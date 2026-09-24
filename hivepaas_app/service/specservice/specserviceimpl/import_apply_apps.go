@@ -187,14 +187,23 @@ func (w *writer) configureApp(
 	}
 }
 
-// giveDockerAPI gives a new app's service the socket and network of the access
-// its settings grant. The setting is provisioned with the app, so it cannot be
-// read back the way ApplyToService reads it.
+// giveDockerAPI gives a new app's service what the access its settings grant
+// needs: its socket and network, or in host mode the node's socket. The setting
+// is provisioned with the app, so it cannot be read back the way ApplyToService
+// reads it.
 func (w *writer) giveDockerAPI(
 	ctx context.Context, node *specmodel.PlanNode, app *entity.App, spec *swarm.ServiceSpec,
 ) error {
 	for _, setting := range w.appSettings[node.Path] {
 		if setting.Type != base.SettingTypeAppDockerAPI || setting.Status != base.SettingStatusActive {
+			continue
+		}
+		access, err := setting.AsAppDockerAPISettings()
+		if err != nil {
+			return hperrors.Wrap(err).WithExtraDetail("%s", node.Path)
+		}
+		if access.IsHostMode() {
+			dockerapiservice.AttachHost(spec)
 			continue
 		}
 		networkID, err := w.p.s.dockerAPIService.EnsureNetwork(ctx, app.ID)

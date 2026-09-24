@@ -24,27 +24,44 @@ func planAskingCluster(
 	return out, &asked
 }
 
-// The Docker socket mounted into an app is root on its node. An import is the
-// one way to ask for a mount of the host, and it takes what capabilities take.
-func TestPlanSkipsAnAppMountingTheHostForAnOperatorWhoMayNotWriteTheCluster(t *testing.T) {
-	for allowed, wantSkip := range map[bool]bool{false: true, true: false} {
-		svc, bundle := planFixture(t)
-		backendStorage(bundle).DockerMounts["/var/run/docker.sock"] = specmodel.Mount{
-			Type: mount.TypeBind, Source: "/var/run/docker.sock",
-		}
+// planAsAdmin plans with the switch on, as an administrator or not, with Write
+// on the Cluster module either way, counting how often that is asked.
+func planAsAdmin(
+	t *testing.T, svc *service, bundle *specmodel.ImportBundle, admin bool,
+) (*specmodel.ImportPlan, *int) {
+	t.Helper()
+	asked := 0
+	out := planWith(t, svc, bundle, &specservice.ValidateImportReq{
+		MayWriteCluster:     func(context.Context) (bool, error) { asked++; return true, nil },
+		AllowPrivilegedApps: true,
+		Admin:               admin,
+	})
+	return out, &asked
+}
 
-		out, asked := planAskingCluster(t, svc, bundle, allowed)
+var hostDirMount = specmodel.Mount{Type: mount.TypeBind, Source: "/srv/backups"}
+
+// A directory of the node mounted into an app reaches past everything HivePaaS
+// keeps apart. An import is the one way to ask for it, and it takes the switch
+// and an administrator; Write on the Cluster module is not enough.
+func TestPlanSkipsAnAppMountingTheHostForAnOperatorWhoIsNotAnAdministrator(t *testing.T) {
+	for admin, wantSkip := range map[bool]bool{false: true, true: false} {
+		svc, bundle := planFixture(t)
+		backendStorage(bundle).DockerMounts["/backups"] = hostDirMount
+
+		out, asked := planAsAdmin(t, svc, bundle, admin)
 
 		backend := node(t, out, backendPath)
-		assert.Equal(t, 1, *asked)
+		assert.Zero(t, *asked, "Write on the Cluster module decides nothing here")
 		if !wantSkip {
 			assert.Equal(t, specmodel.ActionUpdate, backend.Action)
 			continue
 		}
 		assert.Equal(t, specmodel.ActionSkip, backend.Action)
 		if issues := issuesOf(backend, specmodel.CodeHostMountNotPermitted); assert.Len(t, issues, 1) {
-			assert.Equal(t, map[string]any{"mounts": []string{"/var/run/docker.sock"}}, issues[0].Detail,
+			assert.Equal(t, map[string]any{"mounts": []string{"/backups"}}, issues[0].Detail,
 				"the mount the app already has is not asked about again")
+			assert.Contains(t, issues[0].Action, "administrator")
 		}
 	}
 }
@@ -53,13 +70,12 @@ func TestPlanSkipsAnAppMountingTheHostForAnOperatorWhoMayNotWriteTheCluster(t *t
 // import mounts the host, and nobody is asked.
 func TestPlanSkipsAnAppMountingTheHostWhileTheSwitchIsOff(t *testing.T) {
 	svc, bundle := planFixture(t)
-	backendStorage(bundle).DockerMounts["/var/run/docker.sock"] = specmodel.Mount{
-		Type: mount.TypeBind, Source: "/var/run/docker.sock",
-	}
+	backendStorage(bundle).DockerMounts["/backups"] = hostDirMount
 	asked := 0
 
 	out := planWith(t, svc, bundle, &specservice.ValidateImportReq{
 		MayWriteCluster: func(context.Context) (bool, error) { asked++; return true, nil },
+		Admin:           true,
 	})
 
 	backend := node(t, out, backendPath)
@@ -70,21 +86,25 @@ func TestPlanSkipsAnAppMountingTheHostWhileTheSwitchIsOff(t *testing.T) {
 	}
 }
 
-// An app's socket comes with its access. Mounting it into another app would
-// hand that app the access without anybody granting it, so no import does.
-func TestPlanSkipsAnAppMountingAnAppsSocket(t *testing.T) {
-	svc, bundle := planFixture(t)
-	backendStorage(bundle).DockerMounts["/var/run/hivepaas"] = specmodel.Mount{
-		Type: mount.TypeVolume, Source: dockerapiservice.SocketVolumeName("app_9"),
-	}
+// An app's socket comes with its access, and the node's socket where host mode
+// binds it comes with host mode. Mounting either would hand an app the access
+// without anybody granting it, so no import does.
+func TestPlanSkipsAnAppMountingASocketItsAccessGives(t *testing.T) {
+	for target, m := range map[string]specmodel.Mount{
+		"/var/run/hivepaas":    {Type: mount.TypeVolume, Source: dockerapiservice.SocketVolumeName("app_9")},
+		"/var/run/docker.sock": {Type: mount.TypeBind, Source: "/var/run/docker.sock"},
+	} {
+		svc, bundle := planFixture(t)
+		backendStorage(bundle).DockerMounts[target] = m
 
-	out, asked := planAskingCluster(t, svc, bundle, true)
+		out, _ := planAsAdmin(t, svc, bundle, true)
 
-	backend := node(t, out, backendPath)
-	assert.Zero(t, *asked)
-	assert.Equal(t, specmodel.ActionSkip, backend.Action)
-	if issues := issuesOf(backend, specmodel.CodeHostMountNotPermitted); assert.Len(t, issues, 1) {
-		assert.Equal(t, map[string]any{"mounts": []string{"/var/run/hivepaas"}}, issues[0].Detail)
+		backend := node(t, out, backendPath)
+		assert.Equal(t, specmodel.ActionSkip, backend.Action, target)
+		if issues := issuesOf(backend, specmodel.CodeHostMountNotPermitted); assert.Len(t, issues, 1, target) {
+			assert.Equal(t, map[string]any{"mounts": []string{target}}, issues[0].Detail)
+			assert.Contains(t, issues[0].Action, "never mounted", target)
+		}
 	}
 }
 

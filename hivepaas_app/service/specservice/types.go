@@ -74,10 +74,9 @@ type ValidateImportReq struct {
 	// and before anything is compared. Nil allows it.
 	AuthorizeSecrets func(ctx context.Context, mode specmodel.SecretsMode) error
 	// MayWriteCluster answers whether this caller has Write on the cluster
-	// module, which giving an app more of the host than a container ordinarily
-	// gets takes: capabilities, and mounts of the host's own paths and volumes.
-	// It is asked at most once, and only when an imported app would. Nil allows
-	// it.
+	// module, which giving an app more than a container ordinarily gets takes:
+	// capabilities, and the Docker API through the proxy. It is asked at most
+	// once, and only when an imported app would. Nil allows it.
 	MayWriteCluster func(ctx context.Context) (bool, error)
 	// MayWriteApp answers whether this caller may write to an app, which an
 	// imported mount reaching that app's storage needs. It is asked only for an
@@ -88,9 +87,13 @@ type ValidateImportReq struct {
 	// changes. Nil allows it.
 	MayChangeOwner func(ctx context.Context, project *entity.Project) (bool, error)
 	// AllowPrivilegedApps is the operator's switch, Security.AllowPrivilegedApps.
-	// Off, no import gives an app a new mount of the host, whoever asks; the
-	// zero value is off, so a caller that forgets it grants nothing.
+	// Off, no import gives an app a new mount of the host or the node's own
+	// Docker socket, whoever asks; the zero value is off, so a caller that
+	// forgets it grants nothing.
 	AllowPrivilegedApps bool
+	// Admin says the caller is an administrator, which the same grants take
+	// with the switch on. The zero value is not.
+	Admin bool
 }
 
 // ApplyImportReq applies the plan a ValidateImportReq made. PlanHash is the

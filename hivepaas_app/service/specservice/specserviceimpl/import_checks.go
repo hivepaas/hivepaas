@@ -52,9 +52,7 @@ func (p *planner) checkPermissions(ctx context.Context) error {
 		if node.Action == specmodel.ActionSkip {
 			continue
 		}
-		if err := p.checkHostMounts(ctx, node); err != nil {
-			return err
-		}
+		p.checkHostMounts(node)
 		if node.Action == specmodel.ActionSkip {
 			continue
 		}
@@ -110,24 +108,25 @@ func hostMounts(doc *specmodel.AppDoc) map[string]string {
 }
 
 // checkHostMounts skips an app created with a mount of the host, or updated so
-// that its mounts of the host change, when the operator's switch is off or the
-// operator may not write the cluster. The storage screen offers no such mount at
+// that its mounts of the host change, unless the operator's switch is on and
+// the caller is an administrator. The storage screen offers no such mount at
 // all; an import is the one way to ask for it, and a mount of the Docker socket
-// is root on the node. A mount of an app's Docker API socket is never imported:
-// the socket comes with that app's access, which is granted, not mounted.
-func (p *planner) checkHostMounts(ctx context.Context, node *specmodel.PlanNode) error {
+// is root on the node. A socket Docker API access gives - an app's socket
+// volume, the node's socket where host mode binds it - is never imported: it
+// comes with the access, which is granted, not mounted.
+func (p *planner) checkHostMounts(node *specmodel.PlanNode) {
 	doc := p.apps[node.Path].doc
 	wanted := hostMounts(doc)
 	if len(wanted) == 0 || !writesBlock(node, "deployment.storage") {
-		return nil
+		return
 	}
 	if sockets := socketMounts(doc); len(sockets) > 0 {
 		p.skipNode(node, specmodel.Issue{
 			Severity: specmodel.SeveritySkipped, Code: specmodel.CodeHostMountNotPermitted, Path: node.Path,
 			Detail: map[string]any{detailMounts: sockets},
-			Action: "not imported: an app's Docker API socket comes with its access and is never mounted",
+			Action: "not imported: a Docker API socket comes with the app's access and is never mounted",
 		})
-		return nil
+		return
 	}
 	// An update asks only for what it changes: a mount the app already has was
 	// allowed when it was made.
@@ -142,38 +141,40 @@ func (p *planner) checkHostMounts(ctx context.Context, node *specmodel.PlanNode)
 		}
 	}
 	if len(changed) == 0 {
-		return nil
+		return
 	}
-	if !p.req.AllowPrivilegedApps {
+	if missing := p.privilegeMissing(); missing != "" {
 		p.skipNode(node, specmodel.Issue{
 			Severity: specmodel.SeveritySkipped, Code: specmodel.CodeHostMountNotPermitted, Path: node.Path,
 			Detail: map[string]any{detailMounts: changed},
-			Action: "not imported: this installation does not let apps reach the host; " +
-				"an administrator turns that on in the security settings",
+			Action: "not imported: mounting the host's paths or volumes " + missing,
 		})
-		return nil
 	}
-	allowed, err := p.mayWriteCluster(ctx)
-	if err != nil || allowed {
-		return err
+}
+
+// privilegeMissing says what raw access to the host lacks - the switch, or an
+// administrator - as the end of an issue's action, and is empty when nothing is.
+func (p *planner) privilegeMissing() string {
+	switch {
+	case !p.req.AllowPrivilegedApps:
+		return "needs the privileged-apps switch, which is off; an administrator turns it on " +
+			"in the security settings"
+	case !p.req.Admin:
+		return "needs an administrator"
 	}
-	p.skipNode(node, specmodel.Issue{
-		Severity: specmodel.SeveritySkipped, Code: specmodel.CodeHostMountNotPermitted, Path: node.Path,
-		Detail: map[string]any{detailMounts: changed},
-		Action: "not imported: mounting the host's paths or volumes needs Write permission on the Cluster module",
-	})
-	return nil
+	return ""
 }
 
 // detailMounts is the detail of a host mount issue: the targets it is about.
 const detailMounts = "mounts"
 
-// socketMounts are the targets of an app's docker mounts of any app's socket
-// volume.
+// socketMounts are the targets of an app's docker mounts of a socket Docker API
+// access gives.
 func socketMounts(doc *specmodel.AppDoc) []string {
 	var out []string
 	for target, m := range doc.Deployment.Storage.DockerMounts {
-		if m.Type == mount.TypeVolume && strings.HasPrefix(m.Source, dockerapiservice.SocketVolumePrefix) {
+		docker := mount.Mount{Type: m.Type, Source: m.Source, Target: target}
+		if dockerapiservice.IsSocketMount(&docker) {
 			out = append(out, target)
 		}
 	}
@@ -207,7 +208,8 @@ func (p *planner) checkCapabilities(ctx context.Context, node *specmodel.PlanNod
 
 // checkDockerAPI refuses a Docker API block wrong in itself, and skips an app
 // created with the block, or updated so that the block changes, when the
-// operator may not grant it. Narrowing is asked about too: the planner does not
+// operator may not grant it: Write on the Cluster module for the proxy, the
+// switch and an administrator for host mode. Narrowing is asked about too: the planner does not
 // weigh one policy against another the way the settings screen does.
 func (p *planner) checkDockerAPI(ctx context.Context, node *specmodel.PlanNode) error {
 	block := specmodel.BlockSettingsDockerAPI
@@ -226,6 +228,16 @@ func (p *planner) checkDockerAPI(ctx context.Context, node *specmodel.PlanNode) 
 	access, _ := data.(*entity.AppDockerAPISettings)
 	if problem := specmodel.DockerAPIProblem(access); problem != "" {
 		return hperrors.Wrap(hperrors.ErrSpecBundleInvalid).WithExtraDetail("%s: %s", node.Path, problem)
+	}
+	if access.IsHostMode() {
+		if missing := p.privilegeMissing(); missing != "" {
+			p.skipNode(node, specmodel.Issue{
+				Severity: specmodel.SeveritySkipped, Code: specmodel.CodeDockerSocketNotPermitted, Path: node.Path,
+				Detail: map[string]any{refInSetting: string(block)},
+				Action: "not imported: giving an app the node's Docker socket " + missing,
+			})
+		}
+		return nil
 	}
 	allowed, err := p.mayWriteCluster(ctx)
 	if err != nil || allowed {

@@ -5,6 +5,7 @@ import (
 	"errors"
 	"testing"
 
+	"github.com/moby/moby/api/types/mount"
 	"github.com/moby/moby/api/types/swarm"
 	"github.com/stretchr/testify/assert"
 
@@ -63,6 +64,64 @@ func TestPlanSkipsAnAppGivenTheDockerAPIByAnOperatorWhoMayNotWriteTheCluster(t *
 		assert.Equal(t, specmodel.ActionSkip, backend.Action)
 		assert.Len(t, issuesOf(backend, specmodel.CodeDockerAPINotPermitted), 1)
 	}
+}
+
+// The node's own socket takes the switch and an administrator, and nothing
+// else: Write on the Cluster module is not asked.
+func TestPlanGivesHostModeOnlyToAnAdministratorWithTheSwitchOn(t *testing.T) {
+	for name, tc := range map[string]struct {
+		on, admin bool
+		missing   string
+	}{
+		"the switch off":       {admin: true, missing: "security settings"},
+		"not an administrator": {on: true, missing: "administrator"},
+		"both":                 {on: true, admin: true},
+	} {
+		svc, bundle := planFixture(t)
+		backendSettings(bundle)["dockerApi"] = map[string]any{"mode": "host"}
+		asked := 0
+
+		out := planWith(t, svc, bundle, &specservice.ValidateImportReq{
+			MayWriteCluster:     func(context.Context) (bool, error) { asked++; return true, nil },
+			AllowPrivilegedApps: tc.on,
+			Admin:               tc.admin,
+		})
+
+		backend := node(t, out, backendPath)
+		assert.Zero(t, asked, name)
+		if tc.missing == "" {
+			assert.Equal(t, specmodel.ActionUpdate, backend.Action, name)
+			continue
+		}
+		assert.Equal(t, specmodel.ActionSkip, backend.Action, name)
+		if issues := issuesOf(backend, specmodel.CodeDockerSocketNotPermitted); assert.Len(t, issues, 1, name) {
+			assert.Contains(t, issues[0].Action, tc.missing, name)
+		}
+	}
+}
+
+// A new app in host mode is provisioned with the node's socket, and no network
+// of its own: host mode has no use for one.
+func TestApplyGivesANewAppInHostModeTheNodesSocket(t *testing.T) {
+	svc, bundle := planFixture(t)
+	dockerAPI := &fakeImportDockerAPI{}
+	svc.dockerAPIService = dockerAPI
+	addWorker(bundle, map[string]any{"dockerApi": map[string]any{"mode": "host"}})
+	req := &specservice.ApplyImportReq{OperatorID: "u_operator", AcceptIssues: true}
+	req.AllowPrivilegedApps, req.Admin = true, true
+	req.PlanHash = planWith(t, svc, bundle, &req.ValidateImportReq).PlanHash
+
+	apply(t, svc, bundle, req)
+
+	provision := svc.appProvisionService.(*fakeProvisionService)
+	if !assert.Len(t, provision.reqs, 1) {
+		return
+	}
+	spec := provision.specs[provision.reqs[0].AppID]
+	assert.Equal(t, []mount.Mount{dockerapiservice.HostSocketMount()},
+		spec.TaskTemplate.ContainerSpec.Mounts[len(spec.TaskTemplate.ContainerSpec.Mounts)-1:])
+	assert.Empty(t, spec.TaskTemplate.Networks)
+	assert.Empty(t, dockerAPI.calls)
 }
 
 // A block the screen or a template would refuse is refused here too, rather

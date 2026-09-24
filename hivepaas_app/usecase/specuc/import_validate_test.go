@@ -128,21 +128,24 @@ func TestValidateImportAsksThePermissionManagerForWhatAnImportGrants(t *testing.
 	}
 }
 
-// The operator's switch over mounts of the host reaches the planner as it is
-// when the request is made.
-func TestValidateImportPassesThePrivilegedAppsSwitch(t *testing.T) {
+// Raw access to the host takes the operator's switch, as it is when the request
+// is made, and an administrator.
+func TestValidateImportPassesThePrivilegedAppsSwitchAndWhetherTheCallerIsAnAdmin(t *testing.T) {
 	for _, on := range []bool{false, true} {
-		prev := config.Current()
-		config.SetCurrent(&config.Config{Security: config.Security{AllowPrivilegedApps: on}})
-		t.Cleanup(func() { config.SetCurrent(prev) })
-		uc, _, _ := newTestUC(t)
-		svc := &fakeImportService{mode: specmodel.SecretsModeOmit}
-		uc.specService = svc
+		for auth, admin := range map[*basedto.Auth]bool{adminAuth(): true, plainAuth(): false} {
+			prev := config.Current()
+			config.SetCurrent(&config.Config{Security: config.Security{AllowPrivilegedApps: on}})
+			t.Cleanup(func() { config.SetCurrent(prev) })
+			uc, _, _ := newTestUC(t)
+			svc := &fakeImportService{mode: specmodel.SecretsModeOmit}
+			uc.specService = svc
 
-		_, err := uc.ValidateImport(context.Background(), adminAuth(), importReq())
+			_, err := uc.ValidateImport(context.Background(), auth, importReq())
 
-		assert.NoError(t, err)
-		assert.Equal(t, on, svc.lastReq.AllowPrivilegedApps)
+			assert.NoError(t, err)
+			assert.Equal(t, on, svc.lastReq.AllowPrivilegedApps)
+			assert.Equal(t, admin, svc.lastReq.Admin, auth.User.ID)
+		}
 	}
 }
 

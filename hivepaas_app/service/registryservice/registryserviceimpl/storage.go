@@ -10,6 +10,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
+	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/timeutil"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/ulid"
 )
@@ -22,42 +23,48 @@ import (
 // only rewrites the address, because a save is not a rotation: changing the
 // password under apps that are already using it is what RotateCredential does,
 // deliberately and with a grace period.
+//
+// That holds across switching the registry off and on again. The credential
+// outlives the registry for as long as an app names it, and the next registry
+// takes it up again, whatever its address is now: making a second one would
+// leave those apps pulling with a password the new registry does not know.
 func (s *service) ensureCredential(ctx context.Context, db database.IDB, cfg *entity.RegistrySettings) (
 	*entity.Setting, string, error) {
 	timeNow := timeutil.NowUTC()
 
-	if cfg.RegistryAuthID != "" {
-		setting, err := s.settingRepo.GetByID(ctx, db, entity.NewObjectScopeGlobal(),
-			base.SettingTypeRegistryAuth, cfg.RegistryAuthID, false)
-		if err == nil && setting != nil {
-			auth, parseErr := setting.AsRegistryAuth()
-			if parseErr != nil {
-				return nil, "", hperrors.Wrap(parseErr)
-			}
-			password, plainErr := auth.Password.GetPlain()
-			if plainErr != nil {
-				return nil, "", hperrors.Wrap(plainErr)
-			}
-			if auth.Address != cfg.Domain {
-				if err = updateRegistryAuthSetting(setting, cfg.Domain, "", timeNow); err != nil {
-					return nil, "", hperrors.Wrap(err)
-				}
-				if err = s.settingRepo.Upsert(ctx, db, setting,
-					entity.SettingUpsertingConflictCols, entity.SettingUpsertingUpdateCols); err != nil {
-					return nil, "", hperrors.Wrap(err)
-				}
-			}
-			return setting, password, nil
+	setting, err := s.findOwnCredential(ctx, db, cfg.RegistryAuthID)
+	if err != nil {
+		return nil, "", err
+	}
+	if setting != nil {
+		auth, err := setting.AsRegistryAuth()
+		if err != nil {
+			return nil, "", hperrors.Wrap(err)
 		}
-		// A credential somebody deleted is not a reason to refuse: one is made
-		// below, and the setting is pointed at it.
+		password, err := auth.Password.GetPlain()
+		if err != nil {
+			return nil, "", hperrors.Wrap(err)
+		}
+		// A credential made before the marker existed gets it now, so it is
+		// found again even once the registry has forgotten its id.
+		stamp := auth.ManagedBy != entity.RegistryAuthManagedBySystemRegistry
+		if auth.Address != cfg.Domain || stamp {
+			if err = updateRegistryAuthSetting(setting, cfg.Domain, "", timeNow); err != nil {
+				return nil, "", hperrors.Wrap(err)
+			}
+			if err = s.settingRepo.Upsert(ctx, db, setting,
+				entity.SettingUpsertingConflictCols, entity.SettingUpsertingUpdateCols); err != nil {
+				return nil, "", hperrors.Wrap(err)
+			}
+		}
+		return setting, password, nil
 	}
 
 	password, err := generatePassword()
 	if err != nil {
 		return nil, "", hperrors.Wrap(err)
 	}
-	setting, err := newRegistryAuthSetting(gofn.Must(ulid.NewStringULID()), cfg.Domain, password, timeNow)
+	setting, err = newRegistryAuthSetting(gofn.Must(ulid.NewStringULID()), cfg.Domain, password, timeNow)
 	if err != nil {
 		return nil, "", hperrors.Wrap(err)
 	}
@@ -66,6 +73,57 @@ func (s *service) ensureCredential(ctx context.Context, db database.IDB, cfg *en
 		return nil, "", hperrors.Wrap(err)
 	}
 	return setting, password, nil
+}
+
+// findOwnCredential is the credential the registry created for itself, or nil
+// when it no longer exists.
+//
+// The id the registry remembers is asked first. The marker is for when that id
+// is gone - a registry setting written before ids outlived a switch-off, or one
+// reset by hand - and, among several marked, the one changed last is taken.
+// Neither looks at the address or the name: both may have changed since.
+func (s *service) findOwnCredential(ctx context.Context, db database.IDB, id string) (*entity.Setting, error) {
+	if id != "" {
+		setting, err := s.settingRepo.GetByID(ctx, db, entity.NewObjectScopeGlobal(),
+			base.SettingTypeRegistryAuth, id, false)
+		if err != nil && !errors.Is(err, hperrors.ErrNotFound) {
+			return nil, hperrors.Wrap(err)
+		}
+		if setting != nil {
+			return setting, nil
+		}
+		// Deleted by somebody, or with the last app that named it: looked for by
+		// the marker below, and made anew when there is none.
+	}
+
+	settings, _, err := s.settingRepo.List(ctx, db, entity.NewObjectScopeGlobal(), nil,
+		bunex.SelectWhere("setting.type = ?", base.SettingTypeRegistryAuth),
+		bunex.SelectOrder("setting.updated_at DESC"),
+	)
+	if err != nil {
+		return nil, hperrors.Wrap(err)
+	}
+	return pickOwnCredential(settings), nil
+}
+
+// pickOwnCredential is the credential marked as the registry's, the one changed
+// last when there are several. A credential whose data cannot be read is
+// passed over: it is nothing the registry could push with anyway.
+func pickOwnCredential(settings []*entity.Setting) *entity.Setting {
+	var own *entity.Setting
+	for _, setting := range settings {
+		if setting.Type != base.SettingTypeRegistryAuth || setting.Scope != base.ObjectScopeGlobal {
+			continue
+		}
+		auth, err := setting.AsRegistryAuth()
+		if err != nil || auth.ManagedBy != entity.RegistryAuthManagedBySystemRegistry {
+			continue
+		}
+		if own == nil || setting.UpdatedAt.After(own.UpdatedAt) {
+			own = setting
+		}
+	}
+	return own
 }
 
 // resolveStorage turns the setting's reference into what the configuration and

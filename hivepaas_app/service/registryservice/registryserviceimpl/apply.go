@@ -183,9 +183,10 @@ func (s *service) teardown(
 		return nil, hperrors.Wrap(err)
 	}
 	if app == nil {
-		// Nothing to take down. The ids may still name an app somebody removed
-		// another way, and an id that resolves to nothing is worse than none.
-		if err = s.rememberWhatWasCreated(ctx, db, setting, cfg, "", ""); err != nil {
+		// Nothing to take down. The app's id may still name an app somebody
+		// removed another way, and an id that resolves to nothing is worse than
+		// none. The credential's is kept: see below.
+		if err = s.rememberWhatWasCreated(ctx, db, setting, cfg, "", cfg.RegistryAuthID); err != nil {
 			return nil, hperrors.Wrap(err)
 		}
 		return &registryservice.SettingApplyResp{}, nil
@@ -203,7 +204,10 @@ func (s *service) teardown(
 	if err = s.systemAppService.Remove(ctx, db, app, req.RemoveStorage); err != nil {
 		return nil, hperrors.Wrap(err)
 	}
-	if err = s.rememberWhatWasCreated(ctx, db, setting, cfg, "", ""); err != nil {
+	// The credential's id is kept. The credential itself outlives the registry
+	// for as long as an app names it, and the next switch-on takes it up again
+	// by this id rather than making a second one beside it.
+	if err = s.rememberWhatWasCreated(ctx, db, setting, cfg, "", credentialID); err != nil {
 		return nil, hperrors.Wrap(err)
 	}
 

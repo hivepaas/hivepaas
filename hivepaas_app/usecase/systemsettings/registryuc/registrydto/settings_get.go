@@ -134,7 +134,9 @@ func TransformRegistrySettings(
 	if cfg.AppID != "" {
 		resp.App = &basedto.ObjectIDResp{ID: cfg.AppID}
 	}
-	if cfg.RegistryAuthID != "" {
+	// Only while the registry is on: switched off, the id is kept for the next
+	// switch-on, but the credential may have gone with the last app naming it.
+	if cfg.Enabled && cfg.RegistryAuthID != "" {
 		resp.Credential = &basedto.ObjectIDResp{ID: cfg.RegistryAuthID}
 	}
 	if !cfg.CredentialRotatedAt.IsZero() {

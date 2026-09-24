@@ -22,11 +22,23 @@ func (s *registryAuthParser) New() SettingData {
 	return &RegistryAuth{}
 }
 
+// RegistryAuthManagedBySystemRegistry marks, in RegistryAuth.ManagedBy, the
+// credential the system registry created for itself. It is how the registry
+// knows its own credential again whatever it is called or addressed at now: an
+// operator may rename it, and the registry's domain may change between one
+// switch-on and the next. It is in the data rather than in Setting.Kind, which
+// a registry auth keeps its address in.
+const RegistryAuthManagedBySystemRegistry = "system-registry"
+
 type RegistryAuth struct {
 	Username string         `json:"username"`
 	Password EncryptedField `json:"password"`
 	Address  string         `json:"address"`
 	Readonly bool           `json:"readonly,omitempty"`
+	// ManagedBy names what created the credential and keeps it, when that is not
+	// an operator. It cannot be set or cleared through the API: an edit carries
+	// it over.
+	ManagedBy string `json:"managedBy,omitempty"`
 }
 
 func (s *RegistryAuth) GetType() base.SettingType {

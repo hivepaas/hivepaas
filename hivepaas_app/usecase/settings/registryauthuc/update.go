@@ -33,6 +33,8 @@ func (uc *UC) UpdateRegistryAuth(
 				return hperrors.Wrap(err)
 			}
 			req.KeepMaskedSecrets(regAuth, current)
+			// Not the operator's to set or clear: an edit keeps what created it.
+			regAuth.ManagedBy = current.ManagedBy
 
 			err = pData.Setting.SetData(regAuth)
 			if err != nil {

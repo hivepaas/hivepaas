@@ -80,6 +80,7 @@ func newRegistryAuthSetting(id, domain, password string, timeNow time.Time) (*en
 		ID:          id,
 		Scope:       base.ObjectScopeGlobal,
 		Type:        base.SettingTypeRegistryAuth,
+		Kind:        domain,
 		Name:        registryAuthName,
 		Status:      base.SettingStatusActive,
 		Inheritable: true,
@@ -89,9 +90,10 @@ func newRegistryAuthSetting(id, domain, password string, timeNow time.Time) (*en
 		UpdatedAt:   timeNow,
 	}
 	err := setting.SetData(&entity.RegistryAuth{
-		Username: registryUsername,
-		Password: entity.NewEncryptedField(password),
-		Address:  domain,
+		Username:  registryUsername,
+		Password:  entity.NewEncryptedField(password),
+		Address:   domain,
+		ManagedBy: entity.RegistryAuthManagedBySystemRegistry,
 	})
 	if err != nil {
 		return nil, hperrors.Wrap(err)
@@ -101,7 +103,8 @@ func newRegistryAuthSetting(id, domain, password string, timeNow time.Time) (*en
 
 // updateRegistryAuthSetting rewrites the address, and the password when one is
 // given. An empty password keeps the stored one, which is what every save that is
-// not a rotation does.
+// not a rotation does. It also marks the credential as the registry's, which one
+// made before the marker existed gets this way.
 func updateRegistryAuthSetting(setting *entity.Setting, domain, password string, timeNow time.Time) error {
 	auth, err := setting.AsRegistryAuth()
 	if err != nil {
@@ -110,12 +113,16 @@ func updateRegistryAuthSetting(setting *entity.Setting, domain, password string,
 
 	auth.Address = domain
 	auth.Username = registryUsername
+	auth.ManagedBy = entity.RegistryAuthManagedBySystemRegistry
 	if password != "" {
 		auth.Password = entity.NewEncryptedField(password)
 	}
 	if err = setting.SetData(auth); err != nil {
 		return hperrors.Wrap(err)
 	}
+	// Where every registry auth keeps its address, so a list filtered by it
+	// finds this one too.
+	setting.Kind = domain
 	setting.UpdateVer++
 	setting.UpdatedAt = timeNow
 	return nil

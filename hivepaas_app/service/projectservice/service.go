@@ -20,6 +20,11 @@ type Service interface {
 	InitRootProject(ctx context.Context, db database.IDB) (postInitFunc func() error, err error)
 
 	PersistProjectData(ctx context.Context, db database.IDB, data *PersistingProjectData) error
+	// PrepareNewProject adds to out everything a project is created with: its
+	// row, its envs and tags, and the defaults every project gets - a webhook, a
+	// notification and a volume. Nothing is written, and nothing outside the
+	// database is created.
+	PrepareNewProject(ctx context.Context, req *NewProjectReq, out *PersistingProjectData) error
 	// DeleteProject removes a project with everything in it. removeStorage also
 	// deletes the volumes the project owns and the data its apps kept.
 	DeleteProject(ctx context.Context, db database.IDB, project *entity.Project, removeStorage bool) error

@@ -18,14 +18,8 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/timeutil"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/transaction"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/ulid"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/projectservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/projectuc/projectdto"
-)
-
-const (
-	projectWebhookName      = "default"
-	projectWebhookSecretLen = 24
-
-	projectNotificationName = "default"
 )
 
 func (uc *UC) CreateProject(
@@ -124,21 +118,25 @@ func (uc *UC) preparePersistingProject(
 	req *projectdto.CreateProjectReq,
 	data *createProjectData,
 	persistingData *persistingProjectData,
-) (err error) {
-	timeNow := timeutil.NowUTC()
-	// Upserting project
+) error {
 	project := &entity.Project{
-		ID:        gofn.Must(ulid.NewStringULID()),
-		Key:       data.ProjectKey,
-		CreatedAt: timeNow,
+		ID:      gofn.Must(ulid.NewStringULID()),
+		Key:     data.ProjectKey,
+		Name:    req.Name,
+		Status:  req.Status,
+		Note:    req.Note,
+		OwnerID: req.Owner.ID,
 	}
-
-	uc.preparePersistingProjectBase(project, req.ProjectBaseReq, timeNow, persistingData)
-	uc.preparePersistingProjectEnvs(project, req.Envs, 0, timeNow, persistingData)
-	uc.preparePersistingProjectTags(project, req.Tags, 0, persistingData)
-	uc.preparePersistingProjectWebhook(project, timeNow, persistingData)
-	uc.preparePersistingProjectNotificationDefault(project, timeNow, persistingData)
-	err = uc.preparePersistingProjectDefaultVolume(ctx, project, persistingData)
+	envs := make([]*projectservice.NewProjectEnvReq, 0, len(req.Envs))
+	for _, env := range req.Envs {
+		envs = append(envs, &projectservice.NewProjectEnvReq{Name: env.Name, Color: env.Color})
+	}
+	err := uc.projectService.PrepareNewProject(ctx, &projectservice.NewProjectReq{
+		Project: project,
+		Envs:    envs,
+		Tags:    req.Tags,
+		TimeNow: timeutil.NowUTC(),
+	}, &persistingData.PersistingProjectData)
 	if err != nil {
 		return hperrors.Wrap(err)
 	}
@@ -160,107 +158,12 @@ func (uc *UC) preparePersistingProjectBase(
 	persistingData.UpsertingProjects = append(persistingData.UpsertingProjects, project)
 }
 
-func (uc *UC) preparePersistingProjectEnvs(
-	project *entity.Project,
-	envs []*projectdto.ProjectEnvReq,
-	startIndex int,
-	timeNow time.Time,
-	persistingData *persistingProjectData,
-) {
-	index := startIndex
-	for _, env := range envs {
-		persistingData.UpsertingProjectEnvs = append(persistingData.UpsertingProjectEnvs,
-			&entity.ProjectEnv{
-				ID:        projecthelper.CalcProjectEnvID(project.ID, env.Name),
-				ProjectID: project.ID,
-				Name:      env.Name,
-				Key:       projecthelper.CalcProjectEnvKey(env.Name),
-				Status:    base.ProjectStatusActive,
-				Color:     env.Color,
-				Index:     index,
-				CreatedAt: timeNow,
-				UpdatedAt: timeNow,
-			})
-		index++
-	}
-}
-
 func (uc *UC) preparePersistingProjectTags(
 	project *entity.Project,
 	tags []string,
 	startIndex int,
 	persistingData *persistingProjectData,
 ) {
-	index := startIndex
-	for _, tag := range tags {
-		persistingData.UpsertingTags = append(persistingData.UpsertingTags,
-			&entity.Tag{
-				ObjectID: project.ID,
-				Tag:      tag,
-				Index:    index,
-			})
-		index++
-	}
-}
-
-func (uc *UC) preparePersistingProjectWebhook(
-	project *entity.Project,
-	timeNow time.Time,
-	persistingData *persistingProjectData,
-) {
-	setting := &entity.Setting{
-		ID:          gofn.Must(ulid.NewStringULID()),
-		Scope:       base.ObjectScopeProject,
-		ObjectID:    project.ID,
-		Type:        base.SettingTypeRepoWebhook,
-		Status:      base.SettingStatusActive,
-		Name:        projectWebhookName,
-		Inheritable: true,
-		Default:     true,
-		Version:     entity.CurrentRepoWebhookVersion,
-		CreatedAt:   timeNow,
-		UpdatedAt:   timeNow,
-	}
-	// Kind is deliberately left unset: the provider is unknown when a project is
-	// created, and an unset kind means the webhook accepts any of them - the
-	// sender is identified per delivery, see webhookuc.detectWebhookKind.
-	setting.MustSetData(&entity.RepoWebhook{
-		Secret: entity.NewEncryptedField(gofn.RandTokenAsHex(projectWebhookSecretLen)),
-	})
-	persistingData.UpsertingSettings = append(persistingData.UpsertingSettings, setting)
-}
-
-func (uc *UC) preparePersistingProjectNotificationDefault(
-	project *entity.Project,
-	timeNow time.Time,
-	persistingData *persistingProjectData,
-) {
-	setting := &entity.Setting{
-		ID:          gofn.Must(ulid.NewStringULID()),
-		Scope:       base.ObjectScopeProject,
-		ObjectID:    project.ID,
-		Type:        base.SettingTypeNotification,
-		Status:      base.SettingStatusActive,
-		Name:        projectNotificationName,
-		Inheritable: true,
-		Default:     true,
-		Version:     entity.CurrentNotificationVersion,
-		CreatedAt:   timeNow,
-		UpdatedAt:   timeNow,
-	}
-	setting.MustSetData(entity.NewNotificationDefaultForScope(entity.NewObjectScopeProject(project.ID)))
-	persistingData.UpsertingSettings = append(persistingData.UpsertingSettings, setting)
-}
-
-func (uc *UC) preparePersistingProjectDefaultVolume(
-	ctx context.Context,
-	project *entity.Project,
-	persistingData *persistingProjectData,
-) error {
-	setting, err := uc.volumeService.CreateProjectDefaultVolume(ctx, project)
-	if err != nil {
-		return hperrors.Wrap(err)
-	}
-	persistingData.UpsertingSettings = append(persistingData.UpsertingSettings, setting)
-	return nil
+	persistingData.UpsertingTags = append(persistingData.UpsertingTags,
+		projectservice.NewProjectTags(project, tags, startIndex)...)
 }

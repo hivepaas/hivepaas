@@ -14,9 +14,9 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/permission"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/auditdetail"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
-	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/projecthelper"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/timeutil"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/transaction"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/projectservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/projectuc/projectdto"
 )
 
@@ -134,17 +134,8 @@ func (uc *UC) loadProjectDataForUpdate(
 	for i, envReq := range req.Envs {
 		currEnv := currEnvs[envReq.Name]
 		if currEnv == nil {
-			data.UpsertingProjectEnvs = append(data.UpsertingProjectEnvs, &entity.ProjectEnv{
-				ID:        projecthelper.CalcProjectEnvID(project.ID, envReq.Name),
-				ProjectID: project.ID,
-				Name:      envReq.Name,
-				Key:       projecthelper.CalcProjectEnvKey(envReq.Name),
-				Status:    base.ProjectStatusActive,
-				Color:     envReq.Color,
-				Index:     i,
-				CreatedAt: timeNow,
-				UpdatedAt: timeNow,
-			})
+			data.UpsertingProjectEnvs = append(data.UpsertingProjectEnvs,
+				projectservice.NewProjectEnv(project, envReq.Name, envReq.Color, i, timeNow))
 			continue
 		}
 		if currEnv.Color != envReq.Color || currEnv.Index != i {

@@ -130,6 +130,13 @@ func (s *service) cloneSwarmService(
 	}
 	destSvc.Spec.TaskTemplate.Networks = newNetAttachments
 
+	// A clone starts with a copy of the source app's service, which carries the
+	// source app's socket and network. Access is given, not copied: the clone has
+	// no app-docker-api setting, so it gets neither.
+	if err = s.dockerAPIService.DetachFromService(ctx, srcApp.ID, &destSvc.Spec); err != nil {
+		return hperrors.Wrap(err)
+	}
+
 	cloneFunc := data.OnCloneService
 	if cloneFunc == nil {
 		cloneFunc = func(destApp, srcApp *entity.App, destSvc, srcSvc *swarm.Service) error {

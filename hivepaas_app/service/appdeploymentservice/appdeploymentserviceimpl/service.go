@@ -10,6 +10,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/appservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/clusterservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/containerexecservice"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/dockerapiservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/imagebuildservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/notificationservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/placementservice"
@@ -33,6 +34,7 @@ type service struct {
 	appService           appservice.Service
 	clusterService       clusterservice.Service
 	containerExecService containerexecservice.Service
+	dockerAPIService     dockerapiservice.Service
 	imageBuildService    imagebuildservice.Service
 	notificationService  notificationservice.Service
 	placementService     placementservice.Service
@@ -55,6 +57,7 @@ func New(
 	appService appservice.Service,
 	clusterService clusterservice.Service,
 	containerExecService containerexecservice.Service,
+	dockerAPIService dockerapiservice.Service,
 	imageBuildService imagebuildservice.Service,
 	notificationService notificationservice.Service,
 	placementService placementservice.Service,
@@ -76,6 +79,7 @@ func New(
 		appService:           appService,
 		clusterService:       clusterService,
 		containerExecService: containerExecService,
+		dockerAPIService:     dockerAPIService,
 		imageBuildService:    imageBuildService,
 		notificationService:  notificationService,
 		placementService:     placementService,

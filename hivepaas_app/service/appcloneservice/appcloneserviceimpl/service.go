@@ -9,6 +9,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/clustersecretservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/clusterservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/commandpipeexecservice"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/dockerapiservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/domainservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/envvarservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/networkservice"
@@ -34,6 +35,7 @@ type service struct {
 	clusterService         clusterservice.Service
 	commandPipeExecService commandpipeexecservice.Service
 	domainService          domainservice.Service
+	dockerAPIService       dockerapiservice.Service
 	envVarService          envvarservice.Service
 	networkService         networkservice.Service
 	settingService         settingservice.Service
@@ -56,6 +58,7 @@ func New(
 	clusterService clusterservice.Service,
 	commandPipeExecService commandpipeexecservice.Service,
 	domainService domainservice.Service,
+	dockerAPIService dockerapiservice.Service,
 	envVarService envvarservice.Service,
 	networkService networkservice.Service,
 	settingService settingservice.Service,
@@ -77,6 +80,7 @@ func New(
 		clusterService:         clusterService,
 		commandPipeExecService: commandPipeExecService,
 		domainService:          domainService,
+		dockerAPIService:       dockerAPIService,
 		envVarService:          envVarService,
 		networkService:         networkService,
 		settingService:         settingService,

@@ -31,6 +31,10 @@ func (s *service) imageDeployStepServiceApply(
 		SkipSavingToDocker: true,
 	}
 
+	if err = s.prepareDockerAPI(ctx, db, data.appDeploymentData); err != nil {
+		return hperrors.Wrap(err)
+	}
+
 	err = s.dockerManager.ServiceUpdateFunc(ctx, data.App.ServiceID, nil,
 		func(i int, svc *swarm.Service) (bool, error) {
 			if i > 0 {
@@ -41,6 +45,12 @@ func (s *service) imageDeployStepServiceApply(
 			contSpec.Dir = deployment.Settings.WorkingDir
 			dockerhelper.ContainerCommandApply(contSpec, deployment.Settings.Command)
 			s.applyContainerInit(ctx, data.appDeploymentData, contSpec)
+
+			// The socket and the network follow the app's access on every
+			// deployment, whatever a screen or an older release left on the service.
+			if err := s.dockerAPIService.ApplyToService(ctx, db, data.App.ID, &svc.Spec); err != nil {
+				return false, hperrors.Wrap(err)
+			}
 
 			placementReq.Service = svc
 			_, err := s.placementService.ApplyPlacementSettings(ctx, db, placementReq)

@@ -167,10 +167,12 @@ func (s *service) deleteAppInDocker(ctx context.Context, db database.IDB, app *e
 		return hperrors.Wrap(err)
 	}
 
-	// Now that nothing is holding them open. Neither of these is fatal: what they
-	// leave behind is something to clean up by hand, and failing here instead
-	// would leave an app half deleted.
+	// Now that nothing is holding them open. None of these is fatal: what they
+	// leave behind is something to clean up by hand - or, for what the app's
+	// Docker API left, what the agents sweep - and failing here instead would
+	// leave an app half deleted.
 	_ = s.deleteDockerSecretsAndConfigs(ctx, secrets, configs)
+	_ = s.dockerAPIService.RemoveApp(ctx, app.ID)
 	if removeStorage {
 		_ = s.volumeService.RemoveAppStorage(ctx, db, app, mounts)
 	}

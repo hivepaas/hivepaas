@@ -69,7 +69,7 @@ settings:
     sharedDirs: ["/var/lib/autobase/ansible"]
     networks: []
     allow: []
-    limits: {containers: 3, memory: 2Gi, cpus: 2}
+    limits: {containers: 3, memory: 2gb, cpus: 2}
 ```
 
 | field | meaning | default |
@@ -79,21 +79,24 @@ settings:
 | `networks` | Networks children may join besides their own. The only value in this phase is `env`: the app's project-env network, for a runner whose jobs clone from a forge in the same env. | none |
 | `allow` | Groups of endpoints beyond the core (§3): `exec`, `files`, `volumes`, `networks`, `nestedSocket`. | none |
 | `limits.containers` | Children that may exist at once, running or not. At most 50. | 5 |
-| `limits.memory`, `limits.cpus` | The most one child may ask for, and what it gets when it asks for nothing. | 1Gi, 1 |
+| `limits.memory`, `limits.cpus` | The most one child may ask for, and what it gets when it asks for nothing. A data size such as `2gb` and a number of CPUs, as `deployment.resources.limits` takes them. | 1gb, 1 |
 
 The buildable subset (`specmodel/buildable.go`) accepts the block with exactly
-these fields and bounds. Build refuses a `sharedDirs` entry that no mount of the
-app covers, and one covered by a cluster volume: a container outside Swarm
-cannot mount a CSI volume.
+these fields and bounds, and refuses a `sharedDirs` entry that no storage mount
+of the app covers. A shared directory on a cluster volume is refused by the
+proxy when a child asks for it, since a container outside Swarm cannot mount a
+CSI volume and the document does not say which kind a volume is.
 
 Export writes the block like any other setting. Import reads it back (§9).
 
 ## 2. What the app sees
 
-- A socket at `/var/run/hivepaas/docker.sock`, and `DOCKER_HOST` set to
-  `unix:///var/run/hivepaas/docker.sock` unless the app sets `DOCKER_HOST`
-  itself. A template for an app that reads another variable - Autobase reads
-  `PG_CONSOLE_DOCKER_HOST` - sets that one to the same value.
+- A socket at `/var/run/hivepaas/docker.sock`, and a system variable
+  `HIVEPAAS_DOCKER_HOST=unix:///var/run/hivepaas/docker.sock`, like the other
+  `HIVEPAAS_*` variables. A template sets the variable its app reads to
+  `${HIVEPAAS_DOCKER_HOST}`: `DOCKER_HOST` for most, `PG_CONSOLE_DOCKER_HOST`
+  for Autobase. HivePaaS does not set `DOCKER_HOST` itself, because an app's own
+  variables and the system's are kept apart.
 - A network of its own, `hp-dapi-<app id>`. Its children join it by default.
 - Refusals as Docker errors: status 403 and a message starting `hivepaas:` that
   names the rule, such as `hivepaas: HostConfig.Privileged is not allowed`. The
@@ -277,7 +280,7 @@ access or removing it needs only the app's own Write.
 
 | surface | behaviour |
 |---|---|
-| Template create and preflight | refused with `DOCKER_API_NOT_PERMITTED`, reported by preflight like the capability check |
+| Template create and preflight | refused as unauthorized, naming the apps and the Docker API, and reported by preflight exactly as the capability check is |
 | Import | the app is skipped with `DOCKER_API_NOT_PERMITTED` (severity skipped) |
 | App settings | a Docker API screen shows the policy and edits it under the same gate |
 | Export | writes the block |
@@ -364,17 +367,20 @@ Gitea runner: a plain job, a job with a `redis` service, and a job running
    - hosting the engine;
    - socket volumes and reconcile;
    - `DockerAPIService.Sync`, removal by label, and collection on a timer.
-3. **Backend.**
-   - the setting type;
+3. **Backend, granting it.** The setting type moved into plan 2. This plan has:
    - the buildable subset and builder;
-   - export and import;
-   - template checks and preflight;
+   - template checks, preflight and the template detail;
    - deployment (mount, variable, network);
-   - lifecycle on delete;
+   - lifecycle on delete and clone;
+   - the storage and network screens;
+   - export.
+4. **Backend, import and the settings screen's API.**
+   - import's checks and re-attaching;
    - reserved volume names;
-   - the switch in import.
-4. **Dashboard.** Template detail, create dialog, app settings screen.
-5. **Templates.** `autobase` and `gitea-runner`.
+   - the switch in import;
+   - the Docker API screen's endpoints.
+5. **Dashboard.** Template detail, create dialog, app settings screen.
+6. **Templates.** `autobase` and `gitea-runner`.
 
 ## Not in this design
 

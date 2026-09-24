@@ -1,10 +1,14 @@
+import { useMemo } from "react";
+
 import { useParams } from "react-router";
 import invariant from "tiny-invariant";
-import type { SpecExportScope } from "~/operations/domain";
-import { SpecExportPanel } from "~/operations/routes/export";
+import type { SpecExportScope, SpecImportScope } from "~/operations/domain";
+import { SpecExportPanel, SpecImportPanel } from "~/operations/routes/export";
 import { ProjectsQueries } from "~/projects/data";
 import { ProjectEnvScopeBadge } from "~/projects/module-shared/components";
 import { getProjectEnvFilterParam, useSelectedProjectEnv } from "~/projects/module-shared/hooks";
+
+import { MODULE_IDS } from "@application/shared/constants";
 
 /**
  * Scope follows the environment picker in the top right rather than adding a
@@ -25,6 +29,15 @@ export function ProjectExportRoute() {
     const scope: SpecExportScope = scopedEnv
         ? { type: "project-env", projectID: projectId, projectEnvID: scopedEnv }
         : { type: "project", projectID: projectId };
+    // Kept stable across renders: the import panel asks for its plan again when
+    // its scope changes.
+    const importScope = useMemo<SpecImportScope>(
+        () =>
+            scopedEnv
+                ? { type: "project-env", projectID: projectId, projectEnvID: scopedEnv }
+                : { type: "project", projectID: projectId },
+        [projectId, scopedEnv],
+    );
 
     const scopeLabel = scopedEnv ? `${projectName} (${scopedEnv})` : projectName;
 
@@ -36,11 +49,23 @@ export function ProjectExportRoute() {
                     envs={projectEnvs}
                 />
             </div>
-            <SpecExportPanel
-                key={`${projectId}-${scopedEnv ?? "all"}`}
-                scope={scope}
-                scopeLabel={scopeLabel}
-            />
+            <div className="flex flex-col gap-3">
+                <h2 className="text-base font-semibold text-foreground">Export</h2>
+                <SpecExportPanel
+                    key={`${projectId}-${scopedEnv ?? "all"}`}
+                    scope={scope}
+                    scopeLabel={scopeLabel}
+                />
+            </div>
+            <div className="flex flex-col gap-3">
+                <h2 className="text-base font-semibold text-foreground">Import</h2>
+                <SpecImportPanel
+                    key={`${projectId}-${scopedEnv ?? "all"}`}
+                    scope={importScope}
+                    scopeLabel={scopeLabel}
+                    permissionModuleId={MODULE_IDS.Project}
+                />
+            </div>
         </div>
     );
 }

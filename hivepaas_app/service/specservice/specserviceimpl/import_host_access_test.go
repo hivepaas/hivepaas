@@ -7,6 +7,7 @@ import (
 	"github.com/moby/moby/api/types/mount"
 	"github.com/stretchr/testify/assert"
 
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/dockerapiservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/specservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/specservice/specmodel"
 )
@@ -17,7 +18,8 @@ func planAskingCluster(
 	t.Helper()
 	asked := 0
 	out := planWith(t, svc, bundle, &specservice.ValidateImportReq{
-		MayWriteCluster: func(context.Context) (bool, error) { asked++; return allowed, nil },
+		MayWriteCluster:     func(context.Context) (bool, error) { asked++; return allowed, nil },
+		AllowPrivilegedApps: true,
 	})
 	return out, &asked
 }
@@ -44,6 +46,45 @@ func TestPlanSkipsAnAppMountingTheHostForAnOperatorWhoMayNotWriteTheCluster(t *t
 			assert.Equal(t, map[string]any{"mounts": []string{"/var/run/docker.sock"}}, issues[0].Detail,
 				"the mount the app already has is not asked about again")
 		}
+	}
+}
+
+// The operator's switch is over what anybody may give an app: with it off, no
+// import mounts the host, and nobody is asked.
+func TestPlanSkipsAnAppMountingTheHostWhileTheSwitchIsOff(t *testing.T) {
+	svc, bundle := planFixture(t)
+	backendStorage(bundle).DockerMounts["/var/run/docker.sock"] = specmodel.Mount{
+		Type: mount.TypeBind, Source: "/var/run/docker.sock",
+	}
+	asked := 0
+
+	out := planWith(t, svc, bundle, &specservice.ValidateImportReq{
+		MayWriteCluster: func(context.Context) (bool, error) { asked++; return true, nil },
+	})
+
+	backend := node(t, out, backendPath)
+	assert.Zero(t, asked)
+	assert.Equal(t, specmodel.ActionSkip, backend.Action)
+	if issues := issuesOf(backend, specmodel.CodeHostMountNotPermitted); assert.Len(t, issues, 1) {
+		assert.Contains(t, issues[0].Action, "security settings")
+	}
+}
+
+// An app's socket comes with its access. Mounting it into another app would
+// hand that app the access without anybody granting it, so no import does.
+func TestPlanSkipsAnAppMountingAnAppsSocket(t *testing.T) {
+	svc, bundle := planFixture(t)
+	backendStorage(bundle).DockerMounts["/var/run/hivepaas"] = specmodel.Mount{
+		Type: mount.TypeVolume, Source: dockerapiservice.SocketVolumeName("app_9"),
+	}
+
+	out, asked := planAskingCluster(t, svc, bundle, true)
+
+	backend := node(t, out, backendPath)
+	assert.Zero(t, *asked)
+	assert.Equal(t, specmodel.ActionSkip, backend.Action)
+	if issues := issuesOf(backend, specmodel.CodeHostMountNotPermitted); assert.Len(t, issues, 1) {
+		assert.Equal(t, map[string]any{"mounts": []string{"/var/run/hivepaas"}}, issues[0].Detail)
 	}
 }
 

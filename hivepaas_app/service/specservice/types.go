@@ -87,6 +87,10 @@ type ValidateImportReq struct {
 	// another owner. It is asked only for a project whose owner the bundle
 	// changes. Nil allows it.
 	MayChangeOwner func(ctx context.Context, project *entity.Project) (bool, error)
+	// AllowPrivilegedApps is the operator's switch, Security.AllowPrivilegedApps.
+	// Off, no import gives an app a new mount of the host, whoever asks; the
+	// zero value is off, so a caller that forgets it grants nothing.
+	AllowPrivilegedApps bool
 }
 
 // ApplyImportReq applies the plan a ValidateImportReq made. PlanHash is the

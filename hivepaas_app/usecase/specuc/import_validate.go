@@ -6,6 +6,7 @@ import (
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
+	"github.com/hivepaas/hivepaas/hivepaas_app/config"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/permission"
@@ -35,14 +36,17 @@ func (uc *UC) ValidateImport(
 
 // importReq is what validate and apply both ask the service, with the gates of
 // the caller: revealing secrets, granting capabilities, reaching another app's
-// storage, changing a project's owner.
+// storage, changing a project's owner - and the operator's switch over mounts of
+// the host.
 func (uc *UC) importReq(auth *basedto.Auth, req *specdto.ValidateImportReq) *specservice.ValidateImportReq {
+	cfg := config.Current()
 	return &specservice.ValidateImportReq{
-		Scope:      req.Scope,
-		Bundle:     req.Bundle,
-		Passphrase: req.Passphrase,
-		Selection:  req.Selection,
-		Options:    req.Options,
+		Scope:               req.Scope,
+		Bundle:              req.Bundle,
+		Passphrase:          req.Passphrase,
+		Selection:           req.Selection,
+		Options:             req.Options,
+		AllowPrivilegedApps: cfg != nil && cfg.Security.AllowPrivilegedApps,
 		AuthorizeSecrets: func(ctx context.Context, mode specmodel.SecretsMode) error {
 			return uc.permissionManager.AuthorizeSecretReveal(ctx, uc.db, auth, &permission.RevealSubject{
 				Scope:    req.Scope.ScopeType,

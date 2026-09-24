@@ -7,6 +7,7 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
+	"github.com/hivepaas/hivepaas/hivepaas_app/config"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
@@ -124,6 +125,24 @@ func TestValidateImportAsksThePermissionManagerForWhatAnImportGrants(t *testing.
 		mayWrite, err := svc.lastReq.MayWriteApp(context.Background(), app)
 		assert.NoError(t, err)
 		assert.Equal(t, want, mayWrite, auth.User.ID)
+	}
+}
+
+// The operator's switch over mounts of the host reaches the planner as it is
+// when the request is made.
+func TestValidateImportPassesThePrivilegedAppsSwitch(t *testing.T) {
+	for _, on := range []bool{false, true} {
+		prev := config.Current()
+		config.SetCurrent(&config.Config{Security: config.Security{AllowPrivilegedApps: on}})
+		t.Cleanup(func() { config.SetCurrent(prev) })
+		uc, _, _ := newTestUC(t)
+		svc := &fakeImportService{mode: specmodel.SecretsModeOmit}
+		uc.specService = svc
+
+		_, err := uc.ValidateImport(context.Background(), adminAuth(), importReq())
+
+		assert.NoError(t, err)
+		assert.Equal(t, on, svc.lastReq.AllowPrivilegedApps)
 	}
 }
 

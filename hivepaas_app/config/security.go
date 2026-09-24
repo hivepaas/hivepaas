@@ -38,8 +38,10 @@ type Security struct {
 	// manager, over the whole cluster - so it is off unless the operator turns it
 	// on, and turning it on takes the app secret like the switch above.
 	//
-	// TODO: privileged apps - app templates and import consult this before they
-	// grant an app access to the host.
+	// Import is the one way to ask for such a mount, and consults it before Write
+	// on the Cluster module. Templates never ask for one; the Docker API they can
+	// grant goes through HivePaaS's proxy instead, gated by that permission alone.
+	// See docs/superpowers/specs/2026-09-24-docker-api-access-design.md §9.
 	AllowPrivilegedApps bool `toml:"allow_privileged_apps" env:"HP_SECURITY_ALLOW_PRIVILEGED_APPS"`
 }
 

@@ -16,6 +16,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/clusterservice"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/dockerapiservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/specservice/specmodel"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/volumeservice"
 )
@@ -109,13 +110,23 @@ func hostMounts(doc *specmodel.AppDoc) map[string]string {
 }
 
 // checkHostMounts skips an app created with a mount of the host, or updated so
-// that its mounts of the host change, when the operator may not write the
-// cluster. The storage screen offers no such mount at all; an import is the one
-// way to ask for it, and a mount of the Docker socket is root on the node.
+// that its mounts of the host change, when the operator's switch is off or the
+// operator may not write the cluster. The storage screen offers no such mount at
+// all; an import is the one way to ask for it, and a mount of the Docker socket
+// is root on the node. A mount of an app's Docker API socket is never imported:
+// the socket comes with that app's access, which is granted, not mounted.
 func (p *planner) checkHostMounts(ctx context.Context, node *specmodel.PlanNode) error {
 	doc := p.apps[node.Path].doc
 	wanted := hostMounts(doc)
 	if len(wanted) == 0 || !writesBlock(node, "deployment.storage") {
+		return nil
+	}
+	if sockets := socketMounts(doc); len(sockets) > 0 {
+		p.skipNode(node, specmodel.Issue{
+			Severity: specmodel.SeveritySkipped, Code: specmodel.CodeHostMountNotPermitted, Path: node.Path,
+			Detail: map[string]any{detailMounts: sockets},
+			Action: "not imported: an app's Docker API socket comes with its access and is never mounted",
+		})
 		return nil
 	}
 	// An update asks only for what it changes: a mount the app already has was
@@ -133,16 +144,41 @@ func (p *planner) checkHostMounts(ctx context.Context, node *specmodel.PlanNode)
 	if len(changed) == 0 {
 		return nil
 	}
+	if !p.req.AllowPrivilegedApps {
+		p.skipNode(node, specmodel.Issue{
+			Severity: specmodel.SeveritySkipped, Code: specmodel.CodeHostMountNotPermitted, Path: node.Path,
+			Detail: map[string]any{detailMounts: changed},
+			Action: "not imported: this installation does not let apps reach the host; " +
+				"an administrator turns that on in the security settings",
+		})
+		return nil
+	}
 	allowed, err := p.mayWriteCluster(ctx)
 	if err != nil || allowed {
 		return err
 	}
 	p.skipNode(node, specmodel.Issue{
 		Severity: specmodel.SeveritySkipped, Code: specmodel.CodeHostMountNotPermitted, Path: node.Path,
-		Detail: map[string]any{"mounts": changed},
+		Detail: map[string]any{detailMounts: changed},
 		Action: "not imported: mounting the host's paths or volumes needs Write permission on the Cluster module",
 	})
 	return nil
+}
+
+// detailMounts is the detail of a host mount issue: the targets it is about.
+const detailMounts = "mounts"
+
+// socketMounts are the targets of an app's docker mounts of any app's socket
+// volume.
+func socketMounts(doc *specmodel.AppDoc) []string {
+	var out []string
+	for target, m := range doc.Deployment.Storage.DockerMounts {
+		if m.Type == mount.TypeVolume && strings.HasPrefix(m.Source, dockerapiservice.SocketVolumePrefix) {
+			out = append(out, target)
+		}
+	}
+	slices.Sort(out)
+	return out
 }
 
 // checkCapabilities skips an app created with capabilities, or updated so that

@@ -327,7 +327,11 @@ func exportFixture(t *testing.T) specservice.Service {
 	}
 	assert.NoError(t, sharedVolume.SetData(&entity.ClusterVolume{}))
 
-	settingRepo := &fakeSettingRepo{}
+	// The env's own network, as cluster sync records it.
+	settingRepo := &fakeSettingRepo{networks: []*entity.Setting{{
+		ID: "net_1", Type: base.SettingTypeClusterNetwork, Scope: base.ObjectScopeProjectEnv, ObjectID: "p1:dev",
+		RefID: "8vo4p3pwm1aksdu2ilryn8mpf", Name: "project_a_dev_net", Status: base.SettingStatusActive,
+	}}}
 
 	proj := &entity.Project{
 		ID: "p1", Key: "project_a", Name: "Project A",
@@ -370,6 +374,7 @@ func exportFixture(t *testing.T) specservice.Service {
 		&fakeClusterSecretService{},
 		&fakeDomainService{},
 		&fakeEnvVarService{},
+		&fakeNetworkService{},
 		&fakeSSLService{},
 		&fakeExportVolumeService{descs: map[string]*volumeservice.AppMountDesc{
 			"/var/lib/postgresql/data": {AppKey: "backend", Own: true, Subpath: "data", VolumeID: "vol_setting_1"},

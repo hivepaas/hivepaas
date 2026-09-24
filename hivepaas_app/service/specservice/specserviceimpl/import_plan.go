@@ -233,8 +233,8 @@ type planner struct {
 	pulled map[string][]string
 	// targetApps is the app on this installation each app node matched.
 	targetApps map[string]*entity.App
-	// capabilitiesAllowed is the answer of MayGrantCapabilities, once asked.
-	capabilitiesAllowed *bool
+	// clusterWriteAllowed is the answer of MayWriteCluster, once asked.
+	clusterWriteAllowed *bool
 	// owners is the owner resolved for each project node, by path; absent when
 	// nobody here is the bundle's owner.
 	owners map[string]string

@@ -73,10 +73,12 @@ type ValidateImportReq struct {
 	// since planning it compares this installation's secrets with the bundle's,
 	// and before anything is compared. Nil allows it.
 	AuthorizeSecrets func(ctx context.Context, mode specmodel.SecretsMode) error
-	// MayGrantCapabilities answers whether this caller may give an app more of
-	// the host than a container ordinarily gets. It is asked at most once, and
-	// only when an imported app would. Nil allows it.
-	MayGrantCapabilities func(ctx context.Context) (bool, error)
+	// MayWriteCluster answers whether this caller has Write on the cluster
+	// module, which giving an app more of the host than a container ordinarily
+	// gets takes: capabilities, and mounts of the host's own paths and volumes.
+	// It is asked at most once, and only when an imported app would. Nil allows
+	// it.
+	MayWriteCluster func(ctx context.Context) (bool, error)
 	// MayWriteApp answers whether this caller may write to an app, which an
 	// imported mount reaching that app's storage needs. It is asked only for an
 	// app the import does not itself write. Nil allows it.

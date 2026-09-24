@@ -51,10 +51,91 @@ func (p *planner) checkPermissions(ctx context.Context) error {
 		if node.Action == specmodel.ActionSkip {
 			continue
 		}
+		if err := p.checkHostMounts(ctx, node); err != nil {
+			return err
+		}
+		if node.Action == specmodel.ActionSkip {
+			continue
+		}
 		if err := p.checkSharedMounts(ctx, node); err != nil {
 			return err
 		}
 	}
+	return nil
+}
+
+// mayWriteCluster asks MayWriteCluster once per plan.
+func (p *planner) mayWriteCluster(ctx context.Context) (bool, error) {
+	if p.clusterWriteAllowed == nil {
+		allowed := true
+		if p.req.MayWriteCluster != nil {
+			var err error
+			if allowed, err = p.req.MayWriteCluster(ctx); err != nil {
+				return false, hperrors.Wrap(err)
+			}
+		}
+		p.clusterWriteAllowed = &allowed
+	}
+	return *p.clusterWriteAllowed, nil
+}
+
+// reachesHost reports whether a mount kept as Docker holds it reaches outside
+// the container: a path of the host - the Docker socket among them - or a volume
+// by name, which can be any app's data or HivePaaS's own. A tmpfs or an image
+// reaches nothing.
+func reachesHost(m specmodel.Mount) bool {
+	return m.Type != mount.TypeTmpfs && m.Type != mount.TypeImage
+}
+
+// hostMounts are the targets of an app's mounts that reach the host, each with
+// what it reaches.
+func hostMounts(doc *specmodel.AppDoc) map[string]string {
+	if doc == nil || doc.Deployment == nil || doc.Deployment.Storage == nil {
+		return nil
+	}
+	out := map[string]string{}
+	for target, m := range doc.Deployment.Storage.DockerMounts {
+		if reachesHost(m) {
+			out[target] = string(m.Type) + ":" + m.Source
+		}
+	}
+	return out
+}
+
+// checkHostMounts skips an app created with a mount of the host, or updated so
+// that its mounts of the host change, when the operator may not write the
+// cluster. The storage screen offers no such mount at all; an import is the one
+// way to ask for it, and a mount of the Docker socket is root on the node.
+func (p *planner) checkHostMounts(ctx context.Context, node *specmodel.PlanNode) error {
+	doc := p.apps[node.Path].doc
+	wanted := hostMounts(doc)
+	if len(wanted) == 0 || !writesBlock(node, "deployment.storage") {
+		return nil
+	}
+	// An update asks only for what it changes: a mount the app already has was
+	// allowed when it was made.
+	current := map[string]string{}
+	if node.Action == specmodel.ActionUpdate {
+		current = hostMounts(p.currentApp(node))
+	}
+	var changed []string
+	for _, target := range slices.Sorted(maps.Keys(wanted)) {
+		if current[target] != wanted[target] {
+			changed = append(changed, target)
+		}
+	}
+	if len(changed) == 0 {
+		return nil
+	}
+	allowed, err := p.mayWriteCluster(ctx)
+	if err != nil || allowed {
+		return err
+	}
+	p.skipNode(node, specmodel.Issue{
+		Severity: specmodel.SeveritySkipped, Code: specmodel.CodeHostMountNotPermitted, Path: node.Path,
+		Detail: map[string]any{"mounts": changed},
+		Action: "not imported: mounting the host's paths or volumes needs Write permission on the Cluster module",
+	})
 	return nil
 }
 
@@ -70,18 +151,9 @@ func (p *planner) checkCapabilities(ctx context.Context, node *specmodel.PlanNod
 		sameYAML(doc.Deployment.Resources.Capabilities, currentCapabilities(p.currentApp(node))) {
 		return nil
 	}
-	if p.capabilitiesAllowed == nil {
-		allowed := true
-		if p.req.MayGrantCapabilities != nil {
-			var err error
-			if allowed, err = p.req.MayGrantCapabilities(ctx); err != nil {
-				return hperrors.Wrap(err)
-			}
-		}
-		p.capabilitiesAllowed = &allowed
-	}
-	if *p.capabilitiesAllowed {
-		return nil
+	allowed, err := p.mayWriteCluster(ctx)
+	if err != nil || allowed {
+		return err
 	}
 	p.skipNode(node, specmodel.Issue{
 		Severity: specmodel.SeveritySkipped, Code: specmodel.CodeCapabilityNotPermitted, Path: node.Path,
@@ -176,6 +248,9 @@ func (p *planner) checkAvailability(ctx context.Context) error {
 	if err := p.checkNodes(ctx); err != nil {
 		return err
 	}
+	if err := p.checkAttachments(ctx, apps); err != nil {
+		return err
+	}
 	return p.checkStorage(ctx, apps)
 }
 
@@ -257,6 +332,64 @@ func (p *planner) checkPorts(ctx context.Context, apps []*specmodel.PlanNode) er
 		}
 	}
 	return nil
+}
+
+// checkAttachments reports a network an imported app would be attached to that
+// its project cannot use - the network settings screen offers only the env's
+// own network and the networks the project has. Anything else, such as the one
+// HivePaaS runs its own services on, is dropped from the app.
+func (p *planner) checkAttachments(ctx context.Context, apps []*specmodel.PlanNode) error {
+	available := map[string]map[string]bool{}
+	for _, node := range apps {
+		doc := p.apps[node.Path].doc
+		if node.Action == specmodel.ActionSkip || doc.Deployment == nil || doc.Deployment.Networks == nil ||
+			len(doc.Deployment.Networks.Attachments) == 0 || !writesBlock(node, "deployment.networks") {
+			continue
+		}
+		place := p.apps[node.Path]
+		names, found := available[place.project+"/"+place.env]
+		if !found {
+			var err error
+			if names, err = p.availableNetworks(ctx, node, place); err != nil {
+				return err
+			}
+			available[place.project+"/"+place.env] = names
+		}
+		for _, attachment := range doc.Deployment.Networks.Attachments {
+			if attachment != nil && !names[attachment.Name] {
+				p.fixable(node, specmodel.CodeNetworkNotAvailable, map[string]any{"network": attachment.Name},
+					"the app is not attached to this network: its project cannot use it")
+			}
+		}
+	}
+	return nil
+}
+
+// availableNetworks are the networks an app of an env may be attached to: the
+// env's own, and those the project sees, as the network settings screen lists
+// them.
+func (p *planner) availableNetworks(
+	ctx context.Context, node *specmodel.PlanNode, place appPlace,
+) (map[string]bool, error) {
+	names := map[string]bool{
+		p.s.networkService.GetProjectNetworkName(&entity.Project{Key: place.project}, place.env): true,
+	}
+	scope := p.lookupScope[node.Path]
+	if scope == nil || scope.ScopeType == base.ObjectScopeGlobal {
+		// A project being created sees nothing of its own yet.
+		return names, nil
+	}
+	networks, _, err := p.s.settingRepo.List(ctx, p.db, entity.NewObjectScopeProject(scope.ProjectID), nil,
+		bunex.SelectWhere("setting.type = ?", base.SettingTypeClusterNetwork),
+		bunex.SelectWhere("setting.status = ?", base.SettingStatusActive),
+	)
+	if err != nil {
+		return nil, hperrors.Wrap(err)
+	}
+	for _, network := range networks {
+		names[network.Name] = true
+	}
+	return names, nil
 }
 
 // checkNodes reports a volume written pinned to a node this installation does

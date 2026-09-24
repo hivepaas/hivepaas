@@ -178,7 +178,7 @@ func TestPlanSkipsAnAppGrantingCapabilitiesTheOperatorMayNot(t *testing.T) {
 		asked := 0
 
 		backend := node(t, planWith(t, svc, bundle, &specservice.ValidateImportReq{
-			MayGrantCapabilities: func(context.Context) (bool, error) { asked++; return allowed, nil },
+			MayWriteCluster: func(context.Context) (bool, error) { asked++; return allowed, nil },
 		}), backendPath)
 
 		assert.Equal(t, 1, asked)

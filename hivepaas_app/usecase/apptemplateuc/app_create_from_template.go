@@ -2,7 +2,6 @@ package apptemplateuc
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"time"
 
@@ -136,7 +135,10 @@ func (uc *UC) checkDomains(
 	claimed := map[string]string{}
 	var domains []string
 	for _, target := range apps {
-		for _, domain := range renderedDomains(target) {
+		// A routing block that does not read has no domains to check here:
+		// building it refuses it, before anything is created.
+		rendered, _ := specmodel.ActiveDomains(target.result.Doc)
+		for _, domain := range rendered {
 			if by, taken := claimed[domain]; taken {
 				return hperrors.Wrap(hperrors.ErrDomainInUse).WithParam("Domain", domain).
 					WithExtraDetail("%s and %s are created together and ask for the same address", by, target.name)
@@ -152,28 +154,6 @@ func (uc *UC) checkDomains(
 		return hperrors.Wrap(err)
 	}
 	return hperrors.Wrap(uc.domainService.VerifyDomainsAvailable(ctx, uc.db, domains, nil))
-}
-
-// renderedDomains reads the addresses an app was rendered with, from the
-// document rather than from a built setting: nothing has been built yet.
-func renderedDomains(target *appToProvision) []string {
-	doc := target.result.Doc
-	if doc == nil {
-		return nil
-	}
-	routing := &entity.AppRoutingSettings{}
-	body, ok := doc.Settings[specmodel.SingletonBlockName(base.SettingTypeAppRouting)]
-	if !ok {
-		return nil
-	}
-	encoded, err := json.Marshal(body)
-	if err != nil {
-		return nil
-	}
-	if err = json.Unmarshal(encoded, routing); err != nil {
-		return nil
-	}
-	return routing.GetActiveDomainNames()
 }
 
 // provisionAll is everything that happens inside the transaction: the apps of

@@ -220,7 +220,7 @@ func replaceStrings(node any, replacements map[string]string) {
 }
 
 // externalRefKey is the key an external reference is written under.
-const externalRefKey = "external"
+const externalRefKey = specmodel.ExternalRefKey
 
 // replaceExternalRefs swaps any identifier the index could not resolve for the
 // block that says what it was, so import can look it up or report it.

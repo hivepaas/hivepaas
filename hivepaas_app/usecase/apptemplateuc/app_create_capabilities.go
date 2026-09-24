@@ -9,7 +9,6 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/permission"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/specservice/specmodel"
-	"github.com/hivepaas/hivepaas/services/docker"
 )
 
 // checkCapabilities refuses a request whose apps would be given more of the host
@@ -30,7 +29,7 @@ func (uc *UC) checkCapabilities(
 ) error {
 	asked := map[string][]string{}
 	for _, target := range apps {
-		if granted := grantedCapabilities(target); len(granted) > 0 {
+		if granted := specmodel.GrantedCapabilities(target.result.Doc); len(granted) > 0 {
 			asked[target.name] = granted
 		}
 	}
@@ -58,42 +57,4 @@ func (uc *UC) checkCapabilities(
 		WithExtraDetail("%s: granting this needs Write permission on the Cluster module",
 			strings.Join(described, "; ")).
 		WithMsgLog("creating an app from a template with capabilities requires Write on the Cluster module")
-}
-
-// grantedCapabilities names, for a person to read, what one app's document asks
-// the host for. It is empty for an app whose document carries no capabilities.
-func grantedCapabilities(target *appToProvision) []string {
-	doc := target.result.Doc
-	if doc == nil || doc.Deployment == nil || doc.Deployment.Resources == nil {
-		return nil
-	}
-	capabilities := doc.Deployment.Resources.Capabilities
-	if capabilities == nil {
-		return nil
-	}
-	granted := make([]string, 0, len(capabilities.CapabilityAdd))
-	granted = append(granted, capabilities.CapabilityAdd...)
-	if capabilities.EnableGPU {
-		granted = append(granted, docker.CapabilityGPU)
-	}
-	for _, described := range []struct {
-		what  string
-		count int
-	}{
-		{"sysctls", len(capabilities.Sysctls)}, {"ulimits", len(capabilities.Ulimits)},
-	} {
-		if described.count > 0 {
-			granted = append(granted, described.what)
-		}
-	}
-	if len(granted) == 0 && len(capabilities.CapabilityDrop) == 0 && capabilities.OomScoreAdj == 0 {
-		return nil
-	}
-	if len(granted) == 0 {
-		// A block that only drops capabilities or nudges the OOM score grants
-		// nothing, but it is still the privileged block, and the gate is the
-		// block's rather than each field's.
-		granted = append(granted, string(specmodel.BlockDeploymentResources)+".capabilities")
-	}
-	return granted
 }

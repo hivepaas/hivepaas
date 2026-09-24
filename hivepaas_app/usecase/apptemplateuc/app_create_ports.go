@@ -26,7 +26,7 @@ func (uc *UC) checkPublishedPorts(ctx context.Context, apps []*appToProvision) e
 	claimed := map[clusterservice.PortRef]string{}
 	wanted := make([]clusterservice.PortRef, 0, len(apps))
 	for _, target := range apps {
-		for _, port := range publishedPortsOf(target) {
+		for _, port := range specmodel.PublishedPorts(target.result.Doc) {
 			ref := clusterservice.PortRef{Published: port.Published, Protocol: port.Protocol}
 			if ref.Protocol == "" {
 				ref.Protocol = network.TCP
@@ -47,23 +47,6 @@ func (uc *UC) checkPublishedPorts(ctx context.Context, apps []*appToProvision) e
 		return nil
 	}
 	return hperrors.Wrap(uc.clusterService.VerifyPortsAvailable(ctx, wanted, nil))
-}
-
-// publishedPortsOf reads the ports an app was rendered with, from the document:
-// nothing has been built yet.
-func publishedPortsOf(target *appToProvision) []specmodel.PortConfig {
-	doc := target.result.Doc
-	if doc == nil || doc.Deployment == nil || doc.Deployment.Networks == nil ||
-		doc.Deployment.Networks.EndpointSpec == nil {
-		return nil
-	}
-	ports := make([]specmodel.PortConfig, 0, len(doc.Deployment.Networks.EndpointSpec.Ports))
-	for _, port := range doc.Deployment.Networks.EndpointSpec.Ports {
-		if port != nil && port.Published > 0 {
-			ports = append(ports, *port)
-		}
-	}
-	return ports
 }
 
 func describePort(ref clusterservice.PortRef) string {

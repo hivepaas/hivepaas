@@ -47,17 +47,31 @@ func (p *planner) settingsChanges(
 	bundle, current map[string]any,
 ) []string {
 	var changes []string
+	// A scope's settings are written through import policies; an app's are built
+	// with the app.
+	scoped := prefix == ""
+	change := func(typ base.SettingType, name string, found bool) {
+		if policy := importPolicyFor(typ); scoped && policy.skip != "" {
+			node.Issues = append(node.Issues, specmodel.Issue{
+				Severity: specmodel.SeveritySkipped, Code: specmodel.CodeTypeNotImportable, Path: node.Path,
+				Detail: map[string]any{refInSetting: name, "reason": policy.skip},
+				Action: "not imported: " + policy.skip,
+			})
+			return
+		}
+		if !found {
+			p.addMissing(node, prefix+name)
+		}
+		changes = append(changes, prefix+name)
+	}
 	for _, block := range slices.Sorted(maps.Keys(bundle)) {
 		if typ, ok := specmodel.SingletonTypeOf(block); ok {
 			if newerSetting(typ, bundle[block]) {
 				node.Issues = append(node.Issues, versionNewer(node.Path, prefix+block))
 			}
 			currentBody, found := current[block]
-			if !found {
-				p.addMissing(node, prefix+block)
-			}
 			if !found || !sameBody(bundle[block], currentBody) {
-				changes = append(changes, prefix+block)
+				change(typ, block, found)
 			}
 			continue
 		}
@@ -77,11 +91,8 @@ func (p *planner) settingsChanges(
 				node.Issues = append(node.Issues, versionNewer(node.Path, prefix+block+"/"+key))
 			}
 			currentBody, found := currentEntry(currentEntries, key, entries[key])
-			if !found {
-				p.addMissing(node, prefix+block+"/"+key)
-			}
 			if !found || !sameBody(entries[key], currentBody) {
-				changes = append(changes, prefix+block+"/"+key)
+				change(typ, block+"/"+key, found)
 			}
 		}
 	}

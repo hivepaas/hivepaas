@@ -105,3 +105,16 @@ func CollectionTypeOf(block string) (base.SettingType, bool) {
 	}
 	return "", false
 }
+
+// BlockTypes is every setting type a document can hold a block of, singletons
+// and collections both, in no particular order.
+func BlockTypes() []base.SettingType {
+	out := make([]base.SettingType, 0, len(singletonBlockNames)+len(collectionBlockNames))
+	for typ := range singletonBlockNames {
+		out = append(out, typ)
+	}
+	for typ := range collectionBlockNames {
+		out = append(out, typ)
+	}
+	return out
+}

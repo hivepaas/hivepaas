@@ -24,6 +24,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/domainservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/specservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/specservice/specmodel"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/sslservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/volumeservice"
 )
 
@@ -357,6 +358,7 @@ func exportFixture(t *testing.T) specservice.Service {
 		}},
 		&fakeClusterService{services: map[string]*swarm.Service{"svc_1": testService()}},
 		&fakeDomainService{},
+		&fakeSSLService{},
 		&fakeExportVolumeService{descs: map[string]*volumeservice.AppMountDesc{
 			"/var/lib/postgresql/data": {AppKey: "backend", Own: true, Subpath: "data", VolumeID: "vol_setting_1"},
 			"/shared":                  {AppKey: "backend", Own: true, Subpath: "cache", VolumeID: "gvol_1"},
@@ -631,4 +633,17 @@ func TestExportWritesTheReportIntoTheBundle(t *testing.T) {
 	assert.Contains(t, content, "issues:")
 	assert.Contains(t, content, specmodel.CodePreviewAppSkipped)
 	assert.Contains(t, content, specmodel.CodeServiceUnavailable)
+}
+
+// fakeSSLService records the certificates whose files were written.
+type fakeSSLService struct {
+	sslservice.Service
+	written []string
+}
+
+func (f *fakeSSLService) WriteCertFiles(_ bool, settings ...*entity.Setting) error {
+	for _, setting := range settings {
+		f.written = append(f.written, setting.ID)
+	}
+	return nil
 }

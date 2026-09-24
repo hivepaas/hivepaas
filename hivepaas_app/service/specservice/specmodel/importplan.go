@@ -20,6 +20,15 @@ const (
 	CodeStorageUnchecked        = "STORAGE_UNCHECKED"
 	CodeCapabilityNotPermitted  = "CAPABILITY_NOT_PERMITTED"
 	CodeSharedMountNotPermitted = "SHARED_MOUNT_NOT_PERMITTED"
+	CodeSecretOmitted           = "SECRET_OMITTED"
+	CodeOwnerNotPermitted       = "OWNER_NOT_PERMITTED"
+)
+
+// Note codes. A note says what import does, and needs no acceptance.
+const (
+	CodeSecretGenerated = "SECRET_GENERATED"
+	CodeCredentialKept  = "CREDENTIAL_KEPT" //nolint:gosec // an issue code, not a credential
+	CodeOwnerNotFound   = "OWNER_NOT_FOUND"
 )
 
 // SeverityWarning clears nothing, but the result may not be what the operator

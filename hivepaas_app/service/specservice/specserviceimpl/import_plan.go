@@ -273,6 +273,9 @@ func (p *planner) plan(ctx context.Context) error {
 	if err := p.checkAvailability(ctx); err != nil {
 		return err
 	}
+	if err := p.checkSecrets(); err != nil {
+		return err
+	}
 	p.selectAncestors()
 	return nil
 }
@@ -341,9 +344,16 @@ func (p *planner) planProject(ctx context.Context, key string) error {
 		} else if nameErr != nil && !errors.Is(nameErr, hperrors.ErrNotFound) {
 			return hperrors.Wrap(nameErr)
 		}
+		if _, err = p.planOwner(ctx, node, doc, nil); err != nil {
+			return err
+		}
 	default:
 		node.MatchedBy, node.TargetID = matchedBy, target.ID
-		setChanges(node, p.projectChanges(doc, key))
+		ownerChange, ownerErr := p.planOwner(ctx, node, doc, target)
+		if ownerErr != nil {
+			return ownerErr
+		}
+		setChanges(node, append(p.projectChanges(doc, key), ownerChange...))
 	}
 
 	var currentProject *specmodel.ProjectDoc
@@ -401,9 +411,6 @@ func (p *planner) projectChanges(doc *specmodel.ProjectDoc, key string) []string
 	}
 	if doc.Note != current.Note {
 		changes = append(changes, "note")
-	}
-	if doc.Owner != nil && (current.Owner == nil || doc.Owner.ID != current.Owner.ID) {
-		changes = append(changes, "owner")
 	}
 	return changes
 }
@@ -513,7 +520,8 @@ func (p *planner) planApp(
 	if current != nil {
 		currentSettings = current.Settings
 	}
-	changes = append(changes, p.settingsChanges(node, "settings.", doc.Settings, currentSettings)...)
+	bundleSettings := p.withTargetCredential(doc.Settings, currentSettings, matchedBy)
+	changes = append(changes, p.settingsChanges(node, "settings.", bundleSettings, currentSettings)...)
 	setChanges(node, changes)
 	node.Restart = app.ServiceID != "" && restarts(changes)
 	node.Deploy = p.req.Options.DeployChangedSource && slices.Contains(changes, "deployment.source")

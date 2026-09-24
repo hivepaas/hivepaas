@@ -368,7 +368,10 @@ new owner; a disabled or pending one falls through to the next step. On the
 installation that produced the bundle the id finds the owner even if their email
 changed since; elsewhere the email finds the same person under another id.
 
-A new project gets the resolved owner. An existing one is given it only if the
+A new project gets the resolved owner. An existing project whose owner step 3
+would reach keeps its owner instead, with the same note: handing a project to
+whoever happens to import it is a change nobody asked for (decided while planning
+validate, 2026-09-24). An existing one is given a resolved owner only if the
 operator may change the owner by hand - an admin, the current owner, or Write on
 the Project module, the gate project update applies. Otherwise the owner stays,
 and the project takes `OWNER_NOT_PERMITTED`.
@@ -832,8 +835,9 @@ Five plans, each shippable without the next:
    records a selected object needs. Validate, third part:
    `docs/superpowers/plans/2026-09-24-spec-import-availability.md` - domains,
    ports, nodes and storage, and the capability and shared-mount gates, with the
-   template checks' reading of a document moved to `specmodel`. Secrets and owner
-   notes, and apply, follow in their own plans.
+   template checks' reading of a document moved to `specmodel`. Validate, fourth
+   part: `docs/superpowers/plans/2026-09-24-spec-import-secrets-owner.md` -
+   secrets and the owner. Apply follows in its own plan.
 5. **Dashboard**: the import screens.
 
 ---

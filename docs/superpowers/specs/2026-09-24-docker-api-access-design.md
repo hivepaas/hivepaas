@@ -36,8 +36,10 @@ Woodpecker's docker backend, Dozzle, Kestra's and Nextcloud AIO's compose files.
 
 ## Decisions
 
-1. **No app is given the Docker socket.** An app with Docker API access talks to
-   a proxy on its node, and the proxy holds the socket.
+1. **No app is given the Docker socket, unless an administrator gives it.** An
+   app with Docker API access talks to a proxy on its node, and the proxy holds
+   the socket. Host mode (§15) is the way out for an app the proxy cannot serve,
+   behind the privileged-apps switch and an administrator.
 2. **One engine, configured by data.** A template declares a policy (§1); nothing
    about a particular app is code. An app that needs something the policy cannot
    say waits until the policy can say it, for every app at once.
@@ -50,7 +52,8 @@ Woodpecker's docker backend, Dozzle, Kestra's and Nextcloud AIO's compose files.
 5. **The gate is Write on the Cluster module, not the privileged-apps switch.**
    Nothing the proxy allows reaches the host, so granting it is the same kind of
    decision as granting a capability (§9). The switch stays what it was: raw
-   access to the host, which only import can ask for.
+   access to the host. It gates host mode (§15) and raw host mounts in an
+   import, together with being an administrator.
 6. **Measured before designed.** A spike ran the Autobase console and the Gitea
    runner through a prototype of this engine, unchanged, on Docker 29.8. What it
    found is written into the rules below where it applies.
@@ -78,6 +81,7 @@ settings:
 | `sharedDirs` | Directories of the app a child may bind, at most 5. Each is an absolute path in the app's container that equals or lies below the target of one of the app's own storage mounts. | none |
 | `networks` | Networks children may join besides their own. The only value in this phase is `env`: the app's project-env network, for a runner whose jobs clone from a forge in the same env. | none |
 | `allow` | Groups of endpoints beyond the core (§3): `exec`, `files`, `volumes`, `networks`, `nestedSocket`. | none |
+| `mode` | `proxy`, or `host` for the node's own socket (§15). | `proxy` |
 | `limits.containers` | Children that may exist at once, running or not. At most 50. | 5 |
 | `limits.memory`, `limits.cpus` | The most one child may ask for, and what it gets when it asks for nothing. A data size such as `2gb` and a number of CPUs, as `deployment.resources.limits` takes them. | 1gb, 1 |
 
@@ -297,9 +301,13 @@ storage screen never offers them, and import refuses a docker mount that names
 one, as a host mount.
 
 **The privileged-apps switch.** This work closes the TODO on the switch in
-`config/security.go`: import's check of raw host mounts (`HOST_MOUNT_NOT_PERMITTED`)
-also requires the switch to be on. Templates never ask for raw host mounts, so
-nothing here depends on the switch.
+`config/security.go`. Raw access to the host takes the switch on **and** an
+administrator; Write on the Cluster module is not enough:
+- import's raw host mounts (`HOST_MOUNT_NOT_PERMITTED`);
+- host mode (§15), on the screen and in an import.
+
+Templates never ask for either, so nothing a template gives depends on the
+switch.
 
 ## 10. Dashboard
 
@@ -312,7 +320,10 @@ nothing here depends on the switch.
   - one sentence on what that means.
 - **The create dialog** shows the same block, and the preflight issue when the
   person may not grant it.
-- **App settings** gains the Docker API screen of §9.
+- **App settings** gains the Docker API screen of §9, with host mode (§15).
+- **The privileged-apps switch** says what it is for now: host mode and raw
+  host mounts in an import, not the apps the proxy serves. The security screen
+  lists the apps in host mode.
 
 ## 11. Templates
 
@@ -385,8 +396,69 @@ Gitea runner: a plain job, a job with a `redis` service, and a job running
    - reserved volume names;
    - the switch in import;
    - the Docker API screen's endpoints, `GET|PUT .../apps/{appID}/docker-api-settings`.
-5. **Dashboard.** Template detail, create dialog, app settings screen.
+5. **Dashboard.** Template detail, create dialog, app settings screen, host
+   mode on it, the switch's description and the list of apps in host mode.
 6. **Templates.** `autobase` and `gitea-runner`.
+7. **Backend, host mode** (§15), before the dashboard.
+
+## 15. Host mode: the node's own socket
+
+The proxy serves job runners. Some apps it cannot serve, by design (see *Not in
+this design*): observers, Docker managers, builds, children that publish ports
+or use devices. For those, an administrator can give an app the node's socket,
+as upstream installs it. This is the deepest HivePaaS lets anyone reach, and it
+is labelled as such.
+
+**The setting.** `settings.dockerApi` gains `mode`:
+
+| mode | what the app gets |
+|---|---|
+| `proxy` (the default, and an empty value) | what the rest of this design says |
+| `host` | the node's `/var/run/docker.sock`, bound at `/var/run/docker.sock` |
+
+In host mode:
+- `HIVEPAAS_DOCKER_HOST` is `unix:///var/run/docker.sock`, so a template's
+  variable set to `${HIVEPAAS_DOCKER_HOST}` works in both modes.
+- The app has no socket volume, no network of its own, and no policy on any
+  agent. The rest of the block is kept, and not checked or applied: switching
+  back to `proxy` checks it and uses it again.
+- Which node's socket the app gets is where it runs. On a worker that is the
+  containers of that node; on a manager, the whole cluster. HivePaaS does not
+  move the app; its placement settings do.
+- Children the app made through the proxy before are collected by the agents,
+  as for an app without access.
+
+**The mount belongs to the setting.** The bind of `/var/run/docker.sock` at
+`/var/run/docker.sock` is given and taken with host mode, as the socket volume is
+with the proxy:
+- the storage screen neither shows it nor drops it;
+- export leaves it out;
+- import refuses a docker mount of exactly that bind, as it refuses a socket
+  volume. A bind of the socket anywhere else is a raw host mount.
+
+**Who may.** Choosing host mode takes the switch on and an administrator:
+- on the screen, from no access, from `proxy`, or turning a disabled host mode
+  back on;
+- in an import that creates or changes a block in host mode. The app is
+  skipped with `DOCKER_SOCKET_NOT_PERMITTED` (severity skipped), whose action
+  says which of the two is missing.
+
+Leaving host mode, for `proxy` or for nothing, takes the app's Write, as
+narrowing does. Templates cannot ask for host mode: the buildable subset
+refuses `mode: host`.
+
+**Turning the switch off** grants nothing new and takes nothing away. Apps
+already in host mode keep running and deploying with the socket. The security
+screen lists them, each with its project and env, so the administrator decides
+what to do with each.
+
+**The screen.** The Docker API screen chooses between the two modes.
+- Host mode is shown to everyone. It is locked, with the reason, while the
+  switch is off or for someone who is not an administrator. `GET` says which,
+  as `hostMode: {available, blockedBy: "" | "switch" | "admin"}`.
+- Choosing it shows a red warning: the app controls its node, and on a manager
+  the whole cluster, including HivePaaS and every other app's data.
+- In host mode the fields of the proxy's policy are hidden.
 
 ## Not in this design
 

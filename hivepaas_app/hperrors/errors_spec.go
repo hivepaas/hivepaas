@@ -16,4 +16,8 @@ var (
 	ErrSpecBundleInvalid          = NewErr(ErrArgumentInvalid, "ERR_SPEC_BUNDLE_INVALID")
 	ErrSpecAPIVersionUnsupported  = NewErr(ErrUnsupported, "ERR_SPEC_API_VERSION_UNSUPPORTED")
 	ErrSpecImportScopeNotInBundle = NewErr(ErrArgumentInvalid, "ERR_SPEC_IMPORT_SCOPE_NOT_IN_BUNDLE")
+
+	ErrSpecImportPlanChanged       = NewErr(ErrConflict, "ERR_SPEC_IMPORT_PLAN_CHANGED")
+	ErrSpecImportBlocked           = NewErr(ErrPreconditionFailed, "ERR_SPEC_IMPORT_BLOCKED")
+	ErrSpecImportIssuesNotAccepted = NewErr(ErrPreconditionRequired, "ERR_SPEC_IMPORT_ISSUES_NOT_ACCEPTED")
 )

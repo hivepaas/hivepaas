@@ -84,8 +84,7 @@ func settingRefs(typ base.SettingType, at, holder string, body any) ([]bundleRef
 		switch {
 		case id == "":
 		case strings.HasPrefix(id, externalRefPlaceholder):
-			n, convErr := strconv.Atoi(strings.TrimPrefix(id, externalRefPlaceholder))
-			if convErr == nil && n >= 0 && n < len(externals) {
+			if n, ok := placeholderIndex(id, len(externals)); ok {
 				add(bundleRef{kind: refExternal, value: id, external: externals[n]})
 			}
 		default:
@@ -118,6 +117,17 @@ func readBundleSetting(typ base.SettingType, at, holder string, body any) (entit
 			WithExtraDetail("%s: %s does not read as a %s setting", at, holder, typ)
 	}
 	return data, nil
+}
+
+// placeholderIndex is the external block a placeholder stands for, by its
+// position among count collected.
+func placeholderIndex(value string, count int) (int, bool) {
+	number, found := strings.CutPrefix(value, externalRefPlaceholder)
+	if !found {
+		return 0, false
+	}
+	n, err := strconv.Atoi(number)
+	return n, err == nil && n >= 0 && n < count
 }
 
 // withExternalPlaceholders copies a body with every external block swapped for

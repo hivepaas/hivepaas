@@ -86,6 +86,25 @@ type ValidateImportReq struct {
 	MayChangeOwner func(ctx context.Context, project *entity.Project) (bool, error)
 }
 
+// ApplyImportReq applies the plan a ValidateImportReq made. PlanHash is the
+// hash of the plan the operator saw: apply plans the request again, and refuses
+// a plan that is not the same.
+type ApplyImportReq struct {
+	ValidateImportReq
+	// OperatorID owns a project created for an owner nobody here is.
+	OperatorID   string
+	PlanHash     string
+	AcceptIssues bool
+}
+
+type ApplyImportResp struct {
+	// Plan is the plan applied, with each selected node's outcome.
+	Plan *specmodel.ImportPlan
+	// AfterCommit does what writing takes beyond the database - certificate
+	// files - and is the caller's to run once its transaction has committed.
+	AfterCommit func(ctx context.Context) error
+}
+
 type ValidateImportResp struct {
 	Plan *specmodel.ImportPlan
 	// SecretsMode is the bundle's, which decides the permission reading it needs.

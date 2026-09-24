@@ -9,6 +9,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/repository"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/clusterservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/domainservice"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/projectservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/specservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/specservice/specmodel"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/sslservice"
@@ -28,6 +29,8 @@ func New(
 	settingRepo repository.SettingRepo,
 	userRepo repository.UserRepo,
 
+	projectService projectservice.Service,
+
 	clusterService clusterservice.Service,
 	domainService domainservice.Service,
 	sslService sslservice.Service,
@@ -39,6 +42,8 @@ func New(
 		projectRepo:    projectRepo,
 		settingRepo:    settingRepo,
 		userRepo:       userRepo,
+
+		projectService: projectService,
 
 		clusterService: clusterService,
 		domainService:  domainService,
@@ -93,6 +98,8 @@ type service struct {
 	projectRepo    repository.ProjectRepo
 	settingRepo    repository.SettingRepo
 	userRepo       repository.UserRepo
+
+	projectService projectservice.Service
 
 	clusterService clusterservice.Service
 	domainService  domainservice.Service

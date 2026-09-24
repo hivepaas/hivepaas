@@ -144,7 +144,19 @@ type PlanNode struct {
 	Deploy   bool     `json:"deploy"`
 	Issues   []Issue  `json:"issues,omitempty"`
 	Notes    []Issue  `json:"notes,omitempty"`
+	// Outcome is what apply did with a selected node; empty in validate's plan.
+	Outcome NodeOutcome `json:"outcome,omitempty"`
 }
+
+// NodeOutcome is what apply did with a node.
+type NodeOutcome string
+
+const (
+	OutcomeApplied   NodeOutcome = "applied"
+	OutcomeUnchanged NodeOutcome = "unchanged"
+	OutcomeSkipped   NodeOutcome = "skipped"
+	OutcomeFailed    NodeOutcome = "failed"
+)
 
 // BundleInfo is what the plan says about the bundle itself.
 type BundleInfo struct {

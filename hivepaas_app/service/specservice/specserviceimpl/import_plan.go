@@ -46,6 +46,21 @@ func (s *service) planImport(
 	req *specservice.ValidateImportReq,
 	bundle *specmodel.ImportBundle,
 ) (*specmodel.ImportPlan, error) {
+	p, err := s.planBundle(ctx, db, req, bundle)
+	if err != nil {
+		return nil, err
+	}
+	return p.result, nil
+}
+
+// planBundle plans a bundle and returns the planner, which apply goes on to
+// write from: it knows what each node matched.
+func (s *service) planBundle(
+	ctx context.Context,
+	db database.IDB,
+	req *specservice.ValidateImportReq,
+	bundle *specmodel.ImportBundle,
+) (*planner, error) {
 	// What the route may not write can still be what a reference names, so the
 	// bundle as uploaded is kept beside the part that is planned.
 	full := *bundle
@@ -70,12 +85,13 @@ func (s *service) planImport(
 		lookupScope: map[string]*entity.ObjectScope{},
 		pulled:      map[string][]string{},
 		targetApps:  map[string]*entity.App{},
+		owners:      map[string]string{},
 	}
 	if err = p.plan(ctx); err != nil {
 		return nil, err
 	}
 	manifest := bundle.Manifest
-	return &specmodel.ImportPlan{
+	p.result = &specmodel.ImportPlan{
 		Bundle: specmodel.BundleInfo{
 			APIVersion: manifest.APIVersion, Scope: manifest.Scope, ExportedAt: manifest.ExportedAt,
 			SourceAppVersion: manifest.SourceAppVersion, SecretsMode: manifest.SecretsMode,
@@ -83,7 +99,8 @@ func (s *service) planImport(
 		Nodes:    p.nodes,
 		Summary:  summarize(p.nodes),
 		PlanHash: planHash(bundle.Digest, req, p.nodes),
-	}, nil
+	}
+	return p, nil
 }
 
 // restrictToScope drops what the route may not write. A project or env route
@@ -217,6 +234,11 @@ type planner struct {
 	targetApps map[string]*entity.App
 	// capabilitiesAllowed is the answer of MayGrantCapabilities, once asked.
 	capabilitiesAllowed *bool
+	// owners is the owner resolved for each project node, by path; absent when
+	// nobody here is the bundle's owner.
+	owners map[string]string
+	// result is the plan, once made.
+	result *specmodel.ImportPlan
 	// envOnly is an env route's plan: its project is matched, never planned.
 	envOnly bool
 	// missing names, by node path, the settings the target does not have at all.

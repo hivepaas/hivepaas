@@ -33,4 +33,13 @@ var routes = []route{
 	on("GET", `/images/json`, "", (*Proxy).pass),
 	on("GET", `/images/(.+)/json`, "", (*Proxy).pass),
 	on("POST", `/images/create`, "", (*Proxy).pull),
+
+	on("GET", `/containers/json`, "", (*Proxy).listContainers),
+	on("GET", `/containers/`+idPart+`/(?:json|logs|stats|top)`, "", (*Proxy).onChild),
+	on("POST", `/containers/`+idPart+`/(?:start|stop|kill|wait|restart|resize|attach)`, "", (*Proxy).onChild),
+	on("DELETE", `/containers/`+idPart, "", (*Proxy).onChild),
+	on("GET,PUT,HEAD", `/containers/`+idPart+`/archive`, GroupFiles, (*Proxy).onChild),
+	on("POST", `/containers/`+idPart+`/exec`, GroupExec, (*Proxy).execCreate),
+	on("POST", `/exec/`+idPart+`/(?:start|resize)`, GroupExec, (*Proxy).onExec),
+	on("GET", `/exec/`+idPart+`/json`, GroupExec, (*Proxy).onExec),
 }

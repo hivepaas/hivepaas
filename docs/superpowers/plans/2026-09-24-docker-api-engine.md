@@ -1339,8 +1339,8 @@ func TestOtherContainersAreNot(t *testing.T) {
 	tests := map[string]string{
 		// Another app's child, and the app's own task: the app may run containers,
 		// not reach into the ones HivePaaS runs.
-		"/v1.51/containers/other1/json": "container other1 is not one this app started",
-		"/v1.51/containers/task1/json":  "container task1 is not one this app started",
+		"/v1.51/containers/other1/json":  "container other1 is not one this app started",
+		"/v1.51/containers/task1/json":   "container task1 is not one this app started",
 		"/v1.51/containers/missing/json": "container missing does not exist",
 	}
 	for path, message := range tests {

@@ -28,14 +28,15 @@ var (
 		"ExposedPorts", "Tty", "OpenStdin", "StdinOnce", "Env", "Cmd", "Healthcheck", "ArgsEscaped", "Image",
 		"Volumes", "WorkingDir", "Entrypoint", "NetworkDisabled", fieldLabels, "StopSignal", "StopTimeout",
 		"Shell", "HostConfig", "NetworkingConfig"}
-	// hostFields are the fields of a HostConfig a child may set. Everything that
-	// reaches past the container - Privileged, CapAdd, Devices, the host's
-	// namespaces, SecurityOpt, Runtime, Sysctls, CgroupParent, VolumesFrom,
-	// Links, PortBindings - is absent, and so refused.
-	hostFields = []string{"NetworkMode", "RestartPolicy", "AutoRemove", "Memory", "MemorySwap",
-		"MemoryReservation", "NanoCpus", "CpuQuota", "CpuPeriod", "CpuShares", "PidsLimit", "ShmSize", "Dns",
-		"DnsOptions", "DnsSearch", "ExtraHosts", "LogConfig", "Init", "ReadonlyRootfs", "Tmpfs", "CapDrop",
-		"Ulimits", "GroupAdd", "ConsoleSize", "Isolation"}
+	// hostFields are the fields of a HostConfig a child may set; Binds and Mounts
+	// are then judged by rewriteStorage. Everything that reaches past the
+	// container - Privileged, CapAdd, Devices, the host's namespaces, SecurityOpt,
+	// Runtime, Sysctls, CgroupParent, VolumesFrom, Links, PortBindings - is
+	// absent, and so refused.
+	hostFields = []string{"Binds", "Mounts", "NetworkMode", "RestartPolicy", "AutoRemove", "Memory",
+		"MemorySwap", "MemoryReservation", "NanoCpus", "CpuQuota", "CpuPeriod", "CpuShares", "PidsLimit",
+		"ShmSize", "Dns", "DnsOptions", "DnsSearch", "ExtraHosts", "LogConfig", "Init", "ReadonlyRootfs", "Tmpfs",
+		"CapDrop", "Ulimits", "GroupAdd", "ConsoleSize", "Isolation"}
 	// hostNullOnly are fields whose empty list unmasks /proc.
 	hostNullOnly     = []string{"MaskedPaths", "ReadonlyPaths"}
 	networkingFields = []string{"EndpointsConfig"}
@@ -81,6 +82,9 @@ func (p *Proxy) checkCreate(ctx context.Context, policy *Policy, body map[string
 	}
 	if driver := text(object(host["LogConfig"])["Type"]); !slices.Contains(logDrivers, driver) {
 		return refusef("log driver %s is not allowed", driver)
+	}
+	if err := p.rewriteStorage(ctx, policy, host); err != nil {
+		return err
 	}
 	if err := p.rewriteNetwork(ctx, policy, body, host); err != nil {
 		return err

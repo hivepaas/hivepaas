@@ -178,10 +178,3 @@ func TestCreateSpeaksAtLeastTheVersionSubpathsNeed(t *testing.T) {
 		assert.Equal(t, want, path)
 	}
 }
-
-func TestCreateRefusesStorageUntilItIsJudged(t *testing.T) {
-	w := newWorld(t, testPolicy())
-	body := set(fixture(t, "cli-create-plain.json"), "HostConfig.Binds", []any{"/:/host"})
-	status, _ := w.do(t, http.MethodPost, createPath, body)
-	assert.Equal(t, http.StatusForbidden, status)
-}

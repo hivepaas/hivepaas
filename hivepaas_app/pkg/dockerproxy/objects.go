@@ -13,6 +13,7 @@ const (
 	kindVolumes  = "volumes"
 	kindNetworks = "networks"
 
+	fieldName   = "Name"
 	fieldDriver = "Driver"
 	// local is docker's name for its own volume driver, log driver and network
 	// scope: what stays on this node.
@@ -23,9 +24,9 @@ const (
 )
 
 var (
-	volumeCreateFields  = []string{"Name", fieldDriver, fieldLabels}
+	volumeCreateFields  = []string{fieldName, fieldDriver, fieldLabels}
 	volumeDrivers       = []string{"", local}
-	networkCreateFields = []string{"Name", "CheckDuplicate", fieldDriver, "Scope", "Internal", "Attachable",
+	networkCreateFields = []string{fieldName, "CheckDuplicate", fieldDriver, "Scope", "Internal", "Attachable",
 		"EnableIPv4", "EnableIPv6", fieldLabels, "IPAM"}
 	networkDrivers       = []string{"", "bridge"}
 	networkScopes        = []string{"", local}
@@ -117,7 +118,7 @@ func (p *Proxy) listNetworks(c *call) {
 		return
 	}
 	kept := keep(items, func(item map[string]any) bool {
-		return ownedBy(item[fieldLabels], c.policy.AppID) || c.policy.joinable(text(item["Name"]))
+		return ownedBy(item[fieldLabels], c.policy.AppID) || c.policy.joinable(text(item[fieldName]))
 	})
 	p.decide(c, true, fmt.Sprintf("%d of %d networks are the app's", len(kept), len(items)))
 	writeJSON(c.w, http.StatusOK, kept)

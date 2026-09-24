@@ -1,10 +1,12 @@
 package dockerproxy
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"net/http"
 	"net/url"
 )
@@ -54,4 +56,32 @@ func (d *daemon) get(ctx context.Context, path string, out any) (bool, error) {
 func labelFilter(key, value string) string {
 	raw, _ := json.Marshal(map[string][]string{"label": {key + "=" + value}})
 	return url.QueryEscape(string(raw))
+}
+
+// maxErrorDetail is how much of a refusal from the daemon is kept to explain it.
+const maxErrorDetail = 512
+
+// createVolume creates a volume with labels, and fails unless the daemon
+// accepts it.
+func (d *daemon) createVolume(ctx context.Context, name string, labels map[string]string) error {
+	const path = "/volumes/create"
+	raw, err := json.Marshal(map[string]any{fieldName: name, fieldLabels: labels})
+	if err != nil {
+		return fmt.Errorf("POST %s: %w", path, err)
+	}
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, "http://"+daemonHost+path, bytes.NewReader(raw))
+	if err != nil {
+		return fmt.Errorf("POST %s: %w", path, err)
+	}
+	req.Header.Set("Content-Type", contentTypeJSON)
+	resp, err := d.client.Do(req)
+	if err != nil {
+		return fmt.Errorf("POST %s: %w", path, err)
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode < http.StatusOK || resp.StatusCode >= http.StatusMultipleChoices {
+		detail, _ := io.ReadAll(io.LimitReader(resp.Body, maxErrorDetail))
+		return fmt.Errorf("%w: POST %s answered %d: %s", errDaemon, path, resp.StatusCode, bytes.TrimSpace(detail))
+	}
+	return nil
 }

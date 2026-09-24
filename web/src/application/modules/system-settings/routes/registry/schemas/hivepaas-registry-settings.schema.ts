@@ -16,6 +16,7 @@ export const HivePaaSRegistrySettingsFormSchema = z
         cleanupEnabled: z.boolean(),
         keepLast: z.number().int().min(1).max(1000),
         keepDays: z.number().int().min(1).max(3650),
+        cpuLimit: z.number().min(0.25).max(256).nullable(),
         memoryLimit: z
             .string()
             .trim()

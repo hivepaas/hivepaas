@@ -7,11 +7,12 @@ import type { HivePaaSRegistrySettingsFormInput, HivePaaSRegistrySettingsFormOut
  * What a registry nobody has configured yet starts with.
  *
  * The two numbers are the ones the server defaults to as well: the last ten
- * builds of every app, and everything from the past month. 1gb is the server's
- * default too; it refuses anything below 256mb.
+ * builds of every app, and everything from the past month. One core and 1gb are
+ * the server's defaults too; it refuses anything below 256mb.
  */
 const DEFAULT_KEEP_LAST = 10;
 const DEFAULT_KEEP_DAYS = 30;
+const DEFAULT_CPU_LIMIT = 1;
 const DEFAULT_MEMORY_LIMIT = "1gb";
 
 export function toRegistryFormInput(settings?: HivePaaSRegistrySettings): HivePaaSRegistrySettingsFormInput {
@@ -27,6 +28,7 @@ export function toRegistryFormInput(settings?: HivePaaSRegistrySettings): HivePa
         cleanupEnabled: settings?.cleanup.enabled ?? true,
         keepLast: settings?.cleanup.keepLast ?? DEFAULT_KEEP_LAST,
         keepDays: settings?.cleanup.keepDays ?? DEFAULT_KEEP_DAYS,
+        cpuLimit: settings?.cpuLimit ?? DEFAULT_CPU_LIMIT,
         memoryLimit: settings?.memoryLimit ?? DEFAULT_MEMORY_LIMIT,
     };
 }
@@ -62,6 +64,7 @@ export function toRegistryPayload(
             keepLast: values.keepLast,
             keepDays: values.keepDays,
         },
+        cpuLimit: values.cpuLimit ?? DEFAULT_CPU_LIMIT,
         memoryLimit: values.memoryLimit || DEFAULT_MEMORY_LIMIT,
         removeApp: removal?.removeApp,
         removeStorage: removal?.removeStorage,

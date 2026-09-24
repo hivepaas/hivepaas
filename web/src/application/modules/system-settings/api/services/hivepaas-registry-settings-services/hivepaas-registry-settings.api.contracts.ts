@@ -25,6 +25,7 @@ export type HivePaaSRegistrySettings_UpdateOnePayload = {
     };
     cleanup: { enabled: boolean; keepLast: number; keepDays: number };
     dashboardEnabled: boolean;
+    cpuLimit: number;
     memoryLimit: string;
     /**
      * Switching the registry off takes its app down, and the app has no screen of

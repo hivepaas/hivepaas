@@ -51,6 +51,7 @@ const SettingsSchema = SettingsBaseEntitySchema.omit({ description: true }).exte
         keepDays: z.number().catch(30),
     }),
     dashboardEnabled: z.boolean().catch(false),
+    cpuLimit: z.number().catch(1),
     memoryLimit: z.string().catch("1gb"),
     app: ObjectIdSchema,
     credential: ObjectIdSchema,

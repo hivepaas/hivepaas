@@ -410,6 +410,36 @@ export function HivePaaSRegistrySettingsForm({ settings, readOnly = false, onSub
                                         titleWidth={220}
                                         title={
                                             <LabelWithInfo
+                                                label="CPU limit"
+                                                content="CPU cores the registry may use. Left empty, it gets one core."
+                                            />
+                                        }
+                                    >
+                                        <Controller
+                                            control={control}
+                                            name="cpuLimit"
+                                            render={({ field }) => (
+                                                <InputNumber
+                                                    value={field.value ?? undefined}
+                                                    placeholder="1"
+                                                    min={0.25}
+                                                    max={256}
+                                                    step={0.25}
+                                                    showControls={false}
+                                                    useGrouping={false}
+                                                    className="w-full max-w-[200px]"
+                                                    onValueChange={value => {
+                                                        field.onChange(typeof value === "number" ? value : null);
+                                                    }}
+                                                />
+                                            )}
+                                        />
+                                    </InfoBlock>
+
+                                    <InfoBlock
+                                        titleWidth={220}
+                                        title={
+                                            <LabelWithInfo
                                                 label="Memory limit"
                                                 content="What the registry may use. At least 256mb."
                                             />

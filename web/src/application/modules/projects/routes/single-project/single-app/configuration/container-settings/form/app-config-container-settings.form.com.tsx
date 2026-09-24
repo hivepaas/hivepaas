@@ -59,18 +59,20 @@ function LogDriverSectionTitle() {
     );
 }
 
-const CONTAINER_SETTINGS_SECTIONS: {
+function containerSettingsSections(labelsToolbar: React.ReactNode): {
     value: SectionValue;
     title: React.ReactNode;
     content: React.ReactNode;
-}[] = [
-    { value: "general", title: "General", content: <GeneralFields /> },
-    { value: "labels", title: "Labels", content: <LabelsFields /> },
-    { value: "restart-policy", title: "Restart Policy", content: <RestartPolicyFields /> },
-    { value: "security", title: "Security", content: <SecurityFields /> },
-    { value: "log-driver", title: <LogDriverSectionTitle />, content: <LogDriverFields /> },
-    { value: "healthcheck", title: "Healthcheck", content: <HealthcheckFields /> },
-];
+}[] {
+    return [
+        { value: "general", title: "General", content: <GeneralFields /> },
+        { value: "labels", title: "Labels", content: <LabelsFields toolbar={labelsToolbar} /> },
+        { value: "restart-policy", title: "Restart Policy", content: <RestartPolicyFields /> },
+        { value: "security", title: "Security", content: <SecurityFields /> },
+        { value: "log-driver", title: <LogDriverSectionTitle />, content: <LogDriverFields /> },
+        { value: "healthcheck", title: "Healthcheck", content: <HealthcheckFields /> },
+    ];
+}
 
 function getSectionValueFromPath(path: string): SectionValue | undefined {
     const [field] = path.split(".");
@@ -78,7 +80,14 @@ function getSectionValueFromPath(path: string): SectionValue | undefined {
     return SECTION_BY_FIELD[field as keyof SchemaInput];
 }
 
-export function AppConfigContainerSettingsForm({ ref, defaultValues, onSubmit, readOnly = false, children }: Props) {
+export function AppConfigContainerSettingsForm({
+    ref,
+    defaultValues,
+    onSubmit,
+    readOnly = false,
+    labelsToolbar,
+    children,
+}: Props) {
     const methods = useForm<SchemaInput, unknown, SchemaOutput>({
         defaultValues: defaultValues
             ? mapAppContainerSettingsToFormInput(defaultValues)
@@ -165,7 +174,7 @@ export function AppConfigContainerSettingsForm({ ref, defaultValues, onSubmit, r
                             }}
                             className="w-full flex flex-col gap-4"
                         >
-                            {CONTAINER_SETTINGS_SECTIONS.map(section => (
+                            {containerSettingsSections(labelsToolbar).map(section => (
                                 <AccordionItem
                                     key={section.value}
                                     value={section.value}
@@ -194,4 +203,6 @@ type Props = PropsWithChildren<{
     defaultValues?: AppContainerSettings;
     onSubmit: (values: SchemaOutput) => void;
     readOnly?: boolean;
+    /** Sits at the top of the Labels section. */
+    labelsToolbar?: React.ReactNode;
 }>;

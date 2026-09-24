@@ -1,5 +1,6 @@
-import { useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 
+import { EyeOffIcon } from "lucide-react";
 import { useParams } from "react-router";
 import { toast } from "sonner";
 import invariant from "tiny-invariant";
@@ -14,14 +15,19 @@ import {
 } from "~/projects/domain";
 import { ProjectPermissionSubmitButton } from "~/projects/module-shared/components";
 import { ERestartPolicyCondition } from "~/projects/module-shared/enums";
+import { ConfirmRevealSecretsDialog, RevealSecretsButton } from "~/settings/module-shared/components";
 
 import { AppLoader, FormActionBar } from "@application/shared/components";
-import { MODULE_IDS } from "@application/shared/constants";
-import { useConditionalModule } from "@application/shared/permissions";
+import { CAPABILITY_IDS, MODULE_IDS } from "@application/shared/constants";
+import { useProfileContext } from "@application/shared/context";
+import { EUserRole } from "@application/shared/enums";
+import { useCapability, useConditionalModule } from "@application/shared/permissions";
 
 import { isValidationException } from "@infrastructure/api";
 
 import { ValidationException } from "@infrastructure/exceptions/validation";
+
+import { Button } from "@/components/ui/button";
 
 import { AppConfigContainerSettingsForm } from "../form";
 import { type AppConfigContainerSettingsFormSchemaOutput } from "../schemas";
@@ -137,23 +143,83 @@ function mapFormValuesToPayload(
     };
 }
 
+/**
+ * Reveals or hides the labels HivePaaS and Docker manage. Revealing them takes
+ * what revealing secrets takes, so it is offered to whoever could reveal those.
+ */
+function SystemLabelsRevealButton({
+    isRevealed,
+    onReveal,
+    onHide,
+    isLoading,
+}: {
+    isRevealed: boolean;
+    onReveal: () => void;
+    onHide: () => void;
+    isLoading: boolean;
+}) {
+    if (isRevealed) {
+        return (
+            <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={onHide}
+                className="gap-1.5 shrink-0 px-2.5 sm:px-3 text-xs sm:text-sm h-8 sm:h-9"
+            >
+                <EyeOffIcon className="size-3.5 sm:size-4" />
+                <span>Hide System Labels</span>
+            </Button>
+        );
+    }
+
+    return (
+        <RevealSecretsButton
+            onClick={onReveal}
+            isLoading={isLoading}
+            label="Reveal System Labels"
+        />
+    );
+}
+
 export function AppConfigContainerSettingsRoute() {
     const { id: projectId, env, appId } = useParams<{ id: string; env: string; appId: string }>();
     const formRef = useRef<AppConfigContainerSettingsFormRef>(null);
     const { canWrite } = useConditionalModule({ id: MODULE_IDS.Project });
+    const [isSystemLabelsRevealed, setIsSystemLabelsRevealed] = useState(false);
+    const [isRevealDialogOpen, setIsRevealDialogOpen] = useState(false);
+
+    const profile = useProfileContext(state => state.profile);
+    const isAdmin = profile?.role === EUserRole.Admin;
+    const { hasCapability: canRevealSecrets } = useCapability(CAPABILITY_IDS.SecretReveal);
+    const canRevealSystemLabels = isAdmin || canRevealSecrets;
 
     invariant(projectId, "projectId must be defined");
     invariant(env, "env must be defined");
     invariant(appId, "appId must be defined");
 
-    const { data, isLoading } = AppContainerSettingsQueries.useFindOne(
+    const { data, isLoading, isFetching, isError, error } = AppContainerSettingsQueries.useFindOne(
         {
             projectID: projectId,
             env,
             appID: appId,
+            revealSystemLabels: isSystemLabelsRevealed,
         },
-        APP_CONFIGURATION_QUERY_OPTIONS,
+        {
+            ...APP_CONFIGURATION_QUERY_OPTIONS,
+            // A refused reveal is not retried: the answer will not change, and
+            // every attempt is recorded.
+            ...(isSystemLabelsRevealed ? { retry: false } : {}),
+        },
     );
+
+    // A refused reveal leaves the labels hidden, and says why.
+    useEffect(() => {
+        if (isError && isSystemLabelsRevealed) {
+            setIsSystemLabelsRevealed(false);
+            toast.error(error.message || "Failed to reveal system labels");
+        }
+    }, [isError, error, isSystemLabelsRevealed]);
 
     const { mutate: update, isPending } = AppContainerSettingsCommands.useUpdateOne({
         onSuccess: () => {
@@ -197,11 +263,45 @@ export function AppConfigContainerSettingsRoute() {
                 defaultValues={data?.data}
                 onSubmit={handleSubmit}
                 readOnly={!canWrite}
+                labelsToolbar={
+                    canRevealSystemLabels ? (
+                        <SystemLabelsRevealButton
+                            isRevealed={isSystemLabelsRevealed}
+                            onReveal={() => {
+                                setIsRevealDialogOpen(true);
+                            }}
+                            onHide={() => {
+                                setIsSystemLabelsRevealed(false);
+                            }}
+                            isLoading={isFetching && isSystemLabelsRevealed}
+                        />
+                    ) : undefined
+                }
             >
                 <FormActionBar>
                     <ProjectPermissionSubmitButton isPending={isPending} />
                 </FormActionBar>
             </AppConfigContainerSettingsForm>
+
+            <ConfirmRevealSecretsDialog
+                open={isRevealDialogOpen}
+                onOpenChange={setIsRevealDialogOpen}
+                onConfirm={() => {
+                    setIsSystemLabelsRevealed(true);
+                    setIsRevealDialogOpen(false);
+                }}
+                isPending={isFetching && isSystemLabelsRevealed}
+                title="Reveal System Labels"
+                actionLabel="Reveal the system labels"
+                note={
+                    <p>
+                        System labels are the ones HivePaaS and Docker manage: <code>hivepaas.*</code>,{" "}
+                        <code>traefik.*</code> and <code>com.docker.stack.*</code>. They can carry credentials, which is
+                        why they are revealed like secrets. Changes to them are not saved: saving keeps them as they
+                        are.
+                    </p>
+                }
+            />
         </div>
     );
 }

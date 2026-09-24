@@ -837,7 +837,11 @@ Five plans, each shippable without the next:
    ports, nodes and storage, and the capability and shared-mount gates, with the
    template checks' reading of a document moved to `specmodel`. Validate, fourth
    part: `docs/superpowers/plans/2026-09-24-spec-import-secrets-owner.md` -
-   secrets and the owner. Apply follows in its own plan.
+   secrets and the owner. Apply, first part:
+   `docs/superpowers/plans/2026-09-24-spec-import-apply-scopes.md` - project
+   creation's defaults moved to `projectservice`, import policies, and
+   `ApplyImport` writing global settings, projects, envs and their settings.
+   Apps, phases 2 and 3, the usecase and the routes follow.
 5. **Dashboard**: the import screens.
 
 ---

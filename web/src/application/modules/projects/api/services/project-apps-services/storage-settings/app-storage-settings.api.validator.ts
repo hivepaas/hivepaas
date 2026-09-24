@@ -7,6 +7,7 @@ import { BaseMetaApiSchema, parseApiResponse } from "@infrastructure/api";
 import {
     type AppStorageSettings_FindOne_Res,
     type AppStorageSettings_Preflight_Res,
+    type AppStorageSettings_ResetPermissions_Res,
 } from "./app-storage-settings.api.contracts";
 
 const VolumeDriverSchema = z.object({
@@ -100,6 +101,11 @@ const PreflightSchema = z.object({
     meta: BaseMetaApiSchema.nullish(),
 });
 
+const ResetPermissionsSchema = z.object({
+    data: z.object({ path: z.string().catch("") }),
+    meta: BaseMetaApiSchema.nullish(),
+});
+
 const FindOneSchema = z.object({
     data: AppStorageSettingsSchema,
     meta: BaseMetaApiSchema.nullable(),
@@ -109,6 +115,11 @@ export class AppStorageSettingsApiValidator {
     preflight = (response: AxiosResponse): AppStorageSettings_Preflight_Res => {
         const { data, meta } = parseApiResponse({ response, schema: PreflightSchema });
         return { data: { storage: data.storage ?? [], unchecked: data.storageUnchecked ?? [] }, meta };
+    };
+
+    resetPermissions = (response: AxiosResponse): AppStorageSettings_ResetPermissions_Res => {
+        const { data, meta } = parseApiResponse({ response, schema: ResetPermissionsSchema });
+        return { data, meta };
     };
 
     findOne = (response: AxiosResponse): AppStorageSettings_FindOne_Res => {

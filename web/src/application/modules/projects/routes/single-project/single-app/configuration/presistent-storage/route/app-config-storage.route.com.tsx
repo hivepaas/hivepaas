@@ -1,3 +1,5 @@
+import { useState } from "react";
+
 import { useParams } from "react-router";
 import { toast } from "sonner";
 import invariant from "tiny-invariant";
@@ -11,7 +13,7 @@ import { useAppNavigate } from "@application/shared/hooks/router";
 import { PageError } from "@application/shared/pages";
 import { useConditionalModule } from "@application/shared/permissions";
 
-import { BorrowedByPanel, StorageTable } from "../building-blocks";
+import { BorrowedByPanel, ResetPermissionsDialog, StorageTable } from "../building-blocks";
 import { StorageMountsProvider, useStorageMounts } from "../context";
 
 type StorageMountWithId = AppStorageMount & { _id: string };
@@ -40,6 +42,8 @@ function AppConfigStorageContent() {
     );
 
     const { mutateAsync: update } = AppStorageSettingsCommands.useUpdateOne();
+    const { mutate: resetPermissions, isPending: isResetting } = AppStorageSettingsCommands.useResetPermissions();
+    const [resetMount, setResetMount] = useState<StorageMountWithId | null>(null);
 
     const updateVer = appData?.data.updateVer ?? 0;
 
@@ -98,6 +102,13 @@ function AppConfigStorageContent() {
         });
     };
 
+    const handleResetPermissions = (mount: StorageMountWithId) => {
+        if (!canWrite) {
+            return;
+        }
+        setResetMount(mount);
+    };
+
     if (appLoading) {
         return <AppLoader />;
     }
@@ -108,10 +119,41 @@ function AppConfigStorageContent() {
                 onAddMount={handleAddMount}
                 onEditMount={handleEditMount}
                 onDeleteMount={handleDeleteMount}
+                onResetPermissions={handleResetPermissions}
                 canWrite={canWrite}
             />
 
             <BorrowedByPanel borrowers={appData?.data.borrowedBy ?? []} />
+
+            <ResetPermissionsDialog
+                open={resetMount !== null}
+                target={resetMount?.target ?? ""}
+                isPending={isResetting}
+                onOpenChange={open => {
+                    if (!open) {
+                        setResetMount(null);
+                    }
+                }}
+                onConfirm={owner => {
+                    if (!resetMount?.key) {
+                        return;
+                    }
+                    resetPermissions(
+                        {
+                            projectID: resolvedProjectId,
+                            env: resolvedEnv,
+                            appID: resolvedAppId,
+                            payload: { key: resetMount.key, owner },
+                        },
+                        {
+                            onSuccess: () => {
+                                toast.success(`Permissions reset for ${resetMount.target ?? "the mount"}`);
+                                setResetMount(null);
+                            },
+                        },
+                    );
+                }}
+            />
         </div>
     );
 }

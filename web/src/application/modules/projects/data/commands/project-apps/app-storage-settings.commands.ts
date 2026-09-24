@@ -4,6 +4,8 @@ import { useAppStorageSettingsApi } from "../../../api/hooks/project-apps";
 import {
     type AppStorageSettings_Preflight_Req,
     type AppStorageSettings_Preflight_Res,
+    type AppStorageSettings_ResetPermissions_Req,
+    type AppStorageSettings_ResetPermissions_Res,
     type AppStorageSettings_UpdateOne_Req,
     type AppStorageSettings_UpdateOne_Res,
 } from "../../../api/services";
@@ -45,7 +47,22 @@ function usePreflight(options: PreflightOptions = {}) {
     });
 }
 
+type ResetPermissionsReq = AppStorageSettings_ResetPermissions_Req["data"];
+type ResetPermissionsRes = AppStorageSettings_ResetPermissions_Res;
+type ResetPermissionsOptions = Omit<UseMutationOptions<ResetPermissionsRes, Error, ResetPermissionsReq>, "mutationFn">;
+
+/** Changes files on disk and nothing the settings show, so it invalidates nothing. */
+function useResetPermissions(options: ResetPermissionsOptions = {}) {
+    const { mutations } = useAppStorageSettingsApi();
+
+    return useMutation({
+        mutationFn: mutations.resetPermissions,
+        ...options,
+    });
+}
+
 export const AppStorageSettingsCommands = Object.freeze({
     usePreflight,
+    useResetPermissions,
     useUpdateOne,
 });

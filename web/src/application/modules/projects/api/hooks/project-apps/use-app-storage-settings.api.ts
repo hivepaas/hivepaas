@@ -4,7 +4,11 @@ import { match } from "oxide.ts";
 
 import { useApiErrorNotifications } from "@infrastructure/api";
 
-import { type AppStorageSettings_Preflight_Req, type AppStorageSettings_UpdateOne_Req } from "../../../api/services";
+import {
+    type AppStorageSettings_Preflight_Req,
+    type AppStorageSettings_ResetPermissions_Req,
+    type AppStorageSettings_UpdateOne_Req,
+} from "../../../api/services";
 import { ProjectsApiContext } from "../../api-context/projects.api.context";
 
 function createHook() {
@@ -36,6 +40,16 @@ function createHook() {
                         Ok: _ => _,
                         Err: error => {
                             notifyError({ message: "Failed to update storage settings", error });
+                            throw error;
+                        },
+                    });
+                },
+                resetPermissions: async (request: AppStorageSettings_ResetPermissions_Req["data"]) => {
+                    const result = await api.projects.apps.storageSettings.$.resetPermissions({ data: request });
+                    return match(result, {
+                        Ok: _ => _,
+                        Err: error => {
+                            notifyError({ message: "Failed to reset storage permissions", error });
                             throw error;
                         },
                     });

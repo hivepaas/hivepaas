@@ -43,3 +43,24 @@ export type AppStorageSettings_Preflight_Res = ApiResponseBase<{
      */
     unchecked: AppStorageFinding[];
 }>;
+
+/**
+ * Who the files of a mount are given to, by number. Without one, every user is
+ * let read and write them instead.
+ */
+export type AppStorageOwner = { uid: number; gid: number };
+
+export type AppStorageSettings_ResetPermissions_Req = ApiRequestBase<{
+    projectID: string;
+    env: string;
+    appID: string;
+    payload: {
+        /** The mount's key, as the storage settings list it. */
+        key: string;
+        owner?: AppStorageOwner;
+    };
+}>;
+export type AppStorageSettings_ResetPermissions_Res = ApiResponseBase<{
+    /** The directory that was reset, inside its volume. */
+    path: string;
+}>;

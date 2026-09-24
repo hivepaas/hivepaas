@@ -18,16 +18,17 @@ interface StorageTableProps {
     onAddMount: () => void;
     onEditMount: (mount: StorageMountWithId) => void;
     onDeleteMount: (mount: StorageMountWithId) => Promise<void> | void;
+    onResetPermissions: (mount: StorageMountWithId) => void;
     canWrite: boolean;
 }
 
-function View({ onAddMount, onEditMount, onDeleteMount, canWrite }: StorageTableProps) {
+function View({ onAddMount, onEditMount, onDeleteMount, onResetPermissions, canWrite }: StorageTableProps) {
     const { mounts } = useStorageMounts();
     const [internalSearch, setInternalSearch] = useState("");
 
     const columns = useMemo(
-        () => createStorageTableColumns(onEditMount, onDeleteMount, canWrite),
-        [canWrite, onDeleteMount, onEditMount],
+        () => createStorageTableColumns(onEditMount, onDeleteMount, onResetPermissions, canWrite),
+        [canWrite, onDeleteMount, onEditMount, onResetPermissions],
     );
 
     const filteredMounts = useMemo(() => {

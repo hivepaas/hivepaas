@@ -4,8 +4,9 @@ import { Badge } from "@components/ui/badge";
 import { Button } from "@components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger } from "@components/ui/dropdown-menu";
 import { type ColumnDef } from "@tanstack/react-table";
-import { EyeIcon, MoreVertical, Trash2Icon, TriangleAlert } from "lucide-react";
+import { EyeIcon, KeyRound, MoreVertical, Trash2Icon, TriangleAlert } from "lucide-react";
 import type { AppStorageMount } from "~/projects/domain";
+import { EMountType } from "~/projects/module-shared/enums";
 
 import { PopConfirm } from "@application/shared/components";
 import { MODULE_IDS } from "@application/shared/constants";
@@ -47,9 +48,22 @@ function getOptionsDisplay(mount: AppStorageMount): string {
     return options.join("\n") || "-";
 }
 
+/**
+ * Whether a mount's permissions can be reset: a saved mount of the app's own
+ * directory. What reaches another app's directory is that app's to reset, and
+ * tmpfs and the like hold nothing on disk.
+ */
+function canResetPermissions(mount: AppStorageMount): boolean {
+    if (!mount.key || mount.sourceApp) {
+        return false;
+    }
+    return mount.type === EMountType.Volume || mount.type === EMountType.Cluster || mount.type === EMountType.Bind;
+}
+
 export function createStorageTableColumns(
     onEdit: (mount: StorageMountWithId) => void,
     onDelete: (mount: StorageMountWithId) => Promise<void> | void,
+    onResetPermissions: (mount: StorageMountWithId) => void,
     canWrite: boolean,
 ): ColumnDef<StorageMountWithId>[] {
     return [
@@ -157,6 +171,27 @@ export function createStorageTableColumns(
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
                         <div className="flex flex-col gap-0">
+                            {canResetPermissions(row.original) && (
+                                <PermissionTooltipAction
+                                    id={MODULE_IDS.Project}
+                                    action="write"
+                                    triggerClassName="w-full"
+                                >
+                                    {({ isDenied }) => (
+                                        <Button
+                                            className="justify-start py-1.5 w-full"
+                                            variant="ghost"
+                                            disabled={isDenied || !canWrite}
+                                            onClick={() => {
+                                                onResetPermissions(row.original);
+                                            }}
+                                        >
+                                            <KeyRound className="mr-2 size-4" />
+                                            Reset permissions
+                                        </Button>
+                                    )}
+                                </PermissionTooltipAction>
+                            )}
                             {canWrite ? (
                                 <PopConfirm
                                     title="Remove Storage Mount"

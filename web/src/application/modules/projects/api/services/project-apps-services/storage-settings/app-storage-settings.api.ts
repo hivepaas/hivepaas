@@ -8,6 +8,8 @@ import {
     type AppStorageSettings_FindOne_Res,
     type AppStorageSettings_Preflight_Req,
     type AppStorageSettings_Preflight_Res,
+    type AppStorageSettings_ResetPermissions_Req,
+    type AppStorageSettings_ResetPermissions_Res,
     type AppStorageSettings_UpdateOne_Req,
     type AppStorageSettings_UpdateOne_Res,
 } from "./app-storage-settings.api.contracts";
@@ -74,6 +76,31 @@ export class AppStorageSettingsApi extends BaseApi {
                 }),
             ).pipe(
                 map(this.validator.preflight),
+                map(res => Ok(res)),
+                catchError(error => of(Err(parseApiError(error)))),
+            ),
+        );
+    }
+
+    /**
+     * Gives what one mount holds to a user, or opens it up to every user, for
+     * an app that has to be given data another user wrote.
+     */
+    async resetPermissions(
+        req: AppStorageSettings_ResetPermissions_Req,
+        signal?: AbortSignal,
+    ): Promise<Result<AppStorageSettings_ResetPermissions_Res, Error>> {
+        const { projectID, env, appID, payload } = req.data;
+
+        return lastValueFrom(
+            from(
+                this.client.v1.post(
+                    `/projects/${projectID}/${env}/apps/${appID}/storage-settings/reset-permissions`,
+                    payload,
+                    { signal },
+                ),
+            ).pipe(
+                map(this.validator.resetPermissions),
                 map(res => Ok(res)),
                 catchError(error => of(Err(parseApiError(error)))),
             ),

@@ -256,7 +256,13 @@ service, can join it.
 - **Deleting the app, or removing its access.**
   1. The backend asks every node's agent to remove the app's children, networks
      and volumes, by label.
-  2. It then removes the app's network and socket volumes.
+  2. On deletion, it then removes the app's network and socket volumes. On
+     removing access it keeps the app's network, unused: the task still leaving
+     it would make the removal fail. The network is reused if access is given
+     again, and goes with the app.
+
+  The settings screen turns access off without forgetting it: the setting is kept,
+  disabled, for turning it on again.
 - **Every agent collects on a timer.** It removes:
   - anything labelled for an app that no longer has access;
   - an exited child older than 24 hours;
@@ -378,7 +384,7 @@ Gitea runner: a plain job, a job with a `redis` service, and a job running
    - import's checks and re-attaching;
    - reserved volume names;
    - the switch in import;
-   - the Docker API screen's endpoints.
+   - the Docker API screen's endpoints, `GET|PUT .../apps/{appID}/docker-api-settings`.
 5. **Dashboard.** Template detail, create dialog, app settings screen.
 6. **Templates.** `autobase` and `gitea-runner`.
 

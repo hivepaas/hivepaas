@@ -59,6 +59,16 @@ func Cmp(v1, v2 *Version) int {
 		return v1.Patch - v2.Patch
 	}
 	if v1.Suffix != v2.Suffix {
+		// A release comes after every pre-release of the same number: 1.2.3 is
+		// what 1.2.3-beta2 was on its way to. Compared as strings, the release's
+		// empty suffix would sort first, and a beta installation would never be
+		// offered the stable release it was testing.
+		switch {
+		case v1.Suffix == "":
+			return 1
+		case v2.Suffix == "":
+			return -1
+		}
 		return strings.Compare(v1.Suffix, v2.Suffix)
 	}
 	if v1.SuffixNumber != v2.SuffixNumber {

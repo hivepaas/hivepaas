@@ -38714,6 +38714,55 @@
         "x-codegen-request-body-name" : "body"
       }
     },
+    "/system/hivepaas/update-plan" : {
+      "get" : {
+        "description" : "Gets, component by component, what an update to a published version would do - the image each\nruns now and would run, and whether the update would move it - without changing anything.",
+        "operationId" : "getHivePaaSUpdatePlan",
+        "parameters" : [ {
+          "description" : "a version published on the stable or beta channel",
+          "in" : "query",
+          "name" : "targetVersion",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/system_hpappdto.GetHpAppUpdatePlanResp"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "400" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Bad Request"
+          },
+          "500" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Internal Server Error"
+          }
+        },
+        "summary" : "Gets what an update to a version would do",
+        "tags" : [ "system_hivepaas" ]
+      }
+    },
     "/system/hivepaas/update-version" : {
       "post" : {
         "description" : "Updates HivePaaS app",
@@ -42451,6 +42500,21 @@
         "type" : "string",
         "x-enum-varnames" : [ "LogTypeIn", "LogTypeOut", "LogTypeErr", "LogTypeWarn", "LogTypeDebug" ]
       },
+      "service_hpappservice.CurrentRelease" : {
+        "properties" : {
+          "appVersion" : {
+            "type" : "string"
+          },
+          "channel" : {
+            "type" : "string"
+          },
+          "releaseDate" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "appVersion", "channel", "releaseDate" ],
+        "type" : "object"
+      },
       "service_hpappservice.ReleaseInfo" : {
         "properties" : {
           "appImage" : {
@@ -42467,10 +42531,14 @@
             "type" : "array"
           },
           "canUpdate" : {
-            "description" : "System specific flag",
+            "description" : "CanUpdate is whether this installation may move to the release, which is\nwhether it is newer than the one running.",
             "type" : "boolean"
           },
           "dbImage" : {
+            "type" : "string"
+          },
+          "notesUrl" : {
+            "description" : "NotesURL is where the release's notes are read: what changed, and what to\nknow before moving to it. Absent means the release published none.",
             "type" : "string"
           },
           "redisImage" : {
@@ -42479,6 +42547,9 @@
           "registryImage" : {
             "description" : "RegistryImage is the registry HivePaaS runs for itself, when it runs one.\nThe configuration HivePaaS writes for it is the configuration this version\nof zot accepts, so a bump is the trigger to re-check that.",
             "type" : "string"
+          },
+          "relation" : {
+            "$ref" : "#/components/schemas/service_hpappservice.ReleaseRelation"
           },
           "releaseDate" : {
             "type" : "string"
@@ -42500,8 +42571,13 @@
             "type" : "string"
           }
         },
-        "required" : [ "appImage", "appVersion", "blockMajorUpgrade", "canUpdate", "dbImage", "redisImage", "registryImage", "releaseDate", "templates", "traefikImage", "victoriaLogsImage", "vlagentImage" ],
+        "required" : [ "appImage", "appVersion", "blockMajorUpgrade", "canUpdate", "dbImage", "notesUrl", "redisImage", "registryImage", "relation", "releaseDate", "templates", "traefikImage", "victoriaLogsImage", "vlagentImage" ],
         "type" : "object"
+      },
+      "service_hpappservice.ReleaseRelation" : {
+        "enum" : [ "newer", "same", "older" ],
+        "type" : "string",
+        "x-enum-varnames" : [ "ReleaseNewer", "ReleaseSame", "ReleaseOlder" ]
       },
       "service_specservice.ImportDeployment" : {
         "properties" : {
@@ -58855,16 +58931,62 @@
         "required" : [ "data", "meta" ],
         "type" : "object"
       },
+      "system_hpappdto.GetHpAppUpdatePlanResp" : {
+        "properties" : {
+          "data" : {
+            "$ref" : "#/components/schemas/system_hpappdto.HpAppUpdatePlanDataResp"
+          },
+          "meta" : {
+            "$ref" : "#/components/schemas/basedto.Meta"
+          }
+        },
+        "required" : [ "data", "meta" ],
+        "type" : "object"
+      },
       "system_hpappdto.HpAppReleaseInfoResp" : {
         "properties" : {
           "beta" : {
             "$ref" : "#/components/schemas/service_hpappservice.ReleaseInfo"
           },
+          "current" : {
+            "allOf" : [ {
+              "$ref" : "#/components/schemas/service_hpappservice.CurrentRelease"
+            } ],
+            "description" : "Current is the release this installation runs. It is not read from the\nrelease file, which only knows what is published.",
+            "type" : "object"
+          },
           "stable" : {
             "$ref" : "#/components/schemas/service_hpappservice.ReleaseInfo"
           }
         },
-        "required" : [ "beta", "stable" ],
+        "required" : [ "beta", "current", "stable" ],
+        "type" : "object"
+      },
+      "system_hpappdto.HpAppUpdatePlanDataResp" : {
+        "properties" : {
+          "blocked" : {
+            "description" : "Blocked is whether the update would refuse to run: a component would\ncross a major version the release does not allow.",
+            "type" : "boolean"
+          },
+          "components" : {
+            "description" : "Components are in the order the update reaches them.",
+            "items" : {
+              "$ref" : "#/components/schemas/system_hpappdto.UpdateComponentResp"
+            },
+            "type" : "array"
+          },
+          "current" : {
+            "$ref" : "#/components/schemas/service_hpappservice.CurrentRelease"
+          },
+          "requiresBackup" : {
+            "description" : "RequiresBackup is whether the database backup cannot be skipped.",
+            "type" : "boolean"
+          },
+          "target" : {
+            "$ref" : "#/components/schemas/system_hpappdto.UpdateTargetResp"
+          }
+        },
+        "required" : [ "blocked", "components", "current", "requiresBackup", "target" ],
         "type" : "object"
       },
       "system_hpappdto.ReloadHpAppConfigReq" : {
@@ -58909,6 +59031,36 @@
         "required" : [ "meta" ],
         "type" : "object"
       },
+      "system_hpappdto.UpdateComponentResp" : {
+        "properties" : {
+          "change" : {
+            "description" : "Change is none, update, major, blocked or not-deployed.",
+            "type" : "string"
+          },
+          "currentImage" : {
+            "type" : "string"
+          },
+          "interruptsTraffic" : {
+            "type" : "boolean"
+          },
+          "key" : {
+            "description" : "Key is db, redis, traefik, victoria-logs, vlagent, registry, app or worker.",
+            "type" : "string"
+          },
+          "reason" : {
+            "description" : "Reason is the update's own words for what it would do.",
+            "type" : "string"
+          },
+          "requiresBackup" : {
+            "type" : "boolean"
+          },
+          "targetImage" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "change", "currentImage", "interruptsTraffic", "key", "reason", "requiresBackup", "targetImage" ],
+        "type" : "object"
+      },
       "system_hpappdto.UpdateHpAppReq" : {
         "properties" : {
           "skipBackup" : {
@@ -58929,6 +59081,24 @@
           }
         },
         "required" : [ "meta" ],
+        "type" : "object"
+      },
+      "system_hpappdto.UpdateTargetResp" : {
+        "properties" : {
+          "appVersion" : {
+            "type" : "string"
+          },
+          "channel" : {
+            "type" : "string"
+          },
+          "notesUrl" : {
+            "type" : "string"
+          },
+          "releaseDate" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "appVersion", "channel", "notesUrl", "releaseDate" ],
         "type" : "object"
       },
       "system_syserrordto.DeleteSysErrorResp" : {

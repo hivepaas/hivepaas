@@ -13,6 +13,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/releasesig"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/version"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/hpappservice"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/systemappservice"
 )
 
 const (
@@ -85,6 +86,30 @@ func parseReleaseInfo(envelope []byte, keys map[string][]byte) (*hpappservice.Ap
 // signed, so a malformed field is a mistake made at release - and a release that
 // quietly lost its templates pin is worse to diagnose than one that fails.
 func decodeReleaseInfo(data []byte) (*hpappservice.AppReleaseInfo, error) {
+	return decodeReleaseInfoFor(data, currentRelease())
+}
+
+// currentRelease is the release this binary runs, and the channel it follows.
+func currentRelease() *hpappservice.CurrentRelease {
+	running := systemappservice.CurrentRelease()
+	channel := hpappservice.ReleaseChannelStable
+	if running == base.BetaVersion {
+		channel = hpappservice.ReleaseChannelBeta
+	}
+	return &hpappservice.CurrentRelease{
+		AppVersion:  running.AppVersion,
+		Channel:     channel,
+		ReleaseDate: running.ReleaseDate,
+	}
+}
+
+// decodeReleaseInfoFor decodes release.json and places each published release
+// against current, the one running.
+//
+// Both channels are measured against what runs, whichever channel that is. A
+// stable installation is offered a beta only when the beta is ahead of it, and a
+// beta installation is not offered a stable release it has already passed.
+func decodeReleaseInfoFor(data []byte, current *hpappservice.CurrentRelease) (*hpappservice.AppReleaseInfo, error) {
 	info := &hpappservice.AppReleaseInfo{}
 	err := json.Unmarshal(data, info)
 	if err != nil {
@@ -100,20 +125,24 @@ func decodeReleaseInfo(data []byte) (*hpappservice.AppReleaseInfo, error) {
 		}
 	}
 
-	if info.Stable != nil && info.Stable.AppVersion != "" {
-		cmp, err := version.CmpStr(info.Stable.AppVersion, base.StableVersion.AppVersion)
+	info.Current = current
+	for _, release := range []*hpappservice.ReleaseInfo{info.Stable, info.Beta} {
+		if release == nil || release.AppVersion == "" {
+			continue
+		}
+		cmp, err := version.CmpStr(release.AppVersion, current.AppVersion)
 		if err != nil {
 			return nil, hperrors.Wrap(err)
 		}
-		info.Stable.CanUpdate = cmp > 0
-	}
-
-	if info.Beta != nil && info.Beta.AppVersion != "" {
-		cmp, err := version.CmpStr(info.Beta.AppVersion, base.BetaVersion.AppVersion)
-		if err != nil {
-			return nil, hperrors.Wrap(err)
+		switch {
+		case cmp > 0:
+			release.Relation = hpappservice.ReleaseNewer
+		case cmp < 0:
+			release.Relation = hpappservice.ReleaseOlder
+		default:
+			release.Relation = hpappservice.ReleaseSame
 		}
-		info.Beta.CanUpdate = cmp > 0
+		release.CanUpdate = cmp > 0
 	}
 
 	return info, nil

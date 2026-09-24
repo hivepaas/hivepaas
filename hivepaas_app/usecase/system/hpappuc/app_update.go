@@ -11,6 +11,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/transaction"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/hpappservice"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/sysupdateservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/system/hpappuc/hpappdto"
 )
 
@@ -28,24 +29,24 @@ func (uc *UC) UpdateHpApp(
 		return nil, hperrors.Wrap(err)
 	}
 
-	var target *hpappservice.ReleaseInfo
-	switch {
-	case info.Stable != nil && info.Stable.AppVersion == req.TargetVersion:
-		target = info.Stable
-	case info.Beta != nil && info.Beta.AppVersion == req.TargetVersion:
-		target = info.Beta
-	default:
-		return nil, hperrors.Wrap(hperrors.ErrUpdateVerMismatched)
+	target, err := findTargetRelease(info, req.TargetVersion)
+	if err != nil {
+		return nil, err
 	}
-	// Naming a version release.json lists is not enough: a release.json that lists
-	// an older one - stale, reverted, or not ours - would otherwise walk the install
-	// back onto it, and swarm restores images, never the data a newer one migrated.
-	// CanUpdate is the same comparison the dashboard shows the button by, so the
-	// API refuses exactly what the UI does not offer.
 	if !target.CanUpdate {
 		return nil, hperrors.Wrap(hperrors.ErrVersionNotNewer)
 	}
 	targetVersion := &target.ReleaseInfo
+
+	// Refused here, while everything still runs. The update would find the same
+	// thing, but only once the app and the workers were already stopped.
+	plan, err := uc.sysUpdateService.PlanUpdate(ctx, uc.db, targetVersion)
+	if err != nil {
+		return nil, hperrors.Wrap(err)
+	}
+	if err = checkPlan(plan, req.SkipBackup); err != nil {
+		return nil, err
+	}
 
 	err = transaction.Execute(ctx, uc.db, func(db database.Tx) error {
 		_, err := uc.lockRepo.GetByID(ctx, db, lockIDSystemVersionUpdate,
@@ -65,7 +66,7 @@ func (uc *UC) UpdateHpApp(
 		// upgrade entry is read to answer. It is taken from the binary serving
 		// this request, which is the one actually running.
 		return uc.recordHpAppAction(ctx, db, auth, "version-update", auditdetail.New().
-			Compare("version", base.StableVersion.AppVersion, targetVersion.AppVersion).
+			Compare("version", runningVersion(info), targetVersion.AppVersion).
 			Set("channel", releaseChannelOf(info, targetVersion)).
 			Set("appImage", targetVersion.AppImage))
 	})
@@ -78,6 +79,40 @@ func (uc *UC) UpdateHpApp(
 
 // releaseChannelOf names which channel the target came from, so a reader can tell
 // a move onto beta from a move along stable.
+// findTargetRelease is the published release of that version, on either channel.
+func findTargetRelease(info *hpappservice.AppReleaseInfo, version string) (*hpappservice.ReleaseInfo, error) {
+	switch {
+	case info.Stable != nil && info.Stable.AppVersion == version:
+		return info.Stable, nil
+	case info.Beta != nil && info.Beta.AppVersion == version:
+		return info.Beta, nil
+	default:
+		return nil, hperrors.Wrap(hperrors.ErrUpdateVerMismatched)
+	}
+}
+
+// checkPlan refuses an update the updater would refuse partway through.
+func checkPlan(plan *sysupdateservice.UpdatePlan, skipBackup bool) error {
+	for _, component := range plan.Components {
+		if component.Change == sysupdateservice.ChangeBlocked {
+			return hperrors.Wrap(hperrors.ErrSystemUpdateBlocked).WithParam("Component", component.Key)
+		}
+		if component.RequiresBackup && skipBackup {
+			return hperrors.Wrap(hperrors.ErrSystemUpdateNeedsBackup).WithParam("Component", component.Key)
+		}
+	}
+	return nil
+}
+
+// runningVersion is the version the update moves from: the release this
+// installation runs, whichever channel that is.
+func runningVersion(info *hpappservice.AppReleaseInfo) string {
+	if info.Current != nil {
+		return info.Current.AppVersion
+	}
+	return base.StableVersion.AppVersion
+}
+
 func releaseChannelOf(info *hpappservice.AppReleaseInfo, target *base.ReleaseInfo) string {
 	if info.Beta != nil && info.Beta.AppVersion == target.AppVersion {
 		return "beta"

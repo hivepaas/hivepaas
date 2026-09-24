@@ -18,6 +18,7 @@ func (s *HTTPServer) registerHivePaaSRoutes(systemGroup *gin.RouterGroup) *gin.R
 	// Release info
 	hivepaasGroup.GET("/release-info", hivepaasHandler.GetAppReleaseInfo)
 	// Update app version
+	hivepaasGroup.GET("/update-plan", hivepaasHandler.GetAppUpdatePlan)
 	hivepaasGroup.POST("/update-version", hivepaasHandler.UpdateAppVersion)
 
 	// Service settings

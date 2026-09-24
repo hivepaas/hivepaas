@@ -5,6 +5,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/repository"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/auditservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/hpappservice"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/sysupdateservice"
 )
 
 type UC struct {
@@ -12,8 +13,9 @@ type UC struct {
 
 	lockRepo repository.LockRepo
 
-	auditService auditservice.Service
-	hpAppService hpappservice.Service
+	auditService     auditservice.Service
+	hpAppService     hpappservice.Service
+	sysUpdateService sysupdateservice.Service
 }
 
 func New(
@@ -23,13 +25,15 @@ func New(
 
 	auditService auditservice.Service,
 	hpAppService hpappservice.Service,
+	sysUpdateService sysupdateservice.Service,
 ) *UC {
 	return &UC{
 		db: db,
 
 		lockRepo: lockRepo,
 
-		auditService: auditService,
-		hpAppService: hpAppService,
+		auditService:     auditService,
+		hpAppService:     hpAppService,
+		sysUpdateService: sysUpdateService,
 	}
 }

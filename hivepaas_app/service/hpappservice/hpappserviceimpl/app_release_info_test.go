@@ -19,6 +19,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/config"
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/releasesig"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/hpappservice"
 )
 
 type releaseSigner struct {
@@ -143,4 +144,48 @@ func TestEmbeddedReleaseSigningKeys(t *testing.T) {
 	}
 	_, err = releasesig.ParsePublicKeys(keys)
 	assert.NoError(t, err)
+}
+
+// Both channels are measured against the release running, whichever channel
+// that is.
+func TestReleasesArePlacedAgainstTheOneRunning(t *testing.T) {
+	data := []byte(`{"stable":{"appVersion":"v0.2.0"},"beta":{"appVersion":"v0.3.0-beta1"}}`)
+
+	t.Run("on stable, both newer releases are offered", func(t *testing.T) {
+		info, err := decodeReleaseInfoFor(data, &hpappservice.CurrentRelease{AppVersion: "v0.1.0", Channel: "stable"})
+
+		assert.NoError(t, err)
+		assert.Equal(t, "v0.1.0", info.Current.AppVersion)
+		assert.Equal(t, hpappservice.ReleaseNewer, info.Stable.Relation)
+		assert.True(t, info.Stable.CanUpdate)
+		assert.Equal(t, hpappservice.ReleaseNewer, info.Beta.Relation)
+		assert.True(t, info.Beta.CanUpdate)
+	})
+
+	t.Run("on a later beta, the stable release passed is not offered", func(t *testing.T) {
+		info, err := decodeReleaseInfoFor(data, &hpappservice.CurrentRelease{AppVersion: "v0.3.0-beta1", Channel: "beta"})
+
+		assert.NoError(t, err)
+		assert.Equal(t, hpappservice.ReleaseOlder, info.Stable.Relation)
+		assert.False(t, info.Stable.CanUpdate, "it would be a downgrade")
+		assert.Equal(t, hpappservice.ReleaseSame, info.Beta.Relation)
+		assert.False(t, info.Beta.CanUpdate)
+	})
+
+	t.Run("on a beta, the stable release it led to is offered", func(t *testing.T) {
+		info, err := decodeReleaseInfoFor([]byte(`{"stable":{"appVersion":"v0.3.0"}}`),
+			&hpappservice.CurrentRelease{AppVersion: "v0.3.0-beta1", Channel: "beta"})
+
+		assert.NoError(t, err)
+		assert.Equal(t, hpappservice.ReleaseNewer, info.Stable.Relation)
+		assert.True(t, info.Stable.CanUpdate)
+	})
+
+	t.Run("what the file says of the running release is not taken", func(t *testing.T) {
+		info, err := decodeReleaseInfoFor([]byte(`{"current":{"appVersion":"v9.9.9"},"stable":{"appVersion":"v0.2.0"}}`),
+			&hpappservice.CurrentRelease{AppVersion: "v0.1.0", Channel: "stable"})
+
+		assert.NoError(t, err)
+		assert.Equal(t, "v0.1.0", info.Current.AppVersion)
+	})
 }

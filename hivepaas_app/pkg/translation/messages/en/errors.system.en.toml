@@ -7,3 +7,5 @@ ERR_VERSION_NOT_NEWER = "The target version is not newer than the running versio
 ERR_RELEASE_SIGNATURE_INVALID = "Release information could not be verified"
 ERR_RELEASE_SIGNING_KEY_INVALID = "Release signing key is misconfigured"
 ERR_RELEASE_INFO_INVALID = "Release information is invalid"
+ERR_SYSTEM_UPDATE_BLOCKED = "This update would move {{.Component}} across a major version, which the release does not allow"
+ERR_SYSTEM_UPDATE_NEEDS_BACKUP = "This update moves {{.Component}} from the database backup, so the backup cannot be skipped"

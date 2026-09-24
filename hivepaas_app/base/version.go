@@ -93,6 +93,10 @@ type ReleaseInfo struct {
 	// when it exists, is switched on.
 	BlockMajorUpgrade []string `json:"blockMajorUpgrade,omitempty"`
 
+	// NotesURL is where the release's notes are read: what changed, and what to
+	// know before moving to it. Absent means the release published none.
+	NotesURL string `json:"notesUrl,omitempty"`
+
 	// Templates pins the app templates this release offers. It is only ever read
 	// from release info, never from the copy compiled in: templates are released
 	// on their own schedule, and the binary has no use for a pin it cannot fetch.

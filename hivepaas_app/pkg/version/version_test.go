@@ -137,6 +137,18 @@ func TestCmp(t *testing.T) {
 			want: 1,
 		},
 		{
+			name: "a release after its pre-release",
+			v1:   &Version{Major: 1, Minor: 2, Patch: 3},
+			v2:   &Version{Major: 1, Minor: 2, Patch: 3, Suffix: "beta", SuffixNumber: 2},
+			want: 1,
+		},
+		{
+			name: "a pre-release before its release",
+			v1:   &Version{Major: 1, Minor: 2, Patch: 3, Suffix: "rc", SuffixNumber: 1},
+			v2:   &Version{Major: 1, Minor: 2, Patch: 3},
+			want: -1,
+		},
+		{
 			name: "suffix less",
 			v1:   &Version{Major: 1, Minor: 2, Patch: 3, Suffix: "alpha"},
 			v2:   &Version{Major: 1, Minor: 2, Patch: 3, Suffix: "beta"},

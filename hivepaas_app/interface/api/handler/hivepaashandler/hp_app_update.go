@@ -91,3 +91,45 @@ func (h *Handler) UpdateAppVersion(ctx *gin.Context) {
 
 	ctx.JSON(http.StatusCreated, resp)
 }
+
+// GetAppUpdatePlan Gets what an update to a version would do
+// @Summary Gets what an update to a version would do
+// @Description Gets, component by component, what an update to a published version would do - the image each
+// @Description runs now and would run, and whether the update would move it - without changing anything.
+// @Tags    system_hivepaas
+// @Produce json
+// @Id      getHivePaaSUpdatePlan
+// @Param   targetVersion query string true "a version published on the stable or beta channel"
+// @Success 200 {object} hpappdto.GetHpAppUpdatePlanResp
+// @Failure 400 {object} hperrors.ErrorInfo
+// @Failure 500 {object} hperrors.ErrorInfo
+// @Router  /system/hivepaas/update-plan [get]
+func (h *Handler) GetAppUpdatePlan(ctx *gin.Context) {
+	auth, err := h.authHandler.GetCurrentAuth(ctx, &permission.ModuleAccessCheck{
+		BaseAccessCheck: permission.BaseAccessCheck{Action: base.ActionTypeWrite},
+		Module:          base.ResourceModuleSystem,
+	})
+	if err != nil {
+		h.RenderError(ctx, err)
+		return
+	}
+	if auth.User.Role != base.UserRoleAdmin {
+		h.RenderError(ctx, hperrors.NewForbidden("Getting the update plan").
+			WithMsgLog("only admin can perform this action"))
+		return
+	}
+
+	req := hpappdto.NewGetHpAppUpdatePlanReq()
+	if err := h.ParseAndValidateRequest(ctx, req, nil); err != nil {
+		h.RenderError(ctx, err)
+		return
+	}
+
+	resp, err := h.hpAppUC.GetHpAppUpdatePlan(h.RequestCtx(ctx), auth, req)
+	if err != nil {
+		h.RenderError(ctx, err)
+		return
+	}
+
+	ctx.JSON(http.StatusOK, resp)
+}

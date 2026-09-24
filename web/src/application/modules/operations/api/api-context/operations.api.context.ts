@@ -4,6 +4,9 @@ import {
     AuditLogsApi,
     AuditLogsApiValidator,
     SpecExportApi,
+    SpecImportApi,
+    SpecImportApiMapper,
+    SpecImportApiValidator,
     SystemTaskLogsWsApi,
     SystemTasksApi,
     SystemTasksApiValidator,
@@ -12,6 +15,8 @@ import {
 function createApi() {
     const systemTasksValidator = new SystemTasksApiValidator();
     const auditLogsValidator = new AuditLogsApiValidator();
+    const specImportValidator = new SpecImportApiValidator();
+    const specImportMapper = new SpecImportApiMapper();
 
     const operationsApi = {
         tasks: new SystemTasksApi(systemTasksValidator),
@@ -20,6 +25,7 @@ function createApi() {
         },
         auditLogs: new AuditLogsApi(auditLogsValidator),
         specExport: new SpecExportApi(),
+        specImport: new SpecImportApi(specImportValidator, specImportMapper),
     };
 
     return {

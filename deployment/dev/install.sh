@@ -15,9 +15,51 @@ echo "Prepare host memory settings..."
 curl -sL "https://raw.githubusercontent.com/hivepaas/hivepaas/main/deployment/dev/host-memory.sh" -o host-memory.sh
 sudo bash host-memory.sh || echo "WARNING: host-memory.sh failed, continuing without swap/earlyoom" >&2
 
-# Reset whole cluster
+# Overlay networks of the swarm this node is in. ingress is the swarm's own:
+# it is recreated with the swarm and refuses to be removed while it is up.
+swarm_networks() {
+  docker network ls --filter driver=overlay --filter scope=swarm --format '{{.Name}}' | grep -vx ingress || true
+}
+
+# Removes a network, including the load-balancer endpoint swarm gives every
+# overlay network with a service on it. That endpoint belongs to no container,
+# so nothing else ever takes it off; while it is there the network cannot go.
+remove_network() {
+  docker network disconnect -f "$1" "lb-$1" >/dev/null 2>&1 || true
+  docker network rm "$1" >/dev/null 2>&1
+}
+
+# Reset whole cluster.
+#
+# Leaving a swarm is not enough to clear it: an overlay network that still had
+# a service on it stays behind on this node, holding its subnet. The next swarm
+# does not know about it and hands the same subnet to a new network, and every
+# task on that one is then refused with "Pool overlaps with other one on this
+# address space". So the services go first, then their networks, then the swarm.
+if [ "$(docker info --format '{{.Swarm.LocalNodeState}}')" = "active" ]; then
+  echo "Remove the services and networks of the current swarm..."
+  docker service ls -q | xargs -r docker service rm >/dev/null
+  # A network cannot go until the tasks on it have stopped.
+  for _ in $(seq 60); do
+    [ -z "$(docker ps -q --filter label=com.docker.swarm.service.id)" ] && break
+    sleep 1
+  done
+  for net in $(swarm_networks); do
+    remove_network "$net" || echo "WARNING: could not remove network $net" >&2
+  done
+fi
 docker swarm leave --force || true
 docker swarm init
+
+# Whatever overlay network is here now came from an earlier swarm - this one has
+# only just been made - and would collide with a network this one creates.
+for net in $(swarm_networks); do
+  echo "Remove network '$net' left behind by an earlier swarm..."
+  if ! remove_network "$net"; then
+    echo "WARNING: network $net could not be removed and still holds its subnet." >&2
+    echo "         Restarting docker clears it: sudo systemctl restart docker" >&2
+  fi
+done
 
 # Label the current node as control-plane
 NODE_ID=$(docker info --format '{{.Swarm.NodeID}}')

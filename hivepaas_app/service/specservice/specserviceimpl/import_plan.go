@@ -273,6 +273,9 @@ func (p *planner) plan(ctx context.Context) error {
 	if err := p.checkAvailability(ctx); err != nil {
 		return err
 	}
+	if err := p.checkSecrets(); err != nil {
+		return err
+	}
 	p.selectAncestors()
 	return nil
 }
@@ -513,7 +516,8 @@ func (p *planner) planApp(
 	if current != nil {
 		currentSettings = current.Settings
 	}
-	changes = append(changes, p.settingsChanges(node, "settings.", doc.Settings, currentSettings)...)
+	bundleSettings := p.withTargetCredential(doc.Settings, currentSettings, matchedBy)
+	changes = append(changes, p.settingsChanges(node, "settings.", bundleSettings, currentSettings)...)
 	setChanges(node, changes)
 	node.Restart = app.ServiceID != "" && restarts(changes)
 	node.Deploy = p.req.Options.DeployChangedSource && slices.Contains(changes, "deployment.source")

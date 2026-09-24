@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
+	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/specservice/specmodel"
 )
@@ -59,17 +60,9 @@ const externalRefPlaceholder = "hivepaas-spec-external:"
 // blocks the import.
 func settingRefs(typ base.SettingType, at, holder string, body any) ([]bundleRef, error) {
 	var externals []*specmodel.ExternalRef
-	readable := withExternalPlaceholders(body, &externals)
-	_, data, err := decodeImportedSetting(specmodel.Block(holder), typ, holder, readable)
-	if errors.Is(err, hperrors.ErrDataVerNewerThanSystemVer) {
-		return nil, nil
-	}
-	if err != nil {
-		return nil, hperrors.Wrap(hperrors.ErrSpecBundleInvalid).WithCause(err).
-			WithExtraDetail("%s: %s does not read as a %s setting", at, holder, typ)
-	}
-	if data == nil {
-		return nil, nil
+	data, err := readBundleSetting(typ, at, holder, withExternalPlaceholders(body, &externals))
+	if err != nil || data == nil {
+		return nil, err
 	}
 	ids := data.GetRefObjectIDs()
 	if ids == nil {
@@ -109,6 +102,22 @@ func settingRefs(typ base.SettingType, at, holder string, body any) ([]bundleRef
 		}
 	}
 	return refs, nil
+}
+
+// readBundleSetting reads one setting body of the bundle as its type. It reads
+// nothing from a newer HivePaaS - SETTING_VERSION_NEWER already blocks the
+// import - and refuses a body that is not its type. External references have to
+// be out of the way first: withExternalPlaceholders.
+func readBundleSetting(typ base.SettingType, at, holder string, body any) (entity.SettingData, error) {
+	_, data, err := decodeImportedSetting(specmodel.Block(holder), typ, holder, body)
+	if errors.Is(err, hperrors.ErrDataVerNewerThanSystemVer) {
+		return nil, nil
+	}
+	if err != nil {
+		return nil, hperrors.Wrap(hperrors.ErrSpecBundleInvalid).WithCause(err).
+			WithExtraDetail("%s: %s does not read as a %s setting", at, holder, typ)
+	}
+	return data, nil
 }
 
 // withExternalPlaceholders copies a body with every external block swapped for

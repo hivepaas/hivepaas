@@ -264,6 +264,16 @@ func exportFixture(t *testing.T) specservice.Service {
 		Key: "DB_PASSWORD", Value: entity.NewEncryptedField("hunter2"),
 	}))
 
+	// The backend is a database, whose credential is a secret HivePaaS owns.
+	kind := &entity.Setting{
+		ID: "kind_1", Type: base.SettingTypeAppKind, Scope: base.ObjectScopeApp,
+		ObjectID: "app_1", Status: base.SettingStatusActive, Version: entity.CurrentAppKindSettingsVersion,
+	}
+	assert.NoError(t, kind.SetData(&entity.AppKindSettings{
+		Category: base.AppCategoryDatabase, Engine: "postgres",
+		Database: &entity.AppKindDatabase{DbName: "app", Username: "app", Password: entity.NewEncryptedField("s3cret")},
+	}))
+
 	apiKey := &entity.Setting{
 		ID: "key_1", Type: base.SettingTypeAPIKey, Scope: base.ObjectScopeGlobal,
 		Name: "ci", Status: base.SettingStatusActive,
@@ -305,7 +315,7 @@ func exportFixture(t *testing.T) specservice.Service {
 		ProjectEnvID: "p1:dev", ParentID: "app_1",
 	}
 
-	all := []*entity.Setting{cert, apiKey, routing, secret, projectVolume, sharedVolume}
+	all := []*entity.Setting{cert, apiKey, routing, secret, kind, projectVolume, sharedVolume}
 
 	svc := New(
 		&fakeAppRepo{apps: []*entity.App{deployed, undeployed, preview}},

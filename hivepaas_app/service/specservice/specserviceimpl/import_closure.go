@@ -77,10 +77,10 @@ func (p *planner) nodeRefs(node *specmodel.PlanNode) ([]bundleRef, error) {
 	if !holdsSettings {
 		return nil, nil
 	}
-	prefix := ""
+	prefix := p.settingsPrefix(node)
 	var deployment *specmodel.Deployment
 	if place, ok := p.apps[node.Path]; ok {
-		prefix, deployment = "settings.", place.doc.Deployment
+		deployment = place.doc.Deployment
 	}
 
 	var refs []bundleRef
@@ -120,6 +120,15 @@ func (p *planner) nodeRefs(node *specmodel.PlanNode) ([]bundleRef, error) {
 		refs = append(refs, more...)
 	}
 	return refs, nil
+}
+
+// settingsPrefix is what a node's changes name its settings under: an app's
+// are beside its deployment, under settings; a settings node holds nothing else.
+func (p *planner) settingsPrefix(node *specmodel.PlanNode) string {
+	if _, ok := p.apps[node.Path]; ok {
+		return "settings."
+	}
+	return ""
 }
 
 // settingNames names every setting of a settings map the way changes name them:

@@ -42296,44 +42296,23 @@
             "type" : "integer"
           },
           "retryBackoffJitter" : {
-            "$ref" : "#/components/schemas/timeutil.Duration"
+            "type" : "string"
           },
           "retryDelay" : {
-            "$ref" : "#/components/schemas/timeutil.Duration"
+            "type" : "string"
           },
           "retryDelayIncr" : {
-            "$ref" : "#/components/schemas/timeutil.Duration"
+            "type" : "string"
           },
           "retryDelayMax" : {
-            "$ref" : "#/components/schemas/timeutil.Duration"
+            "type" : "string"
           },
           "timeout" : {
-            "$ref" : "#/components/schemas/timeutil.Duration"
+            "type" : "string"
           }
         },
         "required" : [ "controlDisabled", "maxRetry", "priority", "retry", "retryBackoffJitter", "retryDelay", "retryDelayIncr", "retryDelayMax", "timeout" ],
         "type" : "object"
-      },
-      "pkg_fileutil.FileMode" : {
-        "enum" : [ 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511, 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511 ],
-        "type" : "integer",
-        "x-enum-comments" : {
-          "ModeAppend" : "a: append-only",
-          "ModeCharDevice" : "c: Unix character device, when ModeDevice is set",
-          "ModeDevice" : "D: device file",
-          "ModeDir" : "d: is a directory",
-          "ModeExclusive" : "l: exclusive use",
-          "ModeIrregular" : "?: non-regular file; nothing else is known about this file",
-          "ModeNamedPipe" : "p: named pipe (FIFO)",
-          "ModePerm" : "Unix permission bits, 0o777",
-          "ModeSetgid" : "g: setgid",
-          "ModeSetuid" : "u: setuid",
-          "ModeSocket" : "S: Unix domain socket",
-          "ModeSticky" : "t: sticky",
-          "ModeSymlink" : "L: symbolic link",
-          "ModeTemporary" : "T: temporary file; Plan 9 only"
-        },
-        "x-enum-varnames" : [ "ModeDir", "ModeAppend", "ModeExclusive", "ModeTemporary", "ModeSymlink", "ModeDevice", "ModeNamedPipe", "ModeSocket", "ModeSetuid", "ModeSetgid", "ModeCharDevice", "ModeSticky", "ModeIrregular", "ModeType", "ModePerm" ]
       },
       "pkg_tasklog.LogFrame" : {
         "properties" : {
@@ -42624,9 +42603,9 @@
         "type" : "object"
       },
       "service_specservice_specmodel.Severity" : {
-        "enum" : [ "warning", "fixable", "skipped", "blocked" ],
+        "enum" : [ "fixable", "skipped", "blocked", "warning" ],
         "type" : "string",
-        "x-enum-varnames" : [ "SeverityWarning", "SeverityFixable", "SeveritySkipped", "SeverityBlocked" ]
+        "x-enum-varnames" : [ "SeverityFixable", "SeveritySkipped", "SeverityBlocked", "SeverityWarning" ]
       },
       "appactiondto.DeployAppDataResp" : {
         "properties" : {
@@ -42743,7 +42722,7 @@
             "type" : "integer"
           },
           "timeout" : {
-            "$ref" : "#/components/schemas/timeutil.Duration"
+            "type" : "string"
           }
         },
         "required" : [ "port", "timeout" ],
@@ -43517,7 +43496,7 @@
             "type" : "object"
           },
           "stopGracePeriod" : {
-            "$ref" : "#/components/schemas/timeutil.Duration"
+            "type" : "string"
           },
           "stopSignal" : {
             "type" : "string"
@@ -44242,7 +44221,7 @@
       "appsettingsdto.HTTPCircuitBreakerConfigReq" : {
         "properties" : {
           "checkPeriod" : {
-            "$ref" : "#/components/schemas/timeutil.Duration"
+            "type" : "string"
           },
           "enabled" : {
             "type" : "boolean"
@@ -44251,10 +44230,10 @@
             "type" : "string"
           },
           "fallbackDuration" : {
-            "$ref" : "#/components/schemas/timeutil.Duration"
+            "type" : "string"
           },
           "recoveryDuration" : {
-            "$ref" : "#/components/schemas/timeutil.Duration"
+            "type" : "string"
           },
           "responseCode" : {
             "type" : "integer"
@@ -44266,7 +44245,7 @@
       "appsettingsdto.HTTPCircuitBreakerConfigResp" : {
         "properties" : {
           "checkPeriod" : {
-            "$ref" : "#/components/schemas/timeutil.Duration"
+            "type" : "string"
           },
           "enabled" : {
             "type" : "boolean"
@@ -44275,10 +44254,10 @@
             "type" : "string"
           },
           "fallbackDuration" : {
-            "$ref" : "#/components/schemas/timeutil.Duration"
+            "type" : "string"
           },
           "recoveryDuration" : {
-            "$ref" : "#/components/schemas/timeutil.Duration"
+            "type" : "string"
           },
           "responseCode" : {
             "type" : "integer"
@@ -44620,7 +44599,7 @@
             "type" : "integer"
           },
           "period" : {
-            "$ref" : "#/components/schemas/timeutil.Duration"
+            "type" : "string"
           }
         },
         "required" : [ "average", "burst", "enabled", "maxInFlightReq", "period" ],
@@ -44641,7 +44620,7 @@
             "type" : "integer"
           },
           "period" : {
-            "$ref" : "#/components/schemas/timeutil.Duration"
+            "type" : "string"
           }
         },
         "required" : [ "average", "burst", "enabled", "maxInFlightReq", "period" ],
@@ -44674,11 +44653,8 @@
             "type" : "boolean"
           },
           "interval" : {
-            "allOf" : [ {
-              "$ref" : "#/components/schemas/timeutil.Duration"
-            } ],
             "description" : "Zero means to inherit. Durations are expressed as integer nanoseconds.",
-            "type" : "object"
+            "type" : "string"
           },
           "mode" : {
             "allOf" : [ {
@@ -44692,13 +44668,13 @@
             "type" : "integer"
           },
           "startInterval" : {
-            "$ref" : "#/components/schemas/timeutil.Duration"
+            "type" : "string"
           },
           "startPeriod" : {
-            "$ref" : "#/components/schemas/timeutil.Duration"
+            "type" : "string"
           },
           "timeout" : {
-            "$ref" : "#/components/schemas/timeutil.Duration"
+            "type" : "string"
           }
         },
         "required" : [ "command", "enabled", "interval", "mode", "retries", "startInterval", "startPeriod", "timeout" ],
@@ -45078,13 +45054,13 @@
             "$ref" : "#/components/schemas/swarm.RestartPolicyCondition"
           },
           "delay" : {
-            "$ref" : "#/components/schemas/timeutil.Duration"
+            "type" : "string"
           },
           "maxAttempts" : {
             "type" : "integer"
           },
           "window" : {
-            "$ref" : "#/components/schemas/timeutil.Duration"
+            "type" : "string"
           }
         },
         "required" : [ "condition", "delay", "maxAttempts", "window" ],
@@ -45247,7 +45223,7 @@
       "appsettingsdto.TmpfsOptions" : {
         "properties" : {
           "mode" : {
-            "$ref" : "#/components/schemas/pkg_fileutil.FileMode"
+            "type" : "string"
           },
           "options" : {
             "items" : {
@@ -45417,7 +45393,7 @@
             "type" : "object"
           },
           "stopGracePeriod" : {
-            "$ref" : "#/components/schemas/timeutil.Duration"
+            "type" : "string"
           },
           "stopSignal" : {
             "type" : "string"
@@ -48285,7 +48261,7 @@
             "type" : "integer"
           },
           "mode" : {
-            "$ref" : "#/components/schemas/pkg_fileutil.FileMode"
+            "type" : "string"
           },
           "size" : {
             "type" : "integer"
@@ -48309,7 +48285,7 @@
             "type" : "integer"
           },
           "mode" : {
-            "$ref" : "#/components/schemas/pkg_fileutil.FileMode"
+            "type" : "string"
           },
           "size" : {
             "type" : "integer"
@@ -48366,7 +48342,7 @@
       "filedto.FileDownloadURLDataResp" : {
         "properties" : {
           "expiration" : {
-            "$ref" : "#/components/schemas/timeutil.Duration"
+            "type" : "string"
           },
           "url" : {
             "type" : "string"
@@ -50600,7 +50576,7 @@
             "type" : "array"
           },
           "creationDelay" : {
-            "$ref" : "#/components/schemas/timeutil.Duration"
+            "type" : "string"
           },
           "enabled" : {
             "type" : "boolean"
@@ -50627,7 +50603,7 @@
             "type" : "array"
           },
           "creationDelay" : {
-            "$ref" : "#/components/schemas/timeutil.Duration"
+            "type" : "string"
           },
           "enabled" : {
             "type" : "boolean"
@@ -52657,7 +52633,7 @@
             "type" : "string"
           },
           "mode" : {
-            "$ref" : "#/components/schemas/pkg_fileutil.FileMode"
+            "type" : "string"
           },
           "name" : {
             "type" : "string"
@@ -52675,7 +52651,7 @@
             "type" : "string"
           },
           "mode" : {
-            "$ref" : "#/components/schemas/pkg_fileutil.FileMode"
+            "type" : "string"
           },
           "name" : {
             "type" : "string"
@@ -52780,7 +52756,7 @@
             "type" : "string"
           },
           "validPeriod" : {
-            "$ref" : "#/components/schemas/timeutil.Duration"
+            "type" : "string"
           }
         },
         "required" : [ "autoObtain", "autoRenew", "certType", "email", "keyType", "validPeriod" ],
@@ -52804,7 +52780,7 @@
             "type" : "string"
           },
           "validPeriod" : {
-            "$ref" : "#/components/schemas/timeutil.Duration"
+            "type" : "string"
           }
         },
         "required" : [ "autoObtain", "autoRenew", "certType", "email", "keyType", "validPeriod" ],
@@ -54558,7 +54534,7 @@
             "type" : "boolean"
           },
           "minSendInterval" : {
-            "$ref" : "#/components/schemas/timeutil.Duration"
+            "type" : "string"
           },
           "name" : {
             "type" : "string"
@@ -54654,7 +54630,7 @@
             "type" : "string"
           },
           "minSendInterval" : {
-            "$ref" : "#/components/schemas/timeutil.Duration"
+            "type" : "string"
           },
           "name" : {
             "type" : "string"
@@ -54882,7 +54858,7 @@
             "type" : "boolean"
           },
           "minSendInterval" : {
-            "$ref" : "#/components/schemas/timeutil.Duration"
+            "type" : "string"
           },
           "name" : {
             "type" : "string"
@@ -55230,7 +55206,7 @@
             "type" : "boolean"
           },
           "interval" : {
-            "$ref" : "#/components/schemas/timeutil.Duration"
+            "type" : "string"
           },
           "kind" : {
             "type" : "string"
@@ -55245,10 +55221,10 @@
             "$ref" : "#/components/schemas/settings_periodicjobdto.PeriodicNotificationReq"
           },
           "retryDelay" : {
-            "$ref" : "#/components/schemas/timeutil.Duration"
+            "type" : "string"
           },
           "timeout" : {
-            "$ref" : "#/components/schemas/timeutil.Duration"
+            "type" : "string"
           }
         },
         "required" : [ "default", "healthcheck", "inheritable", "interval", "kind", "maxRetry", "name", "notification", "retryDelay", "timeout" ],
@@ -55494,7 +55470,7 @@
             "type" : "boolean"
           },
           "interval" : {
-            "$ref" : "#/components/schemas/timeutil.Duration"
+            "type" : "string"
           },
           "kind" : {
             "type" : "string"
@@ -55509,7 +55485,7 @@
             "$ref" : "#/components/schemas/settings_periodicjobdto.PeriodicNotificationResp"
           },
           "retryDelay" : {
-            "$ref" : "#/components/schemas/timeutil.Duration"
+            "type" : "string"
           },
           "size" : {
             "type" : "integer"
@@ -55518,7 +55494,7 @@
             "type" : "string"
           },
           "timeout" : {
-            "$ref" : "#/components/schemas/timeutil.Duration"
+            "type" : "string"
           },
           "type" : {
             "type" : "string"
@@ -55542,7 +55518,7 @@
             "type" : "boolean"
           },
           "minSendInterval" : {
-            "$ref" : "#/components/schemas/timeutil.Duration"
+            "type" : "string"
           },
           "success" : {
             "$ref" : "#/components/schemas/basedto.ObjectIDReq"
@@ -55563,7 +55539,7 @@
             "type" : "boolean"
           },
           "minSendInterval" : {
-            "$ref" : "#/components/schemas/timeutil.Duration"
+            "type" : "string"
           },
           "success" : {
             "$ref" : "#/components/schemas/basedto.NamedObjectResp"
@@ -55587,7 +55563,7 @@
             "type" : "boolean"
           },
           "interval" : {
-            "$ref" : "#/components/schemas/timeutil.Duration"
+            "type" : "string"
           },
           "kind" : {
             "type" : "string"
@@ -55602,10 +55578,10 @@
             "$ref" : "#/components/schemas/settings_periodicjobdto.PeriodicNotificationReq"
           },
           "retryDelay" : {
-            "$ref" : "#/components/schemas/timeutil.Duration"
+            "type" : "string"
           },
           "timeout" : {
-            "$ref" : "#/components/schemas/timeutil.Duration"
+            "type" : "string"
           },
           "updateVer" : {
             "type" : "integer"
@@ -56104,7 +56080,7 @@
             "type" : "string"
           },
           "interval" : {
-            "$ref" : "#/components/schemas/timeutil.Duration"
+            "type" : "string"
           }
         },
         "required" : [ "count", "cronExpr", "endTime", "initialTime", "interval" ],
@@ -56332,22 +56308,22 @@
             "type" : "boolean"
           },
           "retryBackoffJitter" : {
-            "$ref" : "#/components/schemas/timeutil.Duration"
+            "type" : "string"
           },
           "retryDelay" : {
-            "$ref" : "#/components/schemas/timeutil.Duration"
+            "type" : "string"
           },
           "retryDelayIncr" : {
-            "$ref" : "#/components/schemas/timeutil.Duration"
+            "type" : "string"
           },
           "retryDelayMax" : {
-            "$ref" : "#/components/schemas/timeutil.Duration"
+            "type" : "string"
           },
           "schedule" : {
             "$ref" : "#/components/schemas/settings_schedjobdto.ScheduleReq"
           },
           "timeout" : {
-            "$ref" : "#/components/schemas/timeutil.Duration"
+            "type" : "string"
           }
         },
         "required" : [ "app", "command", "commandOutput", "controlDisabled", "default", "inheritable", "jobType", "maxRetry", "name", "notification", "priority", "retryBackoff", "retryBackoffJitter", "retryDelay", "retryDelayIncr", "retryDelayMax", "schedule", "timeout" ],
@@ -56486,16 +56462,16 @@
             "type" : "boolean"
           },
           "retryBackoffJitter" : {
-            "$ref" : "#/components/schemas/timeutil.Duration"
+            "type" : "string"
           },
           "retryDelay" : {
-            "$ref" : "#/components/schemas/timeutil.Duration"
+            "type" : "string"
           },
           "retryDelayIncr" : {
-            "$ref" : "#/components/schemas/timeutil.Duration"
+            "type" : "string"
           },
           "retryDelayMax" : {
-            "$ref" : "#/components/schemas/timeutil.Duration"
+            "type" : "string"
           },
           "schedule" : {
             "$ref" : "#/components/schemas/settings_schedjobdto.ScheduleResp"
@@ -56507,7 +56483,7 @@
             "type" : "string"
           },
           "timeout" : {
-            "$ref" : "#/components/schemas/timeutil.Duration"
+            "type" : "string"
           },
           "type" : {
             "type" : "string"
@@ -56535,7 +56511,7 @@
             "type" : "string"
           },
           "interval" : {
-            "$ref" : "#/components/schemas/timeutil.Duration"
+            "type" : "string"
           }
         },
         "required" : [ "cronExpr", "endTime", "initialTime", "interval" ],
@@ -56554,7 +56530,7 @@
             "type" : "string"
           },
           "interval" : {
-            "$ref" : "#/components/schemas/timeutil.Duration"
+            "type" : "string"
           }
         },
         "required" : [ "cronExpr", "endTime", "initialTime", "interval" ],
@@ -56599,22 +56575,22 @@
             "type" : "boolean"
           },
           "retryBackoffJitter" : {
-            "$ref" : "#/components/schemas/timeutil.Duration"
+            "type" : "string"
           },
           "retryDelay" : {
-            "$ref" : "#/components/schemas/timeutil.Duration"
+            "type" : "string"
           },
           "retryDelayIncr" : {
-            "$ref" : "#/components/schemas/timeutil.Duration"
+            "type" : "string"
           },
           "retryDelayMax" : {
-            "$ref" : "#/components/schemas/timeutil.Duration"
+            "type" : "string"
           },
           "schedule" : {
             "$ref" : "#/components/schemas/settings_schedjobdto.ScheduleReq"
           },
           "timeout" : {
-            "$ref" : "#/components/schemas/timeutil.Duration"
+            "type" : "string"
           },
           "updateVer" : {
             "type" : "integer"
@@ -56854,7 +56830,7 @@
             "type" : "string"
           },
           "mode" : {
-            "$ref" : "#/components/schemas/pkg_fileutil.FileMode"
+            "type" : "string"
           },
           "name" : {
             "type" : "string"
@@ -56872,7 +56848,7 @@
             "type" : "string"
           },
           "mode" : {
-            "$ref" : "#/components/schemas/pkg_fileutil.FileMode"
+            "type" : "string"
           },
           "name" : {
             "type" : "string"
@@ -57265,7 +57241,7 @@
             "$ref" : "#/components/schemas/basedto.ObjectIDReq"
           },
           "validPeriod" : {
-            "$ref" : "#/components/schemas/timeutil.Duration"
+            "type" : "string"
           }
         },
         "required" : [ "acmeProvider", "autoRenew", "caCertificate", "certType", "certificate", "default", "domain", "email", "expireAt", "inheritable", "keyType", "notification", "notifyFrom", "privateKey", "provider", "validPeriod" ],
@@ -57415,7 +57391,7 @@
             "type" : "string"
           },
           "validPeriod" : {
-            "$ref" : "#/components/schemas/timeutil.Duration"
+            "type" : "string"
           }
         },
         "required" : [ "acmeProvider", "autoRenew", "caCertificate", "certType", "certificate", "createdAt", "default", "domain", "email", "expireAt", "id", "inheritable", "inherited", "keyType", "kind", "name", "notification", "notifyFrom", "privateKey", "provider", "renewableFrom", "secretMasked", "size", "status", "type", "updateVer", "updatedAt", "validPeriod" ],
@@ -57472,7 +57448,7 @@
             "type" : "integer"
           },
           "validPeriod" : {
-            "$ref" : "#/components/schemas/timeutil.Duration"
+            "type" : "string"
           }
         },
         "required" : [ "acmeProvider", "autoRenew", "caCertificate", "certType", "certificate", "default", "domain", "email", "expireAt", "inheritable", "keyType", "notification", "notifyFrom", "privateKey", "provider", "updateVer", "validPeriod" ],
@@ -58112,7 +58088,7 @@
             "type" : "integer"
           },
           "period" : {
-            "$ref" : "#/components/schemas/timeutil.Duration"
+            "type" : "string"
           }
         },
         "required" : [ "average", "burst", "enabled", "maxInFlightReq", "period" ],
@@ -58133,7 +58109,7 @@
             "type" : "integer"
           },
           "period" : {
-            "$ref" : "#/components/schemas/timeutil.Duration"
+            "type" : "string"
           }
         },
         "required" : [ "average", "burst", "enabled", "maxInFlightReq", "period" ],
@@ -58160,7 +58136,7 @@
       "system_hpappsettingsdto.HivePaaSPeriodicSettingsReq" : {
         "properties" : {
           "baseInterval" : {
-            "$ref" : "#/components/schemas/timeutil.Duration"
+            "type" : "string"
           },
           "batchSize" : {
             "type" : "integer"
@@ -58172,7 +58148,7 @@
       "system_hpappsettingsdto.HivePaaSPeriodicSettingsResp" : {
         "properties" : {
           "baseInterval" : {
-            "$ref" : "#/components/schemas/timeutil.Duration"
+            "type" : "string"
           },
           "batchSize" : {
             "type" : "integer"
@@ -58220,10 +58196,10 @@
       "system_hpappsettingsdto.HivePaaSTaskSettingsReq" : {
         "properties" : {
           "taskCheckInterval" : {
-            "$ref" : "#/components/schemas/timeutil.Duration"
+            "type" : "string"
           },
           "taskCreateInterval" : {
-            "$ref" : "#/components/schemas/timeutil.Duration"
+            "type" : "string"
           }
         },
         "required" : [ "taskCheckInterval", "taskCreateInterval" ],
@@ -58232,10 +58208,10 @@
       "system_hpappsettingsdto.HivePaaSTaskSettingsResp" : {
         "properties" : {
           "taskCheckInterval" : {
-            "$ref" : "#/components/schemas/timeutil.Duration"
+            "type" : "string"
           },
           "taskCreateInterval" : {
-            "$ref" : "#/components/schemas/timeutil.Duration"
+            "type" : "string"
           }
         },
         "required" : [ "taskCheckInterval", "taskCreateInterval" ],
@@ -58510,11 +58486,8 @@
       "system_hpappsettingsdto.UpdateRoutingSettingsReq" : {
         "properties" : {
           "confirmWindow" : {
-            "allOf" : [ {
-              "$ref" : "#/components/schemas/timeutil.Duration"
-            } ],
             "description" : "ConfirmWindow is how long the change may stay unconfirmed before it is\nundone. Absent means the default; there is no value that turns the trial\noff - see resolveProbationWindow.",
-            "type" : "object"
+            "type" : "string"
           },
           "domains" : {
             "items" : {
@@ -58580,11 +58553,8 @@
             "$ref" : "#/components/schemas/system_hpappsettingsdto.HivePaaSAppSettingsReq"
           },
           "confirmWindow" : {
-            "allOf" : [ {
-              "$ref" : "#/components/schemas/timeutil.Duration"
-            } ],
             "description" : "ConfirmWindow is how long a proxy settings change may stay unconfirmed\nbefore it is undone. Absent means the default; there is no value that turns\nthe trial off. It is ignored when the request leaves the proxy settings\nalone, since nothing else in here can lock the caller out.",
-            "type" : "object"
+            "type" : "string"
           },
           "periodicSettings" : {
             "$ref" : "#/components/schemas/system_hpappsettingsdto.HivePaaSPeriodicSettingsReq"
@@ -59059,11 +59029,8 @@
       "system_traefiksettingsdto.UpdateConfigOptionsReq" : {
         "properties" : {
           "confirmWindow" : {
-            "allOf" : [ {
-              "$ref" : "#/components/schemas/timeutil.Duration"
-            } ],
             "description" : "ConfirmWindow is how long the change may stay unconfirmed before it is\nundone, as a Go duration string (\"5m\"). Clamped server-side, and there is no\nway to ask for no trial at all - see settingsprobationservice.ResolveWindow.",
-            "type" : "object"
+            "type" : "string"
           },
           "startupCommand" : {
             "$ref" : "#/components/schemas/system_traefiksettingsdto.StartupCommandReq"
@@ -59258,7 +59225,7 @@
             "type" : "string"
           },
           "interval" : {
-            "$ref" : "#/components/schemas/timeutil.Duration"
+            "type" : "string"
           }
         },
         "required" : [ "cronExpr", "initialTime", "interval" ],
@@ -59274,7 +59241,7 @@
             "type" : "string"
           },
           "interval" : {
-            "$ref" : "#/components/schemas/timeutil.Duration"
+            "type" : "string"
           }
         },
         "required" : [ "cronExpr", "initialTime", "interval" ],
@@ -59648,7 +59615,7 @@
             "type" : "string"
           },
           "retention" : {
-            "$ref" : "#/components/schemas/timeutil.Duration"
+            "type" : "string"
           },
           "volume" : {
             "$ref" : "#/components/schemas/basedto.ObjectIDReq"
@@ -59673,7 +59640,7 @@
             "type" : "string"
           },
           "retention" : {
-            "$ref" : "#/components/schemas/timeutil.Duration"
+            "type" : "string"
           },
           "volume" : {
             "$ref" : "#/components/schemas/settings.BaseSettingResp"
@@ -60170,7 +60137,7 @@
             "type" : "string"
           },
           "interval" : {
-            "$ref" : "#/components/schemas/timeutil.Duration"
+            "type" : "string"
           }
         },
         "required" : [ "cronExpr", "initialTime", "interval" ],
@@ -60186,7 +60153,7 @@
             "type" : "string"
           },
           "interval" : {
-            "$ref" : "#/components/schemas/timeutil.Duration"
+            "type" : "string"
           }
         },
         "required" : [ "cronExpr", "initialTime", "interval" ],
@@ -60271,7 +60238,7 @@
             "type" : "string"
           },
           "interval" : {
-            "$ref" : "#/components/schemas/timeutil.Duration"
+            "type" : "string"
           }
         },
         "required" : [ "cronExpr", "initialTime", "interval" ],
@@ -60287,7 +60254,7 @@
             "type" : "string"
           },
           "interval" : {
-            "$ref" : "#/components/schemas/timeutil.Duration"
+            "type" : "string"
           }
         },
         "required" : [ "cronExpr", "initialTime", "interval" ],
@@ -60540,22 +60507,22 @@
       "systemsettings_systemcleanupdto.DBObjectRetentionReq" : {
         "properties" : {
           "auditLogs" : {
-            "$ref" : "#/components/schemas/timeutil.Duration"
+            "type" : "string"
           },
           "deletedObjects" : {
-            "$ref" : "#/components/schemas/timeutil.Duration"
+            "type" : "string"
           },
           "deployments" : {
-            "$ref" : "#/components/schemas/timeutil.Duration"
+            "type" : "string"
           },
           "enabled" : {
             "type" : "boolean"
           },
           "sysErrors" : {
-            "$ref" : "#/components/schemas/timeutil.Duration"
+            "type" : "string"
           },
           "tasks" : {
-            "$ref" : "#/components/schemas/timeutil.Duration"
+            "type" : "string"
           }
         },
         "required" : [ "auditLogs", "deletedObjects", "deployments", "enabled", "sysErrors", "tasks" ],
@@ -60564,22 +60531,22 @@
       "systemsettings_systemcleanupdto.DBObjectRetentionResp" : {
         "properties" : {
           "auditLogs" : {
-            "$ref" : "#/components/schemas/timeutil.Duration"
+            "type" : "string"
           },
           "deletedObjects" : {
-            "$ref" : "#/components/schemas/timeutil.Duration"
+            "type" : "string"
           },
           "deployments" : {
-            "$ref" : "#/components/schemas/timeutil.Duration"
+            "type" : "string"
           },
           "enabled" : {
             "type" : "boolean"
           },
           "sysErrors" : {
-            "$ref" : "#/components/schemas/timeutil.Duration"
+            "type" : "string"
           },
           "tasks" : {
-            "$ref" : "#/components/schemas/timeutil.Duration"
+            "type" : "string"
           }
         },
         "required" : [ "auditLogs", "deletedObjects", "deployments", "enabled", "sysErrors", "tasks" ],
@@ -60631,7 +60598,7 @@
             "type" : "string"
           },
           "interval" : {
-            "$ref" : "#/components/schemas/timeutil.Duration"
+            "type" : "string"
           }
         },
         "required" : [ "cronExpr", "initialTime", "interval" ],
@@ -60647,7 +60614,7 @@
             "type" : "string"
           },
           "interval" : {
-            "$ref" : "#/components/schemas/timeutil.Duration"
+            "type" : "string"
           }
         },
         "required" : [ "cronExpr", "initialTime", "interval" ],
@@ -60656,13 +60623,13 @@
       "systemsettings_systemcleanupdto.SystemBackupCleanupReq" : {
         "properties" : {
           "cloudBackupRetention" : {
-            "$ref" : "#/components/schemas/timeutil.Duration"
+            "type" : "string"
           },
           "enabled" : {
             "type" : "boolean"
           },
           "localBackupRetention" : {
-            "$ref" : "#/components/schemas/timeutil.Duration"
+            "type" : "string"
           }
         },
         "required" : [ "cloudBackupRetention", "enabled", "localBackupRetention" ],
@@ -60671,13 +60638,13 @@
       "systemsettings_systemcleanupdto.SystemBackupCleanupResp" : {
         "properties" : {
           "cloudBackupRetention" : {
-            "$ref" : "#/components/schemas/timeutil.Duration"
+            "type" : "string"
           },
           "enabled" : {
             "type" : "boolean"
           },
           "localBackupRetention" : {
-            "$ref" : "#/components/schemas/timeutil.Duration"
+            "type" : "string"
           }
         },
         "required" : [ "cloudBackupRetention", "enabled", "localBackupRetention" ],
@@ -60689,7 +60656,7 @@
             "type" : "boolean"
           },
           "repoCacheRetention" : {
-            "$ref" : "#/components/schemas/timeutil.Duration"
+            "type" : "string"
           }
         },
         "required" : [ "enabled", "repoCacheRetention" ],
@@ -60701,7 +60668,7 @@
             "type" : "boolean"
           },
           "repoCacheRetention" : {
-            "$ref" : "#/components/schemas/timeutil.Duration"
+            "type" : "string"
           }
         },
         "required" : [ "enabled", "repoCacheRetention" ],
@@ -60783,13 +60750,13 @@
       "systemsettings_systemcleanupdto.SystemClusterCleanupReq" : {
         "properties" : {
           "buildCacheRetention" : {
-            "$ref" : "#/components/schemas/timeutil.Duration"
+            "type" : "string"
           },
           "enabled" : {
             "type" : "boolean"
           },
           "generalRetention" : {
-            "$ref" : "#/components/schemas/timeutil.Duration"
+            "type" : "string"
           },
           "pruneBuildCache" : {
             "type" : "boolean"
@@ -60813,13 +60780,13 @@
       "systemsettings_systemcleanupdto.SystemClusterCleanupResp" : {
         "properties" : {
           "buildCacheRetention" : {
-            "$ref" : "#/components/schemas/timeutil.Duration"
+            "type" : "string"
           },
           "enabled" : {
             "type" : "boolean"
           },
           "generalRetention" : {
-            "$ref" : "#/components/schemas/timeutil.Duration"
+            "type" : "string"
           },
           "pruneBuildCache" : {
             "type" : "boolean"
@@ -62095,11 +62062,6 @@
         "enum" : [ "new", "allocated", "pending", "assigned", "accepted", "preparing", "ready", "starting", "running", "complete", "shutdown", "failed", "rejected", "remove", "orphaned" ],
         "type" : "string",
         "x-enum-varnames" : [ "TaskStateNew", "TaskStateAllocated", "TaskStatePending", "TaskStateAssigned", "TaskStateAccepted", "TaskStatePreparing", "TaskStateReady", "TaskStateStarting", "TaskStateRunning", "TaskStateComplete", "TaskStateShutdown", "TaskStateFailed", "TaskStateRejected", "TaskStateRemove", "TaskStateOrphaned" ]
-      },
-      "timeutil.Duration" : {
-        "enum" : [ -9223372036854775808, 9223372036854775807, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000, -9223372036854775808, 9223372036854775807, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000 ],
-        "type" : "integer",
-        "x-enum-varnames" : [ "minDuration", "maxDuration", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour", "minDuration", "maxDuration", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour" ]
       },
       "uploadFiles_request" : {
         "properties" : {

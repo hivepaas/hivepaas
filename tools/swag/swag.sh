@@ -52,7 +52,7 @@ EXCLUDE_ITEMS=$(IFS=,; echo "${EXCLUDE_API_DIRS[*]}")
 # Gen swagger.json
 docker run --entrypoint "/go/bin/swag" --rm --volume "${PWD}":/app --volume "${HOME}/go/pkg/mod":/go/pkg/mod ${DEVTOOLS_IMAGE} init \
   -g hivepaas_app/interface/api/server/server.go -o docs/openapi --outputTypes json \
-  --parseDependencyLevel 1 --requiredByDefault \
+  --parseDependencyLevel 1 --requiredByDefault --overridesFile .swaggo \
   --exclude "${EXCLUDE_ITEMS}"
 
 # Shorten type names in swagger.json before conversion

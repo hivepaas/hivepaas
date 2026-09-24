@@ -10,6 +10,11 @@ const (
 	SeveritySkipped Severity = "skipped"
 	// SeverityBlocked stops everything.
 	SeverityBlocked Severity = "blocked"
+	// SeverityWarning clears nothing, but the result may not be what the operator
+	// expects, so applying an import still needs their acceptance. Declared with
+	// the others: swag lists an enum's values in the order it reads the files
+	// declaring them, and that order changes between runs.
+	SeverityWarning Severity = "warning"
 )
 
 // Issue codes. Export emits the first four; the rest belong to the import

@@ -53,11 +53,11 @@ export class UsersApi extends BaseApi {
         request: Users_FindManyPaginated_Req,
         signal?: AbortSignal,
     ): Promise<Result<Users_FindManyPaginated_Res, Error>> {
-        const { search, pagination, sorting } = request.data;
+        const { search, pagination, sorting, role } = request.data;
 
         const query = this.queryBuilder.getInstance();
 
-        query.pagination(pagination).sorting(sorting).search(search);
+        query.pagination(pagination).sorting(sorting).search(search).filterBy({ role });
 
         return lastValueFrom(
             from(

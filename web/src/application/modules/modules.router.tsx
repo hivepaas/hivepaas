@@ -5,6 +5,7 @@ import { ModuleLayout } from "@application/shared/layouts/module";
 import { Page404NotFound } from "@application/shared/pages";
 
 import { clusterRouter } from "./cluster/cluster.router";
+import { homeRouter } from "./home";
 import { operationsRouter } from "./operations";
 import { projectsRouter } from "./projects/projects.router";
 import { settingsRouter } from "./settings/settings.router";
@@ -25,6 +26,7 @@ export const modulesRouter: RouteObject = {
         </ModuleLayout>
     ),
     children: [
+        homeRouter,
         userManagementRouter,
         clusterRouter,
         projectsRouter,

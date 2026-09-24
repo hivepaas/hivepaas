@@ -3,55 +3,8 @@ import { type PropsWithChildren } from "react";
 import { useLocation, useMatch, useSearchParams } from "react-router";
 
 import { AppNavigate } from "@application/shared/components";
-import { MODULE_IDS, ROUTE } from "@application/shared/constants";
+import { ROUTE } from "@application/shared/constants";
 import { useProfileContext } from "@application/shared/context";
-import {
-    type ModuleId,
-    type ModulePermission,
-    type ProjectPermission,
-    useConditionalModuleCollections,
-    useConditionalProjectCollections,
-} from "@application/shared/permissions";
-
-const DEFAULT_MODULE_ROUTES = [
-    {
-        moduleId: MODULE_IDS.User,
-        route: ROUTE.userManagement.users.$route,
-    },
-    {
-        moduleId: MODULE_IDS.Project,
-        route: ROUTE.projects.list.$route,
-    },
-    {
-        moduleId: MODULE_IDS.Cluster,
-        route: ROUTE.cluster.nodes.$route,
-    },
-    {
-        moduleId: MODULE_IDS.Settings,
-        route: ROUTE.settings.basicAuth.$route,
-    },
-    {
-        moduleId: MODULE_IDS.System,
-        route: ROUTE.systemSettings.hivepaas.general.$route,
-    },
-] as const;
-
-function hasReadableProjectAccess(projectPermissions: readonly ProjectPermission[]) {
-    return projectPermissions.some(project => project.actions.read);
-}
-
-function getDefaultRoute(
-    modulePermissions: ReadonlyMap<ModuleId, ModulePermission>,
-    projectPermissions: readonly ProjectPermission[],
-) {
-    return (
-        DEFAULT_MODULE_ROUTES.find(
-            item =>
-                modulePermissions.get(item.moduleId)?.actions.read === true ||
-                (item.moduleId === MODULE_IDS.Project && hasReadableProjectAccess(projectPermissions)),
-        )?.route ?? ROUTE.currentUser.profile.$route
-    );
-}
 
 function normalizePathname(pathname: string) {
     const withLeadingSlash = pathname.startsWith("/") ? pathname : `/${pathname}`;
@@ -145,8 +98,6 @@ function getCurrentPath(location: ReturnType<typeof useLocation>) {
 
 export function AuthRouteProtection({ children }: PropsWithChildren) {
     const { profile } = useProfileContext();
-    const { map: modulePermissionMap } = useConditionalModuleCollections();
-    const { list: projectPermissions } = useConditionalProjectCollections();
 
     const location = useLocation();
 
@@ -161,7 +112,8 @@ export function AuthRouteProtection({ children }: PropsWithChildren) {
     if (profile && (isMain || isAuthGroup)) {
         return (
             <AppNavigate.Basic
-                to={safeNextPath ?? getDefaultRoute(modulePermissionMap, projectPermissions)}
+                // Every signed-in user has a home page, showing each only their part.
+                to={safeNextPath ?? ROUTE.home.$route}
                 replace
             />
         );

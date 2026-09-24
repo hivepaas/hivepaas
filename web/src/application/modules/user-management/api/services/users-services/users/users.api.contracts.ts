@@ -12,6 +12,7 @@ export type Users_FindManyPaginated_Req = ApiRequestBase<{
     pagination?: PaginationState;
     sorting?: SortingState;
     search?: string;
+    role?: EUserRole[];
 }>;
 
 export type Users_FindManyPaginated_Res = ApiResponsePaginated<UserBase>;

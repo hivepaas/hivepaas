@@ -16,6 +16,7 @@ import {
     Globe,
     Hammer,
     HardDrive,
+    House,
     Key,
     KeyRound,
     Layers,
@@ -84,6 +85,14 @@ interface SidebarItem {
 }
 
 const navMain: SidebarItem[] = [
+    {
+        // Every signed-in user has a home page: it shows each of them only their part.
+        title: "Home",
+        route: ROUTE.home.$route,
+        pattern: ROUTE.home.$pattern,
+        icon: House,
+        alwaysVisible: true,
+    },
     {
         title: "Projects",
         route: ROUTE.projects.list.$route,

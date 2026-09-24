@@ -73,6 +73,14 @@ export const ROUTE = {
     },
 
     /**
+     * Home: where a signed-in user lands
+     */
+    home: {
+        $pattern: "home",
+        $route: "/home/",
+    },
+
+    /**
      * Cluster
      */
     cluster: {

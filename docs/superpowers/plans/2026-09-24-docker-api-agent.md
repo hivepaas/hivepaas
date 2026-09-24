@@ -60,6 +60,7 @@
 **Files:**
 - Modify: `hivepaas_app/base/setting.go`
 - Create: `hivepaas_app/entity/setting_app_docker_api.go`
+- Create: `hivepaas_app/entity/setting_app_docker_api_migration.go`
 - Modify: `hivepaas_app/entity/setting_spec.go`
 - Modify: `hivepaas_app/service/specservice/specmodel/singleton.go`
 - Modify: `hivepaas_app/service/specservice/specserviceimpl/import_policy.go`
@@ -133,9 +134,13 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 )
 
-// DockerAPINetworkEnv, in AppDockerAPISettings.Networks, is the app's own
-// project-env network.
-const DockerAPINetworkEnv = "env"
+const (
+	CurrentAppDockerAPIVersion = 1
+
+	// DockerAPINetworkEnv, in AppDockerAPISettings.Networks, is the app's own
+	// project-env network.
+	DockerAPINetworkEnv = "env"
+)
 
 var _ = registerSettingParser(base.SettingTypeAppDockerAPI, &appDockerAPISettingsParser{})
 
@@ -192,6 +197,33 @@ func (s *Setting) AsAppDockerAPISettings() (*AppDockerAPISettings, error) {
 
 func (s *Setting) MustAsAppDockerAPISettings() *AppDockerAPISettings {
 	return gofn.Must(s.AsAppDockerAPISettings())
+}
+```
+
+Every setting type migrates its stored data between versions.
+`hivepaas_app/entity/setting_app_docker_api_migration.go`:
+
+```go
+package entity
+
+import (
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
+)
+
+func (s *AppDockerAPISettings) Migrate(setting *Setting) (hasChange bool, err error) {
+	if setting.Version == CurrentAppDockerAPIVersion {
+		return false, nil
+	}
+	if setting.Version > CurrentAppDockerAPIVersion {
+		return false, hperrors.Wrap(hperrors.ErrDataVerNewerThanSystemVer)
+	}
+
+	// Version 1 is the first, so an older row is one written before versions
+	// were set: the data is already in its shape.
+	setting.Version = CurrentAppDockerAPIVersion
+	setting.UpdateVer++
+	setting.MustSetData(s)
+	return true, nil
 }
 ```
 

@@ -24,8 +24,9 @@ type importPolicy struct {
 }
 
 const (
-	reasonSchedulesTasks = "writing it schedules tasks, which import does not do yet"
-	reasonRunsAService   = "it configures a service HivePaaS runs, which import does not restart yet"
+	reasonSchedulesTasks  = "writing it schedules tasks, which import does not do yet"
+	reasonRunsAService    = "it configures a service HivePaaS runs, which import does not restart yet"
+	reasonGrantsDockerAPI = "it grants the Docker API, and import does not check who may grant it yet"
 )
 
 var importPolicies = map[base.SettingType]importPolicy{
@@ -68,6 +69,7 @@ var importPolicies = map[base.SettingType]importPolicy{
 
 	base.SettingTypeSchedJob:          {skip: reasonSchedulesTasks},
 	base.SettingTypePeriodicJob:       {skip: reasonSchedulesTasks},
+	base.SettingTypeAppDockerAPI:      {skip: reasonGrantsDockerAPI},
 	base.SettingTypeBackupRepoCleanup: {skip: reasonSchedulesTasks},
 	base.SettingTypeSSLRenewal:        {skip: reasonSchedulesTasks},
 	base.SettingTypeSystemBackup:      {skip: reasonSchedulesTasks},

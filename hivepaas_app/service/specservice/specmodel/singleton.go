@@ -20,6 +20,7 @@ var singletonBlockNames = map[base.SettingType]string{
 	base.SettingTypeApp:           "app",
 	base.SettingTypeAppClone:      "clone",
 	base.SettingTypeAppDeployment: "source", // lifted into deployment.source
+	base.SettingTypeAppDockerAPI:  "dockerApi",
 	base.SettingTypeAppFeatures:   "features",
 	base.SettingTypeAppKind:       "kind",
 	base.SettingTypeAppPlacement:  "placement",

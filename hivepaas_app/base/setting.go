@@ -11,6 +11,7 @@ const (
 	SettingTypeApp               SettingType = "app"
 	SettingTypeAppClone          SettingType = "app-clone"
 	SettingTypeAppDeployment     SettingType = "app-deployment"
+	SettingTypeAppDockerAPI      SettingType = "app-docker-api"
 	SettingTypeAppFeatures       SettingType = "app-features"
 	SettingTypeAppKind           SettingType = "app-kind"
 	SettingTypeAppPlacement      SettingType = "app-placement"

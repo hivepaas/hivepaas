@@ -177,6 +177,7 @@ var (
 		base.SettingTypeAcmeDnsProvider,
 		base.SettingTypeAppClone,
 		base.SettingTypeAppDeployment,
+		base.SettingTypeAppDockerAPI,
 		base.SettingTypeAppFeatures,
 		base.SettingTypeAppKind,
 		base.SettingTypeAppPlacement,

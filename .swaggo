@@ -1,0 +1,11 @@
+// Global type overrides for swag (tools/swag/swag.sh passes this file).
+//
+// Both types below are declared over a standard library type - `type FileMode
+// os.FileMode`, `type Duration time.Duration` - so swag reads each as the integer
+// enum of the constants it finds for the underlying type, collected from every
+// package that declares them, in an order that changes between runs: the
+// generated file differed on every `make gen-swag`. On the wire they are neither
+// integers nor enums. MarshalJSON writes a string: an octal mode such as "0755",
+// a duration such as "1h30m".
+replace github.com/hivepaas/hivepaas/hivepaas_app/pkg/fileutil.FileMode string
+replace github.com/hivepaas/hivepaas/hivepaas_app/pkg/timeutil.Duration string

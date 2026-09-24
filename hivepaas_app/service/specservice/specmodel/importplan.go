@@ -33,10 +33,6 @@ const (
 	CodeOwnerNotFound   = "OWNER_NOT_FOUND"
 )
 
-// SeverityWarning clears nothing, but the result may not be what the operator
-// expects, so applying still needs their acceptance.
-const SeverityWarning Severity = "warning"
-
 // Selection is the part of a bundle an import takes: node paths, each naming
 // its node and everything below it. A segment may be "*". Exclude wins, and an
 // empty Include selects everything.

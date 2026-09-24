@@ -22,6 +22,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/interface/api/handler/devhelperhandler"
 	"github.com/hivepaas/hivepaas/hivepaas_app/interface/api/handler/filehandler"
 	"github.com/hivepaas/hivepaas/hivepaas_app/interface/api/handler/hivepaashandler"
+	"github.com/hivepaas/hivepaas/hivepaas_app/interface/api/handler/homehandler"
 	"github.com/hivepaas/hivepaas/hivepaas_app/interface/api/handler/imagehandler"
 	"github.com/hivepaas/hivepaas/hivepaas_app/interface/api/handler/projectenvhandler"
 	"github.com/hivepaas/hivepaas/hivepaas_app/interface/api/handler/projectenvsettingshandler"
@@ -54,6 +55,7 @@ type HandlerRegistry struct {
 	devHelperHandler          *devhelperhandler.Handler
 	fileHandler               *filehandler.Handler
 	hivepaasHandler           *hivepaashandler.Handler
+	homeHandler               *homehandler.Handler
 	imageHandler              *imagehandler.Handler
 	projectEnvHandler         *projectenvhandler.Handler
 	projectEnvSettingsHandler *projectenvsettingshandler.Handler
@@ -86,6 +88,7 @@ func NewHandlerRegistry(
 	devHelperHandler *devhelperhandler.Handler,
 	fileHandler *filehandler.Handler,
 	hivepaasHandler *hivepaashandler.Handler,
+	homeHandler *homehandler.Handler,
 	imageHandler *imagehandler.Handler,
 	projectEnvHandler *projectenvhandler.Handler,
 	projectEnvSettingsHandler *projectenvsettingshandler.Handler,
@@ -117,6 +120,7 @@ func NewHandlerRegistry(
 		devHelperHandler:          devHelperHandler,
 		fileHandler:               fileHandler,
 		hivepaasHandler:           hivepaasHandler,
+		homeHandler:               homeHandler,
 		imageHandler:              imageHandler,
 		projectEnvHandler:         projectEnvHandler,
 		projectEnvSettingsHandler: projectEnvSettingsHandler,
@@ -181,6 +185,7 @@ func (s *HTTPServer) registerRoutes() {
 	s.registerImageRoutes(apiGroup)
 	s.registerAppTemplateRoutes(apiGroup)
 	s.registerSupportRoutes(apiGroup)
+	s.registerHomeRoutes(apiGroup)
 	s.registerSpecRoutes(apiGroup)
 }
 

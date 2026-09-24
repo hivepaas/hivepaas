@@ -23,6 +23,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/interface/api/handler/devhelperhandler"
 	"github.com/hivepaas/hivepaas/hivepaas_app/interface/api/handler/filehandler"
 	"github.com/hivepaas/hivepaas/hivepaas_app/interface/api/handler/hivepaashandler"
+	"github.com/hivepaas/hivepaas/hivepaas_app/interface/api/handler/homehandler"
 	"github.com/hivepaas/hivepaas/hivepaas_app/interface/api/handler/imagehandler"
 	"github.com/hivepaas/hivepaas/hivepaas_app/interface/api/handler/projectbasehandler"
 	"github.com/hivepaas/hivepaas/hivepaas_app/interface/api/handler/projectenvhandler"
@@ -53,6 +54,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/approutingservice/approutingserviceimpl"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/appservice/appserviceimpl"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/apptemplateservice/apptemplateserviceimpl"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/attentionservice/attentionserviceimpl"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/auditservice/auditserviceimpl"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/backuprepocleanupservice/backuprepocleanupserviceimpl"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/backupreposervice/backupreposerviceimpl"
@@ -131,6 +133,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/cluster/volumeuc"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/devhelperuc"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/fileuc"
+	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/homeuc"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/projectenvsettingsuc"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/projectenvuc"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/projectsettingsuc"
@@ -260,6 +263,7 @@ var Provides = []any{
 	sessionhandler.New,
 	settinghandler.New,
 	supporthandler.New,
+	homehandler.New,
 	systemhandler.New,
 	systemsettingshandler.New,
 	spechandler.New,
@@ -324,6 +328,7 @@ var Provides = []any{
 	sslprovideruc.New,
 	sslrenewaluc.New,
 	supportuc.New,
+	homeuc.New,
 	syserroruc.New,
 	sysstatusuc.New,
 	systembackupuc.New,
@@ -370,6 +375,7 @@ var Provides = []any{
 	loggingserviceimpl.New,
 	registryserviceimpl.New,
 	systemappserviceimpl.New,
+	attentionserviceimpl.New,
 	networkserviceimpl.New,
 	nodeexecserviceimpl.New,
 	notificationserviceimpl.New,

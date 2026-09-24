@@ -1981,6 +1981,46 @@
         "tags" : [ "files" ]
       }
     },
+    "/home/attention" : {
+      "get" : {
+        "description" : "Gets what needs attention across the cluster - apps not running or restarting, nodes down\nor given more memory than they have - narrowed to what the caller may see. Any signed-in\nuser may ask: each item is checked against the screen it leads to.",
+        "operationId" : "getHomeAttention",
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/homedto.GetHomeAttentionResp"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "400" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Bad Request"
+          },
+          "500" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Internal Server Error"
+          }
+        },
+        "summary" : "Gets what needs attention",
+        "tags" : [ "home" ]
+      }
+    },
     "/images/{imageID}" : {
       "get" : {
         "description" : "Gets an image file",
@@ -48586,6 +48626,90 @@
           }
         },
         "required" : [ "data", "meta" ],
+        "type" : "object"
+      },
+      "homedto.AttentionItemResp" : {
+        "properties" : {
+          "app" : {
+            "$ref" : "#/components/schemas/basedto.NamedObjectResp"
+          },
+          "canAct" : {
+            "description" : "CanAct is whether the user may change what the item is about, beyond\nlooking at it: the screen it leads to lets them act.",
+            "type" : "boolean"
+          },
+          "desired" : {
+            "type" : "integer"
+          },
+          "env" : {
+            "type" : "string"
+          },
+          "kind" : {
+            "description" : "Kind is app-not-running, app-restarting, node-down or node-overcommitted.",
+            "type" : "string"
+          },
+          "lastError" : {
+            "type" : "string"
+          },
+          "memoryLimitsBytes" : {
+            "type" : "integer"
+          },
+          "memoryTotalBytes" : {
+            "type" : "integer"
+          },
+          "nodeState" : {
+            "type" : "string"
+          },
+          "project" : {
+            "$ref" : "#/components/schemas/basedto.NamedObjectResp"
+          },
+          "restarts" : {
+            "type" : "integer"
+          },
+          "running" : {
+            "type" : "integer"
+          },
+          "scope" : {
+            "description" : "Scope is where it is fixed: app (the app's screens), system or cluster.",
+            "type" : "string"
+          },
+          "severity" : {
+            "description" : "Severity is critical or warning.",
+            "type" : "string"
+          },
+          "since" : {
+            "type" : "string"
+          },
+          "subject" : {
+            "description" : "Subject names what it is about: an app, a system service, a node.",
+            "type" : "string"
+          }
+        },
+        "required" : [ "app", "canAct", "desired", "env", "kind", "lastError", "memoryLimitsBytes", "memoryTotalBytes", "nodeState", "project", "restarts", "running", "scope", "severity", "since", "subject" ],
+        "type" : "object"
+      },
+      "homedto.GetHomeAttentionResp" : {
+        "properties" : {
+          "data" : {
+            "$ref" : "#/components/schemas/homedto.HomeAttentionDataResp"
+          },
+          "meta" : {
+            "$ref" : "#/components/schemas/basedto.Meta"
+          }
+        },
+        "required" : [ "data", "meta" ],
+        "type" : "object"
+      },
+      "homedto.HomeAttentionDataResp" : {
+        "properties" : {
+          "items" : {
+            "description" : "Items is what needs attention, the most severe first.",
+            "items" : {
+              "$ref" : "#/components/schemas/homedto.AttentionItemResp"
+            },
+            "type" : "array"
+          }
+        },
+        "required" : [ "items" ],
         "type" : "object"
       },
       "projectenvsettingsdto.ComputeProjectEnvEnvVarsReq" : {

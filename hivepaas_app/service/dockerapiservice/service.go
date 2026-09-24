@@ -28,12 +28,17 @@ type Service interface {
 	// AppNetworkID is the id of the app's own network, "" when it has none.
 	AppNetworkID(ctx context.Context, appID string) (string, error)
 	// ApplyToService gives an app's service spec what its access needs - its
-	// socket and its network - or takes them away when it has none.
+	// socket and its network, or in host mode the node's own socket - or takes
+	// them away when it has none.
 	ApplyToService(ctx context.Context, db database.IDB, appID string, spec *swarm.ServiceSpec) error
-	// DetachFromService takes an app's socket and network off a spec: a clone's,
-	// which starts as a copy of that app's.
+	// DetachFromService takes an app's socket, the node's socket of host mode,
+	// and the app's network off a spec: a clone's, which starts as a copy of that
+	// app's.
 	DetachFromService(ctx context.Context, appID string, spec *swarm.ServiceSpec) error
 	// RemoveApp removes what an app's access made: its children and socket
 	// volumes on every node, and its network. Its setting goes with the app's.
 	RemoveApp(ctx context.Context, appID string) error
+	// HostModeApps are the apps given the node's own socket, each with its
+	// project and env: what the security settings list.
+	HostModeApps(ctx context.Context, db database.IDB) ([]*entity.App, error)
 }

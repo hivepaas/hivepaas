@@ -77,6 +77,9 @@ func validateDockerAPI(t *Template, p *problems) {
 		if problem = specmodel.DockerAPIProblem(access); problem != "" {
 			p.add("%s.%s", where, problem)
 		}
+		if access.IsHostMode() {
+			p.add("%s.%s", where, specmodel.HostModeFromTemplate)
+		}
 	}
 	for _, version := range t.Versions {
 		if version == nil || version.Override == nil {

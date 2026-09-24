@@ -75,6 +75,13 @@ func (s *service) ApplyToService(ctx context.Context, db database.IDB, appID str
 	if access == nil {
 		return s.DetachFromService(ctx, appID, spec)
 	}
+	if access.IsHostMode() {
+		if err = s.DetachFromService(ctx, appID, spec); err != nil {
+			return err
+		}
+		dockerapiservice.AttachHost(spec)
+		return nil
+	}
 	networkID, err := s.EnsureNetwork(ctx, appID)
 	if err != nil {
 		return err

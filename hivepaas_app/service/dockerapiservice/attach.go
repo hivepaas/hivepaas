@@ -13,9 +13,22 @@ func SocketMount(appID string) mount.Mount {
 	return mount.Mount{Type: mount.TypeVolume, Source: SocketVolumeName(appID), Target: SocketMountTarget}
 }
 
-// IsSocketMount reports a mount of any app's socket volume.
+// HostSocketMount is the mount host mode gives an app: the node's own socket.
+func HostSocketMount() mount.Mount {
+	return mount.Mount{Type: mount.TypeBind, Source: HostSocketPath, Target: HostSocketPath}
+}
+
+// IsSocketMount reports a mount Docker API access gives an app: any app's socket
+// volume, or the node's own socket where host mode binds it. A bind of the
+// socket anywhere else is the app's own mount, not the access's.
 func IsSocketMount(m *mount.Mount) bool {
-	return m.Type == mount.TypeVolume && strings.HasPrefix(m.Source, SocketVolumePrefix)
+	switch m.Type { //nolint:exhaustive // only two kinds of mount are access's
+	case mount.TypeVolume:
+		return strings.HasPrefix(m.Source, SocketVolumePrefix)
+	case mount.TypeBind:
+		return m.Source == HostSocketPath && m.Target == HostSocketPath
+	}
+	return false
 }
 
 // IsAppNetworkName reports the name of any app's own network.
@@ -28,7 +41,8 @@ func isSocketMount(m mount.Mount) bool {
 }
 
 // Attach gives a service spec an app's socket and its network, once each. A
-// socket of another app - the one a clone was copied from - is replaced.
+// socket of another app - the one a clone was copied from - is replaced, and so
+// is the node's own socket of host mode.
 func Attach(spec *swarm.ServiceSpec, appID, networkID string) {
 	container := spec.TaskTemplate.ContainerSpec
 	if container == nil {
@@ -44,8 +58,20 @@ func Attach(spec *swarm.ServiceSpec, appID, networkID string) {
 	}
 }
 
-// Detach takes every socket mount off a spec, and the attachment to networkID
-// when there is one.
+// AttachHost gives a service spec the node's own socket, once, in place of any
+// socket volume. The app's network is Detach's to take away: this does not
+// know its id.
+func AttachHost(spec *swarm.ServiceSpec) {
+	container := spec.TaskTemplate.ContainerSpec
+	if container == nil {
+		container = &swarm.ContainerSpec{}
+		spec.TaskTemplate.ContainerSpec = container
+	}
+	container.Mounts = append(slices.DeleteFunc(container.Mounts, isSocketMount), HostSocketMount())
+}
+
+// Detach takes every socket mount off a spec, the node's own socket among them,
+// and the attachment to networkID when there is one.
 func Detach(spec *swarm.ServiceSpec, networkID string) {
 	if container := spec.TaskTemplate.ContainerSpec; container != nil {
 		container.Mounts = slices.DeleteFunc(container.Mounts, isSocketMount)

@@ -22,6 +22,10 @@ const (
 	// of dockerproxy.SocketPath.
 	SocketMountTarget = "/var/run/hivepaas"
 
+	// HostSocketPath is the node's own Docker socket, which host mode binds at
+	// the same path in the app: where apps that need it look by default.
+	HostSocketPath = "/var/run/docker.sock"
+
 	// DefaultContainers, DefaultMemory and DefaultNanoCPUs are an app's limits
 	// when its setting names none. DefaultCPUs is DefaultNanoCPUs as the setting
 	// writes it.

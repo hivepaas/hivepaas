@@ -67,6 +67,25 @@ func TestDockerAPIProblem(t *testing.T) {
 	}
 }
 
+// Host mode takes nothing of the proxy's policy, and there is no third mode.
+func TestDockerAPIProblemOfTheMode(t *testing.T) {
+	assert.Empty(t, DockerAPIProblem(&entity.AppDockerAPISettings{Mode: entity.DockerAPIModeHost}))
+	assert.Empty(t, DockerAPIProblem(&entity.AppDockerAPISettings{
+		Mode: entity.DockerAPIModeProxy, Images: []string{"alpine"},
+	}))
+	assert.Contains(t, DockerAPIProblem(&entity.AppDockerAPISettings{Mode: "root", Images: []string{"alpine"}}),
+		"settings.dockerApi.mode")
+}
+
+// The node's own socket is given by an administrator, never by a document a
+// template renders.
+func TestCheckBuildableRefusesHostMode(t *testing.T) {
+	err := CheckBuildable(decodeDoc(t, "settings:\n  dockerApi: {mode: host}\n"))
+
+	assert.ErrorIs(t, err, hperrors.ErrSpecBlockInvalid)
+	assert.Contains(t, buildableErrorDetail(t, err), "settings.dockerApi.mode")
+}
+
 func TestCheckBuildableTakesTheDockerAPIBlock(t *testing.T) {
 	doc := decodeDoc(t, `
 deployment:

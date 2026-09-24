@@ -65,3 +65,26 @@ func TestAnImageAddedToEveryImageDoesNotWiden(t *testing.T) {
 
 	assert.False(t, Widens(prev, next))
 }
+
+// Host mode covers everything the proxy could allow: entering it widens,
+// leaving it never does.
+func TestWidensAcrossModes(t *testing.T) {
+	proxy := &entity.AppDockerAPISettings{Images: []string{"*"}, Limits: entity.AppDockerAPILimits{Containers: 50}}
+	host := &entity.AppDockerAPISettings{Mode: entity.DockerAPIModeHost}
+
+	assert.True(t, Widens(proxy, host))
+	assert.True(t, Widens(nil, host))
+	assert.False(t, Widens(host, proxy))
+	assert.False(t, Widens(host, host))
+}
+
+func TestEntersHostMode(t *testing.T) {
+	proxy := &entity.AppDockerAPISettings{Images: []string{"*"}}
+	host := &entity.AppDockerAPISettings{Mode: entity.DockerAPIModeHost}
+
+	assert.True(t, EntersHostMode(nil, host), "from no access, or from host mode turned off")
+	assert.True(t, EntersHostMode(proxy, host))
+	assert.False(t, EntersHostMode(host, host))
+	assert.False(t, EntersHostMode(host, proxy))
+	assert.False(t, EntersHostMode(nil, proxy))
+}

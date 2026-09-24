@@ -56,6 +56,17 @@ func TestDockerAPIMayNotDependOnWhatAPersonFillsIn(t *testing.T) {
 	assert.Contains(t, errorDetail(t, tmpl.Validate("autobase.yaml")), "app.settings.dockerApi: a placeholder here")
 }
 
+// A template never gives its app the node's own socket: that is an
+// administrator's choice, on the app's screen.
+func TestATemplateMayNotAskForTheNodesSocket(t *testing.T) {
+	tmpl, err := DecodeTemplate([]byte(strings.Replace(dockerAPITemplateYAML, "images: [autobase/automation]",
+		"mode: host\n      images: [autobase/automation]", 1)))
+	if !assert.NoError(t, err) {
+		t.FailNow()
+	}
+	assert.Contains(t, errorDetail(t, tmpl.Validate("autobase.yaml")), "app.settings.dockerApi.mode")
+}
+
 func TestAVersionMayNotChangeTheDockerAPI(t *testing.T) {
 	tmpl, err := DecodeTemplate([]byte(strings.Replace(dockerAPITemplateYAML,
 		`default: true, image: "autobase/console:2.11.0"}`,

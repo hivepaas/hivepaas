@@ -31,6 +31,7 @@ const (
 )
 
 var (
+	dockerAPIModes    = []string{"", entity.DockerAPIModeProxy, entity.DockerAPIModeHost}
 	dockerAPINetworks = []string{entity.DockerAPINetworkEnv}
 	dockerAPIGroups   = []string{string(dockerproxy.GroupExec), string(dockerproxy.GroupFiles),
 		string(dockerproxy.GroupVolumes), string(dockerproxy.GroupNetworks), string(dockerproxy.GroupNestedSocket)}
@@ -58,9 +59,16 @@ func DockerAPIIn(settings map[string]any) (*entity.AppDockerAPISettings, error) 
 }
 
 // DockerAPIProblem says what is wrong with a Docker API block, and is empty when
-// nothing is.
+// nothing is. In host mode the proxy's policy is kept but not used, and not
+// checked either: going back to the proxy checks it.
 func DockerAPIProblem(s *entity.AppDockerAPISettings) string {
-	if s == nil {
+	switch {
+	case s == nil:
+		return ""
+	case !slices.Contains(dockerAPIModes, s.Mode):
+		return fmt.Sprintf("%smode: %q is not one of %s or %s",
+			dockerAPIPrefix, s.Mode, entity.DockerAPIModeProxy, entity.DockerAPIModeHost)
+	case s.IsHostMode():
 		return ""
 	}
 	if problem := dockerAPICountProblem(s); problem != "" {
@@ -117,6 +125,11 @@ func dockerAPILimitsProblem(limits entity.AppDockerAPILimits) string {
 	return ""
 }
 
+// HostModeFromTemplate is why a template may not give its app the node's own
+// socket.
+const HostModeFromTemplate = dockerAPIPrefix + "mode: host is given by an administrator, on the app's " +
+	"Docker API screen, never by a template"
+
 // checkDockerAPI refuses a block that is wrong in itself, and a shared
 // directory the app does not keep on its own storage: what a child is given is
 // the directory the app mounts there, so there has to be one.
@@ -127,6 +140,9 @@ func checkDockerAPI(doc *AppDoc) error {
 	}
 	if problem := DockerAPIProblem(settings); problem != "" {
 		return invalid("%s", problem)
+	}
+	if settings.IsHostMode() {
+		return invalid("%s", HostModeFromTemplate)
 	}
 	var targets []string
 	if doc.Deployment != nil && doc.Deployment.Storage != nil {

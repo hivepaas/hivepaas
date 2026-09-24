@@ -79,3 +79,36 @@ func TestAppNetworkNamesAreRecognized(t *testing.T) {
 	assert.True(t, IsSocketMount(&socket))
 	assert.False(t, IsSocketMount(&dataMount))
 }
+
+// Host mode binds the node's socket where apps look for it by default, and
+// nothing of the proxy's.
+func TestAttachHostGivesTheNodesSocketOnce(t *testing.T) {
+	spec := appSpec([]mount.Mount{dataMount, SocketMount("app1")}, "project-net", "net-app1")
+	AttachHost(spec)
+	AttachHost(spec)
+
+	assert.Equal(t, []mount.Mount{dataMount, HostSocketMount()}, spec.TaskTemplate.ContainerSpec.Mounts)
+	assert.Equal(t, mount.Mount{Type: mount.TypeBind, Source: "/var/run/docker.sock", Target: "/var/run/docker.sock"},
+		HostSocketMount())
+}
+
+func TestAttachAndDetachTakeTheNodesSocketAway(t *testing.T) {
+	spec := appSpec([]mount.Mount{dataMount, HostSocketMount()})
+	Attach(spec, "app1", "net-app1")
+	assert.Equal(t, []mount.Mount{dataMount, SocketMount("app1")}, spec.TaskTemplate.ContainerSpec.Mounts)
+
+	spec = appSpec([]mount.Mount{dataMount, HostSocketMount()})
+	Detach(spec, "")
+	assert.Equal(t, []mount.Mount{dataMount}, spec.TaskTemplate.ContainerSpec.Mounts)
+}
+
+// The storage screen shows neither socket and keeps both; a bind of the socket
+// anywhere else is the app's own mount.
+func TestTheNodesSocketIsASocketMountOnlyWhereHostModePutsIt(t *testing.T) {
+	host := HostSocketMount()
+	assert.True(t, IsSocketMount(&host))
+	elsewhere := mount.Mount{Type: mount.TypeBind, Source: HostSocketPath, Target: "/docker.sock"}
+	assert.False(t, IsSocketMount(&elsewhere))
+
+	assert.Equal(t, []mount.Mount{dataMount, host}, KeepSocketMounts([]mount.Mount{dataMount}, []mount.Mount{host}))
+}

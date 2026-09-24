@@ -15,6 +15,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/dockerproxy"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/settinghelper"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/dockerapiservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/envvarservice"
 )
 
@@ -113,8 +114,11 @@ func (s *service) BuildSystemEnvVarsInApp(
 		return nil, hperrors.Wrap(err)
 	}
 	result = append(result, kindEnvs...)
-	result = append(result, dockerAPIEnvVars(
-		settinghelper.FindSettingByType(settings, base.SettingTypeAppDockerAPI) != nil)...)
+	dockerAPIEnvs, err := dockerAPIEnvVars(settinghelper.FindSettingByType(settings, base.SettingTypeAppDockerAPI))
+	if err != nil {
+		return nil, err
+	}
+	result = append(result, dockerAPIEnvs...)
 
 	for _, env := range result {
 		env.IsLiteral = true
@@ -246,14 +250,23 @@ func sharedEnv(key, value string) *envvarservice.EnvVar {
 	}
 }
 
-// dockerAPIEnvVars is where an app given the Docker API finds it. It is not
+// dockerAPIEnvVars is where an app given the Docker API finds it, from its
+// setting, or nil: the proxy's socket, or in host mode the node's own. It is not
 // shared: another app has no use for this app's socket, and no way to reach it.
-func dockerAPIEnvVars(hasAccess bool) []*envvarservice.EnvVar {
-	if !hasAccess {
-		return nil
+func dockerAPIEnvVars(setting *entity.Setting) ([]*envvarservice.EnvVar, error) {
+	if setting == nil {
+		return nil, nil
+	}
+	access, err := setting.AsAppDockerAPISettings()
+	if err != nil {
+		return nil, hperrors.Wrap(err)
+	}
+	socket := dockerproxy.SocketPath
+	if access.IsHostMode() {
+		socket = dockerapiservice.HostSocketPath
 	}
 	return []*envvarservice.EnvVar{{EnvVar: &entity.EnvVar{
 		Key:   base.AppSystemEnvVarDockerHost,
-		Value: "unix://" + dockerproxy.SocketPath,
-	}}}
+		Value: "unix://" + socket,
+	}}}, nil
 }

@@ -96,3 +96,28 @@ func TestPoliciesComeFromTheAppsSettings(t *testing.T) {
 		},
 	}, policies)
 }
+
+// An app in host mode talks to the node's socket: no agent serves it a policy,
+// and the security settings list it.
+func TestAnAppInHostModeHasNoPolicyAndIsListed(t *testing.T) {
+	svc := &service{
+		settingRepo: &fakeSettingRepo{settings: []*entity.Setting{
+			dockerAPISetting("runner", `{"images":["*"]}`),
+			dockerAPISetting("portainer", `{"mode":"host"}`),
+		}},
+		appRepo:        &fakeAppRepo{apps: []*entity.App{appIn("runner"), appIn("portainer")}},
+		networkService: fakeNetworkService{},
+	}
+
+	policies, err := svc.Policies(context.Background(), nil)
+	assert.NoError(t, err)
+	if assert.Len(t, policies, 1) {
+		assert.Equal(t, "runner", policies[0].AppID)
+	}
+
+	apps, err := svc.HostModeApps(context.Background(), nil)
+	assert.NoError(t, err)
+	if assert.Len(t, apps, 1) {
+		assert.Equal(t, "portainer", apps[0].ID)
+	}
+}

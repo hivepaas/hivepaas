@@ -92,6 +92,23 @@ func TestApplyToServiceDetachesAnAppWithout(t *testing.T) {
 	assert.Empty(t, spec.TaskTemplate.Networks)
 }
 
+// Host mode gives the node's socket and takes the proxy's socket and network
+// away, without creating a network it has no use for.
+func TestApplyToServiceGivesAnAppInHostModeTheNodesSocket(t *testing.T) {
+	svc, networks := accessService(dockerAPISetting("app1", `{"mode":"host"}`))
+	networks.byName["hp-dapi-app1"] = "id-hp-dapi-app1"
+	spec := &swarm.ServiceSpec{TaskTemplate: swarm.TaskSpec{
+		ContainerSpec: &swarm.ContainerSpec{Mounts: []mount.Mount{dockerapiservice.SocketMount("app1")}},
+		Networks:      []swarm.NetworkAttachmentConfig{{Target: "id-hp-dapi-app1"}},
+	}}
+
+	assert.NoError(t, svc.ApplyToService(context.Background(), nil, "app1", spec))
+
+	assert.Equal(t, []mount.Mount{dockerapiservice.HostSocketMount()}, spec.TaskTemplate.ContainerSpec.Mounts)
+	assert.Empty(t, spec.TaskTemplate.Networks)
+	assert.Empty(t, networks.created)
+}
+
 // fakeCluster is a cluster's nodes and networks at once, for a call that needs
 // both.
 type fakeCluster struct {

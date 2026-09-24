@@ -50,6 +50,7 @@
 - Create: `hivepaas_app/pkg/dockerproxy/errors.go`
 - Create: `hivepaas_app/pkg/dockerproxy/fields.go`
 - Create: `hivepaas_app/pkg/dockerproxy/images.go`
+- Test: `hivepaas_app/pkg/dockerproxy/helpers_test.go`
 - Test: `hivepaas_app/pkg/dockerproxy/fields_test.go`
 - Test: `hivepaas_app/pkg/dockerproxy/images_test.go`
 
@@ -65,6 +66,26 @@ git checkout -b feat/docker-api-engine
 
 - [ ] **Step 2: Write the failing tests**
 
+The repo vendors testify's `assert` but not `require`, and its tests stop with
+`if !assert...` or `t.Fatal`. This package's tests use one helper for that.
+
+`hivepaas_app/pkg/dockerproxy/helpers_test.go`:
+
+```go
+package dockerproxy
+
+import "testing"
+
+// stop ends the test when the assertion it wraps failed, where going on would
+// only report the same failure again.
+func stop(t testing.TB, ok bool) {
+	t.Helper()
+	if !ok {
+		t.FailNow()
+	}
+}
+```
+
 `hivepaas_app/pkg/dockerproxy/fields_test.go`:
 
 ```go
@@ -75,7 +96,6 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
 func TestIsZeroIsWhatAClientSendsForUnset(t *testing.T) {
@@ -97,12 +117,12 @@ func TestIsZeroIsWhatAClientSendsForUnset(t *testing.T) {
 
 func TestCheckFieldsRefusesAFieldItDoesNotKnow(t *testing.T) {
 	obj := map[string]any{"Image": "alpine", "Privileged": false, "MaskedPaths": nil}
-	require.NoError(t, checkFields("HostConfig", obj, []string{"Image"}, []string{"MaskedPaths"}))
+	stop(t, assert.NoError(t, checkFields("HostConfig", obj, []string{"Image"}, []string{"MaskedPaths"})))
 
 	obj["Privileged"] = true
 	err := checkFields("HostConfig", obj, []string{"Image"}, []string{"MaskedPaths"})
 	var refusal *refusalError
-	require.ErrorAs(t, err, &refusal)
+	stop(t, assert.ErrorAs(t, err, &refusal))
 	assert.EqualError(t, err, "HostConfig.Privileged is not allowed")
 }
 
@@ -242,7 +262,7 @@ type Policy struct {
 	// SocketVolume is the volume holding the app's socket on every node.
 	SocketVolume string
 	// Allow are the groups of endpoints beyond the core.
-	Allow []Group
+	Allow  []Group
 	Limits Limits
 }
 ```
@@ -392,7 +412,8 @@ func matchImage(patterns []string, ref string) bool {
 - [ ] **Step 5: Run the tests to see them pass, then lint**
 
 Run: `go test ./hivepaas_app/pkg/dockerproxy/... && golangci-lint run ./hivepaas_app/pkg/dockerproxy/...`
-Expected: `ok`, `0 issues`.
+Expected: `ok`, and one issue until Task 3: unparam reports that `checkFields`'s `where` always receives
+`"HostConfig"`, since only the tests call it yet.
 
 - [ ] **Step 6: Commit**
 
@@ -631,7 +652,7 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/stretchr/testify/require"
+	"github.com/stretchr/testify/assert"
 )
 
 // world is a proxy in front of a fake daemon holding:
@@ -720,16 +741,16 @@ func (w *world) do(t testing.TB, method, path string, body any) (int, []byte) {
 		reader = bytes.NewReader(b)
 	default:
 		raw, err := json.Marshal(b)
-		require.NoError(t, err)
+		stop(t, assert.NoError(t, err))
 		reader = bytes.NewReader(raw)
 	}
 	req, err := http.NewRequestWithContext(context.Background(), method, w.url+path, reader)
-	require.NoError(t, err)
+	stop(t, assert.NoError(t, err))
 	resp, err := http.DefaultClient.Do(req)
-	require.NoError(t, err)
+	stop(t, assert.NoError(t, err))
 	defer resp.Body.Close()
 	raw, err := io.ReadAll(resp.Body)
-	require.NoError(t, err)
+	stop(t, assert.NoError(t, err))
 	return resp.StatusCode, raw
 }
 
@@ -739,7 +760,7 @@ func refusalMessage(t testing.TB, raw []byte) string {
 	var answer struct {
 		Message string `json:"message"`
 	}
-	require.NoError(t, json.Unmarshal(raw, &answer), string(raw))
+	stop(t, assert.NoError(t, json.Unmarshal(raw, &answer), string(raw)))
 	return answer.Message
 }
 
@@ -771,7 +792,7 @@ func (w *world) forwarded(t testing.TB, method, suffix string) (string, map[stri
 		if len(req.body) > 0 {
 			decoder := json.NewDecoder(bytes.NewReader(req.body))
 			decoder.UseNumber()
-			require.NoError(t, decoder.Decode(&body))
+			stop(t, assert.NoError(t, decoder.Decode(&body)))
 		}
 		return req.path, body
 	}
@@ -796,7 +817,6 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
 func TestRefusesEveryEndpointOutsideTheTable(t *testing.T) {
@@ -855,9 +875,9 @@ func TestPassesPingVersionAndImageReads(t *testing.T) {
 func TestInfoLeavesOutTheCluster(t *testing.T) {
 	w := newWorld(t, testPolicy())
 	status, raw := w.do(t, http.MethodGet, "/v1.51/info", nil)
-	require.Equal(t, http.StatusOK, status)
+	stop(t, assert.Equal(t, http.StatusOK, status))
 	var info map[string]any
-	require.NoError(t, json.Unmarshal(raw, &info))
+	stop(t, assert.NoError(t, json.Unmarshal(raw, &info)))
 	assert.Equal(t, "29.8.0", info["ServerVersion"])
 	assert.NotContains(t, info, "Swarm")
 	assert.NotContains(t, info, "Labels")
@@ -887,7 +907,7 @@ func TestDecisionsAreReported(t *testing.T) {
 
 	w.mu.Lock()
 	defer w.mu.Unlock()
-	require.Len(t, w.decisions, 2)
+	stop(t, assert.Len(t, w.decisions, 2))
 	assert.Equal(t, Decision{AppID: "app1", Method: http.MethodGet, Path: "/_ping", Allowed: true,
 		Reason: "read-only endpoint"}, w.decisions[0])
 	assert.False(t, w.decisions[1].Allowed)
@@ -908,9 +928,9 @@ func TestSetPolicyAppliesToTheNextRequest(t *testing.T) {
 
 func TestAnUnreachableDaemonIsNotARefusal(t *testing.T) {
 	ln, err := net.Listen("tcp", "127.0.0.1:0")
-	require.NoError(t, err)
+	stop(t, assert.NoError(t, err))
 	addr := ln.Addr().String()
-	require.NoError(t, ln.Close())
+	stop(t, assert.NoError(t, ln.Close()))
 	upstream := &http.Transport{DialContext: func(ctx context.Context, _, _ string) (net.Conn, error) {
 		return (&net.Dialer{}).DialContext(ctx, "tcp", addr)
 	}}
@@ -1297,7 +1317,6 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
 func TestTheAppsChildrenAreReachable(t *testing.T) {
@@ -1336,24 +1355,24 @@ func TestOtherContainersAreNot(t *testing.T) {
 func TestTheContainerListShowsOnlyTheAppsChildren(t *testing.T) {
 	w := newWorld(t, testPolicy())
 	status, raw := w.do(t, http.MethodGet, "/v1.51/containers/json?all=1", nil)
-	require.Equal(t, http.StatusOK, status)
+	stop(t, assert.Equal(t, http.StatusOK, status))
 	var containers []struct {
 		ID string `json:"Id"`
 	}
-	require.NoError(t, json.Unmarshal(raw, &containers))
-	require.Len(t, containers, 1)
+	stop(t, assert.NoError(t, json.Unmarshal(raw, &containers)))
+	stop(t, assert.Len(t, containers, 1))
 	assert.Equal(t, "child1", containers[0].ID)
 }
 
 func TestAttachStreamsThroughTheProxy(t *testing.T) {
 	w := newWorld(t, testPolicy())
 	conn, err := net.Dial("tcp", strings.TrimPrefix(w.url, "http://"))
-	require.NoError(t, err)
+	stop(t, assert.NoError(t, err))
 	defer conn.Close()
 	_, err = conn.Write([]byte("POST /v1.51/containers/child1/attach?stream=1&stdout=1 HTTP/1.1\r\n" +
 		"Host: docker\r\nConnection: Upgrade\r\nUpgrade: tcp\r\n\r\n"))
-	require.NoError(t, err)
-	require.NoError(t, conn.SetReadDeadline(time.Now().Add(5*time.Second)))
+	stop(t, assert.NoError(t, err))
+	stop(t, assert.NoError(t, conn.SetReadDeadline(time.Now().Add(5*time.Second))))
 	got, _ := io.ReadAll(conn)
 	assert.Contains(t, string(got), "101")
 	assert.Contains(t, string(got), "stream-ok")
@@ -1665,11 +1684,11 @@ Add to `hivepaas_app/pkg/dockerproxy/world_test.go`, with `"os"` and `"path/file
 func fixture(t testing.TB, name string) map[string]any {
 	t.Helper()
 	raw, err := os.ReadFile(filepath.Join("testdata", name))
-	require.NoError(t, err)
+	stop(t, assert.NoError(t, err))
 	body := map[string]any{}
 	decoder := json.NewDecoder(bytes.NewReader(raw))
 	decoder.UseNumber()
-	require.NoError(t, decoder.Decode(&body))
+	stop(t, assert.NoError(t, decoder.Decode(&body)))
 	return body
 }
 ```
@@ -1687,7 +1706,6 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
 func volumesAndNetworks() *Policy {
@@ -1700,12 +1718,12 @@ func TestVolumesAreTheAppsOwn(t *testing.T) {
 	w := newWorld(t, volumesAndNetworks())
 
 	status, raw := w.do(t, http.MethodGet, "/v1.51/volumes", nil)
-	require.Equal(t, http.StatusOK, status)
+	stop(t, assert.Equal(t, http.StatusOK, status))
 	var answer struct {
 		Volumes []struct{ Name string }
 	}
-	require.NoError(t, json.Unmarshal(raw, &answer))
-	require.Len(t, answer.Volumes, 1)
+	stop(t, assert.NoError(t, json.Unmarshal(raw, &answer)))
+	stop(t, assert.Len(t, answer.Volumes, 1))
 	assert.Equal(t, "cache-app1", answer.Volumes[0].Name)
 
 	status, _ = w.do(t, http.MethodPost, "/v1.51/volumes/create", map[string]any{
@@ -1738,7 +1756,7 @@ func TestNetworksAreTheAppsOwn(t *testing.T) {
 	w := newWorld(t, volumesAndNetworks())
 
 	status, raw := w.do(t, http.MethodPost, "/v1.51/networks/create", fixture(t, "cli-network-create.json"))
-	require.Equal(t, http.StatusOK, status, string(raw))
+	stop(t, assert.Equal(t, http.StatusOK, status, string(raw)))
 	_, body := w.forwarded(t, http.MethodPost, "/networks/create")
 	assert.Equal(t, map[string]any{OwnerLabel: "app1"}, body["Labels"])
 
@@ -1757,9 +1775,9 @@ func TestNetworksAreTheAppsOwn(t *testing.T) {
 	}
 
 	status, raw = w.do(t, http.MethodGet, "/v1.51/networks", nil)
-	require.Equal(t, http.StatusOK, status)
+	stop(t, assert.Equal(t, http.StatusOK, status))
 	var networks []struct{ Name string }
-	require.NoError(t, json.Unmarshal(raw, &networks))
+	stop(t, assert.NoError(t, json.Unmarshal(raw, &networks)))
 	names := make([]string, 0, len(networks))
 	for _, n := range networks {
 		names = append(names, n.Name)
@@ -2172,7 +2190,6 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
 const createPath = "/v1.51/containers/create"
@@ -2180,7 +2197,7 @@ const createPath = "/v1.51/containers/create"
 func TestCreateTakesWhatTheCLISendsForAPlainContainer(t *testing.T) {
 	w := newWorld(t, testPolicy())
 	status, raw := w.do(t, http.MethodPost, createPath+"?name=job1", fixture(t, "cli-create-plain.json"))
-	require.Equal(t, http.StatusCreated, status, string(raw))
+	stop(t, assert.Equal(t, http.StatusCreated, status, string(raw)))
 
 	path, body := w.forwarded(t, http.MethodPost, "/containers/create")
 	assert.Equal(t, createPath, path)
@@ -2246,7 +2263,7 @@ func TestCreatePutsTheDefaultNetworksOnTheAppsNetwork(t *testing.T) {
 	for _, mode := range []string{"", "default", "bridge", "host"} {
 		status, raw := w.do(t, http.MethodPost, createPath,
 			set(fixture(t, "cli-create-plain.json"), "HostConfig.NetworkMode", mode))
-		require.Equal(t, http.StatusCreated, status, "%q %s", mode, raw)
+		stop(t, assert.Equal(t, http.StatusCreated, status, "%q %s", mode, raw))
 		_, body := w.forwarded(t, http.MethodPost, "/containers/create")
 		assert.Equal(t, "hp-dapi-app1", object(body["HostConfig"])["NetworkMode"], mode)
 	}
@@ -2306,7 +2323,7 @@ func TestCreateGivesTheLimitsAndRefusesMore(t *testing.T) {
 
 	body := set(fixture(t, "cli-create-plain.json"), "HostConfig.CpuQuota", 50000)
 	status, raw := w.do(t, http.MethodPost, createPath, body)
-	require.Equal(t, http.StatusCreated, status, string(raw))
+	stop(t, assert.Equal(t, http.StatusCreated, status, string(raw)))
 	_, forwarded := w.forwarded(t, http.MethodPost, "/containers/create")
 	assert.Equal(t, json.Number("0"), object(forwarded["HostConfig"])["NanoCpus"],
 		"a quota is the child's own limit, and docker refuses both at once")
@@ -2318,7 +2335,7 @@ func TestCreateReplacesTheOwnerLabel(t *testing.T) {
 		"keep": "yes", OwnerLabel: "app2", "com.docker.swarm.service.id": "svc1",
 	})
 	status, _ := w.do(t, http.MethodPost, createPath, body)
-	require.Equal(t, http.StatusCreated, status)
+	stop(t, assert.Equal(t, http.StatusCreated, status))
 	_, forwarded := w.forwarded(t, http.MethodPost, "/containers/create")
 	assert.Equal(t, map[string]any{"keep": "yes", OwnerLabel: "app1"}, forwarded["Labels"])
 }
@@ -2340,7 +2357,7 @@ func TestCreateSpeaksAtLeastTheVersionSubpathsNeed(t *testing.T) {
 		"/containers/create":       "/containers/create",
 	} {
 		status, _ := w.do(t, http.MethodPost, sent, fixture(t, "cli-create-plain.json"))
-		require.Equal(t, http.StatusCreated, status, sent)
+		stop(t, assert.Equal(t, http.StatusCreated, status, sent))
 		path, _ := w.forwarded(t, http.MethodPost, "/containers/create")
 		assert.Equal(t, want, path)
 	}
@@ -2721,7 +2738,6 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
 // createWith sends the plain CLI create with the given binds and mounts.
@@ -2747,7 +2763,7 @@ func forwardedStorage(t *testing.T, w *world) ([]any, []any) {
 func TestCreateMountsASharedDirectoryFromTheAppsVolume(t *testing.T) {
 	w := newWorld(t, testPolicy())
 	status, raw := w.do(t, http.MethodPost, createPath, fixture(t, "cli-create-bind-host.json"))
-	require.Equal(t, http.StatusCreated, status, string(raw))
+	stop(t, assert.Equal(t, http.StatusCreated, status, string(raw)))
 
 	binds, mounts := forwardedStorage(t, w)
 	assert.Empty(t, binds)
@@ -2814,7 +2830,7 @@ func TestCreateMountsTheAppsSocketOnlyWhenNestingIsAllowed(t *testing.T) {
 	policy.Allow = []Group{GroupNestedSocket}
 	w = newWorld(t, policy)
 	status, message = createWith(t, w, []any{SocketPath + ":/var/run/docker.sock"}, nil)
-	require.Equal(t, http.StatusCreated, status, message)
+	stop(t, assert.Equal(t, http.StatusCreated, status, message))
 	_, mounts := forwardedStorage(t, w)
 	assert.Equal(t, []any{map[string]any{
 		"Type": "volume", "Source": "hp-dapi-sock-app1", "Target": "/var/run/docker.sock", "ReadOnly": false,
@@ -2833,7 +2849,7 @@ func TestCreateTakesOnlyTheAppsNamedVolumes(t *testing.T) {
 	w = newWorld(t, policy)
 
 	status, message = createWith(t, w, []any{"cache-app1:/cache:ro"}, nil)
-	require.Equal(t, http.StatusCreated, status, message)
+	stop(t, assert.Equal(t, http.StatusCreated, status, message))
 	binds, _ := forwardedStorage(t, w)
 	assert.Equal(t, []any{"cache-app1:/cache:ro"}, binds)
 
@@ -2843,7 +2859,7 @@ func TestCreateTakesOnlyTheAppsNamedVolumes(t *testing.T) {
 
 	// act names volumes in Binds and never creates them.
 	status, message = createWith(t, w, []any{"act-toolcache:/opt/hostedtoolcache"}, nil)
-	require.Equal(t, http.StatusCreated, status, message)
+	stop(t, assert.Equal(t, http.StatusCreated, status, message))
 	w.daemon.mu.Lock()
 	assert.Equal(t, map[string]string{OwnerLabel: "app1"}, w.daemon.volumes["act-toolcache"])
 	w.daemon.mu.Unlock()
@@ -2875,7 +2891,7 @@ func TestCreateTakesTmpfsAndRefusesOtherMountTypes(t *testing.T) {
 	w := newWorld(t, testPolicy())
 	status, message := createWith(t, w, nil, []any{map[string]any{"Type": "tmpfs", "Target": "/scratch",
 		"TmpfsOptions": map[string]any{"SizeBytes": 1 << 20}}})
-	require.Equal(t, http.StatusCreated, status, message)
+	stop(t, assert.Equal(t, http.StatusCreated, status, message))
 
 	for _, kind := range []string{"npipe", "cluster", "image"} {
 		status, message = createWith(t, w, nil, []any{map[string]any{"Type": kind, "Source": "x", "Target": "/x"}})
@@ -3255,7 +3271,6 @@ import (
 	"github.com/moby/moby/api/types/mount"
 	"github.com/moby/moby/api/types/network"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
 // sdkCreate is a create as a Go client - act, Woodpecker, Autobase - sends it:
@@ -3264,7 +3279,7 @@ func sdkCreate(t *testing.T, cfg *container.Config, host *container.HostConfig,
 	networking *network.NetworkingConfig) []byte {
 	t.Helper()
 	raw, err := json.Marshal(container.CreateRequest{Config: cfg, HostConfig: host, NetworkingConfig: networking})
-	require.NoError(t, err)
+	stop(t, assert.NoError(t, err))
 	return raw
 }
 
@@ -3285,7 +3300,7 @@ func TestCreateTakesWhatGoClientsSend(t *testing.T) {
 			"jobnet": {Aliases: []string{"job"}},
 		}})
 	status, raw := w.do(t, http.MethodPost, "/v1.44/containers/create", act)
-	require.Equal(t, http.StatusCreated, status, string(raw))
+	stop(t, assert.Equal(t, http.StatusCreated, status, string(raw)))
 	path, _ := w.forwarded(t, http.MethodPost, "/containers/create")
 	assert.Equal(t, "/v1.45/containers/create", path)
 
@@ -3297,7 +3312,7 @@ func TestCreateTakesWhatGoClientsSend(t *testing.T) {
 		}}},
 		nil)
 	status, raw = w.do(t, http.MethodPost, "/v1.47/containers/create", autobase)
-	require.Equal(t, http.StatusCreated, status, string(raw))
+	stop(t, assert.Equal(t, http.StatusCreated, status, string(raw)))
 	_, body := w.forwarded(t, http.MethodPost, "/containers/create")
 	host := object(body["HostConfig"])
 	assert.Equal(t, "hp-dapi-app1", host["NetworkMode"])

@@ -48,6 +48,16 @@ type Service interface {
 	// runs.
 	RemoveAppStorage(ctx context.Context, db database.IDB, app *entity.App, mounts []mount.Mount) error
 
+	// ResetAppStoragePermissions gives what is in the directory of one of an app's
+	// mounts to a user, or opens it up to every user - for data the app has to be
+	// given that another user wrote: a different image on the same volume, files
+	// copied in by hand. Nothing does this on its own; see MakeDirWritableCmd.
+	//
+	// Only a directory of the app's own is reset. A mount reaching another app's
+	// directory, a whole volume or a bind HivePaaS did not make is refused.
+	ResetAppStoragePermissions(ctx context.Context, db database.IDB, req *ResetAppStoragePermissionsReq) (
+		*ResetAppStoragePermissionsResp, error)
+
 	// InspectAppStorage reports whether the directories apps would be given
 	// already hold something. It reads only, and answers about an app's own
 	// directory inside a volume rather than about the volume.

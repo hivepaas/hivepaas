@@ -53,7 +53,7 @@ func (s *service) RemoveVolumeInCluster(
 	onThisNode := s.storageIsOnThisNode(ctx, pins)
 
 	if target, ok := volumeStorageTarget(clusterVol); ok && removeData {
-		if err := s.removeStorageTarget(ctx, &target, constraint, onThisNode); err != nil {
+		if err := s.removeStorageTarget(ctx, &target, &appStorage{constraint: constraint, local: onThisNode}); err != nil {
 			return hperrors.Wrap(err)
 		}
 	}

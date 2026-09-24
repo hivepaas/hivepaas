@@ -20551,6 +20551,83 @@
         "x-codegen-request-body-name" : "body"
       }
     },
+    "/projects/{projectID}/{projectEnv}/apps/{appID}/storage-settings/reset-permissions" : {
+      "post" : {
+        "description" : "Gives the directory of one of the app's mounts, and everything in it, to a user and group,\nor without an owner lets every user read and write them. Symlinks are not followed.\nOnly a directory of the app's own can be reset.",
+        "operationId" : "resetAppStoragePermissions",
+        "parameters" : [ {
+          "description" : "project ID",
+          "in" : "path",
+          "name" : "projectID",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "project env",
+          "in" : "path",
+          "name" : "projectEnv",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "app ID",
+          "in" : "path",
+          "name" : "appID",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "*/*" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/appsettingsdto.ResetAppStoragePermissionsReq"
+              }
+            }
+          },
+          "description" : "request data",
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/appsettingsdto.ResetAppStoragePermissionsResp"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "400" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Bad Request"
+          },
+          "500" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Internal Server Error"
+          }
+        },
+        "summary" : "Resets the permissions of what one of an app's mounts holds",
+        "tags" : [ "app_settings" ],
+        "x-codegen-request-body-name" : "body"
+      }
+    },
     "/projects/{projectID}/{projectEnv}/apps/{appID}/tags" : {
       "post" : {
         "description" : "Creates a new app tag",
@@ -44998,6 +45075,45 @@
         "required" : [ "appArmor", "noNewPrivileges", "seLinuxContext", "seccomp" ],
         "type" : "object"
       },
+      "appsettingsdto.ResetAppStoragePermissionsDataResp" : {
+        "properties" : {
+          "path" : {
+            "description" : "Path is the directory that was reset, inside its volume, so an operator can\ngo and look.",
+            "type" : "string"
+          }
+        },
+        "required" : [ "path" ],
+        "type" : "object"
+      },
+      "appsettingsdto.ResetAppStoragePermissionsReq" : {
+        "properties" : {
+          "key" : {
+            "description" : "Key is the mount's, as the storage settings list it.",
+            "type" : "string"
+          },
+          "owner" : {
+            "allOf" : [ {
+              "$ref" : "#/components/schemas/appsettingsdto.StorageOwnerReq"
+            } ],
+            "description" : "Owner is who the directory and everything in it are given to. Without one,\nevery user is let read and write them instead.",
+            "type" : "object"
+          }
+        },
+        "required" : [ "key", "owner" ],
+        "type" : "object"
+      },
+      "appsettingsdto.ResetAppStoragePermissionsResp" : {
+        "properties" : {
+          "data" : {
+            "$ref" : "#/components/schemas/appsettingsdto.ResetAppStoragePermissionsDataResp"
+          },
+          "meta" : {
+            "$ref" : "#/components/schemas/basedto.Meta"
+          }
+        },
+        "required" : [ "data", "meta" ],
+        "type" : "object"
+      },
       "appsettingsdto.ResourceLimits" : {
         "properties" : {
           "cpus" : {
@@ -45200,6 +45316,18 @@
           }
         },
         "required" : [ "containerStatus", "err", "message", "state", "timestamp" ],
+        "type" : "object"
+      },
+      "appsettingsdto.StorageOwnerReq" : {
+        "properties" : {
+          "gid" : {
+            "type" : "integer"
+          },
+          "uid" : {
+            "type" : "integer"
+          }
+        },
+        "required" : [ "gid", "uid" ],
         "type" : "object"
       },
       "appsettingsdto.StorageSettingsResp" : {

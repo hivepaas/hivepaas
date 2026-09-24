@@ -125,3 +125,44 @@ func (h *Handler) PreflightAppStorageSettings(ctx *gin.Context) {
 
 	ctx.JSON(http.StatusOK, resp)
 }
+
+// ResetAppStoragePermissions Resets the permissions of what one of an app's mounts holds
+// @Summary Resets the permissions of what one of an app's mounts holds
+// @Description Gives the directory of one of the app's mounts, and everything in it, to a user and group,
+// @Description or without an owner lets every user read and write them. Symlinks are not followed.
+// @Description Only a directory of the app's own can be reset.
+// @Tags    app_settings
+// @Produce json
+// @Id      resetAppStoragePermissions
+// @Param   projectID path string true "project ID"
+// @Param   projectEnv path string true "project env"
+// @Param   appID path string true "app ID"
+// @Param   body body appsettingsdto.ResetAppStoragePermissionsReq true "request data"
+// @Success 200 {object} appsettingsdto.ResetAppStoragePermissionsResp
+// @Failure 400 {object} hperrors.ErrorInfo
+// @Failure 500 {object} hperrors.ErrorInfo
+// @Router  /projects/{projectID}/{projectEnv}/apps/{appID}/storage-settings/reset-permissions [post]
+func (h *Handler) ResetAppStoragePermissions(ctx *gin.Context) {
+	auth, projectID, projectEnvID, appID, err := h.GetAuth(ctx, base.ActionTypeWrite)
+	if err != nil {
+		h.RenderError(ctx, err)
+		return
+	}
+
+	req := appsettingsdto.NewResetAppStoragePermissionsReq()
+	req.ProjectID = projectID
+	req.ProjectEnvID = projectEnvID
+	req.AppID = appID
+	if err := h.ParseAndValidateJSONBody(ctx, req); err != nil {
+		h.RenderError(ctx, err)
+		return
+	}
+
+	resp, err := h.appSettingsUC.ResetAppStoragePermissions(h.RequestCtx(ctx), auth, req)
+	if err != nil {
+		h.RenderError(ctx, err)
+		return
+	}
+
+	ctx.JSON(http.StatusOK, resp)
+}

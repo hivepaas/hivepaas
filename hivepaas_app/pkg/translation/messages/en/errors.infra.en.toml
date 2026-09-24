@@ -18,6 +18,8 @@ ERR_FILE_NAME_TOO_LONG = "File name must contain less than {{.MaxNameLen}} chara
 ERR_ARCHIVE_FORMAT_UNSUPPORTED = "Archive format '{{.Format}}' is not supported"
 ERR_ENCRYPTION_FORMAT_UNSUPPORTED = "Encryption format '{{.Format}}' is not supported"
 ERR_STORAGE_TYPE_UNSUPPORTED = "Storage type '{{.Type}}' is not supported"
+ERR_STORAGE_PERMISSIONS_NOT_RESETTABLE = "The storage at '{{.Target}}' is not a directory of this app's own, so its permissions cannot be reset"
+ERR_STORAGE_PERMISSIONS_NOT_RESET = "The permissions of some files in '{{.Path}}' could not be changed"
 
 # Infra errors
 ERR_INFRA = "{{.Error}}"

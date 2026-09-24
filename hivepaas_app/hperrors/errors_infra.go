@@ -25,6 +25,10 @@ var (
 	ErrArchiveFormatUnsupported    = NewErr(ErrUnsupported, "ERR_ARCHIVE_FORMAT_UNSUPPORTED")
 	ErrEncryptionFormatUnsupported = NewErr(ErrUnsupported, "ERR_ENCRYPTION_FORMAT_UNSUPPORTED")
 	ErrStorageTypeUnsupported      = NewErr(ErrUnsupported, "ERR_STORAGE_TYPE_UNSUPPORTED")
+	// A mount whose directory is not the app's own: another app's, a whole volume,
+	// or a bind HivePaaS did not make.
+	ErrStoragePermissionsNotResettable = NewErr(ErrPreconditionFailed, "ERR_STORAGE_PERMISSIONS_NOT_RESETTABLE")
+	ErrStoragePermissionsNotReset      = NewErr(ErrActionFailed, "ERR_STORAGE_PERMISSIONS_NOT_RESET")
 )
 
 // nolint Errors from infrastructure

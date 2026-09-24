@@ -2,7 +2,6 @@ package volumeuc
 
 import (
 	"context"
-	"fmt"
 	"path/filepath"
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
@@ -148,7 +147,10 @@ func (uc *UC) createBindDirectoryInNode(
 	}
 
 	targetDir := filepath.Join(volumeservice.HostPathPrefix, req.BindOptions.Directory)
-	mkdirCmd := fmt.Sprintf("mkdir -p '%s' && chmod -R 777 '%s'", targetDir, targetDir)
+	// The directory may be one that is already in use on the node - a volume is
+	// often made over data that is already there - so it is opened up only if it
+	// is empty, and nothing in it is touched.
+	mkdirCmd := volumeservice.MakeDirWritableCmd(targetDir)
 	cmdReq := &nodeexecservice.CommandExecReq{
 		NodeID:    req.NodeID,
 		NodeLabel: req.NodeLabel,

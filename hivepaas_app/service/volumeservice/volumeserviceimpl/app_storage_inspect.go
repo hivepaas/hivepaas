@@ -147,7 +147,8 @@ func (s *service) RemoveAppStoragePaths(
 			return hperrors.Wrap(hperrors.ErrActionFailed).WithMsgLog(
 				"cannot remove storage at %s: %s", path, conflict.Error())
 		}
-		if err = s.removeStorageTarget(ctx, &target, constraint, s.storageIsOnThisNode(ctx, pins)); err != nil {
+		where := &appStorage{constraint: constraint, local: s.storageIsOnThisNode(ctx, pins)}
+		if err = s.removeStorageTarget(ctx, &target, where); err != nil {
 			return hperrors.Wrap(err)
 		}
 	}

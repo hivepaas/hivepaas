@@ -43,6 +43,51 @@ func (s *service) RemoveAppStorage(
 		return nil
 	}
 
+	found, err := s.findAppStorage(ctx, db, app, mounts)
+	if err != nil {
+		return hperrors.Wrap(err)
+	}
+	if len(found.targets) == 0 {
+		// Nothing matched, and the caller asked for data to be deleted: saying so
+		// is the difference between a storage removal that had nothing to do and
+		// one that quietly did nothing. The second is what a mount whose source
+		// docker reports differently than HivePaaS wrote it looks like.
+		if s.logger != nil {
+			s.logger.Warn("no storage of app was removed: none of its mounts matched a volume it owns",
+				"app", app.ID, "mounts", len(mounts), "volumes", found.volumeCount,
+				"sources", mountSources(mounts))
+		}
+		return nil
+	}
+	for _, target := range found.targets {
+		if err := s.removeStorageTarget(ctx, &target, found); err != nil {
+			return hperrors.Wrap(err)
+		}
+	}
+	return nil
+}
+
+// appStorage is where an app's own directories are: the directories themselves,
+// and what it takes to reach them.
+type appStorage struct {
+	targets []storageTarget
+	// constraint places a swarm task on the node holding the data, if it is
+	// pinned to one.
+	constraint string
+	// local is whether the data is reachable from this node at all.
+	local bool
+	// volumeCount is how many volumes the mounts were matched against.
+	volumeCount int
+}
+
+// findAppStorage is which directories of an app's mounts are its own, and where
+// they are.
+func (s *service) findAppStorage(
+	ctx context.Context,
+	db database.IDB,
+	app *entity.App,
+	mounts []mount.Mount,
+) (*appStorage, error) {
 	// The volumes the app was allowed to mount, which is what a mount has to be
 	// matched against to learn which node its data is on - and, for a bind, to
 	// learn that it is a volume's directory at all.
@@ -50,42 +95,28 @@ func (s *service) RemoveAppStorage(
 		bunex.SelectWhere("setting.type = ?", base.SettingTypeClusterVolume),
 	)
 	if err != nil {
-		return hperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 
 	pins, err := placementservice.VolumePinsForMounts(mounts, volumes)
 	if err != nil {
-		return hperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 	constraint, conflict := placementservice.VolumePinConstraint(pins)
 	if conflict != nil {
 		// The app's mounts name two nodes, so there is no answer to which node
-		// holds the data. Deleting on the wrong one removes nothing at best, and
-		// at worst a directory of the same name belonging to something else.
-		return hperrors.Wrap(hperrors.ErrActionFailed).WithMsgLog(
-			"cannot remove the storage of app %s: %s", app.ID, conflict.Error())
+		// holds the data. Acting on the wrong one does nothing at best, and at
+		// worst reaches a directory of the same name belonging to something else.
+		return nil, hperrors.Wrap(hperrors.ErrActionFailed).WithMsgLog(
+			"cannot reach the storage of app %s: %s", app.ID, conflict.Error())
 	}
-	local := s.storageIsOnThisNode(ctx, pins)
 
-	targets := ownStorageTargets(app, mounts, volumes)
-	if len(targets) == 0 {
-		// Nothing matched, and the caller asked for data to be deleted: saying so
-		// is the difference between a storage removal that had nothing to do and
-		// one that quietly did nothing. The second is what a mount whose source
-		// docker reports differently than HivePaaS wrote it looks like.
-		if s.logger != nil {
-			s.logger.Warn("no storage of app was removed: none of its mounts matched a volume it owns",
-				"app", app.ID, "mounts", len(mounts), "volumes", len(volumes),
-				"sources", mountSources(mounts))
-		}
-		return nil
-	}
-	for _, target := range targets {
-		if err := s.removeStorageTarget(ctx, &target, constraint, local); err != nil {
-			return hperrors.Wrap(err)
-		}
-	}
-	return nil
+	return &appStorage{
+		targets:     ownStorageTargets(app, mounts, volumes),
+		constraint:  constraint,
+		local:       s.storageIsOnThisNode(ctx, pins),
+		volumeCount: len(volumes),
+	}, nil
 }
 
 // mountSources is what the warning above prints: enough to compare against the
@@ -311,57 +342,108 @@ func safeSubpath(subpath string) string {
 	return trimmed
 }
 
-// removeStorageTarget deletes one directory, the same three ways
+// removeStorageTarget deletes one directory.
+func (s *service) removeStorageTarget(ctx context.Context, target *storageTarget, where *appStorage) error {
+	return s.runOnStorageTarget(ctx, target, where, &storageTargetAction{
+		onHost: os.RemoveAll,
+		// No shell: the path is an argument of its own, so nothing in it can be
+		// read as a command, and -- keeps a name starting with a dash from
+		// becoming a flag.
+		cmd: func(dir string) []string {
+			return []string{"rm", "-rf", "--", dir}
+		},
+		failure: func(statusCode int64) error {
+			return hperrors.Wrap(hperrors.ErrActionFailed).WithMsgLog(
+				"removing storage directory %q exited with status code %d", target.subpath, statusCode)
+		},
+	})
+}
+
+// storageTargetAction is something done to one of an app's directories, in each
+// of the places runOnStorageTarget may do it.
+type storageTargetAction struct {
+	// onHost does it to the directory as this process sees it on the host.
+	onHost func(dir string) error
+	// cmd is the command a helper runs, given the directory as the helper sees it.
+	cmd func(dir string) []string
+	// failure is the error for a helper that exited with statusCode.
+	failure func(statusCode int64) error
+	// scoped gives a helper the directory alone rather than the storage it is in.
+	// An action that walks what an app wrote needs it: anything the app made to
+	// point outside its directory then points at nothing in the helper.
+	scoped bool
+}
+
+// runOnStorageTarget does something to one directory, the same three ways
 // EnsureVolumePermissions creates it: on the host when the storage is a
 // directory this node can reach, then a container, then a swarm task - which is
 // the only one of the three that reaches another node, and so the only way to
-// delete anything belonging to storage pinned to one.
-func (s *service) removeStorageTarget(
+// reach anything belonging to storage pinned to one.
+func (s *service) runOnStorageTarget(
 	ctx context.Context,
 	target *storageTarget,
-	constraint string,
-	local bool,
+	where *appStorage,
+	action *storageTargetAction,
 ) error {
-	if local {
+	if where.local {
 		if hostPath, isDirect := s.getDirectHostPath(ctx, &target.mount, ""); isDirect && hostPath != "" {
-			if err := os.RemoveAll(filepath.Join(hostPath, target.subpath)); err == nil {
+			if err := action.onHost(filepath.Join(hostPath, target.subpath)); err == nil {
 				return nil
 			}
 		}
 	}
 
 	image := gofn.Coalesce(s.hpAppService.GetHpAgentImage(ctx), rsyncDefaultImage)
-	// No shell: the path is an argument of its own, so nothing in it can be read
-	// as a command, and -- keeps a name starting with a dash from becoming a flag.
-	rmCmd := []string{"rm", "-rf", "--", path.Join(volumeHelperTarget, target.subpath)}
+	helperMount := target.mount
+	cmd := action.cmd(path.Join(volumeHelperTarget, target.subpath))
+	if action.scoped {
+		helperMount = scopedHelperMount(target)
+		cmd = action.cmd(volumeHelperTarget)
+	}
 
 	// Docker creates a volume it does not know rather than refusing the mount, so
-	// a container started here for storage that lives elsewhere would delete
-	// nothing out of an empty volume and report that it had worked. It is only
-	// worth trying while the data is on this node.
-	if local && s.isVolumeAccessibleLocally(ctx, &target.mount) {
-		_, statusCode, err := s.dockerManager.ContainerCreateToExec(ctx, image, rmCmd,
+	// a container started here for storage that lives elsewhere would act on an
+	// empty volume and report that it had worked. It is only worth trying while
+	// the data is on this node.
+	if where.local && s.isVolumeAccessibleLocally(ctx, &target.mount) {
+		_, statusCode, err := s.dockerManager.ContainerCreateToExec(ctx, image, cmd,
 			func(opts *client.ContainerCreateOptions) {
-				opts.HostConfig.Mounts = []mount.Mount{target.mount}
+				opts.HostConfig.Mounts = []mount.Mount{helperMount}
 			})
 		if err == nil && statusCode == 0 {
 			return nil
 		}
 	}
 
-	_, statusCode, err := s.dockerManager.ServiceCreateToExec(ctx, image, rmCmd, 0, 0,
+	_, statusCode, err := s.dockerManager.ServiceCreateToExec(ctx, image, cmd, 0, 0,
 		func(opts *client.ServiceCreateOptions) {
-			opts.Spec.TaskTemplate.ContainerSpec.Mounts = []mount.Mount{target.mount}
-			if constraint != "" {
-				opts.Spec.TaskTemplate.Placement = &swarm.Placement{Constraints: []string{constraint}}
+			opts.Spec.TaskTemplate.ContainerSpec.Mounts = []mount.Mount{helperMount}
+			if where.constraint != "" {
+				opts.Spec.TaskTemplate.Placement = &swarm.Placement{Constraints: []string{where.constraint}}
 			}
 		})
 	if err != nil {
 		return hperrors.Wrap(err)
 	}
 	if statusCode != 0 {
-		return hperrors.Wrap(hperrors.ErrActionFailed).WithMsgLog(
-			"removing storage directory %q exited with status code %d", target.subpath, statusCode)
+		return action.failure(statusCode)
 	}
 	return nil
+}
+
+// scopedHelperMount is the target's directory mounted at the helper's target on
+// its own, rather than the storage around it.
+func scopedHelperMount(target *storageTarget) mount.Mount {
+	mnt := target.mount
+	if mnt.Type == mount.TypeBind {
+		mnt.Source = filepath.Join(mnt.Source, target.subpath)
+		return mnt
+	}
+	opts := mount.VolumeOptions{}
+	if mnt.VolumeOptions != nil {
+		opts = *mnt.VolumeOptions
+	}
+	opts.Subpath = target.subpath
+	mnt.VolumeOptions = &opts
+	return mnt
 }

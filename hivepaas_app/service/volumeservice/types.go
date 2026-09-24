@@ -137,6 +137,26 @@ type AppMountDesc struct {
 //
 // The apps need not exist: a template is answered for before anything is
 // created, which is the whole point of asking.
+type ResetAppStoragePermissionsReq struct {
+	App   *entity.App
+	Mount mount.Mount
+	// Owner is who the directory and everything in it are given to. Without one,
+	// every user is let read and write them instead.
+	Owner *StorageOwner
+}
+
+// StorageOwner is a user and group by number, which is how a volume records
+// them: a name means something only inside the image that defines it.
+type StorageOwner struct {
+	UID int
+	GID int
+}
+
+type ResetAppStoragePermissionsResp struct {
+	// Path is the directory that was reset, inside its volume.
+	Path string
+}
+
 type InspectAppStorageReq struct {
 	// Scope is what the volumes are looked up in - the env the apps belong to.
 	Scope   *entity.ObjectScope

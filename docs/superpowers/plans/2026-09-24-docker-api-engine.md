@@ -1275,7 +1275,8 @@ func (p *Proxy) fetch(c *call, out any) bool {
 - [ ] **Step 5: Run the tests to see them pass, then lint**
 
 Run: `go test ./hivepaas_app/pkg/dockerproxy/... && golangci-lint run ./hivepaas_app/pkg/dockerproxy/...`
-Expected: `ok`, `0 issues`.
+Expected: `ok`. Lint reports five issues that Task 3 removes by using what is declared here: unparam on
+`checkFields`'s `where`, `on`'s `group` and `(*world).do`'s `body`, and unused `idPart` and `(*world).reached`.
 
 - [ ] **Step 6: Commit**
 

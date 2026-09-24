@@ -10,6 +10,8 @@
 // docs/superpowers/specs/2026-09-24-docker-api-access-design.md.
 package dockerproxy
 
+import "slices"
+
 // Group names endpoints beyond the core that a policy may allow.
 type Group string
 
@@ -70,4 +72,8 @@ type Policy struct {
 	// Allow are the groups of endpoints beyond the core.
 	Allow  []Group
 	Limits Limits
+}
+
+func (p *Policy) allows(group Group) bool {
+	return group == "" || slices.Contains(p.Allow, group)
 }

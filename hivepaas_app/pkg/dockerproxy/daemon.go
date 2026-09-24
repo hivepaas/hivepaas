@@ -1,0 +1,50 @@
+package dockerproxy
+
+import (
+	"context"
+	"encoding/json"
+	"errors"
+	"fmt"
+	"net/http"
+)
+
+const (
+	// daemonHost is the host requests to the daemon carry. The transport dials the
+	// daemon's socket whatever the address, so it only has to be a valid name.
+	daemonHost = "docker"
+
+	contentTypeJSON = "application/json"
+)
+
+// errDaemon is the daemon answering a lookup in a way the proxy cannot use.
+var errDaemon = errors.New("unexpected answer from the Docker daemon")
+
+// daemon asks the Docker daemon what the proxy needs to know to judge a request.
+type daemon struct {
+	client *http.Client
+}
+
+// get fetches path and decodes the answer into out. Not found is not an error:
+// the bool says whether there was anything.
+func (d *daemon) get(ctx context.Context, path string, out any) (bool, error) {
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, "http://"+daemonHost+path, nil)
+	if err != nil {
+		return false, fmt.Errorf("GET %s: %w", path, err)
+	}
+	resp, err := d.client.Do(req)
+	if err != nil {
+		return false, fmt.Errorf("GET %s: %w", path, err)
+	}
+	defer resp.Body.Close()
+	switch resp.StatusCode {
+	case http.StatusOK:
+		if err = json.NewDecoder(resp.Body).Decode(out); err != nil {
+			return false, fmt.Errorf("GET %s: %w", path, err)
+		}
+		return true, nil
+	case http.StatusNotFound:
+		return false, nil
+	default:
+		return false, fmt.Errorf("%w: GET %s answered %d", errDaemon, path, resp.StatusCode)
+	}
+}

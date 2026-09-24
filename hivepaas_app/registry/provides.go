@@ -67,6 +67,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/containerfileservice/containerfileserviceimpl"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/datakeyservice/datakeyserviceimpl"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/dbservice/dbserviceimpl"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/dockerapiservice/dockerapiserviceimpl"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/domainservice/domainserviceimpl"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/emailservice/emailserviceimpl"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/envvarservice/envvarserviceimpl"
@@ -185,6 +186,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/useruc"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/webhookuc"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecaseagent/containeragentuc"
+	"github.com/hivepaas/hivepaas/hivepaas_app/usecaseagent/dockerapiagentuc"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecaseagent/imagebuildagentuc"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecaseagent/nodeagentuc"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecaseagent/nodecleanupagentuc"
@@ -365,6 +367,7 @@ var Provides = []any{
 	containerexecserviceimpl.New,
 	containerfileserviceimpl.New,
 	dbserviceimpl.New,
+	dockerapiserviceimpl.New,
 	domainserviceimpl.New,
 	emailserviceimpl.New,
 	envvarserviceimpl.New,
@@ -442,6 +445,7 @@ var Provides = []any{
 
 	// Use case: Agent
 	containeragentuc.New,
+	dockerapiagentuc.New,
 	imagebuildagentuc.New,
 	nodeagentuc.New,
 	nodecleanupagentuc.New,

@@ -24,6 +24,7 @@ func main() {
 			return func(s *grpc.Server) {
 				agentproto.RegisterAgentServiceServer(s, agentSrv)
 				agentproto.RegisterContainerServiceServer(s, agentSrv)
+				agentproto.RegisterDockerAPIServiceServer(s, agentSrv)
 				agentproto.RegisterNodeCleanupServiceServer(s, agentSrv)
 				agentproto.RegisterImageBuildServiceServer(s, agentSrv)
 				agentproto.RegisterNodeServiceServer(s, agentSrv)
@@ -44,6 +45,7 @@ func main() {
 		fx.Invoke(internal.InitSystemSettings),
 		fx.Invoke(internal.InitSystemEventBus),
 		fx.Invoke(internal.InitGrpcServer),
+		fx.Invoke(internal.InitDockerAPIHost),
 	)
 
 	app.Run()

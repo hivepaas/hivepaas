@@ -11,6 +11,12 @@ import type {
 const FindOneSchema = z.object({
     data: z.object({
         returnSecretsViaApi: z.boolean(),
+        alwaysReturnSecretTypes: z
+            .array(z.string())
+            .nullish()
+            .transform(value => value ?? []),
+        // Absent from a server older than the switch, which has it off.
+        allowPrivilegedApps: z.boolean().optional().default(false),
     }),
     meta: BaseMetaApiSchema.nullish(),
 });
@@ -25,6 +31,8 @@ export class HivePaaSSecuritySettingsApiValidator {
         return {
             data: {
                 returnSecretsViaApi: data.returnSecretsViaApi,
+                alwaysReturnSecretTypes: data.alwaysReturnSecretTypes,
+                allowPrivilegedApps: data.allowPrivilegedApps,
             },
             meta,
         };

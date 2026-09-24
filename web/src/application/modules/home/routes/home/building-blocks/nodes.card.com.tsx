@@ -19,7 +19,7 @@ export function NodesCard() {
 
     return (
         <Card className="gap-0 py-0">
-            <CardHeader className="flex flex-row items-center justify-between border-b px-5 py-4">
+            <CardHeader className="flex flex-row items-center justify-between border-b px-5 py-4 [.border-b]:pb-4">
                 <CardTitle className="text-[15px]">Nodes</CardTitle>
                 <Link
                     to={ROUTE.cluster.nodes.$route}

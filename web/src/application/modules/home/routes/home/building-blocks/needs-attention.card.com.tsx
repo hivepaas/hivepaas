@@ -64,7 +64,7 @@ function AttentionRow({ item }: { item: AttentionItem }) {
 export function NeedsAttentionCard({ items, isLoading }: Props) {
     return (
         <Card className="gap-0 py-0">
-            <CardHeader className="flex flex-row items-center gap-2 border-b px-5 py-4">
+            <CardHeader className="flex flex-row items-center gap-2 border-b px-5 py-4 [.border-b]:pb-4">
                 <CardTitle className="text-[15px]">Needs attention</CardTitle>
                 {items.length > 0 && (
                     <Badge

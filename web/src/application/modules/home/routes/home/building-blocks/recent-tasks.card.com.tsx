@@ -47,7 +47,7 @@ export function RecentTasksCard() {
 
     return (
         <Card className="gap-0 py-0">
-            <CardHeader className="flex flex-row items-center justify-between border-b px-5 py-4">
+            <CardHeader className="flex flex-row items-center justify-between border-b px-5 py-4 [.border-b]:pb-4">
                 <CardTitle className="text-[15px]">Recent activity</CardTitle>
                 <Link
                     to={ROUTE.operations.tasks.$route}

@@ -28,7 +28,7 @@ export function UpdateHistoryCard() {
 
     return (
         <Card className="gap-0 py-0">
-            <CardHeader className="border-b px-5 py-4">
+            <CardHeader className="flex items-center border-b px-5 py-4 [.border-b]:pb-4">
                 <CardTitle className="text-[15px]">Update history</CardTitle>
             </CardHeader>
             <CardContent className="px-0">

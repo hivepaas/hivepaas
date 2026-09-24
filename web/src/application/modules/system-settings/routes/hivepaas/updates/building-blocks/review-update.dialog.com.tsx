@@ -9,9 +9,11 @@ import {
     DialogTitle,
 } from "@components/ui/dialog";
 import { cn } from "@lib/utils";
-import { AlertTriangle, ArrowRight, Clock, ExternalLink } from "lucide-react";
+import { AlertTriangle, ArrowRight, Clock, ExternalLink, FileDown } from "lucide-react";
 import { HivePaaSUpdatesCommands, HivePaaSUpdatesQueries } from "~/system-settings/data";
 import type { HivePaaSReleaseInfo, ReleaseChannel, UpdateComponent } from "~/system-settings/domain";
+
+import { ROUTE } from "@application/shared/constants";
 
 import { Button, Checkbox, Separator } from "@/components/ui";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -84,11 +86,13 @@ export function ReviewUpdateDialog({ open, channel, releaseInfo, onOpenChange, o
     const offered = (["stable", "beta"] as const).filter(c => releaseInfo[c]?.canUpdate === true);
     const [selected, setSelected] = useState<ReleaseChannel>(channel);
     const [backup, setBackup] = useState(true);
+    const [configSaved, setConfigSaved] = useState(false);
 
     useEffect(() => {
         if (open) {
             setSelected(channel);
             setBackup(true);
+            setConfigSaved(false);
         }
     }, [open, channel]);
 
@@ -264,6 +268,41 @@ export function ReviewUpdateDialog({ open, channel, releaseInfo, onOpenChange, o
                             </span>
                         </span>
                     </label>
+
+                    <div className="flex flex-col gap-3 rounded-lg border border-amber-300 bg-amber-50 px-3.5 py-3 text-sm dark:border-amber-800 dark:bg-amber-950/60">
+                        <div className="flex items-start gap-2.5">
+                            <FileDown className="mt-0.5 size-4 shrink-0 text-amber-700 dark:text-amber-300" />
+                            <span className="leading-6">
+                                Export the system configuration before updating. The database backup undoes a failed
+                                migration; the exported spec is what the projects, apps and settings can be set up again
+                                from if anything else goes wrong.{" "}
+                                <a
+                                    href={ROUTE.operations.export.$route}
+                                    target="_blank"
+                                    rel="noreferrer"
+                                    className="inline-flex items-center gap-1 font-medium underline underline-offset-4"
+                                >
+                                    Open Operations › Export
+                                    <ExternalLink className="size-3.5" />
+                                </a>
+                            </span>
+                        </div>
+                        <label
+                            htmlFor="update-config-saved"
+                            className="flex items-start gap-2.5 font-medium"
+                        >
+                            <Checkbox
+                                id="update-config-saved"
+                                className="mt-0.5"
+                                checked={configSaved}
+                                disabled={isPending}
+                                onCheckedChange={checked => {
+                                    setConfigSaved(checked === true);
+                                }}
+                            />
+                            I confirm I have backed up the system configuration
+                        </label>
+                    </div>
                 </DialogBody>
                 <DialogActionFooter>
                     <Button
@@ -276,7 +315,7 @@ export function ReviewUpdateDialog({ open, channel, releaseInfo, onOpenChange, o
                         Cancel
                     </Button>
                     <Button
-                        disabled={!plan || plan.blocked || isPending}
+                        disabled={!plan || plan.blocked || !configSaved || isPending}
                         isLoading={isPending}
                         onClick={() => {
                             update({ targetVersion: version, skipBackup: !(backup || mustBackUp) });

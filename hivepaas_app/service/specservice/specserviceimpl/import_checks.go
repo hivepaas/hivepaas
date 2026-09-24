@@ -60,6 +60,12 @@ func (p *planner) checkPermissions(ctx context.Context) error {
 		if err := p.checkSharedMounts(ctx, node); err != nil {
 			return err
 		}
+		if node.Action == specmodel.ActionSkip {
+			continue
+		}
+		if err := p.checkDockerAPI(ctx, node); err != nil {
+			return err
+		}
 	}
 	return nil
 }
@@ -159,6 +165,40 @@ func (p *planner) checkCapabilities(ctx context.Context, node *specmodel.PlanNod
 		Severity: specmodel.SeveritySkipped, Code: specmodel.CodeCapabilityNotPermitted, Path: node.Path,
 		Detail: map[string]any{"capabilities": granted},
 		Action: "not imported: granting this needs Write permission on the Cluster module",
+	})
+	return nil
+}
+
+// checkDockerAPI refuses a Docker API block wrong in itself, and skips an app
+// created with the block, or updated so that the block changes, when the
+// operator may not grant it. Narrowing is asked about too: the planner does not
+// weigh one policy against another the way the settings screen does.
+func (p *planner) checkDockerAPI(ctx context.Context, node *specmodel.PlanNode) error {
+	block := specmodel.BlockSettingsDockerAPI
+	body, found := p.apps[node.Path].doc.Settings[specmodel.SingletonBlockName(base.SettingTypeAppDockerAPI)]
+	if !found || !writesBlock(node, string(block)) {
+		return nil
+	}
+	_, data, err := decodeImportedSetting(block, base.SettingTypeAppDockerAPI, "", body)
+	if errors.Is(err, hperrors.ErrDataVerNewerThanSystemVer) {
+		// SETTING_VERSION_NEWER says so, and nothing of it is written.
+		return nil
+	}
+	if err != nil {
+		return err
+	}
+	access, _ := data.(*entity.AppDockerAPISettings)
+	if problem := specmodel.DockerAPIProblem(access); problem != "" {
+		return hperrors.Wrap(hperrors.ErrSpecBundleInvalid).WithExtraDetail("%s: %s", node.Path, problem)
+	}
+	allowed, err := p.mayWriteCluster(ctx)
+	if err != nil || allowed {
+		return err
+	}
+	p.skipNode(node, specmodel.Issue{
+		Severity: specmodel.SeveritySkipped, Code: specmodel.CodeDockerAPINotPermitted, Path: node.Path,
+		Detail: map[string]any{refInSetting: string(block)},
+		Action: "not imported: giving an app the Docker API needs Write permission on the Cluster module",
 	})
 	return nil
 }

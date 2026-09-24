@@ -132,13 +132,22 @@ func checkDockerAPI(doc *AppDoc) error {
 	if doc.Deployment != nil && doc.Deployment.Storage != nil {
 		targets = slices.Collect(maps.Keys(doc.Deployment.Storage.Mounts))
 	}
-	for _, dir := range settings.SharedDirs {
+	if problem := SharedDirsProblem(settings.SharedDirs, targets); problem != "" {
+		return invalid("%s", problem)
+	}
+	return nil
+}
+
+// SharedDirsProblem names the first shared directory on none of the mount
+// targets given, and is empty when each is on one.
+func SharedDirsProblem(dirs, targets []string) string {
+	for _, dir := range dirs {
 		covered := slices.ContainsFunc(targets, func(target string) bool {
 			return dir == target || strings.HasPrefix(dir, strings.TrimSuffix(target, "/")+"/")
 		})
 		if !covered {
-			return invalid("%ssharedDirs: %s is on none of the app's storage mounts", dockerAPIPrefix, dir)
+			return fmt.Sprintf("%ssharedDirs: %s is on none of the app's storage mounts", dockerAPIPrefix, dir)
 		}
 	}
-	return nil
+	return ""
 }

@@ -19,6 +19,7 @@ const (
 	CodeStorageNotEmpty         = "STORAGE_NOT_EMPTY"
 	CodeStorageUnchecked        = "STORAGE_UNCHECKED"
 	CodeCapabilityNotPermitted  = "CAPABILITY_NOT_PERMITTED"
+	CodeDockerAPINotPermitted   = "DOCKER_API_NOT_PERMITTED"
 	CodeSharedMountNotPermitted = "SHARED_MOUNT_NOT_PERMITTED"
 	CodeHostMountNotPermitted   = "HOST_MOUNT_NOT_PERMITTED"
 	CodeNetworkNotAvailable     = "NETWORK_NOT_AVAILABLE"

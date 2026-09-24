@@ -589,14 +589,16 @@ func (p *planner) matchApp(
 }
 
 // restarts reports whether a change reaches a running app's service: every
-// deployment block but the source, which only a deployment applies, and the
-// settings ApplyAppConfiguration pushes to the service.
+// deployment block but the source, which only a deployment applies, the
+// settings ApplyAppConfiguration pushes to the service, and the Docker API,
+// whose socket the service gains.
 func restarts(changes []string) bool {
 	for _, change := range changes {
 		switch {
 		case strings.HasPrefix(change, "deployment.") && change != changeDeploymentSource:
 			return true
 		case change == "settings.envVars", change == "settings.routing",
+			change == string(specmodel.BlockSettingsDockerAPI),
 			strings.HasPrefix(change, "settings.secrets"), strings.HasPrefix(change, "settings.configFiles"):
 			return true
 		}

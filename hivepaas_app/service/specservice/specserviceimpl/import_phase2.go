@@ -148,7 +148,8 @@ func (w *writer) applyToService(ctx context.Context, db database.IDB, node *spec
 	if err != nil {
 		return hperrors.Wrap(err)
 	}
-	if deployment := w.prepared[node.Path]; deployment != nil {
+	deployment := w.prepared[node.Path]
+	if deployment != nil || slices.Contains(node.Changes, string(specmodel.BlockSettingsDockerAPI)) {
 		if err = w.updateService(ctx, db, node, app, deployment); err != nil {
 			return err
 		}
@@ -173,9 +174,11 @@ func (w *writer) applyToService(ctx context.Context, db database.IDB, node *spec
 	return nil
 }
 
-// updateService builds an app's deployment blocks onto its running spec and
-// updates the service once: one restart, where the settings screens make one
-// update per block.
+// updateService builds an app's deployment blocks, when they changed, onto its
+// running spec, and what its Docker API access needs, and updates the service
+// once: one restart, where the settings screens make one update per block.
+// Rebuilding storage or networks writes them afresh, without the socket and the
+// network the access gives, which is why the access is applied after them.
 func (w *writer) updateService(
 	ctx context.Context, db database.IDB, node *specmodel.PlanNode, app *entity.App, deployment *specmodel.Deployment,
 ) error {
@@ -183,11 +186,16 @@ func (w *writer) updateService(
 	if err != nil {
 		return hperrors.Wrap(err)
 	}
-	_, err = w.p.s.BuildApp(ctx, db, &specservice.BuildAppReq{
-		App: app, Doc: &specmodel.AppDoc{App: node.Key, Deployment: deployment}, Spec: &svc.Spec,
-		TimeNow: w.now, Import: true,
-	})
-	if err != nil {
+	if deployment != nil {
+		_, err = w.p.s.BuildApp(ctx, db, &specservice.BuildAppReq{
+			App: app, Doc: &specmodel.AppDoc{App: node.Key, Deployment: deployment}, Spec: &svc.Spec,
+			TimeNow: w.now, Import: true,
+		})
+		if err != nil {
+			return hperrors.Wrap(err)
+		}
+	}
+	if err = w.p.s.dockerAPIService.ApplyToService(ctx, db, app.ID, &svc.Spec); err != nil {
 		return hperrors.Wrap(err)
 	}
 	_, err = w.p.s.clusterService.ServiceUpdate(ctx, app.ServiceID, &svc.Version, &svc.Spec)

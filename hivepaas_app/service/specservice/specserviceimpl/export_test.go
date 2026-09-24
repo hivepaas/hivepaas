@@ -373,7 +373,7 @@ func exportFixture(t *testing.T) specservice.Service {
 		&fakeClusterService{services: map[string]*swarm.Service{"svc_1": testService()}},
 		&fakeClusterSecretService{},
 		&fakeDomainService{},
-		nil, // the Docker API: export reads nothing of it
+		&fakeNoDockerAPI{},
 		&fakeEnvVarService{},
 		&fakeNetworkService{},
 		&fakeSSLService{},

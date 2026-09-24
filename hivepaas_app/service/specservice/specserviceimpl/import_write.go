@@ -547,8 +547,22 @@ func (w *writer) setOutcomes() {
 
 // afterCommit is phase 2: what the settings written take beyond their rows.
 func (w *writer) afterCommit(ctx context.Context, db database.IDB) error {
+	w.syncDockerAPI(ctx)
 	w.applyToServices(ctx, db)
 	return w.writeFiles()
+}
+
+// syncDockerAPI has every node's agent serve the Docker API of the apps the
+// import gave it, before their services are updated: a task that starts before
+// its socket exists finds nothing, and many apps give up on that. A failure is
+// the agents', which come to it at their next tick.
+func (w *writer) syncDockerAPI(ctx context.Context) {
+	written := slices.ContainsFunc(w.written, func(setting *entity.Setting) bool {
+		return setting.Type == base.SettingTypeAppDockerAPI
+	})
+	if written {
+		_ = w.p.s.dockerAPIService.SyncAgents(ctx)
+	}
 }
 
 // writeFiles does what the settings written take beyond their rows, by type.

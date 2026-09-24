@@ -14,6 +14,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/approutingservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/appservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/clustersecretservice"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/dockerapiservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/envvarservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/networkservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/volumeservice"
@@ -178,4 +179,14 @@ type fakeNetworkService struct {
 
 func (fakeNetworkService) GetProjectNetworkName(project *entity.Project, env string) string {
 	return project.Key + "_" + env + "_net"
+}
+
+// fakeNoDockerAPI is an installation where no app has the Docker API: applying
+// it to a service leaves the service as it is.
+type fakeNoDockerAPI struct {
+	dockerapiservice.Service
+}
+
+func (fakeNoDockerAPI) ApplyToService(context.Context, database.IDB, string, *swarm.ServiceSpec) error {
+	return nil
 }

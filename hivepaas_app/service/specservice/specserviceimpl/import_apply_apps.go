@@ -15,6 +15,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/appdeploymentservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/appprovisionservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/appservice"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/dockerapiservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/specservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/specservice/specmodel"
 )
@@ -179,8 +180,30 @@ func (w *writer) configureApp(
 		if err != nil {
 			return nil, hperrors.Wrap(err).WithExtraDetail("%s", node.Path)
 		}
+		if err = w.giveDockerAPI(ctx, node, app, spec); err != nil {
+			return nil, err
+		}
 		return w.appSettings[node.Path], nil
 	}
+}
+
+// giveDockerAPI gives a new app's service the socket and network of the access
+// its settings grant. The setting is provisioned with the app, so it cannot be
+// read back the way ApplyToService reads it.
+func (w *writer) giveDockerAPI(
+	ctx context.Context, node *specmodel.PlanNode, app *entity.App, spec *swarm.ServiceSpec,
+) error {
+	for _, setting := range w.appSettings[node.Path] {
+		if setting.Type != base.SettingTypeAppDockerAPI || setting.Status != base.SettingStatusActive {
+			continue
+		}
+		networkID, err := w.p.s.dockerAPIService.EnsureNetwork(ctx, app.ID)
+		if err != nil {
+			return hperrors.Wrap(err).WithExtraDetail("%s", node.Path)
+		}
+		dockerapiservice.Attach(spec, app.ID, networkID)
+	}
+	return nil
 }
 
 // cleanup removes from docker what provisioning created, for a transaction

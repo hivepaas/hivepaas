@@ -95,6 +95,7 @@ func (s *service) planBundle(
 		Bundle: specmodel.BundleInfo{
 			APIVersion: manifest.APIVersion, Scope: manifest.Scope, ExportedAt: manifest.ExportedAt,
 			SourceAppVersion: manifest.SourceAppVersion, SecretsMode: manifest.SecretsMode,
+			Digest: bundle.Digest,
 		},
 		Nodes:    p.nodes,
 		Summary:  summarize(p.nodes),

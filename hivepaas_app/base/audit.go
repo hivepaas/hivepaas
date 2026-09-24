@@ -252,6 +252,13 @@ const (
 	// secrets, from any endpoint; spec-export is who took a copy of the
 	// configuration.
 	AuditLogTypeSpecExport AuditLogType = "spec-export"
+
+	// AuditLogTypeSpecImport records a configuration spec being applied: what
+	// was imported where - the bundle's digest, the scope, the selection and the
+	// options - and what it did, counted. Each object it writes is not recorded
+	// on its own: one import can write hundreds, and the record is what says they
+	// arrived together.
+	AuditLogTypeSpecImport AuditLogType = "spec-import"
 )
 
 var AllAuditLogTypes = []AuditLogType{
@@ -282,6 +289,7 @@ var AllAuditLogTypes = []AuditLogType{
 	AuditLogTypeHivePaaSSettingsUpdate,
 	AuditLogTypeHivePaaSAction,
 	AuditLogTypeSpecExport,
+	AuditLogTypeSpecImport,
 }
 
 // AuditLogSource is the way in - which endpoint, or which subsystem.

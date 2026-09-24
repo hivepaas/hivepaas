@@ -168,6 +168,9 @@ type BundleInfo struct {
 	ExportedAt       time.Time   `json:"exportedAt"`
 	SourceAppVersion string      `json:"sourceAppVersion"`
 	SecretsMode      SecretsMode `json:"secretsMode"`
+	// Digest is the SHA-256 of the bundle's bytes, which names the bundle in the
+	// import's audit record.
+	Digest string `json:"digest"`
 }
 
 // ImportPlan is what validate answers, and what apply is bound to by PlanHash.

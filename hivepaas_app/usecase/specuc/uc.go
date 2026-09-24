@@ -5,6 +5,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/permission"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/auditservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/specservice"
+	"github.com/hivepaas/hivepaas/hivepaas_app/tasks/queue"
 )
 
 type UC struct {
@@ -13,6 +14,7 @@ type UC struct {
 	permissionManager permission.Manager
 	auditService      auditservice.Service
 	specService       specservice.Service
+	taskQueue         queue.TaskQueue
 }
 
 func New(
@@ -21,6 +23,7 @@ func New(
 	permissionManager permission.Manager,
 	auditService auditservice.Service,
 	specService specservice.Service,
+	taskQueue queue.TaskQueue,
 ) *UC {
 	return &UC{
 		db: db,
@@ -28,5 +31,6 @@ func New(
 		permissionManager: permissionManager,
 		auditService:      auditService,
 		specService:       specService,
+		taskQueue:         taskQueue,
 	}
 }

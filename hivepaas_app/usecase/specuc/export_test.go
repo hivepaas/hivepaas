@@ -89,7 +89,7 @@ func newTestUC(t *testing.T) (*UC, *fakeAuditService, *fakeSpecService) {
 	audit := &fakeAuditService{}
 	manager := permissionimpl.NewManager(&fakeACLRepo{}, nil, nil, nil, audit)
 	svc := &fakeSpecService{}
-	return New(nil, manager, audit, svc), audit, svc
+	return New(nil, manager, audit, svc, nil), audit, svc
 }
 
 // allowSecretReveal sets the operator flag that gates every stored secret.

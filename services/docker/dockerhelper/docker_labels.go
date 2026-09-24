@@ -2,17 +2,11 @@ package dockerhelper
 
 import (
 	"strings"
-
-	"github.com/hivepaas/hivepaas/services/docker"
 )
 
-var (
-	restrictedSystemLabels = map[string]struct{}{
-		docker.StackLabelNamespace: {},
-	}
-
-	restrictedLabelPrefixes = []string{"hivepaas.", "traefik."}
-)
+// restrictedLabelPrefixes are the labels HivePaaS and Docker manage - Docker's
+// stack labels among them - which a person neither sees by default nor sets.
+var restrictedLabelPrefixes = []string{"hivepaas.", "traefik.", "com.docker.stack."}
 
 func FilterOutRestrictedLabels(labels map[string]string) map[string]string {
 	resp := make(map[string]string, len(labels))
@@ -55,9 +49,6 @@ func ApplyUserLabels(currLabels, userLabels map[string]string) map[string]string
 
 func isLabelRestricted(labelKey string) bool {
 	labelKey = strings.ToLower(labelKey)
-	if _, exists := restrictedSystemLabels[labelKey]; exists {
-		return true
-	}
 	for _, prefix := range restrictedLabelPrefixes {
 		if strings.HasPrefix(labelKey, prefix) {
 			return true

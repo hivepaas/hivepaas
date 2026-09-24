@@ -24,6 +24,10 @@ type Manager interface {
 	AuthorizeAccessChanges(ctx context.Context, db database.IDB, auth *basedto.Auth,
 		desired []*entity.ACLPermission, current []*entity.ACLPermission) ([]*entity.ACLPermission, error)
 
+	// NewVisibility answers, for the caller, whether screens across the system
+	// would open for them. See Visibility.
+	NewVisibility(db database.IDB, auth *basedto.Auth) Visibility
+
 	// HasCapability reports whether the caller holds a capability
 	HasCapability(ctx context.Context, db database.IDB, auth *basedto.Auth,
 		capability base.ResourceCapability) (bool, error)

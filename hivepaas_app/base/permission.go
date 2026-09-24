@@ -189,7 +189,7 @@ func (a *AccessActions) AllowsAny(actions []ActionType) bool {
 		return true
 	}
 	for _, action := range actions {
-		if !a.Allows(action) {
+		if a.Allows(action) {
 			return true
 		}
 	}

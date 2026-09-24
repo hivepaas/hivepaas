@@ -65,13 +65,17 @@ func (p *manager) checkAccess(
 
 	// When user has no permission, collect IDs of all resources of resource types the user has permissions on.
 	// This is usually to allow users seeing individual accessible objects of a resource type.
+	//
+	// Only a grant of the action asked for counts. A row can hold no action at
+	// all - an env a user is kept out of is written that way - and collecting it
+	// would turn the denial into a way in.
 	allowedResources = make(map[base.ResourceType][]string)
 	for _, res := range resources {
 		if res.ResourceID != "" {
 			continue
 		}
 		for _, perm := range perms {
-			if res.ResourceType != perm.ResourceType {
+			if res.ResourceType != perm.ResourceType || !p.hasPermission(perm, check) {
 				continue
 			}
 			allowedResources[res.ResourceType] = append(allowedResources[res.ResourceType], perm.ResourceID)

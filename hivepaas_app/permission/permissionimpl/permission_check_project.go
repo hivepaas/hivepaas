@@ -20,20 +20,19 @@ func (p *manager) checkProjectAccess(
 	db database.IDB,
 	check *permission.ProjectAccessCheck,
 ) (hasPerm bool, allowedResources map[base.ResourceType][]string, err error) {
-	// Project owner has all permissions on the project
-	if check.ProjectID != "" {
-		project, err := p.projectRepo.GetByIDAndOwner(ctx, db, check.ProjectID, check.SubjectID,
-			bunex.SelectColumns("id"),
-		)
-		if err != nil && !errors.Is(err, hperrors.ErrNotFound) {
-			return false, nil, hperrors.Wrap(err)
-		}
-		if project != nil {
-			return true, nil, nil
-		}
-	}
 	if check.ProjectID == "" && (check.ProjectEnv != nil && *check.ProjectEnv != "") {
 		check.ProjectID, _ = projecthelper.ParseProjectEnvID(*check.ProjectEnv)
+	}
+	if check.ProjectID == "" && check.ProjectEnv == nil {
+		return p.checkProjectsAccess(ctx, db, check)
+	}
+
+	// Project owner has all permissions on the project
+	if check.ProjectID != "" {
+		owned, err := p.ownsProject(ctx, db, check.SubjectID, check.ProjectID)
+		if err != nil || owned {
+			return owned, nil, err
+		}
 	}
 
 	resources := make([]*base.PermissionResource, 0, 3) //nolint:mnd
@@ -56,14 +55,143 @@ func (p *manager) checkProjectAccess(
 			ResourceType: base.ResourceTypeProject,
 			ResourceID:   check.ProjectID,
 		},
-		&base.PermissionResource{
-			SubjectType:  check.SubjectType,
-			SubjectID:    check.SubjectID,
-			ResourceType: base.ResourceTypeModule,
-			ResourceID:   string(base.ResourceModuleProject),
-		})
+		p.projectModuleResource(check))
 
-	return p.checkAccess(ctx, db, &check.BaseAccessCheck, resources)
+	hasPerm, allowedResources, err = p.checkAccess(ctx, db, &check.BaseAccessCheck, resources)
+	if err != nil || hasPerm || check.ProjectEnv != nil || check.Action != base.ActionTypeRead {
+		return hasPerm, allowedResources, err
+	}
+
+	// Reading the project as a whole. Grants are written per env, so one on any
+	// env of the project is a way into the project, or a user given a single env
+	// could never open the project it is in. Only reading: changing or deleting
+	// the project reaches every env, and a grant on one says nothing of the rest.
+	envIDs, err := p.grantedEnvs(ctx, db, &check.BaseAccessCheck)
+	if err != nil {
+		return false, nil, err
+	}
+	for _, envID := range envIDs {
+		if projectID, _ := projecthelper.ParseProjectEnvID(envID); projectID == check.ProjectID {
+			return true, nil, nil
+		}
+	}
+	return false, nil, nil
+}
+
+// checkProjectsAccess answers a question about projects in general: which ones
+// may be read, for a list, or whether a project may be made at all.
+//
+// The project module grant answers for every project. Short of it, reading is
+// allowed on the projects the user was given - on the project, on any of its
+// envs - or owns, and those are what the list is narrowed to. Anything other
+// than reading, such as making a project, is the module's alone: a grant inside
+// one project says nothing about the others, or about new ones.
+func (p *manager) checkProjectsAccess(
+	ctx context.Context,
+	db database.IDB,
+	check *permission.ProjectAccessCheck,
+) (bool, map[base.ResourceType][]string, error) {
+	module := p.projectModuleResource(check)
+	perms, err := p.aclPermissionRepo.ListByResources(ctx, db, []*base.PermissionResource{module})
+	if err != nil {
+		return false, nil, hperrors.Wrap(err)
+	}
+	for _, perm := range perms {
+		if perm.ResourceType == module.ResourceType && perm.ResourceID == module.ResourceID &&
+			p.hasPermission(perm, &check.BaseAccessCheck) {
+			return true, nil, nil
+		}
+	}
+	if check.Action != base.ActionTypeRead {
+		return false, nil, nil
+	}
+
+	projectIDs, err := p.grantedProjects(ctx, db, &check.BaseAccessCheck)
+	if err != nil {
+		return false, nil, err
+	}
+	owned, _, err := p.projectRepo.List(ctx, db, nil,
+		bunex.SelectColumns("id"),
+		bunex.SelectWhere("project.owner_id = ?", check.SubjectID),
+	)
+	if err != nil {
+		return false, nil, hperrors.Wrap(err)
+	}
+	for _, project := range owned {
+		projectIDs = append(projectIDs, project.ID)
+	}
+	if len(projectIDs) == 0 {
+		return false, nil, nil
+	}
+	return true, map[base.ResourceType][]string{base.ResourceTypeProject: gofn.ToSet(projectIDs)}, nil
+}
+
+// grantedProjects is the projects the check's action is granted on, on the
+// project itself or on any of its envs.
+func (p *manager) grantedProjects(
+	ctx context.Context,
+	db database.IDB,
+	check *permission.BaseAccessCheck,
+) ([]string, error) {
+	perms, err := p.aclPermissionRepo.ListByResources(ctx, db, []*base.PermissionResource{
+		{SubjectType: check.SubjectType, SubjectID: check.SubjectID, ResourceType: base.ResourceTypeProject},
+		{SubjectType: check.SubjectType, SubjectID: check.SubjectID, ResourceType: base.ResourceTypeProjectEnv},
+	})
+	if err != nil {
+		return nil, hperrors.Wrap(err)
+	}
+	projectIDs := make([]string, 0, len(perms))
+	for _, perm := range perms {
+		if !p.hasPermission(perm, check) {
+			continue
+		}
+		if perm.ResourceType == base.ResourceTypeProject {
+			projectIDs = append(projectIDs, perm.ResourceID)
+			continue
+		}
+		if projectID, _ := projecthelper.ParseProjectEnvID(perm.ResourceID); projectID != "" {
+			projectIDs = append(projectIDs, projectID)
+		}
+	}
+	return projectIDs, nil
+}
+
+// grantedEnvs is the envs, of any project, the check's action is granted on.
+func (p *manager) grantedEnvs(
+	ctx context.Context,
+	db database.IDB,
+	check *permission.BaseAccessCheck,
+) ([]string, error) {
+	perms, err := p.aclPermissionRepo.ListByResources(ctx, db, []*base.PermissionResource{
+		{SubjectType: check.SubjectType, SubjectID: check.SubjectID, ResourceType: base.ResourceTypeProjectEnv},
+	})
+	if err != nil {
+		return nil, hperrors.Wrap(err)
+	}
+	envIDs := make([]string, 0, len(perms))
+	for _, perm := range perms {
+		if perm.ResourceType == base.ResourceTypeProjectEnv && p.hasPermission(perm, check) {
+			envIDs = append(envIDs, perm.ResourceID)
+		}
+	}
+	return envIDs, nil
+}
+
+func (p *manager) ownsProject(ctx context.Context, db database.IDB, userID, projectID string) (bool, error) {
+	project, err := p.projectRepo.GetByIDAndOwner(ctx, db, projectID, userID, bunex.SelectColumns("id"))
+	if err != nil && !errors.Is(err, hperrors.ErrNotFound) {
+		return false, hperrors.Wrap(err)
+	}
+	return project != nil, nil
+}
+
+func (p *manager) projectModuleResource(check *permission.ProjectAccessCheck) *base.PermissionResource {
+	return &base.PermissionResource{
+		SubjectType:  check.SubjectType,
+		SubjectID:    check.SubjectID,
+		ResourceType: base.ResourceTypeModule,
+		ResourceID:   string(base.ResourceModuleProject),
+	}
 }
 
 func (p *manager) LoadProjectAccesses(

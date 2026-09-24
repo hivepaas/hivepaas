@@ -17,6 +17,19 @@ const FindOneSchema = z.object({
             .transform(value => value ?? []),
         // Absent from a server older than the switch, which has it off.
         allowPrivilegedApps: z.boolean().optional().default(false),
+        privilegedApps: z
+            .array(
+                z.object({
+                    appId: z.string(),
+                    appName: z.string(),
+                    projectId: z.string(),
+                    projectName: z.string(),
+                    projectEnvKey: z.string(),
+                    projectEnvName: z.string(),
+                }),
+            )
+            .nullish()
+            .transform(value => value ?? []),
     }),
     meta: BaseMetaApiSchema.nullish(),
 });
@@ -33,6 +46,7 @@ export class HivePaaSSecuritySettingsApiValidator {
                 returnSecretsViaApi: data.returnSecretsViaApi,
                 alwaysReturnSecretTypes: data.alwaysReturnSecretTypes,
                 allowPrivilegedApps: data.allowPrivilegedApps,
+                privilegedApps: data.privilegedApps,
             },
             meta,
         };

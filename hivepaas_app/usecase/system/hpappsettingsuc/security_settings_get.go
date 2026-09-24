@@ -14,8 +14,13 @@ func (uc *UC) GetSecuritySettings(
 	auth *basedto.Auth,
 	req *hpappsettingsdto.GetSecuritySettingsReq,
 ) (*hpappsettingsdto.GetSecuritySettingsResp, error) {
+	privilegedApps, err := uc.dockerAPIService.HostModeApps(ctx, uc.db)
+	if err != nil {
+		return nil, hperrors.Wrap(err)
+	}
 	input := &hpappsettingsdto.SecuritySettingsTransformInput{
-		Config: config.Current(),
+		Config:         config.Current(),
+		PrivilegedApps: privilegedApps,
 	}
 
 	resp, err := hpappsettingsdto.TransformSecuritySettings(input)

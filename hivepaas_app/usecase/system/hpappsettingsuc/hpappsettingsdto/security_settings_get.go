@@ -3,6 +3,7 @@ package hpappsettingsdto
 import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/config"
+	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 )
 
@@ -26,10 +27,27 @@ type SecuritySettingsResp struct {
 	ReturnSecretsViaAPI     bool     `json:"returnSecretsViaApi"`
 	AlwaysReturnSecretTypes []string `json:"alwaysReturnSecretTypes"`
 	AllowPrivilegedApps     bool     `json:"allowPrivilegedApps"`
+	// PrivilegedApps are the apps given the node's own Docker socket. Turning the
+	// switch off takes it from none of them: this is where an administrator
+	// finds them.
+	PrivilegedApps []*PrivilegedAppResp `json:"privilegedApps"`
+}
+
+// PrivilegedAppResp is an app given the node's own Docker socket, with where to
+// find it.
+type PrivilegedAppResp struct {
+	AppID          string `json:"appId"`
+	AppName        string `json:"appName"`
+	ProjectID      string `json:"projectId"`
+	ProjectName    string `json:"projectName"`
+	ProjectEnvID   string `json:"projectEnvId"`
+	ProjectEnvName string `json:"projectEnvName"`
 }
 
 type SecuritySettingsTransformInput struct {
 	Config *config.Config
+	// PrivilegedApps are loaded with their Project and ProjectEnv.
+	PrivilegedApps []*entity.App
 }
 
 func TransformSecuritySettings(input *SecuritySettingsTransformInput) (resp *SecuritySettingsResp, err error) {
@@ -44,6 +62,17 @@ func TransformSecuritySettings(input *SecuritySettingsTransformInput) (resp *Sec
 		ReturnSecretsViaAPI:     input.Config.Security.ReturnSecretsViaAPI,
 		AlwaysReturnSecretTypes: exemptions,
 		AllowPrivilegedApps:     input.Config.Security.AllowPrivilegedApps,
+		PrivilegedApps:          make([]*PrivilegedAppResp, 0, len(input.PrivilegedApps)),
+	}
+	for _, app := range input.PrivilegedApps {
+		resp.PrivilegedApps = append(resp.PrivilegedApps, &PrivilegedAppResp{
+			AppID:          app.ID,
+			AppName:        app.Name,
+			ProjectID:      app.ProjectID,
+			ProjectName:    app.Project.Name,
+			ProjectEnvID:   app.ProjectEnvID,
+			ProjectEnvName: app.ProjectEnv.Name,
+		})
 	}
 	return resp, nil
 }

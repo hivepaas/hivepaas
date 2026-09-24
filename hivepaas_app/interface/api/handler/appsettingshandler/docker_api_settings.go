@@ -52,7 +52,8 @@ func (h *Handler) GetAppDockerAPISettings(ctx *gin.Context) {
 // UpdateAppDockerAPISettings Updates what an app may do through the Docker API
 // @Summary Updates what an app may do through the Docker API
 // @Description Updates the app's Docker API access. Turning it on, or letting it do more, needs Write
-// @Description permission on the Cluster module; narrowing it or turning it off needs Write on the app.
+// @Description permission on the Cluster module; host mode, the node's own socket, needs the privileged-apps
+// @Description switch and an administrator. Narrowing it, leaving host mode or turning it off needs Write on the app.
 // @Tags    app_settings
 // @Produce json
 // @Id      updateAppDockerAPISettings

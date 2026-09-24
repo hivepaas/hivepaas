@@ -15,7 +15,11 @@ type UpdateAppDockerAPISettingsReq struct {
 
 	// Enabled off takes the access away and keeps what it allowed, for turning
 	// it on again: the other fields are not read.
-	Enabled    bool                `json:"enabled"`
+	Enabled bool `json:"enabled"`
+	// Mode is proxy, the default when empty, or host: the node's own socket,
+	// which takes the privileged-apps switch and an administrator. In host mode
+	// the fields below are kept, not checked, for going back to the proxy.
+	Mode       string              `json:"mode"`
 	Images     []string            `json:"images"`
 	SharedDirs []string            `json:"sharedDirs"`
 	Networks   []string            `json:"networks"`
@@ -42,7 +46,11 @@ func (req *UpdateAppDockerAPISettingsReq) Validate() hperrors.ValidationErrors {
 // ToEntity is the access the request asks for.
 func (req *UpdateAppDockerAPISettingsReq) ToEntity() *entity.AppDockerAPISettings {
 	access := &entity.AppDockerAPISettings{
-		Images: req.Images, SharedDirs: req.SharedDirs, Networks: req.Networks, Allow: req.Allow,
+		Mode: req.Mode, Images: req.Images, SharedDirs: req.SharedDirs, Networks: req.Networks, Allow: req.Allow,
+	}
+	if access.Mode == entity.DockerAPIModeProxy {
+		// Written as the default it is, as a template's block is.
+		access.Mode = ""
 	}
 	if req.Limits != nil {
 		access.Limits = entity.AppDockerAPILimits{

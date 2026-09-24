@@ -11,6 +11,7 @@ import (
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
+	"github.com/hivepaas/hivepaas/hivepaas_app/config"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
@@ -54,6 +55,7 @@ func (uc *UC) UpdateAppDockerAPISettings(
 		return uc.recordAppUpdate(ctx, db, auth, data.App, base.AuditLogSourceAPIUpdate, "docker-api",
 			auditdetail.New().
 				Set("enabled", data.Next != nil).
+				Set("hostMode", data.Next.IsHostMode()).
 				Set("widened", dockerapiservice.Widens(data.Prev, data.Next)))
 	})
 	if err != nil {
@@ -144,9 +146,10 @@ func (uc *UC) prepareAppDockerAPI(
 
 // dockerAPIProblem says what is wrong with the access asked for, empty when
 // nothing is. A shared directory has to be on one of the volumes the app's
-// service mounts: that volume is what a child is given.
+// service mounts: that volume is what a child is given. Host mode uses no
+// policy, so none is held against the service.
 func dockerAPIProblem(access *entity.AppDockerAPISettings, service *swarm.Service) string {
-	if problem := specmodel.DockerAPIProblem(access); problem != "" {
+	if problem := specmodel.DockerAPIProblem(access); problem != "" || access.IsHostMode() {
 		return problem
 	}
 	var targets []string
@@ -161,15 +164,31 @@ func dockerAPIProblem(access *entity.AppDockerAPISettings, service *swarm.Servic
 	return specmodel.SharedDirsProblem(access.SharedDirs, targets)
 }
 
-// checkDockerAPIGrant refuses access given, or widened, by a caller without
-// Write on the Cluster module: the gate a template giving it passes. Narrowing
-// it or turning it off takes only the app's Write, which the route asked for.
+// checkDockerAPIGrant refuses the node's own socket to a caller who is not an
+// administrator, or while the privileged-apps switch is off, and access given,
+// or widened, through the proxy to a caller without Write on the Cluster
+// module: the gate a template giving it passes. Narrowing access, leaving host
+// mode or turning it off takes only the app's Write, which the route asked for.
 func (uc *UC) checkDockerAPIGrant(
 	ctx context.Context,
 	db database.IDB,
 	auth *basedto.Auth,
 	prev, next *entity.AppDockerAPISettings,
 ) error {
+	if dockerapiservice.EntersHostMode(prev, next) {
+		switch hostModeBlockedBy(config.Current(), auth) {
+		case hostModeBlockedBySwitch:
+			return hperrors.Wrap(hperrors.ErrUnauthorized).
+				WithExtraDetail("giving an app the node's Docker socket needs the privileged-apps switch, " +
+					"which is off; an administrator turns it on in the security settings").
+				WithMsgLog("host mode requires the privileged-apps switch")
+		case hostModeBlockedByAdmin:
+			return hperrors.Wrap(hperrors.ErrUnauthorized).
+				WithExtraDetail("giving an app the node's Docker socket needs an administrator").
+				WithMsgLog("host mode requires an administrator")
+		}
+		return nil
+	}
 	if !dockerapiservice.Widens(prev, next) {
 		return nil
 	}
@@ -219,9 +238,11 @@ func nextDockerAPISetting(
 // applyAppDockerAPI brings the agents, the app's service and its environment to
 // the access just saved.
 //   - With access, the agents are synced first: the service's new task looks for
-//     its socket as it starts, and many apps give up when it is not there.
-//   - When access appears or goes, the service gains or loses its socket and
-//     network, and HIVEPAAS_DOCKER_HOST appears or goes from the environment.
+//     its socket as it starts, and many apps give up when it is not there. An app
+//     entering host mode is no longer served.
+//   - When access appears or goes, or its mode changes, the service gains or
+//     loses its socket and network - or the node's socket - and
+//     HIVEPAAS_DOCKER_HOST appears, goes, or names the other socket.
 //   - When it goes, the app's children and their leftovers are removed at once.
 //     The app's network stays, unused, until the app is deleted: removing it now
 //     would race the task still leaving it.
@@ -233,7 +254,7 @@ func (uc *UC) applyAppDockerAPI(ctx context.Context, data *updateAppDockerAPIDat
 	if data.Next != nil {
 		errs = append(errs, uc.dockerAPIService.SyncAgents(ctx))
 	}
-	if (data.Prev == nil) != (data.Next == nil) {
+	if dockerAPIShape(data.Prev) != dockerAPIShape(data.Next) {
 		errs = append(errs, uc.dockerManager.ServiceUpdateFunc(ctx, data.Service.ID, data.Service,
 			func(_ int, service *swarm.Service) (bool, error) {
 				return true, uc.dockerAPIService.ApplyToService(ctx, uc.db, data.App.ID, &service.Spec)
@@ -244,6 +265,18 @@ func (uc *UC) applyAppDockerAPI(ctx context.Context, data *updateAppDockerAPIDat
 		errs = append(errs, uc.dockerAPIService.RemoveAppObjects(ctx, data.App.ID))
 	}
 	return errors.Join(errs...)
+}
+
+// dockerAPIShape is what access gives a service: nothing, the proxy's socket and
+// network, or the node's socket.
+func dockerAPIShape(access *entity.AppDockerAPISettings) string {
+	switch {
+	case access == nil:
+		return ""
+	case access.IsHostMode():
+		return entity.DockerAPIModeHost
+	}
+	return entity.DockerAPIModeProxy
 }
 
 // applyDockerHostVar builds an app's environment again, with or without

@@ -5,6 +5,7 @@ import (
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
+	"github.com/hivepaas/hivepaas/hivepaas_app/config"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
@@ -14,7 +15,7 @@ import (
 
 func (uc *UC) GetAppDockerAPISettings(
 	ctx context.Context,
-	_ *basedto.Auth,
+	auth *basedto.Auth,
 	req *appsettingsdto.GetAppDockerAPISettingsReq,
 ) (*appsettingsdto.GetAppDockerAPISettingsResp, error) {
 	app, err := uc.appService.LoadApp(ctx, uc.db, req.ProjectID, req.AppID, false, false,
@@ -27,11 +28,29 @@ func (uc *UC) GetAppDockerAPISettings(
 	if err != nil {
 		return nil, err
 	}
-	resp, err := appsettingsdto.TransformAppDockerAPISettings(setting)
+	resp, err := appsettingsdto.TransformAppDockerAPISettings(setting, hostModeBlockedBy(config.Current(), auth))
 	if err != nil {
 		return nil, hperrors.Wrap(err)
 	}
 	return &appsettingsdto.GetAppDockerAPISettingsResp{Data: resp}, nil
+}
+
+const (
+	hostModeBlockedBySwitch = "switch"
+	hostModeBlockedByAdmin  = "admin"
+)
+
+// hostModeBlockedBy says what keeps a caller from giving an app the node's own
+// socket: the privileged-apps switch, then being an administrator. It is empty
+// when nothing does.
+func hostModeBlockedBy(cfg *config.Config, auth *basedto.Auth) string {
+	switch {
+	case cfg == nil || !cfg.Security.AllowPrivilegedApps:
+		return hostModeBlockedBySwitch
+	case auth == nil || auth.User.Entity() == nil || !auth.User.IsAdmin():
+		return hostModeBlockedByAdmin
+	}
+	return ""
 }
 
 // appDockerAPISetting is an app's Docker API setting whatever its status, nil

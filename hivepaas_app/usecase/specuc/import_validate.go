@@ -47,7 +47,7 @@ func (uc *UC) importReq(auth *basedto.Auth, req *specdto.ValidateImportReq) *spe
 		Selection:           req.Selection,
 		Options:             req.Options,
 		AllowPrivilegedApps: cfg != nil && cfg.Security.AllowPrivilegedApps,
-		Admin:               auth.User != nil && auth.User.IsAdmin(),
+		Admin:               auth.User.Entity() != nil && auth.User.IsAdmin(),
 		AuthorizeSecrets: func(ctx context.Context, mode specmodel.SecretsMode) error {
 			return uc.permissionManager.AuthorizeSecretReveal(ctx, uc.db, auth, &permission.RevealSubject{
 				Scope:    req.Scope.ScopeType,

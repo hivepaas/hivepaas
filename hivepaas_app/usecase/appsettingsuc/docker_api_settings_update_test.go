@@ -12,6 +12,7 @@ import (
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
+	"github.com/hivepaas/hivepaas/hivepaas_app/config"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
@@ -25,6 +26,7 @@ import (
 type recordingDockerAPIService struct {
 	dockerapiservice.Service
 	access bool
+	host   bool
 	calls  []string
 }
 
@@ -37,6 +39,11 @@ func (f *recordingDockerAPIService) ApplyToService(
 	_ context.Context, _ database.IDB, appID string, spec *swarm.ServiceSpec,
 ) error {
 	f.calls = append(f.calls, "apply")
+	if f.host {
+		dockerapiservice.Detach(spec, "net-"+appID)
+		dockerapiservice.AttachHost(spec)
+		return nil
+	}
 	if f.access {
 		dockerapiservice.Attach(spec, appID, "net-"+appID)
 	} else {
@@ -206,6 +213,111 @@ func TestApplyingAChangedPolicyOnlySyncsTheAgents(t *testing.T) {
 	err := uc.applyAppDockerAPI(context.Background(), &updateAppDockerAPIData{
 		App: &entity.App{ID: "app-1"}, Service: dockerAPIService(), Setting: &entity.Setting{},
 		Prev: dockerAPIAccess(), Next: dockerAPIAccess(),
+	})
+
+	assert.NoError(t, err)
+	assert.Equal(t, []string{"sync"}, dockerAPI.calls)
+	assert.Nil(t, dockerManager.updatedSpec)
+}
+
+func adminAuth(admin bool) *basedto.Auth {
+	role := base.UserRoleMember
+	if admin {
+		role = base.UserRoleAdmin
+	}
+	return &basedto.Auth{User: &basedto.User{User: &entity.User{ID: "usr-1", Role: role}}}
+}
+
+func privilegedAppsSwitch(t *testing.T, on bool) {
+	t.Helper()
+	prev := config.Current()
+	config.SetCurrent(&config.Config{Security: config.Security{AllowPrivilegedApps: on}})
+	t.Cleanup(func() { config.SetCurrent(prev) })
+}
+
+// The switch comes first: an administrator can turn it on, a member cannot.
+func TestHostModeIsBlockedByTheSwitchThenByNotBeingAnAdministrator(t *testing.T) {
+	for name, tc := range map[string]struct {
+		on, admin bool
+		want      string
+	}{
+		"off, for an administrator": {admin: true, want: hostModeBlockedBySwitch},
+		"off, for a member":         {want: hostModeBlockedBySwitch},
+		"on, for a member":          {on: true, want: hostModeBlockedByAdmin},
+		"on, for an administrator":  {on: true, admin: true},
+	} {
+		cfg := &config.Config{Security: config.Security{AllowPrivilegedApps: tc.on}}
+		assert.Equal(t, tc.want, hostModeBlockedBy(cfg, adminAuth(tc.admin)), name)
+	}
+}
+
+// The node's own socket takes the switch and an administrator, and Write on the
+// Cluster module decides nothing about it; leaving host mode takes nothing.
+func TestHostModeIsGrantedOnlyByAnAdministratorWithTheSwitchOn(t *testing.T) {
+	host := &entity.AppDockerAPISettings{Mode: entity.DockerAPIModeHost}
+	for name, tc := range map[string]struct {
+		on, admin  bool
+		prev, next *entity.AppDockerAPISettings
+		refused    bool
+	}{
+		"entered with the switch off":   {admin: true, prev: dockerAPIAccess(), next: host, refused: true},
+		"entered by a member":           {on: true, next: host, refused: true},
+		"entered by an administrator":   {on: true, admin: true, prev: dockerAPIAccess(), next: host},
+		"left for the proxy by anybody": {prev: host, next: dockerAPIAccess()},
+		"turned off by anybody":         {prev: host},
+	} {
+		privilegedAppsSwitch(t, tc.on)
+		perms := &answeringPermissionManager{allow: true}
+		uc := &UC{permissionManager: perms}
+
+		err := uc.checkDockerAPIGrant(context.Background(), nil, adminAuth(tc.admin), tc.prev, tc.next)
+
+		assert.Equal(t, tc.refused, errors.Is(err, hperrors.ErrUnauthorized), name)
+		assert.Empty(t, perms.checked, name)
+	}
+}
+
+// Host mode keeps the proxy's policy without using it, so nothing of it is held
+// against the service.
+func TestDockerAPIProblemInHostModeLooksAtNoPolicy(t *testing.T) {
+	access := dockerAPIAccess()
+	access.Mode = entity.DockerAPIModeHost
+	access.SharedDirs = []string{"/nowhere"}
+
+	assert.Empty(t, dockerAPIProblem(access, dockerAPIService()))
+}
+
+// Moving from the proxy to the node's socket changes the service and the
+// environment, after the agents have stopped serving the app.
+func TestApplyingHostModeGivesTheServiceTheNodesSocket(t *testing.T) {
+	dockerAPI := &recordingDockerAPIService{host: true}
+	dockerManager := &serviceUpdatingDockerManager{}
+	uc := &UC{dockerAPIService: dockerAPI, dockerManager: dockerManager,
+		envVarService: &recordingEnvVarService{calls: &dockerAPI.calls}}
+
+	err := uc.applyAppDockerAPI(context.Background(), &updateAppDockerAPIData{
+		App: &entity.App{ID: "app-1"}, Service: dockerAPIService(), Setting: &entity.Setting{},
+		Prev: dockerAPIAccess(), Next: &entity.AppDockerAPISettings{Mode: entity.DockerAPIModeHost},
+	})
+
+	assert.NoError(t, err)
+	assert.Equal(t, []string{"sync", "apply", "env app-1"}, dockerAPI.calls)
+	if assert.NotNil(t, dockerManager.updatedSpec) {
+		mounts := dockerManager.updatedSpec.TaskTemplate.ContainerSpec.Mounts
+		assert.Contains(t, mounts, dockerapiservice.HostSocketMount())
+		assert.NotContains(t, mounts, dockerapiservice.SocketMount("app-1"))
+	}
+}
+
+func TestApplyingHostModeUnchangedOnlySyncsTheAgents(t *testing.T) {
+	dockerAPI := &recordingDockerAPIService{host: true}
+	dockerManager := &serviceUpdatingDockerManager{}
+	uc := &UC{dockerAPIService: dockerAPI, dockerManager: dockerManager}
+	host := &entity.AppDockerAPISettings{Mode: entity.DockerAPIModeHost}
+
+	err := uc.applyAppDockerAPI(context.Background(), &updateAppDockerAPIData{
+		App: &entity.App{ID: "app-1"}, Service: dockerAPIService(), Setting: &entity.Setting{},
+		Prev: host, Next: host,
 	})
 
 	assert.NoError(t, err)

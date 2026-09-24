@@ -16714,7 +16714,7 @@
         "tags" : [ "app_settings" ]
       },
       "put" : {
-        "description" : "Updates the app's Docker API access. Turning it on, or letting it do more, needs Write\npermission on the Cluster module; narrowing it or turning it off needs Write on the app.",
+        "description" : "Updates the app's Docker API access. Turning it on, or letting it do more, needs Write\npermission on the Cluster module; host mode, the node's own socket, needs the privileged-apps\nswitch and an administrator. Narrowing it, leaving host mode or turning it off needs Write on the app.",
         "operationId" : "updateAppDockerAPISettings",
         "parameters" : [ {
           "description" : "project ID",
@@ -43470,6 +43470,18 @@
         "required" : [ "cloneConfigFiles", "cloneDeploymentSettings", "cloneEnvVars", "clonePeriodicJobs", "cloneRoutingDomains", "cloneRoutingSettings", "cloneSchedJobs", "cloneSecrets", "cloneVolumeData", "cloneVolumes", "commandPipes", "excludedVolumes", "includedVolumes", "liveVolumeClone", "notification", "targetEnv", "targetName", "targetReplicas", "targetStatus", "updateVer" ],
         "type" : "object"
       },
+      "appsettingsdto.AppDockerAPIHostModeResp" : {
+        "properties" : {
+          "available" : {
+            "type" : "boolean"
+          },
+          "blockedBy" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "available", "blockedBy" ],
+        "type" : "object"
+      },
       "appsettingsdto.AppDockerAPILimits" : {
         "properties" : {
           "containers" : {
@@ -43503,6 +43515,13 @@
           "enabled" : {
             "type" : "boolean"
           },
+          "hostMode" : {
+            "allOf" : [ {
+              "$ref" : "#/components/schemas/appsettingsdto.AppDockerAPIHostModeResp"
+            } ],
+            "description" : "HostMode says whether the caller may choose host mode.",
+            "type" : "object"
+          },
           "images" : {
             "items" : {
               "type" : "string"
@@ -43511,6 +43530,10 @@
           },
           "limits" : {
             "$ref" : "#/components/schemas/appsettingsdto.AppDockerAPILimits"
+          },
+          "mode" : {
+            "description" : "Mode is proxy or host, never empty.",
+            "type" : "string"
           },
           "networks" : {
             "items" : {
@@ -43528,7 +43551,7 @@
             "type" : "integer"
           }
         },
-        "required" : [ "allow", "defaultLimits", "enabled", "images", "limits", "networks", "sharedDirs", "updateVer" ],
+        "required" : [ "allow", "defaultLimits", "enabled", "hostMode", "images", "limits", "mode", "networks", "sharedDirs", "updateVer" ],
         "type" : "object"
       },
       "appsettingsdto.AppKindCacheReq" : {
@@ -45968,6 +45991,10 @@
           "limits" : {
             "$ref" : "#/components/schemas/appsettingsdto.AppDockerAPILimits"
           },
+          "mode" : {
+            "description" : "Mode is proxy, the default when empty, or host: the node's own socket,\nwhich takes the privileged-apps switch and an administrator. In host mode\nthe fields below are kept, not checked, for going back to the proxy.",
+            "type" : "string"
+          },
           "networks" : {
             "items" : {
               "type" : "string"
@@ -45984,7 +46011,7 @@
             "type" : "integer"
           }
         },
-        "required" : [ "allow", "enabled", "images", "limits", "networks", "sharedDirs", "updateVer" ],
+        "required" : [ "allow", "enabled", "images", "limits", "mode", "networks", "sharedDirs", "updateVer" ],
         "type" : "object"
       },
       "appsettingsdto.UpdateAppDockerAPISettingsResp" : {
@@ -58914,6 +58941,30 @@
         "required" : [ "appliedAt", "changeId", "confirmableFrom", "deadlineAt" ],
         "type" : "object"
       },
+      "system_hpappsettingsdto.PrivilegedAppResp" : {
+        "properties" : {
+          "appId" : {
+            "type" : "string"
+          },
+          "appName" : {
+            "type" : "string"
+          },
+          "projectEnvId" : {
+            "type" : "string"
+          },
+          "projectEnvName" : {
+            "type" : "string"
+          },
+          "projectId" : {
+            "type" : "string"
+          },
+          "projectName" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "appId", "appName", "projectEnvId", "projectEnvName", "projectId", "projectName" ],
+        "type" : "object"
+      },
       "system_hpappsettingsdto.RequestInfoResp" : {
         "properties" : {
           "clientIp" : {
@@ -59036,11 +59087,18 @@
             },
             "type" : "array"
           },
+          "privilegedApps" : {
+            "description" : "PrivilegedApps are the apps given the node's own Docker socket. Turning the\nswitch off takes it from none of them: this is where an administrator\nfinds them.",
+            "items" : {
+              "$ref" : "#/components/schemas/system_hpappsettingsdto.PrivilegedAppResp"
+            },
+            "type" : "array"
+          },
           "returnSecretsViaApi" : {
             "type" : "boolean"
           }
         },
-        "required" : [ "allowPrivilegedApps", "alwaysReturnSecretTypes", "returnSecretsViaApi" ],
+        "required" : [ "allowPrivilegedApps", "alwaysReturnSecretTypes", "privilegedApps", "returnSecretsViaApi" ],
         "type" : "object"
       },
       "system_hpappsettingsdto.ServiceSettingsResp" : {

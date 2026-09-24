@@ -44,7 +44,7 @@ func importReq() *specdto.ValidateImportReq {
 	req := specdto.NewValidateImportReq()
 	req.Scope = entity.NewObjectScopeGlobal()
 	req.Bundle = []byte("bundle")
-	req.ModifyRequest()
+	_ = req.ModifyRequest()
 	return req
 }
 

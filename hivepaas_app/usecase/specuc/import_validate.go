@@ -26,7 +26,18 @@ func (uc *UC) ValidateImport(
 	auth *basedto.Auth,
 	req *specdto.ValidateImportReq,
 ) (*specdto.ValidateImportResp, error) {
-	resp, err := uc.specService.ValidateImport(ctx, uc.db, &specservice.ValidateImportReq{
+	resp, err := uc.specService.ValidateImport(ctx, uc.db, uc.importReq(auth, req))
+	if err != nil {
+		return nil, hperrors.Wrap(err)
+	}
+	return &specdto.ValidateImportResp{Data: resp.Plan}, nil
+}
+
+// importReq is what validate and apply both ask the service, with the gates of
+// the caller: revealing secrets, granting capabilities, reaching another app's
+// storage, changing a project's owner.
+func (uc *UC) importReq(auth *basedto.Auth, req *specdto.ValidateImportReq) *specservice.ValidateImportReq {
+	return &specservice.ValidateImportReq{
 		Scope:      req.Scope,
 		Bundle:     req.Bundle,
 		Passphrase: req.Passphrase,
@@ -69,9 +80,5 @@ func (uc *UC) ValidateImport(
 				Module:          base.ResourceModuleProject,
 			})
 		},
-	})
-	if err != nil {
-		return nil, hperrors.Wrap(err)
 	}
-	return &specdto.ValidateImportResp{Data: resp.Plan}, nil
 }

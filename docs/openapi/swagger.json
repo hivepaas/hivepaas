@@ -10683,6 +10683,45 @@
         "tags" : [ "spec" ]
       }
     },
+    "/projects/{projectID}/spec/import/apply" : {
+      "post" : {
+        "parameters" : [ {
+          "description" : "Project ID",
+          "in" : "path",
+          "name" : "projectID",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/specdto.ApplyImportReq"
+              }
+            }
+          },
+          "description" : "validate's body, planHash, acceptIssues",
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/specdto.ApplyImportResp"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "summary" : "Import a configuration bundle into one project",
+        "tags" : [ "spec" ],
+        "x-codegen-request-body-name" : "body"
+      }
+    },
     "/projects/{projectID}/spec/import/validate" : {
       "post" : {
         "parameters" : [ {
@@ -28072,6 +28111,53 @@
         "tags" : [ "spec" ]
       }
     },
+    "/projects/{projectID}/{projectEnv}/spec/import/apply" : {
+      "post" : {
+        "parameters" : [ {
+          "description" : "Project ID",
+          "in" : "path",
+          "name" : "projectID",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "Project env",
+          "in" : "path",
+          "name" : "projectEnv",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/specdto.ApplyImportReq"
+              }
+            }
+          },
+          "description" : "validate's body, planHash, acceptIssues",
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/specdto.ApplyImportResp"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "summary" : "Import a configuration bundle into one project env",
+        "tags" : [ "spec" ],
+        "x-codegen-request-body-name" : "body"
+      }
+    },
     "/projects/{projectID}/{projectEnv}/spec/import/validate" : {
       "post" : {
         "parameters" : [ {
@@ -37328,6 +37414,36 @@
         "x-codegen-request-body-name" : "body"
       }
     },
+    "/spec/import/apply" : {
+      "post" : {
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/specdto.ApplyImportReq"
+              }
+            }
+          },
+          "description" : "validate's body, planHash, acceptIssues",
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/specdto.ApplyImportResp"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "summary" : "Import a configuration bundle into the whole installation",
+        "tags" : [ "spec" ],
+        "x-codegen-request-body-name" : "body"
+      }
+    },
     "/spec/import/validate" : {
       "post" : {
         "requestBody" : {
@@ -42199,25 +42315,15 @@
         "type" : "object"
       },
       "pkg_fileutil.FileMode" : {
-        "enum" : [ 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511, 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511 ],
+        "enum" : [ 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511, 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511, 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511, 8388608, 4194304, 1048576, 511, 8388608, 4194304, 1048576, 511 ],
         "type" : "integer",
         "x-enum-comments" : {
-          "ModeAppend" : "a: append-only",
-          "ModeCharDevice" : "c: Unix character device, when ModeDevice is set",
-          "ModeDevice" : "D: device file",
-          "ModeDir" : "d: is a directory",
-          "ModeExclusive" : "l: exclusive use",
-          "ModeIrregular" : "?: non-regular file; nothing else is known about this file",
-          "ModeNamedPipe" : "p: named pipe (FIFO)",
           "ModePerm" : "Unix permission bits, 0o777",
           "ModeSetgid" : "g: setgid",
           "ModeSetuid" : "u: setuid",
-          "ModeSocket" : "S: Unix domain socket",
-          "ModeSticky" : "t: sticky",
-          "ModeSymlink" : "L: symbolic link",
-          "ModeTemporary" : "T: temporary file; Plan 9 only"
+          "ModeSticky" : "t: sticky"
         },
-        "x-enum-varnames" : [ "ModeDir", "ModeAppend", "ModeExclusive", "ModeTemporary", "ModeSymlink", "ModeDevice", "ModeNamedPipe", "ModeSocket", "ModeSetuid", "ModeSetgid", "ModeCharDevice", "ModeSticky", "ModeIrregular", "ModeType", "ModePerm" ]
+        "x-enum-varnames" : [ "ModeSetuid", "ModeSetgid", "ModeSticky", "ModePerm" ]
       },
       "pkg_tasklog.LogFrame" : {
         "properties" : {
@@ -42287,9 +42393,25 @@
         "required" : [ "appImage", "appVersion", "blockMajorUpgrade", "canUpdate", "dbImage", "redisImage", "releaseDate", "templates", "traefikImage", "victoriaLogsImage", "vlagentImage" ],
         "type" : "object"
       },
+      "service_specservice.ImportDeployment" : {
+        "properties" : {
+          "appId" : {
+            "type" : "string"
+          },
+          "deploymentId" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "appId", "deploymentId" ],
+        "type" : "object"
+      },
       "service_specservice_specmodel.BundleInfo" : {
         "properties" : {
           "apiVersion" : {
+            "type" : "string"
+          },
+          "digest" : {
+            "description" : "Digest is the SHA-256 of the bundle's bytes, which names the bundle in the\nimport's audit record.",
             "type" : "string"
           },
           "exportedAt" : {
@@ -42305,7 +42427,7 @@
             "type" : "string"
           }
         },
-        "required" : [ "apiVersion", "exportedAt", "scope", "secretsMode", "sourceAppVersion" ],
+        "required" : [ "apiVersion", "digest", "exportedAt", "scope", "secretsMode", "sourceAppVersion" ],
         "type" : "object"
       },
       "service_specservice_specmodel.Existing" : {
@@ -42417,6 +42539,10 @@
           "deploy" : {
             "type" : "boolean"
           },
+          "error" : {
+            "description" : "Error is why an app failed in apply's second phase: its configuration was\nsaved, and its running service was not brought to it.",
+            "type" : "string"
+          },
           "issues" : {
             "items" : {
               "$ref" : "#/components/schemas/service_specservice_specmodel.Issue"
@@ -42461,7 +42587,7 @@
             "type" : "string"
           }
         },
-        "required" : [ "action", "changes", "deploy", "issues", "key", "kind", "matchedBy", "name", "notes", "outcome", "path", "restart", "selected", "selectedBy" ],
+        "required" : [ "action", "changes", "deploy", "error", "issues", "key", "kind", "matchedBy", "name", "notes", "outcome", "path", "restart", "selected", "selectedBy" ],
         "type" : "object"
       },
       "service_specservice_specmodel.SecretsMode" : {
@@ -57654,6 +57780,68 @@
         "required" : [ "meta" ],
         "type" : "object"
       },
+      "specdto.ApplyImportData" : {
+        "properties" : {
+          "deployments" : {
+            "description" : "Deployments are the deployments the import queued.",
+            "items" : {
+              "$ref" : "#/components/schemas/service_specservice.ImportDeployment"
+            },
+            "type" : "array"
+          },
+          "plan" : {
+            "allOf" : [ {
+              "$ref" : "#/components/schemas/service_specservice_specmodel.ImportPlan"
+            } ],
+            "description" : "Plan is the plan applied, each selected node with its outcome.",
+            "type" : "object"
+          }
+        },
+        "required" : [ "deployments", "plan" ],
+        "type" : "object"
+      },
+      "specdto.ApplyImportReq" : {
+        "properties" : {
+          "acceptIssues" : {
+            "description" : "AcceptIssues accepts every skipped, fixable and warning issue of the plan.\nA plan with any is refused without it.",
+            "type" : "boolean"
+          },
+          "bundle" : {
+            "description" : "Bundle is the archive export produced, as it was downloaded. JSON carries\nit as base64.",
+            "items" : {
+              "type" : "integer"
+            },
+            "type" : "array"
+          },
+          "options" : {
+            "$ref" : "#/components/schemas/service_specservice_specmodel.ImportOptions"
+          },
+          "passphrase" : {
+            "description" : "Passphrase opens an encrypted bundle. It is never stored or logged.",
+            "type" : "string"
+          },
+          "planHash" : {
+            "type" : "string"
+          },
+          "selection" : {
+            "$ref" : "#/components/schemas/service_specservice_specmodel.Selection"
+          }
+        },
+        "required" : [ "acceptIssues", "bundle", "options", "passphrase", "planHash", "selection" ],
+        "type" : "object"
+      },
+      "specdto.ApplyImportResp" : {
+        "properties" : {
+          "data" : {
+            "$ref" : "#/components/schemas/specdto.ApplyImportData"
+          },
+          "meta" : {
+            "$ref" : "#/components/schemas/basedto.Meta"
+          }
+        },
+        "required" : [ "data", "meta" ],
+        "type" : "object"
+      },
       "specdto.ExportSpecReq" : {
         "properties" : {
           "passphrase" : {
@@ -61892,9 +62080,9 @@
         "x-enum-varnames" : [ "TaskStateNew", "TaskStateAllocated", "TaskStatePending", "TaskStateAssigned", "TaskStateAccepted", "TaskStatePreparing", "TaskStateReady", "TaskStateStarting", "TaskStateRunning", "TaskStateComplete", "TaskStateShutdown", "TaskStateFailed", "TaskStateRejected", "TaskStateRemove", "TaskStateOrphaned" ]
       },
       "timeutil.Duration" : {
-        "enum" : [ -9223372036854775808, 9223372036854775807, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000, -9223372036854775808, 9223372036854775807, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000 ],
+        "enum" : [ -9223372036854775808, 9223372036854775807, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000 ],
         "type" : "integer",
-        "x-enum-varnames" : [ "minDuration", "maxDuration", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour", "minDuration", "maxDuration", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour" ]
+        "x-enum-varnames" : [ "minDuration", "maxDuration", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour" ]
       },
       "uploadFiles_request" : {
         "properties" : {

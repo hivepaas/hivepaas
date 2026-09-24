@@ -11,4 +11,5 @@ import (
 func (s *HTTPServer) registerSpecRoutes(apiGroup *gin.RouterGroup) {
 	apiGroup.POST("/spec/export", s.handlerRegistry.specHandler.ExportGlobalSpec)
 	apiGroup.POST("/spec/import/validate", s.handlerRegistry.specHandler.ValidateGlobalImport)
+	apiGroup.POST("/spec/import/apply", s.handlerRegistry.specHandler.ApplyGlobalImport)
 }

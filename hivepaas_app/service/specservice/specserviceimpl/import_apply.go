@@ -44,10 +44,14 @@ func (s *service) applyBundle(
 		return nil, err
 	}
 	w := newWriter(p, req.OperatorID)
+	resp := &specservice.ApplyImportResp{Plan: p.result, Cleanup: w.cleanup, AfterCommit: w.afterCommit}
+	// What provisioning made in docker is the caller's to undo even when writing
+	// fails part way, so the response comes back with the error.
 	if err = w.write(ctx); err != nil {
-		return nil, err
+		return resp, err
 	}
-	return &specservice.ApplyImportResp{Plan: p.result, AfterCommit: w.afterCommit}, nil
+	resp.Tasks, resp.Deployments = w.tasks, w.deployments
+	return resp, nil
 }
 
 // refuseToApply refuses a plan other than the one the operator saw, a plan

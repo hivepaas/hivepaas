@@ -95,6 +95,7 @@ func (s *service) planBundle(
 		Bundle: specmodel.BundleInfo{
 			APIVersion: manifest.APIVersion, Scope: manifest.Scope, ExportedAt: manifest.ExportedAt,
 			SourceAppVersion: manifest.SourceAppVersion, SecretsMode: manifest.SecretsMode,
+			Digest: bundle.Digest,
 		},
 		Nodes:    p.nodes,
 		Summary:  summarize(p.nodes),
@@ -546,7 +547,7 @@ func (p *planner) planApp(
 	changes = append(changes, p.settingsChanges(node, "settings.", bundleSettings, currentSettings)...)
 	setChanges(node, changes)
 	node.Restart = app.ServiceID != "" && restarts(changes)
-	node.Deploy = p.req.Options.DeployChangedSource && slices.Contains(changes, "deployment.source")
+	node.Deploy = p.req.Options.DeployChangedSource && slices.Contains(changes, changeDeploymentSource)
 	return nil
 }
 
@@ -593,7 +594,7 @@ func (p *planner) matchApp(
 func restarts(changes []string) bool {
 	for _, change := range changes {
 		switch {
-		case strings.HasPrefix(change, "deployment.") && change != "deployment.source":
+		case strings.HasPrefix(change, "deployment.") && change != changeDeploymentSource:
 			return true
 		case change == "settings.envVars", change == "settings.routing",
 			strings.HasPrefix(change, "settings.secrets"), strings.HasPrefix(change, "settings.configFiles"):

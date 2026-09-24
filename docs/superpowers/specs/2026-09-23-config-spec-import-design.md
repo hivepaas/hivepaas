@@ -841,7 +841,9 @@ Five plans, each shippable without the next:
    `docs/superpowers/plans/2026-09-24-spec-import-apply-scopes.md` - project
    creation's defaults moved to `projectservice`, import policies, and
    `ApplyImport` writing global settings, projects, envs and their settings.
-   Apps, phases 2 and 3, the usecase and the routes follow.
+   Apply, second part: `docs/superpowers/plans/2026-09-24-spec-import-apply-apps.md`
+   - apps provisioned and updated, phases 2 and 3, the usecase with its
+   `spec-import` record, and the apply routes.
 5. **Dashboard**: the import screens.
 
 ---

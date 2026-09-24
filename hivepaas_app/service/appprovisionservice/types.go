@@ -23,7 +23,11 @@ type ProvisionAppReq struct {
 	// AppID is the id the app is created with, generated when empty. The apps a
 	// template creates together name each other by id, so their ids are chosen
 	// before the first of them exists.
-	AppID  string
+	AppID string
+	// Key is the app's key, derived from Name when empty. Import keeps the key an
+	// app had where it was exported: keys never change, and other apps of the
+	// env reach it by that name.
+	Key    string
 	Name   string
 	Status base.AppStatus
 	Note   string

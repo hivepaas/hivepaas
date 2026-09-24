@@ -216,7 +216,7 @@ func (s *service) newApp(
 		Project:         project,
 		ProjectEnvID:    projectEnv.ID,
 		ProjectEnv:      projectEnv,
-		Key:             projecthelper.CalcAppKey(req.Name),
+		Key:             gofn.Coalesce(req.Key, projecthelper.CalcAppKey(req.Name)),
 		Name:            req.Name,
 		Status:          req.Status,
 		Note:            req.Note,

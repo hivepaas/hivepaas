@@ -13,6 +13,7 @@ import (
 	"github.com/moby/moby/api/types/swarm"
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
+	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/specservice/specmodel"
 )
 
@@ -100,9 +101,29 @@ type ApplyImportReq struct {
 type ApplyImportResp struct {
 	// Plan is the plan applied, with each selected node's outcome.
 	Plan *specmodel.ImportPlan
-	// AfterCommit does what writing takes beyond the database - certificate
-	// files - and is the caller's to run once its transaction has committed.
-	AfterCommit func(ctx context.Context) error
+	// Cleanup removes from docker what provisioning the new apps created. It is
+	// the caller's to run when its transaction did not commit: the records are
+	// gone, and the services, secrets and configs are not. Its context should be
+	// one that is not already canceled.
+	Cleanup func(ctx context.Context) error
+	// AfterCommit is phase 2: what writing takes beyond the database - the
+	// running services of the apps updated, their swarm files, routing and
+	// environment, certificate files. It runs once the caller's transaction has
+	// committed, on db, and records each app's outcome in Plan. An app that fails
+	// does not stop the others.
+	AfterCommit func(ctx context.Context, db database.IDB) error
+	// Tasks are the deployments and certificate tasks phase 1 created. They can
+	// be scheduled once the transaction has committed, and after AfterCommit, so
+	// that a deployment runs on the service phase 2 updated.
+	Tasks []*entity.Task
+	// Deployments are the deployments queued.
+	Deployments []*ImportDeployment
+}
+
+// ImportDeployment is a deployment an import queued.
+type ImportDeployment struct {
+	AppID        string `json:"appId"`
+	DeploymentID string `json:"deploymentId"`
 }
 
 type ValidateImportResp struct {

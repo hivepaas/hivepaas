@@ -176,6 +176,10 @@ type fakeClusterService struct {
 	services map[string]*swarm.Service
 	// ports are the published ports other services hold, by service id.
 	ports map[clusterservice.PortRef]string
+	// updated are the specs each service was updated to; failUpdate makes one
+	// service's update fail.
+	updated    map[string][]*swarm.ServiceSpec
+	failUpdate map[string]error
 }
 
 func (f *fakeClusterService) VerifyPortsAvailable(
@@ -358,13 +362,20 @@ func exportFixture(t *testing.T) specservice.Service {
 			{ID: "u3", Email: "other@example.com", Status: base.UserStatusActive},
 		}},
 		&fakeProjectService{},
+		&fakeAppService{},
+		&fakeDeploymentService{},
+		&fakeProvisionService{},
+		&fakeRoutingService{},
 		&fakeClusterService{services: map[string]*swarm.Service{"svc_1": testService()}},
+		&fakeClusterSecretService{},
 		&fakeDomainService{},
+		&fakeEnvVarService{},
 		&fakeSSLService{},
 		&fakeExportVolumeService{descs: map[string]*volumeservice.AppMountDesc{
 			"/var/lib/postgresql/data": {AppKey: "backend", Own: true, Subpath: "data", VolumeID: "vol_setting_1"},
 			"/shared":                  {AppKey: "backend", Own: true, Subpath: "cache", VolumeID: "gvol_1"},
 		}},
+		&fakeTaskQueue{},
 	)
 
 	// The seam does what the repository's SQL would: return the settings this
@@ -382,7 +393,7 @@ func exportFixture(t *testing.T) specservice.Service {
 			if setting.ObjectID != objectID {
 				continue
 			}
-			out = append(out, setting)
+			out = append(out, fresh(t, setting))
 		}
 		return out, nil
 	}
@@ -390,7 +401,7 @@ func exportFixture(t *testing.T) specservice.Service {
 		var out []*entity.Setting
 		for _, setting := range all {
 			if slices.Contains(ids, setting.ID) {
-				out = append(out, setting)
+				out = append(out, fresh(t, setting))
 			}
 		}
 		return out, nil
@@ -430,6 +441,16 @@ func exportFixture(t *testing.T) specservice.Service {
 		return nodeID == "node_1", nil
 	}
 	return svc
+}
+
+// fresh is a setting as a query returns it: a row of its own, so that what one
+// reader does to its parsed data does not reach the next reader - export clears
+// the secrets of what it renders.
+func fresh(t *testing.T, setting *entity.Setting) *entity.Setting {
+	t.Helper()
+	cp, err := setting.Clone(false)
+	assert.NoError(t, err)
+	return cp
 }
 
 func containsScope(scopes []base.ObjectScopeType, want base.ObjectScopeType) bool {

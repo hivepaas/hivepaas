@@ -80,6 +80,10 @@ type ValidateImportReq struct {
 	// imported mount reaching that app's storage needs. It is asked only for an
 	// app the import does not itself write. Nil allows it.
 	MayWriteApp func(ctx context.Context, app *entity.App) (bool, error)
+	// MayChangeOwner answers whether this caller may give an existing project
+	// another owner. It is asked only for a project whose owner the bundle
+	// changes. Nil allows it.
+	MayChangeOwner func(ctx context.Context, project *entity.Project) (bool, error)
 }
 
 type ValidateImportResp struct {

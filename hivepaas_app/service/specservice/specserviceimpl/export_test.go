@@ -83,6 +83,34 @@ func (f *fakeProjectRepo) find(match func(*entity.Project) bool) (*entity.Projec
 	return nil, hperrors.Wrap(hperrors.ErrProjectNotFound)
 }
 
+// fakeUserRepo knows the fixture's users: the project's owner, a disabled
+// user, and another active one.
+type fakeUserRepo struct {
+	repository.UserRepo
+	users []*entity.User
+}
+
+func (f *fakeUserRepo) GetByID(
+	_ context.Context, _ database.IDB, id string, _ ...bunex.SelectQueryOption,
+) (*entity.User, error) {
+	return f.find(func(u *entity.User) bool { return u.ID == id })
+}
+
+func (f *fakeUserRepo) GetByEmail(
+	_ context.Context, _ database.IDB, email string, _ ...bunex.SelectQueryOption,
+) (*entity.User, error) {
+	return f.find(func(u *entity.User) bool { return strings.EqualFold(u.Email, email) })
+}
+
+func (f *fakeUserRepo) find(match func(*entity.User) bool) (*entity.User, error) {
+	for _, user := range f.users {
+		if match(user) {
+			return user, nil
+		}
+	}
+	return nil, hperrors.Wrap(hperrors.ErrUserNotFound)
+}
+
 type fakeProjectEnvRepo struct {
 	repository.ProjectEnvRepo
 	envs []*entity.ProjectEnv
@@ -322,6 +350,11 @@ func exportFixture(t *testing.T) specservice.Service {
 		&fakeProjectEnvRepo{envs: []*entity.ProjectEnv{env}},
 		&fakeProjectRepo{projects: []*entity.Project{proj, hive}},
 		settingRepo,
+		&fakeUserRepo{users: []*entity.User{
+			{ID: "u1", Email: "owner@example.com", Status: base.UserStatusActive},
+			{ID: "u2", Email: "gone@example.com", Status: base.UserStatusDisabled},
+			{ID: "u3", Email: "other@example.com", Status: base.UserStatusActive},
+		}},
 		&fakeClusterService{services: map[string]*swarm.Service{"svc_1": testService()}},
 		&fakeDomainService{},
 		&fakeExportVolumeService{descs: map[string]*volumeservice.AppMountDesc{

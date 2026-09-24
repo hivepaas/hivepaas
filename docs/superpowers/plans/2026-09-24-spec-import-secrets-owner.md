@@ -65,11 +65,12 @@ secret raises nothing; an encrypted bundle whose app is matched by key and by id
 
 ### Task 3: The owner (`import_owner.go`, `specuc`)
 
-`New` takes `repository.UserRepo`. `ValidateImportReq` gains `OperatorID` and
-`MayChangeOwner func(ctx, *entity.Project) (bool, error)`. `resolveOwner(ctx, doc)` returns the
+`New` takes `repository.UserRepo`. `ValidateImportReq` gains
+`MayChangeOwner func(ctx, *entity.Project) (bool, error)`. Validate needs no operator id: that the
+operator owns a project is a note, and apply, which writes it, has the operator. `resolveOwner(ctx, doc)` returns the
 user and how it was found. `planProject` compares the resolved owner with the target's in place
 of the bundle's owner id, which differs between installations for the same person. The usecase
-sets `OperatorID` and answers `MayChangeOwner` with project update's gate: an admin, the current
+answers `MayChangeOwner` with project update's gate: an admin, the current
 owner, or Write on the Project module.
 
 Tests: found by id, by email when the id is another installation's, not found for a new project

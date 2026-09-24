@@ -25,6 +25,7 @@ func New(
 	projectEnvRepo repository.ProjectEnvRepo,
 	projectRepo repository.ProjectRepo,
 	settingRepo repository.SettingRepo,
+	userRepo repository.UserRepo,
 
 	clusterService clusterservice.Service,
 	domainService domainservice.Service,
@@ -35,6 +36,7 @@ func New(
 		projectEnvRepo: projectEnvRepo,
 		projectRepo:    projectRepo,
 		settingRepo:    settingRepo,
+		userRepo:       userRepo,
 
 		clusterService: clusterService,
 		domainService:  domainService,
@@ -87,6 +89,7 @@ type service struct {
 	projectEnvRepo repository.ProjectEnvRepo
 	projectRepo    repository.ProjectRepo
 	settingRepo    repository.SettingRepo
+	userRepo       repository.UserRepo
 
 	clusterService clusterservice.Service
 	domainService  domainservice.Service

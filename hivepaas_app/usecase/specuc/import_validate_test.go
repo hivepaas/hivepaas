@@ -126,3 +126,29 @@ func TestValidateImportAsksThePermissionManagerForWhatAnImportGrants(t *testing.
 		assert.Equal(t, want, mayWrite, auth.User.ID)
 	}
 }
+
+// Changing an existing project's owner takes what project update takes.
+func TestValidateImportAsksWhoMayChangeAProjectsOwner(t *testing.T) {
+	for name, tc := range map[string]struct {
+		auth  *basedto.Auth
+		owner string
+		want  bool
+	}{
+		"an admin":          {adminAuth(), "usr_x", true},
+		"the current owner": {plainAuth(), "usr_1", true},
+		"another member":    {plainAuth(), "usr_x", false},
+	} {
+		t.Run(name, func(t *testing.T) {
+			uc, _, _ := newTestUC(t)
+			svc := &fakeImportService{mode: specmodel.SecretsModeOmit}
+			uc.specService = svc
+
+			_, err := uc.ValidateImport(context.Background(), tc.auth, importReq())
+			assert.NoError(t, err)
+
+			allowed, err := svc.lastReq.MayChangeOwner(context.Background(), &entity.Project{ID: "p1", OwnerID: tc.owner})
+			assert.NoError(t, err)
+			assert.Equal(t, tc.want, allowed)
+		})
+	}
+}

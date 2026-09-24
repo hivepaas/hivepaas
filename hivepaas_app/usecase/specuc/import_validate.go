@@ -58,6 +58,17 @@ func (uc *UC) ValidateImport(
 				ProjectEnv:      app.ProjectEnvID,
 			})
 		},
+		// Project update's gate: an admin, the current owner, or Write on the
+		// Project module.
+		MayChangeOwner: func(ctx context.Context, project *entity.Project) (bool, error) {
+			if auth.User.IsAdmin() || auth.User.ID == project.OwnerID {
+				return true, nil
+			}
+			return uc.permissionManager.CheckAccess(ctx, uc.db, auth, &permission.ModuleAccessCheck{
+				BaseAccessCheck: permission.BaseAccessCheck{Action: base.ActionTypeWrite},
+				Module:          base.ResourceModuleProject,
+			})
+		},
 	})
 	if err != nil {
 		return nil, hperrors.Wrap(err)

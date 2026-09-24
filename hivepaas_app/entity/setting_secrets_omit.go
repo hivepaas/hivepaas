@@ -111,6 +111,62 @@ func clearEncryptedField(value reflect.Value) (int, error) {
 	return 1, nil
 }
 
+// CountEmptySecrets counts the encrypted values a setting holds nothing in. A
+// setting written from a bundle that omitted its secrets has one wherever the
+// source had a secret - and wherever it had none, which reads the same.
+func CountEmptySecrets(data SettingData) int {
+	if data == nil {
+		return 0
+	}
+	return countEmptySecretsIn(reflect.ValueOf(data))
+}
+
+func countEmptySecretsIn(value reflect.Value) int {
+	switch value.Kind() { //nolint:exhaustive // reflect.Kind: only containers and EncryptedField matter to this walk
+	case reflect.Pointer, reflect.Interface:
+		if value.IsNil() {
+			return 0
+		}
+		return countEmptySecretsIn(value.Elem())
+
+	case reflect.Struct:
+		if value.Type() == encryptedFieldType {
+			field := value.Interface().(EncryptedField) //nolint:forcetypeassert // the type was just checked
+			if field.IsEmpty() {
+				return 1
+			}
+			return 0
+		}
+		count := 0
+		for i := range value.NumField() {
+			if value.Type().Field(i).IsExported() {
+				count += countEmptySecretsIn(value.Field(i))
+			}
+		}
+		return count
+
+	case reflect.Slice, reflect.Array:
+		count := 0
+		for i := range value.Len() {
+			count += countEmptySecretsIn(value.Index(i))
+		}
+		return count
+
+	case reflect.Map:
+		if value.IsNil() || !typeHoldsEncryptedField(value.Type().Elem()) {
+			return 0
+		}
+		count := 0
+		for _, key := range value.MapKeys() {
+			count += countEmptySecretsIn(value.MapIndex(key))
+		}
+		return count
+
+	default:
+		return 0
+	}
+}
+
 // SecretPlaintexts maps each of a setting's stored ciphertexts to its plaintext.
 //
 // It exists because a secret cannot be marshaled in the clear, by design.

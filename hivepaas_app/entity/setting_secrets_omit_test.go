@@ -1,6 +1,7 @@
 package entity
 
 import (
+	"reflect"
 	"strings"
 	"testing"
 
@@ -62,4 +63,24 @@ func TestOmitSecretsCountsNothingWhenThereAreNone(t *testing.T) {
 	count, err := OmitSecrets(&Script{Data: "echo hi"})
 	assert.NoError(t, err)
 	assert.Equal(t, 0, count)
+}
+
+// An empty secret is counted wherever it sits; a nested block that is absent
+// holds none.
+func TestCountEmptySecrets(t *testing.T) {
+	assert.Equal(t, 1, CountEmptySecrets(&AppKindSettings{
+		Database: &AppKindDatabase{Password: NewEncryptedField("pw")},
+	}), "the root password is empty, the password is not; the cache is absent")
+	assert.Equal(t, 1, CountEmptySecrets(&Secret{Key: "TOKEN"}))
+	assert.Equal(t, 0, CountEmptySecrets(&Secret{Key: "TOKEN", Value: NewEncryptedField("t")}))
+	assert.Equal(t, 0, CountEmptySecrets(&AppKindSettings{}))
+	assert.Equal(t, 0, CountEmptySecrets(nil))
+
+	assert.Equal(t, 3, countEmptySecretsIn(reflect.ValueOf(&struct {
+		List   []Secret
+		ByName map[string]*Secret
+	}{
+		List:   []Secret{{}, {Value: NewEncryptedField("x")}},
+		ByName: map[string]*Secret{"a": {}, "b": {}},
+	})))
 }

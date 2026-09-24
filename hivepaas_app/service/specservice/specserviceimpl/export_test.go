@@ -21,6 +21,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
 	"github.com/hivepaas/hivepaas/hivepaas_app/repository"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/clusterservice"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/domainservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/specservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/specservice/specmodel"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/volumeservice"
@@ -143,6 +144,36 @@ func (f *fakeAppRepo) GetByID(
 type fakeClusterService struct {
 	clusterservice.Service
 	services map[string]*swarm.Service
+	// ports are the published ports other services hold, by service id.
+	ports map[clusterservice.PortRef]string
+}
+
+func (f *fakeClusterService) VerifyPortsAvailable(
+	_ context.Context, ports []clusterservice.PortRef, ignoreServiceIDs []string,
+) error {
+	for _, port := range ports {
+		if by, taken := f.ports[port]; taken && !slices.Contains(ignoreServiceIDs, by) {
+			return hperrors.Wrap(hperrors.ErrPortInUse)
+		}
+	}
+	return nil
+}
+
+// fakeDomainService holds domains for apps, by app id.
+type fakeDomainService struct {
+	domainservice.Service
+	held map[string]string
+}
+
+func (f *fakeDomainService) VerifyDomainsAvailable(
+	_ context.Context, _ database.IDB, domains []string, ignoreAppIDs []string,
+) error {
+	for _, domain := range domains {
+		if by, taken := f.held[domain]; taken && !slices.Contains(ignoreAppIDs, by) {
+			return hperrors.Wrap(hperrors.ErrDomainInUse)
+		}
+	}
+	return nil
 }
 
 func (f *fakeClusterService) ServiceInspect(
@@ -159,6 +190,25 @@ func (f *fakeClusterService) ServiceInspect(
 type fakeExportVolumeService struct {
 	volumeservice.Service
 	descs map[string]*volumeservice.AppMountDesc
+	// storage answers InspectAppStorage for a volume id; a volume it does not
+	// name is checked and empty.
+	storage map[string]*volumeservice.AppStorageState
+}
+
+func (f *fakeExportVolumeService) InspectAppStorage(
+	_ context.Context, _ database.IDB, req *volumeservice.InspectAppStorageReq,
+) (*volumeservice.InspectAppStorageResp, error) {
+	resp := &volumeservice.InspectAppStorageResp{}
+	for _, query := range req.Queries {
+		state := &volumeservice.AppStorageState{Checked: true, Exists: true, Empty: true}
+		if known := f.storage[query.VolumeID]; known != nil {
+			copied := *known
+			state = &copied
+		}
+		state.AppKey, state.VolumeID = query.AppKey, query.VolumeID
+		resp.States = append(resp.States, state)
+	}
+	return resp, nil
 }
 
 func (f *fakeExportVolumeService) DescribeAppMounts(
@@ -263,6 +313,7 @@ func exportFixture(t *testing.T) specservice.Service {
 		&fakeProjectRepo{projects: []*entity.Project{proj, hive}},
 		settingRepo,
 		&fakeClusterService{services: map[string]*swarm.Service{"svc_1": testService()}},
+		&fakeDomainService{},
 		&fakeExportVolumeService{descs: map[string]*volumeservice.AppMountDesc{
 			"/var/lib/postgresql/data": {AppKey: "backend", Own: true, Subpath: "data", VolumeID: "vol_setting_1"},
 			"/shared":                  {AppKey: "backend", Own: true, Subpath: "cache", VolumeID: "gvol_1"},
@@ -327,6 +378,9 @@ func exportFixture(t *testing.T) specservice.Service {
 			}
 		}
 		return nil, nil
+	}
+	impl.nodeExists = func(_ context.Context, _ database.IDB, nodeID string) (bool, error) {
+		return nodeID == "node_1", nil
 	}
 	return svc
 }

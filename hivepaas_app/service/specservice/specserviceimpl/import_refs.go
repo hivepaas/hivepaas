@@ -31,6 +31,12 @@ const (
 	refSourceApp
 )
 
+// What holds a reference, as an issue's detail names it.
+const (
+	refInSetting = "setting"
+	refInMount   = "mount"
+)
+
 // bundleRef is one reference a bundle object makes.
 type bundleRef struct {
 	kind     refKind
@@ -78,7 +84,7 @@ func settingRefs(typ base.SettingType, at, holder string, body any) ([]bundleRef
 			return
 		}
 		seen[id] = true
-		ref.in, ref.holder = "setting", holder
+		ref.in, ref.holder = refInSetting, holder
 		refs = append(refs, ref)
 	}
 	for _, id := range ids.RefSettingIDs {
@@ -175,7 +181,7 @@ func mountRefs(storage *specmodel.Storage) []bundleRef {
 		}
 		for i := range refs {
 			if refs[i].in == "" {
-				refs[i].in, refs[i].holder = "mount", target
+				refs[i].in, refs[i].holder = refInMount, target
 			}
 		}
 	}

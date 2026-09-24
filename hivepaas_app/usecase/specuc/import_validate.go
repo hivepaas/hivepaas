@@ -6,6 +6,7 @@ import (
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
+	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/permission"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/specservice"
@@ -38,6 +39,23 @@ func (uc *UC) ValidateImport(
 				Source:   base.AuditLogSourceAPIAction,
 				ResType:  base.ResourceTypeSetting,
 				ResName:  fmt.Sprintf("configuration spec import (%s)", mode),
+			})
+		},
+		// The gates template creation applies to the same grants: the resources
+		// screen's for capabilities, the storage screen's for another app's files.
+		MayGrantCapabilities: func(ctx context.Context) (bool, error) {
+			return uc.permissionManager.CheckAccess(ctx, uc.db, auth, &permission.ModuleAccessCheck{
+				BaseAccessCheck: permission.BaseAccessCheck{Action: base.ActionTypeWrite},
+				Module:          base.ResourceModuleCluster,
+			})
+		},
+		MayWriteApp: func(ctx context.Context, app *entity.App) (bool, error) {
+			return uc.permissionManager.CheckAccess(ctx, uc.db, auth, &permission.AppAccessCheck{
+				BaseAccessCheck: permission.BaseAccessCheck{Action: base.ActionTypeWrite},
+				AppID:           app.ID,
+				ParentID:        app.ParentID,
+				ProjectID:       app.ProjectID,
+				ProjectEnv:      app.ProjectEnvID,
 			})
 		},
 	})

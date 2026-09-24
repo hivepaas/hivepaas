@@ -829,8 +829,11 @@ Five plans, each shippable without the next:
    plan hash, and the validate endpoint at the three scopes. Validate, second
    part: `docs/superpowers/plans/2026-09-24-spec-import-references.md` -
    references and closure, `keep` creating the settings a scope lacks, and the
-   records a selected object needs. Availability issues, owner and credential
-   notes, and apply follow in their own plans.
+   records a selected object needs. Validate, third part:
+   `docs/superpowers/plans/2026-09-24-spec-import-availability.md` - domains,
+   ports, nodes and storage, and the capability and shared-mount gates, with the
+   template checks' reading of a document moved to `specmodel`. Secrets and owner
+   notes, and apply, follow in their own plans.
 5. **Dashboard**: the import screens.
 
 ---

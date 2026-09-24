@@ -12,6 +12,14 @@ const (
 	CodeNameInUse           = "NAME_IN_USE"
 	CodeSettingVersionNewer = "SETTING_VERSION_NEWER"
 	CodeTypeNotImportable   = "TYPE_NOT_IMPORTABLE"
+
+	CodeDomainInUse             = "DOMAIN_IN_USE"
+	CodePortInUse               = "PORT_IN_USE"
+	CodeNodeNotFound            = "NODE_NOT_FOUND"
+	CodeStorageNotEmpty         = "STORAGE_NOT_EMPTY"
+	CodeStorageUnchecked        = "STORAGE_UNCHECKED"
+	CodeCapabilityNotPermitted  = "CAPABILITY_NOT_PERMITTED"
+	CodeSharedMountNotPermitted = "SHARED_MOUNT_NOT_PERMITTED"
 )
 
 // SeverityWarning clears nothing, but the result may not be what the operator

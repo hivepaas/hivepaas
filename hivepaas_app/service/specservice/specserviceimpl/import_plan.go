@@ -69,6 +69,7 @@ func (s *service) planImport(
 		apps:        map[string]appPlace{},
 		lookupScope: map[string]*entity.ObjectScope{},
 		pulled:      map[string][]string{},
+		targetApps:  map[string]*entity.App{},
 	}
 	if err = p.plan(ctx); err != nil {
 		return nil, err
@@ -212,6 +213,10 @@ type planner struct {
 	lookupScope map[string]*entity.ObjectScope
 	// pulled names, by node path, the settings closure pulled into a node.
 	pulled map[string][]string
+	// targetApps is the app on this installation each app node matched.
+	targetApps map[string]*entity.App
+	// capabilitiesAllowed is the answer of MayGrantCapabilities, once asked.
+	capabilitiesAllowed *bool
 	// envOnly is an env route's plan: its project is matched, never planned.
 	envOnly bool
 	// missing names, by node path, the settings the target does not have at all.
@@ -260,6 +265,12 @@ func (p *planner) plan(ctx context.Context) error {
 		p.applyExisting(node)
 	}
 	if err := p.resolveRefs(ctx); err != nil {
+		return err
+	}
+	if err := p.checkPermissions(ctx); err != nil {
+		return err
+	}
+	if err := p.checkAvailability(ctx); err != nil {
 		return err
 	}
 	p.selectAncestors()
@@ -492,6 +503,7 @@ func (p *planner) planApp(
 	}
 
 	node.MatchedBy, node.TargetID = matchedBy, app.ID
+	p.targetApps[path] = app
 	var current *specmodel.AppDoc
 	if currentEnv != nil {
 		current = currentEnv.Apps[key]

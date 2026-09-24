@@ -50,6 +50,9 @@ type writer struct {
 	appSettings map[string][]*entity.Setting
 	// provisioned is what provisioning created, for Cleanup.
 	provisioned *appprovisionservice.ProvisionAppsResp
+	// prepared is the deployment each updated app's service is built from in
+	// phase 2, prepared while the transaction is open.
+	prepared map[string]*specmodel.Deployment
 	// tasks and deployments are what phase 1 queued, for phase 3.
 	tasks       []*entity.Task
 	deployments []*specservice.ImportDeployment
@@ -61,7 +64,7 @@ func newWriter(p *planner, operatorID string) *writer {
 		ids: map[string]string{}, rows: map[string]*scopeRows{},
 		projectIDs: map[string]string{},
 		appIDs:     map[string]string{}, appIDsByBundle: map[string]string{},
-		appSettings: map[string][]*entity.Setting{},
+		appSettings: map[string][]*entity.Setting{}, prepared: map[string]*specmodel.Deployment{},
 	}
 }
 
@@ -85,6 +88,9 @@ func (w *writer) write(ctx context.Context) error {
 		return hperrors.Wrap(err)
 	}
 	if err := w.writeUpdatedApps(ctx); err != nil {
+		return err
+	}
+	if err := w.prepareUpdatedServices(ctx); err != nil {
 		return err
 	}
 	if err := w.provisionApps(ctx); err != nil {

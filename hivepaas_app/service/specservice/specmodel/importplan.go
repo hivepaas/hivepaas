@@ -146,6 +146,9 @@ type PlanNode struct {
 	Notes    []Issue  `json:"notes,omitempty"`
 	// Outcome is what apply did with a selected node; empty in validate's plan.
 	Outcome NodeOutcome `json:"outcome,omitempty"`
+	// Error is why an app failed in apply's second phase: its configuration was
+	// saved, and its running service was not brought to it.
+	Error string `json:"error,omitempty"`
 }
 
 // NodeOutcome is what apply did with a node.

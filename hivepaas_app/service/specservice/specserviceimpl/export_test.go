@@ -176,6 +176,10 @@ type fakeClusterService struct {
 	services map[string]*swarm.Service
 	// ports are the published ports other services hold, by service id.
 	ports map[clusterservice.PortRef]string
+	// updated are the specs each service was updated to; failUpdate makes one
+	// service's update fail.
+	updated    map[string][]*swarm.ServiceSpec
+	failUpdate map[string]error
 }
 
 func (f *fakeClusterService) VerifyPortsAvailable(
@@ -361,11 +365,11 @@ func exportFixture(t *testing.T) specservice.Service {
 		&fakeAppService{},
 		&fakeDeploymentService{},
 		&fakeProvisionService{},
-		nil,
+		&fakeRoutingService{},
 		&fakeClusterService{services: map[string]*swarm.Service{"svc_1": testService()}},
-		nil,
+		&fakeClusterSecretService{},
 		&fakeDomainService{},
-		nil,
+		&fakeEnvVarService{},
 		&fakeSSLService{},
 		&fakeExportVolumeService{descs: map[string]*volumeservice.AppMountDesc{
 			"/var/lib/postgresql/data": {AppKey: "backend", Own: true, Subpath: "data", VolumeID: "vol_setting_1"},

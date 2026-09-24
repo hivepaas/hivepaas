@@ -12,10 +12,13 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
+	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/projecthelper"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/timeutil"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/ulid"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/appprovisionservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/projectservice"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/specservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/specservice/specmodel"
 )
 
@@ -45,6 +48,11 @@ type writer struct {
 	// appSettings are the settings of each app created, which are provisioned
 	// with it rather than persisted with the scopes.
 	appSettings map[string][]*entity.Setting
+	// provisioned is what provisioning created, for Cleanup.
+	provisioned *appprovisionservice.ProvisionAppsResp
+	// tasks and deployments are what phase 1 queued, for phase 3.
+	tasks       []*entity.Task
+	deployments []*specservice.ImportDeployment
 }
 
 func newWriter(p *planner, operatorID string) *writer {
@@ -75,6 +83,12 @@ func (w *writer) write(ctx context.Context) error {
 	}
 	if err := w.p.s.projectService.PersistProjectData(ctx, w.p.db, &w.data); err != nil {
 		return hperrors.Wrap(err)
+	}
+	if err := w.writeUpdatedApps(ctx); err != nil {
+		return err
+	}
+	if err := w.provisionApps(ctx); err != nil {
+		return err
 	}
 	w.setOutcomes()
 	return nil
@@ -507,11 +521,11 @@ func (w *writer) pathID(ctx context.Context, scope *entity.ObjectScope, path str
 	return found.ID, nil
 }
 
-// setOutcomes says what apply did with each selected node. Apps are not written
-// yet, and have none.
+// setOutcomes says what phase 1 did with each selected node. Phase 2 can still
+// fail an app it updates.
 func (w *writer) setOutcomes() {
 	for _, node := range w.p.nodes {
-		if !node.Selected || node.Kind == specmodel.NodeKindApp {
+		if !node.Selected {
 			continue
 		}
 		switch {
@@ -525,8 +539,14 @@ func (w *writer) setOutcomes() {
 	}
 }
 
-// afterCommit does what the settings written take beyond their rows.
-func (w *writer) afterCommit(context.Context) error {
+// afterCommit is phase 2: what the settings written take beyond their rows.
+func (w *writer) afterCommit(ctx context.Context, db database.IDB) error {
+	w.applyToServices(ctx, db)
+	return w.writeFiles()
+}
+
+// writeFiles does what the settings written take beyond their rows, by type.
+func (w *writer) writeFiles() error {
 	byType := map[base.SettingType][]*entity.Setting{}
 	for _, setting := range w.written {
 		byType[setting.Type] = append(byType[setting.Type], setting)

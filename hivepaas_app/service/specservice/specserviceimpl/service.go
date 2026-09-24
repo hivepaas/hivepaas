@@ -7,13 +7,20 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/repository"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/appdeploymentservice"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/appprovisionservice"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/approutingservice"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/appservice"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/clustersecretservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/clusterservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/domainservice"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/envvarservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/projectservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/specservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/specservice/specmodel"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/sslservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/volumeservice"
+	"github.com/hivepaas/hivepaas/hivepaas_app/tasks/queue"
 )
 
 // New builds the spec exporter.
@@ -30,11 +37,19 @@ func New(
 	userRepo repository.UserRepo,
 
 	projectService projectservice.Service,
+	appService appservice.Service,
+	appDeploymentService appdeploymentservice.Service,
+	appProvisionService appprovisionservice.Service,
+	appRoutingService approutingservice.Service,
 
 	clusterService clusterservice.Service,
+	clusterSecretService clustersecretservice.Service,
 	domainService domainservice.Service,
+	envVarService envvarservice.Service,
 	sslService sslservice.Service,
 	volumeService volumeservice.Service,
+
+	taskQueue queue.TaskQueue,
 ) specservice.Service {
 	svc := &service{
 		appRepo:        appRepo,
@@ -43,12 +58,20 @@ func New(
 		settingRepo:    settingRepo,
 		userRepo:       userRepo,
 
-		projectService: projectService,
+		projectService:       projectService,
+		appService:           appService,
+		appDeploymentService: appDeploymentService,
+		appProvisionService:  appProvisionService,
+		appRoutingService:    appRoutingService,
 
-		clusterService: clusterService,
-		domainService:  domainService,
-		sslService:     sslService,
-		volumeService:  volumeService,
+		clusterService:       clusterService,
+		clusterSecretService: clusterSecretService,
+		domainService:        domainService,
+		envVarService:        envVarService,
+		sslService:           sslService,
+		volumeService:        volumeService,
+
+		taskQueue: taskQueue,
 	}
 	svc.loadOwned = svc.loadOwnedFromRepo
 	svc.loadByIDs = svc.loadByIDsFromRepo
@@ -99,7 +122,14 @@ type service struct {
 	settingRepo    repository.SettingRepo
 	userRepo       repository.UserRepo
 
-	projectService projectservice.Service
+	projectService       projectservice.Service
+	appService           appservice.Service
+	appDeploymentService appdeploymentservice.Service
+	appProvisionService  appprovisionservice.Service
+	appRoutingService    approutingservice.Service
+	clusterSecretService clustersecretservice.Service
+	envVarService        envvarservice.Service
+	taskQueue            queue.TaskQueue
 
 	clusterService clusterservice.Service
 	domainService  domainservice.Service

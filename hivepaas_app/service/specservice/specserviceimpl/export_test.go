@@ -358,13 +358,20 @@ func exportFixture(t *testing.T) specservice.Service {
 			{ID: "u3", Email: "other@example.com", Status: base.UserStatusActive},
 		}},
 		&fakeProjectService{},
+		&fakeAppService{},
+		&fakeDeploymentService{},
+		&fakeProvisionService{},
+		nil,
 		&fakeClusterService{services: map[string]*swarm.Service{"svc_1": testService()}},
+		nil,
 		&fakeDomainService{},
+		nil,
 		&fakeSSLService{},
 		&fakeExportVolumeService{descs: map[string]*volumeservice.AppMountDesc{
 			"/var/lib/postgresql/data": {AppKey: "backend", Own: true, Subpath: "data", VolumeID: "vol_setting_1"},
 			"/shared":                  {AppKey: "backend", Own: true, Subpath: "cache", VolumeID: "gvol_1"},
 		}},
+		&fakeTaskQueue{},
 	)
 
 	// The seam does what the repository's SQL would: return the settings this

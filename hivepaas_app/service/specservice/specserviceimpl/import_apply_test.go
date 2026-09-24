@@ -20,10 +20,20 @@ func applyReq(
 	t *testing.T, svc *service, bundle *specmodel.ImportBundle, selectors ...string,
 ) *specservice.ApplyImportReq {
 	t.Helper()
-	validated := plan(t, svc, bundle, specmodel.ImportOptions{}, selectors...)
+	return applyReqWith(t, svc, bundle, specmodel.ImportOptions{}, selectors...)
+}
+
+func applyReqWith(
+	t *testing.T, svc *service, bundle *specmodel.ImportBundle, options specmodel.ImportOptions, selectors ...string,
+) *specservice.ApplyImportReq {
+	t.Helper()
+	validated := plan(t, svc, bundle, options, selectors...)
 	req := &specservice.ApplyImportReq{OperatorID: "u_operator", PlanHash: validated.PlanHash, AcceptIssues: true}
 	req.Scope = entity.NewObjectScopeGlobal()
-	req.Options.Existing = specmodel.ExistingUpdate
+	req.Options = options
+	if req.Options.Existing == "" {
+		req.Options.Existing = specmodel.ExistingUpdate
+	}
 	for _, selector := range selectors {
 		if excluded, ok := cutExclude(selector); ok {
 			req.Selection.Exclude = append(req.Selection.Exclude, excluded)
@@ -134,7 +144,7 @@ func TestApplyRewritesAChangedCertificateInPlace(t *testing.T) {
 	assert.Equal(t, "renewed.example.com", cert.MustAsSSLCert().Domain)
 	assert.Equal(t, specmodel.OutcomeApplied, node(t, resp.Plan, "global").Outcome)
 
-	assert.NoError(t, resp.AfterCommit(context.Background()))
+	assert.NoError(t, resp.AfterCommit(context.Background(), nil))
 	assert.Equal(t, []string{"cert_1"}, svc.sslService.(*fakeSSLService).written)
 }
 

@@ -1,5 +1,7 @@
 export const QK = {
     "system-settings.hivepaas.service-settings.find-one": "system-settings.hivepaas.service-settings.find-one",
+    "system-settings.hivepaas.updates.release-info": "system-settings.hivepaas.updates.release-info",
+    "system-settings.hivepaas.updates.plan": "system-settings.hivepaas.updates.plan",
     "system-settings.hivepaas.service-settings.probe": "system-settings.hivepaas.service-settings.probe",
     "system-settings.hivepaas.request-info.find-one": "system-settings.hivepaas.request-info.find-one",
     "system-settings.hivepaas.routing-settings.find-one": "system-settings.hivepaas.routing-settings.find-one",

@@ -1,6 +1,6 @@
 import { type PropsWithChildren, memo } from "react";
 
-import { Globe, Play, Settings, ShieldCheck } from "lucide-react";
+import { CircleArrowUp, Globe, Play, Settings, ShieldCheck } from "lucide-react";
 import { SystemSettingsSidebarLayout, type SystemSettingsTabSection } from "~/system-settings/module-shared";
 
 import { ROUTE } from "@application/shared/constants";
@@ -25,6 +25,11 @@ const sections: SystemSettingsTabSection[] = [
                 label: "Security",
                 route: ROUTE.systemSettings.hivepaas.security.$route,
                 icon: ShieldCheck,
+            },
+            {
+                label: "Updates",
+                route: ROUTE.systemSettings.hivepaas.updates.$route,
+                icon: CircleArrowUp,
             },
             {
                 label: "Actions",

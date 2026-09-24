@@ -8,6 +8,7 @@ export {
     SystemSettingsLoggingRoute,
     SystemSettingsRegistryRoute,
     SystemSettingsHivePaaSActionsRoute,
+    SystemSettingsHivePaaSUpdatesRoute,
     SystemSettingsHivePaaSHttpSettingsRoute,
     SystemSettingsTraefikGeneralRoute,
     SystemSettingsTraefikConfigOptionsRoute,

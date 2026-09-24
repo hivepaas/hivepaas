@@ -8,7 +8,7 @@ import { DEFAULT_PAGINATED_DATA, MODULE_IDS, ROUTE } from "@application/shared/c
 import { EUserRole } from "@application/shared/enums";
 import { useConditionalModule, useProjectPermissionsStore } from "@application/shared/permissions";
 
-import { NeedsAttentionCard, NodesCard, RecentTasksCard, SummaryTiles } from "../building-blocks";
+import { NeedsAttentionCard, NodesCard, RecentTasksCard, SummaryTiles, UpdateAvailableBadge } from "../building-blocks";
 
 function plural(count: number, noun: string) {
     return `${count} ${noun}${count === 1 ? "" : "s"}`;
@@ -94,11 +94,14 @@ export function HomeRoute() {
 
     return (
         <div className="flex flex-col gap-6">
-            <header className="flex flex-col gap-1.5">
-                <h1 className="text-2xl font-bold tracking-tight">Welcome back</h1>
-                <p className="text-sm text-muted-foreground">
-                    What is running on your cluster, and what needs you today.
-                </p>
+            <header className="flex flex-wrap items-end justify-between gap-4">
+                <div className="flex flex-col gap-1.5">
+                    <h1 className="text-2xl font-bold tracking-tight">Welcome back</h1>
+                    <p className="text-sm text-muted-foreground">
+                        What is running on your cluster, and what needs you today.
+                    </p>
+                </div>
+                <UpdateAvailableBadge />
             </header>
 
             <SummaryTiles tiles={tiles} />

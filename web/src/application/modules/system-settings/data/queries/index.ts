@@ -12,3 +12,4 @@ export * from "./traefik-config-options.queries";
 export * from "./hivepaas-request-info.queries";
 export * from "./hivepaas-logging-settings.queries";
 export * from "./hivepaas-registry-settings.queries";
+export * from "./hivepaas-updates.queries";

@@ -76,6 +76,14 @@ export const systemSettingsRouter: RouteObject = {
                     },
                 },
                 {
+                    path: "updates",
+                    lazy: async () => {
+                        const { SystemSettingsHivePaaSUpdatesRoute } = await getLazyComponents();
+
+                        return { Component: SystemSettingsHivePaaSUpdatesRoute };
+                    },
+                },
+                {
                     path: "actions",
                     lazy: async () => {
                         const { SystemSettingsHivePaaSActionsRoute } = await getLazyComponents();

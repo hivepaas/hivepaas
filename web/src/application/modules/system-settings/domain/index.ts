@@ -11,3 +11,4 @@ export * from "./hivepaas-security-settings.entity";
 export * from "./traefik-service-settings.entity";
 export * from "./hivepaas-logging-settings.entity";
 export * from "./hivepaas-registry-settings.entity";
+export * from "./hivepaas-updates.entity";

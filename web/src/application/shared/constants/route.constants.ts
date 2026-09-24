@@ -441,6 +441,11 @@ export const ROUTE = {
                 $route: "/system/hivepaas/security/",
             },
 
+            updates: {
+                $pattern: "system/hivepaas/updates",
+                $route: "/system/hivepaas/updates/",
+            },
+
             actions: {
                 $pattern: "system/hivepaas/actions",
                 $route: "/system/hivepaas/actions/",

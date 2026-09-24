@@ -6,8 +6,13 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
+	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
+	"github.com/hivepaas/hivepaas/hivepaas_app/permission/permissionimpl"
+	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
+	"github.com/hivepaas/hivepaas/hivepaas_app/repository"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/specservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/specservice/specmodel"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/specuc/specdto"
@@ -19,6 +24,7 @@ type fakeImportService struct {
 	fakeSpecService
 	mode    specmodel.SecretsMode
 	planned bool
+	lastReq *specservice.ValidateImportReq
 }
 
 func (f *fakeImportService) ValidateImport(
@@ -30,6 +36,7 @@ func (f *fakeImportService) ValidateImport(
 		}
 	}
 	f.planned = true
+	f.lastReq = req
 	return &specservice.ValidateImportResp{Plan: &specmodel.ImportPlan{}, SecretsMode: f.mode}, nil
 }
 
@@ -84,4 +91,38 @@ func TestValidateImportReqDefaultsToUpdatingWhatExists(t *testing.T) {
 	req := importReq()
 	req.Bundle = nil
 	assert.NotEmpty(t, req.Validate(), "a request without a bundle is refused")
+}
+
+// fakeOwnerlessProjectRepo owns nothing for anybody, so an app's access has to
+// come from the role.
+type fakeOwnerlessProjectRepo struct {
+	repository.ProjectRepo
+}
+
+func (f *fakeOwnerlessProjectRepo) GetByIDAndOwner(
+	_ context.Context, _ database.IDB, _, _ string, _ ...bunex.SelectQueryOption,
+) (*entity.Project, error) {
+	return nil, hperrors.Wrap(hperrors.ErrProjectNotFound)
+}
+
+// Granting capabilities and reaching another app's storage take what they take
+// when a template asks for them.
+func TestValidateImportAsksThePermissionManagerForWhatAnImportGrants(t *testing.T) {
+	app := &entity.App{ID: "app_1", ProjectID: "p1", ProjectEnvID: "p1:dev"}
+	for auth, want := range map[*basedto.Auth]bool{adminAuth(): true, plainAuth(): false} {
+		uc, audit, _ := newTestUC(t)
+		uc.permissionManager = permissionimpl.NewManager(&fakeACLRepo{}, nil, nil, &fakeOwnerlessProjectRepo{}, audit)
+		svc := &fakeImportService{mode: specmodel.SecretsModeOmit}
+		uc.specService = svc
+
+		_, err := uc.ValidateImport(context.Background(), auth, importReq())
+		assert.NoError(t, err)
+
+		mayGrant, err := svc.lastReq.MayGrantCapabilities(context.Background())
+		assert.NoError(t, err)
+		assert.Equal(t, want, mayGrant, auth.User.ID)
+		mayWrite, err := svc.lastReq.MayWriteApp(context.Background(), app)
+		assert.NoError(t, err)
+		assert.Equal(t, want, mayWrite, auth.User.ID)
+	}
 }

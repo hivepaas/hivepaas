@@ -63,6 +63,13 @@ func writes(node *specmodel.PlanNode) bool {
 	return node.Action == specmodel.ActionCreate || node.Action == specmodel.ActionUpdate
 }
 
+// writesBlock reports whether a node writes one of its blocks: all of them for
+// an object being created, what changed of one being updated.
+func writesBlock(node *specmodel.PlanNode, change string) bool {
+	return node.Action == specmodel.ActionCreate ||
+		node.Action == specmodel.ActionUpdate && slices.Contains(node.Changes, change)
+}
+
 // nodeRefs reads the references of what a node writes: everything a node being
 // created holds, and what changed of one being updated.
 func (p *planner) nodeRefs(node *specmodel.PlanNode) ([]bundleRef, error) {
@@ -75,16 +82,13 @@ func (p *planner) nodeRefs(node *specmodel.PlanNode) ([]bundleRef, error) {
 	if place, ok := p.apps[node.Path]; ok {
 		prefix, deployment = "settings.", place.doc.Deployment
 	}
-	written := func(change string) bool {
-		return node.Action == specmodel.ActionCreate || slices.Contains(node.Changes, change)
-	}
 
 	var refs []bundleRef
 	if deployment != nil {
-		if written("deployment.storage") {
+		if writesBlock(node, "deployment.storage") {
 			refs = append(refs, mountRefs(deployment.Storage)...)
 		}
-		if deployment.Source != nil && written("deployment.source") {
+		if deployment.Source != nil && writesBlock(node, "deployment.source") {
 			sourceRefs, err := settingRefs(base.SettingTypeAppDeployment, node.Path, "deployment.source",
 				deployment.Source)
 			if err != nil {
@@ -273,7 +277,7 @@ func (p *planner) narrowPulled() {
 		node := p.byPath[path]
 		kept := node.Issues[:0]
 		for _, issue := range node.Issues {
-			if setting, _ := issue.Detail["setting"].(string); slices.Contains(names, setting) {
+			if setting, _ := issue.Detail[refInSetting].(string); slices.Contains(names, setting) {
 				kept = append(kept, issue)
 			}
 		}
@@ -391,7 +395,7 @@ func (p *planner) refIssue(node *specmodel.PlanNode, ref bundleRef, code, availa
 		detail["ref"] = named
 	}
 	cleared := "the reference is cleared"
-	if ref.in == "mount" {
+	if ref.in == refInMount {
 		cleared = "the mount is left out"
 	}
 	action := cleared + ": neither the bundle nor this installation has what it names"

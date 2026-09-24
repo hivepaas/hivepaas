@@ -8,6 +8,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/repository"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/clusterservice"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/domainservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/specservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/specservice/specmodel"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/volumeservice"
@@ -26,6 +27,7 @@ func New(
 	settingRepo repository.SettingRepo,
 
 	clusterService clusterservice.Service,
+	domainService domainservice.Service,
 	volumeService volumeservice.Service,
 ) specservice.Service {
 	svc := &service{
@@ -35,11 +37,13 @@ func New(
 		settingRepo:    settingRepo,
 
 		clusterService: clusterService,
+		domainService:  domainService,
 		volumeService:  volumeService,
 	}
 	svc.loadOwned = svc.loadOwnedFromRepo
 	svc.loadByIDs = svc.loadByIDsFromRepo
 	svc.findRef = svc.findRefInRepo
+	svc.nodeExists = svc.nodeExistsInRepo
 	return svc
 }
 
@@ -74,6 +78,10 @@ type refFinder func(
 	ref *specmodel.ExternalRef,
 ) (*entity.Setting, error)
 
+// nodeFinder reports whether this installation has a cluster node, by its
+// Docker id. It is a seam for the reason settingLoader is.
+type nodeFinder func(ctx context.Context, db database.IDB, nodeID string) (bool, error)
+
 type service struct {
 	appRepo        repository.AppRepo
 	projectEnvRepo repository.ProjectEnvRepo
@@ -81,9 +89,11 @@ type service struct {
 	settingRepo    repository.SettingRepo
 
 	clusterService clusterservice.Service
+	domainService  domainservice.Service
 	volumeService  volumeservice.Service
 
-	loadOwned settingLoader
-	loadByIDs settingsByIDLoader
-	findRef   refFinder
+	loadOwned  settingLoader
+	loadByIDs  settingsByIDLoader
+	findRef    refFinder
+	nodeExists nodeFinder
 }

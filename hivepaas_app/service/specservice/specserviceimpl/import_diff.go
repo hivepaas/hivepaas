@@ -139,7 +139,7 @@ func newerSetting(typ base.SettingType, body any) bool {
 func versionNewer(path, block string) specmodel.Issue {
 	return specmodel.Issue{
 		Severity: specmodel.SeverityBlocked, Code: specmodel.CodeSettingVersionNewer, Path: path,
-		Detail: map[string]any{"setting": block},
+		Detail: map[string]any{refInSetting: block},
 		Action: "nothing can be imported: this setting was written by a newer HivePaaS",
 	}
 }

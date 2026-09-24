@@ -440,7 +440,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
 
 **Interfaces:**
 - Consumes: Task 1.
-- Produces: `type Options struct{Upstream http.RoundTripper; OnDecision func(Decision)}`, `type Decision struct{AppID, Method, Path string; Allowed bool; Reason string}`, `func New(policy *Policy, opts Options) *Proxy`, `func (p *Proxy) SetPolicy(*Policy)`, `(*Proxy).ServeHTTP`; internal `call{w, r, policy, args}`, `(*Proxy).forward(c, reason)`, `(*Proxy).refuse(c, err)`, `(*Proxy).decide(c, allowed, reason)`, `(*Proxy).fetch(c, out) bool`, `writeJSON`, `writeError`, `on(methods, pattern string, group Group, handle func(*Proxy, *call)) route`, `idPart`, `var routes []route`; `daemon.get(ctx, path, out) (bool, error)`, `errDaemon`, `daemonHost`, `contentTypeJSON`, `versionPrefix`. Test harness: `newWorld(t testing.TB, policy *Policy) *world`, `testPolicy() *Policy`, `(*world).do(t, method, path string, body any) (int, []byte)`, `refusalMessage(t, raw) string`, `(*world).reached(method, suffix string) bool`, `(*world).forwarded(t, method, suffix string) (string, map[string]any)`.
+- Produces: `type Options struct{Upstream http.RoundTripper; OnDecision func(Decision)}`, `type Decision struct{AppID, Method, Path string; Allowed bool; Reason string}`, `func New(policy *Policy, opts Options) *Proxy`, `func (p *Proxy) SetPolicy(*Policy)`, `(*Proxy).ServeHTTP`; internal `call{w, r, policy, args}`, `(*Proxy).forward(c, reason)`, `(*Proxy).refuse(c, err)`, `(*Proxy).decide(c, allowed, reason)`, `(*Proxy).fetch(c, out) bool`, `writeJSON`, `writeError`, `on(methods, pattern string, group Group, handle func(*Proxy, *call)) route`, `idPart`, `var routes []route`; `daemon.get(ctx, path, out) (bool, error)`, `errDaemon`, `daemonHost`, `contentTypeJSON`, `versionPrefix`. Test harness: `newWorld(t testing.TB, policy *Policy) *world`, `testPolicy() *Policy`, `(*world).do(t, method, path string, body any) (int, []byte)`, `refusalMessage(t, raw) string`, `(*world).reached(method, suffix string) bool`, `(*world).posted(t, suffix string) (string, map[string]any)`.
 
 - [ ] **Step 1: Write the fake daemon and the test world**
 
@@ -777,15 +777,15 @@ func (w *world) reached(method, suffix string) bool {
 	return false
 }
 
-// forwarded returns the path and decoded body of the last request with that
-// method and path suffix that reached the daemon.
-func (w *world) forwarded(t testing.TB, method, suffix string) (string, map[string]any) {
+// posted returns the path and decoded body of the last POST with that path
+// suffix that reached the daemon.
+func (w *world) posted(t testing.TB, suffix string) (string, map[string]any) {
 	t.Helper()
 	w.daemon.mu.Lock()
 	defer w.daemon.mu.Unlock()
 	for i := len(w.daemon.requests) - 1; i >= 0; i-- {
 		req := w.daemon.requests[i]
-		if req.method != method || !strings.HasSuffix(req.path, suffix) {
+		if req.method != http.MethodPost || !strings.HasSuffix(req.path, suffix) {
 			continue
 		}
 		body := map[string]any{}
@@ -796,7 +796,7 @@ func (w *world) forwarded(t testing.TB, method, suffix string) (string, map[stri
 		}
 		return req.path, body
 	}
-	t.Fatalf("no %s ...%s reached the daemon", method, suffix)
+	t.Fatalf("no POST ...%s reached the daemon", suffix)
 	return "", nil
 }
 ```
@@ -888,7 +888,7 @@ func TestPullTakesOnlyThePolicysImages(t *testing.T) {
 	w := newWorld(t, testPolicy())
 	status, _ := w.do(t, http.MethodPost, "/v1.51/images/create?fromImage=alpine&tag=3", nil)
 	assert.Equal(t, http.StatusOK, status)
-	path, _ := w.forwarded(t, http.MethodPost, "/images/create")
+	path, _ := w.posted(t, "/images/create")
 	assert.Equal(t, "/v1.51/images/create", path)
 
 	status, raw := w.do(t, http.MethodPost, "/v1.51/images/create?fromImage=busybox&tag=1", nil)
@@ -1731,7 +1731,7 @@ func TestVolumesAreTheAppsOwn(t *testing.T) {
 		"Name": "cache2", "Labels": map[string]any{"keep": "yes", OwnerLabel: "app2"},
 	})
 	assert.Equal(t, http.StatusCreated, status)
-	_, body := w.forwarded(t, http.MethodPost, "/volumes/create")
+	_, body := w.posted(t, "/volumes/create")
 	assert.Equal(t, map[string]any{"keep": "yes", OwnerLabel: "app1"}, body["Labels"])
 
 	status, raw = w.do(t, http.MethodPost, "/v1.51/volumes/create", fixture(t, "cli-volume-create-bind-opts.json"))
@@ -1758,7 +1758,7 @@ func TestNetworksAreTheAppsOwn(t *testing.T) {
 
 	status, raw := w.do(t, http.MethodPost, "/v1.51/networks/create", fixture(t, "cli-network-create.json"))
 	stop(t, assert.Equal(t, http.StatusOK, status, string(raw)))
-	_, body := w.forwarded(t, http.MethodPost, "/networks/create")
+	_, body := w.posted(t, "/networks/create")
 	assert.Equal(t, map[string]any{OwnerLabel: "app1"}, body["Labels"])
 
 	refused := map[string]map[string]any{
@@ -1888,6 +1888,9 @@ const (
 	kindNetworks = "networks"
 
 	fieldDriver = "Driver"
+	// local is docker's name for its own volume driver, log driver and network
+	// scope: what stays on this node.
+	local = "local"
 
 	// serviceIDLabel is how Docker marks the containers of a swarm service's tasks.
 	serviceIDLabel = "com.docker.swarm.service.id"
@@ -1895,11 +1898,11 @@ const (
 
 var (
 	volumeCreateFields  = []string{"Name", fieldDriver, fieldLabels}
-	volumeDrivers       = []string{"", "local"}
+	volumeDrivers       = []string{"", local}
 	networkCreateFields = []string{"Name", "CheckDuplicate", fieldDriver, "Scope", "Internal", "Attachable",
 		"EnableIPv4", "EnableIPv6", fieldLabels, "IPAM"}
 	networkDrivers       = []string{"", "bridge"}
-	networkScopes        = []string{"", "local"}
+	networkScopes        = []string{"", local}
 	ipamDrivers          = []string{"", "default"}
 	networkConnectFields = []string{"Container", "EndpointConfig", "Force"}
 	// endpointFields are what a child may say about a network it joins. A static
@@ -2206,7 +2209,7 @@ func TestCreateTakesWhatTheCLISendsForAPlainContainer(t *testing.T) {
 	status, raw := w.do(t, http.MethodPost, createPath+"?name=job1", fixture(t, "cli-create-plain.json"))
 	stop(t, assert.Equal(t, http.StatusCreated, status, string(raw)))
 
-	path, body := w.forwarded(t, http.MethodPost, "/containers/create")
+	path, body := w.posted(t, "/containers/create")
 	assert.Equal(t, createPath, path)
 	host := object(body["HostConfig"])
 	assert.Equal(t, "hp-dapi-app1", host["NetworkMode"])
@@ -2271,7 +2274,7 @@ func TestCreatePutsTheDefaultNetworksOnTheAppsNetwork(t *testing.T) {
 		status, raw := w.do(t, http.MethodPost, createPath,
 			set(fixture(t, "cli-create-plain.json"), "HostConfig.NetworkMode", mode))
 		stop(t, assert.Equal(t, http.StatusCreated, status, "%q %s", mode, raw))
-		_, body := w.forwarded(t, http.MethodPost, "/containers/create")
+		_, body := w.posted(t, "/containers/create")
 		assert.Equal(t, "hp-dapi-app1", object(body["HostConfig"])["NetworkMode"], mode)
 	}
 }
@@ -2331,7 +2334,7 @@ func TestCreateGivesTheLimitsAndRefusesMore(t *testing.T) {
 	body := set(fixture(t, "cli-create-plain.json"), "HostConfig.CpuQuota", 50000)
 	status, raw := w.do(t, http.MethodPost, createPath, body)
 	stop(t, assert.Equal(t, http.StatusCreated, status, string(raw)))
-	_, forwarded := w.forwarded(t, http.MethodPost, "/containers/create")
+	_, forwarded := w.posted(t, "/containers/create")
 	assert.Equal(t, json.Number("0"), object(forwarded["HostConfig"])["NanoCpus"],
 		"a quota is the child's own limit, and docker refuses both at once")
 }
@@ -2343,7 +2346,7 @@ func TestCreateReplacesTheOwnerLabel(t *testing.T) {
 	})
 	status, _ := w.do(t, http.MethodPost, createPath, body)
 	stop(t, assert.Equal(t, http.StatusCreated, status))
-	_, forwarded := w.forwarded(t, http.MethodPost, "/containers/create")
+	_, forwarded := w.posted(t, "/containers/create")
 	assert.Equal(t, map[string]any{"keep": "yes", OwnerLabel: "app1"}, forwarded["Labels"])
 }
 
@@ -2365,7 +2368,7 @@ func TestCreateSpeaksAtLeastTheVersionSubpathsNeed(t *testing.T) {
 	} {
 		status, _ := w.do(t, http.MethodPost, sent, fixture(t, "cli-create-plain.json"))
 		stop(t, assert.Equal(t, http.StatusCreated, status, sent))
-		path, _ := w.forwarded(t, http.MethodPost, "/containers/create")
+		path, _ := w.posted(t, "/containers/create")
 		assert.Equal(t, want, path)
 	}
 }
@@ -2559,7 +2562,7 @@ var (
 	hostNullOnly     = []string{"MaskedPaths", "ReadonlyPaths"}
 	networkingFields = []string{"EndpointsConfig"}
 	// logDrivers write where docker logs reads, and nowhere else.
-	logDrivers = []string{"", "json-file", "local"}
+	logDrivers = []string{"", "json-file", local}
 	// defaultNetworkModes are what a client asks for when it names no network of
 	// its own, and they all become the app's network. host is among them because
 	// the apps that ask for it - Autobase's automation - want the internet, which
@@ -2762,7 +2765,7 @@ func createWith(t *testing.T, w *world, binds, mounts []any) (int, string) {
 
 func forwardedStorage(t *testing.T, w *world) ([]any, []any) {
 	t.Helper()
-	_, body := w.forwarded(t, http.MethodPost, "/containers/create")
+	_, body := w.posted(t, "/containers/create")
 	host := object(body["HostConfig"])
 	return list(host["Binds"]), list(host["Mounts"])
 }
@@ -3308,7 +3311,7 @@ func TestCreateTakesWhatGoClientsSend(t *testing.T) {
 		}})
 	status, raw := w.do(t, http.MethodPost, "/v1.44/containers/create", act)
 	stop(t, assert.Equal(t, http.StatusCreated, status, string(raw)))
-	path, _ := w.forwarded(t, http.MethodPost, "/containers/create")
+	path, _ := w.posted(t, "/containers/create")
 	assert.Equal(t, "/v1.45/containers/create", path)
 
 	// Autobase: host networking and the log directory it shares with the playbook.
@@ -3320,7 +3323,7 @@ func TestCreateTakesWhatGoClientsSend(t *testing.T) {
 		nil)
 	status, raw = w.do(t, http.MethodPost, "/v1.47/containers/create", autobase)
 	stop(t, assert.Equal(t, http.StatusCreated, status, string(raw)))
-	_, body := w.forwarded(t, http.MethodPost, "/containers/create")
+	_, body := w.posted(t, "/containers/create")
 	host := object(body["HostConfig"])
 	assert.Equal(t, "hp-dapi-app1", host["NetworkMode"])
 	assert.Equal(t, "app1-key/ansible", object(object(list(host["Mounts"])[0])["VolumeOptions"])["Subpath"])
@@ -3368,7 +3371,7 @@ func FuzzCreate(f *testing.F) {
 		if status != http.StatusCreated {
 			return
 		}
-		_, body := w.forwarded(t, http.MethodPost, "/containers/create")
+		_, body := w.posted(t, "/containers/create")
 		assertConfined(t, policy, body)
 	})
 }

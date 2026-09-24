@@ -80,7 +80,7 @@ func TestPullTakesOnlyThePolicysImages(t *testing.T) {
 	w := newWorld(t, testPolicy())
 	status, _ := w.do(t, http.MethodPost, "/v1.51/images/create?fromImage=alpine&tag=3", nil)
 	assert.Equal(t, http.StatusOK, status)
-	path, _ := w.forwarded(t, http.MethodPost, "/images/create")
+	path, _ := w.posted(t, "/images/create")
 	assert.Equal(t, "/v1.51/images/create", path)
 
 	status, raw := w.do(t, http.MethodPost, "/v1.51/images/create?fromImage=busybox&tag=1", nil)

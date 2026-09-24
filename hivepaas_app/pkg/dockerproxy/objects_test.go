@@ -30,7 +30,7 @@ func TestVolumesAreTheAppsOwn(t *testing.T) {
 		"Name": "cache2", "Labels": map[string]any{"keep": "yes", OwnerLabel: "app2"},
 	})
 	assert.Equal(t, http.StatusCreated, status)
-	_, body := w.forwarded(t, http.MethodPost, "/volumes/create")
+	_, body := w.posted(t, "/volumes/create")
 	assert.Equal(t, map[string]any{"keep": "yes", OwnerLabel: "app1"}, body["Labels"])
 
 	status, raw = w.do(t, http.MethodPost, "/v1.51/volumes/create", fixture(t, "cli-volume-create-bind-opts.json"))
@@ -57,7 +57,7 @@ func TestNetworksAreTheAppsOwn(t *testing.T) {
 
 	status, raw := w.do(t, http.MethodPost, "/v1.51/networks/create", fixture(t, "cli-network-create.json"))
 	stop(t, assert.Equal(t, http.StatusOK, status, string(raw)))
-	_, body := w.forwarded(t, http.MethodPost, "/networks/create")
+	_, body := w.posted(t, "/networks/create")
 	assert.Equal(t, map[string]any{OwnerLabel: "app1"}, body["Labels"])
 
 	refused := map[string]map[string]any{

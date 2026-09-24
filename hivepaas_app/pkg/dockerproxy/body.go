@@ -66,3 +66,22 @@ func list(v any) []any {
 	l, _ := v.([]any)
 	return l
 }
+
+// number reads a whole number the client sent, or one the proxy set. Absent and
+// null are zero.
+func number(v any) (int64, error) {
+	switch n := v.(type) {
+	case nil:
+		return 0, nil
+	case int64:
+		return n, nil
+	case json.Number:
+		i, err := n.Int64()
+		if err != nil {
+			return 0, refusef("%s is not a whole number", n)
+		}
+		return i, nil
+	default:
+		return 0, refusef("%v is not a number", v)
+	}
+}

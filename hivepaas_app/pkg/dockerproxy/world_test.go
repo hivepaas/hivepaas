@@ -139,15 +139,15 @@ func (w *world) reached(method, suffix string) bool {
 	return false
 }
 
-// forwarded returns the path and decoded body of the last request with that
-// method and path suffix that reached the daemon.
-func (w *world) forwarded(t testing.TB, method, suffix string) (string, map[string]any) {
+// posted returns the path and decoded body of the last POST with that path
+// suffix that reached the daemon.
+func (w *world) posted(t testing.TB, suffix string) (string, map[string]any) {
 	t.Helper()
 	w.daemon.mu.Lock()
 	defer w.daemon.mu.Unlock()
 	for i := len(w.daemon.requests) - 1; i >= 0; i-- {
 		req := w.daemon.requests[i]
-		if req.method != method || !strings.HasSuffix(req.path, suffix) {
+		if req.method != http.MethodPost || !strings.HasSuffix(req.path, suffix) {
 			continue
 		}
 		body := map[string]any{}
@@ -158,7 +158,7 @@ func (w *world) forwarded(t testing.TB, method, suffix string) (string, map[stri
 		}
 		return req.path, body
 	}
-	t.Fatalf("no %s ...%s reached the daemon", method, suffix)
+	t.Fatalf("no POST ...%s reached the daemon", suffix)
 	return "", nil
 }
 
@@ -171,5 +171,21 @@ func fixture(t testing.TB, name string) map[string]any {
 	decoder := json.NewDecoder(bytes.NewReader(raw))
 	decoder.UseNumber()
 	stop(t, assert.NoError(t, decoder.Decode(&body)))
+	return body
+}
+
+// set changes a field of a decoded body by its dotted path, and returns the body.
+func set(body map[string]any, dotted string, value any) map[string]any {
+	keys := strings.Split(dotted, ".")
+	obj := body
+	for _, key := range keys[:len(keys)-1] {
+		next, ok := obj[key].(map[string]any)
+		if !ok {
+			next = map[string]any{}
+			obj[key] = next
+		}
+		obj = next
+	}
+	obj[keys[len(keys)-1]] = value
 	return body
 }

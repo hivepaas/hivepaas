@@ -14,6 +14,9 @@ const (
 	kindNetworks = "networks"
 
 	fieldDriver = "Driver"
+	// local is docker's name for its own volume driver, log driver and network
+	// scope: what stays on this node.
+	local = "local"
 
 	// serviceIDLabel is how Docker marks the containers of a swarm service's tasks.
 	serviceIDLabel = "com.docker.swarm.service.id"
@@ -21,11 +24,11 @@ const (
 
 var (
 	volumeCreateFields  = []string{"Name", fieldDriver, fieldLabels}
-	volumeDrivers       = []string{"", "local"}
+	volumeDrivers       = []string{"", local}
 	networkCreateFields = []string{"Name", "CheckDuplicate", fieldDriver, "Scope", "Internal", "Attachable",
 		"EnableIPv4", "EnableIPv6", fieldLabels, "IPAM"}
 	networkDrivers       = []string{"", "bridge"}
-	networkScopes        = []string{"", "local"}
+	networkScopes        = []string{"", local}
 	ipamDrivers          = []string{"", "default"}
 	networkConnectFields = []string{"Container", "EndpointConfig", "Force"}
 	// endpointFields are what a child may say about a network it joins. A static

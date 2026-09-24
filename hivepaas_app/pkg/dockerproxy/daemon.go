@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"net/url"
 )
 
 const (
@@ -47,4 +48,10 @@ func (d *daemon) get(ctx context.Context, path string, out any) (bool, error) {
 	default:
 		return false, fmt.Errorf("%w: GET %s answered %d", errDaemon, path, resp.StatusCode)
 	}
+}
+
+// labelFilter is a filters query parameter selecting by one label.
+func labelFilter(key, value string) string {
+	raw, _ := json.Marshal(map[string][]string{"label": {key + "=" + value}})
+	return url.QueryEscape(string(raw))
 }

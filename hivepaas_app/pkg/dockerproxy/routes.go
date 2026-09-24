@@ -35,6 +35,7 @@ var routes = []route{
 	on("POST", `/images/create`, "", (*Proxy).pull),
 
 	on("GET", `/containers/json`, "", (*Proxy).listContainers),
+	on("POST", `/containers/create`, "", (*Proxy).create),
 	on("GET", `/containers/`+idPart+`/(?:json|logs|stats|top)`, "", (*Proxy).onChild),
 	on("POST", `/containers/`+idPart+`/(?:start|stop|kill|wait|restart|resize|attach)`, "", (*Proxy).onChild),
 	on("DELETE", `/containers/`+idPart, "", (*Proxy).onChild),

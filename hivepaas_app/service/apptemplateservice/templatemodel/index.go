@@ -55,6 +55,9 @@ type IndexEntry struct {
 	// before anybody opens the template, and what exactly it asks for is in the
 	// template file.
 	RequiresCapabilities bool `json:"requiresCapabilities,omitempty"`
+	// RequiresDockerAPI says the template gives an app the Docker API, which
+	// also takes Write on the Cluster module; in the index for the same reason.
+	RequiresDockerAPI bool `json:"requiresDockerApi,omitempty"`
 }
 
 type IndexVariant struct {

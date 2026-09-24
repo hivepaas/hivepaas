@@ -46881,6 +46881,10 @@
             "description" : "RequiresCapabilities says creating this template grants the app kernel\ncapabilities, sysctls, ulimits or the GPU. The store marks those, and only\nsomeone with Write on the cluster module can create one.",
             "type" : "boolean"
           },
+          "requiresDockerApi" : {
+            "description" : "RequiresDockerAPI says creating this template gives an app the Docker API,\nbehind the same permission. The store marks those too.",
+            "type" : "boolean"
+          },
           "tagline" : {
             "type" : "string"
           },
@@ -46906,7 +46910,7 @@
             "type" : "array"
           }
         },
-        "required" : [ "aliases", "categories", "compatible", "components", "dependencies", "iconUrl", "license", "name", "requiresCapabilities", "tagline", "tags", "title", "variants", "versions" ],
+        "required" : [ "aliases", "categories", "compatible", "components", "dependencies", "iconUrl", "license", "name", "requiresCapabilities", "requiresDockerApi", "tagline", "tags", "title", "variants", "versions" ],
         "type" : "object"
       },
       "apptemplatedto.AppTemplateTagResp" : {
@@ -58949,7 +58953,7 @@
           "appName" : {
             "type" : "string"
           },
-          "projectEnvId" : {
+          "projectEnvKey" : {
             "type" : "string"
           },
           "projectEnvName" : {
@@ -58962,7 +58966,7 @@
             "type" : "string"
           }
         },
-        "required" : [ "appId", "appName", "projectEnvId", "projectEnvName", "projectId", "projectName" ],
+        "required" : [ "appId", "appName", "projectEnvKey", "projectEnvName", "projectId", "projectName" ],
         "type" : "object"
       },
       "system_hpappsettingsdto.RequestInfoResp" : {

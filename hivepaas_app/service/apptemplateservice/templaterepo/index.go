@@ -42,7 +42,8 @@ func BuildIndex(repo *Repo) (*templatemodel.Index, error) {
 			Internal:   tmpl.Metadata.Internal,
 			Requires:   tmpl.Metadata.Requires,
 
-			RequiresCapabilities: requiresCapabilities(repo, tmpl),
+			RequiresCapabilities: requires(repo, tmpl, (*templatemodel.Template).RequiresCapabilities),
+			RequiresDockerAPI:    requires(repo, tmpl, (*templatemodel.Template).RequiresDockerAPI),
 		}
 		for _, variant := range tmpl.Variants {
 			entry.Variants = append(entry.Variants,
@@ -75,20 +76,20 @@ func BuildIndex(repo *Repo) (*templatemodel.Index, error) {
 	return index, nil
 }
 
-// requiresCapabilities reports whether creating this template grants
-// capabilities to any app it creates - its own, or one of the dependencies
-// created alongside it, since those are provisioned by the same request and
-// gated on the same permission.
+// requires reports whether creating this template grants what asks says to any
+// app it creates - its own, or one of the dependencies created alongside it,
+// since those are provisioned by the same request and gated on the same
+// permission.
 //
 // A dependency naming a template this repository does not have is Lint's
 // problem; here it simply grants nothing.
-func requiresCapabilities(repo *Repo, tmpl *templatemodel.Template) bool {
-	if tmpl.RequiresCapabilities() {
+func requires(repo *Repo, tmpl *templatemodel.Template, asks func(*templatemodel.Template) bool) bool {
+	if asks(tmpl) {
 		return true
 	}
 	for _, dep := range tmpl.Dependencies {
 		target := repo.FindTemplate(dep.Template)
-		if target != nil && target.Template.RequiresCapabilities() {
+		if target != nil && asks(target.Template) {
 			return true
 		}
 	}

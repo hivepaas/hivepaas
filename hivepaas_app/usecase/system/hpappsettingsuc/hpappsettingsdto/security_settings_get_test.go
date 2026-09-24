@@ -22,11 +22,11 @@ func TestSecuritySettingsListTheAppsGivenTheNodesSocket(t *testing.T) {
 	resp, err = TransformSecuritySettings(&SecuritySettingsTransformInput{Config: cfg,
 		PrivilegedApps: []*entity.App{{
 			ID: "app-1", Name: "Portainer", ProjectID: "p1", ProjectEnvID: "p1:prod",
-			Project: &entity.Project{Name: "Ops"}, ProjectEnv: &entity.ProjectEnv{Name: "prod"},
+			Project: &entity.Project{Name: "Ops"}, ProjectEnv: &entity.ProjectEnv{Key: "prod", Name: "Production"},
 		}}})
 	assert.NoError(t, err)
 	assert.Equal(t, []*PrivilegedAppResp{{
 		AppID: "app-1", AppName: "Portainer", ProjectID: "p1", ProjectName: "Ops",
-		ProjectEnvID: "p1:prod", ProjectEnvName: "prod",
+		ProjectEnvKey: "prod", ProjectEnvName: "Production",
 	}}, resp.PrivilegedApps)
 }

@@ -244,3 +244,39 @@ func TestBuildIndexMarksWhatNeedsCapabilities(t *testing.T) {
 		"a dependency's capabilities are granted by the same request")
 	assert.False(t, index.FindTemplate("demo").RequiresCapabilities)
 }
+
+const dockerAPITemplateYAML = `
+apiVersion: hivepaas.com/v1
+kind: AppTemplate
+metadata:
+  name: search
+  title: Search
+  tagline: Search things
+  description: Search.
+  categories: [databases/sql]
+  icon: icons/demo.svg
+  requires: {versionCode: v000001}
+versions:
+  - {name: "3", release: "3.0", default: true, image: "search:3.0.0"}
+app:
+  deployment:
+    source: {activeMethod: image, imageSource: {image: "${{ image }}"}}
+  settings:
+    dockerApi: {images: [search/worker]}
+`
+
+func TestBuildIndexMarksWhatStartsContainers(t *testing.T) {
+	fsys := withFile(withFile(validRepoFS(), "templates/search.yaml", dockerAPITemplateYAML),
+		"templates/site.yaml", appTemplateYAML)
+	repo, problems := loadAndLint(t, fsys)
+	assert.Empty(t, problems)
+
+	index, err := BuildIndex(repo)
+	assert.NoError(t, err)
+
+	assert.True(t, index.FindTemplate("search").RequiresDockerAPI)
+	assert.True(t, index.FindTemplate("site").RequiresDockerAPI,
+		"a dependency's Docker API is granted by the same request")
+	assert.False(t, index.FindTemplate("demo").RequiresDockerAPI)
+	assert.False(t, index.FindTemplate("search").RequiresCapabilities)
+}

@@ -34,13 +34,13 @@ type SecuritySettingsResp struct {
 }
 
 // PrivilegedAppResp is an app given the node's own Docker socket, with where to
-// find it.
+// find it: the dashboard's routes name an env by its key.
 type PrivilegedAppResp struct {
 	AppID          string `json:"appId"`
 	AppName        string `json:"appName"`
 	ProjectID      string `json:"projectId"`
 	ProjectName    string `json:"projectName"`
-	ProjectEnvID   string `json:"projectEnvId"`
+	ProjectEnvKey  string `json:"projectEnvKey"`
 	ProjectEnvName string `json:"projectEnvName"`
 }
 
@@ -70,7 +70,7 @@ func TransformSecuritySettings(input *SecuritySettingsTransformInput) (resp *Sec
 			AppName:        app.Name,
 			ProjectID:      app.ProjectID,
 			ProjectName:    app.Project.Name,
-			ProjectEnvID:   app.ProjectEnvID,
+			ProjectEnvKey:  app.ProjectEnv.Key,
 			ProjectEnvName: app.ProjectEnv.Name,
 		})
 	}

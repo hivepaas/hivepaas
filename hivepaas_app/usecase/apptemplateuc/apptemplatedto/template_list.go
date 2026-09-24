@@ -110,6 +110,9 @@ type AppTemplateSummaryResp struct {
 	// capabilities, sysctls, ulimits or the GPU. The store marks those, and only
 	// someone with Write on the cluster module can create one.
 	RequiresCapabilities bool `json:"requiresCapabilities"`
+	// RequiresDockerAPI says creating this template gives an app the Docker API,
+	// behind the same permission. The store marks those too.
+	RequiresDockerAPI bool `json:"requiresDockerApi"`
 	// Compatible is false for a template needing a newer HivePaaS: the store
 	// lists it, locked, rather than hiding it.
 	//
@@ -170,6 +173,7 @@ func transformSummary(entry *templatemodel.IndexEntry, currentVersionCode string
 		Compatible:   templatemodel.IsCompatible(entry.Requires, currentVersionCode),
 
 		RequiresCapabilities: entry.RequiresCapabilities,
+		RequiresDockerAPI:    entry.RequiresDockerAPI,
 	}
 	for _, variant := range entry.Variants {
 		summary.Variants = append(summary.Variants,

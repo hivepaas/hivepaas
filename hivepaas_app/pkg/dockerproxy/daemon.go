@@ -38,7 +38,13 @@ func (d *daemon) get(ctx context.Context, path string, out any) (bool, error) {
 	if err != nil {
 		return false, fmt.Errorf("GET %s: %w", path, err)
 	}
-	defer resp.Body.Close()
+	// What is left of the body is read before closing it, so that the connection
+	// goes back to the pool: a decoder stops at the end of the value, before the
+	// newline the daemon writes after it.
+	defer func() {
+		_, _ = io.Copy(io.Discard, resp.Body)
+		_ = resp.Body.Close()
+	}()
 	switch resp.StatusCode {
 	case http.StatusOK:
 		if err = json.NewDecoder(resp.Body).Decode(out); err != nil {
@@ -78,7 +84,10 @@ func (d *daemon) createVolume(ctx context.Context, name string, labels map[strin
 	if err != nil {
 		return fmt.Errorf("POST %s: %w", path, err)
 	}
-	defer resp.Body.Close()
+	defer func() {
+		_, _ = io.Copy(io.Discard, resp.Body)
+		_ = resp.Body.Close()
+	}()
 	if resp.StatusCode < http.StatusOK || resp.StatusCode >= http.StatusMultipleChoices {
 		detail, _ := io.ReadAll(io.LimitReader(resp.Body, maxErrorDetail))
 		return fmt.Errorf("%w: POST %s answered %d: %s", errDaemon, path, resp.StatusCode, bytes.TrimSpace(detail))

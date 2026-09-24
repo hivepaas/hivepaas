@@ -66,9 +66,9 @@ secret raises nothing; an encrypted bundle whose app is matched by key and by id
 ### Task 3: The owner (`import_owner.go`, `specuc`)
 
 `New` takes `repository.UserRepo`. `ValidateImportReq` gains
-`MayChangeOwner func(ctx, *entity.Project) (bool, error)`. Validate needs no operator id: that the
-operator owns a project is a note, and apply, which writes it, has the operator. `resolveOwner(ctx, doc)` returns the
-user and how it was found. `planProject` compares the resolved owner with the target's in place
+`MayChangeOwner func(ctx, *entity.Project) (bool, error)`. Validate needs no operator id: that
+the operator owns a project is a note, and apply, which writes it, has the operator.
+`resolveOwner(ctx, doc)` returns the user. `planProject` compares the resolved owner with the target's in place
 of the bundle's owner id, which differs between installations for the same person. The usecase
 answers `MayChangeOwner` with project update's gate: an admin, the current
 owner, or Write on the Project module.

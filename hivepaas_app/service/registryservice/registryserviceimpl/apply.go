@@ -9,6 +9,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/timeutil"
+	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/unit"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/registryservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/systemappservice"
 )
@@ -35,6 +36,8 @@ type planInput struct {
 	// EnvKeys is every environment key in the installation, which retention needs
 	// to count each environment's builds separately.
 	EnvKeys []string
+	// Resources is what a new app is created with.
+	Resources systemappservice.Resources
 }
 
 // planAppDoc turns the setting into the document the app is built from. It is
@@ -57,7 +60,8 @@ func planAppDoc(cfg *entity.RegistrySettings, in planInput) (appDocInput, error)
 		Domain: cfg.Domain,
 		// DataSize.String already writes "512mb", which is the spelling every
 		// size in a spec document uses.
-		MemoryLimit: cfg.MemoryLimit.String(),
+		MemoryLimit: unit.DataSize(in.Resources.MemoryLimit).String(),
+		CPULimit:    in.Resources.CPULimit,
 		OomScoreAdj: base.OomScoreAdjSystemAddon,
 		VolumeID:    volumeID,
 		ZotConfig:   string(zotConfig),
@@ -130,6 +134,10 @@ func (s *service) Apply(
 		return nil, hperrors.Wrap(err)
 	}
 
+	in.Resources = defaultResources()
+	if req.Resources != nil {
+		in.Resources = *req.Resources
+	}
 	plan, err := planAppDoc(cfg, in)
 	if err != nil {
 		return nil, hperrors.Wrap(err)
@@ -140,7 +148,7 @@ func (s *service) Apply(
 			"storage", cfg.Storage.Type)
 		app, err = s.provision(ctx, db, plan, req.TriggerUserID, resp)
 	} else {
-		err = s.reconcile(ctx, db, app, plan)
+		err = s.reconcile(ctx, db, app, plan, req, resp)
 	}
 	// From here on the response goes back with the error too: it carries the
 	// cleanup of whatever provisioning already created in docker.
@@ -283,11 +291,43 @@ func (s *service) reconcile(
 	db database.IDB,
 	app *entity.App,
 	plan appDocInput,
+	req *registryservice.SettingApplyReq,
+	resp *registryservice.SettingApplyResp,
 ) error {
 	if err := s.applyConfigFile(ctx, db, app, plan.ZotConfig); err != nil {
 		return hperrors.Wrap(err)
 	}
-	return s.applyHtpasswd(ctx, db, app, plan.Htpasswd)
+	if err := s.applyHtpasswd(ctx, db, app, plan.Htpasswd); err != nil {
+		return hperrors.Wrap(err)
+	}
+	// The limits live on the app's service, so that is where a save writes them.
+	if req.Resources != nil {
+		if err := s.systemAppService.SetResources(ctx, app, *req.Resources); err != nil {
+			return hperrors.Wrap(err)
+		}
+	}
+	// The image is the release's, and a save puts back one that drifted - edited
+	// on the app's screen, or left behind by an update that did not reach it.
+	image := registryImage()
+	task, err := s.systemAppService.Redeploy(ctx, db, &systemappservice.RedeployReq{
+		App: app,
+		Change: func(settings *entity.AppDeploymentSettings) bool {
+			if settings.ImageSource != nil && settings.ImageSource.Image == image {
+				return false
+			}
+			if settings.ImageSource == nil {
+				settings.ImageSource = &entity.DeploymentImageSource{}
+			}
+			settings.ImageSource.Image = image
+			return true
+		},
+		TriggerUserID: req.TriggerUserID,
+	})
+	if err != nil {
+		return hperrors.Wrap(err)
+	}
+	resp.DeploymentTask = task
+	return nil
 }
 
 // applyConfigFile writes a changed configuration into the app and into the swarm.
@@ -398,4 +438,12 @@ func (s *service) loadSetting(ctx context.Context, db database.IDB) (*entity.Set
 func (s *service) loadApp(ctx context.Context, db database.IDB) (*entity.App, error) {
 	app, err := s.systemAppService.LoadApp(ctx, db, base.HivepaasRegistryKey)
 	return app, hperrors.Wrap(err)
+}
+
+// defaultResources is what a registry gets when nothing says otherwise.
+func defaultResources() systemappservice.Resources {
+	return systemappservice.Resources{
+		CPULimit:    entity.DefaultRegistryCPULimit,
+		MemoryLimit: entity.DefaultRegistryMemoryLimit.Bytes(),
+	}
 }

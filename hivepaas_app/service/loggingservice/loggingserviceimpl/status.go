@@ -10,6 +10,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/loggingservice"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/systemappservice"
 	"github.com/hivepaas/hivepaas/services/docker"
 )
 
@@ -46,7 +47,7 @@ func (s *service) Status(
 		// The limits are read off the service, where they live: see
 		// applyBackendResources.
 		if svc != nil {
-			status.BackendResources = resourcesOf(&svc.Spec)
+			status.BackendResources = toLoggingResources(systemappservice.ResourcesOf(&svc.Spec))
 		}
 	}
 

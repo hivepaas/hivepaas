@@ -14,6 +14,7 @@ func docInput() appDocInput {
 		Key:         "registry",
 		Domain:      "registry.example.com",
 		MemoryLimit: "512mb",
+		CPULimit:    1,
 		OomScoreAdj: -300,
 		VolumeID:    "01M32ATCXAVPK6JYV0HNCFCJYM",
 		ZotConfig:   "{\n  \"distSpecVersion\": \"1.1.1\"\n}",
@@ -40,7 +41,7 @@ func TestAppDocIsBuildable(t *testing.T) {
 	// build_deployment.go decodes it. Reading it the same way is what checks the
 	// image actually landed in it.
 	source, _ := doc.Deployment.Source["imageSource"].(map[string]any)
-	assert.Equal(t, registryImage, source["image"])
+	assert.Equal(t, registryImage(), source["image"])
 	assert.Equal(t, "image", doc.Deployment.Source["activeMethod"])
 }
 
@@ -57,6 +58,7 @@ func TestAppDocProtectsTheRegistryFromTheOOMKiller(t *testing.T) {
 		t.Fatalf("want limits and capabilities, got %+v", res)
 	}
 	assert.Equal(t, "512mb", res.Limits.Memory.String())
+	assert.InDelta(t, 1.0, res.Limits.CPUs, 0)
 	assert.Equal(t, int64(-300), res.Capabilities.OomScoreAdj)
 }
 
@@ -99,4 +101,11 @@ func TestAppDocCarriesTheConfigAndTheAccount(t *testing.T) {
 
 	routing, _ := doc.Settings["routing"].(map[string]any)
 	assert.Equal(t, 5000, routing["port"])
+}
+
+// The image is the release's, and the kind settings record its minor line.
+func TestRegistryImageComesFromTheRelease(t *testing.T) {
+	assert.NotEmpty(t, registryImage())
+	assert.Equal(t, "2.1", registryVersion("ghcr.io/project-zot/zot:v2.1.21"))
+	assert.Equal(t, "2.2", registryVersion("ghcr.io/project-zot/zot:v2.2.0@sha256:aaaa"))
 }

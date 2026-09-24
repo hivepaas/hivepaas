@@ -39,6 +39,14 @@ type Service interface {
 	// it the next deployment of the app would put the old image back.
 	RecordImage(ctx context.Context, db database.IDB, app *entity.App, image string) error
 
+	// ReadResources is what the app's service runs under, or nil when the app has
+	// no service to read.
+	ReadResources(ctx context.Context, app *entity.App) (*Resources, error)
+
+	// SetResources writes the limits onto the app's service - a service update,
+	// so the app restarts when anything changed.
+	SetResources(ctx context.Context, app *entity.App, res Resources) error
+
 	// SyncSecrets makes the app's secrets exactly files: it creates the ones that
 	// are missing, replaces the ones whose value or path changed and removes the
 	// rest, in the swarm and in the app's settings. Every change is a service

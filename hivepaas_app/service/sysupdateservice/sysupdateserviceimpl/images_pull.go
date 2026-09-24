@@ -54,6 +54,7 @@ func (s *service) pullAllImages(
 		args.TargetVersion.TraefikImage,
 		args.TargetVersion.VictoriaLogsImage,
 		args.TargetVersion.VlagentImage,
+		args.TargetVersion.RegistryImage,
 	}
 
 	tasks := make([]func(context.Context) error, 0, len(images))
@@ -63,9 +64,9 @@ func (s *service) pullAllImages(
 		})
 	}
 
-	// Three at a time rather than all of them. Six simultaneous pulls contend for
+	// Three at a time rather than all of them. Every image at once would contend for
 	// the same bandwidth and disk, and against an unauthenticated registry they
-	// are also six requests toward a rate limit - which no amount of retrying
+	// are also that many requests toward a rate limit - which no amount of retrying
 	// gets past, so the cheaper fix is not to approach it.
 	//
 	// Not stopping at the first error: one image being unreachable is no reason

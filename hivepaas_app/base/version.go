@@ -24,6 +24,7 @@ var StableVersion = &ReleaseInfo{
 	TraefikImage:      "traefik:v3.7",
 	VictoriaLogsImage: "victoriametrics/victoria-logs:v1.52.0",
 	VlagentImage:      "victoriametrics/vlagent:v1.52.0",
+	RegistryImage:     "ghcr.io/project-zot/zot:v2.1.21",
 
 	BlockMajorUpgrade: []string{HivepaasDbKey},
 
@@ -46,6 +47,7 @@ var BetaVersion = &ReleaseInfo{
 	TraefikImage:      "traefik:v3.7",
 	VictoriaLogsImage: "victoriametrics/victoria-logs:v1.52.0",
 	VlagentImage:      "victoriametrics/vlagent:v1.52.0",
+	RegistryImage:     "ghcr.io/project-zot/zot:v2.1.21",
 
 	BlockMajorUpgrade: []string{HivepaasDbKey},
 }
@@ -68,6 +70,10 @@ type ReleaseInfo struct {
 	TraefikImage      string        `json:"traefikImage"`
 	VictoriaLogsImage string        `json:"victoriaLogsImage"`
 	VlagentImage      string        `json:"vlagentImage"`
+	// RegistryImage is the registry HivePaaS runs for itself, when it runs one.
+	// The configuration HivePaaS writes for it is the configuration this version
+	// of zot accepts, so a bump is the trigger to re-check that.
+	RegistryImage string `json:"registryImage"`
 
 	// BlockMajorUpgrade names the components whose image may not cross a major
 	// version in this release, by the same keys as HivepaasDbKey and friends.

@@ -18,6 +18,10 @@ const (
 	DefaultRegistryKeepLast = 10
 	DefaultRegistryKeepDays = 30
 
+	// The registry app's limits when nothing says otherwise. They are not stored
+	// with the settings: the app's service is where they live, and the settings
+	// screen reads them off it and writes them back there.
+	DefaultRegistryCPULimit    = 1.0
 	DefaultRegistryMemoryLimit = 1 * unit.GB
 	MinRegistryMemoryLimit     = 256 * unit.MB
 )
@@ -42,7 +46,6 @@ func (s *registrySettingsParser) New() SettingData {
 			KeepLast: DefaultRegistryKeepLast,
 			KeepDays: DefaultRegistryKeepDays,
 		},
-		MemoryLimit: DefaultRegistryMemoryLimit,
 	}
 }
 
@@ -74,8 +77,6 @@ type RegistrySettings struct {
 	// account that can then sign in is the credential HivePaaS pushes with -
 	// which may delete every image it can read.
 	DashboardEnabled bool `json:"dashboardEnabled,omitempty"`
-
-	MemoryLimit unit.DataSize `json:"memoryLimit,omitempty"`
 
 	// AppID and RegistryAuthID are what provisioning created. They are how Apply
 	// finds its own work again, and how the dashboard links to it.

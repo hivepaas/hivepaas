@@ -42359,6 +42359,10 @@
           "redisImage" : {
             "type" : "string"
           },
+          "registryImage" : {
+            "description" : "RegistryImage is the registry HivePaaS runs for itself, when it runs one.\nThe configuration HivePaaS writes for it is the configuration this version\nof zot accepts, so a bump is the trigger to re-check that.",
+            "type" : "string"
+          },
           "releaseDate" : {
             "type" : "string"
           },
@@ -42379,7 +42383,7 @@
             "type" : "string"
           }
         },
-        "required" : [ "appImage", "appVersion", "blockMajorUpgrade", "canUpdate", "dbImage", "redisImage", "releaseDate", "templates", "traefikImage", "victoriaLogsImage", "vlagentImage" ],
+        "required" : [ "appImage", "appVersion", "blockMajorUpgrade", "canUpdate", "dbImage", "redisImage", "registryImage", "releaseDate", "templates", "traefikImage", "victoriaLogsImage", "vlagentImage" ],
         "type" : "object"
       },
       "service_specservice.ImportDeployment" : {
@@ -59839,6 +59843,10 @@
           "cleanup" : {
             "$ref" : "#/components/schemas/systemsettings_registrydto.CleanupResp"
           },
+          "cpuLimit" : {
+            "description" : "CPULimit and MemoryLimit are read off the registry app's service, where\nthey live - the app's own resource screen reads the same place. With no app\nrunning they are what a new one would get.",
+            "type" : "number"
+          },
           "createdAt" : {
             "type" : "string"
           },
@@ -59911,7 +59919,7 @@
             "type" : "string"
           }
         },
-        "required" : [ "app", "cleanup", "createdAt", "credential", "credentialRotation", "dashboardEnabled", "default", "domain", "enabled", "expireAt", "id", "inheritable", "inherited", "kind", "managed", "memoryLimit", "name", "registryStatus", "size", "status", "storage", "type", "updateVer", "updatedAt" ],
+        "required" : [ "app", "cleanup", "cpuLimit", "createdAt", "credential", "credentialRotation", "dashboardEnabled", "default", "domain", "enabled", "expireAt", "id", "inheritable", "inherited", "kind", "managed", "memoryLimit", "name", "registryStatus", "size", "status", "storage", "type", "updateVer", "updatedAt" ],
         "type" : "object"
       },
       "systemsettings_registrydto.RegistryStatusResp" : {
@@ -60009,6 +60017,10 @@
           "cleanup" : {
             "$ref" : "#/components/schemas/systemsettings_registrydto.CleanupReq"
           },
+          "cpuLimit" : {
+            "description" : "CPULimit and MemoryLimit are what the registry's app runs under. They are\nnot stored with the settings: see Resources. CPULimit is in cores;\nMemoryLimit is written the way every other size in HivePaaS is - \"512mb\".\nZero in either is the default.",
+            "type" : "number"
+          },
           "dashboardEnabled" : {
             "description" : "DashboardEnabled serves zot's own web interface at the registry's domain.",
             "type" : "boolean"
@@ -60026,7 +60038,6 @@
             "type" : "boolean"
           },
           "memoryLimit" : {
-            "description" : "MemoryLimit is written the way every other size in HivePaaS is - \"512mb\" -\nand decoded into the same type the setting stores.",
             "type" : "integer"
           },
           "removeApp" : {
@@ -60044,7 +60055,7 @@
             "type" : "integer"
           }
         },
-        "required" : [ "cleanup", "dashboardEnabled", "default", "domain", "enabled", "inheritable", "memoryLimit", "removeApp", "removeStorage", "storage", "updateVer" ],
+        "required" : [ "cleanup", "cpuLimit", "dashboardEnabled", "default", "domain", "enabled", "inheritable", "memoryLimit", "removeApp", "removeStorage", "storage", "updateVer" ],
         "type" : "object"
       },
       "systemsettings_registrydto.UpdateRegistrySettingsResp" : {

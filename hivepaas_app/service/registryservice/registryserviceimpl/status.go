@@ -36,7 +36,7 @@ func (s *service) Status(
 		return nil, hperrors.Wrap(err)
 	}
 
-	status := &registryservice.Status{CredentialRotatedAt: cfg.CredentialRotatedAt}
+	status := &registryservice.Status{CredentialRotatedAt: cfg.CredentialRotatedAt, Resources: defaultResources()}
 	app, err := s.loadApp(ctx, db)
 	if err != nil {
 		return nil, hperrors.Wrap(err)
@@ -45,6 +45,11 @@ func (s *service) Status(
 		return status, nil
 	}
 	status.Provisioned, status.AppID = true, app.ID
+	// Read off the app's service, where they live; a service that cannot be read
+	// leaves the defaults rather than failing the screen.
+	if res, resErr := s.systemAppService.ReadResources(ctx, app); resErr == nil && res != nil {
+		status.Resources = *res
+	}
 
 	repos, stored, err := s.askRegistry(ctx, db, cfg)
 	if err != nil {

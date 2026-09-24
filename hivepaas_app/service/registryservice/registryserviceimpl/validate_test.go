@@ -7,14 +7,12 @@ import (
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
-	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/unit"
 )
 
 func validSettings() *entity.RegistrySettings {
 	return &entity.RegistrySettings{
 		Enabled: true, Type: base.RegistryTypeZot, Managed: true,
-		Domain:      "registry.example.com",
-		MemoryLimit: 512 * unit.MB,
+		Domain: "registry.example.com",
 		Storage: entity.RegistryStorage{
 			Type: base.RegistryStorageTypeVolume, Volume: entity.ObjectID{ID: "vol-1"},
 		},
@@ -52,9 +50,6 @@ func TestValidateRefusals(t *testing.T) {
 		}},
 		{name: "keeping nothing", mutate: func(c *entity.RegistrySettings) { c.Cleanup.KeepLast = 0 }},
 		{name: "keeping no days", mutate: func(c *entity.RegistrySettings) { c.Cleanup.KeepDays = 0 }},
-		{name: "memory below what zot needs", mutate: func(c *entity.RegistrySettings) {
-			c.MemoryLimit = 64 * unit.MB
-		}},
 	}
 
 	for _, tt := range tests {

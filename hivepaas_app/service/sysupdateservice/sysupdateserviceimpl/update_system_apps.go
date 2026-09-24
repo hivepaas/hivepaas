@@ -14,29 +14,28 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/imageref"
 )
 
-// updateLoggingService moves the logging stack to the images this release names.
+// updateSystemApps moves the apps HivePaaS provisions for itself to the images
+// this release names: the logging stack's two and the registry.
 //
-// It is two apps, not one: the backend stores and answers queries, the
-// collector ships lines to it from every node. They are separate upstream
-// repositories with separate tags, so the release names them separately too.
-//
-// Neither is in the stack file. They are apps HivePaaS provisions in its hidden
-// project when logging is switched on and removes when it is switched off or
-// handed to a system somebody else runs - so an app that is not there is the
-// ordinary case, handled the way the worker service already is, and not a
-// reason to fail the update.
-func (s *service) updateLoggingService(
+// None of them is in the stack file. They are apps HivePaaS provisions in its
+// hidden project when the feature is switched on and removes when it is switched
+// off - so an app that is not there is the ordinary case, handled the way the
+// worker service already is, and not a reason to fail the update.
+func (s *service) updateSystemApps(
 	ctx context.Context,
 	db database.IDB,
 	data *sysUpdateData,
 ) error {
 	args := gofn.Must(data.Task.ArgsAsSystemUpdate())
 
-	// The backend first, so the collector is never the only one on the new
-	// version writing into an older store.
+	// The logging backend before its collector, so the collector is never the
+	// only one on the new version writing into an older store. The backend and
+	// the collector are separate upstream repositories with separate tags, so the
+	// release names them separately.
 	steps := []systemAppImageUpdate{
 		{What: "victoria-logs", Key: base.HivepaasVictoriaLogsKey, TargetImage: args.TargetVersion.VictoriaLogsImage},
 		{What: "vlagent", Key: base.HivepaasVlagentKey, TargetImage: args.TargetVersion.VlagentImage},
+		{What: "registry", Key: base.HivepaasRegistryKey, TargetImage: args.TargetVersion.RegistryImage},
 	}
 	for _, step := range steps {
 		if err := s.updateSystemAppImage(ctx, db, data, step); err != nil {

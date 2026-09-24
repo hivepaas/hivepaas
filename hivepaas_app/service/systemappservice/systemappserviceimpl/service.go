@@ -16,6 +16,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/hpappservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/specservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/systemappservice"
+	"github.com/hivepaas/hivepaas/services/docker"
 )
 
 type service struct {
@@ -29,6 +30,8 @@ type service struct {
 	specService          specservice.Service
 	deploymentService    appdeploymentservice.Service
 	clusterSecretService clustersecretservice.Service
+
+	dockerManager docker.Manager
 }
 
 // New builds the system app service. fx wires the arguments from the provider
@@ -46,6 +49,8 @@ func New(
 	specService specservice.Service,
 	deploymentService appdeploymentservice.Service,
 	clusterSecretService clustersecretservice.Service,
+
+	dockerManager docker.Manager,
 ) systemappservice.Service {
 	return &service{
 		projectRepo:          projectRepo,
@@ -57,6 +62,7 @@ func New(
 		specService:          specService,
 		deploymentService:    deploymentService,
 		clusterSecretService: clusterSecretService,
+		dockerManager:        dockerManager,
 	}
 }
 

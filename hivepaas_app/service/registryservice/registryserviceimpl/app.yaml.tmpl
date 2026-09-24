@@ -12,7 +12,7 @@ deployment:
       # One static binary, no shell: there is nothing in the image to run a check with.
       enabled: false
   resources:
-    limits: {memory: {{ .MemoryLimit }}}
+    limits: {memory: {{ .MemoryLimit }}{{ if .CPULimit }}, cpus: {{ .CPULimit }}{{ end }}}
     capabilities: {oomScoreAdj: {{ .OomScoreAdj }}}
 settings:
   kind:

@@ -6,10 +6,10 @@ import (
 	"fmt"
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
-	"github.com/hivepaas/hivepaas/hivepaas_app/config"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/systemappservice"
 	"github.com/hivepaas/hivepaas/services/logging"
 	"github.com/hivepaas/hivepaas/services/logging/victorialogs"
 )
@@ -42,26 +42,13 @@ const (
 	dockerContainersGlob = "/var/lib/docker/containers/*/*-json.log"
 )
 
-// releaseImages returns the images this release runs the logging stack on.
-//
-// They come from the release rather than from the stored settings because the
-// system updater is what moves them. A save writes them into the apps'
-// deployment settings too, so an image that drifted - edited on an app's screen,
-// or left behind by an update that did not reach the apps - comes back to the
-// release's the next time anyone saves.
-//
-// The release the updater applies and the release compiled into the binary it
-// installs are the same one, so the two agree - as long as release.json and
-// base.ReleaseInfo are changed together, which is the contract stated there. An
+// releaseImages returns the images this release runs the logging stack on. A
+// save writes them into the apps' deployment settings too, so an image that
+// drifted - edited on an app's screen, or left behind by an update that did not
+// reach the apps - comes back to the release's the next time anyone saves. An
 // empty value falls back to the pinned default in services/logging.
 func releaseImages() (backend, collector string) {
-	release := base.StableVersion
-	// config.Current() is nil until a config has been loaded, which is the case
-	// for tests exercising the deploy path on its own. Stable is the right answer
-	// to "no idea which channel this is".
-	if cfg := config.Current(); cfg != nil && cfg.IsBetaEnv() {
-		release = base.BetaVersion
-	}
+	release := systemappservice.CurrentRelease()
 	return release.VictoriaLogsImage, release.VlagentImage
 }
 

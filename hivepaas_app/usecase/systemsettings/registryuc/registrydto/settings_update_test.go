@@ -6,6 +6,7 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
+	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/unit"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/systemsettings/registryuc/registrydto"
 )
@@ -27,10 +28,24 @@ func TestToEntityCarriesEveryField(t *testing.T) {
 	assert.Equal(t, base.RegistryTypeZot, got.Type)
 	assert.True(t, got.Managed)
 	assert.Equal(t, "registry.example.com", got.Domain)
-	assert.Equal(t, 512*unit.MB, got.MemoryLimit)
 	assert.Equal(t, "vol-1", got.Storage.Volume.ID)
 	assert.Equal(t, base.RegistryCleanupModePolicy, got.Cleanup.Mode)
 	assert.Equal(t, 10, got.Cleanup.KeepLast)
+}
+
+// The limits are not stored: they go to the app's service, and an empty one is the
+// default.
+func TestResourcesDefaultWhatIsLeftEmpty(t *testing.T) {
+	req := &registrydto.UpdateSettingsBaseReq{MemoryLimit: 512 * unit.MB}
+
+	got := req.Resources()
+
+	assert.Equal(t, (512 * unit.MB).Bytes(), got.MemoryLimit)
+	assert.InDelta(t, entity.DefaultRegistryCPULimit, got.CPULimit, 0)
+
+	got = (&registrydto.UpdateSettingsBaseReq{CPULimit: 2}).Resources()
+	assert.Equal(t, entity.DefaultRegistryMemoryLimit.Bytes(), got.MemoryLimit)
+	assert.InDelta(t, 2.0, got.CPULimit, 0)
 }
 
 // Every other settings DTO in this repo learned this the hard way: a nil request

@@ -7,7 +7,6 @@ import (
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
-	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/unit"
 )
 
 // storedRegistry returns a setting shaped like a database row: Data filled in, no
@@ -25,11 +24,10 @@ func storedRegistry(t *testing.T, data *entity.RegistrySettings) *entity.Setting
 
 func TestRegistrySurvivesPersistence(t *testing.T) {
 	stored := storedRegistry(t, &entity.RegistrySettings{
-		Enabled:     true,
-		Type:        base.RegistryTypeZot,
-		Managed:     true,
-		Domain:      "registry.example.com",
-		MemoryLimit: 512 * unit.MB,
+		Enabled: true,
+		Type:    base.RegistryTypeZot,
+		Managed: true,
+		Domain:  "registry.example.com",
 		Storage: entity.RegistryStorage{
 			Type:   base.RegistryStorageTypeVolume,
 			Volume: entity.ObjectID{ID: "vol-1"},

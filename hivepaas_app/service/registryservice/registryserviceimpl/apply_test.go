@@ -9,13 +9,13 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/unit"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/systemappservice"
 )
 
 func planSettings() *entity.RegistrySettings {
 	return &entity.RegistrySettings{
 		Enabled: true, Type: base.RegistryTypeZot, Managed: true,
-		Domain:      "registry.example.com",
-		MemoryLimit: 512 * unit.MB,
+		Domain: "registry.example.com",
 		Storage: entity.RegistryStorage{
 			Type: base.RegistryStorageTypeVolume, Volume: entity.ObjectID{ID: "vol-1"},
 		},
@@ -25,8 +25,9 @@ func planSettings() *entity.RegistrySettings {
 
 func TestPlanCarriesTheVolumeAndTheConfiguration(t *testing.T) {
 	got, err := planAppDoc(planSettings(), planInput{
-		VolumeID: "01M32ATCXAVPK6JYV0HNCFCJYM",
-		Htpasswd: "hivepaas:$2y$10$hash\n",
+		VolumeID:  "01M32ATCXAVPK6JYV0HNCFCJYM",
+		Htpasswd:  "hivepaas:$2y$10$hash\n",
+		Resources: systemappservice.Resources{CPULimit: 1, MemoryLimit: (512 * unit.MB).Bytes()},
 	})
 	if err != nil {
 		t.Fatalf("planAppDoc: %v", err)
@@ -36,6 +37,7 @@ func TestPlanCarriesTheVolumeAndTheConfiguration(t *testing.T) {
 	assert.Equal(t, "registry.example.com", got.Domain)
 	assert.Equal(t, "01M32ATCXAVPK6JYV0HNCFCJYM", got.VolumeID)
 	assert.Equal(t, "512mb", got.MemoryLimit)
+	assert.InDelta(t, 1.0, got.CPULimit, 0)
 	assert.Contains(t, got.ZotConfig, "docker2s2")
 	assert.Contains(t, got.Htpasswd, "$2y$10$hash")
 }

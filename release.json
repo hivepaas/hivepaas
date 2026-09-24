@@ -8,6 +8,7 @@
     "traefikImage": "traefik:v3.7",
     "victoriaLogsImage": "victoriametrics/victoria-logs:v1.52.0",
     "vlagentImage": "victoriametrics/vlagent:v1.52.0",
+    "registryImage": "ghcr.io/project-zot/zot:v2.1.21",
     "blockMajorUpgrade": [
       "db"
     ],
@@ -26,6 +27,7 @@
     "traefikImage": "traefik:v3.7",
     "victoriaLogsImage": "victoriametrics/victoria-logs:v1.52.0",
     "vlagentImage": "victoriametrics/vlagent:v1.52.0",
+    "registryImage": "ghcr.io/project-zot/zot:v2.1.21",
     "blockMajorUpgrade": [
       "db"
     ],

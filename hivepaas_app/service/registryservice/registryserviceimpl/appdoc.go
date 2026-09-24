@@ -6,20 +6,36 @@ import (
 	"strings"
 	"text/template"
 
+	"github.com/tiendc/gofn"
 	"gopkg.in/yaml.v3"
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
+	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/imageref"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/specservice/specmodel"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/systemappservice"
 )
 
-const (
-	// registryImage is pinned here rather than in the setting: the configuration
-	// this package writes is the configuration this version of zot accepts, and
-	// the two have to move together. registryVersion is the same release's minor
-	// line, which is what the app's kind settings record.
-	registryImage   = "ghcr.io/project-zot/zot:v2.1.21"
-	registryVersion = "2.1"
-)
+// defaultRegistryImage is what runs when the release names no registry image -
+// a release file from before the field existed. The release is what normally
+// decides it: the configuration this package writes is the configuration that
+// version of zot accepts, and the two move together.
+const defaultRegistryImage = "ghcr.io/project-zot/zot:v2.1.21"
+
+// registryImage is the image this release runs the registry on.
+func registryImage() string {
+	return gofn.Coalesce(systemappservice.CurrentRelease().RegistryImage, defaultRegistryImage)
+}
+
+// registryVersion is the image's minor line - "2.1" for v2.1.21 - which is what
+// the app's kind settings record.
+func registryVersion(image string) string {
+	tag := strings.TrimPrefix(imageref.Parse(image).Tag, "v")
+	parts := strings.SplitN(tag, ".", 3) //nolint:mnd // major, minor, the rest
+	if len(parts) < 2 {                  //nolint:mnd
+		return tag
+	}
+	return parts[0] + "." + parts[1]
+}
 
 //go:embed app.yaml.tmpl
 var appDocTemplate string
@@ -30,6 +46,8 @@ type appDocInput struct {
 	Key         string
 	Domain      string
 	MemoryLimit string
+	// CPULimit is in cores, zero for no cap.
+	CPULimit float64
 	// OomScoreAdj keeps the registry alive over user apps when memory runs out.
 	// The registry always has a memory limit, which is what makes that safe.
 	OomScoreAdj int64
@@ -63,6 +81,7 @@ func renderAppDoc(in appDocInput) (*specmodel.AppDoc, error) {
 		return nil, hperrors.Wrap(err)
 	}
 
+	image := registryImage()
 	var buf bytes.Buffer
 	err = tmpl.Execute(&buf, struct {
 		appDocInput
@@ -72,8 +91,8 @@ func renderAppDoc(in appDocInput) (*specmodel.AppDoc, error) {
 		ConfDir string
 	}{
 		appDocInput: in,
-		Image:       registryImage,
-		Version:     registryVersion,
+		Image:       image,
+		Version:     registryVersion(image),
 		RootDir:     registryRootDir,
 		ConfDir:     registryConfDir,
 	})

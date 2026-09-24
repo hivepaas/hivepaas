@@ -45,10 +45,14 @@ type RegistrySettingsResp struct {
 	Cleanup CleanupResp       `json:"cleanup"`
 	// DashboardEnabled says whether zot's own web interface answers at the
 	// registry's domain.
-	DashboardEnabled bool                  `json:"dashboardEnabled"`
-	MemoryLimit      unit.DataSize         `json:"memoryLimit"`
-	App              *basedto.ObjectIDResp `json:"app,omitempty"`
-	Credential       *basedto.ObjectIDResp `json:"credential,omitempty"`
+	DashboardEnabled bool `json:"dashboardEnabled"`
+	// CPULimit and MemoryLimit are read off the registry app's service, where
+	// they live - the app's own resource screen reads the same place. With no app
+	// running they are what a new one would get.
+	CPULimit    float64               `json:"cpuLimit"`
+	MemoryLimit unit.DataSize         `json:"memoryLimit"`
+	App         *basedto.ObjectIDResp `json:"app,omitempty"`
+	Credential  *basedto.ObjectIDResp `json:"credential,omitempty"`
 	// RegistryStatus is not called Status: BaseSettingResp already has one, and
 	// the copier writes the setting's status into whatever field that name
 	// matches - which turned the whole response into a 500 the first time it ran.
@@ -112,7 +116,7 @@ func TransformRegistrySettings(
 	}
 
 	resp.Enabled, resp.Type, resp.Managed = cfg.Enabled, cfg.Type, cfg.Managed
-	resp.Domain, resp.MemoryLimit = cfg.Domain, cfg.MemoryLimit
+	resp.Domain = cfg.Domain
 	resp.DashboardEnabled = cfg.DashboardEnabled
 	resp.Storage = StorageResp{Type: cfg.Storage.Type}
 	if cfg.Storage.Volume.ID != "" {
@@ -142,6 +146,8 @@ func TransformRegistrySettings(
 
 	resp.RegistryStatus = &RegistryStatusResp{}
 	if input.RegistryStatus != nil {
+		resp.CPULimit = input.RegistryStatus.Resources.CPULimit
+		resp.MemoryLimit = unit.DataSize(input.RegistryStatus.Resources.MemoryLimit)
 		resp.RegistryStatus.Provisioned = input.RegistryStatus.Provisioned
 		resp.RegistryStatus.AppID = input.RegistryStatus.AppID
 		resp.RegistryStatus.Reachable = input.RegistryStatus.Reachable

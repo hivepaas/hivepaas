@@ -50,9 +50,6 @@ func validateSettings(cfg, current *entity.RegistrySettings, provisioned bool) e
 			return invalid("Days to keep must be at least one.")
 		}
 	}
-	if cfg.MemoryLimit < entity.MinRegistryMemoryLimit {
-		return invalid("The memory limit must be at least 256mb.")
-	}
 
 	// Once the app exists the storage is what holds its images. Nothing copies
 	// them anywhere, so changing it is refused rather than obeyed.

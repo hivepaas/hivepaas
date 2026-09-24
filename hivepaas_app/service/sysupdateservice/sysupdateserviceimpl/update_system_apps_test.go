@@ -178,7 +178,7 @@ func TestLoggingUpdateMovesBothAppsToANewerImage(t *testing.T) {
 	})
 	s := &service{dockerManager: f, systemAppService: apps}
 
-	err := s.updateLoggingService(context.Background(), nil, loggingUpdateData(t, &base.ReleaseInfo{
+	err := s.updateSystemApps(context.Background(), nil, loggingUpdateData(t, &base.ReleaseInfo{
 		VictoriaLogsImage: "victoriametrics/victoria-logs:v1.53.0",
 		VlagentImage:      "victoriametrics/vlagent:v1.53.0",
 	}))
@@ -199,7 +199,7 @@ func TestLoggingUpdateRecordsTheImageInTheAppsSettings(t *testing.T) {
 	f.onUpdate = func(serviceID, image string) { f.deployed[serviceID] = image }
 	s := &service{dockerManager: f, systemAppService: apps}
 
-	err := s.updateLoggingService(context.Background(), nil, loggingUpdateData(t, &base.ReleaseInfo{
+	err := s.updateSystemApps(context.Background(), nil, loggingUpdateData(t, &base.ReleaseInfo{
 		VictoriaLogsImage: "victoriametrics/victoria-logs:v1.53.0",
 	}))
 
@@ -218,7 +218,7 @@ func TestLoggingUpdateLeavesTheSameVersionAlone(t *testing.T) {
 	})
 	s := &service{dockerManager: f, systemAppService: apps}
 
-	err := s.updateLoggingService(context.Background(), nil, loggingUpdateData(t, &base.ReleaseInfo{
+	err := s.updateSystemApps(context.Background(), nil, loggingUpdateData(t, &base.ReleaseInfo{
 		VictoriaLogsImage: "victoriametrics/victoria-logs:v1.52.0",
 		VlagentImage:      "victoriametrics/vlagent:v1.52.0",
 	}))
@@ -236,7 +236,7 @@ func TestLoggingUpdateIgnoresADigestUnderTheSameTag(t *testing.T) {
 	})
 	s := &service{dockerManager: f, systemAppService: apps}
 
-	err := s.updateLoggingService(context.Background(), nil, loggingUpdateData(t, &base.ReleaseInfo{
+	err := s.updateSystemApps(context.Background(), nil, loggingUpdateData(t, &base.ReleaseInfo{
 		VictoriaLogsImage: "victoriametrics/victoria-logs:v1.52.0",
 	}))
 
@@ -252,7 +252,7 @@ func TestLoggingUpdateRefusesToGoBackwards(t *testing.T) {
 	})
 	s := &service{dockerManager: f, systemAppService: apps}
 
-	err := s.updateLoggingService(context.Background(), nil, loggingUpdateData(t, &base.ReleaseInfo{
+	err := s.updateSystemApps(context.Background(), nil, loggingUpdateData(t, &base.ReleaseInfo{
 		VictoriaLogsImage: "victoriametrics/victoria-logs:v1.51.0",
 	}))
 
@@ -267,7 +267,7 @@ func TestLoggingUpdateSkipsWhatIsNotDeployed(t *testing.T) {
 	f, apps := loggingStack(nil)
 	s := &service{dockerManager: f, systemAppService: apps}
 
-	err := s.updateLoggingService(context.Background(), nil, loggingUpdateData(t, &base.ReleaseInfo{
+	err := s.updateSystemApps(context.Background(), nil, loggingUpdateData(t, &base.ReleaseInfo{
 		VictoriaLogsImage: "victoriametrics/victoria-logs:v1.53.0",
 		VlagentImage:      "victoriametrics/vlagent:v1.53.0",
 	}))
@@ -285,7 +285,7 @@ func TestLoggingUpdateMovesOnlyTheAppThatExists(t *testing.T) {
 	})
 	s := &service{dockerManager: f, systemAppService: apps}
 
-	err := s.updateLoggingService(context.Background(), nil, loggingUpdateData(t, &base.ReleaseInfo{
+	err := s.updateSystemApps(context.Background(), nil, loggingUpdateData(t, &base.ReleaseInfo{
 		VictoriaLogsImage: "victoriametrics/victoria-logs:v1.53.0",
 		VlagentImage:      "victoriametrics/vlagent:v1.53.0",
 	}))
@@ -302,7 +302,7 @@ func TestLoggingUpdateDoesNothingWithoutTargetImages(t *testing.T) {
 	})
 	s := &service{dockerManager: f, systemAppService: apps}
 
-	err := s.updateLoggingService(context.Background(), nil, loggingUpdateData(t, &base.ReleaseInfo{}))
+	err := s.updateSystemApps(context.Background(), nil, loggingUpdateData(t, &base.ReleaseInfo{}))
 
 	assert.NoError(t, err)
 	assert.Empty(t, f.updated)
@@ -318,7 +318,7 @@ func TestLoggingUpdateArmsSwarmRollback(t *testing.T) {
 	})
 	s := &service{dockerManager: f, systemAppService: apps}
 
-	err := s.updateLoggingService(context.Background(), nil, loggingUpdateData(t, &base.ReleaseInfo{
+	err := s.updateSystemApps(context.Background(), nil, loggingUpdateData(t, &base.ReleaseInfo{
 		VictoriaLogsImage: "victoriametrics/victoria-logs:v1.53.0",
 	}))
 
@@ -328,4 +328,21 @@ func TestLoggingUpdateArmsSwarmRollback(t *testing.T) {
 		assert.Equal(t, swarm.UpdateFailureActionRollback, spec.UpdateConfig.FailureAction)
 		assert.InDelta(t, updateMaxFailureRatio, spec.UpdateConfig.MaxFailureRatio, 0.0001)
 	}
+}
+
+// The registry is a system app too, and moves with the release the same way.
+func TestSystemAppsUpdateMovesTheRegistry(t *testing.T) {
+	f, apps := loggingStack(map[string]string{
+		base.HivepaasRegistryKey: "ghcr.io/project-zot/zot:v2.1.21",
+	})
+	f.onUpdate = func(serviceID, image string) { f.deployed[serviceID] = image }
+	s := &service{dockerManager: f, systemAppService: apps}
+
+	err := s.updateSystemApps(context.Background(), nil, loggingUpdateData(t, &base.ReleaseInfo{
+		RegistryImage: "ghcr.io/project-zot/zot:v2.1.22",
+	}))
+
+	assert.NoError(t, err)
+	assert.Equal(t, map[string]string{"svc-registry": "ghcr.io/project-zot/zot:v2.1.22"}, f.updated)
+	assert.Equal(t, "ghcr.io/project-zot/zot:v2.1.22", apps.recorded[base.HivepaasRegistryKey])
 }

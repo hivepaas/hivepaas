@@ -65,6 +65,7 @@ func (uc *UC) UpdateRegistrySettings(
 			applyResp, applyErr := uc.registryService.Apply(ctx, db, &registryservice.SettingApplyReq{
 				Setting:       pData.Setting,
 				TriggerUserID: auth.UserID(),
+				Resources:     req.Resources(),
 				RemoveApp:     req.RemoveApp,
 				RemoveStorage: req.RemoveStorage,
 			})

@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/systemappservice"
 )
 
 type SettingApplyReq struct {
@@ -14,6 +15,12 @@ type SettingApplyReq struct {
 	// template usecase records it. Empty when nothing asked - a reconcile that
 	// runs on start-up, for instance.
 	TriggerUserID string
+
+	// Resources is what the registry's app runs under. It is not stored with the
+	// settings: the app's service is where it lives, the same place the app's own
+	// resource screen reads and writes. Nil leaves a running registry as it is,
+	// and gives a new one the defaults.
+	Resources *systemappservice.Resources
 
 	// RemoveApp takes the registry's app and its service down. It is only read
 	// when the configuration being applied is switched off, and switching off
@@ -64,6 +71,9 @@ type Status struct {
 	StoredBytes  int64
 	// CredentialRotatedAt is when the password last changed, empty if never.
 	CredentialRotatedAt time.Time
+	// Resources is what the app's service runs under, or what a new registry
+	// would get when there is none.
+	Resources systemappservice.Resources
 }
 
 type RotateCredentialReq struct {

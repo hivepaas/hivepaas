@@ -8,6 +8,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/unit"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/systemappservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings"
 )
 
@@ -22,6 +23,8 @@ const (
 	// exists so a typo cannot ask swarm for a limit no node could satisfy,
 	// leaving the task unschedulable.
 	maxMemoryLimit = 64 * unit.GB
+	// maxCPULimit is the same kind of bound, in cores.
+	maxCPULimit = 256
 )
 
 type UpdateRegistrySettingsReq struct {
@@ -40,8 +43,11 @@ type UpdateSettingsBaseReq struct {
 	Cleanup CleanupReq `json:"cleanup"`
 	// DashboardEnabled serves zot's own web interface at the registry's domain.
 	DashboardEnabled bool `json:"dashboardEnabled"`
-	// MemoryLimit is written the way every other size in HivePaaS is - "512mb" -
-	// and decoded into the same type the setting stores.
+	// CPULimit and MemoryLimit are what the registry's app runs under. They are
+	// not stored with the settings: see Resources. CPULimit is in cores;
+	// MemoryLimit is written the way every other size in HivePaaS is - "512mb".
+	// Zero in either is the default.
+	CPULimit    float64       `json:"cpuLimit"`
 	MemoryLimit unit.DataSize `json:"memoryLimit"`
 
 	// RemoveApp and RemoveStorage are asked of this request, not stored by it.
@@ -104,8 +110,24 @@ func (req *UpdateSettingsBaseReq) ToEntity() *entity.RegistrySettings {
 			KeepDays: req.Cleanup.KeepDays,
 		},
 		DashboardEnabled: req.DashboardEnabled,
-		MemoryLimit:      req.MemoryLimit,
 	}
+}
+
+// Resources is what the registry's app is to run under. It goes to the app's
+// service, where the app's own resource screen reads and writes it too, rather
+// than into the settings. Zero in a field is the default.
+func (req *UpdateSettingsBaseReq) Resources() *systemappservice.Resources {
+	res := &systemappservice.Resources{
+		CPULimit:    req.CPULimit,
+		MemoryLimit: req.MemoryLimit.Bytes(),
+	}
+	if res.CPULimit == 0 {
+		res.CPULimit = entity.DefaultRegistryCPULimit
+	}
+	if res.MemoryLimit == 0 {
+		res.MemoryLimit = entity.DefaultRegistryMemoryLimit.Bytes()
+	}
+	return res
 }
 
 func (req *UpdateRegistrySettingsReq) Validate() hperrors.ValidationErrors {
@@ -136,8 +158,12 @@ func (req *UpdateRegistrySettingsReq) Validate() hperrors.ValidationErrors {
 			vld.SetField("storage.cloudStorage.id", nil),
 		))
 	}
+	// Zero is the default in both; anything else for memory has to leave zot room
+	// to run.
+	validators = append(validators, basedto.ValidateNumber(&req.MemoryLimit, false,
+		entity.MinRegistryMemoryLimit, maxMemoryLimit, "memoryLimit")...)
 	validators = append(validators,
-		basedto.ValidateNumber(&req.MemoryLimit, false, 0, maxMemoryLimit, "memoryLimit")...)
+		basedto.ValidateNumber(&req.CPULimit, false, 0, maxCPULimit, "cpuLimit")...)
 
 	return hperrors.NewValidationErrors(vld.Validate(validators...))
 }

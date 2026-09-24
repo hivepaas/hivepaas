@@ -198,10 +198,10 @@ func (s *service) updateSystem(
 		return hperrors.Wrap(err)
 	}
 
-	// 4. Update the logging stack, if it is deployed at all. Before the app and
-	// the worker only because those two are what bring the system back up, and
-	// nothing here is a dependency of either.
-	err = s.updateLoggingService(ctx, db, data)
+	// 4. Update the system apps - the logging stack and the registry - if they
+	// run at all. Before the app and the worker only because those two are what
+	// bring the system back up, and nothing here is a dependency of either.
+	err = s.updateSystemApps(ctx, db, data)
 	if err != nil {
 		return hperrors.Wrap(err)
 	}

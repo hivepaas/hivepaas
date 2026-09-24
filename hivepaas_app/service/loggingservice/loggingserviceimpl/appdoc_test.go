@@ -11,6 +11,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/executil"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/unit"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/systemappservice"
 	"github.com/hivepaas/hivepaas/services/logging"
 )
 
@@ -105,7 +106,7 @@ func TestStatusReadsTheAppsAndTheirLimits(t *testing.T) {
 	_, err = apply(t, s, enabledConfig(), nil)
 	assert.NoError(t, err)
 	backend := appsOf(s).docker.inspected["svc-"+backendAppKey]
-	setResources(&backend.Spec, logging.Resources{MemoryLimit: (3 * unit.GB).Bytes()})
+	systemappservice.ApplyResources(&backend.Spec, systemappservice.Resources{MemoryLimit: (3 * unit.GB).Bytes()})
 	backend.ServiceStatus = &swarm.ServiceStatus{RunningTasks: 1, DesiredTasks: 1}
 	appsOf(s).docker.inspected["svc-"+backendAppKey] = backend
 

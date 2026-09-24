@@ -199,6 +199,13 @@ func (f *fakeSystemApps) Redeploy(
 	return &entity.Task{ID: "redeploy-" + req.App.Key}, nil
 }
 
+func (f *fakeSystemApps) SetResources(_ context.Context, app *entity.App, res systemappservice.Resources) error {
+	svc := f.docker.inspected[app.ServiceID]
+	systemappservice.ApplyResources(&svc.Spec, res)
+	f.docker.inspected[app.ServiceID] = svc
+	return nil
+}
+
 func (f *fakeSystemApps) SyncSecrets(
 	_ context.Context, _ database.IDB, app *entity.App, files []*systemappservice.SecretFile,
 ) error {

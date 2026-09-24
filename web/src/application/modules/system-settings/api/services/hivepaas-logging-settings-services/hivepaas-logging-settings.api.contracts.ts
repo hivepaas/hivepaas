@@ -20,7 +20,6 @@ export type HivePaaSLoggingSettings_UpdateOnePayload = {
         query?: HivePaaSLoggingEndpoint | null;
         victoriaLogs?: {
             volume: { id: string };
-            volumeSubpath?: string;
             retention: string;
             maxDiskUsagePercent?: number;
             cpuLimit?: number;
@@ -28,6 +27,14 @@ export type HivePaaSLoggingSettings_UpdateOnePayload = {
         } | null;
     };
     forwards: { name: string; format?: string; endpoint: HivePaaSLoggingEndpoint }[];
+    /**
+     * Asked of this save, not stored by it: switching logging off, or handing the
+     * backend to a store somebody else runs, takes an app down, and the apps have
+     * no screen of their own to be removed from.
+     */
+    removeApp?: boolean;
+    /** Deletes the stored logs with the backend. */
+    removeStorage?: boolean;
 };
 
 export type HivePaaSLoggingSettings_UpdateOne_Req = ApiRequestBase<{

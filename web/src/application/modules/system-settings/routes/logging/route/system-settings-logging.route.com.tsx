@@ -13,8 +13,8 @@ import { AppLoader, FormActionBar } from "@application/shared/components";
 import { MODULE_IDS } from "@application/shared/constants";
 import { PermissionTooltipAction, useConditionalModule } from "@application/shared/permissions";
 
-import { LoggingStatusSection } from "../building-blocks";
-import { HivePaaSLoggingSettingsForm, toLoggingPayload } from "../form";
+import { LoggingStatusSection, RemoveLoggingAppsDialog } from "../building-blocks";
+import { HivePaaSLoggingSettingsForm, type LoggingAppRemoval, toLoggingPayload } from "../form";
 import type { HivePaaSLoggingSettingsFormInput, HivePaaSLoggingSettingsFormOutput } from "../schemas";
 
 function LoggingRevealSecretsButton({
@@ -67,19 +67,48 @@ export function SystemSettingsLoggingRoute() {
 
     const activeSettings = revealedSettings ?? data?.data.settings;
     const isUnmasked = isRevealed && Boolean(revealedSettings);
+    const loggingStatus = data?.data.loggingStatus;
+
+    // Held while the operator confirms: a save that switches logging off, or
+    // hands the backend to a store somebody else runs, takes an app down, and the
+    // apps have no screen of their own to be removed from.
+    const [pendingRemoval, setPendingRemoval] = useState<{
+        values: HivePaaSLoggingSettingsFormOutput;
+        reason: "switch-off" | "external-backend";
+        removesBackend: boolean;
+    } | null>(null);
 
     const { mutate: update, isPending } = HivePaaSLoggingSettingsCommands.useUpdateOne({
-        onSuccess: () => {
+        onSuccess: (_response, request) => {
             setRevealedSettings(null);
-            toast.success("Logging settings saved");
+            setPendingRemoval(null);
+            toast.success(
+                request.payload.removeApp && !request.payload.enabled
+                    ? "Logging switched off and its apps removed"
+                    : "Logging settings saved",
+            );
         },
     });
+
+    function save(values: HivePaaSLoggingSettingsFormOutput, removal?: LoggingAppRemoval) {
+        update({ payload: toLoggingPayload(values, activeSettings?.updateVer ?? 0, removal) });
+    }
 
     function handleSubmit(values: HivePaaSLoggingSettingsFormOutput) {
         if (!canWrite) {
             return;
         }
-        update({ payload: toLoggingPayload(values, activeSettings?.updateVer ?? 0) });
+        const runsBackend = Boolean(loggingStatus?.backend);
+        const runsCollector = Boolean(loggingStatus?.collector);
+        if (!values.enabled && (runsBackend || runsCollector)) {
+            setPendingRemoval({ values, reason: "switch-off", removesBackend: runsBackend });
+            return;
+        }
+        if (values.enabled && !values.backendManaged && runsBackend) {
+            setPendingRemoval({ values, reason: "external-backend", removesBackend: true });
+            return;
+        }
+        save(values);
     }
 
     if (isLoading) {
@@ -95,7 +124,7 @@ export function SystemSettingsLoggingRoute() {
                 readOnly={!canWrite}
             >
                 {/* Inside the form, before the sticky action bar, so the Save bar stays last. */}
-                {data?.data.loggingStatus && <LoggingStatusSection loggingStatus={data.data.loggingStatus} />}
+                {loggingStatus && <LoggingStatusSection loggingStatus={loggingStatus} />}
                 <FormActionBar>
                     <LoggingRevealSecretsButton
                         canShow={canShowRevealButton}
@@ -124,6 +153,22 @@ export function SystemSettingsLoggingRoute() {
                     </PermissionTooltipAction>
                 </FormActionBar>
             </HivePaaSLoggingSettingsForm>
+            <RemoveLoggingAppsDialog
+                open={pendingRemoval !== null}
+                reason={pendingRemoval?.reason ?? "switch-off"}
+                removesBackend={pendingRemoval?.removesBackend ?? false}
+                isPending={isPending}
+                onOpenChange={nextOpen => {
+                    if (!nextOpen) {
+                        setPendingRemoval(null);
+                    }
+                }}
+                onConfirm={removeStorage => {
+                    if (pendingRemoval) {
+                        save(pendingRemoval.values, { removeApp: true, removeStorage });
+                    }
+                }}
+            />
             <ConfirmRevealSecretsDialog
                 open={isDialogOpen}
                 onOpenChange={setIsDialogOpen}

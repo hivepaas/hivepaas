@@ -15,20 +15,34 @@ export type HivePaaSLoggingEndpoint = {
 export type HivePaaSLoggingVictoriaLogs = {
     /** The volume decides both where logs are stored and which node the backend runs on. */
     volume?: { id: string; name?: string } | null;
-    /** Directory inside the volume; empty means its root. */
-    volumeSubpath?: string;
     /** timeutil.Duration text: the server writes days as "30d", and accepts w/d/h/m/s. */
     retention: string;
     maxDiskUsagePercent?: number;
-    /** Cores. Absent means the backend may take whatever its node has. */
+    /**
+     * Cores, read off the backend's service - the same place the app's own
+     * resource screen reads. Absent means no cap.
+     */
     cpuLimit?: number;
-    /** A size carrying its unit, such as "1gb". Absent means no cap. */
+    /** A size carrying its unit, such as "1gb", read off the service too. */
     memoryLimit?: string;
+};
+
+/** One app of the logging stack: an ordinary app in the hidden hivepaas project. */
+export type HivePaaSLoggingApp = {
+    appId: string;
+    projectId: string;
+    projectEnv: string;
+    /** Containers: one for the backend, one per node for the collector. */
+    runningTasks: number;
+    desiredTasks: number;
 };
 
 export type HivePaaSLoggingStatus = {
     collectorReady: boolean;
     backendReady: boolean;
+    /** The apps HivePaaS runs, absent when it runs none. */
+    backend?: HivePaaSLoggingApp;
+    collector?: HivePaaSLoggingApp;
 };
 
 export interface HivePaaSLoggingSettings extends SettingsBaseEntity {

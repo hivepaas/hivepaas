@@ -18,10 +18,23 @@ const EndpointSchema = z.object({
     tlsSkipVerify: z.boolean().optional(),
 });
 
+const LoggingAppSchema = z
+    .object({
+        appId: z.string(),
+        projectId: z.string(),
+        projectEnv: z.string().catch(""),
+        runningTasks: z.number().catch(0),
+        desiredTasks: z.number().catch(0),
+    })
+    .nullish()
+    .transform(value => value ?? undefined);
+
 const StatusSchema = z
     .object({
         collectorReady: z.boolean().catch(false),
         backendReady: z.boolean().catch(false),
+        backend: LoggingAppSchema,
+        collector: LoggingAppSchema,
     })
     .nullish()
     .transform(value => value ?? { collectorReady: false, backendReady: false });
@@ -29,7 +42,6 @@ const StatusSchema = z
 const VictoriaLogsSchema = z
     .object({
         volume: z.object({ id: z.string(), name: z.string().optional() }).nullish(),
-        volumeSubpath: z.string().optional(),
         retention: z.string().catch("30d"),
         maxDiskUsagePercent: z.number().optional(),
         cpuLimit: z.number().optional(),

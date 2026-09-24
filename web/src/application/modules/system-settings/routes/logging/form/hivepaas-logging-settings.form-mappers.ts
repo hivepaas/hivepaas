@@ -87,10 +87,10 @@ function toEndpoint(f: EndpointForm): HivePaaSLoggingEndpoint {
 
 export function toLoggingFormInput(s?: HivePaaSLoggingSettings): HivePaaSLoggingSettingsFormInput {
     const vlogs = s?.backend.victoriaLogs;
-    // A default belongs to a backend that does not exist yet. Once one is
-    // saved the form shows exactly what it holds - otherwise a limit the user
-    // deliberately cleared would come back on the next load, and there would be
-    // no way to run without one.
+    // The limits are read off the backend's service, which the server fills in -
+    // or the defaults a new backend would get, when there is none. Only a
+    // logging configuration that was never saved has nothing to show, and gets
+    // the defaults from here.
     const isUnconfigured = vlogs === undefined || vlogs === null;
 
     return {
@@ -105,7 +105,6 @@ export function toLoggingFormInput(s?: HivePaaSLoggingSettings): HivePaaSLogging
         },
         backendManaged: s?.backend ? s.backend.managed || !s.backend.ingest?.url : true,
         volumeId: vlogs?.volume?.id ?? "",
-        volumeSubpath: vlogs?.volumeSubpath ?? "",
         retention: vlogs?.retention ?? "30d",
         maxDiskUsagePercent: vlogs?.maxDiskUsagePercent ?? null,
         cpuLimit: vlogs?.cpuLimit ?? (isUnconfigured ? DEFAULT_BACKEND_CPU_LIMIT : null),
@@ -120,11 +119,19 @@ export function toLoggingFormInput(s?: HivePaaSLoggingSettings): HivePaaSLogging
     };
 }
 
+/** The confirmation a save that takes an app of the stack down carries. */
+export type LoggingAppRemoval = {
+    removeApp: boolean;
+    removeStorage: boolean;
+};
+
 export function toLoggingPayload(
     v: HivePaaSLoggingSettingsFormOutput,
     updateVer: number = 0,
+    removal?: LoggingAppRemoval,
 ): HivePaaSLoggingSettings_UpdateOnePayload {
     return {
+        ...(removal ? { removeApp: removal.removeApp, removeStorage: removal.removeStorage } : {}),
         updateVer,
         enabled: v.enabled,
         // Only container logs are collected. The proxy's access log rides along
@@ -137,7 +144,6 @@ export function toLoggingPayload(
                   managed: true,
                   victoriaLogs: {
                       volume: { id: v.volumeId },
-                      ...(v.volumeSubpath ? { volumeSubpath: v.volumeSubpath } : {}),
                       retention: v.retention,
                       ...(v.maxDiskUsagePercent ? { maxDiskUsagePercent: v.maxDiskUsagePercent } : {}),
                       ...(v.cpuLimit ? { cpuLimit: v.cpuLimit } : {}),

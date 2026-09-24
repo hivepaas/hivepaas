@@ -61,8 +61,11 @@ export function HivePaaSLoggingSettingsForm({ settings, readOnly, onSubmit, chil
     const backendManaged = useWatch({ control, name: "backendManaged" });
     const volumeId = useWatch({ control, name: "volumeId" });
 
+    // Only volumes that are shared with apps reach the backend: its app lives in
+    // a project of its own, and a volume that is not inheritable is invisible
+    // there. Offering the rest would mean offering a choice the server refuses.
     const volumesQuery = ClusterVolumesQueries.useFindManyPaginated(LIST_ALL);
-    const volumes = volumesQuery.data?.data ?? [];
+    const volumes = (volumesQuery.data?.data ?? []).filter(volume => volume.inheritable === true);
     // The backend runs wherever its volume is, so a volume that names no node -
     // by id or by label - leaves that open. Not gated on the cluster having
     // more than one node: a warning about losing logs must not be suppressed by
@@ -259,22 +262,6 @@ export function HivePaaSLoggingSettingsForm({ settings, readOnly, onSubmit, chil
                                                     .
                                                 </p>
                                                 <FieldMessage name="volumeId" />
-                                            </InfoBlock>
-                                            <InfoBlock
-                                                titleWidth={220}
-                                                title={
-                                                    <LabelWithInfo
-                                                        label="Data directory"
-                                                        content="A directory inside the volume, so one volume can serve more than logging. Empty writes at the volume's root. Changing it on a running backend starts an empty store: the logs collected so far stay where they are, and stop being shown."
-                                                    />
-                                                }
-                                            >
-                                                <Input
-                                                    {...register("volumeSubpath")}
-                                                    placeholder="logs"
-                                                    className="max-w-[420px]"
-                                                />
-                                                <FieldMessage name="volumeSubpath" />
                                             </InfoBlock>
                                             <InfoBlock
                                                 titleWidth={220}

@@ -24,13 +24,6 @@ export const HivePaaSLoggingSettingsFormSchema = z
         // wire it is `volume`, an object either way: { id } in a request, the
         // whole setting in a response. The form mappers convert at both ends.
         volumeId: z.string(),
-        volumeSubpath: z
-            .string()
-            .trim()
-            // It is a path inside the volume: the server refuses anything that
-            // would climb out, and saying so here costs a round trip less.
-            .refine(v => !v.startsWith("/"), "Must not start with /")
-            .refine(v => !v.split("/").includes(".."), "Must not contain .."),
         retention: z
             .string()
             .trim()

@@ -4,6 +4,7 @@ import (
 	"github.com/tiendc/gofn"
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
+	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/unit"
 )
 
 const (
@@ -40,15 +41,15 @@ type AppDockerAPISettings struct {
 	Limits AppDockerAPILimits `json:"limits,omitzero"`
 }
 
-// AppDockerAPILimits bound what the app's children use. Zero is the default.
+// AppDockerAPILimits bound what the app's children use, in the units the
+// deployment's own resource limits take. Zero is the default.
 type AppDockerAPILimits struct {
 	// Containers is how many children may exist at once.
 	Containers int `json:"containers,omitempty"`
-	// Memory is the most one child may have, in bytes.
-	Memory int64 `json:"memory,omitempty"`
-	// NanoCPUs is the most processor time one child may have, in billionths of
-	// a CPU.
-	NanoCPUs int64 `json:"nanoCpus,omitempty"`
+	// Memory is the most one child may have.
+	Memory unit.DataSize `json:"memory,omitempty"`
+	// CPUs is the most processor time one child may have.
+	CPUs float64 `json:"cpus,omitempty"`
 }
 
 func (s *AppDockerAPISettings) GetType() base.SettingType {

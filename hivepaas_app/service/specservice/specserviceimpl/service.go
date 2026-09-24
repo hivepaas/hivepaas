@@ -13,6 +13,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/appservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/clustersecretservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/clusterservice"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/dockerapiservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/domainservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/envvarservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/networkservice"
@@ -46,6 +47,7 @@ func New(
 	clusterService clusterservice.Service,
 	clusterSecretService clustersecretservice.Service,
 	domainService domainservice.Service,
+	dockerAPIService dockerapiservice.Service,
 	envVarService envvarservice.Service,
 	networkService networkservice.Service,
 	sslService sslservice.Service,
@@ -69,6 +71,7 @@ func New(
 		clusterService:       clusterService,
 		clusterSecretService: clusterSecretService,
 		domainService:        domainService,
+		dockerAPIService:     dockerAPIService,
 		envVarService:        envVarService,
 		networkService:       networkService,
 		sslService:           sslService,
@@ -135,10 +138,11 @@ type service struct {
 	networkService       networkservice.Service
 	taskQueue            queue.TaskQueue
 
-	clusterService clusterservice.Service
-	domainService  domainservice.Service
-	sslService     sslservice.Service
-	volumeService  volumeservice.Service
+	clusterService   clusterservice.Service
+	dockerAPIService dockerapiservice.Service
+	domainService    domainservice.Service
+	sslService       sslservice.Service
+	volumeService    volumeservice.Service
 
 	loadOwned  settingLoader
 	loadByIDs  settingsByIDLoader

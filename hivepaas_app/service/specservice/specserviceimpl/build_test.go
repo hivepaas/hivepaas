@@ -24,6 +24,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/settinghelper"
 	"github.com/hivepaas/hivepaas/hivepaas_app/repository"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/dockerapiservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/specservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/specservice/specmodel"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/volumeservice"
@@ -55,6 +56,14 @@ settings:
     data:
       - {k: POSTGRES_PASSWORD, v: "${HIVEPAAS_PASSWORD}"}
   routing: {port: 5432}
+`
+
+// dockerAPIDocYAML gives the app of buildDocYAML the Docker API. It is kept out
+// of buildDocYAML so that the builds that do not reach the Docker API need no
+// service for it.
+const dockerAPIDocYAML = `  dockerApi:
+    images: [autobase/automation]
+    sharedDirs: [/var/lib/postgresql/data]
 `
 
 type fakeBuildVolumeService struct {
@@ -570,4 +579,29 @@ func TestBuildAppIgnoresAMountNamingItself(t *testing.T) {
 
 	assert.NoError(t, err)
 	assert.Nil(t, volumes.req.New[0].OwnerApp)
+}
+
+type fakeDockerAPIService struct {
+	dockerapiservice.Service
+}
+
+func (fakeDockerAPIService) EnsureNetwork(_ context.Context, appID string) (string, error) {
+	return "net-" + appID, nil
+}
+
+func TestBuildDockerAPIGivesTheAppItsSocketAndNetwork(t *testing.T) {
+	useDataKey(t)
+	svc := &service{volumeService: &fakeBuildVolumeService{}, dockerAPIService: &fakeDockerAPIService{}}
+	req := buildReq(t, buildDocYAML+dockerAPIDocYAML)
+
+	resp, err := svc.BuildApp(context.Background(), nil, req)
+	if !assert.NoError(t, err) {
+		t.FailNow()
+	}
+	setting := settinghelper.FindSettingByType(resp.Settings, base.SettingTypeAppDockerAPI)
+	if assert.NotNil(t, setting) {
+		assert.Equal(t, []string{"autobase/automation"}, setting.MustAsAppDockerAPISettings().Images)
+	}
+	assert.Contains(t, req.Spec.TaskTemplate.ContainerSpec.Mounts, dockerapiservice.SocketMount("app-1"))
+	assert.Contains(t, req.Spec.TaskTemplate.Networks, swarm.NetworkAttachmentConfig{Target: "net-app-1"})
 }

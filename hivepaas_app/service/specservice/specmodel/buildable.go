@@ -31,6 +31,7 @@ const (
 	BlockSettingsSecrets      Block = "settings.secrets"
 	BlockSettingsConfigFiles  Block = "settings.configFiles"
 	BlockSettingsRouting      Block = "settings.routing"
+	BlockSettingsDockerAPI    Block = "settings.dockerApi"
 )
 
 const (
@@ -147,7 +148,8 @@ func ImportBlocks(doc *AppDoc) []Block {
 // docs/superpowers/specs/2026-09-17-app-templates-design.md §12.
 var BuildableBlocks = []Block{BlockDeploymentSource, BlockDeploymentStorage, BlockContainerHealthcheck,
 	BlockContainerInit, BlockDeploymentResources, BlockDeploymentNetworks, BlockSettingsKind,
-	BlockSettingsEnvVars, BlockSettingsSecrets, BlockSettingsConfigFiles, BlockSettingsRouting}
+	BlockSettingsEnvVars, BlockSettingsSecrets, BlockSettingsConfigFiles, BlockSettingsRouting,
+	BlockSettingsDockerAPI}
 
 // CheckBuildable refuses any part of doc that phase 1 cannot build.
 //
@@ -164,7 +166,10 @@ func CheckBuildable(doc *AppDoc) error {
 	if err := checkDeployment(doc.Deployment); err != nil {
 		return err
 	}
-	return checkSettings(doc.Settings)
+	if err := checkSettings(doc.Settings); err != nil {
+		return err
+	}
+	return checkDockerAPI(doc)
 }
 
 // PresentBlocks lists the buildable blocks doc carries, in BuildableBlocks order.
@@ -212,6 +217,7 @@ func presentSettingsBlocks(doc *AppDoc) []Block {
 		{base.SettingTypeAppKind, BlockSettingsKind},
 		{base.SettingTypeEnvVar, BlockSettingsEnvVars},
 		{base.SettingTypeAppRouting, BlockSettingsRouting},
+		{base.SettingTypeAppDockerAPI, BlockSettingsDockerAPI},
 	} {
 		if _, ok := doc.Settings[SingletonBlockName(pair.typ)]; ok {
 			blocks = append(blocks, pair.block)
@@ -480,13 +486,16 @@ func checkSettings(settings map[string]any) error {
 	kind := SingletonBlockName(base.SettingTypeAppKind)
 	envVars := SingletonBlockName(base.SettingTypeEnvVar)
 	routing := SingletonBlockName(base.SettingTypeAppRouting)
+	dockerAPI := SingletonBlockName(base.SettingTypeAppDockerAPI)
 
 	secrets := CollectionBlockName(base.SettingTypeSecret)
 	configFiles := CollectionBlockName(base.SettingTypeConfigFile)
 
 	for _, key := range slices.Sorted(maps.Keys(settings)) {
 		switch key {
-		case kind, envVars:
+		// The Docker API block is checked with the whole document, by checkDockerAPI:
+		// its shared directories are read against the app's storage.
+		case kind, envVars, dockerAPI:
 		case secrets:
 			if err := checkSecrets(settings[key]); err != nil {
 				return err

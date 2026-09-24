@@ -653,19 +653,20 @@ func TestDockerAPIProblem(t *testing.T) {
 	for i := range tooMany {
 		tooMany[i] = "alpine"
 	}
+	sixDirs := []string{"/a", "/b", "/c", "/d", "/e", "/f"}
 	cases := map[string]func(s *entity.AppDockerAPISettings){
-		"images: at least one":       func(s *entity.AppDockerAPISettings) { s.Images = nil },
-		"images: at most":            func(s *entity.AppDockerAPISettings) { s.Images = tooMany },
-		"images[0]":                  func(s *entity.AppDockerAPISettings) { s.Images = []string{"alp ine"} },
-		"sharedDirs: at most":        func(s *entity.AppDockerAPISettings) { s.SharedDirs = []string{"/a", "/b", "/c", "/d", "/e", "/f"} },
-		"sharedDirs[0]":              func(s *entity.AppDockerAPISettings) { s.SharedDirs = []string{"data"} },
-		"sharedDirs[0]: / is":        func(s *entity.AppDockerAPISettings) { s.SharedDirs = []string{"/"} },
-		"sharedDirs[0]: /a/../b is":  func(s *entity.AppDockerAPISettings) { s.SharedDirs = []string{"/a/../b"} },
-		"networks[0]":                func(s *entity.AppDockerAPISettings) { s.Networks = []string{"hivepaas_net"} },
-		"allow[0]":                   func(s *entity.AppDockerAPISettings) { s.Allow = []string{"build"} },
-		"limits.containers":          func(s *entity.AppDockerAPISettings) { s.Limits.Containers = 51 },
-		"limits.memory":              func(s *entity.AppDockerAPISettings) { s.Limits.Memory = 1 * unit.MB },
-		"limits.cpus":                func(s *entity.AppDockerAPISettings) { s.Limits.CPUs = -1 },
+		"images: at least one":      func(s *entity.AppDockerAPISettings) { s.Images = nil },
+		"images: at most":           func(s *entity.AppDockerAPISettings) { s.Images = tooMany },
+		"images[0]":                 func(s *entity.AppDockerAPISettings) { s.Images = []string{"alp ine"} },
+		"sharedDirs: at most":       func(s *entity.AppDockerAPISettings) { s.SharedDirs = sixDirs },
+		"sharedDirs[0]":             func(s *entity.AppDockerAPISettings) { s.SharedDirs = []string{"data"} },
+		"sharedDirs[0]: / is":       func(s *entity.AppDockerAPISettings) { s.SharedDirs = []string{"/"} },
+		"sharedDirs[0]: /a/../b is": func(s *entity.AppDockerAPISettings) { s.SharedDirs = []string{"/a/../b"} },
+		"networks[0]":               func(s *entity.AppDockerAPISettings) { s.Networks = []string{"hivepaas_net"} },
+		"allow[0]":                  func(s *entity.AppDockerAPISettings) { s.Allow = []string{"build"} },
+		"limits.containers":         func(s *entity.AppDockerAPISettings) { s.Limits.Containers = 51 },
+		"limits.memory":             func(s *entity.AppDockerAPISettings) { s.Limits.Memory = 1 * unit.MB },
+		"limits.cpus":               func(s *entity.AppDockerAPISettings) { s.Limits.CPUs = -1 },
 	}
 	for want, change := range cases {
 		settings := ok()
@@ -689,14 +690,14 @@ settings:
 	doc.Settings["dockerApi"] = map[string]any{"images": []any{"alpine"}, "sharedDirs": []any{"/srv/work"}}
 	err := CheckBuildable(doc)
 	assert.ErrorIs(t, err, hperrors.ErrSpecBlockInvalid)
-	assert.ErrorContains(t, err, "/srv/work is on none of the app's storage mounts")
+	assert.Contains(t, buildableErrorDetail(t, err), "/srv/work is on none of the app's storage mounts")
 
 	doc.Settings["dockerApi"] = map[string]any{"images": []any{}}
 	assert.ErrorIs(t, CheckBuildable(doc), hperrors.ErrSpecBlockInvalid)
 }
 ```
 
-In `hivepaas_app/service/specservice/specmodel/buildable_test.go`, add a `dockerApi` block to `buildableDocYAML` under `settings:`, after `routing`:
+In `hivepaas_app/service/specservice/specmodel/buildable_test.go`, add a `dockerApi` block to `buildableDocYAML` under `settings:`, before `routing` (the routing tests append domains to the end of the document, so routing stays last):
 
 ```yaml
   dockerApi:
@@ -704,12 +705,17 @@ In `hivepaas_app/service/specservice/specmodel/buildable_test.go`, add a `docker
     sharedDirs: [/var/lib/postgresql/data/logs]
 ```
 
-In `hivepaas_app/service/specservice/specserviceimpl/build_test.go`:
-- add the same `dockerApi` block to `buildDocYAML`, with `sharedDirs: [/var/lib/postgresql/data]`;
-- in `TestBuildAppBuildsEverySupportedBlock`, give the service a fake Docker API service, `svc := &service{volumeService: volumes, dockerAPIService: &fakeDockerAPIService{}}`, and expect five settings (`assert.Len(t, byType, 5)`);
-- add this fake and a test to the file:
+In `hivepaas_app/service/specservice/specserviceimpl/build_test.go`, add the block as a document of its own, since `buildDocYAML` is built by tests that do not reach the Docker API and give the service none. Add the fake and a test:
 
 ```go
+// dockerAPIDocYAML gives the app of buildDocYAML the Docker API. It is kept out
+// of buildDocYAML so that the builds that do not reach the Docker API need no
+// service for it.
+const dockerAPIDocYAML = `  dockerApi:
+    images: [autobase/automation]
+    sharedDirs: [/var/lib/postgresql/data]
+`
+
 type fakeDockerAPIService struct {
 	dockerapiservice.Service
 }
@@ -721,7 +727,7 @@ func (fakeDockerAPIService) EnsureNetwork(_ context.Context, appID string) (stri
 func TestBuildDockerAPIGivesTheAppItsSocketAndNetwork(t *testing.T) {
 	useDataKey(t)
 	svc := &service{volumeService: &fakeBuildVolumeService{}, dockerAPIService: &fakeDockerAPIService{}}
-	req := buildReq(t, buildDocYAML)
+	req := buildReq(t, buildDocYAML+dockerAPIDocYAML)
 
 	resp, err := svc.BuildApp(context.Background(), nil, req)
 	if !assert.NoError(t, err) {
@@ -735,6 +741,8 @@ func TestBuildDockerAPIGivesTheAppItsSocketAndNetwork(t *testing.T) {
 	assert.Contains(t, req.Spec.TaskTemplate.Networks, swarm.NetworkAttachmentConfig{Target: "net-app-1"})
 }
 ```
+
+`export_test.go` builds the service through `New`: pass `nil, // the Docker API: export reads nothing of it` after `&fakeDomainService{},`.
 
 - [ ] **Step 2: Run them to see them fail**
 

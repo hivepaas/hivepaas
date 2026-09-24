@@ -54,6 +54,9 @@ settings:
     postgresql.conf:
       content: "max_connections = 200\n"
       swarmRef: {file: {name: /etc/postgresql/postgresql.conf, mode: 444}}
+  dockerApi:
+    images: [autobase/automation]
+    sharedDirs: [/var/lib/postgresql/data/logs]
   routing:
     port: 5432
 `

@@ -45,6 +45,7 @@ func (s *service) builders() map[specmodel.Block]blockBuilder {
 		specmodel.BlockSettingsSecrets:      s.buildSecrets,
 		specmodel.BlockSettingsConfigFiles:  s.buildConfigFiles,
 		specmodel.BlockSettingsRouting:      s.buildRouting,
+		specmodel.BlockSettingsDockerAPI:    s.buildDockerAPI,
 		specmodel.BlockContainer:            s.buildContainer,
 		specmodel.BlockDeploymentService:    s.buildService,
 		specmodel.BlockSettings:             s.buildImportedSettings,

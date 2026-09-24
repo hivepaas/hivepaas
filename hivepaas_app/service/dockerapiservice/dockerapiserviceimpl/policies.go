@@ -15,6 +15,9 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/dockerapiservice"
 )
 
+// nanoPerCPU is how docker counts processor time: in billionths of a CPU.
+const nanoPerCPU = 1_000_000_000
+
 func (s *service) Policies(ctx context.Context, db database.IDB) ([]*dockerproxy.Policy, error) {
 	settings, _, err := s.settingRepo.List(ctx, db, nil, nil,
 		bunex.SelectWhere("setting.type = ?", base.SettingTypeAppDockerAPI),
@@ -66,8 +69,8 @@ func policyOf(app *entity.App, data *entity.AppDockerAPISettings, envNetwork str
 		SocketVolume: dockerapiservice.SocketVolumeName(app.ID),
 		Limits: dockerproxy.Limits{
 			Containers: gofn.Coalesce(data.Limits.Containers, dockerapiservice.DefaultContainers),
-			Memory:     gofn.Coalesce(data.Limits.Memory, dockerapiservice.DefaultMemory),
-			NanoCPUs:   gofn.Coalesce(data.Limits.NanoCPUs, dockerapiservice.DefaultNanoCPUs),
+			Memory:     gofn.Coalesce(data.Limits.Memory.Bytes(), dockerapiservice.DefaultMemory),
+			NanoCPUs:   gofn.Coalesce(int64(data.Limits.CPUs*nanoPerCPU), dockerapiservice.DefaultNanoCPUs),
 		},
 	}
 	if slices.Contains(data.Networks, entity.DockerAPINetworkEnv) {

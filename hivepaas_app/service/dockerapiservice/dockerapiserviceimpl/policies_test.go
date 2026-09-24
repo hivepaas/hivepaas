@@ -68,7 +68,7 @@ func TestPoliciesComeFromTheAppsSettings(t *testing.T) {
 			dockerAPISetting("runner", `{"images":["*"],"networks":["env"],`+
 				`"allow":["exec","files","volumes","networks","nestedSocket"]}`),
 			dockerAPISetting("autobase", `{"images":["autobase/automation:2.11.0"],`+
-				`"sharedDirs":["/var/lib/autobase/ansible"],"limits":{"containers":3,"memory":2147483648}}`),
+				`"sharedDirs":["/var/lib/autobase/ansible"],"limits":{"containers":3,"memory":"2gb","cpus":0.5}}`),
 			// An app deleted since: its setting row is still there for a moment.
 			dockerAPISetting("gone", `{"images":["*"]}`),
 		}},
@@ -92,7 +92,7 @@ func TestPoliciesComeFromTheAppsSettings(t *testing.T) {
 			AppID: "autobase", ServiceID: "svc-autobase", Images: []string{"autobase/automation:2.11.0"},
 			SharedDirs: []string{"/var/lib/autobase/ansible"},
 			Network:    "hp-dapi-autobase", SocketVolume: "hp-dapi-sock-autobase",
-			Limits: dockerproxy.Limits{Containers: 3, Memory: 2 << 30, NanoCPUs: 1_000_000_000},
+			Limits: dockerproxy.Limits{Containers: 3, Memory: 2 << 30, NanoCPUs: 500_000_000},
 		},
 	}, policies)
 }

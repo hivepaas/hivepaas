@@ -13,6 +13,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/ulid"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/dockerapiservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/specservice/specmodel"
 )
 
@@ -261,4 +262,23 @@ func decodeImportedSetting(
 		return nil, nil, invalidBlock(block, "%s: %s", key, err.Error())
 	}
 	return setting, parsed, nil
+}
+
+// buildDockerAPI gives the app the Docker API: the setting that says what it may
+// do, and on its service, the socket and the network its children join. The
+// network is created here because the service is: a spec cannot name one that
+// does not exist.
+func (s *service) buildDockerAPI(ctx context.Context, state *buildState) error {
+	block := specmodel.BlockSettingsDockerAPI
+	settings := &entity.AppDockerAPISettings{}
+	body := state.req.Doc.Settings[specmodel.SingletonBlockName(base.SettingTypeAppDockerAPI)]
+	if err := decodeBlock(block, body, settings); err != nil {
+		return err
+	}
+	networkID, err := s.dockerAPIService.EnsureNetwork(ctx, state.req.App.ID)
+	if err != nil {
+		return hperrors.Wrap(err)
+	}
+	dockerapiservice.Attach(state.req.Spec, state.req.App.ID, networkID)
+	return state.addSetting(base.SettingTypeAppDockerAPI, entity.CurrentAppDockerAPIVersion, false, settings)
 }

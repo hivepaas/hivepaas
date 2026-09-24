@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 
 import { cn } from "@/lib/utils";
-import { Boxes, Lock, Rocket, Scale, ShieldAlert } from "lucide-react";
+import { Boxes, Container, Lock, Rocket, Scale, ShieldAlert } from "lucide-react";
 import { useParams } from "react-router";
 
 import { Badge } from "@/components/ui/badge";
@@ -109,6 +109,15 @@ export function AppTemplateCard({ template, onSelect, onSelectTag, selectedTag, 
                     <div className="mt-3 flex items-center gap-1.5 rounded-md bg-orange-500/10 px-2 py-1 text-[12px] text-orange-700 dark:text-orange-400 border border-orange-500/20">
                         <ShieldAlert className="size-3.5 shrink-0" />
                         <span className="truncate">Needs elevated privileges</span>
+                    </div>
+                )}
+
+                {/* Templates whose app starts containers of its own, through the
+                    Docker API proxy, take the same permission. */}
+                {template.requiresDockerApi && (
+                    <div className="mt-3 flex items-center gap-1.5 rounded-md bg-sky-500/10 px-2 py-1 text-[12px] text-sky-700 dark:text-sky-400 border border-sky-500/20">
+                        <Container className="size-3.5 shrink-0" />
+                        <span className="truncate">Starts containers</span>
                     </div>
                 )}
 

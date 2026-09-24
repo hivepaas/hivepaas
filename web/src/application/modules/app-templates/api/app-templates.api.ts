@@ -49,6 +49,9 @@ export interface AppTemplateSummary {
     /** Deploying this grants the app kernel capabilities, sysctls, ulimits or
      *  the GPU, which needs Write on the Cluster module. */
     requiresCapabilities?: boolean;
+    /** Deploying this lets an app start containers through HivePaaS's Docker API
+     *  proxy, which also needs Write on the Cluster module. */
+    requiresDockerApi?: boolean;
 }
 
 export interface ListAppTemplatesFilter {
@@ -153,6 +156,25 @@ export interface AppTemplateCapabilities {
     oomScoreAdj?: number;
 }
 
+/** What a template lets its app do through HivePaaS's Docker API proxy: start
+ *  containers of these images, sharing these directories, within these limits.
+ *  The app never gets the Docker socket itself. Like capabilities, a version
+ *  cannot change it. */
+export interface AppTemplateDockerApi {
+    /** Patterns over the images children may run; "*" is any image. */
+    images: string[];
+    /** Directories of the app a child may bind. */
+    sharedDirs?: string[];
+    /** "env": children may also join the app's env network. */
+    networks?: string[];
+    /** Groups of endpoints beyond the core: exec, files, volumes, networks, nestedSocket. */
+    allow?: string[];
+    /** Absent where the template leaves HivePaaS's default. */
+    containers?: number;
+    memory?: string;
+    cpus?: number;
+}
+
 /** One address a template claims on the cluster itself, beside the web
  *  addresses the reverse proxy serves. Two apps cannot share one. */
 export interface AppTemplatePort {
@@ -177,6 +199,7 @@ export interface AppTemplateDependency {
     parameters?: AppTemplateParam[];
     /** What this dependency's app is granted: the same request creates it. */
     capabilities?: AppTemplateCapabilities | null;
+    dockerApi?: AppTemplateDockerApi | null;
     /** Ports this dependency's app claims on the cluster. */
     publishedPorts?: AppTemplatePort[] | null;
 }
@@ -200,6 +223,8 @@ export interface AppTemplateDetail {
     dependencies?: AppTemplateDependency[];
     /** Null for the templates that ask for nothing, which is most of them. */
     capabilities?: AppTemplateCapabilities | null;
+    /** Null for the templates whose app starts no containers of its own. */
+    dockerApi?: AppTemplateDockerApi | null;
     /** Empty for the templates that publish nothing, which is most of them. */
     publishedPorts?: AppTemplatePort[] | null;
 }

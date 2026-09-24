@@ -6,6 +6,7 @@ import {
     Boxes,
     Check,
     ChevronDown,
+    Container,
     Database,
     Globe,
     HardDrive,
@@ -56,9 +57,12 @@ import { useListEnvApps } from "../../../data";
 import {
     type ClaimedPort,
     type GrantedCapabilities,
+    type GrantedDockerApi,
     describeCapabilities,
+    describeDockerApi,
     describePort,
     grantedByTemplate,
+    grantedDockerApiByTemplate,
     portsClaimedByTemplate,
 } from "../../../utils";
 
@@ -196,12 +200,14 @@ export function DeployTemplateForm({
     // What this request would grant the host, and whether the person may grant
     // it: the same permission the app's resource settings screen asks for.
     const granted = useMemo(() => grantedByTemplate(template), [template]);
+    // The Docker API a template gives is behind the same permission.
+    const grantedDockerApi = useMemo(() => grantedDockerApiByTemplate(template), [template]);
     // Ports are a shared resource of the cluster: another app already on one is
     // what refuses this deployment, so they are shown with the number the person
     // is actually about to claim.
     const claimedPorts = useMemo(() => portsClaimedByTemplate(template), [template]);
     const { canWrite: canGrantCapabilities } = useConditionalModule({ id: MODULE_IDS.Cluster });
-    const capabilitiesBlocked = granted.length > 0 && !canGrantCapabilities;
+    const capabilitiesBlocked = (granted.length > 0 || grantedDockerApi.length > 0) && !canGrantCapabilities;
 
     const paramValues = watch("params");
 
@@ -337,6 +343,11 @@ export function DeployTemplateForm({
             <DialogBody className="space-y-6 px-3.5 py-5 overflow-y-auto">
                 <CapabilitiesNotice
                     granted={granted}
+                    canGrant={canGrantCapabilities}
+                />
+
+                <DockerApiNotice
+                    granted={grantedDockerApi}
                     canGrant={canGrantCapabilities}
                 />
 
@@ -1442,6 +1453,67 @@ function CapabilitiesNotice({ granted, canGrant }: { granted: GrantedCapabilitie
                 <p className="text-[11px] leading-relaxed font-medium text-destructive">
                     You need Write permission on the Cluster module to deploy this template. Ask an administrator for
                     it, or choose a template that asks for no capabilities.
+                </p>
+            )}
+        </div>
+    );
+}
+
+/**
+ * The notice shown before a template whose apps start containers of their own
+ * is deployed: what they may start, and the permission giving it takes - the one
+ * capabilities take.
+ */
+function DockerApiNotice({ granted, canGrant }: { granted: GrantedDockerApi[]; canGrant: boolean }) {
+    if (granted.length === 0) {
+        return null;
+    }
+    return (
+        <div
+            className={cn(
+                "space-y-3 rounded-xl border p-4 shadow-2xs",
+                canGrant ? "border-sky-500/40 bg-sky-500/5" : "border-destructive/50 bg-destructive/5",
+            )}
+        >
+            <div className="flex items-center gap-2">
+                <Container className={cn("size-4", canGrant ? "text-sky-500" : "text-destructive")} />
+                <h4 className="text-sm font-semibold tracking-tight">Starts containers of its own</h4>
+            </div>
+
+            <div className="space-y-2">
+                {granted.map(one => (
+                    <div
+                        key={one.app}
+                        className="flex flex-wrap items-center gap-1.5"
+                    >
+                        <span className="text-xs text-muted-foreground">{one.app}</span>
+                        {describeDockerApi(one.access).map(item => (
+                            <Badge
+                                key={item}
+                                variant="outline"
+                                className="h-5 px-1.5 font-mono text-[10px] border-sky-500/40 text-sky-600 dark:text-sky-400"
+                            >
+                                {item}
+                            </Badge>
+                        ))}
+                    </div>
+                ))}
+            </div>
+
+            <p className="text-[11px] leading-relaxed text-muted-foreground">
+                The app starts containers on the node it runs on, through the Docker API proxy HivePaaS runs: only these
+                images, on the app&apos;s own network, within these limits. It never gets the Docker socket itself.
+            </p>
+
+            {canGrant ? (
+                <p className="text-[11px] leading-relaxed text-muted-foreground">
+                    Giving this needs <span className="font-medium text-sky-600">Write</span> permission on the{" "}
+                    <span className="font-medium text-sky-600">Cluster</span> module, which you have.
+                </p>
+            ) : (
+                <p className="text-[11px] leading-relaxed font-medium text-destructive">
+                    You need Write permission on the Cluster module to deploy this template. Ask an administrator for
+                    it.
                 </p>
             )}
         </div>

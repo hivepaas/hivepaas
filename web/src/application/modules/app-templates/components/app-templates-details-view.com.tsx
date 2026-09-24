@@ -7,6 +7,7 @@ import {
     Boxes,
     CheckCircle2,
     Code2,
+    Container,
     ExternalLink,
     Globe,
     HardDrive,
@@ -37,7 +38,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import type { AppTemplateDependency, AppTemplateDetail, AppTemplateParam, AppTemplateSummary } from "../api";
 import { useGetAppTemplate } from "../data";
 import { useDeployTemplateDialogState } from "../dialogs";
-import { describeCapabilities, grantedByTemplate } from "../utils";
+import { describeCapabilities, describeDockerApi, grantedByTemplate, grantedDockerApiByTemplate } from "../utils";
 
 interface AppTemplatesDetailsViewProps {
     templateName: string;
@@ -522,6 +523,7 @@ export function AppTemplatesDetailsView({
                 block because it is the one thing on this page that changes who
                 may deploy the template at all. */}
             {!isLoading && templateDetail && <CapabilitiesSection template={templateDetail} />}
+            {!isLoading && templateDetail && <DockerApiSection template={templateDetail} />}
 
             {/* Main Content Layout: Left 3/4 and Right 1/4 */}
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 items-start">
@@ -967,6 +969,70 @@ function CapabilitiesSection({ template }: { template: AppTemplateDetail }) {
                                 Granting this needs <span className="font-medium text-orange-500">Write</span>{" "}
                                 permission on the <span className="font-medium text-orange-500">Cluster</span> module,
                                 which you have.
+                            </>
+                        ) : (
+                            <span className="font-medium text-destructive">
+                                You need Write permission on the Cluster module to deploy this template.
+                            </span>
+                        )}
+                    </p>
+                </div>
+            </div>
+        </div>
+    );
+}
+
+/**
+ * What deploying this template lets its apps do through HivePaaS's Docker API
+ * proxy, and the permission needed to give it. Like capabilities, it says nothing
+ * for the templates whose apps start no containers of their own.
+ */
+function DockerApiSection({ template }: { template: AppTemplateDetail }) {
+    const granted = useMemo(() => grantedDockerApiByTemplate(template), [template]);
+    const { canWrite: canGrant } = useConditionalModule({ id: MODULE_IDS.Cluster });
+
+    if (granted.length === 0) {
+        return null;
+    }
+    return (
+        <div className="rounded-xl border border-sky-500/40 bg-sky-500/5 dark:bg-sky-500/10 p-4 shadow-xs">
+            <div className="flex items-start gap-3.5">
+                <div className="rounded-lg bg-sky-500/15 p-2 text-sky-700 dark:text-sky-400 shrink-0">
+                    <Container className="size-5" />
+                </div>
+
+                <div className="flex-1 space-y-2 text-xs">
+                    <h4 className="text-sm font-semibold text-foreground">Starts containers of its own</h4>
+
+                    {granted.map(one => (
+                        <div
+                            key={one.app}
+                            className="flex flex-wrap items-center gap-1.5"
+                        >
+                            <span className="text-muted-foreground">{one.app}</span>
+                            {describeDockerApi(one.access).map(item => (
+                                <Badge
+                                    key={item}
+                                    variant="outline"
+                                    className="h-5 px-1.5 font-mono text-[10px] border-sky-500/40 text-sky-700 dark:text-sky-400"
+                                >
+                                    {item}
+                                </Badge>
+                            ))}
+                        </div>
+                    ))}
+
+                    <p className="leading-relaxed text-foreground/90 font-medium">
+                        The app starts containers on the node it runs on, through the Docker API proxy HivePaaS runs:
+                        only these images, on the app&apos;s own network, within these limits. It never gets the Docker
+                        socket itself.
+                    </p>
+
+                    <p className="leading-relaxed text-muted-foreground">
+                        {canGrant ? (
+                            <>
+                                Giving this needs <span className="font-medium text-sky-600">Write</span> permission on
+                                the <span className="font-medium text-sky-600">Cluster</span> module, which you have.
                             </>
                         ) : (
                             <span className="font-medium text-destructive">

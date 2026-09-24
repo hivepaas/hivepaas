@@ -380,15 +380,15 @@ func socketOf(volumes *fakeVolumes, appID string) string {
 	return filepath.Join(volumes.root, dockerapiservice.SocketVolumeName(appID), dockerproxy.SocketFile)
 }
 
-// get sends a request over an app's socket.
-func get(t *testing.T, socket, path string) (int, error) {
+// send makes a request over an app's socket.
+func send(t *testing.T, socket, method, path string) (int, error) {
 	t.Helper()
 	httpClient := &http.Client{Transport: &http.Transport{
 		DialContext: func(ctx context.Context, _, _ string) (net.Conn, error) {
 			return (&net.Dialer{}).DialContext(ctx, "unix", socket)
 		},
 	}}
-	req, err := http.NewRequestWithContext(context.Background(), http.MethodPost, "http://docker"+path, nil)
+	req, err := http.NewRequestWithContext(context.Background(), method, "http://docker"+path, nil)
 	if err != nil {
 		return 0, err
 	}
@@ -411,7 +411,7 @@ func TestReconcileServesEachAppOnASocketInItsVolume(t *testing.T) {
 		volumes.created[dockerapiservice.SocketVolumeName("app1")])
 
 	for _, appID := range []string{"app1", "app2"} {
-		status, err := get(t, socketOf(volumes, appID), "/v1.51/images/create?fromImage=alpine&tag=3")
+		status, err := send(t, socketOf(volumes, appID), http.MethodPost, "/v1.51/images/create?fromImage=alpine&tag=3")
 		assert.NoError(t, err)
 		assert.Equal(t, http.StatusOK, status)
 	}
@@ -422,13 +422,13 @@ func TestReconcileGivesAChangedPolicyToTheOpenSocket(t *testing.T) {
 	host, volumes, _ := newTestHost(t)
 	ctx := context.Background()
 	assert.NoError(t, host.reconcile(ctx, []*dockerproxy.Policy{testPolicy("app1")}))
-	status, _ := get(t, socketOf(volumes, "app1"), "/v1.51/images/create?fromImage=busybox&tag=1")
+	status, _ := send(t, socketOf(volumes, "app1"), http.MethodPost, "/v1.51/images/create?fromImage=busybox&tag=1")
 	assert.Equal(t, http.StatusForbidden, status)
 
 	changed := testPolicy("app1")
 	changed.Images = []string{"busybox"}
 	assert.NoError(t, host.reconcile(ctx, []*dockerproxy.Policy{changed}))
-	status, _ = get(t, socketOf(volumes, "app1"), "/v1.51/images/create?fromImage=busybox&tag=1")
+	status, _ = send(t, socketOf(volumes, "app1"), http.MethodPost, "/v1.51/images/create?fromImage=busybox&tag=1")
 	assert.Equal(t, http.StatusOK, status)
 }
 
@@ -441,7 +441,7 @@ func TestReconcileClosesTheSocketOfAnAppNoLongerListed(t *testing.T) {
 	assert.Empty(t, host.served())
 	_, err := os.Stat(socketOf(volumes, "app1"))
 	assert.ErrorIs(t, err, os.ErrNotExist)
-	_, err = get(t, socketOf(volumes, "app1"), "/_ping")
+	_, err = send(t, socketOf(volumes, "app1"), http.MethodGet, "/_ping")
 	assert.Error(t, err)
 }
 
@@ -454,7 +454,7 @@ func TestReconcileReplacesASocketAnEarlierAgentLeft(t *testing.T) {
 	assert.NoError(t, os.WriteFile(socket, []byte("stale"), 0o600))
 
 	assert.NoError(t, host.reconcile(context.Background(), []*dockerproxy.Policy{testPolicy("app1")}))
-	status, err := get(t, socket, "/_ping")
+	status, err := send(t, socket, http.MethodGet, "/_ping")
 	assert.NoError(t, err)
 	assert.Equal(t, http.StatusOK, status)
 }
@@ -473,7 +473,7 @@ func TestOneAppThatCannotBeServedDoesNotStopTheOthers(t *testing.T) {
 	err := host.reconcile(context.Background(), []*dockerproxy.Policy{testPolicy("broken"), testPolicy("app1")})
 	assert.ErrorIs(t, err, unreachable)
 	assert.Equal(t, []string{"app1"}, host.served())
-	status, _ := get(t, socketOf(volumes, "app1"), "/_ping")
+	status, _ := send(t, socketOf(volumes, "app1"), http.MethodGet, "/_ping")
 	assert.Equal(t, http.StatusOK, status)
 }
 

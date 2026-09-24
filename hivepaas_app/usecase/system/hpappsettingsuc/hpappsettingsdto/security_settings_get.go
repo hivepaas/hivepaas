@@ -25,6 +25,7 @@ type GetSecuritySettingsResp struct {
 type SecuritySettingsResp struct {
 	ReturnSecretsViaAPI     bool     `json:"returnSecretsViaApi"`
 	AlwaysReturnSecretTypes []string `json:"alwaysReturnSecretTypes"`
+	AllowPrivilegedApps     bool     `json:"allowPrivilegedApps"`
 }
 
 type SecuritySettingsTransformInput struct {
@@ -42,6 +43,7 @@ func TransformSecuritySettings(input *SecuritySettingsTransformInput) (resp *Sec
 	resp = &SecuritySettingsResp{
 		ReturnSecretsViaAPI:     input.Config.Security.ReturnSecretsViaAPI,
 		AlwaysReturnSecretTypes: exemptions,
+		AllowPrivilegedApps:     input.Config.Security.AllowPrivilegedApps,
 	}
 	return resp, nil
 }

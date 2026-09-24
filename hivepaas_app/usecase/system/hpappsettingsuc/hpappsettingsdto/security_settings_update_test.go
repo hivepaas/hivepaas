@@ -39,9 +39,10 @@ func TestSecuritySettingsJSONNames(t *testing.T) {
 	req := &UpdateSecuritySettingsReq{}
 	assert.NoError(t, json.Unmarshal(
 		[]byte(`{"appSecret":"s","returnSecretsViaApi":true,`+
-			`"alwaysReturnSecretTypes":["swarm-join-token"]}`), req))
+			`"alwaysReturnSecretTypes":["swarm-join-token"],"allowPrivilegedApps":true}`), req))
 	assert.Equal(t, "s", req.AppSecret)
 	assert.True(t, req.ReturnSecretsViaAPI)
+	assert.True(t, req.AllowPrivilegedApps)
 	assert.Equal(t, []string{"swarm-join-token"}, req.AlwaysReturnSecretTypes)
 
 	body, err := json.Marshal(&SecuritySettingsResp{
@@ -50,7 +51,7 @@ func TestSecuritySettingsJSONNames(t *testing.T) {
 	})
 	assert.NoError(t, err)
 	assert.JSONEq(t,
-		`{"returnSecretsViaApi":true,"alwaysReturnSecretTypes":["swarm-join-token"]}`,
+		`{"returnSecretsViaApi":true,"alwaysReturnSecretTypes":["swarm-join-token"],"allowPrivilegedApps":false}`,
 		string(body))
 }
 

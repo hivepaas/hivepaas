@@ -47,6 +47,7 @@ type ManagedSettings struct {
 type ManagedSecurity struct {
 	ReturnSecretsViaAPI     *bool     `toml:"return_secrets_via_api"`
 	AlwaysReturnSecretTypes *[]string `toml:"always_return_secret_types"`
+	AllowPrivilegedApps     *bool     `toml:"allow_privileged_apps"`
 }
 
 // applyTo overlays the settings that are set. A field the file omits leaves the
@@ -63,6 +64,9 @@ func (s *ManagedSettings) applyTo(config *Config) {
 	}
 	if v := s.Security.AlwaysReturnSecretTypes; v != nil {
 		config.Security.AlwaysReturnSecretTypes = *v
+	}
+	if v := s.Security.AllowPrivilegedApps; v != nil {
+		config.Security.AllowPrivilegedApps = *v
 	}
 }
 

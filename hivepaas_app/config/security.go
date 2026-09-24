@@ -32,6 +32,15 @@ type Security struct {
 	// the reveal capability, and the attempt is still recorded either way. Values
 	// are base.SecretType; see base.AllSecretTypes for what may be listed.
 	AlwaysReturnSecretTypes []string `toml:"always_return_secret_types" env:"HP_SECURITY_ALWAYS_RETURN_SECRET_TYPES"`
+
+	// AllowPrivilegedApps lets apps reach into the host they run on: the Docker
+	// socket, a directory of the node. Such an app is root on its node - on a
+	// manager, over the whole cluster - so it is off unless the operator turns it
+	// on, and turning it on takes the app secret like the switch above.
+	//
+	// TODO: privileged apps - app templates and import consult this before they
+	// grant an app access to the host.
+	AllowPrivilegedApps bool `toml:"allow_privileged_apps" env:"HP_SECURITY_ALLOW_PRIVILEGED_APPS"`
 }
 
 // Equal reports whether two sets of settings say the same thing.
@@ -44,7 +53,7 @@ func (s *Security) Equal(other *Security) bool {
 	if s == nil || other == nil {
 		return s == other
 	}
-	if s.ReturnSecretsViaAPI != other.ReturnSecretsViaAPI {
+	if s.ReturnSecretsViaAPI != other.ReturnSecretsViaAPI || s.AllowPrivilegedApps != other.AllowPrivilegedApps {
 		return false
 	}
 	if len(s.AlwaysReturnSecretTypes) != len(other.AlwaysReturnSecretTypes) {
@@ -104,6 +113,7 @@ func SaveSecuritySettings(security *Security) error {
 		// never having set them - the same reason the bool above is a pointer.
 		exemptions := append([]string{}, security.AlwaysReturnSecretTypes...)
 		settings.Security.AlwaysReturnSecretTypes = &exemptions
+		settings.Security.AllowPrivilegedApps = &security.AllowPrivilegedApps
 	})
 	if err != nil {
 		return fmt.Errorf("failed to persist the security settings: %w", err)

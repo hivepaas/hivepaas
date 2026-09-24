@@ -25,6 +25,11 @@ type UpdateSecuritySettingsReq struct {
 	// flag: an exemption is a hole in the flag, so it must not be easier to make
 	// than the flag is to switch.
 	AlwaysReturnSecretTypes []string `json:"alwaysReturnSecretTypes"`
+
+	// AllowPrivilegedApps lets apps reach into the host - the Docker socket, a
+	// directory of the node. Behind the app secret for the same reason: such an
+	// app is root on its node.
+	AllowPrivilegedApps bool `json:"allowPrivilegedApps"`
 }
 
 func NewUpdateSecuritySettingsReq() *UpdateSecuritySettingsReq {
@@ -38,6 +43,7 @@ func (req *UpdateSecuritySettingsReq) ToConfig() *config.Security {
 	return &config.Security{
 		ReturnSecretsViaAPI:     req.ReturnSecretsViaAPI,
 		AlwaysReturnSecretTypes: req.AlwaysReturnSecretTypes,
+		AllowPrivilegedApps:     req.AllowPrivilegedApps,
 	}
 }
 

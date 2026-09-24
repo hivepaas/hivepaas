@@ -23,10 +23,12 @@ const (
 	SocketMountTarget = "/var/run/hivepaas"
 
 	// DefaultContainers, DefaultMemory and DefaultNanoCPUs are an app's limits
-	// when its setting names none.
+	// when its setting names none. DefaultCPUs is DefaultNanoCPUs as the setting
+	// writes it.
 	DefaultContainers = 5
 	DefaultMemory     = 1 << 30
 	DefaultNanoCPUs   = 1_000_000_000
+	DefaultCPUs       = 1.0
 )
 
 // NetworkName is the name of an app's own network.

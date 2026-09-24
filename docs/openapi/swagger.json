@@ -16649,6 +16649,146 @@
         "tags" : [ "app_deployments" ]
       }
     },
+    "/projects/{projectID}/{projectEnv}/apps/{appID}/docker-api-settings" : {
+      "get" : {
+        "description" : "Gets the app's Docker API access: the images its children may run, the directories they\nshare, the networks they join, the groups of endpoints allowed, and the limits.",
+        "operationId" : "getAppDockerAPISettings",
+        "parameters" : [ {
+          "description" : "project ID",
+          "in" : "path",
+          "name" : "projectID",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "project env",
+          "in" : "path",
+          "name" : "projectEnv",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "app ID",
+          "in" : "path",
+          "name" : "appID",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/appsettingsdto.GetAppDockerAPISettingsResp"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "400" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Bad Request"
+          },
+          "500" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Internal Server Error"
+          }
+        },
+        "summary" : "Gets what an app may do through the Docker API",
+        "tags" : [ "app_settings" ]
+      },
+      "put" : {
+        "description" : "Updates the app's Docker API access. Turning it on, or letting it do more, needs Write\npermission on the Cluster module; narrowing it or turning it off needs Write on the app.",
+        "operationId" : "updateAppDockerAPISettings",
+        "parameters" : [ {
+          "description" : "project ID",
+          "in" : "path",
+          "name" : "projectID",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "project env",
+          "in" : "path",
+          "name" : "projectEnv",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "app ID",
+          "in" : "path",
+          "name" : "appID",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "*/*" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/appsettingsdto.UpdateAppDockerAPISettingsReq"
+              }
+            }
+          },
+          "description" : "request data",
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/appsettingsdto.UpdateAppDockerAPISettingsResp"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "400" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Bad Request"
+          },
+          "500" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Internal Server Error"
+          }
+        },
+        "summary" : "Updates what an app may do through the Docker API",
+        "tags" : [ "app_settings" ],
+        "x-codegen-request-body-name" : "body"
+      }
+    },
     "/projects/{projectID}/{projectEnv}/apps/{appID}/env-vars" : {
       "get" : {
         "description" : "Gets app env vars",
@@ -43330,6 +43470,67 @@
         "required" : [ "cloneConfigFiles", "cloneDeploymentSettings", "cloneEnvVars", "clonePeriodicJobs", "cloneRoutingDomains", "cloneRoutingSettings", "cloneSchedJobs", "cloneSecrets", "cloneVolumeData", "cloneVolumes", "commandPipes", "excludedVolumes", "includedVolumes", "liveVolumeClone", "notification", "targetEnv", "targetName", "targetReplicas", "targetStatus", "updateVer" ],
         "type" : "object"
       },
+      "appsettingsdto.AppDockerAPILimits" : {
+        "properties" : {
+          "containers" : {
+            "type" : "integer"
+          },
+          "cpus" : {
+            "type" : "number"
+          },
+          "memory" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "containers", "cpus", "memory" ],
+        "type" : "object"
+      },
+      "appsettingsdto.AppDockerAPISettingsResp" : {
+        "properties" : {
+          "allow" : {
+            "items" : {
+              "type" : "string"
+            },
+            "type" : "array"
+          },
+          "defaultLimits" : {
+            "allOf" : [ {
+              "$ref" : "#/components/schemas/appsettingsdto.AppDockerAPILimits"
+            } ],
+            "description" : "DefaultLimits are what a limit of zero stands for.",
+            "type" : "object"
+          },
+          "enabled" : {
+            "type" : "boolean"
+          },
+          "images" : {
+            "items" : {
+              "type" : "string"
+            },
+            "type" : "array"
+          },
+          "limits" : {
+            "$ref" : "#/components/schemas/appsettingsdto.AppDockerAPILimits"
+          },
+          "networks" : {
+            "items" : {
+              "type" : "string"
+            },
+            "type" : "array"
+          },
+          "sharedDirs" : {
+            "items" : {
+              "type" : "string"
+            },
+            "type" : "array"
+          },
+          "updateVer" : {
+            "type" : "integer"
+          }
+        },
+        "required" : [ "allow", "defaultLimits", "enabled", "images", "limits", "networks", "sharedDirs", "updateVer" ],
+        "type" : "object"
+      },
       "appsettingsdto.AppKindCacheReq" : {
         "properties" : {
           "evictionRule" : {
@@ -44236,6 +44437,18 @@
         "properties" : {
           "data" : {
             "$ref" : "#/components/schemas/appsettingsdto.DeploymentSettingsResp"
+          },
+          "meta" : {
+            "$ref" : "#/components/schemas/basedto.Meta"
+          }
+        },
+        "required" : [ "data", "meta" ],
+        "type" : "object"
+      },
+      "appsettingsdto.GetAppDockerAPISettingsResp" : {
+        "properties" : {
+          "data" : {
+            "$ref" : "#/components/schemas/appsettingsdto.AppDockerAPISettingsResp"
           },
           "meta" : {
             "$ref" : "#/components/schemas/basedto.Meta"
@@ -45732,6 +45945,55 @@
           }
         },
         "required" : [ "data", "meta" ],
+        "type" : "object"
+      },
+      "appsettingsdto.UpdateAppDockerAPISettingsReq" : {
+        "properties" : {
+          "allow" : {
+            "items" : {
+              "type" : "string"
+            },
+            "type" : "array"
+          },
+          "enabled" : {
+            "description" : "Enabled off takes the access away and keeps what it allowed, for turning\nit on again: the other fields are not read.",
+            "type" : "boolean"
+          },
+          "images" : {
+            "items" : {
+              "type" : "string"
+            },
+            "type" : "array"
+          },
+          "limits" : {
+            "$ref" : "#/components/schemas/appsettingsdto.AppDockerAPILimits"
+          },
+          "networks" : {
+            "items" : {
+              "type" : "string"
+            },
+            "type" : "array"
+          },
+          "sharedDirs" : {
+            "items" : {
+              "type" : "string"
+            },
+            "type" : "array"
+          },
+          "updateVer" : {
+            "type" : "integer"
+          }
+        },
+        "required" : [ "allow", "enabled", "images", "limits", "networks", "sharedDirs", "updateVer" ],
+        "type" : "object"
+      },
+      "appsettingsdto.UpdateAppDockerAPISettingsResp" : {
+        "properties" : {
+          "meta" : {
+            "$ref" : "#/components/schemas/basedto.Meta"
+          }
+        },
+        "required" : [ "meta" ],
         "type" : "object"
       },
       "appsettingsdto.UpdateAppEnvVarsReq" : {

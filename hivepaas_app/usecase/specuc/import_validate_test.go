@@ -118,7 +118,7 @@ func TestValidateImportAsksThePermissionManagerForWhatAnImportGrants(t *testing.
 		_, err := uc.ValidateImport(context.Background(), auth, importReq())
 		assert.NoError(t, err)
 
-		mayGrant, err := svc.lastReq.MayGrantCapabilities(context.Background())
+		mayGrant, err := svc.lastReq.MayWriteCluster(context.Background())
 		assert.NoError(t, err)
 		assert.Equal(t, want, mayGrant, auth.User.ID)
 		mayWrite, err := svc.lastReq.MayWriteApp(context.Background(), app)

@@ -15,6 +15,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/appservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/clustersecretservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/envvarservice"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/networkservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/volumeservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/tasks/queue"
 	"github.com/hivepaas/hivepaas/services/docker"
@@ -168,4 +169,13 @@ func (f *fakeClusterSecretService) CreateSecretForApp(
 ) (*entity.SwarmSecretRef, error) {
 	f.created = append(f.created, secret.Key)
 	return secret.SwarmRef, nil
+}
+
+// fakeNetworkService names an env's own network the way the real one does.
+type fakeNetworkService struct {
+	networkservice.Service
+}
+
+func (fakeNetworkService) GetProjectNetworkName(project *entity.Project, env string) string {
+	return project.Key + "_" + env + "_net"
 }

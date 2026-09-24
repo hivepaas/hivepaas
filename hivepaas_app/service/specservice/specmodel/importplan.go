@@ -20,6 +20,8 @@ const (
 	CodeStorageUnchecked        = "STORAGE_UNCHECKED"
 	CodeCapabilityNotPermitted  = "CAPABILITY_NOT_PERMITTED"
 	CodeSharedMountNotPermitted = "SHARED_MOUNT_NOT_PERMITTED"
+	CodeHostMountNotPermitted   = "HOST_MOUNT_NOT_PERMITTED"
+	CodeNetworkNotAvailable     = "NETWORK_NOT_AVAILABLE"
 	CodeSecretOmitted           = "SECRET_OMITTED"
 	CodeOwnerNotPermitted       = "OWNER_NOT_PERMITTED"
 )

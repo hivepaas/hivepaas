@@ -15,6 +15,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/clusterservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/domainservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/envvarservice"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/networkservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/projectservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/specservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/specservice/specmodel"
@@ -23,12 +24,12 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/tasks/queue"
 )
 
-// New builds the spec exporter.
+// New builds the spec service.
 //
-// There is no networkservice dependency on purpose. Resolving a Docker network
-// id to its name needs only the cluster-network settings, which sync writes
-// with RefID set to the Docker id and Name to the Docker name - so the mapping
-// comes from the database rather than from a round trip to Docker.
+// Export resolves a Docker network id to its name from the cluster-network
+// settings alone, which sync writes with RefID set to the Docker id and Name to
+// the Docker name - no round trip to Docker. Import asks networkservice only
+// what an env's own network is called.
 func New(
 	appRepo repository.AppRepo,
 	projectEnvRepo repository.ProjectEnvRepo,
@@ -46,6 +47,7 @@ func New(
 	clusterSecretService clustersecretservice.Service,
 	domainService domainservice.Service,
 	envVarService envvarservice.Service,
+	networkService networkservice.Service,
 	sslService sslservice.Service,
 	volumeService volumeservice.Service,
 
@@ -68,6 +70,7 @@ func New(
 		clusterSecretService: clusterSecretService,
 		domainService:        domainService,
 		envVarService:        envVarService,
+		networkService:       networkService,
 		sslService:           sslService,
 		volumeService:        volumeService,
 
@@ -129,6 +132,7 @@ type service struct {
 	appRoutingService    approutingservice.Service
 	clusterSecretService clustersecretservice.Service
 	envVarService        envvarservice.Service
+	networkService       networkservice.Service
 	taskQueue            queue.TaskQueue
 
 	clusterService clusterservice.Service

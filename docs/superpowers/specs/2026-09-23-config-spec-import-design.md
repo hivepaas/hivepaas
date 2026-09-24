@@ -481,6 +481,8 @@ says what import did, and needs no acceptance.
 | `TYPE_NOT_IMPORTABLE` | skipped | a setting type with no import policy (§10) | not imported | - |
 | `CAPABILITY_NOT_PERMITTED` | skipped | the app gains capabilities, and the operator lacks Write on the cluster module | app not imported | - |
 | `SHARED_MOUNT_NOT_PERMITTED` | skipped | a mount reaches the storage of an app outside this import that the operator may not write | app not imported | - |
+| `HOST_MOUNT_NOT_PERMITTED` | skipped | the app gains a mount of the host - a path such as the Docker socket, or a volume by name - and the operator lacks Write on the cluster module. The storage screen offers no such mount, so an import is the only way to ask for one | app not imported | - |
+| `NETWORK_NOT_AVAILABLE` | fixable | an attachment to a network the app's project cannot use - not its env's own, not one the project sees - as the network settings screen would refuse it | attachment dropped | `active` |
 | `REF_NOT_SELECTED` | fixable | a reference to a bundle object that is not selected and that the target lacks | reference cleared | `pending` |
 | `REF_NOT_FOUND` | fixable | a reference to something neither in the bundle nor on the target | reference cleared | `pending` |
 | `SECRET_OMITTED` | fixable | §7 | secret left empty | `pending` |

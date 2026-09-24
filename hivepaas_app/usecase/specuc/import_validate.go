@@ -54,7 +54,7 @@ func (uc *UC) importReq(auth *basedto.Auth, req *specdto.ValidateImportReq) *spe
 		},
 		// The gates template creation applies to the same grants: the resources
 		// screen's for capabilities, the storage screen's for another app's files.
-		MayGrantCapabilities: func(ctx context.Context) (bool, error) {
+		MayWriteCluster: func(ctx context.Context) (bool, error) {
 			return uc.permissionManager.CheckAccess(ctx, uc.db, auth, &permission.ModuleAccessCheck{
 				BaseAccessCheck: permission.BaseAccessCheck{Action: base.ActionTypeWrite},
 				Module:          base.ResourceModuleCluster,

@@ -238,7 +238,7 @@ func (w *writer) preparedDeployment(ctx context.Context, node *specmodel.PlanNod
 	out := *doc.Deployment
 	out.Source = nil
 
-	droppedMounts, droppedPorts := map[any]bool{}, map[any]bool{}
+	droppedMounts, droppedPorts, droppedNetworks := map[any]bool{}, map[any]bool{}, map[any]bool{}
 	for _, issue := range node.Issues {
 		switch issue.Code {
 		case specmodel.CodeRefNotSelected, specmodel.CodeRefNotFound:
@@ -247,6 +247,8 @@ func (w *writer) preparedDeployment(ctx context.Context, node *specmodel.PlanNod
 			}
 		case specmodel.CodePortInUse:
 			droppedPorts[issue.Detail["port"]] = true
+		case specmodel.CodeNetworkNotAvailable:
+			droppedNetworks[issue.Detail["network"]] = true
 		}
 	}
 
@@ -271,12 +273,19 @@ func (w *writer) preparedDeployment(ctx context.Context, node *specmodel.PlanNod
 		out.Storage = prepared
 	}
 
-	if networks := doc.Deployment.Networks; networks != nil && networks.EndpointSpec != nil && len(droppedPorts) > 0 {
-		prepared, endpoint := *networks, *networks.EndpointSpec
-		endpoint.Ports = slices.DeleteFunc(slices.Clone(endpoint.Ports), func(port *specmodel.PortConfig) bool {
-			return port != nil && droppedPorts[describePortConfig(port)]
-		})
-		prepared.EndpointSpec = &endpoint
+	if networks := doc.Deployment.Networks; networks != nil && (len(droppedPorts) > 0 || len(droppedNetworks) > 0) {
+		prepared := *networks
+		prepared.Attachments = slices.DeleteFunc(slices.Clone(networks.Attachments),
+			func(attachment *specmodel.NetworkAttachment) bool {
+				return attachment != nil && droppedNetworks[attachment.Name]
+			})
+		if networks.EndpointSpec != nil {
+			endpoint := *networks.EndpointSpec
+			endpoint.Ports = slices.DeleteFunc(slices.Clone(endpoint.Ports), func(port *specmodel.PortConfig) bool {
+				return port != nil && droppedPorts[describePortConfig(port)]
+			})
+			prepared.EndpointSpec = &endpoint
+		}
 		out.Networks = &prepared
 	}
 	return &out, nil

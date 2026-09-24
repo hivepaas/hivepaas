@@ -13,6 +13,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
+	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/dockerproxy"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/settinghelper"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/envvarservice"
 )
@@ -24,7 +25,8 @@ func (s *service) BuildSystemEnvVarsInApp(
 ) ([]*envvarservice.EnvVar, error) {
 	settings, _, err := s.settingRepo.List(ctx, db, nil, nil,
 		bunex.SelectWhere("setting.status = ?", base.SettingStatusActive),
-		bunex.SelectWhereIn("setting.type IN (?)", base.SettingTypeAppRouting, base.SettingTypeAppKind),
+		bunex.SelectWhereIn("setting.type IN (?)", base.SettingTypeAppRouting, base.SettingTypeAppKind,
+			base.SettingTypeAppDockerAPI),
 		bunex.SelectWhere("setting.object_id = ?", req.App.ID),
 	)
 	if err != nil {
@@ -111,6 +113,8 @@ func (s *service) BuildSystemEnvVarsInApp(
 		return nil, hperrors.Wrap(err)
 	}
 	result = append(result, kindEnvs...)
+	result = append(result, dockerAPIEnvVars(
+		settinghelper.FindSettingByType(settings, base.SettingTypeAppDockerAPI) != nil)...)
 
 	for _, env := range result {
 		env.IsLiteral = true
@@ -240,4 +244,16 @@ func sharedEnv(key, value string) *envvarservice.EnvVar {
 			IsShared: true,
 		},
 	}
+}
+
+// dockerAPIEnvVars is where an app given the Docker API finds it. It is not
+// shared: another app has no use for this app's socket, and no way to reach it.
+func dockerAPIEnvVars(hasAccess bool) []*envvarservice.EnvVar {
+	if !hasAccess {
+		return nil
+	}
+	return []*envvarservice.EnvVar{{EnvVar: &entity.EnvVar{
+		Key:   base.AppSystemEnvVarDockerHost,
+		Value: "unix://" + dockerproxy.SocketPath,
+	}}}
 }

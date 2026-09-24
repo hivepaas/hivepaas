@@ -18,6 +18,10 @@ const (
 	// socket lives in.
 	SocketVolumeLabel = "hivepaas.docker-api.socket"
 
+	// SocketMountTarget is where an app's socket volume is mounted: the directory
+	// of dockerproxy.SocketPath.
+	SocketMountTarget = "/var/run/hivepaas"
+
 	// DefaultContainers, DefaultMemory and DefaultNanoCPUs are an app's limits
 	// when its setting names none.
 	DefaultContainers = 5

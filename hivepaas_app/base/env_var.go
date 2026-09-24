@@ -58,6 +58,10 @@ const (
 	AppSystemEnvVarEnv    = "HIVEPAAS_ENV"
 	AppSystemEnvVarName   = "HIVEPAAS_APP_NAME"
 	AppSystemEnvVarID     = "HIVEPAAS_APP_ID"
+	// AppSystemEnvVarDockerHost is where an app given the Docker API reaches it,
+	// in the form DOCKER_HOST takes. A template sets DOCKER_HOST, or whatever
+	// variable its app reads, to ${HIVEPAAS_DOCKER_HOST}.
+	AppSystemEnvVarDockerHost = "HIVEPAAS_DOCKER_HOST"
 
 	AppSystemEnvVarUser         = "HIVEPAAS_USER"
 	AppSystemEnvVarPassword     = "HIVEPAAS_PASSWORD"      //nolint:gosec // G101: env name

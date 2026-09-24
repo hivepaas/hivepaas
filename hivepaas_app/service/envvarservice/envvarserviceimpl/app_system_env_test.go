@@ -200,3 +200,13 @@ func TestKindEnvVars_SharedNamesMatchBase(t *testing.T) {
 		assert.ElementsMatch(t, base.AppKindSharedEnvVars(category), shared, string(category))
 	}
 }
+
+func TestDockerAPIEnvVarsNameTheSocketOnlyForAnAppWithAccess(t *testing.T) {
+	assert.Empty(t, dockerAPIEnvVars(false))
+	envs := dockerAPIEnvVars(true)
+	if assert.Len(t, envs, 1) {
+		assert.Equal(t, base.AppSystemEnvVarDockerHost, envs[0].Key)
+		assert.Equal(t, "unix:///var/run/hivepaas/docker.sock", envs[0].Value)
+		assert.False(t, envs[0].IsShared, "another app has no use for this app's socket")
+	}
+}

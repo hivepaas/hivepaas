@@ -419,3 +419,22 @@ func TestUpdateAppSecretRecordsBothOutcomes(t *testing.T) {
 		assert.Empty(t, audit.entries)
 	})
 }
+
+// Allowing privileged apps is behind the app secret like secret retrieval: such
+// an app is root on its node.
+func TestUpdateSecuritySettingsAllowsPrivilegedAppsOnlyWithTheAppSecret(t *testing.T) {
+	uc, audit, _ := newSecurityUCTest(t)
+
+	_, err := uc.UpdateSecuritySettings(context.Background(), adminAuth(),
+		&hpappsettingsdto.UpdateSecuritySettingsReq{AppSecret: "not-the-app-secret", AllowPrivilegedApps: true})
+	assert.ErrorIs(t, err, hperrors.ErrAppSecretMismatched)
+	assert.False(t, config.Current().Security.AllowPrivilegedApps)
+
+	_, err = uc.UpdateSecuritySettings(context.Background(), adminAuth(),
+		&hpappsettingsdto.UpdateSecuritySettingsReq{AppSecret: testAppSecret, AllowPrivilegedApps: true})
+	assert.NoError(t, err)
+	assert.True(t, config.Current().Security.AllowPrivilegedApps)
+	if assert.Len(t, audit.entries, 2) {
+		assert.Contains(t, audit.entries[1].Detail, `"allowPrivilegedApps":true`)
+	}
+}

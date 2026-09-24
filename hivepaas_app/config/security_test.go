@@ -195,3 +195,26 @@ func TestSecurityEqual(t *testing.T) {
 		assert.False(t, base1.Equal(&Security{ReturnSecretsViaAPI: true}))
 	})
 }
+
+// Privileged apps are off until the operator turns them on, and off is written,
+// like the flag beside it, so it cannot lose to a value loaded from elsewhere.
+func TestSaveSecuritySettingsPersistsAllowPrivilegedApps(t *testing.T) {
+	SetCurrent(&Config{Env: EnvDev, AppPath: t.TempDir(), Secret: "app-secret"})
+	assert.False(t, Current().Security.AllowPrivilegedApps, "off by default")
+
+	assert.NoError(t, SaveSecuritySettings(&Security{AllowPrivilegedApps: true}))
+	assert.True(t, Current().Security.AllowPrivilegedApps)
+
+	assert.NoError(t, SaveSecuritySettings(&Security{AllowPrivilegedApps: false}))
+	saved, err := loadManagedSettings(Current().AppPath)
+	assert.NoError(t, err)
+	if assert.NotNil(t, saved.Security.AllowPrivilegedApps, "off must be recorded, not left absent") {
+		assert.False(t, *saved.Security.AllowPrivilegedApps)
+	}
+
+	loaded := &Config{Security: Security{AllowPrivilegedApps: true}}
+	saved.applyTo(loaded)
+	assert.False(t, loaded.Security.AllowPrivilegedApps, "the managed file wins")
+
+	assert.False(t, (&Security{}).Equal(&Security{AllowPrivilegedApps: true}))
+}

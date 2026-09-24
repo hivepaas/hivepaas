@@ -249,10 +249,12 @@ func securitySettingsDetail(current, newSettings *config.Security) string {
 		"from": map[string]any{
 			"returnSecretsViaApi":     current.ReturnSecretsViaAPI,
 			"alwaysReturnSecretTypes": current.AlwaysReturnSecretTypes,
+			"allowPrivilegedApps":     current.AllowPrivilegedApps,
 		},
 		"to": map[string]any{
 			"returnSecretsViaApi":     newSettings.ReturnSecretsViaAPI,
 			"alwaysReturnSecretTypes": newSettings.AlwaysReturnSecretTypes,
+			"allowPrivilegedApps":     newSettings.AllowPrivilegedApps,
 		},
 	})
 	if err != nil {

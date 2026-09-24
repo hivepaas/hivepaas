@@ -42315,15 +42315,25 @@
         "type" : "object"
       },
       "pkg_fileutil.FileMode" : {
-        "enum" : [ 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511, 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511, 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511, 8388608, 4194304, 1048576, 511, 8388608, 4194304, 1048576, 511 ],
+        "enum" : [ 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511, 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511 ],
         "type" : "integer",
         "x-enum-comments" : {
+          "ModeAppend" : "a: append-only",
+          "ModeCharDevice" : "c: Unix character device, when ModeDevice is set",
+          "ModeDevice" : "D: device file",
+          "ModeDir" : "d: is a directory",
+          "ModeExclusive" : "l: exclusive use",
+          "ModeIrregular" : "?: non-regular file; nothing else is known about this file",
+          "ModeNamedPipe" : "p: named pipe (FIFO)",
           "ModePerm" : "Unix permission bits, 0o777",
           "ModeSetgid" : "g: setgid",
           "ModeSetuid" : "u: setuid",
-          "ModeSticky" : "t: sticky"
+          "ModeSocket" : "S: Unix domain socket",
+          "ModeSticky" : "t: sticky",
+          "ModeSymlink" : "L: symbolic link",
+          "ModeTemporary" : "T: temporary file; Plan 9 only"
         },
-        "x-enum-varnames" : [ "ModeSetuid", "ModeSetgid", "ModeSticky", "ModePerm" ]
+        "x-enum-varnames" : [ "ModeDir", "ModeAppend", "ModeExclusive", "ModeTemporary", "ModeSymlink", "ModeDevice", "ModeNamedPipe", "ModeSocket", "ModeSetuid", "ModeSetgid", "ModeCharDevice", "ModeSticky", "ModeIrregular", "ModeType", "ModePerm" ]
       },
       "pkg_tasklog.LogFrame" : {
         "properties" : {
@@ -58393,6 +58403,9 @@
       },
       "system_hpappsettingsdto.SecuritySettingsResp" : {
         "properties" : {
+          "allowPrivilegedApps" : {
+            "type" : "boolean"
+          },
           "alwaysReturnSecretTypes" : {
             "items" : {
               "type" : "string"
@@ -58403,7 +58416,7 @@
             "type" : "boolean"
           }
         },
-        "required" : [ "alwaysReturnSecretTypes", "returnSecretsViaApi" ],
+        "required" : [ "allowPrivilegedApps", "alwaysReturnSecretTypes", "returnSecretsViaApi" ],
         "type" : "object"
       },
       "system_hpappsettingsdto.ServiceSettingsResp" : {
@@ -58530,6 +58543,10 @@
       },
       "system_hpappsettingsdto.UpdateSecuritySettingsReq" : {
         "properties" : {
+          "allowPrivilegedApps" : {
+            "description" : "AllowPrivilegedApps lets apps reach into the host - the Docker socket, a\ndirectory of the node. Behind the app secret for the same reason: such an\napp is root on its node.",
+            "type" : "boolean"
+          },
           "alwaysReturnSecretTypes" : {
             "description" : "AlwaysReturnSecretTypes lists the kinds of secret that stay retrievable\nwhile ReturnSecretsViaAPI is off. It is behind the same app secret as the\nflag: an exemption is a hole in the flag, so it must not be easier to make\nthan the flag is to switch.",
             "items" : {
@@ -58545,7 +58562,7 @@
             "type" : "boolean"
           }
         },
-        "required" : [ "alwaysReturnSecretTypes", "appSecret", "returnSecretsViaApi" ],
+        "required" : [ "allowPrivilegedApps", "alwaysReturnSecretTypes", "appSecret", "returnSecretsViaApi" ],
         "type" : "object"
       },
       "system_hpappsettingsdto.UpdateSecuritySettingsResp" : {
@@ -62080,9 +62097,9 @@
         "x-enum-varnames" : [ "TaskStateNew", "TaskStateAllocated", "TaskStatePending", "TaskStateAssigned", "TaskStateAccepted", "TaskStatePreparing", "TaskStateReady", "TaskStateStarting", "TaskStateRunning", "TaskStateComplete", "TaskStateShutdown", "TaskStateFailed", "TaskStateRejected", "TaskStateRemove", "TaskStateOrphaned" ]
       },
       "timeutil.Duration" : {
-        "enum" : [ -9223372036854775808, 9223372036854775807, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000 ],
+        "enum" : [ -9223372036854775808, 9223372036854775807, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000, -9223372036854775808, 9223372036854775807, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000 ],
         "type" : "integer",
-        "x-enum-varnames" : [ "minDuration", "maxDuration", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour" ]
+        "x-enum-varnames" : [ "minDuration", "maxDuration", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour", "minDuration", "maxDuration", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour" ]
       },
       "uploadFiles_request" : {
         "properties" : {

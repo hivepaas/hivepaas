@@ -15189,6 +15189,13 @@
           "schema" : {
             "type" : "string"
           }
+        }, {
+          "description" : "also return the labels HivePaaS and Docker manage, as secrets are",
+          "in" : "query",
+          "name" : "revealSystemLabels",
+          "schema" : {
+            "type" : "boolean"
+          }
         } ],
         "responses" : {
           "200" : {

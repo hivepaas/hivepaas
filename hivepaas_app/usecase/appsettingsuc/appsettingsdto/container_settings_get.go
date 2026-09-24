@@ -13,12 +13,17 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/reflectutil"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/timeutil"
 	"github.com/hivepaas/hivepaas/services/docker"
+	"github.com/hivepaas/hivepaas/services/docker/dockerhelper"
 )
 
 type GetAppContainerSettingsReq struct {
 	ProjectID    string `json:"-"`
 	ProjectEnvID string `json:"-"`
 	AppID        string `json:"-"`
+	// RevealSystemLabels returns the labels HivePaaS and Docker manage as well.
+	// They can carry what traefik is told, so they take what revealing secrets
+	// takes.
+	RevealSystemLabels bool `json:"-" mapstructure:"revealSystemLabels"`
 }
 
 func NewGetAppContainerSettingsReq() *GetAppContainerSettingsReq {
@@ -124,8 +129,12 @@ type Privileges struct {
 	NoNewPrivileges bool            `json:"noNewPrivileges,omitempty"`
 }
 
+// TransformContainerSettings is what the screen shows of a service. The labels
+// HivePaaS and Docker manage are left out unless revealSystemLabels says
+// otherwise: saving the screen keeps them whatever it sends.
 func TransformContainerSettings(
 	service *swarm.Service,
+	revealSystemLabels bool,
 ) (resp *ContainerSettingsResp, err error) {
 	spec := &service.Spec
 	resp = &ContainerSettingsResp{
@@ -133,6 +142,10 @@ func TransformContainerSettings(
 	}
 
 	resp.BaseContainerSettings = TransformContainerSettingsBase(spec)
+	if resp.BaseContainerSettings != nil && !revealSystemLabels {
+		resp.ServiceLabels = dockerhelper.FilterOutRestrictedLabels(resp.ServiceLabels)
+		resp.ContainerLabels = dockerhelper.FilterOutRestrictedLabels(resp.ContainerLabels)
+	}
 
 	return resp, nil
 }

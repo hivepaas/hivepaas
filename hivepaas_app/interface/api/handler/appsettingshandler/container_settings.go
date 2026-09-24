@@ -19,6 +19,7 @@ import (
 // @Param   projectID path string true "project ID"
 // @Param   projectEnv path string true "project env"
 // @Param   appID path string true "app ID"
+// @Param   revealSystemLabels query bool false "also return the labels HivePaaS and Docker manage, as secrets are"
 // @Success 200 {object} appsettingsdto.GetAppContainerSettingsResp
 // @Failure 400 {object} hperrors.ErrorInfo
 // @Failure 500 {object} hperrors.ErrorInfo

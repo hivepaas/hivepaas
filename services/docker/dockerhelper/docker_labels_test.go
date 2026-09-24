@@ -9,6 +9,7 @@ import (
 func TestFilterOutRestrictedLabels(t *testing.T) {
 	input := map[string]string{
 		"com.docker.stack.namespace": "system-stack",
+		"com.docker.stack.image":     "nginx:1.27",
 		"hivepaas.service.name":      "app",
 		"traefik.enable":             "true",
 		"custom.label":               "value1",
@@ -65,19 +66,22 @@ func TestValidateUserLabels(t *testing.T) {
 func TestApplyUserLabels(t *testing.T) {
 	currLabels := map[string]string{
 		"com.docker.stack.namespace": "system-stack",
+		"com.docker.stack.image":     "nginx:1.27",
 		"hivepaas.service.name":      "old-app",
 		"custom.old":                 "should-be-removed",
 	}
 
 	userLabels := map[string]string{
-		"hivepaas.service.name": "malicious-attempt", // restricted, should be ignored
-		"traefik.enable":        "false",             // restricted, should be ignored
-		"custom.new":            "value-new",         // allowed, should be applied
-		"custom.updated":        "value-updated",     // allowed, should be applied
+		"hivepaas.service.name":  "malicious-attempt", // restricted, should be ignored
+		"traefik.enable":         "false",             // restricted, should be ignored
+		"com.docker.stack.image": "evil:latest",       // restricted, should be ignored
+		"custom.new":             "value-new",         // allowed, should be applied
+		"custom.updated":         "value-updated",     // allowed, should be applied
 	}
 
 	expected := map[string]string{
 		"com.docker.stack.namespace": "system-stack",
+		"com.docker.stack.image":     "nginx:1.27",
 		"hivepaas.service.name":      "old-app",
 		"custom.new":                 "value-new",
 		"custom.updated":             "value-updated",

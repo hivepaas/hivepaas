@@ -4,10 +4,14 @@ import (
 	"context"
 	"testing"
 
+	"github.com/moby/moby/api/types/mount"
+	"github.com/moby/moby/api/types/network"
 	"github.com/stretchr/testify/assert"
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/clusterservice"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/specservice/specmodel"
 )
 
 func plainOf(t *testing.T, field entity.EncryptedField) string {
@@ -130,4 +134,41 @@ func TestGenerateOwnedSecretsCoversEveryCredential(t *testing.T) {
 	generateOwnedSecrets(kind)
 
 	assert.Zero(t, entity.CountEmptySecrets(kind))
+}
+
+// A mount is built from the volume's id here: the target's for a path, what an
+// external reference finds; one nothing satisfies, and a port another service
+// holds, are left out.
+func TestPreparedDeploymentNamesVolumesByIDAndDropsWhatValidateCleared(t *testing.T) {
+	svc, bundle := planFixture(t)
+	svc.clusterService.(*fakeClusterService).ports = map[clusterservice.PortRef]string{
+		{Published: 8080, Protocol: network.TCP}: "svc_other",
+	}
+	addWorker(bundle, nil)
+	worker := bundle.Envs["project_a"]["dev"].Apps["worker"]
+	worker.Deployment.Storage.Mounts["/shared"] = specmodel.Mount{Type: mount.TypeVolume,
+		External: &specmodel.ExternalRef{Type: "cluster-volume", Name: "shared", ID: "gvol_1"}}
+	worker.Deployment.Storage.Mounts["/lost"] = specmodel.Mount{Type: mount.TypeVolume,
+		External: &specmodel.ExternalRef{Type: "cluster-volume", Name: "nowhere"}}
+	worker.Deployment.Networks = &specmodel.Networks{EndpointSpec: &specmodel.EndpointSpec{
+		Ports: []*specmodel.PortConfig{{Target: 80, Published: 8080}, {Target: 81, Published: 8081}},
+	}}
+	req := applyReq(t, svc, bundle, workerPath)
+	p, err := svc.planBundle(context.Background(), nil, &req.ValidateImportReq, bundle)
+	assert.NoError(t, err)
+	w := newWriter(p, "u_operator")
+	assert.NoError(t, w.write(context.Background()))
+
+	prepared, err := w.preparedDeployment(context.Background(), p.byPath[workerPath])
+
+	assert.NoError(t, err)
+	assert.Nil(t, prepared.Source)
+	assert.Equal(t, "vol_setting_1", prepared.Storage.Mounts["/data"].Source)
+	assert.Equal(t, "gvol_1", prepared.Storage.Mounts["/shared"].Source)
+	assert.Nil(t, prepared.Storage.Mounts["/shared"].External)
+	assert.NotContains(t, prepared.Storage.Mounts, "/lost")
+	if assert.Len(t, prepared.Networks.EndpointSpec.Ports, 1) {
+		assert.Equal(t, uint32(8081), prepared.Networks.EndpointSpec.Ports[0].Published)
+	}
+	assert.Len(t, worker.Deployment.Networks.EndpointSpec.Ports, 2, "the bundle is left as it was")
 }

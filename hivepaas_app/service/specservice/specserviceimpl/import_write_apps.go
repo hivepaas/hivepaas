@@ -3,9 +3,12 @@ package specserviceimpl
 import (
 	"context"
 	"errors"
+	"fmt"
+	"maps"
 	"slices"
 	"strings"
 
+	"github.com/moby/moby/api/types/network"
 	"github.com/tiendc/gofn"
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
@@ -221,4 +224,92 @@ func dropDomain(routing *entity.AppRoutingSettings, domain any) {
 	routing.Domains = slices.DeleteFunc(routing.Domains, func(d *entity.AppDomain) bool {
 		return d != nil && d.Domain == domain
 	})
+}
+
+// preparedDeployment is the deployment an app is built from: the bundle's,
+// without its source - written as a setting - with each managed mount's volume
+// named by its id here, and without what validate said would be dropped: a mount
+// whose volume or app nothing here satisfies, a port another service holds.
+func (w *writer) preparedDeployment(ctx context.Context, node *specmodel.PlanNode) (*specmodel.Deployment, error) {
+	doc := w.p.apps[node.Path].doc
+	if doc.Deployment == nil {
+		return nil, nil
+	}
+	out := *doc.Deployment
+	out.Source = nil
+
+	droppedMounts, droppedPorts := map[any]bool{}, map[any]bool{}
+	for _, issue := range node.Issues {
+		switch issue.Code {
+		case specmodel.CodeRefNotSelected, specmodel.CodeRefNotFound:
+			if target, ok := issue.Detail[refInMount]; ok {
+				droppedMounts[target] = true
+			}
+		case specmodel.CodePortInUse:
+			droppedPorts[issue.Detail["port"]] = true
+		}
+	}
+
+	if storage := doc.Deployment.Storage; storage != nil {
+		prepared := &specmodel.Storage{DockerMounts: storage.DockerMounts}
+		scope := w.p.lookupScope[node.Path]
+		for _, target := range slices.Sorted(maps.Keys(storage.Mounts)) {
+			if droppedMounts[target] {
+				continue
+			}
+			m := storage.Mounts[target]
+			id, err := w.volumeID(ctx, scope, m)
+			if err != nil {
+				return nil, err
+			}
+			if id == "" {
+				continue
+			}
+			m.Source, m.External = id, nil
+			prepared.Mounts = withMount(prepared.Mounts, target, m)
+		}
+		out.Storage = prepared
+	}
+
+	if networks := doc.Deployment.Networks; networks != nil && networks.EndpointSpec != nil && len(droppedPorts) > 0 {
+		prepared, endpoint := *networks, *networks.EndpointSpec
+		endpoint.Ports = slices.DeleteFunc(slices.Clone(endpoint.Ports), func(port *specmodel.PortConfig) bool {
+			return port != nil && droppedPorts[describePortConfig(port)]
+		})
+		prepared.EndpointSpec = &endpoint
+		out.Networks = &prepared
+	}
+	return &out, nil
+}
+
+// volumeID is the id here of the volume a managed mount names.
+func (w *writer) volumeID(ctx context.Context, scope *entity.ObjectScope, m specmodel.Mount) (string, error) {
+	if scope == nil {
+		scope = entity.NewObjectScopeGlobal()
+	}
+	if m.External != nil {
+		found, err := w.p.s.findRef(ctx, w.p.db, scope, m.External)
+		if err != nil || found == nil {
+			return "", hperrors.Wrap(err)
+		}
+		return found.ID, nil
+	}
+	t, isPath := parseRefPath(m.Source)
+	if !isPath {
+		existing, err := w.p.s.loadByIDs(ctx, w.p.db, []string{m.Source})
+		if err != nil || len(existing) == 0 {
+			return "", hperrors.Wrap(err)
+		}
+		return m.Source, nil
+	}
+	return w.pathID(ctx, scope, m.Source, t)
+}
+
+// describePortConfig names a published port the way validate's issues do.
+func describePortConfig(port *specmodel.PortConfig) string {
+	protocol := port.Protocol
+	if protocol == "" {
+		protocol = network.TCP
+	}
+	return fmt.Sprintf("%d/%s", port.Published, strings.ToLower(string(protocol)))
 }

@@ -3,7 +3,6 @@ package specserviceimpl
 import (
 	"context"
 	"errors"
-	"fmt"
 	"maps"
 	"slices"
 	"strings"
@@ -241,7 +240,7 @@ func (p *planner) checkPorts(ctx context.Context, apps []*specmodel.PlanNode) er
 			if ref.Protocol == "" {
 				ref.Protocol = network.TCP
 			}
-			detail := map[string]any{"port": fmt.Sprintf("%d/%s", ref.Published, strings.ToLower(string(ref.Protocol)))}
+			detail := map[string]any{"port": describePortConfig(&port)}
 			if by, claimed := claimedBy[ref]; claimed {
 				detail["with"] = by
 				p.fixable(node, specmodel.CodePortInUse, detail, "the port is not published")

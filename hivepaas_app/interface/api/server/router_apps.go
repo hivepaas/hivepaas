@@ -83,6 +83,8 @@ func (s *HTTPServer) registerAppRoutes(projectGroup, projectEnvGroup *gin.Router
 		envVarGroup.GET("", appSettingsHandler.GetEnvVars)
 		envVarGroup.PUT("", appSettingsHandler.UpdateEnvVars)
 		envVarGroup.POST("/compute", appSettingsHandler.BuildEnvVars)
+		envVarGroup.GET("/link-targets", appSettingsHandler.ListEnvLinkTargets)
+		envVarGroup.GET("/link-suggestions", appSettingsHandler.GetEnvLinkSuggestions)
 	}
 
 	{ // Secrets

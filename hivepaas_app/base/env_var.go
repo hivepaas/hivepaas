@@ -63,11 +63,14 @@ const (
 	// variable its app reads, to ${HIVEPAAS_DOCKER_HOST}.
 	AppSystemEnvVarDockerHost = "HIVEPAAS_DOCKER_HOST"
 
-	AppSystemEnvVarUser         = "HIVEPAAS_USER"
-	AppSystemEnvVarPassword     = "HIVEPAAS_PASSWORD"      //nolint:gosec // G101: env name
-	AppSystemEnvVarRootPassword = "HIVEPAAS_ROOT_PASSWORD" //nolint:gosec // G101: env name
-	AppSystemEnvVarDatabaseName = "HIVEPAAS_DATABASE_NAME"
-	AppSystemEnvVarSSLMode      = "HIVEPAAS_SSL_MODE"
+	AppSystemEnvVarUser     = "HIVEPAAS_USER"
+	AppSystemEnvVarPassword = "HIVEPAAS_PASSWORD" //nolint:gosec // G101: env name
+	// AppSystemEnvVarPasswordURLEncoded is the password percent-encoded, for a
+	// connection string: a password with @ or : would otherwise break the URL.
+	AppSystemEnvVarPasswordURLEncoded = "HIVEPAAS_PASSWORD_URLENCODED" //nolint:gosec // G101: env name
+	AppSystemEnvVarRootPassword       = "HIVEPAAS_ROOT_PASSWORD"       //nolint:gosec // G101: env name
+	AppSystemEnvVarDatabaseName       = "HIVEPAAS_DATABASE_NAME"
+	AppSystemEnvVarSSLMode            = "HIVEPAAS_SSL_MODE"
 
 	AppSystemEnvVarKeyID  = "HIVEPAAS_KEY_ID"
 	AppSystemEnvVarSecret = "HIVEPAAS_SECRET" //nolint:gosec // G101: env name
@@ -95,10 +98,10 @@ var AppCommonSharedEnvVars = []string{
 func AppKindSharedEnvVars(category AppCategory) []string {
 	switch category {
 	case AppCategoryDatabase:
-		return []string{AppSystemEnvVarUser, AppSystemEnvVarPassword, AppSystemEnvVarDatabaseName,
-			AppSystemEnvVarSSLMode}
+		return []string{AppSystemEnvVarUser, AppSystemEnvVarPassword, AppSystemEnvVarPasswordURLEncoded,
+			AppSystemEnvVarDatabaseName, AppSystemEnvVarSSLMode}
 	case AppCategoryCache:
-		return []string{AppSystemEnvVarPassword}
+		return []string{AppSystemEnvVarPassword, AppSystemEnvVarPasswordURLEncoded}
 	case AppCategoryStorage:
 		return []string{AppSystemEnvVarKeyID, AppSystemEnvVarSecret, AppSystemEnvVarBucket, AppSystemEnvVarRegion}
 	case AppCategoryWebapp:
@@ -110,22 +113,23 @@ func AppKindSharedEnvVars(category AppCategory) []string {
 var (
 	mapAppUnallowedVar = func() map[string]struct{} {
 		theMap := map[string]struct{}{
-			AppSystemEnvVarHost:         {},
-			AppSystemEnvVarPort:         {},
-			AppSystemEnvVarDomain:       {},
-			AppSystemEnvVarAppURL:       {},
-			AppSystemEnvVarEnv:          {},
-			AppSystemEnvVarName:         {},
-			AppSystemEnvVarID:           {},
-			AppSystemEnvVarUser:         {},
-			AppSystemEnvVarPassword:     {},
-			AppSystemEnvVarRootPassword: {},
-			AppSystemEnvVarDatabaseName: {},
-			AppSystemEnvVarSSLMode:      {},
-			AppSystemEnvVarKeyID:        {},
-			AppSystemEnvVarSecret:       {},
-			AppSystemEnvVarBucket:       {},
-			AppSystemEnvVarRegion:       {},
+			AppSystemEnvVarHost:               {},
+			AppSystemEnvVarPort:               {},
+			AppSystemEnvVarDomain:             {},
+			AppSystemEnvVarAppURL:             {},
+			AppSystemEnvVarEnv:                {},
+			AppSystemEnvVarName:               {},
+			AppSystemEnvVarID:                 {},
+			AppSystemEnvVarUser:               {},
+			AppSystemEnvVarPassword:           {},
+			AppSystemEnvVarPasswordURLEncoded: {},
+			AppSystemEnvVarRootPassword:       {},
+			AppSystemEnvVarDatabaseName:       {},
+			AppSystemEnvVarSSLMode:            {},
+			AppSystemEnvVarKeyID:              {},
+			AppSystemEnvVarSecret:             {},
+			AppSystemEnvVarBucket:             {},
+			AppSystemEnvVarRegion:             {},
 
 			AppSystemEnvVarMaxMemory:       {},
 			AppSystemEnvVarEvictionRule:    {},
@@ -136,9 +140,10 @@ var (
 	}()
 
 	mapAppSecretVar = map[string]struct{}{
-		AppSystemEnvVarPassword:     {},
-		AppSystemEnvVarRootPassword: {},
-		AppSystemEnvVarSecret:       {},
+		AppSystemEnvVarPassword:           {},
+		AppSystemEnvVarPasswordURLEncoded: {},
+		AppSystemEnvVarRootPassword:       {},
+		AppSystemEnvVarSecret:             {},
 	}
 )
 

@@ -219,3 +219,30 @@ func TestDockerAPIEnvVarsNameTheSocketOnlyForAnAppWithAccess(t *testing.T) {
 		}
 	}
 }
+
+func TestPercentEncode(t *testing.T) {
+	assert.Equal(t, "", percentEncode(""))
+	assert.Equal(t, "Abc-._~09", percentEncode("Abc-._~09"), "the unreserved set is kept")
+	assert.Equal(t, "p%40ss%3Aw%2Frd%3F%23%25", percentEncode("p@ss:w/rd?#%"))
+	assert.Equal(t, "%C3%BC%20x", percentEncode("ü x"), "byte by byte, a space included")
+}
+
+func TestKindEnvVars_TheURLEncodedPasswordIsShared(t *testing.T) {
+	for _, kind := range []*entity.AppKindSettings{
+		{Category: base.AppCategoryDatabase, Engine: "postgres", Database: &entity.AppKindDatabase{
+			Username: "app", Password: entity.NewEncryptedField("p@ss:w"),
+			RootPassword: entity.NewEncryptedField("r"), SSLMode: base.DatabaseSslModeDisable,
+		}},
+		{Category: base.AppCategoryCache, Engine: "redis", Cache: &entity.AppKindCache{
+			Password: entity.NewEncryptedField("p@ss:w"),
+		}},
+	} {
+		envs, err := kindEnvVars(kind)
+		assert.NoError(t, err)
+		byKey := envByKey(t, envs)
+		assert.Equal(t, "p%40ss%3Aw", byKey[base.AppSystemEnvVarPasswordURLEncoded].Value, string(kind.Category))
+		assert.True(t, byKey[base.AppSystemEnvVarPasswordURLEncoded].IsShared, string(kind.Category))
+	}
+	assert.False(t, base.IsAppRuntimeEnvAllowed(base.AppSystemEnvVarPasswordURLEncoded), "a person cannot define it")
+	assert.True(t, base.IsAppSecretEnv(base.AppSystemEnvVarPasswordURLEncoded), "it is masked as the password is")
+}

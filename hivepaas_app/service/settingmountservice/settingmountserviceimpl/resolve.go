@@ -136,15 +136,15 @@ func entryFiles(
 			return nil, "", hperrors.Wrap(err)
 		}
 		files = append(files, &settingmountservice.File{
-			Entry:     entryKey,
-			Part:      part.Name,
-			Path:      f.Path,
-			UID:       gofn.Coalesce(f.UID, defaultUID),
-			GID:       gofn.Coalesce(f.GID, defaultGID),
-			Mode:      gofn.Coalesce(f.Mode, defaultMode),
-			Sensitive: part.Sensitive,
-			Data:      data,
-			Rotation:  settingmountservice.RotationKey(key, source.Type, part, values),
+			Entry:    entryKey,
+			Part:     part.Name,
+			Path:     f.Path,
+			UID:      gofn.Coalesce(f.UID, defaultUID),
+			GID:      gofn.Coalesce(f.GID, defaultGID),
+			Mode:     gofn.Coalesce(f.Mode, defaultMode),
+			Secret:   part.Secret,
+			Data:     data,
+			Rotation: settingmountservice.RotationKey(key, source.Type, part, values),
 		})
 	}
 	return files, "", nil

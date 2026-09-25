@@ -19,12 +19,13 @@ func mountOf(source string, parts ...string) *entity.AppSettingMount {
 	return m
 }
 
-func TestSensitiveByNameWhateverTheType(t *testing.T) {
+func TestGatedByNameWhateverTheType(t *testing.T) {
 	for name, want := range map[string]bool{
 		"privateKey": true, "password": true, "htpasswd": true,
 		"certificate": false, "caCertificate": false, "publicKey": false, "username": false, "other": false,
+		"value": false, "content": false,
 	} {
-		assert.Equal(t, want, SensitivePart(name), name)
+		assert.Equal(t, want, GatedPart(name), name)
 	}
 }
 
@@ -66,7 +67,7 @@ func TestCheckEntry(t *testing.T) {
 		"reserved key":   {"tls", valid, base.SettingTypeSSLCert, hperrors.ErrSettingMountKeyInvalid},
 		"upper case key": {"Cert", valid, base.SettingTypeSSLCert, hperrors.ErrSettingMountKeyInvalid},
 		"no files":       {"cert", mountOf("cert_1"), base.SettingTypeSSLCert, hperrors.ErrSettingMountNoFiles},
-		"not a source":   {"cert", valid, base.SettingTypeSecret, hperrors.ErrSettingMountSourceUnsupported},
+		"not a source":   {"cert", valid, base.SettingTypeEmail, hperrors.ErrSettingMountSourceUnsupported},
 		"part of other type": {
 			"cert", mountOf("cert_1", "htpasswd"), base.SettingTypeSSLCert, hperrors.ErrSettingMountPartInvalid,
 		},

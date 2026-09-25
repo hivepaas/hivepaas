@@ -11,33 +11,33 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 )
 
-// SensitivePart reports whether a part of that name is sensitive in any source
-// type. Import reads an entry before it knows its source's type, and the
-// registry names parts the same way throughout, so the name is enough.
-func SensitivePart(name string) bool {
+// GatedPart reports whether a part of that name is gated in any source type.
+// Import reads an entry before it knows its source's type, and the registry
+// names gated parts the same way throughout, so the name is enough.
+func GatedPart(name string) bool {
 	for _, typ := range SourceTypes() {
-		if part := PartOf(typ, name); part != nil && part.Sensitive {
+		if part := PartOf(typ, name); part != nil && part.Gated {
 			return true
 		}
 	}
 	return false
 }
 
-// Grant is one sensitive part of one source that an entry hands to its app:
-// what §7's gate is about.
+// Grant is one gated part of one source that an entry hands to its app: what
+// §7's gate is about.
 type Grant struct {
 	Source string `json:"source"`
 	Part   string `json:"part"`
 }
 
-// Grants are the sensitive pairs an entry hands out, sorted, each once.
+// Grants are the gated pairs an entry hands out, sorted, each once.
 func Grants(mount *entity.AppSettingMount) []Grant {
 	if mount == nil {
 		return nil
 	}
 	var grants []Grant
 	for _, f := range mount.Files {
-		if f != nil && SensitivePart(f.Part) {
+		if f != nil && GatedPart(f.Part) {
 			grants = append(grants, Grant{Source: mount.Source.ID, Part: f.Part})
 		}
 	}

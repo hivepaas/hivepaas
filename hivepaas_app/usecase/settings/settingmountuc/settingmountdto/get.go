@@ -3,6 +3,7 @@ package settingmountdto
 import (
 	vld "github.com/tiendc/go-validator"
 
+	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
@@ -40,12 +41,15 @@ type SettingMountResp struct {
 }
 
 type SettingMountFileResp struct {
-	Part      string            `json:"part"`
-	Path      string            `json:"path"`
-	UID       string            `json:"uid"`
-	GID       string            `json:"gid"`
-	Mode      fileutil.FileMode `json:"mode"`
-	Sensitive bool              `json:"sensitive"`
+	Part string            `json:"part"`
+	Path string            `json:"path"`
+	UID  string            `json:"uid"`
+	GID  string            `json:"gid"`
+	Mode fileutil.FileMode `json:"mode"`
+	// Secret is stored as a Docker secret.
+	Secret bool `json:"secret"`
+	// Gated takes the Reveal Secrets permission to mount.
+	Gated bool `json:"gated"`
 }
 
 // TransformSettingMount renders an entry with its source and its state.
@@ -66,12 +70,20 @@ func TransformSettingMount(
 	if resp.Source == nil {
 		resp.Source = settings.NewMissingSetting(mount.Source.ID, "")
 	}
+	var sourceType base.SettingType
+	if refObjects != nil && refObjects.RefSettings[mount.Source.ID] != nil {
+		sourceType = refObjects.RefSettings[mount.Source.ID].Type
+	}
 	for _, f := range mount.Files {
 		if f == nil {
 			continue
 		}
-		resp.Files = append(resp.Files, &SettingMountFileResp{Part: f.Part, Path: f.Path, UID: f.UID,
-			GID: f.GID, Mode: f.Mode, Sensitive: settingmountservice.SensitivePart(f.Part)})
+		file := &SettingMountFileResp{Part: f.Part, Path: f.Path, UID: f.UID, GID: f.GID, Mode: f.Mode,
+			Gated: settingmountservice.GatedPart(f.Part)}
+		if part := settingmountservice.PartOf(sourceType, f.Part); part != nil {
+			file.Secret, file.Gated = part.Secret, part.Gated
+		}
+		resp.Files = append(resp.Files, file)
 	}
 	return resp, nil
 }

@@ -70,19 +70,56 @@ func TestHtpasswdIsAUsernameAndABcryptOfThePassword(t *testing.T) {
 	assert.NoError(t, bcrypt.CompareHashAndPassword([]byte(hash), []byte("s3cret")))
 }
 
-func TestSensitivePartsAreTheSecretOnes(t *testing.T) {
-	sensitive := map[string]bool{}
+func TestPartsStoredAsSecretsAndPartsGated(t *testing.T) {
+	secret, gated := map[string]bool{}, map[string]bool{}
 	for _, typ := range SourceTypes() {
 		for _, part := range PartsOf(typ) {
-			if part.Sensitive {
-				sensitive[string(typ)+"/"+part.Name] = true
+			if part.Secret {
+				secret[string(typ)+"/"+part.Name] = true
+			}
+			if part.Gated {
+				gated[string(typ)+"/"+part.Name] = true
 			}
 		}
 	}
 	assert.Equal(t, map[string]bool{
+		"secret/value": true, "ssl-cert/privateKey": true, "ssh-key/privateKey": true,
+		"basic-auth/password": true, "basic-auth/htpasswd": true,
+	}, secret)
+	assert.Equal(t, map[string]bool{
 		"ssl-cert/privateKey": true, "ssh-key/privateKey": true,
 		"basic-auth/password": true, "basic-auth/htpasswd": true,
-	}, sensitive)
+	}, gated, "a secret's value is the app's already: mounting it reveals nothing new")
+}
+
+// A base64 setting holds bytes; the file is those bytes.
+func TestSecretsAndConfigFilesRenderTheirBytes(t *testing.T) {
+	useDataKey(t)
+	plainSecret := sourceSetting(t, base.SettingTypeSecret, &entity.Secret{
+		Key: "DB_PASSWORD", Value: entity.NewEncryptedField("s3cret")})
+	binarySecret := sourceSetting(t, base.SettingTypeSecret, &entity.Secret{
+		Key: "KEYSTORE", Value: entity.NewEncryptedField("AAEC"), Base64: true})
+	plainConfig := sourceSetting(t, base.SettingTypeConfigFile, &entity.ConfigFile{
+		Name: "app.conf", Content: "listen 80"})
+	binaryConfig := sourceSetting(t, base.SettingTypeConfigFile, &entity.ConfigFile{
+		Name: "blob", Content: "AAEC", Base64: true})
+
+	for _, tc := range []struct {
+		setting *entity.Setting
+		part    string
+		want    []byte
+	}{
+		{plainSecret, "value", []byte("s3cret")},
+		{binarySecret, "value", []byte{0, 1, 2}},
+		{plainConfig, "content", []byte("listen 80")},
+		{binaryConfig, "content", []byte{0, 1, 2}},
+	} {
+		values, err := Values(tc.setting)
+		assert.NoError(t, err)
+		out, err := PartOf(tc.setting.Type, tc.part).RenderFrom(values)
+		assert.NoError(t, err)
+		assert.Equal(t, tc.want, out, "%s %s", tc.setting.Type, tc.part)
+	}
 }
 
 // bcrypt salts every hash afresh, so the key reads the inputs, never the output:
@@ -110,5 +147,5 @@ func TestASourceIsUsableWhenEveryRequiredPartHasItsInputs(t *testing.T) {
 	assert.True(t, Usable(base.SettingTypeSSLCert, map[string]string{"certificate": "C", "privateKey": "K"}))
 	assert.False(t, Usable(base.SettingTypeSSLCert, map[string]string{"certificate": "", "privateKey": "K"}),
 		"a certificate not obtained yet")
-	assert.False(t, Usable(base.SettingTypeSecret, map[string]string{}), "not a source type")
+	assert.False(t, Usable(base.SettingTypeEmail, map[string]string{}), "not a source type")
 }

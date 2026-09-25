@@ -8,6 +8,7 @@ package settingmountservice
 import (
 	"crypto/hmac"
 	"crypto/sha256"
+	"encoding/base64"
 	"encoding/binary"
 	"encoding/hex"
 	"slices"
@@ -29,6 +30,8 @@ const (
 	fieldUsername      = "username"
 	fieldPassword      = "password"
 	partHtpasswd       = "htpasswd"
+	fieldValue         = "value"
+	fieldContent       = "content"
 )
 
 // Part is one file a source type offers. A field is the simplest part; a virtual
@@ -38,8 +41,12 @@ type Part struct {
 	// Required parts must all have their inputs for the source to be mounted at
 	// all; an optional part without them is left out alone.
 	Required bool
-	// Sensitive parts become Docker secrets, and mounting one is revealing it.
-	Sensitive bool
+	// Secret parts are stored as Docker secrets; the others as Docker configs.
+	Secret bool
+	// Gated parts take the Reveal Secrets permission to mount: the app has no
+	// other way to read them. A secret's value is not gated - the app reads it
+	// through ${secrets.NAME} already.
+	Gated bool
 	// Version is raised whenever Render's output changes shape for the same
 	// inputs, which is what replaces files already mounted.
 	Version int
@@ -56,17 +63,25 @@ type sourceType struct {
 }
 
 var registry = map[base.SettingType]*sourceType{
+	base.SettingTypeSecret: {
+		parts:  []*Part{{Name: fieldValue, Required: true, Secret: true, Version: 1, Inputs: []string{fieldValue}}},
+		values: secretValues,
+	},
+	base.SettingTypeConfigFile: {
+		parts:  []*Part{{Name: fieldContent, Required: true, Version: 1, Inputs: []string{fieldContent}}},
+		values: configFileValues,
+	},
 	base.SettingTypeSSLCert: {
 		parts: []*Part{
 			{Name: fieldCertificate, Required: true, Version: 1, Inputs: []string{fieldCertificate}},
-			{Name: fieldPrivateKey, Required: true, Sensitive: true, Version: 1, Inputs: []string{fieldPrivateKey}},
+			{Name: fieldPrivateKey, Required: true, Secret: true, Gated: true, Version: 1, Inputs: []string{fieldPrivateKey}},
 			{Name: fieldCACertificate, Version: 1, Inputs: []string{fieldCACertificate}},
 		},
 		values: sslCertValues,
 	},
 	base.SettingTypeSSHKey: {
 		parts: []*Part{
-			{Name: fieldPrivateKey, Required: true, Sensitive: true, Version: 1, Inputs: []string{fieldPrivateKey}},
+			{Name: fieldPrivateKey, Required: true, Secret: true, Gated: true, Version: 1, Inputs: []string{fieldPrivateKey}},
 			{Name: fieldPublicKey, Version: 1, Inputs: []string{fieldPublicKey}},
 		},
 		values: sshKeyValues,
@@ -74,10 +89,10 @@ var registry = map[base.SettingType]*sourceType{
 	base.SettingTypeBasicAuth: {
 		parts: []*Part{
 			{Name: fieldUsername, Required: true, Version: 1, Inputs: []string{fieldUsername}},
-			{Name: fieldPassword, Required: true, Sensitive: true, Version: 1, Inputs: []string{fieldPassword}},
+			{Name: fieldPassword, Required: true, Secret: true, Gated: true, Version: 1, Inputs: []string{fieldPassword}},
 			// bcrypt, which Traefik, Apache, Caddy and HivePaaS's registry read,
 			// and nginx where the system's crypt is libxcrypt.
-			{Name: partHtpasswd, Required: true, Sensitive: true, Version: 1,
+			{Name: partHtpasswd, Required: true, Secret: true, Gated: true, Version: 1,
 				Inputs: []string{fieldUsername, fieldPassword}, Render: renderHtpasswd},
 		},
 		values: basicAuthValues,
@@ -226,4 +241,33 @@ func basicAuthValues(setting *entity.Setting) (map[string]string, error) {
 		return nil, hperrors.Wrap(err)
 	}
 	return map[string]string{fieldUsername: auth.Username, fieldPassword: password}, nil
+}
+
+func secretValues(setting *entity.Setting) (map[string]string, error) {
+	secret, err := setting.AsSecret()
+	if err != nil {
+		return nil, hperrors.Wrap(err)
+	}
+	value, err := secret.ValueAsBytes()
+	if err != nil {
+		return nil, hperrors.Wrap(err)
+	}
+	return map[string]string{fieldValue: string(value)}, nil
+}
+
+// configFileValues decodes a base64 config file itself: ContentAsBytes panics
+// on bad base64, and a deployment is no place for that.
+func configFileValues(setting *entity.Setting) (map[string]string, error) {
+	configFile, err := setting.AsConfigFile()
+	if err != nil {
+		return nil, hperrors.Wrap(err)
+	}
+	if !configFile.Base64 {
+		return map[string]string{fieldContent: configFile.Content}, nil
+	}
+	content, err := base64.StdEncoding.DecodeString(configFile.Content)
+	if err != nil {
+		return nil, hperrors.Wrap(err)
+	}
+	return map[string]string{fieldContent: string(content)}, nil
 }

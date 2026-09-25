@@ -45,14 +45,15 @@ type Service interface {
 // File is one part of a source, at a path of an app's containers.
 type File struct {
 	// Entry is the entry's key, or TLSEntry.
-	Entry     string
-	Part      string
-	Path      string
-	UID       string
-	GID       string
-	Mode      fileutil.FileMode
-	Sensitive bool
-	Data      []byte
+	Entry string
+	Part  string
+	Path  string
+	UID   string
+	GID   string
+	Mode  fileutil.FileMode
+	// Secret is stored as a Docker secret; otherwise as a Docker config.
+	Secret bool
+	Data   []byte
 	// Rotation is the part's RotationKey: a new one is a new object.
 	Rotation string
 }

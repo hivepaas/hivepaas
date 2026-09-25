@@ -152,6 +152,7 @@ export function AppSettingMountFormRoute({ mode, projectId, appId, env, settingM
                     isPending={isCreating || isUpdating}
                     initialValues={entry ? toFormValues(sources, entry) : undefined}
                     initialGrants={grantsOfEntry(entry)}
+                    isDisabledEntry={Boolean(entry) && entry?.status !== EProjectSecretStatus.Active}
                     onSubmit={onSubmit}
                     onHasChanges={setHasChanges}
                     readOnly={!canWrite}

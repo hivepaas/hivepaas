@@ -28,6 +28,7 @@ export function AppSettingMountForm({
     isPending,
     initialValues,
     initialGrants,
+    isDisabledEntry = false,
     onSubmit,
     onHasChanges,
     onClose,
@@ -73,12 +74,12 @@ export function AppSettingMountForm({
         fieldState: { invalid: isSourceInvalid },
     } = useController({ name: "source", control });
 
+    // A disabled entry hands out nothing, before or after the save: enabling it
+    // is what asks.
+    const gatesSave = !mayMountSensitive && !isDisabledEntry;
+
     function isLocked(part: string, gated: boolean): boolean {
-        return (
-            !mayMountSensitive &&
-            gated &&
-            !initialGrants.some(grant => grant.source === source?.id && grant.part === part)
-        );
+        return gatesSave && gated && !initialGrants.some(grant => grant.source === source?.id && grant.part === part);
     }
 
     function onValid(values: AppSettingMountFormOutput) {
@@ -87,7 +88,7 @@ export function AppSettingMountForm({
         }
         // Only what the save adds is gated: an entry that already mounts a
         // private key still saves a change of path.
-        if (!mayMountSensitive && widensGrants(initialGrants, grantsOf(values)).length > 0) {
+        if (gatesSave && widensGrants(initialGrants, grantsOf(values)).length > 0) {
             setError("root", { message: GATED_PART_REASON });
             return;
         }
@@ -253,6 +254,12 @@ export function AppSettingMountForm({
                                             )}
                                         </div>
                                         {locked && <p className="text-xs text-muted-foreground">{GATED_PART_REASON}</p>}
+                                        {row.gated && isDisabledEntry && !mayMountSensitive && (
+                                            <p className="text-xs text-muted-foreground">
+                                                The entry is disabled: enabling it with this part takes the Can Reveal
+                                                Secrets permission.
+                                            </p>
+                                        )}
                                         <div className="flex flex-wrap gap-2">
                                             <Input
                                                 aria-label={`${row.part} path`}
@@ -360,6 +367,8 @@ interface Props {
     initialValues?: AppSettingMountFormInput;
     /** The grants the entry holds as loaded: none for a new or a disabled entry. */
     initialGrants: Grant[];
+    /** The entry being edited is disabled: a save hands out nothing, so nothing is locked. */
+    isDisabledEntry?: boolean;
     onSubmit: (values: AppSettingMountFormOutput) => void;
     onHasChanges?: (dirty: boolean) => void;
     onClose?: () => void;

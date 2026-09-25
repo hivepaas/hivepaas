@@ -174,3 +174,23 @@ func TestValidateImportAsksWhoMayChangeAProjectsOwner(t *testing.T) {
 		})
 	}
 }
+
+// Validate reveals nothing yet, so it asks without recording; apply mounts, and
+// records the answer either way. A denial is an answer: the entry is skipped,
+// and the import goes on.
+func TestImportAsksToMountSecretsWithoutRecordingUntilApply(t *testing.T) {
+	allowSecretReveal(t, true)
+	for auth, want := range map[*basedto.Auth]bool{adminAuth(): true, plainAuth(): false} {
+		uc, audit, _ := newTestUC(t)
+
+		allowed, err := uc.importReq(auth, importReq(), false).MayMountSecrets(context.Background())
+		assert.NoError(t, err)
+		assert.Equal(t, want, allowed, auth.User.ID)
+		assert.Empty(t, audit.entries, "validate records nothing")
+
+		allowed, err = uc.importReq(auth, importReq(), true).MayMountSecrets(context.Background())
+		assert.NoError(t, err)
+		assert.Equal(t, want, allowed, auth.User.ID)
+		assert.Len(t, audit.entries, 1, "apply records the answer")
+	}
+}

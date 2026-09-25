@@ -20,6 +20,7 @@ const (
 	CodeStorageUnchecked         = "STORAGE_UNCHECKED"
 	CodeCapabilityNotPermitted   = "CAPABILITY_NOT_PERMITTED"
 	CodeDockerAPINotPermitted    = "DOCKER_API_NOT_PERMITTED"
+	CodeSettingMountNotPermitted = "SETTING_MOUNT_NOT_PERMITTED"
 	CodeDockerSocketNotPermitted = "DOCKER_SOCKET_NOT_PERMITTED"
 	CodeSharedMountNotPermitted  = "SHARED_MOUNT_NOT_PERMITTED"
 	CodeHostMountNotPermitted    = "HOST_MOUNT_NOT_PERMITTED"

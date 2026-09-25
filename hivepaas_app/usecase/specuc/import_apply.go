@@ -30,7 +30,7 @@ func (uc *UC) ApplyImport(
 	req *specdto.ApplyImportReq,
 ) (_ *specdto.ApplyImportResp, err error) {
 	serviceReq := &specservice.ApplyImportReq{
-		ValidateImportReq: *uc.importReq(auth, &req.ValidateImportReq),
+		ValidateImportReq: *uc.importReq(auth, &req.ValidateImportReq, true),
 		OperatorID:        auth.User.ID,
 		PlanHash:          req.PlanHash,
 		AcceptIssues:      req.AcceptIssues,

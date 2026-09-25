@@ -4,6 +4,7 @@ import (
 	"context"
 	"sort"
 	"strconv"
+	"strings"
 
 	"github.com/tiendc/gofn"
 
@@ -164,6 +165,7 @@ func kindEnvVars(kindSettings *entity.AppKindSettings) ([]*envvarservice.EnvVar,
 		return []*envvarservice.EnvVar{
 			sharedEnv(base.AppSystemEnvVarUser, db.Username),
 			sharedEnv(base.AppSystemEnvVarPassword, gofn.Must(db.Password.GetPlain())),
+			sharedEnv(base.AppSystemEnvVarPasswordURLEncoded, percentEncode(gofn.Must(db.Password.GetPlain()))),
 			{
 				EnvVar: &entity.EnvVar{
 					Key:      base.AppSystemEnvVarRootPassword,
@@ -219,6 +221,7 @@ func kindEnvVars(kindSettings *entity.AppKindSettings) ([]*envvarservice.EnvVar,
 		cache := kindSettings.Cache
 		return []*envvarservice.EnvVar{
 			sharedEnv(base.AppSystemEnvVarPassword, gofn.Must(cache.Password.GetPlain())),
+			sharedEnv(base.AppSystemEnvVarPasswordURLEncoded, percentEncode(gofn.Must(cache.Password.GetPlain()))),
 			ownEnv(base.AppSystemEnvVarMaxMemory, strconv.FormatInt(int64(cache.MaxMemory), 10)),
 			ownEnv(base.AppSystemEnvVarEvictionRule, cache.EvictionRule),
 			ownEnv(base.AppSystemEnvVarPersistenceMode, cache.PersistenceMode),
@@ -269,4 +272,23 @@ func dockerAPIEnvVars(setting *entity.Setting) ([]*envvarservice.EnvVar, error) 
 		Key:   base.AppSystemEnvVarDockerHost,
 		Value: "unix://" + socket,
 	}}}, nil
+}
+
+// percentEncode escapes every byte outside RFC 3986's unreserved set, which is
+// safe in any part of a URL: user info, path or query.
+func percentEncode(s string) string {
+	const hexDigits = "0123456789ABCDEF"
+	var b strings.Builder
+	for i := 0; i < len(s); i++ {
+		c := s[i]
+		if 'A' <= c && c <= 'Z' || 'a' <= c && c <= 'z' || '0' <= c && c <= '9' ||
+			c == '-' || c == '.' || c == '_' || c == '~' {
+			b.WriteByte(c)
+			continue
+		}
+		b.WriteByte('%')
+		b.WriteByte(hexDigits[c>>4])
+		b.WriteByte(hexDigits[c&0x0f])
+	}
+	return b.String()
 }

@@ -206,6 +206,130 @@ test_lowercase() {
   check "lowercase" hivepaas.example.com "$(lowercase HivePaaS.Example.COM)"
 }
 
+# ----------------------------------------------------------- Settings files
+
+test_kv_quote_round_trip() {
+  local v
+  for v in plain "it's" "a'b'c" "with space" "" '$x `y` $(z)' '"dq"' 'back\slash'; do
+    check "round trip of $v" "$v" "$(kv_unquote "$(kv_quote "$v")")"
+  done
+}
+
+test_kv_unquote() {
+  check "single quotes" "a b" "$(kv_unquote "'a b'")"
+  check "double quotes" "a b" "$(kv_unquote '"a b"')"
+  check "bare" "a b" "$(kv_unquote 'a b')"
+  check "an escaped quote" "it's" "$(kv_unquote "'it'\\''s'")"
+  check "nothing runs" '$(touch x)' "$(kv_unquote '$(touch x)')"
+}
+
+collect() {
+  COLLECTED="${COLLECTED}$1=$2|"
+}
+
+test_read_kv_file() {
+  local f="$TMP/kv.conf" out
+  printf '%s\n' '# a comment' '' '  HIVEPAAS_A=one' 'export HIVEPAAS_B="two words"' \
+    "HIVEPAAS_C = 'it'\\''s'  " 'not a setting' >"$f"
+  printf 'HIVEPAAS_D=crlf\r\nHIVEPAAS_E=no newline' >>"$f"
+  COLLECTED=''
+  out=$(read_kv_file "$f" collect 2>&1)
+  read_kv_file "$f" collect 2>/dev/null
+  check "lines read" "HIVEPAAS_A=one|HIVEPAAS_B=two words|HIVEPAAS_C=it's|HIVEPAAS_D=crlf|HIVEPAAS_E=no newline|" \
+    "$COLLECTED"
+  check_contains "a line that is not KEY=VALUE is reported" "$out" "line 6 is not KEY=VALUE"
+}
+
+# ------------------------------------------------------------------ Release
+
+REPO=$(cd "$HERE/../.." && pwd)
+
+# envelope FILE JSON: a release.signed.json around JSON, as releasesign writes one.
+envelope() {
+  local payload sum
+  payload=$(printf '%s' "$2" | base64 | tr -d '\n')
+  sum=$(printf '%s' "$2" | sha256_of)
+  printf '{"payload":"%s","sha256":"%s","signatures":[]}' "$payload" "$sum" >"$1"
+}
+
+RELEASE_JSON='{"beta":{"appVersion":"v0.1.1-beta3","appImage":"hivepaas/hivepaas-dev:0.1.0","dbImage":"postgres:18.3-alpine","redisImage":"redis:8.6-alpine","traefikImage":"traefik:v3.7"},"stable":{"appImage":"hivepaas/hivepaas:1.0.0"}}'
+
+test_release_payload() {
+  envelope "$TMP/ok.json" "$RELEASE_JSON"
+  check "payload" "$RELEASE_JSON" "$(release_payload "$TMP/ok.json")"
+  jq '.sha256 = "0000"' "$TMP/ok.json" >"$TMP/tampered.json"
+  release_payload "$TMP/tampered.json" >/dev/null
+  check "a checksum mismatch returns 2" 2 "$?"
+  printf 'not json' >"$TMP/junk.json"
+  release_payload "$TMP/junk.json" >/dev/null
+  check "not an envelope returns 1" 1 "$?"
+}
+
+test_release_payload_of_this_repo() {
+  release_payload "$REPO/release.signed.json" >"$TMP/repo-release.json"
+  check "release.signed.json verifies" 0 "$?"
+  check_ok "its beta channel has an app image" test -n "$(release_field "$TMP/repo-release.json" beta appImage)"
+}
+
+test_release_field() {
+  printf '%s' "$RELEASE_JSON" >"$TMP/release.json"
+  check "app image" hivepaas/hivepaas-dev:0.1.0 "$(release_field "$TMP/release.json" beta appImage)"
+  check "missing field" "" "$(release_field "$TMP/release.json" stable dbImage)"
+  check "missing channel" "" "$(release_field "$TMP/release.json" nightly appImage)"
+  check "channels" "beta, stable" "$(release_channels "$TMP/release.json")"
+}
+
+test_app_env_of_channel() {
+  check "beta" beta "$(app_env_of_channel beta)"
+  check "stable" production "$(app_env_of_channel stable)"
+  check_fails "anything else" app_env_of_channel nightly
+}
+
+test_image_name_and_tag() {
+  check "name" hivepaas/hivepaas-dev "$(image_name hivepaas/hivepaas-dev:0.1.0)"
+  check "tag" 0.1.0 "$(image_tag hivepaas/hivepaas-dev:0.1.0)"
+  check "name with a registry port" registry.example.com:5000/hivepaas/hivepaas \
+    "$(image_name registry.example.com:5000/hivepaas/hivepaas:1.2)"
+  check "tag with a registry port" 1.2 "$(image_tag registry.example.com:5000/hivepaas/hivepaas:1.2)"
+  check "no tag" "" "$(image_tag registry.example.com:5000/hivepaas/hivepaas)"
+  check "digest dropped" 18.3-alpine "$(image_tag postgres:18.3-alpine@sha256:abc)"
+}
+
+test_derive_agent_image() {
+  check "dev" hivepaas/hivepaas-agent-dev:0.1.0 "$(derive_agent_image hivepaas/hivepaas-dev:0.1.0)"
+  check "stable" hivepaas/hivepaas-agent:1.0.0 "$(derive_agent_image hivepaas/hivepaas:1.0.0)"
+  check "registry and digest" registry.example.com:5000/hivepaas/hivepaas-agent-dev:0.1.0 \
+    "$(derive_agent_image registry.example.com:5000/hivepaas/hivepaas-dev:0.1.0@sha256:abc)"
+  check "no tag" hivepaas/hivepaas-agent-dev "$(derive_agent_image hivepaas/hivepaas-dev)"
+  check_fails "not a HivePaaS image" derive_agent_image nginx:1
+}
+
+test_pg_major_of_image() {
+  check "minor tag" 18 "$(pg_major_of_image postgres:18.3-alpine)"
+  check "major tag" 17 "$(pg_major_of_image postgres:17)"
+  check "with digest" 18 "$(pg_major_of_image postgres:18-alpine@sha256:abc)"
+  check_fails "latest" pg_major_of_image postgres:latest
+  check_fails "no tag" pg_major_of_image postgres
+  check_fails "a registry port is no tag" pg_major_of_image registry:5000/postgres
+}
+
+test_docker_static_arch() {
+  check "x86_64" x86_64 "$(docker_static_arch x86_64)"
+  check "aarch64" aarch64 "$(docker_static_arch aarch64)"
+  check "arm64" aarch64 "$(docker_static_arch arm64)"
+  check "armv7l" armhf "$(docker_static_arch armv7l)"
+  check_fails "riscv64" docker_static_arch riscv64
+}
+
+test_latest_docker_from_index() {
+  local index='<a href="docker-28.5.2.tgz">docker-28.5.2.tgz</a>
+<a href="docker-29.10.0.tgz">docker-29.10.0.tgz</a>
+<a href="docker-29.9.1.tgz">docker-29.9.1.tgz</a>
+<a href="docker-rootless-extras-30.0.0.tgz">docker-rootless-extras-30.0.0.tgz</a>'
+  check "newest" 29.10.0 "$(printf '%s\n' "$index" | latest_docker_from_index)"
+  check_fails "an empty page" latest_docker_from_index </dev/null
+}
+
 # ------------------------------------------------------------------- Runner
 
 for t in $(declare -F | awk '$3 ~ /^test_/ {print $3}'); do

@@ -209,3 +209,159 @@ version_ge() {
   done
   return 0
 }
+
+# ----------------------------------------------------------- Settings files
+
+# kv_quote: a value in single quotes, as install.env stores it.
+kv_quote() {
+  local q="'"
+  printf "'%s'" "${1//$q/$q\\$q$q}"
+}
+
+# kv_unquote: the value of a KEY=VALUE line - taken literally, or from single
+# or double quotes. Nothing in it is expanded or executed.
+kv_unquote() {
+  local v="$1" q="'" esc="'\\''"
+  case "$v" in
+    "'"*"'") v=${v#\'}; v=${v%\'}; v=${v//"$esc"/$q} ;;
+    '"'*'"') v=${v#\"}; v=${v%\"} ;;
+  esac
+  printf '%s' "$v"
+}
+
+# read_kv_file FILE FN: calls FN KEY VALUE for each KEY=VALUE line of FILE.
+# Blank lines and # comments are skipped, and so is an `export ` in front.
+read_kv_file() {
+  local file="$1" fn="$2" line key value n=0
+  while IFS= read -r line || [ -n "$line" ]; do
+    n=$((n + 1))
+    line=${line%$'\r'}
+    line=${line#"${line%%[![:space:]]*}"}
+    case "$line" in
+      '' | '#'*) continue ;;
+    esac
+    line=${line#export }
+    case "$line" in
+      *=*) ;;
+      *)
+        warn "$file line $n is not KEY=VALUE; ignored."
+        continue
+        ;;
+    esac
+    key=${line%%=*}
+    key=${key%"${key##*[![:space:]]}"}
+    value=${line#*=}
+    value=${value#"${value%%[![:space:]]*}"}
+    value=${value%"${value##*[![:space:]]}"}
+    "$fn" "$key" "$(kv_unquote "$value")"
+  done <"$file"
+}
+
+# ------------------------------------------------------------------ Release
+
+sha256_of() {
+  if command -v sha256sum >/dev/null 2>&1; then
+    sha256sum | awk '{print $1}'
+  else
+    shasum -a 256 | awk '{print $1}'
+  fi
+}
+
+# release_payload FILE: the release info inside release.signed.json. Returns 2
+# when the payload does not match its sha256, 1 when the file is not an
+# envelope at all.
+release_payload() {
+  local payload want got
+  payload=$(jq -r '.payload // empty' "$1" 2>/dev/null) || return 1
+  want=$(jq -r '.sha256 // empty' "$1" 2>/dev/null) || return 1
+  if [ -z "$payload" ] || [ -z "$want" ]; then return 1; fi
+  got=$(printf '%s' "$payload" | base64 -d | sha256_of) || return 1
+  if [ "$got" != "$want" ]; then return 2; fi
+  printf '%s' "$payload" | base64 -d
+}
+
+# release_field FILE CHANNEL FIELD: one field of a channel of the release info.
+release_field() {
+  jq -r --arg ch "$2" --arg f "$3" '.[$ch][$f] // empty' "$1"
+}
+
+release_channels() {
+  jq -r 'keys | join(", ")' "$1"
+}
+
+# app_env_of_channel CHANNEL: the app's env, and config file, for a channel.
+app_env_of_channel() {
+  case "$1" in
+    beta) printf 'beta' ;;
+    stable) printf 'production' ;;
+    *) return 1 ;;
+  esac
+}
+
+# image_name IMAGE / image_tag IMAGE: an image reference without, and its tag
+# alone. A digest is dropped, and a registry's port is not taken for a tag.
+image_name() {
+  local image="${1%%@*}" last
+  last=${image##*/}
+  case "$last" in
+    *:*) printf '%s' "${image%:*}" ;;
+    *) printf '%s' "$image" ;;
+  esac
+}
+
+image_tag() {
+  local image="${1%%@*}" last
+  last=${image##*/}
+  case "$last" in
+    *:*) printf '%s' "${last##*:}" ;;
+  esac
+}
+
+# derive_agent_image APP_IMAGE: the agent image built with an app image -
+# `-agent` after `hivepaas`, the same tag.
+derive_agent_image() {
+  local name tag prefix='' repo
+  name=$(image_name "$1")
+  tag=$(image_tag "$1")
+  case "$name" in
+    */*) prefix="${name%/*}/" ;;
+  esac
+  repo=${name##*/}
+  case "$repo" in
+    hivepaas) repo=hivepaas-agent ;;
+    hivepaas-*) repo="hivepaas-agent-${repo#hivepaas-}" ;;
+    *) return 1 ;;
+  esac
+  printf '%s%s%s' "$prefix" "$repo" "${tag:+:$tag}"
+}
+
+# pg_major_of_image IMAGE: the Postgres major an image's tag names.
+pg_major_of_image() {
+  local tag major
+  tag=$(image_tag "$1")
+  major=${tag%%[!0-9]*}
+  if [ -z "$major" ]; then return 1; fi
+  printf '%s' "$major"
+}
+
+# docker_static_arch MACHINE: the directory of Docker's static builds for an
+# architecture `uname -m` names.
+docker_static_arch() {
+  case "$1" in
+    x86_64 | amd64) printf 'x86_64' ;;
+    aarch64 | arm64) printf 'aarch64' ;;
+    armv6l | armv7l | armhf) printf 'armhf' ;;
+    ppc64le | s390x) printf '%s' "$1" ;;
+    *) return 1 ;;
+  esac
+}
+
+# latest_docker_from_index: the newest version an index page of Docker's
+# static builds lists, read from stdin.
+latest_docker_from_index() {
+  local v
+  v=$(grep -oE 'docker-[0-9]+\.[0-9]+\.[0-9]+\.tgz' | sed -e 's/^docker-//' -e 's/\.tgz$//' |
+    sort -t. -k1,1n -k2,2n -k3,3n | tail -n 1) || true
+  if [ -z "$v" ]; then return 1; fi
+  printf '%s\n' "$v"
+}

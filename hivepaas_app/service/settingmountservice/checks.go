@@ -98,21 +98,3 @@ func CheckPathsFree(claimed map[string]string, paths ...string) error {
 	}
 	return nil
 }
-
-// SecretFileTarget is where a secret's file lands in the app's containers, empty
-// for a secret read through the environment only.
-func SecretFileTarget(secret *entity.Secret) string {
-	if secret == nil || secret.SwarmRef == nil || secret.SwarmRef.File == nil || secret.SwarmRef.File.Name == "" {
-		return ""
-	}
-	return SecretTarget(secret.SwarmRef.File.Name)
-}
-
-// ConfigFileTarget is SecretFileTarget for a config file.
-func ConfigFileTarget(configFile *entity.ConfigFile) string {
-	if configFile == nil || configFile.SwarmRef == nil || configFile.SwarmRef.File == nil ||
-		configFile.SwarmRef.File.Name == "" {
-		return ""
-	}
-	return ConfigTarget(configFile.SwarmRef.File.Name)
-}

@@ -6,7 +6,6 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
-	"github.com/hivepaas/hivepaas/hivepaas_app/service/settingmountservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings/configfileuc/configfiledto"
 )
@@ -21,9 +20,6 @@ func (uc *UC) UpdateConfigFile(
 	updatedConfigFile := req.ToEntity()
 	_, err := uc.UpdateSetting(ctx, &req.UpdateSettingReq, &settings.UpdateSettingData{
 		VerifyingRefIDs: updatedConfigFile.GetRefObjectIDs(),
-		// One path, one file: not another config file's, secret's or mount's.
-		AfterLoading: uc.CheckMountPathsAfterLoading(req.Scope,
-			settingmountservice.ConfigFileTarget(updatedConfigFile)),
 		PrepareUpdate: func(
 			ctx context.Context,
 			db database.Tx,
@@ -38,14 +34,6 @@ func (uc *UC) UpdateConfigFile(
 				updatedConfigFile.Name = oldConfigFile.Name // when update, keep the old NAME of the config
 				if req.Content == "" {
 					updatedConfigFile.Content = oldConfigFile.Content
-				}
-			}
-
-			if req.Scope.App != nil {
-				// Update the related configs in docker swarm
-				err := uc.ClusterSecretService.UpdateConfigForApp(ctx, db, req.Scope.App, oldConfigFile, updatedConfigFile)
-				if err != nil {
-					return hperrors.Wrap(err)
 				}
 			}
 

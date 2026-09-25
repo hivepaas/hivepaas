@@ -23,12 +23,12 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/appprovisionservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/approutingservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/appservice"
-	"github.com/hivepaas/hivepaas/hivepaas_app/service/clustersecretservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/clusterservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/domainservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/envvarservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/networkservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/placementservice"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/settingmountservice"
 	"github.com/hivepaas/hivepaas/services/docker"
 )
 
@@ -162,59 +162,21 @@ func (f *fakeRoutingService) ApplyRoutingSettings(
 	return &approutingservice.ApplyAppRoutingResp{}, nil
 }
 
-// fakeClusterSecretService fills in what docker would have returned: an id for
-// every entry that asked to be mounted as a file, and nothing for the rest.
-type fakeClusterSecretService struct {
-	clustersecretservice.Service
-	secrets        []*entity.Secret
-	configs        []*entity.ConfigFile
-	removedSecrets []string
-	removedConfigs []string
+// fakeSettingMounts records what provisioning asks of the app's files: they are
+// its setting mounts', which the engine brings to the service.
+type fakeSettingMounts struct {
+	settingmountservice.Service
+	refreshed []string
+	removed   []string
 }
 
-func (f *fakeClusterSecretService) CreateSecretsForApp(
-	_ context.Context, _ database.IDB, _ *entity.App, secrets []*entity.Secret,
-) ([]*entity.SwarmSecretRef, error) {
-	f.secrets = secrets
-	refs := make([]*entity.SwarmSecretRef, 0, len(secrets))
-	for _, secret := range secrets {
-		if secret.SwarmRef == nil || secret.SwarmRef.File == nil {
-			refs = append(refs, nil)
-			continue
-		}
-		secret.SwarmRef.SecretID = "docker-secret-" + secret.Key
-		refs = append(refs, secret.SwarmRef)
-	}
-	return refs, nil
-}
-
-func (f *fakeClusterSecretService) CreateConfigsForApp(
-	_ context.Context, _ database.IDB, _ *entity.App, configs []*entity.ConfigFile,
-) ([]*entity.SwarmConfigRef, error) {
-	f.configs = configs
-	refs := make([]*entity.SwarmConfigRef, 0, len(configs))
-	for _, config := range configs {
-		if config.SwarmRef == nil || config.SwarmRef.File == nil {
-			refs = append(refs, nil)
-			continue
-		}
-		config.SwarmRef.ConfigID = "docker-config-" + config.Name
-		refs = append(refs, config.SwarmRef)
-	}
-	return refs, nil
-}
-
-func (f *fakeClusterSecretService) SecretsRemove(
-	_ context.Context, secretIDs []string, _ int, _ time.Duration,
-) error {
-	f.removedSecrets = append(f.removedSecrets, secretIDs...)
+func (f *fakeSettingMounts) Refresh(_ context.Context, _ database.IDB, app *entity.App) error {
+	f.refreshed = append(f.refreshed, app.ID)
 	return nil
 }
 
-func (f *fakeClusterSecretService) ConfigsRemove(
-	_ context.Context, configIDs []string, _ int, _ time.Duration,
-) error {
-	f.removedConfigs = append(f.removedConfigs, configIDs...)
+func (f *fakeSettingMounts) RemoveApp(_ context.Context, appID string) error {
+	f.removed = append(f.removed, appID)
 	return nil
 }
 
@@ -268,14 +230,14 @@ func (f *fakeDomainService) EnsureCertsForDomains(
 }
 
 type provisionFakes struct {
-	docker       *fakeDockerManager
-	cluster      *fakeClusterService
-	apps         *fakeAppService
-	placement    *fakePlacementService
-	envVars      *fakeEnvVarService
-	routing      *fakeRoutingService
-	clusterFiles *fakeClusterSecretService
-	domains      *fakeDomainService
+	docker    *fakeDockerManager
+	cluster   *fakeClusterService
+	apps      *fakeAppService
+	placement *fakePlacementService
+	envVars   *fakeEnvVarService
+	routing   *fakeRoutingService
+	mounts    *fakeSettingMounts
+	domains   *fakeDomainService
 }
 
 func newProvisionTest(t *testing.T) (*service, *provisionFakes) {
@@ -289,14 +251,14 @@ func newProvisionTest(t *testing.T) (*service, *provisionFakes) {
 		ProjectEnvs: []*entity.ProjectEnv{env}}
 
 	fakes := &provisionFakes{
-		docker:       &fakeDockerManager{},
-		cluster:      &fakeClusterService{},
-		apps:         &fakeAppService{},
-		placement:    &fakePlacementService{},
-		envVars:      &fakeEnvVarService{},
-		routing:      &fakeRoutingService{},
-		clusterFiles: &fakeClusterSecretService{},
-		domains:      &fakeDomainService{},
+		docker:    &fakeDockerManager{},
+		cluster:   &fakeClusterService{},
+		apps:      &fakeAppService{},
+		placement: &fakePlacementService{},
+		envVars:   &fakeEnvVarService{},
+		routing:   &fakeRoutingService{},
+		mounts:    &fakeSettingMounts{},
+		domains:   &fakeDomainService{},
 	}
 	svc := &service{
 		dockerManager:        fakes.docker,
@@ -305,7 +267,7 @@ func newProvisionTest(t *testing.T) (*service, *provisionFakes) {
 		appDeploymentService: &fakeDeploymentService{},
 		appRoutingService:    fakes.routing,
 		appService:           fakes.apps,
-		clusterSecretService: fakes.clusterFiles,
+		settingMountService:  fakes.mounts,
 		clusterService:       fakes.cluster,
 		domainService:        fakes.domains,
 		envVarService:        fakes.envVars,

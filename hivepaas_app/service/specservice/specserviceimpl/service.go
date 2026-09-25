@@ -11,7 +11,6 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/appprovisionservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/approutingservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/appservice"
-	"github.com/hivepaas/hivepaas/hivepaas_app/service/clustersecretservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/clusterservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/dockerapiservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/domainservice"
@@ -46,7 +45,6 @@ func New(
 	appRoutingService approutingservice.Service,
 
 	clusterService clusterservice.Service,
-	clusterSecretService clustersecretservice.Service,
 	domainService domainservice.Service,
 	dockerAPIService dockerapiservice.Service,
 	envVarService envvarservice.Service,
@@ -70,15 +68,14 @@ func New(
 		appProvisionService:  appProvisionService,
 		appRoutingService:    appRoutingService,
 
-		clusterService:       clusterService,
-		clusterSecretService: clusterSecretService,
-		domainService:        domainService,
-		dockerAPIService:     dockerAPIService,
-		envVarService:        envVarService,
-		networkService:       networkService,
-		settingMountService:  settingMountService,
-		sslService:           sslService,
-		volumeService:        volumeService,
+		clusterService:      clusterService,
+		domainService:       domainService,
+		dockerAPIService:    dockerAPIService,
+		envVarService:       envVarService,
+		networkService:      networkService,
+		settingMountService: settingMountService,
+		sslService:          sslService,
+		volumeService:       volumeService,
 
 		taskQueue: taskQueue,
 	}
@@ -136,7 +133,6 @@ type service struct {
 	appDeploymentService appdeploymentservice.Service
 	appProvisionService  appprovisionservice.Service
 	appRoutingService    approutingservice.Service
-	clusterSecretService clustersecretservice.Service
 	envVarService        envvarservice.Service
 	networkService       networkservice.Service
 	settingMountService  settingmountservice.Service

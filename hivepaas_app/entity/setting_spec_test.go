@@ -95,14 +95,6 @@ func TestLoggingStripDropsManagedEndpointsOnly(t *testing.T) {
 // The values deliberately kept. This is the guard against somebody later
 // "tidying up" a value that is specific to the installation but not derived.
 func TestStripKeepsSystemSpecificValues(t *testing.T) {
-	secret := &Secret{Key: "db", SwarmRef: &SwarmSecretRef{SecretID: "swarm-1"}}
-	SpecPolicyFor(base.SettingTypeSecret).Strip(secret)
-	assert.NotNil(t, secret.SwarmRef, "SwarmRef resolves on the same installation")
-
-	configFile := &ConfigFile{Name: "app.conf", SwarmRef: &SwarmConfigRef{ConfigID: "cfg-1"}}
-	SpecPolicyFor(base.SettingTypeConfigFile).Strip(configFile)
-	assert.NotNil(t, configFile.SwarmRef)
-
 	envVars := &EnvVars{Data: []*EnvVar{
 		{Key: "HIVEPAAS_ROOT_PASSWORD", Value: "generated", IsSystem: true},
 		{Key: "APP_ENV", Value: "production"},

@@ -38,9 +38,10 @@ func TestApplyDropsADomainAnotherAppHolds(t *testing.T) {
 	assert.Empty(t, data.Domains)
 }
 
-// A secret written over one of an omit bundle keeps its value; its swarm ids are
-// this installation's, and another installation's are dropped.
-func TestApplyKeepsASecretsValueAndOnlyThisInstallationsSwarmIDs(t *testing.T) {
+// A secret written over one of an omit bundle keeps its value. A swarmRef in the
+// bundle - an older export - is not carried over: secrets mount through setting
+// mounts.
+func TestApplyKeepsASecretsValueAndDropsASwarmRef(t *testing.T) {
 	svc, bundle := planFixture(t)
 	secrets, _ := backendSettings(bundle)["secrets"].(map[string]any)
 	secret, _ := secrets["db-password"].(map[string]any)
@@ -55,11 +56,8 @@ func TestApplyKeepsASecretsValueAndOnlyThisInstallationsSwarmIDs(t *testing.T) {
 	data, err := written.AsSecret()
 	if assert.NoError(t, err) {
 		assert.Equal(t, "hunter2", plainOf(t, data.Value))
-		if assert.NotNil(t, data.SwarmRef) {
-			assert.Equal(t, "db", data.SwarmRef.File.Name)
-			assert.Empty(t, data.SwarmRef.SecretID)
-		}
 	}
+	assert.NotContains(t, written.Data, "swarmRef")
 }
 
 // An app matched by key keeps the credential its data was initialized with.

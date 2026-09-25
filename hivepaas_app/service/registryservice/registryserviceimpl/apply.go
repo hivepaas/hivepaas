@@ -359,9 +359,6 @@ func (s *service) applyConfigFile(
 
 	updated := *current
 	updated.Content = content
-	if err = s.clusterSecretService.UpdateConfigForApp(ctx, db, app, current, &updated); err != nil {
-		return hperrors.Wrap(err)
-	}
 	return s.persistSetting(ctx, db, setting, &updated)
 }
 
@@ -393,9 +390,6 @@ func (s *service) applyHtpasswd(
 
 	updated := *current
 	updated.Value = entity.NewEncryptedField(content)
-	if err = s.clusterSecretService.UpdateSecretForApp(ctx, db, app, current, &updated); err != nil {
-		return hperrors.Wrap(err)
-	}
 	return s.persistSetting(ctx, db, setting, &updated)
 }
 

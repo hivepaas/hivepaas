@@ -14,7 +14,6 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/appprovisionservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/approutingservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/appservice"
-	"github.com/hivepaas/hivepaas/hivepaas_app/service/clustersecretservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/dockerapiservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/envvarservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/networkservice"
@@ -153,25 +152,6 @@ func (f *fakeRoutingService) ApplyRoutingSettings(
 ) (*approutingservice.ApplyAppRoutingResp, error) {
 	f.applied = append(f.applied, req.App.ID)
 	return &approutingservice.ApplyAppRoutingResp{}, nil
-}
-
-type fakeClusterSecretService struct {
-	clustersecretservice.Service
-	updated, created []string
-}
-
-func (f *fakeClusterSecretService) UpdateSecretForApp(
-	_ context.Context, _ database.IDB, _ *entity.App, _, secret *entity.Secret,
-) error {
-	f.updated = append(f.updated, secret.Key)
-	return nil
-}
-
-func (f *fakeClusterSecretService) CreateSecretForApp(
-	_ context.Context, _ database.IDB, _ *entity.App, secret *entity.Secret,
-) (*entity.SwarmSecretRef, error) {
-	f.created = append(f.created, secret.Key)
-	return secret.SwarmRef, nil
 }
 
 // fakeNetworkService names an env's own network the way the real one does.

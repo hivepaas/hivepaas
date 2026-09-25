@@ -63,23 +63,11 @@ func (s *service) removeCreated(ctx context.Context, apps []*appprovisionservice
 	return errors.Join(errs...)
 }
 
-// removeCreatedFiles removes the docker secrets and configs of one app. A nil
-// reference is a setting that asked for no file, and made nothing to remove.
+// removeCreatedFiles removes the objects of one app's setting mounts, made
+// with its service.
 func (s *service) removeCreatedFiles(ctx context.Context, created *appprovisionservice.CreatedInDocker) error {
-	secretIDs := make([]string, 0, len(created.Secrets))
-	for _, ref := range created.Secrets {
-		if ref != nil && ref.SecretID != "" {
-			secretIDs = append(secretIDs, ref.SecretID)
-		}
+	if created.AppID == "" {
+		return nil
 	}
-	configIDs := make([]string, 0, len(created.Configs))
-	for _, ref := range created.Configs {
-		if ref != nil && ref.ConfigID != "" {
-			configIDs = append(configIDs, ref.ConfigID)
-		}
-	}
-	return errors.Join(
-		s.clusterSecretService.SecretsRemove(ctx, secretIDs, clusterservice.ItemRemovalRetryMax, 0),
-		s.clusterSecretService.ConfigsRemove(ctx, configIDs, clusterservice.ItemRemovalRetryMax, 0),
-	)
+	return hperrors.Wrap(s.settingMountService.RemoveApp(ctx, created.AppID))
 }

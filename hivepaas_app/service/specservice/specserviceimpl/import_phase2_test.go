@@ -49,20 +49,3 @@ func TestPhaseTwoMarksAFailedAppAndGoesOn(t *testing.T) {
 	assert.Contains(t, backend.Error, "update out of sequence")
 	assert.Equal(t, specmodel.OutcomeApplied, node(t, resp.Plan, "projects/project_a/envs/dev/apps/frontend").Outcome)
 }
-
-// A secret written to a running app replaces its docker secret, and the setting
-// is written again with what docker handed back.
-func TestPhaseTwoReplacesTheDockerSecretOfAChangedSecret(t *testing.T) {
-	svc, bundle := planFixture(t)
-	secrets, _ := backendSettings(bundle)["secrets"].(map[string]any)
-	secrets["db-password"].(map[string]any)["swarmRef"] = map[string]any{"file": map[string]any{"name": "db"}}
-
-	resp := apply(t, svc, bundle, applyReq(t, svc, bundle))
-	assert.NoError(t, resp.AfterCommit(context.Background(), nil))
-
-	assert.Equal(t, []string{"DB_PASSWORD"}, svc.clusterSecretService.(*fakeClusterSecretService).updated)
-	persisted := svc.appService.(*fakeAppService).persisted
-	if assert.Len(t, persisted, 1) {
-		assert.Equal(t, "secret_1", persisted[0].UpsertingSettings[0].ID)
-	}
-}

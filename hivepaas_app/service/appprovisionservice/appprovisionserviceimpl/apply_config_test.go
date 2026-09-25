@@ -9,7 +9,6 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
-	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/datakey"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/appprovisionservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/tasks/queue"
 )
@@ -26,9 +25,9 @@ func (f *fakeTaskQueue) ScheduleTasksForSchedJobs(
 	return nil
 }
 
-func settingWithData(t *testing.T, id string, data entity.SettingData) *entity.Setting {
+func routingSetting(t *testing.T, data entity.SettingData) *entity.Setting {
 	t.Helper()
-	setting := &entity.Setting{ID: id, Type: data.GetType(), ObjectID: "app-1"}
+	setting := &entity.Setting{ID: "set-routing", Type: data.GetType(), ObjectID: "app-1"}
 	assert.NoError(t, setting.SetData(data))
 	return setting
 }
@@ -37,62 +36,29 @@ func appWithSettings(settings ...*entity.Setting) *entity.App {
 	return &entity.App{ID: "app-1", Name: "db", ServiceID: "svc-1", Settings: settings}
 }
 
-func TestApplyAppConfigurationKeepsTheIDsDockerCreatedThemWith(t *testing.T) {
-	key, err := datakey.Generate()
-	assert.NoError(t, err)
-	datakey.SetActive(key)
+// The app's files are its setting mounts': configuring a provisioned app brings
+// its service to them, and writes nothing back into its settings.
+func TestApplyAppConfigurationRefreshesTheSettingMounts(t *testing.T) {
 	svc, fakes := newProvisionTest(t)
-	envOnly := settingWithData(t, "set-env",
-		&entity.Secret{Key: "ADMIN_PASSWORD", Value: entity.NewEncryptedField("s3cret")})
-	onFile := settingWithData(t, "set-file", &entity.Secret{Key: "LICENSE_KEY",
-		Value:    entity.NewEncryptedField("abc"),
-		SwarmRef: &entity.SwarmSecretRef{File: &entity.SwarmRefFileTarget{Name: "/etc/app/license"}}})
-	configFile := settingWithData(t, "set-conf", &entity.ConfigFile{Name: "app.conf", Content: "listen = 8080",
-		SwarmRef: &entity.SwarmConfigRef{File: &entity.SwarmRefFileTarget{Name: "/etc/app/app.conf"}}})
-	app := appWithSettings(envOnly, onFile, configFile)
+	app := appWithSettings(&entity.Setting{ID: "set-kind", Type: base.SettingTypeAppKind, ObjectID: "app-1"})
 
-	resp, err := svc.ApplyAppConfiguration(context.Background(), nil,
+	_, err := svc.ApplyAppConfiguration(context.Background(), nil,
 		&appprovisionservice.ApplyAppConfigurationReq{App: app})
 
 	assert.NoError(t, err)
 	assert.True(t, fakes.envVars.applied)
-	// Both secrets are handed over: which of them becomes a docker object is the
-	// cluster service's decision, taken from the file target.
-	assert.Len(t, fakes.clusterFiles.secrets, 2)
-	assert.Len(t, fakes.clusterFiles.configs, 1)
-	assert.Equal(t, []*entity.SwarmConfigRef{configFile.MustAsConfigFile().SwarmRef}, resp.Configs)
-	assert.Nil(t, resp.Secrets[0], "a secret read through the environment makes nothing in docker")
-
-	// What docker returned is written back to the settings, so the app can find
-	// its objects again. Reading it from Data is the point: the parsed object
-	// carries it either way, and only Data is what the database keeps.
-	assert.Len(t, fakes.apps.persisted.UpsertingSettings, 3)
-	stored := func(setting *entity.Setting) *entity.Setting {
-		return &entity.Setting{Type: setting.Type, Data: setting.Data}
-	}
-	assert.Equal(t, "docker-config-app.conf", stored(configFile).MustAsConfigFile().SwarmRef.ConfigID)
-	assert.Equal(t, "docker-secret-LICENSE_KEY", stored(onFile).MustAsSecret().SwarmRef.SecretID)
-	assert.Nil(t, stored(envOnly).MustAsSecret().SwarmRef)
-
-	// The value survives the round trip through the setting, still encrypted.
-	assert.NotContains(t, onFile.Data, "abc")
-	plain, err := stored(onFile).MustAsSecret().Value.GetPlain()
-	assert.NoError(t, err)
-	assert.Equal(t, "abc", plain)
+	assert.Equal(t, []string{"app-1"}, fakes.mounts.refreshed)
+	assert.Nil(t, fakes.apps.persisted, "nothing to write back")
 }
 
 func TestApplyAppConfigurationTouchesDockerOnlyForWhatTheAppHas(t *testing.T) {
 	svc, fakes := newProvisionTest(t)
 	app := appWithSettings(&entity.Setting{ID: "set-kind", Type: base.SettingTypeAppKind, ObjectID: "app-1"})
 
-	resp, err := svc.ApplyAppConfiguration(context.Background(), nil,
+	_, err := svc.ApplyAppConfiguration(context.Background(), nil,
 		&appprovisionservice.ApplyAppConfigurationReq{App: app})
 
 	assert.NoError(t, err)
-	assert.Empty(t, resp.Secrets)
-	assert.Empty(t, resp.Configs)
-	assert.Nil(t, fakes.clusterFiles.secrets)
-	assert.Nil(t, fakes.clusterFiles.configs)
 	assert.Nil(t, fakes.apps.persisted, "nothing to write back")
 	assert.Zero(t, fakes.routing.calls, "an app with no routing settings is not routed")
 }
@@ -104,7 +70,7 @@ func TestApplyAppConfigurationRetriesRoutingWhileSwarmSettles(t *testing.T) {
 	svc, fakes := newProvisionTest(t)
 	fakes.routing.err = errTestRouting
 	fakes.routing.failTimes = routingApplyRetryMax
-	app := appWithSettings(settingWithData(t, "set-routing", &entity.AppRoutingSettings{Port: 5432}))
+	app := appWithSettings(routingSetting(t, &entity.AppRoutingSettings{Port: 5432}))
 
 	_, err := svc.ApplyAppConfiguration(context.Background(), nil,
 		&appprovisionservice.ApplyAppConfigurationReq{App: app})
@@ -117,7 +83,7 @@ func TestApplyAppConfigurationRetriesRoutingWhileSwarmSettles(t *testing.T) {
 func TestApplyAppConfigurationGivesUpOnRoutingThatKeepsFailing(t *testing.T) {
 	svc, fakes := newProvisionTest(t)
 	fakes.routing.err = errTestRouting
-	app := appWithSettings(settingWithData(t, "set-routing", &entity.AppRoutingSettings{Port: 5432}))
+	app := appWithSettings(routingSetting(t, &entity.AppRoutingSettings{Port: 5432}))
 
 	_, err := svc.ApplyAppConfiguration(context.Background(), nil,
 		&appprovisionservice.ApplyAppConfigurationReq{App: app})
@@ -141,7 +107,7 @@ func TestApplyAppConfigurationSchedulesTheAppsJobs(t *testing.T) {
 
 func routedApp(t *testing.T, domain string) *entity.App {
 	t.Helper()
-	return appWithSettings(settingWithData(t, "set-routing", &entity.AppRoutingSettings{
+	return appWithSettings(routingSetting(t, &entity.AppRoutingSettings{
 		Port: 2368, ExposePublicly: true,
 		Domains: []*entity.AppDomain{{Domain: domain, Enabled: true, Protocol: base.NetworkProtocolHTTP}},
 	}))
@@ -192,7 +158,7 @@ func TestApplyAppConfigurationRoutesADomainNothingCovers(t *testing.T) {
 
 func TestApplyAppConfigurationLooksForNoCertificateWithoutADomain(t *testing.T) {
 	svc, fakes := newProvisionTest(t)
-	app := appWithSettings(settingWithData(t, "set-routing", &entity.AppRoutingSettings{Port: 2368}))
+	app := appWithSettings(routingSetting(t, &entity.AppRoutingSettings{Port: 2368}))
 
 	_, err := svc.ApplyAppConfiguration(context.Background(), nil,
 		&appprovisionservice.ApplyAppConfigurationReq{App: app})

@@ -23,16 +23,9 @@ func (s *configFileParser) New() SettingData {
 }
 
 type ConfigFile struct {
-	Name     string          `json:"name"`
-	Content  string          `json:"content"`
-	Base64   bool            `json:"base64,omitempty"`
-	SwarmRef *SwarmConfigRef `json:"swarmRef,omitempty"`
-}
-
-type SwarmConfigRef struct {
-	File       *SwarmRefFileTarget `json:"file"`
-	ConfigID   string              `json:"configId"`
-	ConfigName string              `json:"configName"`
+	Name    string `json:"name"`
+	Content string `json:"content"`
+	Base64  bool   `json:"base64,omitempty"`
 }
 
 func (s *ConfigFile) GetType() base.SettingType {

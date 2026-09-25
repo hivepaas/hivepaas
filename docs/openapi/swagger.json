@@ -53686,9 +53686,6 @@
           "status" : {
             "type" : "string"
           },
-          "swarmRef" : {
-            "$ref" : "#/components/schemas/settings_configfiledto.SwarmConfigFileRefResp"
-          },
           "type" : {
             "type" : "string"
           },
@@ -53699,7 +53696,7 @@
             "type" : "string"
           }
         },
-        "required" : [ "base64", "content", "createdAt", "default", "expireAt", "id", "inheritable", "inherited", "kind", "name", "size", "status", "swarmRef", "type", "updateVer", "updatedAt" ],
+        "required" : [ "base64", "content", "createdAt", "default", "expireAt", "id", "inheritable", "inherited", "kind", "name", "size", "status", "type", "updateVer", "updatedAt" ],
         "type" : "object"
       },
       "settings_configfiledto.CreateConfigFileReq" : {
@@ -53718,12 +53715,9 @@
           },
           "name" : {
             "type" : "string"
-          },
-          "swarmRef" : {
-            "$ref" : "#/components/schemas/settings_configfiledto.SwarmConfigRefReq"
           }
         },
-        "required" : [ "base64", "content", "default", "inheritable", "name", "swarmRef" ],
+        "required" : [ "base64", "content", "default", "inheritable", "name" ],
         "type" : "object"
       },
       "settings_configfiledto.CreateConfigFileResp" : {
@@ -53828,60 +53822,6 @@
         "required" : [ "data", "meta" ],
         "type" : "object"
       },
-      "settings_configfiledto.SwarmConfigFileRefResp" : {
-        "properties" : {
-          "file" : {
-            "$ref" : "#/components/schemas/settings_configfiledto.SwarmRefFileTargetResp"
-          }
-        },
-        "required" : [ "file" ],
-        "type" : "object"
-      },
-      "settings_configfiledto.SwarmConfigRefReq" : {
-        "properties" : {
-          "file" : {
-            "$ref" : "#/components/schemas/settings_configfiledto.SwarmRefFileTargetReq"
-          }
-        },
-        "required" : [ "file" ],
-        "type" : "object"
-      },
-      "settings_configfiledto.SwarmRefFileTargetReq" : {
-        "properties" : {
-          "gid" : {
-            "type" : "string"
-          },
-          "mode" : {
-            "type" : "string"
-          },
-          "name" : {
-            "type" : "string"
-          },
-          "uid" : {
-            "type" : "string"
-          }
-        },
-        "required" : [ "gid", "mode", "name", "uid" ],
-        "type" : "object"
-      },
-      "settings_configfiledto.SwarmRefFileTargetResp" : {
-        "properties" : {
-          "gid" : {
-            "type" : "string"
-          },
-          "mode" : {
-            "type" : "string"
-          },
-          "name" : {
-            "type" : "string"
-          },
-          "uid" : {
-            "type" : "string"
-          }
-        },
-        "required" : [ "gid", "mode", "name", "uid" ],
-        "type" : "object"
-      },
       "settings_configfiledto.UpdateConfigFileReq" : {
         "properties" : {
           "base64" : {
@@ -53899,14 +53839,11 @@
           "name" : {
             "type" : "string"
           },
-          "swarmRef" : {
-            "$ref" : "#/components/schemas/settings_configfiledto.SwarmConfigRefReq"
-          },
           "updateVer" : {
             "type" : "integer"
           }
         },
-        "required" : [ "base64", "content", "default", "inheritable", "name", "swarmRef", "updateVer" ],
+        "required" : [ "base64", "content", "default", "inheritable", "name", "updateVer" ],
         "type" : "object"
       },
       "settings_configfiledto.UpdateConfigFileResp" : {
@@ -57871,14 +57808,11 @@
           "key" : {
             "type" : "string"
           },
-          "swarmRef" : {
-            "$ref" : "#/components/schemas/settings_secretdto.SwarmSecretRefReq"
-          },
           "value" : {
             "type" : "string"
           }
         },
-        "required" : [ "base64", "default", "inheritable", "key", "swarmRef", "value" ],
+        "required" : [ "base64", "default", "inheritable", "key", "value" ],
         "type" : "object"
       },
       "settings_secretdto.CreateSecretResp" : {
@@ -58024,9 +57958,6 @@
           "status" : {
             "type" : "string"
           },
-          "swarmRef" : {
-            "$ref" : "#/components/schemas/settings_secretdto.SwarmSecretRefResp"
-          },
           "type" : {
             "type" : "string"
           },
@@ -58040,61 +57971,7 @@
             "type" : "string"
           }
         },
-        "required" : [ "base64", "createdAt", "default", "expireAt", "id", "inheritable", "inherited", "key", "kind", "name", "secretMasked", "size", "status", "swarmRef", "type", "updateVer", "updatedAt", "value" ],
-        "type" : "object"
-      },
-      "settings_secretdto.SwarmRefFileTargetReq" : {
-        "properties" : {
-          "gid" : {
-            "type" : "string"
-          },
-          "mode" : {
-            "type" : "string"
-          },
-          "name" : {
-            "type" : "string"
-          },
-          "uid" : {
-            "type" : "string"
-          }
-        },
-        "required" : [ "gid", "mode", "name", "uid" ],
-        "type" : "object"
-      },
-      "settings_secretdto.SwarmRefFileTargetResp" : {
-        "properties" : {
-          "gid" : {
-            "type" : "string"
-          },
-          "mode" : {
-            "type" : "string"
-          },
-          "name" : {
-            "type" : "string"
-          },
-          "uid" : {
-            "type" : "string"
-          }
-        },
-        "required" : [ "gid", "mode", "name", "uid" ],
-        "type" : "object"
-      },
-      "settings_secretdto.SwarmSecretRefReq" : {
-        "properties" : {
-          "file" : {
-            "$ref" : "#/components/schemas/settings_secretdto.SwarmRefFileTargetReq"
-          }
-        },
-        "required" : [ "file" ],
-        "type" : "object"
-      },
-      "settings_secretdto.SwarmSecretRefResp" : {
-        "properties" : {
-          "file" : {
-            "$ref" : "#/components/schemas/settings_secretdto.SwarmRefFileTargetResp"
-          }
-        },
-        "required" : [ "file" ],
+        "required" : [ "base64", "createdAt", "default", "expireAt", "id", "inheritable", "inherited", "key", "kind", "name", "secretMasked", "size", "status", "type", "updateVer", "updatedAt", "value" ],
         "type" : "object"
       },
       "settings_secretdto.UpdateSecretReq" : {
@@ -58111,9 +57988,6 @@
           "key" : {
             "type" : "string"
           },
-          "swarmRef" : {
-            "$ref" : "#/components/schemas/settings_secretdto.SwarmSecretRefReq"
-          },
           "updateVer" : {
             "type" : "integer"
           },
@@ -58121,7 +57995,7 @@
             "type" : "string"
           }
         },
-        "required" : [ "base64", "default", "inheritable", "key", "swarmRef", "updateVer", "value" ],
+        "required" : [ "base64", "default", "inheritable", "key", "updateVer", "value" ],
         "type" : "object"
       },
       "settings_secretdto.UpdateSecretResp" : {
@@ -58245,7 +58119,7 @@
             "type" : "array"
           },
           "mayMountSensitive" : {
-            "description" : "MayMountSensitive says whether the caller may mount a private key or a\npassword: the screen locks those parts, with the reason, when not.",
+            "description" : "MayMountSensitive says whether the caller may mount a gated part - a\nprivate key, a password: the screen locks those, with the reason, when not.",
             "type" : "boolean"
           },
           "meta" : {
@@ -58278,6 +58152,10 @@
       },
       "settings_settingmountdto.SettingMountFileResp" : {
         "properties" : {
+          "gated" : {
+            "description" : "Gated takes the Reveal Secrets permission to mount.",
+            "type" : "boolean"
+          },
           "gid" : {
             "type" : "string"
           },
@@ -58290,29 +58168,35 @@
           "path" : {
             "type" : "string"
           },
-          "sensitive" : {
+          "secret" : {
+            "description" : "Secret is stored as a Docker secret.",
             "type" : "boolean"
           },
           "uid" : {
             "type" : "string"
           }
         },
-        "required" : [ "gid", "mode", "part", "path", "sensitive", "uid" ],
+        "required" : [ "gated", "gid", "mode", "part", "path", "secret", "uid" ],
         "type" : "object"
       },
       "settings_settingmountdto.SettingMountPart" : {
         "properties" : {
+          "gated" : {
+            "description" : "Gated takes the Reveal Secrets permission to mount.",
+            "type" : "boolean"
+          },
           "name" : {
             "type" : "string"
           },
           "required" : {
             "type" : "boolean"
           },
-          "sensitive" : {
+          "secret" : {
+            "description" : "Secret is stored as a Docker secret.",
             "type" : "boolean"
           }
         },
-        "required" : [ "name", "required", "sensitive" ],
+        "required" : [ "gated", "name", "required", "secret" ],
         "type" : "object"
       },
       "settings_settingmountdto.SettingMountResp" : {

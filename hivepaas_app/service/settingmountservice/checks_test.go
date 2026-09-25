@@ -85,11 +85,3 @@ func TestCheckPathsFree(t *testing.T) {
 	assert.NoError(t, CheckPathsFree(claimed, "/etc/app/key.pem"))
 	assert.True(t, errors.Is(CheckPathsFree(claimed, "/run/secrets/db_password"), hperrors.ErrSettingMountPathTaken))
 }
-
-func TestFileTargetsOfSecretsAndConfigFiles(t *testing.T) {
-	assert.Equal(t, "/run/secrets/db_password", SecretFileTarget(&entity.Secret{
-		SwarmRef: &entity.SwarmSecretRef{File: &entity.SwarmRefFileTarget{Name: "db_password"}}}))
-	assert.Empty(t, SecretFileTarget(&entity.Secret{}), "read through the environment, no file")
-	assert.Equal(t, "/etc/app.conf", ConfigFileTarget(&entity.ConfigFile{
-		SwarmRef: &entity.SwarmConfigRef{File: &entity.SwarmRefFileTarget{Name: "/etc/app.conf"}}}))
-}

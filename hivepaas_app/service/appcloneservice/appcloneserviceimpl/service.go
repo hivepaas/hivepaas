@@ -6,13 +6,13 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/appprovisionservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/approutingservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/appservice"
-	"github.com/hivepaas/hivepaas/hivepaas_app/service/clustersecretservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/clusterservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/commandpipeexecservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/dockerapiservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/domainservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/envvarservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/networkservice"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/settingmountservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/settingservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/sslservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/traefikservice"
@@ -31,7 +31,7 @@ type service struct {
 	appProvisionService    appprovisionservice.Service
 	appRoutingService      approutingservice.Service
 	appService             appservice.Service
-	clusterSecretService   clustersecretservice.Service
+	settingMountService    settingmountservice.Service
 	clusterService         clusterservice.Service
 	commandPipeExecService commandpipeexecservice.Service
 	domainService          domainservice.Service
@@ -54,7 +54,7 @@ func New(
 	appProvisionService appprovisionservice.Service,
 	appRoutingService approutingservice.Service,
 	appService appservice.Service,
-	clusterSecretService clustersecretservice.Service,
+	settingMountService settingmountservice.Service,
 	clusterService clusterservice.Service,
 	commandPipeExecService commandpipeexecservice.Service,
 	domainService domainservice.Service,
@@ -76,7 +76,7 @@ func New(
 		appProvisionService:    appProvisionService,
 		appRoutingService:      appRoutingService,
 		appService:             appService,
-		clusterSecretService:   clusterSecretService,
+		settingMountService:    settingMountService,
 		clusterService:         clusterService,
 		commandPipeExecService: commandPipeExecService,
 		domainService:          domainService,

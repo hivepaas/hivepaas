@@ -25,7 +25,6 @@ func (s *service) applyClonedConfiguration(
 			RefObjects: data.RefObjects,
 		})
 	if resp != nil {
-		data.DestConfig, data.DestSecrets = resp.Configs, resp.Secrets
 		s.scheduleCertTasks(data, resp.CertTasks) //nolint:contextcheck // queued after this transaction
 	}
 	return hperrors.Wrap(err)

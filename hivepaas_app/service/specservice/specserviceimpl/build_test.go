@@ -326,17 +326,15 @@ func TestBuildAppBuildsSecretsAndConfigFiles(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, "hunter2", value)
 	assert.NotContains(t, admin.Data, "hunter2", "a secret is stored encrypted")
-	assert.Nil(t, secret.SwarmRef, "a secret with no file is read through the environment, not mounted")
 
 	license, err := byName["secret/LICENSE"].AsSecret()
 	assert.NoError(t, err)
-	assert.Equal(t, "/run/secrets/license", license.SwarmRef.File.Name)
+	assert.Equal(t, "LICENSE", license.Key)
 
 	configFile, err := byName["config-file/prometheus.yml"].AsConfigFile()
 	assert.NoError(t, err)
 	assert.Equal(t, "prometheus.yml", configFile.Name)
 	assert.Equal(t, "scrape_interval: 30s\n", configFile.Content)
-	assert.Equal(t, "/etc/prometheus/prometheus.yml", configFile.SwarmRef.File.Name)
 }
 
 // buildErrorDetail is the explanation a person reads; Error() carries the code.

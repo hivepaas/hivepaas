@@ -33,14 +33,6 @@ func (uc *UC) DeleteSecret(
 				return hperrors.Wrap(err)
 			}
 
-			if req.Scope.IsAppScope() {
-				// Delete the related secret in docker swarm
-				err := uc.ClusterSecretService.RemoveSecretForApp(ctx, db, req.Scope.App, data.Setting.MustAsSecret())
-				if err != nil {
-					return hperrors.Wrap(err)
-				}
-			}
-
 			return nil
 		},
 	})

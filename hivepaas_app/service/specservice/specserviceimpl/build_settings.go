@@ -124,7 +124,8 @@ func (s *service) buildSecrets(_ context.Context, state *buildState) error {
 	entries, _ := state.req.Doc.Settings[specmodel.CollectionBlockName(base.SettingTypeSecret)].(map[string]any)
 	for _, name := range slices.Sorted(maps.Keys(entries)) {
 		secret := &entity.Secret{}
-		if err := decodeBlock(block, entries[name], secret); err != nil {
+		body := templateBody(entries[name])
+		if err := decodeBlock(block, body, secret); err != nil {
 			return err
 		}
 		if secret.Key == "" {
@@ -149,7 +150,8 @@ func (s *service) buildConfigFiles(_ context.Context, state *buildState) error {
 	entries, _ := state.req.Doc.Settings[specmodel.CollectionBlockName(base.SettingTypeConfigFile)].(map[string]any)
 	for _, name := range slices.Sorted(maps.Keys(entries)) {
 		configFile := &entity.ConfigFile{}
-		if err := decodeBlock(block, entries[name], configFile); err != nil {
+		body := templateBody(entries[name])
+		if err := decodeBlock(block, body, configFile); err != nil {
 			return err
 		}
 		if configFile.Name == "" {
@@ -281,4 +283,20 @@ func (s *service) buildDockerAPI(ctx context.Context, state *buildState) error {
 	}
 	dockerapiservice.Attach(state.req.Spec, state.req.App.ID, networkID)
 	return state.addSetting(base.SettingTypeAppDockerAPI, entity.CurrentAppDockerAPIVersion, false, settings)
+}
+
+// templateBody is a template's secret or config file without its swarmRef,
+// which templates - and only they - may still write.
+func templateBody(entry any) map[string]any {
+	body, ok := entry.(map[string]any)
+	if !ok {
+		return nil
+	}
+	rest := make(map[string]any, len(body))
+	for key, value := range body {
+		if key != "swarmRef" {
+			rest[key] = value
+		}
+	}
+	return rest
 }

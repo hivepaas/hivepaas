@@ -13,7 +13,6 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/projecthelper"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/approutingservice"
-	"github.com/hivepaas/hivepaas/hivepaas_app/service/appservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/specservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/specservice/specmodel"
 )
@@ -154,9 +153,6 @@ func (w *writer) applyToService(ctx context.Context, db database.IDB, node *spec
 			return err
 		}
 	}
-	if err = w.updateSwarmFiles(ctx, db, node, app); err != nil {
-		return err
-	}
 	if slices.Contains(node.Changes, "settings."+specmodel.SingletonBlockName(base.SettingTypeAppRouting)) {
 		routing := app.GetSettingByType(base.SettingTypeAppRouting)
 		if routing == nil {
@@ -200,77 +196,4 @@ func (w *writer) updateService(
 	}
 	_, err = w.p.s.clusterService.ServiceUpdate(ctx, app.ServiceID, &svc.Version, &svc.Spec)
 	return hperrors.Wrap(err)
-}
-
-// updateSwarmFiles brings the docker secrets and configs of an app's secrets and
-// config files to what was written: one replaced where it existed, created
-// where it did not. The settings are written again with the ids docker handed
-// back, without which nothing could find the objects again.
-func (w *writer) updateSwarmFiles(
-	ctx context.Context, db database.IDB, node *specmodel.PlanNode, app *entity.App,
-) error {
-	previous := w.rows[node.Path]
-	var rewritten []*entity.Setting
-	for _, setting := range w.written {
-		if setting.ObjectID != app.ID {
-			continue
-		}
-		var old *entity.Setting
-		if previous != nil {
-			old = previous.byID[setting.ID]
-		}
-		changed, err := w.updateSwarmFile(ctx, db, app, setting, old)
-		if err != nil {
-			return err
-		}
-		if changed {
-			rewritten = append(rewritten, setting)
-		}
-	}
-	if len(rewritten) == 0 {
-		return nil
-	}
-	return hperrors.Wrap(w.p.s.appService.PersistAppData(ctx, db,
-		&appservice.PersistingAppData{UpsertingSettings: rewritten}))
-}
-
-// updateSwarmFile brings one secret or config file to docker, and reports
-// whether the setting changed with it.
-func (w *writer) updateSwarmFile(
-	ctx context.Context, db database.IDB, app *entity.App, setting, old *entity.Setting,
-) (bool, error) {
-	secrets := w.p.s.clusterSecretService
-	switch setting.Type { //nolint:exhaustive // only two types become docker objects
-	case base.SettingTypeSecret:
-		secret, err := setting.AsSecret()
-		if err != nil || secret.SwarmRef == nil {
-			return false, hperrors.Wrap(err)
-		}
-		if old != nil {
-			oldSecret, err := old.AsSecret()
-			if err != nil {
-				return false, hperrors.Wrap(err)
-			}
-			err = secrets.UpdateSecretForApp(ctx, db, app, oldSecret, secret)
-			return err == nil, hperrors.Wrap(err)
-		}
-		_, err = secrets.CreateSecretForApp(ctx, db, app, secret)
-		return err == nil, hperrors.Wrap(err)
-	case base.SettingTypeConfigFile:
-		config, err := setting.AsConfigFile()
-		if err != nil || config.SwarmRef == nil {
-			return false, hperrors.Wrap(err)
-		}
-		if old != nil {
-			oldConfig, err := old.AsConfigFile()
-			if err != nil {
-				return false, hperrors.Wrap(err)
-			}
-			err = secrets.UpdateConfigForApp(ctx, db, app, oldConfig, config)
-			return err == nil, hperrors.Wrap(err)
-		}
-		_, err = secrets.CreateConfigForApp(ctx, db, app, config)
-		return err == nil, hperrors.Wrap(err)
-	}
-	return false, nil
 }

@@ -12,7 +12,7 @@ const TITLE_WIDTH = 220;
 
 /** Why host mode cannot be chosen, in the words of the person who can change it. */
 const HOST_MODE_BLOCKED: Record<Exclude<AppDockerApiHostModeBlocker, "">, string> = {
-    switch: "The Privileged Apps switch is off. An administrator turns it on in System Settings → Security.",
+    switch: "The Privileged Apps switch is off. An administrator turns it on in System → HivePaaS → Security.",
     admin: "Only an administrator can give an app the node's Docker socket.",
 };
 

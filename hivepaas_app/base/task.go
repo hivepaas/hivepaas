@@ -29,13 +29,18 @@ const (
 	// failure has to be remembered rather than retried on every deployment.
 	// See service/domainservice.
 	TaskTypeSSLObtain TaskType = "task:ssl-obtain"
+
+	// TaskTypeSettingMountRefresh brings the files apps mount from settings up to
+	// date after one of those settings changed. It is recorded in the
+	// transaction that changes the setting. See service/settingmountservice.
+	TaskTypeSettingMountRefresh TaskType = "task:setting-mount-refresh"
 )
 
 var (
 	AllTaskTypes = []TaskType{TaskTypeDummy, TaskTypeAppDeploy, TaskTypeAppClone,
 		TaskTypeAppPreview, TaskTypeSchedJobExec, TaskTypePeriodicExec,
 		TaskTypeSystemUpdate, TaskTypeWorkflow, TaskTypeSettingsRevert, TaskTypeAppLabelsSweep,
-		TaskTypeSSLObtain}
+		TaskTypeSSLObtain, TaskTypeSettingMountRefresh}
 
 	// These are listing types for front-end to show
 	AllGlobalTaskTypes   = gofn.Drop(AllTaskTypes, TaskTypeDummy)

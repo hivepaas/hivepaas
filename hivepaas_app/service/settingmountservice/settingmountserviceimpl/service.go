@@ -5,12 +5,14 @@ import (
 	"time"
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
+	"github.com/hivepaas/hivepaas/hivepaas_app/config"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/logging"
 	"github.com/hivepaas/hivepaas/hivepaas_app/repository"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/settingmountservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/tasks/queue"
 	"github.com/hivepaas/hivepaas/services/docker"
 )
@@ -34,6 +36,37 @@ type service struct {
 	loadEntries func(ctx context.Context, db database.IDB, appID string) ([]*entity.Setting, error)
 	loadSources func(ctx context.Context, db database.IDB, app *entity.App, ids []string) ([]*entity.Setting, error)
 	loadReaders func(ctx context.Context, db database.IDB, sourceIDs []string) ([]string, error)
+}
+
+var _ settingmountservice.Service = (*service)(nil)
+
+const removalRetryDelay = 2 * time.Second
+
+func New(
+	resLinkRepo repository.ResLinkRepo,
+	settingRepo repository.SettingRepo,
+	taskRepo repository.TaskRepo,
+	dockerManager docker.Manager,
+	taskQueue queue.TaskQueue,
+	logger logging.Logger,
+) settingmountservice.Service {
+	s := &service{
+		resLinkRepo:   resLinkRepo,
+		settingRepo:   settingRepo,
+		taskRepo:      taskRepo,
+		dockerManager: dockerManager,
+		taskQueue:     taskQueue,
+		logger:        logger,
+
+		removalRetryDelay: removalRetryDelay,
+	}
+	// Read on every use: the app secret can be replaced while running, which
+	// renames every mounted object once, at its next refresh.
+	s.rotationKey = func() []byte { return []byte(config.Current().Secret) }
+	s.loadEntries = s.loadEntriesFromRepo
+	s.loadSources = s.loadSourcesFromRepo
+	s.loadReaders = s.loadReadersFromRepo
+	return s
 }
 
 // loadEntriesFromRepo is the app's own entries, whatever their status: an entry

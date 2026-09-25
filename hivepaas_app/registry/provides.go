@@ -89,6 +89,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/scopeservice/scopeserviceimpl"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/settingeventservice/settingeventserviceimpl"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/settinginitservice/settinginitserviceimpl"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/settingmountservice/settingmountserviceimpl"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/settingservice/settingserviceimpl"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/settingsprobationservice/settingsprobationserviceimpl"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/settingsrevertservice/settingsrevertserviceimpl"
@@ -114,6 +115,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/tasks/taskdummy"
 	"github.com/hivepaas/hivepaas/hivepaas_app/tasks/taskperiodicjobexec"
 	"github.com/hivepaas/hivepaas/hivepaas_app/tasks/taskschedjobexec"
+	"github.com/hivepaas/hivepaas/hivepaas_app/tasks/tasksettingmountrefresh"
 	"github.com/hivepaas/hivepaas/hivepaas_app/tasks/tasksettingsrevert"
 	"github.com/hivepaas/hivepaas/hivepaas_app/tasks/tasksslobtain"
 	"github.com/hivepaas/hivepaas/hivepaas_app/tasks/taskworkflow"
@@ -232,6 +234,7 @@ var Provides = []any{
 	taskschedjobexec.NewExecutor,
 	tasksettingsrevert.NewExecutor,
 	tasksslobtain.NewExecutor,
+	tasksettingmountrefresh.NewExecutor,
 	taskworkflow.NewExecutor,
 
 	// Updater
@@ -391,6 +394,7 @@ var Provides = []any{
 	scopeserviceimpl.New,
 	settingeventserviceimpl.New,
 	settinginitserviceimpl.New,
+	settingmountserviceimpl.New,
 	specserviceimpl.New,
 	settingserviceimpl.New,
 	sslrenewalserviceimpl.New,

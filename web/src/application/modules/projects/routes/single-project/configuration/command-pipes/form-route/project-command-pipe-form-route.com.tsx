@@ -33,6 +33,7 @@ export function ProjectCommandPipeFormRoute({ mode, projectId, env, commandPipeI
     function markSaved() {
         setHasChanges(false);
         setSaveRevision(revision => revision + 1);
+        navigateToList();
     }
 
     const { mutate: createProjectCommandPipe, isPending: isCreating } = ProjectCommandPipeCommands.useCreateOne({

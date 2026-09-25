@@ -46,6 +46,7 @@ export function SSHKeyFormRoute({ mode, scope, sshKeyId }: Props) {
     function markSaved() {
         setHasChanges(false);
         setSaveRevision(revision => revision + 1);
+        navigateToList();
     }
 
     const { mutate: createSettingSSHKey, isPending: isCreatingSetting } = SSHKeyCommands.useCreateOne({

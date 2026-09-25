@@ -44,6 +44,7 @@ export function RegistryAuthFormRoute({ mode, scope, registryAuthId }: Props) {
     function markSaved() {
         setHasChanges(false);
         setSaveRevision(revision => revision + 1);
+        navigateToList();
     }
 
     const { mutate: createSettingRegistryAuth, isPending: isCreatingSetting } = RegistryAuthCommands.useCreateOne({

@@ -45,6 +45,7 @@ export function ImPlatformFormRoute({ mode, scope, imPlatformId }: Props) {
     function markSaved() {
         setHasChanges(false);
         setSaveRevision(revision => revision + 1);
+        navigateToList();
     }
 
     const { mutate: createSettingImPlatform, isPending: isCreatingSetting } = ImServiceCommands.useCreateOne({

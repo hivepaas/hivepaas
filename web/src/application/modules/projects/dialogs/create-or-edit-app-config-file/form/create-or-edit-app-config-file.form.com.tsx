@@ -178,7 +178,7 @@ export function CreateOrEditAppConfigFileForm({
                                         }
                                         rows={8}
                                         aria-invalid={isTextValueInvalid}
-                                        className={PROJECT_FORM_CONTROL_MAX_WIDTH_CLASS}
+                                        className="w-full"
                                     />
                                     <p className="text-sm text-muted-foreground">Max size: 1mb</p>
                                     <FieldError errors={[errors.textValue]} />

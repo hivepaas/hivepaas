@@ -37,6 +37,7 @@ export function ProjectCommandTemplateFormRoute({ mode, projectId, env, commandT
     function markSaved() {
         setHasChanges(false);
         setSaveRevision(revision => revision + 1);
+        navigateToList();
     }
 
     const { mutate: createProjectCommandTemplate, isPending: isCreating } = ProjectCommandTemplateCommands.useCreateOne(

@@ -43,6 +43,7 @@ export function BasicAuthFormRoute({ mode, scope, basicAuthId }: Props) {
     function markSaved() {
         setHasChanges(false);
         setSaveRevision(revision => revision + 1);
+        navigateToList();
     }
 
     const { mutate: createSettingBasicAuth, isPending: isCreatingSetting } = BasicAuthCommands.useCreateOne({

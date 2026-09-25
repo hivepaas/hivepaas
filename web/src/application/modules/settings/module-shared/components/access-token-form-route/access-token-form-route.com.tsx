@@ -46,6 +46,7 @@ export function AccessTokenFormRoute({ mode, scope, accessTokenId }: Props) {
     function markSaved() {
         setHasChanges(false);
         setSaveRevision(revision => revision + 1);
+        navigateToList();
     }
 
     const { mutate: createSettingAccessToken, isPending: isCreatingSetting } = AccessTokenCommands.useCreateOne({

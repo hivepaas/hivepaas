@@ -45,6 +45,7 @@ export function CloudStorageFormRoute({ mode, scope, cloudStorageId }: Props) {
     function markSaved() {
         setHasChanges(false);
         setSaveRevision(revision => revision + 1);
+        navigateToList();
     }
 
     const { mutate: createSettingCloudStorage, isPending: isCreatingSetting } = CloudStorageCommands.useCreateOne({

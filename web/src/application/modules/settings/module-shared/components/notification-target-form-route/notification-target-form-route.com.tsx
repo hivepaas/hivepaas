@@ -49,6 +49,7 @@ export function NotificationTargetFormRoute({ mode, scope, notificationTargetId 
     function markSaved() {
         setHasChanges(false);
         setSaveRevision(revision => revision + 1);
+        navigateToList();
     }
 
     const { mutate: createSettingNotification, isPending: isCreatingSetting } = NotificationCommands.useCreateOne({

@@ -41,6 +41,7 @@ export function OAuthFormRoute({ mode, oauthId }: Props) {
     function markSaved() {
         setHasChanges(false);
         setSaveRevision(revision => revision + 1);
+        navigateToList();
     }
 
     const { mutate: createOAuth, isPending: isCreating } = OAuthCommands.useCreateOne({

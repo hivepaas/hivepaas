@@ -61,6 +61,7 @@ export function EmailAccountFormRoute({ mode, scope, emailAccountId }: Props) {
     function markSaved() {
         setHasChanges(false);
         setSaveRevision(revision => revision + 1);
+        navigateToList();
     }
 
     const { mutate: createSettingEmailAccount, isPending: isCreatingSetting } = EmailCommands.useCreateOne({

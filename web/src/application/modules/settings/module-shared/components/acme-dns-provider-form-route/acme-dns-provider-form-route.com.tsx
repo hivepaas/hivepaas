@@ -55,6 +55,7 @@ export function AcmeDnsProviderFormRoute({ mode, scope, acmeDnsProviderId }: Pro
     function markSaved() {
         setHasChanges(false);
         setSaveRevision(revision => revision + 1);
+        navigateToList();
     }
 
     const { mutate: createSettingAcmeDnsProvider, isPending: isCreatingSetting } = AcmeDnsProviderCommands.useCreateOne(

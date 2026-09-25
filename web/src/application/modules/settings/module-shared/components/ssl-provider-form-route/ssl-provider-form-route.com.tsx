@@ -100,6 +100,7 @@ export function SslProviderFormRoute({ mode, scope, sslProviderId }: Props) {
     function markSaved() {
         setHasChanges(false);
         setSaveRevision(revision => revision + 1);
+        navigateToList();
     }
 
     const { mutate: createSettingSslProvider, isPending: isCreatingSetting } = SslProviderCommands.useCreateOne({

@@ -45,6 +45,7 @@ export function GithubAppFormRoute({ mode, scope, githubAppId }: Props) {
     function markSaved() {
         setHasChanges(false);
         setSaveRevision(revision => revision + 1);
+        navigateToList();
     }
 
     const { mutate: createSettingsGithubApp, isPending: isCreatingSettings } = GithubAppCommands.useCreateOne({

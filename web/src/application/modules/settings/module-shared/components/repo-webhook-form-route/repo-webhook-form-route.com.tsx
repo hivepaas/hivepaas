@@ -49,10 +49,16 @@ export function RepoWebhookFormRoute({ mode, scope, repoWebhookId }: Props) {
 
     const isEditMode = mode === "edit";
     const detailId = isEditMode ? (repoWebhookId ?? "") : "";
+    const listRoute = getRepoWebhookListRoute(scope);
+
+    function navigateToList() {
+        navigate.modules(listRoute, { ignorePrevPath: true });
+    }
 
     function markSaved() {
         setHasChanges(false);
         setSaveRevision(revision => revision + 1);
+        navigateToList();
     }
 
     const { mutate: createSettingsRepoWebhook, isPending: isCreatingSettings } = RepoWebhookCommands.useCreateOne({
@@ -163,7 +169,8 @@ export function RepoWebhookFormRoute({ mode, scope, repoWebhookId }: Props) {
             return;
         }
 
-        navigate.modules(getRepoWebhookListRoute(scope), { ignorePrevPath: true });
+        setHasChanges(false);
+        navigateToList();
     }
 
     const {

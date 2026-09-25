@@ -59,6 +59,7 @@ export function ProjectSecretFormRoute({ mode, projectId, secretId }: Props) {
     function markSaved() {
         setHasChanges(false);
         setSaveRevision(revision => revision + 1);
+        navigateToList();
     }
 
     const detailQuery = ProjectSecretsQueries.useFindOneById(

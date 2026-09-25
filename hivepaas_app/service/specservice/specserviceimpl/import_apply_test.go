@@ -2,6 +2,7 @@ package specserviceimpl
 
 import (
 	"context"
+	"slices"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -269,4 +270,21 @@ func TestApplyCreatesAProjectFromAnotherInstallation(t *testing.T) {
 		assert.Equal(t, "generated", plain)
 	}
 	assert.Equal(t, specmodel.OutcomeApplied, node(t, resp.Plan, "projects/project_new").Outcome)
+}
+
+// Import records a refresh for what it wrote, in its own transaction; it is
+// scheduled with the rest of phase one's tasks, after the commit.
+func TestApplyRecordsAMountRefreshForWhatItWrote(t *testing.T) {
+	svc, bundle := planFixture(t)
+	mounts, _ := svc.settingMountService.(*fakeSettingMounts)
+	globalCerts(bundle)["localhost"].(map[string]any)["domain"] = "renewed.example.com"
+
+	resp := apply(t, svc, bundle, applyReq(t, svc, bundle))
+
+	assert.True(t, slices.ContainsFunc(mounts.recorded, func(setting *entity.Setting) bool {
+		return setting.ID == "cert_1"
+	}), "the certificate import rewrote")
+	assert.True(t, slices.ContainsFunc(resp.Tasks, func(task *entity.Task) bool {
+		return task.Type == base.TaskTypeSettingMountRefresh
+	}))
 }

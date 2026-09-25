@@ -96,6 +96,15 @@ func (w *writer) write(ctx context.Context) error {
 	if err := w.provisionApps(ctx); err != nil {
 		return err
 	}
+	// Written settings someone mounts are refreshed once the import commits,
+	// scheduled with the other tasks phase one made.
+	refresh, err := w.p.s.settingMountService.RecordRefresh(ctx, w.p.db, w.written...)
+	if err != nil {
+		return hperrors.Wrap(err)
+	}
+	if refresh != nil {
+		w.tasks = append(w.tasks, refresh)
+	}
 	w.setOutcomes()
 	return nil
 }

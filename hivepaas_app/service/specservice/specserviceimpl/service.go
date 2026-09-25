@@ -18,6 +18,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/envvarservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/networkservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/projectservice"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/settingmountservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/specservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/specservice/specmodel"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/sslservice"
@@ -50,6 +51,7 @@ func New(
 	dockerAPIService dockerapiservice.Service,
 	envVarService envvarservice.Service,
 	networkService networkservice.Service,
+	settingMountService settingmountservice.Service,
 	sslService sslservice.Service,
 	volumeService volumeservice.Service,
 
@@ -74,6 +76,7 @@ func New(
 		dockerAPIService:     dockerAPIService,
 		envVarService:        envVarService,
 		networkService:       networkService,
+		settingMountService:  settingMountService,
 		sslService:           sslService,
 		volumeService:        volumeService,
 
@@ -136,6 +139,7 @@ type service struct {
 	clusterSecretService clustersecretservice.Service
 	envVarService        envvarservice.Service
 	networkService       networkservice.Service
+	settingMountService  settingmountservice.Service
 	taskQueue            queue.TaskQueue
 
 	clusterService   clusterservice.Service

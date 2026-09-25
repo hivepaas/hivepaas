@@ -25,6 +25,8 @@ const (
 	timeoutSettingsRevert = 5 * time.Minute
 	timeoutAppLabelsSweep = 15 * time.Minute
 	timeoutSSLObtain      = 15 * time.Minute
+
+	timeoutSettingMountRefresh = 15 * time.Minute
 )
 
 var taskTypeTimeouts = map[base.TaskType]time.Duration{
@@ -51,6 +53,9 @@ var taskTypeTimeouts = map[base.TaskType]time.Duration{
 	// A certificate authority answers an HTTP challenge in seconds and a DNS one
 	// only after the record has propagated, which is minutes on an unlucky zone.
 	base.TaskTypeSSLObtain: timeoutSSLObtain,
+	// One service update per app that mounts the changed setting, each a
+	// restart that converges on its own: a fan-out, as the labels sweep is.
+	base.TaskTypeSettingMountRefresh: timeoutSettingMountRefresh,
 
 	// NOTE: the types below keep the long ceiling on purpose.
 	//

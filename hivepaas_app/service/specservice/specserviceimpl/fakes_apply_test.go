@@ -7,6 +7,7 @@ import (
 	"github.com/moby/moby/api/types/swarm"
 	"github.com/moby/moby/client"
 
+	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/appdeploymentservice"
@@ -17,6 +18,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/dockerapiservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/envvarservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/networkservice"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/settingmountservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/volumeservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/tasks/queue"
 	"github.com/hivepaas/hivepaas/services/docker"
@@ -189,4 +191,22 @@ type fakeNoDockerAPI struct {
 
 func (fakeNoDockerAPI) ApplyToService(context.Context, database.IDB, string, *swarm.ServiceSpec) error {
 	return nil
+}
+
+type fakeSettingMounts struct {
+	settingmountservice.Service
+	recorded []*entity.Setting
+}
+
+func (f *fakeSettingMounts) RecordRefresh(
+	_ context.Context, _ database.IDB, settings ...*entity.Setting,
+) (*entity.Task, error) {
+	// As the engine does, when some app could read one: here, any source.
+	f.recorded = append(f.recorded, settings...)
+	for _, setting := range settings {
+		if settingmountservice.IsSourceType(setting.Type) {
+			return &entity.Task{ID: "task_mount_refresh", Type: base.TaskTypeSettingMountRefresh}, nil
+		}
+	}
+	return nil, nil
 }

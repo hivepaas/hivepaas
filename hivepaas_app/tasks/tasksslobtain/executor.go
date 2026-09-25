@@ -23,6 +23,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/repository"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/approutingservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/appservice"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/settingmountservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/settingservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/sslservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/tasks/queue"
@@ -33,13 +34,15 @@ import (
 const retryAfter = 6 * time.Hour
 
 type Executor struct {
-	appRepo           repository.AppRepo
-	appService        appservice.Service
-	settingRepo       repository.SettingRepo
-	settingService    settingservice.Service
-	sslService        sslservice.Service
-	appRoutingService approutingservice.Service
-	logger            logging.Logger
+	appRepo             repository.AppRepo
+	appService          appservice.Service
+	settingRepo         repository.SettingRepo
+	settingMountService settingmountservice.Service
+	settingService      settingservice.Service
+	sslService          sslservice.Service
+	appRoutingService   approutingservice.Service
+	taskQueue           queue.TaskQueue
+	logger              logging.Logger
 }
 
 func NewExecutor(
@@ -47,19 +50,22 @@ func NewExecutor(
 	appRepo repository.AppRepo,
 	appService appservice.Service,
 	settingRepo repository.SettingRepo,
+	settingMountService settingmountservice.Service,
 	settingService settingservice.Service,
 	sslService sslservice.Service,
 	appRoutingService approutingservice.Service,
 	logger logging.Logger,
 ) *Executor {
 	e := &Executor{
-		appRepo:           appRepo,
-		appService:        appService,
-		settingRepo:       settingRepo,
-		settingService:    settingService,
-		sslService:        sslService,
-		appRoutingService: appRoutingService,
-		logger:            logger,
+		appRepo:             appRepo,
+		appService:          appService,
+		settingRepo:         settingRepo,
+		settingMountService: settingMountService,
+		settingService:      settingService,
+		sslService:          sslService,
+		appRoutingService:   appRoutingService,
+		taskQueue:           taskQueue,
+		logger:              logger,
 	}
 	taskQueue.RegisterExecutor(base.TaskTypeSSLObtain, e.execute)
 	return e
@@ -105,6 +111,15 @@ func (e *Executor) execute(
 
 	if err = e.saveObtained(ctx, db, setting); err != nil {
 		return hperrors.Wrap(err)
+	}
+	// An app mounting this certificate gets it once the task's transaction has
+	// committed.
+	refresh, err := e.settingMountService.RecordRefresh(ctx, db, setting)
+	if err != nil {
+		return hperrors.Wrap(err)
+	}
+	if refresh != nil {
+		task.OnPostTx(func() { _ = e.taskQueue.ScheduleTask(context.WithoutCancel(ctx), refresh) })
 	}
 
 	// The certificate exists now; the app is still being served without it until

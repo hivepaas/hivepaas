@@ -58,6 +58,7 @@ func (uc *BaseUC) CreateSetting(
 	data *CreateSettingData,
 ) (*CreateSettingResp, error) {
 	var persistingData *PersistingSettingCreationData
+	var event *settingeventservice.CreateEvent
 	err := transaction.Execute(ctx, uc.DB, func(db database.Tx) error {
 		err := uc.loadSettingForCreation(ctx, db, req, data)
 		if err != nil {
@@ -104,7 +105,8 @@ func (uc *BaseUC) CreateSetting(
 		}
 
 		// Fire create event
-		err = uc.SettingEventService.OnCreate(ctx, db, &settingeventservice.CreateEvent{Setting: persistingData.Setting})
+		event = &settingeventservice.CreateEvent{Setting: persistingData.Setting}
+		err = uc.SettingEventService.OnCreate(ctx, db, event)
 		if err != nil {
 			return hperrors.Wrap(err)
 		}
@@ -113,6 +115,11 @@ func (uc *BaseUC) CreateSetting(
 	})
 	if err != nil {
 		return nil, hperrors.Wrap(err)
+	}
+	// The tasks the event recorded exist once the transaction has committed. A
+	// transaction that returned before firing it has none.
+	if event != nil {
+		uc.SettingEventService.ScheduleTasks(ctx, event.Tasks...)
 	}
 
 	return &CreateSettingResp{

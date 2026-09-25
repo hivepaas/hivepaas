@@ -52,6 +52,7 @@ func (uc *BaseUC) UpdateUniqueSettingStatus(
 	req *UpdateUniqueSettingStatusReq,
 	data *UpdateUniqueSettingStatusData,
 ) (*UpdateUniqueSettingStatusResp, error) {
+	var event *settingeventservice.UpdateEvent
 	err := transaction.Execute(ctx, uc.DB, func(db database.Tx) error {
 		err := uc.loadUniqueSettingForUpdateStatus(ctx, db, req, data)
 		if err != nil {
@@ -91,10 +92,11 @@ func (uc *BaseUC) UpdateUniqueSettingStatus(
 		}
 
 		// Fire update event
-		err = uc.SettingEventService.OnUpdateStatus(ctx, db, &settingeventservice.UpdateEvent{
+		event = &settingeventservice.UpdateEvent{
 			Setting:    persistingData.Setting,
 			OldSetting: data.Setting,
-		})
+		}
+		err = uc.SettingEventService.OnUpdateStatus(ctx, db, event)
 		if err != nil {
 			return hperrors.Wrap(err)
 		}
@@ -103,6 +105,11 @@ func (uc *BaseUC) UpdateUniqueSettingStatus(
 	})
 	if err != nil {
 		return nil, hperrors.Wrap(err)
+	}
+	// The tasks the event recorded exist once the transaction has committed. A
+	// transaction that returned before firing it has none.
+	if event != nil {
+		uc.SettingEventService.ScheduleTasks(ctx, event.Tasks...)
 	}
 
 	return &UpdateUniqueSettingStatusResp{}, nil

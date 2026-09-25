@@ -51,6 +51,10 @@ func (s *service) imageDeployStepServiceApply(
 			if err := s.dockerAPIService.ApplyToService(ctx, db, data.App.ID, &svc.Spec); err != nil {
 				return false, hperrors.Wrap(err)
 			}
+			// Mounted settings too: a refresh that failed is put right here.
+			if err := s.settingMountService.ApplyToService(ctx, db, data.App, &svc.Spec); err != nil {
+				return false, hperrors.Wrap(err)
+			}
 
 			placementReq.Service = svc
 			_, err := s.placementService.ApplyPlacementSettings(ctx, db, placementReq)
@@ -66,6 +70,9 @@ func (s *service) imageDeployStepServiceApply(
 	if err != nil {
 		return hperrors.Wrap(err)
 	}
+	// What the update replaced goes once nothing references it; what is still
+	// held is left to the next sweep rather than failing the deployment.
+	_ = s.settingMountService.Sweep(ctx, data.App)
 
 	// Save the used image in the output
 	data.Deployment.Output.ImageTags = append(data.Deployment.Output.ImageTags, imageSource.Image)

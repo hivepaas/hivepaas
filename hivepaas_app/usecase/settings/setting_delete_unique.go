@@ -45,6 +45,7 @@ func (uc *BaseUC) DeleteUniqueSetting(
 	req *DeleteUniqueSettingReq,
 	data *DeleteUniqueSettingData,
 ) (*DeleteUniqueSettingResp, error) {
+	var event *settingeventservice.DeleteEvent
 	err := transaction.Execute(ctx, uc.DB, func(db database.Tx) error {
 		err := uc.loadUniqueSettingForDeletion(ctx, db, req, data)
 		if err != nil {
@@ -84,9 +85,10 @@ func (uc *BaseUC) DeleteUniqueSetting(
 		}
 
 		// Fire delete event
-		err = uc.SettingEventService.OnDelete(ctx, db, &settingeventservice.DeleteEvent{
+		event = &settingeventservice.DeleteEvent{
 			Setting: persistingData.Setting,
-		})
+		}
+		err = uc.SettingEventService.OnDelete(ctx, db, event)
 		if err != nil {
 			return hperrors.Wrap(err)
 		}
@@ -95,6 +97,11 @@ func (uc *BaseUC) DeleteUniqueSetting(
 	})
 	if err != nil {
 		return nil, hperrors.Wrap(err)
+	}
+	// The tasks the event recorded exist once the transaction has committed. A
+	// transaction that returned before firing it has none.
+	if event != nil {
+		uc.SettingEventService.ScheduleTasks(ctx, event.Tasks...)
 	}
 
 	return &DeleteUniqueSettingResp{}, nil

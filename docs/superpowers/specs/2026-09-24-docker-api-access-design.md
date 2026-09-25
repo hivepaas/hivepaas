@@ -193,7 +193,7 @@ In order, for `POST /containers/create`:
    the limits and may not exceed them. `CpuPeriod` must be one docker accepts
    (1000-1000000). `PidsLimit` defaults to 1024 and may not exceed 4096.
    Unlimited swap (`MemorySwap: -1`) is refused.
-6. **Ownership.** The label `hivepaas.docker-api.app=<app id>` is set, replacing
+6. **Ownership.** The label `hivepaas.dockerApi.app=<app id>` is set, replacing
    whatever the client put there, and every label starting `com.docker.` or
    `hivepaas.` is dropped. Those mark swarm tasks and what HivePaaS owns. The same
    holds for the labels of a volume or network the app creates.
@@ -251,7 +251,7 @@ access takes them away on the next deployment:
 - the app's network `hp-dapi-<app id>`.
 
 That network is an attachable overlay, created on first need and labelled
-`hivepaas.docker-api.network=<app id>`. It does not carry the owner label, so
+`hivepaas.dockerApi.network=<app id>`. It does not carry the owner label, so
 the app can use it but not remove it. It is an overlay rather than a bridge so that the app's task, a swarm
 service, can join it.
 

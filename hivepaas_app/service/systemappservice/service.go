@@ -47,9 +47,9 @@ type Service interface {
 	// so the app restarts when anything changed.
 	SetResources(ctx context.Context, app *entity.App, res Resources) error
 
-	// SyncSecrets makes the app's secrets exactly files: it creates the ones that
-	// are missing, replaces the ones whose value or path changed and removes the
-	// rest, in the swarm and in the app's settings. Every change is a service
+	// SyncSecrets makes the app's secrets exactly files: each a secret, mounted by
+	// a setting mount. It creates what is missing, rewrites what changed - a value,
+	// a path - and removes the rest. The mounts are refreshed in one service
 	// update, so the app restarts once when anything changed.
 	SyncSecrets(ctx context.Context, db database.IDB, app *entity.App, files []*SecretFile) error
 

@@ -7,7 +7,6 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/copier"
-	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/fileutil"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings"
 )
 
@@ -32,27 +31,15 @@ type GetSecretResp struct {
 
 type SecretResp struct {
 	*settings.BaseSettingResp
-	Key          string              `json:"key"`
-	Value        string              `json:"value,omitzero"`
-	Base64       bool                `json:"base64"`
-	SwarmRef     *SwarmSecretRefResp `json:"swarmRef"`
-	SecretMasked bool                `json:"secretMasked,omitempty"`
+	Key          string `json:"key"`
+	Value        string `json:"value,omitzero"`
+	Base64       bool   `json:"base64"`
+	SecretMasked bool   `json:"secretMasked,omitempty"`
 }
 
 func (resp *SecretResp) CopyValue(field entity.EncryptedField) error {
 	resp.Value = field.String()
 	return nil
-}
-
-type SwarmSecretRefResp struct {
-	File *SwarmRefFileTargetResp `json:"file"`
-}
-
-type SwarmRefFileTargetResp struct {
-	Name string            `json:"name"`
-	UID  string            `json:"uid"`
-	GID  string            `json:"gid"`
-	Mode fileutil.FileMode `json:"mode"`
 }
 
 func TransformSecret(

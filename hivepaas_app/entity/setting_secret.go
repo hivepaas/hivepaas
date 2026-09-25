@@ -7,7 +7,6 @@ import (
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
-	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/fileutil"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/reflectutil"
 )
 
@@ -24,24 +23,12 @@ func (s *secretParser) New() SettingData {
 	return &Secret{}
 }
 
+// Secret is a value an app reads through ${secrets.NAME}, or mounts as a file
+// through a setting mount (app-setting-mount).
 type Secret struct {
-	Key      string          `json:"key"`
-	Value    EncryptedField  `json:"value"`
-	Base64   bool            `json:"base64,omitempty"`
-	SwarmRef *SwarmSecretRef `json:"swarmRef,omitempty"`
-}
-
-type SwarmSecretRef struct {
-	File       *SwarmRefFileTarget `json:"file"`
-	SecretID   string              `json:"secretId"`
-	SecretName string              `json:"secretName"`
-}
-
-type SwarmRefFileTarget struct {
-	Name string            `json:"name,omitempty"`
-	UID  string            `json:"uid,omitempty"`
-	GID  string            `json:"gid,omitempty"`
-	Mode fileutil.FileMode `json:"mode,omitempty"`
+	Key    string         `json:"key"`
+	Value  EncryptedField `json:"value"`
+	Base64 bool           `json:"base64,omitempty"`
 }
 
 func (s *Secret) GetType() base.SettingType {

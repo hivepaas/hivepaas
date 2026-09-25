@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"github.com/moby/moby/api/types/mount"
-	"github.com/moby/moby/api/types/swarm"
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
@@ -114,48 +113,19 @@ func (s *service) DeleteApp(
 	return nil
 }
 
-func (s *service) getDockerSecretsAndConfigs(
-	ctx context.Context,
-	app *entity.App,
-	service *swarm.Service, // can be nil
-) ([]*swarm.SecretReference, []*swarm.ConfigReference, error) {
-	if service == nil {
-		inspect, err := s.dockerManager.ServiceInspect(ctx, app.ServiceID)
-		if err != nil {
-			if errors.Is(err, hperrors.ErrNotFound) {
-				return nil, nil, nil
-			}
-			return nil, nil, hperrors.Wrap(err)
-		}
-		service = &inspect.Service
-	}
-
-	if service.Spec.TaskTemplate.ContainerSpec == nil {
-		return nil, nil, nil
-	}
-	secrets := service.Spec.TaskTemplate.ContainerSpec.Secrets
-	configs := service.Spec.TaskTemplate.ContainerSpec.Configs
-
-	return secrets, configs, nil
-}
-
 // deleteAppInDocker removes everything the app has outside the database: its
-// service, the secrets and config files created for it, and - when asked - the
+// service, the objects of its setting mounts, and - when asked - the
 // directories it kept its data in.
 //
-// What has to be read has to be read before the service goes: the secrets, the
-// configs and the mounts are all recorded on it, and afterwards nothing says
-// where they were.
+// What has to be read has to be read before the service goes: the mounts are
+// recorded on it, and afterwards nothing says where they were.
 func (s *service) deleteAppInDocker(ctx context.Context, db database.IDB, app *entity.App,
 	removeStorage bool) error {
 	if app.ServiceID == "" {
 		return nil
 	}
-	secrets, configs, err := s.getDockerSecretsAndConfigs(ctx, app, nil)
-	if err != nil {
-		return hperrors.Wrap(err)
-	}
 	var mounts []mount.Mount
+	var err error
 	if removeStorage {
 		if mounts, err = s.getAppMounts(ctx, app); err != nil {
 			return hperrors.Wrap(err)
@@ -171,7 +141,6 @@ func (s *service) deleteAppInDocker(ctx context.Context, db database.IDB, app *e
 	// leave behind is something to clean up by hand - or, for what the app's
 	// Docker API left, what the agents sweep - and failing here instead would
 	// leave an app half deleted.
-	_ = s.deleteDockerSecretsAndConfigs(ctx, secrets, configs)
 	_ = s.dockerAPIService.RemoveApp(ctx, app.ID)
 	_ = s.settingMountService.RemoveApp(ctx, app.ID)
 	if removeStorage {
@@ -195,28 +164,4 @@ func (s *service) getAppMounts(ctx context.Context, app *entity.App) ([]mount.Mo
 		return nil, nil
 	}
 	return inspect.Service.Spec.TaskTemplate.ContainerSpec.Mounts, nil
-}
-
-func (s *service) deleteDockerSecretsAndConfigs(
-	ctx context.Context,
-	secrets []*swarm.SecretReference,
-	configs []*swarm.ConfigReference,
-) error {
-	configIDs := make([]string, 0, len(configs))
-	for _, config := range configs {
-		configIDs = append(configIDs, config.ConfigID)
-	}
-	e1 := s.clusterSecretService.ConfigsRemove(ctx, configIDs, clusterservice.ItemRemovalRetryMax, 0)
-
-	secretIDs := make([]string, 0, len(secrets))
-	for _, secret := range secrets {
-		secretIDs = append(secretIDs, secret.SecretID)
-	}
-	e2 := s.clusterSecretService.SecretsRemove(ctx, secretIDs, clusterservice.ItemRemovalRetryMax, 0)
-
-	err := errors.Join(e1, e2)
-	if err != nil {
-		return hperrors.Wrap(err)
-	}
-	return nil
 }

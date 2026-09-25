@@ -825,7 +825,7 @@ func entryGrants(body any) (source any, parts []string) {
 	files, _ := entry["files"].([]any)
 	for _, f := range files {
 		file, _ := f.(map[string]any)
-		if part, _ := file["part"].(string); settingmountservice.SensitivePart(part) {
+		if part, _ := file["part"].(string); settingmountservice.GatedPart(part) {
 			parts = append(parts, part)
 		}
 	}

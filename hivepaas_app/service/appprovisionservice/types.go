@@ -74,8 +74,8 @@ type ProvisionAppResp struct {
 // so that a transaction that rolls back can be followed by removing it.
 type CreatedInDocker struct {
 	ServiceID string
-	Secrets   []*entity.SwarmSecretRef
-	Configs   []*entity.SwarmConfigRef
+	// AppID is the app whose setting mounts' objects were made with it.
+	AppID string
 }
 
 type ProvisionAppsReq struct {
@@ -106,11 +106,6 @@ type ApplyAppConfigurationReq struct {
 }
 
 type ApplyAppConfigurationResp struct {
-	// Secrets and Configs are the docker objects created, in the order the app's
-	// settings list them. An entry is nil where the setting asked for no file to
-	// be mounted, which is a secret read through the environment.
-	Secrets []*entity.SwarmSecretRef
-	Configs []*entity.SwarmConfigRef
 	// CertTasks obtain the certificates the app's domains have none for. Like
 	// DeploymentTask they are created but not scheduled - see ProvisionAppResp.
 	CertTasks []*entity.Task

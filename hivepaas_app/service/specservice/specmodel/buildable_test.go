@@ -49,10 +49,15 @@ settings:
   envVars: {data: [{k: A, v: b}]}
   secrets:
     ADMIN_PASSWORD: {value: hunter2}
-    LICENSE: {value: abc, base64: false, swarmRef: {file: {name: /run/secrets/license, uid: "0", gid: "0", mode: 400}}}
+    LICENSE:
+      value: abc
+      base64: false
+      inheritable: true
+      swarmRef: {file: {name: /run/secrets/license, uid: "0", gid: "0", mode: 400}}
   configFiles:
     postgresql.conf:
       content: "max_connections = 200\n"
+      inheritable: true
       swarmRef: {file: {name: /etc/postgresql/postgresql.conf, mode: 444}}
   dockerApi:
     images: [autobase/automation]
@@ -130,6 +135,8 @@ func TestCheckBuildableRefusesTheRest(t *testing.T) {
 		"config swarm id": {"settings:\n  configFiles:\n    a.conf: {content: x, swarmRef: {configId: abc}}\n",
 			"settings.configFiles.a.conf.swarmRef.configId"},
 		"routing reset": {"settings:\n  routing: {port: 80, reset: true}\n", "settings.routing.reset"},
+		"inheritable not a bool": {"settings:\n  configFiles:\n    a.conf: {content: x, inheritable: 'yes'}\n",
+			"settings.configFiles.a.conf.inheritable"},
 	}
 	for name, tc := range cases {
 		t.Run(name, func(t *testing.T) {

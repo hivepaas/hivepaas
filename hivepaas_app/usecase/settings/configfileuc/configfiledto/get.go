@@ -7,7 +7,6 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/copier"
-	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/fileutil"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings"
 )
 
@@ -32,20 +31,8 @@ type GetConfigFileResp struct {
 
 type ConfigFileResp struct {
 	*settings.BaseSettingResp
-	Content  string                  `json:"content"`
-	Base64   bool                    `json:"base64"`
-	SwarmRef *SwarmConfigFileRefResp `json:"swarmRef"`
-}
-
-type SwarmConfigFileRefResp struct {
-	File *SwarmRefFileTargetResp `json:"file"`
-}
-
-type SwarmRefFileTargetResp struct {
-	Name string            `json:"name"`
-	UID  string            `json:"uid"`
-	GID  string            `json:"gid"`
-	Mode fileutil.FileMode `json:"mode"`
+	Content string `json:"content"`
+	Base64  bool   `json:"base64"`
 }
 
 func TransformConfigFile(

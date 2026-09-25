@@ -3,6 +3,7 @@ package systemappserviceimpl
 import (
 	"context"
 	"maps"
+	"reflect"
 	"slices"
 	"time"
 
@@ -16,6 +17,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/fileutil"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/timeutil"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/ulid"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/settingmountservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/systemappservice"
 )
 
@@ -24,136 +26,160 @@ import (
 // the container they are mounted into can see them.
 const secretFileMode = fileutil.FileMode(0o444)
 
-// secretChange is one secret setting to write once the swarm has been changed.
-type secretChange struct {
-	setting *entity.Setting
-	// next is nil for a secret being removed.
-	next *entity.Secret
-}
+// secretPart is the part of a secret its file holds.
+const secretPart = "value"
 
+// SyncSecrets makes the app's secrets exactly files: each a secret, mounted by a
+// setting mount the way a template's swarmRef makes one, under the entry key
+// its name makes. The mounts are refreshed once when anything changed, which is
+// what puts the files in the container.
 func (s *service) SyncSecrets(
 	ctx context.Context,
 	db database.IDB,
 	app *entity.App,
 	files []*systemappservice.SecretFile,
 ) error {
-	existing := make(map[string]*entity.Setting)
-	for _, setting := range app.GetSettingsByType(base.SettingTypeSecret) {
-		existing[setting.Name] = setting
-	}
+	secrets := settingsByName(app.GetSettingsByType(base.SettingTypeSecret))
+	mounts := settingsByName(app.GetSettingsByType(base.SettingTypeAppSettingMount))
 
 	timeNow := timeutil.NowUTC()
-	var olds, news []*entity.Secret
-	var changes []*secretChange
+	changed := false
 	wanted := make(map[string]bool, len(files))
 	for _, file := range files {
 		wanted[file.Key] = true
-		next := &entity.Secret{
-			Key:   file.Key,
-			Value: entity.NewEncryptedField(file.Value),
-			SwarmRef: &entity.SwarmSecretRef{
-				File: &entity.SwarmRefFileTarget{Name: file.Path, Mode: secretFileMode},
-			},
-		}
-
-		setting := existing[file.Key]
-		if setting == nil {
-			olds, news = append(olds, nil), append(news, next)
-			changes = append(changes, &secretChange{setting: newSecretSetting(app, file.Key, timeNow), next: next})
-			continue
-		}
-		current, err := setting.AsSecret()
+		secret, wrote, err := s.syncSecret(ctx, db, app, secrets[file.Key], file, timeNow)
 		if err != nil {
 			return hperrors.Wrap(err)
 		}
-		same, err := sameSecretFile(current, file)
+		changed = changed || wrote
+		key := settingmountservice.EntryKeyFor(file.Key)
+		wrote, err = s.syncSecretMount(ctx, db, app, mounts[key], key, secret, file, timeNow)
 		if err != nil {
 			return hperrors.Wrap(err)
 		}
-		if same {
-			continue
-		}
-		olds, news = append(olds, current), append(news, next)
-		changes = append(changes, &secretChange{setting: setting, next: next})
+		changed = changed || wrote
 	}
-	for _, key := range slices.Sorted(maps.Keys(existing)) {
+	for _, key := range slices.Sorted(maps.Keys(secrets)) {
 		if wanted[key] {
 			continue
 		}
-		current, err := existing[key].AsSecret()
-		if err != nil {
-			return hperrors.Wrap(err)
+		for _, setting := range []*entity.Setting{mounts[settingmountservice.EntryKeyFor(key)], secrets[key]} {
+			if setting == nil {
+				continue
+			}
+			if err := s.deleteSetting(ctx, db, setting, timeNow); err != nil {
+				return hperrors.Wrap(err)
+			}
 		}
-		olds, news = append(olds, current), append(news, nil)
-		changes = append(changes, &secretChange{setting: existing[key]})
+		changed = true
 	}
-	if len(changes) == 0 {
+	if !changed {
 		return nil
 	}
-
-	// The swarm first: creating a secret is what fills in the reference the
-	// setting then records.
-	if err := s.clusterSecretService.UpdateSecretsForApp(ctx, db, app, olds, news); err != nil {
-		return hperrors.Wrap(err)
-	}
-	for _, change := range changes {
-		if err := s.persistSecretChange(ctx, db, change, timeNow); err != nil {
-			return hperrors.Wrap(err)
-		}
-	}
-	return nil
+	return hperrors.Wrap(s.settingMountService.Refresh(ctx, db, app))
 }
 
-func (s *service) persistSecretChange(
-	ctx context.Context,
-	db database.IDB,
-	change *secretChange,
-	timeNow time.Time,
-) error {
-	setting := change.setting
-	setting.UpdateVer++
-	setting.UpdatedAt = timeNow
-	if change.next == nil {
-		setting.DeletedAt = timeNow
-		return hperrors.Wrap(s.settingRepo.Update(ctx, db, setting,
-			bunex.UpdateColumns("deleted_at", "update_ver", "updated_at")))
+// syncSecret writes the file's value into its secret, creating the secret when
+// there is none, and reports whether it wrote.
+func (s *service) syncSecret(
+	ctx context.Context, db database.IDB, app *entity.App, setting *entity.Setting,
+	file *systemappservice.SecretFile, timeNow time.Time,
+) (*entity.Setting, bool, error) {
+	if setting != nil {
+		current, err := setting.AsSecret()
+		if err != nil {
+			return nil, false, hperrors.Wrap(err)
+		}
+		plain, err := current.Value.GetPlain()
+		if err != nil {
+			return nil, false, hperrors.Wrap(err)
+		}
+		if plain == file.Value {
+			return setting, false, nil
+		}
+	} else {
+		setting = newAppSetting(app, base.SettingTypeSecret, file.Key, entity.CurrentSecretVersion, timeNow)
 	}
-	if err := setting.SetData(change.next); err != nil {
-		return hperrors.Wrap(err)
+	next := &entity.Secret{Key: file.Key, Value: entity.NewEncryptedField(file.Value)}
+	if err := setting.SetData(next); err != nil {
+		return nil, false, hperrors.Wrap(err)
 	}
-	size, err := change.next.ValueSize()
+	size, err := next.ValueSize()
 	if err != nil {
-		return hperrors.Wrap(err)
+		return nil, false, hperrors.Wrap(err)
 	}
 	setting.Size = size
+	return setting, true, s.upsertSetting(ctx, db, setting, timeNow)
+}
+
+// syncSecretMount writes the entry that mounts secret at the file's path, and
+// reports whether it wrote.
+func (s *service) syncSecretMount(
+	ctx context.Context, db database.IDB, app *entity.App, setting *entity.Setting, key string,
+	secret *entity.Setting, file *systemappservice.SecretFile, timeNow time.Time,
+) (bool, error) {
+	next := &entity.AppSettingMount{
+		Source: entity.ObjectID{ID: secret.ID},
+		Files:  []*entity.AppSettingMountFile{{Part: secretPart, Path: file.Path, Mode: secretFileMode}},
+	}
+	if setting != nil {
+		current, err := setting.AsAppSettingMount()
+		if err != nil {
+			return false, hperrors.Wrap(err)
+		}
+		if reflect.DeepEqual(current, next) {
+			return false, nil
+		}
+	} else {
+		setting = newAppSetting(app, base.SettingTypeAppSettingMount, key,
+			entity.CurrentAppSettingMountVersion, timeNow)
+	}
+	if err := setting.SetData(next); err != nil {
+		return false, hperrors.Wrap(err)
+	}
+	return true, s.upsertSetting(ctx, db, setting, timeNow)
+}
+
+func (s *service) upsertSetting(
+	ctx context.Context, db database.IDB, setting *entity.Setting, timeNow time.Time,
+) error {
+	setting.UpdateVer++
+	setting.UpdatedAt = timeNow
 	return hperrors.Wrap(s.settingRepo.Upsert(ctx, db, setting,
 		entity.SettingUpsertingConflictCols, entity.SettingUpsertingUpdateCols))
 }
 
-// sameSecretFile says whether the secret already is the file: the same value,
-// mounted at the same path.
-func sameSecretFile(current *entity.Secret, file *systemappservice.SecretFile) (bool, error) {
-	if current.SwarmRef == nil || current.SwarmRef.File == nil || current.SwarmRef.File.Name != file.Path {
-		return false, nil
-	}
-	plain, err := current.Value.GetPlain()
-	if err != nil {
-		return false, hperrors.Wrap(err)
-	}
-	return plain == file.Value, nil
+func (s *service) deleteSetting(
+	ctx context.Context, db database.IDB, setting *entity.Setting, timeNow time.Time,
+) error {
+	setting.UpdateVer++
+	setting.UpdatedAt = timeNow
+	setting.DeletedAt = timeNow
+	return hperrors.Wrap(s.settingRepo.Update(ctx, db, setting,
+		bunex.UpdateColumns("deleted_at", "update_ver", "updated_at")))
 }
 
-// newSecretSetting is the setting a secret gets, shaped the way the build of an
-// app's document shapes one.
-func newSecretSetting(app *entity.App, key string, timeNow time.Time) *entity.Setting {
+func settingsByName(settings []*entity.Setting) map[string]*entity.Setting {
+	byName := make(map[string]*entity.Setting, len(settings))
+	for _, setting := range settings {
+		byName[setting.Name] = setting
+	}
+	return byName
+}
+
+// newAppSetting is a setting of the app, shaped the way the build of an app's
+// document shapes one.
+func newAppSetting(
+	app *entity.App, typ base.SettingType, name string, version int, timeNow time.Time,
+) *entity.Setting {
 	return &entity.Setting{
 		ID:        gofn.Must(ulid.NewStringULID()),
 		Scope:     base.ObjectScopeApp,
 		ObjectID:  app.ID,
-		Type:      base.SettingTypeSecret,
-		Name:      key,
+		Type:      typ,
+		Name:      name,
 		Status:    base.SettingStatusActive,
-		Version:   entity.CurrentSecretVersion,
+		Version:   version,
 		CreatedAt: timeNow,
 	}
 }

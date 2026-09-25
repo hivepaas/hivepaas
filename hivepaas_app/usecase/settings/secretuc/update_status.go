@@ -32,25 +32,6 @@ func (uc *UC) UpdateSecretStatus(
 			if err != nil {
 				return hperrors.Wrap(err)
 			}
-
-			if req.Scope.IsAppScope() {
-				secret := pData.Setting.MustAsSecret()
-				if pData.Setting.IsActive() {
-					// Create a secret in the cluster for the app
-					_, err = uc.ClusterSecretService.CreateSecretForApp(ctx, db, req.Scope.App, secret)
-				} else {
-					// Delete the related secret in the cluster
-					err = uc.ClusterSecretService.RemoveSecretForApp(ctx, db, req.Scope.App, secret)
-				}
-				if err != nil {
-					return hperrors.Wrap(err)
-				}
-				// Need to re-persist the setting as its content may change
-				pData.Setting.MustSetData(secret)
-				if err = uc.SettingRepo.Update(ctx, db, pData.Setting); err != nil {
-					return hperrors.Wrap(err)
-				}
-			}
 			return nil
 		},
 	})

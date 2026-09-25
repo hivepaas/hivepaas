@@ -21,8 +21,8 @@ func (req *ListSettingMountSourcesReq) Validate() hperrors.ValidationErrors {
 type ListSettingMountSourcesResp struct {
 	Meta *basedto.Meta         `json:"meta"`
 	Data []*SettingMountSource `json:"data"`
-	// MayMountSensitive says whether the caller may mount a private key or a
-	// password: the screen locks those parts, with the reason, when not.
+	// MayMountSensitive says whether the caller may mount a gated part - a
+	// private key, a password: the screen locks those, with the reason, when not.
 	MayMountSensitive bool `json:"mayMountSensitive"`
 }
 
@@ -33,7 +33,10 @@ type SettingMountSource struct {
 }
 
 type SettingMountPart struct {
-	Name      string `json:"name"`
-	Required  bool   `json:"required"`
-	Sensitive bool   `json:"sensitive"`
+	Name     string `json:"name"`
+	Required bool   `json:"required"`
+	// Secret is stored as a Docker secret.
+	Secret bool `json:"secret"`
+	// Gated takes the Reveal Secrets permission to mount.
+	Gated bool `json:"gated"`
 }

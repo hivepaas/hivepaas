@@ -102,7 +102,7 @@ func TestResolveRendersAnEntrysFiles(t *testing.T) {
 		files[0])
 	assert.Equal(t, "1000", files[1].UID)
 	assert.Equal(t, fileutil.FileMode(0o400), files[1].Mode)
-	assert.True(t, files[1].Sensitive)
+	assert.True(t, files[1].Secret)
 	assert.Equal(t, []byte("KEY"), files[1].Data)
 	assert.Len(t, files[0].Rotation, 64)
 }

@@ -23,8 +23,6 @@ type appCloneData struct {
 	DestApp        *entity.App
 	SrcService     *swarm.Service
 	DestService    *swarm.Service
-	DestSecrets    []*entity.SwarmSecretRef
-	DestConfig     []*entity.SwarmConfigRef
 	ClonedSettings []*entity.Setting
 
 	TimeNow time.Time
@@ -220,16 +218,9 @@ func (s *service) cleanupOnFail(
 		_ = s.clusterService.ServiceRemove(ctx, data.DestService.ID, clusterservice.ItemRemovalRetryMax, 0)
 	}
 
-	var secretIDs []string
-	for _, secret := range data.DestSecrets {
-		secretIDs = append(secretIDs, secret.SecretID)
+	// And its setting mounts' objects, which were made with the service.
+	if data.DestApp != nil && data.DestApp.ID != "" {
+		_ = s.settingMountService.RemoveApp(ctx, data.DestApp.ID)
 	}
-	_ = s.clusterSecretService.SecretsRemove(ctx, secretIDs, clusterservice.ItemRemovalRetryMax, 0)
-
-	var configIDs []string
-	for _, cfg := range data.DestConfig {
-		configIDs = append(configIDs, cfg.ConfigID)
-	}
-	_ = s.clusterSecretService.ConfigsRemove(ctx, configIDs, clusterservice.ItemRemovalRetryMax, 0)
 	return nil
 }

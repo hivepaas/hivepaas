@@ -44,3 +44,13 @@ func TestLabels(t *testing.T) {
 		"hivepaas.settingMount.part":  "privateKey",
 	}, Labels("app_1", "tls-cert", "privateKey"))
 }
+
+func TestEntryKeyOfATemplateSetting(t *testing.T) {
+	for name, want := range map[string]string{
+		"DB_PASSWORD": "db-password", "config.json": "config-json", "nginx-conf": "nginx-conf",
+		"__A__": "a", strings.Repeat("x", 30): strings.Repeat("x", 20),
+	} {
+		assert.Equal(t, want, EntryKeyFor(name), name)
+		assert.True(t, ValidEntryKey(EntryKeyFor(name)), name)
+	}
+}

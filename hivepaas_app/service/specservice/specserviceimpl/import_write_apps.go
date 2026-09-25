@@ -127,8 +127,6 @@ func (w *writer) appRefID(ctx context.Context, ref string) (string, error) {
 //   - a bundle without secrets keeps every secret of row it holds nothing in;
 //   - an app matched by key keeps the target's credential, which its data was
 //     initialized with;
-//   - a secret's or config file's swarm ids are row's, or none: another
-//     installation's ids name nothing here;
 //   - a setting created from a bundle without secrets gets the values HivePaaS
 //     owns generated.
 func (w *writer) keepAndGenerate(node *specmodel.PlanNode, data entity.SettingData, row *entity.Setting) error {
@@ -143,26 +141,7 @@ func (w *writer) keepAndGenerate(node *specmodel.PlanNode, data entity.SettingDa
 			entity.KeepSecrets(data, kept)
 		}
 	}
-	switch typed := data.(type) {
-	case *entity.Secret:
-		keptSecret, _ := kept.(*entity.Secret)
-		if typed.SwarmRef != nil {
-			typed.SwarmRef.SecretID, typed.SwarmRef.SecretName = "", ""
-			if keptSecret != nil && keptSecret.SwarmRef != nil {
-				typed.SwarmRef.SecretID, typed.SwarmRef.SecretName =
-					keptSecret.SwarmRef.SecretID, keptSecret.SwarmRef.SecretName
-			}
-		}
-	case *entity.ConfigFile:
-		keptConfig, _ := kept.(*entity.ConfigFile)
-		if typed.SwarmRef != nil {
-			typed.SwarmRef.ConfigID, typed.SwarmRef.ConfigName = "", ""
-			if keptConfig != nil && keptConfig.SwarmRef != nil {
-				typed.SwarmRef.ConfigID, typed.SwarmRef.ConfigName =
-					keptConfig.SwarmRef.ConfigID, keptConfig.SwarmRef.ConfigName
-			}
-		}
-	case *entity.AppKindSettings:
+	if typed, isKind := data.(*entity.AppKindSettings); isKind {
 		if keptKind, ok := kept.(*entity.AppKindSettings); ok && mode.RevealsSecrets() &&
 			node.MatchedBy == specmodel.MatchedByKey {
 			keepCredentials(typed, keptKind)

@@ -23,7 +23,7 @@ func (uc *UC) ListSettingMountSources(
 		source := &settingmountdto.SettingMountSource{Type: typ}
 		for _, part := range settingmountservice.PartsOf(typ) {
 			source.Parts = append(source.Parts, &settingmountdto.SettingMountPart{
-				Name: part.Name, Required: part.Required, Sensitive: part.Sensitive})
+				Name: part.Name, Required: part.Required, Secret: part.Secret, Gated: part.Gated})
 		}
 		resp.Data = append(resp.Data, source)
 	}

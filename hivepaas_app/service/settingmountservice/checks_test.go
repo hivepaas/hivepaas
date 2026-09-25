@@ -19,12 +19,13 @@ func mountOf(source string, parts ...string) *entity.AppSettingMount {
 	return m
 }
 
-func TestSensitiveByNameWhateverTheType(t *testing.T) {
+func TestGatedByNameWhateverTheType(t *testing.T) {
 	for name, want := range map[string]bool{
 		"privateKey": true, "password": true, "htpasswd": true,
 		"certificate": false, "caCertificate": false, "publicKey": false, "username": false, "other": false,
+		"value": false, "content": false,
 	} {
-		assert.Equal(t, want, SensitivePart(name), name)
+		assert.Equal(t, want, GatedPart(name), name)
 	}
 }
 
@@ -66,7 +67,7 @@ func TestCheckEntry(t *testing.T) {
 		"reserved key":   {"tls", valid, base.SettingTypeSSLCert, hperrors.ErrSettingMountKeyInvalid},
 		"upper case key": {"Cert", valid, base.SettingTypeSSLCert, hperrors.ErrSettingMountKeyInvalid},
 		"no files":       {"cert", mountOf("cert_1"), base.SettingTypeSSLCert, hperrors.ErrSettingMountNoFiles},
-		"not a source":   {"cert", valid, base.SettingTypeSecret, hperrors.ErrSettingMountSourceUnsupported},
+		"not a source":   {"cert", valid, base.SettingTypeEmail, hperrors.ErrSettingMountSourceUnsupported},
 		"part of other type": {
 			"cert", mountOf("cert_1", "htpasswd"), base.SettingTypeSSLCert, hperrors.ErrSettingMountPartInvalid,
 		},
@@ -83,12 +84,4 @@ func TestCheckPathsFree(t *testing.T) {
 	claimed := map[string]string{"/run/secrets/db_password": "secret DB_PASSWORD"}
 	assert.NoError(t, CheckPathsFree(claimed, "/etc/app/key.pem"))
 	assert.True(t, errors.Is(CheckPathsFree(claimed, "/run/secrets/db_password"), hperrors.ErrSettingMountPathTaken))
-}
-
-func TestFileTargetsOfSecretsAndConfigFiles(t *testing.T) {
-	assert.Equal(t, "/run/secrets/db_password", SecretFileTarget(&entity.Secret{
-		SwarmRef: &entity.SwarmSecretRef{File: &entity.SwarmRefFileTarget{Name: "db_password"}}}))
-	assert.Empty(t, SecretFileTarget(&entity.Secret{}), "read through the environment, no file")
-	assert.Equal(t, "/etc/app.conf", ConfigFileTarget(&entity.ConfigFile{
-		SwarmRef: &entity.SwarmConfigRef{File: &entity.SwarmRefFileTarget{Name: "/etc/app.conf"}}}))
 }

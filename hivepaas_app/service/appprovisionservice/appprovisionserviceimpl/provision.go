@@ -81,7 +81,7 @@ func (s *service) ProvisionApp(
 	}
 	app.ServiceID = createdSvc.ID
 	resp.App = app
-	resp.Created = &appprovisionservice.CreatedInDocker{ServiceID: createdSvc.ID}
+	resp.Created = &appprovisionservice.CreatedInDocker{ServiceID: createdSvc.ID, AppID: app.ID}
 
 	// What this call made in docker is undone here, where the app it belongs to
 	// has no record yet. Once it has one, a failure is the caller's: the records
@@ -108,7 +108,6 @@ func (s *service) ProvisionApp(
 
 	applied, err := s.ApplyAppConfiguration(ctx, db, &appprovisionservice.ApplyAppConfigurationReq{App: app})
 	if applied != nil {
-		resp.Created.Configs, resp.Created.Secrets = applied.Configs, applied.Secrets
 		resp.CertTasks = applied.CertTasks
 	}
 	if err != nil {

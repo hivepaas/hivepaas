@@ -113,7 +113,7 @@ func (s *service) RotateCredential(
 		return nil, hperrors.Wrap(err)
 	}
 	content := htpasswdContent(append([]string{line}, nonEmptyLines(existing)...)...)
-	if err = s.applyHtpasswd(ctx, db, app, content); err != nil {
+	if err = s.applyAccount(ctx, db, app, content); err != nil {
 		return nil, hperrors.Wrap(err)
 	}
 

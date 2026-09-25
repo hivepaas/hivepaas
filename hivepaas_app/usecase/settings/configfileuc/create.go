@@ -6,7 +6,6 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
-	"github.com/hivepaas/hivepaas/hivepaas_app/service/settingmountservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings/configfileuc/configfiledto"
 )
@@ -29,19 +28,6 @@ func (uc *UC) CreateConfigFile(
 			data *settings.CreateSettingData,
 			pData *settings.PersistingSettingCreationData,
 		) error {
-			// One path, one file: not another config file's, secret's or mount's.
-			if err := uc.CheckMountPaths(ctx, db, req.Scope, "",
-				settingmountservice.ConfigFileTarget(configFile)); err != nil {
-				return hperrors.Wrap(err)
-			}
-			if req.Scope.App != nil {
-				// Create a config in docker swarm
-				_, err := uc.ClusterSecretService.CreateConfigForApp(ctx, db, req.Scope.App, configFile)
-				if err != nil {
-					return hperrors.Wrap(err)
-				}
-			}
-
 			err := pData.Setting.SetData(configFile)
 			if err != nil {
 				return hperrors.Wrap(err)

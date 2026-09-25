@@ -124,7 +124,8 @@ func (s *service) buildSecrets(_ context.Context, state *buildState) error {
 	entries, _ := state.req.Doc.Settings[specmodel.CollectionBlockName(base.SettingTypeSecret)].(map[string]any)
 	for _, name := range slices.Sorted(maps.Keys(entries)) {
 		secret := &entity.Secret{}
-		if err := decodeBlock(block, entries[name], secret); err != nil {
+		body, file, inheritable := templateShorthand(entries[name])
+		if err := decodeBlock(block, body, secret); err != nil {
 			return err
 		}
 		if secret.Key == "" {
@@ -136,9 +137,15 @@ func (s *service) buildSecrets(_ context.Context, state *buildState) error {
 		if !base.IsAppRuntimeEnvAllowed(secret.Key) {
 			return invalidBlock(block, "%s is reserved for HivePaaS", secret.Key)
 		}
-		if err := state.addNamedSetting(base.SettingTypeSecret, secret.Key,
-			entity.CurrentSecretVersion, false, secret); err != nil {
+		setting, err := state.addNamedSetting(base.SettingTypeSecret, secret.Key,
+			entity.CurrentSecretVersion, inheritable, secret)
+		if err != nil {
 			return err
+		}
+		if file != nil {
+			if err = state.addTemplateMount(block, secret.Key, setting, "value", file, inheritable); err != nil {
+				return err
+			}
 		}
 	}
 	return nil
@@ -149,7 +156,8 @@ func (s *service) buildConfigFiles(_ context.Context, state *buildState) error {
 	entries, _ := state.req.Doc.Settings[specmodel.CollectionBlockName(base.SettingTypeConfigFile)].(map[string]any)
 	for _, name := range slices.Sorted(maps.Keys(entries)) {
 		configFile := &entity.ConfigFile{}
-		if err := decodeBlock(block, entries[name], configFile); err != nil {
+		body, file, inheritable := templateShorthand(entries[name])
+		if err := decodeBlock(block, body, configFile); err != nil {
 			return err
 		}
 		if configFile.Name == "" {
@@ -158,9 +166,15 @@ func (s *service) buildConfigFiles(_ context.Context, state *buildState) error {
 		if configFile.Name != name {
 			return invalidBlock(block, "%s: name %q does not match the name it is listed under", name, configFile.Name)
 		}
-		if err := state.addNamedSetting(base.SettingTypeConfigFile, configFile.Name,
-			entity.CurrentConfigFileVersion, false, configFile); err != nil {
+		setting, err := state.addNamedSetting(base.SettingTypeConfigFile, configFile.Name,
+			entity.CurrentConfigFileVersion, inheritable, configFile)
+		if err != nil {
 			return err
+		}
+		if file != nil {
+			if err = state.addTemplateMount(block, configFile.Name, setting, "content", file, inheritable); err != nil {
+				return err
+			}
 		}
 	}
 	return nil
@@ -281,4 +295,28 @@ func (s *service) buildDockerAPI(ctx context.Context, state *buildState) error {
 	}
 	dockerapiservice.Attach(state.req.Spec, state.req.App.ID, networkID)
 	return state.addSetting(base.SettingTypeAppDockerAPI, entity.CurrentAppDockerAPIVersion, false, settings)
+}
+
+// templateShorthand splits a template's secret or config file into the
+// setting's own body, its swarmRef.file and its inheritable flag. Templates -
+// and only they - may write swarmRef.file: it stands for a setting mount entry
+// of the setting (addTemplateMount).
+func templateShorthand(entry any) (body, file map[string]any, inheritable bool) {
+	fields, ok := entry.(map[string]any)
+	if !ok {
+		return nil, nil, false
+	}
+	body = make(map[string]any, len(fields))
+	for key, value := range fields {
+		switch key {
+		case "swarmRef":
+			swarmRef, _ := value.(map[string]any)
+			file, _ = swarmRef["file"].(map[string]any)
+		case "inheritable":
+			inheritable, _ = value.(bool)
+		default:
+			body[key] = value
+		}
+	}
+	return body, file, inheritable
 }

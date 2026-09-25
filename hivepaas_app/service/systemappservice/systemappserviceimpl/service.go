@@ -12,8 +12,8 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/appdeploymentservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/appprovisionservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/appservice"
-	"github.com/hivepaas/hivepaas/hivepaas_app/service/clustersecretservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/hpappservice"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/settingmountservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/specservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/systemappservice"
 	"github.com/hivepaas/hivepaas/services/docker"
@@ -24,12 +24,12 @@ type service struct {
 	projectEnvRepo repository.ProjectEnvRepo
 	settingRepo    repository.SettingRepo
 
-	appService           appservice.Service
-	hpAppService         hpappservice.Service
-	provisionService     appprovisionservice.Service
-	specService          specservice.Service
-	deploymentService    appdeploymentservice.Service
-	clusterSecretService clustersecretservice.Service
+	appService          appservice.Service
+	hpAppService        hpappservice.Service
+	provisionService    appprovisionservice.Service
+	specService         specservice.Service
+	deploymentService   appdeploymentservice.Service
+	settingMountService settingmountservice.Service
 
 	dockerManager docker.Manager
 }
@@ -48,21 +48,21 @@ func New(
 	provisionService appprovisionservice.Service,
 	specService specservice.Service,
 	deploymentService appdeploymentservice.Service,
-	clusterSecretService clustersecretservice.Service,
+	settingMountService settingmountservice.Service,
 
 	dockerManager docker.Manager,
 ) systemappservice.Service {
 	return &service{
-		projectRepo:          projectRepo,
-		projectEnvRepo:       projectEnvRepo,
-		settingRepo:          settingRepo,
-		appService:           appService,
-		hpAppService:         hpAppService,
-		provisionService:     provisionService,
-		specService:          specService,
-		deploymentService:    deploymentService,
-		clusterSecretService: clusterSecretService,
-		dockerManager:        dockerManager,
+		projectRepo:         projectRepo,
+		projectEnvRepo:      projectEnvRepo,
+		settingRepo:         settingRepo,
+		appService:          appService,
+		hpAppService:        hpAppService,
+		provisionService:    provisionService,
+		specService:         specService,
+		deploymentService:   deploymentService,
+		settingMountService: settingMountService,
+		dockerManager:       dockerManager,
 	}
 }
 

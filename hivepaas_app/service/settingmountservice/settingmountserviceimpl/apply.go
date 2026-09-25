@@ -70,7 +70,7 @@ func (s *service) ApplyToService(
 			continue
 		}
 		name := settingmountservice.ObjectName(app.GlobalKey, file.Entry, file.Part, file.Rotation)
-		if file.Sensitive {
+		if file.Secret {
 			id, err := s.ensureSecret(ctx, have, app, file, name)
 			if err != nil {
 				return hperrors.Wrap(err)

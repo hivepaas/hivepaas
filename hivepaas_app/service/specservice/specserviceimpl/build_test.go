@@ -22,6 +22,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
+	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/fileutil"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/settinghelper"
 	"github.com/hivepaas/hivepaas/hivepaas_app/repository"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/dockerapiservice"
@@ -300,7 +301,8 @@ settings:
   configFiles:
     prometheus.yml:
       content: "scrape_interval: 30s\n"
-      swarmRef: {file: {name: /etc/prometheus/prometheus.yml, mode: 444}}
+      inheritable: true
+      swarmRef: {file: {name: /etc/prometheus/prometheus.yml, uid: "65534", mode: 444}}
 `
 
 func TestBuildAppBuildsSecretsAndConfigFiles(t *testing.T) {
@@ -326,17 +328,32 @@ func TestBuildAppBuildsSecretsAndConfigFiles(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, "hunter2", value)
 	assert.NotContains(t, admin.Data, "hunter2", "a secret is stored encrypted")
-	assert.Nil(t, secret.SwarmRef, "a secret with no file is read through the environment, not mounted")
 
 	license, err := byName["secret/LICENSE"].AsSecret()
 	assert.NoError(t, err)
-	assert.Equal(t, "/run/secrets/license", license.SwarmRef.File.Name)
+	assert.Equal(t, "LICENSE", license.Key)
 
 	configFile, err := byName["config-file/prometheus.yml"].AsConfigFile()
 	assert.NoError(t, err)
 	assert.Equal(t, "prometheus.yml", configFile.Name)
 	assert.Equal(t, "scrape_interval: 30s\n", configFile.Content)
-	assert.Equal(t, "/etc/prometheus/prometheus.yml", configFile.SwarmRef.File.Name)
+
+	// A template's swarmRef is shorthand for a setting mount of the setting,
+	// inheritable with it.
+	prometheus, licenseRow := byName["config-file/prometheus.yml"], byName["secret/LICENSE"]
+	assert.True(t, prometheus.Inheritable)
+	configMount, secretMount := byName["app-setting-mount/prometheus-yml"], byName["app-setting-mount/license"]
+	if assert.NotNil(t, configMount) && assert.NotNil(t, secretMount) {
+		assert.True(t, configMount.Inheritable)
+		assert.False(t, secretMount.Inheritable)
+		assert.Equal(t, &entity.AppSettingMount{Source: entity.ObjectID{ID: prometheus.ID},
+			Files: []*entity.AppSettingMountFile{{Part: "content", Path: "/etc/prometheus/prometheus.yml",
+				UID: "65534", Mode: fileutil.FileMode(0o444)}}}, configMount.MustAsAppSettingMount())
+		assert.Equal(t, &entity.AppSettingMount{Source: entity.ObjectID{ID: licenseRow.ID},
+			Files: []*entity.AppSettingMountFile{{Part: "value", Path: "/run/secrets/license",
+				Mode: fileutil.FileMode(0o400)}}}, secretMount.MustAsAppSettingMount())
+	}
+	assert.Nil(t, byName["app-setting-mount/kc-bootstrap-admin-password"], "a secret with no file mounts nothing")
 }
 
 // buildErrorDetail is the explanation a person reads; Error() carries the code.
@@ -604,4 +621,20 @@ func TestBuildDockerAPIGivesTheAppItsSocketAndNetwork(t *testing.T) {
 	}
 	assert.Contains(t, req.Spec.TaskTemplate.ContainerSpec.Mounts, dockerapiservice.SocketMount("app-1"))
 	assert.Contains(t, req.Spec.TaskTemplate.Networks, swarm.NetworkAttachmentConfig{Target: "net-app-1"})
+}
+
+// Two settings whose names make one entry key are refused, rather than one
+// mount silently taking the other's place.
+func TestBuildRefusesTwoTemplateMountsUnderOneEntryKey(t *testing.T) {
+	useDataKey(t)
+	svc := &service{volumeService: &fakeBuildVolumeService{}}
+
+	_, err := svc.BuildApp(context.Background(), nil, buildReq(t, `
+settings:
+  configFiles:
+    app.conf: {content: a, swarmRef: {file: {name: /a}}}
+    app-conf: {content: b, swarmRef: {file: {name: /b}}}
+`))
+
+	assert.ErrorIs(t, err, hperrors.ErrSpecBlockInvalid)
 }

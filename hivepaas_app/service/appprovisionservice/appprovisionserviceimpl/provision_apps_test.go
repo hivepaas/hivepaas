@@ -107,20 +107,13 @@ func TestProvisionAppsNamesTheAppThatFailed(t *testing.T) {
 // it goes newest first so that an app is removed before what it was created for.
 func TestProvisionAppsCleanupRemovesEverythingItMadeNewestFirst(t *testing.T) {
 	svc, fakes := newProvisionTest(t)
-	withSecret := appReq("blog", func(_ context.Context, _ database.IDB, app *entity.App,
-		_ *swarm.ServiceSpec) ([]*entity.Setting, error) {
-		setting := &entity.Setting{ID: "set-secret", Type: base.SettingTypeSecret, ObjectID: app.ID}
-		assert.NoError(t, setting.SetData(&entity.Secret{Key: "LICENSE",
-			SwarmRef: &entity.SwarmSecretRef{File: &entity.SwarmRefFileTarget{Name: "/etc/license"}}}))
-		return []*entity.Setting{setting}, nil
-	})
-
 	resp, err := svc.ProvisionApps(context.Background(), nil, &appprovisionservice.ProvisionAppsReq{
-		Apps: []*appprovisionservice.ProvisionAppReq{appReq("blog-db", nil), withSecret},
+		Apps: []*appprovisionservice.ProvisionAppReq{appReq("blog-db", nil), appReq("blog", nil)},
 	})
 	assert.NoError(t, err)
 	assert.NoError(t, resp.Cleanup(context.Background()))
 
 	assert.Equal(t, []string{"svc-1", "svc-1"}, fakes.cluster.removed, "both services, the newest first")
-	assert.Equal(t, []string{"docker-secret-LICENSE"}, fakes.clusterFiles.removedSecrets)
+	assert.Equal(t, []string{resp.Apps[1].App.ID, resp.Apps[0].App.ID}, fakes.mounts.removed,
+		"and their setting mounts' objects, the newest first")
 }

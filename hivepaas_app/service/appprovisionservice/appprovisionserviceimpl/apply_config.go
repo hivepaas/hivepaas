@@ -32,10 +32,10 @@ func (s *service) ApplyAppConfiguration(
 	if err := s.applyEnvVars(ctx, db, app); err != nil {
 		return resp, hperrors.Wrap(err).WithExtraDetail("while applying environment variables")
 	}
-	configs, secrets, err := s.applySwarmFiles(ctx, db, app)
-	resp.Configs, resp.Secrets = configs, secrets
-	if err != nil {
-		return resp, hperrors.Wrap(err).WithExtraDetail("while applying secrets and config files")
+	// The app's files are its setting mounts': one update brings the service to
+	// them.
+	if err := s.settingMountService.Refresh(ctx, db, app); err != nil {
+		return resp, hperrors.Wrap(err).WithExtraDetail("while mounting the app's files")
 	}
 	if err := s.applyRouting(ctx, db, app, req.RefObjects, &resp.CertTasks); err != nil {
 		return resp, hperrors.Wrap(err).WithExtraDetail("while applying routing settings")
@@ -60,75 +60,6 @@ func (s *service) applyEnvVars(ctx context.Context, db database.IDB, app *entity
 		return hperrors.Wrap(applyErr)
 	}
 	return nil
-}
-
-// applySwarmFiles creates the docker configs and secrets the app's settings
-// describe, and attaches them to its service.
-//
-// Only a setting that asks for a file becomes a docker object: a secret without
-// one is read through the environment, where a ${secrets.NAME} reference
-// resolves it. Creating an object fills in the ids it was created with, and the
-// settings are written again so that the app keeps them - without them nothing
-// could find the object again to update or remove it.
-//
-// It returns what was created even when it fails part way, because those objects
-// are in docker and outlive the transaction that failed.
-func (s *service) applySwarmFiles(
-	ctx context.Context,
-	db database.IDB,
-	app *entity.App,
-) (configRefs []*entity.SwarmConfigRef, secretRefs []*entity.SwarmSecretRef, err error) {
-	configSettings := app.GetSettingsByType(base.SettingTypeConfigFile)
-	secretSettings := app.GetSettingsByType(base.SettingTypeSecret)
-	if len(configSettings) == 0 && len(secretSettings) == 0 {
-		return nil, nil, nil
-	}
-
-	configFiles := make([]*entity.ConfigFile, 0, len(configSettings))
-	for _, setting := range configSettings {
-		configFile, parseErr := setting.AsConfigFile()
-		if parseErr != nil {
-			return nil, nil, hperrors.Wrap(parseErr)
-		}
-		configFiles = append(configFiles, configFile)
-	}
-	secrets := make([]*entity.Secret, 0, len(secretSettings))
-	for _, setting := range secretSettings {
-		secret, parseErr := setting.AsSecret()
-		if parseErr != nil {
-			return nil, nil, hperrors.Wrap(parseErr)
-		}
-		secrets = append(secrets, secret)
-	}
-
-	configRefs, err = s.clusterSecretService.CreateConfigsForApp(ctx, db, app, configFiles)
-	if err != nil {
-		return configRefs, nil, hperrors.Wrap(err)
-	}
-	secretRefs, err = s.clusterSecretService.CreateSecretsForApp(ctx, db, app, secrets)
-	if err != nil {
-		return configRefs, secretRefs, hperrors.Wrap(err)
-	}
-
-	// Writing the settings again is what keeps the ids docker handed back. The
-	// entities were parsed from these settings and filled in place, so each one
-	// only has to be serialized into the setting it came from.
-	persisting := &appservice.PersistingAppData{
-		UpsertingSettings: make([]*entity.Setting, 0, len(configSettings)+len(secretSettings)),
-	}
-	for i, setting := range configSettings {
-		if err = setting.SetData(configFiles[i]); err != nil {
-			return configRefs, secretRefs, hperrors.Wrap(err)
-		}
-		persisting.UpsertingSettings = append(persisting.UpsertingSettings, setting)
-	}
-	for i, setting := range secretSettings {
-		if err = setting.SetData(secrets[i]); err != nil {
-			return configRefs, secretRefs, hperrors.Wrap(err)
-		}
-		persisting.UpsertingSettings = append(persisting.UpsertingSettings, setting)
-	}
-	return configRefs, secretRefs, hperrors.Wrap(s.appService.PersistAppData(ctx, db, persisting))
 }
 
 // applyRouting writes the app's routing settings to traefik and to its service.

@@ -59,7 +59,6 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/backuprepocleanupservice/backuprepocleanupserviceimpl"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/backupreposervice/backupreposerviceimpl"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/clustercleanupservice/clustercleanupserviceimpl"
-	"github.com/hivepaas/hivepaas/hivepaas_app/service/clustersecretservice/clustersecretserviceimpl"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/clusterservice/clusterserviceimpl"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/commandpipeexecservice/commandpipeexecserviceimpl"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/commandservice/commandserviceimpl"
@@ -365,7 +364,6 @@ var Provides = []any{
 	backupreposerviceimpl.New,
 	datakeyserviceimpl.New,
 	clustercleanupserviceimpl.New,
-	clustersecretserviceimpl.New,
 	clusterserviceimpl.New,
 	commandpipeexecserviceimpl.New,
 	commandserviceimpl.New,

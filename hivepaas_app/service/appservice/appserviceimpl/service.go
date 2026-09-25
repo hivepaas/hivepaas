@@ -5,7 +5,6 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/permission"
 	"github.com/hivepaas/hivepaas/hivepaas_app/repository"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/appservice"
-	"github.com/hivepaas/hivepaas/hivepaas_app/service/clustersecretservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/clusterservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/dockerapiservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/settingmountservice"
@@ -25,7 +24,6 @@ func New(
 	tagRepo repository.TagRepo,
 	taskRepo repository.TaskRepo,
 
-	clusterSecretService clustersecretservice.Service,
 	clusterService clusterservice.Service,
 	dockerAPIService dockerapiservice.Service,
 	settingMountService settingmountservice.Service,
@@ -46,12 +44,11 @@ func New(
 		tagRepo:        tagRepo,
 		taskRepo:       taskRepo,
 
-		clusterSecretService: clusterSecretService,
-		clusterService:       clusterService,
-		dockerAPIService:     dockerAPIService,
-		settingMountService:  settingMountService,
-		traefikService:       traefikService,
-		volumeService:        volumeService,
+		clusterService:      clusterService,
+		dockerAPIService:    dockerAPIService,
+		settingMountService: settingMountService,
+		traefikService:      traefikService,
+		volumeService:       volumeService,
 
 		dockerManager:     dockerManager,
 		permissionManager: permissionManager,
@@ -69,12 +66,11 @@ type service struct {
 	tagRepo        repository.TagRepo
 	taskRepo       repository.TaskRepo
 
-	clusterSecretService clustersecretservice.Service
-	clusterService       clusterservice.Service
-	dockerAPIService     dockerapiservice.Service
-	settingMountService  settingmountservice.Service
-	traefikService       traefikservice.Service
-	volumeService        volumeservice.Service
+	clusterService      clusterservice.Service
+	dockerAPIService    dockerapiservice.Service
+	settingMountService settingmountservice.Service
+	traefikService      traefikservice.Service
+	volumeService       volumeservice.Service
 
 	dockerManager     docker.Manager
 	permissionManager permission.Manager

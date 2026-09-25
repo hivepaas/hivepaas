@@ -1086,3 +1086,604 @@ ensure_docker() {
   fi
   ok "Docker $DOCKER_VERSION (API $DOCKER_API)"
 }
+
+# ---------------------------------------------------------- Swarm and files
+
+SUBNET=10.11.0.0/16
+SUBNET_GATEWAY=10.11.0.1
+REPO_RAW=https://raw.githubusercontent.com/hivepaas/hivepaas
+CONFIG_DIR=${INSTALL_ENV%/*}
+
+ensure_swarm() {
+  local state node
+  state=$(docker info --format '{{.Swarm.LocalNodeState}}')
+  case "$state" in
+    active)
+      if [ "$(docker info --format '{{.Swarm.ControlAvailable}}')" != true ]; then
+        die "This server is a worker in a swarm, and HivePaaS runs on a manager. Run the installer on a manager."
+      fi
+      ok "This server is a swarm manager."
+      ;;
+    inactive)
+      # A host with more than one address has swarm init refuse to guess which
+      # to advertise; the default route's is the one other nodes would reach.
+      if [ -n "$HOST_IP" ]; then
+        docker swarm init --advertise-addr "$HOST_IP" >/dev/null || die "docker swarm init failed; see above."
+      else
+        docker swarm init >/dev/null || die "docker swarm init failed; see above."
+      fi
+      ok "Swarm started${HOST_IP:+, advertising $HOST_IP}."
+      ;;
+    *)
+      die "The swarm on this server is '$state'. Bring it back to active ('docker swarm unlock', if it is" \
+        "locked), then run the installer again."
+      ;;
+  esac
+  node=$(docker info --format '{{.Swarm.NodeID}}')
+  docker node update --label-add hivepaas.role=control-plane "$node" >/dev/null
+  ok "Node labeled hivepaas.role=control-plane."
+}
+
+# ensure_network: the network Traefik finds services on. Its subnet is dev's
+# when no route of this host reaches into it; nothing depends on the subnet.
+ensure_network() {
+  if docker network inspect hivepaas_net >/dev/null 2>&1; then
+    ok "Network hivepaas_net is there."
+    return 0
+  fi
+  if ! (command -v ip >/dev/null 2>&1 && ip route show 2>/dev/null | routes_overlap "$SUBNET") &&
+    docker network create --driver overlay --attachable --subnet "$SUBNET" --gateway "$SUBNET_GATEWAY" \
+      --opt com.docker.network.driver.mtu=1380 hivepaas_net >/dev/null 2>&1; then
+    ok "Network hivepaas_net ($SUBNET)."
+    return 0
+  fi
+  docker network create --driver overlay --attachable --opt com.docker.network.driver.mtu=1380 \
+    hivepaas_net >/dev/null || die "Could not create the network hivepaas_net; see above."
+  ok "Network hivepaas_net, on a subnet Docker picked: $SUBNET is in use on this host."
+}
+
+# write_self_signed_cert DIR ROOT APP: the certificate the app would otherwise
+# make on its first boot, and adopts when it finds one. Traefik serves it from
+# its first second instead of a default of its own.
+write_self_signed_cert() {
+  local san="DNS:$2,DNS:*.$2"
+  if [ "$3" != "$2" ]; then san="$san,DNS:$3"; fi
+  openssl req -x509 -days 365 -nodes -sha256 -newkey ec -pkeyopt ec_paramgen_curve:prime256v1 \
+    -keyout "$1/self-signed.key" -out "$1/self-signed.crt" -subj "/CN=$2" \
+    -addext "subjectAltName=$san" >/dev/null 2>&1 && chmod 600 "$1/self-signed.key"
+}
+
+# fetch_install_file NAME DEST: a file of deployment/release, from the ref the
+# installer came from.
+fetch_install_file() {
+  local tmp="$2.tmp"
+  mkdir -p "${2%/*}"
+  if [ -n "${HIVEPAAS_INSTALL_FILES_DIR:-}" ]; then
+    cp "$HIVEPAAS_INSTALL_FILES_DIR/$1" "$tmp"
+  else
+    curl -fsSL --retry 3 "$REPO_RAW/${HIVEPAAS_INSTALL_REF:-main}/deployment/release/$1" -o "$tmp"
+  fi || {
+    rm -f "$tmp"
+    die "Could not get $1."
+  }
+  mv -f "$tmp" "$2"
+}
+
+prepare_files() {
+  local data="$HIVEPAAS_DATA_DIR" certs="$HIVEPAAS_DATA_DIR/ssl/certs"
+  mkdir -p "$certs" "$data/traefik/etc/dynamic" "$data/traefik/var/log" "$HIVEPAAS_PROJECT_DATA_DIR"
+  ok "Directories: $data, $HIVEPAAS_PROJECT_DATA_DIR."
+  if [ -s "$certs/self-signed.crt" ] && [ -s "$certs/self-signed.key" ]; then
+    ok "Self-signed certificate: kept."
+  else
+    write_self_signed_cert "$certs" "$HIVEPAAS_ROOT_DOMAIN" "$HIVEPAAS_APP_DOMAIN" ||
+      die "Could not make the self-signed certificate."
+    ok "Self-signed certificate for $HIVEPAAS_ROOT_DOMAIN, *.$HIVEPAAS_ROOT_DOMAIN and $HIVEPAAS_APP_DOMAIN."
+  fi
+  fetch_install_file hivepaas.yaml "$CONFIG_DIR/hivepaas.yaml"
+  fetch_install_file hivepaas.first-boot.yaml "$CONFIG_DIR/hivepaas.first-boot.yaml"
+  # The app writes Traefik's configuration from here on; a run after the first
+  # leaves it alone.
+  if [ ! -f "$data/traefik/etc/dynamic/dynamic_conf.yml" ]; then
+    fetch_install_file traefik/dynamic_conf.yml "$data/traefik/etc/dynamic/dynamic_conf.yml"
+  fi
+  ok "Stack files in $CONFIG_DIR."
+}
+
+# ------------------------------------------------------------------- Deploy
+
+STACK=hivepaas
+REDEPLOY=0
+INSTALL_STATE=''
+HP_DB_VOLUME='' HP_DB_MAJOR=''
+UPDATE_ARGS=()
+HIVEPAAS_IP_RULE=''
+
+fetch_release() {
+  local url="${HIVEPAAS_RELEASE_URL:-$REPO_RAW/${HIVEPAAS_RELEASE_BRANCH:-release}/release.signed.json}" status=0
+  curl -fsSL --retry 3 "$url" -o "$WORK_DIR/release.signed.json" 2>/dev/null ||
+    die "Could not read the release info from $url. HIVEPAAS_RELEASE_BRANCH names the branch it is read from."
+  release_payload "$WORK_DIR/release.signed.json" >"$WORK_DIR/release.json" || status=$?
+  case "$status" in
+    0) ;;
+    2) die "The release info from $url does not match its checksum; nothing is installed from it." ;;
+    *) die "$url is not release info." ;;
+  esac
+  RELEASE_FILE=$WORK_DIR/release.json
+  if [ -z "$(release_field "$RELEASE_FILE" "$HIVEPAAS_CHANNEL" appImage)" ]; then
+    die "The release info has no '$HIVEPAAS_CHANNEL' channel. It has: $(release_channels "$RELEASE_FILE")."
+  fi
+}
+
+gather_addresses() {
+  HOST_IP=$(host_ip) || HOST_IP=
+  PUBLIC_IP=$(public_ip) || PUBLIC_IP=
+  HIVEPAAS_IP_RULE=$(ip_host_rule "$PUBLIC_IP" "$HOST_IP")
+}
+
+service_exists() {
+  docker service inspect "${STACK}_$1" >/dev/null 2>&1
+}
+
+db_volume_exists() {
+  [ -n "$(docker volume ls -q --filter name=hivepaas_db 2>/dev/null)" ]
+}
+
+# detect_install_state: fresh, unfinished (deployed, the admin's password not
+# yet removed) or installed.
+detect_install_state() {
+  if [ ! -f "$INSTALL_ENV" ] && { service_exists app || db_volume_exists; }; then
+    die "HivePaaS is on this server already, but $INSTALL_ENV is not, and the secrets in it are what open" \
+      "its database. Put your copy of the file back, then run the installer again."
+  fi
+  if [ "${HIVEPAAS_INSTALLED:-}" = true ]; then
+    INSTALL_STATE=installed
+    if ! service_exists app && [ "$REDEPLOY" != 1 ]; then
+      die "HivePaaS was installed here, but its services are gone. Run the installer with --redeploy to deploy them again."
+    fi
+  elif service_exists app; then
+    INSTALL_STATE=unfinished
+  else
+    INSTALL_STATE=fresh
+  fi
+}
+
+running_image() {
+  docker service inspect --format '{{.Spec.TaskTemplate.ContainerSpec.Image}}' "${STACK}_$1" 2>/dev/null
+}
+
+# image_for SERVICE RELEASE_IMAGE: a running service keeps its image. Images
+# are the updater's to move, with whatever a move needs, which a deploy does
+# not do.
+image_for() {
+  local image
+  image=$(running_image "$1") || image=
+  printf '%s' "${image:-$2}"
+}
+
+take_db_volume() {
+  case "$1" in
+    HP_DB_VOLUME) if [[ $2 =~ ^[A-Za-z0-9_.-]+$ ]]; then HP_DB_VOLUME=$2; fi ;;
+    HP_DB_MAJOR) if [[ $2 =~ ^[0-9]+$ ]]; then HP_DB_MAJOR=$2; fi ;;
+  esac
+}
+
+resolve_images() {
+  local app agent db_env="$HIVEPAAS_DATA_DIR/system/update/db-volume.env"
+  app=$(release_field "$RELEASE_FILE" "$HIVEPAAS_CHANNEL" appImage)
+  agent=${HIVEPAAS_AGENT_IMAGE:-$(release_field "$RELEASE_FILE" "$HIVEPAAS_CHANNEL" agentImage)}
+  if [ -z "$agent" ]; then
+    agent=$(derive_agent_image "$app") ||
+      die "Cannot tell the agent image of $app; set HIVEPAAS_AGENT_IMAGE."
+  fi
+  HIVEPAAS_IMAGE_APP=$(image_for app "$app")
+  HIVEPAAS_IMAGE_WORKER=$(image_for worker "$app")
+  HIVEPAAS_IMAGE_UPDATER=$(image_for updater "$app")
+  HIVEPAAS_IMAGE_AGENT=$(image_for agent "$agent")
+  HIVEPAAS_IMAGE_DB=$(image_for db "$(release_field "$RELEASE_FILE" "$HIVEPAAS_CHANNEL" dbImage)")
+  HIVEPAAS_IMAGE_REDIS=$(image_for redis "$(release_field "$RELEASE_FILE" "$HIVEPAAS_CHANNEL" redisImage)")
+  HIVEPAAS_IMAGE_TRAEFIK=$(image_for traefik "$(release_field "$RELEASE_FILE" "$HIVEPAAS_CHANNEL" traefikImage)")
+  # A Postgres major upgrade moves the database to a volume of its own, and
+  # the updater records where. Deploying without it would put the database
+  # back as it was before the upgrade.
+  if [ -f "$db_env" ]; then read_kv_file "$db_env" take_db_volume; fi
+  if [ -z "$HP_DB_MAJOR" ]; then
+    HP_DB_MAJOR=$(pg_major_of_image "$HIVEPAAS_IMAGE_DB") ||
+      die "Cannot tell the Postgres major version of $HIVEPAAS_IMAGE_DB."
+  fi
+}
+
+# deploy_stack FIRST_BOOT: docker stack deploy with the settings in the
+# environment it interpolates. FIRST_BOOT=1 adds the admin's account, which the
+# app reads on its first boot only.
+deploy_stack() {
+  local -a files=(-c "$CONFIG_DIR/hivepaas.yaml")
+  if [ "$1" = 1 ]; then files+=(-c "$CONFIG_DIR/hivepaas.first-boot.yaml"); fi
+  (
+    HIVEPAAS_APP_ENV=$(app_env_of_channel "$HIVEPAAS_CHANNEL")
+    export HIVEPAAS_APP_ENV HIVEPAAS_APP_DOMAIN HIVEPAAS_ROOT_DOMAIN HIVEPAAS_APP_SECRET \
+      HIVEPAAS_JWT_SECRET HIVEPAAS_DATA_DIR HIVEPAAS_PROJECT_DATA_DIR HIVEPAAS_DB_PASSWORD \
+      HIVEPAAS_REDIS_PASSWORD HIVEPAAS_AGENT_TOKEN HIVEPAAS_IP_RULE HIVEPAAS_ADMIN_EMAIL \
+      HIVEPAAS_ADMIN_PASSWORD HP_DB_MAJOR HIVEPAAS_IMAGE_APP HIVEPAAS_IMAGE_WORKER \
+      HIVEPAAS_IMAGE_UPDATER HIVEPAAS_IMAGE_AGENT HIVEPAAS_IMAGE_DB HIVEPAAS_IMAGE_REDIS \
+      HIVEPAAS_IMAGE_TRAEFIK
+    if [ -n "$HP_DB_VOLUME" ]; then export HP_DB_VOLUME; fi
+    docker stack deploy --with-registry-auth --detach=true "${files[@]}" "$STACK"
+  ) || die "docker stack deploy failed; see the output above."
+}
+
+# run_migrations IMAGE: the app does not migrate its database on boot; the
+# updater does, on an update. The first time is here: retried until the
+# database takes connections, while the app restarts until the tables exist.
+run_migrations() {
+  local log="$WORK_DIR/migrate.log" start=$SECONDS limit="${HIVEPAAS_WAIT_SECONDS:-300}"
+  info "Migrating the database, once it is up..."
+  until HP_DB_PASSWORD=$HIVEPAAS_DB_PASSWORD docker run --rm --network "${STACK}_local_net" \
+    -e HP_DB_HOST=db -e HP_DB_PORT=5432 -e HP_DB_USER=hivepaas -e HP_DB_PASSWORD -e HP_DB_DB_NAME=hivepaas \
+    "$1" sql-migrate up -config=hivepaas_app/db/dbconfig.yml -env=main >"$log" 2>&1; do
+    if [ $((SECONDS - start)) -ge "$limit" ]; then
+      tail -n 20 "$log" >&2
+      die "The database migrations did not run within $limit seconds. See 'docker service ps ${STACK}_db'" \
+        "and 'docker service logs ${STACK}_db', then run the installer again."
+    fi
+    sleep 5
+  done
+  ok "Database migrated: $(tail -n 1 "$log")"
+}
+
+update_state() {
+  docker service inspect "${STACK}_$1" --format '{{if .UpdateStatus}}{{.UpdateStatus.State}}{{end}}' 2>/dev/null
+}
+
+# wait_for_update SERVICE: until swarm is done updating the service, or has
+# given up on the update.
+wait_for_update() {
+  local start=$SECONDS limit="${HIVEPAAS_WAIT_SECONDS:-300}"
+  while [ $((SECONDS - start)) -lt "$limit" ]; do
+    case "$(update_state "$1")" in
+      updating | rollback_started) sleep 3 ;;
+      *) return 0 ;;
+    esac
+  done
+  return 1
+}
+
+task_template() {
+  docker service inspect "${STACK}_$1" --format '{{json .Spec.TaskTemplate}}' 2>/dev/null
+}
+
+# redeploy_stack: docker stack deploy over a running installation. The deploy
+# resets the OOM priority tune_services gives every service, so the database
+# restarts along with the app; an app started while the database is down
+# cannot connect, exits, and has swarm roll its update back. The stack is then
+# deployed once more, with the database back.
+redeploy_stack() {
+  local old_task before after attempt
+  for attempt in 1 2; do
+    old_task=$(running_task app) || old_task=''
+    before=$(task_template app) || before=''
+    deploy_stack 0
+    # Read at once: a rollback would put the old template back.
+    after=$(task_template app) || after=''
+    if ! { wait_for_update db && wait_for_update redis; }; then
+      die "The database did not come back within ${HIVEPAAS_WAIT_SECONDS:-300} seconds. See" \
+        "'docker service ps ${STACK}_db --no-trunc', then run the installer again."
+    fi
+    # A deploy that left the app's tasks as they were has nothing to wait for.
+    if [ "$after" = "$before" ]; then return 0; fi
+    wait_for_new_task app "$old_task" || die_waiting
+    case "$(update_state app)" in
+      rollback_*) ;;
+      *) return 0 ;;
+    esac
+    if [ "$attempt" = 2 ]; then
+      die "Swarm rolled back the app's update twice. See 'docker service ps ${STACK}_app --no-trunc'" \
+        "and 'docker service logs ${STACK}_app', then run the installer again."
+    fi
+    info "The app's update was rolled back while the database restarted; deploying again..."
+  done
+}
+
+deploy() {
+  case "$INSTALL_STATE" in
+    fresh)
+      resolve_images
+      deploy_stack 1
+      run_migrations "$HIVEPAAS_IMAGE_APP"
+      ;;
+    unfinished)
+      if [ "$REDEPLOY" = 1 ]; then
+        resolve_images
+        if [ -n "${HIVEPAAS_ADMIN_PASSWORD:-}" ]; then deploy_stack 1; else deploy_stack 0; fi
+      else
+        info "Deployed by an earlier run; finishing what it started."
+      fi
+      run_migrations "$(running_image app)"
+      ;;
+    installed)
+      if [ "$REDEPLOY" = 1 ]; then
+        resolve_images
+        redeploy_stack
+      else
+        ok "Deployed already, and left as it is (--redeploy deploys it again)."
+        update_ip_routes
+      fi
+      ;;
+  esac
+}
+
+# update_ip_routes: the routers by address follow an address that changed.
+# They are service labels, so changing them restarts nothing. Without the
+# public address this run, they are left alone rather than lose it.
+update_ip_routes() {
+  local current
+  if [ -z "$PUBLIC_IP" ]; then
+    warn "Could not look up this server's public address; the routes by address are left as they are."
+    return 0
+  fi
+  current=$(docker service inspect "${STACK}_app" \
+    --format '{{index .Spec.Labels "traefik.http.routers.x-custom-router-ip.rule"}}' 2>/dev/null) || return 0
+  if [ "$current" = "$HIVEPAAS_IP_RULE" ]; then return 0; fi
+  docker service update --detach --quiet \
+    --label-add "traefik.http.routers.x-custom-router-ip.rule=$HIVEPAAS_IP_RULE" \
+    --label-add "traefik.http.routers.x-custom-router-ip-http.rule=$HIVEPAAS_IP_RULE" \
+    "${STACK}_app" >/dev/null || die "Could not update the routes by address."
+  ok "Routes by address now: $HIVEPAAS_IP_RULE"
+}
+
+# -------------------------------------------------------------------- Waits
+
+dashboard_answers() {
+  curl -fsSk --max-time 5 --resolve "$HIVEPAAS_APP_DOMAIN:443:127.0.0.1" \
+    "https://$HIVEPAAS_APP_DOMAIN/_/ping" >/dev/null 2>&1
+}
+
+wait_for_dashboard() {
+  local start=$SECONDS limit="${HIVEPAAS_WAIT_SECONDS:-300}" said=0
+  until dashboard_answers; do
+    if [ $((SECONDS - start)) -ge "$limit" ]; then return 1; fi
+    if [ $((SECONDS - start)) -ge $((said + 30)) ]; then
+      said=$((SECONDS - start))
+      info "Still waiting (${said}s)..."
+    fi
+    sleep 5
+  done
+}
+
+die_waiting() {
+  die "HivePaaS did not answer within ${HIVEPAAS_WAIT_SECONDS:-300} seconds. See what it is doing with" \
+    "'docker service ps ${STACK}_app --no-trunc' and 'docker service logs ${STACK}_app', then run the" \
+    "installer again."
+}
+
+# running_task SERVICE: the ID of the service's task that is running, if any.
+running_task() {
+  docker service ps "${STACK}_$1" --filter desired-state=running --format '{{.ID}} {{.CurrentState}}' \
+    2>/dev/null | awk '$2 == "Running" {print $1; exit}'
+}
+
+# wait_for_new_task SERVICE OLD_TASK: until a task other than OLD_TASK runs.
+# A task with a healthcheck only counts as running once it is healthy.
+wait_for_new_task() {
+  local start=$SECONDS limit="${HIVEPAAS_WAIT_SECONDS:-300}" task
+  while [ $((SECONDS - start)) -lt "$limit" ]; do
+    task=$(running_task "$1") || task=
+    if [ -n "$task" ] && [ "$task" != "$2" ]; then return 0; fi
+    sleep 3
+  done
+  return 1
+}
+
+# service_update_args SERVICE: what the service still needs, into UPDATE_ARGS:
+# the OOM priority of a system service, and the admin's account out of its
+# environment.
+service_update_args() {
+  local svc="${STACK}_$1" oom env key nl=$'\n'
+  UPDATE_ARGS=()
+  oom=$(docker service inspect --format '{{.Spec.TaskTemplate.ContainerSpec.OomScoreAdj}}' "$svc" 2>/dev/null) ||
+    return 1
+  if [ "$oom" != -500 ]; then UPDATE_ARGS+=(--oom-score-adj -500); fi
+  env=$(docker service inspect --format '{{range .Spec.TaskTemplate.ContainerSpec.Env}}{{println .}}{{end}}' "$svc")
+  for key in HP_USER_ADMIN_USERNAME HP_USER_ADMIN_EMAIL HP_USER_ADMIN_PASSWORD; do
+    case "$nl$env" in *"$nl$key="*) UPDATE_ARGS+=(--env-rm "$key") ;; esac
+  done
+}
+
+# tune_services: the system services get the kernel's OOM priority -500, so
+# that a user app is what the kernel kills when memory runs out - `docker stack
+# deploy` drops oom_score_adj - and the admin's password leaves the app and
+# the worker once the app has used it.
+#
+# Only what differs is changed, one service at a time, each waited for: an app
+# restarted while the database restarts cannot connect, exits, and has swarm
+# roll its update back. The database goes first and the app last. An update
+# swarm rolled back anyway stops the install rather than pass for done.
+tune_services() {
+  local svc old_task
+  for svc in db redis traefik agent worker updater app; do
+    service_update_args "$svc" || continue
+    if [ "${#UPDATE_ARGS[@]}" -eq 0 ]; then continue; fi
+    old_task=$(running_task "$svc") || old_task=''
+    info "Updating ${STACK}_$svc..."
+    docker service update --detach --quiet "${UPDATE_ARGS[@]}" "${STACK}_$svc" >/dev/null ||
+      die "Could not update ${STACK}_$svc."
+    if [ -n "$old_task" ]; then
+      wait_for_new_task "$svc" "$old_task" ||
+        die "${STACK}_$svc did not come back within ${HIVEPAAS_WAIT_SECONDS:-300} seconds. See" \
+          "'docker service ps ${STACK}_$svc --no-trunc', then run the installer again."
+    fi
+    service_update_args "$svc" || true
+    if [ "${#UPDATE_ARGS[@]}" -gt 0 ]; then
+      die "Swarm rolled back the update of ${STACK}_$svc: its new task did not stay up. See" \
+        "'docker service ps ${STACK}_$svc --no-trunc', then run the installer again."
+    fi
+  done
+  wait_for_dashboard || die_waiting
+}
+
+# ------------------------------------------------------------------- Finish
+
+finish_install() {
+  HIVEPAAS_ADMIN_PASSWORD=
+  HIVEPAAS_INSTALLED=true
+  save_settings
+  ok "The admin's password is out of $INSTALL_ENV and of the services' settings."
+}
+
+print_done() {
+  local ips=''
+  print_logo
+  printf '\n  %s%sHivePaaS is running.%s\n\n' "$C_BOLD" "$C_GREEN" "$C_RESET"
+  info "Dashboard   https://$HIVEPAAS_APP_DOMAIN"
+  info "            once DNS points $HIVEPAAS_APP_DOMAIN at this server; point *.$HIVEPAAS_ROOT_DOMAIN"
+  info "            at it too, for your apps."
+  if [ -n "$PUBLIC_IP" ]; then ips=" https://$PUBLIC_IP"; fi
+  if [ -n "$HOST_IP" ] && [ "$HOST_IP" != "$PUBLIC_IP" ]; then ips="$ips https://$HOST_IP"; fi
+  if [ -n "$ips" ]; then info "            Until then:$ips"; fi
+  if [ "$1" = 1 ]; then
+    info "Sign in     as $ADMIN_USERNAME ($HIVEPAAS_ADMIN_EMAIL), with the password you chose."
+  fi
+  printf '\n'
+  warn "The certificate is self-signed until you get one in the setup, so the browser warns"
+  info "  about it: accept the warning to go on."
+  warn "After a restart, HivePaaS can take 30 to 60 seconds to answer."
+  warn "$INSTALL_ENV holds the app secret, the only key to your encrypted data."
+  info "  Keep a copy of it somewhere other than this server."
+  printf '\n'
+}
+
+# --------------------------------------------------------------------- Main
+
+usage() {
+  cat <<'USAGE'
+Usage: install.sh [--yes] [--config FILE] [--redeploy]
+
+Installs HivePaaS on this server, as root. Every answer is saved in
+/etc/hivepaas/install.env; running it again finishes an interrupted install
+or re-checks the host.
+
+Options:
+  -y, --yes        answer yes to installing or upgrading Docker and to the
+                   final confirmation; with every setting given, nothing is asked
+  --config FILE    read settings from FILE: KEY=VALUE lines, never executed
+  --redeploy       deploy the stack again on an installed server. What HivePaaS
+                   changed on its own services since goes back to the stack file.
+  -h, --help       show this help
+
+Settings, from the environment or --config (the environment wins):
+  HIVEPAAS_ADMIN_EMAIL         the admin's email
+  HIVEPAAS_ADMIN_PASSWORD      the admin's password, 10 characters or more
+  HIVEPAAS_APP_DOMAIN          the dashboard's domain, e.g. hivepaas.example.com
+  HIVEPAAS_ROOT_DOMAIN         the domain apps get subdomains of (default: from the app domain)
+  HIVEPAAS_APP_SECRET          the key stored secrets are encrypted with, 32 characters
+                               or more (default: generated)
+  HIVEPAAS_DATA_DIR            HivePaaS's data (default: /var/lib/hivepaas)
+  HIVEPAAS_PROJECT_DATA_DIR    projects' data (default: <data dir>/project_data)
+  HIVEPAAS_CHANNEL             beta or stable (default: beta)
+  HIVEPAAS_SWAP=false          do not add a swap file
+  HIVEPAAS_SWAP_SIZE_MB        the swap file's size (default: 2048)
+  HIVEPAAS_EARLYOOM=false      do not install earlyoom
+  HIVEPAAS_UPGRADE_DOCKER=true upgrade Docker to its latest release without asking
+  HIVEPAAS_AGENT_IMAGE         the agent's image (default: from the release)
+  HIVEPAAS_RELEASE_BRANCH      the branch the release info is read from (default: release)
+  HIVEPAAS_INSTALL_REF         the ref the stack files are downloaded from (default: main)
+
+Silent install:
+  curl -fsSL .../install.sh | sudo HIVEPAAS_ADMIN_EMAIL=... HIVEPAAS_ADMIN_PASSWORD=... \
+    HIVEPAAS_APP_DOMAIN=... bash -s -- --yes
+USAGE
+}
+
+parse_args() {
+  while [ $# -gt 0 ]; do
+    case "$1" in
+      -y | --yes) ASSUME_YES=1 ;;
+      --redeploy) REDEPLOY=1 ;;
+      --config)
+        if [ $# -lt 2 ]; then die "--config needs a file."; fi
+        CONFIG_FILE=$2
+        shift
+        ;;
+      --config=*) CONFIG_FILE=${1#--config=} ;;
+      -h | --help)
+        usage
+        exit 0
+        ;;
+      *) die "Unknown option: $1. See --help." ;;
+    esac
+    shift
+  done
+}
+
+cleanup() {
+  if [ -n "$WORK_DIR" ]; then rm -rf "$WORK_DIR"; fi
+}
+
+main() {
+  local just_installed=0
+  set -Eeuo pipefail
+  trap 'on_error $? $LINENO' ERR
+  trap cleanup EXIT
+  parse_args "$@"
+  setup_colors
+  print_logo
+  open_tty
+  WORK_DIR=$(mktemp -d)
+
+  step "Preflight"
+  preflight
+
+  step "Docker"
+  ensure_docker
+
+  step "Settings"
+  load_settings
+  detect_install_state
+  ask_questions
+  generate_secrets
+  gather_addresses
+  if [ "$INSTALL_STATE" = fresh ] || [ "$REDEPLOY" = 1 ]; then fetch_release; fi
+  if [ "$INSTALL_STATE" = installed ]; then
+    ok "HivePaaS is installed here, with the settings in $INSTALL_ENV."
+    if [ "$REDEPLOY" = 1 ]; then
+      warn "--redeploy puts HivePaaS's services back as the stack file has them: Traefik's settings, the"
+      info "  worker and updater replicas and the app's routing labels, if HivePaaS changed them since."
+      confirm "Redeploy the stack?" || die "Stopped; the stack was not redeployed."
+    fi
+  else
+    print_summary
+    confirm "Install HivePaaS with these settings?" || die "Stopped; HivePaaS was not installed."
+  fi
+  save_settings
+  ok "Settings saved in $INSTALL_ENV."
+
+  step "Host memory"
+  setup_swap || true
+  setup_earlyoom || true
+
+  step "Swarm"
+  ensure_swarm
+  ensure_network
+
+  step "Files"
+  prepare_files
+
+  step "Deploy"
+  deploy
+
+  step "Waiting for HivePaaS"
+  wait_for_dashboard || die_waiting
+  tune_services
+  ok "HivePaaS answers."
+
+  step "Finish"
+  if [ "${HIVEPAAS_INSTALLED:-}" != true ]; then
+    finish_install
+    just_installed=1
+  fi
+  print_done "$just_installed"
+}
+
+if [ "${HIVEPAAS_INSTALL_LIB:-}" != 1 ]; then
+  main "$@"
+fi

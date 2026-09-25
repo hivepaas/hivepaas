@@ -615,6 +615,92 @@ test_earlyoom_config() {
   check_contains "openrc avoid" "$conf" "avoid_cmds='^(hivepaas|"
 }
 
+# ------------------------------------------------------------------- Deploy
+
+test_write_self_signed_cert() {
+  local text
+  mkdir -p "$TMP/certs"
+  write_self_signed_cert "$TMP/certs" mydomain.com hivepaas.dev.mydomain.com
+  check "written" 0 "$?"
+  text=$(openssl x509 -in "$TMP/certs/self-signed.crt" -noout -text)
+  check_contains "common name" "$text" "CN=mydomain.com"
+  check_contains "names" "$text" "DNS:mydomain.com, DNS:*.mydomain.com, DNS:hivepaas.dev.mydomain.com"
+  check_contains "an EC P-256 key" "$text" "prime256v1"
+  check "the key is root's alone" 600 "$(stat -c %a "$TMP/certs/self-signed.key" 2>/dev/null ||
+    stat -f %Lp "$TMP/certs/self-signed.key")"
+  write_self_signed_cert "$TMP/certs" mydomain.com mydomain.com
+  text=$(openssl x509 -in "$TMP/certs/self-signed.crt" -noout -text)
+  check_contains "the app on the root domain is named once" "$text" "DNS:mydomain.com, DNS:*.mydomain.com"$'\n'
+}
+
+test_take_db_volume() {
+  HP_DB_VOLUME='' HP_DB_MAJOR=''
+  printf '%s\n' HP_DB_VOLUME=hivepaas_db_19 HP_DB_MAJOR=19 >"$TMP/db-volume.env"
+  read_kv_file "$TMP/db-volume.env" take_db_volume
+  check "volume" hivepaas_db_19 "$HP_DB_VOLUME"
+  check "major" 19 "$HP_DB_MAJOR"
+  HP_DB_VOLUME='' HP_DB_MAJOR=''
+  printf '%s\n' 'HP_DB_VOLUME=x;rm -rf /' HP_DB_MAJOR=abc 'PATH=/nowhere' >"$TMP/db-volume.env"
+  read_kv_file "$TMP/db-volume.env" take_db_volume
+  check "a volume name that is not one is ignored" "" "$HP_DB_VOLUME"
+  check "a major that is not a number is ignored" "" "$HP_DB_MAJOR"
+  check_fails "nothing else is taken" test "$PATH" = /nowhere
+}
+
+# stack_variables: the ${VAR}s the stack files interpolate - not those in
+# comments, nor the $${VAR}s escaped for the container's shell.
+stack_variables() {
+  cat "$HERE/hivepaas.yaml" "$HERE/hivepaas.first-boot.yaml" | grep -v '^[[:space:]]*#' |
+    grep -oE '(^|[^$])\$\{[A-Z_]+' | sed 's/.*\${//' | sort -u
+}
+
+test_deploy_exports_every_stack_variable() {
+  local var body
+  body=$(declare -f deploy_stack)
+  for var in $(stack_variables); do
+    check_contains "deploy_stack exports $var" "$body" "$var"
+  done
+  check_ok "the stack files were read" test "$(stack_variables | wc -l)" -ge 20
+}
+
+# --------------------------------------------------------------------- Main
+
+test_parse_args() {
+  parse_args --yes --config /tmp/a.conf --redeploy
+  check "--yes" 1 "$ASSUME_YES"
+  check "--config" /tmp/a.conf "$CONFIG_FILE"
+  check "--redeploy" 1 "$REDEPLOY"
+  parse_args --config=/tmp/b.conf -y
+  check "--config=" /tmp/b.conf "$CONFIG_FILE"
+  out=$( (parse_args --config) 2>&1)
+  check "--config without a file stops" 1 "$?"
+  out=$( (parse_args --nope) 2>&1)
+  check "an unknown option stops" 1 "$?"
+  check_contains "naming it" "$out" --nope
+}
+
+test_help() {
+  local out key
+  out=$(bash "$HERE/install.sh" --help)
+  check "--help exits 0" 0 "$?"
+  check_contains "usage" "$out" "Usage: install.sh"
+  for key in ADMIN_EMAIL ADMIN_PASSWORD APP_DOMAIN ROOT_DOMAIN APP_SECRET DATA_DIR PROJECT_DATA_DIR CHANNEL \
+    SWAP SWAP_SIZE_MB EARLYOOM UPGRADE_DOCKER AGENT_IMAGE RELEASE_BRANCH INSTALL_REF; do
+    check_contains "--help lists HIVEPAAS_$key" "$out" "HIVEPAAS_$key"
+  done
+}
+
+test_refuses_without_root() {
+  local out
+  if [ "$(id -u)" -eq 0 ]; then
+    printf 'skip test_refuses_without_root: running as root\n'
+    return 0
+  fi
+  out=$(HIVEPAAS_TTY=/dev/null bash "$HERE/install.sh" 2>&1)
+  check "stops" 1 "$?"
+  check_contains "saying why" "$out" "as root"
+}
+
 # ------------------------------------------------------------------- Runner
 
 for t in $(declare -F | awk '$3 ~ /^test_/ {print $3}'); do

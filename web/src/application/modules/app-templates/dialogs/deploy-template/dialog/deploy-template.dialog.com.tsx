@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 
 import { MODULE_IDS, ROUTE } from "@/application/shared/constants";
 import { useConditionalModule } from "@/application/shared/permissions";
@@ -27,6 +27,7 @@ export function DeployTemplateDialog() {
     const { state, props: dialogOptions, ...actions } = useDeployTemplateDialogState();
     const navigate = useNavigate();
     const [imageError, setImageError] = useState(false);
+    const [hasChanges, setHasChanges] = useState(false);
 
     const { canWrite } = useConditionalModule({ id: MODULE_IDS.Project });
     const open = state.mode !== "closed";
@@ -110,7 +111,21 @@ export function DeployTemplateDialog() {
         preflight(values);
     };
 
+    // Reset hasChanges when dialog closes
+    useEffect(() => {
+        if (state.mode === "closed") {
+            setHasChanges(false);
+        }
+    }, [state.mode]);
+
     const handleClose = () => {
+        if (canWrite && hasChanges) {
+            const userConfirmed = window.confirm("Are you sure you want to close without saving changes?");
+            if (!userConfirmed) {
+                return;
+            }
+        }
+        setHasChanges(false);
         actions.close();
     };
 
@@ -123,7 +138,15 @@ export function DeployTemplateDialog() {
             open={open}
             onOpenChange={handleClose}
         >
-            <DialogFixedContent className="sm:max-w-[800px] w-full">
+            <DialogFixedContent
+                className="sm:max-w-[800px] w-full"
+                onPointerDownOutside={event => {
+                    event.preventDefault();
+                }}
+                onInteractOutside={event => {
+                    event.preventDefault();
+                }}
+            >
                 <DialogHeader className="border-b border-border/50 px-3.5 py-4">
                     <div className="flex items-center gap-3.5">
                         <div className="flex size-10 shrink-0 items-center justify-center rounded-lg border border-border/80 bg-muted/30 p-2 overflow-hidden shadow-2xs">
@@ -174,6 +197,7 @@ export function DeployTemplateDialog() {
                         readOnly={!canWrite}
                         onSubmit={handleSubmit}
                         onCancel={handleClose}
+                        onHasChanges={setHasChanges}
                     />
                 )}
             </DialogFixedContent>

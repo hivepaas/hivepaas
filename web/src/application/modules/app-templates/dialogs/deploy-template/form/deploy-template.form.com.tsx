@@ -76,6 +76,7 @@ export interface DeployTemplateFormProps {
     initialVariant?: string;
     isPending: boolean;
     readOnly?: boolean;
+    onHasChanges?: (dirty: boolean) => void;
     onSubmit: (values: CreateAppFromTemplateReq) => void;
     onCancel: () => void;
 }
@@ -107,6 +108,7 @@ export function DeployTemplateForm({
     initialVariant,
     isPending,
     readOnly = false,
+    onHasChanges,
     onSubmit,
     onCancel,
 }: DeployTemplateFormProps) {
@@ -184,7 +186,13 @@ export function DeployTemplateForm({
     }, [template.dependencies, clusterVolumes]);
 
     // 2. React Hook Form Setup
-    const { control, handleSubmit, watch, setValue } = useForm<FormState>({
+    const {
+        control,
+        handleSubmit,
+        watch,
+        setValue,
+        formState: { isDirty },
+    } = useForm<FormState>({
         defaultValues: {
             name: template.name,
             env: defaultEnv,
@@ -196,6 +204,10 @@ export function DeployTemplateForm({
         },
         mode: "onSubmit",
     });
+
+    useEffect(() => {
+        onHasChanges?.(readOnly ? false : isDirty);
+    }, [isDirty, onHasChanges, readOnly]);
 
     // What this request would grant the host, and whether the person may grant
     // it: the same permission the app's resource settings screen asks for.
@@ -239,8 +251,8 @@ export function DeployTemplateForm({
                     versions.find((v: AppTemplateVersionSummary) => v.default)?.name ??
                     versions[0]?.name ??
                     "";
-                setValue("version", fallbackVer);
-                setValue("imageTag", "");
+                setValue("version", fallbackVer, { shouldDirty: true });
+                setValue("imageTag", "", { shouldDirty: true });
             }
         }
         prevVariantRef.current = selectedVariant;
@@ -488,8 +500,8 @@ export function DeployTemplateForm({
                                                                     )?.name ??
                                                                     versions[0]?.name ??
                                                                     "";
-                                                                setValue("version", fallbackVer);
-                                                                setValue("imageTag", "");
+                                                                setValue("version", fallbackVer, { shouldDirty: true });
+                                                                setValue("imageTag", "", { shouldDirty: true });
                                                             }
                                                         }
                                                     }}
@@ -546,7 +558,9 @@ export function DeployTemplateForm({
                                                 // A scanned tag is the tag itself; the repository is
                                                 // the template's and is never assembled here.
                                                 const matchedTag = scannedTags.find(t => t.tag === val);
-                                                setValue("imageTag", matchedTag ? matchedTag.tag : "");
+                                                setValue("imageTag", matchedTag ? matchedTag.tag : "", {
+                                                    shouldDirty: true,
+                                                });
                                             }}
                                             disabled={readOnly || isPending}
                                         >
@@ -1137,7 +1151,10 @@ function ParameterRow({
                                             disabled={readOnly}
                                             onClick={() => {
                                                 const newPass = generateRandomPassword(32);
-                                                setValue(`params.${param.name}`, newPass);
+                                                setValue(`params.${param.name}`, newPass, {
+                                                    shouldValidate: true,
+                                                    shouldDirty: true,
+                                                });
                                             }}
                                             className="h-9 px-3 text-xs font-medium border-border/80 hover:bg-muted/80 text-muted-foreground hover:text-foreground shrink-0"
                                         >

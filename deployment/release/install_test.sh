@@ -330,6 +330,90 @@ test_latest_docker_from_index() {
   check_fails "an empty page" latest_docker_from_index </dev/null
 }
 
+# ------------------------------------------------------------------ Network
+
+test_route_src() {
+  check "src" 172.31.5.10 "$(printf '1.1.1.1 via 172.31.0.1 dev eth0 src 172.31.5.10 uid 0\n' | route_src)"
+  check "none" "" "$(printf 'unreachable 1.1.1.1\n' | route_src)"
+}
+
+test_cidr_overlaps() {
+  check_ok "a smaller network inside" cidr_overlaps 10.11.0.0/16 10.11.5.0/24
+  check_ok "a larger network around" cidr_overlaps 10.11.0.0/16 10.0.0.0/8
+  check_ok "an address inside" cidr_overlaps 10.11.0.0/16 10.11.3.4
+  check_ok "everything" cidr_overlaps 10.11.0.0/16 0.0.0.0/0
+  check_fails "a neighbour" cidr_overlaps 10.11.0.0/16 10.12.0.0/16
+  check_fails "docker0" cidr_overlaps 10.11.0.0/16 172.17.0.0/16
+}
+
+test_routes_overlap() {
+  local routes='default via 172.31.0.1 dev eth0
+172.17.0.0/16 dev docker0 proto kernel scope link src 172.17.0.1 linkdown
+172.31.0.0/20 dev eth0 proto kernel scope link src 172.31.5.10'
+  check_fails "a cloud VM" routes_overlap 10.11.0.0/16 <<<"$routes"
+  check_ok "a VPN route over 10/8" routes_overlap 10.11.0.0/16 <<<"$routes
+10.0.0.0/8 via 172.31.0.1 dev eth0"
+  check_ok "a typed route" routes_overlap 10.11.0.0/16 <<<"$routes
+unreachable 10.11.0.0/24"
+}
+
+test_ip_host_rule() {
+  check "two addresses" 'Host(`1.2.3.4`) || Host(`10.0.0.5`)' "$(ip_host_rule 1.2.3.4 10.0.0.5)"
+  check "the same twice" 'Host(`1.2.3.4`)' "$(ip_host_rule 1.2.3.4 1.2.3.4)"
+  check "no public address" 'Host(`10.0.0.5`)' "$(ip_host_rule "" 10.0.0.5)"
+  check "none at all" 'Host(`127.0.0.1`)' "$(ip_host_rule "" "")"
+}
+
+test_addresses_line() {
+  HIVEPAAS_APP_DOMAIN=app.example.com PUBLIC_IP=1.2.3.4 HOST_IP=10.0.0.5
+  check "all three" "https://app.example.com, https://1.2.3.4, https://10.0.0.5" "$(addresses_line)"
+  HOST_IP=1.2.3.4
+  check "an address once" "https://app.example.com, https://1.2.3.4" "$(addresses_line)"
+  PUBLIC_IP='' HOST_IP=''
+  check "the domain alone" "https://app.example.com" "$(addresses_line)"
+}
+
+# -------------------------------------------------------------------- Stack
+
+# stack_env: what install.sh exports for docker stack deploy, with sample values.
+stack_env() {
+  export HIVEPAAS_APP_ENV=beta HIVEPAAS_ROOT_DOMAIN=mydomain.com HIVEPAAS_APP_DOMAIN=hivepaas.dev.mydomain.com \
+    HIVEPAAS_APP_SECRET=s3cret HIVEPAAS_JWT_SECRET=jwt HIVEPAAS_DATA_DIR=/var/lib/hivepaas \
+    HIVEPAAS_PROJECT_DATA_DIR=/data/projects HIVEPAAS_DB_PASSWORD=dbpw HIVEPAAS_REDIS_PASSWORD=redispw \
+    HIVEPAAS_AGENT_TOKEN=agenttok HIVEPAAS_IP_RULE='Host(`1.2.3.4`) || Host(`10.0.0.5`)' \
+    HIVEPAAS_ADMIN_EMAIL=you@example.com HIVEPAAS_ADMIN_PASSWORD='p$ss "w0rd"' HP_DB_MAJOR=18 \
+    HIVEPAAS_IMAGE_APP=hivepaas/hivepaas-dev:0.1.0 HIVEPAAS_IMAGE_WORKER=hivepaas/hivepaas-dev:0.1.0 \
+    HIVEPAAS_IMAGE_UPDATER=hivepaas/hivepaas-dev:0.1.0 HIVEPAAS_IMAGE_AGENT=hivepaas/hivepaas-agent-dev:0.1.0 \
+    HIVEPAAS_IMAGE_DB=postgres:18.3-alpine HIVEPAAS_IMAGE_REDIS=redis:8.6-alpine HIVEPAAS_IMAGE_TRAEFIK=traefik:v3.7
+}
+
+test_stack_renders() {
+  local out status
+  if ! command -v docker >/dev/null 2>&1; then
+    printf 'skip test_stack_renders: no docker CLI\n'
+    return 0
+  fi
+  stack_env
+  out=$(cd "$HERE" && docker stack config -c hivepaas.yaml 2>&1)
+  check "renders" 0 "$?"
+  check_contains "the router by domain" "$out" 'traefik.http.routers.app-router.rule: Host(`hivepaas.dev.mydomain.com`)'
+  check_contains "the router by address" "$out" \
+    'traefik.http.routers.x-custom-router-ip.rule: Host(`1.2.3.4`) || Host(`10.0.0.5`)'
+  check_contains "the Postgres major" "$out" 'PGDATA: /var/lib/postgresql/18/docker'
+  check_contains "project data seen from the app" "$out" 'target: /host/data/projects'
+  check "every HivePaaS process gets the secret" 5 "$(printf '%s\n' "$out" | grep -c 'HP_APP_SECRET: s3cret')"
+  check_lacks "no admin without the first-boot file" "$out" HP_USER_ADMIN_PASSWORD
+  out=$(cd "$HERE" && docker stack config -c hivepaas.yaml -c hivepaas.first-boot.yaml 2>&1)
+  check "renders with the first-boot file" 0 "$?"
+  check "the admin, literally, on app and worker" 2 \
+    "$(printf '%s\n' "$out" | grep -c 'HP_USER_ADMIN_PASSWORD: p$ss "w0rd"')"
+  unset HIVEPAAS_APP_SECRET
+  out=$(cd "$HERE" && docker stack config -c hivepaas.yaml 2>&1)
+  status=$?
+  check_fails "a missing setting fails" test "$status" -eq 0
+  check_contains "and is named" "$out" HIVEPAAS_APP_SECRET
+}
+
 # ------------------------------------------------------------------- Runner
 
 for t in $(declare -F | awk '$3 ~ /^test_/ {print $3}'); do

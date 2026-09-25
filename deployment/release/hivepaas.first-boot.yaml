@@ -1,0 +1,19 @@
+# Deployed with hivepaas.yaml on the first install only.
+#
+# The app reads the admin's account on its first boot, when it creates them,
+# and never again. Once the dashboard answers, install.sh removes these from
+# the services (docker service update --env-rm) and the password from
+# install.env, so it does not stay readable in `docker service inspect`. A later
+# deploy leaves this file out, and so does not bring them back.
+services:
+  app:
+    environment:
+      HP_USER_ADMIN_USERNAME: admin
+      HP_USER_ADMIN_EMAIL: ${HIVEPAAS_ADMIN_EMAIL:?}
+      HP_USER_ADMIN_PASSWORD: ${HIVEPAAS_ADMIN_PASSWORD:?}
+  # The worker runs the same first-boot step when it starts first.
+  worker:
+    environment:
+      HP_USER_ADMIN_USERNAME: admin
+      HP_USER_ADMIN_EMAIL: ${HIVEPAAS_ADMIN_EMAIL:?}
+      HP_USER_ADMIN_PASSWORD: ${HIVEPAAS_ADMIN_PASSWORD:?}

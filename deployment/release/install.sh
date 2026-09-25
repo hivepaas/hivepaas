@@ -365,3 +365,85 @@ latest_docker_from_index() {
   if [ -z "$v" ]; then return 1; fi
   printf '%s\n' "$v"
 }
+
+# ------------------------------------------------------------------ Network
+
+HOST_IP='' PUBLIC_IP=''
+
+# route_src: the source address in `ip route get` output, read from stdin.
+route_src() {
+  awk '{for (i = 1; i < NF; i++) if ($i == "src") {print $(i + 1); exit}}'
+}
+
+# host_ip: this host's address on its default route.
+host_ip() {
+  local ip
+  command -v ip >/dev/null 2>&1 || return 1
+  ip=$(ip route get 1.1.1.1 2>/dev/null | route_src) || return 1
+  valid_ipv4 "$ip" || return 1
+  printf '%s' "$ip"
+}
+
+# public_ip: the address the internet sees this host at.
+public_ip() {
+  local ip
+  ip=$(curl -4 -fsS --max-time 5 https://ifconfig.io 2>/dev/null | tr -d '[:space:]') || return 1
+  valid_ipv4 "$ip" || return 1
+  printf '%s' "$ip"
+}
+
+ip4_to_int() {
+  local a b c d
+  IFS=. read -r a b c d <<<"$1"
+  printf '%s' $(((a << 24) + (b << 16) + (c << 8) + d))
+}
+
+# cidr_overlaps A B: two IPv4 networks share an address. An address without a
+# prefix length is a network of one.
+cidr_overlaps() {
+  local a="${1%/*}" b="${2%/*}" an=32 bn=32 n mask
+  case "$1" in */*) an=${1#*/} ;; esac
+  case "$2" in */*) bn=${2#*/} ;; esac
+  if ! valid_ipv4 "$a" || ! valid_ipv4 "$b"; then return 1; fi
+  n=$an
+  if [ "$bn" -lt "$n" ]; then n=$bn; fi
+  if [ "$n" -eq 0 ]; then return 0; fi
+  mask=$(((0xFFFFFFFF << (32 - n)) & 0xFFFFFFFF))
+  [ $(($(ip4_to_int "$a") & mask)) -eq $(($(ip4_to_int "$b") & mask)) ]
+}
+
+# routes_overlap CIDR: a route in `ip route show` output, read from stdin,
+# reaches into CIDR.
+routes_overlap() {
+  local first second dest
+  while read -r first second _; do
+    case "$first" in
+      default) continue ;;
+      [0-9]*) dest=$first ;;
+      *) dest=$second ;;
+    esac
+    if cidr_overlaps "$1" "$dest"; then return 0; fi
+  done
+  return 1
+}
+
+# ip_host_rule IP...: the Traefik rule matching requests made to these
+# addresses. Empty and repeated ones are skipped; with none left the rule
+# matches only 127.0.0.1, so the router still has one.
+ip_host_rule() {
+  local ip rule='' seen=' '
+  for ip in "$@"; do
+    if [ -z "$ip" ]; then continue; fi
+    case "$seen" in *" $ip "*) continue ;; esac
+    seen="$seen$ip "
+    rule="${rule:+$rule || }Host(\`$ip\`)"
+  done
+  printf '%s' "${rule:-Host(\`127.0.0.1\`)}"
+}
+
+addresses_line() {
+  local line="https://$HIVEPAAS_APP_DOMAIN"
+  if [ -n "$PUBLIC_IP" ]; then line="$line, https://$PUBLIC_IP"; fi
+  if [ -n "$HOST_IP" ] && [ "$HOST_IP" != "$PUBLIC_IP" ]; then line="$line, https://$HOST_IP"; fi
+  printf '%s' "$line"
+}

@@ -1,0 +1,4 @@
+tls:
+  certificates:
+    - certFile: /etc/traefik/ssl/certs/self-signed.crt
+      keyFile: /etc/traefik/ssl/certs/self-signed.key

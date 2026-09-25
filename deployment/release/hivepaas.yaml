@@ -1,0 +1,351 @@
+# The HivePaaS stack as install.sh deploys it.
+#
+# Every value that differs between servers is a ${VAR} the installer exports
+# before `docker stack deploy`: the answers saved in /etc/hivepaas/install.env
+# and the images of the release it installs. `docker stack config -c
+# hivepaas.yaml` shows what a set of them renders to.
+#
+# The healthchecks, update_config and restart policies are dev's, and
+# deployment/dev/hivepaas.yaml says why each number is what it is. Keep the two
+# in step.
+
+# The environment every HivePaaS process loads its configuration from: app,
+# worker, updater and agent all read the database, the cache and the secrets.
+x-hivepaas-env: &hivepaas-env
+  HP_ENV: ${HIVEPAAS_APP_ENV:?}
+  HP_CONFIG_FILE: config/config.${HIVEPAAS_APP_ENV:?}.toml
+  HP_ROOT_DOMAIN: ${HIVEPAAS_ROOT_DOMAIN:?}
+  HP_APP_DOMAIN: ${HIVEPAAS_APP_DOMAIN:?}
+  HP_APP_SECRET: ${HIVEPAAS_APP_SECRET:?}
+  HP_SESSION_JWT_SECRET: ${HIVEPAAS_JWT_SECRET:?}
+  HP_STORAGE_HOST_DIR: ${HIVEPAAS_DATA_DIR:?}
+  HP_STORAGE_PROJECT_DATA_HOST_DIR: ${HIVEPAAS_PROJECT_DATA_DIR:?}
+  HP_DB_HOST: db
+  HP_DB_PORT: "5432"
+  HP_DB_USER: hivepaas
+  HP_DB_PASSWORD: ${HIVEPAAS_DB_PASSWORD:?}
+  HP_DB_DB_NAME: hivepaas
+  # The database is on the stack's own overlay network, not reachable from outside.
+  HP_DB_SSL_MODE: disable
+  HP_CACHE_URL: redis://default:${HIVEPAAS_REDIS_PASSWORD:?}@redis:6379/0
+  HP_AGENT_SECRET_TOKEN: ${HIVEPAAS_AGENT_TOKEN:?}
+  # The app will not start with no origin list. The dashboard is served by the
+  # app itself, at the app domain and at the server's addresses, and its
+  # session cookies are SameSite=Lax, which a cross-site page cannot send.
+  HP_HTTP_SERVER_CORS_ALLOW_ORIGINS: '["*"]'
+
+x-logging: &logging
+  driver: json-file
+  options:
+    max-size: 50m
+    max-file: "5"
+    compress: "true"
+
+services:
+  traefik:
+    image: ${HIVEPAAS_IMAGE_TRAEFIK:?}
+    command:
+      - "--providers.swarm=true"
+      - "--providers.swarm.watch=true"
+      - "--providers.swarm.network=hivepaas_net"
+      - "--providers.swarm.exposedbydefault=false"
+      - "--entrypoints.web.address=:80"
+      - "--entrypoints.web.allowacmebypass=true"
+      - "--entrypoints.websecure.address=:443"
+      - "--entrypoints.websecure.http.tls=true"
+      - "--entrypoints.ping.address=127.0.0.1:8082"
+      - "--ping=true"
+      - "--ping.entrypoint=ping"
+      - "--providers.file.directory=/etc/traefik/dynamic"
+      - "--providers.file.watch=true"
+      - "--log=true"
+      - "--log.level=INFO"
+      - "--accesslog=true"
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://127.0.0.1:8082/ping"]
+      start_period: 60s
+      start_interval: 5s
+      interval: 30s
+      timeout: 5s
+      retries: 3
+    networks:
+      hivepaas_net:
+        aliases:
+          - hivepaas_traefik
+    ports:
+      - target: 80
+        published: 80
+        protocol: tcp
+        mode: host
+      - target: 443
+        published: 443
+        protocol: tcp
+        mode: host
+    volumes:
+      - ${HIVEPAAS_DATA_DIR:?}/traefik/etc:/etc/traefik
+      - ${HIVEPAAS_DATA_DIR:?}/traefik/var/log:/var/log/traefik
+      - ${HIVEPAAS_DATA_DIR:?}/ssl/certs:/etc/traefik/ssl/certs
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    deploy:
+      labels:
+        - "hivepaas.app.info={\"name\":\"traefik\",\"key\":\"traefik\"}"
+      mode: replicated
+      replicas: 1
+      placement:
+        constraints:
+          - node.role == manager
+          - node.labels.hivepaas.role == control-plane
+      restart_policy:
+        condition: any
+        delay: 5s
+        window: 120s
+      update_config:
+        failure_action: rollback
+        monitor: 180s
+        max_failure_ratio: 0.5
+    logging: *logging
+
+  db:
+    image: ${HIVEPAAS_IMAGE_DB:?}
+    networks:
+      - local_net
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U hivepaas"]
+      interval: 10s
+      timeout: 10s
+      retries: 6
+      start_period: 60s
+    environment:
+      POSTGRES_DB: hivepaas
+      POSTGRES_USER: hivepaas
+      POSTGRES_PASSWORD: ${HIVEPAAS_DB_PASSWORD:?}
+      PGDATA: /var/lib/postgresql/${HP_DB_MAJOR:?}/docker
+    volumes:
+      - db:/var/lib/postgresql
+    deploy:
+      labels:
+        - "hivepaas.app.info={\"name\":\"db\",\"key\":\"db\"}"
+        - "traefik.enable=false"
+      mode: replicated
+      replicas: 1
+      placement:
+        constraints:
+          - node.role == manager
+          - node.labels.hivepaas.role == control-plane
+      restart_policy:
+        condition: any
+        delay: 5s
+        window: 120s
+    logging: *logging
+
+  redis:
+    image: ${HIVEPAAS_IMAGE_REDIS:?}
+    command: ["redis-server", "--save", "", "--appendonly", "no", "--requirepass", "${HIVEPAAS_REDIS_PASSWORD:?}"]
+    networks:
+      - local_net
+    deploy:
+      labels:
+        - "hivepaas.app.info={\"name\":\"redis\",\"key\":\"redis\"}"
+        - "traefik.enable=false"
+      mode: replicated
+      replicas: 1
+      placement:
+        constraints:
+          - node.role == manager
+          - node.labels.hivepaas.role == control-plane
+      restart_policy:
+        condition: any
+        delay: 5s
+        window: 120s
+    logging: *logging
+
+  app:
+    image: ${HIVEPAAS_IMAGE_APP:?}
+    stop_grace_period: 10m
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://127.0.0.1:10000/_/ping"]
+      start_period: 120s
+      start_interval: 5s
+      interval: 30s
+      timeout: 5s
+      retries: 3
+    networks:
+      hivepaas_net:
+        aliases:
+          - hivepaas_app
+      local_net:
+    environment:
+      <<: *hivepaas-env
+    volumes:
+      - ${HIVEPAAS_DATA_DIR:?}:/var/lib/hivepaas
+      - ${HIVEPAAS_DATA_DIR:?}:/host${HIVEPAAS_DATA_DIR:?}
+      - ${HIVEPAAS_PROJECT_DATA_DIR:?}:/host${HIVEPAAS_PROJECT_DATA_DIR:?}
+      - /var/run/docker.sock:/var/run/docker.sock
+    deploy:
+      labels:
+        - "hivepaas.app.info={\"name\":\"app\",\"key\":\"app\"}"
+        - "traefik.enable=true"
+        - "traefik.swarm.network=hivepaas_net"
+        # By domain, as dev. The app rewrites these when its routing settings
+        # are saved.
+        - "traefik.http.services.app-svc.loadbalancer.server.port=10000"
+        - "traefik.http.routers.app-router.rule=Host(`${HIVEPAAS_APP_DOMAIN:?}`)"
+        - "traefik.http.routers.app-router.entrypoints=websecure"
+        - "traefik.http.routers.app-router.tls=true"
+        - "traefik.http.routers.app-router.service=app-svc"
+        - "traefik.http.middlewares.app-router-compress.compress=true"
+        - "traefik.http.middlewares.app-router-compress.compress.defaultencoding=br"
+        - "traefik.http.middlewares.app-router-compress.compress.minresponsebodybytes=1024"
+        - "traefik.http.routers.app-router.middlewares=app-router-compress@swarm"
+        # Everything named x-custom- survives that rewrite (updateSwarmServiceLabels).
+        # Each router names its service: with two on the service, Traefik
+        # would not pick one for a router that leaves it out.
+        - "traefik.http.services.x-custom-svc-app.loadbalancer.server.port=10000"
+        - "traefik.http.routers.x-custom-router-acme.rule=PathPrefix(`/.well-known/acme-challenge/`)"
+        - "traefik.http.routers.x-custom-router-acme.entrypoints=web"
+        - "traefik.http.routers.x-custom-router-acme.tls=false"
+        - "traefik.http.routers.x-custom-router-acme.service=x-custom-svc-app"
+        - "traefik.http.middlewares.x-custom-addprefix-acme.addprefix.prefix=/acme"
+        - "traefik.http.routers.x-custom-router-acme.middlewares=x-custom-addprefix-acme@swarm"
+        # By this server's addresses, until DNS points the app domain at it.
+        # install.sh updates the rule when an address changes.
+        - "traefik.http.routers.x-custom-router-ip.rule=${HIVEPAAS_IP_RULE:?}"
+        - "traefik.http.routers.x-custom-router-ip.entrypoints=websecure"
+        - "traefik.http.routers.x-custom-router-ip.tls=true"
+        - "traefik.http.routers.x-custom-router-ip.service=x-custom-svc-app"
+        - "traefik.http.routers.x-custom-router-ip-http.rule=${HIVEPAAS_IP_RULE:?}"
+        - "traefik.http.routers.x-custom-router-ip-http.entrypoints=web"
+        - "traefik.http.routers.x-custom-router-ip-http.service=x-custom-svc-app"
+        - "traefik.http.routers.x-custom-router-ip-http.middlewares=x-custom-redirect-https@swarm"
+        - "traefik.http.middlewares.x-custom-redirect-https.redirectscheme.scheme=https"
+      mode: replicated
+      replicas: 1
+      placement:
+        constraints:
+          - node.role == manager
+          - node.labels.hivepaas.role == control-plane
+      update_config:
+        failure_action: rollback
+        monitor: 240s
+        max_failure_ratio: 0.5
+      restart_policy:
+        condition: any
+        delay: 5s
+        window: 120s
+    logging: *logging
+
+  worker:
+    image: ${HIVEPAAS_IMAGE_WORKER:?}
+    stop_grace_period: 10m
+    healthcheck:
+      test: ["CMD-SHELL", "HB=$$(cat /tmp/hivepaas-worker.alive 2>/dev/null); [ $$(( $$(date +%s) - $${HB:-0} )) -lt 60 ]"]
+      start_period: 120s
+      start_interval: 5s
+      interval: 30s
+      timeout: 5s
+      retries: 3
+    networks:
+      - local_net
+    environment:
+      <<: *hivepaas-env
+      HP_RUN_MODE: worker
+    volumes:
+      - ${HIVEPAAS_DATA_DIR:?}:/var/lib/hivepaas
+      - ${HIVEPAAS_DATA_DIR:?}:/host${HIVEPAAS_DATA_DIR:?}
+      - ${HIVEPAAS_PROJECT_DATA_DIR:?}:/host${HIVEPAAS_PROJECT_DATA_DIR:?}
+      - /var/run/docker.sock:/var/run/docker.sock
+    deploy:
+      labels:
+        - "hivepaas.app.info={\"name\":\"worker\",\"key\":\"worker\"}"
+        - "traefik.enable=false"
+      mode: replicated
+      replicas: 0
+      placement:
+        constraints:
+          - node.role == manager
+          - node.labels.hivepaas.role == control-plane
+      restart_policy:
+        condition: any
+        delay: 5s
+        window: 120s
+      update_config:
+        failure_action: rollback
+        monitor: 240s
+        max_failure_ratio: 0.5
+    logging: *logging
+
+  updater:
+    image: ${HIVEPAAS_IMAGE_UPDATER:?}
+    stop_grace_period: 10m
+    networks:
+      - local_net
+    environment:
+      <<: *hivepaas-env
+      HP_RUN_MODE: updater
+    volumes:
+      - ${HIVEPAAS_DATA_DIR:?}:/var/lib/hivepaas
+      - ${HIVEPAAS_DATA_DIR:?}:/host${HIVEPAAS_DATA_DIR:?}
+      - /var/run/docker.sock:/var/run/docker.sock
+    deploy:
+      labels:
+        - "hivepaas.app.info={\"name\":\"updater\",\"key\":\"updater\"}"
+        - "traefik.enable=false"
+      mode: replicated
+      replicas: 0
+      placement:
+        constraints:
+          - node.role == manager
+          - node.labels.hivepaas.role == control-plane
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+        window: 120s
+    logging: *logging
+
+  agent:
+    image: ${HIVEPAAS_IMAGE_AGENT:?}
+    stop_grace_period: 10m
+    environment:
+      <<: *hivepaas-env
+      HP_RUN_MODE: agent
+      HP_AGENT_PORT: "10001"
+      HP_AGENT_NODE_ID: "{{.Node.ID}}"
+      HP_AGENT_NODE_NAME: "{{.Node.Hostname}}"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - /:/host
+    networks:
+      - local_net
+    deploy:
+      mode: global
+      endpoint_mode: dnsrr
+      labels:
+        - "hivepaas.app.info={\"name\":\"agent\",\"key\":\"agent\"}"
+        - "traefik.enable=false"
+      restart_policy:
+        condition: any
+        delay: 5s
+        window: 120s
+    logging:
+      driver: json-file
+      options:
+        max-size: 20m
+        max-file: "5"
+        compress: "true"
+
+networks:
+  hivepaas_net:
+    external: true
+  local_net:
+    driver: overlay
+    attachable: true
+    driver_opts:
+      com.docker.network.driver.mtu: 1380
+
+volumes:
+  db:
+    # A Postgres major upgrade moves the database to a volume of its own and
+    # records it in <data dir>/system/update/db-volume.env, which install.sh
+    # reads before a deploy. See deployment/dev/hivepaas.yaml.
+    name: ${HP_DB_VOLUME:-hivepaas_db}
+    driver: local

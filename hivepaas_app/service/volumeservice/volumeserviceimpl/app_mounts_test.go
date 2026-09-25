@@ -289,3 +289,44 @@ func TestAppScopePrefixWithoutAnEnvironment(t *testing.T) {
 	assert.Empty(t, appScopePrefix(app, base.ObjectScopeProject))
 	assert.False(t, appOwnsSubpath(app, base.ObjectScopeProject, "prod/web"))
 }
+
+// A volume whose data is the docker socket, or the directory holding it, is
+// refused whoever built it and whenever: the Docker API an app may use is
+// written down in its Docker API settings, and this would go around them.
+func TestBuildAppMountsRefusesAVolumeReachingTheDockerSocket(t *testing.T) {
+	for _, device := range []string{"/var/run/docker.sock", "/var/run", "/"} {
+		svc, host := newAppMountsTest(scopedVolume(t, "vol-1", "hp-vol-1", base.ObjectScopeApp,
+			&entity.ClusterVolume{
+				Managed: true, Driver: "local",
+				DriverOpts: map[string]string{"type": "none", "device": device, "o": "bind"},
+			}))
+
+		_, err := svc.BuildAppMounts(context.Background(), nil, &volumeservice.BuildAppMountsReq{
+			App: mountTestApp(),
+			New: []*volumeservice.AppMountReq{{Type: mount.TypeVolume, Source: "vol-1", Target: "/sock"}},
+		})
+
+		assert.ErrorIs(t, err, hperrors.ErrArgumentInvalid, device)
+		assert.Empty(t, host.madeSubDirs, "%s: nothing is created for a mount that is refused", device)
+	}
+}
+
+// How a volume is mounted is the volume's own description. A request saying
+// otherwise once replaced it, which turned any volume into any mount.
+func TestBuildAppMountsTakesTheDriverConfigFromTheVolumeAlone(t *testing.T) {
+	svc, _ := newAppMountsTest(scopedVolume(t, "vol-1", "hp-vol-1", base.ObjectScopeApp, &entity.ClusterVolume{
+		Managed: true, Driver: "local",
+		DriverOpts: map[string]string{"type": "nfs", "device": ":/exports/data", "o": "addr=10.0.0.5,rw"},
+	}))
+
+	resp, err := svc.BuildAppMounts(context.Background(), nil, &volumeservice.BuildAppMountsReq{
+		App: mountTestApp(),
+		New: []*volumeservice.AppMountReq{{
+			Type: mount.TypeVolume, Source: "vol-1", Target: "/data",
+			VolumeOptions: &volumeservice.AppMountVolumeOptions{Subpath: "files"},
+		}},
+	})
+
+	assert.NoError(t, err)
+	assert.Equal(t, ":/exports/data", resp.Mounts[0].VolumeOptions.DriverConfig.Options["device"])
+}

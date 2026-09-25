@@ -168,13 +168,17 @@ func (p *planner) privilegeMissing() string {
 // detailMounts is the detail of a host mount issue: the targets it is about.
 const detailMounts = "mounts"
 
-// socketMounts are the targets of an app's docker mounts of a socket Docker API
-// access gives.
+// socketMounts are the targets of an app's docker mounts of a Docker API
+// socket: one an app's access gives, or a path of the node holding the daemon's
+// own. What an app may do with the Docker API is written down in its Docker API
+// settings, and a mount of a socket would go around them, so no import writes
+// one.
 func socketMounts(doc *specmodel.AppDoc) []string {
 	var out []string
 	for target, m := range doc.Deployment.Storage.DockerMounts {
 		docker := mount.Mount{Type: m.Type, Source: m.Source, Target: target}
-		if dockerapiservice.IsSocketMount(&docker) {
+		reachesSocket := m.Type == mount.TypeBind && volumeservice.ReachesDockerSocket(m.Source)
+		if dockerapiservice.IsSocketMount(&docker) || reachesSocket {
 			out = append(out, target)
 		}
 	}
@@ -337,6 +341,9 @@ func (p *planner) checkAvailability(ctx context.Context) error {
 		return err
 	}
 	if err := p.checkAttachments(ctx, apps); err != nil {
+		return err
+	}
+	if err := p.checkVolumeDevices(ctx); err != nil {
 		return err
 	}
 	return p.checkStorage(ctx, apps)
@@ -513,6 +520,85 @@ func (p *planner) checkNodes(ctx context.Context) error {
 		}
 	}
 	return nil
+}
+
+// checkVolumeDevices judges the volumes a bundle writes by what their data is.
+//
+// A volume is ordinarily docker's own storage. One whose driver options name a
+// directory of a node hands that directory to whatever app mounts it, which is
+// the decision Write on the Cluster module stands for - the same gate the
+// volume screen applies. Such a volume is left out for a caller without it, and
+// the rest of the scope is imported.
+//
+// One whose data is the docker socket is refused to everyone, and the bundle
+// with it: an app is given the Docker API through its own Docker API settings,
+// which say what it may do with it, and a volume would go around them.
+func (p *planner) checkVolumeDevices(ctx context.Context) error {
+	block := specmodel.CollectionBlockName(base.SettingTypeClusterVolume)
+	for _, node := range p.nodes {
+		settings, holds := p.settingsOf[node.Path]
+		if !holds || node.Kind == specmodel.NodeKindApp || !node.Selected || !writes(node) {
+			continue
+		}
+		volumes, _ := settings[block].(map[string]any)
+		for _, key := range slices.Sorted(maps.Keys(volumes)) {
+			name := block + "/" + key
+			if !writesBlock(node, name) {
+				continue
+			}
+			volume, err := importedVolume(key, volumes[key])
+			if err != nil {
+				return err
+			}
+			if volume == nil || !volumeservice.DriverOptsNameHostPath(volume.DriverOpts) {
+				continue
+			}
+			if volumeservice.DriverOptsReachDockerSocket(volume.DriverOpts) {
+				return hperrors.Wrap(hperrors.ErrSpecBundleInvalid).WithExtraDetail(
+					"%s/%s: the volume reaches the Docker socket of the node. An app is given the Docker API "+
+						"through its own Docker API settings, and never through a volume.", node.Path, name)
+			}
+			allowed, err := p.mayWriteCluster(ctx)
+			if err != nil {
+				return err
+			}
+			if !allowed {
+				p.refuse(node, name, specmodel.Issue{
+					Severity: specmodel.SeveritySkipped, Code: specmodel.CodeHostMountNotPermitted,
+					Path: node.Path, Detail: map[string]any{refInSetting: name},
+					Action: "not imported: a volume reaching a directory of the node needs Write permission " +
+						"on the Cluster module",
+				})
+			}
+		}
+	}
+	return nil
+}
+
+// refuse leaves one setting of a node out of the import, with the reason. The
+// node itself, and its other settings, are imported as they are.
+func (p *planner) refuse(node *specmodel.PlanNode, name string, issue specmodel.Issue) {
+	if p.refused == nil {
+		p.refused = map[string][]string{}
+	}
+	p.refused[node.Path] = append(p.refused[node.Path], name)
+	node.Changes = slices.DeleteFunc(node.Changes, func(change string) bool { return change == name })
+	node.Issues = append(node.Issues, issue)
+}
+
+// importedVolume reads one volume of a bundle, and is nil for one written by a
+// newer HivePaaS - SETTING_VERSION_NEWER says so, and nothing of it is written.
+func importedVolume(key string, body any) (*entity.ClusterVolume, error) {
+	block := specmodel.Block("settings." + specmodel.CollectionBlockName(base.SettingTypeClusterVolume))
+	_, data, err := decodeImportedSetting(block, base.SettingTypeClusterVolume, key, body)
+	if errors.Is(err, hperrors.ErrDataVerNewerThanSystemVer) {
+		return nil, nil
+	}
+	if err != nil {
+		return nil, err
+	}
+	volume, _ := data.(*entity.ClusterVolume)
+	return volume, nil
 }
 
 func volumeNodeID(key string, body any) (string, error) {

@@ -234,13 +234,22 @@ func (w *writer) writtenNames(node *specmodel.PlanNode) []string {
 	if place, isApp := w.p.apps[node.Path]; isApp {
 		return appWrittenNames(node, place.doc)
 	}
+	// A setting the planner refused is left out however the node got here:
+	// a created scope writes what it holds, and the refusal is not in Changes
+	// to be taken out of.
+	refused := w.p.refused[node.Path]
 	if node.Action != specmodel.ActionCreate {
-		return node.Changes
+		return slices.DeleteFunc(slices.Clone(node.Changes), func(name string) bool {
+			return slices.Contains(refused, name)
+		})
 	}
 	settings := w.p.settingsOf[node.Path]
 	var names []string
 	for _, name := range settingNames(settings) {
 		block, key, _ := strings.Cut(name, "/")
+		if slices.Contains(refused, name) {
+			continue
+		}
 		if _, typ, found := settingBody(settings, block, key); found && importPolicyFor(typ).skip == "" {
 			names = append(names, name)
 		}

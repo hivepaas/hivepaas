@@ -92,11 +92,16 @@ type AppMountReq struct {
 	OwnerApp *entity.App
 }
 
+// AppMountVolumeOptions are what a caller may say about mounting a volume.
+//
+// How the volume is mounted - its driver and that driver's options - is not
+// here on purpose. That is the volume's own description, written when it was
+// created and gated there; a request that could replace it could turn any
+// volume into a mount of anything.
 type AppMountVolumeOptions struct {
-	Subpath      string
-	NoCopy       bool
-	Labels       map[string]string
-	DriverConfig *mount.Driver
+	Subpath string
+	NoCopy  bool
+	Labels  map[string]string
 }
 
 type BuildAppMountsReq struct {

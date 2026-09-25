@@ -244,6 +244,9 @@ type planner struct {
 	envOnly bool
 	// missing names, by node path, the settings the target does not have at all.
 	missing map[string][]string
+	// refused names, by node path, the settings this caller may not write. The
+	// rest of the node's settings are imported as they are.
+	refused map[string][]string
 }
 
 // appPlace is where an app's document sits in the bundle.

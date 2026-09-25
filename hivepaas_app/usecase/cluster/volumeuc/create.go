@@ -25,6 +25,10 @@ func (uc *UC) CreateVolume(
 	req.Type = currentSettingType
 	req.Auth = auth
 
+	if err := uc.checkVolumeHostAccess(ctx, auth, req.VolumeBaseReq); err != nil {
+		return nil, err
+	}
+
 	nodeID, err := uc.resolveCurrentNode(ctx, req.NodeID)
 	if err != nil {
 		return nil, hperrors.Wrap(err)

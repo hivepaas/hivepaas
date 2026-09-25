@@ -17376,6 +17376,144 @@
         "x-codegen-request-body-name" : "body"
       }
     },
+    "/projects/{projectID}/{projectEnv}/apps/{appID}/env-vars/link-suggestions" : {
+      "get" : {
+        "description" : "Suggests the env vars that link an app to another",
+        "operationId" : "getAppEnvLinkSuggestions",
+        "parameters" : [ {
+          "description" : "project ID",
+          "in" : "path",
+          "name" : "projectID",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "project env",
+          "in" : "path",
+          "name" : "projectEnv",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "app ID",
+          "in" : "path",
+          "name" : "appID",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "the app to link to",
+          "in" : "query",
+          "name" : "targetAppId",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/appsettingsdto.GetEnvLinkSuggestionsResp"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "400" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Bad Request"
+          },
+          "500" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Internal Server Error"
+          }
+        },
+        "summary" : "Suggests the env vars that link an app to another",
+        "tags" : [ "app_settings" ]
+      }
+    },
+    "/projects/{projectID}/{projectEnv}/apps/{appID}/env-vars/link-targets" : {
+      "get" : {
+        "description" : "Lists the apps an app may link its env vars to",
+        "operationId" : "listAppEnvLinkTargets",
+        "parameters" : [ {
+          "description" : "project ID",
+          "in" : "path",
+          "name" : "projectID",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "project env",
+          "in" : "path",
+          "name" : "projectEnv",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "app ID",
+          "in" : "path",
+          "name" : "appID",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/appsettingsdto.ListEnvLinkTargetsResp"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "400" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Bad Request"
+          },
+          "500" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Internal Server Error"
+          }
+        },
+        "summary" : "Lists the apps an app may link its env vars to",
+        "tags" : [ "app_settings" ]
+      }
+    },
     "/projects/{projectID}/{projectEnv}/apps/{appID}/feature-settings" : {
       "get" : {
         "description" : "Gets app feature settings",
@@ -45683,6 +45821,87 @@
         "required" : [ "mode", "ports" ],
         "type" : "object"
       },
+      "appsettingsdto.EnvLinkGroupResp" : {
+        "properties" : {
+          "description" : {
+            "type" : "string"
+          },
+          "id" : {
+            "type" : "string"
+          },
+          "recommended" : {
+            "type" : "boolean"
+          },
+          "title" : {
+            "type" : "string"
+          },
+          "vars" : {
+            "items" : {
+              "$ref" : "#/components/schemas/appsettingsdto.EnvLinkVarResp"
+            },
+            "type" : "array"
+          },
+          "warnings" : {
+            "items" : {
+              "type" : "string"
+            },
+            "type" : "array"
+          }
+        },
+        "required" : [ "description", "id", "recommended", "title", "vars", "warnings" ],
+        "type" : "object"
+      },
+      "appsettingsdto.EnvLinkSuggestionsResp" : {
+        "properties" : {
+          "groups" : {
+            "items" : {
+              "$ref" : "#/components/schemas/appsettingsdto.EnvLinkGroupResp"
+            },
+            "type" : "array"
+          },
+          "target" : {
+            "$ref" : "#/components/schemas/appsettingsdto.EnvLinkTargetResp"
+          }
+        },
+        "required" : [ "groups", "target" ],
+        "type" : "object"
+      },
+      "appsettingsdto.EnvLinkTargetResp" : {
+        "properties" : {
+          "category" : {
+            "type" : "string"
+          },
+          "engine" : {
+            "type" : "string"
+          },
+          "id" : {
+            "type" : "string"
+          },
+          "key" : {
+            "type" : "string"
+          },
+          "name" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "category", "engine", "id", "key", "name" ],
+        "type" : "object"
+      },
+      "appsettingsdto.EnvLinkVarResp" : {
+        "properties" : {
+          "description" : {
+            "type" : "string"
+          },
+          "key" : {
+            "type" : "string"
+          },
+          "value" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "description", "key", "value" ],
+        "type" : "object"
+      },
       "appsettingsdto.EnvVarsResp" : {
         "properties" : {
           "buildtimeEnvVars" : {
@@ -45897,6 +46116,18 @@
         "properties" : {
           "data" : {
             "$ref" : "#/components/schemas/appsettingsdto.DockerfileTemplateResp"
+          },
+          "meta" : {
+            "$ref" : "#/components/schemas/basedto.Meta"
+          }
+        },
+        "required" : [ "data", "meta" ],
+        "type" : "object"
+      },
+      "appsettingsdto.GetEnvLinkSuggestionsResp" : {
+        "properties" : {
+          "data" : {
+            "$ref" : "#/components/schemas/appsettingsdto.EnvLinkSuggestionsResp"
           },
           "meta" : {
             "$ref" : "#/components/schemas/basedto.Meta"
@@ -46440,6 +46671,21 @@
           }
         },
         "required" : [ "address", "hostnames" ],
+        "type" : "object"
+      },
+      "appsettingsdto.ListEnvLinkTargetsResp" : {
+        "properties" : {
+          "data" : {
+            "items" : {
+              "$ref" : "#/components/schemas/appsettingsdto.EnvLinkTargetResp"
+            },
+            "type" : "array"
+          },
+          "meta" : {
+            "$ref" : "#/components/schemas/basedto.Meta"
+          }
+        },
+        "required" : [ "data", "meta" ],
         "type" : "object"
       },
       "appsettingsdto.LogDriver" : {

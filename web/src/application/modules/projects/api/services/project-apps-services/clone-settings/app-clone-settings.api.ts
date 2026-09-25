@@ -63,7 +63,8 @@ export class AppCloneSettingsApi extends BaseApi {
 
         return lastValueFrom(
             from(this.client.v1.post(`/projects/${projectID}/${env}/apps/${appID}/clone-execute`, {}, { signal })).pipe(
-                map(() => Ok({ data: { type: "success" } } as const)),
+                map(this.validator.execute),
+                map(res => Ok(res)),
                 catchError(error => of(Err(parseApiError(error)))),
             ),
         );

@@ -5,6 +5,7 @@ export * from "./project-app-status-badge";
 export * from "./app-instances-count-badge";
 export * from "./project-secret-status-badge";
 export * from "./inheritable-cell";
+export * from "./tls-passthrough-mount-note";
 export * from "./project-sidebar";
 export * from "./env-vars-form-header";
 export * from "./final-env-values-dialog";

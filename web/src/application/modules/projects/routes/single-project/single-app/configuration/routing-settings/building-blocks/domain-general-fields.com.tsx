@@ -3,7 +3,7 @@ import { dashedBorderBox } from "@lib/styles";
 import { cn } from "@lib/utils";
 import { Cable, Globe, Radio } from "lucide-react";
 import { useController, useFormContext } from "react-hook-form";
-import { type OptionCard, OptionCardGroup } from "~/projects/module-shared/components";
+import { type OptionCard, OptionCardGroup, TlsPassthroughMountNote } from "~/projects/module-shared/components";
 import { ERoutingProtocol } from "~/projects/module-shared/enums";
 
 import { InfoBlock } from "@application/shared/components";
@@ -104,6 +104,8 @@ export function DomainGeneralFields({ domainIndex, readOnly = false }: DomainGen
                             disabled={readOnly}
                         />
                     </InfoBlock>
+
+                    {tlsPassthrough.value && <TlsPassthroughMountNote />}
 
                     {isHttp && (
                         <InfoBlock

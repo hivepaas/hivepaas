@@ -142,6 +142,7 @@ func (s *service) loadAppCloneData(
 			return hperrors.Wrap(err)
 		}
 		data.SrcApp = app
+		data.DropGatedMounts = taskArgs.DropGatedMounts
 
 		// The settings this task was scheduled for. They are what the app is
 		// loaded with above, and nothing else reads them.

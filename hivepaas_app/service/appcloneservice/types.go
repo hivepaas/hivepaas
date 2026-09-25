@@ -21,6 +21,10 @@ type AppCloneReq struct {
 	// CloneSettings settings to clone an app, can be nil if passing the custom callbacks
 	CloneSettings *entity.AppCloneSettings
 
+	// DropGatedMounts leaves out setting mounts with a gated part - a private
+	// key, a password: the clone's requester may not reveal them.
+	DropGatedMounts bool
+
 	// Custom callbacks to override settings
 	OnCloneStart   func(req *AppCloneReq) error
 	OnCloneApp     func(destApp, srcApp *entity.App) error

@@ -2,6 +2,9 @@ package entity
 
 type TaskAppCloneArgs struct {
 	SrcApp ObjectID `json:"srcApp"`
+	// DropGatedMounts is the answer of the Reveal Secrets gate at the request:
+	// setting mounts with a gated part are not copied.
+	DropGatedMounts bool `json:"dropGatedMounts,omitempty"`
 }
 
 type TaskAppCloneOutput struct {

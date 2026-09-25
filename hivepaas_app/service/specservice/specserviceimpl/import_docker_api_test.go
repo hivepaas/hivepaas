@@ -73,7 +73,7 @@ func TestPlanGivesHostModeOnlyToAnAdministratorWithTheSwitchOn(t *testing.T) {
 		on, admin bool
 		missing   string
 	}{
-		"the switch off":       {admin: true, missing: "security settings"},
+		"the switch off":       {admin: true, missing: "System → HivePaaS → Security"},
 		"not an administrator": {on: true, missing: "administrator"},
 		"both":                 {on: true, admin: true},
 	} {

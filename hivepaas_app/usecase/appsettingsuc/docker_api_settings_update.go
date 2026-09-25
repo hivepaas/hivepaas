@@ -180,7 +180,7 @@ func (uc *UC) checkDockerAPIGrant(
 		case hostModeBlockedBySwitch:
 			return hperrors.Wrap(hperrors.ErrUnauthorized).
 				WithExtraDetail("giving an app the node's Docker socket needs the privileged-apps switch, " +
-					"which is off; an administrator turns it on in the security settings").
+					"which is off; an administrator turns it on in System → HivePaaS → Security").
 				WithMsgLog("host mode requires the privileged-apps switch")
 		case hostModeBlockedByAdmin:
 			return hperrors.Wrap(hperrors.ErrUnauthorized).

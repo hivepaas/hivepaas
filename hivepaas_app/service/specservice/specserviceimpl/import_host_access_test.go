@@ -82,7 +82,7 @@ func TestPlanSkipsAnAppMountingTheHostWhileTheSwitchIsOff(t *testing.T) {
 	assert.Zero(t, asked)
 	assert.Equal(t, specmodel.ActionSkip, backend.Action)
 	if issues := issuesOf(backend, specmodel.CodeHostMountNotPermitted); assert.Len(t, issues, 1) {
-		assert.Contains(t, issues[0].Action, "security settings")
+		assert.Contains(t, issues[0].Action, "System → HivePaaS → Security")
 	}
 }
 

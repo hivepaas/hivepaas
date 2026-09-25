@@ -158,7 +158,7 @@ func (p *planner) privilegeMissing() string {
 	switch {
 	case !p.req.AllowPrivilegedApps:
 		return "needs the privileged-apps switch, which is off; an administrator turns it on " +
-			"in the security settings"
+			"in System → HivePaaS → Security"
 	case !p.req.Admin:
 		return "needs an administrator"
 	}

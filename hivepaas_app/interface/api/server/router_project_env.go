@@ -208,6 +208,16 @@ func (s *HTTPServer) registerProjectEnvRoutes(projectGroup *gin.RouterGroup) {
 		secretGroup.DELETE("/:itemID", projectEnvSettingsHandler.DeleteSecret)
 	}
 
+	{ // Config files
+		configFileGroup := projectEnvGroup.Group("/config-files")
+		configFileGroup.GET("", projectEnvSettingsHandler.ListConfigFile)
+		configFileGroup.GET("/:itemID", projectEnvSettingsHandler.GetConfigFile)
+		configFileGroup.POST("", projectEnvSettingsHandler.CreateConfigFile)
+		configFileGroup.PUT("/:itemID", projectEnvSettingsHandler.UpdateConfigFile)
+		configFileGroup.PUT("/:itemID/status", projectEnvSettingsHandler.UpdateConfigFileStatus)
+		configFileGroup.DELETE("/:itemID", projectEnvSettingsHandler.DeleteConfigFile)
+	}
+
 	{ // SSH key group
 		sshKeyGroup := projectEnvGroup.Group("/ssh-keys")
 		sshKeyGroup.GET("/:itemID", projectEnvSettingsHandler.GetSSHKey)

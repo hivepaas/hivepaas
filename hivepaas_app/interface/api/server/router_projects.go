@@ -266,6 +266,16 @@ func (s *HTTPServer) registerProjectRoutes(apiGroup *gin.RouterGroup) {
 		secretGroup.DELETE("/:itemID", projectSettingsHandler.DeleteSecret)
 	}
 
+	{ // Config files
+		configFileGroup := projectGroup.Group("/:projectID/config-files")
+		configFileGroup.GET("", projectSettingsHandler.ListConfigFile)
+		configFileGroup.GET("/:itemID", projectSettingsHandler.GetConfigFile)
+		configFileGroup.POST("", projectSettingsHandler.CreateConfigFile)
+		configFileGroup.PUT("/:itemID", projectSettingsHandler.UpdateConfigFile)
+		configFileGroup.PUT("/:itemID/status", projectSettingsHandler.UpdateConfigFileStatus)
+		configFileGroup.DELETE("/:itemID", projectSettingsHandler.DeleteConfigFile)
+	}
+
 	{ // SSH key group
 		sshKeyGroup := projectGroup.Group("/:projectID/ssh-keys")
 		sshKeyGroup.GET("/:itemID", projectSettingsHandler.GetSSHKey)

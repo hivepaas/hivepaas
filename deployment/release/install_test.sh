@@ -414,6 +414,143 @@ test_stack_renders() {
   check_contains "and is named" "$out" HIVEPAAS_APP_SECRET
 }
 
+# ---------------------------------------------------------------- Questions
+
+# answers LINE...: a terminal that answers these, one line each.
+answers() {
+  printf '%s\n' "$@" >"$TMP/tty"
+  HIVEPAAS_TTY=$TMP/tty
+  open_tty
+}
+
+test_ask_questions_interactive() {
+  answers not-an-email you@example.com short password123 password124 password123 password123 \
+    HivePaaS.Dev.MyDomain.com '' '' /var/lib/hivepaas/ ''
+  ask_questions 2>/dev/null
+  check "email, asked again" you@example.com "$HIVEPAAS_ADMIN_EMAIL"
+  check "password, typed twice alike" password123 "$HIVEPAAS_ADMIN_PASSWORD"
+  check "app domain, lowercased" hivepaas.dev.mydomain.com "$HIVEPAAS_APP_DOMAIN"
+  check "root domain, derived" mydomain.com "$HIVEPAAS_ROOT_DOMAIN"
+  check_ok "app secret, generated" matches "$HIVEPAAS_APP_SECRET" '^[0-9a-f]{64}$'
+  check "data dir, normalized" /var/lib/hivepaas "$HIVEPAAS_DATA_DIR"
+  check "project data dir, defaulted" /var/lib/hivepaas/project_data "$HIVEPAAS_PROJECT_DATA_DIR"
+}
+
+test_ask_questions_silent() {
+  HIVEPAAS_ADMIN_EMAIL=you@example.com HIVEPAAS_ADMIN_PASSWORD=password123 HIVEPAAS_APP_DOMAIN=app.example.co.uk
+  ask_questions
+  check "root domain" example.co.uk "$HIVEPAAS_ROOT_DOMAIN"
+  check "data dir" /var/lib/hivepaas "$HIVEPAAS_DATA_DIR"
+  check "project data dir" /var/lib/hivepaas/project_data "$HIVEPAAS_PROJECT_DATA_DIR"
+  check_ok "app secret" valid_app_secret "$HIVEPAAS_APP_SECRET"
+}
+
+test_ask_questions_silent_missing() {
+  local out
+  out=$( (ask_questions) 2>&1)
+  check "stops" 1 "$?"
+  check_contains "lists the missing settings" "$out" \
+    "HIVEPAAS_ADMIN_EMAIL HIVEPAAS_ADMIN_PASSWORD HIVEPAAS_APP_DOMAIN"
+}
+
+test_ask_questions_given_invalid() {
+  local out
+  HIVEPAAS_ADMIN_EMAIL=you@example.com HIVEPAAS_ADMIN_PASSWORD=short HIVEPAAS_APP_DOMAIN=app.example.com
+  out=$( (ask_questions) 2>&1)
+  check "a short password stops" 1 "$?"
+  check_contains "naming it" "$out" HIVEPAAS_ADMIN_PASSWORD
+  check_lacks "without printing it" "$out" short
+  HIVEPAAS_ADMIN_PASSWORD=password123 HIVEPAAS_DATA_DIR=/etc/hivepaas
+  out=$( (ask_questions) 2>&1)
+  check "a system directory stops" 1 "$?"
+  HIVEPAAS_DATA_DIR=/data/hp HIVEPAAS_PROJECT_DATA_DIR=/data/hp
+  out=$( (ask_questions) 2>&1)
+  check "project data on app data stops" 1 "$?"
+  check_contains "naming it" "$out" HIVEPAAS_PROJECT_DATA_DIR
+}
+
+test_ask_questions_installed() {
+  HIVEPAAS_INSTALLED=true HIVEPAAS_APP_DOMAIN=app.example.com HIVEPAAS_APP_SECRET=0123456789abcdef0123456789abcdef
+  ask_questions
+  check "no admin asked for once installed" "" "${HIVEPAAS_ADMIN_PASSWORD:-}"
+}
+
+test_load_settings_precedence() {
+  printf '%s\n' HIVEPAAS_ADMIN_EMAIL=file@example.com HIVEPAAS_ADMIN_PASSWORD=file-password >"$TMP/conf"
+  printf '%s\n' "HIVEPAAS_ADMIN_PASSWORD='saved-password'" "HIVEPAAS_DATA_DIR='/srv/hivepaas'" >"$TMP/install.env"
+  CONFIG_FILE=$TMP/conf INSTALL_ENV=$TMP/install.env HIVEPAAS_ADMIN_EMAIL=env@example.com
+  load_settings
+  check "the environment wins" env@example.com "$HIVEPAAS_ADMIN_EMAIL"
+  check "the file wins over install.env" file-password "$HIVEPAAS_ADMIN_PASSWORD"
+  check "install.env fills the rest" /srv/hivepaas "$HIVEPAAS_DATA_DIR"
+  check "the channel defaults to beta" beta "$HIVEPAAS_CHANNEL"
+}
+
+test_load_settings_fixed() {
+  local out saved=0123456789abcdef0123456789abcdef
+  printf '%s\n' "HIVEPAAS_APP_SECRET='$saved'" "HIVEPAAS_DATA_DIR='/srv/hivepaas'" >"$TMP/install.env"
+  INSTALL_ENV=$TMP/install.env
+  out=$(HIVEPAAS_APP_SECRET=${saved}X; (load_settings) 2>&1)
+  check "a different app secret stops" 1 "$?"
+  check_contains "naming it" "$out" HIVEPAAS_APP_SECRET
+  check_lacks "without printing it" "$out" "$saved"
+  out=$(HIVEPAAS_APP_SECRET=$saved HIVEPAAS_DATA_DIR=/srv//hivepaas/; (load_settings) 2>&1)
+  check "the same values, written differently, go on" 0 "$?"
+  out=$(HIVEPAAS_CHANNEL=nightly; (load_settings) 2>&1)
+  check "an unknown channel stops" 1 "$?"
+}
+
+test_load_settings_runs_nothing() {
+  printf '%s\n' 'HIVEPAAS_X[$(touch '"$TMP"'/ran)]=1' 'PATH=/nowhere' 'HIVEPAAS_Y=$(touch '"$TMP"'/ran2)' >"$TMP/conf"
+  CONFIG_FILE=$TMP/conf INSTALL_ENV=$TMP/none.env
+  load_settings 2>/dev/null
+  check_fails "a key is not evaluated" test -e "$TMP/ran"
+  check_fails "a value is not evaluated" test -e "$TMP/ran2"
+  check "a value is taken literally" '$(touch '"$TMP"'/ran2)' "$HIVEPAAS_Y"
+  check_fails "only HIVEPAAS_ settings are taken" test "$PATH" = /nowhere
+}
+
+test_save_settings() {
+  INSTALL_ENV=$TMP/etc/hivepaas/install.env
+  HIVEPAAS_ADMIN_PASSWORD="it's \$x \"quoted\"" HIVEPAAS_APP_DOMAIN=app.example.com HIVEPAAS_INSTALLED=''
+  save_settings
+  check "file mode" 600 "$(stat -c %a "$INSTALL_ENV" 2>/dev/null || stat -f %Lp "$INSTALL_ENV")"
+  check "dir mode" 700 "$(stat -c %a "${INSTALL_ENV%/*}" 2>/dev/null || stat -f %Lp "${INSTALL_ENV%/*}")"
+  check_lacks "an empty setting is not written" "$(cat "$INSTALL_ENV")" HIVEPAAS_INSTALLED
+  unset HIVEPAAS_ADMIN_PASSWORD HIVEPAAS_APP_DOMAIN
+  load_settings
+  check "a password reads back" "it's \$x \"quoted\"" "$HIVEPAAS_ADMIN_PASSWORD"
+  check "a domain reads back" app.example.com "$HIVEPAAS_APP_DOMAIN"
+}
+
+test_confirm_and_offer() {
+  ASSUME_YES=1
+  check_ok "--yes confirms" confirm "Go?"
+  check_fails "--yes declines an offer" offer "Upgrade?"
+  ASSUME_YES=0
+  out=$( (confirm "Go?") 2>&1)
+  check "no terminal and no --yes stops" 1 "$?"
+  check_contains "saying how to go on" "$out" "--yes"
+  check_fails "no terminal declines an offer" offer "Upgrade?"
+  answers '' n y ''
+  check_ok "Enter confirms" confirm "Go?"
+  check_fails "n does not" confirm "Go?"
+  check_ok "y takes an offer" offer "Upgrade?"
+  check_fails "Enter declines it" offer "Upgrade?"
+}
+
+test_print_summary_hides_secrets() {
+  local out
+  HIVEPAAS_ADMIN_EMAIL=you@example.com HIVEPAAS_ADMIN_PASSWORD=password123 HIVEPAAS_APP_DOMAIN=app.example.com
+  HIVEPAAS_ROOT_DOMAIN=example.com HIVEPAAS_APP_SECRET=0123456789abcdef0123456789abcdef
+  HIVEPAAS_DATA_DIR=/var/lib/hivepaas HIVEPAAS_PROJECT_DATA_DIR=/var/lib/hivepaas/project_data PUBLIC_IP=1.2.3.4
+  out=$(print_summary)
+  check_lacks "no password" "$out" password123
+  check_lacks "no secret" "$out" 0123456789abcdef0123456789abcdef
+  check_contains "the secret's end, to recognize it" "$out" "****cdef"
+  check_contains "the addresses" "$out" "https://app.example.com, https://1.2.3.4"
+}
+
 # ------------------------------------------------------------------- Runner
 
 for t in $(declare -F | awk '$3 ~ /^test_/ {print $3}'); do

@@ -447,3 +447,266 @@ addresses_line() {
   if [ -n "$HOST_IP" ] && [ "$HOST_IP" != "$PUBLIC_IP" ]; then line="$line, https://$HOST_IP"; fi
   printf '%s' "$line"
 }
+
+# ---------------------------------------------------------------- Questions
+
+ADMIN_USERNAME='admin'
+INSTALL_ENV=${HIVEPAAS_INSTALL_ENV_FILE:-/etc/hivepaas/install.env}
+
+# The answers install.env keeps, so that a second run asks nothing twice and
+# generates no secret twice.
+SAVED_KEYS="HIVEPAAS_CHANNEL HIVEPAAS_ADMIN_EMAIL HIVEPAAS_ADMIN_PASSWORD HIVEPAAS_APP_DOMAIN
+HIVEPAAS_ROOT_DOMAIN HIVEPAAS_APP_SECRET HIVEPAAS_DATA_DIR HIVEPAAS_PROJECT_DATA_DIR
+HIVEPAAS_JWT_SECRET HIVEPAAS_DB_PASSWORD HIVEPAAS_REDIS_PASSWORD HIVEPAAS_AGENT_TOKEN
+HIVEPAAS_INSTALLED"
+
+# The saved answers a later run may not change: the secrets open data already
+# written with them, and the rest says where that data is and what serves it.
+FIXED_KEYS="HIVEPAAS_CHANNEL HIVEPAAS_APP_DOMAIN HIVEPAAS_ROOT_DOMAIN HIVEPAAS_APP_SECRET
+HIVEPAAS_DATA_DIR HIVEPAAS_PROJECT_DATA_DIR HIVEPAAS_JWT_SECRET HIVEPAAS_DB_PASSWORD
+HIVEPAAS_REDIS_PASSWORD HIVEPAAS_AGENT_TOKEN"
+
+ASSUME_YES=0
+CONFIG_FILE=''
+HAVE_TTY=0
+MISSING=''
+RELEASE_FILE=''
+
+# open_tty: questions are read from the terminal, not from stdin, which
+# `curl | bash` makes the script itself. fd 3 reads answers, fd 4 shows the
+# questions.
+open_tty() {
+  if [ -n "${HIVEPAAS_TTY:-}" ]; then
+    exec 3<"$HIVEPAAS_TTY" 4>/dev/null
+    HAVE_TTY=1
+  elif (exec </dev/tty) 2>/dev/null; then
+    exec 3</dev/tty 4>/dev/tty
+    HAVE_TTY=1
+  fi
+}
+
+# ask VAR PROMPT: one line from the terminal into VAR.
+ask() {
+  printf '  %s' "$2" >&4
+  IFS= read -r -u 3 "$1" || die "No answer to '$2'."
+}
+
+# ask_secret VAR PROMPT: the same, not echoed.
+ask_secret() {
+  printf '  %s' "$2" >&4
+  IFS= read -r -s -u 3 "$1" || die "No answer to '$2'."
+  printf '\n' >&4
+}
+
+# confirm QUESTION: yes unless answered no. --yes answers it; with no terminal
+# and no --yes the installer stops rather than guess.
+confirm() {
+  local reply
+  if [ "$ASSUME_YES" = 1 ]; then return 0; fi
+  if [ "$HAVE_TTY" != 1 ]; then die "$1 Nothing to answer on; run again with --yes to answer yes."; fi
+  ask reply "$1 [Y/n] "
+  case "$reply" in
+    '' | [Yy] | [Yy][Ee][Ss]) return 0 ;;
+  esac
+  return 1
+}
+
+# offer QUESTION: no unless answered yes. --yes and a missing terminal both
+# leave it at no.
+offer() {
+  local reply
+  if [ "$ASSUME_YES" = 1 ] || [ "$HAVE_TTY" != 1 ]; then return 1; fi
+  ask reply "$1 [y/N] "
+  case "$reply" in
+    [Yy] | [Yy][Ee][Ss]) return 0 ;;
+  esac
+  return 1
+}
+
+# answer VAR PROMPT CHECK ERROR [DEFAULT [DEFAULT_LABEL]]: VAR as given, as
+# answered, or its default. A given value that fails CHECK stops the install;
+# an answer that fails it is asked again. With no terminal and no default the
+# variable goes on the MISSING list.
+answer() {
+  local var="$1" prompt="$2" check="$3" error="$4" default="${5:-}" label="${6:-${5:-}}" value
+  value=${!var:-}
+  if [ -n "$value" ]; then
+    "$check" "$value" || die "$var: $error"
+    return 0
+  fi
+  if [ "$HAVE_TTY" != 1 ]; then
+    if [ -n "$default" ]; then
+      printf -v "$var" '%s' "$default"
+    else
+      MISSING="$MISSING $var"
+    fi
+    return 0
+  fi
+  while :; do
+    ask value "$prompt${label:+ [$label]}: "
+    value=${value:-$default}
+    if [ -n "$value" ] && "$check" "$value"; then break; fi
+    warn "$error"
+  done
+  printf -v "$var" '%s' "$value"
+}
+
+answer_password() {
+  local p1 p2
+  if [ -n "${HIVEPAAS_ADMIN_PASSWORD:-}" ]; then
+    valid_password "$HIVEPAAS_ADMIN_PASSWORD" || die "HIVEPAAS_ADMIN_PASSWORD: it needs at least 10 characters."
+    return 0
+  fi
+  if [ "$HAVE_TTY" != 1 ]; then
+    MISSING="$MISSING HIVEPAAS_ADMIN_PASSWORD"
+    return 0
+  fi
+  while :; do
+    ask_secret p1 "Admin password (at least 10 characters): "
+    if ! valid_password "$p1"; then
+      warn "The password needs at least 10 characters."
+      continue
+    fi
+    ask_secret p2 "Admin password, again: "
+    if [ "$p1" = "$p2" ]; then break; fi
+    warn "The two passwords differ; try again."
+  done
+  HIVEPAAS_ADMIN_PASSWORD=$p1
+}
+
+# take_setting KEY VALUE: a line of a --config file. The environment wins over
+# the file; anything but a HIVEPAAS_ setting is ignored, and the name is
+# checked before it is assigned, so the file cannot run anything.
+take_setting() {
+  if [[ ! $1 =~ ^HIVEPAAS_[A-Z0-9_]+$ ]]; then
+    warn "$CONFIG_FILE: $1 is not a HivePaaS setting; ignored."
+    return 0
+  fi
+  if [ -n "${!1:-}" ] || [ -z "$2" ]; then return 0; fi
+  printf -v "$1" '%s' "$2"
+}
+
+# take_saved KEY VALUE: a line of install.env, for a setting the environment
+# and --config left unset. One they set to another value stops the install
+# when the setting is fixed; otherwise theirs wins.
+take_saved() {
+  case " $SAVED_KEYS " in
+    *[[:space:]]"$1"[[:space:]]*) ;;
+    *) return 0 ;;
+  esac
+  if [ -z "${!1:-}" ]; then
+    printf -v "$1" '%s' "$2"
+    return 0
+  fi
+  if [ "${!1}" != "$2" ]; then
+    case " $FIXED_KEYS " in
+      *[[:space:]]"$1"[[:space:]]*)
+        die "$1 is saved in $INSTALL_ENV with another value, and it cannot change once HivePaaS" \
+          "has been installed with it. Leave it out of the environment and of --config."
+        ;;
+    esac
+  fi
+}
+
+# normalize_settings: settings put in the form they are saved and compared in.
+normalize_settings() {
+  if [ -n "${HIVEPAAS_APP_DOMAIN:-}" ]; then HIVEPAAS_APP_DOMAIN=$(lowercase "$HIVEPAAS_APP_DOMAIN"); fi
+  if [ -n "${HIVEPAAS_ROOT_DOMAIN:-}" ]; then HIVEPAAS_ROOT_DOMAIN=$(lowercase "$HIVEPAAS_ROOT_DOMAIN"); fi
+  if [ -n "${HIVEPAAS_DATA_DIR:-}" ]; then HIVEPAAS_DATA_DIR=$(normalize_dir "$HIVEPAAS_DATA_DIR"); fi
+  if [ -n "${HIVEPAAS_PROJECT_DATA_DIR:-}" ]; then
+    HIVEPAAS_PROJECT_DATA_DIR=$(normalize_dir "$HIVEPAAS_PROJECT_DATA_DIR")
+  fi
+}
+
+# load_settings: the environment, then --config, then install.env - each only
+# for what the ones before it left unset.
+load_settings() {
+  if [ -n "$CONFIG_FILE" ]; then
+    [ -r "$CONFIG_FILE" ] || die "Cannot read $CONFIG_FILE."
+    read_kv_file "$CONFIG_FILE" take_setting
+  fi
+  normalize_settings
+  if [ -f "$INSTALL_ENV" ]; then
+    read_kv_file "$INSTALL_ENV" take_saved
+  fi
+  HIVEPAAS_CHANNEL=${HIVEPAAS_CHANNEL:-beta}
+  app_env_of_channel "$HIVEPAAS_CHANNEL" >/dev/null ||
+    die "HIVEPAAS_CHANNEL: '$HIVEPAAS_CHANNEL' is not a channel; it is beta or stable."
+}
+
+# ask_questions: every setting install.env does not hold yet. The admin is
+# asked for only until HivePaaS has created them.
+ask_questions() {
+  if [ "${HIVEPAAS_INSTALLED:-}" != true ]; then
+    answer HIVEPAAS_ADMIN_EMAIL "Admin email" valid_email "Enter an email address, like you@example.com."
+    answer_password
+  fi
+  answer HIVEPAAS_APP_DOMAIN "App domain, the dashboard's address (e.g. hivepaas.example.com)" valid_domain \
+    "Enter a domain name of two labels or more, like hivepaas.example.com."
+  normalize_settings
+  if [ -n "${HIVEPAAS_APP_DOMAIN:-}" ]; then
+    answer HIVEPAAS_ROOT_DOMAIN "Root domain, which apps get subdomains of" valid_root_domain \
+      "Enter the app domain or a domain it is under, like example.com." "$(root_domain_of "$HIVEPAAS_APP_DOMAIN")"
+  fi
+  answer HIVEPAAS_APP_SECRET "App secret, which encrypts stored secrets" valid_app_secret \
+    "The app secret needs 32 characters or more, and no spaces." "$(openssl rand -hex 32)" "Enter to generate"
+  answer HIVEPAAS_DATA_DIR "App data directory" valid_data_dir \
+    "Enter an absolute path of letters, digits, '.', '_' and '-', outside the system's directories." \
+    /var/lib/hivepaas
+  normalize_settings
+  answer HIVEPAAS_PROJECT_DATA_DIR "Project data directory" valid_project_data_dir \
+    "Enter an absolute path outside the system's directories, and not the app data directory or one above it." \
+    "$HIVEPAAS_DATA_DIR/project_data"
+  normalize_settings
+  if [ -n "$MISSING" ]; then
+    die "No terminal to ask on, and these settings are missing:$MISSING. Set them in the environment" \
+      "or in a --config file; install.sh --help lists them."
+  fi
+}
+
+generate_secrets() {
+  HIVEPAAS_JWT_SECRET=${HIVEPAAS_JWT_SECRET:-$(rand_alnum 32)}
+  HIVEPAAS_DB_PASSWORD=${HIVEPAAS_DB_PASSWORD:-$(rand_alnum 32)}
+  HIVEPAAS_REDIS_PASSWORD=${HIVEPAAS_REDIS_PASSWORD:-$(rand_alnum 32)}
+  HIVEPAAS_AGENT_TOKEN=${HIVEPAAS_AGENT_TOKEN:-$(rand_alnum 32)}
+}
+
+# save_settings: install.env, replaced whole: readable by root alone, and never
+# half written.
+save_settings() {
+  local dir="${INSTALL_ENV%/*}" tmp key
+  mkdir -p "$dir"
+  chmod 700 "$dir"
+  tmp=$(mktemp "$dir/.install.env.XXXXXX")
+  {
+    printf '# HivePaaS install settings, written by install.sh.\n'
+    printf '# HIVEPAAS_APP_SECRET is the only key to the encrypted data: keep a copy of\n'
+    printf '# this file somewhere other than this server.\n'
+    for key in $SAVED_KEYS; do
+      if [ -n "${!key:-}" ]; then printf '%s=%s\n' "$key" "$(kv_quote "${!key}")"; fi
+    done
+  } >"$tmp"
+  chmod 600 "$tmp"
+  mv -f "$tmp" "$INSTALL_ENV"
+}
+
+mask() {
+  printf '****%s' "${1: -4}"
+}
+
+print_summary() {
+  printf '\n'
+  if [ -n "$RELEASE_FILE" ]; then
+    info "Release        HivePaaS $(release_field "$RELEASE_FILE" "$HIVEPAAS_CHANNEL" appVersion) ($HIVEPAAS_CHANNEL)"
+  fi
+  if [ "${HIVEPAAS_INSTALLED:-}" != true ]; then
+    info "Admin          $ADMIN_USERNAME, $HIVEPAAS_ADMIN_EMAIL, a password of ${#HIVEPAAS_ADMIN_PASSWORD} characters"
+  fi
+  info "App domain     $HIVEPAAS_APP_DOMAIN"
+  info "Root domain    $HIVEPAAS_ROOT_DOMAIN"
+  info "App secret     $(mask "$HIVEPAAS_APP_SECRET")"
+  info "App data       $HIVEPAAS_DATA_DIR"
+  info "Project data   $HIVEPAAS_PROJECT_DATA_DIR"
+  info "Addresses      $(addresses_line)"
+  printf '\n'
+}

@@ -34,7 +34,7 @@ const (
 
 const (
 	// OwnerLabel marks everything the proxy creates for an app, with the app's id.
-	OwnerLabel = "hivepaas.docker-api.app"
+	OwnerLabel = "hivepaas.dockerApi.app"
 	// SocketPath is where an app with access finds its socket.
 	SocketPath = "/var/run/hivepaas/docker.sock"
 	// SocketFile is the socket's name inside the app's socket volume.

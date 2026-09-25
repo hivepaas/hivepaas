@@ -22,6 +22,8 @@ export function CreateOrEditAppConfigFileForm({
     readOnly = false,
     stickyActions = false,
     onClose,
+    inheritableLabel = "Available in Previews",
+    inheritableWarning = "Warning: Preview apps will not be able to access this configuration.",
 }: Props) {
     const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -229,7 +231,7 @@ export function CreateOrEditAppConfigFileForm({
 
                     <InfoBlock
                         titleWidth={220}
-                        title={<LabelWithInfo label="Available in Previews" />}
+                        title={<LabelWithInfo label={inheritableLabel} />}
                     >
                         <div className="flex items-center gap-3">
                             <Checkbox
@@ -239,9 +241,7 @@ export function CreateOrEditAppConfigFileForm({
                                     inheritableField.onChange(Boolean(checked));
                                 }}
                             />
-                            {!inheritableField.value ? (
-                                <AvailableInAppsWarning message="Warning: Preview apps will not be able to access this configuration." />
-                            ) : null}
+                            {!inheritableField.value ? <AvailableInAppsWarning message={inheritableWarning} /> : null}
                         </div>
                     </InfoBlock>
                 </div>
@@ -290,4 +290,7 @@ interface Props {
     readOnly?: boolean;
     stickyActions?: boolean;
     onClose?: () => void;
+    /** An app's config file is available to its previews; a project's or env's to its apps. */
+    inheritableLabel?: string;
+    inheritableWarning?: string;
 }

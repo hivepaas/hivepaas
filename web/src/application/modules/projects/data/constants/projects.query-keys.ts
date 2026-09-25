@@ -23,6 +23,8 @@ export const QK = {
      */
     "projects.secrets.$.find-many-paginated": "projects.secrets.$.find-many-paginated",
     "projects.secrets.$.find-one-by-id": "projects.secrets.$.find-one-by-id",
+    "projects.config-files.$.find-many-paginated": "projects.config-files.$.find-many-paginated",
+    "projects.config-files.$.find-one-by-id": "projects.config-files.$.find-one-by-id",
     "projects.acme-dns-provider.$.find-many-paginated": "projects.acme-dns-provider.$.find-many-paginated",
     "projects.acme-dns-provider.$.find-one-by-id": "projects.acme-dns-provider.$.find-one-by-id",
     "projects.basic-auth.$.find-many-paginated": "projects.basic-auth.$.find-many-paginated",

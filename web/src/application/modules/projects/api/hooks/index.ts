@@ -18,6 +18,7 @@ export * from "./project-email";
 export * from "./project-ssl-cert";
 export * from "./project-ssl-provider";
 export * from "./project-secrets";
+export * from "./project-config-files";
 export * from "./projects";
 export * from "./project-user-accesses";
 export * from "./project-docker-volumes";

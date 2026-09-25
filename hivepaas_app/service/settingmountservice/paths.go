@@ -2,11 +2,7 @@ package settingmountservice
 
 import (
 	"path"
-	"strings"
 )
-
-// TLSDir is where TLS passthrough mounts, which no entry may reach into.
-const TLSDir = "/run/secrets/tls"
 
 const (
 	secretsDir = "/run/secrets"
@@ -14,12 +10,9 @@ const (
 )
 
 // ValidPath reports whether a file may be mounted at p: absolute, clean, not the
-// root, and outside TLSDir.
+// root.
 func ValidPath(p string) bool {
-	if p == "" || p == "/" || !path.IsAbs(p) || path.Clean(p) != p {
-		return false
-	}
-	return p != TLSDir && !strings.HasPrefix(p, TLSDir+"/")
+	return p != "" && p != "/" && path.IsAbs(p) && path.Clean(p) == p
 }
 
 // SecretTarget is where a secret reference's file lands: a relative name is

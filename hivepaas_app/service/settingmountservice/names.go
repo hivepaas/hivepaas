@@ -11,15 +11,10 @@ const (
 	// LabelAppID is the app a mounted object belongs to, as elsewhere
 	// (appservice.LabelLogAppID).
 	LabelAppID = "hivepaas.app.id"
-	// LabelEntry marks an object as a mounted setting's, with the entry's key,
-	// or TLSEntry.
+	// LabelEntry marks an object as a mounted setting's, with the entry's key.
 	LabelEntry = "hivepaas.settingMount.entry"
 	// LabelPart is the part the object holds.
 	LabelPart = "hivepaas.settingMount.part"
-
-	// TLSEntry is the entry TLS passthrough mounts under, which no entry may be
-	// called.
-	TLSEntry = "tls"
 
 	maxNameLen     = 64
 	hashLen        = 8
@@ -33,7 +28,7 @@ var (
 
 // ValidEntryKey reports whether an entry may be called key.
 func ValidEntryKey(key string) bool {
-	return key != TLSEntry && entryKeyPattern.MatchString(key)
+	return entryKeyPattern.MatchString(key)
 }
 
 // EntryKeyFor is the entry key a setting's name makes, for the entries
@@ -52,11 +47,7 @@ func EntryKeyFor(name string) string {
 // at 64 characters and a GlobalKey can be longer; such a name keeps as much of
 // the GlobalKey as fits, and a hash of the whole of it.
 func ObjectName(globalKey, entry, part, rotation string) string {
-	middle := "_mount_" + entry
-	if entry == TLSEntry {
-		middle = "_tls"
-	}
-	suffix := strings.ToLower(middle + "_" + part + "_" + rotation[:min(hashLen, len(rotation))])
+	suffix := strings.ToLower("_mount_" + entry + "_" + part + "_" + rotation[:min(hashLen, len(rotation))])
 	prefix := strings.ToLower(globalKey)
 	if len(prefix)+len(suffix) > maxNameLen {
 		sum := sha256.Sum256([]byte(prefix))

@@ -52,28 +52,28 @@ func TestWidensOnlyByNewPairs(t *testing.T) {
 func TestCheckEntry(t *testing.T) {
 	valid := mountOf("cert_1", "certificate", "privateKey")
 	assert.NoError(t, CheckEntry("cert", valid, base.SettingTypeSSLCert))
+	// Nothing is reserved for TLS passthrough: people mount its certificate themselves.
+	underTLS := mountOf("cert_1", "certificate")
+	underTLS.Files[0].Path = "/run/secrets/tls/cert.pem"
+	assert.NoError(t, CheckEntry("tls", underTLS, base.SettingTypeSSLCert))
 
 	dup := mountOf("cert_1", "certificate", "certificate")
 	samePath := mountOf("cert_1", "certificate", "privateKey")
 	samePath.Files[1].Path = samePath.Files[0].Path
-	underTLS := mountOf("cert_1", "certificate")
-	underTLS.Files[0].Path = "/run/secrets/tls/cert.pem"
 	for name, tc := range map[string]struct {
 		key   string
 		mount *entity.AppSettingMount
 		typ   base.SettingType
 		want  error
 	}{
-		"reserved key":   {"tls", valid, base.SettingTypeSSLCert, hperrors.ErrSettingMountKeyInvalid},
 		"upper case key": {"Cert", valid, base.SettingTypeSSLCert, hperrors.ErrSettingMountKeyInvalid},
 		"no files":       {"cert", mountOf("cert_1"), base.SettingTypeSSLCert, hperrors.ErrSettingMountNoFiles},
 		"not a source":   {"cert", valid, base.SettingTypeEmail, hperrors.ErrSettingMountSourceUnsupported},
 		"part of other type": {
 			"cert", mountOf("cert_1", "htpasswd"), base.SettingTypeSSLCert, hperrors.ErrSettingMountPartInvalid,
 		},
-		"part twice":     {"cert", dup, base.SettingTypeSSLCert, hperrors.ErrSettingMountPartInvalid},
-		"path twice":     {"cert", samePath, base.SettingTypeSSLCert, hperrors.ErrSettingMountPathInvalid},
-		"path under tls": {"cert", underTLS, base.SettingTypeSSLCert, hperrors.ErrSettingMountPathInvalid},
+		"part twice": {"cert", dup, base.SettingTypeSSLCert, hperrors.ErrSettingMountPartInvalid},
+		"path twice": {"cert", samePath, base.SettingTypeSSLCert, hperrors.ErrSettingMountPathInvalid},
 	} {
 		err := CheckEntry(tc.key, tc.mount, tc.typ)
 		assert.True(t, errors.Is(err, tc.want), "%s: %v", name, err)

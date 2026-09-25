@@ -38,12 +38,20 @@ func (f *fakeVolumes) VolumeCreate(_ context.Context, options ...docker.VolumeCr
 	}
 	f.mu.Lock()
 	defer f.mu.Unlock()
-	f.created[opts.Name] = opts.Labels
+	// Docker returns a volume that exists as it is, labels and all, rather than
+	// creating it again.
+	labels, exists := f.created[opts.Name]
+	if !exists {
+		labels = opts.Labels
+		f.created[opts.Name] = labels
+	}
 	dir := filepath.Join(f.root, opts.Name)
 	if err := os.MkdirAll(dir, 0o755); err != nil {
 		return nil, err
 	}
-	return &client.VolumeCreateResult{Volume: volume.Volume{Name: opts.Name, Mountpoint: dir}}, nil
+	return &client.VolumeCreateResult{
+		Volume: volume.Volume{Name: opts.Name, Mountpoint: dir, Labels: labels},
+	}, nil
 }
 
 // shortTempDir is a directory with a path short enough for a unix socket, which
@@ -198,4 +206,20 @@ func TestCloseAppStopsServingOneApp(t *testing.T) {
 		[]*dockerproxy.Policy{testPolicy("app1"), testPolicy("app2")}))
 	host.closeApp("app1")
 	assert.Equal(t, []string{"app2"}, host.served())
+}
+
+// A socket volume under an app's name that something else made is not the
+// app's: putting its socket there would leave it where that something else can
+// reach it, which is the Docker API of the whole app.
+func TestReconcileRefusesASocketVolumeLabeledForAnotherApp(t *testing.T) {
+	root := shortTempDir(t)
+	volumes := &fakeVolumes{root: root, created: map[string]map[string]string{
+		"hp-dapi-sock-app1": {dockerapiservice.SocketVolumeLabel: "app2"},
+	}}
+
+	_, err := volumeSocketDir(context.Background(), volumes, &dockerproxy.Policy{
+		AppID: "app1", SocketVolume: "hp-dapi-sock-app1",
+	})
+
+	assert.Error(t, err)
 }

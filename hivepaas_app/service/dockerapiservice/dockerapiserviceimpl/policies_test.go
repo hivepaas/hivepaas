@@ -84,6 +84,7 @@ func TestPoliciesComeFromTheAppsSettings(t *testing.T) {
 		{
 			AppID: "runner", ServiceID: "svc-runner", Images: []string{"*"},
 			Network: "hp-dapi-runner", Networks: []string{"shop_prod_net"}, SocketVolume: "hp-dapi-sock-runner",
+			ReservedPrefix: "hp-dapi-",
 			Allow: []dockerproxy.Group{dockerproxy.GroupExec, dockerproxy.GroupFiles, dockerproxy.GroupVolumes,
 				dockerproxy.GroupNetworks, dockerproxy.GroupNestedSocket},
 			Limits: dockerproxy.Limits{Containers: 5, Memory: 1 << 30, NanoCPUs: 1_000_000_000},
@@ -92,7 +93,8 @@ func TestPoliciesComeFromTheAppsSettings(t *testing.T) {
 			AppID: "autobase", ServiceID: "svc-autobase", Images: []string{"autobase/automation:2.11.0"},
 			SharedDirs: []string{"/var/lib/autobase/ansible"},
 			Network:    "hp-dapi-autobase", SocketVolume: "hp-dapi-sock-autobase",
-			Limits: dockerproxy.Limits{Containers: 3, Memory: 2 << 30, NanoCPUs: 500_000_000},
+			ReservedPrefix: "hp-dapi-",
+			Limits:         dockerproxy.Limits{Containers: 3, Memory: 2 << 30, NanoCPUs: 500_000_000},
 		},
 	}, policies)
 }

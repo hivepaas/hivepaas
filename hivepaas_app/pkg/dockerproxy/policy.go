@@ -10,7 +10,10 @@
 // docs/superpowers/specs/2026-09-24-docker-api-access-design.md.
 package dockerproxy
 
-import "slices"
+import (
+	"slices"
+	"strings"
+)
 
 // Group names endpoints beyond the core that a policy may allow.
 type Group string
@@ -69,6 +72,13 @@ type Policy struct {
 	Networks []string
 	// SocketVolume is the volume holding the app's socket on every node.
 	SocketVolume string
+	// ReservedPrefix names the volumes and networks HivePaaS makes for apps -
+	// each app's socket volume and its own network. A child may not create a
+	// name that starts with it: the name is what says whose socket that is, and
+	// whose children a network holds, so one an app could take would be a way to
+	// be handed another app's, or to hand its own away. Its own socket volume is
+	// reached through nestedSocket, not by naming it.
+	ReservedPrefix string
 	// Allow are the groups of endpoints beyond the core.
 	Allow  []Group
 	Limits Limits
@@ -76,6 +86,11 @@ type Policy struct {
 
 func (p *Policy) allows(group Group) bool {
 	return group == "" || slices.Contains(p.Allow, group)
+}
+
+// reserved reports a name HivePaaS keeps for itself.
+func (p *Policy) reserved(name string) bool {
+	return p.ReservedPrefix != "" && strings.HasPrefix(name, p.ReservedPrefix)
 }
 
 // joinable reports whether a child may join the network of that name.

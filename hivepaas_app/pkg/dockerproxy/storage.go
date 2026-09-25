@@ -205,6 +205,11 @@ func (p *Proxy) namedVolume(ctx context.Context, policy *Policy, name string) er
 		}
 		return nil
 	}
+	// Any other reserved name is another app's socket or network, and naming one
+	// the node does not have yet would otherwise create it for this app.
+	if err := refuseReserved(policy, name); err != nil {
+		return err
+	}
 	if !policy.allows(GroupVolumes) {
 		return refusef("%s is not allowed for this app", GroupVolumes)
 	}

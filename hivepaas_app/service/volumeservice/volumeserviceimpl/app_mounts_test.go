@@ -330,3 +330,40 @@ func TestBuildAppMountsTakesTheDriverConfigFromTheVolumeAlone(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, ":/exports/data", resp.Mounts[0].VolumeOptions.DriverConfig.Options["device"])
 }
+
+// A subpath is a directory inside the app's own, so it goes below it. One that
+// climbs out lands in another app's directory of a shared volume - past the
+// permission that mounting another app's storage asks for.
+func TestBuildAppMountsRefusesASubpathThatLeavesTheAppsDirectory(t *testing.T) {
+	for _, subpath := range []string{"../other", "files/../../other", "/etc", ".."} {
+		svc, _ := newAppMountsTest(scopedVolume(t, "vol-1", "hp-vol-1", base.ObjectScopeProject,
+			&entity.ClusterVolume{Managed: true, Driver: "local"}))
+
+		_, err := svc.BuildAppMounts(context.Background(), nil, &volumeservice.BuildAppMountsReq{
+			App: mountTestApp(),
+			New: []*volumeservice.AppMountReq{{
+				Type: mount.TypeVolume, Source: "vol-1", Target: "/data",
+				VolumeOptions: &volumeservice.AppMountVolumeOptions{Subpath: subpath},
+			}},
+		})
+
+		assert.ErrorIs(t, err, hperrors.ErrArgumentInvalid, subpath)
+	}
+}
+
+// What a subpath is for still works: a directory below the app's own.
+func TestBuildAppMountsTakesASubpathBelowTheAppsDirectory(t *testing.T) {
+	svc, _ := newAppMountsTest(scopedVolume(t, "vol-1", "hp-vol-1", base.ObjectScopeProject,
+		&entity.ClusterVolume{Managed: true, Driver: "local"}))
+
+	resp, err := svc.BuildAppMounts(context.Background(), nil, &volumeservice.BuildAppMountsReq{
+		App: mountTestApp(),
+		New: []*volumeservice.AppMountReq{{
+			Type: mount.TypeVolume, Source: "vol-1", Target: "/data",
+			VolumeOptions: &volumeservice.AppMountVolumeOptions{Subpath: "files/uploads"},
+		}},
+	})
+
+	assert.NoError(t, err)
+	assert.Equal(t, "prod/web/files/uploads", resp.Mounts[0].VolumeOptions.Subpath)
+}

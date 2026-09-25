@@ -19,6 +19,7 @@ const ProjectSecretSchema = z.object({
     value: z.string().optional(),
     secretMasked: z.boolean().optional(),
     base64: z.boolean().optional().default(false),
+    inheritable: z.boolean().optional().default(false),
     inherited: z.boolean().optional().default(false),
     status: z.string(),
     createdAt: z.coerce.date(),

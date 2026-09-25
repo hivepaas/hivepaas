@@ -10,6 +10,7 @@ export interface ProjectSecret {
     value?: string;
     secretMasked?: boolean;
     base64: boolean;
+    inheritable: boolean;
     inherited?: boolean;
     status: OpenApiConstant<EProjectSecretStatus>;
 

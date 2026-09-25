@@ -17,6 +17,7 @@ const AppConfigFileSchema = z.object({
     name: z.string(),
     content: z.string().optional().default(""),
     base64: z.boolean().optional().default(false),
+    inheritable: z.boolean().optional().default(false),
     type: z.string().optional().default("config-file"),
     status: z.string(),
     inherited: z.boolean().optional().default(false),

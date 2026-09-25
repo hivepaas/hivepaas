@@ -6,9 +6,9 @@ import { type FieldErrors, useController, useForm, useWatch } from "react-hook-f
 import { toast } from "sonner";
 import { PROJECT_FORM_CONTROL_MAX_WIDTH_CLASS } from "~/projects/module-shared/constants";
 
-import { FormActionBar, InfoBlock, LabelWithInfo } from "@application/shared/components";
+import { AvailableInAppsWarning, FormActionBar, InfoBlock, LabelWithInfo } from "@application/shared/components";
 
-import { Button, Field, FieldError, FieldGroup, Input, Tabs, TabsList, TabsTrigger } from "@/components/ui";
+import { Button, Checkbox, Field, FieldError, FieldGroup, Input, Tabs, TabsList, TabsTrigger } from "@/components/ui";
 import { Textarea } from "@/components/ui/textarea";
 
 import type { CreateOrEditProjectSecretFormInput, CreateOrEditProjectSecretFormOutput } from "../schemas";
@@ -43,6 +43,8 @@ export function CreateOrEditProjectSecretForm({
             isEditMode,
             textValue: "",
             binaryFile: null,
+            // New settings are available unless the person says otherwise.
+            inheritable: initialValues?.inheritable ?? true,
         },
         resolver: zodResolver(CreateOrEditProjectSecretFormSchema),
         mode: "onSubmit",
@@ -102,6 +104,11 @@ export function CreateOrEditProjectSecretForm({
 
     const { field: valueTypeField } = useController({
         name: "valueType",
+        control,
+    });
+
+    const { field: inheritableField } = useController({
+        name: "inheritable",
         control,
     });
 
@@ -315,6 +322,22 @@ export function CreateOrEditProjectSecretForm({
                             </FieldGroup>
                         </InfoBlock>
                     )}
+
+                    <InfoBlock
+                        titleWidth={220}
+                        title={<LabelWithInfo label="Available in Apps" />}
+                    >
+                        <div className="flex items-center gap-3">
+                            <Checkbox
+                                id="project-secret-inheritable"
+                                checked={inheritableField.value}
+                                onCheckedChange={checked => {
+                                    inheritableField.onChange(Boolean(checked));
+                                }}
+                            />
+                            {!inheritableField.value ? <AvailableInAppsWarning /> : null}
+                        </div>
+                    </InfoBlock>
                 </div>
                 {!readOnly && (
                     <FormActionBar sticky={stickyActions}>

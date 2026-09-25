@@ -89,6 +89,7 @@ export function CreateOrEditProjectSecretDialog() {
                 name: values.name,
                 value,
                 base64,
+                inheritable: values.inheritable,
             });
         } else if (state.mode === "open" && value !== undefined) {
             createProjectSecret({
@@ -97,6 +98,7 @@ export function CreateOrEditProjectSecretDialog() {
                 name: values.name,
                 value,
                 base64,
+                inheritable: values.inheritable,
             });
         }
     }
@@ -124,6 +126,7 @@ export function CreateOrEditProjectSecretDialog() {
             ? {
                   name: state.secret.name,
                   valueType: state.secret.base64 ? ("binary" as const) : ("text" as const),
+                  inheritable: state.secret.inheritable,
               }
             : undefined;
 

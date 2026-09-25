@@ -127,6 +127,7 @@ export function ProjectSecretFormRoute({ mode, projectId, secretId }: Props) {
                 name: values.name,
                 value,
                 base64,
+                inheritable: values.inheritable,
             });
             return;
         }
@@ -138,6 +139,7 @@ export function ProjectSecretFormRoute({ mode, projectId, secretId }: Props) {
                 name: values.name,
                 value,
                 base64,
+                inheritable: values.inheritable,
             });
         }
     }
@@ -160,6 +162,7 @@ export function ProjectSecretFormRoute({ mode, projectId, secretId }: Props) {
             ? {
                   name: secret.name,
                   valueType: secret.base64 ? ("binary" as const) : ("text" as const),
+                  inheritable: secret.inheritable,
               }
             : undefined;
     const isDetailLoading = isEditMode && detailQuery.isFetching;

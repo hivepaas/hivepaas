@@ -14,6 +14,7 @@ export const CreateOrEditAppSecretFormSchema = z
         isEditMode: z.boolean(),
         textValue: z.string(),
         binaryFile: z.custom<File>().nullable(),
+        inheritable: z.boolean(),
     })
     .superRefine((value, ctx) => {
         if (value.valueType === "text") {

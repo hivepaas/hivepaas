@@ -7,6 +7,7 @@ export interface AppConfigFile {
     name: string;
     content: string;
     base64: boolean;
+    inheritable: boolean;
     type: string;
     status: OpenApiConstant<EProjectSecretStatus>;
     inherited: boolean;

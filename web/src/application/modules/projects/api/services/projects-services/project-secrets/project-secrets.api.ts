@@ -86,7 +86,7 @@ export class ProjectSecretsApi extends BaseApi {
         request: ProjectSecrets_CreateOne_Req,
         signal?: AbortSignal,
     ): Promise<Result<ProjectSecrets_CreateOne_Res, Error>> {
-        const { projectID, env, name, value, base64 } = request.data;
+        const { projectID, env, name, value, base64, inheritable } = request.data;
 
         const json = {
             key: JsonTransformer.string({
@@ -96,6 +96,7 @@ export class ProjectSecretsApi extends BaseApi {
                 data: value,
             }),
             base64,
+            inheritable,
             status: EProjectSecretStatus.Active,
         };
 
@@ -133,7 +134,7 @@ export class ProjectSecretsApi extends BaseApi {
         request: ProjectSecrets_UpdateOne_Req,
         signal?: AbortSignal,
     ): Promise<Result<ProjectSecrets_UpdateOne_Res, Error>> {
-        const { projectID, env, secretID, updateVer, name, value, base64 } = request.data;
+        const { projectID, env, secretID, updateVer, name, value, base64, inheritable } = request.data;
 
         const json = {
             updateVer,
@@ -144,6 +145,7 @@ export class ProjectSecretsApi extends BaseApi {
                 data: value,
             }),
             base64,
+            inheritable,
         };
 
         return lastValueFrom(

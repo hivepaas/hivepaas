@@ -20,6 +20,7 @@ const AppSecretSchema = z.object({
     value: z.string().optional(),
     secretMasked: z.boolean().optional(),
     base64: z.boolean().optional().default(false),
+    inheritable: z.boolean().optional().default(false),
     type: z.string().optional().default("secret"),
     status: z.string(),
     inherited: z.boolean().optional().default(false),

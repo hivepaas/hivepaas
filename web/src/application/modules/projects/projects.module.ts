@@ -104,6 +104,8 @@ export {
     AppConfigFileCreateRoute,
     AppConfigFileEditRoute,
     AppSettingMountsRoute,
+    AppSettingMountCreateRoute,
+    AppSettingMountEditRoute,
     AppDataFilesRoute,
     AppDataFileCreateRoute,
     AppConfigAvailabilityRoute,

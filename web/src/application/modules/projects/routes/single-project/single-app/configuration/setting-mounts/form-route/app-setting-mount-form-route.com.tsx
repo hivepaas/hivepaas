@@ -1,9 +1,10 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 
 import { toast } from "sonner";
 import { AppSettingMountsCommands } from "~/projects/data/commands";
 import { AppSettingMountsQueries } from "~/projects/data/queries";
 import type { AppSettingMount, AppSettingMountSource } from "~/projects/domain";
+import { AppSettingMountsTableDefs } from "~/projects/module-shared/definitions/tables/app-setting-mounts";
 import { EProjectSecretStatus } from "~/projects/module-shared/enums";
 
 import { AppLoader, RouteFormHeader } from "@application/shared/components";
@@ -32,6 +33,13 @@ function toFormValues(sources: AppSettingMountSource[], entry: AppSettingMount):
                 : row;
         }),
     };
+}
+
+/** The source types in the order the labels list them: the settings an app mounts most often first. */
+function ordered(sources: AppSettingMountSource[] | undefined): AppSettingMountSource[] | undefined {
+    const order = Object.keys(AppSettingMountsTableDefs.sourceTypeLabels);
+    const rank = (type: string) => (order.includes(type) ? order.indexOf(type) : order.length);
+    return sources ? [...sources].sort((a, b) => rank(a.type) - rank(b.type)) : undefined;
 }
 
 /** What the entry hands out as loaded: nothing when it is disabled. */
@@ -76,7 +84,7 @@ export function AppSettingMountFormRoute({ mode, projectId, appId, env, settingM
         { projectID: projectId, env, appID: appId, settingMountID: settingMountId ?? "" },
         { enabled: isEditMode && Boolean(settingMountId) },
     );
-    const sources = sourcesQuery.data?.data.sources;
+    const sources = useMemo(() => ordered(sourcesQuery.data?.data.sources), [sourcesQuery.data]);
     const mayMountSensitive = sourcesQuery.data?.data.mayMountSensitive ?? false;
     const entry = detailQuery.data?.data;
 

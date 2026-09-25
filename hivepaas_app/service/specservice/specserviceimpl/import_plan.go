@@ -235,6 +235,8 @@ type planner struct {
 	targetApps map[string]*entity.App
 	// clusterWriteAllowed is the answer of MayWriteCluster, once asked.
 	clusterWriteAllowed *bool
+	// mountSecretsAllowed is the answer of MayMountSecrets, once asked.
+	mountSecretsAllowed *bool
 	// owners is the owner resolved for each project node, by path; absent when
 	// nobody here is the bundle's owner.
 	owners map[string]string

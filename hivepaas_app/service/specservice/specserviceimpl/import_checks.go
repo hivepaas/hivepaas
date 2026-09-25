@@ -17,6 +17,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/clusterservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/dockerapiservice"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/settingmountservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/specservice/specmodel"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/volumeservice"
 )
@@ -63,6 +64,12 @@ func (p *planner) checkPermissions(ctx context.Context) error {
 			continue
 		}
 		if err := p.checkDockerAPI(ctx, node); err != nil {
+			return err
+		}
+		if node.Action == specmodel.ActionSkip {
+			continue
+		}
+		if err := p.checkSettingMounts(ctx, node); err != nil {
 			return err
 		}
 	}
@@ -734,4 +741,104 @@ func (s *service) nodeExistsInRepo(ctx context.Context, db database.IDB, nodeID 
 		return false, hperrors.Wrap(err)
 	}
 	return len(nodes) > 0, nil
+}
+
+// checkSettingMounts leaves out of an app the entries that would hand it a
+// private key or a password it did not have, for a caller who may not reveal
+// secrets. The rest of the app is imported.
+func (p *planner) checkSettingMounts(ctx context.Context, node *specmodel.PlanNode) error {
+	block := specmodel.CollectionBlockName(base.SettingTypeAppSettingMount)
+	entries, _ := p.apps[node.Path].doc.Settings[block].(map[string]any)
+	var installed map[string]any
+	if current := p.currentApp(node); current != nil {
+		installed, _ = current.Settings[block].(map[string]any)
+	}
+	for _, key := range slices.Sorted(maps.Keys(entries)) {
+		name := block + "/" + key
+		if !writesBlock(node, "settings."+name) || !entryWidens(entries[key], installed[key]) {
+			continue
+		}
+		allowed, err := p.mayMountSecrets(ctx)
+		if err != nil {
+			return err
+		}
+		if !allowed {
+			p.refuseAppSetting(node, name, specmodel.Issue{
+				Severity: specmodel.SeveritySkipped, Code: specmodel.CodeSettingMountNotPermitted,
+				Path: node.Path, Detail: map[string]any{refInSetting: name},
+				Action: "not imported: mounting a private key or a password takes the Reveal Secrets permission",
+			})
+		}
+	}
+	return nil
+}
+
+// mayMountSecrets asks MayMountSecrets once per plan.
+func (p *planner) mayMountSecrets(ctx context.Context) (bool, error) {
+	if p.mountSecretsAllowed == nil {
+		allowed := true
+		if p.req.MayMountSecrets != nil {
+			var err error
+			if allowed, err = p.req.MayMountSecrets(ctx); err != nil {
+				return false, hperrors.Wrap(err)
+			}
+		}
+		p.mountSecretsAllowed = &allowed
+	}
+	return *p.mountSecretsAllowed, nil
+}
+
+// entryWidens reports whether a bundle's entry hands out a sensitive part the
+// installed one did not: a new entry, another source, a part added, or an entry
+// enabled. Sources are compared as the documents write them, since both are
+// exports; a bundle from another installation names them differently, and is
+// asked about.
+func entryWidens(bundleBody, installedBody any) bool {
+	source, parts := entryGrants(bundleBody)
+	if len(parts) == 0 {
+		return false
+	}
+	installedSource, installedParts := entryGrants(installedBody)
+	if !sameBody(source, installedSource) {
+		return true
+	}
+	for _, part := range parts {
+		if !slices.Contains(installedParts, part) {
+			return true
+		}
+	}
+	return false
+}
+
+// entryGrants reads the source and the sensitive parts of an exported entry;
+// none for a disabled one.
+func entryGrants(body any) (source any, parts []string) {
+	entry, _ := body.(map[string]any)
+	if entry == nil {
+		return nil, nil
+	}
+	if meta, _ := entry[specmodel.SettingMetaKey].(map[string]any); meta != nil {
+		if status, _ := meta["status"].(string); status != "" && status != string(base.SettingStatusActive) {
+			return nil, nil
+		}
+	}
+	files, _ := entry["files"].([]any)
+	for _, f := range files {
+		file, _ := f.(map[string]any)
+		if part, _ := file["part"].(string); settingmountservice.SensitivePart(part) {
+			parts = append(parts, part)
+		}
+	}
+	return entry["source"], parts
+}
+
+// refuseAppSetting is refuse for an app's setting, whose change is named with
+// the "settings." prefix app documents use.
+func (p *planner) refuseAppSetting(node *specmodel.PlanNode, name string, issue specmodel.Issue) {
+	if p.refused == nil {
+		p.refused = map[string][]string{}
+	}
+	p.refused[node.Path] = append(p.refused[node.Path], name)
+	node.Changes = slices.DeleteFunc(node.Changes, func(change string) bool { return change == "settings."+name })
+	node.Issues = append(node.Issues, issue)
 }

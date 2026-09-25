@@ -34,6 +34,8 @@ type service struct {
 	loadEntries func(ctx context.Context, db database.IDB, appID string) ([]*entity.Setting, error)
 	loadSources func(ctx context.Context, db database.IDB, app *entity.App, ids []string) ([]*entity.Setting, error)
 	loadReaders func(ctx context.Context, db database.IDB, sourceIDs []string) ([]string, error)
+	// loadClaimants are the app's own settings that can give it files.
+	loadClaimants func(ctx context.Context, db database.IDB, appID string) ([]*entity.Setting, error)
 }
 
 var _ settingmountservice.Service = (*service)(nil)
@@ -62,6 +64,7 @@ func New(
 	s.loadEntries = s.loadEntriesFromRepo
 	s.loadSources = s.loadSourcesFromRepo
 	s.loadReaders = s.loadReadersFromRepo
+	s.loadClaimants = s.loadClaimantsFromRepo
 	return s
 }
 

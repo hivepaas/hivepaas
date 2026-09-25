@@ -2,6 +2,7 @@ package specuc
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
@@ -27,7 +28,7 @@ func (uc *UC) ValidateImport(
 	auth *basedto.Auth,
 	req *specdto.ValidateImportReq,
 ) (*specdto.ValidateImportResp, error) {
-	resp, err := uc.specService.ValidateImport(ctx, uc.db, uc.importReq(auth, req))
+	resp, err := uc.specService.ValidateImport(ctx, uc.db, uc.importReq(auth, req, false))
 	if err != nil {
 		return nil, hperrors.Wrap(err)
 	}
@@ -37,8 +38,11 @@ func (uc *UC) ValidateImport(
 // importReq is what validate and apply both ask the service, with the gates of
 // the caller: revealing secrets, granting capabilities, reaching another app's
 // storage, changing a project's owner - and the operator's switch over mounts of
-// the host.
-func (uc *UC) importReq(auth *basedto.Auth, req *specdto.ValidateImportReq) *specservice.ValidateImportReq {
+// the host. record says whether the answers are recorded: apply's are, since
+// apply reveals what it is allowed to; validate's are not.
+func (uc *UC) importReq(
+	auth *basedto.Auth, req *specdto.ValidateImportReq, record bool,
+) *specservice.ValidateImportReq {
 	cfg := config.Current()
 	return &specservice.ValidateImportReq{
 		Scope:               req.Scope,
@@ -48,6 +52,11 @@ func (uc *UC) importReq(auth *basedto.Auth, req *specdto.ValidateImportReq) *spe
 		Options:             req.Options,
 		AllowPrivilegedApps: cfg != nil && cfg.Security.AllowPrivilegedApps,
 		Admin:               auth.User.Entity() != nil && auth.User.IsAdmin(),
+		// Mounting a private key or a password is revealing it (§7 of the
+		// setting mounts design).
+		MayMountSecrets: func(ctx context.Context) (bool, error) {
+			return uc.mayMountSecrets(ctx, auth, req, record)
+		},
 		AuthorizeSecrets: func(ctx context.Context, mode specmodel.SecretsMode) error {
 			return uc.permissionManager.AuthorizeSecretReveal(ctx, uc.db, auth, &permission.RevealSubject{
 				Scope:    req.Scope.ScopeType,
@@ -86,4 +95,31 @@ func (uc *UC) importReq(auth *basedto.Auth, req *specdto.ValidateImportReq) *spe
 			})
 		},
 	}
+}
+
+// mayMountSecrets answers MayMountSecrets. Validate asks without recording; apply
+// records, allowed or denied, and a denial is an answer rather than an error:
+// the entry is skipped and the import goes on.
+func (uc *UC) mayMountSecrets(
+	ctx context.Context, auth *basedto.Auth, req *specdto.ValidateImportReq, record bool,
+) (bool, error) {
+	if !record {
+		allowed, err := uc.permissionManager.MayRevealSecrets(ctx, uc.db, auth)
+		return allowed, hperrors.Wrap(err)
+	}
+	err := uc.permissionManager.AuthorizeSecretReveal(ctx, uc.db, auth, &permission.RevealSubject{
+		Scope:    req.Scope.ScopeType,
+		ObjectID: req.Scope.ScopeObjectID(),
+		Source:   base.AuditLogSourceAPIAction,
+		ResType:  base.ResourceTypeSettingMount,
+		ResName:  "configuration spec import (setting mounts)",
+	})
+	if errors.Is(err, hperrors.ErrRevealSecretsDisabled) ||
+		errors.Is(err, hperrors.ErrUserNotHavePermissionOnRevealSecrets) {
+		return false, nil
+	}
+	if err != nil {
+		return false, hperrors.Wrap(err)
+	}
+	return true, nil
 }

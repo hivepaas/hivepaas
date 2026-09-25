@@ -94,3 +94,15 @@ var (
 	// repository, so a second run is refused rather than queued behind the first.
 	ErrBackupRepoCleanupInProgress = NewErr(ErrConflict, "ERR_BACKUP_REPO_CLEANUP_IN_PROGRESS")
 )
+
+// Errors for setting mounts
+var (
+	ErrSettingMountKeyInvalid        = NewErr(ErrArgumentInvalid, "ERR_SETTING_MOUNT_KEY_INVALID")
+	ErrSettingMountNoFiles           = NewErr(ErrArgumentInvalid, "ERR_SETTING_MOUNT_NO_FILES")
+	ErrSettingMountSourceUnsupported = NewErr(ErrArgumentInvalid, "ERR_SETTING_MOUNT_SOURCE_UNSUPPORTED")
+	ErrSettingMountPartInvalid       = NewErr(ErrArgumentInvalid, "ERR_SETTING_MOUNT_PART_INVALID")
+	ErrSettingMountPathInvalid       = NewErr(ErrArgumentInvalid, "ERR_SETTING_MOUNT_PATH_INVALID")
+	// ErrSettingMountPathTaken refuses a file at a path another file of the app
+	// has: Docker would refuse the service, or one file would hide the other.
+	ErrSettingMountPathTaken = NewErr(ErrConflict, "ERR_SETTING_MOUNT_PATH_TAKEN")
+)

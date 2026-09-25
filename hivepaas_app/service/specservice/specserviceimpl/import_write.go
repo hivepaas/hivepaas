@@ -241,7 +241,10 @@ func (w *writer) writtenNodes() []*specmodel.PlanNode {
 // created - but a type import skips - and what changed otherwise.
 func (w *writer) writtenNames(node *specmodel.PlanNode) []string {
 	if place, isApp := w.p.apps[node.Path]; isApp {
-		return appWrittenNames(node, place.doc)
+		refused := w.p.refused[node.Path]
+		return slices.DeleteFunc(appWrittenNames(node, place.doc), func(name string) bool {
+			return slices.Contains(refused, name)
+		})
 	}
 	// A setting the planner refused is left out however the node got here:
 	// a created scope writes what it holds, and the refusal is not in Changes

@@ -60,6 +60,7 @@ const (
 	ResourceTypeSecret            ResourceType = "secret"
 	ResourceTypeSecuritySettings  ResourceType = "security-settings"
 	ResourceTypeSetting           ResourceType = "setting"
+	ResourceTypeSettingMount      ResourceType = "setting-mount"
 	ResourceTypeSSHKey            ResourceType = "ssh-key"
 	ResourceTypeSSLCert           ResourceType = "ssl-cert"
 	ResourceTypeSSLProvider       ResourceType = "ssl-provider"

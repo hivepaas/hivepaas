@@ -20407,6 +20407,523 @@
         "tags" : [ "app_settings" ]
       }
     },
+    "/projects/{projectID}/{projectEnv}/apps/{appID}/setting-mounts" : {
+      "get" : {
+        "description" : "Lists app setting mounts",
+        "operationId" : "listAppSettingMount",
+        "parameters" : [ {
+          "description" : "project ID",
+          "in" : "path",
+          "name" : "projectID",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "project env",
+          "in" : "path",
+          "name" : "projectEnv",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "app ID",
+          "in" : "path",
+          "name" : "appID",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/settings_settingmountdto.ListSettingMountResp"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "400" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Bad Request"
+          },
+          "500" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Internal Server Error"
+          }
+        },
+        "summary" : "Lists app setting mounts",
+        "tags" : [ "app_settings" ]
+      },
+      "post" : {
+        "description" : "Creates an app setting mount",
+        "operationId" : "createAppSettingMount",
+        "parameters" : [ {
+          "description" : "project ID",
+          "in" : "path",
+          "name" : "projectID",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "project env",
+          "in" : "path",
+          "name" : "projectEnv",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "app ID",
+          "in" : "path",
+          "name" : "appID",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "*/*" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/settings_settingmountdto.CreateSettingMountReq"
+              }
+            }
+          },
+          "description" : "request data",
+          "required" : true
+        },
+        "responses" : {
+          "201" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/settings_settingmountdto.CreateSettingMountResp"
+                }
+              }
+            },
+            "description" : "Created"
+          },
+          "400" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Bad Request"
+          },
+          "500" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Internal Server Error"
+          }
+        },
+        "summary" : "Creates an app setting mount",
+        "tags" : [ "app_settings" ],
+        "x-codegen-request-body-name" : "body"
+      }
+    },
+    "/projects/{projectID}/{projectEnv}/apps/{appID}/setting-mounts/sources" : {
+      "get" : {
+        "description" : "Lists the settings an app can mount, and their parts",
+        "operationId" : "listAppSettingMountSources",
+        "parameters" : [ {
+          "description" : "project ID",
+          "in" : "path",
+          "name" : "projectID",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "project env",
+          "in" : "path",
+          "name" : "projectEnv",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "app ID",
+          "in" : "path",
+          "name" : "appID",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/settings_settingmountdto.ListSettingMountSourcesResp"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "400" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Bad Request"
+          },
+          "500" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Internal Server Error"
+          }
+        },
+        "summary" : "Lists the settings an app can mount, and their parts",
+        "tags" : [ "app_settings" ]
+      }
+    },
+    "/projects/{projectID}/{projectEnv}/apps/{appID}/setting-mounts/{itemID}" : {
+      "delete" : {
+        "description" : "Deletes an app setting mount",
+        "operationId" : "deleteAppSettingMount",
+        "parameters" : [ {
+          "description" : "project ID",
+          "in" : "path",
+          "name" : "projectID",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "project env",
+          "in" : "path",
+          "name" : "projectEnv",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "app ID",
+          "in" : "path",
+          "name" : "appID",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "setting ID",
+          "in" : "path",
+          "name" : "itemID",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/settings_settingmountdto.DeleteSettingMountResp"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "400" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Bad Request"
+          },
+          "500" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Internal Server Error"
+          }
+        },
+        "summary" : "Deletes an app setting mount",
+        "tags" : [ "app_settings" ]
+      },
+      "get" : {
+        "description" : "Get an app setting mount details",
+        "operationId" : "getAppSettingMount",
+        "parameters" : [ {
+          "description" : "project ID",
+          "in" : "path",
+          "name" : "projectID",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "project env",
+          "in" : "path",
+          "name" : "projectEnv",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "app ID",
+          "in" : "path",
+          "name" : "appID",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "setting ID",
+          "in" : "path",
+          "name" : "itemID",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/settings_settingmountdto.GetSettingMountResp"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "400" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Bad Request"
+          },
+          "500" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Internal Server Error"
+          }
+        },
+        "summary" : "Get an app setting mount details",
+        "tags" : [ "app_settings" ]
+      },
+      "put" : {
+        "description" : "Updates an app setting mount",
+        "operationId" : "updateAppSettingMount",
+        "parameters" : [ {
+          "description" : "project ID",
+          "in" : "path",
+          "name" : "projectID",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "project env",
+          "in" : "path",
+          "name" : "projectEnv",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "app ID",
+          "in" : "path",
+          "name" : "appID",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "setting ID",
+          "in" : "path",
+          "name" : "itemID",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "*/*" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/settings_settingmountdto.UpdateSettingMountReq"
+              }
+            }
+          },
+          "description" : "request data",
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/settings_settingmountdto.UpdateSettingMountResp"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "400" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Bad Request"
+          },
+          "500" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Internal Server Error"
+          }
+        },
+        "summary" : "Updates an app setting mount",
+        "tags" : [ "app_settings" ],
+        "x-codegen-request-body-name" : "body"
+      }
+    },
+    "/projects/{projectID}/{projectEnv}/apps/{appID}/setting-mounts/{itemID}/status" : {
+      "put" : {
+        "description" : "Updates app setting mount status",
+        "operationId" : "updateAppSettingMountStatus",
+        "parameters" : [ {
+          "description" : "project ID",
+          "in" : "path",
+          "name" : "projectID",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "project env",
+          "in" : "path",
+          "name" : "projectEnv",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "app ID",
+          "in" : "path",
+          "name" : "appID",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "setting ID",
+          "in" : "path",
+          "name" : "itemID",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "*/*" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/settings_settingmountdto.UpdateSettingMountStatusReq"
+              }
+            }
+          },
+          "description" : "request data",
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/settings_settingmountdto.UpdateSettingMountStatusResp"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "400" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Bad Request"
+          },
+          "500" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Internal Server Error"
+          }
+        },
+        "summary" : "Updates app setting mount status",
+        "tags" : [ "app_settings" ],
+        "x-codegen-request-body-name" : "body"
+      }
+    },
     "/projects/{projectID}/{projectEnv}/apps/{appID}/spec/export" : {
       "post" : {
         "parameters" : [ {
@@ -42726,6 +43243,22 @@
         "type" : "string",
         "x-enum-varnames" : [ "ReleaseNewer", "ReleaseSame", "ReleaseOlder" ]
       },
+      "service_settingmountservice.EntryState" : {
+        "properties" : {
+          "mounted" : {
+            "items" : {
+              "type" : "string"
+            },
+            "type" : "array"
+          },
+          "reason" : {
+            "description" : "Reason is why nothing is mounted; empty when something is.",
+            "type" : "string"
+          }
+        },
+        "required" : [ "mounted", "reason" ],
+        "type" : "object"
+      },
       "service_specservice.ImportDeployment" : {
         "properties" : {
           "appId" : {
@@ -57622,6 +58155,301 @@
         "type" : "object"
       },
       "settings_secretdto.UpdateSecretStatusResp" : {
+        "properties" : {
+          "meta" : {
+            "$ref" : "#/components/schemas/basedto.Meta"
+          }
+        },
+        "required" : [ "meta" ],
+        "type" : "object"
+      },
+      "settings_settingmountdto.CreateSettingMountReq" : {
+        "properties" : {
+          "default" : {
+            "type" : "boolean"
+          },
+          "files" : {
+            "items" : {
+              "$ref" : "#/components/schemas/settings_settingmountdto.SettingMountFileReq"
+            },
+            "type" : "array"
+          },
+          "inheritable" : {
+            "type" : "boolean"
+          },
+          "name" : {
+            "description" : "Name is the entry's key.",
+            "type" : "string"
+          },
+          "source" : {
+            "$ref" : "#/components/schemas/basedto.ObjectIDReq"
+          }
+        },
+        "required" : [ "default", "files", "inheritable", "name", "source" ],
+        "type" : "object"
+      },
+      "settings_settingmountdto.CreateSettingMountResp" : {
+        "properties" : {
+          "data" : {
+            "$ref" : "#/components/schemas/basedto.ObjectIDResp"
+          },
+          "meta" : {
+            "$ref" : "#/components/schemas/basedto.Meta"
+          }
+        },
+        "required" : [ "data", "meta" ],
+        "type" : "object"
+      },
+      "settings_settingmountdto.DeleteSettingMountResp" : {
+        "properties" : {
+          "meta" : {
+            "$ref" : "#/components/schemas/basedto.Meta"
+          }
+        },
+        "required" : [ "meta" ],
+        "type" : "object"
+      },
+      "settings_settingmountdto.GetSettingMountResp" : {
+        "properties" : {
+          "data" : {
+            "$ref" : "#/components/schemas/settings_settingmountdto.SettingMountResp"
+          },
+          "meta" : {
+            "$ref" : "#/components/schemas/basedto.Meta"
+          }
+        },
+        "required" : [ "data", "meta" ],
+        "type" : "object"
+      },
+      "settings_settingmountdto.ListSettingMountResp" : {
+        "properties" : {
+          "data" : {
+            "items" : {
+              "$ref" : "#/components/schemas/settings_settingmountdto.SettingMountResp"
+            },
+            "type" : "array"
+          },
+          "meta" : {
+            "$ref" : "#/components/schemas/basedto.ListMeta"
+          }
+        },
+        "required" : [ "data", "meta" ],
+        "type" : "object"
+      },
+      "settings_settingmountdto.ListSettingMountSourcesResp" : {
+        "properties" : {
+          "data" : {
+            "items" : {
+              "$ref" : "#/components/schemas/settings_settingmountdto.SettingMountSource"
+            },
+            "type" : "array"
+          },
+          "mayMountSensitive" : {
+            "description" : "MayMountSensitive says whether the caller may mount a private key or a\npassword: the screen locks those parts, with the reason, when not.",
+            "type" : "boolean"
+          },
+          "meta" : {
+            "$ref" : "#/components/schemas/basedto.Meta"
+          }
+        },
+        "required" : [ "data", "mayMountSensitive", "meta" ],
+        "type" : "object"
+      },
+      "settings_settingmountdto.SettingMountFileReq" : {
+        "properties" : {
+          "gid" : {
+            "type" : "string"
+          },
+          "mode" : {
+            "type" : "string"
+          },
+          "part" : {
+            "type" : "string"
+          },
+          "path" : {
+            "type" : "string"
+          },
+          "uid" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "gid", "mode", "part", "path", "uid" ],
+        "type" : "object"
+      },
+      "settings_settingmountdto.SettingMountFileResp" : {
+        "properties" : {
+          "gid" : {
+            "type" : "string"
+          },
+          "mode" : {
+            "type" : "string"
+          },
+          "part" : {
+            "type" : "string"
+          },
+          "path" : {
+            "type" : "string"
+          },
+          "sensitive" : {
+            "type" : "boolean"
+          },
+          "uid" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "gid", "mode", "part", "path", "sensitive", "uid" ],
+        "type" : "object"
+      },
+      "settings_settingmountdto.SettingMountPart" : {
+        "properties" : {
+          "name" : {
+            "type" : "string"
+          },
+          "required" : {
+            "type" : "boolean"
+          },
+          "sensitive" : {
+            "type" : "boolean"
+          }
+        },
+        "required" : [ "name", "required", "sensitive" ],
+        "type" : "object"
+      },
+      "settings_settingmountdto.SettingMountResp" : {
+        "properties" : {
+          "createdAt" : {
+            "type" : "string"
+          },
+          "default" : {
+            "type" : "boolean"
+          },
+          "expireAt" : {
+            "type" : "string"
+          },
+          "files" : {
+            "items" : {
+              "$ref" : "#/components/schemas/settings_settingmountdto.SettingMountFileResp"
+            },
+            "type" : "array"
+          },
+          "id" : {
+            "type" : "string"
+          },
+          "inheritable" : {
+            "type" : "boolean"
+          },
+          "inherited" : {
+            "type" : "boolean"
+          },
+          "kind" : {
+            "type" : "string"
+          },
+          "name" : {
+            "type" : "string"
+          },
+          "size" : {
+            "type" : "integer"
+          },
+          "source" : {
+            "$ref" : "#/components/schemas/settings.BaseSettingResp"
+          },
+          "state" : {
+            "allOf" : [ {
+              "$ref" : "#/components/schemas/service_settingmountservice.EntryState"
+            } ],
+            "description" : "State is what of the entry is mounted; null when it could not be read.",
+            "type" : "object"
+          },
+          "status" : {
+            "type" : "string"
+          },
+          "type" : {
+            "type" : "string"
+          },
+          "updateVer" : {
+            "type" : "integer"
+          },
+          "updatedAt" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "createdAt", "default", "expireAt", "files", "id", "inheritable", "inherited", "kind", "name", "size", "source", "state", "status", "type", "updateVer", "updatedAt" ],
+        "type" : "object"
+      },
+      "settings_settingmountdto.SettingMountSource" : {
+        "properties" : {
+          "parts" : {
+            "items" : {
+              "$ref" : "#/components/schemas/settings_settingmountdto.SettingMountPart"
+            },
+            "type" : "array"
+          },
+          "type" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "parts", "type" ],
+        "type" : "object"
+      },
+      "settings_settingmountdto.UpdateSettingMountReq" : {
+        "properties" : {
+          "default" : {
+            "type" : "boolean"
+          },
+          "files" : {
+            "items" : {
+              "$ref" : "#/components/schemas/settings_settingmountdto.SettingMountFileReq"
+            },
+            "type" : "array"
+          },
+          "inheritable" : {
+            "type" : "boolean"
+          },
+          "name" : {
+            "description" : "Name is the entry's key.",
+            "type" : "string"
+          },
+          "source" : {
+            "$ref" : "#/components/schemas/basedto.ObjectIDReq"
+          },
+          "updateVer" : {
+            "type" : "integer"
+          }
+        },
+        "required" : [ "default", "files", "inheritable", "name", "source", "updateVer" ],
+        "type" : "object"
+      },
+      "settings_settingmountdto.UpdateSettingMountResp" : {
+        "properties" : {
+          "meta" : {
+            "$ref" : "#/components/schemas/basedto.Meta"
+          }
+        },
+        "required" : [ "meta" ],
+        "type" : "object"
+      },
+      "settings_settingmountdto.UpdateSettingMountStatusReq" : {
+        "properties" : {
+          "default" : {
+            "type" : "boolean"
+          },
+          "expireAt" : {
+            "type" : "string"
+          },
+          "inheritable" : {
+            "type" : "boolean"
+          },
+          "status" : {
+            "type" : "string"
+          },
+          "updateVer" : {
+            "type" : "integer"
+          }
+        },
+        "required" : [ "default", "expireAt", "inheritable", "status", "updateVer" ],
+        "type" : "object"
+      },
+      "settings_settingmountdto.UpdateSettingMountStatusResp" : {
         "properties" : {
           "meta" : {
             "$ref" : "#/components/schemas/basedto.Meta"

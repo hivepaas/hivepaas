@@ -31,6 +31,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings/repowebhookuc"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings/schedjobuc"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings/secretuc"
+	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings/settingmountuc"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings/sshkeyuc"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings/sslcertuc"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings/sslprovideruc"
@@ -62,6 +63,7 @@ type Handler struct {
 	CommandPipeUC          *commandpipeuc.UC
 	CommandTemplateUC      *commandtemplateuc.UC
 	ConfigFileUC           *configfileuc.UC
+	SettingMountUC         *settingmountuc.UC
 	DomainSettingsUC       *domainsettingsuc.UC
 	EmailUC                *emailuc.UC
 	FileUC                 *fileuc.UC
@@ -105,6 +107,7 @@ func New(
 	commandPipeUC *commandpipeuc.UC,
 	commandTemplateUC *commandtemplateuc.UC,
 	configFileUC *configfileuc.UC,
+	settingMountUC *settingmountuc.UC,
 	domainSettingsUC *domainsettingsuc.UC,
 	emailUC *emailuc.UC,
 	fileUC *fileuc.UC,
@@ -147,6 +150,7 @@ func New(
 		CommandPipeUC:          commandPipeUC,
 		CommandTemplateUC:      commandTemplateUC,
 		ConfigFileUC:           configFileUC,
+		SettingMountUC:         settingMountUC,
 		DomainSettingsUC:       domainSettingsUC,
 		EmailUC:                emailUC,
 		FileUC:                 fileUC,

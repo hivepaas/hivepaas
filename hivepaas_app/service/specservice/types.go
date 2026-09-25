@@ -86,6 +86,11 @@ type ValidateImportReq struct {
 	// another owner. It is asked only for a project whose owner the bundle
 	// changes. Nil allows it.
 	MayChangeOwner func(ctx context.Context, project *entity.Project) (bool, error)
+	// MayMountSecrets answers whether this caller may have an app mount a
+	// private key or a password - revealing it to whoever controls the app. It is
+	// asked at most once, and only when an entry the import writes hands out a
+	// (source, sensitive part) pair the installed entry did not. Nil allows it.
+	MayMountSecrets func(ctx context.Context) (bool, error)
 	// AllowPrivilegedApps is the operator's switch, Security.AllowPrivilegedApps.
 	// Off, no import gives an app a new mount of the host or the node's own
 	// Docker socket, whoever asks; the zero value is off, so a caller that

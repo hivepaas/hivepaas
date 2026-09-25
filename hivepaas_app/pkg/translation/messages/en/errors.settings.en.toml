@@ -40,3 +40,10 @@ ERR_PASSWORD_TOO_SIMILAR_TO_PREVIOUS = "Password is too similar to the current o
 
 # Placement errors
 ERR_PLACEMENT_NO_MATCHING_NODE = "No node in the cluster matches these placement rules, so no app could be scheduled"
+
+ERR_SETTING_MOUNT_KEY_INVALID = "'{{.Name}}' cannot name a setting mount: use lowercase letters, digits and hyphens, at most 20, and not 'tls'"
+ERR_SETTING_MOUNT_NO_FILES = "A setting mount needs at least one file"
+ERR_SETTING_MOUNT_SOURCE_UNSUPPORTED = "Settings of type '{{.Type}}' cannot be mounted"
+ERR_SETTING_MOUNT_PART_INVALID = "'{{.Part}}' is not a part a '{{.Type}}' setting offers, or it is listed twice"
+ERR_SETTING_MOUNT_PATH_INVALID = "'{{.Path}}' cannot hold a mounted file: use an absolute path, once, outside /run/secrets/tls"
+ERR_SETTING_MOUNT_PATH_TAKEN = "'{{.Path}}' is already used by the app's {{.Owner}}"

@@ -29,6 +29,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings/repowebhookuc/repowebhookdto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings/schedjobuc/schedjobdto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings/secretuc/secretdto"
+	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings/settingmountuc/settingmountdto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings/sshkeyuc/sshkeydto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings/sslcertuc/sslcertdto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings/sslprovideruc/sslproviderdto"
@@ -140,6 +141,11 @@ func (h *Handler) CreateSetting(
 		r := commandtemplatedto.NewCreateCommandTemplateReq()
 		r.Scope = scope
 		req, ucFunc = r, func() (any, error) { return h.CommandTemplateUC.CreateCommandTemplate(reqCtx, auth, r) }
+
+	case base.ResourceTypeSettingMount:
+		r := settingmountdto.NewCreateSettingMountReq()
+		r.Scope = scope
+		req, ucFunc = r, func() (any, error) { return h.SettingMountUC.CreateSettingMount(reqCtx, auth, r) }
 
 	case base.ResourceTypeConfigFile:
 		r := configfiledto.NewCreateConfigFileReq()

@@ -36,6 +36,11 @@ type Manager interface {
 	// and records the answer either way.
 	AuthorizeSecretReveal(ctx context.Context, db database.IDB, auth *basedto.Auth, subject *RevealSubject) error
 
+	// MayRevealSecrets answers whether the caller may see a stored secret in the
+	// clear, and records nothing: for checks that reveal nothing yet, such as an
+	// import's validate.
+	MayRevealSecrets(ctx context.Context, db database.IDB, auth *basedto.Auth) (bool, error)
+
 	// NOTE: this func should be called within a transaction
 	UpdateACLPermissions(ctx context.Context, db database.IDB, perms []*entity.ACLPermission) error
 	DeleteACLPermissions(ctx context.Context, db database.IDB, perms []*base.PermissionResource) error

@@ -160,8 +160,6 @@ var (
 		reason: "backup history, rediscovered by scanning the repository"})
 	_ = registerSpecPolicy(base.SettingTypeApp, skipSpecPolicy{
 		reason: "a declared type with no parser and no rows"})
-	_ = registerSpecPolicy(base.SettingTypeAppSettingMount, skipSpecPolicy{
-		reason: "setting mounts are exported once import checks who may mount a sensitive part"})
 
 	_ = registerSpecPolicy(base.SettingTypeClusterNetwork, clusterSpecPolicy{})
 	_ = registerSpecPolicy(base.SettingTypeClusterVolume, clusterSpecPolicy{})
@@ -183,6 +181,7 @@ var (
 		base.SettingTypeAppFeatures,
 		base.SettingTypeAppKind,
 		base.SettingTypeAppPlacement,
+		base.SettingTypeAppSettingMount,
 		base.SettingTypeAppTemplate,
 		base.SettingTypeBackupRepo,
 		base.SettingTypeBackupRepoCleanup,

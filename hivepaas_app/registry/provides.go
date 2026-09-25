@@ -166,6 +166,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings/repowebhookuc"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings/schedjobuc"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings/secretuc"
+	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings/settingmountuc"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings/sshkeyuc"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings/sslcertuc"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings/sslprovideruc"
@@ -301,6 +302,7 @@ var Provides = []any{
 	commandpipeuc.New,
 	commandtemplateuc.New,
 	configfileuc.New,
+	settingmountuc.New,
 	devhelperuc.New,
 	domainsettingsuc.New,
 	emailuc.New,

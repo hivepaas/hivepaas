@@ -298,6 +298,16 @@ func exportFixture(t *testing.T) specservice.Service {
 		Key: "DB_PASSWORD", Value: entity.NewEncryptedField("hunter2"),
 	}))
 
+	// The backend mounts the certificate the routing uses.
+	mountEntry := &entity.Setting{
+		ID: "mount_1", Type: base.SettingTypeAppSettingMount, Scope: base.ObjectScopeApp,
+		ObjectID: "app_1", Name: "cert", Status: base.SettingStatusActive, Version: entity.CurrentAppSettingMountVersion,
+	}
+	assert.NoError(t, mountEntry.SetData(&entity.AppSettingMount{
+		Source: entity.ObjectID{ID: "cert_1"},
+		Files:  []*entity.AppSettingMountFile{{Part: "certificate", Path: "/etc/app/tls/cert.pem"}},
+	}))
+
 	// The backend is a database, whose credential is a secret HivePaaS owns.
 	kind := &entity.Setting{
 		ID: "kind_1", Type: base.SettingTypeAppKind, Scope: base.ObjectScopeApp,
@@ -353,7 +363,7 @@ func exportFixture(t *testing.T) specservice.Service {
 		ProjectEnvID: "p1:dev", ParentID: "app_1",
 	}
 
-	all := []*entity.Setting{cert, apiKey, routing, secret, kind, projectVolume, sharedVolume}
+	all := []*entity.Setting{cert, apiKey, routing, secret, mountEntry, kind, projectVolume, sharedVolume}
 
 	svc := New(
 		&fakeAppRepo{apps: []*entity.App{deployed, undeployed, preview}},

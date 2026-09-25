@@ -34,6 +34,8 @@ import {
     AppServiceSettingsApiValidator,
     AppServiceTasksApi,
     AppServiceTasksApiValidator,
+    AppSettingMountsApi,
+    AppSettingMountsApiValidator,
     AppTerminalApi,
     AppTerminalApiValidator,
     AppTerminalWsApi,
@@ -147,6 +149,7 @@ function createApi() {
     const appContainerFilesApiValidator = new AppContainerFilesApiValidator();
     const appContainerSettingsApiValidator = new AppContainerSettingsApiValidator();
     const appConfigFilesApiValidator = new AppConfigFilesApiValidator();
+    const appSettingMountsApiValidator = new AppSettingMountsApiValidator();
     const appDataFilesApiValidator = new AppDataFilesApiValidator();
     const appDeploymentsApiValidator = new AppDeploymentsApiValidator();
     const appDeploymentsApi = new AppDeploymentsApi(appDeploymentsApiValidator);
@@ -209,6 +212,9 @@ function createApi() {
                 },
                 configFiles: {
                     $: new AppConfigFilesApi(appConfigFilesApiValidator),
+                },
+                settingMounts: {
+                    $: new AppSettingMountsApi(appSettingMountsApiValidator),
                 },
                 dataFiles: {
                     $: new AppDataFilesApi(appDataFilesApiValidator),

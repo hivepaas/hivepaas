@@ -30,6 +30,7 @@ import { ValidationException } from "@infrastructure/exceptions/validation";
 import { Button } from "@/components/ui/button";
 
 import { AppConfigContainerSettingsForm } from "../form";
+import { mapAppContainerLabelsToFormInput } from "../form/app-config-container-settings.form-mappers";
 import { type AppConfigContainerSettingsFormSchemaOutput } from "../schemas";
 import { type AppConfigContainerSettingsFormRef } from "../types";
 
@@ -198,7 +199,7 @@ export function AppConfigContainerSettingsRoute() {
     invariant(env, "env must be defined");
     invariant(appId, "appId must be defined");
 
-    const { data, isLoading, isFetching, isError, error } = AppContainerSettingsQueries.useFindOne(
+    const { data, isLoading, isFetching, isError, error, isPlaceholderData } = AppContainerSettingsQueries.useFindOne(
         {
             projectID: projectId,
             env,
@@ -212,6 +213,16 @@ export function AppConfigContainerSettingsRoute() {
             ...(isSystemLabelsRevealed ? { retry: false } : {}),
         },
     );
+
+    // The form takes its values when it mounts, and not again. Revealing or
+    // hiding system labels fetches the settings anew, and only the labels are
+    // put back: whatever else is being edited stays as it is.
+    useEffect(() => {
+        if (!data?.data || isPlaceholderData) {
+            return;
+        }
+        formRef.current?.setValues(mapAppContainerLabelsToFormInput(data.data));
+    }, [data, isPlaceholderData]);
 
     // A refused reveal leaves the labels hidden, and says why.
     useEffect(() => {

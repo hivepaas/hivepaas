@@ -186,6 +186,15 @@ func volumeSocketDir(ctx context.Context, dockerManager docker.Manager, policy *
 	if err != nil {
 		return "", hperrors.Wrap(err)
 	}
+	// Creating a volume that exists returns it with the labels it already has.
+	// One under this name that is not this app's was made by something else, and
+	// serving this app's socket into it would put the socket where that
+	// something else can read it.
+	if owner := resp.Volume.Labels[dockerapiservice.SocketVolumeLabel]; owner != policy.AppID {
+		return "", hperrors.Wrap(hperrors.ErrInfraInvalidArgument).
+			WithMsgLog("socket volume %s is labeled for %q, not for app %s",
+				policy.SocketVolume, owner, policy.AppID)
+	}
 	mountpoint := resp.Volume.Mountpoint
 	// The agent's container reaches the host's filesystem under a prefix; an
 	// agent running on the host itself reaches it as it is.

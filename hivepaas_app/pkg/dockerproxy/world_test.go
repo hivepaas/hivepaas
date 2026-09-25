@@ -38,14 +38,15 @@ type world struct {
 
 func testPolicy() *Policy {
 	return &Policy{
-		AppID:        "app1",
-		ServiceID:    "svc1",
-		Images:       []string{"alpine", "autobase/automation:2.11.0"},
-		SharedDirs:   []string{"/var/lib/autobase/ansible"},
-		Network:      "hp-dapi-app1",
-		Networks:     []string{"proj_env_net"},
-		SocketVolume: "hp-dapi-sock-app1",
-		Limits:       Limits{Containers: 3, Memory: 1 << 30, NanoCPUs: 1_000_000_000},
+		AppID:          "app1",
+		ServiceID:      "svc1",
+		Images:         []string{"alpine", "autobase/automation:2.11.0"},
+		SharedDirs:     []string{"/var/lib/autobase/ansible"},
+		Network:        "hp-dapi-app1",
+		Networks:       []string{"proj_env_net"},
+		SocketVolume:   "hp-dapi-sock-app1",
+		ReservedPrefix: "hp-dapi-",
+		Limits:         Limits{Containers: 3, Memory: 1 << 30, NanoCPUs: 1_000_000_000},
 	}
 }
 

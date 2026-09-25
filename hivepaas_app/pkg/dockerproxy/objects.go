@@ -88,6 +88,9 @@ func (p *Proxy) volumeCreate(c *call) {
 	if err == nil {
 		err = checkFields("Volume", body, volumeCreateFields, nil)
 	}
+	if err == nil {
+		err = refuseReserved(c.policy, text(body[fieldName]))
+	}
 	if driver := text(body[fieldDriver]); err == nil && !slices.Contains(volumeDrivers, driver) {
 		err = refusef("volume driver %s is not allowed", driver)
 	}
@@ -129,6 +132,9 @@ func (p *Proxy) networkCreate(c *call) {
 	if err == nil {
 		err = checkNetworkCreate(body)
 	}
+	if err == nil {
+		err = refuseReserved(c.policy, text(body[fieldName]))
+	}
 	if err != nil {
 		p.refuse(c, err)
 		return
@@ -136,6 +142,15 @@ func (p *Proxy) networkCreate(c *call) {
 	body[fieldLabels] = ownLabels(object(body[fieldLabels]), c.policy.AppID)
 	setBody(c.r, body)
 	p.forward(c, "a network of the app's own")
+}
+
+// refuseReserved refuses a name HivePaaS keeps for the objects it makes for
+// apps.
+func refuseReserved(policy *Policy, name string) error {
+	if policy.reserved(name) {
+		return refusef("%s is a name HivePaaS uses for an app's own socket and network", name)
+	}
+	return nil
 }
 
 // checkNetworkCreate takes a plain bridge on this node. Anything else - an

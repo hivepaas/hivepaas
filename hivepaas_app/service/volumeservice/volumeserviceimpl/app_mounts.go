@@ -33,6 +33,9 @@ func (s *service) BuildAppMounts(
 			return nil, hperrors.Wrap(hperrors.ErrUnsupported).
 				WithParam("Name", fmt.Sprintf("Mount type '%v'", mnt.Type))
 		}
+		if err := refuseEscapingSubpath(mnt); err != nil {
+			return nil, err
+		}
 		volumeIDs = append(volumeIDs, mnt.Source)
 	}
 
@@ -76,6 +79,34 @@ func (s *service) BuildAppMounts(
 	}
 
 	return &volumeservice.BuildAppMountsResp{Mounts: mounts}, nil
+}
+
+// refuseEscapingSubpath refuses a subpath that does not stay inside the app's
+// own directory.
+//
+// A subpath is joined below the directory the app owns in the volume, and
+// filepath.Join cleans the result: a subpath climbing out of it lands somewhere
+// else in a volume the whole scope shares - another app's directory, reached
+// without the permission that mounting another app's storage asks for.
+func refuseEscapingSubpath(mnt *volumeservice.AppMountReq) error {
+	subpath := ""
+	switch {
+	case mnt.VolumeOptions != nil:
+		subpath = mnt.VolumeOptions.Subpath
+	case mnt.ClusterOptions != nil:
+		subpath = mnt.ClusterOptions.Subpath
+	}
+	if subpath == "" {
+		return nil
+	}
+	clean := filepath.Clean(subpath)
+	if filepath.IsAbs(clean) || clean == ".." || strings.HasPrefix(clean, "../") {
+		return hperrors.Wrap(hperrors.ErrArgumentInvalid).
+			WithExtraDetail("mount %s: the subpath %s leaves the directory this app owns in the volume",
+				mnt.Target, subpath).
+			WithMsgLog("refused an escaping mount subpath %s", subpath)
+	}
+	return nil
 }
 
 func (s *service) buildAppMount(

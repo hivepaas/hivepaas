@@ -106,6 +106,8 @@ func policyOf(app *entity.App, data *entity.AppDockerAPISettings, envNetwork str
 		SharedDirs:   data.SharedDirs,
 		Network:      dockerapiservice.NetworkName(app.ID),
 		SocketVolume: dockerapiservice.SocketVolumeName(app.ID),
+		// Both names HivePaaS makes for an app start with this.
+		ReservedPrefix: dockerapiservice.NetworkPrefix,
 		Limits: dockerproxy.Limits{
 			Containers: gofn.Coalesce(data.Limits.Containers, dockerapiservice.DefaultContainers),
 			Memory:     gofn.Coalesce(data.Limits.Memory.Bytes(), dockerapiservice.DefaultMemory),

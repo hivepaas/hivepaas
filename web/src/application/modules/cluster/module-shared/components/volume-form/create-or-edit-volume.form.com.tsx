@@ -256,15 +256,30 @@ export function CreateOrEditVolumeForm({
                                 {currentLocalType === EClusterVolumeLocalType.Bind && (
                                     <FieldGroup>
                                         <InfoBlock
-                                            title="Directory"
+                                            title={
+                                                <LabelWithInfo
+                                                    label="Directory"
+                                                    content="Left empty, HivePaaS chooses a directory inside its own storage for this scope. Naming one instead gives whatever app mounts this volume that path of the node."
+                                                />
+                                            }
                                             titleWidth={220}
                                         >
-                                            <Input
-                                                {...bindDirectory}
-                                                value={bindDirectory.value}
-                                                placeholder="auto"
-                                                className="max-w-[600px]"
-                                            />
+                                            <div className="flex max-w-[600px] flex-col gap-1">
+                                                <Input
+                                                    {...bindDirectory}
+                                                    value={bindDirectory.value}
+                                                    placeholder="auto"
+                                                />
+                                                {/* Said here rather than after the server refuses it: the
+                                                    field looks like any other until you learn otherwise. */}
+                                                <p className="text-xs text-muted-foreground">
+                                                    A directory of your own needs{" "}
+                                                    <span className="font-medium">Write</span> permission on the{" "}
+                                                    <span className="font-medium">Cluster</span> module. The Docker
+                                                    socket, and any directory holding it, is never allowed: an app is
+                                                    given the Docker API through its own Docker API settings.
+                                                </p>
+                                            </div>
                                         </InfoBlock>
 
                                         <InfoBlock

@@ -31,7 +31,7 @@ type service struct {
 	// The seams below are what tests replace: bunex options are opaque closures,
 	// which a test double of the repositories cannot read.
 	rotationKey func() []byte
-	loadEntries func(ctx context.Context, db database.IDB, appID string) ([]*entity.Setting, error)
+	loadEntries func(ctx context.Context, db database.IDB, app *entity.App) ([]*entity.Setting, error)
 	loadSources func(ctx context.Context, db database.IDB, app *entity.App, ids []string) ([]*entity.Setting, error)
 	loadReaders func(ctx context.Context, db database.IDB, sourceIDs []string) ([]string, error)
 	// loadClaimants are the app's own settings that can give it files.
@@ -68,12 +68,19 @@ func New(
 	return s
 }
 
-// loadEntriesFromRepo is the app's own entries, whatever their status: an entry
-// is never inherited.
-func (s *service) loadEntriesFromRepo(ctx context.Context, db database.IDB, appID string) ([]*entity.Setting, error) {
+// loadEntriesFromRepo is the app's own entries, whatever their status, and for
+// a preview its parent's inheritable ones: an entry is inherited only when
+// whoever made it said so.
+func (s *service) loadEntriesFromRepo(
+	ctx context.Context, db database.IDB, app *entity.App,
+) ([]*entity.Setting, error) {
 	entries, _, err := s.settingRepo.List(ctx, db, nil, nil,
 		bunex.SelectWhere("setting.type = ?", base.SettingTypeAppSettingMount),
-		bunex.SelectWhere("setting.object_id = ?", appID),
+		bunex.SelectWhereGroup(
+			bunex.SelectWhere("setting.object_id = ?", app.ID),
+			bunex.SelectWhereOrIf(app.ParentID != "",
+				"(setting.object_id = ? AND setting.inheritable = TRUE)", app.ParentID),
+		),
 	)
 	return entries, hperrors.Wrap(err)
 }

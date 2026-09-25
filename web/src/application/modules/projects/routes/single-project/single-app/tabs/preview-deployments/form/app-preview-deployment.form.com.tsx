@@ -24,7 +24,7 @@ import {
     type PreviewDeploymentTrigger,
 } from "../schemas";
 
-const INFO_BLOCK_TITLE_WIDTH = 300;
+const INFO_BLOCK_TITLE_WIDTH = 240;
 
 type PreparedPreview = AppPreviews_PrepareCreate_Res["data"];
 

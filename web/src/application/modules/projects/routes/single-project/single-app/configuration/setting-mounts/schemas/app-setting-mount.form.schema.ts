@@ -1,7 +1,6 @@
 import { z } from "zod";
 
 export const SETTING_MOUNT_KEY_PATTERN = /^[a-z0-9]([a-z0-9-]{0,18}[a-z0-9])?$/;
-export const SETTING_MOUNT_TLS_DIR = "/run/secrets/tls";
 const FILE_MODE_PATTERN = /^0?[0-7]{3}$/;
 
 const FileRowSchema = z.object({
@@ -17,11 +16,7 @@ const FileRowSchema = z.object({
 
 export const AppSettingMountFormSchema = z
     .object({
-        name: z
-            .string()
-            .trim()
-            .regex(SETTING_MOUNT_KEY_PATTERN, "Lowercase letters, digits and hyphens, at most 20")
-            .refine(value => value !== "tls", "'tls' is reserved for TLS passthrough"),
+        name: z.string().trim().regex(SETTING_MOUNT_KEY_PATTERN, "Lowercase letters, digits and hyphens, at most 20"),
         inheritable: z.boolean(),
         sourceType: z.string().min(1, "Choose what to mount from"),
         source: z.object({ id: z.string(), name: z.string() }).nullable(),
@@ -43,11 +38,9 @@ export const AppSettingMountFormSchema = z
             const path = file.path.trim();
             const message = !path.startsWith("/")
                 ? "Use an absolute path"
-                : path === SETTING_MOUNT_TLS_DIR || path.startsWith(`${SETTING_MOUNT_TLS_DIR}/`)
-                  ? `${SETTING_MOUNT_TLS_DIR} is reserved for TLS passthrough`
-                  : seen.has(path)
-                    ? "Another part of this entry has this path"
-                    : "";
+                : seen.has(path)
+                  ? "Another part of this entry has this path"
+                  : "";
             if (message) {
                 ctx.addIssue({ code: z.ZodIssueCode.custom, message, path: ["files", index, "path"] });
             }

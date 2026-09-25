@@ -1,5 +1,6 @@
 import { Checkbox, Field, FieldError, FieldGroup, Input } from "@components/ui";
 import { useController, useFormContext } from "react-hook-form";
+import { TlsPassthroughMountNote } from "~/projects/module-shared/components";
 import { PROJECT_FORM_CONTROL_MAX_WIDTH_CLASS } from "~/projects/module-shared/constants";
 
 import { InfoBlock, LabelWithInfo } from "@application/shared/components";
@@ -225,6 +226,8 @@ export function DatabaseKindFields({ readOnly = false }: Props) {
                     </span>
                 </div>
             </InfoBlock>
+
+            {tlsPassthrough.value && <TlsPassthroughMountNote />}
         </>
     );
 }

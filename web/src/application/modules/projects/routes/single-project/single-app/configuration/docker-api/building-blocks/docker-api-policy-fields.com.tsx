@@ -1,6 +1,7 @@
 import { Checkbox, FieldError, Input } from "@components/ui";
 import { InputNumber } from "@components/ui/input-number";
 import { useController, useFormContext } from "react-hook-form";
+import { useDockerApiPermissionsGuideDialog } from "~/projects/dialogs/docker-api-permissions-guide";
 import { type AppDockerApiLimits } from "~/projects/domain";
 
 import { InfoBlock, LabelWithInfo } from "@application/shared/components";
@@ -23,6 +24,7 @@ export function DockerApiPolicyFields({ readOnly = false }: { readOnly?: boolean
     } = useFormContext<AppConfigDockerApiFormSchemaInput, unknown, AppConfigDockerApiFormSchemaOutput>();
     const { field: envNetworkField } = useController({ control, name: "envNetwork" });
     const { field: allowField } = useController({ control, name: "allow" });
+    const permissionsGuide = useDockerApiPermissionsGuideDialog();
 
     return (
         <div className="flex flex-col gap-6">
@@ -85,10 +87,25 @@ export function DockerApiPolicyFields({ readOnly = false }: { readOnly?: boolean
             <InfoBlock
                 titleWidth={TITLE_WIDTH}
                 title={
-                    <LabelWithInfo
-                        label="Allowed"
-                        content="What its containers may do beyond being started, watched and removed."
-                    />
+                    <div className="flex flex-col items-start gap-1">
+                        <LabelWithInfo
+                            label="Allowed"
+                            content="What its containers may do beyond being started, watched and removed."
+                        />
+                        {/* An anchor rather than a button: the form's fieldset disables
+                            buttons for someone who may only read, and reading is what
+                            this is for. */}
+                        <a
+                            href="#docker-api-permissions"
+                            className="text-xs font-normal text-link hover:underline"
+                            onClick={event => {
+                                event.preventDefault();
+                                permissionsGuide.actions.open();
+                            }}
+                        >
+                            What each permission allows
+                        </a>
+                    </div>
                 }
             >
                 <div className="flex flex-col gap-2.5">

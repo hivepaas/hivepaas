@@ -9,6 +9,7 @@ export * from "./feature-settings";
 export * from "./clone-settings";
 export * from "./previews";
 export * from "./secrets";
+export * from "./setting-mounts";
 export * from "./project-apps";
 export * from "./service-settings";
 export * from "./service-tasks";

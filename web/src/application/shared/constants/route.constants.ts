@@ -718,6 +718,24 @@ export const ROUTE = {
                             },
                         },
 
+                        settingMounts: {
+                            $pattern: "projects/:id/:env/apps/:appId/setting-mounts",
+                            $route: (id: string, env: string, appId: string) =>
+                                `/projects/${id}/${env}/apps/${appId}/setting-mounts/`,
+
+                            create: {
+                                $pattern: "projects/:id/:env/apps/:appId/setting-mounts/create",
+                                $route: (id: string, env: string, appId: string) =>
+                                    `/projects/${id}/${env}/apps/${appId}/setting-mounts/create/`,
+                            },
+
+                            edit: {
+                                $pattern: "projects/:id/:env/apps/:appId/setting-mounts/:settingMountId/edit",
+                                $route: (id: string, env: string, appId: string, settingMountId: string) =>
+                                    `/projects/${id}/${env}/apps/${appId}/setting-mounts/${settingMountId}/edit/`,
+                            },
+                        },
+
                         dataFiles: {
                             $pattern: "projects/:id/:env/apps/:appId/data-files",
                             $route: (id: string, env: string, appId: string) =>

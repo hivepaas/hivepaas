@@ -106,6 +106,7 @@ function View({ projectId, env, appId }: Props) {
 
         ROUTE.projects.single.apps.single.configuration.secrets.$route(projectId, env, appId),
         ROUTE.projects.single.apps.single.configuration.configFiles.$route(projectId, env, appId),
+        ROUTE.projects.single.apps.single.configuration.settingMounts.$route(projectId, env, appId),
         ROUTE.projects.single.apps.single.configuration.containerSettings.$route(projectId, env, appId),
         ROUTE.projects.single.apps.single.configuration.availabilityAndScaling.$route(projectId, env, appId),
         ROUTE.projects.single.apps.single.configuration.presistentStorage.$route(projectId, env, appId),

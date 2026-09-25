@@ -42,21 +42,6 @@ async function getSecretValue(values: CreateOrEditAppSecretFormOutput): Promise<
     return fileToBase64(values.binaryFile);
 }
 
-function getSwarmRef(values: CreateOrEditAppSecretFormOutput) {
-    if (!values.mountIntoFilesystem) {
-        return undefined;
-    }
-
-    return {
-        file: {
-            name: values.filePath,
-            mode: values.fileMode,
-            uid: values.fileUid,
-            gid: values.fileGid,
-        },
-    };
-}
-
 export function AppSecretFormRoute({ mode, projectId, appId, env, secretId }: Props) {
     const [hasChanges, setHasChanges] = useState(false);
     const { canWrite } = useConditionalModule({ id: MODULE_IDS.Project });
@@ -124,7 +109,6 @@ export function AppSecretFormRoute({ mode, projectId, appId, env, secretId }: Pr
 
         const value = await getSecretValue(values);
         const base64 = values.valueType === "binary";
-        const swarmRef = getSwarmRef(values);
 
         if (isEditMode && secret) {
             updateAppSecret({
@@ -136,7 +120,6 @@ export function AppSecretFormRoute({ mode, projectId, appId, env, secretId }: Pr
                 name: values.name,
                 value,
                 base64,
-                swarmRef,
             });
             return;
         }
@@ -149,7 +132,6 @@ export function AppSecretFormRoute({ mode, projectId, appId, env, secretId }: Pr
                 name: values.name,
                 value,
                 base64,
-                swarmRef,
             });
         }
     }
@@ -172,11 +154,6 @@ export function AppSecretFormRoute({ mode, projectId, appId, env, secretId }: Pr
             ? {
                   name: secret.name,
                   valueType: secret.base64 ? ("binary" as const) : ("text" as const),
-                  mountIntoFilesystem: Boolean(secret.swarmRef?.file),
-                  filePath: secret.swarmRef?.file?.name,
-                  fileMode: secret.swarmRef?.file?.mode,
-                  fileUid: secret.swarmRef?.file?.uid,
-                  fileGid: secret.swarmRef?.file?.gid,
               }
             : undefined;
     const isDetailLoading = isEditMode && detailQuery.isFetching;

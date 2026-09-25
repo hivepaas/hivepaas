@@ -39,21 +39,6 @@ async function getSecretValue(values: CreateOrEditAppSecretFormOutput): Promise<
     return fileToBase64(values.binaryFile);
 }
 
-function getSwarmRef(values: CreateOrEditAppSecretFormOutput) {
-    if (!values.mountIntoFilesystem) {
-        return undefined;
-    }
-
-    return {
-        file: {
-            name: values.filePath,
-            mode: values.fileMode,
-            uid: values.fileUid,
-            gid: values.fileGid,
-        },
-    };
-}
-
 export function CreateOrEditAppSecretDialog() {
     const { env } = useParams<{ env: string }>();
     const { state, props: dialogOptions, ...actions } = useCreateOrEditAppSecretDialogState();
@@ -101,7 +86,6 @@ export function CreateOrEditAppSecretDialog() {
 
         const value = await getSecretValue(values);
         const base64 = values.valueType === "binary";
-        const swarmRef = getSwarmRef(values);
 
         if (state.mode === "edit") {
             updateAppSecret({
@@ -113,7 +97,6 @@ export function CreateOrEditAppSecretDialog() {
                 name: values.name,
                 value,
                 base64,
-                swarmRef,
             });
             return;
         }
@@ -126,7 +109,6 @@ export function CreateOrEditAppSecretDialog() {
                 name: values.name,
                 value,
                 base64,
-                swarmRef,
             });
         }
     }
@@ -155,11 +137,6 @@ export function CreateOrEditAppSecretDialog() {
             ? {
                   name: state.secret.name,
                   valueType: state.secret.base64 ? ("binary" as const) : ("text" as const),
-                  mountIntoFilesystem: Boolean(state.secret.swarmRef?.file),
-                  filePath: state.secret.swarmRef?.file?.name,
-                  fileMode: state.secret.swarmRef?.file?.mode,
-                  fileUid: state.secret.swarmRef?.file?.uid,
-                  fileGid: state.secret.swarmRef?.file?.gid,
               }
             : undefined;
 

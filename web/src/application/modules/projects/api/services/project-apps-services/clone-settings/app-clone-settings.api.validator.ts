@@ -4,7 +4,7 @@ import { EProjectAppStatus } from "~/projects/module-shared/enums";
 
 import { BaseMetaApiSchema, parseApiResponse } from "@infrastructure/api";
 
-import type { AppCloneSettings_FindOne_Res } from "./app-clone-settings.api.contracts";
+import type { AppCloneSettings_Execute_Res, AppCloneSettings_FindOne_Res } from "./app-clone-settings.api.contracts";
 
 const SettingRefSchema = z
     .object({
@@ -84,8 +84,18 @@ const FindOneSchema = z.object({
     meta: BaseMetaApiSchema.nullable(),
 });
 
+/** The clone's answer carries a warning when it left setting mounts out. */
+const ExecuteSchema = z.object({
+    meta: BaseMetaApiSchema.nullable().optional().default(null),
+});
+
 export class AppCloneSettingsApiValidator {
     findOne = (response: AxiosResponse): AppCloneSettings_FindOne_Res => {
         return parseApiResponse({ response, schema: FindOneSchema });
+    };
+
+    execute = (response: AxiosResponse): AppCloneSettings_Execute_Res => {
+        const { meta } = parseApiResponse({ response, schema: ExecuteSchema });
+        return { data: { type: "success" }, meta };
     };
 }

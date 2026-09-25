@@ -53,6 +53,9 @@ export const QK = {
      */
     "projects.apps.config-files.$.find-many-paginated": "projects.apps.config-files.$.find-many-paginated",
     "projects.apps.config-files.$.find-one-by-id": "projects.apps.config-files.$.find-one-by-id",
+    "projects.apps.setting-mounts.$.find-many-paginated": "projects.apps.setting-mounts.$.find-many-paginated",
+    "projects.apps.setting-mounts.$.find-one-by-id": "projects.apps.setting-mounts.$.find-one-by-id",
+    "projects.apps.setting-mounts.$.find-sources": "projects.apps.setting-mounts.$.find-sources",
     /*
      * Project App Data Files
      */

@@ -8,6 +8,7 @@ export * from "./feature-settings";
 export * from "./clone-settings";
 export * from "./health-check";
 export * from "./secret";
+export * from "./setting-mount";
 export * from "./service-task";
 export * from "./service-settings";
 export * from "./scheduled-job";

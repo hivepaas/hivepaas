@@ -66,12 +66,6 @@ function createColumns(projectId: string, env: string, appId: string): ColumnDef
             },
         },
         {
-            header: "Mountpoint",
-            cell: ({ row: { original } }) => {
-                return <div className="break-all">{original.swarmRef?.file?.name ?? "-"}</div>;
-            },
-        },
-        {
             accessorKey: "expireAt",
             header: "Expire At",
             cell: ({ row: { original } }) => {

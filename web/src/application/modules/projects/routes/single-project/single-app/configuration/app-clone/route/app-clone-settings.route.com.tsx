@@ -77,8 +77,12 @@ export function AppCloneSettingsRoute() {
     });
 
     const { mutate: execute, isPending: isExecuting } = AppCloneSettingsCommands.useExecute({
-        onSuccess: () => {
+        onSuccess: response => {
             toast.success("App clone started");
+            // Setting mounts the requester may not reveal are left out, and named.
+            if (response.meta?.warning) {
+                toast.warning(response.meta.warning);
+            }
         },
         onError: err => {
             if (err instanceof Error) {

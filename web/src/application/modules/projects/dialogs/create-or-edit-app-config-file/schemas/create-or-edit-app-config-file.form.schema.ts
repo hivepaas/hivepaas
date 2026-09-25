@@ -1,8 +1,6 @@
 import { z } from "zod";
 
 export const APP_CONFIG_FILE_MAX_VALUE_SIZE = 1024 * 1024;
-export const APP_CONFIG_FILE_DEFAULT_FILE_PATH = "/etc/myapp/config";
-export const APP_CONFIG_FILE_DEFAULT_FILE_MODE = "0444";
 
 export const CreateOrEditAppConfigFileFormSchema = z
     .object({
@@ -16,11 +14,6 @@ export const CreateOrEditAppConfigFileFormSchema = z
         isEditMode: z.boolean(),
         textValue: z.string(),
         binaryFile: z.custom<File>().nullable(),
-        mountIntoFilesystem: z.boolean(),
-        filePath: z.string(),
-        fileMode: z.string(),
-        fileUid: z.string(),
-        fileGid: z.string(),
     })
     .superRefine((value, ctx) => {
         if (value.valueType === "text") {
@@ -55,24 +48,6 @@ export const CreateOrEditAppConfigFileFormSchema = z
                 message: "File must be 1mb or less",
                 path: ["binaryFile"],
             });
-        }
-
-        if (value.mountIntoFilesystem) {
-            if (!value.filePath.trim()) {
-                ctx.addIssue({
-                    code: z.ZodIssueCode.custom,
-                    message: "File path is required",
-                    path: ["filePath"],
-                });
-            }
-
-            if (!value.fileMode.trim()) {
-                ctx.addIssue({
-                    code: z.ZodIssueCode.custom,
-                    message: "File mode is required",
-                    path: ["fileMode"],
-                });
-            }
         }
     });
 

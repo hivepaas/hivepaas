@@ -9,6 +9,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/sslrenewalservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/sslservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/traefikservice"
+	"github.com/hivepaas/hivepaas/hivepaas_app/tasks/queue"
 )
 
 type service struct {
@@ -21,6 +22,7 @@ type service struct {
 	settingService      settingservice.Service
 	sslService          sslservice.Service
 	traefikService      traefikservice.Service
+	taskQueue           queue.TaskQueue
 }
 
 func New(
@@ -33,6 +35,7 @@ func New(
 	settingService settingservice.Service,
 	sslService sslservice.Service,
 	traefikService traefikservice.Service,
+	taskQueue queue.TaskQueue,
 ) sslrenewalservice.Service {
 	return &service{
 		db: db,
@@ -44,5 +47,6 @@ func New(
 		settingService:      settingService,
 		sslService:          sslService,
 		traefikService:      traefikService,
+		taskQueue:           taskQueue,
 	}
 }

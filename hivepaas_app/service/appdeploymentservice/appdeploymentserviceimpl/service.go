@@ -15,6 +15,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/notificationservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/placementservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/repocheckoutservice"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/settingmountservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/settingservice"
 	"github.com/hivepaas/hivepaas/services/docker"
 )
@@ -40,6 +41,7 @@ type service struct {
 	placementService     placementservice.Service
 	repoCheckoutService  repocheckoutservice.Service
 	settingService       settingservice.Service
+	settingMountService  settingmountservice.Service
 }
 
 func New(
@@ -63,6 +65,7 @@ func New(
 	placementService placementservice.Service,
 	repoCheckoutService repocheckoutservice.Service,
 	settingService settingservice.Service,
+	settingMountService settingmountservice.Service,
 ) appdeploymentservice.Service {
 	return &service{
 		db:            db,
@@ -85,5 +88,6 @@ func New(
 		placementService:     placementService,
 		repoCheckoutService:  repoCheckoutService,
 		settingService:       settingService,
+		settingMountService:  settingMountService,
 	}
 }

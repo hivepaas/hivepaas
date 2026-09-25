@@ -8,6 +8,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/clustersecretservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/clusterservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/dockerapiservice"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/settingmountservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/traefikservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/volumeservice"
 	"github.com/hivepaas/hivepaas/services/docker"
@@ -27,6 +28,7 @@ func New(
 	clusterSecretService clustersecretservice.Service,
 	clusterService clusterservice.Service,
 	dockerAPIService dockerapiservice.Service,
+	settingMountService settingmountservice.Service,
 	traefikService traefikservice.Service,
 	volumeService volumeservice.Service,
 
@@ -47,6 +49,7 @@ func New(
 		clusterSecretService: clusterSecretService,
 		clusterService:       clusterService,
 		dockerAPIService:     dockerAPIService,
+		settingMountService:  settingMountService,
 		traefikService:       traefikService,
 		volumeService:        volumeService,
 
@@ -69,6 +72,7 @@ type service struct {
 	clusterSecretService clustersecretservice.Service
 	clusterService       clusterservice.Service
 	dockerAPIService     dockerapiservice.Service
+	settingMountService  settingmountservice.Service
 	traefikService       traefikservice.Service
 	volumeService        volumeservice.Service
 

@@ -3,6 +3,8 @@ package settingeventserviceimpl
 import (
 	"context"
 
+	"github.com/tiendc/gofn"
+
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
@@ -24,5 +26,10 @@ func (s *service) recordMountRefresh(
 }
 
 func (s *service) ScheduleTasks(ctx context.Context, tasks ...*entity.Task) {
-	s.settingMountService.Schedule(ctx, tasks...)
+	tasks = gofn.ToSliceSkippingNil(tasks...)
+	if len(tasks) == 0 {
+		return
+	}
+	// A task the queue is not told of now is found by its own scan.
+	_ = s.taskQueue.ScheduleTask(ctx, tasks...)
 }

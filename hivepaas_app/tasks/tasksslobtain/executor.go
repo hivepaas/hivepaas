@@ -41,6 +41,7 @@ type Executor struct {
 	settingService      settingservice.Service
 	sslService          sslservice.Service
 	appRoutingService   approutingservice.Service
+	taskQueue           queue.TaskQueue
 	logger              logging.Logger
 }
 
@@ -63,6 +64,7 @@ func NewExecutor(
 		settingService:      settingService,
 		sslService:          sslService,
 		appRoutingService:   appRoutingService,
+		taskQueue:           taskQueue,
 		logger:              logger,
 	}
 	taskQueue.RegisterExecutor(base.TaskTypeSSLObtain, e.execute)
@@ -116,7 +118,9 @@ func (e *Executor) execute(
 	if err != nil {
 		return hperrors.Wrap(err)
 	}
-	task.OnPostTx(func() { e.settingMountService.Schedule(context.WithoutCancel(ctx), refresh) })
+	if refresh != nil {
+		task.OnPostTx(func() { _ = e.taskQueue.ScheduleTask(context.WithoutCancel(ctx), refresh) })
+	}
 
 	// The certificate exists now; the app is still being served without it until
 	// traefik is told, which is what this does. A failure here is worth a retry -

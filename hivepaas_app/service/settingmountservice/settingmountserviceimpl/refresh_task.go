@@ -73,16 +73,6 @@ func (s *service) RecordRefresh(
 	return task, nil
 }
 
-func (s *service) Schedule(ctx context.Context, tasks ...*entity.Task) {
-	tasks = gofn.ToSliceSkippingNil(tasks...)
-	if len(tasks) == 0 {
-		return
-	}
-	if err := s.taskQueue.ScheduleTask(ctx, tasks...); err != nil {
-		s.logger.Warnf("setting mount refresh left to the queue's scan: %v", err)
-	}
-}
-
 // loadReadersFromRepo is the apps whose entries mount one of sourceIDs, through
 // the links every setting reference writes.
 func (s *service) loadReadersFromRepo(ctx context.Context, db database.IDB, sourceIDs []string) ([]string, error) {

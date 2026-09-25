@@ -318,7 +318,10 @@ func (s *service) sslSaveUpdatedSettings(
 	if err != nil {
 		return hperrors.Wrap(err)
 	}
-	s.settingMountService.Schedule(ctx, refresh)
+	if refresh != nil {
+		// A task the queue is not told of now is found by its own scan.
+		_ = s.taskQueue.ScheduleTask(ctx, refresh)
+	}
 
 	for _, sslSetting := range persistingSettings {
 		data.TaskOutput.RenewedSSLs = append(data.TaskOutput.RenewedSSLs,

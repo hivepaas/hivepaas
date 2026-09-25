@@ -173,6 +173,7 @@ func (s *service) deleteAppInDocker(ctx context.Context, db database.IDB, app *e
 	// leave an app half deleted.
 	_ = s.deleteDockerSecretsAndConfigs(ctx, secrets, configs)
 	_ = s.dockerAPIService.RemoveApp(ctx, app.ID)
+	_ = s.settingMountService.RemoveApp(ctx, app.ID)
 	if removeStorage {
 		_ = s.volumeService.RemoveAppStorage(ctx, db, app, mounts)
 	}

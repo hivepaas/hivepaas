@@ -30,10 +30,9 @@ type Service interface {
 	// RecordRefresh records, in db's transaction, a refresh of the apps that
 	// read one of settings: an entry's own app, or the apps whose entries mount
 	// a source. It records nothing, and returns nil, when no app does.
+	// The caller hands the task to the queue once its transaction has committed;
+	// this service does not hold the queue, which depends on the app service.
 	RecordRefresh(ctx context.Context, db database.IDB, settings ...*entity.Setting) (*entity.Task, error)
-	// Schedule hands recorded tasks to the queue once their transaction has
-	// committed. A failure is left to the queue's own scan.
-	Schedule(ctx context.Context, tasks ...*entity.Task)
 }
 
 // File is one part of a source, at a path of an app's containers.

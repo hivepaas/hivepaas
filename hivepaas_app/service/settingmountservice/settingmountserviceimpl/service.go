@@ -13,7 +13,6 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/logging"
 	"github.com/hivepaas/hivepaas/hivepaas_app/repository"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/settingmountservice"
-	"github.com/hivepaas/hivepaas/hivepaas_app/tasks/queue"
 	"github.com/hivepaas/hivepaas/services/docker"
 )
 
@@ -23,7 +22,6 @@ type service struct {
 	taskRepo    repository.TaskRepo
 
 	dockerManager docker.Manager
-	taskQueue     queue.TaskQueue
 	logger        logging.Logger
 
 	// removalRetryDelay is how long Sweep waits before asking again to remove
@@ -47,7 +45,6 @@ func New(
 	settingRepo repository.SettingRepo,
 	taskRepo repository.TaskRepo,
 	dockerManager docker.Manager,
-	taskQueue queue.TaskQueue,
 	logger logging.Logger,
 ) settingmountservice.Service {
 	s := &service{
@@ -55,7 +52,6 @@ func New(
 		settingRepo:   settingRepo,
 		taskRepo:      taskRepo,
 		dockerManager: dockerManager,
-		taskQueue:     taskQueue,
 		logger:        logger,
 
 		removalRetryDelay: removalRetryDelay,

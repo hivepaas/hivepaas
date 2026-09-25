@@ -51,6 +51,11 @@ func (s *service) onCloneAppSetting(
 		return nil, nil
 	case base.SettingTypeAppFeatures:
 		return nil, nil
+	case base.SettingTypeAppSettingMount:
+		// Not copied: handing a private key to the copy takes the Reveal Secrets
+		// permission, and nobody's session is here to ask it of. The copy
+		// resolves its own entries, of which it has none.
+		return nil, nil
 	default:
 		return nil, nil
 	}

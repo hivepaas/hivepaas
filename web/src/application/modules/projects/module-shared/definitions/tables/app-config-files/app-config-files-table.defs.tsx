@@ -2,7 +2,7 @@ import { Badge } from "@components/ui/badge";
 import type { ColumnDef } from "@tanstack/react-table";
 import { format } from "date-fns";
 import type { AppConfigFile } from "~/projects/domain";
-import { ProjectSecretStatusBadge } from "~/projects/module-shared/components";
+import { InheritableCell, ProjectSecretStatusBadge } from "~/projects/module-shared/components";
 
 import { EditCell, MenuCell } from "./building-blocks";
 
@@ -60,6 +60,24 @@ function createColumns(projectId: string, env: string, appId: string): ColumnDef
             header: "Type",
             cell: ({ row: { original } }) => {
                 return original.base64 ? "binary" : "text";
+            },
+        },
+        {
+            id: "inheritable",
+            header: "In Previews",
+            enableSorting: false,
+            size: 110,
+            // An inherited row's flag is about the project's or env's apps, not this app's previews.
+            cell: ({ row: { original } }) =>
+                original.inherited ? null : (
+                    <InheritableCell
+                        inheritable={original.inheritable}
+                        target="previews"
+                    />
+                ),
+            meta: {
+                align: "center",
+                titleAlign: "center",
             },
         },
         {

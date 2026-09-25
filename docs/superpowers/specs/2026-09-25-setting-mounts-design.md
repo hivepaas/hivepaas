@@ -59,6 +59,13 @@ settings:
 | `source` | A setting reference, as every setting reference is: written to `res_link`, remapped by import, and a source still linked cannot be deleted (`ERR_SETTING_IN_USE`). |
 | `files[].part` | A part the source's type offers (§2). Each part at most once per entry. |
 | `files[].path` | An absolute, clean path. Unique among the app's entries, secrets and config files, and outside `/run/secrets/tls`. |
+
+A path is compared by where the file lands: a secret's `db_password` is
+`/run/secrets/db_password`. Saving an entry, a secret or a config file refuses
+a path another of them has (`ERR_SETTING_MOUNT_PATH_TAKEN`). What gets past that
+check - a secret enabled again, an import, older data - is settled in Docker the
+same way every time: an ordinary secret or config file keeps the path, and the
+mount's file is left out.
 | `files[].uid`, `gid`, `mode` | Optional. The defaults are those of secrets and config files. |
 
 An entry has at least one file. Its source must be of a type §2 lists and
@@ -170,7 +177,7 @@ the others go on.
 | entry deleted | its files are removed |
 | source deleted | refused while linked, as for any reference |
 | app deleted | every secret and config labeled `hivepaas.app.id=<app>` and `hivepaas.settingMount.entry` is removed |
-| app cloned, preview app created | references copied from the source app are dropped, and the new app is resolved on its own |
+| app cloned, preview app created | entries are not copied: handing a private key to the copy would take §7's gate, and a clone runs as a task with nobody's session to ask it of. References a copied spec held are dropped, and the copy resolves its own entries, of which it has none |
 
 ## 7. Permissions
 

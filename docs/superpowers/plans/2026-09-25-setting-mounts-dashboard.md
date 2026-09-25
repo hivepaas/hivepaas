@@ -30,6 +30,23 @@ Two pure helpers mirror what the backend decides:
 
 **Spec:** `docs/superpowers/specs/2026-09-25-setting-mounts-design.md` §10. The routing and kind screens' passthrough state waits for plan 3. Wire format: plan 2 (`docs/superpowers/plans/2026-09-25-setting-mounts-surfaces.md`, Global Constraints).
 
+## Amendment: one way to a file
+
+`docs/superpowers/specs/2026-09-25-setting-mounts-one-way-design.md` (plans 1-3 built) changes this plan. Where the tasks below disagree with this section, this section wins.
+
+- **Wire format.**
+  - Files carry `secret` (stored as a Docker secret) and `gated` (takes Reveal Secrets) in place of `sensitive`; so do the parts of `GET .../sources`. `mayMountSensitive` keeps its name.
+  - Entries carry `inheritable`, and create and update send it.
+  - `ExecuteAppClone` answers with `meta.warning` when it left gated entries out.
+- **Two more source types.** `secret` (part `value`) and `config-file` (part `content`). Their picker lists the app's secrets and config files through the app-level queries (`ProjectAppSecretsQueries`, `AppConfigFilesQueries`), which already carry the project's inheritable ones. The labels are "Secret" and "Config file".
+- **Marks and locks.** A `gated` part shows the lock and is what `widensGrants` counts and what is locked. A `secret` part that is not gated shows a "stored as secret" mark only.
+- **Default mode** is `0400` for a `secret` part and `0444` otherwise.
+- **Suggested paths.** A secret's value suggests `/run/secrets/<setting name>`, a config file's content `/etc/app/<setting name>`, both lowercased. Picking a setting replaces a row's path only while it is still the suggestion.
+- **Inheritable.** The form has a switch "Previews and clones get this entry", with the line "A preview runs a pull request's code: whatever this entry mounts reaches it." The list marks inheritable entries.
+- **Task 5: Secrets and Config Files lose their mount fields.** The `mountIntoFilesystem`, `filePath`, `fileMode`, `fileUid`, `fileGid` fields of both forms (route and dialog), their schemas, `swarmRef` in the entities, contracts, validators and API bodies, and the Mountpoint columns go. Commit: "refactor(apps): secrets and config files are mounted through setting mounts".
+- **Task 6: The clone says what it left out.** The execute call parses the response's `meta`, and the clone route shows `meta.warning` with `toast.warning` beside "App clone started". Commit: "feat(apps): the clone says which setting mounts it left out".
+- **Task 4** runs after Tasks 5 and 6, and its checks add: a secret mounted at its suggested path; an inheritable switch that survives an edit.
+
 ## Global Constraints
 
 - **Repository:** `../hivepaas-dashboard`, on branch `feat/setting-mounts`. Every commit ends with `Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>`. Merge locally, delete the branch, do not push, and stage only the files named here.

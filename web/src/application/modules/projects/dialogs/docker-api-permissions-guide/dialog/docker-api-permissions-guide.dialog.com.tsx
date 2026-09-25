@@ -73,7 +73,7 @@ export function DockerApiPermissionsGuideDialog() {
         >
             <DialogFixedContent className="sm:max-w-[1200px]">
                 <DialogHeader>
-                    <DialogTitle>Docker API permissions</DialogTitle>
+                    <DialogTitle>What the app&apos;s containers may do</DialogTitle>
                     <DialogDescription>
                         What an app may do through the Docker API proxy of HivePaaS. Everything is refused unless a rule
                         below lets it through, and everything the app reaches is what it created itself.

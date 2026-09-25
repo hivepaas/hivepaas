@@ -337,6 +337,18 @@ func exportFixture(t *testing.T) specservice.Service {
 	}
 	assert.NoError(t, sharedVolume.SetData(&entity.ClusterVolume{}))
 
+	// Config files a project and an env hold for their apps.
+	projectConfig := &entity.Setting{
+		ID: "cfg_p1", Type: base.SettingTypeConfigFile, Scope: base.ObjectScopeProject,
+		ObjectID: "p1", Name: "shared.yaml", Status: base.SettingStatusActive, Inheritable: true,
+	}
+	assert.NoError(t, projectConfig.SetData(&entity.ConfigFile{Name: "shared.yaml", Content: "level: project\n"}))
+	envConfig := &entity.Setting{
+		ID: "cfg_dev", Type: base.SettingTypeConfigFile, Scope: base.ObjectScopeProjectEnv,
+		ObjectID: "p1:dev", Name: "dev-only.yaml", Status: base.SettingStatusActive,
+	}
+	assert.NoError(t, envConfig.SetData(&entity.ConfigFile{Name: "dev-only.yaml", Content: "level: env\n"}))
+
 	// The env's own network, as cluster sync records it.
 	settingRepo := &fakeSettingRepo{networks: []*entity.Setting{{
 		ID: "net_1", Type: base.SettingTypeClusterNetwork, Scope: base.ObjectScopeProjectEnv, ObjectID: "p1:dev",
@@ -363,7 +375,8 @@ func exportFixture(t *testing.T) specservice.Service {
 		ProjectEnvID: "p1:dev", ParentID: "app_1",
 	}
 
-	all := []*entity.Setting{cert, apiKey, routing, secret, mountEntry, kind, projectVolume, sharedVolume}
+	all := []*entity.Setting{cert, apiKey, routing, secret, mountEntry, kind, projectVolume, sharedVolume,
+		projectConfig, envConfig}
 
 	svc := New(
 		&fakeAppRepo{apps: []*entity.App{deployed, undeployed, preview}},
@@ -712,4 +725,17 @@ func (f *fakeProjectService) PersistProjectData(
 ) error {
 	f.persisted = data
 	return nil
+}
+
+func TestExportKeepsProjectAndEnvConfigFiles(t *testing.T) {
+	path, _ := runExport(t, specmodel.SecretsModeOmit, "")
+
+	project := readFromArchive(t, path, "projects/project_a/project.yaml")
+	assert.Contains(t, project, "configFiles:")
+	assert.Contains(t, project, "level: project")
+	assert.Contains(t, project, "inheritable: true", "whether apps get it travels with it")
+
+	env := readFromArchive(t, path, "projects/project_a/envs/dev.yaml")
+	assert.Contains(t, env, "dev-only.yaml")
+	assert.Contains(t, env, "level: env")
 }

@@ -88,6 +88,15 @@ func (s *service) buildAppMount(
 	if err != nil {
 		return nil, hperrors.Wrap(err)
 	}
+	if volumeservice.DriverOptsReachDockerSocket(vol.DriverOpts) {
+		return nil, hperrors.Wrap(hperrors.ErrArgumentInvalid).
+			WithExtraDetail("volume %s reaches the Docker socket of the node. An app is given the Docker API "+
+				"through its own Docker API settings, which say what it may do with it, and never through "+
+				"a volume.", setting.Name).
+			WithMsgLog("refused mounting volume %s, whose device %s holds the docker socket",
+				setting.ID, vol.DriverOpts[volumeservice.DriverOptDevice])
+	}
+
 	dockerMnt := &mount.Mount{
 		Type:        mnt.Type,
 		Source:      setting.RefID,
@@ -124,20 +133,18 @@ func (s *service) buildDockerMount(
 	case mount.TypeVolume:
 		if opts := mnt.VolumeOptions; opts != nil {
 			dockerMnt.VolumeOptions = &mount.VolumeOptions{
-				Subpath:      subpath,
-				NoCopy:       opts.NoCopy,
-				Labels:       opts.Labels,
-				DriverConfig: opts.DriverConfig,
+				Subpath: subpath,
+				NoCopy:  opts.NoCopy,
+				Labels:  opts.Labels,
 			}
 		}
-		applyVolumeDriverConfigUnlessOverridden(dockerMnt, vol)
+		applyVolumeDriverConfig(dockerMnt, vol)
 	case mount.TypeCluster:
 		if opts := mnt.ClusterOptions; opts != nil {
 			dockerMnt.VolumeOptions = &mount.VolumeOptions{
-				Subpath:      subpath,
-				NoCopy:       opts.NoCopy,
-				Labels:       opts.Labels,
-				DriverConfig: opts.DriverConfig,
+				Subpath: subpath,
+				NoCopy:  opts.NoCopy,
+				Labels:  opts.Labels,
 			}
 		}
 	case mount.TypeBind, mount.TypeImage, mount.TypeTmpfs, mount.TypeNamedPipe:

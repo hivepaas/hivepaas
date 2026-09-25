@@ -210,15 +210,13 @@ func toAppMountReq(reqMnt *appsettingsdto.Mount) *volumeservice.AppMountReq {
 }
 
 func toAppMountVolumeOptions(opts *appsettingsdto.VolumeOptions) *volumeservice.AppMountVolumeOptions {
-	out := &volumeservice.AppMountVolumeOptions{
+	// driverConfig is not carried over: how a volume is mounted is the volume's
+	// own description, settled when it was created.
+	return &volumeservice.AppMountVolumeOptions{
 		Subpath: opts.Subpath,
 		NoCopy:  opts.NoCopy,
 		Labels:  opts.Labels,
 	}
-	if driver := opts.DriverConfig; driver != nil {
-		out.DriverConfig = &mount.Driver{Name: driver.Name, Options: driver.Options}
-	}
-	return out
 }
 
 // applyAppStorageSettings writes the new mounts and the placement constraints

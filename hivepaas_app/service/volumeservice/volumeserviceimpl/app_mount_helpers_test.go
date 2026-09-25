@@ -106,30 +106,11 @@ func TestApplyVolumeDriverConfigSkipsUnmanaged(t *testing.T) {
 	assert.Nil(t, dockerMnt.VolumeOptions)
 }
 
-// A client that names its own driver is overriding, not omitting: the setting
-// must not clobber a choice the caller made on purpose.
-func TestApplyVolumeDriverConfigUnlessOverriddenKeepsClientDriverConfig(t *testing.T) {
-	dockerMnt := &mount.Mount{
-		Type: mount.TypeVolume,
-		VolumeOptions: &mount.VolumeOptions{
-			DriverConfig: &mount.Driver{Name: "nfs", Options: map[string]string{"device": ":/client/chosen"}},
-		},
-	}
-	vol := &entity.ClusterVolume{
-		Managed:    true,
-		Driver:     "local",
-		DriverOpts: map[string]string{"type": "none", "device": "/srv/data"},
-	}
-
-	applyVolumeDriverConfigUnlessOverridden(dockerMnt, vol)
-
-	assert.Equal(t, "nfs", dockerMnt.VolumeOptions.DriverConfig.Name)
-	assert.Equal(t, ":/client/chosen", dockerMnt.VolumeOptions.DriverConfig.Options["device"])
-}
-
-// The client can set Subpath/NoCopy/Labels without naming a driver; the setting
-// fills in the driver config it omitted without touching what it did set.
-func TestApplyVolumeDriverConfigUnlessOverriddenFillsInWhenClientOmitsDriverConfig(t *testing.T) {
+// What a caller says about a mount - where in the volume, whether to copy, its
+// labels - is kept, and how the volume is mounted is filled in from the volume
+// itself. A caller used to be able to send a driver config of its own here, and
+// it replaced the volume's: any volume could then be made a mount of anything.
+func TestApplyVolumeDriverConfigLeavesWhatTheCallerMaySay(t *testing.T) {
 	dockerMnt := &mount.Mount{
 		Type: mount.TypeVolume,
 		VolumeOptions: &mount.VolumeOptions{
@@ -144,7 +125,7 @@ func TestApplyVolumeDriverConfigUnlessOverriddenFillsInWhenClientOmitsDriverConf
 		DriverOpts: map[string]string{"type": "nfs", "device": ":/exports/data"},
 	}
 
-	applyVolumeDriverConfigUnlessOverridden(dockerMnt, vol)
+	applyVolumeDriverConfig(dockerMnt, vol)
 
 	assert.Equal(t, "local", dockerMnt.VolumeOptions.DriverConfig.Name)
 	assert.Equal(t, ":/exports/data", dockerMnt.VolumeOptions.DriverConfig.Options["device"])
@@ -153,9 +134,9 @@ func TestApplyVolumeDriverConfigUnlessOverriddenFillsInWhenClientOmitsDriverConf
 	assert.Equal(t, "web", dockerMnt.VolumeOptions.Labels["app"])
 }
 
-// The common case: the client sends no VolumeOptions at all, so the mount has
-// none to preserve and the setting's specification is what makes it work.
-func TestApplyVolumeDriverConfigUnlessOverriddenAppliesWhenNoVolumeOptions(t *testing.T) {
+// The common case: the caller sends no VolumeOptions at all, and the volume's
+// description is what makes the mount work.
+func TestApplyVolumeDriverConfigAppliesWhenNoVolumeOptions(t *testing.T) {
 	dockerMnt := &mount.Mount{Type: mount.TypeVolume, Source: "01JVOL"}
 	vol := &entity.ClusterVolume{
 		Managed:    true,
@@ -163,31 +144,10 @@ func TestApplyVolumeDriverConfigUnlessOverriddenAppliesWhenNoVolumeOptions(t *te
 		DriverOpts: map[string]string{"type": "none", "device": "/srv/data"},
 	}
 
-	applyVolumeDriverConfigUnlessOverridden(dockerMnt, vol)
+	applyVolumeDriverConfig(dockerMnt, vol)
 
 	assert.NotNil(t, dockerMnt.VolumeOptions)
 	assert.Equal(t, "local", dockerMnt.VolumeOptions.DriverConfig.Name)
-}
-
-// Unmanaged still wins even when the client's VolumeOptions leave room for a
-// DriverConfig to be filled in: a volume we did not author is not ours to
-// describe, guard or no guard.
-func TestApplyVolumeDriverConfigUnlessOverriddenSkipsUnmanaged(t *testing.T) {
-	dockerMnt := &mount.Mount{
-		Type: mount.TypeVolume,
-		VolumeOptions: &mount.VolumeOptions{
-			Subpath: "shop/prod/web",
-		},
-	}
-	vol := &entity.ClusterVolume{
-		Managed:    false,
-		Driver:     "local",
-		DriverOpts: map[string]string{"type": "none", "device": "/srv/data"},
-	}
-
-	applyVolumeDriverConfigUnlessOverridden(dockerMnt, vol)
-
-	assert.Nil(t, dockerMnt.VolumeOptions.DriverConfig)
 }
 
 // newVolumeSetting builds a TypeVolume/TypeCluster-matchable *entity.Setting

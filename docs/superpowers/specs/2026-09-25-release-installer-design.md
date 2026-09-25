@@ -23,16 +23,17 @@ to beta except the default.
    (`config/config.beta.toml`, later `config.production.toml`).
 2. **Images come from the release info**, the same file the app's updater
    reads, so what the installer deploys is what the updater later compares
-   against.
+   against. A service already running keeps its image: moving images is the
+   updater's job, with the migrations a move needs.
 3. **Nothing destructive.** The installer never leaves or resets a swarm,
    never removes a service, network or volume, and never regenerates a secret.
-   Running it again redeploys the same installation.
+   Running it again on an installed server does not redeploy (§11).
 4. **Every answer is saved** in `/etc/hivepaas/install.env` (root, `0600`), and a
    second run reads it. The app secret in it is the only key to the encrypted
    data, so the installer never changes it once written.
 5. **Interactive by default, silent on request.** Every question has an
    environment variable; `--config FILE` reads them from a file, and `--yes`
-   answers yes to installing or upgrading Docker.
+   answers yes to installing or upgrading Docker and to the confirmations.
 6. **Host tuning never fails the install.** Swap and earlyoom are attempted and
    reported; a failure is a warning.
 7. **The admin password leaves the configuration** once the app has used it
@@ -47,59 +48,81 @@ to beta except the default.
 |---|---|
 | `install.sh` | the installer |
 | `hivepaas.yaml` | the stack, every host-specific value a `${VAR}` |
+| `hivepaas.first-boot.yaml` | the admin's account, deployed with the stack on the first install only (§6) |
 | `traefik/dynamic_conf.yml` | the default certificate, as in dev |
+| `install_test.sh` | the tests of the installer's functions |
+| `install_e2e.sh` | a whole install in docker:dind (§10) |
 
-The installer downloads the other two from the same ref it came from:
-`HIVEPAAS_INSTALL_REF`, default `main`.
+The installer downloads the stack files from the same ref it came from,
+`HIVEPAAS_INSTALL_REF` (default `main`), and keeps them in `/etc/hivepaas/`
+next to `install.env`.
 
 ## 2. Steps
 
 The script prints the logo, then numbered steps, each `[n/9] What`, in colour
-when stdout is a terminal and `NO_COLOR` is unset.
+when stdout is a terminal, `NO_COLOR` is unset and `TERM` is not `dumb`.
 
 1. **Preflight.**
    - Refuses without root.
-   - Detects the distribution from `/etc/os-release`. Supported families:
-     Debian/Ubuntu/Raspbian/Mint/Pop (apt), Fedora/RHEL/CentOS/Rocky/Alma/
-     Oracle/Amazon Linux (dnf or yum), SLES/openSUSE (zypper), Arch/Manjaro
-     (pacman), Alpine (apk). Anything else stops, naming the families.
-   - Warns under 2 GB of RAM or 20 GB of free disk; does not stop.
+   - Detects the distribution from `/etc/os-release`, read as data, not
+     sourced. Supported families: Debian/Ubuntu/Raspbian and their derivatives
+     (apt), Fedora/RHEL/CentOS/Rocky/Alma/Oracle/Amazon Linux (dnf),
+     SLES/openSUSE (zypper), Arch/Manjaro (pacman), Alpine (apk). Anything else
+     stops, naming the families.
+   - Warns under 2 GB of RAM or 20 GB free under `/var/lib`; does not stop.
    - Installs what it needs and is missing: `curl`, `openssl`, `jq`,
      `ca-certificates`.
 2. **Docker**: at least Engine 29.5 and API 1.54 (§3).
-3. **Questions** (§4), skipped for any value `install.env` already holds.
+3. **Settings** (§4): read from the environment, `--config` and `install.env`;
+   what is still missing is asked. Before anything is changed, the settings
+   are printed - the password and the secrets masked - for a last yes, then
+   saved.
 4. **Host memory**: swap and earlyoom (§7).
 5. **Swarm.**
-   - Not in a swarm: `docker swarm init`. On a host with more than one address
-     it passes `--advertise-addr` with the address of the default route, which
-     is what `docker swarm init` refuses to guess.
-   - In a swarm as a worker: stops - HivePaaS runs on a manager.
+   - Not in a swarm: `docker swarm init --advertise-addr` with the address of
+     the default route, which `docker swarm init` refuses to guess on a host
+     with more than one.
+   - In a swarm as a worker, or a swarm not active (locked, pending): stops -
+     HivePaaS runs on a manager.
    - Labels the node `hivepaas.role=control-plane`.
    - Creates the overlay network `hivepaas_net` if it is missing, with the
-     subnet dev uses, `10.11.0.0/16`; when that overlaps a network the host
-     has, it lets Docker pick one and says so. Nothing in the app depends on
-     the subnet.
+     subnet dev uses, `10.11.0.0/16`; when a route of the host reaches into
+     that subnet, or Docker refuses it, it lets Docker pick one and says so.
+     Nothing in the app depends on the subnet.
 6. **Files.**
    - Creates the app data directory, the project data directory, and
      `ssl/certs`, `traefik/etc/dynamic` and `traefik/var/log` under app data.
    - Writes the self-signed certificate the app would otherwise make on first
-     boot (`ssl/certs/self-signed.crt|key`): common name the root domain,
-     alternative names the root domain, `*.<root domain>` and the app domain.
-     The app adopts files it finds there, and Traefik has a certificate from
-     its first second rather than its own default one.
-   - Downloads the stack and `dynamic_conf.yml`.
-7. **Deploy.**
+     boot (`ssl/certs/self-signed.crt|key`), unless both are there: EC P-256,
+     365 days, common name the root domain, alternative names the root domain,
+     `*.<root domain>` and the app domain. The app adopts files it finds there,
+     and Traefik has a certificate from its first second rather than its own
+     default one.
+   - Downloads the stack files into `/etc/hivepaas/`, and `dynamic_conf.yml`
+     into Traefik's directory only when it is not there: the app writes that
+     directory from its first boot on.
+7. **Deploy** (a first install; §11 for a second run).
    - Reads `<app data>/system/update/db-volume.env` when an earlier database
-     upgrade left one, as `local/install.sh` does.
-   - Exports the saved values and runs `docker stack deploy -c hivepaas.yaml
-     hivepaas --with-registry-auth`.
-   - Sets `--oom-score-adj -500` on the system services, as dev does.
-8. **Wait** for the dashboard: polls
-   `https://<app domain>/_/ping`, resolved to 127.0.0.1, for up to 5 minutes.
-   A timeout is reported with the commands to look at (`docker service ps
-   hivepaas_app`, `docker service logs hivepaas_app`), and the script exits 1.
+     upgrade left one, as `local/install.sh` does, but as data: the two keys it
+     knows, checked.
+   - Exports the settings and runs `docker stack deploy -c hivepaas.yaml -c
+     hivepaas.first-boot.yaml hivepaas --with-registry-auth --detach=true`.
+   - Migrates the database: the app does not migrate on boot, and the updater
+     only on an update. `sql-migrate up` runs in a container of the app image on
+     the stack's network, retried until the database takes connections, while
+     the app restarts until its tables exist.
+8. **Wait** for the dashboard: polls `https://<app domain>/_/ping`, resolved to
+   127.0.0.1, for up to 5 minutes. Then, one service at a time:
+   - `--oom-score-adj -500` on each system service, as dev does - `docker stack
+     deploy` drops `oom_score_adj`;
+   - the admin's account out of the app's and the worker's environment (§6).
+   The database goes first and the app last, each waited for: an app started
+   while the database restarts cannot connect, exits, and has swarm roll its
+   update back. An update swarm rolled back stops the install. A timeout is
+   reported with the commands to look at (`docker service ps hivepaas_app`,
+   `docker service logs hivepaas_app`), and the script exits 1.
 9. **Finish.**
-   - Removes the admin password (§6).
+   - Removes the admin password from `install.env` and marks it installed.
    - Prints the logo, the addresses (§5), and the reminders:
      - the certificate is self-signed until one is obtained in the setup, so
        the browser warns and the warning has to be passed once;
@@ -107,50 +130,70 @@ when stdout is a terminal and `NO_COLOR` is unset.
      - `/etc/hivepaas/install.env` holds the app secret: back it up somewhere
        that is not this server.
 
+An unexpected failure prints the line it happened on, and that running the
+installer again picks up where it stopped.
+
 ## 3. Docker
 
 - **Missing:** asks to install. Yes installs:
-  - Debian, Ubuntu, Raspbian, CentOS, Fedora, RHEL: `get.docker.com`;
-  - Rocky, Alma, Oracle: Docker's CentOS repository with dnf;
+  - Debian, Ubuntu, Raspbian, CentOS, Fedora, RHEL, Rocky: `get.docker.com`;
+  - other derivatives of Ubuntu or Debian (Mint, Pop, Kali...): Docker's apt
+    repository, for `UBUNTU_CODENAME`, or `DEBIAN_CODENAME`/`VERSION_CODENAME`;
+  - AlmaLinux, Oracle Linux and other RHEL rebuilds: Docker's RHEL repository
+    with dnf;
   - Amazon Linux, SLES/openSUSE, Arch, Alpine: the distribution's package.
-  Then enables and starts the service.
+  Then enables and starts the service (systemd, or OpenRC on Alpine).
 - **Older than 29.5 or API older than 1.54:** asks to upgrade, the same way.
   No stops: HivePaaS cannot run on it.
 - **At least 29.5 but older than the latest release:** asks, defaulting to
-  no. The latest version is read from GitHub's releases of `moby/moby`; when
-  that fails the question is skipped.
+  no. The latest version is the newest in the index of Docker's static builds
+  for the architecture (`download.docker.com/linux/static/stable/<arch>/`);
+  when that cannot be read the question is skipped.
 - **After installing or upgrading**, the version is checked again. A
   distribution package still below 29.5 (Amazon Linux, SLES, Alpine can lag)
   stops the install with where to get a newer Docker.
 - `--yes` answers yes to the first two and no to the third, unless
-  `HIVEPAAS_UPGRADE_DOCKER=true`.
+  `HIVEPAAS_UPGRADE_DOCKER=true`. With no terminal and no `--yes`, the first
+  two stop the install, and the third is no.
 
-## 4. Questions
+## 4. Settings
 
 Prompts read from `/dev/tty`, not stdin, since `curl | bash` makes stdin the
 script. Without a terminal and with a value missing, the installer stops and
-lists the variables to set.
+lists the variables to set. A value given in the environment or `--config`
+that fails its check stops the install, naming the variable and not printing
+the value; a typed one that fails is asked again.
 
 | question | variable | default / check |
 |---|---|---|
 | Admin email | `HIVEPAAS_ADMIN_EMAIL` | an address |
 | Admin password | `HIVEPAAS_ADMIN_PASSWORD` | at least 10 characters, typed twice, not echoed |
-| App domain | `HIVEPAAS_APP_DOMAIN` | a hostname with at least two labels, e.g. `hivepaas.dev.mydomain.com` |
-| Root domain | `HIVEPAAS_ROOT_DOMAIN` | derived and shown for Enter to accept (below) |
-| App secret | `HIVEPAAS_APP_SECRET` | Enter generates 64 hex characters; given, at least 32 characters |
-| App data directory | `HIVEPAAS_DATA_DIR` | `/var/lib/hivepaas`; an absolute path, not `/` |
-| Project data directory | `HIVEPAAS_PROJECT_DATA_DIR` | Enter: `<app data>/project_data`; an absolute path, not `/` |
+| App domain | `HIVEPAAS_APP_DOMAIN` | a hostname with at least two labels, e.g. `hivepaas.dev.mydomain.com`; saved lowercased |
+| Root domain | `HIVEPAAS_ROOT_DOMAIN` | derived and shown for Enter to accept (below); the app domain or a domain it is under |
+| App secret | `HIVEPAAS_APP_SECRET` | Enter generates 64 hex characters; given, at least 32 characters, no spaces |
+| App data directory | `HIVEPAAS_DATA_DIR` | `/var/lib/hivepaas` |
+| Project data directory | `HIVEPAAS_PROJECT_DATA_DIR` | Enter: `<app data>/project_data`; not the app data directory or one above it |
 
-- **The admin username** is `admin`, not asked.
+- **The admin username** is `admin`, not asked. The admin is not asked for
+  once installed.
 - **The root domain** is the app domain's last two labels, or last three when
   the last two are a known two-level suffix (`co.uk`, `com.vn`, `com.au`,
   `co.jp`, `com.br`, `co.nz`, `co.za`, `com.sg`, `net.vn`, `org.uk`, and the
   like - a short list in the script). It is shown for the person to accept or
   correct, because no list is complete.
+- **A data directory** is an absolute path of letters, digits, `.`, `_` and
+  `-`, which Docker can bind as written, and not `/`, a system directory
+  (`/etc`, `/usr`, `/proc`, `/run`, `/tmp`, `/var/lib/docker`...) or `/var`,
+  `/home`, `/root` themselves. Repeated and trailing slashes are dropped.
 - **Generated, not asked:** `HIVEPAAS_JWT_SECRET` (32 alphanumeric characters),
-  the database password, the Redis password and the agent token.
-- **Confirmation.** Before anything is changed, the answers are printed - the
-  password and the secrets masked - for a last yes.
+  the database password, the Redis password and the agent token (32 each).
+- **Precedence:** the environment, then `--config`, then `install.env`. A
+  setting that names where data is or opens it - the channel, the domains,
+  the secrets, the directories - cannot change once saved: given with another
+  value, it stops the install.
+- **A lost `install.env`:** with no `install.env` but a HivePaaS service or
+  database volume on the server, the installer stops and asks for the file
+  back rather than generate new secrets the database would not take.
 
 ## 5. The stack
 
@@ -161,19 +204,25 @@ lists the variables to set.
   the release info has one, otherwise the app image's repository with `-agent`
   inserted after `hivepaas/hivepaas` and the same tag
   (`hivepaas/hivepaas-dev:0.1.0` gives `hivepaas/hivepaas-agent-dev:0.1.0`), which
-  is how the images are built. `HIVEPAAS_AGENT_IMAGE` overrides both.
-- **Postgres major** for `PGDATA` is read from the `dbImage` tag.
+  is how the images are built. `HIVEPAAS_AGENT_IMAGE` overrides both. A running
+  service keeps its image; each service has a variable of its own.
+- **Postgres major** for `PGDATA` is read from the `dbImage` tag, unless
+  `db-volume.env` names it.
 - **Paths** are the saved directories, never `${PWD}`:
   - app data at `/var/lib/hivepaas` and at `/host<app data>` in app, worker and
     updater, as dev binds `${PWD}/hivepaas`;
-  - project data also at `/host<project data>`;
+  - project data also at `/host<project data>` in app and worker;
   - Traefik's `etc`, `var/log` and `ssl/certs` under app data.
-- **Configuration** by environment: `HP_ENV` and `HP_CONFIG_FILE` from the
-  channel; `HP_ROOT_DOMAIN`, `HP_APP_DOMAIN`, `HP_APP_SECRET`,
-  `HP_SESSION_JWT_SECRET`, `HP_STORAGE_HOST_DIR`,
-  `HP_STORAGE_PROJECT_DATA_HOST_DIR`, `HP_DB_*` with `HP_DB_SSL_MODE=disable`
-  (the database is on the stack's own overlay), `HP_CACHE_URL` with the Redis
-  password, `HP_AGENT_SECRET_TOKEN`, and the admin's `HP_USER_ADMIN_*`.
+- **Configuration** by environment, the same for app, worker, updater and
+  agent - each loads the configuration and reaches the database and the
+  cache: `HP_ENV` and `HP_CONFIG_FILE` from the channel; `HP_ROOT_DOMAIN`,
+  `HP_APP_DOMAIN`, `HP_APP_SECRET`, `HP_SESSION_JWT_SECRET`,
+  `HP_STORAGE_HOST_DIR`, `HP_STORAGE_PROJECT_DATA_HOST_DIR`, `HP_DB_*` with
+  `HP_DB_SSL_MODE=disable` (the database is on the stack's own overlay),
+  `HP_CACHE_URL` with the Redis password, `HP_AGENT_SECRET_TOKEN`, and
+  `HP_HTTP_SERVER_CORS_ALLOW_ORIGINS=["*"]`, as dev: the app does not start
+  without an origin list, the dashboard is served by the app itself at the
+  domain and at the addresses, and its session cookies are `SameSite=Lax`.
 - **Redis** is started with `--requirepass`.
 - **Traefik**: no `--api.insecure`, no dashboard port, log level `INFO`.
 - **No adminer.**
@@ -182,41 +231,49 @@ lists the variables to set.
     challenge router;
   - by address: `Host(<ip>)` for each IPv4 address the installer found - the
     public one (from `https://ifconfig.io`, skipped on failure) and the host's
-    own - on `websecure` with TLS, and on `web` redirecting to HTTPS.
-  The address routers and their service are named `x-custom-...`, the marker
-  Traefik's label rewrite keeps (`updateSwarmServiceLabels`), so saving the
-  app's routing settings later does not remove them. An address that changes
-  needs the installer to run again.
+    own on the default route - on `websecure` with TLS, and on `web`
+    redirecting to HTTPS. With no address found, the rule is
+    ``Host(`127.0.0.1`)``, so the router still has one.
+  The address routers, the ACME router and the service they share are named
+  `x-custom-...`, the marker Traefik's label rewrite keeps
+  (`updateSwarmServiceLabels`), so saving the app's routing settings later
+  does not remove them. Each names its service: with two services on the app,
+  Traefik would not pick one for a router that leaves it out.
 
 ## 6. The admin password
 
 The app reads `HP_USER_ADMIN_*` once, on the first boot, when it creates the
-admin (`sysInstallationInitData`); afterwards it never looks at them. Kept, the
-password would sit in the service definition, readable with `docker service
-inspect`, for good.
+admin (`sysInstallationInitData`, in the app or the worker, whichever starts
+first); afterwards it never looks at them. Kept, the password would sit in the
+service definition, readable with `docker service inspect`, for good.
 
-So once the dashboard answers:
-- the password is removed from `install.env`;
-- `docker service update --env-rm HP_USER_ADMIN_PASSWORD` runs on app and
-  worker, and the installer waits for the dashboard again. That restarts the app
-  once, before its address is printed.
+So the account is in `hivepaas.first-boot.yaml`, deployed with the stack on the
+first install only, and once the dashboard answers:
+- `docker service update --env-rm HP_USER_ADMIN_USERNAME/EMAIL/PASSWORD` runs
+  on app and worker (with the OOM priority, in one update), and the installer
+  waits for the app's new task and for the dashboard again. That restarts the
+  app once, before its address is printed;
+- the password is removed from `install.env`, which records
+  `HIVEPAAS_INSTALLED=true`.
 
-The stack writes `HP_USER_ADMIN_PASSWORD: ${HIVEPAAS_ADMIN_PASSWORD:-}`, so a
-later run, which no longer has it, deploys it empty.
+A later deploy leaves `hivepaas.first-boot.yaml` out, so it does not bring the
+account back.
 
 ## 7. Host memory
 
 What `deployment/dev/host-memory.sh` does, folded into the installer, with its
 failures made warnings:
 
-- **Swap:** when the host has none and the disk has room, a
-  `HIVEPAAS_SWAP_SIZE_MB` file (2048) at `/swapfile`, in `/etc/fstab`;
-  `vm.swappiness = 10`. `HIVEPAAS_SWAP=false` skips it.
+- **Swap:** when the host has none, `/swapfile` does not exist and the disk
+  has room, a `HIVEPAAS_SWAP_SIZE_MB` file (2048) at `/swapfile`, in
+  `/etc/fstab`; `vm.swappiness = 10`. `HIVEPAAS_SWAP=false` skips both.
 - **earlyoom:** installed from the distribution where it is packaged - apt,
   dnf (Fedora; RHEL-family only with EPEL, which the installer does not add),
-  zypper, pacman, apk - with dev's arguments and avoid list; its config file
-  is `/etc/default/earlyoom`, or `/etc/conf.d/earlyoom` on Alpine. Elsewhere it
-  is skipped with a note. `HIVEPAAS_EARLYOOM=false` skips it.
+  zypper, pacman, apk (with `earlyoom-openrc`) - with dev's arguments and avoid
+  list. Its configuration is `EARLYOOM_ARGS` in `/etc/default/earlyoom` (apt,
+  dnf, pacman) or `/etc/sysconfig/earlyoom` (zypper), and OpenRC's variables in
+  `/etc/conf.d/earlyoom` on Alpine. Where it is not packaged it is skipped with
+  a note. `HIVEPAAS_EARLYOOM=false` skips it.
 
 earlyoom is Linux-only, as is everything this installer targets. It is worth
 installing: without it, a host out of memory stalls for a long time before the
@@ -226,7 +283,8 @@ kernel's own OOM killer acts, and every HivePaaS healthcheck fails meanwhile.
 
 - Read from `https://raw.githubusercontent.com/hivepaas/hivepaas/<branch>/release.signed.json`,
   `<branch>` being `release`, the branch a non-dev app reads, overridable with
-  `HIVEPAAS_RELEASE_BRANCH` (`main` until `release` exists).
+  `HIVEPAAS_RELEASE_BRANCH` (`main` until `release` exists). The error when it
+  cannot be read names the variable.
 - The payload is decoded and its `sha256` checked; a mismatch stops.
 - **The signatures are not checked.** The installer, the stack and the release
   info come from the same repository over the same connection; a key embedded
@@ -234,6 +292,9 @@ kernel's own OOM killer acts, and every HivePaaS healthcheck fails meanwhile.
   which keeps its keys in its own binary, checks them as it does now.
 - A channel missing from the release info stops the install, naming the
   channels there are.
+- It is read for a first install and for a redeploy, before the settings are
+  confirmed, so that a wrong branch stops the install before it changes
+  anything.
 
 ## 9. Silent install
 
@@ -244,20 +305,54 @@ sudo bash install.sh --config ./hivepaas.conf --yes
 ```
 
 A config file is `KEY=VALUE` lines of the variables above, read without being
-executed. Command-line environment wins over the file, the file over
-`install.env`. `--help` lists every variable.
+executed: `#` comments, blank lines, `export ` and single or double quotes are
+allowed, CRLF line ends are taken, and a name that is not `HIVEPAAS_...` is
+ignored with a warning. Command-line environment wins over the file, the file
+over `install.env`. `--help` lists every variable.
+
+For tests only: `HIVEPAAS_INSTALL_LIB=1` defines the functions and stops;
+`HIVEPAAS_INSTALL_FILES_DIR` copies the stack files from a directory;
+`HIVEPAAS_RELEASE_URL` reads the release info from a URL (`file://` works);
+`HIVEPAAS_INSTALL_ENV_FILE` moves `install.env`; `HIVEPAAS_TTY` reads answers
+from a file; `HIVEPAAS_WAIT_SECONDS` changes the 300-second waits.
 
 ## 10. Testing
 
-- `shellcheck` on `install.sh`, clean.
-- The pure functions - the root domain, the email and password checks, the
-  agent image, the Postgres major, reading a config file - sourced by
-  `deployment/release/install_test.sh` (`HIVEPAAS_INSTALL_LIB=1` makes the
-  script define its functions and return), run by `make test-installer`.
-- `docker stack config -c hivepaas.yaml` with a sample `install.env`: the stack
-  renders.
+- `shellcheck` on `install.sh` and the test scripts, clean.
+- The pure functions - the checks, the root domain, the settings files, the
+  release info, the images, the addresses, the distribution helpers - and the
+  questions (answered through `HIVEPAAS_TTY`) in
+  `deployment/release/install_test.sh`, under macOS's bash 3.2 as under bash
+  5, run by `make test-installer`.
+- `docker stack config -c hivepaas.yaml [-c hivepaas.first-boot.yaml]` with
+  sample values: the stack renders; every `${VAR}` it uses is one the installer
+  exports.
+- `make test-installer-e2e` (`install_e2e.sh`): in a docker:dind container, a
+  silent install with this checkout's release info; the dashboard by domain
+  and by address, HTTP redirected to HTTPS, the admin signing in, the admin's
+  account gone from the services and `install.env`, OOM priorities, file
+  modes; a second run that changes no service; another app secret stopping; a
+  lost `install.env` stopping; the address route following a change; and
+  `--redeploy`. On a machine that is not amd64 the HivePaaS images run
+  emulated and the stack is deployed without resolving images.
 - On a fresh Linux server, by the user: an interactive install, a silent one,
   a second run, and the dashboard reached by domain and by IP.
+
+## 11. Running it again
+
+- **Installed** (`HIVEPAAS_INSTALLED=true`): nothing is asked. The host is
+  checked again (Docker, memory, swarm, files), the routes by address follow
+  an address that changed - a label update, which restarts nothing, and left
+  alone when the public address cannot be looked up - and the system services
+  get their OOM priority back if something reset it. The stack is not
+  redeployed: HivePaaS changes its own services at runtime (Traefik's
+  arguments, the worker and updater replicas, routing labels), and a deploy
+  would put them back as the stack file has them.
+- **`--redeploy`** deploys the stack again, after a warning saying so; the
+  running images stay. The deploy restarts the database with the app, and an
+  app update swarm rolls back meanwhile is deployed once more.
+- **Unfinished** (the stack deployed, not marked installed): the migrations
+  run, then the wait and the finish, without a new deploy.
 
 ## Not in this design
 
@@ -266,3 +361,6 @@ executed. Command-line environment wins over the file, the file over
 - **The updater updating the agent.** `sysupdateservice`'s plan has no agent
   step today, so the agent stays on the image the installer deployed.
 - **Joining more nodes, uninstalling, IPv6 addresses in the IP routers.**
+- **The app's own fixes this work found:** an empty CORS origin list makes it
+  panic at boot, and it exits when the database is not reachable at boot
+  instead of retrying. The installer works around both (§5, §2 step 8).

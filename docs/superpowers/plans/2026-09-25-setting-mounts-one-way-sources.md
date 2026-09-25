@@ -271,7 +271,7 @@ In `provision_apps_test.go`, the cleanup test asserts `mounts.removed` contains 
 - [ ] **Step 3: Remove, and route through the engine.** Delete the fields and types in the entities first; `go build ./...` then lists every use. Deal with each:
   - **The secret use cases.** Delete the `IsAppScope`/`App != nil` Docker blocks and the re-persist. In `secretuc/update.go`, keep the env var rebuild (`secretValueChanged`).
   - **Sources that change.** Settings written through the use cases already record a refresh through their events (engine plan 1). When a secret or config file that an entry mounts changes, the refresh task updates the file.
-  - **`clustersecretservice`'s remaining users.** Registry `apply.go` and `systemappservice/secrets.go` are Task 4. For this task, replace their calls with a `TODO`-free minimum that compiles: persist the setting without the Docker call, and note in the ledger that Task 4 adds the refresh. If that leaves the package unused, delete it.
+  - **`clustersecretservice`'s remaining users.** Registry `apply.go` and `systemappservice/secrets.go` are Task 4. For this task, replace their calls with the smallest change that compiles: persist the setting without the Docker call, and note in the ledger that Task 4 adds the refresh. If that leaves the package unused, delete it.
   - **Tests** that asserted `swarmRef` in `buildable_test.go`, `build_test.go` and `import_write_apps_test.go` change with Task 3's shorthand. For this task, make `swarmRef` on a secret or config file in a template build to a setting without it, and let Task 3 add the entry. Keep the buildable check accepting `swarmRef`.
   - **Rows** with a `swarmRef` key parse without error: `encoding/json` ignores unknown fields, and the setting parser uses it. Check this with a test in `entity/setting_secret_test.go`:
 
@@ -310,16 +310,17 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
 - Modify: `hivepaas_app/service/specservice/specmodel/buildable.go`: `checkSecrets` and `checkConfigFiles` accept `inheritable` (a bool); `checkSwarmRef` stays.
 - Modify: `hivepaas_app/service/specservice/specserviceimpl/build_settings.go`: `buildSecrets` and `buildConfigFiles` read `swarmRef` and `inheritable` and make the entry.
 - Modify: `hivepaas_app/service/specservice/specserviceimpl/build.go`: `addNamedSetting` returns the setting it adds.
-- Create: `hivepaas_app/service/specservice/specserviceimpl/build_mounts.go` (`templateEntryKey`, `addTemplateMount`)
+- Create: `hivepaas_app/service/specservice/specserviceimpl/build_mounts.go` (`addTemplateMount`)
+- Modify: `hivepaas_app/service/settingmountservice/names.go` (`EntryKeyFor`), test `names_test.go`
 - Test: `build_test.go`, `specmodel/buildable_test.go`
 
 **Interfaces:**
 - Produces:
-  - `templateEntryKey(name string) string`;
+  - `settingmountservice.EntryKeyFor(name string) string`, which Task 4 uses too;
   - `(state *buildState) addNamedSetting(...) (*entity.Setting, error)`;
   - `(state *buildState) addTemplateMount(key string, source *entity.Setting, part string, file map[string]any, inheritable bool) error`.
 
-- [ ] **Step 1: Write the failing tests.** In `build_test.go`, add the two tests below. Find a template-build helper there (`grep -n "^func build\|^func buildDoc\|BuildApp(" hivepaas_app/service/specservice/specserviceimpl/build_test.go`) and use it.
+- [ ] **Step 1: Write the failing tests.** In `settingmountservice/names_test.go`:
 
 ```go
 func TestEntryKeyOfATemplateSetting(t *testing.T) {
@@ -327,9 +328,15 @@ func TestEntryKeyOfATemplateSetting(t *testing.T) {
 		"DB_PASSWORD": "db-password", "config.json": "config-json", "mosquitto-conf": "mosquitto-conf",
 		"__A__": "a", strings.Repeat("x", 30): strings.Repeat("x", 20),
 	} {
-		assert.Equal(t, want, templateEntryKey(name), name)
+		assert.Equal(t, want, EntryKeyFor(name), name)
+		assert.True(t, ValidEntryKey(EntryKeyFor(name)), name)
 	}
 }
+```
+
+In `build_test.go`, add the two tests below. Find a template-build helper there (`grep -n "^func build\|^func buildDoc\|BuildApp(" hivepaas_app/service/specservice/specserviceimpl/build_test.go`) and use it.
+
+```go
 
 // A template's swarmRef is shorthand for a setting mount: the setting is built
 // without it, and an entry mounts it.
@@ -390,36 +397,21 @@ package specserviceimpl
 
 import (
 	"fmt"
-	"regexp"
-	"strings"
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/fileutil"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/settingmountservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/specservice/specmodel"
 )
-
-const entryKeyMaxLen = 20
-
-var notEntryKeyChars = regexp.MustCompile(`[^a-z0-9]+`)
-
-// templateEntryKey is the key of the entry a template's swarmRef becomes: the
-// setting's key, lowercased, anything else made a hyphen.
-func templateEntryKey(name string) string {
-	key := strings.Trim(notEntryKeyChars.ReplaceAllString(strings.ToLower(name), "-"), "-")
-	if len(key) > entryKeyMaxLen {
-		key = strings.Trim(key[:entryKeyMaxLen], "-")
-	}
-	return key
-}
 
 // addTemplateMount makes the entry a template's swarmRef stands for: one file,
 // of source's part, where the template put it.
 func (state *buildState) addTemplateMount(
 	block specmodel.Block, name string, source *entity.Setting, part string, file map[string]any, inheritable bool,
 ) error {
-	key := templateEntryKey(name)
+	key := settingmountservice.EntryKeyFor(name)
 	for _, existing := range state.settings {
 		if existing.Type == base.SettingTypeAppSettingMount && existing.Name == key {
 			return invalidBlock(block, "%s: its mount would be called %q, as another's is", name, key)
@@ -452,7 +444,24 @@ func gofnOr(value, or any) any {
 }
 ```
 
-Fold `gofnOr` into two plain `if` statements if lint prefers. `invalidBlock` returns an error already wrapped; check its signature and adapt the call.
+In `settingmountservice/names.go`:
+
+```go
+var notEntryKeyChars = regexp.MustCompile(`[^a-z0-9]+`)
+
+// EntryKeyFor is the entry key a setting's name makes, for entries HivePaaS
+// makes itself - a template's swarmRef, a system app's secret: lowercased,
+// anything else a hyphen, at most 20 characters.
+func EntryKeyFor(name string) string {
+	key := strings.Trim(notEntryKeyChars.ReplaceAllString(strings.ToLower(name), "-"), "-")
+	if len(key) > entryKeyMaxLen {
+		key = strings.Trim(key[:entryKeyMaxLen], "-")
+	}
+	return key
+}
+```
+
+with `entryKeyMaxLen = 20` beside `maxNameLen`. Fold `gofnOr` into two plain `if` statements if lint prefers. `invalidBlock` returns an error already wrapped; check its signature and adapt the call.
 
 In `build.go`, `addNamedSetting` returns `(*entity.Setting, error)`, and `addSetting` discards the setting. In `build_settings.go`, `buildSecrets`, before decoding:
 
@@ -487,7 +496,8 @@ In `buildable.go`, add `case "inheritable":` to both `checkSecrets` and `checkCo
 - [ ] **Step 5: Commit**
 
 ```bash
-git add hivepaas_app/service/specservice/
+git add hivepaas_app/service/specservice/ hivepaas_app/service/settingmountservice/names.go \
+  hivepaas_app/service/settingmountservice/names_test.go
 git commit -m "feat(templates): a template's swarmRef is shorthand for a setting mount, and settings may be inheritable
 
 Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
@@ -501,7 +511,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
 - Check: `hivepaas_app/service/loggingservice/loggingserviceimpl/appdoc.go`. It builds its app through the builder with `swarmRef`, which Task 3's shorthand serves; `appdoc_test.go` should need no change.
 
 **Interfaces:**
-- Consumes: `settingmountservice.Service.Refresh`; `templateEntryKey`'s rule (repeat it here, or export it from `settingmountservice` as `EntryKeyFor(name string) string`, and use it in both places).
+- Consumes: `settingmountservice.Service.Refresh`, `settingmountservice.EntryKeyFor` (Task 3).
 
 - [ ] **Step 1: Write the failing tests.**
   - **Registry.** In `registryserviceimpl/apply_test.go`, give the fixture a fake `settingmountservice.Service` recording `Refresh`. A change of the config or the htpasswd asserts `refreshed == []string{registryApp.ID}`; an unchanged one asserts none. Read the test's fixture first (`grep -n "clusterSecretService\|func new" .../apply_test.go`).

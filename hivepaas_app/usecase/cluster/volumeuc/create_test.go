@@ -5,6 +5,13 @@ import (
 	"go/parser"
 	"go/token"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
+
+	"github.com/hivepaas/hivepaas/hivepaas_app/base"
+	"github.com/hivepaas/hivepaas/hivepaas_app/config"
+	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 )
 
 // CreateVolume must never assign to req.Name. The settings framework checks
@@ -140,4 +147,31 @@ func selectorPath(expr ast.Expr) string {
 	default:
 		return ""
 	}
+}
+
+func TestDefaultBindDirectory(t *testing.T) {
+	app := &entity.App{Key: "web", Project: &entity.Project{Key: "shop"}, ProjectEnv: &entity.ProjectEnv{Key: "dev"}}
+	scopes := map[string]*entity.ObjectScope{
+		"project": {ScopeType: base.ObjectScopeProject, Project: app.Project},
+		"env": {ScopeType: base.ObjectScopeProjectEnv,
+			ProjectEnv: &entity.ProjectEnv{Key: "dev", Project: app.Project}},
+		"app": {ScopeType: base.ObjectScopeApp, App: app},
+	}
+	want := map[string]string{"project": "shop", "env": "shop/dev", "app": "shop/dev/web"}
+
+	for name, scope := range scopes {
+		dir, subpath, err := defaultBindDirectory(config.Storage{HostDir: "/srv/hivepaas"}, scope)
+		assert.NoError(t, err)
+		assert.Equal(t, "/srv/hivepaas", dir, "the default is made under the storage root: %s", name)
+		assert.Equal(t, "project_data/"+want[name], subpath, name)
+
+		dir, subpath, err = defaultBindDirectory(
+			config.Storage{HostDir: "/srv/hivepaas", ProjectDataHostDir: "/data/projects"}, scope)
+		assert.NoError(t, err)
+		assert.Equal(t, "/data/projects", dir, "a directory of the operator's own is used as it is: %s", name)
+		assert.Equal(t, want[name], subpath, name)
+	}
+
+	_, _, err := defaultBindDirectory(config.Storage{}, scopes["project"])
+	assert.ErrorIs(t, err, hperrors.ErrUnconfigured)
 }

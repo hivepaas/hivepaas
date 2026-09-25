@@ -11,7 +11,7 @@ set -euo pipefail
 cd "$(dirname "$0")/../.."
 
 LOCAL_CONFIG="config/config.local.toml"
-# Absolute, because HP_STORAGE_BIND_SOURCE is handed to docker as the source of a
+# Absolute, because HP_STORAGE_HOST_DIR is handed to docker as the source of a
 # bind mount and the daemon resolves it on the host, not against this process's
 # working directory. In the stack the two are deliberately different - the
 # container sees its data at /var/lib/hivepaas while docker binds it from the host
@@ -23,7 +23,7 @@ app)
   mkdir -p "$LOCAL_APP_PATH"
   HP_CONFIG_FILE="$LOCAL_CONFIG" \
     HP_APP_PATH="$LOCAL_APP_PATH" \
-    HP_STORAGE_BIND_SOURCE="$LOCAL_APP_PATH" \
+    HP_STORAGE_HOST_DIR="$LOCAL_APP_PATH" \
     exec go run ./hivepaas_app/cmd/app/...
   ;;
 agent)

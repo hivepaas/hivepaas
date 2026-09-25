@@ -73,7 +73,8 @@ func (s *service) RemoveVolumeInCluster(
 // every byte where it was - so the directory is deleted here.
 //
 // Only a directory HivePaaS chose is deleted, which means one under the
-// configured storage root. A directory the operator pointed at is theirs: it can
+// configured storage root or under the project data directory, which can be a
+// directory of its own. A directory the operator pointed at is theirs: it can
 // be a mount point, or hold things HivePaaS never put there, and the apps' own
 // directories inside it have already gone with the apps.
 func volumeStorageTarget(vol *entity.ClusterVolume) (storageTarget, bool) {
@@ -82,13 +83,9 @@ func volumeStorageTarget(vol *entity.ClusterVolume) (storageTarget, bool) {
 		return storageTarget{}, false
 	}
 
-	root := config.Current().Storage.BindSource
-	if root == "" {
-		return storageTarget{}, false
-	}
-	root = filepath.Clean(root)
+	storage := config.Current().Storage
 	dir = filepath.Clean(dir)
-	if root == "/" || root == "." || !strings.HasPrefix(dir, root+"/") {
+	if !underAnyRoot(dir, storage.HostDir, storage.ProjectDataRoot()) {
 		return storageTarget{}, false
 	}
 
@@ -148,4 +145,19 @@ func (s *service) removeVolumeThroughAgent(
 		return hperrors.Wrap(err)
 	}
 	return nil
+}
+
+// underAnyRoot reports whether dir is strictly below one of the roots. An empty
+// root, "." or "/" claims nothing.
+func underAnyRoot(dir string, roots ...string) bool {
+	for _, root := range roots {
+		if root == "" {
+			continue
+		}
+		root = filepath.Clean(root)
+		if root != "/" && root != "." && strings.HasPrefix(dir, root+"/") {
+			return true
+		}
+	}
+	return false
 }

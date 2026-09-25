@@ -201,6 +201,9 @@ func loadConfig(configFile string) (*Config, error) {
 	if err := ensureAppSecret(config, appPath); err != nil {
 		return config, tracerr.Wrap(err)
 	}
+	if err := config.Storage.Validate(); err != nil {
+		return config, tracerr.Wrap(err)
+	}
 
 	lastConfigFile = configFile
 	return config, nil

@@ -11,6 +11,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
+	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/logging"
 	"github.com/hivepaas/hivepaas/hivepaas_app/repository"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/settingmountservice"
@@ -21,6 +22,10 @@ type Executor struct {
 	appRepo             repository.AppRepo
 	settingMountService settingmountservice.Service
 	logger              logging.Logger
+
+	// listPreviews is a seam: a test double of the repository cannot read bunex
+	// options.
+	listPreviews func(ctx context.Context, db database.IDB, app *entity.App) ([]*entity.App, error)
 }
 
 func NewExecutor(
@@ -30,6 +35,7 @@ func NewExecutor(
 	logger logging.Logger,
 ) *Executor {
 	e := &Executor{appRepo: appRepo, settingMountService: settingMountService, logger: logger}
+	e.listPreviews = e.listPreviewsFromRepo
 	taskQueue.RegisterExecutor(base.TaskTypeSettingMountRefresh, e.execute)
 	return e
 }
@@ -53,12 +59,16 @@ func (e *Executor) execute(ctx context.Context, db database.Tx, task *queue.Task
 			fail(output, appID, err)
 			continue
 		}
-		if err = e.settingMountService.Refresh(ctx, db, app); err != nil {
-			e.logger.Errorf("failed to refresh the setting mounts of app %s: %v", appID, err)
+		e.refresh(ctx, db, app, output)
+		// A preview mounts its parent's inheritable entries.
+		previews, err := e.listPreviews(ctx, db, app)
+		if err != nil {
 			fail(output, appID, err)
 			continue
 		}
-		output.Applied++
+		for _, preview := range previews {
+			e.refresh(ctx, db, preview, output)
+		}
 	}
 	task.Task.MustSetOutput(output)
 
@@ -76,4 +86,19 @@ func fail(out *entity.TaskSettingMountRefreshOutput, appID string, err error) {
 		out.Failed = map[string]string{}
 	}
 	out.Failed[appID] = err.Error()
+}
+
+func (e *Executor) refresh(ctx context.Context, db database.IDB, app *entity.App,
+	output *entity.TaskSettingMountRefreshOutput) {
+	if err := e.settingMountService.Refresh(ctx, db, app); err != nil {
+		e.logger.Errorf("failed to refresh the setting mounts of app %s: %v", app.ID, err)
+		fail(output, app.ID, err)
+		return
+	}
+	output.Applied++
+}
+
+func (e *Executor) listPreviewsFromRepo(ctx context.Context, db database.IDB, app *entity.App) ([]*entity.App, error) {
+	previews, _, err := e.appRepo.List(ctx, db, app.ProjectID, nil, bunex.SelectWhere("app.parent_id = ?", app.ID))
+	return previews, hperrors.Wrap(err)
 }

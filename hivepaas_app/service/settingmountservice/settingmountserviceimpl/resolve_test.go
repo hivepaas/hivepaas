@@ -62,7 +62,7 @@ func fixture(t *testing.T, entries []*entity.Setting, sources ...*entity.Setting
 	t.Helper()
 	useDataKey(t)
 	svc := &service{rotationKey: func() []byte { return []byte("k") }, removalRetryDelay: time.Millisecond}
-	svc.loadEntries = func(context.Context, database.IDB, string) ([]*entity.Setting, error) {
+	svc.loadEntries = func(context.Context, database.IDB, *entity.App) ([]*entity.Setting, error) {
 		return entries, nil
 	}
 	svc.loadSources = func(_ context.Context, _ database.IDB, _ *entity.App, ids []string) ([]*entity.Setting, error) {
@@ -183,4 +183,25 @@ func TestEntryStatesSayWhyNothingIsMounted(t *testing.T) {
 	assert.Equal(t, settingmountservice.ReasonSourceUnavailable, states[missing.ID].Reason)
 	assert.Equal(t, settingmountservice.ReasonSourceIncomplete, states[incomplete.ID].Reason)
 	assert.Equal(t, settingmountservice.ReasonPathsTaken, states[shadowed.ID].Reason)
+}
+
+// A preview's entries are its parent's inheritable ones; the files carry the
+// preview's own name.
+func TestAPreviewResolvesItsParentsInheritableEntries(t *testing.T) {
+	inherited := entry(t, "cert", base.SettingStatusActive, certFiles("cert_1"))
+	inherited.Inheritable = true
+	svc := fixture(t, []*entity.Setting{inherited}, certSource(t, "cert_1", "CERT", "KEY"))
+	var asked *entity.App
+	loadAll := svc.loadEntries
+	svc.loadEntries = func(ctx context.Context, db database.IDB, app *entity.App) ([]*entity.Setting, error) {
+		asked = app
+		return loadAll(ctx, db, app)
+	}
+	preview := &entity.App{ID: "app_preview", ParentID: testApp.ID, GlobalKey: "shop_prod_api-pr-7"}
+
+	files, err := svc.Resolve(context.Background(), nil, preview)
+
+	assert.NoError(t, err)
+	assert.Equal(t, preview, asked, "the preview is who asks: its parent's entries are the repository's to add")
+	assert.Len(t, files, 2)
 }

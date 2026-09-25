@@ -11,6 +11,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/settingmountservice"
 )
 
 const (
@@ -39,7 +40,13 @@ func (s *service) cloneAppSettings(
 		}
 	}
 
+	// Setting mounts name their sources by id; the copies of the app's own get
+	// new ones, so the entries are remapped once every setting is copied.
+	idMap := make(map[string]string, len(appSettings))
+	srcOwn := make(map[string]bool, len(appSettings))
+	var mounts []*entity.Setting
 	for _, setting := range appSettings {
+		srcOwn[setting.ID] = true
 		cpSetting, err := setting.Clone(true)
 		if err != nil {
 			return hperrors.Wrap(err)
@@ -52,10 +59,18 @@ func (s *service) cloneAppSettings(
 		if err != nil {
 			return hperrors.Wrap(err)
 		}
-		if st != nil {
-			data.ClonedSettings = append(data.ClonedSettings, st)
+		if st == nil {
+			continue
 		}
+		idMap[setting.ID] = st.ID
+		if st.Type == base.SettingTypeAppSettingMount {
+			mounts = append(mounts, st)
+			continue
+		}
+		data.ClonedSettings = append(data.ClonedSettings, st)
 	}
+	data.ClonedSettings = append(data.ClonedSettings,
+		remapClonedMounts(mounts, idMap, srcOwn, data.DropGatedMounts)...)
 
 	destApp.Settings = data.ClonedSettings
 
@@ -114,10 +129,9 @@ func (s *service) onCloneSettingDefault(
 	case base.SettingTypeSchedJob:
 		return gofn.If(settings.CloneSchedJobs, setting, nil), nil
 	case base.SettingTypeAppSettingMount:
-		// Not copied: handing a private key to the copy takes the Reveal Secrets
-		// permission, and nobody's session is here to ask it of. The copy
-		// resolves its own entries, of which it has none.
-		return nil, nil
+		// Copied when inheritable: whoever made it said a copy may have it.
+		// Its source is remapped once every setting is copied.
+		return gofn.If(setting.Inheritable, setting, nil), nil
 	default:
 		return nil, nil
 	}
@@ -170,4 +184,36 @@ func (s *service) onCloneRoutingSettingDefault(
 
 	setting.MustSetData(routingSettings)
 	return setting, nil
+}
+
+// remapClonedMounts is the entries a clone keeps: each pointed at the copy of
+// its source when the source was the app's own and was copied, dropped when it
+// was the app's own and was not, kept as it is when it came from outside the
+// app. With dropGated, an entry with a gated part is dropped: the person who
+// asked for the clone may not reveal it.
+func remapClonedMounts(
+	entries []*entity.Setting, idMap map[string]string, srcOwn map[string]bool, dropGated bool,
+) []*entity.Setting {
+	kept := make([]*entity.Setting, 0, len(entries))
+	for _, setting := range entries {
+		mount, err := setting.AsAppSettingMount()
+		if err != nil {
+			continue
+		}
+		if dropGated && len(settingmountservice.Grants(mount)) > 0 {
+			continue
+		}
+		if srcOwn[mount.Source.ID] {
+			copied, ok := idMap[mount.Source.ID]
+			if !ok {
+				continue
+			}
+			mount.Source.ID = copied
+			if err = setting.SetData(mount); err != nil {
+				continue
+			}
+		}
+		kept = append(kept, setting)
+	}
+	return kept
 }

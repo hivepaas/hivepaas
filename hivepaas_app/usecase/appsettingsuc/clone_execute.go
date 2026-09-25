@@ -2,7 +2,9 @@ package appsettingsuc
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
+	"strings"
 
 	"github.com/tiendc/gofn"
 
@@ -11,9 +13,11 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
+	"github.com/hivepaas/hivepaas/hivepaas_app/permission"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/projecthelper"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/transaction"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/settingmountservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/appsettingsuc/appsettingsdto"
 )
 
@@ -22,9 +26,25 @@ func (uc *UC) ExecuteAppClone(
 	auth *basedto.Auth,
 	req *appsettingsdto.ExecuteAppCloneReq,
 ) (*appsettingsdto.ExecuteAppCloneResp, error) {
+	// The gate goes first, outside the transaction: its answer is recorded
+	// whatever becomes of the clone. Disabled entries count: the clone copies
+	// them, and its owner may enable them.
+	entries, _, err := uc.settingRepo.List(ctx, uc.db, nil, nil,
+		bunex.SelectWhere("setting.type = ?", base.SettingTypeAppSettingMount),
+		bunex.SelectWhere("setting.object_id = ?", req.AppID),
+		bunex.SelectWhere("setting.inheritable = TRUE"),
+	)
+	if err != nil {
+		return nil, hperrors.Wrap(err)
+	}
+	dropGated, leftOut, err := uc.cloneMountsGate(ctx, auth, &entity.App{ID: req.AppID}, entries)
+	if err != nil {
+		return nil, hperrors.Wrap(err)
+	}
+
 	var data *executeAppCloneData
-	err := transaction.Execute(ctx, uc.db, func(db database.Tx) error {
-		data = &executeAppCloneData{}
+	err = transaction.Execute(ctx, uc.db, func(db database.Tx) error {
+		data = &executeAppCloneData{DropGatedMounts: dropGated}
 		err := uc.loadAppCloneSettingsForExecute(ctx, db, req, data)
 		if err != nil {
 			return hperrors.Wrap(err)
@@ -50,12 +70,20 @@ func (uc *UC) ExecuteAppClone(
 		}
 	}
 
-	return &appsettingsdto.ExecuteAppCloneResp{}, nil
+	resp := &appsettingsdto.ExecuteAppCloneResp{}
+	if len(leftOut) > 0 {
+		resp.Meta = &basedto.Meta{Warning: "The clone is made without these setting mounts, whose files " +
+			"you may not reveal: " + strings.Join(leftOut, ", ")}
+	}
+	return resp, nil
 }
 
 type executeAppCloneData struct {
 	App          *entity.App
 	AppCloneTask *entity.Task
+	// DropGatedMounts is the gate's answer: the clone leaves out setting mounts
+	// with a gated part.
+	DropGatedMounts bool
 }
 
 func (uc *UC) loadAppCloneSettingsForExecute(
@@ -101,11 +129,55 @@ func (uc *UC) loadAppCloneSettingsForExecute(
 	}
 
 	// Create a task for cloning the app
-	cloneTask, err := uc.appCloneService.CreateAppCloneTask(data.App)
+	cloneTask, err := uc.appCloneService.CreateAppCloneTask(data.App, data.DropGatedMounts)
 	if err != nil {
 		return hperrors.Wrap(err)
 	}
 	data.AppCloneTask = cloneTask
 
 	return nil
+}
+
+// cloneMountsGate passes §7's gate for the gated parts of the app's inheritable
+// entries, which a clone would copy: the person asking for the clone gets an app
+// that reads them. A denial is an answer, not an error - the clone goes on
+// without those entries, and says so.
+func (uc *UC) cloneMountsGate(
+	ctx context.Context, auth *basedto.Auth, app *entity.App, entries []*entity.Setting,
+) (drop bool, leftOut []string, err error) {
+	var grants []settingmountservice.Grant
+	for _, setting := range entries {
+		mount, parseErr := setting.AsAppSettingMount()
+		if parseErr != nil {
+			return false, nil, hperrors.Wrap(parseErr)
+		}
+		if g := settingmountservice.Grants(mount); len(g) > 0 {
+			grants = append(grants, g...)
+			leftOut = append(leftOut, setting.Name)
+		}
+	}
+	if len(grants) == 0 {
+		return false, nil, nil
+	}
+	detail, err := json.Marshal(map[string]any{"grants": grants})
+	if err != nil {
+		return false, nil, hperrors.Wrap(err)
+	}
+	err = uc.permissionManager.AuthorizeSecretReveal(ctx, uc.db, auth, &permission.RevealSubject{
+		Scope:    base.ObjectScopeApp,
+		ObjectID: app.ID,
+		Source:   base.AuditLogSourceAPIAction,
+		ResType:  base.ResourceTypeSettingMount,
+		ResID:    app.ID,
+		ResName:  "clone (setting mounts)",
+		Detail:   string(detail),
+	})
+	switch {
+	case err == nil:
+		return false, nil, nil
+	case errors.Is(err, hperrors.ErrRevealSecretsDisabled),
+		errors.Is(err, hperrors.ErrUserNotHavePermissionOnRevealSecrets):
+		return true, leftOut, nil
+	}
+	return false, nil, hperrors.Wrap(err)
 }

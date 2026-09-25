@@ -10,8 +10,11 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/ulid"
 )
 
+// CreateAppCloneTask is the task that clones app. dropGatedMounts leaves out its
+// setting mounts with a gated part: the requester may not reveal them.
 func (s *service) CreateAppCloneTask(
 	app *entity.App,
+	dropGatedMounts bool,
 ) (*entity.Task, error) {
 	timeNow := timeutil.NowUTC()
 	appCloneTask := &entity.Task{
@@ -30,7 +33,8 @@ func (s *service) CreateAppCloneTask(
 		UpdatedAt: timeNow,
 	}
 	err := appCloneTask.SetArgs(&entity.TaskAppCloneArgs{
-		SrcApp: entity.ObjectID{ID: app.ID},
+		SrcApp:          entity.ObjectID{ID: app.ID},
+		DropGatedMounts: dropGatedMounts,
 	})
 	if err != nil {
 		return nil, hperrors.Wrap(err)

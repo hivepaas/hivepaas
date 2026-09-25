@@ -46,7 +46,8 @@ func (f *fakeMounts) Refresh(_ context.Context, _ database.IDB, app *entity.App)
 // one deleted since is skipped.
 func TestTheTaskRefreshesEveryAppAndReportsThoseThatFailed(t *testing.T) {
 	mounts := &fakeMounts{}
-	e := &Executor{appRepo: fakeApps{}, settingMountService: mounts, logger: logging.GlobalLogger()}
+	e := &Executor{appRepo: fakeApps{}, settingMountService: mounts, logger: logging.GlobalLogger(),
+		listPreviews: noPreviews}
 	task := &entity.Task{Type: base.TaskTypeSettingMountRefresh}
 	assert.NoError(t, task.SetArgs(&entity.TaskSettingMountRefreshArgs{
 		AppIDs: []string{"app_1", "app_broken", "app_gone", "app_2"}}))
@@ -58,4 +59,28 @@ func TestTheTaskRefreshesEveryAppAndReportsThoseThatFailed(t *testing.T) {
 	out, _ := task.OutputAsSettingMountRefresh()
 	assert.Equal(t, 2, out.Applied)
 	assert.Contains(t, out.Failed, "app_broken")
+}
+
+func noPreviews(context.Context, database.IDB, *entity.App) ([]*entity.App, error) {
+	return nil, nil
+}
+
+// A preview mounts its parent's inheritable entries, so it is refreshed with it.
+func TestTheTaskRefreshesAnAppsPreviewsWithIt(t *testing.T) {
+	mounts := &fakeMounts{}
+	e := &Executor{appRepo: fakeApps{}, settingMountService: mounts, logger: logging.GlobalLogger()}
+	e.listPreviews = func(_ context.Context, _ database.IDB, app *entity.App) ([]*entity.App, error) {
+		if app.ID == "app_1" {
+			return []*entity.App{{ID: "app_1_preview", ParentID: "app_1"}}, nil
+		}
+		return nil, nil
+	}
+	task := &entity.Task{Type: base.TaskTypeSettingMountRefresh}
+	assert.NoError(t, task.SetArgs(&entity.TaskSettingMountRefreshArgs{AppIDs: []string{"app_1", "app_2"}}))
+
+	assert.NoError(t, e.execute(context.Background(), database.Tx{}, &queue.TaskExecData{Task: task}))
+
+	assert.Equal(t, []string{"app_1", "app_1_preview", "app_2"}, mounts.refreshed)
+	out, _ := task.OutputAsSettingMountRefresh()
+	assert.Equal(t, 3, out.Applied)
 }

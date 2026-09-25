@@ -148,8 +148,9 @@ Base §2's table gains two rows and a column:
      (§2).
    - The template shorthand and `inheritable` in templates (§3), and
      `systemappservice`.
-2. **Backend, inheritance.**
-   - `inheritable` on entries through the API.
+2. **Backend, inheritance** (built: `plans/2026-09-25-setting-mounts-one-way-inheritance.md`).
+   - `inheritable` on entries through the API. It needed no change: the
+     entry requests embed `CreateSettingReq`/`UpdateSettingReq`, which carry it.
    - Previews resolving their parent's, and the refresh reaching them.
    - Clones copying, with the gate at request.
 3. **Templates.** `inheritable: true` on the config files that mount files, in

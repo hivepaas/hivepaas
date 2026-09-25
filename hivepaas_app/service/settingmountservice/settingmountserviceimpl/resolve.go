@@ -38,7 +38,7 @@ func (s *service) EntryStates(
 func (s *service) resolve(
 	ctx context.Context, db database.IDB, app *entity.App,
 ) ([]*settingmountservice.File, map[string]*settingmountservice.EntryState, error) {
-	all, err := s.loadEntries(ctx, db, app.ID)
+	all, err := s.loadEntries(ctx, db, app)
 	if err != nil {
 		return nil, nil, hperrors.Wrap(err)
 	}

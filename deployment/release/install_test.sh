@@ -663,6 +663,26 @@ test_deploy_exports_every_stack_variable() {
   check_ok "the stack files were read" test "$(stack_variables | wc -l)" -ge 20
 }
 
+test_port_taken() {
+  local port pid
+  check_fails "a closed port is free" port_taken 1
+  if ! command -v python3 >/dev/null 2>&1; then
+    printf 'skip test_port_taken: no python3\n'
+    return 0
+  fi
+  python3 -c 'import socket, time
+s = socket.socket(); s.bind(("127.0.0.1", 0)); s.listen(1)
+print(s.getsockname()[1], flush=True); time.sleep(20)' >"$TMP/port" &
+  pid=$!
+  for _ in 1 2 3 4 5 6 7 8 9 10; do
+    if [ -s "$TMP/port" ]; then break; fi
+    sleep 0.2
+  done
+  port=$(cat "$TMP/port")
+  check_ok "a port something listens on is taken" port_taken "$port"
+  kill "$pid" 2>/dev/null
+}
+
 # --------------------------------------------------------------------- Main
 
 test_parse_args() {

@@ -1248,6 +1248,25 @@ detect_install_state() {
   fi
 }
 
+# port_taken PORT: something on this host takes connections on PORT.
+port_taken() {
+  (exec 3<>"/dev/tcp/127.0.0.1/$1") 2>/dev/null
+}
+
+# check_ports: Traefik publishes 80 and 443 on the host, and a task that cannot
+# bind them never starts. Another web server there would leave a first install
+# waiting for a dashboard that cannot come, so it stops before anything else.
+check_ports() {
+  local port taken=''
+  for port in 80 443; do
+    if port_taken "$port"; then taken="$taken $port"; fi
+  done
+  if [ -n "$taken" ]; then
+    die "Port(s)$taken on this server are taken already - by a web server? HivePaaS's Traefik needs" \
+      "ports 80 and 443. Stop what holds them, then run the installer again."
+  fi
+}
+
 running_image() {
   docker service inspect --format '{{.Spec.TaskTemplate.ContainerSpec.Image}}' "${STACK}_$1" 2>/dev/null
 }
@@ -1639,6 +1658,7 @@ main() {
   step "Settings"
   load_settings
   detect_install_state
+  if [ "$INSTALL_STATE" = fresh ] && ! service_exists traefik; then check_ports; fi
   ask_questions
   generate_secrets
   gather_addresses

@@ -1,5 +1,6 @@
 import { Checkbox, FieldError, Input } from "@components/ui";
 import { InputNumber } from "@components/ui/input-number";
+import { BookOpen } from "lucide-react";
 import { useController, useFormContext } from "react-hook-form";
 import { useDockerApiPermissionsGuideDialog } from "~/projects/dialogs/docker-api-permissions-guide";
 import { type AppDockerApiLimits } from "~/projects/domain";
@@ -28,6 +29,27 @@ export function DockerApiPolicyFields({ readOnly = false }: { readOnly?: boolean
 
     return (
         <div className="flex flex-col gap-6">
+            <div className="flex flex-wrap items-center gap-x-2 gap-y-1 rounded-md border border-dashed px-3 py-2 text-sm">
+                <BookOpen className="size-4 shrink-0 text-muted-foreground" />
+                <span className="text-muted-foreground">
+                    What each setting of this section and of Limits lets the app&apos;s containers do, the rules the
+                    proxy holds them to, and what it never allows.
+                </span>
+                {/* An anchor rather than a button: the form's fieldset disables
+                    buttons for someone who may only read, and reading is what
+                    this is for. */}
+                <a
+                    href="#docker-api-permissions"
+                    className="text-link hover:underline"
+                    onClick={event => {
+                        event.preventDefault();
+                        permissionsGuide.actions.open();
+                    }}
+                >
+                    Read the guide
+                </a>
+            </div>
+
             <InfoBlock
                 titleWidth={TITLE_WIDTH}
                 title={
@@ -87,25 +109,10 @@ export function DockerApiPolicyFields({ readOnly = false }: { readOnly?: boolean
             <InfoBlock
                 titleWidth={TITLE_WIDTH}
                 title={
-                    <div className="flex flex-col items-start gap-1">
-                        <LabelWithInfo
-                            label="Allowed"
-                            content="What its containers may do beyond being started, watched and removed."
-                        />
-                        {/* An anchor rather than a button: the form's fieldset disables
-                            buttons for someone who may only read, and reading is what
-                            this is for. */}
-                        <a
-                            href="#docker-api-permissions"
-                            className="text-xs font-normal text-link hover:underline"
-                            onClick={event => {
-                                event.preventDefault();
-                                permissionsGuide.actions.open();
-                            }}
-                        >
-                            What each permission allows
-                        </a>
-                    </div>
+                    <LabelWithInfo
+                        label="Allowed"
+                        content="What its containers may do beyond being started, watched and removed."
+                    />
                 }
             >
                 <div className="flex flex-col gap-2.5">

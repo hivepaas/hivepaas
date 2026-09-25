@@ -1,6 +1,7 @@
 import {
     Container,
     FileStack,
+    Gauge,
     HardDrive,
     Image,
     type LucideIcon,
@@ -65,7 +66,7 @@ export const CORE_AREAS: CoreArea[] = [
         title: "Images",
         icon: Image,
         items: [
-            "Pulling an image, only when it matches one of Images.",
+            "Pulling an image, and creating a container of it, only when it matches one of Images.",
             "Listing and inspecting the images of the node.",
             "Importing an image from a tarball is refused.",
         ],
@@ -111,6 +112,17 @@ export const CORE_AREAS: CoreArea[] = [
             "tmpfs mounts.",
             "A bind of a Shared directory, which becomes a mount of the app's own directory on its volume.",
             "Any other path of the node is refused.",
+        ],
+        endpoints: [],
+    },
+    {
+        title: "Limits",
+        icon: Gauge,
+        items: [
+            "Containers: how many the app may have at once, running or not. One more is refused.",
+            "Memory and CPUs: the most one container may ask for, and what it gets when it asks for none. Asking for more is refused.",
+            "Processes: 1024 for a container that asks for no limit, and at most 4096.",
+            "Unlimited swap is refused.",
         ],
         endpoints: [],
     },

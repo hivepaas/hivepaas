@@ -89,8 +89,11 @@ Each part declares:
 A sensitive part becomes a Docker secret, any other a Docker config. A part
 derived from a sensitive field is sensitive.
 
-The **rotation key** of a file is a hash of its inputs' values and its part's
-version. It is what decides whether the file is new (§4).
+The **rotation key** of a file is an HMAC of its inputs' values and its part's
+version, keyed with the app secret. It is what decides whether the file is new
+(§4). It is keyed because it ends up in a name anyone who can list secrets
+reads, and an unkeyed hash of a password is a way to guess it. Replacing the app
+secret renames every mounted object once, at its next refresh.
 
 ## 3. Names and labels
 
@@ -152,7 +155,7 @@ naming it, in the same transaction, and the task runs once it commits:
 | the settings screens, content and status | the settings use case, through `settingeventservice.OnUpdate` / `OnUpdateStatus` |
 | SSL renewal | `settingRepo.UpsertMulti`, after the renewal |
 | SSL obtain (`task:ssl-obtain`) | `settingRepo.Update` |
-| import | phase 2, after the commit |
+| import | phase 1 records it; it is scheduled with the other tasks after the commit |
 
 The task finds the apps that read the source through `res_link` - an entry
 pointing at it, or routing settings whose TLS passthrough uses it - and calls
@@ -249,9 +252,9 @@ gate. Templates cannot set either.
 
 ## 12. To verify before building on it
 
-- **Secrets outside `/run/secrets`.** Docker configs take an absolute target.
-  Whether a Linux secret does is checked on a real daemon first; if not,
-  sensitive parts are limited to paths under `/run/secrets`.
+- **Secrets outside `/run/secrets`.** Verified on Docker 29.8: a secret takes an
+  absolute target, and its mode is kept. The engine's real-daemon test mounts a
+  key at `/etc/app/tls/key.pem` and renews it.
 - **bcrypt in htpasswd.** Traefik, Apache, Caddy and HivePaaS's registry read
   it; nginx does where the system's crypt is libxcrypt, the default on current
   distributions. The part's description says so.

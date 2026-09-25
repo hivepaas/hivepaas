@@ -602,7 +602,7 @@ export function AppTerminalPanel({
                     <Button
                         type="button"
                         variant="link"
-                        className="h-auto px-0 text-sm sm:text-base"
+                        className="h-auto px-0 py-0 text-xs sm:text-sm"
                         disabled={!canConnect}
                         onClick={handleConnect}
                     >

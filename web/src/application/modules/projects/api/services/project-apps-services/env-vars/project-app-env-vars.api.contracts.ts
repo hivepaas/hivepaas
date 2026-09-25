@@ -59,3 +59,40 @@ export type ProjectAppEnvVars_Compute_Req = ApiRequestBase<{
 }>;
 
 export type ProjectAppEnvVars_Compute_Res = ApiResponseBase<{ key: string; value: string }[]>;
+
+export type EnvLinkTarget = {
+    id: string;
+    key: string;
+    name: string;
+    category: string;
+    engine: string;
+};
+
+export type EnvLinkVar = {
+    key: string;
+    value: string;
+    description: string;
+};
+
+export type EnvLinkGroup = {
+    id: string;
+    title: string;
+    description: string;
+    recommended: boolean;
+    warnings: string[];
+    vars: EnvLinkVar[];
+};
+
+export type ProjectAppEnvVars_FindLinkTargets_Req = ApiRequestBase<{ projectID: string; env: string; appID: string }>;
+export type ProjectAppEnvVars_FindLinkTargets_Res = ApiResponseBase<EnvLinkTarget[]>;
+
+export type ProjectAppEnvVars_FindLinkSuggestions_Req = ApiRequestBase<{
+    projectID: string;
+    env: string;
+    appID: string;
+    targetAppID: string;
+}>;
+export type ProjectAppEnvVars_FindLinkSuggestions_Res = ApiResponseBase<{
+    target: EnvLinkTarget;
+    groups: EnvLinkGroup[];
+}>;

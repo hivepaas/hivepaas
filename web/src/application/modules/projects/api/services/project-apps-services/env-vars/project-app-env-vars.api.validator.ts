@@ -1,6 +1,11 @@
 import { type AxiosResponse } from "axios";
 import { z } from "zod";
-import type { ProjectAppEnvVars_Compute_Res, ProjectAppEnvVars_FindOne_Res } from "~/projects/api/services";
+import type {
+    ProjectAppEnvVars_Compute_Res,
+    ProjectAppEnvVars_FindLinkSuggestions_Res,
+    ProjectAppEnvVars_FindLinkTargets_Res,
+    ProjectAppEnvVars_FindOne_Res,
+} from "~/projects/api/services";
 
 import { BaseMetaApiSchema, parseApiResponse } from "@infrastructure/api";
 
@@ -74,6 +79,49 @@ const ComputeSchema = z.object({
     meta: BaseMetaApiSchema.nullable(),
 });
 
+const EnvLinkTargetSchema = z.object({
+    id: z.string(),
+    key: z.string(),
+    name: z.string(),
+    category: z.string().optional().default(""),
+    engine: z.string().optional().default(""),
+});
+
+const FindLinkTargetsSchema = z.object({
+    data: z
+        .array(EnvLinkTargetSchema)
+        .nullable()
+        .transform(value => value ?? []),
+    meta: BaseMetaApiSchema.nullable().optional().default(null),
+});
+
+const FindLinkSuggestionsSchema = z.object({
+    data: z.object({
+        target: EnvLinkTargetSchema,
+        groups: z.array(
+            z.object({
+                id: z.string(),
+                title: z.string(),
+                description: z.string().optional().default(""),
+                recommended: z.boolean().optional().default(false),
+                warnings: z
+                    .array(z.string())
+                    .nullable()
+                    .optional()
+                    .transform(value => value ?? []),
+                vars: z.array(
+                    z.object({
+                        key: z.string(),
+                        value: z.string(),
+                        description: z.string().optional().default(""),
+                    }),
+                ),
+            }),
+        ),
+    }),
+    meta: BaseMetaApiSchema.nullable().optional().default(null),
+});
+
 export class ProjectAppEnvVarsApiValidator {
     /**
      * Validate and transform find one project app env vars API response
@@ -114,5 +162,13 @@ export class ProjectAppEnvVarsApiValidator {
             data: data ?? [],
             meta,
         };
+    };
+
+    findLinkTargets = (response: AxiosResponse): ProjectAppEnvVars_FindLinkTargets_Res => {
+        return parseApiResponse({ response, schema: FindLinkTargetsSchema });
+    };
+
+    findLinkSuggestions = (response: AxiosResponse): ProjectAppEnvVars_FindLinkSuggestions_Res => {
+        return parseApiResponse({ response, schema: FindLinkSuggestionsSchema });
     };
 }

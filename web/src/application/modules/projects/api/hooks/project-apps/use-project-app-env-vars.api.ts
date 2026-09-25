@@ -4,6 +4,8 @@ import { match } from "oxide.ts";
 import { ProjectsApiContext } from "~/projects/api/api-context";
 import type {
     ProjectAppEnvVars_Compute_Req,
+    ProjectAppEnvVars_FindLinkSuggestions_Req,
+    ProjectAppEnvVars_FindLinkTargets_Req,
     ProjectAppEnvVars_FindOne_Req,
     ProjectAppEnvVars_UpdateOne_Req,
 } from "~/projects/api/services";
@@ -37,6 +39,29 @@ function createHook() {
                                 error,
                             });
 
+                            throw error;
+                        },
+                    });
+                },
+                findLinkTargets: async (data: ProjectAppEnvVars_FindLinkTargets_Req["data"], signal?: AbortSignal) => {
+                    const result = await api.projects.apps.envVars.$.findLinkTargets({ data }, signal);
+
+                    return match(result, {
+                        Ok: _ => _,
+                        Err: error => {
+                            throw error;
+                        },
+                    });
+                },
+                findLinkSuggestions: async (
+                    data: ProjectAppEnvVars_FindLinkSuggestions_Req["data"],
+                    signal?: AbortSignal,
+                ) => {
+                    const result = await api.projects.apps.envVars.$.findLinkSuggestions({ data }, signal);
+
+                    return match(result, {
+                        Ok: _ => _,
+                        Err: error => {
                             throw error;
                         },
                     });

@@ -45,6 +45,8 @@ export const QK = {
      * Project App Env Vars
      */
     "projects.apps.env-vars.$.find-one": "projects.apps.env-vars.$.find-one",
+    "projects.apps.env-vars.$.find-link-targets": "projects.apps.env-vars.$.find-link-targets",
+    "projects.apps.env-vars.$.find-link-suggestions": "projects.apps.env-vars.$.find-link-suggestions",
     /*
      * Project App Secrets
      */

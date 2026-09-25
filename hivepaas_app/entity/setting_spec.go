@@ -146,7 +146,7 @@ func (registrySpecPolicy) Strip(data SettingData) {
 	}
 }
 
-// Nothing here strips Secret.SwarmRef, ConfigFile.SwarmRef, env-var entries
+// Nothing here strips env-var entries
 // flagged IsSystem, an image digest, or cluster-volume.NodeID. Each is specific
 // to the installation rather than regenerated, and each is what makes a restore
 // onto the same installation exact. The env-var case is the sharpest:

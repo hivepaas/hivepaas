@@ -40,8 +40,14 @@ test-cover:
 # The release installer (deployment/release): shellcheck, then the tests of
 # its functions under this machine's bash.
 test-installer:
-	@docker run --rm -v "$(PWD)/deployment/release":/mnt:ro -w /mnt koalaman/shellcheck:stable -x install.sh install_test.sh
+	@docker run --rm -v "$(PWD)/deployment/release":/mnt:ro -w /mnt koalaman/shellcheck:stable \
+		-x install.sh install_test.sh install_e2e.sh
 	@bash deployment/release/install_test.sh
+
+# A whole install in a docker:dind container. Pulls the release's images and
+# takes several minutes; nothing outside the container is deployed.
+test-installer-e2e:
+	@bash deployment/release/install_e2e.sh
 
 nilaway:
 	# run once: go install go.uber.org/nilaway/cmd/nilaway@latest

@@ -153,9 +153,9 @@ Base §2's table gains two rows and a column:
      entry requests embed `CreateSettingReq`/`UpdateSettingReq`, which carry it.
    - Previews resolving their parent's, and the refresh reaching them.
    - Clones copying, with the gate at request.
-3. **Templates.** `inheritable: true` on the config files that mount files, in
+3. **Templates** (built in `app-templates`). `inheritable: true` on the config files that mount files, in
    `app-templates`.
-4. **Dashboard.**
+4. **Dashboard** (built: `plans/2026-09-25-setting-mounts-dashboard.md` and its amendment).
    - The Setting Mounts screen of `plans/2026-09-25-setting-mounts-dashboard.md`,
      with the two source types, the `inheritable` switch and gated parts locked.
    - The mount fields removed from Secrets and Config Files.

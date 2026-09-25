@@ -270,6 +270,7 @@ func (s *service) sslSaveUpdatedSettings(
 		return nil
 	}
 	var persistingSettings []*entity.Setting
+	var refresh *entity.Task
 	// Open a new transaction to save updated settings
 	err = transaction.Execute(ctx, s.db, func(db database.Tx) error {
 		// Reloads SSL settings to see if we should update them with the renewed cert
@@ -300,6 +301,13 @@ func (s *service) sslSaveUpdatedSettings(
 		if err != nil {
 			return hperrors.Wrap(err)
 		}
+
+		// The apps that mount a renewed certificate get it; renewing is not
+		// granting, so nothing is asked.
+		refresh, err = s.settingMountService.RecordRefresh(ctx, db, persistingSettings...)
+		if err != nil {
+			return hperrors.Wrap(err)
+		}
 		return nil
 	})
 	if err != nil {
@@ -310,6 +318,7 @@ func (s *service) sslSaveUpdatedSettings(
 	if err != nil {
 		return hperrors.Wrap(err)
 	}
+	s.settingMountService.Schedule(ctx, refresh)
 
 	for _, sslSetting := range persistingSettings {
 		data.TaskOutput.RenewedSSLs = append(data.TaskOutput.RenewedSSLs,

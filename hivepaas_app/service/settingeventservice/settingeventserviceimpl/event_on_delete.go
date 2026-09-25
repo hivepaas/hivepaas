@@ -21,5 +21,5 @@ func (s *service) OnDelete(
 		_ = s.systemEventBus.Publish(ctx, base.SystemEventPeriodicSettingsReload)
 	}
 
-	return nil
+	return s.recordMountRefresh(ctx, db, &event.Tasks, event.Setting)
 }

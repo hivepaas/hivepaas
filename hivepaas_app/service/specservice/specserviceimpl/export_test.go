@@ -376,6 +376,7 @@ func exportFixture(t *testing.T) specservice.Service {
 		&fakeNoDockerAPI{},
 		&fakeEnvVarService{},
 		&fakeNetworkService{},
+		&fakeSettingMounts{},
 		&fakeSSLService{},
 		&fakeExportVolumeService{descs: map[string]*volumeservice.AppMountDesc{
 			"/var/lib/postgresql/data": {AppKey: "backend", Own: true, Subpath: "data", VolumeID: "vol_setting_1"},

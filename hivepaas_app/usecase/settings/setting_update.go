@@ -62,6 +62,7 @@ func (uc *BaseUC) UpdateSetting(
 	req *UpdateSettingReq,
 	data *UpdateSettingData,
 ) (*UpdateSettingResp, error) {
+	var event *settingeventservice.UpdateEvent
 	err := transaction.Execute(ctx, uc.DB, func(db database.Tx) error {
 		err := uc.loadSettingForUpdate(ctx, db, req, data)
 		if err != nil {
@@ -108,10 +109,11 @@ func (uc *BaseUC) UpdateSetting(
 		}
 
 		// Fire update event
-		err = uc.SettingEventService.OnUpdate(ctx, db, &settingeventservice.UpdateEvent{
+		event = &settingeventservice.UpdateEvent{
 			Setting:    persistingData.Setting,
 			OldSetting: data.Setting,
-		})
+		}
+		err = uc.SettingEventService.OnUpdate(ctx, db, event)
 		if err != nil {
 			return hperrors.Wrap(err)
 		}
@@ -120,6 +122,11 @@ func (uc *BaseUC) UpdateSetting(
 	})
 	if err != nil {
 		return nil, hperrors.Wrap(err)
+	}
+	// The tasks the event recorded exist once the transaction has committed. A
+	// transaction that returned before firing it has none.
+	if event != nil {
+		uc.SettingEventService.ScheduleTasks(ctx, event.Tasks...)
 	}
 
 	return &UpdateSettingResp{}, nil

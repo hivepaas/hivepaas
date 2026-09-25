@@ -10,11 +10,11 @@ import (
 
 func (s *service) OnCreate(
 	ctx context.Context,
-	_ database.IDB,
+	db database.IDB,
 	event *settingeventservice.CreateEvent,
 ) (err error) {
 	if event.Setting.IsTypeIn(base.SettingTypePeriodicJob, base.SettingTypeIMService, base.SettingTypeEmail) {
 		_ = s.systemEventBus.Publish(ctx, base.SystemEventPeriodicSettingsReload)
 	}
-	return nil
+	return s.recordMountRefresh(ctx, db, &event.Tasks, event.Setting)
 }

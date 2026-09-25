@@ -3,7 +3,6 @@ import type { ReactNode } from "react";
 import { Badge } from "@components/ui/badge";
 import {
     Dialog,
-    DialogActionFooter,
     DialogBody,
     DialogDescription,
     DialogFixedContent,
@@ -114,15 +113,6 @@ export function DockerApiPermissionsGuideDialog() {
                     <NeverAllowedSection />
                     <ExamplesSection />
                 </DialogBody>
-
-                <DialogActionFooter>
-                    <Button
-                        type="button"
-                        onClick={handleClose}
-                    >
-                        Close
-                    </Button>
-                </DialogActionFooter>
             </DialogFixedContent>
         </Dialog>
     );

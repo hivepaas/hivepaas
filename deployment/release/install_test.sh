@@ -551,6 +551,70 @@ test_print_summary_hides_secrets() {
   check_contains "the addresses" "$out" "https://app.example.com, https://1.2.3.4"
 }
 
+# --------------------------------------------------------------------- Host
+
+test_read_os_release() {
+  printf '%s\n' 'PRETTY_NAME="Linux Mint 22.1"' 'NAME="Linux Mint"' 'ID=linuxmint' 'ID_LIKE="ubuntu debian"' \
+    'VERSION_CODENAME=xia' 'UBUNTU_CODENAME=noble' >"$TMP/os-release"
+  read_os_release "$TMP/os-release"
+  check "id" linuxmint "$OS_ID"
+  check "id like" "ubuntu debian" "$OS_ID_LIKE"
+  check "name" "Linux Mint 22.1" "$OS_NAME"
+  check "ubuntu codename" noble "$OS_UBUNTU_CODENAME"
+  printf 'ID="opensuse-leap"\nID_LIKE="suse opensuse"\n' >"$TMP/os-release2"
+  OS_NAME=''
+  read_os_release "$TMP/os-release2"
+  check "a name falls back to the id" opensuse-leap "$OS_NAME"
+}
+
+test_package_manager_of() {
+  check "ubuntu" apt "$(package_manager_of ubuntu '')"
+  check "mint" apt "$(package_manager_of linuxmint 'ubuntu debian')"
+  check "kali" apt "$(package_manager_of kali debian)"
+  check "rocky" dnf "$(package_manager_of rocky 'rhel centos fedora')"
+  check "oracle" dnf "$(package_manager_of ol fedora)"
+  check "amazon" dnf "$(package_manager_of amzn fedora)"
+  check "leap" zypper "$(package_manager_of opensuse-leap 'suse opensuse')"
+  check "sles" zypper "$(package_manager_of sles suse)"
+  check "arch" pacman "$(package_manager_of arch '')"
+  check "endeavour" pacman "$(package_manager_of endeavouros arch)"
+  check "alpine" apk "$(package_manager_of alpine '')"
+  check_fails "gentoo" package_manager_of gentoo ''
+  check_fails "nixos" package_manager_of nixos ''
+}
+
+test_docker_install_method() {
+  local id
+  for id in ubuntu debian raspbian fedora centos rhel rocky; do
+    check "$id" getdocker "$(docker_install_method "$id" '')"
+  done
+  check "alma" dnf-rhel "$(docker_install_method almalinux 'rhel centos fedora')"
+  check "oracle" dnf-rhel "$(docker_install_method ol fedora)"
+  check "amazon" dnf "$(docker_install_method amzn fedora)"
+  check "mint" apt-repo "$(docker_install_method linuxmint 'ubuntu debian')"
+  check "kali" apt-repo "$(docker_install_method kali debian)"
+  check "tumbleweed" zypper "$(docker_install_method opensuse-tumbleweed 'opensuse suse')"
+  check "sles" zypper "$(docker_install_method sles suse)"
+  check "arch" pacman "$(docker_install_method arch '')"
+  check "manjaro" pacman "$(docker_install_method manjaro arch)"
+  check "alpine" apk "$(docker_install_method alpine '')"
+  check_fails "gentoo" docker_install_method gentoo ''
+}
+
+test_earlyoom_config() {
+  local conf
+  check "apt" /etc/default/earlyoom "$(earlyoom_config_file apt)"
+  check "dnf" /etc/default/earlyoom "$(earlyoom_config_file dnf)"
+  check "pacman" /etc/default/earlyoom "$(earlyoom_config_file pacman)"
+  check "zypper" /etc/sysconfig/earlyoom "$(earlyoom_config_file zypper)"
+  check "apk" /etc/conf.d/earlyoom "$(earlyoom_config_file apk)"
+  check "systemd arguments" "EARLYOOM_ARGS=\"-m 5 -s 20 -r 3600 --avoid $EARLYOOM_AVOID\"" "$(earlyoom_config apt)"
+  check_fails "the regex has no whitespace for systemd to split on" matches "$EARLYOOM_AVOID" '[[:space:]]'
+  conf=$(earlyoom_config apk)
+  check_contains "openrc memory" "$conf" "mem_min_percent=5"
+  check_contains "openrc avoid" "$conf" "avoid_cmds='^(hivepaas|"
+}
+
 # ------------------------------------------------------------------- Runner
 
 for t in $(declare -F | awk '$3 ~ /^test_/ {print $3}'); do

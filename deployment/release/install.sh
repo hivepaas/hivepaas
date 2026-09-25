@@ -710,3 +710,379 @@ print_summary() {
   info "Addresses      $(addresses_line)"
   printf '\n'
 }
+
+# --------------------------------------------------------------------- Host
+
+# earlyoom never kills these. postgres and redis-server are HivePaaS's own, but
+# the names also cover user apps' databases: earlyoom sees process names, not
+# services. The kernel cuts a name at 15 characters, hence the wildcards.
+EARLYOOM_AVOID='^(hivepaas|hivepaas-agent|traefik|postgres|redis-server|dockerd|containerd|containerd-shim|sshd|systemd|systemd-.*'
+EARLYOOM_AVOID+='|vlagent.*|victoria-logs.*|zot-linux-.*)$'
+
+OS_ID='' OS_ID_LIKE='' OS_CODENAME='' OS_UBUNTU_CODENAME='' OS_DEBIAN_CODENAME='' OS_NAME=''
+PKG_MANAGER=''
+PKG_INDEX_FRESH=0
+
+take_os_release() {
+  case "$1" in
+    ID) OS_ID=$(lowercase "$2") ;;
+    ID_LIKE) OS_ID_LIKE=$(lowercase "$2") ;;
+    VERSION_CODENAME) OS_CODENAME=$2 ;;
+    UBUNTU_CODENAME) OS_UBUNTU_CODENAME=$2 ;;
+    DEBIAN_CODENAME) OS_DEBIAN_CODENAME=$2 ;;
+    PRETTY_NAME) OS_NAME=$2 ;;
+  esac
+}
+
+# read_os_release FILE: the distribution, read as data rather than sourced.
+read_os_release() {
+  read_kv_file "$1" take_os_release
+  OS_NAME=${OS_NAME:-$OS_ID}
+}
+
+# package_manager_of ID ID_LIKE: the package manager of a distribution, by its
+# /etc/os-release ID or, for a derivative, the IDs it is like.
+package_manager_of() {
+  local id
+  for id in $1 $2; do
+    case "$id" in
+      debian | ubuntu | raspbian) printf 'apt' && return 0 ;;
+      fedora | rhel | centos | rocky | almalinux | ol | amzn) printf 'dnf' && return 0 ;;
+      sles | suse | opensuse | opensuse-*) printf 'zypper' && return 0 ;;
+      arch | manjaro) printf 'pacman' && return 0 ;;
+      alpine) printf 'apk' && return 0 ;;
+    esac
+  done
+  return 1
+}
+
+# docker_install_method ID ID_LIKE: how Docker is installed on a distribution.
+#   getdocker  Docker's convenience script, for the distributions it supports
+#   apt-repo   Docker's apt repository, for derivatives of Ubuntu and Debian
+#   dnf-rhel   Docker's RHEL repository, for the RHEL rebuilds it leaves out
+#   dnf, zypper, pacman, apk   the distribution's own package
+docker_install_method() {
+  case "$1" in
+    ubuntu | debian | raspbian | centos | fedora | rhel | rocky) printf 'getdocker' && return 0 ;;
+    amzn) printf 'dnf' && return 0 ;;
+  esac
+  case " $2 " in
+    *" ubuntu "* | *" debian "*) printf 'apt-repo' && return 0 ;;
+    *" rhel "* | *" centos "* | *" fedora "*) printf 'dnf-rhel' && return 0 ;;
+  esac
+  case "$(package_manager_of "$1" "$2")" in
+    zypper) printf 'zypper' ;;
+    pacman) printf 'pacman' ;;
+    apk) printf 'apk' ;;
+    *) return 1 ;;
+  esac
+}
+
+# earlyoom_config_file PKG_MANAGER: where the distribution's earlyoom service
+# reads its arguments.
+earlyoom_config_file() {
+  case "$1" in
+    zypper) printf '/etc/sysconfig/earlyoom' ;;
+    apk) printf '/etc/conf.d/earlyoom' ;;
+    *) printf '/etc/default/earlyoom' ;;
+  esac
+}
+
+# earlyoom_config PKG_MANAGER: act when available memory is under 5% and free
+# swap under 20% - the swap is there to be used first. Under systemd the regex
+# is unquoted: $EARLYOOM_ARGS is split on whitespace, and it has none.
+earlyoom_config() {
+  if [ "$1" = apk ]; then
+    printf 'mem_min_percent=5\nswap_min_percent=20\navoid_cmds=%s\ncommand_args="-r 3600"\n' \
+      "$(kv_quote "$EARLYOOM_AVOID")"
+  else
+    printf 'EARLYOOM_ARGS="-m 5 -s 20 -r 3600 --avoid %s"\n' "$EARLYOOM_AVOID"
+  fi
+}
+
+pm_install() {
+  case "$PKG_MANAGER" in
+    apt)
+      if [ "$PKG_INDEX_FRESH" != 1 ]; then
+        apt-get update -qq </dev/null || return 1
+        PKG_INDEX_FRESH=1
+      fi
+      DEBIAN_FRONTEND=noninteractive apt-get install -y -qq "$@" </dev/null
+      ;;
+    dnf) dnf install -y -q "$@" </dev/null ;;
+    zypper) zypper --non-interactive --quiet install "$@" </dev/null ;;
+    pacman)
+      # Arch has no partial upgrades: the index is refreshed with the system.
+      if [ "$PKG_INDEX_FRESH" != 1 ]; then
+        pacman -Syu --noconfirm </dev/null || return 1
+        PKG_INDEX_FRESH=1
+      fi
+      pacman -S --noconfirm --needed "$@" </dev/null
+      ;;
+    apk) apk add --no-cache "$@" </dev/null ;;
+    *) return 1 ;;
+  esac
+}
+
+has_systemd() {
+  command -v systemctl >/dev/null 2>&1 && [ -d /run/systemd/system ]
+}
+
+# service_start NAME: started now and at every boot.
+service_start() {
+  if has_systemd; then
+    systemctl enable --now "$1" >/dev/null 2>&1
+  elif command -v rc-service >/dev/null 2>&1; then
+    rc-update add "$1" default >/dev/null 2>&1 || true
+    rc-service "$1" status >/dev/null 2>&1 || rc-service "$1" start >/dev/null 2>&1
+  else
+    return 1
+  fi
+}
+
+# service_restart NAME: restarted now, so it reads its configuration, and
+# started at every boot.
+service_restart() {
+  if has_systemd; then
+    systemctl enable "$1" >/dev/null 2>&1 && systemctl restart "$1" >/dev/null 2>&1
+  elif command -v rc-service >/dev/null 2>&1; then
+    rc-update add "$1" default >/dev/null 2>&1 || true
+    rc-service "$1" restart >/dev/null 2>&1
+  else
+    return 1
+  fi
+}
+
+ca_bundle_present() {
+  [ -s /etc/ssl/certs/ca-certificates.crt ] || [ -s /etc/pki/tls/certs/ca-bundle.crt ] ||
+    [ -s /etc/ssl/ca-bundle.pem ] || [ -s /etc/ssl/cert.pem ]
+}
+
+install_tools() {
+  local tool
+  local -a missing=()
+  for tool in curl openssl jq; do
+    if ! command -v "$tool" >/dev/null 2>&1; then missing+=("$tool"); fi
+  done
+  if ! ca_bundle_present; then missing+=(ca-certificates); fi
+  if [ "${#missing[@]}" -eq 0 ]; then
+    ok "curl, openssl and jq are here."
+    return 0
+  fi
+  info "Installing ${missing[*]}..."
+  pm_install "${missing[@]}" || die "Could not install ${missing[*]}. Install them, then run the installer again."
+  ok "Installed ${missing[*]}."
+}
+
+check_resources() {
+  local mem_mb disk_mb
+  mem_mb=$(awk '/^MemTotal:/ {print int($2 / 1024)}' /proc/meminfo 2>/dev/null) || mem_mb=
+  if [ -n "$mem_mb" ] && [ "$mem_mb" -lt 1900 ]; then
+    warn "This server has ${mem_mb} MB of memory; HivePaaS wants 2 GB or more."
+  fi
+  disk_mb=$(df -Pm /var/lib 2>/dev/null | awk 'NR == 2 {print $4}') || disk_mb=
+  if [ -n "$disk_mb" ] && [ "$disk_mb" -lt 20480 ]; then
+    warn "/var/lib has $((disk_mb / 1024)) GB free; HivePaaS wants 20 GB or more."
+  fi
+}
+
+preflight() {
+  if [ "$(id -u)" -ne 0 ]; then die "Run the installer as root, e.g. with sudo."; fi
+  if [ "$(uname -s)" != Linux ]; then die "HivePaaS runs on Linux."; fi
+  if [ ! -r /etc/os-release ]; then die "Cannot tell which Linux this is: /etc/os-release is missing."; fi
+  read_os_release /etc/os-release
+  PKG_MANAGER=$(package_manager_of "$OS_ID" "$OS_ID_LIKE") ||
+    die "$OS_NAME is not supported. The installer knows Debian, Ubuntu and their derivatives;" \
+      "Fedora, RHEL, CentOS, Rocky, AlmaLinux, Oracle Linux and Amazon Linux; SLES and openSUSE;" \
+      "Arch and Manjaro; and Alpine."
+  ok "$OS_NAME ($PKG_MANAGER)"
+  check_resources
+  install_tools
+}
+
+make_swap_file() {
+  { fallocate -l "${2}M" "$1" 2>/dev/null || dd if=/dev/zero of="$1" bs=1M count="$2" 2>/dev/null; } &&
+    chmod 600 "$1" && mkswap "$1" >/dev/null 2>&1 && swapon "$1" 2>/dev/null || return 1
+  if ! grep -q "^$1 " /etc/fstab 2>/dev/null; then
+    printf '%s none swap sw 0 0\n' "$1" >>/etc/fstab
+  fi
+}
+
+# setup_swap: without swap, a host out of memory can only drop program code
+# and file cache, and everything on it crawls - healthchecks included - long
+# before the kernel's OOM killer acts. A failure here is a warning.
+setup_swap() {
+  local size="${HIVEPAAS_SWAP_SIZE_MB:-2048}" file=/swapfile free_mb
+  if [ "${HIVEPAAS_SWAP:-true}" = false ]; then
+    info "Swap: skipped (HIVEPAAS_SWAP=false)."
+    return 0
+  fi
+  if [ "$(awk 'NR > 1' /proc/swaps 2>/dev/null | wc -l)" -gt 0 ]; then
+    ok "Swap is on already."
+  elif [ -e "$file" ]; then
+    warn "Swap: $file exists but is not in use; left as it is."
+  else
+    free_mb=$(df -Pm / | awk 'NR == 2 {print $4}') || free_mb=0
+    if [ "${free_mb:-0}" -lt $((size + 1024)) ]; then
+      warn "Swap: not enough free disk for a ${size} MB swap file; skipped."
+    elif make_swap_file "$file" "$size"; then
+      ok "Swap: ${size} MB at $file."
+    else
+      rm -f "$file"
+      warn "Swap: this host would not take a swap file; skipped."
+    fi
+  fi
+  # Swap only what is really idle: at the default of 60 the kernel also swaps
+  # out memory that services touch regularly.
+  if mkdir -p /etc/sysctl.d 2>/dev/null &&
+    printf 'vm.swappiness = 10\n' 2>/dev/null >/etc/sysctl.d/99-hivepaas-memory.conf &&
+    sysctl -w vm.swappiness=10 >/dev/null 2>&1; then
+    ok "vm.swappiness = 10"
+  else
+    warn "Could not set vm.swappiness to 10."
+  fi
+}
+
+# setup_earlyoom: kills the largest process that is not a system one before a
+# host out of memory stalls. A failure here is a warning.
+setup_earlyoom() {
+  local conf
+  local -a packages=(earlyoom)
+  if [ "${HIVEPAAS_EARLYOOM:-true}" = false ]; then
+    info "earlyoom: skipped (HIVEPAAS_EARLYOOM=false)."
+    return 0
+  fi
+  if ! command -v earlyoom >/dev/null 2>&1; then
+    if [ "$PKG_MANAGER" = apk ]; then packages+=(earlyoom-openrc); fi
+    if ! pm_install "${packages[@]}" >/dev/null 2>&1; then
+      warn "earlyoom: $OS_NAME does not package it (RHEL-like systems have it in EPEL); skipped."
+      return 0
+    fi
+  fi
+  conf=$(earlyoom_config_file "$PKG_MANAGER")
+  if mkdir -p "${conf%/*}" && earlyoom_config "$PKG_MANAGER" >"$conf" && service_restart earlyoom; then
+    ok "earlyoom is on, and leaves HivePaaS's own processes alone."
+  else
+    warn "earlyoom: installed, but its service would not start."
+  fi
+}
+
+# ------------------------------------------------------------------- Docker
+
+MIN_DOCKER_VERSION=29.5
+MIN_DOCKER_API=1.54
+DOCKER_VERSION='' DOCKER_API=''
+WORK_DIR=''
+
+read_docker_versions() {
+  DOCKER_VERSION=$(docker version --format '{{.Server.Version}}' 2>/dev/null) || DOCKER_VERSION=
+  DOCKER_API=$(docker version --format '{{.Server.APIVersion}}' 2>/dev/null) || DOCKER_API=
+}
+
+docker_new_enough() {
+  [ -n "$DOCKER_VERSION" ] && version_ge "$DOCKER_VERSION" "$MIN_DOCKER_VERSION" &&
+    version_ge "$DOCKER_API" "$MIN_DOCKER_API"
+}
+
+wait_for_docker() {
+  for _ in $(seq 30); do
+    if docker info >/dev/null 2>&1; then return 0; fi
+    sleep 1
+  done
+  return 1
+}
+
+# latest_docker_version: the newest Docker release, from the index of Docker's
+# static builds for this architecture.
+latest_docker_version() {
+  local arch
+  arch=$(docker_static_arch "$(uname -m)") || return 1
+  curl -fsSL --max-time 10 "https://download.docker.com/linux/static/stable/$arch/" 2>/dev/null |
+    latest_docker_from_index
+}
+
+install_docker_apt_repo() {
+  local dist=debian codename
+  codename=${OS_DEBIAN_CODENAME:-$OS_CODENAME}
+  case " $OS_ID_LIKE " in
+    *" ubuntu "*)
+      dist=ubuntu
+      codename=$OS_UBUNTU_CODENAME
+      ;;
+  esac
+  if [ -z "$codename" ]; then return 1; fi
+  pm_install ca-certificates curl &&
+    install -m 0755 -d /etc/apt/keyrings &&
+    curl -fsSL "https://download.docker.com/linux/$dist/gpg" -o /etc/apt/keyrings/docker.asc &&
+    chmod a+r /etc/apt/keyrings/docker.asc &&
+    printf 'deb [arch=%s signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/%s %s stable\n' \
+      "$(dpkg --print-architecture)" "$dist" "$codename" >/etc/apt/sources.list.d/docker.list &&
+    apt-get update -qq </dev/null &&
+    DEBIAN_FRONTEND=noninteractive apt-get install -y -qq docker-ce docker-ce-cli containerd.io \
+      docker-buildx-plugin docker-compose-plugin </dev/null
+}
+
+install_docker_rhel_repo() {
+  local repo=https://download.docker.com/linux/rhel/docker-ce.repo
+  dnf install -y -q dnf-plugins-core </dev/null &&
+    { dnf config-manager --add-repo "$repo" >/dev/null 2>&1 ||
+      dnf config-manager addrepo --overwrite --from-repofile="$repo" >/dev/null; } &&
+    dnf install -y -q docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin </dev/null
+}
+
+# install_docker: installs Docker, or upgrades it to the latest release, the
+# way the distribution takes it; then starts it at boot and now.
+install_docker() {
+  local method
+  method=$(docker_install_method "$OS_ID" "$OS_ID_LIKE") ||
+    die "The installer cannot install Docker on $OS_NAME. Install Docker $MIN_DOCKER_VERSION or newer" \
+      "(https://docs.docker.com/engine/install/), then run it again."
+  info "Installing Docker ($method)..."
+  case "$method" in
+    getdocker)
+      curl -fsSL https://get.docker.com -o "$WORK_DIR/get-docker.sh" && sh "$WORK_DIR/get-docker.sh" </dev/null
+      ;;
+    apt-repo) install_docker_apt_repo ;;
+    dnf-rhel) install_docker_rhel_repo ;;
+    dnf | zypper) pm_install docker ;;
+    pacman) pm_install docker ;;
+    apk) apk add --no-cache --upgrade docker </dev/null ;;
+  esac || die "Installing Docker failed; see the output above."
+  service_start docker || true
+  wait_for_docker || die "Docker is installed but does not answer. Look at 'systemctl status docker', then run the installer again."
+  read_docker_versions
+}
+
+ensure_docker() {
+  local latest just_installed=0
+  if ! command -v docker >/dev/null 2>&1; then
+    confirm "Docker is not installed. Install it now?" ||
+      die "HivePaaS needs Docker $MIN_DOCKER_VERSION or newer. Install it, then run the installer again."
+    install_docker
+    just_installed=1
+  elif ! docker info >/dev/null 2>&1; then
+    service_start docker || true
+    wait_for_docker || die "Docker does not answer. Start it ('systemctl start docker'), then run the installer again."
+  fi
+  read_docker_versions
+  if ! docker_new_enough; then
+    if [ "$just_installed" = 1 ]; then
+      die "$OS_NAME's Docker is $DOCKER_VERSION (API $DOCKER_API); HivePaaS needs $MIN_DOCKER_VERSION" \
+        "(API $MIN_DOCKER_API) or newer. Install a newer Docker (https://docs.docker.com/engine/install/)," \
+        "then run the installer again."
+    fi
+    confirm "Docker $DOCKER_VERSION (API $DOCKER_API) is older than HivePaaS needs ($MIN_DOCKER_VERSION, API $MIN_DOCKER_API). Upgrade it now? Its containers restart." ||
+      die "HivePaaS needs Docker $MIN_DOCKER_VERSION or newer. Upgrade it, then run the installer again."
+    install_docker
+    if ! docker_new_enough; then
+      die "Docker is still $DOCKER_VERSION after the upgrade: $OS_NAME does not package a newer one." \
+        "Install Docker $MIN_DOCKER_VERSION or newer (https://docs.docker.com/engine/install/), then run the installer again."
+    fi
+  elif [ "$just_installed" = 0 ] && latest=$(latest_docker_version) && ! version_ge "$DOCKER_VERSION" "$latest"; then
+    if [ "${HIVEPAAS_UPGRADE_DOCKER:-}" = true ] ||
+      offer "Docker $DOCKER_VERSION is installed and $latest is out. Upgrade? Its containers restart."; then
+      install_docker
+    fi
+  fi
+  ok "Docker $DOCKER_VERSION (API $DOCKER_API)"
+}

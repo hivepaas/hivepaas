@@ -12,8 +12,9 @@ const rotation = "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcd
 func TestObjectNamesFollowTheSecretsConvention(t *testing.T) {
 	assert.Equal(t, "shop_prod_api_mount_tls-cert_privatekey_01234567",
 		ObjectName("Shop_Prod_API", "tls-cert", "privateKey", rotation))
-	assert.Equal(t, "shop_prod_api_tls_certificate_01234567",
-		ObjectName("shop_prod_api", TLSEntry, "certificate", rotation))
+	// "tls" is an entry like any other: nothing mounts under a name of its own.
+	assert.Equal(t, "shop_prod_api_mount_tls_certificate_01234567",
+		ObjectName("shop_prod_api", "tls", "certificate", rotation))
 }
 
 // Docker caps names at 64; the GlobalKey is cut and a hash of it keeps two long
@@ -30,8 +31,8 @@ func TestALongNameIsShortenedAndStaysUnique(t *testing.T) {
 
 func TestEntryKeys(t *testing.T) {
 	for key, want := range map[string]bool{
-		"tls-cert": true, "a": true, "a1-b2": true, strings.Repeat("a", 20): true,
-		"tls": false, "": false, "-a": false, "a-": false, "A": false, "a_b": false, strings.Repeat("a", 21): false,
+		"tls-cert": true, "tls": true, "a": true, "a1-b2": true, strings.Repeat("a", 20): true,
+		"": false, "-a": false, "a-": false, "A": false, "a_b": false, strings.Repeat("a", 21): false,
 	} {
 		assert.Equal(t, want, ValidEntryKey(key), key)
 	}

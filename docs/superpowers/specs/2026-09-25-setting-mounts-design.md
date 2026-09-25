@@ -8,6 +8,12 @@ someone has to copy it into a secret by hand and do it again at every renewal.
 
 > Amended by `2026-09-25-setting-mounts-one-way-design.md`: secrets and config
 > files are sources, lose their own `swarmRef`, and entries can be inheritable.
+>
+> TLS passthrough's automatic mount (§8, plan 3) is dropped: few apps pass TLS
+> through, mostly older databases, and it cost the backend a flow of its own.
+> Someone who turns passthrough on mounts the certificate in Setting Mounts, and
+> the routing and kind screens say so. Nothing is reserved for it: `tls` is an
+> ordinary entry key and `/run/secrets/tls` an ordinary path.
 
 This design lets an app mount parts of another setting - a certificate, a key,
 a basic auth pair rendered as htpasswd - as files that follow that setting from
@@ -34,7 +40,7 @@ brings its certificate with it.
 5. **Handing out a sensitive part is revealing it.** Whoever controls the
    container can read the file, so mounting a private key or a password takes
    what revealing it takes.
-6. **TLS passthrough is derived, never stored as an entry.** The routing
+6. *(Dropped with §8.)* **TLS passthrough is derived, never stored as an entry.** The routing
    settings are the one description of it; an entry HivePaaS made would be a
    second one that a person could edit or delete.
 7. **A setting that cannot be used is not in the container.** A disabled entry,
@@ -58,10 +64,10 @@ settings:
 
 | field | meaning |
 |---|---|
-| key | The entry's name: `a-z0-9-`, and never `tls`, which TLS passthrough uses (§3). |
+| key | The entry's name: `a-z0-9-`, at most 20 characters. |
 | `source` | A setting reference, as every setting reference is: written to `res_link`, remapped by import, and a source still linked cannot be deleted (`ERR_SETTING_IN_USE`). |
 | `files[].part` | A part the source's type offers (§2). Each part at most once per entry. |
-| `files[].path` | An absolute, clean path. Unique among the app's entries, secrets and config files, and outside `/run/secrets/tls`. |
+| `files[].path` | An absolute, clean path. Unique among the app's entries. |
 
 A path is compared by where the file lands: a secret's `db_password` is
 `/run/secrets/db_password`. Saving an entry, a secret or a config file refuses
@@ -112,7 +118,6 @@ Names follow the convention secrets and config files already use,
 
 ```
 <GlobalKey>_mount_<entry>_<part>_<hash8>      an entry's file
-<GlobalKey>_tls_<part>_<hash8>                TLS passthrough (§8)
 ```
 
 `hash8` is the rotation key. Docker caps names at 64 characters and a
@@ -123,7 +128,7 @@ here.
 
 Labels follow the `hivepaas.<object>.<field>` convention, camelCase:
 - `hivepaas.app.id` - the app, as elsewhere;
-- `hivepaas.settingMount.entry` - the entry's key, or `tls`;
+- `hivepaas.settingMount.entry` - the entry's key;
 - `hivepaas.settingMount.part` - the part.
 
 The labels the Docker API design introduced are renamed to the same
@@ -198,6 +203,11 @@ An entry of plain parts only takes Write on the app, and a source visible from
 its scope.
 
 ## 8. TLS passthrough
+
+**Dropped.** What follows was never built. The routing settings' and the
+database and cache kind screens' passthrough switch shows a note instead: the
+app terminates TLS itself, and its certificate and key are mounted in Setting
+Mounts.
 
 **What is mounted.** The first active domain with `tlsPassthrough` and an SSL
 certificate gives the app:
@@ -276,8 +286,7 @@ gate. Templates cannot set either.
    lifecycle, and the Docker API label rename.
 2. **Backend, permissions and surfaces.** §7's gate on the entry endpoints,
    export and import, clone and preview apps.
-3. **Backend, TLS passthrough.** `tlsMountedCert`, routing and kind settings,
-   and the gate on both.
+3. ~~**Backend, TLS passthrough.**~~ Dropped (§8).
 4. **Dashboard.** The Setting Mounts screen, and the state under passthrough
    domains.
 

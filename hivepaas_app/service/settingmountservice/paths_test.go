@@ -9,8 +9,8 @@ import (
 func TestPaths(t *testing.T) {
 	for path, want := range map[string]bool{
 		"/etc/app/tls/cert.pem": true, "/run/secrets/app.pem": true, "/run/secrets/tlsx": true,
+		"/run/secrets/tls": true, "/run/secrets/tls/cert.pem": true,
 		"": false, "/": false, "etc/app": false, "/etc/../app": false, "/etc/app/": false,
-		"/run/secrets/tls": false, "/run/secrets/tls/cert.pem": false,
 	} {
 		assert.Equal(t, want, ValidPath(path), path)
 	}

@@ -44,7 +44,7 @@ type Service interface {
 
 // File is one part of a source, at a path of an app's containers.
 type File struct {
-	// Entry is the entry's key, or TLSEntry.
+	// Entry is the entry's key.
 	Entry string
 	Part  string
 	Path  string

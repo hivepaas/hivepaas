@@ -118,7 +118,7 @@ func TestResolveLeavesOutWhatCannotBeUsed(t *testing.T) {
 			certFiles("cert_other")), []*entity.Setting{certSource(t, "cert_1", "CERT", "KEY")}},
 		"a certificate not obtained yet": {entry(t, "a", base.SettingStatusActive, certFiles("cert_1")),
 			[]*entity.Setting{certSource(t, "cert_1", "", "")}},
-		"a key no entry may have": {entry(t, "tls", base.SettingStatusActive, certFiles("cert_1")),
+		"a key no entry may have": {entry(t, "Cert", base.SettingStatusActive, certFiles("cert_1")),
 			[]*entity.Setting{certSource(t, "cert_1", "CERT", "KEY")}},
 	} {
 		svc := fixture(t, []*entity.Setting{tc.entry}, tc.sources...)
@@ -138,7 +138,7 @@ func TestResolveSkipsAFileThatIsWrongInItself(t *testing.T) {
 	svc := fixture(t, []*entity.Setting{entry(t, "a", base.SettingStatusActive, &entity.AppSettingMount{
 		Source: entity.ObjectID{ID: "cert_1"}, Files: []*entity.AppSettingMountFile{
 			{Part: "certificate", Path: "relative/cert.pem"},
-			{Part: "certificate", Path: "/run/secrets/tls/cert.pem"},
+			{Part: "certificate", Path: "/etc/app/../cert.pem"},
 			{Part: "htpasswd", Path: "/etc/htpasswd"},
 			{Part: "privateKey", Path: "/etc/key.pem"},
 		}})}, certSource(t, "cert_1", "CERT", "KEY"))

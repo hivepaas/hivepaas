@@ -6,6 +6,9 @@ nothing lets a file in the container follow another setting. An app that
 terminates TLS itself needs the certificate HivePaaS already manages, and today
 someone has to copy it into a secret by hand and do it again at every renewal.
 
+> Amended by `2026-09-25-setting-mounts-one-way-design.md`: secrets and config
+> files are sources, lose their own `swarmRef`, and entries can be inheritable.
+
 This design lets an app mount parts of another setting - a certificate, a key,
 a basic auth pair rendered as htpasswd - as files that follow that setting from
 then on. TLS passthrough is its first user: a domain passed through to the app

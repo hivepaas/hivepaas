@@ -91,7 +91,7 @@ Base §2's table gains two rows and a column:
   secret or config file may still carry `swarmRef: {file: {name, uid, gid,
   mode}}`. Building the app creates the setting without it, and an
   `app-setting-mount` entry:
-  - the key is the setting's key, lowercased and made a valid entry key;
+  - the key is the setting's key made an entry key (`settingmountservice.EntryKeyFor`: lowercased, anything outside `a-z0-9` a hyphen, at most 20 characters; `DB_PASSWORD` gives `db-password`), and two settings of one template whose keys make the same entry key are refused;
   - the source is the new setting;
   - one file: part `value` or `content`, path `file.name`, and uid, gid and
     mode as given;
@@ -142,7 +142,7 @@ Base §2's table gains two rows and a column:
 
 ## 5. Plans
 
-1. **Backend, sources.**
+1. **Backend, sources** (built: `plans/2026-09-25-setting-mounts-one-way-sources.md`).
    - The `secret` and `config-file` sources, and the stored/gated split.
    - `swarmRef` removed from secrets and config files, and what goes with it
      (§2).

@@ -22,6 +22,10 @@ import {
 import { CreateProjectDialog, useCreateProjectDialogState } from "~/projects/dialogs/create-project";
 import { CreateProjectAppDialog, useCreateProjectAppDialogState } from "~/projects/dialogs/create-project-app";
 import {
+    DockerApiPermissionsGuideDialog,
+    useDockerApiPermissionsGuideDialogState,
+} from "~/projects/dialogs/docker-api-permissions-guide";
+import {
     ExportContainerFilesDialog,
     useExportContainerFilesDialogState,
 } from "~/projects/dialogs/export-container-files";
@@ -97,6 +101,7 @@ function View() {
     const updateAppHealthCheckStatusDialog = useUpdateAppHealthCheckStatusDialogState();
     const updateAppScheduledJobStatusDialog = useUpdateAppScheduledJobStatusDialogState();
     const runNowTaskCreatedDialog = useRunNowTaskCreatedDialogState();
+    const dockerApiPermissionsGuideDialog = useDockerApiPermissionsGuideDialogState();
     const quickInstallSslCertDialog = useQuickInstallSslCertDialogState();
     const confirmAppDangerActionDialog = useConfirmAppDangerActionDialogState();
     const confirmEnvDangerActionDialog = useConfirmEnvDangerActionDialogState();
@@ -132,6 +137,7 @@ function View() {
         updateAppHealthCheckStatusDialog.destroy();
         updateAppScheduledJobStatusDialog.destroy();
         runNowTaskCreatedDialog.destroy();
+        dockerApiPermissionsGuideDialog.destroy();
         quickInstallSslCertDialog.destroy();
         confirmAppDangerActionDialog.destroy();
         confirmEnvDangerActionDialog.destroy();
@@ -169,6 +175,7 @@ function View() {
             <UpdateAppHealthCheckStatusDialog />
             <UpdateAppScheduledJobStatusDialog />
             <RunNowTaskCreatedDialog />
+            <DockerApiPermissionsGuideDialog />
             <QuickInstallSslCertDialog />
             <ConfirmAppDangerActionDialog />
             <ConfirmEnvDangerActionDialog />

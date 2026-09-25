@@ -28,14 +28,14 @@ func (s *service) CreateProjectDefaultVolume(
 	ctx context.Context,
 	project *entity.Project,
 ) (_ *entity.Setting, err error) {
-	storagePathInHost := config.Current().Storage.BindSource
-	if storagePathInHost == "" {
-		return nil, hperrors.Wrap(hperrors.ErrUnconfigured).
-			WithParam("Name", "HP_STORAGE_BIND_SOURCE")
+	// The base must exist; the default project_data under it is created here,
+	// with the project's directory, the first time a project is made.
+	baseDir, prefix := config.Current().Storage.ProjectDataDirs()
+	if baseDir == "" {
+		return nil, hperrors.Wrap(hperrors.ErrUnconfigured).WithParam("Name", config.ProjectDataSettings)
 	}
 
-	subpath := filepath.Join("project_data", project.Key)
-	err = s.MakeSubDirInHost(ctx, storagePathInHost, subpath, true)
+	err = s.MakeSubDirInHost(ctx, baseDir, filepath.Join(prefix, project.Key), true)
 	if err != nil {
 		return nil, hperrors.Wrap(err)
 	}
@@ -45,7 +45,7 @@ func (s *service) CreateProjectDefaultVolume(
 		return nil, hperrors.Wrap(err)
 	}
 
-	return buildProjectDefaultVolumeSetting(project, storagePathInHost, nodeID), nil
+	return buildProjectDefaultVolumeSetting(project, filepath.Join(baseDir, prefix), nodeID), nil
 }
 
 // buildProjectDefaultVolumeSetting is the whole record, and nothing in it needs
@@ -53,7 +53,7 @@ func (s *service) CreateProjectDefaultVolume(
 // be rebuilt on a node this process never talks to.
 func buildProjectDefaultVolumeSetting(
 	project *entity.Project,
-	storagePathInHost string,
+	projectDataRoot string,
 	nodeID string,
 ) *entity.Setting {
 	timeNow := timeutil.NowUTC()
@@ -82,7 +82,7 @@ func buildProjectDefaultVolumeSetting(
 		Driver:  string(docker.VolumeDriverLocal),
 		DriverOpts: map[string]string{
 			"type":   "none",
-			"device": filepath.Join(storagePathInHost, filepath.Join("project_data", project.Key)),
+			"device": filepath.Join(projectDataRoot, project.Key),
 			"o":      "bind,rw",
 		},
 		Labels: map[string]string{

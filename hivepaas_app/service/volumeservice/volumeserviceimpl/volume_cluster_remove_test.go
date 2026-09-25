@@ -81,9 +81,31 @@ func TestVolumeStorageTargetRefusesTheWholeFilesystemAsARoot(t *testing.T) {
 
 func withStorageRoot(t *testing.T, root string) {
 	t.Helper()
+	withStorage(t, config.Storage{HostDir: root})
+}
+
+func withStorage(t *testing.T, storage config.Storage) {
+	t.Helper()
 	previous := config.Current()
-	config.SetCurrent(&config.Config{Storage: config.Storage{BindSource: root}})
+	config.SetCurrent(&config.Config{Storage: storage})
 	t.Cleanup(func() { config.SetCurrent(previous) })
+}
+
+// Project data kept outside the storage root is HivePaaS's too, and the volumes
+// made before it moved are still under the storage root.
+func TestVolumeStorageTargetUnderAProjectDataDirectoryOfItsOwn(t *testing.T) {
+	withStorage(t, config.Storage{HostDir: "/srv/hivepaas", ProjectDataHostDir: "/data/projects"})
+
+	target, ok := volumeStorageTarget(bindVolume("/data/projects/shop"))
+	assert.True(t, ok)
+	assert.Equal(t, "/data/projects", target.mount.Source)
+	assert.Equal(t, "shop", target.subpath)
+
+	_, ok = volumeStorageTarget(bindVolume("/srv/hivepaas/project_data/shop"))
+	assert.True(t, ok, "a volume made before project data moved")
+
+	_, ok = volumeStorageTarget(bindVolume("/data/projects"))
+	assert.False(t, ok, "the directory itself is not one volume's")
 }
 
 func bindVolume(device string) *entity.ClusterVolume {

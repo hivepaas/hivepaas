@@ -109,27 +109,10 @@ func (uc *UC) calcBindDirectory(
 ) (string, error) {
 	subpath := ""
 	if directory == "" {
-		storageInHost := config.Current().Storage.BindSource
-		if storageInHost == "" {
-			return "", hperrors.Wrap(hperrors.ErrUnconfigured).
-				WithParam("Name", "HP_STORAGE_BIND_SOURCE")
-		}
-		directory = storageInHost
-		subpath = "project_data"
-		switch req.Scope.ScopeType {
-		case base.ObjectScopeProject:
-			subpath = filepath.Join(subpath, req.Scope.Project.Key)
-		case base.ObjectScopeProjectEnv:
-			projectEnv := req.Scope.ProjectEnv
-			subpath = filepath.Join(subpath, projectEnv.Project.Key, projectEnv.Key)
-		case base.ObjectScopeApp:
-			app := req.Scope.App
-			subpath = filepath.Join(subpath, app.Project.Key, app.ProjectEnv.Key, app.Key)
-		case base.ObjectScopeGlobal, base.ObjectScopeHivepaas:
-		case base.ObjectScopeUser:
-			fallthrough
-		default:
-			return "", hperrors.Wrap(hperrors.ErrObjectScopeInvalid)
+		var err error
+		directory, subpath, err = defaultBindDirectory(config.Current().Storage, req.Scope)
+		if err != nil {
+			return "", hperrors.Wrap(err)
 		}
 	}
 
@@ -140,6 +123,32 @@ func (uc *UC) calcBindDirectory(
 
 	directory = filepath.Join(directory, subpath)
 	return directory, nil
+}
+
+// defaultBindDirectory is where a volume made without a directory goes, as the
+// directory that must exist and the path under it made for the volume's scope:
+// the project data directory, then the project, env and app keys.
+func defaultBindDirectory(storage config.Storage, scope *entity.ObjectScope) (dir, subpath string, err error) {
+	dir, subpath = storage.ProjectDataDirs()
+	if dir == "" {
+		return "", "", hperrors.Wrap(hperrors.ErrUnconfigured).WithParam("Name", config.ProjectDataSettings)
+	}
+	switch scope.ScopeType {
+	case base.ObjectScopeProject:
+		subpath = filepath.Join(subpath, scope.Project.Key)
+	case base.ObjectScopeProjectEnv:
+		projectEnv := scope.ProjectEnv
+		subpath = filepath.Join(subpath, projectEnv.Project.Key, projectEnv.Key)
+	case base.ObjectScopeApp:
+		app := scope.App
+		subpath = filepath.Join(subpath, app.Project.Key, app.ProjectEnv.Key, app.Key)
+	case base.ObjectScopeGlobal, base.ObjectScopeHivepaas:
+	case base.ObjectScopeUser:
+		fallthrough
+	default:
+		return "", "", hperrors.Wrap(hperrors.ErrObjectScopeInvalid)
+	}
+	return dir, subpath, nil
 }
 
 func (uc *UC) createBindDirectoryInNode(

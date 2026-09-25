@@ -276,7 +276,10 @@ services:
       local_net:
     environment:
       HP_CONFIG_FILE: config/config.development.toml
-      HP_STORAGE_BIND_SOURCE: ${PWD}/hivepaas
+      HP_STORAGE_HOST_DIR: ${PWD}/hivepaas
+      # Project data goes to project_data under HP_STORAGE_HOST_DIR, created on
+      # first use, unless this names a directory of its own, which must exist.
+      # HP_STORAGE_PROJECT_DATA_HOST_DIR: /data/hivepaas-projects
       HP_USER_ADMIN_USERNAME: admin
       HP_USER_ADMIN_EMAIL: admin@hivepaasdomain.name
       HP_USER_ADMIN_PASSWORD: abc123

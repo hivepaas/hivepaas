@@ -14,7 +14,7 @@ import (
 func TestProjectDefaultVolumeRecordsItsSpecification(t *testing.T) {
 	setting := buildProjectDefaultVolumeSetting(
 		&entity.Project{ID: "01JPROJECT0000000000000000", Key: "shop"},
-		"/srv/hivepaas",
+		"/srv/hivepaas/project_data",
 		"node-1",
 	)
 

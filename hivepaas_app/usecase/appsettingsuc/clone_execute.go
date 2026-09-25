@@ -27,12 +27,12 @@ func (uc *UC) ExecuteAppClone(
 	req *appsettingsdto.ExecuteAppCloneReq,
 ) (*appsettingsdto.ExecuteAppCloneResp, error) {
 	// The gate goes first, outside the transaction: its answer is recorded
-	// whatever becomes of the clone.
+	// whatever becomes of the clone. Disabled entries count: the clone copies
+	// them, and its owner may enable them.
 	entries, _, err := uc.settingRepo.List(ctx, uc.db, nil, nil,
 		bunex.SelectWhere("setting.type = ?", base.SettingTypeAppSettingMount),
 		bunex.SelectWhere("setting.object_id = ?", req.AppID),
 		bunex.SelectWhere("setting.inheritable = TRUE"),
-		bunex.SelectWhere("setting.status = ?", base.SettingStatusActive),
 	)
 	if err != nil {
 		return nil, hperrors.Wrap(err)

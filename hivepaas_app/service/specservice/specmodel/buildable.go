@@ -612,6 +612,10 @@ func checkSecrets(body any) error {
 		for _, field := range slices.Sorted(maps.Keys(entry)) {
 			switch field {
 			case "key", "base64":
+			case "inheritable":
+				if _, isBool := entry[field].(bool); !isBool {
+					return unsupported(path + "." + field)
+				}
 			case "value":
 				if text, isText := entry[field].(string); isText && len(text) > MaxSecretValueBytes {
 					return tooLarge(path+".value", len(text), MaxSecretValueBytes)
@@ -642,6 +646,10 @@ func checkConfigFiles(body any) error {
 		for _, field := range slices.Sorted(maps.Keys(entry)) {
 			switch field {
 			case "name", "base64":
+			case "inheritable":
+				if _, isBool := entry[field].(bool); !isBool {
+					return unsupported(path + "." + field)
+				}
 			case "content":
 				if text, isText := entry[field].(string); isText && len(text) > MaxConfigFileBytes {
 					return tooLarge(path+".content", len(text), MaxConfigFileBytes)

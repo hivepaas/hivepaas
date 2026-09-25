@@ -93,7 +93,8 @@ func (state *buildState) addSetting(
 	inheritable bool,
 	data entity.SettingData,
 ) error {
-	return state.addNamedSetting(typ, "", version, inheritable, data)
+	_, err := state.addNamedSetting(typ, "", version, inheritable, data)
+	return err
 }
 
 // addNamedSetting creates a setting that carries a name: the key a collection
@@ -104,7 +105,7 @@ func (state *buildState) addNamedSetting(
 	version int,
 	inheritable bool,
 	data entity.SettingData,
-) error {
+) (*entity.Setting, error) {
 	setting := &entity.Setting{
 		ID:          gofn.Must(ulid.NewStringULID()),
 		Scope:       base.ObjectScopeApp,
@@ -119,10 +120,10 @@ func (state *buildState) addNamedSetting(
 		UpdatedAt:   state.req.TimeNow,
 	}
 	if err := setting.SetData(data); err != nil {
-		return hperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 	state.settings = append(state.settings, setting)
-	return nil
+	return setting, nil
 }
 
 // decodeBlock decodes a settings-shaped block into its entity. Unknown fields

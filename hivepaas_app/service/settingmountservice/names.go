@@ -21,15 +21,30 @@ const (
 	// called.
 	TLSEntry = "tls"
 
-	maxNameLen = 64
-	hashLen    = 8
+	maxNameLen     = 64
+	hashLen        = 8
+	entryKeyMaxLen = 20
 )
 
-var entryKeyPattern = regexp.MustCompile(`^[a-z0-9]([a-z0-9-]{0,18}[a-z0-9])?$`)
+var (
+	entryKeyPattern  = regexp.MustCompile(`^[a-z0-9]([a-z0-9-]{0,18}[a-z0-9])?$`)
+	notEntryKeyChars = regexp.MustCompile(`[^a-z0-9]+`)
+)
 
 // ValidEntryKey reports whether an entry may be called key.
 func ValidEntryKey(key string) bool {
 	return key != TLSEntry && entryKeyPattern.MatchString(key)
+}
+
+// EntryKeyFor is the entry key a setting's name makes, for the entries
+// HivePaaS makes itself - a template's swarmRef, a system app's secret:
+// lowercased, anything else a hyphen, at most 20 characters.
+func EntryKeyFor(name string) string {
+	key := strings.Trim(notEntryKeyChars.ReplaceAllString(strings.ToLower(name), "-"), "-")
+	if len(key) > entryKeyMaxLen {
+		key = strings.Trim(key[:entryKeyMaxLen], "-")
+	}
+	return key
 }
 
 // ObjectName is the Docker secret or config a file is held in, named as secrets

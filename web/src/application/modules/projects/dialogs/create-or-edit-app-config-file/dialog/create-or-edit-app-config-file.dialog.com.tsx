@@ -97,6 +97,7 @@ export function CreateOrEditAppConfigFileDialog() {
                 name: values.name,
                 content,
                 base64,
+                inheritable: values.inheritable,
             });
             return;
         }
@@ -109,6 +110,7 @@ export function CreateOrEditAppConfigFileDialog() {
                 name: values.name,
                 content,
                 base64,
+                inheritable: values.inheritable,
             });
         }
     }
@@ -137,6 +139,7 @@ export function CreateOrEditAppConfigFileDialog() {
             ? {
                   name: state.configFile.name,
                   valueType: state.configFile.base64 ? ("binary" as const) : ("text" as const),
+                  inheritable: state.configFile.inheritable,
               }
             : undefined;
 

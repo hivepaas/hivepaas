@@ -1,5 +1,6 @@
 export * from "./env-variables";
 export * from "./secrets";
+export * from "./config-files";
 export * from "./general";
 export * from "./basic-auth";
 export * from "./github-apps";

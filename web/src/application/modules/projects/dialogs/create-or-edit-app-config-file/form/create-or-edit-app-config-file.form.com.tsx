@@ -5,9 +5,9 @@ import { UploadIcon } from "lucide-react";
 import { type FieldErrors, useController, useForm, useWatch } from "react-hook-form";
 import { PROJECT_FORM_CONTROL_MAX_WIDTH_CLASS } from "~/projects/module-shared/constants";
 
-import { FormActionBar, InfoBlock, LabelWithInfo } from "@application/shared/components";
+import { AvailableInAppsWarning, FormActionBar, InfoBlock, LabelWithInfo } from "@application/shared/components";
 
-import { Button, Field, FieldError, FieldGroup, Input, Tabs, TabsList, TabsTrigger } from "@/components/ui";
+import { Button, Checkbox, Field, FieldError, FieldGroup, Input, Tabs, TabsList, TabsTrigger } from "@/components/ui";
 import { Textarea } from "@/components/ui/textarea";
 
 import type { CreateOrEditAppConfigFileFormInput, CreateOrEditAppConfigFileFormOutput } from "../schemas";
@@ -22,6 +22,8 @@ export function CreateOrEditAppConfigFileForm({
     readOnly = false,
     stickyActions = false,
     onClose,
+    inheritableLabel = "Available in Previews",
+    inheritableWarning = "Warning: Preview apps will not be able to access this configuration.",
 }: Props) {
     const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -36,6 +38,8 @@ export function CreateOrEditAppConfigFileForm({
             isEditMode,
             textValue: "",
             binaryFile: null,
+            // New settings are available unless the person says otherwise.
+            inheritable: initialValues?.inheritable ?? true,
         },
         resolver: zodResolver(CreateOrEditAppConfigFileFormSchema),
         mode: "onSubmit",
@@ -66,6 +70,11 @@ export function CreateOrEditAppConfigFileForm({
 
     const { field: valueTypeField } = useController({
         name: "valueType",
+        control,
+    });
+
+    const { field: inheritableField } = useController({
+        name: "inheritable",
         control,
     });
 
@@ -104,7 +113,7 @@ export function CreateOrEditAppConfigFileForm({
             >
                 <div className="flex flex-col gap-6">
                     <InfoBlock
-                        titleWidth={240}
+                        titleWidth={220}
                         title={
                             <LabelWithInfo
                                 label="Name"
@@ -128,7 +137,7 @@ export function CreateOrEditAppConfigFileForm({
                     </InfoBlock>
 
                     <InfoBlock
-                        titleWidth={240}
+                        titleWidth={220}
                         title={
                             <LabelWithInfo
                                 label="Value Type"
@@ -151,7 +160,7 @@ export function CreateOrEditAppConfigFileForm({
 
                     {valueType === "text" ? (
                         <InfoBlock
-                            titleWidth={240}
+                            titleWidth={220}
                             title={
                                 <LabelWithInfo
                                     label="Value"
@@ -178,7 +187,7 @@ export function CreateOrEditAppConfigFileForm({
                         </InfoBlock>
                     ) : (
                         <InfoBlock
-                            titleWidth={240}
+                            titleWidth={220}
                             title={
                                 <LabelWithInfo
                                     label="Value"
@@ -219,6 +228,22 @@ export function CreateOrEditAppConfigFileForm({
                             </FieldGroup>
                         </InfoBlock>
                     )}
+
+                    <InfoBlock
+                        titleWidth={220}
+                        title={<LabelWithInfo label={inheritableLabel} />}
+                    >
+                        <div className="flex items-center gap-3">
+                            <Checkbox
+                                id="app-config-file-inheritable"
+                                checked={inheritableField.value}
+                                onCheckedChange={checked => {
+                                    inheritableField.onChange(Boolean(checked));
+                                }}
+                            />
+                            {!inheritableField.value ? <AvailableInAppsWarning message={inheritableWarning} /> : null}
+                        </div>
+                    </InfoBlock>
                 </div>
                 {!readOnly && (
                     <FormActionBar sticky={stickyActions}>
@@ -265,4 +290,7 @@ interface Props {
     readOnly?: boolean;
     stickyActions?: boolean;
     onClose?: () => void;
+    /** An app's config file is available to its previews; a project's or env's to its apps. */
+    inheritableLabel?: string;
+    inheritableWarning?: string;
 }

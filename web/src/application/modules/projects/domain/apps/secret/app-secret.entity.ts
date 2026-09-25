@@ -10,6 +10,7 @@ export interface AppSecret {
     value?: string;
     secretMasked?: boolean;
     base64: boolean;
+    inheritable: boolean;
     type: string;
     status: OpenApiConstant<EProjectSecretStatus>;
     inherited: boolean;

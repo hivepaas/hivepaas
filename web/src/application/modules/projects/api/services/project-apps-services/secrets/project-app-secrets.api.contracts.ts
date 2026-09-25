@@ -66,6 +66,7 @@ export type AppSecrets_CreateOne_Req = ApiRequestBase<{
     name: string;
     value: string;
     base64: boolean;
+    inheritable: boolean;
 }>;
 
 export type AppSecrets_CreateOne_Res = ApiResponseBase<{

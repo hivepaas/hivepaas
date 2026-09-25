@@ -1089,6 +1089,22 @@ export const ROUTE = {
                     },
                 },
 
+                configFiles: {
+                    $pattern: "projects/:id/integrations/config-files",
+                    $route: (id: string) => `/projects/${id}/integrations/config-files/`,
+
+                    create: {
+                        $pattern: "projects/:id/integrations/config-files/create",
+                        $route: (id: string) => `/projects/${id}/integrations/config-files/create/`,
+                    },
+
+                    edit: {
+                        $pattern: "projects/:id/integrations/config-files/:configFileId/edit",
+                        $route: (id: string, configFileId: string) =>
+                            `/projects/${id}/integrations/config-files/${configFileId}/edit/`,
+                    },
+                },
+
                 secrets: {
                     $pattern: "projects/:id/integrations/secrets",
                     $route: (id: string) => `/projects/${id}/integrations/secrets/`,

@@ -1161,6 +1161,36 @@ export const projectsRouter: RouteObject = {
                             },
                         },
                         {
+                            path: ROUTE.projects.single.providerConfiguration.configFiles.$pattern,
+                            lazy: async () => {
+                                const { ProjectConfigFilesRoute } = await getLazyComponents();
+
+                                return {
+                                    Component: ProjectConfigFilesRoute,
+                                };
+                            },
+                        },
+                        {
+                            path: ROUTE.projects.single.providerConfiguration.configFiles.create.$pattern,
+                            lazy: async () => {
+                                const { ProjectConfigFileCreateRoute } = await getLazyComponents();
+
+                                return {
+                                    Component: ProjectConfigFileCreateRoute,
+                                };
+                            },
+                        },
+                        {
+                            path: ROUTE.projects.single.providerConfiguration.configFiles.edit.$pattern,
+                            lazy: async () => {
+                                const { ProjectConfigFileEditRoute } = await getLazyComponents();
+
+                                return {
+                                    Component: ProjectConfigFileEditRoute,
+                                };
+                            },
+                        },
+                        {
                             path: ROUTE.projects.single.providerConfiguration.sshKeys.$pattern,
                             lazy: async () => {
                                 const { ProjectSSHKeysRoute } = await getLazyComponents();

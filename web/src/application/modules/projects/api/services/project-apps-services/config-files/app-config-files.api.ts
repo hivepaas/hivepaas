@@ -124,7 +124,7 @@ export class AppConfigFilesApi extends BaseApi {
         request: AppConfigFiles_CreateOne_Req,
         signal?: AbortSignal,
     ): Promise<Result<AppConfigFiles_CreateOne_Res, Error>> {
-        const { projectID, env, appID, name, content, base64 } = request.data;
+        const { projectID, env, appID, name, content, base64, inheritable } = request.data;
 
         const json = {
             name: JsonTransformer.string({
@@ -134,6 +134,7 @@ export class AppConfigFilesApi extends BaseApi {
                 data: content,
             }),
             base64,
+            inheritable,
         };
 
         return lastValueFrom(
@@ -172,7 +173,7 @@ export class AppConfigFilesApi extends BaseApi {
         request: AppConfigFiles_UpdateOne_Req,
         signal?: AbortSignal,
     ): Promise<Result<AppConfigFiles_UpdateOne_Res, Error>> {
-        const { projectID, env, appID, configFileID, updateVer, name, content, base64 } = request.data;
+        const { projectID, env, appID, configFileID, updateVer, name, content, base64, inheritable } = request.data;
 
         const json = {
             updateVer,
@@ -183,6 +184,7 @@ export class AppConfigFilesApi extends BaseApi {
                 data: content,
             }),
             base64,
+            inheritable,
         };
 
         return lastValueFrom(

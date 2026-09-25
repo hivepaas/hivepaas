@@ -97,6 +97,7 @@ export function CreateOrEditAppSecretDialog() {
                 name: values.name,
                 value,
                 base64,
+                inheritable: values.inheritable,
             });
             return;
         }
@@ -109,6 +110,7 @@ export function CreateOrEditAppSecretDialog() {
                 name: values.name,
                 value,
                 base64,
+                inheritable: values.inheritable,
             });
         }
     }
@@ -137,6 +139,7 @@ export function CreateOrEditAppSecretDialog() {
             ? {
                   name: state.secret.name,
                   valueType: state.secret.base64 ? ("binary" as const) : ("text" as const),
+                  inheritable: state.secret.inheritable,
               }
             : undefined;
 

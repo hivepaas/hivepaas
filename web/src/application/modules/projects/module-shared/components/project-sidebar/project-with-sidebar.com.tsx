@@ -195,6 +195,11 @@ function createProviderConfigurationSections(projectId: string): ProviderTabSect
                     icon: KeyRound,
                     route: ROUTE.projects.single.providerConfiguration.secrets.$route(projectId),
                 },
+                {
+                    label: "Config Files",
+                    icon: FileCode2,
+                    route: ROUTE.projects.single.providerConfiguration.configFiles.$route(projectId),
+                },
             ],
         },
         {

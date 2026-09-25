@@ -96,6 +96,7 @@ export function AppConfigFileFormRoute({ mode, projectId, appId, env, configFile
                 name: values.name,
                 content,
                 base64,
+                inheritable: values.inheritable,
             });
             return;
         }
@@ -108,6 +109,7 @@ export function AppConfigFileFormRoute({ mode, projectId, appId, env, configFile
                 name: values.name,
                 content,
                 base64,
+                inheritable: values.inheritable,
             });
         }
     }
@@ -130,6 +132,7 @@ export function AppConfigFileFormRoute({ mode, projectId, appId, env, configFile
             ? {
                   name: configFile.name,
                   valueType: configFile.base64 ? ("binary" as const) : ("text" as const),
+                  inheritable: configFile.inheritable,
               }
             : undefined;
     const isDetailLoading = isEditMode && detailQuery.isFetching;

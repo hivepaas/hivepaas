@@ -59,6 +59,8 @@ import {
     ProjectCommandPipeApiValidator,
     ProjectCommandTemplateApi,
     ProjectCommandTemplateApiValidator,
+    ProjectConfigFilesApi,
+    ProjectConfigFilesApiValidator,
     ProjectDockerVolumesApi,
     ProjectDockerVolumesApiValidator,
     ProjectDomainSettingsApi,
@@ -140,6 +142,7 @@ function createApi() {
     const projectGithubAppApiValidator = new ProjectGithubAppApiValidator();
     const projectRepoWebhookApiValidator = new ProjectRepoWebhookApiValidator();
     const projectSecretsApiValidator = new ProjectSecretsApiValidator();
+    const projectConfigFilesApiValidator = new ProjectConfigFilesApiValidator();
     const projectEnvVarsApiValidator = new ProjectEnvVarsApiValidator();
     const projectDomainSettingsApiValidator = new ProjectDomainSettingsApiValidator();
     const projectNetworksApiValidator = new ProjectNetworksApiValidator();
@@ -279,6 +282,9 @@ function createApi() {
             },
             secrets: {
                 $: new ProjectSecretsApi(projectSecretsApiValidator),
+            },
+            configFiles: {
+                $: new ProjectConfigFilesApi(projectConfigFilesApiValidator),
             },
             acmeDnsProvider: {
                 $: new ProjectAcmeDnsProviderApi(projectAcmeDnsProviderApiValidator),

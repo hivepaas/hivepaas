@@ -1,7 +1,7 @@
 import type { ColumnDef } from "@tanstack/react-table";
 import { format } from "date-fns";
 import type { ProjectSecret } from "~/projects/domain";
-import { ProjectSecretStatusBadge } from "~/projects/module-shared/components";
+import { InheritableCell, ProjectSecretStatusBadge } from "~/projects/module-shared/components";
 
 import { EditCell, MenuCell } from "./building-blocks";
 
@@ -44,6 +44,22 @@ function createColumns(projectId: string, env?: string): ColumnDef<ProjectSecret
             header: "Type",
             cell: ({ row: { original } }) => {
                 return original.base64 ? "binary" : "text";
+            },
+        },
+        {
+            id: "inheritable",
+            header: "In Apps",
+            enableSorting: false,
+            size: 90,
+            cell: ({ row: { original } }) => (
+                <InheritableCell
+                    inheritable={original.inheritable}
+                    target="apps"
+                />
+            ),
+            meta: {
+                align: "center",
+                titleAlign: "center",
             },
         },
         {

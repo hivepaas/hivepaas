@@ -1,7 +1,7 @@
 import { z } from "zod";
 
 /** At most, as the server bounds them. */
-export const DOCKER_API_MAX_CONTAINERS = 50;
+export const DOCKER_API_MAX_CONTAINERS = 100;
 
 /** The groups of endpoints beyond the core, as the proxy names them, and what each lets children do. */
 export const DOCKER_API_GROUPS = [

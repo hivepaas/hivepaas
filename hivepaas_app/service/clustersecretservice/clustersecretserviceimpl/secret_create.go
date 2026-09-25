@@ -13,6 +13,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/settingmountservice"
 	"github.com/hivepaas/hivepaas/services/docker"
 )
 
@@ -103,6 +104,10 @@ func (s *service) addSwarmSecretsToService(
 	if len(refs) == 0 || app.ServiceID == "" {
 		return nil
 	}
+	mounted, err := s.mountedIDs(ctx)
+	if err != nil {
+		return hperrors.Wrap(err)
+	}
 
 	err = s.dockerManager.ServiceUpdateFunc(ctx, app.ServiceID, nil,
 		func(_ int, swarmSvc *swarm.Service) (bool, error) {
@@ -111,11 +116,10 @@ func (s *service) addSwarmSecretsToService(
 				if swarmRef == nil || swarmRef.SecretID == "" {
 					continue
 				}
-				// Only add the secret to the swarm service when the target file name is not used by another secret
-				_, inUse := gofn.Find(containerSpec.Secrets, func(sec *swarm.SecretReference) bool {
-					return sec.File != nil && sec.File.Name == swarmRef.File.Name
-				})
-				if inUse {
+				// Only when no other file lands where this one does. A setting
+				// mount there steps aside: an ordinary file wins, as it does when
+				// the mounts are applied.
+				if makeRoomForSecret(containerSpec, settingmountservice.SecretTarget(swarmRef.File.Name), mounted) {
 					continue
 				}
 				containerSpec.Secrets = append(containerSpec.Secrets, &swarm.SecretReference{

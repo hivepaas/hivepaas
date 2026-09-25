@@ -13,6 +13,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/settingmountservice"
 	"github.com/hivepaas/hivepaas/services/docker"
 )
 
@@ -98,6 +99,10 @@ func (s *service) addSwarmConfigsToService(
 	if len(refs) == 0 || app.ServiceID == "" {
 		return nil
 	}
+	mounted, err := s.mountedIDs(ctx)
+	if err != nil {
+		return hperrors.Wrap(err)
+	}
 
 	err = s.dockerManager.ServiceUpdateFunc(ctx, app.ServiceID, nil,
 		func(_ int, swarmSvc *swarm.Service) (bool, error) {
@@ -106,11 +111,10 @@ func (s *service) addSwarmConfigsToService(
 				if swarmRef == nil || swarmRef.ConfigID == "" {
 					continue
 				}
-				// Only add the config to the swarm service when the target file name is not used by another config
-				_, inUse := gofn.Find(containerSpec.Configs, func(cfg *swarm.ConfigReference) bool {
-					return cfg.File != nil && cfg.File.Name == swarmRef.File.Name
-				})
-				if inUse {
+				// Only when no other file lands where this one does. A setting
+				// mount there steps aside: an ordinary file wins, as it does when
+				// the mounts are applied.
+				if makeRoomForConfig(containerSpec, settingmountservice.ConfigTarget(swarmRef.File.Name), mounted) {
 					continue
 				}
 				containerSpec.Configs = append(containerSpec.Configs, &swarm.ConfigReference{

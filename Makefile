@@ -37,6 +37,12 @@ test-race:
 test-cover:
 	@./scripts/test.sh
 
+# The release installer (deployment/release): shellcheck, then the tests of
+# its functions under this machine's bash.
+test-installer:
+	@docker run --rm -v "$(PWD)/deployment/release":/mnt:ro -w /mnt koalaman/shellcheck:stable -x install.sh install_test.sh
+	@bash deployment/release/install_test.sh
+
 nilaway:
 	# run once: go install go.uber.org/nilaway/cmd/nilaway@latest
 	@nilaway ./hivepaas_app/...

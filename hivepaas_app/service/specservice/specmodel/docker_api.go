@@ -23,7 +23,7 @@ const (
 	// MaxDockerAPISharedDirs is how many of its directories an app may share.
 	MaxDockerAPISharedDirs = 5
 	// MaxDockerAPIContainers is the most children one app may keep at once.
-	MaxDockerAPIContainers = 50
+	MaxDockerAPIContainers = 100
 	// minDockerAPIMemory is the least memory docker starts a container with.
 	minDockerAPIMemory = 6 * unit.MB
 

@@ -55,7 +55,7 @@ func TestDockerAPIProblem(t *testing.T) {
 		"sharedDirs[0]: /a/../b is": func(s *entity.AppDockerAPISettings) { s.SharedDirs = []string{"/a/../b"} },
 		"networks[0]":               func(s *entity.AppDockerAPISettings) { s.Networks = []string{"hivepaas_net"} },
 		"allow[0]":                  func(s *entity.AppDockerAPISettings) { s.Allow = []string{"build"} },
-		"limits.containers":         func(s *entity.AppDockerAPISettings) { s.Limits.Containers = 51 },
+		"limits.containers":         func(s *entity.AppDockerAPISettings) { s.Limits.Containers = 101 },
 		"limits.memory":             func(s *entity.AppDockerAPISettings) { s.Limits.Memory = 1 * unit.MB },
 		"limits.cpus":               func(s *entity.AppDockerAPISettings) { s.Limits.CPUs = -1 },
 	}

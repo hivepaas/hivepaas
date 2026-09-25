@@ -82,7 +82,7 @@ settings:
 | `networks` | Networks children may join besides their own. The only value in this phase is `env`: the app's project-env network, for a runner whose jobs clone from a forge in the same env. | none |
 | `allow` | Groups of endpoints beyond the core (§3): `exec`, `files`, `volumes`, `networks`, `nestedSocket`. | none |
 | `mode` | `proxy`, or `host` for the node's own socket (§15). | `proxy` |
-| `limits.containers` | Children that may exist at once, running or not. At most 50. | 5 |
+| `limits.containers` | Children that may exist at once, running or not. At most 100. | 5 |
 | `limits.memory`, `limits.cpus` | The most one child may ask for, and what it gets when it asks for nothing. A data size such as `2gb` and a number of CPUs, as `deployment.resources.limits` takes them. | 1gb, 1 |
 
 The buildable subset (`specmodel/buildable.go`) accepts the block with exactly

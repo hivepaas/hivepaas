@@ -3,6 +3,7 @@ package envvarservice
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
@@ -14,11 +15,20 @@ const (
 	ParseErrorSecretMissing ParseErrorType = "secret-missing"
 	ParseErrorSecretFailure ParseErrorType = "secret-failure"
 	ParseErrorVarMissing    ParseErrorType = "var-missing"
+	// ParseErrorSecretWithheld is a reference to a secret the scope above holds
+	// and does not make inheritable.
+	ParseErrorSecretWithheld ParseErrorType = "secret-withheld"
+	// ParseErrorVarUsesWithheldSecret is an inherited variable whose value was
+	// built from such a secret: the value holds it.
+	//nolint:gosec // an error type, not a credential
+	ParseErrorVarUsesWithheldSecret ParseErrorType = "var-uses-withheld-secret"
 )
 
 type ParseError struct {
 	Type ParseErrorType
 	Name string
+	// Secrets are the held back secrets a variable used.
+	Secrets []string
 }
 
 func (e *ParseError) Error() string {
@@ -29,6 +39,12 @@ func (e *ParseError) Error() string {
 		return fmt.Sprintf("secret '%v' is failed to parse", e.Name)
 	case ParseErrorVarMissing:
 		return fmt.Sprintf("variable '%v' is missing", e.Name)
+	case ParseErrorSecretWithheld:
+		return fmt.Sprintf("secret '%v' is not available here: the scope above holds it and does not make it "+
+			"inheritable", e.Name)
+	case ParseErrorVarUsesWithheldSecret:
+		return fmt.Sprintf("inherited variable '%v' uses secret '%v', which the scope above does not make "+
+			"inheritable", e.Name, strings.Join(e.Secrets, "', '"))
 	default:
 		return fmt.Sprintf("unknown error '%v' at '%v'", e.Type, e.Name)
 	}
@@ -41,7 +57,10 @@ func (e *ParseError) ErrorWithApp(app string) string {
 type EnvVar struct {
 	*entity.EnvVar
 	RefSecrets map[*entity.Secret]struct{}
-	Errors     []*ParseError
+	// RefSecretSettings are the settings of those secrets, by id: whether each
+	// may go below the scope that holds it.
+	RefSecretSettings map[string]*entity.Setting
+	Errors            []*ParseError
 }
 
 func (env *EnvVar) ToString(sep string) string {
@@ -53,6 +72,13 @@ func (env *EnvVar) AddRefSecret(secret *entity.Secret) {
 		env.RefSecrets = make(map[*entity.Secret]struct{})
 	}
 	env.RefSecrets[secret] = struct{}{}
+}
+
+func (env *EnvVar) AddRefSecretSetting(setting *entity.Setting) {
+	if env.RefSecretSettings == nil {
+		env.RefSecretSettings = make(map[string]*entity.Setting)
+	}
+	env.RefSecretSettings[setting.ID] = setting
 }
 
 type EnvVarsData struct {

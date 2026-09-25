@@ -164,6 +164,8 @@ Base §2's table gains two rows and a column:
 ## Not in this design
 
 - **The environment's reading of secrets** agreeing with settings' visibility
-  (Decision 3). A task of its own.
+  (Decision 3). Done in a task of its own: a scope's secrets reach the scope
+  below only when inheritable, and an inherited variable built from one that is
+  not is refused there.
 - **Moving data from `swarmRef` to entries.** Nothing is carried over
   (development).

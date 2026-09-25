@@ -24,9 +24,12 @@ var (
 )
 
 type processRefsData struct {
-	EnvStore     map[string]*envvarservice.EnvVar
-	SecretStore  map[string]*entity.Setting
-	BuildOptions envvarservice.EnvBuildOptions
+	EnvStore    map[string]*envvarservice.EnvVar
+	SecretStore map[string]*entity.Setting
+	// WithheldSecrets are the secrets of the scope above that it does not make
+	// inheritable, by name: a reference to one says so rather than "missing".
+	WithheldSecrets map[string]struct{}
+	BuildOptions    envvarservice.EnvBuildOptions
 
 	ExternalRefsData     map[string]map[string]*envvarservice.EnvVar
 	ExternalRefsLoadFunc func(refName string) (map[string]*envvarservice.EnvVar, error)
@@ -73,10 +76,11 @@ func (s *service) processRefsRecursively(
 		if refName == secretRefPrefix {
 			refSecret, exists := data.SecretStore[varName]
 			if !exists {
-				env.Errors = append(env.Errors, &envvarservice.ParseError{
-					Type: envvarservice.ParseErrorSecretMissing,
-					Name: varName,
-				})
+				errType := envvarservice.ParseErrorSecretMissing
+				if _, withheld := data.WithheldSecrets[varName]; withheld {
+					errType = envvarservice.ParseErrorSecretWithheld
+				}
+				env.Errors = append(env.Errors, &envvarservice.ParseError{Type: errType, Name: varName})
 				return match
 			}
 			secret, err := refSecret.AsSecret()
@@ -88,6 +92,7 @@ func (s *service) processRefsRecursively(
 				return match
 			}
 			env.AddRefSecret(secret)
+			env.AddRefSecretSetting(refSecret)
 
 			if data.BuildOptions.MaskSecrets {
 				return secretMask
@@ -148,6 +153,9 @@ func (s *service) processRefsRecursively(
 		}
 		for secret := range refEnv.RefSecrets {
 			env.AddRefSecret(secret)
+		}
+		for _, setting := range refEnv.RefSecretSettings {
+			env.AddRefSecretSetting(setting)
 		}
 		return refEnv.Value
 	}

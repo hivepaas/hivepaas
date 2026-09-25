@@ -21,7 +21,7 @@ func (s *service) BuildEnvVarsInApp(
 	secretStore := make(map[string]*entity.Setting, 20)    //nolint:mnd
 
 	// Merge with inherited envs and secrets
-	inheritedVars, inheritedSecrets, err := s.loadInheritedVarDataInApp(ctx, db, req, envStore, secretStore)
+	inherited, err := s.loadInheritedVarDataInApp(ctx, db, req, envStore, secretStore)
 	if err != nil {
 		return nil, hperrors.Wrap(err)
 	}
@@ -33,9 +33,10 @@ func (s *service) BuildEnvVarsInApp(
 	}
 
 	refsData := &processRefsData{
-		EnvStore:     envStore,
-		SecretStore:  secretStore,
-		BuildOptions: req.BuildOptions,
+		EnvStore:        envStore,
+		SecretStore:     secretStore,
+		WithheldSecrets: inherited.withheld,
+		BuildOptions:    req.BuildOptions,
 		ExternalRefsLoadFunc: func(refName string) (map[string]*envvarservice.EnvVar, error) {
 			resp, err := s.buildSharedEnvVarsInApp(ctx, db, req.App.ProjectID, req.App.ProjectEnvID,
 				refName, req.BuildOptions)
@@ -84,8 +85,8 @@ func (s *service) BuildEnvVarsInApp(
 	return &envvarservice.BuildEnvVarsInAppResp{
 		EnvVars:          resultVars,
 		Secrets:          gofn.MapValues(secretStore),
-		InheritedEnvVars: inheritedVars,
-		InheritedSecrets: inheritedSecrets,
+		InheritedEnvVars: inherited.vars,
+		InheritedSecrets: inherited.secrets,
 	}, nil
 }
 
@@ -141,7 +142,7 @@ func (s *service) loadInheritedVarDataInApp(
 	req *envvarservice.BuildEnvVarsInAppReq,
 	envStore map[string]*envvarservice.EnvVar,
 	secretStore map[string]*entity.Setting,
-) (inheritedVars []*envvarservice.EnvVar, inheritedSecrets []*entity.Setting, err error) {
+) (*inherited, error) {
 	app := req.App
 	defaultLoadFunc := func(context.Context, database.IDB, *entity.ObjectScope, envvarservice.EnvLoadOptions) (
 		[]*envvarservice.EnvVar, []*entity.Setting, error) {
@@ -179,17 +180,19 @@ func (s *service) loadInheritedVarDataInApp(
 		loadFunc = defaultLoadFunc
 	}
 
-	inheritedVars, inheritedSecrets, err = loadFunc(ctx, db, app.GetObjectScope(), req.LoadOptions)
+	inheritedVars, inheritedSecrets, err := loadFunc(ctx, db, app.GetObjectScope(), req.LoadOptions)
 	if err != nil {
-		return nil, nil, hperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 
-	for _, aVar := range inheritedVars {
+	// Only what the scope above makes inheritable comes down.
+	res := inherit(inheritedVars, inheritedSecrets)
+	for _, aVar := range res.vars {
 		envStore[aVar.Key] = aVar
 	}
-	for _, aSec := range inheritedSecrets {
+	for _, aSec := range res.secrets {
 		secretStore[aSec.Name] = aSec
 	}
 
-	return inheritedVars, inheritedSecrets, nil
+	return res, nil
 }

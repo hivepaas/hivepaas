@@ -21,7 +21,7 @@ func (s *service) BuildEnvVarsInProjectEnv(
 	secretStore := make(map[string]*entity.Setting, 20)    //nolint:mnd
 
 	// Merge with inherited envs and secrets
-	inheritedVars, inheritedSecrets, err := s.loadInheritedVarDataInProjectEnv(ctx, db, req,
+	inherited, err := s.loadInheritedVarDataInProjectEnv(ctx, db, req,
 		envStore, secretStore)
 	if err != nil {
 		return nil, hperrors.Wrap(err)
@@ -34,9 +34,10 @@ func (s *service) BuildEnvVarsInProjectEnv(
 	}
 
 	refsData := &processRefsData{
-		EnvStore:     envStore,
-		SecretStore:  secretStore,
-		BuildOptions: req.BuildOptions,
+		EnvStore:        envStore,
+		SecretStore:     secretStore,
+		WithheldSecrets: inherited.withheld,
+		BuildOptions:    req.BuildOptions,
 	}
 
 	resultVars := make([]*envvarservice.EnvVar, 0, len(envStore))
@@ -73,8 +74,8 @@ func (s *service) BuildEnvVarsInProjectEnv(
 	return &envvarservice.BuildEnvVarsInProjectEnvResp{
 		EnvVars:          resultVars,
 		Secrets:          gofn.MapValues(secretStore),
-		InheritedEnvVars: inheritedVars,
-		InheritedSecrets: inheritedSecrets,
+		InheritedEnvVars: inherited.vars,
+		InheritedSecrets: inherited.secrets,
 	}, nil
 }
 
@@ -129,7 +130,7 @@ func (s *service) loadInheritedVarDataInProjectEnv(
 	req *envvarservice.BuildEnvVarsInProjectEnvReq,
 	envStore map[string]*envvarservice.EnvVar,
 	secretStore map[string]*entity.Setting,
-) (inheritedVars []*envvarservice.EnvVar, inheritedSecrets []*entity.Setting, err error) {
+) (*inherited, error) {
 	projectEnv := req.ProjectEnv
 	defaultLoadFunc := func(context.Context, database.IDB, *entity.ObjectScope, envvarservice.EnvLoadOptions) (
 		[]*envvarservice.EnvVar, []*entity.Setting, error) {
@@ -149,17 +150,19 @@ func (s *service) loadInheritedVarDataInProjectEnv(
 		loadFunc = defaultLoadFunc
 	}
 
-	inheritedVars, inheritedSecrets, err = loadFunc(ctx, db, projectEnv.GetObjectScope(), req.LoadOptions)
+	inheritedVars, inheritedSecrets, err := loadFunc(ctx, db, projectEnv.GetObjectScope(), req.LoadOptions)
 	if err != nil {
-		return nil, nil, hperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 
-	for _, aVar := range inheritedVars {
+	// Only what the scope above makes inheritable comes down.
+	res := inherit(inheritedVars, inheritedSecrets)
+	for _, aVar := range res.vars {
 		envStore[aVar.Key] = aVar
 	}
-	for _, aSec := range inheritedSecrets {
+	for _, aSec := range res.secrets {
 		secretStore[aSec.Name] = aSec
 	}
 
-	return inheritedVars, inheritedSecrets, nil
+	return res, nil
 }

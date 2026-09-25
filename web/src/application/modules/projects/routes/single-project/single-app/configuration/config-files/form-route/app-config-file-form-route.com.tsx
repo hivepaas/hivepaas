@@ -39,21 +39,6 @@ async function getConfigFileContent(values: CreateOrEditAppConfigFileFormOutput)
     return fileToBase64(values.binaryFile);
 }
 
-function getSwarmRef(values: CreateOrEditAppConfigFileFormOutput) {
-    if (!values.mountIntoFilesystem) {
-        return undefined;
-    }
-
-    return {
-        file: {
-            name: values.filePath,
-            mode: values.fileMode,
-            uid: values.fileUid,
-            gid: values.fileGid,
-        },
-    };
-}
-
 export function AppConfigFileFormRoute({ mode, projectId, appId, env, configFileId }: Props) {
     const [hasChanges, setHasChanges] = useState(false);
     const { canWrite } = useConditionalModule({ id: MODULE_IDS.Project });
@@ -100,7 +85,6 @@ export function AppConfigFileFormRoute({ mode, projectId, appId, env, configFile
 
         const content = await getConfigFileContent(values);
         const base64 = values.valueType === "binary";
-        const swarmRef = getSwarmRef(values);
 
         if (isEditMode && configFile) {
             updateAppConfigFile({
@@ -112,7 +96,6 @@ export function AppConfigFileFormRoute({ mode, projectId, appId, env, configFile
                 name: values.name,
                 content,
                 base64,
-                swarmRef,
             });
             return;
         }
@@ -125,7 +108,6 @@ export function AppConfigFileFormRoute({ mode, projectId, appId, env, configFile
                 name: values.name,
                 content,
                 base64,
-                swarmRef,
             });
         }
     }
@@ -148,11 +130,6 @@ export function AppConfigFileFormRoute({ mode, projectId, appId, env, configFile
             ? {
                   name: configFile.name,
                   valueType: configFile.base64 ? ("binary" as const) : ("text" as const),
-                  mountIntoFilesystem: Boolean(configFile.swarmRef?.file),
-                  filePath: configFile.swarmRef?.file?.name,
-                  fileMode: configFile.swarmRef?.file?.mode,
-                  fileUid: configFile.swarmRef?.file?.uid,
-                  fileGid: configFile.swarmRef?.file?.gid,
               }
             : undefined;
     const isDetailLoading = isEditMode && detailQuery.isFetching;

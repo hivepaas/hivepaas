@@ -122,7 +122,7 @@ export class AppSecretsApi extends BaseApi {
         request: AppSecrets_CreateOne_Req,
         signal?: AbortSignal,
     ): Promise<Result<AppSecrets_CreateOne_Res, Error>> {
-        const { projectID, env, appID, name, value, base64, swarmRef } = request.data;
+        const { projectID, env, appID, name, value, base64 } = request.data;
 
         const json = {
             key: JsonTransformer.string({
@@ -132,7 +132,6 @@ export class AppSecretsApi extends BaseApi {
                 data: value,
             }),
             base64,
-            swarmRef,
             status: EProjectSecretStatus.Active,
         };
 
@@ -170,7 +169,7 @@ export class AppSecretsApi extends BaseApi {
         request: AppSecrets_UpdateOne_Req,
         signal?: AbortSignal,
     ): Promise<Result<AppSecrets_UpdateOne_Res, Error>> {
-        const { projectID, env, appID, secretID, updateVer, name, value, base64, swarmRef } = request.data;
+        const { projectID, env, appID, secretID, updateVer, name, value, base64 } = request.data;
 
         const json = {
             updateVer,
@@ -181,7 +180,6 @@ export class AppSecretsApi extends BaseApi {
                 data: value,
             }),
             base64,
-            swarmRef,
         };
 
         return lastValueFrom(

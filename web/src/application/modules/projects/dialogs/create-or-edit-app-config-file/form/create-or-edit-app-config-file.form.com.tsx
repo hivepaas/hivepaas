@@ -7,15 +7,11 @@ import { PROJECT_FORM_CONTROL_MAX_WIDTH_CLASS } from "~/projects/module-shared/c
 
 import { FormActionBar, InfoBlock, LabelWithInfo } from "@application/shared/components";
 
-import { Button, Checkbox, Field, FieldError, FieldGroup, Input, Tabs, TabsList, TabsTrigger } from "@/components/ui";
+import { Button, Field, FieldError, FieldGroup, Input, Tabs, TabsList, TabsTrigger } from "@/components/ui";
 import { Textarea } from "@/components/ui/textarea";
 
 import type { CreateOrEditAppConfigFileFormInput, CreateOrEditAppConfigFileFormOutput } from "../schemas";
-import {
-    APP_CONFIG_FILE_DEFAULT_FILE_MODE,
-    APP_CONFIG_FILE_DEFAULT_FILE_PATH,
-    CreateOrEditAppConfigFileFormSchema,
-} from "../schemas";
+import { CreateOrEditAppConfigFileFormSchema } from "../schemas";
 
 export function CreateOrEditAppConfigFileForm({
     isPending,
@@ -40,18 +36,12 @@ export function CreateOrEditAppConfigFileForm({
             isEditMode,
             textValue: "",
             binaryFile: null,
-            mountIntoFilesystem: initialValues?.mountIntoFilesystem ?? false,
-            filePath: initialValues?.filePath ?? APP_CONFIG_FILE_DEFAULT_FILE_PATH,
-            fileMode: initialValues?.fileMode ?? APP_CONFIG_FILE_DEFAULT_FILE_MODE,
-            fileUid: initialValues?.fileUid ?? "",
-            fileGid: initialValues?.fileGid ?? "",
         },
         resolver: zodResolver(CreateOrEditAppConfigFileFormSchema),
         mode: "onSubmit",
     });
 
     const valueType = useWatch({ control, name: "valueType" });
-    const mountIntoFilesystem = useWatch({ control, name: "mountIntoFilesystem" });
     const selectedFile = useWatch({ control, name: "binaryFile" });
 
     useEffect(() => {
@@ -79,39 +69,8 @@ export function CreateOrEditAppConfigFileForm({
         control,
     });
 
-    const { field: mountIntoFilesystemField } = useController({
-        name: "mountIntoFilesystem",
-        control,
-    });
-
     const { field: binaryFileField } = useController({
         name: "binaryFile",
-        control,
-    });
-
-    const {
-        field: filePath,
-        fieldState: { invalid: isFilePathInvalid },
-    } = useController({
-        name: "filePath",
-        control,
-    });
-
-    const {
-        field: fileMode,
-        fieldState: { invalid: isFileModeInvalid },
-    } = useController({
-        name: "fileMode",
-        control,
-    });
-
-    const { field: fileUid } = useController({
-        name: "fileUid",
-        control,
-    });
-
-    const { field: fileGid } = useController({
-        name: "fileGid",
         control,
     });
 
@@ -259,92 +218,6 @@ export function CreateOrEditAppConfigFileForm({
                                 </Field>
                             </FieldGroup>
                         </InfoBlock>
-                    )}
-
-                    <InfoBlock
-                        titleWidth={240}
-                        title={<LabelWithInfo label="Mount into Filesystem" />}
-                    >
-                        <Checkbox
-                            checked={mountIntoFilesystem}
-                            onCheckedChange={checked => {
-                                mountIntoFilesystemField.onChange(checked === true);
-                            }}
-                        />
-                    </InfoBlock>
-
-                    {mountIntoFilesystem && (
-                        <>
-                            <InfoBlock
-                                titleWidth={240}
-                                title={
-                                    <LabelWithInfo
-                                        label="File Path"
-                                        isRequired
-                                    />
-                                }
-                            >
-                                <FieldGroup>
-                                    <Field>
-                                        <Input
-                                            id="app-config-file-path"
-                                            {...filePath}
-                                            placeholder={APP_CONFIG_FILE_DEFAULT_FILE_PATH}
-                                            aria-invalid={isFilePathInvalid}
-                                            className={PROJECT_FORM_CONTROL_MAX_WIDTH_CLASS}
-                                        />
-                                        <FieldError errors={[errors.filePath]} />
-                                    </Field>
-                                </FieldGroup>
-                            </InfoBlock>
-
-                            <InfoBlock
-                                titleWidth={240}
-                                title={
-                                    <LabelWithInfo
-                                        label="File Mode"
-                                        isRequired
-                                    />
-                                }
-                            >
-                                <FieldGroup>
-                                    <Field>
-                                        <Input
-                                            id="app-config-file-mode"
-                                            {...fileMode}
-                                            placeholder="default: 0444"
-                                            aria-invalid={isFileModeInvalid}
-                                            className="max-w-[180px]"
-                                        />
-                                        <FieldError errors={[errors.fileMode]} />
-                                    </Field>
-                                </FieldGroup>
-                            </InfoBlock>
-
-                            <InfoBlock
-                                titleWidth={240}
-                                title={<LabelWithInfo label="File UID" />}
-                            >
-                                <Input
-                                    id="app-config-file-uid"
-                                    {...fileUid}
-                                    placeholder="uid"
-                                    className="max-w-[180px]"
-                                />
-                            </InfoBlock>
-
-                            <InfoBlock
-                                titleWidth={240}
-                                title={<LabelWithInfo label="File GID" />}
-                            >
-                                <Input
-                                    id="app-config-file-gid"
-                                    {...fileGid}
-                                    placeholder="gid"
-                                    className="max-w-[180px]"
-                                />
-                            </InfoBlock>
-                        </>
                     )}
                 </div>
                 {!readOnly && (

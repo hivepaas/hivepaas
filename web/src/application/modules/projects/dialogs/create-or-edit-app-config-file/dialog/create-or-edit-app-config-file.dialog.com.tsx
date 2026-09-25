@@ -39,21 +39,6 @@ async function getConfigFileContent(values: CreateOrEditAppConfigFileFormOutput)
     return fileToBase64(values.binaryFile);
 }
 
-function getSwarmRef(values: CreateOrEditAppConfigFileFormOutput) {
-    if (!values.mountIntoFilesystem) {
-        return undefined;
-    }
-
-    return {
-        file: {
-            name: values.filePath,
-            mode: values.fileMode,
-            uid: values.fileUid,
-            gid: values.fileGid,
-        },
-    };
-}
-
 export function CreateOrEditAppConfigFileDialog() {
     const { env } = useParams<{ env: string }>();
     const { state, props: dialogOptions, ...actions } = useCreateOrEditAppConfigFileDialogState();
@@ -101,7 +86,6 @@ export function CreateOrEditAppConfigFileDialog() {
 
         const content = await getConfigFileContent(values);
         const base64 = values.valueType === "binary";
-        const swarmRef = getSwarmRef(values);
 
         if (state.mode === "edit") {
             updateAppConfigFile({
@@ -113,7 +97,6 @@ export function CreateOrEditAppConfigFileDialog() {
                 name: values.name,
                 content,
                 base64,
-                swarmRef,
             });
             return;
         }
@@ -126,7 +109,6 @@ export function CreateOrEditAppConfigFileDialog() {
                 name: values.name,
                 content,
                 base64,
-                swarmRef,
             });
         }
     }
@@ -155,11 +137,6 @@ export function CreateOrEditAppConfigFileDialog() {
             ? {
                   name: state.configFile.name,
                   valueType: state.configFile.base64 ? ("binary" as const) : ("text" as const),
-                  mountIntoFilesystem: Boolean(state.configFile.swarmRef?.file),
-                  filePath: state.configFile.swarmRef?.file?.name,
-                  fileMode: state.configFile.swarmRef?.file?.mode,
-                  fileUid: state.configFile.swarmRef?.file?.uid,
-                  fileGid: state.configFile.swarmRef?.file?.gid,
               }
             : undefined;
 

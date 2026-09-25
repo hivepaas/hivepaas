@@ -8,16 +8,11 @@ import { PROJECT_FORM_CONTROL_MAX_WIDTH_CLASS } from "~/projects/module-shared/c
 
 import { FormActionBar, InfoBlock, LabelWithInfo } from "@application/shared/components";
 
-import { Button, Checkbox, Field, FieldError, FieldGroup, Input, Tabs, TabsList, TabsTrigger } from "@/components/ui";
+import { Button, Field, FieldError, FieldGroup, Input, Tabs, TabsList, TabsTrigger } from "@/components/ui";
 import { Textarea } from "@/components/ui/textarea";
 
 import type { CreateOrEditAppSecretFormInput, CreateOrEditAppSecretFormOutput } from "../schemas";
-import { APP_SECRET_DEFAULT_FILE_MODE, CreateOrEditAppSecretFormSchema } from "../schemas";
-
-function getDefaultFilePath(name: string): string {
-    const normalizedName = name.trim().toLowerCase();
-    return normalizedName ? `/run/secrets/${normalizedName}` : "/run/secrets/secret_name";
-}
+import { CreateOrEditAppSecretFormSchema } from "../schemas";
 
 export function CreateOrEditAppSecretForm({
     isPending,
@@ -37,7 +32,7 @@ export function CreateOrEditAppSecretForm({
         handleSubmit,
         control,
         setValue,
-        formState: { errors, isDirty, dirtyFields },
+        formState: { errors, isDirty },
     } = useForm<CreateOrEditAppSecretFormInput, unknown, CreateOrEditAppSecretFormOutput>({
         defaultValues: {
             name: initialValues?.name ?? "",
@@ -45,19 +40,12 @@ export function CreateOrEditAppSecretForm({
             isEditMode,
             textValue: "",
             binaryFile: null,
-            mountIntoFilesystem: initialValues?.mountIntoFilesystem ?? false,
-            filePath: initialValues?.filePath ?? getDefaultFilePath(initialValues?.name ?? ""),
-            fileMode: initialValues?.fileMode ?? APP_SECRET_DEFAULT_FILE_MODE,
-            fileUid: initialValues?.fileUid ?? "",
-            fileGid: initialValues?.fileGid ?? "",
         },
         resolver: zodResolver(CreateOrEditAppSecretFormSchema),
         mode: "onSubmit",
     });
 
-    const secretName = useWatch({ control, name: "name" });
     const valueType = useWatch({ control, name: "valueType" });
-    const mountIntoFilesystem = useWatch({ control, name: "mountIntoFilesystem" });
     const selectedFile = useWatch({ control, name: "binaryFile" });
 
     useEffect(() => {
@@ -74,11 +62,7 @@ export function CreateOrEditAppSecretForm({
                     for (let i = 0; i < binaryStr.length; i++) {
                         bytes[i] = binaryStr.charCodeAt(i);
                     }
-                    const fileName = initialValues.filePath
-                        ? (initialValues.filePath.split("/").pop() ?? "secret.bin")
-                        : initialValues.name
-                          ? `${initialValues.name}.bin`
-                          : "secret.bin";
+                    const fileName = initialValues.name ? `${initialValues.name}.bin` : "secret.bin";
                     const file = new File([bytes], fileName);
                     setValue("binaryFile", file, { shouldDirty: false });
                 } catch (e) {
@@ -86,22 +70,7 @@ export function CreateOrEditAppSecretForm({
                 }
             }
         }
-    }, [
-        revealedSecret,
-        revealedVersion,
-        setValue,
-        initialValues?.valueType,
-        initialValues?.filePath,
-        initialValues?.name,
-    ]);
-
-    useEffect(() => {
-        if (isEditMode || dirtyFields.filePath) {
-            return;
-        }
-
-        setValue("filePath", getDefaultFilePath(secretName), { shouldDirty: false });
-    }, [dirtyFields.filePath, isEditMode, secretName, setValue]);
+    }, [revealedSecret, revealedVersion, setValue, initialValues?.valueType, initialValues?.name]);
 
     const {
         field: name,
@@ -124,39 +93,8 @@ export function CreateOrEditAppSecretForm({
         control,
     });
 
-    const { field: mountIntoFilesystemField } = useController({
-        name: "mountIntoFilesystem",
-        control,
-    });
-
     const { field: binaryFileField } = useController({
         name: "binaryFile",
-        control,
-    });
-
-    const {
-        field: filePath,
-        fieldState: { invalid: isFilePathInvalid },
-    } = useController({
-        name: "filePath",
-        control,
-    });
-
-    const {
-        field: fileMode,
-        fieldState: { invalid: isFileModeInvalid },
-    } = useController({
-        name: "fileMode",
-        control,
-    });
-
-    const { field: fileUid } = useController({
-        name: "fileUid",
-        control,
-    });
-
-    const { field: fileGid } = useController({
-        name: "fileGid",
         control,
     });
 
@@ -364,92 +302,6 @@ export function CreateOrEditAppSecretForm({
                                 </Field>
                             </FieldGroup>
                         </InfoBlock>
-                    )}
-
-                    <InfoBlock
-                        titleWidth={220}
-                        title={<LabelWithInfo label="Mount into Filesystem" />}
-                    >
-                        <Checkbox
-                            checked={mountIntoFilesystem}
-                            onCheckedChange={checked => {
-                                mountIntoFilesystemField.onChange(checked === true);
-                            }}
-                        />
-                    </InfoBlock>
-
-                    {mountIntoFilesystem && (
-                        <>
-                            <InfoBlock
-                                titleWidth={220}
-                                title={
-                                    <LabelWithInfo
-                                        label="File Path"
-                                        isRequired
-                                    />
-                                }
-                            >
-                                <FieldGroup>
-                                    <Field>
-                                        <Input
-                                            id="app-secret-file-path"
-                                            {...filePath}
-                                            placeholder="/run/secrets/secret_name"
-                                            aria-invalid={isFilePathInvalid}
-                                            className={PROJECT_FORM_CONTROL_MAX_WIDTH_CLASS}
-                                        />
-                                        <FieldError errors={[errors.filePath]} />
-                                    </Field>
-                                </FieldGroup>
-                            </InfoBlock>
-
-                            <InfoBlock
-                                titleWidth={220}
-                                title={
-                                    <LabelWithInfo
-                                        label="File Mode"
-                                        isRequired
-                                    />
-                                }
-                            >
-                                <FieldGroup>
-                                    <Field>
-                                        <Input
-                                            id="app-secret-file-mode"
-                                            {...fileMode}
-                                            placeholder="default: 0444"
-                                            aria-invalid={isFileModeInvalid}
-                                            className="max-w-[180px]"
-                                        />
-                                        <FieldError errors={[errors.fileMode]} />
-                                    </Field>
-                                </FieldGroup>
-                            </InfoBlock>
-
-                            <InfoBlock
-                                titleWidth={220}
-                                title={<LabelWithInfo label="File UID" />}
-                            >
-                                <Input
-                                    id="app-secret-file-uid"
-                                    {...fileUid}
-                                    placeholder="uid"
-                                    className="max-w-[180px]"
-                                />
-                            </InfoBlock>
-
-                            <InfoBlock
-                                titleWidth={220}
-                                title={<LabelWithInfo label="File GID" />}
-                            >
-                                <Input
-                                    id="app-secret-file-gid"
-                                    {...fileGid}
-                                    placeholder="gid"
-                                    className="max-w-[180px]"
-                                />
-                            </InfoBlock>
-                        </>
                     )}
                 </div>
                 {!readOnly && (

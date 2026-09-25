@@ -1,7 +1,6 @@
 import { z } from "zod";
 
 export const APP_SECRET_MAX_VALUE_SIZE = 500 * 1024;
-export const APP_SECRET_DEFAULT_FILE_MODE = "0444";
 
 export const CreateOrEditAppSecretFormSchema = z
     .object({
@@ -15,11 +14,6 @@ export const CreateOrEditAppSecretFormSchema = z
         isEditMode: z.boolean(),
         textValue: z.string(),
         binaryFile: z.custom<File>().nullable(),
-        mountIntoFilesystem: z.boolean(),
-        filePath: z.string(),
-        fileMode: z.string(),
-        fileUid: z.string(),
-        fileGid: z.string(),
     })
     .superRefine((value, ctx) => {
         if (value.valueType === "text") {
@@ -56,24 +50,6 @@ export const CreateOrEditAppSecretFormSchema = z
                 message: "File must be 500kb or less",
                 path: ["binaryFile"],
             });
-        }
-
-        if (value.mountIntoFilesystem) {
-            if (!value.filePath.trim()) {
-                ctx.addIssue({
-                    code: z.ZodIssueCode.custom,
-                    message: "File path is required",
-                    path: ["filePath"],
-                });
-            }
-
-            if (!value.fileMode.trim()) {
-                ctx.addIssue({
-                    code: z.ZodIssueCode.custom,
-                    message: "File mode is required",
-                    path: ["fileMode"],
-                });
-            }
         }
     });
 

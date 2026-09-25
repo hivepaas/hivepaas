@@ -66,7 +66,6 @@ export type AppConfigFiles_CreateOne_Req = ApiRequestBase<{
     name: string;
     content: string;
     base64: boolean;
-    swarmRef?: AppConfigFile["swarmRef"];
 }>;
 
 export type AppConfigFiles_CreateOne_Res = ApiResponseBase<{

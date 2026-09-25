@@ -23,22 +23,6 @@ const AppSecretSchema = z.object({
     type: z.string().optional().default("secret"),
     status: z.string(),
     inherited: z.boolean().optional().default(false),
-    swarmRef: z
-        .object({
-            file: z
-                .object({
-                    name: z.string(),
-                    uid: z.string().optional().default(""),
-                    gid: z.string().optional().default(""),
-                    mode: z.union([z.string(), z.number()]).transform(value => String(value)),
-                })
-                .nullable()
-                .optional()
-                .default(null),
-        })
-        .nullable()
-        .optional()
-        .default(null),
     createdAt: z.coerce.date(),
     updatedAt: z.coerce.date().nullable(),
     expireAt: z.coerce.date().nullable().optional().default(null),

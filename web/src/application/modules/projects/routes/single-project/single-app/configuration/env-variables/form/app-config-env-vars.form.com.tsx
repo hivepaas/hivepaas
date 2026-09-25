@@ -17,6 +17,7 @@ import { type ValidationException } from "@infrastructure/exceptions/validation"
 
 import { Separator } from "@/components/ui/separator";
 
+import { LinkAppDialog, type LinkSection } from "../link-app";
 import {
     AppConfigEnvVarsFormSchema,
     type AppConfigEnvVarsFormSchemaInput,
@@ -119,6 +120,7 @@ export const AppConfigEnvVarsForm = React.forwardRef<AppConfigEnvVarsFormRef, Pr
     } | null>(null);
 
     const [finalValuesOpen, setFinalValuesOpen] = useState(false);
+    const [linkSection, setLinkSection] = useState<LinkSection | null>(null);
     const [finalValuesItems, setFinalValuesItems] = useState<FinalEnvValueItem[]>([]);
     const [finalValuesSectionTitle, setFinalValuesSectionTitle] = useState("Build Time Env Variables");
 
@@ -168,6 +170,25 @@ export const AppConfigEnvVarsForm = React.forwardRef<AppConfigEnvVarsFormRef, Pr
             runtimeEnvVars,
             sharedEnvVars,
         });
+    }
+
+    function existingKeys(section: LinkSection): Set<string> {
+        return new Set(methods.getValues(section).map(envVar => envVar.key.trim()));
+    }
+
+    function addLinkedVars(section: LinkSection, vars: { key: string; value: string }[]) {
+        const current = [...methods.getValues(section)];
+        for (const linked of vars) {
+            const item = { key: linked.key, value: linked.value, isLiteral: false, isSystem: false, isReadOnly: false };
+            const at = current.findIndex(envVar => envVar.key.trim() === linked.key);
+            if (at >= 0) {
+                current[at] = item;
+            } else {
+                current.push(item);
+            }
+        }
+        methods.setValue(section, current, { shouldDirty: true });
+        toast.success(`${vars.length} variable${vars.length === 1 ? "" : "s"} added - save to keep them`);
     }
 
     function handleSortCycle() {
@@ -302,6 +323,13 @@ export const AppConfigEnvVarsForm = React.forwardRef<AppConfigEnvVarsFormRef, Pr
                             onShowFinalValues={() => {
                                 handleShowFinalValues("buildtime");
                             }}
+                            onLinkApp={
+                                readOnly
+                                    ? undefined
+                                    : () => {
+                                          setLinkSection("buildtime");
+                                      }
+                            }
                         />
                         <Separator className="opacity-50" />
                         {inheritedValues && (
@@ -331,12 +359,31 @@ export const AppConfigEnvVarsForm = React.forwardRef<AppConfigEnvVarsFormRef, Pr
                             onShowFinalValues={() => {
                                 handleShowFinalValues("runtime");
                             }}
+                            onLinkApp={
+                                readOnly
+                                    ? undefined
+                                    : () => {
+                                          setLinkSection("runtime");
+                                      }
+                            }
                         />
 
                         {children}
                     </fieldset>
                 </form>
             </FormProvider>
+
+            <LinkAppDialog
+                open={linkSection !== null}
+                initialSection={linkSection ?? "runtime"}
+                onOpenChange={open => {
+                    if (!open) {
+                        setLinkSection(null);
+                    }
+                }}
+                existingKeys={existingKeys}
+                onAdd={addLinkedVars}
+            />
 
             <FinalEnvValuesDialog
                 open={finalValuesOpen || isComputing}

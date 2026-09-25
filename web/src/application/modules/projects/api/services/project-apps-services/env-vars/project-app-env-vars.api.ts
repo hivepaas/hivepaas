@@ -7,6 +7,10 @@ import type {
     EnvVarWireItem,
     ProjectAppEnvVars_Compute_Req,
     ProjectAppEnvVars_Compute_Res,
+    ProjectAppEnvVars_FindLinkSuggestions_Req,
+    ProjectAppEnvVars_FindLinkSuggestions_Res,
+    ProjectAppEnvVars_FindLinkTargets_Req,
+    ProjectAppEnvVars_FindLinkTargets_Res,
     ProjectAppEnvVars_FindOne_Req,
     ProjectAppEnvVars_FindOne_Res,
     ProjectAppEnvVars_UpdateOne_Req,
@@ -113,6 +117,43 @@ export class ProjectAppEnvVarsApi extends BaseApi {
                 }),
             ).pipe(
                 map(this.validator.compute),
+                map(res => Ok(res)),
+                catchError(error => of(Err(parseApiError(error)))),
+            ),
+        );
+    }
+
+    async findLinkTargets(
+        request: ProjectAppEnvVars_FindLinkTargets_Req,
+        signal?: AbortSignal,
+    ): Promise<Result<ProjectAppEnvVars_FindLinkTargets_Res, Error>> {
+        const { projectID, env, appID } = request.data;
+
+        return lastValueFrom(
+            from(
+                this.client.v1.get(`/projects/${projectID}/${env}/apps/${appID}/env-vars/link-targets`, { signal }),
+            ).pipe(
+                map(this.validator.findLinkTargets),
+                map(res => Ok(res)),
+                catchError(error => of(Err(parseApiError(error)))),
+            ),
+        );
+    }
+
+    async findLinkSuggestions(
+        request: ProjectAppEnvVars_FindLinkSuggestions_Req,
+        signal?: AbortSignal,
+    ): Promise<Result<ProjectAppEnvVars_FindLinkSuggestions_Res, Error>> {
+        const { projectID, env, appID, targetAppID } = request.data;
+
+        return lastValueFrom(
+            from(
+                this.client.v1.get(`/projects/${projectID}/${env}/apps/${appID}/env-vars/link-suggestions`, {
+                    params: { targetAppId: targetAppID },
+                    signal,
+                }),
+            ).pipe(
+                map(this.validator.findLinkSuggestions),
                 map(res => Ok(res)),
                 catchError(error => of(Err(parseApiError(error)))),
             ),

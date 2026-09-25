@@ -73,7 +73,6 @@ function View({ title, items, isRevealed = false, search = "" }: Props) {
                                                             value={item.value}
                                                             readOnly
                                                             disabled
-                                                            placeholder="Value"
                                                             minRows={4}
                                                             maxRows={0}
                                                             className="bg-muted cursor-default resize-y"
@@ -84,7 +83,6 @@ function View({ title, items, isRevealed = false, search = "" }: Props) {
                                                             value={item.value}
                                                             readOnly
                                                             disabled
-                                                            placeholder="Value"
                                                             className="bg-muted cursor-default"
                                                         />
                                                     )}

@@ -242,7 +242,6 @@ function View<T>({
                                                 <Textarea
                                                     id={`${name}-${index}-value`}
                                                     {...register(`${name}.${index}.value`)}
-                                                    placeholder="Value"
                                                     aria-invalid={!!get(errors, `${name}.${index}.value`)}
                                                     disabled={rowReadOnly}
                                                     minRows={4}
@@ -257,7 +256,6 @@ function View<T>({
                                                     id={`${name}-${index}-value`}
                                                     type={isRevealed ? "text" : "password"}
                                                     {...register(`${name}.${index}.value`)}
-                                                    placeholder="Value"
                                                     aria-invalid={!!get(errors, `${name}.${index}.value`)}
                                                     disabled={rowReadOnly}
                                                 />

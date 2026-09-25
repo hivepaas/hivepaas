@@ -2,6 +2,7 @@ import React from "react";
 
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@components/ui/accordion";
 import { Button } from "@components/ui/button";
+import { Link2 } from "lucide-react";
 
 import { ConfigVariables } from "@application/shared/form";
 
@@ -15,17 +16,34 @@ function View({
     alwaysExpanded = false,
     notice,
     onShowFinalValues,
+    onLinkApp,
 }: Props) {
-    const extraActions = onShowFinalValues ? (
-        <Button
-            type="button"
-            variant="outline"
-            onClick={onShowFinalValues}
-            className="w-fit"
-        >
-            Show Final Values
-        </Button>
-    ) : undefined;
+    const extraActions =
+        onShowFinalValues || onLinkApp ? (
+            <div className="flex items-center gap-2">
+                {onLinkApp && (
+                    <Button
+                        type="button"
+                        variant="outline"
+                        onClick={onLinkApp}
+                        className="w-fit"
+                    >
+                        <Link2 className="size-4" />
+                        Link App
+                    </Button>
+                )}
+                {onShowFinalValues && (
+                    <Button
+                        type="button"
+                        variant="outline"
+                        onClick={onShowFinalValues}
+                        className="w-fit"
+                    >
+                        Show Final Values
+                    </Button>
+                )}
+            </div>
+        ) : undefined;
 
     const content = (
         <div className="flex flex-col gap-4">
@@ -85,6 +103,8 @@ type Props = {
     alwaysExpanded?: boolean;
     notice?: React.ReactNode;
     onShowFinalValues?: () => void;
+    /** Opens the Link App dialog: the app screen only. */
+    onLinkApp?: () => void;
 };
 
 export const EnvVarsBaseForm = React.memo(View);

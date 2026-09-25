@@ -49,6 +49,7 @@ var collectionBlockNames = map[base.SettingType]string{
 	base.SettingTypeAPIKey:          "apiKeys",
 	base.SettingTypeBackupRepo:      "backupRepos",
 	base.SettingTypeBackupSnapshot:  "backupSnapshots",
+	base.SettingTypeAppSettingMount: "settingMounts",
 	base.SettingTypeBasicAuth:       "basicAuths",
 	base.SettingTypeCloudStorage:    "cloudStorages",
 	base.SettingTypeClusterNetwork:  "networks",

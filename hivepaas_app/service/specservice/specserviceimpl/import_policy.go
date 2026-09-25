@@ -27,6 +27,7 @@ const (
 	reasonSchedulesTasks  = "writing it schedules tasks, which import does not do yet"
 	reasonRunsAService    = "it configures a service HivePaaS runs, which import does not restart yet"
 	reasonGrantsDockerAPI = "only an app is given the Docker API: a scope's setting would grant nothing"
+	reasonMountsSettings  = "only an app mounts settings, and import does not check who may mount a sensitive part yet"
 )
 
 var importPolicies = map[base.SettingType]importPolicy{
@@ -70,6 +71,7 @@ var importPolicies = map[base.SettingType]importPolicy{
 	base.SettingTypeSchedJob:          {skip: reasonSchedulesTasks},
 	base.SettingTypePeriodicJob:       {skip: reasonSchedulesTasks},
 	base.SettingTypeAppDockerAPI:      {skip: reasonGrantsDockerAPI},
+	base.SettingTypeAppSettingMount:   {skip: reasonMountsSettings},
 	base.SettingTypeBackupRepoCleanup: {skip: reasonSchedulesTasks},
 	base.SettingTypeSSLRenewal:        {skip: reasonSchedulesTasks},
 	base.SettingTypeSystemBackup:      {skip: reasonSchedulesTasks},

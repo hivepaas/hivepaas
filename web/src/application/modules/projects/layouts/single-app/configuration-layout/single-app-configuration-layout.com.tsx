@@ -11,6 +11,7 @@ import {
     Copy,
     Cpu,
     FileCode2,
+    FileKey,
     FolderTree,
     Globe,
     HardDrive,
@@ -139,6 +140,15 @@ function View({ children }: PropsWithChildren) {
                         label: "Config Files",
                         icon: FileCode2,
                         route: ROUTE.projects.single.apps.single.configuration.configFiles.$route(
+                            projectId,
+                            env,
+                            appId,
+                        ),
+                    },
+                    {
+                        label: "Setting Mounts",
+                        icon: FileKey,
+                        route: ROUTE.projects.single.apps.single.configuration.settingMounts.$route(
                             projectId,
                             env,
                             appId,

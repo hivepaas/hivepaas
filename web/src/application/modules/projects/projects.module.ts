@@ -103,6 +103,7 @@ export {
     AppConfigFilesRoute,
     AppConfigFileCreateRoute,
     AppConfigFileEditRoute,
+    AppSettingMountsRoute,
     AppDataFilesRoute,
     AppDataFileCreateRoute,
     AppConfigAvailabilityRoute,

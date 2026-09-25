@@ -11,6 +11,7 @@ export * from "./app-clone";
 export * from "./feature-settings";
 export * from "./secrets";
 export * from "./config-files";
+export * from "./setting-mounts";
 export * from "./data-files";
 export * from "./availability-and-scaling";
 export * from "./presistent-storage";

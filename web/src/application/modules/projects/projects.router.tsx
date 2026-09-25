@@ -1806,6 +1806,14 @@ export const projectsRouter: RouteObject = {
                             },
                         },
                         {
+                            path: ROUTE.projects.single.apps.single.configuration.settingMounts.$pattern,
+                            lazy: async () => {
+                                const { AppSettingMountsRoute } = await getLazyComponents();
+
+                                return { Component: AppSettingMountsRoute };
+                            },
+                        },
+                        {
                             path: ROUTE.projects.single.apps.single.configuration.dataFiles.$pattern,
                             lazy: async () => {
                                 const { AppDataFilesRoute } = await getLazyComponents();

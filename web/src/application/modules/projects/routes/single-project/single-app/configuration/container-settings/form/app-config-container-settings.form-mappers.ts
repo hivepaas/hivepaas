@@ -3,6 +3,16 @@ import { EAppArmorMode, EHealthcheckMode, ERestartPolicyCondition, ESeccompMode 
 
 import { type AppConfigContainerSettingsFormSchemaInput } from "../schemas";
 
+/** The labels of the settings, as the form holds them. */
+export function mapAppContainerLabelsToFormInput(
+    data: AppContainerSettings,
+): Pick<AppConfigContainerSettingsFormSchemaInput, "serviceLabels" | "containerLabels"> {
+    return {
+        serviceLabels: Object.entries(data.serviceLabels).map(([key, value]) => ({ key, value })),
+        containerLabels: Object.entries(data.containerLabels).map(([key, value]) => ({ key, value })),
+    };
+}
+
 export function mapAppContainerSettingsToFormInput(
     data: AppContainerSettings,
 ): AppConfigContainerSettingsFormSchemaInput {
@@ -24,8 +34,7 @@ export function mapAppContainerSettingsToFormInput(
             stopSignal: data.stopSignal,
             stopGracePeriod: data.stopGracePeriod ?? "",
         },
-        serviceLabels: Object.entries(data.serviceLabels).map(([key, value]) => ({ key, value })),
-        containerLabels: Object.entries(data.containerLabels).map(([key, value]) => ({ key, value })),
+        ...mapAppContainerLabelsToFormInput(data),
         healthcheck: {
             enabled: data.healthcheck?.enabled ?? false,
             mode: data.healthcheck?.mode ?? EHealthcheckMode.Inherit,

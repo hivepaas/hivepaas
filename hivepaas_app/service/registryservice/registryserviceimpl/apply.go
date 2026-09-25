@@ -288,8 +288,8 @@ func (s *service) provision(
 // certificate; what this does about a domain is keep the credential's address in
 // step with it.
 //
-// Both files are swarm objects, which are immutable, so each change is a new
-// object and a service update: the registry restarts for a few seconds.
+// Both files reach the container through the app's setting mounts, so a change
+// is a service update: the registry restarts for a few seconds.
 func (s *service) reconcile(
 	ctx context.Context,
 	db database.IDB,
@@ -298,10 +298,7 @@ func (s *service) reconcile(
 	req *registryservice.SettingApplyReq,
 	resp *registryservice.SettingApplyResp,
 ) error {
-	if err := s.applyConfigFile(ctx, db, app, plan.ZotConfig); err != nil {
-		return hperrors.Wrap(err)
-	}
-	if err := s.applyHtpasswd(ctx, db, app, plan.Htpasswd); err != nil {
+	if err := s.applyFiles(ctx, db, app, plan); err != nil {
 		return hperrors.Wrap(err)
 	}
 	// The limits live on the app's service, so that is where a save writes them.
@@ -334,32 +331,60 @@ func (s *service) reconcile(
 	return nil
 }
 
-// applyConfigFile writes a changed configuration into the app and into the swarm.
-// It does nothing when the file is the one already there, which is what makes
-// saving the same settings twice cost nothing.
+// applyFiles writes the configuration and the account, and refreshes the app's
+// setting mounts when either changed: they are what put the files in the
+// container.
+func (s *service) applyFiles(ctx context.Context, db database.IDB, app *entity.App, plan appDocInput) error {
+	configChanged, err := s.applyConfigFile(ctx, db, app, plan.ZotConfig)
+	if err != nil {
+		return hperrors.Wrap(err)
+	}
+	accountChanged, err := s.applyHtpasswd(ctx, db, app, plan.Htpasswd)
+	if err != nil {
+		return hperrors.Wrap(err)
+	}
+	if !configChanged && !accountChanged {
+		return nil
+	}
+	return hperrors.Wrap(s.settingMountService.Refresh(ctx, db, app))
+}
+
+// applyAccount writes the account alone - a rotation, a grace period ending -
+// and refreshes the mounts when it changed.
+func (s *service) applyAccount(ctx context.Context, db database.IDB, app *entity.App, content string) error {
+	changed, err := s.applyHtpasswd(ctx, db, app, content)
+	if err != nil || !changed {
+		return hperrors.Wrap(err)
+	}
+	return hperrors.Wrap(s.settingMountService.Refresh(ctx, db, app))
+}
+
+// applyConfigFile writes a changed configuration into the app, and reports
+// whether it changed. It does nothing when the file is the one already there,
+// which is what makes saving the same settings twice cost nothing.
 func (s *service) applyConfigFile(
 	ctx context.Context,
 	db database.IDB,
 	app *entity.App,
 	content string,
-) error {
+) (bool, error) {
 	setting := settingNamed(app.GetSettingsByType(base.SettingTypeConfigFile), registryConfigFileName)
 	if setting == nil {
-		return hperrors.Wrap(hperrors.ErrRegistryNotConfigured).
+		return false, hperrors.Wrap(hperrors.ErrRegistryNotConfigured).
 			WithExtraDetail("The registry app has no %s config file.", registryConfigFileName)
 	}
 
 	current, err := setting.AsConfigFile()
 	if err != nil {
-		return hperrors.Wrap(err)
+		return false, hperrors.Wrap(err)
 	}
 	if current.Content == content {
-		return nil
+		return false, nil
 	}
 
 	updated := *current
 	updated.Content = content
-	return s.persistSetting(ctx, db, setting, &updated)
+	return true, s.persistSetting(ctx, db, setting, &updated)
 }
 
 // applyHtpasswd does for the account what applyConfigFile does for the
@@ -369,28 +394,28 @@ func (s *service) applyHtpasswd(
 	db database.IDB,
 	app *entity.App,
 	content string,
-) error {
+) (bool, error) {
 	setting := settingNamed(app.GetSettingsByType(base.SettingTypeSecret), registrySecretName)
 	if setting == nil {
-		return hperrors.Wrap(hperrors.ErrRegistryNotConfigured).
+		return false, hperrors.Wrap(hperrors.ErrRegistryNotConfigured).
 			WithExtraDetail("The registry app has no %s secret.", registrySecretName)
 	}
 
 	current, err := setting.AsSecret()
 	if err != nil {
-		return hperrors.Wrap(err)
+		return false, hperrors.Wrap(err)
 	}
 	plain, err := current.Value.GetPlain()
 	if err != nil {
-		return hperrors.Wrap(err)
+		return false, hperrors.Wrap(err)
 	}
 	if plain == content {
-		return nil
+		return false, nil
 	}
 
 	updated := *current
 	updated.Value = entity.NewEncryptedField(content)
-	return s.persistSetting(ctx, db, setting, &updated)
+	return true, s.persistSetting(ctx, db, setting, &updated)
 }
 
 func (s *service) persistSetting(

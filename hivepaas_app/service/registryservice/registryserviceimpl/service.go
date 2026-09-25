@@ -11,6 +11,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/logging"
 	"github.com/hivepaas/hivepaas/hivepaas_app/repository"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/registryservice"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/settingmountservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/systemappservice"
 )
 
@@ -22,7 +23,8 @@ type service struct {
 	projectEnvRepo repository.ProjectEnvRepo
 	settingRepo    repository.SettingRepo
 
-	systemAppService systemappservice.Service
+	settingMountService settingmountservice.Service
+	systemAppService    systemappservice.Service
 
 	logger logging.Logger
 
@@ -40,16 +42,18 @@ func New(
 	projectEnvRepo repository.ProjectEnvRepo,
 	settingRepo repository.SettingRepo,
 
+	settingMountService settingmountservice.Service,
 	systemAppService systemappservice.Service,
 
 	logger logging.Logger,
 ) registryservice.Service {
 	return &service{
-		projectEnvRepo:   projectEnvRepo,
-		settingRepo:      settingRepo,
-		systemAppService: systemAppService,
-		logger:           logger,
-		httpClient:       &http.Client{Timeout: httpTimeout},
+		projectEnvRepo:      projectEnvRepo,
+		settingRepo:         settingRepo,
+		settingMountService: settingMountService,
+		systemAppService:    systemAppService,
+		logger:              logger,
+		httpClient:          &http.Client{Timeout: httpTimeout},
 	}
 }
 

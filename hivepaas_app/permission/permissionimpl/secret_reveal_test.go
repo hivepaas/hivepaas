@@ -5,6 +5,8 @@ import (
 	"errors"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
+
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/config"
@@ -234,4 +236,23 @@ func TestAuthorizeSecretRevealRefusesAMissingSubject(t *testing.T) {
 	if len(audit.entries) != 0 {
 		t.Error("nothing was decided, so there is nothing to record")
 	}
+}
+
+// Import's validate asks without recording: nothing is revealed until apply.
+func TestMayRevealSecretsAnswersWithoutRecording(t *testing.T) {
+	enableReveal(t, true)
+	mgr, audit := newRevealManager(nil)
+
+	allowed, err := mgr.MayRevealSecrets(context.Background(), nil, adminAuth())
+	assert.NoError(t, err)
+	assert.True(t, allowed)
+	allowed, err = mgr.MayRevealSecrets(context.Background(), nil, plainAuth())
+	assert.NoError(t, err)
+	assert.False(t, allowed, "a denial is an answer, not an error")
+
+	enableReveal(t, false)
+	allowed, err = mgr.MayRevealSecrets(context.Background(), nil, adminAuth())
+	assert.NoError(t, err)
+	assert.False(t, allowed)
+	assert.Empty(t, audit.entries)
 }

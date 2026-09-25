@@ -163,3 +163,24 @@ func TestTwoEntriesClaimingAPathKeepTheFirstByKey(t *testing.T) {
 	assert.Equal(t, []string{"/etc/app/tls/cert.pem", "/etc/app/tls/key.pem"}, paths(files))
 	assert.Equal(t, []byte("ONE"), files[0].Data)
 }
+
+// Why an entry is not in the container is what the screen says.
+func TestEntryStatesSayWhyNothingIsMounted(t *testing.T) {
+	mounted := entry(t, "a", base.SettingStatusActive, certFiles("cert_1"))
+	disabled := entry(t, "b", base.SettingStatusDisabled, certFiles("cert_1"))
+	missing := entry(t, "c", base.SettingStatusActive, certFiles("cert_gone"))
+	incomplete := entry(t, "d", base.SettingStatusActive, certFiles("cert_2"))
+	shadowed := entry(t, "e", base.SettingStatusActive, certFiles("cert_1"))
+	svc := fixture(t, []*entity.Setting{mounted, disabled, missing, incomplete, shadowed},
+		certSource(t, "cert_1", "CERT", "KEY"), certSource(t, "cert_2", "", ""))
+
+	states, err := svc.EntryStates(context.Background(), nil, testApp)
+
+	assert.NoError(t, err)
+	assert.Equal(t, &settingmountservice.EntryState{Mounted: []string{"/etc/app/tls/cert.pem", "/etc/app/tls/key.pem"}},
+		states[mounted.ID])
+	assert.Equal(t, settingmountservice.ReasonEntryDisabled, states[disabled.ID].Reason)
+	assert.Equal(t, settingmountservice.ReasonSourceUnavailable, states[missing.ID].Reason)
+	assert.Equal(t, settingmountservice.ReasonSourceIncomplete, states[incomplete.ID].Reason)
+	assert.Equal(t, settingmountservice.ReasonPathsTaken, states[shadowed.ID].Reason)
+}

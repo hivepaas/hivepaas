@@ -2,6 +2,7 @@ package permissionimpl
 
 import (
 	"context"
+	"errors"
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
@@ -91,4 +92,13 @@ func (p *manager) canRevealSecrets(
 		return false, hperrors.Wrap(hperrors.ErrUserNotHavePermissionOnRevealSecrets)
 	}
 	return true, nil
+}
+
+func (p *manager) MayRevealSecrets(ctx context.Context, db database.IDB, auth *basedto.Auth) (bool, error) {
+	allowed, err := p.canRevealSecrets(ctx, db, auth, "")
+	if errors.Is(err, hperrors.ErrRevealSecretsDisabled) ||
+		errors.Is(err, hperrors.ErrUserNotHavePermissionOnRevealSecrets) {
+		return false, nil
+	}
+	return allowed, err
 }

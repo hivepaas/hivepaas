@@ -26,6 +26,13 @@ type Service interface {
 	Refresh(ctx context.Context, db database.IDB, app *entity.App) error
 	// RemoveApp removes every mounted object of an app whose service is gone.
 	RemoveApp(ctx context.Context, appID string) error
+	// ClaimedPaths are the paths the app's active secrets, config files and
+	// entries give files to, each with what gives it, leaving out the setting
+	// exceptSettingID - the one being saved.
+	ClaimedPaths(ctx context.Context, db database.IDB, appID, exceptSettingID string) (map[string]string, error)
+	// EntryStates says, for each of the app's entries by setting id, what of it
+	// is mounted, and why nothing is when nothing is.
+	EntryStates(ctx context.Context, db database.IDB, app *entity.App) (map[string]*EntryState, error)
 
 	// RecordRefresh records, in db's transaction, a refresh of the apps that
 	// read one of settings: an entry's own app, or the apps whose entries mount
@@ -48,4 +55,20 @@ type File struct {
 	Data      []byte
 	// Rotation is the part's RotationKey: a new one is a new object.
 	Rotation string
+}
+
+// Why nothing of an entry is mounted.
+const (
+	ReasonEntryDisabled     = "entry-disabled"
+	ReasonKeyInvalid        = "key-invalid"
+	ReasonSourceUnavailable = "source-unavailable" // missing, disabled, or not visible from the app
+	ReasonSourceIncomplete  = "source-incomplete"  // a required part is empty: a certificate not obtained yet
+	ReasonPathsTaken        = "paths-taken"        // every path is another entry's
+)
+
+// EntryState is what of an entry is mounted.
+type EntryState struct {
+	// Reason is why nothing is mounted; empty when something is.
+	Reason  string   `json:"reason,omitempty"`
+	Mounted []string `json:"mounted"`
 }

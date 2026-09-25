@@ -14,8 +14,8 @@
     ],
     "templates": {
       "repo": "hivepaas/app-templates",
-      "commit": "5a206ba9d53fffe4184e76a67d8a2134a07f84e6",
-      "indexSha256": "ccde6637aee7e15f937491080ce0e2e343739f6c1b44f3ea3fa90630c14a3740"
+      "commit": "fb53bb5d1181284b468eb84cea9740b2ffd0e2bc",
+      "indexSha256": "22517e952a5af2a58c6d7ecdfa130bb19ef281d5c2454d96f09eecb2b142db7b"
     }
   },
   "beta": {
@@ -33,8 +33,8 @@
     ],
     "templates": {
       "repo": "hivepaas/app-templates",
-      "commit": "5a206ba9d53fffe4184e76a67d8a2134a07f84e6",
-      "indexSha256": "ccde6637aee7e15f937491080ce0e2e343739f6c1b44f3ea3fa90630c14a3740"
+      "commit": "fb53bb5d1181284b468eb84cea9740b2ffd0e2bc",
+      "indexSha256": "22517e952a5af2a58c6d7ecdfa130bb19ef281d5c2454d96f09eecb2b142db7b"
     }
   }
 }

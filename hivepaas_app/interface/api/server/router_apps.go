@@ -111,6 +111,17 @@ func (s *HTTPServer) registerAppRoutes(projectGroup, projectEnvGroup *gin.Router
 		configFileGroup.GET("/:itemID/download", appSettingsHandler.DownloadConfigFile)
 	}
 
+	{ // Setting mounts
+		settingMountGroup := appGroup.Group("/:appID/setting-mounts")
+		settingMountGroup.GET("", appSettingsHandler.ListSettingMount)
+		settingMountGroup.GET("/sources", appSettingsHandler.ListSettingMountSources)
+		settingMountGroup.GET("/:itemID", appSettingsHandler.GetSettingMount)
+		settingMountGroup.POST("", appSettingsHandler.CreateSettingMount)
+		settingMountGroup.PUT("/:itemID", appSettingsHandler.UpdateSettingMount)
+		settingMountGroup.PUT("/:itemID/status", appSettingsHandler.UpdateSettingMountStatus)
+		settingMountGroup.DELETE("/:itemID", appSettingsHandler.DeleteSettingMount)
+	}
+
 	{ // Data files
 		dataFileGroup := appGroup.Group("/:appID/data-files")
 		dataFileGroup.GET("", appSettingsHandler.ListDataFile)

@@ -11,6 +11,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/envvarservice"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/settingmountservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings/secretuc/secretdto"
 )
@@ -28,6 +29,8 @@ func (uc *UC) UpdateSecret(
 	var appEnvVarData []*envvarservice.AppEnvVarData
 	_, err := uc.UpdateSetting(ctx, &req.UpdateSettingReq, &settings.UpdateSettingData{
 		VerifyingRefIDs: updatedSecret.GetRefObjectIDs(),
+		// One path, one file: not another secret's, config file's or mount's.
+		AfterLoading: uc.CheckMountPathsAfterLoading(req.Scope, settingmountservice.SecretFileTarget(updatedSecret)),
 		PrepareUpdate: func(
 			ctx context.Context,
 			db database.Tx,

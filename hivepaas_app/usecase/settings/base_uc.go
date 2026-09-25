@@ -13,6 +13,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/scopeservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/settingeventservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/settinginitservice"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/settingmountservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/settingservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/userservice"
 )
@@ -35,6 +36,7 @@ type BaseUC struct {
 	ScopeService         scopeservice.Service
 	SettingEventService  settingeventservice.Service
 	SettingInitService   settinginitservice.Service
+	SettingMountService  settingmountservice.Service
 	SettingService       settingservice.Service
 	UserService          userservice.Service
 	PermissionManager    permission.Manager
@@ -58,6 +60,7 @@ func New(
 	scopeService scopeservice.Service,
 	settingEventService settingeventservice.Service,
 	settingInitService settinginitservice.Service,
+	settingMountService settingmountservice.Service,
 	settingService settingservice.Service,
 	userService userservice.Service,
 	permissionManager permission.Manager,
@@ -80,6 +83,7 @@ func New(
 		ScopeService:         scopeService,
 		SettingEventService:  settingEventService,
 		SettingInitService:   settingInitService,
+		SettingMountService:  settingMountService,
 		SettingService:       settingService,
 		UserService:          userService,
 		PermissionManager:    permissionManager,

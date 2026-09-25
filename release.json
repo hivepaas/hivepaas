@@ -1,23 +1,4 @@
 {
-  "stable": {
-    "releaseDate": "2026-01-01",
-    "appVersion": "v0.1.1",
-    "appImage": "hivepaas/hivepaas-dev:0.1.0",
-    "redisImage": "redis:8.6-alpine",
-    "dbImage": "postgres:18.3-alpine",
-    "traefikImage": "traefik:v3.7",
-    "victoriaLogsImage": "victoriametrics/victoria-logs:v1.52.0",
-    "vlagentImage": "victoriametrics/vlagent:v1.52.0",
-    "registryImage": "ghcr.io/project-zot/zot:v2.1.21",
-    "blockMajorUpgrade": [
-      "db"
-    ],
-    "templates": {
-      "repo": "hivepaas/app-templates",
-      "commit": "fb53bb5d1181284b468eb84cea9740b2ffd0e2bc",
-      "indexSha256": "22517e952a5af2a58c6d7ecdfa130bb19ef281d5c2454d96f09eecb2b142db7b"
-    }
-  },
   "beta": {
     "releaseDate": "2026-01-01",
     "appVersion": "v0.1.1-beta3",
@@ -33,8 +14,8 @@
     ],
     "templates": {
       "repo": "hivepaas/app-templates",
-      "commit": "fb53bb5d1181284b468eb84cea9740b2ffd0e2bc",
-      "indexSha256": "22517e952a5af2a58c6d7ecdfa130bb19ef281d5c2454d96f09eecb2b142db7b"
+      "commit": "5f29ced87fa945f47f47d181eb76b378abf04f3f",
+      "indexSha256": "fa5fd9b4c5c67fed3602fd86485b157f997fb233c92817e97abce817f27080d7"
     }
   }
 }

@@ -16,25 +16,33 @@ const removalRetryMax = 2
 // Sweep removes the app's mounted objects that its service no longer
 // references. Docker refuses to remove one a service still names; that one is
 // retried, then left to the next sweep - a deployment is not failed for it.
+//
+// Without a service to read, nothing is removed: a service being recreated is
+// between removal and creation, and its new spec needs what it references.
+// Deleting an app is RemoveApp's.
 func (s *service) Sweep(ctx context.Context, app *entity.App) error {
-	have, err := s.listMounted(ctx, settingmountservice.LabelAppID+"="+app.ID, settingmountservice.LabelEntry)
+	if app.ServiceID == "" {
+		return nil
+	}
+	inspect, err := s.dockerManager.ServiceInspect(ctx, app.ServiceID)
 	if err != nil {
+		if errors.Is(err, hperrors.ErrNotFound) {
+			return nil
+		}
 		return hperrors.Wrap(err)
 	}
 	referenced := map[string]bool{}
-	if app.ServiceID != "" {
-		inspect, err := s.dockerManager.ServiceInspect(ctx, app.ServiceID)
-		if err != nil && !errors.Is(err, hperrors.ErrNotFound) {
-			return hperrors.Wrap(err)
+	if contSpec := inspect.Service.Spec.TaskTemplate.ContainerSpec; contSpec != nil {
+		for _, ref := range contSpec.Secrets {
+			referenced[ref.SecretID] = true
 		}
-		if err == nil && inspect.Service.Spec.TaskTemplate.ContainerSpec != nil {
-			for _, ref := range inspect.Service.Spec.TaskTemplate.ContainerSpec.Secrets {
-				referenced[ref.SecretID] = true
-			}
-			for _, ref := range inspect.Service.Spec.TaskTemplate.ContainerSpec.Configs {
-				referenced[ref.ConfigID] = true
-			}
+		for _, ref := range contSpec.Configs {
+			referenced[ref.ConfigID] = true
 		}
+	}
+	have, err := s.listMounted(ctx, settingmountservice.LabelAppID+"="+app.ID, settingmountservice.LabelEntry)
+	if err != nil {
+		return hperrors.Wrap(err)
 	}
 	return s.remove(ctx, have, referenced)
 }

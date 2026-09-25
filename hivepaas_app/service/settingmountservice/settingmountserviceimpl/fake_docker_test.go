@@ -26,6 +26,8 @@ type fakeDocker struct {
 	// inUse is how many more removals of an id fail, as a secret a service still
 	// references does.
 	inUse map[string]int
+	// gone makes the service answer as one that does not exist.
+	gone bool
 }
 
 func newFakeDocker(spec swarm.ServiceSpec) *fakeDocker {
@@ -147,6 +149,9 @@ func (f *fakeDocker) ConfigRemove(
 func (f *fakeDocker) ServiceInspect(
 	_ context.Context, _ string, _ ...docker.ServiceInspectOption,
 ) (*client.ServiceInspectResult, error) {
+	if f.gone {
+		return nil, hperrors.NewNotFound("Service")
+	}
 	return &client.ServiceInspectResult{Service: *f.copyService()}, nil
 }
 

@@ -181,3 +181,19 @@ func TestRemoveAppRemovesOnlyItsOwnMountedObjects(t *testing.T) {
 	assert.Empty(t, fake.secrets)
 	assert.Contains(t, fake.configs, "theirs")
 }
+
+// A service that cannot be found says nothing of what a service will need: it
+// may be between removal and creation. Deleting an app is RemoveApp's.
+func TestSweepRemovesNothingWhileTheServiceCannotBeFound(t *testing.T) {
+	svc, fake := engine(t, nil)
+	fake.secrets["needed"] = swarm.Secret{ID: "needed", Spec: swarm.SecretSpec{
+		Annotations: swarm.Annotations{Name: "needed", Labels: sms.Labels("app_1", "a", "privateKey")}}}
+	fake.gone = true
+
+	assert.NoError(t, svc.Sweep(context.Background(), testApp))
+	noService := *testApp
+	noService.ServiceID = ""
+	assert.NoError(t, svc.Sweep(context.Background(), &noService))
+
+	assert.Contains(t, fake.secrets, "needed")
+}

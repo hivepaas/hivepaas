@@ -4,6 +4,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
+	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/system/getstarteduc/getstarteddto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/useruc/userdto"
 )
 
@@ -23,6 +24,9 @@ type GetMeResp struct {
 type GetMeDataResp struct {
 	NextStep string                   `json:"nextStep,omitempty"`
 	User     *userdto.UserDetailsResp `json:"user"`
+	// SetupChecklist is what the installation still has to do, for an admin
+	// while nextStep is hivepaas/get-started.
+	SetupChecklist *getstarteddto.ChecklistResp `json:"setupChecklist,omitempty"`
 }
 
 func TransformUserDetails(user *entity.User) (resp *userdto.UserDetailsResp, err error) {

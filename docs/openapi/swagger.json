@@ -51762,11 +51762,18 @@
           "nextStep" : {
             "type" : "string"
           },
+          "setupChecklist" : {
+            "allOf" : [ {
+              "$ref" : "#/components/schemas/system_getstarteddto.ChecklistResp"
+            } ],
+            "description" : "SetupChecklist is what the installation still has to do, for an admin\nwhile nextStep is hivepaas/get-started.",
+            "type" : "object"
+          },
           "user" : {
             "$ref" : "#/components/schemas/userdto.UserDetailsResp"
           }
         },
-        "required" : [ "nextStep", "user" ],
+        "required" : [ "nextStep", "setupChecklist", "user" ],
         "type" : "object"
       },
       "sessiondto.GetMeResp" : {
@@ -60516,6 +60523,38 @@
           }
         },
         "required" : [ "data", "meta" ],
+        "type" : "object"
+      },
+      "system_getstarteddto.ChecklistItemResp" : {
+        "properties" : {
+          "domain" : {
+            "description" : "Domain is the dashboard certificate's: the name it is for.",
+            "type" : "string"
+          },
+          "error" : {
+            "description" : "Error is why the last attempt at the dashboard's certificate failed.",
+            "type" : "string"
+          },
+          "status" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "domain", "error", "status" ],
+        "type" : "object"
+      },
+      "system_getstarteddto.ChecklistResp" : {
+        "properties" : {
+          "dashboardCert" : {
+            "$ref" : "#/components/schemas/system_getstarteddto.ChecklistItemResp"
+          },
+          "githubApp" : {
+            "$ref" : "#/components/schemas/system_getstarteddto.ChecklistItemResp"
+          },
+          "twoFactor" : {
+            "$ref" : "#/components/schemas/system_getstarteddto.ChecklistItemResp"
+          }
+        },
+        "required" : [ "dashboardCert", "githubApp", "twoFactor" ],
         "type" : "object"
       },
       "system_hpappsettingsdto.ConfirmRoutingSettingsReq" : {

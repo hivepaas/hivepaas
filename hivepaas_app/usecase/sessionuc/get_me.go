@@ -10,6 +10,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/sessionuc/sessiondto"
+	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/system/getstarteduc/getstarteddto"
 )
 
 func (uc *UC) GetMe(
@@ -48,6 +49,9 @@ func (uc *UC) GetMe(
 		}
 		config.SetInstallationStep(sysStatus.NextStep)
 		respData.NextStep = string(sysStatus.NextStep)
+		if err = uc.addSetupChecklist(ctx, user, respData); err != nil {
+			return nil, hperrors.Wrap(err)
+		}
 	}
 
 	if user.Status == base.UserStatusPending && user.TotpSecret == "" {
@@ -57,4 +61,30 @@ func (uc *UC) GetMe(
 	return &sessiondto.GetMeResp{
 		Data: respData,
 	}, nil
+}
+
+// addSetupChecklist gives an admin what the installation still has to do, while
+// the step says so. Finding all of it done clears the step, so the card goes
+// for every admin without anyone closing it.
+func (uc *UC) addSetupChecklist(
+	ctx context.Context,
+	user *basedto.User,
+	respData *sessiondto.GetMeDataResp,
+) error {
+	if respData.NextStep != base.InstallationStepGetStarted {
+		return nil
+	}
+	checklist, err := uc.getStartedService.Checklist(ctx, uc.db, user.TotpSecret != "")
+	if err != nil {
+		return hperrors.Wrap(err)
+	}
+	if checklist.AllDone() {
+		if err = uc.getStartedService.Finish(ctx, uc.db); err != nil {
+			return hperrors.Wrap(err)
+		}
+		respData.NextStep = ""
+		return nil
+	}
+	respData.SetupChecklist = getstarteddto.TransformChecklist(checklist)
+	return nil
 }

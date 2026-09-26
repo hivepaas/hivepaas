@@ -228,12 +228,4 @@ func TestEveryToolIsDescribed(t *testing.T) {
 	}
 }
 
-func readToolCount() int {
-	n := 0
-	for _, tool := range Tools() {
-		if tool.Kind == KindRead {
-			n++
-		}
-	}
-	return n
-}
+func readToolCount() int { return readToolCountOf(Tools()) }

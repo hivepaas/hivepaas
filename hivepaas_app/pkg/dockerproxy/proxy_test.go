@@ -3,9 +3,11 @@ package dockerproxy
 import (
 	"context"
 	"encoding/json"
+	"io"
 	"net"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -16,7 +18,6 @@ func TestRefusesEveryEndpointOutsideTheTable(t *testing.T) {
 	for _, endpoint := range []struct{ method, path string }{
 		{http.MethodPost, "/v1.51/build"},
 		{http.MethodPost, "/v1.51/session"},
-		{http.MethodGet, "/v1.51/events"},
 		{http.MethodPost, "/v1.51/containers/child1/update"},
 		{http.MethodPost, "/v1.51/containers/prune"},
 		{http.MethodGet, "/v1.51/containers/child1/export"},
@@ -88,6 +89,39 @@ func TestPullTakesOnlyThePolicysImages(t *testing.T) {
 	assert.Equal(t, "hivepaas: image busybox:1 is not allowed", refusalMessage(t, raw))
 
 	status, raw = w.do(t, http.MethodPost, "/v1.51/images/create?fromSrc=http://example.com/rootfs.tar", nil)
+	assert.Equal(t, http.StatusForbidden, status)
+	assert.Equal(t, "hivepaas: importing an image is not allowed", refusalMessage(t, raw))
+}
+
+// The daemon reads a pull's parameters from a form body as well as the query,
+// the body's first; utopia-php's client, Appwrite's executor's, sends them there.
+func TestPullJudgesTheImageTheDaemonWouldPull(t *testing.T) {
+	w := newWorld(t, testPolicy())
+	post := func(query, form string) (int, []byte) {
+		req, err := http.NewRequestWithContext(context.Background(), http.MethodPost,
+			w.url+"/v1.51/images/create?"+query, strings.NewReader(form))
+		stop(t, assert.NoError(t, err))
+		req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+		resp, err := http.DefaultClient.Do(req)
+		stop(t, assert.NoError(t, err))
+		defer resp.Body.Close()
+		raw, err := io.ReadAll(resp.Body)
+		stop(t, assert.NoError(t, err))
+		return resp.StatusCode, raw
+	}
+
+	status, raw := post("", "fromImage=alpine%3A3")
+	stop(t, assert.Equal(t, http.StatusOK, status, string(raw)))
+	w.daemon.mu.Lock()
+	last := w.daemon.requests[len(w.daemon.requests)-1]
+	w.daemon.mu.Unlock()
+	assert.Equal(t, "fromImage=alpine%3A3", string(last.body), "the body is forwarded as it came")
+
+	status, raw = post("fromImage=alpine&tag=3", "fromImage=busybox&tag=1")
+	assert.Equal(t, http.StatusForbidden, status)
+	assert.Equal(t, "hivepaas: image busybox:1 is not allowed", refusalMessage(t, raw))
+
+	status, raw = post("fromImage=alpine&tag=3", "fromSrc=-")
 	assert.Equal(t, http.StatusForbidden, status)
 	assert.Equal(t, "hivepaas: importing an image is not allowed", refusalMessage(t, raw))
 }

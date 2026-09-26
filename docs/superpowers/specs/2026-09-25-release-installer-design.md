@@ -28,12 +28,18 @@ to beta except the default.
 3. **Nothing destructive.** The installer never leaves or resets a swarm,
    never removes a service, network or volume, and never regenerates a secret.
    Running it again on an installed server does not redeploy (§11).
-4. **Every answer is saved** in `/etc/hivepaas/install.env` (root, `0600`), and a
-   second run reads it. The app secret in it is the only key to the encrypted
-   data, so the installer never changes it once written.
+4. **Settings live where HivePaaS reads them, and nowhere else.** The app
+   secret is in `<app data>/hivepaas.toml` (root, `0600`), the app's own
+   settings file, where it also keeps a secret it rotates; every other setting
+   is the environment of the HivePaaS services. A second run reads them back
+   from there. The secret is the only key to the encrypted data, so the
+   installer never changes it once written, and `hivepaas.toml` is the one file
+   to back up.
 5. **Interactive by default, silent on request.** Every question has an
-   environment variable; `--config FILE` reads them from a file, and `--yes`
-   answers yes to installing or upgrading Docker and to the confirmations.
+   environment variable; `--config FILE` reads them from a file -
+   `deployment/release/install.env` is one to fill in, every setting explained -
+   and `--yes` answers yes to installing or upgrading Docker and to the
+   confirmations.
 6. **Host tuning never fails the install.** Swap and earlyoom are attempted and
    reported; a failure is a warning.
 7. **The admin password leaves the configuration** once the app has used it
@@ -50,12 +56,13 @@ to beta except the default.
 | `hivepaas.yaml` | the stack, every host-specific value a `${VAR}` |
 | `hivepaas.first-boot.yaml` | the admin's account, deployed with the stack on the first install only (§6) |
 | `traefik/dynamic_conf.yml` | the default certificate, as in dev |
+| `install.env` | the settings of a silent install, to fill in (§9) |
 | `install_test.sh` | the tests of the installer's functions |
 | `install_e2e.sh` | a whole install in docker:dind (§10) |
 
 The installer downloads the stack files from the same ref it came from,
-`HIVEPAAS_INSTALL_REF` (default `main`), and keeps them in `/etc/hivepaas/`
-next to `install.env`.
+`HIVEPAAS_INSTALL_REF` (default `main`), into a temporary directory: it keeps
+nothing on the server of its own.
 
 ## 2. Steps
 
@@ -73,10 +80,11 @@ when stdout is a terminal, `NO_COLOR` is unset and `TERM` is not `dumb`.
    - Installs what it needs and is missing: `curl`, `openssl`, `jq`,
      `ca-certificates`.
 2. **Docker**: at least Engine 29.5 and API 1.54 (§3).
-3. **Settings** (§4): read from the environment, `--config` and `install.env`;
-   what is still missing is asked. Before anything is changed, the settings
-   are printed - the password and the secrets masked - for a last yes, then
-   saved.
+3. **Settings** (§4): read from the environment, `--config` and the HivePaaS
+   already on the server; what is still missing is asked. On a first install
+   with a terminal and no `--config`, it first says how to install without
+   questions (§9). Before anything is changed, the settings are printed - the
+   password and the secrets masked - for a last yes.
 4. **Host memory**: swap and earlyoom (§7).
 5. **Swarm.**
    - Not in a swarm: `docker swarm init --advertise-addr` with the address of
@@ -98,9 +106,13 @@ when stdout is a terminal, `NO_COLOR` is unset and `TERM` is not `dumb`.
      `*.<root domain>` and the app domain. The app adopts files it finds there,
      and Traefik has a certificate from its first second rather than its own
      default one.
-   - Downloads the stack files into `/etc/hivepaas/`, and `dynamic_conf.yml`
-     into Traefik's directory only when it is not there: the app writes that
-     directory from its first boot on.
+   - Writes `<app data>/hivepaas.toml` when it is not there: the app secret,
+     and the security settings the file may also hold, commented out and
+     explained. The app rewrites the file, without the comments, when it
+     rotates its secret or a security setting is saved in the dashboard.
+   - Downloads the stack files, and `dynamic_conf.yml` into Traefik's directory
+     only when it is not there: the app writes that directory from its first
+     boot on.
 7. **Deploy** (a first install; §11 for a second run).
    - Reads `<app data>/system/update/db-volume.env` when an earlier database
      upgrade left one, as `local/install.sh` does, but as data: the two keys it
@@ -122,13 +134,15 @@ when stdout is a terminal, `NO_COLOR` is unset and `TERM` is not `dumb`.
    reported with the commands to look at (`docker service ps hivepaas_app`,
    `docker service logs hivepaas_app`), and the script exits 1.
 9. **Finish.**
-   - Removes the admin password from `install.env` and marks it installed.
    - Prints the logo, the addresses (§5), and the reminders:
      - the certificate is self-signed until one is obtained in the setup, so
        the browser warns and the warning has to be passed once;
      - the server can take 30-60 seconds to answer after a restart;
-     - `/etc/hivepaas/install.env` holds the app secret: back it up somewhere
-       that is not this server.
+     - `<app data>/hivepaas.toml` holds the app secret: back it up somewhere
+       that is not this server;
+     - the other settings are the services' environment (`docker service
+       inspect hivepaas_app`);
+     - how to install another server without questions (§9).
 
 An unexpected failure prints the line it happened on, and that running the
 installer again picks up where it stopped.
@@ -170,9 +184,9 @@ the value; a typed one that fails is asked again.
 | Admin password | `HIVEPAAS_ADMIN_PASSWORD` | at least 10 characters, typed twice, not echoed |
 | App domain | `HIVEPAAS_APP_DOMAIN` | a hostname with at least two labels, e.g. `hivepaas.dev.mydomain.com`; saved lowercased |
 | Root domain | `HIVEPAAS_ROOT_DOMAIN` | derived and shown for Enter to accept (below); the app domain or a domain it is under |
-| App secret | `HIVEPAAS_APP_SECRET` | Enter generates 64 hex characters; given, at least 32 characters, no spaces |
 | App data directory | `HIVEPAAS_DATA_DIR` | `/var/lib/hivepaas` |
 | Project data directory | `HIVEPAAS_PROJECT_DATA_DIR` | Enter: `<app data>/project_data`; not the app data directory or one above it |
+| App secret | `HIVEPAAS_APP_SECRET` | not asked when `<app data>/hivepaas.toml` has one; Enter generates 64 hex characters; given, at least 32 characters, no spaces, quotes or backslashes |
 
 - **The admin username** is `admin`, not asked. The admin is not asked for
   once installed.
@@ -187,13 +201,18 @@ the value; a typed one that fails is asked again.
   `/home`, `/root` themselves. Repeated and trailing slashes are dropped.
 - **Generated, not asked:** `HIVEPAAS_JWT_SECRET` (32 alphanumeric characters),
   the database password, the Redis password and the agent token (32 each).
-- **Precedence:** the environment, then `--config`, then `install.env`. A
-  setting that names where data is or opens it - the channel, the domains,
-  the secrets, the directories - cannot change once saved: given with another
-  value, it stops the install.
-- **A lost `install.env`:** with no `install.env` but a HivePaaS service or
-  database volume on the server, the installer stops and asks for the file
-  back rather than generate new secrets the database would not take.
+- **Precedence:** the environment, then `--config`, then the HivePaaS already
+  on the server: the environment of the `hivepaas_app` service, and the secret
+  in `<app data>/hivepaas.toml`. A setting that names where data is or opens it
+  - the channel, the domains, the secrets, the directories - cannot change once
+  installed: given with another value, it stops the install.
+- **What a run cannot guess:**
+  - HivePaaS running but `<app data>/hivepaas.toml` missing: the installer stops
+    and asks for the file back rather than generate a secret the data was not
+    encrypted with.
+  - A HivePaaS database volume without HivePaaS services (`docker stack rm`):
+    its password was in them. The installer stops, unless
+    `HIVEPAAS_DB_PASSWORD` gives it; removing the volume starts over.
 
 ## 5. The stack
 
@@ -215,8 +234,10 @@ the value; a typed one that fails is asked again.
   - Traefik's `etc`, `var/log` and `ssl/certs` under app data.
 - **Configuration** by environment, the same for app, worker, updater and
   agent - each loads the configuration and reaches the database and the
-  cache: `HP_ENV` and `HP_CONFIG_FILE` from the channel; `HP_ROOT_DOMAIN`,
-  `HP_APP_DOMAIN`, `HP_APP_SECRET`, `HP_SESSION_JWT_SECRET`,
+  cache - except the app secret, which no service is given: app, worker and
+  updater read it from `hivepaas.toml` at `/var/lib/hivepaas`, and the agent,
+  which runs on every node and decrypts nothing, needs none: `HP_ENV` and `HP_CONFIG_FILE` from the channel; `HP_ROOT_DOMAIN`,
+  `HP_APP_DOMAIN`, `HP_SESSION_JWT_SECRET` (not for the agent),
   `HP_STORAGE_HOST_DIR`, `HP_STORAGE_PROJECT_DATA_HOST_DIR`, `HP_DB_*` with
   `HP_DB_SSL_MODE=disable` (the database is on the stack's own overlay),
   `HP_CACHE_URL` with the Redis password, `HP_AGENT_SECRET_TOKEN`, and
@@ -248,13 +269,12 @@ first); afterwards it never looks at them. Kept, the password would sit in the
 service definition, readable with `docker service inspect`, for good.
 
 So the account is in `hivepaas.first-boot.yaml`, deployed with the stack on the
-first install only, and once the dashboard answers:
-- `docker service update --env-rm HP_USER_ADMIN_USERNAME/EMAIL/PASSWORD` runs
-  on app and worker (with the OOM priority, in one update), and the installer
-  waits for the app's new task and for the dashboard again. That restarts the
-  app once, before its address is printed;
-- the password is removed from `install.env`, which records
-  `HIVEPAAS_INSTALLED=true`.
+first install only, and once the dashboard answers,
+`docker service update --env-rm HP_USER_ADMIN_USERNAME/EMAIL/PASSWORD` runs on
+app and worker (with the OOM priority, in one update), and the installer waits
+for the app's new task and for the dashboard again. That restarts the app once,
+before its address is printed. The password in the app's environment is also
+how a later run tells an install that has not finished.
 
 A later deploy leaves `hivepaas.first-boot.yaml` out, so it does not bring the
 account back.
@@ -299,22 +319,30 @@ kernel's own OOM killer acts, and every HivePaaS healthcheck fails meanwhile.
 ## 9. Silent install
 
 ```bash
+curl -fsSLO https://raw.githubusercontent.com/hivepaas/hivepaas/main/deployment/release/install.env
+# fill it in
+sudo bash install.sh --config install.env --yes
+# or
 sudo HIVEPAAS_ADMIN_EMAIL=... HIVEPAAS_ADMIN_PASSWORD=... HIVEPAAS_APP_DOMAIN=... \
   bash install.sh --yes
-sudo bash install.sh --config ./hivepaas.conf --yes
 ```
+
+`deployment/release/install.env` has the three required settings, empty, and
+every other one commented out with what it does and its default. `--help`, the
+start of an interactive first install and the end of every install point to
+it.
 
 A config file is `KEY=VALUE` lines of the variables above, read without being
 executed: `#` comments, blank lines, `export ` and single or double quotes are
 allowed, CRLF line ends are taken, and a name that is not `HIVEPAAS_...` is
 ignored with a warning. Command-line environment wins over the file, the file
-over `install.env`. `--help` lists every variable.
+over what the installed services say. `--help` lists every variable.
 
 For tests only: `HIVEPAAS_INSTALL_LIB=1` defines the functions and stops;
 `HIVEPAAS_INSTALL_FILES_DIR` copies the stack files from a directory;
 `HIVEPAAS_RELEASE_URL` reads the release info from a URL (`file://` works);
-`HIVEPAAS_INSTALL_ENV_FILE` moves `install.env`; `HIVEPAAS_TTY` reads answers
-from a file; `HIVEPAAS_WAIT_SECONDS` changes the 300-second waits.
+`HIVEPAAS_TTY` reads answers from a file; `HIVEPAAS_WAIT_SECONDS` changes the
+300-second waits.
 
 ## 10. Testing
 
@@ -328,19 +356,22 @@ from a file; `HIVEPAAS_WAIT_SECONDS` changes the 300-second waits.
   sample values: the stack renders; every `${VAR}` it uses is one the installer
   exports.
 - `make test-installer-e2e` (`install_e2e.sh`): in a docker:dind container, a
-  silent install with this checkout's release info; the dashboard by domain
-  and by address, HTTP redirected to HTTPS, the admin signing in, the admin's
-  account gone from the services and `install.env`, OOM priorities, file
-  modes; a second run that changes no service; another app secret stopping; a
-  lost `install.env` stopping; the address route following a change; and
-  `--redeploy`. On a machine that is not amd64 the HivePaaS images run
+  silent install from the `install.env` template with this checkout's release
+  info; the dashboard by domain and by address, HTTP redirected to HTTPS, the
+  admin signing in, the admin's account gone from the services, the app secret
+  in `hivepaas.toml` and in no service, the agent running without it, OOM
+  priorities; a second run that changes no service; another app secret
+  stopping; a lost `hivepaas.toml` stopping; the address route following a
+  change; and `--redeploy`. `HIVEPAAS_E2E_IMAGES` loads images built from the
+  checkout, for an app change the release's images do not have yet. On a machine that is not amd64 the HivePaaS images run
   emulated and the stack is deployed without resolving images.
 - On a fresh Linux server, by the user: an interactive install, a silent one,
   a second run, and the dashboard reached by domain and by IP.
 
 ## 11. Running it again
 
-- **Installed** (`HIVEPAAS_INSTALLED=true`): nothing is asked. The host is
+- **Installed** (the `hivepaas_app` service there, without the admin's
+  password in its environment): nothing is asked. The host is
   checked again (Docker, memory, swarm, files), the routes by address follow
   an address that changed - a label update, which restarts nothing, and left
   alone when the public address cannot be looked up - and the system services
@@ -361,6 +392,10 @@ from a file; `HIVEPAAS_WAIT_SECONDS` changes the 300-second waits.
 - **The updater updating the agent.** `sysupdateservice`'s plan has no agent
   step today, so the agent stays on the image the installer deployed.
 - **Joining more nodes, uninstalling, IPv6 addresses in the IP routers.**
+- **The agent and the secrets** is an app change that comes with this design:
+  in `run_mode = agent`, the app no longer requires the app secret or the JWT
+  secret. Until images with it are released, the agent of a stack deployed by
+  this installer does not start.
 - **The app's own fixes this work found:** an empty CORS origin list makes it
   panic at boot, and it exits when the database is not reachable at boot
   instead of retrying. The installer works around both (§5, §2 step 8).

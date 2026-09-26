@@ -118,6 +118,21 @@ func (r *writeRoutes) add(api *gin.RouterGroup) {
 		}
 		ctx.JSON(http.StatusOK, gin.H{"meta": gin.H{}})
 	})
+	api.POST("/projects/p1/prod/apps/a1/running-status", func(ctx *gin.Context) {
+		ctx.JSON(http.StatusOK, gin.H{"meta": gin.H{}})
+	})
+	api.GET("/projects/p1/prod/apps/a1/deployments/:id", func(ctx *gin.Context) {
+		status := map[string]string{"d3": "in-progress", "d1": "done"}[ctx.Param("id")]
+		ctx.JSON(http.StatusOK, gin.H{"data": testDeployment(ctx.Param("id"), status)})
+	})
+	api.GET("/projects/p1/prod/apps/a1/deployments/:id/logs", func(ctx *gin.Context) {
+		ctx.JSON(http.StatusOK, gin.H{"data": gin.H{"logs": []logFrame{
+			{Type: "out", Data: "Step 1/3"}, {Type: "err", Data: "npm ERR! missing script"},
+		}}})
+	})
+	api.POST("/projects/p1/prod/apps/a1/deployments/:id/cancel", func(ctx *gin.Context) {
+		ctx.JSON(http.StatusOK, gin.H{"meta": gin.H{}})
+	})
 	app := api.Group("/projects/p1/prod/apps/a1")
 	app.GET("/deployment-settings", func(ctx *gin.Context) {
 		r.mu.Lock()
@@ -126,7 +141,7 @@ func (r *writeRoutes) add(api *gin.RouterGroup) {
 	})
 	app.POST("/restart", func(ctx *gin.Context) { ctx.JSON(http.StatusOK, gin.H{"meta": gin.H{}}) })
 	app.POST("/deploy", func(ctx *gin.Context) {
-		ctx.JSON(http.StatusOK, gin.H{"data": gin.H{"deploymentId": "d9"}})
+		ctx.JSON(http.StatusOK, gin.H{"data": gin.H{"deploymentId": "d9", "taskId": "t9"}})
 	})
 }
 
@@ -251,26 +266,24 @@ func TestAPlanChangesNothingAndApplySendsExactlyIt(t *testing.T) {
 	assert.Contains(t, applied, "plan_restart_app")
 }
 
-func TestRedeployAnotherTag(t *testing.T) {
+func TestRedeployDeploysTheSourceAsItIs(t *testing.T) {
 	w := newWriteWorld(t)
 	session := w.session(t, "key1")
-	args := shopProd("api")
-	args["imageTag"] = "1.27"
 
-	text, isErr := callTool(t, session, "plan_redeploy_app", args)
+	text, isErr := callTool(t, session, "plan_redeploy_app", shopProd("api"))
 	assert.False(t, isErr, text)
 	plan := planOf(t, text)
 	var shown redeployPlan
 	assert.NoError(t, json.Unmarshal(plan.Plan, &shown))
-	assert.Equal(t, "shop/api:1.25", shown.Now.Image)
-	assert.Equal(t, "shop/api:1.27", shown.After.Image)
+	assert.Equal(t, deploySource{Method: "image", Image: "shop/api:1.25"}, shown.Source)
 
 	text, isErr = callTool(t, session, "apply_plan", map[string]any{"planToken": plan.PlanToken})
 	assert.False(t, isErr, text)
 	assert.Contains(t, text, `"deploymentId":"d9"`)
+	assert.Contains(t, text, `"taskId":"t9"`)
 	if sent := w.routes.writes(); assert.Len(t, sent, 1) {
 		assert.Equal(t, "/projects/p1/prod/apps/a1/deploy", sent[0].Path)
-		assert.JSONEq(t, `{"activeMethod":"image","imageSource":{"imageTag":"1.27"}}`, sent[0].Body)
+		assert.JSONEq(t, `{"noCache":false,"changeId":""}`, sent[0].Body, "the deploy endpoint's own request")
 	}
 }
 
@@ -292,16 +305,14 @@ func TestRedeployRefusesASourceThatMoved(t *testing.T) {
 	assert.Empty(t, w.routes.writes())
 }
 
-func TestRedeployRefusesWhatDoesNotFitTheSource(t *testing.T) {
+func TestAnAppWithNoSourceHasNoRedeployPlan(t *testing.T) {
 	w := newWriteWorld(t)
-	args := shopProd("api")
-	args["repoRef"] = "main"
-	text, isErr := callTool(t, w.session(t, "key1"), "plan_redeploy_app", args)
+	w.routes.source = gin.H{"activeMethod": ""}
+	text, isErr := callTool(t, w.session(t, "key1"), "plan_redeploy_app", shopProd("api"))
 	assert.False(t, isErr, text)
 	plan := planOf(t, text)
 	assert.Empty(t, plan.PlanToken)
-	assert.Equal(t, nextNothing, plan.Next)
-	assert.Contains(t, string(plan.Plan), "for an app built from a repository")
+	assert.Contains(t, string(plan.Plan), "no source to deploy from")
 }
 
 func installArgs() map[string]any {
@@ -634,4 +645,73 @@ func TestASettingsChangeThatChangesNothingHasNoPlan(t *testing.T) {
 func fmtJSON(v any) string {
 	raw, _ := json.Marshal(v)
 	return string(raw)
+}
+
+func testDeployment(id, status string) gin.H {
+	return gin.H{"id": id, "status": status, "createdAt": "2026-09-26T08:00:00Z",
+		"trigger": gin.H{"source": "user"},
+		"output":  gin.H{"commitHashShort": "abc123", "commitTitle": "fix build"},
+		"settings": gin.H{"activeMethod": "repo",
+			"repoSource": gin.H{"repoURL": "https://git.test/shop/api", "repoRef": "main"},
+			"command":    "serve --token s3cr3t"}}
+}
+
+func TestStopAnApp(t *testing.T) {
+	w := newWriteWorld(t)
+	session := w.session(t, "key1")
+	args := shopProd("api")
+	args["running"] = false
+	text, isErr := callTool(t, session, "plan_set_app_running", args)
+	assert.False(t, isErr, text)
+	plan := planOf(t, text)
+	assert.Contains(t, string(plan.Plan), "settings, volumes and data are kept")
+	text, isErr = callTool(t, session, "apply_plan", map[string]any{"planToken": plan.PlanToken})
+	assert.False(t, isErr, text)
+	assert.Contains(t, text, `"summary":"stop api in shop/prod"`)
+	if sent := w.routes.writes(); assert.Len(t, sent, 1) {
+		assert.Equal(t, "/projects/p1/prod/apps/a1/running-status", sent[0].Path)
+		assert.JSONEq(t, `{"running":false}`, sent[0].Body)
+	}
+}
+
+func TestDeploymentsAreListedAndReadWithTheirLog(t *testing.T) {
+	w := newWriteWorld(t)
+	session := w.session(t, "key1")
+	text, isErr := callTool(t, session, "list_app_deployments", shopProd("api"))
+	assert.False(t, isErr, text)
+	var list deploymentList
+	assert.NoError(t, json.Unmarshal([]byte(text), &list))
+	if assert.Len(t, list.Deployments, 2) {
+		assert.Equal(t, "failed", list.Deployments[0].Status)
+		assert.Equal(t, "pull access denied for shop/api", list.Deployments[0].Error)
+	}
+	assert.NotContains(t, text, "s3cr3t", "a deployment's commands are not passed on")
+
+	args := shopProd("api")
+	args["deployment"], args["grep"] = "d3", "err"
+	text, isErr = callTool(t, session, "get_app_deployment", args)
+	assert.False(t, isErr, text)
+	var detail deploymentDetail
+	assert.NoError(t, json.Unmarshal([]byte(text), &detail))
+	assert.Equal(t, "in-progress", detail.Deployment.Status)
+	assert.Equal(t, &deploySource{Method: "repo", Repo: "https://git.test/shop/api", Ref: "main"}, detail.Source)
+	assert.Equal(t, []string{"[stderr] npm ERR! missing script"}, detail.Log.Lines)
+	assert.NotContains(t, text, "s3cr3t")
+}
+
+func TestOnlyADeploymentThatHasNotEndedIsCanceled(t *testing.T) {
+	w := newWriteWorld(t)
+	session := w.session(t, "key1")
+	args := shopProd("api")
+	args["deployment"] = "d1"
+	text, _ := callTool(t, session, "plan_cancel_deployment", args)
+	assert.Empty(t, planOf(t, text).PlanToken, "d1 is done")
+
+	args["deployment"] = "d3"
+	text, _ = callTool(t, session, "plan_cancel_deployment", args)
+	token := planOf(t, text).PlanToken
+	text, isErr := callTool(t, session, "apply_plan", map[string]any{"planToken": token})
+	assert.False(t, isErr, text)
+	assert.Equal(t, []sentRequest{{"POST", "/projects/p1/prod/apps/a1/deployments/d3/cancel", "{}"}},
+		w.routes.writes())
 }

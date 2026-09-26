@@ -5,8 +5,16 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"net/url"
 	"strings"
+
+	"github.com/hivepaas/hivepaas/hivepaas_app/base"
+	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/appactionuc/appactiondto"
+	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/appsettingsuc/appsettingsdto"
+	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/appuc/appdto"
 )
+
+// The tools of appactionuc's endpoints: restart, deploy, and set running.
 
 // ---- plan_restart_app ----
 
@@ -29,15 +37,13 @@ func planRestartAppTool() Tool {
 			if err != nil {
 				return restartPlan{}, nil, err
 			}
-			var resp struct {
-				Data []apiServiceTask `json:"data"`
-			}
-			if err = call.Get(ctx, ref.path("/service-tasks"), nil, &resp); err != nil {
+			tasks, err := readServiceTasks(ctx, call, ref)
+			if err != nil {
 				return restartPlan{}, nil, err
 			}
 			out := restartPlan{App: ref.AppKey, Project: ref.ProjectKey, Env: ref.Env,
 				Effect: "every container of the app is replaced; the app may be unavailable while they start",
-				Tasks:  makeAppStatus(ref, resp.Data).Tasks}
+				Tasks:  makeAppStatus(ref, tasks).Tasks}
 			return out, &storedPlan{Method: http.MethodPost, Path: ref.path("/restart"),
 				Body:    json.RawMessage(`{}`),
 				Summary: fmt.Sprintf("restart %s in %s/%s", ref.AppKey, ref.ProjectKey, ref.Env)}, nil
@@ -47,149 +53,104 @@ func planRestartAppTool() Tool {
 // ---- plan_redeploy_app ----
 
 type redeployInput struct {
-	Project  string `json:"project" jsonschema:"the project's key, name or id"`
-	Env      string `json:"env" jsonschema:"the env's name, such as prod"`
-	App      string `json:"app" jsonschema:"the app's key, name or id"`
-	ImageTag string `json:"imageTag,omitempty" jsonschema:"an image app: the tag to deploy; the current one when empty"`
-	RepoRef  string `json:"repoRef,omitempty" jsonschema:"a repository app: the branch or tag to build"`
-	NoCache  bool   `json:"noCache,omitempty" jsonschema:"a repository app: build without the build cache"`
+	Project string `json:"project" jsonschema:"the project's key, name or id"`
+	Env     string `json:"env" jsonschema:"the env's name, such as prod"`
+	App     string `json:"app" jsonschema:"the app's key, name or id"`
+	NoCache bool   `json:"noCache,omitempty" jsonschema:"a repository app: build without the build cache"`
 }
 
 // deploySource is where an app's image comes from, as its deployment settings
 // say: what a redeploy plan shows, and what its apply checks has not moved.
 type deploySource struct {
-	Method  string `json:"method"`
-	Image   string `json:"image,omitempty"`
-	Repo    string `json:"repo,omitempty"`
-	Ref     string `json:"ref,omitempty"`
-	Commit  string `json:"commit,omitempty"`
-	NoCache bool   `json:"noCache,omitempty"`
+	Method string `json:"method"`
+	Image  string `json:"image,omitempty"`
+	Repo   string `json:"repo,omitempty"`
+	Ref    string `json:"ref,omitempty"`
+	Commit string `json:"commit,omitempty"`
 }
 
 type redeployPlan struct {
 	App     string       `json:"app"`
 	Project string       `json:"project"`
 	Env     string       `json:"env"`
-	Now     deploySource `json:"now"`
-	After   deploySource `json:"after"`
+	Source  deploySource `json:"source"`
+	NoCache bool         `json:"noCache,omitempty"`
 	Effect  string       `json:"effect"`
 	Issues  []string     `json:"issues,omitempty"`
 }
 
-const (
-	methodImage = "image"
-	methodRepo  = "repo"
-)
-
 func planRedeployAppTool() Tool {
 	return planTool("plan_redeploy_app", "Plan a redeploy",
-		"Plans deploying an app again: an image app pulls its image - or another tag of it - and a "+
-			"repository app is built again from its branch, or another one. Answers the source now and "+
-			"after. The source's other settings are configuration: plan_update_app_config changes them. "+
-			"Nothing happens until apply_plan.",
-		NeedExecute, &applier{check: checkDeploySource,
-			follow: "get_app shows the new deployment and how it ends; get_task_logs its build."},
+		"Plans deploying an app again from its source as its settings say: an image app pulls its image, "+
+			"a repository app is built from its branch. Answers the source. To deploy another tag or branch, "+
+			"change the deployment settings with plan_update_app_settings first. Nothing happens until "+
+			"apply_plan.",
+		NeedExecute, &applier{check: checkDeploySource, result: redeployResult,
+			follow: "get_app_deployment with the deploymentId shows how it goes, and its build's log."},
 		func(ctx context.Context, call *Call, in redeployInput) (redeployPlan, *storedPlan, error) {
 			ref, err := resolveApp(ctx, call, in.Project, in.Env, in.App)
 			if err != nil {
 				return redeployPlan{}, nil, err
 			}
-			now, err := readDeploySource(ctx, call, ref.path(""))
+			source, err := readDeploySource(ctx, call, ref.path(""))
 			if err != nil {
 				return redeployPlan{}, nil, err
 			}
-			return makeRedeployPlan(ref, now, &in)
+			return makeRedeployPlan(ref, source, in.NoCache)
 		})
 }
 
-func makeRedeployPlan(ref *appRef, now deploySource, in *redeployInput) (redeployPlan, *storedPlan, error) {
-	out := redeployPlan{App: ref.AppKey, Project: ref.ProjectKey, Env: ref.Env, Now: now, After: now,
-		Effect: "a new deployment is made; the app's containers are replaced once it succeeds"}
-	body := map[string]any{"activeMethod": now.Method}
-	imageTag, repoRef := strings.TrimSpace(in.ImageTag), strings.TrimSpace(in.RepoRef)
-	switch now.Method {
-	case methodImage:
-		if repoRef != "" || in.NoCache {
-			out.Issues = append(out.Issues, "repoRef and noCache are for an app built from a repository; "+
-				"this one runs an image")
-		}
-		if imageTag != "" {
-			name, _, _ := strings.Cut(now.Image, ":")
-			out.After.Image = name + ":" + imageTag
-			body["imageSource"] = map[string]string{"imageTag": imageTag}
-		}
-	case methodRepo:
-		if imageTag != "" {
-			out.Issues = append(out.Issues, "imageTag is for an app that runs an image; this one is built "+
-				"from a repository")
-		}
-		if repoRef != "" {
-			out.After.Ref, out.After.Commit = repoRef, ""
-			body["repoSource"] = map[string]string{"repoRef": repoRef}
-		}
-		out.After.NoCache = in.NoCache
-		body["noCache"] = in.NoCache
-	default:
-		out.Issues = append(out.Issues, "the app has no source to deploy from yet; set one in the dashboard")
-	}
-	if len(out.Issues) > 0 {
+func makeRedeployPlan(ref *appRef, source deploySource, noCache bool) (redeployPlan, *storedPlan, error) {
+	out := redeployPlan{App: ref.AppKey, Project: ref.ProjectKey, Env: ref.Env, Source: source,
+		NoCache: noCache && source.Method == string(base.DeploymentMethodRepo),
+		Effect:  "a new deployment is made; the app's containers are replaced once it succeeds"}
+	if source.Method == "" {
+		out.Issues = append(out.Issues, "the app has no source to deploy from yet; set one in its deployment settings")
 		return out, nil, nil
 	}
-	raw, err := json.Marshal(body)
+	body, err := json.Marshal(appactiondto.DeployAppReq{NoCache: out.NoCache})
 	if err != nil {
 		return redeployPlan{}, nil, fmt.Errorf("mcp: encoding a plan: %w", err)
 	}
-	seen, err := json.Marshal(redeployCheck{AppPath: ref.path(""), Seen: now})
+	seen, err := json.Marshal(redeployCheck{AppPath: ref.path(""), Seen: source})
 	if err != nil {
 		return redeployPlan{}, nil, fmt.Errorf("mcp: encoding a plan: %w", err)
 	}
-	return out, &storedPlan{Method: http.MethodPost, Path: ref.path("/deploy"), Body: raw, Check: seen,
+	return out, &storedPlan{Method: http.MethodPost, Path: ref.path("/deploy"), Body: body, Check: seen,
 		Summary: fmt.Sprintf("redeploy %s in %s/%s from %s", ref.AppKey, ref.ProjectKey, ref.Env,
-			out.After.describe())}, nil
+			source.describe())}, nil
 }
 
 // describe is a source in a few words, for a summary.
 func (s deploySource) describe() string {
-	if s.Method == methodImage {
+	if s.Method == string(base.DeploymentMethodImage) {
 		return s.Image
 	}
 	return strings.TrimSpace(s.Repo + " " + s.Ref)
 }
 
-// apiDeploySettings is an app's deployment settings as the API answers them,
-// as far as its source goes.
-type apiDeploySettings struct {
-	ActiveMethod string `json:"activeMethod"`
-	ImageSource  *struct {
-		Image string `json:"image"`
-	} `json:"imageSource"`
-	RepoSource *struct {
-		RepoURL    string `json:"repoURL"`
-		RepoRef    string `json:"repoRef"`
-		CommitHash string `json:"commitHash"`
-	} `json:"repoSource"`
-}
-
 // readDeploySource reads an app's source from its deployment settings: what the
-// next deployment uses, which the last one may not have.
+// next deployment uses.
 func readDeploySource(ctx context.Context, call *Call, appPath string) (deploySource, error) {
-	var resp struct {
-		Data apiDeploySettings `json:"data"`
-	}
+	var resp appsettingsdto.GetAppDeploymentSettingsResp
 	if err := call.Get(ctx, appPath+"/deployment-settings", nil, &resp); err != nil {
 		return deploySource{}, err
 	}
 	s := resp.Data
-	out := deploySource{Method: s.ActiveMethod}
-	if s.ImageSource != nil {
-		out.Image = s.ImageSource.Image
+	if s == nil {
+		return deploySource{}, nil
 	}
-	if s.RepoSource != nil && s.ActiveMethod == methodRepo {
-		out.Repo, out.Ref, out.Commit = withoutUserinfo(s.RepoSource.RepoURL), s.RepoSource.RepoRef,
-			s.RepoSource.CommitHash
-	}
-	if s.ActiveMethod != methodImage {
-		out.Image = ""
+	out := deploySource{Method: string(s.ActiveMethod)}
+	switch s.ActiveMethod {
+	case base.DeploymentMethodImage:
+		if s.ImageSource != nil {
+			out.Image = s.ImageSource.Image
+		}
+	case base.DeploymentMethodRepo:
+		if s.RepoSource != nil {
+			out.Repo, out.Ref, out.Commit = withoutUserinfo(s.RepoSource.RepoURL), s.RepoSource.RepoRef,
+				s.RepoSource.CommitHash
+		}
 	}
 	return out, nil
 }
@@ -216,4 +177,69 @@ func checkDeploySource(ctx context.Context, call *Call, raw json.RawMessage) err
 		return planMoved("the app's source")
 	}
 	return nil
+}
+
+// redeployResult is the deploy endpoint's answer: the deployment, and the task
+// that carries it out.
+func redeployResult(data json.RawMessage) (any, error) {
+	var deployed appactiondto.DeployAppDataResp
+	if err := json.Unmarshal(data, &deployed); err != nil {
+		return nil, fmt.Errorf("mcp: decoding the answer: %w", err)
+	}
+	return deployed, nil
+}
+
+// ---- plan_set_app_running ----
+
+type setRunningInput struct {
+	Project string `json:"project" jsonschema:"the project's key, name or id"`
+	Env     string `json:"env" jsonschema:"the env's name, such as prod"`
+	App     string `json:"app" jsonschema:"the app's key, name or id"`
+	Running bool   `json:"running" jsonschema:"true to start the app, false to stop it"`
+}
+
+type setRunningPlan struct {
+	App     string `json:"app"`
+	Project string `json:"project"`
+	Env     string `json:"env"`
+	Status  string `json:"statusNow"`
+	Running *int   `json:"runningNow,omitempty"`
+	Desired *int   `json:"desiredNow,omitempty"`
+	Effect  string `json:"effect"`
+}
+
+func planSetAppRunningTool() Tool {
+	return planTool("plan_set_app_running", "Plan stopping or starting an app",
+		"Plans stopping an app - its containers go, its settings and data stay - or starting it again, as "+
+			"the dashboard's Stop and Start do. Answers its state now. Nothing happens until apply_plan.",
+		NeedExecute, &applier{follow: "get_app_status shows its containers go or come back."},
+		func(ctx context.Context, call *Call, in setRunningInput) (setRunningPlan, *storedPlan, error) {
+			ref, err := resolveApp(ctx, call, in.Project, in.Env, in.App)
+			if err != nil {
+				return setRunningPlan{}, nil, err
+			}
+			var resp appdto.GetAppResp
+			if err = call.Get(ctx, ref.path(""), url.Values{"getStats": {paramTrue}}, &resp); err != nil {
+				return setRunningPlan{}, nil, err
+			}
+			out := setRunningPlan{App: ref.AppKey, Project: ref.ProjectKey, Env: ref.Env}
+			if resp.Data != nil {
+				out.Status = string(resp.Data.Status)
+				if resp.Data.Stats != nil {
+					out.Running, out.Desired = &resp.Data.Stats.RunningTasks, &resp.Data.Stats.DesiredTasks
+				}
+			}
+			verb := "stop"
+			out.Effect = "the app's containers are removed; its settings, volumes and data are kept"
+			if in.Running {
+				verb = "start"
+				out.Effect = "the app's containers are created again from its current settings"
+			}
+			body, err := json.Marshal(appactiondto.SetAppRunningReq{Running: in.Running})
+			if err != nil {
+				return setRunningPlan{}, nil, fmt.Errorf("mcp: encoding a plan: %w", err)
+			}
+			return out, &storedPlan{Method: http.MethodPost, Path: ref.path("/running-status"), Body: body,
+				Summary: fmt.Sprintf("%s %s in %s/%s", verb, ref.AppKey, ref.ProjectKey, ref.Env)}, nil
+		})
 }

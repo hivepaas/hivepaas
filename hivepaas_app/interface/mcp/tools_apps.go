@@ -7,6 +7,8 @@ import (
 	"sort"
 	"strconv"
 	"time"
+
+	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/appsettingsuc/appsettingsdto"
 )
 
 type envInput struct {
@@ -247,21 +249,6 @@ func (s *appStatus) shrink() bool {
 	return shrinkList(&s.Tasks, &s.Truncated)
 }
 
-type apiServiceTask struct {
-	ID   string `json:"id"`
-	Slot int    `json:"slot"`
-	Node *struct {
-		Hostname string `json:"hostname"`
-	} `json:"node"`
-	Status *struct {
-		Timestamp time.Time `json:"timestamp"`
-		State     string    `json:"state"`
-		Message   string    `json:"message"`
-		Err       string    `json:"err"`
-	} `json:"status"`
-	DesiredState string `json:"desiredState"`
-}
-
 func getAppStatusTool() Tool {
 	return readTool("get_app_status", "Get an app's containers",
 		"Shows the swarm tasks of an app, newest first: which node each is on, the state it is in "+
@@ -273,25 +260,35 @@ func getAppStatusTool() Tool {
 			if err != nil {
 				return appStatus{}, err
 			}
-			var resp struct {
-				Data []apiServiceTask `json:"data"`
-			}
-			if err = call.Get(ctx, ref.path("/service-tasks"), nil, &resp); err != nil {
+			tasks, err := readServiceTasks(ctx, call, ref)
+			if err != nil {
 				return appStatus{}, err
 			}
-			return makeAppStatus(ref, resp.Data), nil
+			return makeAppStatus(ref, tasks), nil
 		})
 }
 
-func makeAppStatus(ref *appRef, tasks []apiServiceTask) appStatus {
+// readServiceTasks is appsettingsuc's service tasks of an app.
+func readServiceTasks(ctx context.Context, call *Call, ref *appRef) ([]*appsettingsdto.ServiceTaskResp, error) {
+	var resp appsettingsdto.GetAppServiceTasksResp
+	if err := call.Get(ctx, ref.path("/service-tasks"), nil, &resp); err != nil {
+		return nil, err
+	}
+	return resp.Data, nil
+}
+
+func makeAppStatus(ref *appRef, tasks []*appsettingsdto.ServiceTaskResp) appStatus {
 	out := appStatus{App: ref.AppKey, Tasks: make([]taskItem, 0, len(tasks))}
 	for _, t := range tasks {
-		item := taskItem{ID: shortID(t.ID), Slot: t.Slot, Desired: t.DesiredState}
+		if t == nil {
+			continue
+		}
+		item := taskItem{ID: shortID(t.ID), Slot: t.Slot, Desired: string(t.DesiredState)}
 		if t.Node != nil {
 			item.Node = t.Node.Hostname
 		}
 		if t.Status != nil {
-			item.State, item.At = t.Status.State, t.Status.Timestamp
+			item.State, item.At = string(t.Status.State), t.Status.Timestamp
 			item.Message = t.Status.Message
 			item.Error = cutText(t.Status.Err, maxErrorText, "")
 		}

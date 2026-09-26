@@ -1271,3 +1271,382 @@ git branch -d feat/installer-secret-file
 ```
 
 Expected: `383 passed, 0 failed`, both packages `ok`. Do not push. Tell the user, in Vietnamese, that a server install needs images released after this merge: the agent in `hivepaas-agent-dev:0.1.0` does not start without the secrets.
+
+### Task 4: credentials.txt and install.log (added at the user's request, after the plan was approved)
+
+**Why:** with `install.env` gone, the database password lives only in the services: after `docker stack rm` nothing can open the database volume left behind. The user asked for a file of the secrets a person may need, and for a log of the runs, both next to `hivepaas.toml`. Decided with the user: `credentials.txt`, plain text for a person, not TOML; the admin password is not kept; `install.log` holds no secret.
+
+**Files:**
+- Modify: `deployment/release/install.sh`, `deployment/release/install_test.sh`, `deployment/release/install_e2e.sh`, `deployment/release/install.env` (a comment)
+- Modify: `docs/superpowers/specs/2026-09-25-release-installer-design.md`
+
+**Interfaces:**
+- Consumes: `take_installed`, `read_kv_file`, `kv_quote`, `secret_file` (Task 2).
+- Produces:
+  - `credentials_file` (`$HIVEPAAS_DATA_DIR/credentials.txt`); `write_credentials FILE` - mode `0600`, comments saying what each line is and not to share the file, and `HIVEPAAS_DB_PASSWORD`, `HIVEPAAS_REDIS_PASSWORD`, `HIVEPAAS_AGENT_TOKEN`, `HIVEPAAS_JWT_SECRET` as `KEY='value'` lines, so that it also works as a `--config` file; never the app secret or the admin's password. Written by `prepare_files` on every run.
+  - `take_credential KEY VALUE` - `take_installed` for those four keys only.
+  - `detect_install_state`: a database volume without services reads `credentials.txt` from the app data directory (given, or `/var/lib/hivepaas`) when `HIVEPAAS_DB_PASSWORD` is not given, and stops only when neither has it. A reinstall over that database counts as installed (`INSTALLED=1`): the admin exists already, so it is not asked for and the first-boot file is not deployed.
+  - `LOG_FILE` and `log_line`: `info`, `ok`, `warn`, `die`, `step` and `on_error` also write their line, without colour, to `$WORK_DIR/install.log`; `save_log`, run on exit, appends it under a dated header to `<app data>/install.log` (mode `0600`) once that directory exists. Output of the commands the installer runs is not in it.
+
+- [ ] **Step 1: Write the failing tests** - in `install_test.sh`: `test_credentials_file` (written, `0600`, the four keys and their values, no app secret, readable back with `read_kv_file ... take_credential`, which ignores other keys), `test_log_lines` (the output helpers write plain lines to `LOG_FILE`, none when it is empty), `test_save_log` (appended under a header, `0600`; nothing without a data directory).
+- [ ] **Step 2: Run them to see them fail.** Run: `bash deployment/release/install_test.sh`. Expected: FAIL on the new tests only.
+- [ ] **Step 3: Write the code** as the Interfaces say; the patch is appended to this task once written.
+- [ ] **Step 4: Run** `make test-installer` (shellcheck clean, all pass) and the bash 5 command of Task 2.
+- [ ] **Step 5: E2E** - add checks: `credentials.txt` is `0600`, its database password is the one the app runs with, and it has no app secret; `install.log` is there, says `[9/9] Finish`, has no escape codes and no password; after `docker stack rm hivepaas`, a run without `credentials.txt` stops, and a run with it deploys again over the same database, where the admin still signs in. Then Task 3's Steps 2-3 (agent image, e2e run) with every check `ok`.
+- [ ] **Step 6: Spec** - §2 steps 6 and 9, §4 "What a run cannot guess", §10, and "Not in this design" (the database in the app data directory is the next piece of work).
+- [ ] **Step 7: Commit, review, merge** as Task 3 Step 5.
+
+**The code, as written and verified** (`make test-installer`: 400 passed; bash 5: 385 passed; the e2e: every check `ok`, among them the reinstall after `docker stack rm`):
+
+```diff
+diff --git a/deployment/release/install.env b/deployment/release/install.env
+index 97b61c81..ce6b6118 100644
+--- a/deployment/release/install.env
++++ b/deployment/release/install.env
+@@ -62,6 +62,7 @@ HIVEPAAS_APP_DOMAIN=
+ # The agent's image. Default: the release's, or the app image's with -agent.
+ #HIVEPAAS_AGENT_IMAGE=
+ 
+-# Only to deploy again over a database whose services were removed: the
+-# password it was created with.
++# Only to deploy again over a database whose services were removed, and only
++# when <data dir>/credentials.txt, which the installer reads for it, is gone
++# too: the password the database was created with.
+ #HIVEPAAS_DB_PASSWORD=
+diff --git a/deployment/release/install.sh b/deployment/release/install.sh
+index 9a6c1199..a552030c 100755
+--- a/deployment/release/install.sh
++++ b/deployment/release/install.sh
+@@ -25,6 +25,10 @@
+ STEP_NO=0
+ STEP_TOTAL=9
+ C_RESET='' C_BOLD='' C_RED='' C_GREEN='' C_YELLOW='' C_BLUE='' C_LOGO=''
++# LOG_FILE: where the run's own lines also go, without colour; save_log keeps
++# them in the app data directory. The output of the commands it runs is not
++# in it, and neither are questions or answers.
++LOG_FILE=''
+ 
+ setup_colors() {
+   if [ -t 1 ] && [ -z "${NO_COLOR:-}" ] && [ "${TERM:-}" != dumb ]; then
+@@ -33,16 +37,31 @@ setup_colors() {
+   fi
+ }
+ 
+-info() { printf '  %s\n' "$*"; }
+-ok() { printf '  %s✔%s %s\n' "$C_GREEN" "$C_RESET" "$*"; }
+-warn() { printf '  %s!%s %s\n' "$C_YELLOW" "$C_RESET" "$*" >&2; }
++log_line() {
++  if [ -n "$LOG_FILE" ]; then printf '%s\n' "$*" >>"$LOG_FILE"; fi
++}
++
++info() {
++  printf '  %s\n' "$*"
++  log_line "  $*"
++}
++ok() {
++  printf '  %s✔%s %s\n' "$C_GREEN" "$C_RESET" "$*"
++  log_line "  ok: $*"
++}
++warn() {
++  printf '  %s!%s %s\n' "$C_YELLOW" "$C_RESET" "$*" >&2
++  log_line "  !: $*"
++}
+ die() {
+   printf '\n%s✘ %s%s\n' "$C_RED" "$*" "$C_RESET" >&2
++  log_line "error: $*"
+   exit 1
+ }
+ step() {
+   STEP_NO=$((STEP_NO + 1))
+   printf '\n%s%s[%d/%d] %s%s\n' "$C_BOLD" "$C_BLUE" "$STEP_NO" "$STEP_TOTAL" "$*" "$C_RESET"
++  log_line "[$STEP_NO/$STEP_TOTAL] $*"
+ }
+ 
+ # on_error runs for a command that failed where nothing expected it to. Inside
+@@ -50,6 +69,7 @@ step() {
+ on_error() {
+   [ "${BASH_SUBSHELL:-0}" -eq 0 ] || return 0
+   printf '\n%s✘ The installer stopped at line %s (exit status %s).%s\n' "$C_RED" "$2" "$1" "$C_RESET" >&2
++  log_line "error: the installer stopped at line $2 (exit status $1)"
+   printf '  Fix what the output above says, then run it again: it picks up where it stopped.\n' >&2
+   exit "$1"
+ }
+@@ -708,6 +728,47 @@ normalize_settings() {
+   fi
+ }
+ 
++
++# credentials_file: the secrets a person may need, next to hivepaas.toml.
++credentials_file() {
++  printf '%s/credentials.txt' "$HIVEPAAS_DATA_DIR"
++}
++
++# write_credentials FILE: the passwords and tokens the services run with, for a
++# person to read and for a run whose services are gone - Postgres only ever
++# takes the password it was created with. KEY=VALUE lines, so the file also
++# works as a --config file. Never the app secret, nor the admin's password.
++write_credentials() {
++  (
++    umask 077
++    {
++      printf '# HivePaaS credentials, written by install.sh on %s.\n' "$(date -u '+%Y-%m-%d %H:%M UTC')"
++      printf '# Keep this file private: do not paste it into an issue or a chat.\n'
++      printf '# The app secret is not here: it is in hivepaas.toml, next to this file.\n'
++      printf '# The admin password is not kept anywhere: it is the one you chose.\n'
++      printf '# These are also in the environment of the HivePaaS services.\n\n'
++      printf "# The database's password. Postgres only takes the password it was created\n"
++      printf "# with: without it, a database left after 'docker stack rm' cannot be opened.\n"
++      printf 'HIVEPAAS_DB_PASSWORD=%s\n\n' "$(kv_quote "$HIVEPAAS_DB_PASSWORD")"
++      printf "# Redis's password; the cache keeps nothing across a restart.\n"
++      printf 'HIVEPAAS_REDIS_PASSWORD=%s\n\n' "$(kv_quote "$HIVEPAAS_REDIS_PASSWORD")"
++      printf '# The token the app and its agents authenticate each other with.\n'
++      printf 'HIVEPAAS_AGENT_TOKEN=%s\n\n' "$(kv_quote "$HIVEPAAS_AGENT_TOKEN")"
++      printf '# The key sessions are signed with; a new one signs everyone out.\n'
++      printf 'HIVEPAAS_JWT_SECRET=%s\n' "$(kv_quote "$HIVEPAAS_JWT_SECRET")"
++    } >"$1.tmp"
++  ) && mv -f "$1.tmp" "$1"
++}
++
++# take_credential KEY VALUE: a line of credentials.txt - the four keys it holds,
++# and nothing else.
++take_credential() {
++  case "$1" in
++    HIVEPAAS_DB_PASSWORD | HIVEPAAS_REDIS_PASSWORD | HIVEPAAS_AGENT_TOKEN | HIVEPAAS_JWT_SECRET)
++      take_installed "$1" "$2"
++      ;;
++  esac
++}
+ # load_settings INSTALLED_ENV: the environment, then --config, then the
+ # HivePaaS already on this server - each only for what the ones before it left
+ # unset. INSTALLED_ENV is the hivepaas_app service's environment, empty when
+@@ -1263,6 +1324,8 @@ prepare_files() {
+     write_secret_file "$(secret_file)" "$HIVEPAAS_APP_SECRET" || die "Could not write $(secret_file)."
+     ok "App secret: in $(secret_file)."
+   fi
++  write_credentials "$(credentials_file)" || die "Could not write $(credentials_file)."
++  ok "Passwords and tokens, for you to keep private: $(credentials_file)."
+   fetch_install_file hivepaas.yaml "$WORK_DIR/hivepaas.yaml"
+   fetch_install_file hivepaas.first-boot.yaml "$WORK_DIR/hivepaas.first-boot.yaml"
+   # The app writes Traefik's configuration from here on; a run after the first
+@@ -1331,14 +1394,35 @@ detect_install_state() {
+     fi
+   else
+     INSTALL_STATE=fresh
+-    if db_volume_exists && [ -z "${HIVEPAAS_DB_PASSWORD:-}" ]; then
+-      die "A HivePaaS database volume is on this server, but no HivePaaS services, and its password was in" \
+-        "them. Set HIVEPAAS_DB_PASSWORD to it (and keep <app data>/hivepaas.toml where it is), or remove the" \
+-        "volume to start over ('docker volume ls', 'docker volume rm'), then run the installer again."
++    if db_volume_exists; then
++      reinstall_over_database
+     fi
+   fi
+ }
+ 
++# reinstall_over_database: a database volume without services - left by
++# `docker stack rm` - is deployed over again, with the password it was created
++# with: given, or from credentials.txt in the app data directory. Its admin
++# exists already, so it is not asked for.
++reinstall_over_database() {
++  local creds
++  if [ -z "${HIVEPAAS_DB_PASSWORD:-}" ]; then
++    creds="$(normalize_dir "${HIVEPAAS_DATA_DIR:-/var/lib/hivepaas}")/credentials.txt"
++    if [ -f "$creds" ]; then
++      read_kv_file "$creds" take_credential
++      HIVEPAAS_DATA_DIR=${HIVEPAAS_DATA_DIR:-${creds%/*}}
++    fi
++  fi
++  if [ -z "${HIVEPAAS_DB_PASSWORD:-}" ]; then
++    die "A HivePaaS database volume is on this server, but no HivePaaS services and no credentials.txt" \
++      "in the app data directory to take its password from. Set HIVEPAAS_DB_PASSWORD (or HIVEPAAS_DATA_DIR," \
++      "where credentials.txt and hivepaas.toml are), or remove the volume to start over ('docker volume ls'," \
++      "'docker volume rm'), then run the installer again."
++  fi
++  INSTALLED=1
++  info "Deploying again over the database already here; its admin is kept."
++}
++
+ # port_taken PORT: something on this host takes connections on PORT.
+ port_taken() {
+   (exec 3<>"/dev/tcp/127.0.0.1/$1") 2>/dev/null
+@@ -1498,7 +1582,8 @@ deploy() {
+   case "$INSTALL_STATE" in
+     fresh)
+       resolve_images
+-      deploy_stack 1
++      # Over a database already here, the admin exists: no first boot.
++      if [ "$INSTALLED" = 1 ]; then deploy_stack 0; else deploy_stack 1; fi
+       run_migrations "$HIVEPAAS_IMAGE_APP"
+       ;;
+     unfinished)
+@@ -1707,7 +1792,8 @@ Settings, from the environment or --config (the environment wins):
+   HIVEPAAS_AGENT_IMAGE         the agent's image (default: from the release)
+   HIVEPAAS_RELEASE_BRANCH      the branch the release info is read from (default: release)
+   HIVEPAAS_INSTALL_REF         the ref the stack files are downloaded from (default: main)
+-  HIVEPAAS_DB_PASSWORD         only to redeploy over a database whose services are gone
++  HIVEPAAS_DB_PASSWORD         only to redeploy over a database whose services are gone,
++                               when <data dir>/credentials.txt, read by default, is gone too
+ 
+ Silent install - a settings file to fill in, with every setting explained:
+   curl -fsSLO https://raw.githubusercontent.com/hivepaas/hivepaas/main/deployment/release/install.env
+@@ -1736,7 +1822,22 @@ parse_args() {
+   done
+ }
+ 
++# save_log: the run's lines, appended under a dated header to install.log in the
++# app data directory - once that exists, which a run stopped early leaves it
++# without.
++save_log() {
++  local log="${HIVEPAAS_DATA_DIR:-}/install.log"
++  if [ -z "$LOG_FILE" ] || [ ! -f "$LOG_FILE" ] || [ ! -d "${HIVEPAAS_DATA_DIR:-/nonexistent}" ]; then
++    return 0
++  fi
++  {
++    printf '\n=== install.sh, %s\n' "$(date -u '+%Y-%m-%d %H:%M:%S UTC')"
++    cat "$LOG_FILE"
++  } >>"$log" && chmod 600 "$log"
++}
++
+ cleanup() {
++  save_log || true
+   if [ -n "$WORK_DIR" ]; then rm -rf "$WORK_DIR"; fi
+ }
+ 
+@@ -1750,6 +1851,7 @@ main() {
+   print_logo
+   open_tty
+   WORK_DIR=$(mktemp -d)
++  LOG_FILE=$WORK_DIR/install.log
+ 
+   step "Preflight"
+   preflight
+diff --git a/deployment/release/install_e2e.sh b/deployment/release/install_e2e.sh
+index 9077fc44..0932aa8c 100755
+--- a/deployment/release/install_e2e.sh
++++ b/deployment/release/install_e2e.sh
+@@ -6,7 +6,8 @@
+ # signing in, the admin's password gone, the app secret in hivepaas.toml and
+ # in no service - and the runs after it: one that must change nothing, one
+ # with another app secret and one without hivepaas.toml that must stop, one
+-# after an address changed, and a --redeploy.
++# after an address changed, a --redeploy, and one after `docker stack rm`,
++# which must deploy again over the database left behind, from credentials.txt.
+ #
+ #   make test-installer-e2e     (bash deployment/release/install_e2e.sh)
+ #
+@@ -140,6 +141,19 @@ expect "the agent runs, without the JWT secret" "1/1 0" "$(in_dind 'docker servi
+   --format "{{.Replicas}}"; docker service inspect hivepaas_agent \
+   --format "{{range .Spec.TaskTemplate.ContainerSpec.Env}}{{println .}}{{end}}" | grep -c JWT || true' | xargs)"
+ expect "nothing is kept in /etc/hivepaas" no "$(in_dind 'test -e /etc/hivepaas && echo yes || echo no')"
++expect "credentials.txt is root's alone, with the database's password and no app secret" "600 1 0" "$(in_dind '
++  stat -c %a /var/lib/hivepaas/credentials.txt
++  pw=$(docker service inspect hivepaas_app --format "{{range .Spec.TaskTemplate.ContainerSpec.Env}}{{println .}}{{end}}" |
++    sed -n "s/^HP_DB_PASSWORD=//p")
++  grep -c "^HIVEPAAS_DB_PASSWORD=.$pw.$" /var/lib/hivepaas/credentials.txt
++  grep -c -i "app_secret\|^secret" /var/lib/hivepaas/credentials.txt || true' | xargs)"
++expect "install.log tells the run, without colour or password" "600 1 0 0" "$(in_dind '
++  log=/var/lib/hivepaas/install.log
++  stat -c %a $log
++  grep -c "^\[9/9\] Finish" $log
++  grep -c "$(printf "\033")" $log || true
++  pw=$(sed -n "s/^HIVEPAAS_DB_PASSWORD=.\(.*\).$/\1/p" /var/lib/hivepaas/credentials.txt)
++  grep -c "$pw" $log || true' | xargs)"
+ 
+ versions() {
+   in_dind 'for s in traefik db redis app worker updater agent; do
+@@ -182,4 +196,24 @@ expect "and every system service has OOM priority -500 again" "-500 -500 -500 -5
+ expect "and the dashboard answers" 200 "$(in_dind "curl -sk -o /dev/null -w '%{http_code}' \
+   --resolve $DOMAIN:443:127.0.0.1 https://$DOMAIN/_/ping")"
+ 
++in_dind 'docker stack rm hivepaas >/dev/null
++  for _ in $(seq 120); do
++    if ! docker network inspect hivepaas_local_net >/dev/null 2>&1 &&
++      [ -z "$(docker ps -q --filter label=com.docker.stack.namespace=hivepaas)" ]; then break; fi
++    sleep 1
++  done'
++in_dind 'mv /var/lib/hivepaas/credentials.txt /root/credentials.txt.bak'
++if in_dind "$INSTALL >/root/install6.log 2>&1"; then fail "a run over a database without its password went on"; fi
++in_dind 'grep -q "no credentials.txt" /root/install6.log' || fail "a run over a database without its password: no reason"
++pass "after docker stack rm, a run without credentials.txt stops"
++in_dind 'mv /root/credentials.txt.bak /var/lib/hivepaas/credentials.txt'
++# The services held the domain too: a run over the database is told it again,
++# as a person would answer it.
++in_dind "HIVEPAAS_APP_DOMAIN=$DOMAIN $INSTALL >/root/install7.log 2>&1" || {
++  in_dind 'tail -n 30 /root/install7.log' >&2
++  fail "a run over the database left behind"
++}
++pass "with it, a run deploys again over the database left behind"
++expect "where the admin still signs in" 200 "$(login "$DOMAIN" "$PASSWORD")"
++
+ printf 'all end-to-end checks passed\n'
+diff --git a/deployment/release/install_test.sh b/deployment/release/install_test.sh
+index 287effb7..72a93439 100755
+--- a/deployment/release/install_test.sh
++++ b/deployment/release/install_test.sh
+@@ -604,6 +604,31 @@ test_print_summary_hides_secrets() {
+   check_contains "the addresses" "$out" "https://app.example.com, https://1.2.3.4"
+ }
+ 
++test_credentials_file() {
++  local file text
++  HIVEPAAS_DATA_DIR=$TMP/data HIVEPAAS_APP_SECRET=the-app-secret-0123456789abcdef01 HIVEPAAS_ADMIN_PASSWORD=admin-pass-1
++  HIVEPAAS_DB_PASSWORD=db-pass HIVEPAAS_REDIS_PASSWORD=redis-pass HIVEPAAS_AGENT_TOKEN=agent-token
++  HIVEPAAS_JWT_SECRET=jwt-secret
++  mkdir -p "$HIVEPAAS_DATA_DIR"
++  file=$(credentials_file)
++  check "next to hivepaas.toml" "$TMP/data/credentials.txt" "$file"
++  write_credentials "$file"
++  check "written" 0 "$?"
++  check "readable by root alone" 600 "$(stat -c %a "$file" 2>/dev/null || stat -f %Lp "$file")"
++  text=$(cat "$file")
++  check_contains "it says not to share it" "$text" "do not paste it"
++  check_lacks "no app secret" "$text" the-app-secret
++  check_lacks "no admin password" "$text" admin-pass-1
++  unset HIVEPAAS_DB_PASSWORD HIVEPAAS_REDIS_PASSWORD HIVEPAAS_AGENT_TOKEN HIVEPAAS_JWT_SECRET
++  printf '%s\n' 'HIVEPAAS_DATA_DIR=/elsewhere' 'PATH=/nowhere' >>"$file"
++  read_kv_file "$file" take_credential 2>/dev/null
++  check "the database password reads back" db-pass "$HIVEPAAS_DB_PASSWORD"
++  check "the redis password" redis-pass "$HIVEPAAS_REDIS_PASSWORD"
++  check "the agent token" agent-token "$HIVEPAAS_AGENT_TOKEN"
++  check "the JWT secret" jwt-secret "$HIVEPAAS_JWT_SECRET"
++  check "nothing else is taken" "$TMP/data" "$HIVEPAAS_DATA_DIR"
++}
++
+ # --------------------------------------------------------------------- Host
+ 
+ test_read_os_release() {
+@@ -788,6 +813,34 @@ test_install_env_template() {
+   done
+ }
+ 
++test_log_lines() {
++  LOG_FILE=$TMP/run.log C_GREEN=$'\033[32m' C_RESET=$'\033[0m'
++  info "an info" >/dev/null
++  ok "an ok" >/dev/null
++  warn "a warning" 2>/dev/null
++  step "A step" >/dev/null
++  check "plain lines" "  an info|  ok: an ok|  !: a warning|[1/9] A step|" "$(tr '\n' '|' <"$LOG_FILE")"
++  LOG_FILE=''
++  info "not logged" >/dev/null
++  check "no log without a file" 4 "$(wc -l <"$TMP/run.log" | tr -d ' ')"
++}
++
++test_save_log() {
++  LOG_FILE=$TMP/run.log
++  printf '  a line\n' >"$LOG_FILE"
++  HIVEPAAS_DATA_DIR=$TMP/nowhere
++  save_log
++  check_fails "no data directory, no log" test -e "$TMP/nowhere/install.log"
++  HIVEPAAS_DATA_DIR=$TMP/data
++  mkdir -p "$HIVEPAAS_DATA_DIR"
++  save_log
++  save_log
++  check "appended once a run, under a header" 2 "$(grep -c '^=== install.sh, ' "$TMP/data/install.log")"
++  check_contains "with the run's lines" "$(cat "$TMP/data/install.log")" "  a line"
++  check "readable by root alone" 600 "$(stat -c %a "$TMP/data/install.log" 2>/dev/null ||
++    stat -f %Lp "$TMP/data/install.log")"
++}
++
+ # ------------------------------------------------------------------- Runner
+ 
+ for t in $(declare -F | awk '$3 ~ /^test_/ {print $3}'); do
+```

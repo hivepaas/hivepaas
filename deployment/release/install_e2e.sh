@@ -1,11 +1,13 @@
 #!/usr/bin/env bash
 #
 # End-to-end test of install.sh, in a docker:dind container: a silent install
-# with this checkout's release info and stack files, then what a person would
-# check - the dashboard by domain and by address, signing in, the admin's
-# password gone - and the runs after it: one that must change nothing, one
-# with another app secret and one without install.env that must stop, one
-# after an address changed, and a --redeploy.
+# with this checkout's release info, stack files and install.env template,
+# then what a person would check - the dashboard by domain and by address,
+# signing in, the admin's password gone, the app secret in hivepaas.toml and
+# in no service - and the runs after it: one that must change nothing, one
+# with another app secret and one without hivepaas.toml that must stop, one
+# after an address changed, a --redeploy, and one after `docker stack rm`,
+# which must deploy again over the database left behind, from credentials.txt.
 #
 #   make test-installer-e2e     (bash deployment/release/install_e2e.sh)
 #
@@ -13,6 +15,8 @@
 # privileged and runs a swarm of its own; HIVEPAAS_SWAP=false keeps the install
 # from setting vm.swappiness, which is the kernel's and so the host's too.
 # HIVEPAAS_E2E_KEEP=1 leaves the container running to look around in.
+# HIVEPAAS_E2E_IMAGES names a `docker save` archive loaded after the pulls, to
+# test images built from this checkout under the release's names.
 #
 # The commands in single quotes run in the container, where their $ expand:
 # shellcheck disable=SC2016
@@ -91,9 +95,15 @@ for field in dbImage redisImage traefikImage; do
 done
 EOF
 pass "images pulled"
+if [ -n "${HIVEPAAS_E2E_IMAGES:-}" ]; then
+  docker exec -i "$NAME" docker load -q <"$HIVEPAAS_E2E_IMAGES" >/dev/null
+  pass "images loaded from $HIVEPAAS_E2E_IMAGES"
+fi
 
-in_dind "HIVEPAAS_ADMIN_EMAIL=admin@example.com HIVEPAAS_ADMIN_PASSWORD=$PASSWORD HIVEPAAS_APP_DOMAIN=$DOMAIN \
-  $INSTALL >/root/install.log 2>&1" || {
+in_dind "sed -e 's/^HIVEPAAS_ADMIN_EMAIL=.*/HIVEPAAS_ADMIN_EMAIL=admin@example.com/' \
+  -e 's/^HIVEPAAS_ADMIN_PASSWORD=.*/HIVEPAAS_ADMIN_PASSWORD=$PASSWORD/' \
+  -e 's/^HIVEPAAS_APP_DOMAIN=.*/HIVEPAAS_APP_DOMAIN=$DOMAIN/' /repo/deployment/release/install.env >/root/install.env"
+in_dind "$INSTALL --config /root/install.env >/root/install.log 2>&1" || {
   in_dind 'tail -n 40 /root/install.log' >&2
   fail "the install"
 }
@@ -121,9 +131,29 @@ oom_priorities() {
     docker service inspect hivepaas_$s --format "{{.Spec.TaskTemplate.ContainerSpec.OomScoreAdj}}"; done' | xargs
 }
 expect "every system service has OOM priority -500" "-500 -500 -500 -500 -500 -500 -500" "$(oom_priorities)"
-expect "install.env is root's alone" "700 600" "$(in_dind 'stat -c %a /etc/hivepaas /etc/hivepaas/install.env' | xargs)"
-expect "install.env says installed" 1 "$(in_dind 'grep -c "^HIVEPAAS_INSTALLED=.true.$" /etc/hivepaas/install.env')"
-expect "install.env has no password" 0 "$(in_dind 'grep -c ADMIN_PASSWORD /etc/hivepaas/install.env || true')"
+expect "the app secret is in hivepaas.toml, root's alone" "600 1" "$(in_dind \
+  'stat -c %a /var/lib/hivepaas/hivepaas.toml; grep -c "^secret = \"[0-9a-f]\{64\}\"$" /var/lib/hivepaas/hivepaas.toml' |
+  xargs)"
+expect "and in no service" 0 "$(in_dind 'for s in traefik db redis app worker updater agent; do
+  docker service inspect hivepaas_$s --format "{{range .Spec.TaskTemplate.ContainerSpec.Env}}{{println .}}{{end}}"
+  done | grep -c HP_APP_SECRET || true')"
+expect "the agent runs, without the JWT secret" "1/1 0" "$(in_dind 'docker service ls --filter name=hivepaas_agent \
+  --format "{{.Replicas}}"; docker service inspect hivepaas_agent \
+  --format "{{range .Spec.TaskTemplate.ContainerSpec.Env}}{{println .}}{{end}}" | grep -c JWT || true' | xargs)"
+expect "nothing is kept in /etc/hivepaas" no "$(in_dind 'test -e /etc/hivepaas && echo yes || echo no')"
+expect "credentials.txt is root's alone, with the database's password and no app secret" "600 1 0" "$(in_dind '
+  stat -c %a /var/lib/hivepaas/credentials.txt
+  pw=$(docker service inspect hivepaas_app --format "{{range .Spec.TaskTemplate.ContainerSpec.Env}}{{println .}}{{end}}" |
+    sed -n "s/^HP_DB_PASSWORD=//p")
+  grep -c "^HIVEPAAS_DB_PASSWORD=.$pw.$" /var/lib/hivepaas/credentials.txt
+  grep -c -i "app_secret\|^secret" /var/lib/hivepaas/credentials.txt || true' | xargs)"
+expect "install.log tells the run, without colour or password" "600 1 0 0" "$(in_dind '
+  log=/var/lib/hivepaas/install.log
+  stat -c %a $log
+  grep -c "^\[9/9\] Finish" $log
+  grep -c "$(printf "\033")" $log || true
+  pw=$(sed -n "s/^HIVEPAAS_DB_PASSWORD=.\(.*\).$/\1/p" /var/lib/hivepaas/credentials.txt)
+  grep -c "$pw" $log || true' | xargs)"
 
 versions() {
   in_dind 'for s in traefik db redis app worker updater agent; do
@@ -138,11 +168,12 @@ if in_dind "HIVEPAAS_APP_SECRET=0123456789abcdef0123456789abcdefXX $INSTALL >/ro
 fi
 pass "a run with another app secret stops"
 
-in_dind 'mv /etc/hivepaas/install.env /root/install.env.bak'
-if in_dind "$INSTALL >/root/install-lost.log 2>&1"; then fail "a run without install.env went on"; fi
-in_dind 'grep -q "Put your copy of the file back" /root/install-lost.log' || fail "a run without install.env: no reason given"
-in_dind 'mv /root/install.env.bak /etc/hivepaas/install.env'
-pass "a run without install.env stops"
+in_dind 'mv /var/lib/hivepaas/hivepaas.toml /root/hivepaas.toml.bak'
+if in_dind "$INSTALL >/root/install-lost.log 2>&1"; then fail "a run without hivepaas.toml went on"; fi
+in_dind 'grep -q "Put your copy of the file back" /root/install-lost.log' ||
+  fail "a run without hivepaas.toml: no reason given"
+in_dind 'mv /root/hivepaas.toml.bak /var/lib/hivepaas/hivepaas.toml'
+pass "a run without hivepaas.toml stops"
 
 in_dind "docker service update --detach --quiet \
   --label-add 'traefik.http.routers.x-custom-router-ip.rule=Host(\`192.0.2.1\`)' hivepaas_app >/dev/null"
@@ -164,5 +195,25 @@ expect "after it, the app's update stands" "" "$(in_dind 'docker service inspect
 expect "and every system service has OOM priority -500 again" "-500 -500 -500 -500 -500 -500 -500" "$(oom_priorities)"
 expect "and the dashboard answers" 200 "$(in_dind "curl -sk -o /dev/null -w '%{http_code}' \
   --resolve $DOMAIN:443:127.0.0.1 https://$DOMAIN/_/ping")"
+
+in_dind 'docker stack rm hivepaas >/dev/null
+  for _ in $(seq 120); do
+    if ! docker network inspect hivepaas_local_net >/dev/null 2>&1 &&
+      [ -z "$(docker ps -q --filter label=com.docker.stack.namespace=hivepaas)" ]; then break; fi
+    sleep 1
+  done'
+in_dind 'mv /var/lib/hivepaas/credentials.txt /root/credentials.txt.bak'
+if in_dind "$INSTALL >/root/install6.log 2>&1"; then fail "a run over a database without its password went on"; fi
+in_dind 'grep -q "no credentials.txt" /root/install6.log' || fail "a run over a database without its password: no reason"
+pass "after docker stack rm, a run without credentials.txt stops"
+in_dind 'mv /root/credentials.txt.bak /var/lib/hivepaas/credentials.txt'
+# The services held the domain too: a run over the database is told it again,
+# as a person would answer it.
+in_dind "HIVEPAAS_APP_DOMAIN=$DOMAIN $INSTALL >/root/install7.log 2>&1" || {
+  in_dind 'tail -n 30 /root/install7.log' >&2
+  fail "a run over the database left behind"
+}
+pass "with it, a run deploys again over the database left behind"
+expect "where the admin still signs in" 200 "$(login "$DOMAIN" "$PASSWORD")"
 
 printf 'all end-to-end checks passed\n'

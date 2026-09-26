@@ -2,9 +2,9 @@
 #
 # The app reads the admin's account on its first boot, when it creates them,
 # and never again. Once the dashboard answers, install.sh removes these from
-# the services (docker service update --env-rm) and the password from
-# install.env, so it does not stay readable in `docker service inspect`. A later
-# deploy leaves this file out, and so does not bring them back.
+# the services (docker service update --env-rm), so the password does not stay
+# readable in `docker service inspect`. A later deploy leaves this file out, and
+# so does not bring them back.
 services:
   app:
     environment:

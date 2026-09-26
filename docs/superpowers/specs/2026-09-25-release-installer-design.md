@@ -110,6 +110,11 @@ when stdout is a terminal, `NO_COLOR` is unset and `TERM` is not `dumb`.
      and the security settings the file may also hold, commented out and
      explained. The app rewrites the file, without the comments, when it
      rotates its secret or a security setting is saved in the dashboard.
+   - Writes `<app data>/credentials.txt` (`0600`) on every run: the database
+     and Redis passwords, the agent token and the JWT secret, each explained,
+     as `KEY='value'` lines - readable by a person, and usable as a `--config`
+     file. It says not to share it. Never the app secret, nor the admin's
+     password.
    - Downloads the stack files, and `dynamic_conf.yml` into Traefik's directory
      only when it is not there: the app writes that directory from its first
      boot on.
@@ -143,6 +148,11 @@ when stdout is a terminal, `NO_COLOR` is unset and `TERM` is not `dumb`.
      - the other settings are the services' environment (`docker service
        inspect hivepaas_app`);
      - how to install another server without questions (§9).
+   - Every run appends its own lines - steps, results, warnings, errors,
+     without colour - under a dated header to `<app data>/install.log`
+     (`0600`), once that directory exists. The output of the commands it runs
+     is not in it, nor any question, answer or secret: it is the file to share
+     when asking for help.
 
 An unexpected failure prints the line it happened on, and that running the
 installer again picks up where it stopped.
@@ -211,8 +221,11 @@ the value; a typed one that fails is asked again.
     and asks for the file back rather than generate a secret the data was not
     encrypted with.
   - A HivePaaS database volume without HivePaaS services (`docker stack rm`):
-    its password was in them. The installer stops, unless
-    `HIVEPAAS_DB_PASSWORD` gives it; removing the volume starts over.
+    the installer takes the database's password from
+    `<app data>/credentials.txt` (the app data directory given, or the
+    default), or from `HIVEPAAS_DB_PASSWORD`, and deploys again over that
+    database; its admin exists already, so it is not asked for. With neither,
+    it stops; removing the volume starts over.
 
 ## 5. The stack
 
@@ -360,9 +373,11 @@ For tests only: `HIVEPAAS_INSTALL_LIB=1` defines the functions and stops;
   info; the dashboard by domain and by address, HTTP redirected to HTTPS, the
   admin signing in, the admin's account gone from the services, the app secret
   in `hivepaas.toml` and in no service, the agent running without it, OOM
-  priorities; a second run that changes no service; another app secret
-  stopping; a lost `hivepaas.toml` stopping; the address route following a
-  change; and `--redeploy`. `HIVEPAAS_E2E_IMAGES` loads images built from the
+  priorities, `credentials.txt` and `install.log`; a second run that changes
+  no service; another app secret stopping; a lost `hivepaas.toml` stopping;
+  the address route following a change; `--redeploy`; and after
+  `docker stack rm`, a run stopping without `credentials.txt` and deploying
+  again over the database with it. `HIVEPAAS_E2E_IMAGES` loads images built from the
   checkout, for an app change the release's images do not have yet. On a machine that is not amd64 the HivePaaS images run
   emulated and the stack is deployed without resolving images.
 - On a fresh Linux server, by the user: an interactive install, a silent one,
@@ -392,6 +407,10 @@ For tests only: `HIVEPAAS_INSTALL_LIB=1` defines the functions and stops;
 - **The updater updating the agent.** `sysupdateservice`'s plan has no agent
   step today, so the agent stays on the image the installer deployed.
 - **Joining more nodes, uninstalling, IPv6 addresses in the IP routers.**
+- **The database in the app data directory.** Postgres is on the named volume
+  `hivepaas_db`, under Docker's own directory. Moving it to
+  `<app data>/db/<major>` needs the updater's major upgrade to follow a bind
+  mount; it is the next piece of work, so that one directory holds everything.
 - **The agent and the secrets** is an app change that comes with this design:
   in `run_mode = agent`, the app no longer requires the app secret or the JWT
   secret. Until images with it are released, the agent of a stack deployed by

@@ -5,17 +5,18 @@
 #   curl -fsSL https://raw.githubusercontent.com/hivepaas/hivepaas/main/deployment/release/install.sh | sudo bash
 #
 # It installs Docker when it is missing, makes the server a single-node swarm
-# and deploys the HivePaaS stack of a release channel, beta for now. Every
-# answer is saved in /etc/hivepaas/install.env. Running it again finishes an
-# interrupted install or re-checks the host: it never resets a swarm, removes a
-# service, network or volume, or generates a secret a second time.
-# `install.sh --help` lists the settings of a silent install.
+# and deploys the HivePaaS stack of a release channel, beta for now. The
+# settings end up where HivePaaS reads them: the app secret in
+# <app data>/hivepaas.toml, the rest in the environment of its services, where a
+# second run reads them back. Running it again finishes an interrupted install
+# or re-checks the host: it never resets a swarm, removes a service, network or
+# volume, or generates a secret a second time. For a silent install, fill in
+# deployment/release/install.env and pass it with --config; see --help.
 #
 # For tests only:
 #   HIVEPAAS_INSTALL_LIB=1       define the functions and stop (install_test.sh)
 #   HIVEPAAS_INSTALL_FILES_DIR   copy the stack files from this directory
 #   HIVEPAAS_RELEASE_URL         read the release info from this URL
-#   HIVEPAAS_INSTALL_ENV_FILE    where the answers are saved
 #   HIVEPAAS_TTY                 read answers from this file, not the terminal
 #   HIVEPAAS_WAIT_SECONDS        how long to wait for the dashboard (300)
 
@@ -24,6 +25,10 @@
 STEP_NO=0
 STEP_TOTAL=9
 C_RESET='' C_BOLD='' C_RED='' C_GREEN='' C_YELLOW='' C_BLUE='' C_LOGO=''
+# LOG_FILE: where the run's own lines also go, without colour; save_log keeps
+# them in the app data directory. The output of the commands it runs is not
+# in it, and neither are questions or answers.
+LOG_FILE=''
 
 setup_colors() {
   if [ -t 1 ] && [ -z "${NO_COLOR:-}" ] && [ "${TERM:-}" != dumb ]; then
@@ -32,16 +37,31 @@ setup_colors() {
   fi
 }
 
-info() { printf '  %s\n' "$*"; }
-ok() { printf '  %s✔%s %s\n' "$C_GREEN" "$C_RESET" "$*"; }
-warn() { printf '  %s!%s %s\n' "$C_YELLOW" "$C_RESET" "$*" >&2; }
+log_line() {
+  if [ -n "$LOG_FILE" ]; then printf '%s\n' "$*" >>"$LOG_FILE"; fi
+}
+
+info() {
+  printf '  %s\n' "$*"
+  log_line "  $*"
+}
+ok() {
+  printf '  %s✔%s %s\n' "$C_GREEN" "$C_RESET" "$*"
+  log_line "  ok: $*"
+}
+warn() {
+  printf '  %s!%s %s\n' "$C_YELLOW" "$C_RESET" "$*" >&2
+  log_line "  !: $*"
+}
 die() {
   printf '\n%s✘ %s%s\n' "$C_RED" "$*" "$C_RESET" >&2
+  log_line "error: $*"
   exit 1
 }
 step() {
   STEP_NO=$((STEP_NO + 1))
   printf '\n%s%s[%d/%d] %s%s\n' "$C_BOLD" "$C_BLUE" "$STEP_NO" "$STEP_TOTAL" "$*" "$C_RESET"
+  log_line "[$STEP_NO/$STEP_TOTAL] $*"
 }
 
 # on_error runs for a command that failed where nothing expected it to. Inside
@@ -49,6 +69,7 @@ step() {
 on_error() {
   [ "${BASH_SUBSHELL:-0}" -eq 0 ] || return 0
   printf '\n%s✘ The installer stopped at line %s (exit status %s).%s\n' "$C_RED" "$2" "$1" "$C_RESET" >&2
+  log_line "error: the installer stopped at line $2 (exit status $1)"
   printf '  Fix what the output above says, then run it again: it picks up where it stopped.\n' >&2
   exit "$1"
 }
@@ -172,8 +193,10 @@ valid_project_data_dir() {
   return 0
 }
 
+# valid_app_secret: 32 characters or more, with nothing TOML would have to
+# escape in hivepaas.toml - no spaces, quotes or backslashes.
 valid_app_secret() {
-  [ "${#1}" -ge 32 ] && [[ ! $1 =~ [[:space:]] ]]
+  [ "${#1}" -ge 32 ] && [[ ! $1 =~ [[:space:]\"\'\\] ]]
 }
 
 valid_ipv4() {
@@ -212,7 +235,7 @@ version_ge() {
 
 # ----------------------------------------------------------- Settings files
 
-# kv_quote: a value in single quotes, as install.env stores it.
+# kv_quote: a value in single quotes, for a file a shell reads.
 kv_quote() {
   local q="'"
   printf "'%s'" "${1//$q/$q\\$q$q}"
@@ -451,16 +474,8 @@ addresses_line() {
 # ---------------------------------------------------------------- Questions
 
 ADMIN_USERNAME='admin'
-INSTALL_ENV=${HIVEPAAS_INSTALL_ENV_FILE:-/etc/hivepaas/install.env}
 
-# The answers install.env keeps, so that a second run asks nothing twice and
-# generates no secret twice.
-SAVED_KEYS="HIVEPAAS_CHANNEL HIVEPAAS_ADMIN_EMAIL HIVEPAAS_ADMIN_PASSWORD HIVEPAAS_APP_DOMAIN
-HIVEPAAS_ROOT_DOMAIN HIVEPAAS_APP_SECRET HIVEPAAS_DATA_DIR HIVEPAAS_PROJECT_DATA_DIR
-HIVEPAAS_JWT_SECRET HIVEPAAS_DB_PASSWORD HIVEPAAS_REDIS_PASSWORD HIVEPAAS_AGENT_TOKEN
-HIVEPAAS_INSTALLED"
-
-# The saved answers a later run may not change: the secrets open data already
+# The settings a later run may not change: the secrets open data already
 # written with them, and the rest says where that data is and what serves it.
 FIXED_KEYS="HIVEPAAS_CHANNEL HIVEPAAS_APP_DOMAIN HIVEPAAS_ROOT_DOMAIN HIVEPAAS_APP_SECRET
 HIVEPAAS_DATA_DIR HIVEPAAS_PROJECT_DATA_DIR HIVEPAAS_JWT_SECRET HIVEPAAS_DB_PASSWORD
@@ -471,6 +486,8 @@ CONFIG_FILE=''
 HAVE_TTY=0
 MISSING=''
 RELEASE_FILE=''
+# INSTALLED=1: HivePaaS runs here and has created its admin.
+INSTALLED=0
 
 # open_tty: questions are read from the terminal, not from stdin, which
 # `curl | bash` makes the script itself. fd 3 reads answers, fd 4 shows the
@@ -586,14 +603,11 @@ take_setting() {
   printf -v "$1" '%s' "$2"
 }
 
-# take_saved KEY VALUE: a line of install.env, for a setting the environment
-# and --config left unset. One they set to another value stops the install
-# when the setting is fixed; otherwise theirs wins.
-take_saved() {
-  case " $SAVED_KEYS " in
-    *[[:space:]]"$1"[[:space:]]*) ;;
-    *) return 0 ;;
-  esac
+# take_installed KEY VALUE: a setting of the HivePaaS already on this server,
+# for what the environment and --config left unset. One they set to another
+# value stops the install when the setting is fixed; otherwise theirs wins.
+take_installed() {
+  if [ -z "$2" ]; then return 0; fi
   if [ -z "${!1:-}" ]; then
     printf -v "$1" '%s' "$2"
     return 0
@@ -601,11 +615,107 @@ take_saved() {
   if [ "${!1}" != "$2" ]; then
     case " $FIXED_KEYS " in
       *[[:space:]]"$1"[[:space:]]*)
-        die "$1 is saved in $INSTALL_ENV with another value, and it cannot change once HivePaaS" \
-          "has been installed with it. Leave it out of the environment and of --config."
+        die "$1 differs from what the HivePaaS on this server runs with, and it cannot change once" \
+          "installed. Leave it out of the environment and of --config."
         ;;
     esac
   fi
+}
+
+# channel_of_app_env ENV: the channel an app env runs, app_env_of_channel undone.
+channel_of_app_env() {
+  case "$1" in
+    beta) printf 'beta' ;;
+    production) printf 'stable' ;;
+    *) return 1 ;;
+  esac
+}
+
+# take_installed_env ENV: the settings in the environment of the hivepaas_app
+# service, one VAR=VALUE a line - where they live once installed. The admin's
+# password there means the install has not finished.
+take_installed_env() {
+  local line key value
+  INSTALLED=1
+  while IFS= read -r line; do
+    key=${line%%=*}
+    value=${line#*=}
+    case "$key" in
+      HP_ENV) take_installed HIVEPAAS_CHANNEL "$(channel_of_app_env "$value")" ;;
+      HP_APP_DOMAIN) take_installed HIVEPAAS_APP_DOMAIN "$value" ;;
+      HP_ROOT_DOMAIN) take_installed HIVEPAAS_ROOT_DOMAIN "$value" ;;
+      HP_STORAGE_HOST_DIR) take_installed HIVEPAAS_DATA_DIR "$value" ;;
+      HP_STORAGE_PROJECT_DATA_HOST_DIR) take_installed HIVEPAAS_PROJECT_DATA_DIR "$value" ;;
+      HP_SESSION_JWT_SECRET) take_installed HIVEPAAS_JWT_SECRET "$value" ;;
+      HP_DB_PASSWORD) take_installed HIVEPAAS_DB_PASSWORD "$value" ;;
+      HP_CACHE_URL)
+        value=${value#*://*:}
+        take_installed HIVEPAAS_REDIS_PASSWORD "${value%@*}"
+        ;;
+      HP_AGENT_SECRET_TOKEN) take_installed HIVEPAAS_AGENT_TOKEN "$value" ;;
+      HP_USER_ADMIN_EMAIL) take_installed HIVEPAAS_ADMIN_EMAIL "$value" ;;
+      HP_USER_ADMIN_PASSWORD)
+        INSTALLED=0
+        take_installed HIVEPAAS_ADMIN_PASSWORD "$value"
+        ;;
+    esac
+  done <<<"$1"
+}
+
+# secret_file: where the app keeps its secret - its managed settings file, in
+# the app data directory.
+secret_file() {
+  printf '%s/hivepaas.toml' "$HIVEPAAS_DATA_DIR"
+}
+
+# toml_secret FILE: the top-level `secret` of a TOML file, quoted as the app or
+# write_secret_file writes it.
+toml_secret() {
+  sed -n -e '/^[[:space:]]*\[/q' \
+    -e 's/^[[:space:]]*secret[[:space:]]*=[[:space:]]*"\([^"\\]*\)".*/\1/p' \
+    -e "s/^[[:space:]]*secret[[:space:]]*=[[:space:]]*'\\([^']*\\)'.*/\\1/p" "$1" | head -n 1
+}
+
+# write_secret_file FILE SECRET: the app's managed settings file, with the
+# settings it may hold explained. The app rewrites it itself, without the
+# comments, when its secret is rotated or a security setting is saved.
+write_secret_file() {
+  (
+    umask 077
+    cat >"$1.tmp" <<EOF
+# HivePaaS's own settings. The app reads this file whenever it starts, and
+# writes it when its secret is rotated or a security setting is saved in the
+# dashboard. It must stay readable by root alone (0600): the app refuses more.
+#
+# Every other setting is the environment of the HivePaaS services:
+#   docker service inspect hivepaas_app --format '{{range .Spec.TaskTemplate.ContainerSpec.Env}}{{println .}}{{end}}'
+
+# The key every stored secret is encrypted with, and the only one. Back this
+# file up somewhere other than this server: without it the data is unreadable.
+secret = "$2"
+
+[security]
+# Show stored secrets' values through the API and the dashboard. Default: false.
+# return_secrets_via_api = false
+# Secret types shown even while the switch above is off: "swarm-join-token".
+# always_return_secret_types = ["swarm-join-token"]
+# Let apps mount the Docker socket or a host directory, which makes them root
+# on their node. Default: false.
+# allow_privileged_apps = false
+EOF
+  ) && mv -f "$1.tmp" "$1"
+}
+
+# load_secret_file: the app secret already in the app data directory, left by
+# an earlier run or rotated by the app. It wins over one generated here, and
+# one given that differs stops the install.
+load_secret_file() {
+  local file secret
+  file=$(secret_file)
+  if [ ! -f "$file" ]; then return 0; fi
+  secret=$(toml_secret "$file") || secret=''
+  if [ -z "$secret" ]; then die "Cannot read the secret in $file."; fi
+  take_installed HIVEPAAS_APP_SECRET "$secret"
 }
 
 # normalize_settings: settings put in the form they are saved and compared in.
@@ -618,26 +728,68 @@ normalize_settings() {
   fi
 }
 
-# load_settings: the environment, then --config, then install.env - each only
-# for what the ones before it left unset.
+
+# credentials_file: the secrets a person may need, next to hivepaas.toml.
+credentials_file() {
+  printf '%s/credentials.txt' "$HIVEPAAS_DATA_DIR"
+}
+
+# write_credentials FILE: the passwords and tokens the services run with, for a
+# person to read and for a run whose services are gone - Postgres only ever
+# takes the password it was created with. KEY=VALUE lines, so the file also
+# works as a --config file. Never the app secret, nor the admin's password.
+write_credentials() {
+  (
+    umask 077
+    {
+      printf '# HivePaaS credentials, written by install.sh on %s.\n' "$(date -u '+%Y-%m-%d %H:%M UTC')"
+      printf '# Keep this file private: do not paste it into an issue or a chat.\n'
+      printf '# The app secret is not here: it is in hivepaas.toml, next to this file.\n'
+      printf '# The admin password is not kept anywhere: it is the one you chose.\n'
+      printf '# These are also in the environment of the HivePaaS services.\n\n'
+      printf "# The database's password. Postgres only takes the password it was created\n"
+      printf "# with: without it, a database left after 'docker stack rm' cannot be opened.\n"
+      printf 'HIVEPAAS_DB_PASSWORD=%s\n\n' "$(kv_quote "$HIVEPAAS_DB_PASSWORD")"
+      printf "# Redis's password; the cache keeps nothing across a restart.\n"
+      printf 'HIVEPAAS_REDIS_PASSWORD=%s\n\n' "$(kv_quote "$HIVEPAAS_REDIS_PASSWORD")"
+      printf '# The token the app and its agents authenticate each other with.\n'
+      printf 'HIVEPAAS_AGENT_TOKEN=%s\n\n' "$(kv_quote "$HIVEPAAS_AGENT_TOKEN")"
+      printf '# The key sessions are signed with; a new one signs everyone out.\n'
+      printf 'HIVEPAAS_JWT_SECRET=%s\n' "$(kv_quote "$HIVEPAAS_JWT_SECRET")"
+    } >"$1.tmp"
+  ) && mv -f "$1.tmp" "$1"
+}
+
+# take_credential KEY VALUE: a line of credentials.txt - the four keys it holds,
+# and nothing else.
+take_credential() {
+  case "$1" in
+    HIVEPAAS_DB_PASSWORD | HIVEPAAS_REDIS_PASSWORD | HIVEPAAS_AGENT_TOKEN | HIVEPAAS_JWT_SECRET)
+      take_installed "$1" "$2"
+      ;;
+  esac
+}
+# load_settings INSTALLED_ENV: the environment, then --config, then the
+# HivePaaS already on this server - each only for what the ones before it left
+# unset. INSTALLED_ENV is the hivepaas_app service's environment, empty when
+# there is no such service.
 load_settings() {
   if [ -n "$CONFIG_FILE" ]; then
     [ -r "$CONFIG_FILE" ] || die "Cannot read $CONFIG_FILE."
     read_kv_file "$CONFIG_FILE" take_setting
   fi
   normalize_settings
-  if [ -f "$INSTALL_ENV" ]; then
-    read_kv_file "$INSTALL_ENV" take_saved
-  fi
+  if [ -n "${1:-}" ]; then take_installed_env "$1"; fi
   HIVEPAAS_CHANNEL=${HIVEPAAS_CHANNEL:-beta}
   app_env_of_channel "$HIVEPAAS_CHANNEL" >/dev/null ||
     die "HIVEPAAS_CHANNEL: '$HIVEPAAS_CHANNEL' is not a channel; it is beta or stable."
 }
 
-# ask_questions: every setting install.env does not hold yet. The admin is
-# asked for only until HivePaaS has created them.
+# ask_questions: every setting still missing. The admin is asked for only until
+# HivePaaS has created them, and the app secret only when the app data
+# directory has none.
 ask_questions() {
-  if [ "${HIVEPAAS_INSTALLED:-}" != true ]; then
+  if [ "$INSTALLED" != 1 ]; then
     answer HIVEPAAS_ADMIN_EMAIL "Admin email" valid_email "Enter an email address, like you@example.com."
     answer_password
   fi
@@ -648,8 +800,6 @@ ask_questions() {
     answer HIVEPAAS_ROOT_DOMAIN "Root domain, which apps get subdomains of" valid_root_domain \
       "Enter the app domain or a domain it is under, like example.com." "$(root_domain_of "$HIVEPAAS_APP_DOMAIN")"
   fi
-  answer HIVEPAAS_APP_SECRET "App secret, which encrypts stored secrets" valid_app_secret \
-    "The app secret needs 32 characters or more, and no spaces." "$(openssl rand -hex 32)" "Enter to generate"
   answer HIVEPAAS_DATA_DIR "App data directory" valid_data_dir \
     "Enter an absolute path of letters, digits, '.', '_' and '-', outside the system's directories." \
     /var/lib/hivepaas
@@ -658,9 +808,13 @@ ask_questions() {
     "Enter an absolute path outside the system's directories, and not the app data directory or one above it." \
     "$HIVEPAAS_DATA_DIR/project_data"
   normalize_settings
+  load_secret_file
+  answer HIVEPAAS_APP_SECRET "App secret, which encrypts stored secrets" valid_app_secret \
+    "The app secret needs 32 characters or more, and no spaces, quotes or backslashes." \
+    "$(openssl rand -hex 32)" "Enter to generate"
   if [ -n "$MISSING" ]; then
     die "No terminal to ask on, and these settings are missing:$MISSING. Set them in the environment" \
-      "or in a --config file; install.sh --help lists them."
+      "or in a --config file (deployment/release/install.env is one to fill in); install.sh --help lists them."
   fi
 }
 
@@ -671,24 +825,7 @@ generate_secrets() {
   HIVEPAAS_AGENT_TOKEN=${HIVEPAAS_AGENT_TOKEN:-$(rand_alnum 32)}
 }
 
-# save_settings: install.env, replaced whole: readable by root alone, and never
-# half written.
-save_settings() {
-  local dir="${INSTALL_ENV%/*}" tmp key
-  mkdir -p "$dir"
-  chmod 700 "$dir"
-  tmp=$(mktemp "$dir/.install.env.XXXXXX")
-  {
-    printf '# HivePaaS install settings, written by install.sh.\n'
-    printf '# HIVEPAAS_APP_SECRET is the only key to the encrypted data: keep a copy of\n'
-    printf '# this file somewhere other than this server.\n'
-    for key in $SAVED_KEYS; do
-      if [ -n "${!key:-}" ]; then printf '%s=%s\n' "$key" "$(kv_quote "${!key}")"; fi
-    done
-  } >"$tmp"
-  chmod 600 "$tmp"
-  mv -f "$tmp" "$INSTALL_ENV"
-}
+
 
 mask() {
   printf '****%s' "${1: -4}"
@@ -699,12 +836,12 @@ print_summary() {
   if [ -n "$RELEASE_FILE" ]; then
     info "Release        HivePaaS $(release_field "$RELEASE_FILE" "$HIVEPAAS_CHANNEL" appVersion) ($HIVEPAAS_CHANNEL)"
   fi
-  if [ "${HIVEPAAS_INSTALLED:-}" != true ]; then
+  if [ "$INSTALLED" != 1 ]; then
     info "Admin          $ADMIN_USERNAME, $HIVEPAAS_ADMIN_EMAIL, a password of ${#HIVEPAAS_ADMIN_PASSWORD} characters"
   fi
   info "App domain     $HIVEPAAS_APP_DOMAIN"
   info "Root domain    $HIVEPAAS_ROOT_DOMAIN"
-  info "App secret     $(mask "$HIVEPAAS_APP_SECRET")"
+  info "App secret     $(mask "$HIVEPAAS_APP_SECRET"), kept in $(secret_file)"
   info "App data       $HIVEPAAS_DATA_DIR"
   info "Project data   $HIVEPAAS_PROJECT_DATA_DIR"
   info "Addresses      $(addresses_line)"
@@ -1092,7 +1229,6 @@ ensure_docker() {
 SUBNET=10.11.0.0/16
 SUBNET_GATEWAY=10.11.0.1
 REPO_RAW=https://raw.githubusercontent.com/hivepaas/hivepaas
-CONFIG_DIR=${INSTALL_ENV%/*}
 
 ensure_swarm() {
   local state node
@@ -1180,14 +1316,23 @@ prepare_files() {
       die "Could not make the self-signed certificate."
     ok "Self-signed certificate for $HIVEPAAS_ROOT_DOMAIN, *.$HIVEPAAS_ROOT_DOMAIN and $HIVEPAAS_APP_DOMAIN."
   fi
-  fetch_install_file hivepaas.yaml "$CONFIG_DIR/hivepaas.yaml"
-  fetch_install_file hivepaas.first-boot.yaml "$CONFIG_DIR/hivepaas.first-boot.yaml"
+  # The app keeps its secret here, and rotates it here; a run after the first
+  # leaves the file alone.
+  if [ -f "$(secret_file)" ]; then
+    ok "App secret: kept in $(secret_file)."
+  else
+    write_secret_file "$(secret_file)" "$HIVEPAAS_APP_SECRET" || die "Could not write $(secret_file)."
+    ok "App secret: in $(secret_file)."
+  fi
+  write_credentials "$(credentials_file)" || die "Could not write $(credentials_file)."
+  ok "Passwords and tokens, for you to keep private: $(credentials_file)."
+  fetch_install_file hivepaas.yaml "$WORK_DIR/hivepaas.yaml"
+  fetch_install_file hivepaas.first-boot.yaml "$WORK_DIR/hivepaas.first-boot.yaml"
   # The app writes Traefik's configuration from here on; a run after the first
   # leaves it alone.
   if [ ! -f "$data/traefik/etc/dynamic/dynamic_conf.yml" ]; then
     fetch_install_file traefik/dynamic_conf.yml "$data/traefik/etc/dynamic/dynamic_conf.yml"
   fi
-  ok "Stack files in $CONFIG_DIR."
 }
 
 # ------------------------------------------------------------------- Deploy
@@ -1229,23 +1374,53 @@ db_volume_exists() {
   [ -n "$(docker volume ls -q --filter name=hivepaas_db 2>/dev/null)" ]
 }
 
+# service_env SERVICE: the service's environment, one VAR=VALUE a line; empty
+# when there is no such service.
+service_env() {
+  docker service inspect "${STACK}_$1" \
+    --format '{{range .Spec.TaskTemplate.ContainerSpec.Env}}{{println .}}{{end}}' 2>/dev/null || true
+}
+
 # detect_install_state: fresh, unfinished (deployed, the admin's password not
-# yet removed) or installed.
+# yet removed) or installed. It stops where a run could only guess: HivePaaS
+# running without the file its secret is in, or a database volume left
+# without the services that held its password.
 detect_install_state() {
-  if [ ! -f "$INSTALL_ENV" ] && { service_exists app || db_volume_exists; }; then
-    die "HivePaaS is on this server already, but $INSTALL_ENV is not, and the secrets in it are what open" \
-      "its database. Put your copy of the file back, then run the installer again."
-  fi
-  if [ "${HIVEPAAS_INSTALLED:-}" = true ]; then
-    INSTALL_STATE=installed
-    if ! service_exists app && [ "$REDEPLOY" != 1 ]; then
-      die "HivePaaS was installed here, but its services are gone. Run the installer with --redeploy to deploy them again."
+  if service_exists app; then
+    if [ "$INSTALLED" = 1 ]; then INSTALL_STATE=installed; else INSTALL_STATE=unfinished; fi
+    if [ ! -f "$(secret_file)" ]; then
+      die "HivePaaS runs here, but $(secret_file) is not there, and the secret in it is the only key to" \
+        "the encrypted data. Put your copy of the file back, then run the installer again."
     fi
-  elif service_exists app; then
-    INSTALL_STATE=unfinished
   else
     INSTALL_STATE=fresh
+    if db_volume_exists; then
+      reinstall_over_database
+    fi
   fi
+}
+
+# reinstall_over_database: a database volume without services - left by
+# `docker stack rm` - is deployed over again, with the password it was created
+# with: given, or from credentials.txt in the app data directory. Its admin
+# exists already, so it is not asked for.
+reinstall_over_database() {
+  local creds
+  if [ -z "${HIVEPAAS_DB_PASSWORD:-}" ]; then
+    creds="$(normalize_dir "${HIVEPAAS_DATA_DIR:-/var/lib/hivepaas}")/credentials.txt"
+    if [ -f "$creds" ]; then
+      read_kv_file "$creds" take_credential
+      HIVEPAAS_DATA_DIR=${HIVEPAAS_DATA_DIR:-${creds%/*}}
+    fi
+  fi
+  if [ -z "${HIVEPAAS_DB_PASSWORD:-}" ]; then
+    die "A HivePaaS database volume is on this server, but no HivePaaS services and no credentials.txt" \
+      "in the app data directory to take its password from. Set HIVEPAAS_DB_PASSWORD (or HIVEPAAS_DATA_DIR," \
+      "where credentials.txt and hivepaas.toml are), or remove the volume to start over ('docker volume ls'," \
+      "'docker volume rm'), then run the installer again."
+  fi
+  INSTALLED=1
+  info "Deploying again over the database already here; its admin is kept."
 }
 
 # port_taken PORT: something on this host takes connections on PORT.
@@ -1316,11 +1491,11 @@ resolve_images() {
 # environment it interpolates. FIRST_BOOT=1 adds the admin's account, which the
 # app reads on its first boot only.
 deploy_stack() {
-  local -a files=(-c "$CONFIG_DIR/hivepaas.yaml")
-  if [ "$1" = 1 ]; then files+=(-c "$CONFIG_DIR/hivepaas.first-boot.yaml"); fi
+  local -a files=(-c "$WORK_DIR/hivepaas.yaml")
+  if [ "$1" = 1 ]; then files+=(-c "$WORK_DIR/hivepaas.first-boot.yaml"); fi
   (
     HIVEPAAS_APP_ENV=$(app_env_of_channel "$HIVEPAAS_CHANNEL")
-    export HIVEPAAS_APP_ENV HIVEPAAS_APP_DOMAIN HIVEPAAS_ROOT_DOMAIN HIVEPAAS_APP_SECRET \
+    export HIVEPAAS_APP_ENV HIVEPAAS_APP_DOMAIN HIVEPAAS_ROOT_DOMAIN \
       HIVEPAAS_JWT_SECRET HIVEPAAS_DATA_DIR HIVEPAAS_PROJECT_DATA_DIR HIVEPAAS_DB_PASSWORD \
       HIVEPAAS_REDIS_PASSWORD HIVEPAAS_AGENT_TOKEN HIVEPAAS_IP_RULE HIVEPAAS_ADMIN_EMAIL \
       HIVEPAAS_ADMIN_PASSWORD HP_DB_MAJOR HIVEPAAS_IMAGE_APP HIVEPAAS_IMAGE_WORKER \
@@ -1407,7 +1582,8 @@ deploy() {
   case "$INSTALL_STATE" in
     fresh)
       resolve_images
-      deploy_stack 1
+      # Over a database already here, the admin exists: no first boot.
+      if [ "$INSTALLED" = 1 ]; then deploy_stack 0; else deploy_stack 1; fi
       run_migrations "$HIVEPAAS_IMAGE_APP"
       ;;
     unfinished)
@@ -1543,10 +1719,16 @@ tune_services() {
 # ------------------------------------------------------------------- Finish
 
 finish_install() {
-  HIVEPAAS_ADMIN_PASSWORD=
-  HIVEPAAS_INSTALLED=true
-  save_settings
-  ok "The admin's password is out of $INSTALL_ENV and of the services' settings."
+  HIVEPAAS_ADMIN_PASSWORD=''
+  INSTALLED=1
+  ok "The admin's password is out of the services' settings."
+}
+
+# silent_hint: how to install without being asked, for the next server.
+silent_hint() {
+  info "To install without questions, fill in the settings file and pass it:"
+  info "  curl -fsSLO $REPO_RAW/${HIVEPAAS_INSTALL_REF:-main}/deployment/release/install.env"
+  info "  sudo bash install.sh --config install.env --yes"
 }
 
 print_done() {
@@ -1566,8 +1748,11 @@ print_done() {
   warn "The certificate is self-signed until you get one in the setup, so the browser warns"
   info "  about it: accept the warning to go on."
   warn "After a restart, HivePaaS can take 30 to 60 seconds to answer."
-  warn "$INSTALL_ENV holds the app secret, the only key to your encrypted data."
+  warn "$(secret_file) holds the app secret, the only key to your encrypted data."
   info "  Keep a copy of it somewhere other than this server."
+  info "The other settings are the environment of the services: docker service inspect hivepaas_app"
+  printf '\n'
+  silent_hint
   printf '\n'
 }
 
@@ -1577,9 +1762,10 @@ usage() {
   cat <<'USAGE'
 Usage: install.sh [--yes] [--config FILE] [--redeploy]
 
-Installs HivePaaS on this server, as root. Every answer is saved in
-/etc/hivepaas/install.env; running it again finishes an interrupted install
-or re-checks the host.
+Installs HivePaaS on this server, as root. The app secret is written to
+<app data>/hivepaas.toml - back that file up - and every other setting is the
+environment of the HivePaaS services, where a second run reads it back.
+Running it again finishes an interrupted install or re-checks the host.
 
 Options:
   -y, --yes        answer yes to installing or upgrading Docker and to the
@@ -1594,8 +1780,8 @@ Settings, from the environment or --config (the environment wins):
   HIVEPAAS_ADMIN_PASSWORD      the admin's password, 10 characters or more
   HIVEPAAS_APP_DOMAIN          the dashboard's domain, e.g. hivepaas.example.com
   HIVEPAAS_ROOT_DOMAIN         the domain apps get subdomains of (default: from the app domain)
-  HIVEPAAS_APP_SECRET          the key stored secrets are encrypted with, 32 characters
-                               or more (default: generated)
+  HIVEPAAS_APP_SECRET          the key stored secrets are encrypted with, 32 characters or
+                               more, no spaces, quotes or backslashes (default: generated)
   HIVEPAAS_DATA_DIR            HivePaaS's data (default: /var/lib/hivepaas)
   HIVEPAAS_PROJECT_DATA_DIR    projects' data (default: <data dir>/project_data)
   HIVEPAAS_CHANNEL             beta or stable (default: beta)
@@ -1606,10 +1792,12 @@ Settings, from the environment or --config (the environment wins):
   HIVEPAAS_AGENT_IMAGE         the agent's image (default: from the release)
   HIVEPAAS_RELEASE_BRANCH      the branch the release info is read from (default: release)
   HIVEPAAS_INSTALL_REF         the ref the stack files are downloaded from (default: main)
+  HIVEPAAS_DB_PASSWORD         only to redeploy over a database whose services are gone,
+                               when <data dir>/credentials.txt, read by default, is gone too
 
-Silent install:
-  curl -fsSL .../install.sh | sudo HIVEPAAS_ADMIN_EMAIL=... HIVEPAAS_ADMIN_PASSWORD=... \
-    HIVEPAAS_APP_DOMAIN=... bash -s -- --yes
+Silent install - a settings file to fill in, with every setting explained:
+  curl -fsSLO https://raw.githubusercontent.com/hivepaas/hivepaas/main/deployment/release/install.env
+  sudo bash install.sh --config install.env --yes
 USAGE
 }
 
@@ -1634,7 +1822,22 @@ parse_args() {
   done
 }
 
+# save_log: the run's lines, appended under a dated header to install.log in the
+# app data directory - once that exists, which a run stopped early leaves it
+# without.
+save_log() {
+  local log="${HIVEPAAS_DATA_DIR:-}/install.log"
+  if [ -z "$LOG_FILE" ] || [ ! -f "$LOG_FILE" ] || [ ! -d "${HIVEPAAS_DATA_DIR:-/nonexistent}" ]; then
+    return 0
+  fi
+  {
+    printf '\n=== install.sh, %s\n' "$(date -u '+%Y-%m-%d %H:%M:%S UTC')"
+    cat "$LOG_FILE"
+  } >>"$log" && chmod 600 "$log"
+}
+
 cleanup() {
+  save_log || true
   if [ -n "$WORK_DIR" ]; then rm -rf "$WORK_DIR"; fi
 }
 
@@ -1648,6 +1851,7 @@ main() {
   print_logo
   open_tty
   WORK_DIR=$(mktemp -d)
+  LOG_FILE=$WORK_DIR/install.log
 
   step "Preflight"
   preflight
@@ -1656,15 +1860,19 @@ main() {
   ensure_docker
 
   step "Settings"
-  load_settings
+  load_settings "$(service_env app)"
   detect_install_state
   if [ "$INSTALL_STATE" = fresh ] && ! service_exists traefik; then check_ports; fi
+  if [ "$INSTALL_STATE" = fresh ] && [ "$HAVE_TTY" = 1 ] && [ -z "$CONFIG_FILE" ]; then
+    silent_hint
+    printf '\n'
+  fi
   ask_questions
   generate_secrets
   gather_addresses
   if [ "$INSTALL_STATE" = fresh ] || [ "$REDEPLOY" = 1 ]; then fetch_release; fi
   if [ "$INSTALL_STATE" = installed ]; then
-    ok "HivePaaS is installed here, with the settings in $INSTALL_ENV."
+    ok "HivePaaS is installed here; its settings are read from its services."
     if [ "$REDEPLOY" = 1 ]; then
       warn "--redeploy puts HivePaaS's services back as the stack file has them: Traefik's settings, the"
       info "  worker and updater replicas and the app's routing labels, if HivePaaS changed them since."
@@ -1674,8 +1882,6 @@ main() {
     print_summary
     confirm "Install HivePaaS with these settings?" || die "Stopped; HivePaaS was not installed."
   fi
-  save_settings
-  ok "Settings saved in $INSTALL_ENV."
 
   step "Host memory"
   setup_swap || true
@@ -1697,7 +1903,7 @@ main() {
   ok "HivePaaS answers."
 
   step "Finish"
-  if [ "${HIVEPAAS_INSTALLED:-}" != true ]; then
+  if [ "$INSTALLED" != 1 ]; then
     finish_install
     just_installed=1
   fi

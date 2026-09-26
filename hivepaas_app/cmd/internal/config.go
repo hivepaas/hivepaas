@@ -83,16 +83,19 @@ func reloadConfigOnSignal(logger logging.Logger) {
 func validateConfig(cfg *config.Config, logger logging.Logger) error {
 	logger.Info("validating app config...")
 	isProdEnv := !cfg.IsDevEnv()
+	// The agent issues no sessions and decrypts nothing, so it is given neither
+	// secret; see config.ensureAppSecret.
+	needsSecrets := isProdEnv && cfg.RunMode != config.RunModeAgent
 
 	// JWT secret must not be empty or short enough to brute force offline
-	if isProdEnv && len(cfg.Session.JWTSecret) < jwtSecretMinLen {
+	if needsSecrets && len(cfg.Session.JWTSecret) < jwtSecretMinLen {
 		return fmt.Errorf("%w: JWT secret must be at least %d characters for production",
 			ErrInvalidConfig, jwtSecretMinLen)
 	}
 
 	// App secret is mandatory: everything stored as a secret is encrypted with it,
 	// and config.ensureAppSecret already refuses to start without one outside dev.
-	if isProdEnv && len(cfg.Secret) < appSecretMinLen {
+	if needsSecrets && len(cfg.Secret) < appSecretMinLen {
 		return fmt.Errorf("%w: app secret must be at least %d characters for production",
 			ErrInvalidConfig, appSecretMinLen)
 	}

@@ -79,7 +79,7 @@ func newMCPWorld(t *testing.T, routes ...func(api *gin.RouterGroup)) *mcpWorld {
 		for _, add := range routes {
 			add(api)
 		}
-		api.GET("/projects", func(ctx *gin.Context) {
+		api.GET("/projects/base", func(ctx *gin.Context) {
 			if _, err := auth.GetCurrentAuth(ctx, authhandler.NoAccessCheck); err != nil || w.denied {
 				ctx.JSON(http.StatusForbidden, gin.H{"title": "Forbidden", "status": 403})
 				return

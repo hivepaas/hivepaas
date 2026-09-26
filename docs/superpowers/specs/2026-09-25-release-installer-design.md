@@ -78,7 +78,9 @@ when stdout is a terminal, `NO_COLOR` is unset and `TERM` is not `dumb`.
      (apt), Fedora/RHEL/CentOS/Rocky/Alma/Oracle/Amazon Linux (dnf),
      SLES/openSUSE (zypper), Arch/Manjaro (pacman), Alpine (apk). Anything else
      stops, naming the families.
-   - Warns under 1 GB of RAM or 8 GB free under `/var/lib`; does not stop.
+   - Warns when the server is below what is recommended - 4 CPUs, 8 GB of
+     RAM, a 40 GB disk under `/var/lib` - with some slack for the sizes a server
+     reports; does not stop.
    - Installs what it needs and is missing: `curl`, `openssl`, `jq`,
      `ca-certificates`.
 2. **Docker**: at least Engine 29.5 and API 1.54 (§3).

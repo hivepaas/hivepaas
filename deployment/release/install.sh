@@ -1070,16 +1070,24 @@ install_tools() {
   ok "Installed ${missing[*]}."
 }
 
+# check_resources: the server against what HivePaaS recommends - 4 CPUs, 8 GB
+# of memory, a 40 GB disk. Less only warns: HivePaaS runs on less, with less
+# room for apps. The sizes a server reports are a little under the ones it is
+# sold with - the kernel keeps some memory, the filesystem some disk - so the
+# thresholds sit a little under too.
 check_resources() {
-  local mem_mb disk_mb
-  mem_mb=$(awk '/^MemTotal:/ {print int($2 / 1024)}' /proc/meminfo 2>/dev/null) || mem_mb=
-  # A "1 GB" server reports a little less: the kernel keeps some for itself.
-  if [ -n "$mem_mb" ] && [ "$mem_mb" -lt 900 ]; then
-    warn "This server has ${mem_mb} MB of memory; HivePaaS wants 1 GB or more."
+  local cpus mem_mb disk_mb
+  cpus=$(nproc 2>/dev/null || getconf _NPROCESSORS_ONLN 2>/dev/null) || cpus=
+  if [ -n "$cpus" ] && [ "$cpus" -lt 4 ]; then
+    warn "This server has $cpus CPU(s); 4 or more are recommended."
   fi
-  disk_mb=$(df -Pm /var/lib 2>/dev/null | awk 'NR == 2 {print $4}') || disk_mb=
-  if [ -n "$disk_mb" ] && [ "$disk_mb" -lt 8192 ]; then
-    warn "/var/lib has $((disk_mb / 1024)) GB free; HivePaaS wants 8 GB or more."
+  mem_mb=$(awk '/^MemTotal:/ {print int($2 / 1024)}' /proc/meminfo 2>/dev/null) || mem_mb=
+  if [ -n "$mem_mb" ] && [ "$mem_mb" -lt 7500 ]; then
+    warn "This server has $((mem_mb / 1024)).$(((mem_mb % 1024) * 10 / 1024)) GB of memory; 8 GB or more is recommended."
+  fi
+  disk_mb=$(df -Pm /var/lib 2>/dev/null | awk 'NR == 2 {print $2}') || disk_mb=
+  if [ -n "$disk_mb" ] && [ "$disk_mb" -lt 35840 ]; then
+    warn "The disk of /var/lib holds $((disk_mb / 1024)) GB; 40 GB or more is recommended."
   fi
 }
 

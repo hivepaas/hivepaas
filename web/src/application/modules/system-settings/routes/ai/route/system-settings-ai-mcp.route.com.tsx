@@ -2,7 +2,7 @@ import { useEffect } from "react";
 
 import { dashedBorderBox } from "@lib/styles";
 import { cn } from "@lib/utils";
-import { Controller, useForm } from "react-hook-form";
+import { Controller, useForm, useWatch } from "react-hook-form";
 import { toast } from "sonner";
 import { McpSettingsCommands, McpSettingsQueries } from "~/system-settings/data";
 import { SectionHeader } from "~/system-settings/module-shared";
@@ -35,6 +35,10 @@ export function SystemSettingsAiMcpRoute() {
     const { control, handleSubmit, reset } = useForm<FormValues>({
         defaultValues: { enabled: settings?.enabled ?? false, allowWrite: settings?.allowWrite ?? false },
     });
+
+    // What the form says now, not what is saved: ticking Enabled shows what it
+    // turns on before Save, as every settings page does.
+    const enabled = useWatch({ control, name: "enabled" });
 
     useEffect(() => {
         reset({ enabled: settings?.enabled ?? false, allowWrite: settings?.allowWrite ?? false });
@@ -109,52 +113,62 @@ export function SystemSettingsAiMcpRoute() {
                             )}
                         />
                     </InfoBlock>
-                    <InfoBlock
-                        titleWidth={220}
-                        title={
-                            <LabelWithInfo
-                                label="Allow changes"
-                                content="Let an assistant install, restart and redeploy apps, change their configuration and schedule jobs - never delete anything. Each change is planned first and made only when the assistant applies the plan you agreed to, with a key that may make it."
-                            />
-                        }
-                    >
-                        <Controller
-                            control={control}
-                            name="allowWrite"
-                            render={({ field }) => (
-                                <Checkbox
-                                    checked={field.value}
-                                    onCheckedChange={checked => {
-                                        field.onChange(checked === true);
-                                    }}
+                    {/* Nothing below applies while the server is off, the way every
+                        other settings page hides its configuration. */}
+                    {enabled && (
+                        <>
+                            <InfoBlock
+                                titleWidth={220}
+                                title={
+                                    <LabelWithInfo
+                                        label="Allow changes"
+                                        content="Let an assistant install, restart and redeploy apps, change their configuration and schedule jobs - never delete anything. Each change is planned first and made only when the assistant applies the plan you agreed to, with a key that may make it."
+                                    />
+                                }
+                            >
+                                <Controller
+                                    control={control}
+                                    name="allowWrite"
+                                    render={({ field }) => (
+                                        <Checkbox
+                                            checked={field.value}
+                                            onCheckedChange={checked => {
+                                                field.onChange(checked === true);
+                                            }}
+                                        />
+                                    )}
                                 />
-                            )}
-                        />
-                    </InfoBlock>
-                    <InfoBlock
-                        titleWidth={220}
-                        title={
-                            <LabelWithInfo
-                                label="Endpoint"
-                                content="The address a client connects to, over streamable HTTP."
-                            />
-                        }
-                    >
-                        <CopyField
-                            what="Endpoint"
-                            value={endpoint}
-                        />
-                    </InfoBlock>
+                            </InfoBlock>
+                            <InfoBlock
+                                titleWidth={220}
+                                title={
+                                    <LabelWithInfo
+                                        label="Endpoint"
+                                        content="The address a client connects to, over streamable HTTP."
+                                    />
+                                }
+                            >
+                                <CopyField
+                                    what="Endpoint"
+                                    value={endpoint}
+                                />
+                            </InfoBlock>
+                        </>
+                    )}
                 </fieldset>
 
                 {/* Inside the form, before the sticky action bar, so Save stays last.
                     Neither is part of what Save sends. */}
-                <McpConnectSection
-                    endpoint={endpoint}
-                    enabled={settings?.enabled ?? false}
-                    allowWrite={settings?.allowWrite ?? false}
-                />
-                <McpRecentCallsSection />
+                {enabled && (
+                    <>
+                        <McpConnectSection
+                            endpoint={endpoint}
+                            enabled={settings?.enabled ?? false}
+                            allowWrite={settings?.allowWrite ?? false}
+                        />
+                        <McpRecentCallsSection />
+                    </>
+                )}
 
                 <FormActionBar>
                     <PermissionTooltipAction

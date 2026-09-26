@@ -21,6 +21,11 @@ interface CreatedKey {
     secretKey: string;
 }
 
+interface KeyState extends CreatedKey {
+    /** Set for a key created here, which the page says when it runs out. */
+    expireAt?: Date;
+}
+
 /** Placeholders in the snippets until a key is pasted or created here. */
 const KEY_ID_PLACEHOLDER = "<key-id>";
 const SECRET_PLACEHOLDER = "<secret>";
@@ -80,6 +85,19 @@ function todayName(): string {
     return `MCP - ${new Date().toISOString().slice(0, 10)}`;
 }
 
+/**
+ * How long a key made here lasts. HivePaaS requires every key to expire, within
+ * a year of its creation; a key pasted into a client's configuration is one
+ * nobody looks at again, so it is made to run out well before that.
+ */
+const KEY_LIFETIME_DAYS = 90;
+
+function keyExpiry(): Date {
+    const expireAt = new Date();
+    expireAt.setDate(expireAt.getDate() + KEY_LIFETIME_DAYS);
+    return expireAt;
+}
+
 interface Props {
     endpoint: string;
     /** Whether the server is on as saved: a key made while it is off answers 404 until it is not. */
@@ -98,19 +116,21 @@ interface Props {
  * stays in this page: it fills the snippets and is neither saved nor sent.
  */
 export function McpConnectSection({ endpoint, enabled, allowWrite }: Props) {
-    const [key, setKey] = useState<CreatedKey>({ keyId: "", secretKey: "" });
+    const [key, setKey] = useState<KeyState>({ keyId: "", secretKey: "" });
     const [wasCreated, setWasCreated] = useState(false);
     const { mutate: createApiKey, isPending } = ProfileCommands.useCreateOneApiKey();
 
     function handleCreate() {
+        const expireAt = keyExpiry();
         createApiKey(
             {
                 name: todayName(),
                 accessAction: { read: true, write: false, execute: false, delete: false },
+                expireAt,
             },
             {
                 onSuccess: response => {
-                    setKey({ keyId: response.data.keyId, secretKey: response.data.secretKey });
+                    setKey({ keyId: response.data.keyId, secretKey: response.data.secretKey, expireAt });
                     setWasCreated(true);
                     toast.success("Read-only API key created");
                 },
@@ -154,8 +174,8 @@ export function McpConnectSection({ endpoint, enabled, allowWrite }: Props) {
                         {wasCreated ? (
                             <div className={cn(dashedBorderBox, "text-sm")}>
                                 <span className="font-semibold text-orange-500">Copy it now:</span> the secret is not
-                                shown again. The snippets below carry it. Manage the key in your profile, under API
-                                keys.
+                                shown again. The snippets below carry it. The key runs out on{" "}
+                                {key.expireAt?.toLocaleDateString()}; manage it in your profile, under API keys.
                             </div>
                         ) : (
                             <div className="flex flex-col items-start gap-2">
@@ -169,6 +189,10 @@ export function McpConnectSection({ endpoint, enabled, allowWrite }: Props) {
                                     <KeyRound className="size-4" />
                                     Create a read-only key
                                 </Button>
+                                <span className="text-xs text-muted-foreground">
+                                    It lasts {KEY_LIFETIME_DAYS} days. A key with another lifetime is made in your
+                                    profile.
+                                </span>
                                 {!enabled && (
                                     <span className="text-xs text-muted-foreground">
                                         The server answers once it is enabled and saved.

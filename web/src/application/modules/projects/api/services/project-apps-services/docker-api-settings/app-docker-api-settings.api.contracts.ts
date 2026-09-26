@@ -11,6 +11,7 @@ export type AppDockerApiSettings_UpdatePayload = {
     mode: AppDockerApiMode;
     images: string[];
     sharedDirs: string[];
+    sharedVolumes: Record<string, string>;
     networks: string[];
     allow: string[];
     /** Left out where the default is kept. */

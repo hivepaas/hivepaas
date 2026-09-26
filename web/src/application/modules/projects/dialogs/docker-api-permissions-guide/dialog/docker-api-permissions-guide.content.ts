@@ -84,7 +84,7 @@ export const CORE_AREAS: CoreArea[] = [
             "Starting, watching, stopping and removing the containers it created - and seeing only those.",
         ],
         endpoints: [
-            { methods: ["GET"], path: "/containers/json", note: "Only the app's own" },
+            { methods: ["GET"], path: "/containers/json", note: "Only the app's own, and the app itself" },
             { methods: ["POST"], path: "/containers/create", note: "Checked, limited, labeled" },
             { methods: ["GET"], path: "/containers/{id}/json|logs|stats|top", note: "Inspect, logs, usage, processes" },
             {
@@ -93,6 +93,7 @@ export const CORE_AREAS: CoreArea[] = [
                 note: "Run and watch",
             },
             { methods: ["DELETE"], path: "/containers/{id}", note: "Remove" },
+            { methods: ["GET"], path: "/events", note: "Only filtered to its own containers" },
         ],
     },
     {
@@ -111,6 +112,7 @@ export const CORE_AREAS: CoreArea[] = [
         items: [
             "tmpfs mounts.",
             "A bind of a Shared directory, which becomes a mount of the app's own directory on its volume.",
+            "A mount of a Shared volume's name, which becomes the same mount as a bind of the directory it stands for. No volume of that name is created or used.",
             "Any other path of the node is refused.",
         ],
         endpoints: [],
@@ -207,7 +209,8 @@ export const PERMISSION_GUIDES: PermissionGuide[] = [
             "A subpath of a volume must stay inside it.",
             "Volumes are not counted by the limits. They stay while the app has access, as caches, and are removed when access is turned off or the app is deleted.",
         ],
-        withoutIt: "Containers can use tmpfs and the shared directories only. Naming any volume in a mount is refused.",
+        withoutIt:
+            "Containers can use tmpfs, the shared directories and the shared volumes only. Naming any other volume in a mount is refused.",
         usedBy: ["Gitea / Forgejo runner (act): act-toolcache, and a workspace per job"],
         risk: {
             level: "medium",
@@ -287,7 +290,7 @@ export const NEVER_ALLOWED: string[] = [
     "volumes-from and links",
     "docker build",
     "Swarm services and stacks",
-    "Events, prune and other calls across the whole daemon",
+    "Events of anything but its own containers, prune and other calls across the whole daemon",
     "Another app's containers, volumes or networks",
 ];
 

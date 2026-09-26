@@ -6,7 +6,7 @@ import { useDockerApiPermissionsGuideDialog } from "~/projects/dialogs/docker-ap
 import { type AppDockerApiLimits } from "~/projects/domain";
 
 import { InfoBlock, LabelWithInfo } from "@application/shared/components";
-import { SingleValueList } from "@application/shared/form";
+import { KeyValueList, SingleValueList } from "@application/shared/form";
 
 import {
     type AppConfigDockerApiFormSchemaInput,
@@ -84,6 +84,28 @@ export function DockerApiPolicyFields({ readOnly = false }: { readOnly?: boolean
                     name="sharedDirs"
                     placeholder="/var/lib/app/work"
                     className="max-w-[590px]"
+                    enableValueEditing
+                    disabled={readOnly}
+                />
+            </InfoBlock>
+
+            <InfoBlock
+                titleWidth={TITLE_WIDTH}
+                title={
+                    <LabelWithInfo
+                        label="Shared volumes"
+                        content="Volume names its containers may mount, each standing for a shared directory above, at most five. For an app that names a volume where another would bind a path: a container mounting the name gets that directory, never a volume of that name."
+                    />
+                }
+            >
+                <KeyValueList<AppConfigDockerApiFormSchemaInput>
+                    name="sharedVolumes"
+                    className="max-w-[590px]"
+                    keyLabel="Volume name"
+                    valueLabel="Directory"
+                    keyPlaceholder="appwrite-builds"
+                    valuePlaceholder="/storage/builds"
+                    checkDuplicates
                     enableValueEditing
                     disabled={readOnly}
                 />

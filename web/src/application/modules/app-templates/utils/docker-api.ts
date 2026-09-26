@@ -1,5 +1,7 @@
 import type { AppTemplateDetail, AppTemplateDockerApi } from "../api";
 
+import { componentLabel } from "./components";
+
 /** One app of a deploy request and the Docker API deploying it gives that app. */
 export interface GrantedDockerApi {
     app: string;
@@ -29,6 +31,9 @@ export function describeDockerApi(access: AppTemplateDockerApi): string[] {
     for (const dir of access.sharedDirs ?? []) {
         described.push(`shares ${dir}`);
     }
+    for (const [name, dir] of Object.entries(access.sharedVolumes ?? {})) {
+        described.push(`shares ${dir} as the volume ${name}`);
+    }
     if (access.networks?.includes("env")) {
         described.push("joins the env network");
     }
@@ -45,13 +50,18 @@ export function describeDockerApi(access: AppTemplateDockerApi): string[] {
 
 /**
  * Everything deploying a template would give through the Docker API: its own
- * block, and each dependency's, since those apps are created by the same request
- * behind the same permission.
+ * block, or each component's, and each dependency's, since those apps are
+ * created by the same request behind the same permission.
  */
 export function grantedDockerApiByTemplate(template: AppTemplateDetail): GrantedDockerApi[] {
     const granted: GrantedDockerApi[] = [];
     if (template.dockerApi) {
         granted.push({ app: template.title, access: template.dockerApi });
+    }
+    for (const component of template.components ?? []) {
+        if (component.dockerApi) {
+            granted.push({ app: componentLabel(template, component), access: component.dockerApi });
+        }
     }
     for (const dep of template.dependencies ?? []) {
         if (dep.dockerApi) {

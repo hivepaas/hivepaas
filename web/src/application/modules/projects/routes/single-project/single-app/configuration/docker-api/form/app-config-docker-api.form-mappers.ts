@@ -9,6 +9,7 @@ export function mapAppDockerApiSettingsToFormInput(data: AppDockerApiSettings): 
         mode: data.mode,
         images: data.images.map(value => ({ value })),
         sharedDirs: data.sharedDirs.map(value => ({ value })),
+        sharedVolumes: Object.entries(data.sharedVolumes).map(([key, value]) => ({ key, value })),
         envNetwork: data.networks.includes("env"),
         allow: data.allow,
         limits: {
@@ -31,6 +32,7 @@ export function mapDockerApiFormValuesToPayload(
         mode: values.mode,
         images: values.images.map(item => item.value),
         sharedDirs: values.sharedDirs.map(item => item.value),
+        sharedVolumes: Object.fromEntries(values.sharedVolumes.map(item => [item.key, item.value])),
         networks: values.envNetwork ? ["env"] : [],
         allow: values.allow,
         limits: {

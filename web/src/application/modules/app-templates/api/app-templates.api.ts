@@ -165,6 +165,8 @@ export interface AppTemplateDockerApi {
     images: string[];
     /** Directories of the app a child may bind. */
     sharedDirs?: string[];
+    /** Volume names a child may mount, each standing for one of sharedDirs. */
+    sharedVolumes?: Record<string, string>;
     /** "env": children may also join the app's env network. */
     networks?: string[];
     /** Groups of endpoints beyond the core: exec, files, volumes, networks, nestedSocket. */
@@ -204,6 +206,17 @@ export interface AppTemplateDependency {
     publishedPorts?: AppTemplatePort[] | null;
 }
 
+/** One app of a template that creates several, and what creating it grants
+ *  that app: one request creates them all, behind one permission. */
+export interface AppTemplateComponent {
+    name: string;
+    title: string;
+    primary: boolean;
+    capabilities?: AppTemplateCapabilities | null;
+    dockerApi?: AppTemplateDockerApi | null;
+    publishedPorts?: AppTemplatePort[] | null;
+}
+
 export interface AppTemplateDetail {
     source: string;
     revision: string;
@@ -227,6 +240,10 @@ export interface AppTemplateDetail {
     dockerApi?: AppTemplateDockerApi | null;
     /** Empty for the templates that publish nothing, which is most of them. */
     publishedPorts?: AppTemplatePort[] | null;
+    /** The apps a template that creates several makes for itself. Such a
+     *  template has no single app: capabilities, dockerApi and publishedPorts
+     *  above are empty for it, and each component carries its own. */
+    components?: AppTemplateComponent[] | null;
 }
 
 export interface AppTemplateImageTag {

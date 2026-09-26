@@ -31,6 +31,10 @@ const AppDockerApiSettingsSchema = z.object({
         .transform(value => value ?? "proxy"),
     images: StringListSchema,
     sharedDirs: StringListSchema,
+    sharedVolumes: z
+        .record(z.string(), z.string())
+        .nullish()
+        .transform(value => value ?? {}),
     networks: StringListSchema,
     allow: StringListSchema,
     limits: LimitsSchema,

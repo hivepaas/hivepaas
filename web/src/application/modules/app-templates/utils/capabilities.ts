@@ -1,5 +1,7 @@
 import type { AppTemplateCapabilities, AppTemplateDetail, AppTemplatePort } from "../api";
 
+import { componentLabel } from "./components";
+
 /** One app of a deploy request and what deploying it grants that app. */
 export interface GrantedCapabilities {
     app: string;
@@ -31,14 +33,19 @@ export function describeCapabilities(capabilities: AppTemplateCapabilities): str
 }
 
 /**
- * Everything deploying a template would grant: its own block, and each
- * dependency's - those apps are created by the same request, run on the same
+ * Everything deploying a template would grant: its own block, or each
+ * component's, and each dependency's - those apps are created by the same request, run on the same
  * nodes, and are gated on the same permission.
  */
 export function grantedByTemplate(template: AppTemplateDetail): GrantedCapabilities[] {
     const granted: GrantedCapabilities[] = [];
     if (template.capabilities) {
         granted.push({ app: template.title, capabilities: template.capabilities });
+    }
+    for (const component of template.components ?? []) {
+        if (component.capabilities) {
+            granted.push({ app: componentLabel(template, component), capabilities: component.capabilities });
+        }
     }
     for (const dep of template.dependencies ?? []) {
         if (dep.capabilities) {
@@ -64,6 +71,11 @@ export function portsClaimedByTemplate(template: AppTemplateDetail): ClaimedPort
         app: template.title,
         port,
     }));
+    for (const component of template.components ?? []) {
+        for (const port of component.publishedPorts ?? []) {
+            claimed.push({ app: componentLabel(template, component), port });
+        }
+    }
     for (const dep of template.dependencies ?? []) {
         for (const port of dep.publishedPorts ?? []) {
             claimed.push({ app: dep.templateTitle ?? dep.title, port });

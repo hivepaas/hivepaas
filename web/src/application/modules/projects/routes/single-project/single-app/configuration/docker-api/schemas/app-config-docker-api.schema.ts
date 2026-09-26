@@ -24,6 +24,7 @@ export const AppConfigDockerApiFormSchema = z
         mode: z.enum(["proxy", "host"]),
         images: z.array(ValueSchema),
         sharedDirs: z.array(ValueSchema),
+        sharedVolumes: z.array(z.object({ key: z.string(), value: z.string() })),
         envNetwork: z.boolean(),
         allow: z.array(z.string()),
         limits: z.object({
@@ -50,6 +51,7 @@ export const emptyAppConfigDockerApiFormDefaults: AppConfigDockerApiFormSchemaIn
     mode: "proxy",
     images: [],
     sharedDirs: [],
+    sharedVolumes: [],
     envNetwork: false,
     allow: [],
     limits: { containers: undefined, memory: undefined, cpus: undefined },

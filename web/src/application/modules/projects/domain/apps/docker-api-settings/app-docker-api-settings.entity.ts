@@ -23,6 +23,8 @@ export interface AppDockerApiSettings {
     images: string[];
     /** Directories of the app a child may bind. */
     sharedDirs: string[];
+    /** Volume names a child may mount, each standing for one of sharedDirs. */
+    sharedVolumes: Record<string, string>;
     /** "env": children may also join the app's env network. */
     networks: string[];
     /** Groups of endpoints beyond the core. */

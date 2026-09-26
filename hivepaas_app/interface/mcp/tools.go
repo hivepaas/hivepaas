@@ -22,6 +22,7 @@ func Tools() []Tool {
 		planRedeployAppTool(),
 		planInstallAppTool(),
 		planUpdateAppConfigTool(),
+		planCreateSchedJobTool(),
 		applyPlanTool(),
 	}
 }

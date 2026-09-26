@@ -8,6 +8,7 @@ import (
 	"strings"
 	"sync"
 	"testing"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	mcpsdk "github.com/modelcontextprotocol/go-sdk/mcp"
@@ -92,6 +93,12 @@ func (r *writeRoutes) add(api *gin.RouterGroup) {
 		ctx.JSON(http.StatusOK, gin.H{"data": gin.H{"plan": gin.H{"nodes": []gin.H{
 			{"path": "projects/shop/envs/prod/apps/api", "action": "update", "outcome": "updated"},
 		}}, "deployments": []gin.H{}}})
+	})
+	api.POST("/settings/sched-jobs/calc-next-runs", func(ctx *gin.Context) {
+		ctx.JSON(http.StatusOK, gin.H{"data": []string{"2026-09-26T19:00:00Z", "2026-09-27T19:00:00Z"}})
+	})
+	api.POST("/projects/p1/prod/apps/a1/sched-jobs", func(ctx *gin.Context) {
+		ctx.JSON(http.StatusCreated, gin.H{"data": gin.H{"id": "j9"}})
 	})
 	app := api.Group("/projects/p1/prod/apps/a1")
 	app.GET("/deployment-settings", func(ctx *gin.Context) {
@@ -411,5 +418,67 @@ func TestAConfigDocumentIsOneMapping(t *testing.T) {
 		text, isErr := callTool(t, w.session(t, "key1"), "plan_update_app_config", configArgs(doc))
 		assert.True(t, isErr, doc)
 		assert.Contains(t, text, "yaml is", doc)
+	}
+}
+
+func TestASchedJobIsPlannedWithItsRuns(t *testing.T) {
+	timeNow = func() time.Time { return time.Date(2026, 9, 26, 12, 0, 0, 0, time.UTC) }
+	defer func() { timeNow = time.Now }()
+	w := newWriteWorld(t)
+	session := w.session(t, "key1")
+	args := shopProd("api")
+	args["name"], args["cronExpr"], args["timeZone"] = "nightly cleanup", "0 2 * * *", "Asia/Ho_Chi_Minh"
+	args["command"], args["timeout"] = "php artisan cleanup", "30m"
+
+	text, isErr := callTool(t, session, "plan_create_sched_job", args)
+	assert.False(t, isErr, text)
+	plan := planOf(t, text)
+	var shown schedJobPlan
+	assert.NoError(t, json.Unmarshal(plan.Plan, &shown))
+	assert.Equal(t, []string{"2026-09-27T02:00:00+07:00 Sun", "2026-09-28T02:00:00+07:00 Mon"}, shown.NextRuns)
+	assert.Empty(t, w.routes.writes())
+
+	text, isErr = callTool(t, session, "apply_plan", map[string]any{"planToken": plan.PlanToken})
+	assert.False(t, isErr, text)
+	assert.Contains(t, text, `"id":"j9"`)
+	if sent := w.routes.writes(); assert.Len(t, sent, 1) {
+		assert.Equal(t, "/projects/p1/prod/apps/a1/sched-jobs", sent[0].Path)
+		assert.JSONEq(t, `{"name":"nightly cleanup","jobType":"container-command","app":{"id":"a1"},"maxRetry":0,
+			"schedule":{"cronExpr":"0 2 * * *","initialTime":"2026-09-26T19:00:00+07:00"},
+			"command":{"command":"php artisan cleanup"},"timeout":"30m",
+			"notification":{"successUseDefault":true,"failureUseDefault":true}}`, sent[0].Body)
+	}
+}
+
+func TestASchedJobNeedsWhatItRuns(t *testing.T) {
+	w := newWriteWorld(t)
+	for name, change := range map[string]map[string]any{
+		"no command":      {"command": ""},
+		"both schedules":  {"interval": "1h"},
+		"a bad timeout":   {"timeout": "soon"},
+		"too many tries":  {"maxRetry": 11},
+		"an unknown zone": {"timeZone": "Mars/Base"},
+	} {
+		args := shopProd("api")
+		args["name"], args["cronExpr"], args["command"] = "job", "@daily", "true"
+		for k, v := range change {
+			args[k] = v
+		}
+		_, isErr := callTool(t, w.session(t, "key1"), "plan_create_sched_job", args)
+		assert.True(t, isErr, name)
+	}
+}
+
+func TestPromptsPlanWhenChangesAreAllowed(t *testing.T) {
+	w := newWriteWorld(t)
+	res, err := w.session(t, "key1").GetPrompt(context.Background(), &mcpsdk.GetPromptParams{Name: "debug_app",
+		Arguments: map[string]string{"project": "shop", "env": "prod", "app": "api"}})
+	if assert.NoError(t, err) {
+		assert.Contains(t, res.Messages[0].Content.(*mcpsdk.TextContent).Text, "apply it only once I agree")
+	}
+	res, err = w.session(t, "reader").GetPrompt(context.Background(), &mcpsdk.GetPromptParams{Name: "debug_app",
+		Arguments: map[string]string{"project": "shop", "env": "prod", "app": "api"}})
+	if assert.NoError(t, err) {
+		assert.Contains(t, res.Messages[0].Content.(*mcpsdk.TextContent).Text, "these tools only read")
 	}
 }

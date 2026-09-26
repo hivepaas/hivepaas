@@ -45,7 +45,7 @@ func (uc *UC) UpdateMCPSettings(
 	}
 
 	uc.mu.Lock()
-	uc.enabled, uc.enabledRead = next.Enabled, timeNow()
+	uc.current, uc.read = *next, timeNow()
 	uc.mu.Unlock()
 	return &mcpdto.UpdateMCPSettingsResp{}, nil
 }

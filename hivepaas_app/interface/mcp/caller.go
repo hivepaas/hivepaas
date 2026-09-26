@@ -16,9 +16,13 @@ import (
 // audit entries show the client rather than the backend itself.
 var forwardedHeaders = []string{"User-Agent", "X-Forwarded-For", "X-Real-Ip", "Accept-Language"}
 
-// caller is who sent an MCP request, and from where.
+// caller is who sent an MCP request, with which key, and from where.
 type caller struct {
-	auth       *basedto.Auth
+	auth  *basedto.Auth
+	keyID string
+	// writable is whether this request is served the tools that change things:
+	// the setting allows them and the key may write or execute.
+	writable   bool
 	remoteAddr string
 	header     http.Header
 }
@@ -27,14 +31,15 @@ type callerKey struct{}
 
 // withCaller is the context the endpoint hands the SDK: the tools find their
 // caller in it.
-func withCaller(ctx context.Context, auth *basedto.Auth, r *http.Request) context.Context {
+func withCaller(ctx context.Context, c *caller, r *http.Request) context.Context {
 	header := http.Header{}
 	for _, name := range forwardedHeaders {
 		if values := r.Header.Values(name); len(values) > 0 {
 			header[http.CanonicalHeaderKey(name)] = values
 		}
 	}
-	return context.WithValue(ctx, callerKey{}, &caller{auth: auth, remoteAddr: r.RemoteAddr, header: header})
+	c.remoteAddr, c.header = r.RemoteAddr, header
+	return context.WithValue(ctx, callerKey{}, c)
 }
 
 func callerFrom(ctx context.Context) *caller {

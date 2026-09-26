@@ -18,5 +18,11 @@ func Tools() []Tool {
 		preflightInstallTool(),
 		listSchedJobsTool(),
 		explainScheduleTool(),
+		planRestartAppTool(),
+		planRedeployAppTool(),
+		planInstallAppTool(),
+		planUpdateAppConfigTool(),
+		planCreateSchedJobTool(),
+		applyPlanTool(),
 	}
 }

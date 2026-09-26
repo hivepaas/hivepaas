@@ -14,24 +14,36 @@ import (
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
+	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/interface/api/handler/authhandler"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/auditservice"
 )
 
-type fakeSwitch struct{ on bool }
+type fakeSwitch struct {
+	on         bool
+	allowWrite bool
+}
 
-func (f *fakeSwitch) IsEnabled(context.Context) (bool, error) { return f.on, nil }
+func (f *fakeSwitch) Current(context.Context) (entity.MCPSettings, error) {
+	return entity.MCPSettings{Enabled: f.on, AllowWrite: f.allowWrite}, nil
+}
 
-// fakeKeys takes the key "key1" and nothing else.
+// fakeKeys takes three keys of user u1: "key1" and "key2", not limited, and
+// "reader", which may only read.
 type fakeKeys struct{}
 
-func (fakeKeys) GetAPIKeyAuth(ctx *gin.Context) (*basedto.Auth, error) {
-	if ctx.GetHeader("HIVEPAAS-API-KEY-ID") != "key1" {
-		return nil, hperrors.Wrap(hperrors.ErrAPIKeyInvalid)
+func (fakeKeys) GetAPIKeyAuth(ctx *gin.Context) (*basedto.Auth, string, error) {
+	switch keyID := ctx.GetHeader("HIVEPAAS-API-KEY-ID"); keyID {
+	case "key1", "key2":
+		return testAuth(), keyID, nil
+	case "reader":
+		auth := testAuth()
+		auth.User.AuthClaims.AccessAction = &base.AccessActions{Read: true}
+		return auth, keyID, nil
 	}
-	return testAuth(), nil
+	return nil, "", hperrors.Wrap(hperrors.ErrAPIKeyInvalid)
 }
 
 func (fakeKeys) RequestCtx(ctx *gin.Context) context.Context { return ctx.Request.Context() }
@@ -54,13 +66,14 @@ type mcpWorld struct {
 	url    string
 	sw     *fakeSwitch
 	audit  *fakeAudit
+	plans  *memPlans
 	denied bool
 }
 
 // newMCPWorld serves the project list, and whatever routes adds.
 func newMCPWorld(t *testing.T, routes ...func(api *gin.RouterGroup)) *mcpWorld {
 	t.Helper()
-	w := &mcpWorld{sw: &fakeSwitch{on: true}, audit: &fakeAudit{}}
+	w := &mcpWorld{sw: &fakeSwitch{on: true}, audit: &fakeAudit{}, plans: newMemPlans()}
 	engine := testEngine(func(api *gin.RouterGroup, auth *authhandler.Handler) {
 		for _, add := range routes {
 			add(api)
@@ -73,7 +86,7 @@ func newMCPWorld(t *testing.T, routes ...func(api *gin.RouterGroup)) *mcpWorld {
 			ctx.JSON(http.StatusOK, gin.H{"data": testProjects})
 		})
 	})
-	services := &Services{Auth: fakeKeys{}, Switch: w.sw, Audit: w.audit}
+	services := &Services{Auth: fakeKeys{}, Settings: w.sw, Plans: w.plans, Audit: w.audit}
 	endpoint := NewEndpoint(services, NewDispatcher(engine, "/api"), Tools())
 	engine.Any("/api/mcp", endpoint.Serve)
 	server := httptest.NewServer(engine)
@@ -149,7 +162,7 @@ func TestEndpointTakesAnAPIKey(t *testing.T) {
 	}
 	tools, err := session.ListTools(context.Background(), nil)
 	assert.NoError(t, err)
-	assert.Len(t, tools.Tools, len(Tools()))
+	assert.Len(t, tools.Tools, readToolCount(), "changes are not allowed: the read tools only")
 }
 
 // A call reads through the router as the caller, and is audited.
@@ -201,13 +214,18 @@ func TestARefusalIsAToolErrorAndAudited(t *testing.T) {
 	}
 }
 
-func TestEveryToolIsReadAndDescribed(t *testing.T) {
+func TestEveryToolIsDescribed(t *testing.T) {
 	names := map[string]bool{}
 	for _, tool := range Tools() {
-		assert.Equal(t, KindRead, tool.Kind, tool.Name)
+		assert.Contains(t, []Kind{KindRead, KindPlan, KindApply}, tool.Kind, tool.Name)
+		if tool.Kind == KindPlan {
+			assert.True(t, strings.HasPrefix(tool.Name, "plan_"), "%s: a plan is named plan_*", tool.Name)
+		}
 		assert.NotEmpty(t, tool.Title, tool.Name)
 		assert.True(t, strings.HasSuffix(tool.Description, "."), "%s: describe it in a sentence", tool.Name)
 		assert.False(t, names[tool.Name], "%s is registered twice", tool.Name)
 		names[tool.Name] = true
 	}
 }
+
+func readToolCount() int { return readToolCountOf(Tools()) }

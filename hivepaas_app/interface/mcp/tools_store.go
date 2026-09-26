@@ -173,6 +173,12 @@ type preflightInput struct {
 	DependencyParams map[string]map[string]any `json:"dependencyParams,omitempty" jsonschema:"by dependency"`
 }
 
+// body is the create request: preflight asks about it, and an install sends it.
+func (in preflightInput) body() map[string]any {
+	return map[string]any{"name": in.Name, "template": in.Template, "version": in.Version,
+		"variant": in.Variant, "params": in.Params, "dependencyParams": in.DependencyParams}
+}
+
 // forAudit keeps the parameters' names: which of them are secret is the
 // template's to say, and any may be.
 func (in preflightInput) forAudit() any {
@@ -213,6 +219,8 @@ type preflightAnswer struct {
 	Storage []preflightStorage `json:"storage,omitempty"`
 	// StorageUnchecked is where the check could not look.
 	StorageUnchecked []preflightStorage `json:"storageUnchecked,omitempty"`
+	// Apps are what the install would create.
+	Apps []plannedApp `json:"apps,omitempty"`
 }
 
 type apiPreflightStorage struct {
@@ -236,19 +244,19 @@ func preflightInstallTool() Tool {
 			if err != nil {
 				return preflightAnswer{}, err
 			}
-			body := map[string]any{"name": in.Name, "template": in.Template, "version": in.Version,
-				"variant": in.Variant, "params": in.Params, "dependencyParams": in.DependencyParams}
+			body := in.body()
 			var resp struct {
 				Data struct {
 					Storage          []apiPreflightStorage `json:"storage"`
 					StorageUnchecked []apiPreflightStorage `json:"storageUnchecked"`
 					Issues           []preflightIssue      `json:"issues"`
+					Apps             []plannedApp          `json:"apps"`
 				} `json:"data"`
 			}
 			if err = call.Post(ctx, ref.path("/apps/from-template/preflight"), body, &resp); err != nil {
 				return preflightAnswer{}, err
 			}
-			out := preflightAnswer{Issues: resp.Data.Issues,
+			out := preflightAnswer{Issues: resp.Data.Issues, Apps: resp.Data.Apps,
 				Storage:          makePreflightStorage(resp.Data.Storage),
 				StorageUnchecked: makePreflightStorage(resp.Data.StorageUnchecked)}
 			if out.Issues == nil {

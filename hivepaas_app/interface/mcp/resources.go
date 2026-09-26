@@ -80,7 +80,7 @@ func readTemplateResource(ctx context.Context, deps *Deps, uri string) (*mcpsdk.
 	}}, nil
 }
 
-func addPrompts(s *mcpsdk.Server) {
+func addPrompts(s *mcpsdk.Server, writable bool) {
 	s.AddPrompt(&mcpsdk.Prompt{
 		Name:        "debug_app",
 		Title:       "Why is this app not working?",
@@ -99,8 +99,7 @@ func addPrompts(s *mcpsdk.Server) {
 			"3. get_app_logs with grep /error|exception|fatal|panic/ over the last hour; then the last " +
 			"100 lines without grep, for what happened just before.\n" +
 			"4. If the cause is outside the app - a node down, memory - list_attention and list_nodes.\n\n" +
-			"Then say what is wrong, quote the lines that show it, and what to change. Change nothing: " +
-			"these tools only read."), nil
+			"Then say what is wrong, quote the lines that show it, and what to change. " + debugEnding(writable)), nil
 	})
 
 	s.AddPrompt(&mcpsdk.Prompt{
@@ -122,9 +121,32 @@ func addPrompts(s *mcpsdk.Server) {
 			text += "3. preflight_install it into " + a["project"] + ", env " + a["env"] +
 				", with the defaults, and tell me what would stop it.\n"
 		}
-		text += "\nInstalling itself is done in the dashboard; say where."
+		text += installEnding(writable, a["project"] != "" && a["env"] != "")
 		return userPrompt(text), nil
 	})
+}
+
+// debugEnding is what a diagnosis ends with: a change the tools can make is
+// planned and shown, and one they cannot is described.
+func debugEnding(writable bool) string {
+	if !writable {
+		return "Change nothing: these tools only read."
+	}
+	return "If a restart, a redeploy or a configuration change would fix it, plan it with the plan_* " +
+		"tool, show me the plan, and apply it only once I agree."
+}
+
+// installEnding is what an install ends with: planned and applied once the
+// person agrees, or done in the dashboard.
+func installEnding(writable, placed bool) string {
+	switch {
+	case writable && placed:
+		return "4. Then plan_install_app with what I decided, show me the plan, and apply it only once I agree."
+	case writable:
+		return "\nAsk me which project and env to install into, then plan_install_app, show me the plan, " +
+			"and apply it only once I agree."
+	}
+	return "\nInstalling itself is done in the dashboard; say where."
 }
 
 func userPrompt(text string) *mcpsdk.GetPromptResult {

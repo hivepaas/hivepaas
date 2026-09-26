@@ -2,6 +2,7 @@ package mcp
 
 import (
 	"context"
+	"encoding/json"
 	"net/http"
 	"os"
 	"strings"
@@ -19,6 +20,8 @@ import (
 //	HP_TEST_MCP_URL     the endpoint, such as http://localhost:8080/_/mcp
 //	HP_TEST_MCP_KEY     an API key as <keyId>:<secret>
 //	HP_TEST_MCP_APP     an app to read, as <project>/<env>/<app>
+//	HP_TEST_MCP_WRITE   1 to also plan and apply a restart of that app: the
+//	                    server must allow changes and the key must execute
 func TestAgainstARealServer(t *testing.T) {
 	endpoint := os.Getenv("HP_TEST_MCP_URL")
 	if endpoint == "" {
@@ -42,7 +45,7 @@ func TestAgainstARealServer(t *testing.T) {
 
 	listed, err := session.ListTools(context.Background(), nil)
 	if assert.NoError(t, err) {
-		assert.Len(t, listed.Tools, len(Tools()))
+		assert.GreaterOrEqual(t, len(listed.Tools), readToolCountOf(Tools()))
 	}
 
 	inApp := map[string]any{"project": app[0], "env": app[1], "app": app[2]}
@@ -82,6 +85,43 @@ func TestAgainstARealServer(t *testing.T) {
 		assert.LessOrEqual(t, len(text), MaxToolOutput, c.tool)
 		t.Logf("%s: %d bytes", c.tool, len(text))
 	}
+
+	if os.Getenv("HP_TEST_MCP_WRITE") == "1" {
+		restartForReal(t, session, inApp)
+	}
+}
+
+// restartForReal plans a restart of the app and applies it, as an assistant would once agreed.
+func restartForReal(t *testing.T, session *mcpsdk.ClientSession, inApp map[string]any) {
+	t.Helper()
+	res, err := session.CallTool(context.Background(), &mcpsdk.CallToolParams{Name: "plan_restart_app",
+		Arguments: inApp})
+	if !assert.NoError(t, err) || !assert.False(t, res.IsError, "plan_restart_app") {
+		return
+	}
+	var plan planResult[json.RawMessage]
+	if !assert.NoError(t, json.Unmarshal([]byte(res.Content[0].(*mcpsdk.TextContent).Text), &plan)) ||
+		!assert.NotEmpty(t, plan.PlanToken) {
+		return
+	}
+	t.Logf("plan: %s", plan.Plan)
+	res, err = session.CallTool(context.Background(), &mcpsdk.CallToolParams{Name: "apply_plan",
+		Arguments: map[string]any{"planToken": plan.PlanToken}})
+	if assert.NoError(t, err) {
+		text := res.Content[0].(*mcpsdk.TextContent).Text
+		assert.False(t, res.IsError, text)
+		t.Logf("applied: %s", text)
+	}
+}
+
+func readToolCountOf(tools []Tool) int {
+	n := 0
+	for _, tool := range tools {
+		if tool.Kind == KindRead {
+			n++
+		}
+	}
+	return n
 }
 
 type bearerTransport struct{ token string }

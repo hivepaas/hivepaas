@@ -87,3 +87,16 @@ func TestTheSwitchIsReadOncePerInterval(t *testing.T) {
 	assert.False(t, enabled, "turned off elsewhere, seen within the interval")
 	assert.Equal(t, 2, repo.reads)
 }
+
+func TestCurrentCarriesWhetherToolsMayWrite(t *testing.T) {
+	withClock(t)
+	s := &entity.Setting{Type: base.SettingTypeMCP, Status: base.SettingStatusActive,
+		Version: entity.CurrentMCPSettingsVersion}
+	if !assert.NoError(t, s.SetData(&entity.MCPSettings{Enabled: true, AllowWrite: true})) {
+		t.FailNow()
+	}
+	uc := New(&settings.BaseUC{SettingRepo: &fakeSettingRepo{setting: s}})
+	current, err := uc.Current(context.Background())
+	assert.NoError(t, err)
+	assert.Equal(t, entity.MCPSettings{Enabled: true, AllowWrite: true}, current)
+}

@@ -44580,37 +44580,24 @@
         "properties" : {
           "deploymentId" : {
             "type" : "string"
+          },
+          "taskId" : {
+            "type" : "string"
           }
         },
-        "required" : [ "deploymentId" ],
+        "required" : [ "deploymentId", "taskId" ],
         "type" : "object"
       },
       "appactiondto.DeployAppReq" : {
         "properties" : {
-          "activeMethod" : {
-            "type" : "string"
-          },
           "changeId" : {
             "type" : "string"
           },
-          "imageSource" : {
-            "$ref" : "#/components/schemas/appactiondto.DeploymentImageSourceReq"
-          },
-          "imageTags" : {
-            "description" : "ImageTags are extra tags for this deployment only, without the environment\nprefix, which the build adds. Nothing stores them.",
-            "items" : {
-              "type" : "string"
-            },
-            "type" : "array"
-          },
           "noCache" : {
             "type" : "boolean"
-          },
-          "repoSource" : {
-            "$ref" : "#/components/schemas/appactiondto.DeploymentRepoSourceReq"
           }
         },
-        "required" : [ "activeMethod", "changeId", "imageSource", "imageTags", "noCache", "repoSource" ],
+        "required" : [ "changeId", "noCache" ],
         "type" : "object"
       },
       "appactiondto.DeployAppResp" : {
@@ -44623,27 +44610,6 @@
           }
         },
         "required" : [ "data", "meta" ],
-        "type" : "object"
-      },
-      "appactiondto.DeploymentImageSourceReq" : {
-        "properties" : {
-          "imageTag" : {
-            "type" : "string"
-          }
-        },
-        "required" : [ "imageTag" ],
-        "type" : "object"
-      },
-      "appactiondto.DeploymentRepoSourceReq" : {
-        "properties" : {
-          "commitHash" : {
-            "type" : "string"
-          },
-          "repoRef" : {
-            "type" : "string"
-          }
-        },
-        "required" : [ "commitHash", "repoRef" ],
         "type" : "object"
       },
       "appactiondto.RestartAppReq" : {
@@ -47656,20 +47622,14 @@
       },
       "appsettingsdto.UpdateAppDeploymentSettingsDataResp" : {
         "properties" : {
-          "errors" : {
-            "items" : {
-              "type" : "string"
-            },
-            "type" : "array"
+          "deploymentId" : {
+            "type" : "string"
           },
-          "warnings" : {
-            "items" : {
-              "type" : "string"
-            },
-            "type" : "array"
+          "taskId" : {
+            "type" : "string"
           }
         },
-        "required" : [ "errors", "warnings" ],
+        "required" : [ "deploymentId", "taskId" ],
         "type" : "object"
       },
       "appsettingsdto.UpdateAppDeploymentSettingsReq" : {

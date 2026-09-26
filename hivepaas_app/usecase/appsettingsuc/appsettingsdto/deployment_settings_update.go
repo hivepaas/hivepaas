@@ -217,6 +217,6 @@ type UpdateAppDeploymentSettingsResp struct {
 }
 
 type UpdateAppDeploymentSettingsDataResp struct {
-	Errors   []string `json:"errors,omitempty"`
-	Warnings []string `json:"warnings,omitempty"`
+	DeploymentID string `json:"deploymentId,omitempty"`
+	TaskID       string `json:"taskId,omitempty"`
 }

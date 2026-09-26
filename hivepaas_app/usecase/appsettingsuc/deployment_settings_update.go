@@ -53,12 +53,25 @@ func (uc *UC) UpdateAppDeploymentSettings(
 		return nil, hperrors.Wrap(err)
 	}
 
-	err = uc.postTransactionAppDeploymentSettings(ctx, persistingData)
+	err = uc.taskQueue.ScheduleTask(ctx, persistingData.UpsertingTasks...)
 	if err != nil {
 		return nil, hperrors.Wrap(err)
 	}
 
-	return &appsettingsdto.UpdateAppDeploymentSettingsResp{}, nil
+	var deploymentID, taskID string
+	if deployment, _ := gofn.First(persistingData.UpsertingDeployments); deployment != nil {
+		deploymentID = deployment.ID
+	}
+	if deploymentTask, _ := gofn.First(persistingData.UpsertingTasks); deploymentTask != nil {
+		taskID = deploymentTask.ID
+	}
+
+	return &appsettingsdto.UpdateAppDeploymentSettingsResp{
+		Data: &appsettingsdto.UpdateAppDeploymentSettingsDataResp{
+			DeploymentID: deploymentID,
+			TaskID:       taskID,
+		},
+	}, nil
 }
 
 type updateAppDeploymentSettingsData struct {
@@ -184,18 +197,5 @@ func (uc *UC) prepareUpdatingAppDeploymentSettings(
 
 	persistingData.UpsertingDeployments = append(persistingData.UpsertingDeployments, deployment)
 	persistingData.UpsertingTasks = append(persistingData.UpsertingTasks, deploymentTask)
-	return nil
-}
-
-func (uc *UC) postTransactionAppDeploymentSettings(
-	ctx context.Context,
-	persistingData *persistingAppData,
-) error {
-	for _, task := range persistingData.UpsertingTasks {
-		err := uc.taskQueue.ScheduleTask(ctx, task)
-		if err != nil {
-			return hperrors.Wrap(err)
-		}
-	}
 	return nil
 }

@@ -2,9 +2,6 @@ package appactionuc
 
 import (
 	"context"
-	"time"
-
-	"github.com/tiendc/gofn"
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
@@ -12,10 +9,6 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
-	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/copier"
-	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/githelper"
-	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/gittool"
-	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/timeutil"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/transaction"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/appdeploymentservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/appservice"
@@ -27,208 +20,74 @@ func (uc *UC) DeployApp(
 	auth *basedto.Auth,
 	req *appactiondto.DeployAppReq,
 ) (*appactiondto.DeployAppResp, error) {
-	var data *deployAppData
-	var persistingData *persistingAppData
+	var deployment *entity.Deployment
+	var deploymentTask *entity.Task
 	err := transaction.Execute(ctx, uc.db, func(db database.Tx) error {
-		data = &deployAppData{}
-		err := uc.loadAppDeploymentSettingsForUpdate(ctx, db, req, data)
+		app, err := uc.appService.LoadApp(ctx, db, req.ProjectID, req.AppID, true, true,
+			bunex.SelectFor("UPDATE OF app"),
+			bunex.SelectRelation("Project",
+				bunex.SelectExcludeColumns(entity.ProjectDefaultExcludeColumns...),
+			),
+			bunex.SelectRelation("ProjectEnv"),
+			bunex.SelectRelation("Settings",
+				bunex.SelectWhere("setting.type = ?", base.SettingTypeAppDeployment),
+			),
+		)
 		if err != nil {
 			return hperrors.Wrap(err)
 		}
 
-		persistingData = &persistingAppData{}
-		err = uc.prepareUpdatingAppDeploymentSettings(auth, req, data, persistingData)
+		deploymentSetting := app.GetSettingByType(base.SettingTypeAppDeployment)
+		if deploymentSetting == nil || !deploymentSetting.IsActive() {
+			return hperrors.NewNotFound("App deployment settings").
+				WithMsgLog("app deployment settings not found")
+		}
+		deploymentSettings, err := deploymentSetting.AsAppDeploymentSettings()
 		if err != nil {
 			return hperrors.Wrap(err)
 		}
 
-		err = uc.persistAppData(ctx, db, persistingData)
+		// Create a deployment and a task for it
+		deployment, deploymentTask, err = uc.appDeploymentService.CreateDeploymentAndTask(
+			app, deploymentSettings,
+			appdeploymentservice.DeploymentArgs{NoCache: req.NoCache},
+		)
+		if err != nil {
+			return hperrors.Wrap(err)
+		}
+		// Set trigger for the deployment
+		deployment.Trigger = &entity.AppDeploymentTrigger{
+			Source:   base.DeploymentTriggerSourceAPI,
+			SourceID: auth.User.ID,
+			ChangeID: req.ChangeID,
+		}
+
+		persistingData := &appservice.PersistingAppData{}
+		persistingData.UpsertingDeployments = append(persistingData.UpsertingDeployments, deployment)
+		persistingData.UpsertingTasks = append(persistingData.UpsertingTasks, deploymentTask)
+
+		err = uc.appService.PersistAppData(ctx, db, persistingData)
 		if err != nil {
 			return hperrors.Wrap(err)
 		}
 
 		// Inside the transaction, unlike restart and stop: this one writes a
 		// deployment row, so a failed record can still take the change with it.
-		return uc.recordAppAction(ctx, db, auth, data.App, base.AuditLogSourceAPIAction, "deploy", nil)
+		return uc.recordAppAction(ctx, db, auth, app, base.AuditLogSourceAPIAction, "deploy", nil)
 	})
 	if err != nil {
 		return nil, hperrors.Wrap(err)
 	}
 
-	err = uc.postTransactionAppDeploymentSettings(ctx, persistingData)
+	err = uc.taskQueue.ScheduleTask(ctx, deploymentTask)
 	if err != nil {
 		return nil, hperrors.Wrap(err)
 	}
 
-	deployment, _ := gofn.First(persistingData.UpsertingDeployments)
 	return &appactiondto.DeployAppResp{
-		Data: &appactiondto.DeployAppDataResp{DeploymentID: deployment.ID},
+		Data: &appactiondto.DeployAppDataResp{
+			DeploymentID: deployment.ID,
+			TaskID:       deploymentTask.ID,
+		},
 	}, nil
-}
-
-type deployAppData struct {
-	App                    *entity.App
-	DeploymentSettingEnt   *entity.Setting
-	CurrDeploymentSettings *entity.AppDeploymentSettings
-	NewDeploymentSettings  *entity.AppDeploymentSettings
-}
-
-type persistingAppData struct {
-	appservice.PersistingAppData
-}
-
-func (uc *UC) loadAppDeploymentSettingsForUpdate(
-	ctx context.Context,
-	db database.Tx,
-	req *appactiondto.DeployAppReq,
-	data *deployAppData,
-) error {
-	app, err := uc.appService.LoadApp(ctx, db, req.ProjectID, req.AppID, true, true,
-		bunex.SelectFor("UPDATE OF app"),
-		bunex.SelectRelation("Project",
-			bunex.SelectExcludeColumns(entity.ProjectDefaultExcludeColumns...),
-		),
-		bunex.SelectRelation("ProjectEnv"),
-		bunex.SelectRelation("Settings",
-			bunex.SelectWhere("setting.type = ?", base.SettingTypeAppDeployment),
-		),
-	)
-	if err != nil {
-		return hperrors.Wrap(err)
-	}
-	data.App = app
-	data.DeploymentSettingEnt, _ = gofn.First(app.Settings)
-
-	if data.DeploymentSettingEnt == nil || !data.DeploymentSettingEnt.IsActive() {
-		return hperrors.NewNotFound("App deployment settings").
-			WithMsgLog("app deployment settings not found")
-	}
-
-	// Parse the current deployment settings
-	currSettings, err := data.DeploymentSettingEnt.AsAppDeploymentSettings()
-	if err != nil {
-		return hperrors.Wrap(err).WithMsgLog("failed to parse app deployment settings")
-	}
-	data.CurrDeploymentSettings = currSettings
-
-	newSettings, err := copier.CopyAs(currSettings)
-	if err != nil {
-		return hperrors.Wrap(err)
-	}
-	data.NewDeploymentSettings = newSettings
-	if err = req.ApplyTo(newSettings); err != nil {
-		return hperrors.Wrap(err)
-	}
-
-	// Make sure all reference settings used in this settings exist actively
-	refObjects := entity.NewRefObjects()
-	err = uc.settingService.LoadRefObjectsByIDs(ctx, db, &refObjects, app.GetObjectScope(),
-		true, newSettings.GetRefObjectIDs())
-	if err != nil {
-		return hperrors.Wrap(err)
-	}
-
-	// Validate active deployment method
-	if newSettings.ActiveMethod == "" {
-		return hperrors.NewMissing("Deployment method")
-	}
-
-	switch newSettings.ActiveMethod {
-	case base.DeploymentMethodImage:
-		// Do nothing
-
-	case base.DeploymentMethodRepo:
-		repoSource := newSettings.RepoSource
-
-		// When the cluster has multiple nodes, the result image must be pushed to a registry
-		// that can be accessed by all the nodes in the cluster.
-		isMultiNode, err := uc.clusterService.IsMultiNode(ctx)
-		if err != nil {
-			return hperrors.Wrap(err)
-		}
-		if isMultiNode && repoSource.PushToRegistry.ID == "" {
-			return hperrors.Wrap(hperrors.ErrMultiNodeClusterRequireRegistryForImages)
-		}
-
-		// Validate existence of repo and ref
-		switch repoSource.RepoType { //nolint:gocritic
-		case base.RepoTypeGit:
-			// TODO: do not check commit hash for now, that's so slow
-			err := gittool.ValidateWithGitCli(ctx, &gittool.ValidationOptions{
-				URL:           repoSource.RepoURL,
-				Credentials:   refObjects.RefSettings[repoSource.Credentials.ID],
-				ReferenceName: githelper.ReferenceName(repoSource.RepoRef),
-			})
-			if err != nil {
-				return hperrors.Wrap(err)
-			}
-		}
-
-	default:
-		return hperrors.NewArgumentInvalid("deployment method")
-	}
-
-	return nil
-}
-
-func (uc *UC) prepareUpdatingAppDeploymentSettings(
-	auth *basedto.Auth,
-	req *appactiondto.DeployAppReq,
-	data *deployAppData,
-	persistingData *persistingAppData,
-) error {
-	app := data.App
-	setting := data.DeploymentSettingEnt
-	setting.UpdateVer++
-	setting.UpdatedAt = timeutil.NowUTC()
-	setting.ExpireAt = time.Time{}
-	setting.Status = base.SettingStatusActive
-
-	setting.MustSetData(data.NewDeploymentSettings)
-	persistingData.UpsertingSettings = append(persistingData.UpsertingSettings, setting)
-
-	// Create a deployment and a task for it
-	deployment, deploymentTask, err := uc.appDeploymentService.CreateDeploymentAndTask(
-		app, data.NewDeploymentSettings,
-		appdeploymentservice.DeploymentArgs{NoCache: req.NoCache, ImageTags: req.ImageTags},
-	)
-	if err != nil {
-		return hperrors.Wrap(err)
-	}
-	// Set trigger for the deployment
-	deployment.Trigger = &entity.AppDeploymentTrigger{
-		Source:   base.DeploymentTriggerSourceAPI,
-		SourceID: auth.User.ID,
-		ChangeID: req.ChangeID,
-	}
-
-	persistingData.UpsertingDeployments = append(persistingData.UpsertingDeployments, deployment)
-	persistingData.UpsertingTasks = append(persistingData.UpsertingTasks, deploymentTask)
-
-	return nil
-}
-
-func (uc *UC) persistAppData(
-	ctx context.Context,
-	db database.IDB,
-	persistingData *persistingAppData,
-) error {
-	err := uc.appService.PersistAppData(ctx, db, &persistingData.PersistingAppData)
-	if err != nil {
-		return hperrors.Wrap(err)
-	}
-	return nil
-}
-
-func (uc *UC) postTransactionAppDeploymentSettings(
-	ctx context.Context,
-	persistingData *persistingAppData,
-) error {
-	for _, task := range persistingData.UpsertingTasks {
-		err := uc.taskQueue.ScheduleTask(ctx, task)
-		if err != nil {
-			return hperrors.Wrap(err)
-		}
-	}
-	return nil
 }

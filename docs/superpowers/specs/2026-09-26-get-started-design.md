@@ -46,8 +46,12 @@ committed, the app asks for the dashboard's certificate:
 - the HivePaaS app is `hpAppService.LoadAppByKey(base.HivepaasAppKey)`; its
   routing settings' enabled domains without a certificate are the ones asked for;
 - `domainService.EnsureCertsForDomains` with the app's scope, project and ID, and
-  the tasks it returns scheduled on the task queue, as
-  `routing_settings_update.go` does;
+  the tasks it returns scheduled on the task queue once the queue has started
+  (`DashboardCertOnFirstBoot`, after `InitTaskQueue`);
+- the installer starts the app only after every service is tuned and the
+  database migrated, so nothing restarts it while the certificate is obtained,
+  and waits a little for the certificate before saying done (the installer's
+  spec, §2);
 - a failure here is logged and does not stop the boot: the card offers the
   attempt again.
 

@@ -20,6 +20,7 @@ func Tools() []Tool {
 		explainScheduleTool(),
 		planRestartAppTool(),
 		planRedeployAppTool(),
+		planInstallAppTool(),
 		applyPlanTool(),
 	}
 }

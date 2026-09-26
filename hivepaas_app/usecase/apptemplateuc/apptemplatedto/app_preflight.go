@@ -53,6 +53,25 @@ type PreflightAppResult struct {
 	// are reported together rather than one at a time, because a dialog that
 	// says "and also" three times is three round trips through the same form.
 	Issues []*PreflightIssueResult `json:"issues"`
+
+	// Apps are the apps the request would create, in the order it creates them:
+	// dependencies first, the app asked for last. An assistant shows them as the
+	// plan of an install; nothing here is decided by anything but the request.
+	Apps []*PreflightPlannedApp `json:"apps"`
+}
+
+// PreflightPlannedApp is one app a request would create, as it would be named.
+type PreflightPlannedApp struct {
+	Name string `json:"name"`
+	Key  string `json:"key"`
+	// Kind is app for the app asked for, component for another process of the
+	// same application, dependency for an app it needs.
+	Kind string `json:"kind"`
+	// Role is its role in the template - db, worker - empty for the app asked for.
+	Role     string `json:"role,omitempty"`
+	Template string `json:"template"`
+	Version  string `json:"version,omitempty"`
+	Image    string `json:"image"`
 }
 
 type PreflightIssueResult struct {

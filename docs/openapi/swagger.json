@@ -48941,6 +48941,13 @@
       },
       "apptemplatedto.PreflightAppResult" : {
         "properties" : {
+          "apps" : {
+            "description" : "Apps are the apps the request would create, in the order it creates them:\ndependencies first, the app asked for last. An assistant shows them as the\nplan of an install; nothing here is decided by anything but the request.",
+            "items" : {
+              "$ref" : "#/components/schemas/apptemplatedto.PreflightPlannedApp"
+            },
+            "type" : "array"
+          },
           "issues" : {
             "description" : "Issues are the refusals the creation would raise: a domain already served,\na published port already held, permission the caller does not have. They\nare reported together rather than one at a time, because a dialog that\nsays \"and also\" three times is three round trips through the same form.",
             "items" : {
@@ -48963,7 +48970,7 @@
             "type" : "array"
           }
         },
-        "required" : [ "issues", "storage", "storageUnchecked" ],
+        "required" : [ "apps", "issues", "storage", "storageUnchecked" ],
         "type" : "object"
       },
       "apptemplatedto.PreflightIssueResult" : {
@@ -48978,6 +48985,35 @@
           }
         },
         "required" : [ "code", "detail" ],
+        "type" : "object"
+      },
+      "apptemplatedto.PreflightPlannedApp" : {
+        "properties" : {
+          "image" : {
+            "type" : "string"
+          },
+          "key" : {
+            "type" : "string"
+          },
+          "kind" : {
+            "description" : "Kind is app for the app asked for, component for another process of the\nsame application, dependency for an app it needs.",
+            "type" : "string"
+          },
+          "name" : {
+            "type" : "string"
+          },
+          "role" : {
+            "description" : "Role is its role in the template - db, worker - empty for the app asked for.",
+            "type" : "string"
+          },
+          "template" : {
+            "type" : "string"
+          },
+          "version" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "image", "key", "kind", "name", "role", "template", "version" ],
         "type" : "object"
       },
       "apptemplatedto.PreflightStorageResult" : {

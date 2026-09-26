@@ -98,3 +98,25 @@ func TestProvisionAllRecordsABindingOnEveryComponent(t *testing.T) {
 	assert.Equal(t, gateway.ID, binding(t, auth).CreatedForAppID)
 	assert.Equal(t, auth.ID, binding(t, gateway).Components[0].AppID)
 }
+
+// A preflight says what an install would create - what an assistant shows as
+// the plan of one - with the names the creation will use.
+func TestPlannedAppsAreWhatTheCreationMakes(t *testing.T) {
+	_, fakes := newCreateTest(t)
+	req := testCreateReq()
+	req.Name = "shop"
+
+	planned := plannedApps(planApps(req, renderedWithComponents(t, fakes)))
+
+	if assert.Len(t, planned, 3) {
+		assert.Equal(t, []string{"shop-db", "shop-auth", "shop"},
+			[]string{planned[0].Name, planned[1].Name, planned[2].Name})
+		assert.Equal(t, []string{"dependency", "component", "app"},
+			[]string{planned[0].Kind, planned[1].Kind, planned[2].Kind})
+		assert.Equal(t, "db", planned[0].Role)
+		assert.Equal(t, "auth", planned[1].Role)
+		assert.Empty(t, planned[2].Role, "the app asked for plays no role")
+		assert.Equal(t, "stack", planned[2].Template)
+		assert.NotEmpty(t, planned[0].Image)
+	}
+}

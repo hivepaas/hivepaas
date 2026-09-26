@@ -4,6 +4,8 @@ import (
 	"context"
 	"errors"
 
+	"github.com/tiendc/gofn"
+
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/apptemplateservice"
@@ -52,7 +54,35 @@ func (uc *UC) PreflightAppFromTemplate(
 		Storage:          storageResults(plan.Findings),
 		StorageUnchecked: storageResults(plan.Unchecked),
 		Issues:           issues,
+		Apps:             plannedApps(apps),
 	}}, nil
+}
+
+// plannedApps says what planApps decided, each app as the person would find it.
+func plannedApps(apps []*appToProvision) []*apptemplatedto.PreflightPlannedApp {
+	out := make([]*apptemplatedto.PreflightPlannedApp, 0, len(apps))
+	for _, app := range apps {
+		planned := &apptemplatedto.PreflightPlannedApp{Name: app.name, Key: app.key(), Role: app.role}
+		switch {
+		case app.logicalParentID == "":
+			planned.Kind, planned.Role = "app", ""
+		case app.links.component != "":
+			planned.Kind = "component"
+		default:
+			planned.Kind = "dependency"
+		}
+		if app.rendered != nil && app.rendered.Template != nil {
+			planned.Template = app.rendered.Template.Metadata.Name
+		}
+		if app.result != nil {
+			planned.Image = gofn.Coalesce(app.result.ImageOverride, app.result.Image)
+			if app.result.Version != nil {
+				planned.Version = app.result.Version.Name
+			}
+		}
+		out = append(out, planned)
+	}
+	return out
 }
 
 // collectIssues runs the refusals the creation runs and reports them instead of

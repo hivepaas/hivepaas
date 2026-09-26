@@ -25,6 +25,7 @@
 ## Review Focus
 
 - **The dispatched auth.** `authhandler` must take the auth from the context only when the dispatcher put it there (unexported key type), must still run `VerifyAuth` with the handler's access check, and a request from outside must have no way to set it. Pinned by `TestDispatchedAuthIsOnlyTakenFromTheContext` and `TestDispatchedAuthStillVerifiesAccess` (Task 2).
+- **A fresh auth per dispatched request.** `permission.CheckAccess` writes the resources it allowed into `auth.AllowedResources`, and use cases filter lists by it; a tool that dispatches twice with one auth would have the second answer filtered by the first's check. `authhandler` hands each handler a copy holding only the user. Pinned by `TestEachDispatchedRequestGetsAFreshAuth` (Task 2), found while implementing Task 2.
 - **An API key's access actions.** A key limited to `read` reaches read endpoints and nothing else, through a tool as through the API. Pinned by `TestToolsRespectTheKeysAccessActions` (Task 4).
 - **Secrets.** `get_app_config` and `get_app` must not carry a secret value, whatever the app holds. Pinned by `TestNoToolOutputCarriesASecretValue` (Task 5), over a fake app whose secret and env values are distinctive strings.
 - **Name resolution.** An ambiguous project, env or app name is an error listing the candidates; a name the caller cannot see is "not found", the same as a name that does not exist. Pinned by `TestResolveRefusesAmbiguity` and `TestResolveHidesWhatTheCallerCannotSee` (Task 5).
@@ -403,7 +404,7 @@ git add -A && git commit -m "feat(mcp): the endpoint, off by default, by API key
 
 ### Task 8: End to end, and merge
 
-- [ ] **Step 1: An SDK client against the real router.** `interface/mcp/e2e_test.go`, build-tagged `e2e`, starts the whole HTTP server over the test database (the pattern of the existing `real_*_test.go` files), creates a user, an API key and a project with an app, and calls every tool once through `StreamableClientTransport`.
+- [ ] **Step 1: An SDK client against a real server.** `interface/mcp/real_server_test.go` calls every tool once through `StreamableClientTransport` against a running HivePaaS, and is skipped unless `HP_TEST_MCP_URL`, `HP_TEST_MCP_KEY` and `HP_TEST_MCP_APP` are set - the pattern of the existing `real_*_test.go` files, which run against a real Docker daemon only when asked. (Planned as a build-tagged test that starts the whole server over a test database; the repository has no such harness, and building one is more than this phase needs.)
 
 - [ ] **Step 2: By hand, with the user's go-ahead to restart the backend.** Turn the switch on in the dashboard, create the key, add the server to Claude Code with the snippet, and ask it: "why is <an app that crash-loops> not running?", "show me errors in <app>'s logs in the last hour", "what would installing postgres into <env> create?". Record what it called in the plan's last section.
 

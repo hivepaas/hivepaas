@@ -15,6 +15,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/interface/api/middleware/recovery"
 	"github.com/hivepaas/hivepaas/hivepaas_app/interface/api/middleware/secretguard"
 	"github.com/hivepaas/hivepaas/hivepaas_app/interface/api/middleware/secureheaders"
+	"github.com/hivepaas/hivepaas/hivepaas_app/interface/mcp"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/logging"
 )
 
@@ -29,6 +30,7 @@ type HTTPServer struct {
 	config          *config.Config
 	engine          *gin.Engine
 	handlerRegistry *HandlerRegistry
+	mcpServices     *mcp.Services
 	logger          logging.Logger
 }
 
@@ -48,10 +50,12 @@ func NewHTTPServer(
 	config *config.Config,
 	logger logging.Logger,
 	handlerRegistry *HandlerRegistry,
+	mcpServices *mcp.Services,
 ) Server {
 	s := &HTTPServer{
 		config:          config,
 		handlerRegistry: handlerRegistry,
+		mcpServices:     mcpServices,
 		logger:          logger,
 	}
 	return s

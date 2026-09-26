@@ -132,8 +132,11 @@ The MCP tab (System settings › AI) gains:
 
 - **Allow changes** (`allowWrite`), off by default, with what it lets an
   assistant do and that each change is planned first.
-- A second key button, **Create a key that can make changes** (read, write,
-  execute; not delete), shown when Allow changes is on.
+- **No button makes a key that can make changes.** The person creates it
+  themselves, in Profile › API keys, choosing its access actions, and pastes its
+  ID and secret into the tab, which fills the client snippets with it. The pasted
+  key stays in the page: it is not saved or sent anywhere. The tab says which
+  access actions each tool needs (write, execute).
 - In **Recent calls**, an apply shows the tool it applied.
 
 ## 7. Prompts

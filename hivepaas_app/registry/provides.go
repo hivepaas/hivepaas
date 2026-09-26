@@ -173,6 +173,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings/sslprovideruc"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/specuc"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/supportuc"
+	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/system/getstarteduc"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/system/hpappsettingsuc"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/system/hpappuc"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/system/syserroruc"
@@ -342,6 +343,7 @@ var Provides = []any{
 	homeuc.New,
 	syserroruc.New,
 	sysstatusuc.New,
+	getstarteduc.New,
 	systembackupuc.New,
 	systemcleanupuc.New,
 	specuc.New,

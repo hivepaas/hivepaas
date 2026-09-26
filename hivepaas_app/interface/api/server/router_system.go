@@ -24,6 +24,12 @@ func (s *HTTPServer) registerSystemRoutes(apiGroup *gin.RouterGroup) {
 		statusGroup.GET("/db", systemHandler.GetDBStats)
 	}
 
+	{ // Get started group: the dashboard's first-login card
+		getStartedGroup := systemGroup.Group("/get-started")
+		getStartedGroup.POST("/dashboard-cert", systemHandler.RequestDashboardCert)
+		getStartedGroup.POST("/dismiss", systemHandler.DismissGetStarted)
+	}
+
 	{ // Error group
 		errorGroup := systemGroup.Group("/errors")
 		errorGroup.GET("", systemHandler.ListSysError)

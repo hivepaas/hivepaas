@@ -2,7 +2,7 @@ import { useState } from "react";
 
 import { dashedBorderBox } from "@lib/styles";
 import { cn } from "@lib/utils";
-import { KeyRound } from "lucide-react";
+import { ExternalLink, KeyRound } from "lucide-react";
 import { Link } from "react-router";
 import { toast } from "sonner";
 import { SectionHeader } from "~/system-settings/module-shared";
@@ -12,6 +12,15 @@ import { ROUTE } from "@application/shared/constants";
 import { ProfileCommands } from "@application/shared/data/commands";
 
 import { Button, Input } from "@/components/ui";
+import {
+    AlertDialog,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { PasswordInput } from "@/components/ui/input-password";
 
 import { McpClientSnippets } from "./mcp-client-snippets.com";
@@ -31,7 +40,7 @@ interface KeyState extends CreatedKey {
 const KEY_ID_PLACEHOLDER = "<key-id>";
 const SECRET_PLACEHOLDER = "<secret>";
 
-/** Which access actions a key needs, so the person can create the one they want in their profile. */
+/** Which access actions each kind of tool needs, for a key made in the profile. */
 function KeyAccessNote({ allowWrite }: { allowWrite: boolean }) {
     return (
         <ul className="list-disc pl-5 text-xs leading-relaxed text-muted-foreground">
@@ -40,16 +49,6 @@ function KeyAccessNote({ allowWrite }: { allowWrite: boolean }) {
                 <>
                     <li>Restarting and redeploying an app needs Execute.</li>
                     <li>Installing, changing configuration and scheduling jobs needs Write.</li>
-                    <li>
-                        A key that can make changes is created in{" "}
-                        <Link
-                            to={ROUTE.currentUser.profileApiKeys.create.$route}
-                            className="underline underline-offset-2"
-                        >
-                            Profile › API keys
-                        </Link>
-                        , with the access actions it needs and no more.
-                    </li>
                 </>
             ) : (
                 <li>Changes are off: whatever the key may do, an assistant only reads.</li>
@@ -63,15 +62,39 @@ function todayName(): string {
 }
 
 /**
- * How long a key made here lasts. HivePaaS requires every key to expire, within
- * a year of its creation; a key pasted into a client's configuration is one
- * nobody looks at again, so it is made to run out well before that.
+ * The key the button makes: what the server lets an assistant do, and no more.
+ * HivePaaS requires every key to expire within a year; a key pasted into a
+ * client's configuration is one nobody looks at again, so it runs out well
+ * before that - and the sooner, the more it may do.
  */
-const KEY_LIFETIME_DAYS = 90;
+interface KeyKind {
+    label: string;
+    created: string;
+    access: { read: boolean; execute: boolean; write: boolean; delete: boolean };
+    lifetimeDays: number;
+    /** Whether the person confirms first: a key that can change things works on the whole API. */
+    confirm: boolean;
+}
 
-function keyExpiry(): Date {
+const READ_ONLY_KEY: KeyKind = {
+    label: "Create a read-only key",
+    created: "Read-only API key created",
+    access: { read: true, execute: false, write: false, delete: false },
+    lifetimeDays: 90,
+    confirm: false,
+};
+
+const CHANGES_KEY: KeyKind = {
+    label: "Create a key that can make changes",
+    created: "API key that can make changes created",
+    access: { read: true, execute: true, write: true, delete: false },
+    lifetimeDays: 30,
+    confirm: true,
+};
+
+function keyExpiry(days: number): Date {
     const expireAt = new Date();
-    expireAt.setDate(expireAt.getDate() + KEY_LIFETIME_DAYS);
+    expireAt.setDate(expireAt.getDate() + days);
     return expireAt;
 }
 
@@ -87,32 +110,40 @@ interface Props {
  * How to point an assistant at the server: a key, and the configuration each
  * kind of client takes, filled in with it.
  *
- * The key is the person's own: pasted here, or - for one that may only read -
- * created here. A key that can make changes is only ever created in the
- * profile, where its access actions are chosen deliberately. What is pasted
- * stays in this page: it fills the snippets and is neither saved nor sent.
+ * The key is the person's own: pasted here, made in the profile, or made by the
+ * button - which makes the key the server's setting calls for, read-only or one
+ * that can make changes, the latter only once the person has confirmed what it
+ * can do. What is pasted stays in this page: it fills the snippets and is
+ * neither saved nor sent.
  */
 export function McpConnectSection({ endpoint, enabled, allowWrite }: Props) {
     const [key, setKey] = useState<KeyState>({ keyId: "", secretKey: "" });
     const [wasCreated, setWasCreated] = useState(false);
+    const [isConfirming, setIsConfirming] = useState(false);
     const { mutate: createApiKey, isPending } = ProfileCommands.useCreateOneApiKey();
+    const kind = allowWrite ? CHANGES_KEY : READ_ONLY_KEY;
 
-    function handleCreate() {
-        const expireAt = keyExpiry();
+    function create() {
+        const expireAt = keyExpiry(kind.lifetimeDays);
         createApiKey(
-            {
-                name: todayName(),
-                accessAction: { read: true, write: false, execute: false, delete: false },
-                expireAt,
-            },
+            { name: todayName(), accessAction: kind.access, expireAt },
             {
                 onSuccess: response => {
                     setKey({ keyId: response.data.keyId, secretKey: response.data.secretKey, expireAt });
                     setWasCreated(true);
-                    toast.success("Read-only API key created");
+                    setIsConfirming(false);
+                    toast.success(kind.created);
                 },
             },
         );
+    }
+
+    function handleCreate() {
+        if (kind.confirm) {
+            setIsConfirming(true);
+            return;
+        }
+        create();
     }
 
     const keyId = key.keyId.trim() || KEY_ID_PLACEHOLDER;
@@ -156,19 +187,30 @@ export function McpConnectSection({ endpoint, enabled, allowWrite }: Props) {
                             </div>
                         ) : (
                             <div className="flex flex-col items-start gap-2">
-                                <Button
-                                    type="button"
-                                    variant="outline"
-                                    onClick={handleCreate}
-                                    isLoading={isPending}
-                                    disabled={isPending}
-                                >
-                                    <KeyRound className="size-4" />
-                                    Create a read-only key
-                                </Button>
+                                <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+                                    <Button
+                                        type="button"
+                                        variant="outline"
+                                        onClick={handleCreate}
+                                        isLoading={isPending && !isConfirming}
+                                        disabled={isPending}
+                                    >
+                                        <KeyRound className="size-4" />
+                                        {kind.label}
+                                    </Button>
+                                    <Link
+                                        to={ROUTE.currentUser.profileApiKeys.$route}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="inline-flex items-center gap-1 text-sm underline underline-offset-2"
+                                    >
+                                        Create one yourself
+                                        <ExternalLink className="size-3.5" />
+                                    </Link>
+                                </div>
                                 <span className="text-xs text-muted-foreground">
-                                    It lasts {KEY_LIFETIME_DAYS} days. A key with another lifetime is made in your
-                                    profile.
+                                    It lasts {kind.lifetimeDays} days. Your own, in your profile, can have other access
+                                    actions and another lifetime.
                                 </span>
                                 {!enabled && (
                                     <span className="text-xs text-muted-foreground">
@@ -183,6 +225,13 @@ export function McpConnectSection({ endpoint, enabled, allowWrite }: Props) {
                         />
                         <KeyAccessNote allowWrite={allowWrite} />
                     </div>
+                    <ConfirmChangesKeyDialog
+                        open={isConfirming}
+                        lifetimeDays={CHANGES_KEY.lifetimeDays}
+                        isPending={isPending}
+                        onOpenChange={setIsConfirming}
+                        onConfirm={create}
+                    />
                 </InfoBlock>
 
                 <InfoBlock
@@ -202,5 +251,58 @@ export function McpConnectSection({ endpoint, enabled, allowWrite }: Props) {
                 </InfoBlock>
             </div>
         </>
+    );
+}
+
+interface ConfirmProps {
+    open: boolean;
+    lifetimeDays: number;
+    isPending: boolean;
+    onOpenChange: (open: boolean) => void;
+    onConfirm: () => void;
+}
+
+/**
+ * What a key that can make changes can do, said before it exists: it acts on
+ * the whole API, not only through the MCP server's plans.
+ */
+function ConfirmChangesKeyDialog({ open, lifetimeDays, isPending, onOpenChange, onConfirm }: ConfirmProps) {
+    return (
+        <AlertDialog
+            open={open}
+            onOpenChange={onOpenChange}
+        >
+            <AlertDialogContent className="sm:max-w-[520px]">
+                <AlertDialogHeader>
+                    <AlertDialogTitle>Create a key that can make changes?</AlertDialogTitle>
+                    <AlertDialogDescription asChild>
+                        <ul className="list-disc space-y-2 pl-5 text-left text-sm">
+                            <li>
+                                It may read, execute and write, and not delete. An assistant using it can restart and
+                                redeploy apps, install them, change their configuration and schedule jobs - each once
+                                you agree to its plan.
+                            </li>
+                            <li className="text-amber-700 dark:text-amber-400">
+                                It works on the whole HivePaaS API, not only through the MCP server: whoever holds it
+                                can do all of that directly, with no plan, as you. Keep it out of shared and versioned
+                                files.
+                            </li>
+                            <li>It runs out in {lifetimeDays} days, and you can revoke it in your profile.</li>
+                        </ul>
+                    </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                    <AlertDialogCancel disabled={isPending}>Cancel</AlertDialogCancel>
+                    <Button
+                        type="button"
+                        onClick={onConfirm}
+                        isLoading={isPending}
+                        disabled={isPending}
+                    >
+                        Create the key
+                    </Button>
+                </AlertDialogFooter>
+            </AlertDialogContent>
+        </AlertDialog>
     );
 }

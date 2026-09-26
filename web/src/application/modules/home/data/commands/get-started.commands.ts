@@ -1,44 +1,40 @@
 import { type UseMutationOptions, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useGetStartedApi } from "~/home/api";
 import type { GetStarted_Dismiss_Res, GetStarted_RequestDashboardCert_Res } from "~/home/api/services";
+import { QK as HOME_QK } from "~/home/data/constants";
 
 import { QK } from "@application/shared/data/constants";
 
 /**
- * The checklist comes with the profile, so after either call the profile is
- * read again: it has the certificate being obtained, or no checklist at all.
+ * Asking answers with where the certificate stands now - being obtained - which
+ * is put in place of the last reading, so the card polls from there.
  */
-function useRefreshProfile() {
-    const queryClient = useQueryClient();
-
-    return () => queryClient.invalidateQueries({ queryKey: [QK["session.get-profile"]] });
-}
-
 function useRequestDashboardCert({
     onSuccess,
     ...options
 }: Omit<UseMutationOptions<GetStarted_RequestDashboardCert_Res>, "mutationFn"> = {}) {
     const { mutations } = useGetStartedApi();
-    const refreshProfile = useRefreshProfile();
+    const queryClient = useQueryClient();
 
     return useMutation({
         mutationFn: mutations.requestDashboardCert,
         onSuccess: (response, ...rest) => {
-            void refreshProfile();
+            queryClient.setQueryData([HOME_QK["home.get-started.dashboard-cert"]], response);
             onSuccess?.(response, ...rest);
         },
         ...options,
     });
 }
 
+/** Closing clears the step, which the profile says: it is read again. */
 function useDismiss({ onSuccess, ...options }: Omit<UseMutationOptions<GetStarted_Dismiss_Res>, "mutationFn"> = {}) {
     const { mutations } = useGetStartedApi();
-    const refreshProfile = useRefreshProfile();
+    const queryClient = useQueryClient();
 
     return useMutation({
         mutationFn: mutations.dismiss,
         onSuccess: (response, ...rest) => {
-            void refreshProfile();
+            void queryClient.invalidateQueries({ queryKey: [QK["session.get-profile"]] });
             onSuccess?.(response, ...rest);
         },
         ...options,

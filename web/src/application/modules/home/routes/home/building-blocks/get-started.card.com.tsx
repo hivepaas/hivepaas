@@ -1,29 +1,24 @@
-import { useEffect, useRef } from "react";
-
-import { CircleCheck, CircleX, KeyRound, Loader2, ShieldCheck, X } from "lucide-react";
-import { toast } from "sonner";
-import { GetStartedCommands } from "~/home/data";
+import { CircleCheck, CircleX, Lightbulb, Loader2, ShieldCheck, X } from "lucide-react";
+import { GetStartedCommands, GetStartedQueries } from "~/home/data";
+import type { DashboardCert } from "~/home/domain";
 import { ProvisionGithubAppDialog, useProvisionGithubAppDialog } from "~/settings/dialogs/provision-github-app";
 
 import { useProfileContext } from "@application/shared/context";
 import { SessionQueries } from "@application/shared/data/queries";
-import { useF2aSetupDialog } from "@application/shared/dialogs";
-import type { SetupChecklist, SetupChecklistItem } from "@application/shared/entities";
 import { EUserRole } from "@application/shared/enums";
 
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
-/** How often the profile is read again while the certificate is being obtained. */
-const OBTAINING_REFRESH_MS = 5_000;
+/** The installation step the card is shown for. */
+const GET_STARTED_STEP = "hivepaas/get-started";
 
 const REOPEN_BROWSER =
     "Certificate installed. Quit and reopen your browser to see this site as secure: " +
     "a browser keeps the connection it opened with the old certificate, even in a new tab.";
 
-function StatusIcon({ item }: { item: SetupChecklistItem }) {
-    switch (item.status) {
+function CertStatusIcon({ cert }: { cert: DashboardCert }) {
+    switch (cert.status) {
         case "done":
             return <CircleCheck className="mt-0.5 size-4 shrink-0 text-green-600 dark:text-green-500" />;
         case "failed":
@@ -36,17 +31,17 @@ function StatusIcon({ item }: { item: SetupChecklistItem }) {
 }
 
 interface RowProps {
-    item: SetupChecklistItem;
+    icon: React.ReactNode;
     title: string;
     tag?: string;
     children: React.ReactNode;
     action?: React.ReactNode;
 }
 
-function Row({ item, title, tag, children, action }: RowProps) {
+function Row({ icon, title, tag, children, action }: RowProps) {
     return (
         <li className="flex items-start gap-3 px-5 py-3.5 border-b border-border/60 last:border-b-0">
-            <StatusIcon item={item} />
+            {icon}
             {/* The button goes under the text on a phone, beside it on anything wider. */}
             <div className="flex min-w-0 grow flex-col gap-2 sm:flex-row sm:items-start sm:gap-3">
                 <div className="flex min-w-0 grow flex-col gap-1">
@@ -56,18 +51,18 @@ function Row({ item, title, tag, children, action }: RowProps) {
                     </span>
                     <div className="text-[13px] text-muted-foreground break-words">{children}</div>
                 </div>
-                {action && item.status !== "done" && <div className="shrink-0">{action}</div>}
+                {action && <div className="shrink-0">{action}</div>}
             </div>
         </li>
     );
 }
 
-function DashboardCertRow({ item }: { item: SetupChecklistItem }) {
+function DashboardCertRow({ cert }: { cert: DashboardCert }) {
     const { mutate: requestCert, isPending } = GetStartedCommands.useRequestDashboardCert();
-    const domain = item.domain || "the dashboard's domain";
+    const domain = cert.domain || "the dashboard's domain";
 
     let detail: React.ReactNode;
-    switch (item.status) {
+    switch (cert.status) {
         case "done":
             detail = REOPEN_BROWSER;
             break;
@@ -77,7 +72,7 @@ function DashboardCertRow({ item }: { item: SetupChecklistItem }) {
         case "failed":
             detail = (
                 <>
-                    <span className="text-destructive">The last attempt failed: {item.error}</span>
+                    <span className="text-destructive">The last attempt failed: {cert.error}</span>
                     <br />
                     {`Check that ${domain} points at this server's IP and that port 80 is open, then try again.`}
                 </>
@@ -89,21 +84,23 @@ function DashboardCertRow({ item }: { item: SetupChecklistItem }) {
 
     return (
         <Row
-            item={item}
+            icon={<CertStatusIcon cert={cert} />}
             title="Secure the dashboard"
             action={
-                <Button
-                    size="sm"
-                    variant="outline"
-                    isLoading={isPending}
-                    disabled={isPending || item.status === "obtaining"}
-                    onClick={() => {
-                        requestCert();
-                    }}
-                >
-                    <ShieldCheck className="size-4" />
-                    {item.status === "failed" ? "Try again" : "Get the certificate"}
-                </Button>
+                cert.status !== "done" && (
+                    <Button
+                        size="sm"
+                        variant="outline"
+                        isLoading={isPending}
+                        disabled={isPending || cert.status === "obtaining"}
+                        onClick={() => {
+                            requestCert();
+                        }}
+                    >
+                        <ShieldCheck className="size-4" />
+                        {cert.status === "failed" ? "Try again" : "Get the certificate"}
+                    </Button>
+                )
             }
         >
             {detail}
@@ -111,42 +108,13 @@ function DashboardCertRow({ item }: { item: SetupChecklistItem }) {
     );
 }
 
-function TwoFactorRow({ item }: { item: SetupChecklistItem }) {
-    const dialog = useF2aSetupDialog({
-        onClose: () => {
-            dialog.actions.close();
-        },
-    });
-
-    return (
-        <Row
-            item={item}
-            title="Turn on two-factor authentication"
-            tag="Recommended"
-            action={
-                <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={dialog.actions.open}
-                >
-                    <KeyRound className="size-4" />
-                    Set up
-                </Button>
-            }
-        >
-            {item.status === "done"
-                ? "Your account asks for a code from your authenticator app at sign-in."
-                : "Ask for a code from an authenticator app at sign-in, on top of your password."}
-        </Row>
-    );
-}
-
-function GithubAppRow({ item, certDone }: { item: SetupChecklistItem; certDone: boolean }) {
+/** A suggestion, not a step: whether one is connected already is not asked. */
+function GithubAppRow({ certDone }: { certDone: boolean }) {
     const dialog = useProvisionGithubAppDialog();
 
     return (
         <Row
-            item={item}
+            icon={<Lightbulb className="mt-0.5 size-4 shrink-0 text-muted-foreground" />}
             title="Connect a GitHub App"
             tag="Optional"
             action={
@@ -161,20 +129,13 @@ function GithubAppRow({ item, certDone }: { item: SetupChecklistItem; certDone: 
                 </Button>
             }
         >
-            {item.status === "done" ? (
-                "A GitHub App is connected."
-            ) : (
+            Sign in with GitHub, and create apps from your repositories.
+            {!certDone && (
                 <>
-                    Sign in with GitHub, and create apps from your repositories.
-                    {!certDone && (
-                        <>
-                            {" "}
-                            <span className="text-amber-600 dark:text-amber-400">
-                                GitHub sends its webhooks only to a site with a valid certificate: secure the dashboard
-                                first.
-                            </span>
-                        </>
-                    )}
+                    {" "}
+                    <span className="text-amber-600 dark:text-amber-400">
+                        GitHub sends its webhooks only to a site with a valid certificate: secure the dashboard first.
+                    </span>
                 </>
             )}
         </Row>
@@ -182,57 +143,31 @@ function GithubAppRow({ item, certDone }: { item: SetupChecklistItem; certDone: 
 }
 
 /**
- * Tells the admin when the certificate arrives while they watch, since the row
- * saying so goes with the card once everything is done.
- */
-function useCertArrivedToast(checklist: SetupChecklist | null) {
-    const previous = useRef(checklist?.dashboardCert.status);
-    const status = checklist?.dashboardCert.status;
-
-    useEffect(() => {
-        if (previous.current === "obtaining" && status === "done") {
-            toast.success(REOPEN_BROWSER, { duration: 15_000 });
-        }
-        previous.current = status;
-    }, [status]);
-}
-
-/**
- * What a new installation still has to do, for an admin, until it is done or
- * closed. The server works out each item from what exists, and clears the step
- * for every admin when all three are done or one of them closes the card.
+ * What a new installation still has to do, for an admin, while the installation
+ * step says so: a certificate for the dashboard a browser trusts, with a GitHub
+ * App suggested beside it. The first reading that finds the certificate done
+ * clears the step on the server; the card keeps saying so until the page is
+ * loaded again, and closing it clears the step for every admin.
  */
 export function GetStartedCard() {
     const isAdmin = useProfileContext(state => state.profile?.role === EUserRole.Admin);
 
-    const { data } = SessionQueries.useGetProfile({
-        enabled: isAdmin,
-        refetchInterval: query =>
-            query.state.data?.data.setupChecklist?.dashboardCert.status === "obtaining" ? OBTAINING_REFRESH_MS : false,
-    });
+    // The profile the dashboard loaded at sign-in, not read again for this.
+    const { data: profile } = SessionQueries.useGetProfile({ enabled: isAdmin, staleTime: Infinity });
+    const shown = isAdmin && profile?.data.nextStep === GET_STARTED_STEP;
+
+    const { data } = GetStartedQueries.useDashboardCert({ enabled: shown });
     const { mutate: dismiss, isPending: isDismissing } = GetStartedCommands.useDismiss();
 
-    const checklist = isAdmin ? (data?.data.setupChecklist ?? null) : null;
-    useCertArrivedToast(checklist);
-
-    if (!checklist) {
+    const cert = shown ? data?.data : undefined;
+    if (!cert) {
         return null;
     }
-
-    const left = [checklist.dashboardCert, checklist.twoFactor, checklist.githubApp].filter(
-        item => item.status !== "done",
-    ).length;
 
     return (
         <Card className="gap-0 py-0">
             <CardHeader className="flex flex-row items-center gap-2 border-b px-5 py-4 [.border-b]:pb-4">
                 <CardTitle className="text-[15px]">Get started</CardTitle>
-                <Badge
-                    variant="secondary"
-                    className="rounded-full px-2"
-                >
-                    {left} left
-                </Badge>
                 <Button
                     size="icon-sm"
                     variant="ghost"
@@ -249,12 +184,8 @@ export function GetStartedCard() {
             </CardHeader>
             <CardContent className="px-0">
                 <ul>
-                    <DashboardCertRow item={checklist.dashboardCert} />
-                    <TwoFactorRow item={checklist.twoFactor} />
-                    <GithubAppRow
-                        item={checklist.githubApp}
-                        certDone={checklist.dashboardCert.status === "done"}
-                    />
+                    <DashboardCertRow cert={cert} />
+                    <GithubAppRow certDone={cert.status === "done"} />
                 </ul>
             </CardContent>
             <ProvisionGithubAppDialog />

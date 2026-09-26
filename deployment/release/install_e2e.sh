@@ -30,7 +30,7 @@ NAME=hivepaas-install-e2e
 DOMAIN=hivepaas.e2e.example.com
 PASSWORD=e2e-password-123
 INSTALL="HIVEPAAS_RELEASE_URL=file:///repo/release.signed.json HIVEPAAS_INSTALL_FILES_DIR=/repo/deployment/release \
-HIVEPAAS_SWAP=false bash /repo/deployment/release/install.sh --yes"
+HIVEPAAS_SWAP=false HIVEPAAS_CERT_WAIT_SECONDS=4 bash /repo/deployment/release/install.sh --yes"
 
 cleanup() {
   if [ "${HIVEPAAS_E2E_KEEP:-}" != 1 ]; then docker rm -f "$NAME" >/dev/null 2>&1 || true; fi
@@ -124,9 +124,26 @@ login() {
 expect "the admin signs in" 200 "$(login "$DOMAIN" "$PASSWORD")"
 expect "the admin signs in by address" 200 "$(login "$HOST_IP" "$PASSWORD")"
 expect "a wrong password does not" 401 "$(login "$DOMAIN" wrong-password-1)"
-expect "the admin's account left the app and worker" 0 "$(in_dind 'for s in app worker; do
+expect "no service was given the admin's account" 0 "$(in_dind 'for s in app worker; do
   docker service inspect hivepaas_$s --format "{{range .Spec.TaskTemplate.ContainerSpec.Env}}{{println .}}{{end}}"
   done | grep -c HP_USER_ADMIN || true')"
+expect "the first boot deleted first-boot.env" no "$(in_dind \
+  'test -e /var/lib/hivepaas/first-boot.env && echo yes || echo no')"
+# restarted_after_app: the system services whose running task is newer than the
+# app's - restarted after its first boot began.
+restarted_after_app() {
+  in_dind 'created() { docker inspect --format "{{.CreatedAt}}" \
+      "$(docker service ps "hivepaas_$1" --filter desired-state=running -q | head -n 1)"; }
+    app=$(created app)
+    for s in traefik db redis agent; do
+      if [ "$(created $s)" \> "$app" ]; then printf "%s " "$s"; fi
+    done'
+}
+expect "the app started once" 1 "$(in_dind 'docker service ps hivepaas_app -q | wc -l')"
+expect "and nothing restarted after its first boot" "" "$(restarted_after_app)"
+expect "the certificate's state is told, with the wait" "1 1" "$(in_dind '
+  grep -c "Waiting up to 4s for the dashboard" /var/lib/hivepaas/install.log
+  grep -c "self-signed until Let" /var/lib/hivepaas/install.log' | xargs)"
 oom_priorities() {
   in_dind 'for s in traefik db redis app worker updater agent; do
     docker service inspect hivepaas_$s --format "{{.Spec.TaskTemplate.ContainerSpec.OomScoreAdj}}"; done' | xargs
@@ -160,9 +177,15 @@ versions() {
   in_dind 'for s in traefik db redis app worker updater agent; do
     docker service inspect hivepaas_$s --format "{{.Version.Index}}"; done' | xargs
 }
+fingerprint() {
+  in_dind 'openssl x509 -in /var/lib/hivepaas/ssl/certs/self-signed.crt -noout -fingerprint -sha256'
+}
 before=$(versions)
+cert_before=$(fingerprint)
 in_dind "$INSTALL >/root/install2.log 2>&1" || fail "a second run"
 expect "a second run changes no service" "$before" "$(versions)"
+if [ "$(fingerprint)" = "$cert_before" ]; then fail "a second run kept the self-signed certificate"; fi
+pass "a second run makes the self-signed certificate anew"
 
 if in_dind "HIVEPAAS_APP_SECRET=0123456789abcdef0123456789abcdefXX $INSTALL >/root/install3.log 2>&1"; then
   fail "a run with another app secret went on"
@@ -235,6 +258,8 @@ in_dind "HIVEPAAS_EXISTING_DB=reset HIVEPAAS_ADMIN_EMAIL=new@example.com HIVEPAA
 }
 pass "resetting it installs afresh"
 expect "where the new admin signs in" 200 "$(login "$DOMAIN" new-password-456)"
+expect "its first boot deleted first-boot.env too" no "$(in_dind \
+  'test -e /var/lib/hivepaas/first-boot.env && echo yes || echo no')"
 expect "and the old one does not" 401 "$(login "$DOMAIN" "$PASSWORD")"
 
 printf 'all end-to-end checks passed\n'

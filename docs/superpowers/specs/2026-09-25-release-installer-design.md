@@ -56,7 +56,7 @@ to beta except the default.
 |---|---|
 | `install.sh` | the installer |
 | `hivepaas.yaml` | the stack, every host-specific value a `${VAR}` |
-| `hivepaas.first-boot.yaml` | the admin's account, deployed with the stack on the first install only (§6) |
+| `hivepaas.first-boot.yaml` | the app held back (no replicas), deployed with the stack on a first deploy only (§2, step 7) |
 | `traefik/dynamic_conf.yml` | the default certificate, as in dev |
 | `install.env` | the settings of a silent install, to fill in (§9) |
 | `install_test.sh` | the tests of the installer's functions |
@@ -105,11 +105,12 @@ when stdout is a terminal, `NO_COLOR` is unset and `TERM` is not `dumb`.
    - Creates the app data directory, the project data directory, and
      `ssl/certs`, `traefik/etc/dynamic` and `traefik/var/log` under app data.
    - Writes the self-signed certificate the app would otherwise make on first
-     boot (`ssl/certs/self-signed.crt|key`), unless both are there: EC P-256,
-     365 days, common name the root domain, alternative names the root domain,
+     boot (`ssl/certs/self-signed.crt|key`), anew on every run - one kept from
+     an earlier run can have expired, or name another domain: EC P-256, 365
+     days, common name the root domain, alternative names the root domain,
      `*.<root domain>` and the app domain. The app adopts files it finds there,
-     and Traefik has a certificate from its first second rather than its own
-     default one.
+     with their own expiry, unless they are due for renewal; Traefik has a
+     certificate from its first second rather than its own default one.
    - Writes `<app data>/hivepaas.toml` when it is not there: the app secret,
      and the security settings the file may also hold, commented out and
      explained. The app rewrites the file, without the comments, when it
@@ -126,26 +127,39 @@ when stdout is a terminal, `NO_COLOR` is unset and `TERM` is not `dumb`.
    - Reads `<app data>/system/update/db-volume.env` when an earlier database
      upgrade left one, as `local/install.sh` does, but as data: the two keys it
      knows, checked.
+   - Writes `<app data>/first-boot.env` (§6) when the app will make its admin.
    - Exports the settings and runs `docker stack deploy -c hivepaas.yaml -c
-     hivepaas.first-boot.yaml hivepaas --with-registry-auth --detach=true`.
+     hivepaas.first-boot.yaml hivepaas --with-registry-auth --detach=true`:
+     the app deployed with no replicas.
+   - One service at a time, `--oom-score-adj -500` on each system service, as
+     dev does - `docker stack deploy` drops `oom_score_adj`. Each update
+     restarts the service, which is why it happens now, with the app held
+     back, and not after its first boot. The database goes first, each waited
+     for; an update swarm rolled back stops the install.
    - Migrates the database: the app does not migrate on boot, and the updater
      only on an update. `sql-migrate up` runs in a container of the app image on
-     the stack's network, retried until the database takes connections, while
-     the app restarts until its tables exist.
+     the stack's network, retried until the database takes connections.
+   - Starts the app (one replica). Its first boot - the admin, and the request
+     for the dashboard's certificate - runs with nothing left to restart it.
 8. **Wait** for the dashboard: polls `https://<app domain>/_/ping`, resolved to
-   127.0.0.1, for up to 5 minutes. Then, one service at a time:
-   - `--oom-score-adj -500` on each system service, as dev does - `docker stack
-     deploy` drops `oom_score_adj`;
-   - the admin's account out of the app's and the worker's environment (§6).
-   The database goes first and the app last, each waited for: an app started
-   while the database restarts cannot connect, exits, and has swarm roll its
-   update back. An update swarm rolled back stops the install. A timeout is
-   reported with the commands to look at (`docker service ps hivepaas_app`,
-   `docker service logs hivepaas_app`), and the script exits 1.
+   127.0.0.1, for up to 5 minutes. A timeout is reported with the commands to
+   look at (`docker service ps hivepaas_app`, `docker service logs
+   hivepaas_app`), and the script exits 1. On a run over an installation, whose
+   deploy put the OOM priorities back, they are set again here, the app last,
+   and the dashboard waited for again.
 9. **Finish.**
+   - After a first install, waits up to `HIVEPAAS_CERT_WAIT_SECONDS` (20) for
+     the dashboard to answer with a certificate the host trusts - `curl`
+     without `-k` - which it does once Let's Encrypt has issued the one the
+     first boot asked for. A browser that opens the dashboard before then
+     keeps its warning until it is restarted; the wait is short because the
+     certificate cannot arrive while the domain points elsewhere. Done is
+     said either way.
    - Prints the logo, the addresses (§5), and the reminders:
-     - the certificate is self-signed until one is obtained in the setup, so
-       the browser warns and the warning has to be passed once;
+     - whether the dashboard has its certificate; if not, that the browser
+       warns until it does, that HivePaaS asks for it once the domain points
+       at the server and port 80 is open, the Get started card following it,
+       and to quit and reopen the browser once it arrives;
      - the server can take 30-60 seconds to answer after a restart;
      - `<app data>/hivepaas.toml` holds the app secret: back it up somewhere
        that is not this server;
@@ -288,23 +302,26 @@ the value; a typed one that fails is asked again.
   does not remove them. Each names its service: with two services on the app,
   Traefik would not pick one for a router that leaves it out.
 
-## 6. The admin password
+## 6. The admin password: `first-boot.env`
 
 The app reads `HP_USER_ADMIN_*` once, on the first boot, when it creates the
 admin (`sysInstallationInitData`, in the app or the worker, whichever starts
-first); afterwards it never looks at them. Kept, the password would sit in the
-service definition, readable with `docker service inspect`, for good.
+first); afterwards it never looks at them. In a service's environment the
+password would be readable with `docker service inspect`, and taking it out
+means a service update, which restarts the service - right when its first boot
+asks for the dashboard's certificate.
 
-So the account is in `hivepaas.first-boot.yaml`, deployed with the stack on the
-first install only, and once the dashboard answers,
-`docker service update --env-rm HP_USER_ADMIN_USERNAME/EMAIL/PASSWORD` runs on
-app and worker (with the OOM priority, in one update), and the installer waits
-for the app's new task and for the dashboard again. That restarts the app once,
-before its address is printed. The password in the app's environment is also
-how a later run tells an install that has not finished.
+So the installer writes the account to `<app data>/first-boot.env` (`0600`),
+never to a service: `HP_*` variables, one `KEY=VALUE` a line, the value as it
+stands after the first `=` - no quotes, no escapes. The app reads the file with
+its configuration, under the service's own environment, and deletes it once
+the installation's data exists; the installer deletes one the app could not.
+The file is there only until the first boot has run, which is how a later run
+tells an install that has not finished, and where it reads the account back.
 
-A later deploy leaves `hivepaas.first-boot.yaml` out, so it does not bring the
-account back.
+The file is for values the first boot uses once. What every boot needs belongs
+in `hivepaas.toml` (the managed settings): `first-boot.env` does not survive
+the first boot.
 
 ## 7. Host memory
 
@@ -380,15 +397,18 @@ For tests only: `HIVEPAAS_INSTALL_LIB=1` defines the functions and stops;
   `deployment/release/install_test.sh`, under macOS's bash 3.2 as under bash
   5, run by `make test-installer`.
 - `docker stack config -c hivepaas.yaml [-c hivepaas.first-boot.yaml]` with
-  sample values: the stack renders; every `${VAR}` it uses is one the installer
-  exports.
+  sample values: the stack renders, the app held back by the first-boot file
+  and no service given the admin's account; every `${VAR}` it uses is one the
+  installer exports.
 - `make test-installer-e2e` (`install_e2e.sh`): in a docker:dind container, a
   silent install from the `install.env` template with this checkout's release
   info; the dashboard by domain and by address, HTTP redirected to HTTPS, the
-  admin signing in, the admin's account gone from the services, the app secret
+  admin signing in, the admin's account in no service and `first-boot.env`
+  deleted, the app started once and no service restarted after its first
+  boot, the certificate's state told after its wait, the app secret
   in `hivepaas.toml` and in no service, the agent running without it, OOM
   priorities, `credentials.txt` and `install.log`; a second run that changes
-  no service; another app secret stopping; a lost `hivepaas.toml` stopping;
+  no service and makes the self-signed certificate anew; another app secret stopping; a lost `hivepaas.toml` stopping;
   the address route following a change; `--redeploy`; and after
   `docker stack rm`, a silent run stopping until told to keep or reset the
   database, a wrong password stopping `keep`, `keep` with `credentials.txt`
@@ -400,8 +420,8 @@ For tests only: `HIVEPAAS_INSTALL_LIB=1` defines the functions and stops;
 
 ## 11. Running it again
 
-- **Installed** (the `hivepaas_app` service there, without the admin's
-  password in its environment): nothing is asked. The host is
+- **Installed** (the `hivepaas_app` service there, and no
+  `<app data>/first-boot.env`): nothing is asked. The host is
   checked again (Docker, memory, swarm, files), the routes by address follow
   an address that changed - a label update, which restarts nothing, and left
   alone when the public address cannot be looked up - and the system services
@@ -412,8 +432,9 @@ For tests only: `HIVEPAAS_INSTALL_LIB=1` defines the functions and stops;
 - **`--redeploy`** deploys the stack again, after a warning saying so; the
   running images stay. The deploy restarts the database with the app, and an
   app update swarm rolls back meanwhile is deployed once more.
-- **Unfinished** (the stack deployed, not marked installed): the migrations
-  run, then the wait and the finish, without a new deploy.
+- **Unfinished** (the stack deployed, `first-boot.env` still there): the OOM
+  priorities, the migrations and the app's start, then the wait and the
+  finish, without a new deploy.
 
 ## Not in this design
 

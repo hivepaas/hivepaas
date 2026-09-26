@@ -7,10 +7,10 @@ import type { ApiRequestBase, ApiResponseBase, ApiResponsePaginated } from "@inf
 
 /** Mirrors `basedto.BaseEventNotificationReq` for create/update bodies. */
 export type SslCert_Notification_Payload = {
-    success: { id: string };
-    successUseDefault: boolean;
-    failure: { id: string };
-    failureUseDefault: boolean;
+    success?: { id: string };
+    successUseDefault?: boolean;
+    failure?: { id: string };
+    failureUseDefault?: boolean;
 };
 
 export type SslCert_Provider_Payload = {

@@ -93,7 +93,7 @@ export function QuickInstallSslCertDialog() {
 
         createSslCert({
             payload: {
-                inheritable: false,
+                inheritable: true,
                 default: false,
                 certType: values.certType,
                 provider: values.provider?.id ? { id: values.provider.id } : undefined,
@@ -110,9 +110,7 @@ export function QuickInstallSslCertDialog() {
                 expireAt,
                 notifyFrom,
                 notification: {
-                    success: { id: "" },
                     successUseDefault: true,
-                    failure: { id: "" },
                     failureUseDefault: true,
                 },
             },

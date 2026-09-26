@@ -122,6 +122,7 @@ export type ProjectApps_Deploy_Req = ApiRequestBase<{
 
 export type ProjectApps_Deploy_Res = ApiResponseBase<{
     deploymentId: string;
+    taskId: string;
 }>;
 
 /**

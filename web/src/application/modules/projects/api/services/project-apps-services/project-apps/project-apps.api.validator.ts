@@ -36,6 +36,7 @@ const CreateOneSchema = z.object({
 const DeploySchema = z.object({
     data: z.object({
         deploymentId: z.string(),
+        taskId: z.string(),
     }),
     meta: BaseMetaApiSchema.nullable(),
 });

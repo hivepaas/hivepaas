@@ -488,6 +488,8 @@ MISSING=''
 RELEASE_FILE=''
 # INSTALLED=1: HivePaaS runs here and has created its admin.
 INSTALLED=0
+# CERT_TRUSTED=1: the dashboard answers with its certificate from Let's Encrypt.
+CERT_TRUSTED=0
 # EXISTING_DB: keep or reset, for the database an earlier HivePaaS left here.
 EXISTING_DB=''
 
@@ -634,8 +636,9 @@ channel_of_app_env() {
 }
 
 # take_installed_env ENV: the settings in the environment of the hivepaas_app
-# service, one VAR=VALUE a line - where they live once installed. The admin's
-# password there means the install has not finished.
+# service, one VAR=VALUE a line - where they live once installed. The
+# first-boot settings still in the data directory mean the app has not made its
+# admin yet: the install has not finished.
 take_installed_env() {
   local line key value
   INSTALLED=1
@@ -655,13 +658,53 @@ take_installed_env() {
         take_installed HIVEPAAS_REDIS_PASSWORD "${value%@*}"
         ;;
       HP_AGENT_SECRET_TOKEN) take_installed HIVEPAAS_AGENT_TOKEN "$value" ;;
-      HP_USER_ADMIN_EMAIL) take_installed HIVEPAAS_ADMIN_EMAIL "$value" ;;
-      HP_USER_ADMIN_PASSWORD)
-        INSTALLED=0
-        take_installed HIVEPAAS_ADMIN_PASSWORD "$value"
-        ;;
     esac
   done <<<"$1"
+  if [ -n "${HIVEPAAS_DATA_DIR:-}" ] && [ -f "$(first_boot_env_file)" ]; then
+    INSTALLED=0
+    take_first_boot_env "$(first_boot_env_file)"
+  fi
+}
+
+# first_boot_env_file: the settings the app's first boot reads once and then
+# deletes - the admin's account - so that no service's environment carries
+# them, and nothing has to be taken out of a service after the first boot.
+first_boot_env_file() {
+  printf '%s/first-boot.env' "$HIVEPAAS_DATA_DIR"
+}
+
+# write_first_boot_env: the admin's account for the first boot, one KEY=VALUE a
+# line. The app takes a value as it stands after the first '=', so a password
+# needs no quoting; it cannot hold a line break, which valid_password refuses.
+write_first_boot_env() {
+  local file tmp
+  file=$(first_boot_env_file)
+  tmp="$file.tmp"
+  (
+    umask 077
+    {
+      printf '# Read once by the first boot of HivePaaS, which deletes it once the admin exists.\n'
+      printf 'HP_USER_ADMIN_USERNAME=%s\n' "$ADMIN_USERNAME"
+      printf 'HP_USER_ADMIN_EMAIL=%s\n' "$HIVEPAAS_ADMIN_EMAIL"
+      printf 'HP_USER_ADMIN_PASSWORD=%s\n' "$HIVEPAAS_ADMIN_PASSWORD"
+    } >"$tmp"
+  ) && chmod 600 "$tmp" && mv -f "$tmp" "$file"
+}
+
+# take_first_boot_env FILE: the admin's account an unfinished install wrote,
+# read as the app reads it.
+take_first_boot_env() {
+  local line key value
+  while IFS= read -r line || [ -n "$line" ]; do
+    line=${line%$'\r'}
+    case "$line" in '' | '#'*) continue ;; esac
+    key=${line%%=*}
+    value=${line#*=}
+    case "$key" in
+      HP_USER_ADMIN_EMAIL) take_installed HIVEPAAS_ADMIN_EMAIL "$value" ;;
+      HP_USER_ADMIN_PASSWORD) take_installed HIVEPAAS_ADMIN_PASSWORD "$value" ;;
+    esac
+  done <"$1"
 }
 
 # secret_file: where the app keeps its secret - its managed settings file, in
@@ -1357,6 +1400,15 @@ write_self_signed_cert() {
     -addext "subjectAltName=$san" >/dev/null 2>&1 && chmod 600 "$1/self-signed.key"
 }
 
+# ensure_self_signed_cert DIR ROOT APP: a new self-signed certificate on every
+# run. One kept from an earlier run can have expired while HivePaaS was not
+# here to renew it, or name a domain this run does not have; making it costs
+# nothing, and a running HivePaaS renews its own copy by its own dates.
+ensure_self_signed_cert() {
+  write_self_signed_cert "$1" "$2" "$3" || die "Could not make the self-signed certificate."
+  ok "Self-signed certificate for $2, *.$2 and $3."
+}
+
 # fetch_install_file NAME DEST: a file of deployment/release, from the ref the
 # installer came from.
 fetch_install_file() {
@@ -1377,13 +1429,7 @@ prepare_files() {
   local data="$HIVEPAAS_DATA_DIR" certs="$HIVEPAAS_DATA_DIR/ssl/certs"
   mkdir -p "$certs" "$data/traefik/etc/dynamic" "$data/traefik/var/log" "$HIVEPAAS_PROJECT_DATA_DIR"
   ok "Directories: $data, $HIVEPAAS_PROJECT_DATA_DIR."
-  if [ -s "$certs/self-signed.crt" ] && [ -s "$certs/self-signed.key" ]; then
-    ok "Self-signed certificate: kept."
-  else
-    write_self_signed_cert "$certs" "$HIVEPAAS_ROOT_DOMAIN" "$HIVEPAAS_APP_DOMAIN" ||
-      die "Could not make the self-signed certificate."
-    ok "Self-signed certificate for $HIVEPAAS_ROOT_DOMAIN, *.$HIVEPAAS_ROOT_DOMAIN and $HIVEPAAS_APP_DOMAIN."
-  fi
+  ensure_self_signed_cert "$certs" "$HIVEPAAS_ROOT_DOMAIN" "$HIVEPAAS_APP_DOMAIN"
   # The app keeps its secret here, and rotates it here; a run after the first
   # leaves the file alone.
   if [ -f "$(secret_file)" ]; then
@@ -1604,9 +1650,10 @@ resolve_images() {
   fi
 }
 
-# deploy_stack FIRST_BOOT: docker stack deploy with the settings in the
-# environment it interpolates. FIRST_BOOT=1 adds the admin's account, which the
-# app reads on its first boot only.
+# deploy_stack HOLD_APP: docker stack deploy with the settings in the
+# environment it interpolates. HOLD_APP=1 deploys the app with no replicas, for
+# start_app to start once the database is migrated and every service tuned: a
+# first boot that nothing restarts.
 deploy_stack() {
   local -a files=(-c "$WORK_DIR/hivepaas.yaml")
   if [ "$1" = 1 ]; then files+=(-c "$WORK_DIR/hivepaas.first-boot.yaml"); fi
@@ -1614,9 +1661,8 @@ deploy_stack() {
     HIVEPAAS_APP_ENV=$(app_env_of_channel "$HIVEPAAS_CHANNEL")
     export HIVEPAAS_APP_ENV HIVEPAAS_APP_DOMAIN HIVEPAAS_ROOT_DOMAIN \
       HIVEPAAS_JWT_SECRET HIVEPAAS_DATA_DIR HIVEPAAS_PROJECT_DATA_DIR HIVEPAAS_DB_PASSWORD \
-      HIVEPAAS_REDIS_PASSWORD HIVEPAAS_AGENT_TOKEN HIVEPAAS_IP_RULE HIVEPAAS_ADMIN_EMAIL \
-      HIVEPAAS_ADMIN_PASSWORD HP_DB_MAJOR HIVEPAAS_IMAGE_APP HIVEPAAS_IMAGE_WORKER \
-      HIVEPAAS_IMAGE_UPDATER HIVEPAAS_IMAGE_AGENT HIVEPAAS_IMAGE_DB HIVEPAAS_IMAGE_REDIS \
+      HIVEPAAS_REDIS_PASSWORD HIVEPAAS_AGENT_TOKEN HIVEPAAS_IP_RULE HP_DB_MAJOR HIVEPAAS_IMAGE_APP \
+      HIVEPAAS_IMAGE_WORKER HIVEPAAS_IMAGE_UPDATER HIVEPAAS_IMAGE_AGENT HIVEPAAS_IMAGE_DB HIVEPAAS_IMAGE_REDIS \
       HIVEPAAS_IMAGE_TRAEFIK
     if [ -n "$HP_DB_VOLUME" ]; then export HP_DB_VOLUME; fi
     docker stack deploy --with-registry-auth --detach=true "${files[@]}" "$STACK"
@@ -1625,7 +1671,7 @@ deploy_stack() {
 
 # run_migrations IMAGE: the app does not migrate its database on boot; the
 # updater does, on an update. The first time is here: retried until the
-# database takes connections, while the app restarts until the tables exist.
+# database takes connections. The app is held back meanwhile (deploy_stack).
 run_migrations() {
   local log="$WORK_DIR/migrate.log" start=$SECONDS limit="${HIVEPAAS_WAIT_SECONDS:-300}"
   info "Migrating the database, once it is up..."
@@ -1640,6 +1686,18 @@ run_migrations() {
     sleep 5
   done
   ok "Database migrated: $(tail -n 1 "$log")"
+}
+
+# start_app: the app, held back by deploy_stack, started once: its first boot
+# runs on a migrated database with every service already tuned, so nothing
+# restarts it while it asks for the dashboard's certificate.
+start_app() {
+  local replicas
+  replicas=$(docker service inspect "${STACK}_app" --format '{{.Spec.Mode.Replicated.Replicas}}' 2>/dev/null) ||
+    replicas=''
+  if [ "$replicas" != 0 ]; then return 0; fi
+  docker service update --detach --quiet --replicas 1 "${STACK}_app" >/dev/null || die "Could not start ${STACK}_app."
+  info "Starting HivePaaS..."
 }
 
 update_state() {
@@ -1701,17 +1759,24 @@ deploy() {
       if [ "$EXISTING_DB" = reset ]; then reset_db; fi
       resolve_images
       # Over a database already here, the admin exists: no first boot.
-      if [ "$INSTALLED" = 1 ]; then deploy_stack 0; else deploy_stack 1; fi
+      if [ "$INSTALLED" != 1 ]; then
+        write_first_boot_env || die "Could not write $(first_boot_env_file)."
+      fi
+      deploy_stack 1
+      tune_services
       run_migrations "$HIVEPAAS_IMAGE_APP"
+      start_app
       ;;
     unfinished)
       if [ "$REDEPLOY" = 1 ]; then
         resolve_images
-        if [ -n "${HIVEPAAS_ADMIN_PASSWORD:-}" ]; then deploy_stack 1; else deploy_stack 0; fi
+        deploy_stack 1
       else
         info "Deployed by an earlier run; finishing what it started."
       fi
+      tune_services
       run_migrations "$(running_image app)"
+      start_app
       ;;
     installed)
       if [ "$REDEPLOY" = 1 ]; then
@@ -1763,6 +1828,39 @@ wait_for_dashboard() {
   done
 }
 
+# cert_wait_seconds: how long to wait for the dashboard's certificate from
+# Let's Encrypt before saying done anyway (HIVEPAAS_CERT_WAIT_SECONDS).
+cert_wait_seconds() {
+  local value="${HIVEPAAS_CERT_WAIT_SECONDS:-20}"
+  if [[ ! $value =~ ^[0-9]+$ ]]; then
+    warn "HIVEPAAS_CERT_WAIT_SECONDS: '$value' is not a number of seconds; waiting 20."
+    value=20
+  fi
+  printf '%s' "$value"
+}
+
+# dashboard_trusted: the dashboard answers with a certificate this host trusts
+# - the one HivePaaS asks Let's Encrypt for on its first boot.
+dashboard_trusted() {
+  curl -fsS --max-time 5 --resolve "$HIVEPAAS_APP_DOMAIN:443:127.0.0.1" \
+    "https://$HIVEPAAS_APP_DOMAIN/_/ping" >/dev/null 2>&1
+}
+
+# wait_for_trusted_cert LIMIT: CERT_TRUSTED=1 once the dashboard has its
+# certificate, asked at least once and then for up to LIMIT seconds. A browser
+# that opens the dashboard before it arrives keeps its warning until it is
+# restarted, so this is worth a short wait; not a long one, since it cannot
+# arrive while the domain points elsewhere.
+wait_for_trusted_cert() {
+  local start=$SECONDS
+  CERT_TRUSTED=0
+  until dashboard_trusted; do
+    if [ $((SECONDS - start)) -ge "$1" ]; then return 0; fi
+    sleep 2
+  done
+  CERT_TRUSTED=1
+}
+
 die_waiting() {
   die "HivePaaS did not answer within ${HIVEPAAS_WAIT_SECONDS:-300} seconds. See what it is doing with" \
     "'docker service ps ${STACK}_app --no-trunc' and 'docker service logs ${STACK}_app', then run the" \
@@ -1788,24 +1886,20 @@ wait_for_new_task() {
 }
 
 # service_update_args SERVICE: what the service still needs, into UPDATE_ARGS:
-# the OOM priority of a system service, and the admin's account out of its
-# environment.
+# the OOM priority of a system service.
 service_update_args() {
-  local svc="${STACK}_$1" oom env key nl=$'\n'
+  local svc="${STACK}_$1" oom
   UPDATE_ARGS=()
   oom=$(docker service inspect --format '{{.Spec.TaskTemplate.ContainerSpec.OomScoreAdj}}' "$svc" 2>/dev/null) ||
     return 1
   if [ "$oom" != -500 ]; then UPDATE_ARGS+=(--oom-score-adj -500); fi
-  env=$(docker service inspect --format '{{range .Spec.TaskTemplate.ContainerSpec.Env}}{{println .}}{{end}}' "$svc")
-  for key in HP_USER_ADMIN_USERNAME HP_USER_ADMIN_EMAIL HP_USER_ADMIN_PASSWORD; do
-    case "$nl$env" in *"$nl$key="*) UPDATE_ARGS+=(--env-rm "$key") ;; esac
-  done
 }
 
 # tune_services: the system services get the kernel's OOM priority -500, so
 # that a user app is what the kernel kills when memory runs out - `docker stack
-# deploy` drops oom_score_adj - and the admin's password leaves the app and
-# the worker once the app has used it.
+# deploy` drops oom_score_adj. Each update restarts the service, which is why a
+# first deploy does this while the app is still held back (deploy_stack), and
+# not after its first boot.
 #
 # Only what differs is changed, one service at a time, each waited for: an app
 # restarted while the database restarts cannot connect, exits, and has swarm
@@ -1831,15 +1925,17 @@ tune_services() {
         "'docker service ps ${STACK}_$svc --no-trunc', then run the installer again."
     fi
   done
-  wait_for_dashboard || die_waiting
 }
 
 # ------------------------------------------------------------------- Finish
 
+# finish_install: the app deletes the first-boot settings once its admin
+# exists, which it has once it answers; one it could not delete goes here.
 finish_install() {
+  rm -f "$(first_boot_env_file)"
   HIVEPAAS_ADMIN_PASSWORD=''
   INSTALLED=1
-  ok "The admin's password is out of the services' settings."
+  ok "The admin's password is gone from $(first_boot_env_file)."
 }
 
 # silent_hint: how to install without being asked, for the next server.
@@ -1863,8 +1959,14 @@ print_done() {
     info "Sign in     as $ADMIN_USERNAME ($HIVEPAAS_ADMIN_EMAIL), with the password you chose."
   fi
   printf '\n'
-  warn "The certificate is self-signed until you get one in the setup, so the browser warns"
-  info "  about it: accept the warning to go on."
+  if [ "$CERT_TRUSTED" = 1 ]; then
+    ok "The dashboard has its certificate from Let's Encrypt."
+  else
+    warn "The dashboard's certificate is self-signed until Let's Encrypt issues one, so the browser"
+    info "  warns about it. HivePaaS asks for it once $HIVEPAAS_APP_DOMAIN points at this server and"
+    info "  port 80 is open; the Get started card on the home page follows it. Once it arrives, quit"
+    info "  and reopen the browser: an open browser keeps the certificate it was first shown."
+  fi
   warn "After a restart, HivePaaS can take 30 to 60 seconds to answer."
   warn "$(secret_file) holds the app secret, the only key to your encrypted data."
   info "  Keep a copy of it somewhere other than this server."
@@ -1914,6 +2016,8 @@ Settings, from the environment or --config (the environment wins):
                                earlier HivePaaS; asked when not set, and never assumed
   HIVEPAAS_DB_PASSWORD         with keep: the database's password, when
                                <data dir>/credentials.txt is gone
+  HIVEPAAS_CERT_WAIT_SECONDS   how long to wait for the dashboard's certificate from
+                               Let's Encrypt before saying done (default: 20)
 
 Silent install - a settings file to fill in, with every setting explained:
   curl -fsSLO https://raw.githubusercontent.com/hivepaas/hivepaas/main/deployment/release/install.env
@@ -2020,13 +2124,20 @@ main() {
 
   step "Waiting for HivePaaS"
   wait_for_dashboard || die_waiting
+  # A first deploy tuned the services before the app started; this is for a
+  # run over an installation, whose deploy put their OOM priority back.
   tune_services
+  wait_for_dashboard || die_waiting
   ok "HivePaaS answers."
 
   step "Finish"
   if [ "$INSTALLED" != 1 ]; then
     finish_install
     just_installed=1
+    info "Waiting up to $(cert_wait_seconds)s for the dashboard's certificate from Let's Encrypt..."
+    wait_for_trusted_cert "$(cert_wait_seconds)"
+  else
+    wait_for_trusted_cert 0
   fi
   print_done "$just_installed"
 }

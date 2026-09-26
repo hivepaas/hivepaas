@@ -390,6 +390,11 @@ stack_env() {
     HIVEPAAS_IMAGE_DB=postgres:18.3-alpine HIVEPAAS_IMAGE_REDIS=redis:8.6-alpine HIVEPAAS_IMAGE_TRAEFIK=traefik:v3.7
 }
 
+# app_replicas CONFIG: the app's replicas in a rendered stack.
+app_replicas() {
+  printf '%s\n' "$1" | awk '/^  app:/ {app = 1; next} /^  [a-z]+:/ {app = 0} app && /replicas:/ {print $2; exit}'
+}
+
 test_stack_renders() {
   local out status
   if ! command -v docker >/dev/null 2>&1; then
@@ -407,11 +412,12 @@ test_stack_renders() {
   check "no service is given the app secret" 0 "$(printf '%s\n' "$out" | grep -c 'HP_APP_SECRET')"
   check "app, worker and updater get the JWT secret, the agent not" 3 \
     "$(printf '%s\n' "$out" | grep -c 'HP_SESSION_JWT_SECRET: jwt')"
-  check_lacks "no admin without the first-boot file" "$out" HP_USER_ADMIN_PASSWORD
+  check_lacks "no service is given the admin's account" "$out" HP_USER_ADMIN
+  check "the app runs once deployed" 1 "$(app_replicas "$out")"
   out=$(cd "$HERE" && docker stack config -c hivepaas.yaml -c hivepaas.first-boot.yaml 2>&1)
   check "renders with the first-boot file" 0 "$?"
-  check "the admin, literally, on app and worker" 2 \
-    "$(printf '%s\n' "$out" | grep -c 'HP_USER_ADMIN_PASSWORD: p$ss "w0rd"')"
+  check "which holds the app back" 0 "$(app_replicas "$out")"
+  check_lacks "and gives no service the admin's account" "$out" HP_USER_ADMIN
   unset HIVEPAAS_JWT_SECRET
   out=$(cd "$HERE" && docker stack config -c hivepaas.yaml 2>&1)
   status=$?
@@ -530,10 +536,81 @@ HP_RUN_MODE=app+worker'
   check "redis password, from the URL" redis-password "$HIVEPAAS_REDIS_PASSWORD"
   check "agent token" agent-token "$HIVEPAAS_AGENT_TOKEN"
   check "installed" 1 "$INSTALLED"
-  take_installed_env 'HP_USER_ADMIN_EMAIL=you@example.com
-HP_USER_ADMIN_PASSWORD=password123'
-  check "the admin's password there: not finished" 0 "$INSTALLED"
-  check "the admin's password" password123 "$HIVEPAAS_ADMIN_PASSWORD"
+}
+
+test_first_boot_env() {
+  local file
+  HIVEPAAS_DATA_DIR=$TMP/fb
+  mkdir -p "$HIVEPAAS_DATA_DIR"
+  file=$(first_boot_env_file)
+  check "in the app data directory" "$TMP/fb/first-boot.env" "$file"
+  HIVEPAAS_ADMIN_EMAIL=you@example.com HIVEPAAS_ADMIN_PASSWORD='p=ss "w0rd" $x \y'
+  write_first_boot_env
+  check "written" 0 "$?"
+  check "readable by root alone" 600 "$(stat -c %a "$file" 2>/dev/null || stat -f %Lp "$file")"
+  check "the admin's account, as the app reads it" \
+    "HP_USER_ADMIN_USERNAME=admin|HP_USER_ADMIN_EMAIL=you@example.com|HP_USER_ADMIN_PASSWORD=p=ss \"w0rd\" \$x \\y|" \
+    "$(grep -v '^#' "$file" | tr '\n' '|')"
+
+  HIVEPAAS_ADMIN_EMAIL='' HIVEPAAS_ADMIN_PASSWORD=''
+  take_installed_env "HP_STORAGE_HOST_DIR=$TMP/fb"
+  check "the file there: not finished" 0 "$INSTALLED"
+  check "the password read back as written" 'p=ss "w0rd" $x \y' "$HIVEPAAS_ADMIN_PASSWORD"
+  check "the email read back" you@example.com "$HIVEPAAS_ADMIN_EMAIL"
+
+  rm -f "$file"
+  take_installed_env "HP_STORAGE_HOST_DIR=$TMP/fb"
+  check "no file: installed" 1 "$INSTALLED"
+}
+
+test_finish_install_removes_the_first_boot_env() {
+  HIVEPAAS_DATA_DIR=$TMP/fin
+  mkdir -p "$HIVEPAAS_DATA_DIR"
+  HIVEPAAS_ADMIN_EMAIL=you@example.com HIVEPAAS_ADMIN_PASSWORD=password123
+  write_first_boot_env
+  finish_install >/dev/null
+  check_fails "gone" test -e "$(first_boot_env_file)"
+  check "installed" 1 "$INSTALLED"
+  check "the password is forgotten" "" "$HIVEPAAS_ADMIN_PASSWORD"
+}
+
+test_cert_wait_seconds() {
+  check "20 by default" 20 "$(unset HIVEPAAS_CERT_WAIT_SECONDS; cert_wait_seconds)"
+  check "as set" 5 "$(HIVEPAAS_CERT_WAIT_SECONDS=5 cert_wait_seconds)"
+  check "0: not waited for" 0 "$(HIVEPAAS_CERT_WAIT_SECONDS=0 cert_wait_seconds)"
+  check "not a number: the default" 20 "$(HIVEPAAS_CERT_WAIT_SECONDS=soon cert_wait_seconds 2>/dev/null)"
+}
+
+test_wait_for_trusted_cert() {
+  HIVEPAAS_APP_DOMAIN=hivepaas.example.com
+  sleep() { :; }
+  # curl answers with a trusted certificate on its third try.
+  curl() {
+    TRIES=$((TRIES + 1))
+    case " $* " in *" -k "* | *" -fsSk "*) return 0 ;; esac
+    [ "$TRIES" -ge 3 ]
+  }
+  TRIES=0
+  wait_for_trusted_cert 60
+  check "trusted once it is" 1 "$CERT_TRUSTED"
+  check "asked until then" 3 "$TRIES"
+  TRIES=-100
+  wait_for_trusted_cert 0
+  check "a limit of 0 asks once" 0 "$CERT_TRUSTED"
+  check "and only once" -99 "$TRIES"
+  unset -f sleep curl
+}
+
+test_ensure_self_signed_cert() {
+  local before after
+  mkdir -p "$TMP/ss"
+  ensure_self_signed_cert "$TMP/ss" mydomain.com hivepaas.mydomain.com >/dev/null
+  before=$(openssl x509 -in "$TMP/ss/self-signed.crt" -noout -fingerprint)
+  ensure_self_signed_cert "$TMP/ss" mydomain.com hivepaas.mydomain.com >/dev/null
+  after=$(openssl x509 -in "$TMP/ss/self-signed.crt" -noout -fingerprint)
+  check_fails "made anew on every run" test "$before" = "$after"
+  check_contains "for the domains of this run" "$(openssl x509 -in "$TMP/ss/self-signed.crt" -noout -text)" \
+    "DNS:mydomain.com, DNS:*.mydomain.com, DNS:hivepaas.mydomain.com"
 }
 
 test_toml_secret() {
@@ -779,7 +856,7 @@ test_deploy_exports_every_stack_variable() {
   for var in $(stack_variables); do
     check_contains "deploy_stack exports $var" "$body" "$var"
   done
-  check_ok "the stack files were read" test "$(stack_variables | wc -l)" -ge 20
+  check_ok "the stack files were read" test "$(stack_variables | wc -l)" -ge 18
 }
 
 test_port_taken() {
@@ -826,7 +903,7 @@ test_help() {
   check_contains "the settings file to fill in" "$out" "deployment/release/install.env"
   check_contains "the choice over an earlier database" "$out" "HIVEPAAS_EXISTING_DB"
   for key in ADMIN_EMAIL ADMIN_PASSWORD APP_DOMAIN ROOT_DOMAIN APP_SECRET DATA_DIR PROJECT_DATA_DIR CHANNEL \
-    SWAP SWAP_SIZE_MB EARLYOOM UPGRADE_DOCKER AGENT_IMAGE RELEASE_BRANCH INSTALL_REF; do
+    SWAP SWAP_SIZE_MB EARLYOOM UPGRADE_DOCKER AGENT_IMAGE RELEASE_BRANCH INSTALL_REF CERT_WAIT_SECONDS; do
     check_contains "--help lists HIVEPAAS_$key" "$out" "HIVEPAAS_$key"
   done
 }

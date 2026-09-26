@@ -181,6 +181,9 @@ func loadConfig(configFile string) (*Config, error) {
 	snapshotEnv()
 	restoreEnv()
 	defer clearEnv()
+	if err := applyFirstBootEnv(appPath); err != nil {
+		return nil, tracerr.Wrap(err)
+	}
 
 	err := configor.New(&configor.Config{ENVPrefix: envPrefix}).Load(config, configFile)
 	if err != nil {

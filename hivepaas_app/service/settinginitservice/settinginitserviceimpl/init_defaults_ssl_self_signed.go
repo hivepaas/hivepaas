@@ -2,9 +2,12 @@ package settinginitserviceimpl
 
 import (
 	"context"
+	"crypto/x509"
 	"crypto/x509/pkix"
+	"encoding/pem"
 	"os"
 	"path/filepath"
+	"time"
 
 	"github.com/tiendc/gofn"
 
@@ -63,18 +66,26 @@ func (s *service) InitSelfSignedCert(
 
 	var certBytes, keyBytes []byte
 	validTo := timeNow.Add(sslSelfSignedValidPeriod)
+	if !regenerate {
+		// The installer makes the certificate before the first boot so Traefik
+		// serves it from its first second. It is recorded with the dates it has,
+		// or the renewal would wait for dates it does not have.
+		if certBytes, err = os.ReadFile(certFile); err != nil {
+			return hperrors.Wrap(err)
+		}
+		notAfter, adoptable := adoptableSelfSigned(certBytes, timeNow)
+		if adoptable {
+			validTo = notAfter
+			if keyBytes, err = os.ReadFile(keyFile); err != nil {
+				return hperrors.Wrap(err)
+			}
+		} else {
+			regenerate = true
+		}
+	}
 	if regenerate {
 		certBytes, keyBytes, err = s.sslService.GenerateCertAsPEM(&pkix.Name{CommonName: domain},
 			sslSelfSignedKeyType, timeNow, validTo, false)
-		if err != nil {
-			return hperrors.Wrap(err)
-		}
-	} else {
-		certBytes, err = os.ReadFile(certFile)
-		if err != nil {
-			return hperrors.Wrap(err)
-		}
-		keyBytes, err = os.ReadFile(keyFile)
 		if err != nil {
 			return hperrors.Wrap(err)
 		}
@@ -144,4 +155,23 @@ func (s *service) selfSignedCertFor(ctx context.Context, db database.IDB, domain
 		return false, hperrors.Wrap(err)
 	}
 	return len(certs) > 0, nil
+}
+
+// adoptableSelfSigned says whether a certificate found on disk can be taken on
+// as it is, and until when it is valid: it has to be one, and not be due for
+// renewal already. Anything else is made anew.
+func adoptableSelfSigned(certPEM []byte, timeNow time.Time) (time.Time, bool) {
+	block, _ := pem.Decode(certPEM)
+	if block == nil || block.Type != "CERTIFICATE" {
+		return time.Time{}, false
+	}
+	cert, err := x509.ParseCertificate(block.Bytes)
+	if err != nil {
+		return time.Time{}, false
+	}
+	notAfter := cert.NotAfter.UTC()
+	if !notAfter.After(timeNow.Add(sslSelfSignedRenewBeforeExp)) {
+		return time.Time{}, false
+	}
+	return notAfter, true
 }

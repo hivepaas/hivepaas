@@ -2,6 +2,7 @@ import { useEffect } from "react";
 
 import { Badge } from "@components/ui/badge";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { cn } from "@lib/utils";
 import { LockIcon } from "lucide-react";
 import { type FieldErrors, useController, useFieldArray, useForm, useWatch } from "react-hook-form";
 import type { AppSettingMountSource } from "~/projects/domain";
@@ -10,12 +11,31 @@ import { AppSettingMountsTableDefs } from "~/projects/module-shared/definitions/
 
 import { FormActionBar, InfoBlock, LabelWithInfo } from "@application/shared/components";
 
-import { Button, Checkbox, Field, FieldError, FieldGroup, Input, Tabs, TabsList, TabsTrigger } from "@/components/ui";
+import {
+    Button,
+    Checkbox,
+    Field,
+    FieldError,
+    FieldGroup,
+    Input,
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+    Tabs,
+    TabsList,
+    TabsTrigger,
+} from "@/components/ui";
 
 import { type AppSettingMountFormInput, type AppSettingMountFormOutput, AppSettingMountFormSchema } from "../schemas";
 import { GATED_PART_REASON, type Grant, rowsFor, suggestPath, widensGrants } from "../utils";
 
 import { SourcePicker } from "./source-picker.com";
+
+function sourceTypeLabel(type: string): string {
+    return AppSettingMountsTableDefs.sourceTypeLabels[type] ?? type;
+}
 
 function grantsOf(values: AppSettingMountFormOutput): Grant[] {
     const source = values.source?.id ?? "";
@@ -80,6 +100,14 @@ export function AppSettingMountForm({
 
     function isLocked(part: string, gated: boolean): boolean {
         return gatesSave && gated && !initialGrants.some(grant => grant.source === source?.id && grant.part === part);
+    }
+
+    function changeSourceType(nextType: string) {
+        // The parts of the old type go with it: a certificate's private key must
+        // not stay ticked under basic auth.
+        setValue("sourceType", nextType, { shouldDirty: true });
+        setValue("source", null, { shouldDirty: true });
+        replace(rowsFor(sources, nextType));
     }
 
     function onValid(values: AppSettingMountFormOutput) {
@@ -150,27 +178,48 @@ export function AppSettingMountForm({
                             />
                         }
                     >
-                        <Tabs
-                            value={sourceType}
-                            onValueChange={nextType => {
-                                // The parts of the old type go with it: a certificate's
-                                // private key must not stay ticked under basic auth.
-                                setValue("sourceType", nextType, { shouldDirty: true });
-                                setValue("source", null, { shouldDirty: true });
-                                replace(rowsFor(sources, nextType));
-                            }}
-                        >
-                            <TabsList className="bg-muted/80 p-1 rounded-lg flex-wrap h-auto">
-                                {sources.map(item => (
-                                    <TabsTrigger
-                                        key={item.type}
-                                        value={item.type}
-                                    >
-                                        {AppSettingMountsTableDefs.sourceTypeLabels[item.type] ?? item.type}
-                                    </TabsTrigger>
-                                ))}
-                            </TabsList>
-                        </Tabs>
+                        {/* The tabs fit in a row only when the room beside the title is
+                            wide, which the sidebars decide as much as the screen: below
+                            that, a container query on this block makes it a dropdown as
+                            wide as the text inputs. Both show the same choice. */}
+                        <div className="@container min-w-0">
+                            <Select
+                                value={sourceType}
+                                onValueChange={changeSourceType}
+                            >
+                                <SelectTrigger
+                                    className={cn(PROJECT_FORM_CONTROL_MAX_WIDTH_CLASS, "@xl:hidden")}
+                                    aria-label="Mount From"
+                                >
+                                    <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {sources.map(item => (
+                                        <SelectItem
+                                            key={item.type}
+                                            value={item.type}
+                                        >
+                                            {sourceTypeLabel(item.type)}
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                            <Tabs
+                                value={sourceType}
+                                onValueChange={changeSourceType}
+                            >
+                                <TabsList className="hidden @xl:inline-flex bg-muted/80 p-1 rounded-lg">
+                                    {sources.map(item => (
+                                        <TabsTrigger
+                                            key={item.type}
+                                            value={item.type}
+                                        >
+                                            {sourceTypeLabel(item.type)}
+                                        </TabsTrigger>
+                                    ))}
+                                </TabsList>
+                            </Tabs>
+                        </div>
                     </InfoBlock>
 
                     <InfoBlock

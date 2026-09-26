@@ -15,3 +15,4 @@ export * from "./traefik-restart-services";
 export * from "./hivepaas-logging-settings-services";
 export * from "./hivepaas-registry-settings-services";
 export * from "./hivepaas-updates-services";
+export * from "./mcp-settings-services";

@@ -19,6 +19,8 @@ import {
     HivePaaSServiceSettingsApiValidator,
     HivePaaSUpdatesApi,
     HivePaaSUpdatesApiValidator,
+    McpSettingsApi,
+    McpSettingsApiValidator,
     SystemBackupApi,
     SystemBackupApiValidator,
     SystemBackupFileApi,
@@ -75,6 +77,7 @@ function createApi() {
             cleanup: new SystemCleanupApi(systemCleanupValidator),
             sslRenewal: new SystemSslRenewalApi(systemSslRenewalValidator),
             backupRepoCleanup: new SystemBackupRepoCleanupApi(systemBackupRepoCleanupValidator),
+            mcpSettings: new McpSettingsApi(new McpSettingsApiValidator()),
         },
     };
 }

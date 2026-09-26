@@ -12,3 +12,4 @@ export * from "./traefik-service-settings.entity";
 export * from "./hivepaas-logging-settings.entity";
 export * from "./hivepaas-registry-settings.entity";
 export * from "./hivepaas-updates.entity";
+export * from "./mcp-settings.entity";

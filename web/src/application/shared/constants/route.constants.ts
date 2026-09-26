@@ -462,6 +462,16 @@ export const ROUTE = {
             },
         },
 
+        ai: {
+            $pattern: "system/ai",
+            $route: "/system/ai/mcp/",
+
+            mcp: {
+                $pattern: "system/ai/mcp",
+                $route: "/system/ai/mcp/",
+            },
+        },
+
         registry: {
             $pattern: "system/registry",
             $route: "/system/registry/configuration/",

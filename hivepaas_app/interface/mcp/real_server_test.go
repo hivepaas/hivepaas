@@ -53,7 +53,9 @@ func TestAgainstARealServer(t *testing.T) {
 	calls := []struct {
 		tool string
 		args map[string]any
-		// mayRefuse is a call a key limited to reading is refused.
+		// mayRefuse is a call the endpoint may refuse and still have been
+		// reached: a key limited to reading, or a template parameter the test
+		// cannot know, such as a volume of this installation.
 		mayRefuse bool
 	}{
 		{"list_projects", nil, false},
@@ -77,8 +79,8 @@ func TestAgainstARealServer(t *testing.T) {
 			continue
 		}
 		text := res.Content[0].(*mcpsdk.TextContent).Text
-		if res.IsError && c.mayRefuse && strings.HasPrefix(text, "not permitted") {
-			t.Logf("%s: refused, as it is for a read-only key", c.tool)
+		if res.IsError && c.mayRefuse && (strings.HasPrefix(text, "not permitted") || strings.HasPrefix(text, "400")) {
+			t.Logf("%s: refused by the endpoint: %s", c.tool, text)
 			continue
 		}
 		assert.False(t, res.IsError, "%s: %s", c.tool, text)

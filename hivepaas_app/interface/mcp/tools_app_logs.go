@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/url"
 	"regexp"
+	"slices"
 	"strconv"
 	"strings"
 	"time"
@@ -162,6 +163,11 @@ func readLogs(ctx context.Context, call *Call, path string, tail int, since time
 // makeLogsAnswer filters the frames, keeps the newest tail of them, and keeps
 // of those what fits in an answer.
 func makeLogsAnswer(frames []logFrame, tail int, match func(string) bool) logsAnswer {
+	// An app's log is its containers' logs together, each in order but not
+	// with one another: put in time order, the newest lines are the last, which
+	// is what the tail keeps.
+	frames = slices.Clone(frames)
+	slices.SortStableFunc(frames, func(a, b logFrame) int { return a.Ts.Compare(b.Ts) })
 	var out logsAnswer
 	lines := make([]string, 0, len(frames))
 	for _, f := range frames {

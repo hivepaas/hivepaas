@@ -254,3 +254,19 @@ func TestParseSince(t *testing.T) {
 		assert.ErrorAs(t, err, new(*InputError), in)
 	}
 }
+
+// The log endpoint answers several containers' lines each in order but not
+// with one another: the tail keeps the newest, whichever container they are of.
+func TestLogsAreTailedInTimeOrder(t *testing.T) {
+	at := func(day int) time.Time { return time.Date(2026, 9, day, 0, 0, 0, 0, time.UTC) }
+	frames := []logFrame{
+		{Type: "out", Data: "second container, newest", Ts: at(26)},
+		{Type: "out", Data: "first container, oldest", Ts: at(20)},
+		{Type: "out", Data: "first container, later", Ts: at(24)},
+	}
+	out := makeLogsAnswer(frames, 2, nil)
+	assert.Equal(t, []string{
+		"2026-09-24T00:00:00.000Z first container, later",
+		"2026-09-26T00:00:00.000Z second container, newest",
+	}, out.Lines)
+}

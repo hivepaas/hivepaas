@@ -9,6 +9,7 @@ func Tools() []Tool {
 		getAppStatusTool(),
 		getAppLogsTool(),
 		getAppConfigTool(),
+		getAppSettingsTool(),
 		listAttentionTool(),
 		listTasksTool(),
 		getTaskLogsTool(),
@@ -22,6 +23,7 @@ func Tools() []Tool {
 		planRedeployAppTool(),
 		planInstallAppTool(),
 		planUpdateAppConfigTool(),
+		planUpdateAppSettingsTool(),
 		planCreateSchedJobTool(),
 		applyPlanTool(),
 	}

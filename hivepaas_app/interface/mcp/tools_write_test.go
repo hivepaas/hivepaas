@@ -34,6 +34,8 @@ type writeRoutes struct {
 	importPlan  gin.H
 	validated   string
 	planChanged bool
+	// settingsMoved makes a settings PUT refuse, as a stale updateVer is.
+	settingsMoved bool
 }
 
 func (r *writeRoutes) writes() []sentRequest {
@@ -99,6 +101,22 @@ func (r *writeRoutes) add(api *gin.RouterGroup) {
 	})
 	api.POST("/projects/p1/prod/apps/a1/sched-jobs", func(ctx *gin.Context) {
 		ctx.JSON(http.StatusCreated, gin.H{"data": gin.H{"id": "j9"}})
+	})
+	api.GET("/projects/p1/prod/apps/a1/env-vars", func(ctx *gin.Context) {
+		ctx.JSON(http.StatusOK, gin.H{"data": gin.H{
+			"inheritedRuntimeEnvVars": []gin.H{{"key": "FROM_ENV", "value": "1"}},
+			"runtimeEnvVars":          []gin.H{{"key": "LOG_LEVEL", "value": "info"}},
+			"buildtimeEnvVars":        []gin.H{}, "sharedEnvVars": []gin.H{}, "updateVer": 7,
+		}})
+	})
+	api.PUT("/projects/p1/prod/apps/a1/env-vars", func(ctx *gin.Context) {
+		r.mu.Lock()
+		defer r.mu.Unlock()
+		if r.settingsMoved {
+			ctx.JSON(http.StatusConflict, gin.H{"status": 409, "code": "ERR_UPDATE_VER_MISMATCHED"})
+			return
+		}
+		ctx.JSON(http.StatusOK, gin.H{"meta": gin.H{}})
 	})
 	app := api.Group("/projects/p1/prod/apps/a1")
 	app.GET("/deployment-settings", func(ctx *gin.Context) {
@@ -531,4 +549,89 @@ func TestAPlanNeedsItsKindOfAccessToApply(t *testing.T) {
 	assert.ErrorContains(t, access{changesAllowed: true}.refusal(NeedChange), "may only read")
 	assert.Equal(t, errChangesNotAllowed, access{execute: true, write: true}.refusal(NeedWrite))
 	assert.NoError(t, access{changesAllowed: true, execute: true}.refusal(NeedExecute))
+}
+
+func envVarsArgs(changes map[string]any) map[string]any {
+	args := shopProd("api")
+	args["kind"], args["changes"] = "env-vars", changes
+	return args
+}
+
+func TestGetAppSettingsReadsOneKind(t *testing.T) {
+	w := newWriteWorld(t)
+	args := shopProd("api")
+	args["kind"] = "env-vars"
+	text, isErr := callTool(t, w.session(t, "key1"), "get_app_settings", args)
+	assert.False(t, isErr, text)
+	assert.Contains(t, text, `"LOG_LEVEL"`)
+	assert.Contains(t, text, `"inheritedRuntimeEnvVars"`, "the GET's data, as it answers it")
+
+	args["kind"] = "secrets"
+	text, isErr = callTool(t, w.session(t, "key1"), "get_app_settings", args)
+	assert.True(t, isErr)
+	assert.Contains(t, text, "the kinds are")
+}
+
+// A settings change shows values, sends the PUT's own request with the
+// updateVer the plan read, and never what the PUT does not take.
+func TestASettingsChangeShowsValuesAndSendsThePutsRequest(t *testing.T) {
+	w := newWriteWorld(t)
+	session := w.session(t, "key1")
+	text, isErr := callTool(t, session, "plan_update_app_settings", envVarsArgs(map[string]any{
+		"runtimeEnvVars": []any{
+			map[string]any{"key": "LOG_LEVEL", "value": "debug"},
+			map[string]any{"key": "FEATURE_X", "value": "on"},
+		},
+		"inheritedRuntimeEnvVars": []any{},
+		"updateVer":               99,
+	}))
+	assert.False(t, isErr, text)
+	plan := planOf(t, text)
+	var shown settingsPlan
+	assert.NoError(t, json.Unmarshal(plan.Plan, &shown))
+	if assert.Len(t, shown.Changes, 1) {
+		assert.Equal(t, "runtimeEnvVars", shown.Changes[0].Path)
+		assert.Contains(t, fmtJSON(shown.Changes[0].Before), `"value":"info"`)
+		assert.Contains(t, fmtJSON(shown.Changes[0].After), `"FEATURE_X"`)
+	}
+	assert.Equal(t, []string{"inheritedRuntimeEnvVars"}, shown.Ignored, "the PUT does not take it")
+	assert.Empty(t, w.routes.writes())
+
+	text, isErr = callTool(t, session, "apply_plan", map[string]any{"planToken": plan.PlanToken})
+	assert.False(t, isErr, text)
+	if sent := w.routes.writes(); assert.Len(t, sent, 1) {
+		assert.Equal(t, "PUT", sent[0].Method)
+		assert.Equal(t, "/projects/p1/prod/apps/a1/env-vars", sent[0].Path)
+		var body map[string]any
+		assert.NoError(t, json.Unmarshal([]byte(sent[0].Body), &body))
+		assert.EqualValues(t, 7, body["updateVer"], "the updateVer read, not one the patch gave")
+		assert.NotContains(t, body, "inheritedRuntimeEnvVars")
+		assert.Len(t, body["runtimeEnvVars"], 2)
+	}
+}
+
+func TestASettingsChangeRefusedAsStaleSaysPlanAgain(t *testing.T) {
+	w := newWriteWorld(t)
+	session := w.session(t, "key1")
+	text, _ := callTool(t, session, "plan_update_app_settings", envVarsArgs(map[string]any{
+		"runtimeEnvVars": []any{map[string]any{"key": "LOG_LEVEL", "value": "debug"}}}))
+	w.routes.settingsMoved = true
+	text, isErr := callTool(t, session, "apply_plan", map[string]any{"planToken": planOf(t, text).PlanToken})
+	assert.True(t, isErr)
+	assert.Contains(t, text, "the settings changed since the plan was made")
+}
+
+func TestASettingsChangeThatChangesNothingHasNoPlan(t *testing.T) {
+	w := newWriteWorld(t)
+	text, isErr := callTool(t, w.session(t, "key1"), "plan_update_app_settings", envVarsArgs(map[string]any{
+		"runtimeEnvVars": []any{map[string]any{"key": "LOG_LEVEL", "value": "info"}}}))
+	assert.False(t, isErr, text)
+	plan := planOf(t, text)
+	assert.Empty(t, plan.PlanToken)
+	assert.Equal(t, nextNothing, plan.Next)
+}
+
+func fmtJSON(v any) string {
+	raw, _ := json.Marshal(v)
+	return string(raw)
 }

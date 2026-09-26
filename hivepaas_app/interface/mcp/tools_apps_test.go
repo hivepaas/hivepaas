@@ -223,7 +223,7 @@ func TestLogsGrepBeforeTail(t *testing.T) {
 	text, isErr := call("get_app_logs", args)
 	assert.False(t, isErr, text)
 	assert.Equal(t, "5000", routes.logsTail, "a grep reads all it can, then tails")
-	var out appLogs
+	var out logsAnswer
 	assert.NoError(t, json.Unmarshal([]byte(text), &out))
 	assert.Equal(t, []string{"2026-09-26T08:00:20.000Z [stderr] Error: connection refused 20"}, out.Lines)
 	assert.Equal(t, 2, *out.Matched)
@@ -237,7 +237,7 @@ func TestLogsGrepBeforeTail(t *testing.T) {
 	args["tail"] = 3
 	text, _ = call("get_app_logs", args)
 	assert.Equal(t, "3", routes.logsTail)
-	out = appLogs{}
+	out = logsAnswer{}
 	assert.NoError(t, json.Unmarshal([]byte(text), &out))
 	assert.Len(t, out.Lines, 3)
 	assert.Nil(t, out.Matched)

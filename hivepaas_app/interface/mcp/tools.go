@@ -9,5 +9,14 @@ func Tools() []Tool {
 		getAppStatusTool(),
 		getAppLogsTool(),
 		getAppConfigTool(),
+		listAttentionTool(),
+		listTasksTool(),
+		getTaskLogsTool(),
+		listNodesTool(),
+		searchTemplatesTool(),
+		getTemplateTool(),
+		preflightInstallTool(),
+		listSchedJobsTool(),
+		explainScheduleTool(),
 	}
 }

@@ -65,6 +65,8 @@ func NewEndpoint(services *Services, dispatcher *Dispatcher, tools []Tool) *Endp
 	for _, tool := range tools {
 		tool.add(server, deps)
 	}
+	addResources(server, deps)
+	addPrompts(server)
 	handler := mcpsdk.NewStreamableHTTPHandler(func(*http.Request) *mcpsdk.Server { return server },
 		&mcpsdk.StreamableHTTPOptions{Stateless: true})
 	return &Endpoint{services: services, handler: handler}

@@ -30,8 +30,10 @@ type appLogsInput struct {
 	Grep    string `json:"grep,omitempty" jsonschema:"only lines containing this, ignoring case; /expr/ for a regexp"`
 }
 
-type appLogs struct {
-	App   string   `json:"app"`
+// logsAnswer is what a log tool answers: an app's logs, or a task's.
+type logsAnswer struct {
+	App   string   `json:"app,omitempty"`
+	Task  string   `json:"task,omitempty"`
 	Lines []string `json:"lines"`
 	// Matched is how many of the lines read matched grep, before the tail.
 	Matched *int `json:"matched,omitempty"`
@@ -53,47 +55,58 @@ func getAppLogsTool() Tool {
 		"Reads the newest lines an app's containers printed, with their times; lines written to "+
 			"stderr are marked. With grep, it reads up to the last 5000 lines and answers the newest "+
 			"of those that match, so an error from an hour ago is found under a busy log.",
-		func(ctx context.Context, call *Call, in appLogsInput) (appLogs, error) {
-			if err := in.check(); err != nil {
-				return appLogs{}, err
-			}
-			match, err := grepMatcher(in.Grep)
+		func(ctx context.Context, call *Call, in appLogsInput) (logsAnswer, error) {
+			q, err := newLogQuery(in.Tail, in.Since, in.Grep)
 			if err != nil {
-				return appLogs{}, err
-			}
-			since, err := parseSince(in.Since, timeNow())
-			if err != nil {
-				return appLogs{}, err
+				return logsAnswer{}, err
 			}
 			ref, err := resolveApp(ctx, call, in.Project, in.Env, in.App)
 			if err != nil {
-				return appLogs{}, err
+				return logsAnswer{}, err
 			}
-			frames, err := readLogs(ctx, call, ref.path("/logs"), in.tail(match != nil), since)
-			if err != nil {
-				return appLogs{}, err
-			}
-			return makeAppLogs(ref.AppKey, frames, in.tail(false), match), nil
+			out, err := q.read(ctx, call, ref.path("/logs"))
+			out.App = ref.AppKey
+			return out, err
 		})
 }
 
-func (in *appLogsInput) check() error {
-	if in.Tail < 0 || in.Tail > maxLogTail {
-		return &InputError{Message: fmt.Sprintf("tail is %d; it is 1 to %d", in.Tail, maxLogTail)}
-	}
-	return nil
+// logQuery is what a log tool was asked for.
+type logQuery struct {
+	tail  int
+	since time.Time
+	match func(string) bool
 }
 
-// tail is how many lines to ask the endpoint for: all it answers when they are
-// to be filtered, since the lines that match may be anywhere in them.
-func (in *appLogsInput) tail(grep bool) int {
-	switch {
-	case grep:
-		return grepScan
-	case in.Tail == 0:
-		return defaultLogTail
+func newLogQuery(tail int, since, grep string) (*logQuery, error) {
+	if tail < 0 || tail > maxLogTail {
+		return nil, &InputError{Message: fmt.Sprintf("tail is %d; it is 1 to %d", tail, maxLogTail)}
 	}
-	return in.Tail
+	if tail == 0 {
+		tail = defaultLogTail
+	}
+	q := &logQuery{tail: tail}
+	var err error
+	if q.match, err = grepMatcher(grep); err != nil {
+		return nil, err
+	}
+	if q.since, err = parseSince(since, timeNow()); err != nil {
+		return nil, err
+	}
+	return q, nil
+}
+
+// read asks a log endpoint for the lines, as the caller: all it answers when
+// they are to be filtered, since the lines that match may be anywhere in them.
+func (q *logQuery) read(ctx context.Context, call *Call, path string) (logsAnswer, error) {
+	scan := q.tail
+	if q.match != nil {
+		scan = grepScan
+	}
+	frames, err := readLogs(ctx, call, path, scan, q.since)
+	if err != nil {
+		return logsAnswer{}, err
+	}
+	return makeLogsAnswer(frames, q.tail, q.match), nil
 }
 
 // timeNow is time.Now, replaced in tests.
@@ -148,10 +161,10 @@ func readLogs(ctx context.Context, call *Call, path string, tail int, since time
 	return resp.Data.Logs, nil
 }
 
-// makeAppLogs filters the frames, keeps the newest tail of them, and keeps of
-// those what fits in an answer.
-func makeAppLogs(app string, frames []logFrame, tail int, match func(string) bool) appLogs {
-	out := appLogs{App: app}
+// makeLogsAnswer filters the frames, keeps the newest tail of them, and keeps
+// of those what fits in an answer.
+func makeLogsAnswer(frames []logFrame, tail int, match func(string) bool) logsAnswer {
+	var out logsAnswer
 	lines := make([]string, 0, len(frames))
 	for _, f := range frames {
 		text := strings.TrimRight(f.Data, "\r\n")

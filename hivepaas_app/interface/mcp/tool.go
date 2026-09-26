@@ -157,10 +157,19 @@ func describeAPIError(e *APIError) string {
 	return e.Error()
 }
 
+// auditedInput is an input that may carry a secret - a parameter an install
+// asks for - and says what of it the audit log may keep.
+type auditedInput interface {
+	forAudit() any
+}
+
 // recordCall writes the audit entry for one tool call. A call whose record
 // cannot be written is not made, as for every recorded action.
 func recordCall(ctx context.Context, deps *Deps, c *caller, tool string, input any,
 	result base.AuditLogResult) error {
+	if in, ok := input.(auditedInput); ok {
+		input = in.forAudit()
+	}
 	entry := &auditservice.Entry{
 		Scope:   entity.NewObjectScopeGlobal().ScopeType,
 		Type:    base.AuditLogTypeMCPToolCall,

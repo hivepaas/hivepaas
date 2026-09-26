@@ -442,6 +442,7 @@ var Provides = []any{
 	cacherepository.NewGithubAppManifestRepo,
 	cacherepository.NewHealthcheckStateRepo,
 	cacherepository.NewLoginAttemptRepo,
+	cacherepository.NewMCPPlanRepo,
 	cacherepository.NewMFAPasscodeRepo,
 	cacherepository.NewPeriodicSettingsRepo,
 	cacherepository.NewTaskControlRepo,

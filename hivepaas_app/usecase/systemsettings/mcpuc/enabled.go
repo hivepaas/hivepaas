@@ -13,27 +13,34 @@ import (
 var timeNow = time.Now
 
 // IsEnabled reports whether the MCP endpoint serves, for a request no one has
-// authenticated yet. It asks the database at most once per enabledCacheTTL; a
-// setting that cannot be read is off, and the error says why.
+// authenticated yet.
 func (uc *UC) IsEnabled(ctx context.Context) (bool, error) {
+	current, err := uc.Current(ctx)
+	return current.Enabled, err
+}
+
+// Current is the MCP setting as the endpoint acts on it: whether it serves, and
+// whether its tools may change things. It asks the database at most once per
+// enabledCacheTTL; a setting that cannot be read is off, and the error says why.
+func (uc *UC) Current(ctx context.Context) (entity.MCPSettings, error) {
 	uc.mu.Lock()
 	defer uc.mu.Unlock()
-	if !uc.enabledRead.IsZero() && timeNow().Sub(uc.enabledRead) < enabledCacheTTL {
-		return uc.enabled, nil
+	if !uc.read.IsZero() && timeNow().Sub(uc.read) < enabledCacheTTL {
+		return uc.current, nil
 	}
 
 	setting, err := uc.SettingRepo.GetSingle(ctx, uc.DB, entity.NewObjectScopeGlobal(), currentSettingType, false)
 	if err != nil && !errors.Is(err, hperrors.ErrNotFound) {
-		return false, hperrors.Wrap(err)
+		return entity.MCPSettings{}, hperrors.Wrap(err)
 	}
-	enabled := false
+	var current entity.MCPSettings
 	if setting != nil && setting.IsActive() {
 		data, err := setting.AsMCPSettings()
 		if err != nil {
-			return false, hperrors.Wrap(err)
+			return entity.MCPSettings{}, hperrors.Wrap(err)
 		}
-		enabled = data.Enabled
+		current = *data
 	}
-	uc.enabled, uc.enabledRead = enabled, timeNow()
-	return enabled, nil
+	uc.current, uc.read = current, timeNow()
+	return current, nil
 }

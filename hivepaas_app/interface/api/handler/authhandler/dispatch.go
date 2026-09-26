@@ -38,26 +38,28 @@ func dispatchedAuth(ctx context.Context) *basedto.Auth {
 // GetAPIKeyAuth authenticates a request by API key alone: the two HIVEPAAS-API-*
 // headers, or "Authorization: Bearer <keyId>:<secret>" for clients that let a
 // person set that header and no other. A session token is refused: it expires
-// within minutes and would end up pasted into a config file.
-func (h *Handler) GetAPIKeyAuth(ctx *gin.Context) (*basedto.Auth, error) {
+// within minutes and would end up pasted into a config file. It answers the
+// key's ID beside the auth, which carries the key's user and limits but not the
+// key itself.
+func (h *Handler) GetAPIKeyAuth(ctx *gin.Context) (*basedto.Auth, string, error) {
 	keyID, secret, err := h.getAuthAPIKey(ctx)
 	if err != nil {
-		return nil, hperrors.Wrap(err)
+		return nil, "", hperrors.Wrap(err)
 	}
 	if keyID == "" {
 		keyID, secret, err = bearerAPIKey(ctx.GetHeader("Authorization"))
 		if err != nil {
-			return nil, hperrors.Wrap(err)
+			return nil, "", hperrors.Wrap(err)
 		}
 	}
 	if keyID == "" {
-		return nil, hperrors.Wrap(hperrors.ErrNoSession)
+		return nil, "", hperrors.Wrap(hperrors.ErrNoSession)
 	}
 	auth, err := h.sessionUC.GetCurrentAuthByAPIKey(h.RequestCtx(ctx), keyID, secret)
 	if err != nil {
-		return nil, hperrors.Wrap(err)
+		return nil, "", hperrors.Wrap(err)
 	}
-	return auth, nil
+	return auth, keyID, nil
 }
 
 // bearerAPIKey reads "Bearer <keyId>:<secret>". An empty header is no key; a

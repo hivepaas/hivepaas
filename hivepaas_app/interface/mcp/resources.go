@@ -80,7 +80,7 @@ func readTemplateResource(ctx context.Context, deps *Deps, uri string) (*mcpsdk.
 	}}, nil
 }
 
-func addPrompts(s *mcpsdk.Server) {
+func addPrompts(s *mcpsdk.Server, _ bool) {
 	s.AddPrompt(&mcpsdk.Prompt{
 		Name:        "debug_app",
 		Title:       "Why is this app not working?",

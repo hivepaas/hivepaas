@@ -30,7 +30,7 @@ func testContext(auth *basedto.Auth) context.Context {
 	r.RemoteAddr = "203.0.113.7:51000"
 	r.Header.Set("User-Agent", "claude-code/2.1")
 	r.Header.Set("X-Forwarded-For", "198.51.100.9")
-	return withCaller(context.Background(), auth, r)
+	return withCaller(context.Background(), &caller{auth: auth, keyID: "key1"}, r)
 }
 
 // testEngine is a gin engine whose handlers find their caller the way the real

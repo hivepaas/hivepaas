@@ -130,9 +130,10 @@ func TestGetAPIKeyAuthTakesBothForms(t *testing.T) {
 		"headers": {"HIVEPAAS-API-KEY-ID": "key1", "HIVEPAAS-API-SECRET-KEY": "s3cret"},
 		"bearer":  {"Authorization": "Bearer key1:s3cret"},
 	} {
-		auth, err := h.GetAPIKeyAuth(ginContext(context.Background(), headers))
+		auth, keyID, err := h.GetAPIKeyAuth(ginContext(context.Background(), headers))
 		assert.NoError(t, err, name)
 		assert.NotNil(t, auth, name)
+		assert.Equal(t, "key1", keyID, name)
 	}
 
 	for name, headers := range map[string]map[string]string{
@@ -142,7 +143,7 @@ func TestGetAPIKeyAuthTakesBothForms(t *testing.T) {
 		"basic":           {"Authorization": "Basic a2V5MTpzM2NyZXQ="},
 		"nothing":         {},
 	} {
-		_, err := h.GetAPIKeyAuth(ginContext(context.Background(), headers))
+		_, _, err := h.GetAPIKeyAuth(ginContext(context.Background(), headers))
 		assert.Error(t, err, name)
 	}
 	assert.Zero(t, session.jwtCalls, "a session token is never tried")

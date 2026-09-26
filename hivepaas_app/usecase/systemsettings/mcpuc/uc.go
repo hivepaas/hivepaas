@@ -4,6 +4,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings"
 )
 
@@ -15,9 +16,9 @@ const enabledCacheTTL = 10 * time.Second
 type UC struct {
 	*settings.BaseUC
 
-	mu          sync.Mutex
-	enabled     bool
-	enabledRead time.Time
+	mu      sync.Mutex
+	current entity.MCPSettings
+	read    time.Time
 }
 
 func New(baseUC *settings.BaseUC) *UC {

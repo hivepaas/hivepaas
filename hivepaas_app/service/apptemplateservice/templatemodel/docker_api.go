@@ -27,6 +27,16 @@ func (t *Template) DockerAPI() (*entity.AppDockerAPISettings, error) {
 	return access, nil
 }
 
+// DockerAPI is the Docker API this component's app is given, and is nil for one
+// given none.
+func (c *Component) DockerAPI() (*entity.AppDockerAPISettings, error) {
+	access, problem := dockerAPIIn(c.App)
+	if problem != "" {
+		return nil, hperrors.Wrap(hperrors.ErrAppTemplateInvalid).WithExtraDetail("%s", problem)
+	}
+	return access, nil
+}
+
 // RequiresDockerAPI reports whether any app of the template is given the Docker
 // API. One whose block cannot be read counts, as for capabilities.
 func (t *Template) RequiresDockerAPI() bool {

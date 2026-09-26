@@ -62,6 +62,17 @@ const (
 	// in the form DOCKER_HOST takes. A template sets DOCKER_HOST, or whatever
 	// variable its app reads, to ${HIVEPAAS_DOCKER_HOST}.
 	AppSystemEnvVarDockerHost = "HIVEPAAS_DOCKER_HOST"
+	// AppSystemEnvVarDockerNetwork is the name of the network an app's children
+	// join unless they name another, for an app that has to name it itself:
+	// Appwrite's executor starts its runtimes on the network it is told, and
+	// reaches them there by host name. Given through the proxy only; in host mode
+	// the app has no network of this kind.
+	AppSystemEnvVarDockerNetwork = "HIVEPAAS_DOCKER_NETWORK"
+	// AppSystemEnvVarDockerEnvNetwork is the name of the app's env network, for an
+	// app given the Docker API whose children may join it. The app names it when
+	// it starts a child: Appwrite's orchestrator puts every build on the network
+	// it is told, and the builds reach the API there.
+	AppSystemEnvVarDockerEnvNetwork = "HIVEPAAS_DOCKER_ENV_NETWORK"
 
 	AppSystemEnvVarUser     = "HIVEPAAS_USER"
 	AppSystemEnvVarPassword = "HIVEPAAS_PASSWORD" //nolint:gosec // G101: env name

@@ -79,6 +79,7 @@ settings:
 |---|---|---|
 | `images` | The images children may run, as patterns over the reference the client names (`path.Match` on `repository:tag`, after Docker's own normalisation of `docker.io/` and `library/`). `"*"` is any image. | required, not empty |
 | `sharedDirs` | Directories of the app a child may bind, at most 5. Each is an absolute path in the app's container that equals or lies below the target of one of the app's own storage mounts. | none |
+| `sharedVolumes` | Volume names a child may mount, at most 5, each standing for a directory equal to or below one of `sharedDirs`: `{appwrite-builds: /storage/builds}`. For an app whose code names a volume where another binds a path. | none |
 | `networks` | Networks children may join besides their own. The only value in this phase is `env`: the app's project-env network, for a runner whose jobs clone from a forge in the same env. | none |
 | `allow` | Groups of endpoints beyond the core (§3): `exec`, `files`, `volumes`, `networks`, `nestedSocket`. | none |
 | `mode` | `proxy`, or `host` for the node's own socket (§15). | `proxy` |
@@ -101,7 +102,13 @@ Export writes the block like any other setting. Import reads it back (§9).
   `${HIVEPAAS_DOCKER_HOST}`: `DOCKER_HOST` for most, `PG_CONSOLE_DOCKER_HOST`
   for Autobase. HivePaaS does not set `DOCKER_HOST` itself, because an app's own
   variables and the system's are kept apart.
-- A network of its own, `hp-dapi-<app id>`. Its children join it by default.
+- A network of its own, `hp-dapi-<app id>`. Its children join it by default,
+  and `HIVEPAAS_DOCKER_NETWORK` names it, for an app that names the network of
+  its children itself: Appwrite's executor starts its runtimes on the network it
+  is told and reaches them there by host name.
+- With `networks: [env]`, `HIVEPAAS_DOCKER_ENV_NETWORK`: the name of the app's
+  env network, which a child joins by name. Appwrite's orchestrator puts every
+  build on the one network it is told, and the builds reach the API there.
 - Refusals as Docker errors: status 403 and a message starting `hivepaas:` that
   names the rule, such as `hivepaas: HostConfig.Privileged is not allowed`. The
   app logs it as it logs any daemon error, which is where the person debugging it
@@ -120,7 +127,7 @@ and the daemon could read it differently.
 | `GET /info` | core | passed with `Swarm`, `Labels` and `RegistryConfig` removed |
 | `GET /images/json`, `GET /images/{name}/json` | core | passed |
 | `POST /images/create` | core | the image must match `images`; `fromSrc` (import) refused |
-| `GET /containers/json` | core | filtered to the app's children |
+| `GET /containers/json` | core | filtered to the app's children and its own tasks: an app finds itself this way, as Appwrite's executor does by its host name |
 | `POST /containers/create` | core | §4 |
 | `GET /containers/{id}/json`, `logs`, `stats`, `top` | core | the app's children only |
 | `POST /containers/{id}/start`, `stop`, `kill`, `wait`, `restart`, `resize`, `attach`; `DELETE /containers/{id}` | core | the app's children only |
@@ -129,7 +136,8 @@ and the daemon could read it differently.
 | `POST /exec/{id}/start`, `resize`; `GET /exec/{id}/json` | exec | the exec's container must be one of the app's children |
 | `GET /volumes`, `POST /volumes/create`, `GET,DELETE /volumes/{name}` | volumes | filtered, labelled, the app's only; driver `local` with no options |
 | `GET /networks`, `POST /networks/create`, `GET,DELETE /networks/{id}`, `POST /networks/{id}/connect`, `disconnect` | networks | filtered, labelled, the app's only; driver `bridge`, scope `local`, no options, default IPAM. Connect takes a child, or the app's own task (Appwrite's executor connects itself to its runtimes' network) |
-| anything else | - | refused: build, BuildKit sessions, swarm, plugins, secrets, configs, system, prune, commit, export, events |
+| `GET /events` | core | filtered to `type=container` and to containers each of which is one of the app's children; the daemon applies the filter. Appwrite's orchestrator watches each build's containers this way |
+| anything else | - | refused: build, BuildKit sessions, swarm, plugins, secrets, configs, system, prune, commit, export, events of anything but the app's children |
 
 Streams and hijacked connections (attach, exec start, pull progress, logs
 follow) pass through `httputil.ReverseProxy` with flushing on. The spike ran
@@ -172,6 +180,13 @@ In order, for `POST /containers/create`:
      the app's task, whatever its other labels say. Autobase binds `/var/lib/autobase/ansible` into its
      automation container, and the container gets the same directory of the
      app's volume, which is how the console reads the log the playbook writes.
+   - **A shared volume's name.** It becomes the same mount a bind of the
+     directory it stands for would, a subpath the child gives joined below that
+     directory. No volume of that name is created or used: the name shadows any
+     on the node, whoever made it. Creating one answers with it, inspecting one
+     answers in Docker's words, and removing one is refused. Appwrite's
+     orchestrator mounts `appwrite-builds` into every build, and the build's
+     output lands where the API and the executor read it.
    - **The app's socket**, `/var/run/hivepaas/docker.sock`, with `nestedSocket`.
      It becomes a mount of the socket volume with subpath `docker.sock`, so a
      job's own `docker run` goes through this proxy under this policy. The Gitea
@@ -211,8 +226,8 @@ names by id is checked against it:
 - an exec, by looking up its container;
 - a volume or network, by inspecting it.
 
-Lists are fetched and filtered. The app's own tasks count as its own only for
-network connect and disconnect.
+Lists are fetched and filtered. The app's own tasks count as its own for being
+listed, and for network connect and disconnect; nothing else may name them.
 
 What stays visible is the node's image list and a trimmed `/info`. act needs
 both, and neither holds a secret.

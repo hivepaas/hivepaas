@@ -88,6 +88,13 @@ func (p *Proxy) volumeCreate(c *call) {
 	if err == nil {
 		err = checkFields("Volume", body, volumeCreateFields, nil)
 	}
+	if _, shared := c.policy.sharedVolume(text(body[fieldName])); err == nil && shared {
+		// Creating a volume that exists answers with it; a client that creates
+		// before it mounts must not be handed a new, empty one of the same name.
+		p.decide(c, true, "a shared volume of the app, which exists")
+		writeJSON(c.w, http.StatusCreated, sharedVolumeInfo(c.policy, text(body[fieldName])))
+		return
+	}
 	if err == nil {
 		err = refuseReserved(c.policy, text(body[fieldName]))
 	}
@@ -104,6 +111,15 @@ func (p *Proxy) volumeCreate(c *call) {
 }
 
 func (p *Proxy) onVolume(c *call) {
+	if _, shared := c.policy.sharedVolume(c.args[0]); shared {
+		if c.r.Method != http.MethodGet {
+			p.refuse(c, refusef("volume %s is a directory of the app, and is not removed through Docker", c.args[0]))
+			return
+		}
+		p.decide(c, true, "a shared volume of the app")
+		writeJSON(c.w, http.StatusOK, sharedVolumeInfo(c.policy, c.args[0]))
+		return
+	}
 	info, found, err := p.inspect(c.r.Context(), kindVolumes, c.args[0])
 	if err == nil && (!found || info.Labels[OwnerLabel] != c.policy.AppID) {
 		err = refusef("volume %s is not one this app created", c.args[0])
@@ -113,6 +129,17 @@ func (p *Proxy) onVolume(c *call) {
 		return
 	}
 	p.forward(c, "a volume of the app's own")
+}
+
+// sharedVolumeInfo is what the proxy answers for a shared volume in Docker's
+// words. There is no volume of that name to inspect: the name stands for a
+// directory of one the app mounts, and where that is on the node is not the
+// child's to know.
+func sharedVolumeInfo(policy *Policy, name string) map[string]any {
+	return map[string]any{
+		fieldName: name, fieldDriver: local, "Scope": local, "Mountpoint": "", "Options": map[string]any{},
+		fieldLabels: map[string]any{OwnerLabel: policy.AppID},
+	}
 }
 
 func (p *Proxy) listNetworks(c *call) {

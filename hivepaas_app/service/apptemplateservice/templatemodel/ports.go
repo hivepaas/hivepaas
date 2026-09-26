@@ -31,7 +31,18 @@ type PublishedPort struct {
 // PublishedPorts are the ports a template publishes, read from the template
 // rather than from a render: the store shows them before anybody deploys.
 func (t *Template) PublishedPorts() []PublishedPort {
-	node := any(t.App)
+	return t.publishedPortsIn(t.App)
+}
+
+// ComponentPublishedPorts are the ports one component's app publishes.
+func (t *Template) ComponentPublishedPorts(component *Component) []PublishedPort {
+	return t.publishedPortsIn(component.App)
+}
+
+// publishedPortsIn reads the ports out of an app tree, a port given by a
+// parameter as that parameter's default.
+func (t *Template) publishedPortsIn(app map[string]any) []PublishedPort {
+	node := any(app)
 	for _, key := range portsPath {
 		parent, ok := node.(map[string]any)
 		if !ok {

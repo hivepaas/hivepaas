@@ -45,16 +45,32 @@ func TestOtherContainersAreNot(t *testing.T) {
 	assert.False(t, w.reached(http.MethodDelete, "/containers/other1"))
 }
 
-func TestTheContainerListShowsOnlyTheAppsChildren(t *testing.T) {
+// The list holds the app's children and the app's own task, which is how an app
+// finds itself: another app's containers, and a child dressed as the task, are
+// not in it.
+func TestTheContainerListShowsOnlyTheAppsChildrenAndItself(t *testing.T) {
 	w := newWorld(t, testPolicy())
+	w.daemon.mu.Lock()
+	w.daemon.containers["spoof"] = &fakeContainer{running: true,
+		labels: map[string]string{serviceIDLabel: "svc1", OwnerLabel: "app2"}}
+	w.daemon.containers["task2"] = &fakeContainer{running: true, labels: map[string]string{serviceIDLabel: "svc2"}}
+	w.daemon.mu.Unlock()
+
 	status, raw := w.do(t, http.MethodGet, "/v1.51/containers/json?all=1", nil)
 	stop(t, assert.Equal(t, http.StatusOK, status))
 	var containers []struct {
 		ID string `json:"Id"`
 	}
 	stop(t, assert.NoError(t, json.Unmarshal(raw, &containers)))
-	stop(t, assert.Len(t, containers, 1))
-	assert.Equal(t, "child1", containers[0].ID)
+	ids := make([]string, 0, len(containers))
+	for _, c := range containers {
+		ids = append(ids, c.ID)
+	}
+	assert.Equal(t, []string{"child1", "task1"}, ids)
+
+	// Being listed is all the task is given: it is not a child to act on.
+	status, _ = w.do(t, http.MethodPost, "/v1.51/containers/task1/stop", nil)
+	assert.Equal(t, http.StatusForbidden, status)
 }
 
 func TestAttachStreamsThroughTheProxy(t *testing.T) {

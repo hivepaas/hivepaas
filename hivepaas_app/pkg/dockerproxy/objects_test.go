@@ -140,3 +140,26 @@ func TestReservedLabelsCannotBeSet(t *testing.T) {
 	}, "app1")
 	assert.Equal(t, map[string]any{"keep": "yes", OwnerLabel: "app1"}, got)
 }
+
+func TestASharedVolumeAnswersAsOneThatExists(t *testing.T) {
+	policy := volumesAndNetworks()
+	policy.SharedDirs = []string{"/var/lib/autobase/ansible"}
+	policy.SharedVolumes = map[string]string{"appwrite-builds": "/var/lib/autobase/ansible"}
+	w := newWorld(t, policy)
+
+	status, raw := w.do(t, http.MethodPost, "/v1.51/volumes/create", map[string]any{"Name": "appwrite-builds"})
+	stop(t, assert.Equal(t, http.StatusCreated, status, string(raw)))
+	assert.False(t, w.reached(http.MethodPost, "/volumes/create"), "nothing is created on the node")
+
+	status, raw = w.do(t, http.MethodGet, "/v1.51/volumes/appwrite-builds", nil)
+	stop(t, assert.Equal(t, http.StatusOK, status, string(raw)))
+	var info map[string]any
+	stop(t, assert.NoError(t, json.Unmarshal(raw, &info)))
+	assert.Equal(t, "appwrite-builds", info["Name"])
+	assert.Equal(t, "local", info["Driver"])
+
+	status, raw = w.do(t, http.MethodDelete, "/v1.51/volumes/appwrite-builds", nil)
+	assert.Equal(t, http.StatusForbidden, status)
+	assert.Equal(t, "hivepaas: volume appwrite-builds is a directory of the app, and is not removed through Docker",
+		refusalMessage(t, raw))
+}

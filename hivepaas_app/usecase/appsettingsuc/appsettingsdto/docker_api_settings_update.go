@@ -19,12 +19,15 @@ type UpdateAppDockerAPISettingsReq struct {
 	// Mode is proxy, the default when empty, or host: the node's own socket,
 	// which takes the privileged-apps switch and an administrator. In host mode
 	// the fields below are kept, not checked, for going back to the proxy.
-	Mode       string              `json:"mode"`
-	Images     []string            `json:"images"`
-	SharedDirs []string            `json:"sharedDirs"`
-	Networks   []string            `json:"networks"`
-	Allow      []string            `json:"allow"`
-	Limits     *AppDockerAPILimits `json:"limits"`
+	Mode       string   `json:"mode"`
+	Images     []string `json:"images"`
+	SharedDirs []string `json:"sharedDirs"`
+	// SharedVolumes are volume names a child may mount, each standing for a
+	// directory of SharedDirs.
+	SharedVolumes map[string]string   `json:"sharedVolumes"`
+	Networks      []string            `json:"networks"`
+	Allow         []string            `json:"allow"`
+	Limits        *AppDockerAPILimits `json:"limits"`
 
 	UpdateVer int `json:"updateVer"`
 }
@@ -46,7 +49,12 @@ func (req *UpdateAppDockerAPISettingsReq) Validate() hperrors.ValidationErrors {
 // ToEntity is the access the request asks for.
 func (req *UpdateAppDockerAPISettingsReq) ToEntity() *entity.AppDockerAPISettings {
 	access := &entity.AppDockerAPISettings{
-		Mode: req.Mode, Images: req.Images, SharedDirs: req.SharedDirs, Networks: req.Networks, Allow: req.Allow,
+		Mode: req.Mode, Images: req.Images, SharedDirs: req.SharedDirs, SharedVolumes: req.SharedVolumes,
+		Networks: req.Networks, Allow: req.Allow,
+	}
+	if len(access.SharedVolumes) == 0 {
+		// Written as absent, as a template without the field is.
+		access.SharedVolumes = nil
 	}
 	if access.Mode == entity.DockerAPIModeProxy {
 		// Written as the default it is, as a template's block is.

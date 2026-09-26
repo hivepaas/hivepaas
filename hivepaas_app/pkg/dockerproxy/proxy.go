@@ -1,6 +1,7 @@
 package dockerproxy
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"net/http"
@@ -35,6 +36,15 @@ type Options struct {
 	Upstream http.RoundTripper
 	// OnDecision, when set, is told about every request.
 	OnDecision func(Decision)
+	// MakeDir creates subpath, and every directory above it that is missing,
+	// below dir: on the node, the directory of a volume the app mounts - the
+	// volume's own directory as the daemon reports it, joined with the subpath
+	// the app mounts. The proxy asks for it for every bind of a path it turns into
+	// a mount of that volume, because Docker creates a bind's missing source and
+	// does not create a volume's missing subpath: Appwrite's executor binds
+	// directories of each runtime it has not made. It must not follow a link out
+	// of dir. Nil leaves the directories to exist already.
+	MakeDir func(ctx context.Context, dir, subpath string) error
 }
 
 // Proxy serves one app's socket.
@@ -43,6 +53,7 @@ type Proxy struct {
 	daemon     *daemon
 	forwarder  *httputil.ReverseProxy
 	onDecision func(Decision)
+	makeDir    func(ctx context.Context, dir, subpath string) error
 }
 
 // New returns a proxy enforcing policy.
@@ -50,6 +61,7 @@ func New(policy *Policy, opts Options) *Proxy {
 	p := &Proxy{
 		daemon:     &daemon{client: &http.Client{Transport: opts.Upstream}},
 		onDecision: opts.OnDecision,
+		makeDir:    opts.MakeDir,
 	}
 	p.policy.Store(policy)
 	p.forwarder = &httputil.ReverseProxy{

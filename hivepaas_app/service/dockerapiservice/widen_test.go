@@ -13,7 +13,8 @@ func TestWidens(t *testing.T) {
 	base := func() *entity.AppDockerAPISettings {
 		return &entity.AppDockerAPISettings{
 			Images: []string{"autobase/automation"}, SharedDirs: []string{"/data"},
-			Allow: []string{"exec"}, Limits: entity.AppDockerAPILimits{Containers: 3},
+			SharedVolumes: map[string]string{"builds": "/data/builds"},
+			Allow:         []string{"exec"}, Limits: entity.AppDockerAPILimits{Containers: 3},
 		}
 	}
 	for name, tc := range map[string]struct {
@@ -32,6 +33,15 @@ func TestWidens(t *testing.T) {
 		}},
 		"a directory added": {prev: base(), next: base(), want: true, change: func(s *entity.AppDockerAPISettings) {
 			s.SharedDirs = append(s.SharedDirs, "/cache")
+		}},
+		"a shared volume added": {prev: base(), next: base(), want: true, change: func(s *entity.AppDockerAPISettings) {
+			s.SharedVolumes = map[string]string{"builds": "/data/builds", "cache": "/data/cache"}
+		}},
+		"a shared volume moved": {prev: base(), next: base(), want: true, change: func(s *entity.AppDockerAPISettings) {
+			s.SharedVolumes = map[string]string{"builds": "/data"}
+		}},
+		"a shared volume removed": {prev: base(), next: base(), want: false, change: func(s *entity.AppDockerAPISettings) {
+			s.SharedVolumes = nil
 		}},
 		"a network added": {prev: base(), next: base(), want: true, change: func(s *entity.AppDockerAPISettings) {
 			s.Networks = []string{entity.DockerAPINetworkEnv}

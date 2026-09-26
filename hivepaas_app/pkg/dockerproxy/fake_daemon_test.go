@@ -35,6 +35,8 @@ type fakeDaemon struct {
 	containers map[string]*fakeContainer
 	execs      map[string]string
 	volumes    map[string]map[string]string
+	// volumeInfo is what inspecting a volume says besides its name and labels.
+	volumeInfo map[string]map[string]any
 	networks   map[string]*fakeNetwork
 	requests   []recordedRequest
 }
@@ -150,7 +152,9 @@ func (f *fakeDaemon) inspectVolume(w http.ResponseWriter, name string) {
 		writeError(w, http.StatusNotFound, "no such volume")
 		return
 	}
-	writeJSON(w, http.StatusOK, map[string]any{"Name": name, "Labels": labels})
+	info := map[string]any{"Name": name, "Labels": labels}
+	maps.Copy(info, f.volumeInfo[name])
+	writeJSON(w, http.StatusOK, info)
 }
 
 func (f *fakeDaemon) listNetworks(w http.ResponseWriter) {

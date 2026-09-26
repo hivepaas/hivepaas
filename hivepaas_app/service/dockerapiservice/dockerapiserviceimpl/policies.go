@@ -100,12 +100,13 @@ func (s *service) grantedAccess(ctx context.Context, db database.IDB) ([]appAcce
 // policyOf is what the proxy enforces for one app.
 func policyOf(app *entity.App, data *entity.AppDockerAPISettings, envNetwork string) *dockerproxy.Policy {
 	policy := &dockerproxy.Policy{
-		AppID:        app.ID,
-		ServiceID:    app.ServiceID,
-		Images:       data.Images,
-		SharedDirs:   data.SharedDirs,
-		Network:      dockerapiservice.NetworkName(app.ID),
-		SocketVolume: dockerapiservice.SocketVolumeName(app.ID),
+		AppID:         app.ID,
+		ServiceID:     app.ServiceID,
+		Images:        data.Images,
+		SharedDirs:    data.SharedDirs,
+		SharedVolumes: data.SharedVolumes,
+		Network:       dockerapiservice.NetworkName(app.ID),
+		SocketVolume:  dockerapiservice.SocketVolumeName(app.ID),
 		// Both names HivePaaS makes for an app start with this.
 		ReservedPrefix: dockerapiservice.NetworkPrefix,
 		Limits: dockerproxy.Limits{

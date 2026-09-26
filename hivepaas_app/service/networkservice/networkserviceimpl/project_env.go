@@ -14,16 +14,13 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
-	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/projecthelper"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/ulid"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/networkservice"
 	"github.com/hivepaas/hivepaas/services/docker"
 )
 
 func (s *service) GetProjectNetworkName(project *entity.Project, env string) string {
-	if env == "" {
-		return project.Key + "_local_net"
-	}
-	return project.Key + "_" + projecthelper.CalcProjectEnvKey(env) + "_net"
+	return networkservice.ProjectNetworkName(project, env)
 }
 
 func (s *service) GetOrCreateProjectNetwork(

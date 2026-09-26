@@ -202,7 +202,8 @@ func TestKindEnvVars_SharedNamesMatchBase(t *testing.T) {
 }
 
 func TestDockerAPIEnvVarsNameTheSocketOnlyForAnAppWithAccess(t *testing.T) {
-	envs, err := dockerAPIEnvVars(nil)
+	app := &entity.App{ID: "app1", Project: &entity.Project{Key: "shop"}, ProjectEnv: &entity.ProjectEnv{Name: "dev"}}
+	envs, err := dockerAPIEnvVars(nil, app)
 	assert.NoError(t, err)
 	assert.Empty(t, envs)
 
@@ -210,14 +211,48 @@ func TestDockerAPIEnvVarsNameTheSocketOnlyForAnAppWithAccess(t *testing.T) {
 		`{"images":["*"]}`: "unix:///var/run/hivepaas/docker.sock",
 		`{"mode":"host"}`:  "unix:///var/run/docker.sock",
 	} {
-		envs, err = dockerAPIEnvVars(&entity.Setting{Type: base.SettingTypeAppDockerAPI, Data: data})
+		envs, err = dockerAPIEnvVars(&entity.Setting{Type: base.SettingTypeAppDockerAPI, Data: data}, app)
 		assert.NoError(t, err)
-		if assert.Len(t, envs, 1) {
+		if assert.NotEmpty(t, envs) {
 			assert.Equal(t, base.AppSystemEnvVarDockerHost, envs[0].Key)
 			assert.Equal(t, want, envs[0].Value, data)
 			assert.False(t, envs[0].IsShared, "another app has no use for this app's socket")
 		}
 	}
+}
+
+// The app's own network is named through the proxy, and the env network only to
+// an app whose children may join it - each to the app alone, like its socket.
+func TestDockerAPIEnvVarsNameTheNetworksChildrenJoin(t *testing.T) {
+	app := &entity.App{ID: "app1", ProjectEnv: &entity.ProjectEnv{Name: "dev", Project: &entity.Project{Key: "shop"}}}
+	values := func(envs []*envvarservice.EnvVar) map[string]string {
+		out := map[string]string{}
+		for _, env := range envs {
+			assert.False(t, env.IsShared, env.Key)
+			out[env.Key] = env.Value
+		}
+		return out
+	}
+
+	setting := &entity.Setting{Type: base.SettingTypeAppDockerAPI, Data: `{"images":["*"],"networks":["env"]}`}
+	envs, err := dockerAPIEnvVars(setting, app)
+	assert.NoError(t, err)
+	assert.Equal(t, map[string]string{
+		base.AppSystemEnvVarDockerHost:       "unix:///var/run/hivepaas/docker.sock",
+		base.AppSystemEnvVarDockerNetwork:    "hp-dapi-app1",
+		base.AppSystemEnvVarDockerEnvNetwork: "shop_dev_net",
+	}, values(envs))
+
+	// Loaded without its env, the app is told nothing rather than a wrong name.
+	envs, err = dockerAPIEnvVars(setting, &entity.App{ID: "app1"})
+	assert.NoError(t, err)
+	assert.NotContains(t, values(envs), base.AppSystemEnvVarDockerEnvNetwork)
+
+	// In host mode there is no network of the app's own to name.
+	host := &entity.Setting{Type: base.SettingTypeAppDockerAPI, Data: `{"mode":"host","networks":["env"]}`}
+	envs, err = dockerAPIEnvVars(host, app)
+	assert.NoError(t, err)
+	assert.NotContains(t, values(envs), base.AppSystemEnvVarDockerNetwork)
 }
 
 func TestPercentEncode(t *testing.T) {

@@ -3,6 +3,7 @@ package appsettingsuc
 import (
 	"context"
 	"errors"
+	"slices"
 	"time"
 
 	"github.com/moby/moby/api/types/mount"
@@ -243,6 +244,8 @@ func nextDockerAPISetting(
 //   - When access appears or goes, or its mode changes, the service gains or
 //     loses its socket and network - or the node's socket - and
 //     HIVEPAAS_DOCKER_HOST appears, goes, or names the other socket.
+//   - When children start or stop being let onto the env network,
+//     HIVEPAAS_DOCKER_ENV_NETWORK appears or goes.
 //   - When it goes, the app's children and their leftovers are removed at once.
 //     The app's network stays, unused, until the app is deleted: removing it now
 //     would race the task still leaving it.
@@ -254,12 +257,15 @@ func (uc *UC) applyAppDockerAPI(ctx context.Context, data *updateAppDockerAPIDat
 	if data.Next != nil {
 		errs = append(errs, uc.dockerAPIService.SyncAgents(ctx))
 	}
-	if dockerAPIShape(data.Prev) != dockerAPIShape(data.Next) {
+	shapeChanged := dockerAPIShape(data.Prev) != dockerAPIShape(data.Next)
+	if shapeChanged {
 		errs = append(errs, uc.dockerManager.ServiceUpdateFunc(ctx, data.Service.ID, data.Service,
 			func(_ int, service *swarm.Service) (bool, error) {
 				return true, uc.dockerAPIService.ApplyToService(ctx, uc.db, data.App.ID, &service.Spec)
 			}, defaultServiceRetryMax, 0))
-		errs = append(errs, uc.applyDockerHostVar(ctx, data.App))
+	}
+	if shapeChanged || joinsEnvNetwork(data.Prev) != joinsEnvNetwork(data.Next) {
+		errs = append(errs, uc.applyDockerAPIVars(ctx, data.App))
 	}
 	if data.Prev != nil && data.Next == nil {
 		errs = append(errs, uc.dockerAPIService.RemoveAppObjects(ctx, data.App.ID))
@@ -279,10 +285,17 @@ func dockerAPIShape(access *entity.AppDockerAPISettings) string {
 	return entity.DockerAPIModeProxy
 }
 
-// applyDockerHostVar builds an app's environment again, with or without
-// HIVEPAAS_DOCKER_HOST, and applies it: a service whose environment does not
-// change, because none of its variables names it, is left as it is.
-func (uc *UC) applyDockerHostVar(ctx context.Context, app *entity.App) error {
+// joinsEnvNetwork reports access whose children may join the app's env network,
+// which is what HIVEPAAS_DOCKER_ENV_NETWORK is given for.
+func joinsEnvNetwork(access *entity.AppDockerAPISettings) bool {
+	return access != nil && slices.Contains(access.Networks, entity.DockerAPINetworkEnv)
+}
+
+// applyDockerAPIVars builds an app's environment again, with or without
+// HIVEPAAS_DOCKER_HOST and HIVEPAAS_DOCKER_ENV_NETWORK, and applies it: a service
+// whose environment does not change, because none of its variables names them,
+// is left as it is.
+func (uc *UC) applyDockerAPIVars(ctx context.Context, app *entity.App) error {
 	envData, err := uc.envVarService.BuildEnvVarsForAllAppsInScope(ctx, uc.db, app.GetObjectScope(),
 		false, nil, true, true)
 	if err != nil {

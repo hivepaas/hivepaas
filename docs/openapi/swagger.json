@@ -44999,11 +44999,18 @@
             },
             "type" : "array"
           },
+          "sharedVolumes" : {
+            "additionalProperties" : {
+              "type" : "string"
+            },
+            "description" : "SharedVolumes are volume names a child may mount, each standing for a\ndirectory of SharedDirs.",
+            "type" : "object"
+          },
           "updateVer" : {
             "type" : "integer"
           }
         },
-        "required" : [ "allow", "defaultLimits", "enabled", "hostMode", "images", "limits", "mode", "networks", "sharedDirs", "updateVer" ],
+        "required" : [ "allow", "defaultLimits", "enabled", "hostMode", "images", "limits", "mode", "networks", "sharedDirs", "sharedVolumes", "updateVer" ],
         "type" : "object"
       },
       "appsettingsdto.AppKindCacheReq" : {
@@ -47567,11 +47574,18 @@
             },
             "type" : "array"
           },
+          "sharedVolumes" : {
+            "additionalProperties" : {
+              "type" : "string"
+            },
+            "description" : "SharedVolumes are volume names a child may mount, each standing for a\ndirectory of SharedDirs.",
+            "type" : "object"
+          },
           "updateVer" : {
             "type" : "integer"
           }
         },
-        "required" : [ "allow", "enabled", "images", "limits", "mode", "networks", "sharedDirs", "updateVer" ],
+        "required" : [ "allow", "enabled", "images", "limits", "mode", "networks", "sharedDirs", "sharedVolumes", "updateVer" ],
         "type" : "object"
       },
       "appsettingsdto.UpdateAppDockerAPISettingsResp" : {
@@ -48035,6 +48049,37 @@
         "required" : [ "children", "count", "id", "title" ],
         "type" : "object"
       },
+      "apptemplatedto.AppTemplateComponentResp" : {
+        "properties" : {
+          "capabilities" : {
+            "allOf" : [ {
+              "$ref" : "#/components/schemas/apptemplatedto.AppTemplateCapabilitiesResp"
+            } ],
+            "description" : "Capabilities, DockerAPI and PublishedPorts are as the template's own are.",
+            "type" : "object"
+          },
+          "dockerApi" : {
+            "$ref" : "#/components/schemas/apptemplatedto.AppTemplateDockerAPIResp"
+          },
+          "name" : {
+            "type" : "string"
+          },
+          "primary" : {
+            "type" : "boolean"
+          },
+          "publishedPorts" : {
+            "items" : {
+              "$ref" : "#/components/schemas/apptemplatedto.AppTemplatePortResp"
+            },
+            "type" : "array"
+          },
+          "title" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "capabilities", "dockerApi", "name", "primary", "publishedPorts", "title" ],
+        "type" : "object"
+      },
       "apptemplatedto.AppTemplateComponentSummaryResp" : {
         "properties" : {
           "name" : {
@@ -48154,9 +48199,15 @@
               "type" : "string"
             },
             "type" : "array"
+          },
+          "sharedVolumes" : {
+            "additionalProperties" : {
+              "type" : "string"
+            },
+            "type" : "object"
           }
         },
-        "required" : [ "allow", "containers", "cpus", "images", "memory", "networks", "sharedDirs" ],
+        "required" : [ "allow", "containers", "cpus", "images", "memory", "networks", "sharedDirs", "sharedVolumes" ],
         "type" : "object"
       },
       "apptemplatedto.AppTemplateImageTagResp" : {
@@ -48320,6 +48371,13 @@
           "compatible" : {
             "type" : "boolean"
           },
+          "components" : {
+            "description" : "Components are the apps a template that creates several makes for itself.\nSuch a template has no single app, so Capabilities, DockerAPI and\nPublishedPorts above are empty for it, and each component carries its own.",
+            "items" : {
+              "$ref" : "#/components/schemas/apptemplatedto.AppTemplateComponentResp"
+            },
+            "type" : "array"
+          },
           "dependencies" : {
             "description" : "Dependencies are the apps creating this template also creates, each with the\nparameters a person has to fill in for it.",
             "items" : {
@@ -48393,7 +48451,7 @@
             "type" : "array"
           }
         },
-        "required" : [ "capabilities", "categories", "compatible", "dependencies", "description", "dockerApi", "iconUrl", "license", "links", "name", "parameters", "publishedPorts", "revision", "source", "tagline", "tags", "title", "variants", "versions" ],
+        "required" : [ "capabilities", "categories", "compatible", "components", "dependencies", "description", "dockerApi", "iconUrl", "license", "links", "name", "parameters", "publishedPorts", "revision", "source", "tagline", "tags", "title", "variants", "versions" ],
         "type" : "object"
       },
       "apptemplatedto.AppTemplateSummaryResp" : {

@@ -196,6 +196,40 @@ func TestTransformAppTemplateAsksOnlyWhatADependencyNeeds(t *testing.T) {
 	assert.Equal(t, "dataVolume", db.Parameters[0].Name, "defaulted and generated parameters are not asked")
 }
 
+// A template of components has no app of its own: what it grants is each
+// component's, and the store has to show every one.
+func TestTransformAppTemplateShowsWhatEachComponentIsGranted(t *testing.T) {
+	useBasePath(t)
+	tmpl := &apptemplateservice.TemplateResp{
+		Entry: testEntry("v000001"),
+		Template: &templatemodel.Template{
+			Metadata: templatemodel.Metadata{Name: "appwrite"},
+			Components: []*templatemodel.Component{
+				{Name: "gw", Title: "Gateway", Primary: true, App: map[string]any{}},
+				{Name: "orch", Title: "Orchestrator", App: map[string]any{"settings": map[string]any{
+					"dockerApi": map[string]any{
+						"images":        []any{"openruntimes/*"},
+						"sharedDirs":    []any{"/storage/builds"},
+						"sharedVolumes": map[string]any{"appwrite-builds": "/storage/builds"},
+					},
+				}}},
+			},
+		},
+	}
+
+	resp := TransformAppTemplate(tmpl, "v000001")
+
+	assert.Nil(t, resp.DockerAPI)
+	assert.Len(t, resp.Components, 2)
+	assert.Equal(t, "gw", resp.Components[0].Name)
+	assert.True(t, resp.Components[0].Primary)
+	assert.Nil(t, resp.Components[0].DockerAPI)
+	assert.Equal(t, &AppTemplateDockerAPIResp{
+		Images: []string{"openruntimes/*"}, SharedDirs: []string{"/storage/builds"},
+		SharedVolumes: map[string]string{"appwrite-builds": "/storage/builds"},
+	}, resp.Components[1].DockerAPI)
+}
+
 func TestTransformAppTemplateBindingLinks(t *testing.T) {
 	resp := TransformAppTemplateBinding(&entity.AppTemplateSettings{
 		Dependencies:    []entity.AppTemplateDependency{{Name: "db", AppID: "app-db", Template: "mysql"}},

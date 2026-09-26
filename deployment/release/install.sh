@@ -25,6 +25,10 @@
 STEP_NO=0
 STEP_TOTAL=9
 C_RESET='' C_BOLD='' C_RED='' C_GREEN='' C_YELLOW='' C_BLUE='' C_LOGO=''
+# LOG_FILE: where the run's own lines also go, without colour; save_log keeps
+# them in the app data directory. The output of the commands it runs is not
+# in it, and neither are questions or answers.
+LOG_FILE=''
 
 setup_colors() {
   if [ -t 1 ] && [ -z "${NO_COLOR:-}" ] && [ "${TERM:-}" != dumb ]; then
@@ -33,16 +37,31 @@ setup_colors() {
   fi
 }
 
-info() { printf '  %s\n' "$*"; }
-ok() { printf '  %s✔%s %s\n' "$C_GREEN" "$C_RESET" "$*"; }
-warn() { printf '  %s!%s %s\n' "$C_YELLOW" "$C_RESET" "$*" >&2; }
+log_line() {
+  if [ -n "$LOG_FILE" ]; then printf '%s\n' "$*" >>"$LOG_FILE"; fi
+}
+
+info() {
+  printf '  %s\n' "$*"
+  log_line "  $*"
+}
+ok() {
+  printf '  %s✔%s %s\n' "$C_GREEN" "$C_RESET" "$*"
+  log_line "  ok: $*"
+}
+warn() {
+  printf '  %s!%s %s\n' "$C_YELLOW" "$C_RESET" "$*" >&2
+  log_line "  !: $*"
+}
 die() {
   printf '\n%s✘ %s%s\n' "$C_RED" "$*" "$C_RESET" >&2
+  log_line "error: $*"
   exit 1
 }
 step() {
   STEP_NO=$((STEP_NO + 1))
   printf '\n%s%s[%d/%d] %s%s\n' "$C_BOLD" "$C_BLUE" "$STEP_NO" "$STEP_TOTAL" "$*" "$C_RESET"
+  log_line "[$STEP_NO/$STEP_TOTAL] $*"
 }
 
 # on_error runs for a command that failed where nothing expected it to. Inside
@@ -50,6 +69,7 @@ step() {
 on_error() {
   [ "${BASH_SUBSHELL:-0}" -eq 0 ] || return 0
   printf '\n%s✘ The installer stopped at line %s (exit status %s).%s\n' "$C_RED" "$2" "$1" "$C_RESET" >&2
+  log_line "error: the installer stopped at line $2 (exit status $1)"
   printf '  Fix what the output above says, then run it again: it picks up where it stopped.\n' >&2
   exit "$1"
 }
@@ -708,6 +728,47 @@ normalize_settings() {
   fi
 }
 
+
+# credentials_file: the secrets a person may need, next to hivepaas.toml.
+credentials_file() {
+  printf '%s/credentials.txt' "$HIVEPAAS_DATA_DIR"
+}
+
+# write_credentials FILE: the passwords and tokens the services run with, for a
+# person to read and for a run whose services are gone - Postgres only ever
+# takes the password it was created with. KEY=VALUE lines, so the file also
+# works as a --config file. Never the app secret, nor the admin's password.
+write_credentials() {
+  (
+    umask 077
+    {
+      printf '# HivePaaS credentials, written by install.sh on %s.\n' "$(date -u '+%Y-%m-%d %H:%M UTC')"
+      printf '# Keep this file private: do not paste it into an issue or a chat.\n'
+      printf '# The app secret is not here: it is in hivepaas.toml, next to this file.\n'
+      printf '# The admin password is not kept anywhere: it is the one you chose.\n'
+      printf '# These are also in the environment of the HivePaaS services.\n\n'
+      printf "# The database's password. Postgres only takes the password it was created\n"
+      printf "# with: without it, a database left after 'docker stack rm' cannot be opened.\n"
+      printf 'HIVEPAAS_DB_PASSWORD=%s\n\n' "$(kv_quote "$HIVEPAAS_DB_PASSWORD")"
+      printf "# Redis's password; the cache keeps nothing across a restart.\n"
+      printf 'HIVEPAAS_REDIS_PASSWORD=%s\n\n' "$(kv_quote "$HIVEPAAS_REDIS_PASSWORD")"
+      printf '# The token the app and its agents authenticate each other with.\n'
+      printf 'HIVEPAAS_AGENT_TOKEN=%s\n\n' "$(kv_quote "$HIVEPAAS_AGENT_TOKEN")"
+      printf '# The key sessions are signed with; a new one signs everyone out.\n'
+      printf 'HIVEPAAS_JWT_SECRET=%s\n' "$(kv_quote "$HIVEPAAS_JWT_SECRET")"
+    } >"$1.tmp"
+  ) && mv -f "$1.tmp" "$1"
+}
+
+# take_credential KEY VALUE: a line of credentials.txt - the four keys it holds,
+# and nothing else.
+take_credential() {
+  case "$1" in
+    HIVEPAAS_DB_PASSWORD | HIVEPAAS_REDIS_PASSWORD | HIVEPAAS_AGENT_TOKEN | HIVEPAAS_JWT_SECRET)
+      take_installed "$1" "$2"
+      ;;
+  esac
+}
 # load_settings INSTALLED_ENV: the environment, then --config, then the
 # HivePaaS already on this server - each only for what the ones before it left
 # unset. INSTALLED_ENV is the hivepaas_app service's environment, empty when
@@ -1263,6 +1324,8 @@ prepare_files() {
     write_secret_file "$(secret_file)" "$HIVEPAAS_APP_SECRET" || die "Could not write $(secret_file)."
     ok "App secret: in $(secret_file)."
   fi
+  write_credentials "$(credentials_file)" || die "Could not write $(credentials_file)."
+  ok "Passwords and tokens, for you to keep private: $(credentials_file)."
   fetch_install_file hivepaas.yaml "$WORK_DIR/hivepaas.yaml"
   fetch_install_file hivepaas.first-boot.yaml "$WORK_DIR/hivepaas.first-boot.yaml"
   # The app writes Traefik's configuration from here on; a run after the first
@@ -1331,12 +1394,33 @@ detect_install_state() {
     fi
   else
     INSTALL_STATE=fresh
-    if db_volume_exists && [ -z "${HIVEPAAS_DB_PASSWORD:-}" ]; then
-      die "A HivePaaS database volume is on this server, but no HivePaaS services, and its password was in" \
-        "them. Set HIVEPAAS_DB_PASSWORD to it (and keep <app data>/hivepaas.toml where it is), or remove the" \
-        "volume to start over ('docker volume ls', 'docker volume rm'), then run the installer again."
+    if db_volume_exists; then
+      reinstall_over_database
     fi
   fi
+}
+
+# reinstall_over_database: a database volume without services - left by
+# `docker stack rm` - is deployed over again, with the password it was created
+# with: given, or from credentials.txt in the app data directory. Its admin
+# exists already, so it is not asked for.
+reinstall_over_database() {
+  local creds
+  if [ -z "${HIVEPAAS_DB_PASSWORD:-}" ]; then
+    creds="$(normalize_dir "${HIVEPAAS_DATA_DIR:-/var/lib/hivepaas}")/credentials.txt"
+    if [ -f "$creds" ]; then
+      read_kv_file "$creds" take_credential
+      HIVEPAAS_DATA_DIR=${HIVEPAAS_DATA_DIR:-${creds%/*}}
+    fi
+  fi
+  if [ -z "${HIVEPAAS_DB_PASSWORD:-}" ]; then
+    die "A HivePaaS database volume is on this server, but no HivePaaS services and no credentials.txt" \
+      "in the app data directory to take its password from. Set HIVEPAAS_DB_PASSWORD (or HIVEPAAS_DATA_DIR," \
+      "where credentials.txt and hivepaas.toml are), or remove the volume to start over ('docker volume ls'," \
+      "'docker volume rm'), then run the installer again."
+  fi
+  INSTALLED=1
+  info "Deploying again over the database already here; its admin is kept."
 }
 
 # port_taken PORT: something on this host takes connections on PORT.
@@ -1498,7 +1582,8 @@ deploy() {
   case "$INSTALL_STATE" in
     fresh)
       resolve_images
-      deploy_stack 1
+      # Over a database already here, the admin exists: no first boot.
+      if [ "$INSTALLED" = 1 ]; then deploy_stack 0; else deploy_stack 1; fi
       run_migrations "$HIVEPAAS_IMAGE_APP"
       ;;
     unfinished)
@@ -1707,7 +1792,8 @@ Settings, from the environment or --config (the environment wins):
   HIVEPAAS_AGENT_IMAGE         the agent's image (default: from the release)
   HIVEPAAS_RELEASE_BRANCH      the branch the release info is read from (default: release)
   HIVEPAAS_INSTALL_REF         the ref the stack files are downloaded from (default: main)
-  HIVEPAAS_DB_PASSWORD         only to redeploy over a database whose services are gone
+  HIVEPAAS_DB_PASSWORD         only to redeploy over a database whose services are gone,
+                               when <data dir>/credentials.txt, read by default, is gone too
 
 Silent install - a settings file to fill in, with every setting explained:
   curl -fsSLO https://raw.githubusercontent.com/hivepaas/hivepaas/main/deployment/release/install.env
@@ -1736,7 +1822,22 @@ parse_args() {
   done
 }
 
+# save_log: the run's lines, appended under a dated header to install.log in the
+# app data directory - once that exists, which a run stopped early leaves it
+# without.
+save_log() {
+  local log="${HIVEPAAS_DATA_DIR:-}/install.log"
+  if [ -z "$LOG_FILE" ] || [ ! -f "$LOG_FILE" ] || [ ! -d "${HIVEPAAS_DATA_DIR:-/nonexistent}" ]; then
+    return 0
+  fi
+  {
+    printf '\n=== install.sh, %s\n' "$(date -u '+%Y-%m-%d %H:%M:%S UTC')"
+    cat "$LOG_FILE"
+  } >>"$log" && chmod 600 "$log"
+}
+
 cleanup() {
+  save_log || true
   if [ -n "$WORK_DIR" ]; then rm -rf "$WORK_DIR"; fi
 }
 
@@ -1750,6 +1851,7 @@ main() {
   print_logo
   open_tty
   WORK_DIR=$(mktemp -d)
+  LOG_FILE=$WORK_DIR/install.log
 
   step "Preflight"
   preflight

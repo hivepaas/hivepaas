@@ -604,6 +604,31 @@ test_print_summary_hides_secrets() {
   check_contains "the addresses" "$out" "https://app.example.com, https://1.2.3.4"
 }
 
+test_credentials_file() {
+  local file text
+  HIVEPAAS_DATA_DIR=$TMP/data HIVEPAAS_APP_SECRET=the-app-secret-0123456789abcdef01 HIVEPAAS_ADMIN_PASSWORD=admin-pass-1
+  HIVEPAAS_DB_PASSWORD=db-pass HIVEPAAS_REDIS_PASSWORD=redis-pass HIVEPAAS_AGENT_TOKEN=agent-token
+  HIVEPAAS_JWT_SECRET=jwt-secret
+  mkdir -p "$HIVEPAAS_DATA_DIR"
+  file=$(credentials_file)
+  check "next to hivepaas.toml" "$TMP/data/credentials.txt" "$file"
+  write_credentials "$file"
+  check "written" 0 "$?"
+  check "readable by root alone" 600 "$(stat -c %a "$file" 2>/dev/null || stat -f %Lp "$file")"
+  text=$(cat "$file")
+  check_contains "it says not to share it" "$text" "do not paste it"
+  check_lacks "no app secret" "$text" the-app-secret
+  check_lacks "no admin password" "$text" admin-pass-1
+  unset HIVEPAAS_DB_PASSWORD HIVEPAAS_REDIS_PASSWORD HIVEPAAS_AGENT_TOKEN HIVEPAAS_JWT_SECRET
+  printf '%s\n' 'HIVEPAAS_DATA_DIR=/elsewhere' 'PATH=/nowhere' >>"$file"
+  read_kv_file "$file" take_credential 2>/dev/null
+  check "the database password reads back" db-pass "$HIVEPAAS_DB_PASSWORD"
+  check "the redis password" redis-pass "$HIVEPAAS_REDIS_PASSWORD"
+  check "the agent token" agent-token "$HIVEPAAS_AGENT_TOKEN"
+  check "the JWT secret" jwt-secret "$HIVEPAAS_JWT_SECRET"
+  check "nothing else is taken" "$TMP/data" "$HIVEPAAS_DATA_DIR"
+}
+
 # --------------------------------------------------------------------- Host
 
 test_read_os_release() {
@@ -786,6 +811,34 @@ test_install_env_template() {
   for key in $(usage | grep -oE 'HIVEPAAS_[A-Z_]+' | sort -u); do
     check_contains "it explains $key" "$(cat "$file")" "$key"
   done
+}
+
+test_log_lines() {
+  LOG_FILE=$TMP/run.log C_GREEN=$'\033[32m' C_RESET=$'\033[0m'
+  info "an info" >/dev/null
+  ok "an ok" >/dev/null
+  warn "a warning" 2>/dev/null
+  step "A step" >/dev/null
+  check "plain lines" "  an info|  ok: an ok|  !: a warning|[1/9] A step|" "$(tr '\n' '|' <"$LOG_FILE")"
+  LOG_FILE=''
+  info "not logged" >/dev/null
+  check "no log without a file" 4 "$(wc -l <"$TMP/run.log" | tr -d ' ')"
+}
+
+test_save_log() {
+  LOG_FILE=$TMP/run.log
+  printf '  a line\n' >"$LOG_FILE"
+  HIVEPAAS_DATA_DIR=$TMP/nowhere
+  save_log
+  check_fails "no data directory, no log" test -e "$TMP/nowhere/install.log"
+  HIVEPAAS_DATA_DIR=$TMP/data
+  mkdir -p "$HIVEPAAS_DATA_DIR"
+  save_log
+  save_log
+  check "appended once a run, under a header" 2 "$(grep -c '^=== install.sh, ' "$TMP/data/install.log")"
+  check_contains "with the run's lines" "$(cat "$TMP/data/install.log")" "  a line"
+  check "readable by root alone" 600 "$(stat -c %a "$TMP/data/install.log" 2>/dev/null ||
+    stat -f %Lp "$TMP/data/install.log")"
 }
 
 # ------------------------------------------------------------------- Runner

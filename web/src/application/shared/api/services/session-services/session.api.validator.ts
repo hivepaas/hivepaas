@@ -8,8 +8,6 @@ import type { ModulePermission, ProjectPermission } from "@application/shared/pe
 
 import { parseApiResponse } from "@infrastructure/api";
 
-import { SetupChecklistSchema } from "./setup-checklist.api.schema";
-
 /**
  * Get account API response schema
  */
@@ -121,7 +119,6 @@ function mapProjectAccessesToProjectPermissions(
 const GetProfileSchema = z.object({
     data: z.object({
         nextStep: z.string().optional(),
-        setupChecklist: SetupChecklistSchema.nullish(),
         user: z.object({
             id: z.string(),
             username: z.string(),
@@ -151,7 +148,7 @@ export class SessionApiValidator {
      */
     getProfile = (response: AxiosResponse): Session_GetProfile_Res => {
         const {
-            data: { user, nextStep, setupChecklist },
+            data: { user, nextStep },
         } = parseApiResponse({
             response,
             schema: GetProfileSchema,
@@ -175,7 +172,6 @@ export class SessionApiValidator {
                 createdAt: user.createdAt,
                 lastAccess: user.lastAccess ?? null,
                 nextStep,
-                setupChecklist: setupChecklist ?? null,
                 position: user.position ?? "",
                 status: user.status,
                 projectAccesses,

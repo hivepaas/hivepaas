@@ -1,20 +1,42 @@
 import { type AxiosResponse } from "axios";
 import { z } from "zod";
-
-import { SetupChecklistItemSchema } from "@application/shared/api/services";
+import type { DashboardCert } from "~/home/domain";
 
 import { BaseMetaApiSchema, parseApiResponse } from "@infrastructure/api";
 
-import type { GetStarted_Dismiss_Res, GetStarted_RequestDashboardCert_Res } from "./get-started.api.contracts";
+import type {
+    GetStarted_Dismiss_Res,
+    GetStarted_GetDashboardCert_Res,
+    GetStarted_RequestDashboardCert_Res,
+} from "./get-started.api.contracts";
 
-const RequestDashboardCertSchema = z.object({
-    data: SetupChecklistItemSchema,
+const DashboardCertSchema = z
+    .object({
+        status: z.enum(["todo", "obtaining", "failed", "done"]).catch("todo"),
+        domain: z.string().nullish(),
+        error: z.string().nullish(),
+    })
+    .transform(
+        (cert): DashboardCert => ({
+            status: cert.status,
+            domain: cert.domain ?? "",
+            error: cert.error ?? "",
+        }),
+    );
+
+const DashboardCertResponseSchema = z.object({
+    data: DashboardCertSchema,
     meta: BaseMetaApiSchema.nullish(),
 });
 
 export class GetStartedApiValidator {
+    getDashboardCert = (response: AxiosResponse): GetStarted_GetDashboardCert_Res => {
+        const { data, meta } = parseApiResponse({ response, schema: DashboardCertResponseSchema });
+        return { data, meta };
+    };
+
     requestDashboardCert = (response: AxiosResponse): GetStarted_RequestDashboardCert_Res => {
-        const { data, meta } = parseApiResponse({ response, schema: RequestDashboardCertSchema });
+        const { data, meta } = parseApiResponse({ response, schema: DashboardCertResponseSchema });
         return { data, meta };
     };
 

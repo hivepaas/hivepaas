@@ -10,6 +10,23 @@ function createHook() {
         const { api } = use(HomeApiContext);
         const { notifyError } = useApiErrorNotifications();
 
+        const queries = useMemo(
+            () => ({
+                getDashboardCert: async (signal?: AbortSignal) => {
+                    const result = await api.home.getStarted.getDashboardCert({ data: {} }, signal);
+
+                    return match(result, {
+                        Ok: _ => _,
+                        Err: error => {
+                            notifyError({ message: "Failed to get the dashboard's certificate", error });
+                            throw error;
+                        },
+                    });
+                },
+            }),
+            [api, notifyError],
+        );
+
         const mutations = useMemo(
             () => ({
                 requestDashboardCert: async () => {
@@ -38,7 +55,7 @@ function createHook() {
             [api, notifyError],
         );
 
-        return { mutations };
+        return { queries, mutations };
     };
 }
 

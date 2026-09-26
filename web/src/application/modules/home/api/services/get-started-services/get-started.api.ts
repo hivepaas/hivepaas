@@ -6,6 +6,8 @@ import { BaseApi, parseApiError } from "@infrastructure/api";
 import type {
     GetStarted_Dismiss_Req,
     GetStarted_Dismiss_Res,
+    GetStarted_GetDashboardCert_Req,
+    GetStarted_GetDashboardCert_Res,
     GetStarted_RequestDashboardCert_Req,
     GetStarted_RequestDashboardCert_Res,
 } from "./get-started.api.contracts";
@@ -14,6 +16,19 @@ import type { GetStartedApiValidator } from "./get-started.api.validator";
 export class GetStartedApi extends BaseApi {
     public constructor(private readonly validator: GetStartedApiValidator) {
         super();
+    }
+
+    async getDashboardCert(
+        _request: GetStarted_GetDashboardCert_Req,
+        signal?: AbortSignal,
+    ): Promise<Result<GetStarted_GetDashboardCert_Res, Error>> {
+        return lastValueFrom(
+            from(this.client.v1.get("/system/get-started/dashboard-cert", { signal })).pipe(
+                map(this.validator.getDashboardCert),
+                map(res => Ok(res)),
+                catchError(error => of(Err(parseApiError(error)))),
+            ),
+        );
     }
 
     async requestDashboardCert(

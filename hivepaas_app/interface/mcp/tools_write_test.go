@@ -222,7 +222,7 @@ func TestAPlanChangesNothingAndApplySendsExactlyIt(t *testing.T) {
 		switch {
 		case entry.ResName == "plan_restart_app":
 			planned = entry.Detail
-		case entry.ResName == "apply_plan" && strings.Contains(entry.Detail, "applies"):
+		case entry.ResName == "apply_plan: plan_restart_app":
 			applied = entry.Detail
 		}
 		assert.NotContains(t, entry.Detail, plan.PlanToken)

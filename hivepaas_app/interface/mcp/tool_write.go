@@ -140,8 +140,9 @@ func applyPlan(ctx context.Context, call *Call, c *caller, in applyInput) (apply
 		return applyAnswer{}, err
 	}
 	// Recorded before anything is sent: a change whose record cannot be written
-	// is not made.
-	if err = recordCall(ctx, deps, c, "apply_plan", in, base.AuditLogResultAllowed,
+	// is not made. Named with the tool it applies, which is what a list of calls
+	// shows of an entry: its detail is cut there.
+	if err = recordCall(ctx, deps, c, "apply_plan: "+plan.Tool, in, base.AuditLogResultAllowed,
 		auditNote{"plan", planID}, auditNote{"applies", plan.Tool}, auditNote{"summary", plan.Summary}); err != nil {
 		return applyAnswer{}, err
 	}

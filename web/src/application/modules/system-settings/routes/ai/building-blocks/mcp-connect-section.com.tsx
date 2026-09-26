@@ -14,7 +14,7 @@ import { ProfileCommands } from "@application/shared/data/commands";
 import { Button, Input } from "@/components/ui";
 import { PasswordInput } from "@/components/ui/input-password";
 
-import { CopyField } from "./copy-field.com";
+import { McpClientSnippets } from "./mcp-client-snippets.com";
 import { McpKeyCheck } from "./mcp-key-check.com";
 
 interface CreatedKey {
@@ -30,30 +30,6 @@ interface KeyState extends CreatedKey {
 /** Placeholders in the snippets until a key is pasted or created here. */
 const KEY_ID_PLACEHOLDER = "<key-id>";
 const SECRET_PLACEHOLDER = "<secret>";
-
-function claudeCodeSnippet(endpoint: string, keyId: string, secret: string): string {
-    return (
-        `claude mcp add --transport http hivepaas ${endpoint} \\\n` +
-        `  --header "HIVEPAAS-API-KEY-ID: ${keyId}" \\\n` +
-        `  --header "HIVEPAAS-API-SECRET-KEY: ${secret}"`
-    );
-}
-
-function mcpServersSnippet(endpoint: string, keyId: string, secret: string): string {
-    const config = {
-        mcpServers: {
-            hivepaas: {
-                type: "http",
-                url: endpoint,
-                headers: {
-                    "HIVEPAAS-API-KEY-ID": keyId,
-                    "HIVEPAAS-API-SECRET-KEY": secret,
-                },
-            },
-        },
-    };
-    return JSON.stringify(config, null, 2);
-}
 
 /** Which access actions a key needs, so the person can create the one they want in their profile. */
 function KeyAccessNote({ allowWrite }: { allowWrite: boolean }) {
@@ -213,44 +189,15 @@ export function McpConnectSection({ endpoint, enabled, allowWrite }: Props) {
                     titleWidth={220}
                     title={
                         <LabelWithInfo
-                            label="Claude Code"
-                            content="Run it in a terminal. Add --scope user to have it in every project."
+                            label="Client"
+                            content="MCP is not any one vendor's: every client below reaches the same server, and whichever model it runs sees the same tools. Each writes its configuration its own way."
                         />
                     }
                 >
-                    <CopyField
-                        what="Command"
-                        value={claudeCodeSnippet(endpoint, keyId, secret)}
-                    />
-                </InfoBlock>
-
-                <InfoBlock
-                    titleWidth={220}
-                    title={
-                        <LabelWithInfo
-                            label="Claude Desktop and editors"
-                            content="The mcpServers entry that Claude Desktop, Cursor, VS Code and most other clients read from their configuration file."
-                        />
-                    }
-                >
-                    <CopyField
-                        what="Configuration"
-                        value={mcpServersSnippet(endpoint, keyId, secret)}
-                    />
-                </InfoBlock>
-
-                <InfoBlock
-                    titleWidth={220}
-                    title={
-                        <LabelWithInfo
-                            label="Other clients"
-                            content="A client that sets only the Authorization header can send the key there, as its id and secret joined by a colon."
-                        />
-                    }
-                >
-                    <CopyField
-                        what="Header"
-                        value={`Authorization: Bearer ${keyId}:${secret}`}
+                    <McpClientSnippets
+                        endpoint={endpoint}
+                        keyId={keyId}
+                        secret={secret}
                     />
                 </InfoBlock>
             </div>

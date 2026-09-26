@@ -190,6 +190,14 @@ func TestEnsureAppSecret(t *testing.T) {
 		assert.ErrorIs(t, err, ErrAppSecretUnset)
 		assert.Empty(t, config.Secret)
 	})
+
+	// The agent decrypts nothing, and runs on nodes where the app's volume, and
+	// the managed settings in it, are not.
+	t.Run("the agent needs none", func(t *testing.T) {
+		config := &Config{Env: EnvProd, RunMode: RunModeAgent}
+		assert.NoError(t, ensureAppSecret(config, t.TempDir()))
+		assert.Empty(t, config.Secret)
+	})
 }
 
 func TestSaveManagedSettings(t *testing.T) {

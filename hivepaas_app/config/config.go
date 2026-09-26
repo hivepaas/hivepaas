@@ -243,6 +243,11 @@ func ensureAppSecret(config *Config, appPath string) error {
 	if config.Secret != "" {
 		return nil
 	}
+	// The agent decrypts nothing, and runs on every node - where the app's volume,
+	// and the managed settings in it, are not. It is given no secret.
+	if config.RunMode == RunModeAgent {
+		return nil
+	}
 
 	if !config.IsDevEnv() {
 		return fmt.Errorf("%w: HP_APP_SECRET must be set, e.g. %s",

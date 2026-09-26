@@ -105,7 +105,7 @@ func sysInstallationInitData(
 			return fmt.Errorf("failed to initialize dev projects: %w", err)
 		}
 
-		sysStatus.NextStep = base.InstallationStepObtainAppSSL
+		sysStatus.NextStep = base.InstallationStepGetStarted
 		sysStatus.UpdateVer++
 		sysStatus.UpdatedAt = timeutil.NowUTC()
 		err = sysStatusRepo.Upsert(ctx, db, sysStatus,

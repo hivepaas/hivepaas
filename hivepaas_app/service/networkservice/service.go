@@ -8,7 +8,17 @@ import (
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
+	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/projecthelper"
 )
+
+// ProjectNetworkName is the network of one env of a project: the one its apps
+// join, and reach each other on by key. An empty env is the project's local one.
+func ProjectNetworkName(project *entity.Project, env string) string {
+	if env == "" {
+		return project.Key + "_local_net"
+	}
+	return project.Key + "_" + projecthelper.CalcProjectEnvKey(env) + "_net"
+}
 
 type Service interface {
 	GetGlobalRoutingNetworkID(ctx context.Context) (string, error)

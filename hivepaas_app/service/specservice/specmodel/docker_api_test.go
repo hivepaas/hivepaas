@@ -39,6 +39,10 @@ func TestDockerAPIProblem(t *testing.T) {
 		return &entity.AppDockerAPISettings{Images: []string{"alpine"}}
 	}
 	assert.Empty(t, DockerAPIProblem(ok()))
+	below := ok()
+	below.SharedDirs = []string{"/storage"}
+	below.SharedVolumes = map[string]string{"appwrite-builds": "/storage/builds", "all": "/storage"}
+	assert.Empty(t, DockerAPIProblem(below), "a shared volume may stand for a shared directory or one below it")
 
 	tooMany := make([]string, MaxDockerAPIImages+1)
 	for i := range tooMany {
@@ -53,11 +57,27 @@ func TestDockerAPIProblem(t *testing.T) {
 		"sharedDirs[0]":             func(s *entity.AppDockerAPISettings) { s.SharedDirs = []string{"data"} },
 		"sharedDirs[0]: / is":       func(s *entity.AppDockerAPISettings) { s.SharedDirs = []string{"/"} },
 		"sharedDirs[0]: /a/../b is": func(s *entity.AppDockerAPISettings) { s.SharedDirs = []string{"/a/../b"} },
-		"networks[0]":               func(s *entity.AppDockerAPISettings) { s.Networks = []string{"hivepaas_net"} },
-		"allow[0]":                  func(s *entity.AppDockerAPISettings) { s.Allow = []string{"build"} },
-		"limits.containers":         func(s *entity.AppDockerAPISettings) { s.Limits.Containers = 101 },
-		"limits.memory":             func(s *entity.AppDockerAPISettings) { s.Limits.Memory = 1 * unit.MB },
-		"limits.cpus":               func(s *entity.AppDockerAPISettings) { s.Limits.CPUs = -1 },
+		"sharedVolumes: at most": func(s *entity.AppDockerAPISettings) {
+			s.SharedDirs = []string{"/a"}
+			s.SharedVolumes = map[string]string{"v1": "/a", "v2": "/a", "v3": "/a", "v4": "/a", "v5": "/a", "v6": "/a"}
+		},
+		"sharedVolumes: \"-x\" is not a volume name": func(s *entity.AppDockerAPISettings) {
+			s.SharedDirs = []string{"/a"}
+			s.SharedVolumes = map[string]string{"-x": "/a"}
+		},
+		"sharedVolumes.bb: /a/../b is not": func(s *entity.AppDockerAPISettings) {
+			s.SharedDirs = []string{"/a"}
+			s.SharedVolumes = map[string]string{"bb": "/a/../b"}
+		},
+		"sharedVolumes.builds: /ab is in none of sharedDirs": func(s *entity.AppDockerAPISettings) {
+			s.SharedDirs = []string{"/a"}
+			s.SharedVolumes = map[string]string{"builds": "/ab"}
+		},
+		"networks[0]":       func(s *entity.AppDockerAPISettings) { s.Networks = []string{"hivepaas_net"} },
+		"allow[0]":          func(s *entity.AppDockerAPISettings) { s.Allow = []string{"build"} },
+		"limits.containers": func(s *entity.AppDockerAPISettings) { s.Limits.Containers = 101 },
+		"limits.memory":     func(s *entity.AppDockerAPISettings) { s.Limits.Memory = 1 * unit.MB },
+		"limits.cpus":       func(s *entity.AppDockerAPISettings) { s.Limits.CPUs = -1 },
 	}
 	for want, change := range cases {
 		settings := ok()

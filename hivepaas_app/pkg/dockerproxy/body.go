@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 	"strconv"
 )
 
@@ -35,6 +36,28 @@ func readBody(r *http.Request) (map[string]any, error) {
 		body = map[string]any{}
 	}
 	return body, nil
+}
+
+// formValues are a request's parameters as the daemon reads them: the query,
+// and for a form-encoded body the body too, whose values come first. Judging the
+// query alone would let a client put one image there and pull another from the
+// body - utopia-php's Docker client, which Appwrite's executor uses, sends every
+// parameter of a pull in the body. The body is left for the request to forward.
+func formValues(r *http.Request) (url.Values, error) {
+	raw, err := io.ReadAll(io.LimitReader(r.Body, maxBody+1))
+	if err != nil {
+		return nil, fmt.Errorf("reading the request: %w", err)
+	}
+	if len(raw) > maxBody {
+		return nil, refusef("the request body is larger than %d bytes", maxBody)
+	}
+	r.Body = io.NopCloser(bytes.NewReader(raw))
+	parsed := r.Clone(r.Context())
+	parsed.Body = io.NopCloser(bytes.NewReader(raw))
+	if err = parsed.ParseForm(); err != nil {
+		return nil, refusef("the request's parameters are not readable")
+	}
+	return parsed.Form, nil
 }
 
 // setBody replaces the request's body with body, as JSON.

@@ -34,6 +34,8 @@ var routes = []route{
 	on("GET", `/images/(.+)/json`, "", (*Proxy).pass),
 	on("POST", `/images/create`, "", (*Proxy).pull),
 
+	on("GET", `/events`, "", (*Proxy).events),
+
 	on("GET", `/containers/json`, "", (*Proxy).listContainers),
 	on("POST", `/containers/create`, "", (*Proxy).create),
 	on("GET", `/containers/`+idPart+`/(?:json|logs|stats|top)`, "", (*Proxy).onChild),

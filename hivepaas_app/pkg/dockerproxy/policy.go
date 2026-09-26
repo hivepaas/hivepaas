@@ -65,6 +65,12 @@ type Policy struct {
 	// SharedDirs are directories of the app a child may bind. Each lies on one of
 	// the app's volume mounts.
 	SharedDirs []string
+	// SharedVolumes are volume names that stand for one of SharedDirs each, for
+	// an app whose code names a volume rather than a path: Appwrite's
+	// orchestrator mounts "appwrite-builds" into every build. A child naming one
+	// gets the directory it stands for, which is what a bind of the path would
+	// get - never a volume of that name on the node.
+	SharedVolumes map[string]string
 	// Network is the app's own network, which children join unless they name
 	// another the policy allows.
 	Network string
@@ -86,6 +92,13 @@ type Policy struct {
 
 func (p *Policy) allows(group Group) bool {
 	return group == "" || slices.Contains(p.Allow, group)
+}
+
+// sharedVolume is the directory a volume name stands for, and whether it stands
+// for one.
+func (p *Policy) sharedVolume(name string) (string, bool) {
+	dir, found := p.SharedVolumes[name]
+	return dir, found
 }
 
 // reserved reports a name HivePaaS keeps for itself.

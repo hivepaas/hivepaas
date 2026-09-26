@@ -7,9 +7,11 @@ import (
 	"github.com/tiendc/gofn"
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
+	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/apptemplateservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/apptemplateservice/templatemodel"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/specservice/specmodel"
 )
 
 const templateNameMaxLen = 63
@@ -66,6 +68,23 @@ type AppTemplateResp struct {
 	// beside the web addresses the reverse proxy serves. Two apps cannot share
 	// one, so they are shown before anybody deploys.
 	PublishedPorts []*AppTemplatePortResp `json:"publishedPorts"`
+	// Components are the apps a template that creates several makes for itself.
+	// Such a template has no single app, so Capabilities, DockerAPI and
+	// PublishedPorts above are empty for it, and each component carries its own.
+	Components []*AppTemplateComponentResp `json:"components"`
+}
+
+// AppTemplateComponentResp is one app of a template that creates several, and
+// what creating it grants that app - gated like the rest, since one request
+// creates them all.
+type AppTemplateComponentResp struct {
+	Name    string `json:"name"`
+	Title   string `json:"title"`
+	Primary bool   `json:"primary"`
+	// Capabilities, DockerAPI and PublishedPorts are as the template's own are.
+	Capabilities   *AppTemplateCapabilitiesResp `json:"capabilities"`
+	DockerAPI      *AppTemplateDockerAPIResp    `json:"dockerApi"`
+	PublishedPorts []*AppTemplatePortResp       `json:"publishedPorts"`
 }
 
 // AppTemplatePortResp is one port a template publishes on every node.
@@ -100,10 +119,11 @@ type AppTemplateCapabilitiesResp struct {
 // AppTemplateDockerAPIResp is the dockerApi block of the template, as the
 // template wrote it: a version cannot override it.
 type AppTemplateDockerAPIResp struct {
-	Images     []string `json:"images"`
-	SharedDirs []string `json:"sharedDirs,omitempty"`
-	Networks   []string `json:"networks,omitempty"`
-	Allow      []string `json:"allow,omitempty"`
+	Images        []string          `json:"images"`
+	SharedDirs    []string          `json:"sharedDirs,omitempty"`
+	SharedVolumes map[string]string `json:"sharedVolumes,omitempty"`
+	Networks      []string          `json:"networks,omitempty"`
+	Allow         []string          `json:"allow,omitempty"`
 	// Containers, Memory and CPUs are the limits of the app's children, zero
 	// where the template leaves the default.
 	Containers int     `json:"containers,omitempty"`
@@ -209,9 +229,23 @@ func TransformAppTemplate(tmpl *apptemplateservice.TemplateResp, currentVersionC
 	for _, param := range tmpl.Template.Parameters {
 		resp.Parameters = append(resp.Parameters, transformParam(param))
 	}
-	resp.Capabilities = transformCapabilities(tmpl.Template)
-	resp.DockerAPI = transformDockerAPI(tmpl.Template)
-	resp.PublishedPorts = transformPublishedPorts(tmpl.Template)
+	resp.Capabilities = transformCapabilities(tmpl.Template.Capabilities())
+	resp.DockerAPI = transformDockerAPI(tmpl.Template.DockerAPI())
+	resp.PublishedPorts = transformPublishedPorts(tmpl.Template.PublishedPorts())
+	resp.Components = make([]*AppTemplateComponentResp, 0, len(tmpl.Template.Components))
+	for _, component := range tmpl.Template.Components {
+		if component == nil {
+			continue
+		}
+		resp.Components = append(resp.Components, &AppTemplateComponentResp{
+			Name:           component.Name,
+			Title:          component.Title,
+			Primary:        component.Primary,
+			Capabilities:   transformCapabilities(component.Capabilities()),
+			DockerAPI:      transformDockerAPI(component.DockerAPI()),
+			PublishedPorts: transformPublishedPorts(tmpl.Template.ComponentPublishedPorts(component)),
+		})
+	}
 	resp.Dependencies = make([]*AppTemplateDependencyResp, 0, len(tmpl.Dependencies))
 	for _, dep := range tmpl.Dependencies {
 		asked := dep.Dependency.AskedParams(dep.Template)
@@ -223,24 +257,24 @@ func TransformAppTemplate(tmpl *apptemplateservice.TemplateResp, currentVersionC
 			Version:       dep.Dependency.Version,
 			Variant:       dep.Dependency.Variant,
 			Parameters:    make([]*AppTemplateParamResp, 0, len(asked)),
-			Capabilities:  transformCapabilities(dep.Template),
-			DockerAPI:     transformDockerAPI(dep.Template),
+			Capabilities:  transformCapabilities(dep.Template.Capabilities()),
+			DockerAPI:     transformDockerAPI(dep.Template.DockerAPI()),
 		}
 		for _, param := range asked {
 			depResp.Parameters = append(depResp.Parameters, transformParam(param))
 		}
-		depResp.PublishedPorts = transformPublishedPorts(dep.Template)
+		depResp.PublishedPorts = transformPublishedPorts(dep.Template.PublishedPorts())
 		resp.Dependencies = append(resp.Dependencies, depResp)
 	}
 	return resp
 }
 
-// transformCapabilities reads the block out of the template. A block that
-// cannot be read is left out: validation refuses such a template, so rendering
+// transformCapabilities is a capabilities block as the response shows it, read
+// out of a template or one of its components. A block that cannot be read is
+// left out: validation refuses such a template, so rendering
 // it would fail before anything was created, and there is nothing truthful to
 // show about what it would have granted.
-func transformCapabilities(tmpl *templatemodel.Template) *AppTemplateCapabilitiesResp {
-	capabilities, err := tmpl.Capabilities()
+func transformCapabilities(capabilities *specmodel.Capabilities, err error) *AppTemplateCapabilitiesResp {
 	if err != nil || capabilities == nil {
 		return nil
 	}
@@ -261,15 +295,15 @@ func transformCapabilities(tmpl *templatemodel.Template) *AppTemplateCapabilitie
 	return resp
 }
 
-// transformDockerAPI reads the block out of the template, and leaves out one
-// that cannot be read, for the reason transformCapabilities does.
-func transformDockerAPI(tmpl *templatemodel.Template) *AppTemplateDockerAPIResp {
-	access, err := tmpl.DockerAPI()
+// transformDockerAPI is a dockerApi block as the response shows it, and leaves
+// out one that cannot be read, for the reason transformCapabilities does.
+func transformDockerAPI(access *entity.AppDockerAPISettings, err error) *AppTemplateDockerAPIResp {
 	if err != nil || access == nil {
 		return nil
 	}
 	resp := &AppTemplateDockerAPIResp{
-		Images: access.Images, SharedDirs: access.SharedDirs, Networks: access.Networks, Allow: access.Allow,
+		Images: access.Images, SharedDirs: access.SharedDirs, SharedVolumes: access.SharedVolumes,
+		Networks: access.Networks, Allow: access.Allow,
 		Containers: access.Limits.Containers, CPUs: access.Limits.CPUs,
 	}
 	if access.Limits.Memory > 0 {
@@ -281,8 +315,7 @@ func transformDockerAPI(tmpl *templatemodel.Template) *AppTemplateDockerAPIResp 
 // transformPublishedPorts reads the ports out of the template, filling in what
 // docker assumes when the template leaves it out, so that what is shown is what
 // will actually be published.
-func transformPublishedPorts(tmpl *templatemodel.Template) []*AppTemplatePortResp {
-	ports := tmpl.PublishedPorts()
+func transformPublishedPorts(ports []templatemodel.PublishedPort) []*AppTemplatePortResp {
 	resp := make([]*AppTemplatePortResp, 0, len(ports))
 	for _, port := range ports {
 		resp = append(resp, &AppTemplatePortResp{

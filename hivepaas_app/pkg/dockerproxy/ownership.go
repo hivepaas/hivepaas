@@ -51,6 +51,14 @@ func ownedBy(labels any, appID string) bool {
 	return text(object(labels)[OwnerLabel]) == appID
 }
 
+// ownTask reports whether labels, as a list answer carries them, mark one of the
+// app's own task containers. A container carrying the owner label is a child,
+// whatever else it says, as taskMounts has it.
+func ownTask(labels any, policy *Policy) bool {
+	fields := object(labels)
+	return policy.ServiceID != "" && text(fields[serviceIDLabel]) == policy.ServiceID && text(fields[OwnerLabel]) == ""
+}
+
 // keep returns the items ok allows, and an empty list rather than none.
 func keep(items []map[string]any, ok func(map[string]any) bool) []map[string]any {
 	kept := []map[string]any{}
@@ -67,8 +75,14 @@ func (p *Proxy) listContainers(c *call) {
 	if !p.fetch(c, &items) {
 		return
 	}
-	kept := keep(items, func(item map[string]any) bool { return ownedBy(item[fieldLabels], c.policy.AppID) })
-	p.decide(c, true, fmt.Sprintf("%d of %d containers are the app's", len(kept), len(items)))
+	// The app's own tasks are listed beside its children, so that it can find
+	// itself: Appwrite's executor looks itself up by its host name, to connect
+	// itself to the network of its runtimes. Listing is all it is given of them;
+	// everything else it names must still be a child.
+	kept := keep(items, func(item map[string]any) bool {
+		return ownedBy(item[fieldLabels], c.policy.AppID) || ownTask(item[fieldLabels], c.policy)
+	})
+	p.decide(c, true, fmt.Sprintf("%d of %d containers are the app's or its own", len(kept), len(items)))
 	writeJSON(c.w, http.StatusOK, kept)
 }
 

@@ -2,6 +2,7 @@ package envvarserviceimpl
 
 import (
 	"context"
+	"slices"
 	"sort"
 	"strconv"
 	"strings"
@@ -18,6 +19,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/settinghelper"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/dockerapiservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/envvarservice"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/networkservice"
 )
 
 func (s *service) BuildSystemEnvVarsInApp(
@@ -110,16 +112,12 @@ func (s *service) BuildSystemEnvVarsInApp(
 		},
 	}
 
-	kindEnvs, err := kindEnvVars(kindSettings)
-	if err != nil {
-		return nil, hperrors.Wrap(err)
-	}
-	result = append(result, kindEnvs...)
-	dockerAPIEnvs, err := dockerAPIEnvVars(settinghelper.FindSettingByType(settings, base.SettingTypeAppDockerAPI))
+	settingEnvs, err := settingEnvVars(kindSettings,
+		settinghelper.FindSettingByType(settings, base.SettingTypeAppDockerAPI), req.App)
 	if err != nil {
 		return nil, err
 	}
-	result = append(result, dockerAPIEnvs...)
+	result = append(result, settingEnvs...)
 
 	for _, env := range result {
 		env.IsLiteral = true
@@ -142,6 +140,21 @@ func (s *service) BuildSystemEnvVarsInApp(
 	}
 
 	return result, nil
+}
+
+// settingEnvVars are the system variables an app's settings add: its kind's,
+// and its Docker API's.
+func settingEnvVars(kind *entity.AppKindSettings, dockerAPI *entity.Setting, app *entity.App) (
+	[]*envvarservice.EnvVar, error) {
+	kindEnvs, err := kindEnvVars(kind)
+	if err != nil {
+		return nil, hperrors.Wrap(err)
+	}
+	dockerAPIEnvs, err := dockerAPIEnvVars(dockerAPI, app)
+	if err != nil {
+		return nil, err
+	}
+	return append(kindEnvs, dockerAPIEnvs...), nil
 }
 
 // kindEnvVars is the part of an app's system environment that comes from its
@@ -256,7 +269,12 @@ func sharedEnv(key, value string) *envvarservice.EnvVar {
 // dockerAPIEnvVars is where an app given the Docker API finds it, from its
 // setting, or nil: the proxy's socket, or in host mode the node's own. It is not
 // shared: another app has no use for this app's socket, and no way to reach it.
-func dockerAPIEnvVars(setting *entity.Setting) ([]*envvarservice.EnvVar, error) {
+//
+// Through the proxy the app is also told the name of its own network, which its
+// children join by default. An app whose children may join its env network is
+// told that network's name too, in either mode: a child joins a network by name,
+// and the app has no other way to know these.
+func dockerAPIEnvVars(setting *entity.Setting, app *entity.App) ([]*envvarservice.EnvVar, error) {
 	if setting == nil {
 		return nil, nil
 	}
@@ -268,10 +286,28 @@ func dockerAPIEnvVars(setting *entity.Setting) ([]*envvarservice.EnvVar, error) 
 	if access.IsHostMode() {
 		socket = dockerapiservice.HostSocketPath
 	}
-	return []*envvarservice.EnvVar{{EnvVar: &entity.EnvVar{
-		Key:   base.AppSystemEnvVarDockerHost,
-		Value: "unix://" + socket,
-	}}}, nil
+	vars := []*envvarservice.EnvVar{ownEnv(base.AppSystemEnvVarDockerHost, "unix://"+socket)}
+	if !access.IsHostMode() && app != nil {
+		vars = append(vars, ownEnv(base.AppSystemEnvVarDockerNetwork, dockerapiservice.NetworkName(app.ID)))
+	}
+	if network := envNetworkName(app); network != "" &&
+		slices.Contains(access.Networks, entity.DockerAPINetworkEnv) {
+		vars = append(vars, ownEnv(base.AppSystemEnvVarDockerEnvNetwork, network))
+	}
+	return vars, nil
+}
+
+// envNetworkName is the network of the app's env, and empty for an app loaded
+// without its project or env.
+func envNetworkName(app *entity.App) string {
+	if app == nil || app.ProjectEnv == nil {
+		return ""
+	}
+	project := gofn.Coalesce(app.Project, app.ProjectEnv.Project)
+	if project == nil {
+		return ""
+	}
+	return networkservice.ProjectNetworkName(project, app.ProjectEnv.Name)
 }
 
 // percentEncode escapes every byte outside RFC 3986's unreserved set, which is

@@ -36,6 +36,16 @@ func (t *Template) Capabilities() (*specmodel.Capabilities, error) {
 	return capabilities, nil
 }
 
+// Capabilities are what this component's app is granted, and nil for one
+// granted none.
+func (c *Component) Capabilities() (*specmodel.Capabilities, error) {
+	capabilities, problem := capabilitiesIn(c.App)
+	if problem != "" {
+		return nil, hperrors.Wrap(hperrors.ErrAppTemplateInvalid).WithExtraDetail("%s", problem)
+	}
+	return capabilities, nil
+}
+
 // RequiresCapabilities reports whether a template asks for any. A template whose
 // block cannot be read asks for something, which is what a false would hide, so
 // an unreadable one counts as requiring them; validation refuses it anyway.

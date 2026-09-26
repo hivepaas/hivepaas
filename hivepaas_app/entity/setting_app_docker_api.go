@@ -43,6 +43,9 @@ type AppDockerAPISettings struct {
 	Images []string `json:"images"`
 	// SharedDirs are directories of the app's own storage a child may bind.
 	SharedDirs []string `json:"sharedDirs,omitempty"`
+	// SharedVolumes are volume names a child may mount, each standing for one of
+	// SharedDirs: for an app that names a volume where another would bind a path.
+	SharedVolumes map[string]string `json:"sharedVolumes,omitempty"`
 	// Networks are networks children may join besides their own.
 	Networks []string `json:"networks,omitempty"`
 	// Allow are groups of endpoints beyond the core, as the proxy names them.

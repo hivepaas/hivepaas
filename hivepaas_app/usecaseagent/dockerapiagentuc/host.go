@@ -30,6 +30,8 @@ const (
 	// readHeaderTimeout bounds a client that connects and says nothing. Nothing
 	// else is bounded: logs and attach are streams.
 	readHeaderTimeout = 10 * time.Second
+	// bindSourceMode is what Docker gives a bind's source it creates.
+	bindSourceMode = 0o755
 )
 
 // socketHost keeps one proxy socket per app with access, on this node.
@@ -121,7 +123,9 @@ func (h *socketHost) open(ctx context.Context, policy *dockerproxy.Policy) error
 		_ = listener.Close()
 		return hperrors.Wrap(err)
 	}
-	proxy := dockerproxy.New(policy, dockerproxy.Options{Upstream: h.upstream, OnDecision: h.logDecision})
+	proxy := dockerproxy.New(policy, dockerproxy.Options{
+		Upstream: h.upstream, OnDecision: h.logDecision, MakeDir: makeBindSource,
+	})
 	server := &http.Server{Handler: proxy, ReadHeaderTimeout: readHeaderTimeout}
 	safego.GoWithLogger(h.logger, "dockerAPI.serve", func() {
 		_ = server.Serve(listener)
@@ -204,6 +208,25 @@ func volumeSocketDir(ctx context.Context, dockerManager docker.Manager, policy *
 	}
 	return "", hperrors.Wrap(hperrors.ErrInfraNotFound).
 		WithMsgLog("socket volume %s is not reachable at %s", policy.SocketVolume, mountpoint)
+}
+
+// makeBindSource creates subpath below dir, a directory of the node, the way
+// Docker creates a bind's missing source. It is created through a root opened at
+// dir, so a link in the app's directory cannot lead it anywhere outside.
+func makeBindSource(_ context.Context, dir, subpath string) error {
+	// The agent's container reaches the host's filesystem under a prefix; an
+	// agent running on the host itself reaches it as it is.
+	candidates := []string{filepath.Join(volumeservice.HostPathPrefix, dir), dir}
+	i := slices.IndexFunc(candidates, isDir)
+	if i < 0 {
+		return hperrors.Wrap(hperrors.ErrInfraNotFound).WithMsgLog("volume directory %s is not reachable", dir)
+	}
+	root, err := os.OpenRoot(candidates[i])
+	if err != nil {
+		return hperrors.Wrap(err)
+	}
+	defer root.Close()
+	return hperrors.Wrap(root.MkdirAll(subpath, bindSourceMode))
 }
 
 func isDir(path string) bool {

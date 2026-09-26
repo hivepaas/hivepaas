@@ -223,3 +223,27 @@ func TestReconcileRefusesASocketVolumeLabeledForAnotherApp(t *testing.T) {
 
 	assert.Error(t, err)
 }
+
+func TestMakeBindSourceCreatesTheDirectoriesBelowTheAppsDirectory(t *testing.T) {
+	dir := t.TempDir()
+	assert.NoError(t, makeBindSource(context.Background(), dir, "rt1/logs"))
+	info, err := os.Stat(filepath.Join(dir, "rt1", "logs"))
+	if !assert.NoError(t, err) {
+		t.FailNow()
+	}
+	assert.True(t, info.IsDir())
+	assert.NoError(t, makeBindSource(context.Background(), dir, "rt1/logs"), "a directory that exists is left as it is")
+}
+
+// A link in the app's directory is the app's to make; following it out would
+// let the app have a directory made anywhere on the node.
+func TestMakeBindSourceDoesNotFollowALinkOut(t *testing.T) {
+	outside := t.TempDir()
+	dir := t.TempDir()
+	if !assert.NoError(t, os.Symlink(outside, filepath.Join(dir, "escape"))) {
+		t.FailNow()
+	}
+	assert.Error(t, makeBindSource(context.Background(), dir, "escape/made"))
+	_, err := os.Stat(filepath.Join(outside, "made"))
+	assert.True(t, errors.Is(err, os.ErrNotExist))
+}

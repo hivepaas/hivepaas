@@ -10,7 +10,8 @@ import (
 
 // Widens reports whether next lets an app do anything prev did not: access
 // where it had none, an image, directory, network or group it did not have, or
-// a higher limit. Granting that takes what giving access takes; taking any of it
+// a shared volume it did not have or one standing for another directory, or a
+// higher limit. Granting that takes what giving access takes; taking any of it
 // away does not. nil is no access.
 //
 // Host mode covers everything the proxy could allow, so entering it widens and
@@ -29,6 +30,11 @@ func Widens(prev, next *entity.AppDockerAPISettings) bool {
 	}
 	if adds(prev.SharedDirs, next.SharedDirs) || adds(prev.Networks, next.Networks) || adds(prev.Allow, next.Allow) {
 		return true
+	}
+	for name, dir := range next.SharedVolumes {
+		if was, found := prev.SharedVolumes[name]; !found || was != dir {
+			return true
+		}
 	}
 	was, is := effectiveLimits(prev.Limits), effectiveLimits(next.Limits)
 	return is.Containers > was.Containers || is.Memory > was.Memory || is.CPUs > was.CPUs

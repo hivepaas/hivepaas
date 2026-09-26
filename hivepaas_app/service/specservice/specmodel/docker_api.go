@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"maps"
 	"path"
+	"regexp"
 	"slices"
 	"strings"
 
@@ -22,6 +23,8 @@ const (
 	MaxDockerAPIImages = 20
 	// MaxDockerAPISharedDirs is how many of its directories an app may share.
 	MaxDockerAPISharedDirs = 5
+	// MaxDockerAPISharedVolumes is how many volume names may stand for them.
+	MaxDockerAPISharedVolumes = 5
 	// MaxDockerAPIContainers is the most children one app may keep at once.
 	MaxDockerAPIContainers = 100
 	// minDockerAPIMemory is the least memory docker starts a container with.
@@ -31,6 +34,9 @@ const (
 )
 
 var (
+	// volumeNamePattern is Docker's own rule for a volume's name.
+	volumeNamePattern = regexp.MustCompile(`^[a-zA-Z0-9][a-zA-Z0-9_.-]{1,127}$`)
+
 	dockerAPIModes    = []string{"", entity.DockerAPIModeProxy, entity.DockerAPIModeHost}
 	dockerAPINetworks = []string{entity.DockerAPINetworkEnv}
 	dockerAPIGroups   = []string{string(dockerproxy.GroupExec), string(dockerproxy.GroupFiles),
@@ -85,6 +91,9 @@ func DockerAPIProblem(s *entity.AppDockerAPISettings) string {
 				dockerAPIPrefix, i, dir)
 		}
 	}
+	if problem := sharedVolumesProblem(s); problem != "" {
+		return problem
+	}
 	for i, network := range s.Networks {
 		if !slices.Contains(dockerAPINetworks, network) {
 			return fmt.Sprintf("%snetworks[%d]: %q is not one of %v", dockerAPIPrefix, i, network, dockerAPINetworks)
@@ -107,8 +116,38 @@ func dockerAPICountProblem(s *entity.AppDockerAPISettings) string {
 	case len(s.SharedDirs) > MaxDockerAPISharedDirs:
 		return fmt.Sprintf("%ssharedDirs: at most %d, and this has %d",
 			dockerAPIPrefix, MaxDockerAPISharedDirs, len(s.SharedDirs))
+	case len(s.SharedVolumes) > MaxDockerAPISharedVolumes:
+		return fmt.Sprintf("%ssharedVolumes: at most %d, and this has %d",
+			dockerAPIPrefix, MaxDockerAPISharedVolumes, len(s.SharedVolumes))
 	}
 	return ""
+}
+
+// sharedVolumesProblem refuses a shared volume that is not a volume's name, or
+// that stands for a directory none of sharedDirs covers: a name gives what a
+// bind of the path would, so it can give nothing sharedDirs does not.
+//
+// A name HivePaaS keeps for itself needs no rule of its own. The proxy reads a
+// shared volume before anything else a name could be, and it gives the app's own
+// directory, so one called like another app's socket volume only shadows it.
+func sharedVolumesProblem(s *entity.AppDockerAPISettings) string {
+	for _, name := range slices.Sorted(maps.Keys(s.SharedVolumes)) {
+		dir := s.SharedVolumes[name]
+		switch {
+		case !volumeNamePattern.MatchString(name):
+			return fmt.Sprintf("%ssharedVolumes: %q is not a volume name", dockerAPIPrefix, name)
+		case !path.IsAbs(dir) || path.Clean(dir) != dir:
+			return fmt.Sprintf("%ssharedVolumes.%s: %s is not an absolute path", dockerAPIPrefix, name, dir)
+		case !slices.ContainsFunc(s.SharedDirs, func(shared string) bool { return coversPath(shared, dir) }):
+			return fmt.Sprintf("%ssharedVolumes.%s: %s is in none of sharedDirs", dockerAPIPrefix, name, dir)
+		}
+	}
+	return ""
+}
+
+// coversPath reports whether p is dir or lies below it.
+func coversPath(dir, p string) bool {
+	return p == dir || strings.HasPrefix(p, strings.TrimSuffix(dir, "/")+"/")
 }
 
 func dockerAPILimitsProblem(limits entity.AppDockerAPILimits) string {
@@ -158,9 +197,7 @@ func checkDockerAPI(doc *AppDoc) error {
 // targets given, and is empty when each is on one.
 func SharedDirsProblem(dirs, targets []string) string {
 	for _, dir := range dirs {
-		covered := slices.ContainsFunc(targets, func(target string) bool {
-			return dir == target || strings.HasPrefix(dir, strings.TrimSuffix(target, "/")+"/")
-		})
+		covered := slices.ContainsFunc(targets, func(target string) bool { return coversPath(target, dir) })
 		if !covered {
 			return fmt.Sprintf("%ssharedDirs: %s is on none of the app's storage mounts", dockerAPIPrefix, dir)
 		}

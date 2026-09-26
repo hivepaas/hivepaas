@@ -27,7 +27,11 @@ func (p *Proxy) info(c *call) {
 }
 
 func (p *Proxy) pull(c *call) {
-	query := c.r.URL.Query()
+	query, err := formValues(c.r)
+	if err != nil {
+		p.refuse(c, err)
+		return
+	}
 	if query.Get("fromSrc") != "" {
 		p.refuse(c, refusef("importing an image is not allowed"))
 		return

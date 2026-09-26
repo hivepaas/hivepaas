@@ -1,6 +1,8 @@
 package appsettingsdto
 
 import (
+	"maps"
+
 	vld "github.com/tiendc/go-validator"
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
@@ -40,12 +42,15 @@ type GetAppDockerAPISettingsResp struct {
 type AppDockerAPISettingsResp struct {
 	Enabled bool `json:"enabled"`
 	// Mode is proxy or host, never empty.
-	Mode       string              `json:"mode"`
-	Images     []string            `json:"images"`
-	SharedDirs []string            `json:"sharedDirs"`
-	Networks   []string            `json:"networks"`
-	Allow      []string            `json:"allow"`
-	Limits     *AppDockerAPILimits `json:"limits"`
+	Mode       string   `json:"mode"`
+	Images     []string `json:"images"`
+	SharedDirs []string `json:"sharedDirs"`
+	// SharedVolumes are volume names a child may mount, each standing for a
+	// directory of SharedDirs.
+	SharedVolumes map[string]string   `json:"sharedVolumes"`
+	Networks      []string            `json:"networks"`
+	Allow         []string            `json:"allow"`
+	Limits        *AppDockerAPILimits `json:"limits"`
 	// DefaultLimits are what a limit of zero stands for.
 	DefaultLimits *AppDockerAPILimits `json:"defaultLimits"`
 	// HostMode says whether the caller may choose host mode.
@@ -75,7 +80,8 @@ type AppDockerAPILimits struct {
 func TransformAppDockerAPISettings(setting *entity.Setting, blockedBy string) (*AppDockerAPISettingsResp, error) {
 	resp := &AppDockerAPISettingsResp{
 		Mode:   entity.DockerAPIModeProxy,
-		Images: []string{}, SharedDirs: []string{}, Networks: []string{}, Allow: []string{},
+		Images: []string{}, SharedDirs: []string{}, SharedVolumes: map[string]string{},
+		Networks: []string{}, Allow: []string{},
 		Limits: &AppDockerAPILimits{},
 		DefaultLimits: &AppDockerAPILimits{
 			Containers: dockerapiservice.DefaultContainers,
@@ -97,6 +103,7 @@ func TransformAppDockerAPISettings(setting *entity.Setting, blockedBy string) (*
 	}
 	resp.Images = append(resp.Images, access.Images...)
 	resp.SharedDirs = append(resp.SharedDirs, access.SharedDirs...)
+	maps.Copy(resp.SharedVolumes, access.SharedVolumes)
 	resp.Networks = append(resp.Networks, access.Networks...)
 	resp.Allow = append(resp.Allow, access.Allow...)
 	resp.Limits = &AppDockerAPILimits{

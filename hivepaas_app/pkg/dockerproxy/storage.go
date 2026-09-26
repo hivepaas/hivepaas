@@ -2,6 +2,7 @@ package dockerproxy
 
 import (
 	"context"
+	"fmt"
 	"net/url"
 	"path"
 	"slices"
@@ -38,7 +39,8 @@ type taskMount struct {
 
 // rewriteStorage turns every bind and mount of a child into one the app may give
 // it, or refuses. A path becomes a mount of the directory the app itself has
-// there; a named volume must be the app's.
+// there, and so does a shared volume's name; any other named volume must be the
+// app's.
 func (p *Proxy) rewriteStorage(ctx context.Context, policy *Policy, host map[string]any) error {
 	var mounts []any
 	for _, raw := range list(host["Mounts"]) {
@@ -66,8 +68,8 @@ func (p *Proxy) rewriteStorage(ctx context.Context, policy *Policy, host map[str
 	return nil
 }
 
-// bind judges one entry of Binds. A named volume stays a bind; a path comes back
-// as the mount that replaces it.
+// bind judges one entry of Binds. A named volume stays a bind; a path, or a
+// shared volume's name, comes back as the mount that replaces it.
 func (p *Proxy) bind(ctx context.Context, policy *Policy, spec string) (map[string]any, error) {
 	parts := strings.Split(spec, ":")
 	if len(parts) < bindMinParts || len(parts) > bindMaxParts {
@@ -84,7 +86,20 @@ func (p *Proxy) bind(ctx context.Context, policy *Policy, spec string) (map[stri
 		}
 	}
 	if strings.HasPrefix(source, "/") {
-		return p.hostPath(ctx, policy, source, target, readOnly)
+		if path.Clean(source) == SocketPath {
+			return p.hostPath(ctx, policy, source, target, readOnly)
+		}
+		loc, err := p.locateShared(ctx, policy, source)
+		if err == nil {
+			err = p.makeBindSource(ctx, loc)
+		}
+		if err != nil {
+			return nil, err
+		}
+		return loc.mount(target, readOnly), nil
+	}
+	if dir, found := policy.sharedVolume(source); found {
+		return p.hostPath(ctx, policy, dir, target, readOnly)
 	}
 	return nil, p.namedVolume(ctx, policy, source)
 }
@@ -102,8 +117,16 @@ func (p *Proxy) mount(ctx context.Context, policy *Policy, m map[string]any) (ma
 		if err := checkFields("Mount.VolumeOptions", options, volumeOptionFields, nil); err != nil {
 			return nil, err
 		}
-		if subpath := text(options["Subpath"]); subpath != "" && !localPath(subpath) {
+		subpath := text(options["Subpath"])
+		if subpath != "" && !localPath(subpath) {
 			return nil, refusef("volume subpath %s leaves the volume", subpath)
+		}
+		// A shared volume is the directory it stands for, and a subpath of it a
+		// directory below that one: both become the mount a bind of that path
+		// would, so the subpath is checked against the directory, not the volume.
+		if dir, found := policy.sharedVolume(text(m["Source"])); found {
+			readOnly, _ := m["ReadOnly"].(bool)
+			return p.hostPath(ctx, policy, path.Join(dir, subpath), text(m["Target"]), readOnly)
 		}
 		if source := text(m["Source"]); source != "" {
 			if err := p.namedVolume(ctx, policy, source); err != nil {
@@ -132,13 +155,35 @@ func (p *Proxy) hostPath(
 		}
 		return volumeMount(policy.SocketVolume, SocketFile, target, readOnly), nil
 	}
+	loc, err := p.locateShared(ctx, policy, source)
+	if err != nil {
+		return nil, err
+	}
+	return loc.mount(target, readOnly), nil
+}
+
+// sharedLocation is where a path of a shared directory is: in the volume of the
+// app's mount that covers it, below that mount's subpath.
+type sharedLocation struct {
+	volume string
+	// base is the subpath the app mounts, rest the path below it.
+	base, rest string
+}
+
+func (l sharedLocation) mount(target string, readOnly bool) map[string]any {
+	return volumeMount(l.volume, strings.TrimPrefix(path.Join(l.base, l.rest), "/"), target, readOnly)
+}
+
+// locateShared finds a path of a shared directory in the app's own mounts.
+func (p *Proxy) locateShared(ctx context.Context, policy *Policy, source string) (sharedLocation, error) {
+	clean := path.Clean(source)
 	dir := longestCover(policy.SharedDirs, clean)
 	if dir == "" {
-		return nil, refusef("%s is not a shared directory of this app", source)
+		return sharedLocation{}, refusef("%s is not a shared directory of this app", source)
 	}
 	mounts, err := p.taskMounts(ctx, policy)
 	if err != nil {
-		return nil, err
+		return sharedLocation{}, err
 	}
 	var best *taskMount
 	for i := range mounts {
@@ -148,14 +193,49 @@ func (p *Proxy) hostPath(
 		}
 	}
 	if best == nil {
-		return nil, refusef("shared directory %s is not on a volume of the app", dir)
+		return sharedLocation{}, refusef("shared directory %s is not on a volume of the app", dir)
 	}
-	subpath := ""
+	loc := sharedLocation{volume: best.Source}
 	if best.VolumeOptions != nil {
-		subpath = best.VolumeOptions.Subpath
+		loc.base = best.VolumeOptions.Subpath
 	}
-	rest := strings.TrimPrefix(clean, strings.TrimSuffix(best.Target, "/"))
-	return volumeMount(best.Source, strings.TrimPrefix(path.Join(subpath, rest), "/"), target, readOnly), nil
+	loc.rest = strings.TrimPrefix(strings.TrimPrefix(clean, strings.TrimSuffix(best.Target, "/")), "/")
+	return loc, nil
+}
+
+// makeBindSource creates the directory a bind of a path became, when it is not
+// there yet: Docker creates a missing bind source, and a client that binds one
+// it has not made expects that, where a missing subpath of a volume would stop
+// the container from starting.
+//
+// It is created below the directory the app mounts, never above: that is all a
+// shared directory is of the volume, which other apps may share. The volume's
+// own directory is where the daemon keeps its data: for a local volume bound to
+// a directory of the node, that directory; otherwise its mountpoint.
+func (p *Proxy) makeBindSource(ctx context.Context, loc sharedLocation) error {
+	if p.makeDir == nil || loc.rest == "" {
+		return nil
+	}
+	var info struct {
+		Mountpoint string
+		Options    map[string]string
+	}
+	found, err := p.daemon.get(ctx, "/volumes/"+url.PathEscape(loc.volume), &info)
+	if err != nil {
+		return err
+	}
+	if !found {
+		return refusef("volume %s does not exist", loc.volume)
+	}
+	dir := info.Mountpoint
+	bound := slices.Contains(strings.Split(info.Options["o"], ","), "bind")
+	if device := info.Options["device"]; device != "" && bound {
+		dir = device
+	}
+	if err = p.makeDir(ctx, path.Join(dir, loc.base), loc.rest); err != nil {
+		return fmt.Errorf("%w: creating %s in volume %s: %w", errDaemon, loc.rest, loc.volume, err)
+	}
+	return nil
 }
 
 // taskMounts are the mounts of the app's own task on this node. They are read

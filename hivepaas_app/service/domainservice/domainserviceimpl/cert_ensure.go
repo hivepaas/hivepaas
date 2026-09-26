@@ -54,6 +54,9 @@ func (s *service) EnsureCertsForDomains(
 	if err != nil {
 		return nil, hperrors.Wrap(err)
 	}
+	if req.IgnoreSelfSigned {
+		matched = withoutSelfSigned(matched)
+	}
 	resp.Matched = matched
 
 	remaining := gofn.Filter(req.Domains, func(domain string) bool { return matched[domain] == nil })
@@ -93,6 +96,17 @@ func (s *service) EnsureCertsForDomains(
 	}
 
 	return resp, nil
+}
+
+// withoutSelfSigned is the matches a browser trusts.
+func withoutSelfSigned(matched map[string]*entity.Setting) map[string]*entity.Setting {
+	trusted := make(map[string]*entity.Setting, len(matched))
+	for domain, setting := range matched {
+		if setting.Kind != string(base.SSLCertTypeSelfSigned) {
+			trusted[domain] = setting
+		}
+	}
+	return trusted
 }
 
 // certProviders is what obtaining goes through: the account a certificate is
@@ -139,7 +153,7 @@ func (s *service) ensurePlan(
 		// Something is already responsible for this name, so a second setting
 		// would only mean a second request to the authority. What is left to
 		// decide is whether to ask again through the setting there is.
-		retry, reason := retryable(existing, timeNow)
+		retry, reason := retryable(existing, timeNow, req.IgnoreRetryAfter)
 		if !retry {
 			for _, domain := range plan.Domains {
 				resp.Skipped[domain] = reason
@@ -282,13 +296,18 @@ func (s *service) certSettingNamed(
 // a DNS record that had not propagated yet, an app that was not reachable when
 // the challenge came. An attempt still in flight is left to finish, and a
 // setting that holds a certificate is renewal's business rather than this one's.
-func retryable(setting *entity.Setting, timeNow time.Time) (retry bool, reason string) {
+// ignoreWait is a person asking: it tries again at once, whatever the last
+// attempt left, and the caller has made sure none is in flight.
+func retryable(setting *entity.Setting, timeNow time.Time, ignoreWait bool) (retry bool, reason string) {
 	cert, err := setting.AsSSLCert()
 	if err != nil {
 		return false, "a certificate named " + setting.Name + " already exists"
 	}
 	if cert.Certificate != "" {
 		return false, "a certificate for " + setting.Name + " exists but cannot serve this domain"
+	}
+	if ignoreWait {
+		return true, ""
 	}
 	if cert.LastError == "" {
 		return false, "a certificate for " + setting.Name + " is already being obtained"

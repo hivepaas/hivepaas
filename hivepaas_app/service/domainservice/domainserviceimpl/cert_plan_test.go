@@ -153,9 +153,32 @@ func TestRetryableWaitsOutAFailureAndAsksAgainAfterIt(t *testing.T) {
 	}
 	for name, tc := range cases {
 		t.Run(name, func(t *testing.T) {
-			retry, reason := retryable(settingWith(tc.cert), timeNow)
+			retry, reason := retryable(settingWith(tc.cert), timeNow, false)
 			assert.Equal(t, tc.wantRetry, retry)
 			assert.Equal(t, tc.wantRetry, reason == "")
 		})
 	}
+
+	// A person asking skips the wait, but never replaces a certificate there is.
+	t.Run("asked by a person", func(t *testing.T) {
+		waiting := &entity.SSLCert{Domain: "app.example.com", LastError: "dns", RetryAfter: timeNow.Add(time.Hour)}
+		retry, _ := retryable(settingWith(waiting), timeNow, true)
+		assert.True(t, retry)
+		held := &entity.SSLCert{Domain: "app.example.com", Certificate: "-----BEGIN CERTIFICATE-----"}
+		retry, _ = retryable(settingWith(held), timeNow, true)
+		assert.False(t, retry)
+	})
+}
+
+func TestWithoutSelfSignedKeepsOnlyWhatABrowserTrusts(t *testing.T) {
+	selfSigned := &entity.Setting{Name: "example.com", Kind: string(base.SSLCertTypeSelfSigned)}
+	letsEncrypt := &entity.Setting{Name: "*.example.com", Kind: string(base.SSLCertTypeLetsEncrypt)}
+
+	trusted := withoutSelfSigned(map[string]*entity.Setting{
+		"example.com":     selfSigned,
+		"app.example.com": letsEncrypt,
+	})
+
+	assert.Equal(t, map[string]*entity.Setting{"app.example.com": letsEncrypt}, trusted)
+	assert.Empty(t, withoutSelfSigned(nil))
 }

@@ -38,6 +38,15 @@ type EnsureCertsReq struct {
 	// AppID is whose routing gets applied again once a certificate arrives.
 	AppID   string
 	Domains []string
+	// IgnoreRetryAfter asks again for a certificate a failed attempt left waiting:
+	// a person asking is reason enough. One being obtained is still not asked for
+	// twice by the caller, which checks first.
+	IgnoreRetryAfter bool
+	// IgnoreSelfSigned leaves a self-signed certificate that covers a domain out
+	// of the matching, so one a browser trusts is asked for instead. The one an
+	// installation signs itself is made for its root domain, which the dashboard's
+	// domain can be.
+	IgnoreSelfSigned bool
 }
 
 type EnsureCertsResp struct {

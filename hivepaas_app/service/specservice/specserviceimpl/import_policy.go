@@ -80,6 +80,7 @@ var importPolicies = map[base.SettingType]importPolicy{
 		skip: "writing it initializes the repository, which import does not do yet",
 	},
 	base.SettingTypeLogging:         {skip: reasonRunsAService},
+	base.SettingTypeMCP:             {skip: reasonLetsAIClientsIn},
 	base.SettingTypeRegistry:        {skip: reasonRunsAService},
 	base.SettingTypeTraefikConfig:   {skip: reasonRunsAService},
 	base.SettingTypeTraefikService:  {skip: reasonRunsAService},
@@ -96,6 +97,11 @@ var importPolicies = map[base.SettingType]importPolicy{
 }
 
 const reasonNeverExported = "export never writes this type"
+
+// reasonLetsAIClientsIn is why the MCP switch is exported but never imported: a
+// bundle shows whether the server was on, and no bundle turns on what lets an AI
+// client in. An administrator does that, in System settings.
+const reasonLetsAIClientsIn = "it lets AI clients in, which an administrator turns on in System settings"
 
 // importPolicyFor is the policy of a type. A type with none is not imported: a
 // setting type added later has to be thought about before import writes it.

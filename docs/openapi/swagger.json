@@ -41115,6 +41115,96 @@
         "x-codegen-request-body-name" : "body"
       }
     },
+    "/system/settings/mcp" : {
+      "get" : {
+        "description" : "Gets whether HivePaaS serves the Model Context Protocol at <API base path>/mcp.",
+        "operationId" : "getMCPSettings",
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/systemsettings_mcpdto.GetMCPSettingsResp"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "400" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Bad Request"
+          },
+          "500" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Internal Server Error"
+          }
+        },
+        "summary" : "Gets MCP server settings",
+        "tags" : [ "system_settings" ]
+      },
+      "put" : {
+        "description" : "Turns the MCP server on or off.",
+        "operationId" : "updateMCPSettings",
+        "requestBody" : {
+          "content" : {
+            "*/*" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/systemsettings_mcpdto.UpdateMCPSettingsReq"
+              }
+            }
+          },
+          "description" : "request data",
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/systemsettings_mcpdto.UpdateMCPSettingsResp"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "400" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Bad Request"
+          },
+          "500" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Internal Server Error"
+          }
+        },
+        "summary" : "Updates MCP server settings",
+        "tags" : [ "system_settings" ],
+        "x-codegen-request-body-name" : "body"
+      }
+    },
     "/system/settings/registry" : {
       "get" : {
         "description" : "Gets registry settings",
@@ -62286,6 +62376,63 @@
           }
         },
         "required" : [ "cpuLimit", "maxDiskUsagePercent", "memoryLimit", "retention", "volume" ],
+        "type" : "object"
+      },
+      "systemsettings_mcpdto.GetMCPSettingsResp" : {
+        "properties" : {
+          "data" : {
+            "$ref" : "#/components/schemas/systemsettings_mcpdto.MCPSettingsResp"
+          },
+          "meta" : {
+            "$ref" : "#/components/schemas/basedto.Meta"
+          }
+        },
+        "required" : [ "data", "meta" ],
+        "type" : "object"
+      },
+      "systemsettings_mcpdto.MCPSettingsResp" : {
+        "properties" : {
+          "allowWrite" : {
+            "type" : "boolean"
+          },
+          "enabled" : {
+            "type" : "boolean"
+          },
+          "updateVer" : {
+            "type" : "integer"
+          }
+        },
+        "required" : [ "allowWrite", "enabled", "updateVer" ],
+        "type" : "object"
+      },
+      "systemsettings_mcpdto.UpdateMCPSettingsReq" : {
+        "properties" : {
+          "allowWrite" : {
+            "type" : "boolean"
+          },
+          "default" : {
+            "type" : "boolean"
+          },
+          "enabled" : {
+            "type" : "boolean"
+          },
+          "inheritable" : {
+            "type" : "boolean"
+          },
+          "updateVer" : {
+            "type" : "integer"
+          }
+        },
+        "required" : [ "allowWrite", "default", "enabled", "inheritable", "updateVer" ],
+        "type" : "object"
+      },
+      "systemsettings_mcpdto.UpdateMCPSettingsResp" : {
+        "properties" : {
+          "meta" : {
+            "$ref" : "#/components/schemas/basedto.Meta"
+          }
+        },
+        "required" : [ "meta" ],
         "type" : "object"
       },
       "systemsettings_registrydto.CleanupReq" : {

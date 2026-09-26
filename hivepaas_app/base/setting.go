@@ -37,6 +37,7 @@ const (
 	SettingTypeIMService         SettingType = "im-service"
 	SettingTypeHivePaaSService   SettingType = "hivepaas-service"
 	SettingTypeLogging           SettingType = "logging"
+	SettingTypeMCP               SettingType = "mcp"
 	SettingTypeNotification      SettingType = "notification"
 	SettingTypeOAuth             SettingType = "oauth"
 	SettingTypePeriodicJob       SettingType = "periodic-job"

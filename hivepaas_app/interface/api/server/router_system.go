@@ -76,6 +76,13 @@ func (s *HTTPServer) registerSystemRoutes(apiGroup *gin.RouterGroup) {
 		backupRepoCleanupGroup.POST("/exec", systemSettingsHandler.ExecuteBackupRepoCleanup)
 	}
 
+	// MCP server settings
+	{
+		mcpGroup := systemSettingGroup.Group("/mcp")
+		mcpGroup.GET("", systemSettingsHandler.GetMCPSettings)
+		mcpGroup.PUT("", systemSettingsHandler.UpdateMCPSettings)
+	}
+
 	// Logging settings
 	{
 		loggingGroup := systemSettingGroup.Group("/logging")

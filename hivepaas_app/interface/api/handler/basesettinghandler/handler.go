@@ -37,6 +37,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings/sslprovideruc"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/systemsettings/backuprepocleanupuc"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/systemsettings/logginguc"
+	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/systemsettings/mcpuc"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/systemsettings/registryuc"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/systemsettings/sslrenewaluc"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/systemsettings/systembackupuc"
@@ -72,6 +73,7 @@ type Handler struct {
 	ImageBuildUC           *imagebuildsettingsuc.UC
 	IMServiceUC            *imserviceuc.UC
 	LoggingUC              *logginguc.UC
+	MCPUC                  *mcpuc.UC
 	RegistryUC             *registryuc.UC
 	NotificationUC         *notificationuc.UC
 	OAuthUC                *oauthuc.UC
@@ -116,6 +118,7 @@ func New(
 	imageBuildUC *imagebuildsettingsuc.UC,
 	imServiceUC *imserviceuc.UC,
 	loggingUC *logginguc.UC,
+	mcpUC *mcpuc.UC,
 	registryUC *registryuc.UC,
 	notificationUC *notificationuc.UC,
 	oauthUC *oauthuc.UC,
@@ -159,6 +162,7 @@ func New(
 		ImageBuildUC:           imageBuildUC,
 		IMServiceUC:            imServiceUC,
 		LoggingUC:              loggingUC,
+		MCPUC:                  mcpUC,
 		RegistryUC:             registryUC,
 		NotificationUC:         notificationUC,
 		OAuthUC:                oauthUC,

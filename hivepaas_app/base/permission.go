@@ -45,6 +45,7 @@ const (
 	ResourceTypeImageBuild        ResourceType = "image-build"
 	ResourceTypeIMService         ResourceType = "im-service"
 	ResourceTypeLogging           ResourceType = "logging"
+	ResourceTypeMCP               ResourceType = "mcp"
 	ResourceTypeModule            ResourceType = "module"
 	ResourceTypeNotification      ResourceType = "notification"
 	ResourceTypeOAuth             ResourceType = "oauth"

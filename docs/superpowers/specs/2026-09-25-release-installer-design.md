@@ -25,8 +25,10 @@ to beta except the default.
    reads, so what the installer deploys is what the updater later compares
    against. A service already running keeps its image: moving images is the
    updater's job, with the migrations a move needs.
-3. **Nothing destructive.** The installer never leaves or resets a swarm,
-   never removes a service, network or volume, and never regenerates a secret.
+3. **Nothing destructive** unless asked. The installer never leaves or resets a
+   swarm, never removes a service or network, and never regenerates a secret;
+   the one volume it removes is an earlier database the person chose to reset
+   (§4).
    Running it again on an installed server does not redeploy (§11).
 4. **Settings live where HivePaaS reads them, and nowhere else.** The app
    secret is in `<app data>/hivepaas.toml` (root, `0600`), the app's own
@@ -221,11 +223,21 @@ the value; a typed one that fails is asked again.
     and asks for the file back rather than generate a secret the data was not
     encrypted with.
   - A HivePaaS database volume without HivePaaS services (`docker stack rm`):
-    the installer takes the database's password from
-    `<app data>/credentials.txt` (the app data directory given, or the
-    default), or from `HIVEPAAS_DB_PASSWORD`, and deploys again over that
-    database; its admin exists already, so it is not asked for. With neither,
-    it stops; removing the volume starts over.
+    the installer asks at once whether to **keep** or **reset** it - typed out,
+    no default, and `--yes` does not answer it; `HIVEPAAS_EXISTING_DB=keep|reset`
+    answers it for a silent install, which otherwise stops. Old data can be
+    what the person wants back, or what broke the old install.
+    - **keep** needs the database's password - `HIVEPAAS_DB_PASSWORD`, or
+      `<app data>/credentials.txt` - and `<app data>/hivepaas.toml`. The
+      password is tried before anything changes, in a throwaway Postgres of the
+      release's image on the volume, with no network. Anything missing, or a
+      password that does not open it, stops the install: run it again. The
+      admin exists already, so it is not asked for.
+    - **reset** deletes the database volumes (`hivepaas_db`, `hivepaas_db_<major>`)
+      and `db-volume.env`, and installs afresh, with a new password and a new
+      admin.
+    - Either waits, first, for the removed stack's containers to let go of the
+      volume.
 
 ## 5. The stack
 
@@ -376,8 +388,9 @@ For tests only: `HIVEPAAS_INSTALL_LIB=1` defines the functions and stops;
   priorities, `credentials.txt` and `install.log`; a second run that changes
   no service; another app secret stopping; a lost `hivepaas.toml` stopping;
   the address route following a change; `--redeploy`; and after
-  `docker stack rm`, a run stopping without `credentials.txt` and deploying
-  again over the database with it. `HIVEPAAS_E2E_IMAGES` loads images built from the
+  `docker stack rm`, a silent run stopping until told to keep or reset the
+  database, a wrong password stopping `keep`, `keep` with `credentials.txt`
+  bringing the old admin back, and `reset` starting over with a new one. `HIVEPAAS_E2E_IMAGES` loads images built from the
   checkout, for an app change the release's images do not have yet. On a machine that is not amd64 the HivePaaS images run
   emulated and the stack is deployed without resolving images.
 - On a fresh Linux server, by the user: an interactive install, a silent one,

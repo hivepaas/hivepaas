@@ -259,6 +259,13 @@ const (
 	// on its own: one import can write hundreds, and the record is what says they
 	// arrived together.
 	AuditLogTypeSpecImport AuditLogType = "spec-import"
+
+	// AuditLogTypeMCPToolCall records an AI client calling one of the MCP
+	// server's tools: which tool, with what input. A tool reads through the
+	// dashboard's own endpoints, which audit their writes as always; this is the
+	// record that an assistant, not a person at the dashboard, asked - reads
+	// included, since an assistant reading logs is worth being able to see.
+	AuditLogTypeMCPToolCall AuditLogType = "mcp-tool-call"
 )
 
 var AllAuditLogTypes = []AuditLogType{
@@ -290,6 +297,7 @@ var AllAuditLogTypes = []AuditLogType{
 	AuditLogTypeHivePaaSAction,
 	AuditLogTypeSpecExport,
 	AuditLogTypeSpecImport,
+	AuditLogTypeMCPToolCall,
 }
 
 // AuditLogSource is the way in - which endpoint, or which subsystem.
@@ -317,6 +325,10 @@ const (
 	// of those as api-update would say the stored configuration changed, which is
 	// the opposite of what a reader needs to know about a restart.
 	AuditLogSourceAPIAction AuditLogSource = "api-action"
+
+	// AuditLogSourceMCP is the MCP server: an AI client, authenticated by one of
+	// its user's API keys.
+	AuditLogSourceMCP AuditLogSource = "mcp"
 )
 
 // AuditLogResult says whether the action was permitted.

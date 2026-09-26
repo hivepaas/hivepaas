@@ -42,6 +42,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/interface/api/handler/usersettingshandler"
 	"github.com/hivepaas/hivepaas/hivepaas_app/interface/api/handler/webhookhandler"
 	"github.com/hivepaas/hivepaas/hivepaas_app/interface/api/server"
+	"github.com/hivepaas/hivepaas/hivepaas_app/interface/mcp"
 	"github.com/hivepaas/hivepaas/hivepaas_app/permission/permissionimpl"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/logging"
 	"github.com/hivepaas/hivepaas/hivepaas_app/repository"
@@ -335,6 +336,7 @@ var Provides = []any{
 	sslprovideruc.New,
 	sslrenewaluc.New,
 	mcpuc.New,
+	mcp.NewServices,
 	supportuc.New,
 	homeuc.New,
 	syserroruc.New,

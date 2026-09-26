@@ -187,6 +187,7 @@ func (s *HTTPServer) registerRoutes() {
 	s.registerSupportRoutes(apiGroup)
 	s.registerHomeRoutes(apiGroup)
 	s.registerSpecRoutes(apiGroup)
+	s.registerMCPRoutes(apiGroup)
 }
 
 func routePing(c *gin.Context) {

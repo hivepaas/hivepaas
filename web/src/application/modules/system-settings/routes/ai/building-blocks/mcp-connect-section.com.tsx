@@ -15,6 +15,7 @@ import { Button, Input } from "@/components/ui";
 import { PasswordInput } from "@/components/ui/input-password";
 
 import { CopyField } from "./copy-field.com";
+import { McpKeyCheck } from "./mcp-key-check.com";
 
 interface CreatedKey {
     keyId: string;
@@ -200,6 +201,10 @@ export function McpConnectSection({ endpoint, enabled, allowWrite }: Props) {
                                 )}
                             </div>
                         )}
+                        <McpKeyCheck
+                            keyId={key.keyId.trim()}
+                            allowWrite={allowWrite}
+                        />
                         <KeyAccessNote allowWrite={allowWrite} />
                     </div>
                 </InfoBlock>

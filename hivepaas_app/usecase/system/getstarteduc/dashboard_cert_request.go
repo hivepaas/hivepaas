@@ -58,7 +58,7 @@ func (uc *UC) RequestDashboardCert(
 	}
 	return &getstarteddto.RequestDashboardCertResp{
 		Meta: &basedto.Meta{},
-		Data: getstarteddto.TransformChecklistItem(item),
+		Data: getstarteddto.TransformDashboardCert(item),
 	}, nil
 }
 

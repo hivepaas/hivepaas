@@ -11,6 +11,6 @@ func NewRequestDashboardCertReq() *RequestDashboardCertReq {
 }
 
 type RequestDashboardCertResp struct {
-	Meta *basedto.Meta      `json:"meta"`
-	Data *ChecklistItemResp `json:"data"`
+	Meta *basedto.Meta          `json:"meta"`
+	Data *DashboardCertDataResp `json:"data"`
 }

@@ -16,8 +16,8 @@ func (s *service) Finish(ctx context.Context, db database.IDB) error {
 	if err != nil {
 		return hperrors.Wrap(err)
 	}
-	if sysStatus.NextStep == base.InstallationStepNone {
-		config.SetInstallationStep(base.InstallationStepNone)
+	if !shouldFinish(sysStatus.NextStep) {
+		config.SetInstallationStep(sysStatus.NextStep)
 		return nil
 	}
 	sysStatus.NextStep = base.InstallationStepNone
@@ -30,4 +30,11 @@ func (s *service) Finish(ctx context.Context, db database.IDB) error {
 	}
 	config.SetInstallationStep(base.InstallationStepNone)
 	return nil
+}
+
+// shouldFinish says whether Finish has a step to clear. Reading the dashboard's
+// certificate may finish the step at any time, so it must never clear one that
+// is not the Get started card's.
+func shouldFinish(step base.InstallationStep) bool {
+	return step == base.InstallationStepGetStarted
 }

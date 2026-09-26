@@ -78,6 +78,11 @@ func (s *service) DashboardCert(ctx context.Context, db database.IDB) (*getstart
 			}
 		}
 	}
+	timeNow := timeutil.NowUTC()
+	if certTrusted(attached, timeNow) {
+		// Done: nothing being obtained changes that, so it is not looked up.
+		return &getstartedservice.Item{Status: getstartedservice.ItemStatusDone, Domain: domain.Domain}, nil
+	}
 
 	pendingSetting, err := s.pendingCertSetting(ctx, db, dashboard.app, domain.Domain)
 	if err != nil {
@@ -94,7 +99,7 @@ func (s *service) DashboardCert(ctx context.Context, db database.IDB) (*getstart
 		}
 	}
 
-	item := dashboardCertItem(domain.Domain, attached, pending, obtaining, timeutil.NowUTC())
+	item := dashboardCertItem(domain.Domain, attached, pending, obtaining, timeNow)
 	return &item, nil
 }
 
@@ -112,8 +117,7 @@ func dashboardCertItem(
 ) getstartedservice.Item {
 	item := getstartedservice.Item{Status: getstartedservice.ItemStatusTodo, Domain: domain}
 	switch {
-	case attached != nil && attached.Certificate != "" && attached.CertType != base.SSLCertTypeSelfSigned &&
-		(attached.ExpireAt.IsZero() || attached.ExpireAt.After(timeNow)):
+	case certTrusted(attached, timeNow):
 		item.Status = getstartedservice.ItemStatusDone
 	case obtaining:
 		item.Status = getstartedservice.ItemStatusObtaining
@@ -122,6 +126,13 @@ func dashboardCertItem(
 		item.Error = pending.LastError
 	}
 	return item
+}
+
+// certTrusted reports whether a certificate is one a browser accepts without a
+// warning: it has content, has not expired, and is not the installation's own.
+func certTrusted(cert *entity.SSLCert, timeNow time.Time) bool {
+	return cert != nil && cert.Certificate != "" && cert.CertType != base.SSLCertTypeSelfSigned &&
+		(cert.ExpireAt.IsZero() || cert.ExpireAt.After(timeNow))
 }
 
 // pendingCertSetting is the certificate setting obtaining is going through for

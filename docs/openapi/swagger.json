@@ -39557,6 +39557,44 @@
       }
     },
     "/system/get-started/dashboard-cert" : {
+      "get" : {
+        "description" : "For the Get started card, while nextStep is hivepaas/get-started: todo, obtaining, failed\n(with the error) or done. The first answer that finds it done also clears the step, for\nevery admin.",
+        "operationId" : "getDashboardCert",
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/system_getstarteddto.GetDashboardCertResp"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "400" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Bad Request"
+          },
+          "500" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Internal Server Error"
+          }
+        },
+        "summary" : "Tells where the dashboard's certificate stands",
+        "tags" : [ "system" ]
+      },
       "post" : {
         "description" : "For the Get started card: asks for a certificate for the dashboard's domain, past\nthe wait a failed attempt leaves. Refused with ERR_CONFLICT while one is being\nobtained. Answers with where the certificate stands.",
         "operationId" : "requestDashboardCert",
@@ -51812,18 +51850,11 @@
           "nextStep" : {
             "type" : "string"
           },
-          "setupChecklist" : {
-            "allOf" : [ {
-              "$ref" : "#/components/schemas/system_getstarteddto.ChecklistResp"
-            } ],
-            "description" : "SetupChecklist is what the installation still has to do, for an admin\nwhile nextStep is hivepaas/get-started.",
-            "type" : "object"
-          },
           "user" : {
             "$ref" : "#/components/schemas/userdto.UserDetailsResp"
           }
         },
-        "required" : [ "nextStep", "setupChecklist", "user" ],
+        "required" : [ "nextStep", "user" ],
         "type" : "object"
       },
       "sessiondto.GetMeResp" : {
@@ -60575,14 +60606,14 @@
         "required" : [ "data", "meta" ],
         "type" : "object"
       },
-      "system_getstarteddto.ChecklistItemResp" : {
+      "system_getstarteddto.DashboardCertDataResp" : {
         "properties" : {
           "domain" : {
-            "description" : "Domain is the dashboard certificate's: the name it is for.",
+            "description" : "Domain is the name the certificate is for.",
             "type" : "string"
           },
           "error" : {
-            "description" : "Error is why the last attempt at the dashboard's certificate failed.",
+            "description" : "Error is why the last attempt failed.",
             "type" : "string"
           },
           "status" : {
@@ -60590,21 +60621,6 @@
           }
         },
         "required" : [ "domain", "error", "status" ],
-        "type" : "object"
-      },
-      "system_getstarteddto.ChecklistResp" : {
-        "properties" : {
-          "dashboardCert" : {
-            "$ref" : "#/components/schemas/system_getstarteddto.ChecklistItemResp"
-          },
-          "githubApp" : {
-            "$ref" : "#/components/schemas/system_getstarteddto.ChecklistItemResp"
-          },
-          "twoFactor" : {
-            "$ref" : "#/components/schemas/system_getstarteddto.ChecklistItemResp"
-          }
-        },
-        "required" : [ "dashboardCert", "githubApp", "twoFactor" ],
         "type" : "object"
       },
       "system_getstarteddto.DismissResp" : {
@@ -60616,10 +60632,22 @@
         "required" : [ "meta" ],
         "type" : "object"
       },
+      "system_getstarteddto.GetDashboardCertResp" : {
+        "properties" : {
+          "data" : {
+            "$ref" : "#/components/schemas/system_getstarteddto.DashboardCertDataResp"
+          },
+          "meta" : {
+            "$ref" : "#/components/schemas/basedto.Meta"
+          }
+        },
+        "required" : [ "data", "meta" ],
+        "type" : "object"
+      },
       "system_getstarteddto.RequestDashboardCertResp" : {
         "properties" : {
           "data" : {
-            "$ref" : "#/components/schemas/system_getstarteddto.ChecklistItemResp"
+            "$ref" : "#/components/schemas/system_getstarteddto.DashboardCertDataResp"
           },
           "meta" : {
             "$ref" : "#/components/schemas/basedto.Meta"

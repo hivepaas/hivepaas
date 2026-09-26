@@ -1,6 +1,7 @@
 // Package getstartedservice is what a new installation still has to do, as the
-// dashboard's Get started card shows it: the dashboard's certificate, two-factor
-// authentication, a GitHub App.
+// dashboard's Get started card shows it: a certificate for the dashboard that a
+// browser trusts. The card's other suggestions - two-factor authentication, a
+// GitHub App - are reminders it shows without asking anything here.
 package getstartedservice
 
 import (
@@ -27,18 +28,6 @@ type Item struct {
 	Error  string
 }
 
-type Checklist struct {
-	DashboardCert Item
-	TwoFactor     Item
-	GithubApp     Item
-}
-
-// AllDone reports whether nothing is left to do.
-func (c *Checklist) AllDone() bool {
-	return c.DashboardCert.Status == ItemStatusDone && c.TwoFactor.Status == ItemStatusDone &&
-		c.GithubApp.Status == ItemStatusDone
-}
-
 // CertRequest is what asking for the dashboard's certificate did: the tasks to
 // schedule, or, when it asked for nothing, why not - a certificate already
 // attached or covering the domain, automatic certificates turned off, a name no
@@ -50,12 +39,8 @@ type CertRequest struct {
 }
 
 type Service interface {
-	// Checklist is each item's state, worked out from what exists. hasTwoFactor
-	// is the asking admin's: two-factor authentication is theirs, not the
-	// installation's.
-	Checklist(ctx context.Context, db database.IDB, hasTwoFactor bool) (*Checklist, error)
-
-	// DashboardCert is the state of the dashboard's certificate alone.
+	// DashboardCert is where the dashboard's certificate stands, worked out from
+	// what exists.
 	DashboardCert(ctx context.Context, db database.IDB) (*Item, error)
 
 	// RequestDashboardCert asks for a certificate for the dashboard's domains that
@@ -64,6 +49,7 @@ type Service interface {
 	// failed attempt leaves: a person asking is reason enough to try again.
 	RequestDashboardCert(ctx context.Context, db database.IDB, ignoreRetryAfter bool) (*CertRequest, error)
 
-	// Finish clears the installation step, which hides the card for every admin.
+	// Finish clears the installation step while it is hivepaas/get-started, which
+	// hides the card for every admin. Any other step is left alone.
 	Finish(ctx context.Context, db database.IDB) error
 }

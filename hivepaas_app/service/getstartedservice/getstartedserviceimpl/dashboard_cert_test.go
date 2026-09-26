@@ -166,3 +166,25 @@ func TestFirstObtainableSkipsTheSelfSignedCertificate(t *testing.T) {
 	assert.Nil(t, firstObtainable([]*entity.Setting{selfSigned}))
 	assert.Nil(t, firstObtainable(nil))
 }
+
+func TestCertTrusted(t *testing.T) {
+	timeNow := time.Date(2026, 9, 26, 12, 0, 0, 0, time.UTC)
+	pem := "-----BEGIN CERTIFICATE-----"
+
+	assert.True(t, certTrusted(&entity.SSLCert{CertType: base.SSLCertTypeLetsEncrypt, Certificate: pem,
+		ExpireAt: timeNow.AddDate(0, 2, 0)}, timeNow))
+	assert.True(t, certTrusted(&entity.SSLCert{CertType: base.SSLCertTypeLetsEncrypt, Certificate: pem}, timeNow),
+		"no expiry recorded")
+	assert.False(t, certTrusted(&entity.SSLCert{CertType: base.SSLCertTypeSelfSigned, Certificate: pem}, timeNow))
+	assert.False(t, certTrusted(&entity.SSLCert{CertType: base.SSLCertTypeLetsEncrypt, Certificate: pem,
+		ExpireAt: timeNow.Add(-time.Hour)}, timeNow), "expired")
+	assert.False(t, certTrusted(&entity.SSLCert{CertType: base.SSLCertTypeLetsEncrypt}, timeNow), "no content")
+	assert.False(t, certTrusted(nil, timeNow))
+}
+
+func TestShouldFinishOnlyTheGetStartedStep(t *testing.T) {
+	assert.True(t, shouldFinish(base.InstallationStepGetStarted))
+	assert.False(t, shouldFinish(base.InstallationStepNone))
+	assert.False(t, shouldFinish(base.InstallationStepInitData))
+	assert.False(t, shouldFinish("hivepaas/obtain-ssl"))
+}

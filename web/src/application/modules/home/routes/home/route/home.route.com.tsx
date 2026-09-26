@@ -8,7 +8,14 @@ import { DEFAULT_PAGINATED_DATA, MODULE_IDS, ROUTE } from "@application/shared/c
 import { EUserRole } from "@application/shared/enums";
 import { useConditionalModule, useProjectPermissionsStore } from "@application/shared/permissions";
 
-import { NeedsAttentionCard, NodesCard, RecentTasksCard, SummaryTiles, UpdateAvailableBadge } from "../building-blocks";
+import {
+    GetStartedCard,
+    NeedsAttentionCard,
+    NodesCard,
+    RecentTasksCard,
+    SummaryTiles,
+    UpdateAvailableBadge,
+} from "../building-blocks";
 
 function plural(count: number, noun: string) {
     return `${count} ${noun}${count === 1 ? "" : "s"}`;
@@ -103,6 +110,8 @@ export function HomeRoute() {
                 </div>
                 <UpdateAvailableBadge />
             </header>
+
+            <GetStartedCard />
 
             <SummaryTiles tiles={tiles} />
 

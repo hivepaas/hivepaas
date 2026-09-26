@@ -1,3 +1,4 @@
+export * from "./get-started.card.com";
 export * from "./needs-attention.card.com";
 export * from "./nodes.card.com";
 export * from "./recent-tasks.card.com";

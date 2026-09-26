@@ -187,6 +187,44 @@ export const systemSettingsRouter: RouteObject = {
         },
         {
             lazy: async () => {
+                const { AiLayout } = await getLazyComponents();
+
+                return {
+                    element: (
+                        <ConditionalModule id={MODULE_IDS.System}>
+                            <ModuleTitle title="AI">
+                                <AiLayout>
+                                    <Outlet />
+                                </AiLayout>
+                            </ModuleTitle>
+                        </ConditionalModule>
+                    ),
+                };
+            },
+            path: ROUTE.systemSettings.ai.$pattern,
+            children: [
+                {
+                    index: true,
+                    element: (
+                        <AppNavigate.Basic
+                            to={ROUTE.systemSettings.ai.mcp.$route}
+                            replace
+                            ignorePrevPath
+                        />
+                    ),
+                },
+                {
+                    path: "mcp",
+                    lazy: async () => {
+                        const { SystemSettingsAiMcpRoute } = await getLazyComponents();
+
+                        return { Component: SystemSettingsAiMcpRoute };
+                    },
+                },
+            ],
+        },
+        {
+            lazy: async () => {
                 const { RegistryLayout } = await getLazyComponents();
 
                 return {

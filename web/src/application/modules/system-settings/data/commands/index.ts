@@ -14,3 +14,4 @@ export * from "./traefik-restart.commands";
 export * from "./hivepaas-logging-settings.commands";
 export * from "./hivepaas-registry-settings.commands";
 export * from "./hivepaas-updates.commands";
+export * from "./mcp-settings.commands";

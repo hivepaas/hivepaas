@@ -15,3 +15,4 @@ export * from "./use-hivepaas-request-info.api";
 export * from "./use-hivepaas-logging-settings.api";
 export * from "./use-hivepaas-registry-settings.api";
 export * from "./use-hivepaas-updates.api";
+export * from "./use-mcp-settings.api";

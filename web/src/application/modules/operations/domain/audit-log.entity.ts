@@ -34,6 +34,7 @@ export const AuditLogType = {
     HivePaaSAction: "hivepaas-action",
     SpecExport: "spec-export",
     SpecImport: "spec-import",
+    McpToolCall: "mcp-tool-call",
 } as const;
 
 export type AuditLogType = (typeof AuditLogType)[keyof typeof AuditLogType];
@@ -45,6 +46,7 @@ export const AuditLogSource = {
     ApiUpdate: "api-update",
     ApiDelete: "api-delete",
     ApiAction: "api-action",
+    Mcp: "mcp",
 } as const;
 
 export type AuditLogSource = (typeof AuditLogSource)[keyof typeof AuditLogSource];

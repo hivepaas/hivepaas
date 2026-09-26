@@ -1,4 +1,16 @@
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui";
+import { useState } from "react";
+
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+    Tabs,
+    TabsContent,
+    TabsList,
+    TabsTrigger,
+} from "@/components/ui";
 
 import { CopyField } from "./copy-field.com";
 
@@ -191,49 +203,82 @@ interface Props {
     secret: string;
 }
 
+/**
+ * One picker, two faces: seven tabs fit in a row only when the space beside
+ * the row's title is wide, which depends on the sidebars as much as on the
+ * screen - so the switch is a container query on this block, not a breakpoint
+ * of the viewport. Narrower than that, the same choice is a dropdown.
+ */
 export function McpClientSnippets({ endpoint, keyId, secret }: Props) {
     const guides = clientGuides(endpoint, keyId, secret);
+    const [client, setClient] = useState("claude-code");
 
     return (
-        <Tabs defaultValue="claude-code">
-            <TabsList className="flex h-auto flex-wrap justify-start">
+        <div className="@container flex min-w-0 flex-col gap-2">
+            <Select
+                value={client}
+                onValueChange={setClient}
+            >
+                <SelectTrigger
+                    className="w-full @3xl:hidden"
+                    aria-label="Client"
+                >
+                    <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                    {guides.map(guide => (
+                        <SelectItem
+                            key={guide.value}
+                            value={guide.value}
+                        >
+                            {guide.label}
+                        </SelectItem>
+                    ))}
+                </SelectContent>
+            </Select>
+            <Tabs
+                value={client}
+                onValueChange={setClient}
+            >
+                <TabsList className="hidden @3xl:inline-flex">
+                    {guides.map(guide => (
+                        <TabsTrigger
+                            key={guide.value}
+                            value={guide.value}
+                        >
+                            {guide.label}
+                        </TabsTrigger>
+                    ))}
+                </TabsList>
                 {guides.map(guide => (
-                    <TabsTrigger
+                    <TabsContent
                         key={guide.value}
                         value={guide.value}
+                        className="flex flex-col gap-3 pt-2"
                     >
-                        {guide.label}
-                    </TabsTrigger>
+                        {guide.steps.map(step => (
+                            <div
+                                key={step.say}
+                                className="flex flex-col gap-1"
+                            >
+                                <span className="text-sm">{step.say}</span>
+                                <CopyField
+                                    what={step.what}
+                                    value={step.value}
+                                />
+                            </div>
+                        ))}
+                        {guide.notes?.map(note => (
+                            <p
+                                key={note}
+                                className="text-xs text-muted-foreground"
+                            >
+                                {note}
+                            </p>
+                        ))}
+                    </TabsContent>
                 ))}
-            </TabsList>
-            {guides.map(guide => (
-                <TabsContent
-                    key={guide.value}
-                    value={guide.value}
-                    className="flex flex-col gap-3 pt-2"
-                >
-                    {guide.steps.map(step => (
-                        <div
-                            key={step.say}
-                            className="flex flex-col gap-1"
-                        >
-                            <span className="text-sm">{step.say}</span>
-                            <CopyField
-                                what={step.what}
-                                value={step.value}
-                            />
-                        </div>
-                    ))}
-                    {guide.notes?.map(note => (
-                        <p
-                            key={note}
-                            className="text-xs text-muted-foreground"
-                        >
-                            {note}
-                        </p>
-                    ))}
-                </TabsContent>
-            ))}
-        </Tabs>
+            </Tabs>
+        </div>
     );
 }

@@ -25,6 +25,7 @@
 ## Review Focus
 
 - **The dispatched auth.** `authhandler` must take the auth from the context only when the dispatcher put it there (unexported key type), must still run `VerifyAuth` with the handler's access check, and a request from outside must have no way to set it. Pinned by `TestDispatchedAuthIsOnlyTakenFromTheContext` and `TestDispatchedAuthStillVerifiesAccess` (Task 2).
+- **A fresh auth per dispatched request.** `permission.CheckAccess` writes the resources it allowed into `auth.AllowedResources`, and use cases filter lists by it; a tool that dispatches twice with one auth would have the second answer filtered by the first's check. `authhandler` hands each handler a copy holding only the user. Pinned by `TestEachDispatchedRequestGetsAFreshAuth` (Task 2), found while implementing Task 2.
 - **An API key's access actions.** A key limited to `read` reaches read endpoints and nothing else, through a tool as through the API. Pinned by `TestToolsRespectTheKeysAccessActions` (Task 4).
 - **Secrets.** `get_app_config` and `get_app` must not carry a secret value, whatever the app holds. Pinned by `TestNoToolOutputCarriesASecretValue` (Task 5), over a fake app whose secret and env values are distinctive strings.
 - **Name resolution.** An ambiguous project, env or app name is an error listing the candidates; a name the caller cannot see is "not found", the same as a name that does not exist. Pinned by `TestResolveRefusesAmbiguity` and `TestResolveHidesWhatTheCallerCannotSee` (Task 5).

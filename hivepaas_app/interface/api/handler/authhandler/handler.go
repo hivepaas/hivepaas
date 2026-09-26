@@ -1,6 +1,7 @@
 package authhandler
 
 import (
+	"context"
 	"strings"
 
 	"github.com/gin-gonic/gin"
@@ -18,7 +19,17 @@ var (
 
 type Handler struct {
 	*handler.BaseHandler
-	sessionUC *sessionuc.UC
+	sessionUC sessionUseCase
+}
+
+// sessionUseCase is what the handler asks of sessionuc.UC, narrowed so that a
+// test can stand in for it.
+type sessionUseCase interface {
+	GetCurrentUserByJWT(ctx context.Context, token string) (*basedto.User, error)
+	GetCurrentUserByAPIKey(ctx context.Context, keyID, secret string) (*basedto.User, error)
+	GetCurrentAuthByJWT(ctx context.Context, token string) (*basedto.Auth, error)
+	GetCurrentAuthByAPIKey(ctx context.Context, keyID, secret string) (*basedto.Auth, error)
+	VerifyAuth(ctx context.Context, auth *basedto.Auth, accessCheck permission.AccessCheck) error
 }
 
 func New(
@@ -32,6 +43,9 @@ func New(
 }
 
 func (h *Handler) GetCurrentUser(ctx *gin.Context) (*basedto.User, error) {
+	if auth := dispatchedAuth(ctx.Request.Context()); auth != nil {
+		return auth.User, nil
+	}
 	token, err := h.getAuthToken(ctx)
 	if err != nil {
 		return nil, hperrors.Wrap(err)
@@ -84,6 +98,9 @@ func (h *Handler) GetCurrentAuth(ctx *gin.Context, accessCheck permission.Access
 }
 
 func (h *Handler) getCurrentAuth(ctx *gin.Context) (*basedto.Auth, error) {
+	if auth := dispatchedAuth(ctx.Request.Context()); auth != nil {
+		return auth, nil
+	}
 	token, err := h.getAuthToken(ctx)
 	if err != nil {
 		return nil, hperrors.Wrap(err)

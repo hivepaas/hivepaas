@@ -1073,12 +1073,13 @@ install_tools() {
 check_resources() {
   local mem_mb disk_mb
   mem_mb=$(awk '/^MemTotal:/ {print int($2 / 1024)}' /proc/meminfo 2>/dev/null) || mem_mb=
-  if [ -n "$mem_mb" ] && [ "$mem_mb" -lt 1900 ]; then
-    warn "This server has ${mem_mb} MB of memory; HivePaaS wants 2 GB or more."
+  # A "1 GB" server reports a little less: the kernel keeps some for itself.
+  if [ -n "$mem_mb" ] && [ "$mem_mb" -lt 900 ]; then
+    warn "This server has ${mem_mb} MB of memory; HivePaaS wants 1 GB or more."
   fi
   disk_mb=$(df -Pm /var/lib 2>/dev/null | awk 'NR == 2 {print $4}') || disk_mb=
-  if [ -n "$disk_mb" ] && [ "$disk_mb" -lt 20480 ]; then
-    warn "/var/lib has $((disk_mb / 1024)) GB free; HivePaaS wants 20 GB or more."
+  if [ -n "$disk_mb" ] && [ "$disk_mb" -lt 8192 ]; then
+    warn "/var/lib has $((disk_mb / 1024)) GB free; HivePaaS wants 8 GB or more."
   fi
 }
 

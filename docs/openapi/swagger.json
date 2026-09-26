@@ -39556,6 +39556,96 @@
         "tags" : [ "system_errors" ]
       }
     },
+    "/system/get-started/dashboard-cert" : {
+      "post" : {
+        "description" : "For the Get started card: asks for a certificate for the dashboard's domain, past\nthe wait a failed attempt leaves. Refused with ERR_CONFLICT while one is being\nobtained. Answers with where the certificate stands.",
+        "operationId" : "requestDashboardCert",
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/system_getstarteddto.RequestDashboardCertResp"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "400" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Bad Request"
+          },
+          "409" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Conflict"
+          },
+          "500" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Internal Server Error"
+          }
+        },
+        "summary" : "Asks for the dashboard's certificate now",
+        "tags" : [ "system" ]
+      }
+    },
+    "/system/get-started/dismiss" : {
+      "post" : {
+        "description" : "Clears the installation step, which hides the card for every admin.",
+        "operationId" : "dismissGetStarted",
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/system_getstarteddto.DismissResp"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "400" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Bad Request"
+          },
+          "500" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Internal Server Error"
+          }
+        },
+        "summary" : "Closes the Get started card",
+        "tags" : [ "system" ]
+      }
+    },
     "/system/hivepaas/app-secret" : {
       "put" : {
         "description" : "Replaces the key every stored secret is encrypted with, then re-encrypts them",
@@ -51762,11 +51852,18 @@
           "nextStep" : {
             "type" : "string"
           },
+          "setupChecklist" : {
+            "allOf" : [ {
+              "$ref" : "#/components/schemas/system_getstarteddto.ChecklistResp"
+            } ],
+            "description" : "SetupChecklist is what the installation still has to do, for an admin\nwhile nextStep is hivepaas/get-started.",
+            "type" : "object"
+          },
           "user" : {
             "$ref" : "#/components/schemas/userdto.UserDetailsResp"
           }
         },
-        "required" : [ "nextStep", "user" ],
+        "required" : [ "nextStep", "setupChecklist", "user" ],
         "type" : "object"
       },
       "sessiondto.GetMeResp" : {
@@ -60510,6 +60607,59 @@
         "properties" : {
           "data" : {
             "$ref" : "#/components/schemas/basedto.ObjectIDResp"
+          },
+          "meta" : {
+            "$ref" : "#/components/schemas/basedto.Meta"
+          }
+        },
+        "required" : [ "data", "meta" ],
+        "type" : "object"
+      },
+      "system_getstarteddto.ChecklistItemResp" : {
+        "properties" : {
+          "domain" : {
+            "description" : "Domain is the dashboard certificate's: the name it is for.",
+            "type" : "string"
+          },
+          "error" : {
+            "description" : "Error is why the last attempt at the dashboard's certificate failed.",
+            "type" : "string"
+          },
+          "status" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "domain", "error", "status" ],
+        "type" : "object"
+      },
+      "system_getstarteddto.ChecklistResp" : {
+        "properties" : {
+          "dashboardCert" : {
+            "$ref" : "#/components/schemas/system_getstarteddto.ChecklistItemResp"
+          },
+          "githubApp" : {
+            "$ref" : "#/components/schemas/system_getstarteddto.ChecklistItemResp"
+          },
+          "twoFactor" : {
+            "$ref" : "#/components/schemas/system_getstarteddto.ChecklistItemResp"
+          }
+        },
+        "required" : [ "dashboardCert", "githubApp", "twoFactor" ],
+        "type" : "object"
+      },
+      "system_getstarteddto.DismissResp" : {
+        "properties" : {
+          "meta" : {
+            "$ref" : "#/components/schemas/basedto.Meta"
+          }
+        },
+        "required" : [ "meta" ],
+        "type" : "object"
+      },
+      "system_getstarteddto.RequestDashboardCertResp" : {
+        "properties" : {
+          "data" : {
+            "$ref" : "#/components/schemas/system_getstarteddto.ChecklistItemResp"
           },
           "meta" : {
             "$ref" : "#/components/schemas/basedto.Meta"

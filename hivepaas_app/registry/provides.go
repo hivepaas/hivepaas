@@ -72,6 +72,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/emailservice/emailserviceimpl"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/envvarservice/envvarserviceimpl"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/fileservice/fileserviceimpl"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/getstartedservice/getstartedserviceimpl"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/healthcheckservice/healthcheckserviceimpl"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/hpappservice/hpappserviceimpl"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/imagebuildservice/imagebuildserviceimpl"
@@ -172,6 +173,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings/sslprovideruc"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/specuc"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/supportuc"
+	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/system/getstarteduc"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/system/hpappsettingsuc"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/system/hpappuc"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/system/syserroruc"
@@ -341,6 +343,7 @@ var Provides = []any{
 	homeuc.New,
 	syserroruc.New,
 	sysstatusuc.New,
+	getstarteduc.New,
 	systembackupuc.New,
 	systemcleanupuc.New,
 	specuc.New,
@@ -376,6 +379,7 @@ var Provides = []any{
 	dbserviceimpl.New,
 	dockerapiserviceimpl.New,
 	domainserviceimpl.New,
+	getstartedserviceimpl.New,
 	emailserviceimpl.New,
 	envvarserviceimpl.New,
 	fileserviceimpl.New,

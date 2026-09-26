@@ -320,7 +320,9 @@ export function AppSettingMountForm({
                                                     });
                                                 }}
                                                 aria-invalid={Boolean(rowErrors?.path)}
-                                                className={PROJECT_FORM_CONTROL_MAX_WIDTH_CLASS}
+                                                // The path and its mode, uid and gid on one line where
+                                                // there is room; they wrap on a phone.
+                                                className="w-full max-w-[400px]"
                                             />
                                             {(["mode", "uid", "gid"] as const).map(key => (
                                                 <Input
@@ -335,7 +337,7 @@ export function AppSettingMountForm({
                                                         });
                                                     }}
                                                     aria-invalid={Boolean(rowErrors?.[key])}
-                                                    className="max-w-[120px]"
+                                                    className="max-w-[72px]"
                                                 />
                                             ))}
                                         </div>

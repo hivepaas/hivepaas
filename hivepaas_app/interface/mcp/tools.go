@@ -21,6 +21,7 @@ func Tools() []Tool {
 		planRestartAppTool(),
 		planRedeployAppTool(),
 		planInstallAppTool(),
+		planUpdateAppConfigTool(),
 		applyPlanTool(),
 	}
 }

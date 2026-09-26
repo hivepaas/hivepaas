@@ -27,6 +27,12 @@ type writeRoutes struct {
 	source gin.H
 	// preflight is what the install preflight answers.
 	preflight gin.H
+	// importPlan is what the env's import validate answers; validated is the
+	// app document of the last bundle it was sent; planChanged makes apply
+	// refuse, as the import does when the target moved.
+	importPlan  gin.H
+	validated   string
+	planChanged bool
 }
 
 func (r *writeRoutes) writes() []sentRequest {
@@ -60,6 +66,32 @@ func (r *writeRoutes) add(api *gin.RouterGroup) {
 			"app": gin.H{"id": "n1"}, "deployment": gin.H{"id": "d1"},
 			"dependencies": []gin.H{{"name": "db", "app": gin.H{"id": "n0"}, "deployment": gin.H{"id": "d0"}}},
 		}})
+	})
+	api.POST("/projects/p1/prod/spec/import/validate", func(ctx *gin.Context) {
+		var body struct {
+			Bundle    []byte `json:"bundle"`
+			Selection struct {
+				Include []string `json:"include"`
+			} `json:"selection"`
+		}
+		_ = ctx.ShouldBindJSON(&body)
+		doc, _ := appDocument(body.Bundle, "api")
+		r.mu.Lock()
+		defer r.mu.Unlock()
+		r.validated = strings.Join(body.Selection.Include, ",") + "\n" + doc
+		ctx.JSON(http.StatusOK, gin.H{"data": r.importPlan})
+	})
+	api.POST("/projects/p1/prod/spec/import/apply", func(ctx *gin.Context) {
+		r.mu.Lock()
+		defer r.mu.Unlock()
+		if r.planChanged {
+			ctx.JSON(http.StatusConflict, gin.H{"status": 409, "title": "Conflict",
+				"code": "ERR_SPEC_IMPORT_PLAN_CHANGED"})
+			return
+		}
+		ctx.JSON(http.StatusOK, gin.H{"data": gin.H{"plan": gin.H{"nodes": []gin.H{
+			{"path": "projects/shop/envs/prod/apps/api", "action": "update", "outcome": "updated"},
+		}}, "deployments": []gin.H{}}})
 	})
 	app := api.Group("/projects/p1/prod/apps/a1")
 	app.GET("/deployment-settings", func(ctx *gin.Context) {
@@ -297,4 +329,87 @@ func TestAnInstallOverOldDataSaysSo(t *testing.T) {
 	plan := planOf(t, text)
 	assert.NotEmpty(t, plan.PlanToken, "keeping the data is the person's choice to make")
 	assert.Contains(t, string(plan.Plan), "password it was created with")
+}
+
+const apiPath = "projects/shop/envs/prod/apps/api"
+
+func configArgs(doc string) map[string]any {
+	args := shopProd("api")
+	args["yaml"] = doc
+	return args
+}
+
+func updatePlan(changes ...string) gin.H {
+	return gin.H{"planHash": "h1", "nodes": []gin.H{
+		{"path": "projects/shop/envs/prod", "kind": "env", "selected": false, "action": "unchanged"},
+		{"path": apiPath, "kind": "app", "key": "api", "selected": true, "action": "update",
+			"changes": changes, "restart": true},
+	}}
+}
+
+func TestAConfigChangeIsTheImportsPlan(t *testing.T) {
+	w := newWriteWorld(t)
+	w.routes.importPlan = updatePlan("settings/envVars")
+	session := w.session(t, "key1")
+	doc := "name: API\nsettings:\n  envVars:\n    - {k: LOG_LEVEL, v: debug}\n"
+
+	text, isErr := callTool(t, session, "plan_update_app_config", configArgs(doc))
+	assert.False(t, isErr, text)
+	plan := planOf(t, text)
+	var shown configPlan
+	assert.NoError(t, json.Unmarshal(plan.Plan, &shown))
+	assert.Equal(t, []string{"settings/envVars"}, shown.Changes)
+	assert.True(t, shown.Restart)
+	assert.Equal(t, apiPath+"\n"+doc, w.routes.validated,
+		"the import is asked about the app alone, with the model's document in place of its own")
+	assert.Empty(t, w.routes.writes())
+
+	text, isErr = callTool(t, session, "apply_plan", map[string]any{"planToken": plan.PlanToken})
+	assert.False(t, isErr, text)
+	assert.Contains(t, text, `"outcome":"updated"`)
+	if sent := w.routes.writes(); assert.Len(t, sent, 1) {
+		assert.Equal(t, "/projects/p1/prod/spec/import/apply", sent[0].Path)
+		var body map[string]any
+		assert.NoError(t, json.Unmarshal([]byte(sent[0].Body), &body))
+		assert.Equal(t, "h1", body["planHash"])
+		assert.NotEmpty(t, body["bundle"])
+	}
+}
+
+func TestAConfigChangeRefusedAsMovedSaysPlanAgain(t *testing.T) {
+	w := newWriteWorld(t)
+	w.routes.importPlan = updatePlan("settings/envVars")
+	session := w.session(t, "key1")
+	text, _ := callTool(t, session, "plan_update_app_config", configArgs("name: API\n"))
+	w.routes.planChanged = true
+	text, isErr := callTool(t, session, "apply_plan", map[string]any{"planToken": planOf(t, text).PlanToken})
+	assert.True(t, isErr)
+	assert.Contains(t, text, "the app's configuration changed since the plan was made")
+}
+
+func TestAConfigChangeThatChangesNothingOrIsBlockedHasNoPlan(t *testing.T) {
+	w := newWriteWorld(t)
+	session := w.session(t, "key1")
+
+	w.routes.importPlan = gin.H{"planHash": "h1", "nodes": []gin.H{
+		{"path": apiPath, "kind": "app", "selected": true, "action": "unchanged"}}}
+	text, _ := callTool(t, session, "plan_update_app_config", configArgs("name: API\n"))
+	assert.Empty(t, planOf(t, text).PlanToken, "nothing to change")
+
+	w.routes.importPlan = gin.H{"planHash": "h1", "nodes": []gin.H{
+		{"path": apiPath, "kind": "app", "selected": true, "action": "update", "changes": []string{"x"},
+			"issues": []gin.H{{"severity": "blocked", "code": "MOUNT_TARGET_DUPLICATED"}}}}}
+	text, _ = callTool(t, session, "plan_update_app_config", configArgs("name: API\n"))
+	plan := planOf(t, text)
+	assert.Empty(t, plan.PlanToken, "blocked")
+	assert.Contains(t, string(plan.Plan), "MOUNT_TARGET_DUPLICATED")
+}
+
+func TestAConfigDocumentIsOneMapping(t *testing.T) {
+	w := newWriteWorld(t)
+	for _, doc := range []string{"- a\n- b\n", "name: [unclosed\n", ""} {
+		text, isErr := callTool(t, w.session(t, "key1"), "plan_update_app_config", configArgs(doc))
+		assert.True(t, isErr, doc)
+		assert.Contains(t, text, "yaml is", doc)
+	}
 }

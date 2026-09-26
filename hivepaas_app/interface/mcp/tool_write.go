@@ -3,6 +3,7 @@ package mcp
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"time"
 
@@ -18,6 +19,9 @@ type applier struct {
 	check func(ctx context.Context, call *Call, seen json.RawMessage) error
 	// result trims the endpoint's data to what a model needs; nil keeps it.
 	result func(data json.RawMessage) (any, error)
+	// refused words the endpoint's refusal of a plan that no longer holds; nil,
+	// or a nil answer, leaves the refusal as the endpoint worded it.
+	refused func(apiErr *APIError) error
 	// follow says which read tools watch the change happen.
 	follow string
 }
@@ -146,8 +150,19 @@ func applyPlan(ctx context.Context, call *Call, c *caller, in applyInput) (apply
 			return applyAnswer{}, err
 		}
 	}
+	return sendPlan(ctx, call, plan, applies)
+}
+
+// sendPlan sends a plan's request, as the caller, and reads what it did.
+func sendPlan(ctx context.Context, call *Call, plan *storedPlan, applies *applier) (applyAnswer, error) {
 	resp, err := call.Do(ctx, plan.Method, plan.Path, nil, plan.Body)
 	if err != nil {
+		var apiErr *APIError
+		if applies.refused != nil && errors.As(err, &apiErr) {
+			if worded := applies.refused(apiErr); worded != nil {
+				return applyAnswer{}, worded
+			}
+		}
 		return applyAnswer{}, err
 	}
 	out := applyAnswer{Tool: plan.Tool, Summary: plan.Summary, Follow: applies.follow}

@@ -47,7 +47,7 @@ func planCreateSchedJobTool() Tool {
 		"Plans a job that runs a command in an app's container on a schedule: a cron expression, read in "+
 			"the time zone given, or an interval. Answers the job and its next five runs. Nothing is "+
 			"created until apply_plan.",
-		&applier{follow: "list_sched_jobs lists it; list_tasks with type task:sched-job-exec shows its runs."},
+		NeedWrite, &applier{follow: "list_sched_jobs lists it; list_tasks with type task:sched-job-exec shows its runs."},
 		func(ctx context.Context, call *Call, in createSchedJobInput) (schedJobPlan, *storedPlan, error) {
 			if err := in.check(); err != nil {
 				return schedJobPlan{}, nil, err

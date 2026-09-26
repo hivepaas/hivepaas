@@ -30,11 +30,6 @@ const (
 	KindApply Kind = "apply"
 )
 
-// changes is whether a tool is served only to a caller who may change things.
-func (k Kind) changes() bool {
-	return k != KindRead
-}
-
 // Deps is what every tool is served with.
 type Deps struct {
 	Dispatcher *Dispatcher
@@ -52,7 +47,10 @@ type Tool struct {
 	Title       string
 	Description string
 	Kind        Kind
-	add         func(s *mcpsdk.Server, deps *Deps)
+	// needs is what the tool needs of its caller; it is listed only to one who
+	// has it.
+	needs Need
+	add   func(s *mcpsdk.Server, deps *Deps)
 	// applies is how apply_plan carries out a plan this tool made; nil for a
 	// tool that makes none.
 	applies *applier

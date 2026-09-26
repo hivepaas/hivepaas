@@ -24,6 +24,8 @@ type applier struct {
 	refused func(apiErr *APIError) error
 	// follow says which read tools watch the change happen.
 	follow string
+	// needs is what the plan tool, and so its apply, needs of the caller.
+	needs Need
 }
 
 // planResult is what every plan tool answers: its plan, and the token that
@@ -45,9 +47,10 @@ const (
 // it would do and, when it can be done, the request that does it; the plan is
 // then kept for apply_plan, and the answer carries its token. A plan's audit
 // entry names the plan, so the apply's entry can be traced to it.
-func planTool[In, T any](name, title, description string, applies *applier,
+func planTool[In, T any](name, title, description string, needs Need, applies *applier,
 	run func(ctx context.Context, call *Call, in In) (T, *storedPlan, error)) Tool {
-	return Tool{Name: name, Title: title, Description: description, Kind: KindPlan, applies: applies,
+	applies.needs = needs
+	return Tool{Name: name, Title: title, Description: description, Kind: KindPlan, needs: needs, applies: applies,
 		add: func(s *mcpsdk.Server, deps *Deps) {
 			sdkTool := &mcpsdk.Tool{Name: name, Title: title, Description: description,
 				Annotations: &mcpsdk.ToolAnnotations{ReadOnlyHint: true, Title: title}}
@@ -75,10 +78,13 @@ func planTool[In, T any](name, title, description string, applies *applier,
 					}
 					out.PlanToken, out.ExpiresAt, out.Next = token, timeNow().Add(planTTL).UTC(), nextApply
 					return out, recordCall(ctx, deps, c, name, in, base.AuditLogResultAllowed,
-						auditNote{"plan", planID}, auditNote{"summary", plan.Summary})
+						auditNote{noteKeyPlan, planID}, auditNote{"summary", plan.Summary})
 				})
 		}}
 }
+
+// noteKeyPlan is the audit note that names a plan, on its entry and its apply's.
+const noteKeyPlan = "plan"
 
 type applyInput struct {
 	PlanToken string `json:"planToken" jsonschema:"the planToken a plan_* tool answered"`
@@ -105,7 +111,7 @@ func applyPlanTool() Tool {
 	const description = "Carries out a plan a plan_* tool made, exactly as it was shown. Call it only once " +
 		"the person has seen the plan and agreed to it. A plan is used once and lasts ten minutes."
 	destructive, openWorld := true, false
-	return Tool{Name: name, Title: title, Description: description, Kind: KindApply,
+	return Tool{Name: name, Title: title, Description: description, Kind: KindApply, needs: NeedChange,
 		add: func(s *mcpsdk.Server, deps *Deps) {
 			sdkTool := &mcpsdk.Tool{Name: name, Title: title, Description: description,
 				Annotations: &mcpsdk.ToolAnnotations{Title: title, DestructiveHint: &destructive,
@@ -116,21 +122,28 @@ func applyPlanTool() Tool {
 
 func applyPlan(ctx context.Context, call *Call, c *caller, in applyInput) (applyAnswer, error) {
 	deps := call.deps
-	current, err := deps.Settings.Current(ctx)
-	if err != nil {
-		return applyAnswer{}, fmt.Errorf("mcp: reading the MCP setting: %w", err)
-	}
-	if !current.AllowWrite || !c.writable {
+	if refusal := c.access.refusal(NeedChange); refusal != nil {
 		if recErr := recordCall(ctx, deps, c, "apply_plan", in, base.AuditLogResultDenied); recErr != nil {
 			return applyAnswer{}, recErr
 		}
-		return applyAnswer{}, errChangesNotAllowed
+		return applyAnswer{}, refusal
 	}
 	plan, planID, err := takePlan(ctx, deps.Plans, c, in.PlanToken)
 	var applies *applier
 	if err == nil {
 		if applies = deps.appliers[plan.Tool]; applies == nil {
 			err = errNoSuchPlan
+		}
+	}
+	// The plan's own kind of change: a key that may restart apps cannot apply a
+	// plan to install one, whoever made it.
+	if err == nil {
+		if refusal := c.access.refusal(applies.needs); refusal != nil {
+			if recErr := recordCall(ctx, deps, c, "apply_plan", in, base.AuditLogResultDenied,
+				auditNote{noteKeyPlan, planID}, auditNote{"applies", plan.Tool}); recErr != nil {
+				return applyAnswer{}, recErr
+			}
+			return applyAnswer{}, refusal
 		}
 	}
 	if err != nil {
@@ -143,7 +156,7 @@ func applyPlan(ctx context.Context, call *Call, c *caller, in applyInput) (apply
 	// is not made. Named with the tool it applies, which is what a list of calls
 	// shows of an entry: its detail is cut there.
 	if err = recordCall(ctx, deps, c, "apply_plan: "+plan.Tool, in, base.AuditLogResultAllowed,
-		auditNote{"plan", planID}, auditNote{"applies", plan.Tool}, auditNote{"summary", plan.Summary}); err != nil {
+		auditNote{noteKeyPlan, planID}, auditNote{"applies", plan.Tool}, auditNote{"summary", plan.Summary}); err != nil {
 		return applyAnswer{}, err
 	}
 	if applies.check != nil && len(plan.Check) > 0 {

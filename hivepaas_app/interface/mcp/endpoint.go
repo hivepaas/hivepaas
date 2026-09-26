@@ -81,32 +81,31 @@ func NewEndpoint(services *Services, dispatcher *Dispatcher, tools []Tool) *Endp
 			deps.appliers[tool.Name] = tool.applies
 		}
 	}
-	readServer := newServer(deps, tools, false)
-	writeServer := newServer(deps, tools, true)
+	servers := make(map[access]*mcpsdk.Server, len(allAccesses))
+	for _, a := range allAccesses {
+		servers[a] = newServer(deps, tools, a)
+	}
 	handler := mcpsdk.NewStreamableHTTPHandler(func(r *http.Request) *mcpsdk.Server {
-		if c := callerFrom(r.Context()); c != nil && c.writable {
-			return writeServer
+		if c := callerFrom(r.Context()); c != nil {
+			return servers[c.access]
 		}
-		return readServer
+		return servers[access{}]
 	}, &mcpsdk.StreamableHTTPOptions{Stateless: true})
 	return &Endpoint{services: services, handler: handler}
 }
 
-func newServer(deps *Deps, tools []Tool, writable bool) *mcpsdk.Server {
-	instructions := readInstructions
-	if writable {
-		instructions = writeInstructions
-	}
+// newServer is the server of one access: the tools it can use, and what it
+// is told of those it cannot.
+func newServer(deps *Deps, tools []Tool, a access) *mcpsdk.Server {
 	server := mcpsdk.NewServer(&mcpsdk.Implementation{Name: "hivepaas", Title: "HivePaaS", Version: base.CurrentVersion},
-		&mcpsdk.ServerOptions{Instructions: instructions})
+		&mcpsdk.ServerOptions{Instructions: a.instructions()})
 	for _, tool := range tools {
-		if tool.Kind.changes() && !writable {
-			continue
+		if a.serves(tool.needs) {
+			tool.add(server, deps)
 		}
-		tool.add(server, deps)
 	}
 	addResources(server, deps)
-	addPrompts(server, writable)
+	addPrompts(server, a)
 	return server
 }
 
@@ -127,17 +126,7 @@ func (e *Endpoint) Serve(ctx *gin.Context) {
 		})
 		return
 	}
-	c := &caller{auth: auth, keyID: keyID, writable: current.AllowWrite && keyMayChange(auth)}
+	c := &caller{auth: auth, keyID: keyID, access: accessOf(current.AllowWrite, auth)}
 	reqCtx := withCaller(e.services.Auth.RequestCtx(ctx), c, ctx.Request)
 	e.handler.ServeHTTP(ctx.Writer, ctx.Request.WithContext(reqCtx))
-}
-
-// keyMayChange is whether a key's access actions let it write or execute
-// anything. A key with no access actions is not limited.
-func keyMayChange(auth *basedto.Auth) bool {
-	if auth == nil || auth.User == nil || auth.User.AuthClaims == nil {
-		return false
-	}
-	access := auth.User.AuthClaims.AccessAction
-	return access == nil || access.Write || access.Exec
 }

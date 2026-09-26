@@ -37,7 +37,7 @@ func planInstallAppTool() Tool {
 			"its components, the apps it depends on - with names and images, and what would stop it. A "+
 			"secret parameter left out is generated. Takes what preflight_install takes. Nothing is "+
 			"created until apply_plan.",
-		&applier{follow: "get_app and get_app_status on each app created show its first deployment.",
+		NeedWrite, &applier{follow: "get_app and get_app_status on each app created show its first deployment.",
 			result: installResult},
 		func(ctx context.Context, call *Call, in preflightInput) (installPlan, *storedPlan, error) {
 			ref, err := resolveEnv(ctx, call, in.Project, in.Env)

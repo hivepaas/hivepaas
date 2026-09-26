@@ -80,7 +80,7 @@ func readTemplateResource(ctx context.Context, deps *Deps, uri string) (*mcpsdk.
 	}}, nil
 }
 
-func addPrompts(s *mcpsdk.Server, writable bool) {
+func addPrompts(s *mcpsdk.Server, a access) {
 	s.AddPrompt(&mcpsdk.Prompt{
 		Name:        "debug_app",
 		Title:       "Why is this app not working?",
@@ -91,15 +91,15 @@ func addPrompts(s *mcpsdk.Server, writable bool) {
 			{Name: "app", Description: "the app's key or name", Required: true},
 		},
 	}, func(_ context.Context, req *mcpsdk.GetPromptRequest) (*mcpsdk.GetPromptResult, error) {
-		a := req.Params.Arguments
-		return userPrompt("Find out why the app " + a["app"] + " of " + a["project"] + ", env " + a["env"] +
+		args := req.Params.Arguments
+		return userPrompt("Find out why the app " + args["app"] + " of " + args["project"] + ", env " + args["env"] +
 			", is not working as it should.\n\n" +
 			"1. get_app_status: are its containers running, and if not, what error stopped them?\n" +
 			"2. get_app: how did its last deployments end?\n" +
 			"3. get_app_logs with grep /error|exception|fatal|panic/ over the last hour; then the last " +
 			"100 lines without grep, for what happened just before.\n" +
 			"4. If the cause is outside the app - a node down, memory - list_attention and list_nodes.\n\n" +
-			"Then say what is wrong, quote the lines that show it, and what to change. " + debugEnding(writable)), nil
+			"Then say what is wrong, quote the lines that show it, and what to change. " + debugEnding(a)), nil
 	})
 
 	s.AddPrompt(&mcpsdk.Prompt{
@@ -112,39 +112,49 @@ func addPrompts(s *mcpsdk.Server, writable bool) {
 			{Name: "env", Description: "the env to install into"},
 		},
 	}, func(_ context.Context, req *mcpsdk.GetPromptRequest) (*mcpsdk.GetPromptResult, error) {
-		a := req.Params.Arguments
-		text := "I want to install " + a["what"] + " on HivePaaS.\n\n" +
+		args := req.Params.Arguments
+		text := "I want to install " + args["what"] + " on HivePaaS.\n\n" +
 			"1. search_templates for it, and compare at most three candidates: what each installs, " +
 			"the apps it brings along, and whether it needs the Docker API or extra capabilities.\n" +
 			"2. get_template of the one you recommend, and list the parameters I must decide.\n"
-		if a["project"] != "" && a["env"] != "" {
-			text += "3. preflight_install it into " + a["project"] + ", env " + a["env"] +
+		if args["project"] != "" && args["env"] != "" {
+			text += "3. preflight_install it into " + args["project"] + ", env " + args["env"] +
 				", with the defaults, and tell me what would stop it.\n"
 		}
-		text += installEnding(writable, a["project"] != "" && a["env"] != "")
+		text += installEnding(a, args["project"] != "" && args["env"] != "")
 		return userPrompt(text), nil
 	})
 }
 
 // debugEnding is what a diagnosis ends with: a change the tools can make is
-// planned and shown, and one they cannot is described.
-func debugEnding(writable bool) string {
-	if !writable {
+// planned and shown, and one they cannot is described, with what would allow it.
+func debugEnding(a access) string {
+	switch {
+	case !a.changesAllowed:
 		return "Change nothing: these tools only read."
+	case !a.mayChange():
+		return "Change nothing: this key may only read. If a change would fix it, say which: restarting " +
+			"or redeploying needs a key with Execute; changing configuration, one with Write."
 	}
 	return "If a restart, a redeploy or a configuration change would fix it, plan it with the plan_* " +
-		"tool, show me the plan, and apply it only once I agree."
+		"tool, show me the plan, and apply it only once I agree. If the change needs access this key " +
+		"does not have, say which."
 }
 
 // installEnding is what an install ends with: planned and applied once the
 // person agrees, or done in the dashboard.
-func installEnding(writable, placed bool) string {
+func installEnding(a access, placed bool) string {
+	writable := a.serves(NeedWrite)
 	switch {
 	case writable && placed:
 		return "4. Then plan_install_app with what I decided, show me the plan, and apply it only once I agree."
 	case writable:
 		return "\nAsk me which project and env to install into, then plan_install_app, show me the plan, " +
 			"and apply it only once I agree."
+	}
+	if a.changesAllowed {
+		return "\nThis key cannot install: installing needs a key with Write. Say so, and that installing " +
+			"can also be done in the dashboard."
 	}
 	return "\nInstalling itself is done in the dashboard; say where."
 }

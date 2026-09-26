@@ -30,17 +30,18 @@ func (f *fakeSwitch) Current(context.Context) (entity.MCPSettings, error) {
 	return entity.MCPSettings{Enabled: f.on, AllowWrite: f.allowWrite}, nil
 }
 
-// fakeKeys takes three keys of user u1: "key1" and "key2", not limited, and
-// "reader", which may only read.
+// fakeKeys takes keys of user u1: "key1" and "key2", not limited; "reader",
+// which may only read; "executor" and "writer", which may read and one more.
 type fakeKeys struct{}
 
 func (fakeKeys) GetAPIKeyAuth(ctx *gin.Context) (*basedto.Auth, string, error) {
 	switch keyID := ctx.GetHeader("HIVEPAAS-API-KEY-ID"); keyID {
 	case "key1", "key2":
 		return testAuth(), keyID, nil
-	case "reader":
+	case "reader", "executor", "writer":
 		auth := testAuth()
-		auth.User.AuthClaims.AccessAction = &base.AccessActions{Read: true}
+		auth.User.AuthClaims.AccessAction = &base.AccessActions{Read: true,
+			Exec: keyID == "executor", Write: keyID == "writer"}
 		return auth, keyID, nil
 	}
 	return nil, "", hperrors.Wrap(hperrors.ErrAPIKeyInvalid)

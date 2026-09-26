@@ -20,9 +20,9 @@ var forwardedHeaders = []string{"User-Agent", "X-Forwarded-For", "X-Real-Ip", "A
 type caller struct {
 	auth  *basedto.Auth
 	keyID string
-	// writable is whether this request is served the tools that change things:
-	// the setting allows them and the key may write or execute.
-	writable   bool
+	// access is what this request may change: what the setting allows, and the
+	// key's access actions.
+	access     access
 	remoteAddr string
 	header     http.Header
 }

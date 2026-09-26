@@ -93,7 +93,7 @@ func planUpdateAppConfigTool() Tool {
 			"deployed again - a change to its source deploys it - and anything the import would refuse or "+
 			"clear. A secret's value is never in the document; a secret it adds is created empty. Nothing "+
 			"changes until apply_plan.",
-		&applier{refused: configRefused, result: configResult,
+		NeedWrite, &applier{refused: configRefused, result: configResult,
 			follow: "get_app_status shows the app restart; get_app_config reads what it has now."},
 		func(ctx context.Context, call *Call, in updateConfigInput) (configPlan, *storedPlan, error) {
 			doc, err := parseAppDocument(in.YAML)

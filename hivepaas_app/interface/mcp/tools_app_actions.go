@@ -23,7 +23,7 @@ func planRestartAppTool() Tool {
 		"Plans restarting an app: the swarm replaces its containers with new ones of the same image and "+
 			"configuration, as the dashboard's Restart does. Answers its containers now. Nothing happens "+
 			"until apply_plan.",
-		&applier{follow: "get_app_status shows the new containers start; get_app_logs what they print."},
+		NeedExecute, &applier{follow: "get_app_status shows the new containers start; get_app_logs what they print."},
 		func(ctx context.Context, call *Call, in appInput) (restartPlan, *storedPlan, error) {
 			ref, err := in.resolve(ctx, call)
 			if err != nil {
@@ -87,7 +87,7 @@ func planRedeployAppTool() Tool {
 			"repository app is built again from its branch, or another one. Answers the source now and "+
 			"after. The source's other settings are configuration: plan_update_app_config changes them. "+
 			"Nothing happens until apply_plan.",
-		&applier{check: checkDeploySource,
+		NeedExecute, &applier{check: checkDeploySource,
 			follow: "get_app shows the new deployment and how it ends; get_task_logs its build."},
 		func(ctx context.Context, call *Call, in redeployInput) (redeployPlan, *storedPlan, error) {
 			ref, err := resolveApp(ctx, call, in.Project, in.Env, in.App)

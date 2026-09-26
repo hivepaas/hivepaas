@@ -479,6 +479,56 @@ func TestPromptsPlanWhenChangesAreAllowed(t *testing.T) {
 	res, err = w.session(t, "reader").GetPrompt(context.Background(), &mcpsdk.GetPromptParams{Name: "debug_app",
 		Arguments: map[string]string{"project": "shop", "env": "prod", "app": "api"}})
 	if assert.NoError(t, err) {
-		assert.Contains(t, res.Messages[0].Content.(*mcpsdk.TextContent).Text, "these tools only read")
+		assert.Contains(t, res.Messages[0].Content.(*mcpsdk.TextContent).Text, "this key may only read")
 	}
+}
+
+// A client is listed the tools its key can use, and told why not the others -
+// so that an assistant asked for a change it cannot make says what would let it.
+func TestEachKeyIsServedWhatItCanUseAndToldWhy(t *testing.T) {
+	w := newWriteWorld(t)
+	for key, want := range map[string]struct {
+		listed, unlisted []string
+		told             string
+	}{
+		"reader": {[]string{"get_app"},
+			[]string{"plan_restart_app", "plan_install_app", "apply_plan"}, "may only read"},
+		"executor": {[]string{"plan_restart_app", "plan_redeploy_app", "apply_plan"},
+			[]string{"plan_install_app"}, "need a key that has Write"},
+		"writer": {[]string{"plan_install_app", "plan_update_app_config", "apply_plan"},
+			[]string{"plan_restart_app"}, "need a key that has Execute"},
+		"key1": {[]string{"plan_restart_app", "plan_install_app", "apply_plan"}, nil, "only once they have agreed"},
+	} {
+		session := w.session(t, key)
+		names := toolNames(t, session)
+		for _, name := range want.listed {
+			assert.Contains(t, names, name, key)
+		}
+		for _, name := range want.unlisted {
+			assert.NotContains(t, names, name, key)
+		}
+		assert.Contains(t, session.InitializeResult().Instructions, want.told, key)
+	}
+
+	w.sw.allowWrite = false
+	assert.Contains(t, w.session(t, "key1").InitializeResult().Instructions, "Changes are off on this server")
+}
+
+// A plan is applied only by the key that made it, and apply checks the kind of
+// change against the key again: the refusals say what access would allow it.
+func TestAPlanNeedsItsKindOfAccessToApply(t *testing.T) {
+	w := newWriteWorld(t)
+	text, _ := callTool(t, w.session(t, "key1"), "plan_restart_app", shopProd("api"))
+	token := planOf(t, text).PlanToken
+	// Bound to key1: the same plan tried by writer is not writer's to find.
+	text, isErr := callTool(t, w.session(t, "writer"), "apply_plan", map[string]any{"planToken": token})
+	assert.True(t, isErr)
+	assert.Contains(t, text, "no such plan")
+	assert.Empty(t, w.routes.writes())
+
+	assert.ErrorContains(t, access{changesAllowed: true, write: true}.refusal(NeedExecute), "need a key that has Execute")
+	assert.ErrorContains(t, access{changesAllowed: true, execute: true}.refusal(NeedWrite), "need a key that has Write")
+	assert.ErrorContains(t, access{changesAllowed: true}.refusal(NeedChange), "may only read")
+	assert.Equal(t, errChangesNotAllowed, access{execute: true, write: true}.refusal(NeedWrite))
+	assert.NoError(t, access{changesAllowed: true, execute: true}.refusal(NeedExecute))
 }

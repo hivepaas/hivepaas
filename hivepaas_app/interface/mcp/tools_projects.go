@@ -39,7 +39,8 @@ func (l *projectList) shrink() bool {
 
 func listProjectsTool() Tool {
 	return readTool("list_projects", "List projects",
-		"Lists the projects the API key's user can see, each with its envs; a disabled project is not listed. Start here to find the "+
+		"Lists the projects the API key's user can see, each with its envs; a disabled project is not "+
+			"listed. Start here to find the "+
 			"project and env an app is in.",
 		func(ctx context.Context, call *Call, in listProjectsInput) (projectList, error) {
 			projects, err := listProjects(ctx, call, in.Search)

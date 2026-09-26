@@ -629,6 +629,47 @@ test_credentials_file() {
   check "nothing else is taken" "$TMP/data" "$HIVEPAAS_DATA_DIR"
 }
 
+test_choose_existing_db() {
+  local out
+  HIVEPAAS_EXISTING_DB=reset
+  choose_existing_db
+  check "given: reset" reset "$EXISTING_DB"
+  out=$(HIVEPAAS_EXISTING_DB=maybe; (choose_existing_db) 2>&1)
+  check "given something else: stops" 1 "$?"
+  unset HIVEPAAS_EXISTING_DB
+  EXISTING_DB=''
+  out=$( (choose_existing_db) 2>&1)
+  check "no terminal and nothing given: stops" 1 "$?"
+  check_contains "saying what to set" "$out" "HIVEPAAS_EXISTING_DB"
+  ASSUME_YES=1
+  answers '' yes keep
+  choose_existing_db 2>/dev/null
+  check "asked until keep or reset, --yes or not" keep "$EXISTING_DB"
+}
+
+test_take_kept_credentials() {
+  local out
+  HIVEPAAS_DATA_DIR=$TMP/kept
+  mkdir -p "$HIVEPAAS_DATA_DIR"
+  out=$( (take_kept_credentials) 2>&1)
+  check "no password: stops" 1 "$?"
+  check_contains "saying where one comes from" "$out" "credentials.txt"
+  HIVEPAAS_DB_PASSWORD=db-pass HIVEPAAS_REDIS_PASSWORD=redis-pass HIVEPAAS_AGENT_TOKEN=agent-token
+  HIVEPAAS_JWT_SECRET=jwt-secret
+  write_credentials "$(credentials_file)"
+  unset HIVEPAAS_DB_PASSWORD HIVEPAAS_REDIS_PASSWORD HIVEPAAS_AGENT_TOKEN HIVEPAAS_JWT_SECRET
+  out=$( (take_kept_credentials) 2>&1)
+  check "no hivepaas.toml: stops" 1 "$?"
+  check_contains "naming it" "$out" "hivepaas.toml"
+  write_secret_file "$(secret_file)" 0123456789abcdef0123456789abcdef
+  take_kept_credentials
+  check "the password from credentials.txt" db-pass "$HIVEPAAS_DB_PASSWORD"
+  check "the JWT secret too, so sessions last" jwt-secret "$HIVEPAAS_JWT_SECRET"
+  HIVEPAAS_DB_PASSWORD=given-pass
+  take_kept_credentials
+  check "a given password wins" given-pass "$HIVEPAAS_DB_PASSWORD"
+}
+
 # --------------------------------------------------------------------- Host
 
 test_read_os_release() {
@@ -783,6 +824,7 @@ test_help() {
   check "--help exits 0" 0 "$?"
   check_contains "usage" "$out" "Usage: install.sh"
   check_contains "the settings file to fill in" "$out" "deployment/release/install.env"
+  check_contains "the choice over an earlier database" "$out" "HIVEPAAS_EXISTING_DB"
   for key in ADMIN_EMAIL ADMIN_PASSWORD APP_DOMAIN ROOT_DOMAIN APP_SECRET DATA_DIR PROJECT_DATA_DIR CHANNEL \
     SWAP SWAP_SIZE_MB EARLYOOM UPGRADE_DOCKER AGENT_IMAGE RELEASE_BRANCH INSTALL_REF; do
     check_contains "--help lists HIVEPAAS_$key" "$out" "HIVEPAAS_$key"

@@ -488,6 +488,8 @@ MISSING=''
 RELEASE_FILE=''
 # INSTALLED=1: HivePaaS runs here and has created its admin.
 INSTALLED=0
+# EXISTING_DB: keep or reset, for the database an earlier HivePaaS left here.
+EXISTING_DB=''
 
 # open_tty: questions are read from the terminal, not from stdin, which
 # `curl | bash` makes the script itself. fd 3 reads answers, fd 4 shows the
@@ -760,6 +762,58 @@ write_credentials() {
   ) && mv -f "$1.tmp" "$1"
 }
 
+# choose_existing_db: what to do with the database an earlier HivePaaS left on
+# this server - given in HIVEPAAS_EXISTING_DB, or asked. Nothing is assumed:
+# old data can be what the person wants back, or what broke the old install.
+# --yes does not answer it.
+choose_existing_db() {
+  local reply
+  if [ -n "${HIVEPAAS_EXISTING_DB:-}" ]; then
+    case "$HIVEPAAS_EXISTING_DB" in
+      keep | reset)
+        EXISTING_DB=$HIVEPAAS_EXISTING_DB
+        return 0
+        ;;
+    esac
+    die "HIVEPAAS_EXISTING_DB: '$HIVEPAAS_EXISTING_DB' is neither keep nor reset."
+  fi
+  if [ "$HAVE_TTY" != 1 ]; then
+    die "This server has the database of an earlier HivePaaS. Set HIVEPAAS_EXISTING_DB to keep, to use" \
+      "it again, or to reset, to delete it; then run the installer again."
+  fi
+  warn "This server has the database of an earlier HivePaaS."
+  info "  keep:  use it again, with its password and the hivepaas.toml of its app data"
+  info "  reset: delete everything in it, and install afresh"
+  while :; do
+    ask reply "Keep it or reset it? Type keep or reset: "
+    case "$reply" in
+      keep | reset)
+        EXISTING_DB=$reply
+        return 0
+        ;;
+    esac
+  done
+}
+
+# take_kept_credentials: what a kept database needs - its password, given or
+# from credentials.txt in the app data directory, and hivepaas.toml there, whose
+# secret is the only key to its encrypted data. Either missing stops the install.
+take_kept_credentials() {
+  local creds
+  creds=$(credentials_file)
+  if [ -z "${HIVEPAAS_DB_PASSWORD:-}" ] && [ -f "$creds" ]; then
+    read_kv_file "$creds" take_credential
+  fi
+  if [ -z "${HIVEPAAS_DB_PASSWORD:-}" ]; then
+    die "To keep the database, the installer needs its password: set HIVEPAAS_DB_PASSWORD, or put" \
+      "credentials.txt back in $HIVEPAAS_DATA_DIR - or run again and reset the database."
+  fi
+  if [ ! -f "$(secret_file)" ]; then
+    die "To keep the database, the installer needs $(secret_file): its secret is the only key to" \
+      "the encrypted data. Put the file back - or run again and reset the database."
+  fi
+}
+
 # take_credential KEY VALUE: a line of credentials.txt - the four keys it holds,
 # and nothing else.
 take_credential() {
@@ -808,6 +862,7 @@ ask_questions() {
     "Enter an absolute path outside the system's directories, and not the app data directory or one above it." \
     "$HIVEPAAS_DATA_DIR/project_data"
   normalize_settings
+  if [ "$EXISTING_DB" = keep ]; then take_kept_credentials; fi
   load_secret_file
   answer HIVEPAAS_APP_SECRET "App secret, which encrypts stored secrets" valid_app_secret \
     "The app secret needs 32 characters or more, and no spaces, quotes or backslashes." \
@@ -841,6 +896,10 @@ print_summary() {
   fi
   info "App domain     $HIVEPAAS_APP_DOMAIN"
   info "Root domain    $HIVEPAAS_ROOT_DOMAIN"
+  case "$EXISTING_DB" in
+    keep) info "Database       the earlier one, kept" ;;
+    reset) info "Database       the earlier one is DELETED, and a new one made" ;;
+  esac
   info "App secret     $(mask "$HIVEPAAS_APP_SECRET"), kept in $(secret_file)"
   info "App data       $HIVEPAAS_DATA_DIR"
   info "Project data   $HIVEPAAS_PROJECT_DATA_DIR"
@@ -1370,8 +1429,77 @@ service_exists() {
   docker service inspect "${STACK}_$1" >/dev/null 2>&1
 }
 
+# db_volumes: the volumes a HivePaaS database is on - hivepaas_db, and the
+# hivepaas_db_<major> a Postgres major upgrade moves it to.
+db_volumes() {
+  docker volume ls -q 2>/dev/null | grep -E "^${STACK}_db(_[0-9]+)?\$" || true
+}
+
 db_volume_exists() {
-  [ -n "$(docker volume ls -q --filter name=hivepaas_db 2>/dev/null)" ]
+  [ -n "$(db_volumes)" ]
+}
+
+# DB_CHECK_SCRIPT: run as postgres in a throwaway container of the database's
+# image, on its volume: start it on loopback with a password check there, try
+# the password, stop it. Exit 0: it opens the database; 3: Postgres would not
+# start on the volume; anything else: it does not.
+# shellcheck disable=SC2016 # expanded in the container
+DB_CHECK_SCRIPT='
+printf "host all all 127.0.0.1/32 scram-sha-256\n" >/tmp/hba.conf &&
+  pg_ctl -D "$PGDATA" -o "-c listen_addresses=127.0.0.1 -c hba_file=/tmp/hba.conf" -w -t 60 start >/dev/null 2>&1 ||
+  exit 3
+PGPASSWORD=$HP_DB_PASSWORD psql -h 127.0.0.1 -U hivepaas -d hivepaas -tAc "select 1" >/dev/null 2>&1
+status=$?
+pg_ctl -D "$PGDATA" -m fast -w stop >/dev/null 2>&1
+exit $status'
+
+# wait_volume_free VOLUME: until no container uses the volume. Right after
+# `docker stack rm`, swarm is still stopping and removing the old tasks: a
+# second Postgres on the same data, or a volume still in use, would follow.
+wait_volume_free() {
+  local start=$SECONDS
+  while [ -n "$(docker ps -aq --filter "volume=$1" 2>/dev/null)" ]; do
+    if [ $((SECONDS - start)) -ge 120 ]; then
+      die "The volume $1 is still in use: 'docker ps -a --filter volume=$1' says by what. Stop that," \
+        "then run the installer again."
+    fi
+    sleep 2
+  done
+}
+
+# check_kept_db: the password opens the kept database, tried before anything
+# changes, in a throwaway Postgres with no network. It fails, and the install
+# stops: a run again can keep it with the right password, or reset it.
+check_kept_db() {
+  local status=0
+  resolve_images
+  wait_volume_free "${HP_DB_VOLUME:-${STACK}_db}"
+  HP_DB_PASSWORD=$HIVEPAAS_DB_PASSWORD docker run --rm --network none --user postgres -e HP_DB_PASSWORD \
+    -e PGDATA="/var/lib/postgresql/$HP_DB_MAJOR/docker" -v "${HP_DB_VOLUME:-${STACK}_db}:/var/lib/postgresql" \
+    --entrypoint sh "$HIVEPAAS_IMAGE_DB" -c "$DB_CHECK_SCRIPT" >/dev/null 2>&1 || status=$?
+  case "$status" in
+    0) ok "The database's password opens it: it is kept." ;;
+    3)
+      die "Postgres $HP_DB_MAJOR ($HIVEPAAS_IMAGE_DB) would not start on the volume" \
+        "${HP_DB_VOLUME:-${STACK}_db}. Run the installer again and reset the database."
+      ;;
+    *)
+      die "The password does not open the database. Run the installer again with its password in" \
+        "HIVEPAAS_DB_PASSWORD, or reset the database."
+      ;;
+  esac
+}
+
+# reset_db: the earlier database deleted - every volume it was on, and the
+# record of the one a major upgrade moved it to.
+reset_db() {
+  local volume
+  for volume in $(db_volumes); do
+    wait_volume_free "$volume"
+    docker volume rm "$volume" >/dev/null || die "Could not delete the volume $volume; see above."
+    ok "Deleted the database volume $volume."
+  done
+  rm -f "$HIVEPAAS_DATA_DIR/system/update/db-volume.env"
 }
 
 # service_env SERVICE: the service's environment, one VAR=VALUE a line; empty
@@ -1395,32 +1523,11 @@ detect_install_state() {
   else
     INSTALL_STATE=fresh
     if db_volume_exists; then
-      reinstall_over_database
+      choose_existing_db
+      # A kept database has its admin.
+      if [ "$EXISTING_DB" = keep ]; then INSTALLED=1; fi
     fi
   fi
-}
-
-# reinstall_over_database: a database volume without services - left by
-# `docker stack rm` - is deployed over again, with the password it was created
-# with: given, or from credentials.txt in the app data directory. Its admin
-# exists already, so it is not asked for.
-reinstall_over_database() {
-  local creds
-  if [ -z "${HIVEPAAS_DB_PASSWORD:-}" ]; then
-    creds="$(normalize_dir "${HIVEPAAS_DATA_DIR:-/var/lib/hivepaas}")/credentials.txt"
-    if [ -f "$creds" ]; then
-      read_kv_file "$creds" take_credential
-      HIVEPAAS_DATA_DIR=${HIVEPAAS_DATA_DIR:-${creds%/*}}
-    fi
-  fi
-  if [ -z "${HIVEPAAS_DB_PASSWORD:-}" ]; then
-    die "A HivePaaS database volume is on this server, but no HivePaaS services and no credentials.txt" \
-      "in the app data directory to take its password from. Set HIVEPAAS_DB_PASSWORD (or HIVEPAAS_DATA_DIR," \
-      "where credentials.txt and hivepaas.toml are), or remove the volume to start over ('docker volume ls'," \
-      "'docker volume rm'), then run the installer again."
-  fi
-  INSTALLED=1
-  info "Deploying again over the database already here; its admin is kept."
 }
 
 # port_taken PORT: something on this host takes connections on PORT.
@@ -1464,6 +1571,7 @@ take_db_volume() {
 
 resolve_images() {
   local app agent db_env="$HIVEPAAS_DATA_DIR/system/update/db-volume.env"
+  HP_DB_VOLUME='' HP_DB_MAJOR=
   app=$(release_field "$RELEASE_FILE" "$HIVEPAAS_CHANNEL" appImage)
   agent=${HIVEPAAS_AGENT_IMAGE:-$(release_field "$RELEASE_FILE" "$HIVEPAAS_CHANNEL" agentImage)}
   if [ -z "$agent" ]; then
@@ -1581,6 +1689,7 @@ redeploy_stack() {
 deploy() {
   case "$INSTALL_STATE" in
     fresh)
+      if [ "$EXISTING_DB" = reset ]; then reset_db; fi
       resolve_images
       # Over a database already here, the admin exists: no first boot.
       if [ "$INSTALLED" = 1 ]; then deploy_stack 0; else deploy_stack 1; fi
@@ -1792,8 +1901,10 @@ Settings, from the environment or --config (the environment wins):
   HIVEPAAS_AGENT_IMAGE         the agent's image (default: from the release)
   HIVEPAAS_RELEASE_BRANCH      the branch the release info is read from (default: release)
   HIVEPAAS_INSTALL_REF         the ref the stack files are downloaded from (default: main)
-  HIVEPAAS_DB_PASSWORD         only to redeploy over a database whose services are gone,
-                               when <data dir>/credentials.txt, read by default, is gone too
+  HIVEPAAS_EXISTING_DB         keep or reset, when this server has the database of an
+                               earlier HivePaaS; asked when not set, and never assumed
+  HIVEPAAS_DB_PASSWORD         with keep: the database's password, when
+                               <data dir>/credentials.txt is gone
 
 Silent install - a settings file to fill in, with every setting explained:
   curl -fsSLO https://raw.githubusercontent.com/hivepaas/hivepaas/main/deployment/release/install.env
@@ -1871,6 +1982,7 @@ main() {
   generate_secrets
   gather_addresses
   if [ "$INSTALL_STATE" = fresh ] || [ "$REDEPLOY" = 1 ]; then fetch_release; fi
+  if [ "$EXISTING_DB" = keep ]; then check_kept_db; fi
   if [ "$INSTALL_STATE" = installed ]; then
     ok "HivePaaS is installed here; its settings are read from its services."
     if [ "$REDEPLOY" = 1 ]; then

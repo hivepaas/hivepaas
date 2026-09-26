@@ -19,6 +19,7 @@ import { CopyField, McpConnectSection, McpRecentCallsSection } from "../building
 
 interface FormValues {
     enabled: boolean;
+    allowWrite: boolean;
 }
 
 /** Where the server answers: the API's own address, and /mcp under it. */
@@ -32,11 +33,11 @@ export function SystemSettingsAiMcpRoute() {
     const settings = data?.data;
 
     const { control, handleSubmit, reset } = useForm<FormValues>({
-        defaultValues: { enabled: settings?.enabled ?? false },
+        defaultValues: { enabled: settings?.enabled ?? false, allowWrite: settings?.allowWrite ?? false },
     });
 
     useEffect(() => {
-        reset({ enabled: settings?.enabled ?? false });
+        reset({ enabled: settings?.enabled ?? false, allowWrite: settings?.allowWrite ?? false });
     }, [settings, reset]);
 
     const { mutate: update, isPending } = McpSettingsCommands.useUpdateOne({
@@ -52,8 +53,7 @@ export function SystemSettingsAiMcpRoute() {
         update({
             payload: {
                 enabled: values.enabled,
-                // Kept as it is: nothing reads it until the tools that change things exist.
-                allowWrite: settings?.allowWrite ?? false,
+                allowWrite: values.allowWrite,
                 updateVer: settings?.updateVer ?? 0,
             },
         });
@@ -77,8 +77,9 @@ export function SystemSettingsAiMcpRoute() {
                 <div className={cn(dashedBorderBox)}>
                     <span className="font-semibold text-orange-500">Note:</span> The MCP server lets an AI assistant -
                     Claude Code, Claude Desktop, an editor - read HivePaaS for you: the status and logs of apps, tasks,
-                    nodes, the app store and scheduled jobs. It uses an API key, sees only what the key&apos;s user can
-                    see, and changes nothing. Every call is recorded in the audit log.
+                    nodes, the app store and scheduled jobs. It uses an API key and sees only what the key&apos;s user
+                    can see. It changes nothing unless changes are allowed below, and then only a change planned first
+                    and applied once you agree. Every call is recorded in the audit log.
                 </div>
 
                 <SectionHeader>General</SectionHeader>
@@ -112,6 +113,28 @@ export function SystemSettingsAiMcpRoute() {
                         titleWidth={220}
                         title={
                             <LabelWithInfo
+                                label="Allow changes"
+                                content="Let an assistant install, restart and redeploy apps, change their configuration and schedule jobs - never delete anything. Each change is planned first and made only when the assistant applies the plan you agreed to, with a key that may make it."
+                            />
+                        }
+                    >
+                        <Controller
+                            control={control}
+                            name="allowWrite"
+                            render={({ field }) => (
+                                <Checkbox
+                                    checked={field.value}
+                                    onCheckedChange={checked => {
+                                        field.onChange(checked === true);
+                                    }}
+                                />
+                            )}
+                        />
+                    </InfoBlock>
+                    <InfoBlock
+                        titleWidth={220}
+                        title={
+                            <LabelWithInfo
                                 label="Endpoint"
                                 content="The address a client connects to, over streamable HTTP."
                             />
@@ -129,6 +152,7 @@ export function SystemSettingsAiMcpRoute() {
                 <McpConnectSection
                     endpoint={endpoint}
                     enabled={settings?.enabled ?? false}
+                    allowWrite={settings?.allowWrite ?? false}
                 />
                 <McpRecentCallsSection />
 

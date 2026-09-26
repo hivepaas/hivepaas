@@ -145,7 +145,7 @@ func (s *service) ensurePlan(
 	timeNow time.Time,
 	resp *domainservice.EnsureCertsResp,
 ) error {
-	existing, err := s.certSettingNamed(ctx, db, req.Scope, plan.Name)
+	existing, err := s.certSettingNamed(ctx, db, req.Scope, plan.Name, req.IgnoreSelfSigned)
 	if err != nil {
 		return hperrors.Wrap(err)
 	}
@@ -275,6 +275,7 @@ func (s *service) certSettingNamed(
 	db database.IDB,
 	scope *entity.ObjectScope,
 	name string,
+	ignoreSelfSigned bool,
 ) (*entity.Setting, error) {
 	settings, _, err := s.settingRepo.List(ctx, db, scope, nil,
 		bunex.SelectWhere("setting.type = ?", base.SettingTypeSSLCert),
@@ -283,10 +284,21 @@ func (s *service) certSettingNamed(
 	if err != nil {
 		return nil, hperrors.Wrap(err)
 	}
-	if len(settings) == 0 {
-		return nil, nil //nolint:nilnil // not finding one is the ordinary case
+	return firstNamed(settings, ignoreSelfSigned), nil
+}
+
+// firstNamed is the setting responsible for a name. The self-signed certificate
+// an installation makes for its root domain is inherited everywhere under that
+// name; a caller that wants one a browser trusts looks past it, or it would be
+// told a certificate exists already.
+func firstNamed(settings []*entity.Setting, ignoreSelfSigned bool) *entity.Setting {
+	for _, setting := range settings {
+		if ignoreSelfSigned && setting.Kind == string(base.SSLCertTypeSelfSigned) {
+			continue
+		}
+		return setting
 	}
-	return settings[0], nil
+	return nil
 }
 
 // retryable says whether a name that already has a certificate setting is worth

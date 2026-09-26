@@ -182,3 +182,13 @@ func TestWithoutSelfSignedKeepsOnlyWhatABrowserTrusts(t *testing.T) {
 	assert.Equal(t, map[string]*entity.Setting{"app.example.com": letsEncrypt}, trusted)
 	assert.Empty(t, withoutSelfSigned(nil))
 }
+
+func TestFirstNamedSkipsTheSelfSignedOneWhenAsked(t *testing.T) {
+	selfSigned := &entity.Setting{Name: "example.com", Kind: string(base.SSLCertTypeSelfSigned)}
+	obtained := &entity.Setting{Name: "example.com", Kind: string(base.SSLCertTypeLetsEncrypt)}
+
+	assert.Same(t, selfSigned, firstNamed([]*entity.Setting{selfSigned, obtained}, false))
+	assert.Same(t, obtained, firstNamed([]*entity.Setting{selfSigned, obtained}, true))
+	assert.Nil(t, firstNamed([]*entity.Setting{selfSigned}, true))
+	assert.Nil(t, firstNamed(nil, false))
+}

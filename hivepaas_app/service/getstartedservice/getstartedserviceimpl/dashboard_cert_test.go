@@ -140,3 +140,29 @@ func TestNotAskedReasonSaysWhyNothingWasAskedFor(t *testing.T) {
 	assert.Equal(t, "no certificate was asked for dash.example.com",
 		notAskedReason("dash.example.com", &domainservice.EnsureCertsResp{}))
 }
+
+func TestAnyStillObtainingCountsATaskWaitingToRetry(t *testing.T) {
+	task := func(status base.TaskStatus, retry, maxRetry int) *entity.Task {
+		return &entity.Task{Status: status, Config: entity.TaskConfig{Retry: retry, MaxRetry: maxRetry}}
+	}
+
+	assert.True(t, anyStillObtaining([]*entity.Task{task(base.TaskStatusNotStarted, 0, 2)}))
+	assert.True(t, anyStillObtaining([]*entity.Task{task(base.TaskStatusInProgress, 0, 2)}))
+	assert.True(t, anyStillObtaining([]*entity.Task{task(base.TaskStatusFailed, 1, 2)}), "failed, a retry to come")
+	assert.False(t, anyStillObtaining([]*entity.Task{task(base.TaskStatusFailed, 2, 2)}), "failed, no retry left")
+	assert.False(t, anyStillObtaining([]*entity.Task{task(base.TaskStatusDone, 0, 2)}))
+	assert.False(t, anyStillObtaining([]*entity.Task{task(base.TaskStatusCanceled, 0, 2)}))
+	assert.False(t, anyStillObtaining(nil))
+	assert.True(t, anyStillObtaining([]*entity.Task{
+		task(base.TaskStatusFailed, 2, 2), task(base.TaskStatusFailed, 0, 2),
+	}), "an earlier attempt gave up, a later one will retry")
+}
+
+func TestFirstObtainableSkipsTheSelfSignedCertificate(t *testing.T) {
+	selfSigned := &entity.Setting{Name: "example.com", Kind: string(base.SSLCertTypeSelfSigned)}
+	obtaining := &entity.Setting{Name: "example.com", Kind: string(base.SSLCertTypeLetsEncrypt)}
+
+	assert.Same(t, obtaining, firstObtainable([]*entity.Setting{selfSigned, obtaining}))
+	assert.Nil(t, firstObtainable([]*entity.Setting{selfSigned}))
+	assert.Nil(t, firstObtainable(nil))
+}

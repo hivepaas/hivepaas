@@ -139,24 +139,44 @@ func (s *service) pendingCertSetting(
 	if err != nil {
 		return nil, hperrors.Wrap(err)
 	}
-	if len(settings) == 0 {
-		return nil, nil //nolint:nilnil // none is not an error
-	}
-	return settings[0], nil
+	return firstObtainable(settings), nil
 }
 
+// firstObtainable is the setting obtaining goes through. The installation's
+// self-signed certificate can carry the same name - it is made for the root
+// domain, which the dashboard's domain can be - and is never obtained.
+func firstObtainable(settings []*entity.Setting) *entity.Setting {
+	for _, setting := range settings {
+		if setting.Kind != string(base.SSLCertTypeSelfSigned) {
+			return setting
+		}
+	}
+	return nil
+}
+
+// hasActiveObtainTask reports whether a task is still on the certificate: one
+// waiting to run, running, or failed with a retry to come. A failed attempt
+// leaves its task failed until the retry picks it up again, minutes later.
 func (s *service) hasActiveObtainTask(ctx context.Context, db database.IDB, settingID string) (bool, error) {
 	tasks, _, err := s.taskRepo.List(ctx, db, nil, nil,
 		bunex.SelectWhere("task.type = ?", base.TaskTypeSSLObtain),
 		bunex.SelectWhere("task.object_id = ?", settingID),
 		bunex.SelectWhere("task.status IN (?)", bun.List([]base.TaskStatus{
-			base.TaskStatusNotStarted, base.TaskStatusInProgress})),
-		bunex.SelectLimit(1),
+			base.TaskStatusNotStarted, base.TaskStatusInProgress, base.TaskStatusFailed})),
 	)
 	if err != nil {
 		return false, hperrors.Wrap(err)
 	}
-	return len(tasks) > 0, nil
+	return anyStillObtaining(tasks), nil
+}
+
+func anyStillObtaining(tasks []*entity.Task) bool {
+	for _, task := range tasks {
+		if task.IsNotStarted() || task.IsInProgress() || task.CanRetry() {
+			return true
+		}
+	}
+	return false
 }
 
 func (s *service) RequestDashboardCert(

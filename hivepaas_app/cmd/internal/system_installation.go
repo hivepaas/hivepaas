@@ -17,9 +17,11 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/timeutil"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/transaction"
 	"github.com/hivepaas/hivepaas/hivepaas_app/repository"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/getstartedservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/projectservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/settinginitservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/userservice"
+	"github.com/hivepaas/hivepaas/hivepaas_app/tasks/queue"
 )
 
 func SystemInstallation(
@@ -31,6 +33,8 @@ func SystemInstallation(
 	userService userservice.Service,
 	settingInitService settinginitservice.Service,
 	projectService projectservice.Service,
+	getStartedService getstartedservice.Service,
+	taskQueue queue.TaskQueue,
 	logger logging.Logger,
 ) {
 	stepEnabled := cfg.RunMode != config.RunModeUpdater
@@ -51,6 +55,7 @@ func SystemInstallation(
 				if err != nil {
 					return fmt.Errorf("failed to initialize system data: %w", err)
 				}
+				requestDashboardCert(ctx, db, getStartedService, taskQueue, logger)
 			}
 
 			return nil
@@ -154,4 +159,31 @@ func sysInstallationInitDevProjects(
 	}
 
 	return nil
+}
+
+// requestDashboardCert asks for the dashboard's certificate once the first
+// boot has created the data: where the domain already points here and port 80
+// is open, it is there before anyone opens the dashboard. A failure is only
+// logged - the Get started card asks again - and never stops the boot.
+func requestDashboardCert(
+	ctx context.Context,
+	db *database.DB,
+	getStartedService getstartedservice.Service,
+	taskQueue queue.TaskQueue,
+	logger logging.Logger,
+) {
+	certRequest, err := getStartedService.RequestDashboardCert(ctx, db, false)
+	if err != nil {
+		logger.Errorf("failed to request the dashboard's certificate: %v", err)
+		return
+	}
+	if certRequest.NotAsked != "" {
+		logger.Warnf("the dashboard's certificate was not requested: %s", certRequest.NotAsked)
+	}
+	if len(certRequest.Tasks) == 0 {
+		return
+	}
+	if err = taskQueue.ScheduleTask(ctx, certRequest.Tasks...); err != nil {
+		logger.Errorf("failed to schedule obtaining the dashboard's certificate: %v", err)
+	}
 }

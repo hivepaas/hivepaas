@@ -13,6 +13,9 @@ import (
 	"github.com/gin-gonic/gin"
 	mcpsdk "github.com/modelcontextprotocol/go-sdk/mcp"
 	"github.com/stretchr/testify/assert"
+
+	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/apptemplateuc/apptemplatedto"
+	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings/schedjobuc/schedjobdto"
 )
 
 // sentRequest is a request that would change something.
@@ -296,8 +299,8 @@ func TestInstallPlansEveryAppAndCreatesThemOnApply(t *testing.T) {
 	var shown installPlan
 	assert.NoError(t, json.Unmarshal(plan.Plan, &shown))
 	if assert.Len(t, shown.Apps, 2) {
-		assert.Equal(t, plannedApp{Name: "wiki-db", Key: "wiki-db", Kind: "dependency", Role: "db",
-			Template: "postgres", Image: "postgres:17"}, shown.Apps[0])
+		assert.Equal(t, apptemplatedto.PreflightPlannedApp{Name: "wiki-db", Key: "wiki-db", Kind: "dependency",
+			Role: "db", Template: "postgres", Image: "postgres:17"}, *shown.Apps[0])
 	}
 	assert.Empty(t, w.routes.writes(), "a plan creates nothing")
 
@@ -355,10 +358,19 @@ func TestASchedJobIsPlannedWithItsRuns(t *testing.T) {
 	assert.Contains(t, text, `"id":"j9"`)
 	if sent := w.routes.writes(); assert.Len(t, sent, 1) {
 		assert.Equal(t, "/projects/p1/prod/apps/a1/sched-jobs", sent[0].Path)
-		assert.JSONEq(t, `{"name":"nightly cleanup","jobType":"container-command","app":{"id":"a1"},"maxRetry":0,
-			"schedule":{"cronExpr":"0 2 * * *","initialTime":"2026-09-26T19:00:00+07:00"},
-			"command":{"command":"php artisan cleanup"},"timeout":"30m",
-			"notification":{"successUseDefault":true,"failureUseDefault":true}}`, sent[0].Body)
+		var body schedjobdto.CreateSchedJobReq
+		assert.NoError(t, json.Unmarshal([]byte(sent[0].Body), &body), "the create endpoint's own request")
+		if assert.NotNil(t, body.SchedJobBaseReq) {
+			job := body.SchedJobBaseReq
+			assert.Equal(t, "nightly cleanup", job.Name)
+			assert.Equal(t, "container-command", string(job.JobType))
+			assert.Equal(t, "a1", job.App.ID)
+			assert.Equal(t, "0 2 * * *", job.Schedule.CronExpr)
+			assert.Equal(t, "2026-09-26T19:00:00+07:00", job.Schedule.InitialTime.Format(time.RFC3339))
+			assert.Equal(t, "php artisan cleanup", job.Command.Command)
+			assert.Equal(t, "30m0s", job.Timeout.ToDuration().String())
+			assert.True(t, job.Notification.SuccessUseDefault && job.Notification.FailureUseDefault)
+		}
 	}
 }
 

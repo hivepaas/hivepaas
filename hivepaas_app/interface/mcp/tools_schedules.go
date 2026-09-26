@@ -7,6 +7,9 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/timeutil"
+	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings/schedjobuc/schedjobdto"
 )
 
 // ---- list_sched_jobs ----
@@ -45,20 +48,50 @@ func (l *schedJobList) shrink() bool {
 	return shrinkList(&l.Jobs, &l.Truncated)
 }
 
-// apiSchedJob is a scheduled job as the API answers it. Its command is not
-// read: a command may carry anything.
-type apiSchedJob struct {
-	ID       string    `json:"id"`
-	Name     string    `json:"name"`
-	Status   string    `json:"status"`
-	JobType  string    `json:"jobType"`
-	Schedule *schedule `json:"schedule"`
-	App      *struct {
-		Name string `json:"name"`
-	} `json:"app"`
-	NextRuns []time.Time `json:"nextRuns"`
-	Timeout  string      `json:"timeout"`
-	MaxRetry int         `json:"maxRetry"`
+// schedJobItemOf is a job as a model reads it, from the endpoint's own type.
+// Its command is not read: a command may carry anything.
+func schedJobItemOf(j *schedjobdto.SchedJobResp) schedJobItem {
+	item := schedJobItem{JobType: string(j.JobType), NextRuns: j.NextRuns, MaxRetry: j.MaxRetry}
+	if j.BaseSettingResp != nil {
+		item.ID, item.Name, item.Status = j.ID, j.Name, string(j.Status)
+	}
+	if j.Timeout > 0 {
+		item.Timeout = j.Timeout.String()
+	}
+	if j.App != nil {
+		item.App = j.App.Name
+	}
+	if s := j.Schedule; s != nil {
+		item.Schedule = &schedule{CronExpr: s.CronExpr, InitialTime: s.InitialTime, EndTime: s.EndTime}
+		if s.Interval > 0 {
+			item.Schedule.Interval = s.Interval.String()
+		}
+	}
+	return item
+}
+
+// scheduleReq is the sched job endpoints' own schedule: a cron expression, or
+// an interval, from an initial time - whose zone a cron expression is read in.
+func scheduleReq(cronExpr, interval string, initial time.Time) (*schedjobdto.ScheduleReq, error) {
+	req := &schedjobdto.ScheduleReq{CronExpr: cronExpr, InitialTime: initial}
+	if interval != "" {
+		d, err := timeutil.ParseDuration(interval)
+		if err != nil || d <= 0 {
+			return nil, &InputError{Message: fmt.Sprintf("interval is %q; give a duration such as 90m or 24h", interval)}
+		}
+		req.Interval = d
+	}
+	return req, nil
+}
+
+// calcNextRuns asks the sched job endpoints when a schedule runs next.
+func calcNextRuns(ctx context.Context, call *Call, sched *schedjobdto.ScheduleReq, count int) ([]time.Time, error) {
+	var resp schedjobdto.CalcNextRunsResp
+	if err := call.Post(ctx, "/settings/sched-jobs/calc-next-runs",
+		&schedjobdto.CalcNextRunsReq{ScheduleReq: sched, Count: count}, &resp); err != nil {
+		return nil, err
+	}
+	return resp.Data, nil
 }
 
 func listSchedJobsTool() Tool {
@@ -74,20 +107,15 @@ func listSchedJobsTool() Tool {
 				}
 				path = ref.path("/sched-jobs")
 			}
-			var resp struct {
-				Data []apiSchedJob `json:"data"`
-			}
+			var resp schedjobdto.ListSchedJobResp
 			if err := call.Get(ctx, path, url.Values{paramPageLimit: {strconv.Itoa(maxListed)}}, &resp); err != nil {
 				return schedJobList{}, err
 			}
 			out := schedJobList{Jobs: make([]schedJobItem, 0, len(resp.Data))}
 			for _, j := range resp.Data {
-				item := schedJobItem{ID: j.ID, Name: j.Name, Status: j.Status, JobType: j.JobType,
-					Schedule: j.Schedule, NextRuns: j.NextRuns, Timeout: j.Timeout, MaxRetry: j.MaxRetry}
-				if j.App != nil {
-					item.App = j.App.Name
+				if j != nil {
+					out.Jobs = append(out.Jobs, schedJobItemOf(j))
 				}
-				out.Jobs = append(out.Jobs, item)
 			}
 			return out, nil
 		})
@@ -137,20 +165,16 @@ func explainScheduleTool() Tool {
 			if err != nil {
 				return scheduleRuns{}, &InputError{Message: fmt.Sprintf("no time zone %q; use an IANA name", zone)}
 			}
-			body := map[string]any{"count": count, "initialTime": timeNow().In(loc).Format(time.RFC3339)}
-			if cronExpr != "" {
-				body["cronExpr"] = cronExpr
-			} else {
-				body["interval"] = interval
-			}
-			var resp struct {
-				Data []time.Time `json:"data"`
-			}
-			if err = call.Post(ctx, "/settings/sched-jobs/calc-next-runs", body, &resp); err != nil {
+			sched, err := scheduleReq(cronExpr, interval, timeNow().In(loc).Truncate(time.Second))
+			if err != nil {
 				return scheduleRuns{}, err
 			}
-			out := scheduleRuns{TimeZone: zone, Runs: make([]string, 0, len(resp.Data))}
-			for _, run := range resp.Data {
+			runs, err := calcNextRuns(ctx, call, sched, count)
+			if err != nil {
+				return scheduleRuns{}, err
+			}
+			out := scheduleRuns{TimeZone: zone, Runs: make([]string, 0, len(runs))}
+			for _, run := range runs {
 				out.Runs = append(out.Runs, run.In(loc).Format("2006-01-02T15:04:05Z07:00 Mon"))
 			}
 			return out, nil

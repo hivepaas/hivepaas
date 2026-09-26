@@ -9,6 +9,12 @@ import (
 	"time"
 
 	"github.com/tiendc/gofn"
+
+	"github.com/hivepaas/hivepaas/hivepaas_app/base"
+	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
+	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/timeutil"
+	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings/commandtemplateuc/commandtemplatedto"
+	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings/schedjobuc/schedjobdto"
 )
 
 type createSchedJobInput struct {
@@ -66,38 +72,33 @@ func planCreateSchedJobTool() Tool {
 			}
 			// A job reads its cron expression in the zone of its initial time:
 			// the plan's runs and the job's are computed from the same one.
-			schedule := map[string]any{"initialTime": timeNow().In(loc).Truncate(time.Second).Format(time.RFC3339)}
-			if cron := strings.TrimSpace(in.CronExpr); cron != "" {
-				schedule["cronExpr"] = cron
-			} else {
-				schedule["interval"] = strings.TrimSpace(in.Interval)
+			sched, err := scheduleReq(strings.TrimSpace(in.CronExpr), strings.TrimSpace(in.Interval),
+				timeNow().In(loc).Truncate(time.Second))
+			if err != nil {
+				return schedJobPlan{}, nil, err
 			}
-			calc := map[string]any{"count": schedJobRuns}
-			for k, v := range schedule {
-				calc[k] = v
-			}
-			var runs struct {
-				Data []time.Time `json:"data"`
-			}
-			if err = call.Post(ctx, "/settings/sched-jobs/calc-next-runs", calc, &runs); err != nil {
+			runs, err := calcNextRuns(ctx, call, sched, schedJobRuns)
+			if err != nil {
 				return schedJobPlan{}, nil, err
 			}
 
 			out := schedJobPlan{App: ref.AppKey, Project: ref.ProjectKey, Env: ref.Env, Name: strings.TrimSpace(in.Name),
 				Schedule: gofn.Coalesce(strings.TrimSpace(in.CronExpr), "every "+strings.TrimSpace(in.Interval)),
 				TimeZone: zone, Command: in.Command, Timeout: in.Timeout, MaxRetry: in.MaxRetry,
-				NextRuns: make([]string, 0, len(runs.Data))}
-			for _, run := range runs.Data {
+				NextRuns: make([]string, 0, len(runs))}
+			for _, run := range runs {
 				out.NextRuns = append(out.NextRuns, run.In(loc).Format("2006-01-02T15:04:05Z07:00 Mon"))
 			}
 
-			body := map[string]any{"name": out.Name, "jobType": "container-command", "schedule": schedule,
-				"app": map[string]string{"id": ref.AppID}, "maxRetry": in.MaxRetry,
-				"command":      map[string]any{"command": in.Command},
-				"notification": map[string]bool{"successUseDefault": true, "failureUseDefault": true}}
-			if t := strings.TrimSpace(in.Timeout); t != "" {
-				body["timeout"] = t
-			}
+			// The create endpoint's own request, as the dashboard's form fills it
+			// for a command run in the app's container.
+			timeout, _ := timeutil.ParseDurationWithEmptyIsZero(strings.TrimSpace(in.Timeout))
+			body := &schedjobdto.CreateSchedJobReq{SchedJobBaseReq: &schedjobdto.SchedJobBaseReq{
+				Name: out.Name, JobType: base.SchedJobTypeContainerCommand, Schedule: sched,
+				App: basedto.ObjectIDReq{ID: ref.AppID}, MaxRetry: in.MaxRetry, Timeout: timeout,
+				Command:      &commandtemplatedto.CommandTemplateBaseReq{Command: in.Command},
+				Notification: &basedto.BaseEventNotificationReq{SuccessUseDefault: true, FailureUseDefault: true},
+			}}
 			raw, err := json.Marshal(body)
 			if err != nil {
 				return schedJobPlan{}, nil, fmt.Errorf("mcp: encoding a plan: %w", err)
@@ -120,7 +121,7 @@ func (in *createSchedJobInput) check() error {
 		return &InputError{Message: fmt.Sprintf("maxRetry is 0 to %d", maxSchedJobRetry)}
 	}
 	if t := strings.TrimSpace(in.Timeout); t != "" {
-		if d, err := time.ParseDuration(t); err != nil || d <= 0 {
+		if d, err := timeutil.ParseDuration(t); err != nil || d <= 0 {
 			return &InputError{Message: fmt.Sprintf("timeout is %q; give a duration such as 30m", t)}
 		}
 	}

@@ -4,6 +4,8 @@ import (
 	"context"
 	"net/url"
 	"strconv"
+
+	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/projectuc/projectdto"
 )
 
 // maxListed is the most items a list tool asks the API for.
@@ -35,17 +37,6 @@ func (l *projectList) shrink() bool {
 	return shrinkList(&l.Projects, &l.Truncated)
 }
 
-// apiProject is what the project endpoints answer, as far as the tools read it.
-type apiProject struct {
-	ID   string `json:"id"`
-	Key  string `json:"key"`
-	Name string `json:"name"`
-	Envs []struct {
-		ID   string `json:"id"`
-		Name string `json:"name"`
-	} `json:"envs"`
-}
-
 func listProjectsTool() Tool {
 	return readTool("list_projects", "List projects",
 		"Lists the projects the API key's user can see, each with its envs. Start here to find the "+
@@ -57,9 +48,14 @@ func listProjectsTool() Tool {
 			}
 			out := projectList{Projects: make([]projectItem, 0, len(projects))}
 			for _, p := range projects {
+				if p == nil {
+					continue
+				}
 				item := projectItem{ID: p.ID, Key: p.Key, Name: p.Name, Envs: make([]string, 0, len(p.Envs))}
 				for _, env := range p.Envs {
-					item.Envs = append(item.Envs, env.Name)
+					if env != nil {
+						item.Envs = append(item.Envs, env.Name)
+					}
 				}
 				out.Projects = append(out.Projects, item)
 			}
@@ -68,14 +64,12 @@ func listProjectsTool() Tool {
 }
 
 // listProjects asks the project list endpoint, as the caller.
-func listProjects(ctx context.Context, call *Call, search string) ([]apiProject, error) {
+func listProjects(ctx context.Context, call *Call, search string) ([]*projectdto.ProjectResp, error) {
 	query := url.Values{paramPageLimit: {strconv.Itoa(maxListed)}}
 	if search != "" {
 		query.Set("search", search)
 	}
-	var resp struct {
-		Data []apiProject `json:"data"`
-	}
+	var resp projectdto.ListProjectResp
 	if err := call.Get(ctx, "/projects", query, &resp); err != nil {
 		return nil, err
 	}

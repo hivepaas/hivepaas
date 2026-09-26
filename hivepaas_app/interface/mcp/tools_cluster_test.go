@@ -158,7 +158,10 @@ func TestTemplates(t *testing.T) {
 	var list templateList
 	assert.NoError(t, json.Unmarshal([]byte(text), &list))
 	if assert.Len(t, list.Templates, 1) {
-		assert.Equal(t, []templateVersion{{Name: "17", Release: "17.5", Default: true}}, list.Templates[0].Versions)
+		if assert.Len(t, list.Templates[0].Versions, 1) {
+			v := list.Templates[0].Versions[0]
+			assert.Equal(t, []any{"17", "17.5", true}, []any{v.Name, v.Release, v.Default})
+		}
 	}
 
 	text, isErr = callTool(t, session, "get_template", map[string]any{"template": "postgres"})
@@ -181,8 +184,15 @@ func TestPreflightInstallAuditsNoParameterValue(t *testing.T) {
 		"the endpoint is asked with the value")
 	var out preflightAnswer
 	assert.NoError(t, json.Unmarshal([]byte(text), &out))
-	assert.Equal(t, []preflightIssue{{Code: "ERR_NAME_TAKEN", Detail: "an app named db exists"}}, out.Issues)
-	assert.Equal(t, []preflightStorage{{App: "db", AppKey: "db", IsDatabase: true, Volume: "data"}}, out.Storage)
+	if assert.Len(t, out.Issues, 1) {
+		assert.Equal(t, "ERR_NAME_TAKEN", out.Issues[0].Code)
+		assert.Equal(t, "an app named db exists", out.Issues[0].Detail)
+	}
+	if assert.Len(t, out.Storage, 1) {
+		assert.Equal(t, "db", out.Storage[0].AppKey)
+		assert.True(t, out.Storage[0].IsDatabase)
+		assert.Equal(t, "data", out.Storage[0].Volume.Name)
+	}
 
 	if assert.NotEmpty(t, w.audit.entries) {
 		detail := w.audit.entries[len(w.audit.entries)-1].Detail
@@ -204,8 +214,10 @@ func TestSchedules(t *testing.T) {
 	text, isErr = callTool(t, session, "explain_schedule",
 		map[string]any{"cronExpr": "0 2 * * *", "timeZone": "Asia/Ho_Chi_Minh", "count": 2})
 	assert.False(t, isErr, text)
-	assert.JSONEq(t, `{"count":2,"cronExpr":"0 2 * * *","initialTime":"2026-09-26T19:00:00+07:00"}`,
-		routes.asked["/settings/sched-jobs/calc-next-runs"])
+	var calc map[string]any
+	assert.NoError(t, json.Unmarshal([]byte(routes.asked["/settings/sched-jobs/calc-next-runs"]), &calc))
+	assert.Equal(t, []any{2.0, "0 2 * * *", "2026-09-26T19:00:00+07:00"},
+		[]any{calc["count"], calc["cronExpr"], calc["initialTime"]}, "the endpoint's own request")
 	var out scheduleRuns
 	assert.NoError(t, json.Unmarshal([]byte(text), &out))
 	assert.Equal(t, []string{"2026-09-27T02:00:00+07:00 Sun", "2026-09-28T02:00:00+07:00 Mon"}, out.Runs)

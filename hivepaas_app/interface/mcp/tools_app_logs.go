@@ -8,6 +8,8 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/tasklog"
 )
 
 const (
@@ -43,12 +45,8 @@ type logsAnswer struct {
 	Omitted int `json:"omitted,omitempty"`
 }
 
-// logFrame is one line as the log endpoint answers it.
-type logFrame struct {
-	Type string    `json:"type"`
-	Data string    `json:"data"`
-	Ts   time.Time `json:"ts"`
-}
+// logFrame is one line as the log endpoints answer it: tasklog's own frame.
+type logFrame = tasklog.LogFrame
 
 func getAppLogsTool() Tool {
 	return readTool("get_app_logs", "Read an app's logs",
@@ -171,7 +169,7 @@ func makeLogsAnswer(frames []logFrame, tail int, match func(string) bool) logsAn
 		if match != nil && !match(text) {
 			continue
 		}
-		lines = append(lines, formatLogLine(f.Ts, f.Type, text))
+		lines = append(lines, formatLogLine(f.Ts, string(f.Type), text))
 	}
 	if match != nil {
 		matched := len(lines)

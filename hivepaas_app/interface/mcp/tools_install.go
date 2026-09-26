@@ -5,26 +5,18 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+
+	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/apptemplateuc/apptemplatedto"
 )
 
-type plannedApp struct {
-	Name     string `json:"name"`
-	Key      string `json:"key"`
-	Kind     string `json:"kind"`
-	Role     string `json:"role,omitempty"`
-	Template string `json:"template"`
-	Version  string `json:"version,omitempty"`
-	Image    string `json:"image"`
-}
-
 type installPlan struct {
-	Project  string             `json:"project"`
-	Env      string             `json:"env"`
-	Template string             `json:"template"`
-	Apps     []plannedApp       `json:"apps"`
-	Issues   []preflightIssue   `json:"issues"`
-	Storage  []preflightStorage `json:"leftoverData,omitempty"`
-	Warnings []string           `json:"warnings,omitempty"`
+	Project  string                                   `json:"project"`
+	Env      string                                   `json:"env"`
+	Template string                                   `json:"template"`
+	Apps     []*apptemplatedto.PreflightPlannedApp    `json:"apps"`
+	Issues   []*apptemplatedto.PreflightIssueResult   `json:"issues"`
+	Storage  []*apptemplatedto.PreflightStorageResult `json:"leftoverData,omitempty"`
+	Warnings []string                                 `json:"warnings,omitempty"`
 }
 
 const leftoverDataWarning = "Some of these apps would find data an earlier install left in their " +
@@ -45,21 +37,12 @@ func planInstallAppTool() Tool {
 				return installPlan{}, nil, err
 			}
 			body := in.body()
-			var resp struct {
-				Data struct {
-					Storage []apiPreflightStorage `json:"storage"`
-					Issues  []preflightIssue      `json:"issues"`
-					Apps    []plannedApp          `json:"apps"`
-				} `json:"data"`
-			}
-			if err = call.Post(ctx, ref.path("/apps/from-template/preflight"), body, &resp); err != nil {
+			result, err := preflight(ctx, call, ref, body)
+			if err != nil {
 				return installPlan{}, nil, err
 			}
 			out := installPlan{Project: ref.ProjectKey, Env: ref.Env, Template: in.Template,
-				Apps: resp.Data.Apps, Issues: resp.Data.Issues, Storage: makePreflightStorage(resp.Data.Storage)}
-			if out.Issues == nil {
-				out.Issues = []preflightIssue{}
-			}
+				Apps: result.Apps, Issues: result.Issues, Storage: result.Storage}
 			if len(out.Storage) > 0 {
 				out.Warnings = append(out.Warnings, leftoverDataWarning)
 			}

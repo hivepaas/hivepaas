@@ -157,7 +157,7 @@ func TestGetApp(t *testing.T) {
 	assert.NoError(t, json.Unmarshal([]byte(text), &out))
 	assert.Equal(t, []string{"api-db"}, out.Children)
 	assert.Equal(t, []string{"https://api.shop.test"}, out.Links)
-	assert.Equal(t, &appSource{Method: "image", Image: "shop/api:2"}, out.Source)
+	assert.Equal(t, &deploySource{Method: "image", Image: "shop/api:2"}, out.Source)
 	assert.Equal(t, "https://git.test/shop/api.git", withoutUserinfo("https://ada:s3cr3t-4@git.test/shop/api.git"))
 	if assert.Len(t, out.Deployments, 2) {
 		assert.Equal(t, "failed", out.Deployments[0].Status)

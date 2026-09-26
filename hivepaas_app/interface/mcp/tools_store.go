@@ -2,9 +2,13 @@ package mcp
 
 import (
 	"context"
+	"encoding/json"
+	"fmt"
 	"net/url"
 	"strconv"
 	"strings"
+
+	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/apptemplateuc/apptemplatedto"
 )
 
 // ---- search_templates ----
@@ -20,24 +24,18 @@ type searchTemplatesInput struct {
 	Category string `json:"category,omitempty" jsonschema:"a category such as databases or databases/sql"`
 }
 
-type templateVersion struct {
-	Name    string `json:"name"`
-	Release string `json:"release,omitempty"`
-	Default bool   `json:"default,omitempty"`
-}
-
 type templateItem struct {
-	Name                 string            `json:"name"`
-	Title                string            `json:"title"`
-	Tagline              string            `json:"tagline"`
-	Categories           []string          `json:"categories,omitempty"`
-	Versions             []templateVersion `json:"versions,omitempty"`
-	Variants             []string          `json:"variants,omitempty"`
-	Dependencies         []string          `json:"dependencies,omitempty"`
-	Components           []string          `json:"components,omitempty"`
-	RequiresDockerAPI    bool              `json:"requiresDockerApi,omitempty"`
-	RequiresCapabilities bool              `json:"requiresCapabilities,omitempty"`
-	Compatible           bool              `json:"compatible"`
+	Name                 string                                   `json:"name"`
+	Title                string                                   `json:"title"`
+	Tagline              string                                   `json:"tagline"`
+	Categories           []string                                 `json:"categories,omitempty"`
+	Versions             []*apptemplatedto.AppTemplateVersionResp `json:"versions,omitempty"`
+	Variants             []string                                 `json:"variants,omitempty"`
+	Dependencies         []string                                 `json:"dependencies,omitempty"`
+	Components           []string                                 `json:"components,omitempty"`
+	RequiresDockerAPI    bool                                     `json:"requiresDockerApi,omitempty"`
+	RequiresCapabilities bool                                     `json:"requiresCapabilities,omitempty"`
+	Compatible           bool                                     `json:"compatible"`
 }
 
 type templateList struct {
@@ -47,26 +45,6 @@ type templateList struct {
 
 func (l *templateList) shrink() bool {
 	return shrinkList(&l.Templates, &l.Truncated)
-}
-
-type apiTemplateSummary struct {
-	Name         string   `json:"name"`
-	Title        string   `json:"title"`
-	Tagline      string   `json:"tagline"`
-	Categories   []string `json:"categories"`
-	Dependencies []struct {
-		Template string `json:"template"`
-	} `json:"dependencies"`
-	Components []struct {
-		Name string `json:"name"`
-	} `json:"components"`
-	Variants []struct {
-		Name string `json:"name"`
-	} `json:"variants"`
-	Versions             []templateVersion `json:"versions"`
-	RequiresCapabilities bool              `json:"requiresCapabilities"`
-	RequiresDockerAPI    bool              `json:"requiresDockerApi"`
-	Compatible           bool              `json:"compatible"`
 }
 
 func searchTemplatesTool() Tool {
@@ -82,32 +60,38 @@ func searchTemplatesTool() Tool {
 			if c := strings.TrimSpace(in.Category); c != "" {
 				query.Set("category", c)
 			}
-			var resp struct {
-				Data []apiTemplateSummary `json:"data"`
-			}
+			var resp apptemplatedto.ListAppTemplatesResp
 			if err := call.Get(ctx, "/app-templates", query, &resp); err != nil {
 				return templateList{}, err
 			}
 			out := templateList{Templates: make([]templateItem, 0, len(resp.Data))}
 			for _, t := range resp.Data {
-				out.Templates = append(out.Templates, makeTemplateItem(&t))
+				if t != nil {
+					out.Templates = append(out.Templates, makeTemplateItem(t))
+				}
 			}
 			return out, nil
 		})
 }
 
-func makeTemplateItem(t *apiTemplateSummary) templateItem {
+func makeTemplateItem(t *apptemplatedto.AppTemplateSummaryResp) templateItem {
 	item := templateItem{Name: t.Name, Title: t.Title, Tagline: t.Tagline, Categories: t.Categories,
 		Versions: t.Versions, RequiresDockerAPI: t.RequiresDockerAPI,
 		RequiresCapabilities: t.RequiresCapabilities, Compatible: t.Compatible}
 	for _, d := range t.Dependencies {
-		item.Dependencies = append(item.Dependencies, d.Template)
+		if d != nil {
+			item.Dependencies = append(item.Dependencies, d.Template)
+		}
 	}
 	for _, c := range t.Components {
-		item.Components = append(item.Components, c.Name)
+		if c != nil {
+			item.Components = append(item.Components, c.Name)
+		}
 	}
 	for _, v := range t.Variants {
-		item.Variants = append(item.Variants, v.Name)
+		if v != nil {
+			item.Variants = append(item.Variants, v.Name)
+		}
 	}
 	return item
 }
@@ -118,26 +102,13 @@ type templateInput struct {
 	Template string `json:"template" jsonschema:"the template's name, from search_templates"`
 }
 
-// templateDetail is a template as the store shows it. The nested parts are
-// passed on as the API words them: they are the template's own, public text.
-type templateDetail struct {
-	Name           string   `json:"name"`
-	Title          string   `json:"title"`
-	Tagline        string   `json:"tagline"`
-	Description    string   `json:"description"`
-	Categories     []string `json:"categories,omitempty"`
-	License        string   `json:"license,omitempty"`
-	Compatible     bool     `json:"compatible"`
-	Links          any      `json:"links,omitempty"`
-	Versions       any      `json:"versions,omitempty"`
-	Variants       any      `json:"variants,omitempty"`
-	Parameters     any      `json:"parameters,omitempty"`
-	Dependencies   any      `json:"dependencies,omitempty"`
-	Components     any      `json:"components,omitempty"`
-	Capabilities   any      `json:"capabilities,omitempty"`
-	DockerAPI      any      `json:"dockerApi,omitempty"`
-	PublishedPorts any      `json:"publishedPorts,omitempty"`
-}
+// templateDetail is a template as the store's endpoint answers it, less what
+// only the dashboard uses: its own, public text.
+type templateDetail map[string]any
+
+// templateOnlyForTheDashboard are the fields of a template a model has no use
+// for: where the store read it from, and its icon.
+var templateOnlyForTheDashboard = []string{"source", "revision", "iconUrl"}
 
 func getTemplateTool() Tool {
 	return readTool("get_template", "Get a template",
@@ -150,13 +121,22 @@ func getTemplateTool() Tool {
 				return templateDetail{}, &InputError{Message: "template is required; search_templates lists them"}
 			}
 			var resp struct {
-				Data templateDetail `json:"data"`
+				Data json.RawMessage `json:"data"`
 			}
 			if err := call.Get(ctx, "/app-templates/"+url.PathEscape(name), nil, &resp); err != nil {
 				return templateDetail{}, err
 			}
-			resp.Data.Description = cutText(resp.Data.Description, maxDescription, "")
-			return resp.Data, nil
+			out, err := through(resp.Data, &apptemplatedto.AppTemplateResp{})
+			if err != nil {
+				return templateDetail{}, fmt.Errorf("mcp: reading the template: %w", err)
+			}
+			for _, field := range templateOnlyForTheDashboard {
+				delete(out, field)
+			}
+			if description, ok := out["description"].(string); ok {
+				out["description"] = cutText(description, maxDescription, "")
+			}
+			return out, nil
 		})
 }
 
@@ -173,10 +153,11 @@ type preflightInput struct {
 	DependencyParams map[string]map[string]any `json:"dependencyParams,omitempty" jsonschema:"by dependency"`
 }
 
-// body is the create request: preflight asks about it, and an install sends it.
-func (in preflightInput) body() map[string]any {
-	return map[string]any{"name": in.Name, "template": in.Template, "version": in.Version,
-		"variant": in.Variant, "params": in.Params, "dependencyParams": in.DependencyParams}
+// body is the create endpoint's own request: preflight asks about it, and an
+// install sends it.
+func (in preflightInput) body() *apptemplatedto.CreateAppFromTemplateReq {
+	return &apptemplatedto.CreateAppFromTemplateReq{Name: in.Name, Template: in.Template, Version: in.Version,
+		Variant: in.Variant, Params: in.Params, DependencyParams: in.DependencyParams}
 }
 
 // forAudit keeps the parameters' names: which of them are secret is the
@@ -199,38 +180,15 @@ func redactValues(params map[string]any) map[string]any {
 	return out
 }
 
-type preflightStorage struct {
-	App        string `json:"app"`
-	AppKey     string `json:"appKey"`
-	IsDatabase bool   `json:"isDatabase,omitempty"`
-	Volume     string `json:"volume"`
-	Path       string `json:"path"`
-}
-
-type preflightIssue struct {
-	Code   string `json:"code"`
-	Detail string `json:"detail"`
-}
-
 type preflightAnswer struct {
 	// Issues are what would refuse the install; none means it would go ahead.
-	Issues []preflightIssue `json:"issues"`
+	Issues []*apptemplatedto.PreflightIssueResult `json:"issues"`
 	// Storage is where an earlier install left data the new apps would find.
-	Storage []preflightStorage `json:"storage,omitempty"`
+	Storage []*apptemplatedto.PreflightStorageResult `json:"storage,omitempty"`
 	// StorageUnchecked is where the check could not look.
-	StorageUnchecked []preflightStorage `json:"storageUnchecked,omitempty"`
+	StorageUnchecked []*apptemplatedto.PreflightStorageResult `json:"storageUnchecked,omitempty"`
 	// Apps are what the install would create.
-	Apps []plannedApp `json:"apps,omitempty"`
-}
-
-type apiPreflightStorage struct {
-	App        string `json:"app"`
-	AppKey     string `json:"appKey"`
-	IsDatabase bool   `json:"isDatabase"`
-	Volume     struct {
-		Name string `json:"name"`
-	} `json:"volume"`
-	Path string `json:"path"`
+	Apps []*apptemplatedto.PreflightPlannedApp `json:"apps,omitempty"`
 }
 
 func preflightInstallTool() Tool {
@@ -244,33 +202,28 @@ func preflightInstallTool() Tool {
 			if err != nil {
 				return preflightAnswer{}, err
 			}
-			body := in.body()
-			var resp struct {
-				Data struct {
-					Storage          []apiPreflightStorage `json:"storage"`
-					StorageUnchecked []apiPreflightStorage `json:"storageUnchecked"`
-					Issues           []preflightIssue      `json:"issues"`
-					Apps             []plannedApp          `json:"apps"`
-				} `json:"data"`
-			}
-			if err = call.Post(ctx, ref.path("/apps/from-template/preflight"), body, &resp); err != nil {
+			result, err := preflight(ctx, call, ref, in.body())
+			if err != nil {
 				return preflightAnswer{}, err
 			}
-			out := preflightAnswer{Issues: resp.Data.Issues, Apps: resp.Data.Apps,
-				Storage:          makePreflightStorage(resp.Data.Storage),
-				StorageUnchecked: makePreflightStorage(resp.Data.StorageUnchecked)}
-			if out.Issues == nil {
-				out.Issues = []preflightIssue{}
-			}
-			return out, nil
+			return preflightAnswer{Issues: result.Issues, Apps: result.Apps, Storage: result.Storage,
+				StorageUnchecked: result.StorageUnchecked}, nil
 		})
 }
 
-func makePreflightStorage(items []apiPreflightStorage) []preflightStorage {
-	var out []preflightStorage
-	for _, s := range items {
-		out = append(out, preflightStorage{App: s.App, AppKey: s.AppKey, IsDatabase: s.IsDatabase,
-			Volume: s.Volume.Name, Path: s.Path})
+// preflight asks the create endpoint's preflight about a request, as the caller.
+func preflight(ctx context.Context, call *Call, ref *envRef, body *apptemplatedto.CreateAppFromTemplateReq) (
+	*apptemplatedto.PreflightAppResult, error) {
+	var resp apptemplatedto.PreflightAppFromTemplateResp
+	if err := call.Post(ctx, ref.path("/apps/from-template/preflight"), body, &resp); err != nil {
+		return nil, err
 	}
-	return out
+	result := resp.Data
+	if result == nil {
+		result = &apptemplatedto.PreflightAppResult{}
+	}
+	if result.Issues == nil {
+		result.Issues = []*apptemplatedto.PreflightIssueResult{}
+	}
+	return result, nil
 }

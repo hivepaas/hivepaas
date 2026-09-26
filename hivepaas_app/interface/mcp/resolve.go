@@ -7,6 +7,9 @@ import (
 	"slices"
 	"strconv"
 	"strings"
+
+	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/appuc/appdto"
+	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/projectuc/projectdto"
 )
 
 // A model names things the way a person does - "the api app of shop, in
@@ -40,23 +43,10 @@ func (r *appRef) path(suffix string) string {
 	return r.envRef.path("/apps/" + url.PathEscape(r.AppID) + suffix)
 }
 
-// apiApp is what the app endpoints answer, as far as the tools read it.
-type apiApp struct {
-	ID               string    `json:"id"`
-	Key              string    `json:"key"`
-	Name             string    `json:"name"`
-	Status           string    `json:"status"`
-	Engine           string    `json:"engine"`
-	Note             string    `json:"note"`
-	Tags             []string  `json:"tags"`
-	ChildApps        []*apiApp `json:"childApps"`
-	LogicalChildApps []*apiApp `json:"logicalChildApps"`
-	AccessLinks      []string  `json:"accessLinks"`
-	Stats            *struct {
-		RunningTasks int `json:"runningTasks"`
-		DesiredTasks int `json:"desiredTasks"`
-	} `json:"stats"`
-
+// listedApp is an app of an env's list, from the endpoint's own type, with the
+// app it was made underneath, if any.
+type listedApp struct {
+	*appdto.AppResp
 	// owner is the key of the app this one was made underneath, if any.
 	owner string
 }
@@ -116,19 +106,17 @@ func resolveEnv(ctx context.Context, call *Call, project, env string) (*envRef, 
 	if err != nil {
 		return nil, err
 	}
-	p, err := pick("project", project, "list_projects", projects, func(p apiProject) named {
-		return named{id: p.ID, key: p.Key, name: p.Name}
-	})
+	p, err := pick("project", project, "list_projects", slices.DeleteFunc(projects, isNil),
+		func(p *projectdto.ProjectResp) named {
+			return named{id: p.ID, key: p.Key, name: p.Name}
+		})
 	if err != nil {
 		return nil, err
 	}
-	type apiEnv = struct {
-		ID   string `json:"id"`
-		Name string `json:"name"`
-	}
-	e, err := pick("env of "+p.Key, env, "list_projects", p.Envs, func(e apiEnv) named {
-		return named{id: e.ID, key: e.Name, name: e.Name}
-	})
+	e, err := pick("env of "+p.Key, env, "list_projects", slices.DeleteFunc(p.Envs, isNil),
+		func(e *projectdto.ProjectEnvResp) named {
+			return named{id: e.ID, key: e.Name, name: e.Name}
+		})
 	if err != nil {
 		return nil, err
 	}
@@ -145,7 +133,7 @@ func resolveApp(ctx context.Context, call *Call, project, env, app string) (*app
 	if err != nil {
 		return nil, err
 	}
-	a, err := pick("app", app, "list_apps", apps, func(a *apiApp) named {
+	a, err := pick("app", app, "list_apps", apps, func(a listedApp) named {
 		return named{id: a.ID, key: a.Key, name: a.Name}
 	})
 	if err != nil {
@@ -156,27 +144,31 @@ func resolveApp(ctx context.Context, call *Call, project, env, app string) (*app
 
 // listApps asks the env's app list, as the caller: every app, those that
 // belong to another app included, the way a name may refer to any of them.
-func listApps(ctx context.Context, call *Call, ref *envRef, stats bool) ([]*apiApp, error) {
+func listApps(ctx context.Context, call *Call, ref *envRef, stats bool) ([]listedApp, error) {
 	query := url.Values{paramPageLimit: {strconv.Itoa(maxListed)}, "getChildApps": {paramTrue}}
 	if stats {
 		query.Set("getStats", paramTrue)
 	}
-	var resp struct {
-		Data []*apiApp `json:"data"`
-	}
+	var resp appdto.ListAppResp
 	if err := call.Get(ctx, ref.path("/apps"), query, &resp); err != nil {
 		return nil, err
 	}
 	// An app made underneath another - a preview, a template's component - is
 	// listed inside its owner. The list is made flat, each child naming its owner.
-	var flat []*apiApp
+	var flat []listedApp
 	for _, a := range resp.Data {
-		flat = append(flat, a)
-		for _, child := range slices.Concat(a.ChildApps, a.LogicalChildApps) {
-			child.owner = a.Key
-			flat = append(flat, child)
+		if a == nil {
+			continue
 		}
-		a.ChildApps, a.LogicalChildApps = nil, nil
+		flat = append(flat, listedApp{AppResp: a})
+		for _, child := range slices.Concat(a.ChildApps, a.LogicalChildApps) {
+			if child != nil {
+				flat = append(flat, listedApp{AppResp: child, owner: a.Key})
+			}
+		}
 	}
 	return flat, nil
 }
+
+// isNil is for dropping the nil entries a list of pointers may have.
+func isNil[T any](v *T) bool { return v == nil }

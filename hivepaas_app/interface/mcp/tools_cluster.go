@@ -6,6 +6,10 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/cluster/nodeuc/nodedto"
+	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/homeuc/homedto"
+	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/taskuc/taskdto"
 )
 
 // ---- list_attention ----
@@ -15,8 +19,8 @@ type namedObject struct {
 	Name string `json:"name"`
 }
 
-// attentionItem is one card of the Home page's attention list, as the API
-// answers it.
+// attentionItem is one card of the Home page's attention list, as a model
+// reads it.
 type attentionItem struct {
 	Kind              string       `json:"kind"`
 	Severity          string       `json:"severity"`
@@ -44,6 +48,22 @@ func (l *attentionList) shrink() bool {
 	return shrinkList(&l.Items, &l.Truncated)
 }
 
+// attentionItemOf is a card as a model reads it: the endpoint's own, less
+// what the dashboard uses to draw it, with its error cut.
+func attentionItemOf(item *homedto.AttentionItemResp) attentionItem {
+	out := attentionItem{Kind: item.Kind, Severity: item.Severity, Scope: item.Scope, Env: item.Env,
+		Subject: item.Subject, Running: item.Running, Desired: item.Desired, Restarts: item.Restarts,
+		LastError: cutText(item.LastError, maxErrorText, ""), NodeState: item.NodeState,
+		MemoryLimitsBytes: item.MemoryLimitsBytes, MemoryTotalBytes: item.MemoryTotalBytes, Since: item.Since}
+	if item.Project != nil {
+		out.Project = &namedObject{ID: item.Project.ID, Name: item.Project.Name}
+	}
+	if item.App != nil {
+		out.App = &namedObject{ID: item.App.ID, Name: item.App.Name}
+	}
+	return out
+}
+
 type noInput struct{}
 
 func listAttentionTool() Tool {
@@ -52,20 +72,17 @@ func listAttentionTool() Tool {
 			"containers do not all run or keep restarting, nodes that are down, memory promised past "+
 			"what a node has. Start here when asked what is wrong.",
 		func(ctx context.Context, call *Call, _ noInput) (attentionList, error) {
-			var resp struct {
-				Data struct {
-					Items []attentionItem `json:"items"`
-				} `json:"data"`
-			}
+			var resp homedto.GetHomeAttentionResp
 			if err := call.Get(ctx, "/home/attention", nil, &resp); err != nil {
 				return attentionList{}, err
 			}
-			out := attentionList{Items: resp.Data.Items}
-			if out.Items == nil {
-				out.Items = []attentionItem{}
-			}
-			for i := range out.Items {
-				out.Items[i].LastError = cutText(out.Items[i].LastError, maxErrorText, "")
+			out := attentionList{Items: []attentionItem{}}
+			if resp.Data != nil {
+				for _, item := range resp.Data.Items {
+					if item != nil {
+						out.Items = append(out.Items, attentionItemOf(item))
+					}
+				}
 			}
 			return out, nil
 		})
@@ -106,25 +123,6 @@ func (l *taskList) shrink() bool {
 	return shrinkList(&l.Tasks, &l.Truncated)
 }
 
-type apiTask struct {
-	ID        string `json:"id"`
-	Type      string `json:"type"`
-	Status    string `json:"status"`
-	TargetJob *struct {
-		Name string `json:"name"`
-	} `json:"targetJob"`
-	LastError    string `json:"lastError"`
-	ScopeProject *struct {
-		Key string `json:"key"`
-	} `json:"scopeProject"`
-	ScopeApp *struct {
-		Key string `json:"key"`
-	} `json:"scopeApp"`
-	CreatedAt time.Time  `json:"createdAt"`
-	StartedAt *time.Time `json:"startedAt"`
-	EndedAt   *time.Time `json:"endedAt"`
-}
-
 func listTasksTool() Tool {
 	return readTool("list_tasks", "List background tasks",
 		"Lists the newest background tasks - deployments, backups, scheduled jobs, cleanups - with "+
@@ -149,22 +147,22 @@ func listTasksTool() Tool {
 			for _, typ := range in.Type {
 				query.Add("type", typ)
 			}
-			var resp struct {
-				Data []apiTask `json:"data"`
-			}
+			var resp taskdto.ListTaskResp
 			if err = call.Get(ctx, path, query, &resp); err != nil {
 				return taskList{}, err
 			}
 			out := taskList{Tasks: make([]taskListItem, 0, len(resp.Data))}
 			for _, t := range resp.Data {
-				out.Tasks = append(out.Tasks, makeTaskListItem(&t))
+				if t != nil {
+					out.Tasks = append(out.Tasks, makeTaskListItem(t))
+				}
 			}
 			return out, nil
 		})
 }
 
-func makeTaskListItem(t *apiTask) taskListItem {
-	item := taskListItem{ID: t.ID, Type: t.Type, Status: t.Status, CreatedAt: t.CreatedAt,
+func makeTaskListItem(t *taskdto.TaskResp) taskListItem {
+	item := taskListItem{ID: t.ID, Type: string(t.Type), Status: string(t.Status), CreatedAt: t.CreatedAt,
 		StartedAt: t.StartedAt, EndedAt: t.EndedAt, LastError: cutText(t.LastError, maxErrorText, "")}
 	if t.TargetJob != nil {
 		item.Job = t.TargetJob.Name
@@ -251,52 +249,32 @@ func (l *nodeList) shrink() bool {
 	return shrinkList(&l.Nodes, &l.Truncated)
 }
 
-type apiNode struct {
-	ID           string            `json:"id"`
-	Name         string            `json:"name"`
-	Hostname     string            `json:"hostname"`
-	Addr         string            `json:"addr"`
-	Role         string            `json:"role"`
-	IsLeader     bool              `json:"isLeader"`
-	State        string            `json:"state"`
-	Availability string            `json:"availability"`
-	Labels       map[string]string `json:"labels"`
-	Platform     *struct {
-		Architecture string `json:"architecture"`
-		OS           string `json:"os"`
-	} `json:"platform"`
-	Resources *struct {
-		CPUs        int64 `json:"cpus"`
-		MemoryBytes int64 `json:"memoryBytes"`
-	} `json:"resources"`
-	EngineDesc *struct {
-		EngineVersion string `json:"engineVersion"`
-	} `json:"engineDesc"`
-}
-
 func listNodesTool() Tool {
 	return readTool("list_nodes", "List cluster nodes",
 		"Lists the nodes of the swarm: role, state, whether they take work, their CPUs and memory, "+
 			"and their labels, which placement constraints match against.",
 		func(ctx context.Context, call *Call, _ noInput) (nodeList, error) {
-			var resp struct {
-				Data []apiNode `json:"data"`
-			}
+			var resp nodedto.ListNodeResp
 			query := url.Values{paramPageLimit: {strconv.Itoa(maxListed)}}
 			if err := call.Get(ctx, "/cluster/nodes", query, &resp); err != nil {
 				return nodeList{}, err
 			}
 			out := nodeList{Nodes: make([]nodeItem, 0, len(resp.Data))}
 			for _, n := range resp.Data {
-				out.Nodes = append(out.Nodes, makeNodeItem(&n))
+				if n != nil {
+					out.Nodes = append(out.Nodes, makeNodeItem(n))
+				}
 			}
 			return out, nil
 		})
 }
 
-func makeNodeItem(n *apiNode) nodeItem {
-	item := nodeItem{ID: n.ID, Name: n.Name, Hostname: n.Hostname, Addr: n.Addr, Role: n.Role,
-		Leader: n.IsLeader, State: n.State, Availability: n.Availability, Labels: n.Labels}
+func makeNodeItem(n *nodedto.NodeResp) nodeItem {
+	item := nodeItem{Hostname: n.Hostname, Addr: n.Addr, Role: string(n.Role), Leader: n.IsLeader,
+		State: string(n.State), Availability: string(n.Availability), Labels: n.Labels}
+	if n.BaseSettingResp != nil {
+		item.ID, item.Name = n.ID, n.Name
+	}
 	if n.Resources != nil {
 		item.CPUs, item.MemoryBytes = n.Resources.CPUs, n.Resources.MemoryBytes
 	}

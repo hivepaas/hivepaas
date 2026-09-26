@@ -8,7 +8,9 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/appdeploymentuc/appdeploymentdto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/appsettingsuc/appsettingsdto"
+	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/appuc/appdto"
 )
 
 type envInput struct {
@@ -66,7 +68,7 @@ func listAppsTool() Tool {
 			}
 			out := appList{Project: ref.ProjectKey, Env: ref.Env, Apps: make([]appItem, 0, len(apps))}
 			for _, a := range apps {
-				item := appItem{Key: a.Key, Name: a.Name, Engine: a.Engine, Status: a.Status,
+				item := appItem{Key: a.Key, Name: a.Name, Engine: a.Engine, Status: string(a.Status),
 					Owner: a.owner, Links: a.AccessLinks}
 				if a.Stats != nil {
 					item.Running, item.Desired = &a.Stats.RunningTasks, &a.Stats.DesiredTasks
@@ -84,13 +86,6 @@ const maxDeployments = 5
 
 // maxErrorText is the most of one error message an answer quotes.
 const maxErrorText = 2000
-
-type appSource struct {
-	Method string `json:"method"`
-	Image  string `json:"image,omitempty"`
-	Repo   string `json:"repo,omitempty"`
-	Ref    string `json:"ref,omitempty"`
-}
 
 type deploymentItem struct {
 	ID        string     `json:"id"`
@@ -117,44 +112,8 @@ type appDetail struct {
 	Links       []string         `json:"links,omitempty"`
 	Running     *int             `json:"running,omitempty"`
 	Desired     *int             `json:"desired,omitempty"`
-	Source      *appSource       `json:"source,omitempty"`
+	Source      *deploySource    `json:"source,omitempty"`
 	Deployments []deploymentItem `json:"deployments"`
-}
-
-// apiAppDetail is the app endpoint's answer, as far as get_app reads it.
-type apiAppDetail struct {
-	apiApp
-	ParentApp *struct {
-		Key string `json:"key"`
-	} `json:"parentApp"`
-}
-
-// apiDeployment is a deployment as the API answers it. Its settings are read
-// for where the app comes from and nothing else: they also hold commands, which
-// may carry anything.
-type apiDeployment struct {
-	ID       string `json:"id"`
-	Status   string `json:"status"`
-	Settings *struct {
-		ActiveMethod string `json:"activeMethod"`
-		ImageSource  *struct {
-			Image string `json:"image"`
-		} `json:"imageSource"`
-		RepoSource *struct {
-			RepoURL string `json:"repoURL"`
-			RepoRef string `json:"repoRef"`
-		} `json:"repoSource"`
-	} `json:"settings"`
-	Trigger *struct {
-		Source string `json:"source"`
-	} `json:"trigger"`
-	Output *struct {
-		Error           string `json:"error"`
-		CommitHashShort string `json:"commitHashShort"`
-		CommitTitle     string `json:"commitTitle"`
-	} `json:"output"`
-	CreatedAt time.Time  `json:"createdAt"`
-	EndedAt   *time.Time `json:"endedAt"`
 }
 
 func getAppTool() Tool {
@@ -167,58 +126,45 @@ func getAppTool() Tool {
 			if err != nil {
 				return appDetail{}, err
 			}
-			var appResp struct {
-				Data apiAppDetail `json:"data"`
-			}
+			var appResp appdto.GetAppResp
 			if err = call.Get(ctx, ref.path(""), url.Values{"getStats": {paramTrue}}, &appResp); err != nil {
 				return appDetail{}, err
 			}
-			var deployResp struct {
-				Data []apiDeployment `json:"data"`
+			if appResp.Data == nil {
+				return appDetail{}, &InputError{Message: "no app " + ref.AppKey}
 			}
+			var deployResp appdeploymentdto.ListDeploymentResp
 			if err = call.Get(ctx, ref.path("/deployments"),
 				url.Values{paramPageLimit: {strconv.Itoa(maxDeployments)}}, &deployResp); err != nil {
 				return appDetail{}, err
 			}
-			return makeAppDetail(ref, &appResp.Data, deployResp.Data), nil
+			return makeAppDetail(ref, appResp.Data, deployResp.Data), nil
 		})
 }
 
-func makeAppDetail(ref *appRef, a *apiAppDetail, deployments []apiDeployment) appDetail {
+func makeAppDetail(ref *appRef, a *appdto.AppResp, deployments []*appdeploymentdto.DeploymentResp) appDetail {
 	out := appDetail{Key: a.Key, Name: a.Name, ID: a.ID, Project: ref.ProjectKey, Env: ref.Env,
-		Engine: a.Engine, Status: a.Status, Note: a.Note, Tags: a.Tags, Links: a.AccessLinks,
+		Engine: a.Engine, Status: string(a.Status), Note: a.Note, Tags: a.Tags, Links: a.AccessLinks,
 		Deployments: make([]deploymentItem, 0, len(deployments))}
 	if a.ParentApp != nil {
 		out.Owner = a.ParentApp.Key
 	}
 	for _, child := range slices.Concat(a.ChildApps, a.LogicalChildApps) {
-		out.Children = append(out.Children, child.Key)
+		if child != nil {
+			out.Children = append(out.Children, child.Key)
+		}
 	}
 	if a.Stats != nil {
 		out.Running, out.Desired = &a.Stats.RunningTasks, &a.Stats.DesiredTasks
 	}
-	for i, d := range deployments {
-		if i == 0 && d.Settings != nil {
-			out.Source = &appSource{Method: d.Settings.ActiveMethod}
-			if d.Settings.ImageSource != nil {
-				out.Source.Image = d.Settings.ImageSource.Image
-			}
-			if d.Settings.RepoSource != nil {
-				out.Source.Repo = withoutUserinfo(d.Settings.RepoSource.RepoURL)
-				out.Source.Ref = d.Settings.RepoSource.RepoRef
-			}
+	for _, d := range deployments {
+		if d == nil {
+			continue
 		}
-		item := deploymentItem{ID: d.ID, Status: d.Status, CreatedAt: d.CreatedAt, EndedAt: d.EndedAt}
-		if d.Trigger != nil {
-			item.Trigger = d.Trigger.Source
+		if out.Source == nil {
+			out.Source = deploymentSourceOf(d)
 		}
-		if d.Output != nil {
-			item.Error = cutText(d.Output.Error, maxErrorText, "")
-			if d.Output.CommitHashShort != "" {
-				item.Commit = d.Output.CommitHashShort + " " + d.Output.CommitTitle
-			}
-		}
-		out.Deployments = append(out.Deployments, item)
+		out.Deployments = append(out.Deployments, deploymentItemOf(d))
 	}
 	return out
 }

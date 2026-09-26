@@ -22,10 +22,13 @@ here so that they need no second tool layer.
 2. **One tool layer, two doors.** Tools are defined once, in a service. The MCP
    endpoint is the first door; the dashboard's own assistant (§10.2) is the
    second, and calls the same tools in-process.
-3. **A tool acts as the person who called it.** It calls the use case the
-   dashboard's endpoint calls, with the caller's `*basedto.Auth`. Permissions,
-   `Visibility`, audit and secret masking are the ones that already apply; a tool
-   can see and do exactly what its caller can in the dashboard.
+3. **A tool acts as the person who called it, through the dashboard's own
+   endpoints.** It sends the request the dashboard would send to the backend's
+   router, in-process, carrying the caller's already-verified `*basedto.Auth`.
+   Permissions - many of them checked in the handler, not the use case - the
+   key's access actions, validation, audit and secret masking are the ones that
+   already apply; a tool can see and do exactly what its caller can in the
+   dashboard, and cannot drift from it.
 4. **Read-only first.** Phase 1 ships no tool that changes anything. A tool that
    writes comes with a plan and an explicit apply (§10.1), never in one call.
 5. **Answers are bounded.** A model reads every byte it is given. Logs come as a
@@ -73,7 +76,7 @@ key instead.
 
 ## 3. The tool layer
 
-A new service, `service/aitoolservice`, holds a registry of tools:
+`interface/mcp` holds a registry of tools:
 
 ```go
 type Tool struct {
@@ -86,9 +89,22 @@ type Tool struct {
 }
 ```
 
-- `Handle` calls use cases, never HTTP: the same ones the dashboard's handlers
-  call, with the caller's auth. A tool that needs something no use case offers
-  gets a use case first, so the dashboard can have it too.
+- `Handle` dispatches to the backend's own router, in-process: the method, path,
+  query and body the dashboard would send, answered by the same handler. The
+  caller's `*basedto.Auth` travels in the request's context, under a key only
+  this package can set, and `authhandler` takes it from there instead of from a
+  header; a request from outside can carry headers but never a Go context, so it
+  cannot claim one. No credential is verified twice, and no handler learns it is
+  being called by a tool.
+- A tool that needs something no endpoint offers gets an endpoint first, so the
+  dashboard can have it too. The tool then trims the endpoint's answer to what a
+  model needs.
+
+  *Found while planning:* the first version of this design had tools call use
+  cases directly. Many permission checks live in the handlers - task lists,
+  settings lists, the per-module checks passed to `GetCurrentAuth` - so a tool
+  calling the use case would have had to repeat each of them, and one it missed
+  would be a way around it.
 - `ToolResult` is text for the model and, where the SDK allows it, structured
   content of the same data. Errors a person can act on - not found, not
   permitted, invalid input - are tool results with `isError`, worded for the
@@ -96,8 +112,9 @@ type Tool struct {
 - `Kind` is what the phases, the key's access actions and the global switch
   (§8) check before `Handle` runs.
 
-`interface/mcp` adapts the registry to the SDK's server and mounts it on the
-router, behind the switch and the API key middleware.
+The same package adapts the registry to the SDK's server and mounts it on the
+router, behind the switch and the API key check. The dashboard's assistant (§10.2)
+runs in the same process and dispatches the same way.
 
 ### Naming things
 
@@ -108,9 +125,9 @@ ambiguous name is an error listing the candidates, never a guess.
 
 ## 4. Phase 1 tools
 
-All `read`. Each names the use case it calls.
+All `read`. Each dispatches to the endpoint whose use case is named.
 
-| Tool | What it answers | Calls |
+| Tool | What it answers | The endpoint's use case |
 |---|---|---|
 | `list_projects` | projects and their envs the caller can see | `projectuc.ListProject` |
 | `list_apps` | apps of an env, with status, image, replicas running/desired | `appuc.ListApp` |

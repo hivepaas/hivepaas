@@ -9,7 +9,7 @@
 #
 # The tests feed install.sh literal $, `...` and $(...) on purpose, and set
 # the settings it reads:
-# shellcheck disable=SC2016,SC2031,SC2153
+# shellcheck disable=SC2016,SC2030,SC2031,SC2153
 
 set -u
 
@@ -168,6 +168,9 @@ test_valid_app_secret() {
   check_ok "64 hex" valid_app_secret "$(openssl rand -hex 32)"
   check_fails "31 characters" valid_app_secret 0123456789abcdef0123456789abcde
   check_fails "a space" valid_app_secret "0123456789abcdef 0123456789abcdef"
+  check_fails "a double quote" valid_app_secret '0123456789abcdef"0123456789abcdef'
+  check_fails "a single quote" valid_app_secret "0123456789abcdef'0123456789abcdef"
+  check_fails "a backslash" valid_app_secret '0123456789abcdef\0123456789abcdef'
 }
 
 test_valid_ipv4() {
@@ -378,7 +381,7 @@ test_addresses_line() {
 # stack_env: what install.sh exports for docker stack deploy, with sample values.
 stack_env() {
   export HIVEPAAS_APP_ENV=beta HIVEPAAS_ROOT_DOMAIN=mydomain.com HIVEPAAS_APP_DOMAIN=hivepaas.dev.mydomain.com \
-    HIVEPAAS_APP_SECRET=s3cret HIVEPAAS_JWT_SECRET=jwt HIVEPAAS_DATA_DIR=/var/lib/hivepaas \
+    HIVEPAAS_JWT_SECRET=jwt HIVEPAAS_DATA_DIR=/var/lib/hivepaas \
     HIVEPAAS_PROJECT_DATA_DIR=/data/projects HIVEPAAS_DB_PASSWORD=dbpw HIVEPAAS_REDIS_PASSWORD=redispw \
     HIVEPAAS_AGENT_TOKEN=agenttok HIVEPAAS_IP_RULE='Host(`1.2.3.4`) || Host(`10.0.0.5`)' \
     HIVEPAAS_ADMIN_EMAIL=you@example.com HIVEPAAS_ADMIN_PASSWORD='p$ss "w0rd"' HP_DB_MAJOR=18 \
@@ -401,17 +404,19 @@ test_stack_renders() {
     'traefik.http.routers.x-custom-router-ip.rule: Host(`1.2.3.4`) || Host(`10.0.0.5`)'
   check_contains "the Postgres major" "$out" 'PGDATA: /var/lib/postgresql/18/docker'
   check_contains "project data seen from the app" "$out" 'target: /host/data/projects'
-  check "every HivePaaS process gets the secret" 5 "$(printf '%s\n' "$out" | grep -c 'HP_APP_SECRET: s3cret')"
+  check "no service is given the app secret" 0 "$(printf '%s\n' "$out" | grep -c 'HP_APP_SECRET')"
+  check "app, worker and updater get the JWT secret, the agent not" 3 \
+    "$(printf '%s\n' "$out" | grep -c 'HP_SESSION_JWT_SECRET: jwt')"
   check_lacks "no admin without the first-boot file" "$out" HP_USER_ADMIN_PASSWORD
   out=$(cd "$HERE" && docker stack config -c hivepaas.yaml -c hivepaas.first-boot.yaml 2>&1)
   check "renders with the first-boot file" 0 "$?"
   check "the admin, literally, on app and worker" 2 \
     "$(printf '%s\n' "$out" | grep -c 'HP_USER_ADMIN_PASSWORD: p$ss "w0rd"')"
-  unset HIVEPAAS_APP_SECRET
+  unset HIVEPAAS_JWT_SECRET
   out=$(cd "$HERE" && docker stack config -c hivepaas.yaml 2>&1)
   status=$?
   check_fails "a missing setting fails" test "$status" -eq 0
-  check_contains "and is named" "$out" HIVEPAAS_APP_SECRET
+  check_contains "and is named" "$out" HIVEPAAS_JWT_SECRET
 }
 
 # ---------------------------------------------------------------- Questions
@@ -425,7 +430,7 @@ answers() {
 
 test_ask_questions_interactive() {
   answers not-an-email you@example.com short password123 password124 password123 password123 \
-    HivePaaS.Dev.MyDomain.com '' '' /var/lib/hivepaas/ ''
+    HivePaaS.Dev.MyDomain.com '' /var/lib/hivepaas/ '' ''
   ask_questions 2>/dev/null
   check "email, asked again" you@example.com "$HIVEPAAS_ADMIN_EMAIL"
   check "password, typed twice alike" password123 "$HIVEPAAS_ADMIN_PASSWORD"
@@ -470,58 +475,106 @@ test_ask_questions_given_invalid() {
 }
 
 test_ask_questions_installed() {
-  HIVEPAAS_INSTALLED=true HIVEPAAS_APP_DOMAIN=app.example.com HIVEPAAS_APP_SECRET=0123456789abcdef0123456789abcdef
+  INSTALLED=1 HIVEPAAS_APP_DOMAIN=app.example.com HIVEPAAS_APP_SECRET=0123456789abcdef0123456789abcdef
   ask_questions
   check "no admin asked for once installed" "" "${HIVEPAAS_ADMIN_PASSWORD:-}"
 }
 
 test_load_settings_precedence() {
   printf '%s\n' HIVEPAAS_ADMIN_EMAIL=file@example.com HIVEPAAS_ADMIN_PASSWORD=file-password >"$TMP/conf"
-  printf '%s\n' "HIVEPAAS_ADMIN_PASSWORD='saved-password'" "HIVEPAAS_DATA_DIR='/srv/hivepaas'" >"$TMP/install.env"
-  CONFIG_FILE=$TMP/conf INSTALL_ENV=$TMP/install.env HIVEPAAS_ADMIN_EMAIL=env@example.com
-  load_settings
+  CONFIG_FILE=$TMP/conf HIVEPAAS_ADMIN_EMAIL=env@example.com
+  load_settings "HP_USER_ADMIN_PASSWORD=installed-password
+HP_STORAGE_HOST_DIR=/srv/hivepaas"
   check "the environment wins" env@example.com "$HIVEPAAS_ADMIN_EMAIL"
-  check "the file wins over install.env" file-password "$HIVEPAAS_ADMIN_PASSWORD"
-  check "install.env fills the rest" /srv/hivepaas "$HIVEPAAS_DATA_DIR"
+  check "the file wins over the installation" file-password "$HIVEPAAS_ADMIN_PASSWORD"
+  check "the installation fills the rest" /srv/hivepaas "$HIVEPAAS_DATA_DIR"
   check "the channel defaults to beta" beta "$HIVEPAAS_CHANNEL"
 }
 
 test_load_settings_fixed() {
-  local out saved=0123456789abcdef0123456789abcdef
-  printf '%s\n' "HIVEPAAS_APP_SECRET='$saved'" "HIVEPAAS_DATA_DIR='/srv/hivepaas'" >"$TMP/install.env"
-  INSTALL_ENV=$TMP/install.env
-  out=$(HIVEPAAS_APP_SECRET=${saved}X; (load_settings) 2>&1)
-  check "a different app secret stops" 1 "$?"
-  check_contains "naming it" "$out" HIVEPAAS_APP_SECRET
-  check_lacks "without printing it" "$out" "$saved"
-  out=$(HIVEPAAS_APP_SECRET=$saved HIVEPAAS_DATA_DIR=/srv//hivepaas/; (load_settings) 2>&1)
+  local out installed='HP_ENV=production
+HP_STORAGE_HOST_DIR=/srv/hivepaas
+HP_DB_PASSWORD=db-password-1'
+  out=$(HIVEPAAS_DB_PASSWORD=db-password-2; (load_settings "$installed") 2>&1)
+  check "a different database password stops" 1 "$?"
+  check_contains "naming it" "$out" HIVEPAAS_DB_PASSWORD
+  check_lacks "without printing it" "$out" db-password
+  out=$(HIVEPAAS_DATA_DIR=/srv//hivepaas/; (load_settings "$installed") 2>&1)
   check "the same values, written differently, go on" 0 "$?"
-  out=$(HIVEPAAS_CHANNEL=nightly; (load_settings) 2>&1)
+  out=$(HIVEPAAS_CHANNEL=beta; (load_settings "$installed") 2>&1)
+  check "another channel stops" 1 "$?"
+  load_settings "$installed"
+  check "the installation's channel" stable "$HIVEPAAS_CHANNEL"
+  out=$(HIVEPAAS_CHANNEL=nightly; (load_settings '') 2>&1)
   check "an unknown channel stops" 1 "$?"
+}
+
+test_take_installed_env() {
+  take_installed_env 'HP_ENV=beta
+HP_APP_DOMAIN=app.example.com
+HP_ROOT_DOMAIN=example.com
+HP_STORAGE_HOST_DIR=/srv/hivepaas
+HP_STORAGE_PROJECT_DATA_HOST_DIR=/data/projects
+HP_SESSION_JWT_SECRET=jwt=with=equals
+HP_DB_PASSWORD=db-password
+HP_CACHE_URL=redis://default:redis-password@redis:6379/0
+HP_AGENT_SECRET_TOKEN=agent-token
+HP_RUN_MODE=app+worker'
+  check "channel" beta "$HIVEPAAS_CHANNEL"
+  check "app domain" app.example.com "$HIVEPAAS_APP_DOMAIN"
+  check "root domain" example.com "$HIVEPAAS_ROOT_DOMAIN"
+  check "data dir" /srv/hivepaas "$HIVEPAAS_DATA_DIR"
+  check "project data dir" /data/projects "$HIVEPAAS_PROJECT_DATA_DIR"
+  check "a value with =" jwt=with=equals "$HIVEPAAS_JWT_SECRET"
+  check "database password" db-password "$HIVEPAAS_DB_PASSWORD"
+  check "redis password, from the URL" redis-password "$HIVEPAAS_REDIS_PASSWORD"
+  check "agent token" agent-token "$HIVEPAAS_AGENT_TOKEN"
+  check "installed" 1 "$INSTALLED"
+  take_installed_env 'HP_USER_ADMIN_EMAIL=you@example.com
+HP_USER_ADMIN_PASSWORD=password123'
+  check "the admin's password there: not finished" 0 "$INSTALLED"
+  check "the admin's password" password123 "$HIVEPAAS_ADMIN_PASSWORD"
+}
+
+test_toml_secret() {
+  printf '%s\n' '# rotated' 'secret = "from-the-app"' '[security]' 'secret = "not-this"' >"$TMP/a.toml"
+  check "a basic string" from-the-app "$(toml_secret "$TMP/a.toml")"
+  printf '%s\n' "  secret='literal'  # a comment" >"$TMP/b.toml"
+  check "a literal string" literal "$(toml_secret "$TMP/b.toml")"
+  printf '%s\n' '[security]' 'allow_privileged_apps = true' >"$TMP/c.toml"
+  check "none" "" "$(toml_secret "$TMP/c.toml")"
+}
+
+test_secret_file() {
+  local out saved=0123456789abcdef0123456789abcdef
+  HIVEPAAS_DATA_DIR=$TMP/data
+  mkdir -p "$HIVEPAAS_DATA_DIR"
+  write_secret_file "$(secret_file)" "$saved"
+  check "written" 0 "$?"
+  check "readable by root alone" 600 "$(stat -c %a "$(secret_file)" 2>/dev/null || stat -f %Lp "$(secret_file)")"
+  check "the secret reads back" "$saved" "$(toml_secret "$(secret_file)")"
+  check_contains "the security settings, explained" "$(cat "$(secret_file)")" "# allow_privileged_apps = false"
+  load_secret_file
+  check "it is the app secret" "$saved" "$HIVEPAAS_APP_SECRET"
+  out=$(HIVEPAAS_APP_SECRET=${saved}X; (load_secret_file) 2>&1)
+  check "another given secret stops" 1 "$?"
+  check_lacks "without printing it" "$out" "$saved"
+  printf '[security]\n' >"$(secret_file)"
+  out=$( (load_secret_file) 2>&1)
+  check "a file without a secret stops" 1 "$?"
 }
 
 test_load_settings_runs_nothing() {
   printf '%s\n' 'HIVEPAAS_X[$(touch '"$TMP"'/ran)]=1' 'PATH=/nowhere' 'HIVEPAAS_Y=$(touch '"$TMP"'/ran2)' >"$TMP/conf"
-  CONFIG_FILE=$TMP/conf INSTALL_ENV=$TMP/none.env
-  load_settings 2>/dev/null
+  CONFIG_FILE=$TMP/conf
+  load_settings '' 2>/dev/null
   check_fails "a key is not evaluated" test -e "$TMP/ran"
   check_fails "a value is not evaluated" test -e "$TMP/ran2"
   check "a value is taken literally" '$(touch '"$TMP"'/ran2)' "$HIVEPAAS_Y"
   check_fails "only HIVEPAAS_ settings are taken" test "$PATH" = /nowhere
 }
 
-test_save_settings() {
-  INSTALL_ENV=$TMP/etc/hivepaas/install.env
-  HIVEPAAS_ADMIN_PASSWORD="it's \$x \"quoted\"" HIVEPAAS_APP_DOMAIN=app.example.com HIVEPAAS_INSTALLED=''
-  save_settings
-  check "file mode" 600 "$(stat -c %a "$INSTALL_ENV" 2>/dev/null || stat -f %Lp "$INSTALL_ENV")"
-  check "dir mode" 700 "$(stat -c %a "${INSTALL_ENV%/*}" 2>/dev/null || stat -f %Lp "${INSTALL_ENV%/*}")"
-  check_lacks "an empty setting is not written" "$(cat "$INSTALL_ENV")" HIVEPAAS_INSTALLED
-  unset HIVEPAAS_ADMIN_PASSWORD HIVEPAAS_APP_DOMAIN
-  load_settings
-  check "a password reads back" "it's \$x \"quoted\"" "$HIVEPAAS_ADMIN_PASSWORD"
-  check "a domain reads back" app.example.com "$HIVEPAAS_APP_DOMAIN"
-}
+
 
 test_confirm_and_offer() {
   ASSUME_YES=1
@@ -704,6 +757,7 @@ test_help() {
   out=$(bash "$HERE/install.sh" --help)
   check "--help exits 0" 0 "$?"
   check_contains "usage" "$out" "Usage: install.sh"
+  check_contains "the settings file to fill in" "$out" "deployment/release/install.env"
   for key in ADMIN_EMAIL ADMIN_PASSWORD APP_DOMAIN ROOT_DOMAIN APP_SECRET DATA_DIR PROJECT_DATA_DIR CHANNEL \
     SWAP SWAP_SIZE_MB EARLYOOM UPGRADE_DOCKER AGENT_IMAGE RELEASE_BRANCH INSTALL_REF; do
     check_contains "--help lists HIVEPAAS_$key" "$out" "HIVEPAAS_$key"
@@ -719,6 +773,19 @@ test_refuses_without_root() {
   out=$(HIVEPAAS_TTY=/dev/null bash "$HERE/install.sh" 2>&1)
   check "stops" 1 "$?"
   check_contains "saying why" "$out" "as root"
+}
+
+test_install_env_template() {
+  local file="$HERE/install.env" out key
+  COLLECTED=''
+  out=$(read_kv_file "$file" collect 2>&1)
+  check "it reads without a warning" "" "$out"
+  read_kv_file "$file" collect
+  check "the required settings, to fill in" "HIVEPAAS_ADMIN_EMAIL=|HIVEPAAS_ADMIN_PASSWORD=|HIVEPAAS_APP_DOMAIN=|" \
+    "$COLLECTED"
+  for key in $(usage | grep -oE 'HIVEPAAS_[A-Z_]+' | sort -u); do
+    check_contains "it explains $key" "$(cat "$file")" "$key"
+  done
 }
 
 # ------------------------------------------------------------------- Runner

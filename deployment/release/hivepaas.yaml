@@ -1,23 +1,24 @@
 # The HivePaaS stack as install.sh deploys it.
 #
 # Every value that differs between servers is a ${VAR} the installer exports
-# before `docker stack deploy`: the answers saved in /etc/hivepaas/install.env
-# and the images of the release it installs. `docker stack config -c
-# hivepaas.yaml` shows what a set of them renders to.
+# before `docker stack deploy`: the answers it was given, or read back from the
+# services an earlier run deployed, and the images of the release it installs.
+# `docker stack config -c hivepaas.yaml` shows what a set of them renders to.
 #
 # The healthchecks, update_config and restart policies are dev's, and
 # deployment/dev/hivepaas.yaml says why each number is what it is. Keep the two
 # in step.
 
 # The environment every HivePaaS process loads its configuration from: app,
-# worker, updater and agent all read the database, the cache and the secrets.
+# worker, updater and agent all read the database and the cache. The app
+# secret is in <app data>/hivepaas.toml, which app, worker and updater see at
+# /var/lib/hivepaas; the agent, on every node, needs neither it nor the JWT
+# secret, which the others get below.
 x-hivepaas-env: &hivepaas-env
   HP_ENV: ${HIVEPAAS_APP_ENV:?}
   HP_CONFIG_FILE: config/config.${HIVEPAAS_APP_ENV:?}.toml
   HP_ROOT_DOMAIN: ${HIVEPAAS_ROOT_DOMAIN:?}
   HP_APP_DOMAIN: ${HIVEPAAS_APP_DOMAIN:?}
-  HP_APP_SECRET: ${HIVEPAAS_APP_SECRET:?}
-  HP_SESSION_JWT_SECRET: ${HIVEPAAS_JWT_SECRET:?}
   HP_STORAGE_HOST_DIR: ${HIVEPAAS_DATA_DIR:?}
   HP_STORAGE_PROJECT_DATA_HOST_DIR: ${HIVEPAAS_PROJECT_DATA_DIR:?}
   HP_DB_HOST: db
@@ -176,6 +177,7 @@ services:
       local_net:
     environment:
       <<: *hivepaas-env
+      HP_SESSION_JWT_SECRET: ${HIVEPAAS_JWT_SECRET:?}
     volumes:
       - ${HIVEPAAS_DATA_DIR:?}:/var/lib/hivepaas
       - ${HIVEPAAS_DATA_DIR:?}:/host${HIVEPAAS_DATA_DIR:?}
@@ -249,6 +251,7 @@ services:
     environment:
       <<: *hivepaas-env
       HP_RUN_MODE: worker
+      HP_SESSION_JWT_SECRET: ${HIVEPAAS_JWT_SECRET:?}
     volumes:
       - ${HIVEPAAS_DATA_DIR:?}:/var/lib/hivepaas
       - ${HIVEPAAS_DATA_DIR:?}:/host${HIVEPAAS_DATA_DIR:?}
@@ -282,6 +285,7 @@ services:
     environment:
       <<: *hivepaas-env
       HP_RUN_MODE: updater
+      HP_SESSION_JWT_SECRET: ${HIVEPAAS_JWT_SECRET:?}
     volumes:
       - ${HIVEPAAS_DATA_DIR:?}:/var/lib/hivepaas
       - ${HIVEPAAS_DATA_DIR:?}:/host${HIVEPAAS_DATA_DIR:?}

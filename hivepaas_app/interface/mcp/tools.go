@@ -4,5 +4,10 @@ package mcp
 func Tools() []Tool {
 	return []Tool{
 		listProjectsTool(),
+		listAppsTool(),
+		getAppTool(),
+		getAppStatusTool(),
+		getAppLogsTool(),
+		getAppConfigTool(),
 	}
 }

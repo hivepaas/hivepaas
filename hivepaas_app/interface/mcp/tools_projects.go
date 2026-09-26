@@ -9,8 +9,14 @@ import (
 // maxListed is the most items a list tool asks the API for.
 const maxListed = 200
 
+// Query parameters the API's lists and gets take.
+const (
+	paramPageLimit = "pageLimit"
+	paramTrue      = "true"
+)
+
 type listProjectsInput struct {
-	Search string `json:"search,omitempty" jsonschema:"words in the project's key or name; empty for all"`
+	Search string `json:"search,omitempty" jsonschema:"text in the project's name or note; empty for all"`
 }
 
 type projectItem struct {
@@ -63,7 +69,7 @@ func listProjectsTool() Tool {
 
 // listProjects asks the project list endpoint, as the caller.
 func listProjects(ctx context.Context, call *Call, search string) ([]apiProject, error) {
-	query := url.Values{"pageLimit": {strconv.Itoa(maxListed)}}
+	query := url.Values{paramPageLimit: {strconv.Itoa(maxListed)}}
 	if search != "" {
 		query.Set("search", search)
 	}

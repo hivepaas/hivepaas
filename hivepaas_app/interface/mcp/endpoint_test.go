@@ -57,18 +57,20 @@ type mcpWorld struct {
 	denied bool
 }
 
-func newMCPWorld(t *testing.T) *mcpWorld {
+// newMCPWorld serves the project list, and whatever routes adds.
+func newMCPWorld(t *testing.T, routes ...func(api *gin.RouterGroup)) *mcpWorld {
 	t.Helper()
 	w := &mcpWorld{sw: &fakeSwitch{on: true}, audit: &fakeAudit{}}
 	engine := testEngine(func(api *gin.RouterGroup, auth *authhandler.Handler) {
+		for _, add := range routes {
+			add(api)
+		}
 		api.GET("/projects", func(ctx *gin.Context) {
 			if _, err := auth.GetCurrentAuth(ctx, authhandler.NoAccessCheck); err != nil || w.denied {
 				ctx.JSON(http.StatusForbidden, gin.H{"title": "Forbidden", "status": 403})
 				return
 			}
-			ctx.JSON(http.StatusOK, gin.H{"data": []gin.H{
-				{"id": "p1", "key": "shop", "name": "Shop", "envs": []gin.H{{"id": "e1", "name": "dev"}}},
-			}})
+			ctx.JSON(http.StatusOK, gin.H{"data": testProjects})
 		})
 	})
 	services := &Services{Auth: fakeKeys{}, Switch: w.sw, Audit: w.audit}
@@ -99,6 +101,24 @@ func (w *mcpWorld) connect(t *testing.T, key string) (*mcpsdk.ClientSession, err
 		t.Cleanup(func() { _ = session.Close() })
 	}
 	return session, err
+}
+
+// testProjects are what the fake project list answers. Two share the name
+// Shop; one of them has the key shop.
+var testProjects = []gin.H{
+	{"id": "p1", "key": "shop", "name": "Shop",
+		"envs": []gin.H{{"id": "e1", "name": "dev"}, {"id": "e2", "name": "prod"}}},
+	{"id": "p2", "key": "shop-eu", "name": "Shop", "envs": []gin.H{{"id": "e3", "name": "prod"}}},
+}
+
+// callTool calls a tool and answers its text, and whether it is a tool error.
+func callTool(t *testing.T, session *mcpsdk.ClientSession, name string, args map[string]any) (string, bool) {
+	t.Helper()
+	res, err := session.CallTool(context.Background(), &mcpsdk.CallToolParams{Name: name, Arguments: args})
+	if !assert.NoError(t, err) || !assert.NotEmpty(t, res.Content) {
+		t.FailNow()
+	}
+	return res.Content[0].(*mcpsdk.TextContent).Text, res.IsError
 }
 
 func TestEndpointIsOffUntilEnabled(t *testing.T) {
@@ -147,7 +167,7 @@ func TestAToolCallIsAnsweredAndAudited(t *testing.T) {
 	}
 	assert.False(t, res.IsError)
 	assert.Contains(t, res.Content[0].(*mcpsdk.TextContent).Text, `"key":"shop"`)
-	assert.Contains(t, res.Content[0].(*mcpsdk.TextContent).Text, `"envs":["dev"]`)
+	assert.Contains(t, res.Content[0].(*mcpsdk.TextContent).Text, `"envs":["dev","prod"]`)
 
 	if assert.Len(t, w.audit.entries, 1) {
 		entry := w.audit.entries[0]

@@ -61,7 +61,7 @@ func TestAgainstARealServer(t *testing.T) {
 		{"get_app", inApp, false},
 		{"get_app_status", inApp, false},
 		{"get_app_logs", merge(inApp, map[string]any{"tail": 20, "grep": "/err|warn/"}), false},
-		{"get_app_config", inApp, false},
+		{"get_app_settings", merge(inApp, map[string]any{"kind": "env-vars"}), false},
 		{"list_attention", nil, false},
 		{"list_tasks", merge(inEnv, map[string]any{"limit": 5}), false},
 		{"list_nodes", nil, false},

@@ -1,9 +1,6 @@
 package mcp
 
 import (
-	"archive/tar"
-	"bytes"
-	"compress/gzip"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -19,9 +16,8 @@ import (
 // owns api-db, and worker - and one it does not. Wherever an answer may hold a
 // secret the tools must not pass on, it holds s3cr3t-<n>.
 type appRoutes struct {
-	logs       []logFrame
-	logsTail   string
-	exportMode string
+	logs     []logFrame
+	logsTail string
 }
 
 func (r *appRoutes) add(api *gin.RouterGroup) {
@@ -71,36 +67,12 @@ func (r *appRoutes) add(api *gin.RouterGroup) {
 		r.logsTail = ctx.Query("tail")
 		ctx.JSON(http.StatusOK, gin.H{"data": gin.H{"logs": r.logs}})
 	})
-	env.POST("/apps/a1/spec/export", func(ctx *gin.Context) {
-		var body struct {
-			SecretsMode string `json:"secretsMode"`
-		}
-		_ = ctx.ShouldBindJSON(&body)
-		r.exportMode = body.SecretsMode
-		password := ""
-		if body.SecretsMode != "omit" {
-			password = "s3cr3t-3"
-		}
-		ctx.Data(http.StatusOK, "application/gzip", testBundle(map[string]string{
-			"spec.yaml": "kind: bundle\n",
-			"projects/shop/envs/prod.yaml": "kind: env\nproject: shop\nenv: prod\napps:\n" +
-				"  api:\n    name: API\n    settings:\n      envVars:\n        - {k: DB_PASSWORD, v: '" + password + "'}\n" +
-				"  worker:\n    name: Worker\n",
-		}))
+	env.GET("/apps/a1/kind-settings", func(ctx *gin.Context) {
+		// As the endpoint answers without revealSecrets: the password masked.
+		ctx.JSON(http.StatusOK, gin.H{"data": gin.H{"category": "database", "engine": "postgres",
+			"database":     gin.H{"dbName": "shop", "username": "shop", "password": "********"},
+			"secretMasked": true, "updateVer": 1}})
 	})
-}
-
-func testBundle(files map[string]string) []byte {
-	var buf bytes.Buffer
-	gz := gzip.NewWriter(&buf)
-	archive := tar.NewWriter(gz)
-	for name, content := range files {
-		_ = archive.WriteHeader(&tar.Header{Name: name, Mode: 0o600, Size: int64(len(content))})
-		_, _ = archive.Write([]byte(content))
-	}
-	_ = archive.Close()
-	_ = gz.Close()
-	return buf.Bytes()
 }
 
 func appSession(t *testing.T) (*appRoutes, func(name string, args map[string]any) (string, bool)) {
@@ -248,24 +220,17 @@ func TestLogsGrepBeforeTail(t *testing.T) {
 	assert.Contains(t, text, "tail")
 }
 
-func TestGetAppConfigIsTheAppsDocument(t *testing.T) {
-	routes, call := appSession(t)
-	text, isErr := call("get_app_config", shopProd("api"))
-	assert.False(t, isErr, text)
-	assert.Equal(t, "omit", routes.exportMode)
-	var out appConfig
-	assert.NoError(t, json.Unmarshal([]byte(text), &out))
-	assert.Equal(t, "name: API\nsettings:\n  envVars:\n    - {k: DB_PASSWORD, v: ''}\n", out.YAML)
-}
-
 // Whatever an app holds, no tool that reads it answers a secret value: they
 // read only what they show, and export in the mode that omits secrets.
 func TestNoToolOutputCarriesASecretValue(t *testing.T) {
 	_, call := appSession(t)
-	for _, tool := range []string{"list_apps", "get_app", "get_app_status", "get_app_config"} {
+	for _, tool := range []string{"list_apps", "get_app", "get_app_status", "get_app_settings"} {
 		args := shopProd("api")
-		if tool == "list_apps" {
+		switch tool {
+		case "list_apps":
 			delete(args, "app")
+		case "get_app_settings":
+			args["kind"] = "kind"
 		}
 		text, isErr := call(tool, args)
 		assert.False(t, isErr, "%s: %s", tool, text)

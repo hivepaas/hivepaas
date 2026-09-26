@@ -144,7 +144,7 @@ export function AppSettingMountForm({
             >
                 <div className="flex flex-col gap-6">
                     <InfoBlock
-                        titleWidth={240}
+                        titleWidth={220}
                         title={
                             <LabelWithInfo
                                 label="Name"
@@ -170,7 +170,7 @@ export function AppSettingMountForm({
                     </InfoBlock>
 
                     <InfoBlock
-                        titleWidth={240}
+                        titleWidth={220}
                         title={
                             <LabelWithInfo
                                 label="Mount From"
@@ -223,7 +223,7 @@ export function AppSettingMountForm({
                     </InfoBlock>
 
                     <InfoBlock
-                        titleWidth={240}
+                        titleWidth={220}
                         title={
                             <LabelWithInfo
                                 label="Setting"
@@ -258,7 +258,7 @@ export function AppSettingMountForm({
                     </InfoBlock>
 
                     <InfoBlock
-                        titleWidth={240}
+                        titleWidth={220}
                         title={
                             <LabelWithInfo
                                 label="Files"
@@ -348,7 +348,7 @@ export function AppSettingMountForm({
                     </InfoBlock>
 
                     <InfoBlock
-                        titleWidth={240}
+                        titleWidth={220}
                         title={<LabelWithInfo label="Inheritable" />}
                     >
                         <div className="flex flex-col gap-1">

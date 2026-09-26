@@ -4,10 +4,14 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"os"
+	"path/filepath"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"go.uber.org/fx"
 
+	"github.com/hivepaas/hivepaas/hivepaas_app/config"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/logging"
@@ -117,5 +121,69 @@ func TestFirstBootSaysWhyItAskedForNothing(t *testing.T) {
 	assert.Empty(t, logger.errors)
 	if assert.Len(t, logger.warnings, 1) {
 		assert.Contains(t, logger.warnings[0], "not a public name")
+	}
+}
+
+func TestForgetFirstBootEnvRemovesTheFile(t *testing.T) {
+	appPath := t.TempDir()
+	t.Setenv("HP_APP_PATH", appPath)
+	assert.NoError(t, os.WriteFile(config.FirstBootEnvPath(appPath), []byte("HP_USER_ADMIN_PASSWORD=x\n"), 0o600))
+	logger := &errorLogger{}
+
+	forgetFirstBootEnv(logger)
+
+	_, err := os.Stat(config.FirstBootEnvPath(appPath))
+	assert.True(t, errors.Is(err, os.ErrNotExist))
+	assert.Empty(t, logger.errors)
+}
+
+func TestForgetFirstBootEnvLogsWhatItCannotRemove(t *testing.T) {
+	appPath := t.TempDir()
+	t.Setenv("HP_APP_PATH", appPath)
+	// A directory with something in it is what os.Remove refuses.
+	assert.NoError(t, os.MkdirAll(filepath.Join(config.FirstBootEnvPath(appPath), "x"), 0o700))
+	logger := &errorLogger{}
+
+	forgetFirstBootEnv(logger)
+
+	assert.Len(t, logger.errors, 1)
+}
+
+func TestDashboardCertOnFirstBootWaitsForTheQueue(t *testing.T) {
+	task := &entity.Task{ID: "task-1"}
+
+	for _, ran := range []bool{false, true} {
+		firstBootRan.Store(ran)
+		service := &certRequestingService{tasks: []*entity.Task{task}}
+		taskQueue := &schedulingQueue{}
+		lc := &lifecycle{}
+
+		DashboardCertOnFirstBoot(lc, nil, service, taskQueue, &errorLogger{})
+		lc.start(t)
+
+		if ran {
+			assert.Equal(t, []*entity.Task{task}, taskQueue.scheduled, "asked and scheduled after this boot made the data")
+		} else {
+			assert.Empty(t, taskQueue.scheduled, "nothing on a boot that made no data")
+		}
+	}
+	firstBootRan.Store(false)
+}
+
+// lifecycle keeps the hooks it is given, for a test to start them.
+type lifecycle struct {
+	hooks []fx.Hook
+}
+
+func (l *lifecycle) Append(hook fx.Hook) {
+	l.hooks = append(l.hooks, hook)
+}
+
+func (l *lifecycle) start(t *testing.T) {
+	t.Helper()
+	for _, hook := range l.hooks {
+		if hook.OnStart != nil {
+			assert.NoError(t, hook.OnStart(context.Background()))
+		}
 	}
 }

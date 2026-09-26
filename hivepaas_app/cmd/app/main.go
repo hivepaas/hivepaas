@@ -30,6 +30,8 @@ func main() {
 		fx.Invoke(internal.InitSystemSettings),
 		fx.Invoke(internal.InitSystemEventBus),
 		fx.Invoke(internal.InitTaskQueue),
+		// After InitTaskQueue: the certificate's task is scheduled on a queue that runs.
+		fx.Invoke(internal.DashboardCertOnFirstBoot),
 		// After InitTaskQueue: the heartbeat must not vouch for a worker whose
 		// queue has not started.
 		fx.Invoke(internal.InitWorkerHeartbeat),

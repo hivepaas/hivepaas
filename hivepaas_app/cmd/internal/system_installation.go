@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"sync/atomic"
 
 	"go.uber.org/fx"
 
@@ -33,8 +34,6 @@ func SystemInstallation(
 	userService userservice.Service,
 	settingInitService settinginitservice.Service,
 	projectService projectservice.Service,
-	getStartedService getstartedservice.Service,
-	taskQueue queue.TaskQueue,
 	logger logging.Logger,
 ) {
 	stepEnabled := cfg.RunMode != config.RunModeUpdater
@@ -55,12 +54,49 @@ func SystemInstallation(
 				if err != nil {
 					return fmt.Errorf("failed to initialize system data: %w", err)
 				}
-				requestDashboardCert(ctx, db, getStartedService, taskQueue, logger)
+				firstBootRan.Store(true)
 			}
+			// The data exists, whoever made it: what the first boot needed is
+			// not kept on disk a moment longer.
+			forgetFirstBootEnv(logger)
 
 			return nil
 		},
 		OnStop: func(ctx context.Context) error {
+			return nil
+		},
+	})
+}
+
+// firstBootRan says this process created the installation's data, for what
+// has to wait for services started after SystemInstallation.
+var firstBootRan atomic.Bool
+
+// forgetFirstBootEnv deletes the settings the installer left for the first boot.
+// A failure is logged, not fatal: the boot has what it needs, and the next boot
+// tries again.
+func forgetFirstBootEnv(logger logging.Logger) {
+	if err := config.RemoveFirstBootEnv(); err != nil {
+		logger.Errorf("failed to remove the first-boot settings: %v", err)
+	}
+}
+
+// DashboardCertOnFirstBoot asks for the dashboard's certificate after a boot
+// that created the installation's data. It runs once the task queue has
+// started, so the task is scheduled at once rather than found by the queue's
+// next scan.
+func DashboardCertOnFirstBoot(
+	lc fx.Lifecycle,
+	db *database.DB,
+	getStartedService getstartedservice.Service,
+	taskQueue queue.TaskQueue,
+	logger logging.Logger,
+) {
+	lc.Append(fx.Hook{
+		OnStart: func(ctx context.Context) error {
+			if firstBootRan.Load() {
+				requestDashboardCert(ctx, db, getStartedService, taskQueue, logger)
+			}
 			return nil
 		},
 	})

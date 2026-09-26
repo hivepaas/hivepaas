@@ -35,6 +35,7 @@ func TestFxGraphResolves(t *testing.T) {
 		fx.Invoke(InitSystemSettings),
 		fx.Invoke(InitSystemEventBus),
 		fx.Invoke(InitTaskQueue),
+		fx.Invoke(DashboardCertOnFirstBoot),
 		fx.Invoke(InitWorkerHeartbeat),
 		fx.Invoke(InitJWTSession),
 		fx.Invoke(InitSettingsProbation),

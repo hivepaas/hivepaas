@@ -17,8 +17,8 @@ import {
     Hammer,
     HardDrive,
     House,
+    IdCard,
     Key,
-    KeyRound,
     KeySquare,
     Layers,
     LayoutGrid,
@@ -163,7 +163,7 @@ const navMain: SidebarItem[] = [
                     },
                     {
                         title: "OAuth",
-                        icon: KeyRound,
+                        icon: IdCard,
                         route: ROUTE.settings.oauth.$route,
                         pattern: ROUTE.settings.oauth.$pattern,
                     },

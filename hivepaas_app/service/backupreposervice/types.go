@@ -160,6 +160,9 @@ type BackupStreamReq struct {
 	Source      string
 	Description string
 	Tags        []string
+	// Progress, when set, is told the steps the backup takes, such as a
+	// repository server started for it.
+	Progress func(msg string)
 	// OnConnected, when set, is called once the engine is built and connected:
 	// from then on the stream uses the database no more, and whatever writes
 	// Stdin may use it.
@@ -168,6 +171,8 @@ type BackupStreamReq struct {
 
 type BackupDirectoryReq struct {
 	RepoTarget
+	// Progress, when set, is told the steps the backup takes.
+	Progress func(msg string)
 	// HostDir is the directory as the node's host sees it.
 	HostDir   string
 	NodeID    string
@@ -176,6 +181,34 @@ type BackupDirectoryReq struct {
 	Source      string
 	Description string
 	Tags        []string
+}
+
+// OpenRepoServerReq is a repository server to open: the repository, on a
+// volume, and the user its clients log in as, user@host.
+type OpenRepoServerReq struct {
+	RepoTarget
+	Username string
+}
+
+// RepoServerSession is a repository server running for the caller, until Close.
+type RepoServerSession struct {
+	URL         string
+	Fingerprint string
+	// Username and Hostname are the identity clients log in and write snapshots as.
+	Username string
+	Hostname string
+	Password string
+	// Stop stops the server; Close calls it once.
+	Stop func() error
+}
+
+func (s *RepoServerSession) Close() error {
+	if s.Stop == nil {
+		return nil
+	}
+	stop := s.Stop
+	s.Stop = nil
+	return stop()
 }
 
 type BackupResp struct {

@@ -3,6 +3,7 @@ package backupreposerviceimpl
 import (
 	"context"
 	"path/filepath"
+	"strings"
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
@@ -18,19 +19,28 @@ func (s *service) BackupStream(
 	db database.IDB,
 	req *backupreposervice.BackupStreamReq,
 ) (*backupreposervice.BackupResp, error) {
-	engine, err := s.buildTargetEngine(ctx, db, &req.RepoTarget)
+	repo, storage, err := s.targetStorage(ctx, db, &req.RepoTarget)
 	if err != nil {
 		return nil, hperrors.Wrap(err)
 	}
-	if err = engine.ConnectRepo(ctx); err != nil {
-		return nil, hperrors.Wrap(err)
+	opts := &backup.BackupOptions{Tags: req.Tags, Description: req.Description, Source: req.Source}
+	take := func(engine backup.Engine) (backupmodel.BackupResult, error) {
+		if req.OnConnected != nil {
+			req.OnConnected()
+		}
+		result, err := engine.BackupStream(ctx, req.Stdin, req.FileName, opts)
+		return result, hperrors.Wrap(err)
 	}
-	if req.OnConnected != nil {
-		req.OnConnected()
+
+	var result backupmodel.BackupResult
+	if !repoServerNeeded(storage, true, "", "") {
+		result, err = s.backupWith(ctx, repo, storage, s.buildCommandExecutor(storage.StorageLocal != nil), take)
+	} else {
+		// The agent's commands carry no stdin: kopia runs here, through the
+		// repository's server.
+		result, err = s.backupThroughServer(ctx, req.RepoSetting.ID, repo, storage, req.Source, req.Progress,
+			s.buildCommandExecutor(false), take)
 	}
-	result, err := engine.BackupStream(ctx, req.Stdin, req.FileName, &backup.BackupOptions{
-		Tags: req.Tags, Description: req.Description, Source: req.Source,
-	})
 	if err != nil {
 		return nil, hperrors.Wrap(err)
 	}
@@ -42,36 +52,125 @@ func (s *service) BackupDirectory(
 	db database.IDB,
 	req *backupreposervice.BackupDirectoryReq,
 ) (*backupreposervice.BackupResp, error) {
-	repo, err := req.RepoSetting.AsBackupRepo()
+	repo, storage, err := s.targetStorage(ctx, db, &req.RepoTarget)
 	if err != nil {
-		return nil, hperrors.Wrap(err)
-	}
-	storage, _, err := s.buildStorage(ctx, db, req.Scope, repo, req.RepoSetting.ID, req.RefObjects, "")
-	if err != nil {
-		return nil, hperrors.Wrap(err)
-	}
-	if err = checkRepoReachableFrom(storage, req.NodeID, req.NodeLabel); err != nil {
-		return nil, hperrors.Wrap(err)
-	}
-	// The directory is read where it is: the engine runs on its node, whatever the
-	// repository's storage would have chosen.
-	engine, err := backup.NewEngine(repo.Engine, storage,
-		onNodeExecutor(s.buildCommandExecutor(true), req.NodeID, req.NodeLabel))
-	if err != nil {
-		return nil, hperrors.Wrap(err)
-	}
-	if err = engine.ConnectRepo(ctx); err != nil {
 		return nil, hperrors.Wrap(err)
 	}
 	// The agent mounts the host root: the directory is expressed from inside it.
 	dir := filepath.Join(volumeservice.HostPathPrefix, req.HostDir)
-	result, err := engine.BackupDirectory(ctx, dir, &backup.BackupOptions{
-		Tags: req.Tags, Description: req.Description, Source: req.Source,
-	})
+	opts := &backup.BackupOptions{Tags: req.Tags, Description: req.Description, Source: req.Source}
+	take := func(engine backup.Engine) (backupmodel.BackupResult, error) {
+		result, err := engine.BackupDirectory(ctx, dir, opts)
+		return result, hperrors.Wrap(err)
+	}
+	// The directory is read where it is: kopia runs on its node, whatever the
+	// repository's storage would have chosen.
+	onDataNode := onNodeExecutor(s.buildCommandExecutor(true), req.NodeID, req.NodeLabel)
+
+	var result backupmodel.BackupResult
+	if !repoServerNeeded(storage, false, req.NodeID, req.NodeLabel) {
+		result, err = s.backupWith(ctx, repo, storage, onDataNode, take)
+	} else {
+		result, err = s.backupThroughServer(ctx, req.RepoSetting.ID, repo, storage, req.Source, req.Progress,
+			onDataNode, take)
+	}
 	if err != nil {
 		return nil, hperrors.Wrap(err)
 	}
 	return &backupreposervice.BackupResp{Snapshot: toRepoSnapshot(result.Item)}, nil
+}
+
+// targetStorage is the repository and where it is.
+func (s *service) targetStorage(
+	ctx context.Context,
+	db database.IDB,
+	target *backupreposervice.RepoTarget,
+) (*entity.BackupRepo, *backup.Storage, error) {
+	repo, err := target.RepoSetting.AsBackupRepo()
+	if err != nil {
+		return nil, nil, hperrors.Wrap(err)
+	}
+	storage, _, err := s.buildStorage(ctx, db, target.Scope, repo, target.RepoSetting.ID, target.RefObjects, "")
+	if err != nil {
+		return nil, nil, hperrors.Wrap(err)
+	}
+	return repo, storage, nil
+}
+
+// backupWith connects an engine on the storage, its commands run by exec, and
+// takes the backup.
+func (s *service) backupWith(
+	ctx context.Context,
+	repo *entity.BackupRepo,
+	storage *backup.Storage,
+	exec backupmodel.CommandExecutor,
+	take func(backup.Engine) (backupmodel.BackupResult, error),
+) (backupmodel.BackupResult, error) {
+	engine, err := backup.NewEngine(repo.Engine, storage, exec)
+	if err != nil {
+		return backupmodel.BackupResult{}, hperrors.Wrap(err)
+	}
+	if err = engine.ConnectRepo(ctx); err != nil {
+		return backupmodel.BackupResult{}, hperrors.Wrap(err)
+	}
+	return take(engine)
+}
+
+// backupThroughServer takes the backup through a repository server run for it on
+// the repository's node, as the identity of the snapshot's source, user@host.
+// The client's connection goes with the session.
+func (s *service) backupThroughServer(
+	ctx context.Context,
+	repoID string,
+	repo *entity.BackupRepo,
+	storage *backup.Storage,
+	source string,
+	progress func(string),
+	exec backupmodel.CommandExecutor,
+	take func(backup.Engine) (backupmodel.BackupResult, error),
+) (result backupmodel.BackupResult, err error) {
+	username, _, _ := strings.Cut(source, ":")
+	say := func(msg string) {
+		if progress != nil {
+			progress(msg)
+		}
+	}
+	node := storage.StorageLocal.NodeID
+	if node == "" {
+		node = storage.StorageLocal.NodeLabel
+	}
+	say("Starting the repository server on node " + node)
+	err = s.withRepoServer(ctx, storage, username, repoID, func(client *backup.Storage) error {
+		say("Repository server ready at " + client.StorageServer.URL)
+		engine, err := backup.NewEngine(repo.Engine, client, exec)
+		if err != nil {
+			return hperrors.Wrap(err)
+		}
+		if err = engine.ConnectRepo(ctx); err != nil {
+			return hperrors.Wrap(err)
+		}
+		defer func() { _ = engine.DisconnectRepo(context.WithoutCancel(ctx)) }()
+		result, err = take(engine)
+		return hperrors.Wrap(err)
+	})
+	say("Repository server stopped")
+	return result, hperrors.Wrap(err)
+}
+
+// repoServerNeeded says whether a backup needs the repository's server: a
+// repository on a volume is reached directly on its own node only, and there by
+// commands that carry no stdin.
+func repoServerNeeded(storage *backup.Storage, stream bool, nodeID, nodeLabel string) bool {
+	local := storage.StorageLocal
+	if local == nil {
+		return false
+	}
+	if stream {
+		return true
+	}
+	onRepoNode := (local.NodeID != "" && local.NodeID == nodeID) ||
+		(local.NodeLabel != "" && local.NodeLabel == nodeLabel)
+	return !onRepoNode
 }
 
 func (s *service) DeleteSnapshot(
@@ -128,21 +227,6 @@ func onNodeExecutor(base backupmodel.CommandExecutor, nodeID, nodeLabel string) 
 		}
 		return base(ctx, req)
 	}
-}
-
-// checkRepoReachableFrom refuses a repository on a volume of another node than the
-// one a directory is read on: it is reachable there only, until the repository
-// server makes it reachable from anywhere.
-func checkRepoReachableFrom(storage *backup.Storage, nodeID, nodeLabel string) error {
-	local := storage.StorageLocal
-	if local == nil {
-		return nil
-	}
-	if (local.NodeID != "" && local.NodeID == nodeID) || (local.NodeLabel != "" && local.NodeLabel == nodeLabel) {
-		return nil
-	}
-	return hperrors.Wrap(hperrors.ErrNotImplemented).WithExtraDetail(
-		"the repository's volume is on another node than the data: backing it up there is not supported yet")
 }
 
 // toRepoSnapshot is a snapshot the engine made, as the repository's snapshots read.

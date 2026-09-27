@@ -117,6 +117,7 @@ func (s *service) backupCommand(
 			RepoTarget: target, Stdin: reader, FileName: dataBackup.SourceFileName, Tags: tags,
 			Source:      dataBackupSource + req.JobSetting.ID,
 			Description: description,
+			Progress:    logProgress(ctx, req),
 			OnConnected: func() { close(connected) },
 		})
 		// Whatever the engine did not read is not waited for.
@@ -234,6 +235,7 @@ func (s *service) backupVolume(
 	resp, err := s.backupRepoService.BackupDirectory(ctx, db, &backupreposervice.BackupDirectoryReq{
 		RepoTarget: target, HostDir: dir, NodeID: appVolume.NodeID, NodeLabel: appVolume.NodeLabel, Tags: tags,
 		Source: dataBackupSource + req.JobSetting.ID, Description: description,
+		Progress: logProgress(ctx, req),
 	})
 	if err != nil {
 		return nil, hperrors.Wrap(err)
@@ -257,4 +259,11 @@ func (s *service) syncSnapshots(ctx context.Context, db database.Tx, target back
 		Scope: target.Scope, RepoSetting: target.RepoSetting, Remaining: listed.Snapshots,
 	})
 	return hperrors.Wrap(err)
+}
+
+// logProgress writes the steps a backup takes into the run's log.
+func logProgress(ctx context.Context, req *databackupservice.BackupReq) func(string) {
+	return func(msg string) {
+		_ = req.LogStore.Add(ctx, tasklog.NewOutFrame(msg+"\n", tasklog.TsNow))
+	}
 }

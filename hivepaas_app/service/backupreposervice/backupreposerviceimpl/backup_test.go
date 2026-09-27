@@ -2,14 +2,12 @@ package backupreposerviceimpl
 
 import (
 	"context"
-	"errors"
 	"testing"
 	"time"
 
 	"github.com/stretchr/testify/assert"
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
-	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/services/backup"
 	"github.com/hivepaas/hivepaas/services/backup/backupmodel"
 )
@@ -34,20 +32,32 @@ func TestOnNodeExecutorRunsWhereAsked(t *testing.T) {
 	assert.Equal(t, "zone=b", got.NodeLabel)
 }
 
-// A repository on a volume is reachable on its own node only: a directory on
-// another node cannot be backed up into it yet.
-func TestCheckRepoReachableFrom(t *testing.T) {
+// Where a backup runs: a repository on a volume is reached directly on its own
+// node only; a stream into it, or a directory on another node, needs its server.
+func TestRepoServerNeeded(t *testing.T) {
 	cloud := &backup.Storage{StorageS3: &backup.StorageS3{Bucket: "b"}}
-	assert.NoError(t, checkRepoReachableFrom(cloud, "node-2", ""))
-
 	onNode2 := &backup.Storage{StorageLocal: &backup.StorageLocal{Path: "/host/srv", NodeID: "node-2"}}
-	assert.NoError(t, checkRepoReachableFrom(onNode2, "node-2", ""))
-	err := checkRepoReachableFrom(onNode2, "node-3", "")
-	assert.True(t, errors.Is(err, hperrors.ErrNotImplemented), "got %v", err)
-
 	byLabel := &backup.Storage{StorageLocal: &backup.StorageLocal{Path: "/host/srv", NodeLabel: "zone=b"}}
-	assert.NoError(t, checkRepoReachableFrom(byLabel, "", "zone=b"))
-	assert.Error(t, checkRepoReachableFrom(byLabel, "node-2", ""))
+
+	cases := []struct {
+		name      string
+		storage   *backup.Storage
+		stream    bool
+		nodeID    string
+		nodeLabel string
+		want      bool
+	}{
+		{"a stream into cloud storage", cloud, true, "", "", false},
+		{"a directory into cloud storage", cloud, false, "node-3", "", false},
+		{"a stream into a volume repository", onNode2, true, "", "", true},
+		{"a directory on the repository's node", onNode2, false, "node-2", "", false},
+		{"a directory on another node", onNode2, false, "node-3", "", true},
+		{"a directory on the repository's labeled node", byLabel, false, "", "zone=b", false},
+		{"a directory on a node without the label", byLabel, false, "node-2", "", true},
+	}
+	for _, c := range cases {
+		assert.Equal(t, c.want, repoServerNeeded(c.storage, c.stream, c.nodeID, c.nodeLabel), c.name)
+	}
 }
 
 // A snapshot the engine made reads as the repository's snapshots do.

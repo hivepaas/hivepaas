@@ -48,6 +48,9 @@ func (f *fakeRepos) BackupStream(
 	}
 	f.connected = true
 	f.stream = req
+	if req.Progress != nil {
+		req.Progress("Repository server ready at https://10.0.1.5:40123")
+	}
 	req.OnConnected()
 	if f.stopErr != nil {
 		return nil, f.stopErr
@@ -66,6 +69,9 @@ func (f *fakeRepos) BackupDirectory(
 	_ context.Context, _ database.IDB, req *backupreposervice.BackupDirectoryReq,
 ) (*backupreposervice.BackupResp, error) {
 	f.directory = req
+	if req.Progress != nil {
+		req.Progress("Starting the repository server on node node-1")
+	}
 	return &backupreposervice.BackupResp{Snapshot: f.snapshot}, nil
 }
 
@@ -336,4 +342,44 @@ func TestBackupFailsWithoutItsApp(t *testing.T) {
 	_, err := newTestService(&fakeRepos{}, &fakeJobExec{}).Backup(context.Background(), database.Tx{}, req)
 
 	assert.Error(t, err)
+}
+
+// logText is what the run's log says.
+func logText(t *testing.T, req *databackupservice.BackupReq) string {
+	t.Helper()
+	frames, err := req.LogStore.GetLocalData(context.Background(), 0)
+	assert.NoError(t, err)
+	var text string
+	for _, frame := range frames {
+		text += frame.Data
+	}
+	return text
+}
+
+// The run's log says what the backup did on the way, such as a repository server
+// started for it.
+func TestBackupLogsItsProgress(t *testing.T) {
+	repos := &fakeRepos{snapshot: snapshotOf("k1")}
+	req := backupReq(t, commandBackup())
+	req.LogStore = tasklog.NewLocalStore("t1")
+
+	_, err := newTestService(repos, &fakeJobExec{}).Backup(context.Background(), database.Tx{}, req)
+
+	assert.NoError(t, err)
+	assert.Contains(t, logText(t, req), "Repository server ready at https://10.0.1.5:40123\n")
+
+	repos = &fakeRepos{snapshot: snapshotOf("k1")}
+	svc := newTestService(repos, &fakeJobExec{})
+	svc.findAppVolume = func(context.Context, database.IDB, *entity.App, string) (*databackupservice.AppVolume, error) {
+		return &databackupservice.AppVolume{HostDir: "/srv/data/a1", NodeID: "node-2"}, nil
+	}
+	req = backupReq(t, &entity.SchedJobDataBackup{
+		Source: base.SchedJobDataBackupSourceVolume, SourceVolume: entity.ObjectID{ID: "vol1"},
+	})
+	req.LogStore = tasklog.NewLocalStore("t1")
+
+	_, err = svc.Backup(context.Background(), database.Tx{}, req)
+
+	assert.NoError(t, err)
+	assert.Contains(t, logText(t, req), "Starting the repository server on node node-1\n")
 }

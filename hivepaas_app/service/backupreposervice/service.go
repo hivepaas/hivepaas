@@ -42,6 +42,9 @@ type Service interface {
 	BackupStream(ctx context.Context, db database.IDB, req *BackupStreamReq) (*BackupResp, error)
 	// BackupDirectory takes a snapshot of a directory of a node's host, the engine running on
 	// that node through its agent. A repository on a volume is reachable on its own node only.
+	// OpenRepoServer runs a repository server for a repository on a volume, on
+	// its node, until the session is closed or ctx ends.
+	OpenRepoServer(ctx context.Context, db database.IDB, req *OpenRepoServerReq) (*RepoServerSession, error)
 	BackupDirectory(ctx context.Context, db database.IDB, req *BackupDirectoryReq) (*BackupResp, error)
 	// DeleteSnapshot removes one snapshot from the repository.
 	DeleteSnapshot(ctx context.Context, db database.IDB, req *DeleteSnapshotReq) error

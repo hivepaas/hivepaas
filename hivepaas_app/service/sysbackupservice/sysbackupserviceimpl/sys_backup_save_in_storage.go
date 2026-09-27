@@ -17,7 +17,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/tasklog"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/timeutil"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/ulid"
-	"github.com/hivepaas/hivepaas/services/aws/s3"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/cloudstorageservice"
 )
 
 func (s *service) sysBackupSaveResultInStorage(
@@ -40,7 +40,7 @@ func (s *service) sysBackupSaveResultInStorage(
 
 	switch base.CloudStorageKind(storageSetting.Kind) {
 	case base.CloudStorageKindS3:
-		s3Client, err := s3.NewClientFromSetting(ctx, storageSetting)
+		s3Client, err := cloudstorageservice.NewS3Client(ctx, db, storageSetting, data.RefObjects)
 		if err != nil {
 			return hperrors.Wrap(err)
 		}

@@ -23,6 +23,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings/emailuc/emaildto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings/githubappuc/githubappdto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings/imserviceuc/imservicedto"
+	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings/keyauthuc/keyauthdto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings/notificationuc/notificationdto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings/oauthuc/oauthdto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings/periodicjobuc/periodicjobdto"
@@ -114,6 +115,11 @@ func (h *Handler) ListSetting(
 		r := basicauthdto.NewListBasicAuthReq()
 		r.Scope = scope
 		req, ucFunc = r, func() (any, error) { return h.BasicAuthUC.ListBasicAuth(reqCtx, auth, r) }
+
+	case base.ResourceTypeKeyAuth:
+		r := keyauthdto.NewListKeyAuthReq()
+		r.Scope = scope
+		req, ucFunc = r, func() (any, error) { return h.KeyAuthUC.ListKeyAuth(reqCtx, auth, r) }
 
 	case base.ResourceTypeCloudStorage:
 		r := cloudstoragedto.NewListCloudStorageReq()

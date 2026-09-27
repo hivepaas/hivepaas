@@ -9,8 +9,8 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/config"
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/cloudstorageservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/fileservice"
-	"github.com/hivepaas/hivepaas/services/aws/s3"
 )
 
 func (s *service) GetDownloadURL(
@@ -41,7 +41,7 @@ func (s *service) GetDownloadURL(
 
 	switch base.CloudStorageKind(storageSetting.Kind) {
 	case base.CloudStorageKindS3:
-		s3Client, err := s3.NewClientFromSetting(ctx, storageSetting)
+		s3Client, err := cloudstorageservice.NewS3Client(ctx, db, storageSetting, nil)
 		if err != nil {
 			return nil, hperrors.Wrap(err)
 		}

@@ -62,6 +62,7 @@ var collectionBlockNames = map[base.SettingType]string{
 	base.SettingTypeEmail:           "emails",
 	base.SettingTypeGithubApp:       "githubApps",
 	base.SettingTypeIMService:       "imServices",
+	base.SettingTypeKeyAuth:         "keyAuths",
 	base.SettingTypeNotification:    "notifications",
 	base.SettingTypeOAuth:           "oauths",
 	base.SettingTypePeriodicJob:     "periodicJobs",

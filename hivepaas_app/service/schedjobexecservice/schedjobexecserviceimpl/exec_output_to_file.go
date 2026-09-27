@@ -22,7 +22,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/safego"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/ulid"
-	"github.com/hivepaas/hivepaas/services/aws/s3"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/cloudstorageservice"
 )
 
 //nolint:gocognit
@@ -176,7 +176,7 @@ func (s *service) initOutputFile(
 		if base.CloudStorageKind(storageSetting.Kind) != base.CloudStorageKindS3 {
 			return hperrors.NewUnsupported(fmt.Sprintf("Storage kind '%s'", storageSetting.Kind))
 		}
-		s3Client, err := s3.NewClientFromSetting(ctx, storageSetting)
+		s3Client, err := cloudstorageservice.NewS3Client(ctx, data.db, storageSetting, data.RefObjects)
 		if err != nil {
 			return hperrors.Wrap(err)
 		}

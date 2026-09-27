@@ -7,10 +7,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/credentials"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
-	"github.com/tiendc/gofn"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/base"
-	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 )
 
@@ -53,27 +50,6 @@ func NewClient(ctx context.Context, cfg *Config) (*Client, error) {
 		client:        s3Client,
 		presignClient: s3.NewPresignClient(s3Client),
 	}, nil
-}
-
-func NewClientFromSetting(ctx context.Context, storageSetting *entity.Setting) (*Client, error) {
-	if storageSetting.Type != base.SettingTypeCloudStorage || storageSetting.Kind != string(base.CloudStorageKindS3) {
-		return nil, hperrors.Wrap(hperrors.ErrSettingTypeUnsupported).WithParam("Name", storageSetting.Type)
-	}
-	storage, err := storageSetting.AsCloudStorage()
-	if err != nil {
-		return nil, hperrors.Wrap(err)
-	}
-	secretKey, err := storage.S3.SecretKey.GetPlain()
-	if err != nil {
-		return nil, hperrors.Wrap(err)
-	}
-	return NewClient(ctx, &Config{
-		AccessKeyID:     storage.S3.AccessKeyID,
-		SecretAccessKey: secretKey,
-		Endpoint:        storage.S3.Endpoint,
-		Region:          gofn.Coalesce(storage.S3.Region, storage.S3.CloudProviderAWS.Region),
-		Bucket:          storage.S3.Bucket,
-	})
 }
 
 func (client *Client) HeadBucket(ctx context.Context) (*s3.HeadBucketOutput, error) {

@@ -197,6 +197,7 @@ var (
 		base.SettingTypeHivePaaSService,
 		base.SettingTypeIMService,
 		base.SettingTypeImageBuild,
+		base.SettingTypeKeyAuth,
 		base.SettingTypeMCP,
 		base.SettingTypeNotification,
 		base.SettingTypeOAuth,

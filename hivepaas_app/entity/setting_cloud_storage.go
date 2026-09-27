@@ -4,7 +4,6 @@ import (
 	"github.com/tiendc/gofn"
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
-	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 )
 
 const (
@@ -25,10 +24,12 @@ type CloudStorage struct {
 }
 
 type CloudStorageS3 struct {
-	*CloudProviderAWS
-	Region   string `json:"region,omitempty"`
-	Bucket   string `json:"bucket,omitempty"`
-	Endpoint string `json:"endpoint,omitempty"`
+	// KeyAuth is the key auth setting whose key id and secret key the bucket is
+	// reached with.
+	KeyAuth  ObjectID `json:"keyAuth"`
+	Region   string   `json:"region,omitempty"`
+	Bucket   string   `json:"bucket,omitempty"`
+	Endpoint string   `json:"endpoint,omitempty"`
 }
 
 func (s *CloudStorage) GetType() base.SettingType {
@@ -36,22 +37,22 @@ func (s *CloudStorage) GetType() base.SettingType {
 }
 
 func (s *CloudStorage) GetRefObjectIDs() *RefObjectIDs {
-	return &RefObjectIDs{}
+	refIDs := &RefObjectIDs{}
+	if s.S3 != nil && s.S3.KeyAuth.ID != "" {
+		refIDs.RefSettingIDs = append(refIDs.RefSettingIDs, s.S3.KeyAuth.ID)
+	}
+	return refIDs
 }
 
 func (s *CloudStorage) GetResourceLinks(setting *Setting) []*ResLink {
 	return s.GetRefObjectIDs().GetResourceLinks(base.ResourceTypeSetting, setting.ID)
 }
 
+// Decrypt has nothing to do: the secret is the linked key auth's.
 func (s *CloudStorage) Decrypt() error {
-	if s.S3 != nil {
-		_, err := s.S3.SecretKey.GetPlain()
-		if err != nil {
-			return hperrors.Wrap(err)
-		}
-	}
 	return nil
 }
+
 func (s *Setting) AsCloudStorage() (*CloudStorage, error) {
 	return parseSettingAs[*CloudStorage](s)
 }

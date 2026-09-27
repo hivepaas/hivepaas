@@ -77,6 +77,18 @@ func (s *HTTPServer) registerSettingRoutes(apiGroup *gin.RouterGroup) {
 			settingHandler.SettingUsages(base.ResourceTypeBasicAuth, base.ObjectScopeGlobal))
 	}
 
+	{ // key auth group
+		keyAuthGroup := settingGroup.Group("/key-auth")
+		keyAuthGroup.GET("/:itemID", settingHandler.GetKeyAuth)
+		keyAuthGroup.GET("", settingHandler.ListKeyAuth)
+		keyAuthGroup.POST("", settingHandler.CreateKeyAuth)
+		keyAuthGroup.PUT("/:itemID", settingHandler.UpdateKeyAuth)
+		keyAuthGroup.PUT("/:itemID/status", settingHandler.UpdateKeyAuthStatus)
+		keyAuthGroup.DELETE("/:itemID", settingHandler.DeleteKeyAuth)
+		keyAuthGroup.GET("/:itemID/usages",
+			settingHandler.SettingUsages(base.ResourceTypeKeyAuth, base.ObjectScopeGlobal))
+	}
+
 	{ // Cloud storage group
 		cloudStorageGroup := settingGroup.Group("/cloud-storages")
 		cloudStorageGroup.GET("/:itemID", settingHandler.GetCloudStorage)

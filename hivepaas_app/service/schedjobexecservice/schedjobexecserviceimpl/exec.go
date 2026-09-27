@@ -23,6 +23,8 @@ type execData struct {
 	SchedJob *entity.SchedJob
 	File     *entity.File
 	TimeNow  time.Time
+	// db reads what the refs do not hold, such as a storage's key auth.
+	db database.IDB
 
 	uploadFunc    func(_ context.Context, objectKey string, data io.Reader) error
 	uploadErrChan chan error
@@ -42,6 +44,7 @@ func (s *service) SchedJobExec(
 		SchedJobExecReq: req,
 		SchedJob:        schedJob,
 		TimeNow:         time.Now(),
+		db:              db,
 	}
 
 	cmd, err := s.calcCommand(ctx, data)

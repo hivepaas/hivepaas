@@ -161,6 +161,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings/githubappuc"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings/imagebuildsettingsuc"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings/imserviceuc"
+	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings/keyauthuc"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings/notificationuc"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings/oauthuc"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings/periodicjobuc"
@@ -300,6 +301,7 @@ var Provides = []any{
 	backuprepocleanupuc.New,
 	backuprepouc.New,
 	basicauthuc.New,
+	keyauthuc.New,
 	binobjectuc.New,
 	builduc.New,
 	cloudstorageuc.New,

@@ -13,6 +13,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/timeutil"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/ulid"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/cloudstorageservice"
 )
 
 // ensureCredential returns the credential the registry is pushed to with, and the
@@ -177,21 +178,22 @@ func (s *service) resolveCloudStorage(ctx context.Context, db database.IDB, id s
 	if err != nil {
 		return nil, hperrors.Wrap(err)
 	}
-	if storage.S3 == nil || storage.S3.CloudProviderAWS == nil || storage.S3.Bucket == "" {
+	if storage.S3 == nil || storage.S3.Bucket == "" {
 		return nil, hperrors.Wrap(hperrors.ErrRegistrySettingsInvalid).
 			WithExtraDetail("The chosen cloud storage names no S3 bucket.")
 	}
-	secretKey, err := storage.S3.SecretKey.GetPlain()
+	cfg, err := cloudstorageservice.S3Config(ctx, db, setting, nil)
 	if err != nil {
-		return nil, hperrors.Wrap(err)
+		return nil, hperrors.Wrap(hperrors.ErrRegistrySettingsInvalid).WithCause(err).
+			WithExtraDetail("The chosen cloud storage's key auth is missing or disabled.")
 	}
 
 	return &zotS3Input{
-		Bucket:    storage.S3.Bucket,
-		Region:    gofn.Coalesce(storage.S3.Region, storage.S3.CloudProviderAWS.Region),
-		Endpoint:  storage.S3.Endpoint,
-		AccessKey: storage.S3.AccessKeyID,
-		SecretKey: secretKey,
+		Bucket:    cfg.Bucket,
+		Region:    cfg.Region,
+		Endpoint:  cfg.Endpoint,
+		AccessKey: cfg.AccessKeyID,
+		SecretKey: cfg.SecretAccessKey,
 		// Anything but a plain-HTTP endpoint speaks TLS, and a registry's bucket
 		// is not somewhere to make that optional.
 		Secure: true,

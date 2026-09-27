@@ -6,6 +6,7 @@ import (
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
+	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 )
 
 /// DOWNLOAD
@@ -49,6 +50,8 @@ type UploadResp struct {
 /// DELETE
 
 type DeleteDataReq struct {
+	// DB reads what deleting a cloud file needs, its storage's key auth.
+	DB         database.IDB
 	File       *entity.File
 	RetryMax   int
 	RetryDelay time.Duration

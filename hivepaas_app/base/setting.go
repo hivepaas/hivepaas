@@ -34,6 +34,7 @@ const (
 	SettingTypeEnvVar            SettingType = "env-var"
 	SettingTypeGithubApp         SettingType = "github-app"
 	SettingTypeImageBuild        SettingType = "image-build"
+	SettingTypeKeyAuth           SettingType = "key-auth"
 	SettingTypeIMService         SettingType = "im-service"
 	SettingTypeHivePaaSService   SettingType = "hivepaas-service"
 	SettingTypeLogging           SettingType = "logging"

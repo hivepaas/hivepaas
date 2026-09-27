@@ -6,11 +6,10 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/tiendc/gofn"
-
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/cloudstorageservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/nodeexecservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/volumeservice"
 	"github.com/hivepaas/hivepaas/services/backup"
@@ -139,7 +138,7 @@ func (s *service) buildStorage(
 	}
 
 	if hasCloudStorage {
-		storage.StorageS3, err = s.buildS3Storage(repo, refObjects)
+		storage.StorageS3, err = s.buildS3Storage(ctx, db, repo, refObjects)
 		if err != nil {
 			return nil, false, hperrors.Wrap(err)
 		}
@@ -154,6 +153,8 @@ func (s *service) buildStorage(
 }
 
 func (s *service) buildS3Storage(
+	ctx context.Context,
+	db database.IDB,
 	repo *entity.BackupRepo,
 	refObjects *entity.RefObjects,
 ) (*backup.StorageS3, error) {
@@ -162,29 +163,18 @@ func (s *service) buildS3Storage(
 		return nil, hperrors.Wrap(hperrors.ErrSettingNotFound).WithParam("ID", repo.CloudStorage.ID)
 	}
 
-	cloudStorage, err := setting.AsCloudStorage()
-	if err != nil {
-		return nil, hperrors.Wrap(err)
-	}
-	if cloudStorage.S3 == nil || cloudStorage.S3.CloudProviderAWS == nil {
-		return nil, hperrors.Wrap(hperrors.ErrStorageTypeUnsupported)
-	}
-	if err := cloudStorage.Decrypt(); err != nil {
-		return nil, hperrors.Wrap(err)
-	}
-
-	secretKey, err := cloudStorage.S3.SecretKey.GetPlain()
+	cfg, err := cloudstorageservice.S3Config(ctx, db, setting, refObjects)
 	if err != nil {
 		return nil, hperrors.Wrap(err)
 	}
 
 	return &backup.StorageS3{
-		Endpoint:  cloudStorage.S3.Endpoint,
-		Region:    gofn.Coalesce(cloudStorage.S3.Region, cloudStorage.S3.CloudProviderAWS.Region),
-		Bucket:    cloudStorage.S3.Bucket,
+		Endpoint:  cfg.Endpoint,
+		Region:    cfg.Region,
+		Bucket:    cfg.Bucket,
 		Prefix:    normalizeStoragePrefix(repo.StoragePrefix),
-		AccessKey: cloudStorage.S3.AccessKeyID,
-		SecretKey: secretKey,
+		AccessKey: cfg.AccessKeyID,
+		SecretKey: cfg.SecretAccessKey,
 	}, nil
 }
 

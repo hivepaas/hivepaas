@@ -15,8 +15,8 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/fileutil"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/timeutil"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/ulid"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/cloudstorageservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/fileuc/filedto"
-	"github.com/hivepaas/hivepaas/services/aws/s3"
 )
 
 func (uc *UC) CreateFile(
@@ -40,7 +40,7 @@ func (uc *UC) CreateFile(
 	if err != nil {
 		return nil, hperrors.Wrap(err).WithMsgLog("failed to get storage setting")
 	}
-	s3Client, err := s3.NewClientFromSetting(ctx, storageSetting)
+	s3Client, err := cloudstorageservice.NewS3Client(ctx, uc.db, storageSetting, nil)
 	if err != nil {
 		return nil, hperrors.Wrap(err)
 	}

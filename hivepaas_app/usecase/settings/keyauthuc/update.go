@@ -1,4 +1,4 @@
-package cloudstorageuc
+package keyauthuc
 
 import (
 	"context"
@@ -7,31 +7,33 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings"
-	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings/cloudstorageuc/cloudstoragedto"
+	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings/keyauthuc/keyauthdto"
 )
 
-func (uc *UC) UpdateCloudStorage(
+func (uc *UC) UpdateKeyAuth(
 	ctx context.Context,
 	auth *basedto.Auth,
-	req *cloudstoragedto.UpdateCloudStorageReq,
-) (*cloudstoragedto.UpdateCloudStorageResp, error) {
+	req *keyauthdto.UpdateKeyAuthReq,
+) (*keyauthdto.UpdateKeyAuthResp, error) {
 	req.Type = currentSettingType
 	req.Auth = auth
-	cloudStorage := req.ToEntity()
+	keyAuth := req.ToEntity()
 	_, err := uc.UpdateSetting(ctx, &req.UpdateSettingReq, &settings.UpdateSettingData{
 		VerifyingName:   req.Name,
-		VerifyingRefIDs: cloudStorage.GetRefObjectIDs(),
+		VerifyingRefIDs: keyAuth.GetRefObjectIDs(),
 		PrepareUpdate: func(
 			ctx context.Context,
 			db database.Tx,
 			data *settings.UpdateSettingData,
 			pData *settings.PersistingSettingData,
 		) error {
-			pData.Setting.Kind = string(req.Kind)
-			if err := uc.checkKeyAuth(ctx, db, cloudStorage); err != nil {
-				return err
+			current, err := data.Setting.AsKeyAuth()
+			if err != nil {
+				return hperrors.Wrap(err)
 			}
-			err := pData.Setting.SetData(cloudStorage)
+			req.KeepMaskedSecrets(keyAuth, current)
+
+			err = pData.Setting.SetData(keyAuth)
 			if err != nil {
 				return hperrors.Wrap(err)
 			}
@@ -42,5 +44,5 @@ func (uc *UC) UpdateCloudStorage(
 		return nil, hperrors.Wrap(err)
 	}
 
-	return &cloudstoragedto.UpdateCloudStorageResp{}, nil
+	return &keyauthdto.UpdateKeyAuthResp{}, nil
 }

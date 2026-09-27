@@ -96,6 +96,16 @@ func (s *HTTPServer) registerProjectRoutes(apiGroup *gin.RouterGroup) {
 		basicAuthGroup.DELETE("/:itemID", projectSettingsHandler.DeleteBasicAuth)
 	}
 
+	{ // Key auth group
+		keyAuthGroup := projectGroup.Group("/:projectID/key-auth")
+		keyAuthGroup.GET("/:itemID", projectSettingsHandler.GetKeyAuth)
+		keyAuthGroup.GET("", projectSettingsHandler.ListKeyAuth)
+		keyAuthGroup.POST("", projectSettingsHandler.CreateKeyAuth)
+		keyAuthGroup.PUT("/:itemID", projectSettingsHandler.UpdateKeyAuth)
+		keyAuthGroup.PUT("/:itemID/status", projectSettingsHandler.UpdateKeyAuthStatus)
+		keyAuthGroup.DELETE("/:itemID", projectSettingsHandler.DeleteKeyAuth)
+	}
+
 	{ // Cloud storage group
 		cloudStorageGroup := projectGroup.Group("/:projectID/cloud-storages")
 		cloudStorageGroup.GET("/:itemID", projectSettingsHandler.GetCloudStorage)

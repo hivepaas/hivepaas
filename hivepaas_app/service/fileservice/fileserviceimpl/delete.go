@@ -12,8 +12,8 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/config"
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/cloudstorageservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/fileservice"
-	"github.com/hivepaas/hivepaas/services/aws/s3"
 )
 
 func (s *service) DeleteFileData(
@@ -65,7 +65,7 @@ func (s *service) deleteCloudFile(
 
 	switch base.CloudStorageKind(file.Storage.Kind) {
 	case base.CloudStorageKindS3:
-		s3Client, err := s3.NewClientFromSetting(ctx, file.Storage)
+		s3Client, err := cloudstorageservice.NewS3Client(ctx, req.DB, file.Storage, nil)
 		if err != nil {
 			return hperrors.Wrap(err)
 		}

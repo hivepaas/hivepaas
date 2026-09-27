@@ -3,8 +3,6 @@ package cloudstorageuc
 import (
 	"context"
 
-	"github.com/tiendc/gofn"
-
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
@@ -19,7 +17,7 @@ func (uc *UC) TestCloudStorageConn(
 ) (*cloudstoragedto.TestCloudStorageConnResp, error) {
 	switch req.Kind {
 	case base.CloudStorageKindS3:
-		return uc.testCloudStorageS3Conn(ctx, req)
+		return uc.testCloudStorageS3Conn(ctx, auth, req)
 	default:
 		return nil, hperrors.NewUnsupported("Storage kind")
 	}
@@ -27,19 +25,34 @@ func (uc *UC) TestCloudStorageConn(
 
 func (uc *UC) testCloudStorageS3Conn(
 	ctx context.Context,
+	auth *basedto.Auth,
 	req *cloudstoragedto.TestCloudStorageConnReq,
 ) (*cloudstoragedto.TestCloudStorageConnResp, error) {
 	storage := req.ToEntity()
-	secretKey, err := storage.S3.SecretKey.GetPlain()
+	keyAuthSetting, err := uc.SettingRepo.GetByID(ctx, uc.DB, nil, base.SettingTypeKeyAuth,
+		storage.S3.KeyAuth.ID, true)
+	if err != nil {
+		return nil, hperrors.Wrap(err)
+	}
+	// The endpoint takes any signed-in caller: the key it tries is one they may
+	// read, or it is not tried.
+	if err = uc.CheckAccessOnSetting(ctx, uc.DB, auth, keyAuthSetting, base.ActionTypeRead); err != nil {
+		return nil, hperrors.Wrap(err)
+	}
+	keyAuth, err := keyAuthSetting.AsKeyAuth()
+	if err != nil {
+		return nil, hperrors.Wrap(err)
+	}
+	secretKey, err := keyAuth.SecretKey.GetPlain()
 	if err != nil {
 		return nil, hperrors.Wrap(err)
 	}
 	s3Client, err := s3.NewClient(ctx, &s3.Config{
-		AccessKeyID:     storage.S3.AccessKeyID,
+		AccessKeyID:     keyAuth.KeyID,
 		SecretAccessKey: secretKey,
-		Region:          gofn.Coalesce(req.S3.Region, storage.S3.CloudProviderAWS.Region),
-		Endpoint:        req.S3.Endpoint,
-		Bucket:          req.S3.Bucket,
+		Region:          storage.S3.Region,
+		Endpoint:        storage.S3.Endpoint,
+		Bucket:          storage.S3.Bucket,
 	})
 	if err != nil {
 		return nil, hperrors.Wrap(err)

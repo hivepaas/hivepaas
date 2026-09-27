@@ -14,7 +14,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/tasklog"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/timeutil"
-	"github.com/hivepaas/hivepaas/services/aws/s3"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/cloudstorageservice"
 )
 
 func (s *service) sysCleanupBackups(
@@ -152,7 +152,7 @@ func (s *service) sysCleanupCloudBackupFiles(
 
 		switch base.CloudStorageKind(file.Storage.Kind) { //nolint:gocritic
 		case base.CloudStorageKindS3:
-			s3Client, err := s3.NewClientFromSetting(ctx, file.Storage)
+			s3Client, err := cloudstorageservice.NewS3Client(ctx, db, file.Storage, nil)
 			if err != nil {
 				return nil, hperrors.Wrap(err)
 			}

@@ -24,6 +24,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings/githubappuc"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings/imagebuildsettingsuc"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings/imserviceuc"
+	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings/keyauthuc"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings/notificationuc"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings/oauthuc"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings/periodicjobuc"
@@ -57,6 +58,7 @@ type Handler struct {
 	BackupRepoCleanupUC    *backuprepocleanupuc.UC
 	BackupRepoUC           *backuprepouc.UC
 	BasicAuthUC            *basicauthuc.UC
+	KeyAuthUC              *keyauthuc.UC
 	CloudStorageUC         *cloudstorageuc.UC
 	ClusterNetworkUC       *networkuc.UC
 	ClusterNodeUC          *nodeuc.UC
@@ -102,6 +104,7 @@ func New(
 	backupRepoCleanupUC *backuprepocleanupuc.UC,
 	backupRepoUC *backuprepouc.UC,
 	basicAuthUC *basicauthuc.UC,
+	keyAuthUC *keyauthuc.UC,
 	cloudStorageUC *cloudstorageuc.UC,
 	clusterNetworkUC *networkuc.UC,
 	clusterNodeUC *nodeuc.UC,
@@ -146,6 +149,7 @@ func New(
 		BackupRepoCleanupUC:    backupRepoCleanupUC,
 		BackupRepoUC:           backupRepoUC,
 		BasicAuthUC:            basicAuthUC,
+		KeyAuthUC:              keyAuthUC,
 		CloudStorageUC:         cloudStorageUC,
 		ClusterNetworkUC:       clusterNetworkUC,
 		ClusterNodeUC:          clusterNodeUC,

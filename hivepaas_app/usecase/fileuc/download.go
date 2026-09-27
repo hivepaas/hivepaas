@@ -15,8 +15,8 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/cloudstorageservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/fileuc/filedto"
-	"github.com/hivepaas/hivepaas/services/aws/s3"
 )
 
 const (
@@ -113,7 +113,7 @@ func (uc *UC) downloadCloudFile(
 
 	switch base.CloudStorageKind(file.Storage.Kind) {
 	case base.CloudStorageKindS3:
-		s3Client, err := s3.NewClientFromSetting(ctx, file.Storage)
+		s3Client, err := cloudstorageservice.NewS3Client(ctx, uc.db, file.Storage, nil)
 		if err != nil {
 			return nil, hperrors.Wrap(err)
 		}

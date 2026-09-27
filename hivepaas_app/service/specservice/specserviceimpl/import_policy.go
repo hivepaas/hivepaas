@@ -53,6 +53,7 @@ var importPolicies = map[base.SettingType]importPolicy{
 	base.SettingTypeGithubApp:       {},
 	base.SettingTypeIMService:       {},
 	base.SettingTypeImageBuild:      {},
+	base.SettingTypeKeyAuth:         {},
 	base.SettingTypeNotification:    {},
 	base.SettingTypeOAuth:           {},
 	base.SettingTypeProject:         {},

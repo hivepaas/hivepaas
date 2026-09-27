@@ -23,13 +23,18 @@ func connReason(err error) string {
 	// what they have in common is the status the store answered with.
 	var statusErr interface{ HTTPStatusCode() int }
 	if errors.As(err, &statusErr) {
+		// A HEAD has no body, so the status is all there is, and stores use it
+		// differently: R2 answers a wrong key 400 and a bucket the key may not
+		// see 403. The reasons name everything a status can mean.
 		switch code := statusErr.HTTPStatusCode(); code {
 		case http.StatusUnauthorized, http.StatusForbidden:
-			return "the key was refused - check the key auth's key ID and secret key, and that the key may read the bucket"
+			return "access was refused - check the key auth's key ID and secret key, the bucket's name, " +
+				"and that the key may read that bucket"
 		case http.StatusNotFound:
-			return "no such bucket at this endpoint"
+			return "no such bucket at this endpoint - check the bucket's name"
 		case http.StatusMovedPermanently, http.StatusBadRequest:
-			return "the store refused the request - check the region and the endpoint"
+			return "the request was rejected - check the key auth's key ID and secret key, the region " +
+				"and the endpoint"
 		case 0:
 		default:
 			return "the store answered " + http.StatusText(code)

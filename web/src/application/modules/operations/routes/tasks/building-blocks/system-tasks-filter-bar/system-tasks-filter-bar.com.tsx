@@ -16,7 +16,7 @@ import { DateTimePicker } from "@/components/ui/date-time-picker";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
-interface SearchableFilterItem {
+export interface SearchableFilterItem {
     value: string;
     label: string;
     searchKey?: string;
@@ -27,7 +27,7 @@ interface SearchableFilterItem {
     };
 }
 
-interface SearchableFilterSelectProps {
+export interface SearchableFilterSelectProps {
     value: string;
     onValueChange: (value: string) => void;
     placeholder: string;
@@ -36,7 +36,8 @@ interface SearchableFilterSelectProps {
     items: SearchableFilterItem[];
 }
 
-function SearchableFilterSelect({
+/** A filter select with a search box, as the task filters use for long lists. */
+export function SearchableFilterSelect({
     value,
     onValueChange,
     placeholder,

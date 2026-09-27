@@ -36,13 +36,13 @@ export class EnvScheduledJobsApi extends BaseApi {
         request: EnvScheduledJobs_FindManyPaginated_Req,
         signal?: AbortSignal,
     ): Promise<Result<EnvScheduledJobs_FindManyPaginated_Res, Error>> {
-        const { projectID, env, search, pagination, sorting, jobTypes, appId } = request.data;
+        const { projectID, env, search, pagination, sorting, jobTypes, appId, statuses } = request.data;
         const query = this.queryBuilder.getInstance();
         query
             .pagination(pagination)
             .sorting(sorting)
             .search(search)
-            .filterBy({ jobType: jobTypes, appId: [appId] });
+            .filterBy({ jobType: jobTypes, appId: [appId], status: statuses });
 
         return lastValueFrom(
             from(this.client.v1.get(basePath(projectID, env), { params: query.build(), signal })).pipe(

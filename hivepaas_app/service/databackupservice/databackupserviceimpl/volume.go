@@ -15,12 +15,19 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/volumeservice"
 )
 
-func (s *service) FindAppVolume(
+func (s *service) CheckAppVolume(ctx context.Context, db database.IDB, app *entity.App, volumeID string) error {
+	_, err := s.appVolumeMount(ctx, db, app, volumeID)
+	return hperrors.Wrap(err)
+}
+
+// appVolumeMount is the app's mount of its own directory in the volume, as its
+// service has it.
+func (s *service) appVolumeMount(
 	ctx context.Context,
 	db database.IDB,
 	app *entity.App,
 	volumeID string,
-) (*databackupservice.AppVolume, error) {
+) (*mount.Mount, error) {
 	swarmService, err := s.clusterService.ServiceInspect(ctx, app.ServiceID, true)
 	if err != nil {
 		return nil, hperrors.Wrap(err)
@@ -34,6 +41,19 @@ func (s *service) FindAppVolume(
 	if picked == nil {
 		return nil, hperrors.NewArgumentInvalid("dataBackup.sourceVolume").
 			WithExtraDetail("the app does not mount this volume as its own directory")
+	}
+	return picked, nil
+}
+
+func (s *service) FindAppVolume(
+	ctx context.Context,
+	db database.IDB,
+	app *entity.App,
+	volumeID string,
+) (*databackupservice.AppVolume, error) {
+	picked, err := s.appVolumeMount(ctx, db, app, volumeID)
+	if err != nil {
+		return nil, hperrors.Wrap(err)
 	}
 
 	refObjects := entity.NewRefObjects()

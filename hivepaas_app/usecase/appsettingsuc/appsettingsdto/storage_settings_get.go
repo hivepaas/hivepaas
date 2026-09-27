@@ -73,6 +73,9 @@ type Mount struct {
 	ClusterOptions *ClusterOptions   `json:"clusterOptions,omitempty"`
 	TmpfsOptions   *TmpfsOptions     `json:"tmpfsOptions,omitempty"`
 	SourceApp      *MountSourceApp   `json:"sourceApp,omitempty"`
+	// VolumeID is the volume setting a mount of the app's own directory is in:
+	// what a data backup of a volume picks. An answer, ignored when written.
+	VolumeID string `json:"volumeId,omitempty" copy:"-"`
 }
 
 // MountSourceApp says the directory this mount reaches belongs to another app -
@@ -210,6 +213,9 @@ func TransformStorageMount(
 		// Do nothing
 	}
 
+	if desc != nil && desc.Own {
+		resp.VolumeID = desc.VolumeID
+	}
 	applyMountSourceApp(resp, desc, input)
 	return resp, nil
 }

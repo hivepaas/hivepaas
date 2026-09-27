@@ -51,6 +51,9 @@ type SchedJobBaseReq struct {
 	Sequence *SchedJobSequenceReq `json:"sequence"`
 	// Triggers are the events that run the job, beside its schedule.
 	Triggers []*SchedJobTriggerReq `json:"triggers"`
+	// DataBackup is a data-backup's source and repository; left out for every
+	// other type.
+	DataBackup *SchedJobDataBackupReq `json:"dataBackup"`
 }
 
 func (req *SchedJobBaseReq) ToEntity() *entity.SchedJob {
@@ -76,6 +79,9 @@ func (req *SchedJobBaseReq) ToEntity() *entity.SchedJob {
 	if req.JobType == base.SchedJobTypeJobSequence {
 		res.Sequence = req.Sequence.ToEntity()
 	}
+	if req.JobType == base.SchedJobTypeDataBackup {
+		res.DataBackup = req.DataBackup.ToEntity()
+	}
 	return res
 }
 
@@ -99,6 +105,9 @@ func (req *SchedJobBaseReq) modifyRequest() error {
 		if err := req.Command.ModifyRequest(); err != nil {
 			return hperrors.Wrap(err)
 		}
+	}
+	if err := req.DataBackup.modifyRequest(); err != nil {
+		return hperrors.Wrap(err)
 	}
 	if req.CommandOutput != nil && req.CommandOutput.PipeToApp != nil {
 		req.CommandOutput.PipeToApp.Command.Name = "-"
@@ -134,6 +143,7 @@ func (req *SchedJobBaseReq) validate(field string) (res []vld.Validator) {
 	res = append(res, req.Notification.Validate(field+"notification")...)
 	res = append(res, req.validateSequenceFields(field)...)
 	res = append(res, req.validateTriggers(field)...)
+	res = append(res, req.validateDataBackupFields(field)...)
 	return res
 }
 

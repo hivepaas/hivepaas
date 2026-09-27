@@ -53,6 +53,9 @@ func (uc *UC) CreateSchedJob(
 			if err := uc.checkTriggerApps(ctx, db, req.Scope, schedJob); err != nil {
 				return hperrors.Wrap(err)
 			}
+			if err := uc.checkDataBackup(ctx, db, req.Scope, schedJob); err != nil {
+				return hperrors.Wrap(err)
+			}
 			if err := uc.checkPermissionPipeToApp(ctx, db, auth, schedJob); err != nil {
 				return hperrors.Wrap(err)
 			}

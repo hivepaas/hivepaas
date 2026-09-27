@@ -48332,11 +48332,15 @@
           "type" : {
             "$ref" : "#/components/schemas/mount.Type"
           },
+          "volumeId" : {
+            "description" : "VolumeID is the volume setting a mount of the app's own directory is in:\nwhat a data backup of a volume picks. An answer, ignored when written.",
+            "type" : "string"
+          },
           "volumeOptions" : {
             "$ref" : "#/components/schemas/appsettingsdto.VolumeOptions"
           }
         },
-        "required" : [ "bindOptions", "clusterOptions", "consistency", "key", "readOnly", "source", "sourceApp", "target", "tmpfsOptions", "type", "volumeOptions" ],
+        "required" : [ "bindOptions", "clusterOptions", "consistency", "key", "readOnly", "source", "sourceApp", "target", "tmpfsOptions", "type", "volumeId", "volumeOptions" ],
         "type" : "object"
       },
       "appsettingsdto.MountBorrower" : {
@@ -60277,6 +60281,13 @@
           "controlDisabled" : {
             "type" : "boolean"
           },
+          "dataBackup" : {
+            "allOf" : [ {
+              "$ref" : "#/components/schemas/settings_schedjobdto.SchedJobDataBackupReq"
+            } ],
+            "description" : "DataBackup is a data-backup's source and repository; left out for every\nother type.",
+            "type" : "object"
+          },
           "default" : {
             "type" : "boolean"
           },
@@ -60334,7 +60345,7 @@
             "type" : "array"
           }
         },
-        "required" : [ "app", "command", "commandOutput", "controlDisabled", "default", "inheritable", "jobType", "maxRetry", "name", "notification", "priority", "retryBackoff", "retryBackoffJitter", "retryDelay", "retryDelayIncr", "retryDelayMax", "schedule", "sequence", "timeout", "triggers" ],
+        "required" : [ "app", "command", "commandOutput", "controlDisabled", "dataBackup", "default", "inheritable", "jobType", "maxRetry", "name", "notification", "priority", "retryBackoff", "retryBackoffJitter", "retryDelay", "retryDelayIncr", "retryDelayMax", "schedule", "sequence", "timeout", "triggers" ],
         "type" : "object"
       },
       "settings_schedjobdto.CreateSchedJobResp" : {
@@ -60374,6 +60385,9 @@
           },
           "createdAt" : {
             "type" : "string"
+          },
+          "dataBackup" : {
+            "$ref" : "#/components/schemas/settings_schedjobdto.SchedJobDataBackupResp"
           },
           "default" : {
             "type" : "boolean"
@@ -60467,7 +60481,7 @@
             "type" : "string"
           }
         },
-        "required" : [ "app", "command", "commandOutput", "controlDisabled", "createdAt", "default", "expireAt", "id", "inheritable", "inherited", "jobType", "kind", "maxRetry", "name", "nextRuns", "notification", "ownerApp", "priority", "retryBackoff", "retryBackoffJitter", "retryDelay", "retryDelayIncr", "retryDelayMax", "schedule", "scope", "sequence", "size", "status", "timeout", "triggers", "type", "updateVer", "updatedAt" ],
+        "required" : [ "app", "command", "commandOutput", "controlDisabled", "createdAt", "dataBackup", "default", "expireAt", "id", "inheritable", "inherited", "jobType", "kind", "maxRetry", "name", "nextRuns", "notification", "ownerApp", "priority", "retryBackoff", "retryBackoffJitter", "retryDelay", "retryDelayIncr", "retryDelayMax", "schedule", "scope", "sequence", "size", "status", "timeout", "triggers", "type", "updateVer", "updatedAt" ],
         "type" : "object"
       },
       "settings_schedjobdto.ExecuteSchedJobDataResp" : {
@@ -60536,6 +60550,74 @@
         "required" : [ "data", "meta" ],
         "type" : "object"
       },
+      "settings_schedjobdto.SchedJobDataBackupReq" : {
+        "properties" : {
+          "source" : {
+            "type" : "string"
+          },
+          "sourceCommand" : {
+            "allOf" : [ {
+              "$ref" : "#/components/schemas/settings_commandtemplatedto.CommandTemplateBaseReq"
+            } ],
+            "description" : "SourceCommand runs in the job's app; its stdout is the file SourceFileName.",
+            "type" : "object"
+          },
+          "sourceFileName" : {
+            "type" : "string"
+          },
+          "sourceVolume" : {
+            "allOf" : [ {
+              "$ref" : "#/components/schemas/basedto.ObjectIDReq"
+            } ],
+            "description" : "SourceVolume is a volume the app mounts; SourceVolumeSubpath a path inside\nwhat the app sees of it, \"\" for all of it.",
+            "type" : "object"
+          },
+          "sourceVolumeSubpath" : {
+            "type" : "string"
+          },
+          "tags" : {
+            "additionalProperties" : {
+              "type" : "string"
+            },
+            "type" : "object"
+          },
+          "targetRepository" : {
+            "$ref" : "#/components/schemas/basedto.ObjectIDReq"
+          }
+        },
+        "required" : [ "source", "sourceCommand", "sourceFileName", "sourceVolume", "sourceVolumeSubpath", "tags", "targetRepository" ],
+        "type" : "object"
+      },
+      "settings_schedjobdto.SchedJobDataBackupResp" : {
+        "properties" : {
+          "source" : {
+            "type" : "string"
+          },
+          "sourceCommand" : {
+            "$ref" : "#/components/schemas/settings_commandtemplatedto.CommandTemplateResp"
+          },
+          "sourceFileName" : {
+            "type" : "string"
+          },
+          "sourceVolume" : {
+            "$ref" : "#/components/schemas/settings.BaseSettingResp"
+          },
+          "sourceVolumeSubpath" : {
+            "type" : "string"
+          },
+          "tags" : {
+            "additionalProperties" : {
+              "type" : "string"
+            },
+            "type" : "object"
+          },
+          "targetRepository" : {
+            "$ref" : "#/components/schemas/settings.BaseSettingResp"
+          }
+        },
+        "required" : [ "source", "sourceCommand", "sourceFileName", "sourceVolume", "sourceVolumeSubpath", "tags", "targetRepository" ],
+        "type" : "object"
+      },
       "settings_schedjobdto.SchedJobResp" : {
         "properties" : {
           "app" : {
@@ -60552,6 +60634,9 @@
           },
           "createdAt" : {
             "type" : "string"
+          },
+          "dataBackup" : {
+            "$ref" : "#/components/schemas/settings_schedjobdto.SchedJobDataBackupResp"
           },
           "default" : {
             "type" : "boolean"
@@ -60639,7 +60724,7 @@
             "type" : "string"
           }
         },
-        "required" : [ "app", "command", "commandOutput", "controlDisabled", "createdAt", "default", "expireAt", "id", "inheritable", "inherited", "jobType", "kind", "maxRetry", "name", "nextRuns", "notification", "priority", "retryBackoff", "retryBackoffJitter", "retryDelay", "retryDelayIncr", "retryDelayMax", "schedule", "sequence", "size", "status", "timeout", "triggers", "type", "updateVer", "updatedAt" ],
+        "required" : [ "app", "command", "commandOutput", "controlDisabled", "createdAt", "dataBackup", "default", "expireAt", "id", "inheritable", "inherited", "jobType", "kind", "maxRetry", "name", "nextRuns", "notification", "priority", "retryBackoff", "retryBackoffJitter", "retryDelay", "retryDelayIncr", "retryDelayMax", "schedule", "sequence", "size", "status", "timeout", "triggers", "type", "updateVer", "updatedAt" ],
         "type" : "object"
       },
       "settings_schedjobdto.SchedJobSequenceReq" : {
@@ -60803,6 +60888,13 @@
           "controlDisabled" : {
             "type" : "boolean"
           },
+          "dataBackup" : {
+            "allOf" : [ {
+              "$ref" : "#/components/schemas/settings_schedjobdto.SchedJobDataBackupReq"
+            } ],
+            "description" : "DataBackup is a data-backup's source and repository; left out for every\nother type.",
+            "type" : "object"
+          },
           "default" : {
             "type" : "boolean"
           },
@@ -60863,7 +60955,7 @@
             "type" : "integer"
           }
         },
-        "required" : [ "app", "command", "commandOutput", "controlDisabled", "default", "inheritable", "jobType", "maxRetry", "name", "notification", "priority", "retryBackoff", "retryBackoffJitter", "retryDelay", "retryDelayIncr", "retryDelayMax", "schedule", "sequence", "timeout", "triggers", "updateVer" ],
+        "required" : [ "app", "command", "commandOutput", "controlDisabled", "dataBackup", "default", "inheritable", "jobType", "maxRetry", "name", "notification", "priority", "retryBackoff", "retryBackoffJitter", "retryDelay", "retryDelayIncr", "retryDelayMax", "schedule", "sequence", "timeout", "triggers", "updateVer" ],
         "type" : "object"
       },
       "settings_schedjobdto.UpdateSchedJobResp" : {

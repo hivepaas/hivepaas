@@ -55,6 +55,7 @@ type SchedJobResp struct {
 	Notification       *basedto.BaseEventNotificationResp      `json:"notification"`
 	Sequence           *SchedJobSequenceResp                   `json:"sequence,omitempty" copy:"-"`
 	Triggers           []*SchedJobTriggerResp                  `json:"triggers,omitempty" copy:"-"`
+	DataBackup         *SchedJobDataBackupResp                 `json:"dataBackup,omitempty" copy:"-"`
 
 	// Calculated fields
 	NextRuns []time.Time `json:"nextRuns,omitempty"`
@@ -127,45 +128,14 @@ func TransformSchedJob(
 		commandtemplatedto.TransformScript(&job.Command.Script, refObjects, resp.Command)
 	}
 
-	if job.CommandOutput != nil {
-		cmdOutput := job.CommandOutput
-		cmdOutputResp := resp.CommandOutput
-
-		if cmdOutput.SaveToFile != nil && cmdOutput.SaveToFile.Storage.ID != "" {
-			targetStorage := refObjects.RefSettings[cmdOutput.SaveToFile.Storage.ID]
-			cmdOutputResp.SaveToFile.Storage = &CommandOutputFileStorageResp{
-				Bucket: cmdOutput.SaveToFile.Storage.Bucket,
-			}
-			storageResp, _ := settings.TransformSettingBase(targetStorage)
-			if storageResp == nil {
-				storageResp = settings.NewMissingSetting(cmdOutput.SaveToFile.Storage.ID, base.SettingTypeCloudStorage)
-			}
-			cmdOutputResp.SaveToFile.Storage.BaseSettingResp = storageResp
-		} else {
-			cmdOutputResp.SaveToFile = nil
-		}
-
-		if cmdOutput.PipeToApp != nil && cmdOutput.PipeToApp.TargetApp.ID != "" {
-			targetApp := refObjects.RefApps[cmdOutput.PipeToApp.TargetApp.ID]
-			targetAppResp := appdto.TransformAppBase(targetApp)
-			if targetAppResp == nil {
-				targetAppResp = appdto.NewMissingApp(cmdOutput.PipeToApp.TargetApp.ID)
-			}
-			cmdOutputResp.PipeToApp.TargetApp = targetAppResp
-
-			// Transform the script part of command template if presents
-			if cmdOutput.PipeToApp.Command != nil && !isListAPI {
-				commandtemplatedto.TransformScript(&cmdOutput.PipeToApp.Command.Script, refObjects,
-					cmdOutputResp.PipeToApp.Command)
-			}
-		} else {
-			cmdOutputResp.PipeToApp = nil
-		}
-	}
+	transformCommandOutput(job.CommandOutput, refObjects, isListAPI, resp.CommandOutput)
 
 	resp.Notification = basedto.TransformBaseEventNotification(job.Notification, refObjects)
 	resp.Sequence = TransformSchedJobSequence(job.Sequence, refObjects)
 	resp.Triggers = TransformSchedJobTriggers(job.Triggers, refObjects)
+	if resp.DataBackup, err = TransformSchedJobDataBackup(job.DataBackup, refObjects); err != nil {
+		return nil, hperrors.Wrap(err)
+	}
 
 	// Custom fields
 	if !resp.RetryBackoff && resp.RetryBackoffJitter > 0 {
@@ -178,4 +148,47 @@ func TransformSchedJob(
 	}
 
 	return resp, nil
+}
+
+// transformCommandOutput names the storage and the app a command's output goes
+// to, in cmdOutputResp, which is cmdOutput copied.
+func transformCommandOutput(
+	cmdOutput *entity.SchedJobCommandOutput,
+	refObjects *entity.RefObjects,
+	isListAPI bool,
+	cmdOutputResp *CommandOutputResp,
+) {
+	if cmdOutput == nil || cmdOutputResp == nil {
+		return
+	}
+	if cmdOutput.SaveToFile != nil && cmdOutput.SaveToFile.Storage.ID != "" {
+		targetStorage := refObjects.RefSettings[cmdOutput.SaveToFile.Storage.ID]
+		cmdOutputResp.SaveToFile.Storage = &CommandOutputFileStorageResp{
+			Bucket: cmdOutput.SaveToFile.Storage.Bucket,
+		}
+		storageResp, _ := settings.TransformSettingBase(targetStorage)
+		if storageResp == nil {
+			storageResp = settings.NewMissingSetting(cmdOutput.SaveToFile.Storage.ID, base.SettingTypeCloudStorage)
+		}
+		cmdOutputResp.SaveToFile.Storage.BaseSettingResp = storageResp
+	} else {
+		cmdOutputResp.SaveToFile = nil
+	}
+
+	if cmdOutput.PipeToApp != nil && cmdOutput.PipeToApp.TargetApp.ID != "" {
+		targetApp := refObjects.RefApps[cmdOutput.PipeToApp.TargetApp.ID]
+		targetAppResp := appdto.TransformAppBase(targetApp)
+		if targetAppResp == nil {
+			targetAppResp = appdto.NewMissingApp(cmdOutput.PipeToApp.TargetApp.ID)
+		}
+		cmdOutputResp.PipeToApp.TargetApp = targetAppResp
+
+		// Transform the script part of command template if presents
+		if cmdOutput.PipeToApp.Command != nil && !isListAPI {
+			commandtemplatedto.TransformScript(&cmdOutput.PipeToApp.Command.Script, refObjects,
+				cmdOutputResp.PipeToApp.Command)
+		}
+	} else {
+		cmdOutputResp.PipeToApp = nil
+	}
 }

@@ -14,6 +14,9 @@ type Service interface {
 	// Backup takes the snapshot a data-backup job says, records it in the repository's
 	// snapshot list, and, but for a step of a job sequence, in the task's output.
 	Backup(ctx context.Context, db database.Tx, req *BackupReq) (*BackupResp, error)
+	// CheckAppVolume says whether the app mounts its own directory of the volume:
+	// what a volume source reads.
+	CheckAppVolume(ctx context.Context, db database.IDB, app *entity.App, volumeID string) error
 	// FindAppVolume is where the app's part of a volume it mounts is on a host; an error
 	// when the app does not mount it as its own directory.
 	FindAppVolume(ctx context.Context, db database.IDB, app *entity.App, volumeID string) (*AppVolume, error)

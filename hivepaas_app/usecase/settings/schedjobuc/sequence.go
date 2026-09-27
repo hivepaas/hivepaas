@@ -14,10 +14,13 @@ import (
 )
 
 // checkJobTypeInScope says which job types a scope holds: a job sequence lives
-// in an app or a project env, and an env holds sequences only, for now.
+// in an app or a project env, an env holds sequences only, for now, and a data
+// backup is an app's.
 func checkJobTypeInScope(scopeType base.ObjectScopeType, jobType base.SchedJobType) error {
 	isSequence := jobType == base.SchedJobTypeJobSequence
 	switch {
+	case jobType == base.SchedJobTypeDataBackup && scopeType != base.ObjectScopeApp:
+		return hperrors.NewArgumentInvalid("jobType").WithExtraDetail("a data backup belongs to an app")
 	case isSequence && scopeType != base.ObjectScopeApp && scopeType != base.ObjectScopeProjectEnv:
 		return hperrors.NewArgumentInvalid("jobType").
 			WithExtraDetail("a job sequence belongs to an app or a project env")

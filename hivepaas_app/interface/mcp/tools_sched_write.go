@@ -73,6 +73,8 @@ var schedJobDescs = func() map[string]string {
 			"id is given. When not given, both use the default, as the dashboard's form starts",
 		"sequence": "not used here: this plans a command that runs in an app; a job sequence, which runs " +
 			"other scheduled jobs in order, is made in the dashboard",
+		"dataBackup": "not used here: this plans a command that runs in an app; a data backup, which takes " +
+			"a snapshot of a command's output or of a volume into a backup repository, is made in the dashboard",
 		"triggers": "events of this app that also run the job, beside its schedule: pre-deploy, post-deploy, " +
 			"deploy-failed, health-down, health-up, app-enabled, app-disabled; up to 10",
 	}

@@ -58989,9 +58989,16 @@
           },
           "timeout" : {
             "type" : "string"
+          },
+          "triggers" : {
+            "description" : "Triggers are the events that run the job, beside its schedule.",
+            "items" : {
+              "$ref" : "#/components/schemas/settings_schedjobdto.SchedJobTriggerReq"
+            },
+            "type" : "array"
           }
         },
-        "required" : [ "app", "command", "commandOutput", "controlDisabled", "default", "inheritable", "jobType", "maxRetry", "name", "notification", "priority", "retryBackoff", "retryBackoffJitter", "retryDelay", "retryDelayIncr", "retryDelayMax", "schedule", "sequence", "timeout" ],
+        "required" : [ "app", "command", "commandOutput", "controlDisabled", "default", "inheritable", "jobType", "maxRetry", "name", "notification", "priority", "retryBackoff", "retryBackoffJitter", "retryDelay", "retryDelayIncr", "retryDelayMax", "schedule", "sequence", "timeout", "triggers" ],
         "type" : "object"
       },
       "settings_schedjobdto.CreateSchedJobResp" : {
@@ -59108,6 +59115,12 @@
           "timeout" : {
             "type" : "string"
           },
+          "triggers" : {
+            "items" : {
+              "$ref" : "#/components/schemas/settings_schedjobdto.SchedJobTriggerResp"
+            },
+            "type" : "array"
+          },
           "type" : {
             "type" : "string"
           },
@@ -59118,7 +59131,7 @@
             "type" : "string"
           }
         },
-        "required" : [ "app", "command", "commandOutput", "controlDisabled", "createdAt", "default", "expireAt", "id", "inheritable", "inherited", "jobType", "kind", "maxRetry", "name", "nextRuns", "notification", "ownerApp", "priority", "retryBackoff", "retryBackoffJitter", "retryDelay", "retryDelayIncr", "retryDelayMax", "schedule", "scope", "sequence", "size", "status", "timeout", "type", "updateVer", "updatedAt" ],
+        "required" : [ "app", "command", "commandOutput", "controlDisabled", "createdAt", "default", "expireAt", "id", "inheritable", "inherited", "jobType", "kind", "maxRetry", "name", "nextRuns", "notification", "ownerApp", "priority", "retryBackoff", "retryBackoffJitter", "retryDelay", "retryDelayIncr", "retryDelayMax", "schedule", "scope", "sequence", "size", "status", "timeout", "triggers", "type", "updateVer", "updatedAt" ],
         "type" : "object"
       },
       "settings_schedjobdto.ExecuteSchedJobDataResp" : {
@@ -59274,6 +59287,12 @@
           "timeout" : {
             "type" : "string"
           },
+          "triggers" : {
+            "items" : {
+              "$ref" : "#/components/schemas/settings_schedjobdto.SchedJobTriggerResp"
+            },
+            "type" : "array"
+          },
           "type" : {
             "type" : "string"
           },
@@ -59284,7 +59303,7 @@
             "type" : "string"
           }
         },
-        "required" : [ "app", "command", "commandOutput", "controlDisabled", "createdAt", "default", "expireAt", "id", "inheritable", "inherited", "jobType", "kind", "maxRetry", "name", "nextRuns", "notification", "priority", "retryBackoff", "retryBackoffJitter", "retryDelay", "retryDelayIncr", "retryDelayMax", "schedule", "sequence", "size", "status", "timeout", "type", "updateVer", "updatedAt" ],
+        "required" : [ "app", "command", "commandOutput", "controlDisabled", "createdAt", "default", "expireAt", "id", "inheritable", "inherited", "jobType", "kind", "maxRetry", "name", "nextRuns", "notification", "priority", "retryBackoff", "retryBackoffJitter", "retryDelay", "retryDelayIncr", "retryDelayMax", "schedule", "sequence", "size", "status", "timeout", "triggers", "type", "updateVer", "updatedAt" ],
         "type" : "object"
       },
       "settings_schedjobdto.SchedJobSequenceReq" : {
@@ -59356,6 +59375,44 @@
           }
         },
         "required" : [ "app", "job", "name" ],
+        "type" : "object"
+      },
+      "settings_schedjobdto.SchedJobTriggerReq" : {
+        "properties" : {
+          "apps" : {
+            "description" : "Apps are the apps whose events run the job: none for an app's job, one or\nmore of the env's for an env job.",
+            "items" : {
+              "$ref" : "#/components/schemas/basedto.ObjectIDReq"
+            },
+            "type" : "array"
+          },
+          "event" : {
+            "type" : "string"
+          },
+          "wait" : {
+            "description" : "Wait holds the deploy until the run ends. pre-deploy only.",
+            "type" : "boolean"
+          }
+        },
+        "required" : [ "apps", "event", "wait" ],
+        "type" : "object"
+      },
+      "settings_schedjobdto.SchedJobTriggerResp" : {
+        "properties" : {
+          "apps" : {
+            "items" : {
+              "$ref" : "#/components/schemas/basedto.NamedObjectResp"
+            },
+            "type" : "array"
+          },
+          "event" : {
+            "type" : "string"
+          },
+          "wait" : {
+            "type" : "boolean"
+          }
+        },
+        "required" : [ "apps", "event", "wait" ],
         "type" : "object"
       },
       "settings_schedjobdto.ScheduleReq" : {
@@ -59459,11 +59516,18 @@
           "timeout" : {
             "type" : "string"
           },
+          "triggers" : {
+            "description" : "Triggers are the events that run the job, beside its schedule.",
+            "items" : {
+              "$ref" : "#/components/schemas/settings_schedjobdto.SchedJobTriggerReq"
+            },
+            "type" : "array"
+          },
           "updateVer" : {
             "type" : "integer"
           }
         },
-        "required" : [ "app", "command", "commandOutput", "controlDisabled", "default", "inheritable", "jobType", "maxRetry", "name", "notification", "priority", "retryBackoff", "retryBackoffJitter", "retryDelay", "retryDelayIncr", "retryDelayMax", "schedule", "sequence", "timeout", "updateVer" ],
+        "required" : [ "app", "command", "commandOutput", "controlDisabled", "default", "inheritable", "jobType", "maxRetry", "name", "notification", "priority", "retryBackoff", "retryBackoffJitter", "retryDelay", "retryDelayIncr", "retryDelayMax", "schedule", "sequence", "timeout", "triggers", "updateVer" ],
         "type" : "object"
       },
       "settings_schedjobdto.UpdateSchedJobResp" : {

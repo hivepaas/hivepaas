@@ -34,6 +34,12 @@ func checkJobTypeInScope(scopeType base.ObjectScopeType, jobType base.SchedJobTy
 // and a disabled member is allowed - the run skips it.
 func verifyingRefIDs(job *entity.SchedJob) *entity.RefObjectIDs {
 	refIDs := job.GetRefObjectIDs()
+	// A trigger's apps likewise: checkTriggerApps checks them against the env.
+	if triggerApps := job.TriggerAppIDs(); len(triggerApps) > 0 {
+		refIDs.RefAppIDs = gofn.Filter(refIDs.RefAppIDs, func(id string) bool {
+			return !gofn.Contain(triggerApps, id)
+		})
+	}
 	members := job.Sequence.MemberIDs()
 	if len(members) == 0 {
 		return refIDs

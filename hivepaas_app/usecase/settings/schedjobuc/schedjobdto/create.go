@@ -49,6 +49,8 @@ type SchedJobBaseReq struct {
 	Notification       *basedto.BaseEventNotificationReq          `json:"notification"`
 	// Sequence is a job-sequence's jobs; left out for every other type.
 	Sequence *SchedJobSequenceReq `json:"sequence"`
+	// Triggers are the events that run the job, beside its schedule.
+	Triggers []*SchedJobTriggerReq `json:"triggers"`
 }
 
 func (req *SchedJobBaseReq) ToEntity() *entity.SchedJob {
@@ -65,6 +67,7 @@ func (req *SchedJobBaseReq) ToEntity() *entity.SchedJob {
 		Timeout:            req.Timeout,
 		ControlDisabled:    req.ControlDisabled,
 		Notification:       req.Notification.ToEntity(),
+		Triggers:           triggersToEntity(req.Triggers),
 	}
 	if req.JobType == base.SchedJobTypeContainerCommand {
 		res.Command = req.Command.ToEntity()
@@ -130,6 +133,7 @@ func (req *SchedJobBaseReq) validate(field string) (res []vld.Validator) {
 	res = append(res, req.CommandOutput.validate(req.App.ID, field+"commandOutput")...)
 	res = append(res, req.Notification.Validate(field+"notification")...)
 	res = append(res, req.validateSequenceFields(field)...)
+	res = append(res, req.validateTriggers(field)...)
 	return res
 }
 

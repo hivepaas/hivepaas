@@ -35,6 +35,9 @@ func (uc *UC) GetSchedJob(
 	if err = uc.loadSequenceMembers(ctx, uc.DB, resp.RefObjects, resp.Data); err != nil {
 		return nil, hperrors.Wrap(err)
 	}
+	if err = uc.loadTriggerApps(ctx, uc.DB, resp.RefObjects, resp.Data); err != nil {
+		return nil, hperrors.Wrap(err)
+	}
 	respData, err := schedjobdto.TransformSchedJob(resp.Data, resp.RefObjects, false)
 	if err != nil {
 		return nil, hperrors.Wrap(err)

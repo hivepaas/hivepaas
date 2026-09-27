@@ -43,6 +43,9 @@ func (uc *UC) ListEnvSchedJob(
 	if err = uc.loadSequenceMembers(ctx, uc.DB, resp.RefObjects, resp.Data...); err != nil {
 		return nil, hperrors.Wrap(err)
 	}
+	if err = uc.loadTriggerApps(ctx, uc.DB, resp.RefObjects, resp.Data...); err != nil {
+		return nil, hperrors.Wrap(err)
+	}
 	if err = uc.loadOwnerApps(ctx, resp.RefObjects, resp.Data); err != nil {
 		return nil, hperrors.Wrap(err)
 	}

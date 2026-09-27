@@ -39,22 +39,27 @@ RepoServerResp)`.
 1. The backend opens the stream and sends the start request:
    - the repository's directory on the host, read under `/host`;
    - the repository's password;
-   - the user and its password.
+   - the user and its password;
+   - the address to listen on: the agent's own, as the backend reached it.
 2. The agent makes a session directory, `/tmp/hivepaas/repo-servers/<session>/`,
    and does the following in it:
    1. connects to the repository on the filesystem, with the session's own
       config file;
    2. adds the user, or sets its password when the user exists
       (`kopia server user add` / `set`);
-   3. picks a free port;
-   4. starts `kopia server start` with:
+   3. starts `kopia server start` with:
       - a TLS certificate it generates;
-      - the agent's overlay address and that port;
-      - a control user and password, random for the session;
-      - `GOMEMLIMIT`.
-3. Once the server listens, the agent answers with its URL,
-   `https://<agent overlay address>:<port>`, and the certificate's SHA-256
-   fingerprint.
+      - that address and port 0, so the system picks a free port;
+      - a control user, and a control password random for the session, in the
+        environment;
+      - `GOMEMLIMIT`, and its logs and cache in the session directory;
+      - its own process group, so that stopping it stops everything it
+        started.
+3. Once the server listens, the agent answers with its port and the
+   certificate's SHA-256 fingerprint, read from what kopia prints. The backend
+   makes the URL, `https://<agent address>:<port>`. kopia's certificate names
+   127.0.0.1 only; a client pinning the fingerprint connects by any address
+   (checked with kopia 0.23.1).
 4. The session ends in one of two ways:
    - **The stream ends** - the backend closes it, is canceled, or is gone. The
      agent stops the server, then removes the session directory.
@@ -84,7 +89,7 @@ OpenRepoServer(ctx, db, *OpenRepoServerReq) (*RepoServerSession, error)
 ```
 
 - **Where it opens.** It opens the stream to the agent of the node of the
-  repository's volume, found by `VolumeHostDir`. A volume repository pinned to
+  repository's volume. A volume repository pinned to
   no node cannot have a server, and the run fails, saying so.
 - **The user's password** is an HMAC-SHA256 of the repository's password, keyed
   by the user's name.
@@ -121,7 +126,8 @@ OpenRepoServer(ctx, db, *OpenRepoServerReq) (*RepoServerSession, error)
   These need the repository's owner, who sees every snapshot and runs
   maintenance.
 
-**The run's log** says:
+**The run's log** says the following, through a `Progress` callback on the
+backup requests:
 - "Starting the repository server on node X";
 - "Repository server ready at <url>";
 - "Repository server stopped".
@@ -129,7 +135,8 @@ OpenRepoServer(ctx, db, *OpenRepoServerReq) (*RepoServerSession, error)
 **Errors** fail the run with what went wrong:
 - the node's agent unreachable;
 - the server not starting, with kopia's words;
-- the server or its agent gone during the backup.
+- the server or its agent gone during the backup - the error says the server
+  stopped, and why.
 
 A snapshot left half made is deleted by its run's tag, `hivepaas.run:<task
 id>`, as today. Canceling a run, or a timeout, ends the stream, and with it the

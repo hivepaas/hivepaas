@@ -1,0 +1,556 @@
+diff --git a/hivepaas_app/service/backupreposervice/backupreposerviceimpl/backup.go b/hivepaas_app/service/backupreposervice/backupreposerviceimpl/backup.go
+index e6ad7f1a..3d40e7d8 100644
+--- a/hivepaas_app/service/backupreposervice/backupreposerviceimpl/backup.go
++++ b/hivepaas_app/service/backupreposervice/backupreposerviceimpl/backup.go
+@@ -3,6 +3,7 @@ package backupreposerviceimpl
+ import (
+ 	"context"
+ 	"path/filepath"
++	"strings"
+ 
+ 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
+ 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
+@@ -18,19 +19,28 @@ func (s *service) BackupStream(
+ 	db database.IDB,
+ 	req *backupreposervice.BackupStreamReq,
+ ) (*backupreposervice.BackupResp, error) {
+-	engine, err := s.buildTargetEngine(ctx, db, &req.RepoTarget)
++	repo, storage, err := s.targetStorage(ctx, db, &req.RepoTarget)
+ 	if err != nil {
+ 		return nil, hperrors.Wrap(err)
+ 	}
+-	if err = engine.ConnectRepo(ctx); err != nil {
+-		return nil, hperrors.Wrap(err)
++	opts := &backup.BackupOptions{Tags: req.Tags, Description: req.Description, Source: req.Source}
++	take := func(engine backup.Engine) (backupmodel.BackupResult, error) {
++		if req.OnConnected != nil {
++			req.OnConnected()
++		}
++		result, err := engine.BackupStream(ctx, req.Stdin, req.FileName, opts)
++		return result, hperrors.Wrap(err)
+ 	}
+-	if req.OnConnected != nil {
+-		req.OnConnected()
++
++	var result backupmodel.BackupResult
++	if !repoServerNeeded(storage, true, "", "") {
++		result, err = s.backupWith(ctx, repo, storage, s.buildCommandExecutor(storage.StorageLocal != nil), take)
++	} else {
++		// The agent's commands carry no stdin: kopia runs here, through the
++		// repository's server.
++		result, err = s.backupThroughServer(ctx, req.RepoSetting.ID, repo, storage, req.Source, req.Progress,
++			s.buildCommandExecutor(false), take)
+ 	}
+-	result, err := engine.BackupStream(ctx, req.Stdin, req.FileName, &backup.BackupOptions{
+-		Tags: req.Tags, Description: req.Description, Source: req.Source,
+-	})
+ 	if err != nil {
+ 		return nil, hperrors.Wrap(err)
+ 	}
+@@ -42,36 +52,125 @@ func (s *service) BackupDirectory(
+ 	db database.IDB,
+ 	req *backupreposervice.BackupDirectoryReq,
+ ) (*backupreposervice.BackupResp, error) {
+-	repo, err := req.RepoSetting.AsBackupRepo()
++	repo, storage, err := s.targetStorage(ctx, db, &req.RepoTarget)
+ 	if err != nil {
+ 		return nil, hperrors.Wrap(err)
+ 	}
+-	storage, _, err := s.buildStorage(ctx, db, req.Scope, repo, req.RepoSetting.ID, req.RefObjects, "")
++	// The agent mounts the host root: the directory is expressed from inside it.
++	dir := filepath.Join(volumeservice.HostPathPrefix, req.HostDir)
++	opts := &backup.BackupOptions{Tags: req.Tags, Description: req.Description, Source: req.Source}
++	take := func(engine backup.Engine) (backupmodel.BackupResult, error) {
++		result, err := engine.BackupDirectory(ctx, dir, opts)
++		return result, hperrors.Wrap(err)
++	}
++	// The directory is read where it is: kopia runs on its node, whatever the
++	// repository's storage would have chosen.
++	onDataNode := onNodeExecutor(s.buildCommandExecutor(true), req.NodeID, req.NodeLabel)
++
++	var result backupmodel.BackupResult
++	if !repoServerNeeded(storage, false, req.NodeID, req.NodeLabel) {
++		result, err = s.backupWith(ctx, repo, storage, onDataNode, take)
++	} else {
++		result, err = s.backupThroughServer(ctx, req.RepoSetting.ID, repo, storage, req.Source, req.Progress,
++			onDataNode, take)
++	}
+ 	if err != nil {
+ 		return nil, hperrors.Wrap(err)
+ 	}
+-	if err = checkRepoReachableFrom(storage, req.NodeID, req.NodeLabel); err != nil {
+-		return nil, hperrors.Wrap(err)
++	return &backupreposervice.BackupResp{Snapshot: toRepoSnapshot(result.Item)}, nil
++}
++
++// targetStorage is the repository and where it is.
++func (s *service) targetStorage(
++	ctx context.Context,
++	db database.IDB,
++	target *backupreposervice.RepoTarget,
++) (*entity.BackupRepo, *backup.Storage, error) {
++	repo, err := target.RepoSetting.AsBackupRepo()
++	if err != nil {
++		return nil, nil, hperrors.Wrap(err)
+ 	}
+-	// The directory is read where it is: the engine runs on its node, whatever the
+-	// repository's storage would have chosen.
+-	engine, err := backup.NewEngine(repo.Engine, storage,
+-		onNodeExecutor(s.buildCommandExecutor(true), req.NodeID, req.NodeLabel))
++	storage, _, err := s.buildStorage(ctx, db, target.Scope, repo, target.RepoSetting.ID, target.RefObjects, "")
+ 	if err != nil {
+-		return nil, hperrors.Wrap(err)
++		return nil, nil, hperrors.Wrap(err)
++	}
++	return repo, storage, nil
++}
++
++// backupWith connects an engine on the storage, its commands run by exec, and
++// takes the backup.
++func (s *service) backupWith(
++	ctx context.Context,
++	repo *entity.BackupRepo,
++	storage *backup.Storage,
++	exec backupmodel.CommandExecutor,
++	take func(backup.Engine) (backupmodel.BackupResult, error),
++) (backupmodel.BackupResult, error) {
++	engine, err := backup.NewEngine(repo.Engine, storage, exec)
++	if err != nil {
++		return backupmodel.BackupResult{}, hperrors.Wrap(err)
+ 	}
+ 	if err = engine.ConnectRepo(ctx); err != nil {
+-		return nil, hperrors.Wrap(err)
++		return backupmodel.BackupResult{}, hperrors.Wrap(err)
+ 	}
+-	// The agent mounts the host root: the directory is expressed from inside it.
+-	dir := filepath.Join(volumeservice.HostPathPrefix, req.HostDir)
+-	result, err := engine.BackupDirectory(ctx, dir, &backup.BackupOptions{
+-		Tags: req.Tags, Description: req.Description, Source: req.Source,
++	return take(engine)
++}
++
++// backupThroughServer takes the backup through a repository server run for it on
++// the repository's node, as the identity of the snapshot's source, user@host.
++// The client's connection goes with the session.
++func (s *service) backupThroughServer(
++	ctx context.Context,
++	repoID string,
++	repo *entity.BackupRepo,
++	storage *backup.Storage,
++	source string,
++	progress func(string),
++	exec backupmodel.CommandExecutor,
++	take func(backup.Engine) (backupmodel.BackupResult, error),
++) (result backupmodel.BackupResult, err error) {
++	username, _, _ := strings.Cut(source, ":")
++	say := func(msg string) {
++		if progress != nil {
++			progress(msg)
++		}
++	}
++	node := storage.StorageLocal.NodeID
++	if node == "" {
++		node = storage.StorageLocal.NodeLabel
++	}
++	say("Starting the repository server on node " + node)
++	err = s.withRepoServer(ctx, storage, username, repoID, func(client *backup.Storage) error {
++		say("Repository server ready at " + client.StorageServer.URL)
++		engine, err := backup.NewEngine(repo.Engine, client, exec)
++		if err != nil {
++			return hperrors.Wrap(err)
++		}
++		if err = engine.ConnectRepo(ctx); err != nil {
++			return hperrors.Wrap(err)
++		}
++		defer func() { _ = engine.DisconnectRepo(context.WithoutCancel(ctx)) }()
++		result, err = take(engine)
++		return hperrors.Wrap(err)
+ 	})
+-	if err != nil {
+-		return nil, hperrors.Wrap(err)
++	say("Repository server stopped")
++	return result, hperrors.Wrap(err)
++}
++
++// repoServerNeeded says whether a backup needs the repository's server: a
++// repository on a volume is reached directly on its own node only, and there by
++// commands that carry no stdin.
++func repoServerNeeded(storage *backup.Storage, stream bool, nodeID, nodeLabel string) bool {
++	local := storage.StorageLocal
++	if local == nil {
++		return false
+ 	}
+-	return &backupreposervice.BackupResp{Snapshot: toRepoSnapshot(result.Item)}, nil
++	if stream {
++		return true
++	}
++	onRepoNode := (local.NodeID != "" && local.NodeID == nodeID) ||
++		(local.NodeLabel != "" && local.NodeLabel == nodeLabel)
++	return !onRepoNode
+ }
+ 
+ func (s *service) DeleteSnapshot(
+@@ -130,21 +229,6 @@ func onNodeExecutor(base backupmodel.CommandExecutor, nodeID, nodeLabel string)
+ 	}
+ }
+ 
+-// checkRepoReachableFrom refuses a repository on a volume of another node than the
+-// one a directory is read on: it is reachable there only, until the repository
+-// server makes it reachable from anywhere.
+-func checkRepoReachableFrom(storage *backup.Storage, nodeID, nodeLabel string) error {
+-	local := storage.StorageLocal
+-	if local == nil {
+-		return nil
+-	}
+-	if (local.NodeID != "" && local.NodeID == nodeID) || (local.NodeLabel != "" && local.NodeLabel == nodeLabel) {
+-		return nil
+-	}
+-	return hperrors.Wrap(hperrors.ErrNotImplemented).WithExtraDetail(
+-		"the repository's volume is on another node than the data: backing it up there is not supported yet")
+-}
+-
+ // toRepoSnapshot is a snapshot the engine made, as the repository's snapshots read.
+ func toRepoSnapshot(item *backupmodel.Snapshot) *backupreposervice.RepoSnapshot {
+ 	if item == nil {
+diff --git a/hivepaas_app/service/backupreposervice/backupreposerviceimpl/repo_server.go b/hivepaas_app/service/backupreposervice/backupreposerviceimpl/repo_server.go
+new file mode 100644
+index 00000000..60b5d67f
+--- /dev/null
++++ b/hivepaas_app/service/backupreposervice/backupreposerviceimpl/repo_server.go
+@@ -0,0 +1,173 @@
++package backupreposerviceimpl
++
++import (
++	"context"
++	"crypto/hmac"
++	"crypto/rand"
++	"crypto/sha256"
++	"encoding/hex"
++	"errors"
++	"fmt"
++	"net"
++	"path/filepath"
++	"strconv"
++	"strings"
++
++	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
++	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
++	"github.com/hivepaas/hivepaas/hivepaas_app/interface/agent/client/reposerverservice"
++	"github.com/hivepaas/hivepaas/hivepaas_app/service/backupreposervice"
++	"github.com/hivepaas/hivepaas/hivepaas_app/usecaseagent/reposerveragentuc"
++	"github.com/hivepaas/hivepaas/services/backup"
++)
++
++// openedRepoServer is a server an agent runs for a session.
++type openedRepoServer struct {
++	port        int
++	fingerprint string
++	close       func() error
++	// err is why the server went by itself, if it did.
++	err func() error
++}
++
++// openRepoServerOnAgent asks an agent to run a repository server.
++func openRepoServerOnAgent(
++	ctx context.Context,
++	agentAddr string,
++	req *reposerveragentuc.RunReq,
++) (*openedRepoServer, error) {
++	session, err := reposerverservice.Open(ctx, agentAddr, req)
++	if err != nil {
++		return nil, hperrors.Wrap(err)
++	}
++	return &openedRepoServer{
++		port: session.Port, fingerprint: session.Fingerprint,
++		close: session.Close, err: session.Err,
++	}, nil
++}
++
++func (s *service) agentAddrForNode(ctx context.Context, nodeID, nodeLabel string) (string, error) {
++	if nodeID != "" {
++		addr, err := s.agentService.GetAgentAddrForNode(ctx, nodeID)
++		return addr, hperrors.Wrap(err)
++	}
++	addr, err := s.agentService.GetAgentAddrForNodeLabel(ctx, nodeLabel)
++	return addr, hperrors.Wrap(err)
++}
++
++func (s *service) OpenRepoServer(
++	ctx context.Context,
++	db database.IDB,
++	req *backupreposervice.OpenRepoServerReq,
++) (*backupreposervice.RepoServerSession, error) {
++	repo, err := req.RepoSetting.AsBackupRepo()
++	if err != nil {
++		return nil, hperrors.Wrap(err)
++	}
++	storage, _, err := s.buildStorage(ctx, db, req.Scope, repo, req.RepoSetting.ID, req.RefObjects, "")
++	if err != nil {
++		return nil, hperrors.Wrap(err)
++	}
++	session, err := s.openRepoServerOn(ctx, storage, req.Username)
++	return session, hperrors.Wrap(err)
++}
++
++// openRepoServerOn runs a server for the repository on its volume's node, on the
++// address its agent is reached by, for the user user@host.
++func (s *service) openRepoServerOn(
++	ctx context.Context,
++	storage *backup.Storage,
++	username string,
++) (*backupreposervice.RepoServerSession, error) {
++	local := storage.StorageLocal
++	if local == nil {
++		return nil, hperrors.Wrap(hperrors.ErrBadRequest).
++			WithExtraDetail("only a repository on a volume is served by a repository server")
++	}
++	user, host, ok := strings.Cut(username, "@")
++	if !ok || user == "" || host == "" {
++		return nil, hperrors.Wrap(hperrors.ErrBadRequest).WithExtraDetail("a server user is user@host")
++	}
++	agentAddr, err := s.agentAddr(ctx, local.NodeID, local.NodeLabel)
++	if err != nil {
++		return nil, hperrors.Wrap(err)
++	}
++	listenHost, _, err := net.SplitHostPort(agentAddr)
++	if err != nil {
++		return nil, hperrors.Wrap(err)
++	}
++
++	password := repoServerUserPassword(storage.RepositoryPassword, username)
++	opened, err := s.openRepoServer(ctx, agentAddr, &reposerveragentuc.RunReq{
++		RepoPath:     local.Path,
++		RepoPassword: storage.RepositoryPassword,
++		Username:     username,
++		UserPassword: password,
++		ListenHost:   listenHost,
++	})
++	if err != nil {
++		return nil, hperrors.Wrap(fmt.Errorf("the repository server on %s did not start: %w", listenHost, err))
++	}
++	return &backupreposervice.RepoServerSession{
++		URL:         "https://" + net.JoinHostPort(listenHost, strconv.Itoa(opened.port)),
++		Fingerprint: opened.fingerprint,
++		Username:    user,
++		Hostname:    host,
++		Password:    password,
++		Stop: func() error {
++			if err := opened.close(); err != nil {
++				return hperrors.Wrap(err)
++			}
++			return hperrors.Wrap(opened.err())
++		},
++	}, nil
++}
++
++// repoServerUserPassword is the server user's password: the repository's,
++// hashed with the user. The same in every session, so two sessions on one
++// repository at once do not log each other out.
++func repoServerUserPassword(repoPassword, username string) string {
++	mac := hmac.New(sha256.New, []byte(username))
++	mac.Write([]byte(repoPassword))
++	return hex.EncodeToString(mac.Sum(nil))
++}
++
++// repoServerStorage is how a client of the session reaches the repository: from
++// a config file of its own, so two sessions at once do not share one.
++func repoServerStorage(session *backupreposervice.RepoServerSession, repoID string) *backup.Storage {
++	suffix := make([]byte, 8) //nolint:mnd
++	_, _ = rand.Read(suffix)
++	return &backup.Storage{
++		RepositoryPassword: session.Password,
++		StorageServer: &backup.StorageServer{
++			URL: session.URL, Fingerprint: session.Fingerprint,
++			Username: session.Username, Hostname: session.Hostname,
++		},
++		ConfigFile: filepath.Join(engineConfigDir, repoID, "server-"+hex.EncodeToString(suffix)+".config"),
++	}
++}
++
++// withRepoServer runs fn with a client storage reaching a repository server for
++// the storage's repository, and closes the session whatever fn does. A backup
++// that failed because the server went says so.
++func (s *service) withRepoServer(
++	ctx context.Context,
++	storage *backup.Storage,
++	username string,
++	repoID string,
++	fn func(client *backup.Storage) error,
++) (err error) {
++	session, err := s.openRepoServerOn(ctx, storage, username)
++	if err != nil {
++		return hperrors.Wrap(err)
++	}
++	fnErr := fn(repoServerStorage(session, repoID))
++	closeErr := session.Close()
++	switch {
++	case fnErr != nil && closeErr != nil:
++		return hperrors.Wrap(errors.Join(fnErr, fmt.Errorf("the repository server stopped: %w", closeErr)))
++	case fnErr != nil:
++		return hperrors.Wrap(fnErr)
++	}
++	return hperrors.Wrap(closeErr)
++}
+diff --git a/hivepaas_app/service/backupreposervice/backupreposerviceimpl/service.go b/hivepaas_app/service/backupreposervice/backupreposerviceimpl/service.go
+index 3fb3573c..741d1e79 100644
+--- a/hivepaas_app/service/backupreposervice/backupreposerviceimpl/service.go
++++ b/hivepaas_app/service/backupreposervice/backupreposerviceimpl/service.go
+@@ -1,11 +1,15 @@
+ package backupreposerviceimpl
+ 
+ import (
++	"context"
++
+ 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
+ 	"github.com/hivepaas/hivepaas/hivepaas_app/repository"
++	"github.com/hivepaas/hivepaas/hivepaas_app/service/agentservice"
+ 	"github.com/hivepaas/hivepaas/hivepaas_app/service/backupreposervice"
+ 	"github.com/hivepaas/hivepaas/hivepaas_app/service/nodeexecservice"
+ 	"github.com/hivepaas/hivepaas/hivepaas_app/service/settingservice"
++	"github.com/hivepaas/hivepaas/hivepaas_app/usecaseagent/reposerveragentuc"
+ 	"github.com/hivepaas/hivepaas/services/docker"
+ )
+ 
+@@ -16,8 +20,14 @@ type service struct {
+ 	settingRepo repository.SettingRepo
+ 	tagRepo     repository.TagRepo
+ 
++	agentService    agentservice.Service
+ 	nodeExecService nodeexecservice.Service
+ 	settingService  settingservice.Service
++
++	// agentAddr and openRepoServer reach a node's agent and run a repository
++	// server there; tests replace them.
++	agentAddr      func(ctx context.Context, nodeID, nodeLabel string) (string, error)
++	openRepoServer func(ctx context.Context, agentAddr string, req *reposerveragentuc.RunReq) (*openedRepoServer, error)
+ }
+ 
+ func New(
+@@ -27,17 +37,23 @@ func New(
+ 	settingRepo repository.SettingRepo,
+ 	tagRepo repository.TagRepo,
+ 
++	agentService agentservice.Service,
+ 	nodeExecService nodeexecservice.Service,
+ 	settingService settingservice.Service,
+ ) backupreposervice.Service {
+-	return &service{
++	svc := &service{
+ 		db:            db,
+ 		dockerManager: dockerManager,
+ 
+ 		settingRepo: settingRepo,
+ 		tagRepo:     tagRepo,
+ 
++		agentService:    agentService,
+ 		nodeExecService: nodeExecService,
+ 		settingService:  settingService,
++
++		openRepoServer: openRepoServerOnAgent,
+ 	}
++	svc.agentAddr = svc.agentAddrForNode
++	return svc
+ }
+diff --git a/hivepaas_app/service/backupreposervice/service.go b/hivepaas_app/service/backupreposervice/service.go
+index c477547c..38d63e92 100644
+--- a/hivepaas_app/service/backupreposervice/service.go
++++ b/hivepaas_app/service/backupreposervice/service.go
+@@ -42,6 +42,9 @@ type Service interface {
+ 	BackupStream(ctx context.Context, db database.IDB, req *BackupStreamReq) (*BackupResp, error)
+ 	// BackupDirectory takes a snapshot of a directory of a node's host, the engine running on
+ 	// that node through its agent. A repository on a volume is reachable on its own node only.
++	// OpenRepoServer runs a repository server for a repository on a volume, on
++	// its node, until the session is closed or ctx ends.
++	OpenRepoServer(ctx context.Context, db database.IDB, req *OpenRepoServerReq) (*RepoServerSession, error)
+ 	BackupDirectory(ctx context.Context, db database.IDB, req *BackupDirectoryReq) (*BackupResp, error)
+ 	// DeleteSnapshot removes one snapshot from the repository.
+ 	DeleteSnapshot(ctx context.Context, db database.IDB, req *DeleteSnapshotReq) error
+diff --git a/hivepaas_app/service/backupreposervice/types.go b/hivepaas_app/service/backupreposervice/types.go
+index 7ac0c468..aca692d2 100644
+--- a/hivepaas_app/service/backupreposervice/types.go
++++ b/hivepaas_app/service/backupreposervice/types.go
+@@ -160,6 +160,9 @@ type BackupStreamReq struct {
+ 	Source      string
+ 	Description string
+ 	Tags        []string
++	// Progress, when set, is told the steps the backup takes, such as a
++	// repository server started for it.
++	Progress func(msg string)
+ 	// OnConnected, when set, is called once the engine is built and connected:
+ 	// from then on the stream uses the database no more, and whatever writes
+ 	// Stdin may use it.
+@@ -168,6 +171,8 @@ type BackupStreamReq struct {
+ 
+ type BackupDirectoryReq struct {
+ 	RepoTarget
++	// Progress, when set, is told the steps the backup takes.
++	Progress func(msg string)
+ 	// HostDir is the directory as the node's host sees it.
+ 	HostDir   string
+ 	NodeID    string
+@@ -178,6 +183,34 @@ type BackupDirectoryReq struct {
+ 	Tags        []string
+ }
+ 
++// OpenRepoServerReq is a repository server to open: the repository, on a
++// volume, and the user its clients log in as, user@host.
++type OpenRepoServerReq struct {
++	RepoTarget
++	Username string
++}
++
++// RepoServerSession is a repository server running for the caller, until Close.
++type RepoServerSession struct {
++	URL         string
++	Fingerprint string
++	// Username and Hostname are the identity clients log in and write snapshots as.
++	Username string
++	Hostname string
++	Password string
++	// Stop stops the server; Close calls it once.
++	Stop func() error
++}
++
++func (s *RepoServerSession) Close() error {
++	if s.Stop == nil {
++		return nil
++	}
++	stop := s.Stop
++	s.Stop = nil
++	return stop()
++}
++
+ type BackupResp struct {
+ 	Snapshot *RepoSnapshot
+ }
+diff --git a/hivepaas_app/service/databackupservice/databackupserviceimpl/backup.go b/hivepaas_app/service/databackupservice/databackupserviceimpl/backup.go
+index 5f08650e..1a0fcf6f 100644
+--- a/hivepaas_app/service/databackupservice/databackupserviceimpl/backup.go
++++ b/hivepaas_app/service/databackupservice/databackupserviceimpl/backup.go
+@@ -117,6 +117,7 @@ func (s *service) backupCommand(
+ 			RepoTarget: target, Stdin: reader, FileName: dataBackup.SourceFileName, Tags: tags,
+ 			Source:      dataBackupSource + req.JobSetting.ID,
+ 			Description: description,
++			Progress:    logProgress(ctx, req),
+ 			OnConnected: func() { close(connected) },
+ 		})
+ 		// Whatever the engine did not read is not waited for.
+@@ -234,6 +235,7 @@ func (s *service) backupVolume(
+ 	resp, err := s.backupRepoService.BackupDirectory(ctx, db, &backupreposervice.BackupDirectoryReq{
+ 		RepoTarget: target, HostDir: dir, NodeID: appVolume.NodeID, NodeLabel: appVolume.NodeLabel, Tags: tags,
+ 		Source: dataBackupSource + req.JobSetting.ID, Description: description,
++		Progress: logProgress(ctx, req),
+ 	})
+ 	if err != nil {
+ 		return nil, hperrors.Wrap(err)
+@@ -258,3 +260,10 @@ func (s *service) syncSnapshots(ctx context.Context, db database.Tx, target back
+ 	})
+ 	return hperrors.Wrap(err)
+ }
++
++// logProgress writes the steps a backup takes into the run's log.
++func logProgress(ctx context.Context, req *databackupservice.BackupReq) func(string) {
++	return func(msg string) {
++		_ = req.LogStore.Add(ctx, tasklog.NewOutFrame(msg+"\n", tasklog.TsNow))
++	}
++}

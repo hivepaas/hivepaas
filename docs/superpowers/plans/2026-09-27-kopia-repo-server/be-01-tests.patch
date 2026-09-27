@@ -1,0 +1,172 @@
+diff --git a/services/backup/kopia/cmd_util_test.go b/services/backup/kopia/cmd_util_test.go
+index a2633de0..8be6b64e 100644
+--- a/services/backup/kopia/cmd_util_test.go
++++ b/services/backup/kopia/cmd_util_test.go
+@@ -1,6 +1,7 @@
+ package kopia
+ 
+ import (
++	"context"
+ 	"testing"
+ 
+ 	"github.com/stretchr/testify/assert"
+@@ -82,3 +83,39 @@ func TestClient_BuildLocalFlags(t *testing.T) {
+ 	assert.Contains(t, flags, "filesystem")
+ 	assert.Contains(t, flags, "--path=/mnt/backups")
+ }
++
++// A repository server is reached by its URL, its certificate pinned by
++// fingerprint; the client logs in as the identity it writes snapshots under,
++// its password from the environment, never kept on disk.
++func TestClient_BuildServerFlags(t *testing.T) {
++	c := NewClient(&backupmodel.Storage{
++		RepositoryPassword: "user-password",
++		StorageServer: &backupmodel.StorageServer{
++			URL:         "https://10.0.1.5:40123",
++			Fingerprint: "ab12",
++			Username:    "hivepaas",
++			Hostname:    "data-backup",
++		},
++	}, nil)
++
++	flags, err := c.buildStorageFlags()
++	assert.NoError(t, err)
++	assert.Equal(t, []string{"server", "--url=https://10.0.1.5:40123", "--server-cert-fingerprint=ab12",
++		"--override-username=hivepaas", "--override-hostname=data-backup", "--no-persist-credentials"}, flags)
++	assert.Equal(t, []string{"KOPIA_PASSWORD=user-password"}, c.buildEnv(""))
++}
++
++// Disconnecting removes the client's connection to the repository: its config file.
++func TestClient_DisconnectRepo(t *testing.T) {
++	var executed []string
++	c := NewClient(&backupmodel.Storage{
++		StorageServer: &backupmodel.StorageServer{URL: "https://10.0.1.5:40123"},
++		ConfigFile:    "/tmp/s1/repository.config",
++	}, func(_ context.Context, req *backupmodel.CommandExecReq) (*backupmodel.CommandExecResp, error) {
++		executed = req.Command
++		return &backupmodel.CommandExecResp{}, nil
++	})
++
++	assert.NoError(t, c.DisconnectRepo(context.Background()))
++	assert.Equal(t, []string{"kopia", "--config-file=/tmp/s1/repository.config", "repository", "disconnect"}, executed)
++}
+diff --git a/services/backup/kopia/server_integration_test.go b/services/backup/kopia/server_integration_test.go
+new file mode 100644
+index 00000000..861514eb
+--- /dev/null
++++ b/services/backup/kopia/server_integration_test.go
+@@ -0,0 +1,114 @@
++package kopia
++
++import (
++	"bufio"
++	"context"
++	"os"
++	"os/exec"
++	"path/filepath"
++	"regexp"
++	"strings"
++	"testing"
++	"time"
++
++	"github.com/stretchr/testify/assert"
++
++	"github.com/hivepaas/hivepaas/services/backup/backupmodel"
++)
++
++var (
++	serverFingerprintLine = regexp.MustCompile(`SERVER CERT SHA256: ([0-9a-f]+)`)
++	serverAddressLine     = regexp.MustCompile(`SERVER ADDRESS: https://.*:(\d+)$`)
++)
++
++// startTestServer runs a kopia repository server on a fresh filesystem
++// repository, with the user hivepaas@data-backup, and gives the storage a client
++// reaches it with. The server stops with the test.
++func startTestServer(t *testing.T) *backupmodel.Storage {
++	t.Helper()
++	owner, baseDir := newTestRepo(t, "repo")
++	mustNoError(t, owner.InitRepo(context.Background(), &backupmodel.InitRepoOptions{}))
++	ownerConfig := filepath.Join(baseDir, "repo.config")
++
++	userAdd := exec.Command("kopia", "--config-file="+ownerConfig, "server", "user", "add",
++		"hivepaas@data-backup", "--user-password=user-password")
++	userAdd.Env = append(os.Environ(), "KOPIA_PASSWORD=integration-test-password")
++	mustNoError(t, userAdd.Run())
++
++	server := exec.Command("kopia", "--config-file="+ownerConfig, "server", "start",
++		"--address=127.0.0.1:0", "--tls-generate-cert",
++		"--tls-cert-file="+filepath.Join(baseDir, "cert.pem"), "--tls-key-file="+filepath.Join(baseDir, "key.pem"),
++		"--server-username=control", "--server-password=control-password")
++	server.Env = append(os.Environ(), "KOPIA_PASSWORD=integration-test-password", "KOPIA_CHECK_FOR_UPDATES=false")
++	output, err := server.StderrPipe()
++	mustNoError(t, err)
++	server.Stdout = server.Stderr
++	mustNoError(t, server.Start())
++	t.Cleanup(func() {
++		_ = server.Process.Kill()
++		_ = server.Wait()
++	})
++
++	var fingerprint, port string
++	lines := bufio.NewScanner(output)
++	deadline := time.Now().Add(30 * time.Second)
++	for (fingerprint == "" || port == "") && time.Now().Before(deadline) && lines.Scan() {
++		if m := serverFingerprintLine.FindStringSubmatch(lines.Text()); m != nil {
++			fingerprint = m[1]
++		}
++		if m := serverAddressLine.FindStringSubmatch(strings.TrimSpace(lines.Text())); m != nil {
++			port = m[1]
++		}
++	}
++	if fingerprint == "" || port == "" {
++		t.Fatal("the kopia server did not start")
++	}
++	// The server blocks once its output is not read.
++	go func() {
++		for lines.Scan() {
++			continue
++		}
++	}()
++
++	return &backupmodel.Storage{
++		RepositoryPassword: "user-password",
++		StorageServer: &backupmodel.StorageServer{
++			URL: "https://127.0.0.1:" + port, Fingerprint: fingerprint,
++			Username: "hivepaas", Hostname: "data-backup",
++		},
++		ConfigFile: filepath.Join(t.TempDir(), "client.config"),
++	}
++}
++
++// Through a repository server, a client takes a stream and a directory under its
++// own identity, is refused another, and disconnects leaving no config behind.
++func TestIntegration_Server_BackupsUnderTheUsersIdentity(t *testing.T) {
++	if _, err := exec.LookPath("kopia"); err != nil {
++		t.Skip("kopia binary not installed, skipping integration test")
++	}
++	storage := startTestServer(t)
++	client := NewClient(storage, backupmodel.DefaultCommandExecutor)
++	ctx := context.Background()
++
++	mustNoError(t, client.ConnectRepo(ctx))
++
++	stream, err := client.BackupStream(ctx, strings.NewReader("CREATE TABLE t();\n"), "db.sql",
++		&backupmodel.BackupOptions{Source: "hivepaas@data-backup:/j1", Tags: []string{"hivepaas.run:t1"}})
++	mustNoError(t, err)
++	mustNotNil(t, stream.Item)
++	assert.Equal(t, "data-backup", stream.Item.Hostname)
++
++	dataDir := t.TempDir()
++	mustNoError(t, os.WriteFile(filepath.Join(dataDir, "f1.txt"), []byte("hello"), 0o600))
++	dir, err := client.BackupDirectory(ctx, dataDir, &backupmodel.BackupOptions{Source: "hivepaas@data-backup:/j2"})
++	mustNoError(t, err)
++	assert.Equal(t, []string{"/j2"}, dir.Item.Paths)
++
++	_, err = client.BackupStream(ctx, strings.NewReader("x"), "x.sql",
++		&backupmodel.BackupOptions{Source: "someone@elsewhere:/k"})
++	assert.ErrorContains(t, err, "access denied")
++
++	mustNoError(t, client.DisconnectRepo(ctx))
++	_, err = os.Stat(storage.ConfigFile)
++	assert.True(t, os.IsNotExist(err), "the client's config file is removed")
++}

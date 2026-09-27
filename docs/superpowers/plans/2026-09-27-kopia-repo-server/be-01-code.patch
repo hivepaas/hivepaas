@@ -1,0 +1,116 @@
+diff --git a/services/backup/backupmodel/engine.go b/services/backup/backupmodel/engine.go
+index c5aca031..1d3ec8c7 100644
+--- a/services/backup/backupmodel/engine.go
++++ b/services/backup/backupmodel/engine.go
+@@ -27,6 +27,9 @@ type Engine interface {
+ 	// ConnectRepo connects to an existing backup repository on the storage backend.
+ 	ConnectRepo(ctx context.Context) error
+ 
++	// DisconnectRepo drops the connection ConnectRepo made, and its config file.
++	DisconnectRepo(ctx context.Context) error
++
+ 	// CheckRepo verifies the integrity of the backup repository.
+ 	CheckRepo(ctx context.Context) error
+ 
+diff --git a/services/backup/backupmodel/types.go b/services/backup/backupmodel/types.go
+index 8cc9c7d2..9c6d74c6 100644
+--- a/services/backup/backupmodel/types.go
++++ b/services/backup/backupmodel/types.go
+@@ -128,6 +128,9 @@ type Storage struct {
+ 	RepositoryPassword string        `json:"repositoryPassword"`
+ 	StorageS3          *StorageS3    `json:"storageS3,omitempty"`
+ 	StorageLocal       *StorageLocal `json:"storageLocal,omitempty"`
++	// StorageServer is a repository reached through a repository server. The
++	// password is then the server user's, not the repository's.
++	StorageServer *StorageServer `json:"storageServer,omitempty"`
+ 
+ 	// ConfigFile is the engine config file holding the repository connection state.
+ 	// Every repository must use its own file, otherwise operations on different repositories
+@@ -145,6 +148,15 @@ type StorageS3 struct {
+ 	ForcePathStyle bool   `json:"forcePathStyle"`
+ }
+ 
++// StorageServer is a repository server: its URL, its certificate's SHA-256
++// fingerprint, and the identity the client logs in and writes snapshots as.
++type StorageServer struct {
++	URL         string `json:"url"`
++	Fingerprint string `json:"fingerprint"`
++	Username    string `json:"username"`
++	Hostname    string `json:"hostname"`
++}
++
+ type StorageLocal struct {
+ 	Path      string `json:"path"`
+ 	NodeID    string `json:"nodeId,omitempty"`
+diff --git a/services/backup/engine.go b/services/backup/engine.go
+index 8475b379..66b88917 100644
+--- a/services/backup/engine.go
++++ b/services/backup/engine.go
+@@ -38,6 +38,7 @@ type (
+ 	RetentionPolicy      = backupmodel.RetentionPolicy
+ 	Storage              = backupmodel.Storage
+ 	StorageS3            = backupmodel.StorageS3
++	StorageServer        = backupmodel.StorageServer
+ 	StorageLocal         = backupmodel.StorageLocal
+ 	CommandExecReq       = backupmodel.CommandExecReq
+ 	CommandExecResp      = backupmodel.CommandExecResp
+diff --git a/services/backup/kopia/cmd_util.go b/services/backup/kopia/cmd_util.go
+index 1eca8b4e..bf47b340 100644
+--- a/services/backup/kopia/cmd_util.go
++++ b/services/backup/kopia/cmd_util.go
+@@ -33,6 +33,9 @@ func (c *Client) buildStorageFlags() ([]string, error) {
+ 	if c.storage.StorageLocal != nil {
+ 		return c.buildLocalFlags(c.storage.StorageLocal), nil
+ 	}
++	if c.storage.StorageServer != nil {
++		return c.buildServerFlags(c.storage.StorageServer), nil
++	}
+ 	return nil, hperrors.Wrap(backupmodel.ErrStorageTypeRequired)
+ }
+ 
+@@ -68,6 +71,20 @@ func (c *Client) buildS3Flags(cfg *backupmodel.StorageS3) []string {
+ 	return flags
+ }
+ 
++// buildServerFlags reaches a repository server. The certificate is pinned by its
++// fingerprint, whatever address the server is reached by; the password, from
++// the environment, is not kept on disk.
++func (c *Client) buildServerFlags(cfg *backupmodel.StorageServer) []string {
++	return []string{
++		"server",
++		"--url=" + cfg.URL,
++		"--server-cert-fingerprint=" + cfg.Fingerprint,
++		"--override-username=" + cfg.Username,
++		"--override-hostname=" + cfg.Hostname,
++		"--no-persist-credentials",
++	}
++}
++
+ func (c *Client) buildLocalFlags(cfg *backupmodel.StorageLocal) []string {
+ 	return []string{
+ 		"filesystem",
+diff --git a/services/backup/kopia/repo.go b/services/backup/kopia/repo.go
+index f428a400..1c3809db 100644
+--- a/services/backup/kopia/repo.go
++++ b/services/backup/kopia/repo.go
+@@ -114,6 +114,20 @@ func (c *Client) ConnectRepo(
+ 	return nil
+ }
+ 
++func (c *Client) DisconnectRepo(
++	ctx context.Context,
++) error {
++	var errBuf bytes.Buffer
++	_, err := c.execCommand(ctx, []string{cmdRepository, "disconnect"}, func(o *execOptions) {
++		o.stderr = &errBuf
++	})
++	if err != nil {
++		return hperrors.Wrap(fmt.Errorf("kopia repository disconnect failed: %s (err: %w)",
++			strings.TrimSpace(errBuf.String()), err))
++	}
++	return nil
++}
++
+ func (c *Client) CheckRepo(
+ 	ctx context.Context,
+ ) error {

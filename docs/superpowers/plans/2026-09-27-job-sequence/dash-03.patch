@@ -1,0 +1,892 @@
+diff --git a/src/application/modules/projects/module-shared/components/project-sidebar/project-with-sidebar.com.tsx b/src/application/modules/projects/module-shared/components/project-sidebar/project-with-sidebar.com.tsx
+index 6ab0e163..b8389b70 100644
+--- a/src/application/modules/projects/module-shared/components/project-sidebar/project-with-sidebar.com.tsx
++++ b/src/application/modules/projects/module-shared/components/project-sidebar/project-with-sidebar.com.tsx
+@@ -6,6 +6,7 @@ import {
+     AlertTriangle,
+     Archive,
+     Bell,
++    CalendarClock,
+     Container,
+     FileBadge,
+     FileCode2,
+@@ -210,6 +211,11 @@ function createProviderConfigurationSections(projectId: string): ProviderTabSect
+                     icon: FileCode2,
+                     route: ROUTE.projects.single.providerConfiguration.commandTemplates.$route(projectId),
+                 },
++                {
++                    label: "Scheduled Jobs",
++                    icon: CalendarClock,
++                    route: ROUTE.projects.single.providerConfiguration.scheduledJobs.$route(projectId),
++                },
+                 {
+                     label: "Command Pipes",
+                     icon: Workflow,
+diff --git a/src/application/modules/projects/projects.module.ts b/src/application/modules/projects/projects.module.ts
+index bee6db36..262a7427 100644
+--- a/src/application/modules/projects/projects.module.ts
++++ b/src/application/modules/projects/projects.module.ts
+@@ -27,6 +27,9 @@ export {
+     ProjectAcmeDnsProviderEditRoute,
+     ProjectCloudStoragesRoute,
+     ProjectCommandPipesRoute,
++    ProjectScheduledJobsRoute,
++    EnvJobSequenceCreateRoute,
++    EnvJobSequenceEditRoute,
+     ProjectCommandPipeCreateRoute,
+     ProjectCommandPipeEditRoute,
+     ProjectCommandTemplatesRoute,
+diff --git a/src/application/modules/projects/projects.router.tsx b/src/application/modules/projects/projects.router.tsx
+index b3515810..1d9c1107 100644
+--- a/src/application/modules/projects/projects.router.tsx
++++ b/src/application/modules/projects/projects.router.tsx
+@@ -910,7 +910,30 @@ export const projectsRouter: RouteObject = {
+                                 };
+                             },
+                         },
++                        {
++                            path: ROUTE.projects.single.providerConfiguration.scheduledJobs.$pattern,
++                            lazy: async () => {
++                                const { ProjectScheduledJobsRoute } = await getLazyComponents();
++
++                                return { Component: ProjectScheduledJobsRoute };
++                            },
++                        },
++                        {
++                            path: ROUTE.projects.single.providerConfiguration.scheduledJobs.createSequence.$pattern,
++                            lazy: async () => {
++                                const { EnvJobSequenceCreateRoute } = await getLazyComponents();
+ 
++                                return { Component: EnvJobSequenceCreateRoute };
++                            },
++                        },
++                        {
++                            path: ROUTE.projects.single.providerConfiguration.scheduledJobs.edit.$pattern,
++                            lazy: async () => {
++                                const { EnvJobSequenceEditRoute } = await getLazyComponents();
++
++                                return { Component: EnvJobSequenceEditRoute };
++                            },
++                        },
+                         {
+                             path: ROUTE.projects.single.providerConfiguration.commandPipes.$pattern,
+                             lazy: async () => {
+diff --git a/src/application/modules/projects/routes/index.ts b/src/application/modules/projects/routes/index.ts
+index d8124bbb..f0f552b6 100644
+--- a/src/application/modules/projects/routes/index.ts
++++ b/src/application/modules/projects/routes/index.ts
+@@ -24,6 +24,9 @@ export {
+     ProjectAcmeDnsProviderEditRoute,
+     ProjectCloudStoragesRoute,
+     ProjectCommandPipesRoute,
++    ProjectScheduledJobsRoute,
++    EnvJobSequenceCreateRoute,
++    EnvJobSequenceEditRoute,
+     ProjectCommandPipeCreateRoute,
+     ProjectCommandPipeEditRoute,
+     ProjectCommandTemplatesRoute,
+diff --git a/src/application/modules/projects/routes/single-project/configuration/index.ts b/src/application/modules/projects/routes/single-project/configuration/index.ts
+index 8506a2cb..2c7ebbea 100644
+--- a/src/application/modules/projects/routes/single-project/configuration/index.ts
++++ b/src/application/modules/projects/routes/single-project/configuration/index.ts
+@@ -21,3 +21,4 @@ export * from "./notification-targets";
+ export * from "./build-settings";
+ export * from "./domain-settings";
+ export * from "./danger-zone";
++export * from "./scheduled-jobs";
+diff --git a/src/application/modules/projects/routes/single-project/configuration/scheduled-jobs/building-blocks/env-scheduled-job-menu-cell.com.tsx b/src/application/modules/projects/routes/single-project/configuration/scheduled-jobs/building-blocks/env-scheduled-job-menu-cell.com.tsx
+new file mode 100644
+index 00000000..1355a411
+--- /dev/null
++++ b/src/application/modules/projects/routes/single-project/configuration/scheduled-jobs/building-blocks/env-scheduled-job-menu-cell.com.tsx
+@@ -0,0 +1,149 @@
++import { memo, useState } from "react";
++
++import { Button } from "@components/ui/button";
++import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger } from "@components/ui/dropdown-menu";
++import { Cog, ExternalLink, MoreVertical, Power, Trash2Icon } from "lucide-react";
++import { toast } from "sonner";
++import { EnvScheduledJobsCommands } from "~/projects/data/commands";
++import type { EnvScheduledJob } from "~/projects/domain";
++
++import { PopConfirm } from "@application/shared/components";
++import { MODULE_IDS, ROUTE } from "@application/shared/constants";
++import { ESettingStatus } from "@application/shared/enums";
++import { useAppNavigate } from "@application/shared/hooks/router";
++import { useConditionalModule } from "@application/shared/permissions";
++
++/**
++ * The actions on a job of an env's list. The env's own jobs are run, enabled,
++ * disabled and removed here; an app's job is managed on its app's page.
++ */
++function View({ projectId, env, job }: Props) {
++    const [open, setOpen] = useState(false);
++    const { navigate } = useAppNavigate();
++    const { canWrite, canDelete } = useConditionalModule({ id: MODULE_IDS.Project });
++
++    const { mutate: runNow, isPending: isRunning } = EnvScheduledJobsCommands.useRunNow({
++        onSuccess: response => {
++            setOpen(false);
++            toast.success("Job sequence started");
++            navigate.modules(ROUTE.projects.single.operations.tasks.details.$route(projectId, response.data.task.id));
++        },
++    });
++    const { mutate: updateStatus, isPending: isUpdatingStatus } = EnvScheduledJobsCommands.useUpdateStatus({
++        onSuccess: () => {
++            setOpen(false);
++        },
++    });
++    const { mutate: deleteOne, isPending: isDeleting } = EnvScheduledJobsCommands.useDeleteOne({
++        onSuccess: () => {
++            toast.success("Job sequence deleted successfully");
++            setOpen(false);
++        },
++    });
++
++    const isEnvJob = job.scope === "project-env";
++    const isActive = job.status === ESettingStatus.Active;
++    const request = { projectID: projectId, env, scheduledJobID: job.id };
++
++    return (
++        <DropdownMenu
++            open={open}
++            onOpenChange={setOpen}
++        >
++            <DropdownMenuTrigger asChild>
++                <Button
++                    variant="ghost"
++                    size="icon"
++                    className="h-8 w-8"
++                >
++                    <MoreVertical className="size-4" />
++                    <span className="sr-only">Actions menu</span>
++                </Button>
++            </DropdownMenuTrigger>
++            <DropdownMenuContent align="end">
++                <div className="flex flex-col gap-0">
++                    {!isEnvJob && job.ownerApp && (
++                        <Button
++                            className="justify-start py-1.5"
++                            variant="ghost"
++                            onClick={() => {
++                                navigate.modules(
++                                    ROUTE.projects.single.apps.single.configuration.scheduledJobs.$route(
++                                        projectId,
++                                        env,
++                                        job.ownerApp?.id ?? "",
++                                    ),
++                                );
++                            }}
++                        >
++                            <ExternalLink className="mr-2 size-4" />
++                            Open in {job.ownerApp.name}
++                        </Button>
++                    )}
++                    {isEnvJob && (
++                        <>
++                            <Button
++                                className="justify-start py-1.5"
++                                variant="ghost"
++                                disabled={!canWrite || isRunning}
++                                onClick={() => {
++                                    runNow(request);
++                                }}
++                            >
++                                <Cog className="mr-2 size-4" />
++                                Run Now
++                            </Button>
++                            <Button
++                                className="justify-start py-1.5"
++                                variant="ghost"
++                                disabled={!canWrite || isUpdatingStatus}
++                                onClick={() => {
++                                    updateStatus({
++                                        ...request,
++                                        payload: {
++                                            updateVer: job.updateVer,
++                                            status: isActive ? ESettingStatus.Disabled : ESettingStatus.Active,
++                                            expireAt: job.expireAt,
++                                            inheritable: job.inheritable,
++                                            default: job.default,
++                                        },
++                                    });
++                                }}
++                            >
++                                <Power className="mr-2 size-4" />
++                                {isActive ? "Disable" : "Enable"}
++                            </Button>
++                            <PopConfirm
++                                title="Remove Job Sequence"
++                                variant="destructive"
++                                confirmText="Remove"
++                                cancelText="Cancel"
++                                description="Are you sure you want to remove this job sequence?"
++                                onConfirm={() => {
++                                    deleteOne(request);
++                                }}
++                            >
++                                <Button
++                                    className="justify-start py-1.5"
++                                    variant="ghost"
++                                    disabled={!canDelete || isDeleting}
++                                >
++                                    <Trash2Icon className="mr-2 size-4" />
++                                    Remove
++                                </Button>
++                            </PopConfirm>
++                        </>
++                    )}
++                </div>
++            </DropdownMenuContent>
++        </DropdownMenu>
++    );
++}
++
++interface Props {
++    projectId: string;
++    env: string;
++    job: EnvScheduledJob;
++}
++
++export const EnvScheduledJobMenuCell = memo(View);
+diff --git a/src/application/modules/projects/routes/single-project/configuration/scheduled-jobs/building-blocks/env-scheduled-jobs-table.com.tsx b/src/application/modules/projects/routes/single-project/configuration/scheduled-jobs/building-blocks/env-scheduled-jobs-table.com.tsx
+new file mode 100644
+index 00000000..711790c4
+--- /dev/null
++++ b/src/application/modules/projects/routes/single-project/configuration/scheduled-jobs/building-blocks/env-scheduled-jobs-table.com.tsx
+@@ -0,0 +1,137 @@
++import { useMemo, useState } from "react";
++
++import { Plus } from "lucide-react";
++import { EnvScheduledJobsQueries, ProjectAppsQueries } from "~/projects/data/queries";
++import { EAppScheduledJobType } from "~/projects/module-shared/enums";
++
++import { TableActions } from "@application/shared/components";
++import { DEFAULT_PAGINATED_DATA, MODULE_IDS, ROUTE } from "@application/shared/constants";
++import { useAppNavigate } from "@application/shared/hooks/router";
++import { useTableState } from "@application/shared/hooks/table";
++import { PermissionTooltipAction } from "@application/shared/permissions";
++
++import { Button, DataTable, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui";
++
++import { EnvScheduledJobsTableDefs } from "./env-scheduled-jobs-table.defs";
++
++const ALL = "all";
++const LIST_ALL_PAGE = { page: 1, size: 1000 };
++
++const JOB_TYPE_OPTIONS = [
++    { value: ALL, label: "All types" },
++    { value: EAppScheduledJobType.JobSequence, label: "Job sequences" },
++    { value: EAppScheduledJobType.ContainerCommand, label: "Container commands" },
++];
++
++/** An env's scheduled jobs: its own, and those of the apps in it. */
++export function EnvScheduledJobsTable({ projectId, env }: Props) {
++    const { pagination, setPagination, sorting, setSorting, search, setSearch } = useTableState();
++    const { navigate } = useAppNavigate();
++    const [jobType, setJobType] = useState<string>(ALL);
++    const [appId, setAppId] = useState<string>(ALL);
++
++    const { data: appsData } = ProjectAppsQueries.useFindManyPaginated({
++        projectID: projectId,
++        env,
++        pagination: LIST_ALL_PAGE,
++    });
++    const apps = appsData?.data ?? [];
++
++    const { data: { data: jobs, meta } = DEFAULT_PAGINATED_DATA, isFetching } =
++        EnvScheduledJobsQueries.useFindManyPaginated({
++            projectID: projectId,
++            env,
++            pagination,
++            sorting,
++            search,
++            ...(jobType === ALL ? {} : { jobTypes: [jobType as EAppScheduledJobType] }),
++            ...(appId === ALL ? {} : { appId }),
++        });
++    const columns = useMemo(() => EnvScheduledJobsTableDefs.columns(projectId, env), [projectId, env]);
++
++    return (
++        <div className="flex flex-col gap-4">
++            <TableActions
++                search={{ value: search, onChange: setSearch }}
++                renderActions={
++                    <div className="flex flex-wrap gap-3">
++                        <Select
++                            value={jobType}
++                            onValueChange={setJobType}
++                        >
++                            <SelectTrigger className="w-[190px]">
++                                <SelectValue />
++                            </SelectTrigger>
++                            <SelectContent>
++                                {JOB_TYPE_OPTIONS.map(option => (
++                                    <SelectItem
++                                        key={option.value}
++                                        value={option.value}
++                                    >
++                                        {option.label}
++                                    </SelectItem>
++                                ))}
++                            </SelectContent>
++                        </Select>
++                        <Select
++                            value={appId}
++                            onValueChange={setAppId}
++                        >
++                            <SelectTrigger className="w-[190px]">
++                                <SelectValue />
++                            </SelectTrigger>
++                            <SelectContent>
++                                <SelectItem value={ALL}>All owners</SelectItem>
++                                {apps.map(app => (
++                                    <SelectItem
++                                        key={app.id}
++                                        value={app.id}
++                                    >
++                                        {app.name}
++                                    </SelectItem>
++                                ))}
++                            </SelectContent>
++                        </Select>
++                        <PermissionTooltipAction
++                            id={MODULE_IDS.Project}
++                            action="write"
++                        >
++                            {({ isDenied }) => (
++                                <Button
++                                    disabled={isDenied}
++                                    onClick={() => {
++                                        navigate.modules(
++                                            ROUTE.projects.single.providerConfiguration.scheduledJobs.createSequence.$route(
++                                                projectId,
++                                            ),
++                                        );
++                                    }}
++                                >
++                                    <Plus className="size-4" /> New Job Sequence
++                                </Button>
++                            )}
++                        </PermissionTooltipAction>
++                    </div>
++                }
++            />
++            <DataTable
++                columns={columns}
++                data={jobs}
++                pageSize={pagination.size}
++                manualPagination
++                totalCount={meta.page.total}
++                manualSorting
++                enableSorting
++                enablePagination
++                isLoading={isFetching}
++                onPaginationChange={setPagination}
++                onSortingChange={setSorting}
++            />
++        </div>
++    );
++}
++
++interface Props {
++    projectId: string;
++    env: string;
++}
+diff --git a/src/application/modules/projects/routes/single-project/configuration/scheduled-jobs/building-blocks/env-scheduled-jobs-table.defs.tsx b/src/application/modules/projects/routes/single-project/configuration/scheduled-jobs/building-blocks/env-scheduled-jobs-table.defs.tsx
+new file mode 100644
+index 00000000..4a3d836d
+--- /dev/null
++++ b/src/application/modules/projects/routes/single-project/configuration/scheduled-jobs/building-blocks/env-scheduled-jobs-table.defs.tsx
+@@ -0,0 +1,125 @@
++import { Button } from "@components/ui/button";
++import type { ColumnDef } from "@tanstack/react-table";
++import { format } from "date-fns";
++import { EyeIcon } from "lucide-react";
++import type { EnvScheduledJob } from "~/projects/domain";
++import { formatJobSchedule } from "~/projects/module-shared/components";
++import { ScheduledJobNameCell } from "~/projects/module-shared/definitions/tables/app-scheduled-jobs";
++import { SettingStatusBadge } from "~/settings/module-shared/components";
++
++import { AppLink } from "@application/shared/components";
++import { ROUTE } from "@application/shared/constants";
++
++import { EnvScheduledJobMenuCell } from "./env-scheduled-job-menu-cell.com";
++
++/** Where a job is edited: the env's own here, an app's on its app's page. */
++function editRoute(projectId: string, env: string, job: EnvScheduledJob): string {
++    if (job.scope === "app" && job.ownerApp) {
++        return ROUTE.projects.single.apps.single.configuration.scheduledJobs.edit.$route(
++            projectId,
++            env,
++            job.ownerApp.id,
++            job.id,
++        );
++    }
++
++    return ROUTE.projects.single.providerConfiguration.scheduledJobs.edit.$route(projectId, job.id);
++}
++
++/** Where a job's runs are listed. */
++function runsRoute(projectId: string, env: string, job: EnvScheduledJob): string {
++    if (job.scope === "app" && job.ownerApp) {
++        return `${ROUTE.projects.single.apps.single.tasks.$route(projectId, env, job.ownerApp.id)}?targetId=${job.id}`;
++    }
++
++    return `${ROUTE.projects.single.operations.tasks.$route(projectId)}?targetId=${job.id}`;
++}
++
++function createColumns(projectId: string, env: string): ColumnDef<EnvScheduledJob>[] {
++    return [
++        {
++            id: "view",
++            header: "",
++            enableSorting: false,
++            enableHiding: false,
++            minSize: 56,
++            size: 56,
++            cell: ({ row: { original } }) => (
++                <AppLink.Basic to={editRoute(projectId, env, original)}>
++                    <Button
++                        variant="ghost"
++                        size="icon"
++                        className="h-8 w-8 text-link hover:opacity-50"
++                    >
++                        <EyeIcon className="size-5" />
++                        <span className="sr-only">Edit scheduled job</span>
++                    </Button>
++                </AppLink.Basic>
++            ),
++            meta: { align: "center", titleAlign: "center" },
++        },
++        {
++            id: "runs",
++            header: "",
++            enableSorting: false,
++            minSize: 100,
++            size: 100,
++            cell: ({ row: { original } }) => (
++                <AppLink.Basic
++                    className="text-sm font-medium text-link underline-offset-4"
++                    to={runsRoute(projectId, env, original)}
++                >
++                    View Runs
++                </AppLink.Basic>
++            ),
++        },
++        {
++            accessorKey: "name",
++            header: "Name",
++            cell: ({ row: { original } }) => <ScheduledJobNameCell job={original} />,
++        },
++        {
++            id: "owner",
++            header: "Owner",
++            enableSorting: false,
++            cell: ({ row: { original } }) =>
++                original.scope === "project-env" ? "Env" : (original.ownerApp?.name ?? "-"),
++        },
++        {
++            accessorKey: "schedule",
++            header: "Schedule",
++            enableSorting: false,
++            cell: ({ row: { original } }) => formatJobSchedule(original.schedule),
++        },
++        {
++            accessorKey: "nextRuns",
++            header: "Next Run",
++            enableSorting: false,
++            cell: ({ row: { original } }) =>
++                original.nextRuns[0] ? format(original.nextRuns[0], "yyyy-MM-dd HH:mm:ss") : "-",
++        },
++        {
++            accessorKey: "status",
++            header: "Status",
++            cell: ({ row: { original } }) => <SettingStatusBadge status={original.status} />,
++            meta: { align: "center", titleAlign: "center" },
++        },
++        {
++            id: "actions",
++            header: "",
++            enableSorting: false,
++            cell: ({ row: { original } }) => (
++                <EnvScheduledJobMenuCell
++                    projectId={projectId}
++                    env={env}
++                    job={original}
++                />
++            ),
++            meta: { align: "right" },
++        },
++    ];
++}
++
++export const EnvScheduledJobsTableDefs = Object.freeze({
++    columns: createColumns,
++});
+diff --git a/src/application/modules/projects/routes/single-project/configuration/scheduled-jobs/building-blocks/index.ts b/src/application/modules/projects/routes/single-project/configuration/scheduled-jobs/building-blocks/index.ts
+new file mode 100644
+index 00000000..e421f255
+--- /dev/null
++++ b/src/application/modules/projects/routes/single-project/configuration/scheduled-jobs/building-blocks/index.ts
+@@ -0,0 +1,3 @@
++export * from "./env-scheduled-job-menu-cell.com";
++export * from "./env-scheduled-jobs-table.com";
++export * from "./env-scheduled-jobs-table.defs";
+diff --git a/src/application/modules/projects/routes/single-project/configuration/scheduled-jobs/create/env-job-sequence-create.route.com.tsx b/src/application/modules/projects/routes/single-project/configuration/scheduled-jobs/create/env-job-sequence-create.route.com.tsx
+new file mode 100644
+index 00000000..7d253e38
+--- /dev/null
++++ b/src/application/modules/projects/routes/single-project/configuration/scheduled-jobs/create/env-job-sequence-create.route.com.tsx
+@@ -0,0 +1,27 @@
++import { useParams } from "react-router";
++import invariant from "tiny-invariant";
++import { getProjectEnvFilterParam, useSelectedProjectEnv } from "~/projects/module-shared/hooks";
++
++import { EnvJobSequenceFormRoute } from "../form-route";
++import { ProjectScheduledJobsRoute } from "../route";
++
++export function EnvJobSequenceCreateRoute() {
++    const { id: projectId } = useParams<{ id: string }>();
++
++    invariant(projectId, "projectId must be defined");
++    const scopedEnv = getProjectEnvFilterParam(useSelectedProjectEnv(projectId));
++
++    // A sequence belongs to an env: without one picked, the list says so.
++    if (!scopedEnv) {
++        return <ProjectScheduledJobsRoute />;
++    }
++
++    return (
++        <EnvJobSequenceFormRoute
++            key={scopedEnv}
++            mode="create"
++            projectId={projectId}
++            env={scopedEnv}
++        />
++    );
++}
+diff --git a/src/application/modules/projects/routes/single-project/configuration/scheduled-jobs/create/index.ts b/src/application/modules/projects/routes/single-project/configuration/scheduled-jobs/create/index.ts
+new file mode 100644
+index 00000000..7f6b46ed
+--- /dev/null
++++ b/src/application/modules/projects/routes/single-project/configuration/scheduled-jobs/create/index.ts
+@@ -0,0 +1 @@
++export * from "./env-job-sequence-create.route.com";
+diff --git a/src/application/modules/projects/routes/single-project/configuration/scheduled-jobs/edit/env-job-sequence-edit.route.com.tsx b/src/application/modules/projects/routes/single-project/configuration/scheduled-jobs/edit/env-job-sequence-edit.route.com.tsx
+new file mode 100644
+index 00000000..a410e13a
+--- /dev/null
++++ b/src/application/modules/projects/routes/single-project/configuration/scheduled-jobs/edit/env-job-sequence-edit.route.com.tsx
+@@ -0,0 +1,33 @@
++import { useParams } from "react-router";
++import invariant from "tiny-invariant";
++import { EnvScheduledJobsQueries } from "~/projects/data/queries";
++import { getProjectEnvFilterParam, useSelectedProjectEnv } from "~/projects/module-shared/hooks";
++
++import { EnvJobSequenceFormRoute } from "../form-route";
++import { ProjectScheduledJobsRoute } from "../route";
++
++export function EnvJobSequenceEditRoute() {
++    const { id: projectId, scheduledJobId } = useParams<{ id: string; scheduledJobId: string }>();
++
++    invariant(projectId, "projectId must be defined");
++    invariant(scheduledJobId, "scheduledJobId must be defined");
++    const scopedEnv = getProjectEnvFilterParam(useSelectedProjectEnv(projectId));
++
++    const { data } = EnvScheduledJobsQueries.useFindOneById(
++        { projectID: projectId, env: scopedEnv ?? "", scheduledJobID: scheduledJobId },
++        { enabled: Boolean(scopedEnv) },
++    );
++
++    if (!scopedEnv) {
++        return <ProjectScheduledJobsRoute />;
++    }
++
++    return (
++        <EnvJobSequenceFormRoute
++            mode="edit"
++            projectId={projectId}
++            env={scopedEnv}
++            scheduledJob={data?.data}
++        />
++    );
++}
+diff --git a/src/application/modules/projects/routes/single-project/configuration/scheduled-jobs/edit/index.ts b/src/application/modules/projects/routes/single-project/configuration/scheduled-jobs/edit/index.ts
+new file mode 100644
+index 00000000..e0213fb5
+--- /dev/null
++++ b/src/application/modules/projects/routes/single-project/configuration/scheduled-jobs/edit/index.ts
+@@ -0,0 +1 @@
++export * from "./env-job-sequence-edit.route.com";
+diff --git a/src/application/modules/projects/routes/single-project/configuration/scheduled-jobs/form-route/env-job-sequence-form-route.com.tsx b/src/application/modules/projects/routes/single-project/configuration/scheduled-jobs/form-route/env-job-sequence-form-route.com.tsx
+new file mode 100644
+index 00000000..b0d286e2
+--- /dev/null
++++ b/src/application/modules/projects/routes/single-project/configuration/scheduled-jobs/form-route/env-job-sequence-form-route.com.tsx
+@@ -0,0 +1,130 @@
++import { useMemo, useState } from "react";
++
++import { toast } from "sonner";
++import { EnvScheduledJobsCommands } from "~/projects/data/commands";
++import { EnvScheduledJobsQueries } from "~/projects/data/queries";
++import type { AppScheduledJob } from "~/projects/domain";
++import {
++    type JobSequenceCandidate,
++    JobSequenceForm,
++    type JobSequenceFormOutput,
++    mapJobSequenceFormToPayload,
++} from "~/projects/module-shared/components";
++import { EAppScheduledJobType } from "~/projects/module-shared/enums";
++
++import { AppLoader, RouteFormHeader } from "@application/shared/components";
++import { MODULE_IDS, ROUTE } from "@application/shared/constants";
++import { useAppNavigate } from "@application/shared/hooks/router";
++import { useConditionalModule } from "@application/shared/permissions";
++
++const LIST_ALL_PAGE = { page: 1, size: 1000 };
++
++/** An env's sequence runs the jobs of the env's apps, never another sequence. */
++export function EnvJobSequenceFormRoute({ mode, projectId, env, scheduledJob }: Props) {
++    const [hasChanges, setHasChanges] = useState(false);
++    const { canWrite } = useConditionalModule({ id: MODULE_IDS.Project });
++    const { navigate } = useAppNavigate();
++
++    const { data: jobsData, isFetching: isLoadingCandidates } = EnvScheduledJobsQueries.useFindManyPaginated({
++        projectID: projectId,
++        env,
++        pagination: LIST_ALL_PAGE,
++    });
++    const candidates = useMemo<JobSequenceCandidate[]>(
++        () =>
++            (jobsData?.data ?? [])
++                .filter(job => job.scope === "app" && job.jobType !== EAppScheduledJobType.JobSequence)
++                .map(job => ({
++                    id: job.id,
++                    name: job.name,
++                    appName: job.ownerApp?.name ?? "",
++                    disabled: job.status !== "active",
++                })),
++        [jobsData],
++    );
++
++    function navigateToList() {
++        navigate.modules(ROUTE.projects.single.providerConfiguration.scheduledJobs.$route(projectId), {
++            ignorePrevPath: true,
++        });
++    }
++
++    const { mutate: createOne, isPending: isCreating } = EnvScheduledJobsCommands.useCreateOne({
++        onSuccess: () => {
++            toast.success("Job sequence created successfully");
++            navigateToList();
++        },
++    });
++    const { mutate: updateOne, isPending: isUpdating } = EnvScheduledJobsCommands.useUpdateOne({
++        onSuccess: () => {
++            toast.success("Job sequence updated successfully");
++            navigateToList();
++        },
++    });
++
++    function onSubmit(values: JobSequenceFormOutput) {
++        if (!canWrite) {
++            return;
++        }
++
++        const payload = mapJobSequenceFormToPayload(values);
++        if (mode === "edit" && scheduledJob) {
++            updateOne({
++                projectID: projectId,
++                env,
++                scheduledJobID: scheduledJob.id,
++                payload: { ...payload, updateVer: scheduledJob.updateVer },
++            });
++            return;
++        }
++
++        createOne({ projectID: projectId, env, payload });
++    }
++
++    function handleClose() {
++        if (isCreating || isUpdating) {
++            return;
++        }
++
++        if (canWrite && hasChanges && !window.confirm("Are you sure you want to close without saving changes?")) {
++            return;
++        }
++
++        navigateToList();
++    }
++
++    return (
++        <div className="flex w-full flex-col">
++            <RouteFormHeader
++                title={mode === "create" ? `Create Job Sequence in ${env}` : `Edit Job Sequence in ${env}`}
++            />
++
++            {mode === "edit" && !scheduledJob ? (
++                <div className="flex min-h-[220px] items-center justify-center">
++                    <AppLoader />
++                </div>
++            ) : (
++                <JobSequenceForm
++                    projectId={projectId}
++                    env={env}
++                    candidates={candidates}
++                    isLoadingCandidates={isLoadingCandidates}
++                    isPending={isCreating || isUpdating}
++                    onSubmit={onSubmit}
++                    onHasChanges={setHasChanges}
++                    initialValues={scheduledJob}
++                    readOnly={!canWrite}
++                    stickyActions
++                    onClose={handleClose}
++                />
++            )}
++        </div>
++    );
++}
++
++interface Props {
++    mode: "create" | "edit";
++    projectId: string;
++    env: string;
++    scheduledJob?: AppScheduledJob;
++}
+diff --git a/src/application/modules/projects/routes/single-project/configuration/scheduled-jobs/form-route/index.ts b/src/application/modules/projects/routes/single-project/configuration/scheduled-jobs/form-route/index.ts
+new file mode 100644
+index 00000000..aca9f219
+--- /dev/null
++++ b/src/application/modules/projects/routes/single-project/configuration/scheduled-jobs/form-route/index.ts
+@@ -0,0 +1 @@
++export * from "./env-job-sequence-form-route.com";
+diff --git a/src/application/modules/projects/routes/single-project/configuration/scheduled-jobs/index.ts b/src/application/modules/projects/routes/single-project/configuration/scheduled-jobs/index.ts
+new file mode 100644
+index 00000000..3dea1c5e
+--- /dev/null
++++ b/src/application/modules/projects/routes/single-project/configuration/scheduled-jobs/index.ts
+@@ -0,0 +1,4 @@
++export * from "./route";
++export * from "./form-route";
++export * from "./create";
++export * from "./edit";
+diff --git a/src/application/modules/projects/routes/single-project/configuration/scheduled-jobs/route/index.ts b/src/application/modules/projects/routes/single-project/configuration/scheduled-jobs/route/index.ts
+new file mode 100644
+index 00000000..17db0a4f
+--- /dev/null
++++ b/src/application/modules/projects/routes/single-project/configuration/scheduled-jobs/route/index.ts
+@@ -0,0 +1 @@
++export * from "./project-scheduled-jobs.route.com";
+diff --git a/src/application/modules/projects/routes/single-project/configuration/scheduled-jobs/route/project-scheduled-jobs.route.com.tsx b/src/application/modules/projects/routes/single-project/configuration/scheduled-jobs/route/project-scheduled-jobs.route.com.tsx
+new file mode 100644
+index 00000000..af969d02
+--- /dev/null
++++ b/src/application/modules/projects/routes/single-project/configuration/scheduled-jobs/route/project-scheduled-jobs.route.com.tsx
+@@ -0,0 +1,35 @@
++import { dashedBorderBox } from "@lib/styles";
++import { cn } from "@lib/utils";
++import { useParams } from "react-router";
++import invariant from "tiny-invariant";
++import { ProjectProviderSettingsScopeHeader } from "~/projects/module-shared/components";
++import { getProjectEnvFilterParam, useSelectedProjectEnv } from "~/projects/module-shared/hooks";
++
++import { EnvScheduledJobsTable } from "../building-blocks";
++
++/** An env's scheduled jobs: there are none at the project scope, so an env has to be picked. */
++export function ProjectScheduledJobsRoute() {
++    const { id: projectId } = useParams<{ id: string }>();
++
++    invariant(projectId, "projectId must be defined");
++    const selectedEnv = useSelectedProjectEnv(projectId);
++    const scopedEnv = getProjectEnvFilterParam(selectedEnv);
++
++    return (
++        <div className="flex flex-col gap-4">
++            <ProjectProviderSettingsScopeHeader projectId={projectId} />
++            {scopedEnv ? (
++                <EnvScheduledJobsTable
++                    key={scopedEnv}
++                    projectId={projectId}
++                    env={scopedEnv}
++                />
++            ) : (
++                <div className={cn(dashedBorderBox, "w-fit text-sm leading-normal")}>
++                    Scheduled jobs belong to an env and its apps: pick an env in the top right to see them, or to create
++                    a job sequence that runs the jobs of its apps in order.
++                </div>
++            )}
++        </div>
++    );
++}
+diff --git a/src/application/modules/projects/routes/single-project/operations/tasks/route/project-tasks.route.com.tsx b/src/application/modules/projects/routes/single-project/operations/tasks/route/project-tasks.route.com.tsx
+index a8c0a9f4..0e308467 100644
+--- a/src/application/modules/projects/routes/single-project/operations/tasks/route/project-tasks.route.com.tsx
++++ b/src/application/modules/projects/routes/single-project/operations/tasks/route/project-tasks.route.com.tsx
+@@ -1,4 +1,4 @@
+-import { useParams } from "react-router";
++import { useParams, useSearchParams } from "react-router";
+ import invariant from "tiny-invariant";
+ import type { SystemTaskScope } from "~/operations/domain";
+ import { SystemTasksList } from "~/operations/routes/tasks";
+@@ -12,6 +12,9 @@ import { useAppNavigate } from "@application/shared/hooks/router";
+ export function ProjectTasksRoute() {
+     const { id: projectId = "" } = useParams<{ id: string }>();
+     const { navigate } = useAppNavigate();
++    const [searchParams] = useSearchParams();
++    // A job's "View Runs" opens the list filtered to it.
++    const targetId = searchParams.get("targetId") ?? undefined;
+ 
+     invariant(projectId, "projectId must be defined");
+     const selectedEnv = useSelectedProjectEnv(projectId);
+@@ -39,8 +42,9 @@ export function ProjectTasksRoute() {
+                 />
+             </div>
+             <SystemTasksList
+-                key={`${projectId}-${scopedEnv ?? "all"}`}
++                key={`${projectId}-${scopedEnv ?? "all"}-${targetId ?? "all"}`}
+                 scope={scope}
++                initialFilters={targetId ? { targetId } : undefined}
+                 onSelectTask={task => {
+                     navigate.modules(ROUTE.projects.single.operations.tasks.details.$route(projectId, task.id));
+                 }}
+diff --git a/src/application/shared/constants/route.constants.ts b/src/application/shared/constants/route.constants.ts
+index c7ad40e1..48ae4563 100644
+--- a/src/application/shared/constants/route.constants.ts
++++ b/src/application/shared/constants/route.constants.ts
+@@ -972,6 +972,22 @@ export const ROUTE = {
+                     },
+                 },
+ 
++                scheduledJobs: {
++                    $pattern: "projects/:id/integrations/sched-jobs",
++                    $route: (id: string) => `/projects/${id}/integrations/sched-jobs/`,
++
++                    createSequence: {
++                        $pattern: "projects/:id/integrations/sched-jobs/create-sequence",
++                        $route: (id: string) => `/projects/${id}/integrations/sched-jobs/create-sequence/`,
++                    },
++
++                    edit: {
++                        $pattern: "projects/:id/integrations/sched-jobs/:scheduledJobId/edit",
++                        $route: (id: string, scheduledJobId: string) =>
++                            `/projects/${id}/integrations/sched-jobs/${scheduledJobId}/edit/`,
++                    },
++                },
++
+                 commandPipes: {
+                     $pattern: "projects/:id/integrations/command-pipes",
+                     $route: (id: string) => `/projects/${id}/integrations/command-pipes/`,
+diff --git a/src/application/shared/utils/setting-usage-link.ts b/src/application/shared/utils/setting-usage-link.ts
+index 9f7dbae1..051ac8e7 100644
+--- a/src/application/shared/utils/setting-usage-link.ts
++++ b/src/application/shared/utils/setting-usage-link.ts
+@@ -81,6 +81,8 @@ const PROJECT_HREF: Record<string, ProjectHref> = {
+     "notification": P.notificationTargets.edit.$route,
+     "registry-auth": P.registryAuth.edit.$route,
+     "repo-webhook": P.webhooks.edit.$route,
++    // An env's job sequence; the page edits it in the env picked at the top.
++    "sched-job": P.scheduledJobs.edit.$route,
+     "secret": P.secrets.edit.$route,
+     "ssh-key": P.sshKeys.edit.$route,
+     "ssl-cert": P.sslCertificates.edit.$route,

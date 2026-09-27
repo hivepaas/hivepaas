@@ -1,0 +1,226 @@
+diff --git a/hivepaas_app/usecase/settings/schedjobuc/schedjobdto/sequence_test.go b/hivepaas_app/usecase/settings/schedjobuc/schedjobdto/sequence_test.go
+new file mode 100644
+index 00000000..2cf5cbe8
+--- /dev/null
++++ b/hivepaas_app/usecase/settings/schedjobuc/schedjobdto/sequence_test.go
+@@ -0,0 +1,147 @@
++package schedjobdto
++
++import (
++	"strings"
++	"testing"
++	"time"
++
++	"github.com/stretchr/testify/assert"
++
++	"github.com/hivepaas/hivepaas/hivepaas_app/base"
++	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
++	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
++	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/translation"
++	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings/commandtemplateuc/commandtemplatedto"
++)
++
++const (
++	jobA = "01JAB9XED0GTXBSQDFVYAJ8WA7"
++	jobB = "01JAB9XED0GTXBSQDFVYAJ8WA8"
++)
++
++func sequenceReq(jobIDs ...string) *CreateSchedJobReq {
++	req := NewCreateSchedJobReq()
++	req.SchedJobBaseReq = &SchedJobBaseReq{
++		Name:     "release",
++		JobType:  base.SchedJobTypeJobSequence,
++		Sequence: &SchedJobSequenceReq{},
++	}
++	for _, id := range jobIDs {
++		req.Sequence.Steps = append(req.Sequence.Steps, &SchedJobSequenceStepReq{Job: basedto.ObjectIDReq{ID: id}})
++	}
++	return req
++}
++
++// invalidFields is the paths of the fields the request fails on, joined.
++func invalidFields(t *testing.T, req *CreateSchedJobReq) string {
++	t.Helper()
++	assert.NoError(t, req.ModifyRequest())
++	errs := req.Validate()
++	if len(errs) == 0 {
++		return ""
++	}
++	paths := make([]string, 0, len(errs))
++	for _, inner := range errs.Build(translation.LangEn).InnerErrors {
++		paths = append(paths, inner.Path)
++	}
++	return strings.Join(paths, " ")
++}
++
++func TestASequenceIsValidWithoutASchedule(t *testing.T) {
++	req := sequenceReq(jobA, jobB, jobA)
++
++	assert.Equal(t, "", invalidFields(t, req))
++	assert.Equal(t, base.SchedJobSeqModeSequential, req.Sequence.Mode, "the mode defaults to sequential")
++	assert.Equal(t, base.SchedJobSeqOnFailureStop, req.Sequence.OnFailure, "on failure defaults to stop")
++
++	job := req.ToEntity()
++	assert.Nil(t, job.Schedule)
++	if assert.NotNil(t, job.Sequence) && assert.Len(t, job.Sequence.Steps, 3) {
++		assert.Equal(t, jobB, job.Sequence.Steps[1].Job.ID)
++	}
++}
++
++func TestASequenceNeedsBetweenOneAndFiftySteps(t *testing.T) {
++	assert.Contains(t, invalidFields(t, sequenceReq()), "sequence.steps")
++
++	ids := make([]string, base.SchedJobSeqMaxSteps+1)
++	for i := range ids {
++		ids[i] = jobA
++	}
++	assert.Contains(t, invalidFields(t, sequenceReq(ids...)), "sequence.steps")
++	assert.Equal(t, "", invalidFields(t, sequenceReq(ids[:base.SchedJobSeqMaxSteps]...)))
++}
++
++func TestASequenceStepNamesAJob(t *testing.T) {
++	assert.Contains(t, invalidFields(t, sequenceReq("")), "sequence.steps[0].job")
++}
++
++func TestASequenceRefusesAnUnknownModeOrFailurePolicy(t *testing.T) {
++	req := sequenceReq(jobA)
++	req.Sequence.Mode = "parallel"
++	assert.Contains(t, invalidFields(t, req), "sequence.mode")
++
++	req = sequenceReq(jobA)
++	req.Sequence.OnFailure = "retry"
++	assert.Contains(t, invalidFields(t, req), "sequence.onFailure")
++}
++
++func TestASequenceRunsNoCommandOfItsOwn(t *testing.T) {
++	req := sequenceReq(jobA)
++	req.Command = &commandtemplatedto.CommandTemplateBaseReq{Command: "echo hi"}
++	assert.Contains(t, invalidFields(t, req), "command")
++
++	req = sequenceReq(jobA)
++	req.App = basedto.ObjectIDReq{ID: jobB}
++	assert.Contains(t, invalidFields(t, req), "app")
++}
++
++func TestOnlyASequenceHasSteps(t *testing.T) {
++	req := sequenceReq(jobA)
++	req.JobType = base.SchedJobTypeSystemCleanup
++	req.Schedule = &ScheduleReq{Interval: 3600e9, InitialTime: time.Now()}
++	assert.Contains(t, invalidFields(t, req), "sequence")
++}
++
++func TestAnyJobMayGoWithoutASchedule(t *testing.T) {
++	req := NewCreateSchedJobReq()
++	req.SchedJobBaseReq = &SchedJobBaseReq{Name: "cleanup", JobType: base.SchedJobTypeSystemCleanup}
++	assert.Equal(t, "", invalidFields(t, req))
++	assert.Nil(t, req.ToEntity().Schedule)
++}
++
++func TestTransformSchedJobGivesASequencesSteps(t *testing.T) {
++	job := &entity.SchedJob{
++		JobType: base.SchedJobTypeJobSequence,
++		Sequence: &entity.SchedJobSequence{
++			Mode: base.SchedJobSeqModeSequential, OnFailure: base.SchedJobSeqOnFailureContinue,
++			Steps: []*entity.SchedJobSequenceStep{
++				{Job: entity.ObjectID{ID: jobA}, Name: "migrate"},
++				{Job: entity.ObjectID{ID: jobB}},
++			},
++		},
++	}
++	setting := &entity.Setting{ID: "seq", Type: base.SettingTypeSchedJob, Name: "release"}
++	setting.MustSetData(job)
++	refObjects := entity.NewRefObjects()
++	refObjects.RefSettings[jobA] = &entity.Setting{ID: jobA, Type: base.SettingTypeSchedJob, Name: "db migrate",
++		Status: base.SettingStatusActive, Scope: base.ObjectScopeApp, ObjectID: "app-1"}
++	refObjects.RefApps["app-1"] = &entity.App{ID: "app-1", Name: "backend"}
++
++	resp, err := TransformSchedJob(setting, refObjects, false)
++
++	assert.NoError(t, err)
++	assert.Nil(t, resp.Schedule, "no schedule")
++	assert.Empty(t, resp.NextRuns)
++	if assert.NotNil(t, resp.Sequence) && assert.Len(t, resp.Sequence.Steps, 2) {
++		assert.Equal(t, base.SchedJobSeqOnFailureContinue, resp.Sequence.OnFailure)
++		assert.Equal(t, "migrate", resp.Sequence.Steps[0].Name)
++		assert.Equal(t, "db migrate", resp.Sequence.Steps[0].Job.Name)
++		if assert.NotNil(t, resp.Sequence.Steps[0].App) {
++			assert.Equal(t, "backend", resp.Sequence.Steps[0].App.Name, "whose job it is")
++		}
++		assert.Nil(t, resp.Sequence.Steps[1].App)
++		assert.Equal(t, base.SettingStatusMissing, resp.Sequence.Steps[1].Job.Status, "a job not loaded")
++		assert.Equal(t, jobB, resp.Sequence.Steps[1].Job.ID)
++	}
++}
+diff --git a/hivepaas_app/usecase/settings/schedjobuc/sequence_test.go b/hivepaas_app/usecase/settings/schedjobuc/sequence_test.go
+new file mode 100644
+index 00000000..c18e9ee1
+--- /dev/null
++++ b/hivepaas_app/usecase/settings/schedjobuc/sequence_test.go
+@@ -0,0 +1,67 @@
++package schedjobuc
++
++import (
++	"errors"
++	"testing"
++
++	"github.com/stretchr/testify/assert"
++
++	"github.com/hivepaas/hivepaas/hivepaas_app/base"
++	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
++	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
++)
++
++func TestJobSequencesLiveInAppsAndEnvs(t *testing.T) {
++	seq := base.SchedJobTypeJobSequence
++	cmd := base.SchedJobTypeContainerCommand
++
++	assert.NoError(t, checkJobTypeInScope(base.ObjectScopeApp, seq))
++	assert.NoError(t, checkJobTypeInScope(base.ObjectScopeProjectEnv, seq))
++	assert.NoError(t, checkJobTypeInScope(base.ObjectScopeApp, cmd))
++	assert.NoError(t, checkJobTypeInScope(base.ObjectScopeGlobal, base.SchedJobTypeSystemCleanup))
++
++	for _, scope := range []base.ObjectScopeType{base.ObjectScopeGlobal, base.ObjectScopeProject} {
++		err := checkJobTypeInScope(scope, seq)
++		assert.True(t, errors.Is(err, hperrors.ErrArgumentInvalid), "%s: got %v", scope, err)
++	}
++	err := checkJobTypeInScope(base.ObjectScopeProjectEnv, cmd)
++	assert.True(t, errors.Is(err, hperrors.ErrArgumentInvalid), "an env holds sequences only, for now: got %v", err)
++}
++
++func TestASequencesMembersAreCheckedApartFromItsOtherReferences(t *testing.T) {
++	job := &entity.SchedJob{
++		JobType:      base.SchedJobTypeJobSequence,
++		Notification: nil,
++		Sequence: &entity.SchedJobSequence{Steps: []*entity.SchedJobSequenceStep{
++			{Job: entity.ObjectID{ID: "job-a"}}, {Job: entity.ObjectID{ID: "job-b"}},
++		}},
++	}
++
++	assert.ElementsMatch(t, []string{"job-a", "job-b"}, job.GetRefObjectIDs().RefSettingIDs)
++	assert.Empty(t, verifyingRefIDs(job).RefSettingIDs,
++		"members are checked by checkSequenceMembers, which can see an env's apps and a disabled job")
++}
++
++func TestMemberProblem(t *testing.T) {
++	appScope := &entity.ObjectScope{ScopeType: base.ObjectScopeApp, AppID: "app-1"}
++	envScope := &entity.ObjectScope{ScopeType: base.ObjectScopeProjectEnv, ProjectEnvID: "env-1"}
++	appJob := func(appID string, jobType base.SchedJobType) *entity.Setting {
++		return &entity.Setting{ID: "job", Scope: base.ObjectScopeApp, ObjectID: appID, Kind: string(jobType),
++			Status: base.SettingStatusDisabled}
++	}
++	inEnv := &entity.App{ID: "app-2", ProjectEnvID: "env-1"}
++	elsewhere := &entity.App{ID: "app-3", ProjectEnvID: "env-2"}
++	cmd := base.SchedJobTypeContainerCommand
++
++	assert.Empty(t, memberProblem(appScope, appJob("app-1", cmd), nil), "the app's own job, even disabled")
++	assert.Empty(t, memberProblem(envScope, appJob("app-2", cmd), inEnv), "a job of an app in the env")
++
++	assert.Contains(t, memberProblem(appScope, nil, nil), "not found")
++	assert.Contains(t, memberProblem(appScope, appJob("app-9", cmd), nil), "another app")
++	assert.Contains(t, memberProblem(envScope, appJob("app-3", cmd), elsewhere), "outside this env")
++	assert.Contains(t, memberProblem(envScope, appJob("app-4", cmd), nil), "outside this env")
++	assert.Contains(t, memberProblem(appScope, appJob("app-1", base.SchedJobTypeJobSequence), nil),
++		"another sequence")
++	envJob := &entity.Setting{ID: "job", Scope: base.ObjectScopeProjectEnv, ObjectID: "env-1", Kind: string(cmd)}
++	assert.Contains(t, memberProblem(envScope, envJob, nil), "not an app's job")
++}

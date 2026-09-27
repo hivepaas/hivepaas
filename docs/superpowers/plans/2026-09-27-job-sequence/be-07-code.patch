@@ -1,0 +1,124 @@
+diff --git a/hivepaas_app/service/specservice/specserviceimpl/import_apply_apps.go b/hivepaas_app/service/specservice/specserviceimpl/import_apply_apps.go
+index 8b11125e..4205fc90 100644
+--- a/hivepaas_app/service/specservice/specserviceimpl/import_apply_apps.go
++++ b/hivepaas_app/service/specservice/specserviceimpl/import_apply_apps.go
+@@ -56,6 +56,22 @@ func (w *writer) writeUpdatedApps(ctx context.Context) error {
+ 	return nil
+ }
+ 
++// scheduleEnvJobs schedules, in the transaction, the envs' scheduled jobs the
++// import wrote, as writing one through its screen does.
++func (w *writer) scheduleEnvJobs(ctx context.Context) error {
++	var jobs []*entity.Setting
++	for _, setting := range w.written {
++		if setting.Type == base.SettingTypeSchedJob && setting.Scope == base.ObjectScopeProjectEnv {
++			jobs = append(jobs, setting)
++		}
++	}
++	if len(jobs) == 0 {
++		return nil
++	}
++	tx, _ := w.p.db.(database.Tx)
++	return hperrors.Wrap(w.p.s.taskQueue.ScheduleTasksForSchedJobs(ctx, tx, jobs, true))
++}
++
+ // queueDeployment creates the deployment of an app's source, to be scheduled
+ // once the transaction has committed.
+ func (w *writer) queueDeployment(ctx context.Context, app *entity.App, source *entity.Setting) error {
+diff --git a/hivepaas_app/service/specservice/specserviceimpl/import_diff.go b/hivepaas_app/service/specservice/specserviceimpl/import_diff.go
+index c2f72f6c..fa094bb7 100644
+--- a/hivepaas_app/service/specservice/specserviceimpl/import_diff.go
++++ b/hivepaas_app/service/specservice/specserviceimpl/import_diff.go
+@@ -51,7 +51,7 @@ func (p *planner) settingsChanges(
+ 	// with the app.
+ 	scoped := prefix == ""
+ 	change := func(typ base.SettingType, name string, found bool) {
+-		if policy := importPolicyFor(typ); scoped && policy.skip != "" {
++		if policy := importPolicyIn(typ, settingsScope(node)); scoped && policy.skip != "" {
+ 			node.Issues = append(node.Issues, specmodel.Issue{
+ 				Severity: specmodel.SeveritySkipped, Code: specmodel.CodeTypeNotImportable, Path: node.Path,
+ 				Detail: map[string]any{refInSetting: name, "reason": policy.skip},
+diff --git a/hivepaas_app/service/specservice/specserviceimpl/import_policy.go b/hivepaas_app/service/specservice/specserviceimpl/import_policy.go
+index fc6ab6ed..f1d4669c 100644
+--- a/hivepaas_app/service/specservice/specserviceimpl/import_policy.go
++++ b/hivepaas_app/service/specservice/specserviceimpl/import_policy.go
+@@ -112,3 +112,18 @@ func importPolicyFor(typ base.SettingType) importPolicy {
+ 	}
+ 	return policy
+ }
++
++// scopedPolicies are the policies a scope gives a type in place of its own.
++var scopedPolicies = map[base.ObjectScopeType]map[base.SettingType]importPolicy{
++	// An env's scheduled jobs are job sequences, whose tasks the writer schedules
++	// with the apps' jobs (scheduleEnvJobs).
++	base.ObjectScopeProjectEnv: {base.SettingTypeSchedJob: {}},
++}
++
++// importPolicyIn is the policy of a type in a scope.
++func importPolicyIn(typ base.SettingType, scope base.ObjectScopeType) importPolicy {
++	if policy, found := scopedPolicies[scope][typ]; found {
++		return policy
++	}
++	return importPolicyFor(typ)
++}
+diff --git a/hivepaas_app/service/specservice/specserviceimpl/import_write.go b/hivepaas_app/service/specservice/specserviceimpl/import_write.go
+index 0bd1e2a9..486a2f07 100644
+--- a/hivepaas_app/service/specservice/specserviceimpl/import_write.go
++++ b/hivepaas_app/service/specservice/specserviceimpl/import_write.go
+@@ -90,6 +90,9 @@ func (w *writer) write(ctx context.Context) error {
+ 	if err := w.writeUpdatedApps(ctx); err != nil {
+ 		return err
+ 	}
++	if err := w.scheduleEnvJobs(ctx); err != nil {
++		return err
++	}
+ 	if err := w.prepareUpdatedServices(ctx); err != nil {
+ 		return err
+ 	}
+@@ -262,7 +265,7 @@ func (w *writer) writtenNames(node *specmodel.PlanNode) []string {
+ 		if slices.Contains(refused, name) {
+ 			continue
+ 		}
+-		if _, typ, found := settingBody(settings, block, key); found && importPolicyFor(typ).skip == "" {
++		if _, typ, found := settingBody(settings, block, key); found && importPolicyIn(typ, settingsScope(node)).skip == "" {
+ 			names = append(names, name)
+ 		}
+ 	}
+@@ -277,18 +280,31 @@ func settingPath(node *specmodel.PlanNode, name string) string {
+ 
+ // scopeOf is the scope a settings node writes into, and the id of its object.
+ func (w *writer) scopeOf(node *specmodel.PlanNode) (base.ObjectScopeType, string) {
++	switch scope := settingsScope(node); scope { //nolint:exhaustive // the scopes a node holds settings of
++	case base.ObjectScopeGlobal:
++		return scope, ""
++	case base.ObjectScopeApp:
++		return scope, w.appIDs[node.Path]
++	case base.ObjectScopeProjectEnv:
++		place := w.p.envPlace(strings.TrimSuffix(node.Path, "/settings"))
++		return scope, projecthelper.CalcProjectEnvID(w.projectID(place.project), place.env)
++	}
++	key := strings.TrimSuffix(strings.TrimPrefix(node.Path, projectsSegment+"/"), "/settings")
++	return base.ObjectScopeProject, w.projectID(key)
++}
++
++// settingsScope is the kind of scope a settings node's settings are in.
++func settingsScope(node *specmodel.PlanNode) base.ObjectScopeType {
+ 	switch node.Kind { //nolint:exhaustive // projects and envs hold no settings of their own
+ 	case specmodel.NodeKindGlobal:
+-		return base.ObjectScopeGlobal, ""
++		return base.ObjectScopeGlobal
+ 	case specmodel.NodeKindApp:
+-		return base.ObjectScopeApp, w.appIDs[node.Path]
++		return base.ObjectScopeApp
+ 	}
+ 	if strings.Contains(node.Path, "/envs/") {
+-		place := w.p.envPlace(strings.TrimSuffix(node.Path, "/settings"))
+-		return base.ObjectScopeProjectEnv, projecthelper.CalcProjectEnvID(w.projectID(place.project), place.env)
++		return base.ObjectScopeProjectEnv
+ 	}
+-	key := strings.TrimSuffix(strings.TrimPrefix(node.Path, projectsSegment+"/"), "/settings")
+-	return base.ObjectScopeProject, w.projectID(key)
++	return base.ObjectScopeProject
+ }
+ 
+ // scopeRows are a scope's settings, found the way export keys them.

@@ -1,0 +1,518 @@
+diff --git a/hivepaas_app/service/containerexecservice/containerexecserviceimpl/exec.go b/hivepaas_app/service/containerexecservice/containerexecserviceimpl/exec.go
+index d4bbafbf..81e7615b 100644
+--- a/hivepaas_app/service/containerexecservice/containerexecserviceimpl/exec.go
++++ b/hivepaas_app/service/containerexecservice/containerexecserviceimpl/exec.go
+@@ -51,7 +51,9 @@ func (s *service) ContainerExec(
+ 			return nil, hperrors.Wrap(sleepErr)
+ 		}
+ 	}
+-	return nil, hperrors.Wrap(lastErr)
++	// The last attempt's response, when it has one: a command that ran and
++	// exited non-zero says where, and with what code.
++	return resp, hperrors.Wrap(lastErr)
+ }
+ 
+ func (s *service) containerExec(
+@@ -65,32 +67,14 @@ func (s *service) containerExec(
+ 		logStore = tasklog.NewNullStore()
+ 	}
+ 
+-	serviceID := req.App.ServiceID
+-	if serviceID == "" {
+-		return nil, false, hperrors.NewNotFound("Swarm service")
+-	}
+-
+-	inspectResp, err := s.dockerManager.ServiceInspect(ctx, serviceID)
+-	if err != nil {
+-		return nil, true, hperrors.Wrap(err)
+-	}
+-	svcMode := &inspectResp.Service.Spec.Mode
+-	if svcMode.Replicated != nil && (svcMode.Replicated.Replicas == nil || *svcMode.Replicated.Replicas == 0) {
+-		return &containerexecservice.ContainerExecResp{ExecStarted: false}, false, nil
+-	}
+-
+-	task, _, err := s.dockerManager.ServiceTaskGetRunning(ctx, serviceID,
+-		gofn.Coalesce(req.TaskMinRunningDuration, taskFindMinRunningDuration),
+-		gofn.Coalesce(req.TaskFindRetryMax, taskFindRetryMax),
+-		gofn.Coalesce(req.TaskFindRetryDelay, taskFindRetryDelay),
+-		nil)
+-	if err != nil {
+-		return nil, false, hperrors.Wrap(err)
+-	}
+-	if task == nil {
+-		_ = logStore.Add(ctx, tasklog.NewWarnFrame("No running task found for service: "+serviceID,
+-			tasklog.TsNow))
+-		return nil, false, hperrors.NewNotFound("Running task of service")
++	containerID, nodeID := req.ContainerID, req.NodeID
++	if containerID == "" {
++		var started bool
++		containerID, nodeID, started, retryable, err = s.pickContainer(ctx, req, logStore)
++		if err != nil || !started {
++			return gofn.If(started, nil, &containerexecservice.ContainerExecResp{ExecStarted: false}),
++				retryable, err
++		}
+ 	}
+ 
+ 	currNodeID, err := s.dockerManager.NodeCurrentID(ctx)
+@@ -98,7 +82,7 @@ func (s *service) containerExec(
+ 		return nil, true, hperrors.Wrap(err)
+ 	}
+ 
+-	isRemote := task.NodeID != "" && task.NodeID != currNodeID
++	isRemote := nodeID != "" && nodeID != currNodeID
+ 	if config.Current().DevMode.Enabled && config.Current().DevMode.ForceAgentLocal {
+ 		isRemote = true
+ 	}
+@@ -107,14 +91,13 @@ func (s *service) containerExec(
+ 		logStore:     logStore,
+ 		agentService: s.agentService,
+ 		dockerClient: gofn.If(isRemote, nil, s.dockerManager),
+-		targetNodeID: task.NodeID,
++		targetNodeID: nodeID,
+ 		retryable:    true,
+ 	}
+ 
+-	containerID := task.Status.ContainerStatus.ContainerID
+ 	resp = &containerexecservice.ContainerExecResp{
+ 		ContainerID:    containerID,
+-		NodeID:         task.NodeID,
++		NodeID:         nodeID,
+ 		IsRemoteExec:   isRemote,
+ 		CloseFunc:      execHelper.Close,
+ 		ExecResizeFunc: execHelper.ExecResize,
+@@ -159,10 +142,11 @@ func (s *service) containerExec(
+ 	if err != nil {
+ 		return nil, retryable, hperrors.Wrap(err)
+ 	}
++	resp.ExitCode = exitCode
+ 	if exitCode != 0 {
+ 		_ = logStore.AddRedacted(ctx, tasklog.NewErrFrame(fmt.Sprintf(
+ 			"Command execution failed with exit code: %v", exitCode), tasklog.TsNow))
+-		return nil, false, hperrors.Wrap(hperrors.ErrInfraActionFailed)
++		return resp, false, hperrors.Wrap(hperrors.ErrInfraActionFailed)
+ 	}
+ 
+ 	return resp, false, nil
+@@ -325,3 +309,41 @@ func (h *containerExecHelper) calcIsRetryable(
+ 	}
+ 	return nil
+ }
++
++// pickContainer is a running container of the app's service to run in, and
++// its node. started is false for a service scaled to nothing: there is nothing
++// to run in, and that is not an error.
++func (s *service) pickContainer(
++	ctx context.Context,
++	req *containerexecservice.ContainerExecReq,
++	logStore *tasklog.Store,
++) (containerID, nodeID string, started, retryable bool, err error) {
++	serviceID := req.App.ServiceID
++	if serviceID == "" {
++		return "", "", true, false, hperrors.NewNotFound("Swarm service")
++	}
++
++	inspectResp, err := s.dockerManager.ServiceInspect(ctx, serviceID)
++	if err != nil {
++		return "", "", true, true, hperrors.Wrap(err)
++	}
++	svcMode := &inspectResp.Service.Spec.Mode
++	if svcMode.Replicated != nil && (svcMode.Replicated.Replicas == nil || *svcMode.Replicated.Replicas == 0) {
++		return "", "", false, false, nil
++	}
++
++	task, _, err := s.dockerManager.ServiceTaskGetRunning(ctx, serviceID,
++		gofn.Coalesce(req.TaskMinRunningDuration, taskFindMinRunningDuration),
++		gofn.Coalesce(req.TaskFindRetryMax, taskFindRetryMax),
++		gofn.Coalesce(req.TaskFindRetryDelay, taskFindRetryDelay),
++		nil)
++	if err != nil {
++		return "", "", true, false, hperrors.Wrap(err)
++	}
++	if task == nil {
++		_ = logStore.Add(ctx, tasklog.NewWarnFrame("No running task found for service: "+serviceID,
++			tasklog.TsNow))
++		return "", "", true, false, hperrors.NewNotFound("Running task of service")
++	}
++	return task.Status.ContainerStatus.ContainerID, task.NodeID, true, false, nil
++}
+diff --git a/hivepaas_app/service/containerexecservice/types.go b/hivepaas_app/service/containerexecservice/types.go
+index 6ac57869..3a057d29 100644
+--- a/hivepaas_app/service/containerexecservice/types.go
++++ b/hivepaas_app/service/containerexecservice/types.go
+@@ -22,11 +22,19 @@ type ContainerExecReq struct {
+ 	LogStore               *tasklog.Store
+ 	StdoutWriter           io.Writer
+ 	StdinReader            io.Reader
++	// ContainerID and NodeID run the command in that container rather than in
++	// one the app's running tasks offer: a second command that has to meet the
++	// files the first left, in an app with more than one replica.
++	ContainerID string
++	NodeID      string
+ }
+ 
+ type ContainerExecResp struct {
+-	ContainerID      string
+-	NodeID           string
++	ContainerID string
++	NodeID      string
++	// ExitCode is the command's. A command that exits non-zero is an error, and
++	// the response comes with it, for its container and its exit code.
++	ExitCode         int
+ 	ExecStarted      bool
+ 	IsRemoteExec     bool
+ 	ExecCreateResult *client.ExecCreateResult
+diff --git a/hivepaas_app/service/schedjobexecservice/schedjobexecserviceimpl/exec.go b/hivepaas_app/service/schedjobexecservice/schedjobexecserviceimpl/exec.go
+index 99cfebb9..f10094ad 100644
+--- a/hivepaas_app/service/schedjobexecservice/schedjobexecserviceimpl/exec.go
++++ b/hivepaas_app/service/schedjobexecservice/schedjobexecserviceimpl/exec.go
+@@ -53,6 +53,7 @@ func (s *service) SchedJobExec(
+ 	if err != nil {
+ 		return nil, hperrors.Wrap(err)
+ 	}
++	env = append(env, sequenceEnv(req.Sequence)...)
+ 
+ 	stdoutWriter, err := s.initOutputWriter(ctx, data)
+ 	if err != nil {
+@@ -61,7 +62,7 @@ func (s *service) SchedJobExec(
+ 
+ 	defer s.cleanup(err, data)
+ 
+-	_, err = s.containerExecService.ContainerExec(ctx, &containerexecservice.ContainerExecReq{
++	execResp, err := s.containerExecService.ContainerExec(ctx, &containerexecservice.ContainerExecReq{
+ 		App:                    req.DestApp,
+ 		TaskMinRunningDuration: req.TaskMinRunningDuration,
+ 		TaskFindRetryMax:       req.TaskFindRetryMax,
+@@ -85,10 +86,19 @@ func (s *service) SchedJobExec(
+ 		},
+ 	})
+ 
++	resp := &schedjobexecservice.SchedJobExecResp{}
++	if execResp != nil && execResp.ExecStarted {
++		exitCode := execResp.ExitCode
++		resp.ExitCode = &exitCode
++	}
++	if req.Sequence != nil {
++		// Read even after a failure: a step may say why in its outputs.
++		resp.Outputs = s.readOutputs(ctx, req, execResp)
++	}
++
+ 	err = s.finalize(ctx, db, err, data)
+ 	if err != nil {
+-		return nil, hperrors.Wrap(err)
++		return resp, hperrors.Wrap(err)
+ 	}
+-
+-	return &schedjobexecservice.SchedJobExecResp{}, nil
++	return resp, nil
+ }
+diff --git a/hivepaas_app/service/schedjobexecservice/schedjobexecserviceimpl/exec_sequence.go b/hivepaas_app/service/schedjobexecservice/schedjobexecserviceimpl/exec_sequence.go
+new file mode 100644
+index 00000000..763305b4
+--- /dev/null
++++ b/hivepaas_app/service/schedjobexecservice/schedjobexecserviceimpl/exec_sequence.go
+@@ -0,0 +1,184 @@
++package schedjobexecserviceimpl
++
++import (
++	"bufio"
++	"bytes"
++	"context"
++	"encoding/json"
++	"fmt"
++	"regexp"
++	"strconv"
++	"strings"
++
++	"github.com/moby/moby/client"
++
++	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
++	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/tasklog"
++	"github.com/hivepaas/hivepaas/hivepaas_app/service/containerexecservice"
++	"github.com/hivepaas/hivepaas/hivepaas_app/service/schedjobexecservice"
++)
++
++const (
++	// outputsMaxSize is the most of a step's output file that is read.
++	outputsMaxSize = 64 * 1024
++)
++
++var outputKeyRegex = regexp.MustCompile(`^[A-Za-z_][A-Za-z0-9_]*$`)
++
++type seqStepResultEnv struct {
++	Job        string `json:"job"`
++	Name       string `json:"name,omitempty"`
++	Status     string `json:"status"`
++	ExitCode   *int   `json:"exitCode,omitempty"`
++	Error      string `json:"error,omitempty"`
++	DurationMs int64  `json:"durationMs,omitempty"`
++}
++
++type seqStepOutputsEnv struct {
++	Job     string            `json:"job"`
++	Name    string            `json:"name,omitempty"`
++	Outputs map[string]string `json:"outputs"`
++}
++
++// sequenceEnv is what a step of a job sequence is told: which step it is, how
++// the earlier steps went, what they output, and where to write its own
++// outputs. Nothing outside a sequence. HIVEPAAS_, not HP_: HP_ is the app's
++// own configuration.
++func sequenceEnv(step *schedjobexecservice.SequenceStep) []string {
++	if step == nil {
++		return nil
++	}
++	results := make([]*seqStepResultEnv, 0, len(step.Earlier))
++	outputs := make([]*seqStepOutputsEnv, 0, len(step.Earlier))
++	for _, earlier := range step.Earlier {
++		result := &seqStepResultEnv{
++			Job:      earlier.Job.ID,
++			Name:     earlier.Name,
++			Status:   string(earlier.Status),
++			ExitCode: earlier.ExitCode,
++			Error:    earlier.Error,
++		}
++		if !earlier.StartedAt.IsZero() && !earlier.EndedAt.IsZero() {
++			result.DurationMs = earlier.EndedAt.Sub(earlier.StartedAt).Milliseconds()
++		}
++		results = append(results, result)
++		stepOutputs := earlier.Outputs
++		if stepOutputs == nil {
++			stepOutputs = map[string]string{}
++		}
++		outputs = append(outputs, &seqStepOutputsEnv{Job: earlier.Job.ID, Name: earlier.Name, Outputs: stepOutputs})
++	}
++	resultsJSON, _ := json.Marshal(results)
++	outputsJSON, _ := json.Marshal(outputs)
++
++	env := []string{
++		"HIVEPAAS_SEQ_STEP=" + strconv.Itoa(step.Step),
++		"HIVEPAAS_SEQ_STEPS=" + strconv.Itoa(step.Steps),
++		"HIVEPAAS_SEQ_RESULTS=" + string(resultsJSON),
++		"HIVEPAAS_SEQ_OUTPUTS=" + string(outputsJSON),
++		"HIVEPAAS_OUTPUT=" + step.OutputFile,
++	}
++	var prev *entity.SchedJobSeqStepResult
++	if n := len(step.Earlier); n > 0 {
++		prev = step.Earlier[n-1]
++	}
++	if prev == nil {
++		return append(env, "HIVEPAAS_SEQ_PREV_STATUS=")
++	}
++	env = append(env, "HIVEPAAS_SEQ_PREV_STATUS="+string(prev.Status))
++	for key, value := range prev.Outputs {
++		env = append(env, "HIVEPAAS_SEQ_OUTPUT_"+strings.ToUpper(key)+"="+value)
++	}
++	return env
++}
++
++// parseOutputs reads a step's output file: KEY=value lines, the value as it
++// stands after the first '='. Blank lines and # comments are skipped; a line
++// that breaks the rules is left out with a warning, and so is what lies past
++// the first 64 KB.
++func parseOutputs(data []byte) (map[string]string, []string) {
++	var warnings []string
++	tooLong := len(data) > outputsMaxSize
++	if tooLong {
++		data = data[:outputsMaxSize]
++		if i := bytes.LastIndexByte(data, '\n'); i >= 0 {
++			data = data[:i+1]
++		}
++	}
++	outputs := map[string]string{}
++	scanner := bufio.NewScanner(bytes.NewReader(data))
++	scanner.Buffer(nil, outputsMaxSize+1)
++	for n := 1; scanner.Scan(); n++ {
++		line := strings.TrimSuffix(scanner.Text(), "\r")
++		if strings.TrimSpace(line) == "" || strings.HasPrefix(strings.TrimSpace(line), "#") {
++			continue
++		}
++		key, value, found := strings.Cut(line, "=")
++		if !found || !outputKeyRegex.MatchString(key) {
++			warnings = append(warnings, fmt.Sprintf("output line %d is not KEY=value with a KEY of letters, "+
++				"digits and _, not starting with a digit; left out", n))
++			continue
++		}
++		outputs[key] = value
++	}
++	if tooLong {
++		warnings = append(warnings, "the output file is over 64 KB; what follows the first 64 KB is left out")
++	}
++	return outputs, warnings
++}
++
++// readOutputs reads and deletes a step's output file, with a second command in
++// the container the step ran in. A file that cannot be read - no shell in the
++// container, a container gone - is a warning and no outputs, never a failed
++// step.
++func (s *service) readOutputs(
++	ctx context.Context,
++	req *schedjobexecservice.SchedJobExecReq,
++	execResp *containerexecservice.ContainerExecResp,
++) map[string]string {
++	if execResp == nil || execResp.ContainerID == "" {
++		return nil
++	}
++	buf := &limitedBuffer{max: outputsMaxSize + 1}
++	_, err := s.containerExecService.ContainerExec(ctx, &containerexecservice.ContainerExecReq{
++		App:          req.DestApp,
++		ContainerID:  execResp.ContainerID,
++		NodeID:       execResp.NodeID,
++		LogStore:     tasklog.NewNullStore(),
++		StdoutWriter: buf,
++		ExecOptions: func(opts *client.ExecCreateOptions) {
++			opts.AttachStdout = true
++			opts.AttachStderr = true
++			opts.Cmd = []string{"sh", "-c", `cat "$1" 2>/dev/null; rm -f "$1"`, "sh", req.Sequence.OutputFile}
++		},
++	})
++	if err != nil {
++		_ = req.LogStore.Add(ctx, tasklog.NewWarnFrame(
++			"The step's outputs could not be read: "+err.Error()+"\n", tasklog.TsNow))
++		return nil
++	}
++	outputs, warnings := parseOutputs(buf.Bytes())
++	for _, warning := range warnings {
++		_ = req.LogStore.Add(ctx, tasklog.NewWarnFrame("Outputs: "+warning+"\n", tasklog.TsNow))
++	}
++	return outputs
++}
++
++// limitedBuffer keeps what is written to it up to max bytes; past that it
++// keeps nothing more, which parseOutputs then reports.
++type limitedBuffer struct {
++	bytes.Buffer
++	max int
++}
++
++func (b *limitedBuffer) Write(p []byte) (int, error) {
++	room := b.max - b.Len()
++	if room <= 0 {
++		return len(p), nil
++	}
++	if len(p) > room {
++		_, _ = b.Buffer.Write(p[:room])
++		return len(p), nil
++	}
++	return b.Buffer.Write(p) //nolint:wrapcheck // bytes.Buffer never fails
++}
+diff --git a/hivepaas_app/service/schedjobexecservice/types.go b/hivepaas_app/service/schedjobexecservice/types.go
+index 2684ed9b..c17049cf 100644
+--- a/hivepaas_app/service/schedjobexecservice/types.go
++++ b/hivepaas_app/service/schedjobexecservice/types.go
+@@ -1,6 +1,7 @@
+ package schedjobexecservice
+ 
+ import (
++	"fmt"
+ 	"time"
+ 
+ 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
+@@ -14,8 +15,30 @@ type SchedJobExecReq struct {
+ 	TaskMinRunningDuration time.Duration
+ 	TaskFindRetryMax       int
+ 	TaskFindRetryDelay     time.Duration
++	// Sequence is set when the job runs as a step of a job sequence.
++	Sequence *SequenceStep
+ }
+ 
+ type SchedJobExecResp struct {
+ 	SkipResultNotification bool
++	// ExitCode is the command's, when it ran to an end.
++	ExitCode *int
++	// Outputs is what a step of a sequence wrote to its output file.
++	Outputs map[string]string
++}
++
++// SequenceStep is the part a job plays in a job sequence's run: which step it
++// is, and how the steps before it went. The job is told so in its environment,
++// and may write outputs for the steps after it to OutputFile.
++type SequenceStep struct {
++	Step       int // 1-based
++	Steps      int
++	Earlier    []*entity.SchedJobSeqStepResult
++	OutputFile string
++}
++
++// OutputFilePath is where the step of a run writes its outputs, in its
++// container.
++func OutputFilePath(taskID string, step int) string {
++	return fmt.Sprintf("/tmp/hivepaas-output-%s-%d", taskID, step)
+ }
+diff --git a/hivepaas_app/tasks/taskschedjobexec/job_run.go b/hivepaas_app/tasks/taskschedjobexec/job_run.go
+index 8938df11..ec9feb73 100644
+--- a/hivepaas_app/tasks/taskschedjobexec/job_run.go
++++ b/hivepaas_app/tasks/taskschedjobexec/job_run.go
+@@ -21,11 +21,17 @@ type jobRun struct {
+ 	execData   *queue.TaskExecData
+ 	jobSetting *entity.Setting
+ 	refObjects *entity.RefObjects
++	// sequence is set when the job runs as a step of a job sequence.
++	sequence *schedjobexecservice.SequenceStep
+ }
+ 
+-// jobResult is what running a job says beyond its error.
++// jobResult is what running a job says beyond its error. A container command
++// gives its exit code, and, as a step of a sequence, its outputs, even when it
++// fails.
+ type jobResult struct {
+ 	skipNotification bool
++	exitCode         *int
++	outputs          map[string]string
+ }
+ 
+ // runJob runs a scheduled job by its type. A job run on its own schedule and a
+@@ -39,11 +45,16 @@ func (e *Executor) runJob(ctx context.Context, db database.Tx, run *jobRun) (*jo
+ 			TaskExecData:    run.execData,
+ 			SchedJobSetting: run.jobSetting,
+ 			DestApp:         run.refObjects.RefApps[schedJob.App.ID],
++			Sequence:        run.sequence,
+ 		})
++		if resp != nil {
++			result.skipNotification = resp.SkipResultNotification
++			result.exitCode = resp.ExitCode
++			result.outputs = resp.Outputs
++		}
+ 		if err != nil {
+-			return nil, hperrors.Wrap(err)
++			return result, hperrors.Wrap(err)
+ 		}
+-		result.skipNotification = resp.SkipResultNotification
+ 
+ 	case base.SchedJobTypeSystemCleanup:
+ 		setting := run.refObjects.RefSettings[schedJob.TargetSetting.ID]
+diff --git a/hivepaas_app/tasks/taskschedjobexec/sequence.go b/hivepaas_app/tasks/taskschedjobexec/sequence.go
+index 0f377db6..fdd4732f 100644
+--- a/hivepaas_app/tasks/taskschedjobexec/sequence.go
++++ b/hivepaas_app/tasks/taskschedjobexec/sequence.go
+@@ -11,6 +11,7 @@ import (
+ 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
+ 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/tasklog"
+ 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/timeutil"
++	"github.com/hivepaas/hivepaas/hivepaas_app/service/schedjobexecservice"
+ )
+ 
+ // executeSequence runs one step of a job sequence's run and says what comes
+@@ -169,12 +170,22 @@ func (e *Executor) runStep(
+ 		step.Error = stepError(err)
+ 		return hperrors.Wrap(err)
+ 	}
+-	_, err = e.runJob(ctx, db, &jobRun{
++	result, err := e.runJob(ctx, db, &jobRun{
+ 		execData:   data.SubTask(data.Task),
+ 		jobSetting: member,
+ 		refObjects: refObjects,
++		sequence: &schedjobexecservice.SequenceStep{
++			Step:       run.CurrentStep + 1,
++			Steps:      len(run.Steps),
++			Earlier:    run.Steps[:run.CurrentStep],
++			OutputFile: schedjobexecservice.OutputFilePath(data.Task.ID, run.CurrentStep+1),
++		},
+ 	})
+ 	step.EndedAt = timeutil.NowUTC()
++	if result != nil {
++		step.ExitCode = result.exitCode
++		step.Outputs = result.outputs
++	}
+ 	if err != nil {
+ 		step.Error = stepError(err)
+ 		return hperrors.Wrap(err)

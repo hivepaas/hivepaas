@@ -1,0 +1,149 @@
+diff --git a/hivepaas_app/tasks/queue/queueimpl/queue_execution.go b/hivepaas_app/tasks/queue/queueimpl/queue_execution.go
+index 14176f68..f9c44f4c 100644
+--- a/hivepaas_app/tasks/queue/queueimpl/queue_execution.go
++++ b/hivepaas_app/tasks/queue/queueimpl/queue_execution.go
+@@ -6,8 +6,6 @@ import (
+ 	"fmt"
+ 	"time"
+ 
+-	"github.com/tiendc/gofn"
+-
+ 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
+ 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
+ 	"github.com/hivepaas/hivepaas/hivepaas_app/entity/cacheentity"
+@@ -114,27 +112,7 @@ func (q *taskQueue) executeTask(
+ 			if err != nil {
+ 				return
+ 			}
+-			task.EndedAt = timeutil.NowUTC()
+-			if execErr != nil {
+-				task.Status = base.TaskStatusFailed
+-				if taskData.TaskNonRetryable {
+-					task.Config.MaxRetry = task.Config.Retry
+-				}
+-				if task.CanRetry() {
+-					task.RetryAt = task.EndedAt.Add(task.NextRetryDelay())
+-					rescheduleAt = task.RetryAt
+-				} else {
+-					task.RetryAt = time.Time{}
+-				}
+-				_ = task.AddRun(&entity.TaskRun{
+-					StartedAt:  task.StartedAt,
+-					EndedAt:    task.EndedAt,
+-					Error:      hperrors.GetErrorDetail(execErr, ""),
+-					StackTrace: hperrors.GetErrorStackTrace(execErr),
+-				})
+-			} else {
+-				task.Status = gofn.If(taskData.TaskCanceled, base.TaskStatusCanceled, base.TaskStatusDone)
+-			}
++			rescheduleAt = settleTask(task, taskData, execErr, timeutil.NowUTC())
+ 			// Post execution event
+ 			if taskData.OnEndTxFunc != nil {
+ 				taskData.OnEndTxFunc()
+@@ -163,6 +141,47 @@ func (q *taskQueue) executeTask(
+ 	return rescheduleAt
+ }
+ 
++// settleTask is where an execution leaves its task: failed, to be retried or
++// not; run again at once, when it asked to Continue; canceled; or done. It
++// returns when the task is to run next, zero for not at all.
++func settleTask(
++	task *entity.Task,
++	taskData *queue.TaskExecData,
++	execErr error,
++	timeNow time.Time,
++) (rescheduleAt time.Time) {
++	task.EndedAt = timeNow
++	switch {
++	case execErr != nil:
++		task.Status = base.TaskStatusFailed
++		if taskData.TaskNonRetryable {
++			task.Config.MaxRetry = task.Config.Retry
++		}
++		if task.CanRetry() {
++			task.RetryAt = task.EndedAt.Add(task.NextRetryDelay())
++			rescheduleAt = task.RetryAt
++		} else {
++			task.RetryAt = time.Time{}
++		}
++		_ = task.AddRun(&entity.TaskRun{
++			StartedAt:  task.StartedAt,
++			EndedAt:    task.EndedAt,
++			Error:      hperrors.GetErrorDetail(execErr, ""),
++			StackTrace: hperrors.GetErrorStackTrace(execErr),
++		})
++	case taskData.TaskCanceled:
++		task.Status = base.TaskStatusCanceled
++	case taskData.Continued():
++		task.Status = base.TaskStatusNotStarted
++		task.RunAt = timeNow
++		task.RetryAt = time.Time{}
++		rescheduleAt = timeNow
++	default:
++		task.Status = base.TaskStatusDone
++	}
++	return rescheduleAt
++}
++
+ func (q *taskQueue) loadTask(
+ 	ctx context.Context,
+ 	db database.IDB,
+diff --git a/hivepaas_app/tasks/queue/types.go b/hivepaas_app/tasks/queue/types.go
+index e688a792..d2d31cfc 100644
+--- a/hivepaas_app/tasks/queue/types.go
++++ b/hivepaas_app/tasks/queue/types.go
+@@ -27,6 +27,9 @@ type TaskExecData struct {
+ 	OnEndTxFunc   func()
+ 	OnPostTxFunc  func()
+ 
++	// continued is Continue's: the task has more to do, and runs again at once.
++	continued bool
++
+ 	// owner is the task whose transaction this one runs inside, when this data
+ 	// belongs to work that is a task of its own but not a task of the queue's: a
+ 	// workflow step, or the clone a preview makes. Only the queue calls these
+@@ -57,6 +60,24 @@ func (t *TaskExecData) SubTask(task *entity.Task) *TaskExecData {
+ 	}
+ }
+ 
++// Continue tells the queue that the task has more to do: once this execution
++// returns without error, the task is not marked done but saved as not started
++// and run again at once, with whatever this execution left in its args and
++// output. A task that works in steps - a workflow, a job sequence - calls it
++// after each step but its last. A failure or a cancel wins over it.
++func (t *TaskExecData) Continue() {
++	if t.owner != nil {
++		t.owner.Continue()
++		return
++	}
++	t.continued = true
++}
++
++// Continued says whether Continue was called.
++func (t *TaskExecData) Continued() bool {
++	return t.continued
++}
++
+ func (t *TaskExecData) IsTaskCanceled() bool {
+ 	return t.TaskCanceled
+ }
+diff --git a/hivepaas_app/tasks/taskworkflow/executor.go b/hivepaas_app/tasks/taskworkflow/executor.go
+index c41f4ee4..b46410ca 100644
+--- a/hivepaas_app/tasks/taskworkflow/executor.go
++++ b/hivepaas_app/tasks/taskworkflow/executor.go
+@@ -79,11 +79,11 @@ func (e *Executor) execute(
+ 		return hperrors.Wrap(err)
+ 	}
+ 
+-	// If there are remaining steps, re-enqueue workflow task for next step
++	// Steps left: the queue runs the task again for the next one. Scheduling it
++	// from here did not work - the queue marks a task done when it returns, and
++	// ScheduleTask skips a task that is done.
+ 	if wfArgs.CurrentStep < len(wfArgs.Steps) {
+-		execData.OnPostTx(func() { //nolint:contextcheck
+-			_ = e.taskQueue.ScheduleTask(context.Background(), task)
+-		})
++		execData.Continue()
+ 	}
+ 
+ 	return nil

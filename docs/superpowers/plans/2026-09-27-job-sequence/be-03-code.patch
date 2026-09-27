@@ -1,0 +1,486 @@
+diff --git a/hivepaas_app/interface/mcp/tools_sched_write.go b/hivepaas_app/interface/mcp/tools_sched_write.go
+index cb5088a3..3f4425ce 100644
+--- a/hivepaas_app/interface/mcp/tools_sched_write.go
++++ b/hivepaas_app/interface/mcp/tools_sched_write.go
+@@ -71,6 +71,8 @@ var schedJobDescs = func() map[string]string {
+ 		"notification": "who is told how a run went: success and failure, each the id of a notification " +
+ 			"setting; successUseDefault and failureUseDefault, true to use the default notification when no " +
+ 			"id is given. When not given, both use the default, as the dashboard's form starts",
++		"sequence": "not used here: this plans a command that runs in an app; a job sequence, which runs " +
++			"other scheduled jobs in order, is made in the dashboard",
+ 	}
+ 	maps.Copy(descs, scheduleDescs("schedule."))
+ 	maps.Copy(descs, descCommand("command."))
+diff --git a/hivepaas_app/usecase/settings/schedjobuc/create.go b/hivepaas_app/usecase/settings/schedjobuc/create.go
+index 8b8de32b..73b27648 100644
+--- a/hivepaas_app/usecase/settings/schedjobuc/create.go
++++ b/hivepaas_app/usecase/settings/schedjobuc/create.go
+@@ -33,7 +33,7 @@ func (uc *UC) CreateSchedJob(
+ 	schedJob := req.ToEntity()
+ 	resp, err := uc.CreateSetting(ctx, &req.CreateSettingReq, &settings.CreateSettingData{
+ 		VerifyingName:   req.Name,
+-		VerifyingRefIDs: schedJob.GetRefObjectIDs(),
++		VerifyingRefIDs: verifyingRefIDs(schedJob),
+ 		Version:         currentSettingVersion,
+ 		PrepareCreation: func(
+ 			ctx context.Context,
+@@ -44,6 +44,12 @@ func (uc *UC) CreateSchedJob(
+ 			if err := uc.isSchedJobFeatureEnabledInApp(ctx, db, req.Scope.App); err != nil {
+ 				return hperrors.Wrap(err)
+ 			}
++			if err := checkJobTypeInScope(req.Scope.ScopeType, schedJob.JobType); err != nil {
++				return hperrors.Wrap(err)
++			}
++			if err := uc.checkSequenceMembers(ctx, db, req.Scope, schedJob); err != nil {
++				return hperrors.Wrap(err)
++			}
+ 			if err := uc.checkPermissionPipeToApp(ctx, db, auth, schedJob); err != nil {
+ 				return hperrors.Wrap(err)
+ 			}
+diff --git a/hivepaas_app/usecase/settings/schedjobuc/get.go b/hivepaas_app/usecase/settings/schedjobuc/get.go
+index a57eae17..651a2419 100644
+--- a/hivepaas_app/usecase/settings/schedjobuc/get.go
++++ b/hivepaas_app/usecase/settings/schedjobuc/get.go
+@@ -32,6 +32,9 @@ func (uc *UC) GetSchedJob(
+ 		return nil, hperrors.Wrap(err)
+ 	}
+ 
++	if err = uc.loadSequenceMembers(ctx, uc.DB, resp.RefObjects, resp.Data); err != nil {
++		return nil, hperrors.Wrap(err)
++	}
+ 	respData, err := schedjobdto.TransformSchedJob(resp.Data, resp.RefObjects, false)
+ 	if err != nil {
+ 		return nil, hperrors.Wrap(err)
+diff --git a/hivepaas_app/usecase/settings/schedjobuc/list.go b/hivepaas_app/usecase/settings/schedjobuc/list.go
+index c0b5e713..d091affa 100644
+--- a/hivepaas_app/usecase/settings/schedjobuc/list.go
++++ b/hivepaas_app/usecase/settings/schedjobuc/list.go
+@@ -32,6 +32,9 @@ func (uc *UC) ListSchedJob(
+ 		return nil, hperrors.Wrap(err)
+ 	}
+ 
++	if err = uc.loadSequenceMembers(ctx, uc.DB, resp.RefObjects, resp.Data...); err != nil {
++		return nil, hperrors.Wrap(err)
++	}
+ 	respData, err := schedjobdto.TransformSchedJobs(resp.Data, resp.RefObjects, true)
+ 	if err != nil {
+ 		return nil, hperrors.Wrap(err)
+diff --git a/hivepaas_app/usecase/settings/schedjobuc/schedjobdto/create.go b/hivepaas_app/usecase/settings/schedjobuc/schedjobdto/create.go
+index 86ba69c8..b241ac67 100644
+--- a/hivepaas_app/usecase/settings/schedjobuc/schedjobdto/create.go
++++ b/hivepaas_app/usecase/settings/schedjobuc/schedjobdto/create.go
+@@ -47,6 +47,8 @@ type SchedJobBaseReq struct {
+ 	Command            *commandtemplatedto.CommandTemplateBaseReq `json:"command"`
+ 	CommandOutput      *CommandOutputReq                          `json:"commandOutput"`
+ 	Notification       *basedto.BaseEventNotificationReq          `json:"notification"`
++	// Sequence is a job-sequence's jobs; left out for every other type.
++	Sequence *SchedJobSequenceReq `json:"sequence"`
+ }
+ 
+ func (req *SchedJobBaseReq) ToEntity() *entity.SchedJob {
+@@ -68,6 +70,9 @@ func (req *SchedJobBaseReq) ToEntity() *entity.SchedJob {
+ 		res.Command = req.Command.ToEntity()
+ 		res.CommandOutput = req.CommandOutput.ToEntity()
+ 	}
++	if req.JobType == base.SchedJobTypeJobSequence {
++		res.Sequence = req.Sequence.ToEntity()
++	}
+ 	return res
+ }
+ 
+@@ -81,6 +86,7 @@ func (req *SchedJobBaseReq) modifyRequest() error {
+ 		}
+ 		req.Schedule.InitialTime = req.Schedule.InitialTime.Truncate(time.Second)
+ 	}
++	req.Sequence.modifyRequest()
+ 	if req.RetryBackoff && req.RetryBackoffJitter <= 0 {
+ 		req.RetryBackoffJitter = timeutil.Duration(time.Second)
+ 	}
+@@ -113,9 +119,17 @@ func (req *SchedJobBaseReq) validate(field string) (res []vld.Validator) {
+ 	res = append(res, basedto.ValidateNumber(&req.MaxRetry, false, 1, maxRetryCount, field+"maxRetry")...)
+ 	res = append(res, basedto.ValidateDuration(&req.RetryDelay, false, 1, maxRetryDelay, field+"retryDelay")...)
+ 	res = append(res, basedto.ValidateDuration(&req.Timeout, false, 1, maxTimeout, field+"timeout")...)
+-	res = append(res, req.Command.Validate(field+"command")...)
++	// A container command needs its command; no other job type has one, and a
++	// nil one is not validated (Validate dereferences it).
++	if req.JobType == base.SchedJobTypeContainerCommand {
++		res = append(res, basedto.ValidateCond(req.Command != nil, field+"command")...)
++	}
++	if req.Command != nil {
++		res = append(res, req.Command.Validate(field+"command")...)
++	}
+ 	res = append(res, req.CommandOutput.validate(req.App.ID, field+"commandOutput")...)
+ 	res = append(res, req.Notification.Validate(field+"notification")...)
++	res = append(res, req.validateSequenceFields(field)...)
+ 	return res
+ }
+ 
+@@ -138,7 +152,12 @@ func (req *ScheduleReq) ToEntity() *entity.SchedJobSchedule {
+ 	}
+ }
+ 
++// validate checks a schedule when there is one. A job without a schedule is
++// valid: it runs by hand, or as a step of a job sequence.
+ func (req *ScheduleReq) validate(field string) (res []vld.Validator) {
++	if req == nil {
++		return nil
++	}
+ 	if field != "" {
+ 		field += "."
+ 	}
+diff --git a/hivepaas_app/usecase/settings/schedjobuc/schedjobdto/get.go b/hivepaas_app/usecase/settings/schedjobuc/schedjobdto/get.go
+index b09622ff..cc83ceac 100644
+--- a/hivepaas_app/usecase/settings/schedjobuc/schedjobdto/get.go
++++ b/hivepaas_app/usecase/settings/schedjobuc/schedjobdto/get.go
+@@ -53,6 +53,7 @@ type SchedJobResp struct {
+ 	Command            *commandtemplatedto.CommandTemplateResp `json:"command"`
+ 	CommandOutput      *CommandOutputResp                      `json:"commandOutput,omitempty"`
+ 	Notification       *basedto.BaseEventNotificationResp      `json:"notification"`
++	Sequence           *SchedJobSequenceResp                   `json:"sequence,omitempty" copy:"-"`
+ 
+ 	// Calculated fields
+ 	NextRuns []time.Time `json:"nextRuns,omitempty"`
+@@ -162,6 +163,7 @@ func TransformSchedJob(
+ 	}
+ 
+ 	resp.Notification = basedto.TransformBaseEventNotification(job.Notification, refObjects)
++	resp.Sequence = TransformSchedJobSequence(job.Sequence, refObjects)
+ 
+ 	// Custom fields
+ 	if !resp.RetryBackoff && resp.RetryBackoffJitter > 0 {
+diff --git a/hivepaas_app/usecase/settings/schedjobuc/schedjobdto/sequence.go b/hivepaas_app/usecase/settings/schedjobuc/schedjobdto/sequence.go
+new file mode 100644
+index 00000000..9084f65f
+--- /dev/null
++++ b/hivepaas_app/usecase/settings/schedjobuc/schedjobdto/sequence.go
+@@ -0,0 +1,142 @@
++package schedjobdto
++
++import (
++	"fmt"
++	"strings"
++
++	vld "github.com/tiendc/go-validator"
++
++	"github.com/hivepaas/hivepaas/hivepaas_app/base"
++	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
++	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
++	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings"
++)
++
++const sequenceStepNameMaxLen = 100
++
++// SchedJobSequenceReq is a job sequence's jobs and how it runs them.
++type SchedJobSequenceReq struct {
++	Mode      base.SchedJobSeqMode       `json:"mode"`
++	OnFailure base.SchedJobSeqOnFailure  `json:"onFailure"`
++	Steps     []*SchedJobSequenceStepReq `json:"steps"`
++}
++
++type SchedJobSequenceStepReq struct {
++	Job  basedto.ObjectIDReq `json:"job"`
++	Name string              `json:"name"`
++}
++
++func (req *SchedJobSequenceReq) ToEntity() *entity.SchedJobSequence {
++	if req == nil {
++		return nil
++	}
++	seq := &entity.SchedJobSequence{Mode: req.Mode, OnFailure: req.OnFailure}
++	for _, step := range req.Steps {
++		if step == nil {
++			continue
++		}
++		seq.Steps = append(seq.Steps, &entity.SchedJobSequenceStep{
++			Job:  entity.ObjectID{ID: step.Job.ID},
++			Name: step.Name,
++		})
++	}
++	return seq
++}
++
++func (req *SchedJobSequenceReq) modifyRequest() {
++	if req == nil {
++		return
++	}
++	if req.Mode == "" {
++		req.Mode = base.SchedJobSeqModeSequential
++	}
++	if req.OnFailure == "" {
++		req.OnFailure = base.SchedJobSeqOnFailureStop
++	}
++	for _, step := range req.Steps {
++		if step != nil {
++			step.Name = strings.TrimSpace(step.Name)
++		}
++	}
++}
++
++func (req *SchedJobSequenceReq) validate(field string) (res []vld.Validator) {
++	res = append(res, basedto.ValidateCond(req != nil, field)...)
++	if req == nil {
++		return res
++	}
++	field += "."
++	res = append(res, basedto.ValidateStrIn(&req.Mode, true, base.AllSchedJobSeqModes, field+"mode")...)
++	res = append(res, basedto.ValidateStrIn(&req.OnFailure, true, base.AllSchedJobSeqOnFailures,
++		field+"onFailure")...)
++	res = append(res, basedto.ValidateCond(len(req.Steps) >= 1 && len(req.Steps) <= base.SchedJobSeqMaxSteps,
++		field+"steps")...)
++	for i, step := range req.Steps {
++		stepField := fmt.Sprintf("%ssteps[%d]", field, i)
++		res = append(res, basedto.ValidateCond(step != nil, stepField)...)
++		if step == nil {
++			continue
++		}
++		res = append(res, basedto.ValidateObjectIDReq(&step.Job, true, stepField+".job")...)
++		res = append(res, basedto.ValidateStr(&step.Name, false, 0, sequenceStepNameMaxLen, stepField+".name")...)
++	}
++	return res
++}
++
++// validateSequenceFields is what a job's type says about its sequence: a
++// job-sequence has one and runs nothing of its own, any other type has none.
++func (req *SchedJobBaseReq) validateSequenceFields(field string) (res []vld.Validator) {
++	if req.JobType != base.SchedJobTypeJobSequence {
++		return basedto.ValidateCond(req.Sequence == nil, field+"sequence")
++	}
++	res = append(res, req.Sequence.validate(field+"sequence")...)
++	res = append(res, basedto.ValidateCond(req.Command == nil, field+"command")...)
++	res = append(res, basedto.ValidateCond(req.App.ID == "", field+"app")...)
++	res = append(res, basedto.ValidateCond(req.CommandOutput == nil, field+"commandOutput")...)
++	return res
++}
++
++type SchedJobSequenceResp struct {
++	Mode      base.SchedJobSeqMode        `json:"mode"`
++	OnFailure base.SchedJobSeqOnFailure   `json:"onFailure"`
++	Steps     []*SchedJobSequenceStepResp `json:"steps"`
++}
++
++type SchedJobSequenceStepResp struct {
++	// Job is the scheduled job the step runs; "missing" when it is gone.
++	Job *settings.BaseSettingResp `json:"job"`
++	// App is the app the job belongs to, when it is an app's.
++	App  *basedto.NamedObjectResp `json:"app,omitempty"`
++	Name string                   `json:"name,omitempty"`
++}
++
++// TransformSchedJobSequence is a sequence with each step's job named, from the
++// jobs refObjects holds.
++func TransformSchedJobSequence(seq *entity.SchedJobSequence, refObjects *entity.RefObjects) *SchedJobSequenceResp {
++	if seq == nil {
++		return nil
++	}
++	resp := &SchedJobSequenceResp{
++		Mode:      seq.Mode,
++		OnFailure: seq.OnFailure,
++		Steps:     make([]*SchedJobSequenceStepResp, 0, len(seq.Steps)),
++	}
++	for _, step := range seq.Steps {
++		var member *entity.Setting
++		if refObjects != nil {
++			member = refObjects.RefSettings[step.Job.ID]
++		}
++		jobResp, _ := settings.TransformSettingBase(member)
++		if jobResp == nil {
++			jobResp = settings.NewMissingSetting(step.Job.ID, base.SettingTypeSchedJob)
++		}
++		stepResp := &SchedJobSequenceStepResp{Job: jobResp, Name: step.Name}
++		if member != nil && member.Scope == base.ObjectScopeApp {
++			if app := refObjects.RefApps[member.ObjectID]; app != nil {
++				stepResp.App = &basedto.NamedObjectResp{ID: app.ID, Name: app.Name}
++			}
++		}
++		resp.Steps = append(resp.Steps, stepResp)
++	}
++	return resp
++}
+diff --git a/hivepaas_app/usecase/settings/schedjobuc/sequence.go b/hivepaas_app/usecase/settings/schedjobuc/sequence.go
+new file mode 100644
+index 00000000..6d9578da
+--- /dev/null
++++ b/hivepaas_app/usecase/settings/schedjobuc/sequence.go
+@@ -0,0 +1,156 @@
++package schedjobuc
++
++import (
++	"context"
++	"fmt"
++
++	"github.com/tiendc/gofn"
++
++	"github.com/hivepaas/hivepaas/hivepaas_app/base"
++	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
++	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
++	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
++	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
++)
++
++// checkJobTypeInScope says which job types a scope holds: a job sequence lives
++// in an app or a project env, and an env holds sequences only, for now.
++func checkJobTypeInScope(scopeType base.ObjectScopeType, jobType base.SchedJobType) error {
++	isSequence := jobType == base.SchedJobTypeJobSequence
++	switch {
++	case isSequence && scopeType != base.ObjectScopeApp && scopeType != base.ObjectScopeProjectEnv:
++		return hperrors.NewArgumentInvalid("jobType").
++			WithExtraDetail("a job sequence belongs to an app or a project env")
++	case !isSequence && scopeType == base.ObjectScopeProjectEnv:
++		return hperrors.NewArgumentInvalid("jobType").
++			WithExtraDetail("a project env's scheduled jobs are job sequences")
++	}
++	return nil
++}
++
++// verifyingRefIDs is what the setting base checks exists, active, in the job's
++// own scope. A sequence's members are left to checkSequenceMembers: an env
++// sequence's members are its apps' jobs, which the env's scope does not show,
++// and a disabled member is allowed - the run skips it.
++func verifyingRefIDs(job *entity.SchedJob) *entity.RefObjectIDs {
++	refIDs := job.GetRefObjectIDs()
++	members := job.Sequence.MemberIDs()
++	if len(members) == 0 {
++		return refIDs
++	}
++	refIDs.RefSettingIDs = gofn.Filter(refIDs.RefSettingIDs, func(id string) bool {
++		return !gofn.Contain(members, id)
++	})
++	return refIDs
++}
++
++// checkSequenceMembers refuses a sequence whose members are not all scheduled
++// jobs within its reach: the app's own, for an app sequence; those of the
++// env's apps, for an env sequence.
++func (uc *UC) checkSequenceMembers(
++	ctx context.Context,
++	db database.IDB,
++	scope *entity.ObjectScope,
++	job *entity.SchedJob,
++) error {
++	memberIDs := job.Sequence.MemberIDs()
++	if len(memberIDs) == 0 {
++		return nil
++	}
++	members, _, err := uc.SettingRepo.List(ctx, db, nil, nil,
++		bunex.SelectWhere("setting.type = ?", base.SettingTypeSchedJob),
++		bunex.SelectWhere("setting.id IN (?)", bunex.List(memberIDs)),
++	)
++	if err != nil {
++		return hperrors.Wrap(err)
++	}
++	byID := make(map[string]*entity.Setting, len(members))
++	appIDs := make([]string, 0, len(members))
++	for _, member := range members {
++		byID[member.ID] = member
++		if member.Scope == base.ObjectScopeApp {
++			appIDs = append(appIDs, member.ObjectID)
++		}
++	}
++	apps, err := uc.appService.LoadApps(ctx, db, "", gofn.ToSet(appIDs), false, false)
++	if err != nil {
++		return hperrors.Wrap(err)
++	}
++	appByID := make(map[string]*entity.App, len(apps))
++	for _, app := range apps {
++		appByID[app.ID] = app
++	}
++	for i, step := range job.Sequence.Steps {
++		member := byID[step.Job.ID]
++		var app *entity.App
++		if member != nil {
++			app = appByID[member.ObjectID]
++		}
++		if problem := memberProblem(scope, member, app); problem != "" {
++			return hperrors.NewArgumentInvalid(fmt.Sprintf("sequence.steps[%d].job", i)).
++				WithExtraDetail("step %d: %s", i+1, problem)
++		}
++	}
++	return nil
++}
++
++// memberProblem says why a job cannot be a step of a sequence in the scope, or
++// nothing when it can. app is the member's app, when it has one.
++func memberProblem(scope *entity.ObjectScope, member *entity.Setting, app *entity.App) string {
++	switch {
++	case member == nil:
++		return "the scheduled job is not found"
++	case member.Kind == string(base.SchedJobTypeJobSequence):
++		return "a sequence cannot run another sequence"
++	case member.Scope != base.ObjectScopeApp:
++		return "the scheduled job is not an app's job"
++	case scope.ScopeType == base.ObjectScopeApp && member.ObjectID != scope.AppID:
++		return "the scheduled job belongs to another app"
++	case scope.ScopeType == base.ObjectScopeProjectEnv && (app == nil || app.ProjectEnvID != scope.ProjectEnvID):
++		return "the scheduled job belongs to an app outside this env"
++	}
++	return ""
++}
++
++// loadSequenceMembers adds to refObjects the jobs the sequences among
++// jobSettings run, and their apps, whatever their scope: an env sequence's
++// members are its apps' jobs, which loading its references in its own scope
++// does not reach. What is gone is left out; the response says "missing".
++func (uc *UC) loadSequenceMembers(
++	ctx context.Context,
++	db database.IDB,
++	refObjects *entity.RefObjects,
++	jobSettings ...*entity.Setting,
++) error {
++	var memberIDs []string
++	for _, setting := range jobSettings {
++		if setting.Kind != string(base.SchedJobTypeJobSequence) {
++			continue
++		}
++		job, err := setting.AsSchedJob()
++		if err != nil {
++			return hperrors.Wrap(err)
++		}
++		memberIDs = append(memberIDs, job.Sequence.MemberIDs()...)
++	}
++	if len(memberIDs) == 0 || refObjects == nil {
++		return nil
++	}
++	err := uc.SettingService.LoadRefObjectsByIDsSkipMissing(ctx, db, &refObjects, nil, false,
++		&entity.RefObjectIDs{RefSettingIDs: gofn.ToSet(memberIDs)})
++	if err != nil {
++		return hperrors.Wrap(err)
++	}
++	var appIDs []string
++	for _, id := range memberIDs {
++		if member := refObjects.RefSettings[id]; member != nil && member.Scope == base.ObjectScopeApp {
++			appIDs = append(appIDs, member.ObjectID)
++		}
++	}
++	if len(appIDs) == 0 {
++		return nil
++	}
++	err = uc.SettingService.LoadRefObjectsByIDsSkipMissing(ctx, db, &refObjects, nil, false,
++		&entity.RefObjectIDs{RefAppIDs: gofn.ToSet(appIDs)})
++	return hperrors.Wrap(err)
++}
+diff --git a/hivepaas_app/usecase/settings/schedjobuc/update.go b/hivepaas_app/usecase/settings/schedjobuc/update.go
+index 4550f6a9..11850c0d 100644
+--- a/hivepaas_app/usecase/settings/schedjobuc/update.go
++++ b/hivepaas_app/usecase/settings/schedjobuc/update.go
+@@ -22,7 +22,7 @@ func (uc *UC) UpdateSchedJob(
+ 	var oldJob *entity.SchedJob
+ 	_, err := uc.UpdateSetting(ctx, &req.UpdateSettingReq, &settings.UpdateSettingData{
+ 		VerifyingName:   req.Name,
+-		VerifyingRefIDs: newJob.GetRefObjectIDs(),
++		VerifyingRefIDs: verifyingRefIDs(newJob),
+ 		AfterLoading: func(ctx context.Context, db database.Tx, data *settings.UpdateSettingData) error {
+ 			err := uc.isSchedJobFeatureEnabledInApp(ctx, db, req.Scope.App)
+ 			if err != nil {
+@@ -40,6 +40,12 @@ func (uc *UC) UpdateSchedJob(
+ 			data *settings.UpdateSettingData,
+ 			pData *settings.PersistingSettingData,
+ 		) error {
++			if err := checkJobTypeInScope(req.Scope.ScopeType, newJob.JobType); err != nil {
++				return hperrors.Wrap(err)
++			}
++			if err := uc.checkSequenceMembers(ctx, db, req.Scope, newJob); err != nil {
++				return hperrors.Wrap(err)
++			}
+ 			if err := uc.checkPermissionPipeToApp(ctx, db, auth, newJob); err != nil {
+ 				return hperrors.Wrap(err)
+ 			}

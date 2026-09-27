@@ -1,0 +1,1175 @@
+diff --git a/src/application/modules/projects/module-shared/components/index.ts b/src/application/modules/projects/module-shared/components/index.ts
+index 48fedc18..d36b1b43 100644
+--- a/src/application/modules/projects/module-shared/components/index.ts
++++ b/src/application/modules/projects/module-shared/components/index.ts
+@@ -23,3 +23,4 @@ export * from "./command-config-section";
+ export * from "./confirm-danger-target-badge";
+ export * from "./option-card-group";
+ export * from "./job-schedule-fields";
++export * from "./job-sequence-form";
+diff --git a/src/application/modules/projects/module-shared/components/job-sequence-form/index.ts b/src/application/modules/projects/module-shared/components/job-sequence-form/index.ts
+new file mode 100644
+index 00000000..d5140790
+--- /dev/null
++++ b/src/application/modules/projects/module-shared/components/job-sequence-form/index.ts
+@@ -0,0 +1,4 @@
++export * from "./job-sequence.form.com";
++export * from "./job-sequence.form-mappers";
++export * from "./job-sequence.form.schema";
++export * from "./job-sequence-steps-field.com";
+diff --git a/src/application/modules/projects/module-shared/components/job-sequence-form/job-sequence-steps-field.com.tsx b/src/application/modules/projects/module-shared/components/job-sequence-form/job-sequence-steps-field.com.tsx
+new file mode 100644
+index 00000000..7347bb78
+--- /dev/null
++++ b/src/application/modules/projects/module-shared/components/job-sequence-form/job-sequence-steps-field.com.tsx
+@@ -0,0 +1,197 @@
++import { useMemo, useState } from "react";
++
++import { ArrowDown, ArrowUp, Plus, Trash2 } from "lucide-react";
++import { useFieldArray, useFormContext, useFormState } from "react-hook-form";
++
++import {
++    Button,
++    FieldError,
++    Input,
++    Select,
++    SelectContent,
++    SelectGroup,
++    SelectItem,
++    SelectLabel,
++    SelectTrigger,
++    SelectValue,
++} from "@/components/ui";
++
++import { JOB_SEQUENCE_MAX_STEPS, type JobSequenceFormInput } from "./job-sequence.form.schema";
++
++/** A job a step can run: one of the scope's jobs, never a sequence. */
++export interface JobSequenceCandidate {
++    id: string;
++    name: string;
++    /** The app the job belongs to; empty for the scope's own. */
++    appName: string;
++    disabled: boolean;
++}
++
++function groupByApp(candidates: JobSequenceCandidate[]): [string, JobSequenceCandidate[]][] {
++    const groups = new Map<string, JobSequenceCandidate[]>();
++    for (const candidate of candidates) {
++        const group = groups.get(candidate.appName) ?? [];
++        group.push(candidate);
++        groups.set(candidate.appName, group);
++    }
++
++    return [...groups.entries()].sort(([a], [b]) => a.localeCompare(b));
++}
++
++/**
++ * The steps of a sequence, in order: added from the scope's jobs, moved up and
++ * down, each with an optional label. A job may be added more than once.
++ */
++export function JobSequenceStepsField({ candidates, isLoadingCandidates, readOnly }: Props) {
++    const { control } = useFormContext<JobSequenceFormInput>();
++    const { fields, append, remove, swap } = useFieldArray({ control, name: "steps" });
++    const { errors } = useFormState({ control, name: "steps" });
++    const [picked, setPicked] = useState("");
++
++    const groups = useMemo(() => groupByApp(candidates), [candidates]);
++    const canAdd = !readOnly && fields.length < JOB_SEQUENCE_MAX_STEPS;
++
++    function addPicked() {
++        const candidate = candidates.find(item => item.id === picked);
++        if (!candidate) {
++            return;
++        }
++
++        append({ jobId: candidate.id, jobName: candidate.name, appName: candidate.appName, name: "" });
++        setPicked("");
++    }
++
++    return (
++        <div className="flex w-full max-w-[720px] flex-col gap-3">
++            {fields.length === 0 && (
++                <p className="text-sm text-muted-foreground">No steps yet: add the jobs to run, in order.</p>
++            )}
++
++            {fields.length > 0 && (
++                <ol className="flex flex-col gap-2">
++                    {fields.map((field, index) => {
++                        const stepError = errors.steps?.[index];
++
++                        return (
++                            <li
++                                key={field.id}
++                                className="flex flex-wrap items-center gap-2 rounded-md border px-3 py-2"
++                            >
++                                <span className="w-6 shrink-0 text-sm font-semibold tabular-nums">{index + 1}.</span>
++                                <div className="flex min-w-[160px] grow flex-col">
++                                    <span className="text-sm font-medium">{field.jobName || field.jobId}</span>
++                                    {field.appName && (
++                                        <span className="text-xs text-muted-foreground">{field.appName}</span>
++                                    )}
++                                </div>
++                                <div className="flex flex-col gap-1">
++                                    <Input
++                                        {...control.register(`steps.${index}.name`)}
++                                        placeholder="label (optional)"
++                                        className="h-8 w-[200px] text-sm"
++                                        aria-invalid={Boolean(stepError?.name)}
++                                        disabled={readOnly}
++                                    />
++                                    <FieldError errors={[stepError?.name, stepError?.jobId]} />
++                                </div>
++                                {!readOnly && (
++                                    <div className="flex items-center">
++                                        <Button
++                                            type="button"
++                                            variant="ghost"
++                                            size="icon-sm"
++                                            aria-label="Move up"
++                                            disabled={index === 0}
++                                            onClick={() => {
++                                                swap(index, index - 1);
++                                            }}
++                                        >
++                                            <ArrowUp className="size-4" />
++                                        </Button>
++                                        <Button
++                                            type="button"
++                                            variant="ghost"
++                                            size="icon-sm"
++                                            aria-label="Move down"
++                                            disabled={index === fields.length - 1}
++                                            onClick={() => {
++                                                swap(index, index + 1);
++                                            }}
++                                        >
++                                            <ArrowDown className="size-4" />
++                                        </Button>
++                                        <Button
++                                            type="button"
++                                            variant="ghost"
++                                            size="icon-sm"
++                                            aria-label="Remove step"
++                                            onClick={() => {
++                                                remove(index);
++                                            }}
++                                        >
++                                            <Trash2 className="size-4" />
++                                        </Button>
++                                    </div>
++                                )}
++                            </li>
++                        );
++                    })}
++                </ol>
++            )}
++
++            {canAdd && (
++                <div className="flex flex-wrap items-center gap-2">
++                    <Select
++                        value={picked}
++                        onValueChange={setPicked}
++                        disabled={isLoadingCandidates || candidates.length === 0}
++                    >
++                        <SelectTrigger className="w-[320px]">
++                            <SelectValue
++                                placeholder={
++                                    isLoadingCandidates
++                                        ? "Loading jobs..."
++                                        : candidates.length === 0
++                                          ? "No job to add"
++                                          : "Pick a job"
++                                }
++                            />
++                        </SelectTrigger>
++                        <SelectContent>
++                            {groups.map(([appName, jobs]) => (
++                                <SelectGroup key={appName || "-"}>
++                                    <SelectLabel>{appName || "This scope"}</SelectLabel>
++                                    {jobs.map(job => (
++                                        <SelectItem
++                                            key={job.id}
++                                            value={job.id}
++                                        >
++                                            {job.name}
++                                            {job.disabled && <span className="text-muted-foreground"> (disabled)</span>}
++                                        </SelectItem>
++                                    ))}
++                                </SelectGroup>
++                            ))}
++                        </SelectContent>
++                    </Select>
++                    <Button
++                        type="button"
++                        variant="outline"
++                        disabled={!picked}
++                        onClick={addPicked}
++                    >
++                        <Plus className="size-4" /> Add step
++                    </Button>
++                </div>
++            )}
++
++            <FieldError errors={[errors.steps?.root, errors.steps]} />
++        </div>
++    );
++}
++
++interface Props {
++    candidates: JobSequenceCandidate[];
++    isLoadingCandidates: boolean;
++    readOnly: boolean;
++}
+diff --git a/src/application/modules/projects/module-shared/components/job-sequence-form/job-sequence.form-mappers.ts b/src/application/modules/projects/module-shared/components/job-sequence-form/job-sequence.form-mappers.ts
+new file mode 100644
+index 00000000..9fb055d5
+--- /dev/null
++++ b/src/application/modules/projects/module-shared/components/job-sequence-form/job-sequence.form-mappers.ts
+@@ -0,0 +1,97 @@
++import type { AppScheduledJobs_Upsert_Payload } from "~/projects/api/services";
++import type { AppScheduledJob } from "~/projects/domain";
++import {
++    EAppScheduledJobScheduleMode,
++    EAppScheduledJobTaskPriority,
++    EAppScheduledJobType,
++    ESchedJobSeqMode,
++    ESchedJobSeqOnFailure,
++} from "~/projects/module-shared/enums";
++
++import { ESettingStatus } from "@application/shared/enums";
++
++import {
++    createDefaultJobScheduleFormValues,
++    mapJobScheduleFormValuesToPayload,
++    mapJobScheduleToFormValues,
++} from "../job-schedule-fields";
++
++import type { JobSequenceFormInput, JobSequenceFormOutput } from "./job-sequence.form.schema";
++
++/** A new sequence runs by hand until it is given a schedule, and can be canceled. */
++export function createEmptyJobSequenceFormDefaults(): JobSequenceFormInput {
++    return {
++        name: "",
++        ...createDefaultJobScheduleFormValues(EAppScheduledJobScheduleMode.None),
++        steps: [],
++        mode: ESchedJobSeqMode.Sequential,
++        onFailure: ESchedJobSeqOnFailure.Stop,
++        timeout: "",
++        priority: EAppScheduledJobTaskPriority.Default,
++        controlEnabled: true,
++        notification: {
++            successUseDefault: true,
++            success: undefined,
++            failureUseDefault: true,
++            failure: undefined,
++        },
++    };
++}
++
++export function mapJobSequenceToFormInput(job: AppScheduledJob): JobSequenceFormInput {
++    const { sequence } = job;
++
++    return {
++        name: job.name,
++        ...mapJobScheduleToFormValues(job.schedule),
++        steps: (sequence?.steps ?? []).map(step => ({
++            jobId: step.job.id,
++            // A job deleted since is named so; the server skips its step.
++            jobName: step.job.status === ESettingStatus.Missing ? "Deleted job" : step.job.name,
++            appName: step.app?.name ?? "",
++            name: step.name,
++        })),
++        mode: sequence?.mode ?? ESchedJobSeqMode.Sequential,
++        onFailure: sequence?.onFailure ?? ESchedJobSeqOnFailure.Stop,
++        timeout: job.timeout,
++        priority: job.priority,
++        controlEnabled: !job.controlDisabled,
++        notification: {
++            successUseDefault: job.notification?.successUseDefault ?? true,
++            success: job.notification?.success,
++            failureUseDefault: job.notification?.failureUseDefault ?? true,
++            failure: job.notification?.failure,
++        },
++    };
++}
++
++/** A sequence has no app and no command: each step's job has its own. */
++export function mapJobSequenceFormToPayload(values: JobSequenceFormOutput): AppScheduledJobs_Upsert_Payload {
++    return {
++        inheritable: false,
++        default: false,
++        name: values.name,
++        jobType: EAppScheduledJobType.JobSequence,
++        schedule: mapJobScheduleFormValuesToPayload(values),
++        priority: values.priority,
++        maxRetry: 0,
++        retryBackoff: false,
++        ...(values.timeout ? { timeout: values.timeout } : {}),
++        controlDisabled: !values.controlEnabled,
++        sequence: {
++            mode: values.mode,
++            onFailure: values.onFailure,
++            steps: values.steps.map(step => ({ job: { id: step.jobId }, name: step.name })),
++        },
++        notification: {
++            successUseDefault: values.notification.successUseDefault,
++            ...(!values.notification.successUseDefault && values.notification.success
++                ? { success: values.notification.success }
++                : {}),
++            failureUseDefault: values.notification.failureUseDefault,
++            ...(!values.notification.failureUseDefault && values.notification.failure
++                ? { failure: values.notification.failure }
++                : {}),
++        },
++    };
++}
+diff --git a/src/application/modules/projects/module-shared/components/job-sequence-form/job-sequence.form.com.tsx b/src/application/modules/projects/module-shared/components/job-sequence-form/job-sequence.form.com.tsx
+new file mode 100644
+index 00000000..ffde8bd8
+--- /dev/null
++++ b/src/application/modules/projects/module-shared/components/job-sequence-form/job-sequence.form.com.tsx
+@@ -0,0 +1,345 @@
++import { useMemo } from "react";
++
++import { zodResolver } from "@hookform/resolvers/zod";
++import { dashedBorderBox } from "@lib/styles";
++import { cn } from "@lib/utils";
++import { FormProvider, useController, useForm, useFormState } from "react-hook-form";
++import { useUpdateEffect } from "react-use";
++import type { AppScheduledJob } from "~/projects/domain";
++import { PROJECT_FORM_CONTROL_MAX_WIDTH_CLASS } from "~/projects/module-shared/constants";
++import { ESchedJobSeqMode, ESchedJobSeqOnFailure } from "~/projects/module-shared/enums";
++import { useProjectNotificationSettingsSources } from "~/projects/module-shared/hooks";
++
++import { ContentBlock, FormActionBar, InfoBlock, LabelWithInfo } from "@application/shared/components";
++import { NotificationSettings } from "@application/shared/form";
++
++import { Button, Checkbox, Field, FieldError, FieldGroup, Input, Tabs, TabsList, TabsTrigger } from "@/components/ui";
++
++import { JobScheduleFields, PriorityTabsField } from "../job-schedule-fields";
++
++import { type JobSequenceCandidate, JobSequenceStepsField } from "./job-sequence-steps-field.com";
++import { createEmptyJobSequenceFormDefaults, mapJobSequenceToFormInput } from "./job-sequence.form-mappers";
++import {
++    type JobSequenceFormInput,
++    type JobSequenceFormOutput,
++    JobSequenceFormSchema,
++} from "./job-sequence.form.schema";
++
++const TITLE_WIDTH = 220;
++
++/** What a step's command is told, and how it hands values to the steps after it. */
++function StepEnvironmentHelp() {
++    return (
++        <div className={cn(dashedBorderBox, "flex max-w-[720px] flex-col gap-2 text-sm leading-normal")}>
++            <p>
++                A step whose job runs a command is told how the steps before it went, in its environment:{" "}
++                <code>HIVEPAAS_SEQ_STEP</code> and <code>HIVEPAAS_SEQ_STEPS</code> (its number and the count),{" "}
++                <code>HIVEPAAS_SEQ_PREV_STATUS</code> (<code>done</code>, <code>failed</code> or <code>skipped</code>),{" "}
++                <code>HIVEPAAS_SEQ_RESULTS</code> (every earlier step, as JSON) and <code>HIVEPAAS_SEQ_OUTPUTS</code>.
++            </p>
++            <p>
++                To hand a value on, a step writes <code>KEY=value</code> lines to the file named by{" "}
++                <code>$HIVEPAAS_OUTPUT</code>, for example{" "}
++                <code>echo &quot;VERSION=1.2.3&quot; &gt;&gt; &quot;$HIVEPAAS_OUTPUT&quot;</code>. The steps after it
++                read it as <code>HIVEPAAS_SEQ_OUTPUT_VERSION</code>. Up to 64 KB, one line per value.
++            </p>
++            <p>
++                <span className="font-semibold text-orange-500">Note:</span> each step retries and times out as its job
++                does. A step the server was running when it restarted runs again: make the jobs safe to run twice.
++            </p>
++        </div>
++    );
++}
++
++/**
++ * A job sequence, at the app or the env scope: its steps are picked from the
++ * candidates the caller loads for its scope.
++ */
++export function JobSequenceForm({
++    projectId,
++    env,
++    candidates,
++    isLoadingCandidates,
++    isPending,
++    onSubmit,
++    initialValues,
++    onHasChanges,
++    readOnly = false,
++    stickyActions = false,
++    onClose,
++}: Props) {
++    const defaultValues = useMemo(
++        () => (initialValues ? mapJobSequenceToFormInput(initialValues) : createEmptyJobSequenceFormDefaults()),
++        [initialValues],
++    );
++
++    const methods = useForm<JobSequenceFormInput, unknown, JobSequenceFormOutput>({
++        defaultValues,
++        resolver: zodResolver(JobSequenceFormSchema),
++        mode: "onSubmit",
++    });
++    const {
++        control,
++        handleSubmit,
++        formState: { errors },
++    } = methods;
++    const { isDirty } = useFormState({ control });
++
++    useUpdateEffect(() => {
++        methods.reset(defaultValues);
++    }, [defaultValues]);
++
++    useUpdateEffect(() => {
++        onHasChanges?.(readOnly ? false : isDirty);
++    }, [isDirty, readOnly]);
++
++    const { sources: notificationSources, manageLink: notificationManageLink } = useProjectNotificationSettingsSources(
++        projectId,
++        env,
++    );
++
++    const { field: name, fieldState: nameState } = useController({ control, name: "name" });
++    const { field: mode } = useController({ control, name: "mode" });
++    const { field: onFailure } = useController({ control, name: "onFailure" });
++    const { field: timeout, fieldState: timeoutState } = useController({ control, name: "timeout" });
++    const { field: priority } = useController({ control, name: "priority" });
++    const { field: controlEnabled } = useController({ control, name: "controlEnabled" });
++
++    return (
++        <FormProvider {...methods}>
++            <form
++                onSubmit={event => {
++                    event.preventDefault();
++                    if (readOnly) {
++                        return;
++                    }
++
++                    void handleSubmit(values => {
++                        onSubmit(values);
++                    })(event);
++                }}
++                className="min-h-0 flex flex-1 flex-col"
++            >
++                <fieldset className="contents">
++                    <FieldGroup className="gap-6">
++                        <InfoBlock
++                            titleWidth={TITLE_WIDTH}
++                            title={
++                                <LabelWithInfo
++                                    label="Name"
++                                    isRequired
++                                />
++                            }
++                        >
++                            <Field>
++                                <Input
++                                    {...name}
++                                    placeholder="job sequence name"
++                                    aria-invalid={nameState.invalid}
++                                    className={PROJECT_FORM_CONTROL_MAX_WIDTH_CLASS}
++                                    disabled={readOnly}
++                                />
++                                <FieldError errors={[errors.name]} />
++                            </Field>
++                        </InfoBlock>
++
++                        <ContentBlock label="Steps">
++                            <div className="flex flex-col gap-6">
++                                <InfoBlock
++                                    title={
++                                        <LabelWithInfo
++                                            label="Jobs"
++                                            isRequired
++                                        />
++                                    }
++                                    titleWidth={TITLE_WIDTH}
++                                >
++                                    <JobSequenceStepsField
++                                        candidates={candidates}
++                                        isLoadingCandidates={isLoadingCandidates}
++                                        readOnly={readOnly}
++                                    />
++                                </InfoBlock>
++
++                                <InfoBlock
++                                    title="Mode"
++                                    titleWidth={TITLE_WIDTH}
++                                >
++                                    <Tabs
++                                        value={mode.value}
++                                        onValueChange={mode.onChange}
++                                    >
++                                        <TabsList>
++                                            <TabsTrigger
++                                                value={ESchedJobSeqMode.Sequential}
++                                                disabled={readOnly}
++                                            >
++                                                Sequential
++                                            </TabsTrigger>
++                                            <TabsTrigger
++                                                value="parallel"
++                                                disabled
++                                                title="Coming later"
++                                            >
++                                                Parallel (coming)
++                                            </TabsTrigger>
++                                        </TabsList>
++                                    </Tabs>
++                                </InfoBlock>
++
++                                <InfoBlock
++                                    title="On Failure"
++                                    titleWidth={TITLE_WIDTH}
++                                >
++                                    <div className="flex flex-col gap-2">
++                                        <Tabs
++                                            value={onFailure.value}
++                                            onValueChange={onFailure.onChange}
++                                        >
++                                            <TabsList>
++                                                <TabsTrigger
++                                                    value={ESchedJobSeqOnFailure.Stop}
++                                                    disabled={readOnly}
++                                                >
++                                                    Stop
++                                                </TabsTrigger>
++                                                <TabsTrigger
++                                                    value={ESchedJobSeqOnFailure.Continue}
++                                                    disabled={readOnly}
++                                                >
++                                                    Continue
++                                                </TabsTrigger>
++                                            </TabsList>
++                                        </Tabs>
++                                        <p className="text-sm text-muted-foreground">
++                                            {onFailure.value === ESchedJobSeqOnFailure.Stop
++                                                ? "A step that fails ends the run; the steps after it are skipped."
++                                                : "Every step runs; the run fails if one of them did."}
++                                        </p>
++                                    </div>
++                                </InfoBlock>
++
++                                <StepEnvironmentHelp />
++                            </div>
++                        </ContentBlock>
++
++                        <ContentBlock label="Scheduling">
++                            <div className="flex flex-col gap-6">
++                                <InfoBlock
++                                    title="Priority"
++                                    titleWidth={TITLE_WIDTH}
++                                >
++                                    <PriorityTabsField
++                                        value={priority.value}
++                                        onChange={priority.onChange}
++                                        readOnly={readOnly}
++                                    />
++                                </InfoBlock>
++
++                                <JobScheduleFields
++                                    titleWidth={TITLE_WIDTH}
++                                    nextRuns={initialValues?.nextRuns ?? []}
++                                    readOnly={readOnly}
++                                />
++
++                                <InfoBlock
++                                    title={
++                                        <LabelWithInfo
++                                            label="Step Timeout"
++                                            content="For a step whose job has no timeout of its own."
++                                        />
++                                    }
++                                    titleWidth={TITLE_WIDTH}
++                                >
++                                    <Field>
++                                        <Input
++                                            {...timeout}
++                                            placeholder="30m, 1h30m"
++                                            className="max-w-[400px]"
++                                            aria-invalid={timeoutState.invalid}
++                                            disabled={readOnly}
++                                        />
++                                        <FieldError errors={[errors.timeout]} />
++                                    </Field>
++                                </InfoBlock>
++
++                                <InfoBlock
++                                    title="Allow Canceling"
++                                    titleWidth={TITLE_WIDTH}
++                                >
++                                    <Checkbox
++                                        checked={controlEnabled.value}
++                                        onCheckedChange={checked => {
++                                            controlEnabled.onChange(checked === true);
++                                        }}
++                                        disabled={readOnly}
++                                    />
++                                </InfoBlock>
++                            </div>
++                        </ContentBlock>
++
++                        <ContentBlock label="Notification Configuration">
++                            <NotificationSettings<JobSequenceFormInput>
++                                names={{
++                                    successUseDefault: "notification.successUseDefault",
++                                    success: "notification.success",
++                                    failureUseDefault: "notification.failureUseDefault",
++                                    failure: "notification.failure",
++                                }}
++                                sources={notificationSources}
++                                manageLink={notificationManageLink}
++                                readOnly={readOnly}
++                                titleWidth={TITLE_WIDTH}
++                            />
++                        </ContentBlock>
++                    </FieldGroup>
++
++                    <FormActionBar sticky={stickyActions}>
++                        {readOnly ? (
++                            <Button
++                                type="button"
++                                onClick={onClose}
++                                className="min-w-[100px]"
++                            >
++                                Close
++                            </Button>
++                        ) : (
++                            <>
++                                <Button
++                                    type="button"
++                                    variant="outline"
++                                    className="min-w-[100px]"
++                                    disabled={isPending}
++                                    onClick={onClose}
++                                >
++                                    Cancel
++                                </Button>
++                                <Button
++                                    type="submit"
++                                    isLoading={isPending}
++                                    className="min-w-[100px]"
++                                >
++                                    Save
++                                </Button>
++                            </>
++                        )}
++                    </FormActionBar>
++                </fieldset>
++            </form>
++        </FormProvider>
++    );
++}
++
++interface Props {
++    projectId: string;
++    env?: string;
++    candidates: JobSequenceCandidate[];
++    isLoadingCandidates: boolean;
++    isPending: boolean;
++    onSubmit: (values: JobSequenceFormOutput) => void;
++    initialValues?: AppScheduledJob;
++    onHasChanges?: (dirty: boolean) => void;
++    readOnly?: boolean;
++    stickyActions?: boolean;
++    onClose?: () => void;
++}
+diff --git a/src/application/modules/projects/module-shared/components/job-sequence-form/job-sequence.form.schema.ts b/src/application/modules/projects/module-shared/components/job-sequence-form/job-sequence.form.schema.ts
+new file mode 100644
+index 00000000..3ac6ef1e
+--- /dev/null
++++ b/src/application/modules/projects/module-shared/components/job-sequence-form/job-sequence.form.schema.ts
+@@ -0,0 +1,52 @@
++import { z } from "zod";
++import {
++    EAppScheduledJobScheduleMode,
++    EAppScheduledJobTaskPriority,
++    ESchedJobSeqMode,
++    ESchedJobSeqOnFailure,
++} from "~/projects/module-shared/enums";
++
++/** The most steps a sequence has, as the server allows. */
++export const JOB_SEQUENCE_MAX_STEPS = 50;
++
++const NotificationRefSchema = z.object({
++    id: z.string(),
++    name: z.string(),
++});
++
++const JobSequenceStepSchema = z.object({
++    jobId: z.string().min(1, "Pick a job"),
++    /** How the picker named the job, shown in the step's row. */
++    jobName: z.string(),
++    appName: z.string(),
++    /** An optional label for the step, shown in the run. */
++    name: z.string().trim().max(100, "At most 100 characters"),
++});
++
++export const JobSequenceFormSchema = z.object({
++    name: z.string().trim().min(1, "Name is required"),
++    scheduleMode: z.nativeEnum(EAppScheduledJobScheduleMode),
++    scheduleInterval: z.string().trim(),
++    scheduleCronExpr: z.string().trim(),
++    scheduleFrom: z.date().nullable(),
++    scheduleTo: z.date().nullable(),
++    steps: z
++        .array(JobSequenceStepSchema)
++        .min(1, "Add at least one step")
++        .max(JOB_SEQUENCE_MAX_STEPS, `A sequence has at most ${JOB_SEQUENCE_MAX_STEPS} steps`),
++    mode: z.nativeEnum(ESchedJobSeqMode),
++    onFailure: z.nativeEnum(ESchedJobSeqOnFailure),
++    timeout: z.string().trim(),
++    priority: z.nativeEnum(EAppScheduledJobTaskPriority),
++    controlEnabled: z.boolean(),
++    notification: z.object({
++        successUseDefault: z.boolean(),
++        success: NotificationRefSchema.optional(),
++        failureUseDefault: z.boolean(),
++        failure: NotificationRefSchema.optional(),
++    }),
++});
++
++export type JobSequenceFormInput = z.input<typeof JobSequenceFormSchema>;
++export type JobSequenceFormOutput = z.output<typeof JobSequenceFormSchema>;
++export type JobSequenceStepFormValue = JobSequenceFormInput["steps"][number];
+diff --git a/src/application/modules/projects/module-shared/definitions/tables/app-scheduled-jobs/app-scheduled-jobs-table.defs.tsx b/src/application/modules/projects/module-shared/definitions/tables/app-scheduled-jobs/app-scheduled-jobs-table.defs.tsx
+index 58cea77b..356aa9b4 100644
+--- a/src/application/modules/projects/module-shared/definitions/tables/app-scheduled-jobs/app-scheduled-jobs-table.defs.tsx
++++ b/src/application/modules/projects/module-shared/definitions/tables/app-scheduled-jobs/app-scheduled-jobs-table.defs.tsx
+@@ -4,7 +4,7 @@ import type { AppScheduledJob } from "~/projects/domain";
+ import { formatJobSchedule } from "~/projects/module-shared/components";
+ import { SettingStatusBadge } from "~/settings/module-shared/components";
+ 
+-import { EditCell, MenuCell, ViewTasksCell } from "./building-blocks";
++import { EditCell, MenuCell, ScheduledJobNameCell, ViewTasksCell } from "./building-blocks";
+ 
+ function formatDate(date: Date | null | undefined) {
+     if (!date) {
+@@ -59,6 +59,7 @@ function createColumns(projectId: string, env: string, appId: string): ColumnDef
+         {
+             accessorKey: "name",
+             header: "Name",
++            cell: ({ row: { original } }) => <ScheduledJobNameCell job={original} />,
+         },
+         {
+             accessorKey: "schedule",
+diff --git a/src/application/modules/projects/module-shared/definitions/tables/app-scheduled-jobs/building-blocks/index.ts b/src/application/modules/projects/module-shared/definitions/tables/app-scheduled-jobs/building-blocks/index.ts
+index bdb62594..d8d8ea47 100644
+--- a/src/application/modules/projects/module-shared/definitions/tables/app-scheduled-jobs/building-blocks/index.ts
++++ b/src/application/modules/projects/module-shared/definitions/tables/app-scheduled-jobs/building-blocks/index.ts
+@@ -1,3 +1,4 @@
+ export * from "./edit-cell.com";
+ export * from "./menu-cell.com";
+ export * from "./view-tasks-cell.com";
++export * from "./name-cell.com";
+diff --git a/src/application/modules/projects/module-shared/definitions/tables/app-scheduled-jobs/building-blocks/name-cell.com.tsx b/src/application/modules/projects/module-shared/definitions/tables/app-scheduled-jobs/building-blocks/name-cell.com.tsx
+new file mode 100644
+index 00000000..a7911752
+--- /dev/null
++++ b/src/application/modules/projects/module-shared/definitions/tables/app-scheduled-jobs/building-blocks/name-cell.com.tsx
+@@ -0,0 +1,27 @@
++import { memo } from "react";
++
++import { Badge } from "@components/ui/badge";
++import type { AppScheduledJob } from "~/projects/domain";
++import { EAppScheduledJobType } from "~/projects/module-shared/enums";
++
++/** A job's name; a sequence is tagged, with its step count. */
++function View({ job }: Props) {
++    const steps = job.sequence?.steps.length ?? 0;
++
++    return (
++        <div className="flex flex-wrap items-center gap-2">
++            <span>{job.name}</span>
++            {job.jobType === EAppScheduledJobType.JobSequence && (
++                <Badge variant="secondary">
++                    Sequence · {steps} {steps === 1 ? "step" : "steps"}
++                </Badge>
++            )}
++        </div>
++    );
++}
++
++interface Props {
++    job: AppScheduledJob;
++}
++
++export const ScheduledJobNameCell = memo(View);
+diff --git a/src/application/modules/projects/module-shared/definitions/tables/app-scheduled-jobs/index.ts b/src/application/modules/projects/module-shared/definitions/tables/app-scheduled-jobs/index.ts
+index b9e8213a..da273f50 100644
+--- a/src/application/modules/projects/module-shared/definitions/tables/app-scheduled-jobs/index.ts
++++ b/src/application/modules/projects/module-shared/definitions/tables/app-scheduled-jobs/index.ts
+@@ -1 +1,2 @@
+ export * from "./app-scheduled-jobs-table.defs";
++export { ScheduledJobNameCell } from "./building-blocks";
+diff --git a/src/application/modules/projects/projects.module.ts b/src/application/modules/projects/projects.module.ts
+index 7ad198eb..bee6db36 100644
+--- a/src/application/modules/projects/projects.module.ts
++++ b/src/application/modules/projects/projects.module.ts
+@@ -96,6 +96,7 @@ export {
+     AppPeriodicJobHealthCheckEditRoute,
+     AppScheduledJobsRoute,
+     AppScheduledJobCreateRoute,
++    AppJobSequenceCreateRoute,
+     AppScheduledJobEditRoute,
+     AppFeatureSettingsRoute,
+     AppCloneSettingsRoute,
+diff --git a/src/application/modules/projects/projects.router.tsx b/src/application/modules/projects/projects.router.tsx
+index 533e07e8..b3515810 100644
+--- a/src/application/modules/projects/projects.router.tsx
++++ b/src/application/modules/projects/projects.router.tsx
+@@ -910,6 +910,7 @@ export const projectsRouter: RouteObject = {
+                                 };
+                             },
+                         },
++
+                         {
+                             path: ROUTE.projects.single.providerConfiguration.commandPipes.$pattern,
+                             lazy: async () => {
+@@ -1755,6 +1756,14 @@ export const projectsRouter: RouteObject = {
+                                 return { Component: AppScheduledJobCreateRoute };
+                             },
+                         },
++                        {
++                            path: ROUTE.projects.single.apps.single.configuration.scheduledJobs.createSequence.$pattern,
++                            lazy: async () => {
++                                const { AppJobSequenceCreateRoute } = await getLazyComponents();
++
++                                return { Component: AppJobSequenceCreateRoute };
++                            },
++                        },
+                         {
+                             path: ROUTE.projects.single.apps.single.configuration.scheduledJobs.edit.$pattern,
+                             lazy: async () => {
+diff --git a/src/application/modules/projects/routes/index.ts b/src/application/modules/projects/routes/index.ts
+index d376a7d5..d8124bbb 100644
+--- a/src/application/modules/projects/routes/index.ts
++++ b/src/application/modules/projects/routes/index.ts
+@@ -93,6 +93,7 @@ export {
+     AppPeriodicJobHealthCheckEditRoute,
+     AppScheduledJobsRoute,
+     AppScheduledJobCreateRoute,
++    AppJobSequenceCreateRoute,
+     AppScheduledJobEditRoute,
+     AppFeatureSettingsRoute,
+     AppCloneSettingsRoute,
+diff --git a/src/application/modules/projects/routes/single-project/single-app/configuration/scheduled-jobs/edit/app-scheduled-job-edit.route.com.tsx b/src/application/modules/projects/routes/single-project/single-app/configuration/scheduled-jobs/edit/app-scheduled-job-edit.route.com.tsx
+index f8cb36f0..315c1f8f 100644
+--- a/src/application/modules/projects/routes/single-project/single-app/configuration/scheduled-jobs/edit/app-scheduled-job-edit.route.com.tsx
++++ b/src/application/modules/projects/routes/single-project/single-app/configuration/scheduled-jobs/edit/app-scheduled-job-edit.route.com.tsx
+@@ -1,8 +1,14 @@
+ import { useParams } from "react-router";
+ import invariant from "tiny-invariant";
++import { APP_CONFIGURATION_QUERY_OPTIONS, AppScheduledJobsQueries } from "~/projects/data";
++import { EAppScheduledJobType } from "~/projects/module-shared/enums";
++
++import { AppLoader } from "@application/shared/components";
+ 
+ import { AppScheduledJobFormRoute } from "../form-route";
++import { AppJobSequenceFormRoute } from "../sequence";
+ 
++/** Opens the form the job's type needs: a sequence has its own. */
+ export function AppScheduledJobEditRoute() {
+     const {
+         id: projectId,
+@@ -21,6 +27,32 @@ export function AppScheduledJobEditRoute() {
+     invariant(appId, "appId must be defined");
+     invariant(scheduledJobId, "scheduledJobId must be defined");
+ 
++    const { data } = AppScheduledJobsQueries.useFindOneById(
++        { projectID: projectId, env, appID: appId, scheduledJobID: scheduledJobId },
++        APP_CONFIGURATION_QUERY_OPTIONS,
++    );
++    const job = data?.data;
++
++    if (!job) {
++        return (
++            <div className="flex min-h-[220px] items-center justify-center">
++                <AppLoader />
++            </div>
++        );
++    }
++
++    if (job.jobType === EAppScheduledJobType.JobSequence) {
++        return (
++            <AppJobSequenceFormRoute
++                mode="edit"
++                projectId={projectId}
++                env={env}
++                appId={appId}
++                scheduledJob={job}
++            />
++        );
++    }
++
+     return (
+         <AppScheduledJobFormRoute
+             mode="edit"
+diff --git a/src/application/modules/projects/routes/single-project/single-app/configuration/scheduled-jobs/index.ts b/src/application/modules/projects/routes/single-project/single-app/configuration/scheduled-jobs/index.ts
+index 3dea1c5e..40e72ac9 100644
+--- a/src/application/modules/projects/routes/single-project/single-app/configuration/scheduled-jobs/index.ts
++++ b/src/application/modules/projects/routes/single-project/single-app/configuration/scheduled-jobs/index.ts
+@@ -2,3 +2,4 @@ export * from "./route";
+ export * from "./form-route";
+ export * from "./create";
+ export * from "./edit";
++export * from "./sequence";
+diff --git a/src/application/modules/projects/routes/single-project/single-app/configuration/scheduled-jobs/route/app-scheduled-jobs.route.com.tsx b/src/application/modules/projects/routes/single-project/single-app/configuration/scheduled-jobs/route/app-scheduled-jobs.route.com.tsx
+index 7a798a19..b0f817ee 100644
+--- a/src/application/modules/projects/routes/single-project/single-app/configuration/scheduled-jobs/route/app-scheduled-jobs.route.com.tsx
++++ b/src/application/modules/projects/routes/single-project/single-app/configuration/scheduled-jobs/route/app-scheduled-jobs.route.com.tsx
+@@ -71,27 +71,51 @@ export function AppScheduledJobsRoute() {
+             <TableActions
+                 search={{ value: search, onChange: setSearch }}
+                 renderActions={
+-                    <PermissionTooltipAction
+-                        id={MODULE_IDS.Project}
+-                        action="write"
+-                    >
+-                        {({ isDenied }) => (
+-                            <Button
+-                                onClick={() => {
+-                                    navigate.modules(
+-                                        ROUTE.projects.single.apps.single.configuration.scheduledJobs.create.$route(
+-                                            projectId,
+-                                            env,
+-                                            appId,
+-                                        ),
+-                                    );
+-                                }}
+-                                disabled={isDenied}
+-                            >
+-                                <Plus className="size-4" /> New Scheduled Job
+-                            </Button>
+-                        )}
+-                    </PermissionTooltipAction>
++                    <div className="flex flex-wrap gap-3">
++                        <PermissionTooltipAction
++                            id={MODULE_IDS.Project}
++                            action="write"
++                        >
++                            {({ isDenied }) => (
++                                <Button
++                                    variant="outline"
++                                    onClick={() => {
++                                        navigate.modules(
++                                            ROUTE.projects.single.apps.single.configuration.scheduledJobs.createSequence.$route(
++                                                projectId,
++                                                env,
++                                                appId,
++                                            ),
++                                        );
++                                    }}
++                                    disabled={isDenied}
++                                >
++                                    <Plus className="size-4" /> New Job Sequence
++                                </Button>
++                            )}
++                        </PermissionTooltipAction>
++                        <PermissionTooltipAction
++                            id={MODULE_IDS.Project}
++                            action="write"
++                        >
++                            {({ isDenied }) => (
++                                <Button
++                                    onClick={() => {
++                                        navigate.modules(
++                                            ROUTE.projects.single.apps.single.configuration.scheduledJobs.create.$route(
++                                                projectId,
++                                                env,
++                                                appId,
++                                            ),
++                                        );
++                                    }}
++                                    disabled={isDenied}
++                                >
++                                    <Plus className="size-4" /> New Scheduled Job
++                                </Button>
++                            )}
++                        </PermissionTooltipAction>
++                    </div>
+                 }
+             />
+ 
+diff --git a/src/application/modules/projects/routes/single-project/single-app/configuration/scheduled-jobs/sequence/app-job-sequence-create.route.com.tsx b/src/application/modules/projects/routes/single-project/single-app/configuration/scheduled-jobs/sequence/app-job-sequence-create.route.com.tsx
+new file mode 100644
+index 00000000..55981e6d
+--- /dev/null
++++ b/src/application/modules/projects/routes/single-project/single-app/configuration/scheduled-jobs/sequence/app-job-sequence-create.route.com.tsx
+@@ -0,0 +1,21 @@
++import { useParams } from "react-router";
++import invariant from "tiny-invariant";
++
++import { AppJobSequenceFormRoute } from "./app-job-sequence-form-route.com";
++
++export function AppJobSequenceCreateRoute() {
++    const { id: projectId, env, appId } = useParams<{ id: string; env: string; appId: string }>();
++
++    invariant(projectId, "projectId must be defined");
++    invariant(env, "env must be defined");
++    invariant(appId, "appId must be defined");
++
++    return (
++        <AppJobSequenceFormRoute
++            mode="create"
++            projectId={projectId}
++            env={env}
++            appId={appId}
++        />
++    );
++}
+diff --git a/src/application/modules/projects/routes/single-project/single-app/configuration/scheduled-jobs/sequence/app-job-sequence-form-route.com.tsx b/src/application/modules/projects/routes/single-project/single-app/configuration/scheduled-jobs/sequence/app-job-sequence-form-route.com.tsx
+new file mode 100644
+index 00000000..44cfaff6
+--- /dev/null
++++ b/src/application/modules/projects/routes/single-project/single-app/configuration/scheduled-jobs/sequence/app-job-sequence-form-route.com.tsx
+@@ -0,0 +1,124 @@
++import { useMemo, useState } from "react";
++
++import { toast } from "sonner";
++import { APP_CONFIGURATION_QUERY_OPTIONS, AppScheduledJobsCommands, AppScheduledJobsQueries } from "~/projects/data";
++import type { AppScheduledJob } from "~/projects/domain";
++import {
++    type JobSequenceCandidate,
++    JobSequenceForm,
++    type JobSequenceFormOutput,
++    mapJobSequenceFormToPayload,
++} from "~/projects/module-shared/components";
++import { EAppScheduledJobType } from "~/projects/module-shared/enums";
++
++import { AppLoader, RouteFormHeader } from "@application/shared/components";
++import { MODULE_IDS, ROUTE } from "@application/shared/constants";
++import { useAppNavigate } from "@application/shared/hooks/router";
++import { useConditionalModule } from "@application/shared/permissions";
++
++const LIST_ALL_PAGE = { page: 1, size: 1000 };
++
++/** An app's sequence runs the app's own jobs, never another sequence. */
++function toSequenceCandidates(jobs: AppScheduledJob[]): JobSequenceCandidate[] {
++    return jobs
++        .filter(job => job.jobType !== EAppScheduledJobType.JobSequence)
++        .map(job => ({ id: job.id, name: job.name, appName: "", disabled: job.status !== "active" }));
++}
++
++export function AppJobSequenceFormRoute({ mode, projectId, env, appId, scheduledJob }: Props) {
++    const [hasChanges, setHasChanges] = useState(false);
++    const { canWrite } = useConditionalModule({ id: MODULE_IDS.Project });
++    const { navigate } = useAppNavigate();
++
++    const { data: jobsData, isFetching: isLoadingCandidates } = AppScheduledJobsQueries.useFindManyPaginated(
++        { projectID: projectId, env, appID: appId, pagination: LIST_ALL_PAGE },
++        APP_CONFIGURATION_QUERY_OPTIONS,
++    );
++    const candidates = useMemo(() => toSequenceCandidates(jobsData?.data ?? []), [jobsData]);
++
++    function navigateToList() {
++        navigate.modules(ROUTE.projects.single.apps.single.configuration.scheduledJobs.$route(projectId, env, appId), {
++            ignorePrevPath: true,
++        });
++    }
++
++    const { mutate: createOne, isPending: isCreating } = AppScheduledJobsCommands.useCreateOne({
++        onSuccess: () => {
++            toast.success("Job sequence created successfully");
++            navigateToList();
++        },
++    });
++    const { mutate: updateOne, isPending: isUpdating } = AppScheduledJobsCommands.useUpdateOne({
++        onSuccess: () => {
++            toast.success("Job sequence updated successfully");
++            navigateToList();
++        },
++    });
++
++    function onSubmit(values: JobSequenceFormOutput) {
++        if (!canWrite) {
++            return;
++        }
++
++        const payload = mapJobSequenceFormToPayload(values);
++        if (mode === "edit" && scheduledJob) {
++            updateOne({
++                projectID: projectId,
++                env,
++                appID: appId,
++                scheduledJobID: scheduledJob.id,
++                payload: { ...payload, updateVer: scheduledJob.updateVer },
++            });
++            return;
++        }
++
++        createOne({ projectID: projectId, env, appID: appId, payload });
++    }
++
++    function handleClose() {
++        if (isCreating || isUpdating) {
++            return;
++        }
++
++        if (canWrite && hasChanges && !window.confirm("Are you sure you want to close without saving changes?")) {
++            return;
++        }
++
++        navigateToList();
++    }
++
++    return (
++        <div className="flex w-full flex-col">
++            <RouteFormHeader title={mode === "create" ? "Create Job Sequence" : "Edit Job Sequence"} />
++
++            {mode === "edit" && !scheduledJob ? (
++                <div className="flex min-h-[220px] items-center justify-center">
++                    <AppLoader />
++                </div>
++            ) : (
++                <JobSequenceForm
++                    projectId={projectId}
++                    env={env}
++                    candidates={candidates}
++                    isLoadingCandidates={isLoadingCandidates}
++                    isPending={isCreating || isUpdating}
++                    onSubmit={onSubmit}
++                    onHasChanges={setHasChanges}
++                    initialValues={scheduledJob}
++                    readOnly={!canWrite}
++                    stickyActions
++                    onClose={handleClose}
++                />
++            )}
++        </div>
++    );
++}
++
++interface Props {
++    mode: "create" | "edit";
++    projectId: string;
++    env: string;
++    appId: string;
++    /** The sequence being edited. */
++    scheduledJob?: AppScheduledJob;
++}
+diff --git a/src/application/modules/projects/routes/single-project/single-app/configuration/scheduled-jobs/sequence/index.ts b/src/application/modules/projects/routes/single-project/single-app/configuration/scheduled-jobs/sequence/index.ts
+new file mode 100644
+index 00000000..f23ab5ce
+--- /dev/null
++++ b/src/application/modules/projects/routes/single-project/single-app/configuration/scheduled-jobs/sequence/index.ts
+@@ -0,0 +1,2 @@
++export * from "./app-job-sequence-create.route.com";
++export * from "./app-job-sequence-form-route.com";
+diff --git a/src/application/shared/constants/route.constants.ts b/src/application/shared/constants/route.constants.ts
+index f8c70ee2..c7ad40e1 100644
+--- a/src/application/shared/constants/route.constants.ts
++++ b/src/application/shared/constants/route.constants.ts
+@@ -679,6 +679,12 @@ export const ROUTE = {
+                                     `/projects/${id}/${env}/apps/${appId}/sched-jobs/create/`,
+                             },
+ 
++                            createSequence: {
++                                $pattern: "projects/:id/:env/apps/:appId/sched-jobs/create-sequence",
++                                $route: (id: string, env: string, appId: string) =>
++                                    `/projects/${id}/${env}/apps/${appId}/sched-jobs/create-sequence/`,
++                            },
++
+                             edit: {
+                                 $pattern: "projects/:id/:env/apps/:appId/sched-jobs/:scheduledJobId/edit",
+                                 $route: (id: string, env: string, appId: string, scheduledJobId: string) =>

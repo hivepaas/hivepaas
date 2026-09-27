@@ -1,0 +1,153 @@
+diff --git a/hivepaas_app/tasks/queue/queueimpl/queue_settle_test.go b/hivepaas_app/tasks/queue/queueimpl/queue_settle_test.go
+new file mode 100644
+index 00000000..983b3798
+--- /dev/null
++++ b/hivepaas_app/tasks/queue/queueimpl/queue_settle_test.go
+@@ -0,0 +1,79 @@
++package queueimpl
++
++import (
++	"errors"
++	"testing"
++	"time"
++
++	"github.com/stretchr/testify/assert"
++
++	"github.com/hivepaas/hivepaas/hivepaas_app/base"
++	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
++	"github.com/hivepaas/hivepaas/hivepaas_app/tasks/queue"
++)
++
++var settleNow = time.Date(2026, 9, 27, 12, 0, 0, 0, time.UTC)
++
++func runningTask() *entity.Task {
++	return &entity.Task{
++		Status:    base.TaskStatusNotStarted,
++		StartedAt: settleNow.Add(-time.Minute),
++		Config:    entity.TaskConfig{MaxRetry: 2, RetryDelay: 60e9},
++	}
++}
++
++func TestSettleTaskMarksASuccessDone(t *testing.T) {
++	task := runningTask()
++	rescheduleAt := settleTask(task, &queue.TaskExecData{Task: task}, nil, settleNow)
++
++	assert.Equal(t, base.TaskStatusDone, task.Status)
++	assert.True(t, rescheduleAt.IsZero())
++}
++
++func TestSettleTaskRunsAContinuedTaskAgainAtOnce(t *testing.T) {
++	task := runningTask()
++	task.RetryAt = settleNow.Add(-time.Hour)
++	data := &queue.TaskExecData{Task: task}
++	data.Continue()
++
++	rescheduleAt := settleTask(task, data, nil, settleNow)
++
++	assert.Equal(t, base.TaskStatusNotStarted, task.Status, "not done: it has more to do")
++	assert.Equal(t, settleNow, task.RunAt)
++	assert.True(t, task.RetryAt.IsZero())
++	assert.Equal(t, settleNow, rescheduleAt)
++}
++
++func TestSettleTaskLetsACancelWinOverContinue(t *testing.T) {
++	task := runningTask()
++	data := &queue.TaskExecData{Task: task, TaskCanceled: true}
++	data.Continue()
++
++	rescheduleAt := settleTask(task, data, nil, settleNow)
++
++	assert.Equal(t, base.TaskStatusCanceled, task.Status)
++	assert.True(t, rescheduleAt.IsZero())
++}
++
++func TestSettleTaskRetriesAFailure(t *testing.T) {
++	task := runningTask()
++	data := &queue.TaskExecData{Task: task}
++	data.Continue() // a failure is a failure, whatever was asked before it
++
++	rescheduleAt := settleTask(task, data, errors.New("boom"), settleNow)
++
++	assert.Equal(t, base.TaskStatusFailed, task.Status)
++	assert.False(t, rescheduleAt.IsZero())
++	assert.Equal(t, task.RetryAt, rescheduleAt)
++}
++
++func TestSettleTaskGivesUpOnANonRetryableFailure(t *testing.T) {
++	task := runningTask()
++	data := &queue.TaskExecData{Task: task, TaskNonRetryable: true}
++
++	rescheduleAt := settleTask(task, data, errors.New("boom"), settleNow)
++
++	assert.Equal(t, base.TaskStatusFailed, task.Status)
++	assert.True(t, rescheduleAt.IsZero())
++	assert.False(t, task.CanRetry())
++}
+diff --git a/hivepaas_app/tasks/queue/types_test.go b/hivepaas_app/tasks/queue/types_test.go
+index f8d9fc5e..2372ba6c 100644
+--- a/hivepaas_app/tasks/queue/types_test.go
++++ b/hivepaas_app/tasks/queue/types_test.go
+@@ -68,3 +68,12 @@ func TestSubTaskOfASubTaskReachesTheSameTask(t *testing.T) {
+ 
+ 	assert.True(t, ran)
+ }
++
++func TestContinueOnASubTaskReachesItsOwner(t *testing.T) {
++	owner := &TaskExecData{Task: &entity.Task{ID: "owner"}}
++	child := owner.SubTask(&entity.Task{ID: "child"})
++
++	child.Continue()
++
++	assert.True(t, owner.Continued())
++}
+diff --git a/hivepaas_app/tasks/taskworkflow/executor_steps_test.go b/hivepaas_app/tasks/taskworkflow/executor_steps_test.go
+new file mode 100644
+index 00000000..940b3fde
+--- /dev/null
++++ b/hivepaas_app/tasks/taskworkflow/executor_steps_test.go
+@@ -0,0 +1,45 @@
++package taskworkflow
++
++import (
++	"context"
++	"testing"
++
++	"github.com/stretchr/testify/assert"
++
++	"github.com/hivepaas/hivepaas/hivepaas_app/base"
++	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
++	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
++	"github.com/hivepaas/hivepaas/hivepaas_app/tasks/queue"
++)
++
++// stepQueue runs a step by noting its type; the embedded interface leaves the
++// rest nil, which a workflow step never reaches.
++type stepQueue struct {
++	queue.TaskQueue
++	ran []base.TaskType
++}
++
++func (q *stepQueue) ExecuteTaskType(_ context.Context, _ database.Tx, typ base.TaskType, _ *queue.TaskExecData) error {
++	q.ran = append(q.ran, typ)
++	return nil
++}
++
++func TestWorkflowRunsOneStepPerExecutionAndContinues(t *testing.T) {
++	q := &stepQueue{}
++	e := &Executor{taskQueue: q}
++	task := &entity.Task{ID: "wf", Type: base.TaskTypeWorkflow}
++	assert.NoError(t, task.SetArgs(&entity.WorkflowArgs{Steps: []*entity.WorkflowStep{
++		{Name: "one", Type: base.TaskTypeDummy},
++		{Name: "two", Type: base.TaskTypeAppDeploy},
++	}}))
++
++	first := &queue.TaskExecData{Task: task}
++	assert.NoError(t, e.execute(context.Background(), database.Tx{}, first))
++	assert.True(t, first.Continued(), "a step is left: run again")
++
++	second := &queue.TaskExecData{Task: task}
++	assert.NoError(t, e.execute(context.Background(), database.Tx{}, second))
++	assert.False(t, second.Continued(), "the last step: done")
++
++	assert.Equal(t, []base.TaskType{base.TaskTypeDummy, base.TaskTypeAppDeploy}, q.ran)
++}

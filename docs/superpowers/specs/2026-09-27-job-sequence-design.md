@@ -26,7 +26,7 @@ HivePaaS itself has no use for it; it is for its users.
    be added without changing them.
 5. **One task, one step per run, progress kept in the task.** A run is one
    `task:sched-job-exec` task that runs one step each time it executes, in that
-   execution's own transaction, saves its progress in its args and asks the
+   execution's own transaction, saves its progress in its output and asks the
    queue to run it again for the next step. A worker restart resumes at the
    step it was on. The existing `task:workflow` has the same idea but is unused
    and does not advance past its first step (the queue marks a task done when
@@ -77,19 +77,20 @@ type SchedJobSequenceStep struct {
 - The sequence's own `MaxRetry` and `RetryDelay*` are not used: retry belongs
   to each step. Its `Timeout` is the default for a step whose job sets none.
   `Priority` applies to the run.
-- `GetRefObjectIDs()` includes the members, so deleting or disabling a member
-  goes through the existing setting-in-use check, whatever the scopes of the
-  two.
+- `GetRefObjectIDs()` includes the members, so deleting a member goes through
+  the existing setting-in-use check, whatever the scopes of the two. Disabling
+  one is not blocked: its step is skipped when a run reaches it (§2).
 
 **A schedule becomes optional, for every job type.** `Schedule` may be nil: the
 job never runs by itself - `createTasksForJobs` skips it - and runs only when
 run by hand or as a step of a sequence. The dashboard shows "No schedule".
 
-**A run's results**, kept in the task's args while it runs and in its output
-when it ends:
+**A run's results** are the task's output, written after every step, so a
+run's page shows them while the run goes on:
 
 ```go
 type SchedJobSeqRun struct {
+    Started     bool                     `json:"started"` // the run checked it overlaps none
     CurrentStep int                      `json:"currentStep"`
     Steps       []*SchedJobSeqStepResult `json:"steps"`
 }
@@ -118,7 +119,11 @@ and it was called, the queue does not mark the task done: it sets
 schedules it at once. Any task type may use it; `task:workflow` is changed to
 use it too.
 
-**Each execution runs one step:**
+**The first execution only prepares the run:** it refuses to overlap another
+run (below), and gives the task the first step's retry and timeout, which the
+queue reads before an execution starts; then `Continue()`.
+
+**Each execution after it runs one step:**
 
 1. Read `SchedJobSeqRun` from the task's args (initialised from the sequence
    on the first execution), take the current step, load its job.
@@ -154,12 +159,17 @@ The prefix is `HIVEPAAS_`, not `HP_`, which is the app's own configuration.
 
 **Outputs.** A step writes `KEY=value` lines to `$HIVEPAAS_OUTPUT`
 (`/tmp/hivepaas-output-<task>-<step>` in its container). After the step,
-HivePaaS reads it with a second exec and deletes it: at most 64 KB, keys
+HivePaaS reads it with a second exec, pinned to the container and node the
+step ran in, and deletes it: at most 64 KB, keys
 `[A-Za-z_][A-Za-z0-9_]*`, upper-cased in variable names, one-line values.
 Lines that break these rules are skipped with a warning in the log. A file that
 cannot be read - no `cat` in the container - is a warning and no outputs, never
 a failed step. Large data does not belong here: `saveToFile` puts a job's
 output in storage, for a later step to read from there.
+
+**Exit codes.** A `container-command` step's exit code is recorded. The
+container exec reports it, and on a non-zero exit returns its response with
+the error, so the code and the outputs survive a failed step.
 
 System job types (backup, cleanup, SSL renewal, backup repo cleanup) take no
 input and give no outputs; their status counts like any step's.
@@ -177,8 +187,9 @@ run twice.
 **Cancel** stops the run at its current step; the steps left are `skipped`.
 
 **Notifications.** A member run as a step sends none of its own. The sequence
-sends one when the run ends, through its `Notification` settings: each step,
-its status and duration.
+sends its own when the run ends, through its `Notification` settings: a failed
+run's carries the summary - each step, its status and duration - as its error
+detail. The run's log ends with the same summary.
 
 ## 3. API
 
@@ -205,6 +216,9 @@ sequences: other env job types will appear in it when they exist.
 Access to the env covers its apps: a sequence's members are not checked app by
 app.
 
+**MCP** does not make sequences: `plan_create_sched_job` plans a command that
+runs in an app, and says a sequence is made in the dashboard.
+
 **Runs** are tasks: the existing task API lists a sequence's runs
 (`TargetID`), and a run's task output carries `SchedJobSeqRun`.
 
@@ -221,8 +235,11 @@ app.
   references. The planning confirms that the reference handling reaches an
   `ObjectID` inside `sequence.steps`, and a test pins it: an env sequence
   exported and imported into a new env runs the jobs of that env's apps. A
-  member the import does not write - a job it skipped, an app it did not
-  import - is reported, and the step is skipped when the sequence runs (§2).
+  member the import does not find - a job it skipped, an app it did not
+  import - is reported (`REF_NOT_FOUND`, fixable); the sequence is written
+  `pending`, that step's job empty, and the step is skipped when it runs (§2).
+  Import does not re-check a sequence's members against its reach: the runner
+  skips what it cannot run.
 
 ## 4. Dashboard
 
@@ -232,26 +249,34 @@ app.
   In the list, a sequence has a "Sequence" tag and its step count.
 - **Project → Scheduled jobs (new):** the project page with the env picker of
   the other env settings (`ProjectProviderSettingsScopeHeader`). An env has to
-  be picked; "All" shows a note. The list is the env list API: name, type,
-  owner ("Env" or the app), schedule or "No schedule", status, last run;
-  filters by app and type. `+ New Job Sequence`; per row run now, enable or
-  disable, edit, delete, runs. An app's job opens its app's page to edit.
-- **`JobSequenceForm`**, one component for both scopes: name, status; steps -
+  be picked; "All" shows a note. The list is the env list API: name (with the
+  "Sequence" tag), owner ("Env" or the app), schedule or "No schedule", next
+  run, status; filters by app and type. `+ New Job Sequence`. The env's own
+  rows: view runs, run now (opening the run), enable or disable, edit, delete.
+  An app's row: view runs, and edit or "Open in <app>" on its app's page. Like
+  the other env settings pages, the create and edit pages work in the env
+  picked in the header; the project's Tasks page takes `?targetId=` for a job's
+  runs.
+- **`JobSequenceForm`**, one component for both scopes: name; steps -
   added from a picker of the scope's jobs (by app at the env scope, without
   sequences), reordered with up and down, an optional label each, a job may be
   added twice; `On failure` (Stop, Continue); `Mode` (Sequential; Parallel
-  shown disabled, "coming"); schedule with **No schedule**; timeout, priority,
-  notification. It says that a step may run twice after a restart, and
+  shown disabled, "coming"); schedule with **No schedule** (the default for a
+  new sequence); a step timeout for steps whose job has none, priority,
+  "Allow canceling" (on by default: a run is canceled through task control),
+  notification. No status field - a sequence is created active and enabled or
+  disabled from its list, as jobs are - and no retry of its own: each step
+  retries as its job does. It says that a step may run twice after a restart, and
   explains `HIVEPAAS_OUTPUT` and the `HIVEPAAS_SEQ_*` variables. The parts it
-  shares with the job form - schedule, timeout, priority, notification - are
-  components both use.
+  shares with the job form - schedule and priority - are components both use;
+  notification was one already.
 - **Every job form** gains **No schedule** (manual, or run by a sequence).
 - **A run's page** gains, for a sequence, a table of steps: number, name or job,
   status, attempts, duration, error, output keys (their values on click),
   refreshed while the run goes on. The log viewer is the existing one; the step
   headers mark the steps.
-- Deleting or disabling a job a sequence uses opens the existing setting-in-use
-  dialog, with a link to the sequence.
+- Deleting a job a sequence uses opens the existing setting-in-use dialog, with
+  a link to the sequence (an env sequence's edit page, or its app's jobs).
 
 ## 5. Testing
 

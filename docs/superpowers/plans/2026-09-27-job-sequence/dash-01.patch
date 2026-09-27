@@ -1,0 +1,1566 @@
+diff --git a/src/application/modules/projects/api/api-context/projects.api.context.ts b/src/application/modules/projects/api/api-context/projects.api.context.ts
+index e8849238..c99bf017 100644
+--- a/src/application/modules/projects/api/api-context/projects.api.context.ts
++++ b/src/application/modules/projects/api/api-context/projects.api.context.ts
+@@ -39,6 +39,8 @@ import {
+     AppTerminalApi,
+     AppTerminalApiValidator,
+     AppTerminalWsApi,
++    EnvScheduledJobsApi,
++    EnvScheduledJobsApiValidator,
+     ProjectAccessTokenApi,
+     ProjectAccessTokenApiValidator,
+     ProjectAcmeDnsProviderApi,
+@@ -352,6 +354,9 @@ function createApi() {
+             commandPipes: {
+                 $: new ProjectCommandPipeApi(projectCommandPipeApiValidator),
+             },
++            envScheduledJobs: {
++                $: new EnvScheduledJobsApi(new EnvScheduledJobsApiValidator()),
++            },
+             commandTemplates: {
+                 $: new ProjectCommandTemplateApi(projectCommandTemplateApiValidator),
+             },
+diff --git a/src/application/modules/projects/api/hooks/index.ts b/src/application/modules/projects/api/hooks/index.ts
+index 765a7dc5..80a40ba1 100644
+--- a/src/application/modules/projects/api/hooks/index.ts
++++ b/src/application/modules/projects/api/hooks/index.ts
+@@ -27,3 +27,4 @@ export * from "./project-access-token";
+ export * from "./project-cloud-storage";
+ export * from "./project-image-build-settings";
+ export * from "./project-backup-repo";
++export * from "./project-env-scheduled-jobs";
+diff --git a/src/application/modules/projects/api/hooks/project-env-scheduled-jobs/index.ts b/src/application/modules/projects/api/hooks/project-env-scheduled-jobs/index.ts
+new file mode 100644
+index 00000000..a41638e8
+--- /dev/null
++++ b/src/application/modules/projects/api/hooks/project-env-scheduled-jobs/index.ts
+@@ -0,0 +1 @@
++export * from "./use-env-scheduled-jobs.api";
+diff --git a/src/application/modules/projects/api/hooks/project-env-scheduled-jobs/use-env-scheduled-jobs.api.ts b/src/application/modules/projects/api/hooks/project-env-scheduled-jobs/use-env-scheduled-jobs.api.ts
+new file mode 100644
+index 00000000..74ba6662
+--- /dev/null
++++ b/src/application/modules/projects/api/hooks/project-env-scheduled-jobs/use-env-scheduled-jobs.api.ts
+@@ -0,0 +1,117 @@
++import { use, useMemo } from "react";
++
++import { match } from "oxide.ts";
++import { ProjectsApiContext } from "~/projects/api/api-context";
++import type {
++    EnvScheduledJobs_CreateOne_Req,
++    EnvScheduledJobs_DeleteOne_Req,
++    EnvScheduledJobs_FindManyPaginated_Req,
++    EnvScheduledJobs_FindOneById_Req,
++    EnvScheduledJobs_RunNow_Req,
++    EnvScheduledJobs_UpdateOne_Req,
++    EnvScheduledJobs_UpdateStatus_Req,
++} from "~/projects/api/services";
++
++import { useApiErrorNotifications } from "@infrastructure/api";
++
++function createHook() {
++    return function useEnvScheduledJobsApi() {
++        const { api } = use(ProjectsApiContext);
++        const { notifyError } = useApiErrorNotifications();
++
++        const queries = useMemo(
++            () => ({
++                findManyPaginated: async (
++                    data: EnvScheduledJobs_FindManyPaginated_Req["data"],
++                    signal?: AbortSignal,
++                ) => {
++                    const result = await api.projects.envScheduledJobs.$.findManyPaginated({ data }, signal);
++
++                    return match(result, {
++                        Ok: _ => _,
++                        Err: error => {
++                            notifyError({ message: "Failed to load scheduled jobs", error });
++                            throw error;
++                        },
++                    });
++                },
++                findOneById: async (data: EnvScheduledJobs_FindOneById_Req["data"], signal?: AbortSignal) => {
++                    const result = await api.projects.envScheduledJobs.$.findOneById({ data }, signal);
++
++                    return match(result, {
++                        Ok: _ => _,
++                        Err: error => {
++                            throw error;
++                        },
++                    });
++                },
++            }),
++            [api, notifyError],
++        );
++
++        const mutations = useMemo(
++            () => ({
++                createOne: async (data: EnvScheduledJobs_CreateOne_Req["data"]) => {
++                    const result = await api.projects.envScheduledJobs.$.createOne({ data });
++
++                    return match(result, {
++                        Ok: _ => _,
++                        Err: error => {
++                            notifyError({ message: "Failed to create job sequence", error });
++                            throw error;
++                        },
++                    });
++                },
++                updateOne: async (data: EnvScheduledJobs_UpdateOne_Req["data"]) => {
++                    const result = await api.projects.envScheduledJobs.$.updateOne({ data });
++
++                    return match(result, {
++                        Ok: _ => _,
++                        Err: error => {
++                            notifyError({ message: "Failed to update job sequence", error });
++                            throw error;
++                        },
++                    });
++                },
++                updateStatus: async (data: EnvScheduledJobs_UpdateStatus_Req["data"]) => {
++                    const result = await api.projects.envScheduledJobs.$.updateStatus({ data });
++
++                    return match(result, {
++                        Ok: _ => _,
++                        Err: error => {
++                            notifyError({ message: "Failed to update job sequence status", error });
++                            throw error;
++                        },
++                    });
++                },
++                deleteOne: async (data: EnvScheduledJobs_DeleteOne_Req["data"]) => {
++                    const result = await api.projects.envScheduledJobs.$.deleteOne({ data });
++
++                    return match(result, {
++                        Ok: _ => _,
++                        Err: error => {
++                            notifyError({ message: "Failed to delete job sequence", error });
++                            throw error;
++                        },
++                    });
++                },
++                runNow: async (data: EnvScheduledJobs_RunNow_Req["data"]) => {
++                    const result = await api.projects.envScheduledJobs.$.runNow({ data });
++
++                    return match(result, {
++                        Ok: _ => _,
++                        Err: error => {
++                            notifyError({ message: "Failed to run job sequence", error });
++                            throw error;
++                        },
++                    });
++                },
++            }),
++            [api, notifyError],
++        );
++
++        return { queries, mutations };
++    };
++}
++
++export const useEnvScheduledJobsApi = createHook();
+diff --git a/src/application/modules/projects/api/services/project-apps-services/scheduled-jobs/app-scheduled-jobs.api.contracts.ts b/src/application/modules/projects/api/services/project-apps-services/scheduled-jobs/app-scheduled-jobs.api.contracts.ts
+index 69d74bcf..2767c51b 100644
+--- a/src/application/modules/projects/api/services/project-apps-services/scheduled-jobs/app-scheduled-jobs.api.contracts.ts
++++ b/src/application/modules/projects/api/services/project-apps-services/scheduled-jobs/app-scheduled-jobs.api.contracts.ts
+@@ -4,6 +4,8 @@ import type {
+     EAppScheduledJobArgSeparator,
+     EAppScheduledJobTaskPriority,
+     EAppScheduledJobType,
++    ESchedJobSeqMode,
++    ESchedJobSeqOnFailure,
+ } from "~/projects/module-shared/enums";
+ 
+ import type { ESettingStatus } from "@application/shared/enums";
+@@ -84,13 +86,29 @@ export type AppScheduledJobs_CommandOutput_Payload = {
+     pipeToApp?: AppScheduledJobs_CommandOutput_PipeToApp_Payload | null;
+ };
+ 
++export type AppScheduledJobs_SequenceStep_Payload = {
++    job: AppScheduledJobs_RefObject_Payload;
++    name: string;
++};
++
++export type AppScheduledJobs_Sequence_Payload = {
++    mode: ESchedJobSeqMode;
++    onFailure: ESchedJobSeqOnFailure;
++    steps: AppScheduledJobs_SequenceStep_Payload[];
++};
++
++/**
++ * A job to create or update. A container command has `app` and `command`; a job
++ * sequence has `sequence` and neither of those. `schedule` is null for a job run
++ * by hand or by a sequence.
++ */
+ export type AppScheduledJobs_Upsert_Payload = {
+     inheritable: boolean;
+     default: boolean;
+     name: string;
+     jobType: EAppScheduledJobType;
+-    schedule: AppScheduledJobs_Schedule_Payload;
+-    app: AppScheduledJobs_RefObject_Payload;
++    schedule: AppScheduledJobs_Schedule_Payload | null;
++    app?: AppScheduledJobs_RefObject_Payload;
+     priority: EAppScheduledJobTaskPriority;
+     maxRetry?: number;
+     retryDelay?: string;
+@@ -99,8 +117,9 @@ export type AppScheduledJobs_Upsert_Payload = {
+     retryDelayMax?: string;
+     timeout?: string;
+     controlDisabled: boolean;
+-    command: AppScheduledJobs_Command_Payload;
++    command?: AppScheduledJobs_Command_Payload;
+     commandOutput?: AppScheduledJobs_CommandOutput_Payload;
++    sequence?: AppScheduledJobs_Sequence_Payload;
+     notification: AppScheduledJobs_Notification_Payload;
+ };
+ 
+diff --git a/src/application/modules/projects/api/services/project-apps-services/scheduled-jobs/app-scheduled-jobs.api.ts b/src/application/modules/projects/api/services/project-apps-services/scheduled-jobs/app-scheduled-jobs.api.ts
+index b626902a..79c27f46 100644
+--- a/src/application/modules/projects/api/services/project-apps-services/scheduled-jobs/app-scheduled-jobs.api.ts
++++ b/src/application/modules/projects/api/services/project-apps-services/scheduled-jobs/app-scheduled-jobs.api.ts
+@@ -60,16 +60,16 @@ function toOptionalObjectIdPayload(ref?: { id: string } | null) {
+     };
+ }
+ 
+-function toUpsertPayload(
++export function toUpsertPayload(
+     payload: AppScheduledJobs_Upsert_Payload | (AppScheduledJobs_Upsert_Payload & { updateVer: number }),
+-) {
++): AppScheduledJobs_Upsert_Payload & { updateVer?: number } {
+     const { success, failure, ...notification } = payload.notification;
+     const successPayload = toOptionalObjectIdPayload(success);
+     const failurePayload = toOptionalObjectIdPayload(failure);
+ 
+     return {
+         ...payload,
+-        app: toObjectIdPayload(payload.app),
++        ...(payload.app ? { app: toObjectIdPayload(payload.app) } : {}),
+         notification: {
+             ...notification,
+             ...(successPayload ? { success: successPayload } : {}),
+diff --git a/src/application/modules/projects/api/services/project-apps-services/scheduled-jobs/app-scheduled-jobs.api.validator.ts b/src/application/modules/projects/api/services/project-apps-services/scheduled-jobs/app-scheduled-jobs.api.validator.ts
+index 850ea610..6feeb96b 100644
+--- a/src/application/modules/projects/api/services/project-apps-services/scheduled-jobs/app-scheduled-jobs.api.validator.ts
++++ b/src/application/modules/projects/api/services/project-apps-services/scheduled-jobs/app-scheduled-jobs.api.validator.ts
+@@ -14,6 +14,8 @@ import {
+     EAppScheduledJobArgSeparator,
+     EAppScheduledJobTaskPriority,
+     EAppScheduledJobType,
++    ESchedJobSeqMode,
++    ESchedJobSeqOnFailure,
+ } from "~/projects/module-shared/enums";
+ 
+ import { BaseMetaApiSchema, PagingMetaApiSchema, parseApiResponse } from "@infrastructure/api";
+@@ -44,13 +46,39 @@ const NullableDateSchema = z.preprocess(value => {
+     return Number.isNaN(date.getTime()) ? null : date;
+ }, z.date().nullable());
+ 
+-const ScheduleSchema = z.object({
+-    cronExpr: z.string().optional().default(""),
+-    interval: z.string().optional().default(""),
+-    initialTime: z.coerce.date(),
+-    endTime: NullableDateSchema,
++const ScheduleSchema = z
++    .object({
++        cronExpr: z.string().optional().default(""),
++        interval: z.string().optional().default(""),
++        initialTime: z.coerce.date(),
++        endTime: NullableDateSchema,
++    })
++    .nullish()
++    .transform(value => value ?? null);
++
++const SequenceStepSchema = z.object({
++    job: z.object({
++        id: z.string(),
++        name: z.string().optional().default(""),
++        kind: z.string().optional().default(""),
++        status: z.string().optional().default(""),
++    }),
++    app: NamedRefSchema,
++    name: z.string().optional().default(""),
+ });
+ 
++const SequenceSchema = z
++    .object({
++        mode: z.nativeEnum(ESchedJobSeqMode).catch(ESchedJobSeqMode.Sequential),
++        onFailure: z.nativeEnum(ESchedJobSeqOnFailure).catch(ESchedJobSeqOnFailure.Stop),
++        steps: z
++            .array(SequenceStepSchema)
++            .nullish()
++            .transform(value => value ?? []),
++    })
++    .nullish()
++    .transform(value => value ?? null);
++
+ const EnvVarSchema = z.object({
+     key: z.string(),
+     value: z.string(),
+@@ -173,7 +201,7 @@ const NotificationSchema = z
+     .nullish()
+     .transform(value => value ?? null);
+ 
+-const AppScheduledJobSchema = z.object({
++export const AppScheduledJobSchema = z.object({
+     id: z.string(),
+     type: z.string(),
+     name: z.string(),
+@@ -200,7 +228,11 @@ const AppScheduledJobSchema = z.object({
+     command: CommandSchema,
+     commandOutput: CommandOutputSchema,
+     notification: NotificationSchema,
+-    nextRuns: z.array(z.coerce.date()).optional().default([]),
++    sequence: SequenceSchema,
++    nextRuns: z
++        .array(z.coerce.date())
++        .nullish()
++        .transform(value => value ?? []),
+ });
+ 
+ const AppScheduledJobTaskPrioritySchema = z
+@@ -225,7 +257,7 @@ const AppScheduledJobTaskConfigSchema = z.preprocess(
+     }),
+ );
+ 
+-const AppScheduledJobTaskSchema = z.object({
++export const AppScheduledJobTaskSchema = z.object({
+     id: z.string(),
+     type: z.string().optional().default(""),
+     status: z.string(),
+diff --git a/src/application/modules/projects/api/services/projects-services/index.ts b/src/application/modules/projects/api/services/projects-services/index.ts
+index 4dab713b..dfaea3b2 100644
+--- a/src/application/modules/projects/api/services/projects-services/index.ts
++++ b/src/application/modules/projects/api/services/projects-services/index.ts
+@@ -25,3 +25,4 @@ export * from "./project-cloud-storage";
+ export * from "./project-command-pipe";
+ export * from "./project-command-template";
+ export * from "./project-backup-repo";
++export * from "./project-env-scheduled-jobs";
+diff --git a/src/application/modules/projects/api/services/projects-services/project-env-scheduled-jobs/index.ts b/src/application/modules/projects/api/services/projects-services/project-env-scheduled-jobs/index.ts
+new file mode 100644
+index 00000000..20341327
+--- /dev/null
++++ b/src/application/modules/projects/api/services/projects-services/project-env-scheduled-jobs/index.ts
+@@ -0,0 +1,3 @@
++export * from "./project-env-scheduled-jobs.api";
++export * from "./project-env-scheduled-jobs.api.contracts";
++export * from "./project-env-scheduled-jobs.api.validator";
+diff --git a/src/application/modules/projects/api/services/projects-services/project-env-scheduled-jobs/project-env-scheduled-jobs.api.contracts.ts b/src/application/modules/projects/api/services/projects-services/project-env-scheduled-jobs/project-env-scheduled-jobs.api.contracts.ts
+new file mode 100644
+index 00000000..35d70547
+--- /dev/null
++++ b/src/application/modules/projects/api/services/projects-services/project-env-scheduled-jobs/project-env-scheduled-jobs.api.contracts.ts
+@@ -0,0 +1,68 @@
++import type { PaginationState, SortingState } from "@infrastructure/data";
++import type { AppScheduledJobs_Upsert_Payload } from "~/projects/api/services/project-apps-services";
++import type { AppScheduledJob, EnvScheduledJob } from "~/projects/domain";
++import type { EAppScheduledJobType } from "~/projects/module-shared/enums";
++
++import type { ESettingStatus } from "@application/shared/enums";
++
++import type { ApiRequestBase, ApiResponseBase, ApiResponsePaginated } from "@infrastructure/api";
++
++interface EnvScope {
++    projectID: string;
++    env: string;
++}
++
++export type EnvScheduledJobs_FindManyPaginated_Req = ApiRequestBase<
++    EnvScope & {
++        pagination?: PaginationState;
++        sorting?: SortingState;
++        search?: string;
++        /** Only jobs of these types. */
++        jobTypes?: EAppScheduledJobType[];
++        /** Only the jobs of this app. */
++        appId?: string;
++    }
++>;
++
++/** The env's own jobs, and those of every app in the env. */
++export type EnvScheduledJobs_FindManyPaginated_Res = ApiResponsePaginated<EnvScheduledJob>;
++
++export type EnvScheduledJobs_FindOneById_Req = ApiRequestBase<EnvScope & { scheduledJobID: string }>;
++
++export type EnvScheduledJobs_FindOneById_Res = ApiResponseBase<AppScheduledJob>;
++
++export type EnvScheduledJobs_CreateOne_Req = ApiRequestBase<EnvScope & { payload: AppScheduledJobs_Upsert_Payload }>;
++
++export type EnvScheduledJobs_CreateOne_Res = ApiResponseBase<{ id: string }>;
++
++export type EnvScheduledJobs_UpdateOne_Req = ApiRequestBase<
++    EnvScope & {
++        scheduledJobID: string;
++        payload: AppScheduledJobs_Upsert_Payload & { updateVer: number };
++    }
++>;
++
++export type EnvScheduledJobs_UpdateOne_Res = ApiResponseBase<{ type: "success" }>;
++
++export type EnvScheduledJobs_UpdateStatus_Req = ApiRequestBase<
++    EnvScope & {
++        scheduledJobID: string;
++        payload: {
++            updateVer: number;
++            status: ESettingStatus;
++            expireAt: Date | null;
++            inheritable: boolean;
++            default: boolean;
++        };
++    }
++>;
++
++export type EnvScheduledJobs_UpdateStatus_Res = ApiResponseBase<{ type: "success" }>;
++
++export type EnvScheduledJobs_DeleteOne_Req = ApiRequestBase<EnvScope & { scheduledJobID: string }>;
++
++export type EnvScheduledJobs_DeleteOne_Res = ApiResponseBase<{ type: "success" }>;
++
++export type EnvScheduledJobs_RunNow_Req = ApiRequestBase<EnvScope & { scheduledJobID: string }>;
++
++export type EnvScheduledJobs_RunNow_Res = ApiResponseBase<{ task: { id: string } }>;
+diff --git a/src/application/modules/projects/api/services/projects-services/project-env-scheduled-jobs/project-env-scheduled-jobs.api.ts b/src/application/modules/projects/api/services/projects-services/project-env-scheduled-jobs/project-env-scheduled-jobs.api.ts
+new file mode 100644
+index 00000000..896a5b4f
+--- /dev/null
++++ b/src/application/modules/projects/api/services/projects-services/project-env-scheduled-jobs/project-env-scheduled-jobs.api.ts
+@@ -0,0 +1,143 @@
++import { Err, Ok, type Result } from "oxide.ts";
++import { catchError, from, lastValueFrom, map, of } from "rxjs";
++import { toUpsertPayload } from "~/projects/api/services/project-apps-services/scheduled-jobs/app-scheduled-jobs.api";
++
++import { BaseApi, parseApiError } from "@infrastructure/api";
++
++import type {
++    EnvScheduledJobs_CreateOne_Req,
++    EnvScheduledJobs_CreateOne_Res,
++    EnvScheduledJobs_DeleteOne_Req,
++    EnvScheduledJobs_DeleteOne_Res,
++    EnvScheduledJobs_FindManyPaginated_Req,
++    EnvScheduledJobs_FindManyPaginated_Res,
++    EnvScheduledJobs_FindOneById_Req,
++    EnvScheduledJobs_FindOneById_Res,
++    EnvScheduledJobs_RunNow_Req,
++    EnvScheduledJobs_RunNow_Res,
++    EnvScheduledJobs_UpdateOne_Req,
++    EnvScheduledJobs_UpdateOne_Res,
++    EnvScheduledJobs_UpdateStatus_Req,
++    EnvScheduledJobs_UpdateStatus_Res,
++} from "./project-env-scheduled-jobs.api.contracts";
++import type { EnvScheduledJobsApiValidator } from "./project-env-scheduled-jobs.api.validator";
++
++function basePath(projectID: string, env: string): string {
++    return `/projects/${projectID}/${encodeURIComponent(env)}/sched-jobs`;
++}
++
++/** An env's scheduled jobs: its own (job sequences), and, in the list, those of its apps. */
++export class EnvScheduledJobsApi extends BaseApi {
++    public constructor(private readonly validator: EnvScheduledJobsApiValidator) {
++        super();
++    }
++
++    async findManyPaginated(
++        request: EnvScheduledJobs_FindManyPaginated_Req,
++        signal?: AbortSignal,
++    ): Promise<Result<EnvScheduledJobs_FindManyPaginated_Res, Error>> {
++        const { projectID, env, search, pagination, sorting, jobTypes, appId } = request.data;
++        const query = this.queryBuilder.getInstance();
++        query
++            .pagination(pagination)
++            .sorting(sorting)
++            .search(search)
++            .filterBy({ jobType: jobTypes, appId: [appId] });
++
++        return lastValueFrom(
++            from(this.client.v1.get(basePath(projectID, env), { params: query.build(), signal })).pipe(
++                map(this.validator.findManyPaginated),
++                map(res => Ok(res)),
++                catchError(error => of(Err(parseApiError(error)))),
++            ),
++        );
++    }
++
++    async findOneById(
++        request: EnvScheduledJobs_FindOneById_Req,
++        signal?: AbortSignal,
++    ): Promise<Result<EnvScheduledJobs_FindOneById_Res, Error>> {
++        const { projectID, env, scheduledJobID } = request.data;
++
++        return lastValueFrom(
++            from(this.client.v1.get(`${basePath(projectID, env)}/${scheduledJobID}`, { signal })).pipe(
++                map(this.validator.findOneById),
++                map(res => Ok(res)),
++                catchError(error => of(Err(parseApiError(error)))),
++            ),
++        );
++    }
++
++    async createOne(
++        request: EnvScheduledJobs_CreateOne_Req,
++        signal?: AbortSignal,
++    ): Promise<Result<EnvScheduledJobs_CreateOne_Res, Error>> {
++        const { projectID, env, payload } = request.data;
++
++        return lastValueFrom(
++            from(this.client.v1.post(basePath(projectID, env), toUpsertPayload(payload), { signal })).pipe(
++                map(this.validator.createOne),
++                map(res => Ok(res)),
++                catchError(error => of(Err(parseApiError(error)))),
++            ),
++        );
++    }
++
++    async updateOne(
++        request: EnvScheduledJobs_UpdateOne_Req,
++        signal?: AbortSignal,
++    ): Promise<Result<EnvScheduledJobs_UpdateOne_Res, Error>> {
++        const { projectID, env, scheduledJobID, payload } = request.data;
++
++        return lastValueFrom(
++            from(
++                this.client.v1.put(`${basePath(projectID, env)}/${scheduledJobID}`, toUpsertPayload(payload), {
++                    signal,
++                }),
++            ).pipe(
++                map(() => Ok({ data: { type: "success" } } as const)),
++                catchError(error => of(Err(parseApiError(error)))),
++            ),
++        );
++    }
++
++    async updateStatus(
++        request: EnvScheduledJobs_UpdateStatus_Req,
++        signal?: AbortSignal,
++    ): Promise<Result<EnvScheduledJobs_UpdateStatus_Res, Error>> {
++        const { projectID, env, scheduledJobID, payload } = request.data;
++
++        return lastValueFrom(
++            from(this.client.v1.put(`${basePath(projectID, env)}/${scheduledJobID}/status`, payload, { signal })).pipe(
++                map(() => Ok({ data: { type: "success" } } as const)),
++                catchError(error => of(Err(parseApiError(error)))),
++            ),
++        );
++    }
++
++    async deleteOne(request: EnvScheduledJobs_DeleteOne_Req): Promise<Result<EnvScheduledJobs_DeleteOne_Res, Error>> {
++        const { projectID, env, scheduledJobID } = request.data;
++
++        return lastValueFrom(
++            from(this.client.v1.delete(`${basePath(projectID, env)}/${scheduledJobID}`)).pipe(
++                map(() => Ok({ data: { type: "success" } } as const)),
++                catchError(error => of(Err(parseApiError(error)))),
++            ),
++        );
++    }
++
++    async runNow(
++        request: EnvScheduledJobs_RunNow_Req,
++        signal?: AbortSignal,
++    ): Promise<Result<EnvScheduledJobs_RunNow_Res, Error>> {
++        const { projectID, env, scheduledJobID } = request.data;
++
++        return lastValueFrom(
++            from(this.client.v1.post(`${basePath(projectID, env)}/${scheduledJobID}/exec`, {}, { signal })).pipe(
++                map(this.validator.runNow),
++                map(res => Ok(res)),
++                catchError(error => of(Err(parseApiError(error)))),
++            ),
++        );
++    }
++}
+diff --git a/src/application/modules/projects/api/services/projects-services/project-env-scheduled-jobs/project-env-scheduled-jobs.api.validator.ts b/src/application/modules/projects/api/services/projects-services/project-env-scheduled-jobs/project-env-scheduled-jobs.api.validator.ts
+new file mode 100644
+index 00000000..f614246e
+--- /dev/null
++++ b/src/application/modules/projects/api/services/projects-services/project-env-scheduled-jobs/project-env-scheduled-jobs.api.validator.ts
+@@ -0,0 +1,58 @@
++import type { AxiosResponse } from "axios";
++import { z } from "zod";
++import { AppScheduledJobSchema } from "~/projects/api/services/project-apps-services/scheduled-jobs/app-scheduled-jobs.api.validator";
++
++import { BaseMetaApiSchema, PagingMetaApiSchema, parseApiResponse } from "@infrastructure/api";
++
++import type {
++    EnvScheduledJobs_CreateOne_Res,
++    EnvScheduledJobs_FindManyPaginated_Res,
++    EnvScheduledJobs_FindOneById_Res,
++    EnvScheduledJobs_RunNow_Res,
++} from "./project-env-scheduled-jobs.api.contracts";
++
++const EnvScheduledJobSchema = AppScheduledJobSchema.extend({
++    scope: z.enum(["project-env", "app"]).catch("app"),
++    ownerApp: z
++        .object({ id: z.string(), name: z.string() })
++        .nullish()
++        .transform(value => value ?? undefined),
++});
++
++const FindManyPaginatedSchema = z.object({
++    data: z.array(EnvScheduledJobSchema),
++    meta: PagingMetaApiSchema,
++});
++
++const FindOneByIdSchema = z.object({
++    data: AppScheduledJobSchema,
++    meta: BaseMetaApiSchema.nullable(),
++});
++
++const CreateOneSchema = z.object({
++    data: z.object({ id: z.string() }),
++    meta: BaseMetaApiSchema.nullable(),
++});
++
++const RunNowSchema = z.object({
++    data: z.object({ task: z.object({ id: z.string() }) }),
++    meta: BaseMetaApiSchema.nullable(),
++});
++
++export class EnvScheduledJobsApiValidator {
++    findManyPaginated = (response: AxiosResponse): EnvScheduledJobs_FindManyPaginated_Res => {
++        return parseApiResponse({ response, schema: FindManyPaginatedSchema });
++    };
++
++    findOneById = (response: AxiosResponse): EnvScheduledJobs_FindOneById_Res => {
++        return parseApiResponse({ response, schema: FindOneByIdSchema });
++    };
++
++    createOne = (response: AxiosResponse): EnvScheduledJobs_CreateOne_Res => {
++        return parseApiResponse({ response, schema: CreateOneSchema });
++    };
++
++    runNow = (response: AxiosResponse): EnvScheduledJobs_RunNow_Res => {
++        return parseApiResponse({ response, schema: RunNowSchema });
++    };
++}
+diff --git a/src/application/modules/projects/data/commands/index.ts b/src/application/modules/projects/data/commands/index.ts
+index 340bf1ba..6e6de54b 100644
+--- a/src/application/modules/projects/data/commands/index.ts
++++ b/src/application/modules/projects/data/commands/index.ts
+@@ -25,3 +25,4 @@ export * from "./project-cluster-volumes";
+ export * from "./project-command-pipe";
+ export * from "./project-command-template";
+ export * from "./project-backup-repo";
++export * from "./project-env-scheduled-jobs";
+diff --git a/src/application/modules/projects/data/commands/project-env-scheduled-jobs/index.ts b/src/application/modules/projects/data/commands/project-env-scheduled-jobs/index.ts
+new file mode 100644
+index 00000000..d5f6aefb
+--- /dev/null
++++ b/src/application/modules/projects/data/commands/project-env-scheduled-jobs/index.ts
+@@ -0,0 +1 @@
++export * from "./project-env-scheduled-jobs.commands";
+diff --git a/src/application/modules/projects/data/commands/project-env-scheduled-jobs/project-env-scheduled-jobs.commands.ts b/src/application/modules/projects/data/commands/project-env-scheduled-jobs/project-env-scheduled-jobs.commands.ts
+new file mode 100644
+index 00000000..4130b119
+--- /dev/null
++++ b/src/application/modules/projects/data/commands/project-env-scheduled-jobs/project-env-scheduled-jobs.commands.ts
+@@ -0,0 +1,120 @@
++import { type QueryClient, type UseMutationOptions, useMutation, useQueryClient } from "@tanstack/react-query";
++import { useEnvScheduledJobsApi } from "~/projects/api/hooks";
++import type {
++    EnvScheduledJobs_CreateOne_Req,
++    EnvScheduledJobs_CreateOne_Res,
++    EnvScheduledJobs_DeleteOne_Req,
++    EnvScheduledJobs_DeleteOne_Res,
++    EnvScheduledJobs_RunNow_Req,
++    EnvScheduledJobs_RunNow_Res,
++    EnvScheduledJobs_UpdateOne_Req,
++    EnvScheduledJobs_UpdateOne_Res,
++    EnvScheduledJobs_UpdateStatus_Req,
++    EnvScheduledJobs_UpdateStatus_Res,
++} from "~/projects/api/services";
++import { QK } from "~/projects/data/constants";
++
++/** An env's list holds its apps' jobs too: their lists are refreshed with it. */
++function invalidateScheduledJobs(queryClient: QueryClient): void {
++    void queryClient.invalidateQueries({ queryKey: [QK["projects.env.scheduled-jobs.$.find-many-paginated"]] });
++    void queryClient.invalidateQueries({ queryKey: [QK["projects.env.scheduled-jobs.$.find-one-by-id"]] });
++    void queryClient.invalidateQueries({ queryKey: [QK["projects.apps.scheduled-jobs.$.find-many-paginated"]] });
++}
++
++type CreateOneOptions = Omit<
++    UseMutationOptions<EnvScheduledJobs_CreateOne_Res, Error, EnvScheduledJobs_CreateOne_Req["data"]>,
++    "mutationFn"
++>;
++
++function useCreateOne({ onSuccess, ...options }: CreateOneOptions = {}) {
++    const { mutations } = useEnvScheduledJobsApi();
++    const queryClient = useQueryClient();
++
++    return useMutation({
++        mutationFn: mutations.createOne,
++        onSuccess: (...args) => {
++            invalidateScheduledJobs(queryClient);
++            onSuccess?.(...args);
++        },
++        ...options,
++    });
++}
++
++type UpdateOneOptions = Omit<
++    UseMutationOptions<EnvScheduledJobs_UpdateOne_Res, Error, EnvScheduledJobs_UpdateOne_Req["data"]>,
++    "mutationFn"
++>;
++
++function useUpdateOne({ onSuccess, ...options }: UpdateOneOptions = {}) {
++    const { mutations } = useEnvScheduledJobsApi();
++    const queryClient = useQueryClient();
++
++    return useMutation({
++        mutationFn: mutations.updateOne,
++        onSuccess: (...args) => {
++            invalidateScheduledJobs(queryClient);
++            onSuccess?.(...args);
++        },
++        ...options,
++    });
++}
++
++type UpdateStatusOptions = Omit<
++    UseMutationOptions<EnvScheduledJobs_UpdateStatus_Res, Error, EnvScheduledJobs_UpdateStatus_Req["data"]>,
++    "mutationFn"
++>;
++
++function useUpdateStatus({ onSuccess, ...options }: UpdateStatusOptions = {}) {
++    const { mutations } = useEnvScheduledJobsApi();
++    const queryClient = useQueryClient();
++
++    return useMutation({
++        mutationFn: mutations.updateStatus,
++        onSuccess: (...args) => {
++            invalidateScheduledJobs(queryClient);
++            onSuccess?.(...args);
++        },
++        ...options,
++    });
++}
++
++type DeleteOneOptions = Omit<
++    UseMutationOptions<EnvScheduledJobs_DeleteOne_Res, Error, EnvScheduledJobs_DeleteOne_Req["data"]>,
++    "mutationFn"
++>;
++
++function useDeleteOne({ onSuccess, ...options }: DeleteOneOptions = {}) {
++    const { mutations } = useEnvScheduledJobsApi();
++    const queryClient = useQueryClient();
++
++    return useMutation({
++        mutationFn: mutations.deleteOne,
++        onSuccess: (...args) => {
++            invalidateScheduledJobs(queryClient);
++            onSuccess?.(...args);
++        },
++        ...options,
++    });
++}
++
++type RunNowOptions = Omit<
++    UseMutationOptions<EnvScheduledJobs_RunNow_Res, Error, EnvScheduledJobs_RunNow_Req["data"]>,
++    "mutationFn"
++>;
++
++function useRunNow(options: RunNowOptions = {}) {
++    const { mutations } = useEnvScheduledJobsApi();
++
++    return useMutation({
++        mutationFn: mutations.runNow,
++        ...options,
++    });
++}
++
++export const EnvScheduledJobsCommands = Object.freeze({
++    useCreateOne,
++    useUpdateOne,
++    useUpdateStatus,
++    useDeleteOne,
++    useRunNow,
++});
+diff --git a/src/application/modules/projects/data/constants/projects.query-keys.ts b/src/application/modules/projects/data/constants/projects.query-keys.ts
+index 2943dff8..84ef9421 100644
+--- a/src/application/modules/projects/data/constants/projects.query-keys.ts
++++ b/src/application/modules/projects/data/constants/projects.query-keys.ts
+@@ -152,6 +152,11 @@ export const QK = {
+      */
+     "projects.email.$.find-many-paginated": "projects.email.$.find-many-paginated",
+     "projects.email.$.find-one-by-id": "projects.email.$.find-one-by-id",
++    /*
++     * Env Scheduled Jobs: the env's own, and those of its apps
++     */
++    "projects.env.scheduled-jobs.$.find-many-paginated": "projects.env.scheduled-jobs.$.find-many-paginated",
++    "projects.env.scheduled-jobs.$.find-one-by-id": "projects.env.scheduled-jobs.$.find-one-by-id",
+     /*
+      * Project Command Pipes
+      */
+diff --git a/src/application/modules/projects/data/queries/index.ts b/src/application/modules/projects/data/queries/index.ts
+index 6906a835..69420d18 100644
+--- a/src/application/modules/projects/data/queries/index.ts
++++ b/src/application/modules/projects/data/queries/index.ts
+@@ -25,3 +25,4 @@ export * from "./project-access-token";
+ export * from "./project-cloud-storage";
+ export * from "./project-image-build-settings";
+ export * from "./project-backup-repo";
++export * from "./project-env-scheduled-jobs";
+diff --git a/src/application/modules/projects/data/queries/project-env-scheduled-jobs/index.ts b/src/application/modules/projects/data/queries/project-env-scheduled-jobs/index.ts
+new file mode 100644
+index 00000000..46f1732a
+--- /dev/null
++++ b/src/application/modules/projects/data/queries/project-env-scheduled-jobs/index.ts
+@@ -0,0 +1 @@
++export * from "./project-env-scheduled-jobs.queries";
+diff --git a/src/application/modules/projects/data/queries/project-env-scheduled-jobs/project-env-scheduled-jobs.queries.ts b/src/application/modules/projects/data/queries/project-env-scheduled-jobs/project-env-scheduled-jobs.queries.ts
+new file mode 100644
+index 00000000..66f2aaf1
+--- /dev/null
++++ b/src/application/modules/projects/data/queries/project-env-scheduled-jobs/project-env-scheduled-jobs.queries.ts
+@@ -0,0 +1,44 @@
++import { type UseQueryOptions, keepPreviousData, useQuery } from "@tanstack/react-query";
++import { useEnvScheduledJobsApi } from "~/projects/api/hooks";
++import type {
++    EnvScheduledJobs_FindManyPaginated_Req,
++    EnvScheduledJobs_FindManyPaginated_Res,
++    EnvScheduledJobs_FindOneById_Req,
++    EnvScheduledJobs_FindOneById_Res,
++} from "~/projects/api/services";
++import { PROJECTS_LIST_QUERY_OPTIONS, QK } from "~/projects/data/constants";
++
++type FindManyPaginatedReq = EnvScheduledJobs_FindManyPaginated_Req["data"];
++type FindManyPaginatedRes = EnvScheduledJobs_FindManyPaginated_Res;
++type FindManyPaginatedOptions = Omit<UseQueryOptions<FindManyPaginatedRes>, "queryKey" | "queryFn">;
++
++function useFindManyPaginated(request: FindManyPaginatedReq, options: FindManyPaginatedOptions = {}) {
++    const { queries } = useEnvScheduledJobsApi();
++
++    return useQuery({
++        queryKey: [QK["projects.env.scheduled-jobs.$.find-many-paginated"], request],
++        queryFn: ({ signal }) => queries.findManyPaginated(request, signal),
++        placeholderData: keepPreviousData,
++        ...PROJECTS_LIST_QUERY_OPTIONS,
++        ...options,
++    });
++}
++
++type FindOneByIdReq = EnvScheduledJobs_FindOneById_Req["data"];
++type FindOneByIdRes = EnvScheduledJobs_FindOneById_Res;
++type FindOneByIdOptions = Omit<UseQueryOptions<FindOneByIdRes>, "queryKey" | "queryFn">;
++
++function useFindOneById(request: FindOneByIdReq, options: FindOneByIdOptions = {}) {
++    const { queries } = useEnvScheduledJobsApi();
++
++    return useQuery({
++        queryKey: [QK["projects.env.scheduled-jobs.$.find-one-by-id"], request],
++        queryFn: ({ signal }) => queries.findOneById(request, signal),
++        ...options,
++    });
++}
++
++export const EnvScheduledJobsQueries = Object.freeze({
++    useFindManyPaginated,
++    useFindOneById,
++});
+diff --git a/src/application/modules/projects/dialogs/create-or-edit-app-scheduled-job/form/building-blocks/index.ts b/src/application/modules/projects/dialogs/create-or-edit-app-scheduled-job/form/building-blocks/index.ts
+index 80608f7e..3856828c 100644
+--- a/src/application/modules/projects/dialogs/create-or-edit-app-scheduled-job/form/building-blocks/index.ts
++++ b/src/application/modules/projects/dialogs/create-or-edit-app-scheduled-job/form/building-blocks/index.ts
+@@ -1,6 +1,6 @@
+ export * from "./app-scheduled-job-form.constants";
+ export * from "./pipe-to-app-section.com";
+-export * from "./priority-tabs-field.com";
++export { PriorityTabsField } from "~/projects/module-shared/components/job-schedule-fields";
+ export * from "./save-to-file-section.com";
+ export * from "./script-editor-field.com";
+ export * from "./section-header.com";
+diff --git a/src/application/modules/projects/dialogs/create-or-edit-app-scheduled-job/form/create-or-edit-app-scheduled-job.form-mappers.ts b/src/application/modules/projects/dialogs/create-or-edit-app-scheduled-job/form/create-or-edit-app-scheduled-job.form-mappers.ts
+index 5c75cd9f..af71560f 100644
+--- a/src/application/modules/projects/dialogs/create-or-edit-app-scheduled-job/form/create-or-edit-app-scheduled-job.form-mappers.ts
++++ b/src/application/modules/projects/dialogs/create-or-edit-app-scheduled-job/form/create-or-edit-app-scheduled-job.form-mappers.ts
+@@ -8,12 +8,10 @@ import {
+     type CommandArgGroupFormValue,
+     createDefaultCommandArg,
+     createDefaultCommandArgGroup,
++    createDefaultJobScheduleFormValues,
++    mapJobScheduleToFormValues,
+ } from "~/projects/module-shared/components";
+-import {
+-    EAppScheduledJobCommandOutputMode,
+-    EAppScheduledJobScheduleMode,
+-    EAppScheduledJobTaskPriority,
+-} from "~/projects/module-shared/enums";
++import { EAppScheduledJobCommandOutputMode, EAppScheduledJobTaskPriority } from "~/projects/module-shared/enums";
+ 
+ import type { CreateOrEditAppScheduledJobFormInput } from "../schemas";
+ import { APP_SCHEDULED_JOB_COMMAND_MODE } from "../schemas";
+@@ -54,11 +52,7 @@ function createDefaultSaveToFile(): CreateOrEditAppScheduledJobFormInput["saveTo
+ export function createEmptyAppScheduledJobFormDefaults(projectId: string = ""): CreateOrEditAppScheduledJobFormInput {
+     return {
+         name: "",
+-        scheduleMode: EAppScheduledJobScheduleMode.Interval,
+-        scheduleInterval: "",
+-        scheduleCronExpr: "",
+-        scheduleFrom: null,
+-        scheduleTo: null,
++        ...createDefaultJobScheduleFormValues(),
+         timeout: "",
+         maxRetry: 0,
+         retryDelay: "",
+@@ -163,17 +157,12 @@ export function mapAppScheduledJobToFormInput(
+     job: AppScheduledJob,
+     projectId: string = "",
+ ): CreateOrEditAppScheduledJobFormInput {
+-    const hasInterval = job.schedule.interval.trim().length > 0;
+     const { command } = job;
+     const script = command?.script ?? "";
+ 
+     return {
+         name: job.name,
+-        scheduleMode: hasInterval ? EAppScheduledJobScheduleMode.Interval : EAppScheduledJobScheduleMode.Cron,
+-        scheduleInterval: job.schedule.interval,
+-        scheduleCronExpr: job.schedule.cronExpr,
+-        scheduleFrom: job.schedule.initialTime,
+-        scheduleTo: job.schedule.endTime,
++        ...mapJobScheduleToFormValues(job.schedule),
+         timeout: job.timeout,
+         maxRetry: job.maxRetry,
+         retryDelay: job.retryDelay,
+diff --git a/src/application/modules/projects/dialogs/create-or-edit-app-scheduled-job/form/create-or-edit-app-scheduled-job.form.com.tsx b/src/application/modules/projects/dialogs/create-or-edit-app-scheduled-job/form/create-or-edit-app-scheduled-job.form.com.tsx
+index 207ce7c2..d4d7d240 100644
+--- a/src/application/modules/projects/dialogs/create-or-edit-app-scheduled-job/form/create-or-edit-app-scheduled-job.form.com.tsx
++++ b/src/application/modules/projects/dialogs/create-or-edit-app-scheduled-job/form/create-or-edit-app-scheduled-job.form.com.tsx
+@@ -6,17 +6,16 @@ import { cn } from "@lib/utils";
+ import { type FieldErrors, FormProvider, useController, useForm, useFormState } from "react-hook-form";
+ import { useToggle, useUpdateEffect } from "react-use";
+ import type { AppScheduledJob } from "~/projects/domain";
+-import { CommandArgGroupsSection, CommandConfigSection } from "~/projects/module-shared/components";
++import { CommandArgGroupsSection, CommandConfigSection, JobScheduleFields } from "~/projects/module-shared/components";
+ import { PROJECT_FORM_CONTROL_MAX_WIDTH_CLASS } from "~/projects/module-shared/constants";
+-import { EAppScheduledJobCommandOutputMode, EAppScheduledJobScheduleMode } from "~/projects/module-shared/enums";
++import { EAppScheduledJobCommandOutputMode } from "~/projects/module-shared/enums";
+ import { useProjectNotificationSettingsSources } from "~/projects/module-shared/hooks";
+ 
+-import { ContentBlock, FormActionBar, InfoBlock, LabelWithInfo, NextRunsField } from "@application/shared/components";
++import { ContentBlock, FormActionBar, InfoBlock, LabelWithInfo } from "@application/shared/components";
+ import { ROUTE } from "@application/shared/constants";
+ import { NotificationSettings } from "@application/shared/form";
+ 
+ import { Button, Checkbox, Field, FieldError, FieldGroup, Input, Tabs, TabsList, TabsTrigger } from "@/components/ui";
+-import { DateTimePicker } from "@/components/ui/date-time-picker";
+ 
+ import type { CreateOrEditAppScheduledJobFormInput, CreateOrEditAppScheduledJobFormOutput } from "../schemas";
+ import { CreateOrEditAppScheduledJobFormSchema } from "../schemas";
+@@ -92,23 +91,6 @@ export function CreateOrEditAppScheduledJobForm({
+         field: name,
+         fieldState: { invalid: isNameInvalid },
+     } = useController({ control, name: "name" });
+-    const { field: scheduleMode } = useController({ control, name: "scheduleMode" });
+-    const {
+-        field: scheduleInterval,
+-        fieldState: { invalid: isScheduleIntervalInvalid },
+-    } = useController({ control, name: "scheduleInterval" });
+-    const {
+-        field: scheduleCronExpr,
+-        fieldState: { invalid: isScheduleCronExprInvalid },
+-    } = useController({ control, name: "scheduleCronExpr" });
+-    const {
+-        field: scheduleFrom,
+-        fieldState: { invalid: isScheduleFromInvalid },
+-    } = useController({ control, name: "scheduleFrom" });
+-    const {
+-        field: scheduleTo,
+-        fieldState: { invalid: isScheduleToInvalid },
+-    } = useController({ control, name: "scheduleTo" });
+     const {
+         field: timeout,
+         fieldState: { invalid: isTimeoutInvalid },
+@@ -204,111 +186,10 @@ export function CreateOrEditAppScheduledJobForm({
+                                         />
+                                     </InfoBlock>
+ 
+-                                    <InfoBlock
+-                                        title="Scheduling Mode"
++                                    <JobScheduleFields
+                                         titleWidth={INFO_BLOCK_TITLE_WIDTH}
+-                                    >
+-                                        <Tabs
+-                                            value={scheduleMode.value}
+-                                            onValueChange={scheduleMode.onChange}
+-                                        >
+-                                            <TabsList>
+-                                                <TabsTrigger
+-                                                    value={EAppScheduledJobScheduleMode.Interval}
+-                                                    disabled={readOnly}
+-                                                >
+-                                                    Interval-based
+-                                                </TabsTrigger>
+-                                                <TabsTrigger
+-                                                    value={EAppScheduledJobScheduleMode.Cron}
+-                                                    disabled={readOnly}
+-                                                >
+-                                                    Time-based
+-                                                </TabsTrigger>
+-                                            </TabsList>
+-                                        </Tabs>
+-                                    </InfoBlock>
+-
+-                                    {scheduleMode.value === EAppScheduledJobScheduleMode.Interval && (
+-                                        <InfoBlock
+-                                            title="Scheduling Interval"
+-                                            titleWidth={INFO_BLOCK_TITLE_WIDTH}
+-                                        >
+-                                            <Field>
+-                                                <Input
+-                                                    {...scheduleInterval}
+-                                                    placeholder="1d, 1h30m"
+-                                                    className="max-w-[400px]"
+-                                                    aria-invalid={isScheduleIntervalInvalid}
+-                                                    disabled={readOnly}
+-                                                />
+-                                                <FieldError errors={[errors.scheduleInterval]} />
+-                                            </Field>
+-                                        </InfoBlock>
+-                                    )}
+-
+-                                    {scheduleMode.value === EAppScheduledJobScheduleMode.Cron && (
+-                                        <InfoBlock
+-                                            title="Cron Expression"
+-                                            titleWidth={INFO_BLOCK_TITLE_WIDTH}
+-                                        >
+-                                            <Field>
+-                                                <Input
+-                                                    {...scheduleCronExpr}
+-                                                    placeholder="accepted form: * * * * *"
+-                                                    className={PROJECT_FORM_CONTROL_MAX_WIDTH_CLASS}
+-                                                    aria-invalid={isScheduleCronExprInvalid}
+-                                                    disabled={readOnly}
+-                                                />
+-                                                <FieldError errors={[errors.scheduleCronExpr]} />
+-                                            </Field>
+-                                        </InfoBlock>
+-                                    )}
+-
+-                                    <InfoBlock
+-                                        title="Schedule From"
+-                                        titleWidth={INFO_BLOCK_TITLE_WIDTH}
+-                                    >
+-                                        <div className="flex w-full max-w-[600px] flex-wrap items-start gap-x-4 gap-y-3">
+-                                            <Field className="min-w-[260px] flex-1">
+-                                                <DateTimePicker
+-                                                    value={scheduleFrom.value ?? undefined}
+-                                                    onChange={date => {
+-                                                        scheduleFrom.onChange(date ?? null);
+-                                                    }}
+-                                                    placeholder="select date time"
+-                                                    granularity="minute"
+-                                                    showClearButton
+-                                                    aria-invalid={isScheduleFromInvalid}
+-                                                    containerClassName="w-full"
+-                                                    disabled={readOnly}
+-                                                />
+-                                                <FieldError errors={[errors.scheduleFrom]} />
+-                                            </Field>
+-
+-                                            <div className="flex h-9 items-center text-sm font-medium">To</div>
+-
+-                                            <Field className="min-w-[260px] flex-1">
+-                                                <DateTimePicker
+-                                                    value={scheduleTo.value ?? undefined}
+-                                                    onChange={date => {
+-                                                        scheduleTo.onChange(date ?? null);
+-                                                    }}
+-                                                    placeholder="select date time"
+-                                                    granularity="minute"
+-                                                    showClearButton
+-                                                    aria-invalid={isScheduleToInvalid}
+-                                                    containerClassName="w-full"
+-                                                    disabled={readOnly}
+-                                                />
+-                                                <FieldError errors={[errors.scheduleTo]} />
+-                                            </Field>
+-                                        </div>
+-                                    </InfoBlock>
+-
+-                                    <NextRunsField
+                                         nextRuns={initialValues?.nextRuns ?? []}
+-                                        titleWidth={INFO_BLOCK_TITLE_WIDTH}
++                                        readOnly={readOnly}
+                                     />
+ 
+                                     <InfoBlock
+diff --git a/src/application/modules/projects/domain/apps/scheduled-job/app-scheduled-job.entity.ts b/src/application/modules/projects/domain/apps/scheduled-job/app-scheduled-job.entity.ts
+index fe88b8ac..7151a634 100644
+--- a/src/application/modules/projects/domain/apps/scheduled-job/app-scheduled-job.entity.ts
++++ b/src/application/modules/projects/domain/apps/scheduled-job/app-scheduled-job.entity.ts
+@@ -2,6 +2,8 @@ import type {
+     EAppScheduledJobArgSeparator,
+     EAppScheduledJobTaskPriority,
+     EAppScheduledJobType,
++    ESchedJobSeqMode,
++    ESchedJobSeqOnFailure,
+ } from "~/projects/module-shared/enums";
+ 
+ import type { ESettingStatus } from "@application/shared/enums";
+@@ -88,6 +90,25 @@ export interface AppScheduledJobCommandOutput {
+     pipeToApp?: AppScheduledJobCommandOutputPipeToApp;
+ }
+ 
++/** A step of a job sequence: the job it runs, and the app that job belongs to. */
++export interface AppScheduledJobSequenceStep {
++    /** The job; its status is "missing" when it was deleted. */
++    job: {
++        id: string;
++        name: string;
++        kind: string;
++        status: string;
++    };
++    app?: AppScheduledJobNamedRef;
++    name: string;
++}
++
++export interface AppScheduledJobSequence {
++    mode: ESchedJobSeqMode;
++    onFailure: ESchedJobSeqOnFailure;
++    steps: AppScheduledJobSequenceStep[];
++}
++
+ export interface AppScheduledJob {
+     id: string;
+     type: string;
+@@ -103,8 +124,10 @@ export interface AppScheduledJob {
+     expireAt: Date | null;
+ 
+     jobType: EAppScheduledJobType;
+-    schedule: AppScheduledJobSchedule;
++    /** Null for a job without a schedule: it runs by hand, or as a step of a sequence. */
++    schedule: AppScheduledJobSchedule | null;
+     app?: AppScheduledJobNamedRef;
++    sequence: AppScheduledJobSequence | null;
+     priority: EAppScheduledJobTaskPriority;
+     maxRetry: number;
+     retryDelay: string;
+@@ -118,3 +141,9 @@ export interface AppScheduledJob {
+     notification: AppScheduledJobNotification | null;
+     nextRuns: Date[];
+ }
++
++/** A job in an env's list: the env's own, or one of an app in the env. */
++export interface EnvScheduledJob extends AppScheduledJob {
++    scope: "project-env" | "app";
++    ownerApp?: AppScheduledJobNamedRef;
++}
+diff --git a/src/application/modules/projects/module-shared/components/index.ts b/src/application/modules/projects/module-shared/components/index.ts
+index b23041a9..48fedc18 100644
+--- a/src/application/modules/projects/module-shared/components/index.ts
++++ b/src/application/modules/projects/module-shared/components/index.ts
+@@ -22,3 +22,4 @@ export * from "./script-editor-field";
+ export * from "./command-config-section";
+ export * from "./confirm-danger-target-badge";
+ export * from "./option-card-group";
++export * from "./job-schedule-fields";
+diff --git a/src/application/modules/projects/module-shared/components/job-schedule-fields/index.ts b/src/application/modules/projects/module-shared/components/job-schedule-fields/index.ts
+new file mode 100644
+index 00000000..08d742af
+--- /dev/null
++++ b/src/application/modules/projects/module-shared/components/job-schedule-fields/index.ts
+@@ -0,0 +1,3 @@
++export * from "./job-schedule-fields.com";
++export * from "./job-schedule.helpers";
++export * from "./priority-tabs-field.com";
+diff --git a/src/application/modules/projects/module-shared/components/job-schedule-fields/job-schedule-fields.com.tsx b/src/application/modules/projects/module-shared/components/job-schedule-fields/job-schedule-fields.com.tsx
+new file mode 100644
+index 00000000..516b3772
+--- /dev/null
++++ b/src/application/modules/projects/module-shared/components/job-schedule-fields/job-schedule-fields.com.tsx
+@@ -0,0 +1,161 @@
++import { useController, useFormContext } from "react-hook-form";
++import { PROJECT_FORM_CONTROL_MAX_WIDTH_CLASS } from "~/projects/module-shared/constants";
++import { EAppScheduledJobScheduleMode } from "~/projects/module-shared/enums";
++
++import { InfoBlock, NextRunsField } from "@application/shared/components";
++
++import { Field, FieldError, Input, Tabs, TabsList, TabsTrigger } from "@/components/ui";
++import { DateTimePicker } from "@/components/ui/date-time-picker";
++
++import type { JobScheduleFormValues } from "./job-schedule.helpers";
++
++const NO_SCHEDULE_NOTE = "The job runs only when run by hand, or as a step of a job sequence.";
++
++/**
++ * A job's schedule, in a form whose values include JobScheduleFormValues: the
++ * mode (None, Interval, Cron), the interval or cron expression, the window and
++ * the next runs.
++ */
++export function JobScheduleFields({ titleWidth, nextRuns, readOnly = false }: Props) {
++    const { control } = useFormContext<JobScheduleFormValues>();
++
++    const { field: scheduleMode } = useController({ control, name: "scheduleMode" });
++    const { field: scheduleInterval, fieldState: intervalState } = useController({ control, name: "scheduleInterval" });
++    const { field: scheduleCronExpr, fieldState: cronExprState } = useController({ control, name: "scheduleCronExpr" });
++    const { field: scheduleFrom, fieldState: fromState } = useController({ control, name: "scheduleFrom" });
++    const { field: scheduleTo, fieldState: toState } = useController({ control, name: "scheduleTo" });
++
++    const mode = scheduleMode.value;
++
++    return (
++        <>
++            <InfoBlock
++                title="Scheduling Mode"
++                titleWidth={titleWidth}
++            >
++                <div className="flex flex-col gap-2">
++                    <Tabs
++                        value={mode}
++                        onValueChange={scheduleMode.onChange}
++                    >
++                        <TabsList>
++                            <TabsTrigger
++                                value={EAppScheduledJobScheduleMode.None}
++                                disabled={readOnly}
++                            >
++                                No schedule
++                            </TabsTrigger>
++                            <TabsTrigger
++                                value={EAppScheduledJobScheduleMode.Interval}
++                                disabled={readOnly}
++                            >
++                                Interval-based
++                            </TabsTrigger>
++                            <TabsTrigger
++                                value={EAppScheduledJobScheduleMode.Cron}
++                                disabled={readOnly}
++                            >
++                                Time-based
++                            </TabsTrigger>
++                        </TabsList>
++                    </Tabs>
++                    {mode === EAppScheduledJobScheduleMode.None && (
++                        <p className="text-sm text-muted-foreground">{NO_SCHEDULE_NOTE}</p>
++                    )}
++                </div>
++            </InfoBlock>
++
++            {mode === EAppScheduledJobScheduleMode.Interval && (
++                <InfoBlock
++                    title="Scheduling Interval"
++                    titleWidth={titleWidth}
++                >
++                    <Field>
++                        <Input
++                            {...scheduleInterval}
++                            placeholder="1d, 1h30m"
++                            className="max-w-[400px]"
++                            aria-invalid={intervalState.invalid}
++                            disabled={readOnly}
++                        />
++                        <FieldError errors={[intervalState.error]} />
++                    </Field>
++                </InfoBlock>
++            )}
++
++            {mode === EAppScheduledJobScheduleMode.Cron && (
++                <InfoBlock
++                    title="Cron Expression"
++                    titleWidth={titleWidth}
++                >
++                    <Field>
++                        <Input
++                            {...scheduleCronExpr}
++                            placeholder="accepted form: * * * * *"
++                            className={PROJECT_FORM_CONTROL_MAX_WIDTH_CLASS}
++                            aria-invalid={cronExprState.invalid}
++                            disabled={readOnly}
++                        />
++                        <FieldError errors={[cronExprState.error]} />
++                    </Field>
++                </InfoBlock>
++            )}
++
++            {mode !== EAppScheduledJobScheduleMode.None && (
++                <>
++                    <InfoBlock
++                        title="Schedule From"
++                        titleWidth={titleWidth}
++                    >
++                        <div className="flex w-full max-w-[600px] flex-wrap items-start gap-x-4 gap-y-3">
++                            <Field className="min-w-[260px] flex-1">
++                                <DateTimePicker
++                                    value={scheduleFrom.value ?? undefined}
++                                    onChange={date => {
++                                        scheduleFrom.onChange(date ?? null);
++                                    }}
++                                    placeholder="select date time"
++                                    granularity="minute"
++                                    showClearButton
++                                    aria-invalid={fromState.invalid}
++                                    containerClassName="w-full"
++                                    disabled={readOnly}
++                                />
++                                <FieldError errors={[fromState.error]} />
++                            </Field>
++
++                            <div className="flex h-9 items-center text-sm font-medium">To</div>
++
++                            <Field className="min-w-[260px] flex-1">
++                                <DateTimePicker
++                                    value={scheduleTo.value ?? undefined}
++                                    onChange={date => {
++                                        scheduleTo.onChange(date ?? null);
++                                    }}
++                                    placeholder="select date time"
++                                    granularity="minute"
++                                    showClearButton
++                                    aria-invalid={toState.invalid}
++                                    containerClassName="w-full"
++                                    disabled={readOnly}
++                                />
++                                <FieldError errors={[toState.error]} />
++                            </Field>
++                        </div>
++                    </InfoBlock>
++
++                    <NextRunsField
++                        nextRuns={nextRuns}
++                        titleWidth={titleWidth}
++                    />
++                </>
++            )}
++        </>
++    );
++}
++
++interface Props {
++    titleWidth: number;
++    nextRuns: Date[];
++    readOnly?: boolean;
++}
+diff --git a/src/application/modules/projects/module-shared/components/job-schedule-fields/job-schedule.helpers.ts b/src/application/modules/projects/module-shared/components/job-schedule-fields/job-schedule.helpers.ts
+new file mode 100644
+index 00000000..1490f29d
+--- /dev/null
++++ b/src/application/modules/projects/module-shared/components/job-schedule-fields/job-schedule.helpers.ts
+@@ -0,0 +1,72 @@
++import type { AppScheduledJobs_Schedule_Payload } from "~/projects/api/services";
++import type { AppScheduledJobSchedule } from "~/projects/domain";
++import { EAppScheduledJobScheduleMode } from "~/projects/module-shared/enums";
++
++/** The schedule fields a job form holds, under these names. */
++export interface JobScheduleFormValues {
++    scheduleMode: EAppScheduledJobScheduleMode;
++    scheduleInterval: string;
++    scheduleCronExpr: string;
++    scheduleFrom: Date | null;
++    scheduleTo: Date | null;
++}
++
++export function createDefaultJobScheduleFormValues(
++    mode: EAppScheduledJobScheduleMode = EAppScheduledJobScheduleMode.Interval,
++): JobScheduleFormValues {
++    return {
++        scheduleMode: mode,
++        scheduleInterval: "",
++        scheduleCronExpr: "",
++        scheduleFrom: null,
++        scheduleTo: null,
++    };
++}
++
++export function mapJobScheduleToFormValues(schedule: AppScheduledJobSchedule | null): JobScheduleFormValues {
++    if (!schedule) {
++        return createDefaultJobScheduleFormValues(EAppScheduledJobScheduleMode.None);
++    }
++
++    const hasInterval = schedule.interval.trim().length > 0;
++
++    return {
++        scheduleMode: hasInterval ? EAppScheduledJobScheduleMode.Interval : EAppScheduledJobScheduleMode.Cron,
++        scheduleInterval: schedule.interval,
++        scheduleCronExpr: schedule.cronExpr,
++        scheduleFrom: schedule.initialTime,
++        scheduleTo: schedule.endTime,
++    };
++}
++
++/** The schedule to send: null for No schedule. */
++export function mapJobScheduleFormValuesToPayload(
++    values: JobScheduleFormValues,
++): AppScheduledJobs_Schedule_Payload | null {
++    if (values.scheduleMode === EAppScheduledJobScheduleMode.None) {
++        return null;
++    }
++
++    const interval = values.scheduleInterval.trim();
++    const cronExpr = values.scheduleCronExpr.trim();
++
++    return {
++        ...(values.scheduleMode === EAppScheduledJobScheduleMode.Interval && interval ? { interval } : {}),
++        ...(values.scheduleMode === EAppScheduledJobScheduleMode.Cron && cronExpr ? { cronExpr } : {}),
++        ...(values.scheduleFrom ? { initialTime: values.scheduleFrom } : {}),
++        ...(values.scheduleTo ? { endTime: values.scheduleTo } : {}),
++    };
++}
++
++/** How a list shows a job's schedule. */
++export function formatJobSchedule(schedule: AppScheduledJobSchedule | null): string {
++    if (schedule?.interval) {
++        return `every ${schedule.interval}`;
++    }
++
++    if (schedule?.cronExpr) {
++        return `cron: ${schedule.cronExpr}`;
++    }
++
++    return "No schedule";
++}
+diff --git a/src/application/modules/projects/dialogs/create-or-edit-app-scheduled-job/form/building-blocks/priority-tabs-field.com.tsx b/src/application/modules/projects/module-shared/components/job-schedule-fields/priority-tabs-field.com.tsx
+similarity index 100%
+rename from src/application/modules/projects/dialogs/create-or-edit-app-scheduled-job/form/building-blocks/priority-tabs-field.com.tsx
+rename to src/application/modules/projects/module-shared/components/job-schedule-fields/priority-tabs-field.com.tsx
+diff --git a/src/application/modules/projects/module-shared/definitions/tables/app-scheduled-jobs/app-scheduled-jobs-table.defs.tsx b/src/application/modules/projects/module-shared/definitions/tables/app-scheduled-jobs/app-scheduled-jobs-table.defs.tsx
+index d4555db4..58cea77b 100644
+--- a/src/application/modules/projects/module-shared/definitions/tables/app-scheduled-jobs/app-scheduled-jobs-table.defs.tsx
++++ b/src/application/modules/projects/module-shared/definitions/tables/app-scheduled-jobs/app-scheduled-jobs-table.defs.tsx
+@@ -1,6 +1,7 @@
+ import type { ColumnDef } from "@tanstack/react-table";
+ import { format } from "date-fns";
+ import type { AppScheduledJob } from "~/projects/domain";
++import { formatJobSchedule } from "~/projects/module-shared/components";
+ import { SettingStatusBadge } from "~/settings/module-shared/components";
+ 
+ import { EditCell, MenuCell, ViewTasksCell } from "./building-blocks";
+@@ -13,18 +14,6 @@ function formatDate(date: Date | null | undefined) {
+     return format(date, "yyyy-MM-dd HH:mm:ss");
+ }
+ 
+-function formatSchedule(scheduledJob: AppScheduledJob) {
+-    if (scheduledJob.schedule.interval) {
+-        return `every ${scheduledJob.schedule.interval}`;
+-    }
+-
+-    if (scheduledJob.schedule.cronExpr) {
+-        return `cron: ${scheduledJob.schedule.cronExpr}`;
+-    }
+-
+-    return "-";
+-}
+-
+ function createColumns(projectId: string, env: string, appId: string): ColumnDef<AppScheduledJob>[] {
+     return [
+         {
+@@ -75,7 +64,7 @@ function createColumns(projectId: string, env: string, appId: string): ColumnDef
+             accessorKey: "schedule",
+             header: "Schedule",
+             enableSorting: false,
+-            cell: ({ row: { original } }) => formatSchedule(original),
++            cell: ({ row: { original } }) => formatJobSchedule(original.schedule),
+         },
+         {
+             accessorKey: "nextRuns",
+diff --git a/src/application/modules/projects/module-shared/enums/e.app-scheduled-job-schedule-mode.ts b/src/application/modules/projects/module-shared/enums/e.app-scheduled-job-schedule-mode.ts
+index b192cc1c..e18d22ed 100644
+--- a/src/application/modules/projects/module-shared/enums/e.app-scheduled-job-schedule-mode.ts
++++ b/src/application/modules/projects/module-shared/enums/e.app-scheduled-job-schedule-mode.ts
+@@ -1,4 +1,6 @@
+ export const EAppScheduledJobScheduleMode = {
++    /** Run by hand, or as a step of a job sequence. */
++    None: "none",
+     Interval: "interval",
+     Cron: "cron",
+ } as const;
+diff --git a/src/application/modules/projects/module-shared/enums/e.app-scheduled-job-type.ts b/src/application/modules/projects/module-shared/enums/e.app-scheduled-job-type.ts
+index cf0ce709..a05f8ef4 100644
+--- a/src/application/modules/projects/module-shared/enums/e.app-scheduled-job-type.ts
++++ b/src/application/modules/projects/module-shared/enums/e.app-scheduled-job-type.ts
+@@ -4,6 +4,7 @@ export const EAppScheduledJobType = {
+     SystemBackup: "system-backup",
+     SSLRenewal: "ssl-renewal",
+     BackupRepoCleanup: "backup-repo-cleanup",
++    JobSequence: "job-sequence",
+ } as const;
+ 
+ export type EAppScheduledJobType = (typeof EAppScheduledJobType)[keyof typeof EAppScheduledJobType];
+diff --git a/src/application/modules/projects/module-shared/enums/e.sched-job-sequence.ts b/src/application/modules/projects/module-shared/enums/e.sched-job-sequence.ts
+new file mode 100644
+index 00000000..aa4a89ba
+--- /dev/null
++++ b/src/application/modules/projects/module-shared/enums/e.sched-job-sequence.ts
+@@ -0,0 +1,22 @@
++export const ESchedJobSeqMode = {
++    Sequential: "sequential",
++} as const;
++
++export type ESchedJobSeqMode = (typeof ESchedJobSeqMode)[keyof typeof ESchedJobSeqMode];
++
++export const ESchedJobSeqOnFailure = {
++    Stop: "stop",
++    Continue: "continue",
++} as const;
++
++export type ESchedJobSeqOnFailure = (typeof ESchedJobSeqOnFailure)[keyof typeof ESchedJobSeqOnFailure];
++
++export const ESchedJobSeqStepStatus = {
++    Pending: "pending",
++    Running: "running",
++    Done: "done",
++    Failed: "failed",
++    Skipped: "skipped",
++} as const;
++
++export type ESchedJobSeqStepStatus = (typeof ESchedJobSeqStepStatus)[keyof typeof ESchedJobSeqStepStatus];
+diff --git a/src/application/modules/projects/module-shared/enums/index.ts b/src/application/modules/projects/module-shared/enums/index.ts
+index 6b00fbe5..d5113554 100644
+--- a/src/application/modules/projects/module-shared/enums/index.ts
++++ b/src/application/modules/projects/module-shared/enums/index.ts
+@@ -14,6 +14,7 @@ export * from "./e.app-scheduled-job-schedule-mode";
+ export * from "./e.app-scheduled-job-task-priority";
+ export * from "./e.app-scheduled-job-task-status";
+ export * from "./e.app-scheduled-job-type";
++export * from "./e.sched-job-sequence";
+ export * from "./e.endpoint-resolution-mode";
+ export * from "./e.healthcheck-mode";
+ export * from "./e.http-path-mode";
+diff --git a/src/application/modules/projects/routes/single-project/single-app/configuration/scheduled-jobs/form-route/app-scheduled-job-form-route.com.tsx b/src/application/modules/projects/routes/single-project/single-app/configuration/scheduled-jobs/form-route/app-scheduled-job-form-route.com.tsx
+index 6edb2eee..1e805269 100644
+--- a/src/application/modules/projects/routes/single-project/single-app/configuration/scheduled-jobs/form-route/app-scheduled-job-form-route.com.tsx
++++ b/src/application/modules/projects/routes/single-project/single-app/configuration/scheduled-jobs/form-route/app-scheduled-job-form-route.com.tsx
+@@ -8,11 +8,8 @@ import {
+     APP_SCHEDULED_JOB_COMMAND_MODE,
+     type CreateOrEditAppScheduledJobFormOutput,
+ } from "~/projects/dialogs/create-or-edit-app-scheduled-job/schemas";
+-import {
+-    EAppScheduledJobCommandOutputMode,
+-    EAppScheduledJobScheduleMode,
+-    EAppScheduledJobType,
+-} from "~/projects/module-shared/enums";
++import { mapJobScheduleFormValuesToPayload } from "~/projects/module-shared/components";
++import { EAppScheduledJobCommandOutputMode, EAppScheduledJobType } from "~/projects/module-shared/enums";
+ 
+ import { AppLoader, RouteFormHeader } from "@application/shared/components";
+ import { MODULE_IDS, ROUTE } from "@application/shared/constants";
+@@ -29,15 +26,6 @@ function mapFormValuesToPayload(
+     values: CreateOrEditAppScheduledJobFormOutput,
+     appId: string,
+ ): AppScheduledJobs_Upsert_Payload {
+-    const scheduleInterval =
+-        values.scheduleMode === EAppScheduledJobScheduleMode.Interval && hasText(values.scheduleInterval)
+-            ? values.scheduleInterval
+-            : undefined;
+-    const scheduleCronExpr =
+-        values.scheduleMode === EAppScheduledJobScheduleMode.Cron && hasText(values.scheduleCronExpr)
+-            ? values.scheduleCronExpr
+-            : undefined;
+-
+     const commandOutput = buildCommandOutputPayload(values);
+ 
+     return {
+@@ -45,12 +33,7 @@ function mapFormValuesToPayload(
+         default: false,
+         name: values.name,
+         jobType: EAppScheduledJobType.ContainerCommand,
+-        schedule: {
+-            ...(scheduleInterval ? { interval: scheduleInterval } : {}),
+-            ...(scheduleCronExpr ? { cronExpr: scheduleCronExpr } : {}),
+-            ...(values.scheduleFrom ? { initialTime: values.scheduleFrom } : {}),
+-            ...(values.scheduleTo ? { endTime: values.scheduleTo } : {}),
+-        },
++        schedule: mapJobScheduleFormValuesToPayload(values),
+         app: {
+             id: appId,
+         },

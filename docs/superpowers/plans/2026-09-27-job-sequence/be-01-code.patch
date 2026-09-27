@@ -1,0 +1,313 @@
+diff --git a/hivepaas_app/base/sched_job.go b/hivepaas_app/base/sched_job.go
+index 76b7ab9a..6525fe9f 100644
+--- a/hivepaas_app/base/sched_job.go
++++ b/hivepaas_app/base/sched_job.go
+@@ -10,13 +10,49 @@ const (
+ 	SchedJobTypeSystemBackup      SchedJobType = "system-backup"
+ 	SchedJobTypeSSLRenewal        SchedJobType = "ssl-renewal"
+ 	SchedJobTypeBackupRepoCleanup SchedJobType = "backup-repo-cleanup"
++	// SchedJobTypeJobSequence runs other scheduled jobs, one after another.
++	SchedJobTypeJobSequence SchedJobType = "job-sequence"
+ )
+ 
+ var (
+ 	AllSchedJobTypes = []SchedJobType{SchedJobTypeContainerCommand, SchedJobTypeSystemCleanup,
+-		SchedJobTypeSystemBackup, SchedJobTypeSSLRenewal, SchedJobTypeBackupRepoCleanup}
++		SchedJobTypeSystemBackup, SchedJobTypeSSLRenewal, SchedJobTypeBackupRepoCleanup, SchedJobTypeJobSequence}
+ )
+ 
++// SchedJobSeqMode is how a job sequence runs its steps. Sequential is the only
++// mode for now; the results are kept per step so a parallel one can follow.
++type SchedJobSeqMode string
++
++const (
++	SchedJobSeqModeSequential SchedJobSeqMode = "sequential"
++)
++
++var AllSchedJobSeqModes = []SchedJobSeqMode{SchedJobSeqModeSequential}
++
++// SchedJobSeqOnFailure is what a job sequence does when a step fails for good.
++type SchedJobSeqOnFailure string
++
++const (
++	SchedJobSeqOnFailureStop     SchedJobSeqOnFailure = "stop"
++	SchedJobSeqOnFailureContinue SchedJobSeqOnFailure = "continue"
++)
++
++var AllSchedJobSeqOnFailures = []SchedJobSeqOnFailure{SchedJobSeqOnFailureStop, SchedJobSeqOnFailureContinue}
++
++// SchedJobSeqStepStatus is where one step of a job sequence's run stands.
++type SchedJobSeqStepStatus string
++
++const (
++	SchedJobSeqStepPending SchedJobSeqStepStatus = "pending"
++	SchedJobSeqStepRunning SchedJobSeqStepStatus = "running"
++	SchedJobSeqStepDone    SchedJobSeqStepStatus = "done"
++	SchedJobSeqStepFailed  SchedJobSeqStepStatus = "failed"
++	SchedJobSeqStepSkipped SchedJobSeqStepStatus = "skipped"
++)
++
++// SchedJobSeqMaxSteps is the most steps a job sequence has.
++const SchedJobSeqMaxSteps = 50
++
+ const (
+ 	ExecCommandMaxSize = 300 * unit.KB
+ )
+diff --git a/hivepaas_app/entity/setting_sched_job.go b/hivepaas_app/entity/setting_sched_job.go
+index 54e4c8fb..975e6a53 100644
+--- a/hivepaas_app/entity/setting_sched_job.go
++++ b/hivepaas_app/entity/setting_sched_job.go
+@@ -44,6 +44,8 @@ type SchedJob struct {
+ 	Command            *CommandTemplate       `json:"command,omitempty"`
+ 	CommandOutput      *SchedJobCommandOutput `json:"commandOutput,omitempty"`
+ 	Notification       *BaseEventNotification `json:"notification,omitempty"`
++	// Sequence is a job-sequence's list of jobs; nil for every other type.
++	Sequence *SchedJobSequence `json:"sequence,omitempty"`
+ }
+ 
+ type SchedJobSchedule struct {
+@@ -59,6 +61,9 @@ type SchedJobSchedule struct {
+ }
+ 
+ func (s *SchedJobSchedule) Equal(oldSched *SchedJobSchedule) bool {
++	if s == nil || oldSched == nil {
++		return s == nil && oldSched == nil
++	}
+ 	return s.CronExpr == oldSched.CronExpr && s.Interval == oldSched.Interval &&
+ 		s.InitialTime.Equal(oldSched.InitialTime) && s.EndTime.Equal(oldSched.EndTime)
+ }
+@@ -89,6 +94,9 @@ func (s *SchedJobSchedule) GetLastSchedTime() time.Time {
+ }
+ 
+ func (s *SchedJobSchedule) SetLastSchedTime(lastSchedTime time.Time) bool {
++	if s == nil {
++		return false
++	}
+ 	// TODO (low): should we always update lastSchedTime of sched jobs
+ 	// if !s.LastSchedTime.IsZero() && lastSchedTime.Sub(s.LastSchedTime) < timeutil.Day {
+ 	//	return false
+@@ -114,7 +122,16 @@ func (s *SchedJobSchedule) ParseCronExpr() (cron.Schedule, error) {
+ 	return sched, nil
+ }
+ 
++// CalcNextRuns is the next count runs from fromTime. A job without a schedule
++// has none: it runs only by hand or as a step of a job sequence.
+ func (s *SchedJobSchedule) CalcNextRuns(fromTime time.Time, count int) (res []time.Time, err error) {
++	if s == nil {
++		return nil, nil
++	}
++	return s.calcNextRuns(fromTime, count)
++}
++
++func (s *SchedJobSchedule) calcNextRuns(fromTime time.Time, count int) (res []time.Time, err error) {
+ 	if count == 0 {
+ 		return nil, hperrors.NewArgumentInvalid("count")
+ 	}
+@@ -166,7 +183,16 @@ func (s *SchedJobSchedule) CalcNextRuns(fromTime time.Time, count int) (res []ti
+ 	return nil, hperrors.NewArgumentInvalid("Schedule")
+ }
+ 
++// CalcNextRunsInRange is the runs between fromTime and toTime; none for a job
++// without a schedule.
+ func (s *SchedJobSchedule) CalcNextRunsInRange(fromTime, toTime time.Time) (res []time.Time, err error) {
++	if s == nil {
++		return nil, nil
++	}
++	return s.calcNextRunsInRange(fromTime, toTime)
++}
++
++func (s *SchedJobSchedule) calcNextRunsInRange(fromTime, toTime time.Time) (res []time.Time, err error) {
+ 	if toTime.IsZero() {
+ 		return nil, hperrors.NewArgumentInvalid("toTime")
+ 	}
+@@ -277,6 +303,9 @@ func (s *SchedJob) GetRefObjectIDs() *RefObjectIDs {
+ 	if s.Notification != nil {
+ 		refIDs.AddRefIDs(s.Notification.GetRefObjectIDs())
+ 	}
++	// A sequence's members are references like any other: they are what keeps a
++	// job a sequence runs from being deleted under it.
++	refIDs.RefSettingIDs = append(refIDs.RefSettingIDs, s.Sequence.MemberIDs()...)
+ 	return refIDs
+ }
+ 
+diff --git a/hivepaas_app/entity/setting_sched_job_sequence.go b/hivepaas_app/entity/setting_sched_job_sequence.go
+new file mode 100644
+index 00000000..4f80d7c5
+--- /dev/null
++++ b/hivepaas_app/entity/setting_sched_job_sequence.go
+@@ -0,0 +1,44 @@
++package entity
++
++import (
++	"github.com/hivepaas/hivepaas/hivepaas_app/base"
++)
++
++// SchedJobSequence is the jobs a job sequence runs, in order.
++type SchedJobSequence struct {
++	Mode      base.SchedJobSeqMode      `json:"mode"`
++	OnFailure base.SchedJobSeqOnFailure `json:"onFailure"`
++	Steps     []*SchedJobSequenceStep   `json:"steps"`
++}
++
++// SchedJobSequenceStep is one scheduled job a sequence runs, with an optional
++// label for its logs and results. A job may be a step more than once.
++type SchedJobSequenceStep struct {
++	Job  ObjectID `json:"job"`
++	Name string   `json:"name,omitempty"`
++}
++
++// MemberIDs is the sequence's jobs, each once, in the order they first appear.
++func (s *SchedJobSequence) MemberIDs() []string {
++	if s == nil {
++		return nil
++	}
++	ids := make([]string, 0, len(s.Steps))
++	seen := make(map[string]struct{}, len(s.Steps))
++	for _, step := range s.Steps {
++		if step == nil || step.Job.ID == "" {
++			continue
++		}
++		if _, dup := seen[step.Job.ID]; dup {
++			continue
++		}
++		seen[step.Job.ID] = struct{}{}
++		ids = append(ids, step.Job.ID)
++	}
++	return ids
++}
++
++// StopsOnFailure says whether a step failing for good ends the run.
++func (s *SchedJobSequence) StopsOnFailure() bool {
++	return s == nil || s.OnFailure != base.SchedJobSeqOnFailureContinue
++}
+diff --git a/hivepaas_app/entity/task_sched_job_seq.go b/hivepaas_app/entity/task_sched_job_seq.go
+new file mode 100644
+index 00000000..8075c2bb
+--- /dev/null
++++ b/hivepaas_app/entity/task_sched_job_seq.go
+@@ -0,0 +1,70 @@
++package entity
++
++import (
++	"time"
++
++	"github.com/hivepaas/hivepaas/hivepaas_app/base"
++	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
++)
++
++// SchedJobSeqRun is a job sequence's run: where it is and how each step went.
++// It is the output of the run's task, written after every step, so the run's
++// page shows it while the run goes on.
++type SchedJobSeqRun struct {
++	// Started is set once the run has checked it does not overlap another.
++	Started     bool                     `json:"started"`
++	CurrentStep int                      `json:"currentStep"`
++	Steps       []*SchedJobSeqStepResult `json:"steps"`
++}
++
++type SchedJobSeqStepResult struct {
++	Job       ObjectID                   `json:"job"`
++	Name      string                     `json:"name,omitempty"`
++	Status    base.SchedJobSeqStepStatus `json:"status"`
++	ExitCode  *int                       `json:"exitCode,omitempty"`
++	Error     string                     `json:"error,omitempty"`
++	Attempts  int                        `json:"attempts"`
++	StartedAt time.Time                  `json:"startedAt,omitzero"`
++	EndedAt   time.Time                  `json:"endedAt,omitzero"`
++	Outputs   map[string]string          `json:"outputs,omitempty"`
++}
++
++// NewSchedJobSeqRun is a run of the sequence with every step pending.
++func NewSchedJobSeqRun(seq *SchedJobSequence) *SchedJobSeqRun {
++	run := &SchedJobSeqRun{}
++	if seq == nil {
++		return run
++	}
++	for _, step := range seq.Steps {
++		run.Steps = append(run.Steps, &SchedJobSeqStepResult{
++			Job:    ObjectID{ID: step.Job.ID},
++			Name:   step.Name,
++			Status: base.SchedJobSeqStepPending,
++		})
++	}
++	return run
++}
++
++// Failed says whether a step of the run failed.
++func (r *SchedJobSeqRun) Failed() bool {
++	for _, step := range r.Steps {
++		if step.Status == base.SchedJobSeqStepFailed {
++			return true
++		}
++	}
++	return false
++}
++
++// OutputAsSchedJobSeqRun is the run a job sequence's task keeps in its output;
++// nil for a task that holds none.
++func (t *Task) OutputAsSchedJobSeqRun() (*SchedJobSeqRun, error) {
++	if t.Type != base.TaskTypeSchedJobExec {
++		return nil, hperrors.NewMismatch("Task type", base.TaskTypeSchedJobExec)
++	}
++	if t.Output == "" {
++		return nil, nil //nolint:nilnil // a task that is not a sequence's holds none
++	}
++	return parseTaskOutputAs(t, func() *SchedJobSeqRun {
++		return &SchedJobSeqRun{}
++	})
++}
+diff --git a/hivepaas_app/tasks/taskschedjobexec/executor.go b/hivepaas_app/tasks/taskschedjobexec/executor.go
+index 669aeb03..427d80bd 100644
+--- a/hivepaas_app/tasks/taskschedjobexec/executor.go
++++ b/hivepaas_app/tasks/taskschedjobexec/executor.go
+@@ -189,6 +189,9 @@ func (e *Executor) execute(
+ 			return hperrors.Wrap(err)
+ 		}
+ 		data.SkipResultNotification = resp.SkipResultNotification
++
++	case base.SchedJobTypeJobSequence:
++		return hperrors.NewUnsupported("Job sequence")
+ 	}
+ 
+ 	return nil
+diff --git a/hivepaas_app/tasks/taskschedjobexec/result_notification.go b/hivepaas_app/tasks/taskschedjobexec/result_notification.go
+index dc06eb82..8a67479e 100644
+--- a/hivepaas_app/tasks/taskschedjobexec/result_notification.go
++++ b/hivepaas_app/tasks/taskschedjobexec/result_notification.go
+@@ -8,6 +8,7 @@ import (
+ 	"github.com/tiendc/gofn"
+ 
+ 	"github.com/hivepaas/hivepaas/hivepaas_app/config"
++	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
+ 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
+ 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
+ 	"github.com/hivepaas/hivepaas/hivepaas_app/service/notificationservice"
+@@ -66,11 +67,7 @@ func (e *Executor) buildNotificationMsgData(
+ 		Retries:      data.Task.Config.Retry,
+ 		LastError:    data.Task.GetLastError(),
+ 	}
+-	if schedJob.Schedule.Interval > 0 {
+-		msgData.Schedule = fmt.Sprintf("every %v", schedJob.Schedule.Interval.String())
+-	} else {
+-		msgData.Schedule = fmt.Sprintf("cron expression %v", schedJob.Schedule.CronExpr)
+-	}
++	msgData.Schedule = describeSchedule(schedJob.Schedule)
+ 	if project := data.Scope.GetProject(); project != nil {
+ 		msgData.ProjectName = project.Name
+ 	}
+@@ -82,3 +79,15 @@ func (e *Executor) buildNotificationMsgData(
+ 
+ 	data.NotifMsgData = msgData
+ }
++
++// describeSchedule is how a notification names a job's schedule.
++func describeSchedule(sched *entity.SchedJobSchedule) string {
++	switch {
++	case sched == nil:
++		return "no schedule (run by hand or by a job sequence)"
++	case sched.Interval > 0:
++		return fmt.Sprintf("every %v", sched.Interval.String())
++	default:
++		return fmt.Sprintf("cron expression %v", sched.CronExpr)
++	}
++}

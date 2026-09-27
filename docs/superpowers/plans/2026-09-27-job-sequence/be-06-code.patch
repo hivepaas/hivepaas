@@ -1,0 +1,399 @@
+diff --git a/hivepaas_app/entity/object_scope.go b/hivepaas_app/entity/object_scope.go
+index 2b442868..9a314337 100644
+--- a/hivepaas_app/entity/object_scope.go
++++ b/hivepaas_app/entity/object_scope.go
+@@ -24,6 +24,10 @@ type ObjectScope struct {
+ 	LockScopeObject  bool
+ 	NotRequireActive bool
+ 	NoInherited      bool
++	// IncludeEnvApps makes a project env's scope reach the settings of the apps
++	// in the env, next to the env's own, and nothing inherited or shared: the
++	// env's scheduled jobs are listed with its apps'.
++	IncludeEnvApps bool
+ }
+ 
+ func (s *ObjectScope) IsGlobalScope() bool {
+diff --git a/hivepaas_app/interface/api/handler/projectenvsettingshandler/sched_job.go b/hivepaas_app/interface/api/handler/projectenvsettingshandler/sched_job.go
+new file mode 100644
+index 00000000..f9e02f17
+--- /dev/null
++++ b/hivepaas_app/interface/api/handler/projectenvsettingshandler/sched_job.go
+@@ -0,0 +1,184 @@
++package projectenvsettingshandler
++
++import (
++	"net/http"
++
++	"github.com/gin-gonic/gin"
++
++	"github.com/hivepaas/hivepaas/hivepaas_app/base"
++	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
++	_ "github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
++	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings/schedjobuc/schedjobdto"
++)
++
++// ListSchedJob Lists an env's scheduled jobs with its apps'
++// @Summary Lists an env's scheduled jobs with its apps'
++// @Description The env's own scheduled jobs - job sequences - and those of every app in the env, each with
++// @Description its scope and, for an app's, the app.
++// @Tags    project_env_settings
++// @Produce json
++// @Id      listProjectEnvSchedJob
++// @Param   projectID path string true "project ID"
++// @Param   projectEnv path string true "project Env"
++// @Param   jobType query string false "`jobType=type1,type2`"
++// @Param   appId query string false "`appId=<an app of the env>`"
++// @Param   status query string false "`status=active,disabled`"
++// @Param   search query string false "`search=<target> (support *)`"
++// @Param   pageOffset query int false "`pageOffset=offset`"
++// @Param   pageLimit query int false "`pageLimit=limit`"
++// @Param   sort query string false "`sort=[-]field1|field2...`"
++// @Success 200 {object} schedjobdto.ListEnvSchedJobResp
++// @Failure 400 {object} hperrors.ErrorInfo
++// @Failure 500 {object} hperrors.ErrorInfo
++// @Router  /projects/{projectID}/{projectEnv}/sched-jobs [get]
++func (h *Handler) ListSchedJob(ctx *gin.Context) {
++	auth, projectID, projectEnvID, _, err := h.GetAuthProjectEnvSettings(ctx, base.ActionTypeRead, "")
++	if err != nil {
++		h.RenderError(ctx, err)
++		return
++	}
++
++	req := schedjobdto.NewListEnvSchedJobReq()
++	req.Scope = &entity.ObjectScope{
++		ScopeType: base.ObjectScopeProjectEnv, ProjectID: projectID, ProjectEnvID: projectEnvID,
++	}
++	if err = h.ParseAndValidateRequest(ctx, req, &req.Paging); err != nil {
++		h.RenderError(ctx, err)
++		return
++	}
++
++	resp, err := h.SchedJobUC.ListEnvSchedJob(h.RequestCtx(ctx), auth, req)
++	if err != nil {
++		h.RenderError(ctx, err)
++		return
++	}
++
++	ctx.JSON(http.StatusOK, resp)
++}
++
++// GetSchedJob Gets an env's scheduled job
++// @Summary Gets an env's scheduled job
++// @Description Gets an env's scheduled job
++// @Tags    project_env_settings
++// @Produce json
++// @Id      getProjectEnvSchedJob
++// @Param   projectID path string true "project ID"
++// @Param   projectEnv path string true "project Env"
++// @Param   itemID path string true "setting ID"
++// @Success 200 {object} schedjobdto.GetSchedJobResp
++// @Failure 400 {object} hperrors.ErrorInfo
++// @Failure 500 {object} hperrors.ErrorInfo
++// @Router  /projects/{projectID}/{projectEnv}/sched-jobs/{itemID} [get]
++func (h *Handler) GetSchedJob(ctx *gin.Context) {
++	h.GetSetting(ctx, base.ResourceTypeSchedJob, base.ObjectScopeProjectEnv)
++}
++
++// CreateSchedJob Creates an env's scheduled job
++// @Summary Creates an env's scheduled job
++// @Description Creates an env's scheduled job: a job sequence of its apps' jobs.
++// @Tags    project_env_settings
++// @Produce json
++// @Id      createProjectEnvSchedJob
++// @Param   projectID path string true "project ID"
++// @Param   projectEnv path string true "project Env"
++// @Param   body body schedjobdto.CreateSchedJobReq true "request data"
++// @Success 201 {object} schedjobdto.CreateSchedJobResp
++// @Failure 400 {object} hperrors.ErrorInfo
++// @Failure 500 {object} hperrors.ErrorInfo
++// @Router  /projects/{projectID}/{projectEnv}/sched-jobs [post]
++func (h *Handler) CreateSchedJob(ctx *gin.Context) {
++	h.CreateSetting(ctx, base.ResourceTypeSchedJob, base.ObjectScopeProjectEnv)
++}
++
++// UpdateSchedJob Updates an env's scheduled job
++// @Summary Updates an env's scheduled job
++// @Description Updates an env's scheduled job
++// @Tags    project_env_settings
++// @Produce json
++// @Id      updateProjectEnvSchedJob
++// @Param   projectID path string true "project ID"
++// @Param   projectEnv path string true "project Env"
++// @Param   itemID path string true "setting ID"
++// @Param   body body schedjobdto.UpdateSchedJobReq true "request data"
++// @Success 200 {object} schedjobdto.UpdateSchedJobResp
++// @Failure 400 {object} hperrors.ErrorInfo
++// @Failure 500 {object} hperrors.ErrorInfo
++// @Router  /projects/{projectID}/{projectEnv}/sched-jobs/{itemID} [put]
++func (h *Handler) UpdateSchedJob(ctx *gin.Context) {
++	h.UpdateSetting(ctx, base.ResourceTypeSchedJob, base.ObjectScopeProjectEnv)
++}
++
++// UpdateSchedJobStatus Enables or disables an env's scheduled job
++// @Summary Enables or disables an env's scheduled job
++// @Description Enables or disables an env's scheduled job
++// @Tags    project_env_settings
++// @Produce json
++// @Id      updateProjectEnvSchedJobStatus
++// @Param   projectID path string true "project ID"
++// @Param   projectEnv path string true "project Env"
++// @Param   itemID path string true "setting ID"
++// @Param   body body schedjobdto.UpdateSchedJobStatusReq true "request data"
++// @Success 200 {object} schedjobdto.UpdateSchedJobStatusResp
++// @Failure 400 {object} hperrors.ErrorInfo
++// @Failure 500 {object} hperrors.ErrorInfo
++// @Router  /projects/{projectID}/{projectEnv}/sched-jobs/{itemID}/status [put]
++func (h *Handler) UpdateSchedJobStatus(ctx *gin.Context) {
++	h.UpdateSettingStatus(ctx, base.ResourceTypeSchedJob, base.ObjectScopeProjectEnv)
++}
++
++// DeleteSchedJob Deletes an env's scheduled job
++// @Summary Deletes an env's scheduled job
++// @Description Deletes an env's scheduled job
++// @Tags    project_env_settings
++// @Produce json
++// @Id      deleteProjectEnvSchedJob
++// @Param   projectID path string true "project ID"
++// @Param   projectEnv path string true "project Env"
++// @Param   itemID path string true "setting ID"
++// @Success 200 {object} schedjobdto.DeleteSchedJobResp
++// @Failure 400 {object} hperrors.ErrorInfo
++// @Failure 500 {object} hperrors.ErrorInfo
++// @Router  /projects/{projectID}/{projectEnv}/sched-jobs/{itemID} [delete]
++func (h *Handler) DeleteSchedJob(ctx *gin.Context) {
++	h.DeleteSetting(ctx, base.ResourceTypeSchedJob, base.ObjectScopeProjectEnv)
++}
++
++// ExecuteSchedJob Runs an env's scheduled job now
++// @Summary Runs an env's scheduled job now
++// @Description Runs an env's scheduled job now, outside its schedule.
++// @Tags    project_env_settings
++// @Produce json
++// @Id      executeProjectEnvSchedJob
++// @Param   projectID path string true "project ID"
++// @Param   projectEnv path string true "project Env"
++// @Param   itemID path string true "setting ID"
++// @Param   body body schedjobdto.ExecuteSchedJobReq true "request data"
++// @Success 200 {object} schedjobdto.ExecuteSchedJobResp
++// @Failure 400 {object} hperrors.ErrorInfo
++// @Failure 500 {object} hperrors.ErrorInfo
++// @Router  /projects/{projectID}/{projectEnv}/sched-jobs/{itemID}/exec [post]
++func (h *Handler) ExecuteSchedJob(ctx *gin.Context) {
++	auth, projectID, projectEnvID, jobID, err := h.GetAuthProjectEnvSettings(ctx, base.ActionTypeExecute, "itemID")
++	if err != nil {
++		h.RenderError(ctx, err)
++		return
++	}
++
++	req := schedjobdto.NewExecuteSchedJobReq()
++	req.ID = jobID
++	req.Scope = &entity.ObjectScope{
++		ScopeType: base.ObjectScopeProjectEnv, ProjectID: projectID, ProjectEnvID: projectEnvID,
++	}
++	if err = h.ParseAndValidateJSONBody(ctx, req); err != nil {
++		h.RenderError(ctx, err)
++		return
++	}
++
++	resp, err := h.SchedJobUC.ExecuteSchedJob(h.RequestCtx(ctx), auth, req)
++	if err != nil {
++		h.RenderError(ctx, err)
++		return
++	}
++
++	ctx.JSON(http.StatusOK, resp)
++}
+diff --git a/hivepaas_app/interface/api/server/router_project_env.go b/hivepaas_app/interface/api/server/router_project_env.go
+index 162958b4..7f275497 100644
+--- a/hivepaas_app/interface/api/server/router_project_env.go
++++ b/hivepaas_app/interface/api/server/router_project_env.go
+@@ -116,6 +116,17 @@ func (s *HTTPServer) registerProjectEnvRoutes(projectGroup *gin.RouterGroup) {
+ 		commandPipeGroup.DELETE("/:itemID", projectEnvSettingsHandler.DeleteCommandPipe)
+ 	}
+ 
++	{ // Scheduled jobs group: the env's own (job sequences) and, listed, its apps'
++		schedJobGroup := projectEnvGroup.Group("/sched-jobs")
++		schedJobGroup.GET("", projectEnvSettingsHandler.ListSchedJob)
++		schedJobGroup.GET("/:itemID", projectEnvSettingsHandler.GetSchedJob)
++		schedJobGroup.POST("", projectEnvSettingsHandler.CreateSchedJob)
++		schedJobGroup.PUT("/:itemID", projectEnvSettingsHandler.UpdateSchedJob)
++		schedJobGroup.PUT("/:itemID/status", projectEnvSettingsHandler.UpdateSchedJobStatus)
++		schedJobGroup.DELETE("/:itemID", projectEnvSettingsHandler.DeleteSchedJob)
++		schedJobGroup.POST("/:itemID/exec", projectEnvSettingsHandler.ExecuteSchedJob)
++	}
++
+ 	{ // Command templates group
+ 		commandTemplateGroup := projectEnvGroup.Group("/command-templates")
+ 		commandTemplateGroup.GET("/:itemID", projectEnvSettingsHandler.GetCommandTemplate)
+diff --git a/hivepaas_app/repository/setting_repo.go b/hivepaas_app/repository/setting_repo.go
+index 152a17f0..761cb40b 100644
+--- a/hivepaas_app/repository/setting_repo.go
++++ b/hivepaas_app/repository/setting_repo.go
+@@ -382,6 +382,15 @@ func (repo *settingRepo) applyAppFilter(opts []bunex.SelectQueryOption,
+ // applyProjectEnvFilter filters settings belong to the project env or to any parent object
+ func (repo *settingRepo) applyProjectEnvFilter(opts []bunex.SelectQueryOption,
+ 	scope *entity.ObjectScope) []bunex.SelectQueryOption {
++	if scope.IncludeEnvApps {
++		return append(opts,
++			bunex.SelectWhereGroup(
++				bunex.SelectWhere("setting.object_id = ?", scope.ProjectEnvID),
++				bunex.SelectWhereOr("setting.object_id IN (SELECT app.id FROM apps AS app "+
++					"WHERE (app.project_env_id = ?) AND (app.deleted_at IS NULL))", scope.ProjectEnvID),
++			),
++		)
++	}
+ 	if scope.NoInherited {
+ 		return append(opts,
+ 			bunex.SelectWhere("setting.object_id = ?", scope.ProjectEnvID))
+diff --git a/hivepaas_app/usecase/settings/schedjobuc/list_env.go b/hivepaas_app/usecase/settings/schedjobuc/list_env.go
+new file mode 100644
+index 00000000..b109ccbe
+--- /dev/null
++++ b/hivepaas_app/usecase/settings/schedjobuc/list_env.go
+@@ -0,0 +1,75 @@
++package schedjobuc
++
++import (
++	"context"
++
++	"github.com/tiendc/gofn"
++
++	"github.com/hivepaas/hivepaas/hivepaas_app/base"
++	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
++	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
++	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
++	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
++	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings"
++	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings/schedjobuc/schedjobdto"
++)
++
++// ListEnvSchedJob lists a project env's scheduled jobs and those of the apps in
++// it, each saying whose it is: the list behind an env's scheduled jobs page and
++// the picker of an env sequence's steps.
++func (uc *UC) ListEnvSchedJob(
++	ctx context.Context,
++	auth *basedto.Auth,
++	req *schedjobdto.ListEnvSchedJobReq,
++) (*schedjobdto.ListEnvSchedJobResp, error) {
++	req.Type = currentSettingType
++	req.Scope.IncludeEnvApps = true
++	for _, jobType := range req.JobTypes {
++		req.Kinds = append(req.Kinds, string(jobType))
++	}
++	var extraOpts []bunex.SelectQueryOption
++	if req.AppID != "" {
++		extraOpts = append(extraOpts, bunex.SelectWhere("setting.object_id = ?", req.AppID))
++	}
++	resp, err := uc.ListSetting(ctx, auth, &req.ListSettingReq, &settings.ListSettingData{
++		ExtraLoadOpts: extraOpts,
++	})
++	if err != nil {
++		return nil, hperrors.Wrap(err)
++	}
++	if resp.RefObjects == nil {
++		resp.RefObjects = entity.NewRefObjects()
++	}
++	if err = uc.loadSequenceMembers(ctx, uc.DB, resp.RefObjects, resp.Data...); err != nil {
++		return nil, hperrors.Wrap(err)
++	}
++	if err = uc.loadOwnerApps(ctx, resp.RefObjects, resp.Data); err != nil {
++		return nil, hperrors.Wrap(err)
++	}
++
++	respData, err := schedjobdto.TransformEnvSchedJobs(resp.Data, resp.RefObjects)
++	if err != nil {
++		return nil, hperrors.Wrap(err)
++	}
++	return &schedjobdto.ListEnvSchedJobResp{
++		Meta: resp.Meta,
++		Data: respData,
++	}, nil
++}
++
++// loadOwnerApps adds to refObjects the apps the app jobs among jobSettings
++// belong to.
++func (uc *UC) loadOwnerApps(ctx context.Context, refObjects *entity.RefObjects, jobSettings []*entity.Setting) error {
++	var appIDs []string
++	for _, setting := range jobSettings {
++		if setting.Scope == base.ObjectScopeApp {
++			appIDs = append(appIDs, setting.ObjectID)
++		}
++	}
++	if len(appIDs) == 0 {
++		return nil
++	}
++	err := uc.SettingService.LoadRefObjectsByIDsSkipMissing(ctx, uc.DB, &refObjects, nil, false,
++		&entity.RefObjectIDs{RefAppIDs: gofn.ToSet(appIDs)})
++	return hperrors.Wrap(err)
++}
+diff --git a/hivepaas_app/usecase/settings/schedjobuc/schedjobdto/list_env.go b/hivepaas_app/usecase/settings/schedjobuc/schedjobdto/list_env.go
+new file mode 100644
+index 00000000..960aba83
+--- /dev/null
++++ b/hivepaas_app/usecase/settings/schedjobuc/schedjobdto/list_env.go
+@@ -0,0 +1,65 @@
++package schedjobdto
++
++import (
++	vld "github.com/tiendc/go-validator"
++
++	"github.com/hivepaas/hivepaas/hivepaas_app/base"
++	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
++	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
++	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
++)
++
++// ListEnvSchedJobReq lists a project env's scheduled jobs with those of the
++// apps in it.
++type ListEnvSchedJobReq struct {
++	ListSchedJobReq
++	JobTypes []base.SchedJobType `json:"-" mapstructure:"jobType"`
++	AppID    string              `json:"-" mapstructure:"appId"`
++}
++
++func NewListEnvSchedJobReq() *ListEnvSchedJobReq {
++	return &ListEnvSchedJobReq{ListSchedJobReq: *NewListSchedJobReq()}
++}
++
++func (req *ListEnvSchedJobReq) Validate() hperrors.ValidationErrors {
++	validators := make([]vld.Validator, 0, 10) //nolint:mnd
++	validators = append(validators, req.ListSettingReq.Validate()...)
++	validators = append(validators, basedto.ValidateSlice(req.JobTypes, true, 0, base.AllSchedJobTypes,
++		"jobType")...)
++	validators = append(validators, basedto.ValidateID(&req.AppID, false, "appId")...)
++	return hperrors.NewValidationErrors(vld.Validate(validators...))
++}
++
++type ListEnvSchedJobResp struct {
++	Meta *basedto.ListMeta  `json:"meta"`
++	Data []*EnvSchedJobResp `json:"data"`
++}
++
++// EnvSchedJobResp is a scheduled job in an env's list: the env's own, or an
++// app's, with the app it belongs to.
++type EnvSchedJobResp struct {
++	*SchedJobResp
++	Scope    base.ObjectScopeType     `json:"scope"`
++	OwnerApp *basedto.NamedObjectResp `json:"ownerApp,omitempty"`
++}
++
++func TransformEnvSchedJobs(
++	settings []*entity.Setting,
++	refObjects *entity.RefObjects,
++) ([]*EnvSchedJobResp, error) {
++	resp := make([]*EnvSchedJobResp, 0, len(settings))
++	for _, setting := range settings {
++		job, err := TransformSchedJob(setting, refObjects, true)
++		if err != nil {
++			return nil, hperrors.Wrap(err)
++		}
++		item := &EnvSchedJobResp{SchedJobResp: job, Scope: setting.Scope}
++		if setting.Scope == base.ObjectScopeApp {
++			if app := refObjects.RefApps[setting.ObjectID]; app != nil {
++				item.OwnerApp = &basedto.NamedObjectResp{ID: app.ID, Name: app.Name}
++			}
++		}
++		resp = append(resp, item)
++	}
++	return resp, nil
++}

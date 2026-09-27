@@ -24,16 +24,15 @@ func inheritableEntry(t *testing.T, name, source string, parts ...string) *entit
 }
 
 // The clone would hand its requester an app that reads the entries' files: a
-// private key takes the Reveal Secrets gate, asked once and recorded. Denied,
+// private key takes the Reveal Secrets capability, asked once and recorded. Denied,
 // the clone goes on without those entries.
 func TestCloneRequestLeavesGatedMountsOutWhenDenied(t *testing.T) {
 	for name, tc := range map[string]struct {
 		err      error
 		wantDrop bool
 	}{
-		"allowed":              {nil, false},
-		"no capability":        {hperrors.ErrUserNotHavePermissionOnRevealSecrets, true},
-		"secrets not returned": {hperrors.ErrRevealSecretsDisabled, true},
+		"allowed":       {nil, false},
+		"no capability": {hperrors.ErrUserNotHavePermissionOnRevealSecrets, true},
 	} {
 		gate := &revealGate{err: tc.err}
 		uc := &UC{permissionManager: gate}

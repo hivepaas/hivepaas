@@ -189,9 +189,15 @@ the others go on.
 
 ## 7. Permissions
 
-Mounting a sensitive part passes `AuthorizeSecretReveal`: the operator's
-Return Secrets Via API switch, and the Can Reveal Secrets capability (which an
-administrator has). The attempt is recorded, allowed or denied.
+Mounting a sensitive part passes `AuthorizeSecretMount`: the Can Reveal
+Secrets capability, which an administrator has. The attempt is recorded,
+allowed or denied, as a reveal.
+
+The operator's Return Secrets Via API switch is not asked (revised
+2026-09-27). It decides what the API hands its caller in the clear; a mount
+hands the caller nothing - the secret goes to the app's container - so an
+installation that keeps secrets off the API can still give an app its private
+key. A clone and a spec import pass the same gate for the entries they copy.
 
 It is asked only when the set of (source, sensitive part) pairs an app mounts
 grows:

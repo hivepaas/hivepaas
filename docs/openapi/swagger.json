@@ -59036,7 +59036,7 @@
             "type" : "array"
           },
           "mayMountSensitive" : {
-            "description" : "MayMountSensitive says whether the caller may mount a gated part - a\nprivate key, a password: the screen locks those, with the reason, when not.",
+            "description" : "MayMountSensitive says whether the caller may mount a gated part - a\nprivate key, a password - which takes the Reveal Secrets capability: the\nscreen locks those, with the reason, when not.",
             "type" : "boolean"
           },
           "meta" : {

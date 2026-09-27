@@ -163,7 +163,7 @@ func (uc *UC) cloneMountsGate(
 	if err != nil {
 		return false, nil, hperrors.Wrap(err)
 	}
-	err = uc.permissionManager.AuthorizeSecretReveal(ctx, uc.db, auth, &permission.RevealSubject{
+	err = uc.permissionManager.AuthorizeSecretMount(ctx, uc.db, auth, &permission.RevealSubject{
 		Scope:    base.ObjectScopeApp,
 		ObjectID: app.ID,
 		Source:   base.AuditLogSourceAPIAction,
@@ -175,8 +175,7 @@ func (uc *UC) cloneMountsGate(
 	switch {
 	case err == nil:
 		return false, nil, nil
-	case errors.Is(err, hperrors.ErrRevealSecretsDisabled),
-		errors.Is(err, hperrors.ErrUserNotHavePermissionOnRevealSecrets):
+	case errors.Is(err, hperrors.ErrUserNotHavePermissionOnRevealSecrets):
 		return true, leftOut, nil
 	}
 	return false, nil, hperrors.Wrap(err)

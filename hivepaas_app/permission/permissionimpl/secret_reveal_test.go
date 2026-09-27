@@ -256,3 +256,36 @@ func TestMayRevealSecretsAnswersWithoutRecording(t *testing.T) {
 	assert.False(t, allowed)
 	assert.Empty(t, audit.entries)
 }
+
+// Mounting takes the capability alone: the flag that stops the API returning
+// secrets does not stop an app being given one.
+func TestAuthorizeSecretMountIgnoresTheAPIFlag(t *testing.T) {
+	enableReveal(t, false)
+	mgr, audit := newRevealManager(nil)
+
+	assert.NoError(t, mgr.AuthorizeSecretMount(context.Background(), nil, adminAuth(), joinTokenSubject()))
+	if assert.Len(t, audit.entries, 1) {
+		assert.Equal(t, base.AuditLogResultAllowed, audit.entries[0].Result)
+	}
+	may, err := mgr.MayMountSecrets(context.Background(), nil, adminAuth())
+	assert.NoError(t, err)
+	assert.True(t, may)
+
+	reveal, err := mgr.MayRevealSecrets(context.Background(), nil, adminAuth())
+	assert.NoError(t, err)
+	assert.False(t, reveal, "revealing through the API still takes the flag")
+}
+
+func TestAuthorizeSecretMountRecordsADenial(t *testing.T) {
+	enableReveal(t, true)
+	mgr, audit := newRevealManager(nil)
+
+	err := mgr.AuthorizeSecretMount(context.Background(), nil, plainAuth(), joinTokenSubject())
+	assert.ErrorIs(t, err, hperrors.ErrUserNotHavePermissionOnRevealSecrets)
+	if assert.Len(t, audit.entries, 1) {
+		assert.Equal(t, base.AuditLogResultDenied, audit.entries[0].Result)
+	}
+	may, err := mgr.MayMountSecrets(context.Background(), nil, plainAuth())
+	assert.NoError(t, err)
+	assert.False(t, may)
+}

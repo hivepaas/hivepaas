@@ -14,7 +14,7 @@ import (
 func (uc *UC) ListSettingMountSources(
 	ctx context.Context, auth *basedto.Auth, _ *settingmountdto.ListSettingMountSourcesReq,
 ) (*settingmountdto.ListSettingMountSourcesResp, error) {
-	mayMount, err := uc.PermissionManager.MayRevealSecrets(ctx, uc.DB, auth)
+	mayMount, err := uc.PermissionManager.MayMountSecrets(ctx, uc.DB, auth)
 	if err != nil {
 		return nil, hperrors.Wrap(err)
 	}

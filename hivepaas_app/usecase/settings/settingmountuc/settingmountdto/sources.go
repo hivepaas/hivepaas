@@ -22,7 +22,8 @@ type ListSettingMountSourcesResp struct {
 	Meta *basedto.Meta         `json:"meta"`
 	Data []*SettingMountSource `json:"data"`
 	// MayMountSensitive says whether the caller may mount a gated part - a
-	// private key, a password: the screen locks those, with the reason, when not.
+	// private key, a password - which takes the Reveal Secrets capability: the
+	// screen locks those, with the reason, when not.
 	MayMountSensitive bool `json:"mayMountSensitive"`
 }
 

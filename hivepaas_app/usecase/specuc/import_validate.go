@@ -104,18 +104,17 @@ func (uc *UC) mayMountSecrets(
 	ctx context.Context, auth *basedto.Auth, req *specdto.ValidateImportReq, record bool,
 ) (bool, error) {
 	if !record {
-		allowed, err := uc.permissionManager.MayRevealSecrets(ctx, uc.db, auth)
+		allowed, err := uc.permissionManager.MayMountSecrets(ctx, uc.db, auth)
 		return allowed, hperrors.Wrap(err)
 	}
-	err := uc.permissionManager.AuthorizeSecretReveal(ctx, uc.db, auth, &permission.RevealSubject{
+	err := uc.permissionManager.AuthorizeSecretMount(ctx, uc.db, auth, &permission.RevealSubject{
 		Scope:    req.Scope.ScopeType,
 		ObjectID: req.Scope.ScopeObjectID(),
 		Source:   base.AuditLogSourceAPIAction,
 		ResType:  base.ResourceTypeSettingMount,
 		ResName:  "configuration spec import (setting mounts)",
 	})
-	if errors.Is(err, hperrors.ErrRevealSecretsDisabled) ||
-		errors.Is(err, hperrors.ErrUserNotHavePermissionOnRevealSecrets) {
+	if errors.Is(err, hperrors.ErrUserNotHavePermissionOnRevealSecrets) {
 		return false, nil
 	}
 	if err != nil {

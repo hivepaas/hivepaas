@@ -34,7 +34,40 @@ func (p *manager) AuthorizeSecretReveal(
 		return hperrors.NewArgumentInvalid("Reveal subject")
 	}
 	allowed, denyErr := p.canRevealSecrets(ctx, db, auth, subject.SecretType)
+	return p.recordReveal(ctx, db, auth, subject, allowed, denyErr)
+}
 
+// AuthorizeSecretMount decides whether the caller may mount a secret - a
+// private key, a password - into an app's container, and records the answer
+// either way, as a reveal.
+//
+// It takes the capability alone. The config flag governs what the API hands
+// its caller in the clear; a mount hands nothing to the caller, it puts the
+// secret where the app reads it. Whoever controls the container can read it
+// too, which is what the capability is for.
+func (p *manager) AuthorizeSecretMount(
+	ctx context.Context,
+	db database.IDB,
+	auth *basedto.Auth,
+	subject *permission.RevealSubject,
+) error {
+	if subject == nil {
+		return hperrors.NewArgumentInvalid("Reveal subject")
+	}
+	allowed, denyErr := p.holdsRevealCapability(ctx, db, auth)
+	return p.recordReveal(ctx, db, auth, subject, allowed, denyErr)
+}
+
+// recordReveal writes the audit entry of a reveal decided, then answers the
+// decision: a record that cannot be written stops the reveal.
+func (p *manager) recordReveal(
+	ctx context.Context,
+	db database.IDB,
+	auth *basedto.Auth,
+	subject *permission.RevealSubject,
+	allowed bool,
+	denyErr error,
+) error {
 	result := base.AuditLogResultAllowed
 	if !allowed {
 		result = base.AuditLogResultDenied
@@ -84,6 +117,12 @@ func (p *manager) canRevealSecrets(
 		return false, hperrors.Wrap(hperrors.ErrRevealSecretsDisabled)
 	}
 
+	return p.holdsRevealCapability(ctx, db, auth)
+}
+
+// holdsRevealCapability is the account's gate: the capability, which an admin
+// always holds.
+func (p *manager) holdsRevealCapability(ctx context.Context, db database.IDB, auth *basedto.Auth) (bool, error) {
 	hasPerm, err := p.HasCapability(ctx, db, auth, base.ResourceCapSecretReveal)
 	if err != nil {
 		return false, hperrors.Wrap(err)
@@ -98,6 +137,14 @@ func (p *manager) MayRevealSecrets(ctx context.Context, db database.IDB, auth *b
 	allowed, err := p.canRevealSecrets(ctx, db, auth, "")
 	if errors.Is(err, hperrors.ErrRevealSecretsDisabled) ||
 		errors.Is(err, hperrors.ErrUserNotHavePermissionOnRevealSecrets) {
+		return false, nil
+	}
+	return allowed, err
+}
+
+func (p *manager) MayMountSecrets(ctx context.Context, db database.IDB, auth *basedto.Auth) (bool, error) {
+	allowed, err := p.holdsRevealCapability(ctx, db, auth)
+	if errors.Is(err, hperrors.ErrUserNotHavePermissionOnRevealSecrets) {
 		return false, nil
 	}
 	return allowed, err

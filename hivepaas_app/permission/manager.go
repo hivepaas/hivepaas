@@ -41,6 +41,16 @@ type Manager interface {
 	// import's validate.
 	MayRevealSecrets(ctx context.Context, db database.IDB, auth *basedto.Auth) (bool, error)
 
+	// AuthorizeSecretMount decides whether the caller may mount a secret into an
+	// app's container, and records the answer either way. It takes the Reveal
+	// Secrets capability alone: the config flag that stops the API returning
+	// secrets does not apply, since a mount returns nothing to the caller.
+	AuthorizeSecretMount(ctx context.Context, db database.IDB, auth *basedto.Auth, subject *RevealSubject) error
+
+	// MayMountSecrets answers what AuthorizeSecretMount would, and records
+	// nothing: for a screen that offers the sensitive parts.
+	MayMountSecrets(ctx context.Context, db database.IDB, auth *basedto.Auth) (bool, error)
+
 	// NOTE: this func should be called within a transaction
 	UpdateACLPermissions(ctx context.Context, db database.IDB, perms []*entity.ACLPermission) error
 	DeleteACLPermissions(ctx context.Context, db database.IDB, perms []*base.PermissionResource) error

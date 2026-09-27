@@ -22,7 +22,7 @@ type fakePermissions struct {
 	subjects []*permission.RevealSubject
 }
 
-func (f *fakePermissions) AuthorizeSecretReveal(
+func (f *fakePermissions) AuthorizeSecretMount(
 	_ context.Context, _ database.IDB, _ *basedto.Auth, subject *permission.RevealSubject,
 ) error {
 	f.subjects = append(f.subjects, subject)

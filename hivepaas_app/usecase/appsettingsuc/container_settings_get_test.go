@@ -32,6 +32,12 @@ func (g *revealGate) AuthorizeSecretReveal(
 	return g.err
 }
 
+func (g *revealGate) AuthorizeSecretMount(
+	ctx context.Context, db database.IDB, auth *basedto.Auth, subject *permission.RevealSubject,
+) error {
+	return g.AuthorizeSecretReveal(ctx, db, auth, subject)
+}
+
 // inspectingClusterService hands back one service and counts the reads.
 type inspectingClusterService struct {
 	clusterservice.Service

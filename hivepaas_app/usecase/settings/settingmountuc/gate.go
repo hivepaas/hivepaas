@@ -26,7 +26,8 @@ func activeGrants(setting *entity.Setting) []settingmountservice.Grant {
 
 // authorizeGrants passes §7's gate for what after hands out that before did not.
 // Mounting a private key or a password is revealing it: whoever controls the
-// container reads the file.
+// container reads the file. It takes the Reveal Secrets capability, whatever
+// the flag that stops the API returning secrets says.
 //
 // It is asked on the database, not on the save's transaction: a denial rolls
 // the save back, and the record of the attempt has to outlive it.
@@ -42,7 +43,7 @@ func (uc *UC) authorizeGrants(
 	if err != nil {
 		return hperrors.Wrap(err)
 	}
-	return hperrors.Wrap(uc.PermissionManager.AuthorizeSecretReveal(ctx, uc.DB, auth, &permission.RevealSubject{
+	return hperrors.Wrap(uc.PermissionManager.AuthorizeSecretMount(ctx, uc.DB, auth, &permission.RevealSubject{
 		Scope:    base.ObjectScopeApp,
 		ObjectID: scope.AppID,
 		Source:   source,

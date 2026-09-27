@@ -56,8 +56,7 @@ export function widensGrants(before: Grant[], after: Grant[]): Grant[] {
 
 /** The line shown wherever a gated part is locked or refused. */
 export const GATED_PART_REASON =
-    "Mounting this reveals it to whoever runs the app: it takes the Can Reveal Secrets permission, and Return " +
-    "Secrets Via API turned on in System → HivePaaS → Security.";
+    "Mounting this reveals it to whoever runs the app: it takes the Can Reveal Secrets permission.";
 
 /** One row per part the type offers, none ticked, each with the suggestions. */
 export function rowsFor(

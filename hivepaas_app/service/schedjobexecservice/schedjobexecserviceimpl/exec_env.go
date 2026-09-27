@@ -15,10 +15,9 @@ func (s *service) calcCommandEnv(
 	db database.IDB,
 	data *execData,
 ) (env []string, err error) {
-	schedJob := data.SchedJobSetting.MustAsSchedJob()
 	resp, err := s.commandService.BuildCommand(ctx, db, &commandservice.BuildCommandReq{
 		Scope:      data.DestApp.GetObjectScope(),
-		Command:    schedJob.Command,
+		Command:    data.Command,
 		RefObjects: data.RefObjects,
 	})
 	if err != nil {

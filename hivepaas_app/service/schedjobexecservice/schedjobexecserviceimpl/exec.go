@@ -21,8 +21,10 @@ type execData struct {
 	*schedjobexecservice.SchedJobExecReq
 
 	SchedJob *entity.SchedJob
-	File     *entity.File
-	TimeNow  time.Time
+	// Command is what runs: the job's own, or the one the request gave.
+	Command *entity.CommandTemplate
+	File    *entity.File
+	TimeNow time.Time
 	// db reads what the refs do not hold, such as a storage's key auth.
 	db database.IDB
 
@@ -40,9 +42,13 @@ func (s *service) SchedJobExec(
 
 	schedJob := req.SchedJobSetting.MustAsSchedJob()
 	command := schedJob.Command
+	if req.Command != nil {
+		command = req.Command
+	}
 	data := &execData{
 		SchedJobExecReq: req,
 		SchedJob:        schedJob,
+		Command:         command,
 		TimeNow:         time.Now(),
 		db:              db,
 	}
@@ -59,9 +65,17 @@ func (s *service) SchedJobExec(
 	env = append(env, sequenceEnv(req.Sequence)...)
 	env = append(env, triggerEnv(req.Task)...)
 
-	stdoutWriter, err := s.initOutputWriter(ctx, data)
-	if err != nil {
-		return nil, hperrors.Wrap(err)
+	var stdoutWriter io.Writer
+	if req.StdoutWriter != nil {
+		stdoutWriter = req.StdoutWriter
+	} else {
+		outputWriter, err := s.initOutputWriter(ctx, data)
+		if err != nil {
+			return nil, hperrors.Wrap(err)
+		}
+		if outputWriter != nil {
+			stdoutWriter = outputWriter
+		}
 	}
 
 	defer s.cleanup(err, data)

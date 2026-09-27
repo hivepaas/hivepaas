@@ -156,7 +156,14 @@ type BackupStreamReq struct {
 	RepoTarget
 	Stdin    io.Reader
 	FileName string
-	Tags     []string
+	// Source is what kopia records the snapshot under, user@host:/path.
+	Source      string
+	Description string
+	Tags        []string
+	// OnConnected, when set, is called once the engine is built and connected:
+	// from then on the stream uses the database no more, and whatever writes
+	// Stdin may use it.
+	OnConnected func()
 }
 
 type BackupDirectoryReq struct {
@@ -165,7 +172,10 @@ type BackupDirectoryReq struct {
 	HostDir   string
 	NodeID    string
 	NodeLabel string
-	Tags      []string
+	// Source is what kopia records the snapshot under, user@host:/path.
+	Source      string
+	Description string
+	Tags        []string
 }
 
 type BackupResp struct {

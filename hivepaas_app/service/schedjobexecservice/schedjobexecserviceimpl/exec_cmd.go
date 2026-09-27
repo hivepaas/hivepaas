@@ -69,7 +69,7 @@ func (s *service) calcCommand(
 	ctx context.Context,
 	data *execData,
 ) (cmd []string, err error) {
-	cmd, err = s.calcCommandHelper(ctx, data.SchedJob.Command, data.Task.ID, data)
+	cmd, err = s.calcCommandHelper(ctx, data.Command, data.Task.ID, data)
 	if err != nil {
 		data.TaskNonRetryable = true
 		return nil, hperrors.Wrap(err)

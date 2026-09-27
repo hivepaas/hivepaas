@@ -65,6 +65,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/commandservice/commandserviceimpl"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/containerexecservice/containerexecserviceimpl"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/containerfileservice/containerfileserviceimpl"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/databackupservice/databackupserviceimpl"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/datakeyservice/datakeyserviceimpl"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/dbservice/dbserviceimpl"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/dockerapiservice/dockerapiserviceimpl"
@@ -372,6 +373,7 @@ var Provides = []any{
 	appserviceimpl.New,
 	backuprepocleanupserviceimpl.New,
 	backupreposerviceimpl.New,
+	databackupserviceimpl.New,
 	datakeyserviceimpl.New,
 	clustercleanupserviceimpl.New,
 	clusterserviceimpl.New,

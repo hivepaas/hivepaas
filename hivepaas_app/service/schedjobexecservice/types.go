@@ -2,6 +2,7 @@ package schedjobexecservice
 
 import (
 	"fmt"
+	"io"
 	"time"
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
@@ -17,6 +18,11 @@ type SchedJobExecReq struct {
 	TaskFindRetryDelay     time.Duration
 	// Sequence is set when the job runs as a step of a job sequence.
 	Sequence *SequenceStep
+	// Command runs in place of the job's own: a data backup's source command.
+	Command *entity.CommandTemplate
+	// StdoutWriter takes the command's stdout in place of the job's command output,
+	// without a TTY: a data backup streams it into its repository.
+	StdoutWriter io.Writer
 }
 
 type SchedJobExecResp struct {

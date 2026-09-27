@@ -8,6 +8,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/backuprepocleanupservice"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/databackupservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/schedjobexecservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/sslrenewalservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/sysbackupservice"
@@ -117,8 +118,17 @@ func (e *Executor) runJob(ctx context.Context, db database.Tx, run *jobRun) (*jo
 		result.skipNotification = resp.SkipResultNotification
 
 	case base.SchedJobTypeDataBackup:
-		// Run by the data backup service, which comes with the next change.
-		return nil, hperrors.NewUnsupported("A data backup")
+		resp, err := e.dataBackupService.Backup(ctx, db, &databackupservice.BackupReq{
+			TaskExecData: run.execData,
+			JobSetting:   run.jobSetting,
+			App:          run.refObjects.RefApps[schedJob.App.ID],
+			RefObjects:   run.refObjects,
+			Sequence:     run.sequence,
+		})
+		if err != nil {
+			return result, hperrors.Wrap(err)
+		}
+		result.outputs = dataBackupOutputs(resp.Result)
 
 	case base.SchedJobTypeJobSequence:
 		// Never a step: a sequence does not run another (checked on save).

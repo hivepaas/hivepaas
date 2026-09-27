@@ -25,7 +25,12 @@ func (s *service) BackupStream(
 	if err = engine.ConnectRepo(ctx); err != nil {
 		return nil, hperrors.Wrap(err)
 	}
-	result, err := engine.BackupStream(ctx, req.Stdin, req.FileName, &backup.BackupOptions{Tags: req.Tags})
+	if req.OnConnected != nil {
+		req.OnConnected()
+	}
+	result, err := engine.BackupStream(ctx, req.Stdin, req.FileName, &backup.BackupOptions{
+		Tags: req.Tags, Description: req.Description, Source: req.Source,
+	})
 	if err != nil {
 		return nil, hperrors.Wrap(err)
 	}
@@ -60,7 +65,9 @@ func (s *service) BackupDirectory(
 	}
 	// The agent mounts the host root: the directory is expressed from inside it.
 	dir := filepath.Join(volumeservice.HostPathPrefix, req.HostDir)
-	result, err := engine.BackupDirectory(ctx, dir, &backup.BackupOptions{Tags: req.Tags})
+	result, err := engine.BackupDirectory(ctx, dir, &backup.BackupOptions{
+		Tags: req.Tags, Description: req.Description, Source: req.Source,
+	})
 	if err != nil {
 		return nil, hperrors.Wrap(err)
 	}

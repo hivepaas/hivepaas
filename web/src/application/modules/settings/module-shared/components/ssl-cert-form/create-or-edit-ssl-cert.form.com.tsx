@@ -51,6 +51,9 @@ import type {
 } from "./create-or-edit-ssl-cert.form.schema";
 import { CreateOrEditSslCertFormSchema } from "./create-or-edit-ssl-cert.form.schema";
 
+/** Every item of a short list a picker offers whole: the API answers 50 when not told. */
+const LIST_ALL_PAGE = { page: 1, size: 100 };
+
 const LETS_ENCRYPT_KEY_TYPES: ESslKeyType[] = [
     ESslKeyType.ECP256,
     ESslKeyType.ECP384,
@@ -255,7 +258,7 @@ export function CreateOrEditSslCertForm({
     const { sources: notificationSources, manageLink: notificationManageLink } = useNotificationSettingsSources(scope);
 
     const settingsProviderQuery = SslProviderQueries.useFindManyPaginated(
-        { kind: providerKind },
+        { kind: providerKind, pagination: LIST_ALL_PAGE },
         {
             enabled: providerKind !== undefined && scope.type === "settings",
         },
@@ -265,6 +268,7 @@ export function CreateOrEditSslCertForm({
         {
             projectID: projectId,
             kind: providerKind,
+            pagination: LIST_ALL_PAGE,
         },
         {
             enabled: providerKind !== undefined && scope.type === "project" && projectId.length > 0,
@@ -283,7 +287,7 @@ export function CreateOrEditSslCertForm({
     );
 
     const settingsAcmeProviderQuery = AcmeDnsProviderQueries.useFindManyPaginated(
-        {},
+        { pagination: LIST_ALL_PAGE },
         {
             enabled: isAcme && scope.type === "settings",
         },
@@ -292,6 +296,7 @@ export function CreateOrEditSslCertForm({
     const projectAcmeProviderQuery = ProjectAcmeDnsProviderQueries.useFindManyPaginated(
         {
             projectID: projectId,
+            pagination: LIST_ALL_PAGE,
         },
         {
             enabled: isAcme && scope.type === "project" && projectId.length > 0,

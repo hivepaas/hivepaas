@@ -28,6 +28,9 @@ import {
 import { DockerfileContentEditor } from "./dockerfile-content-editor.com";
 import { RegistryRepoNote } from "./registry-repo-note.com";
 
+/** Every item of a short list a picker offers whole: the API answers 50 when not told. */
+const LIST_ALL_PAGE = { page: 1, size: 100 };
+
 export function BuildConfigurationFields({ readOnly = false, image }: Props) {
     const { id: projectId, env, appId } = useParams<{ id: string; env: string; appId: string }>();
     invariant(projectId, "projectId must be defined");
@@ -77,6 +80,7 @@ export function BuildConfigurationFields({ readOnly = false, image }: Props) {
     const { data: { data: registryAuths } = DEFAULT_PAGINATED_DATA } = ProjectRegistryAuthQueries.useFindManyPaginated({
         projectID: projectId,
         env,
+        pagination: LIST_ALL_PAGE,
     });
     const selectedRegistry = registryAuths.find(auth => auth.id === pushToRegistry?.id);
     const reference =

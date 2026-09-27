@@ -22,6 +22,9 @@ import {
     QuickInstallSslCertFormSchema,
 } from "../schemas";
 
+/** Every item of a short list a picker offers whole: the API answers 50 when not told. */
+const LIST_ALL_PAGE = { page: 1, size: 100 };
+
 const ACME_KEY_TYPES: ESslKeyType[] = [
     ESslKeyType.ECP256,
     ESslKeyType.ECP384,
@@ -212,8 +215,14 @@ export function QuickInstallSslCertForm({
     const sslProvidersRoute = ROUTE.settings.sslProviders.$route;
     const acmeDnsProvidersRoute = ROUTE.settings.acmeDnsProviders.$route;
 
-    const providerQuery = SslProviderQueries.useFindManyPaginated({ kind: providerKind }, { enabled: isAcme });
-    const acmeProviderQuery = AcmeDnsProviderQueries.useFindManyPaginated({}, { enabled: isAcme });
+    const providerQuery = SslProviderQueries.useFindManyPaginated(
+        { kind: providerKind, pagination: LIST_ALL_PAGE },
+        { enabled: isAcme },
+    );
+    const acmeProviderQuery = AcmeDnsProviderQueries.useFindManyPaginated(
+        { pagination: LIST_ALL_PAGE },
+        { enabled: isAcme },
+    );
 
     const providerOptions = useMemo(
         () => providerQuery.data?.data ?? EMPTY_PROVIDER_OPTIONS,

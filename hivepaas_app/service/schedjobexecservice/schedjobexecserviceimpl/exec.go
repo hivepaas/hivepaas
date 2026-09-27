@@ -54,6 +54,7 @@ func (s *service) SchedJobExec(
 		return nil, hperrors.Wrap(err)
 	}
 	env = append(env, sequenceEnv(req.Sequence)...)
+	env = append(env, triggerEnv(req.Task)...)
 
 	stdoutWriter, err := s.initOutputWriter(ctx, data)
 	if err != nil {

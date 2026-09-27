@@ -3,6 +3,7 @@ package config
 import (
 	"os"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 )
@@ -74,4 +75,18 @@ func Test_LoadConfig(t *testing.T) {
 		_, err := LoadConfig()
 		assert.NotNil(t, err)
 	})
+}
+
+// A deploy that waits for its pre-deploy jobs looks every 3 seconds, and gives a
+// job without a timeout of its own 30 minutes.
+func TestTaskTriggersDefaults(t *testing.T) {
+	t.Setenv("HP_CONFIG_FILE", "testdata/config.myenv.toml")
+
+	SetCurrent(nil)
+	t.Cleanup(func() { SetCurrent(nil) })
+	cfg, err := LoadConfig()
+
+	assert.NoError(t, err)
+	assert.Equal(t, 3*time.Second, cfg.Tasks.Triggers.WaitPollInterval)
+	assert.Equal(t, 30*time.Minute, cfg.Tasks.Triggers.WaitTimeout)
 }

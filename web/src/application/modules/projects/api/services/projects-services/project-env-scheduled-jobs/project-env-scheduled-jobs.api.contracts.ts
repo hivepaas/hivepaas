@@ -21,6 +21,8 @@ export type EnvScheduledJobs_FindManyPaginated_Req = ApiRequestBase<
         jobTypes?: EAppScheduledJobType[];
         /** Only the jobs of this app. */
         appId?: string;
+        /** Only jobs in these statuses. */
+        statuses?: ESettingStatus[];
     }
 >;
 

@@ -135,6 +135,18 @@ const SequenceRunSchema = z
     .nullish()
     .transform(value => value ?? undefined);
 
+const TriggerSchema = z
+    .object({
+        event: z.string(),
+        app: z
+            .object({ id: z.string().optional().default(""), name: z.string().optional().default("") })
+            .nullish()
+            .transform(value => value ?? { id: "", name: "" }),
+        deploymentId: z.string().optional().default(""),
+    })
+    .nullish()
+    .transform(value => value ?? undefined);
+
 const SystemTaskSchema = z.object({
     id: z.string(),
     type: z.string().optional().default(""),
@@ -147,6 +159,7 @@ const SystemTaskSchema = z.object({
     scopeApp: ScopeAppSchema,
     scopeUser: ScopeUserSchema,
     sequenceRun: SequenceRunSchema,
+    trigger: TriggerSchema,
     runAt: NullableDateSchema,
     retryAt: NullableDateSchema,
     startedAt: NullableDateSchema,

@@ -105,6 +105,13 @@ export interface SystemTaskSequenceRun {
     steps: SystemTaskSequenceStep[];
 }
 
+/** What fired a scheduled job's run: an event of an app. */
+export interface SystemTaskTrigger {
+    event: string;
+    app: { id: string; name: string };
+    deploymentId: string;
+}
+
 export interface SystemTask {
     id: string;
     type: string;
@@ -117,6 +124,7 @@ export interface SystemTask {
     scopeApp?: SystemTaskScopeApp;
     scopeUser?: SystemTaskScopeUser;
     sequenceRun?: SystemTaskSequenceRun;
+    trigger?: SystemTaskTrigger;
     runAt: Date | null;
     retryAt: Date | null;
     startedAt: Date | null;

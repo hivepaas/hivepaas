@@ -565,6 +565,25 @@ export function SystemTaskSummaryCard({
                                         </span>
                                     </div>
                                 )}
+
+                                {task.trigger && (
+                                    <div>
+                                        <span className="text-muted-foreground">Triggered By:</span>{" "}
+                                        <span className="text-foreground font-medium">
+                                            <span className="font-mono">{task.trigger.event}</span> of{" "}
+                                            {task.trigger.app.name || task.trigger.app.id}
+                                        </span>
+                                    </div>
+                                )}
+
+                                {task.trigger?.deploymentId && (
+                                    <div>
+                                        <span className="text-muted-foreground">Deployment:</span>{" "}
+                                        <span className="font-mono text-foreground select-all">
+                                            {task.trigger.deploymentId}
+                                        </span>
+                                    </div>
+                                )}
                             </div>
 
                             {/* Error Banner */}

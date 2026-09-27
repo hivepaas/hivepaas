@@ -79,11 +79,11 @@ func (e *Executor) execute(
 		return hperrors.Wrap(err)
 	}
 
-	// If there are remaining steps, re-enqueue workflow task for next step
+	// Steps left: the queue runs the task again for the next one. Scheduling it
+	// from here did not work - the queue marks a task done when it returns, and
+	// ScheduleTask skips a task that is done.
 	if wfArgs.CurrentStep < len(wfArgs.Steps) {
-		execData.OnPostTx(func() { //nolint:contextcheck
-			_ = e.taskQueue.ScheduleTask(context.Background(), task)
-		})
+		execData.Continue()
 	}
 
 	return nil

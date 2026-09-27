@@ -27,6 +27,9 @@ type TaskExecData struct {
 	OnEndTxFunc   func()
 	OnPostTxFunc  func()
 
+	// continued is Continue's: the task has more to do, and runs again at once.
+	continued bool
+
 	// owner is the task whose transaction this one runs inside, when this data
 	// belongs to work that is a task of its own but not a task of the queue's: a
 	// workflow step, or the clone a preview makes. Only the queue calls these
@@ -55,6 +58,24 @@ func (t *TaskExecData) SubTask(task *entity.Task) *TaskExecData {
 		LogStore:   t.LogStore,
 		owner:      t,
 	}
+}
+
+// Continue tells the queue that the task has more to do: once this execution
+// returns without error, the task is not marked done but saved as not started
+// and run again at once, with whatever this execution left in its args and
+// output. A task that works in steps - a workflow, a job sequence - calls it
+// after each step but its last. A failure or a cancel wins over it.
+func (t *TaskExecData) Continue() {
+	if t.owner != nil {
+		t.owner.Continue()
+		return
+	}
+	t.continued = true
+}
+
+// Continued says whether Continue was called.
+func (t *TaskExecData) Continued() bool {
+	return t.continued
 }
 
 func (t *TaskExecData) IsTaskCanceled() bool {

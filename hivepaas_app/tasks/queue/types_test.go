@@ -68,3 +68,12 @@ func TestSubTaskOfASubTaskReachesTheSameTask(t *testing.T) {
 
 	assert.True(t, ran)
 }
+
+func TestContinueOnASubTaskReachesItsOwner(t *testing.T) {
+	owner := &TaskExecData{Task: &entity.Task{ID: "owner"}}
+	child := owner.SubTask(&entity.Task{ID: "child"})
+
+	child.Continue()
+
+	assert.True(t, owner.Continued())
+}

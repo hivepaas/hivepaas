@@ -6,8 +6,6 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/tiendc/gofn"
-
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity/cacheentity"
@@ -114,27 +112,7 @@ func (q *taskQueue) executeTask(
 			if err != nil {
 				return
 			}
-			task.EndedAt = timeutil.NowUTC()
-			if execErr != nil {
-				task.Status = base.TaskStatusFailed
-				if taskData.TaskNonRetryable {
-					task.Config.MaxRetry = task.Config.Retry
-				}
-				if task.CanRetry() {
-					task.RetryAt = task.EndedAt.Add(task.NextRetryDelay())
-					rescheduleAt = task.RetryAt
-				} else {
-					task.RetryAt = time.Time{}
-				}
-				_ = task.AddRun(&entity.TaskRun{
-					StartedAt:  task.StartedAt,
-					EndedAt:    task.EndedAt,
-					Error:      hperrors.GetErrorDetail(execErr, ""),
-					StackTrace: hperrors.GetErrorStackTrace(execErr),
-				})
-			} else {
-				task.Status = gofn.If(taskData.TaskCanceled, base.TaskStatusCanceled, base.TaskStatusDone)
-			}
+			rescheduleAt = settleTask(task, taskData, execErr, timeutil.NowUTC())
 			// Post execution event
 			if taskData.OnEndTxFunc != nil {
 				taskData.OnEndTxFunc()
@@ -160,6 +138,47 @@ func (q *taskQueue) executeTask(
 		taskData.OnPostTxFunc()
 	}
 
+	return rescheduleAt
+}
+
+// settleTask is where an execution leaves its task: failed, to be retried or
+// not; run again at once, when it asked to Continue; canceled; or done. It
+// returns when the task is to run next, zero for not at all.
+func settleTask(
+	task *entity.Task,
+	taskData *queue.TaskExecData,
+	execErr error,
+	timeNow time.Time,
+) (rescheduleAt time.Time) {
+	task.EndedAt = timeNow
+	switch {
+	case execErr != nil:
+		task.Status = base.TaskStatusFailed
+		if taskData.TaskNonRetryable {
+			task.Config.MaxRetry = task.Config.Retry
+		}
+		if task.CanRetry() {
+			task.RetryAt = task.EndedAt.Add(task.NextRetryDelay())
+			rescheduleAt = task.RetryAt
+		} else {
+			task.RetryAt = time.Time{}
+		}
+		_ = task.AddRun(&entity.TaskRun{
+			StartedAt:  task.StartedAt,
+			EndedAt:    task.EndedAt,
+			Error:      hperrors.GetErrorDetail(execErr, ""),
+			StackTrace: hperrors.GetErrorStackTrace(execErr),
+		})
+	case taskData.TaskCanceled:
+		task.Status = base.TaskStatusCanceled
+	case taskData.Continued():
+		task.Status = base.TaskStatusNotStarted
+		task.RunAt = timeNow
+		task.RetryAt = time.Time{}
+		rescheduleAt = timeNow
+	default:
+		task.Status = base.TaskStatusDone
+	}
 	return rescheduleAt
 }
 

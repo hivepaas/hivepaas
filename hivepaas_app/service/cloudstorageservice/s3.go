@@ -70,7 +70,7 @@ func NewS3Client(
 
 func loadKeyAuth(ctx context.Context, db database.IDB, id string, refs *entity.RefObjects) (*entity.KeyAuth, error) {
 	if id == "" {
-		return nil, hperrors.Wrap(hperrors.ErrSettingNotFound).WithParam("ID", "key auth").
+		return nil, hperrors.Wrap(hperrors.ErrSettingNotFound).WithParam("Name", "key auth").
 			WithMsgLog("the cloud storage links no key auth")
 	}
 	var setting *entity.Setting
@@ -86,17 +86,17 @@ func loadKeyAuth(ctx context.Context, db database.IDB, id string, refs *entity.R
 			Where("setting.type = ?", base.SettingTypeKeyAuth).
 			Scan(ctx)
 		if errors.Is(err, sql.ErrNoRows) {
-			return nil, hperrors.Wrap(hperrors.ErrSettingNotFound).WithParam("ID", id)
+			return nil, hperrors.Wrap(hperrors.ErrSettingNotFound).WithParam("Name", "key auth "+id)
 		}
 		if err != nil {
 			return nil, hperrors.Wrap(err)
 		}
 	}
 	if setting.Type != base.SettingTypeKeyAuth || setting.IsDeleted() {
-		return nil, hperrors.Wrap(hperrors.ErrSettingNotFound).WithParam("ID", id)
+		return nil, hperrors.Wrap(hperrors.ErrSettingNotFound).WithParam("Name", "key auth "+id)
 	}
 	if setting.Status != base.SettingStatusActive {
-		return nil, hperrors.Wrap(hperrors.ErrSettingNotFound).WithParam("ID", id).
+		return nil, hperrors.Wrap(hperrors.ErrSettingNotFound).WithParam("Name", setting.Name).
 			WithMsgLog("the key auth %s of the cloud storage is not active", setting.Name)
 	}
 	keyAuth, err := setting.AsKeyAuth()

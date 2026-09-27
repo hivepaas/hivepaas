@@ -160,7 +160,7 @@ func (s *service) buildS3Storage(
 ) (*backup.StorageS3, error) {
 	setting := refObjects.RefSettings[repo.CloudStorage.ID]
 	if setting == nil {
-		return nil, hperrors.Wrap(hperrors.ErrSettingNotFound).WithParam("ID", repo.CloudStorage.ID)
+		return nil, hperrors.Wrap(hperrors.ErrSettingNotFound).WithParam("Name", repo.CloudStorage.ID)
 	}
 
 	cfg, err := cloudstorageservice.S3Config(ctx, db, setting, refObjects)
@@ -185,7 +185,7 @@ func (s *service) buildLocalStorage(
 ) (*backup.StorageLocal, error) {
 	setting := refObjects.RefSettings[repo.Volume.ID]
 	if setting == nil {
-		return nil, hperrors.Wrap(hperrors.ErrSettingNotFound).WithParam("ID", repo.Volume.ID)
+		return nil, hperrors.Wrap(hperrors.ErrSettingNotFound).WithParam("Name", repo.Volume.ID)
 	}
 
 	clusterVolume, err := setting.AsClusterVolume()

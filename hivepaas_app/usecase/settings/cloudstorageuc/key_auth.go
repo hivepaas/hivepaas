@@ -20,7 +20,7 @@ func (uc *UC) checkKeyAuth(ctx context.Context, db database.IDB, storage *entity
 	}
 	_, err := uc.SettingRepo.GetByID(ctx, db, nil, base.SettingTypeKeyAuth, storage.S3.KeyAuth.ID, false)
 	if errors.Is(err, hperrors.ErrNotFound) {
-		return hperrors.Wrap(hperrors.ErrSettingNotFound).WithParam("ID", storage.S3.KeyAuth.ID).
+		return hperrors.Wrap(hperrors.ErrSettingNotFound).WithParam("Name", "key auth "+storage.S3.KeyAuth.ID).
 			WithMsgLog("the cloud storage's key auth is not a key auth")
 	}
 	return hperrors.Wrap(err)

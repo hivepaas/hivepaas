@@ -49,6 +49,8 @@ type TaskResp struct {
 	SequenceRun *entity.SchedJobSeqRun `json:"sequenceRun,omitempty" copy:"-"`
 	// Trigger is what fired a scheduled job's run, when a trigger did.
 	Trigger *TaskTriggerResp `json:"trigger,omitempty" copy:"-"`
+	// DataBackup is the snapshot a data backup's run took.
+	DataBackup *entity.SchedJobDataBackupResult `json:"dataBackup,omitempty" copy:"-"`
 
 	ScopeProject *projectdto.ProjectBaseResp `json:"scopeProject,omitempty"`
 	ScopeApp     *appdto.AppBaseResp         `json:"scopeApp,omitempty"`
@@ -93,9 +95,13 @@ func TransformTask(
 	TransformTaskScopeObject(task, refObjects, resp)
 
 	if task.Type == base.TaskTypeSchedJobExec {
-		// A plain job's task has no output; one that does not parse as a run is
-		// not shown rather than failing the whole answer.
-		resp.SequenceRun, _ = task.OutputAsSchedJobSeqRun()
+		// A plain job's task has no output; one that does not parse is not shown
+		// rather than failing the whole answer. A data backup's output reads as a
+		// sequence run that never started, and a sequence's as no snapshot.
+		if run, _ := task.OutputAsSchedJobSeqRun(); run != nil && run.Started {
+			resp.SequenceRun = run
+		}
+		resp.DataBackup, _ = task.OutputAsDataBackup()
 		resp.Trigger = transformTaskTrigger(task, refObjects)
 	}
 

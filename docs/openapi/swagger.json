@@ -45573,6 +45573,18 @@
         "required" : [ "id", "type" ],
         "type" : "object"
       },
+      "entity.SchedJobDataBackupResult" : {
+        "properties" : {
+          "sizeBytes" : {
+            "type" : "integer"
+          },
+          "snapshotId" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "sizeBytes", "snapshotId" ],
+        "type" : "object"
+      },
       "entity.SchedJobSeqRun" : {
         "properties" : {
           "currentStep" : {
@@ -65850,6 +65862,13 @@
           "createdAt" : {
             "type" : "string"
           },
+          "dataBackup" : {
+            "allOf" : [ {
+              "$ref" : "#/components/schemas/entity.SchedJobDataBackupResult"
+            } ],
+            "description" : "DataBackup is the snapshot a data backup's run took.",
+            "type" : "object"
+          },
           "endedAt" : {
             "type" : "string"
           },
@@ -65907,7 +65926,7 @@
             "type" : "string"
           }
         },
-        "required" : [ "config", "createdAt", "endedAt", "id", "lastError", "retryAt", "runAt", "scopeApp", "scopeProject", "scopeUser", "sequenceRun", "startedAt", "status", "targetJob", "trigger", "type", "updateVer", "updatedAt" ],
+        "required" : [ "config", "createdAt", "dataBackup", "endedAt", "id", "lastError", "retryAt", "runAt", "scopeApp", "scopeProject", "scopeUser", "sequenceRun", "startedAt", "status", "targetJob", "trigger", "type", "updateVer", "updatedAt" ],
         "type" : "object"
       },
       "taskdto.TaskStatusResp" : {

@@ -254,6 +254,8 @@ func (s *service) onPostTx(
 	}()
 	defer safego.Recover("appdeployment.onPostTx")
 
+	s.fireDeployEndedEvent(ctx, data)
+
 	if data.Task.IsDone() || data.Task.IsFailedCompletely() {
 		if err := s.notifyForDeployment(ctx, db, data); err != nil {
 			_ = data.LogStore.Add(ctx,

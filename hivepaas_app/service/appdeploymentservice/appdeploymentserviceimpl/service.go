@@ -15,6 +15,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/notificationservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/placementservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/repocheckoutservice"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/schedjobtriggerservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/settingmountservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/settingservice"
 	"github.com/hivepaas/hivepaas/services/docker"
@@ -42,6 +43,8 @@ type service struct {
 	repoCheckoutService  repocheckoutservice.Service
 	settingService       settingservice.Service
 	settingMountService  settingmountservice.Service
+	// schedJobTriggerService runs the jobs listening to the deploy's events.
+	schedJobTriggerService schedjobtriggerservice.Service
 }
 
 func New(
@@ -66,6 +69,7 @@ func New(
 	repoCheckoutService repocheckoutservice.Service,
 	settingService settingservice.Service,
 	settingMountService settingmountservice.Service,
+	schedJobTriggerService schedjobtriggerservice.Service,
 ) appdeploymentservice.Service {
 	return &service{
 		db:            db,
@@ -78,16 +82,17 @@ func New(
 		settingRepo:        settingRepo,
 		taskLogRepo:        taskLogRepo,
 
-		agentService:         agentService,
-		appService:           appService,
-		clusterService:       clusterService,
-		containerExecService: containerExecService,
-		dockerAPIService:     dockerAPIService,
-		imageBuildService:    imageBuildService,
-		notificationService:  notificationService,
-		placementService:     placementService,
-		repoCheckoutService:  repoCheckoutService,
-		settingService:       settingService,
-		settingMountService:  settingMountService,
+		agentService:           agentService,
+		appService:             appService,
+		clusterService:         clusterService,
+		containerExecService:   containerExecService,
+		dockerAPIService:       dockerAPIService,
+		imageBuildService:      imageBuildService,
+		notificationService:    notificationService,
+		placementService:       placementService,
+		repoCheckoutService:    repoCheckoutService,
+		settingService:         settingService,
+		settingMountService:    settingMountService,
+		schedJobTriggerService: schedJobTriggerService,
 	}
 }

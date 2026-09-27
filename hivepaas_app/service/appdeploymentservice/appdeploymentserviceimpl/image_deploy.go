@@ -59,6 +59,12 @@ func (s *service) deployFromImage(
 		return hperrors.Wrap(err)
 	}
 
+	// Pre-deployment jobs, the deploy waiting for those a trigger holds it for
+	err = s.deployStepPreDeployJobs(ctx, data.appDeploymentData)
+	if err != nil {
+		return hperrors.Wrap(err)
+	}
+
 	// 3. Apply image to service
 	err = s.imageDeployStepServiceApply(ctx, db, data)
 	if err != nil {

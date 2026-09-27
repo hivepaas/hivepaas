@@ -8,12 +8,10 @@ import {
     type CommandArgGroupFormValue,
     createDefaultCommandArg,
     createDefaultCommandArgGroup,
+    createDefaultJobScheduleFormValues,
+    mapJobScheduleToFormValues,
 } from "~/projects/module-shared/components";
-import {
-    EAppScheduledJobCommandOutputMode,
-    EAppScheduledJobScheduleMode,
-    EAppScheduledJobTaskPriority,
-} from "~/projects/module-shared/enums";
+import { EAppScheduledJobCommandOutputMode, EAppScheduledJobTaskPriority } from "~/projects/module-shared/enums";
 
 import type { CreateOrEditAppScheduledJobFormInput } from "../schemas";
 import { APP_SCHEDULED_JOB_COMMAND_MODE } from "../schemas";
@@ -54,11 +52,7 @@ function createDefaultSaveToFile(): CreateOrEditAppScheduledJobFormInput["saveTo
 export function createEmptyAppScheduledJobFormDefaults(projectId: string = ""): CreateOrEditAppScheduledJobFormInput {
     return {
         name: "",
-        scheduleMode: EAppScheduledJobScheduleMode.Interval,
-        scheduleInterval: "",
-        scheduleCronExpr: "",
-        scheduleFrom: null,
-        scheduleTo: null,
+        ...createDefaultJobScheduleFormValues(),
         timeout: "",
         maxRetry: 0,
         retryDelay: "",
@@ -163,17 +157,12 @@ export function mapAppScheduledJobToFormInput(
     job: AppScheduledJob,
     projectId: string = "",
 ): CreateOrEditAppScheduledJobFormInput {
-    const hasInterval = job.schedule.interval.trim().length > 0;
     const { command } = job;
     const script = command?.script ?? "";
 
     return {
         name: job.name,
-        scheduleMode: hasInterval ? EAppScheduledJobScheduleMode.Interval : EAppScheduledJobScheduleMode.Cron,
-        scheduleInterval: job.schedule.interval,
-        scheduleCronExpr: job.schedule.cronExpr,
-        scheduleFrom: job.schedule.initialTime,
-        scheduleTo: job.schedule.endTime,
+        ...mapJobScheduleToFormValues(job.schedule),
         timeout: job.timeout,
         maxRetry: job.maxRetry,
         retryDelay: job.retryDelay,

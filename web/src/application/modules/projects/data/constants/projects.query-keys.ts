@@ -153,6 +153,11 @@ export const QK = {
     "projects.email.$.find-many-paginated": "projects.email.$.find-many-paginated",
     "projects.email.$.find-one-by-id": "projects.email.$.find-one-by-id",
     /*
+     * Env Scheduled Jobs: the env's own, and those of its apps
+     */
+    "projects.env.scheduled-jobs.$.find-many-paginated": "projects.env.scheduled-jobs.$.find-many-paginated",
+    "projects.env.scheduled-jobs.$.find-one-by-id": "projects.env.scheduled-jobs.$.find-one-by-id",
+    /*
      * Project Command Pipes
      */
     "projects.command-pipes.$.find-many-paginated": "projects.command-pipes.$.find-many-paginated",

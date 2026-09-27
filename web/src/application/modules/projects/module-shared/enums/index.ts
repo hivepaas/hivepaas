@@ -14,6 +14,7 @@ export * from "./e.app-scheduled-job-schedule-mode";
 export * from "./e.app-scheduled-job-task-priority";
 export * from "./e.app-scheduled-job-task-status";
 export * from "./e.app-scheduled-job-type";
+export * from "./e.sched-job-sequence";
 export * from "./e.endpoint-resolution-mode";
 export * from "./e.healthcheck-mode";
 export * from "./e.http-path-mode";

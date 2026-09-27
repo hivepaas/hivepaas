@@ -6,17 +6,16 @@ import { cn } from "@lib/utils";
 import { type FieldErrors, FormProvider, useController, useForm, useFormState } from "react-hook-form";
 import { useToggle, useUpdateEffect } from "react-use";
 import type { AppScheduledJob } from "~/projects/domain";
-import { CommandArgGroupsSection, CommandConfigSection } from "~/projects/module-shared/components";
+import { CommandArgGroupsSection, CommandConfigSection, JobScheduleFields } from "~/projects/module-shared/components";
 import { PROJECT_FORM_CONTROL_MAX_WIDTH_CLASS } from "~/projects/module-shared/constants";
-import { EAppScheduledJobCommandOutputMode, EAppScheduledJobScheduleMode } from "~/projects/module-shared/enums";
+import { EAppScheduledJobCommandOutputMode } from "~/projects/module-shared/enums";
 import { useProjectNotificationSettingsSources } from "~/projects/module-shared/hooks";
 
-import { ContentBlock, FormActionBar, InfoBlock, LabelWithInfo, NextRunsField } from "@application/shared/components";
+import { ContentBlock, FormActionBar, InfoBlock, LabelWithInfo } from "@application/shared/components";
 import { ROUTE } from "@application/shared/constants";
 import { NotificationSettings } from "@application/shared/form";
 
 import { Button, Checkbox, Field, FieldError, FieldGroup, Input, Tabs, TabsList, TabsTrigger } from "@/components/ui";
-import { DateTimePicker } from "@/components/ui/date-time-picker";
 
 import type { CreateOrEditAppScheduledJobFormInput, CreateOrEditAppScheduledJobFormOutput } from "../schemas";
 import { CreateOrEditAppScheduledJobFormSchema } from "../schemas";
@@ -92,23 +91,6 @@ export function CreateOrEditAppScheduledJobForm({
         field: name,
         fieldState: { invalid: isNameInvalid },
     } = useController({ control, name: "name" });
-    const { field: scheduleMode } = useController({ control, name: "scheduleMode" });
-    const {
-        field: scheduleInterval,
-        fieldState: { invalid: isScheduleIntervalInvalid },
-    } = useController({ control, name: "scheduleInterval" });
-    const {
-        field: scheduleCronExpr,
-        fieldState: { invalid: isScheduleCronExprInvalid },
-    } = useController({ control, name: "scheduleCronExpr" });
-    const {
-        field: scheduleFrom,
-        fieldState: { invalid: isScheduleFromInvalid },
-    } = useController({ control, name: "scheduleFrom" });
-    const {
-        field: scheduleTo,
-        fieldState: { invalid: isScheduleToInvalid },
-    } = useController({ control, name: "scheduleTo" });
     const {
         field: timeout,
         fieldState: { invalid: isTimeoutInvalid },
@@ -204,111 +186,10 @@ export function CreateOrEditAppScheduledJobForm({
                                         />
                                     </InfoBlock>
 
-                                    <InfoBlock
-                                        title="Scheduling Mode"
+                                    <JobScheduleFields
                                         titleWidth={INFO_BLOCK_TITLE_WIDTH}
-                                    >
-                                        <Tabs
-                                            value={scheduleMode.value}
-                                            onValueChange={scheduleMode.onChange}
-                                        >
-                                            <TabsList>
-                                                <TabsTrigger
-                                                    value={EAppScheduledJobScheduleMode.Interval}
-                                                    disabled={readOnly}
-                                                >
-                                                    Interval-based
-                                                </TabsTrigger>
-                                                <TabsTrigger
-                                                    value={EAppScheduledJobScheduleMode.Cron}
-                                                    disabled={readOnly}
-                                                >
-                                                    Time-based
-                                                </TabsTrigger>
-                                            </TabsList>
-                                        </Tabs>
-                                    </InfoBlock>
-
-                                    {scheduleMode.value === EAppScheduledJobScheduleMode.Interval && (
-                                        <InfoBlock
-                                            title="Scheduling Interval"
-                                            titleWidth={INFO_BLOCK_TITLE_WIDTH}
-                                        >
-                                            <Field>
-                                                <Input
-                                                    {...scheduleInterval}
-                                                    placeholder="1d, 1h30m"
-                                                    className="max-w-[400px]"
-                                                    aria-invalid={isScheduleIntervalInvalid}
-                                                    disabled={readOnly}
-                                                />
-                                                <FieldError errors={[errors.scheduleInterval]} />
-                                            </Field>
-                                        </InfoBlock>
-                                    )}
-
-                                    {scheduleMode.value === EAppScheduledJobScheduleMode.Cron && (
-                                        <InfoBlock
-                                            title="Cron Expression"
-                                            titleWidth={INFO_BLOCK_TITLE_WIDTH}
-                                        >
-                                            <Field>
-                                                <Input
-                                                    {...scheduleCronExpr}
-                                                    placeholder="accepted form: * * * * *"
-                                                    className={PROJECT_FORM_CONTROL_MAX_WIDTH_CLASS}
-                                                    aria-invalid={isScheduleCronExprInvalid}
-                                                    disabled={readOnly}
-                                                />
-                                                <FieldError errors={[errors.scheduleCronExpr]} />
-                                            </Field>
-                                        </InfoBlock>
-                                    )}
-
-                                    <InfoBlock
-                                        title="Schedule From"
-                                        titleWidth={INFO_BLOCK_TITLE_WIDTH}
-                                    >
-                                        <div className="flex w-full max-w-[600px] flex-wrap items-start gap-x-4 gap-y-3">
-                                            <Field className="min-w-[260px] flex-1">
-                                                <DateTimePicker
-                                                    value={scheduleFrom.value ?? undefined}
-                                                    onChange={date => {
-                                                        scheduleFrom.onChange(date ?? null);
-                                                    }}
-                                                    placeholder="select date time"
-                                                    granularity="minute"
-                                                    showClearButton
-                                                    aria-invalid={isScheduleFromInvalid}
-                                                    containerClassName="w-full"
-                                                    disabled={readOnly}
-                                                />
-                                                <FieldError errors={[errors.scheduleFrom]} />
-                                            </Field>
-
-                                            <div className="flex h-9 items-center text-sm font-medium">To</div>
-
-                                            <Field className="min-w-[260px] flex-1">
-                                                <DateTimePicker
-                                                    value={scheduleTo.value ?? undefined}
-                                                    onChange={date => {
-                                                        scheduleTo.onChange(date ?? null);
-                                                    }}
-                                                    placeholder="select date time"
-                                                    granularity="minute"
-                                                    showClearButton
-                                                    aria-invalid={isScheduleToInvalid}
-                                                    containerClassName="w-full"
-                                                    disabled={readOnly}
-                                                />
-                                                <FieldError errors={[errors.scheduleTo]} />
-                                            </Field>
-                                        </div>
-                                    </InfoBlock>
-
-                                    <NextRunsField
                                         nextRuns={initialValues?.nextRuns ?? []}
-                                        titleWidth={INFO_BLOCK_TITLE_WIDTH}
+                                        readOnly={readOnly}
                                     />
 
                                     <InfoBlock

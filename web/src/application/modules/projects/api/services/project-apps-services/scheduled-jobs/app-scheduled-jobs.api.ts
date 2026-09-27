@@ -60,16 +60,16 @@ function toOptionalObjectIdPayload(ref?: { id: string } | null) {
     };
 }
 
-function toUpsertPayload(
+export function toUpsertPayload(
     payload: AppScheduledJobs_Upsert_Payload | (AppScheduledJobs_Upsert_Payload & { updateVer: number }),
-) {
+): AppScheduledJobs_Upsert_Payload & { updateVer?: number } {
     const { success, failure, ...notification } = payload.notification;
     const successPayload = toOptionalObjectIdPayload(success);
     const failurePayload = toOptionalObjectIdPayload(failure);
 
     return {
         ...payload,
-        app: toObjectIdPayload(payload.app),
+        ...(payload.app ? { app: toObjectIdPayload(payload.app) } : {}),
         notification: {
             ...notification,
             ...(successPayload ? { success: successPayload } : {}),

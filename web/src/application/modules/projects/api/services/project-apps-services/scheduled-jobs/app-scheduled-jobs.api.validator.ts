@@ -14,6 +14,8 @@ import {
     EAppScheduledJobArgSeparator,
     EAppScheduledJobTaskPriority,
     EAppScheduledJobType,
+    ESchedJobSeqMode,
+    ESchedJobSeqOnFailure,
 } from "~/projects/module-shared/enums";
 
 import { BaseMetaApiSchema, PagingMetaApiSchema, parseApiResponse } from "@infrastructure/api";
@@ -44,12 +46,38 @@ const NullableDateSchema = z.preprocess(value => {
     return Number.isNaN(date.getTime()) ? null : date;
 }, z.date().nullable());
 
-const ScheduleSchema = z.object({
-    cronExpr: z.string().optional().default(""),
-    interval: z.string().optional().default(""),
-    initialTime: z.coerce.date(),
-    endTime: NullableDateSchema,
+const ScheduleSchema = z
+    .object({
+        cronExpr: z.string().optional().default(""),
+        interval: z.string().optional().default(""),
+        initialTime: z.coerce.date(),
+        endTime: NullableDateSchema,
+    })
+    .nullish()
+    .transform(value => value ?? null);
+
+const SequenceStepSchema = z.object({
+    job: z.object({
+        id: z.string(),
+        name: z.string().optional().default(""),
+        kind: z.string().optional().default(""),
+        status: z.string().optional().default(""),
+    }),
+    app: NamedRefSchema,
+    name: z.string().optional().default(""),
 });
+
+const SequenceSchema = z
+    .object({
+        mode: z.nativeEnum(ESchedJobSeqMode).catch(ESchedJobSeqMode.Sequential),
+        onFailure: z.nativeEnum(ESchedJobSeqOnFailure).catch(ESchedJobSeqOnFailure.Stop),
+        steps: z
+            .array(SequenceStepSchema)
+            .nullish()
+            .transform(value => value ?? []),
+    })
+    .nullish()
+    .transform(value => value ?? null);
 
 const EnvVarSchema = z.object({
     key: z.string(),
@@ -173,7 +201,7 @@ const NotificationSchema = z
     .nullish()
     .transform(value => value ?? null);
 
-const AppScheduledJobSchema = z.object({
+export const AppScheduledJobSchema = z.object({
     id: z.string(),
     type: z.string(),
     name: z.string(),
@@ -200,7 +228,11 @@ const AppScheduledJobSchema = z.object({
     command: CommandSchema,
     commandOutput: CommandOutputSchema,
     notification: NotificationSchema,
-    nextRuns: z.array(z.coerce.date()).optional().default([]),
+    sequence: SequenceSchema,
+    nextRuns: z
+        .array(z.coerce.date())
+        .nullish()
+        .transform(value => value ?? []),
 });
 
 const AppScheduledJobTaskPrioritySchema = z
@@ -225,7 +257,7 @@ const AppScheduledJobTaskConfigSchema = z.preprocess(
     }),
 );
 
-const AppScheduledJobTaskSchema = z.object({
+export const AppScheduledJobTaskSchema = z.object({
     id: z.string(),
     type: z.string().optional().default(""),
     status: z.string(),

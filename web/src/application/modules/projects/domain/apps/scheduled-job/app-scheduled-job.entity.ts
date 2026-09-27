@@ -2,6 +2,8 @@ import type {
     EAppScheduledJobArgSeparator,
     EAppScheduledJobTaskPriority,
     EAppScheduledJobType,
+    ESchedJobSeqMode,
+    ESchedJobSeqOnFailure,
 } from "~/projects/module-shared/enums";
 
 import type { ESettingStatus } from "@application/shared/enums";
@@ -88,6 +90,25 @@ export interface AppScheduledJobCommandOutput {
     pipeToApp?: AppScheduledJobCommandOutputPipeToApp;
 }
 
+/** A step of a job sequence: the job it runs, and the app that job belongs to. */
+export interface AppScheduledJobSequenceStep {
+    /** The job; its status is "missing" when it was deleted. */
+    job: {
+        id: string;
+        name: string;
+        kind: string;
+        status: string;
+    };
+    app?: AppScheduledJobNamedRef;
+    name: string;
+}
+
+export interface AppScheduledJobSequence {
+    mode: ESchedJobSeqMode;
+    onFailure: ESchedJobSeqOnFailure;
+    steps: AppScheduledJobSequenceStep[];
+}
+
 export interface AppScheduledJob {
     id: string;
     type: string;
@@ -103,8 +124,10 @@ export interface AppScheduledJob {
     expireAt: Date | null;
 
     jobType: EAppScheduledJobType;
-    schedule: AppScheduledJobSchedule;
+    /** Null for a job without a schedule: it runs by hand, or as a step of a sequence. */
+    schedule: AppScheduledJobSchedule | null;
     app?: AppScheduledJobNamedRef;
+    sequence: AppScheduledJobSequence | null;
     priority: EAppScheduledJobTaskPriority;
     maxRetry: number;
     retryDelay: string;
@@ -117,4 +140,10 @@ export interface AppScheduledJob {
     commandOutput?: AppScheduledJobCommandOutput | null;
     notification: AppScheduledJobNotification | null;
     nextRuns: Date[];
+}
+
+/** A job in an env's list: the env's own, or one of an app in the env. */
+export interface EnvScheduledJob extends AppScheduledJob {
+    scope: "project-env" | "app";
+    ownerApp?: AppScheduledJobNamedRef;
 }

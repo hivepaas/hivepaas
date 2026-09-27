@@ -8,11 +8,8 @@ import {
     APP_SCHEDULED_JOB_COMMAND_MODE,
     type CreateOrEditAppScheduledJobFormOutput,
 } from "~/projects/dialogs/create-or-edit-app-scheduled-job/schemas";
-import {
-    EAppScheduledJobCommandOutputMode,
-    EAppScheduledJobScheduleMode,
-    EAppScheduledJobType,
-} from "~/projects/module-shared/enums";
+import { mapJobScheduleFormValuesToPayload } from "~/projects/module-shared/components";
+import { EAppScheduledJobCommandOutputMode, EAppScheduledJobType } from "~/projects/module-shared/enums";
 
 import { AppLoader, RouteFormHeader } from "@application/shared/components";
 import { MODULE_IDS, ROUTE } from "@application/shared/constants";
@@ -29,15 +26,6 @@ function mapFormValuesToPayload(
     values: CreateOrEditAppScheduledJobFormOutput,
     appId: string,
 ): AppScheduledJobs_Upsert_Payload {
-    const scheduleInterval =
-        values.scheduleMode === EAppScheduledJobScheduleMode.Interval && hasText(values.scheduleInterval)
-            ? values.scheduleInterval
-            : undefined;
-    const scheduleCronExpr =
-        values.scheduleMode === EAppScheduledJobScheduleMode.Cron && hasText(values.scheduleCronExpr)
-            ? values.scheduleCronExpr
-            : undefined;
-
     const commandOutput = buildCommandOutputPayload(values);
 
     return {
@@ -45,12 +33,7 @@ function mapFormValuesToPayload(
         default: false,
         name: values.name,
         jobType: EAppScheduledJobType.ContainerCommand,
-        schedule: {
-            ...(scheduleInterval ? { interval: scheduleInterval } : {}),
-            ...(scheduleCronExpr ? { cronExpr: scheduleCronExpr } : {}),
-            ...(values.scheduleFrom ? { initialTime: values.scheduleFrom } : {}),
-            ...(values.scheduleTo ? { endTime: values.scheduleTo } : {}),
-        },
+        schedule: mapJobScheduleFormValuesToPayload(values),
         app: {
             id: appId,
         },

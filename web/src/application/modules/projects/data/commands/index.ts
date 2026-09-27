@@ -25,3 +25,4 @@ export * from "./project-cluster-volumes";
 export * from "./project-command-pipe";
 export * from "./project-command-template";
 export * from "./project-backup-repo";
+export * from "./project-env-scheduled-jobs";

@@ -64462,6 +64462,13 @@
           "targetJob" : {
             "$ref" : "#/components/schemas/taskdto.TaskTargetJobResp"
           },
+          "trigger" : {
+            "allOf" : [ {
+              "$ref" : "#/components/schemas/taskdto.TaskTriggerResp"
+            } ],
+            "description" : "Trigger is what fired a scheduled job's run, when a trigger did.",
+            "type" : "object"
+          },
           "type" : {
             "type" : "string"
           },
@@ -64472,7 +64479,7 @@
             "type" : "string"
           }
         },
-        "required" : [ "config", "createdAt", "endedAt", "id", "lastError", "retryAt", "runAt", "scopeApp", "scopeProject", "scopeUser", "sequenceRun", "startedAt", "status", "targetJob", "type", "updateVer", "updatedAt" ],
+        "required" : [ "config", "createdAt", "endedAt", "id", "lastError", "retryAt", "runAt", "scopeApp", "scopeProject", "scopeUser", "sequenceRun", "startedAt", "status", "targetJob", "trigger", "type", "updateVer", "updatedAt" ],
         "type" : "object"
       },
       "taskdto.TaskStatusResp" : {
@@ -64503,6 +64510,21 @@
           }
         },
         "required" : [ "id", "kind", "name", "status", "type" ],
+        "type" : "object"
+      },
+      "taskdto.TaskTriggerResp" : {
+        "properties" : {
+          "app" : {
+            "$ref" : "#/components/schemas/basedto.NamedObjectResp"
+          },
+          "deploymentId" : {
+            "type" : "string"
+          },
+          "event" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "app", "deploymentId", "event" ],
         "type" : "object"
       },
       "usersettings_apikeydto.APIKeyDataResp" : {

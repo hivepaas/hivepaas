@@ -216,6 +216,13 @@ func (t *Task) GetRefObjectIDs() *RefObjectIDs {
 		case base.ObjectScopeGlobal, base.ObjectScopeHivepaas:
 		}
 	}
+	// A run a trigger fired names the app the event happened to.
+	if t.Type == base.TaskTypeSchedJobExec {
+		if args, err := t.ArgsAsSchedJobExec(); err == nil && args != nil && args.Trigger != nil &&
+			args.Trigger.AppID != "" {
+			refIDs.RefAppIDs = append(refIDs.RefAppIDs, args.Trigger.AppID)
+		}
+	}
 	return refIDs
 }
 

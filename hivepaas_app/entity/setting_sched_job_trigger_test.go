@@ -79,3 +79,17 @@ func TestTaskArgsAsSchedJobExec(t *testing.T) {
 		assert.Equal(t, "d1", args.Trigger.DeploymentID)
 	}
 }
+
+// A run a trigger fired references the app the event happened to, so the run's
+// page can name it.
+func TestATriggeredRunReferencesItsApp(t *testing.T) {
+	task := &Task{Type: base.TaskTypeSchedJobExec, Scope: base.ObjectScopeProjectEnv, ObjectID: "p1:dev"}
+	task.MustSetArgs(&TaskSchedJobExecArgs{Trigger: &SchedJobTriggerCause{
+		Event: base.SchedJobTriggerPostDeploy, AppID: "a1",
+	}})
+
+	refs := task.GetRefObjectIDs()
+
+	assert.Equal(t, []string{"a1"}, refs.RefAppIDs)
+	assert.Equal(t, []string{"p1:dev"}, refs.RefProjectEnvIDs)
+}

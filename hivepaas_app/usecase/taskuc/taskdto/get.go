@@ -47,6 +47,8 @@ type TaskResp struct {
 	UpdateVer int                `json:"updateVer"`
 	// SequenceRun is a job sequence's run: each step and how it went.
 	SequenceRun *entity.SchedJobSeqRun `json:"sequenceRun,omitempty" copy:"-"`
+	// Trigger is what fired a scheduled job's run, when a trigger did.
+	Trigger *TaskTriggerResp `json:"trigger,omitempty" copy:"-"`
 
 	ScopeProject *projectdto.ProjectBaseResp `json:"scopeProject,omitempty"`
 	ScopeApp     *appdto.AppBaseResp         `json:"scopeApp,omitempty"`
@@ -94,6 +96,7 @@ func TransformTask(
 		// A plain job's task has no output; one that does not parse as a run is
 		// not shown rather than failing the whole answer.
 		resp.SequenceRun, _ = task.OutputAsSchedJobSeqRun()
+		resp.Trigger = transformTaskTrigger(task, refObjects)
 	}
 
 	return resp, nil
@@ -146,4 +149,25 @@ func TransformTaskScopeObject(
 		}
 		resp.ScopeUser = refResp
 	}
+}
+
+// TaskTriggerResp is what fired a scheduled job's run.
+type TaskTriggerResp struct {
+	Event        base.SchedJobTriggerEvent `json:"event"`
+	App          *basedto.NamedObjectResp  `json:"app"`
+	DeploymentID string                    `json:"deploymentId,omitempty"`
+}
+
+func transformTaskTrigger(task *entity.Task, refObjects *entity.RefObjects) *TaskTriggerResp {
+	args, err := task.ArgsAsSchedJobExec()
+	if err != nil || args == nil || args.Trigger == nil {
+		return nil
+	}
+	app := &basedto.NamedObjectResp{ID: args.Trigger.AppID}
+	if refObjects != nil {
+		if refApp := refObjects.RefApps[args.Trigger.AppID]; refApp != nil {
+			app.Name = refApp.Name
+		}
+	}
+	return &TaskTriggerResp{Event: args.Trigger.Event, App: app, DeploymentID: args.Trigger.DeploymentID}
 }

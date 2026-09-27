@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"strings"
+	"sync"
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/services/backup/backupmodel"
@@ -163,24 +164,32 @@ func (c *Client) execCommand(
 	fullCommand := append([]string{"kopia"}, c.buildGlobalFlags()...)
 	fullCommand = append(fullCommand, args...)
 
+	// The end of what kopia prints on stderr is why it failed: kept for the error,
+	// whether or not the caller reads stderr too.
+	stderrTail := newTailBuffer(stderrTailSize)
+	stderr := io.Writer(stderrTail)
+	if opt.stderr != nil {
+		stderr = io.MultiWriter(opt.stderr, stderrTail)
+	}
+
 	req := &backupmodel.CommandExecReq{
 		Command:   fullCommand,
 		Env:       opt.env,
 		Stdin:     opt.stdin,
 		Stdout:    opt.stdout,
-		Stderr:    opt.stderr,
+		Stderr:    stderr,
 		NodeID:    opt.nodeID,
 		NodeLabel: opt.nodeLabel,
 	}
 
 	resp, err = c.commandExec(ctx, req)
 	if err != nil {
-		return resp, hperrors.Wrap(fmt.Errorf("%w: %s: %w",
-			backupmodel.ErrCommandFailed, redactCommand(fullCommand), err))
+		return resp, withKopiasWords(hperrors.Wrap(fmt.Errorf("%w: %s: %w",
+			backupmodel.ErrCommandFailed, redactCommand(fullCommand), err)), stderrTail)
 	}
 	if resp != nil && resp.ExitCode != 0 {
-		return resp, hperrors.Wrap(fmt.Errorf("%w: %s: exit code %d",
-			backupmodel.ErrCommandFailed, redactCommand(fullCommand), resp.ExitCode))
+		return resp, withKopiasWords(hperrors.Wrap(fmt.Errorf("%w: %s: exit code %d",
+			backupmodel.ErrCommandFailed, redactCommand(fullCommand), resp.ExitCode)), stderrTail)
 	}
 
 	return resp, nil
@@ -222,4 +231,52 @@ func (c *Client) getNodeInfo() (nodeID, nodeLabel string) {
 		return c.storage.StorageLocal.NodeID, c.storage.StorageLocal.NodeLabel
 	}
 	return "", ""
+}
+
+// stderrTailSize is how much of kopia's stderr a failed command's error keeps.
+const stderrTailSize = 2048
+
+// withKopiasWords puts the end of what kopia printed into the error's detail,
+// which a run's page and an API response show.
+func withKopiasWords(err hperrors.HPError, stderr *tailBuffer) error {
+	if words := strings.TrimSpace(stderr.String()); words != "" {
+		return err.WithExtraDetail("%s", words)
+	}
+	return err
+}
+
+// tailBuffer keeps the last bytes written to it.
+type tailBuffer struct {
+	mu   sync.Mutex
+	max  int
+	data []byte
+	cut  bool
+}
+
+func newTailBuffer(maxSize int) *tailBuffer {
+	return &tailBuffer{max: maxSize}
+}
+
+func (b *tailBuffer) Write(p []byte) (int, error) {
+	b.mu.Lock()
+	defer b.mu.Unlock()
+	b.data = append(b.data, p...)
+	if len(b.data) > b.max {
+		b.data = b.data[len(b.data)-b.max:]
+		b.cut = true
+	}
+	return len(p), nil
+}
+
+// String is the kept bytes, from the first whole line when the start was cut.
+func (b *tailBuffer) String() string {
+	b.mu.Lock()
+	defer b.mu.Unlock()
+	s := string(b.data)
+	if b.cut {
+		if _, rest, found := strings.Cut(s, "\n"); found {
+			s = rest
+		}
+	}
+	return s
 }

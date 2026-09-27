@@ -212,11 +212,6 @@ function createProviderConfigurationSections(projectId: string): ProviderTabSect
                     route: ROUTE.projects.single.providerConfiguration.commandTemplates.$route(projectId),
                 },
                 {
-                    label: "Scheduled Jobs",
-                    icon: CalendarClock,
-                    route: ROUTE.projects.single.providerConfiguration.scheduledJobs.$route(projectId),
-                },
-                {
                     label: "Command Pipes",
                     icon: Workflow,
                     route: ROUTE.projects.single.providerConfiguration.commandPipes.$route(projectId),
@@ -225,6 +220,11 @@ function createProviderConfigurationSections(projectId: string): ProviderTabSect
                     label: "Backup Repos",
                     icon: Archive,
                     route: ROUTE.projects.single.providerConfiguration.backupRepos.$route(projectId),
+                },
+                {
+                    label: "Scheduled Jobs",
+                    icon: CalendarClock,
+                    route: ROUTE.projects.single.providerConfiguration.scheduledJobs.$route(projectId),
                 },
             ],
         },

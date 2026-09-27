@@ -107,7 +107,7 @@ func resolveEnv(ctx context.Context, call *Call, project, env string) (*envRef, 
 		return nil, err
 	}
 	p, err := pick("project", project, "list_projects", slices.DeleteFunc(projects, isNil),
-		func(p *projectdto.ProjectBaseResp) named {
+		func(p *projectdto.ProjectResp) named {
 			return named{id: p.ID, key: p.Key, name: p.Name}
 		})
 	if err != nil {

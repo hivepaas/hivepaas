@@ -39,8 +39,7 @@ func (l *projectList) shrink() bool {
 
 func listProjectsTool() Tool {
 	return readTool("list_projects", "List projects",
-		"Lists the projects the API key's user can see, each with its envs; a disabled project is not "+
-			"listed. Start here to find the "+
+		"Lists the projects the API key's user can see, each with its envs. Start here to find the "+
 			"project and env an app is in.",
 		func(ctx context.Context, call *Call, in listProjectsInput) (projectList, error) {
 			projects, err := listProjects(ctx, call, in.Search)
@@ -64,15 +63,15 @@ func listProjectsTool() Tool {
 		})
 }
 
-// listProjects asks the projects' base list, as the caller: the one that
-// answers each project with its envs. The full list leaves them out.
-func listProjects(ctx context.Context, call *Call, search string) ([]*projectdto.ProjectBaseResp, error) {
+// listProjects asks the project list endpoint, as the caller: each project
+// with its envs.
+func listProjects(ctx context.Context, call *Call, search string) ([]*projectdto.ProjectResp, error) {
 	query := url.Values{paramPageLimit: {strconv.Itoa(maxListed)}}
 	if search != "" {
 		query.Set("search", search)
 	}
-	var resp projectdto.ListProjectBaseResp
-	if err := call.Get(ctx, "/projects/base", query, &resp); err != nil {
+	var resp projectdto.ListProjectResp
+	if err := call.Get(ctx, "/projects", query, &resp); err != nil {
 		return nil, err
 	}
 	return resp.Data, nil

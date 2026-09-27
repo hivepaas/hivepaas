@@ -16,6 +16,7 @@ import { NotificationSettings } from "@application/shared/form";
 import { Button, Checkbox, Field, FieldError, FieldGroup, Input, Tabs, TabsList, TabsTrigger } from "@/components/ui";
 
 import { JobScheduleFields, PriorityTabsField } from "../job-schedule-fields";
+import { JobTriggersField } from "../job-triggers-field";
 
 import { type JobSequenceCandidate, JobSequenceStepsField } from "./job-sequence-steps-field.com";
 import { createEmptyJobSequenceFormDefaults, mapJobSequenceToFormInput } from "./job-sequence.form-mappers";
@@ -60,6 +61,7 @@ export function JobSequenceForm({
     env,
     candidates,
     isLoadingCandidates,
+    triggerApps,
     isPending,
     onSubmit,
     initialValues,
@@ -278,6 +280,13 @@ export function JobSequenceForm({
                             </div>
                         </ContentBlock>
 
+                        <ContentBlock label="Triggers">
+                            <JobTriggersField
+                                apps={triggerApps}
+                                readOnly={readOnly}
+                            />
+                        </ContentBlock>
+
                         <ContentBlock label="Notification Configuration">
                             <NotificationSettings<JobSequenceFormInput>
                                 names={{
@@ -335,6 +344,8 @@ interface Props {
     env?: string;
     candidates: JobSequenceCandidate[];
     isLoadingCandidates: boolean;
+    /** The env's apps a trigger may name; undefined for an app's sequence, which listens to its app. */
+    triggerApps?: { id: string; name: string }[];
     isPending: boolean;
     onSubmit: (values: JobSequenceFormOutput) => void;
     initialValues?: AppScheduledJob;

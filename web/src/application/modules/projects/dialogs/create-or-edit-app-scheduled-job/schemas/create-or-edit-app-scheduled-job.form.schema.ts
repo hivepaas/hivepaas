@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { JobTriggersFormSchema } from "~/projects/module-shared/components/job-triggers-field/job-triggers.helpers";
 import {
     EAppScheduledJobArgSeparator,
     EAppScheduledJobCommandOutputMode,
@@ -91,6 +92,7 @@ export const CreateOrEditAppScheduledJobFormSchema = z
         pipeTargetProject: z.object({ id: z.string(), name: z.string() }).nullable(),
         pipeTargetApp: z.object({ id: z.string(), name: z.string() }).nullable(),
         pipeCommand: PipeCommandSchema,
+        triggers: JobTriggersFormSchema,
         notification: z.object({
             successUseDefault: z.boolean(),
             success: NotificationRefSchema.optional(),

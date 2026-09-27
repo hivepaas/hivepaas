@@ -15,6 +15,7 @@ import {
     mapJobScheduleFormValuesToPayload,
     mapJobScheduleToFormValues,
 } from "../job-schedule-fields";
+import { mapJobTriggersFormValuesToPayload, mapJobTriggersToFormValues } from "../job-triggers-field";
 
 import type { JobSequenceFormInput, JobSequenceFormOutput } from "./job-sequence.form.schema";
 
@@ -29,6 +30,7 @@ export function createEmptyJobSequenceFormDefaults(): JobSequenceFormInput {
         timeout: "",
         priority: EAppScheduledJobTaskPriority.Default,
         controlEnabled: true,
+        triggers: [],
         notification: {
             successUseDefault: true,
             success: undefined,
@@ -56,6 +58,7 @@ export function mapJobSequenceToFormInput(job: AppScheduledJob): JobSequenceForm
         timeout: job.timeout,
         priority: job.priority,
         controlEnabled: !job.controlDisabled,
+        triggers: mapJobTriggersToFormValues(job.triggers),
         notification: {
             successUseDefault: job.notification?.successUseDefault ?? true,
             success: job.notification?.success,
@@ -83,6 +86,7 @@ export function mapJobSequenceFormToPayload(values: JobSequenceFormOutput): AppS
             onFailure: values.onFailure,
             steps: values.steps.map(step => ({ job: { id: step.jobId }, name: step.name })),
         },
+        triggers: mapJobTriggersFormValuesToPayload(values.triggers),
         notification: {
             successUseDefault: values.notification.successUseDefault,
             ...(!values.notification.successUseDefault && values.notification.success

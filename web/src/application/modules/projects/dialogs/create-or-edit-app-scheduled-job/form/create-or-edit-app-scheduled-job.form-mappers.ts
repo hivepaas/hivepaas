@@ -10,6 +10,7 @@ import {
     createDefaultCommandArgGroup,
     createDefaultJobScheduleFormValues,
     mapJobScheduleToFormValues,
+    mapJobTriggersToFormValues,
 } from "~/projects/module-shared/components";
 import { EAppScheduledJobCommandOutputMode, EAppScheduledJobTaskPriority } from "~/projects/module-shared/enums";
 
@@ -75,6 +76,7 @@ export function createEmptyAppScheduledJobFormDefaults(projectId: string = ""): 
         pipeTargetProject: { id: projectId, name: "" },
         pipeTargetApp: null,
         pipeCommand: createDefaultPipeCommand(),
+        triggers: [],
         notification: {
             successUseDefault: true,
             success: undefined,
@@ -182,6 +184,7 @@ export function mapAppScheduledJobToFormInput(
         envVars: command?.envVars ?? [],
         argGroups: command?.argGroups ?? [],
         ...mapCommandOutput(job.commandOutput, projectId),
+        triggers: mapJobTriggersToFormValues(job.triggers),
         notification: {
             successUseDefault: job.notification?.successUseDefault ?? true,
             success: job.notification?.success,

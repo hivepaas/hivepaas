@@ -2,7 +2,7 @@ import { useMemo, useState } from "react";
 
 import { toast } from "sonner";
 import { EnvScheduledJobsCommands } from "~/projects/data/commands";
-import { EnvScheduledJobsQueries } from "~/projects/data/queries";
+import { EnvScheduledJobsQueries, ProjectAppsQueries } from "~/projects/data/queries";
 import type { AppScheduledJob } from "~/projects/domain";
 import {
     type JobSequenceCandidate,
@@ -30,6 +30,16 @@ export function EnvJobSequenceFormRoute({ mode, projectId, env, scheduledJob }: 
         env,
         pagination: LIST_ALL_PAGE,
     });
+    const { data: appsData } = ProjectAppsQueries.useFindManyPaginated({
+        projectID: projectId,
+        env,
+        pagination: LIST_ALL_PAGE,
+    });
+    const triggerApps = useMemo(
+        () => (appsData?.data ?? []).map(app => ({ id: app.id, name: app.name })),
+        [appsData?.data],
+    );
+
     const candidates = useMemo<JobSequenceCandidate[]>(
         () =>
             (jobsData?.data ?? [])
@@ -109,6 +119,7 @@ export function EnvJobSequenceFormRoute({ mode, projectId, env, scheduledJob }: 
                     env={env}
                     candidates={candidates}
                     isLoadingCandidates={isLoadingCandidates}
+                    triggerApps={triggerApps}
                     isPending={isCreating || isUpdating}
                     onSubmit={onSubmit}
                     onHasChanges={setHasChanges}

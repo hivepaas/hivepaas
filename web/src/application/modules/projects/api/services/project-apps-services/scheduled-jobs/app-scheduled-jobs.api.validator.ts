@@ -16,6 +16,7 @@ import {
     EAppScheduledJobType,
     ESchedJobSeqMode,
     ESchedJobSeqOnFailure,
+    ESchedJobTriggerEvent,
 } from "~/projects/module-shared/enums";
 
 import { BaseMetaApiSchema, PagingMetaApiSchema, parseApiResponse } from "@infrastructure/api";
@@ -201,6 +202,15 @@ const NotificationSchema = z
     .nullish()
     .transform(value => value ?? null);
 
+const TriggerSchema = z.object({
+    event: z.nativeEnum(ESchedJobTriggerEvent),
+    apps: z
+        .array(z.object({ id: z.string(), name: z.string().optional().default("") }))
+        .nullish()
+        .transform(value => value ?? []),
+    wait: z.boolean().optional().default(false),
+});
+
 export const AppScheduledJobSchema = z.object({
     id: z.string(),
     type: z.string(),
@@ -229,6 +239,16 @@ export const AppScheduledJobSchema = z.object({
     commandOutput: CommandOutputSchema,
     notification: NotificationSchema,
     sequence: SequenceSchema,
+    // An event the dashboard does not know yet is left out, not a failed list.
+    triggers: z
+        .array(z.unknown())
+        .nullish()
+        .transform(value =>
+            (value ?? []).flatMap(item => {
+                const parsed = TriggerSchema.safeParse(item);
+                return parsed.success ? [parsed.data] : [];
+            }),
+        ),
     nextRuns: z
         .array(z.coerce.date())
         .nullish()

@@ -8,7 +8,10 @@ import {
     APP_SCHEDULED_JOB_COMMAND_MODE,
     type CreateOrEditAppScheduledJobFormOutput,
 } from "~/projects/dialogs/create-or-edit-app-scheduled-job/schemas";
-import { mapJobScheduleFormValuesToPayload } from "~/projects/module-shared/components";
+import {
+    mapJobScheduleFormValuesToPayload,
+    mapJobTriggersFormValuesToPayload,
+} from "~/projects/module-shared/components";
 import { EAppScheduledJobCommandOutputMode, EAppScheduledJobType } from "~/projects/module-shared/enums";
 
 import { AppLoader, RouteFormHeader } from "@application/shared/components";
@@ -56,6 +59,7 @@ function mapFormValuesToPayload(
             ...(values.argGroups.length > 0 ? { argGroups: values.argGroups } : {}),
         },
         commandOutput,
+        triggers: mapJobTriggersFormValuesToPayload(values.triggers),
         notification: {
             successUseDefault: values.notification.successUseDefault,
             ...(!values.notification.successUseDefault && values.notification.success

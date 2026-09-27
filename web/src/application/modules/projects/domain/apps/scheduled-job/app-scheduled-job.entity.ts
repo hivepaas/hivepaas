@@ -4,6 +4,7 @@ import type {
     EAppScheduledJobType,
     ESchedJobSeqMode,
     ESchedJobSeqOnFailure,
+    ESchedJobTriggerEvent,
 } from "~/projects/module-shared/enums";
 
 import type { ESettingStatus } from "@application/shared/enums";
@@ -109,6 +110,14 @@ export interface AppScheduledJobSequence {
     steps: AppScheduledJobSequenceStep[];
 }
 
+/** An event that runs the job. `apps` is empty for an app's job: its own app. */
+export interface AppScheduledJobTrigger {
+    event: ESchedJobTriggerEvent;
+    apps: AppScheduledJobNamedRef[];
+    /** The deploy waits for the run; pre-deploy only. */
+    wait: boolean;
+}
+
 export interface AppScheduledJob {
     id: string;
     type: string;
@@ -128,6 +137,7 @@ export interface AppScheduledJob {
     schedule: AppScheduledJobSchedule | null;
     app?: AppScheduledJobNamedRef;
     sequence: AppScheduledJobSequence | null;
+    triggers: AppScheduledJobTrigger[];
     priority: EAppScheduledJobTaskPriority;
     maxRetry: number;
     retryDelay: string;

@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { JobTriggersFormSchema } from "~/projects/module-shared/components/job-triggers-field/job-triggers.helpers";
 import {
     EAppScheduledJobScheduleMode,
     EAppScheduledJobTaskPriority,
@@ -39,6 +40,7 @@ export const JobSequenceFormSchema = z.object({
     timeout: z.string().trim(),
     priority: z.nativeEnum(EAppScheduledJobTaskPriority),
     controlEnabled: z.boolean(),
+    triggers: JobTriggersFormSchema,
     notification: z.object({
         successUseDefault: z.boolean(),
         success: NotificationRefSchema.optional(),

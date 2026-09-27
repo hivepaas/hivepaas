@@ -6,7 +6,12 @@ import { cn } from "@lib/utils";
 import { type FieldErrors, FormProvider, useController, useForm, useFormState } from "react-hook-form";
 import { useToggle, useUpdateEffect } from "react-use";
 import type { AppScheduledJob } from "~/projects/domain";
-import { CommandArgGroupsSection, CommandConfigSection, JobScheduleFields } from "~/projects/module-shared/components";
+import {
+    CommandArgGroupsSection,
+    CommandConfigSection,
+    JobScheduleFields,
+    JobTriggersField,
+} from "~/projects/module-shared/components";
 import { PROJECT_FORM_CONTROL_MAX_WIDTH_CLASS } from "~/projects/module-shared/constants";
 import { EAppScheduledJobCommandOutputMode } from "~/projects/module-shared/enums";
 import { useProjectNotificationSettingsSources } from "~/projects/module-shared/hooks";
@@ -376,6 +381,10 @@ export function CreateOrEditAppScheduledJobForm({
                                         />
                                     </InfoBlock>
                                 </div>
+                            </ContentBlock>
+
+                            <ContentBlock label="Triggers">
+                                <JobTriggersField readOnly={readOnly} />
                             </ContentBlock>
 
                             <CommandConfigSection

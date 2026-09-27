@@ -6,6 +6,7 @@ import type {
     EAppScheduledJobType,
     ESchedJobSeqMode,
     ESchedJobSeqOnFailure,
+    ESchedJobTriggerEvent,
 } from "~/projects/module-shared/enums";
 
 import type { ESettingStatus } from "@application/shared/enums";
@@ -97,6 +98,13 @@ export type AppScheduledJobs_Sequence_Payload = {
     steps: AppScheduledJobs_SequenceStep_Payload[];
 };
 
+/** An event that runs the job: `apps` for an env's job only; `wait` for pre-deploy only. */
+export type AppScheduledJobs_Trigger_Payload = {
+    event: ESchedJobTriggerEvent;
+    apps?: AppScheduledJobs_RefObject_Payload[];
+    wait?: boolean;
+};
+
 /**
  * A job to create or update. A container command has `app` and `command`; a job
  * sequence has `sequence` and neither of those. `schedule` is null for a job run
@@ -120,6 +128,7 @@ export type AppScheduledJobs_Upsert_Payload = {
     command?: AppScheduledJobs_Command_Payload;
     commandOutput?: AppScheduledJobs_CommandOutput_Payload;
     sequence?: AppScheduledJobs_Sequence_Payload;
+    triggers?: AppScheduledJobs_Trigger_Payload[];
     notification: AppScheduledJobs_Notification_Payload;
 };
 

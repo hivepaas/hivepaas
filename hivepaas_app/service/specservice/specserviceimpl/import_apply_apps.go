@@ -56,6 +56,22 @@ func (w *writer) writeUpdatedApps(ctx context.Context) error {
 	return nil
 }
 
+// scheduleEnvJobs schedules, in the transaction, the envs' scheduled jobs the
+// import wrote, as writing one through its screen does.
+func (w *writer) scheduleEnvJobs(ctx context.Context) error {
+	var jobs []*entity.Setting
+	for _, setting := range w.written {
+		if setting.Type == base.SettingTypeSchedJob && setting.Scope == base.ObjectScopeProjectEnv {
+			jobs = append(jobs, setting)
+		}
+	}
+	if len(jobs) == 0 {
+		return nil
+	}
+	tx, _ := w.p.db.(database.Tx)
+	return hperrors.Wrap(w.p.s.taskQueue.ScheduleTasksForSchedJobs(ctx, tx, jobs, true))
+}
+
 // queueDeployment creates the deployment of an app's source, to be scheduled
 // once the transaction has committed.
 func (w *writer) queueDeployment(ctx context.Context, app *entity.App, source *entity.Setting) error {

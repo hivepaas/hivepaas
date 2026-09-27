@@ -51,7 +51,7 @@ func (p *planner) settingsChanges(
 	// with the app.
 	scoped := prefix == ""
 	change := func(typ base.SettingType, name string, found bool) {
-		if policy := importPolicyFor(typ); scoped && policy.skip != "" {
+		if policy := importPolicyIn(typ, settingsScope(node)); scoped && policy.skip != "" {
 			node.Issues = append(node.Issues, specmodel.Issue{
 				Severity: specmodel.SeveritySkipped, Code: specmodel.CodeTypeNotImportable, Path: node.Path,
 				Detail: map[string]any{refInSetting: name, "reason": policy.skip},

@@ -112,3 +112,18 @@ func importPolicyFor(typ base.SettingType) importPolicy {
 	}
 	return policy
 }
+
+// scopedPolicies are the policies a scope gives a type in place of its own.
+var scopedPolicies = map[base.ObjectScopeType]map[base.SettingType]importPolicy{
+	// An env's scheduled jobs are job sequences, whose tasks the writer schedules
+	// with the apps' jobs (scheduleEnvJobs).
+	base.ObjectScopeProjectEnv: {base.SettingTypeSchedJob: {}},
+}
+
+// importPolicyIn is the policy of a type in a scope.
+func importPolicyIn(typ base.SettingType, scope base.ObjectScopeType) importPolicy {
+	if policy, found := scopedPolicies[scope][typ]; found {
+		return policy
+	}
+	return importPolicyFor(typ)
+}

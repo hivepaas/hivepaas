@@ -349,6 +349,30 @@ func exportFixture(t *testing.T) specservice.Service {
 	}
 	assert.NoError(t, envConfig.SetData(&entity.ConfigFile{Name: "dev-only.yaml", Content: "level: env\n"}))
 
+	// A job of the backend, and an env sequence that runs it: a reference from
+	// an env's setting to an app's.
+	appJob := &entity.Setting{
+		ID: "job_1", Type: base.SettingTypeSchedJob, Scope: base.ObjectScopeApp, ObjectID: "app_1",
+		Name: "migrate", Kind: string(base.SchedJobTypeContainerCommand), Status: base.SettingStatusActive,
+		Version: entity.CurrentSchedJobVersion,
+	}
+	assert.NoError(t, appJob.SetData(&entity.SchedJob{
+		JobType: base.SchedJobTypeContainerCommand, App: entity.ObjectID{ID: "app_1"},
+		Command: &entity.CommandTemplate{Command: "./migrate"},
+	}))
+	envSeq := &entity.Setting{
+		ID: "seq_1", Type: base.SettingTypeSchedJob, Scope: base.ObjectScopeProjectEnv, ObjectID: "p1:dev",
+		Name: "release", Kind: string(base.SchedJobTypeJobSequence), Status: base.SettingStatusActive,
+		Version: entity.CurrentSchedJobVersion,
+	}
+	assert.NoError(t, envSeq.SetData(&entity.SchedJob{
+		JobType: base.SchedJobTypeJobSequence,
+		Sequence: &entity.SchedJobSequence{
+			Mode: base.SchedJobSeqModeSequential, OnFailure: base.SchedJobSeqOnFailureStop,
+			Steps: []*entity.SchedJobSequenceStep{{Job: entity.ObjectID{ID: "job_1"}, Name: "migrate"}},
+		},
+	}))
+
 	// The env's own network, as cluster sync records it.
 	settingRepo := &fakeSettingRepo{networks: []*entity.Setting{{
 		ID: "net_1", Type: base.SettingTypeClusterNetwork, Scope: base.ObjectScopeProjectEnv, ObjectID: "p1:dev",
@@ -376,7 +400,7 @@ func exportFixture(t *testing.T) specservice.Service {
 	}
 
 	all := []*entity.Setting{cert, apiKey, routing, secret, mountEntry, kind, projectVolume, sharedVolume,
-		projectConfig, envConfig}
+		projectConfig, envConfig, appJob, envSeq}
 
 	svc := New(
 		&fakeAppRepo{apps: []*entity.App{deployed, undeployed, preview}},

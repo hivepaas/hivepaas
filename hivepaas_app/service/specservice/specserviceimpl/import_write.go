@@ -90,6 +90,9 @@ func (w *writer) write(ctx context.Context) error {
 	if err := w.writeUpdatedApps(ctx); err != nil {
 		return err
 	}
+	if err := w.scheduleEnvJobs(ctx); err != nil {
+		return err
+	}
 	if err := w.prepareUpdatedServices(ctx); err != nil {
 		return err
 	}
@@ -262,7 +265,7 @@ func (w *writer) writtenNames(node *specmodel.PlanNode) []string {
 		if slices.Contains(refused, name) {
 			continue
 		}
-		if _, typ, found := settingBody(settings, block, key); found && importPolicyFor(typ).skip == "" {
+		if _, typ, found := settingBody(settings, block, key); found && importPolicyIn(typ, settingsScope(node)).skip == "" {
 			names = append(names, name)
 		}
 	}
@@ -277,18 +280,31 @@ func settingPath(node *specmodel.PlanNode, name string) string {
 
 // scopeOf is the scope a settings node writes into, and the id of its object.
 func (w *writer) scopeOf(node *specmodel.PlanNode) (base.ObjectScopeType, string) {
-	switch node.Kind { //nolint:exhaustive // projects and envs hold no settings of their own
-	case specmodel.NodeKindGlobal:
-		return base.ObjectScopeGlobal, ""
-	case specmodel.NodeKindApp:
-		return base.ObjectScopeApp, w.appIDs[node.Path]
-	}
-	if strings.Contains(node.Path, "/envs/") {
+	switch scope := settingsScope(node); scope { //nolint:exhaustive // the scopes a node holds settings of
+	case base.ObjectScopeGlobal:
+		return scope, ""
+	case base.ObjectScopeApp:
+		return scope, w.appIDs[node.Path]
+	case base.ObjectScopeProjectEnv:
 		place := w.p.envPlace(strings.TrimSuffix(node.Path, "/settings"))
-		return base.ObjectScopeProjectEnv, projecthelper.CalcProjectEnvID(w.projectID(place.project), place.env)
+		return scope, projecthelper.CalcProjectEnvID(w.projectID(place.project), place.env)
 	}
 	key := strings.TrimSuffix(strings.TrimPrefix(node.Path, projectsSegment+"/"), "/settings")
 	return base.ObjectScopeProject, w.projectID(key)
+}
+
+// settingsScope is the kind of scope a settings node's settings are in.
+func settingsScope(node *specmodel.PlanNode) base.ObjectScopeType {
+	switch node.Kind { //nolint:exhaustive // projects and envs hold no settings of their own
+	case specmodel.NodeKindGlobal:
+		return base.ObjectScopeGlobal
+	case specmodel.NodeKindApp:
+		return base.ObjectScopeApp
+	}
+	if strings.Contains(node.Path, "/envs/") {
+		return base.ObjectScopeProjectEnv
+	}
+	return base.ObjectScopeProject
 }
 
 // scopeRows are a scope's settings, found the way export keys them.

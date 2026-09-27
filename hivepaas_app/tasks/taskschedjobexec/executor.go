@@ -35,6 +35,7 @@ type Executor struct {
 	redisClient rediscache.Client
 
 	taskLogRepo repository.TaskLogRepo
+	taskRepo    repository.TaskRepo
 
 	appService               appservice.Service
 	backupRepoCleanupService backuprepocleanupservice.Service
@@ -54,6 +55,7 @@ func NewExecutor(
 	taskQueue queue.TaskQueue,
 
 	taskLogRepo repository.TaskLogRepo,
+	taskRepo repository.TaskRepo,
 
 	appService appservice.Service,
 	backupRepoCleanupService backuprepocleanupservice.Service,
@@ -71,6 +73,7 @@ func NewExecutor(
 		redisClient: redisClient,
 
 		taskLogRepo: taskLogRepo,
+		taskRepo:    taskRepo,
 
 		appService:               appService,
 		backupRepoCleanupService: backupRepoCleanupService,
@@ -117,83 +120,18 @@ func (e *Executor) execute(
 	}()
 	defer safego.RecoverTo(&err) // Make sure we catch panic before the above defer
 
-	schedJob := data.SchedJob.MustAsSchedJob()
-	switch schedJob.JobType {
-	case base.SchedJobTypeContainerCommand:
-		resp, err := e.schedJobExecService.SchedJobExec(ctx, db, &schedjobexecservice.SchedJobExecReq{
-			TaskExecData:    data.TaskExecData,
-			SchedJobSetting: data.SchedJob,
-			DestApp:         data.RefObjects.RefApps[schedJob.App.ID],
-		})
-		if err != nil {
-			return hperrors.Wrap(err)
-		}
-		data.SkipResultNotification = resp.SkipResultNotification
-
-	case base.SchedJobTypeSystemCleanup:
-		setting := data.RefObjects.RefSettings[schedJob.TargetSetting.ID]
-		if setting == nil {
-			return hperrors.NewNotFound("System cleanup settings")
-		}
-		cleanupReq := &syscleanupservice.SysCleanupReq{
-			TaskExecData:       data.TaskExecData,
-			SysCleanupSettings: setting.MustAsSystemCleanup(),
-		}
-		cleanupReq.SetCleanupFlagsDefault()
-		resp, err := e.sysCleanupService.Cleanup(ctx, db, cleanupReq)
-		if err != nil {
-			return hperrors.Wrap(err)
-		}
-		data.SkipResultNotification = resp.SkipResultNotification
-
-	case base.SchedJobTypeSystemBackup:
-		setting := data.RefObjects.RefSettings[schedJob.TargetSetting.ID]
-		if setting == nil {
-			return hperrors.NewNotFound("System backup settings")
-		}
-		resp, err := e.sysBackupService.Backup(ctx, db, &sysbackupservice.SysBackupReq{
-			TaskExecData:      data.TaskExecData,
-			SysBackupSettings: setting.MustAsSystemBackup(),
-		})
-		if err != nil {
-			return hperrors.Wrap(err)
-		}
-		data.SkipResultNotification = resp.SkipResultNotification
-
-	case base.SchedJobTypeSSLRenewal:
-		setting := data.RefObjects.RefSettings[schedJob.TargetSetting.ID]
-		if setting == nil {
-			return hperrors.NewNotFound("SSL renewal settings")
-		}
-		resp, err := e.sslRenewalService.SSLRenew(ctx, db, &sslrenewalservice.SSLRenewalReq{
-			TaskExecData:      data.TaskExecData,
-			RenewalJobSetting: data.SchedJob,
-			RenewalSettings:   setting.MustAsSSLRenewal(),
-		})
-		if err != nil {
-			return hperrors.Wrap(err)
-		}
-		data.SkipResultNotification = resp.SkipResultNotification
-
-	case base.SchedJobTypeBackupRepoCleanup:
-		setting := data.RefObjects.RefSettings[schedJob.TargetSetting.ID]
-		if setting == nil {
-			return hperrors.NewNotFound("Backup repo cleanup settings")
-		}
-		resp, err := e.backupRepoCleanupService.Cleanup(ctx, db, &backuprepocleanupservice.BackupRepoCleanupReq{
-			TaskExecData:      data.TaskExecData,
-			CleanupJobSetting: data.SchedJob,
-			CleanupSettings:   setting.MustAsBackupRepoCleanup(),
-		})
-		if err != nil {
-			return hperrors.Wrap(err)
-		}
-		data.SkipResultNotification = resp.SkipResultNotification
-
-	case base.SchedJobTypeJobSequence:
-		return hperrors.NewUnsupported("Job sequence")
+	if data.SchedJob.MustAsSchedJob().JobType == base.SchedJobTypeJobSequence {
+		return e.executeSequence(ctx, db, data)
 	}
-
+	result, err := e.runJob(ctx, db, &jobRun{
+		execData:   data.TaskExecData,
+		jobSetting: data.SchedJob,
+		refObjects: data.RefObjects,
+	})
+	if err != nil {
+		return hperrors.Wrap(err)
+	}
+	data.SkipResultNotification = result.skipNotification
 	return nil
 }
 

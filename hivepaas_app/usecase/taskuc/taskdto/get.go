@@ -45,6 +45,8 @@ type TaskResp struct {
 	TargetJob *TaskTargetJobResp `json:"targetJob"`
 	LastError string             `json:"lastError"`
 	UpdateVer int                `json:"updateVer"`
+	// SequenceRun is a job sequence's run: each step and how it went.
+	SequenceRun *entity.SchedJobSeqRun `json:"sequenceRun,omitempty" copy:"-"`
 
 	ScopeProject *projectdto.ProjectBaseResp `json:"scopeProject,omitempty"`
 	ScopeApp     *appdto.AppBaseResp         `json:"scopeApp,omitempty"`
@@ -87,6 +89,12 @@ func TransformTask(
 	}
 
 	TransformTaskScopeObject(task, refObjects, resp)
+
+	if task.Type == base.TaskTypeSchedJobExec {
+		// A plain job's task has no output; one that does not parse as a run is
+		// not shown rather than failing the whole answer.
+		resp.SequenceRun, _ = task.OutputAsSchedJobSeqRun()
+	}
 
 	return resp, nil
 }

@@ -8,6 +8,7 @@ import (
 	"github.com/tiendc/gofn"
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/config"
+	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/notificationservice"
@@ -66,11 +67,7 @@ func (e *Executor) buildNotificationMsgData(
 		Retries:      data.Task.Config.Retry,
 		LastError:    data.Task.GetLastError(),
 	}
-	if schedJob.Schedule.Interval > 0 {
-		msgData.Schedule = fmt.Sprintf("every %v", schedJob.Schedule.Interval.String())
-	} else {
-		msgData.Schedule = fmt.Sprintf("cron expression %v", schedJob.Schedule.CronExpr)
-	}
+	msgData.Schedule = describeSchedule(schedJob.Schedule)
 	if project := data.Scope.GetProject(); project != nil {
 		msgData.ProjectName = project.Name
 	}
@@ -81,4 +78,16 @@ func (e *Executor) buildNotificationMsgData(
 		data.Task.ID, data.Scope.ScopeType)
 
 	data.NotifMsgData = msgData
+}
+
+// describeSchedule is how a notification names a job's schedule.
+func describeSchedule(sched *entity.SchedJobSchedule) string {
+	switch {
+	case sched == nil:
+		return "no schedule (run by hand or by a job sequence)"
+	case sched.Interval > 0:
+		return fmt.Sprintf("every %v", sched.Interval.String())
+	default:
+		return fmt.Sprintf("cron expression %v", sched.CronExpr)
+	}
 }

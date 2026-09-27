@@ -189,6 +189,9 @@ func (e *Executor) execute(
 			return hperrors.Wrap(err)
 		}
 		data.SkipResultNotification = resp.SkipResultNotification
+
+	case base.SchedJobTypeJobSequence:
+		return hperrors.NewUnsupported("Job sequence")
 	}
 
 	return nil

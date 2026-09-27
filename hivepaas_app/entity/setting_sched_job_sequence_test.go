@@ -1,0 +1,90 @@
+package entity
+
+import (
+	"testing"
+	"time"
+
+	"github.com/stretchr/testify/assert"
+
+	"github.com/hivepaas/hivepaas/hivepaas_app/base"
+)
+
+func sequenceOf(jobIDs ...string) *SchedJobSequence {
+	seq := &SchedJobSequence{Mode: base.SchedJobSeqModeSequential, OnFailure: base.SchedJobSeqOnFailureStop}
+	for _, id := range jobIDs {
+		seq.Steps = append(seq.Steps, &SchedJobSequenceStep{Job: ObjectID{ID: id}})
+	}
+	return seq
+}
+
+func TestSchedJobSequenceMembersAreReferences(t *testing.T) {
+	job := &SchedJob{JobType: base.SchedJobTypeJobSequence, Sequence: sequenceOf("job-a", "job-b", "job-a")}
+
+	refIDs := job.GetRefObjectIDs()
+
+	assert.Equal(t, []string{"job-a", "job-b"}, refIDs.RefSettingIDs, "each member once, in order")
+	links := job.GetResourceLinks(&Setting{ID: "seq-1"})
+	if assert.Len(t, links, 2) {
+		assert.Equal(t, "job-a", links[0].DstID)
+	}
+}
+
+func TestSchedJobSequenceStopsOnFailureUnlessToldToContinue(t *testing.T) {
+	assert.True(t, (*SchedJobSequence)(nil).StopsOnFailure())
+	assert.True(t, sequenceOf("a").StopsOnFailure())
+	seq := sequenceOf("a")
+	seq.OnFailure = base.SchedJobSeqOnFailureContinue
+	assert.False(t, seq.StopsOnFailure())
+}
+
+func TestAJobWithoutAScheduleHasNoRuns(t *testing.T) {
+	var sched *SchedJobSchedule
+	timeNow := time.Date(2026, 9, 27, 12, 0, 0, 0, time.UTC)
+
+	runs, err := sched.CalcNextRuns(timeNow, 5)
+	assert.NoError(t, err)
+	assert.Empty(t, runs)
+	runs, err = sched.CalcNextRunsInRange(timeNow, timeNow.Add(time.Hour))
+	assert.NoError(t, err)
+	assert.Empty(t, runs)
+	assert.False(t, sched.SetLastSchedTime(timeNow))
+	assert.True(t, sched.Equal(nil))
+	assert.False(t, sched.Equal(&SchedJobSchedule{Interval: 60}))
+	assert.False(t, (&SchedJobSchedule{Interval: 60}).Equal(nil))
+}
+
+func TestNewSchedJobSeqRunStartsEveryStepPending(t *testing.T) {
+	seq := sequenceOf("job-a", "job-b")
+	seq.Steps[1].Name = "reindex"
+
+	run := NewSchedJobSeqRun(seq)
+
+	assert.False(t, run.Started)
+	assert.Equal(t, 0, run.CurrentStep)
+	if assert.Len(t, run.Steps, 2) {
+		assert.Equal(t, "job-a", run.Steps[0].Job.ID)
+		assert.Equal(t, "reindex", run.Steps[1].Name)
+		assert.Equal(t, base.SchedJobSeqStepPending, run.Steps[1].Status)
+	}
+	assert.False(t, run.Failed())
+	run.Steps[1].Status = base.SchedJobSeqStepFailed
+	assert.True(t, run.Failed())
+}
+
+func TestTaskOutputAsSchedJobSeqRun(t *testing.T) {
+	task := &Task{Type: base.TaskTypeSchedJobExec}
+	run, err := task.OutputAsSchedJobSeqRun()
+	assert.NoError(t, err)
+	assert.Nil(t, run, "a task that is not a sequence's")
+
+	task.MustSetOutput(NewSchedJobSeqRun(sequenceOf("job-a")))
+	task2 := &Task{Type: base.TaskTypeSchedJobExec, Output: task.Output}
+	run, err = task2.OutputAsSchedJobSeqRun()
+	assert.NoError(t, err)
+	if assert.NotNil(t, run) && assert.Len(t, run.Steps, 1) {
+		assert.Equal(t, "job-a", run.Steps[0].Job.ID)
+	}
+
+	_, err = (&Task{Type: base.TaskTypeWorkflow}).OutputAsSchedJobSeqRun()
+	assert.Error(t, err)
+}

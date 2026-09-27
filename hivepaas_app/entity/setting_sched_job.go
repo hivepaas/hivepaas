@@ -44,6 +44,8 @@ type SchedJob struct {
 	Command            *CommandTemplate       `json:"command,omitempty"`
 	CommandOutput      *SchedJobCommandOutput `json:"commandOutput,omitempty"`
 	Notification       *BaseEventNotification `json:"notification,omitempty"`
+	// Sequence is a job-sequence's list of jobs; nil for every other type.
+	Sequence *SchedJobSequence `json:"sequence,omitempty"`
 }
 
 type SchedJobSchedule struct {
@@ -59,6 +61,9 @@ type SchedJobSchedule struct {
 }
 
 func (s *SchedJobSchedule) Equal(oldSched *SchedJobSchedule) bool {
+	if s == nil || oldSched == nil {
+		return s == nil && oldSched == nil
+	}
 	return s.CronExpr == oldSched.CronExpr && s.Interval == oldSched.Interval &&
 		s.InitialTime.Equal(oldSched.InitialTime) && s.EndTime.Equal(oldSched.EndTime)
 }
@@ -89,6 +94,9 @@ func (s *SchedJobSchedule) GetLastSchedTime() time.Time {
 }
 
 func (s *SchedJobSchedule) SetLastSchedTime(lastSchedTime time.Time) bool {
+	if s == nil {
+		return false
+	}
 	// TODO (low): should we always update lastSchedTime of sched jobs
 	// if !s.LastSchedTime.IsZero() && lastSchedTime.Sub(s.LastSchedTime) < timeutil.Day {
 	//	return false
@@ -114,7 +122,16 @@ func (s *SchedJobSchedule) ParseCronExpr() (cron.Schedule, error) {
 	return sched, nil
 }
 
+// CalcNextRuns is the next count runs from fromTime. A job without a schedule
+// has none: it runs only by hand or as a step of a job sequence.
 func (s *SchedJobSchedule) CalcNextRuns(fromTime time.Time, count int) (res []time.Time, err error) {
+	if s == nil {
+		return nil, nil
+	}
+	return s.calcNextRuns(fromTime, count)
+}
+
+func (s *SchedJobSchedule) calcNextRuns(fromTime time.Time, count int) (res []time.Time, err error) {
 	if count == 0 {
 		return nil, hperrors.NewArgumentInvalid("count")
 	}
@@ -166,7 +183,16 @@ func (s *SchedJobSchedule) CalcNextRuns(fromTime time.Time, count int) (res []ti
 	return nil, hperrors.NewArgumentInvalid("Schedule")
 }
 
+// CalcNextRunsInRange is the runs between fromTime and toTime; none for a job
+// without a schedule.
 func (s *SchedJobSchedule) CalcNextRunsInRange(fromTime, toTime time.Time) (res []time.Time, err error) {
+	if s == nil {
+		return nil, nil
+	}
+	return s.calcNextRunsInRange(fromTime, toTime)
+}
+
+func (s *SchedJobSchedule) calcNextRunsInRange(fromTime, toTime time.Time) (res []time.Time, err error) {
 	if toTime.IsZero() {
 		return nil, hperrors.NewArgumentInvalid("toTime")
 	}
@@ -277,6 +303,9 @@ func (s *SchedJob) GetRefObjectIDs() *RefObjectIDs {
 	if s.Notification != nil {
 		refIDs.AddRefIDs(s.Notification.GetRefObjectIDs())
 	}
+	// A sequence's members are references like any other: they are what keeps a
+	// job a sequence runs from being deleted under it.
+	refIDs.RefSettingIDs = append(refIDs.RefSettingIDs, s.Sequence.MemberIDs()...)
 	return refIDs
 }
 

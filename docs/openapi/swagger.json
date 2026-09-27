@@ -44501,6 +44501,10 @@
       },
       "appdeploymentdto.DeploymentTriggerResp" : {
         "properties" : {
+          "changeId" : {
+            "description" : "ChangeID names the change the deployment was made for, as its trigger gave\nit: pr-<number> for a pull request.",
+            "type" : "string"
+          },
           "source" : {
             "type" : "string"
           },
@@ -44508,7 +44512,7 @@
             "$ref" : "#/components/schemas/basedto.UserBaseResp"
           }
         },
-        "required" : [ "source", "sourceUser" ],
+        "required" : [ "changeId", "source", "sourceUser" ],
         "type" : "object"
       },
       "appdeploymentdto.GetDeploymentLogsResp" : {

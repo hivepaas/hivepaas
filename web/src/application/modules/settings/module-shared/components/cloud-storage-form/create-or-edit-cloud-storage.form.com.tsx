@@ -1,16 +1,26 @@
-import { useEffect } from "react";
+import { useEffect, useMemo } from "react";
 
-import { PasswordInput } from "@components/ui/input-password";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@components/ui/select";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { type FieldErrors, useController, useForm } from "react-hook-form";
+import { ProjectKeyAuthQueries } from "~/projects/data/queries";
+import { KeyAuthQueries } from "~/settings/data/queries";
 import { SETTINGS_FORM_FIELD_CONTROL_MAX_WIDTH_CLASS } from "~/settings/module-shared/constants/settings-form-layout.constants";
 
-import { AvailableInAppsWarning, FormActionBar, InfoBlock, LabelWithInfo } from "@application/shared/components";
+import {
+    AppLink,
+    AvailableInAppsWarning,
+    Combobox,
+    FormActionBar,
+    InfoBlock,
+    LabelWithInfo,
+} from "@application/shared/components";
+import { ROUTE } from "@application/shared/constants";
 import { ECloudStorageKind } from "@application/shared/enums";
 
 import { Button, Checkbox, Field, FieldError, FieldGroup, Input } from "@/components/ui";
 
+import type { CloudStorageTableScope } from "../cloud-storage-table/cloud-storage-table.types";
 import { InheritedSettingReadonlyNotice } from "../inherited-setting-readonly-notice.com";
 import { PermissionReadonlyNotice } from "../permission-readonly-notice.com";
 import { SettingsFormCancelAction } from "../settings-form-cancel-action";
@@ -27,6 +37,14 @@ const PROVIDER_LABELS: Record<ECloudStorageKind, string> = {
     [ECloudStorageKind.AWSS3]: "S3 (S3 Compatible)",
 };
 
+/** Every key auth the scope can see: a picker offers the list whole. */
+const KEY_AUTHS_ALL = { page: 1, size: 1000 };
+
+type KeyAuthOption = {
+    id: string;
+    name: string;
+};
+
 export function CreateOrEditCloudStorageForm({
     isPending,
     isTesting,
@@ -37,11 +55,12 @@ export function CreateOrEditCloudStorageForm({
     savedVersion = 0,
     initialValues,
     showAvailableInProjects = true,
-    isProjectScope = false,
+    scope,
     readOnlyInherited = false,
     readOnly = false,
     onClose,
 }: Props) {
+    const isProjectScope = scope.type === "project";
     const isReadOnly = readOnlyInherited || readOnly;
     const isInheritableDisabled = isReadOnly;
     const inheritableLabel = isProjectScope ? "Available in Apps" : "Available in Projects";
@@ -56,8 +75,7 @@ export function CreateOrEditCloudStorageForm({
         defaultValues: {
             name: initialValues?.name ?? "",
             kind: initialValues?.kind ?? ECloudStorageKind.AWSS3,
-            accessKeyId: initialValues?.accessKeyId ?? "",
-            secretKey: initialValues?.secretKey ?? "",
+            keyAuth: initialValues?.keyAuth ?? null,
             region: initialValues?.region ?? "",
             bucket: initialValues?.bucket ?? "",
             endpoint: initialValues?.endpoint ?? "",
@@ -89,14 +107,33 @@ export function CreateOrEditCloudStorageForm({
         field: kind,
         fieldState: { invalid: isKindInvalid },
     } = useController({ name: "kind", control });
-    const {
-        field: accessKeyId,
-        fieldState: { invalid: isAccessKeyIdInvalid },
-    } = useController({ name: "accessKeyId", control });
-    const {
-        field: secretKey,
-        fieldState: { invalid: isSecretKeyInvalid },
-    } = useController({ name: "secretKey", control });
+    const { field: keyAuth } = useController({ name: "keyAuth", control });
+
+    const globalKeyAuthQuery = KeyAuthQueries.useFindManyPaginated(
+        { pagination: KEY_AUTHS_ALL },
+        { enabled: scope.type === "settings" },
+    );
+    const projectKeyAuthQuery = ProjectKeyAuthQueries.useFindManyPaginated(
+        {
+            projectID: scope.type === "project" ? scope.projectId : "",
+            env: scope.type === "project" ? scope.env : undefined,
+            pagination: KEY_AUTHS_ALL,
+        },
+        { enabled: scope.type === "project" },
+    );
+    const keyAuthQuery = scope.type === "project" ? projectKeyAuthQuery : globalKeyAuthQuery;
+    const keyAuthOptions = useMemo(
+        () =>
+            (keyAuthQuery.data?.data ?? []).map(item => ({
+                value: { id: item.id, name: item.name } satisfies KeyAuthOption,
+                label: item.name,
+            })),
+        [keyAuthQuery.data?.data],
+    );
+    const keyAuthManageRoute =
+        scope.type === "project"
+            ? ROUTE.projects.single.providerConfiguration.keyAuth.$route(scope.projectId)
+            : ROUTE.settings.keyAuth.$route;
     const {
         field: region,
         fieldState: { invalid: isRegionInvalid },
@@ -196,39 +233,40 @@ export function CreateOrEditCloudStorageForm({
                         titleWidth={220}
                         title={
                             <LabelWithInfo
-                                label="Access Key ID"
+                                label="Key Auth"
+                                content="The key ID and secret key the bucket is reached with, kept as a Key Auth setting of its own."
                                 isRequired
                             />
                         }
                     >
                         <FieldGroup>
                             <Field>
-                                <Input
-                                    {...accessKeyId}
-                                    aria-invalid={isAccessKeyIdInvalid}
+                                <Combobox<KeyAuthOption>
+                                    options={keyAuthOptions}
+                                    value={keyAuth.value?.id ?? null}
+                                    onChange={(_, option) => {
+                                        keyAuth.onChange(option ?? null);
+                                    }}
+                                    placeholder="select key auth"
+                                    searchable
+                                    closeOnSelect
+                                    emptyText="No key auths available"
+                                    valueKey="id"
+                                    loading={keyAuthQuery.isFetching}
+                                    onRefresh={() => void keyAuthQuery.refetch()}
+                                    isRefreshing={keyAuthQuery.isRefetching}
+                                    disabled={isReadOnly}
                                 />
-                                <FieldError errors={[errors.accessKeyId]} />
-                            </Field>
-                        </FieldGroup>
-                    </InfoBlock>
-
-                    <InfoBlock
-                        titleWidth={220}
-                        title={
-                            <LabelWithInfo
-                                label="Secret Key"
-                                isRequired
-                            />
-                        }
-                    >
-                        <FieldGroup>
-                            <Field>
-                                <PasswordInput
-                                    value={secretKey.value}
-                                    onChange={secretKey.onChange}
-                                    aria-invalid={isSecretKeyInvalid}
-                                />
-                                <FieldError errors={[errors.secretKey]} />
+                                <AppLink.Modules
+                                    to={keyAuthManageRoute}
+                                    className="text-xs text-link"
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    ignorePrevPath
+                                >
+                                    Configure Key Auths
+                                </AppLink.Modules>
+                                <FieldError errors={[errors.keyAuth]} />
                             </Field>
                         </FieldGroup>
                     </InfoBlock>
@@ -375,7 +413,7 @@ interface Props {
     savedVersion?: number;
     initialValues?: Partial<CreateOrEditCloudStorageFormInput>;
     showAvailableInProjects?: boolean;
-    isProjectScope?: boolean;
+    scope: CloudStorageTableScope;
     readOnlyInherited?: boolean;
     readOnly?: boolean;
     onClose?: () => void;

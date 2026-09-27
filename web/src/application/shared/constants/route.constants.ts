@@ -216,6 +216,21 @@ export const ROUTE = {
             },
         },
 
+        keyAuth: {
+            $pattern: "integrations/key-auth",
+            $route: "/integrations/key-auth/",
+
+            create: {
+                $pattern: "integrations/key-auth/create",
+                $route: "/integrations/key-auth/create/",
+            },
+
+            edit: {
+                $pattern: "integrations/key-auth/:keyAuthId/edit",
+                $route: (keyAuthId: string) => `/integrations/key-auth/${keyAuthId}/edit/`,
+            },
+        },
+
         registryAuth: {
             $pattern: "integrations/registry-auth",
             $route: "/integrations/registry-auth/",
@@ -953,6 +968,22 @@ export const ROUTE = {
                         $pattern: "projects/:id/integrations/basic-auth/:basicAuthId/edit",
                         $route: (id: string, basicAuthId: string) =>
                             `/projects/${id}/integrations/basic-auth/${basicAuthId}/edit/`,
+                    },
+                },
+
+                keyAuth: {
+                    $pattern: "projects/:id/integrations/key-auth",
+                    $route: (id: string) => `/projects/${id}/integrations/key-auth/`,
+
+                    create: {
+                        $pattern: "projects/:id/integrations/key-auth/create",
+                        $route: (id: string) => `/projects/${id}/integrations/key-auth/create/`,
+                    },
+
+                    edit: {
+                        $pattern: "projects/:id/integrations/key-auth/:keyAuthId/edit",
+                        $route: (id: string, keyAuthId: string) =>
+                            `/projects/${id}/integrations/key-auth/${keyAuthId}/edit/`,
                     },
                 },
 

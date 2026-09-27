@@ -12,6 +12,7 @@ import {
     UpdateEmailAccountStatusDialog,
     UpdateGithubAppStatusDialog,
     UpdateImPlatformStatusDialog,
+    UpdateKeyAuthStatusDialog,
     UpdateNotificationTargetStatusDialog,
     UpdateOAuthStatusDialog,
     UpdateRegistryAuthStatusDialog,
@@ -29,6 +30,7 @@ import {
     useUpdateEmailAccountStatusDialogState,
     useUpdateGithubAppStatusDialogState,
     useUpdateImPlatformStatusDialogState,
+    useUpdateKeyAuthStatusDialogState,
     useUpdateNotificationTargetStatusDialogState,
     useUpdateOAuthStatusDialogState,
     useUpdateRegistryAuthStatusDialogState,
@@ -41,6 +43,7 @@ import {
 function View() {
     const location = useLocation();
     const updateBasicAuthStatusDialog = useUpdateBasicAuthStatusDialogState();
+    const updateKeyAuthStatusDialog = useUpdateKeyAuthStatusDialogState();
     const updateAcmeDnsProviderStatusDialog = useUpdateAcmeDnsProviderStatusDialogState();
     const updateRegistryAuthStatusDialog = useUpdateRegistryAuthStatusDialogState();
     const updateSslCertStatusDialog = useUpdateSslCertStatusDialogState();
@@ -60,6 +63,7 @@ function View() {
 
     useUpdateEffect(() => {
         updateBasicAuthStatusDialog.destroy();
+        updateKeyAuthStatusDialog.destroy();
         updateAcmeDnsProviderStatusDialog.destroy();
         updateRegistryAuthStatusDialog.destroy();
         updateSslCertStatusDialog.destroy();
@@ -81,6 +85,7 @@ function View() {
     return (
         <>
             <UpdateBasicAuthStatusDialog />
+            <UpdateKeyAuthStatusDialog />
             <UpdateAcmeDnsProviderStatusDialog />
             <UpdateRegistryAuthStatusDialog />
             <UpdateSslCertStatusDialog />

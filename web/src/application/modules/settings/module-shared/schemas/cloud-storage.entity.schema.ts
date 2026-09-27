@@ -5,8 +5,10 @@ import { ECloudStorageKind } from "@application/shared/enums";
 import { SettingsBaseEntitySchema } from "./settings-base.schema";
 
 export const CloudStorageS3EntitySchema = z.object({
-    accessKeyId: z.string(),
-    secretKey: z.string(),
+    keyAuth: z
+        .object({ id: z.string(), name: z.string(), status: z.string().optional() })
+        .nullish()
+        .transform(value => value ?? null),
     region: z.string(),
     bucket: z.string(),
     endpoint: z.string(),
@@ -18,5 +20,4 @@ export const CloudStorageSettingEntitySchema = SettingsBaseEntitySchema.omit({ d
     kind: z.nativeEnum(ECloudStorageKind).optional(),
     inherited: z.boolean().optional(),
     s3: CloudStorageS3EntitySchema,
-    secretMasked: z.boolean().optional(),
 });

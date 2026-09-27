@@ -25,6 +25,8 @@ import {
     ImServiceApiValidator,
     ImageBuildSettingsApi,
     ImageBuildSettingsApiValidator,
+    KeyAuthApi,
+    KeyAuthApiValidator,
     NotificationsApi,
     NotificationsApiValidator,
     OAuthApi,
@@ -50,6 +52,7 @@ function createApi() {
     const notificationsValidator = new NotificationsApiValidator();
     const acmeDnsProviderValidator = new AcmeDnsProviderApiValidator();
     const basicAuthValidator = new BasicAuthApiValidator();
+    const keyAuthValidator = new KeyAuthApiValidator();
     const domainSettingsValidator = new DomainSettingsApiValidator();
     const storageSettingsValidator = new StorageSettingsApiValidator();
     const gitCredentialsValidator = new GitCredentialsApiValidator();
@@ -72,6 +75,7 @@ function createApi() {
             notifications: new NotificationsApi(notificationsValidator),
             acmeDnsProvider: new AcmeDnsProviderApi(acmeDnsProviderValidator),
             basicAuth: new BasicAuthApi(basicAuthValidator),
+            keyAuth: new KeyAuthApi(keyAuthValidator),
             domainSettings: new DomainSettingsApi(domainSettingsValidator),
             storageSettings: new StorageSettingsApi(storageSettingsValidator),
             gitCredentials: new GitCredentialsApi(gitCredentialsValidator),

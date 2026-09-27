@@ -881,6 +881,36 @@ export const projectsRouter: RouteObject = {
                             },
                         },
                         {
+                            path: ROUTE.projects.single.providerConfiguration.keyAuth.$pattern,
+                            lazy: async () => {
+                                const { ProjectKeyAuthRoute } = await getLazyComponents();
+
+                                return {
+                                    Component: ProjectKeyAuthRoute,
+                                };
+                            },
+                        },
+                        {
+                            path: ROUTE.projects.single.providerConfiguration.keyAuth.create.$pattern,
+                            lazy: async () => {
+                                const { ProjectKeyAuthCreateRoute } = await getLazyComponents();
+
+                                return {
+                                    Component: ProjectKeyAuthCreateRoute,
+                                };
+                            },
+                        },
+                        {
+                            path: ROUTE.projects.single.providerConfiguration.keyAuth.edit.$pattern,
+                            lazy: async () => {
+                                const { ProjectKeyAuthEditRoute } = await getLazyComponents();
+
+                                return {
+                                    Component: ProjectKeyAuthEditRoute,
+                                };
+                            },
+                        },
+                        {
                             path: ROUTE.projects.single.providerConfiguration.cloudStorages.$pattern,
                             lazy: async () => {
                                 const { ProjectCloudStoragesRoute } = await getLazyComponents();

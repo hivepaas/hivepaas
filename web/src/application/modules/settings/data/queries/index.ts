@@ -4,6 +4,7 @@ export * from "./image-build-settings.queries";
 export * from "./app-placement-settings.queries";
 export * from "./acme-dns-provider.queries";
 export * from "./basic-auth.queries";
+export * from "./key-auth.queries";
 export * from "./git-credentials.queries";
 export * from "./notification.queries";
 export * from "./registry-auth.queries";

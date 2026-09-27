@@ -79,6 +79,8 @@ import {
     ProjectImServiceApiValidator,
     ProjectImageBuildSettingsApi,
     ProjectImageBuildSettingsApiValidator,
+    ProjectKeyAuthApi,
+    ProjectKeyAuthApiValidator,
     ProjectNetworksApi,
     ProjectNetworksApiValidator,
     ProjectNotificationApi,
@@ -140,6 +142,7 @@ function createApi() {
     const projectAppEnvVarsApiValidator = new ProjectAppEnvVarsApiValidator();
     const projectAcmeDnsProviderApiValidator = new ProjectAcmeDnsProviderApiValidator();
     const projectBasicAuthApiValidator = new ProjectBasicAuthApiValidator();
+    const projectKeyAuthApiValidator = new ProjectKeyAuthApiValidator();
     const projectSettingsImportApiValidator = new ProjectSettingsImportApiValidator();
     const projectGithubAppApiValidator = new ProjectGithubAppApiValidator();
     const projectRepoWebhookApiValidator = new ProjectRepoWebhookApiValidator();
@@ -293,6 +296,9 @@ function createApi() {
             },
             basicAuth: {
                 $: new ProjectBasicAuthApi(projectBasicAuthApiValidator),
+            },
+            keyAuth: {
+                $: new ProjectKeyAuthApi(projectKeyAuthApiValidator),
             },
             settingsImport: {
                 $: new ProjectSettingsImportApi(projectSettingsImportApiValidator),

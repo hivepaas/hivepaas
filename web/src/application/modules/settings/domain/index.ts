@@ -12,6 +12,7 @@ export * from "./storage-settings.entity";
 export * from "./image-build-settings.entity";
 export * from "./app-placement-settings.entity";
 export * from "./basic-auth.entity";
+export * from "./key-auth.entity";
 export * from "./ssh-key.entity";
 export * from "./access-token.entity";
 export * from "./cloud-storage.entity";

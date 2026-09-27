@@ -20,6 +20,7 @@ import {
     ProjectEmailQueries,
     ProjectGithubAppQueries,
     ProjectImServiceQueries,
+    ProjectKeyAuthQueries,
     ProjectNetworksQueries,
     ProjectNotificationQueries,
     ProjectRegistryAuthQueries,
@@ -37,6 +38,7 @@ import {
     EmailQueries,
     GithubAppQueries,
     ImServiceQueries,
+    KeyAuthQueries,
     NotificationQueries,
     RegistryAuthQueries,
     RepoWebhookQueries,
@@ -52,6 +54,7 @@ import { CloudStorageTableDefs } from "~/settings/module-shared/components/cloud
 import { EmailAccountTableDefs } from "~/settings/module-shared/components/email-account-table/email-account-table.defs";
 import { GithubAppTableDefs } from "~/settings/module-shared/components/github-app-table/github-app-table.defs";
 import { ImPlatformTableDefs } from "~/settings/module-shared/components/im-platform-table/im-platform-table.defs";
+import { KeyAuthTableDefs } from "~/settings/module-shared/components/key-auth-table/key-auth-table.defs";
 import { NotificationTargetTableDefs } from "~/settings/module-shared/components/notification-target-table/notification-target-table.defs";
 import { RegistryAuthTableDefs } from "~/settings/module-shared/components/registry-auth-table/registry-auth-table.defs";
 import { RepoWebhookTableDefs } from "~/settings/module-shared/components/repo-webhook-table/repo-webhook-table.defs";
@@ -87,6 +90,7 @@ const IMPORT_DIALOG_LABELS = {
     [PROJECT_SETTINGS_IMPORT_KIND.AccessToken]: "Access Tokens",
     [PROJECT_SETTINGS_IMPORT_KIND.AcmeDnsProvider]: "ACME DNS Providers",
     [PROJECT_SETTINGS_IMPORT_KIND.BasicAuth]: "Basic Auth",
+    [PROJECT_SETTINGS_IMPORT_KIND.KeyAuth]: "Key Auth",
     [PROJECT_SETTINGS_IMPORT_KIND.RegistryAuth]: "Registry Auth",
     [PROJECT_SETTINGS_IMPORT_KIND.SslCert]: "SSL Certificates",
     [PROJECT_SETTINGS_IMPORT_KIND.SslProvider]: "SSL Providers",
@@ -126,6 +130,8 @@ function getImportColumns(settingKind: ProjectSettingsImportKind | null): Column
             return castColumns(AcmeDnsProviderTableDefs.columns({ type: "settings" }));
         case PROJECT_SETTINGS_IMPORT_KIND.BasicAuth:
             return castColumns(BasicAuthTableDefs.columns({ type: "settings" }));
+        case PROJECT_SETTINGS_IMPORT_KIND.KeyAuth:
+            return castColumns(KeyAuthTableDefs.columns({ type: "settings" }));
         case PROJECT_SETTINGS_IMPORT_KIND.RegistryAuth:
             return castColumns(RegistryAuthTableDefs.columns({ type: "settings" }));
         case PROJECT_SETTINGS_IMPORT_KIND.SslCert:
@@ -196,6 +202,12 @@ export function ImportProjectSettingsDialog() {
     });
     const basicAuthProjectQuery = ProjectBasicAuthQueries.useFindManyPaginated(projectListRequest, {
         enabled: open && settingKind === PROJECT_SETTINGS_IMPORT_KIND.BasicAuth,
+    });
+    const keyAuthSettingsQuery = KeyAuthQueries.useFindManyPaginated(queryRequest, {
+        enabled: open && settingKind === PROJECT_SETTINGS_IMPORT_KIND.KeyAuth,
+    });
+    const keyAuthProjectQuery = ProjectKeyAuthQueries.useFindManyPaginated(projectListRequest, {
+        enabled: open && settingKind === PROJECT_SETTINGS_IMPORT_KIND.KeyAuth,
     });
 
     const registryAuthSettingsQuery = RegistryAuthQueries.useFindManyPaginated(queryRequest, {
@@ -318,6 +330,16 @@ export function ImportProjectSettingsDialog() {
             refetch = () => {
                 void basicAuthSettingsQuery.refetch();
                 void basicAuthProjectQuery.refetch();
+            };
+            break;
+        case PROJECT_SETTINGS_IMPORT_KIND.KeyAuth:
+            settings = keyAuthSettingsQuery.data?.data ?? [];
+            projectSettings = keyAuthProjectQuery.data?.data ?? [];
+            isFetching = keyAuthSettingsQuery.isFetching || keyAuthProjectQuery.isFetching;
+            hasError = Boolean(keyAuthSettingsQuery.error ?? keyAuthProjectQuery.error);
+            refetch = () => {
+                void keyAuthSettingsQuery.refetch();
+                void keyAuthProjectQuery.refetch();
             };
             break;
         case PROJECT_SETTINGS_IMPORT_KIND.RegistryAuth:

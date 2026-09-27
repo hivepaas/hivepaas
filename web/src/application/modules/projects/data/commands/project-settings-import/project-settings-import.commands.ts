@@ -5,6 +5,7 @@ import { QK } from "~/projects/data/constants";
 
 export const PROJECT_SETTINGS_IMPORT_KIND = {
     BasicAuth: "basicAuth",
+    KeyAuth: "keyAuth",
     RegistryAuth: "registryAuth",
     SslCert: "sslCert",
     SslProvider: "sslProvider",
@@ -27,6 +28,7 @@ export type ProjectSettingsImportKind =
 
 const PROJECT_SETTINGS_IMPORT_LIST_QUERY_KEYS = {
     [PROJECT_SETTINGS_IMPORT_KIND.BasicAuth]: QK["projects.basic-auth.$.find-many-paginated"],
+    [PROJECT_SETTINGS_IMPORT_KIND.KeyAuth]: QK["projects.key-auth.$.find-many-paginated"],
     [PROJECT_SETTINGS_IMPORT_KIND.RegistryAuth]: QK["projects.registry-auth.$.find-many-paginated"],
     [PROJECT_SETTINGS_IMPORT_KIND.SslCert]: QK["projects.ssl-cert.$.find-many-paginated"],
     [PROJECT_SETTINGS_IMPORT_KIND.SslProvider]: QK["projects.ssl-provider.$.find-many-paginated"],

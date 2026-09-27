@@ -1,4 +1,5 @@
 export * from "./update-basic-auth-status";
+export * from "./update-key-auth-status";
 export * from "./update-acme-dns-provider-status";
 export * from "./update-registry-auth-status";
 export * from "./update-ssl-cert-status";

@@ -4,6 +4,7 @@ export * from "./image-build-settings-services";
 export * from "./app-placement-settings-services";
 export * from "./acme-dns-provider-services";
 export * from "./basic-auth-services";
+export * from "./key-auth-services";
 export * from "./git-credentials-services";
 export * from "./notifications-services";
 export * from "./registry-auth-services";

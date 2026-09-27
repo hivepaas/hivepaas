@@ -1,5 +1,5 @@
 import type { PaginationState, SortingState } from "@infrastructure/data";
-import type { SettingCloudStorage, SettingCloudStorageS3 } from "~/settings/domain";
+import type { SettingCloudStorage, SettingCloudStorageS3Payload } from "~/settings/domain";
 
 import type { ECloudStorageKind, ESettingStatus } from "@application/shared/enums";
 
@@ -22,7 +22,7 @@ export type CloudStorage_CreateOne_Payload = {
     default: boolean;
     kind: ECloudStorageKind;
     name: string;
-    s3: SettingCloudStorageS3;
+    s3: SettingCloudStorageS3Payload;
 };
 
 export type CloudStorage_CreateOne_Req = ApiRequestBase<{ payload: CloudStorage_CreateOne_Payload }>;
@@ -62,7 +62,7 @@ export type CloudStorage_DeleteOne_Res = ApiResponseBase<{ type: "success" }>;
 export type CloudStorage_TestConn_Payload = {
     kind: ECloudStorageKind;
     name: string;
-    s3: SettingCloudStorageS3;
+    s3: SettingCloudStorageS3Payload;
 };
 
 export type CloudStorage_TestConn_Req = ApiRequestBase<{ payload: CloudStorage_TestConn_Payload }>;

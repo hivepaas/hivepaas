@@ -15,6 +15,7 @@ export const ESettingType = {
     IMService: "im-service",
     RegistryAuth: "registry-auth",
     BasicAuth: "basic-auth",
+    KeyAuth: "key-auth",
     GithubApp: "github-app",
     AccessToken: "access-token",
     CommandTemplate: "command-template",

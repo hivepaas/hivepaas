@@ -5,8 +5,10 @@ import { ECloudStorageKind } from "@application/shared/enums";
 export const CreateOrEditCloudStorageFormSchema = z.object({
     name: z.string().trim().min(1, "Name is required"),
     kind: z.nativeEnum(ECloudStorageKind),
-    accessKeyId: z.string().trim().min(1, "Access Key ID is required"),
-    secretKey: z.string().min(1, "Secret Key is required"),
+    keyAuth: z
+        .object({ id: z.string(), name: z.string() })
+        .nullable()
+        .refine((value): boolean => value !== null, "Key auth is required"),
     region: z.string().trim().min(1, "Region is required"),
     bucket: z.string().trim().min(1, "Bucket is required"),
     endpoint: z.string().trim(),

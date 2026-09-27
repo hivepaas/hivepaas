@@ -170,6 +170,21 @@ export const settingsRouter: RouteObject = {
 
             return SettingsBasicAuthEditRoute;
         }),
+        createSettingsRoute(ROUTE.settings.keyAuth.$pattern, "Key Auth", async () => {
+            const { SettingsKeyAuthRoute } = await getLazyComponents();
+
+            return SettingsKeyAuthRoute;
+        }),
+        createSettingsModuleRoute(ROUTE.settings.keyAuth.create.$pattern, "Key Auth", async () => {
+            const { SettingsKeyAuthCreateRoute } = await getLazyComponents();
+
+            return SettingsKeyAuthCreateRoute;
+        }),
+        createSettingsModuleRoute(ROUTE.settings.keyAuth.edit.$pattern, "Key Auth", async () => {
+            const { SettingsKeyAuthEditRoute } = await getLazyComponents();
+
+            return SettingsKeyAuthEditRoute;
+        }),
         createSettingsRoute(ROUTE.settings.registryAuth.$pattern, "Registry Auth", async () => {
             const { SettingsRegistryAuthRoute } = await getLazyComponents();
 

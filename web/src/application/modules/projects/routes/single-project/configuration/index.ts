@@ -3,6 +3,7 @@ export * from "./secrets";
 export * from "./config-files";
 export * from "./general";
 export * from "./basic-auth";
+export * from "./key-auth";
 export * from "./github-apps";
 export * from "./webhooks";
 export * from "./registry-auth";

@@ -1,4 +1,5 @@
 export * from "./basic-auth-table";
+export * from "./key-auth-table";
 export * from "./acme-dns-provider-table";
 export * from "./registry-auth-table";
 export * from "./setting-status-badge";
@@ -28,7 +29,9 @@ export * from "./settings-scope-permission-action";
 export * from "./settings-scope-create-button";
 export * from "./settings-scope-menu-button";
 export * from "./basic-auth-form";
+export * from "./key-auth-form";
 export * from "./basic-auth-form-route";
+export * from "./key-auth-form-route";
 export * from "./registry-auth-form";
 export * from "./registry-auth-form-route";
 export * from "./cloud-storage-form";

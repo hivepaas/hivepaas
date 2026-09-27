@@ -1,6 +1,7 @@
 export * from "./github-apps";
 export * from "./webhooks";
 export * from "./basic-auth";
+export * from "./key-auth";
 export * from "./registry-auth";
 export * from "./ssl-providers";
 export * from "./ssl-certificates";

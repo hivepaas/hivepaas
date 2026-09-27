@@ -4,6 +4,7 @@ export * from "./image-build-settings.commands";
 export * from "./app-placement-settings.commands";
 export * from "./acme-dns-provider.commands";
 export * from "./basic-auth.commands";
+export * from "./key-auth.commands";
 export * from "./notification.commands";
 export * from "./registry-auth.commands";
 export * from "./ssl-cert.commands";

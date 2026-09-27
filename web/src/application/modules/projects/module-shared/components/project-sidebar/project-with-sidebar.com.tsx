@@ -17,6 +17,7 @@ import {
     Hammer,
     HardDrive,
     KeyRound,
+    KeySquare,
     Layers,
     ListTodo,
     Lock,
@@ -140,6 +141,11 @@ function createProviderConfigurationSections(projectId: string): ProviderTabSect
                     label: "Basic Auth",
                     icon: Lock,
                     route: ROUTE.projects.single.providerConfiguration.basicAuth.$route(projectId),
+                },
+                {
+                    label: "Key Auth",
+                    icon: KeySquare,
+                    route: ROUTE.projects.single.providerConfiguration.keyAuth.$route(projectId),
                 },
                 {
                     label: "SSH Keys",

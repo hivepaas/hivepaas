@@ -70,6 +70,7 @@ import {
     UpdateEmailAccountStatusDialog,
     UpdateGithubAppStatusDialog,
     UpdateImPlatformStatusDialog,
+    UpdateKeyAuthStatusDialog,
     UpdateNotificationTargetStatusDialog,
     UpdateRegistryAuthStatusDialog,
     UpdateRepoWebhookStatusDialog,
@@ -86,6 +87,7 @@ import {
     useUpdateEmailAccountStatusDialogState,
     useUpdateGithubAppStatusDialogState,
     useUpdateImPlatformStatusDialogState,
+    useUpdateKeyAuthStatusDialogState,
     useUpdateNotificationTargetStatusDialogState,
     useUpdateRegistryAuthStatusDialogState,
     useUpdateRepoWebhookStatusDialogState,
@@ -107,6 +109,7 @@ function View() {
     const confirmEnvDangerActionDialog = useConfirmEnvDangerActionDialogState();
     const confirmProjectDangerActionDialog = useConfirmProjectDangerActionDialogState();
     const updateBasicAuthStatusDialog = useUpdateBasicAuthStatusDialogState();
+    const updateKeyAuthStatusDialog = useUpdateKeyAuthStatusDialogState();
     const updateRegistryAuthStatusDialog = useUpdateRegistryAuthStatusDialogState();
     const updateSslCertStatusDialog = useUpdateSslCertStatusDialogState();
     const updateSslProviderStatusDialog = useUpdateSslProviderStatusDialogState();
@@ -143,6 +146,7 @@ function View() {
         confirmEnvDangerActionDialog.destroy();
         confirmProjectDangerActionDialog.destroy();
         updateBasicAuthStatusDialog.destroy();
+        updateKeyAuthStatusDialog.destroy();
         updateRegistryAuthStatusDialog.destroy();
         updateSslCertStatusDialog.destroy();
         updateSslProviderStatusDialog.destroy();
@@ -181,6 +185,7 @@ function View() {
             <ConfirmEnvDangerActionDialog />
             <ConfirmProjectDangerActionDialog />
             <UpdateBasicAuthStatusDialog />
+            <UpdateKeyAuthStatusDialog />
             <UpdateRegistryAuthStatusDialog />
             <UpdateSslCertStatusDialog />
             <UpdateSslProviderStatusDialog />

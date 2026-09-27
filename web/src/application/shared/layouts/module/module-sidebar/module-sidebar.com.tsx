@@ -19,6 +19,7 @@ import {
     House,
     Key,
     KeyRound,
+    KeySquare,
     Layers,
     LayoutGrid,
     ListTodo,
@@ -141,6 +142,12 @@ const navMain: SidebarItem[] = [
                         icon: Lock,
                         route: ROUTE.settings.basicAuth.$route,
                         pattern: ROUTE.settings.basicAuth.$pattern,
+                    },
+                    {
+                        title: "Key Auth",
+                        icon: KeySquare,
+                        route: ROUTE.settings.keyAuth.$route,
+                        pattern: ROUTE.settings.keyAuth.$pattern,
                     },
                     {
                         title: "SSH Keys",

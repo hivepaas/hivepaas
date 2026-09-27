@@ -116,6 +116,17 @@ func (s *HTTPServer) registerProjectEnvRoutes(projectGroup *gin.RouterGroup) {
 		commandPipeGroup.DELETE("/:itemID", projectEnvSettingsHandler.DeleteCommandPipe)
 	}
 
+	{ // Scheduled jobs group: the env's own (job sequences) and, listed, its apps'
+		schedJobGroup := projectEnvGroup.Group("/sched-jobs")
+		schedJobGroup.GET("", projectEnvSettingsHandler.ListSchedJob)
+		schedJobGroup.GET("/:itemID", projectEnvSettingsHandler.GetSchedJob)
+		schedJobGroup.POST("", projectEnvSettingsHandler.CreateSchedJob)
+		schedJobGroup.PUT("/:itemID", projectEnvSettingsHandler.UpdateSchedJob)
+		schedJobGroup.PUT("/:itemID/status", projectEnvSettingsHandler.UpdateSchedJobStatus)
+		schedJobGroup.DELETE("/:itemID", projectEnvSettingsHandler.DeleteSchedJob)
+		schedJobGroup.POST("/:itemID/exec", projectEnvSettingsHandler.ExecuteSchedJob)
+	}
+
 	{ // Command templates group
 		commandTemplateGroup := projectEnvGroup.Group("/command-templates")
 		commandTemplateGroup.GET("/:itemID", projectEnvSettingsHandler.GetCommandTemplate)

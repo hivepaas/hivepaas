@@ -24,6 +24,10 @@ type ObjectScope struct {
 	LockScopeObject  bool
 	NotRequireActive bool
 	NoInherited      bool
+	// IncludeEnvApps makes a project env's scope reach the settings of the apps
+	// in the env, next to the env's own, and nothing inherited or shared: the
+	// env's scheduled jobs are listed with its apps'.
+	IncludeEnvApps bool
 }
 
 func (s *ObjectScope) IsGlobalScope() bool {

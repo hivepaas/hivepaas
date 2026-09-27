@@ -88,3 +88,19 @@ func TestInheritedSettingsRequireInheritable(t *testing.T) {
 	assert.Greater(t, globalAt, flagAt,
 		"global settings must not be reachable before the inheritable flag is checked")
 }
+
+// An env's scope with its apps: the env's own settings and those of the apps
+// in it, and nothing inherited or shared - the listing behind the env's
+// scheduled jobs, which shows an app's jobs next to the env's.
+func TestEnvScopeWithItsApps(t *testing.T) {
+	scope := &entity.ObjectScope{ScopeType: base.ObjectScopeProjectEnv, ProjectID: "PROJ", ProjectEnvID: "ENV",
+		IncludeEnvApps: true}
+
+	sql := renderSettingQuery((&settingRepo{}).applyProjectEnvFilter(nil, scope))
+	_, where, found := strings.Cut(sql, " WHERE ")
+	assert.True(t, found)
+
+	assert.Equal(t, `((setting.object_id = 'ENV') OR (setting.object_id IN (SELECT app.id FROM apps AS app `+
+		`WHERE (app.project_env_id = 'ENV') AND (app.deleted_at IS NULL)))) AND "setting"."deleted_at" IS NULL`,
+		where, "the env's own and its apps', nothing inherited, shared or the project's")
+}

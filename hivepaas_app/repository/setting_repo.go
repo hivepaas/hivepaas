@@ -382,6 +382,15 @@ func (repo *settingRepo) applyAppFilter(opts []bunex.SelectQueryOption,
 // applyProjectEnvFilter filters settings belong to the project env or to any parent object
 func (repo *settingRepo) applyProjectEnvFilter(opts []bunex.SelectQueryOption,
 	scope *entity.ObjectScope) []bunex.SelectQueryOption {
+	if scope.IncludeEnvApps {
+		return append(opts,
+			bunex.SelectWhereGroup(
+				bunex.SelectWhere("setting.object_id = ?", scope.ProjectEnvID),
+				bunex.SelectWhereOr("setting.object_id IN (SELECT app.id FROM apps AS app "+
+					"WHERE (app.project_env_id = ?) AND (app.deleted_at IS NULL))", scope.ProjectEnvID),
+			),
+		)
+	}
 	if scope.NoInherited {
 		return append(opts,
 			bunex.SelectWhere("setting.object_id = ?", scope.ProjectEnvID))

@@ -29022,6 +29022,536 @@
         "tags" : [ "project_env_settings" ]
       }
     },
+    "/projects/{projectID}/{projectEnv}/sched-jobs" : {
+      "get" : {
+        "description" : "The env's own scheduled jobs - job sequences - and those of every app in the env, each with\nits scope and, for an app's, the app.",
+        "operationId" : "listProjectEnvSchedJob",
+        "parameters" : [ {
+          "description" : "project ID",
+          "in" : "path",
+          "name" : "projectID",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "project Env",
+          "in" : "path",
+          "name" : "projectEnv",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "`jobType=type1,type2`",
+          "in" : "query",
+          "name" : "jobType",
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "`appId=<an app of the env>`",
+          "in" : "query",
+          "name" : "appId",
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "`status=active,disabled`",
+          "in" : "query",
+          "name" : "status",
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "`search=<target> (support *)`",
+          "in" : "query",
+          "name" : "search",
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "`pageOffset=offset`",
+          "in" : "query",
+          "name" : "pageOffset",
+          "schema" : {
+            "type" : "integer"
+          }
+        }, {
+          "description" : "`pageLimit=limit`",
+          "in" : "query",
+          "name" : "pageLimit",
+          "schema" : {
+            "type" : "integer"
+          }
+        }, {
+          "description" : "`sort=[-]field1|field2...`",
+          "in" : "query",
+          "name" : "sort",
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/settings_schedjobdto.ListEnvSchedJobResp"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "400" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Bad Request"
+          },
+          "500" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Internal Server Error"
+          }
+        },
+        "summary" : "Lists an env's scheduled jobs with its apps'",
+        "tags" : [ "project_env_settings" ]
+      },
+      "post" : {
+        "description" : "Creates an env's scheduled job: a job sequence of its apps' jobs.",
+        "operationId" : "createProjectEnvSchedJob",
+        "parameters" : [ {
+          "description" : "project ID",
+          "in" : "path",
+          "name" : "projectID",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "project Env",
+          "in" : "path",
+          "name" : "projectEnv",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "*/*" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/settings_schedjobdto.CreateSchedJobReq"
+              }
+            }
+          },
+          "description" : "request data",
+          "required" : true
+        },
+        "responses" : {
+          "201" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/settings_schedjobdto.CreateSchedJobResp"
+                }
+              }
+            },
+            "description" : "Created"
+          },
+          "400" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Bad Request"
+          },
+          "500" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Internal Server Error"
+          }
+        },
+        "summary" : "Creates an env's scheduled job",
+        "tags" : [ "project_env_settings" ],
+        "x-codegen-request-body-name" : "body"
+      }
+    },
+    "/projects/{projectID}/{projectEnv}/sched-jobs/{itemID}" : {
+      "delete" : {
+        "description" : "Deletes an env's scheduled job",
+        "operationId" : "deleteProjectEnvSchedJob",
+        "parameters" : [ {
+          "description" : "project ID",
+          "in" : "path",
+          "name" : "projectID",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "project Env",
+          "in" : "path",
+          "name" : "projectEnv",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "setting ID",
+          "in" : "path",
+          "name" : "itemID",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/settings_schedjobdto.DeleteSchedJobResp"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "400" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Bad Request"
+          },
+          "500" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Internal Server Error"
+          }
+        },
+        "summary" : "Deletes an env's scheduled job",
+        "tags" : [ "project_env_settings" ]
+      },
+      "get" : {
+        "description" : "Gets an env's scheduled job",
+        "operationId" : "getProjectEnvSchedJob",
+        "parameters" : [ {
+          "description" : "project ID",
+          "in" : "path",
+          "name" : "projectID",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "project Env",
+          "in" : "path",
+          "name" : "projectEnv",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "setting ID",
+          "in" : "path",
+          "name" : "itemID",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/settings_schedjobdto.GetSchedJobResp"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "400" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Bad Request"
+          },
+          "500" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Internal Server Error"
+          }
+        },
+        "summary" : "Gets an env's scheduled job",
+        "tags" : [ "project_env_settings" ]
+      },
+      "put" : {
+        "description" : "Updates an env's scheduled job",
+        "operationId" : "updateProjectEnvSchedJob",
+        "parameters" : [ {
+          "description" : "project ID",
+          "in" : "path",
+          "name" : "projectID",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "project Env",
+          "in" : "path",
+          "name" : "projectEnv",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "setting ID",
+          "in" : "path",
+          "name" : "itemID",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "*/*" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/settings_schedjobdto.UpdateSchedJobReq"
+              }
+            }
+          },
+          "description" : "request data",
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/settings_schedjobdto.UpdateSchedJobResp"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "400" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Bad Request"
+          },
+          "500" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Internal Server Error"
+          }
+        },
+        "summary" : "Updates an env's scheduled job",
+        "tags" : [ "project_env_settings" ],
+        "x-codegen-request-body-name" : "body"
+      }
+    },
+    "/projects/{projectID}/{projectEnv}/sched-jobs/{itemID}/exec" : {
+      "post" : {
+        "description" : "Runs an env's scheduled job now, outside its schedule.",
+        "operationId" : "executeProjectEnvSchedJob",
+        "parameters" : [ {
+          "description" : "project ID",
+          "in" : "path",
+          "name" : "projectID",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "project Env",
+          "in" : "path",
+          "name" : "projectEnv",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "setting ID",
+          "in" : "path",
+          "name" : "itemID",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "*/*" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/settings_schedjobdto.ExecuteSchedJobReq"
+              }
+            }
+          },
+          "description" : "request data",
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/settings_schedjobdto.ExecuteSchedJobResp"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "400" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Bad Request"
+          },
+          "500" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Internal Server Error"
+          }
+        },
+        "summary" : "Runs an env's scheduled job now",
+        "tags" : [ "project_env_settings" ],
+        "x-codegen-request-body-name" : "body"
+      }
+    },
+    "/projects/{projectID}/{projectEnv}/sched-jobs/{itemID}/status" : {
+      "put" : {
+        "description" : "Enables or disables an env's scheduled job",
+        "operationId" : "updateProjectEnvSchedJobStatus",
+        "parameters" : [ {
+          "description" : "project ID",
+          "in" : "path",
+          "name" : "projectID",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "project Env",
+          "in" : "path",
+          "name" : "projectEnv",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "setting ID",
+          "in" : "path",
+          "name" : "itemID",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "*/*" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/settings_schedjobdto.UpdateSchedJobStatusReq"
+              }
+            }
+          },
+          "description" : "request data",
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/settings_schedjobdto.UpdateSchedJobStatusResp"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "400" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Bad Request"
+          },
+          "500" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Internal Server Error"
+          }
+        },
+        "summary" : "Enables or disables an env's scheduled job",
+        "tags" : [ "project_env_settings" ],
+        "x-codegen-request-body-name" : "body"
+      }
+    },
     "/projects/{projectID}/{projectEnv}/secrets" : {
       "get" : {
         "description" : "Lists project secrets",
@@ -43892,6 +44422,61 @@
         "required" : [ "id", "type" ],
         "type" : "object"
       },
+      "entity.SchedJobSeqRun" : {
+        "properties" : {
+          "currentStep" : {
+            "type" : "integer"
+          },
+          "started" : {
+            "description" : "Started is set once the run has checked it does not overlap another.",
+            "type" : "boolean"
+          },
+          "steps" : {
+            "items" : {
+              "$ref" : "#/components/schemas/entity.SchedJobSeqStepResult"
+            },
+            "type" : "array"
+          }
+        },
+        "required" : [ "currentStep", "started", "steps" ],
+        "type" : "object"
+      },
+      "entity.SchedJobSeqStepResult" : {
+        "properties" : {
+          "attempts" : {
+            "type" : "integer"
+          },
+          "endedAt" : {
+            "type" : "string"
+          },
+          "error" : {
+            "type" : "string"
+          },
+          "exitCode" : {
+            "type" : "integer"
+          },
+          "job" : {
+            "type" : "string"
+          },
+          "name" : {
+            "type" : "string"
+          },
+          "outputs" : {
+            "additionalProperties" : {
+              "type" : "string"
+            },
+            "type" : "object"
+          },
+          "startedAt" : {
+            "type" : "string"
+          },
+          "status" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "attempts", "endedAt", "error", "exitCode", "job", "name", "outputs", "startedAt", "status" ],
+        "type" : "object"
+      },
       "entity.TaskConfig" : {
         "properties" : {
           "controlDisabled" : {
@@ -58395,11 +58980,18 @@
           "schedule" : {
             "$ref" : "#/components/schemas/settings_schedjobdto.ScheduleReq"
           },
+          "sequence" : {
+            "allOf" : [ {
+              "$ref" : "#/components/schemas/settings_schedjobdto.SchedJobSequenceReq"
+            } ],
+            "description" : "Sequence is a job-sequence's jobs; left out for every other type.",
+            "type" : "object"
+          },
           "timeout" : {
             "type" : "string"
           }
         },
-        "required" : [ "app", "command", "commandOutput", "controlDisabled", "default", "inheritable", "jobType", "maxRetry", "name", "notification", "priority", "retryBackoff", "retryBackoffJitter", "retryDelay", "retryDelayIncr", "retryDelayMax", "schedule", "timeout" ],
+        "required" : [ "app", "command", "commandOutput", "controlDisabled", "default", "inheritable", "jobType", "maxRetry", "name", "notification", "priority", "retryBackoff", "retryBackoffJitter", "retryDelay", "retryDelayIncr", "retryDelayMax", "schedule", "sequence", "timeout" ],
         "type" : "object"
       },
       "settings_schedjobdto.CreateSchedJobResp" : {
@@ -58421,6 +59013,112 @@
           }
         },
         "required" : [ "meta" ],
+        "type" : "object"
+      },
+      "settings_schedjobdto.EnvSchedJobResp" : {
+        "properties" : {
+          "app" : {
+            "$ref" : "#/components/schemas/basedto.NamedObjectResp"
+          },
+          "command" : {
+            "$ref" : "#/components/schemas/settings_commandtemplatedto.CommandTemplateResp"
+          },
+          "commandOutput" : {
+            "$ref" : "#/components/schemas/settings_schedjobdto.CommandOutputResp"
+          },
+          "controlDisabled" : {
+            "type" : "boolean"
+          },
+          "createdAt" : {
+            "type" : "string"
+          },
+          "default" : {
+            "type" : "boolean"
+          },
+          "expireAt" : {
+            "type" : "string"
+          },
+          "id" : {
+            "type" : "string"
+          },
+          "inheritable" : {
+            "type" : "boolean"
+          },
+          "inherited" : {
+            "type" : "boolean"
+          },
+          "jobType" : {
+            "type" : "string"
+          },
+          "kind" : {
+            "type" : "string"
+          },
+          "maxRetry" : {
+            "type" : "integer"
+          },
+          "name" : {
+            "type" : "string"
+          },
+          "nextRuns" : {
+            "description" : "Calculated fields",
+            "items" : {
+              "type" : "string"
+            },
+            "type" : "array"
+          },
+          "notification" : {
+            "$ref" : "#/components/schemas/basedto.BaseEventNotificationResp"
+          },
+          "ownerApp" : {
+            "$ref" : "#/components/schemas/basedto.NamedObjectResp"
+          },
+          "priority" : {
+            "type" : "string"
+          },
+          "retryBackoff" : {
+            "type" : "boolean"
+          },
+          "retryBackoffJitter" : {
+            "type" : "string"
+          },
+          "retryDelay" : {
+            "type" : "string"
+          },
+          "retryDelayIncr" : {
+            "type" : "string"
+          },
+          "retryDelayMax" : {
+            "type" : "string"
+          },
+          "schedule" : {
+            "$ref" : "#/components/schemas/settings_schedjobdto.ScheduleResp"
+          },
+          "scope" : {
+            "type" : "string"
+          },
+          "sequence" : {
+            "$ref" : "#/components/schemas/settings_schedjobdto.SchedJobSequenceResp"
+          },
+          "size" : {
+            "type" : "integer"
+          },
+          "status" : {
+            "type" : "string"
+          },
+          "timeout" : {
+            "type" : "string"
+          },
+          "type" : {
+            "type" : "string"
+          },
+          "updateVer" : {
+            "type" : "integer"
+          },
+          "updatedAt" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "app", "command", "commandOutput", "controlDisabled", "createdAt", "default", "expireAt", "id", "inheritable", "inherited", "jobType", "kind", "maxRetry", "name", "nextRuns", "notification", "ownerApp", "priority", "retryBackoff", "retryBackoffJitter", "retryDelay", "retryDelayIncr", "retryDelayMax", "schedule", "scope", "sequence", "size", "status", "timeout", "type", "updateVer", "updatedAt" ],
         "type" : "object"
       },
       "settings_schedjobdto.ExecuteSchedJobDataResp" : {
@@ -58454,6 +59152,21 @@
           },
           "meta" : {
             "$ref" : "#/components/schemas/basedto.Meta"
+          }
+        },
+        "required" : [ "data", "meta" ],
+        "type" : "object"
+      },
+      "settings_schedjobdto.ListEnvSchedJobResp" : {
+        "properties" : {
+          "data" : {
+            "items" : {
+              "$ref" : "#/components/schemas/settings_schedjobdto.EnvSchedJobResp"
+            },
+            "type" : "array"
+          },
+          "meta" : {
+            "$ref" : "#/components/schemas/basedto.ListMeta"
           }
         },
         "required" : [ "data", "meta" ],
@@ -58549,6 +59262,9 @@
           "schedule" : {
             "$ref" : "#/components/schemas/settings_schedjobdto.ScheduleResp"
           },
+          "sequence" : {
+            "$ref" : "#/components/schemas/settings_schedjobdto.SchedJobSequenceResp"
+          },
           "size" : {
             "type" : "integer"
           },
@@ -58568,7 +59284,78 @@
             "type" : "string"
           }
         },
-        "required" : [ "app", "command", "commandOutput", "controlDisabled", "createdAt", "default", "expireAt", "id", "inheritable", "inherited", "jobType", "kind", "maxRetry", "name", "nextRuns", "notification", "priority", "retryBackoff", "retryBackoffJitter", "retryDelay", "retryDelayIncr", "retryDelayMax", "schedule", "size", "status", "timeout", "type", "updateVer", "updatedAt" ],
+        "required" : [ "app", "command", "commandOutput", "controlDisabled", "createdAt", "default", "expireAt", "id", "inheritable", "inherited", "jobType", "kind", "maxRetry", "name", "nextRuns", "notification", "priority", "retryBackoff", "retryBackoffJitter", "retryDelay", "retryDelayIncr", "retryDelayMax", "schedule", "sequence", "size", "status", "timeout", "type", "updateVer", "updatedAt" ],
+        "type" : "object"
+      },
+      "settings_schedjobdto.SchedJobSequenceReq" : {
+        "properties" : {
+          "mode" : {
+            "type" : "string"
+          },
+          "onFailure" : {
+            "type" : "string"
+          },
+          "steps" : {
+            "items" : {
+              "$ref" : "#/components/schemas/settings_schedjobdto.SchedJobSequenceStepReq"
+            },
+            "type" : "array"
+          }
+        },
+        "required" : [ "mode", "onFailure", "steps" ],
+        "type" : "object"
+      },
+      "settings_schedjobdto.SchedJobSequenceResp" : {
+        "properties" : {
+          "mode" : {
+            "type" : "string"
+          },
+          "onFailure" : {
+            "type" : "string"
+          },
+          "steps" : {
+            "items" : {
+              "$ref" : "#/components/schemas/settings_schedjobdto.SchedJobSequenceStepResp"
+            },
+            "type" : "array"
+          }
+        },
+        "required" : [ "mode", "onFailure", "steps" ],
+        "type" : "object"
+      },
+      "settings_schedjobdto.SchedJobSequenceStepReq" : {
+        "properties" : {
+          "job" : {
+            "$ref" : "#/components/schemas/basedto.ObjectIDReq"
+          },
+          "name" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "job", "name" ],
+        "type" : "object"
+      },
+      "settings_schedjobdto.SchedJobSequenceStepResp" : {
+        "properties" : {
+          "app" : {
+            "allOf" : [ {
+              "$ref" : "#/components/schemas/basedto.NamedObjectResp"
+            } ],
+            "description" : "App is the app the job belongs to, when it is an app's.",
+            "type" : "object"
+          },
+          "job" : {
+            "allOf" : [ {
+              "$ref" : "#/components/schemas/settings.BaseSettingResp"
+            } ],
+            "description" : "Job is the scheduled job the step runs; \"missing\" when it is gone.",
+            "type" : "object"
+          },
+          "name" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "app", "job", "name" ],
         "type" : "object"
       },
       "settings_schedjobdto.ScheduleReq" : {
@@ -58662,6 +59449,13 @@
           "schedule" : {
             "$ref" : "#/components/schemas/settings_schedjobdto.ScheduleReq"
           },
+          "sequence" : {
+            "allOf" : [ {
+              "$ref" : "#/components/schemas/settings_schedjobdto.SchedJobSequenceReq"
+            } ],
+            "description" : "Sequence is a job-sequence's jobs; left out for every other type.",
+            "type" : "object"
+          },
           "timeout" : {
             "type" : "string"
           },
@@ -58669,7 +59463,7 @@
             "type" : "integer"
           }
         },
-        "required" : [ "app", "command", "commandOutput", "controlDisabled", "default", "inheritable", "jobType", "maxRetry", "name", "notification", "priority", "retryBackoff", "retryBackoffJitter", "retryDelay", "retryDelayIncr", "retryDelayMax", "schedule", "timeout", "updateVer" ],
+        "required" : [ "app", "command", "commandOutput", "controlDisabled", "default", "inheritable", "jobType", "maxRetry", "name", "notification", "priority", "retryBackoff", "retryBackoffJitter", "retryDelay", "retryDelayIncr", "retryDelayMax", "schedule", "sequence", "timeout", "updateVer" ],
         "type" : "object"
       },
       "settings_schedjobdto.UpdateSchedJobResp" : {
@@ -63588,6 +64382,13 @@
           "scopeUser" : {
             "$ref" : "#/components/schemas/basedto.UserBaseResp"
           },
+          "sequenceRun" : {
+            "allOf" : [ {
+              "$ref" : "#/components/schemas/entity.SchedJobSeqRun"
+            } ],
+            "description" : "SequenceRun is a job sequence's run: each step and how it went.",
+            "type" : "object"
+          },
           "startedAt" : {
             "type" : "string"
           },
@@ -63607,7 +64408,7 @@
             "type" : "string"
           }
         },
-        "required" : [ "config", "createdAt", "endedAt", "id", "lastError", "retryAt", "runAt", "scopeApp", "scopeProject", "scopeUser", "startedAt", "status", "targetJob", "type", "updateVer", "updatedAt" ],
+        "required" : [ "config", "createdAt", "endedAt", "id", "lastError", "retryAt", "runAt", "scopeApp", "scopeProject", "scopeUser", "sequenceRun", "startedAt", "status", "targetJob", "type", "updateVer", "updatedAt" ],
         "type" : "object"
       },
       "taskdto.TaskStatusResp" : {

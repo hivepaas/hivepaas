@@ -99,10 +99,6 @@ func (s *SchedJobSchedule) SetLastSchedTime(lastSchedTime time.Time) bool {
 	if s == nil {
 		return false
 	}
-	// TODO (low): should we always update lastSchedTime of sched jobs
-	// if !s.LastSchedTime.IsZero() && lastSchedTime.Sub(s.LastSchedTime) < timeutil.Day {
-	//	return false
-	// }
 	if s.LastSchedTime.Equal(lastSchedTime) {
 		return false
 	}
@@ -244,32 +240,6 @@ func (s *SchedJobSchedule) calcNextRunsInRange(fromTime, toTime time.Time) (res 
 	}
 
 	return nil, hperrors.NewArgumentInvalid("Schedule")
-}
-
-type SchedJobCommandOutput struct {
-	Enabled    bool                             `json:"enabled"`
-	SaveToFile *SchedJobCommandOutputSaveToFile `json:"saveToFile,omitempty"`
-	PipeToApp  *SchedJobCommandOutputPipeToApp  `json:"pipeToApp,omitempty"`
-}
-
-type SchedJobCommandOutputSaveToFile struct {
-	FileName          string                           `json:"fileName"`
-	FilePath          string                           `json:"filePath"`
-	FileKind          base.FileKind                    `json:"fileKind"`
-	Storage           SchedJobCommandOutputFileStorage `json:"storage"`
-	CompressionFormat base.FileCompressionFormat       `json:"compressionFormat"`
-	EncryptionFormat  base.FileEncryptionFormat        `json:"encryptionFormat"`
-	EncryptionSecret  EncryptedField                   `json:"encryptionSecret"`
-}
-
-type SchedJobCommandOutputFileStorage struct {
-	ID     string `json:"id"`
-	Bucket string `json:"bucket,omitempty"`
-}
-
-type SchedJobCommandOutputPipeToApp struct {
-	TargetApp ObjectID         `json:"targetApp"`
-	Command   *CommandTemplate `json:"command"`
 }
 
 func (s *SchedJob) GetType() base.SettingType {

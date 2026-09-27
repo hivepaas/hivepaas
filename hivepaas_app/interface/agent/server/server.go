@@ -11,6 +11,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecaseagent/imagebuildagentuc"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecaseagent/nodeagentuc"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecaseagent/nodecleanupagentuc"
+	"github.com/hivepaas/hivepaas/hivepaas_app/usecaseagent/reposerveragentuc"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecaseagent/volumeagentuc"
 )
 
@@ -21,6 +22,7 @@ type AgentServer struct {
 	agentproto.UnimplementedImageBuildServiceServer
 	agentproto.UnimplementedNodeCleanupServiceServer
 	agentproto.UnimplementedNodeServiceServer
+	agentproto.UnimplementedRepoServerServiceServer
 	agentproto.UnimplementedVolumeServiceServer
 	logger             logging.Logger
 	containerAgentUC   *containeragentuc.UC
@@ -28,6 +30,7 @@ type AgentServer struct {
 	imageBuildAgentUC  *imagebuildagentuc.UC
 	nodeAgentUC        *nodeagentuc.UC
 	nodeCleanupAgentUC *nodecleanupagentuc.UC
+	repoServerAgentUC  *reposerveragentuc.UC
 	volumeAgentUC      *volumeagentuc.UC
 }
 
@@ -38,6 +41,7 @@ func NewAgentServer(
 	imageBuildAgentUC *imagebuildagentuc.UC,
 	nodeAgentUC *nodeagentuc.UC,
 	nodeCleanupAgentUC *nodecleanupagentuc.UC,
+	repoServerAgentUC *reposerveragentuc.UC,
 	volumeAgentUC *volumeagentuc.UC,
 
 ) *AgentServer {
@@ -48,6 +52,7 @@ func NewAgentServer(
 		imageBuildAgentUC:  imageBuildAgentUC,
 		nodeAgentUC:        nodeAgentUC,
 		nodeCleanupAgentUC: nodeCleanupAgentUC,
+		repoServerAgentUC:  repoServerAgentUC,
 		volumeAgentUC:      volumeAgentUC,
 	}
 }

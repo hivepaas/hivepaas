@@ -1,0 +1,29 @@
+syntax = "proto3";
+
+package agent;
+
+option go_package = "github.com/hivepaas/hivepaas/hivepaas_app/interface/agent/proto;agentproto";
+
+service RepoServerService {
+  // RepoServer runs a kopia repository server for as long as the stream is open.
+  // The client sends one request; the agent answers once the server listens, and
+  // ends the stream with an error when the server exits.
+  rpc RepoServer(stream RepoServerReq) returns (stream RepoServerResp);
+}
+
+message RepoServerReq {
+  // repo_path is the repository's directory, as the agent sees the host.
+  string repo_path = 1;
+  string repo_password = 2;
+  // username is the user its clients log in as, user@host.
+  string username = 3;
+  string user_password = 4;
+  // listen_host is the agent's address, as the caller reached it.
+  string listen_host = 5;
+}
+
+message RepoServerResp {
+  int32 port = 1;
+  // cert_fingerprint is the SHA-256 fingerprint of the server's certificate.
+  string cert_fingerprint = 2;
+}

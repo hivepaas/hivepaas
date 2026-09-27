@@ -1,6 +1,7 @@
 package schedjobexecservice
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
@@ -14,8 +15,30 @@ type SchedJobExecReq struct {
 	TaskMinRunningDuration time.Duration
 	TaskFindRetryMax       int
 	TaskFindRetryDelay     time.Duration
+	// Sequence is set when the job runs as a step of a job sequence.
+	Sequence *SequenceStep
 }
 
 type SchedJobExecResp struct {
 	SkipResultNotification bool
+	// ExitCode is the command's, when it ran to an end.
+	ExitCode *int
+	// Outputs is what a step of a sequence wrote to its output file.
+	Outputs map[string]string
+}
+
+// SequenceStep is the part a job plays in a job sequence's run: which step it
+// is, and how the steps before it went. The job is told so in its environment,
+// and may write outputs for the steps after it to OutputFile.
+type SequenceStep struct {
+	Step       int // 1-based
+	Steps      int
+	Earlier    []*entity.SchedJobSeqStepResult
+	OutputFile string
+}
+
+// OutputFilePath is where the step of a run writes its outputs, in its
+// container.
+func OutputFilePath(taskID string, step int) string {
+	return fmt.Sprintf("/tmp/hivepaas-output-%s-%d", taskID, step)
 }

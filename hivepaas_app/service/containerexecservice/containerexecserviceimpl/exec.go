@@ -51,7 +51,9 @@ func (s *service) ContainerExec(
 			return nil, hperrors.Wrap(sleepErr)
 		}
 	}
-	return nil, hperrors.Wrap(lastErr)
+	// The last attempt's response, when it has one: a command that ran and
+	// exited non-zero says where, and with what code.
+	return resp, hperrors.Wrap(lastErr)
 }
 
 func (s *service) containerExec(
@@ -65,32 +67,14 @@ func (s *service) containerExec(
 		logStore = tasklog.NewNullStore()
 	}
 
-	serviceID := req.App.ServiceID
-	if serviceID == "" {
-		return nil, false, hperrors.NewNotFound("Swarm service")
-	}
-
-	inspectResp, err := s.dockerManager.ServiceInspect(ctx, serviceID)
-	if err != nil {
-		return nil, true, hperrors.Wrap(err)
-	}
-	svcMode := &inspectResp.Service.Spec.Mode
-	if svcMode.Replicated != nil && (svcMode.Replicated.Replicas == nil || *svcMode.Replicated.Replicas == 0) {
-		return &containerexecservice.ContainerExecResp{ExecStarted: false}, false, nil
-	}
-
-	task, _, err := s.dockerManager.ServiceTaskGetRunning(ctx, serviceID,
-		gofn.Coalesce(req.TaskMinRunningDuration, taskFindMinRunningDuration),
-		gofn.Coalesce(req.TaskFindRetryMax, taskFindRetryMax),
-		gofn.Coalesce(req.TaskFindRetryDelay, taskFindRetryDelay),
-		nil)
-	if err != nil {
-		return nil, false, hperrors.Wrap(err)
-	}
-	if task == nil {
-		_ = logStore.Add(ctx, tasklog.NewWarnFrame("No running task found for service: "+serviceID,
-			tasklog.TsNow))
-		return nil, false, hperrors.NewNotFound("Running task of service")
+	containerID, nodeID := req.ContainerID, req.NodeID
+	if containerID == "" {
+		var started bool
+		containerID, nodeID, started, retryable, err = s.pickContainer(ctx, req, logStore)
+		if err != nil || !started {
+			return gofn.If(started, nil, &containerexecservice.ContainerExecResp{ExecStarted: false}),
+				retryable, err
+		}
 	}
 
 	currNodeID, err := s.dockerManager.NodeCurrentID(ctx)
@@ -98,7 +82,7 @@ func (s *service) containerExec(
 		return nil, true, hperrors.Wrap(err)
 	}
 
-	isRemote := task.NodeID != "" && task.NodeID != currNodeID
+	isRemote := nodeID != "" && nodeID != currNodeID
 	if config.Current().DevMode.Enabled && config.Current().DevMode.ForceAgentLocal {
 		isRemote = true
 	}
@@ -107,14 +91,13 @@ func (s *service) containerExec(
 		logStore:     logStore,
 		agentService: s.agentService,
 		dockerClient: gofn.If(isRemote, nil, s.dockerManager),
-		targetNodeID: task.NodeID,
+		targetNodeID: nodeID,
 		retryable:    true,
 	}
 
-	containerID := task.Status.ContainerStatus.ContainerID
 	resp = &containerexecservice.ContainerExecResp{
 		ContainerID:    containerID,
-		NodeID:         task.NodeID,
+		NodeID:         nodeID,
 		IsRemoteExec:   isRemote,
 		CloseFunc:      execHelper.Close,
 		ExecResizeFunc: execHelper.ExecResize,
@@ -159,10 +142,11 @@ func (s *service) containerExec(
 	if err != nil {
 		return nil, retryable, hperrors.Wrap(err)
 	}
+	resp.ExitCode = exitCode
 	if exitCode != 0 {
 		_ = logStore.AddRedacted(ctx, tasklog.NewErrFrame(fmt.Sprintf(
 			"Command execution failed with exit code: %v", exitCode), tasklog.TsNow))
-		return nil, false, hperrors.Wrap(hperrors.ErrInfraActionFailed)
+		return resp, false, hperrors.Wrap(hperrors.ErrInfraActionFailed)
 	}
 
 	return resp, false, nil
@@ -324,4 +308,42 @@ func (h *containerExecHelper) calcIsRetryable(
 		}
 	}
 	return nil
+}
+
+// pickContainer is a running container of the app's service to run in, and
+// its node. started is false for a service scaled to nothing: there is nothing
+// to run in, and that is not an error.
+func (s *service) pickContainer(
+	ctx context.Context,
+	req *containerexecservice.ContainerExecReq,
+	logStore *tasklog.Store,
+) (containerID, nodeID string, started, retryable bool, err error) {
+	serviceID := req.App.ServiceID
+	if serviceID == "" {
+		return "", "", true, false, hperrors.NewNotFound("Swarm service")
+	}
+
+	inspectResp, err := s.dockerManager.ServiceInspect(ctx, serviceID)
+	if err != nil {
+		return "", "", true, true, hperrors.Wrap(err)
+	}
+	svcMode := &inspectResp.Service.Spec.Mode
+	if svcMode.Replicated != nil && (svcMode.Replicated.Replicas == nil || *svcMode.Replicated.Replicas == 0) {
+		return "", "", false, false, nil
+	}
+
+	task, _, err := s.dockerManager.ServiceTaskGetRunning(ctx, serviceID,
+		gofn.Coalesce(req.TaskMinRunningDuration, taskFindMinRunningDuration),
+		gofn.Coalesce(req.TaskFindRetryMax, taskFindRetryMax),
+		gofn.Coalesce(req.TaskFindRetryDelay, taskFindRetryDelay),
+		nil)
+	if err != nil {
+		return "", "", true, false, hperrors.Wrap(err)
+	}
+	if task == nil {
+		_ = logStore.Add(ctx, tasklog.NewWarnFrame("No running task found for service: "+serviceID,
+			tasklog.TsNow))
+		return "", "", true, false, hperrors.NewNotFound("Running task of service")
+	}
+	return task.Status.ContainerStatus.ContainerID, task.NodeID, true, false, nil
 }

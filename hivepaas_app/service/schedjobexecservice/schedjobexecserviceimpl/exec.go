@@ -53,6 +53,7 @@ func (s *service) SchedJobExec(
 	if err != nil {
 		return nil, hperrors.Wrap(err)
 	}
+	env = append(env, sequenceEnv(req.Sequence)...)
 
 	stdoutWriter, err := s.initOutputWriter(ctx, data)
 	if err != nil {
@@ -61,7 +62,7 @@ func (s *service) SchedJobExec(
 
 	defer s.cleanup(err, data)
 
-	_, err = s.containerExecService.ContainerExec(ctx, &containerexecservice.ContainerExecReq{
+	execResp, err := s.containerExecService.ContainerExec(ctx, &containerexecservice.ContainerExecReq{
 		App:                    req.DestApp,
 		TaskMinRunningDuration: req.TaskMinRunningDuration,
 		TaskFindRetryMax:       req.TaskFindRetryMax,
@@ -85,10 +86,19 @@ func (s *service) SchedJobExec(
 		},
 	})
 
-	err = s.finalize(ctx, db, err, data)
-	if err != nil {
-		return nil, hperrors.Wrap(err)
+	resp := &schedjobexecservice.SchedJobExecResp{}
+	if execResp != nil && execResp.ExecStarted {
+		exitCode := execResp.ExitCode
+		resp.ExitCode = &exitCode
+	}
+	if req.Sequence != nil {
+		// Read even after a failure: a step may say why in its outputs.
+		resp.Outputs = s.readOutputs(ctx, req, execResp)
 	}
 
-	return &schedjobexecservice.SchedJobExecResp{}, nil
+	err = s.finalize(ctx, db, err, data)
+	if err != nil {
+		return resp, hperrors.Wrap(err)
+	}
+	return resp, nil
 }

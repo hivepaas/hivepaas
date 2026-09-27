@@ -21,11 +21,17 @@ type jobRun struct {
 	execData   *queue.TaskExecData
 	jobSetting *entity.Setting
 	refObjects *entity.RefObjects
+	// sequence is set when the job runs as a step of a job sequence.
+	sequence *schedjobexecservice.SequenceStep
 }
 
-// jobResult is what running a job says beyond its error.
+// jobResult is what running a job says beyond its error. A container command
+// gives its exit code, and, as a step of a sequence, its outputs, even when it
+// fails.
 type jobResult struct {
 	skipNotification bool
+	exitCode         *int
+	outputs          map[string]string
 }
 
 // runJob runs a scheduled job by its type. A job run on its own schedule and a
@@ -39,11 +45,16 @@ func (e *Executor) runJob(ctx context.Context, db database.Tx, run *jobRun) (*jo
 			TaskExecData:    run.execData,
 			SchedJobSetting: run.jobSetting,
 			DestApp:         run.refObjects.RefApps[schedJob.App.ID],
+			Sequence:        run.sequence,
 		})
-		if err != nil {
-			return nil, hperrors.Wrap(err)
+		if resp != nil {
+			result.skipNotification = resp.SkipResultNotification
+			result.exitCode = resp.ExitCode
+			result.outputs = resp.Outputs
 		}
-		result.skipNotification = resp.SkipResultNotification
+		if err != nil {
+			return result, hperrors.Wrap(err)
+		}
 
 	case base.SchedJobTypeSystemCleanup:
 		setting := run.refObjects.RefSettings[schedJob.TargetSetting.ID]

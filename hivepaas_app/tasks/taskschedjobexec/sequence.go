@@ -11,6 +11,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/tasklog"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/timeutil"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/schedjobexecservice"
 )
 
 // executeSequence runs one step of a job sequence's run and says what comes
@@ -169,12 +170,22 @@ func (e *Executor) runStep(
 		step.Error = stepError(err)
 		return hperrors.Wrap(err)
 	}
-	_, err = e.runJob(ctx, db, &jobRun{
+	result, err := e.runJob(ctx, db, &jobRun{
 		execData:   data.SubTask(data.Task),
 		jobSetting: member,
 		refObjects: refObjects,
+		sequence: &schedjobexecservice.SequenceStep{
+			Step:       run.CurrentStep + 1,
+			Steps:      len(run.Steps),
+			Earlier:    run.Steps[:run.CurrentStep],
+			OutputFile: schedjobexecservice.OutputFilePath(data.Task.ID, run.CurrentStep+1),
+		},
 	})
 	step.EndedAt = timeutil.NowUTC()
+	if result != nil {
+		step.ExitCode = result.exitCode
+		step.Outputs = result.outputs
+	}
 	if err != nil {
 		step.Error = stepError(err)
 		return hperrors.Wrap(err)

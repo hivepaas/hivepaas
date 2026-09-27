@@ -23,7 +23,7 @@ import {
 } from "../schemas";
 
 /** Every item of a short list a picker offers whole: the API answers 50 when not told. */
-const LIST_ALL_PAGE = { page: 1, size: 100 };
+const LIST_ALL_PAGE = { page: 1, size: 1000 };
 
 const ACME_KEY_TYPES: ESslKeyType[] = [
     ESslKeyType.ECP256,

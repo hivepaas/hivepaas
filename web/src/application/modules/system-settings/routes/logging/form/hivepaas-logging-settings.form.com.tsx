@@ -36,7 +36,7 @@ import { emptyLoggingEndpointForm, toLoggingFormInput } from "./hivepaas-logging
 type SchemaInput = HivePaaSLoggingSettingsFormInput;
 type SchemaOutput = HivePaaSLoggingSettingsFormOutput;
 
-const LIST_ALL = { pagination: { page: 1, size: 100 } };
+const LIST_ALL = { pagination: { page: 1, size: 1000 } };
 
 /** The rows of one section, indented under its header like every settings page. */
 function SectionBody({ children }: PropsWithChildren) {

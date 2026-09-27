@@ -29,7 +29,7 @@ import { describeCleanup, toRegistryFormInput } from "./hivepaas-registry-settin
 type SchemaInput = HivePaaSRegistrySettingsFormInput;
 type SchemaOutput = HivePaaSRegistrySettingsFormOutput;
 
-const LIST_ALL = { pagination: { page: 1, size: 100 } };
+const LIST_ALL = { pagination: { page: 1, size: 1000 } };
 
 const STORAGE_OPTIONS: OptionCard<HivePaaSRegistryStorageType>[] = [
     {

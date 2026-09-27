@@ -29,7 +29,7 @@ import { DockerfileContentEditor } from "./dockerfile-content-editor.com";
 import { RegistryRepoNote } from "./registry-repo-note.com";
 
 /** Every item of a short list a picker offers whole: the API answers 50 when not told. */
-const LIST_ALL_PAGE = { page: 1, size: 100 };
+const LIST_ALL_PAGE = { page: 1, size: 1000 };
 
 export function BuildConfigurationFields({ readOnly = false, image }: Props) {
     const { id: projectId, env, appId } = useParams<{ id: string; env: string; appId: string }>();

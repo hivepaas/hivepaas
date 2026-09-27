@@ -72,6 +72,26 @@ func (s *service) loadRefObjectsByIDs(
 	requireExistence bool,
 	requireActive bool,
 	refIDs *entity.RefObjectIDs,
+) error {
+	requested := &entity.RefObjectIDs{}
+	requested.AddRefIDs(refIDs)
+	return s.loadRefObjectsByIDsOnce(ctx, db, pRefObjects, scope, requireExistence, requireActive, refIDs, requested)
+}
+
+// loadRefObjectsByIDsOnce loads refIDs, then what the loaded settings reference
+// that was never asked for: requested holds every ID asked for so far. Leaving
+// out only this round's IDs recursed forever on a chain of three - a backup
+// repository, its cloud storage, the storage's key auth - asking again for the
+// middle one each other round.
+func (s *service) loadRefObjectsByIDsOnce(
+	ctx context.Context,
+	db database.IDB,
+	pRefObjects **entity.RefObjects,
+	scope *entity.ObjectScope,
+	requireExistence bool,
+	requireActive bool,
+	refIDs *entity.RefObjectIDs,
+	requested *entity.RefObjectIDs,
 ) (err error) {
 	if pRefObjects == nil {
 		return hperrors.NewArgumentInvalid("refObjects")
@@ -126,12 +146,14 @@ func (s *service) loadRefObjectsByIDs(
 	}
 
 	// Calculate recursive ref IDs to load
-	newRecursiveRefIDs := refIDs.GetRecursiveRefObjectIDs(refObjects)
+	newRecursiveRefIDs := requested.GetRecursiveRefObjectIDs(refObjects)
 	if !newRecursiveRefIDs.HasData() {
 		return nil
 	}
+	requested.AddRefIDs(newRecursiveRefIDs)
 
-	err = s.loadRefObjectsByIDs(ctx, db, pRefObjects, scope, requireExistence, requireActive, newRecursiveRefIDs)
+	err = s.loadRefObjectsByIDsOnce(ctx, db, pRefObjects, scope, requireExistence, requireActive,
+		newRecursiveRefIDs, requested)
 	if err != nil {
 		return hperrors.Wrap(err)
 	}

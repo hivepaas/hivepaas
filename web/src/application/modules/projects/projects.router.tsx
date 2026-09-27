@@ -910,7 +910,30 @@ export const projectsRouter: RouteObject = {
                                 };
                             },
                         },
+                        {
+                            path: ROUTE.projects.single.providerConfiguration.scheduledJobs.$pattern,
+                            lazy: async () => {
+                                const { ProjectScheduledJobsRoute } = await getLazyComponents();
 
+                                return { Component: ProjectScheduledJobsRoute };
+                            },
+                        },
+                        {
+                            path: ROUTE.projects.single.providerConfiguration.scheduledJobs.createSequence.$pattern,
+                            lazy: async () => {
+                                const { EnvJobSequenceCreateRoute } = await getLazyComponents();
+
+                                return { Component: EnvJobSequenceCreateRoute };
+                            },
+                        },
+                        {
+                            path: ROUTE.projects.single.providerConfiguration.scheduledJobs.edit.$pattern,
+                            lazy: async () => {
+                                const { EnvJobSequenceEditRoute } = await getLazyComponents();
+
+                                return { Component: EnvJobSequenceEditRoute };
+                            },
+                        },
                         {
                             path: ROUTE.projects.single.providerConfiguration.commandPipes.$pattern,
                             lazy: async () => {

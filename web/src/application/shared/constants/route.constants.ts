@@ -972,6 +972,22 @@ export const ROUTE = {
                     },
                 },
 
+                scheduledJobs: {
+                    $pattern: "projects/:id/integrations/sched-jobs",
+                    $route: (id: string) => `/projects/${id}/integrations/sched-jobs/`,
+
+                    createSequence: {
+                        $pattern: "projects/:id/integrations/sched-jobs/create-sequence",
+                        $route: (id: string) => `/projects/${id}/integrations/sched-jobs/create-sequence/`,
+                    },
+
+                    edit: {
+                        $pattern: "projects/:id/integrations/sched-jobs/:scheduledJobId/edit",
+                        $route: (id: string, scheduledJobId: string) =>
+                            `/projects/${id}/integrations/sched-jobs/${scheduledJobId}/edit/`,
+                    },
+                },
+
                 commandPipes: {
                     $pattern: "projects/:id/integrations/command-pipes",
                     $route: (id: string) => `/projects/${id}/integrations/command-pipes/`,

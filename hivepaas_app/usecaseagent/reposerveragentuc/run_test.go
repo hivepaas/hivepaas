@@ -155,7 +155,7 @@ func TestRunSetsAnExistingUsersPassword(t *testing.T) {
 // printed.
 func TestRunFailsWhenTheServerDoesNotStart(t *testing.T) {
 	fake := &fakeKopia{scripts: map[string]string{
-		"server start": `echo "error opening repository: invalid repository password"; echo $$ > pid; exec sleep 60`,
+		"server start": `echo "error opening repository: invalid repository password"; exec sleep 60`,
 	}}
 	uc := newTestUC(t, fake)
 	uc.startTimeout = 300 * time.Millisecond

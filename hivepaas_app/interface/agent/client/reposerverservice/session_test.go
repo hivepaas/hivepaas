@@ -10,7 +10,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
-	"google.golang.org/grpc/test/bufconn"
 
 	agentproto "github.com/hivepaas/hivepaas/hivepaas_app/interface/agent/proto"
 	serverside "github.com/hivepaas/hivepaas/hivepaas_app/interface/agent/server/reposerverservice"
@@ -52,17 +51,19 @@ func (s *testServer) RepoServer(stream agentproto.RepoServerService_RepoServerSe
 	return serverside.RepoServer(s.runner, stream)
 }
 
-// dial serves the RPC over an in-memory connection.
+// dial serves the RPC on a local port. A plain listener, not bufconn: a checkout
+// with a vendor directory builds only what the code imports.
 func dial(t *testing.T, runner serverside.Runner) *grpc.ClientConn {
 	t.Helper()
-	listener := bufconn.Listen(1 << 20)
+	listener, err := net.Listen("tcp", "127.0.0.1:0")
+	if err != nil {
+		t.Fatal(err)
+	}
 	srv := grpc.NewServer()
 	agentproto.RegisterRepoServerServiceServer(srv, &testServer{runner: runner})
 	go func() { _ = srv.Serve(listener) }()
 	t.Cleanup(srv.Stop)
-	conn, err := grpc.NewClient("passthrough:///bufnet",
-		grpc.WithContextDialer(func(ctx context.Context, _ string) (net.Conn, error) { return listener.DialContext(ctx) }),
-		grpc.WithTransportCredentials(insecure.NewCredentials()))
+	conn, err := grpc.NewClient(listener.Addr().String(), grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		t.Fatal(err)
 	}

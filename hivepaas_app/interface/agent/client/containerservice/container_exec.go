@@ -4,10 +4,12 @@ import (
 	"bufio"
 	"bytes"
 	"context"
+	"encoding/binary"
 	"net"
 	"sync"
 	"time"
 
+	"github.com/moby/moby/api/pkg/stdcopy"
 	"github.com/moby/moby/client"
 	"google.golang.org/grpc"
 
@@ -58,6 +60,11 @@ type ContainerExecStream struct {
 	readMutex sync.Mutex
 	readErr   error
 	cond      *sync.Cond
+
+	// muxOutput frames stdout and stderr as Docker's attach stream does for a
+	// command without a TTY: the agent sends them apart, and whoever reads the
+	// stream expects Docker's framing, as when the exec is local.
+	muxOutput bool
 
 	// Exit code captured from stream
 	exitCode int32
@@ -130,6 +137,10 @@ func (s *ContainerExecStream) SendExecCreate(containerID string, option docker.E
 			Height: uint32(execOpts.ConsoleSize.Height), //nolint:gosec
 		}
 	}
+
+	s.readMutex.Lock()
+	s.muxOutput = !execOpts.TTY
+	s.readMutex.Unlock()
 
 	return s.Send(&ContainerExecReq{
 		Config: &ContainerExecConfig{
@@ -237,10 +248,10 @@ func (s *ContainerExecStream) handleResp(resp *ContainerExecResp) {
 
 	switch {
 	case resp.Stdout != nil:
-		s.readBuf.Write(resp.Stdout)
+		s.writeOutput(stdcopy.Stdout, resp.Stdout)
 		s.cond.Broadcast()
 	case resp.Stderr != nil:
-		s.readBuf.Write(resp.Stderr)
+		s.writeOutput(stdcopy.Stderr, resp.Stderr)
 		s.cond.Broadcast()
 	case resp.ExitCode != nil:
 		s.exitCode = *resp.ExitCode
@@ -252,6 +263,21 @@ func (s *ContainerExecStream) handleResp(resp *ContainerExecResp) {
 		s.cond.Broadcast()
 	}
 }
+
+// writeOutput buffers a chunk of output, framed with its stream when muxOutput:
+// one byte for the stream, three zero bytes, the size in four big-endian bytes.
+func (s *ContainerExecStream) writeOutput(stream stdcopy.StdType, data []byte) {
+	if !s.muxOutput || len(data) == 0 {
+		s.readBuf.Write(data)
+		return
+	}
+	header := [stdcopyHeaderLen]byte{byte(stream)}
+	binary.BigEndian.PutUint32(header[4:], uint32(len(data))) //nolint:gosec // a gRPC message is far below 4 GB
+	s.readBuf.Write(header[:])
+	s.readBuf.Write(data)
+}
+
+const stdcopyHeaderLen = 8
 
 // Read implements io.Reader
 func (s *ContainerExecStream) Read(b []byte) (int, error) {
@@ -316,6 +342,25 @@ func (s *ContainerExecStream) SetWriteDeadline(t time.Time) error {
 func (s *ContainerExecStream) GetExitCode() (int32, bool) {
 	s.readMutex.Lock()
 	defer s.readMutex.Unlock()
+	return s.exitCode, s.hasExit
+}
+
+// WaitExitCode is the command's exit code, waiting for the agent to send it:
+// it is the stream's last message, and whoever read the output may have
+// stopped before it came. ok is false when the stream or ctx ends without it.
+func (s *ContainerExecStream) WaitExitCode(ctx context.Context) (code int32, ok bool) {
+	stop := context.AfterFunc(ctx, func() {
+		s.readMutex.Lock()
+		defer s.readMutex.Unlock()
+		s.cond.Broadcast()
+	})
+	defer stop()
+
+	s.readMutex.Lock()
+	defer s.readMutex.Unlock()
+	for !s.hasExit && s.readErr == nil && ctx.Err() == nil {
+		s.cond.Wait()
+	}
 	return s.exitCode, s.hasExit
 }
 

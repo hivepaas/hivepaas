@@ -267,8 +267,8 @@ func (h *containerExecHelper) GetExecExitCode(
 		return execInfo.ExitCode, false, nil
 	}
 
-	// Remote exec
-	exitCode, ok := h.remoteStream.GetExitCode()
+	// Remote exec: the exit code is the stream's last message, maybe not come yet
+	exitCode, ok := h.remoteStream.WaitExitCode(ctx)
 	if !ok {
 		_ = h.calcIsRetryable(ctx)
 		return 0, h.retryable, hperrors.Wrap(hperrors.ErrGRPCRequestFailed).

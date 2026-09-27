@@ -26,14 +26,14 @@ export function CopyField({ value, what, className }: Props) {
 
     return (
         <div className={cn("flex items-start gap-2", className)}>
-            <pre className="min-w-0 flex-1 overflow-x-auto whitespace-pre-wrap break-all rounded-md border bg-muted/40 px-3 py-2 font-mono text-xs leading-relaxed">
+            <pre className="min-w-0 min-h-9 flex-1 overflow-x-auto whitespace-pre-wrap break-all rounded-md border bg-muted/40 px-3 py-2 font-mono text-xs leading-normal">
                 {value}
             </pre>
             <Button
                 type="button"
                 variant="outline"
                 size="icon"
-                className="size-8 shrink-0"
+                className="size-9 shrink-0"
                 onClick={handleCopy}
                 aria-label={`Copy the ${what.toLowerCase()}`}
             >

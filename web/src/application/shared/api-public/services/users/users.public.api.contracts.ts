@@ -4,11 +4,11 @@ import type { EUserRole } from "@application/shared/enums";
 import { type ApiRequestBase, type ApiResponsePaginated } from "@infrastructure/api";
 
 /**
- * Find many public users base
+ * Find many public users
  */
-export type Public_Users_FindManyBase_Req = ApiRequestBase<{
+export type Public_Users_FindMany_Req = ApiRequestBase<{
     search?: string;
     role?: EUserRole;
 }>;
 
-export type Public_Users_FindManyBase_Res = ApiResponsePaginated<UserPublic>;
+export type Public_Users_FindMany_Res = ApiResponsePaginated<UserPublic>;

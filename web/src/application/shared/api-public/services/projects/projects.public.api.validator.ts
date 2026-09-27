@@ -6,7 +6,8 @@ import { type Public_Projects_FindManyPaginated_Res } from "@application/shared/
 import { PagingMetaApiSchema, parseApiResponse } from "@infrastructure/api";
 
 /**
- * Find many paginated API response schema (base-list).
+ * The fields a picker needs from GET /projects; the rest of each project is
+ * dropped.
  */
 const FindManyPaginatedSchema = z.object({
     data: z.array(

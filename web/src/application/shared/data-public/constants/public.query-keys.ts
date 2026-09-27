@@ -6,9 +6,9 @@ export const QK = {
     /**
      * Users
      */
-    "users.public.find-many-base": "users.public.find-many-base",
+    "users.public.find-many": "users.public.find-many",
     /**
      * Apps
      */
-    "apps.public.find-many-base": "apps.public.find-many-base",
+    "apps.public.find-many": "apps.public.find-many",
 } as const;

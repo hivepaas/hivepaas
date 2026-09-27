@@ -347,7 +347,7 @@ export function ProjectUserAccessesDialog() {
         return Object.values(envSearchQueries).find(query => query.length > 0) ?? "";
     }, [envSearchQueries, globalSearchQuery]);
 
-    const { data: usersData, isFetching: isFetchingUsers } = UsersPublicQueries.useFindManyBase(
+    const { data: usersData, isFetching: isFetchingUsers } = UsersPublicQueries.useFindMany(
         {
             search: activeSearchQuery,
             role: EUserRole.Member,

@@ -1,0 +1,486 @@
+import React, { type PropsWithChildren, useEffect, useImperativeHandle, useMemo, useState } from "react";
+
+import { PasswordInput, RevealSecretsProvider } from "@components/ui/input-password";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { dashedBorderBox } from "@lib/styles";
+import { cn } from "@lib/utils";
+import { type FieldPath, FormProvider, useController, useForm, useFormContext, useWatch } from "react-hook-form";
+import { CloudStorageQueries } from "~/settings/data";
+import { ConfirmRevealSecretsDialog, RevealSecretsButton } from "~/settings/module-shared/components";
+import { useNotificationSettingsSources, useSettingRevealSecrets } from "~/settings/module-shared/hooks";
+import type { SystemBackupSettings } from "~/system-settings/domain";
+import { SectionHeader } from "~/system-settings/module-shared";
+import { ESystemBackupCompressionFormat, ESystemBackupEncryptionFormat } from "~/system-settings/module-shared/enums";
+
+import { AppLink, Combobox, InfoBlock, NextRunsField } from "@application/shared/components";
+import { DEFAULT_PAGINATED_DATA, ROUTE } from "@application/shared/constants";
+import { ESettingStatus } from "@application/shared/enums";
+import { NotificationSettings } from "@application/shared/form";
+
+import { type ValidationException } from "@infrastructure/exceptions/validation";
+
+import { Checkbox, Field, FieldError, FieldGroup, Input, Tabs, TabsList, TabsTrigger } from "@/components/ui";
+import { DateTimePicker } from "@/components/ui/date-time-picker";
+import { Separator } from "@/components/ui/separator";
+
+import {
+    type SystemBackupConfigurationFormInput,
+    type SystemBackupConfigurationFormOutput,
+    SystemBackupConfigurationFormSchema,
+    SystemBackupScheduleMode,
+} from "../schemas";
+import type { SystemBackupConfigurationFormRef } from "../types";
+
+import {
+    emptySystemBackupConfigurationFormDefaults,
+    mapSystemBackupSettingsToFormInput,
+} from "./system-backup-configuration.form-mappers";
+
+type SchemaInput = SystemBackupConfigurationFormInput;
+type SchemaOutput = SystemBackupConfigurationFormOutput;
+
+function EnabledField() {
+    const { control } = useFormContext<SchemaInput, unknown, SchemaOutput>();
+    const { field: status } = useController({ control, name: "status" });
+
+    return (
+        <InfoBlock
+            titleWidth={220}
+            title="Enabled"
+        >
+            <Checkbox
+                checked={status.value === ESettingStatus.Active}
+                onCheckedChange={checked => {
+                    status.onChange(checked ? ESettingStatus.Active : ESettingStatus.Disabled);
+                }}
+            />
+        </InfoBlock>
+    );
+}
+
+function GeneralFields({ nextRuns }: { nextRuns: Date[] }) {
+    const { control } = useFormContext<SchemaInput, unknown, SchemaOutput>();
+    const [cloudStorageSearch, setCloudStorageSearch] = useState("");
+
+    const {
+        data: { data: cloudStorages } = DEFAULT_PAGINATED_DATA,
+        isFetching,
+        refetch,
+        isRefetching,
+    } = CloudStorageQueries.useFindManyPaginated({ search: cloudStorageSearch });
+
+    const { field: scheduleMode } = useController({ control, name: "scheduleMode" });
+    const {
+        field: scheduleInterval,
+        fieldState: { error: scheduleIntervalError, invalid: isScheduleIntervalInvalid },
+    } = useController({ control, name: "scheduleInterval" });
+    const {
+        field: scheduleCronExpr,
+        fieldState: { error: scheduleCronExprError, invalid: isScheduleCronExprInvalid },
+    } = useController({ control, name: "scheduleCronExpr" });
+    const {
+        field: scheduleFrom,
+        fieldState: { error: scheduleFromError, invalid: isScheduleFromInvalid },
+    } = useController({ control, name: "scheduleFrom" });
+    const { field: compressionFormat } = useController({ control, name: "compressionFormat" });
+    const { field: encryptionFormat } = useController({ control, name: "encryptionFormat" });
+    const {
+        field: encryptionSecret,
+        fieldState: { error: encryptionSecretError, invalid: isEncryptionSecretInvalid },
+    } = useController({ control, name: "encryptionSecret" });
+    const {
+        field: cloudStorage,
+        fieldState: { error: cloudStorageError, invalid: isCloudStorageInvalid },
+    } = useController({ control, name: "cloudStorage" });
+    const { field: cloudStorageBucket } = useController({ control, name: "cloudStorageBucket" });
+    const {
+        field: cloudStorageDestinationDir,
+        fieldState: { error: cloudStorageDestinationDirError, invalid: isCloudStorageDestinationDirInvalid },
+    } = useController({ control, name: "cloudStorageDestinationDir" });
+
+    useEffect(() => {
+        if (encryptionFormat.value !== ESystemBackupEncryptionFormat.Age) {
+            encryptionSecret.onChange("");
+        }
+    }, [encryptionFormat.value, encryptionSecret]);
+
+    const { canShowRevealButton, isDialogOpen, setIsDialogOpen, isRevealing, isRevealed, handleConfirmReveal } =
+        useSettingRevealSecrets<SystemBackupSettings>({
+            customPath: "/system/settings/backup",
+            mode: "edit",
+            onSuccess: data => {
+                if (data.encryption.secret) {
+                    encryptionSecret.onChange(data.encryption.secret);
+                }
+            },
+        });
+
+    const shouldShowReveal = canShowRevealButton && encryptionFormat.value !== ESystemBackupEncryptionFormat.None;
+
+    const cloudStorageOptions = useMemo(() => {
+        return cloudStorages.map(item => ({
+            value: { id: item.id, name: item.name },
+            label: item.kind ? `${item.kind} ${item.name}` : item.name,
+        }));
+    }, [cloudStorages]);
+
+    return (
+        <>
+            <SectionHeader>General</SectionHeader>
+            <div className="flex flex-col gap-6 px-3">
+                <div className={cn(dashedBorderBox)}>
+                    <span className="font-semibold text-orange-500">Note:</span>{" "}
+                    <span>
+                        We encourage you to run this task during low server load periods (e.g., midnight). Additionally,
+                        you should schedule system tasks at different times (e.g., system cleanup at 1 AM, followed by
+                        data backup at 2 AM).
+                    </span>
+                </div>
+
+                <InfoBlock
+                    titleWidth={220}
+                    title="Scheduling Mode"
+                >
+                    <Tabs
+                        value={scheduleMode.value}
+                        onValueChange={scheduleMode.onChange}
+                    >
+                        <TabsList>
+                            <TabsTrigger value={SystemBackupScheduleMode.Interval}>Interval-based</TabsTrigger>
+                            <TabsTrigger value={SystemBackupScheduleMode.Cron}>Time-based</TabsTrigger>
+                        </TabsList>
+                    </Tabs>
+                </InfoBlock>
+
+                {scheduleMode.value === SystemBackupScheduleMode.Interval && (
+                    <InfoBlock
+                        titleWidth={220}
+                        title="Scheduling Interval"
+                    >
+                        <FieldGroup>
+                            <Field>
+                                <Input
+                                    {...scheduleInterval}
+                                    placeholder="1d, 1h30m"
+                                    className="max-w-[400px]"
+                                    aria-invalid={isScheduleIntervalInvalid}
+                                />
+                                <FieldError errors={[scheduleIntervalError]} />
+                            </Field>
+                        </FieldGroup>
+                    </InfoBlock>
+                )}
+
+                {scheduleMode.value === SystemBackupScheduleMode.Cron && (
+                    <InfoBlock
+                        titleWidth={220}
+                        title="Cron Expression"
+                    >
+                        <FieldGroup>
+                            <Field>
+                                <Input
+                                    {...scheduleCronExpr}
+                                    placeholder="accepted form: * * * * *"
+                                    className="max-w-[400px]"
+                                    aria-invalid={isScheduleCronExprInvalid}
+                                />
+                                <FieldError errors={[scheduleCronExprError]} />
+                            </Field>
+                        </FieldGroup>
+                    </InfoBlock>
+                )}
+
+                <InfoBlock
+                    titleWidth={220}
+                    title="Schedule From"
+                >
+                    <FieldGroup>
+                        <Field>
+                            <DateTimePicker
+                                value={scheduleFrom.value ?? undefined}
+                                onChange={date => {
+                                    scheduleFrom.onChange(date ?? null);
+                                }}
+                                placeholder="select date time"
+                                granularity="minute"
+                                showClearButton
+                                aria-invalid={isScheduleFromInvalid}
+                                containerClassName="max-w-[400px]"
+                            />
+                            <FieldError errors={[scheduleFromError]} />
+                        </Field>
+                    </FieldGroup>
+                </InfoBlock>
+
+                <NextRunsField
+                    nextRuns={nextRuns}
+                    titleWidth={220}
+                />
+
+                <Separator className="opacity-50" />
+
+                <InfoBlock
+                    titleWidth={220}
+                    title="Compress Backups"
+                >
+                    <Tabs
+                        value={compressionFormat.value}
+                        onValueChange={compressionFormat.onChange}
+                    >
+                        <TabsList>
+                            <TabsTrigger value={ESystemBackupCompressionFormat.None}>Disabled</TabsTrigger>
+                            <TabsTrigger value={ESystemBackupCompressionFormat.Gzip}>Gzip</TabsTrigger>
+                            <TabsTrigger value={ESystemBackupCompressionFormat.Zstd}>Zstd</TabsTrigger>
+                        </TabsList>
+                    </Tabs>
+                </InfoBlock>
+
+                <InfoBlock
+                    titleWidth={220}
+                    title="Encrypt Backups"
+                >
+                    <Tabs
+                        value={encryptionFormat.value}
+                        onValueChange={encryptionFormat.onChange}
+                    >
+                        <TabsList>
+                            <TabsTrigger value={ESystemBackupEncryptionFormat.None}>Disabled</TabsTrigger>
+                            <TabsTrigger value={ESystemBackupEncryptionFormat.Age}>Age</TabsTrigger>
+                        </TabsList>
+                    </Tabs>
+                </InfoBlock>
+
+                {encryptionFormat.value !== ESystemBackupEncryptionFormat.None && (
+                    <InfoBlock
+                        titleWidth={220}
+                        title="Encryption Secret"
+                    >
+                        <FieldGroup>
+                            <Field>
+                                <div className="flex items-center gap-2">
+                                    <div className="w-full max-w-[400px]">
+                                        <RevealSecretsProvider value={{ isRevealed }}>
+                                            <PasswordInput
+                                                value={encryptionSecret.value}
+                                                onChange={encryptionSecret.onChange}
+                                                placeholder="password"
+                                                className="w-full"
+                                                aria-invalid={isEncryptionSecretInvalid}
+                                            />
+                                        </RevealSecretsProvider>
+                                    </div>
+                                    {shouldShowReveal && (
+                                        <RevealSecretsButton
+                                            onClick={() => {
+                                                setIsDialogOpen(true);
+                                            }}
+                                            isLoading={isRevealing}
+                                        />
+                                    )}
+                                </div>
+                                <FieldError errors={[encryptionSecretError]} />
+                            </Field>
+                        </FieldGroup>
+                        <ConfirmRevealSecretsDialog
+                            open={isDialogOpen}
+                            onOpenChange={setIsDialogOpen}
+                            onConfirm={handleConfirmReveal}
+                            isPending={isRevealing}
+                        />
+                    </InfoBlock>
+                )}
+
+                <Separator className="opacity-50" />
+
+                <InfoBlock
+                    titleWidth={220}
+                    title="Save Backups in Cloud Storage"
+                >
+                    <FieldGroup>
+                        <Field>
+                            <Combobox
+                                options={cloudStorageOptions}
+                                value={cloudStorage.value?.id ?? null}
+                                onChange={(_, option) => {
+                                    cloudStorage.onChange(option ?? undefined);
+                                }}
+                                onSearch={setCloudStorageSearch}
+                                placeholder="Select Cloud Storage"
+                                emptyText="No cloud storages available"
+                                className="max-w-[400px]"
+                                valueKey="id"
+                                searchable
+                                closeOnSelect
+                                loading={isFetching}
+                                onRefresh={() => void refetch()}
+                                isRefreshing={isRefetching}
+                                aria-invalid={isCloudStorageInvalid}
+                                splitLabelBadge
+                            />
+                            <FieldError errors={[cloudStorageError]} />
+                            <AppLink.Basic
+                                to={ROUTE.settings.cloudStorages.$route}
+                                target="_blank"
+                                className="text-xs text-blue-500"
+                                ignorePrevPath
+                            >
+                                Configure Cloud Storages
+                            </AppLink.Basic>
+                        </Field>
+                    </FieldGroup>
+                </InfoBlock>
+
+                {cloudStorage.value && (
+                    <>
+                        <InfoBlock
+                            titleWidth={220}
+                            title="Bucket"
+                        >
+                            <Field>
+                                <Input
+                                    {...cloudStorageBucket}
+                                    placeholder="use default"
+                                    className="max-w-[400px]"
+                                />
+                            </Field>
+                        </InfoBlock>
+
+                        <InfoBlock
+                            titleWidth={220}
+                            title="Destination Directory"
+                        >
+                            <Field>
+                                <Input
+                                    {...cloudStorageDestinationDir}
+                                    placeholder="path/to/sub/dir"
+                                    className="max-w-[400px]"
+                                    aria-invalid={isCloudStorageDestinationDirInvalid}
+                                />
+                                <FieldError errors={[cloudStorageDestinationDirError]} />
+                            </Field>
+                        </InfoBlock>
+                    </>
+                )}
+            </div>
+        </>
+    );
+}
+
+function EnabledBackupConfigurationFields({ nextRuns, readOnly }: { nextRuns: Date[]; readOnly: boolean }) {
+    const { control } = useFormContext<SchemaInput, unknown, SchemaOutput>();
+    const status = useWatch({ control, name: "status" });
+
+    if (status !== ESettingStatus.Active) {
+        return null;
+    }
+
+    return (
+        <>
+            <GeneralFields nextRuns={nextRuns} />
+            <NotificationFields readOnly={readOnly} />
+        </>
+    );
+}
+
+function NotificationFields({ readOnly = false }: { readOnly?: boolean }) {
+    const { sources, manageLink } = useNotificationSettingsSources({ type: "settings" });
+
+    return (
+        <>
+            <SectionHeader>Notification Configuration</SectionHeader>
+            <div className="px-3">
+                <NotificationSettings<SchemaInput>
+                    names={{
+                        successUseDefault: "notification.successUseDefault",
+                        success: "notification.success",
+                        failureUseDefault: "notification.failureUseDefault",
+                        failure: "notification.failure",
+                    }}
+                    sources={sources}
+                    manageLink={manageLink}
+                    readOnly={readOnly}
+                    titleWidth={220}
+                />
+            </div>
+        </>
+    );
+}
+
+function useSystemBackupFormMethods(defaultValues?: SystemBackupSettings) {
+    return useForm<SchemaInput, unknown, SchemaOutput>({
+        defaultValues: defaultValues
+            ? mapSystemBackupSettingsToFormInput(defaultValues)
+            : emptySystemBackupConfigurationFormDefaults,
+        resolver: zodResolver(SystemBackupConfigurationFormSchema),
+        mode: "onSubmit",
+    });
+}
+
+export function SystemBackupConfigurationForm({ ref, defaultValues, onSubmit, readOnly = false, children }: Props) {
+    const methods = useSystemBackupFormMethods(defaultValues);
+
+    useImperativeHandle(
+        ref,
+        () => ({
+            setValues: (values: Partial<SchemaInput>) => {
+                methods.reset({
+                    ...methods.getValues(),
+                    ...values,
+                } as SchemaInput);
+            },
+            onError(error: ValidationException) {
+                if (error.errors.length === 0) {
+                    return;
+                }
+
+                error.errors.forEach(({ path, message }, index) => {
+                    methods.setError(
+                        path as FieldPath<SchemaInput>,
+                        { message, type: "manual" },
+                        {
+                            shouldFocus: index === 0,
+                        },
+                    );
+                });
+            },
+        }),
+        [methods],
+    );
+
+    return (
+        <div className="pt-2">
+            <FormProvider {...methods}>
+                <form
+                    onSubmit={event => {
+                        event.preventDefault();
+                        if (readOnly) {
+                            return;
+                        }
+
+                        void methods.handleSubmit(onSubmit)(event);
+                    }}
+                    className="flex flex-col gap-6"
+                >
+                    <fieldset
+                        disabled={readOnly}
+                        className="flex flex-col gap-6 border-0 p-0 m-0 min-w-0"
+                    >
+                        <EnabledField />
+                        <EnabledBackupConfigurationFields
+                            nextRuns={defaultValues?.nextRuns ?? []}
+                            readOnly={readOnly}
+                        />
+                    </fieldset>
+                    {children}
+                </form>
+            </FormProvider>
+        </div>
+    );
+}
+
+type Props = PropsWithChildren<{
+    ref?: React.Ref<SystemBackupConfigurationFormRef>;
+    defaultValues?: SystemBackupSettings;
+    onSubmit: (values: SchemaOutput) => void;
+    readOnly?: boolean;
+}>;

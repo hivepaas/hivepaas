@@ -104,12 +104,12 @@ const APP_HREF: Record<string, AppHref> = {
 
 /** Settings that live on exactly one page, whatever scope they claim. */
 const SYSTEM_HREF: Record<string, string> = {
-    "backup-repo-cleanup": ROUTE.systemSettings.backupRepoCleanup.configuration.$route,
+    "backup-repo-cleanup": ROUTE.appSettings.backupRepoCleanup.configuration.$route,
     "hivepaas-service": ROUTE.systemSettings.hivepaas.general.$route,
     "image-build": ROUTE.appSettings.imageBuild.$route,
-    "ssl-renewal": ROUTE.systemSettings.sslRenewal.configuration.$route,
-    "system-backup": ROUTE.systemSettings.dataBackup.configuration.$route,
-    "system-cleanup": ROUTE.systemSettings.dataCleanup.configuration.$route,
+    "ssl-renewal": ROUTE.appSettings.sslRenewal.configuration.$route,
+    "system-backup": ROUTE.appSettings.dataBackup.configuration.$route,
+    "system-cleanup": ROUTE.appSettings.dataCleanup.configuration.$route,
     "traefik-service": ROUTE.systemSettings.traefik.general.$route,
 };
 

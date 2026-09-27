@@ -233,23 +233,64 @@ const navMain: SidebarItem[] = [
         ],
     },
     {
+        // Each section is shown to whom its pages are: the app settings to
+        // Settings, the scheduled jobs - the installation's own - to System.
         title: "Settings",
         route: "#",
         pattern: ROUTE.appSettings.$pattern,
         icon: Settings,
-        moduleId: MODULE_IDS.Settings,
-        items: [
+        sections: [
             {
-                title: "Image Build",
-                icon: Hammer,
-                route: ROUTE.appSettings.imageBuild.$route,
-                pattern: ROUTE.appSettings.imageBuild.$pattern,
+                title: "Settings",
+                items: [
+                    {
+                        title: "Image Build",
+                        icon: Hammer,
+                        moduleId: MODULE_IDS.Settings,
+                        route: ROUTE.appSettings.imageBuild.$route,
+                        pattern: ROUTE.appSettings.imageBuild.$pattern,
+                    },
+                    {
+                        title: "App Placement",
+                        icon: MapPin,
+                        moduleId: MODULE_IDS.Settings,
+                        route: ROUTE.appSettings.appPlacement.$route,
+                        pattern: ROUTE.appSettings.appPlacement.$pattern,
+                    },
+                ],
             },
             {
-                title: "App Placement",
-                icon: MapPin,
-                route: ROUTE.appSettings.appPlacement.$route,
-                pattern: ROUTE.appSettings.appPlacement.$pattern,
+                title: "Scheduled Jobs",
+                items: [
+                    {
+                        title: "Backup Repo Cleanup",
+                        icon: ArchiveX,
+                        moduleId: MODULE_IDS.System,
+                        route: ROUTE.appSettings.backupRepoCleanup.configuration.$route,
+                        pattern: ROUTE.appSettings.backupRepoCleanup.$pattern,
+                    },
+                    {
+                        title: "SSL Renewal",
+                        icon: RefreshCw,
+                        moduleId: MODULE_IDS.System,
+                        route: ROUTE.appSettings.sslRenewal.configuration.$route,
+                        pattern: ROUTE.appSettings.sslRenewal.$pattern,
+                    },
+                    {
+                        title: "Data Backup",
+                        icon: DatabaseBackup,
+                        moduleId: MODULE_IDS.System,
+                        route: ROUTE.appSettings.dataBackup.configuration.$route,
+                        pattern: ROUTE.appSettings.dataBackup.$pattern,
+                    },
+                    {
+                        title: "Data Cleanup",
+                        icon: Trash2,
+                        moduleId: MODULE_IDS.System,
+                        route: ROUTE.appSettings.dataCleanup.configuration.$route,
+                        pattern: ROUTE.appSettings.dataCleanup.$pattern,
+                    },
+                ],
             },
         ],
     },
@@ -324,35 +365,6 @@ const navMain: SidebarItem[] = [
                         icon: Sparkles,
                         route: ROUTE.systemSettings.ai.mcp.$route,
                         pattern: ROUTE.systemSettings.ai.$pattern,
-                    },
-                ],
-            },
-            {
-                title: "Scheduled Jobs",
-                items: [
-                    {
-                        title: "Backup Repo Cleanup",
-                        icon: ArchiveX,
-                        route: ROUTE.systemSettings.backupRepoCleanup.configuration.$route,
-                        pattern: ROUTE.systemSettings.backupRepoCleanup.$pattern,
-                    },
-                    {
-                        title: "SSL Renewal",
-                        icon: RefreshCw,
-                        route: ROUTE.systemSettings.sslRenewal.configuration.$route,
-                        pattern: ROUTE.systemSettings.sslRenewal.$pattern,
-                    },
-                    {
-                        title: "Data Backup",
-                        icon: DatabaseBackup,
-                        route: ROUTE.systemSettings.dataBackup.configuration.$route,
-                        pattern: ROUTE.systemSettings.dataBackup.$pattern,
-                    },
-                    {
-                        title: "Data Cleanup",
-                        icon: Trash2,
-                        route: ROUTE.systemSettings.dataCleanup.configuration.$route,
-                        pattern: ROUTE.systemSettings.dataCleanup.$pattern,
                     },
                 ],
             },

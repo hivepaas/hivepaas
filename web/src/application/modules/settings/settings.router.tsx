@@ -3,6 +3,7 @@ import type { ComponentType } from "react";
 import { MODULE_IDS, ROUTE } from "@/application/shared/constants";
 import { Navigate, Outlet, type RouteObject, useParams } from "react-router";
 
+import { AppNavigate } from "@application/shared/components";
 import { ModuleTitle } from "@application/shared/components/module-title";
 import { ConditionalModule } from "@application/shared/permissions";
 
@@ -367,6 +368,198 @@ export const settingsRouter: RouteObject = {
 
             return SettingsBackupRepoEditRoute;
         }),
+        {
+            lazy: async () => {
+                const { DataBackupLayout } = await getLazyComponents();
+
+                return {
+                    element: (
+                        <ConditionalModule id={MODULE_IDS.System}>
+                            <ModuleTitle title="Data Backup">
+                                <DataBackupLayout>
+                                    <Outlet />
+                                </DataBackupLayout>
+                            </ModuleTitle>
+                        </ConditionalModule>
+                    ),
+                };
+            },
+            path: ROUTE.appSettings.dataBackup.$pattern,
+            children: [
+                {
+                    index: true,
+                    element: (
+                        <AppNavigate.Basic
+                            to={ROUTE.appSettings.dataBackup.configuration.$route}
+                            replace
+                            ignorePrevPath
+                        />
+                    ),
+                },
+                {
+                    path: "configuration",
+                    lazy: async () => {
+                        const { SettingsDataBackupConfigurationRoute } = await getLazyComponents();
+
+                        return { Component: SettingsDataBackupConfigurationRoute };
+                    },
+                },
+                {
+                    path: "backup-files",
+                    lazy: async () => {
+                        const { SettingsDataBackupBackupFilesRoute } = await getLazyComponents();
+
+                        return { Component: SettingsDataBackupBackupFilesRoute };
+                    },
+                },
+                {
+                    path: "actions",
+                    lazy: async () => {
+                        const { SettingsDataBackupActionsRoute } = await getLazyComponents();
+
+                        return { Component: SettingsDataBackupActionsRoute };
+                    },
+                },
+            ],
+        },
+        {
+            lazy: async () => {
+                const { DataCleanupLayout } = await getLazyComponents();
+
+                return {
+                    element: (
+                        <ConditionalModule id={MODULE_IDS.System}>
+                            <ModuleTitle title="Data Cleanup">
+                                <DataCleanupLayout>
+                                    <Outlet />
+                                </DataCleanupLayout>
+                            </ModuleTitle>
+                        </ConditionalModule>
+                    ),
+                };
+            },
+            path: ROUTE.appSettings.dataCleanup.$pattern,
+            children: [
+                {
+                    index: true,
+                    element: (
+                        <AppNavigate.Basic
+                            to={ROUTE.appSettings.dataCleanup.configuration.$route}
+                            replace
+                            ignorePrevPath
+                        />
+                    ),
+                },
+                {
+                    path: "configuration",
+                    lazy: async () => {
+                        const { SettingsDataCleanupConfigurationRoute } = await getLazyComponents();
+
+                        return { Component: SettingsDataCleanupConfigurationRoute };
+                    },
+                },
+                {
+                    path: "actions",
+                    lazy: async () => {
+                        const { SettingsDataCleanupActionsRoute } = await getLazyComponents();
+
+                        return { Component: SettingsDataCleanupActionsRoute };
+                    },
+                },
+            ],
+        },
+        {
+            lazy: async () => {
+                const { SslRenewalLayout } = await getLazyComponents();
+
+                return {
+                    element: (
+                        <ConditionalModule id={MODULE_IDS.System}>
+                            <ModuleTitle title="SSL Renewal">
+                                <SslRenewalLayout>
+                                    <Outlet />
+                                </SslRenewalLayout>
+                            </ModuleTitle>
+                        </ConditionalModule>
+                    ),
+                };
+            },
+            path: ROUTE.appSettings.sslRenewal.$pattern,
+            children: [
+                {
+                    index: true,
+                    element: (
+                        <AppNavigate.Basic
+                            to={ROUTE.appSettings.sslRenewal.configuration.$route}
+                            replace
+                            ignorePrevPath
+                        />
+                    ),
+                },
+                {
+                    path: "configuration",
+                    lazy: async () => {
+                        const { SettingsSslRenewalConfigurationRoute } = await getLazyComponents();
+
+                        return { Component: SettingsSslRenewalConfigurationRoute };
+                    },
+                },
+                {
+                    path: "actions",
+                    lazy: async () => {
+                        const { SettingsSslRenewalActionsRoute } = await getLazyComponents();
+
+                        return { Component: SettingsSslRenewalActionsRoute };
+                    },
+                },
+            ],
+        },
+        {
+            lazy: async () => {
+                const { BackupRepoCleanupLayout } = await getLazyComponents();
+
+                return {
+                    element: (
+                        <ConditionalModule id={MODULE_IDS.System}>
+                            <ModuleTitle title="Backup Repo Cleanup">
+                                <BackupRepoCleanupLayout>
+                                    <Outlet />
+                                </BackupRepoCleanupLayout>
+                            </ModuleTitle>
+                        </ConditionalModule>
+                    ),
+                };
+            },
+            path: ROUTE.appSettings.backupRepoCleanup.$pattern,
+            children: [
+                {
+                    index: true,
+                    element: (
+                        <AppNavigate.Basic
+                            to={ROUTE.appSettings.backupRepoCleanup.configuration.$route}
+                            replace
+                            ignorePrevPath
+                        />
+                    ),
+                },
+                {
+                    path: "configuration",
+                    lazy: async () => {
+                        const { SettingsBackupRepoCleanupConfigurationRoute } = await getLazyComponents();
+
+                        return { Component: SettingsBackupRepoCleanupConfigurationRoute };
+                    },
+                },
+                {
+                    path: "actions",
+                    lazy: async () => {
+                        const { SettingsBackupRepoCleanupActionsRoute } = await getLazyComponents();
+
+                        return { Component: SettingsBackupRepoCleanupActionsRoute };
+                    },
+                },
+            ],
+        },
         {
             path: "settings",
             element: (

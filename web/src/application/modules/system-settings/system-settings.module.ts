@@ -14,31 +14,12 @@ export {
     SystemSettingsTraefikGeneralRoute,
     SystemSettingsTraefikConfigOptionsRoute,
     SystemSettingsTraefikActionsRoute,
-    SystemSettingsDataBackupActionsRoute,
-    SystemSettingsDataBackupBackupFilesRoute,
-    SystemSettingsDataBackupConfigurationRoute,
-    SystemSettingsDataCleanupActionsRoute,
-    SystemSettingsDataCleanupConfigurationRoute,
-    SystemSettingsSslRenewalActionsRoute,
-    SystemSettingsSslRenewalConfigurationRoute,
-    SystemSettingsBackupRepoCleanupActionsRoute,
-    SystemSettingsBackupRepoCleanupConfigurationRoute,
 } from "./routes";
 
 /**
  * Layouts
  */
-export {
-    DataBackupLayout,
-    DataCleanupLayout,
-    HivePaaSLayout,
-    LoggingLayout,
-    AiLayout,
-    RegistryLayout,
-    SslRenewalLayout,
-    BackupRepoCleanupLayout,
-    TraefikLayout,
-} from "./layouts";
+export { HivePaaSLayout, LoggingLayout, AiLayout, RegistryLayout, TraefikLayout } from "./layouts";
 
 /**
  * Dialogs

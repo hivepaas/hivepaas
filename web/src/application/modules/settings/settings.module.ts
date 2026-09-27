@@ -49,6 +49,15 @@ export {
     SettingsBackupReposRoute,
     SettingsBackupRepoCreateRoute,
     SettingsBackupRepoEditRoute,
+    SettingsDataBackupActionsRoute,
+    SettingsDataBackupBackupFilesRoute,
+    SettingsDataBackupConfigurationRoute,
+    SettingsDataCleanupActionsRoute,
+    SettingsDataCleanupConfigurationRoute,
+    SettingsSslRenewalActionsRoute,
+    SettingsSslRenewalConfigurationRoute,
+    SettingsBackupRepoCleanupActionsRoute,
+    SettingsBackupRepoCleanupConfigurationRoute,
 } from "./routes";
 
 /**
@@ -59,7 +68,7 @@ export { SettingsDialogsContainer } from "./dialogs-container";
 /**
  * Layouts
  */
-// export { ... } from "./layouts";
+export { DataBackupLayout, DataCleanupLayout, SslRenewalLayout, BackupRepoCleanupLayout } from "./layouts";
 
 /**
  * Dialogs

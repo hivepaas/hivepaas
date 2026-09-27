@@ -414,6 +414,71 @@ export const ROUTE = {
             $pattern: "settings/app-placement",
             $route: "/settings/app-placement/",
         },
+
+        dataBackup: {
+            $pattern: "settings/data-backup",
+            $route: "/settings/data-backup/configuration/",
+
+            configuration: {
+                $pattern: "settings/data-backup/configuration",
+                $route: "/settings/data-backup/configuration/",
+            },
+
+            backupFiles: {
+                $pattern: "settings/data-backup/backup-files",
+                $route: "/settings/data-backup/backup-files/",
+            },
+
+            actions: {
+                $pattern: "settings/data-backup/actions",
+                $route: "/settings/data-backup/actions/",
+            },
+        },
+
+        dataCleanup: {
+            $pattern: "settings/data-cleanup",
+            $route: "/settings/data-cleanup/configuration/",
+
+            configuration: {
+                $pattern: "settings/data-cleanup/configuration",
+                $route: "/settings/data-cleanup/configuration/",
+            },
+
+            actions: {
+                $pattern: "settings/data-cleanup/actions",
+                $route: "/settings/data-cleanup/actions/",
+            },
+        },
+
+        sslRenewal: {
+            $pattern: "settings/ssl-renewal",
+            $route: "/settings/ssl-renewal/configuration/",
+
+            configuration: {
+                $pattern: "settings/ssl-renewal/configuration",
+                $route: "/settings/ssl-renewal/configuration/",
+            },
+
+            actions: {
+                $pattern: "settings/ssl-renewal/actions",
+                $route: "/settings/ssl-renewal/actions/",
+            },
+        },
+
+        backupRepoCleanup: {
+            $pattern: "settings/backup-repo-cleanup",
+            $route: "/settings/backup-repo-cleanup/configuration/",
+
+            configuration: {
+                $pattern: "settings/backup-repo-cleanup/configuration",
+                $route: "/settings/backup-repo-cleanup/configuration/",
+            },
+
+            actions: {
+                $pattern: "settings/backup-repo-cleanup/actions",
+                $route: "/settings/backup-repo-cleanup/actions/",
+            },
+        },
     },
 
     /**
@@ -499,71 +564,6 @@ export const ROUTE = {
             actions: {
                 $pattern: "system/traefik/actions",
                 $route: "/system/traefik/actions/",
-            },
-        },
-
-        dataBackup: {
-            $pattern: "system/data-backup",
-            $route: "/system/data-backup/configuration/",
-
-            configuration: {
-                $pattern: "system/data-backup/configuration",
-                $route: "/system/data-backup/configuration/",
-            },
-
-            backupFiles: {
-                $pattern: "system/data-backup/backup-files",
-                $route: "/system/data-backup/backup-files/",
-            },
-
-            actions: {
-                $pattern: "system/data-backup/actions",
-                $route: "/system/data-backup/actions/",
-            },
-        },
-
-        dataCleanup: {
-            $pattern: "system/data-cleanup",
-            $route: "/system/data-cleanup/configuration/",
-
-            configuration: {
-                $pattern: "system/data-cleanup/configuration",
-                $route: "/system/data-cleanup/configuration/",
-            },
-
-            actions: {
-                $pattern: "system/data-cleanup/actions",
-                $route: "/system/data-cleanup/actions/",
-            },
-        },
-
-        sslRenewal: {
-            $pattern: "system/ssl-renewal",
-            $route: "/system/ssl-renewal/configuration/",
-
-            configuration: {
-                $pattern: "system/ssl-renewal/configuration",
-                $route: "/system/ssl-renewal/configuration/",
-            },
-
-            actions: {
-                $pattern: "system/ssl-renewal/actions",
-                $route: "/system/ssl-renewal/actions/",
-            },
-        },
-
-        backupRepoCleanup: {
-            $pattern: "system/backup-repo-cleanup",
-            $route: "/system/backup-repo-cleanup/configuration/",
-
-            configuration: {
-                $pattern: "system/backup-repo-cleanup/configuration",
-                $route: "/system/backup-repo-cleanup/configuration/",
-            },
-
-            actions: {
-                $pattern: "system/backup-repo-cleanup/actions",
-                $route: "/system/backup-repo-cleanup/actions/",
             },
         },
     },

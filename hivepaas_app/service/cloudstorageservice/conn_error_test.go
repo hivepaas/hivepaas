@@ -24,9 +24,10 @@ func (e *statusError) Unwrap() error       { return e.cause }
 func TestConnErrorSaysWhatToCheck(t *testing.T) {
 	dns := &net.DNSError{Err: "no such host", Name: "bucket.s3.example.invalid", IsNotFound: true}
 	for want, err := range map[string]error{
-		"the key was refused":               &statusError{code: 403},
+		"access was refused":                &statusError{code: 403},
 		"no such bucket":                    &statusError{code: 404},
-		"check the region":                  &statusError{code: 301},
+		"the request was rejected":          &statusError{code: 400},
+		"check the bucket's name":           &statusError{code: 404},
 		"the store answered Internal":       &statusError{code: 500},
 		"the endpoint could not be reached": &statusError{code: 0, cause: dns},
 		"check the endpoint, the region":    errors.New("something else"),

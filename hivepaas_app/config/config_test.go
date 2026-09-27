@@ -90,3 +90,16 @@ func TestTaskTriggersDefaults(t *testing.T) {
 	assert.Equal(t, 3*time.Second, cfg.Tasks.Triggers.WaitPollInterval)
 	assert.Equal(t, 30*time.Minute, cfg.Tasks.Triggers.WaitTimeout)
 }
+
+// The agent's repository server keeps under 256 MiB and has 30 seconds to listen.
+func TestAgentRepoServerDefaults(t *testing.T) {
+	t.Setenv("HP_CONFIG_FILE", "testdata/config.myenv.toml")
+
+	SetCurrent(nil)
+	t.Cleanup(func() { SetCurrent(nil) })
+	cfg, err := LoadConfig()
+
+	assert.NoError(t, err)
+	assert.Equal(t, "256MiB", cfg.Agent.RepoServer.MemLimit)
+	assert.Equal(t, 30*time.Second, cfg.Agent.RepoServer.StartTimeout)
+}

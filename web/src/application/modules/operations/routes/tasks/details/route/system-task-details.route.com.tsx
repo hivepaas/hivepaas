@@ -6,7 +6,7 @@ import { useParams } from "react-router";
 import { toast } from "sonner";
 import invariant from "tiny-invariant";
 import { SystemTasksCommands, SystemTasksQueries } from "~/operations/data";
-import { SystemTaskStatus } from "~/operations/domain";
+import { type SystemTask, SystemTaskStatus } from "~/operations/domain";
 
 import { useLogViewerControls } from "@application/shared/components";
 
@@ -19,7 +19,13 @@ import {
 
 const TASK_DETAILS_REFETCH_INTERVAL_MS = 5_000;
 
-function shouldPollTaskDetails(status: SystemTaskStatus | undefined, shouldPollAfterStreamClose: boolean): boolean {
+function shouldPollTaskDetails(task: SystemTask | undefined, shouldPollAfterStreamClose: boolean): boolean {
+    const status = task?.status;
+    // A job sequence's steps are refreshed while its run goes on.
+    if (task?.sequenceRun && !isTaskTerminal(status)) {
+        return true;
+    }
+
     return status === SystemTaskStatus.NotStarted || (shouldPollAfterStreamClose && isTaskInProgress(status));
 }
 
@@ -66,7 +72,7 @@ export function SystemTaskDetailsRoute({ embedded = false }: SystemTaskDetailsRo
         },
         {
             refetchInterval: query =>
-                shouldPollTaskDetails(query.state.data?.data.status, shouldPollAfterStreamClose)
+                shouldPollTaskDetails(query.state.data?.data, shouldPollAfterStreamClose)
                     ? TASK_DETAILS_REFETCH_INTERVAL_MS
                     : false,
         },

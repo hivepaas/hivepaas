@@ -679,6 +679,12 @@ export const ROUTE = {
                                     `/projects/${id}/${env}/apps/${appId}/sched-jobs/create/`,
                             },
 
+                            createSequence: {
+                                $pattern: "projects/:id/:env/apps/:appId/sched-jobs/create-sequence",
+                                $route: (id: string, env: string, appId: string) =>
+                                    `/projects/${id}/${env}/apps/${appId}/sched-jobs/create-sequence/`,
+                            },
+
                             edit: {
                                 $pattern: "projects/:id/:env/apps/:appId/sched-jobs/:scheduledJobId/edit",
                                 $route: (id: string, env: string, appId: string, scheduledJobId: string) =>
@@ -963,6 +969,22 @@ export const ROUTE = {
                         $pattern: "projects/:id/integrations/cloud-storages/:cloudStorageId/edit",
                         $route: (id: string, cloudStorageId: string) =>
                             `/projects/${id}/integrations/cloud-storages/${cloudStorageId}/edit/`,
+                    },
+                },
+
+                scheduledJobs: {
+                    $pattern: "projects/:id/integrations/sched-jobs",
+                    $route: (id: string) => `/projects/${id}/integrations/sched-jobs/`,
+
+                    createSequence: {
+                        $pattern: "projects/:id/integrations/sched-jobs/create-sequence",
+                        $route: (id: string) => `/projects/${id}/integrations/sched-jobs/create-sequence/`,
+                    },
+
+                    edit: {
+                        $pattern: "projects/:id/integrations/sched-jobs/:scheduledJobId/edit",
+                        $route: (id: string, scheduledJobId: string) =>
+                            `/projects/${id}/integrations/sched-jobs/${scheduledJobId}/edit/`,
                     },
                 },
 

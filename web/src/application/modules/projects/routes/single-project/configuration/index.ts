@@ -21,3 +21,4 @@ export * from "./notification-targets";
 export * from "./build-settings";
 export * from "./domain-settings";
 export * from "./danger-zone";
+export * from "./scheduled-jobs";

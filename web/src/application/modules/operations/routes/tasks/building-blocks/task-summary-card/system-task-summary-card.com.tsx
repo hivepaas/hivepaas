@@ -14,6 +14,8 @@ import { timeAgoFormatter } from "@application/shared/utils/time-ago";
 import { Button, Skeleton } from "@/components/ui";
 import { Avatar } from "@/components/ui/avatar";
 
+import { SequenceRunSteps } from "../sequence-run-steps";
+
 const STATUS_LABELS: Record<SystemTaskStatus, string> = {
     [SystemTaskStatus.Done]: "Done",
     [SystemTaskStatus.Failed]: "Failed",
@@ -382,58 +384,6 @@ export function SystemTaskSummaryCard({
                         </div>
                     </div>
 
-                    {/* Compact Scope Row when details are collapsed */}
-                    {!shouldShowDetailsContent && hasScope && (
-                        <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
-                            <div className="flex items-center gap-1.5">
-                                <FolderTree className="size-4 shrink-0 text-muted-foreground/70" />
-                                <span>Scope:</span>
-                            </div>
-
-                            <div className="flex flex-wrap items-center gap-2">
-                                {task.scopeProject && (
-                                    <div className="flex items-center gap-1.5">
-                                        <Avatar
-                                            name={task.scopeProject.name}
-                                            src={task.scopeProject.photo}
-                                            className="size-4.5 rounded-xs text-[9px] border border-border shrink-0"
-                                        />
-                                        <span className="font-medium text-foreground">{task.scopeProject.name}</span>
-                                    </div>
-                                )}
-
-                                {task.scopeProject && task.scopeApp && (
-                                    <span className="text-muted-foreground/40 select-none">•</span>
-                                )}
-
-                                {task.scopeApp && (
-                                    <div className="flex items-center gap-1.5">
-                                        <Avatar
-                                            name={task.scopeApp.name}
-                                            src={task.scopeApp.photo}
-                                            className="size-4.5 rounded-xs text-[9px] border border-border shrink-0"
-                                        />
-                                        <span className="font-medium text-foreground">{task.scopeApp.name}</span>
-                                        <span className="font-medium text-muted-foreground">({task.scopeApp.env})</span>
-                                    </div>
-                                )}
-
-                                {!task.scopeProject && !task.scopeApp && task.scopeUser && (
-                                    <div className="flex items-center gap-1.5">
-                                        <Avatar
-                                            name={task.scopeUser.fullName ?? task.scopeUser.username}
-                                            src={task.scopeUser.photo}
-                                            className="size-4.5 rounded-full text-[9px] border border-border shrink-0"
-                                        />
-                                        <span className="font-medium text-foreground">
-                                            {task.scopeUser.fullName ?? task.scopeUser.username}
-                                        </span>
-                                    </div>
-                                )}
-                            </div>
-                        </div>
-                    )}
-
                     {/* Expanded Details Section */}
                     {shouldShowDetailsContent && (
                         <div className="flex flex-col gap-3.5 pt-3 border-t border-border/60">
@@ -629,6 +579,14 @@ export function SystemTaskSummaryCard({
                                         </pre>
                                     </div>
                                 </div>
+                            )}
+
+                            {/* Sequence Run Steps */}
+                            {task.sequenceRun && (
+                                <SequenceRunSteps
+                                    run={task.sequenceRun}
+                                    now={now}
+                                />
                             )}
                         </div>
                     )}

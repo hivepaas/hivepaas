@@ -1,9 +1,10 @@
 import type { ColumnDef } from "@tanstack/react-table";
 import { format } from "date-fns";
 import type { AppScheduledJob } from "~/projects/domain";
+import { formatJobSchedule } from "~/projects/module-shared/components";
 import { SettingStatusBadge } from "~/settings/module-shared/components";
 
-import { EditCell, MenuCell, ViewTasksCell } from "./building-blocks";
+import { EditCell, MenuCell, ScheduledJobNameCell, ViewTasksCell } from "./building-blocks";
 
 function formatDate(date: Date | null | undefined) {
     if (!date) {
@@ -11,18 +12,6 @@ function formatDate(date: Date | null | undefined) {
     }
 
     return format(date, "yyyy-MM-dd HH:mm:ss");
-}
-
-function formatSchedule(scheduledJob: AppScheduledJob) {
-    if (scheduledJob.schedule.interval) {
-        return `every ${scheduledJob.schedule.interval}`;
-    }
-
-    if (scheduledJob.schedule.cronExpr) {
-        return `cron: ${scheduledJob.schedule.cronExpr}`;
-    }
-
-    return "-";
 }
 
 function createColumns(projectId: string, env: string, appId: string): ColumnDef<AppScheduledJob>[] {
@@ -70,12 +59,13 @@ function createColumns(projectId: string, env: string, appId: string): ColumnDef
         {
             accessorKey: "name",
             header: "Name",
+            cell: ({ row: { original } }) => <ScheduledJobNameCell job={original} />,
         },
         {
             accessorKey: "schedule",
             header: "Schedule",
             enableSorting: false,
-            cell: ({ row: { original } }) => formatSchedule(original),
+            cell: ({ row: { original } }) => formatJobSchedule(original.schedule),
         },
         {
             accessorKey: "nextRuns",

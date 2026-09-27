@@ -1,4 +1,4 @@
-import { useParams } from "react-router";
+import { useParams, useSearchParams } from "react-router";
 import invariant from "tiny-invariant";
 import type { SystemTaskScope } from "~/operations/domain";
 import { SystemTasksList } from "~/operations/routes/tasks";
@@ -12,6 +12,9 @@ import { useAppNavigate } from "@application/shared/hooks/router";
 export function ProjectTasksRoute() {
     const { id: projectId = "" } = useParams<{ id: string }>();
     const { navigate } = useAppNavigate();
+    const [searchParams] = useSearchParams();
+    // A job's "View Runs" opens the list filtered to it.
+    const targetId = searchParams.get("targetId") ?? undefined;
 
     invariant(projectId, "projectId must be defined");
     const selectedEnv = useSelectedProjectEnv(projectId);
@@ -39,8 +42,9 @@ export function ProjectTasksRoute() {
                 />
             </div>
             <SystemTasksList
-                key={`${projectId}-${scopedEnv ?? "all"}`}
+                key={`${projectId}-${scopedEnv ?? "all"}-${targetId ?? "all"}`}
                 scope={scope}
+                initialFilters={targetId ? { targetId } : undefined}
                 onSelectTask={task => {
                     navigate.modules(ROUTE.projects.single.operations.tasks.details.$route(projectId, task.id));
                 }}

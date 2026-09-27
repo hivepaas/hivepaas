@@ -39,6 +39,8 @@ import {
     AppTerminalApi,
     AppTerminalApiValidator,
     AppTerminalWsApi,
+    EnvScheduledJobsApi,
+    EnvScheduledJobsApiValidator,
     ProjectAccessTokenApi,
     ProjectAccessTokenApiValidator,
     ProjectAcmeDnsProviderApi,
@@ -351,6 +353,9 @@ function createApi() {
             },
             commandPipes: {
                 $: new ProjectCommandPipeApi(projectCommandPipeApiValidator),
+            },
+            envScheduledJobs: {
+                $: new EnvScheduledJobsApi(new EnvScheduledJobsApiValidator()),
             },
             commandTemplates: {
                 $: new ProjectCommandTemplateApi(projectCommandTemplateApiValidator),

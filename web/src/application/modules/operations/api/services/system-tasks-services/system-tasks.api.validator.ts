@@ -1,6 +1,6 @@
 import { type AxiosResponse } from "axios";
 import { z } from "zod";
-import { SystemTaskPriority, SystemTaskStatus } from "~/operations/domain";
+import { SystemTaskPriority, SystemTaskSequenceStepStatus, SystemTaskStatus } from "~/operations/domain";
 
 import { BaseMetaApiSchema, PagingMetaApiSchema, parseApiResponse } from "@infrastructure/api";
 
@@ -106,6 +106,35 @@ const ScopeUserSchema = z
     .nullish()
     .transform(value => value ?? undefined);
 
+const SequenceStepSchema = z.object({
+    job: z.object({ id: z.string().optional().default("") }).catch({ id: "" }),
+    name: z.string().optional().default(""),
+    status: z.nativeEnum(SystemTaskSequenceStepStatus).catch(SystemTaskSequenceStepStatus.Pending),
+    exitCode: z
+        .number()
+        .nullish()
+        .transform(value => value ?? null),
+    error: z.string().optional().default(""),
+    attempts: z.number().optional().default(0),
+    startedAt: NullableDateSchema.optional().transform(value => value ?? null),
+    endedAt: NullableDateSchema.optional().transform(value => value ?? null),
+    outputs: z
+        .record(z.string())
+        .nullish()
+        .transform(value => value ?? {}),
+});
+
+const SequenceRunSchema = z
+    .object({
+        currentStep: z.number().optional().default(0),
+        steps: z
+            .array(SequenceStepSchema)
+            .nullish()
+            .transform(value => value ?? []),
+    })
+    .nullish()
+    .transform(value => value ?? undefined);
+
 const SystemTaskSchema = z.object({
     id: z.string(),
     type: z.string().optional().default(""),
@@ -117,6 +146,7 @@ const SystemTaskSchema = z.object({
     scopeProject: ScopeProjectSchema,
     scopeApp: ScopeAppSchema,
     scopeUser: ScopeUserSchema,
+    sequenceRun: SequenceRunSchema,
     runAt: NullableDateSchema,
     retryAt: NullableDateSchema,
     startedAt: NullableDateSchema,

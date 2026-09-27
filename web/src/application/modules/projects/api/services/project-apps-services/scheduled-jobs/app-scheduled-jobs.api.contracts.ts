@@ -4,6 +4,8 @@ import type {
     EAppScheduledJobArgSeparator,
     EAppScheduledJobTaskPriority,
     EAppScheduledJobType,
+    ESchedJobSeqMode,
+    ESchedJobSeqOnFailure,
 } from "~/projects/module-shared/enums";
 
 import type { ESettingStatus } from "@application/shared/enums";
@@ -84,13 +86,29 @@ export type AppScheduledJobs_CommandOutput_Payload = {
     pipeToApp?: AppScheduledJobs_CommandOutput_PipeToApp_Payload | null;
 };
 
+export type AppScheduledJobs_SequenceStep_Payload = {
+    job: AppScheduledJobs_RefObject_Payload;
+    name: string;
+};
+
+export type AppScheduledJobs_Sequence_Payload = {
+    mode: ESchedJobSeqMode;
+    onFailure: ESchedJobSeqOnFailure;
+    steps: AppScheduledJobs_SequenceStep_Payload[];
+};
+
+/**
+ * A job to create or update. A container command has `app` and `command`; a job
+ * sequence has `sequence` and neither of those. `schedule` is null for a job run
+ * by hand or by a sequence.
+ */
 export type AppScheduledJobs_Upsert_Payload = {
     inheritable: boolean;
     default: boolean;
     name: string;
     jobType: EAppScheduledJobType;
-    schedule: AppScheduledJobs_Schedule_Payload;
-    app: AppScheduledJobs_RefObject_Payload;
+    schedule: AppScheduledJobs_Schedule_Payload | null;
+    app?: AppScheduledJobs_RefObject_Payload;
     priority: EAppScheduledJobTaskPriority;
     maxRetry?: number;
     retryDelay?: string;
@@ -99,8 +117,9 @@ export type AppScheduledJobs_Upsert_Payload = {
     retryDelayMax?: string;
     timeout?: string;
     controlDisabled: boolean;
-    command: AppScheduledJobs_Command_Payload;
+    command?: AppScheduledJobs_Command_Payload;
     commandOutput?: AppScheduledJobs_CommandOutput_Payload;
+    sequence?: AppScheduledJobs_Sequence_Payload;
     notification: AppScheduledJobs_Notification_Payload;
 };
 

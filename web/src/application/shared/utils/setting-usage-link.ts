@@ -81,6 +81,8 @@ const PROJECT_HREF: Record<string, ProjectHref> = {
     "notification": P.notificationTargets.edit.$route,
     "registry-auth": P.registryAuth.edit.$route,
     "repo-webhook": P.webhooks.edit.$route,
+    // An env's job sequence; the page edits it in the env picked at the top.
+    "sched-job": P.scheduledJobs.edit.$route,
     "secret": P.secrets.edit.$route,
     "ssh-key": P.sshKeys.edit.$route,
     "ssl-cert": P.sslCertificates.edit.$route,

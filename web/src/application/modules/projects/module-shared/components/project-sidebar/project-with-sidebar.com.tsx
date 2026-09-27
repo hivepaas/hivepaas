@@ -6,6 +6,7 @@ import {
     AlertTriangle,
     Archive,
     Bell,
+    CalendarClock,
     Container,
     FileBadge,
     FileCode2,
@@ -209,6 +210,11 @@ function createProviderConfigurationSections(projectId: string): ProviderTabSect
                     label: "Command Templates",
                     icon: FileCode2,
                     route: ROUTE.projects.single.providerConfiguration.commandTemplates.$route(projectId),
+                },
+                {
+                    label: "Scheduled Jobs",
+                    icon: CalendarClock,
+                    route: ROUTE.projects.single.providerConfiguration.scheduledJobs.$route(projectId),
                 },
                 {
                     label: "Command Pipes",

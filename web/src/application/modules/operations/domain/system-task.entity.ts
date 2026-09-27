@@ -74,6 +74,37 @@ export type SystemTaskScope =
     | { type: "project-env"; projectID: string; projectEnvID: string }
     | { type: "app"; projectID: string; projectEnvID: string; appID: string };
 
+export const SystemTaskSequenceStepStatus = {
+    Pending: "pending",
+    Running: "running",
+    Done: "done",
+    Failed: "failed",
+    Skipped: "skipped",
+} as const;
+
+export type SystemTaskSequenceStepStatus =
+    (typeof SystemTaskSequenceStepStatus)[keyof typeof SystemTaskSequenceStepStatus];
+
+/** How one step of a job sequence's run went. */
+export interface SystemTaskSequenceStep {
+    job: { id: string };
+    name: string;
+    status: SystemTaskSequenceStepStatus;
+    exitCode: number | null;
+    error: string;
+    attempts: number;
+    startedAt: Date | null;
+    endedAt: Date | null;
+    /** What the step wrote to its output file, by key. */
+    outputs: Record<string, string>;
+}
+
+/** A job sequence's run, which its task keeps as it goes. */
+export interface SystemTaskSequenceRun {
+    currentStep: number;
+    steps: SystemTaskSequenceStep[];
+}
+
 export interface SystemTask {
     id: string;
     type: string;
@@ -85,6 +116,7 @@ export interface SystemTask {
     scopeProject?: SystemTaskScopeProject;
     scopeApp?: SystemTaskScopeApp;
     scopeUser?: SystemTaskScopeUser;
+    sequenceRun?: SystemTaskSequenceRun;
     runAt: Date | null;
     retryAt: Date | null;
     startedAt: Date | null;

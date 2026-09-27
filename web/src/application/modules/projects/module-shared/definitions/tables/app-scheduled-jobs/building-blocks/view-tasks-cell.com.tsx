@@ -11,7 +11,7 @@ function View({ projectId, env, appId, scheduledJob }: Props) {
             className="text-sm font-medium text-link underline-offset-4"
             to={`${ROUTE.projects.single.apps.single.tasks.$route(projectId, env, appId)}?targetId=${scheduledJob.id}`}
         >
-            View Tasks
+            View Runs
         </AppLink.Basic>
     );
 }

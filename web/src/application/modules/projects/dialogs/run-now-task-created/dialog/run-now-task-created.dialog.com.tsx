@@ -61,7 +61,7 @@ export function RunNowTaskCreatedDialog() {
                         <p>The task has been added to the execution queue.</p>
                         <p>
                             You can view the execution details via the job&apos;s{" "}
-                            <span className="text-link">View Tasks</span> link or click the button below.
+                            <span className="text-link">View Runs</span> link or click the button below.
                         </p>
                     </div>
                 </DialogBody>
@@ -71,7 +71,7 @@ export function RunNowTaskCreatedDialog() {
                         type="button"
                         onClick={handleViewTask}
                     >
-                        View Task
+                        View Run
                     </Button>
                     <Button
                         type="button"

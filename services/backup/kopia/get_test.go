@@ -135,3 +135,13 @@ func TestHasMatchingPath(t *testing.T) {
 	assert.True(t, hasMatchingPath(paths, "/var/lib/docker/volumes/my_data/"))
 	assert.False(t, hasMatchingPath(paths, "/var/lib/docker/volumes/other"))
 }
+
+// `snapshot create --json` gives no stats: the size is the root entry's sum.
+func TestToStandardSnapshot_SizeFromTheRootEntry(t *testing.T) {
+	manifest := &kopiaSnapshotManifest{ID: "k1", Description: "nightly (run t1)"}
+	manifest.RootEntry.Summary.Size = 42
+
+	snap := toStandardSnapshot(manifest)
+	assert.Equal(t, int64(42), snap.SizeBytes)
+	assert.Equal(t, "nightly (run t1)", snap.Description)
+}

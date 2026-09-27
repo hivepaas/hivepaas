@@ -21,6 +21,15 @@ type kopiaSnapshotManifest struct {
 	Description string            `json:"description"`
 	Tags        map[string]string `json:"tags"`
 	Stats       kopiaStats        `json:"stats"`
+	// RootEntry sums what the snapshot holds: `snapshot create --json` gives no
+	// stats, only this.
+	RootEntry kopiaRootEntry `json:"rootEntry"`
+}
+
+type kopiaRootEntry struct {
+	Summary struct {
+		Size int64 `json:"size"`
+	} `json:"summ"`
 }
 
 type kopiaSource struct {
@@ -69,7 +78,9 @@ func (c *Client) BackupStream(
 	filename string,
 	opts *backupmodel.BackupOptions,
 ) (res backupmodel.BackupResult, err error) {
-	args := []string{cmdSnapshot, cmdCreate, "--stdin-file=" + filename, cmdFlagJSON}
+	// kopia needs a path for a stream, the directory its one file is in; the
+	// snapshot's source, when given, is recorded instead.
+	args := []string{cmdSnapshot, cmdCreate, "--stdin-file=" + filename, "/" + filename, cmdFlagJSON}
 	args = append(args, c.formatBackupFlags(opts)...)
 
 	var outBuf, errBuf bytes.Buffer
@@ -131,8 +142,14 @@ func (c *Client) formatBackupFlags(opts *backupmodel.BackupOptions) []string {
 			flags = append(flags, "--tags="+tag)
 		}
 	}
-	if opts.Hostname != "" {
+	switch {
+	case opts.Source != "":
+		flags = append(flags, "--override-source="+opts.Source)
+	case opts.Hostname != "":
 		flags = append(flags, "--override-source="+opts.Hostname+":/")
+	}
+	if opts.Description != "" {
+		flags = append(flags, "--description="+opts.Description)
 	}
 
 	return flags

@@ -23,6 +23,8 @@ type Snapshot struct {
 	Paths     []string  `json:"paths"`
 	Hostname  string    `json:"hostname"`
 	SizeBytes int64     `json:"sizeBytes,omitempty"`
+	// Description is what the snapshot was taken with, such as the job and run.
+	Description string `json:"description,omitempty"`
 }
 
 // RepoOptions are the repository settings that can still be changed once the repository exists.
@@ -71,6 +73,12 @@ type BackupOptions struct {
 	Tags     []string `json:"tags,omitempty"`
 	Hostname string   `json:"hostname,omitempty"`
 	PackSize int      `json:"packSize,omitempty"` // in MB
+	// Description goes onto the snapshot.
+	Description string `json:"description,omitempty"`
+	// Source is what the snapshot is recorded under, as kopia's user@host:/path,
+	// which its retention goes by; the machine's own and the path read when not
+	// given. It takes precedence over Hostname.
+	Source string `json:"source,omitempty"`
 }
 
 type BackupResult struct {

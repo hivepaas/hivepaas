@@ -3,6 +3,7 @@ package backupreposervice
 import (
 	"context"
 
+	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 )
 
@@ -34,4 +35,16 @@ type Service interface {
 	// ApplyRepoOptions pushes the changeable repository settings onto the repository. They are
 	// stored inside it, so backups taken from any node pick them up without further work.
 	ApplyRepoOptions(ctx context.Context, db database.IDB, req *ApplyRepoOptionsReq) error
+
+	// BackupStream takes a snapshot of what Stdin carries, as the file FileName, the engine
+	// running in this process. A repository on a volume cannot take one yet: the agent that
+	// reaches it carries no stdin.
+	BackupStream(ctx context.Context, db database.IDB, req *BackupStreamReq) (*BackupResp, error)
+	// BackupDirectory takes a snapshot of a directory of a node's host, the engine running on
+	// that node through its agent. A repository on a volume is reachable on its own node only.
+	BackupDirectory(ctx context.Context, db database.IDB, req *BackupDirectoryReq) (*BackupResp, error)
+	// DeleteSnapshot removes one snapshot from the repository.
+	DeleteSnapshot(ctx context.Context, db database.IDB, req *DeleteSnapshotReq) error
+	// VolumeHostDir is where a volume's data is on the host of its node, and that node.
+	VolumeHostDir(ctx context.Context, volume *entity.Setting) (*VolumeHostDir, error)
 }

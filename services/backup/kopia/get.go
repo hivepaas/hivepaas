@@ -115,14 +115,21 @@ func toStandardSnapshot(m *kopiaSnapshotManifest) *backupmodel.Snapshot {
 		shortID = shortID[:shortIDLen]
 	}
 
+	// `snapshot list` gives stats; `snapshot create --json` only the root's sum.
+	size := m.Stats.TotalSize
+	if size == 0 {
+		size = m.RootEntry.Summary.Size
+	}
+
 	return &backupmodel.Snapshot{
-		ID:        m.ID,
-		ShortID:   shortID,
-		Time:      m.StartTime,
-		Tags:      tags,
-		Paths:     []string{m.Source.Path},
-		Hostname:  m.Source.Host,
-		SizeBytes: m.Stats.TotalSize,
+		ID:          m.ID,
+		ShortID:     shortID,
+		Time:        m.StartTime,
+		Tags:        tags,
+		Paths:       []string{m.Source.Path},
+		Hostname:    m.Source.Host,
+		SizeBytes:   size,
+		Description: m.Description,
 	}
 }
 

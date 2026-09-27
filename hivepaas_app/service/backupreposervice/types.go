@@ -1,6 +1,8 @@
 package backupreposervice
 
 import (
+	"io"
+
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/secrethelper"
 	"github.com/hivepaas/hivepaas/services/backup"
@@ -140,4 +142,44 @@ type SyncRepoSnapshotsResp struct {
 	// ones are gone.
 	Removed []*entity.BackupSnapshot
 	Added   int
+}
+
+// RepoTarget is the repository a snapshot goes into: its setting, and the scope that
+// resolves its storage.
+type RepoTarget struct {
+	Scope       *entity.ObjectScope
+	RepoSetting *entity.Setting
+	RefObjects  *entity.RefObjects
+}
+
+type BackupStreamReq struct {
+	RepoTarget
+	Stdin    io.Reader
+	FileName string
+	Tags     []string
+}
+
+type BackupDirectoryReq struct {
+	RepoTarget
+	// HostDir is the directory as the node's host sees it.
+	HostDir   string
+	NodeID    string
+	NodeLabel string
+	Tags      []string
+}
+
+type BackupResp struct {
+	Snapshot *RepoSnapshot
+}
+
+type DeleteSnapshotReq struct {
+	RepoTarget
+	SnapshotID string
+}
+
+// VolumeHostDir is a volume's directory on its node's host.
+type VolumeHostDir struct {
+	Dir       string
+	NodeID    string
+	NodeLabel string
 }

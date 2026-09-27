@@ -81,3 +81,26 @@ func TestImportPolicyInAScope(t *testing.T) {
 	assert.Equal(t, reasonSchedulesTasks, importPolicyIn(base.SettingTypeSchedJob, base.ObjectScopeGlobal).skip)
 	assert.Equal(t, reasonSchedulesTasks, importPolicyIn(base.SettingTypePeriodicJob, base.ObjectScopeProjectEnv).skip)
 }
+
+// A trigger's apps travel as the IDs they had where the bundle was made, and are
+// written as the IDs the same apps have here.
+func TestAnEnvJobsTriggerAppsAreMappedOnImport(t *testing.T) {
+	svc, bundle := planFixture(t)
+	backend := bundle.Envs["project_a"]["dev"].Apps["backend"]
+	backend.ID = "app_elsewhere"
+	release := bundle.Envs["project_a"]["dev"].Settings["schedJobs"].(map[string]any)["release"].(map[string]any)
+	triggers := release["triggers"].([]any)
+	assert.Equal(t, "app_1", triggers[0].(map[string]any)["apps"].([]any)[0].(map[string]any)["id"],
+		"export writes the app's ID")
+	triggers[0].(map[string]any)["apps"] = []any{map[string]any{"id": "app_elsewhere"}}
+
+	apply(t, svc, bundle, applyReq(t, svc, bundle))
+
+	written := persistedSetting(t, svc, func(s *entity.Setting) bool {
+		return s.Type == base.SettingTypeSchedJob && s.Scope == base.ObjectScopeProjectEnv
+	})
+	job := written.MustAsSchedJob()
+	if assert.Len(t, job.Triggers, 1) {
+		assert.Equal(t, []entity.ObjectID{{ID: "app_1"}}, job.Triggers[0].Apps)
+	}
+}

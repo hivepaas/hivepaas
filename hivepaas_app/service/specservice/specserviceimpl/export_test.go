@@ -371,6 +371,9 @@ func exportFixture(t *testing.T) specservice.Service {
 			Mode: base.SchedJobSeqModeSequential, OnFailure: base.SchedJobSeqOnFailureStop,
 			Steps: []*entity.SchedJobSequenceStep{{Job: entity.ObjectID{ID: "job_1"}, Name: "migrate"}},
 		},
+		Triggers: []*entity.SchedJobTrigger{
+			{Event: base.SchedJobTriggerPostDeploy, Apps: []entity.ObjectID{{ID: "app_1"}}},
+		},
 	}))
 
 	// The env's own network, as cluster sync records it.

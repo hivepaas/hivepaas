@@ -46,6 +46,8 @@ type SchedJob struct {
 	Notification       *BaseEventNotification `json:"notification,omitempty"`
 	// Sequence is a job-sequence's list of jobs; nil for every other type.
 	Sequence *SchedJobSequence `json:"sequence,omitempty"`
+	// Triggers are the events that run the job, beside its schedule.
+	Triggers []*SchedJobTrigger `json:"triggers,omitempty"`
 }
 
 type SchedJobSchedule struct {
@@ -306,6 +308,7 @@ func (s *SchedJob) GetRefObjectIDs() *RefObjectIDs {
 	// A sequence's members are references like any other: they are what keeps a
 	// job a sequence runs from being deleted under it.
 	refIDs.RefSettingIDs = append(refIDs.RefSettingIDs, s.Sequence.MemberIDs()...)
+	refIDs.RefAppIDs = append(refIDs.RefAppIDs, s.TriggerAppIDs()...)
 	return refIDs
 }
 

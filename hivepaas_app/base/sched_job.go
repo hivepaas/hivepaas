@@ -53,6 +53,27 @@ const (
 // SchedJobSeqMaxSteps is the most steps a job sequence has.
 const SchedJobSeqMaxSteps = 50
 
+// SchedJobTriggerEvent is something that happens to an app and runs the
+// scheduled jobs that listen to it.
+type SchedJobTriggerEvent string
+
+const (
+	SchedJobTriggerPreDeploy    SchedJobTriggerEvent = "pre-deploy"
+	SchedJobTriggerPostDeploy   SchedJobTriggerEvent = "post-deploy"
+	SchedJobTriggerDeployFailed SchedJobTriggerEvent = "deploy-failed"
+	SchedJobTriggerHealthDown   SchedJobTriggerEvent = "health-down"
+	SchedJobTriggerHealthUp     SchedJobTriggerEvent = "health-up"
+	SchedJobTriggerAppEnabled   SchedJobTriggerEvent = "app-enabled"
+	SchedJobTriggerAppDisabled  SchedJobTriggerEvent = "app-disabled"
+)
+
+var AllSchedJobTriggerEvents = []SchedJobTriggerEvent{SchedJobTriggerPreDeploy, SchedJobTriggerPostDeploy,
+	SchedJobTriggerDeployFailed, SchedJobTriggerHealthDown, SchedJobTriggerHealthUp, SchedJobTriggerAppEnabled,
+	SchedJobTriggerAppDisabled}
+
+// SchedJobMaxTriggers is the most triggers a scheduled job has.
+const SchedJobMaxTriggers = 10
+
 const (
 	ExecCommandMaxSize = 300 * unit.KB
 )

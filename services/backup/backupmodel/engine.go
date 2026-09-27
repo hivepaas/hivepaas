@@ -27,6 +27,9 @@ type Engine interface {
 	// ConnectRepo connects to an existing backup repository on the storage backend.
 	ConnectRepo(ctx context.Context) error
 
+	// DisconnectRepo drops the connection ConnectRepo made, and its config file.
+	DisconnectRepo(ctx context.Context) error
+
 	// CheckRepo verifies the integrity of the backup repository.
 	CheckRepo(ctx context.Context) error
 

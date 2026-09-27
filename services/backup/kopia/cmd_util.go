@@ -33,6 +33,9 @@ func (c *Client) buildStorageFlags() ([]string, error) {
 	if c.storage.StorageLocal != nil {
 		return c.buildLocalFlags(c.storage.StorageLocal), nil
 	}
+	if c.storage.StorageServer != nil {
+		return c.buildServerFlags(c.storage.StorageServer), nil
+	}
 	return nil, hperrors.Wrap(backupmodel.ErrStorageTypeRequired)
 }
 
@@ -66,6 +69,20 @@ func (c *Client) buildS3Flags(cfg *backupmodel.StorageS3) []string {
 	}
 
 	return flags
+}
+
+// buildServerFlags reaches a repository server. The certificate is pinned by its
+// fingerprint, whatever address the server is reached by; the password, from
+// the environment, is not kept on disk.
+func (c *Client) buildServerFlags(cfg *backupmodel.StorageServer) []string {
+	return []string{
+		"server",
+		"--url=" + cfg.URL,
+		"--server-cert-fingerprint=" + cfg.Fingerprint,
+		"--override-username=" + cfg.Username,
+		"--override-hostname=" + cfg.Hostname,
+		"--no-persist-credentials",
+	}
 }
 
 func (c *Client) buildLocalFlags(cfg *backupmodel.StorageLocal) []string {

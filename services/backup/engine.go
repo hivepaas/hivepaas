@@ -38,6 +38,7 @@ type (
 	RetentionPolicy      = backupmodel.RetentionPolicy
 	Storage              = backupmodel.Storage
 	StorageS3            = backupmodel.StorageS3
+	StorageServer        = backupmodel.StorageServer
 	StorageLocal         = backupmodel.StorageLocal
 	CommandExecReq       = backupmodel.CommandExecReq
 	CommandExecResp      = backupmodel.CommandExecResp

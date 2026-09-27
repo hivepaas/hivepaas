@@ -114,6 +114,20 @@ func (c *Client) ConnectRepo(
 	return nil
 }
 
+func (c *Client) DisconnectRepo(
+	ctx context.Context,
+) error {
+	var errBuf bytes.Buffer
+	_, err := c.execCommand(ctx, []string{cmdRepository, "disconnect"}, func(o *execOptions) {
+		o.stderr = &errBuf
+	})
+	if err != nil {
+		return hperrors.Wrap(fmt.Errorf("kopia repository disconnect failed: %s (err: %w)",
+			strings.TrimSpace(errBuf.String()), err))
+	}
+	return nil
+}
+
 func (c *Client) CheckRepo(
 	ctx context.Context,
 ) error {

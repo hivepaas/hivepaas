@@ -128,6 +128,9 @@ type Storage struct {
 	RepositoryPassword string        `json:"repositoryPassword"`
 	StorageS3          *StorageS3    `json:"storageS3,omitempty"`
 	StorageLocal       *StorageLocal `json:"storageLocal,omitempty"`
+	// StorageServer is a repository reached through a repository server. The
+	// password is then the server user's, not the repository's.
+	StorageServer *StorageServer `json:"storageServer,omitempty"`
 
 	// ConfigFile is the engine config file holding the repository connection state.
 	// Every repository must use its own file, otherwise operations on different repositories
@@ -143,6 +146,15 @@ type StorageS3 struct {
 	AccessKey      string `json:"accessKey"`
 	SecretKey      string `json:"secretKey"`
 	ForcePathStyle bool   `json:"forcePathStyle"`
+}
+
+// StorageServer is a repository server: its URL, its certificate's SHA-256
+// fingerprint, and the identity the client logs in and writes snapshots as.
+type StorageServer struct {
+	URL         string `json:"url"`
+	Fingerprint string `json:"fingerprint"`
+	Username    string `json:"username"`
+	Hostname    string `json:"hostname"`
 }
 
 type StorageLocal struct {

@@ -1,6 +1,7 @@
 package kopia
 
 import (
+	"context"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -81,4 +82,40 @@ func TestClient_BuildLocalFlags(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Contains(t, flags, "filesystem")
 	assert.Contains(t, flags, "--path=/mnt/backups")
+}
+
+// A repository server is reached by its URL, its certificate pinned by
+// fingerprint; the client logs in as the identity it writes snapshots under,
+// its password from the environment, never kept on disk.
+func TestClient_BuildServerFlags(t *testing.T) {
+	c := NewClient(&backupmodel.Storage{
+		RepositoryPassword: "user-password",
+		StorageServer: &backupmodel.StorageServer{
+			URL:         "https://10.0.1.5:40123",
+			Fingerprint: "ab12",
+			Username:    "hivepaas",
+			Hostname:    "data-backup",
+		},
+	}, nil)
+
+	flags, err := c.buildStorageFlags()
+	assert.NoError(t, err)
+	assert.Equal(t, []string{"server", "--url=https://10.0.1.5:40123", "--server-cert-fingerprint=ab12",
+		"--override-username=hivepaas", "--override-hostname=data-backup", "--no-persist-credentials"}, flags)
+	assert.Equal(t, []string{"KOPIA_PASSWORD=user-password"}, c.buildEnv(""))
+}
+
+// Disconnecting removes the client's connection to the repository: its config file.
+func TestClient_DisconnectRepo(t *testing.T) {
+	var executed []string
+	c := NewClient(&backupmodel.Storage{
+		StorageServer: &backupmodel.StorageServer{URL: "https://10.0.1.5:40123"},
+		ConfigFile:    "/tmp/s1/repository.config",
+	}, func(_ context.Context, req *backupmodel.CommandExecReq) (*backupmodel.CommandExecResp, error) {
+		executed = req.Command
+		return &backupmodel.CommandExecResp{}, nil
+	})
+
+	assert.NoError(t, c.DisconnectRepo(context.Background()))
+	assert.Equal(t, []string{"kopia", "--config-file=/tmp/s1/repository.config", "repository", "disconnect"}, executed)
 }

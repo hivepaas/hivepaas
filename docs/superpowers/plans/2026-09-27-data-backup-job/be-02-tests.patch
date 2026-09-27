@@ -1,0 +1,154 @@
+diff --git a/hivepaas_app/service/backupreposervice/backupreposerviceimpl/backup_test.go b/hivepaas_app/service/backupreposervice/backupreposerviceimpl/backup_test.go
+new file mode 100644
+index 00000000..7b68dfd1
+--- /dev/null
++++ b/hivepaas_app/service/backupreposervice/backupreposerviceimpl/backup_test.go
+@@ -0,0 +1,67 @@
++package backupreposerviceimpl
++
++import (
++	"context"
++	"errors"
++	"testing"
++	"time"
++
++	"github.com/stretchr/testify/assert"
++
++	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
++	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
++	"github.com/hivepaas/hivepaas/services/backup"
++	"github.com/hivepaas/hivepaas/services/backup/backupmodel"
++)
++
++// A command the engine gives no node runs on the node asked for: the engine of
++// a cloud repository names none, and a directory on a node has to be read there.
++func TestOnNodeExecutorRunsWhereAsked(t *testing.T) {
++	var got *backupmodel.CommandExecReq
++	base := func(_ context.Context, req *backupmodel.CommandExecReq) (*backupmodel.CommandExecResp, error) {
++		got = req
++		return &backupmodel.CommandExecResp{}, nil
++	}
++
++	exec := onNodeExecutor(base, "node-2", "")
++	_, err := exec(context.Background(), &backupmodel.CommandExecReq{Command: []string{"kopia"}})
++
++	assert.NoError(t, err)
++	assert.Equal(t, "node-2", got.NodeID)
++
++	exec = onNodeExecutor(base, "", "zone=b")
++	_, _ = exec(context.Background(), &backupmodel.CommandExecReq{Command: []string{"kopia"}})
++	assert.Equal(t, "zone=b", got.NodeLabel)
++}
++
++// A repository on a volume is reachable on its own node only: a directory on
++// another node cannot be backed up into it yet.
++func TestCheckRepoReachableFrom(t *testing.T) {
++	cloud := &backup.Storage{StorageS3: &backup.StorageS3{Bucket: "b"}}
++	assert.NoError(t, checkRepoReachableFrom(cloud, "node-2", ""))
++
++	onNode2 := &backup.Storage{StorageLocal: &backup.StorageLocal{Path: "/host/srv", NodeID: "node-2"}}
++	assert.NoError(t, checkRepoReachableFrom(onNode2, "node-2", ""))
++	err := checkRepoReachableFrom(onNode2, "node-3", "")
++	assert.True(t, errors.Is(err, hperrors.ErrNotImplemented), "got %v", err)
++
++	byLabel := &backup.Storage{StorageLocal: &backup.StorageLocal{Path: "/host/srv", NodeLabel: "zone=b"}}
++	assert.NoError(t, checkRepoReachableFrom(byLabel, "", "zone=b"))
++	assert.Error(t, checkRepoReachableFrom(byLabel, "node-2", ""))
++}
++
++// A snapshot the engine made reads as the repository's snapshots do.
++func TestToRepoSnapshot(t *testing.T) {
++	when := time.Date(2026, 9, 27, 12, 0, 0, 0, time.UTC)
++
++	snapshot := toRepoSnapshot(&backupmodel.Snapshot{
++		ID: "k1", ShortID: "k1s", Time: when, Tags: []string{"a:b"}, Paths: []string{"/db.sql"},
++		Hostname: "h", SizeBytes: 42,
++	})
++
++	assert.Equal(t, &entity.BackupSnapshot{
++		ID: "k1", ShortID: "k1s", Time: when, Paths: []string{"/db.sql"}, Hostname: "h", SizeBytes: 42,
++	}, snapshot.Snapshot)
++	assert.Equal(t, []string{"a:b"}, snapshot.Tags)
++	assert.Nil(t, toRepoSnapshot(nil))
++}
+diff --git a/services/backup/kopia/backup_stream_integration_test.go b/services/backup/kopia/backup_stream_integration_test.go
+new file mode 100644
+index 00000000..95da9bb5
+--- /dev/null
++++ b/services/backup/kopia/backup_stream_integration_test.go
+@@ -0,0 +1,57 @@
++package kopia
++
++import (
++	"context"
++	"os"
++	"path/filepath"
++	"strings"
++	"testing"
++
++	"github.com/stretchr/testify/assert"
++
++	"github.com/hivepaas/hivepaas/services/backup/backupmodel"
++)
++
++// A stream is taken as one file of a snapshot recorded under the source it is
++// given, with its tags and description.
++func TestIntegration_BackupStream_TakesTheStreamAsAFile(t *testing.T) {
++	client, _ := newTestRepo(t, "repo")
++	ctx := context.Background()
++	mustNoError(t, client.InitRepo(ctx, &backupmodel.InitRepoOptions{}))
++
++	resp, err := client.BackupStream(ctx, strings.NewReader("CREATE TABLE t();\n"), "db.sql",
++		&backupmodel.BackupOptions{
++			Source:      "hivepaas@data-backup:/j1",
++			Description: "nightly (run t1)",
++			Tags:        []string{"hivepaas.job:j1", "hivepaas.run:t1"},
++		})
++
++	mustNoError(t, err)
++	mustNotNil(t, resp.Item)
++	assert.Equal(t, int64(len("CREATE TABLE t();\n")), resp.Item.SizeBytes)
++	assert.Contains(t, resp.Item.Paths, "/j1")
++	assert.Equal(t, "data-backup", resp.Item.Hostname)
++	assert.Equal(t, "nightly (run t1)", resp.Item.Description)
++	assert.Contains(t, resp.Item.Tags, "hivepaas.run:t1")
++}
++
++// A directory is recorded under the source it is given too: every run of a job
++// under one source, whichever node read it.
++func TestIntegration_BackupDirectory_UnderAGivenSource(t *testing.T) {
++	client, baseDir := newTestRepo(t, "repo")
++	ctx := context.Background()
++	mustNoError(t, client.InitRepo(ctx, &backupmodel.InitRepoOptions{}))
++	dataDir := filepath.Join(baseDir, "data")
++	mustNoError(t, os.MkdirAll(dataDir, 0o755))
++	mustNoError(t, os.WriteFile(filepath.Join(dataDir, "f1.txt"), []byte("hello"), 0o600))
++
++	resp, err := client.BackupDirectory(ctx, dataDir, &backupmodel.BackupOptions{
++		Source: "hivepaas@data-backup:/j2", Description: "files (run t2)",
++	})
++
++	mustNoError(t, err)
++	mustNotNil(t, resp.Item)
++	assert.Equal(t, []string{"/j2"}, resp.Item.Paths)
++	assert.Equal(t, int64(len("hello")), resp.Item.SizeBytes)
++	assert.Equal(t, "files (run t2)", resp.Item.Description)
++}
+diff --git a/services/backup/kopia/get_test.go b/services/backup/kopia/get_test.go
+index 74a5da18..7f77ff20 100644
+--- a/services/backup/kopia/get_test.go
++++ b/services/backup/kopia/get_test.go
+@@ -135,3 +135,13 @@ func TestHasMatchingPath(t *testing.T) {
+ 	assert.True(t, hasMatchingPath(paths, "/var/lib/docker/volumes/my_data/"))
+ 	assert.False(t, hasMatchingPath(paths, "/var/lib/docker/volumes/other"))
+ }
++
++// `snapshot create --json` gives no stats: the size is the root entry's sum.
++func TestToStandardSnapshot_SizeFromTheRootEntry(t *testing.T) {
++	manifest := &kopiaSnapshotManifest{ID: "k1", Description: "nightly (run t1)"}
++	manifest.RootEntry.Summary.Size = 42
++
++	snap := toStandardSnapshot(manifest)
++	assert.Equal(t, int64(42), snap.SizeBytes)
++	assert.Equal(t, "nightly (run t1)", snap.Description)
++}

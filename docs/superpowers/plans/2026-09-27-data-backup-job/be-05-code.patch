@@ -1,0 +1,76 @@
+diff --git a/docs/openapi/swagger.json b/docs/openapi/swagger.json
+index cfc938a0..286936f1 100644
+--- a/docs/openapi/swagger.json
++++ b/docs/openapi/swagger.json
+@@ -44422,6 +44422,18 @@
+         "required" : [ "id", "type" ],
+         "type" : "object"
+       },
++      "entity.SchedJobDataBackupResult" : {
++        "properties" : {
++          "sizeBytes" : {
++            "type" : "integer"
++          },
++          "snapshotId" : {
++            "type" : "string"
++          }
++        },
++        "required" : [ "sizeBytes", "snapshotId" ],
++        "type" : "object"
++      },
+       "entity.SchedJobSeqRun" : {
+         "properties" : {
+           "currentStep" : {
+@@ -64514,6 +64526,13 @@
+           "createdAt" : {
+             "type" : "string"
+           },
++          "dataBackup" : {
++            "allOf" : [ {
++              "$ref" : "#/components/schemas/entity.SchedJobDataBackupResult"
++            } ],
++            "description" : "DataBackup is the snapshot a data backup's run took.",
++            "type" : "object"
++          },
+           "endedAt" : {
+             "type" : "string"
+           },
+@@ -64571,7 +64590,7 @@
+             "type" : "string"
+           }
+         },
+-        "required" : [ "config", "createdAt", "endedAt", "id", "lastError", "retryAt", "runAt", "scopeApp", "scopeProject", "scopeUser", "sequenceRun", "startedAt", "status", "targetJob", "trigger", "type", "updateVer", "updatedAt" ],
++        "required" : [ "config", "createdAt", "dataBackup", "endedAt", "id", "lastError", "retryAt", "runAt", "scopeApp", "scopeProject", "scopeUser", "sequenceRun", "startedAt", "status", "targetJob", "trigger", "type", "updateVer", "updatedAt" ],
+         "type" : "object"
+       },
+       "taskdto.TaskStatusResp" : {
+diff --git a/hivepaas_app/usecase/taskuc/taskdto/get.go b/hivepaas_app/usecase/taskuc/taskdto/get.go
+index e4a10877..1dbf7851 100644
+--- a/hivepaas_app/usecase/taskuc/taskdto/get.go
++++ b/hivepaas_app/usecase/taskuc/taskdto/get.go
+@@ -49,6 +49,8 @@ type TaskResp struct {
+ 	SequenceRun *entity.SchedJobSeqRun `json:"sequenceRun,omitempty" copy:"-"`
+ 	// Trigger is what fired a scheduled job's run, when a trigger did.
+ 	Trigger *TaskTriggerResp `json:"trigger,omitempty" copy:"-"`
++	// DataBackup is the snapshot a data backup's run took.
++	DataBackup *entity.SchedJobDataBackupResult `json:"dataBackup,omitempty" copy:"-"`
+ 
+ 	ScopeProject *projectdto.ProjectBaseResp `json:"scopeProject,omitempty"`
+ 	ScopeApp     *appdto.AppBaseResp         `json:"scopeApp,omitempty"`
+@@ -93,9 +95,13 @@ func TransformTask(
+ 	TransformTaskScopeObject(task, refObjects, resp)
+ 
+ 	if task.Type == base.TaskTypeSchedJobExec {
+-		// A plain job's task has no output; one that does not parse as a run is
+-		// not shown rather than failing the whole answer.
+-		resp.SequenceRun, _ = task.OutputAsSchedJobSeqRun()
++		// A plain job's task has no output; one that does not parse is not shown
++		// rather than failing the whole answer. A data backup's output reads as a
++		// sequence run that never started, and a sequence's as no snapshot.
++		if run, _ := task.OutputAsSchedJobSeqRun(); run != nil && run.Started {
++			resp.SequenceRun = run
++		}
++		resp.DataBackup, _ = task.OutputAsDataBackup()
+ 		resp.Trigger = transformTaskTrigger(task, refObjects)
+ 	}
+ 

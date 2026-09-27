@@ -1,0 +1,40 @@
+diff --git a/hivepaas_app/usecase/taskuc/taskdto/data_backup_test.go b/hivepaas_app/usecase/taskuc/taskdto/data_backup_test.go
+new file mode 100644
+index 00000000..c9ca3468
+--- /dev/null
++++ b/hivepaas_app/usecase/taskuc/taskdto/data_backup_test.go
+@@ -0,0 +1,34 @@
++package taskdto
++
++import (
++	"testing"
++
++	"github.com/stretchr/testify/assert"
++
++	"github.com/hivepaas/hivepaas/hivepaas_app/base"
++	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
++)
++
++// A data backup's run gives the snapshot it took, and no sequence run: its
++// output reads as an empty one.
++func TestTransformTaskGivesADataBackupsSnapshot(t *testing.T) {
++	task := &entity.Task{ID: "t1", Type: base.TaskTypeSchedJobExec}
++	task.MustSetOutput(&entity.SchedJobDataBackupResult{SnapshotID: "k1", SizeBytes: 42})
++
++	resp, err := TransformTask(task, nil, entity.NewRefObjects())
++
++	assert.NoError(t, err)
++	assert.Equal(t, &entity.SchedJobDataBackupResult{SnapshotID: "k1", SizeBytes: 42}, resp.DataBackup)
++	assert.Nil(t, resp.SequenceRun)
++}
++
++func TestTransformTaskGivesNoSnapshotForASequencesRun(t *testing.T) {
++	task := &entity.Task{ID: "t1", Type: base.TaskTypeSchedJobExec}
++	task.MustSetOutput(&entity.SchedJobSeqRun{Started: true})
++
++	resp, err := TransformTask(task, nil, entity.NewRefObjects())
++
++	assert.NoError(t, err)
++	assert.Nil(t, resp.DataBackup)
++	assert.NotNil(t, resp.SequenceRun)
++}

@@ -1,0 +1,759 @@
+diff --git a/hivepaas_app/registry/provides.go b/hivepaas_app/registry/provides.go
+index 2814ecba..8459305e 100644
+--- a/hivepaas_app/registry/provides.go
++++ b/hivepaas_app/registry/provides.go
+@@ -65,6 +65,7 @@ import (
+ 	"github.com/hivepaas/hivepaas/hivepaas_app/service/commandservice/commandserviceimpl"
+ 	"github.com/hivepaas/hivepaas/hivepaas_app/service/containerexecservice/containerexecserviceimpl"
+ 	"github.com/hivepaas/hivepaas/hivepaas_app/service/containerfileservice/containerfileserviceimpl"
++	"github.com/hivepaas/hivepaas/hivepaas_app/service/databackupservice/databackupserviceimpl"
+ 	"github.com/hivepaas/hivepaas/hivepaas_app/service/datakeyservice/datakeyserviceimpl"
+ 	"github.com/hivepaas/hivepaas/hivepaas_app/service/dbservice/dbserviceimpl"
+ 	"github.com/hivepaas/hivepaas/hivepaas_app/service/dockerapiservice/dockerapiserviceimpl"
+@@ -370,6 +371,7 @@ var Provides = []any{
+ 	appserviceimpl.New,
+ 	backuprepocleanupserviceimpl.New,
+ 	backupreposerviceimpl.New,
++	databackupserviceimpl.New,
+ 	datakeyserviceimpl.New,
+ 	clustercleanupserviceimpl.New,
+ 	clusterserviceimpl.New,
+diff --git a/hivepaas_app/service/backupreposervice/backupreposerviceimpl/backup.go b/hivepaas_app/service/backupreposervice/backupreposerviceimpl/backup.go
+index c77c49d7..e6ad7f1a 100644
+--- a/hivepaas_app/service/backupreposervice/backupreposerviceimpl/backup.go
++++ b/hivepaas_app/service/backupreposervice/backupreposerviceimpl/backup.go
+@@ -25,7 +25,12 @@ func (s *service) BackupStream(
+ 	if err = engine.ConnectRepo(ctx); err != nil {
+ 		return nil, hperrors.Wrap(err)
+ 	}
+-	result, err := engine.BackupStream(ctx, req.Stdin, req.FileName, &backup.BackupOptions{Tags: req.Tags})
++	if req.OnConnected != nil {
++		req.OnConnected()
++	}
++	result, err := engine.BackupStream(ctx, req.Stdin, req.FileName, &backup.BackupOptions{
++		Tags: req.Tags, Description: req.Description, Source: req.Source,
++	})
+ 	if err != nil {
+ 		return nil, hperrors.Wrap(err)
+ 	}
+@@ -60,7 +65,9 @@ func (s *service) BackupDirectory(
+ 	}
+ 	// The agent mounts the host root: the directory is expressed from inside it.
+ 	dir := filepath.Join(volumeservice.HostPathPrefix, req.HostDir)
+-	result, err := engine.BackupDirectory(ctx, dir, &backup.BackupOptions{Tags: req.Tags})
++	result, err := engine.BackupDirectory(ctx, dir, &backup.BackupOptions{
++		Tags: req.Tags, Description: req.Description, Source: req.Source,
++	})
+ 	if err != nil {
+ 		return nil, hperrors.Wrap(err)
+ 	}
+diff --git a/hivepaas_app/service/backupreposervice/types.go b/hivepaas_app/service/backupreposervice/types.go
+index ae3521e6..7ac0c468 100644
+--- a/hivepaas_app/service/backupreposervice/types.go
++++ b/hivepaas_app/service/backupreposervice/types.go
+@@ -156,7 +156,14 @@ type BackupStreamReq struct {
+ 	RepoTarget
+ 	Stdin    io.Reader
+ 	FileName string
+-	Tags     []string
++	// Source is what kopia records the snapshot under, user@host:/path.
++	Source      string
++	Description string
++	Tags        []string
++	// OnConnected, when set, is called once the engine is built and connected:
++	// from then on the stream uses the database no more, and whatever writes
++	// Stdin may use it.
++	OnConnected func()
+ }
+ 
+ type BackupDirectoryReq struct {
+@@ -165,7 +172,10 @@ type BackupDirectoryReq struct {
+ 	HostDir   string
+ 	NodeID    string
+ 	NodeLabel string
+-	Tags      []string
++	// Source is what kopia records the snapshot under, user@host:/path.
++	Source      string
++	Description string
++	Tags        []string
+ }
+ 
+ type BackupResp struct {
+diff --git a/hivepaas_app/service/databackupservice/databackupserviceimpl/backup.go b/hivepaas_app/service/databackupservice/databackupserviceimpl/backup.go
+new file mode 100644
+index 00000000..5f08650e
+--- /dev/null
++++ b/hivepaas_app/service/databackupservice/databackupserviceimpl/backup.go
+@@ -0,0 +1,260 @@
++package databackupserviceimpl
++
++import (
++	"context"
++	"fmt"
++	"io"
++	"time"
++
++	"github.com/hivepaas/hivepaas/hivepaas_app/base"
++	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
++	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
++	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
++	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/tasklog"
++	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/unit"
++	"github.com/hivepaas/hivepaas/hivepaas_app/service/backupreposervice"
++	"github.com/hivepaas/hivepaas/hivepaas_app/service/databackupservice"
++	"github.com/hivepaas/hivepaas/hivepaas_app/service/schedjobexecservice"
++	"github.com/hivepaas/hivepaas/services/backup"
++)
++
++// dataBackupTagRun is the tag of every snapshot one run takes: what finds the
++// snapshot a failed command left behind when kopia did not name it.
++const dataBackupTagRun = "hivepaas.run"
++
++// dataBackupSource and the job's ID are the source every snapshot of the job is
++// recorded under, whichever machine took it: kopia's retention goes by source,
++// and the backend's or an agent's hostname changes as it is redeployed.
++const dataBackupSource = "hivepaas@data-backup:/"
++
++func (s *service) Backup(
++	ctx context.Context,
++	db database.Tx,
++	req *databackupservice.BackupReq,
++) (*databackupservice.BackupResp, error) {
++	start := time.Now()
++	job := req.JobSetting.MustAsSchedJob()
++	dataBackup := job.DataBackup
++	if dataBackup == nil {
++		return nil, hperrors.Wrap(hperrors.ErrSettingMissing).WithParam("Name", "data backup")
++	}
++	if req.App == nil {
++		return nil, hperrors.NewNotFound("App")
++	}
++	repoSetting := req.RefObjects.RefSettings[dataBackup.TargetRepository.ID]
++	if repoSetting == nil || !repoSetting.IsActive() {
++		return nil, hperrors.NewNotFound("Active backup repository")
++	}
++	scope, err := s.repoScope(ctx, db, repoSetting)
++	if err != nil {
++		return nil, hperrors.Wrap(err)
++	}
++	target := backupreposervice.RepoTarget{Scope: scope, RepoSetting: repoSetting, RefObjects: req.RefObjects}
++	tags := append(dataBackup.SnapshotTags(req.JobSetting.ID, req.App.ID), dataBackupTagRun+":"+req.Task.ID)
++	description := fmt.Sprintf("%s (run %s)", req.JobSetting.Name, req.Task.ID)
++
++	var snapshot *backupreposervice.RepoSnapshot
++	switch dataBackup.Source {
++	case base.SchedJobDataBackupSourceCommand:
++		snapshot, err = s.backupCommand(ctx, db, req, dataBackup, target, tags, description)
++	case base.SchedJobDataBackupSourceVolume:
++		snapshot, err = s.backupVolume(ctx, db, req, dataBackup, target, tags, description)
++	default:
++		err = hperrors.NewUnsupported(fmt.Sprintf("Data backup source '%s'", dataBackup.Source))
++	}
++	if err != nil {
++		return nil, hperrors.Wrap(err)
++	}
++	if snapshot == nil || snapshot.Snapshot == nil {
++		return nil, hperrors.Wrap(hperrors.ErrInternal).WithMsgLog("the engine named no snapshot")
++	}
++
++	result := &entity.SchedJobDataBackupResult{SnapshotID: snapshot.Snapshot.ID, SizeBytes: snapshot.Snapshot.SizeBytes}
++	_ = req.LogStore.Add(ctx, tasklog.NewOutFrame(fmt.Sprintf("Snapshot %s taken: %s in %s\n", result.SnapshotID,
++		unit.DataSize(result.SizeBytes).String(), time.Since(start).Truncate(time.Second)), tasklog.TsNow))
++	if err = s.syncSnapshots(ctx, db, target); err != nil {
++		// The snapshot is taken: its record comes with the repository's next sync.
++		_ = req.LogStore.Add(ctx, tasklog.NewWarnFrame(
++			"The repository's snapshot list could not be updated: "+err.Error()+"\n", tasklog.TsNow))
++	}
++	if req.Sequence == nil {
++		req.Task.MustSetOutput(result)
++	}
++	return &databackupservice.BackupResp{Result: result}, nil
++}
++
++// backupCommand streams the command's stdout into the repository. A command that
++// fails leaves no snapshot: kopia may have committed what it read, which is
++// deleted.
++//
++// The engine and the command share the run's transaction, which is not safe to
++// use from two goroutines: the command starts once the engine is connected, and
++// the engine uses the database no more.
++func (s *service) backupCommand(
++	ctx context.Context,
++	db database.Tx,
++	req *databackupservice.BackupReq,
++	dataBackup *entity.SchedJobDataBackup,
++	target backupreposervice.RepoTarget,
++	tags []string,
++	description string,
++) (*backupreposervice.RepoSnapshot, error) {
++	reader, writer := io.Pipe()
++	streamCtx, cancelStream := context.WithCancel(ctx)
++	defer cancelStream()
++
++	type streamed struct {
++		resp *backupreposervice.BackupResp
++		err  error
++		// stoppedByUs is whether the stream ended after the run canceled it: its
++		// error then follows from the command's.
++		stoppedByUs bool
++	}
++	connected := make(chan struct{})
++	done := make(chan streamed, 1)
++	go func() {
++		resp, err := s.backupRepoService.BackupStream(streamCtx, db, &backupreposervice.BackupStreamReq{
++			RepoTarget: target, Stdin: reader, FileName: dataBackup.SourceFileName, Tags: tags,
++			Source:      dataBackupSource + req.JobSetting.ID,
++			Description: description,
++			OnConnected: func() { close(connected) },
++		})
++		// Whatever the engine did not read is not waited for.
++		_ = reader.CloseWithError(io.ErrClosedPipe)
++		done <- streamed{resp: resp, err: err, stoppedByUs: streamCtx.Err() != nil}
++	}()
++
++	select {
++	case <-connected:
++	case result := <-done:
++		// The engine stopped before it was connected: the command has not run.
++		if result.err == nil {
++			return nil, hperrors.Wrap(hperrors.ErrInternal).WithMsgLog("the stream ended before it began")
++		}
++		return nil, hperrors.Wrap(result.err)
++	}
++
++	_, execErr := s.schedJobExecService.SchedJobExec(ctx, db, &schedjobexecservice.SchedJobExecReq{
++		TaskExecData:    req.TaskExecData,
++		SchedJobSetting: req.JobSetting,
++		DestApp:         req.App,
++		Sequence:        req.Sequence,
++		Command:         dataBackup.SourceCommand,
++		StdoutWriter:    writer,
++	})
++	if execErr != nil {
++		// The engine must not take a partial output for a whole one.
++		cancelStream()
++		_ = writer.CloseWithError(execErr)
++	} else {
++		_ = writer.Close()
++	}
++	result := <-done
++
++	if execErr != nil {
++		s.deleteRunSnapshots(context.WithoutCancel(ctx), db, req, target, result.resp)
++		if result.err != nil && !result.stoppedByUs {
++			// The engine stopped first, and the command failed writing to it.
++			return nil, hperrors.Wrap(result.err)
++		}
++		return nil, hperrors.Wrap(execErr)
++	}
++	if result.err != nil {
++		return nil, hperrors.Wrap(result.err)
++	}
++	return result.resp.Snapshot, nil
++}
++
++// deleteRunSnapshots deletes what a failed run left in the repository: the
++// snapshot the engine named, or those tagged with the run when it named none.
++func (s *service) deleteRunSnapshots(
++	ctx context.Context,
++	db database.IDB,
++	req *databackupservice.BackupReq,
++	target backupreposervice.RepoTarget,
++	resp *backupreposervice.BackupResp,
++) {
++	var ids []string
++	if resp != nil && resp.Snapshot != nil && resp.Snapshot.Snapshot != nil {
++		ids = append(ids, resp.Snapshot.Snapshot.ID)
++	} else {
++		repo, err := target.RepoSetting.AsBackupRepo()
++		if err != nil {
++			return
++		}
++		listed, err := s.backupRepoService.ListSnapshots(ctx, db, &backupreposervice.ListSnapshotsReq{
++			Scope: target.Scope, Repo: repo, RepoID: target.RepoSetting.ID, RefObjects: target.RefObjects,
++			Options: &backup.ListSnapshotsOptions{Tags: []string{dataBackupTagRun + ":" + req.Task.ID}},
++		})
++		if err != nil {
++			_ = req.LogStore.Add(ctx, tasklog.NewWarnFrame(
++				"Could not look for a partial snapshot to delete: "+err.Error()+"\n", tasklog.TsNow))
++			return
++		}
++		for _, item := range listed.Snapshots {
++			if item.Snapshot != nil {
++				ids = append(ids, item.Snapshot.ID)
++			}
++		}
++	}
++	for _, id := range ids {
++		err := s.backupRepoService.DeleteSnapshot(ctx, db, &backupreposervice.DeleteSnapshotReq{
++			RepoTarget: target, SnapshotID: id,
++		})
++		if err != nil {
++			_ = req.LogStore.Add(ctx, tasklog.NewWarnFrame(
++				fmt.Sprintf("Could not delete the partial snapshot %s: %v\n", id, err), tasklog.TsNow))
++			continue
++		}
++		_ = req.LogStore.Add(ctx, tasklog.NewWarnFrame(
++			fmt.Sprintf("Deleted snapshot %s: the command failed, so it holds part of its output\n", id),
++			tasklog.TsNow))
++	}
++}
++
++// backupVolume snapshots the app's part of the volume, on the volume's node.
++func (s *service) backupVolume(
++	ctx context.Context,
++	db database.Tx,
++	req *databackupservice.BackupReq,
++	dataBackup *entity.SchedJobDataBackup,
++	target backupreposervice.RepoTarget,
++	tags []string,
++	description string,
++) (*backupreposervice.RepoSnapshot, error) {
++	appVolume, err := s.findAppVolume(ctx, db, req.App, dataBackup.SourceVolume.ID)
++	if err != nil {
++		return nil, hperrors.Wrap(err)
++	}
++	dir, err := joinSubpath(appVolume.HostDir, dataBackup.SourceVolumeSubpath)
++	if err != nil {
++		return nil, hperrors.Wrap(err)
++	}
++	_ = req.LogStore.Add(ctx, tasklog.NewOutFrame("Backing up "+dir+"\n", tasklog.TsNow))
++	resp, err := s.backupRepoService.BackupDirectory(ctx, db, &backupreposervice.BackupDirectoryReq{
++		RepoTarget: target, HostDir: dir, NodeID: appVolume.NodeID, NodeLabel: appVolume.NodeLabel, Tags: tags,
++		Source: dataBackupSource + req.JobSetting.ID, Description: description,
++	})
++	if err != nil {
++		return nil, hperrors.Wrap(err)
++	}
++	return resp.Snapshot, nil
++}
++
++// syncSnapshots makes the repository's snapshot list match what it now holds.
++func (s *service) syncSnapshots(ctx context.Context, db database.Tx, target backupreposervice.RepoTarget) error {
++	repo, err := target.RepoSetting.AsBackupRepo()
++	if err != nil {
++		return hperrors.Wrap(err)
++	}
++	listed, err := s.backupRepoService.ListSnapshots(ctx, db, &backupreposervice.ListSnapshotsReq{
++		Scope: target.Scope, Repo: repo, RepoID: target.RepoSetting.ID, RefObjects: target.RefObjects,
++	})
++	if err != nil {
++		return hperrors.Wrap(err)
++	}
++	_, err = s.backupRepoService.SyncRepoSnapshots(ctx, db, &backupreposervice.SyncRepoSnapshotsReq{
++		Scope: target.Scope, RepoSetting: target.RepoSetting, Remaining: listed.Snapshots,
++	})
++	return hperrors.Wrap(err)
++}
+diff --git a/hivepaas_app/service/databackupservice/databackupserviceimpl/service.go b/hivepaas_app/service/databackupservice/databackupserviceimpl/service.go
+new file mode 100644
+index 00000000..a98fcf96
+--- /dev/null
++++ b/hivepaas_app/service/databackupservice/databackupserviceimpl/service.go
+@@ -0,0 +1,54 @@
++package databackupserviceimpl
++
++import (
++	"context"
++
++	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
++	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
++	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
++	"github.com/hivepaas/hivepaas/hivepaas_app/service/backupreposervice"
++	"github.com/hivepaas/hivepaas/hivepaas_app/service/clusterservice"
++	"github.com/hivepaas/hivepaas/hivepaas_app/service/databackupservice"
++	"github.com/hivepaas/hivepaas/hivepaas_app/service/schedjobexecservice"
++	"github.com/hivepaas/hivepaas/hivepaas_app/service/scopeservice"
++	"github.com/hivepaas/hivepaas/hivepaas_app/service/settingservice"
++	"github.com/hivepaas/hivepaas/hivepaas_app/service/volumeservice"
++)
++
++type service struct {
++	backupRepoService   backupreposervice.Service
++	schedJobExecService schedjobexecservice.Service
++
++	// repoScope is the scope a repository's storage is resolved in: its own.
++	repoScope func(ctx context.Context, db database.IDB, repo *entity.Setting) (*entity.ObjectScope, error)
++	// findAppVolume is FindAppVolume, replaced in tests.
++	findAppVolume func(ctx context.Context, db database.IDB, app *entity.App,
++		volumeID string) (*databackupservice.AppVolume, error)
++
++	clusterService clusterservice.Service
++	settingService settingservice.Service
++	volumeService  volumeservice.Service
++}
++
++func New(
++	backupRepoService backupreposervice.Service,
++	clusterService clusterservice.Service,
++	schedJobExecService schedjobexecservice.Service,
++	scopeService scopeservice.Service,
++	settingService settingservice.Service,
++	volumeService volumeservice.Service,
++) databackupservice.Service {
++	svc := &service{
++		backupRepoService:   backupRepoService,
++		schedJobExecService: schedJobExecService,
++		clusterService:      clusterService,
++		settingService:      settingService,
++		volumeService:       volumeService,
++	}
++	svc.repoScope = func(ctx context.Context, db database.IDB, repo *entity.Setting) (*entity.ObjectScope, error) {
++		scope, err := scopeService.LoadObjectScope(ctx, db, repo.Scope, repo.ObjectID, true)
++		return scope, hperrors.Wrap(err)
++	}
++	svc.findAppVolume = svc.FindAppVolume
++	return svc
++}
+diff --git a/hivepaas_app/service/databackupservice/databackupserviceimpl/volume.go b/hivepaas_app/service/databackupservice/databackupserviceimpl/volume.go
+new file mode 100644
+index 00000000..7dd80375
+--- /dev/null
++++ b/hivepaas_app/service/databackupservice/databackupserviceimpl/volume.go
+@@ -0,0 +1,102 @@
++package databackupserviceimpl
++
++import (
++	"context"
++	"path"
++	"path/filepath"
++	"strings"
++
++	"github.com/moby/moby/api/types/mount"
++
++	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
++	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
++	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
++	"github.com/hivepaas/hivepaas/hivepaas_app/service/databackupservice"
++	"github.com/hivepaas/hivepaas/hivepaas_app/service/volumeservice"
++)
++
++func (s *service) FindAppVolume(
++	ctx context.Context,
++	db database.IDB,
++	app *entity.App,
++	volumeID string,
++) (*databackupservice.AppVolume, error) {
++	swarmService, err := s.clusterService.ServiceInspect(ctx, app.ServiceID, true)
++	if err != nil {
++		return nil, hperrors.Wrap(err)
++	}
++	mounts := swarmService.Spec.TaskTemplate.ContainerSpec.Mounts
++	descs, err := s.volumeService.DescribeAppMounts(ctx, db, app, mounts)
++	if err != nil {
++		return nil, hperrors.Wrap(err)
++	}
++	picked := pickAppVolumeMount(mounts, descs, volumeID)
++	if picked == nil {
++		return nil, hperrors.NewArgumentInvalid("dataBackup.sourceVolume").
++			WithExtraDetail("the app does not mount this volume as its own directory")
++	}
++
++	refObjects := entity.NewRefObjects()
++	err = s.settingService.LoadRefObjectsByIDs(ctx, db, &refObjects, nil, false,
++		&entity.RefObjectIDs{RefSettingIDs: []string{volumeID}})
++	if err != nil {
++		return nil, hperrors.Wrap(err)
++	}
++	volume := refObjects.RefSettings[volumeID]
++	if volume == nil {
++		return nil, hperrors.NewNotFound("Volume")
++	}
++	volumeDir, err := s.backupRepoService.VolumeHostDir(ctx, volume)
++	if err != nil {
++		return nil, hperrors.Wrap(err)
++	}
++	if volumeDir.NodeID == "" && volumeDir.NodeLabel == "" {
++		return nil, hperrors.NewArgumentInvalid("dataBackup.sourceVolume").
++			WithExtraDetail("the volume is pinned to no node: where to read it is not known")
++	}
++	return &databackupservice.AppVolume{
++		HostDir:   appVolumeDir(picked, volumeDir.Dir),
++		NodeID:    volumeDir.NodeID,
++		NodeLabel: volumeDir.NodeLabel,
++	}, nil
++}
++
++// pickAppVolumeMount is the app's mount of its own directory in the volume; nil
++// when it has none. A directory of another app it was given is not its data.
++func pickAppVolumeMount(
++	mounts []mount.Mount,
++	descs []*volumeservice.AppMountDesc,
++	volumeID string,
++) *mount.Mount {
++	for i, desc := range descs {
++		if i < len(mounts) && desc != nil && desc.VolumeID == volumeID && desc.Own {
++			return &mounts[i]
++		}
++	}
++	return nil
++}
++
++// appVolumeDir is the app's part of the volume on the host: a bind mount names
++// the directory itself, a volume mount a subpath of the volume's directory.
++func appVolumeDir(mnt *mount.Mount, volumeDir string) string {
++	if mnt.Type == mount.TypeBind {
++		return mnt.Source
++	}
++	if mnt.VolumeOptions != nil && mnt.VolumeOptions.Subpath != "" {
++		return filepath.Join(volumeDir, mnt.VolumeOptions.Subpath)
++	}
++	return volumeDir
++}
++
++// joinSubpath is subpath inside dir; an error for one that would leave it.
++func joinSubpath(dir, subpath string) (string, error) {
++	if subpath == "" {
++		return dir, nil
++	}
++	cleaned := path.Clean(subpath)
++	if strings.HasPrefix(subpath, "/") || cleaned == ".." || strings.HasPrefix(cleaned, "../") {
++		return "", hperrors.NewArgumentInvalid("dataBackup.sourceVolumeSubpath").
++			WithExtraDetail("the subpath has to stay inside the app's part of the volume")
++	}
++	return filepath.Join(dir, cleaned), nil
++}
+diff --git a/hivepaas_app/service/databackupservice/service.go b/hivepaas_app/service/databackupservice/service.go
+new file mode 100644
+index 00000000..4ea971f2
+--- /dev/null
++++ b/hivepaas_app/service/databackupservice/service.go
+@@ -0,0 +1,41 @@
++package databackupservice
++
++import (
++	"context"
++
++	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
++	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
++	"github.com/hivepaas/hivepaas/hivepaas_app/service/schedjobexecservice"
++	"github.com/hivepaas/hivepaas/hivepaas_app/tasks/queue"
++)
++
++// Service runs data-backup jobs: a snapshot of an app's data into a backup repository.
++type Service interface {
++	// Backup takes the snapshot a data-backup job says, records it in the repository's
++	// snapshot list, and, but for a step of a job sequence, in the task's output.
++	Backup(ctx context.Context, db database.Tx, req *BackupReq) (*BackupResp, error)
++	// FindAppVolume is where the app's part of a volume it mounts is on a host; an error
++	// when the app does not mount it as its own directory.
++	FindAppVolume(ctx context.Context, db database.IDB, app *entity.App, volumeID string) (*AppVolume, error)
++}
++
++type BackupReq struct {
++	*queue.TaskExecData
++	JobSetting *entity.Setting
++	App        *entity.App
++	// RefObjects holds what the job references: its repository and its volume.
++	RefObjects *entity.RefObjects
++	// Sequence is set when the job runs as a step of a job sequence.
++	Sequence *schedjobexecservice.SequenceStep
++}
++
++type BackupResp struct {
++	Result *entity.SchedJobDataBackupResult
++}
++
++// AppVolume is the app's part of a volume, on the host of the volume's node.
++type AppVolume struct {
++	HostDir   string
++	NodeID    string
++	NodeLabel string
++}
+diff --git a/hivepaas_app/service/schedjobexecservice/schedjobexecserviceimpl/exec.go b/hivepaas_app/service/schedjobexecservice/schedjobexecserviceimpl/exec.go
+index 112e0f3c..997e5f6a 100644
+--- a/hivepaas_app/service/schedjobexecservice/schedjobexecserviceimpl/exec.go
++++ b/hivepaas_app/service/schedjobexecservice/schedjobexecserviceimpl/exec.go
+@@ -21,8 +21,10 @@ type execData struct {
+ 	*schedjobexecservice.SchedJobExecReq
+ 
+ 	SchedJob *entity.SchedJob
+-	File     *entity.File
+-	TimeNow  time.Time
++	// Command is what runs: the job's own, or the one the request gave.
++	Command *entity.CommandTemplate
++	File    *entity.File
++	TimeNow time.Time
+ 
+ 	uploadFunc    func(_ context.Context, objectKey string, data io.Reader) error
+ 	uploadErrChan chan error
+@@ -38,9 +40,13 @@ func (s *service) SchedJobExec(
+ 
+ 	schedJob := req.SchedJobSetting.MustAsSchedJob()
+ 	command := schedJob.Command
++	if req.Command != nil {
++		command = req.Command
++	}
+ 	data := &execData{
+ 		SchedJobExecReq: req,
+ 		SchedJob:        schedJob,
++		Command:         command,
+ 		TimeNow:         time.Now(),
+ 	}
+ 
+@@ -56,9 +62,17 @@ func (s *service) SchedJobExec(
+ 	env = append(env, sequenceEnv(req.Sequence)...)
+ 	env = append(env, triggerEnv(req.Task)...)
+ 
+-	stdoutWriter, err := s.initOutputWriter(ctx, data)
+-	if err != nil {
+-		return nil, hperrors.Wrap(err)
++	var stdoutWriter io.Writer
++	if req.StdoutWriter != nil {
++		stdoutWriter = req.StdoutWriter
++	} else {
++		outputWriter, err := s.initOutputWriter(ctx, data)
++		if err != nil {
++			return nil, hperrors.Wrap(err)
++		}
++		if outputWriter != nil {
++			stdoutWriter = outputWriter
++		}
+ 	}
+ 
+ 	defer s.cleanup(err, data)
+diff --git a/hivepaas_app/service/schedjobexecservice/schedjobexecserviceimpl/exec_cmd.go b/hivepaas_app/service/schedjobexecservice/schedjobexecserviceimpl/exec_cmd.go
+index 4e8fbe44..d0f74dc2 100644
+--- a/hivepaas_app/service/schedjobexecservice/schedjobexecserviceimpl/exec_cmd.go
++++ b/hivepaas_app/service/schedjobexecservice/schedjobexecserviceimpl/exec_cmd.go
+@@ -69,7 +69,7 @@ func (s *service) calcCommand(
+ 	ctx context.Context,
+ 	data *execData,
+ ) (cmd []string, err error) {
+-	cmd, err = s.calcCommandHelper(ctx, data.SchedJob.Command, data.Task.ID, data)
++	cmd, err = s.calcCommandHelper(ctx, data.Command, data.Task.ID, data)
+ 	if err != nil {
+ 		data.TaskNonRetryable = true
+ 		return nil, hperrors.Wrap(err)
+diff --git a/hivepaas_app/service/schedjobexecservice/schedjobexecserviceimpl/exec_env.go b/hivepaas_app/service/schedjobexecservice/schedjobexecserviceimpl/exec_env.go
+index 4ec84df9..e296942c 100644
+--- a/hivepaas_app/service/schedjobexecservice/schedjobexecserviceimpl/exec_env.go
++++ b/hivepaas_app/service/schedjobexecservice/schedjobexecserviceimpl/exec_env.go
+@@ -15,10 +15,9 @@ func (s *service) calcCommandEnv(
+ 	db database.IDB,
+ 	data *execData,
+ ) (env []string, err error) {
+-	schedJob := data.SchedJobSetting.MustAsSchedJob()
+ 	resp, err := s.commandService.BuildCommand(ctx, db, &commandservice.BuildCommandReq{
+ 		Scope:      data.DestApp.GetObjectScope(),
+-		Command:    schedJob.Command,
++		Command:    data.Command,
+ 		RefObjects: data.RefObjects,
+ 	})
+ 	if err != nil {
+diff --git a/hivepaas_app/service/schedjobexecservice/types.go b/hivepaas_app/service/schedjobexecservice/types.go
+index c17049cf..54c2eddf 100644
+--- a/hivepaas_app/service/schedjobexecservice/types.go
++++ b/hivepaas_app/service/schedjobexecservice/types.go
+@@ -2,6 +2,7 @@ package schedjobexecservice
+ 
+ import (
+ 	"fmt"
++	"io"
+ 	"time"
+ 
+ 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
+@@ -17,6 +18,11 @@ type SchedJobExecReq struct {
+ 	TaskFindRetryDelay     time.Duration
+ 	// Sequence is set when the job runs as a step of a job sequence.
+ 	Sequence *SequenceStep
++	// Command runs in place of the job's own: a data backup's source command.
++	Command *entity.CommandTemplate
++	// StdoutWriter takes the command's stdout in place of the job's command output,
++	// without a TTY: a data backup streams it into its repository.
++	StdoutWriter io.Writer
+ }
+ 
+ type SchedJobExecResp struct {
+diff --git a/hivepaas_app/tasks/taskschedjobexec/data_backup.go b/hivepaas_app/tasks/taskschedjobexec/data_backup.go
+new file mode 100644
+index 00000000..dc041f02
+--- /dev/null
++++ b/hivepaas_app/tasks/taskschedjobexec/data_backup.go
+@@ -0,0 +1,18 @@
++package taskschedjobexec
++
++import (
++	"strconv"
++
++	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
++)
++
++// dataBackupOutputs is what a data backup step tells the steps after it.
++func dataBackupOutputs(result *entity.SchedJobDataBackupResult) map[string]string {
++	if result == nil {
++		return nil
++	}
++	return map[string]string{
++		"SNAPSHOT_ID":         result.SnapshotID,
++		"SNAPSHOT_SIZE_BYTES": strconv.FormatInt(result.SizeBytes, 10),
++	}
++}
+diff --git a/hivepaas_app/tasks/taskschedjobexec/executor.go b/hivepaas_app/tasks/taskschedjobexec/executor.go
+index fb842490..33e5377a 100644
+--- a/hivepaas_app/tasks/taskschedjobexec/executor.go
++++ b/hivepaas_app/tasks/taskschedjobexec/executor.go
+@@ -19,6 +19,7 @@ import (
+ 	"github.com/hivepaas/hivepaas/hivepaas_app/repository"
+ 	"github.com/hivepaas/hivepaas/hivepaas_app/service/appservice"
+ 	"github.com/hivepaas/hivepaas/hivepaas_app/service/backuprepocleanupservice"
++	"github.com/hivepaas/hivepaas/hivepaas_app/service/databackupservice"
+ 	"github.com/hivepaas/hivepaas/hivepaas_app/service/notificationservice"
+ 	"github.com/hivepaas/hivepaas/hivepaas_app/service/schedjobexecservice"
+ 	"github.com/hivepaas/hivepaas/hivepaas_app/service/scopeservice"
+@@ -39,6 +40,7 @@ type Executor struct {
+ 
+ 	appService               appservice.Service
+ 	backupRepoCleanupService backuprepocleanupservice.Service
++	dataBackupService        databackupservice.Service
+ 	notificationService      notificationservice.Service
+ 	schedJobExecService      schedjobexecservice.Service
+ 	scopeService             scopeservice.Service
+@@ -59,6 +61,7 @@ func NewExecutor(
+ 
+ 	appService appservice.Service,
+ 	backupRepoCleanupService backuprepocleanupservice.Service,
++	dataBackupService databackupservice.Service,
+ 	notificationService notificationservice.Service,
+ 	schedJobExecService schedjobexecservice.Service,
+ 	scopeService scopeservice.Service,
+@@ -77,6 +80,7 @@ func NewExecutor(
+ 
+ 		appService:               appService,
+ 		backupRepoCleanupService: backupRepoCleanupService,
++		dataBackupService:        dataBackupService,
+ 		notificationService:      notificationService,
+ 		schedJobExecService:      schedJobExecService,
+ 		scopeService:             scopeService,
+diff --git a/hivepaas_app/tasks/taskschedjobexec/job_run.go b/hivepaas_app/tasks/taskschedjobexec/job_run.go
+index f235dd0e..d7be2b90 100644
+--- a/hivepaas_app/tasks/taskschedjobexec/job_run.go
++++ b/hivepaas_app/tasks/taskschedjobexec/job_run.go
+@@ -8,6 +8,7 @@ import (
+ 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
+ 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
+ 	"github.com/hivepaas/hivepaas/hivepaas_app/service/backuprepocleanupservice"
++	"github.com/hivepaas/hivepaas/hivepaas_app/service/databackupservice"
+ 	"github.com/hivepaas/hivepaas/hivepaas_app/service/schedjobexecservice"
+ 	"github.com/hivepaas/hivepaas/hivepaas_app/service/sslrenewalservice"
+ 	"github.com/hivepaas/hivepaas/hivepaas_app/service/sysbackupservice"
+@@ -117,8 +118,17 @@ func (e *Executor) runJob(ctx context.Context, db database.Tx, run *jobRun) (*jo
+ 		result.skipNotification = resp.SkipResultNotification
+ 
+ 	case base.SchedJobTypeDataBackup:
+-		// Run by the data backup service, which comes with the next change.
+-		return nil, hperrors.NewUnsupported("A data backup")
++		resp, err := e.dataBackupService.Backup(ctx, db, &databackupservice.BackupReq{
++			TaskExecData: run.execData,
++			JobSetting:   run.jobSetting,
++			App:          run.refObjects.RefApps[schedJob.App.ID],
++			RefObjects:   run.refObjects,
++			Sequence:     run.sequence,
++		})
++		if err != nil {
++			return result, hperrors.Wrap(err)
++		}
++		result.outputs = dataBackupOutputs(resp.Result)
+ 
+ 	case base.SchedJobTypeJobSequence:
+ 		// Never a step: a sequence does not run another (checked on save).

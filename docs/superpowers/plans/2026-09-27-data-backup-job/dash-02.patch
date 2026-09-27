@@ -1,0 +1,83 @@
+diff --git a/src/application/modules/operations/api/services/system-tasks-services/system-tasks.api.validator.ts b/src/application/modules/operations/api/services/system-tasks-services/system-tasks.api.validator.ts
+index 0bf4b376..beb4d4b4 100644
+--- a/src/application/modules/operations/api/services/system-tasks-services/system-tasks.api.validator.ts
++++ b/src/application/modules/operations/api/services/system-tasks-services/system-tasks.api.validator.ts
+@@ -147,6 +147,14 @@ const TriggerSchema = z
+     .nullish()
+     .transform(value => value ?? undefined);
+ 
++const DataBackupSchema = z
++    .object({
++        snapshotId: z.string(),
++        sizeBytes: z.number().optional().default(0),
++    })
++    .nullish()
++    .transform(value => value ?? undefined);
++
+ const SystemTaskSchema = z.object({
+     id: z.string(),
+     type: z.string().optional().default(""),
+@@ -160,6 +168,7 @@ const SystemTaskSchema = z.object({
+     scopeUser: ScopeUserSchema,
+     sequenceRun: SequenceRunSchema,
+     trigger: TriggerSchema,
++    dataBackup: DataBackupSchema,
+     runAt: NullableDateSchema,
+     retryAt: NullableDateSchema,
+     startedAt: NullableDateSchema,
+diff --git a/src/application/modules/operations/domain/system-task.entity.ts b/src/application/modules/operations/domain/system-task.entity.ts
+index 2fa2d083..de4f87d3 100644
+--- a/src/application/modules/operations/domain/system-task.entity.ts
++++ b/src/application/modules/operations/domain/system-task.entity.ts
+@@ -112,6 +112,12 @@ export interface SystemTaskTrigger {
+     deploymentId: string;
+ }
+ 
++/** The snapshot a data backup's run took. */
++export interface SystemTaskDataBackup {
++    snapshotId: string;
++    sizeBytes: number;
++}
++
+ export interface SystemTask {
+     id: string;
+     type: string;
+@@ -125,6 +131,7 @@ export interface SystemTask {
+     scopeUser?: SystemTaskScopeUser;
+     sequenceRun?: SystemTaskSequenceRun;
+     trigger?: SystemTaskTrigger;
++    dataBackup?: SystemTaskDataBackup;
+     runAt: Date | null;
+     retryAt: Date | null;
+     startedAt: Date | null;
+diff --git a/src/application/modules/operations/routes/tasks/building-blocks/task-summary-card/system-task-summary-card.com.tsx b/src/application/modules/operations/routes/tasks/building-blocks/task-summary-card/system-task-summary-card.com.tsx
+index bbd6817d..8619618e 100644
+--- a/src/application/modules/operations/routes/tasks/building-blocks/task-summary-card/system-task-summary-card.com.tsx
++++ b/src/application/modules/operations/routes/tasks/building-blocks/task-summary-card/system-task-summary-card.com.tsx
+@@ -9,6 +9,7 @@ import type { SystemTask } from "~/operations/domain";
+ import { SystemTaskStatus } from "~/operations/domain";
+ 
+ import { LogViewerActionButtons, PopConfirm } from "@application/shared/components";
++import { formatDataSizeCompact } from "@application/shared/utils/data-size";
+ import { timeAgoFormatter } from "@application/shared/utils/time-ago";
+ 
+ import { Button, Skeleton } from "@/components/ui";
+@@ -584,6 +585,18 @@ export function SystemTaskSummaryCard({
+                                         </span>
+                                     </div>
+                                 )}
++
++                                {task.dataBackup && (
++                                    <div>
++                                        <span className="text-muted-foreground">Snapshot:</span>{" "}
++                                        <span className="font-mono text-foreground select-all">
++                                            {task.dataBackup.snapshotId}
++                                        </span>{" "}
++                                        <span className="text-muted-foreground">
++                                            ({formatDataSizeCompact(task.dataBackup.sizeBytes)})
++                                        </span>
++                                    </div>
++                                )}
+                             </div>
+ 
+                             {/* Error Banner */}

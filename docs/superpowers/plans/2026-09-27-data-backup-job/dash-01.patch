@@ -1,0 +1,1435 @@
+diff --git a/src/application/modules/projects/api/services/project-apps-services/scheduled-jobs/app-scheduled-jobs.api.contracts.ts b/src/application/modules/projects/api/services/project-apps-services/scheduled-jobs/app-scheduled-jobs.api.contracts.ts
+index 72495a76..da6a0880 100644
+--- a/src/application/modules/projects/api/services/project-apps-services/scheduled-jobs/app-scheduled-jobs.api.contracts.ts
++++ b/src/application/modules/projects/api/services/project-apps-services/scheduled-jobs/app-scheduled-jobs.api.contracts.ts
+@@ -4,6 +4,7 @@ import type {
+     EAppScheduledJobArgSeparator,
+     EAppScheduledJobTaskPriority,
+     EAppScheduledJobType,
++    ESchedJobDataBackupSource,
+     ESchedJobSeqMode,
+     ESchedJobSeqOnFailure,
+     ESchedJobTriggerEvent,
+@@ -105,9 +106,21 @@ export type AppScheduledJobs_Trigger_Payload = {
+     wait?: boolean;
+ };
+ 
++/** A data backup: a command and the file its output becomes, or a volume and a path in it; and a repository. */
++export type AppScheduledJobs_DataBackup_Payload = {
++    source: ESchedJobDataBackupSource;
++    sourceCommand?: AppScheduledJobs_Command_Payload;
++    sourceFileName?: string;
++    sourceVolume?: AppScheduledJobs_RefObject_Payload;
++    sourceVolumeSubpath?: string;
++    targetRepository: AppScheduledJobs_RefObject_Payload;
++    tags?: Record<string, string>;
++};
++
+ /**
+  * A job to create or update. A container command has `app` and `command`; a job
+- * sequence has `sequence` and neither of those. `schedule` is null for a job run
++ * sequence has `sequence` and neither of those; a data backup has `app` and
++ * `dataBackup`. `schedule` is null for a job run
+  * by hand or by a sequence.
+  */
+ export type AppScheduledJobs_Upsert_Payload = {
+@@ -128,6 +141,7 @@ export type AppScheduledJobs_Upsert_Payload = {
+     command?: AppScheduledJobs_Command_Payload;
+     commandOutput?: AppScheduledJobs_CommandOutput_Payload;
+     sequence?: AppScheduledJobs_Sequence_Payload;
++    dataBackup?: AppScheduledJobs_DataBackup_Payload;
+     triggers?: AppScheduledJobs_Trigger_Payload[];
+     notification: AppScheduledJobs_Notification_Payload;
+ };
+diff --git a/src/application/modules/projects/api/services/project-apps-services/scheduled-jobs/app-scheduled-jobs.api.validator.ts b/src/application/modules/projects/api/services/project-apps-services/scheduled-jobs/app-scheduled-jobs.api.validator.ts
+index 04d32f4c..0d19f379 100644
+--- a/src/application/modules/projects/api/services/project-apps-services/scheduled-jobs/app-scheduled-jobs.api.validator.ts
++++ b/src/application/modules/projects/api/services/project-apps-services/scheduled-jobs/app-scheduled-jobs.api.validator.ts
+@@ -14,6 +14,7 @@ import {
+     EAppScheduledJobArgSeparator,
+     EAppScheduledJobTaskPriority,
+     EAppScheduledJobType,
++    ESchedJobDataBackupSource,
+     ESchedJobSeqMode,
+     ESchedJobSeqOnFailure,
+     ESchedJobTriggerEvent,
+@@ -202,6 +203,28 @@ const NotificationSchema = z
+     .nullish()
+     .transform(value => value ?? null);
+ 
++const SettingRefSchema = z.object({
++    id: z.string(),
++    name: z.string().optional().default(""),
++    status: z.string().optional().default(""),
++});
++
++const DataBackupSchema = z
++    .object({
++        source: z.nativeEnum(ESchedJobDataBackupSource),
++        sourceCommand: CommandSchema,
++        sourceFileName: z.string().optional().default(""),
++        sourceVolume: SettingRefSchema.nullish().transform(value => value ?? null),
++        sourceVolumeSubpath: z.string().optional().default(""),
++        targetRepository: SettingRefSchema,
++        tags: z
++            .record(z.string())
++            .nullish()
++            .transform(value => value ?? {}),
++    })
++    .nullish()
++    .transform(value => value ?? null);
++
+ const TriggerSchema = z.object({
+     event: z.nativeEnum(ESchedJobTriggerEvent),
+     apps: z
+@@ -239,6 +262,7 @@ export const AppScheduledJobSchema = z.object({
+     commandOutput: CommandOutputSchema,
+     notification: NotificationSchema,
+     sequence: SequenceSchema,
++    dataBackup: DataBackupSchema,
+     // An event the dashboard does not know yet is left out, not a failed list.
+     triggers: z
+         .array(z.unknown())
+diff --git a/src/application/modules/projects/api/services/project-apps-services/storage-settings/app-storage-settings.api.validator.ts b/src/application/modules/projects/api/services/project-apps-services/storage-settings/app-storage-settings.api.validator.ts
+index f7f2fadd..7261e2d5 100644
+--- a/src/application/modules/projects/api/services/project-apps-services/storage-settings/app-storage-settings.api.validator.ts
++++ b/src/application/modules/projects/api/services/project-apps-services/storage-settings/app-storage-settings.api.validator.ts
+@@ -71,6 +71,7 @@ const MountSchema = z.object({
+     tmpfsOptions: TmpfsOptionsSchema.optional(),
+     clusterOptions: ClusterOptionsSchema.optional(),
+     sourceApp: MountSourceAppSchema.nullish(),
++    volumeId: z.string().optional(),
+ });
+ 
+ const MountBorrowerSchema = z.object({
+@@ -139,6 +140,7 @@ export class AppStorageSettingsApiValidator {
+                         tmpfsOptions: item.tmpfsOptions,
+                         clusterOptions: item.clusterOptions,
+                         sourceApp: item.sourceApp ?? undefined,
++                        volumeId: item.volumeId,
+                     })) ?? [],
+                 borrowedBy: data.borrowedBy ?? [],
+                 updateVer: data.updateVer,
+diff --git a/src/application/modules/projects/domain/apps/scheduled-job/app-scheduled-job.entity.ts b/src/application/modules/projects/domain/apps/scheduled-job/app-scheduled-job.entity.ts
+index 11cce2aa..033ee024 100644
+--- a/src/application/modules/projects/domain/apps/scheduled-job/app-scheduled-job.entity.ts
++++ b/src/application/modules/projects/domain/apps/scheduled-job/app-scheduled-job.entity.ts
+@@ -2,6 +2,7 @@ import type {
+     EAppScheduledJobArgSeparator,
+     EAppScheduledJobTaskPriority,
+     EAppScheduledJobType,
++    ESchedJobDataBackupSource,
+     ESchedJobSeqMode,
+     ESchedJobSeqOnFailure,
+     ESchedJobTriggerEvent,
+@@ -118,6 +119,24 @@ export interface AppScheduledJobTrigger {
+     wait: boolean;
+ }
+ 
++/** A setting a data backup names; its status is "missing" when it was deleted. */
++export interface AppScheduledJobSettingRef {
++    id: string;
++    name: string;
++    status: string;
++}
++
++/** What a data backup reads - a command's output, or a volume the app mounts - and the repository it goes to. */
++export interface AppScheduledJobDataBackup {
++    source: ESchedJobDataBackupSource;
++    sourceCommand: AppScheduledJobCommand | null;
++    sourceFileName: string;
++    sourceVolume: AppScheduledJobSettingRef | null;
++    sourceVolumeSubpath: string;
++    targetRepository: AppScheduledJobSettingRef;
++    tags: Record<string, string>;
++}
++
+ export interface AppScheduledJob {
+     id: string;
+     type: string;
+@@ -148,6 +167,7 @@ export interface AppScheduledJob {
+     controlDisabled: boolean;
+     command: AppScheduledJobCommand | null;
+     commandOutput?: AppScheduledJobCommandOutput | null;
++    dataBackup: AppScheduledJobDataBackup | null;
+     notification: AppScheduledJobNotification | null;
+     nextRuns: Date[];
+ }
+diff --git a/src/application/modules/projects/domain/apps/storage-settings/app-storage-settings.entity.ts b/src/application/modules/projects/domain/apps/storage-settings/app-storage-settings.entity.ts
+index edb3bb99..e003edb0 100644
+--- a/src/application/modules/projects/domain/apps/storage-settings/app-storage-settings.entity.ts
++++ b/src/application/modules/projects/domain/apps/storage-settings/app-storage-settings.entity.ts
+@@ -30,6 +30,8 @@ export type AppStorageMount = {
+     tmpfsOptions?: TmpfsOptions;
+     clusterOptions?: ClusterOptions;
+     sourceApp?: MountSourceApp;
++    /** The volume setting a mount of the app's own directory is in; comes back from the API and is not sent. */
++    volumeId?: string;
+ };
+ 
+ /**
+diff --git a/src/application/modules/projects/module-shared/components/data-backup-form/data-backup.form-mappers.ts b/src/application/modules/projects/module-shared/components/data-backup-form/data-backup.form-mappers.ts
+new file mode 100644
+index 00000000..c3c337dc
+--- /dev/null
++++ b/src/application/modules/projects/module-shared/components/data-backup-form/data-backup.form-mappers.ts
+@@ -0,0 +1,178 @@
++import type { AppScheduledJobs_Command_Payload, AppScheduledJobs_Upsert_Payload } from "~/projects/api/services";
++import { APP_SCHEDULED_JOB_DEFAULT_CONSOLE_SIZE, type AppScheduledJob } from "~/projects/domain";
++import {
++    EAppScheduledJobScheduleMode,
++    EAppScheduledJobTaskPriority,
++    EAppScheduledJobType,
++    ESchedJobDataBackupSource,
++} from "~/projects/module-shared/enums";
++
++import { ESettingStatus } from "@application/shared/enums";
++
++import {
++    createDefaultJobScheduleFormValues,
++    mapJobScheduleFormValuesToPayload,
++    mapJobScheduleToFormValues,
++} from "../job-schedule-fields";
++import { mapJobTriggersFormValuesToPayload, mapJobTriggersToFormValues } from "../job-triggers-field";
++
++import {
++    DATA_BACKUP_COMMAND_MODE,
++    type DataBackupFormInput,
++    type DataBackupFormOutput,
++} from "./data-backup.form.schema";
++
++function emptySourceCommand(): DataBackupFormInput["sourceCommand"] {
++    return {
++        commandMode: DATA_BACKUP_COMMAND_MODE.Command,
++        command: "",
++        script: "",
++        workingDir: "",
++        tty: false,
++        consoleSize: { ...APP_SCHEDULED_JOB_DEFAULT_CONSOLE_SIZE },
++        envVars: [],
++        argGroups: [],
++    };
++}
++
++/** A new data backup reads a command's output, runs by hand until given a schedule, and can be canceled. */
++export function createEmptyDataBackupFormDefaults(): DataBackupFormInput {
++    return {
++        name: "",
++        ...createDefaultJobScheduleFormValues(EAppScheduledJobScheduleMode.None),
++        source: ESchedJobDataBackupSource.Command,
++        sourceCommand: emptySourceCommand(),
++        sourceFileName: "",
++        sourceVolume: null,
++        sourceVolumeSubpath: "",
++        targetRepository: null,
++        tags: [],
++        timeout: "",
++        maxRetry: 0,
++        retryDelay: "",
++        priority: EAppScheduledJobTaskPriority.Default,
++        controlEnabled: true,
++        triggers: [],
++        notification: {
++            successUseDefault: true,
++            success: undefined,
++            failureUseDefault: true,
++            failure: undefined,
++        },
++    };
++}
++
++/** A setting's name, or that it was deleted. */
++function refName(ref: { name: string; status: string }, deleted: string): string {
++    return ref.status === ESettingStatus.Missing ? deleted : ref.name;
++}
++
++export function mapDataBackupToFormInput(job: AppScheduledJob): DataBackupFormInput {
++    const backup = job.dataBackup;
++    const command = backup?.sourceCommand;
++    const script = command?.script ?? "";
++
++    return {
++        name: job.name,
++        ...mapJobScheduleToFormValues(job.schedule),
++        source: backup?.source ?? ESchedJobDataBackupSource.Command,
++        sourceCommand: command
++            ? {
++                  commandMode:
++                      script.trim().length > 0 ? DATA_BACKUP_COMMAND_MODE.Script : DATA_BACKUP_COMMAND_MODE.Command,
++                  command: command.command,
++                  script,
++                  workingDir: command.workingDir,
++                  tty: false,
++                  consoleSize: { ...command.consoleSize },
++                  envVars: command.envVars,
++                  argGroups: command.argGroups,
++              }
++            : emptySourceCommand(),
++        sourceFileName: backup?.sourceFileName ?? "",
++        sourceVolume: backup?.sourceVolume
++            ? { id: backup.sourceVolume.id, name: refName(backup.sourceVolume, "Deleted volume") }
++            : null,
++        sourceVolumeSubpath: backup?.sourceVolumeSubpath ?? "",
++        targetRepository: backup
++            ? { id: backup.targetRepository.id, name: refName(backup.targetRepository, "Deleted repository") }
++            : null,
++        tags: Object.entries(backup?.tags ?? {}).map(([key, value]) => ({ key, value })),
++        timeout: job.timeout,
++        maxRetry: job.maxRetry,
++        retryDelay: job.retryDelay,
++        priority: job.priority,
++        controlEnabled: !job.controlDisabled,
++        triggers: mapJobTriggersToFormValues(job.triggers),
++        notification: {
++            successUseDefault: job.notification?.successUseDefault ?? true,
++            success: job.notification?.success,
++            failureUseDefault: job.notification?.failureUseDefault ?? true,
++            failure: job.notification?.failure,
++        },
++    };
++}
++
++/** The command runs without a TTY: its stdout is the backup, and a TTY would mix its stderr in. */
++function mapSourceCommandToPayload(cmd: DataBackupFormOutput["sourceCommand"]): AppScheduledJobs_Command_Payload {
++    const isScript = cmd.commandMode === DATA_BACKUP_COMMAND_MODE.Script;
++    return {
++        command: isScript ? "" : cmd.command,
++        script: isScript ? cmd.script : "",
++        consoleSize: cmd.consoleSize,
++        tty: false,
++        ...(cmd.workingDir ? { workingDir: cmd.workingDir } : {}),
++        ...(cmd.envVars.length > 0 ? { envVars: cmd.envVars.map(envVar => ({ ...envVar })) } : {}),
++        ...(cmd.argGroups.length > 0 ? { argGroups: cmd.argGroups } : {}),
++    };
++}
++
++/** A data backup is its app's: the command runs there, the volume is one it mounts. */
++export function mapDataBackupFormToPayload(
++    values: DataBackupFormOutput,
++    appId: string,
++): AppScheduledJobs_Upsert_Payload {
++    const isCommand = values.source === ESchedJobDataBackupSource.Command;
++
++    return {
++        inheritable: false,
++        default: false,
++        name: values.name,
++        jobType: EAppScheduledJobType.DataBackup,
++        schedule: mapJobScheduleFormValuesToPayload(values),
++        app: { id: appId },
++        priority: values.priority,
++        maxRetry: values.maxRetry ?? 0,
++        ...(values.retryDelay ? { retryDelay: values.retryDelay } : {}),
++        retryBackoff: false,
++        ...(values.timeout ? { timeout: values.timeout } : {}),
++        controlDisabled: !values.controlEnabled,
++        dataBackup: {
++            source: values.source,
++            ...(isCommand
++                ? {
++                      sourceCommand: mapSourceCommandToPayload(values.sourceCommand),
++                      sourceFileName: values.sourceFileName,
++                  }
++                : {
++                      sourceVolume: { id: values.sourceVolume?.id ?? "" },
++                      sourceVolumeSubpath: values.sourceVolumeSubpath,
++                  }),
++            targetRepository: { id: values.targetRepository?.id ?? "" },
++            ...(values.tags.length > 0
++                ? { tags: Object.fromEntries(values.tags.map(tag => [tag.key, tag.value])) }
++                : {}),
++        },
++        triggers: mapJobTriggersFormValuesToPayload(values.triggers),
++        notification: {
++            successUseDefault: values.notification.successUseDefault,
++            ...(!values.notification.successUseDefault && values.notification.success
++                ? { success: values.notification.success }
++                : {}),
++            failureUseDefault: values.notification.failureUseDefault,
++            ...(!values.notification.failureUseDefault && values.notification.failure
++                ? { failure: values.notification.failure }
++                : {}),
++        },
++    };
++}
+diff --git a/src/application/modules/projects/module-shared/components/data-backup-form/data-backup.form.com.tsx b/src/application/modules/projects/module-shared/components/data-backup-form/data-backup.form.com.tsx
+new file mode 100644
+index 00000000..94f801b1
+--- /dev/null
++++ b/src/application/modules/projects/module-shared/components/data-backup-form/data-backup.form.com.tsx
+@@ -0,0 +1,541 @@
++import { useMemo, useState } from "react";
++
++import { zodResolver } from "@hookform/resolvers/zod";
++import { dashedBorderBox } from "@lib/styles";
++import { cn } from "@lib/utils";
++import { FormProvider, useController, useForm, useFormState } from "react-hook-form";
++import { useUpdateEffect } from "react-use";
++import { APP_CONFIGURATION_QUERY_OPTIONS, AppStorageSettingsQueries } from "~/projects/data";
++import { ProjectBackupRepoQueries } from "~/projects/data/queries";
++import type { AppScheduledJob } from "~/projects/domain";
++import { PROJECT_FORM_CONTROL_MAX_WIDTH_CLASS } from "~/projects/module-shared/constants";
++import { ESchedJobDataBackupSource } from "~/projects/module-shared/enums";
++import { useProjectNotificationSettingsSources } from "~/projects/module-shared/hooks";
++
++import {
++    AppLink,
++    Combobox,
++    ContentBlock,
++    FormActionBar,
++    InfoBlock,
++    LabelWithInfo,
++} from "@application/shared/components";
++import { ROUTE } from "@application/shared/constants";
++import { KeyValueList, NotificationSettings } from "@application/shared/form";
++
++import { Button, Checkbox, Field, FieldError, FieldGroup, Input, Tabs, TabsList, TabsTrigger } from "@/components/ui";
++
++import { CommandConfigSection } from "../command-config-section";
++import { JobScheduleFields, PriorityTabsField } from "../job-schedule-fields";
++import { JobTriggersField } from "../job-triggers-field";
++
++import { createEmptyDataBackupFormDefaults, mapDataBackupToFormInput } from "./data-backup.form-mappers";
++import { type DataBackupFormInput, type DataBackupFormOutput, DataBackupFormSchema } from "./data-backup.form.schema";
++
++const TITLE_WIDTH = 220;
++
++interface RefOption {
++    [key: string]: unknown;
++    id: string;
++    name: string;
++}
++
++/** Reading a volume while the app writes to it. */
++function VolumeConsistencyNote() {
++    return (
++        <div className={cn(dashedBorderBox, "flex max-w-[720px] flex-col gap-2 text-sm leading-normal")}>
++            <p>
++                <span className="font-semibold text-orange-500">Note:</span> a volume the app writes to while it is read
++                may be caught mid-write. For a database, back up its dump command instead; otherwise a job sequence
++                whose first step stops or flushes the app, then this backup, avoids it.
++            </p>
++        </div>
++    );
++}
++
++/**
++ * A data backup of an app: a command's output, or a volume the app mounts, into
++ * a backup repository the app sees.
++ */
++export function DataBackupForm({
++    projectId,
++    env,
++    appId,
++    isPending,
++    onSubmit,
++    initialValues,
++    onHasChanges,
++    readOnly = false,
++    stickyActions = false,
++    onClose,
++}: Props) {
++    const defaultValues = useMemo(
++        () => (initialValues ? mapDataBackupToFormInput(initialValues) : createEmptyDataBackupFormDefaults()),
++        [initialValues],
++    );
++
++    const methods = useForm<DataBackupFormInput, unknown, DataBackupFormOutput>({
++        defaultValues,
++        resolver: zodResolver(DataBackupFormSchema),
++        mode: "onSubmit",
++    });
++    const {
++        control,
++        handleSubmit,
++        formState: { errors },
++    } = methods;
++    const { isDirty } = useFormState({ control });
++
++    useUpdateEffect(() => {
++        methods.reset(defaultValues);
++    }, [defaultValues]);
++
++    useUpdateEffect(() => {
++        onHasChanges?.(readOnly ? false : isDirty);
++    }, [isDirty, readOnly]);
++
++    const { sources: notificationSources, manageLink: notificationManageLink } = useProjectNotificationSettingsSources(
++        projectId,
++        env,
++    );
++
++    const { field: name, fieldState: nameState } = useController({ control, name: "name" });
++    const { field: source } = useController({ control, name: "source" });
++    const { field: fileName, fieldState: fileNameState } = useController({ control, name: "sourceFileName" });
++    const { field: volume, fieldState: volumeState } = useController({ control, name: "sourceVolume" });
++    const { field: subpath, fieldState: subpathState } = useController({ control, name: "sourceVolumeSubpath" });
++    const { field: repository, fieldState: repositoryState } = useController({ control, name: "targetRepository" });
++    const { field: timeout, fieldState: timeoutState } = useController({ control, name: "timeout" });
++    const { field: maxRetry, fieldState: maxRetryState } = useController({ control, name: "maxRetry" });
++    const { field: retryDelay, fieldState: retryDelayState } = useController({ control, name: "retryDelay" });
++    const { field: priority } = useController({ control, name: "priority" });
++    const { field: controlEnabled } = useController({ control, name: "controlEnabled" });
++
++    const isCommand = source.value === ESchedJobDataBackupSource.Command;
++
++    // The volumes the app mounts as its own directory: what a volume source reads.
++    const { data: storageData, isFetching: isStorageFetching } = AppStorageSettingsQueries.useFindOne(
++        { projectID: projectId, env, appID: appId },
++        { ...APP_CONFIGURATION_QUERY_OPTIONS, enabled: !isCommand },
++    );
++    const volumeOptions = useMemo(() => {
++        const seen = new Set<string>();
++        return (storageData?.data.mounts ?? []).flatMap(mount => {
++            if (!mount.volumeId || seen.has(mount.volumeId)) {
++                return [];
++            }
++            seen.add(mount.volumeId);
++            const label = mount.target ?? mount.volumeId;
++            return [{ value: { id: mount.volumeId, name: label } satisfies RefOption, label }];
++        });
++    }, [storageData]);
++
++    const [repositorySearch, setRepositorySearch] = useState("");
++    const {
++        data: repositoryData,
++        isFetching: isRepositoryFetching,
++        isRefetching: isRepositoryRefetching,
++        refetch: refetchRepositories,
++    } = ProjectBackupRepoQueries.useFindManyPaginated({ projectID: projectId, env, search: repositorySearch });
++    const repositoryOptions = (repositoryData?.data ?? []).map(repo => ({
++        value: { id: repo.id, name: repo.name } satisfies RefOption,
++        label: repo.name,
++    }));
++
++    const configureTemplatesLink = ROUTE.projects.single.providerConfiguration.commandTemplates.$route(projectId);
++    const backupReposLink = ROUTE.projects.single.providerConfiguration.backupRepos.$route(projectId);
++
++    return (
++        <FormProvider {...methods}>
++            <form
++                onSubmit={event => {
++                    event.preventDefault();
++                    if (readOnly) {
++                        return;
++                    }
++
++                    void handleSubmit(values => {
++                        onSubmit(values);
++                    })(event);
++                }}
++                className="min-h-0 flex flex-1 flex-col"
++            >
++                <fieldset className="contents">
++                    <FieldGroup className="gap-6">
++                        <InfoBlock
++                            titleWidth={TITLE_WIDTH}
++                            title={
++                                <LabelWithInfo
++                                    label="Name"
++                                    isRequired
++                                />
++                            }
++                        >
++                            <Field>
++                                <Input
++                                    {...name}
++                                    placeholder="data backup name"
++                                    aria-invalid={nameState.invalid}
++                                    className={PROJECT_FORM_CONTROL_MAX_WIDTH_CLASS}
++                                    disabled={readOnly}
++                                />
++                                <FieldError errors={[errors.name]} />
++                            </Field>
++                        </InfoBlock>
++
++                        <ContentBlock label="Source">
++                            <div className="flex flex-col gap-6">
++                                <InfoBlock
++                                    title="Back Up"
++                                    titleWidth={TITLE_WIDTH}
++                                >
++                                    <div className="flex flex-col gap-2">
++                                        <Tabs
++                                            value={source.value}
++                                            onValueChange={source.onChange}
++                                        >
++                                            <TabsList>
++                                                <TabsTrigger
++                                                    value={ESchedJobDataBackupSource.Command}
++                                                    disabled={readOnly}
++                                                >
++                                                    Command
++                                                </TabsTrigger>
++                                                <TabsTrigger
++                                                    value={ESchedJobDataBackupSource.Volume}
++                                                    disabled={readOnly}
++                                                >
++                                                    Volume
++                                                </TabsTrigger>
++                                            </TabsList>
++                                        </Tabs>
++                                        <p className="text-sm text-muted-foreground">
++                                            {isCommand
++                                                ? "A command runs in the app, without a TTY; what it prints is the backup, such as pg_dump's output."
++                                                : "A directory of a volume the app mounts, read on the volume's node."}
++                                        </p>
++                                    </div>
++                                </InfoBlock>
++
++                                {isCommand ? (
++                                    <InfoBlock
++                                        title={
++                                            <LabelWithInfo
++                                                label="File Name"
++                                                isRequired
++                                                content="The name of the command's output in the snapshot."
++                                            />
++                                        }
++                                        titleWidth={TITLE_WIDTH}
++                                    >
++                                        <Field>
++                                            <Input
++                                                {...fileName}
++                                                placeholder="db.sql"
++                                                className="max-w-[400px]"
++                                                aria-invalid={fileNameState.invalid}
++                                                disabled={readOnly}
++                                            />
++                                            <FieldError errors={[errors.sourceFileName]} />
++                                        </Field>
++                                    </InfoBlock>
++                                ) : (
++                                    <>
++                                        <InfoBlock
++                                            title={
++                                                <LabelWithInfo
++                                                    label="Volume"
++                                                    isRequired
++                                                    content="The app's own directory of a volume, where the app mounts it."
++                                                />
++                                            }
++                                            titleWidth={TITLE_WIDTH}
++                                        >
++                                            <Field>
++                                                <Combobox<RefOption>
++                                                    options={volumeOptions}
++                                                    value={(volume.value as RefOption | null)?.id ?? null}
++                                                    onChange={(_, option) => {
++                                                        volume.onChange(option ?? null);
++                                                    }}
++                                                    placeholder={volume.value?.name ?? "Select a mounted volume"}
++                                                    emptyText="The app mounts no volume of its own"
++                                                    className="max-w-[400px]"
++                                                    valueKey="id"
++                                                    closeOnSelect
++                                                    loading={isStorageFetching}
++                                                    aria-invalid={volumeState.invalid}
++                                                    disabled={readOnly}
++                                                />
++                                                <FieldError errors={[errors.sourceVolume]} />
++                                            </Field>
++                                        </InfoBlock>
++
++                                        <InfoBlock
++                                            title={
++                                                <LabelWithInfo
++                                                    label="Path"
++                                                    content="A path inside the volume, as the app sees it; empty for all of it."
++                                                />
++                                            }
++                                            titleWidth={TITLE_WIDTH}
++                                        >
++                                            <Field>
++                                                <Input
++                                                    {...subpath}
++                                                    placeholder="uploads"
++                                                    className="max-w-[400px]"
++                                                    aria-invalid={subpathState.invalid}
++                                                    disabled={readOnly}
++                                                />
++                                                <FieldError errors={[errors.sourceVolumeSubpath]} />
++                                            </Field>
++                                        </InfoBlock>
++
++                                        <VolumeConsistencyNote />
++                                    </>
++                                )}
++                            </div>
++                        </ContentBlock>
++
++                        {isCommand && (
++                            <CommandConfigSection
++                                label="Command"
++                                fieldPrefix="sourceCommand"
++                                showLoadTemplate
++                                templateProjectId={projectId}
++                                templateEnv={env}
++                                configureTemplatesLink={configureTemplatesLink}
++                                readOnly={readOnly}
++                                showArgGroups
++                            />
++                        )}
++
++                        <ContentBlock label="Repository">
++                            <div className="flex flex-col gap-6">
++                                <InfoBlock
++                                    title={
++                                        <LabelWithInfo
++                                            label="Backup Repository"
++                                            isRequired
++                                        />
++                                    }
++                                    titleWidth={TITLE_WIDTH}
++                                >
++                                    <Field>
++                                        <Combobox<RefOption>
++                                            options={repositoryOptions}
++                                            value={(repository.value as RefOption | null)?.id ?? null}
++                                            onChange={(_, option) => {
++                                                repository.onChange(option ?? null);
++                                            }}
++                                            onSearch={setRepositorySearch}
++                                            placeholder={repository.value?.name ?? "Select a backup repository"}
++                                            emptyText="No backup repositories available"
++                                            className="max-w-[400px]"
++                                            valueKey="id"
++                                            searchable
++                                            closeOnSelect
++                                            loading={isRepositoryFetching}
++                                            onRefresh={() => void refetchRepositories()}
++                                            isRefreshing={isRepositoryRefetching}
++                                            aria-invalid={repositoryState.invalid}
++                                            disabled={readOnly}
++                                        />
++                                        <AppLink.Modules
++                                            to={backupReposLink}
++                                            className="text-xs text-link hover:underline"
++                                        >
++                                            Configure Backup Repositories
++                                        </AppLink.Modules>
++                                        <FieldError errors={[errors.targetRepository]} />
++                                    </Field>
++                                </InfoBlock>
++
++                                <InfoBlock
++                                    title={
++                                        <LabelWithInfo
++                                            label="Tags"
++                                            content="Put on every snapshot the job takes, beside the job's and the app's."
++                                        />
++                                    }
++                                    titleWidth={TITLE_WIDTH}
++                                >
++                                    <FieldGroup>
++                                        <KeyValueList
++                                            name={"tags" as never}
++                                            keyLabel="Key"
++                                            valueLabel="Value"
++                                            keyPlaceholder="env"
++                                            valuePlaceholder="prod"
++                                            className="max-w-[600px]"
++                                            checkDuplicates
++                                            disabled={readOnly}
++                                            enableValueEditing
++                                        />
++                                        <FieldError errors={[errors.tags?.root ?? errors.tags]} />
++                                    </FieldGroup>
++                                </InfoBlock>
++                            </div>
++                        </ContentBlock>
++
++                        <ContentBlock label="Scheduling">
++                            <div className="flex flex-col gap-6">
++                                <InfoBlock
++                                    title="Priority"
++                                    titleWidth={TITLE_WIDTH}
++                                >
++                                    <PriorityTabsField
++                                        value={priority.value}
++                                        onChange={priority.onChange}
++                                        readOnly={readOnly}
++                                    />
++                                </InfoBlock>
++
++                                <JobScheduleFields
++                                    titleWidth={TITLE_WIDTH}
++                                    nextRuns={initialValues?.nextRuns ?? []}
++                                    readOnly={readOnly}
++                                />
++
++                                <InfoBlock
++                                    title="Timeout"
++                                    titleWidth={TITLE_WIDTH}
++                                >
++                                    <Field>
++                                        <Input
++                                            {...timeout}
++                                            placeholder="30m, 1h30m"
++                                            className="max-w-[400px]"
++                                            aria-invalid={timeoutState.invalid}
++                                            disabled={readOnly}
++                                        />
++                                        <FieldError errors={[errors.timeout]} />
++                                    </Field>
++                                </InfoBlock>
++
++                                <InfoBlock
++                                    title="Retry"
++                                    titleWidth={TITLE_WIDTH}
++                                >
++                                    <div className="flex flex-wrap items-start gap-4">
++                                        <Field className="w-auto">
++                                            <Input
++                                                ref={maxRetry.ref}
++                                                name={maxRetry.name}
++                                                type="number"
++                                                inputMode="numeric"
++                                                min={0}
++                                                value={maxRetry.value ?? ""}
++                                                onBlur={maxRetry.onBlur}
++                                                onChange={event => {
++                                                    const next = Number(event.target.value);
++                                                    maxRetry.onChange(
++                                                        event.target.value === "" || !Number.isFinite(next)
++                                                            ? undefined
++                                                            : next,
++                                                    );
++                                                }}
++                                                placeholder="max, 0"
++                                                className="w-24"
++                                                aria-invalid={maxRetryState.invalid}
++                                                disabled={readOnly}
++                                            />
++                                            <FieldError errors={[errors.maxRetry]} />
++                                        </Field>
++                                        <Field className="w-auto">
++                                            <Input
++                                                {...retryDelay}
++                                                placeholder="delay, 1m"
++                                                className="w-24"
++                                                aria-invalid={retryDelayState.invalid}
++                                                disabled={readOnly}
++                                            />
++                                            <FieldError errors={[errors.retryDelay]} />
++                                        </Field>
++                                    </div>
++                                </InfoBlock>
++
++                                <InfoBlock
++                                    title="Allow Canceling"
++                                    titleWidth={TITLE_WIDTH}
++                                >
++                                    <Checkbox
++                                        checked={controlEnabled.value}
++                                        onCheckedChange={checked => {
++                                            controlEnabled.onChange(checked === true);
++                                        }}
++                                        disabled={readOnly}
++                                    />
++                                </InfoBlock>
++                            </div>
++                        </ContentBlock>
++
++                        <ContentBlock label="Triggers">
++                            <JobTriggersField readOnly={readOnly} />
++                        </ContentBlock>
++
++                        <ContentBlock label="Notification Configuration">
++                            <NotificationSettings<DataBackupFormInput>
++                                names={{
++                                    successUseDefault: "notification.successUseDefault",
++                                    success: "notification.success",
++                                    failureUseDefault: "notification.failureUseDefault",
++                                    failure: "notification.failure",
++                                }}
++                                sources={notificationSources}
++                                manageLink={notificationManageLink}
++                                readOnly={readOnly}
++                                titleWidth={TITLE_WIDTH}
++                            />
++                        </ContentBlock>
++                    </FieldGroup>
++
++                    <FormActionBar sticky={stickyActions}>
++                        {readOnly ? (
++                            <Button
++                                type="button"
++                                onClick={onClose}
++                                className="min-w-[100px]"
++                            >
++                                Close
++                            </Button>
++                        ) : (
++                            <>
++                                <Button
++                                    type="button"
++                                    variant="outline"
++                                    className="min-w-[100px]"
++                                    disabled={isPending}
++                                    onClick={onClose}
++                                >
++                                    Cancel
++                                </Button>
++                                <Button
++                                    type="submit"
++                                    isLoading={isPending}
++                                    className="min-w-[100px]"
++                                >
++                                    Save
++                                </Button>
++                            </>
++                        )}
++                    </FormActionBar>
++                </fieldset>
++            </form>
++        </FormProvider>
++    );
++}
++
++interface Props {
++    projectId: string;
++    env: string;
++    appId: string;
++    isPending: boolean;
++    onSubmit: (values: DataBackupFormOutput) => void;
++    initialValues?: AppScheduledJob;
++    onHasChanges?: (dirty: boolean) => void;
++    readOnly?: boolean;
++    stickyActions?: boolean;
++    onClose?: () => void;
++}
+diff --git a/src/application/modules/projects/module-shared/components/data-backup-form/data-backup.form.schema.ts b/src/application/modules/projects/module-shared/components/data-backup-form/data-backup.form.schema.ts
+new file mode 100644
+index 00000000..26f9e16b
+--- /dev/null
++++ b/src/application/modules/projects/module-shared/components/data-backup-form/data-backup.form.schema.ts
+@@ -0,0 +1,143 @@
++import { z } from "zod";
++import { JobTriggersFormSchema } from "~/projects/module-shared/components/job-triggers-field/job-triggers.helpers";
++import {
++    EAppScheduledJobArgSeparator,
++    EAppScheduledJobScheduleMode,
++    EAppScheduledJobTaskPriority,
++    ESchedJobDataBackupSource,
++} from "~/projects/module-shared/enums";
++
++/** The most tags a data backup puts on its snapshots, as the server allows. */
++export const DATA_BACKUP_MAX_TAGS = 20;
++
++/** A file name without a directory: the snapshot's one file. */
++const FILE_NAME_PATTERN = /^[A-Za-z0-9._-]{1,100}$/;
++/** A tag is kopia's key:value; the key holds no ':', neither holds a space. */
++const TAG_KEY_PATTERN = /^[A-Za-z0-9._-]{1,50}$/;
++const TAG_VALUE_PATTERN = /^[A-Za-z0-9._:/@+=-]{1,100}$/;
++/** HivePaaS's own tags: the job, the app, the run. */
++const RESERVED_TAG_PREFIX = "hivepaas.";
++
++export const DATA_BACKUP_COMMAND_MODE = {
++    Command: "command",
++    Script: "script",
++} as const;
++
++const NamedRefSchema = z.object({
++    id: z.string(),
++    name: z.string(),
++});
++
++/** The command section's fields, as `CommandConfigSection` edits them under `sourceCommand`. */
++const SourceCommandSchema = z.object({
++    commandMode: z.enum([DATA_BACKUP_COMMAND_MODE.Command, DATA_BACKUP_COMMAND_MODE.Script]),
++    command: z.string().trim(),
++    script: z.string(),
++    workingDir: z.string().trim(),
++    tty: z.boolean(),
++    consoleSize: z.object({ width: z.number(), height: z.number() }),
++    envVars: z.array(z.object({ key: z.string(), value: z.string(), isLiteral: z.boolean().optional() })),
++    argGroups: z.array(
++        z.object({
++            enabled: z.boolean(),
++            exportEnv: z.string(),
++            separator: z.nativeEnum(EAppScheduledJobArgSeparator),
++            args: z.array(z.object({ use: z.boolean(), name: z.string(), value: z.string() })),
++        }),
++    ),
++});
++
++/** A path inside a directory: not from the root, never above where it starts. */
++export function isRelativeSubpath(subpath: string): boolean {
++    if (subpath === "") {
++        return true;
++    }
++    if (subpath.startsWith("/") || subpath.length > 500) {
++        return false;
++    }
++    let depth = 0;
++    for (const part of subpath.split("/")) {
++        if (part === "..") {
++            depth -= 1;
++        } else if (part !== "" && part !== ".") {
++            depth += 1;
++        }
++        if (depth < 0) {
++            return false;
++        }
++    }
++    return true;
++}
++
++export const DataBackupFormSchema = z
++    .object({
++        name: z.string().trim().min(1, "Name is required"),
++        scheduleMode: z.nativeEnum(EAppScheduledJobScheduleMode),
++        scheduleInterval: z.string().trim(),
++        scheduleCronExpr: z.string().trim(),
++        scheduleFrom: z.date().nullable(),
++        scheduleTo: z.date().nullable(),
++        source: z.nativeEnum(ESchedJobDataBackupSource),
++        sourceCommand: SourceCommandSchema,
++        sourceFileName: z.string().trim(),
++        sourceVolume: NamedRefSchema.nullable(),
++        sourceVolumeSubpath: z.string().trim(),
++        targetRepository: NamedRefSchema.nullable(),
++        tags: z.array(z.object({ key: z.string().trim(), value: z.string().trim() })),
++        timeout: z.string().trim(),
++        maxRetry: z.number().int().min(0, "Max retry must be greater than or equal to 0").optional(),
++        retryDelay: z.string().trim(),
++        priority: z.nativeEnum(EAppScheduledJobTaskPriority),
++        controlEnabled: z.boolean(),
++        triggers: JobTriggersFormSchema,
++        notification: z.object({
++            successUseDefault: z.boolean(),
++            success: NamedRefSchema.optional(),
++            failureUseDefault: z.boolean(),
++            failure: NamedRefSchema.optional(),
++        }),
++    })
++    .superRefine((value, ctx) => {
++        const issue = (message: string, path: (string | number)[]) => {
++            ctx.addIssue({ code: z.ZodIssueCode.custom, message, path });
++        };
++
++        if (value.source === ESchedJobDataBackupSource.Command) {
++            const cmd = value.sourceCommand;
++            if (cmd.commandMode === DATA_BACKUP_COMMAND_MODE.Command && !cmd.command) {
++                issue("Command is required", ["sourceCommand", "command"]);
++            }
++            if (cmd.commandMode === DATA_BACKUP_COMMAND_MODE.Script && !cmd.script.trim()) {
++                issue("Script is required", ["sourceCommand", "script"]);
++            }
++            if (!FILE_NAME_PATTERN.test(value.sourceFileName)) {
++                issue("Letters, digits, '.', '-' and '_', up to 100, no '/'", ["sourceFileName"]);
++            }
++        } else {
++            if (!value.sourceVolume) {
++                issue("Pick a volume", ["sourceVolume"]);
++            }
++            if (!isRelativeSubpath(value.sourceVolumeSubpath)) {
++                issue("A path inside the volume: no leading '/', never above it with '..'", ["sourceVolumeSubpath"]);
++            }
++        }
++
++        if (!value.targetRepository) {
++            issue("Pick a repository", ["targetRepository"]);
++        }
++
++        if (value.tags.length > DATA_BACKUP_MAX_TAGS) {
++            issue(`At most ${DATA_BACKUP_MAX_TAGS} tags`, ["tags"]);
++        }
++        value.tags.forEach((tag, index) => {
++            if (!TAG_KEY_PATTERN.test(tag.key) || tag.key.startsWith(RESERVED_TAG_PREFIX)) {
++                issue("Letters, digits, '.', '-' and '_'; not starting with 'hivepaas.'", ["tags", index, "key"]);
++            }
++            if (!TAG_VALUE_PATTERN.test(tag.value)) {
++                issue("Up to 100 characters, no spaces", ["tags", index, "value"]);
++            }
++        });
++    });
++
++export type DataBackupFormInput = z.input<typeof DataBackupFormSchema>;
++export type DataBackupFormOutput = z.output<typeof DataBackupFormSchema>;
+diff --git a/src/application/modules/projects/module-shared/components/data-backup-form/index.ts b/src/application/modules/projects/module-shared/components/data-backup-form/index.ts
+new file mode 100644
+index 00000000..b798d28f
+--- /dev/null
++++ b/src/application/modules/projects/module-shared/components/data-backup-form/index.ts
+@@ -0,0 +1,3 @@
++export * from "./data-backup.form.com";
++export * from "./data-backup.form-mappers";
++export * from "./data-backup.form.schema";
+diff --git a/src/application/modules/projects/module-shared/components/index.ts b/src/application/modules/projects/module-shared/components/index.ts
+index 8bd674d0..1a97ce38 100644
+--- a/src/application/modules/projects/module-shared/components/index.ts
++++ b/src/application/modules/projects/module-shared/components/index.ts
+@@ -25,3 +25,4 @@ export * from "./option-card-group";
+ export * from "./job-schedule-fields";
+ export * from "./job-sequence-form";
+ export * from "./job-triggers-field";
++export * from "./data-backup-form";
+diff --git a/src/application/modules/projects/module-shared/definitions/tables/app-scheduled-jobs/building-blocks/name-cell.com.tsx b/src/application/modules/projects/module-shared/definitions/tables/app-scheduled-jobs/building-blocks/name-cell.com.tsx
+index 54ce1fb4..1707545d 100644
+--- a/src/application/modules/projects/module-shared/definitions/tables/app-scheduled-jobs/building-blocks/name-cell.com.tsx
++++ b/src/application/modules/projects/module-shared/definitions/tables/app-scheduled-jobs/building-blocks/name-cell.com.tsx
+@@ -5,7 +5,9 @@ import type { AppScheduledJob } from "~/projects/domain";
+ import { formatJobTrigger } from "~/projects/module-shared/components/job-triggers-field/job-triggers.helpers";
+ import { EAppScheduledJobType } from "~/projects/module-shared/enums";
+ 
+-/** A job's name; a sequence is tagged, with its step count. */
++import { ESettingStatus } from "@application/shared/enums";
++
++/** A job's name; a sequence is tagged with its step count, a data backup with its repository. */
+ function View({ job }: Props) {
+     const steps = job.sequence?.steps.length ?? 0;
+ 
+@@ -17,6 +19,14 @@ function View({ job }: Props) {
+                     Sequence · {steps} {steps === 1 ? "step" : "steps"}
+                 </Badge>
+             )}
++            {job.jobType === EAppScheduledJobType.DataBackup && job.dataBackup && (
++                <Badge variant="secondary">
++                    Backup ·{" "}
++                    {job.dataBackup.targetRepository.status === ESettingStatus.Missing
++                        ? "deleted repository"
++                        : job.dataBackup.targetRepository.name}
++                </Badge>
++            )}
+             {job.triggers.map(trigger => (
+                 <Badge
+                     key={`${trigger.event}-${trigger.apps.map(app => app.id).join(",")}`}
+diff --git a/src/application/modules/projects/module-shared/enums/e.app-scheduled-job-type.ts b/src/application/modules/projects/module-shared/enums/e.app-scheduled-job-type.ts
+index a05f8ef4..3f3f3504 100644
+--- a/src/application/modules/projects/module-shared/enums/e.app-scheduled-job-type.ts
++++ b/src/application/modules/projects/module-shared/enums/e.app-scheduled-job-type.ts
+@@ -5,6 +5,7 @@ export const EAppScheduledJobType = {
+     SSLRenewal: "ssl-renewal",
+     BackupRepoCleanup: "backup-repo-cleanup",
+     JobSequence: "job-sequence",
++    DataBackup: "data-backup",
+ } as const;
+ 
+ export type EAppScheduledJobType = (typeof EAppScheduledJobType)[keyof typeof EAppScheduledJobType];
+diff --git a/src/application/modules/projects/module-shared/enums/e.sched-job-data-backup.ts b/src/application/modules/projects/module-shared/enums/e.sched-job-data-backup.ts
+new file mode 100644
+index 00000000..140acbcf
+--- /dev/null
++++ b/src/application/modules/projects/module-shared/enums/e.sched-job-data-backup.ts
+@@ -0,0 +1,7 @@
++/** What a data backup reads: a command's output, or a volume the app mounts. */
++export const ESchedJobDataBackupSource = {
++    Command: "command",
++    Volume: "volume",
++} as const;
++
++export type ESchedJobDataBackupSource = (typeof ESchedJobDataBackupSource)[keyof typeof ESchedJobDataBackupSource];
+diff --git a/src/application/modules/projects/module-shared/enums/index.ts b/src/application/modules/projects/module-shared/enums/index.ts
+index 038f3eb4..f9bab337 100644
+--- a/src/application/modules/projects/module-shared/enums/index.ts
++++ b/src/application/modules/projects/module-shared/enums/index.ts
+@@ -37,3 +37,4 @@ export * from "./e.deployment-repo-option";
+ export * from "./e.dockerfile-source";
+ export * from "./e.routing-protocol";
+ export * from "./e.sched-job-trigger";
++export * from "./e.sched-job-data-backup";
+diff --git a/src/application/modules/projects/projects.module.ts b/src/application/modules/projects/projects.module.ts
+index 262a7427..e0985627 100644
+--- a/src/application/modules/projects/projects.module.ts
++++ b/src/application/modules/projects/projects.module.ts
+@@ -100,6 +100,7 @@ export {
+     AppScheduledJobsRoute,
+     AppScheduledJobCreateRoute,
+     AppJobSequenceCreateRoute,
++    AppDataBackupCreateRoute,
+     AppScheduledJobEditRoute,
+     AppFeatureSettingsRoute,
+     AppCloneSettingsRoute,
+diff --git a/src/application/modules/projects/projects.router.tsx b/src/application/modules/projects/projects.router.tsx
+index 1d9c1107..368a58ac 100644
+--- a/src/application/modules/projects/projects.router.tsx
++++ b/src/application/modules/projects/projects.router.tsx
+@@ -1787,6 +1787,15 @@ export const projectsRouter: RouteObject = {
+                                 return { Component: AppJobSequenceCreateRoute };
+                             },
+                         },
++                        {
++                            path: ROUTE.projects.single.apps.single.configuration.scheduledJobs.createDataBackup
++                                .$pattern,
++                            lazy: async () => {
++                                const { AppDataBackupCreateRoute } = await getLazyComponents();
++
++                                return { Component: AppDataBackupCreateRoute };
++                            },
++                        },
+                         {
+                             path: ROUTE.projects.single.apps.single.configuration.scheduledJobs.edit.$pattern,
+                             lazy: async () => {
+diff --git a/src/application/modules/projects/routes/index.ts b/src/application/modules/projects/routes/index.ts
+index f0f552b6..e11da0e8 100644
+--- a/src/application/modules/projects/routes/index.ts
++++ b/src/application/modules/projects/routes/index.ts
+@@ -97,6 +97,7 @@ export {
+     AppScheduledJobsRoute,
+     AppScheduledJobCreateRoute,
+     AppJobSequenceCreateRoute,
++    AppDataBackupCreateRoute,
+     AppScheduledJobEditRoute,
+     AppFeatureSettingsRoute,
+     AppCloneSettingsRoute,
+diff --git a/src/application/modules/projects/routes/single-project/configuration/scheduled-jobs/building-blocks/env-scheduled-jobs-filter-bar.com.tsx b/src/application/modules/projects/routes/single-project/configuration/scheduled-jobs/building-blocks/env-scheduled-jobs-filter-bar.com.tsx
+index 4fc7b26d..7006e218 100644
+--- a/src/application/modules/projects/routes/single-project/configuration/scheduled-jobs/building-blocks/env-scheduled-jobs-filter-bar.com.tsx
++++ b/src/application/modules/projects/routes/single-project/configuration/scheduled-jobs/building-blocks/env-scheduled-jobs-filter-bar.com.tsx
+@@ -14,7 +14,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
+ const ALL = "all";
+ const LIST_ALL_PAGE = { page: 1, size: 1000 };
+ 
+-const JOB_TYPES = [EAppScheduledJobType.JobSequence, EAppScheduledJobType.ContainerCommand];
++const JOB_TYPES = [
++    EAppScheduledJobType.JobSequence,
++    EAppScheduledJobType.ContainerCommand,
++    EAppScheduledJobType.DataBackup,
++];
+ const STATUSES = [ESettingStatus.Active, ESettingStatus.Disabled, ESettingStatus.Pending];
+ 
+ export interface EnvScheduledJobFilterValues {
+diff --git a/src/application/modules/projects/routes/single-project/single-app/configuration/scheduled-jobs/data-backup/app-data-backup-create.route.com.tsx b/src/application/modules/projects/routes/single-project/single-app/configuration/scheduled-jobs/data-backup/app-data-backup-create.route.com.tsx
+new file mode 100644
+index 00000000..c8e25727
+--- /dev/null
++++ b/src/application/modules/projects/routes/single-project/single-app/configuration/scheduled-jobs/data-backup/app-data-backup-create.route.com.tsx
+@@ -0,0 +1,21 @@
++import { useParams } from "react-router";
++import invariant from "tiny-invariant";
++
++import { AppDataBackupFormRoute } from "./app-data-backup-form-route.com";
++
++export function AppDataBackupCreateRoute() {
++    const { id: projectId, env, appId } = useParams<{ id: string; env: string; appId: string }>();
++
++    invariant(projectId, "projectId must be defined");
++    invariant(env, "env must be defined");
++    invariant(appId, "appId must be defined");
++
++    return (
++        <AppDataBackupFormRoute
++            mode="create"
++            projectId={projectId}
++            env={env}
++            appId={appId}
++        />
++    );
++}
+diff --git a/src/application/modules/projects/routes/single-project/single-app/configuration/scheduled-jobs/data-backup/app-data-backup-form-route.com.tsx b/src/application/modules/projects/routes/single-project/single-app/configuration/scheduled-jobs/data-backup/app-data-backup-form-route.com.tsx
+new file mode 100644
+index 00000000..f770ff43
+--- /dev/null
++++ b/src/application/modules/projects/routes/single-project/single-app/configuration/scheduled-jobs/data-backup/app-data-backup-form-route.com.tsx
+@@ -0,0 +1,106 @@
++import { useState } from "react";
++
++import { toast } from "sonner";
++import { AppScheduledJobsCommands } from "~/projects/data";
++import type { AppScheduledJob } from "~/projects/domain";
++import {
++    DataBackupForm,
++    type DataBackupFormOutput,
++    mapDataBackupFormToPayload,
++} from "~/projects/module-shared/components";
++
++import { AppLoader, RouteFormHeader } from "@application/shared/components";
++import { MODULE_IDS, ROUTE } from "@application/shared/constants";
++import { useAppNavigate } from "@application/shared/hooks/router";
++import { useConditionalModule } from "@application/shared/permissions";
++
++export function AppDataBackupFormRoute({ mode, projectId, env, appId, scheduledJob }: Props) {
++    const [hasChanges, setHasChanges] = useState(false);
++    const { canWrite } = useConditionalModule({ id: MODULE_IDS.Project });
++    const { navigate } = useAppNavigate();
++
++    function navigateToList() {
++        navigate.modules(ROUTE.projects.single.apps.single.configuration.scheduledJobs.$route(projectId, env, appId), {
++            ignorePrevPath: true,
++        });
++    }
++
++    const { mutate: createOne, isPending: isCreating } = AppScheduledJobsCommands.useCreateOne({
++        onSuccess: () => {
++            toast.success("Data backup created successfully");
++            navigateToList();
++        },
++    });
++    const { mutate: updateOne, isPending: isUpdating } = AppScheduledJobsCommands.useUpdateOne({
++        onSuccess: () => {
++            toast.success("Data backup updated successfully");
++            navigateToList();
++        },
++    });
++
++    function onSubmit(values: DataBackupFormOutput) {
++        if (!canWrite) {
++            return;
++        }
++
++        const payload = mapDataBackupFormToPayload(values, appId);
++        if (mode === "edit" && scheduledJob) {
++            updateOne({
++                projectID: projectId,
++                env,
++                appID: appId,
++                scheduledJobID: scheduledJob.id,
++                payload: { ...payload, updateVer: scheduledJob.updateVer },
++            });
++            return;
++        }
++
++        createOne({ projectID: projectId, env, appID: appId, payload });
++    }
++
++    function handleClose() {
++        if (isCreating || isUpdating) {
++            return;
++        }
++
++        if (canWrite && hasChanges && !window.confirm("Are you sure you want to close without saving changes?")) {
++            return;
++        }
++
++        navigateToList();
++    }
++
++    return (
++        <div className="flex w-full flex-col">
++            <RouteFormHeader title={mode === "create" ? "Create Data Backup" : "Edit Data Backup"} />
++
++            {mode === "edit" && !scheduledJob ? (
++                <div className="flex min-h-[220px] items-center justify-center">
++                    <AppLoader />
++                </div>
++            ) : (
++                <DataBackupForm
++                    projectId={projectId}
++                    env={env}
++                    appId={appId}
++                    isPending={isCreating || isUpdating}
++                    onSubmit={onSubmit}
++                    onHasChanges={setHasChanges}
++                    initialValues={scheduledJob}
++                    readOnly={!canWrite}
++                    stickyActions
++                    onClose={handleClose}
++                />
++            )}
++        </div>
++    );
++}
++
++interface Props {
++    mode: "create" | "edit";
++    projectId: string;
++    env: string;
++    appId: string;
++    /** The data backup being edited. */
++    scheduledJob?: AppScheduledJob;
++}
+diff --git a/src/application/modules/projects/routes/single-project/single-app/configuration/scheduled-jobs/data-backup/index.ts b/src/application/modules/projects/routes/single-project/single-app/configuration/scheduled-jobs/data-backup/index.ts
+new file mode 100644
+index 00000000..7c93787d
+--- /dev/null
++++ b/src/application/modules/projects/routes/single-project/single-app/configuration/scheduled-jobs/data-backup/index.ts
+@@ -0,0 +1,2 @@
++export * from "./app-data-backup-create.route.com";
++export * from "./app-data-backup-form-route.com";
+diff --git a/src/application/modules/projects/routes/single-project/single-app/configuration/scheduled-jobs/edit/app-scheduled-job-edit.route.com.tsx b/src/application/modules/projects/routes/single-project/single-app/configuration/scheduled-jobs/edit/app-scheduled-job-edit.route.com.tsx
+index 315c1f8f..2c95d7ea 100644
+--- a/src/application/modules/projects/routes/single-project/single-app/configuration/scheduled-jobs/edit/app-scheduled-job-edit.route.com.tsx
++++ b/src/application/modules/projects/routes/single-project/single-app/configuration/scheduled-jobs/edit/app-scheduled-job-edit.route.com.tsx
+@@ -5,10 +5,11 @@ import { EAppScheduledJobType } from "~/projects/module-shared/enums";
+ 
+ import { AppLoader } from "@application/shared/components";
+ 
++import { AppDataBackupFormRoute } from "../data-backup";
+ import { AppScheduledJobFormRoute } from "../form-route";
+ import { AppJobSequenceFormRoute } from "../sequence";
+ 
+-/** Opens the form the job's type needs: a sequence has its own. */
++/** Opens the form the job's type needs: a sequence and a data backup have their own. */
+ export function AppScheduledJobEditRoute() {
+     const {
+         id: projectId,
+@@ -53,6 +54,18 @@ export function AppScheduledJobEditRoute() {
+         );
+     }
+ 
++    if (job.jobType === EAppScheduledJobType.DataBackup) {
++        return (
++            <AppDataBackupFormRoute
++                mode="edit"
++                projectId={projectId}
++                env={env}
++                appId={appId}
++                scheduledJob={job}
++            />
++        );
++    }
++
+     return (
+         <AppScheduledJobFormRoute
+             mode="edit"
+diff --git a/src/application/modules/projects/routes/single-project/single-app/configuration/scheduled-jobs/index.ts b/src/application/modules/projects/routes/single-project/single-app/configuration/scheduled-jobs/index.ts
+index 40e72ac9..b66d7ec4 100644
+--- a/src/application/modules/projects/routes/single-project/single-app/configuration/scheduled-jobs/index.ts
++++ b/src/application/modules/projects/routes/single-project/single-app/configuration/scheduled-jobs/index.ts
+@@ -3,3 +3,4 @@ export * from "./form-route";
+ export * from "./create";
+ export * from "./edit";
+ export * from "./sequence";
++export * from "./data-backup";
+diff --git a/src/application/modules/projects/routes/single-project/single-app/configuration/scheduled-jobs/route/app-scheduled-jobs.route.com.tsx b/src/application/modules/projects/routes/single-project/single-app/configuration/scheduled-jobs/route/app-scheduled-jobs.route.com.tsx
+index b0f817ee..1532f5e5 100644
+--- a/src/application/modules/projects/routes/single-project/single-app/configuration/scheduled-jobs/route/app-scheduled-jobs.route.com.tsx
++++ b/src/application/modules/projects/routes/single-project/single-app/configuration/scheduled-jobs/route/app-scheduled-jobs.route.com.tsx
+@@ -94,6 +94,28 @@ export function AppScheduledJobsRoute() {
+                                 </Button>
+                             )}
+                         </PermissionTooltipAction>
++                        <PermissionTooltipAction
++                            id={MODULE_IDS.Project}
++                            action="write"
++                        >
++                            {({ isDenied }) => (
++                                <Button
++                                    variant="outline"
++                                    onClick={() => {
++                                        navigate.modules(
++                                            ROUTE.projects.single.apps.single.configuration.scheduledJobs.createDataBackup.$route(
++                                                projectId,
++                                                env,
++                                                appId,
++                                            ),
++                                        );
++                                    }}
++                                    disabled={isDenied}
++                                >
++                                    <Plus className="size-4" /> New Data Backup
++                                </Button>
++                            )}
++                        </PermissionTooltipAction>
+                         <PermissionTooltipAction
+                             id={MODULE_IDS.Project}
+                             action="write"
+diff --git a/src/application/shared/constants/route.constants.ts b/src/application/shared/constants/route.constants.ts
+index 48ae4563..f551f29b 100644
+--- a/src/application/shared/constants/route.constants.ts
++++ b/src/application/shared/constants/route.constants.ts
+@@ -685,6 +685,12 @@ export const ROUTE = {
+                                     `/projects/${id}/${env}/apps/${appId}/sched-jobs/create-sequence/`,
+                             },
+ 
++                            createDataBackup: {
++                                $pattern: "projects/:id/:env/apps/:appId/sched-jobs/create-data-backup",
++                                $route: (id: string, env: string, appId: string) =>
++                                    `/projects/${id}/${env}/apps/${appId}/sched-jobs/create-data-backup/`,
++                            },
++
+                             edit: {
+                                 $pattern: "projects/:id/:env/apps/:appId/sched-jobs/:scheduledJobId/edit",
+                                 $route: (id: string, env: string, appId: string, scheduledJobId: string) =>

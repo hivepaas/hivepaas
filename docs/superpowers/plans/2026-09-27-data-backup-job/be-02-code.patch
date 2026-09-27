@@ -1,0 +1,356 @@
+diff --git a/hivepaas_app/service/backupreposervice/backupreposerviceimpl/backup.go b/hivepaas_app/service/backupreposervice/backupreposerviceimpl/backup.go
+new file mode 100644
+index 00000000..c77c49d7
+--- /dev/null
++++ b/hivepaas_app/service/backupreposervice/backupreposerviceimpl/backup.go
+@@ -0,0 +1,157 @@
++package backupreposerviceimpl
++
++import (
++	"context"
++	"path/filepath"
++
++	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
++	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
++	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
++	"github.com/hivepaas/hivepaas/hivepaas_app/service/backupreposervice"
++	"github.com/hivepaas/hivepaas/hivepaas_app/service/volumeservice"
++	"github.com/hivepaas/hivepaas/services/backup"
++	"github.com/hivepaas/hivepaas/services/backup/backupmodel"
++)
++
++func (s *service) BackupStream(
++	ctx context.Context,
++	db database.IDB,
++	req *backupreposervice.BackupStreamReq,
++) (*backupreposervice.BackupResp, error) {
++	engine, err := s.buildTargetEngine(ctx, db, &req.RepoTarget)
++	if err != nil {
++		return nil, hperrors.Wrap(err)
++	}
++	if err = engine.ConnectRepo(ctx); err != nil {
++		return nil, hperrors.Wrap(err)
++	}
++	result, err := engine.BackupStream(ctx, req.Stdin, req.FileName, &backup.BackupOptions{Tags: req.Tags})
++	if err != nil {
++		return nil, hperrors.Wrap(err)
++	}
++	return &backupreposervice.BackupResp{Snapshot: toRepoSnapshot(result.Item)}, nil
++}
++
++func (s *service) BackupDirectory(
++	ctx context.Context,
++	db database.IDB,
++	req *backupreposervice.BackupDirectoryReq,
++) (*backupreposervice.BackupResp, error) {
++	repo, err := req.RepoSetting.AsBackupRepo()
++	if err != nil {
++		return nil, hperrors.Wrap(err)
++	}
++	storage, _, err := s.buildStorage(ctx, db, req.Scope, repo, req.RepoSetting.ID, req.RefObjects, "")
++	if err != nil {
++		return nil, hperrors.Wrap(err)
++	}
++	if err = checkRepoReachableFrom(storage, req.NodeID, req.NodeLabel); err != nil {
++		return nil, hperrors.Wrap(err)
++	}
++	// The directory is read where it is: the engine runs on its node, whatever the
++	// repository's storage would have chosen.
++	engine, err := backup.NewEngine(repo.Engine, storage,
++		onNodeExecutor(s.buildCommandExecutor(true), req.NodeID, req.NodeLabel))
++	if err != nil {
++		return nil, hperrors.Wrap(err)
++	}
++	if err = engine.ConnectRepo(ctx); err != nil {
++		return nil, hperrors.Wrap(err)
++	}
++	// The agent mounts the host root: the directory is expressed from inside it.
++	dir := filepath.Join(volumeservice.HostPathPrefix, req.HostDir)
++	result, err := engine.BackupDirectory(ctx, dir, &backup.BackupOptions{Tags: req.Tags})
++	if err != nil {
++		return nil, hperrors.Wrap(err)
++	}
++	return &backupreposervice.BackupResp{Snapshot: toRepoSnapshot(result.Item)}, nil
++}
++
++func (s *service) DeleteSnapshot(
++	ctx context.Context,
++	db database.IDB,
++	req *backupreposervice.DeleteSnapshotReq,
++) error {
++	engine, err := s.buildTargetEngine(ctx, db, &req.RepoTarget)
++	if err != nil {
++		return hperrors.Wrap(err)
++	}
++	if err = engine.ConnectRepo(ctx); err != nil {
++		return hperrors.Wrap(err)
++	}
++	_, err = engine.DeleteSnapshot(ctx, req.SnapshotID)
++	return hperrors.Wrap(err)
++}
++
++func (s *service) VolumeHostDir(
++	ctx context.Context,
++	volume *entity.Setting,
++) (*backupreposervice.VolumeHostDir, error) {
++	clusterVolume, err := volume.AsClusterVolume()
++	if err != nil {
++		return nil, hperrors.Wrap(err)
++	}
++	dir, err := s.resolveVolumeHostPath(ctx, volume, clusterVolume)
++	if err != nil {
++		return nil, hperrors.Wrap(err)
++	}
++	return &backupreposervice.VolumeHostDir{
++		Dir: dir, NodeID: clusterVolume.NodeID, NodeLabel: clusterVolume.NodeLabel,
++	}, nil
++}
++
++func (s *service) buildTargetEngine(
++	ctx context.Context,
++	db database.IDB,
++	target *backupreposervice.RepoTarget,
++) (backup.Engine, error) {
++	repo, err := target.RepoSetting.AsBackupRepo()
++	if err != nil {
++		return nil, hperrors.Wrap(err)
++	}
++	engine, err := s.buildEngine(ctx, db, target.Scope, repo, target.RepoSetting.ID, target.RefObjects)
++	return engine, hperrors.Wrap(err)
++}
++
++// onNodeExecutor runs a command the engine gives no node on the node asked for.
++func onNodeExecutor(base backupmodel.CommandExecutor, nodeID, nodeLabel string) backupmodel.CommandExecutor {
++	return func(ctx context.Context, req *backupmodel.CommandExecReq) (*backupmodel.CommandExecResp, error) {
++		if req.NodeID == "" && req.NodeLabel == "" {
++			req.NodeID, req.NodeLabel = nodeID, nodeLabel
++		}
++		return base(ctx, req)
++	}
++}
++
++// checkRepoReachableFrom refuses a repository on a volume of another node than the
++// one a directory is read on: it is reachable there only, until the repository
++// server makes it reachable from anywhere.
++func checkRepoReachableFrom(storage *backup.Storage, nodeID, nodeLabel string) error {
++	local := storage.StorageLocal
++	if local == nil {
++		return nil
++	}
++	if (local.NodeID != "" && local.NodeID == nodeID) || (local.NodeLabel != "" && local.NodeLabel == nodeLabel) {
++		return nil
++	}
++	return hperrors.Wrap(hperrors.ErrNotImplemented).WithExtraDetail(
++		"the repository's volume is on another node than the data: backing it up there is not supported yet")
++}
++
++// toRepoSnapshot is a snapshot the engine made, as the repository's snapshots read.
++func toRepoSnapshot(item *backupmodel.Snapshot) *backupreposervice.RepoSnapshot {
++	if item == nil {
++		return nil
++	}
++	return &backupreposervice.RepoSnapshot{
++		Snapshot: &entity.BackupSnapshot{
++			ID:        item.ID,
++			ShortID:   item.ShortID,
++			Time:      item.Time,
++			Paths:     item.Paths,
++			Hostname:  item.Hostname,
++			SizeBytes: item.SizeBytes,
++		},
++		Tags: item.Tags,
++	}
++}
+diff --git a/hivepaas_app/service/backupreposervice/service.go b/hivepaas_app/service/backupreposervice/service.go
+index 898b0810..c477547c 100644
+--- a/hivepaas_app/service/backupreposervice/service.go
++++ b/hivepaas_app/service/backupreposervice/service.go
+@@ -3,6 +3,7 @@ package backupreposervice
+ import (
+ 	"context"
+ 
++	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
+ 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
+ )
+ 
+@@ -34,4 +35,16 @@ type Service interface {
+ 	// ApplyRepoOptions pushes the changeable repository settings onto the repository. They are
+ 	// stored inside it, so backups taken from any node pick them up without further work.
+ 	ApplyRepoOptions(ctx context.Context, db database.IDB, req *ApplyRepoOptionsReq) error
++
++	// BackupStream takes a snapshot of what Stdin carries, as the file FileName, the engine
++	// running in this process. A repository on a volume cannot take one yet: the agent that
++	// reaches it carries no stdin.
++	BackupStream(ctx context.Context, db database.IDB, req *BackupStreamReq) (*BackupResp, error)
++	// BackupDirectory takes a snapshot of a directory of a node's host, the engine running on
++	// that node through its agent. A repository on a volume is reachable on its own node only.
++	BackupDirectory(ctx context.Context, db database.IDB, req *BackupDirectoryReq) (*BackupResp, error)
++	// DeleteSnapshot removes one snapshot from the repository.
++	DeleteSnapshot(ctx context.Context, db database.IDB, req *DeleteSnapshotReq) error
++	// VolumeHostDir is where a volume's data is on the host of its node, and that node.
++	VolumeHostDir(ctx context.Context, volume *entity.Setting) (*VolumeHostDir, error)
+ }
+diff --git a/hivepaas_app/service/backupreposervice/types.go b/hivepaas_app/service/backupreposervice/types.go
+index 6b97f5c2..ae3521e6 100644
+--- a/hivepaas_app/service/backupreposervice/types.go
++++ b/hivepaas_app/service/backupreposervice/types.go
+@@ -1,6 +1,8 @@
+ package backupreposervice
+ 
+ import (
++	"io"
++
+ 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
+ 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/secrethelper"
+ 	"github.com/hivepaas/hivepaas/services/backup"
+@@ -141,3 +143,43 @@ type SyncRepoSnapshotsResp struct {
+ 	Removed []*entity.BackupSnapshot
+ 	Added   int
+ }
++
++// RepoTarget is the repository a snapshot goes into: its setting, and the scope that
++// resolves its storage.
++type RepoTarget struct {
++	Scope       *entity.ObjectScope
++	RepoSetting *entity.Setting
++	RefObjects  *entity.RefObjects
++}
++
++type BackupStreamReq struct {
++	RepoTarget
++	Stdin    io.Reader
++	FileName string
++	Tags     []string
++}
++
++type BackupDirectoryReq struct {
++	RepoTarget
++	// HostDir is the directory as the node's host sees it.
++	HostDir   string
++	NodeID    string
++	NodeLabel string
++	Tags      []string
++}
++
++type BackupResp struct {
++	Snapshot *RepoSnapshot
++}
++
++type DeleteSnapshotReq struct {
++	RepoTarget
++	SnapshotID string
++}
++
++// VolumeHostDir is a volume's directory on its node's host.
++type VolumeHostDir struct {
++	Dir       string
++	NodeID    string
++	NodeLabel string
++}
+diff --git a/services/backup/backupmodel/types.go b/services/backup/backupmodel/types.go
+index 94416612..8cc9c7d2 100644
+--- a/services/backup/backupmodel/types.go
++++ b/services/backup/backupmodel/types.go
+@@ -23,6 +23,8 @@ type Snapshot struct {
+ 	Paths     []string  `json:"paths"`
+ 	Hostname  string    `json:"hostname"`
+ 	SizeBytes int64     `json:"sizeBytes,omitempty"`
++	// Description is what the snapshot was taken with, such as the job and run.
++	Description string `json:"description,omitempty"`
+ }
+ 
+ // RepoOptions are the repository settings that can still be changed once the repository exists.
+@@ -71,6 +73,12 @@ type BackupOptions struct {
+ 	Tags     []string `json:"tags,omitempty"`
+ 	Hostname string   `json:"hostname,omitempty"`
+ 	PackSize int      `json:"packSize,omitempty"` // in MB
++	// Description goes onto the snapshot.
++	Description string `json:"description,omitempty"`
++	// Source is what the snapshot is recorded under, as kopia's user@host:/path,
++	// which its retention goes by; the machine's own and the path read when not
++	// given. It takes precedence over Hostname.
++	Source string `json:"source,omitempty"`
+ }
+ 
+ type BackupResult struct {
+diff --git a/services/backup/kopia/backup.go b/services/backup/kopia/backup.go
+index 02c237d1..ef8dbad3 100644
+--- a/services/backup/kopia/backup.go
++++ b/services/backup/kopia/backup.go
+@@ -21,6 +21,15 @@ type kopiaSnapshotManifest struct {
+ 	Description string            `json:"description"`
+ 	Tags        map[string]string `json:"tags"`
+ 	Stats       kopiaStats        `json:"stats"`
++	// RootEntry sums what the snapshot holds: `snapshot create --json` gives no
++	// stats, only this.
++	RootEntry kopiaRootEntry `json:"rootEntry"`
++}
++
++type kopiaRootEntry struct {
++	Summary struct {
++		Size int64 `json:"size"`
++	} `json:"summ"`
+ }
+ 
+ type kopiaSource struct {
+@@ -69,7 +78,9 @@ func (c *Client) BackupStream(
+ 	filename string,
+ 	opts *backupmodel.BackupOptions,
+ ) (res backupmodel.BackupResult, err error) {
+-	args := []string{cmdSnapshot, cmdCreate, "--stdin-file=" + filename, cmdFlagJSON}
++	// kopia needs a path for a stream, the directory its one file is in; the
++	// snapshot's source, when given, is recorded instead.
++	args := []string{cmdSnapshot, cmdCreate, "--stdin-file=" + filename, "/" + filename, cmdFlagJSON}
+ 	args = append(args, c.formatBackupFlags(opts)...)
+ 
+ 	var outBuf, errBuf bytes.Buffer
+@@ -131,9 +142,15 @@ func (c *Client) formatBackupFlags(opts *backupmodel.BackupOptions) []string {
+ 			flags = append(flags, "--tags="+tag)
+ 		}
+ 	}
+-	if opts.Hostname != "" {
++	switch {
++	case opts.Source != "":
++		flags = append(flags, "--override-source="+opts.Source)
++	case opts.Hostname != "":
+ 		flags = append(flags, "--override-source="+opts.Hostname+":/")
+ 	}
++	if opts.Description != "" {
++		flags = append(flags, "--description="+opts.Description)
++	}
+ 
+ 	return flags
+ }
+diff --git a/services/backup/kopia/get.go b/services/backup/kopia/get.go
+index 4aaba025..7dc766fb 100644
+--- a/services/backup/kopia/get.go
++++ b/services/backup/kopia/get.go
+@@ -115,14 +115,21 @@ func toStandardSnapshot(m *kopiaSnapshotManifest) *backupmodel.Snapshot {
+ 		shortID = shortID[:shortIDLen]
+ 	}
+ 
++	// `snapshot list` gives stats; `snapshot create --json` only the root's sum.
++	size := m.Stats.TotalSize
++	if size == 0 {
++		size = m.RootEntry.Summary.Size
++	}
++
+ 	return &backupmodel.Snapshot{
+-		ID:        m.ID,
+-		ShortID:   shortID,
+-		Time:      m.StartTime,
+-		Tags:      tags,
+-		Paths:     []string{m.Source.Path},
+-		Hostname:  m.Source.Host,
+-		SizeBytes: m.Stats.TotalSize,
++		ID:          m.ID,
++		ShortID:     shortID,
++		Time:        m.StartTime,
++		Tags:        tags,
++		Paths:       []string{m.Source.Path},
++		Hostname:    m.Source.Host,
++		SizeBytes:   size,
++		Description: m.Description,
+ 	}
+ }
+ 

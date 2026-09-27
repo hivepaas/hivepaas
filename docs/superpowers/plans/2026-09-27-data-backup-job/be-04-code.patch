@@ -1,0 +1,789 @@
+diff --git a/docs/openapi/swagger.json b/docs/openapi/swagger.json
+index 28570ea4..cfc938a0 100644
+--- a/docs/openapi/swagger.json
++++ b/docs/openapi/swagger.json
+@@ -47181,11 +47181,15 @@
+           "type" : {
+             "$ref" : "#/components/schemas/mount.Type"
+           },
++          "volumeId" : {
++            "description" : "VolumeID is the volume setting a mount of the app's own directory is in:\nwhat a data backup of a volume picks. An answer, ignored when written.",
++            "type" : "string"
++          },
+           "volumeOptions" : {
+             "$ref" : "#/components/schemas/appsettingsdto.VolumeOptions"
+           }
+         },
+-        "required" : [ "bindOptions", "clusterOptions", "consistency", "key", "readOnly", "source", "sourceApp", "target", "tmpfsOptions", "type", "volumeOptions" ],
++        "required" : [ "bindOptions", "clusterOptions", "consistency", "key", "readOnly", "source", "sourceApp", "target", "tmpfsOptions", "type", "volumeId", "volumeOptions" ],
+         "type" : "object"
+       },
+       "appsettingsdto.MountBorrower" : {
+@@ -58941,6 +58945,13 @@
+           "controlDisabled" : {
+             "type" : "boolean"
+           },
++          "dataBackup" : {
++            "allOf" : [ {
++              "$ref" : "#/components/schemas/settings_schedjobdto.SchedJobDataBackupReq"
++            } ],
++            "description" : "DataBackup is a data-backup's source and repository; left out for every\nother type.",
++            "type" : "object"
++          },
+           "default" : {
+             "type" : "boolean"
+           },
+@@ -58998,7 +59009,7 @@
+             "type" : "array"
+           }
+         },
+-        "required" : [ "app", "command", "commandOutput", "controlDisabled", "default", "inheritable", "jobType", "maxRetry", "name", "notification", "priority", "retryBackoff", "retryBackoffJitter", "retryDelay", "retryDelayIncr", "retryDelayMax", "schedule", "sequence", "timeout", "triggers" ],
++        "required" : [ "app", "command", "commandOutput", "controlDisabled", "dataBackup", "default", "inheritable", "jobType", "maxRetry", "name", "notification", "priority", "retryBackoff", "retryBackoffJitter", "retryDelay", "retryDelayIncr", "retryDelayMax", "schedule", "sequence", "timeout", "triggers" ],
+         "type" : "object"
+       },
+       "settings_schedjobdto.CreateSchedJobResp" : {
+@@ -59039,6 +59050,9 @@
+           "createdAt" : {
+             "type" : "string"
+           },
++          "dataBackup" : {
++            "$ref" : "#/components/schemas/settings_schedjobdto.SchedJobDataBackupResp"
++          },
+           "default" : {
+             "type" : "boolean"
+           },
+@@ -59131,7 +59145,7 @@
+             "type" : "string"
+           }
+         },
+-        "required" : [ "app", "command", "commandOutput", "controlDisabled", "createdAt", "default", "expireAt", "id", "inheritable", "inherited", "jobType", "kind", "maxRetry", "name", "nextRuns", "notification", "ownerApp", "priority", "retryBackoff", "retryBackoffJitter", "retryDelay", "retryDelayIncr", "retryDelayMax", "schedule", "scope", "sequence", "size", "status", "timeout", "triggers", "type", "updateVer", "updatedAt" ],
++        "required" : [ "app", "command", "commandOutput", "controlDisabled", "createdAt", "dataBackup", "default", "expireAt", "id", "inheritable", "inherited", "jobType", "kind", "maxRetry", "name", "nextRuns", "notification", "ownerApp", "priority", "retryBackoff", "retryBackoffJitter", "retryDelay", "retryDelayIncr", "retryDelayMax", "schedule", "scope", "sequence", "size", "status", "timeout", "triggers", "type", "updateVer", "updatedAt" ],
+         "type" : "object"
+       },
+       "settings_schedjobdto.ExecuteSchedJobDataResp" : {
+@@ -59200,6 +59214,74 @@
+         "required" : [ "data", "meta" ],
+         "type" : "object"
+       },
++      "settings_schedjobdto.SchedJobDataBackupReq" : {
++        "properties" : {
++          "source" : {
++            "type" : "string"
++          },
++          "sourceCommand" : {
++            "allOf" : [ {
++              "$ref" : "#/components/schemas/settings_commandtemplatedto.CommandTemplateBaseReq"
++            } ],
++            "description" : "SourceCommand runs in the job's app; its stdout is the file SourceFileName.",
++            "type" : "object"
++          },
++          "sourceFileName" : {
++            "type" : "string"
++          },
++          "sourceVolume" : {
++            "allOf" : [ {
++              "$ref" : "#/components/schemas/basedto.ObjectIDReq"
++            } ],
++            "description" : "SourceVolume is a volume the app mounts; SourceVolumeSubpath a path inside\nwhat the app sees of it, \"\" for all of it.",
++            "type" : "object"
++          },
++          "sourceVolumeSubpath" : {
++            "type" : "string"
++          },
++          "tags" : {
++            "additionalProperties" : {
++              "type" : "string"
++            },
++            "type" : "object"
++          },
++          "targetRepository" : {
++            "$ref" : "#/components/schemas/basedto.ObjectIDReq"
++          }
++        },
++        "required" : [ "source", "sourceCommand", "sourceFileName", "sourceVolume", "sourceVolumeSubpath", "tags", "targetRepository" ],
++        "type" : "object"
++      },
++      "settings_schedjobdto.SchedJobDataBackupResp" : {
++        "properties" : {
++          "source" : {
++            "type" : "string"
++          },
++          "sourceCommand" : {
++            "$ref" : "#/components/schemas/settings_commandtemplatedto.CommandTemplateResp"
++          },
++          "sourceFileName" : {
++            "type" : "string"
++          },
++          "sourceVolume" : {
++            "$ref" : "#/components/schemas/settings.BaseSettingResp"
++          },
++          "sourceVolumeSubpath" : {
++            "type" : "string"
++          },
++          "tags" : {
++            "additionalProperties" : {
++              "type" : "string"
++            },
++            "type" : "object"
++          },
++          "targetRepository" : {
++            "$ref" : "#/components/schemas/settings.BaseSettingResp"
++          }
++        },
++        "required" : [ "source", "sourceCommand", "sourceFileName", "sourceVolume", "sourceVolumeSubpath", "tags", "targetRepository" ],
++        "type" : "object"
++      },
+       "settings_schedjobdto.SchedJobResp" : {
+         "properties" : {
+           "app" : {
+@@ -59217,6 +59299,9 @@
+           "createdAt" : {
+             "type" : "string"
+           },
++          "dataBackup" : {
++            "$ref" : "#/components/schemas/settings_schedjobdto.SchedJobDataBackupResp"
++          },
+           "default" : {
+             "type" : "boolean"
+           },
+@@ -59303,7 +59388,7 @@
+             "type" : "string"
+           }
+         },
+-        "required" : [ "app", "command", "commandOutput", "controlDisabled", "createdAt", "default", "expireAt", "id", "inheritable", "inherited", "jobType", "kind", "maxRetry", "name", "nextRuns", "notification", "priority", "retryBackoff", "retryBackoffJitter", "retryDelay", "retryDelayIncr", "retryDelayMax", "schedule", "sequence", "size", "status", "timeout", "triggers", "type", "updateVer", "updatedAt" ],
++        "required" : [ "app", "command", "commandOutput", "controlDisabled", "createdAt", "dataBackup", "default", "expireAt", "id", "inheritable", "inherited", "jobType", "kind", "maxRetry", "name", "nextRuns", "notification", "priority", "retryBackoff", "retryBackoffJitter", "retryDelay", "retryDelayIncr", "retryDelayMax", "schedule", "sequence", "size", "status", "timeout", "triggers", "type", "updateVer", "updatedAt" ],
+         "type" : "object"
+       },
+       "settings_schedjobdto.SchedJobSequenceReq" : {
+@@ -59467,6 +59552,13 @@
+           "controlDisabled" : {
+             "type" : "boolean"
+           },
++          "dataBackup" : {
++            "allOf" : [ {
++              "$ref" : "#/components/schemas/settings_schedjobdto.SchedJobDataBackupReq"
++            } ],
++            "description" : "DataBackup is a data-backup's source and repository; left out for every\nother type.",
++            "type" : "object"
++          },
+           "default" : {
+             "type" : "boolean"
+           },
+@@ -59527,7 +59619,7 @@
+             "type" : "integer"
+           }
+         },
+-        "required" : [ "app", "command", "commandOutput", "controlDisabled", "default", "inheritable", "jobType", "maxRetry", "name", "notification", "priority", "retryBackoff", "retryBackoffJitter", "retryDelay", "retryDelayIncr", "retryDelayMax", "schedule", "sequence", "timeout", "triggers", "updateVer" ],
++        "required" : [ "app", "command", "commandOutput", "controlDisabled", "dataBackup", "default", "inheritable", "jobType", "maxRetry", "name", "notification", "priority", "retryBackoff", "retryBackoffJitter", "retryDelay", "retryDelayIncr", "retryDelayMax", "schedule", "sequence", "timeout", "triggers", "updateVer" ],
+         "type" : "object"
+       },
+       "settings_schedjobdto.UpdateSchedJobResp" : {
+diff --git a/hivepaas_app/interface/mcp/tools_sched_write.go b/hivepaas_app/interface/mcp/tools_sched_write.go
+index a82e38e2..9d55305e 100644
+--- a/hivepaas_app/interface/mcp/tools_sched_write.go
++++ b/hivepaas_app/interface/mcp/tools_sched_write.go
+@@ -73,6 +73,8 @@ var schedJobDescs = func() map[string]string {
+ 			"id is given. When not given, both use the default, as the dashboard's form starts",
+ 		"sequence": "not used here: this plans a command that runs in an app; a job sequence, which runs " +
+ 			"other scheduled jobs in order, is made in the dashboard",
++		"dataBackup": "not used here: this plans a command that runs in an app; a data backup, which takes " +
++			"a snapshot of a command's output or of a volume into a backup repository, is made in the dashboard",
+ 		"triggers": "events of this app that also run the job, beside its schedule: pre-deploy, post-deploy, " +
+ 			"deploy-failed, health-down, health-up, app-enabled, app-disabled; up to 10",
+ 	}
+diff --git a/hivepaas_app/service/databackupservice/databackupserviceimpl/volume.go b/hivepaas_app/service/databackupservice/databackupserviceimpl/volume.go
+index 7dd80375..ccc726ad 100644
+--- a/hivepaas_app/service/databackupservice/databackupserviceimpl/volume.go
++++ b/hivepaas_app/service/databackupservice/databackupserviceimpl/volume.go
+@@ -15,12 +15,19 @@ import (
+ 	"github.com/hivepaas/hivepaas/hivepaas_app/service/volumeservice"
+ )
+ 
+-func (s *service) FindAppVolume(
++func (s *service) CheckAppVolume(ctx context.Context, db database.IDB, app *entity.App, volumeID string) error {
++	_, err := s.appVolumeMount(ctx, db, app, volumeID)
++	return hperrors.Wrap(err)
++}
++
++// appVolumeMount is the app's mount of its own directory in the volume, as its
++// service has it.
++func (s *service) appVolumeMount(
+ 	ctx context.Context,
+ 	db database.IDB,
+ 	app *entity.App,
+ 	volumeID string,
+-) (*databackupservice.AppVolume, error) {
++) (*mount.Mount, error) {
+ 	swarmService, err := s.clusterService.ServiceInspect(ctx, app.ServiceID, true)
+ 	if err != nil {
+ 		return nil, hperrors.Wrap(err)
+@@ -35,6 +42,19 @@ func (s *service) FindAppVolume(
+ 		return nil, hperrors.NewArgumentInvalid("dataBackup.sourceVolume").
+ 			WithExtraDetail("the app does not mount this volume as its own directory")
+ 	}
++	return picked, nil
++}
++
++func (s *service) FindAppVolume(
++	ctx context.Context,
++	db database.IDB,
++	app *entity.App,
++	volumeID string,
++) (*databackupservice.AppVolume, error) {
++	picked, err := s.appVolumeMount(ctx, db, app, volumeID)
++	if err != nil {
++		return nil, hperrors.Wrap(err)
++	}
+ 
+ 	refObjects := entity.NewRefObjects()
+ 	err = s.settingService.LoadRefObjectsByIDs(ctx, db, &refObjects, nil, false,
+diff --git a/hivepaas_app/service/databackupservice/service.go b/hivepaas_app/service/databackupservice/service.go
+index 4ea971f2..07b6fea9 100644
+--- a/hivepaas_app/service/databackupservice/service.go
++++ b/hivepaas_app/service/databackupservice/service.go
+@@ -14,6 +14,9 @@ type Service interface {
+ 	// Backup takes the snapshot a data-backup job says, records it in the repository's
+ 	// snapshot list, and, but for a step of a job sequence, in the task's output.
+ 	Backup(ctx context.Context, db database.Tx, req *BackupReq) (*BackupResp, error)
++	// CheckAppVolume says whether the app mounts its own directory of the volume:
++	// what a volume source reads.
++	CheckAppVolume(ctx context.Context, db database.IDB, app *entity.App, volumeID string) error
+ 	// FindAppVolume is where the app's part of a volume it mounts is on a host; an error
+ 	// when the app does not mount it as its own directory.
+ 	FindAppVolume(ctx context.Context, db database.IDB, app *entity.App, volumeID string) (*AppVolume, error)
+diff --git a/hivepaas_app/usecase/appsettingsuc/appsettingsdto/storage_settings_get.go b/hivepaas_app/usecase/appsettingsuc/appsettingsdto/storage_settings_get.go
+index 23b3c49a..66827e51 100644
+--- a/hivepaas_app/usecase/appsettingsuc/appsettingsdto/storage_settings_get.go
++++ b/hivepaas_app/usecase/appsettingsuc/appsettingsdto/storage_settings_get.go
+@@ -73,6 +73,9 @@ type Mount struct {
+ 	ClusterOptions *ClusterOptions   `json:"clusterOptions,omitempty"`
+ 	TmpfsOptions   *TmpfsOptions     `json:"tmpfsOptions,omitempty"`
+ 	SourceApp      *MountSourceApp   `json:"sourceApp,omitempty"`
++	// VolumeID is the volume setting a mount of the app's own directory is in:
++	// what a data backup of a volume picks. An answer, ignored when written.
++	VolumeID string `json:"volumeId,omitempty" copy:"-"`
+ }
+ 
+ // MountSourceApp says the directory this mount reaches belongs to another app -
+@@ -210,6 +213,9 @@ func TransformStorageMount(
+ 		// Do nothing
+ 	}
+ 
++	if desc != nil && desc.Own {
++		resp.VolumeID = desc.VolumeID
++	}
+ 	applyMountSourceApp(resp, desc, input)
+ 	return resp, nil
+ }
+diff --git a/hivepaas_app/usecase/settings/schedjobuc/create.go b/hivepaas_app/usecase/settings/schedjobuc/create.go
+index 5b08e32c..4e86152e 100644
+--- a/hivepaas_app/usecase/settings/schedjobuc/create.go
++++ b/hivepaas_app/usecase/settings/schedjobuc/create.go
+@@ -53,6 +53,9 @@ func (uc *UC) CreateSchedJob(
+ 			if err := uc.checkTriggerApps(ctx, db, req.Scope, schedJob); err != nil {
+ 				return hperrors.Wrap(err)
+ 			}
++			if err := uc.checkDataBackup(ctx, db, req.Scope, schedJob); err != nil {
++				return hperrors.Wrap(err)
++			}
+ 			if err := uc.checkPermissionPipeToApp(ctx, db, auth, schedJob); err != nil {
+ 				return hperrors.Wrap(err)
+ 			}
+diff --git a/hivepaas_app/usecase/settings/schedjobuc/data_backup.go b/hivepaas_app/usecase/settings/schedjobuc/data_backup.go
+new file mode 100644
+index 00000000..5abee492
+--- /dev/null
++++ b/hivepaas_app/usecase/settings/schedjobuc/data_backup.go
+@@ -0,0 +1,42 @@
++package schedjobuc
++
++import (
++	"context"
++
++	"github.com/hivepaas/hivepaas/hivepaas_app/base"
++	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
++	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
++	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
++)
++
++// checkDataBackup refuses a data backup that is not its app's: another app's
++// command, or a volume the app does not mount as its own directory. What the
++// repository server brings - a command into a volume repository, a volume on
++// another node than the repository's - is not refused: its runs fail, saying
++// why, until then.
++func (uc *UC) checkDataBackup(
++	ctx context.Context,
++	db database.IDB,
++	scope *entity.ObjectScope,
++	job *entity.SchedJob,
++) error {
++	if err := checkDataBackupApp(scope, job); err != nil {
++		return hperrors.Wrap(err)
++	}
++	if job.DataBackup == nil || job.DataBackup.Source != base.SchedJobDataBackupSourceVolume {
++		return nil
++	}
++	err := uc.dataBackupService.CheckAppVolume(ctx, db, scope.App, job.DataBackup.SourceVolume.ID)
++	return hperrors.Wrap(err)
++}
++
++// checkDataBackupApp refuses a data backup whose app is not the scope's.
++func checkDataBackupApp(scope *entity.ObjectScope, job *entity.SchedJob) error {
++	if job.JobType != base.SchedJobTypeDataBackup {
++		return nil
++	}
++	if job.App.ID != scope.AppID {
++		return hperrors.NewArgumentInvalid("app").WithExtraDetail("a data backup runs in its own app")
++	}
++	return nil
++}
+diff --git a/hivepaas_app/usecase/settings/schedjobuc/schedjobdto/create.go b/hivepaas_app/usecase/settings/schedjobuc/schedjobdto/create.go
+index d2b104b2..3679008e 100644
+--- a/hivepaas_app/usecase/settings/schedjobuc/schedjobdto/create.go
++++ b/hivepaas_app/usecase/settings/schedjobuc/schedjobdto/create.go
+@@ -51,6 +51,9 @@ type SchedJobBaseReq struct {
+ 	Sequence *SchedJobSequenceReq `json:"sequence"`
+ 	// Triggers are the events that run the job, beside its schedule.
+ 	Triggers []*SchedJobTriggerReq `json:"triggers"`
++	// DataBackup is a data-backup's source and repository; left out for every
++	// other type.
++	DataBackup *SchedJobDataBackupReq `json:"dataBackup"`
+ }
+ 
+ func (req *SchedJobBaseReq) ToEntity() *entity.SchedJob {
+@@ -76,6 +79,9 @@ func (req *SchedJobBaseReq) ToEntity() *entity.SchedJob {
+ 	if req.JobType == base.SchedJobTypeJobSequence {
+ 		res.Sequence = req.Sequence.ToEntity()
+ 	}
++	if req.JobType == base.SchedJobTypeDataBackup {
++		res.DataBackup = req.DataBackup.ToEntity()
++	}
+ 	return res
+ }
+ 
+@@ -100,6 +106,9 @@ func (req *SchedJobBaseReq) modifyRequest() error {
+ 			return hperrors.Wrap(err)
+ 		}
+ 	}
++	if err := req.DataBackup.modifyRequest(); err != nil {
++		return hperrors.Wrap(err)
++	}
+ 	if req.CommandOutput != nil && req.CommandOutput.PipeToApp != nil {
+ 		req.CommandOutput.PipeToApp.Command.Name = "-"
+ 		req.CommandOutput.PipeToApp.Command.Kind = ""
+@@ -134,6 +143,7 @@ func (req *SchedJobBaseReq) validate(field string) (res []vld.Validator) {
+ 	res = append(res, req.Notification.Validate(field+"notification")...)
+ 	res = append(res, req.validateSequenceFields(field)...)
+ 	res = append(res, req.validateTriggers(field)...)
++	res = append(res, req.validateDataBackupFields(field)...)
+ 	return res
+ }
+ 
+diff --git a/hivepaas_app/usecase/settings/schedjobuc/schedjobdto/data_backup.go b/hivepaas_app/usecase/settings/schedjobuc/schedjobdto/data_backup.go
+new file mode 100644
+index 00000000..95d49340
+--- /dev/null
++++ b/hivepaas_app/usecase/settings/schedjobuc/schedjobdto/data_backup.go
+@@ -0,0 +1,212 @@
++package schedjobdto
++
++import (
++	"path"
++	"regexp"
++	"strings"
++
++	vld "github.com/tiendc/go-validator"
++
++	"github.com/hivepaas/hivepaas/hivepaas_app/base"
++	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
++	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
++	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
++	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/copier"
++	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings"
++	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings/commandtemplateuc/commandtemplatedto"
++)
++
++const (
++	maxDataBackupTags         = 20
++	maxDataBackupSubpathLen   = 500
++	dataBackupReservedTagsKey = "hivepaas."
++)
++
++var (
++	// dataBackupFileNameRegex is a file name without a directory: the snapshot's
++	// one file.
++	dataBackupFileNameRegex = regexp.MustCompile(`^[A-Za-z0-9._-]{1,100}$`)
++	// A tag is kopia's key:value: the key holds no ':', neither holds a space.
++	dataBackupTagKeyRegex   = regexp.MustCompile(`^[A-Za-z0-9._-]{1,50}$`)
++	dataBackupTagValueRegex = regexp.MustCompile(`^[A-Za-z0-9._:/@+=-]{1,100}$`)
++)
++
++// SchedJobDataBackupReq is what a data-backup job backs up, and where to.
++type SchedJobDataBackupReq struct {
++	Source base.SchedJobDataBackupSource `json:"source"`
++	// SourceCommand runs in the job's app; its stdout is the file SourceFileName.
++	SourceCommand  *commandtemplatedto.CommandTemplateBaseReq `json:"sourceCommand"`
++	SourceFileName string                                     `json:"sourceFileName"`
++	// SourceVolume is a volume the app mounts; SourceVolumeSubpath a path inside
++	// what the app sees of it, "" for all of it.
++	SourceVolume        basedto.ObjectIDReq `json:"sourceVolume"`
++	SourceVolumeSubpath string              `json:"sourceVolumeSubpath"`
++	TargetRepository    basedto.ObjectIDReq `json:"targetRepository"`
++	Tags                map[string]string   `json:"tags"`
++}
++
++func (req *SchedJobDataBackupReq) ToEntity() *entity.SchedJobDataBackup {
++	if req == nil {
++		return nil
++	}
++	res := &entity.SchedJobDataBackup{
++		Source:           req.Source,
++		TargetRepository: entity.ObjectID{ID: req.TargetRepository.ID},
++		Tags:             req.Tags,
++	}
++	switch req.Source {
++	case base.SchedJobDataBackupSourceCommand:
++		res.SourceCommand = req.SourceCommand.ToEntity()
++		res.SourceFileName = req.SourceFileName
++	case base.SchedJobDataBackupSourceVolume:
++		res.SourceVolume = entity.ObjectID{ID: req.SourceVolume.ID}
++		res.SourceVolumeSubpath = req.SourceVolumeSubpath
++	}
++	if len(res.Tags) == 0 {
++		res.Tags = nil
++	}
++	return res
++}
++
++func (req *SchedJobDataBackupReq) modifyRequest() error {
++	if req == nil {
++		return nil
++	}
++	req.SourceFileName = strings.TrimSpace(req.SourceFileName)
++	req.SourceVolumeSubpath = strings.TrimSpace(req.SourceVolumeSubpath)
++	if req.SourceVolumeSubpath != "" && !strings.HasPrefix(req.SourceVolumeSubpath, "/") {
++		req.SourceVolumeSubpath = strings.TrimSuffix(path.Clean(req.SourceVolumeSubpath), "/")
++		if req.SourceVolumeSubpath == "." {
++			req.SourceVolumeSubpath = ""
++		}
++	}
++	if req.SourceCommand != nil {
++		req.SourceCommand.Name = "-"
++		req.SourceCommand.Kind = ""
++		// Its stdout is the backup: a TTY would mix stderr into it.
++		req.SourceCommand.TTY = false
++		if err := req.SourceCommand.ModifyRequest(); err != nil {
++			return hperrors.Wrap(err)
++		}
++	}
++	return nil
++}
++
++func (req *SchedJobDataBackupReq) validate(field string) (res []vld.Validator) {
++	res = append(res, basedto.ValidateCond(req != nil, field)...)
++	if req == nil {
++		return res
++	}
++	field += "."
++	res = append(res, basedto.ValidateStrIn(&req.Source, true, base.AllSchedJobDataBackupSources, field+"source")...)
++	isCommand := req.Source == base.SchedJobDataBackupSourceCommand
++	isVolume := req.Source == base.SchedJobDataBackupSourceVolume
++
++	res = append(res, basedto.ValidateCond(isCommand == (req.SourceCommand != nil), field+"sourceCommand")...)
++	if req.SourceCommand != nil {
++		res = append(res, req.SourceCommand.Validate(field+"sourceCommand")...)
++	}
++	res = append(res, basedto.ValidateCond(isCommand == dataBackupFileNameRegex.MatchString(req.SourceFileName),
++		field+"sourceFileName")...)
++
++	res = append(res, basedto.ValidateObjectIDReq(&req.SourceVolume, isVolume, field+"sourceVolume")...)
++	res = append(res, basedto.ValidateCond(isVolume || req.SourceVolume.ID == "", field+"sourceVolume")...)
++	res = append(res, basedto.ValidateCond(isVolume || req.SourceVolumeSubpath == "",
++		field+"sourceVolumeSubpath")...)
++	res = append(res, basedto.ValidateCond(isRelativeSubpath(req.SourceVolumeSubpath),
++		field+"sourceVolumeSubpath")...)
++
++	res = append(res, basedto.ValidateObjectIDReq(&req.TargetRepository, true, field+"targetRepository")...)
++	res = append(res, basedto.ValidateCond(validDataBackupTags(req.Tags), field+"tags")...)
++	return res
++}
++
++// isRelativeSubpath is a path inside a directory: not from the root, never
++// above where it starts.
++func isRelativeSubpath(subpath string) bool {
++	if subpath == "" {
++		return true
++	}
++	if len(subpath) > maxDataBackupSubpathLen || strings.HasPrefix(subpath, "/") {
++		return false
++	}
++	cleaned := path.Clean(subpath)
++	return cleaned != ".." && !strings.HasPrefix(cleaned, "../")
++}
++
++func validDataBackupTags(tags map[string]string) bool {
++	if len(tags) > maxDataBackupTags {
++		return false
++	}
++	for key, value := range tags {
++		if !dataBackupTagKeyRegex.MatchString(key) || strings.HasPrefix(key, dataBackupReservedTagsKey) ||
++			!dataBackupTagValueRegex.MatchString(value) {
++			return false
++		}
++	}
++	return true
++}
++
++// validateDataBackupFields is what a job's type says about its data backup: a
++// data-backup has one, runs its source's command only and is its app's; any
++// other type has none.
++func (req *SchedJobBaseReq) validateDataBackupFields(field string) (res []vld.Validator) {
++	if req.JobType != base.SchedJobTypeDataBackup {
++		return basedto.ValidateCond(req.DataBackup == nil, field+"dataBackup")
++	}
++	res = append(res, req.DataBackup.validate(field+"dataBackup")...)
++	res = append(res, basedto.ValidateCond(req.Command == nil, field+"command")...)
++	res = append(res, basedto.ValidateCond(req.CommandOutput == nil, field+"commandOutput")...)
++	res = append(res, basedto.ValidateObjectIDReq(&req.App, true, field+"app")...)
++	return res
++}
++
++type SchedJobDataBackupResp struct {
++	Source              base.SchedJobDataBackupSource           `json:"source"`
++	SourceCommand       *commandtemplatedto.CommandTemplateResp `json:"sourceCommand,omitempty"`
++	SourceFileName      string                                  `json:"sourceFileName,omitempty"`
++	SourceVolume        *settings.BaseSettingResp               `json:"sourceVolume,omitempty"`
++	SourceVolumeSubpath string                                  `json:"sourceVolumeSubpath,omitempty"`
++	TargetRepository    *settings.BaseSettingResp               `json:"targetRepository"`
++	Tags                map[string]string                       `json:"tags,omitempty"`
++}
++
++// TransformSchedJobDataBackup is a data backup with its volume and repository
++// named, from the settings refObjects holds; "missing" for one that is gone.
++func TransformSchedJobDataBackup(
++	dataBackup *entity.SchedJobDataBackup,
++	refObjects *entity.RefObjects,
++) (*SchedJobDataBackupResp, error) {
++	if dataBackup == nil {
++		return nil, nil //nolint:nilnil // not a data backup
++	}
++	resp := &SchedJobDataBackupResp{
++		Source:              dataBackup.Source,
++		SourceFileName:      dataBackup.SourceFileName,
++		SourceVolumeSubpath: dataBackup.SourceVolumeSubpath,
++		TargetRepository:    namedSetting(refObjects, dataBackup.TargetRepository.ID, base.SettingTypeBackupRepo),
++		Tags:                dataBackup.Tags,
++	}
++	if dataBackup.SourceVolume.ID != "" {
++		resp.SourceVolume = namedSetting(refObjects, dataBackup.SourceVolume.ID, base.SettingTypeClusterVolume)
++	}
++	if dataBackup.SourceCommand != nil {
++		if err := copier.Copy(&resp.SourceCommand, dataBackup.SourceCommand); err != nil {
++			return nil, hperrors.Wrap(err)
++		}
++		commandtemplatedto.TransformScript(&dataBackup.SourceCommand.Script, refObjects, resp.SourceCommand)
++	}
++	return resp, nil
++}
++
++func namedSetting(refObjects *entity.RefObjects, id string, typ base.SettingType) *settings.BaseSettingResp {
++	var setting *entity.Setting
++	if refObjects != nil {
++		setting = refObjects.RefSettings[id]
++	}
++	resp, _ := settings.TransformSettingBase(setting)
++	if resp == nil {
++		resp = settings.NewMissingSetting(id, typ)
++	}
++	return resp
++}
+diff --git a/hivepaas_app/usecase/settings/schedjobuc/schedjobdto/get.go b/hivepaas_app/usecase/settings/schedjobuc/schedjobdto/get.go
+index eeac8b6f..67a0b4bb 100644
+--- a/hivepaas_app/usecase/settings/schedjobuc/schedjobdto/get.go
++++ b/hivepaas_app/usecase/settings/schedjobuc/schedjobdto/get.go
+@@ -55,6 +55,7 @@ type SchedJobResp struct {
+ 	Notification       *basedto.BaseEventNotificationResp      `json:"notification"`
+ 	Sequence           *SchedJobSequenceResp                   `json:"sequence,omitempty" copy:"-"`
+ 	Triggers           []*SchedJobTriggerResp                  `json:"triggers,omitempty" copy:"-"`
++	DataBackup         *SchedJobDataBackupResp                 `json:"dataBackup,omitempty" copy:"-"`
+ 
+ 	// Calculated fields
+ 	NextRuns []time.Time `json:"nextRuns,omitempty"`
+@@ -127,45 +128,14 @@ func TransformSchedJob(
+ 		commandtemplatedto.TransformScript(&job.Command.Script, refObjects, resp.Command)
+ 	}
+ 
+-	if job.CommandOutput != nil {
+-		cmdOutput := job.CommandOutput
+-		cmdOutputResp := resp.CommandOutput
+-
+-		if cmdOutput.SaveToFile != nil && cmdOutput.SaveToFile.Storage.ID != "" {
+-			targetStorage := refObjects.RefSettings[cmdOutput.SaveToFile.Storage.ID]
+-			cmdOutputResp.SaveToFile.Storage = &CommandOutputFileStorageResp{
+-				Bucket: cmdOutput.SaveToFile.Storage.Bucket,
+-			}
+-			storageResp, _ := settings.TransformSettingBase(targetStorage)
+-			if storageResp == nil {
+-				storageResp = settings.NewMissingSetting(cmdOutput.SaveToFile.Storage.ID, base.SettingTypeCloudStorage)
+-			}
+-			cmdOutputResp.SaveToFile.Storage.BaseSettingResp = storageResp
+-		} else {
+-			cmdOutputResp.SaveToFile = nil
+-		}
+-
+-		if cmdOutput.PipeToApp != nil && cmdOutput.PipeToApp.TargetApp.ID != "" {
+-			targetApp := refObjects.RefApps[cmdOutput.PipeToApp.TargetApp.ID]
+-			targetAppResp := appdto.TransformAppBase(targetApp)
+-			if targetAppResp == nil {
+-				targetAppResp = appdto.NewMissingApp(cmdOutput.PipeToApp.TargetApp.ID)
+-			}
+-			cmdOutputResp.PipeToApp.TargetApp = targetAppResp
+-
+-			// Transform the script part of command template if presents
+-			if cmdOutput.PipeToApp.Command != nil && !isListAPI {
+-				commandtemplatedto.TransformScript(&cmdOutput.PipeToApp.Command.Script, refObjects,
+-					cmdOutputResp.PipeToApp.Command)
+-			}
+-		} else {
+-			cmdOutputResp.PipeToApp = nil
+-		}
+-	}
++	transformCommandOutput(job.CommandOutput, refObjects, isListAPI, resp.CommandOutput)
+ 
+ 	resp.Notification = basedto.TransformBaseEventNotification(job.Notification, refObjects)
+ 	resp.Sequence = TransformSchedJobSequence(job.Sequence, refObjects)
+ 	resp.Triggers = TransformSchedJobTriggers(job.Triggers, refObjects)
++	if resp.DataBackup, err = TransformSchedJobDataBackup(job.DataBackup, refObjects); err != nil {
++		return nil, hperrors.Wrap(err)
++	}
+ 
+ 	// Custom fields
+ 	if !resp.RetryBackoff && resp.RetryBackoffJitter > 0 {
+@@ -179,3 +149,46 @@ func TransformSchedJob(
+ 
+ 	return resp, nil
+ }
++
++// transformCommandOutput names the storage and the app a command's output goes
++// to, in cmdOutputResp, which is cmdOutput copied.
++func transformCommandOutput(
++	cmdOutput *entity.SchedJobCommandOutput,
++	refObjects *entity.RefObjects,
++	isListAPI bool,
++	cmdOutputResp *CommandOutputResp,
++) {
++	if cmdOutput == nil || cmdOutputResp == nil {
++		return
++	}
++	if cmdOutput.SaveToFile != nil && cmdOutput.SaveToFile.Storage.ID != "" {
++		targetStorage := refObjects.RefSettings[cmdOutput.SaveToFile.Storage.ID]
++		cmdOutputResp.SaveToFile.Storage = &CommandOutputFileStorageResp{
++			Bucket: cmdOutput.SaveToFile.Storage.Bucket,
++		}
++		storageResp, _ := settings.TransformSettingBase(targetStorage)
++		if storageResp == nil {
++			storageResp = settings.NewMissingSetting(cmdOutput.SaveToFile.Storage.ID, base.SettingTypeCloudStorage)
++		}
++		cmdOutputResp.SaveToFile.Storage.BaseSettingResp = storageResp
++	} else {
++		cmdOutputResp.SaveToFile = nil
++	}
++
++	if cmdOutput.PipeToApp != nil && cmdOutput.PipeToApp.TargetApp.ID != "" {
++		targetApp := refObjects.RefApps[cmdOutput.PipeToApp.TargetApp.ID]
++		targetAppResp := appdto.TransformAppBase(targetApp)
++		if targetAppResp == nil {
++			targetAppResp = appdto.NewMissingApp(cmdOutput.PipeToApp.TargetApp.ID)
++		}
++		cmdOutputResp.PipeToApp.TargetApp = targetAppResp
++
++		// Transform the script part of command template if presents
++		if cmdOutput.PipeToApp.Command != nil && !isListAPI {
++			commandtemplatedto.TransformScript(&cmdOutput.PipeToApp.Command.Script, refObjects,
++				cmdOutputResp.PipeToApp.Command)
++		}
++	} else {
++		cmdOutputResp.PipeToApp = nil
++	}
++}
+diff --git a/hivepaas_app/usecase/settings/schedjobuc/sequence.go b/hivepaas_app/usecase/settings/schedjobuc/sequence.go
+index dadf47f6..467a18ee 100644
+--- a/hivepaas_app/usecase/settings/schedjobuc/sequence.go
++++ b/hivepaas_app/usecase/settings/schedjobuc/sequence.go
+@@ -14,10 +14,13 @@ import (
+ )
+ 
+ // checkJobTypeInScope says which job types a scope holds: a job sequence lives
+-// in an app or a project env, and an env holds sequences only, for now.
++// in an app or a project env, an env holds sequences only, for now, and a data
++// backup is an app's.
+ func checkJobTypeInScope(scopeType base.ObjectScopeType, jobType base.SchedJobType) error {
+ 	isSequence := jobType == base.SchedJobTypeJobSequence
+ 	switch {
++	case jobType == base.SchedJobTypeDataBackup && scopeType != base.ObjectScopeApp:
++		return hperrors.NewArgumentInvalid("jobType").WithExtraDetail("a data backup belongs to an app")
+ 	case isSequence && scopeType != base.ObjectScopeApp && scopeType != base.ObjectScopeProjectEnv:
+ 		return hperrors.NewArgumentInvalid("jobType").
+ 			WithExtraDetail("a job sequence belongs to an app or a project env")
+diff --git a/hivepaas_app/usecase/settings/schedjobuc/uc.go b/hivepaas_app/usecase/settings/schedjobuc/uc.go
+index e14e4071..1aef57cb 100644
+--- a/hivepaas_app/usecase/settings/schedjobuc/uc.go
++++ b/hivepaas_app/usecase/settings/schedjobuc/uc.go
+@@ -5,6 +5,7 @@ import (
+ 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
+ 	"github.com/hivepaas/hivepaas/hivepaas_app/repository"
+ 	"github.com/hivepaas/hivepaas/hivepaas_app/service/appservice"
++	"github.com/hivepaas/hivepaas/hivepaas_app/service/databackupservice"
+ 	"github.com/hivepaas/hivepaas/hivepaas_app/service/schedjobservice"
+ 	"github.com/hivepaas/hivepaas/hivepaas_app/service/taskservice"
+ 	"github.com/hivepaas/hivepaas/hivepaas_app/tasks/queue"
+@@ -21,9 +22,10 @@ type UC struct {
+ 
+ 	taskRepo repository.TaskRepo
+ 
+-	appService      appservice.Service
+-	schedJobService schedjobservice.Service
+-	taskService     taskservice.Service
++	appService        appservice.Service
++	dataBackupService databackupservice.Service
++	schedJobService   schedjobservice.Service
++	taskService       taskservice.Service
+ 
+ 	*settings.BaseUC
+ }
+@@ -34,6 +36,7 @@ func New(
+ 	taskRepo repository.TaskRepo,
+ 
+ 	appService appservice.Service,
++	dataBackupService databackupservice.Service,
+ 	schedJobService schedjobservice.Service,
+ 	taskService taskservice.Service,
+ 
+@@ -44,9 +47,10 @@ func New(
+ 
+ 		taskRepo: taskRepo,
+ 
+-		appService:      appService,
+-		schedJobService: schedJobService,
+-		taskService:     taskService,
++		appService:        appService,
++		dataBackupService: dataBackupService,
++		schedJobService:   schedJobService,
++		taskService:       taskService,
+ 
+ 		BaseUC: baseUC,
+ 	}
+diff --git a/hivepaas_app/usecase/settings/schedjobuc/update.go b/hivepaas_app/usecase/settings/schedjobuc/update.go
+index 8cd00fa7..868614b8 100644
+--- a/hivepaas_app/usecase/settings/schedjobuc/update.go
++++ b/hivepaas_app/usecase/settings/schedjobuc/update.go
+@@ -49,6 +49,9 @@ func (uc *UC) UpdateSchedJob(
+ 			if err := uc.checkTriggerApps(ctx, db, req.Scope, newJob); err != nil {
+ 				return hperrors.Wrap(err)
+ 			}
++			if err := uc.checkDataBackup(ctx, db, req.Scope, newJob); err != nil {
++				return hperrors.Wrap(err)
++			}
+ 			if err := uc.checkPermissionPipeToApp(ctx, db, auth, newJob); err != nil {
+ 				return hperrors.Wrap(err)
+ 			}

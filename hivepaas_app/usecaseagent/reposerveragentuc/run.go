@@ -122,7 +122,10 @@ func (uc *UC) serve(ctx context.Context, server *exec.Cmd, startTimeout time.Dur
 	exited := make(chan error, 1)
 	go func() {
 		defer safego.RecoverWithLogger(uc.logger, "reposerver.wait")
-		exited <- server.Wait()
+		err := server.Wait()
+		// The server's output ends with it: its reader goes too.
+		output.close()
+		exited <- err
 	}()
 	defer uc.stop(server, exited)
 
@@ -226,7 +229,8 @@ func randomHex() (string, error) {
 // the last lines, for an error.
 type serverOutput struct {
 	io.Writer
-	ready chan *Ready
+	writer *io.PipeWriter
+	ready  chan *Ready
 
 	mu    sync.Mutex
 	lines []string
@@ -234,7 +238,7 @@ type serverOutput struct {
 
 func newServerOutput() *serverOutput {
 	reader, writer := io.Pipe()
-	o := &serverOutput{Writer: writer, ready: make(chan *Ready, 1)}
+	o := &serverOutput{Writer: writer, writer: writer, ready: make(chan *Ready, 1)}
 	go o.scan(reader)
 	return o
 }
@@ -263,6 +267,10 @@ func (o *serverOutput) scan(reader io.Reader) {
 			sent = true
 		}
 	}
+}
+
+func (o *serverOutput) close() {
+	_ = o.writer.Close()
 }
 
 func (o *serverOutput) tail() string {

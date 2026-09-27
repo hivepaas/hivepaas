@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"runtime"
 	"strings"
 	"sync"
 	"syscall"
@@ -225,4 +226,24 @@ func TestRunStopsTheServerWhenReadyFails(t *testing.T) {
 	err := uc.Run(context.Background(), runReq(), func(*Ready) error { return errors.New("stream closed") })
 
 	assert.ErrorContains(t, err, "stream closed")
+}
+
+// A session leaves nothing running in the agent behind it: the agent runs for
+// months, a session each backup.
+func TestRunLeavesNoGoroutineBehind(t *testing.T) {
+	fake := &fakeKopia{scripts: map[string]string{"server start": readyScript}}
+	uc := newTestUC(t, fake)
+	before := runtime.NumGoroutine()
+
+	for range 5 {
+		ctx, cancel := context.WithCancel(context.Background())
+		assert.NoError(t, uc.Run(ctx, runReq(), func(*Ready) error { cancel(); return nil }))
+	}
+
+	// Polled here: assert.Eventually runs goroutines of its own.
+	deadline := time.Now().Add(5 * time.Second)
+	for runtime.NumGoroutine() > before && time.Now().Before(deadline) {
+		time.Sleep(50 * time.Millisecond)
+	}
+	assert.LessOrEqual(t, runtime.NumGoroutine(), before)
 }

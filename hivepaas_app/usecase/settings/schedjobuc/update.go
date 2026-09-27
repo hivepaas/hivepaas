@@ -22,7 +22,7 @@ func (uc *UC) UpdateSchedJob(
 	var oldJob *entity.SchedJob
 	_, err := uc.UpdateSetting(ctx, &req.UpdateSettingReq, &settings.UpdateSettingData{
 		VerifyingName:   req.Name,
-		VerifyingRefIDs: newJob.GetRefObjectIDs(),
+		VerifyingRefIDs: verifyingRefIDs(newJob),
 		AfterLoading: func(ctx context.Context, db database.Tx, data *settings.UpdateSettingData) error {
 			err := uc.isSchedJobFeatureEnabledInApp(ctx, db, req.Scope.App)
 			if err != nil {
@@ -40,6 +40,12 @@ func (uc *UC) UpdateSchedJob(
 			data *settings.UpdateSettingData,
 			pData *settings.PersistingSettingData,
 		) error {
+			if err := checkJobTypeInScope(req.Scope.ScopeType, newJob.JobType); err != nil {
+				return hperrors.Wrap(err)
+			}
+			if err := uc.checkSequenceMembers(ctx, db, req.Scope, newJob); err != nil {
+				return hperrors.Wrap(err)
+			}
 			if err := uc.checkPermissionPipeToApp(ctx, db, auth, newJob); err != nil {
 				return hperrors.Wrap(err)
 			}

@@ -33,7 +33,7 @@ func (uc *UC) CreateSchedJob(
 	schedJob := req.ToEntity()
 	resp, err := uc.CreateSetting(ctx, &req.CreateSettingReq, &settings.CreateSettingData{
 		VerifyingName:   req.Name,
-		VerifyingRefIDs: schedJob.GetRefObjectIDs(),
+		VerifyingRefIDs: verifyingRefIDs(schedJob),
 		Version:         currentSettingVersion,
 		PrepareCreation: func(
 			ctx context.Context,
@@ -42,6 +42,12 @@ func (uc *UC) CreateSchedJob(
 			pData *settings.PersistingSettingCreationData,
 		) error {
 			if err := uc.isSchedJobFeatureEnabledInApp(ctx, db, req.Scope.App); err != nil {
+				return hperrors.Wrap(err)
+			}
+			if err := checkJobTypeInScope(req.Scope.ScopeType, schedJob.JobType); err != nil {
+				return hperrors.Wrap(err)
+			}
+			if err := uc.checkSequenceMembers(ctx, db, req.Scope, schedJob); err != nil {
 				return hperrors.Wrap(err)
 			}
 			if err := uc.checkPermissionPipeToApp(ctx, db, auth, schedJob); err != nil {

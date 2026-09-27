@@ -53,6 +53,7 @@ type SchedJobResp struct {
 	Command            *commandtemplatedto.CommandTemplateResp `json:"command"`
 	CommandOutput      *CommandOutputResp                      `json:"commandOutput,omitempty"`
 	Notification       *basedto.BaseEventNotificationResp      `json:"notification"`
+	Sequence           *SchedJobSequenceResp                   `json:"sequence,omitempty" copy:"-"`
 
 	// Calculated fields
 	NextRuns []time.Time `json:"nextRuns,omitempty"`
@@ -162,6 +163,7 @@ func TransformSchedJob(
 	}
 
 	resp.Notification = basedto.TransformBaseEventNotification(job.Notification, refObjects)
+	resp.Sequence = TransformSchedJobSequence(job.Sequence, refObjects)
 
 	// Custom fields
 	if !resp.RetryBackoff && resp.RetryBackoffJitter > 0 {

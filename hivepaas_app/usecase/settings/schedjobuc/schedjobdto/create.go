@@ -47,6 +47,8 @@ type SchedJobBaseReq struct {
 	Command            *commandtemplatedto.CommandTemplateBaseReq `json:"command"`
 	CommandOutput      *CommandOutputReq                          `json:"commandOutput"`
 	Notification       *basedto.BaseEventNotificationReq          `json:"notification"`
+	// Sequence is a job-sequence's jobs; left out for every other type.
+	Sequence *SchedJobSequenceReq `json:"sequence"`
 }
 
 func (req *SchedJobBaseReq) ToEntity() *entity.SchedJob {
@@ -68,6 +70,9 @@ func (req *SchedJobBaseReq) ToEntity() *entity.SchedJob {
 		res.Command = req.Command.ToEntity()
 		res.CommandOutput = req.CommandOutput.ToEntity()
 	}
+	if req.JobType == base.SchedJobTypeJobSequence {
+		res.Sequence = req.Sequence.ToEntity()
+	}
 	return res
 }
 
@@ -81,6 +86,7 @@ func (req *SchedJobBaseReq) modifyRequest() error {
 		}
 		req.Schedule.InitialTime = req.Schedule.InitialTime.Truncate(time.Second)
 	}
+	req.Sequence.modifyRequest()
 	if req.RetryBackoff && req.RetryBackoffJitter <= 0 {
 		req.RetryBackoffJitter = timeutil.Duration(time.Second)
 	}
@@ -113,9 +119,17 @@ func (req *SchedJobBaseReq) validate(field string) (res []vld.Validator) {
 	res = append(res, basedto.ValidateNumber(&req.MaxRetry, false, 1, maxRetryCount, field+"maxRetry")...)
 	res = append(res, basedto.ValidateDuration(&req.RetryDelay, false, 1, maxRetryDelay, field+"retryDelay")...)
 	res = append(res, basedto.ValidateDuration(&req.Timeout, false, 1, maxTimeout, field+"timeout")...)
-	res = append(res, req.Command.Validate(field+"command")...)
+	// A container command needs its command; no other job type has one, and a
+	// nil one is not validated (Validate dereferences it).
+	if req.JobType == base.SchedJobTypeContainerCommand {
+		res = append(res, basedto.ValidateCond(req.Command != nil, field+"command")...)
+	}
+	if req.Command != nil {
+		res = append(res, req.Command.Validate(field+"command")...)
+	}
 	res = append(res, req.CommandOutput.validate(req.App.ID, field+"commandOutput")...)
 	res = append(res, req.Notification.Validate(field+"notification")...)
+	res = append(res, req.validateSequenceFields(field)...)
 	return res
 }
 
@@ -138,7 +152,12 @@ func (req *ScheduleReq) ToEntity() *entity.SchedJobSchedule {
 	}
 }
 
+// validate checks a schedule when there is one. A job without a schedule is
+// valid: it runs by hand, or as a step of a job sequence.
 func (req *ScheduleReq) validate(field string) (res []vld.Validator) {
+	if req == nil {
+		return nil
+	}
 	if field != "" {
 		field += "."
 	}

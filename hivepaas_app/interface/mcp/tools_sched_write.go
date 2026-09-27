@@ -71,6 +71,8 @@ var schedJobDescs = func() map[string]string {
 		"notification": "who is told how a run went: success and failure, each the id of a notification " +
 			"setting; successUseDefault and failureUseDefault, true to use the default notification when no " +
 			"id is given. When not given, both use the default, as the dashboard's form starts",
+		"sequence": "not used here: this plans a command that runs in an app; a job sequence, which runs " +
+			"other scheduled jobs in order, is made in the dashboard",
 	}
 	maps.Copy(descs, scheduleDescs("schedule."))
 	maps.Copy(descs, descCommand("command."))

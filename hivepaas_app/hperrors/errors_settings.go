@@ -22,6 +22,9 @@ var (
 	ErrWebhookTypeUnsupported               = NewErr(ErrUnsupported, "ERR_WEBHOOK_TYPE_UNSUPPORTED")
 	ErrIMServiceUnsupported                 = NewErr(ErrUnsupported, "ERR_IM_SERVICE_UNSUPPORTED")
 	ErrPasswordCurrentMismatched            = NewErr(ErrBadRequest, "ERR_PASSWORD_CURRENT_MISMATCHED")
+	// ErrCloudStorageConnFailed is a bucket a connection test could not reach:
+	// the endpoint, the key or the bucket, as Reason says.
+	ErrCloudStorageConnFailed = NewErr(ErrPreconditionFailed, "ERR_CLOUD_STORAGE_CONN_FAILED")
 	// ErrAppSecretMismatched is a wrong app secret, not a bad session: the caller
 	// is still who they said they are, they just cannot prove they are the
 	// operator. Deliberately a bad request rather than an unauthorized, so a

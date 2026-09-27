@@ -6,6 +6,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/cloudstorageservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings/cloudstorageuc/cloudstoragedto"
 	"github.com/hivepaas/hivepaas/services/aws/s3"
 )
@@ -60,7 +61,7 @@ func (uc *UC) testCloudStorageS3Conn(
 
 	_, err = s3Client.HeadBucket(ctx)
 	if err != nil {
-		return nil, hperrors.Wrap(err)
+		return nil, hperrors.Wrap(cloudstorageservice.ConnError(err))
 	}
 
 	return &cloudstoragedto.TestCloudStorageConnResp{}, nil

@@ -39,6 +39,7 @@ export function SystemSettingsAiMcpRoute() {
     // What the form says now, not what is saved: ticking Enabled shows what it
     // turns on before Save, as every settings page does.
     const enabled = useWatch({ control, name: "enabled" });
+    const allowWrite = useWatch({ control, name: "allowWrite" });
 
     useEffect(() => {
         reset({ enabled: settings?.enabled ?? false, allowWrite: settings?.allowWrite ?? false });
@@ -164,7 +165,8 @@ export function SystemSettingsAiMcpRoute() {
                         <McpConnectSection
                             endpoint={endpoint}
                             enabled={settings?.enabled ?? false}
-                            allowWrite={settings?.allowWrite ?? false}
+                            allowWrite={allowWrite}
+                            savedAllowWrite={settings?.allowWrite ?? false}
                         />
                         <McpRecentCallsSection />
                     </>

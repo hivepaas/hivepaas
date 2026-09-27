@@ -102,8 +102,10 @@ interface Props {
     endpoint: string;
     /** Whether the server is on as saved: a key made while it is off answers 404 until it is not. */
     enabled: boolean;
-    /** Whether assistants may make changes, as saved. */
+    /** Whether assistants may make changes, as the form says now: the key follows it before Save. */
     allowWrite: boolean;
+    /** Whether assistants may make changes, as saved: what the server does until Save. */
+    savedAllowWrite: boolean;
 }
 
 /**
@@ -111,12 +113,12 @@ interface Props {
  * kind of client takes, filled in with it.
  *
  * The key is the person's own: pasted here, made in the profile, or made by the
- * button - which makes the key the server's setting calls for, read-only or one
- * that can make changes, the latter only once the person has confirmed what it
- * can do. What is pasted stays in this page: it fills the snippets and is
- * neither saved nor sent.
+ * button - which makes the key Allow changes calls for as the form says it,
+ * before Save as the rest of the page does: read-only, or one that can make
+ * changes once the person has confirmed what it can do. What is pasted stays in
+ * this page: it fills the snippets and is neither saved nor sent.
  */
-export function McpConnectSection({ endpoint, enabled, allowWrite }: Props) {
+export function McpConnectSection({ endpoint, enabled, allowWrite, savedAllowWrite }: Props) {
     const [key, setKey] = useState<KeyState>({ keyId: "", secretKey: "" });
     const [wasCreated, setWasCreated] = useState(false);
     const [isConfirming, setIsConfirming] = useState(false);
@@ -215,6 +217,13 @@ export function McpConnectSection({ endpoint, enabled, allowWrite }: Props) {
                                 {!enabled && (
                                     <span className="text-xs text-muted-foreground">
                                         The server answers once it is enabled and saved.
+                                    </span>
+                                )}
+                                {enabled && allowWrite !== savedAllowWrite && (
+                                    <span className="text-xs text-muted-foreground">
+                                        {allowWrite
+                                            ? "The server lets assistants make changes once this is saved."
+                                            : "The server stops assistants making changes once this is saved."}
                                     </span>
                                 )}
                             </div>

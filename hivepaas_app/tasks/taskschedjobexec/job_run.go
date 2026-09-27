@@ -116,6 +116,10 @@ func (e *Executor) runJob(ctx context.Context, db database.Tx, run *jobRun) (*jo
 		}
 		result.skipNotification = resp.SkipResultNotification
 
+	case base.SchedJobTypeDataBackup:
+		// Run by the data backup service, which comes with the next change.
+		return nil, hperrors.NewUnsupported("A data backup")
+
 	case base.SchedJobTypeJobSequence:
 		// Never a step: a sequence does not run another (checked on save).
 		return nil, hperrors.NewUnsupported("A job sequence as a step")

@@ -48,6 +48,8 @@ type SchedJob struct {
 	Sequence *SchedJobSequence `json:"sequence,omitempty"`
 	// Triggers are the events that run the job, beside its schedule.
 	Triggers []*SchedJobTrigger `json:"triggers,omitempty"`
+	// DataBackup is what a data-backup job backs up and where; nil for every other type.
+	DataBackup *SchedJobDataBackup `json:"dataBackup,omitempty"`
 }
 
 type SchedJobSchedule struct {
@@ -279,6 +281,7 @@ func (s *SchedJob) GetRefObjectIDs() *RefObjectIDs {
 	// job a sequence runs from being deleted under it.
 	refIDs.RefSettingIDs = append(refIDs.RefSettingIDs, s.Sequence.MemberIDs()...)
 	refIDs.RefAppIDs = append(refIDs.RefAppIDs, s.TriggerAppIDs()...)
+	refIDs.RefSettingIDs = append(refIDs.RefSettingIDs, s.DataBackup.refSettingIDs()...)
 	return refIDs
 }
 

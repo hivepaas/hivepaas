@@ -12,12 +12,27 @@ const (
 	SchedJobTypeBackupRepoCleanup SchedJobType = "backup-repo-cleanup"
 	// SchedJobTypeJobSequence runs other scheduled jobs, one after another.
 	SchedJobTypeJobSequence SchedJobType = "job-sequence"
+	// SchedJobTypeDataBackup takes a snapshot of an app's data into a backup repository.
+	SchedJobTypeDataBackup SchedJobType = "data-backup"
 )
 
 var (
 	AllSchedJobTypes = []SchedJobType{SchedJobTypeContainerCommand, SchedJobTypeSystemCleanup,
-		SchedJobTypeSystemBackup, SchedJobTypeSSLRenewal, SchedJobTypeBackupRepoCleanup, SchedJobTypeJobSequence}
+		SchedJobTypeSystemBackup, SchedJobTypeSSLRenewal, SchedJobTypeBackupRepoCleanup, SchedJobTypeJobSequence,
+		SchedJobTypeDataBackup}
 )
+
+// SchedJobDataBackupSource is what a data backup reads: a command's output, or a
+// volume the app mounts.
+type SchedJobDataBackupSource string
+
+const (
+	SchedJobDataBackupSourceCommand SchedJobDataBackupSource = "command"
+	SchedJobDataBackupSourceVolume  SchedJobDataBackupSource = "volume"
+)
+
+var AllSchedJobDataBackupSources = []SchedJobDataBackupSource{SchedJobDataBackupSourceCommand,
+	SchedJobDataBackupSourceVolume}
 
 // SchedJobSeqMode is how a job sequence runs its steps. Sequential is the only
 // mode for now; the results are kept per step so a parallel one can follow.

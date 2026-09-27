@@ -1,0 +1,363 @@
+diff --git a/hivepaas_app/service/appdeploymentservice/appdeploymentserviceimpl/deployment.go b/hivepaas_app/service/appdeploymentservice/appdeploymentserviceimpl/deployment.go
+index f0758396..c9bcc92a 100644
+--- a/hivepaas_app/service/appdeploymentservice/appdeploymentserviceimpl/deployment.go
++++ b/hivepaas_app/service/appdeploymentservice/appdeploymentserviceimpl/deployment.go
+@@ -254,6 +254,8 @@ func (s *service) onPostTx(
+ 	}()
+ 	defer safego.Recover("appdeployment.onPostTx")
+ 
++	s.fireDeployEndedEvent(ctx, data)
++
+ 	if data.Task.IsDone() || data.Task.IsFailedCompletely() {
+ 		if err := s.notifyForDeployment(ctx, db, data); err != nil {
+ 			_ = data.LogStore.Add(ctx,
+diff --git a/hivepaas_app/service/appdeploymentservice/appdeploymentserviceimpl/deployment_trigger.go b/hivepaas_app/service/appdeploymentservice/appdeploymentserviceimpl/deployment_trigger.go
+new file mode 100644
+index 00000000..11e150db
+--- /dev/null
++++ b/hivepaas_app/service/appdeploymentservice/appdeploymentserviceimpl/deployment_trigger.go
+@@ -0,0 +1,69 @@
++package appdeploymentserviceimpl
++
++import (
++	"context"
++	"fmt"
++
++	"github.com/hivepaas/hivepaas/hivepaas_app/base"
++	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
++	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/tasklog"
++	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/timeutil"
++	"github.com/hivepaas/hivepaas/hivepaas_app/service/schedjobtriggerservice"
++)
++
++const stepPreDeployJobs = "pre-deploy-jobs"
++
++// deployStepPreDeployJobs runs the scheduled jobs listening to the app's
++// pre-deploy, and waits for those a trigger holds the deploy for: one that
++// fails, is canceled or runs out of time fails the deploy. Failing to fire fails
++// it too: it cannot tell whether a job would have held it.
++func (s *service) deployStepPreDeployJobs(ctx context.Context, data *appDeploymentData) (err error) {
++	result, err := s.schedJobTriggerService.Fire(ctx, base.SchedJobTriggerPreDeploy, data.App,
++		&schedjobtriggerservice.TriggerInfo{DeploymentID: data.Deployment.ID})
++	if err != nil {
++		return hperrors.Wrap(err)
++	}
++	if len(result.Runs) == 0 {
++		return nil
++	}
++
++	data.Step = stepPreDeployJobs
++	s.addStepStartLog(ctx, data, "Start running pre-deployment jobs...")
++	defer s.addStepEndLog(ctx, data, timeutil.NowUTC(), err)
++	for _, run := range result.Runs {
++		if !run.Wait {
++			_ = data.LogStore.Add(ctx, tasklog.NewOutFrame(fmt.Sprintf("Started job %s (run %s), not waited for",
++				run.JobName, run.Task.ID), tasklog.TsNow))
++		}
++	}
++	return hperrors.Wrap(s.schedJobTriggerService.WaitForRuns(ctx, result.WaitedRuns(), data.LogStore))
++}
++
++// fireDeployEndedEvent runs the jobs listening to how the deploy ended, once it
++// is committed: post-deploy when it is done, deploy-failed when it failed, none
++// when it was canceled. A failure is logged, never the deploy's.
++func (s *service) fireDeployEndedEvent(ctx context.Context, data *appDeploymentData) {
++	if data.Deployment == nil || data.App == nil {
++		return
++	}
++	var event base.SchedJobTriggerEvent
++	switch data.Deployment.Status { //nolint:exhaustive // the deploy has not ended otherwise
++	case base.DeploymentStatusDone:
++		event = base.SchedJobTriggerPostDeploy
++	case base.DeploymentStatusFailed:
++		event = base.SchedJobTriggerDeployFailed
++	default:
++		return
++	}
++	result, err := s.schedJobTriggerService.Fire(ctx, event, data.App,
++		&schedjobtriggerservice.TriggerInfo{DeploymentID: data.Deployment.ID})
++	if err != nil {
++		_ = data.LogStore.Add(ctx, tasklog.NewWarnFrame(
++			fmt.Sprintf("Failed to start the jobs listening to %s: %v", event, err), tasklog.TsNow))
++		return
++	}
++	for _, run := range result.Runs {
++		_ = data.LogStore.Add(ctx, tasklog.NewOutFrame(fmt.Sprintf("Started job %s (run %s) for %s",
++			run.JobName, run.Task.ID, event), tasklog.TsNow))
++	}
++}
+diff --git a/hivepaas_app/service/appdeploymentservice/appdeploymentserviceimpl/image_deploy.go b/hivepaas_app/service/appdeploymentservice/appdeploymentserviceimpl/image_deploy.go
+index 1042f390..828eb5af 100644
+--- a/hivepaas_app/service/appdeploymentservice/appdeploymentserviceimpl/image_deploy.go
++++ b/hivepaas_app/service/appdeploymentservice/appdeploymentserviceimpl/image_deploy.go
+@@ -59,6 +59,12 @@ func (s *service) deployFromImage(
+ 		return hperrors.Wrap(err)
+ 	}
+ 
++	// Pre-deployment jobs, the deploy waiting for those a trigger holds it for
++	err = s.deployStepPreDeployJobs(ctx, data.appDeploymentData)
++	if err != nil {
++		return hperrors.Wrap(err)
++	}
++
+ 	// 3. Apply image to service
+ 	err = s.imageDeployStepServiceApply(ctx, db, data)
+ 	if err != nil {
+diff --git a/hivepaas_app/service/appdeploymentservice/appdeploymentserviceimpl/repo_deploy.go b/hivepaas_app/service/appdeploymentservice/appdeploymentserviceimpl/repo_deploy.go
+index 8422d2b7..f48fd39f 100644
+--- a/hivepaas_app/service/appdeploymentservice/appdeploymentserviceimpl/repo_deploy.go
++++ b/hivepaas_app/service/appdeploymentservice/appdeploymentserviceimpl/repo_deploy.go
+@@ -94,6 +94,12 @@ func (s *service) deployFromRepo(
+ 		return hperrors.Wrap(err)
+ 	}
+ 
++	// Pre-deployment jobs, the deploy waiting for those a trigger holds it for
++	err = s.deployStepPreDeployJobs(ctx, data.appDeploymentData)
++	if err != nil {
++		return hperrors.Wrap(err)
++	}
++
+ 	// 4. Apply image to service
+ 	err = s.repoDeployStepServiceApply(ctx, db, data)
+ 	if err != nil {
+diff --git a/hivepaas_app/service/appdeploymentservice/appdeploymentserviceimpl/service.go b/hivepaas_app/service/appdeploymentservice/appdeploymentserviceimpl/service.go
+index 644d5311..a55d04e9 100644
+--- a/hivepaas_app/service/appdeploymentservice/appdeploymentserviceimpl/service.go
++++ b/hivepaas_app/service/appdeploymentservice/appdeploymentserviceimpl/service.go
+@@ -15,6 +15,7 @@ import (
+ 	"github.com/hivepaas/hivepaas/hivepaas_app/service/notificationservice"
+ 	"github.com/hivepaas/hivepaas/hivepaas_app/service/placementservice"
+ 	"github.com/hivepaas/hivepaas/hivepaas_app/service/repocheckoutservice"
++	"github.com/hivepaas/hivepaas/hivepaas_app/service/schedjobtriggerservice"
+ 	"github.com/hivepaas/hivepaas/hivepaas_app/service/settingmountservice"
+ 	"github.com/hivepaas/hivepaas/hivepaas_app/service/settingservice"
+ 	"github.com/hivepaas/hivepaas/services/docker"
+@@ -42,6 +43,8 @@ type service struct {
+ 	repoCheckoutService  repocheckoutservice.Service
+ 	settingService       settingservice.Service
+ 	settingMountService  settingmountservice.Service
++	// schedJobTriggerService runs the jobs listening to the deploy's events.
++	schedJobTriggerService schedjobtriggerservice.Service
+ }
+ 
+ func New(
+@@ -66,6 +69,7 @@ func New(
+ 	repoCheckoutService repocheckoutservice.Service,
+ 	settingService settingservice.Service,
+ 	settingMountService settingmountservice.Service,
++	schedJobTriggerService schedjobtriggerservice.Service,
+ ) appdeploymentservice.Service {
+ 	return &service{
+ 		db:            db,
+@@ -78,16 +82,17 @@ func New(
+ 		settingRepo:        settingRepo,
+ 		taskLogRepo:        taskLogRepo,
+ 
+-		agentService:         agentService,
+-		appService:           appService,
+-		clusterService:       clusterService,
+-		containerExecService: containerExecService,
+-		dockerAPIService:     dockerAPIService,
+-		imageBuildService:    imageBuildService,
+-		notificationService:  notificationService,
+-		placementService:     placementService,
+-		repoCheckoutService:  repoCheckoutService,
+-		settingService:       settingService,
+-		settingMountService:  settingMountService,
++		agentService:           agentService,
++		appService:             appService,
++		clusterService:         clusterService,
++		containerExecService:   containerExecService,
++		dockerAPIService:       dockerAPIService,
++		imageBuildService:      imageBuildService,
++		notificationService:    notificationService,
++		placementService:       placementService,
++		repoCheckoutService:    repoCheckoutService,
++		settingService:         settingService,
++		settingMountService:    settingMountService,
++		schedJobTriggerService: schedJobTriggerService,
+ 	}
+ }
+diff --git a/hivepaas_app/service/schedjobtriggerservice/schedjobtriggerserviceimpl/service.go b/hivepaas_app/service/schedjobtriggerservice/schedjobtriggerserviceimpl/service.go
+index 94213c3f..0f487761 100644
+--- a/hivepaas_app/service/schedjobtriggerservice/schedjobtriggerserviceimpl/service.go
++++ b/hivepaas_app/service/schedjobtriggerservice/schedjobtriggerserviceimpl/service.go
+@@ -1,10 +1,15 @@
+ package schedjobtriggerserviceimpl
+ 
+ import (
++	"context"
++
++	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
+ 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
++	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/transaction"
+ 	"github.com/hivepaas/hivepaas/hivepaas_app/repository"
+ 	"github.com/hivepaas/hivepaas/hivepaas_app/service/schedjobservice"
+ 	"github.com/hivepaas/hivepaas/hivepaas_app/service/schedjobtriggerservice"
++	"github.com/hivepaas/hivepaas/hivepaas_app/service/taskservice"
+ 	"github.com/hivepaas/hivepaas/hivepaas_app/tasks/queue"
+ )
+ 
+@@ -16,6 +21,9 @@ type service struct {
+ 
+ 	schedJobService schedjobservice.Service
+ 	taskQueue       queue.TaskQueue
++
++	// cancelRun cancels a run a canceled deploy waited for.
++	cancelRun func(ctx context.Context, taskID string) error
+ }
+ 
+ func New(
+@@ -23,13 +31,21 @@ func New(
+ 	settingRepo repository.SettingRepo,
+ 	taskRepo repository.TaskRepo,
+ 	schedJobService schedjobservice.Service,
++	taskService taskservice.Service,
+ 	taskQueue queue.TaskQueue,
+ ) schedjobtriggerservice.Service {
+-	return &service{
++	svc := &service{
+ 		db:              db,
+ 		settingRepo:     settingRepo,
+ 		taskRepo:        taskRepo,
+ 		schedJobService: schedJobService,
+ 		taskQueue:       taskQueue,
+ 	}
++	svc.cancelRun = func(ctx context.Context, taskID string) error {
++		return transaction.Execute(ctx, db, func(tx database.Tx) error {
++			_, _, err := taskService.CancelTask(ctx, tx, nil, taskID, nil)
++			return hperrors.Wrap(err)
++		})
++	}
++	return svc
+ }
+diff --git a/hivepaas_app/service/schedjobtriggerservice/schedjobtriggerserviceimpl/wait.go b/hivepaas_app/service/schedjobtriggerservice/schedjobtriggerserviceimpl/wait.go
+new file mode 100644
+index 00000000..7d59701b
+--- /dev/null
++++ b/hivepaas_app/service/schedjobtriggerservice/schedjobtriggerserviceimpl/wait.go
+@@ -0,0 +1,103 @@
++package schedjobtriggerserviceimpl
++
++import (
++	"context"
++	"fmt"
++	"time"
++
++	"github.com/hivepaas/hivepaas/hivepaas_app/base"
++	"github.com/hivepaas/hivepaas/hivepaas_app/config"
++	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
++	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
++	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
++	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/tasklog"
++	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/timeutil"
++	"github.com/hivepaas/hivepaas/hivepaas_app/service/schedjobtriggerservice"
++)
++
++const defaultWaitPollInterval = 3 * time.Second
++
++func (s *service) WaitForRuns(
++	ctx context.Context,
++	runs []*schedjobtriggerservice.Run,
++	logStore *tasklog.Store,
++) error {
++	if len(runs) == 0 {
++		return nil
++	}
++	start := time.Now()
++	pending := make(map[string]*schedjobtriggerservice.Run, len(runs))
++	ids := make([]string, 0, len(runs))
++	for _, run := range runs {
++		pending[run.Task.ID] = run
++		ids = append(ids, run.Task.ID)
++		_ = logStore.Add(ctx, tasklog.NewOutFrame(fmt.Sprintf("Waiting for job %s (run %s)...",
++			run.JobName, run.Task.ID), tasklog.TsNow))
++	}
++
++	for len(pending) > 0 {
++		if err := timeutil.SleepCtx(ctx, pollInterval()); err != nil {
++			s.cancelPending(ctx, pending)
++			return hperrors.Wrap(err)
++		}
++		tasks, _, err := s.taskRepo.List(ctx, s.db, nil, nil, bunex.SelectWhere("task.id IN (?)", bunex.List(ids)))
++		if err != nil {
++			return hperrors.Wrap(err)
++		}
++		byID := make(map[string]*entity.Task, len(tasks))
++		for _, task := range tasks {
++			byID[task.ID] = task
++		}
++		for id, run := range pending {
++			ended, err := runEnded(run, byID[id], time.Since(start))
++			if err != nil {
++				// The deploy's log says why it stops, in words: its error says it in codes.
++				_ = logStore.Add(ctx, tasklog.NewErrFrame(hperrors.GetErrorDetail(err, ""), tasklog.TsNow))
++				return err
++			}
++			if ended {
++				_ = logStore.Add(ctx, tasklog.NewOutFrame(fmt.Sprintf("Job %s is done", run.JobName),
++					tasklog.TsNow))
++				delete(pending, id)
++			}
++		}
++	}
++	return nil
++}
++
++// runEnded says whether a waited run is done; an error when it will not be.
++// A run failed with retries left is still going.
++func runEnded(run *schedjobtriggerservice.Run, task *entity.Task, waited time.Duration) (bool, error) {
++	switch {
++	case task == nil:
++		return false, hperrors.NewNotFound("Run of job " + run.JobName)
++	case task.Status == base.TaskStatusDone:
++		return true, nil
++	case task.IsCanceled():
++		return false, hperrors.NewArgumentInvalid("Pre-deploy job").
++			WithExtraDetail("job %s was canceled", run.JobName)
++	case task.IsFailedCompletely():
++		return false, hperrors.NewArgumentInvalid("Pre-deploy job").
++			WithExtraDetail("job %s failed", run.JobName)
++	case run.Timeout > 0 && waited > run.Timeout:
++		return false, hperrors.NewArgumentInvalid("Pre-deploy job").
++			WithExtraDetail("job %s did not end within %s", run.JobName, run.Timeout)
++	}
++	return false, nil
++}
++
++// cancelPending cancels the runs a canceled deploy still waited for. Its own
++// context has ended: the cancels get one that has not.
++func (s *service) cancelPending(ctx context.Context, pending map[string]*schedjobtriggerservice.Run) {
++	ctx = context.WithoutCancel(ctx)
++	for id := range pending {
++		_ = s.cancelRun(ctx, id)
++	}
++}
++
++func pollInterval() time.Duration {
++	if cfg := config.Current(); cfg != nil && cfg.Tasks.Triggers.WaitPollInterval > 0 {
++		return cfg.Tasks.Triggers.WaitPollInterval
++	}
++	return defaultWaitPollInterval
++}
+diff --git a/hivepaas_app/service/schedjobtriggerservice/service.go b/hivepaas_app/service/schedjobtriggerservice/service.go
+index 9da25476..9c80e9b1 100644
+--- a/hivepaas_app/service/schedjobtriggerservice/service.go
++++ b/hivepaas_app/service/schedjobtriggerservice/service.go
+@@ -5,6 +5,7 @@ import (
+ 
+ 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
+ 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
++	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/tasklog"
+ )
+ 
+ // Service runs the scheduled jobs that listen to what happens to an app.
+@@ -14,4 +15,8 @@ type Service interface {
+ 	// wait for them.
+ 	Fire(ctx context.Context, event base.SchedJobTriggerEvent, app *entity.App,
+ 		info *TriggerInfo) (*FireResult, error)
++	// WaitForRuns waits for runs to end, logging to logStore how each did. A run
++	// that fails, is canceled or passes its timeout fails the wait; ctx ending
++	// cancels the runs still going.
++	WaitForRuns(ctx context.Context, runs []*Run, logStore *tasklog.Store) error
+ }

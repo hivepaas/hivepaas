@@ -1,0 +1,142 @@
+diff --git a/hivepaas_app/usecase/settings/schedjobuc/schedjobdto/trigger_test.go b/hivepaas_app/usecase/settings/schedjobuc/schedjobdto/trigger_test.go
+new file mode 100644
+index 00000000..3460b8b0
+--- /dev/null
++++ b/hivepaas_app/usecase/settings/schedjobuc/schedjobdto/trigger_test.go
+@@ -0,0 +1,83 @@
++package schedjobdto
++
++import (
++	"testing"
++
++	"github.com/stretchr/testify/assert"
++
++	"github.com/hivepaas/hivepaas/hivepaas_app/base"
++	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
++	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
++)
++
++const appA = "01JAB9XED0GTXBSQDFVYAJ8WA9"
++
++func triggered(triggers ...*SchedJobTriggerReq) *CreateSchedJobReq {
++	req := sequenceReq(jobA)
++	req.Triggers = triggers
++	return req
++}
++
++func TestTriggersAreKeptOnTheJob(t *testing.T) {
++	req := triggered(
++		&SchedJobTriggerReq{Event: base.SchedJobTriggerPreDeploy, Wait: true},
++		&SchedJobTriggerReq{Event: base.SchedJobTriggerHealthDown, Apps: []basedto.ObjectIDReq{{ID: appA}}},
++	)
++
++	assert.Equal(t, "", invalidFields(t, req))
++	job := req.ToEntity()
++	if assert.Len(t, job.Triggers, 2) {
++		assert.Equal(t, base.SchedJobTriggerPreDeploy, job.Triggers[0].Event)
++		assert.True(t, job.Triggers[0].Wait)
++		assert.Equal(t, []entity.ObjectID{{ID: appA}}, job.Triggers[1].Apps)
++	}
++}
++
++func TestATriggerNeedsAKnownEvent(t *testing.T) {
++	assert.Equal(t, "triggers[0].event", invalidFields(t, triggered(&SchedJobTriggerReq{Event: "pushed"})))
++}
++
++func TestOnlyAPreDeployTriggerWaits(t *testing.T) {
++	req := triggered(&SchedJobTriggerReq{Event: base.SchedJobTriggerPostDeploy, Wait: true})
++	assert.Equal(t, "triggers[0].wait", invalidFields(t, req))
++}
++
++func TestAJobHasAtMostTenTriggersNoTwoAlike(t *testing.T) {
++	var many []*SchedJobTriggerReq
++	for range base.SchedJobMaxTriggers + 1 {
++		many = append(many, &SchedJobTriggerReq{Event: base.SchedJobTriggerPostDeploy})
++	}
++	assert.Contains(t, invalidFields(t, triggered(many...)), "triggers ")
++
++	req := triggered(
++		&SchedJobTriggerReq{Event: base.SchedJobTriggerHealthUp, Apps: []basedto.ObjectIDReq{{ID: appA}}},
++		&SchedJobTriggerReq{Event: base.SchedJobTriggerHealthUp, Apps: []basedto.ObjectIDReq{{ID: appA}}},
++	)
++	assert.Equal(t, "triggers[1]", invalidFields(t, req))
++}
++
++func TestASystemJobHasNoTriggers(t *testing.T) {
++	req := NewCreateSchedJobReq()
++	req.SchedJobBaseReq = &SchedJobBaseReq{
++		Name:     "renew",
++		JobType:  base.SchedJobTypeSSLRenewal,
++		Triggers: []*SchedJobTriggerReq{{Event: base.SchedJobTriggerPostDeploy}},
++	}
++	assert.Contains(t, invalidFields(t, req), "triggers")
++}
++
++func TestTransformSchedJobTriggersNamesTheApps(t *testing.T) {
++	refObjects := entity.NewRefObjects()
++	refObjects.RefApps["a1"] = &entity.App{ID: "a1", Name: "backend"}
++
++	resp := TransformSchedJobTriggers([]*entity.SchedJobTrigger{
++		{Event: base.SchedJobTriggerPostDeploy, Apps: []entity.ObjectID{{ID: "a1"}, {ID: "gone"}}},
++	}, refObjects)
++
++	if assert.Len(t, resp, 1) && assert.Len(t, resp[0].Apps, 2) {
++		assert.Equal(t, base.SchedJobTriggerPostDeploy, resp[0].Event)
++		assert.Equal(t, &basedto.NamedObjectResp{ID: "a1", Name: "backend"}, resp[0].Apps[0])
++		assert.Equal(t, "gone", resp[0].Apps[1].ID)
++	}
++	assert.Empty(t, TransformSchedJobTriggers(nil, refObjects))
++}
+diff --git a/hivepaas_app/usecase/settings/schedjobuc/trigger_test.go b/hivepaas_app/usecase/settings/schedjobuc/trigger_test.go
+new file mode 100644
+index 00000000..96bd45d5
+--- /dev/null
++++ b/hivepaas_app/usecase/settings/schedjobuc/trigger_test.go
+@@ -0,0 +1,47 @@
++package schedjobuc
++
++import (
++	"testing"
++
++	"github.com/stretchr/testify/assert"
++
++	"github.com/hivepaas/hivepaas/hivepaas_app/base"
++	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
++)
++
++// The apps a job's triggers name are checked by checkTriggerApps, which knows
++// an env's apps; the setting base would look for them in the job's own scope.
++func TestTriggerAppsAreCheckedApartFromTheJobsOtherReferences(t *testing.T) {
++	job := &entity.SchedJob{
++		JobType: base.SchedJobTypeJobSequence,
++		Triggers: []*entity.SchedJobTrigger{
++			{Event: base.SchedJobTriggerPostDeploy, Apps: []entity.ObjectID{{ID: "a1"}}},
++		},
++	}
++
++	assert.Equal(t, []string{"a1"}, job.GetRefObjectIDs().RefAppIDs)
++	assert.Empty(t, verifyingRefIDs(job).RefAppIDs)
++}
++
++func TestTriggerAppProblem(t *testing.T) {
++	appScope := &entity.ObjectScope{ScopeType: base.ObjectScopeApp, AppID: "a1"}
++	envScope := &entity.ObjectScope{ScopeType: base.ObjectScopeProjectEnv, ProjectEnvID: "p1:dev"}
++	appOf := func(env string) *entity.App { return &entity.App{ID: "a2", ProjectEnvID: env} }
++	postDeploy := func(appIDs ...string) *entity.SchedJobTrigger {
++		trigger := &entity.SchedJobTrigger{Event: base.SchedJobTriggerPostDeploy}
++		for _, id := range appIDs {
++			trigger.Apps = append(trigger.Apps, entity.ObjectID{ID: id})
++		}
++		return trigger
++	}
++
++	assert.Empty(t, triggerAppProblem(appScope, postDeploy(), nil))
++	assert.Equal(t, "an app's job listens to its own app: name no app",
++		triggerAppProblem(appScope, postDeploy("a2"), map[string]*entity.App{"a2": appOf("p1:dev")}))
++
++	apps := map[string]*entity.App{"a2": appOf("p1:dev"), "a3": appOf("p1:prod")}
++	assert.Empty(t, triggerAppProblem(envScope, postDeploy("a2"), apps))
++	assert.Equal(t, "name the apps whose events run the job", triggerAppProblem(envScope, postDeploy(), apps))
++	assert.Equal(t, "app a3 is not in this env", triggerAppProblem(envScope, postDeploy("a2", "a3"), apps))
++	assert.Equal(t, "app a4 is not found", triggerAppProblem(envScope, postDeploy("a4"), apps))
++}

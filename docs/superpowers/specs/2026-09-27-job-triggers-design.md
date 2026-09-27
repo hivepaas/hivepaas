@@ -41,7 +41,7 @@ type SchedJobTriggerEvent string
 const (
     SchedJobTriggerPreDeploy   SchedJobTriggerEvent = "pre-deploy"
     SchedJobTriggerPostDeploy  SchedJobTriggerEvent = "post-deploy"
-    SchedJobTriggerDeployFail  SchedJobTriggerEvent = "deploy-failed"
+    SchedJobTriggerDeployFailed SchedJobTriggerEvent = "deploy-failed"
     SchedJobTriggerHealthDown  SchedJobTriggerEvent = "health-down"
     SchedJobTriggerHealthUp    SchedJobTriggerEvent = "health-up"
     SchedJobTriggerAppEnabled  SchedJobTriggerEvent = "app-enabled"
@@ -89,6 +89,7 @@ type SchedJobTrigger struct {
 - `app-enabled`, `app-disabled`: the app's status changed between `active` and
   `disabled`, by itself or through its project's or env's status
   (`SetAppStatus`). The event fires once the change is committed.
+  Each health check fires on its own: two checks going down run a job twice.
 
 ## 2. Firing and running
 
@@ -111,13 +112,20 @@ Fire(ctx, event base.SchedJobTriggerEvent, app *entity.App, info *TriggerInfo) (
    run's page, and a `container-command` step or job is told it in
    `HIVEPAAS_TRIGGER_EVENT`, `HIVEPAAS_TRIGGER_APP`,
    `HIVEPAAS_TRIGGER_DEPLOYMENT`.
-3. **A failure to fire** is logged, and never fails what fired it, but for a
-   `pre-deploy` trigger with `wait`.
+3. **A failure to fire** is logged, and never fails what fired it, but for
+   `pre-deploy`: a deploy that cannot list its jobs cannot tell whether one
+   would hold it, and fails.
 
-**Where `Fire` is called:** the deploy's `pre-deploy` step; the end of
-`Deploy`, once the deployment's status is settled (`post-deploy`,
-`deploy-failed`); `calculateStateTransition` of the health check service, on a
-real transition; `SetAppStatus`, after commit (`app-enabled`, `app-disabled`).
+**Where `Fire` is called:** the deploy's `pre-deploy` step; the deploy's
+after-commit hook, once its status is settled (`post-deploy`,
+`deploy-failed`); the health check, after `calculateStateTransition`, on a
+real transition; the status changes of an app, an env and a project
+(`app-enabled`, `app-disabled`), through `FireAppStatusEvents` of the trigger
+service, once their transactions have committed. `SetAppStatus` and
+`SetProjectEnvStatus` say which apps changed; the use cases fire. The app
+service cannot hold the trigger service itself: the trigger service needs the
+task queue, which needs the app service, through the scheduled job and env var
+services.
 
 The transaction of its own matters: a task inserted in the deploy's
 transaction is not seen by another worker until the deploy commits, and a
@@ -131,7 +139,8 @@ deploy's log which job it waits for and how it ended.
 - Every waited run ends `done`: the deploy goes on.
 - One ends `failed` or `canceled`: the deploy fails, its error naming the job.
 - The wait passes the job's timeout, or `WaitTimeout` for a job without one
-  and for a sequence (whose timeout is each step's): the deploy fails.
+  and for a sequence (whose timeout is each step's): the deploy fails; the run
+  goes on - stopping a migration half way is worse than letting it end.
 - The deploy is canceled while it waits: the waited runs are canceled.
 - Runs of triggers without `wait` are scheduled and not waited for.
 
@@ -174,14 +183,21 @@ the apps (`apps: [{id, name}]`). The rules of §1 are the request's validation.
 - **The job lists**, app and env: the triggers as tags, e.g. `post-deploy`,
   `pre-deploy · waits`. A job with triggers and no schedule still shows
   "No schedule".
-- **A run's page:** "Triggered by post-deploy of a1", with a link to the
-  deployment when there is one.
+- **A run's page:** in the run's details, "Triggered By: post-deploy of a1"
+  and the deployment's ID. The task API gives a `sched-job-exec` task a
+  `trigger {event, app {id, name}, deploymentId}`; a run's references include
+  the app, for its name. No link to the deployment: the task does not know the
+  app's env, which the route needs.
 - **The deploy's log** says which jobs it waits for and how they ended; no new
   view.
 
 **Export and import.** Triggers are part of the job's data and travel with it;
-their apps are references, exported as bundle paths and mapped back on import,
-as a sequence's steps are.
+their apps are references to apps, which a bundle writes as the IDs they had
+where it was made; import maps each to the app with that bundle ID here, as
+it does an app's other references to apps.
+
+**MCP.** `plan_create_sched_job` describes `triggers`: an app's job listens to
+its own app's events.
 
 ## 4. Testing
 
@@ -202,7 +218,7 @@ as a sequence's steps are.
     `app-enabled` / `app-disabled`;
   - `HIVEPAAS_TRIGGER_*` in a step's environment;
   - the configuration defaults (3s, 30m);
-  - an env job's triggers exported as bundle paths and imported mapped.
+  - an env job's trigger apps imported as this installation's apps.
 - **Live, on the Linux server:** a `post-deploy` job after a deploy;
   `pre-deploy` with `wait` - a job that exits 1 fails the deploy, one that
   exits 0 lets it go on; a deploy canceled while it waits; a health check that

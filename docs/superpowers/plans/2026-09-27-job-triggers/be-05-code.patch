@@ -1,0 +1,588 @@
+diff --git a/hivepaas_app/service/appservice/appserviceimpl/update_status.go b/hivepaas_app/service/appservice/appserviceimpl/update_status.go
+index 84533400..fd82a9b3 100644
+--- a/hivepaas_app/service/appservice/appserviceimpl/update_status.go
++++ b/hivepaas_app/service/appservice/appserviceimpl/update_status.go
+@@ -27,28 +27,33 @@ func (s *service) SetAppStatus(
+ 	app *entity.App,
+ 	status base.AppStatus,
+ 	cascade bool,
+-) error {
+-	err := s.LoadChildApps(ctx, db, app, true, cascade)
++) (changed []*entity.App, err error) {
++	err = s.LoadChildApps(ctx, db, app, true, cascade)
+ 	if err != nil {
+-		return hperrors.Wrap(err)
++		return nil, hperrors.Wrap(err)
+ 	}
+ 	// All direct child apps (preview apps) must be updated
+ 	for _, childApp := range app.ChildApps {
+-		if err := s.SetAppStatus(ctx, db, childApp, status, cascade); err != nil {
+-			return hperrors.Wrap(err).WithMsgLog("failed to update status of child app %s", childApp.ID)
++		childChanged, err := s.SetAppStatus(ctx, db, childApp, status, cascade)
++		if err != nil {
++			return nil, hperrors.Wrap(err).WithMsgLog("failed to update status of child app %s", childApp.ID)
+ 		}
++		changed = append(changed, childChanged...)
+ 	}
+ 	// If cascading, update all logical child apps (dependent apps)
+ 	if cascade {
+ 		for _, childApp := range app.LogicalChildApps {
+-			if err := s.SetAppStatus(ctx, db, childApp, status, cascade); err != nil {
+-				return hperrors.Wrap(err).WithMsgLog("failed to update status of logical child app %s", childApp.ID)
++			childChanged, err := s.SetAppStatus(ctx, db, childApp, status, cascade)
++			if err != nil {
++				return nil, hperrors.Wrap(err).WithMsgLog("failed to update status of logical child app %s",
++					childApp.ID)
+ 			}
++			changed = append(changed, childChanged...)
+ 		}
+ 	}
+ 
+ 	if app.Status == status {
+-		return nil
++		return changed, nil
+ 	}
+ 	app.Status = status
+ 	app.UpdatedAt = timeutil.NowUTC()
+@@ -56,20 +61,20 @@ func (s *service) SetAppStatus(
+ 
+ 	if app.Status == base.AppStatusDisabled {
+ 		if err := s.stopApp(ctx, app, nil); err != nil {
+-			return hperrors.Wrap(err)
++			return nil, hperrors.Wrap(err)
+ 		}
+ 	}
+ 	if app.Status == base.AppStatusActive {
+ 		if err := s.startApp(ctx, app, nil); err != nil {
+-			return hperrors.Wrap(err)
++			return nil, hperrors.Wrap(err)
+ 		}
+ 	}
+ 
+ 	err = s.appRepo.Update(ctx, db, app, bunex.UpdateColumns("status", "updated_at", "update_ver"))
+ 	if err != nil {
+-		return hperrors.Wrap(err)
++		return nil, hperrors.Wrap(err)
+ 	}
+-	return nil
++	return append(changed, app), nil
+ }
+ 
+ func (s *service) SetAppRunning(ctx context.Context, app *entity.App, running bool) error {
+diff --git a/hivepaas_app/service/appservice/service.go b/hivepaas_app/service/appservice/service.go
+index 6974cff2..9999547d 100644
+--- a/hivepaas_app/service/appservice/service.go
++++ b/hivepaas_app/service/appservice/service.go
+@@ -42,7 +42,11 @@ type Service interface {
+ 	// removeStorage also deletes the directories it kept its data in, inside the
+ 	// volumes it mounted; without it those are left where they are.
+ 	DeleteApp(ctx context.Context, db database.IDB, app *entity.App, removeStorage, cascade bool) error
+-	SetAppStatus(ctx context.Context, db database.IDB, app *entity.App, status base.AppStatus, cascade bool) error
++	// SetAppStatus sets the status of the app and its child apps, and says whose
++	// changed: the caller runs the jobs listening to it once it has committed
++	// (schedjobtriggerservice.FireAppStatusEvents).
++	SetAppStatus(ctx context.Context, db database.IDB, app *entity.App, status base.AppStatus,
++		cascade bool) (changed []*entity.App, err error)
+ 	SetAppRunning(ctx context.Context, app *entity.App, running bool) error
+ 	// RecreateServiceWithSpec deletes and recreates the app swarm service, which is the only way to
+ 	// change its mode variant. It causes downtime and returns the new service ID for the caller to
+diff --git a/hivepaas_app/service/healthcheckservice/healthcheckserviceimpl/healthcheck.go b/hivepaas_app/service/healthcheckservice/healthcheckserviceimpl/healthcheck.go
+index 16420b29..2bc748b2 100644
+--- a/hivepaas_app/service/healthcheckservice/healthcheckserviceimpl/healthcheck.go
++++ b/hivepaas_app/service/healthcheckservice/healthcheckserviceimpl/healthcheck.go
+@@ -50,6 +50,8 @@ func (s *service) Healthcheck(
+ 		data.Task.MustSetOutput(&entity.TaskPeriodicOutput{Healthcheck: data.Output})
+ 		// Calculate state transition to decide whether we need to save the task or not
+ 		_ = s.calculateStateTransition(ctx, data)
++		// Run the jobs listening to the app's health
++		s.fireHealthEvent(ctx, data)
+ 		// Send notification
+ 		_ = s.sendNotification(ctx, s.db, data)
+ 		// Save state in cache
+diff --git a/hivepaas_app/service/healthcheckservice/healthcheckserviceimpl/healthcheck_trigger.go b/hivepaas_app/service/healthcheckservice/healthcheckserviceimpl/healthcheck_trigger.go
+new file mode 100644
+index 00000000..31bb08e4
+--- /dev/null
++++ b/hivepaas_app/service/healthcheckservice/healthcheckserviceimpl/healthcheck_trigger.go
+@@ -0,0 +1,46 @@
++package healthcheckserviceimpl
++
++import (
++	"context"
++
++	"github.com/hivepaas/hivepaas/hivepaas_app/base"
++	"github.com/hivepaas/hivepaas/hivepaas_app/entity/cacheentity"
++	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/logging"
++)
++
++// healthEvent is the event of a check's result: health-down or health-up when
++// its state changed from one it knew; none on its first run or when its last
++// state was lost, which the task is saved for but is no change of health.
++func healthEvent(
++	last *cacheentity.HealthcheckState,
++	status base.TaskStatus,
++) (base.SchedJobTriggerEvent, bool) {
++	if last == nil {
++		return "", false
++	}
++	wasUp := last.State == base.HealthcheckStateSuccess
++	isUp := status == base.TaskStatusDone
++	switch {
++	case wasUp && !isUp:
++		return base.SchedJobTriggerHealthDown, true
++	case !wasUp && isUp:
++		return base.SchedJobTriggerHealthUp, true
++	}
++	return "", false
++}
++
++// fireHealthEvent runs the jobs listening to the change of the app's health. A
++// failure is logged: the check itself went as it went.
++func (s *service) fireHealthEvent(ctx context.Context, data *healthcheckData) {
++	event, changed := healthEvent(data.LastHealthcheckState, data.Task.Status)
++	if !changed || data.Scope == nil {
++		return
++	}
++	app := data.Scope.GetApp()
++	if app == nil {
++		return
++	}
++	if _, err := s.schedJobTriggerService.Fire(context.WithoutCancel(ctx), event, app, nil); err != nil {
++		logging.GlobalLogger().Errorf("failed to start the jobs listening to %s of app %s: %v", event, app.ID, err)
++	}
++}
+diff --git a/hivepaas_app/service/healthcheckservice/healthcheckserviceimpl/service.go b/hivepaas_app/service/healthcheckservice/healthcheckserviceimpl/service.go
+index 355bba6b..c20faa84 100644
+--- a/hivepaas_app/service/healthcheckservice/healthcheckserviceimpl/service.go
++++ b/hivepaas_app/service/healthcheckservice/healthcheckserviceimpl/service.go
+@@ -5,6 +5,7 @@ import (
+ 	"github.com/hivepaas/hivepaas/hivepaas_app/repository/cacherepository"
+ 	"github.com/hivepaas/hivepaas/hivepaas_app/service/healthcheckservice"
+ 	"github.com/hivepaas/hivepaas/hivepaas_app/service/notificationservice"
++	"github.com/hivepaas/hivepaas/hivepaas_app/service/schedjobtriggerservice"
+ )
+ 
+ type service struct {
+@@ -12,7 +13,8 @@ type service struct {
+ 
+ 	healthcheckStateRepo cacherepository.HealthcheckStateRepo
+ 
+-	notificationService notificationservice.Service
++	notificationService    notificationservice.Service
++	schedJobTriggerService schedjobtriggerservice.Service
+ }
+ 
+ func New(
+@@ -21,12 +23,14 @@ func New(
+ 	healthcheckStateRepo cacherepository.HealthcheckStateRepo,
+ 
+ 	notificationService notificationservice.Service,
++	schedJobTriggerService schedjobtriggerservice.Service,
+ ) healthcheckservice.Service {
+ 	return &service{
+ 		db: db,
+ 
+ 		healthcheckStateRepo: healthcheckStateRepo,
+ 
+-		notificationService: notificationService,
++		notificationService:    notificationService,
++		schedJobTriggerService: schedJobTriggerService,
+ 	}
+ }
+diff --git a/hivepaas_app/service/projectservice/projectserviceimpl/update_status.go b/hivepaas_app/service/projectservice/projectserviceimpl/update_status.go
+index 9f81ca16..043ca907 100644
+--- a/hivepaas_app/service/projectservice/projectserviceimpl/update_status.go
++++ b/hivepaas_app/service/projectservice/projectserviceimpl/update_status.go
+@@ -17,9 +17,9 @@ func (s *service) SetProjectEnvStatus(
+ 	projectEnv *entity.ProjectEnv,
+ 	status base.ProjectStatus,
+ 	recursive bool,
+-) error {
++) (changedApps []*entity.App, err error) {
+ 	if projectEnv.Status == status {
+-		return nil
++		return nil, nil
+ 	}
+ 
+ 	var targetAppStatus base.AppStatus
+@@ -39,26 +39,25 @@ func (s *service) SetProjectEnvStatus(
+ 		app.Project = projectEnv.Project
+ 		app.ProjectEnv = projectEnv
+ 		// Run app update in a separate transaction to reduce lock time
+-		err := s.ExecuteEnvInTx(ctx, projectEnv, true, func(db database.Tx) error {
+-			err := s.appService.SetAppStatus(ctx, db, app, targetAppStatus, recursive)
+-			if err != nil {
+-				return hperrors.Wrap(err)
+-			}
+-			return nil
++		var changed []*entity.App
++		err = s.ExecuteEnvInTx(ctx, projectEnv, true, func(db database.Tx) (err error) {
++			changed, err = s.appService.SetAppStatus(ctx, db, app, targetAppStatus, recursive)
++			return hperrors.Wrap(err)
+ 		})
+ 		if err != nil {
+-			return hperrors.Wrap(err)
++			return nil, hperrors.Wrap(err)
+ 		}
++		changedApps = append(changedApps, changed...)
+ 	}
+ 
+ 	projectEnv.Status = status
+ 	projectEnv.UpdatedAt = timeutil.NowUTC()
+ 	projectEnv.UpdateVer++
+ 
+-	err := s.projectEnvRepo.Update(ctx, db, projectEnv,
++	err = s.projectEnvRepo.Update(ctx, db, projectEnv,
+ 		bunex.UpdateColumns("status", "updated_at", "update_ver"))
+ 	if err != nil {
+-		return hperrors.Wrap(err)
++		return nil, hperrors.Wrap(err)
+ 	}
+-	return nil
++	return changedApps, nil
+ }
+diff --git a/hivepaas_app/service/projectservice/service.go b/hivepaas_app/service/projectservice/service.go
+index 2c81d4e2..4961ef10 100644
+--- a/hivepaas_app/service/projectservice/service.go
++++ b/hivepaas_app/service/projectservice/service.go
+@@ -38,8 +38,10 @@ type Service interface {
+ 	// also deletes the volumes the environment owns and the data its apps kept.
+ 	DeleteProjectEnv(ctx context.Context, db database.IDB, projectEnv *entity.ProjectEnv,
+ 		removeStorage bool) error
++	// SetProjectEnvStatus sets an env's status and its apps', and says which apps
++	// changed status.
+ 	SetProjectEnvStatus(ctx context.Context, db database.IDB, projectEnv *entity.ProjectEnv,
+-		status base.ProjectStatus, recursive bool) error
++		status base.ProjectStatus, recursive bool) (changedApps []*entity.App, err error)
+ 
+ 	ExecuteEnvInTx(ctx context.Context, projectEnv *entity.ProjectEnv, requireUpdateVerMatch bool,
+ 		fn func(database.Tx) error) error
+diff --git a/hivepaas_app/service/schedjobtriggerservice/schedjobtriggerserviceimpl/app_status.go b/hivepaas_app/service/schedjobtriggerservice/schedjobtriggerserviceimpl/app_status.go
+new file mode 100644
+index 00000000..0e21f2c3
+--- /dev/null
++++ b/hivepaas_app/service/schedjobtriggerservice/schedjobtriggerserviceimpl/app_status.go
+@@ -0,0 +1,34 @@
++package schedjobtriggerserviceimpl
++
++import (
++	"context"
++
++	"github.com/hivepaas/hivepaas/hivepaas_app/base"
++	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
++	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/logging"
++)
++
++func (s *service) FireAppStatusEvents(ctx context.Context, apps []*entity.App) {
++	for _, app := range apps {
++		event, ok := appStatusEvent(app.Status)
++		if !ok {
++			continue
++		}
++		if _, err := s.Fire(ctx, event, app, nil); err != nil {
++			logging.GlobalLogger().Errorf("failed to start the jobs listening to %s of app %s: %v",
++				event, app.ID, err)
++		}
++	}
++}
++
++// appStatusEvent is the event of an app's new status: app-enabled or
++// app-disabled; none for a status that is no change of that kind.
++func appStatusEvent(status base.AppStatus) (base.SchedJobTriggerEvent, bool) {
++	switch status { //nolint:exhaustive // only these two are a change of status
++	case base.AppStatusActive:
++		return base.SchedJobTriggerAppEnabled, true
++	case base.AppStatusDisabled:
++		return base.SchedJobTriggerAppDisabled, true
++	}
++	return "", false
++}
+diff --git a/hivepaas_app/service/schedjobtriggerservice/service.go b/hivepaas_app/service/schedjobtriggerservice/service.go
+index 9c80e9b1..9df9b83e 100644
+--- a/hivepaas_app/service/schedjobtriggerservice/service.go
++++ b/hivepaas_app/service/schedjobtriggerservice/service.go
+@@ -19,4 +19,8 @@ type Service interface {
+ 	// that fails, is canceled or passes its timeout fails the wait; ctx ending
+ 	// cancels the runs still going.
+ 	WaitForRuns(ctx context.Context, runs []*Run, logStore *tasklog.Store) error
++	// FireAppStatusEvents runs the jobs listening to the apps' status changes:
++	// app-enabled or app-disabled, as each now is. Called once the change is
++	// committed; failures are logged.
++	FireAppStatusEvents(ctx context.Context, apps []*entity.App)
+ }
+diff --git a/hivepaas_app/usecase/appuc/status_update.go b/hivepaas_app/usecase/appuc/status_update.go
+index b694aad9..b6c05e72 100644
+--- a/hivepaas_app/usecase/appuc/status_update.go
++++ b/hivepaas_app/usecase/appuc/status_update.go
+@@ -19,6 +19,7 @@ func (uc *UC) UpdateAppStatus(
+ 	auth *basedto.Auth,
+ 	req *appdto.UpdateAppStatusReq,
+ ) (*appdto.UpdateAppStatusResp, error) {
++	var changed []*entity.App
+ 	err := transaction.Execute(ctx, uc.db, func(db database.Tx) error {
+ 		appData := &updateAppData{}
+ 		err := uc.loadAppDataForUpdateStatus(ctx, db, req, appData)
+@@ -30,7 +31,7 @@ func (uc *UC) UpdateAppStatus(
+ 		}
+ 
+ 		before := appData.App.Status
+-		err = uc.appService.SetAppStatus(ctx, db, appData.App, req.Status, req.Cascade)
++		changed, err = uc.appService.SetAppStatus(ctx, db, appData.App, req.Status, req.Cascade)
+ 		if err != nil {
+ 			return hperrors.Wrap(err)
+ 		}
+@@ -43,6 +44,7 @@ func (uc *UC) UpdateAppStatus(
+ 	if err != nil {
+ 		return nil, hperrors.Wrap(err)
+ 	}
++	uc.schedJobTriggerService.FireAppStatusEvents(ctx, changed)
+ 
+ 	return &appdto.UpdateAppStatusResp{}, nil
+ }
+diff --git a/hivepaas_app/usecase/appuc/uc.go b/hivepaas_app/usecase/appuc/uc.go
+index 949c06ea..0b9252fb 100644
+--- a/hivepaas_app/usecase/appuc/uc.go
++++ b/hivepaas_app/usecase/appuc/uc.go
+@@ -10,6 +10,7 @@ import (
+ 	"github.com/hivepaas/hivepaas/hivepaas_app/service/clusterservice"
+ 	"github.com/hivepaas/hivepaas/hivepaas_app/service/containerexecservice"
+ 	"github.com/hivepaas/hivepaas/hivepaas_app/service/loggingservice"
++	"github.com/hivepaas/hivepaas/hivepaas_app/service/schedjobtriggerservice"
+ 	"github.com/hivepaas/hivepaas/hivepaas_app/service/settingservice"
+ 	"github.com/hivepaas/hivepaas/services/docker"
+ )
+@@ -22,14 +23,15 @@ type UC struct {
+ 	binObjectRepo repository.BinObjectRepo
+ 	settingRepo   repository.SettingRepo
+ 
+-	auditService         auditservice.Service
+-	appCloneService      appcloneservice.Service
+-	appProvisionService  appprovisionservice.Service
+-	appService           appservice.Service
+-	clusterService       clusterservice.Service
+-	containerExecService containerexecservice.Service
+-	settingService       settingservice.Service
+-	loggingService       loggingservice.Service
++	auditService           auditservice.Service
++	appCloneService        appcloneservice.Service
++	appProvisionService    appprovisionservice.Service
++	appService             appservice.Service
++	schedJobTriggerService schedjobtriggerservice.Service
++	clusterService         clusterservice.Service
++	containerExecService   containerexecservice.Service
++	settingService         settingservice.Service
++	loggingService         loggingservice.Service
+ }
+ 
+ func New(
+@@ -44,6 +46,7 @@ func New(
+ 	appCloneService appcloneservice.Service,
+ 	appProvisionService appprovisionservice.Service,
+ 	appService appservice.Service,
++	schedJobTriggerService schedjobtriggerservice.Service,
+ 	clusterService clusterservice.Service,
+ 	containerExecService containerexecservice.Service,
+ 	settingService settingservice.Service,
+@@ -57,13 +60,14 @@ func New(
+ 		binObjectRepo: binObjectRepo,
+ 		settingRepo:   settingRepo,
+ 
+-		auditService:         auditService,
+-		appCloneService:      appCloneService,
+-		appProvisionService:  appProvisionService,
+-		appService:           appService,
+-		clusterService:       clusterService,
+-		containerExecService: containerExecService,
+-		settingService:       settingService,
+-		loggingService:       loggingService,
++		auditService:           auditService,
++		appCloneService:        appCloneService,
++		appProvisionService:    appProvisionService,
++		appService:             appService,
++		schedJobTriggerService: schedJobTriggerService,
++		clusterService:         clusterService,
++		containerExecService:   containerExecService,
++		settingService:         settingService,
++		loggingService:         loggingService,
+ 	}
+ }
+diff --git a/hivepaas_app/usecase/projectenvuc/status_update.go b/hivepaas_app/usecase/projectenvuc/status_update.go
+index cbf0941c..de087b70 100644
+--- a/hivepaas_app/usecase/projectenvuc/status_update.go
++++ b/hivepaas_app/usecase/projectenvuc/status_update.go
+@@ -19,6 +19,7 @@ func (uc *UC) UpdateProjectEnvStatus(
+ 	auth *basedto.Auth,
+ 	req *projectenvdto.UpdateProjectEnvStatusReq,
+ ) (*projectenvdto.UpdateProjectEnvStatusResp, error) {
++	var changedApps []*entity.App
+ 	err := transaction.Execute(ctx, uc.db, func(db database.Tx) error {
+ 		projectEnv, err := uc.projectEnvRepo.GetByID(ctx, db, req.ProjectID, req.ProjectEnvID,
+ 			bunex.SelectFor("UPDATE OF project_env"),
+@@ -38,7 +39,7 @@ func (uc *UC) UpdateProjectEnvStatus(
+ 		}
+ 
+ 		before := projectEnv.Status
+-		err = uc.projectService.SetProjectEnvStatus(ctx, db, projectEnv, req.Status, true)
++		changedApps, err = uc.projectService.SetProjectEnvStatus(ctx, db, projectEnv, req.Status, true)
+ 		if err != nil {
+ 			return hperrors.Wrap(err)
+ 		}
+@@ -52,6 +53,7 @@ func (uc *UC) UpdateProjectEnvStatus(
+ 	if err != nil {
+ 		return nil, hperrors.Wrap(err)
+ 	}
++	uc.schedJobTriggerService.FireAppStatusEvents(ctx, changedApps)
+ 
+ 	return &projectenvdto.UpdateProjectEnvStatusResp{}, nil
+ }
+diff --git a/hivepaas_app/usecase/projectenvuc/uc.go b/hivepaas_app/usecase/projectenvuc/uc.go
+index d25edd5f..9d18e416 100644
+--- a/hivepaas_app/usecase/projectenvuc/uc.go
++++ b/hivepaas_app/usecase/projectenvuc/uc.go
+@@ -7,6 +7,7 @@ import (
+ 	"github.com/hivepaas/hivepaas/hivepaas_app/service/appservice"
+ 	"github.com/hivepaas/hivepaas/hivepaas_app/service/auditservice"
+ 	"github.com/hivepaas/hivepaas/hivepaas_app/service/projectservice"
++	"github.com/hivepaas/hivepaas/hivepaas_app/service/schedjobtriggerservice"
+ 	"github.com/hivepaas/hivepaas/hivepaas_app/service/userservice"
+ )
+ 
+@@ -18,10 +19,11 @@ type UC struct {
+ 	projectEnvRepo repository.ProjectEnvRepo
+ 	projectRepo    repository.ProjectRepo
+ 
+-	appService     appservice.Service
+-	auditService   auditservice.Service
+-	projectService projectservice.Service
+-	userService    userservice.Service
++	appService             appservice.Service
++	schedJobTriggerService schedjobtriggerservice.Service
++	auditService           auditservice.Service
++	projectService         projectservice.Service
++	userService            userservice.Service
+ 
+ 	permissionManager permission.Manager
+ }
+@@ -35,6 +37,7 @@ func New(
+ 	projectRepo repository.ProjectRepo,
+ 
+ 	appService appservice.Service,
++	schedJobTriggerService schedjobtriggerservice.Service,
+ 	auditService auditservice.Service,
+ 	projectService projectservice.Service,
+ 	userService userservice.Service,
+@@ -49,10 +52,11 @@ func New(
+ 		projectEnvRepo: projectEnvRepo,
+ 		projectRepo:    projectRepo,
+ 
+-		appService:     appService,
+-		auditService:   auditService,
+-		projectService: projectService,
+-		userService:    userService,
++		appService:             appService,
++		schedJobTriggerService: schedJobTriggerService,
++		auditService:           auditService,
++		projectService:         projectService,
++		userService:            userService,
+ 
+ 		permissionManager: permissionManager,
+ 	}
+diff --git a/hivepaas_app/usecase/projectuc/status_update.go b/hivepaas_app/usecase/projectuc/status_update.go
+index 6bbffce5..ad9a3ca2 100644
+--- a/hivepaas_app/usecase/projectuc/status_update.go
++++ b/hivepaas_app/usecase/projectuc/status_update.go
+@@ -5,6 +5,7 @@ import (
+ 
+ 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
+ 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
++	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
+ 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
+ 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
+ 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/auditdetail"
+@@ -19,6 +20,7 @@ func (uc *UC) UpdateProjectStatus(
+ 	auth *basedto.Auth,
+ 	req *projectdto.UpdateProjectStatusReq,
+ ) (*projectdto.UpdateProjectStatusResp, error) {
++	var changedApps []*entity.App
+ 	err := transaction.Execute(ctx, uc.db, func(db database.Tx) error {
+ 		projectData := &updateProjectData{}
+ 		err := uc.loadProjectDataForUpdateStatus(ctx, db, req, projectData)
+@@ -39,11 +41,9 @@ func (uc *UC) UpdateProjectStatus(
+ 			env.Project = project
+ 			// Run updates in a separate transaction to reduce lock time
+ 			err = uc.projectService.ExecuteEnvInTx(ctx, env, true, func(db database.Tx) error {
+-				err := uc.projectService.SetProjectEnvStatus(ctx, db, env, project.Status, true)
+-				if err != nil {
+-					return hperrors.Wrap(err)
+-				}
+-				return nil
++				changed, err := uc.projectService.SetProjectEnvStatus(ctx, db, env, project.Status, true)
++				changedApps = append(changedApps, changed...)
++				return hperrors.Wrap(err)
+ 			})
+ 			if err != nil {
+ 				return hperrors.Wrap(err)
+@@ -65,6 +65,7 @@ func (uc *UC) UpdateProjectStatus(
+ 	if err != nil {
+ 		return nil, hperrors.Wrap(err)
+ 	}
++	uc.schedJobTriggerService.FireAppStatusEvents(ctx, changedApps)
+ 
+ 	return &projectdto.UpdateProjectStatusResp{}, nil
+ }
+diff --git a/hivepaas_app/usecase/projectuc/uc.go b/hivepaas_app/usecase/projectuc/uc.go
+index 3bf537f4..a9689e37 100644
+--- a/hivepaas_app/usecase/projectuc/uc.go
++++ b/hivepaas_app/usecase/projectuc/uc.go
+@@ -7,6 +7,7 @@ import (
+ 	"github.com/hivepaas/hivepaas/hivepaas_app/service/appservice"
+ 	"github.com/hivepaas/hivepaas/hivepaas_app/service/auditservice"
+ 	"github.com/hivepaas/hivepaas/hivepaas_app/service/projectservice"
++	"github.com/hivepaas/hivepaas/hivepaas_app/service/schedjobtriggerservice"
+ 	"github.com/hivepaas/hivepaas/hivepaas_app/service/userservice"
+ 	"github.com/hivepaas/hivepaas/hivepaas_app/service/volumeservice"
+ 	"github.com/hivepaas/hivepaas/services/docker"
+@@ -19,11 +20,12 @@ type UC struct {
+ 	binObjectRepo repository.BinObjectRepo
+ 	projectRepo   repository.ProjectRepo
+ 
+-	auditService   auditservice.Service
+-	appService     appservice.Service
+-	projectService projectservice.Service
+-	userService    userservice.Service
+-	volumeService  volumeservice.Service
++	auditService           auditservice.Service
++	appService             appservice.Service
++	schedJobTriggerService schedjobtriggerservice.Service
++	projectService         projectservice.Service
++	userService            userservice.Service
++	volumeService          volumeservice.Service
+ 
+ 	dockerManager     docker.Manager
+ 	permissionManager permission.Manager
+@@ -38,6 +40,7 @@ func New(
+ 
+ 	auditService auditservice.Service,
+ 	appService appservice.Service,
++	schedJobTriggerService schedjobtriggerservice.Service,
+ 	projectService projectservice.Service,
+ 	userService userservice.Service,
+ 	volumeService volumeservice.Service,
+@@ -52,11 +55,12 @@ func New(
+ 		binObjectRepo: binObjectRepo,
+ 		projectRepo:   projectRepo,
+ 
+-		auditService:   auditService,
+-		appService:     appService,
+-		projectService: projectService,
+-		userService:    userService,
+-		volumeService:  volumeService,
++		auditService:           auditService,
++		appService:             appService,
++		schedJobTriggerService: schedJobTriggerService,
++		projectService:         projectService,
++		userService:            userService,
++		volumeService:          volumeService,
+ 
+ 		dockerManager:     dockerManager,
+ 		permissionManager: permissionManager,

@@ -1,0 +1,372 @@
+diff --git a/hivepaas_app/interface/mcp/tools_sched_write.go b/hivepaas_app/interface/mcp/tools_sched_write.go
+index 3f4425ce..a82e38e2 100644
+--- a/hivepaas_app/interface/mcp/tools_sched_write.go
++++ b/hivepaas_app/interface/mcp/tools_sched_write.go
+@@ -73,6 +73,8 @@ var schedJobDescs = func() map[string]string {
+ 			"id is given. When not given, both use the default, as the dashboard's form starts",
+ 		"sequence": "not used here: this plans a command that runs in an app; a job sequence, which runs " +
+ 			"other scheduled jobs in order, is made in the dashboard",
++		"triggers": "events of this app that also run the job, beside its schedule: pre-deploy, post-deploy, " +
++			"deploy-failed, health-down, health-up, app-enabled, app-disabled; up to 10",
+ 	}
+ 	maps.Copy(descs, scheduleDescs("schedule."))
+ 	maps.Copy(descs, descCommand("command."))
+diff --git a/hivepaas_app/usecase/settings/schedjobuc/create.go b/hivepaas_app/usecase/settings/schedjobuc/create.go
+index 73b27648..5b08e32c 100644
+--- a/hivepaas_app/usecase/settings/schedjobuc/create.go
++++ b/hivepaas_app/usecase/settings/schedjobuc/create.go
+@@ -50,6 +50,9 @@ func (uc *UC) CreateSchedJob(
+ 			if err := uc.checkSequenceMembers(ctx, db, req.Scope, schedJob); err != nil {
+ 				return hperrors.Wrap(err)
+ 			}
++			if err := uc.checkTriggerApps(ctx, db, req.Scope, schedJob); err != nil {
++				return hperrors.Wrap(err)
++			}
+ 			if err := uc.checkPermissionPipeToApp(ctx, db, auth, schedJob); err != nil {
+ 				return hperrors.Wrap(err)
+ 			}
+diff --git a/hivepaas_app/usecase/settings/schedjobuc/get.go b/hivepaas_app/usecase/settings/schedjobuc/get.go
+index 651a2419..26a3e396 100644
+--- a/hivepaas_app/usecase/settings/schedjobuc/get.go
++++ b/hivepaas_app/usecase/settings/schedjobuc/get.go
+@@ -35,6 +35,9 @@ func (uc *UC) GetSchedJob(
+ 	if err = uc.loadSequenceMembers(ctx, uc.DB, resp.RefObjects, resp.Data); err != nil {
+ 		return nil, hperrors.Wrap(err)
+ 	}
++	if err = uc.loadTriggerApps(ctx, uc.DB, resp.RefObjects, resp.Data); err != nil {
++		return nil, hperrors.Wrap(err)
++	}
+ 	respData, err := schedjobdto.TransformSchedJob(resp.Data, resp.RefObjects, false)
+ 	if err != nil {
+ 		return nil, hperrors.Wrap(err)
+diff --git a/hivepaas_app/usecase/settings/schedjobuc/list.go b/hivepaas_app/usecase/settings/schedjobuc/list.go
+index d091affa..32b0c5ca 100644
+--- a/hivepaas_app/usecase/settings/schedjobuc/list.go
++++ b/hivepaas_app/usecase/settings/schedjobuc/list.go
+@@ -35,6 +35,9 @@ func (uc *UC) ListSchedJob(
+ 	if err = uc.loadSequenceMembers(ctx, uc.DB, resp.RefObjects, resp.Data...); err != nil {
+ 		return nil, hperrors.Wrap(err)
+ 	}
++	if err = uc.loadTriggerApps(ctx, uc.DB, resp.RefObjects, resp.Data...); err != nil {
++		return nil, hperrors.Wrap(err)
++	}
+ 	respData, err := schedjobdto.TransformSchedJobs(resp.Data, resp.RefObjects, true)
+ 	if err != nil {
+ 		return nil, hperrors.Wrap(err)
+diff --git a/hivepaas_app/usecase/settings/schedjobuc/list_env.go b/hivepaas_app/usecase/settings/schedjobuc/list_env.go
+index b109ccbe..0c86fd95 100644
+--- a/hivepaas_app/usecase/settings/schedjobuc/list_env.go
++++ b/hivepaas_app/usecase/settings/schedjobuc/list_env.go
+@@ -43,6 +43,9 @@ func (uc *UC) ListEnvSchedJob(
+ 	if err = uc.loadSequenceMembers(ctx, uc.DB, resp.RefObjects, resp.Data...); err != nil {
+ 		return nil, hperrors.Wrap(err)
+ 	}
++	if err = uc.loadTriggerApps(ctx, uc.DB, resp.RefObjects, resp.Data...); err != nil {
++		return nil, hperrors.Wrap(err)
++	}
+ 	if err = uc.loadOwnerApps(ctx, resp.RefObjects, resp.Data); err != nil {
+ 		return nil, hperrors.Wrap(err)
+ 	}
+diff --git a/hivepaas_app/usecase/settings/schedjobuc/schedjobdto/create.go b/hivepaas_app/usecase/settings/schedjobuc/schedjobdto/create.go
+index b241ac67..d2b104b2 100644
+--- a/hivepaas_app/usecase/settings/schedjobuc/schedjobdto/create.go
++++ b/hivepaas_app/usecase/settings/schedjobuc/schedjobdto/create.go
+@@ -49,6 +49,8 @@ type SchedJobBaseReq struct {
+ 	Notification       *basedto.BaseEventNotificationReq          `json:"notification"`
+ 	// Sequence is a job-sequence's jobs; left out for every other type.
+ 	Sequence *SchedJobSequenceReq `json:"sequence"`
++	// Triggers are the events that run the job, beside its schedule.
++	Triggers []*SchedJobTriggerReq `json:"triggers"`
+ }
+ 
+ func (req *SchedJobBaseReq) ToEntity() *entity.SchedJob {
+@@ -65,6 +67,7 @@ func (req *SchedJobBaseReq) ToEntity() *entity.SchedJob {
+ 		Timeout:            req.Timeout,
+ 		ControlDisabled:    req.ControlDisabled,
+ 		Notification:       req.Notification.ToEntity(),
++		Triggers:           triggersToEntity(req.Triggers),
+ 	}
+ 	if req.JobType == base.SchedJobTypeContainerCommand {
+ 		res.Command = req.Command.ToEntity()
+@@ -130,6 +133,7 @@ func (req *SchedJobBaseReq) validate(field string) (res []vld.Validator) {
+ 	res = append(res, req.CommandOutput.validate(req.App.ID, field+"commandOutput")...)
+ 	res = append(res, req.Notification.Validate(field+"notification")...)
+ 	res = append(res, req.validateSequenceFields(field)...)
++	res = append(res, req.validateTriggers(field)...)
+ 	return res
+ }
+ 
+diff --git a/hivepaas_app/usecase/settings/schedjobuc/schedjobdto/get.go b/hivepaas_app/usecase/settings/schedjobuc/schedjobdto/get.go
+index cc83ceac..eeac8b6f 100644
+--- a/hivepaas_app/usecase/settings/schedjobuc/schedjobdto/get.go
++++ b/hivepaas_app/usecase/settings/schedjobuc/schedjobdto/get.go
+@@ -54,6 +54,7 @@ type SchedJobResp struct {
+ 	CommandOutput      *CommandOutputResp                      `json:"commandOutput,omitempty"`
+ 	Notification       *basedto.BaseEventNotificationResp      `json:"notification"`
+ 	Sequence           *SchedJobSequenceResp                   `json:"sequence,omitempty" copy:"-"`
++	Triggers           []*SchedJobTriggerResp                  `json:"triggers,omitempty" copy:"-"`
+ 
+ 	// Calculated fields
+ 	NextRuns []time.Time `json:"nextRuns,omitempty"`
+@@ -164,6 +165,7 @@ func TransformSchedJob(
+ 
+ 	resp.Notification = basedto.TransformBaseEventNotification(job.Notification, refObjects)
+ 	resp.Sequence = TransformSchedJobSequence(job.Sequence, refObjects)
++	resp.Triggers = TransformSchedJobTriggers(job.Triggers, refObjects)
+ 
+ 	// Custom fields
+ 	if !resp.RetryBackoff && resp.RetryBackoffJitter > 0 {
+diff --git a/hivepaas_app/usecase/settings/schedjobuc/schedjobdto/trigger.go b/hivepaas_app/usecase/settings/schedjobuc/schedjobdto/trigger.go
+new file mode 100644
+index 00000000..555c722e
+--- /dev/null
++++ b/hivepaas_app/usecase/settings/schedjobuc/schedjobdto/trigger.go
+@@ -0,0 +1,118 @@
++package schedjobdto
++
++import (
++	"fmt"
++	"slices"
++	"strings"
++
++	vld "github.com/tiendc/go-validator"
++
++	"github.com/hivepaas/hivepaas/hivepaas_app/base"
++	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
++	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
++)
++
++// SchedJobTriggerReq is an event that runs the job.
++type SchedJobTriggerReq struct {
++	Event base.SchedJobTriggerEvent `json:"event"`
++	// Apps are the apps whose events run the job: none for an app's job, one or
++	// more of the env's for an env job.
++	Apps []basedto.ObjectIDReq `json:"apps"`
++	// Wait holds the deploy until the run ends. pre-deploy only.
++	Wait bool `json:"wait"`
++}
++
++func triggersToEntity(reqs []*SchedJobTriggerReq) []*entity.SchedJobTrigger {
++	triggers := make([]*entity.SchedJobTrigger, 0, len(reqs))
++	for _, req := range reqs {
++		if req == nil {
++			continue
++		}
++		trigger := &entity.SchedJobTrigger{Event: req.Event, Wait: req.Wait}
++		for _, app := range req.Apps {
++			trigger.Apps = append(trigger.Apps, entity.ObjectID{ID: app.ID})
++		}
++		triggers = append(triggers, trigger)
++	}
++	if len(triggers) == 0 {
++		return nil
++	}
++	return triggers
++}
++
++// triggerJobTypes are the job types triggers run: those that run in an app or
++// an env. A system job has none.
++var triggerJobTypes = []base.SchedJobType{base.SchedJobTypeContainerCommand, base.SchedJobTypeJobSequence}
++
++// validateTriggers checks what a trigger says on its own. Whether its apps are
++// the right ones depends on the job's scope, and is checked with it.
++func (req *SchedJobBaseReq) validateTriggers(field string) (res []vld.Validator) {
++	if len(req.Triggers) == 0 {
++		return nil
++	}
++	res = append(res, basedto.ValidateCond(slices.Contains(triggerJobTypes, req.JobType) &&
++		len(req.Triggers) <= base.SchedJobMaxTriggers, field+"triggers")...)
++	seen := make(map[string]struct{}, len(req.Triggers))
++	for i, trigger := range req.Triggers {
++		triggerField := fmt.Sprintf("%striggers[%d]", field, i)
++		res = append(res, basedto.ValidateCond(trigger != nil, triggerField)...)
++		if trigger == nil {
++			continue
++		}
++		key := triggerKey(trigger)
++		_, dup := seen[key]
++		seen[key] = struct{}{}
++		res = append(res, basedto.ValidateCond(!dup, triggerField)...)
++		res = append(res, basedto.ValidateStrIn(&trigger.Event, true, base.AllSchedJobTriggerEvents,
++			triggerField+".event")...)
++		res = append(res, basedto.ValidateCond(!trigger.Wait || trigger.Event == base.SchedJobTriggerPreDeploy,
++			triggerField+".wait")...)
++		for j := range trigger.Apps {
++			res = append(res, basedto.ValidateObjectIDReq(&trigger.Apps[j], true,
++				fmt.Sprintf("%s.apps[%d]", triggerField, j))...)
++		}
++	}
++	return res
++}
++
++// triggerKey is what two triggers alike share: their event and their apps.
++func triggerKey(trigger *SchedJobTriggerReq) string {
++	ids := make([]string, 0, len(trigger.Apps))
++	for _, app := range trigger.Apps {
++		ids = append(ids, app.ID)
++	}
++	slices.Sort(ids)
++	return string(trigger.Event) + "|" + strings.Join(slices.Compact(ids), ",")
++}
++
++type SchedJobTriggerResp struct {
++	Event base.SchedJobTriggerEvent  `json:"event"`
++	Apps  []*basedto.NamedObjectResp `json:"apps,omitempty"`
++	Wait  bool                       `json:"wait,omitempty"`
++}
++
++// TransformSchedJobTriggers is a job's triggers with their apps named, from the
++// apps refObjects holds. An app gone keeps its ID and no name.
++func TransformSchedJobTriggers(
++	triggers []*entity.SchedJobTrigger,
++	refObjects *entity.RefObjects,
++) []*SchedJobTriggerResp {
++	resp := make([]*SchedJobTriggerResp, 0, len(triggers))
++	for _, trigger := range triggers {
++		if trigger == nil {
++			continue
++		}
++		item := &SchedJobTriggerResp{Event: trigger.Event, Wait: trigger.Wait}
++		for _, app := range trigger.Apps {
++			named := &basedto.NamedObjectResp{ID: app.ID}
++			if refObjects != nil {
++				if refApp := refObjects.RefApps[app.ID]; refApp != nil {
++					named.Name = refApp.Name
++				}
++			}
++			item.Apps = append(item.Apps, named)
++		}
++		resp = append(resp, item)
++	}
++	return resp
++}
+diff --git a/hivepaas_app/usecase/settings/schedjobuc/sequence.go b/hivepaas_app/usecase/settings/schedjobuc/sequence.go
+index 6d9578da..dadf47f6 100644
+--- a/hivepaas_app/usecase/settings/schedjobuc/sequence.go
++++ b/hivepaas_app/usecase/settings/schedjobuc/sequence.go
+@@ -34,6 +34,12 @@ func checkJobTypeInScope(scopeType base.ObjectScopeType, jobType base.SchedJobTy
+ // and a disabled member is allowed - the run skips it.
+ func verifyingRefIDs(job *entity.SchedJob) *entity.RefObjectIDs {
+ 	refIDs := job.GetRefObjectIDs()
++	// A trigger's apps likewise: checkTriggerApps checks them against the env.
++	if triggerApps := job.TriggerAppIDs(); len(triggerApps) > 0 {
++		refIDs.RefAppIDs = gofn.Filter(refIDs.RefAppIDs, func(id string) bool {
++			return !gofn.Contain(triggerApps, id)
++		})
++	}
+ 	members := job.Sequence.MemberIDs()
+ 	if len(members) == 0 {
+ 		return refIDs
+diff --git a/hivepaas_app/usecase/settings/schedjobuc/trigger.go b/hivepaas_app/usecase/settings/schedjobuc/trigger.go
+new file mode 100644
+index 00000000..9d87988c
+--- /dev/null
++++ b/hivepaas_app/usecase/settings/schedjobuc/trigger.go
+@@ -0,0 +1,93 @@
++package schedjobuc
++
++import (
++	"context"
++	"fmt"
++
++	"github.com/hivepaas/hivepaas/hivepaas_app/base"
++	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
++	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
++	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
++)
++
++// checkTriggerApps refuses triggers naming the wrong apps: an app's job listens
++// to its own app and names none; an env job names apps of its env.
++func (uc *UC) checkTriggerApps(
++	ctx context.Context,
++	db database.IDB,
++	scope *entity.ObjectScope,
++	job *entity.SchedJob,
++) error {
++	if len(job.Triggers) == 0 {
++		return nil
++	}
++	apps := map[string]*entity.App{}
++	if appIDs := job.TriggerAppIDs(); len(appIDs) > 0 {
++		loaded, err := uc.appService.LoadApps(ctx, db, "", appIDs, false, false)
++		if err != nil {
++			return hperrors.Wrap(err)
++		}
++		for _, app := range loaded {
++			apps[app.ID] = app
++		}
++	}
++	for i, trigger := range job.Triggers {
++		if problem := triggerAppProblem(scope, trigger, apps); problem != "" {
++			return hperrors.NewArgumentInvalid(fmt.Sprintf("triggers[%d].apps", i)).
++				WithExtraDetail("trigger %d: %s", i+1, problem)
++		}
++	}
++	return nil
++}
++
++// triggerAppProblem says why a trigger's apps do not fit the job's scope, or
++// nothing when they do. apps are the apps found, by ID.
++func triggerAppProblem(
++	scope *entity.ObjectScope,
++	trigger *entity.SchedJobTrigger,
++	apps map[string]*entity.App,
++) string {
++	if scope.ScopeType != base.ObjectScopeProjectEnv {
++		if len(trigger.Apps) > 0 {
++			return "an app's job listens to its own app: name no app"
++		}
++		return ""
++	}
++	if len(trigger.Apps) == 0 {
++		return "name the apps whose events run the job"
++	}
++	for _, ref := range trigger.Apps {
++		app := apps[ref.ID]
++		switch {
++		case app == nil:
++			return fmt.Sprintf("app %s is not found", ref.ID)
++		case app.ProjectEnvID != scope.ProjectEnvID:
++			return fmt.Sprintf("app %s is not in this env", ref.ID)
++		}
++	}
++	return ""
++}
++
++// loadTriggerApps adds to refObjects the apps the triggers of jobSettings name,
++// whatever their scope, for their names in the response.
++func (uc *UC) loadTriggerApps(
++	ctx context.Context,
++	db database.IDB,
++	refObjects *entity.RefObjects,
++	jobSettings ...*entity.Setting,
++) error {
++	var appIDs []string
++	for _, setting := range jobSettings {
++		job, err := setting.AsSchedJob()
++		if err != nil {
++			return hperrors.Wrap(err)
++		}
++		appIDs = append(appIDs, job.TriggerAppIDs()...)
++	}
++	if len(appIDs) == 0 || refObjects == nil {
++		return nil
++	}
++	err := uc.SettingService.LoadRefObjectsByIDsSkipMissing(ctx, db, &refObjects, nil, false,
++		&entity.RefObjectIDs{RefAppIDs: appIDs})
++	return hperrors.Wrap(err)
++}
+diff --git a/hivepaas_app/usecase/settings/schedjobuc/update.go b/hivepaas_app/usecase/settings/schedjobuc/update.go
+index 11850c0d..8cd00fa7 100644
+--- a/hivepaas_app/usecase/settings/schedjobuc/update.go
++++ b/hivepaas_app/usecase/settings/schedjobuc/update.go
+@@ -46,6 +46,9 @@ func (uc *UC) UpdateSchedJob(
+ 			if err := uc.checkSequenceMembers(ctx, db, req.Scope, newJob); err != nil {
+ 				return hperrors.Wrap(err)
+ 			}
++			if err := uc.checkTriggerApps(ctx, db, req.Scope, newJob); err != nil {
++				return hperrors.Wrap(err)
++			}
+ 			if err := uc.checkPermissionPipeToApp(ctx, db, auth, newJob); err != nil {
+ 				return hperrors.Wrap(err)
+ 			}

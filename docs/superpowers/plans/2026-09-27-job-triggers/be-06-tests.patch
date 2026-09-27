@@ -1,0 +1,66 @@
+diff --git a/hivepaas_app/entity/setting_sched_job_trigger_test.go b/hivepaas_app/entity/setting_sched_job_trigger_test.go
+index 85168f5b..90f065a4 100644
+--- a/hivepaas_app/entity/setting_sched_job_trigger_test.go
++++ b/hivepaas_app/entity/setting_sched_job_trigger_test.go
+@@ -79,3 +79,17 @@ func TestTaskArgsAsSchedJobExec(t *testing.T) {
+ 		assert.Equal(t, "d1", args.Trigger.DeploymentID)
+ 	}
+ }
++
++// A run a trigger fired references the app the event happened to, so the run's
++// page can name it.
++func TestATriggeredRunReferencesItsApp(t *testing.T) {
++	task := &Task{Type: base.TaskTypeSchedJobExec, Scope: base.ObjectScopeProjectEnv, ObjectID: "p1:dev"}
++	task.MustSetArgs(&TaskSchedJobExecArgs{Trigger: &SchedJobTriggerCause{
++		Event: base.SchedJobTriggerPostDeploy, AppID: "a1",
++	}})
++
++	refs := task.GetRefObjectIDs()
++
++	assert.Equal(t, []string{"a1"}, refs.RefAppIDs)
++	assert.Equal(t, []string{"p1:dev"}, refs.RefProjectEnvIDs)
++}
+diff --git a/hivepaas_app/usecase/taskuc/taskdto/trigger_test.go b/hivepaas_app/usecase/taskuc/taskdto/trigger_test.go
+new file mode 100644
+index 00000000..176259d5
+--- /dev/null
++++ b/hivepaas_app/usecase/taskuc/taskdto/trigger_test.go
+@@ -0,0 +1,38 @@
++package taskdto
++
++import (
++	"testing"
++
++	"github.com/stretchr/testify/assert"
++
++	"github.com/hivepaas/hivepaas/hivepaas_app/base"
++	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
++	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
++)
++
++// A run a trigger fired says so: the event, the app it happened to, the
++// deployment.
++func TestTransformTaskSaysWhatTriggeredARun(t *testing.T) {
++	task := &entity.Task{ID: "t1", Type: base.TaskTypeSchedJobExec}
++	task.MustSetArgs(&entity.TaskSchedJobExecArgs{Trigger: &entity.SchedJobTriggerCause{
++		Event: base.SchedJobTriggerPostDeploy, AppID: "a1", DeploymentID: "d1",
++	}})
++	refObjects := entity.NewRefObjects()
++	refObjects.RefApps["a1"] = &entity.App{ID: "a1", Name: "backend"}
++
++	resp, err := TransformTask(task, nil, refObjects)
++
++	assert.NoError(t, err)
++	assert.Equal(t, &TaskTriggerResp{
++		Event:        base.SchedJobTriggerPostDeploy,
++		App:          &basedto.NamedObjectResp{ID: "a1", Name: "backend"},
++		DeploymentID: "d1",
++	}, resp.Trigger)
++}
++
++func TestTransformTaskGivesNoTriggerForARunByHand(t *testing.T) {
++	resp, err := TransformTask(&entity.Task{ID: "t1", Type: base.TaskTypeSchedJobExec}, nil, entity.NewRefObjects())
++
++	assert.NoError(t, err)
++	assert.Nil(t, resp.Trigger)
++}

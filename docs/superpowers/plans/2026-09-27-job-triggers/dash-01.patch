@@ -1,0 +1,703 @@
+diff --git a/src/application/modules/projects/api/services/project-apps-services/scheduled-jobs/app-scheduled-jobs.api.contracts.ts b/src/application/modules/projects/api/services/project-apps-services/scheduled-jobs/app-scheduled-jobs.api.contracts.ts
+index 2767c51b..72495a76 100644
+--- a/src/application/modules/projects/api/services/project-apps-services/scheduled-jobs/app-scheduled-jobs.api.contracts.ts
++++ b/src/application/modules/projects/api/services/project-apps-services/scheduled-jobs/app-scheduled-jobs.api.contracts.ts
+@@ -6,6 +6,7 @@ import type {
+     EAppScheduledJobType,
+     ESchedJobSeqMode,
+     ESchedJobSeqOnFailure,
++    ESchedJobTriggerEvent,
+ } from "~/projects/module-shared/enums";
+ 
+ import type { ESettingStatus } from "@application/shared/enums";
+@@ -97,6 +98,13 @@ export type AppScheduledJobs_Sequence_Payload = {
+     steps: AppScheduledJobs_SequenceStep_Payload[];
+ };
+ 
++/** An event that runs the job: `apps` for an env's job only; `wait` for pre-deploy only. */
++export type AppScheduledJobs_Trigger_Payload = {
++    event: ESchedJobTriggerEvent;
++    apps?: AppScheduledJobs_RefObject_Payload[];
++    wait?: boolean;
++};
++
+ /**
+  * A job to create or update. A container command has `app` and `command`; a job
+  * sequence has `sequence` and neither of those. `schedule` is null for a job run
+@@ -120,6 +128,7 @@ export type AppScheduledJobs_Upsert_Payload = {
+     command?: AppScheduledJobs_Command_Payload;
+     commandOutput?: AppScheduledJobs_CommandOutput_Payload;
+     sequence?: AppScheduledJobs_Sequence_Payload;
++    triggers?: AppScheduledJobs_Trigger_Payload[];
+     notification: AppScheduledJobs_Notification_Payload;
+ };
+ 
+diff --git a/src/application/modules/projects/api/services/project-apps-services/scheduled-jobs/app-scheduled-jobs.api.validator.ts b/src/application/modules/projects/api/services/project-apps-services/scheduled-jobs/app-scheduled-jobs.api.validator.ts
+index 6feeb96b..04d32f4c 100644
+--- a/src/application/modules/projects/api/services/project-apps-services/scheduled-jobs/app-scheduled-jobs.api.validator.ts
++++ b/src/application/modules/projects/api/services/project-apps-services/scheduled-jobs/app-scheduled-jobs.api.validator.ts
+@@ -16,6 +16,7 @@ import {
+     EAppScheduledJobType,
+     ESchedJobSeqMode,
+     ESchedJobSeqOnFailure,
++    ESchedJobTriggerEvent,
+ } from "~/projects/module-shared/enums";
+ 
+ import { BaseMetaApiSchema, PagingMetaApiSchema, parseApiResponse } from "@infrastructure/api";
+@@ -201,6 +202,15 @@ const NotificationSchema = z
+     .nullish()
+     .transform(value => value ?? null);
+ 
++const TriggerSchema = z.object({
++    event: z.nativeEnum(ESchedJobTriggerEvent),
++    apps: z
++        .array(z.object({ id: z.string(), name: z.string().optional().default("") }))
++        .nullish()
++        .transform(value => value ?? []),
++    wait: z.boolean().optional().default(false),
++});
++
+ export const AppScheduledJobSchema = z.object({
+     id: z.string(),
+     type: z.string(),
+@@ -229,6 +239,16 @@ export const AppScheduledJobSchema = z.object({
+     commandOutput: CommandOutputSchema,
+     notification: NotificationSchema,
+     sequence: SequenceSchema,
++    // An event the dashboard does not know yet is left out, not a failed list.
++    triggers: z
++        .array(z.unknown())
++        .nullish()
++        .transform(value =>
++            (value ?? []).flatMap(item => {
++                const parsed = TriggerSchema.safeParse(item);
++                return parsed.success ? [parsed.data] : [];
++            }),
++        ),
+     nextRuns: z
+         .array(z.coerce.date())
+         .nullish()
+diff --git a/src/application/modules/projects/dialogs/create-or-edit-app-scheduled-job/form/create-or-edit-app-scheduled-job.form-mappers.ts b/src/application/modules/projects/dialogs/create-or-edit-app-scheduled-job/form/create-or-edit-app-scheduled-job.form-mappers.ts
+index af71560f..343a1917 100644
+--- a/src/application/modules/projects/dialogs/create-or-edit-app-scheduled-job/form/create-or-edit-app-scheduled-job.form-mappers.ts
++++ b/src/application/modules/projects/dialogs/create-or-edit-app-scheduled-job/form/create-or-edit-app-scheduled-job.form-mappers.ts
+@@ -10,6 +10,7 @@ import {
+     createDefaultCommandArgGroup,
+     createDefaultJobScheduleFormValues,
+     mapJobScheduleToFormValues,
++    mapJobTriggersToFormValues,
+ } from "~/projects/module-shared/components";
+ import { EAppScheduledJobCommandOutputMode, EAppScheduledJobTaskPriority } from "~/projects/module-shared/enums";
+ 
+@@ -75,6 +76,7 @@ export function createEmptyAppScheduledJobFormDefaults(projectId: string = ""):
+         pipeTargetProject: { id: projectId, name: "" },
+         pipeTargetApp: null,
+         pipeCommand: createDefaultPipeCommand(),
++        triggers: [],
+         notification: {
+             successUseDefault: true,
+             success: undefined,
+@@ -182,6 +184,7 @@ export function mapAppScheduledJobToFormInput(
+         envVars: command?.envVars ?? [],
+         argGroups: command?.argGroups ?? [],
+         ...mapCommandOutput(job.commandOutput, projectId),
++        triggers: mapJobTriggersToFormValues(job.triggers),
+         notification: {
+             successUseDefault: job.notification?.successUseDefault ?? true,
+             success: job.notification?.success,
+diff --git a/src/application/modules/projects/dialogs/create-or-edit-app-scheduled-job/form/create-or-edit-app-scheduled-job.form.com.tsx b/src/application/modules/projects/dialogs/create-or-edit-app-scheduled-job/form/create-or-edit-app-scheduled-job.form.com.tsx
+index 68c3fe56..a0cd2dbf 100644
+--- a/src/application/modules/projects/dialogs/create-or-edit-app-scheduled-job/form/create-or-edit-app-scheduled-job.form.com.tsx
++++ b/src/application/modules/projects/dialogs/create-or-edit-app-scheduled-job/form/create-or-edit-app-scheduled-job.form.com.tsx
+@@ -6,7 +6,12 @@ import { cn } from "@lib/utils";
+ import { type FieldErrors, FormProvider, useController, useForm, useFormState } from "react-hook-form";
+ import { useToggle, useUpdateEffect } from "react-use";
+ import type { AppScheduledJob } from "~/projects/domain";
+-import { CommandArgGroupsSection, CommandConfigSection, JobScheduleFields } from "~/projects/module-shared/components";
++import {
++    CommandArgGroupsSection,
++    CommandConfigSection,
++    JobScheduleFields,
++    JobTriggersField,
++} from "~/projects/module-shared/components";
+ import { PROJECT_FORM_CONTROL_MAX_WIDTH_CLASS } from "~/projects/module-shared/constants";
+ import { EAppScheduledJobCommandOutputMode } from "~/projects/module-shared/enums";
+ import { useProjectNotificationSettingsSources } from "~/projects/module-shared/hooks";
+@@ -378,6 +383,10 @@ export function CreateOrEditAppScheduledJobForm({
+                                 </div>
+                             </ContentBlock>
+ 
++                            <ContentBlock label="Triggers">
++                                <JobTriggersField readOnly={readOnly} />
++                            </ContentBlock>
++
+                             <CommandConfigSection
+                                 label="Command"
+                                 showLoadTemplate
+diff --git a/src/application/modules/projects/dialogs/create-or-edit-app-scheduled-job/schemas/create-or-edit-app-scheduled-job.form.schema.ts b/src/application/modules/projects/dialogs/create-or-edit-app-scheduled-job/schemas/create-or-edit-app-scheduled-job.form.schema.ts
+index 488ab4d7..97474915 100644
+--- a/src/application/modules/projects/dialogs/create-or-edit-app-scheduled-job/schemas/create-or-edit-app-scheduled-job.form.schema.ts
++++ b/src/application/modules/projects/dialogs/create-or-edit-app-scheduled-job/schemas/create-or-edit-app-scheduled-job.form.schema.ts
+@@ -1,4 +1,5 @@
+ import { z } from "zod";
++import { JobTriggersFormSchema } from "~/projects/module-shared/components/job-triggers-field/job-triggers.helpers";
+ import {
+     EAppScheduledJobArgSeparator,
+     EAppScheduledJobCommandOutputMode,
+@@ -91,6 +92,7 @@ export const CreateOrEditAppScheduledJobFormSchema = z
+         pipeTargetProject: z.object({ id: z.string(), name: z.string() }).nullable(),
+         pipeTargetApp: z.object({ id: z.string(), name: z.string() }).nullable(),
+         pipeCommand: PipeCommandSchema,
++        triggers: JobTriggersFormSchema,
+         notification: z.object({
+             successUseDefault: z.boolean(),
+             success: NotificationRefSchema.optional(),
+diff --git a/src/application/modules/projects/domain/apps/scheduled-job/app-scheduled-job.entity.ts b/src/application/modules/projects/domain/apps/scheduled-job/app-scheduled-job.entity.ts
+index 7151a634..11cce2aa 100644
+--- a/src/application/modules/projects/domain/apps/scheduled-job/app-scheduled-job.entity.ts
++++ b/src/application/modules/projects/domain/apps/scheduled-job/app-scheduled-job.entity.ts
+@@ -4,6 +4,7 @@ import type {
+     EAppScheduledJobType,
+     ESchedJobSeqMode,
+     ESchedJobSeqOnFailure,
++    ESchedJobTriggerEvent,
+ } from "~/projects/module-shared/enums";
+ 
+ import type { ESettingStatus } from "@application/shared/enums";
+@@ -109,6 +110,14 @@ export interface AppScheduledJobSequence {
+     steps: AppScheduledJobSequenceStep[];
+ }
+ 
++/** An event that runs the job. `apps` is empty for an app's job: its own app. */
++export interface AppScheduledJobTrigger {
++    event: ESchedJobTriggerEvent;
++    apps: AppScheduledJobNamedRef[];
++    /** The deploy waits for the run; pre-deploy only. */
++    wait: boolean;
++}
++
+ export interface AppScheduledJob {
+     id: string;
+     type: string;
+@@ -128,6 +137,7 @@ export interface AppScheduledJob {
+     schedule: AppScheduledJobSchedule | null;
+     app?: AppScheduledJobNamedRef;
+     sequence: AppScheduledJobSequence | null;
++    triggers: AppScheduledJobTrigger[];
+     priority: EAppScheduledJobTaskPriority;
+     maxRetry: number;
+     retryDelay: string;
+diff --git a/src/application/modules/projects/module-shared/components/index.ts b/src/application/modules/projects/module-shared/components/index.ts
+index d36b1b43..8bd674d0 100644
+--- a/src/application/modules/projects/module-shared/components/index.ts
++++ b/src/application/modules/projects/module-shared/components/index.ts
+@@ -24,3 +24,4 @@ export * from "./confirm-danger-target-badge";
+ export * from "./option-card-group";
+ export * from "./job-schedule-fields";
+ export * from "./job-sequence-form";
++export * from "./job-triggers-field";
+diff --git a/src/application/modules/projects/module-shared/components/job-sequence-form/job-sequence.form-mappers.ts b/src/application/modules/projects/module-shared/components/job-sequence-form/job-sequence.form-mappers.ts
+index 9fb055d5..632b20e8 100644
+--- a/src/application/modules/projects/module-shared/components/job-sequence-form/job-sequence.form-mappers.ts
++++ b/src/application/modules/projects/module-shared/components/job-sequence-form/job-sequence.form-mappers.ts
+@@ -15,6 +15,7 @@ import {
+     mapJobScheduleFormValuesToPayload,
+     mapJobScheduleToFormValues,
+ } from "../job-schedule-fields";
++import { mapJobTriggersFormValuesToPayload, mapJobTriggersToFormValues } from "../job-triggers-field";
+ 
+ import type { JobSequenceFormInput, JobSequenceFormOutput } from "./job-sequence.form.schema";
+ 
+@@ -29,6 +30,7 @@ export function createEmptyJobSequenceFormDefaults(): JobSequenceFormInput {
+         timeout: "",
+         priority: EAppScheduledJobTaskPriority.Default,
+         controlEnabled: true,
++        triggers: [],
+         notification: {
+             successUseDefault: true,
+             success: undefined,
+@@ -56,6 +58,7 @@ export function mapJobSequenceToFormInput(job: AppScheduledJob): JobSequenceForm
+         timeout: job.timeout,
+         priority: job.priority,
+         controlEnabled: !job.controlDisabled,
++        triggers: mapJobTriggersToFormValues(job.triggers),
+         notification: {
+             successUseDefault: job.notification?.successUseDefault ?? true,
+             success: job.notification?.success,
+@@ -83,6 +86,7 @@ export function mapJobSequenceFormToPayload(values: JobSequenceFormOutput): AppS
+             onFailure: values.onFailure,
+             steps: values.steps.map(step => ({ job: { id: step.jobId }, name: step.name })),
+         },
++        triggers: mapJobTriggersFormValuesToPayload(values.triggers),
+         notification: {
+             successUseDefault: values.notification.successUseDefault,
+             ...(!values.notification.successUseDefault && values.notification.success
+diff --git a/src/application/modules/projects/module-shared/components/job-sequence-form/job-sequence.form.com.tsx b/src/application/modules/projects/module-shared/components/job-sequence-form/job-sequence.form.com.tsx
+index ffde8bd8..247b1cb9 100644
+--- a/src/application/modules/projects/module-shared/components/job-sequence-form/job-sequence.form.com.tsx
++++ b/src/application/modules/projects/module-shared/components/job-sequence-form/job-sequence.form.com.tsx
+@@ -16,6 +16,7 @@ import { NotificationSettings } from "@application/shared/form";
+ import { Button, Checkbox, Field, FieldError, FieldGroup, Input, Tabs, TabsList, TabsTrigger } from "@/components/ui";
+ 
+ import { JobScheduleFields, PriorityTabsField } from "../job-schedule-fields";
++import { JobTriggersField } from "../job-triggers-field";
+ 
+ import { type JobSequenceCandidate, JobSequenceStepsField } from "./job-sequence-steps-field.com";
+ import { createEmptyJobSequenceFormDefaults, mapJobSequenceToFormInput } from "./job-sequence.form-mappers";
+@@ -60,6 +61,7 @@ export function JobSequenceForm({
+     env,
+     candidates,
+     isLoadingCandidates,
++    triggerApps,
+     isPending,
+     onSubmit,
+     initialValues,
+@@ -278,6 +280,13 @@ export function JobSequenceForm({
+                             </div>
+                         </ContentBlock>
+ 
++                        <ContentBlock label="Triggers">
++                            <JobTriggersField
++                                apps={triggerApps}
++                                readOnly={readOnly}
++                            />
++                        </ContentBlock>
++
+                         <ContentBlock label="Notification Configuration">
+                             <NotificationSettings<JobSequenceFormInput>
+                                 names={{
+@@ -335,6 +344,8 @@ interface Props {
+     env?: string;
+     candidates: JobSequenceCandidate[];
+     isLoadingCandidates: boolean;
++    /** The env's apps a trigger may name; undefined for an app's sequence, which listens to its app. */
++    triggerApps?: { id: string; name: string }[];
+     isPending: boolean;
+     onSubmit: (values: JobSequenceFormOutput) => void;
+     initialValues?: AppScheduledJob;
+diff --git a/src/application/modules/projects/module-shared/components/job-sequence-form/job-sequence.form.schema.ts b/src/application/modules/projects/module-shared/components/job-sequence-form/job-sequence.form.schema.ts
+index 3ac6ef1e..29740d2f 100644
+--- a/src/application/modules/projects/module-shared/components/job-sequence-form/job-sequence.form.schema.ts
++++ b/src/application/modules/projects/module-shared/components/job-sequence-form/job-sequence.form.schema.ts
+@@ -1,4 +1,5 @@
+ import { z } from "zod";
++import { JobTriggersFormSchema } from "~/projects/module-shared/components/job-triggers-field/job-triggers.helpers";
+ import {
+     EAppScheduledJobScheduleMode,
+     EAppScheduledJobTaskPriority,
+@@ -39,6 +40,7 @@ export const JobSequenceFormSchema = z.object({
+     timeout: z.string().trim(),
+     priority: z.nativeEnum(EAppScheduledJobTaskPriority),
+     controlEnabled: z.boolean(),
++    triggers: JobTriggersFormSchema,
+     notification: z.object({
+         successUseDefault: z.boolean(),
+         success: NotificationRefSchema.optional(),
+diff --git a/src/application/modules/projects/module-shared/components/job-triggers-field/index.ts b/src/application/modules/projects/module-shared/components/job-triggers-field/index.ts
+new file mode 100644
+index 00000000..326a262d
+--- /dev/null
++++ b/src/application/modules/projects/module-shared/components/job-triggers-field/index.ts
+@@ -0,0 +1,2 @@
++export * from "./job-triggers-field.com";
++export * from "./job-triggers.helpers";
+diff --git a/src/application/modules/projects/module-shared/components/job-triggers-field/job-triggers-field.com.tsx b/src/application/modules/projects/module-shared/components/job-triggers-field/job-triggers-field.com.tsx
+new file mode 100644
+index 00000000..0db39b70
+--- /dev/null
++++ b/src/application/modules/projects/module-shared/components/job-triggers-field/job-triggers-field.com.tsx
+@@ -0,0 +1,214 @@
++import { useState } from "react";
++
++import { dashedBorderBox } from "@lib/styles";
++import { cn } from "@lib/utils";
++import { ChevronDown, Plus, Trash2 } from "lucide-react";
++import { useFieldArray, useFormContext, useWatch } from "react-hook-form";
++import { ESchedJobTriggerEvent, SCHED_JOB_TRIGGER_EVENT_OPTIONS } from "~/projects/module-shared/enums";
++
++import { Button, Checkbox, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui";
++import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
++
++import { JOB_MAX_TRIGGERS, type JobTriggerFormValue, createDefaultJobTrigger } from "./job-triggers.helpers";
++
++interface NamedApp {
++    id: string;
++    name: string;
++}
++
++/** A pick of several apps, as checkboxes in a popover. */
++function AppsPicker({ apps, value, onChange, readOnly }: AppsPickerProps) {
++    const [open, setOpen] = useState(false);
++    const names = apps.filter(app => value.includes(app.id)).map(app => app.name);
++
++    return (
++        <Popover
++            open={open}
++            onOpenChange={setOpen}
++        >
++            <PopoverTrigger asChild>
++                <Button
++                    type="button"
++                    variant="outline"
++                    disabled={readOnly}
++                    className="h-9 w-[240px] justify-between font-normal"
++                >
++                    <span className={cn("truncate", names.length === 0 && "text-muted-foreground")}>
++                        {names.length > 0 ? names.join(", ") : "Pick the apps"}
++                    </span>
++                    <ChevronDown className="size-4 opacity-50" />
++                </Button>
++            </PopoverTrigger>
++            <PopoverContent
++                className="w-[240px] p-1"
++                align="start"
++            >
++                {apps.length === 0 && <p className="p-2 text-sm text-muted-foreground">No app in this env</p>}
++                {apps.map(app => {
++                    const checked = value.includes(app.id);
++                    const inputId = `trigger-app-${app.id}`;
++                    return (
++                        <div
++                            key={app.id}
++                            className="flex items-center gap-2 rounded px-2 py-1.5 text-sm hover:bg-accent"
++                        >
++                            <Checkbox
++                                id={inputId}
++                                checked={checked}
++                                onCheckedChange={next => {
++                                    onChange(next === true ? [...value, app.id] : value.filter(id => id !== app.id));
++                                }}
++                            />
++                            <label
++                                htmlFor={inputId}
++                                className="grow cursor-pointer truncate"
++                            >
++                                {app.name}
++                            </label>
++                        </div>
++                    );
++                })}
++            </PopoverContent>
++        </Popover>
++    );
++}
++
++interface AppsPickerProps {
++    apps: NamedApp[];
++    value: string[];
++    onChange: (value: string[]) => void;
++    readOnly: boolean;
++}
++
++/**
++ * The events that run a job, in a form whose values have `triggers`. An app's
++ * job listens to its own app (no `apps`); an env's job picks the apps of the env
++ * it listens to.
++ */
++export function JobTriggersField({ apps, readOnly = false }: Props) {
++    const { control, setValue } = useFormContext<{ triggers: JobTriggerFormValue[] }>();
++    const { fields, append, remove } = useFieldArray({ control, name: "triggers" });
++    const triggers = useWatch({ control, name: "triggers" });
++    const isEnvJob = apps !== undefined;
++
++    return (
++        <div className="flex w-full max-w-[760px] flex-col gap-3">
++            {fields.length === 0 && (
++                <p className="text-sm text-muted-foreground">
++                    No trigger: the job runs on its schedule, by hand, or as a step of a sequence.
++                </p>
++            )}
++
++            {fields.map((field, index) => {
++                const trigger = triggers[index] ?? field;
++                return (
++                    <div
++                        key={field.id}
++                        className="flex flex-wrap items-center gap-2 rounded-md border px-3 py-2"
++                    >
++                        <Select
++                            value={trigger.event}
++                            onValueChange={value => {
++                                setValue(`triggers.${index}.event`, value as ESchedJobTriggerEvent, {
++                                    shouldDirty: true,
++                                });
++                            }}
++                            disabled={readOnly}
++                        >
++                            <SelectTrigger className="h-9 w-[210px]">
++                                <SelectValue />
++                            </SelectTrigger>
++                            <SelectContent>
++                                {SCHED_JOB_TRIGGER_EVENT_OPTIONS.map(option => (
++                                    <SelectItem
++                                        key={option.value}
++                                        value={option.value}
++                                    >
++                                        {option.label}
++                                    </SelectItem>
++                                ))}
++                            </SelectContent>
++                        </Select>
++
++                        {isEnvJob ? (
++                            <>
++                                <span className="text-sm text-muted-foreground">of</span>
++                                <AppsPicker
++                                    apps={apps}
++                                    value={trigger.appIds}
++                                    onChange={value => {
++                                        setValue(`triggers.${index}.appIds`, value, { shouldDirty: true });
++                                    }}
++                                    readOnly={readOnly}
++                                />
++                            </>
++                        ) : (
++                            <span className="text-sm text-muted-foreground">of this app</span>
++                        )}
++
++                        {trigger.event === ESchedJobTriggerEvent.PreDeploy && (
++                            <div className="flex items-center gap-2 text-sm">
++                                <Checkbox
++                                    id={`${field.id}-wait`}
++                                    checked={trigger.wait}
++                                    onCheckedChange={checked => {
++                                        setValue(`triggers.${index}.wait`, checked === true, { shouldDirty: true });
++                                    }}
++                                    disabled={readOnly}
++                                />
++                                <label
++                                    htmlFor={`${field.id}-wait`}
++                                    className="cursor-pointer"
++                                >
++                                    Deploy waits for this job
++                                </label>
++                            </div>
++                        )}
++
++                        {!readOnly && (
++                            <Button
++                                type="button"
++                                variant="ghost"
++                                size="icon-sm"
++                                aria-label="Remove trigger"
++                                className="ml-auto"
++                                onClick={() => {
++                                    remove(index);
++                                }}
++                            >
++                                <Trash2 className="size-4" />
++                            </Button>
++                        )}
++
++                        {!isEnvJob && trigger.event === ESchedJobTriggerEvent.AppDisabled && (
++                            <p className={cn(dashedBorderBox, "basis-full text-sm")}>
++                                <span className="font-semibold text-orange-500">Note:</span> a disabled app has no
++                                container to run this job in. An env job can run one in another app.
++                            </p>
++                        )}
++                    </div>
++                );
++            })}
++
++            {!readOnly && (
++                <Button
++                    type="button"
++                    variant="outline"
++                    className="w-fit"
++                    disabled={fields.length >= JOB_MAX_TRIGGERS}
++                    onClick={() => {
++                        append(createDefaultJobTrigger());
++                    }}
++                >
++                    <Plus className="size-4" /> Add trigger
++                </Button>
++            )}
++        </div>
++    );
++}
++
++interface Props {
++    /** The env's apps, for an env's job; undefined for an app's job. */
++    apps?: NamedApp[];
++    readOnly?: boolean;
++}
+diff --git a/src/application/modules/projects/module-shared/components/job-triggers-field/job-triggers.helpers.ts b/src/application/modules/projects/module-shared/components/job-triggers-field/job-triggers.helpers.ts
+new file mode 100644
+index 00000000..1211910c
+--- /dev/null
++++ b/src/application/modules/projects/module-shared/components/job-triggers-field/job-triggers.helpers.ts
+@@ -0,0 +1,46 @@
++import { z } from "zod";
++import type { AppScheduledJobs_Trigger_Payload } from "~/projects/api/services";
++import type { AppScheduledJobTrigger } from "~/projects/domain";
++import { ESchedJobTriggerEvent } from "~/projects/module-shared/enums";
++
++/** The most triggers a job has, as the server allows. */
++export const JOB_MAX_TRIGGERS = 10;
++
++export const JobTriggerFormSchema = z.object({
++    event: z.nativeEnum(ESchedJobTriggerEvent),
++    /** The apps whose events run the job: an env's job only. */
++    appIds: z.array(z.string()),
++    wait: z.boolean(),
++});
++
++export const JobTriggersFormSchema = z
++    .array(JobTriggerFormSchema)
++    .max(JOB_MAX_TRIGGERS, `A job has at most ${JOB_MAX_TRIGGERS} triggers`);
++
++export type JobTriggerFormValue = z.input<typeof JobTriggerFormSchema>;
++
++export function createDefaultJobTrigger(): JobTriggerFormValue {
++    return { event: ESchedJobTriggerEvent.PostDeploy, appIds: [], wait: false };
++}
++
++export function mapJobTriggersToFormValues(triggers: AppScheduledJobTrigger[]): JobTriggerFormValue[] {
++    return triggers.map(trigger => ({
++        event: trigger.event,
++        appIds: trigger.apps.map(app => app.id),
++        wait: trigger.wait,
++    }));
++}
++
++/** What the server takes: apps only when named, wait only for pre-deploy. */
++export function mapJobTriggersFormValuesToPayload(values: JobTriggerFormValue[]): AppScheduledJobs_Trigger_Payload[] {
++    return values.map(value => ({
++        event: value.event,
++        ...(value.appIds.length > 0 ? { apps: value.appIds.map(id => ({ id })) } : {}),
++        ...(value.event === ESchedJobTriggerEvent.PreDeploy && value.wait ? { wait: true } : {}),
++    }));
++}
++
++/** How a list names a trigger: its event, and that the deploy waits for it. */
++export function formatJobTrigger(trigger: AppScheduledJobTrigger): string {
++    return trigger.wait ? `${trigger.event} · waits` : trigger.event;
++}
+diff --git a/src/application/modules/projects/module-shared/definitions/tables/app-scheduled-jobs/building-blocks/name-cell.com.tsx b/src/application/modules/projects/module-shared/definitions/tables/app-scheduled-jobs/building-blocks/name-cell.com.tsx
+index a7911752..54ce1fb4 100644
+--- a/src/application/modules/projects/module-shared/definitions/tables/app-scheduled-jobs/building-blocks/name-cell.com.tsx
++++ b/src/application/modules/projects/module-shared/definitions/tables/app-scheduled-jobs/building-blocks/name-cell.com.tsx
+@@ -2,6 +2,7 @@ import { memo } from "react";
+ 
+ import { Badge } from "@components/ui/badge";
+ import type { AppScheduledJob } from "~/projects/domain";
++import { formatJobTrigger } from "~/projects/module-shared/components/job-triggers-field/job-triggers.helpers";
+ import { EAppScheduledJobType } from "~/projects/module-shared/enums";
+ 
+ /** A job's name; a sequence is tagged, with its step count. */
+@@ -16,6 +17,16 @@ function View({ job }: Props) {
+                     Sequence · {steps} {steps === 1 ? "step" : "steps"}
+                 </Badge>
+             )}
++            {job.triggers.map(trigger => (
++                <Badge
++                    key={`${trigger.event}-${trigger.apps.map(app => app.id).join(",")}`}
++                    variant="outline"
++                    className="font-mono text-[11px]"
++                    title={trigger.apps.length > 0 ? `of ${trigger.apps.map(app => app.name).join(", ")}` : undefined}
++                >
++                    {formatJobTrigger(trigger)}
++                </Badge>
++            ))}
+         </div>
+     );
+ }
+diff --git a/src/application/modules/projects/module-shared/enums/e.sched-job-trigger.ts b/src/application/modules/projects/module-shared/enums/e.sched-job-trigger.ts
+new file mode 100644
+index 00000000..69a4b5b6
+--- /dev/null
++++ b/src/application/modules/projects/module-shared/enums/e.sched-job-trigger.ts
+@@ -0,0 +1,22 @@
++export const ESchedJobTriggerEvent = {
++    PreDeploy: "pre-deploy",
++    PostDeploy: "post-deploy",
++    DeployFailed: "deploy-failed",
++    HealthDown: "health-down",
++    HealthUp: "health-up",
++    AppEnabled: "app-enabled",
++    AppDisabled: "app-disabled",
++} as const;
++
++export type ESchedJobTriggerEvent = (typeof ESchedJobTriggerEvent)[keyof typeof ESchedJobTriggerEvent];
++
++/** The events in the order a form offers them, with their labels. */
++export const SCHED_JOB_TRIGGER_EVENT_OPTIONS: { value: ESchedJobTriggerEvent; label: string }[] = [
++    { value: ESchedJobTriggerEvent.PreDeploy, label: "Before a deploy" },
++    { value: ESchedJobTriggerEvent.PostDeploy, label: "After a deploy" },
++    { value: ESchedJobTriggerEvent.DeployFailed, label: "A deploy failed" },
++    { value: ESchedJobTriggerEvent.HealthDown, label: "Health check down" },
++    { value: ESchedJobTriggerEvent.HealthUp, label: "Health check up again" },
++    { value: ESchedJobTriggerEvent.AppEnabled, label: "App enabled" },
++    { value: ESchedJobTriggerEvent.AppDisabled, label: "App disabled" },
++];
+diff --git a/src/application/modules/projects/module-shared/enums/index.ts b/src/application/modules/projects/module-shared/enums/index.ts
+index d5113554..038f3eb4 100644
+--- a/src/application/modules/projects/module-shared/enums/index.ts
++++ b/src/application/modules/projects/module-shared/enums/index.ts
+@@ -36,3 +36,4 @@ export * from "./e.app-service-placement";
+ export * from "./e.deployment-repo-option";
+ export * from "./e.dockerfile-source";
+ export * from "./e.routing-protocol";
++export * from "./e.sched-job-trigger";
+diff --git a/src/application/modules/projects/routes/single-project/configuration/scheduled-jobs/form-route/env-job-sequence-form-route.com.tsx b/src/application/modules/projects/routes/single-project/configuration/scheduled-jobs/form-route/env-job-sequence-form-route.com.tsx
+index b0d286e2..f262f5a4 100644
+--- a/src/application/modules/projects/routes/single-project/configuration/scheduled-jobs/form-route/env-job-sequence-form-route.com.tsx
++++ b/src/application/modules/projects/routes/single-project/configuration/scheduled-jobs/form-route/env-job-sequence-form-route.com.tsx
+@@ -2,7 +2,7 @@ import { useMemo, useState } from "react";
+ 
+ import { toast } from "sonner";
+ import { EnvScheduledJobsCommands } from "~/projects/data/commands";
+-import { EnvScheduledJobsQueries } from "~/projects/data/queries";
++import { EnvScheduledJobsQueries, ProjectAppsQueries } from "~/projects/data/queries";
+ import type { AppScheduledJob } from "~/projects/domain";
+ import {
+     type JobSequenceCandidate,
+@@ -30,6 +30,16 @@ export function EnvJobSequenceFormRoute({ mode, projectId, env, scheduledJob }:
+         env,
+         pagination: LIST_ALL_PAGE,
+     });
++    const { data: appsData } = ProjectAppsQueries.useFindManyPaginated({
++        projectID: projectId,
++        env,
++        pagination: LIST_ALL_PAGE,
++    });
++    const triggerApps = useMemo(
++        () => (appsData?.data ?? []).map(app => ({ id: app.id, name: app.name })),
++        [appsData?.data],
++    );
++
+     const candidates = useMemo<JobSequenceCandidate[]>(
+         () =>
+             (jobsData?.data ?? [])
+@@ -109,6 +119,7 @@ export function EnvJobSequenceFormRoute({ mode, projectId, env, scheduledJob }:
+                     env={env}
+                     candidates={candidates}
+                     isLoadingCandidates={isLoadingCandidates}
++                    triggerApps={triggerApps}
+                     isPending={isCreating || isUpdating}
+                     onSubmit={onSubmit}
+                     onHasChanges={setHasChanges}
+diff --git a/src/application/modules/projects/routes/single-project/single-app/configuration/scheduled-jobs/form-route/app-scheduled-job-form-route.com.tsx b/src/application/modules/projects/routes/single-project/single-app/configuration/scheduled-jobs/form-route/app-scheduled-job-form-route.com.tsx
+index 1e805269..aef737be 100644
+--- a/src/application/modules/projects/routes/single-project/single-app/configuration/scheduled-jobs/form-route/app-scheduled-job-form-route.com.tsx
++++ b/src/application/modules/projects/routes/single-project/single-app/configuration/scheduled-jobs/form-route/app-scheduled-job-form-route.com.tsx
+@@ -8,7 +8,10 @@ import {
+     APP_SCHEDULED_JOB_COMMAND_MODE,
+     type CreateOrEditAppScheduledJobFormOutput,
+ } from "~/projects/dialogs/create-or-edit-app-scheduled-job/schemas";
+-import { mapJobScheduleFormValuesToPayload } from "~/projects/module-shared/components";
++import {
++    mapJobScheduleFormValuesToPayload,
++    mapJobTriggersFormValuesToPayload,
++} from "~/projects/module-shared/components";
+ import { EAppScheduledJobCommandOutputMode, EAppScheduledJobType } from "~/projects/module-shared/enums";
+ 
+ import { AppLoader, RouteFormHeader } from "@application/shared/components";
+@@ -56,6 +59,7 @@ function mapFormValuesToPayload(
+             ...(values.argGroups.length > 0 ? { argGroups: values.argGroups } : {}),
+         },
+         commandOutput,
++        triggers: mapJobTriggersFormValuesToPayload(values.triggers),
+         notification: {
+             successUseDefault: values.notification.successUseDefault,
+             ...(!values.notification.successUseDefault && values.notification.success

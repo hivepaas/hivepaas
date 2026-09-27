@@ -1,0 +1,347 @@
+diff --git a/hivepaas_app/config/tasks.go b/hivepaas_app/config/tasks.go
+index 6c07756a..f69ea0f5 100644
+--- a/hivepaas_app/config/tasks.go
++++ b/hivepaas_app/config/tasks.go
+@@ -3,8 +3,9 @@ package config
+ import "time"
+ 
+ type Tasks struct {
+-	Queue    TaskQueue `toml:"queue"`
+-	Periodic Periodic  `toml:"periodic"`
++	Queue    TaskQueue    `toml:"queue"`
++	Periodic Periodic     `toml:"periodic"`
++	Triggers TaskTriggers `toml:"triggers"`
+ }
+ 
+ type TaskQueue struct {
+@@ -17,3 +18,12 @@ type Periodic struct {
+ 	BaseInterval time.Duration `toml:"base_interval" env:"HP_TASKS_PERIODIC_BASE_INTERVAL" default:"15s"`
+ 	BatchSize    int           `toml:"batch_size" env:"HP_TASKS_PERIODIC_BATCH_SIZE" default:"100"`
+ }
++
++// TaskTriggers is how a deploy waits for the pre-deploy jobs that hold it.
++type TaskTriggers struct {
++	// WaitPollInterval is how often the deploy reads the status of the runs.
++	WaitPollInterval time.Duration `toml:"wait_poll_interval" env:"HP_TASKS_TRIGGERS_WAIT_POLL_INTERVAL" default:"3s"`
++	// WaitTimeout is how long it waits for a job without a timeout of its own,
++	// and for a job sequence, whose timeout is each step's.
++	WaitTimeout time.Duration `toml:"wait_timeout" env:"HP_TASKS_TRIGGERS_WAIT_TIMEOUT" default:"30m"`
++}
+diff --git a/hivepaas_app/registry/provides.go b/hivepaas_app/registry/provides.go
+index abb6a221..2814ecba 100644
+--- a/hivepaas_app/registry/provides.go
++++ b/hivepaas_app/registry/provides.go
+@@ -87,6 +87,7 @@ import (
+ 	"github.com/hivepaas/hivepaas/hivepaas_app/service/reslinkservice/reslinkserviceimpl"
+ 	"github.com/hivepaas/hivepaas/hivepaas_app/service/schedjobexecservice/schedjobexecserviceimpl"
+ 	"github.com/hivepaas/hivepaas/hivepaas_app/service/schedjobservice/schedjobserviceimpl"
++	"github.com/hivepaas/hivepaas/hivepaas_app/service/schedjobtriggerservice/schedjobtriggerserviceimpl"
+ 	"github.com/hivepaas/hivepaas/hivepaas_app/service/scopeservice/scopeserviceimpl"
+ 	"github.com/hivepaas/hivepaas/hivepaas_app/service/settingeventservice/settingeventserviceimpl"
+ 	"github.com/hivepaas/hivepaas/hivepaas_app/service/settinginitservice/settinginitserviceimpl"
+@@ -399,6 +400,7 @@ var Provides = []any{
+ 	reslinkserviceimpl.New,
+ 	schedjobexecserviceimpl.New,
+ 	schedjobserviceimpl.New,
++	schedjobtriggerserviceimpl.New,
+ 	scopeserviceimpl.New,
+ 	settingeventserviceimpl.New,
+ 	settinginitserviceimpl.New,
+diff --git a/hivepaas_app/service/schedjobexecservice/schedjobexecserviceimpl/exec.go b/hivepaas_app/service/schedjobexecservice/schedjobexecserviceimpl/exec.go
+index f10094ad..112e0f3c 100644
+--- a/hivepaas_app/service/schedjobexecservice/schedjobexecserviceimpl/exec.go
++++ b/hivepaas_app/service/schedjobexecservice/schedjobexecserviceimpl/exec.go
+@@ -54,6 +54,7 @@ func (s *service) SchedJobExec(
+ 		return nil, hperrors.Wrap(err)
+ 	}
+ 	env = append(env, sequenceEnv(req.Sequence)...)
++	env = append(env, triggerEnv(req.Task)...)
+ 
+ 	stdoutWriter, err := s.initOutputWriter(ctx, data)
+ 	if err != nil {
+diff --git a/hivepaas_app/service/schedjobexecservice/schedjobexecserviceimpl/exec_trigger.go b/hivepaas_app/service/schedjobexecservice/schedjobexecserviceimpl/exec_trigger.go
+new file mode 100644
+index 00000000..25a1c08c
+--- /dev/null
++++ b/hivepaas_app/service/schedjobexecservice/schedjobexecserviceimpl/exec_trigger.go
+@@ -0,0 +1,23 @@
++package schedjobexecserviceimpl
++
++import (
++	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
++)
++
++// triggerEnv is what a run a trigger fired is told of its cause: the event, the
++// app it happened to, and the deployment of a deploy event. Nothing for a run
++// no trigger fired.
++func triggerEnv(task *entity.Task) []string {
++	if task == nil {
++		return nil
++	}
++	args, err := task.ArgsAsSchedJobExec()
++	if err != nil || args == nil || args.Trigger == nil {
++		return nil
++	}
++	return []string{
++		"HIVEPAAS_TRIGGER_EVENT=" + string(args.Trigger.Event),
++		"HIVEPAAS_TRIGGER_APP=" + args.Trigger.AppID,
++		"HIVEPAAS_TRIGGER_DEPLOYMENT=" + args.Trigger.DeploymentID,
++	}
++}
+diff --git a/hivepaas_app/service/schedjobtriggerservice/schedjobtriggerserviceimpl/fire.go b/hivepaas_app/service/schedjobtriggerservice/schedjobtriggerserviceimpl/fire.go
+new file mode 100644
+index 00000000..f12243b2
+--- /dev/null
++++ b/hivepaas_app/service/schedjobtriggerservice/schedjobtriggerserviceimpl/fire.go
+@@ -0,0 +1,138 @@
++package schedjobtriggerserviceimpl
++
++import (
++	"context"
++	"errors"
++	"time"
++
++	"github.com/hivepaas/hivepaas/hivepaas_app/base"
++	"github.com/hivepaas/hivepaas/hivepaas_app/config"
++	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
++	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
++	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
++	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
++	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/timeutil"
++	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/transaction"
++	"github.com/hivepaas/hivepaas/hivepaas_app/service/schedjobtriggerservice"
++)
++
++func (s *service) Fire(
++	ctx context.Context,
++	event base.SchedJobTriggerEvent,
++	app *entity.App,
++	info *schedjobtriggerservice.TriggerInfo,
++) (*schedjobtriggerservice.FireResult, error) {
++	result := &schedjobtriggerservice.FireResult{}
++	if app == nil {
++		return result, nil
++	}
++	// An app and its env hold few jobs: they are listed whole and matched here.
++	jobs, _, err := s.settingRepo.List(ctx, s.db, nil, nil,
++		bunex.SelectWhere("setting.type = ?", base.SettingTypeSchedJob),
++		bunex.SelectWhere("setting.status = ?", base.SettingStatusActive),
++		bunex.SelectWhere("setting.object_id IN (?)", bunex.List([]string{app.ID, app.ProjectEnvID})),
++	)
++	if err != nil {
++		return nil, hperrors.Wrap(err)
++	}
++	featureOn, err := s.schedJobFeatureOn(ctx, s.db, app)
++	if err != nil {
++		return nil, hperrors.Wrap(err)
++	}
++	result.Runs, err = s.buildRuns(app, jobs, event, info, featureOn, timeutil.NowUTC())
++	if err != nil || len(result.Runs) == 0 {
++		return result, hperrors.Wrap(err)
++	}
++
++	tasks := make([]*entity.Task, 0, len(result.Runs))
++	for _, run := range result.Runs {
++		tasks = append(tasks, run.Task)
++	}
++	err = transaction.Execute(ctx, s.db, func(tx database.Tx) error {
++		return hperrors.Wrap(s.taskRepo.InsertMulti(ctx, tx, tasks))
++	})
++	if err != nil {
++		return nil, hperrors.Wrap(err)
++	}
++	if err = s.taskQueue.ScheduleTask(ctx, tasks...); err != nil {
++		return nil, hperrors.Wrap(err)
++	}
++	return result, nil
++}
++
++// buildRuns is a run of every job listening to event of app: the app's own
++// jobs, when its scheduled jobs feature is on, and the env's jobs naming it.
++func (s *service) buildRuns(
++	app *entity.App,
++	jobs []*entity.Setting,
++	event base.SchedJobTriggerEvent,
++	info *schedjobtriggerservice.TriggerInfo,
++	featureOn bool,
++	timeNow time.Time,
++) ([]*schedjobtriggerservice.Run, error) {
++	var runs []*schedjobtriggerservice.Run
++	for _, setting := range jobs {
++		if !setting.IsActive() || setting.Type != base.SettingTypeSchedJob {
++			continue
++		}
++		ownApp := setting.Scope == base.ObjectScopeApp && setting.ObjectID == app.ID
++		if ownApp && !featureOn {
++			continue
++		}
++		job, err := setting.AsSchedJob()
++		if err != nil {
++			return nil, hperrors.Wrap(err)
++		}
++		listens, wait := job.ListensTo(event, app.ID, ownApp)
++		if !listens {
++			continue
++		}
++		task, err := s.schedJobService.CreateSchedJobTask(setting, timeNow, timeNow)
++		if err != nil {
++			return nil, hperrors.Wrap(err)
++		}
++		cause := &entity.SchedJobTriggerCause{Event: event, AppID: app.ID}
++		if info != nil {
++			cause.DeploymentID = info.DeploymentID
++		}
++		task.MustSetArgs(&entity.TaskSchedJobExecArgs{Trigger: cause})
++		runs = append(runs, &schedjobtriggerservice.Run{
++			Task:    task,
++			JobName: setting.Name,
++			Wait:    wait,
++			Timeout: waitTimeout(job),
++		})
++	}
++	return runs, nil
++}
++
++// waitTimeout is how long a deploy waits for a run of job: its own timeout, or
++// the configured one for a job without a timeout and for a job sequence, whose
++// timeout is each step's.
++func waitTimeout(job *entity.SchedJob) time.Duration {
++	if job.Timeout > 0 && job.JobType != base.SchedJobTypeJobSequence {
++		return job.Timeout.ToDuration()
++	}
++	if cfg := config.Current(); cfg != nil && cfg.Tasks.Triggers.WaitTimeout > 0 {
++		return cfg.Tasks.Triggers.WaitTimeout
++	}
++	return defaultWaitTimeout
++}
++
++const defaultWaitTimeout = 30 * time.Minute
++
++// schedJobFeatureOn says whether the app's scheduled jobs feature is on; it is
++// by default.
++func (s *service) schedJobFeatureOn(ctx context.Context, db database.IDB, app *entity.App) (bool, error) {
++	featureSetting, err := s.settingRepo.GetSingle(ctx, db, app.GetObjectScope(), base.SettingTypeAppFeatures, true)
++	if err != nil && !errors.Is(err, hperrors.ErrNotFound) {
++		return false, hperrors.Wrap(err)
++	}
++	features := &entity.AppFeatureSettings{}
++	if featureSetting != nil {
++		features = featureSetting.MustAsAppFeatureSettings()
++	} else {
++		entity.InitAppFeatureSettingsDefault(features)
++	}
++	return features.SchedJobSettings == nil || features.SchedJobSettings.Enabled, nil
++}
+diff --git a/hivepaas_app/service/schedjobtriggerservice/schedjobtriggerserviceimpl/service.go b/hivepaas_app/service/schedjobtriggerservice/schedjobtriggerserviceimpl/service.go
+new file mode 100644
+index 00000000..94213c3f
+--- /dev/null
++++ b/hivepaas_app/service/schedjobtriggerservice/schedjobtriggerserviceimpl/service.go
+@@ -0,0 +1,35 @@
++package schedjobtriggerserviceimpl
++
++import (
++	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
++	"github.com/hivepaas/hivepaas/hivepaas_app/repository"
++	"github.com/hivepaas/hivepaas/hivepaas_app/service/schedjobservice"
++	"github.com/hivepaas/hivepaas/hivepaas_app/service/schedjobtriggerservice"
++	"github.com/hivepaas/hivepaas/hivepaas_app/tasks/queue"
++)
++
++type service struct {
++	db *database.DB
++
++	settingRepo repository.SettingRepo
++	taskRepo    repository.TaskRepo
++
++	schedJobService schedjobservice.Service
++	taskQueue       queue.TaskQueue
++}
++
++func New(
++	db *database.DB,
++	settingRepo repository.SettingRepo,
++	taskRepo repository.TaskRepo,
++	schedJobService schedjobservice.Service,
++	taskQueue queue.TaskQueue,
++) schedjobtriggerservice.Service {
++	return &service{
++		db:              db,
++		settingRepo:     settingRepo,
++		taskRepo:        taskRepo,
++		schedJobService: schedJobService,
++		taskQueue:       taskQueue,
++	}
++}
+diff --git a/hivepaas_app/service/schedjobtriggerservice/service.go b/hivepaas_app/service/schedjobtriggerservice/service.go
+new file mode 100644
+index 00000000..9da25476
+--- /dev/null
++++ b/hivepaas_app/service/schedjobtriggerservice/service.go
+@@ -0,0 +1,17 @@
++package schedjobtriggerservice
++
++import (
++	"context"
++
++	"github.com/hivepaas/hivepaas/hivepaas_app/base"
++	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
++)
++
++// Service runs the scheduled jobs that listen to what happens to an app.
++type Service interface {
++	// Fire schedules a run of every job listening to event of app. Its runs are
++	// inserted in a transaction of its own: a caller in the middle of one may
++	// wait for them.
++	Fire(ctx context.Context, event base.SchedJobTriggerEvent, app *entity.App,
++		info *TriggerInfo) (*FireResult, error)
++}
+diff --git a/hivepaas_app/service/schedjobtriggerservice/types.go b/hivepaas_app/service/schedjobtriggerservice/types.go
+new file mode 100644
+index 00000000..d7968d48
+--- /dev/null
++++ b/hivepaas_app/service/schedjobtriggerservice/types.go
+@@ -0,0 +1,43 @@
++package schedjobtriggerservice
++
++import (
++	"time"
++
++	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
++)
++
++// TriggerInfo is what an event is about beyond its app.
++type TriggerInfo struct {
++	// DeploymentID is the deployment a deploy event is about.
++	DeploymentID string
++}
++
++// FireResult is the runs an event started.
++type FireResult struct {
++	Runs []*Run
++}
++
++// Run is one job an event runs: its task, and whether a deploy waits for it.
++type Run struct {
++	Task    *entity.Task
++	JobName string
++	// Wait is true when a trigger that fired it holds the deploy.
++	Wait bool
++	// Timeout is how long a waiting deploy gives it: the job's timeout, or the
++	// configured one for a job without a timeout and for a job sequence.
++	Timeout time.Duration
++}
++
++// WaitedRuns are the runs a deploy waits for.
++func (r *FireResult) WaitedRuns() []*Run {
++	if r == nil {
++		return nil
++	}
++	var waited []*Run
++	for _, run := range r.Runs {
++		if run.Wait {
++			waited = append(waited, run)
++		}
++	}
++	return waited
++}

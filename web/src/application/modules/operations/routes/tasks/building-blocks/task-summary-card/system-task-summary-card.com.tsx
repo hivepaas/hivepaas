@@ -9,6 +9,7 @@ import type { SystemTask } from "~/operations/domain";
 import { SystemTaskStatus } from "~/operations/domain";
 
 import { LogViewerActionButtons, PopConfirm } from "@application/shared/components";
+import { formatDataSizeCompact } from "@application/shared/utils/data-size";
 import { timeAgoFormatter } from "@application/shared/utils/time-ago";
 
 import { Button, Skeleton } from "@/components/ui";
@@ -581,6 +582,18 @@ export function SystemTaskSummaryCard({
                                         <span className="text-muted-foreground">Deployment:</span>{" "}
                                         <span className="font-mono text-foreground select-all">
                                             {task.trigger.deploymentId}
+                                        </span>
+                                    </div>
+                                )}
+
+                                {task.dataBackup && (
+                                    <div>
+                                        <span className="text-muted-foreground">Snapshot:</span>{" "}
+                                        <span className="font-mono text-foreground select-all">
+                                            {task.dataBackup.snapshotId}
+                                        </span>{" "}
+                                        <span className="text-muted-foreground">
+                                            ({formatDataSizeCompact(task.dataBackup.sizeBytes)})
                                         </span>
                                     </div>
                                 )}

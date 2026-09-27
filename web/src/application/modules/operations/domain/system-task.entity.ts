@@ -112,6 +112,12 @@ export interface SystemTaskTrigger {
     deploymentId: string;
 }
 
+/** The snapshot a data backup's run took. */
+export interface SystemTaskDataBackup {
+    snapshotId: string;
+    sizeBytes: number;
+}
+
 export interface SystemTask {
     id: string;
     type: string;
@@ -125,6 +131,7 @@ export interface SystemTask {
     scopeUser?: SystemTaskScopeUser;
     sequenceRun?: SystemTaskSequenceRun;
     trigger?: SystemTaskTrigger;
+    dataBackup?: SystemTaskDataBackup;
     runAt: Date | null;
     retryAt: Date | null;
     startedAt: Date | null;

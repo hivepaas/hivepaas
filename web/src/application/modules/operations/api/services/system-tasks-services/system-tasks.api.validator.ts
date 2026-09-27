@@ -147,6 +147,14 @@ const TriggerSchema = z
     .nullish()
     .transform(value => value ?? undefined);
 
+const DataBackupSchema = z
+    .object({
+        snapshotId: z.string(),
+        sizeBytes: z.number().optional().default(0),
+    })
+    .nullish()
+    .transform(value => value ?? undefined);
+
 const SystemTaskSchema = z.object({
     id: z.string(),
     type: z.string().optional().default(""),
@@ -160,6 +168,7 @@ const SystemTaskSchema = z.object({
     scopeUser: ScopeUserSchema,
     sequenceRun: SequenceRunSchema,
     trigger: TriggerSchema,
+    dataBackup: DataBackupSchema,
     runAt: NullableDateSchema,
     retryAt: NullableDateSchema,
     startedAt: NullableDateSchema,

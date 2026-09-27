@@ -20,6 +20,8 @@ export interface AppDeploymentSourceUser {
 export interface AppDeploymentTrigger {
     source: EAppDeploymentTriggerSource;
     sourceUser: AppDeploymentSourceUser | null;
+    /** The change the deployment was made for, as its trigger gave it: pr-<number> for a pull request. */
+    changeId: string;
 }
 
 export interface AppDeploymentOutput {

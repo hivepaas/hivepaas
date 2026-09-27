@@ -30,6 +30,7 @@ const DeploymentTriggerSchema = z
     .object({
         source: z.nativeEnum(EAppDeploymentTriggerSource),
         sourceUser: SourceUserSchema,
+        changeId: z.string().optional().default(""),
     })
     .nullish()
     .transform(value => value ?? null);

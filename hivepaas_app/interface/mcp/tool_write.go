@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/google/jsonschema-go/jsonschema"
 	mcpsdk "github.com/modelcontextprotocol/go-sdk/mcp"
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
@@ -49,11 +50,26 @@ const (
 // entry names the plan, so the apply's entry can be traced to it.
 func planTool[In, T any](name, title, description string, needs Need, applies *applier,
 	run func(ctx context.Context, call *Call, in In) (T, *storedPlan, error)) Tool {
+	return planToolWith(name, title, description, needs, applies, nil, run)
+}
+
+// planToolWith is planTool with an input schema of its own: an endpoint's
+// request body, with the names that find where it is sent.
+func planToolWith[In, T any](name, title, description string, needs Need, applies *applier,
+	input func() (*jsonschema.Schema, error),
+	run func(ctx context.Context, call *Call, in In) (T, *storedPlan, error)) Tool {
 	applies.needs = needs
 	return Tool{Name: name, Title: title, Description: description, Kind: KindPlan, needs: needs, applies: applies,
 		add: func(s *mcpsdk.Server, deps *Deps) {
 			sdkTool := &mcpsdk.Tool{Name: name, Title: title, Description: description,
 				Annotations: &mcpsdk.ToolAnnotations{ReadOnlyHint: true, Title: title}}
+			if input != nil {
+				schema, err := input()
+				if err != nil {
+					panic(err) // a registry error: TestEveryToolBuilds finds it
+				}
+				sdkTool.InputSchema = schema
+			}
 			addTool(s, deps, sdkTool, false,
 				func(ctx context.Context, call *Call, c *caller, in In) (planResult[T], error) {
 					answer, plan, err := run(ctx, call, in)
@@ -93,7 +109,7 @@ type applyInput struct {
 // forAudit keeps the token out of the log: the plan's ID, noted beside it, says
 // which plan it was.
 func (in applyInput) forAudit() any {
-	return applyInput{PlanToken: "(given)"}
+	return applyInput{PlanToken: redactedValue}
 }
 
 type applyAnswer struct {

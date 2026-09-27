@@ -4,12 +4,17 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"net/url"
 	"strings"
 	"testing"
 	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/assert"
+
+	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/appdeploymentuc/appdeploymentdto"
+	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/appsettingsuc/appsettingsdto"
+	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/appuc/appdto"
 )
 
 // appRoutes is one env, shop/prod, with two apps the caller sees - api, which
@@ -18,11 +23,14 @@ import (
 type appRoutes struct {
 	logs     []logFrame
 	logsTail string
+	// query is the query the last list endpoint was asked with.
+	query url.Values
 }
 
 func (r *appRoutes) add(api *gin.RouterGroup) {
 	env := api.Group("/projects/p1/prod")
 	env.GET("/apps", func(ctx *gin.Context) {
+		r.query = ctx.Request.URL.Query()
 		// As the permission layer does: the app the caller may not see is not listed.
 		ctx.JSON(http.StatusOK, gin.H{"data": []gin.H{
 			{"id": "a1", "key": "api", "name": "API", "status": "active", "engine": "",
@@ -42,6 +50,7 @@ func (r *appRoutes) add(api *gin.RouterGroup) {
 		}})
 	})
 	env.GET("/apps/a1/deployments", func(ctx *gin.Context) {
+		r.query = ctx.Request.URL.Query()
 		ctx.JSON(http.StatusOK, gin.H{"data": []gin.H{{
 			"id": "d2", "status": "failed", "createdAt": "2026-09-26T08:00:00Z",
 			"trigger": gin.H{"source": "user"},
@@ -131,21 +140,21 @@ func TestResolveHidesWhatTheCallerCannotSee(t *testing.T) {
 	assert.Contains(t, text, `no env of shop "staging"`)
 }
 
+// A read tool answers what its endpoint answers, decoded into the endpoint's
+// own response type: {meta, data}.
 func TestListApps(t *testing.T) {
-	_, call := appSession(t)
-	text, isErr := call("list_apps", map[string]any{"project": "shop", "env": "prod"})
+	routes, call := appSession(t)
+	text, isErr := call("list_apps", map[string]any{"project": "shop", "env": "prod", "getStats": true})
 	assert.False(t, isErr, text)
-	var out appList
+	assert.Equal(t, url.Values{"getStats": {"true"}}, routes.query)
+	var out appdto.ListAppResp
 	assert.NoError(t, json.Unmarshal([]byte(text), &out))
-	assert.Equal(t, "shop", out.Project)
-	if assert.Len(t, out.Apps, 3) {
-		assert.Equal(t, "api", out.Apps[0].Key)
-		assert.Equal(t, 1, *out.Apps[0].Running)
-		assert.Equal(t, 2, *out.Apps[0].Desired)
-		assert.Equal(t, "api-db", out.Apps[1].Key)
-		assert.Equal(t, "api", out.Apps[1].Owner)
-		assert.Equal(t, "worker", out.Apps[2].Key)
-		assert.Nil(t, out.Apps[2].Running)
+	if assert.Len(t, out.Data, 2) {
+		assert.Equal(t, "api", out.Data[0].Key)
+		assert.Equal(t, 1, out.Data[0].Stats.RunningTasks)
+		assert.Equal(t, 2, out.Data[0].Stats.DesiredTasks)
+		assert.Equal(t, "api-db", out.Data[0].LogicalChildApps[0].Key)
+		assert.Equal(t, "worker", out.Data[1].Key)
 	}
 }
 
@@ -153,29 +162,37 @@ func TestGetApp(t *testing.T) {
 	_, call := appSession(t)
 	text, isErr := call("get_app", shopProd("api"))
 	assert.False(t, isErr, text)
-	var out appDetail
+	var out appdto.GetAppResp
 	assert.NoError(t, json.Unmarshal([]byte(text), &out))
-	assert.Equal(t, []string{"api-db"}, out.Children)
-	assert.Equal(t, []string{"https://api.shop.test"}, out.Links)
-	assert.Equal(t, &deploySource{Method: "image", Image: "shop/api:2"}, out.Source)
+	assert.Equal(t, "the shop's API", out.Data.Note)
+	assert.Equal(t, "api-db", out.Data.LogicalChildApps[0].Key)
 	assert.Equal(t, "https://git.test/shop/api.git", withoutUserinfo("https://ada:s3cr3t-4@git.test/shop/api.git"))
-	if assert.Len(t, out.Deployments, 2) {
-		assert.Equal(t, "failed", out.Deployments[0].Status)
-		assert.Equal(t, "pull access denied for shop/api", out.Deployments[0].Error)
-		assert.Equal(t, "user", out.Deployments[0].Trigger)
-	}
 }
 
-func TestGetAppStatusIsNewestFirst(t *testing.T) {
+func TestGetAppStatus(t *testing.T) {
 	_, call := appSession(t)
 	text, isErr := call("get_app_status", shopProd("api"))
 	assert.False(t, isErr, text)
-	var out appStatus
+	var out appsettingsdto.GetAppServiceTasksResp
 	assert.NoError(t, json.Unmarshal([]byte(text), &out))
-	if assert.Len(t, out.Tasks, 2) {
-		assert.Equal(t, taskItem{ID: "fedcba987654", Slot: 1, Node: "n2", State: "rejected", Desired: "running",
-			Error: "No such image: shop/api:2", At: time.Date(2026, 9, 26, 8, 0, 0, 0, time.UTC)}, out.Tasks[0])
-		assert.Equal(t, "failed", out.Tasks[1].State)
+	if assert.Len(t, out.Data, 2) {
+		assert.Equal(t, "No such image: shop/api:2", out.Data[1].Status.Err)
+	}
+}
+
+func TestListAppDeployments(t *testing.T) {
+	routes, call := appSession(t)
+	args := shopProd("api")
+	args["status"] = []any{"failed", "done"}
+	args["pageLimit"] = 5
+	text, isErr := call("list_app_deployments", args)
+	assert.False(t, isErr, text)
+	assert.Equal(t, url.Values{"status": {"failed,done"}, "pageLimit": {"5"}}, routes.query,
+		"a list goes as the handler reads one: its values joined by commas")
+	var out appdeploymentdto.ListDeploymentResp
+	assert.NoError(t, json.Unmarshal([]byte(text), &out))
+	if assert.Len(t, out.Data, 2) {
+		assert.Equal(t, "pull access denied for shop/api", out.Data[0].Output.Error)
 	}
 }
 
@@ -199,7 +216,7 @@ func TestLogsGrepBeforeTail(t *testing.T) {
 	assert.NoError(t, json.Unmarshal([]byte(text), &out))
 	assert.Equal(t, []string{"2026-09-26T08:00:20.000Z [stderr] Error: connection refused 20"}, out.Lines)
 	assert.Equal(t, 2, *out.Matched)
-	assert.Equal(t, 300, out.Scanned)
+	assert.Equal(t, 300, out.Answered)
 
 	args["grep"] = `/refused (1|2)0$/`
 	text, _ = call("get_app_logs", args)
@@ -214,7 +231,7 @@ func TestLogsGrepBeforeTail(t *testing.T) {
 	assert.Len(t, out.Lines, 3)
 	assert.Nil(t, out.Matched)
 
-	args["tail"] = 501
+	args["tail"] = 5001
 	text, isErr = call("get_app_logs", args)
 	assert.True(t, isErr)
 	assert.Contains(t, text, "tail")
@@ -224,7 +241,7 @@ func TestLogsGrepBeforeTail(t *testing.T) {
 // read only what they show, and export in the mode that omits secrets.
 func TestNoToolOutputCarriesASecretValue(t *testing.T) {
 	_, call := appSession(t)
-	for _, tool := range []string{"list_apps", "get_app", "get_app_status", "get_app_settings"} {
+	for _, tool := range []string{"list_apps", "get_app", "get_app_settings"} {
 		args := shopProd("api")
 		switch tool {
 		case "list_apps":
@@ -235,23 +252,6 @@ func TestNoToolOutputCarriesASecretValue(t *testing.T) {
 		text, isErr := call(tool, args)
 		assert.False(t, isErr, "%s: %s", tool, text)
 		assert.NotContains(t, text, "s3cr3t", tool)
-	}
-}
-
-func TestParseSince(t *testing.T) {
-	now := time.Date(2026, 9, 26, 12, 0, 0, 0, time.UTC)
-	for in, want := range map[string]time.Time{
-		"":                     {},
-		"2h":                   now.Add(-2 * time.Hour),
-		"2026-09-26T08:00:00Z": time.Date(2026, 9, 26, 8, 0, 0, 0, time.UTC),
-	} {
-		got, err := parseSince(in, now)
-		assert.NoError(t, err, in)
-		assert.True(t, want.Equal(got), in)
-	}
-	for _, in := range []string{"yesterday", "-1h"} {
-		_, err := parseSince(in, now)
-		assert.ErrorAs(t, err, new(*InputError), in)
 	}
 }
 

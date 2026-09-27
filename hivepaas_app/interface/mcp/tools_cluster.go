@@ -3,286 +3,60 @@ package mcp
 import (
 	"context"
 	"net/url"
-	"strconv"
 	"strings"
-	"time"
-
-	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/cluster/nodeuc/nodedto"
-	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/homeuc/homedto"
-	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/taskuc/taskdto"
 )
-
-// ---- list_attention ----
-
-type namedObject struct {
-	ID   string `json:"id"`
-	Name string `json:"name"`
-}
-
-// attentionItem is one card of the Home page's attention list, as a model
-// reads it.
-type attentionItem struct {
-	Kind              string       `json:"kind"`
-	Severity          string       `json:"severity"`
-	Scope             string       `json:"scope"`
-	Project           *namedObject `json:"project,omitempty"`
-	Env               string       `json:"env,omitempty"`
-	App               *namedObject `json:"app,omitempty"`
-	Subject           string       `json:"subject"`
-	Running           uint64       `json:"running,omitempty"`
-	Desired           uint64       `json:"desired,omitempty"`
-	Restarts          int          `json:"restarts,omitempty"`
-	LastError         string       `json:"lastError,omitempty"`
-	NodeState         string       `json:"nodeState,omitempty"`
-	MemoryLimitsBytes int64        `json:"memoryLimitsBytes,omitempty"`
-	MemoryTotalBytes  int64        `json:"memoryTotalBytes,omitempty"`
-	Since             *time.Time   `json:"since,omitempty"`
-}
-
-type attentionList struct {
-	Items     []attentionItem `json:"items"`
-	Truncated int             `json:"truncated,omitempty"`
-}
-
-func (l *attentionList) shrink() bool {
-	return shrinkList(&l.Items, &l.Truncated)
-}
-
-// attentionItemOf is a card as a model reads it: the endpoint's own, less
-// what the dashboard uses to draw it, with its error cut.
-func attentionItemOf(item *homedto.AttentionItemResp) attentionItem {
-	out := attentionItem{Kind: item.Kind, Severity: item.Severity, Scope: item.Scope, Env: item.Env,
-		Subject: item.Subject, Running: item.Running, Desired: item.Desired, Restarts: item.Restarts,
-		LastError: cutText(item.LastError, maxErrorText, ""), NodeState: item.NodeState,
-		MemoryLimitsBytes: item.MemoryLimitsBytes, MemoryTotalBytes: item.MemoryTotalBytes, Since: item.Since}
-	if item.Project != nil {
-		out.Project = &namedObject{ID: item.Project.ID, Name: item.Project.Name}
-	}
-	if item.App != nil {
-		out.App = &namedObject{ID: item.App.ID, Name: item.App.Name}
-	}
-	return out
-}
-
-type noInput struct{}
-
-func listAttentionTool() Tool {
-	return readTool("list_attention", "What needs attention",
-		"Lists what the Home page says needs attention and the API key's user may see: apps whose "+
-			"containers do not all run or keep restarting, nodes that are down, memory promised past "+
-			"what a node has. Start here when asked what is wrong.",
-		func(ctx context.Context, call *Call, _ noInput) (attentionList, error) {
-			var resp homedto.GetHomeAttentionResp
-			if err := call.Get(ctx, "/home/attention", nil, &resp); err != nil {
-				return attentionList{}, err
-			}
-			out := attentionList{Items: []attentionItem{}}
-			if resp.Data != nil {
-				for _, item := range resp.Data.Items {
-					if item != nil {
-						out.Items = append(out.Items, attentionItemOf(item))
-					}
-				}
-			}
-			return out, nil
-		})
-}
-
-// ---- list_tasks ----
-
-// maxTaskList is the most tasks list_tasks answers.
-const maxTaskList = 50
-
-type listTasksInput struct {
-	Project string   `json:"project,omitempty" jsonschema:"a project's key, name or id, with env; empty for every task"`
-	Env     string   `json:"env,omitempty" jsonschema:"the env's name, with project"`
-	Status  []string `json:"status,omitempty" jsonschema:"not-started, in-progress, done, failed or canceled"`
-	Type    []string `json:"type,omitempty" jsonschema:"only these types, such as task:app-deploy or task:sched-job-exec"`
-	Limit   int      `json:"limit,omitempty" jsonschema:"how many of the newest to answer, 1-50; 20 when not given"`
-}
-
-type taskListItem struct {
-	ID        string     `json:"id"`
-	Type      string     `json:"type"`
-	Status    string     `json:"status"`
-	Job       string     `json:"job,omitempty"`
-	Project   string     `json:"project,omitempty"`
-	App       string     `json:"app,omitempty"`
-	LastError string     `json:"lastError,omitempty"`
-	CreatedAt time.Time  `json:"createdAt"`
-	StartedAt *time.Time `json:"startedAt,omitempty"`
-	EndedAt   *time.Time `json:"endedAt,omitempty"`
-}
-
-type taskList struct {
-	Tasks     []taskListItem `json:"tasks"`
-	Truncated int            `json:"truncated,omitempty"`
-}
-
-func (l *taskList) shrink() bool {
-	return shrinkList(&l.Tasks, &l.Truncated)
-}
-
-func listTasksTool() Tool {
-	return readTool("list_tasks", "List background tasks",
-		"Lists the newest background tasks - deployments, backups, scheduled jobs, cleanups - with "+
-			"their state and the error that ended a failed one. Every task, which needs access to "+
-			"System, or those of one env. get_task_logs reads what a task printed.",
-		func(ctx context.Context, call *Call, in listTasksInput) (taskList, error) {
-			limit := in.Limit
-			switch {
-			case limit == 0:
-				limit = 20
-			case limit < 0 || limit > maxTaskList:
-				return taskList{}, &InputError{Message: "limit is 1 to " + strconv.Itoa(maxTaskList)}
-			}
-			path, err := tasksPath(ctx, call, in.Project, in.Env)
-			if err != nil {
-				return taskList{}, err
-			}
-			query := url.Values{paramPageLimit: {strconv.Itoa(limit)}}
-			for _, status := range in.Status {
-				query.Add("status", status)
-			}
-			for _, typ := range in.Type {
-				query.Add("type", typ)
-			}
-			var resp taskdto.ListTaskResp
-			if err = call.Get(ctx, path, query, &resp); err != nil {
-				return taskList{}, err
-			}
-			out := taskList{Tasks: make([]taskListItem, 0, len(resp.Data))}
-			for _, t := range resp.Data {
-				if t != nil {
-					out.Tasks = append(out.Tasks, makeTaskListItem(t))
-				}
-			}
-			return out, nil
-		})
-}
-
-func makeTaskListItem(t *taskdto.TaskResp) taskListItem {
-	item := taskListItem{ID: t.ID, Type: string(t.Type), Status: string(t.Status), CreatedAt: t.CreatedAt,
-		StartedAt: t.StartedAt, EndedAt: t.EndedAt, LastError: cutText(t.LastError, maxErrorText, "")}
-	if t.TargetJob != nil {
-		item.Job = t.TargetJob.Name
-	}
-	if t.ScopeProject != nil {
-		item.Project = t.ScopeProject.Key
-	}
-	if t.ScopeApp != nil {
-		item.App = t.ScopeApp.Key
-	}
-	return item
-}
-
-// tasksPath is the task list of one env when one is named, or every task.
-func tasksPath(ctx context.Context, call *Call, project, env string) (string, error) {
-	if project == "" && env == "" {
-		return "/system/tasks", nil
-	}
-	ref, err := resolveEnv(ctx, call, project, env)
-	if err != nil {
-		return "", err
-	}
-	return ref.path("/tasks"), nil
-}
 
 // ---- get_task_logs ----
 
 type taskLogsInput struct {
-	Task    string `json:"task" jsonschema:"the task's id, from list_tasks"`
-	Project string `json:"project,omitempty" jsonschema:"the task's project, for a key that reads one env only"`
-	Env     string `json:"env,omitempty" jsonschema:"the task's env, with project"`
-	Tail    int    `json:"tail,omitempty" jsonschema:"how many of the newest lines to answer, 1-500; 100 when not given"`
-	Since   string `json:"since,omitempty" jsonschema:"only lines since then: an RFC 3339 time, or a duration ago like 2h"`
-	Grep    string `json:"grep,omitempty" jsonschema:"only lines containing this, ignoring case; /expr/ for a regexp"`
+	Task    string `json:"task" jsonschema:"the task's id (data[].id) from list_tasks"`
+	Project string `json:"project,omitempty" jsonschema:"with env: read the task under that env, for a key limited to it"`
+	Env     string `json:"env,omitempty" jsonschema:"the env's name, with project"`
+	App     string `json:"app,omitempty" jsonschema:"with project and env: read the task under that app, for a key limited to it"` //nolint:lll
+	logParams
 }
 
 func getTaskLogsTool() Tool {
-	return readTool("get_task_logs", "Read a task's logs",
-		"Reads what a background task printed - a deployment's build, a backup - newest lines last, "+
-			"grep applied before the tail as get_app_logs does.",
+	return readTool("get_task_logs", "Read a task's log",
+		"GET /system/tasks/{task}/logs, or the same under /projects/{project}/{env} or "+
+			"/projects/{project}/{env}/apps/{app} when they are given - as list_tasks and get_task read the "+
+			"task. What a background task printed: a deployment's build, a backup, a scheduled job's command. "+
+			"Oldest first, each line with its time and those written to stderr marked [stderr]; a task still "+
+			"running answers what it printed so far. "+descLogAnswer,
 		func(ctx context.Context, call *Call, in taskLogsInput) (logsAnswer, error) {
 			id := strings.TrimSpace(in.Task)
 			if id == "" {
 				return logsAnswer{}, &InputError{Message: "task is required; list_tasks lists them"}
 			}
-			q, err := newLogQuery(in.Tail, in.Since, in.Grep)
+			q, err := in.query()
 			if err != nil {
 				return logsAnswer{}, err
 			}
-			base, err := tasksPath(ctx, call, in.Project, in.Env)
+			base, err := tasksPath(ctx, call, in.Project, in.Env, in.App)
 			if err != nil {
 				return logsAnswer{}, err
 			}
-			out, err := q.read(ctx, call, base+"/"+url.PathEscape(id)+"/logs")
-			out.Task = id
-			return out, err
+			return q.read(ctx, call, base+"/"+url.PathEscape(id)+"/logs")
 		})
 }
 
-// ---- list_nodes ----
-
-type nodeItem struct {
-	ID           string            `json:"id"`
-	Name         string            `json:"name"`
-	Hostname     string            `json:"hostname"`
-	Addr         string            `json:"addr"`
-	Role         string            `json:"role"`
-	Leader       bool              `json:"leader,omitempty"`
-	State        string            `json:"state"`
-	Availability string            `json:"availability"`
-	CPUs         int64             `json:"cpus,omitempty"`
-	MemoryBytes  int64             `json:"memoryBytes,omitempty"`
-	Platform     string            `json:"platform,omitempty"`
-	Engine       string            `json:"engine,omitempty"`
-	Labels       map[string]string `json:"labels,omitempty"`
-}
-
-type nodeList struct {
-	Nodes     []nodeItem `json:"nodes"`
-	Truncated int        `json:"truncated,omitempty"`
-}
-
-func (l *nodeList) shrink() bool {
-	return shrinkList(&l.Nodes, &l.Truncated)
-}
-
-func listNodesTool() Tool {
-	return readTool("list_nodes", "List cluster nodes",
-		"Lists the nodes of the swarm: role, state, whether they take work, their CPUs and memory, "+
-			"and their labels, which placement constraints match against.",
-		func(ctx context.Context, call *Call, _ noInput) (nodeList, error) {
-			var resp nodedto.ListNodeResp
-			query := url.Values{paramPageLimit: {strconv.Itoa(maxListed)}}
-			if err := call.Get(ctx, "/cluster/nodes", query, &resp); err != nil {
-				return nodeList{}, err
-			}
-			out := nodeList{Nodes: make([]nodeItem, 0, len(resp.Data))}
-			for _, n := range resp.Data {
-				if n != nil {
-					out.Nodes = append(out.Nodes, makeNodeItem(n))
-				}
-			}
-			return out, nil
-		})
-}
-
-func makeNodeItem(n *nodedto.NodeResp) nodeItem {
-	item := nodeItem{Hostname: n.Hostname, Addr: n.Addr, Role: string(n.Role), Leader: n.IsLeader,
-		State: string(n.State), Availability: string(n.Availability), Labels: n.Labels}
-	if n.BaseSettingResp != nil {
-		item.ID, item.Name = n.ID, n.Name
+// tasksPath is the task list the names given say: an app's, an env's, or
+// every task.
+func tasksPath(ctx context.Context, call *Call, project, env, app string) (string, error) {
+	project, env, app = strings.TrimSpace(project), strings.TrimSpace(env), strings.TrimSpace(app)
+	switch {
+	case app != "":
+		ref, err := resolveApp(ctx, call, project, env, app)
+		if err != nil {
+			return "", err
+		}
+		return ref.path("/tasks"), nil
+	case project != "" || env != "":
+		ref, err := resolveEnv(ctx, call, project, env)
+		if err != nil {
+			return "", err
+		}
+		return ref.path("/tasks"), nil
 	}
-	if n.Resources != nil {
-		item.CPUs, item.MemoryBytes = n.Resources.CPUs, n.Resources.MemoryBytes
-	}
-	if n.Platform != nil {
-		item.Platform = n.Platform.OS + "/" + n.Platform.Architecture
-	}
-	if n.EngineDesc != nil {
-		item.Engine = n.EngineDesc.EngineVersion
-	}
-	return item
+	return "/system/tasks", nil
 }

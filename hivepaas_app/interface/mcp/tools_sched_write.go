@@ -4,126 +4,176 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"maps"
 	"net/http"
-	"strings"
 	"time"
-
-	"github.com/tiendc/gofn"
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
-	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/timeutil"
-	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings/commandtemplateuc/commandtemplatedto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings/schedjobuc/schedjobdto"
 )
 
-type createSchedJobInput struct {
-	Project  string `json:"project" jsonschema:"the project's key, name or id"`
-	Env      string `json:"env" jsonschema:"the env's name, such as prod"`
-	App      string `json:"app" jsonschema:"the app whose container runs the command"`
-	Name     string `json:"name" jsonschema:"the job's name"`
-	CronExpr string `json:"cronExpr,omitempty" jsonschema:"minute hour day month weekday, or @daily and the like"`
-	Interval string `json:"interval,omitempty" jsonschema:"instead of cronExpr: a duration such as 90m or 24h"`
-	TimeZone string `json:"timeZone,omitempty" jsonschema:"the IANA zone the schedule is read in; UTC when empty"`
-	Command  string `json:"command" jsonschema:"the command, run in the app's container"`
-	Timeout  string `json:"timeout,omitempty" jsonschema:"how long a run may take, such as 30m; no limit when empty"`
-	MaxRetry int    `json:"maxRetry,omitempty" jsonschema:"how many times a failed run is tried again, 0-10"`
+// schedJobArgs are the arguments of plan_create_sched_job: the app's names,
+// and the create endpoint's request body.
+type schedJobArgs map[string]any
+
+// descCommand describes a command template, as a job runs one; prefix is its
+// path in the request.
+func descCommand(prefix string) map[string]string {
+	return map[string]string{
+		prefix + "command": "a command line, run in the app's container with its shell. Give it or script, " +
+			"not both",
+		prefix + "script":     "instead of command: a script of several lines, run by the container's shell",
+		prefix + "workingDir": "the directory it runs in; the container's own when not given",
+		prefix + "envVars": "environment variables it runs with, beside the app's own: each a key, a value " +
+			"and isLiteral. A value may refer to the app's variables as ${KEY} and to secrets as " +
+			"${secrets.KEY}; isLiteral true takes it as written",
+		prefix + "argGroups": "arguments put together into one environment variable: each group, when " +
+			"enabled, joins the args it uses - name, or name, separator (a space when not given) and the " +
+			"value quoted - with spaces, into the variable exportEnv, which the command can then use",
+		prefix + "consoleSize": "the terminal's width and height, for a command that runs with tty",
+		prefix + "tty":         "true to run it with a terminal",
+		prefix + "link":        "a link about it, such as its documentation",
+		prefix + "desc":        "a description of it",
+		prefix + argName:       "not used here: set by the endpoint",
+		prefix + argKind:       "not used here: set by the endpoint",
+	}
+}
+
+var schedJobDescs = func() map[string]string {
+	descs := map[string]string{
+		argName: "the job's name, up to 100 characters",
+		"schedule": "when it runs: cronExpr or interval, from initialTime; explain_schedule shows the runs of " +
+			"one",
+		"schedule.endTime": "when the schedule ends, RFC 3339: no run after it; never when not given",
+		"priority": "the priority of its runs in the task queue: " + statusValues(base.AllTaskPriorities) +
+			"; default when not given",
+		"maxRetry": "how many times a failed run is tried again, 1-100; not retried when not given",
+		"retryDelay": "how long a retry waits, up to 24h, such as 30s or 5m; the nth retry waits it, or " +
+			"longer as retryDelayIncr or retryBackoff say",
+		"retryDelayIncr": "added to the wait for each further retry: the nth waits retryDelay + (n-1) x " +
+			"retryDelayIncr. It takes precedence over retryBackoff",
+		"retryBackoff": "true to double the wait for each further retry: the nth waits retryDelay x 2^(n-1), " +
+			"plus a random part of up to retryBackoffJitter",
+		"retryBackoffJitter": "with retryBackoff, the most random time added to a wait; 1s when not given",
+		"retryDelayMax":      "the longest a retry waits, however the wait grows",
+		"timeout":            "how long a run may take before it is stopped, up to 24h; 3h when not given",
+		"controlDisabled":    "true for runs that cannot be canceled once started",
+		"command":            "what runs, in the app's container",
+		"commandOutput": "what is done with what the command prints, when enabled: saved to a file in a " +
+			"storage (saveToFile) or given as input to a command in another app (pipeToApp), one of them",
+		"commandOutput.saveToFile": "fileName and filePath in the storage; fileKind, such as postgres-backup, " +
+			"for a backup the dashboard can restore; storage, the id of a storage setting and a bucket; " +
+			"compressionFormat, one of zstd, gzip, zip, tar or none when not given; encryptionFormat, age or " +
+			"none when not given, with its encryptionSecret",
+		"commandOutput.pipeToApp": "targetApp, the id of another app the API key's user may change, and " +
+			"command, what runs there with the output as its input, given as command is",
+		"notification": "who is told how a run went: success and failure, each the id of a notification " +
+			"setting; successUseDefault and failureUseDefault, true to use the default notification when no " +
+			"id is given. When not given, both use the default, as the dashboard's form starts",
+	}
+	maps.Copy(descs, scheduleDescs("schedule."))
+	maps.Copy(descs, descCommand("command."))
+	return descs
+}()
+
+// forAudit keeps the values of what may be secret: environment variables, and
+// the key a saved output is encrypted with.
+func (in schedJobArgs) forAudit() any {
+	raw, err := json.Marshal(map[string]any(in))
+	if err != nil {
+		return nil
+	}
+	var out map[string]any
+	if err = json.Unmarshal(raw, &out); err != nil {
+		return nil
+	}
+	redactEnvVars := func(command any) {
+		if c, ok := command.(map[string]any); ok {
+			if vars, ok := c["envVars"].([]any); ok {
+				for _, v := range vars {
+					if env, ok := v.(map[string]any); ok {
+						env["value"] = redactedValue
+					}
+				}
+			}
+		}
+	}
+	redactEnvVars(out["command"])
+	if output, ok := out["commandOutput"].(map[string]any); ok {
+		if file, ok := output["saveToFile"].(map[string]any); ok && file["encryptionSecret"] != nil {
+			file["encryptionSecret"] = redactedValue
+		}
+		if pipe, ok := output["pipeToApp"].(map[string]any); ok {
+			redactEnvVars(pipe["command"])
+		}
+	}
+	return out
 }
 
 type schedJobPlan struct {
-	App      string   `json:"app"`
-	Project  string   `json:"project"`
-	Env      string   `json:"env"`
-	Name     string   `json:"name"`
-	Schedule string   `json:"schedule"`
-	TimeZone string   `json:"timeZone"`
-	NextRuns []string `json:"nextRuns"`
-	Command  string   `json:"command"`
-	Timeout  string   `json:"timeout,omitempty"`
-	MaxRetry int      `json:"maxRetry,omitempty"`
+	App     string `json:"app"`
+	Project string `json:"project"`
+	Env     string `json:"env"`
+	// Request is the create endpoint's request the plan sends.
+	Request *schedjobdto.SchedJobBaseReq `json:"request"`
+	// NextRuns are the job's first runs, as explain_schedule answers them.
+	NextRuns []time.Time `json:"nextRuns"`
 }
 
-const (
-	schedJobRuns     = 5
-	maxSchedJobRetry = 10
-)
+const schedJobRuns = 5
 
 func planCreateSchedJobTool() Tool {
-	return planTool("plan_create_sched_job", "Plan a scheduled job",
-		"Plans a job that runs a command in an app's container on a schedule: a cron expression, read in "+
-			"the time zone given, or an interval. Answers the job and its next five runs. Nothing is "+
-			"created until apply_plan.",
-		NeedWrite, &applier{follow: "list_sched_jobs lists it; list_tasks with type task:sched-job-exec shows its runs."},
-		func(ctx context.Context, call *Call, in createSchedJobInput) (schedJobPlan, *storedPlan, error) {
-			if err := in.check(); err != nil {
-				return schedJobPlan{}, nil, err
-			}
-			zone := strings.TrimSpace(in.TimeZone)
-			if zone == "" {
-				zone = "UTC"
-			}
-			loc, err := time.LoadLocation(zone)
-			if err != nil {
-				return schedJobPlan{}, nil, &InputError{Message: fmt.Sprintf("no time zone %q; use an IANA name", zone)}
-			}
-			ref, err := resolveApp(ctx, call, in.Project, in.Env, in.App)
+	return planToolWith("plan_create_sched_job", "Plan a scheduled job",
+		"Plans POST /projects/{project}/{env}/apps/{app}/sched-jobs: a job that runs a command in the app's "+
+			"container on a schedule, as the dashboard's app Scheduled jobs do. The app's scheduled jobs "+
+			"feature must be on. The plan is the request - its app, and jobType container-command, are set "+
+			"by the tool - and the job's first five runs; initialTime is fixed at the plan's time when not "+
+			"given, so the runs shown are the job's. Nothing is created until apply_plan.",
+		NeedWrite, &applier{follow: "list_sched_jobs with the app lists it; list_tasks with type " +
+			string(base.TaskTypeSchedJobExec) + " and targetId the job's id shows its runs."},
+		bodyInput(underApp, &schedjobdto.SchedJobBaseReq{}, schedJobDescs, []string{argName, "schedule", "command"},
+			argApp, "jobType"),
+		func(ctx context.Context, call *Call, in schedJobArgs) (schedJobPlan, *storedPlan, error) {
+			project, _ := in[argProject].(string)
+			env, _ := in[argEnv].(string)
+			app, _ := in[argApp].(string)
+			ref, err := resolveApp(ctx, call, project, env, app)
 			if err != nil {
 				return schedJobPlan{}, nil, err
 			}
-			// A job reads its cron expression in the zone of its initial time:
-			// the plan's runs and the job's are computed from the same one.
-			sched, err := scheduleReq(strings.TrimSpace(in.CronExpr), strings.TrimSpace(in.Interval),
-				timeNow().In(loc).Truncate(time.Second))
-			if err != nil {
+			args := maps.Clone(in)
+			delete(args, argApp) // the app's name, not the request's app
+			body := &schedjobdto.SchedJobBaseReq{}
+			if err = decodeBody(args, body); err != nil {
 				return schedJobPlan{}, nil, err
 			}
-			runs, err := calcNextRuns(ctx, call, sched, schedJobRuns)
-			if err != nil {
+			if body.Schedule == nil {
+				return schedJobPlan{}, nil, &InputError{Message: "schedule is required"}
+			}
+			body.App = basedto.ObjectIDReq{ID: ref.AppID}
+			body.JobType = base.SchedJobTypeContainerCommand
+			if body.Notification == nil { // as the dashboard's form starts
+				body.Notification = &basedto.BaseEventNotificationReq{SuccessUseDefault: true, FailureUseDefault: true}
+			}
+			// The runs a plan shows are the job's only when both start at the
+			// same time: the endpoint would start the job when it is created.
+			if body.Schedule.InitialTime.IsZero() {
+				body.Schedule.InitialTime = timeNow().UTC().Truncate(time.Second)
+			}
+			var runs schedjobdto.CalcNextRunsResp
+			if err = call.Post(ctx, "/settings/sched-jobs/calc-next-runs",
+				&schedjobdto.CalcNextRunsReq{ScheduleReq: body.Schedule, Count: schedJobRuns}, &runs); err != nil {
 				return schedJobPlan{}, nil, err
 			}
-
-			out := schedJobPlan{App: ref.AppKey, Project: ref.ProjectKey, Env: ref.Env, Name: strings.TrimSpace(in.Name),
-				Schedule: gofn.Coalesce(strings.TrimSpace(in.CronExpr), "every "+strings.TrimSpace(in.Interval)),
-				TimeZone: zone, Command: in.Command, Timeout: in.Timeout, MaxRetry: in.MaxRetry,
-				NextRuns: make([]string, 0, len(runs))}
-			for _, run := range runs {
-				out.NextRuns = append(out.NextRuns, run.In(loc).Format("2006-01-02T15:04:05Z07:00 Mon"))
-			}
-
-			// The create endpoint's own request, as the dashboard's form fills it
-			// for a command run in the app's container.
-			timeout, _ := timeutil.ParseDurationWithEmptyIsZero(strings.TrimSpace(in.Timeout))
-			body := &schedjobdto.CreateSchedJobReq{SchedJobBaseReq: &schedjobdto.SchedJobBaseReq{
-				Name: out.Name, JobType: base.SchedJobTypeContainerCommand, Schedule: sched,
-				App: basedto.ObjectIDReq{ID: ref.AppID}, MaxRetry: in.MaxRetry, Timeout: timeout,
-				Command:      &commandtemplatedto.CommandTemplateBaseReq{Command: in.Command},
-				Notification: &basedto.BaseEventNotificationReq{SuccessUseDefault: true, FailureUseDefault: true},
-			}}
-			raw, err := json.Marshal(body)
+			out := schedJobPlan{App: ref.AppKey, Project: ref.ProjectKey, Env: ref.Env, Request: body,
+				NextRuns: runs.Data}
+			raw, err := json.Marshal(&schedjobdto.CreateSchedJobReq{SchedJobBaseReq: body})
 			if err != nil {
 				return schedJobPlan{}, nil, fmt.Errorf("mcp: encoding a plan: %w", err)
 			}
 			return out, &storedPlan{Method: http.MethodPost, Path: ref.path("/sched-jobs"), Body: raw,
-				Summary: fmt.Sprintf("schedule %q in %s of %s/%s, %s", out.Name, ref.AppKey, ref.ProjectKey,
-					ref.Env, out.Schedule)}, nil
+				Summary: fmt.Sprintf("schedule %q in %s of %s/%s", body.Name, ref.AppKey, ref.ProjectKey,
+					ref.Env)}, nil
 		})
-}
-
-func (in *createSchedJobInput) check() error {
-	switch {
-	case strings.TrimSpace(in.Name) == "":
-		return &InputError{Message: "name is required"}
-	case strings.TrimSpace(in.Command) == "":
-		return &InputError{Message: "command is required"}
-	case (strings.TrimSpace(in.CronExpr) == "") == (strings.TrimSpace(in.Interval) == ""):
-		return &InputError{Message: "give either cronExpr or interval"}
-	case in.MaxRetry < 0 || in.MaxRetry > maxSchedJobRetry:
-		return &InputError{Message: fmt.Sprintf("maxRetry is 0 to %d", maxSchedJobRetry)}
-	}
-	if t := strings.TrimSpace(in.Timeout); t != "" {
-		if d, err := timeutil.ParseDuration(t); err != nil || d <= 0 {
-			return &InputError{Message: fmt.Sprintf("timeout is %q; give a duration such as 30m", t)}
-		}
-	}
-	return nil
 }

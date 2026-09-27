@@ -106,7 +106,7 @@ func resolveEnv(ctx context.Context, call *Call, project, env string) (*envRef, 
 	if err != nil {
 		return nil, err
 	}
-	p, err := pick("project", project, "list_projects", slices.DeleteFunc(projects, isNil),
+	p, err := pick(argProject, project, "list_projects", slices.DeleteFunc(projects, isNil),
 		func(p *projectdto.ProjectResp) named {
 			return named{id: p.ID, key: p.Key, name: p.Name}
 		})
@@ -133,7 +133,7 @@ func resolveApp(ctx context.Context, call *Call, project, env, app string) (*app
 	if err != nil {
 		return nil, err
 	}
-	a, err := pick("app", app, "list_apps", apps, func(a listedApp) named {
+	a, err := pick(argApp, app, "list_apps", apps, func(a listedApp) named {
 		return named{id: a.ID, key: a.Key, name: a.Name}
 	})
 	if err != nil {
@@ -147,7 +147,7 @@ func resolveApp(ctx context.Context, call *Call, project, env, app string) (*app
 func listApps(ctx context.Context, call *Call, ref *envRef, stats bool) ([]listedApp, error) {
 	query := url.Values{paramPageLimit: {strconv.Itoa(maxListed)}, "getChildApps": {paramTrue}}
 	if stats {
-		query.Set("getStats", paramTrue)
+		query.Set(paramGetStats, paramTrue)
 	}
 	var resp appdto.ListAppResp
 	if err := call.Get(ctx, ref.path("/apps"), query, &resp); err != nil {

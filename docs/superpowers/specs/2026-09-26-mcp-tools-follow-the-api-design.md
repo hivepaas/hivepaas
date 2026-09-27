@@ -108,3 +108,31 @@ another image tag or branch is a change to the `deployment` settings, planned wi
 - The read tools answer as before, decoded through the DTOs.
 - Against a running server: read and change an env var, change a resource limit,
   redeploy, and follow the deployment to its end.
+
+## 5. Revision: every parameter, every answer as the endpoint gives it
+
+Sections 2 and 3 kept the read tools' own answers. This revision goes the rest of the
+way; where it differs, it replaces them.
+
+- **A read tool is one GET endpoint.** Its input is the endpoint's query parameters,
+  read from the request DTO's `mapstructure` fields - and `pageOffset`, `pageLimit`,
+  `sort` when the request pages - plus the names that find its path (project, env,
+  app) and the id in it (deployment, task, template). A parameter the endpoint takes
+  but ignores (a deployment list's `search`, a template list's `sort`) is not offered.
+  The answer is the endpoint's response, `{meta, data}`, decoded through its DTO.
+- **No output schemas.** The API's types are recursive (an app holds its apps) and
+  marshal some fields as other than their Go kind (a size is `"1GB"`), so a schema
+  generated from Go would describe them wrongly. Tools declare none.
+- **A request body is the endpoint's own.** Tools that send one - preflight and
+  install, explain schedule, redeploy, set running, create a scheduled job - take the
+  body DTO's JSON fields as their arguments, described field by field. What the tool
+  sets itself is not offered: an app job's `app` and `jobType`, an install's
+  `resetStorage` (deleting old data stays the dashboard's).
+- **Every argument is described.** A test lists every tool and fails on an argument
+  without a description, or a description of a parameter the endpoint does not take.
+- **Answers are not cut.** One larger than 64 KB is refused with how to narrow it (a
+  smaller `pageLimit`). The log tools are the exception: they answer lines, bounded,
+  in time order, with `grep` applied by the tool to the most the endpoint answers.
+- **Tools added:** `get_app_deployment_logs`, `search_app_logs`, `get_task`,
+  `get_template_catalog`, `list_template_image_tags`. `get_app_deployment` no longer
+  carries the log.

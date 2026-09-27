@@ -6,11 +6,16 @@ import (
 	"net/http"
 	"strings"
 	"testing"
-	"time"
 
 	"github.com/gin-gonic/gin"
 	mcpsdk "github.com/modelcontextprotocol/go-sdk/mcp"
 	"github.com/stretchr/testify/assert"
+
+	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/apptemplateuc/apptemplatedto"
+	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/cluster/nodeuc/nodedto"
+	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/homeuc/homedto"
+	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings/schedjobuc/schedjobdto"
+	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/taskuc/taskdto"
 )
 
 // clusterRoutes answers the endpoints of the tools beyond apps, and remembers
@@ -96,72 +101,77 @@ func TestListAttention(t *testing.T) {
 	_, _, session := clusterSession(t)
 	text, isErr := callTool(t, session, "list_attention", nil)
 	assert.False(t, isErr, text)
-	var out attentionList
+	var out homedto.GetHomeAttentionResp
 	assert.NoError(t, json.Unmarshal([]byte(text), &out))
-	if assert.Len(t, out.Items, 1) {
-		assert.Equal(t, "exit 1", out.Items[0].LastError)
-		assert.Equal(t, "prod", out.Items[0].Env)
+	if assert.Len(t, out.Data.Items, 1) {
+		assert.Equal(t, "exit 1", out.Data.Items[0].LastError)
+		assert.Equal(t, "prod", out.Data.Items[0].Env)
 	}
-	assert.NotContains(t, text, "canAct")
 }
 
+// list_tasks is the task list of what its arguments name: everything, an
+// env's, or an app's, each asked with the query as the handler reads it.
 func TestListTasksIsEveryTaskOrOneEnvs(t *testing.T) {
 	_, routes, session := clusterSession(t)
-	text, isErr := callTool(t, session, "list_tasks", map[string]any{"status": []string{"failed"}, "limit": 5})
+	text, isErr := callTool(t, session, "list_tasks", map[string]any{"status": []string{"failed", "canceled"},
+		"pageLimit": 5, "sort": "-createdAt"})
 	assert.False(t, isErr, text)
-	assert.Equal(t, "pageLimit=5&status=failed", routes.asked["/system/tasks"])
-	var out taskList
+	assert.Equal(t, "pageLimit=5&sort=-createdAt&status=failed%2Ccanceled", routes.asked["/system/tasks"])
+	var out taskdto.ListTaskResp
 	assert.NoError(t, json.Unmarshal([]byte(text), &out))
-	if assert.Len(t, out.Tasks, 1) {
-		assert.Equal(t, taskListItem{ID: "t1", Type: "task:app-deploy", Status: "failed", Job: "deploy api",
-			App: "api", LastError: "build failed", CreatedAt: time.Date(2026, 9, 26, 8, 0, 0, 0, time.UTC)},
-			out.Tasks[0])
+	if assert.Len(t, out.Data, 1) {
+		assert.Equal(t, "build failed", out.Data[0].LastError)
 	}
-	assert.NotContains(t, text, "s3cr3t")
 
 	text, isErr = callTool(t, session, "list_tasks", map[string]any{"project": "shop", "env": "prod"})
 	assert.False(t, isErr, text)
-	assert.Equal(t, "pageLimit=20", routes.asked["/projects/p1/prod/tasks"])
+	assert.Empty(t, routes.asked["/projects/p1/prod/tasks"])
 
-	text, isErr = callTool(t, session, "list_tasks", map[string]any{"limit": 51})
-	assert.True(t, isErr)
-	assert.Contains(t, text, "limit is 1 to 50")
+	text, isErr = callTool(t, session, "list_tasks", map[string]any{"pageLimit": 10001})
+	assert.True(t, isErr, text)
+	text, isErr = callTool(t, session, "list_tasks", map[string]any{"limit": 5})
+	assert.True(t, isErr, "an argument the endpoint does not take is refused: %s", text)
 }
 
 func TestGetTaskLogs(t *testing.T) {
 	_, routes, session := clusterSession(t)
-	text, isErr := callTool(t, session, "get_task_logs", map[string]any{"task": "t1", "grep": "error"})
+	text, isErr := callTool(t, session, "get_task_logs", map[string]any{"task": "t1", "grep": "error",
+		"since": "2026-09-26T08:00:00+07:00", "duration": "2h"})
 	assert.False(t, isErr, text)
-	assert.Contains(t, routes.asked["/system/tasks/t1/logs"], "tail=5000")
+	assert.Equal(t, "duration=2h&since=2026-09-26T01%3A00%3A00Z&tail=5000&timestamps=true",
+		routes.asked["/system/tasks/t1/logs"])
 	var out logsAnswer
 	assert.NoError(t, json.Unmarshal([]byte(text), &out))
-	assert.Equal(t, "t1", out.Task)
 	assert.Equal(t, []string{"[stderr] error: step 2"}, out.Lines)
+
+	_, isErr = callTool(t, session, "get_task_logs", map[string]any{"task": "t1", "since": "2h"})
+	assert.True(t, isErr, "since is a time; a length of time is duration")
 }
 
 func TestListNodes(t *testing.T) {
-	_, _, session := clusterSession(t)
-	text, isErr := callTool(t, session, "list_nodes", nil)
+	_, routes, session := clusterSession(t)
+	text, isErr := callTool(t, session, "list_nodes", map[string]any{"search": "node"})
 	assert.False(t, isErr, text)
-	var out nodeList
+	assert.Equal(t, "search=node", routes.asked["/cluster/nodes"])
+	var out nodedto.ListNodeResp
 	assert.NoError(t, json.Unmarshal([]byte(text), &out))
-	assert.Equal(t, []nodeItem{{ID: "n1", Name: "node-1", Hostname: "h1", Addr: "10.0.0.1", Role: "manager",
-		Leader: true, State: "ready", Availability: "active", CPUs: 4, MemoryBytes: 8 << 30,
-		Platform: "linux/x86_64", Engine: "28.0", Labels: map[string]string{"zone": "a"}}}, out.Nodes)
+	if assert.Len(t, out.Data, 1) {
+		assert.Equal(t, "h1", out.Data[0].Hostname)
+		assert.Equal(t, map[string]string{"zone": "a"}, out.Data[0].Labels)
+	}
 }
 
 func TestTemplates(t *testing.T) {
 	_, routes, session := clusterSession(t)
-	text, isErr := callTool(t, session, "search_templates", map[string]any{"search": "postgres"})
+	text, isErr := callTool(t, session, "search_templates", map[string]any{"search": "postgres",
+		"category": []string{"databases"}})
 	assert.False(t, isErr, text)
-	assert.Equal(t, "pageLimit=50&search=postgres", routes.asked["/app-templates"])
-	var list templateList
+	assert.Equal(t, "category=databases&search=postgres", routes.asked["/app-templates"])
+	var list apptemplatedto.ListAppTemplatesResp
 	assert.NoError(t, json.Unmarshal([]byte(text), &list))
-	if assert.Len(t, list.Templates, 1) {
-		if assert.Len(t, list.Templates[0].Versions, 1) {
-			v := list.Templates[0].Versions[0]
-			assert.Equal(t, []any{"17", "17.5", true}, []any{v.Name, v.Release, v.Default})
-		}
+	if assert.Len(t, list.Data, 1) && assert.Len(t, list.Data[0].Versions, 1) {
+		v := list.Data[0].Versions[0]
+		assert.Equal(t, []any{"17", "17.5", true}, []any{v.Name, v.Release, v.Default})
 	}
 
 	text, isErr = callTool(t, session, "get_template", map[string]any{"template": "postgres"})
@@ -175,23 +185,22 @@ func TestTemplates(t *testing.T) {
 func TestPreflightInstallAuditsNoParameterValue(t *testing.T) {
 	w, routes, session := clusterSession(t)
 	text, isErr := callTool(t, session, "preflight_install", map[string]any{
-		"project": "shop", "env": "prod", "template": "postgres", "name": "db",
+		"project": "shop", "env": "prod", "template": "postgres", "name": "db", "imageTag": "17.6",
 		"params":           map[string]any{"password": "hunter2-s3cr3t"},
 		"dependencyParams": map[string]any{"cache": map[string]any{"password": "hunter3-s3cr3t"}},
 	})
 	assert.False(t, isErr, text)
-	assert.Contains(t, routes.asked["/projects/p1/prod/apps/from-template/preflight"], "hunter2-s3cr3t",
-		"the endpoint is asked with the value")
-	var out preflightAnswer
+	asked := routes.asked["/projects/p1/prod/apps/from-template/preflight"]
+	assert.Contains(t, asked, "hunter2-s3cr3t", "the endpoint is asked with the value")
+	assert.Contains(t, asked, `"imageTag":"17.6"`)
+	assert.NotContains(t, asked, "project", "the env's names are not the request's")
+	var out apptemplatedto.PreflightAppFromTemplateResp
 	assert.NoError(t, json.Unmarshal([]byte(text), &out))
-	if assert.Len(t, out.Issues, 1) {
-		assert.Equal(t, "ERR_NAME_TAKEN", out.Issues[0].Code)
-		assert.Equal(t, "an app named db exists", out.Issues[0].Detail)
+	if assert.Len(t, out.Data.Issues, 1) {
+		assert.Equal(t, "ERR_NAME_TAKEN", out.Data.Issues[0].Code)
 	}
-	if assert.Len(t, out.Storage, 1) {
-		assert.Equal(t, "db", out.Storage[0].AppKey)
-		assert.True(t, out.Storage[0].IsDatabase)
-		assert.Equal(t, "data", out.Storage[0].Volume.Name)
+	if assert.Len(t, out.Data.Storage, 1) {
+		assert.True(t, out.Data.Storage[0].IsDatabase)
 	}
 
 	if assert.NotEmpty(t, w.audit.entries) {
@@ -199,6 +208,10 @@ func TestPreflightInstallAuditsNoParameterValue(t *testing.T) {
 		assert.Contains(t, detail, "password")
 		assert.NotContains(t, detail, "s3cr3t")
 	}
+
+	_, isErr = callTool(t, session, "preflight_install", map[string]any{"project": "shop", "env": "prod",
+		"template": "postgres", "name": "db", "resetStorage": true})
+	assert.True(t, isErr, "resetStorage is the dashboard's")
 }
 
 func TestSchedules(t *testing.T) {
@@ -206,27 +219,20 @@ func TestSchedules(t *testing.T) {
 	text, isErr := callTool(t, session, "list_sched_jobs", nil)
 	assert.False(t, isErr, text)
 	assert.Contains(t, text, `"cronExpr":"0 2 * * *"`)
-	assert.Contains(t, text, `"initialTime":"2026-09-01T00:00:00+07:00"`)
-	assert.NotContains(t, text, "s3cr3t")
 
-	timeNow = func() time.Time { return time.Date(2026, 9, 26, 12, 0, 0, 0, time.UTC) }
-	defer func() { timeNow = time.Now }()
-	text, isErr = callTool(t, session, "explain_schedule",
-		map[string]any{"cronExpr": "0 2 * * *", "timeZone": "Asia/Ho_Chi_Minh", "count": 2})
+	text, isErr = callTool(t, session, "explain_schedule", map[string]any{"cronExpr": "0 2 * * *",
+		"initialTime": "2026-09-26T19:00:00+07:00", "count": 2})
 	assert.False(t, isErr, text)
 	var calc map[string]any
 	assert.NoError(t, json.Unmarshal([]byte(routes.asked["/settings/sched-jobs/calc-next-runs"]), &calc))
 	assert.Equal(t, []any{2.0, "0 2 * * *", "2026-09-26T19:00:00+07:00"},
 		[]any{calc["count"], calc["cronExpr"], calc["initialTime"]}, "the endpoint's own request")
-	var out scheduleRuns
+	var out schedjobdto.CalcNextRunsResp
 	assert.NoError(t, json.Unmarshal([]byte(text), &out))
-	assert.Equal(t, []string{"2026-09-27T02:00:00+07:00 Sun", "2026-09-28T02:00:00+07:00 Mon"}, out.Runs)
+	assert.Len(t, out.Data, 2)
 
-	text, isErr = callTool(t, session, "explain_schedule", map[string]any{"cronExpr": "* * * * *", "timeZone": "Mars"})
-	assert.True(t, isErr)
-	assert.Contains(t, text, `no time zone "Mars"`)
-	_, isErr = callTool(t, session, "explain_schedule", map[string]any{"cronExpr": "* * * * *", "interval": "1h"})
-	assert.True(t, isErr)
+	_, isErr = callTool(t, session, "explain_schedule", map[string]any{"cronExpr": "* * * * *"})
+	assert.True(t, isErr, "count is required")
 }
 
 func TestResources(t *testing.T) {

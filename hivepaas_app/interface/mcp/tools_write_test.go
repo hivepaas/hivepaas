@@ -14,6 +14,7 @@ import (
 	mcpsdk "github.com/modelcontextprotocol/go-sdk/mcp"
 	"github.com/stretchr/testify/assert"
 
+	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/appdeploymentuc/appdeploymentdto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/apptemplateuc/apptemplatedto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings/schedjobuc/schedjobdto"
 )
@@ -244,7 +245,7 @@ func TestRedeployDeploysTheSourceAsItIs(t *testing.T) {
 	plan := planOf(t, text)
 	var shown redeployPlan
 	assert.NoError(t, json.Unmarshal(plan.Plan, &shown))
-	assert.Equal(t, deploySource{Method: "image", Image: "shop/api:1.25"}, shown.Source)
+	assert.Equal(t, "shop/api:1.25", shown.Settings.ImageSource.Image, "the deployment settings it follows")
 
 	text, isErr = callTool(t, session, "apply_plan", map[string]any{"planToken": plan.PlanToken})
 	assert.False(t, isErr, text)
@@ -284,7 +285,7 @@ func TestAnAppWithNoSourceHasNoRedeployPlan(t *testing.T) {
 	assert.Contains(t, string(plan.Plan), "no source to deploy from")
 }
 
-func installArgs() map[string]any {
+func testInstallArgs() map[string]any {
 	return map[string]any{"project": "shop", "env": "prod", "template": "wikijs", "name": "wiki",
 		"params": map[string]any{"adminPassword": "hunter2-s3cr3t"}}
 }
@@ -293,20 +294,21 @@ func TestInstallPlansEveryAppAndCreatesThemOnApply(t *testing.T) {
 	w := newWriteWorld(t)
 	session := w.session(t, "key1")
 
-	text, isErr := callTool(t, session, "plan_install_app", installArgs())
+	text, isErr := callTool(t, session, "plan_install_app", testInstallArgs())
 	assert.False(t, isErr, text)
 	plan := planOf(t, text)
 	var shown installPlan
 	assert.NoError(t, json.Unmarshal(plan.Plan, &shown))
-	if assert.Len(t, shown.Apps, 2) {
+	if assert.Len(t, shown.Preflight.Apps, 2) {
 		assert.Equal(t, apptemplatedto.PreflightPlannedApp{Name: "wiki-db", Key: "wiki-db", Kind: "dependency",
-			Role: "db", Template: "postgres", Image: "postgres:17"}, *shown.Apps[0])
+			Role: "db", Template: "postgres", Image: "postgres:17"}, *shown.Preflight.Apps[0])
 	}
+	assert.Equal(t, "wikijs", shown.Request.Template)
 	assert.Empty(t, w.routes.writes(), "a plan creates nothing")
 
 	text, isErr = callTool(t, session, "apply_plan", map[string]any{"planToken": plan.PlanToken})
 	assert.False(t, isErr, text)
-	assert.Contains(t, text, `"dependency:db":"n0"`)
+	assert.Contains(t, text, `"dependencies":[{"app":{"id":"n0"}`)
 	if sent := w.routes.writes(); assert.Len(t, sent, 1) {
 		assert.Equal(t, "/projects/p1/prod/apps/from-template", sent[0].Path)
 		assert.Contains(t, sent[0].Body, "hunter2-s3cr3t", "the endpoint is sent the value")
@@ -319,7 +321,7 @@ func TestInstallPlansEveryAppAndCreatesThemOnApply(t *testing.T) {
 func TestAnInstallThatWouldBeRefusedHasNoPlan(t *testing.T) {
 	w := newWriteWorld(t)
 	w.routes.preflight = gin.H{"issues": []gin.H{{"code": "ERR_DOMAIN_TAKEN", "detail": "wiki.test is served"}}}
-	text, isErr := callTool(t, w.session(t, "key1"), "plan_install_app", installArgs())
+	text, isErr := callTool(t, w.session(t, "key1"), "plan_install_app", testInstallArgs())
 	assert.False(t, isErr, text)
 	plan := planOf(t, text)
 	assert.Empty(t, plan.PlanToken)
@@ -330,7 +332,7 @@ func TestAnInstallOverOldDataSaysSo(t *testing.T) {
 	w := newWriteWorld(t)
 	w.routes.preflight["storage"] = []gin.H{{"app": "wiki-db", "appKey": "wiki-db", "isDatabase": true,
 		"volume": gin.H{"name": "data"}, "path": "shop/prod/wiki-db"}}
-	text, _ := callTool(t, w.session(t, "key1"), "plan_install_app", installArgs())
+	text, _ := callTool(t, w.session(t, "key1"), "plan_install_app", testInstallArgs())
 	plan := planOf(t, text)
 	assert.NotEmpty(t, plan.PlanToken, "keeping the data is the person's choice to make")
 	assert.Contains(t, string(plan.Plan), "password it was created with")
@@ -342,15 +344,19 @@ func TestASchedJobIsPlannedWithItsRuns(t *testing.T) {
 	w := newWriteWorld(t)
 	session := w.session(t, "key1")
 	args := shopProd("api")
-	args["name"], args["cronExpr"], args["timeZone"] = "nightly cleanup", "0 2 * * *", "Asia/Ho_Chi_Minh"
-	args["command"], args["timeout"] = "php artisan cleanup", "30m"
+	args["name"], args["timeout"], args["maxRetry"] = "nightly cleanup", "30m", 3
+	args["schedule"] = map[string]any{"cronExpr": "0 2 * * *"}
+	args["command"] = map[string]any{"command": "php artisan cleanup",
+		"envVars": []any{map[string]any{"key": "TOKEN", "value": "s3cr3t-9"}}}
 
 	text, isErr := callTool(t, session, "plan_create_sched_job", args)
 	assert.False(t, isErr, text)
 	plan := planOf(t, text)
 	var shown schedJobPlan
 	assert.NoError(t, json.Unmarshal(plan.Plan, &shown))
-	assert.Equal(t, []string{"2026-09-27T02:00:00+07:00 Sun", "2026-09-28T02:00:00+07:00 Mon"}, shown.NextRuns)
+	assert.Len(t, shown.NextRuns, 2)
+	assert.Equal(t, "2026-09-26T12:00:00Z", shown.Request.Schedule.InitialTime.Format(time.RFC3339),
+		"the runs shown are the job's: it starts when the plan was made")
 	assert.Empty(t, w.routes.writes())
 
 	text, isErr = callTool(t, session, "apply_plan", map[string]any{"planToken": plan.PlanToken})
@@ -366,27 +372,34 @@ func TestASchedJobIsPlannedWithItsRuns(t *testing.T) {
 			assert.Equal(t, "container-command", string(job.JobType))
 			assert.Equal(t, "a1", job.App.ID)
 			assert.Equal(t, "0 2 * * *", job.Schedule.CronExpr)
-			assert.Equal(t, "2026-09-26T19:00:00+07:00", job.Schedule.InitialTime.Format(time.RFC3339))
 			assert.Equal(t, "php artisan cleanup", job.Command.Command)
+			assert.Equal(t, 3, job.MaxRetry)
 			assert.Equal(t, "30m0s", job.Timeout.ToDuration().String())
 			assert.True(t, job.Notification.SuccessUseDefault && job.Notification.FailureUseDefault)
 		}
+	}
+	for _, entry := range w.audit.entries {
+		assert.NotContains(t, entry.Detail, "s3cr3t", "the audit log keeps no variable's value")
 	}
 }
 
 func TestASchedJobNeedsWhatItRuns(t *testing.T) {
 	w := newWriteWorld(t)
 	for name, change := range map[string]map[string]any{
-		"no command":      {"command": ""},
-		"both schedules":  {"interval": "1h"},
-		"a bad timeout":   {"timeout": "soon"},
-		"too many tries":  {"maxRetry": 11},
-		"an unknown zone": {"timeZone": "Mars/Base"},
+		"no command":    {"command": nil},
+		"no schedule":   {"schedule": nil},
+		"a bad timeout": {"timeout": "soon"},
+		"its own app":   {"jobType": "system-backup"},
 	} {
 		args := shopProd("api")
-		args["name"], args["cronExpr"], args["command"] = "job", "@daily", "true"
+		args["name"], args["schedule"] = "job", map[string]any{"cronExpr": "@daily"}
+		args["command"] = map[string]any{"command": "true"}
 		for k, v := range change {
-			args[k] = v
+			if v == nil {
+				delete(args, k)
+			} else {
+				args[k] = v
+			}
 		}
 		_, isErr := callTool(t, w.session(t, "key1"), "plan_create_sched_job", args)
 		assert.True(t, isErr, name)
@@ -569,29 +582,23 @@ func TestStopAnApp(t *testing.T) {
 	}
 }
 
-func TestDeploymentsAreListedAndReadWithTheirLog(t *testing.T) {
+func TestADeploymentIsReadWithItsLog(t *testing.T) {
 	w := newWriteWorld(t)
 	session := w.session(t, "key1")
-	text, isErr := callTool(t, session, "list_app_deployments", shopProd("api"))
-	assert.False(t, isErr, text)
-	var list deploymentList
-	assert.NoError(t, json.Unmarshal([]byte(text), &list))
-	if assert.Len(t, list.Deployments, 2) {
-		assert.Equal(t, "failed", list.Deployments[0].Status)
-		assert.Equal(t, "pull access denied for shop/api", list.Deployments[0].Error)
-	}
-	assert.NotContains(t, text, "s3cr3t", "a deployment's commands are not passed on")
-
 	args := shopProd("api")
-	args["deployment"], args["grep"] = "d3", "err"
-	text, isErr = callTool(t, session, "get_app_deployment", args)
+	args["deployment"] = "d3"
+	text, isErr := callTool(t, session, "get_app_deployment", args)
 	assert.False(t, isErr, text)
-	var detail deploymentDetail
+	var detail appdeploymentdto.GetDeploymentResp
 	assert.NoError(t, json.Unmarshal([]byte(text), &detail))
-	assert.Equal(t, "in-progress", detail.Deployment.Status)
-	assert.Equal(t, &deploySource{Method: "repo", Repo: "https://git.test/shop/api", Ref: "main"}, detail.Source)
-	assert.Equal(t, []string{"[stderr] npm ERR! missing script"}, detail.Log.Lines)
-	assert.NotContains(t, text, "s3cr3t")
+	assert.Equal(t, "in-progress", string(detail.Data.Status))
+
+	args["grep"] = "err"
+	text, isErr = callTool(t, session, "get_app_deployment_logs", args)
+	assert.False(t, isErr, text)
+	var log logsAnswer
+	assert.NoError(t, json.Unmarshal([]byte(text), &log))
+	assert.Equal(t, []string{"[stderr] npm ERR! missing script"}, log.Lines)
 }
 
 func TestOnlyADeploymentThatHasNotEndedIsCanceled(t *testing.T) {

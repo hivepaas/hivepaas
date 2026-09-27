@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"net/url"
 
+	"github.com/google/jsonschema-go/jsonschema"
 	mcpsdk "github.com/modelcontextprotocol/go-sdk/mcp"
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
@@ -106,10 +107,25 @@ func (c *Call) decode(resp *Response, err error) func(out any) error {
 // rather than a protocol one.
 func readTool[In, Out any](name, title, description string,
 	run func(ctx context.Context, call *Call, in In) (Out, error)) Tool {
+	return readToolWith(name, title, description, nil, run)
+}
+
+// readToolWith is readTool with an input schema of its own - one built from
+// an endpoint's request type - for a tool whose input is the arguments as
+// given.
+func readToolWith[In, Out any](name, title, description string, input func() (*jsonschema.Schema, error),
+	run func(ctx context.Context, call *Call, in In) (Out, error)) Tool {
 	return Tool{Name: name, Title: title, Description: description, Kind: KindRead,
 		add: func(s *mcpsdk.Server, deps *Deps) {
 			sdkTool := &mcpsdk.Tool{Name: name, Title: title, Description: description,
 				Annotations: &mcpsdk.ToolAnnotations{ReadOnlyHint: true, Title: title}}
+			if input != nil {
+				schema, err := input()
+				if err != nil {
+					panic(err) // a registry error: TestEveryToolBuilds finds it
+				}
+				sdkTool.InputSchema = schema
+			}
 			addTool(s, deps, sdkTool, true, func(ctx context.Context, call *Call, _ *caller, in In) (Out, error) {
 				return run(ctx, call, in)
 			})
@@ -122,9 +138,12 @@ func readTool[In, Out any](name, title, description string,
 func addTool[In, Out any](s *mcpsdk.Server, deps *Deps, sdkTool *mcpsdk.Tool, auditFirst bool,
 	run func(ctx context.Context, call *Call, c *caller, in In) (Out, error)) {
 	name := sdkTool.Name
+	// The answer is declared as any, so the SDK gives the tool no output
+	// schema: answers are the API's own types, whose JSON a schema generated
+	// from Go would not describe - a size is a string, an app holds its apps.
 	mcpsdk.AddTool(s, sdkTool, func(ctx context.Context, _ *mcpsdk.CallToolRequest, in In) (
-		*mcpsdk.CallToolResult, Out, error) {
-		var zero Out
+		*mcpsdk.CallToolResult, any, error) {
+		var zero any
 		c := callerFrom(ctx)
 		if c == nil {
 			return nil, zero, errNoCaller

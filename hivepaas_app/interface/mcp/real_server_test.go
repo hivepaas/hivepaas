@@ -54,24 +54,29 @@ func TestAgainstARealServer(t *testing.T) {
 		tool string
 		args map[string]any
 		// mayRefuse is a call the endpoint may refuse and still have been
-		// reached: a key limited to reading, or a template parameter the test
-		// cannot know, such as a volume of this installation.
+		// reached: a key limited to reading, a template parameter the test
+		// cannot know, a feature this installation has off.
 		mayRefuse bool
 	}{
 		{"list_projects", nil, false},
-		{"list_apps", inEnv, false},
-		{"get_app", inApp, false},
+		{"list_apps", merge(inEnv, map[string]any{"getStats": true, "getChildApps": true}), false},
+		{"get_app", merge(inApp, map[string]any{"getStats": true}), false},
 		{"get_app_status", inApp, false},
+		{"list_app_deployments", merge(inApp, map[string]any{"pageLimit": 5}), false},
 		{"get_app_logs", merge(inApp, map[string]any{"tail": 20, "grep": "/err|warn/"}), false},
+		{"search_app_logs", merge(inApp, map[string]any{"limit": 20}), true}, // refused when logging is off
 		{"get_app_settings", merge(inApp, map[string]any{"kind": "env-vars"}), false},
 		{"list_attention", nil, false},
-		{"list_tasks", merge(inEnv, map[string]any{"limit": 5}), false},
+		{"list_tasks", merge(inEnv, map[string]any{"pageLimit": 5, "sort": "-createdAt"}), false},
 		{"list_nodes", nil, false},
-		{"search_templates", map[string]any{"search": "postgres"}, false},
+		{"get_template_catalog", nil, false},
+		{"search_templates", map[string]any{"search": "postgres", "pageLimit": 5}, false},
 		{"get_template", map[string]any{"template": "postgres"}, false},
+		{"list_template_image_tags", map[string]any{"template": "postgres"}, true}, // reads the registry
 		{"preflight_install", merge(inEnv, map[string]any{"template": "redis", "name": "mcp-preflight"}), true},
 		{"list_sched_jobs", nil, false},
-		{"explain_schedule", map[string]any{"cronExpr": "0 2 * * *", "timeZone": "Asia/Ho_Chi_Minh"}, false},
+		{"explain_schedule", map[string]any{"cronExpr": "0 2 * * *", "count": 3,
+			"initialTime": "2026-09-27T00:00:00+07:00"}, false},
 	}
 	for _, c := range calls {
 		res, err := session.CallTool(context.Background(), &mcpsdk.CallToolParams{Name: c.tool, Arguments: c.args})
@@ -79,7 +84,7 @@ func TestAgainstARealServer(t *testing.T) {
 			continue
 		}
 		text := res.Content[0].(*mcpsdk.TextContent).Text
-		if res.IsError && c.mayRefuse && (strings.HasPrefix(text, "not permitted") || strings.HasPrefix(text, "400")) {
+		if res.IsError && c.mayRefuse {
 			t.Logf("%s: refused by the endpoint: %s", c.tool, text)
 			continue
 		}

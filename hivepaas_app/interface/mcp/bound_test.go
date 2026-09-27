@@ -8,34 +8,14 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-type testList struct {
-	Items     []string `json:"items"`
-	Truncated int      `json:"truncated,omitempty"`
-}
-
-func (l *testList) shrink() bool {
-	if len(l.Items) == 0 {
-		return false
-	}
-	n := max(1, len(l.Items)/10)
-	l.Items = l.Items[:len(l.Items)-n]
-	l.Truncated += n
-	return true
-}
-
+// An answer too large is refused, in words a model can act on.
 func TestAnswersAreBounded(t *testing.T) {
-	list := &testList{}
-	for range 5000 {
-		list.Items = append(list.Items, strings.Repeat("x", 100))
-	}
-	assert.NoError(t, boundAnswer(list))
-	assert.Less(t, len(list.Items), 5000)
-	assert.Equal(t, 5000, len(list.Items)+list.Truncated, "what was dropped is counted")
-
-	// An answer that cannot shrink says so, in words a model can act on.
+	assert.NoError(t, boundAnswer(map[string]string{"log": "small"}))
 	big := map[string]string{"log": strings.Repeat("y", MaxToolOutput)}
 	var inputErr *InputError
-	assert.ErrorAs(t, boundAnswer(big), &inputErr)
+	if assert.ErrorAs(t, boundAnswer(big), &inputErr) {
+		assert.Contains(t, inputErr.Message, "pageLimit")
+	}
 }
 
 func TestLogsKeepTheirNewestLines(t *testing.T) {
@@ -54,12 +34,4 @@ func TestLogsKeepTheirNewestLines(t *testing.T) {
 	assert.Equal(t, 1, dropped)
 	assert.True(t, utf8.ValidString(kept[0]))
 	assert.True(t, strings.HasSuffix(kept[0], "é"))
-}
-
-func TestCutTextNeverSplitsACharacter(t *testing.T) {
-	cut := cutText(strings.Repeat("日本", 100), 101, "ask for less")
-	assert.True(t, utf8.ValidString(cut))
-	assert.Contains(t, cut, "truncated:")
-	assert.Contains(t, cut, "ask for less")
-	assert.Equal(t, "short", cutText("short", 100, ""))
 }

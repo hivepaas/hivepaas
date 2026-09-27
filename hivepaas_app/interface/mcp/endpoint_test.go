@@ -181,7 +181,7 @@ func TestAToolCallIsAnsweredAndAudited(t *testing.T) {
 	}
 	assert.False(t, res.IsError)
 	assert.Contains(t, res.Content[0].(*mcpsdk.TextContent).Text, `"key":"shop"`)
-	assert.Contains(t, res.Content[0].(*mcpsdk.TextContent).Text, `"envs":["dev","prod"]`)
+	assert.Contains(t, res.Content[0].(*mcpsdk.TextContent).Text, `"envs":[{"id":"e1","name":"dev"`)
 
 	if assert.Len(t, w.audit.entries, 1) {
 		entry := w.audit.entries[0]

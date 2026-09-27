@@ -30,7 +30,7 @@ var dockerAPIGuide string
 func addResources(s *mcpsdk.Server, deps *Deps) {
 	s.AddResourceTemplate(&mcpsdk.ResourceTemplate{
 		URITemplate: templateURIPrefix + "{name}",
-		Name:        "template",
+		Name:        argTemplate,
 		Title:       "App store template",
 		Description: "A template's description, as the app store shows it.",
 		MIMEType:    markdownMIME,
@@ -86,17 +86,18 @@ func addPrompts(s *mcpsdk.Server, a access) {
 		Title:       "Why is this app not working?",
 		Description: "Looks at an app's containers, deployments and logs, and says what is wrong.",
 		Arguments: []*mcpsdk.PromptArgument{
-			{Name: "project", Description: "the project's key or name", Required: true},
-			{Name: "env", Description: "the env's name, such as prod", Required: true},
-			{Name: "app", Description: "the app's key or name", Required: true},
+			{Name: argProject, Description: "the project's key or name", Required: true},
+			{Name: argEnv, Description: "the env's name, such as prod", Required: true},
+			{Name: argApp, Description: "the app's key or name", Required: true},
 		},
 	}, func(_ context.Context, req *mcpsdk.GetPromptRequest) (*mcpsdk.GetPromptResult, error) {
 		args := req.Params.Arguments
-		return userPrompt("Find out why the app " + args["app"] + " of " + args["project"] + ", env " + args["env"] +
+		return userPrompt("Find out why the app " + args[argApp] + " of " + args[argProject] + ", env " + args[argEnv] +
 			", is not working as it should.\n\n" +
 			"1. get_app_status: are its containers running, and if not, what error stopped them?\n" +
-			"2. get_app: how did its last deployments end?\n" +
-			"3. get_app_logs with grep /error|exception|fatal|panic/ over the last hour; then the last " +
+			"2. list_app_deployments with pageLimit 5: how did its last deployments end? For one that " +
+			"failed, get_app_deployment_logs.\n" +
+			"3. get_app_logs with grep /error|exception|fatal|panic/ and duration 1h; then the last " +
 			"100 lines without grep, for what happened just before.\n" +
 			"4. If the cause is outside the app - a node down, memory - list_attention and list_nodes.\n\n" +
 			"Then say what is wrong, quote the lines that show it, and what to change. " + debugEnding(a)), nil
@@ -108,8 +109,8 @@ func addPrompts(s *mcpsdk.Server, a access) {
 		Description: "Finds templates for what is asked, compares them, and checks the chosen one's install.",
 		Arguments: []*mcpsdk.PromptArgument{
 			{Name: "what", Description: "what to install, such as a database or a chat server", Required: true},
-			{Name: "project", Description: "the project to install into, to check the install there"},
-			{Name: "env", Description: "the env to install into"},
+			{Name: argProject, Description: "the project to install into, to check the install there"},
+			{Name: argEnv, Description: "the env to install into"},
 		},
 	}, func(_ context.Context, req *mcpsdk.GetPromptRequest) (*mcpsdk.GetPromptResult, error) {
 		args := req.Params.Arguments
@@ -117,11 +118,11 @@ func addPrompts(s *mcpsdk.Server, a access) {
 			"1. search_templates for it, and compare at most three candidates: what each installs, " +
 			"the apps it brings along, and whether it needs the Docker API or extra capabilities.\n" +
 			"2. get_template of the one you recommend, and list the parameters I must decide.\n"
-		if args["project"] != "" && args["env"] != "" {
-			text += "3. preflight_install it into " + args["project"] + ", env " + args["env"] +
+		if args[argProject] != "" && args[argEnv] != "" {
+			text += "3. preflight_install it into " + args[argProject] + ", env " + args[argEnv] +
 				", with the defaults, and tell me what would stop it.\n"
 		}
-		text += installEnding(a, args["project"] != "" && args["env"] != "")
+		text += installEnding(a, args[argProject] != "" && args[argEnv] != "")
 		return userPrompt(text), nil
 	})
 }

@@ -2,23 +2,13 @@ package mcp
 
 // Tools are every tool the server registers, in the order a client lists them.
 func Tools() []Tool {
-	return []Tool{
-		listProjectsTool(),
-		listAppsTool(),
-		getAppTool(),
-		getAppStatusTool(),
+	tools := endpointTools()
+	return append(tools,
 		getAppLogsTool(),
-		listAppDeploymentsTool(),
-		getAppDeploymentTool(),
-		getAppSettingsTool(),
-		listAttentionTool(),
-		listTasksTool(),
+		getAppDeploymentLogsTool(),
 		getTaskLogsTool(),
-		listNodesTool(),
-		searchTemplatesTool(),
-		getTemplateTool(),
+		getAppSettingsTool(),
 		preflightInstallTool(),
-		listSchedJobsTool(),
 		explainScheduleTool(),
 		planRestartAppTool(),
 		planRedeployAppTool(),
@@ -28,5 +18,5 @@ func Tools() []Tool {
 		planUpdateAppSettingsTool(),
 		planCreateSchedJobTool(),
 		applyPlanTool(),
-	}
+	)
 }

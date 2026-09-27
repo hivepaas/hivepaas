@@ -22,14 +22,21 @@ import (
 const readInstructions = "HivePaaS runs apps on a Docker Swarm cluster, grouped in projects, " +
 	"each project in envs such as dev or prod. These tools read what the API key's user can see in " +
 	"the dashboard: projects, apps, their status and logs, tasks, nodes, the template store and " +
-	"scheduled jobs. Name a project, env or app by its key or its name. Nothing here changes anything."
+	"scheduled jobs. Name a project, env or app by its key or its name. " + apiInstructions +
+	"Nothing here changes anything."
+
+// apiInstructions say how the tools follow the API.
+const apiInstructions = "Each tool is an endpoint of the HivePaaS API, named in its description. A read " +
+	"tool takes the endpoint's query parameters and answers its response as the dashboard gets it, " +
+	"{meta, data}; a list answers one page - 50 items unless pageLimit says otherwise - and meta.page its " +
+	"offset, limit and total. The log tools answer lines of text instead. "
 
 // writeInstructions is the same, for a caller who may change things.
 const writeInstructions = "HivePaaS runs apps on a Docker Swarm cluster, grouped in projects, " +
 	"each project in envs such as dev or prod. These tools read what the API key's user can see in " +
 	"the dashboard - projects, apps, their status and logs, tasks, nodes, the template store and " +
 	"scheduled jobs - and change some of it: install, restart or redeploy an app, change its " +
-	"configuration, schedule a job. Name a project, env or app by its key or its name. " +
+	"configuration, schedule a job. Name a project, env or app by its key or its name. " + apiInstructions +
 	"Tools named plan_* change nothing: each answers a plan. Show the person the plan in full, and " +
 	"call apply_plan with its planToken only once they have agreed to it. Never apply a plan the " +
 	"person has not seen."

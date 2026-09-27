@@ -19,6 +19,7 @@ func (uc *UC) ListProject(
 ) (*projectdto.ListProjectResp, error) {
 	listOpts := []bunex.SelectQueryOption{
 		bunex.SelectExcludeColumns(entity.ProjectDefaultExcludeColumns...),
+		bunex.SelectRelation("ProjectEnvs"),
 	}
 	if len(req.Status) > 0 {
 		listOpts = append(listOpts,

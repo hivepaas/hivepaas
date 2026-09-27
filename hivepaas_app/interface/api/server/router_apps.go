@@ -16,13 +16,11 @@ func (s *HTTPServer) registerAppRoutes(projectGroup, projectEnvGroup *gin.Router
 
 	{ // List apps from `projects/projectID/apps`
 		projectGroup.GET("/apps", appHandler.ListAppInProject)
-		projectGroup.GET("/apps/base", appHandler.ListAppBaseInProject)
 	}
 
 	{ // Base
 		appGroup.GET("/:appID", appHandler.GetApp)
 		appGroup.GET("", appHandler.ListAppInEnv)
-		appGroup.GET("/base", appHandler.ListAppBaseInEnv)
 		// Creation & Update
 		appGroup.POST("", appHandler.CreateApp)
 		appGroup.POST("/from-template", s.handlerRegistry.appTemplateHandler.CreateAppFromTemplate)

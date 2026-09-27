@@ -198,10 +198,6 @@ func TransformAppBase(app *entity.App) *AppBaseResp {
 	}
 }
 
-func TransformAppsBase(apps []*entity.App) []*AppBaseResp {
-	return gofn.MapSlice(apps, TransformAppBase)
-}
-
 func NewMissingApp(id string) *AppBaseResp {
 	return &AppBaseResp{
 		ID:     id,

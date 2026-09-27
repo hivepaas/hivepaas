@@ -10,43 +10,6 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/projectuc/projectdto"
 )
 
-// ListProjectBase Lists projects
-// @Summary Lists projects
-// @Description Lists projects
-// @Tags    projects
-// @Produce json
-// @Id      listProjectBase
-// @Param   status query string false "`status=<target>`"
-// @Param   search query string false "`search=<target> (support *)`"
-// @Param   pageOffset query int false "`pageOffset=offset`"
-// @Param   pageLimit query int false "`pageLimit=limit`"
-// @Param   sort query string false "`sort=[-]field1|field2...`"
-// @Success 200 {object} projectdto.ListProjectBaseResp
-// @Failure 400 {object} hperrors.ErrorInfo
-// @Failure 500 {object} hperrors.ErrorInfo
-// @Router  /projects/base [get]
-func (h *Handler) ListProjectBase(ctx *gin.Context) {
-	auth, _, err := h.GetAuth(ctx, base.ActionTypeRead, false)
-	if err != nil {
-		h.RenderError(ctx, err)
-		return
-	}
-
-	req := projectdto.NewListProjectBaseReq()
-	if err = h.ParseAndValidateRequest(ctx, req, &req.Paging); err != nil {
-		h.RenderError(ctx, err)
-		return
-	}
-
-	resp, err := h.projectUC.ListProjectBase(h.RequestCtx(ctx), auth, req)
-	if err != nil {
-		h.RenderError(ctx, err)
-		return
-	}
-
-	ctx.JSON(http.StatusOK, resp)
-}
-
 // ListProject Lists projects
 // @Summary Lists projects
 // @Description Lists projects

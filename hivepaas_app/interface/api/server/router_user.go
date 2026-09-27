@@ -10,7 +10,6 @@ func (s *HTTPServer) registerUserRoutes(apiGroup *gin.RouterGroup) {
 
 	{ // user group
 		// User info
-		userGroup.GET("/base", userHandler.ListUserBase)
 		userGroup.GET("/:userID", userHandler.GetUser)
 		userGroup.GET("", userHandler.ListUser)
 		// Password

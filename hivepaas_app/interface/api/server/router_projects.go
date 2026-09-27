@@ -12,7 +12,6 @@ func (s *HTTPServer) registerProjectRoutes(apiGroup *gin.RouterGroup) {
 	specHandler := s.handlerRegistry.specHandler
 
 	// Projects
-	projectGroup.GET("/base", projectHandler.ListProjectBase)
 	projectGroup.GET("/:projectID", projectHandler.GetProject)
 	projectGroup.GET("", projectHandler.ListProject)
 	projectGroup.POST("", projectHandler.CreateProject)

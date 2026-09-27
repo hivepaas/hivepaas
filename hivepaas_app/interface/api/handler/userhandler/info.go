@@ -10,43 +10,6 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/useruc/userdto"
 )
 
-// ListUserBase Lists users
-// @Summary Lists users
-// @Description Lists users
-// @Tags    users
-// @Produce json
-// @Id      listUserBase
-// @Param   status query string false "`status=<target>`"
-// @Param   search query string false "`search=<target> (support *)`"
-// @Param   pageOffset query int false "`pageOffset=offset`"
-// @Param   pageLimit query int false "`pageLimit=limit`"
-// @Param   sort query string false "`sort=[-]field1|field2...`"
-// @Success 200 {object} userdto.ListUserBaseResp
-// @Failure 400 {object} hperrors.ErrorInfo
-// @Failure 500 {object} hperrors.ErrorInfo
-// @Router  /users/base [get]
-func (h *Handler) ListUserBase(ctx *gin.Context) {
-	auth, _, err := h.getAuth(ctx, base.ResourceTypeUser, base.ActionTypeRead, false)
-	if err != nil {
-		h.RenderError(ctx, err)
-		return
-	}
-
-	req := userdto.NewListUserBaseReq()
-	if err = h.ParseAndValidateRequest(ctx, req, &req.Paging); err != nil {
-		h.RenderError(ctx, err)
-		return
-	}
-
-	resp, err := h.userUC.ListUserBase(h.RequestCtx(ctx), auth, req)
-	if err != nil {
-		h.RenderError(ctx, err)
-		return
-	}
-
-	ctx.JSON(http.StatusOK, resp)
-}
-
 // GetUser Gets user details
 // @Summary Gets user details
 // @Description Gets user details

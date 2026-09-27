@@ -53,11 +53,6 @@ type ProjectResp struct {
 	UpdatedAt time.Time `json:"updatedAt"`
 }
 
-type ProjectAppResp struct {
-	ID   string `json:"id"`
-	Name string `json:"name"`
-}
-
 type ProjectEnvResp struct {
 	ID        string             `json:"id"`
 	Name      string             `json:"name"`
@@ -154,10 +149,6 @@ func TransformUserAccesses(project *entity.Project) []*ProjectUserAccessResp {
 		})
 	}
 	return resp
-}
-
-func TransformProjectsBase(projects []*entity.Project) []*ProjectBaseResp {
-	return gofn.MapSlice(projects, TransformProjectBase)
 }
 
 func TransformProjectBase(project *entity.Project) *ProjectBaseResp {

@@ -700,6 +700,12 @@ export const ROUTE = {
                                     `/projects/${id}/${env}/apps/${appId}/sched-jobs/create-sequence/`,
                             },
 
+                            createDataBackup: {
+                                $pattern: "projects/:id/:env/apps/:appId/sched-jobs/create-data-backup",
+                                $route: (id: string, env: string, appId: string) =>
+                                    `/projects/${id}/${env}/apps/${appId}/sched-jobs/create-data-backup/`,
+                            },
+
                             edit: {
                                 $pattern: "projects/:id/:env/apps/:appId/sched-jobs/:scheduledJobId/edit",
                                 $route: (id: string, env: string, appId: string, scheduledJobId: string) =>

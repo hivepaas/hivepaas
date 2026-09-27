@@ -4,6 +4,7 @@ import type {
     EAppScheduledJobArgSeparator,
     EAppScheduledJobTaskPriority,
     EAppScheduledJobType,
+    ESchedJobDataBackupSource,
     ESchedJobSeqMode,
     ESchedJobSeqOnFailure,
     ESchedJobTriggerEvent,
@@ -105,9 +106,21 @@ export type AppScheduledJobs_Trigger_Payload = {
     wait?: boolean;
 };
 
+/** A data backup: a command and the file its output becomes, or a volume and a path in it; and a repository. */
+export type AppScheduledJobs_DataBackup_Payload = {
+    source: ESchedJobDataBackupSource;
+    sourceCommand?: AppScheduledJobs_Command_Payload;
+    sourceFileName?: string;
+    sourceVolume?: AppScheduledJobs_RefObject_Payload;
+    sourceVolumeSubpath?: string;
+    targetRepository: AppScheduledJobs_RefObject_Payload;
+    tags?: Record<string, string>;
+};
+
 /**
  * A job to create or update. A container command has `app` and `command`; a job
- * sequence has `sequence` and neither of those. `schedule` is null for a job run
+ * sequence has `sequence` and neither of those; a data backup has `app` and
+ * `dataBackup`. `schedule` is null for a job run
  * by hand or by a sequence.
  */
 export type AppScheduledJobs_Upsert_Payload = {
@@ -128,6 +141,7 @@ export type AppScheduledJobs_Upsert_Payload = {
     command?: AppScheduledJobs_Command_Payload;
     commandOutput?: AppScheduledJobs_CommandOutput_Payload;
     sequence?: AppScheduledJobs_Sequence_Payload;
+    dataBackup?: AppScheduledJobs_DataBackup_Payload;
     triggers?: AppScheduledJobs_Trigger_Payload[];
     notification: AppScheduledJobs_Notification_Payload;
 };

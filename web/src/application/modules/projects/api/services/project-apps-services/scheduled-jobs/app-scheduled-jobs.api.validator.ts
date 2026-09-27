@@ -14,6 +14,7 @@ import {
     EAppScheduledJobArgSeparator,
     EAppScheduledJobTaskPriority,
     EAppScheduledJobType,
+    ESchedJobDataBackupSource,
     ESchedJobSeqMode,
     ESchedJobSeqOnFailure,
     ESchedJobTriggerEvent,
@@ -202,6 +203,28 @@ const NotificationSchema = z
     .nullish()
     .transform(value => value ?? null);
 
+const SettingRefSchema = z.object({
+    id: z.string(),
+    name: z.string().optional().default(""),
+    status: z.string().optional().default(""),
+});
+
+const DataBackupSchema = z
+    .object({
+        source: z.nativeEnum(ESchedJobDataBackupSource),
+        sourceCommand: CommandSchema,
+        sourceFileName: z.string().optional().default(""),
+        sourceVolume: SettingRefSchema.nullish().transform(value => value ?? null),
+        sourceVolumeSubpath: z.string().optional().default(""),
+        targetRepository: SettingRefSchema,
+        tags: z
+            .record(z.string())
+            .nullish()
+            .transform(value => value ?? {}),
+    })
+    .nullish()
+    .transform(value => value ?? null);
+
 const TriggerSchema = z.object({
     event: z.nativeEnum(ESchedJobTriggerEvent),
     apps: z
@@ -239,6 +262,7 @@ export const AppScheduledJobSchema = z.object({
     commandOutput: CommandOutputSchema,
     notification: NotificationSchema,
     sequence: SequenceSchema,
+    dataBackup: DataBackupSchema,
     // An event the dashboard does not know yet is left out, not a failed list.
     triggers: z
         .array(z.unknown())

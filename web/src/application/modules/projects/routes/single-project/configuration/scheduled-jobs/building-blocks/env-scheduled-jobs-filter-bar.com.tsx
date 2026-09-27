@@ -14,7 +14,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 const ALL = "all";
 const LIST_ALL_PAGE = { page: 1, size: 1000 };
 
-const JOB_TYPES = [EAppScheduledJobType.JobSequence, EAppScheduledJobType.ContainerCommand];
+const JOB_TYPES = [
+    EAppScheduledJobType.JobSequence,
+    EAppScheduledJobType.ContainerCommand,
+    EAppScheduledJobType.DataBackup,
+];
 const STATUSES = [ESettingStatus.Active, ESettingStatus.Disabled, ESettingStatus.Pending];
 
 export interface EnvScheduledJobFilterValues {

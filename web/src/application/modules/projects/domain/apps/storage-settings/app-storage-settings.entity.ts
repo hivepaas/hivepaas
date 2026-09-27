@@ -30,6 +30,8 @@ export type AppStorageMount = {
     tmpfsOptions?: TmpfsOptions;
     clusterOptions?: ClusterOptions;
     sourceApp?: MountSourceApp;
+    /** The volume setting a mount of the app's own directory is in; comes back from the API and is not sent. */
+    volumeId?: string;
 };
 
 /**

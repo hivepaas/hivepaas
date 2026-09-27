@@ -5,10 +5,11 @@ import { EAppScheduledJobType } from "~/projects/module-shared/enums";
 
 import { AppLoader } from "@application/shared/components";
 
+import { AppDataBackupFormRoute } from "../data-backup";
 import { AppScheduledJobFormRoute } from "../form-route";
 import { AppJobSequenceFormRoute } from "../sequence";
 
-/** Opens the form the job's type needs: a sequence has its own. */
+/** Opens the form the job's type needs: a sequence and a data backup have their own. */
 export function AppScheduledJobEditRoute() {
     const {
         id: projectId,
@@ -44,6 +45,18 @@ export function AppScheduledJobEditRoute() {
     if (job.jobType === EAppScheduledJobType.JobSequence) {
         return (
             <AppJobSequenceFormRoute
+                mode="edit"
+                projectId={projectId}
+                env={env}
+                appId={appId}
+                scheduledJob={job}
+            />
+        );
+    }
+
+    if (job.jobType === EAppScheduledJobType.DataBackup) {
+        return (
+            <AppDataBackupFormRoute
                 mode="edit"
                 projectId={projectId}
                 env={env}

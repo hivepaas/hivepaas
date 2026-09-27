@@ -5,6 +5,7 @@ export const EAppScheduledJobType = {
     SSLRenewal: "ssl-renewal",
     BackupRepoCleanup: "backup-repo-cleanup",
     JobSequence: "job-sequence",
+    DataBackup: "data-backup",
 } as const;
 
 export type EAppScheduledJobType = (typeof EAppScheduledJobType)[keyof typeof EAppScheduledJobType];

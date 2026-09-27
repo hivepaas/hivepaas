@@ -37,3 +37,4 @@ export * from "./e.deployment-repo-option";
 export * from "./e.dockerfile-source";
 export * from "./e.routing-protocol";
 export * from "./e.sched-job-trigger";
+export * from "./e.sched-job-data-backup";

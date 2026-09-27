@@ -2,6 +2,7 @@ import type {
     EAppScheduledJobArgSeparator,
     EAppScheduledJobTaskPriority,
     EAppScheduledJobType,
+    ESchedJobDataBackupSource,
     ESchedJobSeqMode,
     ESchedJobSeqOnFailure,
     ESchedJobTriggerEvent,
@@ -118,6 +119,24 @@ export interface AppScheduledJobTrigger {
     wait: boolean;
 }
 
+/** A setting a data backup names; its status is "missing" when it was deleted. */
+export interface AppScheduledJobSettingRef {
+    id: string;
+    name: string;
+    status: string;
+}
+
+/** What a data backup reads - a command's output, or a volume the app mounts - and the repository it goes to. */
+export interface AppScheduledJobDataBackup {
+    source: ESchedJobDataBackupSource;
+    sourceCommand: AppScheduledJobCommand | null;
+    sourceFileName: string;
+    sourceVolume: AppScheduledJobSettingRef | null;
+    sourceVolumeSubpath: string;
+    targetRepository: AppScheduledJobSettingRef;
+    tags: Record<string, string>;
+}
+
 export interface AppScheduledJob {
     id: string;
     type: string;
@@ -148,6 +167,7 @@ export interface AppScheduledJob {
     controlDisabled: boolean;
     command: AppScheduledJobCommand | null;
     commandOutput?: AppScheduledJobCommandOutput | null;
+    dataBackup: AppScheduledJobDataBackup | null;
     notification: AppScheduledJobNotification | null;
     nextRuns: Date[];
 }

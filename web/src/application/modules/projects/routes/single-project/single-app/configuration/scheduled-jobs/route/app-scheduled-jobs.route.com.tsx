@@ -100,6 +100,28 @@ export function AppScheduledJobsRoute() {
                         >
                             {({ isDenied }) => (
                                 <Button
+                                    variant="outline"
+                                    onClick={() => {
+                                        navigate.modules(
+                                            ROUTE.projects.single.apps.single.configuration.scheduledJobs.createDataBackup.$route(
+                                                projectId,
+                                                env,
+                                                appId,
+                                            ),
+                                        );
+                                    }}
+                                    disabled={isDenied}
+                                >
+                                    <Plus className="size-4" /> New Data Backup
+                                </Button>
+                            )}
+                        </PermissionTooltipAction>
+                        <PermissionTooltipAction
+                            id={MODULE_IDS.Project}
+                            action="write"
+                        >
+                            {({ isDenied }) => (
+                                <Button
                                     onClick={() => {
                                         navigate.modules(
                                             ROUTE.projects.single.apps.single.configuration.scheduledJobs.create.$route(

@@ -71,6 +71,7 @@ const MountSchema = z.object({
     tmpfsOptions: TmpfsOptionsSchema.optional(),
     clusterOptions: ClusterOptionsSchema.optional(),
     sourceApp: MountSourceAppSchema.nullish(),
+    volumeId: z.string().optional(),
 });
 
 const MountBorrowerSchema = z.object({
@@ -139,6 +140,7 @@ export class AppStorageSettingsApiValidator {
                         tmpfsOptions: item.tmpfsOptions,
                         clusterOptions: item.clusterOptions,
                         sourceApp: item.sourceApp ?? undefined,
+                        volumeId: item.volumeId,
                     })) ?? [],
                 borrowedBy: data.borrowedBy ?? [],
                 updateVer: data.updateVer,

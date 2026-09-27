@@ -1818,6 +1818,15 @@ export const projectsRouter: RouteObject = {
                             },
                         },
                         {
+                            path: ROUTE.projects.single.apps.single.configuration.scheduledJobs.createDataBackup
+                                .$pattern,
+                            lazy: async () => {
+                                const { AppDataBackupCreateRoute } = await getLazyComponents();
+
+                                return { Component: AppDataBackupCreateRoute };
+                            },
+                        },
+                        {
                             path: ROUTE.projects.single.apps.single.configuration.scheduledJobs.edit.$pattern,
                             lazy: async () => {
                                 const { AppScheduledJobEditRoute } = await getLazyComponents();

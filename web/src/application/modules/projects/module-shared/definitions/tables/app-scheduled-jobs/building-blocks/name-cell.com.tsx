@@ -5,7 +5,9 @@ import type { AppScheduledJob } from "~/projects/domain";
 import { formatJobTrigger } from "~/projects/module-shared/components/job-triggers-field/job-triggers.helpers";
 import { EAppScheduledJobType } from "~/projects/module-shared/enums";
 
-/** A job's name; a sequence is tagged, with its step count. */
+import { ESettingStatus } from "@application/shared/enums";
+
+/** A job's name; a sequence is tagged with its step count, a data backup with its repository. */
 function View({ job }: Props) {
     const steps = job.sequence?.steps.length ?? 0;
 
@@ -15,6 +17,14 @@ function View({ job }: Props) {
             {job.jobType === EAppScheduledJobType.JobSequence && (
                 <Badge variant="secondary">
                     Sequence · {steps} {steps === 1 ? "step" : "steps"}
+                </Badge>
+            )}
+            {job.jobType === EAppScheduledJobType.DataBackup && job.dataBackup && (
+                <Badge variant="secondary">
+                    Backup ·{" "}
+                    {job.dataBackup.targetRepository.status === ESettingStatus.Missing
+                        ? "deleted repository"
+                        : job.dataBackup.targetRepository.name}
                 </Badge>
             )}
             {job.triggers.map(trigger => (

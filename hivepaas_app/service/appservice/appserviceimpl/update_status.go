@@ -27,28 +27,33 @@ func (s *service) SetAppStatus(
 	app *entity.App,
 	status base.AppStatus,
 	cascade bool,
-) error {
-	err := s.LoadChildApps(ctx, db, app, true, cascade)
+) (changed []*entity.App, err error) {
+	err = s.LoadChildApps(ctx, db, app, true, cascade)
 	if err != nil {
-		return hperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 	// All direct child apps (preview apps) must be updated
 	for _, childApp := range app.ChildApps {
-		if err := s.SetAppStatus(ctx, db, childApp, status, cascade); err != nil {
-			return hperrors.Wrap(err).WithMsgLog("failed to update status of child app %s", childApp.ID)
+		childChanged, err := s.SetAppStatus(ctx, db, childApp, status, cascade)
+		if err != nil {
+			return nil, hperrors.Wrap(err).WithMsgLog("failed to update status of child app %s", childApp.ID)
 		}
+		changed = append(changed, childChanged...)
 	}
 	// If cascading, update all logical child apps (dependent apps)
 	if cascade {
 		for _, childApp := range app.LogicalChildApps {
-			if err := s.SetAppStatus(ctx, db, childApp, status, cascade); err != nil {
-				return hperrors.Wrap(err).WithMsgLog("failed to update status of logical child app %s", childApp.ID)
+			childChanged, err := s.SetAppStatus(ctx, db, childApp, status, cascade)
+			if err != nil {
+				return nil, hperrors.Wrap(err).WithMsgLog("failed to update status of logical child app %s",
+					childApp.ID)
 			}
+			changed = append(changed, childChanged...)
 		}
 	}
 
 	if app.Status == status {
-		return nil
+		return changed, nil
 	}
 	app.Status = status
 	app.UpdatedAt = timeutil.NowUTC()
@@ -56,20 +61,20 @@ func (s *service) SetAppStatus(
 
 	if app.Status == base.AppStatusDisabled {
 		if err := s.stopApp(ctx, app, nil); err != nil {
-			return hperrors.Wrap(err)
+			return nil, hperrors.Wrap(err)
 		}
 	}
 	if app.Status == base.AppStatusActive {
 		if err := s.startApp(ctx, app, nil); err != nil {
-			return hperrors.Wrap(err)
+			return nil, hperrors.Wrap(err)
 		}
 	}
 
 	err = s.appRepo.Update(ctx, db, app, bunex.UpdateColumns("status", "updated_at", "update_ver"))
 	if err != nil {
-		return hperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
-	return nil
+	return append(changed, app), nil
 }
 
 func (s *service) SetAppRunning(ctx context.Context, app *entity.App, running bool) error {

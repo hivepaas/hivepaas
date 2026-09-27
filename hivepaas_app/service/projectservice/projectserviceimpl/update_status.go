@@ -17,9 +17,9 @@ func (s *service) SetProjectEnvStatus(
 	projectEnv *entity.ProjectEnv,
 	status base.ProjectStatus,
 	recursive bool,
-) error {
+) (changedApps []*entity.App, err error) {
 	if projectEnv.Status == status {
-		return nil
+		return nil, nil
 	}
 
 	var targetAppStatus base.AppStatus
@@ -39,26 +39,25 @@ func (s *service) SetProjectEnvStatus(
 		app.Project = projectEnv.Project
 		app.ProjectEnv = projectEnv
 		// Run app update in a separate transaction to reduce lock time
-		err := s.ExecuteEnvInTx(ctx, projectEnv, true, func(db database.Tx) error {
-			err := s.appService.SetAppStatus(ctx, db, app, targetAppStatus, recursive)
-			if err != nil {
-				return hperrors.Wrap(err)
-			}
-			return nil
+		var changed []*entity.App
+		err = s.ExecuteEnvInTx(ctx, projectEnv, true, func(db database.Tx) (err error) {
+			changed, err = s.appService.SetAppStatus(ctx, db, app, targetAppStatus, recursive)
+			return hperrors.Wrap(err)
 		})
 		if err != nil {
-			return hperrors.Wrap(err)
+			return nil, hperrors.Wrap(err)
 		}
+		changedApps = append(changedApps, changed...)
 	}
 
 	projectEnv.Status = status
 	projectEnv.UpdatedAt = timeutil.NowUTC()
 	projectEnv.UpdateVer++
 
-	err := s.projectEnvRepo.Update(ctx, db, projectEnv,
+	err = s.projectEnvRepo.Update(ctx, db, projectEnv,
 		bunex.UpdateColumns("status", "updated_at", "update_ver"))
 	if err != nil {
-		return hperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
-	return nil
+	return changedApps, nil
 }

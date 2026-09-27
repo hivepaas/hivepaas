@@ -42,7 +42,11 @@ type Service interface {
 	// removeStorage also deletes the directories it kept its data in, inside the
 	// volumes it mounted; without it those are left where they are.
 	DeleteApp(ctx context.Context, db database.IDB, app *entity.App, removeStorage, cascade bool) error
-	SetAppStatus(ctx context.Context, db database.IDB, app *entity.App, status base.AppStatus, cascade bool) error
+	// SetAppStatus sets the status of the app and its child apps, and says whose
+	// changed: the caller runs the jobs listening to it once it has committed
+	// (schedjobtriggerservice.FireAppStatusEvents).
+	SetAppStatus(ctx context.Context, db database.IDB, app *entity.App, status base.AppStatus,
+		cascade bool) (changed []*entity.App, err error)
 	SetAppRunning(ctx context.Context, app *entity.App, running bool) error
 	// RecreateServiceWithSpec deletes and recreates the app swarm service, which is the only way to
 	// change its mode variant. It causes downtime and returns the new service ID for the caller to

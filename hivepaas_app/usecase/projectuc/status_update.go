@@ -5,6 +5,7 @@ import (
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
+	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/auditdetail"
@@ -19,6 +20,7 @@ func (uc *UC) UpdateProjectStatus(
 	auth *basedto.Auth,
 	req *projectdto.UpdateProjectStatusReq,
 ) (*projectdto.UpdateProjectStatusResp, error) {
+	var changedApps []*entity.App
 	err := transaction.Execute(ctx, uc.db, func(db database.Tx) error {
 		projectData := &updateProjectData{}
 		err := uc.loadProjectDataForUpdateStatus(ctx, db, req, projectData)
@@ -39,11 +41,9 @@ func (uc *UC) UpdateProjectStatus(
 			env.Project = project
 			// Run updates in a separate transaction to reduce lock time
 			err = uc.projectService.ExecuteEnvInTx(ctx, env, true, func(db database.Tx) error {
-				err := uc.projectService.SetProjectEnvStatus(ctx, db, env, project.Status, true)
-				if err != nil {
-					return hperrors.Wrap(err)
-				}
-				return nil
+				changed, err := uc.projectService.SetProjectEnvStatus(ctx, db, env, project.Status, true)
+				changedApps = append(changedApps, changed...)
+				return hperrors.Wrap(err)
 			})
 			if err != nil {
 				return hperrors.Wrap(err)
@@ -65,6 +65,7 @@ func (uc *UC) UpdateProjectStatus(
 	if err != nil {
 		return nil, hperrors.Wrap(err)
 	}
+	uc.schedJobTriggerService.FireAppStatusEvents(ctx, changedApps)
 
 	return &projectdto.UpdateProjectStatusResp{}, nil
 }

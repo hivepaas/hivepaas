@@ -38,8 +38,10 @@ type Service interface {
 	// also deletes the volumes the environment owns and the data its apps kept.
 	DeleteProjectEnv(ctx context.Context, db database.IDB, projectEnv *entity.ProjectEnv,
 		removeStorage bool) error
+	// SetProjectEnvStatus sets an env's status and its apps', and says which apps
+	// changed status.
 	SetProjectEnvStatus(ctx context.Context, db database.IDB, projectEnv *entity.ProjectEnv,
-		status base.ProjectStatus, recursive bool) error
+		status base.ProjectStatus, recursive bool) (changedApps []*entity.App, err error)
 
 	ExecuteEnvInTx(ctx context.Context, projectEnv *entity.ProjectEnv, requireUpdateVerMatch bool,
 		fn func(database.Tx) error) error

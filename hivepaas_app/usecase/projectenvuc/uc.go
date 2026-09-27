@@ -7,6 +7,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/appservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/auditservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/projectservice"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/schedjobtriggerservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/userservice"
 )
 
@@ -18,10 +19,11 @@ type UC struct {
 	projectEnvRepo repository.ProjectEnvRepo
 	projectRepo    repository.ProjectRepo
 
-	appService     appservice.Service
-	auditService   auditservice.Service
-	projectService projectservice.Service
-	userService    userservice.Service
+	appService             appservice.Service
+	schedJobTriggerService schedjobtriggerservice.Service
+	auditService           auditservice.Service
+	projectService         projectservice.Service
+	userService            userservice.Service
 
 	permissionManager permission.Manager
 }
@@ -35,6 +37,7 @@ func New(
 	projectRepo repository.ProjectRepo,
 
 	appService appservice.Service,
+	schedJobTriggerService schedjobtriggerservice.Service,
 	auditService auditservice.Service,
 	projectService projectservice.Service,
 	userService userservice.Service,
@@ -49,10 +52,11 @@ func New(
 		projectEnvRepo: projectEnvRepo,
 		projectRepo:    projectRepo,
 
-		appService:     appService,
-		auditService:   auditService,
-		projectService: projectService,
-		userService:    userService,
+		appService:             appService,
+		schedJobTriggerService: schedJobTriggerService,
+		auditService:           auditService,
+		projectService:         projectService,
+		userService:            userService,
 
 		permissionManager: permissionManager,
 	}

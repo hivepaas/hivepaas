@@ -50,6 +50,8 @@ func (s *service) Healthcheck(
 		data.Task.MustSetOutput(&entity.TaskPeriodicOutput{Healthcheck: data.Output})
 		// Calculate state transition to decide whether we need to save the task or not
 		_ = s.calculateStateTransition(ctx, data)
+		// Run the jobs listening to the app's health
+		s.fireHealthEvent(ctx, data)
 		// Send notification
 		_ = s.sendNotification(ctx, s.db, data)
 		// Save state in cache

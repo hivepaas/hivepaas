@@ -10,6 +10,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/clusterservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/containerexecservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/loggingservice"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/schedjobtriggerservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/settingservice"
 	"github.com/hivepaas/hivepaas/services/docker"
 )
@@ -22,14 +23,15 @@ type UC struct {
 	binObjectRepo repository.BinObjectRepo
 	settingRepo   repository.SettingRepo
 
-	auditService         auditservice.Service
-	appCloneService      appcloneservice.Service
-	appProvisionService  appprovisionservice.Service
-	appService           appservice.Service
-	clusterService       clusterservice.Service
-	containerExecService containerexecservice.Service
-	settingService       settingservice.Service
-	loggingService       loggingservice.Service
+	auditService           auditservice.Service
+	appCloneService        appcloneservice.Service
+	appProvisionService    appprovisionservice.Service
+	appService             appservice.Service
+	schedJobTriggerService schedjobtriggerservice.Service
+	clusterService         clusterservice.Service
+	containerExecService   containerexecservice.Service
+	settingService         settingservice.Service
+	loggingService         loggingservice.Service
 }
 
 func New(
@@ -44,6 +46,7 @@ func New(
 	appCloneService appcloneservice.Service,
 	appProvisionService appprovisionservice.Service,
 	appService appservice.Service,
+	schedJobTriggerService schedjobtriggerservice.Service,
 	clusterService clusterservice.Service,
 	containerExecService containerexecservice.Service,
 	settingService settingservice.Service,
@@ -57,13 +60,14 @@ func New(
 		binObjectRepo: binObjectRepo,
 		settingRepo:   settingRepo,
 
-		auditService:         auditService,
-		appCloneService:      appCloneService,
-		appProvisionService:  appProvisionService,
-		appService:           appService,
-		clusterService:       clusterService,
-		containerExecService: containerExecService,
-		settingService:       settingService,
-		loggingService:       loggingService,
+		auditService:           auditService,
+		appCloneService:        appCloneService,
+		appProvisionService:    appProvisionService,
+		appService:             appService,
+		schedJobTriggerService: schedJobTriggerService,
+		clusterService:         clusterService,
+		containerExecService:   containerExecService,
+		settingService:         settingService,
+		loggingService:         loggingService,
 	}
 }

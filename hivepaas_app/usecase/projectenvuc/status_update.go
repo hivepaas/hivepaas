@@ -19,6 +19,7 @@ func (uc *UC) UpdateProjectEnvStatus(
 	auth *basedto.Auth,
 	req *projectenvdto.UpdateProjectEnvStatusReq,
 ) (*projectenvdto.UpdateProjectEnvStatusResp, error) {
+	var changedApps []*entity.App
 	err := transaction.Execute(ctx, uc.db, func(db database.Tx) error {
 		projectEnv, err := uc.projectEnvRepo.GetByID(ctx, db, req.ProjectID, req.ProjectEnvID,
 			bunex.SelectFor("UPDATE OF project_env"),
@@ -38,7 +39,7 @@ func (uc *UC) UpdateProjectEnvStatus(
 		}
 
 		before := projectEnv.Status
-		err = uc.projectService.SetProjectEnvStatus(ctx, db, projectEnv, req.Status, true)
+		changedApps, err = uc.projectService.SetProjectEnvStatus(ctx, db, projectEnv, req.Status, true)
 		if err != nil {
 			return hperrors.Wrap(err)
 		}
@@ -52,6 +53,7 @@ func (uc *UC) UpdateProjectEnvStatus(
 	if err != nil {
 		return nil, hperrors.Wrap(err)
 	}
+	uc.schedJobTriggerService.FireAppStatusEvents(ctx, changedApps)
 
 	return &projectenvdto.UpdateProjectEnvStatusResp{}, nil
 }

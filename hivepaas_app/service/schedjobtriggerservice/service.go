@@ -19,4 +19,8 @@ type Service interface {
 	// that fails, is canceled or passes its timeout fails the wait; ctx ending
 	// cancels the runs still going.
 	WaitForRuns(ctx context.Context, runs []*Run, logStore *tasklog.Store) error
+	// FireAppStatusEvents runs the jobs listening to the apps' status changes:
+	// app-enabled or app-disabled, as each now is. Called once the change is
+	// committed; failures are logged.
+	FireAppStatusEvents(ctx context.Context, apps []*entity.App)
 }

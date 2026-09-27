@@ -7,6 +7,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/appservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/auditservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/projectservice"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/schedjobtriggerservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/userservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/volumeservice"
 	"github.com/hivepaas/hivepaas/services/docker"
@@ -19,11 +20,12 @@ type UC struct {
 	binObjectRepo repository.BinObjectRepo
 	projectRepo   repository.ProjectRepo
 
-	auditService   auditservice.Service
-	appService     appservice.Service
-	projectService projectservice.Service
-	userService    userservice.Service
-	volumeService  volumeservice.Service
+	auditService           auditservice.Service
+	appService             appservice.Service
+	schedJobTriggerService schedjobtriggerservice.Service
+	projectService         projectservice.Service
+	userService            userservice.Service
+	volumeService          volumeservice.Service
 
 	dockerManager     docker.Manager
 	permissionManager permission.Manager
@@ -38,6 +40,7 @@ func New(
 
 	auditService auditservice.Service,
 	appService appservice.Service,
+	schedJobTriggerService schedjobtriggerservice.Service,
 	projectService projectservice.Service,
 	userService userservice.Service,
 	volumeService volumeservice.Service,
@@ -52,11 +55,12 @@ func New(
 		binObjectRepo: binObjectRepo,
 		projectRepo:   projectRepo,
 
-		auditService:   auditService,
-		appService:     appService,
-		projectService: projectService,
-		userService:    userService,
-		volumeService:  volumeService,
+		auditService:           auditService,
+		appService:             appService,
+		schedJobTriggerService: schedJobTriggerService,
+		projectService:         projectService,
+		userService:            userService,
+		volumeService:          volumeService,
 
 		dockerManager:     dockerManager,
 		permissionManager: permissionManager,

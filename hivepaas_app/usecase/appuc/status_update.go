@@ -19,6 +19,7 @@ func (uc *UC) UpdateAppStatus(
 	auth *basedto.Auth,
 	req *appdto.UpdateAppStatusReq,
 ) (*appdto.UpdateAppStatusResp, error) {
+	var changed []*entity.App
 	err := transaction.Execute(ctx, uc.db, func(db database.Tx) error {
 		appData := &updateAppData{}
 		err := uc.loadAppDataForUpdateStatus(ctx, db, req, appData)
@@ -30,7 +31,7 @@ func (uc *UC) UpdateAppStatus(
 		}
 
 		before := appData.App.Status
-		err = uc.appService.SetAppStatus(ctx, db, appData.App, req.Status, req.Cascade)
+		changed, err = uc.appService.SetAppStatus(ctx, db, appData.App, req.Status, req.Cascade)
 		if err != nil {
 			return hperrors.Wrap(err)
 		}
@@ -43,6 +44,7 @@ func (uc *UC) UpdateAppStatus(
 	if err != nil {
 		return nil, hperrors.Wrap(err)
 	}
+	uc.schedJobTriggerService.FireAppStatusEvents(ctx, changed)
 
 	return &appdto.UpdateAppStatusResp{}, nil
 }

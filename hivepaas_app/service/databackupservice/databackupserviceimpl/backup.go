@@ -223,6 +223,9 @@ func (s *service) backupVolume(
 	tags []string,
 	description string,
 ) (*backupreposervice.RepoSnapshot, error) {
+	if err := checkSourceVolume(req.RefObjects, dataBackup.SourceVolume.ID); err != nil {
+		return nil, hperrors.Wrap(err)
+	}
 	appVolume, err := s.findAppVolume(ctx, db, req.App, dataBackup.SourceVolume.ID)
 	if err != nil {
 		return nil, hperrors.Wrap(err)
@@ -266,4 +269,22 @@ func logProgress(ctx context.Context, req *databackupservice.BackupReq) func(str
 	return func(msg string) {
 		_ = req.LogStore.Add(ctx, tasklog.NewOutFrame(msg+"\n", tasklog.TsNow))
 	}
+}
+
+// checkSourceVolume refuses a volume that is gone since the job was saved - the
+// job's references are loaded deleted ones included - saying so, rather than
+// letting the app's mounts answer that the app does not mount it.
+func checkSourceVolume(refObjects *entity.RefObjects, volumeID string) error {
+	volume := refObjects.RefSettings[volumeID]
+	switch {
+	case volume == nil:
+		return hperrors.NewNotFound("Volume").WithExtraDetail(
+			"The volume this job backs up (%s) no longer exists. Edit the job and pick a volume the app mounts.",
+			volumeID)
+	case !volume.DeletedAt.IsZero():
+		return hperrors.NewNotFound("Volume").WithExtraDetail(
+			"The volume '%s' this job backs up was deleted. Edit the job and pick a volume the app mounts.",
+			volume.Name)
+	}
+	return nil
 }

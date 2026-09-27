@@ -5,12 +5,14 @@ import (
 	"errors"
 	"io"
 	"testing"
+	"time"
 
 	"github.com/moby/moby/api/types/mount"
 	"github.com/stretchr/testify/assert"
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/tasklog"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/backupreposervice"
@@ -260,9 +262,13 @@ func TestBackupOfAVolume(t *testing.T) {
 	svc.findAppVolume = func(context.Context, database.IDB, *entity.App, string) (*databackupservice.AppVolume, error) {
 		return &databackupservice.AppVolume{HostDir: "/srv/data/p1/dev/a1", NodeID: "node-2"}, nil
 	}
-	req := backupReq(t, &entity.SchedJobDataBackup{
-		Source: base.SchedJobDataBackupSourceVolume, SourceVolume: entity.ObjectID{ID: "vol1"},
-		SourceVolumeSubpath: "uploads",
+	req := volumeBackupReq(t)
+	req.JobSetting.MustSetData(&entity.SchedJob{
+		JobType: base.SchedJobTypeDataBackup,
+		DataBackup: &entity.SchedJobDataBackup{
+			Source: base.SchedJobDataBackupSourceVolume, SourceVolume: entity.ObjectID{ID: "vol1"},
+			SourceVolumeSubpath: "uploads", TargetRepository: entity.ObjectID{ID: "repo1"},
+		},
 	})
 
 	_, err := svc.Backup(context.Background(), database.Tx{}, req)
@@ -373,13 +379,54 @@ func TestBackupLogsItsProgress(t *testing.T) {
 	svc.findAppVolume = func(context.Context, database.IDB, *entity.App, string) (*databackupservice.AppVolume, error) {
 		return &databackupservice.AppVolume{HostDir: "/srv/data/a1", NodeID: "node-2"}, nil
 	}
-	req = backupReq(t, &entity.SchedJobDataBackup{
-		Source: base.SchedJobDataBackupSourceVolume, SourceVolume: entity.ObjectID{ID: "vol1"},
-	})
+	req = volumeBackupReq(t)
 	req.LogStore = tasklog.NewLocalStore("t1")
 
 	_, err = svc.Backup(context.Background(), database.Tx{}, req)
 
 	assert.NoError(t, err)
 	assert.Contains(t, logText(t, req), "Starting the repository server on node node-1\n")
+}
+
+// volumeBackupReq is a data backup of the volume vol1, which the app mounts.
+func volumeBackupReq(t *testing.T) *databackupservice.BackupReq {
+	t.Helper()
+	req := backupReq(t, &entity.SchedJobDataBackup{
+		Source: base.SchedJobDataBackupSourceVolume, SourceVolume: entity.ObjectID{ID: "vol1"},
+	})
+	req.RefObjects.RefSettings["vol1"] = &entity.Setting{ID: "vol1", Name: "default",
+		Type: base.SettingTypeClusterVolume, Status: base.SettingStatusActive}
+	return req
+}
+
+// A volume deleted since the job was saved fails the run saying so, by its name,
+// and what to do - not that the app does not mount it.
+func TestBackupOfADeletedVolumeSaysItIsGone(t *testing.T) {
+	svc := newTestService(&fakeRepos{snapshot: snapshotOf("k1")}, &fakeJobExec{})
+	svc.findAppVolume = func(context.Context, database.IDB, *entity.App, string) (*databackupservice.AppVolume, error) {
+		t.Error("a deleted volume is not looked for in the app's mounts")
+		return nil, errors.New("not mounted")
+	}
+	req := volumeBackupReq(t)
+	req.RefObjects.RefSettings["vol1"].DeletedAt = time.Now()
+
+	_, err := svc.Backup(context.Background(), database.Tx{}, req)
+
+	detail := hperrors.GetErrorDetail(err, "")
+	assert.Contains(t, detail, "ERR_NOT_FOUND")
+	assert.Contains(t, detail, "volume 'default' this job backs up was deleted")
+	assert.Contains(t, detail, "Edit the job")
+}
+
+// A volume that is not there at all says the same, by its ID.
+func TestBackupOfAMissingVolumeSaysItIsGone(t *testing.T) {
+	svc := newTestService(&fakeRepos{snapshot: snapshotOf("k1")}, &fakeJobExec{})
+	req := volumeBackupReq(t)
+	delete(req.RefObjects.RefSettings, "vol1")
+
+	_, err := svc.Backup(context.Background(), database.Tx{}, req)
+
+	detail := hperrors.GetErrorDetail(err, "")
+	assert.Contains(t, detail, "ERR_NOT_FOUND")
+	assert.Contains(t, detail, "vol1")
 }

@@ -7,8 +7,9 @@ data - the output of a command such as `pg_dump`, or files in a volume the app
 mounts - into a backup repository.
 
 It is the first of two pieces. The second, a kopia repository server started
-for the time of a backup or a restore, opens the combinations this one refuses
-(§1) and is the ground restore will stand on; it has its own spec.
+for the time of a backup or a restore, makes the combinations this one cannot
+run yet work (§1) and is the ground restore will stand on; it has its own
+spec, and follows at once.
 
 ---
 
@@ -23,8 +24,10 @@ for the time of a backup or a restore, opens the combinations this one refuses
    data up, and nothing else.
 3. **The engine as it is.** The kopia engine already has `BackupStream` and
    `BackupDirectory`; nothing calls them yet. Where kopia runs follows from the
-   repository and the source; the combinations it cannot reach are refused
-   when the job is saved, until the repository server of the next spec.
+   repository and the source. The combinations it cannot reach yet are not
+   refused when a job is saved: the repository server of the next spec, which
+   follows at once, makes them work, and a check added now would be taken out
+   again. Until then their runs fail, saying why.
 4. **A failed command leaves no snapshot.** kopia may commit what it read
    before the command failed; the job deletes it.
 
@@ -72,10 +75,10 @@ type SchedJobDataBackup struct {
   app's part of a volume.
 - `targetRepository` exists, in the job's scope or inherited from its project
   or the global scope, and is active.
-- **Refused, with the reason, until the repository server (next spec):**
-  `source: command` into a repository on a volume - the agent's command
-  protocol carries no stdin; `source: volume` on another node than the
-  repository's volume.
+- **Not run yet, and not refused when saved:** `source: command` into a
+  repository on a volume - the agent's command protocol carries no stdin - and
+  `source: volume` on another node than the repository's volume. A run of such
+  a job fails with that reason until the repository server (next spec).
 - `GetRefObjectIDs` includes the repository and the source volume: deleting
   either while a job uses it goes through the setting-in-use check, and export
   and import map them.
@@ -136,8 +139,7 @@ volume and the repository. The rules of §1 are the request's validation.
   `DataBackupForm` of its own; the edit route opens the form a job's type
   needs. The form: name; **Source** tabs - **Command** (the command editor of
   the job form, and File name) or **Volume** (the app's mounted volumes, and a
-  subpath); **Repository** (the backup repositories the app sees), a
-  combination §1 refuses said so at once; tags; and the blocks the job forms
+  subpath); **Repository** (the backup repositories the app sees); tags; and the blocks the job forms
   share - schedule with No schedule, priority, timeout, retry, triggers,
   notification - and a note on reading a volume that is being written.
 - **The list:** a `Backup · <repository>` tag.
@@ -146,19 +148,16 @@ volume and the repository. The rules of §1 are the request's validation.
 
 ## 4. Testing
 
-- **Go:** the rules of §1, the refused combinations and subpaths with `..` or a
-  leading `/`; the host path from the volume, the mount's subpath and the
+- **Go:** the rules of §1 and subpaths with `..` or a leading `/`; the host path from the volume, the mount's subpath and the
   job's; the command run with a fake engine - a snapshot synced and recorded,
   a failed command's snapshot deleted and the run failed, kopia failing; a
   volume run on the volume's node; the task's output.
 - **Live, on the Linux server:** `pg_dump` of a Postgres app into an S3
   repository; a volume into an S3 repository; a volume into a volume
-  repository on the same node; a command into a volume repository refused
-  when saved; a failing command leaving no snapshot; a snapshot opened with
+  repository on the same node; a failing command leaving no snapshot; a snapshot opened with
   the kopia CLI; a backup job on `pre-deploy`, the deploy waiting for it.
 - **Dashboard:** typecheck, lint, prettier; in a browser: create and edit a
-  data backup with each source, the refused combination said so, the list tag,
-  a run's snapshot.
+  data backup with each source, the list tag, a run's snapshot.
 
 ## Not in this version
 

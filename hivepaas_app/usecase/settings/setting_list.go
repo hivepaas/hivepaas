@@ -22,6 +22,12 @@ type ListSettingReq struct {
 	Paging basedto.Paging `json:"-"`
 }
 
+// PagingReq is where a handler parses the page asked for: pageOffset, pageLimit
+// and sort.
+func (req *ListSettingReq) PagingReq() *basedto.Paging {
+	return &req.Paging
+}
+
 func (req *ListSettingReq) Validate() (validators []vld.Validator) {
 	validators = append(validators, basedto.ValidateSlice(req.Statuses, true, 0,
 		base.AllSettingStatuses, "status")...)

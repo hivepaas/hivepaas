@@ -229,6 +229,11 @@ func (h *Handler) ListSetting(
 		return
 	}
 
+	// Every settings list pages: without this, pageOffset, pageLimit and sort
+	// would be read by no one, and every list answered whole.
+	if pager, ok := req.(interface{ PagingReq() *basedto.Paging }); ok {
+		paging = pager.PagingReq()
+	}
 	if err = h.ParseAndValidateRequest(ctx, req, paging); err != nil {
 		h.RenderError(ctx, err)
 		return

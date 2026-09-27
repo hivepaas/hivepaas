@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"sync"
 	"time"
 
 	"github.com/moby/moby/client"
@@ -102,9 +103,11 @@ func (s *service) containerExec(
 		CloseFunc:      execHelper.Close,
 		ExecResizeFunc: execHelper.ExecResize,
 	}
+	// The helper, not resp: an error path returns a nil resp, and a panic here
+	// would stand in for the error being returned.
 	defer func() {
 		if err != nil || !req.TerminalMode {
-			resp.CloseFunc()
+			execHelper.Close()
 		}
 	}()
 
@@ -167,6 +170,8 @@ type containerExecHelper struct {
 	retryable    bool
 	agentService agentservice.Service
 	logStore     *tasklog.Store
+
+	closeOnce sync.Once
 }
 
 func (h *containerExecHelper) ExecCreateAndStart(
@@ -272,16 +277,20 @@ func (h *containerExecHelper) GetExecExitCode(
 	return int(exitCode), false, nil
 }
 
+// Close releases the exec's connections, once however often it is called: a
+// failed start closes them, and so does the caller that returns its error.
 func (h *containerExecHelper) Close() {
-	if h.attachResult != nil {
-		h.attachResult.Close()
-	}
-	if h.remoteStream != nil {
-		_ = h.remoteStream.Close()
-	}
-	if h.agentClient != nil {
-		_ = h.agentClient.Close()
-	}
+	h.closeOnce.Do(func() {
+		if h.attachResult != nil {
+			h.attachResult.Close()
+		}
+		if h.remoteStream != nil {
+			_ = h.remoteStream.Close()
+		}
+		if h.agentClient != nil {
+			_ = h.agentClient.Close()
+		}
+	})
 }
 
 func (h *containerExecHelper) calcIsRetryable(

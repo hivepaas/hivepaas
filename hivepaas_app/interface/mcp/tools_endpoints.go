@@ -9,6 +9,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/apptemplateuc/apptemplatedto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/appuc/appdto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/cluster/nodeuc/nodedto"
+	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/cluster/volumeuc/volumedto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/homeuc/homedto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/projectuc/projectdto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings/schedjobuc/schedjobdto"
@@ -213,6 +214,21 @@ func getEndpoints() []getEndpoint { //nolint:funlen // a table
 				argKind:     "only nodes of these swarm roles: manager, worker",
 			}),
 			answer: func() any { return &nodedto.ListNodeResp{} },
+		},
+		{
+			name: "list_volumes", title: "List volumes",
+			description: "GET /projects/{project}/{env}/cluster-volumes, or /cluster/volumes when no project is " +
+				"given: the swarm volumes an env's apps may use - each with its id, name, driver, the node it is " +
+				"pinned to, and how many containers use it (refCount). A template parameter of type volume, such " +
+				"as a database's dataVolume, takes one's id.",
+			paths: map[under]string{underNothing: "/cluster/volumes", underEnv: "/cluster-volumes"},
+			query: &volumedto.ListVolumeReq{},
+			params: pagingParams(map[string]string{
+				paramSearch: descSearchName,
+				paramStatus: "only volumes whose record is in these states: " + settingStatuses,
+				argKind:     "only volumes of these drivers, such as local",
+			}),
+			answer: func() any { return &volumedto.ListVolumeResp{} },
 		},
 		{
 			name: "get_template_catalog", title: "The app store's categories and tags",

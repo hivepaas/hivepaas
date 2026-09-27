@@ -24,7 +24,8 @@ var installDescs = map[string]string{
 	"imageTag": "a tag of the version's image to run instead of the one it pins, from " +
 		"list_template_image_tags; the pinned tag when not given",
 	"params": "the template's parameters by name, each a JSON value of its type - a size is a string such " +
-		"as 1GB. A parameter not given takes its default; a secret one not given is generated",
+		"as 1GB, and a volume is a volume's id from list_volumes. A parameter not given takes its default; a " +
+		"secret one not given is generated",
 	"dependencyParams": "the parameters of each app the template brings along, by the dependency's name " +
 		"(get_template's dependencies), each as params",
 }

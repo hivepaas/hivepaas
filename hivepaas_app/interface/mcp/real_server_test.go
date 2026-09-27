@@ -69,6 +69,7 @@ func TestAgainstARealServer(t *testing.T) {
 		{"list_attention", nil, false},
 		{"list_tasks", merge(inEnv, map[string]any{"pageLimit": 5, "sort": "-createdAt"}), false},
 		{"list_nodes", nil, false},
+		{"list_volumes", inEnv, false},
 		{"get_template_catalog", nil, false},
 		{"search_templates", map[string]any{"search": "postgres", "pageLimit": 5}, false},
 		{"get_template", map[string]any{"template": "postgres"}, false},

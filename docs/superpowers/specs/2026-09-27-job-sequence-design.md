@@ -208,9 +208,21 @@ app.
 **Runs** are tasks: the existing task API lists a sequence's runs
 (`TargetID`), and a run's task output carries `SchedJobSeqRun`.
 
-**Spec export and import** carry a sequence as the `sched-job` it is. Whether
-import accepts a setting at the env scope is checked while planning; if not,
-env sequences are listed as not exported yet.
+**Spec export and import** carry a sequence as the `sched-job` it is.
+
+- An app sequence travels with its app: import writes an app's scheduled jobs
+  and schedules their tasks (`import_apply_apps.go`), sequences among them.
+- An env sequence is exported with the env's settings. Import skips every
+  `sched-job` outside an app today (`import_policy.go`, `reasonSchedulesTasks`);
+  this design lifts that for the project env scope: the env's scheduled jobs
+  are written, and their tasks scheduled once written, as for an app's.
+- A sequence's members are references to scheduled jobs of the env's apps, and
+  import maps them to the jobs it writes, as it maps the settings' other
+  references. The planning confirms that the reference handling reaches an
+  `ObjectID` inside `sequence.steps`, and a test pins it: an env sequence
+  exported and imported into a new env runs the jobs of that env's apps. A
+  member the import does not write - a job it skipped, an app it did not
+  import - is reported, and the step is skipped when the sequence runs (§2).
 
 ## 4. Dashboard
 
@@ -250,7 +262,8 @@ env sequences are listed as not exported yet.
   `task:workflow` advancing through its steps; the environment and the output
   file (parsing, the 64 KB limit, bad keys, no file); a job without a schedule
   never scheduled; setting usages across the env and app scopes; the env list
-  API with jobs of the env and of its apps.
+  API with jobs of the env and of its apps; export and import of an app and an
+  env sequence, their members mapped to the imported jobs.
 - **Locally, against the running swarm:** an env sequence of two or three
   `container-command` jobs of two apps, a later step reading an earlier one's
   output, with `stop` and with `continue`; the log, the step table, the

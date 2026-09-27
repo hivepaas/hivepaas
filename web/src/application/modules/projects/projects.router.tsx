@@ -910,6 +910,7 @@ export const projectsRouter: RouteObject = {
                                 };
                             },
                         },
+
                         {
                             path: ROUTE.projects.single.providerConfiguration.commandPipes.$pattern,
                             lazy: async () => {
@@ -1753,6 +1754,14 @@ export const projectsRouter: RouteObject = {
                                 const { AppScheduledJobCreateRoute } = await getLazyComponents();
 
                                 return { Component: AppScheduledJobCreateRoute };
+                            },
+                        },
+                        {
+                            path: ROUTE.projects.single.apps.single.configuration.scheduledJobs.createSequence.$pattern,
+                            lazy: async () => {
+                                const { AppJobSequenceCreateRoute } = await getLazyComponents();
+
+                                return { Component: AppJobSequenceCreateRoute };
                             },
                         },
                         {

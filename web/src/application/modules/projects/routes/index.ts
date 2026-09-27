@@ -93,6 +93,7 @@ export {
     AppPeriodicJobHealthCheckEditRoute,
     AppScheduledJobsRoute,
     AppScheduledJobCreateRoute,
+    AppJobSequenceCreateRoute,
     AppScheduledJobEditRoute,
     AppFeatureSettingsRoute,
     AppCloneSettingsRoute,

@@ -4,7 +4,7 @@ import type { AppScheduledJob } from "~/projects/domain";
 import { formatJobSchedule } from "~/projects/module-shared/components";
 import { SettingStatusBadge } from "~/settings/module-shared/components";
 
-import { EditCell, MenuCell, ViewTasksCell } from "./building-blocks";
+import { EditCell, MenuCell, ScheduledJobNameCell, ViewTasksCell } from "./building-blocks";
 
 function formatDate(date: Date | null | undefined) {
     if (!date) {
@@ -59,6 +59,7 @@ function createColumns(projectId: string, env: string, appId: string): ColumnDef
         {
             accessorKey: "name",
             header: "Name",
+            cell: ({ row: { original } }) => <ScheduledJobNameCell job={original} />,
         },
         {
             accessorKey: "schedule",

@@ -1,0 +1,27 @@
+import { memo } from "react";
+
+import { Badge } from "@components/ui/badge";
+import type { AppScheduledJob } from "~/projects/domain";
+import { EAppScheduledJobType } from "~/projects/module-shared/enums";
+
+/** A job's name; a sequence is tagged, with its step count. */
+function View({ job }: Props) {
+    const steps = job.sequence?.steps.length ?? 0;
+
+    return (
+        <div className="flex flex-wrap items-center gap-2">
+            <span>{job.name}</span>
+            {job.jobType === EAppScheduledJobType.JobSequence && (
+                <Badge variant="secondary">
+                    Sequence · {steps} {steps === 1 ? "step" : "steps"}
+                </Badge>
+            )}
+        </div>
+    );
+}
+
+interface Props {
+    job: AppScheduledJob;
+}
+
+export const ScheduledJobNameCell = memo(View);

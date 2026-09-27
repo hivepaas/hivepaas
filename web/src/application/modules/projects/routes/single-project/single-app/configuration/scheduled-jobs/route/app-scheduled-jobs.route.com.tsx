@@ -71,27 +71,51 @@ export function AppScheduledJobsRoute() {
             <TableActions
                 search={{ value: search, onChange: setSearch }}
                 renderActions={
-                    <PermissionTooltipAction
-                        id={MODULE_IDS.Project}
-                        action="write"
-                    >
-                        {({ isDenied }) => (
-                            <Button
-                                onClick={() => {
-                                    navigate.modules(
-                                        ROUTE.projects.single.apps.single.configuration.scheduledJobs.create.$route(
-                                            projectId,
-                                            env,
-                                            appId,
-                                        ),
-                                    );
-                                }}
-                                disabled={isDenied}
-                            >
-                                <Plus className="size-4" /> New Scheduled Job
-                            </Button>
-                        )}
-                    </PermissionTooltipAction>
+                    <div className="flex flex-wrap gap-3">
+                        <PermissionTooltipAction
+                            id={MODULE_IDS.Project}
+                            action="write"
+                        >
+                            {({ isDenied }) => (
+                                <Button
+                                    variant="outline"
+                                    onClick={() => {
+                                        navigate.modules(
+                                            ROUTE.projects.single.apps.single.configuration.scheduledJobs.createSequence.$route(
+                                                projectId,
+                                                env,
+                                                appId,
+                                            ),
+                                        );
+                                    }}
+                                    disabled={isDenied}
+                                >
+                                    <Plus className="size-4" /> New Job Sequence
+                                </Button>
+                            )}
+                        </PermissionTooltipAction>
+                        <PermissionTooltipAction
+                            id={MODULE_IDS.Project}
+                            action="write"
+                        >
+                            {({ isDenied }) => (
+                                <Button
+                                    onClick={() => {
+                                        navigate.modules(
+                                            ROUTE.projects.single.apps.single.configuration.scheduledJobs.create.$route(
+                                                projectId,
+                                                env,
+                                                appId,
+                                            ),
+                                        );
+                                    }}
+                                    disabled={isDenied}
+                                >
+                                    <Plus className="size-4" /> New Scheduled Job
+                                </Button>
+                            )}
+                        </PermissionTooltipAction>
+                    </div>
                 }
             />
 

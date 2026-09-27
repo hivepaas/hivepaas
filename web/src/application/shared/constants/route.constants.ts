@@ -679,6 +679,12 @@ export const ROUTE = {
                                     `/projects/${id}/${env}/apps/${appId}/sched-jobs/create/`,
                             },
 
+                            createSequence: {
+                                $pattern: "projects/:id/:env/apps/:appId/sched-jobs/create-sequence",
+                                $route: (id: string, env: string, appId: string) =>
+                                    `/projects/${id}/${env}/apps/${appId}/sched-jobs/create-sequence/`,
+                            },
+
                             edit: {
                                 $pattern: "projects/:id/:env/apps/:appId/sched-jobs/:scheduledJobId/edit",
                                 $route: (id: string, env: string, appId: string, scheduledJobId: string) =>

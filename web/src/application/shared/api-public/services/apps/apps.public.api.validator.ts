@@ -1,14 +1,15 @@
 import { type AxiosResponse } from "axios";
 import { z } from "zod";
 
-import { type Public_Apps_FindManyBase_Res } from "@application/shared/api-public/services";
+import { type Public_Apps_FindMany_Res } from "@application/shared/api-public/services";
 
 import { PagingMetaApiSchema, parseApiResponse } from "@infrastructure/api";
 
 /**
- * Find many base API response schema (base-list).
+ * The fields a picker needs from GET /projects/{projectID}/apps; the rest of
+ * each app is dropped.
  */
-const FindManyBaseSchema = z.object({
+const FindManySchema = z.object({
     data: z.array(
         z.object({
             id: z.string(),
@@ -20,12 +21,12 @@ const FindManyBaseSchema = z.object({
 
 export class AppsPublicApiValidator {
     /**
-     * Validate and transform find many public apps base API response.
+     * Validate and transform find many public apps API response.
      */
-    findManyBase = (response: AxiosResponse): Public_Apps_FindManyBase_Res => {
+    findMany = (response: AxiosResponse): Public_Apps_FindMany_Res => {
         const { data, meta } = parseApiResponse({
             response,
-            schema: FindManyBaseSchema,
+            schema: FindManySchema,
         });
 
         return {

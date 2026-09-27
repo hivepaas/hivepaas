@@ -1,31 +1,28 @@
 import { type UseQueryOptions, keepPreviousData, useQuery } from "@tanstack/react-query";
 
 import { useAppsPublicApi } from "@application/shared/api-public";
-import type {
-    Public_Apps_FindManyBase_Req,
-    Public_Apps_FindManyBase_Res,
-} from "@application/shared/api-public/services";
+import type { Public_Apps_FindMany_Req, Public_Apps_FindMany_Res } from "@application/shared/api-public/services";
 import { QK } from "@application/shared/data-public/constants";
 
 /**
- * Find many base apps
+ * Find many apps
  */
-type FindManyBaseReq = Public_Apps_FindManyBase_Req["data"];
-type FindManyBaseRes = Public_Apps_FindManyBase_Res;
+type FindManyReq = Public_Apps_FindMany_Req["data"];
+type FindManyRes = Public_Apps_FindMany_Res;
 
-type FindManyBaseOptions = Omit<UseQueryOptions<FindManyBaseRes>, "queryKey" | "queryFn">;
+type FindManyOptions = Omit<UseQueryOptions<FindManyRes>, "queryKey" | "queryFn">;
 
-function useFindManyBase(request: FindManyBaseReq, options: FindManyBaseOptions = {}) {
+function useFindMany(request: FindManyReq, options: FindManyOptions = {}) {
     const { queries } = useAppsPublicApi();
 
     return useQuery({
-        queryKey: [QK["apps.public.find-many-base"], request],
-        queryFn: ({ signal }) => queries.findManyBase(request, signal),
+        queryKey: [QK["apps.public.find-many"], request],
+        queryFn: ({ signal }) => queries.findMany(request, signal),
         placeholderData: keepPreviousData,
         ...options,
     });
 }
 
 export const AppsPublicQueries = Object.freeze({
-    useFindManyBase,
+    useFindMany,
 });

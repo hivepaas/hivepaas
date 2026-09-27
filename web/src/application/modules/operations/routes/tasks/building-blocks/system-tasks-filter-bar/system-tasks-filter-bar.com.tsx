@@ -201,7 +201,7 @@ export function SystemTasksFilterBar({ scope, filters, onChange, className }: Sy
     const { data: projectsResponse } = ProjectsPublicQueries.useFindManyPaginated({}, { enabled: isGlobalScope });
 
     // 3. Fetch apps for app filter (project / project-env scope only)
-    const { data: appsResponse } = AppsPublicQueries.useFindManyBase(
+    const { data: appsResponse } = AppsPublicQueries.useFindMany(
         { projectID },
         { enabled: isProjectOrEnvScope && Boolean(projectID) },
     );

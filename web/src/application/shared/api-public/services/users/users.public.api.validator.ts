@@ -1,7 +1,7 @@
 import { type AxiosResponse } from "axios";
 import { z } from "zod";
 
-import { type Public_Users_FindManyBase_Res } from "@application/shared/api-public/services";
+import { type Public_Users_FindMany_Res } from "@application/shared/api-public/services";
 import { EUserRole } from "@application/shared/enums";
 
 import { PagingMetaApiSchema, parseApiResponse } from "@infrastructure/api";
@@ -15,16 +15,16 @@ const UserBaseSchema = z.object({
     role: z.nativeEnum(EUserRole),
 });
 
-const FindManyBaseSchema = z.object({
+const FindManySchema = z.object({
     data: z.array(UserBaseSchema),
     meta: PagingMetaApiSchema,
 });
 
 export class UsersPublicApiValidator {
-    findManyBase = (response: AxiosResponse): Public_Users_FindManyBase_Res => {
+    findMany = (response: AxiosResponse): Public_Users_FindMany_Res => {
         const { data, meta } = parseApiResponse({
             response,
-            schema: FindManyBaseSchema,
+            schema: FindManySchema,
         });
 
         return {

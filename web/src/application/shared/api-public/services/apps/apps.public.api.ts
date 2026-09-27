@@ -3,8 +3,10 @@ import { catchError, from, lastValueFrom, map, of } from "rxjs";
 
 import {
     type AppsPublicApiValidator,
-    type Public_Apps_FindManyBase_Req,
-    type Public_Apps_FindManyBase_Res,
+    PUBLIC_LIST_ALL,
+    PUBLIC_LIST_STATUS_ACTIVE,
+    type Public_Apps_FindMany_Req,
+    type Public_Apps_FindMany_Res,
 } from "@application/shared/api-public/services";
 
 import { BaseApi, parseApiError } from "@infrastructure/api";
@@ -15,29 +17,31 @@ export class AppsPublicApi extends BaseApi {
     }
 
     /**
-     * Find many public apps base
+     * The active apps of a project the user can see, by name: every one of them
+     * unless a page is asked for.
      */
-    async findManyBase(
-        request: Public_Apps_FindManyBase_Req,
+    async findMany(
+        request: Public_Apps_FindMany_Req,
         signal?: AbortSignal,
-    ): Promise<Result<Public_Apps_FindManyBase_Res, Error>> {
+    ): Promise<Result<Public_Apps_FindMany_Res, Error>> {
         const { projectID, search, pagination } = request.data;
 
         const query = this.queryBuilder.getInstance();
 
         query
-            .pagination(pagination)
+            .pagination(pagination ?? PUBLIC_LIST_ALL)
             .sorting([{ id: "name", desc: false }])
-            .search(search);
+            .search(search)
+            .filterBy({ status: [PUBLIC_LIST_STATUS_ACTIVE] });
 
         return lastValueFrom(
             from(
-                this.client.v1.get(`/projects/${projectID}/apps/base`, {
+                this.client.v1.get(`/projects/${projectID}/apps`, {
                     params: query.build(),
                     signal,
                 }),
             ).pipe(
-                map(this.validator.findManyBase),
+                map(this.validator.findMany),
                 map(res => Ok(res)),
                 catchError(error => of(Err(parseApiError(error)))),
             ),

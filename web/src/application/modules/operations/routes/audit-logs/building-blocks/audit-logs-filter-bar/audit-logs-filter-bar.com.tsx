@@ -149,13 +149,13 @@ export function AuditLogsFilterBar({ scope, filters, onChange, className }: Audi
         typesResponse?.data && typesResponse.data.length > 0 ? typesResponse.data : ALL_TYPES_FALLBACK;
 
     // 2. Fetch users for actor filter
-    const { data: usersResponse } = UsersPublicQueries.useFindManyBase({});
+    const { data: usersResponse } = UsersPublicQueries.useFindMany({});
 
     // 3. Fetch projects for project filter (global scope only)
     const { data: projectsResponse } = ProjectsPublicQueries.useFindManyPaginated({}, { enabled: isGlobalScope });
 
     // 4. Fetch apps for app filter (project / project-env scope only)
-    const { data: appsResponse } = AppsPublicQueries.useFindManyBase(
+    const { data: appsResponse } = AppsPublicQueries.useFindMany(
         { projectID },
         { enabled: isProjectOrEnvScope && Boolean(projectID) },
     );

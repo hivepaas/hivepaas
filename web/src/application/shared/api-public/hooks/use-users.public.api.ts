@@ -1,7 +1,7 @@
 import { use, useMemo } from "react";
 
 import { ApplicationPublicApiContext } from "@application/shared/api-public/api-context";
-import { type Public_Users_FindManyBase_Req } from "@application/shared/api-public/services";
+import { type Public_Users_FindMany_Req } from "@application/shared/api-public/services";
 
 function createHook() {
     return function useUsersPublicApi() {
@@ -10,10 +10,10 @@ function createHook() {
         const queries = useMemo(
             () => ({
                 /**
-                 * Find many public users base
+                 * Find many public users
                  */
-                findManyBase: async (data: Public_Users_FindManyBase_Req["data"], signal?: AbortSignal) => {
-                    const result = await api.users.findManyBase(
+                findMany: async (data: Public_Users_FindMany_Req["data"], signal?: AbortSignal) => {
+                    const result = await api.users.findMany(
                         {
                             data,
                         },

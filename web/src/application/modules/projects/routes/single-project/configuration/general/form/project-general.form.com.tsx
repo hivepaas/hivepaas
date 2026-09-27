@@ -89,7 +89,7 @@ export function ProjectGeneralForm({ ref, defaultValues, onSubmit, readOnly = fa
     const [ownerSearch, setOwnerSearch] = useState("");
     const [selectedOwner, setSelectedOwner] = useState<OwnerOption>(() => toOwnerOption(defaultValues.owner));
 
-    const { data: ownerUsersData, isFetching: isFetchingOwnerUsers } = UsersPublicQueries.useFindManyBase({
+    const { data: ownerUsersData, isFetching: isFetchingOwnerUsers } = UsersPublicQueries.useFindMany({
         search: ownerSearch,
     });
 

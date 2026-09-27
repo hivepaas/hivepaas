@@ -35,7 +35,7 @@ export function AppsPickerDialog({ open, onOpenChange, projectID, excludeAppId, 
     const [page, setPage] = useState(1);
     const [rows, setRows] = useState<AppPublic[]>([]);
 
-    const query = AppsPublicQueries.useFindManyBase(
+    const query = AppsPublicQueries.useFindMany(
         {
             projectID,
             search,

@@ -1,0 +1,75 @@
+diff --git a/hivepaas_app/service/backupreposervice/backupreposerviceimpl/backup.go b/hivepaas_app/service/backupreposervice/backupreposerviceimpl/backup.go
+index 8d7ff7be..b372af98 100644
+--- a/hivepaas_app/service/backupreposervice/backupreposerviceimpl/backup.go
++++ b/hivepaas_app/service/backupreposervice/backupreposerviceimpl/backup.go
+@@ -80,6 +80,35 @@ func (s *service) BackupDirectory(
+ 	return &backupreposervice.BackupResp{Snapshot: toRepoSnapshot(result.Item)}, nil
+ }
+ 
++func (s *service) BackupLocalDirectory(
++	ctx context.Context,
++	db database.IDB,
++	req *backupreposervice.BackupLocalDirectoryReq,
++) (*backupreposervice.BackupResp, error) {
++	repo, storage, err := s.targetStorage(ctx, db, &req.RepoTarget)
++	if err != nil {
++		return nil, hperrors.Wrap(err)
++	}
++	opts := &backup.BackupOptions{Tags: req.Tags, Description: req.Description, Source: req.Source}
++	take := func(engine backup.Engine) (backupmodel.BackupResult, error) {
++		result, err := engine.BackupDirectory(ctx, req.Dir, opts)
++		return result, hperrors.Wrap(err)
++	}
++	// The directory is this process's: kopia runs here, and reaches a repository
++	// on a volume through its server.
++	var result backupmodel.BackupResult
++	if storage.StorageLocal == nil {
++		result, err = s.backupWith(ctx, repo, storage, s.buildCommandExecutor(false), take)
++	} else {
++		result, err = s.backupThroughServer(ctx, req.RepoSetting.ID, repo, storage, req.Source, req.Progress,
++			s.buildCommandExecutor(false), take)
++	}
++	if err != nil {
++		return nil, hperrors.Wrap(err)
++	}
++	return &backupreposervice.BackupResp{Snapshot: toRepoSnapshot(result.Item)}, nil
++}
++
+ // targetStorage is the repository and where it is.
+ func (s *service) targetStorage(
+ 	ctx context.Context,
+diff --git a/hivepaas_app/service/backupreposervice/service.go b/hivepaas_app/service/backupreposervice/service.go
+index bc059eb0..d908defd 100644
+--- a/hivepaas_app/service/backupreposervice/service.go
++++ b/hivepaas_app/service/backupreposervice/service.go
+@@ -43,6 +43,9 @@ type Service interface {
+ 	BackupStream(ctx context.Context, db database.IDB, req *BackupStreamReq) (*BackupResp, error)
+ 	// BackupDirectory takes a snapshot of a directory of a node's host, the engine running on
+ 	// that node through its agent. A repository on a volume is reachable on its own node only.
++	// BackupLocalDirectory takes a snapshot of a directory of this process, the engine running
++	// here: directly into a repository on cloud storage, through its server into one on a volume.
++	BackupLocalDirectory(ctx context.Context, db database.IDB, req *BackupLocalDirectoryReq) (*BackupResp, error)
+ 	// OpenRepoServer runs a repository server for a repository on a volume, on
+ 	// its node, until the session is closed or ctx ends.
+ 	OpenRepoServer(ctx context.Context, db database.IDB, req *OpenRepoServerReq) (*RepoServerSession, error)
+diff --git a/hivepaas_app/service/backupreposervice/types.go b/hivepaas_app/service/backupreposervice/types.go
+index 76b93e7c..cf200f86 100644
+--- a/hivepaas_app/service/backupreposervice/types.go
++++ b/hivepaas_app/service/backupreposervice/types.go
+@@ -260,3 +260,16 @@ type ListEntriesReq struct {
+ 	// Path is a directory inside the snapshot; "" for its root.
+ 	Path string
+ }
++
++type BackupLocalDirectoryReq struct {
++	RepoTarget
++	// Dir is a directory of this process.
++	Dir string
++	// Source is what kopia records the snapshot under, user@host:/path; its user
++	// is who a repository server is reached as.
++	Source      string
++	Description string
++	Tags        []string
++	// Progress, when set, is told the steps the backup takes.
++	Progress func(msg string)
++}

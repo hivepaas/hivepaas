@@ -1,0 +1,2444 @@
+diff --git a/docs/openapi/swagger.json b/docs/openapi/swagger.json
+index c2de2aaa..6cd4c06c 100644
+--- a/docs/openapi/swagger.json
++++ b/docs/openapi/swagger.json
+@@ -4388,6 +4388,92 @@
+         "tags" : [ "Project settings" ]
+       }
+     },
++    "/projects/{projectID}/backup-snapshots/{itemID}/download" : {
++      "get" : {
++        "description" : "Streams a file of a snapshot the scope sees, to a caller who may write on the snapshot's owner;\nthe download is recorded in the audit log",
++        "operationId" : "downloadProjectBackupSnapshotFile",
++        "parameters" : [ {
++          "description" : "project ID",
++          "in" : "path",
++          "name" : "projectID",
++          "required" : true,
++          "schema" : {
++            "type" : "string"
++          }
++        }, {
++          "description" : "snapshot record ID",
++          "in" : "path",
++          "name" : "itemID",
++          "required" : true,
++          "schema" : {
++            "type" : "string"
++          }
++        }, {
++          "description" : "a file inside the snapshot",
++          "in" : "query",
++          "name" : "path",
++          "required" : true,
++          "schema" : {
++            "type" : "string"
++          }
++        } ],
++        "responses" : {
++          "200" : {
++            "content" : {
++              "application/octet-stream" : {
++                "schema" : {
++                  "format" : "binary",
++                  "type" : "string"
++                }
++              }
++            },
++            "description" : "OK"
++          },
++          "400" : {
++            "content" : {
++              "application/octet-stream" : {
++                "schema" : {
++                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
++                }
++              }
++            },
++            "description" : "Bad Request"
++          },
++          "403" : {
++            "content" : {
++              "application/octet-stream" : {
++                "schema" : {
++                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
++                }
++              }
++            },
++            "description" : "Forbidden"
++          },
++          "404" : {
++            "content" : {
++              "application/octet-stream" : {
++                "schema" : {
++                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
++                }
++              }
++            },
++            "description" : "Not Found"
++          },
++          "500" : {
++            "content" : {
++              "application/octet-stream" : {
++                "schema" : {
++                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
++                }
++              }
++            },
++            "description" : "Internal Server Error"
++          }
++        },
++        "summary" : "Downloads a file of a backup snapshot",
++        "tags" : [ "project_settings" ]
++      }
++    },
+     "/projects/{projectID}/backup-snapshots/{itemID}/entries" : {
+       "get" : {
+         "description" : "Lists a directory of a backup snapshot the scope sees: its files and directories, directories first",
+@@ -15585,10 +15671,10 @@
+         "tags" : [ "App settings" ]
+       }
+     },
+-    "/projects/{projectID}/{projectEnv}/apps/{appID}/backup-snapshots/{itemID}/entries" : {
++    "/projects/{projectID}/{projectEnv}/apps/{appID}/backup-snapshots/{itemID}/download" : {
+       "get" : {
+-        "description" : "Lists a directory of a backup snapshot the scope sees: its files and directories, directories first",
+-        "operationId" : "listAppBackupSnapshotEntries",
++        "description" : "Streams a file of a snapshot the scope sees, to a caller who may write on the snapshot's owner;\nthe download is recorded in the audit log",
++        "operationId" : "downloadAppBackupSnapshotFile",
+         "parameters" : [ {
+           "description" : "project ID",
+           "in" : "path",
+@@ -15622,9 +15708,10 @@
+             "type" : "string"
+           }
+         }, {
+-          "description" : "a directory inside the snapshot; empty for its root",
++          "description" : "a file inside the snapshot",
+           "in" : "query",
+           "name" : "path",
++          "required" : true,
+           "schema" : {
+             "type" : "string"
+           }
+@@ -15632,9 +15719,10 @@
+         "responses" : {
+           "200" : {
+             "content" : {
+-              "application/json" : {
++              "application/octet-stream" : {
+                 "schema" : {
+-                  "$ref" : "#/components/schemas/settings_backupsnapshotdto.ListBackupSnapshotEntriesResp"
++                  "format" : "binary",
++                  "type" : "string"
+                 }
+               }
+             },
+@@ -15642,7 +15730,7 @@
+           },
+           "400" : {
+             "content" : {
+-              "application/json" : {
++              "application/octet-stream" : {
+                 "schema" : {
+                   "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                 }
+@@ -15650,9 +15738,19 @@
+             },
+             "description" : "Bad Request"
+           },
++          "403" : {
++            "content" : {
++              "application/octet-stream" : {
++                "schema" : {
++                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
++                }
++              }
++            },
++            "description" : "Forbidden"
++          },
+           "404" : {
+             "content" : {
+-              "application/json" : {
++              "application/octet-stream" : {
+                 "schema" : {
+                   "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                 }
+@@ -15662,7 +15760,7 @@
+           },
+           "500" : {
+             "content" : {
+-              "application/json" : {
++              "application/octet-stream" : {
+                 "schema" : {
+                   "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                 }
+@@ -15671,14 +15769,14 @@
+             "description" : "Internal Server Error"
+           }
+         },
+-        "summary" : "Lists what a backup snapshot holds",
++        "summary" : "Downloads a file of a backup snapshot",
+         "tags" : [ "app_settings" ]
+       }
+     },
+-    "/projects/{projectID}/{projectEnv}/apps/{appID}/backup-snapshots/{itemID}/restore" : {
+-      "post" : {
+-        "description" : "Records a task that puts a snapshot the scope sees back into an app the caller may change: a command\nsnapshot through a command run in the app, a volume snapshot into a volume the app mounts",
+-        "operationId" : "restoreAppBackupSnapshot",
++    "/projects/{projectID}/{projectEnv}/apps/{appID}/backup-snapshots/{itemID}/entries" : {
++      "get" : {
++        "description" : "Lists a directory of a backup snapshot the scope sees: its files and directories, directories first",
++        "operationId" : "listAppBackupSnapshotEntries",
+         "parameters" : [ {
+           "description" : "project ID",
+           "in" : "path",
+@@ -15711,24 +15809,20 @@
+           "schema" : {
+             "type" : "string"
+           }
++        }, {
++          "description" : "a directory inside the snapshot; empty for its root",
++          "in" : "query",
++          "name" : "path",
++          "schema" : {
++            "type" : "string"
++          }
+         } ],
+-        "requestBody" : {
+-          "content" : {
+-            "application/json" : {
+-              "schema" : {
+-                "$ref" : "#/components/schemas/settings_backupsnapshotdto.RestoreBackupSnapshotReq"
+-              }
+-            }
+-          },
+-          "description" : "request data",
+-          "required" : true
+-        },
+         "responses" : {
+           "200" : {
+             "content" : {
+               "application/json" : {
+                 "schema" : {
+-                  "$ref" : "#/components/schemas/settings_backupsnapshotdto.RestoreBackupSnapshotResp"
++                  "$ref" : "#/components/schemas/settings_backupsnapshotdto.ListBackupSnapshotEntriesResp"
+                 }
+               }
+             },
+@@ -15744,16 +15838,6 @@
+             },
+             "description" : "Bad Request"
+           },
+-          "403" : {
+-            "content" : {
+-              "application/json" : {
+-                "schema" : {
+-                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+-                }
+-              }
+-            },
+-            "description" : "Forbidden"
+-          },
+           "404" : {
+             "content" : {
+               "application/json" : {
+@@ -15775,15 +15859,14 @@
+             "description" : "Internal Server Error"
+           }
+         },
+-        "summary" : "Restores a backup snapshot into an app",
+-        "tags" : [ "app_settings" ],
+-        "x-codegen-request-body-name" : "body"
++        "summary" : "Lists what a backup snapshot holds",
++        "tags" : [ "app_settings" ]
+       }
+     },
+-    "/projects/{projectID}/{projectEnv}/apps/{appID}/clone-execute" : {
++    "/projects/{projectID}/{projectEnv}/apps/{appID}/backup-snapshots/{itemID}/restore" : {
+       "post" : {
+-        "description" : "Clones app",
+-        "operationId" : "executeAppClone",
++        "description" : "Records a task that puts a snapshot the scope sees back into an app the caller may change: a command\nsnapshot through a command run in the app, a volume snapshot into a volume the app mounts",
++        "operationId" : "restoreAppBackupSnapshot",
+         "parameters" : [ {
+           "description" : "project ID",
+           "in" : "path",
+@@ -15808,12 +15891,20 @@
+           "schema" : {
+             "type" : "string"
+           }
++        }, {
++          "description" : "snapshot record ID",
++          "in" : "path",
++          "name" : "itemID",
++          "required" : true,
++          "schema" : {
++            "type" : "string"
++          }
+         } ],
+         "requestBody" : {
+           "content" : {
+-            "*/*" : {
++            "application/json" : {
+               "schema" : {
+-                "$ref" : "#/components/schemas/appsettingsdto.ExecuteAppCloneReq"
++                "$ref" : "#/components/schemas/settings_backupsnapshotdto.RestoreBackupSnapshotReq"
+               }
+             }
+           },
+@@ -15825,7 +15916,7 @@
+             "content" : {
+               "application/json" : {
+                 "schema" : {
+-                  "$ref" : "#/components/schemas/appsettingsdto.ExecuteAppCloneResp"
++                  "$ref" : "#/components/schemas/settings_backupsnapshotdto.RestoreBackupSnapshotResp"
+                 }
+               }
+             },
+@@ -15841,7 +15932,7 @@
+             },
+             "description" : "Bad Request"
+           },
+-          "500" : {
++          "403" : {
+             "content" : {
+               "application/json" : {
+                 "schema" : {
+@@ -15849,55 +15940,9 @@
+                 }
+               }
+             },
+-            "description" : "Internal Server Error"
+-          }
+-        },
+-        "summary" : "Clones app",
+-        "tags" : [ "App settings" ],
+-        "x-codegen-request-body-name" : "body"
+-      }
+-    },
+-    "/projects/{projectID}/{projectEnv}/apps/{appID}/clone-settings" : {
+-      "get" : {
+-        "description" : "Gets app clone settings",
+-        "operationId" : "getAppCloneSettings",
+-        "parameters" : [ {
+-          "description" : "project ID",
+-          "in" : "path",
+-          "name" : "projectID",
+-          "required" : true,
+-          "schema" : {
+-            "type" : "string"
+-          }
+-        }, {
+-          "description" : "project env",
+-          "in" : "path",
+-          "name" : "projectEnv",
+-          "required" : true,
+-          "schema" : {
+-            "type" : "string"
+-          }
+-        }, {
+-          "description" : "app ID",
+-          "in" : "path",
+-          "name" : "appID",
+-          "required" : true,
+-          "schema" : {
+-            "type" : "string"
+-          }
+-        } ],
+-        "responses" : {
+-          "200" : {
+-            "content" : {
+-              "application/json" : {
+-                "schema" : {
+-                  "$ref" : "#/components/schemas/appsettingsdto.GetAppCloneSettingsResp"
+-                }
+-              }
+-            },
+-            "description" : "OK"
++            "description" : "Forbidden"
+           },
+-          "400" : {
++          "404" : {
+             "content" : {
+               "application/json" : {
+                 "schema" : {
+@@ -15905,7 +15950,7 @@
+                 }
+               }
+             },
+-            "description" : "Bad Request"
++            "description" : "Not Found"
+           },
+           "500" : {
+             "content" : {
+@@ -15918,12 +15963,15 @@
+             "description" : "Internal Server Error"
+           }
+         },
+-        "summary" : "Gets app clone settings",
+-        "tags" : [ "App settings" ]
+-      },
+-      "put" : {
+-        "description" : "Updates app clone settings",
+-        "operationId" : "updateAppCloneSettings",
++        "summary" : "Restores a backup snapshot into an app",
++        "tags" : [ "app_settings" ],
++        "x-codegen-request-body-name" : "body"
++      }
++    },
++    "/projects/{projectID}/{projectEnv}/apps/{appID}/clone-execute" : {
++      "post" : {
++        "description" : "Clones app",
++        "operationId" : "executeAppClone",
+         "parameters" : [ {
+           "description" : "project ID",
+           "in" : "path",
+@@ -15953,7 +16001,7 @@
+           "content" : {
+             "*/*" : {
+               "schema" : {
+-                "$ref" : "#/components/schemas/appsettingsdto.UpdateAppCloneSettingsReq"
++                "$ref" : "#/components/schemas/appsettingsdto.ExecuteAppCloneReq"
+               }
+             }
+           },
+@@ -15965,7 +16013,7 @@
+             "content" : {
+               "application/json" : {
+                 "schema" : {
+-                  "$ref" : "#/components/schemas/appsettingsdto.UpdateAppCloneSettingsResp"
++                  "$ref" : "#/components/schemas/appsettingsdto.ExecuteAppCloneResp"
+                 }
+               }
+             },
+@@ -15992,15 +16040,15 @@
+             "description" : "Internal Server Error"
+           }
+         },
+-        "summary" : "Updates app clone settings",
++        "summary" : "Clones app",
+         "tags" : [ "App settings" ],
+         "x-codegen-request-body-name" : "body"
+       }
+     },
+-    "/projects/{projectID}/{projectEnv}/apps/{appID}/command-templates/{itemID}/build" : {
+-      "post" : {
+-        "description" : "Builds a command template to get command string",
+-        "operationId" : "buildAppCommandTemplate",
++    "/projects/{projectID}/{projectEnv}/apps/{appID}/clone-settings" : {
++      "get" : {
++        "description" : "Gets app clone settings",
++        "operationId" : "getAppCloneSettings",
+         "parameters" : [ {
+           "description" : "project ID",
+           "in" : "path",
+@@ -16025,21 +16073,13 @@
+           "schema" : {
+             "type" : "string"
+           }
+-        }, {
+-          "description" : "command template ID",
+-          "in" : "path",
+-          "name" : "itemID",
+-          "required" : true,
+-          "schema" : {
+-            "type" : "string"
+-          }
+         } ],
+         "responses" : {
+           "200" : {
+             "content" : {
+               "application/json" : {
+                 "schema" : {
+-                  "$ref" : "#/components/schemas/appsettingsdto.BuildCommandTemplateResp"
++                  "$ref" : "#/components/schemas/appsettingsdto.GetAppCloneSettingsResp"
+                 }
+               }
+             },
+@@ -16066,14 +16106,12 @@
+             "description" : "Internal Server Error"
+           }
+         },
+-        "summary" : "Builds a command template to get command string",
++        "summary" : "Gets app clone settings",
+         "tags" : [ "App settings" ]
+-      }
+-    },
+-    "/projects/{projectID}/{projectEnv}/apps/{appID}/config-files" : {
+-      "get" : {
+-        "description" : "Lists app config files",
+-        "operationId" : "listAppConfigFile",
++      },
++      "put" : {
++        "description" : "Updates app clone settings",
++        "operationId" : "updateAppCloneSettings",
+         "parameters" : [ {
+           "description" : "project ID",
+           "in" : "path",
+@@ -16099,12 +16137,23 @@
+             "type" : "string"
+           }
+         } ],
++        "requestBody" : {
++          "content" : {
++            "*/*" : {
++              "schema" : {
++                "$ref" : "#/components/schemas/appsettingsdto.UpdateAppCloneSettingsReq"
++              }
++            }
++          },
++          "description" : "request data",
++          "required" : true
++        },
+         "responses" : {
+           "200" : {
+             "content" : {
+               "application/json" : {
+                 "schema" : {
+-                  "$ref" : "#/components/schemas/settings_configfiledto.ListConfigFileResp"
++                  "$ref" : "#/components/schemas/appsettingsdto.UpdateAppCloneSettingsResp"
+                 }
+               }
+             },
+@@ -16131,12 +16180,15 @@
+             "description" : "Internal Server Error"
+           }
+         },
+-        "summary" : "Lists app config files",
+-        "tags" : [ "App settings" ]
+-      },
++        "summary" : "Updates app clone settings",
++        "tags" : [ "App settings" ],
++        "x-codegen-request-body-name" : "body"
++      }
++    },
++    "/projects/{projectID}/{projectEnv}/apps/{appID}/command-templates/{itemID}/build" : {
+       "post" : {
+-        "description" : "Creates an app config file",
+-        "operationId" : "createAppConfigFile",
++        "description" : "Builds a command template to get command string",
++        "operationId" : "buildAppCommandTemplate",
+         "parameters" : [ {
+           "description" : "project ID",
+           "in" : "path",
+@@ -16161,28 +16213,25 @@
+           "schema" : {
+             "type" : "string"
+           }
++        }, {
++          "description" : "command template ID",
++          "in" : "path",
++          "name" : "itemID",
++          "required" : true,
++          "schema" : {
++            "type" : "string"
++          }
+         } ],
+-        "requestBody" : {
+-          "content" : {
+-            "*/*" : {
+-              "schema" : {
+-                "$ref" : "#/components/schemas/settings_configfiledto.CreateConfigFileReq"
+-              }
+-            }
+-          },
+-          "description" : "request data",
+-          "required" : true
+-        },
+         "responses" : {
+-          "201" : {
++          "200" : {
+             "content" : {
+               "application/json" : {
+                 "schema" : {
+-                  "$ref" : "#/components/schemas/settings_configfiledto.CreateConfigFileResp"
++                  "$ref" : "#/components/schemas/appsettingsdto.BuildCommandTemplateResp"
+                 }
+               }
+             },
+-            "description" : "Created"
++            "description" : "OK"
+           },
+           "400" : {
+             "content" : {
+@@ -16205,15 +16254,14 @@
+             "description" : "Internal Server Error"
+           }
+         },
+-        "summary" : "Creates an app config file",
+-        "tags" : [ "App settings" ],
+-        "x-codegen-request-body-name" : "body"
++        "summary" : "Builds a command template to get command string",
++        "tags" : [ "App settings" ]
+       }
+     },
+-    "/projects/{projectID}/{projectEnv}/apps/{appID}/config-files/{itemID}" : {
+-      "delete" : {
+-        "description" : "Deletes an app config file",
+-        "operationId" : "deleteAppConfigFile",
++    "/projects/{projectID}/{projectEnv}/apps/{appID}/config-files" : {
++      "get" : {
++        "description" : "Lists app config files",
++        "operationId" : "listAppConfigFile",
+         "parameters" : [ {
+           "description" : "project ID",
+           "in" : "path",
+@@ -16238,21 +16286,13 @@
+           "schema" : {
+             "type" : "string"
+           }
+-        }, {
+-          "description" : "setting ID",
+-          "in" : "path",
+-          "name" : "itemID",
+-          "required" : true,
+-          "schema" : {
+-            "type" : "string"
+-          }
+         } ],
+         "responses" : {
+           "200" : {
+             "content" : {
+               "application/json" : {
+                 "schema" : {
+-                  "$ref" : "#/components/schemas/settings_configfiledto.DeleteConfigFileResp"
++                  "$ref" : "#/components/schemas/settings_configfiledto.ListConfigFileResp"
+                 }
+               }
+             },
+@@ -16279,12 +16319,12 @@
+             "description" : "Internal Server Error"
+           }
+         },
+-        "summary" : "Deletes an app config file",
++        "summary" : "Lists app config files",
+         "tags" : [ "App settings" ]
+       },
+-      "get" : {
+-        "description" : "Get an app config file details",
+-        "operationId" : "getAppConfigFile",
++      "post" : {
++        "description" : "Creates an app config file",
++        "operationId" : "createAppConfigFile",
+         "parameters" : [ {
+           "description" : "project ID",
+           "in" : "path",
+@@ -16309,25 +16349,28 @@
+           "schema" : {
+             "type" : "string"
+           }
+-        }, {
+-          "description" : "setting ID",
+-          "in" : "path",
+-          "name" : "itemID",
+-          "required" : true,
+-          "schema" : {
+-            "type" : "string"
+-          }
+         } ],
++        "requestBody" : {
++          "content" : {
++            "*/*" : {
++              "schema" : {
++                "$ref" : "#/components/schemas/settings_configfiledto.CreateConfigFileReq"
++              }
++            }
++          },
++          "description" : "request data",
++          "required" : true
++        },
+         "responses" : {
+-          "200" : {
++          "201" : {
+             "content" : {
+               "application/json" : {
+                 "schema" : {
+-                  "$ref" : "#/components/schemas/settings_configfiledto.GetConfigFileResp"
++                  "$ref" : "#/components/schemas/settings_configfiledto.CreateConfigFileResp"
+                 }
+               }
+             },
+-            "description" : "OK"
++            "description" : "Created"
+           },
+           "400" : {
+             "content" : {
+@@ -16350,12 +16393,15 @@
+             "description" : "Internal Server Error"
+           }
+         },
+-        "summary" : "Get an app config file details",
+-        "tags" : [ "App settings" ]
+-      },
+-      "put" : {
+-        "description" : "Updates an app config file",
+-        "operationId" : "updateAppConfigFile",
++        "summary" : "Creates an app config file",
++        "tags" : [ "App settings" ],
++        "x-codegen-request-body-name" : "body"
++      }
++    },
++    "/projects/{projectID}/{projectEnv}/apps/{appID}/config-files/{itemID}" : {
++      "delete" : {
++        "description" : "Deletes an app config file",
++        "operationId" : "deleteAppConfigFile",
+         "parameters" : [ {
+           "description" : "project ID",
+           "in" : "path",
+@@ -16389,23 +16435,12 @@
+             "type" : "string"
+           }
+         } ],
+-        "requestBody" : {
+-          "content" : {
+-            "*/*" : {
+-              "schema" : {
+-                "$ref" : "#/components/schemas/settings_configfiledto.UpdateConfigFileReq"
+-              }
+-            }
+-          },
+-          "description" : "request data",
+-          "required" : true
+-        },
+         "responses" : {
+           "200" : {
+             "content" : {
+               "application/json" : {
+                 "schema" : {
+-                  "$ref" : "#/components/schemas/settings_configfiledto.UpdateConfigFileResp"
++                  "$ref" : "#/components/schemas/settings_configfiledto.DeleteConfigFileResp"
+                 }
+               }
+             },
+@@ -16432,15 +16467,12 @@
+             "description" : "Internal Server Error"
+           }
+         },
+-        "summary" : "Updates an app config file",
+-        "tags" : [ "App settings" ],
+-        "x-codegen-request-body-name" : "body"
+-      }
+-    },
+-    "/projects/{projectID}/{projectEnv}/apps/{appID}/config-files/{itemID}/download" : {
++        "summary" : "Deletes an app config file",
++        "tags" : [ "App settings" ]
++      },
+       "get" : {
+-        "description" : "Download a config file",
+-        "operationId" : "downloadAppConfigFile",
++        "description" : "Get an app config file details",
++        "operationId" : "getAppConfigFile",
+         "parameters" : [ {
+           "description" : "project ID",
+           "in" : "path",
+@@ -16479,7 +16511,7 @@
+             "content" : {
+               "application/json" : {
+                 "schema" : {
+-                  "$ref" : "#/components/schemas/settings_configfiledto.DownloadConfigFileResp"
++                  "$ref" : "#/components/schemas/settings_configfiledto.GetConfigFileResp"
+                 }
+               }
+             },
+@@ -16506,14 +16538,12 @@
+             "description" : "Internal Server Error"
+           }
+         },
+-        "summary" : "Download a config file",
++        "summary" : "Get an app config file details",
+         "tags" : [ "App settings" ]
+-      }
+-    },
+-    "/projects/{projectID}/{projectEnv}/apps/{appID}/config-files/{itemID}/download-token" : {
+-      "get" : {
+-        "description" : "Gets config file download token",
+-        "operationId" : "getAppConfigFileDownloadToken",
++      },
++      "put" : {
++        "description" : "Updates an app config file",
++        "operationId" : "updateAppConfigFile",
+         "parameters" : [ {
+           "description" : "project ID",
+           "in" : "path",
+@@ -16547,12 +16577,23 @@
+             "type" : "string"
+           }
+         } ],
++        "requestBody" : {
++          "content" : {
++            "*/*" : {
++              "schema" : {
++                "$ref" : "#/components/schemas/settings_configfiledto.UpdateConfigFileReq"
++              }
++            }
++          },
++          "description" : "request data",
++          "required" : true
++        },
+         "responses" : {
+           "200" : {
+             "content" : {
+               "application/json" : {
+                 "schema" : {
+-                  "$ref" : "#/components/schemas/settings_configfiledto.GetDownloadTokenResp"
++                  "$ref" : "#/components/schemas/settings_configfiledto.UpdateConfigFileResp"
+                 }
+               }
+             },
+@@ -16579,14 +16620,15 @@
+             "description" : "Internal Server Error"
+           }
+         },
+-        "summary" : "Gets config file download token",
+-        "tags" : [ "App settings" ]
++        "summary" : "Updates an app config file",
++        "tags" : [ "App settings" ],
++        "x-codegen-request-body-name" : "body"
+       }
+     },
+-    "/projects/{projectID}/{projectEnv}/apps/{appID}/config-files/{itemID}/status" : {
+-      "put" : {
+-        "description" : "Updates app config file status",
+-        "operationId" : "updateAppConfigFileStatus",
++    "/projects/{projectID}/{projectEnv}/apps/{appID}/config-files/{itemID}/download" : {
++      "get" : {
++        "description" : "Download a config file",
++        "operationId" : "downloadAppConfigFile",
+         "parameters" : [ {
+           "description" : "project ID",
+           "in" : "path",
+@@ -16620,23 +16662,12 @@
+             "type" : "string"
+           }
+         } ],
+-        "requestBody" : {
+-          "content" : {
+-            "*/*" : {
+-              "schema" : {
+-                "$ref" : "#/components/schemas/settings_configfiledto.UpdateConfigFileStatusReq"
+-              }
+-            }
+-          },
+-          "description" : "request data",
+-          "required" : true
+-        },
+         "responses" : {
+           "200" : {
+             "content" : {
+               "application/json" : {
+                 "schema" : {
+-                  "$ref" : "#/components/schemas/settings_configfiledto.UpdateConfigFileStatusResp"
++                  "$ref" : "#/components/schemas/settings_configfiledto.DownloadConfigFileResp"
+                 }
+               }
+             },
+@@ -16663,15 +16694,14 @@
+             "description" : "Internal Server Error"
+           }
+         },
+-        "summary" : "Updates app config file status",
+-        "tags" : [ "App settings" ],
+-        "x-codegen-request-body-name" : "body"
++        "summary" : "Download a config file",
++        "tags" : [ "App settings" ]
+       }
+     },
+-    "/projects/{projectID}/{projectEnv}/apps/{appID}/container-settings" : {
++    "/projects/{projectID}/{projectEnv}/apps/{appID}/config-files/{itemID}/download-token" : {
+       "get" : {
+-        "description" : "Gets app container settings",
+-        "operationId" : "getAppContainerSettings",
++        "description" : "Gets config file download token",
++        "operationId" : "getAppConfigFileDownloadToken",
+         "parameters" : [ {
+           "description" : "project ID",
+           "in" : "path",
+@@ -16697,11 +16727,12 @@
+             "type" : "string"
+           }
+         }, {
+-          "description" : "also return the labels HivePaaS and Docker manage, as secrets are",
+-          "in" : "query",
+-          "name" : "revealSystemLabels",
++          "description" : "setting ID",
++          "in" : "path",
++          "name" : "itemID",
++          "required" : true,
+           "schema" : {
+-            "type" : "boolean"
++            "type" : "string"
+           }
+         } ],
+         "responses" : {
+@@ -16709,7 +16740,7 @@
+             "content" : {
+               "application/json" : {
+                 "schema" : {
+-                  "$ref" : "#/components/schemas/appsettingsdto.GetAppContainerSettingsResp"
++                  "$ref" : "#/components/schemas/settings_configfiledto.GetDownloadTokenResp"
+                 }
+               }
+             },
+@@ -16736,12 +16767,14 @@
+             "description" : "Internal Server Error"
+           }
+         },
+-        "summary" : "Gets app container settings",
++        "summary" : "Gets config file download token",
+         "tags" : [ "App settings" ]
+-      },
++      }
++    },
++    "/projects/{projectID}/{projectEnv}/apps/{appID}/config-files/{itemID}/status" : {
+       "put" : {
+-        "description" : "Updates app container settings",
+-        "operationId" : "updateAppContainerSettings",
++        "description" : "Updates app config file status",
++        "operationId" : "updateAppConfigFileStatus",
+         "parameters" : [ {
+           "description" : "project ID",
+           "in" : "path",
+@@ -16766,12 +16799,20 @@
+           "schema" : {
+             "type" : "string"
+           }
++        }, {
++          "description" : "setting ID",
++          "in" : "path",
++          "name" : "itemID",
++          "required" : true,
++          "schema" : {
++            "type" : "string"
++          }
+         } ],
+         "requestBody" : {
+           "content" : {
+             "*/*" : {
+               "schema" : {
+-                "$ref" : "#/components/schemas/appsettingsdto.UpdateAppContainerSettingsReq"
++                "$ref" : "#/components/schemas/settings_configfiledto.UpdateConfigFileStatusReq"
+               }
+             }
+           },
+@@ -16783,7 +16824,154 @@
+             "content" : {
+               "application/json" : {
+                 "schema" : {
+-                  "$ref" : "#/components/schemas/appsettingsdto.UpdateAppContainerSettingsResp"
++                  "$ref" : "#/components/schemas/settings_configfiledto.UpdateConfigFileStatusResp"
++                }
++              }
++            },
++            "description" : "OK"
++          },
++          "400" : {
++            "content" : {
++              "application/json" : {
++                "schema" : {
++                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
++                }
++              }
++            },
++            "description" : "Bad Request"
++          },
++          "500" : {
++            "content" : {
++              "application/json" : {
++                "schema" : {
++                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
++                }
++              }
++            },
++            "description" : "Internal Server Error"
++          }
++        },
++        "summary" : "Updates app config file status",
++        "tags" : [ "App settings" ],
++        "x-codegen-request-body-name" : "body"
++      }
++    },
++    "/projects/{projectID}/{projectEnv}/apps/{appID}/container-settings" : {
++      "get" : {
++        "description" : "Gets app container settings",
++        "operationId" : "getAppContainerSettings",
++        "parameters" : [ {
++          "description" : "project ID",
++          "in" : "path",
++          "name" : "projectID",
++          "required" : true,
++          "schema" : {
++            "type" : "string"
++          }
++        }, {
++          "description" : "project env",
++          "in" : "path",
++          "name" : "projectEnv",
++          "required" : true,
++          "schema" : {
++            "type" : "string"
++          }
++        }, {
++          "description" : "app ID",
++          "in" : "path",
++          "name" : "appID",
++          "required" : true,
++          "schema" : {
++            "type" : "string"
++          }
++        }, {
++          "description" : "also return the labels HivePaaS and Docker manage, as secrets are",
++          "in" : "query",
++          "name" : "revealSystemLabels",
++          "schema" : {
++            "type" : "boolean"
++          }
++        } ],
++        "responses" : {
++          "200" : {
++            "content" : {
++              "application/json" : {
++                "schema" : {
++                  "$ref" : "#/components/schemas/appsettingsdto.GetAppContainerSettingsResp"
++                }
++              }
++            },
++            "description" : "OK"
++          },
++          "400" : {
++            "content" : {
++              "application/json" : {
++                "schema" : {
++                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
++                }
++              }
++            },
++            "description" : "Bad Request"
++          },
++          "500" : {
++            "content" : {
++              "application/json" : {
++                "schema" : {
++                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
++                }
++              }
++            },
++            "description" : "Internal Server Error"
++          }
++        },
++        "summary" : "Gets app container settings",
++        "tags" : [ "App settings" ]
++      },
++      "put" : {
++        "description" : "Updates app container settings",
++        "operationId" : "updateAppContainerSettings",
++        "parameters" : [ {
++          "description" : "project ID",
++          "in" : "path",
++          "name" : "projectID",
++          "required" : true,
++          "schema" : {
++            "type" : "string"
++          }
++        }, {
++          "description" : "project env",
++          "in" : "path",
++          "name" : "projectEnv",
++          "required" : true,
++          "schema" : {
++            "type" : "string"
++          }
++        }, {
++          "description" : "app ID",
++          "in" : "path",
++          "name" : "appID",
++          "required" : true,
++          "schema" : {
++            "type" : "string"
++          }
++        } ],
++        "requestBody" : {
++          "content" : {
++            "*/*" : {
++              "schema" : {
++                "$ref" : "#/components/schemas/appsettingsdto.UpdateAppContainerSettingsReq"
++              }
++            }
++          },
++          "description" : "request data",
++          "required" : true
++        },
++        "responses" : {
++          "200" : {
++            "content" : {
++              "application/json" : {
++                "schema" : {
++                  "$ref" : "#/components/schemas/appsettingsdto.UpdateAppContainerSettingsResp"
+                 }
+               }
+             },
+@@ -24965,6 +25153,100 @@
+         "tags" : [ "Project env settings" ]
+       }
+     },
++    "/projects/{projectID}/{projectEnv}/backup-snapshots/{itemID}/download" : {
++      "get" : {
++        "description" : "Streams a file of a snapshot the scope sees, to a caller who may write on the snapshot's owner;\nthe download is recorded in the audit log",
++        "operationId" : "downloadProjectEnvBackupSnapshotFile",
++        "parameters" : [ {
++          "description" : "project ID",
++          "in" : "path",
++          "name" : "projectID",
++          "required" : true,
++          "schema" : {
++            "type" : "string"
++          }
++        }, {
++          "description" : "project Env",
++          "in" : "path",
++          "name" : "projectEnv",
++          "required" : true,
++          "schema" : {
++            "type" : "string"
++          }
++        }, {
++          "description" : "snapshot record ID",
++          "in" : "path",
++          "name" : "itemID",
++          "required" : true,
++          "schema" : {
++            "type" : "string"
++          }
++        }, {
++          "description" : "a file inside the snapshot",
++          "in" : "query",
++          "name" : "path",
++          "required" : true,
++          "schema" : {
++            "type" : "string"
++          }
++        } ],
++        "responses" : {
++          "200" : {
++            "content" : {
++              "application/octet-stream" : {
++                "schema" : {
++                  "format" : "binary",
++                  "type" : "string"
++                }
++              }
++            },
++            "description" : "OK"
++          },
++          "400" : {
++            "content" : {
++              "application/octet-stream" : {
++                "schema" : {
++                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
++                }
++              }
++            },
++            "description" : "Bad Request"
++          },
++          "403" : {
++            "content" : {
++              "application/octet-stream" : {
++                "schema" : {
++                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
++                }
++              }
++            },
++            "description" : "Forbidden"
++          },
++          "404" : {
++            "content" : {
++              "application/octet-stream" : {
++                "schema" : {
++                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
++                }
++              }
++            },
++            "description" : "Not Found"
++          },
++          "500" : {
++            "content" : {
++              "application/octet-stream" : {
++                "schema" : {
++                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
++                }
++              }
++            },
++            "description" : "Internal Server Error"
++          }
++        },
++        "summary" : "Downloads a file of a backup snapshot",
++        "tags" : [ "project_env_settings" ]
++      }
++    },
+     "/projects/{projectID}/{projectEnv}/backup-snapshots/{itemID}/entries" : {
+       "get" : {
+         "description" : "Lists a directory of a backup snapshot the scope sees: its files and directories, directories first",
+@@ -36209,12 +36491,71 @@
+             "description" : "Internal Server Error"
+           }
+         },
+-        "summary" : "Deletes a backup snapshot",
++        "summary" : "Deletes a backup snapshot",
++        "tags" : [ "Global settings" ]
++      },
++      "get" : {
++        "description" : "Gets a backup snapshot the scope sees",
++        "operationId" : "getSettingBackupSnapshot",
++        "parameters" : [ {
++          "description" : "snapshot record ID",
++          "in" : "path",
++          "name" : "itemID",
++          "required" : true,
++          "schema" : {
++            "type" : "string"
++          }
++        } ],
++        "responses" : {
++          "200" : {
++            "content" : {
++              "application/json" : {
++                "schema" : {
++                  "$ref" : "#/components/schemas/settings_backupsnapshotdto.GetBackupSnapshotResp"
++                }
++              }
++            },
++            "description" : "OK"
++          },
++          "400" : {
++            "content" : {
++              "application/json" : {
++                "schema" : {
++                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
++                }
++              }
++            },
++            "description" : "Bad Request"
++          },
++          "404" : {
++            "content" : {
++              "application/json" : {
++                "schema" : {
++                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
++                }
++              }
++            },
++            "description" : "Not Found"
++          },
++          "500" : {
++            "content" : {
++              "application/json" : {
++                "schema" : {
++                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
++                }
++              }
++            },
++            "description" : "Internal Server Error"
++          }
++        },
++        "summary" : "Gets a backup snapshot",
+         "tags" : [ "Global settings" ]
+-      },
++      }
++    },
++    "/settings/backup-snapshots/{itemID}/download" : {
+       "get" : {
+-        "description" : "Gets a backup snapshot the scope sees",
+-        "operationId" : "getSettingBackupSnapshot",
++        "description" : "Streams a file of a snapshot the scope sees, to a caller who may write on the snapshot's owner;\nthe download is recorded in the audit log",
++        "operationId" : "downloadSettingBackupSnapshotFile",
+         "parameters" : [ {
+           "description" : "snapshot record ID",
+           "in" : "path",
+@@ -36223,13 +36564,22 @@
+           "schema" : {
+             "type" : "string"
+           }
++        }, {
++          "description" : "a file inside the snapshot",
++          "in" : "query",
++          "name" : "path",
++          "required" : true,
++          "schema" : {
++            "type" : "string"
++          }
+         } ],
+         "responses" : {
+           "200" : {
+             "content" : {
+-              "application/json" : {
++              "application/octet-stream" : {
+                 "schema" : {
+-                  "$ref" : "#/components/schemas/settings_backupsnapshotdto.GetBackupSnapshotResp"
++                  "format" : "binary",
++                  "type" : "string"
+                 }
+               }
+             },
+@@ -36237,7 +36587,7 @@
+           },
+           "400" : {
+             "content" : {
+-              "application/json" : {
++              "application/octet-stream" : {
+                 "schema" : {
+                   "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                 }
+@@ -36245,9 +36595,19 @@
+             },
+             "description" : "Bad Request"
+           },
++          "403" : {
++            "content" : {
++              "application/octet-stream" : {
++                "schema" : {
++                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
++                }
++              }
++            },
++            "description" : "Forbidden"
++          },
+           "404" : {
+             "content" : {
+-              "application/json" : {
++              "application/octet-stream" : {
+                 "schema" : {
+                   "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                 }
+@@ -36257,7 +36617,7 @@
+           },
+           "500" : {
+             "content" : {
+-              "application/json" : {
++              "application/octet-stream" : {
+                 "schema" : {
+                   "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                 }
+@@ -36266,8 +36626,8 @@
+             "description" : "Internal Server Error"
+           }
+         },
+-        "summary" : "Gets a backup snapshot",
+-        "tags" : [ "Global settings" ]
++        "summary" : "Downloads a file of a backup snapshot",
++        "tags" : [ "settings" ]
+       }
+     },
+     "/settings/backup-snapshots/{itemID}/entries" : {
+@@ -43916,252 +44276,29 @@
+             "description" : "Internal Server Error"
+           }
+         },
+-        "summary" : "Gets backup repo cleanup settings",
+-        "tags" : [ "System settings" ]
+-      },
+-      "put" : {
+-        "description" : "Updates backup repo cleanup settings",
+-        "operationId" : "updateBackupRepoCleanupSettings",
+-        "requestBody" : {
+-          "content" : {
+-            "*/*" : {
+-              "schema" : {
+-                "$ref" : "#/components/schemas/systemsettings_backuprepocleanupdto.UpdateBackupRepoCleanupReq"
+-              }
+-            }
+-          },
+-          "description" : "request data",
+-          "required" : true
+-        },
+-        "responses" : {
+-          "200" : {
+-            "content" : {
+-              "application/json" : {
+-                "schema" : {
+-                  "$ref" : "#/components/schemas/systemsettings_backuprepocleanupdto.UpdateBackupRepoCleanupResp"
+-                }
+-              }
+-            },
+-            "description" : "OK"
+-          },
+-          "400" : {
+-            "content" : {
+-              "application/json" : {
+-                "schema" : {
+-                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+-                }
+-              }
+-            },
+-            "description" : "Bad Request"
+-          },
+-          "500" : {
+-            "content" : {
+-              "application/json" : {
+-                "schema" : {
+-                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+-                }
+-              }
+-            },
+-            "description" : "Internal Server Error"
+-          }
+-        },
+-        "summary" : "Updates backup repo cleanup settings",
+-        "tags" : [ "System settings" ],
+-        "x-codegen-request-body-name" : "body"
+-      }
+-    },
+-    "/system/settings/backup-repo-cleanup/exec" : {
+-      "post" : {
+-        "description" : "Executes the renewal",
+-        "operationId" : "executeBackupRepoCleanup",
+-        "requestBody" : {
+-          "content" : {
+-            "*/*" : {
+-              "schema" : {
+-                "$ref" : "#/components/schemas/systemsettings_backuprepocleanupdto.ExecuteBackupRepoCleanupReq"
+-              }
+-            }
+-          },
+-          "description" : "request data",
+-          "required" : true
+-        },
+-        "responses" : {
+-          "200" : {
+-            "content" : {
+-              "application/json" : {
+-                "schema" : {
+-                  "$ref" : "#/components/schemas/systemsettings_backuprepocleanupdto.ExecuteBackupRepoCleanupResp"
+-                }
+-              }
+-            },
+-            "description" : "OK"
+-          },
+-          "400" : {
+-            "content" : {
+-              "application/json" : {
+-                "schema" : {
+-                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+-                }
+-              }
+-            },
+-            "description" : "Bad Request"
+-          },
+-          "500" : {
+-            "content" : {
+-              "application/json" : {
+-                "schema" : {
+-                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+-                }
+-              }
+-            },
+-            "description" : "Internal Server Error"
+-          }
+-        },
+-        "summary" : "Executes the renewal",
+-        "tags" : [ "System settings" ],
+-        "x-codegen-request-body-name" : "body"
+-      }
+-    },
+-    "/system/settings/backup/exec" : {
+-      "post" : {
+-        "description" : "Executes the backup",
+-        "operationId" : "executeSystemBackup",
+-        "requestBody" : {
+-          "content" : {
+-            "*/*" : {
+-              "schema" : {
+-                "$ref" : "#/components/schemas/systemsettings_systembackupdto.ExecuteSystemBackupReq"
+-              }
+-            }
+-          },
+-          "description" : "request data",
+-          "required" : true
+-        },
+-        "responses" : {
+-          "200" : {
+-            "content" : {
+-              "application/json" : {
+-                "schema" : {
+-                  "$ref" : "#/components/schemas/systemsettings_systembackupdto.ExecuteSystemBackupResp"
+-                }
+-              }
+-            },
+-            "description" : "OK"
+-          },
+-          "400" : {
+-            "content" : {
+-              "application/json" : {
+-                "schema" : {
+-                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+-                }
+-              }
+-            },
+-            "description" : "Bad Request"
+-          },
+-          "500" : {
+-            "content" : {
+-              "application/json" : {
+-                "schema" : {
+-                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+-                }
+-              }
+-            },
+-            "description" : "Internal Server Error"
+-          }
+-        },
+-        "summary" : "Executes the backup",
+-        "tags" : [ "System settings" ],
+-        "x-codegen-request-body-name" : "body"
+-      }
+-    },
+-    "/system/settings/backup/files" : {
+-      "get" : {
+-        "description" : "Lists backup files",
+-        "operationId" : "listSystemBackupFiles",
+-        "parameters" : [ {
+-          "description" : "`search=<target> (support *)`",
+-          "in" : "query",
+-          "name" : "search",
+-          "schema" : {
+-            "type" : "string"
+-          }
+-        }, {
+-          "description" : "`pageOffset=offset`",
+-          "in" : "query",
+-          "name" : "pageOffset",
+-          "schema" : {
+-            "type" : "integer"
+-          }
+-        }, {
+-          "description" : "`pageLimit=limit`",
+-          "in" : "query",
+-          "name" : "pageLimit",
+-          "schema" : {
+-            "type" : "integer"
+-          }
+-        }, {
+-          "description" : "`sort=[-]field1|field2...`",
+-          "in" : "query",
+-          "name" : "sort",
+-          "schema" : {
+-            "type" : "string"
+-          }
+-        } ],
+-        "responses" : {
+-          "200" : {
+-            "content" : {
+-              "application/json" : {
+-                "schema" : {
+-                  "$ref" : "#/components/schemas/filedto.ListFileResp"
+-                }
+-              }
+-            },
+-            "description" : "OK"
+-          },
+-          "400" : {
+-            "content" : {
+-              "application/json" : {
+-                "schema" : {
+-                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+-                }
+-              }
+-            },
+-            "description" : "Bad Request"
+-          },
+-          "500" : {
+-            "content" : {
+-              "application/json" : {
+-                "schema" : {
+-                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+-                }
+-              }
+-            },
+-            "description" : "Internal Server Error"
+-          }
+-        },
+-        "summary" : "Lists backup files",
++        "summary" : "Gets backup repo cleanup settings",
+         "tags" : [ "System settings" ]
+-      }
+-    },
+-    "/system/settings/backup/files/{fileID}" : {
+-      "delete" : {
+-        "description" : "Deletes backup file",
+-        "operationId" : "deleteSystemBackupFile",
+-        "parameters" : [ {
+-          "description" : "file setting ID",
+-          "in" : "path",
+-          "name" : "fileID",
+-          "required" : true,
+-          "schema" : {
+-            "type" : "string"
+-          }
+-        } ],
++      },
++      "put" : {
++        "description" : "Updates backup repo cleanup settings",
++        "operationId" : "updateBackupRepoCleanupSettings",
++        "requestBody" : {
++          "content" : {
++            "*/*" : {
++              "schema" : {
++                "$ref" : "#/components/schemas/systemsettings_backuprepocleanupdto.UpdateBackupRepoCleanupReq"
++              }
++            }
++          },
++          "description" : "request data",
++          "required" : true
++        },
+         "responses" : {
+           "200" : {
+             "content" : {
+               "application/json" : {
+                 "schema" : {
+-                  "$ref" : "#/components/schemas/filedto.DeleteFileResp"
++                  "$ref" : "#/components/schemas/systemsettings_backuprepocleanupdto.UpdateBackupRepoCleanupResp"
+                 }
+               }
+             },
+@@ -44188,27 +44325,32 @@
+             "description" : "Internal Server Error"
+           }
+         },
+-        "summary" : "Deletes backup file",
+-        "tags" : [ "System settings" ]
+-      },
+-      "get" : {
+-        "description" : "Gets backup file",
+-        "operationId" : "getSystemBackupFile",
+-        "parameters" : [ {
+-          "description" : "file setting ID",
+-          "in" : "path",
+-          "name" : "fileID",
+-          "required" : true,
+-          "schema" : {
+-            "type" : "string"
+-          }
+-        } ],
++        "summary" : "Updates backup repo cleanup settings",
++        "tags" : [ "System settings" ],
++        "x-codegen-request-body-name" : "body"
++      }
++    },
++    "/system/settings/backup-repo-cleanup/exec" : {
++      "post" : {
++        "description" : "Executes the renewal",
++        "operationId" : "executeBackupRepoCleanup",
++        "requestBody" : {
++          "content" : {
++            "*/*" : {
++              "schema" : {
++                "$ref" : "#/components/schemas/systemsettings_backuprepocleanupdto.ExecuteBackupRepoCleanupReq"
++              }
++            }
++          },
++          "description" : "request data",
++          "required" : true
++        },
+         "responses" : {
+           "200" : {
+             "content" : {
+               "application/json" : {
+                 "schema" : {
+-                  "$ref" : "#/components/schemas/filedto.GetFileResp"
++                  "$ref" : "#/components/schemas/systemsettings_backuprepocleanupdto.ExecuteBackupRepoCleanupResp"
+                 }
+               }
+             },
+@@ -44235,26 +44377,35 @@
+             "description" : "Internal Server Error"
+           }
+         },
+-        "summary" : "Gets backup file",
+-        "tags" : [ "System settings" ]
++        "summary" : "Executes the renewal",
++        "tags" : [ "System settings" ],
++        "x-codegen-request-body-name" : "body"
+       }
+     },
+-    "/system/settings/backup/files/{fileID}/download" : {
+-      "get" : {
+-        "description" : "Downloads a backup file",
+-        "operationId" : "downloadSystemBackupFile",
+-        "parameters" : [ {
+-          "description" : "file setting ID",
+-          "in" : "path",
+-          "name" : "fileID",
+-          "required" : true,
+-          "schema" : {
+-            "type" : "string"
+-          }
+-        } ],
++    "/system/settings/backup/exec" : {
++      "post" : {
++        "description" : "Executes the backup",
++        "operationId" : "executeSystemBackup",
++        "requestBody" : {
++          "content" : {
++            "*/*" : {
++              "schema" : {
++                "$ref" : "#/components/schemas/systemsettings_systembackupdto.ExecuteSystemBackupReq"
++              }
++            }
++          },
++          "description" : "request data",
++          "required" : true
++        },
+         "responses" : {
+           "200" : {
+-            "content" : { },
++            "content" : {
++              "application/json" : {
++                "schema" : {
++                  "$ref" : "#/components/schemas/systemsettings_systembackupdto.ExecuteSystemBackupResp"
++                }
++              }
++            },
+             "description" : "OK"
+           },
+           "400" : {
+@@ -44278,8 +44429,9 @@
+             "description" : "Internal Server Error"
+           }
+         },
+-        "summary" : "Downloads a backup file",
+-        "tags" : [ "System settings" ]
++        "summary" : "Executes the backup",
++        "tags" : [ "System settings" ],
++        "x-codegen-request-body-name" : "body"
+       }
+     },
+     "/system/settings/cleanup" : {
+@@ -67265,158 +67417,26 @@
+         "required" : [ "cronExpr", "initialTime", "interval" ],
+         "type" : "object"
+       },
+-      "systemsettings_systembackupdto.SystemBackupCloudStorageReq" : {
+-        "properties" : {
+-          "bucket" : {
+-            "type" : "string"
+-          },
+-          "destinationDir" : {
+-            "type" : "string"
+-          },
+-          "id" : {
+-            "type" : "string"
+-          }
+-        },
+-        "required" : [ "bucket", "destinationDir", "id" ],
+-        "type" : "object"
+-      },
+-      "systemsettings_systembackupdto.SystemBackupCloudStorageResp" : {
++      "systemsettings_systembackupdto.SystemBackupResp" : {
+         "properties" : {
+-          "bucket" : {
+-            "type" : "string"
+-          },
+           "createdAt" : {
+             "type" : "string"
+           },
+           "default" : {
+             "type" : "boolean"
+           },
+-          "destinationDir" : {
+-            "type" : "string"
+-          },
+           "expireAt" : {
+             "type" : "string"
+           },
+           "id" : {
+             "type" : "string"
+           },
+-          "inheritable" : {
+-            "type" : "boolean"
+-          },
+-          "inherited" : {
+-            "type" : "boolean"
+-          },
+-          "kind" : {
+-            "type" : "string"
+-          },
+-          "name" : {
+-            "type" : "string"
+-          },
+-          "size" : {
+-            "type" : "integer"
+-          },
+-          "status" : {
+-            "type" : "string"
+-          },
+-          "type" : {
+-            "type" : "string"
+-          },
+-          "updateVer" : {
+-            "type" : "integer"
+-          },
+-          "updatedAt" : {
+-            "type" : "string"
+-          }
+-        },
+-        "required" : [ "bucket", "createdAt", "default", "destinationDir", "expireAt", "id", "inheritable", "inherited", "kind", "name", "size", "status", "type", "updateVer", "updatedAt" ],
+-        "type" : "object"
+-      },
+-      "systemsettings_systembackupdto.SystemBackupCompressionReq" : {
+-        "properties" : {
+-          "format" : {
+-            "type" : "string"
+-          }
+-        },
+-        "required" : [ "format" ],
+-        "type" : "object"
+-      },
+-      "systemsettings_systembackupdto.SystemBackupCompressionResp" : {
+-        "properties" : {
+-          "format" : {
+-            "type" : "string"
+-          }
+-        },
+-        "required" : [ "format" ],
+-        "type" : "object"
+-      },
+-      "systemsettings_systembackupdto.SystemBackupDBConfigReq" : {
+-        "properties" : {
+-          "backupDeletedObjects" : {
++          "includeDB" : {
+             "type" : "boolean"
+-          }
+-        },
+-        "required" : [ "backupDeletedObjects" ],
+-        "type" : "object"
+-      },
+-      "systemsettings_systembackupdto.SystemBackupDBConfigResp" : {
+-        "properties" : {
+-          "backupDeletedObjects" : {
+-            "type" : "boolean"
+-          }
+-        },
+-        "required" : [ "backupDeletedObjects" ],
+-        "type" : "object"
+-      },
+-      "systemsettings_systembackupdto.SystemBackupEncryptionReq" : {
+-        "properties" : {
+-          "format" : {
+-            "type" : "string"
+-          },
+-          "secret" : {
+-            "type" : "string"
+-          }
+-        },
+-        "required" : [ "format", "secret" ],
+-        "type" : "object"
+-      },
+-      "systemsettings_systembackupdto.SystemBackupEncryptionResp" : {
+-        "properties" : {
+-          "format" : {
+-            "type" : "string"
+-          },
+-          "secret" : {
+-            "type" : "string"
+-          }
+-        },
+-        "required" : [ "format", "secret" ],
+-        "type" : "object"
+-      },
+-      "systemsettings_systembackupdto.SystemBackupResp" : {
+-        "properties" : {
+-          "cloudStorage" : {
+-            "$ref" : "#/components/schemas/systemsettings_systembackupdto.SystemBackupCloudStorageResp"
+           },
+-          "compression" : {
+-            "$ref" : "#/components/schemas/systemsettings_systembackupdto.SystemBackupCompressionResp"
+-          },
+-          "createdAt" : {
+-            "type" : "string"
+-          },
+-          "dbBackupConfig" : {
+-            "$ref" : "#/components/schemas/systemsettings_systembackupdto.SystemBackupDBConfigResp"
+-          },
+-          "default" : {
++          "includeSpec" : {
+             "type" : "boolean"
+           },
+-          "encryption" : {
+-            "$ref" : "#/components/schemas/systemsettings_systembackupdto.SystemBackupEncryptionResp"
+-          },
+-          "expireAt" : {
+-            "type" : "string"
+-          },
+-          "id" : {
+-            "type" : "string"
+-          },
+           "inheritable" : {
+             "type" : "boolean"
+           },
+@@ -67448,9 +67468,19 @@
+           "size" : {
+             "type" : "integer"
+           },
++          "specPassphrase" : {
++            "description" : "SpecPassphrase comes masked once it is stored.",
++            "type" : "string"
++          },
++          "specSecrets" : {
++            "type" : "string"
++          },
+           "status" : {
+             "type" : "string"
+           },
++          "targetRepository" : {
++            "$ref" : "#/components/schemas/settings.BaseSettingResp"
++          },
+           "type" : {
+             "type" : "string"
+           },
+@@ -67461,25 +67491,20 @@
+             "type" : "string"
+           }
+         },
+-        "required" : [ "cloudStorage", "compression", "createdAt", "dbBackupConfig", "default", "encryption", "expireAt", "id", "inheritable", "inherited", "kind", "name", "nextRuns", "notification", "schedule", "secretMasked", "size", "status", "type", "updateVer", "updatedAt" ],
++        "required" : [ "createdAt", "default", "expireAt", "id", "includeDB", "includeSpec", "inheritable", "inherited", "kind", "name", "nextRuns", "notification", "schedule", "secretMasked", "size", "specPassphrase", "specSecrets", "status", "targetRepository", "type", "updateVer", "updatedAt" ],
+         "type" : "object"
+       },
+       "systemsettings_systembackupdto.UpdateSystemBackupReq" : {
+         "properties" : {
+-          "cloudStorage" : {
+-            "$ref" : "#/components/schemas/systemsettings_systembackupdto.SystemBackupCloudStorageReq"
+-          },
+-          "compression" : {
+-            "$ref" : "#/components/schemas/systemsettings_systembackupdto.SystemBackupCompressionReq"
+-          },
+-          "dbBackupConfig" : {
+-            "$ref" : "#/components/schemas/systemsettings_systembackupdto.SystemBackupDBConfigReq"
+-          },
+           "default" : {
+             "type" : "boolean"
+           },
+-          "encryption" : {
+-            "$ref" : "#/components/schemas/systemsettings_systembackupdto.SystemBackupEncryptionReq"
++          "includeDB" : {
++            "description" : "What goes in: one at least.",
++            "type" : "boolean"
++          },
++          "includeSpec" : {
++            "type" : "boolean"
+           },
+           "inheritable" : {
+             "type" : "boolean"
+@@ -67490,14 +67515,31 @@
+           "schedule" : {
+             "$ref" : "#/components/schemas/systemsettings_systembackupdto.ScheduleReq"
+           },
++          "specPassphrase" : {
++            "type" : "string"
++          },
++          "specSecrets" : {
++            "allOf" : [ {
++              "$ref" : "#/components/schemas/service_specservice_specmodel.SecretsMode"
++            } ],
++            "description" : "SpecSecrets is how the spec holds secrets; SpecPassphrase is required\nwhen they are encrypted.",
++            "type" : "object"
++          },
+           "status" : {
+             "type" : "string"
+           },
++          "targetRepository" : {
++            "allOf" : [ {
++              "$ref" : "#/components/schemas/basedto.ObjectIDReq"
++            } ],
++            "description" : "TargetRepository is a backup repository at the global scope.",
++            "type" : "object"
++          },
+           "updateVer" : {
+             "type" : "integer"
+           }
+         },
+-        "required" : [ "cloudStorage", "compression", "dbBackupConfig", "default", "encryption", "inheritable", "notification", "schedule", "status", "updateVer" ],
++        "required" : [ "default", "includeDB", "includeSpec", "inheritable", "notification", "schedule", "specPassphrase", "specSecrets", "status", "targetRepository", "updateVer" ],
+         "type" : "object"
+       },
+       "systemsettings_systembackupdto.UpdateSystemBackupResp" : {
+@@ -67625,36 +67667,6 @@
+         "required" : [ "cronExpr", "initialTime", "interval" ],
+         "type" : "object"
+       },
+-      "systemsettings_systemcleanupdto.SystemBackupCleanupReq" : {
+-        "properties" : {
+-          "cloudBackupRetention" : {
+-            "type" : "string"
+-          },
+-          "enabled" : {
+-            "type" : "boolean"
+-          },
+-          "localBackupRetention" : {
+-            "type" : "string"
+-          }
+-        },
+-        "required" : [ "cloudBackupRetention", "enabled", "localBackupRetention" ],
+-        "type" : "object"
+-      },
+-      "systemsettings_systemcleanupdto.SystemBackupCleanupResp" : {
+-        "properties" : {
+-          "cloudBackupRetention" : {
+-            "type" : "string"
+-          },
+-          "enabled" : {
+-            "type" : "boolean"
+-          },
+-          "localBackupRetention" : {
+-            "type" : "string"
+-          }
+-        },
+-        "required" : [ "cloudBackupRetention", "enabled", "localBackupRetention" ],
+-        "type" : "object"
+-      },
+       "systemsettings_systemcleanupdto.SystemCacheCleanupReq" : {
+         "properties" : {
+           "enabled" : {
+@@ -67681,9 +67693,6 @@
+       },
+       "systemsettings_systemcleanupdto.SystemCleanupResp" : {
+         "properties" : {
+-          "backupCleanup" : {
+-            "$ref" : "#/components/schemas/systemsettings_systemcleanupdto.SystemBackupCleanupResp"
+-          },
+           "cacheCleanup" : {
+             "$ref" : "#/components/schemas/systemsettings_systemcleanupdto.SystemCacheCleanupResp"
+           },
+@@ -67749,7 +67758,7 @@
+             "type" : "string"
+           }
+         },
+-        "required" : [ "backupCleanup", "cacheCleanup", "clusterCleanup", "createdAt", "dbObjectRetention", "default", "expireAt", "fileCleanup", "id", "inheritable", "inherited", "kind", "name", "nextRuns", "notification", "schedule", "size", "status", "type", "updateVer", "updatedAt" ],
++        "required" : [ "cacheCleanup", "clusterCleanup", "createdAt", "dbObjectRetention", "default", "expireAt", "fileCleanup", "id", "inheritable", "inherited", "kind", "name", "nextRuns", "notification", "schedule", "size", "status", "type", "updateVer", "updatedAt" ],
+         "type" : "object"
+       },
+       "systemsettings_systemcleanupdto.SystemClusterCleanupReq" : {
+@@ -67832,9 +67841,6 @@
+       },
+       "systemsettings_systemcleanupdto.UpdateSystemCleanupReq" : {
+         "properties" : {
+-          "backupCleanup" : {
+-            "$ref" : "#/components/schemas/systemsettings_systemcleanupdto.SystemBackupCleanupReq"
+-          },
+           "cacheCleanup" : {
+             "$ref" : "#/components/schemas/systemsettings_systemcleanupdto.SystemCacheCleanupReq"
+           },
+@@ -67866,7 +67872,7 @@
+             "type" : "integer"
+           }
+         },
+-        "required" : [ "backupCleanup", "cacheCleanup", "clusterCleanup", "dbObjectRetention", "default", "fileCleanup", "inheritable", "notification", "schedule", "status", "updateVer" ],
++        "required" : [ "cacheCleanup", "clusterCleanup", "dbObjectRetention", "default", "fileCleanup", "inheritable", "notification", "schedule", "status", "updateVer" ],
+         "type" : "object"
+       },
+       "systemsettings_systemcleanupdto.UpdateSystemCleanupResp" : {
+diff --git a/hivepaas_app/base/audit.go b/hivepaas_app/base/audit.go
+index 1f812fda..ad697cb4 100644
+--- a/hivepaas_app/base/audit.go
++++ b/hivepaas_app/base/audit.go
+@@ -266,6 +266,11 @@ const (
+ 	// record that an assistant, not a person at the dashboard, asked - reads
+ 	// included, since an assistant reading logs is worth being able to see.
+ 	AuditLogTypeMCPToolCall AuditLogType = "mcp-tool-call"
++
++	// AuditLogTypeBackupDownload records a file taken out of a backup snapshot:
++	// who took a copy of the data itself - an app's database dump, or HivePaaS's
++	// own - and from which snapshot. It is written before the file is read.
++	AuditLogTypeBackupDownload AuditLogType = "backup-download"
+ )
+ 
+ var AllAuditLogTypes = []AuditLogType{
+@@ -298,6 +303,7 @@ var AllAuditLogTypes = []AuditLogType{
+ 	AuditLogTypeSpecExport,
+ 	AuditLogTypeSpecImport,
+ 	AuditLogTypeMCPToolCall,
++	AuditLogTypeBackupDownload,
+ }
+ 
+ // AuditLogSource is the way in - which endpoint, or which subsystem.
+diff --git a/hivepaas_app/interface/api/handler/appsettingshandler/backup_snapshot.go b/hivepaas_app/interface/api/handler/appsettingshandler/backup_snapshot.go
+index 8bdcadbb..98d62d81 100644
+--- a/hivepaas_app/interface/api/handler/appsettingshandler/backup_snapshot.go
++++ b/hivepaas_app/interface/api/handler/appsettingshandler/backup_snapshot.go
+@@ -114,3 +114,25 @@ func (h *Handler) ListBackupSnapshotEntries(ctx *gin.Context) {
+ func (h *Handler) RestoreBackupSnapshot(ctx *gin.Context) {
+ 	h.Handler.RestoreBackupSnapshot(ctx, base.ObjectScopeApp)
+ }
++
++// DownloadBackupSnapshotFile Downloads a file of a backup snapshot
++// @Summary Downloads a file of a backup snapshot
++// @Description Streams a file of a snapshot the scope sees, to a caller who may write on the snapshot's owner;
++// @Description the download is recorded in the audit log
++// @Tags    app_settings
++// @Produce octet-stream
++// @Id      downloadAppBackupSnapshotFile
++// @Param   projectID path string true "project ID"
++// @Param   projectEnv path string true "project env"
++// @Param   appID path string true "app ID"
++// @Param   itemID path string true "snapshot record ID"
++// @Param   path query string true "a file inside the snapshot"
++// @Success 200 {file} binary
++// @Failure 400 {object} hperrors.ErrorInfo
++// @Failure 403 {object} hperrors.ErrorInfo
++// @Failure 404 {object} hperrors.ErrorInfo
++// @Failure 500 {object} hperrors.ErrorInfo
++// @Router  /projects/{projectID}/{projectEnv}/apps/{appID}/backup-snapshots/{itemID}/download [get]
++func (h *Handler) DownloadBackupSnapshotFile(ctx *gin.Context) {
++	h.Handler.DownloadBackupSnapshotFile(ctx, base.ObjectScopeApp)
++}
+diff --git a/hivepaas_app/interface/api/handler/basesettinghandler/xtra_api_backup_snapshot.go b/hivepaas_app/interface/api/handler/basesettinghandler/xtra_api_backup_snapshot.go
+index a842c6bc..b8b3b631 100644
+--- a/hivepaas_app/interface/api/handler/basesettinghandler/xtra_api_backup_snapshot.go
++++ b/hivepaas_app/interface/api/handler/basesettinghandler/xtra_api_backup_snapshot.go
+@@ -1,7 +1,9 @@
+ package basesettinghandler
+ 
+ import (
++	"mime"
+ 	"net/http"
++	"strconv"
+ 
+ 	"github.com/gin-gonic/gin"
+ 
+@@ -143,3 +145,39 @@ func (h *Handler) RestoreBackupSnapshot(ctx *gin.Context, scopeType base.ObjectS
+ 	}
+ 	ctx.JSON(http.StatusOK, resp)
+ }
++
++// DownloadBackupSnapshotFile writes a file of a snapshot to the response. It
++// needs write on the scope, and on the snapshot's owner, which the use case
++// checks. A failure once the headers are sent cuts the body short of its
++// Content-Length, which a client takes for a failed download.
++func (h *Handler) DownloadBackupSnapshotFile(ctx *gin.Context, scopeType base.ObjectScopeType) {
++	auth, scope, itemID, err := h.authBackupSnapshotScope(ctx, scopeType, base.ActionTypeWrite, "itemID")
++	if err != nil {
++		h.RenderError(ctx, err)
++		return
++	}
++	req := backupsnapshotdto.NewDownloadBackupSnapshotFileReq()
++	req.Scope = scope
++	req.ID = itemID
++	if err = h.ParseAndValidateRequest(ctx, req, nil); err != nil {
++		h.RenderError(ctx, err)
++		return
++	}
++	resp, err := h.BackupSnapshotUC.DownloadBackupSnapshotFile(h.RequestCtx(ctx), auth, req)
++	if err != nil {
++		h.RenderError(ctx, err)
++		return
++	}
++	writeDownloadHeaders(ctx, resp)
++	ctx.Status(http.StatusOK)
++	if err = resp.Write(h.RequestCtx(ctx), ctx.Writer); err != nil {
++		_ = ctx.Error(err)
++	}
++}
++
++// writeDownloadHeaders makes the response an attachment of the file's name and size.
++func writeDownloadHeaders(ctx *gin.Context, resp *backupsnapshotdto.DownloadBackupSnapshotFileResp) {
++	ctx.Header("Content-Disposition", mime.FormatMediaType("attachment", map[string]string{"filename": resp.FileName}))
++	ctx.Header("Content-Type", "application/octet-stream")
++	ctx.Header("Content-Length", strconv.FormatInt(resp.SizeBytes, 10))
++}
+diff --git a/hivepaas_app/interface/api/handler/projectenvsettingshandler/backup_snapshot.go b/hivepaas_app/interface/api/handler/projectenvsettingshandler/backup_snapshot.go
+index 61d32fd6..d855c802 100644
+--- a/hivepaas_app/interface/api/handler/projectenvsettingshandler/backup_snapshot.go
++++ b/hivepaas_app/interface/api/handler/projectenvsettingshandler/backup_snapshot.go
+@@ -109,3 +109,24 @@ func (h *Handler) ListBackupSnapshotEntries(ctx *gin.Context) {
+ func (h *Handler) RestoreBackupSnapshot(ctx *gin.Context) {
+ 	h.Handler.RestoreBackupSnapshot(ctx, base.ObjectScopeProjectEnv)
+ }
++
++// DownloadBackupSnapshotFile Downloads a file of a backup snapshot
++// @Summary Downloads a file of a backup snapshot
++// @Description Streams a file of a snapshot the scope sees, to a caller who may write on the snapshot's owner;
++// @Description the download is recorded in the audit log
++// @Tags    project_env_settings
++// @Produce octet-stream
++// @Id      downloadProjectEnvBackupSnapshotFile
++// @Param   projectID path string true "project ID"
++// @Param   projectEnv path string true "project Env"
++// @Param   itemID path string true "snapshot record ID"
++// @Param   path query string true "a file inside the snapshot"
++// @Success 200 {file} binary
++// @Failure 400 {object} hperrors.ErrorInfo
++// @Failure 403 {object} hperrors.ErrorInfo
++// @Failure 404 {object} hperrors.ErrorInfo
++// @Failure 500 {object} hperrors.ErrorInfo
++// @Router  /projects/{projectID}/{projectEnv}/backup-snapshots/{itemID}/download [get]
++func (h *Handler) DownloadBackupSnapshotFile(ctx *gin.Context) {
++	h.Handler.DownloadBackupSnapshotFile(ctx, base.ObjectScopeProjectEnv)
++}
+diff --git a/hivepaas_app/interface/api/handler/projectsettingshandler/backup_snapshot.go b/hivepaas_app/interface/api/handler/projectsettingshandler/backup_snapshot.go
+index 819ba875..3e1f64f5 100644
+--- a/hivepaas_app/interface/api/handler/projectsettingshandler/backup_snapshot.go
++++ b/hivepaas_app/interface/api/handler/projectsettingshandler/backup_snapshot.go
+@@ -104,3 +104,23 @@ func (h *Handler) ListBackupSnapshotEntries(ctx *gin.Context) {
+ func (h *Handler) RestoreBackupSnapshot(ctx *gin.Context) {
+ 	h.Handler.RestoreBackupSnapshot(ctx, base.ObjectScopeProject)
+ }
++
++// DownloadBackupSnapshotFile Downloads a file of a backup snapshot
++// @Summary Downloads a file of a backup snapshot
++// @Description Streams a file of a snapshot the scope sees, to a caller who may write on the snapshot's owner;
++// @Description the download is recorded in the audit log
++// @Tags    project_settings
++// @Produce octet-stream
++// @Id      downloadProjectBackupSnapshotFile
++// @Param   projectID path string true "project ID"
++// @Param   itemID path string true "snapshot record ID"
++// @Param   path query string true "a file inside the snapshot"
++// @Success 200 {file} binary
++// @Failure 400 {object} hperrors.ErrorInfo
++// @Failure 403 {object} hperrors.ErrorInfo
++// @Failure 404 {object} hperrors.ErrorInfo
++// @Failure 500 {object} hperrors.ErrorInfo
++// @Router  /projects/{projectID}/backup-snapshots/{itemID}/download [get]
++func (h *Handler) DownloadBackupSnapshotFile(ctx *gin.Context) {
++	h.Handler.DownloadBackupSnapshotFile(ctx, base.ObjectScopeProject)
++}
+diff --git a/hivepaas_app/interface/api/handler/settinghandler/backup_snapshot.go b/hivepaas_app/interface/api/handler/settinghandler/backup_snapshot.go
+index 49211dd2..6635d59f 100644
+--- a/hivepaas_app/interface/api/handler/settinghandler/backup_snapshot.go
++++ b/hivepaas_app/interface/api/handler/settinghandler/backup_snapshot.go
+@@ -99,3 +99,22 @@ func (h *Handler) ListBackupSnapshotEntries(ctx *gin.Context) {
+ func (h *Handler) RestoreBackupSnapshot(ctx *gin.Context) {
+ 	h.Handler.RestoreBackupSnapshot(ctx, base.ObjectScopeGlobal)
+ }
++
++// DownloadBackupSnapshotFile Downloads a file of a backup snapshot
++// @Summary Downloads a file of a backup snapshot
++// @Description Streams a file of a snapshot the scope sees, to a caller who may write on the snapshot's owner;
++// @Description the download is recorded in the audit log
++// @Tags    settings
++// @Produce octet-stream
++// @Id      downloadSettingBackupSnapshotFile
++// @Param   itemID path string true "snapshot record ID"
++// @Param   path query string true "a file inside the snapshot"
++// @Success 200 {file} binary
++// @Failure 400 {object} hperrors.ErrorInfo
++// @Failure 403 {object} hperrors.ErrorInfo
++// @Failure 404 {object} hperrors.ErrorInfo
++// @Failure 500 {object} hperrors.ErrorInfo
++// @Router  /settings/backup-snapshots/{itemID}/download [get]
++func (h *Handler) DownloadBackupSnapshotFile(ctx *gin.Context) {
++	h.Handler.DownloadBackupSnapshotFile(ctx, base.ObjectScopeGlobal)
++}
+diff --git a/hivepaas_app/interface/api/server/router_apps.go b/hivepaas_app/interface/api/server/router_apps.go
+index 66530c55..a326718a 100644
+--- a/hivepaas_app/interface/api/server/router_apps.go
++++ b/hivepaas_app/interface/api/server/router_apps.go
+@@ -91,6 +91,7 @@ func (s *HTTPServer) registerAppRoutes(projectGroup, projectEnvGroup *gin.Router
+ 		backupSnapshotGroup.GET("/:itemID", appSettingsHandler.GetBackupSnapshot)
+ 		backupSnapshotGroup.DELETE("/:itemID", appSettingsHandler.DeleteBackupSnapshot)
+ 		backupSnapshotGroup.GET("/:itemID/entries", appSettingsHandler.ListBackupSnapshotEntries)
++		backupSnapshotGroup.GET("/:itemID/download", appSettingsHandler.DownloadBackupSnapshotFile)
+ 		backupSnapshotGroup.POST("/:itemID/restore", appSettingsHandler.RestoreBackupSnapshot)
+ 	}
+ 
+diff --git a/hivepaas_app/interface/api/server/router_project_env.go b/hivepaas_app/interface/api/server/router_project_env.go
+index b527b014..5c41d5c7 100644
+--- a/hivepaas_app/interface/api/server/router_project_env.go
++++ b/hivepaas_app/interface/api/server/router_project_env.go
+@@ -55,6 +55,7 @@ func (s *HTTPServer) registerProjectEnvRoutes(projectGroup *gin.RouterGroup) {
+ 		backupSnapshotGroup.GET("/:itemID", projectEnvSettingsHandler.GetBackupSnapshot)
+ 		backupSnapshotGroup.DELETE("/:itemID", projectEnvSettingsHandler.DeleteBackupSnapshot)
+ 		backupSnapshotGroup.GET("/:itemID/entries", projectEnvSettingsHandler.ListBackupSnapshotEntries)
++		backupSnapshotGroup.GET("/:itemID/download", projectEnvSettingsHandler.DownloadBackupSnapshotFile)
+ 		backupSnapshotGroup.POST("/:itemID/restore", projectEnvSettingsHandler.RestoreBackupSnapshot)
+ 
+ 		backupRepoGroup := projectEnvGroup.Group("/backup-repos")
+diff --git a/hivepaas_app/interface/api/server/router_projects.go b/hivepaas_app/interface/api/server/router_projects.go
+index 8072ec4b..99581546 100644
+--- a/hivepaas_app/interface/api/server/router_projects.go
++++ b/hivepaas_app/interface/api/server/router_projects.go
+@@ -76,6 +76,7 @@ func (s *HTTPServer) registerProjectRoutes(apiGroup *gin.RouterGroup) {
+ 		backupSnapshotGroup.GET("/:itemID", projectSettingsHandler.GetBackupSnapshot)
+ 		backupSnapshotGroup.DELETE("/:itemID", projectSettingsHandler.DeleteBackupSnapshot)
+ 		backupSnapshotGroup.GET("/:itemID/entries", projectSettingsHandler.ListBackupSnapshotEntries)
++		backupSnapshotGroup.GET("/:itemID/download", projectSettingsHandler.DownloadBackupSnapshotFile)
+ 		backupSnapshotGroup.POST("/:itemID/restore", projectSettingsHandler.RestoreBackupSnapshot)
+ 
+ 		backupRepoGroup := projectGroup.Group("/:projectID/backup-repos")
+diff --git a/hivepaas_app/interface/api/server/router_settings.go b/hivepaas_app/interface/api/server/router_settings.go
+index 2adcb6db..4ec1cdc5 100644
+--- a/hivepaas_app/interface/api/server/router_settings.go
++++ b/hivepaas_app/interface/api/server/router_settings.go
+@@ -53,6 +53,7 @@ func (s *HTTPServer) registerSettingRoutes(apiGroup *gin.RouterGroup) {
+ 		backupSnapshotGroup.GET("/:itemID", settingHandler.GetBackupSnapshot)
+ 		backupSnapshotGroup.DELETE("/:itemID", settingHandler.DeleteBackupSnapshot)
+ 		backupSnapshotGroup.GET("/:itemID/entries", settingHandler.ListBackupSnapshotEntries)
++		backupSnapshotGroup.GET("/:itemID/download", settingHandler.DownloadBackupSnapshotFile)
+ 		backupSnapshotGroup.POST("/:itemID/restore", settingHandler.RestoreBackupSnapshot)
+ 
+ 		backupRepoGroup := settingGroup.Group("/backup-repos")
+diff --git a/hivepaas_app/usecase/settings/backupsnapshotuc/backupsnapshotdto/download.go b/hivepaas_app/usecase/settings/backupsnapshotuc/backupsnapshotdto/download.go
+new file mode 100644
+index 00000000..f96357af
+--- /dev/null
++++ b/hivepaas_app/usecase/settings/backupsnapshotuc/backupsnapshotdto/download.go
+@@ -0,0 +1,48 @@
++package backupsnapshotdto
++
++import (
++	"context"
++	"io"
++
++	vld "github.com/tiendc/go-validator"
++
++	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
++	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
++	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
++)
++
++// DownloadBackupSnapshotFileReq asks for a file of a snapshot.
++type DownloadBackupSnapshotFileReq struct {
++	Scope *entity.ObjectScope `json:"-" mapstructure:"-"`
++	ID    string              `json:"-" mapstructure:"-"`
++	// Path is a file inside the snapshot.
++	Path string `json:"-" mapstructure:"path"`
++}
++
++func NewDownloadBackupSnapshotFileReq() *DownloadBackupSnapshotFileReq {
++	return &DownloadBackupSnapshotFileReq{}
++}
++
++// ModifyRequest implements interface basedto.ReqModifier
++func (req *DownloadBackupSnapshotFileReq) ModifyRequest() error {
++	req.Path = cleanRelativePath(req.Path)
++	return nil
++}
++
++// Validate implements interface basedto.ReqValidator
++func (req *DownloadBackupSnapshotFileReq) Validate() hperrors.ValidationErrors {
++	validators := make([]vld.Validator, 0, 3) //nolint:mnd
++	validators = append(validators, basedto.ValidateID(&req.ID, true, "id")...)
++	validators = append(validators, basedto.ValidateCond(req.Path != "" && isRelativePath(req.Path), "path")...)
++	return hperrors.NewValidationErrors(vld.Validate(validators...))
++}
++
++// DownloadBackupSnapshotFileResp is the file, to be written to the response once
++// its headers are.
++type DownloadBackupSnapshotFileResp struct {
++	FileName  string
++	SizeBytes int64
++	// Write writes the file's content to w. It fails half way when the engine
++	// does; the caller has sent the headers by then.
++	Write func(ctx context.Context, w io.Writer) error
++}
+diff --git a/hivepaas_app/usecase/settings/backupsnapshotuc/download.go b/hivepaas_app/usecase/settings/backupsnapshotuc/download.go
+new file mode 100644
+index 00000000..18ebf541
+--- /dev/null
++++ b/hivepaas_app/usecase/settings/backupsnapshotuc/download.go
+@@ -0,0 +1,107 @@
++package backupsnapshotuc
++
++import (
++	"context"
++	"io"
++	"path"
++
++	"github.com/hivepaas/hivepaas/hivepaas_app/base"
++	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
++	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
++	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
++	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/auditdetail"
++	"github.com/hivepaas/hivepaas/hivepaas_app/service/auditservice"
++	"github.com/hivepaas/hivepaas/hivepaas_app/service/backupreposervice"
++	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings/backupsnapshotuc/backupsnapshotdto"
++	"github.com/hivepaas/hivepaas/services/backup"
++)
++
++// DownloadBackupSnapshotFile gives a file of a snapshot the view reaches, to a
++// person who may write on the snapshot's owner: the file is the data itself.
++// The download is recorded before anything is read.
++func (uc *UC) DownloadBackupSnapshotFile(
++	ctx context.Context,
++	auth *basedto.Auth,
++	req *backupsnapshotdto.DownloadBackupSnapshotFileReq,
++) (*backupsnapshotdto.DownloadBackupSnapshotFileResp, error) {
++	db := uc.DB
++	if err := uc.ScopeService.LoadObjectScopeData(ctx, db, req.Scope); err != nil {
++		return nil, hperrors.Wrap(err)
++	}
++	record, repos, err := uc.findInReach(ctx, db, auth, req.Scope, req.ID, base.ActionTypeWrite)
++	if err != nil {
++		return nil, hperrors.Wrap(err)
++	}
++	target, snapshot, err := uc.snapshotTarget(ctx, db, record, repos)
++	if err != nil {
++		return nil, hperrors.Wrap(err)
++	}
++	dir, name := path.Split(req.Path)
++	entries, err := uc.backupRepoService.ListEntries(ctx, db, &backupreposervice.ListEntriesReq{
++		RepoTarget: *target, SnapshotID: snapshot.ID, Path: dir,
++	})
++	if err != nil {
++		return nil, hperrors.Wrap(err)
++	}
++	entry, err := downloadableEntry(entries, name)
++	if err != nil {
++		return nil, hperrors.Wrap(err)
++	}
++
++	tags, err := uc.tagsOf(ctx, db, []*entity.Setting{record})
++	if err != nil {
++		return nil, hperrors.Wrap(err)
++	}
++	scope, objectID := downloadAuditScope(entity.ParseDataBackupSnapshotTags(tags[record.ID]).AppID, target.RepoSetting)
++	err = auditservice.RecordAllowed(ctx, uc.AuditService, db, &auditservice.Entry{
++		Type:     base.AuditLogTypeBackupDownload,
++		Scope:    scope,
++		ObjectID: objectID,
++		Source:   base.AuditLogSourceAPIAction,
++		Auth:     auth,
++		ResType:  base.ResourceTypeSetting,
++		ResID:    record.ID,
++		ResName:  "snapshot " + snapshot.ShortID,
++		Detail: auditdetail.New().Set("repository", target.RepoSetting.Name).Set("path", req.Path).
++			Set("sizeBytes", entry.SizeBytes).String(),
++	})
++	if err != nil {
++		return nil, hperrors.Wrap(err)
++	}
++
++	return &backupsnapshotdto.DownloadBackupSnapshotFileResp{
++		FileName:  name,
++		SizeBytes: entry.SizeBytes,
++		Write: func(ctx context.Context, w io.Writer) error {
++			err := uc.backupRepoService.RestoreStream(ctx, uc.DB, &backupreposervice.RestoreStreamReq{
++				RepoTarget: *target, SnapshotID: snapshot.ID, FileName: req.Path, Stdout: w,
++			})
++			return hperrors.Wrap(err)
++		},
++	}, nil
++}
++
++// downloadableEntry is the file name of a directory's entries; a directory is
++// restored, not downloaded.
++func downloadableEntry(entries []backup.SnapshotEntry, name string) (*backup.SnapshotEntry, error) {
++	for i := range entries {
++		if entries[i].Name != name {
++			continue
++		}
++		if entries[i].Dir {
++			return nil, hperrors.NewArgumentInvalid("path").
++				WithExtraDetail("%s is a directory: a directory is restored, not downloaded", name)
++		}
++		return &entries[i], nil
++	}
++	return nil, hperrors.NewNotFound("File in the snapshot")
++}
++
++// downloadAuditScope is where a download is recorded: against the snapshot's
++// app, or its repository's scope when no app owns it.
++func downloadAuditScope(appID string, repo *entity.Setting) (base.ObjectScopeType, string) {
++	if appID != "" {
++		return base.ObjectScopeApp, appID
++	}
++	return repo.Scope, repo.ObjectID
++}

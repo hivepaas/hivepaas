@@ -1,0 +1,507 @@
+diff --git a/hivepaas_app/entity/setting_refmap_test.go b/hivepaas_app/entity/setting_refmap_test.go
+index 41d23f6e..1521d1c6 100644
+--- a/hivepaas_app/entity/setting_refmap_test.go
++++ b/hivepaas_app/entity/setting_refmap_test.go
+@@ -26,20 +26,19 @@ func TestRemapRefsRewritesObjectIDFields(t *testing.T) {
+ 	assert.Equal(t, "example.com", data.Domain, "non-reference fields must not move")
+ }
+ 
+-// SystemBackupCloudStorage is a bespoke struct holding a bare `ID string`, not
+-// an ObjectID. A walk keyed on the ObjectID type misses it; this is the
+-// regression guard for exactly that.
++// SchedJobCommandOutputFileStorage is a bespoke struct holding a bare `ID
++// string`, not an ObjectID. A walk keyed on the ObjectID type misses it; this is
++// the regression guard for exactly that.
+ func TestRemapRefsRewritesBareIDFieldsInBespokeStructs(t *testing.T) {
+-	data := &SystemBackup{
+-		CloudStorage: SystemBackupCloudStorage{
+-			ID:     "old-storage",
+-			Bucket: "backups",
+-		},
++	data := &SchedJob{
++		CommandOutput: &SchedJobCommandOutput{SaveToFile: &SchedJobCommandOutputSaveToFile{
++			Storage: SchedJobCommandOutputFileStorage{ID: "old-storage", Bucket: "backups"},
++		}},
+ 	}
+ 	err := RemapRefs(data, map[string]string{"old-storage": "new-storage"})
+ 	assert.NoError(t, err)
+-	assert.Equal(t, "new-storage", data.CloudStorage.ID)
+-	assert.Equal(t, "backups", data.CloudStorage.Bucket)
++	assert.Equal(t, "new-storage", data.CommandOutput.SaveToFile.Storage.ID)
++	assert.Equal(t, "backups", data.CommandOutput.SaveToFile.Storage.Bucket)
+ }
+ 
+ func TestRemapRefsRewritesSlicesAndNestedPointers(t *testing.T) {
+@@ -120,13 +119,13 @@ func (d *unreachableRefData) Migrate(*Setting) (bool, error)       { return fals
+ func TestReferencesAreHeldInShapesOtherThanObjectID(t *testing.T) {
+ 	objectIDType := reflect.TypeFor[ObjectID]()
+ 
+-	backup := reflect.TypeFor[SystemBackup]()
+-	cloudStorage, ok := backup.FieldByName("CloudStorage")
++	saveToFile := reflect.TypeFor[SchedJobCommandOutputSaveToFile]()
++	storage, ok := saveToFile.FieldByName("Storage")
+ 	assert.True(t, ok)
+-	assert.NotEqual(t, objectIDType, cloudStorage.Type,
+-		"SystemBackup.CloudStorage holds a reference but is not an ObjectID")
++	assert.NotEqual(t, objectIDType, storage.Type,
++		"SchedJobCommandOutputSaveToFile.Storage holds a reference but is not an ObjectID")
+ 
+-	idField, ok := cloudStorage.Type.FieldByName("ID")
++	idField, ok := storage.Type.FieldByName("ID")
+ 	assert.True(t, ok, "and it carries the reference in a bare ID string")
+ 	assert.Equal(t, reflect.String, idField.Type.Kind())
+ }
+diff --git a/hivepaas_app/entity/setting_system_backup_test.go b/hivepaas_app/entity/setting_system_backup_test.go
+new file mode 100644
+index 00000000..98dad16b
+--- /dev/null
++++ b/hivepaas_app/entity/setting_system_backup_test.go
+@@ -0,0 +1,21 @@
++package entity
++
++import (
++	"testing"
++
++	"github.com/stretchr/testify/assert"
++)
++
++// A system backup references the repository it goes into.
++func TestSystemBackupReferencesItsRepository(t *testing.T) {
++	backup := &SystemBackup{IncludeDB: true, TargetRepository: ObjectID{ID: "repo1"}}
++
++	assert.Equal(t, []string{"repo1"}, backup.GetRefObjectIDs().RefSettingIDs)
++}
++
++// What a run takes, by name, in the order a person reads it.
++func TestSystemBackupIncludes(t *testing.T) {
++	assert.Equal(t, []string{"database", "spec"}, (&SystemBackup{IncludeDB: true, IncludeSpec: true}).Includes())
++	assert.Equal(t, []string{"spec"}, (&SystemBackup{IncludeSpec: true}).Includes())
++	assert.Empty(t, (&SystemBackup{}).Includes())
++}
+diff --git a/hivepaas_app/service/sysbackupservice/sysbackupserviceimpl/sys_backup_files_test.go b/hivepaas_app/service/sysbackupservice/sysbackupserviceimpl/sys_backup_files_test.go
+deleted file mode 100644
+index 7ad34126..00000000
+--- a/hivepaas_app/service/sysbackupservice/sysbackupserviceimpl/sys_backup_files_test.go
++++ /dev/null
+@@ -1,31 +0,0 @@
+-package sysbackupserviceimpl
+-
+-import (
+-	"path/filepath"
+-	"strings"
+-	"testing"
+-
+-	"github.com/hivepaas/hivepaas/hivepaas_app/config"
+-)
+-
+-// A backup carries the database dump, whose secrets are encrypted with the app
+-// secret. That secret lives in the app path, so putting the app path in the
+-// archive would ship the lock and the key together and make the encryption
+-// pointless. Anything added here must stay outside it.
+-func TestSysBackupExcludesTheAppPath(t *testing.T) {
+-	config.SetCurrent(&config.Config{AppPath: "/var/lib/hivepaas"})
+-	appPath := filepath.Clean(config.Current().AppPath)
+-
+-	for _, model := range sysBackupFileModels {
+-		if model.DirPath == nil {
+-			t.Errorf("backup file model %q has no DirPath", model.Type)
+-			continue
+-		}
+-		dirPath := filepath.Clean(model.DirPath())
+-		if dirPath == appPath || strings.HasPrefix(dirPath, appPath+string(filepath.Separator)) {
+-			t.Errorf("backup file model %q reads %q, inside the app path %q: the app secret"+
+-				" would be shipped in the same archive as the data it encrypts",
+-				model.Type, dirPath, appPath)
+-		}
+-	}
+-}
+diff --git a/hivepaas_app/service/sysbackupservice/sysbackupserviceimpl/sys_backup_test.go b/hivepaas_app/service/sysbackupservice/sysbackupserviceimpl/sys_backup_test.go
+new file mode 100644
+index 00000000..bb04a0af
+--- /dev/null
++++ b/hivepaas_app/service/sysbackupservice/sysbackupserviceimpl/sys_backup_test.go
+@@ -0,0 +1,239 @@
++package sysbackupserviceimpl
++
++import (
++	"context"
++	"errors"
++	"os"
++	"path/filepath"
++	"sort"
++	"testing"
++
++	"github.com/stretchr/testify/assert"
++
++	"github.com/hivepaas/hivepaas/hivepaas_app/base"
++	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
++	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
++	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
++	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/tasklog"
++	"github.com/hivepaas/hivepaas/hivepaas_app/repository"
++	"github.com/hivepaas/hivepaas/hivepaas_app/service/backupreposervice"
++	"github.com/hivepaas/hivepaas/hivepaas_app/service/specservice"
++	"github.com/hivepaas/hivepaas/hivepaas_app/service/specservice/specmodel"
++	"github.com/hivepaas/hivepaas/hivepaas_app/service/sysbackupservice"
++	"github.com/hivepaas/hivepaas/hivepaas_app/tasks/queue"
++)
++
++type fakeRepos struct {
++	backupreposervice.Service
++	// taken is what the directory held when it was taken, by name.
++	taken   []string
++	req     *backupreposervice.BackupLocalDirectoryReq
++	takeErr error
++	synced  bool
++	deleted []string
++}
++
++func (f *fakeRepos) BackupLocalDirectory(
++	_ context.Context, _ database.IDB, req *backupreposervice.BackupLocalDirectoryReq,
++) (*backupreposervice.BackupResp, error) {
++	f.req = req
++	entries, _ := os.ReadDir(req.Dir)
++	for _, entry := range entries {
++		f.taken = append(f.taken, entry.Name())
++	}
++	sort.Strings(f.taken)
++	if f.takeErr != nil {
++		return nil, f.takeErr
++	}
++	return &backupreposervice.BackupResp{Snapshot: &backupreposervice.RepoSnapshot{
++		Snapshot: &entity.BackupSnapshot{ID: "k1full", SizeBytes: 42},
++	}}, nil
++}
++
++func (f *fakeRepos) ListSnapshots(
++	_ context.Context, _ database.IDB, req *backupreposervice.ListSnapshotsReq,
++) (*backupreposervice.ListSnapshotsResp, error) {
++	if req.Options != nil && len(req.Options.Tags) > 0 {
++		return &backupreposervice.ListSnapshotsResp{Snapshots: []*backupreposervice.RepoSnapshot{
++			{Snapshot: &entity.BackupSnapshot{ID: "k-partial"}},
++		}}, nil
++	}
++	return &backupreposervice.ListSnapshotsResp{}, nil
++}
++
++func (f *fakeRepos) SyncRepoSnapshots(
++	context.Context, database.Tx, *backupreposervice.SyncRepoSnapshotsReq,
++) (*backupreposervice.SyncRepoSnapshotsResp, error) {
++	f.synced = true
++	return &backupreposervice.SyncRepoSnapshotsResp{}, nil
++}
++
++func (f *fakeRepos) DeleteSnapshot(_ context.Context, _ database.IDB, req *backupreposervice.DeleteSnapshotReq) error {
++	f.deleted = append(f.deleted, req.SnapshotID)
++	return nil
++}
++
++type fakeSpecs struct {
++	specservice.Service
++	req *specservice.ExportReq
++	err error
++}
++
++func (f *fakeSpecs) Export(
++	_ context.Context, _ database.IDB, req *specservice.ExportReq,
++) (*specservice.ExportResp, error) {
++	f.req = req
++	if f.err != nil {
++		return nil, f.err
++	}
++	name := "hivepaas-spec-20260928.tar.gz"
++	if req.SecretsMode == specmodel.SecretsModeEncrypted {
++		name += ".age"
++	}
++	path := filepath.Join(req.WorkDir, name)
++	if err := os.WriteFile(path, []byte("bundle"), 0o600); err != nil {
++		return nil, err
++	}
++	return &specservice.ExportResp{Path: path, Filename: name, Size: 6}, nil
++}
++
++type repoByID struct {
++	repository.SettingRepo
++}
++
++func (repoByID) GetByID(_ context.Context, _ database.IDB, _ *entity.ObjectScope, _ base.SettingType,
++	id string, _ bool, _ ...bunex.SelectQueryOption) (*entity.Setting, error) {
++	repo := &entity.Setting{ID: id, Type: base.SettingTypeBackupRepo, Scope: base.ObjectScopeGlobal}
++	repo.MustSetData(&entity.BackupRepo{Engine: "kopia"})
++	return repo, nil
++}
++
++type world struct {
++	repos   *fakeRepos
++	specs   *fakeSpecs
++	dumpErr error
++	dumped  bool
++}
++
++func (w *world) service(t *testing.T) *service {
++	return &service{
++		settingRepo:       repoByID{},
++		backupRepoService: w.repos,
++		specService:       w.specs,
++		repoScope: func(context.Context, database.IDB, *entity.Setting) (*entity.ObjectScope, error) {
++			return &entity.ObjectScope{ScopeType: base.ObjectScopeGlobal}, nil
++		},
++		dumpDB: func(_ context.Context, path string, _ *tasklog.Store) error {
++			w.dumped = true
++			if w.dumpErr != nil {
++				return w.dumpErr
++			}
++			return os.WriteFile(path, []byte("PGDMP"), 0o600)
++		},
++		workDir: func() (string, error) { return os.MkdirTemp(t.TempDir(), "sys-backup-*") },
++	}
++}
++
++func newWorld() *world {
++	return &world{repos: &fakeRepos{}, specs: &fakeSpecs{}}
++}
++
++func backupReq(settings *entity.SystemBackup) *sysbackupservice.SysBackupReq {
++	settings.TargetRepository = entity.ObjectID{ID: "repo1"}
++	return &sysbackupservice.SysBackupReq{
++		TaskExecData:      &queue.TaskExecData{Task: &entity.Task{ID: "t1"}, LogStore: tasklog.NewNullStore()},
++		SysBackupSettings: settings,
++	}
++}
++
++// The database and the spec go into one snapshot of a directory, recorded under
++// the system backup's source with its tags; the repository's records follow.
++func TestSystemBackupTakesTheDatabaseAndTheSpecInOneSnapshot(t *testing.T) {
++	w := newWorld()
++	settings := &entity.SystemBackup{IncludeDB: true, IncludeSpec: true,
++		SpecSecrets: string(specmodel.SecretsModeEncrypted)}
++	settings.SpecPassphrase.Set("correct horse battery staple")
++	req := backupReq(settings)
++
++	_, err := w.service(t).Backup(context.Background(), database.Tx{}, req)
++
++	assert.NoError(t, err)
++	assert.Equal(t, []string{"db.pg_dump", "spec.tar.gz.age"}, w.repos.taken)
++	if assert.NotNil(t, w.specs.req) {
++		assert.Equal(t, base.ObjectScopeGlobal, w.specs.req.Scope.ScopeType)
++		assert.Equal(t, specmodel.SecretsModeEncrypted, w.specs.req.SecretsMode)
++		assert.Equal(t, "correct horse battery staple", w.specs.req.Passphrase)
++	}
++	assert.Equal(t, "hivepaas@system-backup:/system", w.repos.req.Source)
++	assert.Equal(t, []string{"hivepaas.source:system-backup", "hivepaas.run:t1"}, w.repos.req.Tags)
++	assert.Equal(t, "System backup (run t1)", w.repos.req.Description)
++	assert.Equal(t, "repo1", w.repos.req.RepoSetting.ID)
++	assert.True(t, w.repos.synced)
++
++	out, err := req.Task.OutputAsSystemBackup()
++	assert.NoError(t, err)
++	assert.Equal(t, &entity.TaskSystemBackupOutput{SnapshotID: "k1full", SizeBytes: 42,
++		Includes: []string{"database", "spec"}}, out)
++}
++
++func TestSystemBackupOfTheDatabaseOnly(t *testing.T) {
++	w := newWorld()
++
++	_, err := w.service(t).Backup(context.Background(), database.Tx{}, backupReq(&entity.SystemBackup{IncludeDB: true}))
++
++	assert.NoError(t, err)
++	assert.Equal(t, []string{"db.pg_dump"}, w.repos.taken)
++	assert.Nil(t, w.specs.req, "no spec was exported")
++}
++
++func TestSystemBackupOfTheSpecOnly(t *testing.T) {
++	w := newWorld()
++
++	_, err := w.service(t).Backup(context.Background(), database.Tx{}, backupReq(&entity.SystemBackup{
++		IncludeSpec: true, SpecSecrets: string(specmodel.SecretsModeOmit),
++	}))
++
++	assert.NoError(t, err)
++	assert.Equal(t, []string{"spec.tar.gz"}, w.repos.taken)
++	assert.False(t, w.dumped, "the database was not dumped")
++}
++
++// A failed dump or export fails the run before anything is taken.
++func TestSystemBackupThatCannotDumpTakesNothing(t *testing.T) {
++	w := newWorld()
++	w.dumpErr = errors.New("pg_dump: connection refused")
++
++	_, err := w.service(t).Backup(context.Background(), database.Tx{},
++		backupReq(&entity.SystemBackup{IncludeDB: true, IncludeSpec: true, SpecSecrets: "omit"}))
++
++	assert.ErrorContains(t, err, "connection refused")
++	assert.Nil(t, w.repos.req)
++
++	w = newWorld()
++	w.specs.err = errors.New("spec: gather failed")
++	_, err = w.service(t).Backup(context.Background(), database.Tx{},
++		backupReq(&entity.SystemBackup{IncludeDB: true, IncludeSpec: true, SpecSecrets: "omit"}))
++	assert.ErrorContains(t, err, "gather failed")
++	assert.Nil(t, w.repos.req)
++}
++
++// A snapshot failing half way is deleted by the run's tag.
++func TestSystemBackupDeletesAHalfMadeSnapshot(t *testing.T) {
++	w := newWorld()
++	w.repos.takeErr = errors.New("kopia: repository gone")
++
++	_, err := w.service(t).Backup(context.Background(), database.Tx{}, backupReq(&entity.SystemBackup{IncludeDB: true}))
++
++	assert.ErrorContains(t, err, "repository gone")
++	assert.Equal(t, []string{"k-partial"}, w.repos.deleted)
++}
++
++// A backup that takes nothing is refused: the configuration asks for one.
++func TestSystemBackupOfNothingIsRefused(t *testing.T) {
++	w := newWorld()
++
++	_, err := w.service(t).Backup(context.Background(), database.Tx{}, backupReq(&entity.SystemBackup{}))
++
++	assert.Error(t, err)
++	assert.Nil(t, w.repos.req)
++}
+diff --git a/hivepaas_app/usecase/systemsettings/systembackupuc/systembackupdto/update_test.go b/hivepaas_app/usecase/systemsettings/systembackupuc/systembackupdto/update_test.go
+new file mode 100644
+index 00000000..67a5aaee
+--- /dev/null
++++ b/hivepaas_app/usecase/systemsettings/systembackupuc/systembackupdto/update_test.go
+@@ -0,0 +1,108 @@
++package systembackupdto
++
++import (
++	"strings"
++	"testing"
++	"time"
++
++	"github.com/stretchr/testify/assert"
++
++	"github.com/hivepaas/hivepaas/hivepaas_app/base"
++	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
++	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/timeutil"
++	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/translation"
++	"github.com/hivepaas/hivepaas/hivepaas_app/service/specservice/specmodel"
++)
++
++const repoID = "01JAB9XED0GTXBSQDFVYAJ8WS1"
++
++func invalidFields(t *testing.T, req *UpdateSystemBackupReq) string {
++	t.Helper()
++	assert.NoError(t, req.ModifyRequest())
++	errs := req.Validate()
++	if len(errs) == 0 {
++		return ""
++	}
++	paths := make([]string, 0, len(errs))
++	for _, inner := range errs.Build(translation.LangEn).InnerErrors {
++		paths = append(paths, inner.Path)
++	}
++	return strings.Join(paths, " ")
++}
++
++func backupReq(mod func(*SystemBackupBaseReq)) *UpdateSystemBackupReq {
++	req := NewUpdateSystemBackupReq()
++	req.SystemBackupBaseReq = &SystemBackupBaseReq{
++		Status:           base.SettingStatusActive,
++		Schedule:         ScheduleReq{Interval: timeutil.Duration(24 * time.Hour)},
++		IncludeDB:        true,
++		IncludeSpec:      true,
++		SpecSecrets:      specmodel.SecretsModeEncrypted,
++		SpecPassphrase:   "correct horse battery staple",
++		TargetRepository: basedto.ObjectIDReq{ID: repoID},
++	}
++	mod(req.SystemBackupBaseReq)
++	return req
++}
++
++func TestASystemBackupOfTheDatabaseAndTheSpec(t *testing.T) {
++	req := backupReq(func(*SystemBackupBaseReq) {})
++
++	assert.Equal(t, "", invalidFields(t, req))
++	backup := req.ToEntity()
++	assert.True(t, backup.IncludeDB)
++	assert.True(t, backup.IncludeSpec)
++	assert.Equal(t, string(specmodel.SecretsModeEncrypted), backup.SpecSecrets)
++	assert.Equal(t, repoID, backup.TargetRepository.ID)
++	plain, err := backup.SpecPassphrase.GetPlain()
++	assert.NoError(t, err)
++	assert.Equal(t, "correct horse battery staple", plain)
++}
++
++// A system backup takes something, into a repository.
++func TestASystemBackupTakesSomethingIntoARepository(t *testing.T) {
++	assert.Contains(t, invalidFields(t, backupReq(func(req *SystemBackupBaseReq) {
++		req.IncludeDB, req.IncludeSpec = false, false
++	})), "includeDB")
++	assert.Contains(t, invalidFields(t, backupReq(func(req *SystemBackupBaseReq) {
++		req.TargetRepository = basedto.ObjectIDReq{}
++	})), "targetRepository")
++
++	// A disabled backup is not asked for what it would take, nor where.
++	assert.Equal(t, "", invalidFields(t, backupReq(func(req *SystemBackupBaseReq) {
++		req.Status = base.SettingStatusDisabled
++		req.IncludeDB, req.IncludeSpec = false, false
++		req.TargetRepository = basedto.ObjectIDReq{}
++	})))
++}
++
++// The spec's secrets are one of the export's modes; encrypted asks for a
++// passphrase, the others need none.
++func TestASystemBackupsSpecSecrets(t *testing.T) {
++	assert.Contains(t, invalidFields(t, backupReq(func(req *SystemBackupBaseReq) {
++		req.SpecPassphrase = ""
++	})), "specPassphrase")
++	assert.Contains(t, invalidFields(t, backupReq(func(req *SystemBackupBaseReq) {
++		req.SpecSecrets = "reveal"
++	})), "specSecrets")
++	assert.Equal(t, "", invalidFields(t, backupReq(func(req *SystemBackupBaseReq) {
++		req.SpecSecrets, req.SpecPassphrase = specmodel.SecretsModeOmit, ""
++	})))
++	assert.Equal(t, "", invalidFields(t, backupReq(func(req *SystemBackupBaseReq) {
++		req.IncludeSpec, req.SpecSecrets, req.SpecPassphrase = false, "", ""
++	})), "no spec, no secrets mode")
++}
++
++// The passphrase the GET response masks is kept as stored when it comes back
++// masked.
++func TestASystemBackupKeepsAMaskedPassphrase(t *testing.T) {
++	stored := backupReq(func(*SystemBackupBaseReq) {}).ToEntity()
++	req := backupReq(func(req *SystemBackupBaseReq) { req.SpecPassphrase = basedto.MaskedSecret })
++
++	backup := req.ToEntity()
++	req.KeepMaskedSecrets(backup, stored)
++
++	plain, err := backup.SpecPassphrase.GetPlain()
++	assert.NoError(t, err)
++	assert.Equal(t, "correct horse battery staple", plain)
++}
+diff --git a/hivepaas_app/usecase/systemsettings/systembackupuc/update_test.go b/hivepaas_app/usecase/systemsettings/systembackupuc/update_test.go
+new file mode 100644
+index 00000000..166022ec
+--- /dev/null
++++ b/hivepaas_app/usecase/systemsettings/systembackupuc/update_test.go
+@@ -0,0 +1,25 @@
++package systembackupuc
++
++import (
++	"testing"
++
++	"github.com/stretchr/testify/assert"
++
++	"github.com/hivepaas/hivepaas/hivepaas_app/base"
++	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
++	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
++)
++
++// A system backup goes into a repository of the global scope: the installation's
++// own backup is no project's.
++func TestCheckTargetRepository(t *testing.T) {
++	global := &entity.Setting{ID: "r1", Type: base.SettingTypeBackupRepo, Scope: base.ObjectScopeGlobal,
++		Status: base.SettingStatusActive}
++	assert.NoError(t, checkTargetRepository(global))
++
++	project := &entity.Setting{ID: "r2", Type: base.SettingTypeBackupRepo, Scope: base.ObjectScopeProject,
++		ObjectID: "p1", Status: base.SettingStatusActive}
++	assert.ErrorIs(t, checkTargetRepository(project), hperrors.ErrArgumentInvalid)
++
++	assert.ErrorIs(t, checkTargetRepository(nil), hperrors.ErrNotFound)
++}

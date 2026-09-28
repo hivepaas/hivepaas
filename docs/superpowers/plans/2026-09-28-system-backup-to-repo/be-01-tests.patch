@@ -1,0 +1,31 @@
+diff --git a/hivepaas_app/service/backupreposervice/backupreposerviceimpl/restore_test.go b/hivepaas_app/service/backupreposervice/backupreposerviceimpl/restore_test.go
+index 57e0cfbb..e4228cd9 100644
+--- a/hivepaas_app/service/backupreposervice/backupreposerviceimpl/restore_test.go
++++ b/hivepaas_app/service/backupreposervice/backupreposerviceimpl/restore_test.go
+@@ -166,3 +166,26 @@ func TestRestoreStreamOutOfAVolumeRepositoryGoesThroughAServer(t *testing.T) {
+ 	assert.False(t, connected, "the engine never connected")
+ 	assert.Empty(t, commands.runs, "nothing ran through an agent")
+ }
++
++// A directory of this process goes into a repository on a volume through a
++// server run on the repository's node, as the snapshot's source's user: kopia
++// runs here, where the directory is.
++func TestBackupLocalDirectoryIntoAVolumeRepositoryGoesThroughAServer(t *testing.T) {
++	// Nothing listens there: the server is a fake, and kopia is refused at once.
++	agent := &fakeAgent{addr: "127.0.0.1:10001"}
++	commands := &agentCommands{}
++
++	_, err := restoreService(agent, commands).BackupLocalDirectory(context.Background(), nil,
++		&backupreposervice.BackupLocalDirectoryReq{
++			RepoTarget: volumeRepoTarget(t), Dir: t.TempDir(),
++			Source: "hivepaas@system-backup:/system", Tags: []string{"hivepaas.source:system-backup"},
++		})
++
++	// kopia runs in this process, against a server that is not there.
++	assert.Error(t, err)
++	if assert.NotNil(t, agent.req) {
++		assert.Equal(t, "hivepaas@system-backup", agent.req.Username)
++	}
++	assert.True(t, agent.closed)
++	assert.Empty(t, commands.runs, "nothing ran through an agent")
++}

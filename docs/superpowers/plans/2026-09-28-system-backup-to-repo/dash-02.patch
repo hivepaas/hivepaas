@@ -1,0 +1,343 @@
+diff --git a/src/application/modules/operations/routes/tasks/building-blocks/task-summary-card/system-task-summary-card.com.tsx b/src/application/modules/operations/routes/tasks/building-blocks/task-summary-card/system-task-summary-card.com.tsx
+index 1d566eb5..88818697 100644
+--- a/src/application/modules/operations/routes/tasks/building-blocks/task-summary-card/system-task-summary-card.com.tsx
++++ b/src/application/modules/operations/routes/tasks/building-blocks/task-summary-card/system-task-summary-card.com.tsx
+@@ -636,6 +636,16 @@ export function SystemTaskSummaryCard({
+                                             >
+                                                 {task.dataBackup.snapshotId}
+                                             </AppLink.Modules>
++                                        ) : !task.scopeProject ? (
++                                            // A system backup's run: its snapshot is in a repository of the global scope.
++                                            <AppLink.Modules
++                                                to={`${ROUTE.settings.backupSnapshots.$route}?tag=${encodeURIComponent(
++                                                    `hivepaas.run:${task.id}`,
++                                                )}`}
++                                                className="font-mono text-link hover:underline"
++                                            >
++                                                {task.dataBackup.snapshotId}
++                                            </AppLink.Modules>
+                                         ) : (
+                                             <span className="font-mono text-foreground select-all">
+                                                 {task.dataBackup.snapshotId}
+diff --git a/src/application/modules/settings/api/hooks/use-backup-snapshot.api.ts b/src/application/modules/settings/api/hooks/use-backup-snapshot.api.ts
+index bb0a0723..4a1f3dc4 100644
+--- a/src/application/modules/settings/api/hooks/use-backup-snapshot.api.ts
++++ b/src/application/modules/settings/api/hooks/use-backup-snapshot.api.ts
+@@ -4,6 +4,7 @@ import { match } from "oxide.ts";
+ import { SettingsApiContext } from "~/settings/api/api-context/settings.api.context";
+ import type {
+     BackupSnapshot_DeleteOne_Req,
++    BackupSnapshot_DownloadFile_Req,
+     BackupSnapshot_FindEntries_Req,
+     BackupSnapshot_FindManyPaginated_Req,
+     BackupSnapshot_FindOneById_Req,
+@@ -39,6 +40,16 @@ function createHook() {
+                         },
+                     });
+                 },
++                downloadFile: async (data: BackupSnapshot_DownloadFile_Req["data"], signal?: AbortSignal) => {
++                    const result = await api.settings.backupSnapshot.downloadFile({ data }, signal);
++                    return match(result, {
++                        Ok: _ => _,
++                        Err: error => {
++                            notifyError({ message: "Failed to download the file", error });
++                            throw error;
++                        },
++                    });
++                },
+                 findOneById: async (data: BackupSnapshot_FindOneById_Req["data"], signal?: AbortSignal) => {
+                     const result = await api.settings.backupSnapshot.findOneById({ data }, signal);
+                     return match(result, {
+diff --git a/src/application/modules/settings/api/services/backup-snapshot-services/backup-snapshot.api.contracts.ts b/src/application/modules/settings/api/services/backup-snapshot-services/backup-snapshot.api.contracts.ts
+index ca650a83..c8e2171e 100644
+--- a/src/application/modules/settings/api/services/backup-snapshot-services/backup-snapshot.api.contracts.ts
++++ b/src/application/modules/settings/api/services/backup-snapshot-services/backup-snapshot.api.contracts.ts
+@@ -74,3 +74,12 @@ export type BackupSnapshot_Restore_Req = ApiRequestBase<{
+ }>;
+ 
+ export type BackupSnapshot_Restore_Res = ApiResponseBase<{ taskId: string }>;
++
++export type BackupSnapshot_DownloadFile_Req = ApiRequestBase<{
++    scope: BackupSnapshotScope;
++    id: string;
++    /** A file inside the snapshot. */
++    path: string;
++}>;
++
++export type BackupSnapshot_DownloadFile_Res = ApiResponseBase<{ blob: Blob; filename: string }>;
+diff --git a/src/application/modules/settings/api/services/backup-snapshot-services/backup-snapshot.api.ts b/src/application/modules/settings/api/services/backup-snapshot-services/backup-snapshot.api.ts
+index f48cf861..04622138 100644
+--- a/src/application/modules/settings/api/services/backup-snapshot-services/backup-snapshot.api.ts
++++ b/src/application/modules/settings/api/services/backup-snapshot-services/backup-snapshot.api.ts
+@@ -7,6 +7,8 @@ import { BaseApi, parseApiError } from "@infrastructure/api";
+ import type {
+     BackupSnapshot_DeleteOne_Req,
+     BackupSnapshot_DeleteOne_Res,
++    BackupSnapshot_DownloadFile_Req,
++    BackupSnapshot_DownloadFile_Res,
+     BackupSnapshot_FindEntries_Req,
+     BackupSnapshot_FindEntries_Res,
+     BackupSnapshot_FindManyPaginated_Req,
+@@ -99,6 +101,27 @@ export class BackupSnapshotApi extends BaseApi {
+         );
+     }
+ 
++    /** A file of the snapshot, as a blob: the browser holds it whole. */
++    async downloadFile(
++        request: BackupSnapshot_DownloadFile_Req,
++        signal?: AbortSignal,
++    ): Promise<Result<BackupSnapshot_DownloadFile_Res, Error>> {
++        const { scope, id, path } = request.data;
++
++        return lastValueFrom(
++            from(
++                this.client.v1.get<Blob>(`${getBackupSnapshotBasePath(scope)}/${id}/download`, {
++                    params: { path },
++                    responseType: "blob",
++                    signal,
++                }),
++            ).pipe(
++                map(response => Ok({ data: { blob: response.data, filename: path.split("/").pop() ?? path } })),
++                catchError(error => of(Err(parseApiError(error)))),
++            ),
++        );
++    }
++
+     async restore(
+         request: BackupSnapshot_Restore_Req,
+         signal?: AbortSignal,
+diff --git a/src/application/modules/settings/module-shared/components/backup-snapshot-table/backup-snapshot-details.com.tsx b/src/application/modules/settings/module-shared/components/backup-snapshot-table/backup-snapshot-details.com.tsx
+index 988234e6..c5aa8f72 100644
+--- a/src/application/modules/settings/module-shared/components/backup-snapshot-table/backup-snapshot-details.com.tsx
++++ b/src/application/modules/settings/module-shared/components/backup-snapshot-table/backup-snapshot-details.com.tsx
+@@ -3,15 +3,16 @@ import { Badge } from "@components/ui/badge";
+ import { Button } from "@components/ui/button";
+ import { format } from "date-fns";
+ import { ArchiveRestore } from "lucide-react";
+-import type { BackupSnapshot } from "~/settings/domain";
++import type { BackupSnapshot, BackupSnapshotScope } from "~/settings/domain";
+ 
+ import { MODULE_IDS } from "@application/shared/constants";
+-import { PermissionTooltipAction } from "@application/shared/permissions";
++import { PermissionTooltipAction, useConditionalModule } from "@application/shared/permissions";
+ import { formatDataSizeCompact } from "@application/shared/utils/data-size";
+ 
+ import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+ 
+-import { isRepoActive, sourceLabel, tagClassName } from "./backup-snapshot-table.helpers";
++import { BackupSnapshotFiles } from "./backup-snapshot-files.com";
++import { isRepoActive, snapshotScopeModuleId, sourceLabel, tagClassName } from "./backup-snapshot-table.helpers";
+ 
+ function Row({ label, children }: { label: string; children: React.ReactNode }) {
+     return (
+@@ -23,7 +24,9 @@ function Row({ label, children }: { label: string; children: React.ReactNode })
+ }
+ 
+ /** A snapshot's details: what the table has no room for. */
+-export function BackupSnapshotDetails({ snapshot, runLink, onRestore, onOpenChange }: Props) {
++export function BackupSnapshotDetails({ scope, snapshot, runLink, onRestore, onOpenChange }: Props) {
++    const { canWrite } = useConditionalModule({ id: snapshotScopeModuleId(scope) });
++
+     return (
+         <Sheet
+             open={Boolean(snapshot)}
+@@ -81,6 +84,13 @@ export function BackupSnapshotDetails({ snapshot, runLink, onRestore, onOpenChan
+                                 <span className="font-mono">{snapshot.paths.join(", ") || "-"}</span>
+                             </Row>
+                             {snapshot.hostname && <Row label="Hostname">{snapshot.hostname}</Row>}
++                            <Row label="Files">
++                                <BackupSnapshotFiles
++                                    scope={scope}
++                                    snapshotRecordId={snapshot.id}
++                                    canDownload={canWrite}
++                                />
++                            </Row>
+                             <Row label="Tags">
+                                 <div className="flex flex-wrap gap-1.5">
+                                     {snapshot.tags.length === 0 && "-"}
+@@ -104,6 +114,7 @@ export function BackupSnapshotDetails({ snapshot, runLink, onRestore, onOpenChan
+ }
+ 
+ interface Props {
++    scope: BackupSnapshotScope;
+     snapshot: BackupSnapshot | null;
+     /** A link to the run that took the snapshot, when the view can make one. */
+     runLink?: React.ReactNode;
+diff --git a/src/application/modules/settings/module-shared/components/backup-snapshot-table/backup-snapshot-files.com.tsx b/src/application/modules/settings/module-shared/components/backup-snapshot-table/backup-snapshot-files.com.tsx
+new file mode 100644
+index 00000000..ef856d68
+--- /dev/null
++++ b/src/application/modules/settings/module-shared/components/backup-snapshot-table/backup-snapshot-files.com.tsx
+@@ -0,0 +1,147 @@
++import { useState } from "react";
++
++import { ChevronRight, Download, File, Folder, Loader2 } from "lucide-react";
++import { useBackupSnapshotApi } from "~/settings/api/hooks";
++import { BackupSnapshotQueries } from "~/settings/data/queries";
++import type { BackupSnapshotScope } from "~/settings/domain";
++
++import { formatDataSizeCompact } from "@application/shared/utils/data-size";
++
++import { Button } from "@/components/ui";
++
++import { joinSnapshotPath } from "./backup-snapshot-restore.helpers";
++
++function saveBlob(blob: Blob, filename: string) {
++    const url = window.URL.createObjectURL(blob);
++    const anchor = document.createElement("a");
++    anchor.href = url;
++    anchor.download = filename;
++    anchor.click();
++    window.URL.revokeObjectURL(url);
++}
++
++/**
++ * What a snapshot holds, browsed a directory at a time, each file with its download. A download is held whole
++ * in the browser's memory before it is saved.
++ */
++export function BackupSnapshotFiles({ scope, snapshotRecordId, canDownload }: Props) {
++    const [browsed, setBrowsed] = useState("");
++    const [downloading, setDownloading] = useState("");
++    const { queries } = useBackupSnapshotApi();
++    const { data, isFetching } = BackupSnapshotQueries.useFindEntries({ scope, id: snapshotRecordId, path: browsed });
++    const entries = data?.data ?? [];
++    const crumbs = browsed ? browsed.split("/") : [];
++
++    async function download(path: string) {
++        setDownloading(path);
++        try {
++            const { data: file } = await queries.downloadFile({ scope, id: snapshotRecordId, path });
++            saveBlob(file.blob, file.filename);
++        } catch {
++            // The error is notified by the query.
++        } finally {
++            setDownloading("");
++        }
++    }
++
++    return (
++        <div className="rounded-md border border-border/80">
++            <div className="flex flex-wrap items-center gap-1 border-b border-border/60 px-2 py-1.5 text-xs">
++                <Button
++                    type="button"
++                    variant="link"
++                    size="sm"
++                    className="h-auto p-0 text-xs"
++                    onClick={() => {
++                        setBrowsed("");
++                    }}
++                >
++                    /
++                </Button>
++                {crumbs.map((crumb, index) => {
++                    const path = crumbs.slice(0, index + 1).join("/");
++                    return (
++                        <span
++                            key={path}
++                            className="flex items-center gap-1"
++                        >
++                            <ChevronRight className="size-3 text-muted-foreground" />
++                            <Button
++                                type="button"
++                                variant="link"
++                                size="sm"
++                                className="h-auto p-0 font-mono text-xs"
++                                onClick={() => {
++                                    setBrowsed(path);
++                                }}
++                            >
++                                {crumb}
++                            </Button>
++                        </span>
++                    );
++                })}
++                {isFetching && <Loader2 className="ml-auto size-3 animate-spin text-muted-foreground" />}
++            </div>
++            <ul className="max-h-72 overflow-y-auto py-1 text-sm">
++                {!isFetching && entries.length === 0 && <li className="px-3 py-1.5 text-muted-foreground">Empty</li>}
++                {entries.map(entry => {
++                    const path = joinSnapshotPath(browsed, entry.name);
++                    return (
++                        <li
++                            key={path}
++                            className="flex items-center gap-2 px-3 py-1"
++                        >
++                            {entry.dir ? (
++                                <Folder className="size-4 shrink-0 text-muted-foreground" />
++                            ) : (
++                                <File className="size-4 shrink-0 text-muted-foreground" />
++                            )}
++                            {entry.dir ? (
++                                <button
++                                    type="button"
++                                    className="truncate font-mono text-left hover:underline cursor-pointer"
++                                    onClick={() => {
++                                        setBrowsed(path);
++                                    }}
++                                >
++                                    {entry.name}/
++                                </button>
++                            ) : (
++                                <span className="truncate font-mono">{entry.name}</span>
++                            )}
++                            <span className="ml-auto shrink-0 text-xs text-muted-foreground">
++                                {formatDataSizeCompact(entry.sizeBytes)}
++                            </span>
++                            {!entry.dir && canDownload && (
++                                <Button
++                                    type="button"
++                                    variant="ghost"
++                                    size="icon"
++                                    className="size-7 shrink-0"
++                                    aria-label={`Download ${path}`}
++                                    disabled={downloading !== ""}
++                                    onClick={() => {
++                                        void download(path);
++                                    }}
++                                >
++                                    {downloading === path ? (
++                                        <Loader2 className="size-4 animate-spin" />
++                                    ) : (
++                                        <Download className="size-4" />
++                                    )}
++                                </Button>
++                            )}
++                        </li>
++                    );
++                })}
++            </ul>
++        </div>
++    );
++}
++
++interface Props {
++    scope: BackupSnapshotScope;
++    snapshotRecordId: string;
++    /** Whether the viewer may take a file: write on the snapshot's owner. */
++    canDownload: boolean;
++}
+diff --git a/src/application/modules/settings/module-shared/components/backup-snapshot-table/backup-snapshot-table.com.tsx b/src/application/modules/settings/module-shared/components/backup-snapshot-table/backup-snapshot-table.com.tsx
+index f4b65fe1..e7c8805f 100644
+--- a/src/application/modules/settings/module-shared/components/backup-snapshot-table/backup-snapshot-table.com.tsx
++++ b/src/application/modules/settings/module-shared/components/backup-snapshot-table/backup-snapshot-table.com.tsx
+@@ -166,6 +166,7 @@ export function BackupSnapshotTable({ scope }: Props) {
+             />
+ 
+             <BackupSnapshotDetails
++                scope={scope}
+                 snapshot={details}
+                 runLink={
+                     detailsRunRoute && details ? (
+diff --git a/src/application/modules/settings/module-shared/components/backup-snapshot-table/backup-snapshot-table.helpers.ts b/src/application/modules/settings/module-shared/components/backup-snapshot-table/backup-snapshot-table.helpers.ts
+index 0e9cbf31..1a73bd3b 100644
+--- a/src/application/modules/settings/module-shared/components/backup-snapshot-table/backup-snapshot-table.helpers.ts
++++ b/src/application/modules/settings/module-shared/components/backup-snapshot-table/backup-snapshot-table.helpers.ts
+@@ -22,6 +22,8 @@ export function sourceLabel(source: string): string {
+             return "Command";
+         case "volume":
+             return "Volume";
++        case "system-backup":
++            return "System";
+         default:
+             return "-";
+     }

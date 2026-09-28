@@ -1,0 +1,120 @@
+diff --git a/hivepaas_app/interface/api/handler/basesettinghandler/backup_snapshot_restore_request_test.go b/hivepaas_app/interface/api/handler/basesettinghandler/backup_snapshot_restore_request_test.go
+index 1b5828cd..6dec6f44 100644
+--- a/hivepaas_app/interface/api/handler/basesettinghandler/backup_snapshot_restore_request_test.go
++++ b/hivepaas_app/interface/api/handler/basesettinghandler/backup_snapshot_restore_request_test.go
+@@ -53,3 +53,36 @@ func TestBackupSnapshotRestoreRequestParses(t *testing.T) {
+ 
+ var _ = (*Handler).RestoreBackupSnapshot
+ var _ = (*Handler).ListBackupSnapshotEntries
++
++// A download names its file in the query.
++func TestBackupSnapshotDownloadRequestParses(t *testing.T) {
++	gin.SetMode(gin.TestMode)
++	h := &handler.BaseHandler{}
++	req := backupsnapshotdto.NewDownloadBackupSnapshotFileReq()
++	req.ID = "01JAB9XED0GTXBSQDFVYAJ8WS9"
++	var parseErr error
++
++	engine := gin.New()
++	engine.GET("/", func(c *gin.Context) { parseErr = h.ParseAndValidateRequest(c, req, nil) })
++	engine.ServeHTTP(httptest.NewRecorder(), httptest.NewRequest(http.MethodGet, "/?path=spec.tar.gz.age", nil))
++
++	assert.NoError(t, parseErr)
++	assert.Equal(t, "spec.tar.gz.age", req.Path)
++}
++
++var _ = (*Handler).DownloadBackupSnapshotFile
++
++// A download is an attachment of its own name and size.
++func TestDownloadHeaders(t *testing.T) {
++	gin.SetMode(gin.TestMode)
++	rec := httptest.NewRecorder()
++	ctx, _ := gin.CreateTestContext(rec)
++
++	writeDownloadHeaders(ctx, &backupsnapshotdto.DownloadBackupSnapshotFileResp{
++		FileName: "spec.tar.gz.age", SizeBytes: 42,
++	})
++
++	assert.Equal(t, `attachment; filename=spec.tar.gz.age`, rec.Header().Get("Content-Disposition"))
++	assert.Equal(t, "application/octet-stream", rec.Header().Get("Content-Type"))
++	assert.Equal(t, "42", rec.Header().Get("Content-Length"))
++}
+diff --git a/hivepaas_app/usecase/settings/backupsnapshotuc/backupsnapshotdto/download_test.go b/hivepaas_app/usecase/settings/backupsnapshotuc/backupsnapshotdto/download_test.go
+new file mode 100644
+index 00000000..04f23abb
+--- /dev/null
++++ b/hivepaas_app/usecase/settings/backupsnapshotuc/backupsnapshotdto/download_test.go
+@@ -0,0 +1,25 @@
++package backupsnapshotdto
++
++import (
++	"testing"
++
++	"github.com/stretchr/testify/assert"
++)
++
++// A download names a file inside the snapshot, by a relative path.
++func TestDownloadRequestNamesAFileInside(t *testing.T) {
++	req := NewDownloadBackupSnapshotFileReq()
++	req.ID = snapshotRecordID
++	req.Path = "./uploads//a.png"
++	assert.NoError(t, req.ModifyRequest())
++	assert.Empty(t, req.Validate())
++	assert.Equal(t, "uploads/a.png", req.Path)
++
++	for _, bad := range []string{"", "/etc/passwd", "../x", "uploads/../../x"} {
++		req = NewDownloadBackupSnapshotFileReq()
++		req.ID = snapshotRecordID
++		req.Path = bad
++		assert.NoError(t, req.ModifyRequest())
++		assert.NotEmpty(t, req.Validate(), bad)
++	}
++}
+diff --git a/hivepaas_app/usecase/settings/backupsnapshotuc/download_test.go b/hivepaas_app/usecase/settings/backupsnapshotuc/download_test.go
+new file mode 100644
+index 00000000..f840e710
+--- /dev/null
++++ b/hivepaas_app/usecase/settings/backupsnapshotuc/download_test.go
+@@ -0,0 +1,42 @@
++package backupsnapshotuc
++
++import (
++	"testing"
++
++	"github.com/stretchr/testify/assert"
++
++	"github.com/hivepaas/hivepaas/hivepaas_app/base"
++	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
++	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
++	"github.com/hivepaas/hivepaas/services/backup"
++)
++
++// A download is a file of the snapshot: a directory is restored, and a name the
++// directory does not hold is not found.
++func TestDownloadableEntry(t *testing.T) {
++	entries := []backup.SnapshotEntry{{Name: "uploads", Dir: true, SizeBytes: 5}, {Name: "db.pg_dump", SizeBytes: 42}}
++
++	entry, err := downloadableEntry(entries, "db.pg_dump")
++	assert.NoError(t, err)
++	assert.Equal(t, int64(42), entry.SizeBytes)
++
++	_, err = downloadableEntry(entries, "uploads")
++	assert.ErrorIs(t, err, hperrors.ErrArgumentInvalid)
++
++	_, err = downloadableEntry(entries, "gone.txt")
++	assert.ErrorIs(t, err, hperrors.ErrNotFound)
++}
++
++// A download is recorded against the snapshot's app, or its repository's scope
++// when no app owns it.
++func TestDownloadAuditScope(t *testing.T) {
++	repo := &entity.Setting{ID: "r1", Scope: base.ObjectScopeProject, ObjectID: "p1"}
++
++	scope, objectID := downloadAuditScope("a1", repo)
++	assert.Equal(t, base.ObjectScopeApp, scope)
++	assert.Equal(t, "a1", objectID)
++
++	scope, objectID = downloadAuditScope("", repo)
++	assert.Equal(t, base.ObjectScopeProject, scope)
++	assert.Equal(t, "p1", objectID)
++}

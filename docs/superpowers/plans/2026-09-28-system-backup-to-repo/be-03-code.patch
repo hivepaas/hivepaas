@@ -1,0 +1,682 @@
+diff --git a/hivepaas_app/base/file.go b/hivepaas_app/base/file.go
+index 5878c4bb..35be77cd 100644
+--- a/hivepaas_app/base/file.go
++++ b/hivepaas_app/base/file.go
+@@ -48,9 +48,6 @@ const (
+ 
+ 	// File kinds of type `cache`, `tmp`
+ 	FileKindSourceCode FileKind = "source-code"
+-
+-	// File kinds of type `system`
+-	FileKindSystemBackup FileKind = "system-backup"
+ )
+ 
+ var (
+@@ -58,8 +55,6 @@ var (
+ 		FileKindBackupMysql, FileKindBackupPostgres, FileKindBackupRedis, FileKindBackupSqlServer}
+ 
+ 	AllFileCacheKinds = []FileKind{FileKindSourceCode}
+-
+-	AllFileSystemBackupKinds = []FileKind{FileKindSystemBackup}
+ )
+ 
+ type FileStorageType string
+diff --git a/hivepaas_app/config/path.go b/hivepaas_app/config/path.go
+index 32725d4f..89fcc2a3 100644
+--- a/hivepaas_app/config/path.go
++++ b/hivepaas_app/config/path.go
+@@ -137,13 +137,6 @@ func (cfg *Config) DataPathTraefikEtcDynamic() LocalPath {
+ 
+ /// SYSTEM BACKUP
+ 
+-func (cfg *Config) DataPathSystemBackup() LocalPath {
+-	return LocalPath(filepath.Join("system", "backup"))
+-}
+-func (cfg *Config) DataPathSystemBackupFiles() LocalPath {
+-	return cfg.DataPathSystemBackup().Join("files")
+-}
+-
+ /// SYSTEM UPDATE
+ 
+ func (cfg *Config) DataPathSystemUpdate() LocalPath {
+@@ -180,8 +173,7 @@ func (cfg *Config) DataPathsToInitAtStartup() map[string]os.FileMode {
+ 
+ 		cfg.DataPathTraefikEtcDynamic().AbsPath(): base.DirModeDefault,
+ 
+-		cfg.DataPathSystemBackupFiles().AbsPath(): base.DirModeDefault,
+-		cfg.DataPathSystemCacheRepos().AbsPath():  base.DirModeDefault,
+-		cfg.DataPathFiles().AbsPath():             base.DirModeDefault,
++		cfg.DataPathSystemCacheRepos().AbsPath(): base.DirModeDefault,
++		cfg.DataPathFiles().AbsPath():            base.DirModeDefault,
+ 	}
+ }
+diff --git a/hivepaas_app/entity/setting_system_cleanup.go b/hivepaas_app/entity/setting_system_cleanup.go
+index 55b5d6a9..3d225b53 100644
+--- a/hivepaas_app/entity/setting_system_cleanup.go
++++ b/hivepaas_app/entity/setting_system_cleanup.go
+@@ -24,7 +24,6 @@ type SystemCleanup struct {
+ 	Schedule          SchedJobSchedule       `json:"schedule"`
+ 	DBObjectRetention DBObjectRetention      `json:"dbObjectRetention"`
+ 	ClusterCleanup    SystemClusterCleanup   `json:"clusterCleanup"`
+-	BackupCleanup     SystemBackupCleanup    `json:"backupCleanup"`
+ 	CacheCleanup      SystemCacheCleanup     `json:"cacheCleanup"`
+ 	FileCleanup       SystemFileCleanup      `json:"fileCleanup"`
+ 	Notification      *BaseEventNotification `json:"notification,omitempty"`
+@@ -50,12 +49,6 @@ type SystemClusterCleanup struct {
+ 	PruneBuildCache     bool              `json:"pruneBuildCache"`
+ }
+ 
+-type SystemBackupCleanup struct {
+-	Enabled              bool              `json:"enabled"`
+-	CloudBackupRetention timeutil.Duration `json:"cloudBackupRetention,omitempty"`
+-	LocalBackupRetention timeutil.Duration `json:"localBackupRetention,omitempty"`
+-}
+-
+ type SystemCacheCleanup struct {
+ 	Enabled            bool              `json:"enabled"`
+ 	RepoCacheRetention timeutil.Duration `json:"repoCacheRetention,omitempty"`
+diff --git a/hivepaas_app/entity/task_system_cleanup.go b/hivepaas_app/entity/task_system_cleanup.go
+index 5031b287..888a6738 100644
+--- a/hivepaas_app/entity/task_system_cleanup.go
++++ b/hivepaas_app/entity/task_system_cleanup.go
+@@ -3,7 +3,6 @@ package entity
+ type TaskSystemCleanupOutput struct {
+ 	DBCleanup      *DBCleanupOutput      `json:"dbCleanup"`
+ 	ClusterCleanup *ClusterCleanupOutput `json:"clusterCleanup"`
+-	BackupCleanup  *BackupCleanupOutput  `json:"backupCleanup"`
+ 	CacheCleanup   *CacheCleanupOutput   `json:"cacheCleanup"`
+ 	FileCleanup    *FileCleanupOutput    `json:"fileCleanup"`
+ }
+@@ -44,12 +43,6 @@ type ClusterNodeCleanupOutput struct {
+ 	SpaceReclaimed        uint64 `json:"spaceReclaimed"`
+ }
+ 
+-type BackupCleanupOutput struct {
+-	Error               string `json:"error,omitempty"`
+-	LocalBackupsDeleted int    `json:"localBackupsDeleted"`
+-	CloudBackupsDeleted int    `json:"cloudBackupsDeleted"`
+-}
+-
+ type CacheCleanupOutput struct {
+ 	Error                   string `json:"error,omitempty"`
+ 	RepoCacheFilesDeleted   int    `json:"repoCacheFilesDeleted"`
+diff --git a/hivepaas_app/interface/api/handler/systemsettingshandler/sys_backup_files.go b/hivepaas_app/interface/api/handler/systemsettingshandler/sys_backup_files.go
+deleted file mode 100644
+index f4319bb0..00000000
+--- a/hivepaas_app/interface/api/handler/systemsettingshandler/sys_backup_files.go
++++ /dev/null
+@@ -1,206 +0,0 @@
+-package systemsettingshandler
+-
+-import (
+-	"net/http"
+-	"slices"
+-
+-	"github.com/gin-gonic/gin"
+-
+-	"github.com/hivepaas/hivepaas/hivepaas_app/base"
+-	_ "github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
+-	"github.com/hivepaas/hivepaas/hivepaas_app/permission"
+-	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/fileuc/filedto"
+-)
+-
+-const (
+-	defaultUsePresignURLOnFileSize = 10 * 1024 * 1024 // 10MB
+-)
+-
+-// ListBackupFiles Lists backup files
+-// @Summary Lists backup files
+-// @Description Lists backup files
+-// @Tags    System settings
+-// @Produce json
+-// @Id      listSystemBackupFiles
+-// @Param   search query string false "`search=<target> (support *)`"
+-// @Param   pageOffset query int false "`pageOffset=offset`"
+-// @Param   pageLimit query int false "`pageLimit=limit`"
+-// @Param   sort query string false "`sort=[-]field1|field2...`"
+-// @Success 200 {object} filedto.ListFileResp
+-// @Failure 400 {object} hperrors.ErrorInfo
+-// @Failure 500 {object} hperrors.ErrorInfo
+-// @Router  /system/settings/backup/files [get]
+-func (h *Handler) ListBackupFiles(ctx *gin.Context) {
+-	auth, err := h.AuthHandler.GetCurrentAuth(ctx, &permission.GeneralResourceAccessCheck{
+-		BaseAccessCheck: permission.BaseAccessCheck{Action: base.ActionTypeRead},
+-		Module:          base.ResourceModuleSystem,
+-		ResourceType:    base.ResourceTypeSystemBackup,
+-	})
+-	if err != nil {
+-		h.RenderError(ctx, err)
+-		return
+-	}
+-
+-	req := filedto.NewListFileReq()
+-	req.Types = []base.FileType{base.FileTypeSystem}
+-	req.Kinds = slices.Clone(base.AllFileSystemBackupKinds)
+-	if err = h.ParseAndValidateRequest(ctx, req, &req.Paging); err != nil {
+-		h.RenderError(ctx, err)
+-		return
+-	}
+-
+-	resp, err := h.FileUC.ListFile(h.RequestCtx(ctx), auth, req)
+-	if err != nil {
+-		h.RenderError(ctx, err)
+-		return
+-	}
+-
+-	ctx.JSON(http.StatusOK, resp)
+-}
+-
+-// GetBackupFile Gets backup file
+-// @Summary Gets backup file
+-// @Description Gets backup file
+-// @Tags    System settings
+-// @Produce json
+-// @Id      getSystemBackupFile
+-// @Param   fileID path string true "file setting ID"
+-// @Success 200 {object} filedto.GetFileResp
+-// @Failure 400 {object} hperrors.ErrorInfo
+-// @Failure 500 {object} hperrors.ErrorInfo
+-// @Router  /system/settings/backup/files/{fileID} [get]
+-func (h *Handler) GetBackupFile(ctx *gin.Context) {
+-	fileID, err := h.ParseStringParam(ctx, "fileID")
+-	if err != nil {
+-		h.RenderError(ctx, err)
+-		return
+-	}
+-
+-	auth, err := h.AuthHandler.GetCurrentAuth(ctx, &permission.GeneralResourceAccessCheck{
+-		BaseAccessCheck: permission.BaseAccessCheck{Action: base.ActionTypeRead},
+-		Module:          base.ResourceModuleSystem,
+-		ResourceType:    base.ResourceTypeSystemBackup,
+-	})
+-	if err != nil {
+-		h.RenderError(ctx, err)
+-		return
+-	}
+-
+-	req := filedto.NewGetFileReq()
+-	req.ID = fileID
+-	req.Types = []base.FileType{base.FileTypeSystem}
+-	req.Kinds = slices.Clone(base.AllFileSystemBackupKinds)
+-	if err = h.ParseAndValidateRequest(ctx, req, nil); err != nil {
+-		h.RenderError(ctx, err)
+-		return
+-	}
+-
+-	resp, err := h.FileUC.GetFile(h.RequestCtx(ctx), auth, req)
+-	if err != nil {
+-		h.RenderError(ctx, err)
+-		return
+-	}
+-
+-	ctx.JSON(http.StatusOK, resp)
+-}
+-
+-// DownloadBackupFile Downloads a backup file
+-// @Summary Downloads a backup file
+-// @Description Downloads a backup file
+-// @Tags    System settings
+-// @Produce json
+-// @Id      downloadSystemBackupFile
+-// @Param   fileID path string true "file setting ID"
+-// @Success 200
+-// @Failure 400 {object} hperrors.ErrorInfo
+-// @Failure 500 {object} hperrors.ErrorInfo
+-// @Router  /system/settings/backup/files/{fileID}/download [get]
+-func (h *Handler) DownloadBackupFile(ctx *gin.Context) {
+-	fileID, err := h.ParseStringParam(ctx, "fileID")
+-	if err != nil {
+-		h.RenderError(ctx, err)
+-		return
+-	}
+-
+-	auth, err := h.AuthHandler.GetCurrentAuth(ctx, &permission.GeneralResourceAccessCheck{
+-		BaseAccessCheck: permission.BaseAccessCheck{Action: base.ActionTypeRead},
+-		Module:          base.ResourceModuleSystem,
+-		ResourceType:    base.ResourceTypeSystemBackup,
+-		ResourceID:      fileID,
+-	})
+-	if err != nil {
+-		h.RenderError(ctx, err)
+-		return
+-	}
+-
+-	req := filedto.NewDownloadFileReq()
+-	req.ID = fileID
+-	req.UsePresignURLOnFileSize = defaultUsePresignURLOnFileSize
+-	if err = h.ParseAndValidateRequest(ctx, req, nil); err != nil {
+-		h.RenderError(ctx, err)
+-		return
+-	}
+-
+-	resp, err := h.FileUC.DownloadFile(h.RequestCtx(ctx), auth, req)
+-	if err != nil {
+-		h.RenderError(ctx, err)
+-		return
+-	}
+-	data := resp.Data
+-
+-	if data.RedirectURL != "" {
+-		ctx.Redirect(http.StatusFound, data.RedirectURL)
+-		return
+-	}
+-
+-	ctx.DataFromReader(http.StatusOK, data.ContentLength, data.ContentType, data.Content, data.ExtraHeaders)
+-}
+-
+-// DeleteBackupFile Deletes backup file
+-// @Summary Deletes backup file
+-// @Description Deletes backup file
+-// @Tags    System settings
+-// @Produce json
+-// @Id      deleteSystemBackupFile
+-// @Param   fileID path string true "file setting ID"
+-// @Success 200 {object} filedto.DeleteFileResp
+-// @Failure 400 {object} hperrors.ErrorInfo
+-// @Failure 500 {object} hperrors.ErrorInfo
+-// @Router  /system/settings/backup/files/{fileID} [delete]
+-func (h *Handler) DeleteBackupFile(ctx *gin.Context) {
+-	fileID, err := h.ParseStringParam(ctx, "fileID")
+-	if err != nil {
+-		h.RenderError(ctx, err)
+-		return
+-	}
+-
+-	auth, err := h.AuthHandler.GetCurrentAuth(ctx, &permission.GeneralResourceAccessCheck{
+-		BaseAccessCheck: permission.BaseAccessCheck{Action: base.ActionTypeDelete},
+-		Module:          base.ResourceModuleSystem,
+-		ResourceType:    base.ResourceTypeSystemBackup,
+-		ResourceID:      fileID,
+-	})
+-	if err != nil {
+-		h.RenderError(ctx, err)
+-		return
+-	}
+-
+-	req := filedto.NewDeleteFileReq()
+-	req.ID = fileID
+-	req.Scope = new(base.ObjectScopeGlobal)
+-	req.DeletePermanentlyIfLocal = true
+-	req.Types = []base.FileType{base.FileTypeSystem}
+-	req.Kinds = slices.Clone(base.AllFileSystemBackupKinds)
+-	if err = h.ParseAndValidateRequest(ctx, req, nil); err != nil {
+-		h.RenderError(ctx, err)
+-		return
+-	}
+-
+-	resp, err := h.FileUC.DeleteFile(h.RequestCtx(ctx), auth, req)
+-	if err != nil {
+-		h.RenderError(ctx, err)
+-		return
+-	}
+-
+-	ctx.JSON(http.StatusOK, resp)
+-}
+diff --git a/hivepaas_app/interface/api/server/router_system.go b/hivepaas_app/interface/api/server/router_system.go
+index 3000f30e..ec190e7a 100644
+--- a/hivepaas_app/interface/api/server/router_system.go
++++ b/hivepaas_app/interface/api/server/router_system.go
+@@ -61,12 +61,6 @@ func (s *HTTPServer) registerSystemRoutes(apiGroup *gin.RouterGroup) {
+ 		backupGroup.GET("", systemSettingsHandler.GetBackupSettings)
+ 		backupGroup.PUT("", systemSettingsHandler.UpdateBackupSettings)
+ 		backupGroup.POST("/exec", systemSettingsHandler.ExecuteBackup)
+-
+-		// Backup files
+-		backupGroup.GET("/files", systemSettingsHandler.ListBackupFiles)
+-		backupGroup.GET("/files/:fileID", systemSettingsHandler.GetBackupFile)
+-		backupGroup.GET("/files/:fileID/download", systemSettingsHandler.DownloadBackupFile)
+-		backupGroup.DELETE("/files/:fileID", systemSettingsHandler.DeleteBackupFile)
+ 	}
+ 
+ 	{ // SSL renewal group
+diff --git a/hivepaas_app/service/settinginitservice/settinginitserviceimpl/init_defaults_sys_cleanup.go b/hivepaas_app/service/settinginitservice/settinginitserviceimpl/init_defaults_sys_cleanup.go
+index 0cac9868..cc395b1b 100644
+--- a/hivepaas_app/service/settinginitservice/settinginitserviceimpl/init_defaults_sys_cleanup.go
++++ b/hivepaas_app/service/settinginitservice/settinginitserviceimpl/init_defaults_sys_cleanup.go
+@@ -22,8 +22,6 @@ const (
+ 	sysCleanupMaxRetry      = 1
+ 	sysCleanupRetryDelay    = timeutil.Duration(time.Second * 30)
+ 
+-	sysCleanupBackupRetention = timeutil.Duration(timeutil.Day * 30)
+-
+ 	dbObjectRetentionOfTasks          = timeutil.Duration(timeutil.Day * 90)
+ 	dbObjectRetentionOfSysErrors      = timeutil.Duration(timeutil.Day * 90)
+ 	dbObjectRetentionOfAuditLogs      = timeutil.Duration(timeutil.Day * 90)
+@@ -75,11 +73,6 @@ func (s *service) initDefaultSystemCleanup(
+ 			PruneContainers:     true,
+ 			PruneBuildCache:     true,
+ 		},
+-		BackupCleanup: entity.SystemBackupCleanup{
+-			Enabled:              true,
+-			LocalBackupRetention: sysCleanupBackupRetention,
+-			CloudBackupRetention: sysCleanupBackupRetention,
+-		},
+ 		CacheCleanup: entity.SystemCacheCleanup{
+ 			Enabled:            true,
+ 			RepoCacheRetention: sysCleanupRepoCacheRetention,
+diff --git a/hivepaas_app/service/syscleanupservice/syscleanupserviceimpl/sys_cleanup.go b/hivepaas_app/service/syscleanupservice/syscleanupserviceimpl/sys_cleanup.go
+index 03ef2350..58075920 100644
+--- a/hivepaas_app/service/syscleanupservice/syscleanupserviceimpl/sys_cleanup.go
++++ b/hivepaas_app/service/syscleanupservice/syscleanupserviceimpl/sys_cleanup.go
+@@ -29,7 +29,6 @@ func (s *service) Cleanup(
+ 		TaskOutput: &entity.TaskSystemCleanupOutput{
+ 			DBCleanup:      &entity.DBCleanupOutput{},
+ 			ClusterCleanup: &entity.ClusterCleanupOutput{},
+-			BackupCleanup:  &entity.BackupCleanupOutput{},
+ 			CacheCleanup:   &entity.CacheCleanupOutput{},
+ 			FileCleanup:    &entity.FileCleanupOutput{},
+ 		},
+@@ -52,9 +51,6 @@ func (s *service) Cleanup(
+ 	// Cleanup unused cluster data (docker)
+ 	errs = append(errs, s.sysCleanupCluster(ctx, data))
+ 
+-	// Cleanup old backup files
+-	errs = append(errs, s.sysCleanupBackups(ctx, db, data))
+-
+ 	// Cleanup outdated cache files
+ 	errs = append(errs, s.sysCleanupCache(ctx, db, data))
+ 
+diff --git a/hivepaas_app/service/syscleanupservice/syscleanupserviceimpl/sys_cleanup_backups.go b/hivepaas_app/service/syscleanupservice/syscleanupserviceimpl/sys_cleanup_backups.go
+deleted file mode 100644
+index c0435fc8..00000000
+--- a/hivepaas_app/service/syscleanupservice/syscleanupserviceimpl/sys_cleanup_backups.go
++++ /dev/null
+@@ -1,184 +0,0 @@
+-package syscleanupserviceimpl
+-
+-import (
+-	"context"
+-	"errors"
+-	"os"
+-	"path/filepath"
+-
+-	"github.com/hivepaas/hivepaas/hivepaas_app/base"
+-	"github.com/hivepaas/hivepaas/hivepaas_app/config"
+-	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
+-	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
+-	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
+-	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
+-	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/tasklog"
+-	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/timeutil"
+-	"github.com/hivepaas/hivepaas/hivepaas_app/service/cloudstorageservice"
+-)
+-
+-func (s *service) sysCleanupBackups(
+-	ctx context.Context,
+-	db database.IDB,
+-	data *sysCleanupData,
+-) (err error) {
+-	if !data.SysCleanupSettings.BackupCleanup.Enabled {
+-		return nil
+-	}
+-
+-	defer func() {
+-		if err != nil {
+-			data.TaskOutput.BackupCleanup.Error = err.Error()
+-		}
+-	}()
+-
+-	var errs []error
+-
+-	// Remove old backup files in local
+-	errs = append(errs, s.sysCleanupLocalBackupFiles(ctx, db, data))
+-
+-	// Remove old backup files in cloud
+-	errs = append(errs, s.sysCleanupCloudBackupFiles(ctx, db, data))
+-
+-	return errors.Join(errs...)
+-}
+-
+-func (s *service) sysCleanupLocalBackupFiles(
+-	ctx context.Context,
+-	db database.IDB,
+-	data *sysCleanupData,
+-) (err error) {
+-	if data.CleanupBackupInLocal == base.CleanupFlagFalse {
+-		return nil
+-	}
+-
+-	timeNow := timeutil.NowUTC()
+-	retention := data.SysCleanupSettings.BackupCleanup.LocalBackupRetention.ToDuration()
+-	if data.CleanupBackupInLocal == base.CleanupFlagForce {
+-		retention = 0
+-	}
+-	if retention < 0 { // No cleanup
+-		return nil
+-	}
+-
+-	deletingFiles, _, err := s.fileRepo.List(ctx, db, nil,
+-		bunex.SelectWhere("file.type = ?", base.FileTypeSystem),
+-		bunex.SelectWhereIn("file.kind IN (?)", base.AllFileSystemBackupKinds...),
+-		bunex.SelectWhere("file.storage_type = ?", base.FileStorageLocal),
+-		bunex.SelectWhere("file.created_at < ?", timeNow.Add(-retention)),
+-	)
+-	if err != nil {
+-		return hperrors.Wrap(err)
+-	}
+-
+-	for _, file := range deletingFiles {
+-		file.DeletedAt = timeNow
+-		data.TaskOutput.BackupCleanup.LocalBackupsDeleted++
+-	}
+-	err = s.fileRepo.UpsertMulti(ctx, db, deletingFiles, entity.FileUpsertingConflictCols,
+-		[]string{"deleted_at"}) //nolint:goconst
+-	if err != nil {
+-		return hperrors.Wrap(err)
+-	}
+-
+-	// Delete real files in local
+-	rootDir := config.Current().AppPath
+-	for _, file := range deletingFiles {
+-		filePathAbs := filepath.Join(rootDir, file.Path)
+-		err := os.Remove(filePathAbs)
+-		if err != nil {
+-			_ = data.LogStore.Add(ctx, tasklog.NewOutFrame("Failed to remove outdated backup file: "+
+-				file.Path+" with error: "+err.Error(), tasklog.TsNow))
+-		} else {
+-			_ = data.LogStore.Add(ctx, tasklog.NewOutFrame("Outdated backup file removed: "+file.Path,
+-				tasklog.TsNow))
+-		}
+-	}
+-
+-	return nil
+-}
+-
+-func (s *service) sysCleanupCloudBackupFiles(
+-	ctx context.Context,
+-	db database.IDB,
+-	data *sysCleanupData,
+-) (err error) {
+-	if data.CleanupBackupInCloud == base.CleanupFlagFalse {
+-		return nil
+-	}
+-
+-	timeNow := timeutil.NowUTC()
+-	retention := data.SysCleanupSettings.BackupCleanup.CloudBackupRetention.ToDuration()
+-	if data.CleanupBackupInCloud == base.CleanupFlagForce {
+-		retention = 0
+-	}
+-	if retention < 0 { // No cleanup
+-		return nil
+-	}
+-
+-	deletingFiles, _, err := s.fileRepo.List(ctx, db, nil,
+-		bunex.SelectWhere("file.type = ?", base.FileTypeSystem),
+-		bunex.SelectWhereIn("file.kind IN (?)", base.AllFileSystemBackupKinds...),
+-		bunex.SelectWhere("file.status = ?", base.FileStatusActive),
+-		bunex.SelectWhere("file.storage_type = ?", base.FileStorageCloud),
+-		bunex.SelectWhere("file.created_at < ?", timeNow.Add(-retention)),
+-		bunex.SelectRelation("Storage"),
+-	)
+-	if err != nil {
+-		return hperrors.Wrap(err)
+-	}
+-
+-	for _, file := range deletingFiles {
+-		file.DeletedAt = timeNow
+-		data.TaskOutput.BackupCleanup.CloudBackupsDeleted++
+-	}
+-	err = s.fileRepo.UpsertMulti(ctx, db, deletingFiles, entity.SettingUpsertingConflictCols,
+-		[]string{"deleted_at"})
+-	if err != nil {
+-		return hperrors.Wrap(err)
+-	}
+-
+-	// Delete real files in cloud
+-	mapDelFuncByStorage := map[string]func(*entity.File) error{}
+-
+-	getDelFunc := func(file *entity.File) (func(*entity.File) error, error) {
+-		delFunc, exists := mapDelFuncByStorage[file.Storage.ID]
+-		if exists {
+-			return delFunc, nil
+-		}
+-		if file.Storage == nil {
+-			return nil, hperrors.NewNotFound("Storage setting")
+-		}
+-
+-		switch base.CloudStorageKind(file.Storage.Kind) { //nolint:gocritic
+-		case base.CloudStorageKindS3:
+-			s3Client, err := cloudstorageservice.NewS3Client(ctx, db, file.Storage, nil)
+-			if err != nil {
+-				return nil, hperrors.Wrap(err)
+-			}
+-			delFunc = func(file *entity.File) error {
+-				return s3Client.DeleteObject(ctx, file.Bucket, file.Path)
+-			}
+-			mapDelFuncByStorage[file.StorageID] = delFunc
+-		}
+-		return delFunc, nil
+-	}
+-
+-	for _, file := range deletingFiles {
+-		delFunc, err := getDelFunc(file)
+-		if err != nil {
+-			_ = data.LogStore.Add(ctx, tasklog.NewOutFrame("Failed to remove backup file in cloud: "+
+-				file.Path+" with creating client error: "+err.Error(), tasklog.TsNow))
+-		}
+-
+-		err = delFunc(file)
+-		if err != nil {
+-			_ = data.LogStore.Add(ctx, tasklog.NewOutFrame("Failed to remove backup file in cloud: "+
+-				file.Path+" with error: "+err.Error(), tasklog.TsNow))
+-		} else {
+-			_ = data.LogStore.Add(ctx, tasklog.NewOutFrame("Outdated backup file removed from cloud: "+file.Path,
+-				tasklog.TsNow))
+-		}
+-	}
+-	return nil
+-}
+diff --git a/hivepaas_app/service/syscleanupservice/types.go b/hivepaas_app/service/syscleanupservice/types.go
+index 46b6fa96..9ab0dcf4 100644
+--- a/hivepaas_app/service/syscleanupservice/types.go
++++ b/hivepaas_app/service/syscleanupservice/types.go
+@@ -17,9 +17,6 @@ type SysCleanupReq struct {
+ 	CleanupClusterNetworks   base.CleanupFlag
+ 	CleanupClusterBuildCache base.CleanupFlag
+ 
+-	CleanupBackupInLocal base.CleanupFlag
+-	CleanupBackupInCloud base.CleanupFlag
+-
+ 	CleanupCacheRepo base.CleanupFlag
+ 
+ 	CleanupFilesTemp base.CleanupFlag
+@@ -32,9 +29,6 @@ func (req *SysCleanupReq) SetCleanupFlagsDefault() {
+ 	req.CleanupClusterNetworks = base.CleanupFlagTrue
+ 	req.CleanupClusterBuildCache = base.CleanupFlagTrue
+ 
+-	req.CleanupBackupInLocal = base.CleanupFlagTrue
+-	req.CleanupBackupInCloud = base.CleanupFlagTrue
+-
+ 	req.CleanupCacheRepo = base.CleanupFlagTrue
+ 
+ 	req.CleanupFilesTemp = base.CleanupFlagTrue
+diff --git a/hivepaas_app/usecase/systemsettings/systemcleanupuc/systemcleanupdto/get.go b/hivepaas_app/usecase/systemsettings/systemcleanupuc/systemcleanupdto/get.go
+index 64c33b78..76bc0a15 100644
+--- a/hivepaas_app/usecase/systemsettings/systemcleanupuc/systemcleanupdto/get.go
++++ b/hivepaas_app/usecase/systemsettings/systemcleanupuc/systemcleanupdto/get.go
+@@ -37,7 +37,6 @@ type SystemCleanupResp struct {
+ 	Schedule          *ScheduleResp                      `json:"schedule"`
+ 	DBObjectRetention *DBObjectRetentionResp             `json:"dbObjectRetention"`
+ 	ClusterCleanup    *SystemClusterCleanupResp          `json:"clusterCleanup"`
+-	BackupCleanup     *SystemBackupCleanupResp           `json:"backupCleanup"`
+ 	CacheCleanup      *SystemCacheCleanupResp            `json:"cacheCleanup"`
+ 	FileCleanup       *SystemFileCleanupResp             `json:"fileCleanup"`
+ 	Notification      *basedto.BaseEventNotificationResp `json:"notification"`
+@@ -72,12 +71,6 @@ type SystemClusterCleanupResp struct {
+ 	PruneBuildCache     bool              `json:"pruneBuildCache"`
+ }
+ 
+-type SystemBackupCleanupResp struct {
+-	Enabled              bool              `json:"enabled"`
+-	CloudBackupRetention timeutil.Duration `json:"cloudBackupRetention"`
+-	LocalBackupRetention timeutil.Duration `json:"localBackupRetention"`
+-}
+-
+ type SystemCacheCleanupResp struct {
+ 	Enabled            bool              `json:"enabled"`
+ 	RepoCacheRetention timeutil.Duration `json:"repoCacheRetention"`
+diff --git a/hivepaas_app/usecase/systemsettings/systemcleanupuc/systemcleanupdto/update.go b/hivepaas_app/usecase/systemsettings/systemcleanupuc/systemcleanupdto/update.go
+index e34f5ebf..f7c2a201 100644
+--- a/hivepaas_app/usecase/systemsettings/systemcleanupuc/systemcleanupdto/update.go
++++ b/hivepaas_app/usecase/systemsettings/systemcleanupuc/systemcleanupdto/update.go
+@@ -23,7 +23,6 @@ type SystemCleanupBaseReq struct {
+ 	Schedule          ScheduleReq                       `json:"schedule"`
+ 	DBObjectRetention DBObjectRetentionReq              `json:"dbObjectRetention"`
+ 	ClusterCleanup    SystemClusterCleanupReq           `json:"clusterCleanup"`
+-	BackupCleanup     SystemBackupCleanupReq            `json:"backupCleanup"`
+ 	CacheCleanup      SystemCacheCleanupReq             `json:"cacheCleanup"`
+ 	FileCleanup       SystemFileCleanupReq              `json:"fileCleanup"`
+ 	Notification      *basedto.BaseEventNotificationReq `json:"notification"`
+@@ -34,7 +33,6 @@ func (req *SystemCleanupBaseReq) ToEntity() *entity.SystemCleanup {
+ 		Schedule:          req.Schedule.ToEntity(),
+ 		DBObjectRetention: req.DBObjectRetention.ToEntity(),
+ 		ClusterCleanup:    req.ClusterCleanup.ToEntity(),
+-		BackupCleanup:     req.BackupCleanup.ToEntity(),
+ 		CacheCleanup:      req.CacheCleanup.ToEntity(),
+ 		FileCleanup:       req.FileCleanup.ToEntity(),
+ 		Notification:      req.Notification.ToEntity(),
+@@ -54,7 +52,6 @@ func (req *SystemCleanupBaseReq) validate(field string) (res []vld.Validator) {
+ 		time.Now().Add(-timeutil.Dur365Days), time.Time{}, field+"schedule.initialTime")...)
+ 	res = append(res, req.DBObjectRetention.validate(field+"dbObjectRetention")...)
+ 	res = append(res, req.ClusterCleanup.validate(field+"clusterCleanup")...)
+-	res = append(res, req.BackupCleanup.validate(field+"backupCleanup")...)
+ 	res = append(res, req.CacheCleanup.validate(field+"cacheCleanup")...)
+ 	res = append(res, req.FileCleanup.validate(field+"fileCleanup")...)
+ 	res = append(res, req.Notification.Validate(field+"notification")...)
+@@ -141,36 +138,6 @@ func (req *SystemClusterCleanupReq) validate(_ string) []vld.Validator {
+ 	return nil
+ }
+ 
+-type SystemBackupCleanupReq struct {
+-	Enabled              bool              `json:"enabled"`
+-	CloudBackupRetention timeutil.Duration `json:"cloudBackupRetention"`
+-	LocalBackupRetention timeutil.Duration `json:"localBackupRetention"`
+-}
+-
+-func (req *SystemBackupCleanupReq) ToEntity() entity.SystemBackupCleanup {
+-	return entity.SystemBackupCleanup{
+-		Enabled:              req.Enabled,
+-		CloudBackupRetention: req.CloudBackupRetention,
+-		LocalBackupRetention: req.LocalBackupRetention,
+-	}
+-}
+-
+-func (req *SystemBackupCleanupReq) validate(field string) (res []vld.Validator) {
+-	if !req.Enabled {
+-		return nil
+-	}
+-	if field != "" {
+-		field += "."
+-	}
+-	durValid := req.CloudBackupRetention >= 0 && req.LocalBackupRetention >= 0
+-	res = append(res, vld.Must(durValid).OnError(
+-		vld.SetField(field+"duration values", nil),
+-		vld.SetCustomKey("ERR_VLD_VALUE_MUST_GREATER_THAN"),
+-		vld.SetParam("Min", 0),
+-	))
+-	return res
+-}
+-
+ type SystemCacheCleanupReq struct {
+ 	Enabled            bool              `json:"enabled"`
+ 	RepoCacheRetention timeutil.Duration `json:"repoCacheRetention"`

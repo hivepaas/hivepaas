@@ -1,0 +1,2166 @@
+diff --git a/src/application/modules/operations/domain/audit-log.entity.ts b/src/application/modules/operations/domain/audit-log.entity.ts
+index 9c8367f6..4ecb0588 100644
+--- a/src/application/modules/operations/domain/audit-log.entity.ts
++++ b/src/application/modules/operations/domain/audit-log.entity.ts
+@@ -35,6 +35,8 @@ export const AuditLogType = {
+     SpecExport: "spec-export",
+     SpecImport: "spec-import",
+     McpToolCall: "mcp-tool-call",
++    /** A file taken out of a backup snapshot. */
++    BackupDownload: "backup-download",
+ } as const;
+ 
+ export type AuditLogType = (typeof AuditLogType)[keyof typeof AuditLogType];
+diff --git a/src/application/modules/settings/layouts/data-backup/layout/data-backup-layout.com.tsx b/src/application/modules/settings/layouts/data-backup/layout/data-backup-layout.com.tsx
+index 56b5e446..a39b7a68 100644
+--- a/src/application/modules/settings/layouts/data-backup/layout/data-backup-layout.com.tsx
++++ b/src/application/modules/settings/layouts/data-backup/layout/data-backup-layout.com.tsx
+@@ -1,6 +1,6 @@
+ import { type PropsWithChildren, memo } from "react";
+ 
+-import { HardDrive, Play, Settings } from "lucide-react";
++import { Play, Settings } from "lucide-react";
+ import { SystemSettingsSidebarLayout, type SystemSettingsTabSection } from "~/system-settings/module-shared";
+ 
+ import { ROUTE } from "@application/shared/constants";
+@@ -14,11 +14,6 @@ const sections: SystemSettingsTabSection[] = [
+                 route: ROUTE.appSettings.dataBackup.configuration.$route,
+                 icon: Settings,
+             },
+-            {
+-                label: "Backup Files",
+-                route: ROUTE.appSettings.dataBackup.backupFiles.$route,
+-                icon: HardDrive,
+-            },
+             {
+                 label: "Actions",
+                 route: ROUTE.appSettings.dataBackup.actions.$route,
+diff --git a/src/application/modules/settings/routes/data-backup/backup-files/building-blocks/backup-file-info-dialog.com.tsx b/src/application/modules/settings/routes/data-backup/backup-files/building-blocks/backup-file-info-dialog.com.tsx
+deleted file mode 100644
+index 9ac5326c..00000000
+--- a/src/application/modules/settings/routes/data-backup/backup-files/building-blocks/backup-file-info-dialog.com.tsx
++++ /dev/null
+@@ -1,99 +0,0 @@
+-import { format } from "date-fns";
+-import { SystemBackupFileQueries } from "~/system-settings/data";
+-import type { SystemBackupFile } from "~/system-settings/domain";
+-import { getBackupFileStorageLabel } from "~/system-settings/module-shared/definitions/tables/system-backup-files";
+-import { ESystemBackupFileStorageType } from "~/system-settings/module-shared/enums";
+-
+-import { AppLoader } from "@application/shared/components";
+-import { getFriendlyDataSize } from "@application/shared/utils/data-size";
+-
+-import { Dialog, DialogBody, DialogFixedContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+-import { Separator } from "@/components/ui/separator";
+-
+-function InfoRow({ label, value }: InfoRowProps) {
+-    return (
+-        <div className="grid grid-cols-[120px_1fr] gap-6 text-sm">
+-            <div className="font-semibold text-foreground">{label}</div>
+-            <div className="text-foreground break-words">{value ?? "-"}</div>
+-        </div>
+-    );
+-}
+-
+-function BackupFileInfoContent({ file }: { file: SystemBackupFile }) {
+-    const isCloudFile = file.storageType === ESystemBackupFileStorageType.Cloud;
+-
+-    return (
+-        <div className="flex flex-col gap-8 pt-2">
+-            <InfoRow
+-                label="Name"
+-                value={file.name}
+-            />
+-            <InfoRow
+-                label="Mimetype"
+-                value={file.mimetype}
+-            />
+-            <InfoRow
+-                label="Size"
+-                value={getFriendlyDataSize(file.sizeBytes) || "-"}
+-            />
+-            <InfoRow
+-                label="Storage"
+-                value={getBackupFileStorageLabel(file)}
+-            />
+-            {isCloudFile && (
+-                <>
+-                    <InfoRow
+-                        label="Bucket"
+-                        value={file.bucket}
+-                    />
+-                    <InfoRow
+-                        label="Directory Path"
+-                        value={file.path}
+-                    />
+-                </>
+-            )}
+-            <InfoRow
+-                label="Created At"
+-                value={format(file.createdAt, "yyyy-MM-dd HH:mm:ss")}
+-            />
+-        </div>
+-    );
+-}
+-
+-export function BackupFileInfoDialog({ fileID, open, onOpenChange }: Props) {
+-    const { data, isLoading } = SystemBackupFileQueries.useFindOneById(
+-        { fileID: fileID ?? "" },
+-        { enabled: open && Boolean(fileID) },
+-    );
+-
+-    return (
+-        <Dialog
+-            open={open}
+-            onOpenChange={onOpenChange}
+-        >
+-            <DialogFixedContent className="sm:max-w-[640px]">
+-                <DialogHeader>
+-                    <DialogTitle>Backup file info</DialogTitle>
+-                </DialogHeader>
+-                <div className="px-4">
+-                    <Separator className="opacity-50" />
+-                </div>
+-
+-                <DialogBody>
+-                    {isLoading ? <AppLoader /> : data?.data ? <BackupFileInfoContent file={data.data} /> : null}
+-                </DialogBody>
+-            </DialogFixedContent>
+-        </Dialog>
+-    );
+-}
+-
+-interface InfoRowProps {
+-    label: string;
+-    value?: string;
+-}
+-
+-interface Props {
+-    fileID?: string;
+-    open: boolean;
+-    onOpenChange: (open: boolean) => void;
+-}
+diff --git a/src/application/modules/settings/routes/data-backup/backup-files/building-blocks/index.ts b/src/application/modules/settings/routes/data-backup/backup-files/building-blocks/index.ts
+deleted file mode 100644
+index 5cfcd29b..00000000
+--- a/src/application/modules/settings/routes/data-backup/backup-files/building-blocks/index.ts
++++ /dev/null
+@@ -1 +0,0 @@
+-export * from "./backup-file-info-dialog.com";
+diff --git a/src/application/modules/settings/routes/data-backup/backup-files/index.ts b/src/application/modules/settings/routes/data-backup/backup-files/index.ts
+deleted file mode 100644
+index e37ac0d8..00000000
+--- a/src/application/modules/settings/routes/data-backup/backup-files/index.ts
++++ /dev/null
+@@ -1 +0,0 @@
+-export * from "./route";
+diff --git a/src/application/modules/settings/routes/data-backup/backup-files/route/index.ts b/src/application/modules/settings/routes/data-backup/backup-files/route/index.ts
+deleted file mode 100644
+index 33121582..00000000
+--- a/src/application/modules/settings/routes/data-backup/backup-files/route/index.ts
++++ /dev/null
+@@ -1 +0,0 @@
+-export * from "./settings-data-backup-backup-files.route.com";
+diff --git a/src/application/modules/settings/routes/data-backup/backup-files/route/settings-data-backup-backup-files.route.com.tsx b/src/application/modules/settings/routes/data-backup/backup-files/route/settings-data-backup-backup-files.route.com.tsx
+deleted file mode 100644
+index e3f905ba..00000000
+--- a/src/application/modules/settings/routes/data-backup/backup-files/route/settings-data-backup-backup-files.route.com.tsx
++++ /dev/null
+@@ -1,59 +0,0 @@
+-import { useMemo, useState } from "react";
+-
+-import { SystemBackupFileQueries } from "~/system-settings/data";
+-import type { SystemBackupFile } from "~/system-settings/domain";
+-import { SystemBackupFilesTableDefs } from "~/system-settings/module-shared";
+-
+-import { TableActions } from "@application/shared/components";
+-import { DEFAULT_PAGINATED_DATA } from "@application/shared/constants";
+-import { useTableState } from "@application/shared/hooks/table";
+-
+-import { DataTable } from "@/components/ui";
+-
+-import { BackupFileInfoDialog } from "../building-blocks";
+-
+-export function SettingsDataBackupBackupFilesRoute() {
+-    const [selectedFileID, setSelectedFileID] = useState<string>();
+-    const [infoDialogOpen, setInfoDialogOpen] = useState(false);
+-    const { pagination, setPagination, sorting, setSorting, search, setSearch } = useTableState();
+-
+-    const { data: { data: backupFiles, meta } = DEFAULT_PAGINATED_DATA, isFetching } =
+-        SystemBackupFileQueries.useFindManyPaginated({
+-            pagination,
+-            sorting,
+-            search,
+-        });
+-
+-    const columns = useMemo(() => {
+-        return SystemBackupFilesTableDefs.columns((file: SystemBackupFile) => {
+-            setSelectedFileID(file.id);
+-            setInfoDialogOpen(true);
+-        });
+-    }, []);
+-
+-    return (
+-        <div className="flex flex-col gap-4">
+-            <TableActions search={{ value: search, onChange: setSearch }} />
+-
+-            <DataTable
+-                columns={columns}
+-                data={backupFiles}
+-                pageSize={pagination.size}
+-                enablePagination
+-                manualPagination
+-                totalCount={meta.page.total}
+-                enableSorting
+-                manualSorting
+-                isLoading={isFetching}
+-                onPaginationChange={setPagination}
+-                onSortingChange={setSorting}
+-            />
+-
+-            <BackupFileInfoDialog
+-                fileID={selectedFileID}
+-                open={infoDialogOpen}
+-                onOpenChange={setInfoDialogOpen}
+-            />
+-        </div>
+-    );
+-}
+diff --git a/src/application/modules/settings/routes/data-backup/configuration/form/system-backup-configuration.form-mappers.ts b/src/application/modules/settings/routes/data-backup/configuration/form/system-backup-configuration.form-mappers.ts
+index 0668ee6a..1723e184 100644
+--- a/src/application/modules/settings/routes/data-backup/configuration/form/system-backup-configuration.form-mappers.ts
++++ b/src/application/modules/settings/routes/data-backup/configuration/form/system-backup-configuration.form-mappers.ts
+@@ -1,6 +1,5 @@
+-import type { SystemBackupSettings } from "~/system-settings/domain";
++import { SYSTEM_BACKUP_SPEC_SECRETS, type SystemBackupSettings } from "~/system-settings/domain";
+ import { getScheduleModeFromCronExpr } from "~/system-settings/module-shared";
+-import { ESystemBackupCompressionFormat, ESystemBackupEncryptionFormat } from "~/system-settings/module-shared/enums";
+ 
+ import { ESettingStatus } from "@application/shared/enums";
+ 
+@@ -12,13 +11,11 @@ export const emptySystemBackupConfigurationFormDefaults: SystemBackupConfigurati
+     scheduleInterval: "24h",
+     scheduleCronExpr: "",
+     scheduleFrom: null,
+-    compressionFormat: ESystemBackupCompressionFormat.Gzip,
+-    encryptionFormat: ESystemBackupEncryptionFormat.None,
+-    encryptionSecret: "",
+-    cloudStorage: undefined,
+-    cloudStorageBucket: "",
+-    cloudStorageDestinationDir: "",
+-    backupDeletedObjects: false,
++    includeDB: true,
++    includeSpec: false,
++    specSecrets: SYSTEM_BACKUP_SPEC_SECRETS.Encrypted,
++    specPassphrase: "",
++    targetRepository: undefined,
+     notification: {
+         successUseDefault: true,
+         success: undefined,
+@@ -34,18 +31,19 @@ export function mapSystemBackupSettingsToFormInput(settings: SystemBackupSetting
+         scheduleInterval: settings.schedule.interval,
+         scheduleCronExpr: settings.schedule.cronExpr,
+         scheduleFrom: settings.schedule.initialTime ?? null,
+-        compressionFormat: settings.compression.format,
+-        encryptionFormat: settings.encryption.format,
+-        encryptionSecret: settings.encryption.secret,
+-        cloudStorage: settings.cloudStorage
++        includeDB: settings.includeDB,
++        includeSpec: settings.includeSpec,
++        specSecrets: settings.specSecrets,
++        specPassphrase: settings.specPassphrase,
++        targetRepository: settings.targetRepository
+             ? {
+-                  id: settings.cloudStorage.id,
+-                  name: settings.cloudStorage.name,
++                  id: settings.targetRepository.id,
++                  name:
++                      settings.targetRepository.status === "missing"
++                          ? "Deleted repository"
++                          : settings.targetRepository.name,
+               }
+             : undefined,
+-        cloudStorageBucket: settings.cloudStorage?.bucket ?? "",
+-        cloudStorageDestinationDir: settings.cloudStorage?.destinationDir ?? "",
+-        backupDeletedObjects: settings.dbBackupConfig.backupDeletedObjects,
+         notification: {
+             successUseDefault: settings.notification?.successUseDefault ?? true,
+             success: settings.notification?.success,
+diff --git a/src/application/modules/settings/routes/data-backup/configuration/form/system-backup-configuration.form.com.tsx b/src/application/modules/settings/routes/data-backup/configuration/form/system-backup-configuration.form.com.tsx
+index db8c68b4..9b0e2a80 100644
+--- a/src/application/modules/settings/routes/data-backup/configuration/form/system-backup-configuration.form.com.tsx
++++ b/src/application/modules/settings/routes/data-backup/configuration/form/system-backup-configuration.form.com.tsx
+@@ -1,16 +1,15 @@
+-import React, { type PropsWithChildren, useEffect, useImperativeHandle, useMemo, useState } from "react";
++import React, { type PropsWithChildren, useId, useImperativeHandle, useMemo, useState } from "react";
+ 
+ import { PasswordInput, RevealSecretsProvider } from "@components/ui/input-password";
+ import { zodResolver } from "@hookform/resolvers/zod";
+ import { dashedBorderBox } from "@lib/styles";
+ import { cn } from "@lib/utils";
+ import { type FieldPath, FormProvider, useController, useForm, useFormContext, useWatch } from "react-hook-form";
+-import { CloudStorageQueries } from "~/settings/data";
++import { BackupRepoQueries } from "~/settings/data";
+ import { ConfirmRevealSecretsDialog, RevealSecretsButton } from "~/settings/module-shared/components";
+ import { useNotificationSettingsSources, useSettingRevealSecrets } from "~/settings/module-shared/hooks";
+-import type { SystemBackupSettings } from "~/system-settings/domain";
++import { SYSTEM_BACKUP_SPEC_SECRETS, type SystemBackupSettings } from "~/system-settings/domain";
+ import { SectionHeader } from "~/system-settings/module-shared";
+-import { ESystemBackupCompressionFormat, ESystemBackupEncryptionFormat } from "~/system-settings/module-shared/enums";
+ 
+ import { AppLink, Combobox, InfoBlock, NextRunsField } from "@application/shared/components";
+ import { DEFAULT_PAGINATED_DATA, ROUTE } from "@application/shared/constants";
+@@ -60,14 +59,16 @@ function EnabledField() {
+ 
+ function GeneralFields({ nextRuns }: { nextRuns: Date[] }) {
+     const { control } = useFormContext<SchemaInput, unknown, SchemaOutput>();
+-    const [cloudStorageSearch, setCloudStorageSearch] = useState("");
++    const [repositorySearch, setRepositorySearch] = useState("");
++    const includeDBId = useId();
++    const includeSpecId = useId();
+ 
+     const {
+-        data: { data: cloudStorages } = DEFAULT_PAGINATED_DATA,
++        data: { data: repositories } = DEFAULT_PAGINATED_DATA,
+         isFetching,
+         refetch,
+         isRefetching,
+-    } = CloudStorageQueries.useFindManyPaginated({ search: cloudStorageSearch });
++    } = BackupRepoQueries.useFindManyPaginated({ search: repositorySearch });
+ 
+     const { field: scheduleMode } = useController({ control, name: "scheduleMode" });
+     const {
+@@ -82,47 +83,40 @@ function GeneralFields({ nextRuns }: { nextRuns: Date[] }) {
+         field: scheduleFrom,
+         fieldState: { error: scheduleFromError, invalid: isScheduleFromInvalid },
+     } = useController({ control, name: "scheduleFrom" });
+-    const { field: compressionFormat } = useController({ control, name: "compressionFormat" });
+-    const { field: encryptionFormat } = useController({ control, name: "encryptionFormat" });
+     const {
+-        field: encryptionSecret,
+-        fieldState: { error: encryptionSecretError, invalid: isEncryptionSecretInvalid },
+-    } = useController({ control, name: "encryptionSecret" });
++        field: includeDB,
++        fieldState: { error: includeError },
++    } = useController({ control, name: "includeDB" });
++    const { field: includeSpec } = useController({ control, name: "includeSpec" });
++    const { field: specSecrets } = useController({ control, name: "specSecrets" });
+     const {
+-        field: cloudStorage,
+-        fieldState: { error: cloudStorageError, invalid: isCloudStorageInvalid },
+-    } = useController({ control, name: "cloudStorage" });
+-    const { field: cloudStorageBucket } = useController({ control, name: "cloudStorageBucket" });
++        field: specPassphrase,
++        fieldState: { error: specPassphraseError, invalid: isSpecPassphraseInvalid },
++    } = useController({ control, name: "specPassphrase" });
+     const {
+-        field: cloudStorageDestinationDir,
+-        fieldState: { error: cloudStorageDestinationDirError, invalid: isCloudStorageDestinationDirInvalid },
+-    } = useController({ control, name: "cloudStorageDestinationDir" });
+-
+-    useEffect(() => {
+-        if (encryptionFormat.value !== ESystemBackupEncryptionFormat.Age) {
+-            encryptionSecret.onChange("");
+-        }
+-    }, [encryptionFormat.value, encryptionSecret]);
++        field: targetRepository,
++        fieldState: { error: targetRepositoryError, invalid: isTargetRepositoryInvalid },
++    } = useController({ control, name: "targetRepository" });
+ 
+     const { canShowRevealButton, isDialogOpen, setIsDialogOpen, isRevealing, isRevealed, handleConfirmReveal } =
+         useSettingRevealSecrets<SystemBackupSettings>({
+             customPath: "/system/settings/backup",
+             mode: "edit",
+             onSuccess: data => {
+-                if (data.encryption.secret) {
+-                    encryptionSecret.onChange(data.encryption.secret);
++                if (data.specPassphrase) {
++                    specPassphrase.onChange(data.specPassphrase);
+                 }
+             },
+         });
+ 
+-    const shouldShowReveal = canShowRevealButton && encryptionFormat.value !== ESystemBackupEncryptionFormat.None;
++    const isEncrypted = includeSpec.value && specSecrets.value === SYSTEM_BACKUP_SPEC_SECRETS.Encrypted;
+ 
+-    const cloudStorageOptions = useMemo(() => {
+-        return cloudStorages.map(item => ({
++    const repositoryOptions = useMemo(() => {
++        return repositories.map(item => ({
+             value: { id: item.id, name: item.name },
+-            label: item.kind ? `${item.kind} ${item.name}` : item.name,
++            label: item.name,
+         }));
+-    }, [cloudStorages]);
++    }, [repositories]);
+ 
+     return (
+         <>
+@@ -221,39 +215,73 @@ function GeneralFields({ nextRuns }: { nextRuns: Date[] }) {
+ 
+                 <InfoBlock
+                     titleWidth={220}
+-                    title="Compress Backups"
++                    title="Back Up"
+                 >
+-                    <Tabs
+-                        value={compressionFormat.value}
+-                        onValueChange={compressionFormat.onChange}
+-                    >
+-                        <TabsList>
+-                            <TabsTrigger value={ESystemBackupCompressionFormat.None}>Disabled</TabsTrigger>
+-                            <TabsTrigger value={ESystemBackupCompressionFormat.Gzip}>Gzip</TabsTrigger>
+-                            <TabsTrigger value={ESystemBackupCompressionFormat.Zstd}>Zstd</TabsTrigger>
+-                        </TabsList>
+-                    </Tabs>
++                    <FieldGroup>
++                        <Field>
++                            <div className="flex flex-col gap-2 text-sm">
++                                <div className="flex items-center gap-2">
++                                    <Checkbox
++                                        id={includeDBId}
++                                        checked={includeDB.value}
++                                        onCheckedChange={checked => {
++                                            includeDB.onChange(checked === true);
++                                        }}
++                                    />
++                                    <label htmlFor={includeDBId}>
++                                        Database: a dump of HivePaaS&apos;s own database
++                                    </label>
++                                </div>
++                                <div className="flex items-center gap-2">
++                                    <Checkbox
++                                        id={includeSpecId}
++                                        checked={includeSpec.value}
++                                        onCheckedChange={checked => {
++                                            includeSpec.onChange(checked === true);
++                                        }}
++                                    />
++                                    <label htmlFor={includeSpecId}>
++                                        Spec: the configuration of every project, env and app, as Export writes it
++                                    </label>
++                                </div>
++                            </div>
++                            <FieldError errors={[includeError]} />
++                        </Field>
++                    </FieldGroup>
+                 </InfoBlock>
+ 
+-                <InfoBlock
+-                    titleWidth={220}
+-                    title="Encrypt Backups"
+-                >
+-                    <Tabs
+-                        value={encryptionFormat.value}
+-                        onValueChange={encryptionFormat.onChange}
++                {includeSpec.value && (
++                    <InfoBlock
++                        titleWidth={220}
++                        title="Secrets in the Spec"
+                     >
+-                        <TabsList>
+-                            <TabsTrigger value={ESystemBackupEncryptionFormat.None}>Disabled</TabsTrigger>
+-                            <TabsTrigger value={ESystemBackupEncryptionFormat.Age}>Age</TabsTrigger>
+-                        </TabsList>
+-                    </Tabs>
+-                </InfoBlock>
++                        <div className="flex flex-col gap-2">
++                            <Tabs
++                                value={specSecrets.value}
++                                onValueChange={specSecrets.onChange}
++                            >
++                                <TabsList>
++                                    <TabsTrigger value={SYSTEM_BACKUP_SPEC_SECRETS.Encrypted}>Encrypted</TabsTrigger>
++                                    <TabsTrigger value={SYSTEM_BACKUP_SPEC_SECRETS.Omit}>Omit</TabsTrigger>
++                                    <TabsTrigger value={SYSTEM_BACKUP_SPEC_SECRETS.Plaintext}>Plaintext</TabsTrigger>
++                                </TabsList>
++                            </Tabs>
++                            <p className="text-sm text-muted-foreground max-w-[600px]">
++                                {specSecrets.value === SYSTEM_BACKUP_SPEC_SECRETS.Encrypted &&
++                                    "The spec is encrypted with a passphrase of its own, besides the repository's password. A lost passphrase is a spec whose secrets cannot be read."}
++                                {specSecrets.value === SYSTEM_BACKUP_SPEC_SECRETS.Omit &&
++                                    "The spec holds no secret: importing it asks for every one again."}
++                                {specSecrets.value === SYSTEM_BACKUP_SPEC_SECRETS.Plaintext &&
++                                    "The spec holds every secret as it is: whoever has the repository's password reads them."}
++                            </p>
++                        </div>
++                    </InfoBlock>
++                )}
+ 
+-                {encryptionFormat.value !== ESystemBackupEncryptionFormat.None && (
++                {isEncrypted && (
+                     <InfoBlock
+                         titleWidth={220}
+-                        title="Encryption Secret"
++                        title="Spec Passphrase"
+                     >
+                         <FieldGroup>
+                             <Field>
+@@ -261,15 +289,15 @@ function GeneralFields({ nextRuns }: { nextRuns: Date[] }) {
+                                     <div className="w-full max-w-[400px]">
+                                         <RevealSecretsProvider value={{ isRevealed }}>
+                                             <PasswordInput
+-                                                value={encryptionSecret.value}
+-                                                onChange={encryptionSecret.onChange}
+-                                                placeholder="password"
++                                                value={specPassphrase.value}
++                                                onChange={specPassphrase.onChange}
++                                                placeholder="passphrase"
+                                                 className="w-full"
+-                                                aria-invalid={isEncryptionSecretInvalid}
++                                                aria-invalid={isSpecPassphraseInvalid}
+                                             />
+                                         </RevealSecretsProvider>
+                                     </div>
+-                                    {shouldShowReveal && (
++                                    {canShowRevealButton && (
+                                         <RevealSecretsButton
+                                             onClick={() => {
+                                                 setIsDialogOpen(true);
+@@ -278,7 +306,7 @@ function GeneralFields({ nextRuns }: { nextRuns: Date[] }) {
+                                         />
+                                     )}
+                                 </div>
+-                                <FieldError errors={[encryptionSecretError]} />
++                                <FieldError errors={[specPassphraseError]} />
+                             </Field>
+                         </FieldGroup>
+                         <ConfirmRevealSecretsDialog
+@@ -290,23 +318,21 @@ function GeneralFields({ nextRuns }: { nextRuns: Date[] }) {
+                     </InfoBlock>
+                 )}
+ 
+-                <Separator className="opacity-50" />
+-
+                 <InfoBlock
+                     titleWidth={220}
+-                    title="Save Backups in Cloud Storage"
++                    title="Backup Repository"
+                 >
+                     <FieldGroup>
+                         <Field>
+                             <Combobox
+-                                options={cloudStorageOptions}
+-                                value={cloudStorage.value?.id ?? null}
++                                options={repositoryOptions}
++                                value={targetRepository.value?.id ?? null}
+                                 onChange={(_, option) => {
+-                                    cloudStorage.onChange(option ?? undefined);
++                                    targetRepository.onChange(option ?? undefined);
+                                 }}
+-                                onSearch={setCloudStorageSearch}
+-                                placeholder="Select Cloud Storage"
+-                                emptyText="No cloud storages available"
++                                onSearch={setRepositorySearch}
++                                placeholder={targetRepository.value?.name ?? "Select a backup repository"}
++                                emptyText="No backup repositories at the global scope"
+                                 className="max-w-[400px]"
+                                 valueKey="id"
+                                 searchable
+@@ -314,53 +340,29 @@ function GeneralFields({ nextRuns }: { nextRuns: Date[] }) {
+                                 loading={isFetching}
+                                 onRefresh={() => void refetch()}
+                                 isRefreshing={isRefetching}
+-                                aria-invalid={isCloudStorageInvalid}
+-                                splitLabelBadge
++                                aria-invalid={isTargetRepositoryInvalid}
+                             />
+-                            <FieldError errors={[cloudStorageError]} />
+-                            <AppLink.Basic
+-                                to={ROUTE.settings.cloudStorages.$route}
+-                                target="_blank"
+-                                className="text-xs text-blue-500"
+-                                ignorePrevPath
+-                            >
+-                                Configure Cloud Storages
+-                            </AppLink.Basic>
++                            <FieldError errors={[targetRepositoryError]} />
++                            <div className="flex gap-4">
++                                <AppLink.Basic
++                                    to={ROUTE.settings.backupRepos.$route}
++                                    target="_blank"
++                                    className="text-xs text-blue-500"
++                                    ignorePrevPath
++                                >
++                                    Configure Backup Repos
++                                </AppLink.Basic>
++                                <AppLink.Basic
++                                    to={`${ROUTE.settings.backupSnapshots.$route}?tag=${encodeURIComponent("hivepaas.source:system-backup")}`}
++                                    className="text-xs text-blue-500"
++                                    ignorePrevPath
++                                >
++                                    View snapshots
++                                </AppLink.Basic>
++                            </div>
+                         </Field>
+                     </FieldGroup>
+                 </InfoBlock>
+-
+-                {cloudStorage.value && (
+-                    <>
+-                        <InfoBlock
+-                            titleWidth={220}
+-                            title="Bucket"
+-                        >
+-                            <Field>
+-                                <Input
+-                                    {...cloudStorageBucket}
+-                                    placeholder="use default"
+-                                    className="max-w-[400px]"
+-                                />
+-                            </Field>
+-                        </InfoBlock>
+-
+-                        <InfoBlock
+-                            titleWidth={220}
+-                            title="Destination Directory"
+-                        >
+-                            <Field>
+-                                <Input
+-                                    {...cloudStorageDestinationDir}
+-                                    placeholder="path/to/sub/dir"
+-                                    className="max-w-[400px]"
+-                                    aria-invalid={isCloudStorageDestinationDirInvalid}
+-                                />
+-                                <FieldError errors={[cloudStorageDestinationDirError]} />
+-                            </Field>
+-                        </InfoBlock>
+-                    </>
+-                )}
+             </div>
+         </>
+     );
+diff --git a/src/application/modules/settings/routes/data-backup/configuration/route/settings-data-backup-configuration.route.com.tsx b/src/application/modules/settings/routes/data-backup/configuration/route/settings-data-backup-configuration.route.com.tsx
+index e4893eb7..f7e5c4c6 100644
+--- a/src/application/modules/settings/routes/data-backup/configuration/route/settings-data-backup-configuration.route.com.tsx
++++ b/src/application/modules/settings/routes/data-backup/configuration/route/settings-data-backup-configuration.route.com.tsx
+@@ -24,20 +24,12 @@ function mapFormValuesToPayload(values: SystemBackupConfigurationFormOutput, upd
+             cronExpr: values.scheduleMode === SystemBackupScheduleMode.Cron ? values.scheduleCronExpr : "",
+             ...(values.scheduleFrom ? { initialTime: values.scheduleFrom } : {}),
+         },
+-        compression: {
+-            format: values.compressionFormat,
+-        },
+-        encryption: {
+-            format: values.encryptionFormat,
+-            secret: values.encryptionSecret,
+-        },
+-        cloudStorage: {
+-            id: values.cloudStorage?.id ?? "",
+-            bucket: values.cloudStorageBucket,
+-            destinationDir: values.cloudStorageDestinationDir,
+-        },
+-        dbBackupConfig: {
+-            backupDeletedObjects: values.backupDeletedObjects,
++        includeDB: values.includeDB,
++        includeSpec: values.includeSpec,
++        specSecrets: values.specSecrets,
++        specPassphrase: values.includeSpec ? values.specPassphrase : "",
++        targetRepository: {
++            id: values.targetRepository?.id ?? "",
+         },
+         notification: {
+             successUseDefault: values.notification.successUseDefault,
+diff --git a/src/application/modules/settings/routes/data-backup/configuration/schemas/system-backup-configuration.schema.ts b/src/application/modules/settings/routes/data-backup/configuration/schemas/system-backup-configuration.schema.ts
+index eccf7b3c..0e5c2c3e 100644
+--- a/src/application/modules/settings/routes/data-backup/configuration/schemas/system-backup-configuration.schema.ts
++++ b/src/application/modules/settings/routes/data-backup/configuration/schemas/system-backup-configuration.schema.ts
+@@ -1,5 +1,5 @@
+ import { z } from "zod";
+-import { ESystemBackupCompressionFormat, ESystemBackupEncryptionFormat } from "~/system-settings/module-shared/enums";
++import { SYSTEM_BACKUP_SPEC_SECRETS } from "~/system-settings/domain";
+ 
+ import { ESettingStatus } from "@application/shared/enums";
+ 
+@@ -29,29 +29,32 @@ export const SystemBackupConfigurationFormSchema = z
+         scheduleInterval: z.string(),
+         scheduleCronExpr: z.string(),
+         scheduleFrom: z.date().nullable(),
+-        compressionFormat: z.nativeEnum(ESystemBackupCompressionFormat),
+-        encryptionFormat: z.nativeEnum(ESystemBackupEncryptionFormat),
+-        encryptionSecret: z.string(),
+-        cloudStorage: SettingsRefSchema.optional(),
+-        cloudStorageBucket: z.string(),
+-        cloudStorageDestinationDir: z.string(),
+-        backupDeletedObjects: z.boolean(),
++        includeDB: z.boolean(),
++        includeSpec: z.boolean(),
++        specSecrets: z.nativeEnum(SYSTEM_BACKUP_SPEC_SECRETS),
++        specPassphrase: z.string(),
++        targetRepository: SettingsRefSchema.optional(),
+         notification: NotificationSchema,
+     })
+     .superRefine((data, ctx) => {
+-        if (data.encryptionFormat !== ESystemBackupEncryptionFormat.None) {
+-            if (!data.encryptionSecret.trim()) {
+-                ctx.addIssue({
+-                    code: z.ZodIssueCode.custom,
+-                    path: ["encryptionSecret"],
+-                    message: "Encryption secret is required",
+-                });
+-            } else if (data.encryptionSecret.length > 50) {
+-                ctx.addIssue({
+-                    code: z.ZodIssueCode.custom,
+-                    path: ["encryptionSecret"],
+-                    message: "Encryption secret must be at most 50 characters",
+-                });
++        const issue = (message: string, path: string) => {
++            ctx.addIssue({ code: z.ZodIssueCode.custom, path: [path], message });
++        };
++        // A disabled backup is not asked for what it would take.
++        if (data.status !== ESettingStatus.Active) {
++            return;
++        }
++        if (!data.includeDB && !data.includeSpec) {
++            issue("Back up the database, the spec, or both", "includeDB");
++        }
++        if (!data.targetRepository) {
++            issue("Pick a backup repository", "targetRepository");
++        }
++        if (data.includeSpec && data.specSecrets === SYSTEM_BACKUP_SPEC_SECRETS.Encrypted) {
++            if (!data.specPassphrase) {
++                issue("A passphrase is required to encrypt the spec's secrets", "specPassphrase");
++            } else if (data.specPassphrase.length > 256) {
++                issue("At most 256 characters", "specPassphrase");
+             }
+         }
+     });
+diff --git a/src/application/modules/settings/routes/data-backup/index.ts b/src/application/modules/settings/routes/data-backup/index.ts
+index aed5020f..16a91271 100644
+--- a/src/application/modules/settings/routes/data-backup/index.ts
++++ b/src/application/modules/settings/routes/data-backup/index.ts
+@@ -1,3 +1,2 @@
+ export * from "./configuration";
+-export * from "./backup-files";
+ export * from "./actions";
+diff --git a/src/application/modules/settings/routes/data-cleanup/configuration/form/system-cleanup-configuration.form-mappers.ts b/src/application/modules/settings/routes/data-cleanup/configuration/form/system-cleanup-configuration.form-mappers.ts
+index 546f27de..59019a01 100644
+--- a/src/application/modules/settings/routes/data-cleanup/configuration/form/system-cleanup-configuration.form-mappers.ts
++++ b/src/application/modules/settings/routes/data-cleanup/configuration/form/system-cleanup-configuration.form-mappers.ts
+@@ -29,11 +29,6 @@ export const emptySystemCleanupConfigurationFormDefaults: SystemCleanupConfigura
+         pruneContainers: true,
+         pruneBuildCache: true,
+     },
+-    backupCleanup: {
+-        enabled: true,
+-        localBackupRetention: "30d",
+-        cloudBackupRetention: "30d",
+-    },
+     cacheCleanup: {
+         enabled: true,
+         repoCacheRetention: "30d",
+@@ -76,11 +71,6 @@ export function mapSystemCleanupSettingsToFormInput(
+             pruneContainers: settings.clusterCleanup.pruneContainers,
+             pruneBuildCache: settings.clusterCleanup.pruneBuildCache,
+         },
+-        backupCleanup: {
+-            enabled: settings.backupCleanup.enabled,
+-            localBackupRetention: settings.backupCleanup.localBackupRetention,
+-            cloudBackupRetention: settings.backupCleanup.cloudBackupRetention,
+-        },
+         cacheCleanup: {
+             enabled: settings.cacheCleanup.enabled,
+             repoCacheRetention: settings.cacheCleanup.repoCacheRetention || "30d",
+diff --git a/src/application/modules/settings/routes/data-cleanup/configuration/form/system-cleanup-configuration.form.com.tsx b/src/application/modules/settings/routes/data-cleanup/configuration/form/system-cleanup-configuration.form.com.tsx
+index 73bab818..90edb868 100644
+--- a/src/application/modules/settings/routes/data-cleanup/configuration/form/system-cleanup-configuration.form.com.tsx
++++ b/src/application/modules/settings/routes/data-cleanup/configuration/form/system-cleanup-configuration.form.com.tsx
+@@ -419,74 +419,6 @@ function DockerSwarmCleanupOptionsFields() {
+     );
+ }
+ 
+-function BackupCleanupOptionsFields() {
+-    const { control } = useFormContext<SchemaInput, unknown, SchemaOutput>();
+-    const { field: enabled } = useController({ control, name: "backupCleanup.enabled" });
+-    const {
+-        field: localBackupRetention,
+-        fieldState: { error: localBackupRetentionError, invalid: isLocalBackupRetentionInvalid },
+-    } = useController({ control, name: "backupCleanup.localBackupRetention" });
+-    const {
+-        field: cloudBackupRetention,
+-        fieldState: { error: cloudBackupRetentionError, invalid: isCloudBackupRetentionInvalid },
+-    } = useController({ control, name: "backupCleanup.cloudBackupRetention" });
+-
+-    return (
+-        <>
+-            <SectionHeader>Backup Cleanup Options</SectionHeader>
+-            <div className="flex flex-col gap-6 px-3">
+-                <InfoBlock
+-                    titleWidth={220}
+-                    title="Enabled"
+-                >
+-                    <Checkbox
+-                        checked={enabled.value}
+-                        onCheckedChange={enabled.onChange}
+-                    />
+-                </InfoBlock>
+-
+-                {enabled.value && (
+-                    <>
+-                        <InfoBlock
+-                            titleWidth={220}
+-                            title="Local Backup Retention"
+-                        >
+-                            <FieldGroup>
+-                                <Field>
+-                                    <Input
+-                                        {...localBackupRetention}
+-                                        placeholder="30d"
+-                                        className="max-w-[400px]"
+-                                        aria-invalid={isLocalBackupRetentionInvalid}
+-                                    />
+-                                    <FieldError errors={[localBackupRetentionError]} />
+-                                </Field>
+-                            </FieldGroup>
+-                        </InfoBlock>
+-
+-                        <InfoBlock
+-                            titleWidth={220}
+-                            title="Cloud Backup Retention"
+-                        >
+-                            <FieldGroup>
+-                                <Field>
+-                                    <Input
+-                                        {...cloudBackupRetention}
+-                                        placeholder="30d"
+-                                        className="max-w-[400px]"
+-                                        aria-invalid={isCloudBackupRetentionInvalid}
+-                                    />
+-                                    <FieldError errors={[cloudBackupRetentionError]} />
+-                                </Field>
+-                            </FieldGroup>
+-                        </InfoBlock>
+-                    </>
+-                )}
+-            </div>
+-        </>
+-    );
+-}
+-
+ function CacheCleanupOptionsFields() {
+     const { control } = useFormContext<SchemaInput, unknown, SchemaOutput>();
+     const { field: enabled } = useController({ control, name: "cacheCleanup.enabled" });
+@@ -591,7 +523,6 @@ function EnabledCleanupConfigurationFields({ nextRuns, readOnly }: { nextRuns: D
+             <GeneralFields nextRuns={nextRuns} />
+             <DBCleanupOptionsFields />
+             <DockerSwarmCleanupOptionsFields />
+-            <BackupCleanupOptionsFields />
+             <CacheCleanupOptionsFields />
+             <FileCleanupOptionsFields />
+             <NotificationFields readOnly={readOnly} />
+diff --git a/src/application/modules/settings/routes/data-cleanup/configuration/route/settings-data-cleanup-configuration.route.com.tsx b/src/application/modules/settings/routes/data-cleanup/configuration/route/settings-data-cleanup-configuration.route.com.tsx
+index a13a51f9..2a94a0e2 100644
+--- a/src/application/modules/settings/routes/data-cleanup/configuration/route/settings-data-cleanup-configuration.route.com.tsx
++++ b/src/application/modules/settings/routes/data-cleanup/configuration/route/settings-data-cleanup-configuration.route.com.tsx
+@@ -42,11 +42,6 @@ function mapFormValuesToPayload(values: SystemCleanupConfigurationFormOutput, up
+             pruneContainers: values.clusterCleanup.pruneContainers,
+             pruneBuildCache: values.clusterCleanup.pruneBuildCache,
+         },
+-        backupCleanup: {
+-            enabled: values.backupCleanup.enabled,
+-            localBackupRetention: values.backupCleanup.localBackupRetention,
+-            cloudBackupRetention: values.backupCleanup.cloudBackupRetention,
+-        },
+         cacheCleanup: {
+             enabled: values.cacheCleanup.enabled,
+             repoCacheRetention: values.cacheCleanup.repoCacheRetention,
+diff --git a/src/application/modules/settings/routes/data-cleanup/configuration/schemas/system-cleanup-configuration.schema.ts b/src/application/modules/settings/routes/data-cleanup/configuration/schemas/system-cleanup-configuration.schema.ts
+index 5059a737..f32571c1 100644
+--- a/src/application/modules/settings/routes/data-cleanup/configuration/schemas/system-cleanup-configuration.schema.ts
++++ b/src/application/modules/settings/routes/data-cleanup/configuration/schemas/system-cleanup-configuration.schema.ts
+@@ -45,11 +45,6 @@ export const SystemCleanupConfigurationFormSchema = z.object({
+         pruneContainers: z.boolean(),
+         pruneBuildCache: z.boolean(),
+     }),
+-    backupCleanup: z.object({
+-        enabled: z.boolean(),
+-        localBackupRetention: z.string(),
+-        cloudBackupRetention: z.string(),
+-    }),
+     cacheCleanup: z.object({
+         enabled: z.boolean(),
+         repoCacheRetention: z.string(),
+diff --git a/src/application/modules/settings/settings.module.ts b/src/application/modules/settings/settings.module.ts
+index cd12a2bd..8c77620f 100644
+--- a/src/application/modules/settings/settings.module.ts
++++ b/src/application/modules/settings/settings.module.ts
+@@ -55,7 +55,6 @@ export {
+     SettingsBackupRepoCreateRoute,
+     SettingsBackupRepoEditRoute,
+     SettingsDataBackupActionsRoute,
+-    SettingsDataBackupBackupFilesRoute,
+     SettingsDataBackupConfigurationRoute,
+     SettingsDataCleanupActionsRoute,
+     SettingsDataCleanupConfigurationRoute,
+diff --git a/src/application/modules/settings/settings.router.tsx b/src/application/modules/settings/settings.router.tsx
+index 60d01340..950a0377 100644
+--- a/src/application/modules/settings/settings.router.tsx
++++ b/src/application/modules/settings/settings.router.tsx
+@@ -429,14 +429,6 @@ export const settingsRouter: RouteObject = {
+                         return { Component: SettingsDataBackupConfigurationRoute };
+                     },
+                 },
+-                {
+-                    path: "backup-files",
+-                    lazy: async () => {
+-                        const { SettingsDataBackupBackupFilesRoute } = await getLazyComponents();
+-
+-                        return { Component: SettingsDataBackupBackupFilesRoute };
+-                    },
+-                },
+                 {
+                     path: "actions",
+                     lazy: async () => {
+diff --git a/src/application/modules/system-settings/api/api-context/system-settings.api.context.ts b/src/application/modules/system-settings/api/api-context/system-settings.api.context.ts
+index c0df878e..4e3e16c4 100644
+--- a/src/application/modules/system-settings/api/api-context/system-settings.api.context.ts
++++ b/src/application/modules/system-settings/api/api-context/system-settings.api.context.ts
+@@ -23,8 +23,6 @@ import {
+     McpSettingsApiValidator,
+     SystemBackupApi,
+     SystemBackupApiValidator,
+-    SystemBackupFileApi,
+-    SystemBackupFileApiValidator,
+     SystemBackupRepoCleanupApi,
+     SystemBackupRepoCleanupApiValidator,
+     SystemCleanupApi,
+@@ -41,7 +39,6 @@ import {
+ 
+ function createApi() {
+     const systemBackupValidator = new SystemBackupApiValidator();
+-    const systemBackupFileValidator = new SystemBackupFileApiValidator();
+     const systemCleanupValidator = new SystemCleanupApiValidator();
+     const systemSslRenewalValidator = new SystemSslRenewalApiValidator();
+     const systemBackupRepoCleanupValidator = new SystemBackupRepoCleanupApiValidator();
+@@ -73,7 +70,6 @@ function createApi() {
+             traefikConfigOptions: new TraefikConfigOptionsApi(traefikConfigOptionsValidator),
+             traefikRestart: new TraefikRestartApi(traefikRestartValidator),
+             backup: new SystemBackupApi(systemBackupValidator),
+-            backupFiles: new SystemBackupFileApi(systemBackupFileValidator),
+             cleanup: new SystemCleanupApi(systemCleanupValidator),
+             sslRenewal: new SystemSslRenewalApi(systemSslRenewalValidator),
+             backupRepoCleanup: new SystemBackupRepoCleanupApi(systemBackupRepoCleanupValidator),
+diff --git a/src/application/modules/system-settings/api/hooks/index.ts b/src/application/modules/system-settings/api/hooks/index.ts
+index 2c5a0238..b50c00c9 100644
+--- a/src/application/modules/system-settings/api/hooks/index.ts
++++ b/src/application/modules/system-settings/api/hooks/index.ts
+@@ -1,5 +1,4 @@
+ export * from "./use-system-backup.api";
+-export * from "./use-system-backup-file.api";
+ export * from "./use-system-cleanup.api";
+ export * from "./use-system-ssl-renewal.api";
+ export * from "./use-system-backup-repo-cleanup.api";
+diff --git a/src/application/modules/system-settings/api/hooks/use-system-backup-file.api.ts b/src/application/modules/system-settings/api/hooks/use-system-backup-file.api.ts
+deleted file mode 100644
+index 41c740de..00000000
+--- a/src/application/modules/system-settings/api/hooks/use-system-backup-file.api.ts
++++ /dev/null
+@@ -1,86 +0,0 @@
+-import { use, useMemo } from "react";
+-
+-import { match } from "oxide.ts";
+-import { SystemSettingsApiContext } from "~/system-settings/api/api-context";
+-import type {
+-    SystemBackupFile_DeleteOne_Req,
+-    SystemBackupFile_DownloadOne_Req,
+-    SystemBackupFile_FindManyPaginated_Req,
+-    SystemBackupFile_FindOneById_Req,
+-} from "~/system-settings/api/services";
+-
+-import { useApiErrorNotifications } from "@infrastructure/api";
+-
+-function createHook() {
+-    return function useSystemBackupFileApi() {
+-        const { api } = use(SystemSettingsApiContext);
+-        const { notifyError } = useApiErrorNotifications();
+-
+-        const queries = useMemo(
+-            () => ({
+-                findManyPaginated: async (
+-                    data: SystemBackupFile_FindManyPaginated_Req["data"],
+-                    signal?: AbortSignal,
+-                ) => {
+-                    const result = await api.systemSettings.backupFiles.findManyPaginated({ data }, signal);
+-
+-                    return match(result, {
+-                        Ok: _ => _,
+-                        Err: error => {
+-                            notifyError({ message: "Failed to get backup files", error });
+-                            throw error;
+-                        },
+-                    });
+-                },
+-                findOneById: async (data: SystemBackupFile_FindOneById_Req["data"], signal?: AbortSignal) => {
+-                    const result = await api.systemSettings.backupFiles.findOneById({ data }, signal);
+-
+-                    return match(result, {
+-                        Ok: _ => _,
+-                        Err: error => {
+-                            notifyError({ message: "Failed to get backup file", error });
+-                            throw error;
+-                        },
+-                    });
+-                },
+-                downloadOne: async (data: SystemBackupFile_DownloadOne_Req["data"], signal?: AbortSignal) => {
+-                    const result = await api.systemSettings.backupFiles.downloadOne({ data }, signal);
+-
+-                    return match(result, {
+-                        Ok: _ => _,
+-                        Err: error => {
+-                            notifyError({ message: "Failed to download backup file", error });
+-                            throw error;
+-                        },
+-                    });
+-                },
+-            }),
+-            [api, notifyError],
+-        );
+-
+-        const mutations = useMemo(
+-            () => ({
+-                deleteOne: async (data: SystemBackupFile_DeleteOne_Req["data"]) => {
+-                    const result = await api.systemSettings.backupFiles.deleteOne({ data });
+-
+-                    return match(result, {
+-                        Ok: response => response,
+-                        Err: error => {
+-                            notifyError({
+-                                message: "Failed to delete backup file",
+-                                error,
+-                            });
+-
+-                            throw error;
+-                        },
+-                    });
+-                },
+-            }),
+-            [api, notifyError],
+-        );
+-
+-        return { queries, mutations };
+-    };
+-}
+-
+-export const useSystemBackupFileApi = createHook();
+diff --git a/src/application/modules/system-settings/api/services/index.ts b/src/application/modules/system-settings/api/services/index.ts
+index 800d7e60..c07853bf 100644
+--- a/src/application/modules/system-settings/api/services/index.ts
++++ b/src/application/modules/system-settings/api/services/index.ts
+@@ -1,5 +1,4 @@
+ export * from "./system-backup-services";
+-export * from "./system-backup-file-services";
+ export * from "./system-cleanup-services";
+ export * from "./system-ssl-renewal-services";
+ export * from "./system-backup-repo-cleanup-services";
+diff --git a/src/application/modules/system-settings/api/services/system-backup-file-services/index.ts b/src/application/modules/system-settings/api/services/system-backup-file-services/index.ts
+deleted file mode 100644
+index 99c4ecf1..00000000
+--- a/src/application/modules/system-settings/api/services/system-backup-file-services/index.ts
++++ /dev/null
+@@ -1,3 +0,0 @@
+-export * from "./system-backup-file.api";
+-export * from "./system-backup-file.api.contracts";
+-export * from "./system-backup-file.api.validator";
+diff --git a/src/application/modules/system-settings/api/services/system-backup-file-services/system-backup-file.api.contracts.ts b/src/application/modules/system-settings/api/services/system-backup-file-services/system-backup-file.api.contracts.ts
+deleted file mode 100644
+index 29630294..00000000
+--- a/src/application/modules/system-settings/api/services/system-backup-file-services/system-backup-file.api.contracts.ts
++++ /dev/null
+@@ -1,36 +0,0 @@
+-import type { PaginationState, SortingState } from "@infrastructure/data";
+-import type { SystemBackupFile } from "~/system-settings/domain";
+-
+-import type { ApiRequestBase, ApiResponseBase, ApiResponsePaginated } from "@infrastructure/api";
+-
+-export type SystemBackupFile_FindManyPaginated_Req = ApiRequestBase<{
+-    pagination?: PaginationState;
+-    sorting?: SortingState;
+-    search?: string;
+-}>;
+-
+-export type SystemBackupFile_FindManyPaginated_Res = ApiResponsePaginated<SystemBackupFile>;
+-
+-export type SystemBackupFile_FindOneById_Req = ApiRequestBase<{
+-    fileID: string;
+-}>;
+-
+-export type SystemBackupFile_FindOneById_Res = ApiResponseBase<SystemBackupFile>;
+-
+-export type SystemBackupFile_DownloadOne_Req = ApiRequestBase<{
+-    fileID: string;
+-}>;
+-
+-export type SystemBackupFile_DownloadOne_Res = ApiResponseBase<{
+-    blob: Blob;
+-    filename?: string;
+-}>;
+-
+-export type SystemBackupFile_DeleteOne_Req = ApiRequestBase<{
+-    fileID: string;
+-    deletePermanently: boolean;
+-}>;
+-
+-export type SystemBackupFile_DeleteOne_Res = ApiResponseBase<{
+-    type: "success";
+-}>;
+diff --git a/src/application/modules/system-settings/api/services/system-backup-file-services/system-backup-file.api.ts b/src/application/modules/system-settings/api/services/system-backup-file-services/system-backup-file.api.ts
+deleted file mode 100644
+index a3cb3e16..00000000
+--- a/src/application/modules/system-settings/api/services/system-backup-file-services/system-backup-file.api.ts
++++ /dev/null
+@@ -1,124 +0,0 @@
+-import type { AxiosResponse } from "axios";
+-import { Err, Ok, type Result } from "oxide.ts";
+-import { catchError, from, lastValueFrom, map, of } from "rxjs";
+-
+-import { BaseApi, parseApiError } from "@infrastructure/api";
+-
+-import type {
+-    SystemBackupFile_DeleteOne_Req,
+-    SystemBackupFile_DeleteOne_Res,
+-    SystemBackupFile_DownloadOne_Req,
+-    SystemBackupFile_DownloadOne_Res,
+-    SystemBackupFile_FindManyPaginated_Req,
+-    SystemBackupFile_FindManyPaginated_Res,
+-    SystemBackupFile_FindOneById_Req,
+-    SystemBackupFile_FindOneById_Res,
+-} from "./system-backup-file.api.contracts";
+-import type { SystemBackupFileApiValidator } from "./system-backup-file.api.validator";
+-
+-function parseFilenameFromContentDisposition(contentDisposition?: string): string | undefined {
+-    if (!contentDisposition) {
+-        return undefined;
+-    }
+-
+-    const encodedFilename = /filename\*=UTF-8''([^;]+)/i.exec(contentDisposition)?.[1];
+-    if (encodedFilename) {
+-        return decodeURIComponent(encodedFilename);
+-    }
+-
+-    const filename = /filename="?([^";]+)"?/i.exec(contentDisposition)?.[1];
+-    return filename ? decodeURIComponent(filename) : undefined;
+-}
+-
+-function mapDownloadResponse(response: AxiosResponse<Blob>): SystemBackupFile_DownloadOne_Res {
+-    const headers = response.headers as Record<string, unknown>;
+-    const contentDisposition = headers["content-disposition"];
+-
+-    return {
+-        data: {
+-            blob: response.data,
+-            filename: parseFilenameFromContentDisposition(
+-                typeof contentDisposition === "string" ? contentDisposition : undefined,
+-            ),
+-        },
+-    };
+-}
+-
+-export class SystemBackupFileApi extends BaseApi {
+-    public constructor(private readonly validator: SystemBackupFileApiValidator) {
+-        super();
+-    }
+-
+-    async findManyPaginated(
+-        request: SystemBackupFile_FindManyPaginated_Req,
+-        signal?: AbortSignal,
+-    ): Promise<Result<SystemBackupFile_FindManyPaginated_Res, Error>> {
+-        const { pagination, sorting, search } = request.data;
+-        const query = this.queryBuilder.getInstance();
+-
+-        query.pagination(pagination).sorting(sorting).search(search);
+-
+-        return lastValueFrom(
+-            from(
+-                this.client.v1.get("/system/settings/backup/files", {
+-                    params: query.build(),
+-                    signal,
+-                }),
+-            ).pipe(
+-                map(this.validator.findManyPaginated),
+-                map(res => Ok(res)),
+-                catchError(error => of(Err(parseApiError(error)))),
+-            ),
+-        );
+-    }
+-
+-    async findOneById(
+-        request: SystemBackupFile_FindOneById_Req,
+-        signal?: AbortSignal,
+-    ): Promise<Result<SystemBackupFile_FindOneById_Res, Error>> {
+-        const { fileID } = request.data;
+-
+-        return lastValueFrom(
+-            from(this.client.v1.get(`/system/settings/backup/files/${fileID}`, { signal })).pipe(
+-                map(this.validator.findOneById),
+-                map(res => Ok(res)),
+-                catchError(error => of(Err(parseApiError(error)))),
+-            ),
+-        );
+-    }
+-
+-    async downloadOne(
+-        request: SystemBackupFile_DownloadOne_Req,
+-        signal?: AbortSignal,
+-    ): Promise<Result<SystemBackupFile_DownloadOne_Res, Error>> {
+-        const { fileID } = request.data;
+-
+-        return lastValueFrom(
+-            from(
+-                this.client.v1.get<Blob>(`/system/settings/backup/files/${fileID}/download`, {
+-                    responseType: "blob",
+-                    signal,
+-                }),
+-            ).pipe(
+-                map(mapDownloadResponse),
+-                map(res => Ok(res)),
+-                catchError(error => of(Err(parseApiError(error)))),
+-            ),
+-        );
+-    }
+-
+-    async deleteOne(request: SystemBackupFile_DeleteOne_Req): Promise<Result<SystemBackupFile_DeleteOne_Res, Error>> {
+-        const { fileID, deletePermanently } = request.data;
+-
+-        return lastValueFrom(
+-            from(
+-                this.client.v1.delete(`/system/settings/backup/files/${fileID}`, {
+-                    params: { deletePermanently },
+-                }),
+-            ).pipe(
+-                map(() => Ok({ data: { type: "success" } } as const)),
+-                catchError(error => of(Err(parseApiError(error)))),
+-            ),
+-        );
+-    }
+-}
+diff --git a/src/application/modules/system-settings/api/services/system-backup-file-services/system-backup-file.api.validator.ts b/src/application/modules/system-settings/api/services/system-backup-file-services/system-backup-file.api.validator.ts
+deleted file mode 100644
+index bd8780a5..00000000
+--- a/src/application/modules/system-settings/api/services/system-backup-file-services/system-backup-file.api.validator.ts
++++ /dev/null
+@@ -1,32 +0,0 @@
+-import { type AxiosResponse } from "axios";
+-import { z } from "zod";
+-import { SystemBackupFileEntitySchema } from "~/system-settings/module-shared/schemas";
+-
+-import { BaseMetaApiSchema, PagingMetaApiSchema, parseApiResponse } from "@infrastructure/api";
+-
+-import type {
+-    SystemBackupFile_FindManyPaginated_Res,
+-    SystemBackupFile_FindOneById_Res,
+-} from "./system-backup-file.api.contracts";
+-
+-const FindManyPaginatedSchema = z.object({
+-    data: z.array(SystemBackupFileEntitySchema),
+-    meta: PagingMetaApiSchema,
+-});
+-
+-const FindOneByIdSchema = z.object({
+-    data: SystemBackupFileEntitySchema,
+-    meta: BaseMetaApiSchema.nullish(),
+-});
+-
+-export class SystemBackupFileApiValidator {
+-    findManyPaginated = (response: AxiosResponse): SystemBackupFile_FindManyPaginated_Res => {
+-        const { data, meta } = parseApiResponse({ response, schema: FindManyPaginatedSchema });
+-        return { data, meta };
+-    };
+-
+-    findOneById = (response: AxiosResponse): SystemBackupFile_FindOneById_Res => {
+-        const { data, meta } = parseApiResponse({ response, schema: FindOneByIdSchema });
+-        return { data, meta };
+-    };
+-}
+diff --git a/src/application/modules/system-settings/api/services/system-backup-services/system-backup.api.contracts.ts b/src/application/modules/system-settings/api/services/system-backup-services/system-backup.api.contracts.ts
+index 12f70a94..3f9e5b61 100644
+--- a/src/application/modules/system-settings/api/services/system-backup-services/system-backup.api.contracts.ts
++++ b/src/application/modules/system-settings/api/services/system-backup-services/system-backup.api.contracts.ts
+@@ -1,11 +1,9 @@
+-import type { SystemBackupSettings } from "~/system-settings/domain";
++import type { SystemBackupSettings, SystemBackupSpecSecrets } from "~/system-settings/domain";
+ 
+ import type { ESettingStatus } from "@application/shared/enums";
+ 
+ import type { ApiRequestBase, ApiResponseBase } from "@infrastructure/api";
+ 
+-import type { ESystemBackupCompressionFormat, ESystemBackupEncryptionFormat } from "../../../module-shared/enums";
+-
+ export type SystemBackup_FindOne_Req = ApiRequestBase<Record<string, never>>;
+ export type SystemBackup_FindOne_Res = ApiResponseBase<SystemBackupSettings>;
+ 
+@@ -17,20 +15,12 @@ export type SystemBackup_UpdateOne_Payload = {
+         cronExpr: string;
+         initialTime?: Date;
+     };
+-    compression: {
+-        format: ESystemBackupCompressionFormat;
+-    };
+-    encryption: {
+-        format: ESystemBackupEncryptionFormat;
+-        secret: string;
+-    };
+-    cloudStorage: {
++    includeDB: boolean;
++    includeSpec: boolean;
++    specSecrets: SystemBackupSpecSecrets;
++    specPassphrase: string;
++    targetRepository: {
+         id: string;
+-        bucket: string;
+-        destinationDir: string;
+-    };
+-    dbBackupConfig: {
+-        backupDeletedObjects: boolean;
+     };
+     notification: {
+         success: {
+diff --git a/src/application/modules/system-settings/api/services/system-cleanup-services/system-cleanup.api.contracts.ts b/src/application/modules/system-settings/api/services/system-cleanup-services/system-cleanup.api.contracts.ts
+index f951687d..7c03573e 100644
+--- a/src/application/modules/system-settings/api/services/system-cleanup-services/system-cleanup.api.contracts.ts
++++ b/src/application/modules/system-settings/api/services/system-cleanup-services/system-cleanup.api.contracts.ts
+@@ -39,11 +39,6 @@ export type SystemCleanup_UpdateOne_Payload = {
+         pruneContainers: boolean;
+         pruneBuildCache: boolean;
+     };
+-    backupCleanup: {
+-        enabled: boolean;
+-        cloudBackupRetention: string;
+-        localBackupRetention: string;
+-    };
+     cacheCleanup: {
+         enabled: boolean;
+         repoCacheRetention: string;
+diff --git a/src/application/modules/system-settings/data/commands/index.ts b/src/application/modules/system-settings/data/commands/index.ts
+index 0bbe41d6..ff9fbc9c 100644
+--- a/src/application/modules/system-settings/data/commands/index.ts
++++ b/src/application/modules/system-settings/data/commands/index.ts
+@@ -1,5 +1,4 @@
+ export * from "./system-backup.commands";
+-export * from "./system-backup-file.commands";
+ export * from "./system-cleanup.commands";
+ export * from "./system-ssl-renewal.commands";
+ export * from "./system-backup-repo-cleanup.commands";
+diff --git a/src/application/modules/system-settings/data/commands/system-backup-file.commands.ts b/src/application/modules/system-settings/data/commands/system-backup-file.commands.ts
+deleted file mode 100644
+index eca482a6..00000000
+--- a/src/application/modules/system-settings/data/commands/system-backup-file.commands.ts
++++ /dev/null
+@@ -1,29 +0,0 @@
+-import { type UseMutationOptions, useMutation, useQueryClient } from "@tanstack/react-query";
+-import { useSystemBackupFileApi } from "~/system-settings/api/hooks";
+-import type { SystemBackupFile_DeleteOne_Req, SystemBackupFile_DeleteOne_Res } from "~/system-settings/api/services";
+-import { QK } from "~/system-settings/data/constants";
+-
+-type DeleteOneReq = SystemBackupFile_DeleteOne_Req["data"];
+-type DeleteOneRes = SystemBackupFile_DeleteOne_Res;
+-type DeleteOneOptions = Omit<UseMutationOptions<DeleteOneRes, Error, DeleteOneReq>, "mutationFn">;
+-
+-function useDeleteOne({ onSuccess, ...options }: DeleteOneOptions = {}) {
+-    const { mutations } = useSystemBackupFileApi();
+-    const queryClient = useQueryClient();
+-
+-    return useMutation({
+-        mutationFn: mutations.deleteOne,
+-        onSuccess: (response, request, ...rest) => {
+-            void queryClient.invalidateQueries({
+-                queryKey: [QK["system-settings.backup-files.find-many-paginated"]],
+-            });
+-
+-            onSuccess?.(response, request, ...rest);
+-        },
+-        ...options,
+-    });
+-}
+-
+-export const SystemBackupFileCommands = Object.freeze({
+-    useDeleteOne,
+-});
+diff --git a/src/application/modules/system-settings/data/queries/index.ts b/src/application/modules/system-settings/data/queries/index.ts
+index b27a9fd6..3ed0f48a 100644
+--- a/src/application/modules/system-settings/data/queries/index.ts
++++ b/src/application/modules/system-settings/data/queries/index.ts
+@@ -1,5 +1,4 @@
+ export * from "./system-backup.queries";
+-export * from "./system-backup-file.queries";
+ export * from "./system-cleanup.queries";
+ export * from "./system-ssl-renewal.queries";
+ export * from "./system-backup-repo-cleanup.queries";
+diff --git a/src/application/modules/system-settings/data/queries/system-backup-file.queries.ts b/src/application/modules/system-settings/data/queries/system-backup-file.queries.ts
+deleted file mode 100644
+index f987dbfc..00000000
+--- a/src/application/modules/system-settings/data/queries/system-backup-file.queries.ts
++++ /dev/null
+@@ -1,43 +0,0 @@
+-import { type UseQueryOptions, useQuery } from "@tanstack/react-query";
+-import { useSystemBackupFileApi } from "~/system-settings/api/hooks";
+-import type {
+-    SystemBackupFile_FindManyPaginated_Req,
+-    SystemBackupFile_FindManyPaginated_Res,
+-    SystemBackupFile_FindOneById_Req,
+-    SystemBackupFile_FindOneById_Res,
+-} from "~/system-settings/api/services";
+-import { QK } from "~/system-settings/data/constants";
+-
+-type FindManyPaginatedReq = SystemBackupFile_FindManyPaginated_Req["data"];
+-type FindManyPaginatedRes = SystemBackupFile_FindManyPaginated_Res;
+-type FindManyPaginatedOptions = Omit<UseQueryOptions<FindManyPaginatedRes>, "queryKey" | "queryFn">;
+-
+-type FindOneByIdReq = SystemBackupFile_FindOneById_Req["data"];
+-type FindOneByIdRes = SystemBackupFile_FindOneById_Res;
+-type FindOneByIdOptions = Omit<UseQueryOptions<FindOneByIdRes>, "queryKey" | "queryFn">;
+-
+-function useFindManyPaginated(request: FindManyPaginatedReq = {}, options: FindManyPaginatedOptions = {}) {
+-    const { queries } = useSystemBackupFileApi();
+-
+-    return useQuery({
+-        queryKey: [QK["system-settings.backup-files.find-many-paginated"], request],
+-        queryFn: ({ signal }) => queries.findManyPaginated(request, signal),
+-        ...options,
+-    });
+-}
+-
+-function useFindOneById(request: FindOneByIdReq, options: FindOneByIdOptions = {}) {
+-    const { queries } = useSystemBackupFileApi();
+-
+-    return useQuery({
+-        queryKey: [QK["system-settings.backup-files.find-one-by-id"], request],
+-        queryFn: ({ signal }) => queries.findOneById(request, signal),
+-        enabled: Boolean(request.fileID),
+-        ...options,
+-    });
+-}
+-
+-export const SystemBackupFileQueries = Object.freeze({
+-    useFindManyPaginated,
+-    useFindOneById,
+-});
+diff --git a/src/application/modules/system-settings/domain/index.ts b/src/application/modules/system-settings/domain/index.ts
+index 59a01e04..de329481 100644
+--- a/src/application/modules/system-settings/domain/index.ts
++++ b/src/application/modules/system-settings/domain/index.ts
+@@ -1,5 +1,4 @@
+ export * from "./system-backup-settings.entity";
+-export * from "./system-backup-file.entity";
+ export * from "./system-cleanup-settings.entity";
+ export * from "./system-ssl-renewal-settings.entity";
+ export * from "./system-backup-repo-cleanup-settings.entity";
+diff --git a/src/application/modules/system-settings/domain/system-backup-file.entity.ts b/src/application/modules/system-settings/domain/system-backup-file.entity.ts
+deleted file mode 100644
+index 88491b2b..00000000
+--- a/src/application/modules/system-settings/domain/system-backup-file.entity.ts
++++ /dev/null
+@@ -1,29 +0,0 @@
+-import type { SettingsBaseEntity } from "~/settings/domain";
+-
+-import type { ESettingStatus } from "@application/shared/enums";
+-
+-import type { OpenApiConstant } from "@infrastructure/api";
+-
+-import type { ESystemBackupFileStorageType } from "../module-shared/enums";
+-
+-export interface SystemBackupFileStorage extends SettingsBaseEntity {
+-    status: OpenApiConstant<ESettingStatus>;
+-}
+-
+-export interface SystemBackupFile {
+-    id: string;
+-    type: string;
+-    kind: string;
+-    status: OpenApiConstant<ESettingStatus>;
+-    key: string;
+-    name: string;
+-    path: string;
+-    bucket?: string;
+-    mimetype: string;
+-    sizeBytes: number;
+-    storageType: ESystemBackupFileStorageType;
+-    storage?: SystemBackupFileStorage | null;
+-    updateVer: number;
+-    createdAt: Date;
+-    updatedAt: Date;
+-}
+diff --git a/src/application/modules/system-settings/domain/system-backup-settings.entity.ts b/src/application/modules/system-settings/domain/system-backup-settings.entity.ts
+index 5ce44336..89231895 100644
+--- a/src/application/modules/system-settings/domain/system-backup-settings.entity.ts
++++ b/src/application/modules/system-settings/domain/system-backup-settings.entity.ts
+@@ -4,32 +4,12 @@ import type { ESettingStatus } from "@application/shared/enums";
+ 
+ import type { OpenApiConstant } from "@infrastructure/api";
+ 
+-import type { ESystemBackupCompressionFormat, ESystemBackupEncryptionFormat } from "../module-shared/enums";
+-
+ export interface SystemBackupSchedule {
+     interval: string;
+     cronExpr: string;
+     initialTime?: Date | null;
+ }
+ 
+-export interface SystemBackupCompression {
+-    format: ESystemBackupCompressionFormat;
+-}
+-
+-export interface SystemBackupEncryption {
+-    format: ESystemBackupEncryptionFormat;
+-    secret: string;
+-}
+-
+-export interface SystemBackupCloudStorage extends SettingsBaseEntity {
+-    bucket?: string;
+-    destinationDir: string;
+-}
+-
+-export interface SystemBackupDBConfig {
+-    backupDeletedObjects: boolean;
+-}
+-
+ export interface SystemBackupNotification {
+     success?: {
+         id: string;
+@@ -43,13 +23,27 @@ export interface SystemBackupNotification {
+     failureUseDefault: boolean;
+ }
+ 
++/** How a system backup's spec holds secrets, as a spec export's modes are. */
++export const SYSTEM_BACKUP_SPEC_SECRETS = {
++    Encrypted: "encrypted",
++    Omit: "omit",
++    Plaintext: "plaintext",
++} as const;
++
++export type SystemBackupSpecSecrets = (typeof SYSTEM_BACKUP_SPEC_SECRETS)[keyof typeof SYSTEM_BACKUP_SPEC_SECRETS];
++
+ export interface SystemBackupSettings extends SettingsBaseEntity {
+     status: OpenApiConstant<ESettingStatus>;
+     schedule: SystemBackupSchedule;
+-    compression: SystemBackupCompression;
+-    encryption: SystemBackupEncryption;
+-    cloudStorage?: SystemBackupCloudStorage | null;
+-    dbBackupConfig: SystemBackupDBConfig;
++    /** What a run takes: HivePaaS's database, the spec of the whole installation, or both. */
++    includeDB: boolean;
++    includeSpec: boolean;
++    /** How the spec holds secrets: encrypted, omit, plaintext. */
++    specSecrets: SystemBackupSpecSecrets;
++    /** Masked once stored. */
++    specPassphrase: string;
++    /** A backup repository at the global scope; its status is "missing" when it is deleted. */
++    targetRepository?: { id: string; name: string; status: string } | null;
+     notification?: SystemBackupNotification | null;
+     secretMasked?: boolean;
+     nextRuns: Date[];
+diff --git a/src/application/modules/system-settings/domain/system-cleanup-settings.entity.ts b/src/application/modules/system-settings/domain/system-cleanup-settings.entity.ts
+index 47c48039..2bdccb0f 100644
+--- a/src/application/modules/system-settings/domain/system-cleanup-settings.entity.ts
++++ b/src/application/modules/system-settings/domain/system-cleanup-settings.entity.ts
+@@ -30,12 +30,6 @@ export interface SystemCleanupClusterCleanup {
+     pruneBuildCache: boolean;
+ }
+ 
+-export interface SystemCleanupBackupCleanup {
+-    enabled: boolean;
+-    cloudBackupRetention: string;
+-    localBackupRetention: string;
+-}
+-
+ export interface SystemCleanupCacheCleanup {
+     enabled: boolean;
+     repoCacheRetention: string;
+@@ -63,7 +57,6 @@ export interface SystemCleanupSettings extends SettingsBaseEntity {
+     schedule: SystemCleanupSchedule;
+     dbObjectRetention: SystemCleanupDBObjectRetention;
+     clusterCleanup: SystemCleanupClusterCleanup;
+-    backupCleanup: SystemCleanupBackupCleanup;
+     cacheCleanup: SystemCleanupCacheCleanup;
+     fileCleanup: SystemCleanupFileCleanup;
+     notification?: SystemCleanupNotification | null;
+diff --git a/src/application/modules/system-settings/module-shared/definitions/index.ts b/src/application/modules/system-settings/module-shared/definitions/index.ts
+deleted file mode 100644
+index ef02ee47..00000000
+--- a/src/application/modules/system-settings/module-shared/definitions/index.ts
++++ /dev/null
+@@ -1 +0,0 @@
+-export * from "./tables";
+diff --git a/src/application/modules/system-settings/module-shared/definitions/tables/index.ts b/src/application/modules/system-settings/module-shared/definitions/tables/index.ts
+deleted file mode 100644
+index 00438cf6..00000000
+--- a/src/application/modules/system-settings/module-shared/definitions/tables/index.ts
++++ /dev/null
+@@ -1 +0,0 @@
+-export * from "./system-backup-files";
+diff --git a/src/application/modules/system-settings/module-shared/definitions/tables/system-backup-files/building-blocks/backup-file-menu-cell.com.tsx b/src/application/modules/system-settings/module-shared/definitions/tables/system-backup-files/building-blocks/backup-file-menu-cell.com.tsx
+deleted file mode 100644
+index d59f14f1..00000000
+--- a/src/application/modules/system-settings/module-shared/definitions/tables/system-backup-files/building-blocks/backup-file-menu-cell.com.tsx
++++ /dev/null
+@@ -1,203 +0,0 @@
+-import { memo, useState } from "react";
+-
+-import { Button } from "@components/ui/button";
+-import { Checkbox } from "@components/ui/checkbox";
+-import {
+-    Dialog,
+-    DialogActionFooter,
+-    DialogBody,
+-    DialogFixedContent,
+-    DialogHeader,
+-    DialogTitle,
+-} from "@components/ui/dialog";
+-import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger } from "@components/ui/dropdown-menu";
+-import { dashedBorderBox } from "@lib/styles";
+-import { cn } from "@lib/utils";
+-import { DownloadIcon, MoreVertical, Trash2Icon } from "lucide-react";
+-import { toast } from "sonner";
+-import { useSystemBackupFileApi } from "~/system-settings/api/hooks";
+-import { SystemBackupFileCommands } from "~/system-settings/data/commands";
+-import type { SystemBackupFile } from "~/system-settings/domain";
+-
+-import { MODULE_IDS } from "@application/shared/constants";
+-import { PermissionTooltipAction } from "@application/shared/permissions";
+-
+-function saveBlob(blob: Blob, filename: string) {
+-    const url = window.URL.createObjectURL(blob);
+-    const anchor = document.createElement("a");
+-
+-    anchor.href = url;
+-    anchor.download = filename;
+-    anchor.click();
+-    window.URL.revokeObjectURL(url);
+-}
+-
+-function View({ file }: Props) {
+-    const [menuOpen, setMenuOpen] = useState(false);
+-    const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+-    const [deletePermanently, setDeletePermanently] = useState(false);
+-    const [isDownloading, setIsDownloading] = useState(false);
+-    const { queries } = useSystemBackupFileApi();
+-    const { mutate: deleteOne, isPending: isDeleting } = SystemBackupFileCommands.useDeleteOne({
+-        onSuccess: () => {
+-            toast.success("Backup file deleted successfully");
+-            setDeleteDialogOpen(false);
+-        },
+-    });
+-
+-    const isLocalFile = file.storageType === "local";
+-
+-    async function handleDownload() {
+-        try {
+-            setIsDownloading(true);
+-            const { data } = await queries.downloadOne({ fileID: file.id });
+-            saveBlob(data.blob, data.filename ?? file.name);
+-            setMenuOpen(false);
+-        } catch (error) {
+-            toast.error(error instanceof Error ? error.message : "Failed to download backup file");
+-        } finally {
+-            setIsDownloading(false);
+-        }
+-    }
+-
+-    function openDeleteDialog() {
+-        setDeletePermanently(false);
+-        setDeleteDialogOpen(true);
+-        setMenuOpen(false);
+-    }
+-
+-    function closeDeleteDialog() {
+-        if (!isDeleting) {
+-            setDeleteDialogOpen(false);
+-        }
+-    }
+-
+-    function handleDelete() {
+-        deleteOne({
+-            fileID: file.id,
+-            deletePermanently: isLocalFile || deletePermanently,
+-        });
+-    }
+-
+-    return (
+-        <>
+-            <DropdownMenu
+-                open={menuOpen}
+-                onOpenChange={setMenuOpen}
+-            >
+-                <DropdownMenuTrigger asChild>
+-                    <Button
+-                        variant="ghost"
+-                        size="icon"
+-                        className="h-8 w-8"
+-                    >
+-                        <MoreVertical className="size-4" />
+-                        <span className="sr-only">Actions menu</span>
+-                    </Button>
+-                </DropdownMenuTrigger>
+-                <DropdownMenuContent align="end">
+-                    <div className="flex flex-col gap-0">
+-                        <Button
+-                            className="justify-start py-1.5"
+-                            variant="ghost"
+-                            disabled={isDownloading}
+-                            onClick={() => {
+-                                void handleDownload();
+-                            }}
+-                        >
+-                            <DownloadIcon className="mr-2 size-4" />
+-                            Download File
+-                        </Button>
+-                        <PermissionTooltipAction
+-                            id={MODULE_IDS.System}
+-                            action="write"
+-                            triggerClassName="w-full"
+-                        >
+-                            {({ isDenied }) => (
+-                                <Button
+-                                    className="w-full justify-start py-1.5"
+-                                    variant="ghost"
+-                                    disabled={isDenied}
+-                                    onClick={openDeleteDialog}
+-                                >
+-                                    <Trash2Icon className="mr-2 size-4" />
+-                                    Delete
+-                                </Button>
+-                            )}
+-                        </PermissionTooltipAction>
+-                    </div>
+-                </DropdownMenuContent>
+-            </DropdownMenu>
+-
+-            <Dialog
+-                open={deleteDialogOpen}
+-                onOpenChange={isOpen => {
+-                    if (!isOpen) {
+-                        closeDeleteDialog();
+-                    }
+-                }}
+-            >
+-                <DialogFixedContent className="sm:max-w-[560px]">
+-                    <DialogHeader>
+-                        <DialogTitle>Delete file: {file.name}</DialogTitle>
+-                    </DialogHeader>
+-                    <DialogBody className="flex flex-col gap-4">
+-                        {isLocalFile ? (
+-                            <div className={cn(dashedBorderBox)}>
+-                                <span className="font-semibold text-orange-500">Warning:</span> This will delete the
+-                                database record and permanently erase the physical file from the storage system. Once
+-                                deleted, this file cannot be retrieved or restored.
+-                            </div>
+-                        ) : (
+-                            <>
+-                                <p className={cn(dashedBorderBox)}>
+-                                    If you select{" "}
+-                                    <span className="font-medium text-orange-500">Delete Physical File</span>, the file
+-                                    will be permanently deleted and cannot be recovered. Otherwise, only the file record
+-                                    in the database will be removed.
+-                                </p>
+-
+-                                <label
+-                                    htmlFor={`deletePhysicalFile-${file.id}`}
+-                                    className="flex items-center gap-3 text-sm font-medium"
+-                                >
+-                                    <Checkbox
+-                                        id={`deletePhysicalFile-${file.id}`}
+-                                        checked={deletePermanently}
+-                                        disabled={isDeleting}
+-                                        onCheckedChange={checked => {
+-                                            setDeletePermanently(checked === true);
+-                                        }}
+-                                    />
+-                                    Delete Physical File
+-                                </label>
+-                            </>
+-                        )}
+-                    </DialogBody>
+-                    <DialogActionFooter className="gap-3">
+-                        <Button
+-                            variant="outline"
+-                            disabled={isDeleting}
+-                            onClick={closeDeleteDialog}
+-                        >
+-                            Cancel
+-                        </Button>
+-                        <Button
+-                            variant="destructive"
+-                            disabled={isDeleting}
+-                            onClick={handleDelete}
+-                        >
+-                            Delete
+-                        </Button>
+-                    </DialogActionFooter>
+-                </DialogFixedContent>
+-            </Dialog>
+-        </>
+-    );
+-}
+-
+-interface Props {
+-    file: SystemBackupFile;
+-}
+-
+-export const BackupFileMenuCell = memo(View);
+diff --git a/src/application/modules/system-settings/module-shared/definitions/tables/system-backup-files/building-blocks/index.ts b/src/application/modules/system-settings/module-shared/definitions/tables/system-backup-files/building-blocks/index.ts
+deleted file mode 100644
+index 70fb2c1c..00000000
+--- a/src/application/modules/system-settings/module-shared/definitions/tables/system-backup-files/building-blocks/index.ts
++++ /dev/null
+@@ -1 +0,0 @@
+-export * from "./backup-file-menu-cell.com";
+diff --git a/src/application/modules/system-settings/module-shared/definitions/tables/system-backup-files/index.ts b/src/application/modules/system-settings/module-shared/definitions/tables/system-backup-files/index.ts
+deleted file mode 100644
+index 97aa8177..00000000
+--- a/src/application/modules/system-settings/module-shared/definitions/tables/system-backup-files/index.ts
++++ /dev/null
+@@ -1,2 +0,0 @@
+-export * from "./system-backup-files-table.defs";
+-export * from "./utils";
+diff --git a/src/application/modules/system-settings/module-shared/definitions/tables/system-backup-files/system-backup-files-table.defs.tsx b/src/application/modules/system-settings/module-shared/definitions/tables/system-backup-files/system-backup-files-table.defs.tsx
+deleted file mode 100644
+index 50cbc9e5..00000000
+--- a/src/application/modules/system-settings/module-shared/definitions/tables/system-backup-files/system-backup-files-table.defs.tsx
++++ /dev/null
+@@ -1,87 +0,0 @@
+-import type { ColumnDef } from "@tanstack/react-table";
+-import { format } from "date-fns";
+-import { EyeIcon } from "lucide-react";
+-import { SettingStatusBadge } from "~/settings/module-shared/components";
+-import type { SystemBackupFile } from "~/system-settings/domain";
+-
+-import { getFriendlyDataSize } from "@application/shared/utils/data-size";
+-
+-import { Button } from "@/components/ui";
+-
+-import { BackupFileMenuCell } from "./building-blocks";
+-import { getBackupFileStorageLabel } from "./utils";
+-
+-function createColumns(onView: (file: SystemBackupFile) => void): ColumnDef<SystemBackupFile>[] {
+-    return [
+-        {
+-            id: "view",
+-            header: "",
+-            minSize: 64,
+-            size: 64,
+-            meta: {
+-                align: "center",
+-                titleAlign: "center",
+-            },
+-            cell: ({ row: { original } }) => {
+-                return (
+-                    <Button
+-                        type="button"
+-                        variant="ghost"
+-                        size="icon"
+-                        className="h-8 w-8 text-link hover:opacity-50"
+-                        onClick={() => {
+-                            onView(original);
+-                        }}
+-                    >
+-                        <EyeIcon className="size-5" />
+-                        <span className="sr-only">View backup file info</span>
+-                    </Button>
+-                );
+-            },
+-        },
+-        {
+-            accessorKey: "name",
+-            header: "Name",
+-            cell: ({ row: { original } }) => <div className="break-all">{original.name}</div>,
+-        },
+-        {
+-            accessorKey: "sizeBytes",
+-            header: "Size",
+-            cell: ({ row: { original } }) => getFriendlyDataSize(original.sizeBytes) || "-",
+-        },
+-        {
+-            accessorKey: "storage",
+-            header: "Storage",
+-            cell: ({ row: { original } }) => getBackupFileStorageLabel(original),
+-        },
+-        {
+-            accessorKey: "status",
+-            header: "Status",
+-            meta: {
+-                align: "center",
+-                titleAlign: "center",
+-            },
+-            cell: ({ row: { original } }) => <SettingStatusBadge status={original.status} />,
+-        },
+-        {
+-            accessorKey: "createdAt",
+-            header: "Created At",
+-            cell: ({ row: { original } }) => format(original.createdAt, "yyyy-MM-dd HH:mm:ss"),
+-        },
+-        {
+-            id: "actions",
+-            header: "",
+-            minSize: 64,
+-            size: 64,
+-            meta: {
+-                align: "center",
+-                titleAlign: "center",
+-            },
+-            cell: ({ row: { original } }) => <BackupFileMenuCell file={original} />,
+-        },
+-    ];
+-}
+-
+-export const SystemBackupFilesTableDefs = Object.freeze({
+-    columns: createColumns,
+-});
+diff --git a/src/application/modules/system-settings/module-shared/definitions/tables/system-backup-files/utils/index.ts b/src/application/modules/system-settings/module-shared/definitions/tables/system-backup-files/utils/index.ts
+deleted file mode 100644
+index 6ce6a6da..00000000
+--- a/src/application/modules/system-settings/module-shared/definitions/tables/system-backup-files/utils/index.ts
++++ /dev/null
+@@ -1 +0,0 @@
+-export * from "./system-backup-file-formatters";
+diff --git a/src/application/modules/system-settings/module-shared/definitions/tables/system-backup-files/utils/system-backup-file-formatters.ts b/src/application/modules/system-settings/module-shared/definitions/tables/system-backup-files/utils/system-backup-file-formatters.ts
+deleted file mode 100644
+index 31cb0cb3..00000000
+--- a/src/application/modules/system-settings/module-shared/definitions/tables/system-backup-files/utils/system-backup-file-formatters.ts
++++ /dev/null
+@@ -1,10 +0,0 @@
+-import type { SystemBackupFile } from "~/system-settings/domain";
+-import { ESystemBackupFileStorageType } from "~/system-settings/module-shared/enums";
+-
+-export function getBackupFileStorageLabel(file: Pick<SystemBackupFile, "storageType" | "storage">): string {
+-    if (file.storageType === ESystemBackupFileStorageType.Local) {
+-        return "local";
+-    }
+-
+-    return file.storage?.name ?? "-";
+-}
+diff --git a/src/application/modules/system-settings/module-shared/enums/e.system-backup-compression-format.ts b/src/application/modules/system-settings/module-shared/enums/e.system-backup-compression-format.ts
+deleted file mode 100644
+index f456cde7..00000000
+--- a/src/application/modules/system-settings/module-shared/enums/e.system-backup-compression-format.ts
++++ /dev/null
+@@ -1,8 +0,0 @@
+-export const ESystemBackupCompressionFormat = {
+-    None: "",
+-    Gzip: "gzip",
+-    Zstd: "zstd",
+-} as const;
+-
+-export type ESystemBackupCompressionFormat =
+-    (typeof ESystemBackupCompressionFormat)[keyof typeof ESystemBackupCompressionFormat];
+diff --git a/src/application/modules/system-settings/module-shared/enums/e.system-backup-encryption-format.ts b/src/application/modules/system-settings/module-shared/enums/e.system-backup-encryption-format.ts
+deleted file mode 100644
+index 32db6c1c..00000000
+--- a/src/application/modules/system-settings/module-shared/enums/e.system-backup-encryption-format.ts
++++ /dev/null
+@@ -1,7 +0,0 @@
+-export const ESystemBackupEncryptionFormat = {
+-    None: "",
+-    Age: "age",
+-} as const;
+-
+-export type ESystemBackupEncryptionFormat =
+-    (typeof ESystemBackupEncryptionFormat)[keyof typeof ESystemBackupEncryptionFormat];
+diff --git a/src/application/modules/system-settings/module-shared/enums/e.system-backup-file-kind.ts b/src/application/modules/system-settings/module-shared/enums/e.system-backup-file-kind.ts
+deleted file mode 100644
+index 67f6b213..00000000
+--- a/src/application/modules/system-settings/module-shared/enums/e.system-backup-file-kind.ts
++++ /dev/null
+@@ -1,5 +0,0 @@
+-export const ESystemBackupFileKind = {
+-    SystemBackup: "system-backup",
+-} as const;
+-
+-export type ESystemBackupFileKind = (typeof ESystemBackupFileKind)[keyof typeof ESystemBackupFileKind];
+diff --git a/src/application/modules/system-settings/module-shared/enums/e.system-backup-file-storage-type.ts b/src/application/modules/system-settings/module-shared/enums/e.system-backup-file-storage-type.ts
+deleted file mode 100644
+index 794c22fb..00000000
+--- a/src/application/modules/system-settings/module-shared/enums/e.system-backup-file-storage-type.ts
++++ /dev/null
+@@ -1,7 +0,0 @@
+-export const ESystemBackupFileStorageType = {
+-    Local: "local",
+-    Cloud: "cloud",
+-} as const;
+-
+-export type ESystemBackupFileStorageType =
+-    (typeof ESystemBackupFileStorageType)[keyof typeof ESystemBackupFileStorageType];
+diff --git a/src/application/modules/system-settings/module-shared/enums/e.system-backup-file-type.ts b/src/application/modules/system-settings/module-shared/enums/e.system-backup-file-type.ts
+deleted file mode 100644
+index 770d38bd..00000000
+--- a/src/application/modules/system-settings/module-shared/enums/e.system-backup-file-type.ts
++++ /dev/null
+@@ -1,5 +0,0 @@
+-export const ESystemBackupFileType = {
+-    System: "system",
+-} as const;
+-
+-export type ESystemBackupFileType = (typeof ESystemBackupFileType)[keyof typeof ESystemBackupFileType];
+diff --git a/src/application/modules/system-settings/module-shared/enums/index.ts b/src/application/modules/system-settings/module-shared/enums/index.ts
+index c89fccd4..ebcca877 100644
+--- a/src/application/modules/system-settings/module-shared/enums/index.ts
++++ b/src/application/modules/system-settings/module-shared/enums/index.ts
+@@ -1,6 +1 @@
+-export * from "./e.system-backup-compression-format";
+-export * from "./e.system-backup-encryption-format";
+-export * from "./e.system-backup-file-storage-type";
+-export * from "./e.system-backup-file-type";
+-export * from "./e.system-backup-file-kind";
+ export * from "./e.traefik-log-level";
+diff --git a/src/application/modules/system-settings/module-shared/index.ts b/src/application/modules/system-settings/module-shared/index.ts
+index de71151a..9c5078f9 100644
+--- a/src/application/modules/system-settings/module-shared/index.ts
++++ b/src/application/modules/system-settings/module-shared/index.ts
+@@ -1,5 +1,4 @@
+ export * from "./enums";
+ export * from "./schemas";
+ export * from "./components";
+-export * from "./definitions";
+ export * from "./utils";
+diff --git a/src/application/modules/system-settings/module-shared/schemas/index.ts b/src/application/modules/system-settings/module-shared/schemas/index.ts
+index 8cd76ef1..024ea1d6 100644
+--- a/src/application/modules/system-settings/module-shared/schemas/index.ts
++++ b/src/application/modules/system-settings/module-shared/schemas/index.ts
+@@ -1,5 +1,4 @@
+ export * from "./system-backup-settings.entity.schema";
+-export * from "./system-backup-file.entity.schema";
+ export * from "./system-cleanup-settings.entity.schema";
+ export * from "./system-ssl-renewal-settings.entity.schema";
+ export * from "./system-backup-repo-cleanup-settings.entity.schema";
+diff --git a/src/application/modules/system-settings/module-shared/schemas/system-backup-file.entity.schema.ts b/src/application/modules/system-settings/module-shared/schemas/system-backup-file.entity.schema.ts
+deleted file mode 100644
+index ec951f32..00000000
+--- a/src/application/modules/system-settings/module-shared/schemas/system-backup-file.entity.schema.ts
++++ /dev/null
+@@ -1,28 +0,0 @@
+-import { z } from "zod";
+-import { SettingsBaseEntitySchema } from "~/settings/module-shared/schemas";
+-
+-import { ESystemBackupFileStorageType } from "../enums";
+-
+-export const SystemBackupFileEntitySchema = z.object({
+-    id: z.string(),
+-    type: z.string(),
+-    kind: z
+-        .string()
+-        .nullish()
+-        .transform(value => value ?? ""),
+-    status: z.string(),
+-    key: z.string(),
+-    name: z.string(),
+-    path: z.string(),
+-    bucket: z
+-        .string()
+-        .nullish()
+-        .transform(value => value ?? undefined),
+-    mimetype: z.string(),
+-    sizeBytes: z.number(),
+-    storageType: z.nativeEnum(ESystemBackupFileStorageType),
+-    storage: SettingsBaseEntitySchema.omit({ description: true }).nullish(),
+-    updateVer: z.number(),
+-    createdAt: z.coerce.date(),
+-    updatedAt: z.coerce.date(),
+-});
+diff --git a/src/application/modules/system-settings/module-shared/schemas/system-backup-settings.entity.schema.ts b/src/application/modules/system-settings/module-shared/schemas/system-backup-settings.entity.schema.ts
+index a3114f0b..fd692e6a 100644
+--- a/src/application/modules/system-settings/module-shared/schemas/system-backup-settings.entity.schema.ts
++++ b/src/application/modules/system-settings/module-shared/schemas/system-backup-settings.entity.schema.ts
+@@ -1,27 +1,6 @@
+ import { z } from "zod";
+ import { SettingsBaseEntitySchema } from "~/settings/module-shared/schemas";
+-
+-import { ESystemBackupCompressionFormat, ESystemBackupEncryptionFormat } from "../enums";
+-
+-const SystemBackupCompressionSchema = z
+-    .object({
+-        format: z.nativeEnum(ESystemBackupCompressionFormat).default(ESystemBackupCompressionFormat.None),
+-    })
+-    .default({ format: ESystemBackupCompressionFormat.None });
+-
+-const SystemBackupEncryptionSchema = z
+-    .object({
+-        format: z.nativeEnum(ESystemBackupEncryptionFormat).default(ESystemBackupEncryptionFormat.None),
+-        secret: z.string().default(""),
+-    })
+-    .default({ format: ESystemBackupEncryptionFormat.None, secret: "" });
+-
+-const SystemBackupCloudStorageSchema = SettingsBaseEntitySchema.omit({ description: true })
+-    .extend({
+-        bucket: z.string().default(""),
+-        destinationDir: z.string().default(""),
+-    })
+-    .nullable();
++import { SYSTEM_BACKUP_SPEC_SECRETS } from "~/system-settings/domain";
+ 
+ const SystemBackupScheduleSchema = z
+     .object({
+@@ -37,12 +16,6 @@ const SystemBackupScheduleSchema = z
+     }))
+     .default({ cronExpr: "", interval: "", initialTime: null });
+ 
+-const SystemBackupDBConfigSchema = z
+-    .object({
+-        backupDeletedObjects: z.boolean(),
+-    })
+-    .default({ backupDeletedObjects: false });
+-
+ const SystemBackupNotificationRefSchema = z.object({
+     id: z.string(),
+     name: z.string(),
+@@ -60,10 +33,18 @@ const SystemBackupNotificationSchema = z
+ export const SystemBackupSettingsEntitySchema = SettingsBaseEntitySchema.omit({ description: true }).extend({
+     type: z.string(),
+     schedule: SystemBackupScheduleSchema,
+-    compression: SystemBackupCompressionSchema,
+-    encryption: SystemBackupEncryptionSchema,
+-    cloudStorage: SystemBackupCloudStorageSchema,
+-    dbBackupConfig: SystemBackupDBConfigSchema,
++    includeDB: z.boolean().optional().default(false),
++    includeSpec: z.boolean().optional().default(false),
++    specSecrets: z.nativeEnum(SYSTEM_BACKUP_SPEC_SECRETS).catch(SYSTEM_BACKUP_SPEC_SECRETS.Encrypted),
++    specPassphrase: z.string().optional().default(""),
++    targetRepository: z
++        .object({
++            id: z.string(),
++            name: z.string().optional().default(""),
++            status: z.string().optional().default(""),
++        })
++        .nullish()
++        .transform(value => value ?? null),
+     notification: SystemBackupNotificationSchema,
+     secretMasked: z.boolean().optional(),
+     nextRuns: z
+diff --git a/src/application/modules/system-settings/module-shared/schemas/system-cleanup-settings.entity.schema.ts b/src/application/modules/system-settings/module-shared/schemas/system-cleanup-settings.entity.schema.ts
+index 4f7389cf..00256a3c 100644
+--- a/src/application/modules/system-settings/module-shared/schemas/system-cleanup-settings.entity.schema.ts
++++ b/src/application/modules/system-settings/module-shared/schemas/system-cleanup-settings.entity.schema.ts
+@@ -21,12 +21,6 @@ const SystemCleanupClusterCleanupSchema = z.object({
+     pruneBuildCache: z.boolean(),
+ });
+ 
+-const SystemCleanupBackupCleanupSchema = z.object({
+-    enabled: z.boolean(),
+-    cloudBackupRetention: z.string(),
+-    localBackupRetention: z.string(),
+-});
+-
+ const SystemCleanupCacheCleanupSchema = z.object({
+     enabled: z.boolean(),
+     repoCacheRetention: z.string(),
+@@ -69,7 +63,6 @@ export const SystemCleanupSettingsEntitySchema = SettingsBaseEntitySchema.omit({
+     schedule: SystemCleanupScheduleSchema,
+     dbObjectRetention: SystemCleanupDBObjectRetentionSchema,
+     clusterCleanup: SystemCleanupClusterCleanupSchema,
+-    backupCleanup: SystemCleanupBackupCleanupSchema,
+     cacheCleanup: SystemCleanupCacheCleanupSchema,
+     fileCleanup: SystemCleanupFileCleanupSchema,
+     notification: SystemCleanupNotificationSchema,
+diff --git a/src/application/shared/constants/route.constants.ts b/src/application/shared/constants/route.constants.ts
+index ca764669..e693af07 100644
+--- a/src/application/shared/constants/route.constants.ts
++++ b/src/application/shared/constants/route.constants.ts
+@@ -449,11 +449,6 @@ export const ROUTE = {
+                 $route: "/settings/data-backup/configuration/",
+             },
+ 
+-            backupFiles: {
+-                $pattern: "settings/data-backup/backup-files",
+-                $route: "/settings/data-backup/backup-files/",
+-            },
+-
+             actions: {
+                 $pattern: "settings/data-backup/actions",
+                 $route: "/settings/data-backup/actions/",

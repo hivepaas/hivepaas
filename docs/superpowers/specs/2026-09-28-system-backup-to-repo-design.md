@@ -66,9 +66,15 @@ type SystemBackup struct {
   removed; the operator deletes them.
 
 **Checks, when the configuration is saved:**
-- one of the database and the spec at least;
-- a repository, and one at the global scope;
-- a passphrase when the spec's secrets are encrypted.
+- one of the database and the spec at least, and a repository at the global
+  scope - of an enabled configuration: a disabled one may name neither;
+- a passphrase when the spec's secrets are encrypted;
+- a spec holding secrets, encrypted or plaintext, asks the person saving it
+  for the capability to reveal secrets, recorded as a reveal. It is the
+  capability alone, as a mount's is: the backup puts the secrets in a
+  repository and hands the caller nothing in the clear.
+
+**Defaults:** disabled, the database only, secrets encrypted, no repository.
 
 The passphrase is stored encrypted, and the API masks it as it masks every
 secret.
@@ -81,7 +87,8 @@ The system backup task runs as it does today:
 2. **The database:** `pg_dump -Fc` into `db.pg_dump`, the custom format that
    `pg_restore` reads selectively. The `migrations` table is left out, as today.
 3. **The spec:** the spec export at the global scope, with the configured
-   secrets mode and passphrase, into `spec.tar.gz`.
+   secrets mode and passphrase, into `spec.tar.gz` - `spec.tar.gz.age` when
+   encrypted, as the export names an encrypted bundle.
 4. **One snapshot of the work directory:**
    - source `hivepaas@system-backup:/system`;
    - tags `hivepaas.source:system-backup` and `hivepaas.run:<task id>`;
@@ -93,7 +100,8 @@ The system backup task runs as it does today:
    backup of a directory of the backend's own.
 5. **The repository's snapshot records** are brought up to date, as a data
    backup does, so the snapshot shows at once.
-6. **The task's output** is the snapshot's ID, its size, and what it holds.
+6. **The task's output** is the snapshot's ID, its size, and what it holds,
+   named as a data backup's are, so the run's page reads it the same way.
 
 **Failure:**
 - A failed dump or export fails the run before anything is taken. The log
@@ -131,10 +139,13 @@ It is served at the four scopes, as the snapshots' other endpoints are.
 - **A failure half way** cuts the connection, and the download fails: once
   the headers are sent there is no other way to say so.
 
-**Audit:** a download is recorded with who, the snapshot, the repository and
-the path:
+**Audit:** a download is recorded, as `backup-download`, with who, the
+snapshot, the repository and the path:
 - against the app, for an app's snapshot;
 - against the repository otherwise.
+
+**The system cleanup** keeps no backup files any more: its retention of them
+goes, from its settings, its run and its form.
 
 ## 4. Dashboard
 

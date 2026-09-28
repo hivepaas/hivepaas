@@ -1,0 +1,1406 @@
+diff --git a/hivepaas_app/entity/setting_refmap.go b/hivepaas_app/entity/setting_refmap.go
+index d898f9e9..20b5774b 100644
+--- a/hivepaas_app/entity/setting_refmap.go
++++ b/hivepaas_app/entity/setting_refmap.go
+@@ -13,7 +13,7 @@ import (
+ //
+ // It walks by value rather than by type. References are stored in at least four
+ // different shapes - ObjectID, ObjectValue, ObjectIDSlice, and bespoke structs
+-// carrying a bare `ID string` such as SystemBackupCloudStorage - and a walk that
++// carrying a bare `ID string` such as SchedJobCommandOutputFileStorage - and a walk that
+ // recognized only the declared types would silently skip the last group. What
+ // every shape has in common is the identifier itself, and GetRefObjectIDs
+ // already reports exactly which identifiers are references, so that is what the
+diff --git a/hivepaas_app/entity/setting_system_backup.go b/hivepaas_app/entity/setting_system_backup.go
+index ba0384f9..4718dd25 100644
+--- a/hivepaas_app/entity/setting_system_backup.go
++++ b/hivepaas_app/entity/setting_system_backup.go
+@@ -20,32 +20,38 @@ func (s *systemBackupParser) New() SettingData {
+ 	return &SystemBackup{}
+ }
+ 
++// SystemBackup is what the system backup takes - HivePaaS's database, the
++// configuration spec of the whole installation, or both - and the backup
++// repository it goes into, one snapshot a run.
+ type SystemBackup struct {
+-	Schedule       SchedJobSchedule         `json:"schedule"`
+-	Compression    SystemBackupCompression  `json:"compression,omitempty"`
+-	Encryption     SystemBackupEncryption   `json:"encryption,omitempty"`
+-	CloudStorage   SystemBackupCloudStorage `json:"cloudStorage,omitempty"`
+-	DBBackupConfig SystemBackupDBConfig     `json:"dbBackupConfig"`
+-	Notification   *BaseEventNotification   `json:"notification,omitempty"`
++	Schedule    SchedJobSchedule `json:"schedule"`
++	IncludeDB   bool             `json:"includeDB,omitempty"`
++	IncludeSpec bool             `json:"includeSpec,omitempty"`
++	// SpecSecrets is how the spec holds secrets, a spec export's secrets mode:
++	// encrypted, omit or plaintext. SpecPassphrase is what encrypted uses.
++	SpecSecrets    string         `json:"specSecrets,omitempty"`
++	SpecPassphrase EncryptedField `json:"specPassphrase,omitzero"`
++	// TargetRepository is a backup repository at the global scope.
++	TargetRepository ObjectID               `json:"targetRepository,omitzero"`
++	Notification     *BaseEventNotification `json:"notification,omitempty"`
+ }
+ 
+-type SystemBackupCompression struct {
+-	Format base.FileCompressionFormat `json:"format,omitempty"`
+-}
+-
+-type SystemBackupEncryption struct {
+-	Format base.FileEncryptionFormat `json:"format,omitempty"`
+-	Secret EncryptedField            `json:"secret,omitzero"`
+-}
+-
+-type SystemBackupCloudStorage struct {
+-	ID             string `json:"id,omitempty"` // can be S3 setting ID
+-	Bucket         string `json:"bucket,omitempty"`
+-	DestinationDir string `json:"destinationDir,omitempty"`
+-}
++// What a system backup's snapshot holds, by name.
++const (
++	SystemBackupIncludeDB   = "database"
++	SystemBackupIncludeSpec = "spec"
++)
+ 
+-type SystemBackupDBConfig struct {
+-	BackupDeletedObjects bool `json:"backupDeletedObjects"`
++// Includes is what a run takes, by name.
++func (s *SystemBackup) Includes() []string {
++	var includes []string
++	if s.IncludeDB {
++		includes = append(includes, SystemBackupIncludeDB)
++	}
++	if s.IncludeSpec {
++		includes = append(includes, SystemBackupIncludeSpec)
++	}
++	return includes
+ }
+ 
+ func (s *SystemBackup) GetType() base.SettingType {
+@@ -54,8 +60,8 @@ func (s *SystemBackup) GetType() base.SettingType {
+ 
+ func (s *SystemBackup) GetRefObjectIDs() *RefObjectIDs {
+ 	refIDs := &RefObjectIDs{}
+-	if s.CloudStorage.ID != "" {
+-		refIDs.RefSettingIDs = append(refIDs.RefSettingIDs, s.CloudStorage.ID)
++	if s.TargetRepository.ID != "" {
++		refIDs.RefSettingIDs = append(refIDs.RefSettingIDs, s.TargetRepository.ID)
+ 	}
+ 	if s.Notification != nil {
+ 		refIDs.AddRefIDs(s.Notification.GetRefObjectIDs())
+@@ -68,7 +74,7 @@ func (s *SystemBackup) GetResourceLinks(setting *Setting) []*ResLink {
+ }
+ 
+ func (s *SystemBackup) Decrypt() error {
+-	_, err := s.Encryption.Secret.GetPlain()
++	_, err := s.SpecPassphrase.GetPlain()
+ 	if err != nil {
+ 		return hperrors.Wrap(err)
+ 	}
+diff --git a/hivepaas_app/entity/task_system_backup.go b/hivepaas_app/entity/task_system_backup.go
+index af1c39df..b6a5c90e 100644
+--- a/hivepaas_app/entity/task_system_backup.go
++++ b/hivepaas_app/entity/task_system_backup.go
+@@ -1,11 +1,13 @@
+ package entity
+ 
++// TaskSystemBackupOutput is what a system backup's run took. Its snapshot's
++// fields are named as a data backup's are, so that a run's page reads it the
++// same way.
+ type TaskSystemBackupOutput struct {
+-	DBBackup *DBBackupOutput `json:"dbBackup"`
+-}
+-
+-type DBBackupOutput struct {
+-	Error string `json:"error,omitempty"`
++	SnapshotID string `json:"snapshotId"`
++	SizeBytes  int64  `json:"sizeBytes"`
++	// Includes is what the snapshot holds: database, spec.
++	Includes []string `json:"includes,omitempty"`
+ }
+ 
+ func (t *Task) OutputAsSystemBackup() (*TaskSystemBackupOutput, error) {
+diff --git a/hivepaas_app/service/settinginitservice/settinginitserviceimpl/init_defaults_sys_backup.go b/hivepaas_app/service/settinginitservice/settinginitserviceimpl/init_defaults_sys_backup.go
+index a7627b91..74a04fe7 100644
+--- a/hivepaas_app/service/settinginitservice/settinginitserviceimpl/init_defaults_sys_backup.go
++++ b/hivepaas_app/service/settinginitservice/settinginitserviceimpl/init_defaults_sys_backup.go
+@@ -15,14 +15,12 @@ import (
+ )
+ 
+ const (
+-	sysBackupSettingName       = "System backup settings"
+-	sysBackupJobName           = "System backup job"
+-	sysBackupDefaultStatus     = base.SettingStatusDisabled      // Default to Disabled
+-	sysBackupInterval          = timeutil.Duration(timeutil.Day) // daily
+-	sysBackupMaxRetry          = 1
+-	sysBackupRetryDelay        = timeutil.Duration(time.Second * 60)
+-	sysBackupCompressionFormat = base.FileCompressionFormatGzip
+-	sysBackupDeletedObjects    = true
++	sysBackupSettingName   = "System backup settings"
++	sysBackupJobName       = "System backup job"
++	sysBackupDefaultStatus = base.SettingStatusDisabled      // Default to Disabled
++	sysBackupInterval      = timeutil.Duration(timeutil.Day) // daily
++	sysBackupMaxRetry      = 1
++	sysBackupRetryDelay    = timeutil.Duration(time.Second * 60)
+ )
+ 
+ func (s *service) initDefaultSystemBackup(
+@@ -46,15 +44,9 @@ func (s *service) initDefaultSystemBackup(
+ 			Interval:    sysBackupInterval,
+ 			InitialTime: time.Date(timeNow.Year(), timeNow.Month(), timeNow.Day(), 0, 30, 0, 0, time.UTC),
+ 		},
+-		DBBackupConfig: entity.SystemBackupDBConfig{
+-			BackupDeletedObjects: sysBackupDeletedObjects,
+-		},
+-		Compression: entity.SystemBackupCompression{
+-			Format: sysBackupCompressionFormat,
+-		},
+-		Encryption: entity.SystemBackupEncryption{
+-			Format: base.FileEncryptionNone,
+-		},
++		// The database, into a repository the operator picks before enabling it.
++		IncludeDB:   true,
++		SpecSecrets: "encrypted",
+ 		Notification: &entity.BaseEventNotification{
+ 			SuccessUseDefault: true,
+ 			FailureUseDefault: true,
+diff --git a/hivepaas_app/service/sysbackupservice/sysbackupserviceimpl/service.go b/hivepaas_app/service/sysbackupservice/sysbackupserviceimpl/service.go
+index 8924203c..8654ce43 100644
+--- a/hivepaas_app/service/sysbackupservice/sysbackupserviceimpl/service.go
++++ b/hivepaas_app/service/sysbackupservice/sysbackupserviceimpl/service.go
+@@ -1,18 +1,51 @@
+ package sysbackupserviceimpl
+ 
+ import (
++	"context"
++
++	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
++	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
++	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
++	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/fileutil"
++	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/tasklog"
+ 	"github.com/hivepaas/hivepaas/hivepaas_app/repository"
++	"github.com/hivepaas/hivepaas/hivepaas_app/service/backupreposervice"
++	"github.com/hivepaas/hivepaas/hivepaas_app/service/scopeservice"
++	"github.com/hivepaas/hivepaas/hivepaas_app/service/specservice"
+ 	"github.com/hivepaas/hivepaas/hivepaas_app/service/sysbackupservice"
+ )
+ 
+ type service struct {
+-	fileRepo repository.FileRepo
++	settingRepo repository.SettingRepo
++
++	backupRepoService backupreposervice.Service
++	specService       specservice.Service
++
++	// repoScope, dumpDB and workDir resolve a repository's scope, dump the
++	// database into a file, and make a directory for a run; tests replace them.
++	repoScope func(ctx context.Context, db database.IDB, repo *entity.Setting) (*entity.ObjectScope, error)
++	dumpDB    func(ctx context.Context, path string, logStore *tasklog.Store) error
++	workDir   func() (string, error)
+ }
+ 
+ func New(
+-	fileRepo repository.FileRepo,
++	settingRepo repository.SettingRepo,
++	backupRepoService backupreposervice.Service,
++	scopeService scopeservice.Service,
++	specService specservice.Service,
+ ) sysbackupservice.Service {
+ 	return &service{
+-		fileRepo: fileRepo,
++		settingRepo:       settingRepo,
++		backupRepoService: backupRepoService,
++		specService:       specService,
++		repoScope: func(ctx context.Context, db database.IDB, repo *entity.Setting) (*entity.ObjectScope, error) {
++			scope, err := scopeService.LoadObjectScope(ctx, db, repo.Scope, repo.ObjectID, true)
++			return scope, hperrors.Wrap(err)
++		},
++		dumpDB: dumpDB,
++		workDir: func() (string, error) {
++			dir, err := fileutil.CreateTempDirInAppPath("", "sys-backup-*", 0)
++			return dir, hperrors.Wrap(err)
++		},
+ 	}
+ }
+diff --git a/hivepaas_app/service/sysbackupservice/sysbackupserviceimpl/sys_backup.go b/hivepaas_app/service/sysbackupservice/sysbackupserviceimpl/sys_backup.go
+index 9e1b668a..b1b8c100 100644
+--- a/hivepaas_app/service/sysbackupservice/sysbackupserviceimpl/sys_backup.go
++++ b/hivepaas_app/service/sysbackupservice/sysbackupserviceimpl/sys_backup.go
+@@ -1,42 +1,35 @@
+ package sysbackupserviceimpl
+ 
+ import (
+-	"archive/tar"
+-	"compress/gzip"
+ 	"context"
+-	"errors"
+-	"io"
++	"fmt"
+ 	"os"
+ 	"path/filepath"
+ 	"time"
+ 
+-	"filippo.io/age"
+-	"github.com/klauspost/compress/zstd"
+-
+ 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
+-	"github.com/hivepaas/hivepaas/hivepaas_app/config"
+ 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
+ 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
+ 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
+-	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/fileutil"
+ 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/safego"
+-	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/timeutil"
++	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/tasklog"
++	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/unit"
++	"github.com/hivepaas/hivepaas/hivepaas_app/service/backupreposervice"
++	"github.com/hivepaas/hivepaas/hivepaas_app/service/specservice"
++	"github.com/hivepaas/hivepaas/hivepaas_app/service/specservice/specmodel"
+ 	"github.com/hivepaas/hivepaas/hivepaas_app/service/sysbackupservice"
++	"github.com/hivepaas/hivepaas/services/backup"
+ )
+ 
+-type sysBackupData struct {
+-	*sysbackupservice.SysBackupReq
+-	TaskOutput *entity.TaskSystemBackupOutput
+-	TimeNow    time.Time
+-
+-	BackupSaveDir string
+-	TempDir       string
+-
+-	OutFileName   string
+-	OutFilePath   string
+-	LocalOutFile  *entity.File
+-	RemoteOutFile *entity.File
+-}
++const (
++	// systemBackupSource is what every system backup is recorded under: the
++	// repository's retention counts it apart from everything else.
++	systemBackupSource = "hivepaas@system-backup:/system"
++	systemBackupTag    = entity.DataBackupTagSource + ":system-backup"
++	// The files of a system backup's snapshot.
++	dbDumpFileName = "db.pg_dump"
++	specFileName   = "spec.tar.gz"
++)
+ 
+ func (s *service) Backup(
+ 	ctx context.Context,
+@@ -45,176 +38,175 @@ func (s *service) Backup(
+ ) (resp *sysbackupservice.SysBackupResp, err error) {
+ 	defer safego.RecoverTo(&err)
+ 
+-	resp = &sysbackupservice.SysBackupResp{}
+-	data := &sysBackupData{
+-		SysBackupReq: req,
+-		TaskOutput: &entity.TaskSystemBackupOutput{
+-			DBBackup: &entity.DBBackupOutput{},
+-		},
+-		TimeNow: timeutil.NowUTC(),
++	start := time.Now()
++	settings := req.SysBackupSettings
++	includes := settings.Includes()
++	if len(includes) == 0 {
++		return nil, hperrors.NewArgumentInvalid("includeDB").WithExtraDetail("the system backup takes nothing")
+ 	}
+-
+-	// Backup DB
+-	err = s.sysBackup(ctx, db, data)
++	target, err := s.target(ctx, db, settings)
+ 	if err != nil {
+ 		return nil, hperrors.Wrap(err)
+ 	}
+ 
+-	// Assign back the result output
+-	data.Task.MustSetOutput(data.TaskOutput)
+-
+-	return resp, nil
+-}
++	dir, err := s.workDir()
++	if err != nil {
++		return nil, hperrors.Wrap(err)
++	}
++	defer os.RemoveAll(dir)
++	snapshotDir := filepath.Join(dir, "snapshot")
++	if err = os.Mkdir(snapshotDir, base.DirModeDefault); err != nil {
++		return nil, hperrors.Wrap(err)
++	}
+ 
+-func (s *service) sysBackup(
+-	ctx context.Context,
+-	db database.IDB,
+-	data *sysBackupData,
+-) (err error) {
+-	defer func() {
+-		if err != nil {
+-			data.TaskOutput.DBBackup.Error = err.Error()
++	if settings.IncludeDB {
++		logTo(ctx, req, "Dumping the database")
++		if err = s.dumpDB(ctx, filepath.Join(snapshotDir, dbDumpFileName), req.LogStore); err != nil {
++			return nil, hperrors.Wrap(fmt.Errorf("dumping the database: %w", err))
++		}
++	}
++	if settings.IncludeSpec {
++		logTo(ctx, req, "Exporting the spec")
++		if err = s.exportSpec(ctx, db, settings, dir, snapshotDir); err != nil {
++			return nil, hperrors.Wrap(fmt.Errorf("exporting the spec: %w", err))
+ 		}
+-	}()
++	}
+ 
+-	data.TempDir, err = fileutil.CreateTempDirInAppPath("", "sys-backup-*", 0)
++	logTo(ctx, req, "Taking the snapshot")
++	taken, err := s.backupRepoService.BackupLocalDirectory(ctx, db, &backupreposervice.BackupLocalDirectoryReq{
++		RepoTarget: *target, Dir: snapshotDir, Source: systemBackupSource,
++		Description: fmt.Sprintf("System backup (run %s)", req.Task.ID),
++		Tags:        []string{systemBackupTag, entity.DataBackupTagRun + ":" + req.Task.ID},
++		Progress:    func(msg string) { logTo(ctx, req, "%s", msg) },
++	})
+ 	if err != nil {
+-		return hperrors.Wrap(err)
++		s.deleteRunSnapshots(context.WithoutCancel(ctx), db, req, target)
++		return nil, hperrors.Wrap(err)
++	}
++	if taken == nil || taken.Snapshot == nil || taken.Snapshot.Snapshot == nil {
++		return nil, hperrors.Wrap(hperrors.ErrInternal).WithMsgLog("the engine named no snapshot")
+ 	}
+-	defer os.RemoveAll(data.TempDir)
+ 
+-	bakTmpFile, tarW, closer, err := s.sysBackupCreateWriter(data)
+-	if err != nil {
+-		return hperrors.Wrap(err)
++	output := &entity.TaskSystemBackupOutput{
++		SnapshotID: taken.Snapshot.Snapshot.ID, SizeBytes: taken.Snapshot.Snapshot.SizeBytes, Includes: includes,
+ 	}
+-	defer func() {
+-		if closer != nil {
+-			_ = closer()
+-		}
+-	}()
++	logTo(ctx, req, "Snapshot %s taken: %s in %s", output.SnapshotID, unit.DataSize(output.SizeBytes).String(),
++		time.Since(start).Truncate(time.Second))
++	if err = s.syncSnapshots(ctx, db, target); err != nil {
++		// The snapshot is taken: its record comes with the repository's next sync.
++		_ = req.LogStore.Add(ctx, tasklog.NewWarnFrame(
++			"The repository's snapshot list could not be updated: "+err.Error()+"\n", tasklog.TsNow))
++	}
++	req.Task.MustSetOutput(output)
++	return &sysbackupservice.SysBackupResp{}, nil
++}
+ 
+-	// Start the data backup
+-	err = s.sysBackupDB(ctx, tarW, data)
++// target is the repository the backup goes into, which must be active.
++func (s *service) target(
++	ctx context.Context,
++	db database.IDB,
++	settings *entity.SystemBackup,
++) (*backupreposervice.RepoTarget, error) {
++	repo, err := s.settingRepo.GetByID(ctx, db, nil, base.SettingTypeBackupRepo, settings.TargetRepository.ID, true)
+ 	if err != nil {
+-		return hperrors.Wrap(err)
++		return nil, hperrors.Wrap(err)
+ 	}
+-
+-	err = s.sysBackupFiles(ctx, tarW, data)
++	scope, err := s.repoScope(ctx, db, repo)
+ 	if err != nil {
+-		return hperrors.Wrap(err)
++		return nil, hperrors.Wrap(err)
+ 	}
++	return &backupreposervice.RepoTarget{Scope: scope, RepoSetting: repo}, nil
++}
+ 
+-	_ = closer() // Flush data in writers
+-	closer = nil
+-
+-	// Save the result in a local file
+-	err = s.sysBackupSaveResultInLocal(ctx, db, bakTmpFile, data)
+-	if err != nil {
++// exportSpec exports the whole installation's spec into snapshotDir, as the
++// export names it: spec.tar.gz, and .age after it when it is encrypted.
++func (s *service) exportSpec(
++	ctx context.Context,
++	db database.IDB,
++	settings *entity.SystemBackup,
++	dir, snapshotDir string,
++) error {
++	workDir := filepath.Join(dir, "spec-work")
++	if err := os.Mkdir(workDir, base.DirModeDefault); err != nil {
+ 		return hperrors.Wrap(err)
+ 	}
+-
+-	// Upload backup file to cloud storage if configured
+-	err = s.sysBackupSaveResultInStorage(ctx, db, data)
++	mode := specmodel.SecretsMode(settings.SpecSecrets)
++	passphrase := ""
++	if mode == specmodel.SecretsModeEncrypted {
++		var err error
++		if passphrase, err = settings.SpecPassphrase.GetPlain(); err != nil {
++			return hperrors.Wrap(err)
++		}
++	}
++	exported, err := s.specService.Export(ctx, db, &specservice.ExportReq{
++		Scope: &entity.ObjectScope{ScopeType: base.ObjectScopeGlobal}, SecretsMode: mode, Passphrase: passphrase,
++		WorkDir: workDir,
++	})
+ 	if err != nil {
+ 		return hperrors.Wrap(err)
+ 	}
+-
+-	return nil
++	name := specFileName
++	if filepath.Ext(exported.Filename) == ".age" {
++		name += ".age"
++	}
++	return hperrors.Wrap(os.Rename(exported.Path, filepath.Join(snapshotDir, name)))
+ }
+ 
+-//nolint:gocognit
+-func (s *service) sysBackupCreateWriter(
+-	data *sysBackupData,
+-) (tmpFileName string, tarW *tar.Writer, closer func() error, err error) {
+-	// Make sure the backup directory exist
+-	data.BackupSaveDir = config.Current().DataPathSystemBackupFiles().AbsPath()
+-
+-	err = os.MkdirAll(data.BackupSaveDir, base.DirModeDefault)
++// deleteRunSnapshots deletes what a failed run left in the repository: the
++// snapshots tagged with the run.
++func (s *service) deleteRunSnapshots(
++	ctx context.Context,
++	db database.IDB,
++	req *sysbackupservice.SysBackupReq,
++	target *backupreposervice.RepoTarget,
++) {
++	repo, err := target.RepoSetting.AsBackupRepo()
+ 	if err != nil {
+-		return "", nil, nil, hperrors.Wrap(err)
++		return
+ 	}
+-
+-	tmpFileName = filepath.Join(data.TempDir, "sys-backup")
+-	tmpFile, err := os.Create(tmpFileName)
++	listed, err := s.backupRepoService.ListSnapshots(ctx, db, &backupreposervice.ListSnapshotsReq{
++		Scope: target.Scope, Repo: repo, RepoID: target.RepoSetting.ID,
++		Options: &backup.ListSnapshotsOptions{Tags: []string{entity.DataBackupTagRun + ":" + req.Task.ID}},
++	})
+ 	if err != nil {
+-		return "", nil, nil, hperrors.Wrap(err)
++		_ = req.LogStore.Add(ctx, tasklog.NewWarnFrame(
++			"Could not look for a partial snapshot to delete: "+err.Error()+"\n", tasklog.TsNow))
++		return
+ 	}
+-
+-	var w io.Writer
+-	var encW, gzW io.WriteCloser
+-	var zstdW *zstd.Encoder
+-	w = tmpFile
+-
+-	switch data.SysBackupSettings.Encryption.Format {
+-	case base.FileEncryptionFormatAge:
+-		encSecret, err := data.SysBackupSettings.Encryption.Secret.GetPlain()
+-		if err != nil {
+-			return "", nil, nil, hperrors.Wrap(err)
+-		}
+-		if encSecret == "" {
+-			return "", nil, nil, hperrors.NewMissing("Encryption secret")
++	for _, item := range listed.Snapshots {
++		if item.Snapshot == nil {
++			continue
+ 		}
+-		recipient, err := age.NewScryptRecipient(encSecret)
++		err = s.backupRepoService.DeleteSnapshot(ctx, db, &backupreposervice.DeleteSnapshotReq{
++			RepoTarget: *target, SnapshotID: item.Snapshot.ID,
++		})
+ 		if err != nil {
+-			return "", nil, nil, hperrors.Wrap(err)
++			_ = req.LogStore.Add(ctx, tasklog.NewWarnFrame(
++				fmt.Sprintf("Could not delete the partial snapshot %s: %v\n", item.Snapshot.ID, err), tasklog.TsNow))
++			continue
+ 		}
+-		encW, err = age.Encrypt(w, recipient)
+-		if err != nil {
+-			return "", nil, nil, hperrors.Wrap(err)
+-		}
+-		w = encW
+-	case base.FileEncryptionNone: // Do nothing
+-	default:
+-		return "", nil, nil, hperrors.Wrap(hperrors.ErrEncryptionFormatUnsupported).
+-			WithParam("Format", data.SysBackupSettings.Encryption.Format)
++		logTo(ctx, req, "Deleted the partial snapshot %s", item.Snapshot.ID)
+ 	}
++}
+ 
+-	switch data.SysBackupSettings.Compression.Format {
+-	case base.FileCompressionFormatGzip:
+-		gzW = gzip.NewWriter(w)
+-		w = gzW
+-	case base.FileCompressionFormatZstd:
+-		zstdW, err = zstd.NewWriter(w)
+-		if err != nil {
+-			return "", nil, nil, hperrors.Wrap(err)
+-		}
+-		w = zstdW
+-	case base.FileCompressionNone: // Do nothing
+-	case base.FileCompressionFormatZip, base.FileCompressionFormatTar:
+-		fallthrough
+-	default:
+-		return "", nil, nil, hperrors.Wrap(hperrors.ErrArchiveFormatUnsupported).
+-			WithParam("Format", data.SysBackupSettings.Compression.Format)
++// syncSnapshots makes the repository's snapshot list match what it now holds.
++func (s *service) syncSnapshots(ctx context.Context, db database.Tx, target *backupreposervice.RepoTarget) error {
++	repo, err := target.RepoSetting.AsBackupRepo()
++	if err != nil {
++		return hperrors.Wrap(err)
+ 	}
+-
+-	tarW = tar.NewWriter(w)
+-
+-	closer = func() (err error) {
+-		if tarW != nil {
+-			if e := tarW.Close(); e != nil {
+-				err = errors.Join(err, e)
+-			}
+-		}
+-		if gzW != nil {
+-			if e := gzW.Close(); e != nil {
+-				err = errors.Join(err, e)
+-			}
+-		}
+-		if zstdW != nil {
+-			if e := zstdW.Close(); e != nil {
+-				err = errors.Join(err, e)
+-			}
+-		}
+-		if encW != nil {
+-			if e := encW.Close(); e != nil {
+-				err = errors.Join(err, e)
+-			}
+-		}
+-		if e := tmpFile.Close(); e != nil {
+-			err = errors.Join(err, e)
+-		}
+-		return err
++	listed, err := s.backupRepoService.ListSnapshots(ctx, db, &backupreposervice.ListSnapshotsReq{
++		Scope: target.Scope, Repo: repo, RepoID: target.RepoSetting.ID,
++	})
++	if err != nil {
++		return hperrors.Wrap(err)
+ 	}
++	_, err = s.backupRepoService.SyncRepoSnapshots(ctx, db, &backupreposervice.SyncRepoSnapshotsReq{
++		Scope: target.Scope, RepoSetting: target.RepoSetting, Remaining: listed.Snapshots,
++	})
++	return hperrors.Wrap(err)
++}
+ 
+-	return tmpFileName, tarW, closer, nil
++func logTo(ctx context.Context, req *sysbackupservice.SysBackupReq, format string, args ...any) {
++	_ = req.LogStore.Add(ctx, tasklog.NewOutFrame(fmt.Sprintf(format, args...)+"\n", tasklog.TsNow))
+ }
+diff --git a/hivepaas_app/service/sysbackupservice/sysbackupserviceimpl/sys_backup_db.go b/hivepaas_app/service/sysbackupservice/sysbackupserviceimpl/sys_backup_db.go
+index 246e9e45..65481521 100644
+--- a/hivepaas_app/service/sysbackupservice/sysbackupserviceimpl/sys_backup_db.go
++++ b/hivepaas_app/service/sysbackupservice/sysbackupserviceimpl/sys_backup_db.go
+@@ -1,44 +1,21 @@
+ package sysbackupserviceimpl
+ 
+ import (
+-	"archive/tar"
+ 	"context"
+-	"io"
+-	"os"
+ 	"os/exec"
+-	"path/filepath"
+ 	"strconv"
+ 
+ 	"github.com/hivepaas/hivepaas/hivepaas_app/config"
+ 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
+ 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/reflectutil"
+ 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/tasklog"
+-	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/timeutil"
+ )
+ 
+-func (s *service) sysBackupDB(
+-	ctx context.Context,
+-	tarW *tar.Writer,
+-	data *sysBackupData,
+-) (err error) {
+-	start := timeutil.NowUTC()
+-	_ = data.LogStore.Add(ctx, tasklog.NewWarnFrame("Start backing up data from DB...", tasklog.TsNow))
+-
+-	defer func() {
+-		duration := timeutil.NowUTC().Sub(start)
+-		if err != nil {
+-			_ = data.LogStore.Add(ctx, tasklog.NewWarnFrame("DB backup finished in "+duration.String()+
+-				" with error: "+err.Error(), tasklog.TsNow))
+-		} else {
+-			_ = data.LogStore.Add(ctx, tasklog.NewOutFrame("DB backup finished in "+duration.String(),
+-				tasklog.TsNow))
+-		}
+-	}()
+-
++// dumpDB dumps HivePaaS's database into path, in pg_dump's custom format, which
++// pg_restore reads selectively. The migrations table is left out: a restore runs
++// against a database the migrations have made.
++func dumpDB(ctx context.Context, path string, logStore *tasklog.Store) error {
+ 	dbConf := config.Current().DB
+-	dumpFileName := "db.pg_dump"
+-	dumpFilePath := filepath.Join(data.TempDir, dumpFileName)
+-
+ 	pgDumpBin, err := exec.LookPath("pg_dump")
+ 	if err != nil {
+ 		return hperrors.Wrap(err)
+@@ -49,41 +26,13 @@ func (s *service) sysBackupDB(
+ 		"-p", strconv.Itoa(dbConf.Port),
+ 		"-U", dbConf.User,
+ 		"-T", "migrations",
+-		"-f", dumpFilePath,
++		"-Fc",
++		"-f", path,
+ 		dbConf.DBName,
+ 	)
+ 	cmd.Env = []string{"PGPASSWORD=" + dbConf.Password} // NOTE: not use other process's env
+ 
+ 	out, err := cmd.CombinedOutput()
+-	logCmdOutput(ctx, reflectutil.UnsafeBytesToStr(out), err != nil, data.LogStore)
+-	if err != nil {
+-		return hperrors.Wrap(err)
+-	}
+-
+-	fileInfo, err := os.Stat(dumpFilePath)
+-	if err != nil {
+-		return hperrors.Wrap(err)
+-	}
+-
+-	header, err := tar.FileInfoHeader(fileInfo, "")
+-	if err != nil {
+-		return hperrors.Wrap(err)
+-	}
+-	header.Name = dumpFileName
+-
+-	if err := tarW.WriteHeader(header); err != nil {
+-		return hperrors.Wrap(err)
+-	}
+-
+-	file, err := os.Open(dumpFilePath)
+-	if err != nil {
+-		return hperrors.Wrap(err)
+-	}
+-	defer file.Close()
+-
+-	if _, err := io.Copy(tarW, file); err != nil {
+-		return hperrors.Wrap(err)
+-	}
+-
+-	return nil
++	logCmdOutput(ctx, reflectutil.UnsafeBytesToStr(out), err != nil, logStore)
++	return hperrors.Wrap(err)
+ }
+diff --git a/hivepaas_app/service/sysbackupservice/sysbackupserviceimpl/sys_backup_files.go b/hivepaas_app/service/sysbackupservice/sysbackupserviceimpl/sys_backup_files.go
+deleted file mode 100644
+index 19ee5752..00000000
+--- a/hivepaas_app/service/sysbackupservice/sysbackupserviceimpl/sys_backup_files.go
++++ /dev/null
+@@ -1,93 +0,0 @@
+-package sysbackupserviceimpl
+-
+-import (
+-	"archive/tar"
+-	"context"
+-	"io"
+-	"os"
+-	"path/filepath"
+-
+-	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
+-	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/tasklog"
+-	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/timeutil"
+-)
+-
+-// sysBackupFileModels lists the directories whose files go into a system backup,
+-// alongside the database dump.
+-//
+-// The app path must never be added here. It holds the managed settings file, and
+-// therefore the key that encrypts every secret in the dump: shipping both in the
+-// same archive would make encrypting the database pointless, since whoever finds
+-// the backup would hold the key too. TestSysBackupExcludesTheAppPath guards this.
+-var (
+-	sysBackupFileModels = []*sysBackupFileModel{}
+-)
+-
+-type sysBackupFileModel struct {
+-	Type          string
+-	PageDataSize  int
+-	DirPath       func() string
+-	TargetDirPath string
+-}
+-
+-func (s *service) sysBackupFiles(
+-	ctx context.Context,
+-	tarW *tar.Writer,
+-	data *sysBackupData,
+-) (err error) {
+-	start := timeutil.NowUTC()
+-	_ = data.LogStore.Add(ctx, tasklog.NewWarnFrame("Start backing up static files...", tasklog.TsNow))
+-
+-	defer func() {
+-		duration := timeutil.NowUTC().Sub(start)
+-		if err != nil {
+-			_ = data.LogStore.Add(ctx, tasklog.NewWarnFrame("Files backup finished in "+duration.String()+
+-				" with error: "+err.Error(), tasklog.TsNow))
+-		} else {
+-			_ = data.LogStore.Add(ctx, tasklog.NewOutFrame("Files backup finished in "+duration.String(),
+-				tasklog.TsNow))
+-		}
+-	}()
+-
+-	for _, model := range sysBackupFileModels {
+-		dirPath := model.DirPath()
+-		targetDirPath := model.TargetDirPath
+-		entries, err := os.ReadDir(dirPath)
+-		if err != nil {
+-			return hperrors.Wrap(err)
+-		}
+-		for _, entry := range entries {
+-			if entry.IsDir() {
+-				continue
+-			}
+-			fileName := entry.Name()
+-			fileInfo, err := entry.Info()
+-			if err != nil {
+-				return hperrors.Wrap(err)
+-			}
+-
+-			header, err := tar.FileInfoHeader(fileInfo, "")
+-			if err != nil {
+-				return hperrors.Wrap(err)
+-			}
+-			header.Name = filepath.ToSlash(filepath.Join(targetDirPath, fileName))
+-
+-			if err := tarW.WriteHeader(header); err != nil {
+-				return hperrors.Wrap(err)
+-			}
+-
+-			file, err := os.Open(filepath.Join(dirPath, fileName))
+-			if err != nil {
+-				return hperrors.Wrap(err)
+-			}
+-
+-			if _, err := io.Copy(tarW, file); err != nil {
+-				file.Close()
+-				return hperrors.Wrap(err)
+-			}
+-			file.Close()
+-		}
+-	}
+-
+-	return nil
+-}
+diff --git a/hivepaas_app/service/sysbackupservice/sysbackupserviceimpl/sys_backup_save_in_local.go b/hivepaas_app/service/sysbackupservice/sysbackupserviceimpl/sys_backup_save_in_local.go
+deleted file mode 100644
+index 9ad4827e..00000000
+--- a/hivepaas_app/service/sysbackupservice/sysbackupserviceimpl/sys_backup_save_in_local.go
++++ /dev/null
+@@ -1,96 +0,0 @@
+-package sysbackupserviceimpl
+-
+-import (
+-	"context"
+-	"fmt"
+-	"os"
+-	"path/filepath"
+-	"strings"
+-	"time"
+-
+-	"github.com/tiendc/gofn"
+-
+-	"github.com/hivepaas/hivepaas/hivepaas_app/base"
+-	"github.com/hivepaas/hivepaas/hivepaas_app/config"
+-	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
+-	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
+-	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
+-	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/tasklog"
+-	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/ulid"
+-)
+-
+-const (
+-	sysBackupFilePrefix = "hivepaas_backup_"
+-)
+-
+-func (s *service) sysBackupSaveResultInLocal(
+-	ctx context.Context,
+-	db database.IDB,
+-	bakTmpFile string,
+-	data *sysBackupData,
+-) (err error) {
+-	data.OutFileName = fmt.Sprintf("%s%s.tar", sysBackupFilePrefix,
+-		data.TimeNow.Truncate(time.Second).Format(time.RFC3339))
+-
+-	switch data.SysBackupSettings.Compression.Format {
+-	case base.FileCompressionFormatGzip:
+-		data.OutFileName += ".gz"
+-	case base.FileCompressionFormatZstd:
+-		data.OutFileName += ".zst"
+-	case base.FileCompressionNone: // Do nothing
+-	case base.FileCompressionFormatZip, base.FileCompressionFormatTar:
+-		fallthrough
+-	default:
+-		return hperrors.Wrap(hperrors.ErrArchiveFormatUnsupported).
+-			WithParam("Format", data.SysBackupSettings.Compression.Format)
+-	}
+-
+-	switch data.SysBackupSettings.Encryption.Format {
+-	case base.FileEncryptionFormatAge:
+-		data.OutFileName += ".age"
+-	case base.FileEncryptionNone: // Do nothing
+-	default:
+-		return hperrors.Wrap(hperrors.ErrEncryptionFormatUnsupported).
+-			WithParam("Format", data.SysBackupSettings.Encryption.Format)
+-	}
+-
+-	data.OutFilePath = filepath.Join(data.BackupSaveDir, data.OutFileName)
+-	err = os.Rename(bakTmpFile, data.OutFilePath)
+-	if err != nil {
+-		_ = data.LogStore.Add(ctx, tasklog.NewErrFrame(
+-			"Failed to save backup data in file with error: "+err.Error(), tasklog.TsNow))
+-		return hperrors.Wrap(err)
+-	}
+-
+-	// Save file details in to DB
+-	localFile := &entity.File{
+-		ID:          gofn.Must(ulid.NewStringULID()),
+-		Scope:       base.ObjectScopeGlobal,
+-		Type:        base.FileTypeSystem,
+-		Kind:        string(base.FileKindSystemBackup),
+-		StorageType: base.FileStorageLocal,
+-		Status:      base.FileStatusActive,
+-		Name:        data.OutFileName,
+-		Mimetype:    "application/octet-stream",
+-		Path:        strings.TrimPrefix(data.OutFilePath, config.Current().AppPath),
+-		CreatedAt:   data.TimeNow,
+-		UpdatedAt:   data.TimeNow,
+-	}
+-	localFileInfo, err := os.Stat(data.OutFilePath)
+-	if err != nil {
+-		return hperrors.Wrap(err)
+-	}
+-	localFile.Size = localFileInfo.Size()
+-	data.LocalOutFile = localFile
+-
+-	err = s.fileRepo.Insert(ctx, db, localFile)
+-	if err != nil {
+-		_ = data.LogStore.Add(ctx, tasklog.NewOutFrame("Failed to save file into DB with error: "+
+-			err.Error(), tasklog.TsNow))
+-		return hperrors.Wrap(err)
+-	}
+-
+-	_ = data.LogStore.Add(ctx, tasklog.NewOutFrame("Backup data saved into file: "+data.OutFileName,
+-		tasklog.TsNow))
+-	return nil
+-}
+diff --git a/hivepaas_app/service/sysbackupservice/sysbackupserviceimpl/sys_backup_save_in_storage.go b/hivepaas_app/service/sysbackupservice/sysbackupserviceimpl/sys_backup_save_in_storage.go
+deleted file mode 100644
+index 2a7f12de..00000000
+--- a/hivepaas_app/service/sysbackupservice/sysbackupserviceimpl/sys_backup_save_in_storage.go
++++ /dev/null
+@@ -1,107 +0,0 @@
+-package sysbackupserviceimpl
+-
+-import (
+-	"context"
+-	"fmt"
+-	"io"
+-	"os"
+-	"path/filepath"
+-	"time"
+-
+-	"github.com/tiendc/gofn"
+-
+-	"github.com/hivepaas/hivepaas/hivepaas_app/base"
+-	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
+-	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
+-	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
+-	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/tasklog"
+-	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/timeutil"
+-	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/ulid"
+-	"github.com/hivepaas/hivepaas/hivepaas_app/service/cloudstorageservice"
+-)
+-
+-func (s *service) sysBackupSaveResultInStorage(
+-	ctx context.Context,
+-	db database.IDB,
+-	data *sysBackupData,
+-) (err error) {
+-	cloudStorage := &data.SysBackupSettings.CloudStorage
+-	if cloudStorage.ID == "" {
+-		return nil
+-	}
+-	storageSetting := data.RefObjects.RefSettings[cloudStorage.ID]
+-	if storageSetting == nil {
+-		return nil
+-	}
+-
+-	var storageName string
+-	storageBucket := cloudStorage.Bucket
+-	var uploadFunc func(targetFilePath string, data io.Reader) error
+-
+-	switch base.CloudStorageKind(storageSetting.Kind) {
+-	case base.CloudStorageKindS3:
+-		s3Client, err := cloudstorageservice.NewS3Client(ctx, db, storageSetting, data.RefObjects)
+-		if err != nil {
+-			return hperrors.Wrap(err)
+-		}
+-		storageName = "AWS S3"
+-		if storageBucket == "" {
+-			storageBucket = s3Client.Config.Bucket
+-		}
+-		uploadFunc = func(targetFilePath string, input io.Reader) error {
+-			return s3Client.UploadEx(ctx, storageBucket, targetFilePath,
+-				0, 0, input)
+-		}
+-	default:
+-		return hperrors.Wrap(hperrors.ErrStorageTypeUnsupported).WithParam("Type", storageSetting.Kind)
+-	}
+-
+-	targetFilePath := filepath.Join(cloudStorage.DestinationDir, data.OutFileName)
+-	backupFile, err := os.Open(data.OutFilePath)
+-	if err != nil {
+-		return hperrors.Wrap(err)
+-	}
+-	defer backupFile.Close()
+-
+-	start := timeutil.NowUTC()
+-	_ = data.LogStore.Add(ctx, tasklog.NewOutFrame(fmt.Sprintf(
+-		"Start uploading file '%v' to '%v' bucket '%v'...",
+-		data.OutFileName, storageName, storageBucket), tasklog.TsNow))
+-
+-	err = uploadFunc(targetFilePath, backupFile)
+-	if err != nil {
+-		_ = data.LogStore.Add(ctx, tasklog.NewWarnFrame(
+-			"Failed to upload backup file to "+storageName+" with error: "+err.Error(), tasklog.TsNow))
+-		return hperrors.Wrap(err)
+-	}
+-	_ = data.LogStore.Add(ctx, tasklog.NewOutFrame("Backup file uploaded to "+storageName+
+-		" in "+time.Since(start).String(), tasklog.TsNow))
+-
+-	localFile := data.LocalOutFile
+-	remoteFile := &entity.File{
+-		ID:          gofn.Must(ulid.NewStringULID()),
+-		Scope:       base.ObjectScopeGlobal,
+-		Type:        base.FileTypeSystem,
+-		Kind:        string(base.FileKindSystemBackup),
+-		Status:      base.FileStatusActive,
+-		StorageType: base.FileStorageCloud,
+-		StorageID:   cloudStorage.ID,
+-		Bucket:      storageBucket,
+-		Name:        data.OutFileName,
+-		Path:        targetFilePath,
+-		Mimetype:    localFile.Mimetype,
+-		Size:        localFile.Size,
+-		CreatedAt:   data.TimeNow,
+-		UpdatedAt:   data.TimeNow,
+-	}
+-	data.RemoteOutFile = remoteFile
+-
+-	err = s.fileRepo.Insert(ctx, db, remoteFile)
+-	if err != nil {
+-		_ = data.LogStore.Add(ctx, tasklog.NewOutFrame("Failed to save file into DB with error: "+
+-			err.Error(), tasklog.TsNow))
+-		return hperrors.Wrap(err)
+-	}
+-
+-	return nil
+-}
+diff --git a/hivepaas_app/usecase/systemsettings/systembackupuc/systembackupdto/get.go b/hivepaas_app/usecase/systemsettings/systembackupuc/systembackupdto/get.go
+index 89ae0460..ca952cc7 100644
+--- a/hivepaas_app/usecase/systemsettings/systembackupuc/systembackupdto/get.go
++++ b/hivepaas_app/usecase/systemsettings/systembackupuc/systembackupdto/get.go
+@@ -35,13 +35,15 @@ type GetSystemBackupResp struct {
+ 
+ type SystemBackupResp struct {
+ 	*settings.BaseSettingResp
+-	Schedule       *ScheduleResp                      `json:"schedule"`
+-	Compression    *SystemBackupCompressionResp       `json:"compression"`
+-	Encryption     *SystemBackupEncryptionResp        `json:"encryption"`
+-	CloudStorage   *SystemBackupCloudStorageResp      `json:"cloudStorage"`
+-	DBBackupConfig *SystemBackupDBConfigResp          `json:"dbBackupConfig"`
+-	Notification   *basedto.BaseEventNotificationResp `json:"notification"`
+-	SecretMasked   bool                               `json:"secretMasked,omitempty"`
++	Schedule    *ScheduleResp `json:"schedule"`
++	IncludeDB   bool          `json:"includeDB"`
++	IncludeSpec bool          `json:"includeSpec"`
++	SpecSecrets string        `json:"specSecrets,omitempty"`
++	// SpecPassphrase comes masked once it is stored.
++	SpecPassphrase   string                             `json:"specPassphrase,omitempty"`
++	TargetRepository *settings.BaseSettingResp          `json:"targetRepository,omitempty"`
++	Notification     *basedto.BaseEventNotificationResp `json:"notification"`
++	SecretMasked     bool                               `json:"secretMasked,omitempty"`
+ 
+ 	// Calculated fields
+ 	NextRuns []time.Time `json:"nextRuns"`
+@@ -53,36 +55,17 @@ type ScheduleResp struct {
+ 	InitialTime time.Time         `json:"initialTime"`
+ }
+ 
+-type SystemBackupCompressionResp struct {
+-	Format base.FileCompressionFormat `json:"format,omitempty"`
+-}
+-
+-type SystemBackupEncryptionResp struct {
+-	Format base.FileEncryptionFormat `json:"format,omitempty"`
+-	Secret string                    `json:"secret,omitzero"`
+-}
+-
+-func (resp *SystemBackupEncryptionResp) CopySecret(field entity.EncryptedField) error {
+-	resp.Secret = field.String()
+-	return nil
+-}
+-
+-type SystemBackupCloudStorageResp struct {
+-	*settings.BaseSettingResp
+-	Bucket         string `json:"bucket,omitempty"`
+-	DestinationDir string `json:"destinationDir,omitempty"`
+-}
+-
+-type SystemBackupDBConfigResp struct {
+-	BackupDeletedObjects bool `json:"backupDeletedObjects"`
+-}
+-
+ func TransformSystemBackup(
+ 	setting *entity.Setting,
+ 	refObjects *entity.RefObjects,
+ ) (resp *SystemBackupResp, err error) {
+ 	config := setting.MustAsSystemBackup()
+-	if err = copier.Copy(&resp, config); err != nil {
++	resp = &SystemBackupResp{
++		IncludeDB:   config.IncludeDB,
++		IncludeSpec: config.IncludeSpec,
++		SpecSecrets: config.SpecSecrets,
++	}
++	if err = copier.Copy(&resp.Schedule, &config.Schedule); err != nil {
+ 		return nil, hperrors.Wrap(err)
+ 	}
+ 
+@@ -91,25 +74,21 @@ func TransformSystemBackup(
+ 		return nil, hperrors.Wrap(err)
+ 	}
+ 
+-	resp.SecretMasked = config.Encryption.Secret.IsEncrypted() || resp.Inherited
+-	if resp.SecretMasked {
+-		if resp.Encryption != nil {
+-			resp.Encryption.Secret = basedto.MaskedSecret
+-		}
++	resp.SpecPassphrase = config.SpecPassphrase.String()
++	resp.SecretMasked = config.SpecPassphrase.IsEncrypted() || resp.Inherited
++	if resp.SecretMasked && !config.SpecPassphrase.IsEmpty() {
++		resp.SpecPassphrase = basedto.MaskedSecret
+ 	}
+ 
+ 	if refObjects == nil {
+ 		refObjects = &entity.RefObjects{}
+ 	}
+-
+-	if config.CloudStorage.ID != "" {
+-		itemResp, _ := settings.TransformSettingBase(refObjects.RefSettings[config.CloudStorage.ID])
+-		if itemResp == nil {
+-			itemResp = settings.NewMissingSetting(config.CloudStorage.ID, base.SettingTypeCloudStorage)
++	if config.TargetRepository.ID != "" {
++		repoResp, _ := settings.TransformSettingBase(refObjects.RefSettings[config.TargetRepository.ID])
++		if repoResp == nil {
++			repoResp = settings.NewMissingSetting(config.TargetRepository.ID, base.SettingTypeBackupRepo)
+ 		}
+-		resp.CloudStorage.BaseSettingResp = itemResp
+-	} else {
+-		resp.CloudStorage = nil
++		resp.TargetRepository = repoResp
+ 	}
+ 
+ 	resp.Notification = basedto.TransformBaseEventNotification(config.Notification, refObjects)
+diff --git a/hivepaas_app/usecase/systemsettings/systembackupuc/systembackupdto/update.go b/hivepaas_app/usecase/systemsettings/systembackupuc/systembackupdto/update.go
+index 456a90a7..754edcae 100644
+--- a/hivepaas_app/usecase/systemsettings/systembackupuc/systembackupdto/update.go
++++ b/hivepaas_app/usecase/systemsettings/systembackupuc/systembackupdto/update.go
+@@ -9,23 +9,13 @@ import (
+ 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
+ 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
+ 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
+-	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/secrethelper"
+ 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/timeutil"
++	"github.com/hivepaas/hivepaas/hivepaas_app/service/specservice/specmodel"
+ 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings"
+ )
+ 
+-var (
+-	EncryptionSecretRequirements = secrethelper.SecretStrengthRequirements{
+-		MinLen:             secrethelper.DefaultSecretMinLen,
+-		MaxLen:             secrethelper.DefaultSecretMaxLen,
+-		RequiredLowercases: secrethelper.DefaultSecretRequiredLowercases,
+-		RequiredUppercases: secrethelper.DefaultSecretRequiredUppercases,
+-		RequiredDigits:     secrethelper.DefaultSecretRequiredDigits,
+-		RequiredSpecials:   secrethelper.DefaultSecretRequiredSpecials,
+-		MaxSimilarRun:      secrethelper.DefaultSecretMaxSimilarRun,
+-		MaxSequenceRun:     secrethelper.DefaultSecretMaxSequenceRun,
+-	}
+-)
++// specPassphraseMaxLen is as long as a spec export's passphrase may be.
++const specPassphraseMaxLen = 256
+ 
+ type UpdateSystemBackupReq struct {
+ 	settings.UpdateUniqueSettingReq
+@@ -33,24 +23,35 @@ type UpdateSystemBackupReq struct {
+ }
+ 
+ type SystemBackupBaseReq struct {
+-	Status         base.SettingStatus                `json:"status"`
+-	Schedule       ScheduleReq                       `json:"schedule"`
+-	Compression    SystemBackupCompressionReq        `json:"compression"`
+-	Encryption     SystemBackupEncryptionReq         `json:"encryption"`
+-	CloudStorage   SystemBackupCloudStorageReq       `json:"cloudStorage"`
+-	DBBackupConfig SystemBackupDBConfigReq           `json:"dbBackupConfig"`
+-	Notification   *basedto.BaseEventNotificationReq `json:"notification"`
++	Status   base.SettingStatus `json:"status"`
++	Schedule ScheduleReq        `json:"schedule"`
++	// What goes in: one at least.
++	IncludeDB   bool `json:"includeDB"`
++	IncludeSpec bool `json:"includeSpec"`
++	// SpecSecrets is how the spec holds secrets; SpecPassphrase is required
++	// when they are encrypted.
++	SpecSecrets    specmodel.SecretsMode `json:"specSecrets"`
++	SpecPassphrase string                `json:"specPassphrase"`
++	// TargetRepository is a backup repository at the global scope.
++	TargetRepository basedto.ObjectIDReq               `json:"targetRepository"`
++	Notification     *basedto.BaseEventNotificationReq `json:"notification"`
+ }
+ 
+ func (req *SystemBackupBaseReq) ToEntity() *entity.SystemBackup {
+-	return &entity.SystemBackup{
+-		Schedule:       req.Schedule.ToEntity(),
+-		Compression:    req.Compression.ToEntity(),
+-		Encryption:     req.Encryption.ToEntity(),
+-		CloudStorage:   req.CloudStorage.ToEntity(),
+-		DBBackupConfig: req.DBBackupConfig.ToEntity(),
+-		Notification:   req.Notification.ToEntity(),
++	backup := &entity.SystemBackup{
++		Schedule:         req.Schedule.ToEntity(),
++		IncludeDB:        req.IncludeDB,
++		IncludeSpec:      req.IncludeSpec,
++		TargetRepository: entity.ObjectID{ID: req.TargetRepository.ID},
++		Notification:     req.Notification.ToEntity(),
++	}
++	if req.IncludeSpec {
++		backup.SpecSecrets = string(req.SpecSecrets)
++		if req.SpecSecrets == specmodel.SecretsModeEncrypted {
++			backup.SpecPassphrase = entity.NewEncryptedField(req.SpecPassphrase)
++		}
+ 	}
++	return backup
+ }
+ 
+ // KeepMaskedSecrets restores the stored values for the secrets the request only
+@@ -59,8 +60,8 @@ func (req *SystemBackupBaseReq) KeepMaskedSecrets(backup, current *entity.System
+ 	if current == nil {
+ 		return
+ 	}
+-	if basedto.IsMaskedSecret(req.Encryption.Secret) {
+-		backup.Encryption.Secret = current.Encryption.Secret
++	if basedto.IsMaskedSecret(req.SpecPassphrase) && backup.SpecSecrets == string(specmodel.SecretsModeEncrypted) {
++		backup.SpecPassphrase = current.SpecPassphrase
+ 	}
+ }
+ 
+@@ -78,81 +79,6 @@ func (req *ScheduleReq) ToEntity() entity.SchedJobSchedule {
+ 	}
+ }
+ 
+-type SystemBackupCompressionReq struct {
+-	Format base.FileCompressionFormat `json:"format,omitempty"`
+-}
+-
+-func (req *SystemBackupCompressionReq) ToEntity() entity.SystemBackupCompression {
+-	return entity.SystemBackupCompression{
+-		Format: req.Format,
+-	}
+-}
+-
+-func (req *SystemBackupCompressionReq) validate(field string) (res []vld.Validator) {
+-	if field != "" {
+-		field += "."
+-	}
+-	res = append(res, basedto.ValidateStrIn(&req.Format, false,
+-		base.AllFileCompressionFormats, field+"format")...)
+-	return res
+-}
+-
+-type SystemBackupEncryptionReq struct {
+-	Format base.FileEncryptionFormat `json:"format,omitempty"`
+-	Secret string                    `json:"secret,omitzero"`
+-}
+-
+-func (req *SystemBackupEncryptionReq) ToEntity() entity.SystemBackupEncryption {
+-	return entity.SystemBackupEncryption{
+-		Format: req.Format,
+-		Secret: entity.NewEncryptedField(req.Secret),
+-	}
+-}
+-
+-func (req *SystemBackupEncryptionReq) validate(field string) (res []vld.Validator) {
+-	if field != "" {
+-		field += "."
+-	}
+-	res = append(res, basedto.ValidateStrIn(&req.Format, false,
+-		base.AllFileEncryptionFormats, field+"format")...)
+-	res = append(res, basedto.ValidateStr(&req.Secret, req.Format != "", // required if set
+-		1, EncryptionSecretRequirements.MaxLen, field+"secret")...)
+-	res = append(res, basedto.ValidatePlainSecret(&req.Secret, field+"secret")...)
+-	return res
+-}
+-
+-type SystemBackupCloudStorageReq struct {
+-	ID             string `json:"id"`
+-	Bucket         string `json:"bucket"`
+-	DestinationDir string `json:"destinationDir"`
+-}
+-
+-func (req *SystemBackupCloudStorageReq) ToEntity() entity.SystemBackupCloudStorage {
+-	return entity.SystemBackupCloudStorage{
+-		ID:             req.ID,
+-		Bucket:         req.Bucket,
+-		DestinationDir: req.DestinationDir,
+-	}
+-}
+-
+-func (req *SystemBackupCloudStorageReq) validate(field string) (res []vld.Validator) {
+-	if field != "" {
+-		field += "."
+-	}
+-	res = append(res, basedto.ValidateID(&req.ID, false, field+"id")...)
+-	return res
+-}
+-
+-type SystemBackupDBConfigReq struct {
+-	BackupDeletedObjects bool `json:"backupDeletedObjects"`
+-}
+-
+-func (req *SystemBackupDBConfigReq) ToEntity() entity.SystemBackupDBConfig {
+-	return entity.SystemBackupDBConfig{
+-		BackupDeletedObjects: req.BackupDeletedObjects,
+-	}
+-}
+-
+ func (req *SystemBackupBaseReq) validate(field string) (res []vld.Validator) {
+ 	if field != "" {
+ 		field += "."
+@@ -164,9 +90,16 @@ func (req *SystemBackupBaseReq) validate(field string) (res []vld.Validator) {
+ 	))
+ 	res = append(res, basedto.ValidateTime(&req.Schedule.InitialTime, true,
+ 		time.Now().Add(-timeutil.Dur365Days), time.Time{}, field+"schedule.initialTime")...)
+-	res = append(res, req.Compression.validate(field+"compression")...)
+-	res = append(res, req.Encryption.validate(field+"encryption")...)
+-	res = append(res, req.CloudStorage.validate(field+"cloudStorage")...)
++	// A disabled backup is not asked for what it would take, nor where.
++	active := req.Status == base.SettingStatusActive
++	res = append(res, basedto.ValidateCond(!active || req.IncludeDB || req.IncludeSpec, field+"includeDB")...)
++	if req.IncludeSpec {
++		res = append(res, basedto.ValidateStrIn(&req.SpecSecrets, true, specmodel.AllSecretsModes,
++			field+"specSecrets")...)
++		res = append(res, basedto.ValidateStr(&req.SpecPassphrase,
++			req.SpecSecrets == specmodel.SecretsModeEncrypted, 1, specPassphraseMaxLen, field+"specPassphrase")...)
++	}
++	res = append(res, basedto.ValidateObjectIDReq(&req.TargetRepository, active, field+"targetRepository")...)
+ 	res = append(res, req.Notification.Validate(field+"notification")...)
+ 	return res
+ }
+diff --git a/hivepaas_app/usecase/systemsettings/systembackupuc/update.go b/hivepaas_app/usecase/systemsettings/systembackupuc/update.go
+index 8847e776..a3e2d16c 100644
+--- a/hivepaas_app/usecase/systemsettings/systembackupuc/update.go
++++ b/hivepaas_app/usecase/systemsettings/systembackupuc/update.go
+@@ -3,6 +3,7 @@ package systembackupuc
+ import (
+ 	"context"
+ 	"errors"
++	"fmt"
+ 	"time"
+ 
+ 	"github.com/tiendc/gofn"
+@@ -12,10 +13,11 @@ import (
+ 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
+ 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
+ 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
++	"github.com/hivepaas/hivepaas/hivepaas_app/permission"
+ 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
+-	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/secrethelper"
+ 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/timeutil"
+ 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/ulid"
++	"github.com/hivepaas/hivepaas/hivepaas_app/service/specservice/specmodel"
+ 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings"
+ 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/systemsettings/systembackupuc/systembackupdto"
+ )
+@@ -121,17 +123,9 @@ func (uc *UC) loadSettingData(
+ 	data.JobScheduleChanges = !backup.Schedule.Equal(&data.NewBackup.Schedule)
+ 
+ 	req.KeepMaskedSecrets(data.NewBackup, backup)
+-	encryptionSecretUnchanged, err := data.NewBackup.Encryption.Secret.Equal(&backup.Encryption.Secret)
+-	if err != nil {
++	if err = uc.checkNewBackup(ctx, db, req.Auth, data.NewBackup); err != nil {
+ 		return hperrors.Wrap(err)
+ 	}
+-	if !encryptionSecretUnchanged {
+-		requirements := systembackupdto.EncryptionSecretRequirements
+-		err = secrethelper.ValidateStrength(gofn.Must(data.NewBackup.Encryption.Secret.GetPlain()), &requirements)
+-		if err != nil {
+-			return hperrors.Wrap(err)
+-		}
+-	}
+ 
+ 	// Load sched job of the backup
+ 	jobSetting, err := uc.SettingRepo.GetSingle(ctx, db, req.Scope, base.SettingTypeSchedJob, false,
+@@ -168,6 +162,51 @@ func (uc *UC) loadSettingData(
+ 	return nil
+ }
+ 
++// checkNewBackup refuses a repository that is not a global one, and a spec that
++// holds secrets from a person without the capability to reveal them.
++//
++// The gate is a mount's, the capability alone: the backup puts the secrets in a
++// repository, as a mount puts one in a container, and hands the caller nothing
++// in the clear - so the operator's flag on what the API returns does not apply.
++func (uc *UC) checkNewBackup(
++	ctx context.Context,
++	db database.IDB,
++	auth *basedto.Auth,
++	backup *entity.SystemBackup,
++) error {
++	if backup.TargetRepository.ID != "" {
++		repo, err := uc.SettingRepo.GetByID(ctx, db, nil, base.SettingTypeBackupRepo, backup.TargetRepository.ID, false)
++		if err != nil && !errors.Is(err, hperrors.ErrNotFound) {
++			return hperrors.Wrap(err)
++		}
++		if err = checkTargetRepository(repo); err != nil {
++			return hperrors.Wrap(err)
++		}
++	}
++	if !backup.IncludeSpec || !specmodel.SecretsMode(backup.SpecSecrets).RevealsSecrets() {
++		return nil
++	}
++	err := uc.PermissionManager.AuthorizeSecretMount(ctx, db, auth, &permission.RevealSubject{
++		Scope:   base.ObjectScopeGlobal,
++		Source:  base.AuditLogSourceAPIAction,
++		ResType: base.ResourceTypeSetting,
++		ResName: fmt.Sprintf("system backup spec (%s)", backup.SpecSecrets),
++	})
++	return hperrors.Wrap(err)
++}
++
++// checkTargetRepository is a backup repository at the global scope.
++func checkTargetRepository(repo *entity.Setting) error {
++	if repo == nil {
++		return hperrors.NewNotFound("Backup repository")
++	}
++	if repo.Scope != base.ObjectScopeGlobal {
++		return hperrors.NewArgumentInvalid("targetRepository").
++			WithExtraDetail("the system backup goes into a repository of the global scope")
++	}
++	return nil
++}
++
+ func (uc *UC) preparePersistingData(
+ 	req *systembackupdto.UpdateSystemBackupReq,
+ 	updateData *updateSettingData,

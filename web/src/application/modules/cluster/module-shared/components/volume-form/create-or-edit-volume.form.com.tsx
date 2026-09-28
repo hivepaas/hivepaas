@@ -38,7 +38,7 @@ import {
 import { CURRENT_NODE_VALUE, DEFAULT_VOLUME_FORM_VALUES } from "./volume-form.constants";
 
 const VOLUME_NODE_NOTE =
-    "Where this volume's data actually lives. Pin it to a node - or to a node label - when the data sits on that machine's disk: the bind directory is created there, and a backup repository kept on this volume runs there. Pick \u201cAll nodes\u201d only when every node reaches the same data, which is true for cluster volumes and for paths backed by shared storage (NFS, Ceph, ...) mounted identically everywhere. HivePaaS cannot tell that apart from a local directory, so it takes your word for it: choosing it for data that is really on one node leaves the directory uncreated and backup repositories refusing the volume.";
+    "Where this volume's data actually lives. Pin it to a node - or to a node label - when the data sits on that machine's disk: the bind directory is created there, and a backup repository kept on this volume runs there. Pick \u201cAll nodes\u201d only when every node reaches the same data, which is true for cluster volumes and for paths backed by shared storage (NFS, Ceph, ...) mounted identically everywhere. A backup repository on such a volume runs on the node HivePaaS runs on, and needs the volume to be a bind directory, the same path on every node. HivePaaS cannot tell shared storage apart from a local directory, so it takes your word for it: choosing it for data that is really on one node leaves the directory uncreated, and a backup repository on it sees different data on each node.";
 
 // Two choices that are not a node id, kept out of the id space so a node can never
 // collide with them.

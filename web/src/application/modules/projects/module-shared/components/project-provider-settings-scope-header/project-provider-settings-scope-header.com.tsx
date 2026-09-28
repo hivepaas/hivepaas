@@ -14,7 +14,7 @@ function getScopeTooltip(selectedEnv: string): string {
     return `These settings are scoped to env "${selectedEnv}". Switch environments in the top right to change scope.`;
 }
 
-export function ProjectProviderSettingsScopeHeader({ projectId, forceAllEnvs = false }: Props) {
+export function ProjectProviderSettingsScopeHeader({ projectId, forceAllEnvs = false, hideNote = false }: Props) {
     const selectedEnv = useSelectedProjectEnv(projectId);
     const { data: projectData } = ProjectsQueries.useFindOneById({ projectID: projectId });
     const envs = projectData?.data.envs ?? [];
@@ -42,16 +42,18 @@ export function ProjectProviderSettingsScopeHeader({ projectId, forceAllEnvs = f
                         <TooltipContent side="right">{getScopeTooltip(scopedEnv)}</TooltipContent>
                     </Tooltip>
 
-                    <div
-                        className={cn(
-                            dashedBorderBox,
-                            "inline-flex min-h-7 h-auto w-fit items-center px-2.5 sm:px-3 py-1 sm:py-0.5",
-                        )}
-                    >
-                        <span>
-                            <span className="font-semibold text-orange-500">Note:</span> {ENV_SETTING_NOTE}
-                        </span>
-                    </div>
+                    {!hideNote && (
+                        <div
+                            className={cn(
+                                dashedBorderBox,
+                                "inline-flex min-h-7 h-auto w-fit items-center px-2.5 sm:px-3 py-1 sm:py-0.5",
+                            )}
+                        >
+                            <span>
+                                <span className="font-semibold text-orange-500">Note:</span> {ENV_SETTING_NOTE}
+                            </span>
+                        </div>
+                    )}
                 </>
             )}
         </div>
@@ -65,4 +67,8 @@ interface Props {
      * For settings that only exist at project scope (github apps, repo webhooks).
      */
     forceAllEnvs?: boolean;
+    /**
+     * Whether to hide the note recommending settings for every environment.
+     */
+    hideNote?: boolean;
 }

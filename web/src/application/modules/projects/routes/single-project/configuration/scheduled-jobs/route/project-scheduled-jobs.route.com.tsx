@@ -17,7 +17,10 @@ export function ProjectScheduledJobsRoute() {
 
     return (
         <div className="flex flex-col gap-4">
-            <ProjectProviderSettingsScopeHeader projectId={projectId} />
+            <ProjectProviderSettingsScopeHeader
+                projectId={projectId}
+                hideNote
+            />
             {scopedEnv ? (
                 <EnvScheduledJobsTable
                     key={scopedEnv}

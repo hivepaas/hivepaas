@@ -260,3 +260,16 @@ type ListEntriesReq struct {
 	// Path is a directory inside the snapshot; "" for its root.
 	Path string
 }
+
+type BackupLocalDirectoryReq struct {
+	RepoTarget
+	// Dir is a directory of this process.
+	Dir string
+	// Source is what kopia records the snapshot under, user@host:/path; its user
+	// is who a repository server is reached as.
+	Source      string
+	Description string
+	Tags        []string
+	// Progress, when set, is told the steps the backup takes.
+	Progress func(msg string)
+}

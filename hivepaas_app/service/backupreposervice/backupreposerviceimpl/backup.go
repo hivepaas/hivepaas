@@ -80,6 +80,35 @@ func (s *service) BackupDirectory(
 	return &backupreposervice.BackupResp{Snapshot: toRepoSnapshot(result.Item)}, nil
 }
 
+func (s *service) BackupLocalDirectory(
+	ctx context.Context,
+	db database.IDB,
+	req *backupreposervice.BackupLocalDirectoryReq,
+) (*backupreposervice.BackupResp, error) {
+	repo, storage, err := s.targetStorage(ctx, db, &req.RepoTarget)
+	if err != nil {
+		return nil, hperrors.Wrap(err)
+	}
+	opts := &backup.BackupOptions{Tags: req.Tags, Description: req.Description, Source: req.Source}
+	take := func(engine backup.Engine) (backupmodel.BackupResult, error) {
+		result, err := engine.BackupDirectory(ctx, req.Dir, opts)
+		return result, hperrors.Wrap(err)
+	}
+	// The directory is this process's: kopia runs here, and reaches a repository
+	// on a volume through its server.
+	var result backupmodel.BackupResult
+	if storage.StorageLocal == nil {
+		result, err = s.backupWith(ctx, repo, storage, s.buildCommandExecutor(false), take)
+	} else {
+		result, err = s.backupThroughServer(ctx, req.RepoSetting.ID, repo, storage, req.Source, req.Progress,
+			s.buildCommandExecutor(false), take)
+	}
+	if err != nil {
+		return nil, hperrors.Wrap(err)
+	}
+	return &backupreposervice.BackupResp{Snapshot: toRepoSnapshot(result.Item)}, nil
+}
+
 // targetStorage is the repository and where it is.
 func (s *service) targetStorage(
 	ctx context.Context,

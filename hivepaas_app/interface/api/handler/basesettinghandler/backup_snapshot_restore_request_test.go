@@ -1,13 +1,17 @@
 package basesettinghandler
 
 import (
+	"context"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/interface/api/handler"
@@ -85,4 +89,40 @@ func TestDownloadHeaders(t *testing.T) {
 	assert.Equal(t, `attachment; filename=spec.tar.gz.age`, rec.Header().Get("Content-Disposition"))
 	assert.Equal(t, "application/octet-stream", rec.Header().Get("Content-Type"))
 	assert.Equal(t, "42", rec.Header().Get("Content-Length"))
+}
+
+// A download outlasts the server's write timeout: a large file on a slow link
+// takes minutes, and the timeout is meant for ordinary answers.
+func TestADownloadOutlastsTheWriteTimeout(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+	chunk := strings.Repeat("x", 1024)
+	const chunks = 4
+	engine := gin.New()
+	engine.GET("/", func(c *gin.Context) {
+		writeDownload(c, c.Request.Context(), &backupsnapshotdto.DownloadBackupSnapshotFileResp{
+			FileName: "db.pg_dump", SizeBytes: int64(len(chunk) * chunks),
+			Write: func(_ context.Context, w io.Writer) error {
+				for range chunks {
+					time.Sleep(100 * time.Millisecond)
+					if _, err := io.WriteString(w, chunk); err != nil {
+						return err
+					}
+					w.(http.Flusher).Flush()
+				}
+				return nil
+			},
+		})
+	})
+	server := httptest.NewUnstartedServer(engine)
+	server.Config.WriteTimeout = 150 * time.Millisecond
+	server.Start()
+	defer server.Close()
+
+	resp, err := http.Get(server.URL) //nolint:noctx
+	require.NoError(t, err)
+	defer resp.Body.Close()
+	body, err := io.ReadAll(resp.Body)
+
+	require.NoError(t, err)
+	assert.Len(t, body, len(chunk)*chunks)
 }

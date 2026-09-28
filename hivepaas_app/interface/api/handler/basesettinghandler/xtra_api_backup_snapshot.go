@@ -1,9 +1,11 @@
 package basesettinghandler
 
 import (
+	"context"
 	"mime"
 	"net/http"
 	"strconv"
+	"time"
 
 	"github.com/gin-gonic/gin"
 
@@ -168,9 +170,23 @@ func (h *Handler) DownloadBackupSnapshotFile(ctx *gin.Context, scopeType base.Ob
 		h.RenderError(ctx, err)
 		return
 	}
+	writeDownload(ctx, h.RequestCtx(ctx), resp)
+}
+
+// writeDownload writes the file, headers first. The server's write timeout is
+// lifted: it is meant for ordinary answers, and a large file on a slow link
+// takes minutes. The request's context still ends it when the client leaves.
+func writeDownload(
+	ctx *gin.Context,
+	requestCtx context.Context,
+	resp *backupsnapshotdto.DownloadBackupSnapshotFileResp,
+) {
+	if err := http.NewResponseController(ctx.Writer).SetWriteDeadline(time.Time{}); err != nil {
+		_ = ctx.Error(err)
+	}
 	writeDownloadHeaders(ctx, resp)
 	ctx.Status(http.StatusOK)
-	if err = resp.Write(h.RequestCtx(ctx), ctx.Writer); err != nil {
+	if err := resp.Write(requestCtx, ctx.Writer); err != nil {
 		_ = ctx.Error(err)
 	}
 }

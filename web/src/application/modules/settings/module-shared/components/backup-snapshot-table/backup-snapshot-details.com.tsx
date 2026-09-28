@@ -1,13 +1,17 @@
 import { cn } from "@/lib/utils";
 import { Badge } from "@components/ui/badge";
+import { Button } from "@components/ui/button";
 import { format } from "date-fns";
+import { ArchiveRestore } from "lucide-react";
 import type { BackupSnapshot } from "~/settings/domain";
 
+import { MODULE_IDS } from "@application/shared/constants";
+import { PermissionTooltipAction } from "@application/shared/permissions";
 import { formatDataSizeCompact } from "@application/shared/utils/data-size";
 
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 
-import { sourceLabel, tagClassName } from "./backup-snapshot-table.helpers";
+import { isRepoActive, sourceLabel, tagClassName } from "./backup-snapshot-table.helpers";
 
 function Row({ label, children }: { label: string; children: React.ReactNode }) {
     return (
@@ -19,7 +23,7 @@ function Row({ label, children }: { label: string; children: React.ReactNode }) 
 }
 
 /** A snapshot's details: what the table has no room for. */
-export function BackupSnapshotDetails({ snapshot, runLink, onOpenChange }: Props) {
+export function BackupSnapshotDetails({ snapshot, runLink, onRestore, onOpenChange }: Props) {
     return (
         <Sheet
             open={Boolean(snapshot)}
@@ -32,6 +36,26 @@ export function BackupSnapshotDetails({ snapshot, runLink, onOpenChange }: Props
                             <SheetTitle>Snapshot {snapshot.shortId}</SheetTitle>
                             <SheetDescription>{format(snapshot.time, "yyyy-MM-dd HH:mm:ss")}</SheetDescription>
                         </SheetHeader>
+                        <div className="px-4">
+                            <PermissionTooltipAction
+                                id={MODULE_IDS.Project}
+                                action="write"
+                            >
+                                {({ isDenied }) => (
+                                    <Button
+                                        variant="outline"
+                                        size="sm"
+                                        disabled={isDenied || !isRepoActive(snapshot)}
+                                        onClick={() => {
+                                            onRestore(snapshot);
+                                        }}
+                                    >
+                                        <ArchiveRestore className="size-4" />
+                                        Restore
+                                    </Button>
+                                )}
+                            </PermissionTooltipAction>
+                        </div>
                         <div className="flex flex-col gap-4 px-4 pb-6">
                             <Row label="Snapshot ID">
                                 <span className="font-mono select-all">{snapshot.snapshotId}</span>
@@ -83,5 +107,7 @@ interface Props {
     snapshot: BackupSnapshot | null;
     /** A link to the run that took the snapshot, when the view can make one. */
     runLink?: React.ReactNode;
+    /** Opens the snapshot's restore. */
+    onRestore: (snapshot: BackupSnapshot) => void;
     onOpenChange: (open: boolean) => void;
 }

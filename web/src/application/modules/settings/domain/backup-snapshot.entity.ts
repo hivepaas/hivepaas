@@ -29,7 +29,7 @@ export interface BackupSnapshot {
     /** command or volume; empty when not known. */
     source: string;
     repo: BackupSnapshotRepoRef;
-    app?: { id: string; name: string; env: string; deleted: boolean };
+    app?: { id: string; name: string; projectId: string; env: string; deleted: boolean };
     job?: BackupSnapshotJob;
     /** The task of the run that took it. */
     runId: string;

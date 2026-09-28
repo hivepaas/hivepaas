@@ -62,3 +62,8 @@ export interface BackupSnapshotFilterValues {
 export function countActiveFilters(filters: BackupSnapshotFilterValues): number {
     return [filters.repo, filters.app, filters.fromDate, filters.toDate].filter(Boolean).length + filters.tags.length;
 }
+
+/** A snapshot is read, to restore it, from a repository that is active. */
+export function isRepoActive(snapshot: BackupSnapshot): boolean {
+    return snapshot.repo.status === "active";
+}

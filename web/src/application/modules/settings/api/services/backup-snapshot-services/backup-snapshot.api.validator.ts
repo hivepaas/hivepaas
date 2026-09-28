@@ -98,6 +98,7 @@ const BackupSnapshotSchema = z.object({
         .object({
             id: z.string(),
             name: z.string().optional().default(""),
+            projectId: z.string().optional().default(""),
             env: z.string().optional().default(""),
             deleted: z.boolean().optional().default(false),
         })

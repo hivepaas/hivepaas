@@ -185,6 +185,7 @@ const ALL_TASK_TYPES_FALLBACK = [
     "task:workflow",
     "task:settings-revert",
     "task:app-labels-sweep",
+    "task:backup-restore",
 ];
 
 export function SystemTasksFilterBar({ scope, filters, onChange, className }: SystemTasksFilterBarProps) {

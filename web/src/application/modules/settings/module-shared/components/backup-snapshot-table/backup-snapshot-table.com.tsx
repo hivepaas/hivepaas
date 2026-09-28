@@ -16,6 +16,7 @@ import { Badge } from "@/components/ui/badge";
 import { BackupSnapshotDeleteDialog } from "./backup-snapshot-delete-dialog.com";
 import { BackupSnapshotDetails } from "./backup-snapshot-details.com";
 import { BackupSnapshotFilterBar } from "./backup-snapshot-filter-bar.com";
+import { BackupSnapshotRestoreDrawer } from "./backup-snapshot-restore-drawer.com";
 import { BackupSnapshotTableDefs } from "./backup-snapshot-table.defs";
 import { type BackupSnapshotFilterValues, countActiveFilters, isTagFilter } from "./backup-snapshot-table.helpers";
 
@@ -54,6 +55,7 @@ export function BackupSnapshotTable({ scope }: Props) {
     const [isFilterOpen, setIsFilterOpen] = useState(() => countActiveFilters(filters) > 0);
     const [details, setDetails] = useState<BackupSnapshot | null>(null);
     const [deleting, setDeleting] = useState<BackupSnapshot | null>(null);
+    const [restoring, setRestoring] = useState<BackupSnapshot | null>(null);
 
     const { data = { ...DEFAULT_PAGINATED_DATA, repos: [] }, isFetching } = BackupSnapshotQueries.useFindManyPaginated({
         scope,
@@ -77,6 +79,7 @@ export function BackupSnapshotTable({ scope }: Props) {
         () =>
             BackupSnapshotTableDefs.columns(scope, {
                 onViewDetails: setDetails,
+                onRestore: setRestoring,
                 onDelete: setDeleting,
             }),
         [scope],
@@ -166,9 +169,22 @@ export function BackupSnapshotTable({ scope }: Props) {
                         </AppLink.Modules>
                     ) : undefined
                 }
+                onRestore={snapshot => {
+                    setDetails(null);
+                    setRestoring(snapshot);
+                }}
                 onOpenChange={open => {
                     if (!open) {
                         setDetails(null);
+                    }
+                }}
+            />
+            <BackupSnapshotRestoreDrawer
+                scope={scope}
+                snapshot={restoring}
+                onOpenChange={open => {
+                    if (!open) {
+                        setRestoring(null);
                     }
                 }}
             />

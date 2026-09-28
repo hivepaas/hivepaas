@@ -28,8 +28,8 @@ const NamedRefSchema = z.object({
     name: z.string(),
 });
 
-/** The command section's fields, as `CommandConfigSection` edits them under `sourceCommand`. */
-const SourceCommandSchema = z.object({
+/** The command section's fields, as `CommandConfigSection` edits them under `sourceCommand` or `restoreCommand`. */
+export const SourceCommandSchema = z.object({
     commandMode: z.enum([DATA_BACKUP_COMMAND_MODE.Command, DATA_BACKUP_COMMAND_MODE.Script]),
     command: z.string().trim(),
     script: z.string(),
@@ -142,4 +142,5 @@ export const DataBackupFormSchema = z
     });
 
 export type DataBackupFormInput = z.input<typeof DataBackupFormSchema>;
+export type CommandFormInput = z.input<typeof SourceCommandSchema>;
 export type DataBackupFormOutput = z.output<typeof DataBackupFormSchema>;

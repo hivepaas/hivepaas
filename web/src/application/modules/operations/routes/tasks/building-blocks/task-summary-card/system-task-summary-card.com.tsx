@@ -587,6 +587,41 @@ export function SystemTaskSummaryCard({
                                     </div>
                                 )}
 
+                                {task.backupRestore && (
+                                    <div>
+                                        <span className="text-muted-foreground">Restored Snapshot:</span>{" "}
+                                        {task.scopeProject && task.scopeApp?.env ? (
+                                            <AppLink.Modules
+                                                to={`${ROUTE.projects.single.apps.single.configuration.backupSnapshots.$route(
+                                                    task.scopeProject.id,
+                                                    task.scopeApp.env,
+                                                    task.scopeApp.id,
+                                                )}?repo=${encodeURIComponent(task.backupRestore.repoId)}`}
+                                                className="font-mono text-link hover:underline"
+                                            >
+                                                {task.backupRestore.snapshotId}
+                                            </AppLink.Modules>
+                                        ) : (
+                                            <span className="font-mono text-foreground select-all">
+                                                {task.backupRestore.snapshotId}
+                                            </span>
+                                        )}
+                                        {task.backupRestore.snapshotPath && (
+                                            <span className="font-mono text-muted-foreground">
+                                                {" "}
+                                                /{task.backupRestore.snapshotPath}
+                                            </span>
+                                        )}
+                                        {task.backupRestore.mode && (
+                                            <span className="text-muted-foreground">
+                                                {" "}
+                                                ({task.backupRestore.mode === "replace" ? "replace" : "overwrite"}
+                                                {task.backupRestore.stopApp ? ", app stopped" : ""})
+                                            </span>
+                                        )}
+                                    </div>
+                                )}
+
                                 {task.dataBackup && (
                                     <div>
                                         <span className="text-muted-foreground">Snapshot:</span>{" "}

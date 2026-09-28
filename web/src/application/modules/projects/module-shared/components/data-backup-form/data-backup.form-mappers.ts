@@ -26,7 +26,8 @@ import {
     type DataBackupFormOutput,
 } from "./data-backup.form.schema";
 
-function emptySourceCommand(): DataBackupFormInput["sourceCommand"] {
+/** A command section with no command in it. */
+export function emptySourceCommand(): DataBackupFormInput["sourceCommand"] {
     return {
         commandMode: DATA_BACKUP_COMMAND_MODE.Command,
         command: "",
@@ -73,7 +74,7 @@ function refName(ref: { name: string; status: string }, deleted: string): string
 }
 
 /** A job's command as the command section edits it; an empty one for none. */
-function mapCommandToFormInput(
+export function mapCommandToFormInput(
     command: AppScheduledJobCommand | null | undefined,
 ): DataBackupFormInput["sourceCommand"] {
     if (!command) {
@@ -126,7 +127,7 @@ export function mapDataBackupToFormInput(job: AppScheduledJob): DataBackupFormIn
 }
 
 /** Whether the command section holds a command: the restore command is optional. */
-function hasCommand(cmd: DataBackupFormOutput["sourceCommand"]): boolean {
+export function hasCommand(cmd: DataBackupFormOutput["sourceCommand"]): boolean {
     return cmd.commandMode === DATA_BACKUP_COMMAND_MODE.Script ? cmd.script.trim().length > 0 : cmd.command.length > 0;
 }
 
@@ -134,7 +135,9 @@ function hasCommand(cmd: DataBackupFormOutput["sourceCommand"]): boolean {
  * The command runs without a TTY: a backup's stdout is the backup, and a TTY would mix its stderr in; a
  * restore's stdin is the backup, which a TTY would not pass through as is.
  */
-function mapSourceCommandToPayload(cmd: DataBackupFormOutput["sourceCommand"]): AppScheduledJobs_Command_Payload {
+export function mapSourceCommandToPayload(
+    cmd: DataBackupFormOutput["sourceCommand"],
+): AppScheduledJobs_Command_Payload {
     const isScript = cmd.commandMode === DATA_BACKUP_COMMAND_MODE.Script;
     return {
         command: isScript ? "" : cmd.command,

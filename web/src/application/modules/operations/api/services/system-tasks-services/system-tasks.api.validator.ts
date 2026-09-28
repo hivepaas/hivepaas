@@ -155,6 +155,19 @@ const DataBackupSchema = z
     .nullish()
     .transform(value => value ?? undefined);
 
+const BackupRestoreSchema = z
+    .object({
+        snapshotRecordId: z.string().optional().default(""),
+        repoId: z.string().optional().default(""),
+        snapshotId: z.string().optional().default(""),
+        snapshotPath: z.string().optional().default(""),
+        fileName: z.string().optional().default(""),
+        mode: z.string().optional().default(""),
+        stopApp: z.boolean().optional().default(false),
+    })
+    .nullish()
+    .transform(value => value ?? undefined);
+
 const SystemTaskSchema = z.object({
     id: z.string(),
     type: z.string().optional().default(""),
@@ -169,6 +182,7 @@ const SystemTaskSchema = z.object({
     sequenceRun: SequenceRunSchema,
     trigger: TriggerSchema,
     dataBackup: DataBackupSchema,
+    backupRestore: BackupRestoreSchema,
     runAt: NullableDateSchema,
     retryAt: NullableDateSchema,
     startedAt: NullableDateSchema,

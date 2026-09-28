@@ -118,6 +118,18 @@ export interface SystemTaskDataBackup {
     sizeBytes: number;
 }
 
+/** What a restore's task restored, from where, and how. */
+export interface SystemTaskBackupRestore {
+    /** The snapshot's record; snapshotId is the repository's. */
+    snapshotRecordId: string;
+    repoId: string;
+    snapshotId: string;
+    snapshotPath: string;
+    fileName: string;
+    mode: string;
+    stopApp: boolean;
+}
+
 export interface SystemTask {
     id: string;
     type: string;
@@ -132,6 +144,7 @@ export interface SystemTask {
     sequenceRun?: SystemTaskSequenceRun;
     trigger?: SystemTaskTrigger;
     dataBackup?: SystemTaskDataBackup;
+    backupRestore?: SystemTaskBackupRestore;
     runAt: Date | null;
     retryAt: Date | null;
     startedAt: Date | null;

@@ -2,7 +2,7 @@ import { Err, Ok, type Result } from "oxide.ts";
 import { catchError, from, lastValueFrom, map, of } from "rxjs";
 import type { BackupSnapshotScope } from "~/settings/domain";
 
-import { BaseApi, parseApiError } from "@infrastructure/api";
+import { BaseApi, parseApiError, parseBlobApiError } from "@infrastructure/api";
 
 import type {
     BackupSnapshot_DeleteOne_Req,
@@ -117,7 +117,7 @@ export class BackupSnapshotApi extends BaseApi {
                 }),
             ).pipe(
                 map(response => Ok({ data: { blob: response.data, filename: path.split("/").pop() ?? path } })),
-                catchError(error => of(Err(parseApiError(error)))),
+                catchError(error => from(parseBlobApiError(error)).pipe(map(parsed => Err(parsed)))),
             ),
         );
     }

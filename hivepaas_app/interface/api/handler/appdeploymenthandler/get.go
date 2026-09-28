@@ -13,7 +13,7 @@ import (
 // GetAppDeployment Gets app deployment
 // @Summary Gets app deployment
 // @Description Gets app deployment
-// @Tags    app_deployments
+// @Tags    App deployments
 // @Produce json
 // @Id      getAppDeployment
 // @Param   projectID path string true "project ID"
@@ -53,7 +53,7 @@ func (h *Handler) GetAppDeployment(ctx *gin.Context) {
 // GetAppDeploymentStatus Gets app deployment status
 // @Summary Gets app deployment status
 // @Description Gets app deployment status
-// @Tags    app_deployments
+// @Tags    App deployments
 // @Produce json
 // @Produce plain
 // @Id      getAppDeploymentStatus

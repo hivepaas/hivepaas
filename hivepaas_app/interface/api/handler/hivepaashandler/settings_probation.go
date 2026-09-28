@@ -15,7 +15,7 @@ import (
 // ConfirmRoutingSettings Confirms a routing change that is on trial
 // @Summary Confirms a routing change that is on trial
 // @Description Keeps a routing change that would otherwise be reverted at its deadline
-// @Tags    system_hivepaas
+// @Tags    HivePaaS
 // @Produce json
 // @Id      confirmHivePaaSRoutingSettings
 // @Param   body body hpappsettingsdto.ConfirmRoutingSettingsReq true "request data"
@@ -48,7 +48,7 @@ func (h *Handler) ConfirmRoutingSettings(ctx *gin.Context) {
 // RevertRoutingSettings Reverts a routing change that is on trial
 // @Summary Reverts a routing change that is on trial
 // @Description Undoes an unconfirmed routing change now, without waiting for its deadline
-// @Tags    system_hivepaas
+// @Tags    HivePaaS
 // @Produce json
 // @Id      revertHivePaaSRoutingSettings
 // @Param   body body hpappsettingsdto.RevertRoutingSettingsReq true "request data"
@@ -98,7 +98,7 @@ func (h *Handler) authorizeRoutingProbation(ctx *gin.Context, action string) (*b
 // ConfirmServiceSettings Confirms a service settings change that is on trial
 // @Summary Confirms a service settings change that is on trial
 // @Description Keeps a proxy settings change that would otherwise be reverted at its deadline
-// @Tags    system_hivepaas
+// @Tags    HivePaaS
 // @Produce json
 // @Id      confirmHivePaaSServiceSettings
 // @Param   body body hpappsettingsdto.ConfirmServiceSettingsReq true "request data"
@@ -131,7 +131,7 @@ func (h *Handler) ConfirmServiceSettings(ctx *gin.Context) {
 // RevertServiceSettings Reverts a service settings change that is on trial
 // @Summary Reverts a service settings change that is on trial
 // @Description Undoes an unconfirmed proxy settings change now, without waiting for its deadline
-// @Tags    system_hivepaas
+// @Tags    HivePaaS
 // @Produce json
 // @Id      revertHivePaaSServiceSettings
 // @Param   body body hpappsettingsdto.RevertServiceSettingsReq true "request data"

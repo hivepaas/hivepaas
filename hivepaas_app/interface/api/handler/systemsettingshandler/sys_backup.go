@@ -15,7 +15,7 @@ import (
 // GetBackupSettings Gets backup settings
 // @Summary Gets backup settings
 // @Description Gets backup settings
-// @Tags    system_settings
+// @Tags    System settings
 // @Produce json
 // @Id      getSystemBackupSettings
 // @Success 200 {object} systembackupdto.GetSystemBackupResp
@@ -52,7 +52,7 @@ func (h *Handler) GetBackupSettings(ctx *gin.Context) {
 // UpdateBackupSettings Updates backup settings
 // @Summary Updates backup settings
 // @Description Updates backup settings
-// @Tags    system_settings
+// @Tags    System settings
 // @Produce json
 // @Id      updateSystemBackupSettings
 // @Param   body body systembackupdto.UpdateSystemBackupReq true "request data"
@@ -90,7 +90,7 @@ func (h *Handler) UpdateBackupSettings(ctx *gin.Context) {
 // ExecuteBackup Executes the backup
 // @Summary Executes the backup
 // @Description Executes the backup
-// @Tags    system_settings
+// @Tags    System settings
 // @Produce json
 // @Id      executeSystemBackup
 // @Param   body body systembackupdto.ExecuteSystemBackupReq true "request data"

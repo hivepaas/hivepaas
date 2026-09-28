@@ -15,7 +15,7 @@ import (
 // @Description Gets what needs attention across the cluster - apps not running or restarting, nodes down
 // @Description or given more memory than they have - narrowed to what the caller may see. Any signed-in
 // @Description user may ask: each item is checked against the screen it leads to.
-// @Tags    home
+// @Tags    Home
 // @Produce json
 // @Id      getHomeAttention
 // @Success 200 {object} homedto.GetHomeAttentionResp

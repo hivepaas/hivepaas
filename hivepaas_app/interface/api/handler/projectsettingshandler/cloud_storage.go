@@ -11,7 +11,7 @@ import (
 // ListCloudStorage Lists cloud storages
 // @Summary Lists cloud storages
 // @Description Lists cloud storages
-// @Tags    project_settings
+// @Tags    Project settings
 // @Produce json
 // @Id      listProjectCloudStorage
 // @Param   projectID path string true "project ID"
@@ -30,7 +30,7 @@ func (h *Handler) ListCloudStorage(ctx *gin.Context) {
 // GetCloudStorage Gets cloud storage details
 // @Summary Gets cloud storage details
 // @Description Gets cloud storage details
-// @Tags    project_settings
+// @Tags    Project settings
 // @Produce json
 // @Id      getProjectCloudStorage
 // @Param   projectID path string true "project ID"
@@ -46,7 +46,7 @@ func (h *Handler) GetCloudStorage(ctx *gin.Context) {
 // CreateCloudStorage Creates a new cloud storage
 // @Summary Creates a new cloud storage
 // @Description Creates a new cloud storage
-// @Tags    project_settings
+// @Tags    Project settings
 // @Produce json
 // @Id      createProjectCloudStorage
 // @Param   projectID path string true "project ID"
@@ -62,7 +62,7 @@ func (h *Handler) CreateCloudStorage(ctx *gin.Context) {
 // UpdateCloudStorage Updates cloud storage
 // @Summary Updates cloud storage
 // @Description Updates cloud storage
-// @Tags    project_settings
+// @Tags    Project settings
 // @Produce json
 // @Id      updateProjectCloudStorage
 // @Param   projectID path string true "project ID"
@@ -79,7 +79,7 @@ func (h *Handler) UpdateCloudStorage(ctx *gin.Context) {
 // UpdateCloudStorageStatus Updates cloud storage status
 // @Summary Updates cloud storage status
 // @Description Updates cloud storage status
-// @Tags    project_settings
+// @Tags    Project settings
 // @Produce json
 // @Id      updateProjectCloudStorageStatus
 // @Param   projectID path string true "project ID"
@@ -96,7 +96,7 @@ func (h *Handler) UpdateCloudStorageStatus(ctx *gin.Context) {
 // DeleteCloudStorage Deletes a cloud storage
 // @Summary Deletes a cloud storage
 // @Description Deletes a cloud storage
-// @Tags    project_settings
+// @Tags    Project settings
 // @Produce json
 // @Id      deleteProjectCloudStorage
 // @Param   projectID path string true "project ID"

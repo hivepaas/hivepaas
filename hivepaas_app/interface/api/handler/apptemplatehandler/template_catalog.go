@@ -13,7 +13,7 @@ import (
 // GetAppTemplateCatalog Gets the app template catalog
 // @Summary Gets the app template catalog
 // @Description The source, its revision, and the categories and tags the template list can be filtered by.
-// @Tags    app_templates
+// @Tags    App templates
 // @Produce json
 // @Id      getAppTemplateCatalog
 // @Success 200 {object} apptemplatedto.GetAppTemplateCatalogResp

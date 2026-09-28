@@ -11,7 +11,7 @@ import (
 // ListNotification Lists notification settings
 // @Summary Lists notification settings
 // @Description Lists notification settings
-// @Tags    project_settings
+// @Tags    Project settings
 // @Produce json
 // @Id      listProjectNotification
 // @Param   projectID path string true "project ID"
@@ -30,7 +30,7 @@ func (h *Handler) ListNotification(ctx *gin.Context) {
 // GetNotification Gets notification setting details
 // @Summary Gets notification setting details
 // @Description Gets notification setting details
-// @Tags    project_settings
+// @Tags    Project settings
 // @Produce json
 // @Id      getProjectNotification
 // @Param   projectID path string true "project ID"
@@ -46,7 +46,7 @@ func (h *Handler) GetNotification(ctx *gin.Context) {
 // CreateNotification Creates a new notification setting
 // @Summary Creates a new notification setting
 // @Description Creates a new notification setting
-// @Tags    project_settings
+// @Tags    Project settings
 // @Produce json
 // @Id      createProjectNotification
 // @Param   projectID path string true "project ID"
@@ -62,7 +62,7 @@ func (h *Handler) CreateNotification(ctx *gin.Context) {
 // UpdateNotification Updates notification
 // @Summary Updates notification
 // @Description Updates notification
-// @Tags    project_settings
+// @Tags    Project settings
 // @Produce json
 // @Id      updateProjectNotification
 // @Param   projectID path string true "project ID"
@@ -79,7 +79,7 @@ func (h *Handler) UpdateNotification(ctx *gin.Context) {
 // UpdateNotificationStatus Updates notification status
 // @Summary Updates notification status
 // @Description Updates notification status
-// @Tags    project_settings
+// @Tags    Project settings
 // @Produce json
 // @Id      updateProjectNotificationStatus
 // @Param   projectID path string true "project ID"
@@ -96,7 +96,7 @@ func (h *Handler) UpdateNotificationStatus(ctx *gin.Context) {
 // DeleteNotification Deletes notification setting
 // @Summary Deletes notification setting
 // @Description Deletes notification setting
-// @Tags    project_settings
+// @Tags    Project settings
 // @Produce json
 // @Id      deleteProjectNotification
 // @Param   projectID path string true "project ID"

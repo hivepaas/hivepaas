@@ -14,7 +14,7 @@ import (
 // UpdateAppSecret Updates the HivePaaS app secret
 // @Summary Updates the HivePaaS app secret
 // @Description Replaces the key every stored secret is encrypted with, then re-encrypts them
-// @Tags    system_hivepaas
+// @Tags    HivePaaS
 // @Produce json
 // @Id      updateHivePaaSAppSecret
 // @Param   body body hpappsettingsdto.UpdateAppSecretReq true "request data"

@@ -11,7 +11,7 @@ import (
 // ListRepoWebhook Lists webhook settings
 // @Summary Lists webhook settings
 // @Description Lists webhook settings
-// @Tags    project_settings
+// @Tags    Project settings
 // @Produce json
 // @Id      listProjectRepoWebhook
 // @Param   projectID path string true "project ID"
@@ -30,7 +30,7 @@ func (h *Handler) ListRepoWebhook(ctx *gin.Context) {
 // GetRepoWebhook Gets webhook setting details
 // @Summary Gets webhook setting details
 // @Description Gets webhook setting details
-// @Tags    project_settings
+// @Tags    Project settings
 // @Produce json
 // @Id      getProjectRepoWebhook
 // @Param   projectID path string true "project ID"
@@ -46,7 +46,7 @@ func (h *Handler) GetRepoWebhook(ctx *gin.Context) {
 // CreateRepoWebhook Creates a new webhook setting
 // @Summary Creates a new webhook setting
 // @Description Creates a new webhook setting
-// @Tags    project_settings
+// @Tags    Project settings
 // @Produce json
 // @Id      createProjectRepoWebhook
 // @Param   projectID path string true "project ID"
@@ -62,7 +62,7 @@ func (h *Handler) CreateRepoWebhook(ctx *gin.Context) {
 // UpdateRepoWebhook Updates webhook
 // @Summary Updates webhook
 // @Description Updates webhook
-// @Tags    project_settings
+// @Tags    Project settings
 // @Produce json
 // @Id      updateProjectRepoWebhook
 // @Param   projectID path string true "project ID"
@@ -79,7 +79,7 @@ func (h *Handler) UpdateRepoWebhook(ctx *gin.Context) {
 // UpdateRepoWebhookStatus Updates webhook status
 // @Summary Updates webhook status
 // @Description Updates webhook status
-// @Tags    project_settings
+// @Tags    Project settings
 // @Produce json
 // @Id      updateProjectRepoWebhookStatus
 // @Param   projectID path string true "project ID"
@@ -96,7 +96,7 @@ func (h *Handler) UpdateRepoWebhookStatus(ctx *gin.Context) {
 // DeleteRepoWebhook Deletes webhook setting
 // @Summary Deletes webhook setting
 // @Description Deletes webhook setting
-// @Tags    project_settings
+// @Tags    Project settings
 // @Produce json
 // @Id      deleteProjectRepoWebhook
 // @Param   projectID path string true "project ID"

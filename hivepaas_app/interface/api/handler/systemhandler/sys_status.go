@@ -16,7 +16,7 @@ import (
 // @Description Reports the connection pool counters of the process serving the request. WaitCount
 // @Description and waitDuration say whether the pool is a bottleneck: while they stay near zero,
 // @Description raising the pool size would change nothing.
-// @Tags    system
+// @Tags    System
 // @Produce json
 // @Id      getSystemDBStats
 // @Success 200 {object} sysstatusdto.GetDBStatsResp

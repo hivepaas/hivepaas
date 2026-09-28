@@ -13,7 +13,7 @@ import (
 // GetProjectUserAccesses Gets user accesses on the project
 // @Summary Gets user accesses on the project
 // @Description Gets user accesses on the project
-// @Tags    project_settings
+// @Tags    Project settings
 // @Produce json
 // @Id      getProjectUserAccesses
 // @Param   projectID path string true "project ID"
@@ -47,7 +47,7 @@ func (h *Handler) GetProjectUserAccesses(ctx *gin.Context) {
 // UpdateProjectUserAccesses Updates user accesses on the project
 // @Summary Updates user accesses on the project
 // @Description Updates user accesses on the project
-// @Tags    project_settings
+// @Tags    Project settings
 // @Produce json
 // @Id      updateProjectUserAccesses
 // @Param   projectID path string true "project ID"

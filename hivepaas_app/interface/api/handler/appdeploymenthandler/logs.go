@@ -12,7 +12,7 @@ import (
 // GetAppDeploymentLogs Stream app deployment logs via websocket
 // @Summary Stream app deployment logs via websocket
 // @Description Stream deployment app logs via websocket
-// @Tags    app_deployments
+// @Tags    App deployments
 // @Produce json
 // @Id      getAppDeploymentLogs
 // @Param   projectID path string true "project ID"

@@ -14,7 +14,7 @@ import (
 // ListGithubApp Lists github-app settings
 // @Summary Lists github-app settings
 // @Description Lists github-app settings
-// @Tags    settings
+// @Tags    Global settings
 // @Produce json
 // @Id      listSettingGithubApp
 // @Param   search query string false "`search=<target> (support *)`"
@@ -32,7 +32,7 @@ func (h *Handler) ListGithubApp(ctx *gin.Context) {
 // GetGithubApp Gets github-app setting details
 // @Summary Gets github-app setting details
 // @Description Gets github-app setting details
-// @Tags    settings
+// @Tags    Global settings
 // @Produce json
 // @Id      getSettingGithubApp
 // @Param   itemID path string true "setting ID"
@@ -47,7 +47,7 @@ func (h *Handler) GetGithubApp(ctx *gin.Context) {
 // CreateGithubApp Creates a new github-app setting
 // @Summary Creates a new github-app setting
 // @Description Creates a new github-app setting
-// @Tags    settings
+// @Tags    Global settings
 // @Produce json
 // @Id      createSettingGithubApp
 // @Param   body body githubappdto.CreateGithubAppReq true "request data"
@@ -62,7 +62,7 @@ func (h *Handler) CreateGithubApp(ctx *gin.Context) {
 // UpdateGithubApp Updates github-app
 // @Summary Updates github-app
 // @Description Updates github-app
-// @Tags    settings
+// @Tags    Global settings
 // @Produce json
 // @Id      updateSettingGithubApp
 // @Param   itemID path string true "setting ID"
@@ -78,7 +78,7 @@ func (h *Handler) UpdateGithubApp(ctx *gin.Context) {
 // UpdateGithubAppStatus Updates github-app status
 // @Summary Updates github-app status
 // @Description Updates github-app status
-// @Tags    settings
+// @Tags    Global settings
 // @Produce json
 // @Id      updateSettingGithubAppStatus
 // @Param   itemID path string true "setting ID"
@@ -94,7 +94,7 @@ func (h *Handler) UpdateGithubAppStatus(ctx *gin.Context) {
 // DeleteGithubApp Deletes github-app setting
 // @Summary Deletes github-app setting
 // @Description Deletes github-app setting
-// @Tags    settings
+// @Tags    Global settings
 // @Produce json
 // @Id      deleteSettingGithubApp
 // @Param   itemID path string true "setting ID"
@@ -109,7 +109,7 @@ func (h *Handler) DeleteGithubApp(ctx *gin.Context) {
 // TestGithubAppConn Test github app connection
 // @Summary Test github app connection
 // @Description Test github app connection
-// @Tags    settings
+// @Tags    Global settings
 // @Produce json
 // @Id      testGithubAppConn
 // @Param   body body githubappdto.TestGithubAppConnReq true "request data"
@@ -142,7 +142,7 @@ func (h *Handler) TestGithubAppConn(ctx *gin.Context) {
 // ListAppInstallation List github app installation
 // @Summary List github app installation
 // @Description List github app installation
-// @Tags    settings
+// @Tags    Global settings
 // @Produce json
 // @Id      listAppInstallation
 // @Param   body body githubappdto.ListAppInstallationReq true "request data"
@@ -179,7 +179,7 @@ func (h *Handler) ListAppInstallation(ctx *gin.Context) {
 // BeginGithubAppManifestFlow Begins a github-app manifest flow
 // @Summary Begins a github-app manifest flow
 // @Description Begins a github-app manifest flow
-// @Tags    settings
+// @Tags    Global settings
 // @Produce json
 // @Id      beginGithubAppManifestFlow
 // @Param   body body githubappdto.BeginGithubAppManifestFlowReq true "request data"
@@ -194,7 +194,7 @@ func (h *Handler) BeginGithubAppManifestFlow(ctx *gin.Context) {
 // BeginGithubAppManifestFlowCreation Begins a github-app manifest flow of creation
 // @Summary Begins a github-app manifest flow of creation
 // @Description Begins a github-app manifest flow of creation
-// @Tags    settings
+// @Tags    Global settings
 // @Produce json
 // @Id      beginGithubAppManifestFlowCreation
 // @Param   itemID path string true "setting ID"
@@ -209,7 +209,7 @@ func (h *Handler) BeginGithubAppManifestFlowCreation(ctx *gin.Context) {
 // HandleGithubAppManifestFlowProgress Handles progress of github-app manifest flow
 // @Summary Handles progress of github-app manifest flow
 // @Description Handles progress of github-app manifest flow
-// @Tags    settings
+// @Tags    Global settings
 // @Produce json
 // @Id      handleGithubAppManifestFlowProgress
 // @Param   itemID path string true "setting ID"
@@ -224,7 +224,7 @@ func (h *Handler) HandleGithubAppManifestFlowProgress(ctx *gin.Context) {
 // BeginReprovisionGithubApp Begins reprovisioning a github-app through manifest flow
 // @Summary Begins reprovisioning a github-app through manifest flow
 // @Description Begins reprovisioning a github-app through manifest flow
-// @Tags    settings
+// @Tags    Global settings
 // @Produce json
 // @Id      beginReprovisionGithubApp
 // @Param   itemID path string true "setting ID"

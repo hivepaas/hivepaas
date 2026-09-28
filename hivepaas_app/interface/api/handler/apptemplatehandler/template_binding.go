@@ -13,7 +13,7 @@ import (
 // GetAppTemplateBinding Gets the template an app was created from
 // @Summary Gets the template an app was created from
 // @Description 404 for an app that was not created from a template.
-// @Tags    app_templates
+// @Tags    App templates
 // @Produce json
 // @Id      getAppTemplateBinding
 // @Param   projectID path string true "project ID"

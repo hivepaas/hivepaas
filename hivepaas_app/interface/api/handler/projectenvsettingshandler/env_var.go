@@ -13,7 +13,7 @@ import (
 // GetEnvVars Gets project env vars
 // @Summary Gets project env vars
 // @Description Gets project env vars
-// @Tags    project_env_settings
+// @Tags    Project env settings
 // @Produce json
 // @Id      getProjectEnvEnvVars
 // @Param   projectID path string true "project ID"
@@ -49,7 +49,7 @@ func (h *Handler) GetEnvVars(ctx *gin.Context) {
 // UpdateEnvVars Updates project env vars
 // @Summary Updates project env vars
 // @Description Updates project env vars
-// @Tags    project_env_settings
+// @Tags    Project env settings
 // @Produce json
 // @Id      updateProjectEnvEnvVars
 // @Param   projectID path string true "project ID"
@@ -86,7 +86,7 @@ func (h *Handler) UpdateEnvVars(ctx *gin.Context) {
 // BuildEnvVars Computes project env vars
 // @Summary Computes project env vars
 // @Description Computes project env vars
-// @Tags    project_env_settings
+// @Tags    Project env settings
 // @Produce json
 // @Id      computeProjectEnvEnvVars
 // @Param   projectID path string true "project ID"

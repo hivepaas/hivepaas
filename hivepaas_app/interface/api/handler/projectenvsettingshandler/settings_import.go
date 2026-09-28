@@ -13,7 +13,7 @@ import (
 // ImportSettings Imports settings from global to a project
 // @Summary Imports settings from global to a project
 // @Description Imports settings from global to a project
-// @Tags    project_env_settings
+// @Tags    Project env settings
 // @Produce json
 // @Id      importSettingsToProjectEnv
 // @Param   projectID path string true "project ID"

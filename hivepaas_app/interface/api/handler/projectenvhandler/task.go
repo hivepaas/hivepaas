@@ -11,7 +11,7 @@ import (
 // ListTask Lists tasks
 // @Summary Lists tasks
 // @Description Lists tasks
-// @Tags    project_env_tasks
+// @Tags    Project env tasks
 // @Produce json
 // @Id      listProjectEnvTask
 // @Param   projectID path string true "project ID"
@@ -31,7 +31,7 @@ func (h *Handler) ListTask(ctx *gin.Context) {
 // GetTask Gets task
 // @Summary Gets task
 // @Description Gets task
-// @Tags    project_env_tasks
+// @Tags    Project env tasks
 // @Produce json
 // @Id      getProjectEnvTask
 // @Param   projectID path string true "project ID"
@@ -48,7 +48,7 @@ func (h *Handler) GetTask(ctx *gin.Context) {
 // GetTaskStatus Gets task status
 // @Summary Gets task status
 // @Description Gets task status
-// @Tags    project_env_tasks
+// @Tags    Project env tasks
 // @Produce json
 // @Id      getProjectEnvTaskStatus
 // @Param   projectID path string true "project ID"
@@ -65,7 +65,7 @@ func (h *Handler) GetTaskStatus(ctx *gin.Context) {
 // ListTaskType Lists task types
 // @Summary Lists task types
 // @Description Lists task types
-// @Tags    project_env_tasks
+// @Tags    Project env tasks
 // @Produce json
 // @Id      listProjectEnvTaskType
 // @Param   projectID path string true "project ID"
@@ -81,7 +81,7 @@ func (h *Handler) ListTaskType(ctx *gin.Context) {
 // GetTaskLogs Gets task logs
 // @Summary Gets task logs
 // @Description Gets task logs
-// @Tags    project_env_tasks
+// @Tags    Project env tasks
 // @Produce json
 // @Id      getProjectEnvTaskLogs
 // @Param   projectID path string true "project ID"
@@ -98,7 +98,7 @@ func (h *Handler) GetTaskLogs(ctx *gin.Context) {
 // CancelTask Cancels task
 // @Summary Cancels task
 // @Description Cancels task
-// @Tags    project_env_tasks
+// @Tags    Project env tasks
 // @Produce json
 // @Id      cancelProjectEnvTask
 // @Param   projectID path string true "project ID"
@@ -115,7 +115,7 @@ func (h *Handler) CancelTask(ctx *gin.Context) {
 // ListTaskTargetObject Lists task target objects
 // @Summary Lists task target objects
 // @Description Lists task target objects
-// @Tags    project_env_tasks
+// @Tags    Project env tasks
 // @Produce json
 // @Id      listProjectEnvTaskTargetObject
 // @Param   projectID path string true "project ID"

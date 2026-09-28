@@ -14,7 +14,7 @@ import (
 // ListIMService Lists IM services
 // @Summary Lists IM services
 // @Description Lists IM services
-// @Tags    settings
+// @Tags    Global settings
 // @Produce json
 // @Id      listSettingIMService
 // @Param   search query string false "`search=<target> (support *)`"
@@ -32,7 +32,7 @@ func (h *Handler) ListIMService(ctx *gin.Context) {
 // GetIMService Gets IM service details
 // @Summary Gets IM service details
 // @Description Gets IM service details
-// @Tags    settings
+// @Tags    Global settings
 // @Produce json
 // @Id      getSettingIMService
 // @Param   itemID path string true "setting ID"
@@ -47,7 +47,7 @@ func (h *Handler) GetIMService(ctx *gin.Context) {
 // CreateIMService Creates a new IM service
 // @Summary Creates a new IM service
 // @Description Creates a new IM service
-// @Tags    settings
+// @Tags    Global settings
 // @Produce json
 // @Id      createSettingIMService
 // @Param   body body imservicedto.CreateIMServiceReq true "request data"
@@ -62,7 +62,7 @@ func (h *Handler) CreateIMService(ctx *gin.Context) {
 // UpdateIMService Updates IM service
 // @Summary Updates IM service
 // @Description Updates IM service
-// @Tags    settings
+// @Tags    Global settings
 // @Produce json
 // @Id      updateSettingIMService
 // @Param   itemID path string true "setting ID"
@@ -78,7 +78,7 @@ func (h *Handler) UpdateIMService(ctx *gin.Context) {
 // UpdateIMServiceStatus Updates IMService status setting
 // @Summary Updates IMService status setting
 // @Description Updates IMService status setting
-// @Tags    settings
+// @Tags    Global settings
 // @Produce json
 // @Id      updateSettingIMServiceStatus
 // @Param   itemID path string true "setting ID"
@@ -94,7 +94,7 @@ func (h *Handler) UpdateIMServiceStatus(ctx *gin.Context) {
 // DeleteIMService Deletes IM service
 // @Summary Deletes IM service
 // @Description Deletes IM service
-// @Tags    settings
+// @Tags    Global settings
 // @Produce json
 // @Id      deleteSettingIMService
 // @Param   itemID path string true "setting ID"
@@ -109,7 +109,7 @@ func (h *Handler) DeleteIMService(ctx *gin.Context) {
 // TestSendInstantMsg Tests sending a msg
 // @Summary Tests sending a msg
 // @Description Tests sending a msg
-// @Tags    settings
+// @Tags    Global settings
 // @Produce json
 // @Id      testSendIMServiceMsg
 // @Param   body body imservicedto.TestSendInstantMsgReq true "request data"

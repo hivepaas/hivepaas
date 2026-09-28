@@ -15,7 +15,7 @@ import (
 // GetAppTerminalInfo Gets terminal info
 // @Summary Gets terminal info
 // @Description Gets terminal info
-// @Tags    apps
+// @Tags    Apps
 // @Produce json
 // @Id      getAppTerminalInfo
 // @Param   projectID path string true "project ID"
@@ -53,7 +53,7 @@ func (h *Handler) GetAppTerminalInfo(ctx *gin.Context) {
 // OpenAppTerminal Opens app terminal via websocket
 // @Summary Opens app terminal via websocket
 // @Description Opens app terminal via websocket
-// @Tags    apps
+// @Tags    Apps
 // @Produce json
 // @Id      getAppTerminal
 // @Param   projectID path string true "project ID"

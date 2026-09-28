@@ -11,7 +11,7 @@ import (
 // ListSSLCert Lists SSL certs
 // @Summary Lists SSL certs
 // @Description Lists SSL certs
-// @Tags    project_env_settings
+// @Tags    Project env settings
 // @Produce json
 // @Id      listProjectEnvSSLCert
 // @Param   projectID path string true "project ID"
@@ -31,7 +31,7 @@ func (h *Handler) ListSSLCert(ctx *gin.Context) {
 // GetSSLCert Gets SSL cert details
 // @Summary Gets SSL cert details
 // @Description Gets SSL cert details
-// @Tags    project_env_settings
+// @Tags    Project env settings
 // @Produce json
 // @Id      getProjectEnvSSLCert
 // @Param   projectID path string true "project ID"
@@ -48,7 +48,7 @@ func (h *Handler) GetSSLCert(ctx *gin.Context) {
 // CreateSSLCert Creates a new SSL cert
 // @Summary Creates a new SSL cert
 // @Description Creates a new SSL cert
-// @Tags    project_env_settings
+// @Tags    Project env settings
 // @Produce json
 // @Id      createProjectEnvSSLCert
 // @Param   projectID path string true "project ID"
@@ -65,7 +65,7 @@ func (h *Handler) CreateSSLCert(ctx *gin.Context) {
 // UpdateSSLCert Updates an SSL cert
 // @Summary Updates an SSL cert
 // @Description Updates an SSL cert
-// @Tags    project_env_settings
+// @Tags    Project env settings
 // @Produce json
 // @Id      updateProjectEnvSSLCert
 // @Param   projectID path string true "project ID"
@@ -83,7 +83,7 @@ func (h *Handler) UpdateSSLCert(ctx *gin.Context) {
 // UpdateSSLCertStatus Updates SSL cert status
 // @Summary Updates SSL cert status
 // @Description Updates SSL cert status
-// @Tags    project_env_settings
+// @Tags    Project env settings
 // @Produce json
 // @Id      updateProjectEnvSSLCertStatus
 // @Param   projectID path string true "project ID"
@@ -101,7 +101,7 @@ func (h *Handler) UpdateSSLCertStatus(ctx *gin.Context) {
 // DeleteSSLCert Deletes an SSL cert
 // @Summary Deletes an SSL cert
 // @Description Deletes an SSL cert
-// @Tags    project_env_settings
+// @Tags    Project env settings
 // @Produce json
 // @Id      deleteProjectEnvSSLCert
 // @Param   projectID path string true "project ID"
@@ -118,7 +118,7 @@ func (h *Handler) DeleteSSLCert(ctx *gin.Context) {
 // RenewSSLCert Renews SSL cert
 // @Summary Renews SSL cert
 // @Description Renews SSL cert
-// @Tags    project_env_settings
+// @Tags    Project env settings
 // @Produce json
 // @Id      renewProjectEnvSSLCert
 // @Param   projectID path string true "project ID"
@@ -136,7 +136,7 @@ func (h *Handler) RenewSSLCert(ctx *gin.Context) {
 // DownloadSSLCertBundle Downloads SSL cert bundle
 // @Summary Downloads SSL cert bundle
 // @Description Downloads SSL cert bundle
-// @Tags    project_env_settings
+// @Tags    Project env settings
 // @Produce application/zip
 // @Id      downloadProjectEnvSSLCertBundle
 // @Param   projectID path string true "project ID"

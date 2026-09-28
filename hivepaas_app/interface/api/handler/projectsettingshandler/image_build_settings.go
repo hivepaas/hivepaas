@@ -14,7 +14,7 @@ import (
 // GetImageBuildSettings Gets image build setting details
 // @Summary Gets image build setting details
 // @Description Gets image build setting details
-// @Tags    project_settings
+// @Tags    Project settings
 // @Produce json
 // @Id      getProjectImageBuildSettings
 // @Param   projectID path string true "project ID"
@@ -29,7 +29,7 @@ func (h *Handler) GetImageBuildSettings(ctx *gin.Context) {
 // UpdateImageBuildSettings Updates image build settings
 // @Summary Updates image build settings
 // @Description Updates image build settings
-// @Tags    project_settings
+// @Tags    Project settings
 // @Produce json
 // @Id      updateProjectImageBuildSettings
 // @Param   projectID path string true "project ID"
@@ -45,7 +45,7 @@ func (h *Handler) UpdateImageBuildSettings(ctx *gin.Context) {
 // UpdateImageBuildSettingsStatus Updates image build status
 // @Summary Updates image build status
 // @Description Updates image build status
-// @Tags    project_settings
+// @Tags    Project settings
 // @Produce json
 // @Id      updateProjectImageBuildSettingsStatus
 // @Param   projectID path string true "project ID"
@@ -61,7 +61,7 @@ func (h *Handler) UpdateImageBuildSettingsStatus(ctx *gin.Context) {
 // DeleteImageBuildSettings Deletes image build settings
 // @Summary Deletes image build settings
 // @Description Deletes image build settings
-// @Tags    project_settings
+// @Tags    Project settings
 // @Produce json
 // @Id      deleteProjectImageBuildSettings
 // @Param   projectID path string true "project ID"
@@ -76,7 +76,7 @@ func (h *Handler) DeleteImageBuildSettings(ctx *gin.Context) {
 // GetRepoCacheInfo Gets repo cache info
 // @Summary Gets repo cache info
 // @Description Gets repo cache info
-// @Tags    project_settings
+// @Tags    Project settings
 // @Produce json
 // @Id      getProjectRepoCacheInfo
 // @Param   projectID path string true "project ID"
@@ -110,7 +110,7 @@ func (h *Handler) GetRepoCacheInfo(ctx *gin.Context) {
 // ClearRepoCache Clears repo cache
 // @Summary Clears repo cache
 // @Description Clears repo cache
-// @Tags    project_settings
+// @Tags    Project settings
 // @Produce json
 // @Id      clearProjectRepoCache
 // @Param   projectID path string true "project ID"

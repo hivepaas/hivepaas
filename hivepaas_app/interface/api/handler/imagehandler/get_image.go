@@ -13,13 +13,14 @@ import (
 // GetPublicImage Gets an image file
 // @Summary Gets an image file
 // @Description Gets an image file
-// @Tags    images
+// @Tags    Images
 // @Produce json
 // @Id      getPublicImage
 // @Param   imageID path string true "image ID"
 // @Success 200
 // @Failure 400 {object} hperrors.ErrorInfo
 // @Failure 500 {object} hperrors.ErrorInfo
+// @Security
 // @Router  /images/{imageID} [get]
 func (h *Handler) GetPublicImage(ctx *gin.Context) {
 	imageID, err := h.ParseStringParam(ctx, "imageID")

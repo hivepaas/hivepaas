@@ -16,7 +16,7 @@ import (
 // @Description Echoes the proxy headers and the X-Forwarded-For chain this install receives,
 // @Description and derives the proxyHops value that follows from it. Call it from outside the
 // @Description cluster, over the path real traffic takes.
-// @Tags    system_hivepaas
+// @Tags    HivePaaS
 // @Produce json
 // @Id      getHivePaaSRequestInfo
 // @Success 200 {object} hpappsettingsdto.GetRequestInfoResp

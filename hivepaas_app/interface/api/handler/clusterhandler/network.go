@@ -13,7 +13,7 @@ import (
 // ListNetwork Lists cluster network settings
 // @Summary Lists cluster network settings
 // @Description Lists cluster network settings
-// @Tags    cluster_networks
+// @Tags    Cluster networks
 // @Produce json
 // @Id      listClusterNetwork
 // @Param   search query string false "`search=<target> (support *)`"
@@ -31,7 +31,7 @@ func (h *Handler) ListNetwork(ctx *gin.Context) {
 // GetNetwork Gets network setting details
 // @Summary Gets network setting details
 // @Description Gets network setting details
-// @Tags    cluster_networks
+// @Tags    Cluster networks
 // @Produce json
 // @Id      getClusterNetwork
 // @Param   itemID path string true "setting ID"
@@ -46,7 +46,7 @@ func (h *Handler) GetNetwork(ctx *gin.Context) {
 // CreateNetwork Creates a new network setting
 // @Summary Creates a new network setting
 // @Description Creates a new network setting
-// @Tags    cluster_networks
+// @Tags    Cluster networks
 // @Produce json
 // @Id      createClusterNetwork
 // @Param   body body networkdto.CreateNetworkReq true "request data"
@@ -61,7 +61,7 @@ func (h *Handler) CreateNetwork(ctx *gin.Context) {
 // UpdateNetwork Updates cluster network
 // @Summary Updates cluster network
 // @Description Updates cluster network
-// @Tags    cluster_networks
+// @Tags    Cluster networks
 // @Produce json
 // @Id      updateClusterNetwork
 // @Param   itemID path string true "setting ID"
@@ -77,7 +77,7 @@ func (h *Handler) UpdateNetwork(ctx *gin.Context) {
 // UpdateNetworkStatus Updates cluster network status
 // @Summary Updates cluster network status
 // @Description Updates cluster network status
-// @Tags    cluster_networks
+// @Tags    Cluster networks
 // @Produce json
 // @Id      updateClusterNetworkStatus
 // @Param   itemID path string true "setting ID"
@@ -93,7 +93,7 @@ func (h *Handler) UpdateNetworkStatus(ctx *gin.Context) {
 // DeleteNetwork Deletes network setting
 // @Summary Deletes network setting
 // @Description Deletes network setting
-// @Tags    cluster_networks
+// @Tags    Cluster networks
 // @Produce json
 // @Id      deleteClusterNetwork
 // @Param   itemID path string true "setting ID"
@@ -108,7 +108,7 @@ func (h *Handler) DeleteNetwork(ctx *gin.Context) {
 // SyncNetwork Sync networks from Docker
 // @Summary Sync networks from Docker
 // @Description Sync networks from Docker
-// @Tags    cluster_networks
+// @Tags    Cluster networks
 // @Produce json
 // @Id      syncClusterNetwork
 // @Param   body body networkdto.SyncNetworkReq true "request data"

@@ -15,7 +15,7 @@ import (
 // GetSSLRenewalSettings Gets SSL renewal settings
 // @Summary Gets SSL renewal settings
 // @Description Gets SSL renewal settings
-// @Tags    system_settings
+// @Tags    System settings
 // @Produce json
 // @Id      getSSLRenewalSettings
 // @Success 200 {object} sslrenewaldto.GetSSLRenewalResp
@@ -52,7 +52,7 @@ func (h *Handler) GetSSLRenewalSettings(ctx *gin.Context) {
 // UpdateSSLRenewalSettings Updates SSL renewal settings
 // @Summary Updates SSL renewal settings
 // @Description Updates SSL renewal settings
-// @Tags    system_settings
+// @Tags    System settings
 // @Produce json
 // @Id      updateSSLRenewalSettings
 // @Param   body body sslrenewaldto.UpdateSSLRenewalReq true "request data"
@@ -90,7 +90,7 @@ func (h *Handler) UpdateSSLRenewalSettings(ctx *gin.Context) {
 // ExecuteSSLRenewal Executes the renewal
 // @Summary Executes the renewal
 // @Description Executes the renewal
-// @Tags    system_settings
+// @Tags    System settings
 // @Produce json
 // @Id      executeSSLRenewal
 // @Param   body body sslrenewaldto.ExecuteSSLRenewalReq true "request data"

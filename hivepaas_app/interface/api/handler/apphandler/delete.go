@@ -13,7 +13,7 @@ import (
 // DeleteApp Deletes an app
 // @Summary Deletes an app
 // @Description Deletes an app
-// @Tags    apps
+// @Tags    Apps
 // @Produce json
 // @Id      deleteApp
 // @Param   projectID path string true "project ID"

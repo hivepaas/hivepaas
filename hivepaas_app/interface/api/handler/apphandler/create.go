@@ -13,7 +13,7 @@ import (
 // CreateApp Creates a new app
 // @Summary Creates a new app
 // @Description Creates a new app
-// @Tags    apps
+// @Tags    Apps
 // @Produce json
 // @Id      createApp
 // @Param   projectID path string true "project ID"

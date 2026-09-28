@@ -13,7 +13,7 @@ import (
 // ListAppInEnv Lists apps of an env
 // @Summary Lists apps of an env
 // @Description Lists apps of an env
-// @Tags    apps
+// @Tags    Apps
 // @Produce json
 // @Id      listProjectEnvApp
 // @Param   projectID path string true "project ID"
@@ -55,7 +55,7 @@ func (h *Handler) ListAppInEnv(ctx *gin.Context) {
 // GetApp Gets app details
 // @Summary Gets app details
 // @Description Gets app details
-// @Tags    apps
+// @Tags    Apps
 // @Produce json
 // @Id      getApp
 // @Param   projectID path string true "project ID"

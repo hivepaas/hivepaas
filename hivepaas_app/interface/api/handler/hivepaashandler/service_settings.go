@@ -14,7 +14,7 @@ import (
 // GetServiceSettings Gets HivePaaS service settings
 // @Summary Gets HivePaaS service settings
 // @Description Gets HivePaaS service settings
-// @Tags    system_hivepaas
+// @Tags    HivePaaS
 // @Produce json
 // @Id      getHivePaaSServiceSettings
 // @Success 200 {object} hpappsettingsdto.GetServiceSettingsResp
@@ -54,7 +54,7 @@ func (h *Handler) GetServiceSettings(ctx *gin.Context) {
 // UpdateServiceSettings Updates HivePaaS service settings
 // @Summary Updates HivePaaS service settings
 // @Description Updates HivePaaS service settings
-// @Tags    system_hivepaas
+// @Tags    HivePaaS
 // @Produce json
 // @Id      updateHivePaaSServiceSettings
 // @Param   body body hpappsettingsdto.UpdateServiceSettingsReq true "request data"

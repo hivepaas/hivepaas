@@ -13,7 +13,7 @@ import (
 // ListEnvLinkTargets Lists the apps an app may link its env vars to
 // @Summary Lists the apps an app may link its env vars to
 // @Description Lists the apps an app may link its env vars to
-// @Tags    app_settings
+// @Tags    App settings
 // @Produce json
 // @Id      listAppEnvLinkTargets
 // @Param   projectID path string true "project ID"
@@ -51,7 +51,7 @@ func (h *Handler) ListEnvLinkTargets(ctx *gin.Context) {
 // GetEnvLinkSuggestions Suggests the env vars that link an app to another
 // @Summary Suggests the env vars that link an app to another
 // @Description Suggests the env vars that link an app to another
-// @Tags    app_settings
+// @Tags    App settings
 // @Produce json
 // @Id      getAppEnvLinkSuggestions
 // @Param   projectID path string true "project ID"

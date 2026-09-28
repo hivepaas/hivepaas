@@ -14,7 +14,7 @@ import (
 // ListEmail Lists e-mail settings
 // @Summary Lists e-mail settings
 // @Description Lists e-mail settings
-// @Tags    settings
+// @Tags    Global settings
 // @Produce json
 // @Id      listSettingEmail
 // @Param   search query string false "`search=<target> (support *)`"
@@ -32,7 +32,7 @@ func (h *Handler) ListEmail(ctx *gin.Context) {
 // GetEmail Gets e-mail setting details
 // @Summary Gets e-mail setting details
 // @Description Gets e-mail setting details
-// @Tags    settings
+// @Tags    Global settings
 // @Produce json
 // @Id      getSettingEmail
 // @Param   itemID path string true "setting ID"
@@ -47,7 +47,7 @@ func (h *Handler) GetEmail(ctx *gin.Context) {
 // CreateEmail Creates a new e-mail setting
 // @Summary Creates a new e-mail setting
 // @Description Creates a new e-mail setting
-// @Tags    settings
+// @Tags    Global settings
 // @Produce json
 // @Id      createSettingEmail
 // @Param   body body emaildto.CreateEmailReq true "request data"
@@ -62,7 +62,7 @@ func (h *Handler) CreateEmail(ctx *gin.Context) {
 // UpdateEmail Updates e-mail setting
 // @Summary Updates e-mail setting
 // @Description Updates e-mail setting
-// @Tags    settings
+// @Tags    Global settings
 // @Produce json
 // @Id      updateSettingEmail
 // @Param   itemID path string true "setting ID"
@@ -78,7 +78,7 @@ func (h *Handler) UpdateEmail(ctx *gin.Context) {
 // UpdateEmailStatus Updates email setting status
 // @Summary Updates email setting status
 // @Description Updates email setting status
-// @Tags    settings
+// @Tags    Global settings
 // @Produce json
 // @Id      updateSettingEmailStatus
 // @Param   itemID path string true "setting ID"
@@ -94,7 +94,7 @@ func (h *Handler) UpdateEmailStatus(ctx *gin.Context) {
 // DeleteEmail Deletes e-mail setting
 // @Summary Deletes e-mail setting
 // @Description Deletes e-mail setting
-// @Tags    settings
+// @Tags    Global settings
 // @Produce json
 // @Id      deleteSettingEmail
 // @Param   itemID path string true "setting ID"
@@ -109,7 +109,7 @@ func (h *Handler) DeleteEmail(ctx *gin.Context) {
 // TestSendMail Tests sending an email
 // @Summary Tests sending an email
 // @Description Tests sending an email
-// @Tags    settings
+// @Tags    Global settings
 // @Produce json
 // @Id      testSendMail
 // @Param   body body emaildto.TestSendMailReq true "request data"

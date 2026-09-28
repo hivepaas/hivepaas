@@ -12,7 +12,7 @@ import (
 // @Summary Lists the backup snapshots the scope sees
 // @Description Lists the snapshots of the backup repositories the scope sees, those of its apps and repositories
 // @Description the caller may read, newest first
-// @Tags    app_settings
+// @Tags    App settings
 // @Produce json
 // @Id      listAppBackupSnapshot
 // @Param   projectID path string true "project ID"
@@ -37,7 +37,7 @@ func (h *Handler) ListBackupSnapshot(ctx *gin.Context) {
 // GetBackupSnapshot Gets a backup snapshot
 // @Summary Gets a backup snapshot
 // @Description Gets a backup snapshot the scope sees
-// @Tags    app_settings
+// @Tags    App settings
 // @Produce json
 // @Id      getAppBackupSnapshot
 // @Param   projectID path string true "project ID"
@@ -56,7 +56,7 @@ func (h *Handler) GetBackupSnapshot(ctx *gin.Context) {
 // DeleteBackupSnapshot Deletes a backup snapshot
 // @Summary Deletes a backup snapshot
 // @Description Deletes a snapshot from its repository, then its record; one already gone counts as deleted
-// @Tags    app_settings
+// @Tags    App settings
 // @Produce json
 // @Id      deleteAppBackupSnapshot
 // @Param   projectID path string true "project ID"

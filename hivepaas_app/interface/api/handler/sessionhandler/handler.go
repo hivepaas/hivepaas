@@ -33,7 +33,7 @@ func New(
 // GetMe Gets session info of the current user
 // @Summary Gets session info of the current user
 // @Description Gets session info of the current user
-// @Tags    sessions
+// @Tags    Sessions
 // @Produce json
 // @Id      getMe
 // @Param   getAccesses query string false "`getAccesses=true/false`"

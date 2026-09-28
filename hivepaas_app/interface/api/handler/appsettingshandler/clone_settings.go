@@ -13,7 +13,7 @@ import (
 // GetAppCloneSettings Gets app clone settings
 // @Summary Gets app clone settings
 // @Description Gets app clone settings
-// @Tags    app_settings
+// @Tags    App settings
 // @Produce json
 // @Id      getAppCloneSettings
 // @Param   projectID path string true "project ID"
@@ -51,7 +51,7 @@ func (h *Handler) GetAppCloneSettings(ctx *gin.Context) {
 // UpdateAppCloneSettings Updates app clone settings
 // @Summary Updates app clone settings
 // @Description Updates app clone settings
-// @Tags    app_settings
+// @Tags    App settings
 // @Produce json
 // @Id      updateAppCloneSettings
 // @Param   projectID path string true "project ID"
@@ -91,7 +91,7 @@ func (h *Handler) UpdateAppCloneSettings(ctx *gin.Context) {
 // ExecuteAppClone Clones app
 // @Summary Clones app
 // @Description Clones app
-// @Tags    app_settings
+// @Tags    App settings
 // @Produce json
 // @Id      executeAppClone
 // @Param   projectID path string true "project ID"

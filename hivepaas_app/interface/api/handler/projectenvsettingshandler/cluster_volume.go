@@ -11,7 +11,7 @@ import (
 // ListClusterVolume Lists cluster-volume settings
 // @Summary Lists cluster-volume settings
 // @Description Lists cluster-volume settings
-// @Tags    project_env_settings
+// @Tags    Project env settings
 // @Produce json
 // @Id      listProjectEnvClusterVolume
 // @Param   projectID path string true "project ID"
@@ -31,7 +31,7 @@ func (h *Handler) ListClusterVolume(ctx *gin.Context) {
 // GetClusterVolume Gets cluster-volume setting details
 // @Summary Gets cluster-volume setting details
 // @Description Gets cluster-volume setting details
-// @Tags    project_env_settings
+// @Tags    Project env settings
 // @Produce json
 // @Id      getProjectEnvClusterVolume
 // @Param   projectID path string true "project ID"
@@ -48,7 +48,7 @@ func (h *Handler) GetClusterVolume(ctx *gin.Context) {
 // CreateClusterVolume Creates a new cluster-volume setting
 // @Summary Creates a new cluster-volume setting
 // @Description Creates a new cluster-volume setting
-// @Tags    project_env_settings
+// @Tags    Project env settings
 // @Produce json
 // @Id      createProjectEnvClusterVolume
 // @Param   projectID path string true "project ID"
@@ -65,7 +65,7 @@ func (h *Handler) CreateClusterVolume(ctx *gin.Context) {
 // UpdateClusterVolume Updates cluster-volume
 // @Summary Updates cluster-volume
 // @Description Updates cluster-volume
-// @Tags    project_env_settings
+// @Tags    Project env settings
 // @Produce json
 // @Id      updateProjectEnvClusterVolume
 // @Param   projectID path string true "project ID"
@@ -83,7 +83,7 @@ func (h *Handler) UpdateClusterVolume(ctx *gin.Context) {
 // UpdateClusterVolumeStatus Updates cluster-volume status
 // @Summary Updates cluster-volume status
 // @Description Updates cluster-volume status
-// @Tags    project_env_settings
+// @Tags    Project env settings
 // @Produce json
 // @Id      updateProjectEnvClusterVolumeStatus
 // @Param   projectID path string true "project ID"
@@ -101,7 +101,7 @@ func (h *Handler) UpdateClusterVolumeStatus(ctx *gin.Context) {
 // DeleteClusterVolume Deletes cluster-volume setting
 // @Summary Deletes cluster-volume setting
 // @Description Deletes cluster-volume setting
-// @Tags    project_env_settings
+// @Tags    Project env settings
 // @Produce json
 // @Id      deleteProjectEnvClusterVolume
 // @Param   projectID path string true "project ID"

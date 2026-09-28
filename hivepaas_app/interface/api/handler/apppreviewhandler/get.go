@@ -13,7 +13,7 @@ import (
 // ListAppPreview Lists app's previews
 // @Summary Lists app's previews
 // @Description Lists app's previews
-// @Tags    app_previews
+// @Tags    App previews
 // @Produce json
 // @Id      listAppPreview
 // @Param   projectID path string true "project ID"

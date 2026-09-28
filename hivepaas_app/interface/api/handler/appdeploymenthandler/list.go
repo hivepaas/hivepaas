@@ -13,7 +13,7 @@ import (
 // ListAppDeployment Lists app deployments
 // @Summary Lists app deployments
 // @Description Lists app deployments
-// @Tags    app_deployments
+// @Tags    App deployments
 // @Produce json
 // @Id      listAppDeployment
 // @Param   projectID path string true "project ID"

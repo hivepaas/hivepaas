@@ -15,7 +15,7 @@ import (
 // ListGitCredentials Lists git credentials settings
 // @Summary Lists git credentials settings
 // @Description Lists git credentials settings
-// @Tags    project_settings
+// @Tags    Project settings
 // @Produce json
 // @Id      listProjectGitCredentials
 // @Param   projectID path string true "project ID"
@@ -53,7 +53,7 @@ func (h *Handler) ListGitCredentials(ctx *gin.Context) {
 // ListGitRepository Lists git repositories
 // @Summary Lists git repositories
 // @Description Lists git repositories
-// @Tags    project_settings
+// @Tags    Project settings
 // @Produce json
 // @Id      listProjectGitRepository
 // @Param   projectID path string true "project ID"
@@ -93,7 +93,7 @@ func (h *Handler) ListGitRepository(ctx *gin.Context) {
 // ListGitBranch Lists branches of a git repository
 // @Summary Lists branches of a git repository
 // @Description Lists branches of a git repository
-// @Tags    project_settings
+// @Tags    Project settings
 // @Produce json
 // @Id      listProjectGitBranch
 // @Param   projectID path string true "project ID"
@@ -135,7 +135,7 @@ func (h *Handler) ListGitBranch(ctx *gin.Context) {
 // ListGitPullRequest Lists pull requests of a git repository
 // @Summary Lists pull requests of a git repository
 // @Description Lists pull requests of a git repository
-// @Tags    project_settings
+// @Tags    Project settings
 // @Produce json
 // @Id      listProjectGitPullRequest
 // @Param   projectID path string true "project ID"

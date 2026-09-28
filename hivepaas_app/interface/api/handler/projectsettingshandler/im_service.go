@@ -11,7 +11,7 @@ import (
 // ListIMService Lists IM services
 // @Summary Lists IM services
 // @Description Lists IM services
-// @Tags    project_settings
+// @Tags    Project settings
 // @Produce json
 // @Id      listProjectIMService
 // @Param   projectID path string true "project ID"
@@ -30,7 +30,7 @@ func (h *Handler) ListIMService(ctx *gin.Context) {
 // GetIMService Gets IM service details
 // @Summary Gets IM service details
 // @Description Gets IM service details
-// @Tags    project_settings
+// @Tags    Project settings
 // @Produce json
 // @Id      getProjectIMService
 // @Param   projectID path string true "project ID"
@@ -46,7 +46,7 @@ func (h *Handler) GetIMService(ctx *gin.Context) {
 // CreateIMService Creates a new IM service
 // @Summary Creates a new IM service
 // @Description Creates a new IM service
-// @Tags    project_settings
+// @Tags    Project settings
 // @Produce json
 // @Id      createProjectIMService
 // @Param   projectID path string true "project ID"
@@ -62,7 +62,7 @@ func (h *Handler) CreateIMService(ctx *gin.Context) {
 // UpdateIMService Updates IM service
 // @Summary Updates IM service
 // @Description Updates IM service
-// @Tags    project_settings
+// @Tags    Project settings
 // @Produce json
 // @Id      updateProjectIMService
 // @Param   projectID path string true "project ID"
@@ -79,7 +79,7 @@ func (h *Handler) UpdateIMService(ctx *gin.Context) {
 // UpdateIMServiceStatus Updates IM service status
 // @Summary Updates IM service status
 // @Description Updates IM service status
-// @Tags    project_settings
+// @Tags    Project settings
 // @Produce json
 // @Id      updateProjectIMServiceStatus
 // @Param   projectID path string true "project ID"
@@ -96,7 +96,7 @@ func (h *Handler) UpdateIMServiceStatus(ctx *gin.Context) {
 // DeleteIMService Deletes IM service
 // @Summary Deletes IM service
 // @Description Deletes IM service
-// @Tags    project_settings
+// @Tags    Project settings
 // @Produce json
 // @Id      deleteProjectIMService
 // @Param   projectID path string true "project ID"

@@ -13,7 +13,7 @@ import (
 // UpdateAppPhoto Updates app photo
 // @Summary Updates app photo
 // @Description Updates app photo
-// @Tags    apps
+// @Tags    Apps
 // @Produce json
 // @Id      updateAppPhoto
 // @Param   projectID path string true "project ID"
@@ -52,7 +52,7 @@ func (h *Handler) UpdateAppPhoto(ctx *gin.Context) {
 // DetectAppPhoto Detects app photo
 // @Summary Detects app photo
 // @Description Detects app photo
-// @Tags    apps
+// @Tags    Apps
 // @Produce json
 // @Id      detectAppPhoto
 // @Param   projectID path string true "project ID"

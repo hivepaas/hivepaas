@@ -11,7 +11,7 @@ import (
 // ListEmail Lists email settings
 // @Summary Lists email settings
 // @Description Lists email settings
-// @Tags    project_settings
+// @Tags    Project settings
 // @Produce json
 // @Id      listProjectEmail
 // @Param   projectID path string true "project ID"
@@ -30,7 +30,7 @@ func (h *Handler) ListEmail(ctx *gin.Context) {
 // GetEmail Gets email setting details
 // @Summary Gets email setting details
 // @Description Gets email setting details
-// @Tags    project_settings
+// @Tags    Project settings
 // @Produce json
 // @Id      getProjectEmail
 // @Param   projectID path string true "project ID"
@@ -46,7 +46,7 @@ func (h *Handler) GetEmail(ctx *gin.Context) {
 // CreateEmail Creates a new email setting
 // @Summary Creates a new email setting
 // @Description Creates a new email setting
-// @Tags    project_settings
+// @Tags    Project settings
 // @Produce json
 // @Id      createProjectEmail
 // @Param   projectID path string true "project ID"
@@ -62,7 +62,7 @@ func (h *Handler) CreateEmail(ctx *gin.Context) {
 // UpdateEmail Updates email setting
 // @Summary Updates email setting
 // @Description Updates email setting
-// @Tags    project_settings
+// @Tags    Project settings
 // @Produce json
 // @Id      updateProjectEmail
 // @Param   projectID path string true "project ID"
@@ -79,7 +79,7 @@ func (h *Handler) UpdateEmail(ctx *gin.Context) {
 // UpdateEmailStatus Updates Email status setting
 // @Summary Updates Email status setting
 // @Description Updates Email status setting
-// @Tags    project_settings
+// @Tags    Project settings
 // @Produce json
 // @Id      updateProjectEmailStatus
 // @Param   projectID path string true "project ID"
@@ -96,7 +96,7 @@ func (h *Handler) UpdateEmailStatus(ctx *gin.Context) {
 // DeleteEmail Deletes email setting
 // @Summary Deletes email setting
 // @Description Deletes email setting
-// @Tags    project_settings
+// @Tags    Project settings
 // @Produce json
 // @Id      deleteProjectEmail
 // @Param   projectID path string true "project ID"

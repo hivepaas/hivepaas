@@ -11,7 +11,7 @@ import (
 // ListOAuth Lists oauth settings
 // @Summary Lists oauth settings
 // @Description Lists oauth settings
-// @Tags    settings
+// @Tags    Global settings
 // @Produce json
 // @Id      listSettingOAuth
 // @Param   search query string false "`search=<target> (support *)`"
@@ -29,7 +29,7 @@ func (h *Handler) ListOAuth(ctx *gin.Context) {
 // GetOAuth Gets oauth setting details
 // @Summary Gets oauth setting details
 // @Description Gets oauth setting details
-// @Tags    settings
+// @Tags    Global settings
 // @Produce json
 // @Id      getSettingOAuth
 // @Param   itemID path string true "setting ID"
@@ -44,7 +44,7 @@ func (h *Handler) GetOAuth(ctx *gin.Context) {
 // CreateOAuth Creates a new oauth setting
 // @Summary Creates a new oauth setting
 // @Description Creates a new oauth setting
-// @Tags    settings
+// @Tags    Global settings
 // @Produce json
 // @Id      createSettingOAuth
 // @Param   body body oauthdto.CreateOAuthReq true "request data"
@@ -59,7 +59,7 @@ func (h *Handler) CreateOAuth(ctx *gin.Context) {
 // UpdateOAuth Updates oauth
 // @Summary Updates oauth
 // @Description Updates oauth
-// @Tags    settings
+// @Tags    Global settings
 // @Produce json
 // @Id      updateSettingOAuth
 // @Param   itemID path string true "setting ID"
@@ -75,7 +75,7 @@ func (h *Handler) UpdateOAuth(ctx *gin.Context) {
 // UpdateOAuthStatus Updates oauth status
 // @Summary Updates oauth status
 // @Description Updates oauth status
-// @Tags    settings
+// @Tags    Global settings
 // @Produce json
 // @Id      updateSettingOAuthStatus
 // @Param   itemID path string true "setting ID"
@@ -91,7 +91,7 @@ func (h *Handler) UpdateOAuthStatus(ctx *gin.Context) {
 // DeleteOAuth Deletes oauth setting
 // @Summary Deletes oauth setting
 // @Description Deletes oauth setting
-// @Tags    settings
+// @Tags    Global settings
 // @Produce json
 // @Id      deleteSettingOAuth
 // @Param   itemID path string true "setting ID"

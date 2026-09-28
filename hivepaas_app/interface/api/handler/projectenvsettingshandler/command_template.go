@@ -11,7 +11,7 @@ import (
 // ListCommandTemplate Lists command template settings
 // @Summary Lists command template settings
 // @Description Lists command template settings
-// @Tags    project_env_settings
+// @Tags    Project env settings
 // @Produce json
 // @Id      listProjectEnvCommandTemplate
 // @Param   projectID path string true "project ID"
@@ -31,7 +31,7 @@ func (h *Handler) ListCommandTemplate(ctx *gin.Context) {
 // GetCommandTemplate Gets command template setting details
 // @Summary Gets command template setting details
 // @Description Gets command template setting details
-// @Tags    project_env_settings
+// @Tags    Project env settings
 // @Produce json
 // @Id      getProjectEnvCommandTemplate
 // @Param   projectID path string true "project ID"
@@ -48,7 +48,7 @@ func (h *Handler) GetCommandTemplate(ctx *gin.Context) {
 // CreateCommandTemplate Creates a new command template setting
 // @Summary Creates a new command template setting
 // @Description Creates a new command template setting
-// @Tags    project_env_settings
+// @Tags    Project env settings
 // @Produce json
 // @Id      createProjectEnvCommandTemplate
 // @Param   projectID path string true "project ID"
@@ -65,7 +65,7 @@ func (h *Handler) CreateCommandTemplate(ctx *gin.Context) {
 // CreateCommandTemplateFromTemplate Creates a new command template setting from a template
 // @Summary Creates a new command template setting from a template
 // @Description Creates a new command template setting from a template
-// @Tags    project_env_settings
+// @Tags    Project env settings
 // @Produce json
 // @Id      createProjectEnvCommandTemplateFromTemplate
 // @Param   projectID path string true "project ID"
@@ -82,7 +82,7 @@ func (h *Handler) CreateCommandTemplateFromTemplate(ctx *gin.Context) {
 // UpdateCommandTemplate Updates command template
 // @Summary Updates command template
 // @Description Updates command template
-// @Tags    project_env_settings
+// @Tags    Project env settings
 // @Produce json
 // @Id      updateProjectEnvCommandTemplate
 // @Param   projectID path string true "project ID"
@@ -100,7 +100,7 @@ func (h *Handler) UpdateCommandTemplate(ctx *gin.Context) {
 // UpdateCommandTemplateStatus Updates command template status
 // @Summary Updates command template status
 // @Description Updates command template status
-// @Tags    project_env_settings
+// @Tags    Project env settings
 // @Produce json
 // @Id      updateProjectEnvCommandTemplateStatus
 // @Param   projectID path string true "project ID"
@@ -118,7 +118,7 @@ func (h *Handler) UpdateCommandTemplateStatus(ctx *gin.Context) {
 // DeleteCommandTemplate Deletes command template setting
 // @Summary Deletes command template setting
 // @Description Deletes command template setting
-// @Tags    project_env_settings
+// @Tags    Project env settings
 // @Produce json
 // @Id      deleteProjectEnvCommandTemplate
 // @Param   projectID path string true "project ID"

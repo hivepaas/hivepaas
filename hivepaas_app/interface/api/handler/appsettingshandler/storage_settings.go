@@ -13,7 +13,7 @@ import (
 // GetAppStorageSettings Gets app storage settings
 // @Summary Gets app storage settings
 // @Description Gets app storage settings
-// @Tags    app_settings
+// @Tags    App settings
 // @Produce json
 // @Id      getAppStorageSettings
 // @Param   projectID path string true "project ID"
@@ -51,7 +51,7 @@ func (h *Handler) GetAppStorageSettings(ctx *gin.Context) {
 // UpdateAppStorageSettings Updates app storage settings
 // @Summary Updates app storage settings
 // @Description Updates app storage settings
-// @Tags    app_settings
+// @Tags    App settings
 // @Produce json
 // @Id      updateAppStorageSettings
 // @Param   projectID path string true "project ID"
@@ -90,7 +90,7 @@ func (h *Handler) UpdateAppStorageSettings(ctx *gin.Context) {
 // PreflightAppStorageSettings Reports which mounts being added already hold data
 // @Summary Reports which mounts being added already hold data
 // @Description Reports which of the mounts about to be saved reach a directory that already holds data.
-// @Tags    app_settings
+// @Tags    App settings
 // @Produce json
 // @Id      preflightAppStorageSettings
 // @Param   projectID path string true "project ID"
@@ -131,7 +131,7 @@ func (h *Handler) PreflightAppStorageSettings(ctx *gin.Context) {
 // @Description Gives the directory of one of the app's mounts, and everything in it, to a user and group,
 // @Description or without an owner lets every user read and write them. Symlinks are not followed.
 // @Description Only a directory of the app's own can be reset.
-// @Tags    app_settings
+// @Tags    App settings
 // @Produce json
 // @Id      resetAppStoragePermissions
 // @Param   projectID path string true "project ID"

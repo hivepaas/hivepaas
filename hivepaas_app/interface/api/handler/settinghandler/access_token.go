@@ -14,7 +14,7 @@ import (
 // ListAccessToken Lists access-token settings
 // @Summary Lists access-token settings
 // @Description Lists access-token settings
-// @Tags    settings
+// @Tags    Global settings
 // @Produce json
 // @Id      listSettingAccessToken
 // @Param   search query string false "`search=<target> (support *)`"
@@ -32,7 +32,7 @@ func (h *Handler) ListAccessToken(ctx *gin.Context) {
 // GetAccessToken Gets access-token setting details
 // @Summary Gets access-token setting details
 // @Description Gets access-token setting details
-// @Tags    settings
+// @Tags    Global settings
 // @Produce json
 // @Id      getSettingAccessToken
 // @Param   itemID path string true "setting ID"
@@ -47,7 +47,7 @@ func (h *Handler) GetAccessToken(ctx *gin.Context) {
 // CreateAccessToken Creates a new access-token setting
 // @Summary Creates a new access-token setting
 // @Description Creates a new access-token setting
-// @Tags    settings
+// @Tags    Global settings
 // @Produce json
 // @Id      createSettingAccessToken
 // @Param   body body accesstokendto.CreateAccessTokenReq true "request data"
@@ -62,7 +62,7 @@ func (h *Handler) CreateAccessToken(ctx *gin.Context) {
 // UpdateAccessToken Updates access-token
 // @Summary Updates access-token
 // @Description Updates access-token
-// @Tags    settings
+// @Tags    Global settings
 // @Produce json
 // @Id      updateSettingAccessToken
 // @Param   itemID path string true "setting ID"
@@ -78,7 +78,7 @@ func (h *Handler) UpdateAccessToken(ctx *gin.Context) {
 // UpdateAccessTokenStatus Updates access-token status
 // @Summary Updates access-token status
 // @Description Updates access-token status
-// @Tags    settings
+// @Tags    Global settings
 // @Produce json
 // @Id      updateSettingAccessTokenStatus
 // @Param   itemID path string true "setting ID"
@@ -94,7 +94,7 @@ func (h *Handler) UpdateAccessTokenStatus(ctx *gin.Context) {
 // DeleteAccessToken Deletes access-token setting
 // @Summary Deletes access-token setting
 // @Description Deletes access-token setting
-// @Tags    settings
+// @Tags    Global settings
 // @Produce json
 // @Id      deleteSettingAccessToken
 // @Param   itemID path string true "setting ID"
@@ -109,7 +109,7 @@ func (h *Handler) DeleteAccessToken(ctx *gin.Context) {
 // TestAccessTokenConn Test access-token connection
 // @Summary Test access-token connection
 // @Description Test access-token connection
-// @Tags    settings
+// @Tags    Global settings
 // @Produce json
 // @Id      testAccessTokenConn
 // @Param   body body accesstokendto.TestAccessTokenConnReq true "request data"

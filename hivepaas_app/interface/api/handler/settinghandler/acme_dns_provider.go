@@ -14,7 +14,7 @@ import (
 // ListAcmeDnsProvider Lists ACME DNS providers
 // @Summary Lists ACME DNS providers
 // @Description Lists ACME DNS providers
-// @Tags    settings
+// @Tags    Global settings
 // @Produce json
 // @Id      listSettingAcmeDnsProvider
 // @Param   search query string false "`search=<target> (support *)`"
@@ -32,7 +32,7 @@ func (h *Handler) ListAcmeDnsProvider(ctx *gin.Context) {
 // GetAcmeDnsProvider Gets ACME DNS provider details
 // @Summary Gets ACME DNS provider details
 // @Description Gets ACME DNS provider details
-// @Tags    settings
+// @Tags    Global settings
 // @Produce json
 // @Id      getSettingAcmeDnsProvider
 // @Param   itemID path string true "setting ID"
@@ -47,7 +47,7 @@ func (h *Handler) GetAcmeDnsProvider(ctx *gin.Context) {
 // CreateAcmeDnsProvider Creates a new ACME DNS provider
 // @Summary Creates a new ACME DNS provider
 // @Description Creates a new ACME DNS provider
-// @Tags    settings
+// @Tags    Global settings
 // @Produce json
 // @Id      createSettingAcmeDnsProvider
 // @Param   body body acmednsproviderdto.CreateAcmeDnsProviderReq true "request data"
@@ -62,7 +62,7 @@ func (h *Handler) CreateAcmeDnsProvider(ctx *gin.Context) {
 // UpdateAcmeDnsProvider Updates ACME DNS provider
 // @Summary Updates ACME DNS provider
 // @Description Updates ACME DNS provider
-// @Tags    settings
+// @Tags    Global settings
 // @Produce json
 // @Id      updateSettingAcmeDnsProvider
 // @Param   itemID path string true "setting ID"
@@ -78,7 +78,7 @@ func (h *Handler) UpdateAcmeDnsProvider(ctx *gin.Context) {
 // UpdateAcmeDnsProviderStatus Updates ACME DNS provider status
 // @Summary Updates ACME DNS provider status
 // @Description Updates ACME DNS provider status
-// @Tags    settings
+// @Tags    Global settings
 // @Produce json
 // @Id      updateSettingAcmeDnsProviderStatus
 // @Param   itemID path string true "setting ID"
@@ -94,7 +94,7 @@ func (h *Handler) UpdateAcmeDnsProviderStatus(ctx *gin.Context) {
 // DeleteAcmeDnsProvider Deletes ACME DNS provider
 // @Summary Deletes ACME DNS provider
 // @Description Deletes ACME DNS provider
-// @Tags    settings
+// @Tags    Global settings
 // @Produce json
 // @Id      deleteSettingAcmeDnsProvider
 // @Param   itemID path string true "setting ID"
@@ -109,7 +109,7 @@ func (h *Handler) DeleteAcmeDnsProvider(ctx *gin.Context) {
 // TestAcmeDnsProviderAccess Tests provider access
 // @Summary Tests provider access
 // @Description Tests provider access
-// @Tags    settings
+// @Tags    Global settings
 // @Produce json
 // @Id      testAcmeDnsProviderAccess
 // @Param   body body acmednsproviderdto.TestProviderAccessReq true "request data"

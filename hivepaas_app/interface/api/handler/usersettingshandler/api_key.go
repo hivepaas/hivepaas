@@ -13,7 +13,7 @@ import (
 // ListAPIKey Lists API key
 // @Summary Lists API key
 // @Description Lists API key
-// @Tags    user_settings
+// @Tags    API keys
 // @Produce json
 // @Id      listUserAPIKey
 // @Param   search query string false "`search=<target> (support *)`"
@@ -31,7 +31,7 @@ func (h *Handler) ListAPIKey(ctx *gin.Context) {
 // GetAPIKey Gets API key details
 // @Summary Gets API key details
 // @Description Gets API key details
-// @Tags    user_settings
+// @Tags    API keys
 // @Produce json
 // @Id      getUserAPIKey
 // @Param   itemID path string true "setting ID"
@@ -46,7 +46,7 @@ func (h *Handler) GetAPIKey(ctx *gin.Context) {
 // CreateAPIKey Creates a new API key
 // @Summary Creates a new API key
 // @Description Creates a new API key
-// @Tags    user_settings
+// @Tags    API keys
 // @Produce json
 // @Id      createUserAPIKey
 // @Param   body body apikeydto.CreateAPIKeyReq true "request data"
@@ -69,7 +69,7 @@ func (h *Handler) CreateAPIKey(ctx *gin.Context) {
 // UpdateAPIKeyStatus Updates API key status
 // @Summary Updates API key status
 // @Description Updates API key status
-// @Tags    user_settings
+// @Tags    API keys
 // @Produce json
 // @Id      updateUserAPIKeyStatus
 // @Param   itemID path string true "setting ID"
@@ -93,7 +93,7 @@ func (h *Handler) UpdateAPIKeyStatus(ctx *gin.Context) {
 // DeleteAPIKey Deletes an API key
 // @Summary Deletes an API key
 // @Description Deletes an API key
-// @Tags    user_settings
+// @Tags    API keys
 // @Produce json
 // @Id      deleteUserAPIKey
 // @Param   itemID path string true "setting ID"

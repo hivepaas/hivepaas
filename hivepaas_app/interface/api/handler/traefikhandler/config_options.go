@@ -14,7 +14,7 @@ import (
 // GetConfigOptions Gets Traefik config options
 // @Summary Gets Traefik config options
 // @Description Gets Traefik config options
-// @Tags    system_traefik
+// @Tags    Traefik
 // @Produce json
 // @Id      getTraefikConfigOptions
 // @Success 200 {object} traefiksettingsdto.GetConfigOptionsResp
@@ -54,7 +54,7 @@ func (h *Handler) GetConfigOptions(ctx *gin.Context) {
 // UpdateConfigOptions Updates Traefik config options
 // @Summary Updates Traefik config options
 // @Description Updates Traefik config options
-// @Tags    system_traefik
+// @Tags    Traefik
 // @Produce json
 // @Id      updateTraefikConfigOptions
 // @Param   body body traefiksettingsdto.UpdateConfigOptionsReq true "request data"

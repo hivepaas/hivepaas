@@ -13,7 +13,7 @@ import (
 // CreateAppPreview Creates preview for an app
 // @Summary Creates preview for an app
 // @Description Creates preview for an app
-// @Tags    app_previews
+// @Tags    App previews
 // @Produce json
 // @Id      createAppPreview
 // @Param   projectID path string true "project ID"
@@ -52,7 +52,7 @@ func (h *Handler) CreateAppPreview(ctx *gin.Context) {
 // PrepareCreateAppPreview Prepares to create a preview for an app
 // @Summary Prepares to create a preview for an app
 // @Description Prepares to create a preview for an app
-// @Tags    app_previews
+// @Tags    App previews
 // @Produce json
 // @Id      prepareCreateAppPreview
 // @Param   projectID path string true "project ID"

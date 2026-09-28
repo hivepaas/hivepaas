@@ -11,7 +11,7 @@ import (
 // ListSSLProvider Lists SSL providers
 // @Summary Lists SSL providers
 // @Description Lists SSL providers
-// @Tags    project_settings
+// @Tags    Project settings
 // @Produce json
 // @Id      listProjectSSLProvider
 // @Param   projectID path string true "project ID"
@@ -30,7 +30,7 @@ func (h *Handler) ListSSLProvider(ctx *gin.Context) {
 // GetSSLProvider Gets SSL provider details
 // @Summary Gets SSL provider details
 // @Description Gets SSL provider details
-// @Tags    project_settings
+// @Tags    Project settings
 // @Produce json
 // @Id      getProjectSSLProvider
 // @Param   projectID path string true "project ID"
@@ -46,7 +46,7 @@ func (h *Handler) GetSSLProvider(ctx *gin.Context) {
 // CreateSSLProvider Creates a new SSL provider
 // @Summary Creates a new SSL provider
 // @Description Creates a new SSL provider
-// @Tags    project_settings
+// @Tags    Project settings
 // @Produce json
 // @Id      createProjectSSLProvider
 // @Param   projectID path string true "project ID"
@@ -62,7 +62,7 @@ func (h *Handler) CreateSSLProvider(ctx *gin.Context) {
 // UpdateSSLProvider Updates an SSL provider
 // @Summary Updates an SSL provider
 // @Description Updates an SSL provider
-// @Tags    project_settings
+// @Tags    Project settings
 // @Produce json
 // @Id      updateProjectSSLProvider
 // @Param   projectID path string true "project ID"
@@ -79,7 +79,7 @@ func (h *Handler) UpdateSSLProvider(ctx *gin.Context) {
 // UpdateSSLProviderStatus Updates SSL provider status
 // @Summary Updates SSL provider status
 // @Description Updates SSL provider status
-// @Tags    project_settings
+// @Tags    Project settings
 // @Produce json
 // @Id      updateProjectSSLProviderStatus
 // @Param   projectID path string true "project ID"
@@ -96,7 +96,7 @@ func (h *Handler) UpdateSSLProviderStatus(ctx *gin.Context) {
 // DeleteSSLProvider Deletes an SSL provider
 // @Summary Deletes an SSL provider
 // @Description Deletes an SSL provider
-// @Tags    project_settings
+// @Tags    Project settings
 // @Produce json
 // @Id      deleteProjectSSLProvider
 // @Param   projectID path string true "project ID"

@@ -13,7 +13,7 @@ import (
 // CheckAppContainerPort Checks a container port for availability
 // @Summary Checks a container port for availability
 // @Description Checks a container port for availability
-// @Tags    apps
+// @Tags    Apps
 // @Produce json
 // @Id      checkAppContainerPort
 // @Param   projectID path string true "project ID"

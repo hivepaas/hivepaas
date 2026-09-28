@@ -14,12 +14,13 @@ import (
 // SSOOAuthBegin Starts OAuth SSO flow
 // @Summary Starts OAuth SSO flow
 // @Description Starts OAuth SSO flow
-// @Tags    sessions_auth
+// @Tags    Sessions
 // @Produce json
 // @Id      ssoOAuthBegin
 // @Success 302 "on success redirect to provider OAuth URL"
 // @Failure 400 {object} hperrors.ErrorInfo
 // @Failure 500 {object} hperrors.ErrorInfo
+// @Security
 // @Router  /auth/sso/{provider} [get]
 func (h *Handler) SSOOAuthBegin(ctx *gin.Context) {
 	provider, err := h.ParseStringParam(ctx, "provider")
@@ -43,13 +44,14 @@ func (h *Handler) SSOOAuthBegin(ctx *gin.Context) {
 // SSOOAuthCallback Begins SSO flow
 // @Summary Begins SSO flow
 // @Description Begins SSO flow
-// @Tags    users
+// @Tags    Sessions
 // @Produce json
 // @Id      ssoOAuthCallback
 // @Param   provider path string true "provider name"
 // @Success 302 "on success redirect to the dashboard page"
 // @Failure 400 {object} hperrors.ErrorInfo
 // @Failure 500 {object} hperrors.ErrorInfo
+// @Security
 // @Router  /auth/sso/callback/{provider} [get]
 // @Router  /auth/sso/callback/{provider} [post]
 func (h *Handler) SSOOAuthCallback(ctx *gin.Context) {

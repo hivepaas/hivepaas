@@ -14,7 +14,7 @@ import (
 // @Summary Gets what an app may do through the Docker API
 // @Description Gets the app's Docker API access: the images its children may run, the directories they
 // @Description share, the networks they join, the groups of endpoints allowed, and the limits.
-// @Tags    app_settings
+// @Tags    App settings
 // @Produce json
 // @Id      getAppDockerAPISettings
 // @Param   projectID path string true "project ID"
@@ -54,7 +54,7 @@ func (h *Handler) GetAppDockerAPISettings(ctx *gin.Context) {
 // @Description Updates the app's Docker API access. Turning it on, or letting it do more, needs Write
 // @Description permission on the Cluster module; host mode, the node's own socket, needs the privileged-apps
 // @Description switch and an administrator. Narrowing it, leaving host mode or turning it off needs Write on the app.
-// @Tags    app_settings
+// @Tags    App settings
 // @Produce json
 // @Id      updateAppDockerAPISettings
 // @Param   projectID path string true "project ID"

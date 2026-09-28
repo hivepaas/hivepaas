@@ -15,7 +15,7 @@ import (
 // GetMCPSettings Gets MCP server settings
 // @Summary Gets MCP server settings
 // @Description Gets whether HivePaaS serves the Model Context Protocol at `<API base path>/mcp`.
-// @Tags    system_settings
+// @Tags    System settings
 // @Produce json
 // @Id      getMCPSettings
 // @Success 200 {object} mcpdto.GetMCPSettingsResp
@@ -52,7 +52,7 @@ func (h *Handler) GetMCPSettings(ctx *gin.Context) {
 // UpdateMCPSettings Updates MCP server settings
 // @Summary Updates MCP server settings
 // @Description Turns the MCP server on or off.
-// @Tags    system_settings
+// @Tags    System settings
 // @Produce json
 // @Id      updateMCPSettings
 // @Param   body body mcpdto.UpdateMCPSettingsReq true "request data"

@@ -11,7 +11,7 @@ import (
 // ListSSLProvider Lists SSL providers
 // @Summary Lists SSL providers
 // @Description Lists SSL providers
-// @Tags    project_env_settings
+// @Tags    Project env settings
 // @Produce json
 // @Id      listProjectEnvSSLProvider
 // @Param   projectID path string true "project ID"
@@ -31,7 +31,7 @@ func (h *Handler) ListSSLProvider(ctx *gin.Context) {
 // GetSSLProvider Gets SSL provider details
 // @Summary Gets SSL provider details
 // @Description Gets SSL provider details
-// @Tags    project_env_settings
+// @Tags    Project env settings
 // @Produce json
 // @Id      getProjectEnvSSLProvider
 // @Param   projectID path string true "project ID"
@@ -48,7 +48,7 @@ func (h *Handler) GetSSLProvider(ctx *gin.Context) {
 // CreateSSLProvider Creates a new SSL provider
 // @Summary Creates a new SSL provider
 // @Description Creates a new SSL provider
-// @Tags    project_env_settings
+// @Tags    Project env settings
 // @Produce json
 // @Id      createProjectEnvSSLProvider
 // @Param   projectID path string true "project ID"
@@ -65,7 +65,7 @@ func (h *Handler) CreateSSLProvider(ctx *gin.Context) {
 // UpdateSSLProvider Updates an SSL provider
 // @Summary Updates an SSL provider
 // @Description Updates an SSL provider
-// @Tags    project_env_settings
+// @Tags    Project env settings
 // @Produce json
 // @Id      updateProjectEnvSSLProvider
 // @Param   projectID path string true "project ID"
@@ -83,7 +83,7 @@ func (h *Handler) UpdateSSLProvider(ctx *gin.Context) {
 // UpdateSSLProviderStatus Updates SSL provider status
 // @Summary Updates SSL provider status
 // @Description Updates SSL provider status
-// @Tags    project_env_settings
+// @Tags    Project env settings
 // @Produce json
 // @Id      updateProjectEnvSSLProviderStatus
 // @Param   projectID path string true "project ID"
@@ -101,7 +101,7 @@ func (h *Handler) UpdateSSLProviderStatus(ctx *gin.Context) {
 // DeleteSSLProvider Deletes an SSL provider
 // @Summary Deletes an SSL provider
 // @Description Deletes an SSL provider
-// @Tags    project_env_settings
+// @Tags    Project env settings
 // @Produce json
 // @Id      deleteProjectEnvSSLProvider
 // @Param   projectID path string true "project ID"

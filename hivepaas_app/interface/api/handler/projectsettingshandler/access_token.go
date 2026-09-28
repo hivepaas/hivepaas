@@ -11,7 +11,7 @@ import (
 // ListAccessToken Lists access-token settings
 // @Summary Lists access-token settings
 // @Description Lists access-token settings
-// @Tags    project_settings
+// @Tags    Project settings
 // @Produce json
 // @Id      listProjectAccessToken
 // @Param   projectID path string true "project ID"
@@ -30,7 +30,7 @@ func (h *Handler) ListAccessToken(ctx *gin.Context) {
 // GetAccessToken Gets access-token setting details
 // @Summary Gets access-token setting details
 // @Description Gets access-token setting details
-// @Tags    project_settings
+// @Tags    Project settings
 // @Produce json
 // @Id      getProjectAccessToken
 // @Param   projectID path string true "project ID"
@@ -46,7 +46,7 @@ func (h *Handler) GetAccessToken(ctx *gin.Context) {
 // CreateAccessToken Creates a new access-token setting
 // @Summary Creates a new access-token setting
 // @Description Creates a new access-token setting
-// @Tags    project_settings
+// @Tags    Project settings
 // @Produce json
 // @Id      createProjectAccessToken
 // @Param   projectID path string true "project ID"
@@ -62,7 +62,7 @@ func (h *Handler) CreateAccessToken(ctx *gin.Context) {
 // UpdateAccessToken Updates access-token
 // @Summary Updates access-token
 // @Description Updates access-token
-// @Tags    project_settings
+// @Tags    Project settings
 // @Produce json
 // @Id      updateProjectAccessToken
 // @Param   projectID path string true "project ID"
@@ -79,7 +79,7 @@ func (h *Handler) UpdateAccessToken(ctx *gin.Context) {
 // UpdateAccessTokenStatus Updates access-token status
 // @Summary Updates access-token status
 // @Description Updates access-token status
-// @Tags    project_settings
+// @Tags    Project settings
 // @Produce json
 // @Id      updateProjectAccessTokenStatus
 // @Param   projectID path string true "project ID"
@@ -96,7 +96,7 @@ func (h *Handler) UpdateAccessTokenStatus(ctx *gin.Context) {
 // DeleteAccessToken Deletes access-token setting
 // @Summary Deletes access-token setting
 // @Description Deletes access-token setting
-// @Tags    project_settings
+// @Tags    Project settings
 // @Produce json
 // @Id      deleteProjectAccessToken
 // @Param   projectID path string true "project ID"

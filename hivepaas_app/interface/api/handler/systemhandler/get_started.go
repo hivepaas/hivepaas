@@ -16,7 +16,7 @@ import (
 // @Description For the Get started card, while nextStep is hivepaas/get-started: todo, obtaining, failed
 // @Description (with the error) or done. The first answer that finds it done also clears the step, for
 // @Description every admin.
-// @Tags    system
+// @Tags    System
 // @Produce json
 // @Id      getDashboardCert
 // @Success 200 {object} getstarteddto.GetDashboardCertResp
@@ -47,7 +47,7 @@ func (h *Handler) GetDashboardCert(ctx *gin.Context) {
 // @Description For the Get started card: asks for a certificate for the dashboard's domain, past
 // @Description the wait a failed attempt leaves. Refused with ERR_CONFLICT while one is being
 // @Description obtained. Answers with where the certificate stands.
-// @Tags    system
+// @Tags    System
 // @Produce json
 // @Id      requestDashboardCert
 // @Success 200 {object} getstarteddto.RequestDashboardCertResp
@@ -78,7 +78,7 @@ func (h *Handler) RequestDashboardCert(ctx *gin.Context) {
 // DismissGetStarted Closes the Get started card
 // @Summary Closes the Get started card
 // @Description Clears the installation step, which hides the card for every admin.
-// @Tags    system
+// @Tags    System
 // @Produce json
 // @Id      dismissGetStarted
 // @Success 200 {object} getstarteddto.DismissResp

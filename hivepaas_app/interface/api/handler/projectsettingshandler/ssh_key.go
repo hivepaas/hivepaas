@@ -11,7 +11,7 @@ import (
 // ListSSHKey Lists ssh-key settings
 // @Summary Lists ssh-key settings
 // @Description Lists ssh-key settings
-// @Tags    project_settings
+// @Tags    Project settings
 // @Produce json
 // @Id      listProjectSSHKey
 // @Param   projectID path string true "project ID"
@@ -30,7 +30,7 @@ func (h *Handler) ListSSHKey(ctx *gin.Context) {
 // GetSSHKey Gets ssh-key setting details
 // @Summary Gets ssh-key setting details
 // @Description Gets ssh-key setting details
-// @Tags    project_settings
+// @Tags    Project settings
 // @Produce json
 // @Id      getProjectSSHKey
 // @Param   projectID path string true "project ID"
@@ -46,7 +46,7 @@ func (h *Handler) GetSSHKey(ctx *gin.Context) {
 // CreateSSHKey Creates a new ssh-key setting
 // @Summary Creates a new ssh-key setting
 // @Description Creates a new ssh-key setting
-// @Tags    project_settings
+// @Tags    Project settings
 // @Produce json
 // @Id      createProjectSSHKey
 // @Param   projectID path string true "project ID"
@@ -62,7 +62,7 @@ func (h *Handler) CreateSSHKey(ctx *gin.Context) {
 // UpdateSSHKey Updates ssh-key
 // @Summary Updates ssh-key
 // @Description Updates ssh-key
-// @Tags    project_settings
+// @Tags    Project settings
 // @Produce json
 // @Id      updateProjectSSHKey
 // @Param   projectID path string true "project ID"
@@ -79,7 +79,7 @@ func (h *Handler) UpdateSSHKey(ctx *gin.Context) {
 // UpdateSSHKeyStatus Updates ssh-key status
 // @Summary Updates ssh-key status
 // @Description Updates ssh-key status
-// @Tags    project_settings
+// @Tags    Project settings
 // @Produce json
 // @Id      updateProjectSSHKeyStatus
 // @Param   projectID path string true "project ID"
@@ -96,7 +96,7 @@ func (h *Handler) UpdateSSHKeyStatus(ctx *gin.Context) {
 // DeleteSSHKey Deletes ssh-key setting
 // @Summary Deletes ssh-key setting
 // @Description Deletes ssh-key setting
-// @Tags    project_settings
+// @Tags    Project settings
 // @Produce json
 // @Id      deleteProjectSSHKey
 // @Param   projectID path string true "project ID"

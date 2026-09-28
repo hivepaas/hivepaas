@@ -14,7 +14,7 @@ import (
 // ReloadTraefikConfig Reloads traefik config files
 // @Summary Reloads traefik config files
 // @Description Reloads traefik config files
-// @Tags    system_traefik
+// @Tags    Traefik
 // @Produce json
 // @Id      reloadTraefikConfig
 // @Param   body body traefikdto.ReloadTraefikConfigReq true "request data"
@@ -55,7 +55,7 @@ func (h *Handler) ReloadTraefikConfig(ctx *gin.Context) {
 // ResetTraefikConfig Resets traefik config files
 // @Summary Resets traefik config files
 // @Description Resets traefik config files
-// @Tags    system_traefik
+// @Tags    Traefik
 // @Produce json
 // @Id      resetTraefikConfig
 // @Param   body body traefikdto.ResetTraefikConfigReq true "request data"
@@ -96,7 +96,7 @@ func (h *Handler) ResetTraefikConfig(ctx *gin.Context) {
 // RestartTraefik Restarts traefik containers
 // @Summary Restarts traefik containers
 // @Description Restarts traefik containers
-// @Tags    system_traefik
+// @Tags    Traefik
 // @Produce json
 // @Id      restartTraefik
 // @Param   body body traefikdto.RestartTraefikReq true "request data"

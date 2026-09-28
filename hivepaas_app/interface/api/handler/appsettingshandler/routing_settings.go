@@ -13,7 +13,7 @@ import (
 // GetAppRoutingSettings Gets app routing settings
 // @Summary Gets app routing settings
 // @Description Gets app routing settings
-// @Tags    app_settings
+// @Tags    App settings
 // @Produce json
 // @Id      getAppRoutingSettings
 // @Param   projectID path string true "project ID"
@@ -51,7 +51,7 @@ func (h *Handler) GetAppRoutingSettings(ctx *gin.Context) {
 // UpdateAppRoutingSettings Updates app routing settings
 // @Summary Updates app routing settings
 // @Description Updates app routing settings
-// @Tags    app_settings
+// @Tags    App settings
 // @Produce json
 // @Id      updateAppRoutingSettings
 // @Param   projectID path string true "project ID"

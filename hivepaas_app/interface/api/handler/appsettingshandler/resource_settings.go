@@ -13,7 +13,7 @@ import (
 // GetAppResourceSettings Gets app resource settings
 // @Summary Gets app resource settings
 // @Description Gets app resource settings
-// @Tags    app_settings
+// @Tags    App settings
 // @Produce json
 // @Id      getAppResourceSettings
 // @Param   projectID path string true "project ID"
@@ -51,7 +51,7 @@ func (h *Handler) GetAppResourceSettings(ctx *gin.Context) {
 // UpdateAppResourceSettings Updates app resource settings
 // @Summary Updates app resource settings
 // @Description Updates app resource settings
-// @Tags    app_settings
+// @Tags    App settings
 // @Produce json
 // @Id      updateAppResourceSettings
 // @Param   projectID path string true "project ID"

@@ -11,7 +11,7 @@ import (
 // ListAuditLog Lists audit logs
 // @Summary Lists audit logs
 // @Description Lists audit logs
-// @Tags    project_audit_logs
+// @Tags    Project audit logs
 // @Produce json
 // @Id      listProjectAuditLog
 // @Param   projectID path string true "project ID"
@@ -30,7 +30,7 @@ func (h *Handler) ListAuditLog(ctx *gin.Context) {
 // GetAuditLog Gets audit log
 // @Summary Gets audit log
 // @Description Gets audit log
-// @Tags    project_audit_logs
+// @Tags    Project audit logs
 // @Produce json
 // @Id      getProjectAuditLog
 // @Param   projectID path string true "project ID"
@@ -46,7 +46,7 @@ func (h *Handler) GetAuditLog(ctx *gin.Context) {
 // ListAuditLogTypes Lists audit log types
 // @Summary Lists audit log types
 // @Description Lists audit log types
-// @Tags    project_audit_logs
+// @Tags    Project audit logs
 // @Produce json
 // @Id      listProjectAuditLogType
 // @Param   projectID path string true "project ID"

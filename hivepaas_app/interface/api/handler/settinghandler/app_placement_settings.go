@@ -11,7 +11,7 @@ import (
 // GetAppPlacementSettings Gets app placement settings
 // @Summary Gets app placement settings
 // @Description Gets app placement settings
-// @Tags    settings
+// @Tags    Global settings
 // @Produce json
 // @Id      getSettingAppPlacementSettings
 // @Success 200 {object} appplacementsettingsdto.GetAppPlacementSettingsResp
@@ -25,7 +25,7 @@ func (h *Handler) GetAppPlacementSettings(ctx *gin.Context) {
 // UpdateAppPlacementSettings Updates app placement settings
 // @Summary Updates app placement settings
 // @Description Updates app placement settings
-// @Tags    settings
+// @Tags    Global settings
 // @Produce json
 // @Id      updateSettingAppPlacementSettings
 // @Param   body body appplacementsettingsdto.UpdateAppPlacementSettingsReq true "request data"
@@ -40,7 +40,7 @@ func (h *Handler) UpdateAppPlacementSettings(ctx *gin.Context) {
 // UpdateAppPlacementSettingsStatus Updates app placement settings status
 // @Summary Updates app placement settings status
 // @Description Updates app placement settings status
-// @Tags    settings
+// @Tags    Global settings
 // @Produce json
 // @Id      updateSettingAppPlacementSettingsStatus
 // @Param   body body appplacementsettingsdto.UpdateAppPlacementSettingsStatusReq true "request data"
@@ -55,7 +55,7 @@ func (h *Handler) UpdateAppPlacementSettingsStatus(ctx *gin.Context) {
 // DeleteAppPlacementSettings Deletes app placement settings
 // @Summary Deletes app placement settings
 // @Description Deletes app placement settings
-// @Tags    settings
+// @Tags    Global settings
 // @Produce json
 // @Id      deleteSettingAppPlacementSettings
 // @Success 200 {object} appplacementsettingsdto.DeleteAppPlacementSettingsResp

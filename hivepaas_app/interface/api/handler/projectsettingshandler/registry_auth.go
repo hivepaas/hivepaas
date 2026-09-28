@@ -11,7 +11,7 @@ import (
 // ListRegistryAuth Lists registry auth settings
 // @Summary Lists registry auth settings
 // @Description Lists registry auth settings
-// @Tags    project_settings
+// @Tags    Project settings
 // @Produce json
 // @Id      listProjectRegistryAuth
 // @Param   projectID path string true "project ID"
@@ -30,7 +30,7 @@ func (h *Handler) ListRegistryAuth(ctx *gin.Context) {
 // GetRegistryAuth Gets registry auth setting details
 // @Summary Gets registry auth setting details
 // @Description Gets registry auth setting details
-// @Tags    project_settings
+// @Tags    Project settings
 // @Produce json
 // @Id      getProjectRegistryAuth
 // @Param   projectID path string true "project ID"
@@ -46,7 +46,7 @@ func (h *Handler) GetRegistryAuth(ctx *gin.Context) {
 // CreateRegistryAuth Creates a new registry auth setting
 // @Summary Creates a new registry auth setting
 // @Description Creates a new registry auth setting
-// @Tags    project_settings
+// @Tags    Project settings
 // @Produce json
 // @Id      createProjectRegistryAuth
 // @Param   projectID path string true "project ID"
@@ -62,7 +62,7 @@ func (h *Handler) CreateRegistryAuth(ctx *gin.Context) {
 // UpdateRegistryAuth Updates registry auth
 // @Summary Updates registry auth
 // @Description Updates registry auth
-// @Tags    project_settings
+// @Tags    Project settings
 // @Produce json
 // @Id      updateProjectRegistryAuth
 // @Param   projectID path string true "project ID"
@@ -79,7 +79,7 @@ func (h *Handler) UpdateRegistryAuth(ctx *gin.Context) {
 // UpdateRegistryAuthStatus Updates registry auth status
 // @Summary Updates registry auth status
 // @Description Updates registry auth status
-// @Tags    project_settings
+// @Tags    Project settings
 // @Produce json
 // @Id      updateProjectRegistryAuthStatus
 // @Param   projectID path string true "project ID"
@@ -96,7 +96,7 @@ func (h *Handler) UpdateRegistryAuthStatus(ctx *gin.Context) {
 // DeleteRegistryAuth Deletes registry auth setting
 // @Summary Deletes registry auth setting
 // @Description Deletes registry auth setting
-// @Tags    project_settings
+// @Tags    Project settings
 // @Produce json
 // @Id      deleteProjectRegistryAuth
 // @Param   projectID path string true "project ID"

@@ -14,7 +14,7 @@ import (
 // ListSysError Lists sys errors
 // @Summary Lists sys errors
 // @Description Lists sys errors
-// @Tags    system_errors
+// @Tags    System errors
 // @Produce json
 // @Id      listSysError
 // @Param   status query int false "`status=<target>`"
@@ -56,7 +56,7 @@ func (h *Handler) ListSysError(ctx *gin.Context) {
 // GetSysError Gets sys error
 // @Summary Gets sys error
 // @Description Gets sys error
-// @Tags    system_errors
+// @Tags    System errors
 // @Produce json
 // @Id      getSysError
 // @Param   errorID path string true "error ID"
@@ -101,7 +101,7 @@ func (h *Handler) GetSysError(ctx *gin.Context) {
 // DeleteSysError Deletes sys error
 // @Summary Deletes sys error
 // @Description Deletes sys error
-// @Tags    system_errors
+// @Tags    System errors
 // @Produce json
 // @Id      deleteSysError
 // @Param   errorID path string true "error ID"

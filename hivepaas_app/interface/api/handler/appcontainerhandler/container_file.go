@@ -17,7 +17,7 @@ import (
 // DownloadFileFromContainer Downloads a file or directory from container
 // @Summary Downloads a file or directory from container
 // @Description Downloads a file or directory from container
-// @Tags    apps
+// @Tags    Apps
 // @Produce octet-stream
 // @Id      downloadFileFromAppContainer
 // @Param   projectID path string true "project ID"
@@ -71,7 +71,7 @@ func (h *Handler) DownloadFileFromContainer(ctx *gin.Context) {
 // UploadFileToContainer Uploads a file or archive into container
 // @Summary Uploads a file or archive into container
 // @Description Uploads a file or archive into container, with optional archive extraction
-// @Tags    apps
+// @Tags    Apps
 // @Accept  multipart/form-data
 // @Produce json
 // @Id      uploadFileToAppContainer

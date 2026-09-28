@@ -13,7 +13,7 @@ import (
 // SetAppRunning Sets app running status
 // @Summary Sets app running status
 // @Description Sets app running status
-// @Tags    app_actions
+// @Tags    App actions
 // @Produce json
 // @Id      appActionSetRunning
 // @Param   projectID path string true "project ID"

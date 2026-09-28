@@ -11,7 +11,7 @@ import (
 // ListSSLCert Lists SSL certs
 // @Summary Lists SSL certs
 // @Description Lists SSL certs
-// @Tags    settings
+// @Tags    Global settings
 // @Produce json
 // @Id      listSettingSSLCert
 // @Param   search query string false "`search=<target> (support *)`"
@@ -29,7 +29,7 @@ func (h *Handler) ListSSLCert(ctx *gin.Context) {
 // GetSSLCert Gets SSL cert details
 // @Summary Gets SSL cert details
 // @Description Gets SSL cert details
-// @Tags    settings
+// @Tags    Global settings
 // @Produce json
 // @Id      getSettingSSLCert
 // @Param   itemID path string true "setting ID"
@@ -44,7 +44,7 @@ func (h *Handler) GetSSLCert(ctx *gin.Context) {
 // CreateSSLCert Creates a new SSL cert
 // @Summary Creates a new SSL cert
 // @Description Creates a new SSL cert
-// @Tags    settings
+// @Tags    Global settings
 // @Produce json
 // @Id      createSettingSSLCert
 // @Param   body body sslcertdto.CreateSSLCertReq true "request data"
@@ -59,7 +59,7 @@ func (h *Handler) CreateSSLCert(ctx *gin.Context) {
 // UpdateSSLCert Updates SSL cert
 // @Summary Updates SSL cert
 // @Description Updates SSL cert
-// @Tags    settings
+// @Tags    Global settings
 // @Produce json
 // @Id      updateSettingSSLCert
 // @Param   itemID path string true "setting ID"
@@ -75,7 +75,7 @@ func (h *Handler) UpdateSSLCert(ctx *gin.Context) {
 // UpdateSSLCertStatus Updates SSL cert status
 // @Summary Updates SSL cert status
 // @Description Updates SSL cert status
-// @Tags    settings
+// @Tags    Global settings
 // @Produce json
 // @Id      updateSettingSSLCertStatus
 // @Param   itemID path string true "setting ID"
@@ -91,7 +91,7 @@ func (h *Handler) UpdateSSLCertStatus(ctx *gin.Context) {
 // DeleteSSLCert Deletes SSL cert
 // @Summary Deletes SSL cert
 // @Description Deletes SSL cert
-// @Tags    settings
+// @Tags    Global settings
 // @Produce json
 // @Id      deleteSettingSSLCert
 // @Param   itemID path string true "setting ID"
@@ -106,7 +106,7 @@ func (h *Handler) DeleteSSLCert(ctx *gin.Context) {
 // RenewSSLCert Renews SSL cert
 // @Summary Renews SSL cert
 // @Description Renews SSL cert
-// @Tags    settings
+// @Tags    Global settings
 // @Produce json
 // @Id      renewSettingSSLCert
 // @Param   itemID path string true "setting ID"
@@ -122,7 +122,7 @@ func (h *Handler) RenewSSLCert(ctx *gin.Context) {
 // DownloadSSLCertBundle Downloads SSL cert bundle
 // @Summary Downloads SSL cert bundle
 // @Description Downloads SSL cert bundle
-// @Tags    settings
+// @Tags    Global settings
 // @Produce application/zip
 // @Id      downloadSettingSSLCert
 // @Param   itemID path string true "setting ID"

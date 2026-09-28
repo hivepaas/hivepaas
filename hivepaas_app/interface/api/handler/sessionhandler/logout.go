@@ -12,7 +12,7 @@ import (
 // DeleteSession Deletes the current user session
 // @Summary Deletes the current user session
 // @Description Deletes the current user session
-// @Tags    sessions
+// @Tags    Sessions
 // @Produce json
 // @Id      deleteSession
 // @Success 200 {object} sessiondto.DeleteSessionResp
@@ -48,7 +48,7 @@ func (h *Handler) DeleteSession(ctx *gin.Context) {
 // DeleteAllSessions Deletes all sessions of the user
 // @Summary Deletes all sessions of the user
 // @Description Deletes all sessions of the user
-// @Tags    sessions
+// @Tags    Sessions
 // @Produce json
 // @Id      deleteAllSessions
 // @Success 200 {object} sessiondto.DeleteAllSessionsResp

@@ -11,7 +11,7 @@ import (
 // ListBasicAuth Lists basic auth settings
 // @Summary Lists basic auth settings
 // @Description Lists basic auth settings
-// @Tags    project_settings
+// @Tags    Project settings
 // @Produce json
 // @Id      listProjectBasicAuth
 // @Param   projectID path string true "project ID"
@@ -30,7 +30,7 @@ func (h *Handler) ListBasicAuth(ctx *gin.Context) {
 // GetBasicAuth Gets basic auth setting details
 // @Summary Gets basic auth setting details
 // @Description Gets basic auth setting details
-// @Tags    project_settings
+// @Tags    Project settings
 // @Produce json
 // @Id      getProjectBasicAuth
 // @Param   projectID path string true "project ID"
@@ -46,7 +46,7 @@ func (h *Handler) GetBasicAuth(ctx *gin.Context) {
 // CreateBasicAuth Creates a new basic auth setting
 // @Summary Creates a new basic auth setting
 // @Description Creates a new basic auth setting
-// @Tags    project_settings
+// @Tags    Project settings
 // @Produce json
 // @Id      createProjectBasicAuth
 // @Param   projectID path string true "project ID"
@@ -62,7 +62,7 @@ func (h *Handler) CreateBasicAuth(ctx *gin.Context) {
 // UpdateBasicAuth Updates basic auth
 // @Summary Updates basic auth
 // @Description Updates basic auth
-// @Tags    project_settings
+// @Tags    Project settings
 // @Produce json
 // @Id      updateProjectBasicAuth
 // @Param   projectID path string true "project ID"
@@ -79,7 +79,7 @@ func (h *Handler) UpdateBasicAuth(ctx *gin.Context) {
 // UpdateBasicAuthStatus Updates basic auth status
 // @Summary Updates basic auth status
 // @Description Updates basic auth status
-// @Tags    project_settings
+// @Tags    Project settings
 // @Produce json
 // @Id      updateProjectBasicAuthStatus
 // @Param   projectID path string true "project ID"
@@ -96,7 +96,7 @@ func (h *Handler) UpdateBasicAuthStatus(ctx *gin.Context) {
 // DeleteBasicAuth Deletes basic auth setting
 // @Summary Deletes basic auth setting
 // @Description Deletes basic auth setting
-// @Tags    project_settings
+// @Tags    Project settings
 // @Produce json
 // @Id      deleteProjectBasicAuth
 // @Param   projectID path string true "project ID"

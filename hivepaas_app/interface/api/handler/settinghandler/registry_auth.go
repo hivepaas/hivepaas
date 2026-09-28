@@ -14,7 +14,7 @@ import (
 // ListRegistryAuth Lists registry auth settings
 // @Summary Lists registry auth settings
 // @Description Lists registry auth settings
-// @Tags    settings
+// @Tags    Global settings
 // @Produce json
 // @Id      listSettingRegistryAuth
 // @Param   search query string false "`search=<target> (support *)`"
@@ -32,7 +32,7 @@ func (h *Handler) ListRegistryAuth(ctx *gin.Context) {
 // GetRegistryAuth Gets registry auth setting details
 // @Summary Gets registry auth setting details
 // @Description Gets registry auth setting details
-// @Tags    settings
+// @Tags    Global settings
 // @Produce json
 // @Id      getSettingRegistryAuth
 // @Param   itemID path string true "setting ID"
@@ -47,7 +47,7 @@ func (h *Handler) GetRegistryAuth(ctx *gin.Context) {
 // CreateRegistryAuth Creates a new registry auth setting
 // @Summary Creates a new registry auth setting
 // @Description Creates a new registry auth setting
-// @Tags    settings
+// @Tags    Global settings
 // @Produce json
 // @Id      createSettingRegistryAuth
 // @Param   body body registryauthdto.CreateRegistryAuthReq true "request data"
@@ -62,7 +62,7 @@ func (h *Handler) CreateRegistryAuth(ctx *gin.Context) {
 // UpdateRegistryAuth Updates registry auth
 // @Summary Updates registry auth
 // @Description Updates registry auth
-// @Tags    settings
+// @Tags    Global settings
 // @Produce json
 // @Id      updateSettingRegistryAuth
 // @Param   itemID path string true "setting ID"
@@ -78,7 +78,7 @@ func (h *Handler) UpdateRegistryAuth(ctx *gin.Context) {
 // UpdateRegistryAuthStatus Updates registry auth status
 // @Summary Updates registry auth status
 // @Description Updates registry auth status
-// @Tags    settings
+// @Tags    Global settings
 // @Produce json
 // @Id      updateSettingRegistryAuthStatus
 // @Param   itemID path string true "setting ID"
@@ -94,7 +94,7 @@ func (h *Handler) UpdateRegistryAuthStatus(ctx *gin.Context) {
 // DeleteRegistryAuth Deletes registry auth setting
 // @Summary Deletes registry auth setting
 // @Description Deletes registry auth setting
-// @Tags    settings
+// @Tags    Global settings
 // @Produce json
 // @Id      deleteSettingRegistryAuth
 // @Param   itemID path string true "setting ID"
@@ -109,7 +109,7 @@ func (h *Handler) DeleteRegistryAuth(ctx *gin.Context) {
 // TestRegistryAuthConn Tests registry auth connection
 // @Summary Tests registry auth connection
 // @Description Tests registry auth connection
-// @Tags    settings
+// @Tags    Global settings
 // @Produce json
 // @Id      testRegistryAuthConn
 // @Param   body body registryauthdto.TestRegistryAuthConnReq true "request data"

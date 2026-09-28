@@ -13,7 +13,7 @@ import (
 // ListVolume Lists cluster volume settings
 // @Summary Lists cluster volume settings
 // @Description Lists cluster volume settings
-// @Tags    cluster_volumes
+// @Tags    Cluster volumes
 // @Produce json
 // @Id      listClusterVolume
 // @Param   search query string false "`search=<target> (support *)`"
@@ -31,7 +31,7 @@ func (h *Handler) ListVolume(ctx *gin.Context) {
 // GetVolume Gets volume setting details
 // @Summary Gets volume setting details
 // @Description Gets volume setting details
-// @Tags    cluster_volumes
+// @Tags    Cluster volumes
 // @Produce json
 // @Id      getClusterVolume
 // @Param   itemID path string true "setting ID"
@@ -46,7 +46,7 @@ func (h *Handler) GetVolume(ctx *gin.Context) {
 // CreateVolume Creates a new volume setting
 // @Summary Creates a new volume setting
 // @Description Creates a new volume setting
-// @Tags    cluster_volumes
+// @Tags    Cluster volumes
 // @Produce json
 // @Id      createClusterVolume
 // @Param   body body volumedto.CreateVolumeReq true "request data"
@@ -61,7 +61,7 @@ func (h *Handler) CreateVolume(ctx *gin.Context) {
 // UpdateVolume Updates cluster volume
 // @Summary Updates cluster volume
 // @Description Updates cluster volume
-// @Tags    cluster_volumes
+// @Tags    Cluster volumes
 // @Produce json
 // @Id      updateClusterVolume
 // @Param   itemID path string true "setting ID"
@@ -77,7 +77,7 @@ func (h *Handler) UpdateVolume(ctx *gin.Context) {
 // UpdateVolumeStatus Updates cluster volume status
 // @Summary Updates cluster volume status
 // @Description Updates cluster volume status
-// @Tags    cluster_volumes
+// @Tags    Cluster volumes
 // @Produce json
 // @Id      updateClusterVolumeStatus
 // @Param   itemID path string true "setting ID"
@@ -93,7 +93,7 @@ func (h *Handler) UpdateVolumeStatus(ctx *gin.Context) {
 // DeleteVolume Deletes volume setting
 // @Summary Deletes volume setting
 // @Description Deletes volume setting
-// @Tags    cluster_volumes
+// @Tags    Cluster volumes
 // @Produce json
 // @Id      deleteClusterVolume
 // @Param   itemID path string true "setting ID"
@@ -108,7 +108,7 @@ func (h *Handler) DeleteVolume(ctx *gin.Context) {
 // SyncVolume Sync volumes from Docker
 // @Summary Sync volumes from Docker
 // @Description Sync volumes from Docker
-// @Tags    cluster_volumes
+// @Tags    Cluster volumes
 // @Produce json
 // @Id      syncClusterVolume
 // @Param   body body volumedto.SyncVolumeReq true "request data"

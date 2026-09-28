@@ -16,7 +16,7 @@ const webhookMaxBodySize = 25 * 1024 * 1024
 // HandleRepoWebhook Handles Repo webhook
 // @Summary Handles Repo webhook
 // @Description Handles Repo webhook
-// @Tags    webhooks
+// @Tags    Webhooks
 // @Produce json
 // @Id      handleRepoWebhook
 // @Param   webhookID path string true "ID of repo-webhook or github-app"
@@ -24,6 +24,7 @@ const webhookMaxBodySize = 25 * 1024 * 1024
 // @Success 200 {object} webhookdto.HandleRepoWebhookResp
 // @Failure 400 {object} hperrors.ErrorInfo
 // @Failure 500 {object} hperrors.ErrorInfo
+// @Security
 // @Router  /webhooks/{webhookID} [post]
 func (h *Handler) HandleRepoWebhook(ctx *gin.Context) {
 	webhookID, err := h.ParseStringParam(ctx, "webhookID")

@@ -13,7 +13,7 @@ import (
 // DownloadFile Downloads a file
 // @Summary Downloads a file
 // @Description Downloads a file
-// @Tags    files
+// @Tags    Files
 // @Produce application/octet-stream
 // @Id      downloadFile
 // @Param   fileID path string true "file ID"

@@ -14,7 +14,7 @@ import (
 // GetSecuritySettings Gets HivePaaS security settings
 // @Summary Gets HivePaaS security settings
 // @Description Gets HivePaaS security settings
-// @Tags    system_hivepaas
+// @Tags    HivePaaS
 // @Produce json
 // @Id      getHivePaaSSecuritySettings
 // @Success 200 {object} hpappsettingsdto.GetSecuritySettingsResp
@@ -54,7 +54,7 @@ func (h *Handler) GetSecuritySettings(ctx *gin.Context) {
 // UpdateSecuritySettings Updates HivePaaS security settings
 // @Summary Updates HivePaaS security settings
 // @Description Updates HivePaaS security settings
-// @Tags    system_hivepaas
+// @Tags    HivePaaS
 // @Produce json
 // @Id      updateHivePaaSSecuritySettings
 // @Param   body body hpappsettingsdto.UpdateSecuritySettingsReq true "request data"

@@ -12,13 +12,14 @@ import (
 // LoginPasswordForgot Ask the system to send a password reset link via email
 // @Summary Ask the system to send a password reset link via email
 // @Description Ask the system to send a password reset link via email
-// @Tags    sessions
+// @Tags    Sessions
 // @Produce json
 // @Id      loginPasswordForgot
 // @Param   body body sessiondto.LoginPasswordForgotReq true "request data"
 // @Success 200 {object} sessiondto.LoginPasswordForgotResp
 // @Failure 400 {object} hperrors.ErrorInfo
 // @Failure 500 {object} hperrors.ErrorInfo
+// @Security
 // @Router  /auth/login-password-forgot [post]
 func (h *Handler) LoginPasswordForgot(ctx *gin.Context) {
 	req := sessiondto.NewLoginPasswordForgotReq()

@@ -13,7 +13,7 @@ import (
 // GetAppKindSettings Gets app kind settings
 // @Summary Gets app kind settings
 // @Description Gets app kind settings
-// @Tags    app_settings
+// @Tags    App settings
 // @Produce json
 // @Id      getAppKindSettings
 // @Param   projectID path string true "project ID"
@@ -51,7 +51,7 @@ func (h *Handler) GetAppKindSettings(ctx *gin.Context) {
 // UpdateAppKindSettings Updates app kind settings
 // @Summary Updates app kind settings
 // @Description Updates app kind settings
-// @Tags    app_settings
+// @Tags    App settings
 // @Produce json
 // @Id      updateAppKindSettings
 // @Param   projectID path string true "project ID"

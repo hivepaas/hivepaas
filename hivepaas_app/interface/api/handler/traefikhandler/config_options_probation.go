@@ -14,7 +14,7 @@ import (
 // ConfirmConfigOptions Confirms a Traefik config options change
 // @Summary Confirms a Traefik config options change
 // @Description Vouches for a config options change that is on trial, which stops it being undone
-// @Tags    system_traefik
+// @Tags    Traefik
 // @Produce json
 // @Id      confirmTraefikConfigOptions
 // @Param   body body traefiksettingsdto.ConfirmConfigOptionsReq true "request data"
@@ -55,7 +55,7 @@ func (h *Handler) ConfirmConfigOptions(ctx *gin.Context) {
 // RevertConfigOptions Reverts a Traefik config options change
 // @Summary Reverts a Traefik config options change
 // @Description Undoes a config options change that is on trial, without waiting for its deadline
-// @Tags    system_traefik
+// @Tags    Traefik
 // @Produce json
 // @Id      revertTraefikConfigOptions
 // @Param   body body traefiksettingsdto.RevertConfigOptionsReq true "request data"

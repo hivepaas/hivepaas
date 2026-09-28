@@ -11,7 +11,7 @@ import (
 // ListSSHKey Lists ssh-key settings
 // @Summary Lists ssh-key settings
 // @Description Lists ssh-key settings
-// @Tags    project_env_settings
+// @Tags    Project env settings
 // @Produce json
 // @Id      listProjectEnvSSHKey
 // @Param   projectID path string true "project ID"
@@ -31,7 +31,7 @@ func (h *Handler) ListSSHKey(ctx *gin.Context) {
 // GetSSHKey Gets ssh-key setting details
 // @Summary Gets ssh-key setting details
 // @Description Gets ssh-key setting details
-// @Tags    project_env_settings
+// @Tags    Project env settings
 // @Produce json
 // @Id      getProjectEnvSSHKey
 // @Param   projectID path string true "project ID"
@@ -48,7 +48,7 @@ func (h *Handler) GetSSHKey(ctx *gin.Context) {
 // CreateSSHKey Creates a new ssh-key setting
 // @Summary Creates a new ssh-key setting
 // @Description Creates a new ssh-key setting
-// @Tags    project_env_settings
+// @Tags    Project env settings
 // @Produce json
 // @Id      createProjectEnvSSHKey
 // @Param   projectID path string true "project ID"
@@ -65,7 +65,7 @@ func (h *Handler) CreateSSHKey(ctx *gin.Context) {
 // UpdateSSHKey Updates ssh-key
 // @Summary Updates ssh-key
 // @Description Updates ssh-key
-// @Tags    project_env_settings
+// @Tags    Project env settings
 // @Produce json
 // @Id      updateProjectEnvSSHKey
 // @Param   projectID path string true "project ID"
@@ -83,7 +83,7 @@ func (h *Handler) UpdateSSHKey(ctx *gin.Context) {
 // UpdateSSHKeyStatus Updates ssh-key status
 // @Summary Updates ssh-key status
 // @Description Updates ssh-key status
-// @Tags    project_env_settings
+// @Tags    Project env settings
 // @Produce json
 // @Id      updateProjectEnvSSHKeyStatus
 // @Param   projectID path string true "project ID"
@@ -101,7 +101,7 @@ func (h *Handler) UpdateSSHKeyStatus(ctx *gin.Context) {
 // DeleteSSHKey Deletes ssh-key setting
 // @Summary Deletes ssh-key setting
 // @Description Deletes ssh-key setting
-// @Tags    project_env_settings
+// @Tags    Project env settings
 // @Produce json
 // @Id      deleteProjectEnvSSHKey
 // @Param   projectID path string true "project ID"

@@ -16,7 +16,7 @@ import (
 // GetRegistrySettings Gets registry settings
 // @Summary Gets registry settings
 // @Description Gets registry settings
-// @Tags    system_settings
+// @Tags    System settings
 // @Produce json
 // @Id      getSystemRegistrySettings
 // @Success 200 {object} registrydto.GetRegistrySettingsResp
@@ -53,7 +53,7 @@ func (h *Handler) GetRegistrySettings(ctx *gin.Context) {
 // UpdateRegistrySettings Updates registry settings
 // @Summary Updates registry settings
 // @Description Updates registry settings
-// @Tags    system_settings
+// @Tags    System settings
 // @Produce json
 // @Id      updateSystemRegistrySettings
 // @Param   body body registrydto.UpdateRegistrySettingsReq true "request data"
@@ -87,7 +87,7 @@ func (h *Handler) UpdateRegistrySettings(ctx *gin.Context) {
 // ProbeRegistryDomain Checks what answers at the registry's address
 // @Summary Checks what answers at the registry's address
 // @Description Reports whether a proxy answers instead of the registry, which is advisory
-// @Tags    system_settings
+// @Tags    System settings
 // @Produce json
 // @Id      probeSystemRegistryDomain
 // @Param   body body registrydto.ProbeDomainReq true "request data"
@@ -120,7 +120,7 @@ func (h *Handler) ProbeRegistryDomain(ctx *gin.Context) {
 // CheckRegistryPush Uploads a large blob to the registry and throws it away
 // @Summary Uploads a large blob to the registry and throws it away
 // @Description Reports whether anything in front of the registry limits request bodies
-// @Tags    system_settings
+// @Tags    System settings
 // @Produce json
 // @Id      checkSystemRegistryPush
 // @Param   body body registrydto.PushCheckReq true "request data"
@@ -153,7 +153,7 @@ func (h *Handler) CheckRegistryPush(ctx *gin.Context) {
 // RotateRegistryCredential Issues a new registry password
 // @Summary Issues a new registry password
 // @Description The previous password keeps working until the grace period ends
-// @Tags    system_settings
+// @Tags    System settings
 // @Produce json
 // @Id      rotateSystemRegistryCredential
 // @Success 200 {object} registrydto.RotateCredentialResp

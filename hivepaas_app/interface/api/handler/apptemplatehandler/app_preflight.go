@@ -13,7 +13,7 @@ import (
 // PreflightAppFromTemplate Reports what creating an app from a template would run into
 // @Summary Reports what creating an app from a template would run into
 // @Description Renders the request and reports which of its apps would be given a directory that already holds data.
-// @Tags    app_templates
+// @Tags    App templates
 // @Produce json
 // @Id      preflightAppFromTemplate
 // @Param   projectID path string true "project ID"

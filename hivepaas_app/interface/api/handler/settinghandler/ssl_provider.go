@@ -11,7 +11,7 @@ import (
 // ListSSLProvider Lists SSL providers
 // @Summary Lists SSL providers
 // @Description Lists SSL providers
-// @Tags    settings
+// @Tags    Global settings
 // @Produce json
 // @Id      listSettingSSLProvider
 // @Param   search query string false "`search=<target> (support *)`"
@@ -29,7 +29,7 @@ func (h *Handler) ListSSLProvider(ctx *gin.Context) {
 // GetSSLProvider Gets SSL provider details
 // @Summary Gets SSL provider details
 // @Description Gets SSL provider details
-// @Tags    settings
+// @Tags    Global settings
 // @Produce json
 // @Id      getSettingSSLProvider
 // @Param   itemID path string true "setting ID"
@@ -44,7 +44,7 @@ func (h *Handler) GetSSLProvider(ctx *gin.Context) {
 // CreateSSLProvider Creates a new SSL provider
 // @Summary Creates a new SSL provider
 // @Description Creates a new SSL provider
-// @Tags    settings
+// @Tags    Global settings
 // @Produce json
 // @Id      createSettingSSLProvider
 // @Param   body body sslproviderdto.CreateSSLProviderReq true "request data"
@@ -59,7 +59,7 @@ func (h *Handler) CreateSSLProvider(ctx *gin.Context) {
 // UpdateSSLProvider Updates SSL provider
 // @Summary Updates SSL provider
 // @Description Updates SSL provider
-// @Tags    settings
+// @Tags    Global settings
 // @Produce json
 // @Id      updateSettingSSLProvider
 // @Param   itemID path string true "setting ID"
@@ -75,7 +75,7 @@ func (h *Handler) UpdateSSLProvider(ctx *gin.Context) {
 // UpdateSSLProviderStatus Updates SSL provider status
 // @Summary Updates SSL provider status
 // @Description Updates SSL provider status
-// @Tags    settings
+// @Tags    Global settings
 // @Produce json
 // @Id      updateSettingSSLProviderStatus
 // @Param   itemID path string true "setting ID"
@@ -91,7 +91,7 @@ func (h *Handler) UpdateSSLProviderStatus(ctx *gin.Context) {
 // DeleteSSLProvider Deletes SSL provider
 // @Summary Deletes SSL provider
 // @Description Deletes SSL provider
-// @Tags    settings
+// @Tags    Global settings
 // @Produce json
 // @Id      deleteSettingSSLProvider
 // @Param   itemID path string true "setting ID"

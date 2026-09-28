@@ -11,7 +11,7 @@ import (
 // ListAuditLog Lists audit logs
 // @Summary Lists audit logs
 // @Description Lists audit logs
-// @Tags    system_audit_logs
+// @Tags    System audit logs
 // @Produce json
 // @Id      listAuditLog
 // @Param   search query string false "`search=<target> (support *)`"
@@ -29,7 +29,7 @@ func (h *Handler) ListAuditLog(ctx *gin.Context) {
 // GetAuditLog Gets audit log
 // @Summary Gets audit log
 // @Description Gets audit log
-// @Tags    system_audit_logs
+// @Tags    System audit logs
 // @Produce json
 // @Id      getAuditLog
 // @Param   itemID path string true "log ID"
@@ -44,7 +44,7 @@ func (h *Handler) GetAuditLog(ctx *gin.Context) {
 // ListAuditLogTypes Lists audit log types
 // @Summary Lists audit log types
 // @Description Lists audit log types
-// @Tags    system_audit_logs
+// @Tags    System audit logs
 // @Produce json
 // @Id      listAuditLogType
 // @Success 200 {object} auditlogdto.ListAuditLogTypeResp

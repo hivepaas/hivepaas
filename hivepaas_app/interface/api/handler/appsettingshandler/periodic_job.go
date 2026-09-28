@@ -11,7 +11,7 @@ import (
 // ListAppPeriodicJob Lists periodic jobs
 // @Summary Lists periodic jobs
 // @Description Lists periodic jobs
-// @Tags    app_settings
+// @Tags    App settings
 // @Produce json
 // @Id      listAppPeriodicJob
 // @Param   projectID path string true "project ID"
@@ -32,7 +32,7 @@ func (h *Handler) ListAppPeriodicJob(ctx *gin.Context) {
 // GetAppPeriodicJob Gets periodic job details
 // @Summary Gets periodic job details
 // @Description Gets periodic job details
-// @Tags    app_settings
+// @Tags    App settings
 // @Produce json
 // @Id      getAppPeriodicJob
 // @Param   projectID path string true "project ID"
@@ -50,7 +50,7 @@ func (h *Handler) GetAppPeriodicJob(ctx *gin.Context) {
 // CreateAppPeriodicJob Creates a new periodic job
 // @Summary Creates a new periodic job
 // @Description Creates a new periodic job
-// @Tags    app_settings
+// @Tags    App settings
 // @Produce json
 // @Id      createAppPeriodicJob
 // @Param   projectID path string true "project ID"
@@ -68,7 +68,7 @@ func (h *Handler) CreateAppPeriodicJob(ctx *gin.Context) {
 // UpdateAppPeriodicJob Updates a periodic job
 // @Summary Updates a periodic job
 // @Description Updates a periodic job
-// @Tags    app_settings
+// @Tags    App settings
 // @Produce json
 // @Id      updateAppPeriodicJob
 // @Param   projectID path string true "project ID"
@@ -87,7 +87,7 @@ func (h *Handler) UpdateAppPeriodicJob(ctx *gin.Context) {
 // UpdateAppPeriodicJobStatus Updates periodic job status
 // @Summary Updates periodic job status
 // @Description Updates periodic job status
-// @Tags    app_settings
+// @Tags    App settings
 // @Produce json
 // @Id      updateAppPeriodicJobStatus
 // @Param   projectID path string true "project ID"
@@ -106,7 +106,7 @@ func (h *Handler) UpdateAppPeriodicJobStatus(ctx *gin.Context) {
 // DeleteAppPeriodicJob Deletes periodic job
 // @Summary Deletes periodic job
 // @Description Deletes periodic job
-// @Tags    app_settings
+// @Tags    App settings
 // @Produce json
 // @Id      deleteAppPeriodicJob
 // @Param   projectID path string true "project ID"

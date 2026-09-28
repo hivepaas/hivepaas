@@ -2,21 +2,134 @@
   "openapi" : "3.0.1",
   "info" : {
     "contact" : {
-      "email" : "support@swagger.io",
-      "name" : "API Support",
-      "url" : "http://www.swagger.io/support"
+      "name" : "HivePaaS",
+      "url" : "https://github.com/hivepaas/hivepaas/issues"
     },
-    "description" : "HivePaaS App",
+    "description" : "The REST API of HivePaaS, the one its dashboard uses. Every path is under the install's\nAPI base path, `/_`: `GET https://<your HivePaaS domain>/_/projects` lists the projects.\n\n## Authentication\n\nA request authenticates one of two ways:\n\n- **An API key**, in the headers `HIVEPAAS-API-KEY-ID` and `HIVEPAAS-API-SECRET-KEY`.\nA user creates their keys in the dashboard, among their account's settings, or with\n`POST /users/current/settings/api-keys`. A key acts as its user, within the limits it\nwas created with. Scripts and integrations use this.\n- **A session's access token**, in the header `Authorization: Bearer <access token>`.\nA login such as `POST /auth/login-with-password` gives it, and it expires within\nminutes: `POST /sessions/refresh` renews it. The dashboard uses this.\n\nA request with neither is answered `401`. The logins, the sign-up and password reset\nsteps, the webhooks and the public images need neither.\n\n## Errors\n\nA request that fails is answered with a 4xx or 5xx status and an `hperrors.ErrorInfo`\nbody, whose `code` names the error, such as `ERR_NO_SESSION`.",
     "license" : {
       "name" : "Apache 2.0",
-      "url" : "http://www.apache.org/licenses/LICENSE-2.0.html"
+      "url" : "https://github.com/hivepaas/hivepaas/blob/main/LICENSE"
     },
-    "termsOfService" : "http://swagger.io/terms/",
-    "title" : "HivePaaS App",
+    "title" : "HivePaaS API",
     "version" : "0.1"
   },
   "servers" : [ {
     "url" : "/_"
+  } ],
+  "security" : [ {
+    "APIKeyID" : [ ],
+    "APISecretKey" : [ ]
+  }, {
+    "BearerToken" : [ ]
+  } ],
+  "tags" : [ {
+    "description" : "Logging in and out, and the session a login opens.",
+    "name" : "Sessions"
+  }, {
+    "description" : "The install's users: invitations, sign-up, profiles, passwords and two-factor authentication.",
+    "name" : "Users"
+  }, {
+    "description" : "The current user's API keys.",
+    "name" : "API keys"
+  }, {
+    "description" : "What needs attention across the install.",
+    "name" : "Home"
+  }, {
+    "description" : "Projects, which hold the apps.",
+    "name" : "Projects"
+  }, {
+    "description" : "A project's environments. Each holds its own apps and settings.",
+    "name" : "Project envs"
+  }, {
+    "description" : "The settings a project holds: credentials, registries, storages, backups and the rest.",
+    "name" : "Project settings"
+  }, {
+    "description" : "The settings a project env holds: credentials, registries, storages, backups and the rest.",
+    "name" : "Project env settings"
+  }, {
+    "description" : "The background tasks run in a project.",
+    "name" : "Project tasks"
+  }, {
+    "description" : "The background tasks run in a project env.",
+    "name" : "Project env tasks"
+  }, {
+    "description" : "What was done in a project, and by whom.",
+    "name" : "Project audit logs"
+  }, {
+    "description" : "What was done in a project env, and by whom.",
+    "name" : "Project env audit logs"
+  }, {
+    "description" : "Apps: creating, updating and deleting them, and their logs, terminal and container files.",
+    "name" : "Apps"
+  }, {
+    "description" : "The app store: its templates, and creating apps from them.",
+    "name" : "App templates"
+  }, {
+    "description" : "An app's settings: env vars, routing, storage, resources, config files, jobs and the rest.",
+    "name" : "App settings"
+  }, {
+    "description" : "Deploying, restarting, starting and stopping an app.",
+    "name" : "App actions"
+  }, {
+    "description" : "An app's deployments, their status and logs.",
+    "name" : "App deployments"
+  }, {
+    "description" : "An app's previews: copies of it deployed for a branch or a pull request.",
+    "name" : "App previews"
+  }, {
+    "description" : "The background tasks run for an app.",
+    "name" : "App tasks"
+  }, {
+    "description" : "Exporting the install, a project, an env or an app as a configuration spec, and importing one.",
+    "name" : "Configuration specs"
+  }, {
+    "description" : "The settings the whole install holds: credentials, registries, storages, backups and the rest.",
+    "name" : "Global settings"
+  }, {
+    "description" : "The Docker Swarm's nodes: joining them, and choosing its managers.",
+    "name" : "Cluster nodes"
+  }, {
+    "description" : "The Docker Swarm's networks.",
+    "name" : "Cluster networks"
+  }, {
+    "description" : "The Docker Swarm's volumes.",
+    "name" : "Cluster volumes"
+  }, {
+    "description" : "The cache the image builds keep.",
+    "name" : "Image builds"
+  }, {
+    "description" : "The Get started card, and the database's status.",
+    "name" : "System"
+  }, {
+    "description" : "The install's own settings: backups, cleanup, logging, the MCP server and the rest.",
+    "name" : "System settings"
+  }, {
+    "description" : "HivePaaS itself: its version and updates, and its routing, security and service settings.",
+    "name" : "HivePaaS"
+  }, {
+    "description" : "The Traefik proxy in front of the apps: its config and service settings.",
+    "name" : "Traefik"
+  }, {
+    "description" : "The background tasks run for the install.",
+    "name" : "System tasks"
+  }, {
+    "description" : "What was done across the install, and by whom.",
+    "name" : "System audit logs"
+  }, {
+    "description" : "Errors HivePaaS ran into in the background.",
+    "name" : "System errors"
+  }, {
+    "description" : "Uploading files, and downloading them.",
+    "name" : "Files"
+  }, {
+    "description" : "The photos of projects and apps.",
+    "name" : "Images"
+  }, {
+    "description" : "The Git webhooks that deploy apps when their repository changes.",
+    "name" : "Webhooks"
+  }, {
+    "description" : "Sending feedback to the HivePaaS team.",
+    "name" : "Support"
   } ],
   "paths" : {
     "/app-templates" : {
@@ -92,7 +205,7 @@
           }
         },
         "summary" : "Lists app templates",
-        "tags" : [ "app_templates" ]
+        "tags" : [ "App templates" ]
       }
     },
     "/app-templates/catalog" : {
@@ -132,7 +245,7 @@
           }
         },
         "summary" : "Gets the app template catalog",
-        "tags" : [ "app_templates" ]
+        "tags" : [ "App templates" ]
       }
     },
     "/app-templates/icons/{file}" : {
@@ -184,8 +297,9 @@
             "description" : "Not Found"
           }
         },
+        "security" : [ ],
         "summary" : "Gets an app template icon",
-        "tags" : [ "app_templates" ]
+        "tags" : [ "App templates" ]
       }
     },
     "/app-templates/{templateName}" : {
@@ -244,7 +358,7 @@
           }
         },
         "summary" : "Gets an app template",
-        "tags" : [ "app_templates" ]
+        "tags" : [ "App templates" ]
       }
     },
     "/app-templates/{templateName}/image-tags" : {
@@ -317,7 +431,7 @@
           }
         },
         "summary" : "Lists the image tags a template version could use",
-        "tags" : [ "app_templates" ]
+        "tags" : [ "App templates" ]
       }
     },
     "/auth/login-options" : {
@@ -356,8 +470,9 @@
             "description" : "Internal Server Error"
           }
         },
+        "security" : [ ],
         "summary" : "Gets login options",
-        "tags" : [ "sessions" ]
+        "tags" : [ "Sessions" ]
       }
     },
     "/auth/login-password-forgot" : {
@@ -407,8 +522,9 @@
             "description" : "Internal Server Error"
           }
         },
+        "security" : [ ],
         "summary" : "Ask the system to send a password reset link via email",
-        "tags" : [ "sessions" ],
+        "tags" : [ "Sessions" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -459,8 +575,9 @@
             "description" : "Internal Server Error"
           }
         },
+        "security" : [ ],
         "summary" : "Login to system with API key",
-        "tags" : [ "sessions" ],
+        "tags" : [ "Sessions" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -511,8 +628,9 @@
             "description" : "Internal Server Error"
           }
         },
+        "security" : [ ],
         "summary" : "Login to system with passcode after using password",
-        "tags" : [ "sessions" ],
+        "tags" : [ "Sessions" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -563,8 +681,9 @@
             "description" : "Internal Server Error"
           }
         },
+        "security" : [ ],
         "summary" : "Login to system with username/password",
-        "tags" : [ "sessions" ],
+        "tags" : [ "Sessions" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -607,8 +726,9 @@
             "description" : "Internal Server Error"
           }
         },
+        "security" : [ ],
         "summary" : "Begins SSO flow",
-        "tags" : [ "users" ]
+        "tags" : [ "Sessions" ]
       },
       "post" : {
         "description" : "Begins SSO flow",
@@ -648,8 +768,9 @@
             "description" : "Internal Server Error"
           }
         },
+        "security" : [ ],
         "summary" : "Begins SSO flow",
-        "tags" : [ "users" ]
+        "tags" : [ "Sessions" ]
       }
     },
     "/auth/sso/{provider}" : {
@@ -682,8 +803,9 @@
             "description" : "Internal Server Error"
           }
         },
+        "security" : [ ],
         "summary" : "Starts OAuth SSO flow",
-        "tags" : [ "sessions_auth" ]
+        "tags" : [ "Sessions" ]
       }
     },
     "/cluster/build/cache-clear" : {
@@ -734,7 +856,7 @@
           }
         },
         "summary" : "Clears build cache",
-        "tags" : [ "cluster_build" ],
+        "tags" : [ "Image builds" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -804,7 +926,7 @@
           }
         },
         "summary" : "Lists cluster network settings",
-        "tags" : [ "cluster_networks" ]
+        "tags" : [ "Cluster networks" ]
       },
       "post" : {
         "description" : "Creates a new network setting",
@@ -853,7 +975,7 @@
           }
         },
         "summary" : "Creates a new network setting",
-        "tags" : [ "cluster_networks" ],
+        "tags" : [ "Cluster networks" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -905,7 +1027,7 @@
           }
         },
         "summary" : "Sync networks from Docker",
-        "tags" : [ "cluster_networks" ],
+        "tags" : [ "Cluster networks" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -955,7 +1077,7 @@
           }
         },
         "summary" : "Deletes network setting",
-        "tags" : [ "cluster_networks" ]
+        "tags" : [ "Cluster networks" ]
       },
       "get" : {
         "description" : "Gets network setting details",
@@ -1002,7 +1124,7 @@
           }
         },
         "summary" : "Gets network setting details",
-        "tags" : [ "cluster_networks" ]
+        "tags" : [ "Cluster networks" ]
       },
       "put" : {
         "description" : "Updates cluster network",
@@ -1060,7 +1182,7 @@
           }
         },
         "summary" : "Updates cluster network",
-        "tags" : [ "cluster_networks" ],
+        "tags" : [ "Cluster networks" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -1121,7 +1243,7 @@
           }
         },
         "summary" : "Updates cluster network status",
-        "tags" : [ "cluster_networks" ],
+        "tags" : [ "Cluster networks" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -1191,7 +1313,7 @@
           }
         },
         "summary" : "Lists cluster node settings",
-        "tags" : [ "cluster_nodes" ]
+        "tags" : [ "Cluster nodes" ]
       }
     },
     "/cluster/nodes/join" : {
@@ -1242,7 +1364,7 @@
           }
         },
         "summary" : "Joins a node to the swarm",
-        "tags" : [ "cluster_nodes" ],
+        "tags" : [ "Cluster nodes" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -1291,7 +1413,7 @@
           }
         },
         "summary" : "Gets node join command",
-        "tags" : [ "cluster_nodes" ]
+        "tags" : [ "Cluster nodes" ]
       }
     },
     "/cluster/nodes/set-managers" : {
@@ -1342,7 +1464,7 @@
           }
         },
         "summary" : "Sets manager nodes",
-        "tags" : [ "cluster_nodes" ],
+        "tags" : [ "Cluster nodes" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -1392,7 +1514,7 @@
           }
         },
         "summary" : "Deletes node setting",
-        "tags" : [ "cluster_nodes" ]
+        "tags" : [ "Cluster nodes" ]
       },
       "get" : {
         "description" : "Gets node setting details",
@@ -1439,7 +1561,7 @@
           }
         },
         "summary" : "Gets node setting details",
-        "tags" : [ "cluster_nodes" ]
+        "tags" : [ "Cluster nodes" ]
       },
       "put" : {
         "description" : "Updates cluster node",
@@ -1497,7 +1619,7 @@
           }
         },
         "summary" : "Updates cluster node",
-        "tags" : [ "cluster_nodes" ],
+        "tags" : [ "Cluster nodes" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -1567,7 +1689,7 @@
           }
         },
         "summary" : "Lists cluster volume settings",
-        "tags" : [ "cluster_volumes" ]
+        "tags" : [ "Cluster volumes" ]
       },
       "post" : {
         "description" : "Creates a new volume setting",
@@ -1616,7 +1738,7 @@
           }
         },
         "summary" : "Creates a new volume setting",
-        "tags" : [ "cluster_volumes" ],
+        "tags" : [ "Cluster volumes" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -1668,7 +1790,7 @@
           }
         },
         "summary" : "Sync volumes from Docker",
-        "tags" : [ "cluster_volumes" ],
+        "tags" : [ "Cluster volumes" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -1718,7 +1840,7 @@
           }
         },
         "summary" : "Deletes volume setting",
-        "tags" : [ "cluster_volumes" ]
+        "tags" : [ "Cluster volumes" ]
       },
       "get" : {
         "description" : "Gets volume setting details",
@@ -1765,7 +1887,7 @@
           }
         },
         "summary" : "Gets volume setting details",
-        "tags" : [ "cluster_volumes" ]
+        "tags" : [ "Cluster volumes" ]
       },
       "put" : {
         "description" : "Updates cluster volume",
@@ -1823,7 +1945,7 @@
           }
         },
         "summary" : "Updates cluster volume",
-        "tags" : [ "cluster_volumes" ],
+        "tags" : [ "Cluster volumes" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -1884,7 +2006,7 @@
           }
         },
         "summary" : "Updates cluster volume status",
-        "tags" : [ "cluster_volumes" ],
+        "tags" : [ "Cluster volumes" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -1935,7 +2057,7 @@
           }
         },
         "summary" : "Uploads one or multiple files to server",
-        "tags" : [ "files" ]
+        "tags" : [ "Files" ]
       }
     },
     "/files/{fileID}/download" : {
@@ -1978,7 +2100,7 @@
           }
         },
         "summary" : "Downloads a file",
-        "tags" : [ "files" ]
+        "tags" : [ "Files" ]
       }
     },
     "/home/attention" : {
@@ -2018,7 +2140,7 @@
           }
         },
         "summary" : "Gets what needs attention",
-        "tags" : [ "home" ]
+        "tags" : [ "Home" ]
       }
     },
     "/images/{imageID}" : {
@@ -2060,8 +2182,9 @@
             "description" : "Internal Server Error"
           }
         },
+        "security" : [ ],
         "summary" : "Gets an image file",
-        "tags" : [ "images" ]
+        "tags" : [ "Images" ]
       }
     },
     "/projects" : {
@@ -2137,7 +2260,7 @@
           }
         },
         "summary" : "Lists projects",
-        "tags" : [ "projects" ]
+        "tags" : [ "Projects" ]
       },
       "post" : {
         "description" : "Creates a new project",
@@ -2186,7 +2309,7 @@
           }
         },
         "summary" : "Creates a new project",
-        "tags" : [ "projects" ],
+        "tags" : [ "Projects" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -2236,7 +2359,7 @@
           }
         },
         "summary" : "Deletes a project",
-        "tags" : [ "projects" ]
+        "tags" : [ "Projects" ]
       },
       "get" : {
         "description" : "Gets project details",
@@ -2283,7 +2406,7 @@
           }
         },
         "summary" : "Gets project details",
-        "tags" : [ "projects" ]
+        "tags" : [ "Projects" ]
       },
       "put" : {
         "description" : "Updates a project",
@@ -2341,7 +2464,7 @@
           }
         },
         "summary" : "Updates a project",
-        "tags" : [ "projects" ],
+        "tags" : [ "Projects" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -2419,7 +2542,7 @@
           }
         },
         "summary" : "Lists access-token settings",
-        "tags" : [ "project_settings" ]
+        "tags" : [ "Project settings" ]
       },
       "post" : {
         "description" : "Creates a new access-token setting",
@@ -2477,7 +2600,7 @@
           }
         },
         "summary" : "Creates a new access-token setting",
-        "tags" : [ "project_settings" ],
+        "tags" : [ "Project settings" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -2535,7 +2658,7 @@
           }
         },
         "summary" : "Deletes access-token setting",
-        "tags" : [ "project_settings" ]
+        "tags" : [ "Project settings" ]
       },
       "get" : {
         "description" : "Gets access-token setting details",
@@ -2590,7 +2713,7 @@
           }
         },
         "summary" : "Gets access-token setting details",
-        "tags" : [ "project_settings" ]
+        "tags" : [ "Project settings" ]
       },
       "put" : {
         "description" : "Updates access-token",
@@ -2656,7 +2779,7 @@
           }
         },
         "summary" : "Updates access-token",
-        "tags" : [ "project_settings" ],
+        "tags" : [ "Project settings" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -2725,7 +2848,7 @@
           }
         },
         "summary" : "Updates access-token status",
-        "tags" : [ "project_settings" ],
+        "tags" : [ "Project settings" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -2803,7 +2926,7 @@
           }
         },
         "summary" : "Lists ACME DNS providers",
-        "tags" : [ "project_settings" ]
+        "tags" : [ "Project settings" ]
       },
       "post" : {
         "description" : "Creates a new ACME DNS provider",
@@ -2861,7 +2984,7 @@
           }
         },
         "summary" : "Creates a new ACME DNS provider",
-        "tags" : [ "project_settings" ],
+        "tags" : [ "Project settings" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -2919,7 +3042,7 @@
           }
         },
         "summary" : "Deletes an ACME DNS provider",
-        "tags" : [ "project_settings" ]
+        "tags" : [ "Project settings" ]
       },
       "get" : {
         "description" : "Gets ACME DNS provider details",
@@ -2974,7 +3097,7 @@
           }
         },
         "summary" : "Gets ACME DNS provider details",
-        "tags" : [ "project_settings" ]
+        "tags" : [ "Project settings" ]
       },
       "put" : {
         "description" : "Updates an ACME DNS provider",
@@ -3040,7 +3163,7 @@
           }
         },
         "summary" : "Updates an ACME DNS provider",
-        "tags" : [ "project_settings" ],
+        "tags" : [ "Project settings" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -3109,7 +3232,7 @@
           }
         },
         "summary" : "Updates ACME DNS provider status",
-        "tags" : [ "project_settings" ],
+        "tags" : [ "Project settings" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -3201,7 +3324,7 @@
           }
         },
         "summary" : "Lists apps of a project",
-        "tags" : [ "apps" ]
+        "tags" : [ "Apps" ]
       },
       "post" : {
         "description" : "Creates a new app",
@@ -3259,7 +3382,7 @@
           }
         },
         "summary" : "Creates a new app",
-        "tags" : [ "apps" ],
+        "tags" : [ "Apps" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -3337,7 +3460,7 @@
           }
         },
         "summary" : "Lists audit logs",
-        "tags" : [ "project_audit_logs" ]
+        "tags" : [ "Project audit logs" ]
       }
     },
     "/projects/{projectID}/audit-logs/types" : {
@@ -3386,7 +3509,7 @@
           }
         },
         "summary" : "Lists audit log types",
-        "tags" : [ "project_audit_logs" ]
+        "tags" : [ "Project audit logs" ]
       }
     },
     "/projects/{projectID}/audit-logs/{itemID}" : {
@@ -3443,7 +3566,7 @@
           }
         },
         "summary" : "Gets audit log",
-        "tags" : [ "project_audit_logs" ]
+        "tags" : [ "Project audit logs" ]
       }
     },
     "/projects/{projectID}/backup-repos" : {
@@ -3520,7 +3643,7 @@
           }
         },
         "summary" : "Lists backup repo settings",
-        "tags" : [ "project_settings" ]
+        "tags" : [ "Project settings" ]
       },
       "post" : {
         "description" : "Creates a new backup repo setting",
@@ -3578,7 +3701,7 @@
           }
         },
         "summary" : "Creates a new backup repo setting",
-        "tags" : [ "project_settings" ],
+        "tags" : [ "Project settings" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -3636,7 +3759,7 @@
           }
         },
         "summary" : "Deletes backup repo setting",
-        "tags" : [ "project_settings" ]
+        "tags" : [ "Project settings" ]
       },
       "get" : {
         "description" : "Gets backup repo setting details",
@@ -3691,7 +3814,7 @@
           }
         },
         "summary" : "Gets backup repo setting details",
-        "tags" : [ "project_settings" ]
+        "tags" : [ "Project settings" ]
       },
       "put" : {
         "description" : "Updates backup repo",
@@ -3757,7 +3880,7 @@
           }
         },
         "summary" : "Updates backup repo",
-        "tags" : [ "project_settings" ],
+        "tags" : [ "Project settings" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -3815,7 +3938,7 @@
           }
         },
         "summary" : "Cleans up a backup repository",
-        "tags" : [ "project_settings" ]
+        "tags" : [ "Project settings" ]
       }
     },
     "/projects/{projectID}/backup-repos/{itemID}/password" : {
@@ -3883,7 +4006,7 @@
           }
         },
         "summary" : "Changes a backup repository's password",
-        "tags" : [ "project_settings" ],
+        "tags" : [ "Project settings" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -3952,7 +4075,7 @@
           }
         },
         "summary" : "Updates backup repo status",
-        "tags" : [ "project_settings" ],
+        "tags" : [ "Project settings" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -4010,7 +4133,7 @@
           }
         },
         "summary" : "Syncs a backup repository back into its setting",
-        "tags" : [ "project_settings" ]
+        "tags" : [ "Project settings" ]
       }
     },
     "/projects/{projectID}/backup-snapshots" : {
@@ -4130,7 +4253,7 @@
           }
         },
         "summary" : "Lists the backup snapshots the scope sees",
-        "tags" : [ "project_settings" ]
+        "tags" : [ "Project settings" ]
       }
     },
     "/projects/{projectID}/backup-snapshots/{itemID}" : {
@@ -4197,7 +4320,7 @@
           }
         },
         "summary" : "Deletes a backup snapshot",
-        "tags" : [ "project_settings" ]
+        "tags" : [ "Project settings" ]
       },
       "get" : {
         "description" : "Gets a backup snapshot the scope sees",
@@ -4262,7 +4385,7 @@
           }
         },
         "summary" : "Gets a backup snapshot",
-        "tags" : [ "project_settings" ]
+        "tags" : [ "Project settings" ]
       }
     },
     "/projects/{projectID}/basic-auth" : {
@@ -4339,7 +4462,7 @@
           }
         },
         "summary" : "Lists basic auth settings",
-        "tags" : [ "project_settings" ]
+        "tags" : [ "Project settings" ]
       },
       "post" : {
         "description" : "Creates a new basic auth setting",
@@ -4397,7 +4520,7 @@
           }
         },
         "summary" : "Creates a new basic auth setting",
-        "tags" : [ "project_settings" ],
+        "tags" : [ "Project settings" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -4455,7 +4578,7 @@
           }
         },
         "summary" : "Deletes basic auth setting",
-        "tags" : [ "project_settings" ]
+        "tags" : [ "Project settings" ]
       },
       "get" : {
         "description" : "Gets basic auth setting details",
@@ -4510,7 +4633,7 @@
           }
         },
         "summary" : "Gets basic auth setting details",
-        "tags" : [ "project_settings" ]
+        "tags" : [ "Project settings" ]
       },
       "put" : {
         "description" : "Updates basic auth",
@@ -4576,7 +4699,7 @@
           }
         },
         "summary" : "Updates basic auth",
-        "tags" : [ "project_settings" ],
+        "tags" : [ "Project settings" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -4645,7 +4768,7 @@
           }
         },
         "summary" : "Updates basic auth status",
-        "tags" : [ "project_settings" ],
+        "tags" : [ "Project settings" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -4723,7 +4846,7 @@
           }
         },
         "summary" : "Lists cloud storages",
-        "tags" : [ "project_settings" ]
+        "tags" : [ "Project settings" ]
       },
       "post" : {
         "description" : "Creates a new cloud storage",
@@ -4781,7 +4904,7 @@
           }
         },
         "summary" : "Creates a new cloud storage",
-        "tags" : [ "project_settings" ],
+        "tags" : [ "Project settings" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -4839,7 +4962,7 @@
           }
         },
         "summary" : "Deletes a cloud storage",
-        "tags" : [ "project_settings" ]
+        "tags" : [ "Project settings" ]
       },
       "get" : {
         "description" : "Gets cloud storage details",
@@ -4894,7 +5017,7 @@
           }
         },
         "summary" : "Gets cloud storage details",
-        "tags" : [ "project_settings" ]
+        "tags" : [ "Project settings" ]
       },
       "put" : {
         "description" : "Updates cloud storage",
@@ -4960,7 +5083,7 @@
           }
         },
         "summary" : "Updates cloud storage",
-        "tags" : [ "project_settings" ],
+        "tags" : [ "Project settings" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -5029,7 +5152,7 @@
           }
         },
         "summary" : "Updates cloud storage status",
-        "tags" : [ "project_settings" ],
+        "tags" : [ "Project settings" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -5107,7 +5230,7 @@
           }
         },
         "summary" : "Lists cluster-network settings",
-        "tags" : [ "project_settings" ]
+        "tags" : [ "Project settings" ]
       },
       "post" : {
         "description" : "Creates a new cluster-network setting",
@@ -5165,7 +5288,7 @@
           }
         },
         "summary" : "Creates a new cluster-network setting",
-        "tags" : [ "project_settings" ],
+        "tags" : [ "Project settings" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -5223,7 +5346,7 @@
           }
         },
         "summary" : "Deletes cluster-network setting",
-        "tags" : [ "project_settings" ]
+        "tags" : [ "Project settings" ]
       },
       "get" : {
         "description" : "Gets cluster-network setting details",
@@ -5278,7 +5401,7 @@
           }
         },
         "summary" : "Gets cluster-network setting details",
-        "tags" : [ "project_settings" ]
+        "tags" : [ "Project settings" ]
       },
       "put" : {
         "description" : "Updates cluster-network",
@@ -5344,7 +5467,7 @@
           }
         },
         "summary" : "Updates cluster-network",
-        "tags" : [ "project_settings" ],
+        "tags" : [ "Project settings" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -5413,7 +5536,7 @@
           }
         },
         "summary" : "Updates cluster-network status",
-        "tags" : [ "project_settings" ],
+        "tags" : [ "Project settings" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -5491,7 +5614,7 @@
           }
         },
         "summary" : "Lists cluster-volume settings",
-        "tags" : [ "project_settings" ]
+        "tags" : [ "Project settings" ]
       },
       "post" : {
         "description" : "Creates a new cluster-volume setting",
@@ -5549,7 +5672,7 @@
           }
         },
         "summary" : "Creates a new cluster-volume setting",
-        "tags" : [ "project_settings" ],
+        "tags" : [ "Project settings" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -5607,7 +5730,7 @@
           }
         },
         "summary" : "Deletes cluster-volume setting",
-        "tags" : [ "project_settings" ]
+        "tags" : [ "Project settings" ]
       },
       "get" : {
         "description" : "Gets cluster-volume setting details",
@@ -5662,7 +5785,7 @@
           }
         },
         "summary" : "Gets cluster-volume setting details",
-        "tags" : [ "project_settings" ]
+        "tags" : [ "Project settings" ]
       },
       "put" : {
         "description" : "Updates cluster-volume",
@@ -5728,7 +5851,7 @@
           }
         },
         "summary" : "Updates cluster-volume",
-        "tags" : [ "project_settings" ],
+        "tags" : [ "Project settings" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -5797,7 +5920,7 @@
           }
         },
         "summary" : "Updates cluster-volume status",
-        "tags" : [ "project_settings" ],
+        "tags" : [ "Project settings" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -5875,7 +5998,7 @@
           }
         },
         "summary" : "Lists command pipe settings",
-        "tags" : [ "project_settings" ]
+        "tags" : [ "Project settings" ]
       },
       "post" : {
         "description" : "Creates a new command pipe setting",
@@ -5933,7 +6056,7 @@
           }
         },
         "summary" : "Creates a new command pipe setting",
-        "tags" : [ "project_settings" ],
+        "tags" : [ "Project settings" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -5994,7 +6117,7 @@
           }
         },
         "summary" : "Creates a command pipe setting from template",
-        "tags" : [ "project_settings" ],
+        "tags" : [ "Project settings" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -6052,7 +6175,7 @@
           }
         },
         "summary" : "Deletes command pipe setting",
-        "tags" : [ "project_settings" ]
+        "tags" : [ "Project settings" ]
       },
       "get" : {
         "description" : "Gets command pipe setting details",
@@ -6107,7 +6230,7 @@
           }
         },
         "summary" : "Gets command pipe setting details",
-        "tags" : [ "project_settings" ]
+        "tags" : [ "Project settings" ]
       },
       "put" : {
         "description" : "Updates command pipe",
@@ -6173,7 +6296,7 @@
           }
         },
         "summary" : "Updates command pipe",
-        "tags" : [ "project_settings" ],
+        "tags" : [ "Project settings" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -6242,7 +6365,7 @@
           }
         },
         "summary" : "Updates command pipe status",
-        "tags" : [ "project_settings" ],
+        "tags" : [ "Project settings" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -6320,7 +6443,7 @@
           }
         },
         "summary" : "Lists command template settings",
-        "tags" : [ "project_settings" ]
+        "tags" : [ "Project settings" ]
       },
       "post" : {
         "description" : "Creates a new command template setting",
@@ -6378,7 +6501,7 @@
           }
         },
         "summary" : "Creates a new command template setting",
-        "tags" : [ "project_settings" ],
+        "tags" : [ "Project settings" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -6439,7 +6562,7 @@
           }
         },
         "summary" : "Creates a new command template setting from a template",
-        "tags" : [ "project_settings" ],
+        "tags" : [ "Project settings" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -6497,7 +6620,7 @@
           }
         },
         "summary" : "Deletes command template setting",
-        "tags" : [ "project_settings" ]
+        "tags" : [ "Project settings" ]
       },
       "get" : {
         "description" : "Gets command template setting details",
@@ -6552,7 +6675,7 @@
           }
         },
         "summary" : "Gets command template setting details",
-        "tags" : [ "project_settings" ]
+        "tags" : [ "Project settings" ]
       },
       "put" : {
         "description" : "Updates command template",
@@ -6618,7 +6741,7 @@
           }
         },
         "summary" : "Updates command template",
-        "tags" : [ "project_settings" ],
+        "tags" : [ "Project settings" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -6687,7 +6810,7 @@
           }
         },
         "summary" : "Updates command template status",
-        "tags" : [ "project_settings" ],
+        "tags" : [ "Project settings" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -6744,7 +6867,7 @@
           }
         },
         "summary" : "Lists project config files",
-        "tags" : [ "project_settings" ]
+        "tags" : [ "Project settings" ]
       },
       "post" : {
         "description" : "Creates a project config file",
@@ -6802,7 +6925,7 @@
           }
         },
         "summary" : "Creates a project config file",
-        "tags" : [ "project_settings" ],
+        "tags" : [ "Project settings" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -6860,7 +6983,7 @@
           }
         },
         "summary" : "Deletes a project config file",
-        "tags" : [ "project_settings" ]
+        "tags" : [ "Project settings" ]
       },
       "get" : {
         "description" : "Gets config file details",
@@ -6915,7 +7038,7 @@
           }
         },
         "summary" : "Gets config file details",
-        "tags" : [ "project_settings" ]
+        "tags" : [ "Project settings" ]
       },
       "put" : {
         "description" : "Updates a project config file",
@@ -6981,7 +7104,7 @@
           }
         },
         "summary" : "Updates a project config file",
-        "tags" : [ "project_settings" ],
+        "tags" : [ "Project settings" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -7050,7 +7173,7 @@
           }
         },
         "summary" : "Updates project config file status",
-        "tags" : [ "project_settings" ],
+        "tags" : [ "Project settings" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -7100,7 +7223,7 @@
           }
         },
         "summary" : "Deletes domain settings setting",
-        "tags" : [ "project_settings" ]
+        "tags" : [ "Project settings" ]
       },
       "get" : {
         "description" : "Gets domain settings details",
@@ -7147,7 +7270,7 @@
           }
         },
         "summary" : "Gets domain settings details",
-        "tags" : [ "project_settings" ]
+        "tags" : [ "Project settings" ]
       },
       "put" : {
         "description" : "Updates domain settings",
@@ -7205,7 +7328,7 @@
           }
         },
         "summary" : "Updates domain settings",
-        "tags" : [ "project_settings" ],
+        "tags" : [ "Project settings" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -7266,7 +7389,7 @@
           }
         },
         "summary" : "Updates domain settings status",
-        "tags" : [ "project_settings" ],
+        "tags" : [ "Project settings" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -7344,7 +7467,7 @@
           }
         },
         "summary" : "Lists email settings",
-        "tags" : [ "project_settings" ]
+        "tags" : [ "Project settings" ]
       },
       "post" : {
         "description" : "Creates a new email setting",
@@ -7402,7 +7525,7 @@
           }
         },
         "summary" : "Creates a new email setting",
-        "tags" : [ "project_settings" ],
+        "tags" : [ "Project settings" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -7460,7 +7583,7 @@
           }
         },
         "summary" : "Deletes email setting",
-        "tags" : [ "project_settings" ]
+        "tags" : [ "Project settings" ]
       },
       "get" : {
         "description" : "Gets email setting details",
@@ -7515,7 +7638,7 @@
           }
         },
         "summary" : "Gets email setting details",
-        "tags" : [ "project_settings" ]
+        "tags" : [ "Project settings" ]
       },
       "put" : {
         "description" : "Updates email setting",
@@ -7581,7 +7704,7 @@
           }
         },
         "summary" : "Updates email setting",
-        "tags" : [ "project_settings" ],
+        "tags" : [ "Project settings" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -7650,7 +7773,7 @@
           }
         },
         "summary" : "Updates Email status setting",
-        "tags" : [ "project_settings" ],
+        "tags" : [ "Project settings" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -7700,7 +7823,7 @@
           }
         },
         "summary" : "Gets project env vars",
-        "tags" : [ "project_settings" ]
+        "tags" : [ "Project settings" ]
       },
       "put" : {
         "description" : "Updates project env vars",
@@ -7758,7 +7881,7 @@
           }
         },
         "summary" : "Updates project env vars",
-        "tags" : [ "project_settings" ],
+        "tags" : [ "Project settings" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -7819,7 +7942,7 @@
           }
         },
         "summary" : "Computes project env vars",
-        "tags" : [ "project_settings" ],
+        "tags" : [ "Project settings" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -7897,7 +8020,7 @@
           }
         },
         "summary" : "Lists git credentials settings",
-        "tags" : [ "project_settings" ]
+        "tags" : [ "Project settings" ]
       }
     },
     "/projects/{projectID}/git-credentials/{itemID}/repositories" : {
@@ -7982,7 +8105,7 @@
           }
         },
         "summary" : "Lists git repositories",
-        "tags" : [ "project_settings" ]
+        "tags" : [ "Project settings" ]
       }
     },
     "/projects/{projectID}/git-credentials/{itemID}/repository/branches" : {
@@ -8083,7 +8206,7 @@
           }
         },
         "summary" : "Lists branches of a git repository",
-        "tags" : [ "project_settings" ]
+        "tags" : [ "Project settings" ]
       }
     },
     "/projects/{projectID}/git-credentials/{itemID}/repository/pull-requests" : {
@@ -8184,7 +8307,7 @@
           }
         },
         "summary" : "Lists pull requests of a git repository",
-        "tags" : [ "project_settings" ]
+        "tags" : [ "Project settings" ]
       }
     },
     "/projects/{projectID}/github-apps" : {
@@ -8261,7 +8384,7 @@
           }
         },
         "summary" : "Lists github-app settings",
-        "tags" : [ "project_settings" ]
+        "tags" : [ "Project settings" ]
       },
       "post" : {
         "description" : "Creates a new github-app setting",
@@ -8319,7 +8442,7 @@
           }
         },
         "summary" : "Creates a new github-app setting",
-        "tags" : [ "project_settings" ],
+        "tags" : [ "Project settings" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -8371,7 +8494,7 @@
           }
         },
         "summary" : "Handles progress of github-app manifest flow",
-        "tags" : [ "project_settings" ]
+        "tags" : [ "Project settings" ]
       }
     },
     "/projects/{projectID}/github-apps/manifest-flow/begin" : {
@@ -8431,7 +8554,7 @@
           }
         },
         "summary" : "Begins a github-app manifest flow",
-        "tags" : [ "project_settings" ],
+        "tags" : [ "Project settings" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -8489,7 +8612,7 @@
           }
         },
         "summary" : "Deletes github-app setting",
-        "tags" : [ "project_settings" ]
+        "tags" : [ "Project settings" ]
       },
       "get" : {
         "description" : "Gets github-app setting details",
@@ -8544,7 +8667,7 @@
           }
         },
         "summary" : "Gets github-app setting details",
-        "tags" : [ "project_settings" ]
+        "tags" : [ "Project settings" ]
       },
       "put" : {
         "description" : "Updates github-app",
@@ -8610,7 +8733,7 @@
           }
         },
         "summary" : "Updates github-app",
-        "tags" : [ "project_settings" ],
+        "tags" : [ "Project settings" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -8679,7 +8802,7 @@
           }
         },
         "summary" : "Begins reprovisioning a github-app through manifest flow",
-        "tags" : [ "project_settings" ],
+        "tags" : [ "Project settings" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -8731,7 +8854,7 @@
           }
         },
         "summary" : "Begins a github-app manifest flow creation",
-        "tags" : [ "project_settings" ]
+        "tags" : [ "Project settings" ]
       }
     },
     "/projects/{projectID}/github-apps/{itemID}/status" : {
@@ -8799,7 +8922,7 @@
           }
         },
         "summary" : "Updates github-app status",
-        "tags" : [ "project_settings" ],
+        "tags" : [ "Project settings" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -8877,7 +9000,7 @@
           }
         },
         "summary" : "Lists IM services",
-        "tags" : [ "project_settings" ]
+        "tags" : [ "Project settings" ]
       },
       "post" : {
         "description" : "Creates a new IM service",
@@ -8935,7 +9058,7 @@
           }
         },
         "summary" : "Creates a new IM service",
-        "tags" : [ "project_settings" ],
+        "tags" : [ "Project settings" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -8993,7 +9116,7 @@
           }
         },
         "summary" : "Deletes IM service",
-        "tags" : [ "project_settings" ]
+        "tags" : [ "Project settings" ]
       },
       "get" : {
         "description" : "Gets IM service details",
@@ -9048,7 +9171,7 @@
           }
         },
         "summary" : "Gets IM service details",
-        "tags" : [ "project_settings" ]
+        "tags" : [ "Project settings" ]
       },
       "put" : {
         "description" : "Updates IM service",
@@ -9114,7 +9237,7 @@
           }
         },
         "summary" : "Updates IM service",
-        "tags" : [ "project_settings" ],
+        "tags" : [ "Project settings" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -9183,7 +9306,7 @@
           }
         },
         "summary" : "Updates IM service status",
-        "tags" : [ "project_settings" ],
+        "tags" : [ "Project settings" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -9233,7 +9356,7 @@
           }
         },
         "summary" : "Deletes image build settings",
-        "tags" : [ "project_settings" ]
+        "tags" : [ "Project settings" ]
       },
       "get" : {
         "description" : "Gets image build setting details",
@@ -9280,7 +9403,7 @@
           }
         },
         "summary" : "Gets image build setting details",
-        "tags" : [ "project_settings" ]
+        "tags" : [ "Project settings" ]
       },
       "put" : {
         "description" : "Updates image build settings",
@@ -9338,7 +9461,7 @@
           }
         },
         "summary" : "Updates image build settings",
-        "tags" : [ "project_settings" ],
+        "tags" : [ "Project settings" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -9388,7 +9511,7 @@
           }
         },
         "summary" : "Gets repo cache info",
-        "tags" : [ "project_settings" ]
+        "tags" : [ "Project settings" ]
       }
     },
     "/projects/{projectID}/image-build-settings/repo-cache/clear" : {
@@ -9448,7 +9571,7 @@
           }
         },
         "summary" : "Clears repo cache",
-        "tags" : [ "project_settings" ],
+        "tags" : [ "Project settings" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -9509,7 +9632,7 @@
           }
         },
         "summary" : "Updates image build status",
-        "tags" : [ "project_settings" ],
+        "tags" : [ "Project settings" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -9587,7 +9710,7 @@
           }
         },
         "summary" : "Lists key auth settings",
-        "tags" : [ "project_settings" ]
+        "tags" : [ "Project settings" ]
       },
       "post" : {
         "description" : "Creates a new key auth setting",
@@ -9645,7 +9768,7 @@
           }
         },
         "summary" : "Creates a new key auth setting",
-        "tags" : [ "project_settings" ],
+        "tags" : [ "Project settings" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -9703,7 +9826,7 @@
           }
         },
         "summary" : "Deletes key auth setting",
-        "tags" : [ "project_settings" ]
+        "tags" : [ "Project settings" ]
       },
       "get" : {
         "description" : "Gets key auth setting details",
@@ -9758,7 +9881,7 @@
           }
         },
         "summary" : "Gets key auth setting details",
-        "tags" : [ "project_settings" ]
+        "tags" : [ "Project settings" ]
       },
       "put" : {
         "description" : "Updates key auth",
@@ -9824,7 +9947,7 @@
           }
         },
         "summary" : "Updates key auth",
-        "tags" : [ "project_settings" ],
+        "tags" : [ "Project settings" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -9893,7 +10016,7 @@
           }
         },
         "summary" : "Updates key auth status",
-        "tags" : [ "project_settings" ],
+        "tags" : [ "Project settings" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -9971,7 +10094,7 @@
           }
         },
         "summary" : "Lists notification settings",
-        "tags" : [ "project_settings" ]
+        "tags" : [ "Project settings" ]
       },
       "post" : {
         "description" : "Creates a new notification setting",
@@ -10029,7 +10152,7 @@
           }
         },
         "summary" : "Creates a new notification setting",
-        "tags" : [ "project_settings" ],
+        "tags" : [ "Project settings" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -10087,7 +10210,7 @@
           }
         },
         "summary" : "Deletes notification setting",
-        "tags" : [ "project_settings" ]
+        "tags" : [ "Project settings" ]
       },
       "get" : {
         "description" : "Gets notification setting details",
@@ -10142,7 +10265,7 @@
           }
         },
         "summary" : "Gets notification setting details",
-        "tags" : [ "project_settings" ]
+        "tags" : [ "Project settings" ]
       },
       "put" : {
         "description" : "Updates notification",
@@ -10208,7 +10331,7 @@
           }
         },
         "summary" : "Updates notification",
-        "tags" : [ "project_settings" ],
+        "tags" : [ "Project settings" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -10277,7 +10400,7 @@
           }
         },
         "summary" : "Updates notification status",
-        "tags" : [ "project_settings" ],
+        "tags" : [ "Project settings" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -10338,7 +10461,7 @@
           }
         },
         "summary" : "Updates project photo",
-        "tags" : [ "projects" ],
+        "tags" : [ "Projects" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -10416,7 +10539,7 @@
           }
         },
         "summary" : "Lists registry auth settings",
-        "tags" : [ "project_settings" ]
+        "tags" : [ "Project settings" ]
       },
       "post" : {
         "description" : "Creates a new registry auth setting",
@@ -10474,7 +10597,7 @@
           }
         },
         "summary" : "Creates a new registry auth setting",
-        "tags" : [ "project_settings" ],
+        "tags" : [ "Project settings" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -10532,7 +10655,7 @@
           }
         },
         "summary" : "Deletes registry auth setting",
-        "tags" : [ "project_settings" ]
+        "tags" : [ "Project settings" ]
       },
       "get" : {
         "description" : "Gets registry auth setting details",
@@ -10587,7 +10710,7 @@
           }
         },
         "summary" : "Gets registry auth setting details",
-        "tags" : [ "project_settings" ]
+        "tags" : [ "Project settings" ]
       },
       "put" : {
         "description" : "Updates registry auth",
@@ -10653,7 +10776,7 @@
           }
         },
         "summary" : "Updates registry auth",
-        "tags" : [ "project_settings" ],
+        "tags" : [ "Project settings" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -10722,7 +10845,7 @@
           }
         },
         "summary" : "Updates registry auth status",
-        "tags" : [ "project_settings" ],
+        "tags" : [ "Project settings" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -10800,7 +10923,7 @@
           }
         },
         "summary" : "Lists webhook settings",
-        "tags" : [ "project_settings" ]
+        "tags" : [ "Project settings" ]
       },
       "post" : {
         "description" : "Creates a new webhook setting",
@@ -10858,7 +10981,7 @@
           }
         },
         "summary" : "Creates a new webhook setting",
-        "tags" : [ "project_settings" ],
+        "tags" : [ "Project settings" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -10916,7 +11039,7 @@
           }
         },
         "summary" : "Deletes webhook setting",
-        "tags" : [ "project_settings" ]
+        "tags" : [ "Project settings" ]
       },
       "get" : {
         "description" : "Gets webhook setting details",
@@ -10971,7 +11094,7 @@
           }
         },
         "summary" : "Gets webhook setting details",
-        "tags" : [ "project_settings" ]
+        "tags" : [ "Project settings" ]
       },
       "put" : {
         "description" : "Updates webhook",
@@ -11037,7 +11160,7 @@
           }
         },
         "summary" : "Updates webhook",
-        "tags" : [ "project_settings" ],
+        "tags" : [ "Project settings" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -11106,7 +11229,7 @@
           }
         },
         "summary" : "Updates webhook status",
-        "tags" : [ "project_settings" ],
+        "tags" : [ "Project settings" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -11163,7 +11286,7 @@
           }
         },
         "summary" : "Lists project secrets",
-        "tags" : [ "project_settings" ]
+        "tags" : [ "Project settings" ]
       },
       "post" : {
         "description" : "Creates a project secret",
@@ -11221,7 +11344,7 @@
           }
         },
         "summary" : "Creates a project secret",
-        "tags" : [ "project_settings" ],
+        "tags" : [ "Project settings" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -11279,7 +11402,7 @@
           }
         },
         "summary" : "Deletes a project secret",
-        "tags" : [ "project_settings" ]
+        "tags" : [ "Project settings" ]
       },
       "get" : {
         "description" : "Gets secret details",
@@ -11334,7 +11457,7 @@
           }
         },
         "summary" : "Gets secret details",
-        "tags" : [ "project_settings" ]
+        "tags" : [ "Project settings" ]
       },
       "put" : {
         "description" : "Updates a project secret",
@@ -11400,7 +11523,7 @@
           }
         },
         "summary" : "Updates a project secret",
-        "tags" : [ "project_settings" ],
+        "tags" : [ "Project settings" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -11469,7 +11592,7 @@
           }
         },
         "summary" : "Updates project secret status",
-        "tags" : [ "project_settings" ],
+        "tags" : [ "Project settings" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -11530,7 +11653,7 @@
           }
         },
         "summary" : "Imports settings from global to a project",
-        "tags" : [ "project_settings" ],
+        "tags" : [ "Project settings" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -11552,7 +11675,7 @@
           }
         },
         "summary" : "Export one project as a configuration spec",
-        "tags" : [ "spec" ]
+        "tags" : [ "Configuration specs" ]
       }
     },
     "/projects/{projectID}/spec/import/apply" : {
@@ -11590,7 +11713,7 @@
           }
         },
         "summary" : "Import a configuration bundle into one project",
-        "tags" : [ "spec" ],
+        "tags" : [ "Configuration specs" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -11629,7 +11752,7 @@
           }
         },
         "summary" : "Plan importing a configuration bundle into one project",
-        "tags" : [ "spec" ],
+        "tags" : [ "Configuration specs" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -11707,7 +11830,7 @@
           }
         },
         "summary" : "Lists ssh-key settings",
-        "tags" : [ "project_settings" ]
+        "tags" : [ "Project settings" ]
       },
       "post" : {
         "description" : "Creates a new ssh-key setting",
@@ -11765,7 +11888,7 @@
           }
         },
         "summary" : "Creates a new ssh-key setting",
-        "tags" : [ "project_settings" ],
+        "tags" : [ "Project settings" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -11823,7 +11946,7 @@
           }
         },
         "summary" : "Deletes ssh-key setting",
-        "tags" : [ "project_settings" ]
+        "tags" : [ "Project settings" ]
       },
       "get" : {
         "description" : "Gets ssh-key setting details",
@@ -11878,7 +12001,7 @@
           }
         },
         "summary" : "Gets ssh-key setting details",
-        "tags" : [ "project_settings" ]
+        "tags" : [ "Project settings" ]
       },
       "put" : {
         "description" : "Updates ssh-key",
@@ -11944,7 +12067,7 @@
           }
         },
         "summary" : "Updates ssh-key",
-        "tags" : [ "project_settings" ],
+        "tags" : [ "Project settings" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -12013,7 +12136,7 @@
           }
         },
         "summary" : "Updates ssh-key status",
-        "tags" : [ "project_settings" ],
+        "tags" : [ "Project settings" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -12091,7 +12214,7 @@
           }
         },
         "summary" : "Lists SSL certs",
-        "tags" : [ "project_settings" ]
+        "tags" : [ "Project settings" ]
       },
       "post" : {
         "description" : "Creates a new SSL cert",
@@ -12149,7 +12272,7 @@
           }
         },
         "summary" : "Creates a new SSL cert",
-        "tags" : [ "project_settings" ],
+        "tags" : [ "Project settings" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -12207,7 +12330,7 @@
           }
         },
         "summary" : "Deletes an SSL cert",
-        "tags" : [ "project_settings" ]
+        "tags" : [ "Project settings" ]
       },
       "get" : {
         "description" : "Gets SSL cert details",
@@ -12262,7 +12385,7 @@
           }
         },
         "summary" : "Gets SSL cert details",
-        "tags" : [ "project_settings" ]
+        "tags" : [ "Project settings" ]
       },
       "put" : {
         "description" : "Updates an SSL cert",
@@ -12328,7 +12451,7 @@
           }
         },
         "summary" : "Updates an SSL cert",
-        "tags" : [ "project_settings" ],
+        "tags" : [ "Project settings" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -12387,7 +12510,7 @@
           }
         },
         "summary" : "Downloads SSL cert bundle",
-        "tags" : [ "project_settings" ]
+        "tags" : [ "Project settings" ]
       }
     },
     "/projects/{projectID}/ssl-certs/{itemID}/renew" : {
@@ -12455,7 +12578,7 @@
           }
         },
         "summary" : "Renews SSL cert",
-        "tags" : [ "project_settings" ],
+        "tags" : [ "Project settings" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -12524,7 +12647,7 @@
           }
         },
         "summary" : "Updates SSL cert status",
-        "tags" : [ "project_settings" ],
+        "tags" : [ "Project settings" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -12602,7 +12725,7 @@
           }
         },
         "summary" : "Lists SSL providers",
-        "tags" : [ "project_settings" ]
+        "tags" : [ "Project settings" ]
       },
       "post" : {
         "description" : "Creates a new SSL provider",
@@ -12660,7 +12783,7 @@
           }
         },
         "summary" : "Creates a new SSL provider",
-        "tags" : [ "project_settings" ],
+        "tags" : [ "Project settings" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -12718,7 +12841,7 @@
           }
         },
         "summary" : "Deletes an SSL provider",
-        "tags" : [ "project_settings" ]
+        "tags" : [ "Project settings" ]
       },
       "get" : {
         "description" : "Gets SSL provider details",
@@ -12773,7 +12896,7 @@
           }
         },
         "summary" : "Gets SSL provider details",
-        "tags" : [ "project_settings" ]
+        "tags" : [ "Project settings" ]
       },
       "put" : {
         "description" : "Updates an SSL provider",
@@ -12839,7 +12962,7 @@
           }
         },
         "summary" : "Updates an SSL provider",
-        "tags" : [ "project_settings" ],
+        "tags" : [ "Project settings" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -12908,7 +13031,7 @@
           }
         },
         "summary" : "Updates SSL provider status",
-        "tags" : [ "project_settings" ],
+        "tags" : [ "Project settings" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -12969,7 +13092,7 @@
           }
         },
         "summary" : "Updates project status",
-        "tags" : [ "projects" ],
+        "tags" : [ "Projects" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -13030,7 +13153,7 @@
           }
         },
         "summary" : "Creates a new project tag",
-        "tags" : [ "project_settings" ],
+        "tags" : [ "Project settings" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -13091,7 +13214,7 @@
           }
         },
         "summary" : "Deletes project tags",
-        "tags" : [ "project_settings" ],
+        "tags" : [ "Project settings" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -13169,7 +13292,7 @@
           }
         },
         "summary" : "Lists tasks",
-        "tags" : [ "project_tasks" ]
+        "tags" : [ "Project tasks" ]
       }
     },
     "/projects/{projectID}/tasks/target-objects" : {
@@ -13218,7 +13341,7 @@
           }
         },
         "summary" : "Lists task target objects",
-        "tags" : [ "project_tasks" ]
+        "tags" : [ "Project tasks" ]
       }
     },
     "/projects/{projectID}/tasks/types" : {
@@ -13267,7 +13390,7 @@
           }
         },
         "summary" : "Lists task types",
-        "tags" : [ "project_tasks" ]
+        "tags" : [ "Project tasks" ]
       }
     },
     "/projects/{projectID}/tasks/{itemID}" : {
@@ -13324,7 +13447,7 @@
           }
         },
         "summary" : "Gets task",
-        "tags" : [ "project_tasks" ]
+        "tags" : [ "Project tasks" ]
       }
     },
     "/projects/{projectID}/tasks/{itemID}/cancel" : {
@@ -13381,7 +13504,7 @@
           }
         },
         "summary" : "Cancels task",
-        "tags" : [ "project_tasks" ]
+        "tags" : [ "Project tasks" ]
       }
     },
     "/projects/{projectID}/tasks/{itemID}/logs" : {
@@ -13438,7 +13561,7 @@
           }
         },
         "summary" : "Gets task logs",
-        "tags" : [ "project_tasks" ]
+        "tags" : [ "Project tasks" ]
       }
     },
     "/projects/{projectID}/tasks/{itemID}/status" : {
@@ -13495,7 +13618,7 @@
           }
         },
         "summary" : "Gets task status",
-        "tags" : [ "project_tasks" ]
+        "tags" : [ "Project tasks" ]
       }
     },
     "/projects/{projectID}/user-accesses" : {
@@ -13544,7 +13667,7 @@
           }
         },
         "summary" : "Gets user accesses on the project",
-        "tags" : [ "project_settings" ]
+        "tags" : [ "Project settings" ]
       },
       "put" : {
         "description" : "Updates user accesses on the project",
@@ -13602,7 +13725,7 @@
           }
         },
         "summary" : "Updates user accesses on the project",
-        "tags" : [ "project_settings" ],
+        "tags" : [ "Project settings" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -13660,7 +13783,7 @@
           }
         },
         "summary" : "Deletes a project env",
-        "tags" : [ "project_envs" ]
+        "tags" : [ "Project envs" ]
       }
     },
     "/projects/{projectID}/{projectEnv}/access-tokens" : {
@@ -13745,7 +13868,7 @@
           }
         },
         "summary" : "Lists access-token settings",
-        "tags" : [ "project_env_settings" ]
+        "tags" : [ "Project env settings" ]
       },
       "post" : {
         "description" : "Creates a new access-token setting",
@@ -13811,7 +13934,7 @@
           }
         },
         "summary" : "Creates a new access-token setting",
-        "tags" : [ "project_env_settings" ],
+        "tags" : [ "Project env settings" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -13877,7 +14000,7 @@
           }
         },
         "summary" : "Deletes access-token setting",
-        "tags" : [ "project_env_settings" ]
+        "tags" : [ "Project env settings" ]
       },
       "get" : {
         "description" : "Gets access-token setting details",
@@ -13940,7 +14063,7 @@
           }
         },
         "summary" : "Gets access-token setting details",
-        "tags" : [ "project_env_settings" ]
+        "tags" : [ "Project env settings" ]
       },
       "put" : {
         "description" : "Updates access-token",
@@ -14014,7 +14137,7 @@
           }
         },
         "summary" : "Updates access-token",
-        "tags" : [ "project_env_settings" ],
+        "tags" : [ "Project env settings" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -14091,7 +14214,7 @@
           }
         },
         "summary" : "Updates access-token status",
-        "tags" : [ "project_env_settings" ],
+        "tags" : [ "Project env settings" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -14177,7 +14300,7 @@
           }
         },
         "summary" : "Lists ACME DNS providers",
-        "tags" : [ "project_env_settings" ]
+        "tags" : [ "Project env settings" ]
       },
       "post" : {
         "description" : "Creates a new ACME DNS provider",
@@ -14243,7 +14366,7 @@
           }
         },
         "summary" : "Creates a new ACME DNS provider",
-        "tags" : [ "project_env_settings" ],
+        "tags" : [ "Project env settings" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -14309,7 +14432,7 @@
           }
         },
         "summary" : "Deletes an ACME DNS provider",
-        "tags" : [ "project_env_settings" ]
+        "tags" : [ "Project env settings" ]
       },
       "get" : {
         "description" : "Gets ACME DNS provider details",
@@ -14372,7 +14495,7 @@
           }
         },
         "summary" : "Gets ACME DNS provider details",
-        "tags" : [ "project_env_settings" ]
+        "tags" : [ "Project env settings" ]
       },
       "put" : {
         "description" : "Updates an ACME DNS provider",
@@ -14446,7 +14569,7 @@
           }
         },
         "summary" : "Updates an ACME DNS provider",
-        "tags" : [ "project_env_settings" ],
+        "tags" : [ "Project env settings" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -14523,7 +14646,7 @@
           }
         },
         "summary" : "Updates ACME DNS provider status",
-        "tags" : [ "project_env_settings" ],
+        "tags" : [ "Project env settings" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -14623,7 +14746,7 @@
           }
         },
         "summary" : "Lists apps of an env",
-        "tags" : [ "apps" ]
+        "tags" : [ "Apps" ]
       }
     },
     "/projects/{projectID}/{projectEnv}/apps/from-template" : {
@@ -14701,7 +14824,7 @@
           }
         },
         "summary" : "Creates an app from an app template",
-        "tags" : [ "app_templates" ],
+        "tags" : [ "App templates" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -14780,7 +14903,7 @@
           }
         },
         "summary" : "Reports what creating an app from a template would run into",
-        "tags" : [ "app_templates" ],
+        "tags" : [ "App templates" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -14857,7 +14980,7 @@
           }
         },
         "summary" : "Deletes an app",
-        "tags" : [ "apps" ],
+        "tags" : [ "Apps" ],
         "x-codegen-request-body-name" : "body"
       },
       "get" : {
@@ -14921,7 +15044,7 @@
           }
         },
         "summary" : "Gets app details",
-        "tags" : [ "apps" ]
+        "tags" : [ "Apps" ]
       },
       "put" : {
         "description" : "Updates an app",
@@ -14995,7 +15118,7 @@
           }
         },
         "summary" : "Updates an app",
-        "tags" : [ "apps" ],
+        "tags" : [ "Apps" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -15132,7 +15255,7 @@
           }
         },
         "summary" : "Lists the backup snapshots the scope sees",
-        "tags" : [ "app_settings" ]
+        "tags" : [ "App settings" ]
       }
     },
     "/projects/{projectID}/{projectEnv}/apps/{appID}/backup-snapshots/{itemID}" : {
@@ -15215,7 +15338,7 @@
           }
         },
         "summary" : "Deletes a backup snapshot",
-        "tags" : [ "app_settings" ]
+        "tags" : [ "App settings" ]
       },
       "get" : {
         "description" : "Gets a backup snapshot the scope sees",
@@ -15296,7 +15419,7 @@
           }
         },
         "summary" : "Gets a backup snapshot",
-        "tags" : [ "app_settings" ]
+        "tags" : [ "App settings" ]
       }
     },
     "/projects/{projectID}/{projectEnv}/apps/{appID}/clone-execute" : {
@@ -15372,7 +15495,7 @@
           }
         },
         "summary" : "Clones app",
-        "tags" : [ "app_settings" ],
+        "tags" : [ "App settings" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -15438,7 +15561,7 @@
           }
         },
         "summary" : "Gets app clone settings",
-        "tags" : [ "app_settings" ]
+        "tags" : [ "App settings" ]
       },
       "put" : {
         "description" : "Updates app clone settings",
@@ -15512,7 +15635,7 @@
           }
         },
         "summary" : "Updates app clone settings",
-        "tags" : [ "app_settings" ],
+        "tags" : [ "App settings" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -15586,7 +15709,7 @@
           }
         },
         "summary" : "Builds a command template to get command string",
-        "tags" : [ "app_settings" ]
+        "tags" : [ "App settings" ]
       }
     },
     "/projects/{projectID}/{projectEnv}/apps/{appID}/config-files" : {
@@ -15651,7 +15774,7 @@
           }
         },
         "summary" : "Lists app config files",
-        "tags" : [ "app_settings" ]
+        "tags" : [ "App settings" ]
       },
       "post" : {
         "description" : "Creates an app config file",
@@ -15725,7 +15848,7 @@
           }
         },
         "summary" : "Creates an app config file",
-        "tags" : [ "app_settings" ],
+        "tags" : [ "App settings" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -15799,7 +15922,7 @@
           }
         },
         "summary" : "Deletes an app config file",
-        "tags" : [ "app_settings" ]
+        "tags" : [ "App settings" ]
       },
       "get" : {
         "description" : "Get an app config file details",
@@ -15870,7 +15993,7 @@
           }
         },
         "summary" : "Get an app config file details",
-        "tags" : [ "app_settings" ]
+        "tags" : [ "App settings" ]
       },
       "put" : {
         "description" : "Updates an app config file",
@@ -15952,7 +16075,7 @@
           }
         },
         "summary" : "Updates an app config file",
-        "tags" : [ "app_settings" ],
+        "tags" : [ "App settings" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -16026,7 +16149,7 @@
           }
         },
         "summary" : "Download a config file",
-        "tags" : [ "app_settings" ]
+        "tags" : [ "App settings" ]
       }
     },
     "/projects/{projectID}/{projectEnv}/apps/{appID}/config-files/{itemID}/download-token" : {
@@ -16099,7 +16222,7 @@
           }
         },
         "summary" : "Gets config file download token",
-        "tags" : [ "app_settings" ]
+        "tags" : [ "App settings" ]
       }
     },
     "/projects/{projectID}/{projectEnv}/apps/{appID}/config-files/{itemID}/status" : {
@@ -16183,7 +16306,7 @@
           }
         },
         "summary" : "Updates app config file status",
-        "tags" : [ "app_settings" ],
+        "tags" : [ "App settings" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -16256,7 +16379,7 @@
           }
         },
         "summary" : "Gets app container settings",
-        "tags" : [ "app_settings" ]
+        "tags" : [ "App settings" ]
       },
       "put" : {
         "description" : "Updates app container settings",
@@ -16330,7 +16453,7 @@
           }
         },
         "summary" : "Updates app container settings",
-        "tags" : [ "app_settings" ],
+        "tags" : [ "App settings" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -16407,7 +16530,7 @@
           }
         },
         "summary" : "Checks a container port for availability",
-        "tags" : [ "apps" ],
+        "tags" : [ "Apps" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -16510,7 +16633,7 @@
           }
         },
         "summary" : "Downloads a file or directory from container",
-        "tags" : [ "apps" ]
+        "tags" : [ "Apps" ]
       }
     },
     "/projects/{projectID}/{projectEnv}/apps/{appID}/container/file-upload" : {
@@ -16585,7 +16708,7 @@
           }
         },
         "summary" : "Uploads a file or archive into container",
-        "tags" : [ "apps" ]
+        "tags" : [ "Apps" ]
       }
     },
     "/projects/{projectID}/{projectEnv}/apps/{appID}/data-files" : {
@@ -16650,7 +16773,7 @@
           }
         },
         "summary" : "Lists data files of an app",
-        "tags" : [ "app_settings" ]
+        "tags" : [ "App settings" ]
       },
       "post" : {
         "description" : "Creates a data file of an app",
@@ -16724,7 +16847,7 @@
           }
         },
         "summary" : "Creates a data file of an app",
-        "tags" : [ "app_settings" ],
+        "tags" : [ "App settings" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -16798,7 +16921,7 @@
           }
         },
         "summary" : "Deletes a data file of an app",
-        "tags" : [ "app_settings" ]
+        "tags" : [ "App settings" ]
       },
       "get" : {
         "description" : "Gets a data file of an app",
@@ -16869,7 +16992,7 @@
           }
         },
         "summary" : "Gets a data file of an app",
-        "tags" : [ "app_settings" ]
+        "tags" : [ "App settings" ]
       }
     },
     "/projects/{projectID}/{projectEnv}/apps/{appID}/data-files/{itemID}/download-url" : {
@@ -16942,7 +17065,7 @@
           }
         },
         "summary" : "Gets download url of a data file",
-        "tags" : [ "app_settings" ]
+        "tags" : [ "App settings" ]
       }
     },
     "/projects/{projectID}/{projectEnv}/apps/{appID}/deploy" : {
@@ -17018,7 +17141,7 @@
           }
         },
         "summary" : "Deploys an app",
-        "tags" : [ "app_actions" ],
+        "tags" : [ "App actions" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -17084,7 +17207,7 @@
           }
         },
         "summary" : "Gets app deployment settings",
-        "tags" : [ "app_settings" ]
+        "tags" : [ "App settings" ]
       },
       "put" : {
         "description" : "Updates app deployment settings",
@@ -17158,7 +17281,7 @@
           }
         },
         "summary" : "Updates app deployment settings",
-        "tags" : [ "app_settings" ],
+        "tags" : [ "App settings" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -17232,7 +17355,7 @@
           }
         },
         "summary" : "Gets Dockerfile template for a given type",
-        "tags" : [ "app_settings" ]
+        "tags" : [ "App settings" ]
       }
     },
     "/projects/{projectID}/{projectEnv}/apps/{appID}/deployments" : {
@@ -17332,7 +17455,7 @@
           }
         },
         "summary" : "Lists app deployments",
-        "tags" : [ "app_deployments" ]
+        "tags" : [ "App deployments" ]
       }
     },
     "/projects/{projectID}/{projectEnv}/apps/{appID}/deployments/{deploymentID}" : {
@@ -17405,7 +17528,7 @@
           }
         },
         "summary" : "Gets app deployment",
-        "tags" : [ "app_deployments" ]
+        "tags" : [ "App deployments" ]
       }
     },
     "/projects/{projectID}/{projectEnv}/apps/{appID}/deployments/{deploymentID}/cancel" : {
@@ -17489,7 +17612,7 @@
           }
         },
         "summary" : "Cancels app deployment",
-        "tags" : [ "app_deployments" ],
+        "tags" : [ "App deployments" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -17591,7 +17714,7 @@
           }
         },
         "summary" : "Stream app deployment logs via websocket",
-        "tags" : [ "app_deployments" ]
+        "tags" : [ "App deployments" ]
       }
     },
     "/projects/{projectID}/{projectEnv}/apps/{appID}/deployments/{deploymentID}/status" : {
@@ -17679,7 +17802,7 @@
           }
         },
         "summary" : "Gets app deployment status",
-        "tags" : [ "app_deployments" ]
+        "tags" : [ "App deployments" ]
       }
     },
     "/projects/{projectID}/{projectEnv}/apps/{appID}/docker-api-settings" : {
@@ -17744,7 +17867,7 @@
           }
         },
         "summary" : "Gets what an app may do through the Docker API",
-        "tags" : [ "app_settings" ]
+        "tags" : [ "App settings" ]
       },
       "put" : {
         "description" : "Updates the app's Docker API access. Turning it on, or letting it do more, needs Write\npermission on the Cluster module; host mode, the node's own socket, needs the privileged-apps\nswitch and an administrator. Narrowing it, leaving host mode or turning it off needs Write on the app.",
@@ -17818,7 +17941,7 @@
           }
         },
         "summary" : "Updates what an app may do through the Docker API",
-        "tags" : [ "app_settings" ],
+        "tags" : [ "App settings" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -17884,7 +18007,7 @@
           }
         },
         "summary" : "Gets app env vars",
-        "tags" : [ "app_settings" ]
+        "tags" : [ "App settings" ]
       },
       "put" : {
         "description" : "Updates app env vars",
@@ -17958,7 +18081,7 @@
           }
         },
         "summary" : "Updates app env vars",
-        "tags" : [ "app_settings" ],
+        "tags" : [ "App settings" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -18035,7 +18158,7 @@
           }
         },
         "summary" : "Computes app env vars",
-        "tags" : [ "app_settings" ],
+        "tags" : [ "App settings" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -18109,7 +18232,7 @@
           }
         },
         "summary" : "Suggests the env vars that link an app to another",
-        "tags" : [ "app_settings" ]
+        "tags" : [ "App settings" ]
       }
     },
     "/projects/{projectID}/{projectEnv}/apps/{appID}/env-vars/link-targets" : {
@@ -18174,7 +18297,7 @@
           }
         },
         "summary" : "Lists the apps an app may link its env vars to",
-        "tags" : [ "app_settings" ]
+        "tags" : [ "App settings" ]
       }
     },
     "/projects/{projectID}/{projectEnv}/apps/{appID}/feature-settings" : {
@@ -18239,7 +18362,7 @@
           }
         },
         "summary" : "Gets app feature settings",
-        "tags" : [ "app_settings" ]
+        "tags" : [ "App settings" ]
       },
       "put" : {
         "description" : "Updates app feature settings",
@@ -18313,7 +18436,7 @@
           }
         },
         "summary" : "Updates app feature settings",
-        "tags" : [ "app_settings" ],
+        "tags" : [ "App settings" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -18379,7 +18502,7 @@
           }
         },
         "summary" : "Gets app kind settings",
-        "tags" : [ "app_settings" ]
+        "tags" : [ "App settings" ]
       },
       "put" : {
         "description" : "Updates app kind settings",
@@ -18453,7 +18576,7 @@
           }
         },
         "summary" : "Updates app kind settings",
-        "tags" : [ "app_settings" ],
+        "tags" : [ "App settings" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -18554,7 +18677,7 @@
           }
         },
         "summary" : "Stream app logs via websocket",
-        "tags" : [ "apps" ]
+        "tags" : [ "Apps" ]
       }
     },
     "/projects/{projectID}/{projectEnv}/apps/{appID}/logs/history" : {
@@ -18675,7 +18798,7 @@
           }
         },
         "summary" : "Gets stored app logs",
-        "tags" : [ "apps" ]
+        "tags" : [ "Apps" ]
       }
     },
     "/projects/{projectID}/{projectEnv}/apps/{appID}/logs/info" : {
@@ -18740,7 +18863,7 @@
           }
         },
         "summary" : "Gets log info",
-        "tags" : [ "apps" ]
+        "tags" : [ "Apps" ]
       }
     },
     "/projects/{projectID}/{projectEnv}/apps/{appID}/network-settings" : {
@@ -18805,7 +18928,7 @@
           }
         },
         "summary" : "Gets app network settings",
-        "tags" : [ "app_settings" ]
+        "tags" : [ "App settings" ]
       },
       "put" : {
         "description" : "Updates app network settings",
@@ -18879,7 +19002,7 @@
           }
         },
         "summary" : "Updates app network settings",
-        "tags" : [ "app_settings" ],
+        "tags" : [ "App settings" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -18973,7 +19096,7 @@
           }
         },
         "summary" : "Lists periodic jobs",
-        "tags" : [ "app_settings" ]
+        "tags" : [ "App settings" ]
       },
       "post" : {
         "description" : "Creates a new periodic job",
@@ -19047,7 +19170,7 @@
           }
         },
         "summary" : "Creates a new periodic job",
-        "tags" : [ "app_settings" ],
+        "tags" : [ "App settings" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -19121,7 +19244,7 @@
           }
         },
         "summary" : "Deletes periodic job",
-        "tags" : [ "app_settings" ]
+        "tags" : [ "App settings" ]
       },
       "get" : {
         "description" : "Gets periodic job details",
@@ -19192,7 +19315,7 @@
           }
         },
         "summary" : "Gets periodic job details",
-        "tags" : [ "app_settings" ]
+        "tags" : [ "App settings" ]
       },
       "put" : {
         "description" : "Updates a periodic job",
@@ -19274,7 +19397,7 @@
           }
         },
         "summary" : "Updates a periodic job",
-        "tags" : [ "app_settings" ],
+        "tags" : [ "App settings" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -19359,7 +19482,7 @@
           }
         },
         "summary" : "Updates periodic job status",
-        "tags" : [ "app_settings" ],
+        "tags" : [ "App settings" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -19436,7 +19559,7 @@
           }
         },
         "summary" : "Updates app photo",
-        "tags" : [ "apps" ],
+        "tags" : [ "Apps" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -19513,7 +19636,7 @@
           }
         },
         "summary" : "Detects app photo",
-        "tags" : [ "apps" ],
+        "tags" : [ "Apps" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -19614,7 +19737,7 @@
           }
         },
         "summary" : "Lists app's previews",
-        "tags" : [ "app_previews" ]
+        "tags" : [ "App previews" ]
       },
       "post" : {
         "description" : "Creates preview for an app",
@@ -19688,7 +19811,7 @@
           }
         },
         "summary" : "Creates preview for an app",
-        "tags" : [ "app_previews" ],
+        "tags" : [ "App previews" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -19765,7 +19888,7 @@
           }
         },
         "summary" : "Prepares to create a preview for an app",
-        "tags" : [ "app_previews" ],
+        "tags" : [ "App previews" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -19831,7 +19954,7 @@
           }
         },
         "summary" : "Gets app resource settings",
-        "tags" : [ "app_settings" ]
+        "tags" : [ "App settings" ]
       },
       "put" : {
         "description" : "Updates app resource settings",
@@ -19905,7 +20028,7 @@
           }
         },
         "summary" : "Updates app resource settings",
-        "tags" : [ "app_settings" ],
+        "tags" : [ "App settings" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -19982,7 +20105,7 @@
           }
         },
         "summary" : "Restarts an app",
-        "tags" : [ "app_actions" ],
+        "tags" : [ "App actions" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -20048,7 +20171,7 @@
           }
         },
         "summary" : "Gets app routing settings",
-        "tags" : [ "app_settings" ]
+        "tags" : [ "App settings" ]
       },
       "put" : {
         "description" : "Updates app routing settings",
@@ -20122,7 +20245,7 @@
           }
         },
         "summary" : "Updates app routing settings",
-        "tags" : [ "app_settings" ],
+        "tags" : [ "App settings" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -20199,7 +20322,7 @@
           }
         },
         "summary" : "Sets app running status",
-        "tags" : [ "app_actions" ],
+        "tags" : [ "App actions" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -20293,7 +20416,7 @@
           }
         },
         "summary" : "Lists sched-jobs",
-        "tags" : [ "app_settings" ]
+        "tags" : [ "App settings" ]
       },
       "post" : {
         "description" : "Creates a new sched-job",
@@ -20367,7 +20490,7 @@
           }
         },
         "summary" : "Creates a new sched-job",
-        "tags" : [ "app_settings" ],
+        "tags" : [ "App settings" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -20441,7 +20564,7 @@
           }
         },
         "summary" : "Deletes sched-job",
-        "tags" : [ "app_settings" ]
+        "tags" : [ "App settings" ]
       },
       "get" : {
         "description" : "Gets sched-job details",
@@ -20512,7 +20635,7 @@
           }
         },
         "summary" : "Gets sched-job details",
-        "tags" : [ "app_settings" ]
+        "tags" : [ "App settings" ]
       },
       "put" : {
         "description" : "Updates a sched-job",
@@ -20594,7 +20717,7 @@
           }
         },
         "summary" : "Updates a sched-job",
-        "tags" : [ "app_settings" ],
+        "tags" : [ "App settings" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -20679,7 +20802,7 @@
           }
         },
         "summary" : "Executes a sched job",
-        "tags" : [ "app_settings" ],
+        "tags" : [ "App settings" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -20764,7 +20887,7 @@
           }
         },
         "summary" : "Updates sched-job status",
-        "tags" : [ "app_settings" ],
+        "tags" : [ "App settings" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -20830,7 +20953,7 @@
           }
         },
         "summary" : "Lists app secrets",
-        "tags" : [ "app_settings" ]
+        "tags" : [ "App settings" ]
       },
       "post" : {
         "description" : "Creates an app secret",
@@ -20904,7 +21027,7 @@
           }
         },
         "summary" : "Creates an app secret",
-        "tags" : [ "app_settings" ],
+        "tags" : [ "App settings" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -20978,7 +21101,7 @@
           }
         },
         "summary" : "Deletes an app secret",
-        "tags" : [ "app_settings" ]
+        "tags" : [ "App settings" ]
       },
       "get" : {
         "description" : "Get an app secret details",
@@ -21049,7 +21172,7 @@
           }
         },
         "summary" : "Get an app secret details",
-        "tags" : [ "app_settings" ]
+        "tags" : [ "App settings" ]
       },
       "put" : {
         "description" : "Updates an app secret",
@@ -21131,7 +21254,7 @@
           }
         },
         "summary" : "Updates an app secret",
-        "tags" : [ "app_settings" ],
+        "tags" : [ "App settings" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -21205,7 +21328,7 @@
           }
         },
         "summary" : "Download a secret as a file",
-        "tags" : [ "app_settings" ]
+        "tags" : [ "App settings" ]
       }
     },
     "/projects/{projectID}/{projectEnv}/apps/{appID}/secrets/{itemID}/download-token" : {
@@ -21278,7 +21401,7 @@
           }
         },
         "summary" : "Gets secret download token",
-        "tags" : [ "app_settings" ]
+        "tags" : [ "App settings" ]
       }
     },
     "/projects/{projectID}/{projectEnv}/apps/{appID}/secrets/{itemID}/status" : {
@@ -21362,7 +21485,7 @@
           }
         },
         "summary" : "Updates app secret status",
-        "tags" : [ "app_settings" ],
+        "tags" : [ "App settings" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -21428,7 +21551,7 @@
           }
         },
         "summary" : "Gets app service settings",
-        "tags" : [ "app_settings" ]
+        "tags" : [ "App settings" ]
       },
       "put" : {
         "description" : "Updates app service settings",
@@ -21502,7 +21625,7 @@
           }
         },
         "summary" : "Updates app service settings",
-        "tags" : [ "app_settings" ],
+        "tags" : [ "App settings" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -21568,7 +21691,7 @@
           }
         },
         "summary" : "Gets app service tasks",
-        "tags" : [ "app_settings" ]
+        "tags" : [ "App settings" ]
       }
     },
     "/projects/{projectID}/{projectEnv}/apps/{appID}/setting-mounts" : {
@@ -21633,7 +21756,7 @@
           }
         },
         "summary" : "Lists app setting mounts",
-        "tags" : [ "app_settings" ]
+        "tags" : [ "App settings" ]
       },
       "post" : {
         "description" : "Creates an app setting mount",
@@ -21707,7 +21830,7 @@
           }
         },
         "summary" : "Creates an app setting mount",
-        "tags" : [ "app_settings" ],
+        "tags" : [ "App settings" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -21773,7 +21896,7 @@
           }
         },
         "summary" : "Lists the settings an app can mount, and their parts",
-        "tags" : [ "app_settings" ]
+        "tags" : [ "App settings" ]
       }
     },
     "/projects/{projectID}/{projectEnv}/apps/{appID}/setting-mounts/{itemID}" : {
@@ -21846,7 +21969,7 @@
           }
         },
         "summary" : "Deletes an app setting mount",
-        "tags" : [ "app_settings" ]
+        "tags" : [ "App settings" ]
       },
       "get" : {
         "description" : "Get an app setting mount details",
@@ -21917,7 +22040,7 @@
           }
         },
         "summary" : "Get an app setting mount details",
-        "tags" : [ "app_settings" ]
+        "tags" : [ "App settings" ]
       },
       "put" : {
         "description" : "Updates an app setting mount",
@@ -21999,7 +22122,7 @@
           }
         },
         "summary" : "Updates an app setting mount",
-        "tags" : [ "app_settings" ],
+        "tags" : [ "App settings" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -22084,7 +22207,7 @@
           }
         },
         "summary" : "Updates app setting mount status",
-        "tags" : [ "app_settings" ],
+        "tags" : [ "App settings" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -22122,7 +22245,7 @@
           }
         },
         "summary" : "Export one app as a configuration spec",
-        "tags" : [ "spec" ]
+        "tags" : [ "Configuration specs" ]
       }
     },
     "/projects/{projectID}/{projectEnv}/apps/{appID}/status" : {
@@ -22198,7 +22321,7 @@
           }
         },
         "summary" : "Updates app status",
-        "tags" : [ "apps" ],
+        "tags" : [ "Apps" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -22264,7 +22387,7 @@
           }
         },
         "summary" : "Gets app storage settings",
-        "tags" : [ "app_settings" ]
+        "tags" : [ "App settings" ]
       },
       "put" : {
         "description" : "Updates app storage settings",
@@ -22338,7 +22461,7 @@
           }
         },
         "summary" : "Updates app storage settings",
-        "tags" : [ "app_settings" ],
+        "tags" : [ "App settings" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -22415,7 +22538,7 @@
           }
         },
         "summary" : "Reports which mounts being added already hold data",
-        "tags" : [ "app_settings" ],
+        "tags" : [ "App settings" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -22492,7 +22615,7 @@
           }
         },
         "summary" : "Resets the permissions of what one of an app's mounts holds",
-        "tags" : [ "app_settings" ],
+        "tags" : [ "App settings" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -22569,7 +22692,7 @@
           }
         },
         "summary" : "Creates a new app tag",
-        "tags" : [ "app_settings" ],
+        "tags" : [ "App settings" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -22646,7 +22769,7 @@
           }
         },
         "summary" : "Deletes app tags",
-        "tags" : [ "app_settings" ],
+        "tags" : [ "App settings" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -22740,7 +22863,7 @@
           }
         },
         "summary" : "Lists tasks",
-        "tags" : [ "app_tasks" ]
+        "tags" : [ "App tasks" ]
       }
     },
     "/projects/{projectID}/{projectEnv}/apps/{appID}/tasks/target-objects" : {
@@ -22805,7 +22928,7 @@
           }
         },
         "summary" : "Lists task target objects",
-        "tags" : [ "app_tasks" ]
+        "tags" : [ "App tasks" ]
       }
     },
     "/projects/{projectID}/{projectEnv}/apps/{appID}/tasks/types" : {
@@ -22870,7 +22993,7 @@
           }
         },
         "summary" : "Lists task types",
-        "tags" : [ "app_tasks" ]
+        "tags" : [ "App tasks" ]
       }
     },
     "/projects/{projectID}/{projectEnv}/apps/{appID}/tasks/{itemID}" : {
@@ -22943,7 +23066,7 @@
           }
         },
         "summary" : "Gets task",
-        "tags" : [ "app_tasks" ]
+        "tags" : [ "App tasks" ]
       }
     },
     "/projects/{projectID}/{projectEnv}/apps/{appID}/tasks/{itemID}/cancel" : {
@@ -23016,7 +23139,7 @@
           }
         },
         "summary" : "Cancels task",
-        "tags" : [ "app_tasks" ]
+        "tags" : [ "App tasks" ]
       }
     },
     "/projects/{projectID}/{projectEnv}/apps/{appID}/tasks/{itemID}/logs" : {
@@ -23089,7 +23212,7 @@
           }
         },
         "summary" : "Gets task logs",
-        "tags" : [ "app_tasks" ]
+        "tags" : [ "App tasks" ]
       }
     },
     "/projects/{projectID}/{projectEnv}/apps/{appID}/tasks/{itemID}/status" : {
@@ -23162,7 +23285,7 @@
           }
         },
         "summary" : "Gets task status",
-        "tags" : [ "app_tasks" ]
+        "tags" : [ "App tasks" ]
       }
     },
     "/projects/{projectID}/{projectEnv}/apps/{appID}/template" : {
@@ -23237,7 +23360,7 @@
           }
         },
         "summary" : "Gets the template an app was created from",
-        "tags" : [ "app_templates" ]
+        "tags" : [ "App templates" ]
       }
     },
     "/projects/{projectID}/{projectEnv}/apps/{appID}/terminal" : {
@@ -23302,7 +23425,7 @@
           }
         },
         "summary" : "Opens app terminal via websocket",
-        "tags" : [ "apps" ]
+        "tags" : [ "Apps" ]
       }
     },
     "/projects/{projectID}/{projectEnv}/apps/{appID}/terminal/info" : {
@@ -23367,7 +23490,7 @@
           }
         },
         "summary" : "Gets terminal info",
-        "tags" : [ "apps" ]
+        "tags" : [ "Apps" ]
       }
     },
     "/projects/{projectID}/{projectEnv}/audit-logs" : {
@@ -23452,7 +23575,7 @@
           }
         },
         "summary" : "Lists audit logs",
-        "tags" : [ "project_env_audit_logs" ]
+        "tags" : [ "Project env audit logs" ]
       }
     },
     "/projects/{projectID}/{projectEnv}/audit-logs/types" : {
@@ -23501,7 +23624,7 @@
           }
         },
         "summary" : "Lists audit log types",
-        "tags" : [ "project_env_audit_logs" ]
+        "tags" : [ "Project env audit logs" ]
       }
     },
     "/projects/{projectID}/{projectEnv}/audit-logs/{itemID}" : {
@@ -23566,7 +23689,7 @@
           }
         },
         "summary" : "Gets audit log",
-        "tags" : [ "project_env_audit_logs" ]
+        "tags" : [ "Project env audit logs" ]
       }
     },
     "/projects/{projectID}/{projectEnv}/backup-repos" : {
@@ -23651,7 +23774,7 @@
           }
         },
         "summary" : "Lists backup repo settings",
-        "tags" : [ "project_env_settings" ]
+        "tags" : [ "Project env settings" ]
       },
       "post" : {
         "description" : "Creates a new backup repo setting",
@@ -23717,7 +23840,7 @@
           }
         },
         "summary" : "Creates a new backup repo setting",
-        "tags" : [ "project_env_settings" ],
+        "tags" : [ "Project env settings" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -23783,7 +23906,7 @@
           }
         },
         "summary" : "Deletes backup repo setting",
-        "tags" : [ "project_env_settings" ]
+        "tags" : [ "Project env settings" ]
       },
       "get" : {
         "description" : "Gets backup repo setting details",
@@ -23846,7 +23969,7 @@
           }
         },
         "summary" : "Gets backup repo setting details",
-        "tags" : [ "project_env_settings" ]
+        "tags" : [ "Project env settings" ]
       },
       "put" : {
         "description" : "Updates backup repo",
@@ -23920,7 +24043,7 @@
           }
         },
         "summary" : "Updates backup repo",
-        "tags" : [ "project_env_settings" ],
+        "tags" : [ "Project env settings" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -23986,7 +24109,7 @@
           }
         },
         "summary" : "Cleans up a backup repository",
-        "tags" : [ "project_env_settings" ]
+        "tags" : [ "Project env settings" ]
       }
     },
     "/projects/{projectID}/{projectEnv}/backup-repos/{itemID}/password" : {
@@ -24062,7 +24185,7 @@
           }
         },
         "summary" : "Changes a backup repository's password",
-        "tags" : [ "project_env_settings" ],
+        "tags" : [ "Project env settings" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -24139,7 +24262,7 @@
           }
         },
         "summary" : "Updates backup repo status",
-        "tags" : [ "project_env_settings" ],
+        "tags" : [ "Project env settings" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -24205,7 +24328,7 @@
           }
         },
         "summary" : "Syncs a backup repository back into its setting",
-        "tags" : [ "project_env_settings" ]
+        "tags" : [ "Project env settings" ]
       }
     },
     "/projects/{projectID}/{projectEnv}/backup-snapshots" : {
@@ -24333,7 +24456,7 @@
           }
         },
         "summary" : "Lists the backup snapshots the scope sees",
-        "tags" : [ "project_env_settings" ]
+        "tags" : [ "Project env settings" ]
       }
     },
     "/projects/{projectID}/{projectEnv}/backup-snapshots/{itemID}" : {
@@ -24408,7 +24531,7 @@
           }
         },
         "summary" : "Deletes a backup snapshot",
-        "tags" : [ "project_env_settings" ]
+        "tags" : [ "Project env settings" ]
       },
       "get" : {
         "description" : "Gets a backup snapshot the scope sees",
@@ -24481,7 +24604,7 @@
           }
         },
         "summary" : "Gets a backup snapshot",
-        "tags" : [ "project_env_settings" ]
+        "tags" : [ "Project env settings" ]
       }
     },
     "/projects/{projectID}/{projectEnv}/basic-auth" : {
@@ -24566,7 +24689,7 @@
           }
         },
         "summary" : "Lists basic auth settings",
-        "tags" : [ "project_env_settings" ]
+        "tags" : [ "Project env settings" ]
       },
       "post" : {
         "description" : "Creates a new basic auth setting",
@@ -24632,7 +24755,7 @@
           }
         },
         "summary" : "Creates a new basic auth setting",
-        "tags" : [ "project_env_settings" ],
+        "tags" : [ "Project env settings" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -24698,7 +24821,7 @@
           }
         },
         "summary" : "Deletes basic auth setting",
-        "tags" : [ "project_env_settings" ]
+        "tags" : [ "Project env settings" ]
       },
       "get" : {
         "description" : "Gets basic auth setting details",
@@ -24761,7 +24884,7 @@
           }
         },
         "summary" : "Gets basic auth setting details",
-        "tags" : [ "project_env_settings" ]
+        "tags" : [ "Project env settings" ]
       },
       "put" : {
         "description" : "Updates basic auth",
@@ -24835,7 +24958,7 @@
           }
         },
         "summary" : "Updates basic auth",
-        "tags" : [ "project_env_settings" ],
+        "tags" : [ "Project env settings" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -24912,7 +25035,7 @@
           }
         },
         "summary" : "Updates basic auth status",
-        "tags" : [ "project_env_settings" ],
+        "tags" : [ "Project env settings" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -24998,7 +25121,7 @@
           }
         },
         "summary" : "Lists cloud storages",
-        "tags" : [ "project_env_settings" ]
+        "tags" : [ "Project env settings" ]
       },
       "post" : {
         "description" : "Creates a new cloud storage",
@@ -25064,7 +25187,7 @@
           }
         },
         "summary" : "Creates a new cloud storage",
-        "tags" : [ "project_env_settings" ],
+        "tags" : [ "Project env settings" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -25130,7 +25253,7 @@
           }
         },
         "summary" : "Deletes a cloud storage",
-        "tags" : [ "project_env_settings" ]
+        "tags" : [ "Project env settings" ]
       },
       "get" : {
         "description" : "Gets cloud storage details",
@@ -25193,7 +25316,7 @@
           }
         },
         "summary" : "Gets cloud storage details",
-        "tags" : [ "project_env_settings" ]
+        "tags" : [ "Project env settings" ]
       },
       "put" : {
         "description" : "Updates cloud storage",
@@ -25267,7 +25390,7 @@
           }
         },
         "summary" : "Updates cloud storage",
-        "tags" : [ "project_env_settings" ],
+        "tags" : [ "Project env settings" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -25344,7 +25467,7 @@
           }
         },
         "summary" : "Updates cloud storage status",
-        "tags" : [ "project_env_settings" ],
+        "tags" : [ "Project env settings" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -25430,7 +25553,7 @@
           }
         },
         "summary" : "Lists cluster-network settings",
-        "tags" : [ "project_env_settings" ]
+        "tags" : [ "Project env settings" ]
       },
       "post" : {
         "description" : "Creates a new cluster-network setting",
@@ -25488,7 +25611,7 @@
           }
         },
         "summary" : "Creates a new cluster-network setting",
-        "tags" : [ "project_env_settings" ],
+        "tags" : [ "Project env settings" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -25554,7 +25677,7 @@
           }
         },
         "summary" : "Deletes cluster-network setting",
-        "tags" : [ "project_env_settings" ]
+        "tags" : [ "Project env settings" ]
       },
       "get" : {
         "description" : "Gets cluster-network setting details",
@@ -25617,7 +25740,7 @@
           }
         },
         "summary" : "Gets cluster-network setting details",
-        "tags" : [ "project_env_settings" ]
+        "tags" : [ "Project env settings" ]
       },
       "put" : {
         "description" : "Updates cluster-network",
@@ -25691,7 +25814,7 @@
           }
         },
         "summary" : "Updates cluster-network",
-        "tags" : [ "project_env_settings" ],
+        "tags" : [ "Project env settings" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -25768,7 +25891,7 @@
           }
         },
         "summary" : "Updates cluster-network status",
-        "tags" : [ "project_env_settings" ],
+        "tags" : [ "Project env settings" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -25854,7 +25977,7 @@
           }
         },
         "summary" : "Lists cluster-volume settings",
-        "tags" : [ "project_env_settings" ]
+        "tags" : [ "Project env settings" ]
       },
       "post" : {
         "description" : "Creates a new cluster-volume setting",
@@ -25920,7 +26043,7 @@
           }
         },
         "summary" : "Creates a new cluster-volume setting",
-        "tags" : [ "project_env_settings" ],
+        "tags" : [ "Project env settings" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -25986,7 +26109,7 @@
           }
         },
         "summary" : "Deletes cluster-volume setting",
-        "tags" : [ "project_env_settings" ]
+        "tags" : [ "Project env settings" ]
       },
       "get" : {
         "description" : "Gets cluster-volume setting details",
@@ -26049,7 +26172,7 @@
           }
         },
         "summary" : "Gets cluster-volume setting details",
-        "tags" : [ "project_env_settings" ]
+        "tags" : [ "Project env settings" ]
       },
       "put" : {
         "description" : "Updates cluster-volume",
@@ -26123,7 +26246,7 @@
           }
         },
         "summary" : "Updates cluster-volume",
-        "tags" : [ "project_env_settings" ],
+        "tags" : [ "Project env settings" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -26200,7 +26323,7 @@
           }
         },
         "summary" : "Updates cluster-volume status",
-        "tags" : [ "project_env_settings" ],
+        "tags" : [ "Project env settings" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -26286,7 +26409,7 @@
           }
         },
         "summary" : "Lists command pipe settings",
-        "tags" : [ "project_env_settings" ]
+        "tags" : [ "Project env settings" ]
       },
       "post" : {
         "description" : "Creates a new command pipe setting",
@@ -26352,7 +26475,7 @@
           }
         },
         "summary" : "Creates a new command pipe setting",
-        "tags" : [ "project_env_settings" ],
+        "tags" : [ "Project env settings" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -26421,7 +26544,7 @@
           }
         },
         "summary" : "Creates a command pipe setting from template",
-        "tags" : [ "project_env_settings" ],
+        "tags" : [ "Project env settings" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -26487,7 +26610,7 @@
           }
         },
         "summary" : "Deletes command pipe setting",
-        "tags" : [ "project_env_settings" ]
+        "tags" : [ "Project env settings" ]
       },
       "get" : {
         "description" : "Gets command pipe setting details",
@@ -26550,7 +26673,7 @@
           }
         },
         "summary" : "Gets command pipe setting details",
-        "tags" : [ "project_env_settings" ]
+        "tags" : [ "Project env settings" ]
       },
       "put" : {
         "description" : "Updates command pipe",
@@ -26624,7 +26747,7 @@
           }
         },
         "summary" : "Updates command pipe",
-        "tags" : [ "project_env_settings" ],
+        "tags" : [ "Project env settings" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -26701,7 +26824,7 @@
           }
         },
         "summary" : "Updates command pipe status",
-        "tags" : [ "project_env_settings" ],
+        "tags" : [ "Project env settings" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -26787,7 +26910,7 @@
           }
         },
         "summary" : "Lists command template settings",
-        "tags" : [ "project_env_settings" ]
+        "tags" : [ "Project env settings" ]
       },
       "post" : {
         "description" : "Creates a new command template setting",
@@ -26853,7 +26976,7 @@
           }
         },
         "summary" : "Creates a new command template setting",
-        "tags" : [ "project_env_settings" ],
+        "tags" : [ "Project env settings" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -26922,7 +27045,7 @@
           }
         },
         "summary" : "Creates a new command template setting from a template",
-        "tags" : [ "project_env_settings" ],
+        "tags" : [ "Project env settings" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -26988,7 +27111,7 @@
           }
         },
         "summary" : "Deletes command template setting",
-        "tags" : [ "project_env_settings" ]
+        "tags" : [ "Project env settings" ]
       },
       "get" : {
         "description" : "Gets command template setting details",
@@ -27051,7 +27174,7 @@
           }
         },
         "summary" : "Gets command template setting details",
-        "tags" : [ "project_env_settings" ]
+        "tags" : [ "Project env settings" ]
       },
       "put" : {
         "description" : "Updates command template",
@@ -27125,7 +27248,7 @@
           }
         },
         "summary" : "Updates command template",
-        "tags" : [ "project_env_settings" ],
+        "tags" : [ "Project env settings" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -27202,7 +27325,7 @@
           }
         },
         "summary" : "Updates command template status",
-        "tags" : [ "project_env_settings" ],
+        "tags" : [ "Project env settings" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -27267,7 +27390,7 @@
           }
         },
         "summary" : "Lists project config files",
-        "tags" : [ "project_env_settings" ]
+        "tags" : [ "Project env settings" ]
       },
       "post" : {
         "description" : "Creates a project config file",
@@ -27333,7 +27456,7 @@
           }
         },
         "summary" : "Creates a project config file",
-        "tags" : [ "project_env_settings" ],
+        "tags" : [ "Project env settings" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -27399,7 +27522,7 @@
           }
         },
         "summary" : "Deletes a project config file",
-        "tags" : [ "project_env_settings" ]
+        "tags" : [ "Project env settings" ]
       },
       "get" : {
         "description" : "Gets config file details",
@@ -27462,7 +27585,7 @@
           }
         },
         "summary" : "Gets config file details",
-        "tags" : [ "project_env_settings" ]
+        "tags" : [ "Project env settings" ]
       },
       "put" : {
         "description" : "Updates a project config file",
@@ -27536,7 +27659,7 @@
           }
         },
         "summary" : "Updates a project config file",
-        "tags" : [ "project_env_settings" ],
+        "tags" : [ "Project env settings" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -27613,7 +27736,7 @@
           }
         },
         "summary" : "Updates project config file status",
-        "tags" : [ "project_env_settings" ],
+        "tags" : [ "Project env settings" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -27699,7 +27822,7 @@
           }
         },
         "summary" : "Lists email settings",
-        "tags" : [ "project_env_settings" ]
+        "tags" : [ "Project env settings" ]
       },
       "post" : {
         "description" : "Creates a new email setting",
@@ -27765,7 +27888,7 @@
           }
         },
         "summary" : "Creates a new email setting",
-        "tags" : [ "project_env_settings" ],
+        "tags" : [ "Project env settings" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -27831,7 +27954,7 @@
           }
         },
         "summary" : "Deletes email setting",
-        "tags" : [ "project_env_settings" ]
+        "tags" : [ "Project env settings" ]
       },
       "get" : {
         "description" : "Gets email setting details",
@@ -27894,7 +28017,7 @@
           }
         },
         "summary" : "Gets email setting details",
-        "tags" : [ "project_env_settings" ]
+        "tags" : [ "Project env settings" ]
       },
       "put" : {
         "description" : "Updates email setting",
@@ -27968,7 +28091,7 @@
           }
         },
         "summary" : "Updates email setting",
-        "tags" : [ "project_env_settings" ],
+        "tags" : [ "Project env settings" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -28045,7 +28168,7 @@
           }
         },
         "summary" : "Updates Email status setting",
-        "tags" : [ "project_env_settings" ],
+        "tags" : [ "Project env settings" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -28103,7 +28226,7 @@
           }
         },
         "summary" : "Gets project env vars",
-        "tags" : [ "project_env_settings" ]
+        "tags" : [ "Project env settings" ]
       },
       "put" : {
         "description" : "Updates project env vars",
@@ -28169,7 +28292,7 @@
           }
         },
         "summary" : "Updates project env vars",
-        "tags" : [ "project_env_settings" ],
+        "tags" : [ "Project env settings" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -28238,7 +28361,7 @@
           }
         },
         "summary" : "Computes project env vars",
-        "tags" : [ "project_env_settings" ],
+        "tags" : [ "Project env settings" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -28324,7 +28447,7 @@
           }
         },
         "summary" : "Lists git credentials settings",
-        "tags" : [ "project_env_settings" ]
+        "tags" : [ "Project env settings" ]
       }
     },
     "/projects/{projectID}/{projectEnv}/git-credentials/{itemID}/repositories" : {
@@ -28417,7 +28540,7 @@
           }
         },
         "summary" : "Lists git repositories",
-        "tags" : [ "project_env_settings" ]
+        "tags" : [ "Project env settings" ]
       }
     },
     "/projects/{projectID}/{projectEnv}/git-credentials/{itemID}/repository/branches" : {
@@ -28526,7 +28649,7 @@
           }
         },
         "summary" : "Lists branches of a git repository",
-        "tags" : [ "project_env_settings" ]
+        "tags" : [ "Project env settings" ]
       }
     },
     "/projects/{projectID}/{projectEnv}/git-credentials/{itemID}/repository/pull-requests" : {
@@ -28635,7 +28758,7 @@
           }
         },
         "summary" : "Lists pull requests of a git repository",
-        "tags" : [ "project_env_settings" ]
+        "tags" : [ "Project env settings" ]
       }
     },
     "/projects/{projectID}/{projectEnv}/github-apps" : {
@@ -28720,7 +28843,7 @@
           }
         },
         "summary" : "Lists github-app settings",
-        "tags" : [ "project_env_settings" ]
+        "tags" : [ "Project env settings" ]
       }
     },
     "/projects/{projectID}/{projectEnv}/github-apps/{itemID}" : {
@@ -28785,7 +28908,7 @@
           }
         },
         "summary" : "Gets github-app setting details",
-        "tags" : [ "project_env_settings" ]
+        "tags" : [ "Project env settings" ]
       }
     },
     "/projects/{projectID}/{projectEnv}/im-services" : {
@@ -28870,7 +28993,7 @@
           }
         },
         "summary" : "Lists IM services",
-        "tags" : [ "project_env_settings" ]
+        "tags" : [ "Project env settings" ]
       },
       "post" : {
         "description" : "Creates a new IM service",
@@ -28936,7 +29059,7 @@
           }
         },
         "summary" : "Creates a new IM service",
-        "tags" : [ "project_env_settings" ],
+        "tags" : [ "Project env settings" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -29002,7 +29125,7 @@
           }
         },
         "summary" : "Deletes IM service",
-        "tags" : [ "project_env_settings" ]
+        "tags" : [ "Project env settings" ]
       },
       "get" : {
         "description" : "Gets IM service details",
@@ -29065,7 +29188,7 @@
           }
         },
         "summary" : "Gets IM service details",
-        "tags" : [ "project_env_settings" ]
+        "tags" : [ "Project env settings" ]
       },
       "put" : {
         "description" : "Updates IM service",
@@ -29139,7 +29262,7 @@
           }
         },
         "summary" : "Updates IM service",
-        "tags" : [ "project_env_settings" ],
+        "tags" : [ "Project env settings" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -29216,7 +29339,7 @@
           }
         },
         "summary" : "Updates IM service status",
-        "tags" : [ "project_env_settings" ],
+        "tags" : [ "Project env settings" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -29302,7 +29425,7 @@
           }
         },
         "summary" : "Lists key auth settings",
-        "tags" : [ "project_env_settings" ]
+        "tags" : [ "Project env settings" ]
       },
       "post" : {
         "description" : "Creates a new key auth setting",
@@ -29368,7 +29491,7 @@
           }
         },
         "summary" : "Creates a new key auth setting",
-        "tags" : [ "project_env_settings" ],
+        "tags" : [ "Project env settings" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -29434,7 +29557,7 @@
           }
         },
         "summary" : "Deletes key auth setting",
-        "tags" : [ "project_env_settings" ]
+        "tags" : [ "Project env settings" ]
       },
       "get" : {
         "description" : "Gets key auth setting details",
@@ -29497,7 +29620,7 @@
           }
         },
         "summary" : "Gets key auth setting details",
-        "tags" : [ "project_env_settings" ]
+        "tags" : [ "Project env settings" ]
       },
       "put" : {
         "description" : "Updates key auth",
@@ -29571,7 +29694,7 @@
           }
         },
         "summary" : "Updates key auth",
-        "tags" : [ "project_env_settings" ],
+        "tags" : [ "Project env settings" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -29648,7 +29771,7 @@
           }
         },
         "summary" : "Updates key auth status",
-        "tags" : [ "project_env_settings" ],
+        "tags" : [ "Project env settings" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -29734,7 +29857,7 @@
           }
         },
         "summary" : "Lists notification settings",
-        "tags" : [ "project_env_settings" ]
+        "tags" : [ "Project env settings" ]
       },
       "post" : {
         "description" : "Creates a new notification setting",
@@ -29800,7 +29923,7 @@
           }
         },
         "summary" : "Creates a new notification setting",
-        "tags" : [ "project_env_settings" ],
+        "tags" : [ "Project env settings" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -29866,7 +29989,7 @@
           }
         },
         "summary" : "Deletes notification setting",
-        "tags" : [ "project_env_settings" ]
+        "tags" : [ "Project env settings" ]
       },
       "get" : {
         "description" : "Gets notification setting details",
@@ -29929,7 +30052,7 @@
           }
         },
         "summary" : "Gets notification setting details",
-        "tags" : [ "project_env_settings" ]
+        "tags" : [ "Project env settings" ]
       },
       "put" : {
         "description" : "Updates notification",
@@ -30003,7 +30126,7 @@
           }
         },
         "summary" : "Updates notification",
-        "tags" : [ "project_env_settings" ],
+        "tags" : [ "Project env settings" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -30080,7 +30203,7 @@
           }
         },
         "summary" : "Updates notification status",
-        "tags" : [ "project_env_settings" ],
+        "tags" : [ "Project env settings" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -30166,7 +30289,7 @@
           }
         },
         "summary" : "Lists registry auth settings",
-        "tags" : [ "project_env_settings" ]
+        "tags" : [ "Project env settings" ]
       },
       "post" : {
         "description" : "Creates a new registry auth setting",
@@ -30232,7 +30355,7 @@
           }
         },
         "summary" : "Creates a new registry auth setting",
-        "tags" : [ "project_env_settings" ],
+        "tags" : [ "Project env settings" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -30298,7 +30421,7 @@
           }
         },
         "summary" : "Deletes registry auth setting",
-        "tags" : [ "project_env_settings" ]
+        "tags" : [ "Project env settings" ]
       },
       "get" : {
         "description" : "Gets registry auth setting details",
@@ -30361,7 +30484,7 @@
           }
         },
         "summary" : "Gets registry auth setting details",
-        "tags" : [ "project_env_settings" ]
+        "tags" : [ "Project env settings" ]
       },
       "put" : {
         "description" : "Updates registry auth",
@@ -30435,7 +30558,7 @@
           }
         },
         "summary" : "Updates registry auth",
-        "tags" : [ "project_env_settings" ],
+        "tags" : [ "Project env settings" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -30512,7 +30635,7 @@
           }
         },
         "summary" : "Updates registry auth status",
-        "tags" : [ "project_env_settings" ],
+        "tags" : [ "Project env settings" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -30598,7 +30721,7 @@
           }
         },
         "summary" : "Lists webhook settings",
-        "tags" : [ "project_env_settings" ]
+        "tags" : [ "Project env settings" ]
       }
     },
     "/projects/{projectID}/{projectEnv}/repo-webhooks/{itemID}" : {
@@ -30663,7 +30786,7 @@
           }
         },
         "summary" : "Gets webhook setting details",
-        "tags" : [ "project_env_settings" ]
+        "tags" : [ "Project env settings" ]
       }
     },
     "/projects/{projectID}/{projectEnv}/sched-jobs" : {
@@ -30769,7 +30892,7 @@
           }
         },
         "summary" : "Lists an env's scheduled jobs with its apps'",
-        "tags" : [ "project_env_settings" ]
+        "tags" : [ "Project env settings" ]
       },
       "post" : {
         "description" : "Creates an env's scheduled job: a job sequence of its apps' jobs.",
@@ -30835,7 +30958,7 @@
           }
         },
         "summary" : "Creates an env's scheduled job",
-        "tags" : [ "project_env_settings" ],
+        "tags" : [ "Project env settings" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -30901,7 +31024,7 @@
           }
         },
         "summary" : "Deletes an env's scheduled job",
-        "tags" : [ "project_env_settings" ]
+        "tags" : [ "Project env settings" ]
       },
       "get" : {
         "description" : "Gets an env's scheduled job",
@@ -30964,7 +31087,7 @@
           }
         },
         "summary" : "Gets an env's scheduled job",
-        "tags" : [ "project_env_settings" ]
+        "tags" : [ "Project env settings" ]
       },
       "put" : {
         "description" : "Updates an env's scheduled job",
@@ -31038,7 +31161,7 @@
           }
         },
         "summary" : "Updates an env's scheduled job",
-        "tags" : [ "project_env_settings" ],
+        "tags" : [ "Project env settings" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -31115,7 +31238,7 @@
           }
         },
         "summary" : "Runs an env's scheduled job now",
-        "tags" : [ "project_env_settings" ],
+        "tags" : [ "Project env settings" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -31192,7 +31315,7 @@
           }
         },
         "summary" : "Enables or disables an env's scheduled job",
-        "tags" : [ "project_env_settings" ],
+        "tags" : [ "Project env settings" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -31257,7 +31380,7 @@
           }
         },
         "summary" : "Lists project secrets",
-        "tags" : [ "project_env_settings" ]
+        "tags" : [ "Project env settings" ]
       },
       "post" : {
         "description" : "Creates a project secret",
@@ -31323,7 +31446,7 @@
           }
         },
         "summary" : "Creates a project secret",
-        "tags" : [ "project_env_settings" ],
+        "tags" : [ "Project env settings" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -31389,7 +31512,7 @@
           }
         },
         "summary" : "Deletes a project secret",
-        "tags" : [ "project_env_settings" ]
+        "tags" : [ "Project env settings" ]
       },
       "get" : {
         "description" : "Gets secret details",
@@ -31452,7 +31575,7 @@
           }
         },
         "summary" : "Gets secret details",
-        "tags" : [ "project_env_settings" ]
+        "tags" : [ "Project env settings" ]
       },
       "put" : {
         "description" : "Updates a project secret",
@@ -31526,7 +31649,7 @@
           }
         },
         "summary" : "Updates a project secret",
-        "tags" : [ "project_env_settings" ],
+        "tags" : [ "Project env settings" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -31603,7 +31726,7 @@
           }
         },
         "summary" : "Updates project secret status",
-        "tags" : [ "project_env_settings" ],
+        "tags" : [ "Project env settings" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -31672,7 +31795,7 @@
           }
         },
         "summary" : "Imports settings from global to a project",
-        "tags" : [ "project_env_settings" ],
+        "tags" : [ "Project env settings" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -31702,7 +31825,7 @@
           }
         },
         "summary" : "Export one project env as a configuration spec",
-        "tags" : [ "spec" ]
+        "tags" : [ "Configuration specs" ]
       }
     },
     "/projects/{projectID}/{projectEnv}/spec/import/apply" : {
@@ -31748,7 +31871,7 @@
           }
         },
         "summary" : "Import a configuration bundle into one project env",
-        "tags" : [ "spec" ],
+        "tags" : [ "Configuration specs" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -31795,7 +31918,7 @@
           }
         },
         "summary" : "Plan importing a configuration bundle into one project env",
-        "tags" : [ "spec" ],
+        "tags" : [ "Configuration specs" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -31881,7 +32004,7 @@
           }
         },
         "summary" : "Lists ssh-key settings",
-        "tags" : [ "project_env_settings" ]
+        "tags" : [ "Project env settings" ]
       },
       "post" : {
         "description" : "Creates a new ssh-key setting",
@@ -31947,7 +32070,7 @@
           }
         },
         "summary" : "Creates a new ssh-key setting",
-        "tags" : [ "project_env_settings" ],
+        "tags" : [ "Project env settings" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -32013,7 +32136,7 @@
           }
         },
         "summary" : "Deletes ssh-key setting",
-        "tags" : [ "project_env_settings" ]
+        "tags" : [ "Project env settings" ]
       },
       "get" : {
         "description" : "Gets ssh-key setting details",
@@ -32076,7 +32199,7 @@
           }
         },
         "summary" : "Gets ssh-key setting details",
-        "tags" : [ "project_env_settings" ]
+        "tags" : [ "Project env settings" ]
       },
       "put" : {
         "description" : "Updates ssh-key",
@@ -32150,7 +32273,7 @@
           }
         },
         "summary" : "Updates ssh-key",
-        "tags" : [ "project_env_settings" ],
+        "tags" : [ "Project env settings" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -32227,7 +32350,7 @@
           }
         },
         "summary" : "Updates ssh-key status",
-        "tags" : [ "project_env_settings" ],
+        "tags" : [ "Project env settings" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -32313,7 +32436,7 @@
           }
         },
         "summary" : "Lists SSL certs",
-        "tags" : [ "project_env_settings" ]
+        "tags" : [ "Project env settings" ]
       },
       "post" : {
         "description" : "Creates a new SSL cert",
@@ -32379,7 +32502,7 @@
           }
         },
         "summary" : "Creates a new SSL cert",
-        "tags" : [ "project_env_settings" ],
+        "tags" : [ "Project env settings" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -32445,7 +32568,7 @@
           }
         },
         "summary" : "Deletes an SSL cert",
-        "tags" : [ "project_env_settings" ]
+        "tags" : [ "Project env settings" ]
       },
       "get" : {
         "description" : "Gets SSL cert details",
@@ -32508,7 +32631,7 @@
           }
         },
         "summary" : "Gets SSL cert details",
-        "tags" : [ "project_env_settings" ]
+        "tags" : [ "Project env settings" ]
       },
       "put" : {
         "description" : "Updates an SSL cert",
@@ -32582,7 +32705,7 @@
           }
         },
         "summary" : "Updates an SSL cert",
-        "tags" : [ "project_env_settings" ],
+        "tags" : [ "Project env settings" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -32649,7 +32772,7 @@
           }
         },
         "summary" : "Downloads SSL cert bundle",
-        "tags" : [ "project_env_settings" ]
+        "tags" : [ "Project env settings" ]
       }
     },
     "/projects/{projectID}/{projectEnv}/ssl-certs/{itemID}/renew" : {
@@ -32725,7 +32848,7 @@
           }
         },
         "summary" : "Renews SSL cert",
-        "tags" : [ "project_env_settings" ],
+        "tags" : [ "Project env settings" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -32802,7 +32925,7 @@
           }
         },
         "summary" : "Updates SSL cert status",
-        "tags" : [ "project_env_settings" ],
+        "tags" : [ "Project env settings" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -32888,7 +33011,7 @@
           }
         },
         "summary" : "Lists SSL providers",
-        "tags" : [ "project_env_settings" ]
+        "tags" : [ "Project env settings" ]
       },
       "post" : {
         "description" : "Creates a new SSL provider",
@@ -32954,7 +33077,7 @@
           }
         },
         "summary" : "Creates a new SSL provider",
-        "tags" : [ "project_env_settings" ],
+        "tags" : [ "Project env settings" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -33020,7 +33143,7 @@
           }
         },
         "summary" : "Deletes an SSL provider",
-        "tags" : [ "project_env_settings" ]
+        "tags" : [ "Project env settings" ]
       },
       "get" : {
         "description" : "Gets SSL provider details",
@@ -33083,7 +33206,7 @@
           }
         },
         "summary" : "Gets SSL provider details",
-        "tags" : [ "project_env_settings" ]
+        "tags" : [ "Project env settings" ]
       },
       "put" : {
         "description" : "Updates an SSL provider",
@@ -33157,7 +33280,7 @@
           }
         },
         "summary" : "Updates an SSL provider",
-        "tags" : [ "project_env_settings" ],
+        "tags" : [ "Project env settings" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -33234,7 +33357,7 @@
           }
         },
         "summary" : "Updates SSL provider status",
-        "tags" : [ "project_env_settings" ],
+        "tags" : [ "Project env settings" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -33303,7 +33426,7 @@
           }
         },
         "summary" : "Updates project env status",
-        "tags" : [ "project_envs" ],
+        "tags" : [ "Project envs" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -33389,7 +33512,7 @@
           }
         },
         "summary" : "Lists tasks",
-        "tags" : [ "project_env_tasks" ]
+        "tags" : [ "Project env tasks" ]
       }
     },
     "/projects/{projectID}/{projectEnv}/tasks/target-objects" : {
@@ -33446,7 +33569,7 @@
           }
         },
         "summary" : "Lists task target objects",
-        "tags" : [ "project_env_tasks" ]
+        "tags" : [ "Project env tasks" ]
       }
     },
     "/projects/{projectID}/{projectEnv}/tasks/types" : {
@@ -33503,7 +33626,7 @@
           }
         },
         "summary" : "Lists task types",
-        "tags" : [ "project_env_tasks" ]
+        "tags" : [ "Project env tasks" ]
       }
     },
     "/projects/{projectID}/{projectEnv}/tasks/{itemID}" : {
@@ -33568,7 +33691,7 @@
           }
         },
         "summary" : "Gets task",
-        "tags" : [ "project_env_tasks" ]
+        "tags" : [ "Project env tasks" ]
       }
     },
     "/projects/{projectID}/{projectEnv}/tasks/{itemID}/cancel" : {
@@ -33633,7 +33756,7 @@
           }
         },
         "summary" : "Cancels task",
-        "tags" : [ "project_env_tasks" ]
+        "tags" : [ "Project env tasks" ]
       }
     },
     "/projects/{projectID}/{projectEnv}/tasks/{itemID}/logs" : {
@@ -33698,7 +33821,7 @@
           }
         },
         "summary" : "Gets task logs",
-        "tags" : [ "project_env_tasks" ]
+        "tags" : [ "Project env tasks" ]
       }
     },
     "/projects/{projectID}/{projectEnv}/tasks/{itemID}/status" : {
@@ -33763,7 +33886,7 @@
           }
         },
         "summary" : "Gets task status",
-        "tags" : [ "project_env_tasks" ]
+        "tags" : [ "Project env tasks" ]
       }
     },
     "/sessions" : {
@@ -33803,7 +33926,7 @@
           }
         },
         "summary" : "Deletes the current user session",
-        "tags" : [ "sessions" ]
+        "tags" : [ "Sessions" ]
       }
     },
     "/sessions/delete-all" : {
@@ -33843,7 +33966,7 @@
           }
         },
         "summary" : "Deletes all sessions of the user",
-        "tags" : [ "sessions" ]
+        "tags" : [ "Sessions" ]
       }
     },
     "/sessions/me" : {
@@ -33891,7 +34014,7 @@
           }
         },
         "summary" : "Gets session info of the current user",
-        "tags" : [ "sessions" ]
+        "tags" : [ "Sessions" ]
       }
     },
     "/sessions/refresh" : {
@@ -33931,7 +34054,7 @@
           }
         },
         "summary" : "Refreshes the current user session",
-        "tags" : [ "sessions" ]
+        "tags" : [ "Sessions" ]
       }
     },
     "/settings/access-tokens" : {
@@ -34000,7 +34123,7 @@
           }
         },
         "summary" : "Lists access-token settings",
-        "tags" : [ "settings" ]
+        "tags" : [ "Global settings" ]
       },
       "post" : {
         "description" : "Creates a new access-token setting",
@@ -34049,7 +34172,7 @@
           }
         },
         "summary" : "Creates a new access-token setting",
-        "tags" : [ "settings" ],
+        "tags" : [ "Global settings" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -34101,7 +34224,7 @@
           }
         },
         "summary" : "Test access-token connection",
-        "tags" : [ "settings" ],
+        "tags" : [ "Global settings" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -34151,7 +34274,7 @@
           }
         },
         "summary" : "Deletes access-token setting",
-        "tags" : [ "settings" ]
+        "tags" : [ "Global settings" ]
       },
       "get" : {
         "description" : "Gets access-token setting details",
@@ -34198,7 +34321,7 @@
           }
         },
         "summary" : "Gets access-token setting details",
-        "tags" : [ "settings" ]
+        "tags" : [ "Global settings" ]
       },
       "put" : {
         "description" : "Updates access-token",
@@ -34256,7 +34379,7 @@
           }
         },
         "summary" : "Updates access-token",
-        "tags" : [ "settings" ],
+        "tags" : [ "Global settings" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -34317,7 +34440,7 @@
           }
         },
         "summary" : "Updates access-token status",
-        "tags" : [ "settings" ],
+        "tags" : [ "Global settings" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -34387,7 +34510,7 @@
           }
         },
         "summary" : "Lists ACME DNS providers",
-        "tags" : [ "settings" ]
+        "tags" : [ "Global settings" ]
       },
       "post" : {
         "description" : "Creates a new ACME DNS provider",
@@ -34436,7 +34559,7 @@
           }
         },
         "summary" : "Creates a new ACME DNS provider",
-        "tags" : [ "settings" ],
+        "tags" : [ "Global settings" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -34488,7 +34611,7 @@
           }
         },
         "summary" : "Tests provider access",
-        "tags" : [ "settings" ],
+        "tags" : [ "Global settings" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -34538,7 +34661,7 @@
           }
         },
         "summary" : "Deletes ACME DNS provider",
-        "tags" : [ "settings" ]
+        "tags" : [ "Global settings" ]
       },
       "get" : {
         "description" : "Gets ACME DNS provider details",
@@ -34585,7 +34708,7 @@
           }
         },
         "summary" : "Gets ACME DNS provider details",
-        "tags" : [ "settings" ]
+        "tags" : [ "Global settings" ]
       },
       "put" : {
         "description" : "Updates ACME DNS provider",
@@ -34643,7 +34766,7 @@
           }
         },
         "summary" : "Updates ACME DNS provider",
-        "tags" : [ "settings" ],
+        "tags" : [ "Global settings" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -34704,7 +34827,7 @@
           }
         },
         "summary" : "Updates ACME DNS provider status",
-        "tags" : [ "settings" ],
+        "tags" : [ "Global settings" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -34745,7 +34868,7 @@
           }
         },
         "summary" : "Deletes app placement settings",
-        "tags" : [ "settings" ]
+        "tags" : [ "Global settings" ]
       },
       "get" : {
         "description" : "Gets app placement settings",
@@ -34783,7 +34906,7 @@
           }
         },
         "summary" : "Gets app placement settings",
-        "tags" : [ "settings" ]
+        "tags" : [ "Global settings" ]
       },
       "put" : {
         "description" : "Updates app placement settings",
@@ -34832,7 +34955,7 @@
           }
         },
         "summary" : "Updates app placement settings",
-        "tags" : [ "settings" ],
+        "tags" : [ "Global settings" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -34884,7 +35007,7 @@
           }
         },
         "summary" : "Updates app placement settings status",
-        "tags" : [ "settings" ],
+        "tags" : [ "Global settings" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -34954,7 +35077,7 @@
           }
         },
         "summary" : "Lists backup repositories",
-        "tags" : [ "settings" ]
+        "tags" : [ "Global settings" ]
       },
       "post" : {
         "description" : "Creates a new backup repository on the storage backend, or adopts an existing one\nwhen `importExisting` is set, in which case the snapshots already in the repository\nare read back and stored.",
@@ -35003,7 +35126,7 @@
           }
         },
         "summary" : "Creates a new backup repository",
-        "tags" : [ "settings" ],
+        "tags" : [ "Global settings" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -35053,7 +35176,7 @@
           }
         },
         "summary" : "Deletes a backup repository",
-        "tags" : [ "settings" ]
+        "tags" : [ "Global settings" ]
       },
       "get" : {
         "description" : "Gets backup repository details",
@@ -35100,7 +35223,7 @@
           }
         },
         "summary" : "Gets backup repository details",
-        "tags" : [ "settings" ]
+        "tags" : [ "Global settings" ]
       },
       "put" : {
         "description" : "Updates a backup repository",
@@ -35158,7 +35281,7 @@
           }
         },
         "summary" : "Updates a backup repository",
-        "tags" : [ "settings" ],
+        "tags" : [ "Global settings" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -35208,7 +35331,7 @@
           }
         },
         "summary" : "Cleans up a backup repository",
-        "tags" : [ "settings" ]
+        "tags" : [ "Global settings" ]
       }
     },
     "/settings/backup-repos/{itemID}/password" : {
@@ -35268,7 +35391,7 @@
           }
         },
         "summary" : "Changes a backup repository's password",
-        "tags" : [ "settings" ],
+        "tags" : [ "Global settings" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -35329,7 +35452,7 @@
           }
         },
         "summary" : "Updates a backup repository's status",
-        "tags" : [ "settings" ],
+        "tags" : [ "Global settings" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -35379,7 +35502,7 @@
           }
         },
         "summary" : "Syncs a backup repository back into its setting",
-        "tags" : [ "settings" ]
+        "tags" : [ "Global settings" ]
       }
     },
     "/settings/backup-snapshots" : {
@@ -35491,7 +35614,7 @@
           }
         },
         "summary" : "Lists the backup snapshots the scope sees",
-        "tags" : [ "settings" ]
+        "tags" : [ "Global settings" ]
       }
     },
     "/settings/backup-snapshots/{itemID}" : {
@@ -35550,7 +35673,7 @@
           }
         },
         "summary" : "Deletes a backup snapshot",
-        "tags" : [ "settings" ]
+        "tags" : [ "Global settings" ]
       },
       "get" : {
         "description" : "Gets a backup snapshot the scope sees",
@@ -35607,7 +35730,7 @@
           }
         },
         "summary" : "Gets a backup snapshot",
-        "tags" : [ "settings" ]
+        "tags" : [ "Global settings" ]
       }
     },
     "/settings/basic-auth" : {
@@ -35676,7 +35799,7 @@
           }
         },
         "summary" : "Lists basic auth settings",
-        "tags" : [ "settings" ]
+        "tags" : [ "Global settings" ]
       },
       "post" : {
         "description" : "Creates a new basic auth setting",
@@ -35725,7 +35848,7 @@
           }
         },
         "summary" : "Creates a new basic auth setting",
-        "tags" : [ "settings" ],
+        "tags" : [ "Global settings" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -35775,7 +35898,7 @@
           }
         },
         "summary" : "Deletes basic auth setting",
-        "tags" : [ "settings" ]
+        "tags" : [ "Global settings" ]
       },
       "get" : {
         "description" : "Gets basic auth setting details",
@@ -35822,7 +35945,7 @@
           }
         },
         "summary" : "Gets basic auth setting details",
-        "tags" : [ "settings" ]
+        "tags" : [ "Global settings" ]
       },
       "put" : {
         "description" : "Updates basic auth",
@@ -35880,7 +36003,7 @@
           }
         },
         "summary" : "Updates basic auth",
-        "tags" : [ "settings" ],
+        "tags" : [ "Global settings" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -35941,7 +36064,7 @@
           }
         },
         "summary" : "Updates basic auth status",
-        "tags" : [ "settings" ],
+        "tags" : [ "Global settings" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -36011,7 +36134,7 @@
           }
         },
         "summary" : "Lists cloud storages",
-        "tags" : [ "settings" ]
+        "tags" : [ "Global settings" ]
       },
       "post" : {
         "description" : "Creates a new cloud storage",
@@ -36060,7 +36183,7 @@
           }
         },
         "summary" : "Creates a new cloud storage",
-        "tags" : [ "settings" ],
+        "tags" : [ "Global settings" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -36112,7 +36235,7 @@
           }
         },
         "summary" : "Test cloud storage connection",
-        "tags" : [ "settings" ],
+        "tags" : [ "Global settings" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -36162,7 +36285,7 @@
           }
         },
         "summary" : "Deletes a cloud storage",
-        "tags" : [ "settings" ]
+        "tags" : [ "Global settings" ]
       },
       "get" : {
         "description" : "Gets cloud storage details",
@@ -36209,7 +36332,7 @@
           }
         },
         "summary" : "Gets cloud storage details",
-        "tags" : [ "settings" ]
+        "tags" : [ "Global settings" ]
       },
       "put" : {
         "description" : "Updates a cloud storage",
@@ -36267,7 +36390,7 @@
           }
         },
         "summary" : "Updates a cloud storage",
-        "tags" : [ "settings" ],
+        "tags" : [ "Global settings" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -36328,7 +36451,7 @@
           }
         },
         "summary" : "Updates a cloud storage's status",
-        "tags" : [ "settings" ],
+        "tags" : [ "Global settings" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -36369,7 +36492,7 @@
           }
         },
         "summary" : "Deletes domain settings setting",
-        "tags" : [ "settings" ]
+        "tags" : [ "Global settings" ]
       },
       "get" : {
         "description" : "Gets domain settings details",
@@ -36407,7 +36530,7 @@
           }
         },
         "summary" : "Gets domain settings details",
-        "tags" : [ "settings" ]
+        "tags" : [ "Global settings" ]
       },
       "put" : {
         "description" : "Updates domain settings",
@@ -36456,7 +36579,7 @@
           }
         },
         "summary" : "Updates domain settings",
-        "tags" : [ "settings" ],
+        "tags" : [ "Global settings" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -36508,7 +36631,7 @@
           }
         },
         "summary" : "Updates domain settings status",
-        "tags" : [ "settings" ],
+        "tags" : [ "Global settings" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -36578,7 +36701,7 @@
           }
         },
         "summary" : "Lists e-mail settings",
-        "tags" : [ "settings" ]
+        "tags" : [ "Global settings" ]
       },
       "post" : {
         "description" : "Creates a new e-mail setting",
@@ -36627,7 +36750,7 @@
           }
         },
         "summary" : "Creates a new e-mail setting",
-        "tags" : [ "settings" ],
+        "tags" : [ "Global settings" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -36679,7 +36802,7 @@
           }
         },
         "summary" : "Tests sending an email",
-        "tags" : [ "settings" ],
+        "tags" : [ "Global settings" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -36729,7 +36852,7 @@
           }
         },
         "summary" : "Deletes e-mail setting",
-        "tags" : [ "settings" ]
+        "tags" : [ "Global settings" ]
       },
       "get" : {
         "description" : "Gets e-mail setting details",
@@ -36776,7 +36899,7 @@
           }
         },
         "summary" : "Gets e-mail setting details",
-        "tags" : [ "settings" ]
+        "tags" : [ "Global settings" ]
       },
       "put" : {
         "description" : "Updates e-mail setting",
@@ -36834,7 +36957,7 @@
           }
         },
         "summary" : "Updates e-mail setting",
-        "tags" : [ "settings" ],
+        "tags" : [ "Global settings" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -36895,7 +37018,7 @@
           }
         },
         "summary" : "Updates email setting status",
-        "tags" : [ "settings" ],
+        "tags" : [ "Global settings" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -36965,7 +37088,7 @@
           }
         },
         "summary" : "Lists git credential settings",
-        "tags" : [ "settings" ]
+        "tags" : [ "Global settings" ]
       }
     },
     "/settings/github-apps" : {
@@ -37034,7 +37157,7 @@
           }
         },
         "summary" : "Lists github-app settings",
-        "tags" : [ "settings" ]
+        "tags" : [ "Global settings" ]
       },
       "post" : {
         "description" : "Creates a new github-app setting",
@@ -37083,7 +37206,7 @@
           }
         },
         "summary" : "Creates a new github-app setting",
-        "tags" : [ "settings" ],
+        "tags" : [ "Global settings" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -37135,7 +37258,7 @@
           }
         },
         "summary" : "List github app installation",
-        "tags" : [ "settings" ],
+        "tags" : [ "Global settings" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -37187,7 +37310,7 @@
           }
         },
         "summary" : "Begins a github-app manifest flow",
-        "tags" : [ "settings" ],
+        "tags" : [ "Global settings" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -37239,7 +37362,7 @@
           }
         },
         "summary" : "Test github app connection",
-        "tags" : [ "settings" ],
+        "tags" : [ "Global settings" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -37289,7 +37412,7 @@
           }
         },
         "summary" : "Deletes github-app setting",
-        "tags" : [ "settings" ]
+        "tags" : [ "Global settings" ]
       },
       "get" : {
         "description" : "Gets github-app setting details",
@@ -37336,7 +37459,7 @@
           }
         },
         "summary" : "Gets github-app setting details",
-        "tags" : [ "settings" ]
+        "tags" : [ "Global settings" ]
       },
       "put" : {
         "description" : "Updates github-app",
@@ -37394,7 +37517,7 @@
           }
         },
         "summary" : "Updates github-app",
-        "tags" : [ "settings" ],
+        "tags" : [ "Global settings" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -37455,7 +37578,7 @@
           }
         },
         "summary" : "Begins reprovisioning a github-app through manifest flow",
-        "tags" : [ "settings" ],
+        "tags" : [ "Global settings" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -37499,7 +37622,7 @@
           }
         },
         "summary" : "Begins a github-app manifest flow of creation",
-        "tags" : [ "settings" ]
+        "tags" : [ "Global settings" ]
       }
     },
     "/settings/github-apps/{itemID}/manifest-flow/progress" : {
@@ -37542,7 +37665,7 @@
           }
         },
         "summary" : "Handles progress of github-app manifest flow",
-        "tags" : [ "settings" ]
+        "tags" : [ "Global settings" ]
       }
     },
     "/settings/github-apps/{itemID}/status" : {
@@ -37602,7 +37725,7 @@
           }
         },
         "summary" : "Updates github-app status",
-        "tags" : [ "settings" ],
+        "tags" : [ "Global settings" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -37672,7 +37795,7 @@
           }
         },
         "summary" : "Lists IM services",
-        "tags" : [ "settings" ]
+        "tags" : [ "Global settings" ]
       },
       "post" : {
         "description" : "Creates a new IM service",
@@ -37721,7 +37844,7 @@
           }
         },
         "summary" : "Creates a new IM service",
-        "tags" : [ "settings" ],
+        "tags" : [ "Global settings" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -37773,7 +37896,7 @@
           }
         },
         "summary" : "Tests sending a msg",
-        "tags" : [ "settings" ],
+        "tags" : [ "Global settings" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -37823,7 +37946,7 @@
           }
         },
         "summary" : "Deletes IM service",
-        "tags" : [ "settings" ]
+        "tags" : [ "Global settings" ]
       },
       "get" : {
         "description" : "Gets IM service details",
@@ -37870,7 +37993,7 @@
           }
         },
         "summary" : "Gets IM service details",
-        "tags" : [ "settings" ]
+        "tags" : [ "Global settings" ]
       },
       "put" : {
         "description" : "Updates IM service",
@@ -37928,7 +38051,7 @@
           }
         },
         "summary" : "Updates IM service",
-        "tags" : [ "settings" ],
+        "tags" : [ "Global settings" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -37989,7 +38112,7 @@
           }
         },
         "summary" : "Updates IMService status setting",
-        "tags" : [ "settings" ],
+        "tags" : [ "Global settings" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -38030,7 +38153,7 @@
           }
         },
         "summary" : "Deletes image build settings",
-        "tags" : [ "settings" ]
+        "tags" : [ "Global settings" ]
       },
       "get" : {
         "description" : "Gets image build settings",
@@ -38068,7 +38191,7 @@
           }
         },
         "summary" : "Gets image build settings",
-        "tags" : [ "settings" ]
+        "tags" : [ "Global settings" ]
       },
       "put" : {
         "description" : "Updates image build settings",
@@ -38117,7 +38240,7 @@
           }
         },
         "summary" : "Updates image build settings",
-        "tags" : [ "settings" ],
+        "tags" : [ "Global settings" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -38158,7 +38281,7 @@
           }
         },
         "summary" : "Gets repo cache info",
-        "tags" : [ "settings" ]
+        "tags" : [ "Global settings" ]
       }
     },
     "/settings/image-build-settings/repo-cache/clear" : {
@@ -38209,7 +38332,7 @@
           }
         },
         "summary" : "Clears repo cache",
-        "tags" : [ "settings" ],
+        "tags" : [ "Global settings" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -38261,7 +38384,7 @@
           }
         },
         "summary" : "Updates image build settings status",
-        "tags" : [ "settings" ],
+        "tags" : [ "Global settings" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -38331,7 +38454,7 @@
           }
         },
         "summary" : "Lists key auth settings",
-        "tags" : [ "settings" ]
+        "tags" : [ "Global settings" ]
       },
       "post" : {
         "description" : "Creates a new key auth setting",
@@ -38380,7 +38503,7 @@
           }
         },
         "summary" : "Creates a new key auth setting",
-        "tags" : [ "settings" ],
+        "tags" : [ "Global settings" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -38430,7 +38553,7 @@
           }
         },
         "summary" : "Deletes key auth setting",
-        "tags" : [ "settings" ]
+        "tags" : [ "Global settings" ]
       },
       "get" : {
         "description" : "Gets key auth setting details",
@@ -38477,7 +38600,7 @@
           }
         },
         "summary" : "Gets key auth setting details",
-        "tags" : [ "settings" ]
+        "tags" : [ "Global settings" ]
       },
       "put" : {
         "description" : "Updates key auth",
@@ -38535,7 +38658,7 @@
           }
         },
         "summary" : "Updates key auth",
-        "tags" : [ "settings" ],
+        "tags" : [ "Global settings" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -38596,7 +38719,7 @@
           }
         },
         "summary" : "Updates key auth status",
-        "tags" : [ "settings" ],
+        "tags" : [ "Global settings" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -38666,7 +38789,7 @@
           }
         },
         "summary" : "Lists notification settings",
-        "tags" : [ "settings" ]
+        "tags" : [ "Global settings" ]
       },
       "post" : {
         "description" : "Creates a new notification setting",
@@ -38715,7 +38838,7 @@
           }
         },
         "summary" : "Creates a new notification setting",
-        "tags" : [ "settings" ],
+        "tags" : [ "Global settings" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -38765,7 +38888,7 @@
           }
         },
         "summary" : "Deletes notification setting",
-        "tags" : [ "settings" ]
+        "tags" : [ "Global settings" ]
       },
       "get" : {
         "description" : "Gets notification setting details",
@@ -38812,7 +38935,7 @@
           }
         },
         "summary" : "Gets notification setting details",
-        "tags" : [ "settings" ]
+        "tags" : [ "Global settings" ]
       },
       "put" : {
         "description" : "Updates notification",
@@ -38870,7 +38993,7 @@
           }
         },
         "summary" : "Updates notification",
-        "tags" : [ "settings" ],
+        "tags" : [ "Global settings" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -38931,7 +39054,7 @@
           }
         },
         "summary" : "Updates notification status",
-        "tags" : [ "settings" ],
+        "tags" : [ "Global settings" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -39001,7 +39124,7 @@
           }
         },
         "summary" : "Lists oauth settings",
-        "tags" : [ "settings" ]
+        "tags" : [ "Global settings" ]
       },
       "post" : {
         "description" : "Creates a new oauth setting",
@@ -39050,7 +39173,7 @@
           }
         },
         "summary" : "Creates a new oauth setting",
-        "tags" : [ "settings" ],
+        "tags" : [ "Global settings" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -39100,7 +39223,7 @@
           }
         },
         "summary" : "Deletes oauth setting",
-        "tags" : [ "settings" ]
+        "tags" : [ "Global settings" ]
       },
       "get" : {
         "description" : "Gets oauth setting details",
@@ -39147,7 +39270,7 @@
           }
         },
         "summary" : "Gets oauth setting details",
-        "tags" : [ "settings" ]
+        "tags" : [ "Global settings" ]
       },
       "put" : {
         "description" : "Updates oauth",
@@ -39205,7 +39328,7 @@
           }
         },
         "summary" : "Updates oauth",
-        "tags" : [ "settings" ],
+        "tags" : [ "Global settings" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -39266,7 +39389,7 @@
           }
         },
         "summary" : "Updates oauth status",
-        "tags" : [ "settings" ],
+        "tags" : [ "Global settings" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -39336,7 +39459,7 @@
           }
         },
         "summary" : "Lists registry auth settings",
-        "tags" : [ "settings" ]
+        "tags" : [ "Global settings" ]
       },
       "post" : {
         "description" : "Creates a new registry auth setting",
@@ -39385,7 +39508,7 @@
           }
         },
         "summary" : "Creates a new registry auth setting",
-        "tags" : [ "settings" ],
+        "tags" : [ "Global settings" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -39437,7 +39560,7 @@
           }
         },
         "summary" : "Tests registry auth connection",
-        "tags" : [ "settings" ],
+        "tags" : [ "Global settings" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -39487,7 +39610,7 @@
           }
         },
         "summary" : "Deletes registry auth setting",
-        "tags" : [ "settings" ]
+        "tags" : [ "Global settings" ]
       },
       "get" : {
         "description" : "Gets registry auth setting details",
@@ -39534,7 +39657,7 @@
           }
         },
         "summary" : "Gets registry auth setting details",
-        "tags" : [ "settings" ]
+        "tags" : [ "Global settings" ]
       },
       "put" : {
         "description" : "Updates registry auth",
@@ -39592,7 +39715,7 @@
           }
         },
         "summary" : "Updates registry auth",
-        "tags" : [ "settings" ],
+        "tags" : [ "Global settings" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -39653,7 +39776,7 @@
           }
         },
         "summary" : "Updates registry auth status",
-        "tags" : [ "settings" ],
+        "tags" : [ "Global settings" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -39723,7 +39846,7 @@
           }
         },
         "summary" : "Lists webhook settings",
-        "tags" : [ "settings" ]
+        "tags" : [ "Global settings" ]
       },
       "post" : {
         "description" : "Creates a new webhook setting",
@@ -39772,7 +39895,7 @@
           }
         },
         "summary" : "Creates a new webhook setting",
-        "tags" : [ "settings" ],
+        "tags" : [ "Global settings" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -39822,7 +39945,7 @@
           }
         },
         "summary" : "Deletes webhook setting",
-        "tags" : [ "settings" ]
+        "tags" : [ "Global settings" ]
       },
       "get" : {
         "description" : "Gets webhook setting details",
@@ -39869,7 +39992,7 @@
           }
         },
         "summary" : "Gets webhook setting details",
-        "tags" : [ "settings" ]
+        "tags" : [ "Global settings" ]
       },
       "put" : {
         "description" : "Updates webhook",
@@ -39927,7 +40050,7 @@
           }
         },
         "summary" : "Updates webhook",
-        "tags" : [ "settings" ],
+        "tags" : [ "Global settings" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -39988,7 +40111,7 @@
           }
         },
         "summary" : "Updates webhook status",
-        "tags" : [ "settings" ],
+        "tags" : [ "Global settings" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -40058,7 +40181,7 @@
           }
         },
         "summary" : "Lists sched-jobs",
-        "tags" : [ "settings" ]
+        "tags" : [ "Global settings" ]
       },
       "post" : {
         "description" : "Creates a new sched-job",
@@ -40107,7 +40230,7 @@
           }
         },
         "summary" : "Creates a new sched-job",
-        "tags" : [ "settings" ],
+        "tags" : [ "Global settings" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -40159,7 +40282,7 @@
           }
         },
         "summary" : "Calculates next runs of the job",
-        "tags" : [ "settings" ],
+        "tags" : [ "Global settings" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -40209,7 +40332,7 @@
           }
         },
         "summary" : "Deletes sched-job",
-        "tags" : [ "settings" ]
+        "tags" : [ "Global settings" ]
       },
       "get" : {
         "description" : "Gets sched-job details",
@@ -40256,7 +40379,7 @@
           }
         },
         "summary" : "Gets sched-job details",
-        "tags" : [ "settings" ]
+        "tags" : [ "Global settings" ]
       },
       "put" : {
         "description" : "Updates sched-job",
@@ -40314,7 +40437,7 @@
           }
         },
         "summary" : "Updates sched-job",
-        "tags" : [ "settings" ],
+        "tags" : [ "Global settings" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -40375,7 +40498,7 @@
           }
         },
         "summary" : "Updates sched-job status",
-        "tags" : [ "settings" ],
+        "tags" : [ "Global settings" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -40445,7 +40568,7 @@
           }
         },
         "summary" : "Lists ssh-key settings",
-        "tags" : [ "settings" ]
+        "tags" : [ "Global settings" ]
       },
       "post" : {
         "description" : "Creates a new ssh-key setting",
@@ -40494,7 +40617,7 @@
           }
         },
         "summary" : "Creates a new ssh-key setting",
-        "tags" : [ "settings" ],
+        "tags" : [ "Global settings" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -40546,7 +40669,7 @@
           }
         },
         "summary" : "Generates an SSH key",
-        "tags" : [ "settings" ],
+        "tags" : [ "Global settings" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -40596,7 +40719,7 @@
           }
         },
         "summary" : "Deletes sshkey setting",
-        "tags" : [ "settings" ]
+        "tags" : [ "Global settings" ]
       },
       "get" : {
         "description" : "Gets ssh-key setting details",
@@ -40643,7 +40766,7 @@
           }
         },
         "summary" : "Gets ssh-key setting details",
-        "tags" : [ "settings" ]
+        "tags" : [ "Global settings" ]
       },
       "put" : {
         "description" : "Updates ssh-key",
@@ -40701,7 +40824,7 @@
           }
         },
         "summary" : "Updates ssh-key",
-        "tags" : [ "settings" ],
+        "tags" : [ "Global settings" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -40762,7 +40885,7 @@
           }
         },
         "summary" : "Updates ssh-key status",
-        "tags" : [ "settings" ],
+        "tags" : [ "Global settings" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -40832,7 +40955,7 @@
           }
         },
         "summary" : "Lists SSL certs",
-        "tags" : [ "settings" ]
+        "tags" : [ "Global settings" ]
       },
       "post" : {
         "description" : "Creates a new SSL cert",
@@ -40881,7 +41004,7 @@
           }
         },
         "summary" : "Creates a new SSL cert",
-        "tags" : [ "settings" ],
+        "tags" : [ "Global settings" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -40931,7 +41054,7 @@
           }
         },
         "summary" : "Deletes SSL cert",
-        "tags" : [ "settings" ]
+        "tags" : [ "Global settings" ]
       },
       "get" : {
         "description" : "Gets SSL cert details",
@@ -40978,7 +41101,7 @@
           }
         },
         "summary" : "Gets SSL cert details",
-        "tags" : [ "settings" ]
+        "tags" : [ "Global settings" ]
       },
       "put" : {
         "description" : "Updates SSL cert",
@@ -41036,7 +41159,7 @@
           }
         },
         "summary" : "Updates SSL cert",
-        "tags" : [ "settings" ],
+        "tags" : [ "Global settings" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -41087,7 +41210,7 @@
           }
         },
         "summary" : "Downloads SSL cert bundle",
-        "tags" : [ "settings" ]
+        "tags" : [ "Global settings" ]
       }
     },
     "/settings/ssl-certs/{itemID}/renew" : {
@@ -41147,7 +41270,7 @@
           }
         },
         "summary" : "Renews SSL cert",
-        "tags" : [ "settings" ],
+        "tags" : [ "Global settings" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -41208,7 +41331,7 @@
           }
         },
         "summary" : "Updates SSL cert status",
-        "tags" : [ "settings" ],
+        "tags" : [ "Global settings" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -41278,7 +41401,7 @@
           }
         },
         "summary" : "Lists SSL providers",
-        "tags" : [ "settings" ]
+        "tags" : [ "Global settings" ]
       },
       "post" : {
         "description" : "Creates a new SSL provider",
@@ -41327,7 +41450,7 @@
           }
         },
         "summary" : "Creates a new SSL provider",
-        "tags" : [ "settings" ],
+        "tags" : [ "Global settings" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -41377,7 +41500,7 @@
           }
         },
         "summary" : "Deletes SSL provider",
-        "tags" : [ "settings" ]
+        "tags" : [ "Global settings" ]
       },
       "get" : {
         "description" : "Gets SSL provider details",
@@ -41424,7 +41547,7 @@
           }
         },
         "summary" : "Gets SSL provider details",
-        "tags" : [ "settings" ]
+        "tags" : [ "Global settings" ]
       },
       "put" : {
         "description" : "Updates SSL provider",
@@ -41482,7 +41605,7 @@
           }
         },
         "summary" : "Updates SSL provider",
-        "tags" : [ "settings" ],
+        "tags" : [ "Global settings" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -41543,7 +41666,7 @@
           }
         },
         "summary" : "Updates SSL provider status",
-        "tags" : [ "settings" ],
+        "tags" : [ "Global settings" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -41567,7 +41690,7 @@
           }
         },
         "summary" : "Export the whole installation as a configuration spec",
-        "tags" : [ "spec" ],
+        "tags" : [ "Configuration specs" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -41597,7 +41720,7 @@
           }
         },
         "summary" : "Import a configuration bundle into the whole installation",
-        "tags" : [ "spec" ],
+        "tags" : [ "Configuration specs" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -41627,7 +41750,7 @@
           }
         },
         "summary" : "Plan importing a configuration bundle into the whole installation",
-        "tags" : [ "spec" ],
+        "tags" : [ "Configuration specs" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -41679,7 +41802,7 @@
           }
         },
         "summary" : "Creates a feedback",
-        "tags" : [ "support_feedbacks" ],
+        "tags" : [ "Support" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -41749,7 +41872,7 @@
           }
         },
         "summary" : "Lists audit logs",
-        "tags" : [ "system_audit_logs" ]
+        "tags" : [ "System audit logs" ]
       }
     },
     "/system/audit-logs/types" : {
@@ -41789,7 +41912,7 @@
           }
         },
         "summary" : "Lists audit log types",
-        "tags" : [ "system_audit_logs" ]
+        "tags" : [ "System audit logs" ]
       }
     },
     "/system/audit-logs/{itemID}" : {
@@ -41838,7 +41961,7 @@
           }
         },
         "summary" : "Gets audit log",
-        "tags" : [ "system_audit_logs" ]
+        "tags" : [ "System audit logs" ]
       }
     },
     "/system/errors" : {
@@ -41921,7 +42044,7 @@
           }
         },
         "summary" : "Lists sys errors",
-        "tags" : [ "system_errors" ]
+        "tags" : [ "System errors" ]
       }
     },
     "/system/errors/{errorID}" : {
@@ -41970,7 +42093,7 @@
           }
         },
         "summary" : "Deletes sys error",
-        "tags" : [ "system_errors" ]
+        "tags" : [ "System errors" ]
       },
       "get" : {
         "description" : "Gets sys error",
@@ -42017,7 +42140,7 @@
           }
         },
         "summary" : "Gets sys error",
-        "tags" : [ "system_errors" ]
+        "tags" : [ "System errors" ]
       }
     },
     "/system/get-started/dashboard-cert" : {
@@ -42057,7 +42180,7 @@
           }
         },
         "summary" : "Tells where the dashboard's certificate stands",
-        "tags" : [ "system" ]
+        "tags" : [ "System" ]
       },
       "post" : {
         "description" : "For the Get started card: asks for a certificate for the dashboard's domain, past\nthe wait a failed attempt leaves. Refused with ERR_CONFLICT while one is being\nobtained. Answers with where the certificate stands.",
@@ -42105,7 +42228,7 @@
           }
         },
         "summary" : "Asks for the dashboard's certificate now",
-        "tags" : [ "system" ]
+        "tags" : [ "System" ]
       }
     },
     "/system/get-started/dismiss" : {
@@ -42145,7 +42268,7 @@
           }
         },
         "summary" : "Closes the Get started card",
-        "tags" : [ "system" ]
+        "tags" : [ "System" ]
       }
     },
     "/system/hivepaas/app-secret" : {
@@ -42216,7 +42339,7 @@
           }
         },
         "summary" : "Updates the HivePaaS app secret",
-        "tags" : [ "system_hivepaas" ],
+        "tags" : [ "HivePaaS" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -42268,7 +42391,7 @@
           }
         },
         "summary" : "Reloads HivePaaS config files",
-        "tags" : [ "system_hivepaas" ],
+        "tags" : [ "HivePaaS" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -42309,7 +42432,7 @@
           }
         },
         "summary" : "Gets release info of the app",
-        "tags" : [ "system_hivepaas" ]
+        "tags" : [ "HivePaaS" ]
       }
     },
     "/system/hivepaas/request-info" : {
@@ -42349,7 +42472,7 @@
           }
         },
         "summary" : "Reports how a request reached HivePaaS",
-        "tags" : [ "system_hivepaas" ]
+        "tags" : [ "HivePaaS" ]
       }
     },
     "/system/hivepaas/restart" : {
@@ -42400,7 +42523,7 @@
           }
         },
         "summary" : "Restarts hivepaas app containers",
-        "tags" : [ "system_hivepaas" ],
+        "tags" : [ "HivePaaS" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -42441,7 +42564,7 @@
           }
         },
         "summary" : "Gets HivePaaS routing settings",
-        "tags" : [ "system_hivepaas" ]
+        "tags" : [ "HivePaaS" ]
       },
       "put" : {
         "description" : "Updates HivePaaS routing settings",
@@ -42490,7 +42613,7 @@
           }
         },
         "summary" : "Updates HivePaaS routing settings",
-        "tags" : [ "system_hivepaas" ],
+        "tags" : [ "HivePaaS" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -42542,7 +42665,7 @@
           }
         },
         "summary" : "Confirms a routing change that is on trial",
-        "tags" : [ "system_hivepaas" ],
+        "tags" : [ "HivePaaS" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -42594,7 +42717,7 @@
           }
         },
         "summary" : "Reverts a routing change that is on trial",
-        "tags" : [ "system_hivepaas" ],
+        "tags" : [ "HivePaaS" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -42635,7 +42758,7 @@
           }
         },
         "summary" : "Gets HivePaaS security settings",
-        "tags" : [ "system_hivepaas" ]
+        "tags" : [ "HivePaaS" ]
       },
       "put" : {
         "description" : "Updates HivePaaS security settings",
@@ -42684,7 +42807,7 @@
           }
         },
         "summary" : "Updates HivePaaS security settings",
-        "tags" : [ "system_hivepaas" ],
+        "tags" : [ "HivePaaS" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -42725,7 +42848,7 @@
           }
         },
         "summary" : "Gets HivePaaS service settings",
-        "tags" : [ "system_hivepaas" ]
+        "tags" : [ "HivePaaS" ]
       },
       "put" : {
         "description" : "Updates HivePaaS service settings",
@@ -42774,7 +42897,7 @@
           }
         },
         "summary" : "Updates HivePaaS service settings",
-        "tags" : [ "system_hivepaas" ],
+        "tags" : [ "HivePaaS" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -42826,7 +42949,7 @@
           }
         },
         "summary" : "Confirms a service settings change that is on trial",
-        "tags" : [ "system_hivepaas" ],
+        "tags" : [ "HivePaaS" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -42878,7 +43001,7 @@
           }
         },
         "summary" : "Reverts a service settings change that is on trial",
-        "tags" : [ "system_hivepaas" ],
+        "tags" : [ "HivePaaS" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -42928,7 +43051,7 @@
           }
         },
         "summary" : "Gets what an update to a version would do",
-        "tags" : [ "system_hivepaas" ]
+        "tags" : [ "HivePaaS" ]
       }
     },
     "/system/hivepaas/update-version" : {
@@ -42979,7 +43102,7 @@
           }
         },
         "summary" : "Updates HivePaaS app",
-        "tags" : [ "system_hivepaas" ],
+        "tags" : [ "HivePaaS" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -43020,7 +43143,7 @@
           }
         },
         "summary" : "Gets backup settings",
-        "tags" : [ "system_settings" ]
+        "tags" : [ "System settings" ]
       },
       "put" : {
         "description" : "Updates backup settings",
@@ -43069,7 +43192,7 @@
           }
         },
         "summary" : "Updates backup settings",
-        "tags" : [ "system_settings" ],
+        "tags" : [ "System settings" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -43110,7 +43233,7 @@
           }
         },
         "summary" : "Gets backup repo cleanup settings",
-        "tags" : [ "system_settings" ]
+        "tags" : [ "System settings" ]
       },
       "put" : {
         "description" : "Updates backup repo cleanup settings",
@@ -43159,7 +43282,7 @@
           }
         },
         "summary" : "Updates backup repo cleanup settings",
-        "tags" : [ "system_settings" ],
+        "tags" : [ "System settings" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -43211,7 +43334,7 @@
           }
         },
         "summary" : "Executes the renewal",
-        "tags" : [ "system_settings" ],
+        "tags" : [ "System settings" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -43263,7 +43386,7 @@
           }
         },
         "summary" : "Executes the backup",
-        "tags" : [ "system_settings" ],
+        "tags" : [ "System settings" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -43333,7 +43456,7 @@
           }
         },
         "summary" : "Lists backup files",
-        "tags" : [ "system_settings" ]
+        "tags" : [ "System settings" ]
       }
     },
     "/system/settings/backup/files/{fileID}" : {
@@ -43382,7 +43505,7 @@
           }
         },
         "summary" : "Deletes backup file",
-        "tags" : [ "system_settings" ]
+        "tags" : [ "System settings" ]
       },
       "get" : {
         "description" : "Gets backup file",
@@ -43429,7 +43552,7 @@
           }
         },
         "summary" : "Gets backup file",
-        "tags" : [ "system_settings" ]
+        "tags" : [ "System settings" ]
       }
     },
     "/system/settings/backup/files/{fileID}/download" : {
@@ -43472,7 +43595,7 @@
           }
         },
         "summary" : "Downloads a backup file",
-        "tags" : [ "system_settings" ]
+        "tags" : [ "System settings" ]
       }
     },
     "/system/settings/cleanup" : {
@@ -43512,7 +43635,7 @@
           }
         },
         "summary" : "Gets cleanup settings",
-        "tags" : [ "system_settings" ]
+        "tags" : [ "System settings" ]
       },
       "put" : {
         "description" : "Updates cleanup settings",
@@ -43561,7 +43684,7 @@
           }
         },
         "summary" : "Updates cleanup settings",
-        "tags" : [ "system_settings" ],
+        "tags" : [ "System settings" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -43613,7 +43736,7 @@
           }
         },
         "summary" : "Executes the cleanup",
-        "tags" : [ "system_settings" ],
+        "tags" : [ "System settings" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -43654,7 +43777,7 @@
           }
         },
         "summary" : "Gets logging settings",
-        "tags" : [ "system_settings" ]
+        "tags" : [ "System settings" ]
       },
       "put" : {
         "description" : "Updates logging settings",
@@ -43703,7 +43826,7 @@
           }
         },
         "summary" : "Updates logging settings",
-        "tags" : [ "system_settings" ],
+        "tags" : [ "System settings" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -43744,7 +43867,7 @@
           }
         },
         "summary" : "Gets MCP server settings",
-        "tags" : [ "system_settings" ]
+        "tags" : [ "System settings" ]
       },
       "put" : {
         "description" : "Turns the MCP server on or off.",
@@ -43793,7 +43916,7 @@
           }
         },
         "summary" : "Updates MCP server settings",
-        "tags" : [ "system_settings" ],
+        "tags" : [ "System settings" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -43834,7 +43957,7 @@
           }
         },
         "summary" : "Gets registry settings",
-        "tags" : [ "system_settings" ]
+        "tags" : [ "System settings" ]
       },
       "put" : {
         "description" : "Updates registry settings",
@@ -43883,7 +44006,7 @@
           }
         },
         "summary" : "Updates registry settings",
-        "tags" : [ "system_settings" ],
+        "tags" : [ "System settings" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -43935,7 +44058,7 @@
           }
         },
         "summary" : "Checks what answers at the registry's address",
-        "tags" : [ "system_settings" ],
+        "tags" : [ "System settings" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -43987,7 +44110,7 @@
           }
         },
         "summary" : "Uploads a large blob to the registry and throws it away",
-        "tags" : [ "system_settings" ],
+        "tags" : [ "System settings" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -44028,7 +44151,7 @@
           }
         },
         "summary" : "Issues a new registry password",
-        "tags" : [ "system_settings" ]
+        "tags" : [ "System settings" ]
       }
     },
     "/system/settings/ssl-renewal" : {
@@ -44068,7 +44191,7 @@
           }
         },
         "summary" : "Gets SSL renewal settings",
-        "tags" : [ "system_settings" ]
+        "tags" : [ "System settings" ]
       },
       "put" : {
         "description" : "Updates SSL renewal settings",
@@ -44117,7 +44240,7 @@
           }
         },
         "summary" : "Updates SSL renewal settings",
-        "tags" : [ "system_settings" ],
+        "tags" : [ "System settings" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -44169,7 +44292,7 @@
           }
         },
         "summary" : "Executes the renewal",
-        "tags" : [ "system_settings" ],
+        "tags" : [ "System settings" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -44210,7 +44333,7 @@
           }
         },
         "summary" : "Gets database connection pool stats",
-        "tags" : [ "system" ]
+        "tags" : [ "System" ]
       }
     },
     "/system/tasks" : {
@@ -44279,7 +44402,7 @@
           }
         },
         "summary" : "Lists tasks",
-        "tags" : [ "system_tasks" ]
+        "tags" : [ "System tasks" ]
       }
     },
     "/system/tasks/target-objects" : {
@@ -44319,7 +44442,7 @@
           }
         },
         "summary" : "Lists task target objects",
-        "tags" : [ "system_tasks" ]
+        "tags" : [ "System tasks" ]
       }
     },
     "/system/tasks/types" : {
@@ -44359,7 +44482,7 @@
           }
         },
         "summary" : "Lists task types",
-        "tags" : [ "system_tasks" ]
+        "tags" : [ "System tasks" ]
       }
     },
     "/system/tasks/{itemID}" : {
@@ -44408,7 +44531,7 @@
           }
         },
         "summary" : "Gets task",
-        "tags" : [ "system_tasks" ]
+        "tags" : [ "System tasks" ]
       }
     },
     "/system/tasks/{itemID}/cancel" : {
@@ -44457,7 +44580,7 @@
           }
         },
         "summary" : "Cancels task",
-        "tags" : [ "system_tasks" ]
+        "tags" : [ "System tasks" ]
       }
     },
     "/system/tasks/{itemID}/logs" : {
@@ -44506,7 +44629,7 @@
           }
         },
         "summary" : "Gets task logs",
-        "tags" : [ "system_tasks" ]
+        "tags" : [ "System tasks" ]
       }
     },
     "/system/tasks/{itemID}/status" : {
@@ -44555,7 +44678,7 @@
           }
         },
         "summary" : "Gets task status",
-        "tags" : [ "system_tasks" ]
+        "tags" : [ "System tasks" ]
       }
     },
     "/system/traefik/config-options" : {
@@ -44595,7 +44718,7 @@
           }
         },
         "summary" : "Gets Traefik config options",
-        "tags" : [ "system_traefik" ]
+        "tags" : [ "Traefik" ]
       },
       "put" : {
         "description" : "Updates Traefik config options",
@@ -44644,7 +44767,7 @@
           }
         },
         "summary" : "Updates Traefik config options",
-        "tags" : [ "system_traefik" ],
+        "tags" : [ "Traefik" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -44696,7 +44819,7 @@
           }
         },
         "summary" : "Confirms a Traefik config options change",
-        "tags" : [ "system_traefik" ],
+        "tags" : [ "Traefik" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -44748,7 +44871,7 @@
           }
         },
         "summary" : "Reverts a Traefik config options change",
-        "tags" : [ "system_traefik" ],
+        "tags" : [ "Traefik" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -44800,7 +44923,7 @@
           }
         },
         "summary" : "Reloads traefik config files",
-        "tags" : [ "system_traefik" ],
+        "tags" : [ "Traefik" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -44852,7 +44975,7 @@
           }
         },
         "summary" : "Resets traefik config files",
-        "tags" : [ "system_traefik" ],
+        "tags" : [ "Traefik" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -44904,7 +45027,7 @@
           }
         },
         "summary" : "Restarts traefik containers",
-        "tags" : [ "system_traefik" ],
+        "tags" : [ "Traefik" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -44945,7 +45068,7 @@
           }
         },
         "summary" : "Gets Traefik service settings",
-        "tags" : [ "system_traefik" ]
+        "tags" : [ "Traefik" ]
       },
       "put" : {
         "description" : "Updates Traefik service settings",
@@ -44994,7 +45117,7 @@
           }
         },
         "summary" : "Updates Traefik service settings",
-        "tags" : [ "system_traefik" ],
+        "tags" : [ "Traefik" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -45071,7 +45194,7 @@
           }
         },
         "summary" : "Lists users",
-        "tags" : [ "users" ]
+        "tags" : [ "Users" ]
       }
     },
     "/users/current/mfa/totp-begin-setup" : {
@@ -45122,7 +45245,7 @@
           }
         },
         "summary" : "Begins MFA TOTP authenticator setup",
-        "tags" : [ "users" ],
+        "tags" : [ "Users" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -45174,7 +45297,7 @@
           }
         },
         "summary" : "Completes MFA TOTP authenticator setup",
-        "tags" : [ "users" ],
+        "tags" : [ "Users" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -45226,7 +45349,7 @@
           }
         },
         "summary" : "Removes MFA TOTP authenticator setup",
-        "tags" : [ "users" ],
+        "tags" : [ "Users" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -45278,7 +45401,7 @@
           }
         },
         "summary" : "Changes user password",
-        "tags" : [ "users" ],
+        "tags" : [ "Users" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -45329,8 +45452,9 @@
             "description" : "Internal Server Error"
           }
         },
+        "security" : [ ],
         "summary" : "User forgot their password",
-        "tags" : [ "users" ],
+        "tags" : [ "Users" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -45382,7 +45506,7 @@
           }
         },
         "summary" : "Updates user profile",
-        "tags" : [ "users" ],
+        "tags" : [ "Users" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -45452,7 +45576,7 @@
           }
         },
         "summary" : "Lists API key",
-        "tags" : [ "user_settings" ]
+        "tags" : [ "API keys" ]
       },
       "post" : {
         "description" : "Creates a new API key",
@@ -45501,7 +45625,7 @@
           }
         },
         "summary" : "Creates a new API key",
-        "tags" : [ "user_settings" ],
+        "tags" : [ "API keys" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -45551,7 +45675,7 @@
           }
         },
         "summary" : "Deletes an API key",
-        "tags" : [ "user_settings" ]
+        "tags" : [ "API keys" ]
       },
       "get" : {
         "description" : "Gets API key details",
@@ -45598,7 +45722,7 @@
           }
         },
         "summary" : "Gets API key details",
-        "tags" : [ "user_settings" ]
+        "tags" : [ "API keys" ]
       }
     },
     "/users/current/settings/api-keys/{itemID}/status" : {
@@ -45658,7 +45782,7 @@
           }
         },
         "summary" : "Updates API key status",
-        "tags" : [ "user_settings" ],
+        "tags" : [ "API keys" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -45710,7 +45834,7 @@
           }
         },
         "summary" : "Invites a user to system",
-        "tags" : [ "users" ],
+        "tags" : [ "Users" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -45751,7 +45875,7 @@
           }
         },
         "summary" : "Gets user invite info",
-        "tags" : [ "users" ]
+        "tags" : [ "Users" ]
       }
     },
     "/users/signup-begin" : {
@@ -45801,8 +45925,9 @@
             "description" : "Internal Server Error"
           }
         },
+        "security" : [ ],
         "summary" : "Begins user signup process",
-        "tags" : [ "users" ],
+        "tags" : [ "Users" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -45853,8 +45978,9 @@
             "description" : "Internal Server Error"
           }
         },
+        "security" : [ ],
         "summary" : "Completes user signup process",
-        "tags" : [ "users" ],
+        "tags" : [ "Users" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -45904,7 +46030,7 @@
           }
         },
         "summary" : "Deletes a user (admin API)",
-        "tags" : [ "users" ]
+        "tags" : [ "Users" ]
       },
       "get" : {
         "description" : "Gets user details",
@@ -45958,7 +46084,7 @@
           }
         },
         "summary" : "Gets user details",
-        "tags" : [ "users" ]
+        "tags" : [ "Users" ]
       },
       "put" : {
         "description" : "Updates user data (admin API)",
@@ -46016,7 +46142,7 @@
           }
         },
         "summary" : "Updates user data (admin API)",
-        "tags" : [ "users" ],
+        "tags" : [ "Users" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -46077,7 +46203,7 @@
           }
         },
         "summary" : "Requests password reset",
-        "tags" : [ "users" ],
+        "tags" : [ "Users" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -46137,8 +46263,9 @@
             "description" : "Internal Server Error"
           }
         },
+        "security" : [ ],
         "summary" : "Resets password",
-        "tags" : [ "users" ],
+        "tags" : [ "Users" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -46198,8 +46325,9 @@
             "description" : "Internal Server Error"
           }
         },
+        "security" : [ ],
         "summary" : "Handles Repo webhook",
-        "tags" : [ "webhooks" ],
+        "tags" : [ "Webhooks" ],
         "x-codegen-request-body-name" : "body"
       }
     }
@@ -68240,9 +68368,23 @@
       }
     },
     "securitySchemes" : {
-      "BasicAuth" : {
-        "scheme" : "basic",
-        "type" : "http"
+      "APIKeyID" : {
+        "description" : "The ID of an API key. It goes with HIVEPAAS-API-SECRET-KEY.",
+        "in" : "header",
+        "name" : "HIVEPAAS-API-KEY-ID",
+        "type" : "apiKey"
+      },
+      "APISecretKey" : {
+        "description" : "The secret of an API key. It goes with HIVEPAAS-API-KEY-ID.",
+        "in" : "header",
+        "name" : "HIVEPAAS-API-SECRET-KEY",
+        "type" : "apiKey"
+      },
+      "BearerToken" : {
+        "description" : "`Bearer <access token>`, a session's access token from a login.",
+        "in" : "header",
+        "name" : "Authorization",
+        "type" : "apiKey"
       }
     }
   },

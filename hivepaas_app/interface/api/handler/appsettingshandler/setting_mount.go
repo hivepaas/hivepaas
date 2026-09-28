@@ -13,7 +13,7 @@ import (
 // ListSettingMount Lists app setting mounts
 // @Summary Lists app setting mounts
 // @Description Lists app setting mounts
-// @Tags    app_settings
+// @Tags    App settings
 // @Produce json
 // @Id      listAppSettingMount
 // @Param   projectID path string true "project ID"
@@ -30,7 +30,7 @@ func (h *Handler) ListSettingMount(ctx *gin.Context) {
 // GetSettingMount Get an app setting mount details
 // @Summary Get an app setting mount details
 // @Description Get an app setting mount details
-// @Tags    app_settings
+// @Tags    App settings
 // @Produce json
 // @Id      getAppSettingMount
 // @Param   projectID path string true "project ID"
@@ -48,7 +48,7 @@ func (h *Handler) GetSettingMount(ctx *gin.Context) {
 // CreateSettingMount Creates an app setting mount
 // @Summary Creates an app setting mount
 // @Description Creates an app setting mount
-// @Tags    app_settings
+// @Tags    App settings
 // @Produce json
 // @Id      createAppSettingMount
 // @Param   projectID path string true "project ID"
@@ -66,7 +66,7 @@ func (h *Handler) CreateSettingMount(ctx *gin.Context) {
 // UpdateSettingMount Updates an app setting mount
 // @Summary Updates an app setting mount
 // @Description Updates an app setting mount
-// @Tags    app_settings
+// @Tags    App settings
 // @Produce json
 // @Id      updateAppSettingMount
 // @Param   projectID path string true "project ID"
@@ -85,7 +85,7 @@ func (h *Handler) UpdateSettingMount(ctx *gin.Context) {
 // UpdateSettingMountStatus Updates app setting mount status
 // @Summary Updates app setting mount status
 // @Description Updates app setting mount status
-// @Tags    app_settings
+// @Tags    App settings
 // @Produce json
 // @Id      updateAppSettingMountStatus
 // @Param   projectID path string true "project ID"
@@ -104,7 +104,7 @@ func (h *Handler) UpdateSettingMountStatus(ctx *gin.Context) {
 // DeleteSettingMount Deletes an app setting mount
 // @Summary Deletes an app setting mount
 // @Description Deletes an app setting mount
-// @Tags    app_settings
+// @Tags    App settings
 // @Produce json
 // @Id      deleteAppSettingMount
 // @Param   projectID path string true "project ID"
@@ -122,7 +122,7 @@ func (h *Handler) DeleteSettingMount(ctx *gin.Context) {
 // ListSettingMountSources Lists the settings an app can mount, and their parts
 // @Summary Lists the settings an app can mount, and their parts
 // @Description Lists the settings an app can mount, and their parts
-// @Tags    app_settings
+// @Tags    App settings
 // @Produce json
 // @Id      listAppSettingMountSources
 // @Param   projectID path string true "project ID"

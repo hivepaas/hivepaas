@@ -15,7 +15,7 @@ import (
 // GetCleanupSettings Gets cleanup settings
 // @Summary Gets cleanup settings
 // @Description Gets cleanup settings
-// @Tags    system_settings
+// @Tags    System settings
 // @Produce json
 // @Id      getSystemCleanupSettings
 // @Success 200 {object} systemcleanupdto.GetSystemCleanupResp
@@ -52,7 +52,7 @@ func (h *Handler) GetCleanupSettings(ctx *gin.Context) {
 // UpdateCleanupSettings Updates cleanup settings
 // @Summary Updates cleanup settings
 // @Description Updates cleanup settings
-// @Tags    system_settings
+// @Tags    System settings
 // @Produce json
 // @Id      updateSystemCleanupSettings
 // @Param   body body systemcleanupdto.UpdateSystemCleanupReq true "request data"
@@ -90,7 +90,7 @@ func (h *Handler) UpdateCleanupSettings(ctx *gin.Context) {
 // ExecuteCleanup Executes the cleanup
 // @Summary Executes the cleanup
 // @Description Executes the cleanup
-// @Tags    system_settings
+// @Tags    System settings
 // @Produce json
 // @Id      executeSystemCleanup
 // @Param   body body systemcleanupdto.ExecuteSystemCleanupReq true "request data"

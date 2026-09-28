@@ -14,7 +14,7 @@ import (
 // BeginMFATotpSetup Begins MFA TOTP authenticator setup
 // @Summary Begins MFA TOTP authenticator setup
 // @Description Begins MFA TOTP authenticator setup
-// @Tags    users
+// @Tags    Users
 // @Produce json
 // @Id      beginMFATotpSetup
 // @Param   body body userdto.BeginMFATotpSetupReq true "request data"
@@ -47,7 +47,7 @@ func (h *Handler) BeginMFATotpSetup(ctx *gin.Context) {
 // CompleteMFATotpSetup Completes MFA TOTP authenticator setup
 // @Summary Completes MFA TOTP authenticator setup
 // @Description Completes MFA TOTP authenticator setup
-// @Tags    users
+// @Tags    Users
 // @Produce json
 // @Id      completeMFATotpSetup
 // @Param   body body userdto.CompleteMFATotpSetupReq true "request data"
@@ -80,7 +80,7 @@ func (h *Handler) CompleteMFATotpSetup(ctx *gin.Context) {
 // RemoveMFATotp Removes MFA TOTP authenticator setup
 // @Summary Removes MFA TOTP authenticator setup
 // @Description Removes MFA TOTP authenticator setup
-// @Tags    users
+// @Tags    Users
 // @Produce json
 // @Id      removeMFATotp
 // @Param   body body userdto.RemoveMFATotpReq true "request data"

@@ -13,7 +13,7 @@ import (
 // ClearBuildCache Clears build cache
 // @Summary Clears build cache
 // @Description Clears build cache
-// @Tags    cluster_build
+// @Tags    Image builds
 // @Produce json
 // @Id      clearClusterBuildCache
 // @Param   body body builddto.ClearBuildCacheReq true "request data"

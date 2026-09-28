@@ -15,7 +15,7 @@ import (
 // GetBackupRepoCleanupSettings Gets backup repo cleanup settings
 // @Summary Gets backup repo cleanup settings
 // @Description Gets backup repo cleanup settings
-// @Tags    system_settings
+// @Tags    System settings
 // @Produce json
 // @Id      getBackupRepoCleanupSettings
 // @Success 200 {object} backuprepocleanupdto.GetBackupRepoCleanupResp
@@ -52,7 +52,7 @@ func (h *Handler) GetBackupRepoCleanupSettings(ctx *gin.Context) {
 // UpdateBackupRepoCleanupSettings Updates backup repo cleanup settings
 // @Summary Updates backup repo cleanup settings
 // @Description Updates backup repo cleanup settings
-// @Tags    system_settings
+// @Tags    System settings
 // @Produce json
 // @Id      updateBackupRepoCleanupSettings
 // @Param   body body backuprepocleanupdto.UpdateBackupRepoCleanupReq true "request data"
@@ -90,7 +90,7 @@ func (h *Handler) UpdateBackupRepoCleanupSettings(ctx *gin.Context) {
 // ExecuteBackupRepoCleanup Executes the renewal
 // @Summary Executes the renewal
 // @Description Executes the renewal
-// @Tags    system_settings
+// @Tags    System settings
 // @Produce json
 // @Id      executeBackupRepoCleanup
 // @Param   body body backuprepocleanupdto.ExecuteBackupRepoCleanupReq true "request data"

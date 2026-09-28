@@ -13,7 +13,7 @@ import (
 // DeployApp Deploys an app
 // @Summary Deploys an app
 // @Description Deploys an app
-// @Tags    app_actions
+// @Tags    App actions
 // @Produce json
 // @Id      appActionDeploy
 // @Param   projectID path string true "project ID"

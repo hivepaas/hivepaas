@@ -13,7 +13,7 @@ import (
 // BuildCommandTemplate Builds a command template to get command string
 // @Summary Builds a command template to get command string
 // @Description Builds a command template to get command string
-// @Tags    app_settings
+// @Tags    App settings
 // @Produce json
 // @Id      buildAppCommandTemplate
 // @Param   projectID path string true "project ID"

@@ -13,7 +13,7 @@ import (
 // ListProject Lists projects
 // @Summary Lists projects
 // @Description Lists projects
-// @Tags    projects
+// @Tags    Projects
 // @Produce json
 // @Id      listProject
 // @Param   status query string false "`status=<target>`"
@@ -50,7 +50,7 @@ func (h *Handler) ListProject(ctx *gin.Context) {
 // GetProject Gets project details
 // @Summary Gets project details
 // @Description Gets project details
-// @Tags    projects
+// @Tags    Projects
 // @Produce json
 // @Id      getProject
 // @Param   projectID path string true "project ID"

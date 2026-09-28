@@ -13,7 +13,7 @@ import (
 // CreateFeedback Creates a feedback
 // @Summary Creates a feedback
 // @Description Creates a feedback
-// @Tags    support_feedbacks
+// @Tags    Support
 // @Produce json
 // @Id      createFeedback
 // @Param   body body supportdto.CreateFeedbackReq true "request data"

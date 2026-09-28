@@ -13,7 +13,7 @@ import (
 // GetUserInviteInfo Gets user invite info
 // @Summary Gets user invite info
 // @Description Gets user invite info
-// @Tags    users
+// @Tags    Users
 // @Produce json
 // @Id      getUserInviteInfo
 // @Success 200 {object} userdto.GetUserInviteInfoResp
@@ -45,7 +45,7 @@ func (h *Handler) GetUserInviteInfo(ctx *gin.Context) {
 // InviteUser Invites a user to system
 // @Summary Invites a user to system
 // @Description Invites a user to system
-// @Tags    users
+// @Tags    Users
 // @Produce json
 // @Id      inviteUser
 // @Param   body body userdto.InviteUserReq true "request data"
@@ -78,13 +78,14 @@ func (h *Handler) InviteUser(ctx *gin.Context) {
 // BeginUserSignup Begins user signup process
 // @Summary Begins user signup process
 // @Description Begins user signup process
-// @Tags    users
+// @Tags    Users
 // @Produce json
 // @Id      beginUserSignup
 // @Param   body body userdto.BeginUserSignupReq true "request data"
 // @Success 200 {object} userdto.BeginUserSignupResp
 // @Failure 400 {object} hperrors.ErrorInfo
 // @Failure 500 {object} hperrors.ErrorInfo
+// @Security
 // @Router  /users/signup-begin [post]
 func (h *Handler) BeginUserSignup(ctx *gin.Context) {
 	req := userdto.NewBeginUserSignupReq()
@@ -105,13 +106,14 @@ func (h *Handler) BeginUserSignup(ctx *gin.Context) {
 // CompleteUserSignup Completes user signup process
 // @Summary Completes user signup process
 // @Description Completes user signup process
-// @Tags    users
+// @Tags    Users
 // @Produce json
 // @Id      completeUserSignup
 // @Param   body body userdto.CompleteUserSignupReq true "request data"
 // @Success 200 {object} userdto.CompleteUserSignupResp
 // @Failure 400 {object} hperrors.ErrorInfo
 // @Failure 500 {object} hperrors.ErrorInfo
+// @Security
 // @Router  /users/signup-complete [post]
 func (h *Handler) CompleteUserSignup(ctx *gin.Context) {
 	req := userdto.NewCompleteUserSignupReq()

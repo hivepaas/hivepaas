@@ -13,7 +13,7 @@ import (
 // UpdateUserProfile Updates user profile
 // @Summary Updates user profile
 // @Description Updates user profile
-// @Tags    users
+// @Tags    Users
 // @Produce json
 // @Id      updateUserProfile
 // @Param   body body userdto.UpdateProfileReq true "request data"

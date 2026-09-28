@@ -11,7 +11,7 @@ import (
 // ListGithubApp Lists github-app settings
 // @Summary Lists github-app settings
 // @Description Lists github-app settings
-// @Tags    project_env_settings
+// @Tags    Project env settings
 // @Produce json
 // @Id      listProjectEnvGithubApp
 // @Param   projectID path string true "project ID"
@@ -31,7 +31,7 @@ func (h *Handler) ListGithubApp(ctx *gin.Context) {
 // GetGithubApp Gets github-app setting details
 // @Summary Gets github-app setting details
 // @Description Gets github-app setting details
-// @Tags    project_env_settings
+// @Tags    Project env settings
 // @Produce json
 // @Id      getProjectEnvGithubApp
 // @Param   projectID path string true "project ID"

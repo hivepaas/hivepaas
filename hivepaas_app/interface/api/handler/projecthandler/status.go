@@ -13,7 +13,7 @@ import (
 // UpdateProjectStatus Updates project status
 // @Summary Updates project status
 // @Description Updates project status
-// @Tags    projects
+// @Tags    Projects
 // @Produce json
 // @Id      updateProjectStatus
 // @Param   projectID path string true "project ID"

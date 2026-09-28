@@ -11,7 +11,7 @@ import (
 // GetDomainSettings Gets domain settings details
 // @Summary Gets domain settings details
 // @Description Gets domain settings details
-// @Tags    project_settings
+// @Tags    Project settings
 // @Produce json
 // @Id      getProjectDomainSettings
 // @Param   projectID path string true "project ID"
@@ -26,7 +26,7 @@ func (h *Handler) GetDomainSettings(ctx *gin.Context) {
 // UpdateDomainSettings Updates domain settings
 // @Summary Updates domain settings
 // @Description Updates domain settings
-// @Tags    project_settings
+// @Tags    Project settings
 // @Produce json
 // @Id      updateProjectDomainSettings
 // @Param   projectID path string true "project ID"
@@ -42,7 +42,7 @@ func (h *Handler) UpdateDomainSettings(ctx *gin.Context) {
 // UpdateDomainSettingsStatus Updates domain settings status
 // @Summary Updates domain settings status
 // @Description Updates domain settings status
-// @Tags    project_settings
+// @Tags    Project settings
 // @Produce json
 // @Id      updateProjectDomainSettingsStatus
 // @Param   projectID path string true "project ID"
@@ -58,7 +58,7 @@ func (h *Handler) UpdateDomainSettingsStatus(ctx *gin.Context) {
 // DeleteDomainSettings Deletes domain settings setting
 // @Summary Deletes domain settings setting
 // @Description Deletes domain settings setting
-// @Tags    project_settings
+// @Tags    Project settings
 // @Produce json
 // @Id      deleteProjectDomainSettings
 // @Param   projectID path string true "project ID"

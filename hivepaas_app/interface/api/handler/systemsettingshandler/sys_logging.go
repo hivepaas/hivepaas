@@ -15,7 +15,7 @@ import (
 // GetLoggingSettings Gets logging settings
 // @Summary Gets logging settings
 // @Description Gets logging settings
-// @Tags    system_settings
+// @Tags    System settings
 // @Produce json
 // @Id      getSystemLoggingSettings
 // @Success 200 {object} loggingdto.GetLoggingSettingsResp
@@ -52,7 +52,7 @@ func (h *Handler) GetLoggingSettings(ctx *gin.Context) {
 // UpdateLoggingSettings Updates logging settings
 // @Summary Updates logging settings
 // @Description Updates logging settings
-// @Tags    system_settings
+// @Tags    System settings
 // @Produce json
 // @Id      updateSystemLoggingSettings
 // @Param   body body loggingdto.UpdateLoggingSettingsReq true "request data"

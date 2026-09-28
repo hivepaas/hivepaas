@@ -14,7 +14,7 @@ import (
 // UpdateUserPassword Changes user password
 // @Summary Changes user password
 // @Description Changes user password
-// @Tags    users
+// @Tags    Users
 // @Produce json
 // @Id      updateUserPassword
 // @Param   body body userdto.UpdatePasswordReq true "request data"
@@ -47,7 +47,7 @@ func (h *Handler) UpdateUserPassword(ctx *gin.Context) {
 // RequestResetPassword Requests password reset
 // @Summary Requests password reset
 // @Description Requests password reset
-// @Tags    users
+// @Tags    Users
 // @Produce json
 // @Id      requestResetPassword
 // @Param   userID path string true "user ID"
@@ -87,7 +87,7 @@ func (h *Handler) RequestResetPassword(ctx *gin.Context) {
 // ResetPassword Resets password
 // @Summary Resets password
 // @Description Resets password
-// @Tags    users
+// @Tags    Users
 // @Produce json
 // @Id      resetPassword
 // @Param   userID path string true "user ID"
@@ -95,6 +95,7 @@ func (h *Handler) RequestResetPassword(ctx *gin.Context) {
 // @Success 200 {object} userdto.ResetPasswordResp
 // @Failure 400 {object} hperrors.ErrorInfo
 // @Failure 500 {object} hperrors.ErrorInfo
+// @Security
 // @Router  /users/{userID}/password/reset [post]
 func (h *Handler) ResetPassword(ctx *gin.Context) {
 	userID, err := h.ParseStringParam(ctx, "userID")
@@ -122,13 +123,14 @@ func (h *Handler) ResetPassword(ctx *gin.Context) {
 // UserForgotPassword User forgot their password
 // @Summary User forgot their password
 // @Description User forgot their password
-// @Tags    users
+// @Tags    Users
 // @Produce json
 // @Id      userForgotPassword
 // @Param   body body userdto.PasswordForgotReq true "request data"
 // @Success 200 {object} userdto.PasswordForgotResp
 // @Failure 400 {object} hperrors.ErrorInfo
 // @Failure 500 {object} hperrors.ErrorInfo
+// @Security
 // @Router  /users/current/password/forgot [post]
 func (h *Handler) UserForgotPassword(ctx *gin.Context) {
 	req := userdto.NewPasswordForgotReq()

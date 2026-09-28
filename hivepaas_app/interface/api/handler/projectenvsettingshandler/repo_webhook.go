@@ -11,7 +11,7 @@ import (
 // ListRepoWebhook Lists webhook settings
 // @Summary Lists webhook settings
 // @Description Lists webhook settings
-// @Tags    project_env_settings
+// @Tags    Project env settings
 // @Produce json
 // @Id      listProjectEnvRepoWebhook
 // @Param   projectID path string true "project ID"
@@ -31,7 +31,7 @@ func (h *Handler) ListRepoWebhook(ctx *gin.Context) {
 // GetRepoWebhook Gets webhook setting details
 // @Summary Gets webhook setting details
 // @Description Gets webhook setting details
-// @Tags    project_env_settings
+// @Tags    Project env settings
 // @Produce json
 // @Id      getProjectEnvRepoWebhook
 // @Param   projectID path string true "project ID"

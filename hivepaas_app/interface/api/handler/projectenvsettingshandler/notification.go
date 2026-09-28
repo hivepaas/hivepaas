@@ -11,7 +11,7 @@ import (
 // ListNotification Lists notification settings
 // @Summary Lists notification settings
 // @Description Lists notification settings
-// @Tags    project_env_settings
+// @Tags    Project env settings
 // @Produce json
 // @Id      listProjectEnvNotification
 // @Param   projectID path string true "project ID"
@@ -31,7 +31,7 @@ func (h *Handler) ListNotification(ctx *gin.Context) {
 // GetNotification Gets notification setting details
 // @Summary Gets notification setting details
 // @Description Gets notification setting details
-// @Tags    project_env_settings
+// @Tags    Project env settings
 // @Produce json
 // @Id      getProjectEnvNotification
 // @Param   projectID path string true "project ID"
@@ -48,7 +48,7 @@ func (h *Handler) GetNotification(ctx *gin.Context) {
 // CreateNotification Creates a new notification setting
 // @Summary Creates a new notification setting
 // @Description Creates a new notification setting
-// @Tags    project_env_settings
+// @Tags    Project env settings
 // @Produce json
 // @Id      createProjectEnvNotification
 // @Param   projectID path string true "project ID"
@@ -65,7 +65,7 @@ func (h *Handler) CreateNotification(ctx *gin.Context) {
 // UpdateNotification Updates notification
 // @Summary Updates notification
 // @Description Updates notification
-// @Tags    project_env_settings
+// @Tags    Project env settings
 // @Produce json
 // @Id      updateProjectEnvNotification
 // @Param   projectID path string true "project ID"
@@ -83,7 +83,7 @@ func (h *Handler) UpdateNotification(ctx *gin.Context) {
 // UpdateNotificationStatus Updates notification status
 // @Summary Updates notification status
 // @Description Updates notification status
-// @Tags    project_env_settings
+// @Tags    Project env settings
 // @Produce json
 // @Id      updateProjectEnvNotificationStatus
 // @Param   projectID path string true "project ID"
@@ -101,7 +101,7 @@ func (h *Handler) UpdateNotificationStatus(ctx *gin.Context) {
 // DeleteNotification Deletes notification setting
 // @Summary Deletes notification setting
 // @Description Deletes notification setting
-// @Tags    project_env_settings
+// @Tags    Project env settings
 // @Produce json
 // @Id      deleteProjectEnvNotification
 // @Param   projectID path string true "project ID"

@@ -14,7 +14,7 @@ import (
 // ListSSHKey Lists ssh-key settings
 // @Summary Lists ssh-key settings
 // @Description Lists ssh-key settings
-// @Tags    settings
+// @Tags    Global settings
 // @Produce json
 // @Id      listSettingSSHKey
 // @Param   search query string false "`search=<target> (support *)`"
@@ -32,7 +32,7 @@ func (h *Handler) ListSSHKey(ctx *gin.Context) {
 // GetSSHKey Gets ssh-key setting details
 // @Summary Gets ssh-key setting details
 // @Description Gets ssh-key setting details
-// @Tags    settings
+// @Tags    Global settings
 // @Produce json
 // @Id      getSettingSSHKey
 // @Param   itemID path string true "setting ID"
@@ -47,7 +47,7 @@ func (h *Handler) GetSSHKey(ctx *gin.Context) {
 // CreateSSHKey Creates a new ssh-key setting
 // @Summary Creates a new ssh-key setting
 // @Description Creates a new ssh-key setting
-// @Tags    settings
+// @Tags    Global settings
 // @Produce json
 // @Id      createSettingSSHKey
 // @Param   body body sshkeydto.CreateSSHKeyReq true "request data"
@@ -62,7 +62,7 @@ func (h *Handler) CreateSSHKey(ctx *gin.Context) {
 // UpdateSSHKey Updates ssh-key
 // @Summary Updates ssh-key
 // @Description Updates ssh-key
-// @Tags    settings
+// @Tags    Global settings
 // @Produce json
 // @Id      updateSettingSSHKey
 // @Param   itemID path string true "setting ID"
@@ -78,7 +78,7 @@ func (h *Handler) UpdateSSHKey(ctx *gin.Context) {
 // UpdateSSHKeyStatus Updates ssh-key status
 // @Summary Updates ssh-key status
 // @Description Updates ssh-key status
-// @Tags    settings
+// @Tags    Global settings
 // @Produce json
 // @Id      updateSettingSSHKeyStatus
 // @Param   itemID path string true "setting ID"
@@ -94,7 +94,7 @@ func (h *Handler) UpdateSSHKeyStatus(ctx *gin.Context) {
 // DeleteSSHKey Deletes sshkey setting
 // @Summary Deletes sshkey setting
 // @Description Deletes sshkey setting
-// @Tags    settings
+// @Tags    Global settings
 // @Produce json
 // @Id      deleteSettingSSHKey
 // @Param   itemID path string true "setting ID"
@@ -109,7 +109,7 @@ func (h *Handler) DeleteSSHKey(ctx *gin.Context) {
 // GenerateSSHKey Generates an SSH key
 // @Summary Generates an SSH key
 // @Description Generates an SSH key
-// @Tags    settings
+// @Tags    Global settings
 // @Produce json
 // @Id      generateSSHKey
 // @Param   body body sshkeydto.GenerateSSHKeyReq true "request data"

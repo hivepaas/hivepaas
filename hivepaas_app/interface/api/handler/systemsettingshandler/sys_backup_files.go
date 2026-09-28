@@ -19,7 +19,7 @@ const (
 // ListBackupFiles Lists backup files
 // @Summary Lists backup files
 // @Description Lists backup files
-// @Tags    system_settings
+// @Tags    System settings
 // @Produce json
 // @Id      listSystemBackupFiles
 // @Param   search query string false "`search=<target> (support *)`"
@@ -61,7 +61,7 @@ func (h *Handler) ListBackupFiles(ctx *gin.Context) {
 // GetBackupFile Gets backup file
 // @Summary Gets backup file
 // @Description Gets backup file
-// @Tags    system_settings
+// @Tags    System settings
 // @Produce json
 // @Id      getSystemBackupFile
 // @Param   fileID path string true "file setting ID"
@@ -107,7 +107,7 @@ func (h *Handler) GetBackupFile(ctx *gin.Context) {
 // DownloadBackupFile Downloads a backup file
 // @Summary Downloads a backup file
 // @Description Downloads a backup file
-// @Tags    system_settings
+// @Tags    System settings
 // @Produce json
 // @Id      downloadSystemBackupFile
 // @Param   fileID path string true "file setting ID"
@@ -159,7 +159,7 @@ func (h *Handler) DownloadBackupFile(ctx *gin.Context) {
 // DeleteBackupFile Deletes backup file
 // @Summary Deletes backup file
 // @Description Deletes backup file
-// @Tags    system_settings
+// @Tags    System settings
 // @Produce json
 // @Id      deleteSystemBackupFile
 // @Param   fileID path string true "file setting ID"

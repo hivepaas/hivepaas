@@ -26,12 +26,13 @@ const (
 // LoginGetOptions Gets login options
 // @Summary Gets login options
 // @Description Gets login options
-// @Tags    sessions
+// @Tags    Sessions
 // @Produce json
 // @Id      getLoginOptions
 // @Success 200 {object} sessiondto.GetLoginOptionsResp
 // @Failure 400 {object} hperrors.ErrorInfo
 // @Failure 500 {object} hperrors.ErrorInfo
+// @Security
 // @Router  /auth/login-options [get]
 func (h *Handler) LoginGetOptions(ctx *gin.Context) {
 	req := sessiondto.NewGetLoginOptionsReq()
@@ -53,13 +54,14 @@ func (h *Handler) LoginGetOptions(ctx *gin.Context) {
 // @Summary Login to system with username/password
 // @Description When you get response's `next_step` with value `NextMfa`, you need to call the API
 // @Description `/login-with-passcode` to complete the login process.
-// @Tags    sessions
+// @Tags    Sessions
 // @Produce json
 // @Id      loginWithPassword
 // @Param   body body sessiondto.LoginWithPasswordReq true "request data"
 // @Success 200 {object} sessiondto.LoginWithPasswordResp
 // @Failure 400 {object} hperrors.ErrorInfo
 // @Failure 500 {object} hperrors.ErrorInfo
+// @Security
 // @Router  /auth/login-with-password [post]
 func (h *Handler) LoginWithPassword(ctx *gin.Context) {
 	req := sessiondto.NewLoginWithPasswordReq()
@@ -86,13 +88,14 @@ func (h *Handler) LoginWithPassword(ctx *gin.Context) {
 // LoginWithPasscode Login to system with passcode after using password
 // @Summary Login to system with passcode after using password
 // @Description Login to system with passcode after using password
-// @Tags    sessions
+// @Tags    Sessions
 // @Produce json
 // @Id      loginWithPasscode
 // @Param   body body sessiondto.LoginWithPasscodeReq true "request data"
 // @Success 200 {object} sessiondto.LoginWithPasscodeResp
 // @Failure 400 {object} hperrors.ErrorInfo
 // @Failure 500 {object} hperrors.ErrorInfo
+// @Security
 // @Router  /auth/login-with-passcode [post]
 func (h *Handler) LoginWithPasscode(ctx *gin.Context) {
 	req := sessiondto.NewLoginWithPasscodeReq()
@@ -118,13 +121,14 @@ func (h *Handler) LoginWithPasscode(ctx *gin.Context) {
 // LoginWithAPIKey Login to system with API key
 // @Summary Login to system with API key
 // @Description Login to system with API key
-// @Tags    sessions
+// @Tags    Sessions
 // @Produce json
 // @Id      loginWithAPIKey
 // @Param   body body sessiondto.LoginWithAPIKeyReq true "request data"
 // @Success 200 {object} sessiondto.LoginWithAPIKeyResp
 // @Failure 400 {object} hperrors.ErrorInfo
 // @Failure 500 {object} hperrors.ErrorInfo
+// @Security
 // @Router  /auth/login-with-api-key [post]
 func (h *Handler) LoginWithAPIKey(ctx *gin.Context) {
 	req := sessiondto.NewLoginWithAPIKeyReq()
@@ -177,7 +181,7 @@ func (h *Handler) clearSessionDataFromCookies(ctx *gin.Context) {
 // @Summary Refreshes the current user session
 // @Description Refreshes the current user session. Refresh token is required via either
 // @Description `Authorization` header or `refresh_token` cookie.
-// @Tags    sessions
+// @Tags    Sessions
 // @Produce json
 // @Id      refreshSession
 // @Success 200 {object} sessiondto.RefreshSessionResp

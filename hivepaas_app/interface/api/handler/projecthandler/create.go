@@ -13,7 +13,7 @@ import (
 // CreateProject Creates a new project
 // @Summary Creates a new project
 // @Description Creates a new project
-// @Tags    projects
+// @Tags    Projects
 // @Produce json
 // @Id      createProject
 // @Param   body body projectdto.CreateProjectReq true "request data"

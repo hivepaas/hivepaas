@@ -14,7 +14,7 @@ import (
 // ListGitCredential Lists git credential settings
 // @Summary Lists git credential settings
 // @Description Lists git credential settings
-// @Tags    settings
+// @Tags    Global settings
 // @Produce json
 // @Id      listSettingGitCredential
 // @Param   search query string false "`search=<target> (support *)`"

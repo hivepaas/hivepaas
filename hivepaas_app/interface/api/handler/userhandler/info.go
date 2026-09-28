@@ -13,7 +13,7 @@ import (
 // GetUser Gets user details
 // @Summary Gets user details
 // @Description Gets user details
-// @Tags    users
+// @Tags    Users
 // @Produce json
 // @Id      getUser
 // @Param   userID path string true "user ID"
@@ -48,7 +48,7 @@ func (h *Handler) GetUser(ctx *gin.Context) {
 // ListUser Lists users
 // @Summary Lists users
 // @Description Lists users
-// @Tags    users
+// @Tags    Users
 // @Produce json
 // @Id      listUser
 // @Param   status query string false "`status=<target>`"

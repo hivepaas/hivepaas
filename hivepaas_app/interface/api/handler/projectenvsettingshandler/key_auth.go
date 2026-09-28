@@ -11,7 +11,7 @@ import (
 // ListKeyAuth Lists key auth settings
 // @Summary Lists key auth settings
 // @Description Lists key auth settings
-// @Tags    project_env_settings
+// @Tags    Project env settings
 // @Produce json
 // @Id      listProjectEnvKeyAuth
 // @Param   projectID path string true "project ID"
@@ -31,7 +31,7 @@ func (h *Handler) ListKeyAuth(ctx *gin.Context) {
 // GetKeyAuth Gets key auth setting details
 // @Summary Gets key auth setting details
 // @Description Gets key auth setting details
-// @Tags    project_env_settings
+// @Tags    Project env settings
 // @Produce json
 // @Id      getProjectEnvKeyAuth
 // @Param   projectID path string true "project ID"
@@ -48,7 +48,7 @@ func (h *Handler) GetKeyAuth(ctx *gin.Context) {
 // CreateKeyAuth Creates a new key auth setting
 // @Summary Creates a new key auth setting
 // @Description Creates a new key auth setting
-// @Tags    project_env_settings
+// @Tags    Project env settings
 // @Produce json
 // @Id      createProjectEnvKeyAuth
 // @Param   projectID path string true "project ID"
@@ -65,7 +65,7 @@ func (h *Handler) CreateKeyAuth(ctx *gin.Context) {
 // UpdateKeyAuth Updates key auth
 // @Summary Updates key auth
 // @Description Updates key auth
-// @Tags    project_env_settings
+// @Tags    Project env settings
 // @Produce json
 // @Id      updateProjectEnvKeyAuth
 // @Param   projectID path string true "project ID"
@@ -83,7 +83,7 @@ func (h *Handler) UpdateKeyAuth(ctx *gin.Context) {
 // UpdateKeyAuthStatus Updates key auth status
 // @Summary Updates key auth status
 // @Description Updates key auth status
-// @Tags    project_env_settings
+// @Tags    Project env settings
 // @Produce json
 // @Id      updateProjectEnvKeyAuthStatus
 // @Param   projectID path string true "project ID"
@@ -101,7 +101,7 @@ func (h *Handler) UpdateKeyAuthStatus(ctx *gin.Context) {
 // DeleteKeyAuth Deletes key auth setting
 // @Summary Deletes key auth setting
 // @Description Deletes key auth setting
-// @Tags    project_env_settings
+// @Tags    Project env settings
 // @Produce json
 // @Id      deleteProjectEnvKeyAuth
 // @Param   projectID path string true "project ID"

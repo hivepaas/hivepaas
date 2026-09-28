@@ -13,7 +13,7 @@ import (
 // RestartApp Restarts an app
 // @Summary Restarts an app
 // @Description Restarts an app
-// @Tags    app_actions
+// @Tags    App actions
 // @Produce json
 // @Id      appActionRestart
 // @Param   projectID path string true "project ID"

@@ -11,7 +11,7 @@ import (
 // ListClusterNetwork Lists cluster-network settings
 // @Summary Lists cluster-network settings
 // @Description Lists cluster-network settings
-// @Tags    project_settings
+// @Tags    Project settings
 // @Produce json
 // @Id      listProjectClusterNetwork
 // @Param   projectID path string true "project ID"
@@ -30,7 +30,7 @@ func (h *Handler) ListClusterNetwork(ctx *gin.Context) {
 // GetClusterNetwork Gets cluster-network setting details
 // @Summary Gets cluster-network setting details
 // @Description Gets cluster-network setting details
-// @Tags    project_settings
+// @Tags    Project settings
 // @Produce json
 // @Id      getProjectClusterNetwork
 // @Param   projectID path string true "project ID"
@@ -46,7 +46,7 @@ func (h *Handler) GetClusterNetwork(ctx *gin.Context) {
 // CreateClusterNetwork Creates a new cluster-network setting
 // @Summary Creates a new cluster-network setting
 // @Description Creates a new cluster-network setting
-// @Tags    project_settings
+// @Tags    Project settings
 // @Produce json
 // @Id      createProjectClusterNetwork
 // @Param   projectID path string true "project ID"
@@ -62,7 +62,7 @@ func (h *Handler) CreateClusterNetwork(ctx *gin.Context) {
 // UpdateClusterNetwork Updates cluster-network
 // @Summary Updates cluster-network
 // @Description Updates cluster-network
-// @Tags    project_settings
+// @Tags    Project settings
 // @Produce json
 // @Id      updateProjectClusterNetwork
 // @Param   projectID path string true "project ID"
@@ -79,7 +79,7 @@ func (h *Handler) UpdateClusterNetwork(ctx *gin.Context) {
 // UpdateClusterNetworkStatus Updates cluster-network status
 // @Summary Updates cluster-network status
 // @Description Updates cluster-network status
-// @Tags    project_settings
+// @Tags    Project settings
 // @Produce json
 // @Id      updateProjectClusterNetworkStatus
 // @Param   projectID path string true "project ID"
@@ -96,7 +96,7 @@ func (h *Handler) UpdateClusterNetworkStatus(ctx *gin.Context) {
 // DeleteClusterNetwork Deletes cluster-network setting
 // @Summary Deletes cluster-network setting
 // @Description Deletes cluster-network setting
-// @Tags    project_settings
+// @Tags    Project settings
 // @Produce json
 // @Id      deleteProjectClusterNetwork
 // @Param   projectID path string true "project ID"

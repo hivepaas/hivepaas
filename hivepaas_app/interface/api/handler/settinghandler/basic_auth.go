@@ -11,7 +11,7 @@ import (
 // ListBasicAuth Lists basic auth settings
 // @Summary Lists basic auth settings
 // @Description Lists basic auth settings
-// @Tags    settings
+// @Tags    Global settings
 // @Produce json
 // @Id      listSettingBasicAuth
 // @Param   search query string false "`search=<target> (support *)`"
@@ -29,7 +29,7 @@ func (h *Handler) ListBasicAuth(ctx *gin.Context) {
 // GetBasicAuth Gets basic auth setting details
 // @Summary Gets basic auth setting details
 // @Description Gets basic auth setting details
-// @Tags    settings
+// @Tags    Global settings
 // @Produce json
 // @Id      getSettingBasicAuth
 // @Param   itemID path string true "setting ID"
@@ -44,7 +44,7 @@ func (h *Handler) GetBasicAuth(ctx *gin.Context) {
 // CreateBasicAuth Creates a new basic auth setting
 // @Summary Creates a new basic auth setting
 // @Description Creates a new basic auth setting
-// @Tags    settings
+// @Tags    Global settings
 // @Produce json
 // @Id      createSettingBasicAuth
 // @Param   body body basicauthdto.CreateBasicAuthReq true "request data"
@@ -59,7 +59,7 @@ func (h *Handler) CreateBasicAuth(ctx *gin.Context) {
 // UpdateBasicAuth Updates basic auth
 // @Summary Updates basic auth
 // @Description Updates basic auth
-// @Tags    settings
+// @Tags    Global settings
 // @Produce json
 // @Id      updateSettingBasicAuth
 // @Param   itemID path string true "setting ID"
@@ -75,7 +75,7 @@ func (h *Handler) UpdateBasicAuth(ctx *gin.Context) {
 // UpdateBasicAuthStatus Updates basic auth status
 // @Summary Updates basic auth status
 // @Description Updates basic auth status
-// @Tags    settings
+// @Tags    Global settings
 // @Produce json
 // @Id      updateSettingBasicAuthStatus
 // @Param   itemID path string true "setting ID"
@@ -91,7 +91,7 @@ func (h *Handler) UpdateBasicAuthStatus(ctx *gin.Context) {
 // DeleteBasicAuth Deletes basic auth setting
 // @Summary Deletes basic auth setting
 // @Description Deletes basic auth setting
-// @Tags    settings
+// @Tags    Global settings
 // @Produce json
 // @Id      deleteSettingBasicAuth
 // @Param   itemID path string true "setting ID"

@@ -13,7 +13,7 @@ import (
 // ListNode Lists cluster node settings
 // @Summary Lists cluster node settings
 // @Description Lists cluster node settings
-// @Tags    cluster_nodes
+// @Tags    Cluster nodes
 // @Produce json
 // @Id      listClusterNode
 // @Param   search query string false "`search=<target> (support *)`"
@@ -31,7 +31,7 @@ func (h *Handler) ListNode(ctx *gin.Context) {
 // GetNode Gets node setting details
 // @Summary Gets node setting details
 // @Description Gets node setting details
-// @Tags    cluster_nodes
+// @Tags    Cluster nodes
 // @Produce json
 // @Id      getClusterNode
 // @Param   itemID path string true "setting ID"
@@ -46,7 +46,7 @@ func (h *Handler) GetNode(ctx *gin.Context) {
 // UpdateNode Updates cluster node
 // @Summary Updates cluster node
 // @Description Updates cluster node
-// @Tags    cluster_nodes
+// @Tags    Cluster nodes
 // @Produce json
 // @Id      updateClusterNode
 // @Param   itemID path string true "setting ID"
@@ -62,7 +62,7 @@ func (h *Handler) UpdateNode(ctx *gin.Context) {
 // DeleteNode Deletes node setting
 // @Summary Deletes node setting
 // @Description Deletes node setting
-// @Tags    cluster_nodes
+// @Tags    Cluster nodes
 // @Produce json
 // @Id      deleteClusterNode
 // @Param   itemID path string true "setting ID"
@@ -77,7 +77,7 @@ func (h *Handler) DeleteNode(ctx *gin.Context) {
 // JoinNode Joins a node to the swarm
 // @Summary Joins a node to the swarm
 // @Description Joins a node to the swarm
-// @Tags    cluster_nodes
+// @Tags    Cluster nodes
 // @Produce json
 // @Id      joinClusterNode
 // @Param   body body nodedto.JoinNodeReq true "request data"
@@ -110,7 +110,7 @@ func (h *Handler) JoinNode(ctx *gin.Context) {
 // GetNodeJoinCommand Gets node join command
 // @Summary Gets node join command
 // @Description Gets node join command
-// @Tags    cluster_nodes
+// @Tags    Cluster nodes
 // @Produce json
 // @Id      getClusterNodeJoinCommand
 // @Param   joinAsManager query string false "joinAsManager=true/false"
@@ -143,7 +143,7 @@ func (h *Handler) GetNodeJoinCommand(ctx *gin.Context) {
 // SetManagerNodes Sets manager nodes
 // @Summary Sets manager nodes
 // @Description Sets manager nodes
-// @Tags    cluster_nodes
+// @Tags    Cluster nodes
 // @Produce json
 // @Id      setClusterManagerNodes
 // @Param   body body nodedto.SetManagerNodesReq true "request data"

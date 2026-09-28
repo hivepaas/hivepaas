@@ -11,7 +11,7 @@ import (
 // ListKeyAuth Lists key auth settings
 // @Summary Lists key auth settings
 // @Description Lists key auth settings
-// @Tags    project_settings
+// @Tags    Project settings
 // @Produce json
 // @Id      listProjectKeyAuth
 // @Param   projectID path string true "project ID"
@@ -30,7 +30,7 @@ func (h *Handler) ListKeyAuth(ctx *gin.Context) {
 // GetKeyAuth Gets key auth setting details
 // @Summary Gets key auth setting details
 // @Description Gets key auth setting details
-// @Tags    project_settings
+// @Tags    Project settings
 // @Produce json
 // @Id      getProjectKeyAuth
 // @Param   projectID path string true "project ID"
@@ -46,7 +46,7 @@ func (h *Handler) GetKeyAuth(ctx *gin.Context) {
 // CreateKeyAuth Creates a new key auth setting
 // @Summary Creates a new key auth setting
 // @Description Creates a new key auth setting
-// @Tags    project_settings
+// @Tags    Project settings
 // @Produce json
 // @Id      createProjectKeyAuth
 // @Param   projectID path string true "project ID"
@@ -62,7 +62,7 @@ func (h *Handler) CreateKeyAuth(ctx *gin.Context) {
 // UpdateKeyAuth Updates key auth
 // @Summary Updates key auth
 // @Description Updates key auth
-// @Tags    project_settings
+// @Tags    Project settings
 // @Produce json
 // @Id      updateProjectKeyAuth
 // @Param   projectID path string true "project ID"
@@ -79,7 +79,7 @@ func (h *Handler) UpdateKeyAuth(ctx *gin.Context) {
 // UpdateKeyAuthStatus Updates key auth status
 // @Summary Updates key auth status
 // @Description Updates key auth status
-// @Tags    project_settings
+// @Tags    Project settings
 // @Produce json
 // @Id      updateProjectKeyAuthStatus
 // @Param   projectID path string true "project ID"
@@ -96,7 +96,7 @@ func (h *Handler) UpdateKeyAuthStatus(ctx *gin.Context) {
 // DeleteKeyAuth Deletes key auth setting
 // @Summary Deletes key auth setting
 // @Description Deletes key auth setting
-// @Tags    project_settings
+// @Tags    Project settings
 // @Produce json
 // @Id      deleteProjectKeyAuth
 // @Param   projectID path string true "project ID"

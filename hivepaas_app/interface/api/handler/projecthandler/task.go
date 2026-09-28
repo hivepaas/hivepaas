@@ -11,7 +11,7 @@ import (
 // ListTask Lists tasks
 // @Summary Lists tasks
 // @Description Lists tasks
-// @Tags    project_tasks
+// @Tags    Project tasks
 // @Produce json
 // @Id      listProjectTask
 // @Param   projectID path string true "project ID"
@@ -30,7 +30,7 @@ func (h *Handler) ListTask(ctx *gin.Context) {
 // GetTask Gets task
 // @Summary Gets task
 // @Description Gets task
-// @Tags    project_tasks
+// @Tags    Project tasks
 // @Produce json
 // @Id      getProjectTask
 // @Param   projectID path string true "project ID"
@@ -46,7 +46,7 @@ func (h *Handler) GetTask(ctx *gin.Context) {
 // GetTaskStatus Gets task status
 // @Summary Gets task status
 // @Description Gets task status
-// @Tags    project_tasks
+// @Tags    Project tasks
 // @Produce json
 // @Id      getProjectTaskStatus
 // @Param   projectID path string true "project ID"
@@ -62,7 +62,7 @@ func (h *Handler) GetTaskStatus(ctx *gin.Context) {
 // ListTaskType Lists task types
 // @Summary Lists task types
 // @Description Lists task types
-// @Tags    project_tasks
+// @Tags    Project tasks
 // @Produce json
 // @Id      listProjectTaskType
 // @Param   projectID path string true "project ID"
@@ -77,7 +77,7 @@ func (h *Handler) ListTaskType(ctx *gin.Context) {
 // GetTaskLogs Gets task logs
 // @Summary Gets task logs
 // @Description Gets task logs
-// @Tags    project_tasks
+// @Tags    Project tasks
 // @Produce json
 // @Id      getProjectTaskLogs
 // @Param   projectID path string true "project ID"
@@ -93,7 +93,7 @@ func (h *Handler) GetTaskLogs(ctx *gin.Context) {
 // CancelTask Cancels task
 // @Summary Cancels task
 // @Description Cancels task
-// @Tags    project_tasks
+// @Tags    Project tasks
 // @Produce json
 // @Id      cancelProjectTask
 // @Param   projectID path string true "project ID"
@@ -109,7 +109,7 @@ func (h *Handler) CancelTask(ctx *gin.Context) {
 // ListTaskTargetObject Lists task target objects
 // @Summary Lists task target objects
 // @Description Lists task target objects
-// @Tags    project_tasks
+// @Tags    Project tasks
 // @Produce json
 // @Id      listProjectTaskTargetObject
 // @Param   projectID path string true "project ID"

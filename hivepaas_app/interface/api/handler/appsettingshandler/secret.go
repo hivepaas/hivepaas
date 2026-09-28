@@ -11,7 +11,7 @@ import (
 // ListSecret Lists app secrets
 // @Summary Lists app secrets
 // @Description Lists app secrets
-// @Tags    app_settings
+// @Tags    App settings
 // @Produce json
 // @Id      listAppSecret
 // @Param   projectID path string true "project ID"
@@ -28,7 +28,7 @@ func (h *Handler) ListSecret(ctx *gin.Context) {
 // GetSecret Get an app secret details
 // @Summary Get an app secret details
 // @Description Get an app secret details
-// @Tags    app_settings
+// @Tags    App settings
 // @Produce json
 // @Id      getAppSecret
 // @Param   projectID path string true "project ID"
@@ -46,7 +46,7 @@ func (h *Handler) GetSecret(ctx *gin.Context) {
 // GetSecretDownloadToken Gets secret download token
 // @Summary Gets secret download token
 // @Description Gets secret download token
-// @Tags    app_settings
+// @Tags    App settings
 // @Produce json
 // @Id      getAppSecretDownloadToken
 // @Param   projectID path string true "project ID"
@@ -64,7 +64,7 @@ func (h *Handler) GetSecretDownloadToken(ctx *gin.Context) {
 // DownloadSecret Download a secret as a file
 // @Summary Download a secret as a file
 // @Description Download a secret as a file
-// @Tags    app_settings
+// @Tags    App settings
 // @Produce json
 // @Id      downloadAppSecret
 // @Param   projectID path string true "project ID"
@@ -82,7 +82,7 @@ func (h *Handler) DownloadSecret(ctx *gin.Context) {
 // CreateSecret Creates an app secret
 // @Summary Creates an app secret
 // @Description Creates an app secret
-// @Tags    app_settings
+// @Tags    App settings
 // @Produce json
 // @Id      createAppSecret
 // @Param   projectID path string true "project ID"
@@ -100,7 +100,7 @@ func (h *Handler) CreateSecret(ctx *gin.Context) {
 // UpdateSecret Updates an app secret
 // @Summary Updates an app secret
 // @Description Updates an app secret
-// @Tags    app_settings
+// @Tags    App settings
 // @Produce json
 // @Id      updateAppSecret
 // @Param   projectID path string true "project ID"
@@ -119,7 +119,7 @@ func (h *Handler) UpdateSecret(ctx *gin.Context) {
 // UpdateSecretStatus Updates app secret status
 // @Summary Updates app secret status
 // @Description Updates app secret status
-// @Tags    app_settings
+// @Tags    App settings
 // @Produce json
 // @Id      updateAppSecretStatus
 // @Param   projectID path string true "project ID"
@@ -138,7 +138,7 @@ func (h *Handler) UpdateSecretStatus(ctx *gin.Context) {
 // DeleteSecret Deletes an app secret
 // @Summary Deletes an app secret
 // @Description Deletes an app secret
-// @Tags    app_settings
+// @Tags    App settings
 // @Produce json
 // @Id      deleteAppSecret
 // @Param   projectID path string true "project ID"

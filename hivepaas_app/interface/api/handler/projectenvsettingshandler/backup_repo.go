@@ -11,7 +11,7 @@ import (
 // ListBackupRepo Lists backup repo settings
 // @Summary Lists backup repo settings
 // @Description Lists backup repo settings
-// @Tags    project_env_settings
+// @Tags    Project env settings
 // @Produce json
 // @Id      listProjectEnvBackupRepo
 // @Param   projectID path string true "project ID"
@@ -31,7 +31,7 @@ func (h *Handler) ListBackupRepo(ctx *gin.Context) {
 // GetBackupRepo Gets backup repo setting details
 // @Summary Gets backup repo setting details
 // @Description Gets backup repo setting details
-// @Tags    project_env_settings
+// @Tags    Project env settings
 // @Produce json
 // @Id      getProjectEnvBackupRepo
 // @Param   projectID path string true "project ID"
@@ -48,7 +48,7 @@ func (h *Handler) GetBackupRepo(ctx *gin.Context) {
 // CreateBackupRepo Creates a new backup repo setting
 // @Summary Creates a new backup repo setting
 // @Description Creates a new backup repo setting
-// @Tags    project_env_settings
+// @Tags    Project env settings
 // @Produce json
 // @Id      createProjectEnvBackupRepo
 // @Param   projectID path string true "project ID"
@@ -65,7 +65,7 @@ func (h *Handler) CreateBackupRepo(ctx *gin.Context) {
 // UpdateBackupRepo Updates backup repo
 // @Summary Updates backup repo
 // @Description Updates backup repo
-// @Tags    project_env_settings
+// @Tags    Project env settings
 // @Produce json
 // @Id      updateProjectEnvBackupRepo
 // @Param   projectID path string true "project ID"
@@ -84,7 +84,7 @@ func (h *Handler) UpdateBackupRepo(ctx *gin.Context) {
 // @Summary Changes a backup repository's password
 // @Description Re-encrypts the backup repository with a new password. The repository itself is
 // @Description re-encrypted first, so the previous password stops working as soon as this succeeds.
-// @Tags    project_env_settings
+// @Tags    Project env settings
 // @Produce json
 // @Id      changeProjectEnvBackupRepoPassword
 // @Param   projectID path string true "project ID"
@@ -102,7 +102,7 @@ func (h *Handler) ChangeBackupRepoPassword(ctx *gin.Context) {
 // UpdateBackupRepoStatus Updates backup repo status
 // @Summary Updates backup repo status
 // @Description Updates backup repo status
-// @Tags    project_env_settings
+// @Tags    Project env settings
 // @Produce json
 // @Id      updateProjectEnvBackupRepoStatus
 // @Param   projectID path string true "project ID"
@@ -120,7 +120,7 @@ func (h *Handler) UpdateBackupRepoStatus(ctx *gin.Context) {
 // DeleteBackupRepo Deletes backup repo setting
 // @Summary Deletes backup repo setting
 // @Description Deletes backup repo setting
-// @Tags    project_env_settings
+// @Tags    Project env settings
 // @Produce json
 // @Id      deleteProjectEnvBackupRepo
 // @Param   projectID path string true "project ID"
@@ -138,7 +138,7 @@ func (h *Handler) DeleteBackupRepo(ctx *gin.Context) {
 // @Summary Cleans up a backup repository
 // @Description Applies the repository's retention policy, removing the snapshots it expires, then
 // @Description reconciles the stored snapshot records against what the repository still holds.
-// @Tags    project_env_settings
+// @Tags    Project env settings
 // @Produce json
 // @Id      cleanupProjectEnvBackupRepo
 // @Param   projectID path string true "project ID"
@@ -157,7 +157,7 @@ func (h *Handler) CleanupBackupRepo(ctx *gin.Context) {
 // @Description Reads the repository and adopts what it finds: the options it is configured with,
 // @Description and the snapshots it holds. Use it after the repository was changed outside the
 // @Description app. Nothing in the repository is modified.
-// @Tags    project_env_settings
+// @Tags    Project env settings
 // @Produce json
 // @Id      syncProjectEnvBackupRepo
 // @Param   projectID path string true "project ID"

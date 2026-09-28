@@ -11,7 +11,7 @@ import (
 // ListConfigFile Lists project config files
 // @Summary Lists project config files
 // @Description Lists project config files
-// @Tags    project_env_settings
+// @Tags    Project env settings
 // @Produce json
 // @Id      listProjectEnvConfigFile
 // @Param   projectID path string true "project ID"
@@ -28,7 +28,7 @@ func (h *Handler) ListConfigFile(ctx *gin.Context) {
 // GetConfigFile Gets config file details
 // @Summary Gets config file details
 // @Description Gets config file details
-// @Tags    project_env_settings
+// @Tags    Project env settings
 // @Produce json
 // @Id      getProjectEnvConfigFile
 // @Param   projectID path string true "project ID"
@@ -45,7 +45,7 @@ func (h *Handler) GetConfigFile(ctx *gin.Context) {
 // CreateConfigFile Creates a project config file
 // @Summary Creates a project config file
 // @Description Creates a project config file
-// @Tags    project_env_settings
+// @Tags    Project env settings
 // @Produce json
 // @Id      createProjectEnvConfigFile
 // @Param   projectID path string true "project ID"
@@ -62,7 +62,7 @@ func (h *Handler) CreateConfigFile(ctx *gin.Context) {
 // UpdateConfigFile Updates a project config file
 // @Summary Updates a project config file
 // @Description Updates a project config file
-// @Tags    project_env_settings
+// @Tags    Project env settings
 // @Produce json
 // @Id      updateProjectEnvConfigFile
 // @Param   projectID path string true "project ID"
@@ -80,7 +80,7 @@ func (h *Handler) UpdateConfigFile(ctx *gin.Context) {
 // UpdateConfigFileStatus Updates project config file status
 // @Summary Updates project config file status
 // @Description Updates project config file status
-// @Tags    project_env_settings
+// @Tags    Project env settings
 // @Produce json
 // @Id      updateProjectEnvConfigFileStatus
 // @Param   projectID path string true "project ID"
@@ -98,7 +98,7 @@ func (h *Handler) UpdateConfigFileStatus(ctx *gin.Context) {
 // DeleteConfigFile Deletes a project config file
 // @Summary Deletes a project config file
 // @Description Deletes a project config file
-// @Tags    project_env_settings
+// @Tags    Project env settings
 // @Produce json
 // @Id      deleteProjectEnvConfigFile
 // @Param   projectID path string true "project ID"

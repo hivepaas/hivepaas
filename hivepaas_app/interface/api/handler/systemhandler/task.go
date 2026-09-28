@@ -11,7 +11,7 @@ import (
 // ListTask Lists tasks
 // @Summary Lists tasks
 // @Description Lists tasks
-// @Tags    system_tasks
+// @Tags    System tasks
 // @Produce json
 // @Id      listTask
 // @Param   search query string false "`search=<target> (support *)`"
@@ -29,7 +29,7 @@ func (h *Handler) ListTask(ctx *gin.Context) {
 // GetTask Gets task
 // @Summary Gets task
 // @Description Gets task
-// @Tags    system_tasks
+// @Tags    System tasks
 // @Produce json
 // @Id      getTask
 // @Param   itemID path string true "task ID"
@@ -44,7 +44,7 @@ func (h *Handler) GetTask(ctx *gin.Context) {
 // GetTaskStatus Gets task status
 // @Summary Gets task status
 // @Description Gets task status
-// @Tags    system_tasks
+// @Tags    System tasks
 // @Produce json
 // @Id      getTaskStatus
 // @Param   itemID path string true "task ID"
@@ -59,7 +59,7 @@ func (h *Handler) GetTaskStatus(ctx *gin.Context) {
 // ListTaskType Lists task types
 // @Summary Lists task types
 // @Description Lists task types
-// @Tags    system_tasks
+// @Tags    System tasks
 // @Produce json
 // @Id      listTaskType
 // @Success 200 {object} taskdto.ListTaskTypeResp
@@ -73,7 +73,7 @@ func (h *Handler) ListTaskType(ctx *gin.Context) {
 // GetTaskLogs Gets task logs
 // @Summary Gets task logs
 // @Description Gets task logs
-// @Tags    system_tasks
+// @Tags    System tasks
 // @Produce json
 // @Id      getTaskLogs
 // @Param   itemID path string true "task ID"
@@ -88,7 +88,7 @@ func (h *Handler) GetTaskLogs(ctx *gin.Context) {
 // CancelTask Cancels task
 // @Summary Cancels task
 // @Description Cancels task
-// @Tags    system_tasks
+// @Tags    System tasks
 // @Produce json
 // @Id      cancelTask
 // @Param   itemID path string true "task ID"
@@ -103,7 +103,7 @@ func (h *Handler) CancelTask(ctx *gin.Context) {
 // ListTaskTargetObject Lists task target objects
 // @Summary Lists task target objects
 // @Description Lists task target objects
-// @Tags    system_tasks
+// @Tags    System tasks
 // @Produce json
 // @Id      listTaskTargetObject
 // @Success 200 {object} taskdto.ListTargetObjectsResp

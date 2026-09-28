@@ -11,7 +11,7 @@ import (
 // ListAcmeDnsProvider Lists ACME DNS providers
 // @Summary Lists ACME DNS providers
 // @Description Lists ACME DNS providers
-// @Tags    project_env_settings
+// @Tags    Project env settings
 // @Produce json
 // @Id      listProjectEnvAcmeDnsProvider
 // @Param   projectID path string true "project ID"
@@ -31,7 +31,7 @@ func (h *Handler) ListAcmeDnsProvider(ctx *gin.Context) {
 // GetAcmeDnsProvider Gets ACME DNS provider details
 // @Summary Gets ACME DNS provider details
 // @Description Gets ACME DNS provider details
-// @Tags    project_env_settings
+// @Tags    Project env settings
 // @Produce json
 // @Id      getProjectEnvAcmeDnsProvider
 // @Param   projectID path string true "project ID"
@@ -48,7 +48,7 @@ func (h *Handler) GetAcmeDnsProvider(ctx *gin.Context) {
 // CreateAcmeDnsProvider Creates a new ACME DNS provider
 // @Summary Creates a new ACME DNS provider
 // @Description Creates a new ACME DNS provider
-// @Tags    project_env_settings
+// @Tags    Project env settings
 // @Produce json
 // @Id      createProjectEnvAcmeDnsProvider
 // @Param   projectID path string true "project ID"
@@ -65,7 +65,7 @@ func (h *Handler) CreateAcmeDnsProvider(ctx *gin.Context) {
 // UpdateAcmeDnsProvider Updates an ACME DNS provider
 // @Summary Updates an ACME DNS provider
 // @Description Updates an ACME DNS provider
-// @Tags    project_env_settings
+// @Tags    Project env settings
 // @Produce json
 // @Id      updateProjectEnvAcmeDnsProvider
 // @Param   projectID path string true "project ID"
@@ -83,7 +83,7 @@ func (h *Handler) UpdateAcmeDnsProvider(ctx *gin.Context) {
 // UpdateAcmeDnsProviderStatus Updates ACME DNS provider status
 // @Summary Updates ACME DNS provider status
 // @Description Updates ACME DNS provider status
-// @Tags    project_env_settings
+// @Tags    Project env settings
 // @Produce json
 // @Id      updateProjectEnvAcmeDnsProviderStatus
 // @Param   projectID path string true "project ID"
@@ -101,7 +101,7 @@ func (h *Handler) UpdateAcmeDnsProviderStatus(ctx *gin.Context) {
 // DeleteAcmeDnsProvider Deletes an ACME DNS provider
 // @Summary Deletes an ACME DNS provider
 // @Description Deletes an ACME DNS provider
-// @Tags    project_env_settings
+// @Tags    Project env settings
 // @Produce json
 // @Id      deleteProjectEnvAcmeDnsProvider
 // @Param   projectID path string true "project ID"

@@ -14,7 +14,7 @@ import (
 // GetServiceSettings Gets Traefik service settings
 // @Summary Gets Traefik service settings
 // @Description Gets Traefik service settings
-// @Tags    system_traefik
+// @Tags    Traefik
 // @Produce json
 // @Id      getTraefikServiceSettings
 // @Success 200 {object} traefiksettingsdto.GetServiceSettingsResp
@@ -54,7 +54,7 @@ func (h *Handler) GetServiceSettings(ctx *gin.Context) {
 // UpdateServiceSettings Updates Traefik service settings
 // @Summary Updates Traefik service settings
 // @Description Updates Traefik service settings
-// @Tags    system_traefik
+// @Tags    Traefik
 // @Produce json
 // @Id      updateTraefikServiceSettings
 // @Param   body body traefiksettingsdto.UpdateServiceSettingsReq true "request data"

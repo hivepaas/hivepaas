@@ -13,7 +13,7 @@ import (
 // ListAppInProject Lists apps of a project
 // @Summary Lists apps of a project
 // @Description Lists apps of a project
-// @Tags    apps
+// @Tags    Apps
 // @Produce json
 // @Id      listProjectApp
 // @Param   projectID path string true "project ID"

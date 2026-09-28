@@ -11,7 +11,7 @@ import (
 // ListEmail Lists email settings
 // @Summary Lists email settings
 // @Description Lists email settings
-// @Tags    project_env_settings
+// @Tags    Project env settings
 // @Produce json
 // @Id      listProjectEnvEmail
 // @Param   projectID path string true "project ID"
@@ -31,7 +31,7 @@ func (h *Handler) ListEmail(ctx *gin.Context) {
 // GetEmail Gets email setting details
 // @Summary Gets email setting details
 // @Description Gets email setting details
-// @Tags    project_env_settings
+// @Tags    Project env settings
 // @Produce json
 // @Id      getProjectEnvEmail
 // @Param   projectID path string true "project ID"
@@ -48,7 +48,7 @@ func (h *Handler) GetEmail(ctx *gin.Context) {
 // CreateEmail Creates a new email setting
 // @Summary Creates a new email setting
 // @Description Creates a new email setting
-// @Tags    project_env_settings
+// @Tags    Project env settings
 // @Produce json
 // @Id      createProjectEnvEmail
 // @Param   projectID path string true "project ID"
@@ -65,7 +65,7 @@ func (h *Handler) CreateEmail(ctx *gin.Context) {
 // UpdateEmail Updates email setting
 // @Summary Updates email setting
 // @Description Updates email setting
-// @Tags    project_env_settings
+// @Tags    Project env settings
 // @Produce json
 // @Id      updateProjectEnvEmail
 // @Param   projectID path string true "project ID"
@@ -83,7 +83,7 @@ func (h *Handler) UpdateEmail(ctx *gin.Context) {
 // UpdateEmailStatus Updates Email status setting
 // @Summary Updates Email status setting
 // @Description Updates Email status setting
-// @Tags    project_env_settings
+// @Tags    Project env settings
 // @Produce json
 // @Id      updateProjectEnvEmailStatus
 // @Param   projectID path string true "project ID"
@@ -101,7 +101,7 @@ func (h *Handler) UpdateEmailStatus(ctx *gin.Context) {
 // DeleteEmail Deletes email setting
 // @Summary Deletes email setting
 // @Description Deletes email setting
-// @Tags    project_env_settings
+// @Tags    Project env settings
 // @Produce json
 // @Id      deleteProjectEnvEmail
 // @Param   projectID path string true "project ID"

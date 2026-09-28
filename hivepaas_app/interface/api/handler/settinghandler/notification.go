@@ -11,7 +11,7 @@ import (
 // ListNotification Lists notification settings
 // @Summary Lists notification settings
 // @Description Lists notification settings
-// @Tags    settings
+// @Tags    Global settings
 // @Produce json
 // @Id      listSettingNotification
 // @Param   search query string false "`search=<target> (support *)`"
@@ -29,7 +29,7 @@ func (h *Handler) ListNotification(ctx *gin.Context) {
 // GetNotification Gets notification setting details
 // @Summary Gets notification setting details
 // @Description Gets notification setting details
-// @Tags    settings
+// @Tags    Global settings
 // @Produce json
 // @Id      getSettingNotification
 // @Param   itemID path string true "setting ID"
@@ -44,7 +44,7 @@ func (h *Handler) GetNotification(ctx *gin.Context) {
 // CreateNotification Creates a new notification setting
 // @Summary Creates a new notification setting
 // @Description Creates a new notification setting
-// @Tags    settings
+// @Tags    Global settings
 // @Produce json
 // @Id      createSettingNotification
 // @Param   body body notificationdto.CreateNotificationReq true "request data"
@@ -59,7 +59,7 @@ func (h *Handler) CreateNotification(ctx *gin.Context) {
 // UpdateNotification Updates notification
 // @Summary Updates notification
 // @Description Updates notification
-// @Tags    settings
+// @Tags    Global settings
 // @Produce json
 // @Id      updateSettingNotification
 // @Param   itemID path string true "setting ID"
@@ -75,7 +75,7 @@ func (h *Handler) UpdateNotification(ctx *gin.Context) {
 // UpdateNotificationStatus Updates notification status
 // @Summary Updates notification status
 // @Description Updates notification status
-// @Tags    settings
+// @Tags    Global settings
 // @Produce json
 // @Id      updateSettingNotificationStatus
 // @Param   itemID path string true "setting ID"
@@ -91,7 +91,7 @@ func (h *Handler) UpdateNotificationStatus(ctx *gin.Context) {
 // DeleteNotification Deletes notification setting
 // @Summary Deletes notification setting
 // @Description Deletes notification setting
-// @Tags    settings
+// @Tags    Global settings
 // @Produce json
 // @Id      deleteSettingNotification
 // @Param   itemID path string true "setting ID"

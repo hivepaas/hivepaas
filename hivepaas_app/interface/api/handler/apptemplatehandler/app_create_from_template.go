@@ -13,7 +13,7 @@ import (
 // CreateAppFromTemplate Creates an app from an app template
 // @Summary Creates an app from an app template
 // @Description Provisions the app with the template's configuration and queues its first deployment.
-// @Tags    app_templates
+// @Tags    App templates
 // @Produce json
 // @Id      createAppFromTemplate
 // @Param   projectID path string true "project ID"

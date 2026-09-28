@@ -13,7 +13,7 @@ import (
 // CancelAppDeployment Cancels app deployment
 // @Summary Cancels app deployment
 // @Description Cancels app deployment
-// @Tags    app_deployments
+// @Tags    App deployments
 // @Produce json
 // @Id      cancelAppDeployment
 // @Param   projectID path string true "project ID"

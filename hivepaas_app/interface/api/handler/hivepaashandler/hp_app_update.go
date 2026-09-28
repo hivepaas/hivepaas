@@ -14,7 +14,7 @@ import (
 // GetAppReleaseInfo Gets release info of the app
 // @Summary Gets release info of the app
 // @Description Gets release info of the app
-// @Tags    system_hivepaas
+// @Tags    HivePaaS
 // @Produce json
 // @Id      getHivePaaSReleaseInfo
 // @Success 200 {object} hpappdto.GetHpAppReleaseInfoResp
@@ -54,7 +54,7 @@ func (h *Handler) GetAppReleaseInfo(ctx *gin.Context) {
 // UpdateAppVersion Updates HivePaaS app
 // @Summary Updates HivePaaS app
 // @Description Updates HivePaaS app
-// @Tags    system_hivepaas
+// @Tags    HivePaaS
 // @Produce json
 // @Id      updateHivePaaSAppVersion
 // @Param   body body hpappdto.UpdateHpAppReq true "request data"
@@ -96,7 +96,7 @@ func (h *Handler) UpdateAppVersion(ctx *gin.Context) {
 // @Summary Gets what an update to a version would do
 // @Description Gets, component by component, what an update to a published version would do - the image each
 // @Description runs now and would run, and whether the update would move it - without changing anything.
-// @Tags    system_hivepaas
+// @Tags    HivePaaS
 // @Produce json
 // @Id      getHivePaaSUpdatePlan
 // @Param   targetVersion query string true "a version published on the stable or beta channel"

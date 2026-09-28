@@ -14,7 +14,7 @@ import (
 // @Summary Lists app templates
 // @Description Lists the templates a project can create apps from, a page at a time, ordered by name.
 // @Description The categories and tags to filter by come from the app template catalog.
-// @Tags    app_templates
+// @Tags    App templates
 // @Produce json
 // @Id      listAppTemplates
 // @Param   category query string false "categories, comma separated; a parent matches every child"
@@ -51,7 +51,7 @@ func (h *Handler) ListAppTemplates(ctx *gin.Context) {
 // GetAppTemplate Gets an app template
 // @Summary Gets an app template
 // @Description Gets one app template: its description, versions, variants and parameters.
-// @Tags    app_templates
+// @Tags    App templates
 // @Produce json
 // @Id      getAppTemplate
 // @Param   templateName path string true "template name"
@@ -91,7 +91,7 @@ func (h *Handler) GetAppTemplate(ctx *gin.Context) {
 // GetAppTemplateImageTags Lists the image tags a template version could use
 // @Summary Lists the image tags a template version could use
 // @Description Reads the registry on demand. The repository comes from the template, never from the request.
-// @Tags    app_templates
+// @Tags    App templates
 // @Produce json
 // @Id      getAppTemplateImageTags
 // @Param   templateName path string true "template name"
@@ -133,13 +133,14 @@ func (h *Handler) GetAppTemplateImageTags(ctx *gin.Context) {
 // GetAppTemplateIcon Gets an app template icon
 // @Summary Gets an app template icon
 // @Description Public: an `<img>` cannot send the Authorization header. Only icons the current index lists are served.
-// @Tags    app_templates
+// @Tags    App templates
 // @Produce image/svg+xml,image/png
 // @Id      getAppTemplateIcon
 // @Param   file path string true "icon file name, such as postgres.3a18fec853.svg"
 // @Success 200
 // @Failure 400 {object} hperrors.ErrorInfo
 // @Failure 404 {object} hperrors.ErrorInfo
+// @Security
 // @Router  /app-templates/icons/{file} [get]
 func (h *Handler) GetAppTemplateIcon(ctx *gin.Context) {
 	file, err := h.ParseStringParam(ctx, "file")

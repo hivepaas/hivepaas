@@ -15,7 +15,7 @@ import (
 // UploadFiles Uploads one or multiple files to server
 // @Summary Uploads one or multiple files to server
 // @Description Uploads one or multiple files to server
-// @Tags    files
+// @Tags    Files
 // @Accept  multipart/form-data
 // @Produce json
 // @Id      uploadFiles

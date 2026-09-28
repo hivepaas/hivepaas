@@ -14,7 +14,7 @@ import (
 // ReloadHivePaaSAppConfig Reloads HivePaaS config files
 // @Summary Reloads HivePaaS config files
 // @Description Reloads HivePaaS config files
-// @Tags    system_hivepaas
+// @Tags    HivePaaS
 // @Produce json
 // @Id      reloadHivePaaSAppConfig
 // @Param   body body hpappdto.ReloadHpAppConfigReq true "request data"
@@ -55,7 +55,7 @@ func (h *Handler) ReloadHivePaaSAppConfig(ctx *gin.Context) {
 // RestartHivePaaSApp Restarts hivepaas app containers
 // @Summary Restarts hivepaas app containers
 // @Description Restarts hivepaas app containers
-// @Tags    system_hivepaas
+// @Tags    HivePaaS
 // @Produce json
 // @Id      restartHivePaaSApp
 // @Param   body body hpappdto.RestartHpAppReq true "request data"

@@ -11,7 +11,7 @@ import (
 // GetDomainSettings Gets domain settings details
 // @Summary Gets domain settings details
 // @Description Gets domain settings details
-// @Tags    settings
+// @Tags    Global settings
 // @Produce json
 // @Id      getSettingDomainSettings
 // @Success 200 {object} domainsettingsdto.GetDomainSettingsResp
@@ -25,7 +25,7 @@ func (h *Handler) GetDomainSettings(ctx *gin.Context) {
 // UpdateDomainSettings Updates domain settings
 // @Summary Updates domain settings
 // @Description Updates domain settings
-// @Tags    settings
+// @Tags    Global settings
 // @Produce json
 // @Id      updateSettingDomainSettings
 // @Param   body body domainsettingsdto.UpdateDomainSettingsReq true "request data"
@@ -40,7 +40,7 @@ func (h *Handler) UpdateDomainSettings(ctx *gin.Context) {
 // UpdateDomainSettingsStatus Updates domain settings status
 // @Summary Updates domain settings status
 // @Description Updates domain settings status
-// @Tags    settings
+// @Tags    Global settings
 // @Produce json
 // @Id      updateSettingDomainSettingsStatus
 // @Param   body body domainsettingsdto.UpdateDomainSettingsStatusReq true "request data"
@@ -55,7 +55,7 @@ func (h *Handler) UpdateDomainSettingsStatus(ctx *gin.Context) {
 // DeleteDomainSettings Deletes domain settings setting
 // @Summary Deletes domain settings setting
 // @Description Deletes domain settings setting
-// @Tags    settings
+// @Tags    Global settings
 // @Produce json
 // @Id      deleteSettingDomainSettings
 // @Success 200 {object} domainsettingsdto.DeleteDomainSettingsResp

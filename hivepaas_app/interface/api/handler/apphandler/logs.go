@@ -12,7 +12,7 @@ import (
 // GetAppLogsInfo Gets log info
 // @Summary Gets log info
 // @Description Gets log info
-// @Tags    apps
+// @Tags    Apps
 // @Produce json
 // @Id      getAppLogsInfo
 // @Param   projectID path string true "project ID"
@@ -52,7 +52,7 @@ func (h *Handler) GetAppLogsInfo(ctx *gin.Context) {
 // @Description Stream app logs via websocket.
 // @Description Every read is bounded: `tail` defaults to 1000 lines and may not exceed 5000.
 // @Description Reading further back than one response holds is the history endpoint, which pages.
-// @Tags    apps
+// @Tags    Apps
 // @Produce json
 // @Id      getAppLogs
 // @Param   projectID path string true "project ID"
@@ -109,7 +109,7 @@ func (h *Handler) GetAppLogs(ctx *gin.Context) {
 // @Description `search` is matched from the start of a token, which the backend answers from its index.
 // @Description `regex=true` reads it as a regular expression instead: slower, because it is read row by
 // @Description row, and a malformed expression comes back as an invalid query, not as an empty result.
-// @Tags    apps
+// @Tags    Apps
 // @Produce json
 // @Id      getAppLogHistory
 // @Param   projectID path string true "project ID"

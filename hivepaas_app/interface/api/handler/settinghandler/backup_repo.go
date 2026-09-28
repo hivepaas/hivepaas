@@ -11,7 +11,7 @@ import (
 // ListBackupRepo Lists backup repositories
 // @Summary Lists backup repositories
 // @Description Lists backup repositories
-// @Tags    settings
+// @Tags    Global settings
 // @Produce json
 // @Id      listSettingBackupRepo
 // @Param   search query string false "`search=<target> (support *)`"
@@ -29,7 +29,7 @@ func (h *Handler) ListBackupRepo(ctx *gin.Context) {
 // GetBackupRepo Gets backup repository details
 // @Summary Gets backup repository details
 // @Description Gets backup repository details
-// @Tags    settings
+// @Tags    Global settings
 // @Produce json
 // @Id      getSettingBackupRepo
 // @Param   itemID path string true "setting ID"
@@ -46,7 +46,7 @@ func (h *Handler) GetBackupRepo(ctx *gin.Context) {
 // @Description Creates a new backup repository on the storage backend, or adopts an existing one
 // @Description when `importExisting` is set, in which case the snapshots already in the repository
 // @Description are read back and stored.
-// @Tags    settings
+// @Tags    Global settings
 // @Produce json
 // @Id      createSettingBackupRepo
 // @Param   body body backuprepodto.CreateBackupRepoReq true "request data"
@@ -61,7 +61,7 @@ func (h *Handler) CreateBackupRepo(ctx *gin.Context) {
 // UpdateBackupRepo Updates a backup repository
 // @Summary Updates a backup repository
 // @Description Updates a backup repository
-// @Tags    settings
+// @Tags    Global settings
 // @Produce json
 // @Id      updateSettingBackupRepo
 // @Param   itemID path string true "setting ID"
@@ -78,7 +78,7 @@ func (h *Handler) UpdateBackupRepo(ctx *gin.Context) {
 // @Summary Changes a backup repository's password
 // @Description Re-encrypts the backup repository with a new password. The repository itself is
 // @Description re-encrypted first, so the previous password stops working as soon as this succeeds.
-// @Tags    settings
+// @Tags    Global settings
 // @Produce json
 // @Id      changeSettingBackupRepoPassword
 // @Param   itemID path string true "setting ID"
@@ -94,7 +94,7 @@ func (h *Handler) ChangeBackupRepoPassword(ctx *gin.Context) {
 // UpdateBackupRepoStatus Updates a backup repository's status
 // @Summary Updates a backup repository's status
 // @Description Updates a backup repository's status
-// @Tags    settings
+// @Tags    Global settings
 // @Produce json
 // @Id      updateSettingBackupRepoStatus
 // @Param   itemID path string true "setting ID"
@@ -110,7 +110,7 @@ func (h *Handler) UpdateBackupRepoStatus(ctx *gin.Context) {
 // DeleteBackupRepo Deletes a backup repository
 // @Summary Deletes a backup repository
 // @Description Deletes the backup repository setting. The data on the storage backend is kept.
-// @Tags    settings
+// @Tags    Global settings
 // @Produce json
 // @Id      deleteSettingBackupRepo
 // @Param   itemID path string true "setting ID"
@@ -126,7 +126,7 @@ func (h *Handler) DeleteBackupRepo(ctx *gin.Context) {
 // @Summary Cleans up a backup repository
 // @Description Applies the repository's retention policy, removing the snapshots it expires, then
 // @Description reconciles the stored snapshot records against what the repository still holds.
-// @Tags    settings
+// @Tags    Global settings
 // @Produce json
 // @Id      cleanupSettingBackupRepo
 // @Param   itemID path string true "setting ID"
@@ -143,7 +143,7 @@ func (h *Handler) CleanupBackupRepo(ctx *gin.Context) {
 // @Description Reads the repository and adopts what it finds: the options it is configured with,
 // @Description and the snapshots it holds. Use it after the repository was changed outside the
 // @Description app. Nothing in the repository is modified.
-// @Tags    settings
+// @Tags    Global settings
 // @Produce json
 // @Id      syncSettingBackupRepo
 // @Param   itemID path string true "setting ID"

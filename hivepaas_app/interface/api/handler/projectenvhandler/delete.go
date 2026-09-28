@@ -13,7 +13,7 @@ import (
 // DeleteProjectEnv Deletes a project env
 // @Summary Deletes a project env
 // @Description Deletes a project env
-// @Tags    project_envs
+// @Tags    Project envs
 // @Produce json
 // @Id      deleteProjectEnv
 // @Param   projectID path string true "project ID"

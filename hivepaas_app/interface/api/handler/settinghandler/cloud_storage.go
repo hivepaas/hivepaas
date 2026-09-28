@@ -14,7 +14,7 @@ import (
 // ListCloudStorage Lists cloud storages
 // @Summary Lists cloud storages
 // @Description Lists cloud storages
-// @Tags    settings
+// @Tags    Global settings
 // @Produce json
 // @Id      listSettingCloudStorage
 // @Param   search query string false "`search=<target> (support *)`"
@@ -32,7 +32,7 @@ func (h *Handler) ListCloudStorage(ctx *gin.Context) {
 // GetCloudStorage Gets cloud storage details
 // @Summary Gets cloud storage details
 // @Description Gets cloud storage details
-// @Tags    settings
+// @Tags    Global settings
 // @Produce json
 // @Id      getSettingCloudStorage
 // @Param   itemID path string true "setting ID"
@@ -47,7 +47,7 @@ func (h *Handler) GetCloudStorage(ctx *gin.Context) {
 // CreateCloudStorage Creates a new cloud storage
 // @Summary Creates a new cloud storage
 // @Description Creates a new cloud storage
-// @Tags    settings
+// @Tags    Global settings
 // @Produce json
 // @Id      createSettingCloudStorage
 // @Param   body body cloudstoragedto.CreateCloudStorageReq true "request data"
@@ -62,7 +62,7 @@ func (h *Handler) CreateCloudStorage(ctx *gin.Context) {
 // UpdateCloudStorage Updates a cloud storage
 // @Summary Updates a cloud storage
 // @Description Updates a cloud storage
-// @Tags    settings
+// @Tags    Global settings
 // @Produce json
 // @Id      updateSettingCloudStorage
 // @Param   itemID path string true "setting ID"
@@ -78,7 +78,7 @@ func (h *Handler) UpdateCloudStorage(ctx *gin.Context) {
 // UpdateCloudStorageStatus Updates a cloud storage's status
 // @Summary Updates a cloud storage's status
 // @Description Updates a cloud storage's status
-// @Tags    settings
+// @Tags    Global settings
 // @Produce json
 // @Id      updateSettingCloudStorageStatus
 // @Param   itemID path string true "setting ID"
@@ -94,7 +94,7 @@ func (h *Handler) UpdateCloudStorageStatus(ctx *gin.Context) {
 // DeleteCloudStorage Deletes a cloud storage
 // @Summary Deletes a cloud storage
 // @Description Deletes a cloud storage
-// @Tags    settings
+// @Tags    Global settings
 // @Produce json
 // @Id      deleteSettingCloudStorage
 // @Param   itemID path string true "setting ID"
@@ -109,7 +109,7 @@ func (h *Handler) DeleteCloudStorage(ctx *gin.Context) {
 // TestCloudStorageConn Test cloud storage connection
 // @Summary Test cloud storage connection
 // @Description Test cloud storage connection
-// @Tags    settings
+// @Tags    Global settings
 // @Produce json
 // @Id      testCloudStorageConn
 // @Param   body body cloudstoragedto.TestCloudStorageConnReq true "request data"

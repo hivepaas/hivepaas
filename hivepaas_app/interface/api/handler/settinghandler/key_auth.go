@@ -11,7 +11,7 @@ import (
 // ListKeyAuth Lists key auth settings
 // @Summary Lists key auth settings
 // @Description Lists key auth settings
-// @Tags    settings
+// @Tags    Global settings
 // @Produce json
 // @Id      listSettingKeyAuth
 // @Param   search query string false "`search=<target> (support *)`"
@@ -29,7 +29,7 @@ func (h *Handler) ListKeyAuth(ctx *gin.Context) {
 // GetKeyAuth Gets key auth setting details
 // @Summary Gets key auth setting details
 // @Description Gets key auth setting details
-// @Tags    settings
+// @Tags    Global settings
 // @Produce json
 // @Id      getSettingKeyAuth
 // @Param   itemID path string true "setting ID"
@@ -44,7 +44,7 @@ func (h *Handler) GetKeyAuth(ctx *gin.Context) {
 // CreateKeyAuth Creates a new key auth setting
 // @Summary Creates a new key auth setting
 // @Description Creates a new key auth setting
-// @Tags    settings
+// @Tags    Global settings
 // @Produce json
 // @Id      createSettingKeyAuth
 // @Param   body body keyauthdto.CreateKeyAuthReq true "request data"
@@ -59,7 +59,7 @@ func (h *Handler) CreateKeyAuth(ctx *gin.Context) {
 // UpdateKeyAuth Updates key auth
 // @Summary Updates key auth
 // @Description Updates key auth
-// @Tags    settings
+// @Tags    Global settings
 // @Produce json
 // @Id      updateSettingKeyAuth
 // @Param   itemID path string true "setting ID"
@@ -75,7 +75,7 @@ func (h *Handler) UpdateKeyAuth(ctx *gin.Context) {
 // UpdateKeyAuthStatus Updates key auth status
 // @Summary Updates key auth status
 // @Description Updates key auth status
-// @Tags    settings
+// @Tags    Global settings
 // @Produce json
 // @Id      updateSettingKeyAuthStatus
 // @Param   itemID path string true "setting ID"
@@ -91,7 +91,7 @@ func (h *Handler) UpdateKeyAuthStatus(ctx *gin.Context) {
 // DeleteKeyAuth Deletes key auth setting
 // @Summary Deletes key auth setting
 // @Description Deletes key auth setting
-// @Tags    settings
+// @Tags    Global settings
 // @Produce json
 // @Id      deleteSettingKeyAuth
 // @Param   itemID path string true "setting ID"

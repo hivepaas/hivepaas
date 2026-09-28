@@ -13,7 +13,7 @@ import (
 // UpdateUser Updates user data (admin API)
 // @Summary Updates user data (admin API)
 // @Description Updates user data (admin API)
-// @Tags    users
+// @Tags    Users
 // @Produce json
 // @Id      updateUser
 // @Param   userID path string true "user ID"
@@ -48,7 +48,7 @@ func (h *Handler) UpdateUser(ctx *gin.Context) {
 // DeleteUser Deletes a user (admin API)
 // @Summary Deletes a user (admin API)
 // @Description Deletes a user (admin API)
-// @Tags    users
+// @Tags    Users
 // @Produce json
 // @Id      deleteUser
 // @Param   userID path string true "user ID"

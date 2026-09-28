@@ -11,7 +11,7 @@ import (
 // ListRepoWebhook Lists webhook settings
 // @Summary Lists webhook settings
 // @Description Lists webhook settings
-// @Tags    settings
+// @Tags    Global settings
 // @Produce json
 // @Id      listSettingRepoWebhook
 // @Param   search query string false "`search=<target> (support *)`"
@@ -29,7 +29,7 @@ func (h *Handler) ListRepoWebhook(ctx *gin.Context) {
 // GetRepoWebhook Gets webhook setting details
 // @Summary Gets webhook setting details
 // @Description Gets webhook setting details
-// @Tags    settings
+// @Tags    Global settings
 // @Produce json
 // @Id      getSettingRepoWebhook
 // @Param   itemID path string true "setting ID"
@@ -44,7 +44,7 @@ func (h *Handler) GetRepoWebhook(ctx *gin.Context) {
 // CreateRepoWebhook Creates a new webhook setting
 // @Summary Creates a new webhook setting
 // @Description Creates a new webhook setting
-// @Tags    settings
+// @Tags    Global settings
 // @Produce json
 // @Id      createSettingRepoWebhook
 // @Param   body body repowebhookdto.CreateRepoWebhookReq true "request data"
@@ -59,7 +59,7 @@ func (h *Handler) CreateRepoWebhook(ctx *gin.Context) {
 // UpdateRepoWebhook Updates webhook
 // @Summary Updates webhook
 // @Description Updates webhook
-// @Tags    settings
+// @Tags    Global settings
 // @Produce json
 // @Id      updateSettingRepoWebhook
 // @Param   itemID path string true "setting ID"
@@ -75,7 +75,7 @@ func (h *Handler) UpdateRepoWebhook(ctx *gin.Context) {
 // UpdateRepoWebhookStatus Updates webhook status
 // @Summary Updates webhook status
 // @Description Updates webhook status
-// @Tags    settings
+// @Tags    Global settings
 // @Produce json
 // @Id      updateSettingRepoWebhookStatus
 // @Param   itemID path string true "setting ID"
@@ -91,7 +91,7 @@ func (h *Handler) UpdateRepoWebhookStatus(ctx *gin.Context) {
 // DeleteRepoWebhook Deletes webhook setting
 // @Summary Deletes webhook setting
 // @Description Deletes webhook setting
-// @Tags    settings
+// @Tags    Global settings
 // @Produce json
 // @Id      deleteSettingRepoWebhook
 // @Param   itemID path string true "setting ID"

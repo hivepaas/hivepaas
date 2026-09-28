@@ -22,7 +22,7 @@ const importMaxBodySize = 25 * 1024 * 1024
 // ValidateGlobalImport godoc
 //
 //	@Summary	Plan importing a configuration bundle into the whole installation
-//	@Tags		spec
+//	@Tags		Configuration specs
 //	@Accept		json
 //	@Produce	json
 //	@Param		body	body		specdto.ValidateImportReq	true	"bundle, passphrase, selection, options"
@@ -35,7 +35,7 @@ func (h *Handler) ValidateGlobalImport(ctx *gin.Context) {
 // ValidateProjectImport godoc
 //
 //	@Summary	Plan importing a configuration bundle into one project
-//	@Tags		spec
+//	@Tags		Configuration specs
 //	@Accept		json
 //	@Produce	json
 //	@Param		projectID	path		string						true	"Project ID"
@@ -54,7 +54,7 @@ func (h *Handler) ValidateProjectImport(ctx *gin.Context) {
 // ValidateProjectEnvImport godoc
 //
 //	@Summary	Plan importing a configuration bundle into one project env
-//	@Tags		spec
+//	@Tags		Configuration specs
 //	@Accept		json
 //	@Produce	json
 //	@Param		projectID	path		string						true	"Project ID"
@@ -95,7 +95,7 @@ func (h *Handler) validateImport(ctx *gin.Context, scope *entity.ObjectScope) {
 // ApplyGlobalImport godoc
 //
 //	@Summary	Import a configuration bundle into the whole installation
-//	@Tags		spec
+//	@Tags		Configuration specs
 //	@Accept		json
 //	@Produce	json
 //	@Param		body	body		specdto.ApplyImportReq	true	"validate's body, planHash, acceptIssues"
@@ -108,7 +108,7 @@ func (h *Handler) ApplyGlobalImport(ctx *gin.Context) {
 // ApplyProjectImport godoc
 //
 //	@Summary	Import a configuration bundle into one project
-//	@Tags		spec
+//	@Tags		Configuration specs
 //	@Accept		json
 //	@Produce	json
 //	@Param		projectID	path		string					true	"Project ID"
@@ -127,7 +127,7 @@ func (h *Handler) ApplyProjectImport(ctx *gin.Context) {
 // ApplyProjectEnvImport godoc
 //
 //	@Summary	Import a configuration bundle into one project env
-//	@Tags		spec
+//	@Tags		Configuration specs
 //	@Accept		json
 //	@Produce	json
 //	@Param		projectID	path		string					true	"Project ID"

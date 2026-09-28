@@ -11,7 +11,7 @@ import (
 // GetAppFeatureSettings Gets app feature settings
 // @Summary Gets app feature settings
 // @Description Gets app feature settings
-// @Tags    app_settings
+// @Tags    App settings
 // @Produce json
 // @Id      getAppFeatureSettings
 // @Param   projectID path string true "project ID"
@@ -28,7 +28,7 @@ func (h *Handler) GetAppFeatureSettings(ctx *gin.Context) {
 // UpdateAppFeatureSettings Updates app feature settings
 // @Summary Updates app feature settings
 // @Description Updates app feature settings
-// @Tags    app_settings
+// @Tags    App settings
 // @Produce json
 // @Id      updateAppFeatureSettings
 // @Param   projectID path string true "project ID"

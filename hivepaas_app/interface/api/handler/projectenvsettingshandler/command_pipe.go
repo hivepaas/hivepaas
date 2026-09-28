@@ -11,7 +11,7 @@ import (
 // ListCommandPipe Lists command pipe settings
 // @Summary Lists command pipe settings
 // @Description Lists command pipe settings
-// @Tags    project_env_settings
+// @Tags    Project env settings
 // @Produce json
 // @Id      listProjectEnvCommandPipe
 // @Param   projectID path string true "project ID"
@@ -31,7 +31,7 @@ func (h *Handler) ListCommandPipe(ctx *gin.Context) {
 // GetCommandPipe Gets command pipe setting details
 // @Summary Gets command pipe setting details
 // @Description Gets command pipe setting details
-// @Tags    project_env_settings
+// @Tags    Project env settings
 // @Produce json
 // @Id      getProjectEnvCommandPipe
 // @Param   projectID path string true "project ID"
@@ -48,7 +48,7 @@ func (h *Handler) GetCommandPipe(ctx *gin.Context) {
 // CreateCommandPipe Creates a new command pipe setting
 // @Summary Creates a new command pipe setting
 // @Description Creates a new command pipe setting
-// @Tags    project_env_settings
+// @Tags    Project env settings
 // @Produce json
 // @Id      createProjectEnvCommandPipe
 // @Param   projectID path string true "project ID"
@@ -65,7 +65,7 @@ func (h *Handler) CreateCommandPipe(ctx *gin.Context) {
 // CreateCommandPipeFromTemplate Creates a command pipe setting from template
 // @Summary Creates a command pipe setting from template
 // @Description Creates a command pipe setting from template
-// @Tags    project_env_settings
+// @Tags    Project env settings
 // @Produce json
 // @Id      createProjectEnvCommandPipeFromTemplate
 // @Param   projectID path string true "project ID"
@@ -82,7 +82,7 @@ func (h *Handler) CreateCommandPipeFromTemplate(ctx *gin.Context) {
 // UpdateCommandPipe Updates command pipe
 // @Summary Updates command pipe
 // @Description Updates command pipe
-// @Tags    project_env_settings
+// @Tags    Project env settings
 // @Produce json
 // @Id      updateProjectEnvCommandPipe
 // @Param   projectID path string true "project ID"
@@ -100,7 +100,7 @@ func (h *Handler) UpdateCommandPipe(ctx *gin.Context) {
 // UpdateCommandPipeStatus Updates command pipe status
 // @Summary Updates command pipe status
 // @Description Updates command pipe status
-// @Tags    project_env_settings
+// @Tags    Project env settings
 // @Produce json
 // @Id      updateProjectEnvCommandPipeStatus
 // @Param   projectID path string true "project ID"
@@ -118,7 +118,7 @@ func (h *Handler) UpdateCommandPipeStatus(ctx *gin.Context) {
 // DeleteCommandPipe Deletes command pipe setting
 // @Summary Deletes command pipe setting
 // @Description Deletes command pipe setting
-// @Tags    project_env_settings
+// @Tags    Project env settings
 // @Produce json
 // @Id      deleteProjectEnvCommandPipe
 // @Param   projectID path string true "project ID"

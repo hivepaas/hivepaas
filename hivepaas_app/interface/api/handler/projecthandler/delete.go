@@ -13,7 +13,7 @@ import (
 // DeleteProject Deletes a project
 // @Summary Deletes a project
 // @Description Deletes a project
-// @Tags    projects
+// @Tags    Projects
 // @Produce json
 // @Id      deleteProject
 // @Param   projectID path string true "project ID"

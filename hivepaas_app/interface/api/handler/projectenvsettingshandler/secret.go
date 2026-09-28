@@ -11,7 +11,7 @@ import (
 // ListSecret Lists project secrets
 // @Summary Lists project secrets
 // @Description Lists project secrets
-// @Tags    project_env_settings
+// @Tags    Project env settings
 // @Produce json
 // @Id      listProjectEnvSecret
 // @Param   projectID path string true "project ID"
@@ -28,7 +28,7 @@ func (h *Handler) ListSecret(ctx *gin.Context) {
 // GetSecret Gets secret details
 // @Summary Gets secret details
 // @Description Gets secret details
-// @Tags    project_env_settings
+// @Tags    Project env settings
 // @Produce json
 // @Id      getProjectEnvSecret
 // @Param   projectID path string true "project ID"
@@ -45,7 +45,7 @@ func (h *Handler) GetSecret(ctx *gin.Context) {
 // CreateSecret Creates a project secret
 // @Summary Creates a project secret
 // @Description Creates a project secret
-// @Tags    project_env_settings
+// @Tags    Project env settings
 // @Produce json
 // @Id      createProjectEnvSecret
 // @Param   projectID path string true "project ID"
@@ -62,7 +62,7 @@ func (h *Handler) CreateSecret(ctx *gin.Context) {
 // UpdateSecret Updates a project secret
 // @Summary Updates a project secret
 // @Description Updates a project secret
-// @Tags    project_env_settings
+// @Tags    Project env settings
 // @Produce json
 // @Id      updateProjectEnvSecret
 // @Param   projectID path string true "project ID"
@@ -80,7 +80,7 @@ func (h *Handler) UpdateSecret(ctx *gin.Context) {
 // UpdateSecretStatus Updates project secret status
 // @Summary Updates project secret status
 // @Description Updates project secret status
-// @Tags    project_env_settings
+// @Tags    Project env settings
 // @Produce json
 // @Id      updateProjectEnvSecretStatus
 // @Param   projectID path string true "project ID"
@@ -98,7 +98,7 @@ func (h *Handler) UpdateSecretStatus(ctx *gin.Context) {
 // DeleteSecret Deletes a project secret
 // @Summary Deletes a project secret
 // @Description Deletes a project secret
-// @Tags    project_env_settings
+// @Tags    Project env settings
 // @Produce json
 // @Id      deleteProjectEnvSecret
 // @Param   projectID path string true "project ID"

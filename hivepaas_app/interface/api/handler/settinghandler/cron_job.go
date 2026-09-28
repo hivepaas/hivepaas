@@ -14,7 +14,7 @@ import (
 // ListSchedJob Lists sched-jobs
 // @Summary Lists sched-jobs
 // @Description Lists sched-jobs
-// @Tags    settings
+// @Tags    Global settings
 // @Produce json
 // @Id      listSettingSchedJob
 // @Param   search query string false "`search=<target> (support *)`"
@@ -32,7 +32,7 @@ func (h *Handler) ListSchedJob(ctx *gin.Context) {
 // GetSchedJob Gets sched-job details
 // @Summary Gets sched-job details
 // @Description Gets sched-job details
-// @Tags    settings
+// @Tags    Global settings
 // @Produce json
 // @Id      getSettingSchedJob
 // @Param   itemID path string true "setting ID"
@@ -47,7 +47,7 @@ func (h *Handler) GetSchedJob(ctx *gin.Context) {
 // CreateSchedJob Creates a new sched-job
 // @Summary Creates a new sched-job
 // @Description Creates a new sched-job
-// @Tags    settings
+// @Tags    Global settings
 // @Produce json
 // @Id      createSettingSchedJob
 // @Param   body body schedjobdto.CreateSchedJobReq true "request data"
@@ -62,7 +62,7 @@ func (h *Handler) CreateSchedJob(ctx *gin.Context) {
 // UpdateSchedJob Updates sched-job
 // @Summary Updates sched-job
 // @Description Updates sched-job
-// @Tags    settings
+// @Tags    Global settings
 // @Produce json
 // @Id      updateSettingSchedJob
 // @Param   itemID path string true "setting ID"
@@ -78,7 +78,7 @@ func (h *Handler) UpdateSchedJob(ctx *gin.Context) {
 // UpdateSchedJobStatus Updates sched-job status
 // @Summary Updates sched-job status
 // @Description Updates sched-job status
-// @Tags    settings
+// @Tags    Global settings
 // @Produce json
 // @Id      updateSettingSchedJobStatus
 // @Param   itemID path string true "setting ID"
@@ -94,7 +94,7 @@ func (h *Handler) UpdateSchedJobStatus(ctx *gin.Context) {
 // DeleteSchedJob Deletes sched-job
 // @Summary Deletes sched-job
 // @Description Deletes sched-job
-// @Tags    settings
+// @Tags    Global settings
 // @Produce json
 // @Id      deleteSettingSchedJob
 // @Param   itemID path string true "setting ID"
@@ -109,7 +109,7 @@ func (h *Handler) DeleteSchedJob(ctx *gin.Context) {
 // SchedJobCalcNextRuns Calculates next runs of the job
 // @Summary Calculates next runs of the job
 // @Description Calculates next runs of the job
-// @Tags    settings
+// @Tags    Global settings
 // @Produce json
 // @Id      schedJobCalcNextRuns
 // @Param   body body schedjobdto.CalcNextRunsReq true "request data"

@@ -14,7 +14,7 @@ import (
 // GetRoutingSettings Gets HivePaaS routing settings
 // @Summary Gets HivePaaS routing settings
 // @Description Gets HivePaaS routing settings
-// @Tags    system_hivepaas
+// @Tags    HivePaaS
 // @Produce json
 // @Id      getHivePaaSRoutingSettings
 // @Success 200 {object} hpappsettingsdto.GetRoutingSettingsResp
@@ -54,7 +54,7 @@ func (h *Handler) GetRoutingSettings(ctx *gin.Context) {
 // UpdateRoutingSettings Updates HivePaaS routing settings
 // @Summary Updates HivePaaS routing settings
 // @Description Updates HivePaaS routing settings
-// @Tags    system_hivepaas
+// @Tags    HivePaaS
 // @Produce json
 // @Id      updateHivePaaSRoutingSettings
 // @Param   body body hpappsettingsdto.UpdateRoutingSettingsReq true "request data"

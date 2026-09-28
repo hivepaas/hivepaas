@@ -11,7 +11,7 @@ import (
 // ListGithubApp Lists github-app settings
 // @Summary Lists github-app settings
 // @Description Lists github-app settings
-// @Tags    project_settings
+// @Tags    Project settings
 // @Produce json
 // @Id      listProjectGithubApp
 // @Param   projectID path string true "project ID"
@@ -30,7 +30,7 @@ func (h *Handler) ListGithubApp(ctx *gin.Context) {
 // GetGithubApp Gets github-app setting details
 // @Summary Gets github-app setting details
 // @Description Gets github-app setting details
-// @Tags    project_settings
+// @Tags    Project settings
 // @Produce json
 // @Id      getProjectGithubApp
 // @Param   projectID path string true "project ID"
@@ -46,7 +46,7 @@ func (h *Handler) GetGithubApp(ctx *gin.Context) {
 // CreateGithubApp Creates a new github-app setting
 // @Summary Creates a new github-app setting
 // @Description Creates a new github-app setting
-// @Tags    project_settings
+// @Tags    Project settings
 // @Produce json
 // @Id      createProjectGithubApp
 // @Param   projectID path string true "project ID"
@@ -62,7 +62,7 @@ func (h *Handler) CreateGithubApp(ctx *gin.Context) {
 // UpdateGithubApp Updates github-app
 // @Summary Updates github-app
 // @Description Updates github-app
-// @Tags    project_settings
+// @Tags    Project settings
 // @Produce json
 // @Id      updateProjectGithubApp
 // @Param   projectID path string true "project ID"
@@ -79,7 +79,7 @@ func (h *Handler) UpdateGithubApp(ctx *gin.Context) {
 // UpdateGithubAppStatus Updates github-app status
 // @Summary Updates github-app status
 // @Description Updates github-app status
-// @Tags    project_settings
+// @Tags    Project settings
 // @Produce json
 // @Id      updateProjectGithubAppStatus
 // @Param   projectID path string true "project ID"
@@ -96,7 +96,7 @@ func (h *Handler) UpdateGithubAppStatus(ctx *gin.Context) {
 // DeleteGithubApp Deletes github-app setting
 // @Summary Deletes github-app setting
 // @Description Deletes github-app setting
-// @Tags    project_settings
+// @Tags    Project settings
 // @Produce json
 // @Id      deleteProjectGithubApp
 // @Param   projectID path string true "project ID"
@@ -112,7 +112,7 @@ func (h *Handler) DeleteGithubApp(ctx *gin.Context) {
 // BeginProjectGithubAppManifestFlow Begins a github-app manifest flow
 // @Summary Begins a github-app manifest flow
 // @Description Begins a github-app manifest flow
-// @Tags    project_settings
+// @Tags    Project settings
 // @Produce json
 // @Id      beginProjectGithubAppManifestFlow
 // @Param   projectID path string true "project ID"
@@ -128,7 +128,7 @@ func (h *Handler) BeginProjectGithubAppManifestFlow(ctx *gin.Context) {
 // BeginProjectGithubAppManifestFlowCreation Begins a github-app manifest flow creation
 // @Summary Begins a github-app manifest flow creation
 // @Description Begins a github-app manifest flow creation
-// @Tags    project_settings
+// @Tags    Project settings
 // @Produce json
 // @Id      beginProjectGithubAppManifestFlowCreation
 // @Param   projectID path string true "project ID"
@@ -144,7 +144,7 @@ func (h *Handler) BeginProjectGithubAppManifestFlowCreation(ctx *gin.Context) {
 // HandleProjectGithubAppManifestFlowProgress Handles progress of github-app manifest flow
 // @Summary Handles progress of github-app manifest flow
 // @Description Handles progress of github-app manifest flow
-// @Tags    project_settings
+// @Tags    Project settings
 // @Produce json
 // @Id      handleProjectGithubAppManifestFlowProgress
 // @Param   projectID path string true "project ID"
@@ -160,7 +160,7 @@ func (h *Handler) HandleProjectGithubAppManifestFlowProgress(ctx *gin.Context) {
 // BeginReprovisionProjectGithubApp Begins reprovisioning a github-app through manifest flow
 // @Summary Begins reprovisioning a github-app through manifest flow
 // @Description Begins reprovisioning a github-app through manifest flow
-// @Tags    project_settings
+// @Tags    Project settings
 // @Produce json
 // @Id      beginReprovisionProjectGithubApp
 // @Param   projectID path string true "project ID"

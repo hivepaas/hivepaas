@@ -16,7 +16,7 @@ import (
 // CreateDataFile Creates a data file of an app
 // @Summary Creates a data file of an app
 // @Description Creates a data file of an app
-// @Tags    app_settings
+// @Tags    App settings
 // @Produce json
 // @Id      createAppDataFile
 // @Param   projectID path string true "project ID"
@@ -53,7 +53,7 @@ func (h *Handler) CreateDataFile(ctx *gin.Context) {
 // ListDataFile Lists data files of an app
 // @Summary Lists data files of an app
 // @Description Lists data files of an app
-// @Tags    app_settings
+// @Tags    App settings
 // @Produce json
 // @Id      listAppDataFile
 // @Param   projectID path string true "project ID"
@@ -89,7 +89,7 @@ func (h *Handler) ListDataFile(ctx *gin.Context) {
 // GetDataFile Gets a data file of an app
 // @Summary Gets a data file of an app
 // @Description Gets a data file of an app
-// @Tags    app_settings
+// @Tags    App settings
 // @Produce json
 // @Id      getAppDataFile
 // @Param   projectID path string true "project ID"
@@ -127,7 +127,7 @@ func (h *Handler) GetDataFile(ctx *gin.Context) {
 // GetDataFileDownloadURL Gets download url of a data file
 // @Summary Gets download url of a data file
 // @Description Gets download url of a data file
-// @Tags    app_settings
+// @Tags    App settings
 // @Produce json
 // @Id      getAppDataFileDownloadURL
 // @Param   projectID path string true "project ID"
@@ -167,7 +167,7 @@ func (h *Handler) GetDataFileDownloadURL(ctx *gin.Context) {
 // DeleteDataFile Deletes a data file of an app
 // @Summary Deletes a data file of an app
 // @Description Deletes a data file of an app
-// @Tags    app_settings
+// @Tags    App settings
 // @Produce json
 // @Id      deleteAppDataFile
 // @Param   projectID path string true "project ID"

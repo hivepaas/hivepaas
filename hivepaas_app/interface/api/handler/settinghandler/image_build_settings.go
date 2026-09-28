@@ -15,7 +15,7 @@ import (
 // GetImageBuildSettings Gets image build settings
 // @Summary Gets image build settings
 // @Description Gets image build settings
-// @Tags    settings
+// @Tags    Global settings
 // @Produce json
 // @Id      getSettingImageBuildSettings
 // @Success 200 {object} imagebuildsettingsdto.GetImageBuildSettingsResp
@@ -29,7 +29,7 @@ func (h *Handler) GetImageBuildSettings(ctx *gin.Context) {
 // UpdateImageBuildSettings Updates image build settings
 // @Summary Updates image build settings
 // @Description Updates image build settings
-// @Tags    settings
+// @Tags    Global settings
 // @Produce json
 // @Id      updateSettingImageBuildSettings
 // @Param   body body imagebuildsettingsdto.UpdateImageBuildSettingsReq true "request data"
@@ -44,7 +44,7 @@ func (h *Handler) UpdateImageBuildSettings(ctx *gin.Context) {
 // UpdateImageBuildSettingsStatus Updates image build settings status
 // @Summary Updates image build settings status
 // @Description Updates image build settings status
-// @Tags    settings
+// @Tags    Global settings
 // @Produce json
 // @Id      updateSettingImageBuildSettingsStatus
 // @Param   body body imagebuildsettingsdto.UpdateImageBuildSettingsStatusReq true "request data"
@@ -59,7 +59,7 @@ func (h *Handler) UpdateImageBuildSettingsStatus(ctx *gin.Context) {
 // DeleteImageBuildSettings Deletes image build settings
 // @Summary Deletes image build settings
 // @Description Deletes image build settings
-// @Tags    settings
+// @Tags    Global settings
 // @Produce json
 // @Id      deleteSettingImageBuildSettings
 // @Success 200 {object} imagebuildsettingsdto.DeleteImageBuildSettingsResp
@@ -73,7 +73,7 @@ func (h *Handler) DeleteImageBuildSettings(ctx *gin.Context) {
 // GetRepoCacheInfo Gets repo cache info
 // @Summary Gets repo cache info
 // @Description Gets repo cache info
-// @Tags    settings
+// @Tags    Global settings
 // @Produce json
 // @Id      getSettingRepoCacheInfo
 // @Success 200 {object} imagebuildsettingsdto.GetRepoCacheInfoResp
@@ -109,7 +109,7 @@ func (h *Handler) GetRepoCacheInfo(ctx *gin.Context) {
 // ClearRepoCache Clears repo cache
 // @Summary Clears repo cache
 // @Description Clears repo cache
-// @Tags    settings
+// @Tags    Global settings
 // @Produce json
 // @Id      clearSettingRepoCache
 // @Param   body body imagebuildsettingsdto.ClearRepoCacheReq true "request data"

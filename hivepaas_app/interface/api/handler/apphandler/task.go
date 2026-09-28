@@ -11,7 +11,7 @@ import (
 // ListTask Lists tasks
 // @Summary Lists tasks
 // @Description Lists tasks
-// @Tags    app_tasks
+// @Tags    App tasks
 // @Produce json
 // @Id      listAppTask
 // @Param   projectID path string true "project ID"
@@ -32,7 +32,7 @@ func (h *Handler) ListTask(ctx *gin.Context) {
 // GetTask Gets task
 // @Summary Gets task
 // @Description Gets task
-// @Tags    app_tasks
+// @Tags    App tasks
 // @Produce json
 // @Id      getAppTask
 // @Param   projectID path string true "project ID"
@@ -50,7 +50,7 @@ func (h *Handler) GetTask(ctx *gin.Context) {
 // GetTaskStatus Gets task status
 // @Summary Gets task status
 // @Description Gets task status
-// @Tags    app_tasks
+// @Tags    App tasks
 // @Produce json
 // @Id      getAppTaskStatus
 // @Param   projectID path string true "project ID"
@@ -68,7 +68,7 @@ func (h *Handler) GetTaskStatus(ctx *gin.Context) {
 // ListTaskType Lists task types
 // @Summary Lists task types
 // @Description Lists task types
-// @Tags    app_tasks
+// @Tags    App tasks
 // @Produce json
 // @Id      listAppTaskType
 // @Param   projectID path string true "project ID"
@@ -85,7 +85,7 @@ func (h *Handler) ListTaskType(ctx *gin.Context) {
 // GetTaskLogs Gets task logs
 // @Summary Gets task logs
 // @Description Gets task logs
-// @Tags    app_tasks
+// @Tags    App tasks
 // @Produce json
 // @Id      getAppTaskLogs
 // @Param   projectID path string true "project ID"
@@ -103,7 +103,7 @@ func (h *Handler) GetTaskLogs(ctx *gin.Context) {
 // CancelTask Cancels task
 // @Summary Cancels task
 // @Description Cancels task
-// @Tags    app_tasks
+// @Tags    App tasks
 // @Produce json
 // @Id      cancelAppTask
 // @Param   projectID path string true "project ID"
@@ -121,7 +121,7 @@ func (h *Handler) CancelTask(ctx *gin.Context) {
 // ListTaskTargetObject Lists task target objects
 // @Summary Lists task target objects
 // @Description Lists task target objects
-// @Tags    app_tasks
+// @Tags    App tasks
 // @Produce json
 // @Id      listAppTaskTargetObject
 // @Param   projectID path string true "project ID"

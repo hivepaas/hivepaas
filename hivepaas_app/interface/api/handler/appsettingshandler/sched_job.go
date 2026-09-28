@@ -14,7 +14,7 @@ import (
 // ListAppSchedJob Lists sched-jobs
 // @Summary Lists sched-jobs
 // @Description Lists sched-jobs
-// @Tags    app_settings
+// @Tags    App settings
 // @Produce json
 // @Id      listAppSchedJob
 // @Param   projectID path string true "project ID"
@@ -35,7 +35,7 @@ func (h *Handler) ListAppSchedJob(ctx *gin.Context) {
 // GetAppSchedJob Gets sched-job details
 // @Summary Gets sched-job details
 // @Description Gets sched-job details
-// @Tags    app_settings
+// @Tags    App settings
 // @Produce json
 // @Id      getAppSchedJob
 // @Param   projectID path string true "project ID"
@@ -53,7 +53,7 @@ func (h *Handler) GetAppSchedJob(ctx *gin.Context) {
 // CreateAppSchedJob Creates a new sched-job
 // @Summary Creates a new sched-job
 // @Description Creates a new sched-job
-// @Tags    app_settings
+// @Tags    App settings
 // @Produce json
 // @Id      createAppSchedJob
 // @Param   projectID path string true "project ID"
@@ -71,7 +71,7 @@ func (h *Handler) CreateAppSchedJob(ctx *gin.Context) {
 // UpdateAppSchedJob Updates a sched-job
 // @Summary Updates a sched-job
 // @Description Updates a sched-job
-// @Tags    app_settings
+// @Tags    App settings
 // @Produce json
 // @Id      updateAppSchedJob
 // @Param   projectID path string true "project ID"
@@ -90,7 +90,7 @@ func (h *Handler) UpdateAppSchedJob(ctx *gin.Context) {
 // UpdateAppSchedJobStatus Updates sched-job status
 // @Summary Updates sched-job status
 // @Description Updates sched-job status
-// @Tags    app_settings
+// @Tags    App settings
 // @Produce json
 // @Id      updateAppSchedJobStatus
 // @Param   projectID path string true "project ID"
@@ -109,7 +109,7 @@ func (h *Handler) UpdateAppSchedJobStatus(ctx *gin.Context) {
 // DeleteAppSchedJob Deletes sched-job
 // @Summary Deletes sched-job
 // @Description Deletes sched-job
-// @Tags    app_settings
+// @Tags    App settings
 // @Produce json
 // @Id      deleteAppSchedJob
 // @Param   projectID path string true "project ID"
@@ -127,7 +127,7 @@ func (h *Handler) DeleteAppSchedJob(ctx *gin.Context) {
 // ExecuteAppSchedJob Executes a sched job
 // @Summary Executes a sched job
 // @Description Executes a sched job
-// @Tags    app_settings
+// @Tags    App settings
 // @Produce json
 // @Id      executeAppSchedJob
 // @Param   projectID path string true "project ID"

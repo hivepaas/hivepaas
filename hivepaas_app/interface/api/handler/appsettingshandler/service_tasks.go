@@ -13,7 +13,7 @@ import (
 // GetAppServiceTasks Gets app service tasks
 // @Summary Gets app service tasks
 // @Description Gets app service tasks
-// @Tags    app_settings
+// @Tags    App settings
 // @Produce json
 // @Id      getAppServiceTasks
 // @Param   projectID path string true "project ID"

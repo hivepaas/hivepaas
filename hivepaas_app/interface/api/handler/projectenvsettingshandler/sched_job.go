@@ -15,7 +15,7 @@ import (
 // @Summary Lists an env's scheduled jobs with its apps'
 // @Description The env's own scheduled jobs - job sequences - and those of every app in the env, each with
 // @Description its scope and, for an app's, the app.
-// @Tags    project_env_settings
+// @Tags    Project env settings
 // @Produce json
 // @Id      listProjectEnvSchedJob
 // @Param   projectID path string true "project ID"
@@ -59,7 +59,7 @@ func (h *Handler) ListSchedJob(ctx *gin.Context) {
 // GetSchedJob Gets an env's scheduled job
 // @Summary Gets an env's scheduled job
 // @Description Gets an env's scheduled job
-// @Tags    project_env_settings
+// @Tags    Project env settings
 // @Produce json
 // @Id      getProjectEnvSchedJob
 // @Param   projectID path string true "project ID"
@@ -76,7 +76,7 @@ func (h *Handler) GetSchedJob(ctx *gin.Context) {
 // CreateSchedJob Creates an env's scheduled job
 // @Summary Creates an env's scheduled job
 // @Description Creates an env's scheduled job: a job sequence of its apps' jobs.
-// @Tags    project_env_settings
+// @Tags    Project env settings
 // @Produce json
 // @Id      createProjectEnvSchedJob
 // @Param   projectID path string true "project ID"
@@ -93,7 +93,7 @@ func (h *Handler) CreateSchedJob(ctx *gin.Context) {
 // UpdateSchedJob Updates an env's scheduled job
 // @Summary Updates an env's scheduled job
 // @Description Updates an env's scheduled job
-// @Tags    project_env_settings
+// @Tags    Project env settings
 // @Produce json
 // @Id      updateProjectEnvSchedJob
 // @Param   projectID path string true "project ID"
@@ -111,7 +111,7 @@ func (h *Handler) UpdateSchedJob(ctx *gin.Context) {
 // UpdateSchedJobStatus Enables or disables an env's scheduled job
 // @Summary Enables or disables an env's scheduled job
 // @Description Enables or disables an env's scheduled job
-// @Tags    project_env_settings
+// @Tags    Project env settings
 // @Produce json
 // @Id      updateProjectEnvSchedJobStatus
 // @Param   projectID path string true "project ID"
@@ -129,7 +129,7 @@ func (h *Handler) UpdateSchedJobStatus(ctx *gin.Context) {
 // DeleteSchedJob Deletes an env's scheduled job
 // @Summary Deletes an env's scheduled job
 // @Description Deletes an env's scheduled job
-// @Tags    project_env_settings
+// @Tags    Project env settings
 // @Produce json
 // @Id      deleteProjectEnvSchedJob
 // @Param   projectID path string true "project ID"
@@ -146,7 +146,7 @@ func (h *Handler) DeleteSchedJob(ctx *gin.Context) {
 // ExecuteSchedJob Runs an env's scheduled job now
 // @Summary Runs an env's scheduled job now
 // @Description Runs an env's scheduled job now, outside its schedule.
-// @Tags    project_env_settings
+// @Tags    Project env settings
 // @Produce json
 // @Id      executeProjectEnvSchedJob
 // @Param   projectID path string true "project ID"

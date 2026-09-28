@@ -40,6 +40,20 @@ func TestSchedJobDataBackupOfACommandReferencesTheRepositoryOnly(t *testing.T) {
 
 // A snapshot's tags carry the job, the app and the source, then the job's own,
 // as kopia takes them: key:value, in a stable order.
+// The scripts its commands run are references too: they keep a script from
+// being deleted under the job.
+func TestSchedJobDataBackupReferencesItsCommandsScripts(t *testing.T) {
+	job := &SchedJob{JobType: base.SchedJobTypeDataBackup, DataBackup: &SchedJobDataBackup{
+		Source:           base.SchedJobDataBackupSourceCommand,
+		SourceCommand:    &CommandTemplate{Script: ObjectValue{ID: "dump-script"}},
+		RestoreCommand:   &CommandTemplate{Script: ObjectValue{ID: "load-script"}},
+		SourceFileName:   "db.sql",
+		TargetRepository: ObjectID{ID: "repo1"},
+	}}
+
+	assert.ElementsMatch(t, []string{"dump-script", "load-script", "repo1"}, job.GetRefObjectIDs().RefSettingIDs)
+}
+
 func TestSchedJobDataBackupSnapshotTags(t *testing.T) {
 	backup := &SchedJobDataBackup{Source: base.SchedJobDataBackupSourceCommand,
 		Tags: map[string]string{"env": "prod", "db": "main"}}

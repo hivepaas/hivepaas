@@ -18,6 +18,10 @@ type SchedJobDataBackup struct {
 	// SourceFileName of the snapshot.
 	SourceCommand  *CommandTemplate `json:"sourceCommand,omitempty"`
 	SourceFileName string           `json:"sourceFileName,omitempty"`
+	// RestoreCommand reads a backup on its stdin and loads it into the app, e.g.
+	// `psql -U $POSTGRES_USER $POSTGRES_DB`: what a restore offers to run.
+	// Optional; a command source's only.
+	RestoreCommand *CommandTemplate `json:"restoreCommand,omitempty"`
 	// SourceVolume is a volume the app mounts, and SourceVolumeSubpath a path
 	// inside what the app sees of it; "" for all of it.
 	SourceVolume        ObjectID `json:"sourceVolume,omitzero"`
@@ -32,6 +36,11 @@ func (b *SchedJobDataBackup) refSettingIDs() []string {
 		return nil
 	}
 	var ids []string
+	for _, command := range []*CommandTemplate{b.SourceCommand, b.RestoreCommand} {
+		if command != nil && command.Script.ID != "" {
+			ids = append(ids, command.Script.ID)
+		}
+	}
 	if b.SourceVolume.ID != "" {
 		ids = append(ids, b.SourceVolume.ID)
 	}

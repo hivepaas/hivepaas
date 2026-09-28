@@ -77,6 +77,57 @@ func TestADataBackupOfACommandNeedsTheCommandAndAFileName(t *testing.T) {
 	assert.Contains(t, invalidFields(t, req), "dataBackup.sourceVolume")
 }
 
+// A command's backup may say how to load it back; the command gets its stdin,
+// so it runs without a TTY.
+func TestADataBackupOfACommandMayHaveARestoreCommand(t *testing.T) {
+	req := dataBackupReq(commandBackupReq())
+	req.DataBackup.RestoreCommand = &commandtemplatedto.CommandTemplateBaseReq{
+		Command: "psql -U app app", TTY: true,
+	}
+
+	assert.Equal(t, "", invalidFields(t, req))
+	job := req.ToEntity()
+	if assert.NotNil(t, job.DataBackup.RestoreCommand) {
+		assert.Equal(t, "psql -U app app", job.DataBackup.RestoreCommand.Command)
+		assert.False(t, job.DataBackup.RestoreCommand.TTY)
+	}
+
+	req = dataBackupReq(commandBackupReq())
+	req.DataBackup.RestoreCommand = &commandtemplatedto.CommandTemplateBaseReq{}
+	assert.Contains(t, invalidFields(t, req), "dataBackup.restoreCommand", "an empty command")
+}
+
+// A volume is restored by the engine: it has no restore command.
+func TestADataBackupOfAVolumeHasNoRestoreCommand(t *testing.T) {
+	req := dataBackupReq(volumeBackupReq(""))
+	req.DataBackup.RestoreCommand = &commandtemplatedto.CommandTemplateBaseReq{Command: "tar x"}
+
+	assert.Contains(t, invalidFields(t, req), "dataBackup.restoreCommand")
+}
+
+func TestTransformSchedJobGivesADataBackupsRestoreCommand(t *testing.T) {
+	job := &entity.SchedJob{
+		JobType: base.SchedJobTypeDataBackup,
+		App:     entity.ObjectID{ID: backupApp},
+		DataBackup: &entity.SchedJobDataBackup{
+			Source:           base.SchedJobDataBackupSourceCommand,
+			SourceCommand:    &entity.CommandTemplate{Command: "pg_dump app"},
+			RestoreCommand:   &entity.CommandTemplate{Command: "psql app"},
+			SourceFileName:   "db.sql",
+			TargetRepository: entity.ObjectID{ID: repoA},
+		},
+	}
+	setting := &entity.Setting{ID: "j1", Type: base.SettingTypeSchedJob, Name: "db"}
+	setting.MustSetData(job)
+
+	resp, err := TransformSchedJob(setting, entity.NewRefObjects(), false)
+
+	assert.NoError(t, err)
+	if assert.NotNil(t, resp.DataBackup) && assert.NotNil(t, resp.DataBackup.RestoreCommand) {
+		assert.Equal(t, "psql app", resp.DataBackup.RestoreCommand.Command)
+	}
+}
+
 func TestADataBackupOfAVolume(t *testing.T) {
 	req := dataBackupReq(volumeBackupReq("uploads/2026"))
 

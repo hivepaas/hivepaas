@@ -1,3 +1,4 @@
+import { cn } from "@/lib/utils";
 import { Badge } from "@components/ui/badge";
 import { format } from "date-fns";
 import type { BackupSnapshot } from "~/settings/domain";
@@ -6,7 +7,7 @@ import { formatDataSizeCompact } from "@application/shared/utils/data-size";
 
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 
-import { sourceLabel } from "./backup-snapshot-table.helpers";
+import { sourceLabel, tagClassName } from "./backup-snapshot-table.helpers";
 
 function Row({ label, children }: { label: string; children: React.ReactNode }) {
     return (
@@ -63,7 +64,7 @@ export function BackupSnapshotDetails({ snapshot, runLink, onOpenChange }: Props
                                         <Badge
                                             key={tag}
                                             variant="outline"
-                                            className="font-mono text-[11px]"
+                                            className={cn("font-mono text-[11px]", tagClassName(tag))}
                                         >
                                             {tag}
                                         </Badge>

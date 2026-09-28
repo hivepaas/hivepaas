@@ -6,7 +6,7 @@ import { type Public_Apps_FindMany_Res } from "@application/shared/api-public/se
 import { PagingMetaApiSchema, parseApiResponse } from "@infrastructure/api";
 
 /**
- * The fields a picker needs from GET /projects/{projectID}/apps; the rest of
+ * The fields a picker needs from GET /projects/{projectID}[/{env}]/apps; the rest of
  * each app is dropped.
  */
 const FindManySchema = z.object({
@@ -14,6 +14,7 @@ const FindManySchema = z.object({
         z.object({
             id: z.string(),
             name: z.string(),
+            env: z.string().optional(),
         }),
     ),
     meta: PagingMetaApiSchema,
@@ -33,6 +34,7 @@ export class AppsPublicApiValidator {
             data: data.map(app => ({
                 id: app.id,
                 name: app.name,
+                env: app.env,
             })),
             meta,
         };

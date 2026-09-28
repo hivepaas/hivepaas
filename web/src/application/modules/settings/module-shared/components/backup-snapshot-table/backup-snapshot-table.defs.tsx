@@ -1,3 +1,4 @@
+import { cn } from "@/lib/utils";
 import { Badge } from "@components/ui/badge";
 import { Button } from "@components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@components/ui/dropdown-menu";
@@ -10,7 +11,7 @@ import type { BackupSnapshot, BackupSnapshotScope } from "~/settings/domain";
 import { PermissionTooltipAction } from "@application/shared/permissions";
 import { formatDataSizeCompact } from "@application/shared/utils/data-size";
 
-import { snapshotScopeModuleId, sourceLabel, userTags } from "./backup-snapshot-table.helpers";
+import { snapshotScopeModuleId, sourceLabel, tagClassName, userTags } from "./backup-snapshot-table.helpers";
 
 export interface BackupSnapshotRowActions {
     onViewDetails: (snapshot: BackupSnapshot) => void;
@@ -149,7 +150,7 @@ function createColumns(scope: BackupSnapshotScope, actions: BackupSnapshotRowAct
                         <Badge
                             key={tag}
                             variant="outline"
-                            className="font-mono text-[11px]"
+                            className={cn("font-mono text-[11px]", tagClassName(tag))}
                         >
                             {tag}
                         </Badge>

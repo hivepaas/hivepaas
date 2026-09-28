@@ -9,6 +9,8 @@ import { type ApiRequestBase, type ApiResponsePaginated } from "@infrastructure/
  */
 export type Public_Apps_FindMany_Req = ApiRequestBase<{
     projectID: string;
+    /** An env's key: only that env's apps. */
+    env?: string;
     search?: string;
     pagination?: PaginationState;
 }>;

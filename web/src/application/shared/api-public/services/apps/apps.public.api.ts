@@ -24,7 +24,7 @@ export class AppsPublicApi extends BaseApi {
         request: Public_Apps_FindMany_Req,
         signal?: AbortSignal,
     ): Promise<Result<Public_Apps_FindMany_Res, Error>> {
-        const { projectID, search, pagination } = request.data;
+        const { projectID, env, search, pagination } = request.data;
 
         const query = this.queryBuilder.getInstance();
 
@@ -36,7 +36,7 @@ export class AppsPublicApi extends BaseApi {
 
         return lastValueFrom(
             from(
-                this.client.v1.get(`/projects/${projectID}/apps`, {
+                this.client.v1.get(env ? `/projects/${projectID}/${env}/apps` : `/projects/${projectID}/apps`, {
                     params: query.build(),
                     signal,
                 }),

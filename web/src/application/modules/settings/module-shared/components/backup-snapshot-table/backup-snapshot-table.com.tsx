@@ -1,44 +1,23 @@
 import { useMemo, useState } from "react";
 
-import { format } from "date-fns";
-import { X } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { ListFilter } from "lucide-react";
 import { useSearchParams } from "react-router";
-import { type SearchableFilterItem, SearchableFilterSelect } from "~/operations/routes/tasks";
 import { BackupSnapshotQueries } from "~/settings/data/queries";
 import type { BackupSnapshot, BackupSnapshotScope } from "~/settings/domain";
 
 import { AppLink, TableActions } from "@application/shared/components";
 import { DEFAULT_PAGINATED_DATA, ROUTE } from "@application/shared/constants";
-import { AppsPublicQueries } from "@application/shared/data-public/queries";
 import { useTableState } from "@application/shared/hooks/table";
 
-import { Button, DataTable, Input } from "@/components/ui";
-import { DateTimePicker } from "@/components/ui/date-time-picker";
+import { Button, DataTable } from "@/components/ui";
+import { Badge } from "@/components/ui/badge";
 
 import { BackupSnapshotDeleteDialog } from "./backup-snapshot-delete-dialog.com";
 import { BackupSnapshotDetails } from "./backup-snapshot-details.com";
+import { BackupSnapshotFilterBar } from "./backup-snapshot-filter-bar.com";
 import { BackupSnapshotTableDefs } from "./backup-snapshot-table.defs";
-import { isTagFilter } from "./backup-snapshot-table.helpers";
-
-const ALL = "all";
-const LIST_ALL_PAGE = { page: 1, size: 1000 };
-
-interface Filters {
-    repo?: string;
-    app?: string;
-    tags: string[];
-    fromDate?: string;
-    toDate?: string;
-}
-
-function FilterField({ label, children }: { label: string; children: React.ReactNode }) {
-    return (
-        <div className="flex flex-col gap-1.5 min-w-0">
-            <span className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">{label}</span>
-            {children}
-        </div>
-    );
-}
+import { type BackupSnapshotFilterValues, countActiveFilters, isTagFilter } from "./backup-snapshot-table.helpers";
 
 /** The run that took a snapshot, where the view can link it. */
 function runRoute(scope: BackupSnapshotScope, snapshot: BackupSnapshot): string | undefined {
@@ -66,12 +45,13 @@ function runRoute(scope: BackupSnapshotScope, snapshot: BackupSnapshot): string 
 export function BackupSnapshotTable({ scope }: Props) {
     const [searchParams] = useSearchParams();
     const { pagination, setPagination, search, setSearch } = useTableState();
-    const [filters, setFilters] = useState<Filters>(() => ({
+    const [filters, setFilters] = useState<BackupSnapshotFilterValues>(() => ({
         repo: searchParams.get("repo") ?? undefined,
         app: searchParams.get("app") ?? undefined,
         tags: searchParams.getAll("tag").filter(isTagFilter),
     }));
-    const [tagInput, setTagInput] = useState("");
+    // Open from the start when a link in set a filter, so it shows.
+    const [isFilterOpen, setIsFilterOpen] = useState(() => countActiveFilters(filters) > 0);
     const [details, setDetails] = useState<BackupSnapshot | null>(null);
     const [deleting, setDeleting] = useState<BackupSnapshot | null>(null);
 
@@ -86,31 +66,12 @@ export function BackupSnapshotTable({ scope }: Props) {
         toDate: filters.toDate,
     });
 
-    const projectId = scope.type === "settings" ? "" : scope.projectId;
-    const { data: appsData } = AppsPublicQueries.useFindMany(
-        { projectID: projectId, pagination: LIST_ALL_PAGE },
-        { enabled: scope.type === "project" },
-    );
+    const activeFilterCount = countActiveFilters(filters);
 
-    const repoItems: SearchableFilterItem[] = useMemo(
-        () => [
-            { value: ALL, label: "All Repositories" },
-            ...data.repos.map(repo => ({ value: repo.id, label: repo.name, searchKey: repo.name })),
-        ],
-        [data.repos],
-    );
-    const appItems: SearchableFilterItem[] = useMemo(
-        () => [
-            { value: ALL, label: "All Apps" },
-            ...(appsData?.data ?? []).map(app => ({
-                value: app.id,
-                label: app.name,
-                searchKey: app.name,
-                avatar: { name: app.name },
-            })),
-        ],
-        [appsData?.data],
-    );
+    function handleFiltersChange(next: BackupSnapshotFilterValues) {
+        setFilters(next);
+        setPagination(prev => ({ ...prev, page: 1 }));
+    }
 
     const columns = useMemo(
         () =>
@@ -121,15 +82,6 @@ export function BackupSnapshotTable({ scope }: Props) {
         [scope],
     );
 
-    function addTag() {
-        const tag = tagInput.trim();
-        if (!isTagFilter(tag) || filters.tags.includes(tag)) {
-            return;
-        }
-        setFilters({ ...filters, tags: [...filters.tags, tag] });
-        setTagInput("");
-    }
-
     const detailsRunRoute = details ? runRoute(scope, details) : undefined;
 
     return (
@@ -139,97 +91,58 @@ export function BackupSnapshotTable({ scope }: Props) {
                 changed outside HivePaaS.
             </p>
 
-            <div className="rounded-lg border border-border/80 bg-card/60 p-3.5 sm:p-4 shadow-2xs flex flex-col gap-3.5">
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
-                    <FilterField label="Repository">
-                        <SearchableFilterSelect
-                            value={filters.repo ?? ALL}
-                            onValueChange={value => {
-                                setFilters({ ...filters, repo: value === ALL ? undefined : value });
+            <TableActions
+                search={{ value: search, onChange: setSearch }}
+                renderAfterSearch={
+                    <div className="flex items-center gap-2">
+                        <Button
+                            variant={isFilterOpen ? "secondary" : "outline"}
+                            size="sm"
+                            onClick={() => {
+                                setIsFilterOpen(prev => !prev);
                             }}
-                            placeholder="All Repositories"
-                            searchPlaceholder="Search repositories..."
-                            emptyText="No repositories found."
-                            items={repoItems}
-                        />
-                    </FilterField>
-                    {scope.type === "project" && (
-                        <FilterField label="App">
-                            <SearchableFilterSelect
-                                value={filters.app ?? ALL}
-                                onValueChange={value => {
-                                    setFilters({ ...filters, app: value === ALL ? undefined : value });
-                                }}
-                                placeholder="All Apps"
-                                searchPlaceholder="Search apps..."
-                                emptyText="No apps found."
-                                items={appItems}
-                            />
-                        </FilterField>
-                    )}
-                    <FilterField label="Tag">
-                        <Input
-                            value={tagInput}
-                            onChange={event => {
-                                setTagInput(event.target.value);
-                            }}
-                            onKeyDown={event => {
-                                if (event.key === "Enter") {
-                                    event.preventDefault();
-                                    addTag();
-                                }
-                            }}
-                            placeholder="key:value, then Enter"
-                            className="h-9 text-xs sm:text-sm font-mono"
-                        />
-                    </FilterField>
-                    <FilterField label="From Date">
-                        <DateTimePicker
-                            value={filters.fromDate ? new Date(`${filters.fromDate}T00:00:00`) : undefined}
-                            onChange={date => {
-                                setFilters({ ...filters, fromDate: date ? format(date, "yyyy-MM-dd") : undefined });
-                            }}
-                            placeholder="From date"
-                            granularity="day"
-                            showClearButton
-                            className="h-9 text-xs sm:text-sm"
-                        />
-                    </FilterField>
-                    <FilterField label="To Date">
-                        <DateTimePicker
-                            value={filters.toDate ? new Date(`${filters.toDate}T00:00:00`) : undefined}
-                            onChange={date => {
-                                setFilters({ ...filters, toDate: date ? format(date, "yyyy-MM-dd") : undefined });
-                            }}
-                            placeholder="To date"
-                            granularity="day"
-                            showClearButton
-                            className="h-9 text-xs sm:text-sm"
-                        />
-                    </FilterField>
-                </div>
-                {filters.tags.length > 0 && (
-                    <div className="flex flex-wrap gap-2">
-                        {filters.tags.map(tag => (
-                            <Button
-                                key={tag}
-                                type="button"
-                                variant="outline"
-                                size="sm"
-                                className="h-7 gap-1 font-mono text-xs"
-                                onClick={() => {
-                                    setFilters({ ...filters, tags: filters.tags.filter(t => t !== tag) });
-                                }}
-                            >
-                                {tag}
-                                <X className="size-3" />
-                            </Button>
-                        ))}
-                    </div>
-                )}
-            </div>
+                            className={cn(
+                                "h-9 gap-1.5 px-3 font-medium transition-colors",
+                                activeFilterCount > 0 && "border-primary/50 text-foreground bg-primary/5",
+                            )}
+                            aria-label="Toggle filter view"
+                        >
+                            <ListFilter className="size-4 text-muted-foreground" />
+                            <span>Filter</span>
+                            {activeFilterCount > 0 && (
+                                <Badge
+                                    variant="secondary"
+                                    className="size-4.5 p-0 flex items-center justify-center rounded-full text-[10px] font-semibold bg-primary text-primary-foreground"
+                                >
+                                    {activeFilterCount}
+                                </Badge>
+                            )}
+                        </Button>
 
-            <TableActions search={{ value: search, onChange: setSearch }} />
+                        {activeFilterCount > 0 && (
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    handleFiltersChange({ tags: [] });
+                                }}
+                                className="text-xs text-muted-foreground hover:text-foreground font-medium underline underline-offset-4 transition-colors cursor-pointer py-1 px-1.5"
+                            >
+                                Clear Filter
+                            </button>
+                        )}
+                    </div>
+                }
+            />
+
+            {isFilterOpen && (
+                <BackupSnapshotFilterBar
+                    scope={scope}
+                    repos={data.repos}
+                    filters={filters}
+                    onChange={handleFiltersChange}
+                />
+            )}
+
             <DataTable
                 columns={columns}
                 data={data.data}

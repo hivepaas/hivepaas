@@ -8,7 +8,8 @@ import ReactTimeAgo from "react-time-ago";
 import type { SystemTask } from "~/operations/domain";
 import { SystemTaskStatus } from "~/operations/domain";
 
-import { LogViewerActionButtons, PopConfirm } from "@application/shared/components";
+import { AppLink, LogViewerActionButtons, PopConfirm } from "@application/shared/components";
+import { ROUTE } from "@application/shared/constants";
 import { formatDataSizeCompact } from "@application/shared/utils/data-size";
 import { timeAgoFormatter } from "@application/shared/utils/time-ago";
 
@@ -589,9 +590,22 @@ export function SystemTaskSummaryCard({
                                 {task.dataBackup && (
                                     <div>
                                         <span className="text-muted-foreground">Snapshot:</span>{" "}
-                                        <span className="font-mono text-foreground select-all">
-                                            {task.dataBackup.snapshotId}
-                                        </span>{" "}
+                                        {task.scopeProject && task.scopeApp?.env ? (
+                                            <AppLink.Modules
+                                                to={`${ROUTE.projects.single.apps.single.configuration.backupSnapshots.$route(
+                                                    task.scopeProject.id,
+                                                    task.scopeApp.env,
+                                                    task.scopeApp.id,
+                                                )}?tag=${encodeURIComponent(`hivepaas.run:${task.id}`)}`}
+                                                className="font-mono text-link hover:underline"
+                                            >
+                                                {task.dataBackup.snapshotId}
+                                            </AppLink.Modules>
+                                        ) : (
+                                            <span className="font-mono text-foreground select-all">
+                                                {task.dataBackup.snapshotId}
+                                            </span>
+                                        )}{" "}
                                         <span className="text-muted-foreground">
                                             ({formatDataSizeCompact(task.dataBackup.sizeBytes)})
                                         </span>

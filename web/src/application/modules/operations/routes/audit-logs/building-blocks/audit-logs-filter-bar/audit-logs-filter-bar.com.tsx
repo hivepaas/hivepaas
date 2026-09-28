@@ -142,6 +142,7 @@ export function AuditLogsFilterBar({ scope, filters, onChange, className }: Audi
     const isGlobalScope = !scope || scope.type === "global";
     const isProjectOrEnvScope = scope?.type === "project" || scope?.type === "project-env";
     const projectID = isProjectOrEnvScope ? scope.projectID : "";
+    const env = scope?.type === "project-env" ? scope.projectEnvID : undefined;
 
     // 1. Fetch available types from backend (with static fallback)
     const { data: typesResponse } = AuditLogsQueries.useFindTypes({ scope });
@@ -156,7 +157,7 @@ export function AuditLogsFilterBar({ scope, filters, onChange, className }: Audi
 
     // 4. Fetch apps for app filter (project / project-env scope only)
     const { data: appsResponse } = AppsPublicQueries.useFindMany(
-        { projectID },
+        { projectID, env },
         { enabled: isProjectOrEnvScope && Boolean(projectID) },
     );
 
@@ -185,11 +186,13 @@ export function AuditLogsFilterBar({ scope, filters, onChange, className }: Audi
             ...apps.map(app => ({
                 value: app.id,
                 label: app.name,
-                searchKey: app.name,
+                searchKey: `${app.name} ${app.env ?? ""}`,
+                // An env's view lists only its own apps; a project's tells two of one name apart by env.
+                badge: env ? undefined : app.env,
                 avatar: { name: app.name },
             })),
         ];
-    }, [appsResponse?.data]);
+    }, [appsResponse?.data, env]);
 
     const actorItems: SearchableFilterItem[] = useMemo(() => {
         const users = usersResponse?.data ?? [];

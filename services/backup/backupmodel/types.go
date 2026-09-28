@@ -86,6 +86,16 @@ type BackupResult struct {
 }
 
 type RestoreOptions struct {
+	// Path is a directory inside the snapshot to restore alone; "" for all of it.
+	Path string `json:"path,omitempty"`
+}
+
+// SnapshotEntry is a file or a directory a snapshot holds.
+type SnapshotEntry struct {
+	Name string `json:"name"`
+	Dir  bool   `json:"dir,omitempty"`
+	// SizeBytes is a directory's too: all it holds.
+	SizeBytes int64 `json:"sizeBytes"`
 }
 
 type RestoreResult struct {

@@ -40,6 +40,8 @@ type (
 	StorageS3            = backupmodel.StorageS3
 	StorageServer        = backupmodel.StorageServer
 	StorageLocal         = backupmodel.StorageLocal
+	RestoreOptions       = backupmodel.RestoreOptions
+	SnapshotEntry        = backupmodel.SnapshotEntry
 	CommandExecReq       = backupmodel.CommandExecReq
 	CommandExecResp      = backupmodel.CommandExecResp
 	CommandExecutor      = backupmodel.CommandExecutor

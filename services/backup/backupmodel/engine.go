@@ -44,7 +44,11 @@ type Engine interface {
 	BackupStream(ctx context.Context, stdin io.Reader, filename string, opts *BackupOptions) (
 		BackupResult, error)
 
-	// RestoreDirectory restores a snapshot's contents to a target local directory.
+	// ListEntries lists what a snapshot holds in one of its directories: path, "" for its root.
+	ListEntries(ctx context.Context, snapshotID string, path string) ([]SnapshotEntry, error)
+
+	// RestoreDirectory restores a snapshot's contents, or those of the directory opts.Path of it,
+	// to a target local directory.
 	RestoreDirectory(ctx context.Context, snapshotID string, targetDir string, opts *RestoreOptions) (
 		RestoreResult, error)
 

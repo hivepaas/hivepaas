@@ -4,6 +4,7 @@ import { match } from "oxide.ts";
 import { SettingsApiContext } from "~/settings/api/api-context/settings.api.context";
 import type {
     BackupSnapshot_DeleteOne_Req,
+    BackupSnapshot_DownloadFile_Req,
     BackupSnapshot_FindEntries_Req,
     BackupSnapshot_FindManyPaginated_Req,
     BackupSnapshot_FindOneById_Req,
@@ -35,6 +36,16 @@ function createHook() {
                         Ok: _ => _,
                         Err: error => {
                             notifyError({ message: "Failed to list what the snapshot holds", error });
+                            throw error;
+                        },
+                    });
+                },
+                downloadFile: async (data: BackupSnapshot_DownloadFile_Req["data"], signal?: AbortSignal) => {
+                    const result = await api.settings.backupSnapshot.downloadFile({ data }, signal);
+                    return match(result, {
+                        Ok: _ => _,
+                        Err: error => {
+                            notifyError({ message: "Failed to download the file", error });
                             throw error;
                         },
                     });

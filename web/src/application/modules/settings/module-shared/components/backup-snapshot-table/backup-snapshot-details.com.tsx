@@ -3,15 +3,16 @@ import { Badge } from "@components/ui/badge";
 import { Button } from "@components/ui/button";
 import { format } from "date-fns";
 import { ArchiveRestore } from "lucide-react";
-import type { BackupSnapshot } from "~/settings/domain";
+import type { BackupSnapshot, BackupSnapshotScope } from "~/settings/domain";
 
 import { MODULE_IDS } from "@application/shared/constants";
-import { PermissionTooltipAction } from "@application/shared/permissions";
+import { PermissionTooltipAction, useConditionalModule } from "@application/shared/permissions";
 import { formatDataSizeCompact } from "@application/shared/utils/data-size";
 
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 
-import { isRepoActive, sourceLabel, tagClassName } from "./backup-snapshot-table.helpers";
+import { BackupSnapshotFiles } from "./backup-snapshot-files.com";
+import { isRepoActive, snapshotScopeModuleId, sourceLabel, tagClassName } from "./backup-snapshot-table.helpers";
 
 function Row({ label, children }: { label: string; children: React.ReactNode }) {
     return (
@@ -23,7 +24,9 @@ function Row({ label, children }: { label: string; children: React.ReactNode }) 
 }
 
 /** A snapshot's details: what the table has no room for. */
-export function BackupSnapshotDetails({ snapshot, runLink, onRestore, onOpenChange }: Props) {
+export function BackupSnapshotDetails({ scope, snapshot, runLink, onRestore, onOpenChange }: Props) {
+    const { canWrite } = useConditionalModule({ id: snapshotScopeModuleId(scope) });
+
     return (
         <Sheet
             open={Boolean(snapshot)}
@@ -81,6 +84,13 @@ export function BackupSnapshotDetails({ snapshot, runLink, onRestore, onOpenChan
                                 <span className="font-mono">{snapshot.paths.join(", ") || "-"}</span>
                             </Row>
                             {snapshot.hostname && <Row label="Hostname">{snapshot.hostname}</Row>}
+                            <Row label="Files">
+                                <BackupSnapshotFiles
+                                    scope={scope}
+                                    snapshotRecordId={snapshot.id}
+                                    canDownload={canWrite}
+                                />
+                            </Row>
                             <Row label="Tags">
                                 <div className="flex flex-wrap gap-1.5">
                                     {snapshot.tags.length === 0 && "-"}
@@ -104,6 +114,7 @@ export function BackupSnapshotDetails({ snapshot, runLink, onRestore, onOpenChan
 }
 
 interface Props {
+    scope: BackupSnapshotScope;
     snapshot: BackupSnapshot | null;
     /** A link to the run that took the snapshot, when the view can make one. */
     runLink?: React.ReactNode;

@@ -22,6 +22,8 @@ export function sourceLabel(source: string): string {
             return "Command";
         case "volume":
             return "Volume";
+        case "system-backup":
+            return "System";
         default:
             return "-";
     }

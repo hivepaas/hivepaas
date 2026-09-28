@@ -7,6 +7,8 @@ import { BaseApi, parseApiError } from "@infrastructure/api";
 import type {
     BackupSnapshot_DeleteOne_Req,
     BackupSnapshot_DeleteOne_Res,
+    BackupSnapshot_DownloadFile_Req,
+    BackupSnapshot_DownloadFile_Res,
     BackupSnapshot_FindEntries_Req,
     BackupSnapshot_FindEntries_Res,
     BackupSnapshot_FindManyPaginated_Req,
@@ -94,6 +96,27 @@ export class BackupSnapshotApi extends BaseApi {
             ).pipe(
                 map(this.validator.findEntries),
                 map(res => Ok(res)),
+                catchError(error => of(Err(parseApiError(error)))),
+            ),
+        );
+    }
+
+    /** A file of the snapshot, as a blob: the browser holds it whole. */
+    async downloadFile(
+        request: BackupSnapshot_DownloadFile_Req,
+        signal?: AbortSignal,
+    ): Promise<Result<BackupSnapshot_DownloadFile_Res, Error>> {
+        const { scope, id, path } = request.data;
+
+        return lastValueFrom(
+            from(
+                this.client.v1.get<Blob>(`${getBackupSnapshotBasePath(scope)}/${id}/download`, {
+                    params: { path },
+                    responseType: "blob",
+                    signal,
+                }),
+            ).pipe(
+                map(response => Ok({ data: { blob: response.data, filename: path.split("/").pop() ?? path } })),
                 catchError(error => of(Err(parseApiError(error)))),
             ),
         );

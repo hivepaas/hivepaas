@@ -74,3 +74,12 @@ export type BackupSnapshot_Restore_Req = ApiRequestBase<{
 }>;
 
 export type BackupSnapshot_Restore_Res = ApiResponseBase<{ taskId: string }>;
+
+export type BackupSnapshot_DownloadFile_Req = ApiRequestBase<{
+    scope: BackupSnapshotScope;
+    id: string;
+    /** A file inside the snapshot. */
+    path: string;
+}>;
+
+export type BackupSnapshot_DownloadFile_Res = ApiResponseBase<{ blob: Blob; filename: string }>;

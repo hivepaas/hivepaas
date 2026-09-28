@@ -166,6 +166,7 @@ export function BackupSnapshotTable({ scope }: Props) {
             />
 
             <BackupSnapshotDetails
+                scope={scope}
                 snapshot={details}
                 runLink={
                     detailsRunRoute && details ? (

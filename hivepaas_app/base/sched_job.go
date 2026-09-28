@@ -34,6 +34,20 @@ const (
 var AllSchedJobDataBackupSources = []SchedJobDataBackupSource{SchedJobDataBackupSourceCommand,
 	SchedJobDataBackupSourceVolume}
 
+// BackupRestoreMode is how a restore writes a snapshot into a directory.
+type BackupRestoreMode string
+
+const (
+	// BackupRestoreModeReplace moves the directory aside and restores into an
+	// empty one: the state at backup time, and the old one kept.
+	BackupRestoreModeReplace BackupRestoreMode = "replace"
+	// BackupRestoreModeOverwrite writes the snapshot's files over what is there,
+	// keeping what it does not have.
+	BackupRestoreModeOverwrite BackupRestoreMode = "overwrite"
+)
+
+var AllBackupRestoreModes = []BackupRestoreMode{BackupRestoreModeReplace, BackupRestoreModeOverwrite}
+
 // SchedJobSeqMode is how a job sequence runs its steps. Sequential is the only
 // mode for now; the results are kept per step so a parallel one can follow.
 type SchedJobSeqMode string

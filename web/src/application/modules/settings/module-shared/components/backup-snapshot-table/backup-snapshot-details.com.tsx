@@ -29,7 +29,7 @@ export function BackupSnapshotDetails({ snapshot, runLink, onRestore, onOpenChan
             open={Boolean(snapshot)}
             onOpenChange={onOpenChange}
         >
-            <SheetContent className="sm:max-w-[520px] overflow-y-auto">
+            <SheetContent className="sm:max-w-[600px] overflow-y-auto">
                 {snapshot && (
                     <>
                         <SheetHeader>

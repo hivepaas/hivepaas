@@ -15,7 +15,7 @@ func NewEngine(
 	if storageCfg == nil {
 		return nil, hperrors.Wrap(backupmodel.ErrStorageConfigRequired)
 	}
-	if storageCfg.StorageS3 == nil && storageCfg.StorageLocal == nil {
+	if storageCfg.StorageS3 == nil && storageCfg.StorageLocal == nil && storageCfg.StorageServer == nil {
 		return nil, hperrors.Wrap(backupmodel.ErrStorageTypeRequired)
 	}
 

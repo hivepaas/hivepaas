@@ -31,7 +31,7 @@ type UpdateUserReq struct {
 type ProjectAccessReq struct {
 	Project basedto.ObjectIDReq `json:"project"`
 	// EnvAccesses grants access per project env. Permissions are no longer granted
-	// at the project level; each ID is a project env ID ("<projectID>:<envKey>").
+	// at the project level; each ID is a project env ID (`<projectID>:<envKey>`).
 	EnvAccesses basedto.ObjectAccessSliceReq `json:"envAccesses"`
 }
 

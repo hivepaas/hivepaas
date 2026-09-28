@@ -137,7 +137,7 @@
     },
     "/app-templates/icons/{file}" : {
       "get" : {
-        "description" : "Public: an <img> cannot send the Authorization header. Only icons the current index lists are served.",
+        "description" : "Public: an `<img>` cannot send the Authorization header. Only icons the current index lists are served.",
         "operationId" : "getAppTemplateIcon",
         "parameters" : [ {
           "description" : "icon file name, such as postgres.3a18fec853.svg",
@@ -43709,7 +43709,7 @@
     },
     "/system/settings/mcp" : {
       "get" : {
-        "description" : "Gets whether HivePaaS serves the Model Context Protocol at <API base path>/mcp.",
+        "description" : "Gets whether HivePaaS serves the Model Context Protocol at `<API base path>/mcp`.",
         "operationId" : "getMCPSettings",
         "responses" : {
           "200" : {
@@ -47306,7 +47306,7 @@
       "appdeploymentdto.DeploymentTriggerResp" : {
         "properties" : {
           "changeId" : {
-            "description" : "ChangeID names the change the deployment was made for, as its trigger gave\nit: pr-<number> for a pull request.",
+            "description" : "ChangeID names the change the deployment was made for, as its trigger gave\nit: `pr-<number>` for a pull request.",
             "type" : "string"
           },
           "source" : {
@@ -67641,7 +67641,7 @@
       "userdto.ProjectAccessReq" : {
         "properties" : {
           "envAccesses" : {
-            "description" : "EnvAccesses grants access per project env. Permissions are no longer granted\nat the project level; each ID is a project env ID (\"<projectID>:<envKey>\").",
+            "description" : "EnvAccesses grants access per project env. Permissions are no longer granted\nat the project level; each ID is a project env ID (`<projectID>:<envKey>`).",
             "items" : {
               "$ref" : "#/components/schemas/basedto.ObjectAccessReq"
             },

@@ -14,7 +14,7 @@ import (
 
 // GetMCPSettings Gets MCP server settings
 // @Summary Gets MCP server settings
-// @Description Gets whether HivePaaS serves the Model Context Protocol at <API base path>/mcp.
+// @Description Gets whether HivePaaS serves the Model Context Protocol at `<API base path>/mcp`.
 // @Tags    system_settings
 // @Produce json
 // @Id      getMCPSettings

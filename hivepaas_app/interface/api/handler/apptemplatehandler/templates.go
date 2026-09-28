@@ -132,7 +132,7 @@ func (h *Handler) GetAppTemplateImageTags(ctx *gin.Context) {
 
 // GetAppTemplateIcon Gets an app template icon
 // @Summary Gets an app template icon
-// @Description Public: an <img> cannot send the Authorization header. Only icons the current index lists are served.
+// @Description Public: an `<img>` cannot send the Authorization header. Only icons the current index lists are served.
 // @Tags    app_templates
 // @Produce image/svg+xml,image/png
 // @Id      getAppTemplateIcon

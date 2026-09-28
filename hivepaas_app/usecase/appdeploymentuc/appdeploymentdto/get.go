@@ -61,7 +61,7 @@ type DeploymentTriggerResp struct {
 	Source     base.DeploymentTriggerSource `json:"source"`
 	SourceUser *basedto.UserBaseResp        `json:"sourceUser,omitempty"`
 	// ChangeID names the change the deployment was made for, as its trigger gave
-	// it: pr-<number> for a pull request.
+	// it: `pr-<number>` for a pull request.
 	ChangeID string `json:"changeId,omitempty"`
 }
 

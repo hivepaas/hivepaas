@@ -192,6 +192,7 @@ export function SystemTasksFilterBar({ scope, filters, onChange, className }: Sy
     const isProjectOrEnvScope = scope?.type === "project" || scope?.type === "project-env";
     const isAppScope = scope?.type === "app";
     const projectID = isProjectOrEnvScope ? scope.projectID : "";
+    const env = scope?.type === "project-env" ? scope.projectEnvID : undefined;
 
     // 1. Fetch available types from backend (with static fallback)
     const { data: typesResponse } = SystemTasksQueries.useFindTypes({ scope });
@@ -203,7 +204,7 @@ export function SystemTasksFilterBar({ scope, filters, onChange, className }: Sy
 
     // 3. Fetch apps for app filter (project / project-env scope only)
     const { data: appsResponse } = AppsPublicQueries.useFindMany(
-        { projectID },
+        { projectID, env },
         { enabled: isProjectOrEnvScope && Boolean(projectID) },
     );
 
@@ -235,11 +236,13 @@ export function SystemTasksFilterBar({ scope, filters, onChange, className }: Sy
             ...apps.map(app => ({
                 value: app.id,
                 label: app.name,
-                searchKey: app.name,
+                searchKey: `${app.name} ${app.env ?? ""}`,
+                // An env's view lists only its own apps; a project's tells two of one name apart by env.
+                badge: env ? undefined : app.env,
                 avatar: { name: app.name },
             })),
         ];
-    }, [appsResponse?.data]);
+    }, [appsResponse?.data, env]);
 
     const targetJobItems: SearchableFilterItem[] = useMemo(() => {
         const targetObjects = targetObjectsResponse?.data ?? [];

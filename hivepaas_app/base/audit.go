@@ -329,6 +329,10 @@ const (
 	// AuditLogSourceMCP is the MCP server: an AI client, authenticated by one of
 	// its user's API keys.
 	AuditLogSourceMCP AuditLogSource = "mcp"
+
+	// AuditLogSourceSystemCleanup is the daily system cleanup acting on its own:
+	// removing what nothing owns any more, such as an app whose project is gone.
+	AuditLogSourceSystemCleanup AuditLogSource = "system-cleanup"
 )
 
 // AuditLogResult says whether the action was permitted.

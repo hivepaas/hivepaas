@@ -111,8 +111,15 @@ func (s *service) sysCleanupDB(
 
 	timeNow := timeutil.NowUTC()
 
+	// Delete the apps whose project or env is gone, as a person would. First,
+	// so the tasks and deployments they leave are swept by the step after.
+	e := s.sysCleanupDBDeleteOrphanedApps(ctx, db, data)
+	if e != nil {
+		err = errors.Join(err, e)
+	}
+
 	// Soft delete all orphaned tasks and deployments belonging to deleted apps
-	e := s.sysCleanupDBDeleteOrphanedTasksAndDeployments(ctx, db)
+	e = s.sysCleanupDBDeleteOrphanedTasksAndDeployments(ctx, db)
 	if e != nil {
 		err = errors.Join(err, e)
 	}

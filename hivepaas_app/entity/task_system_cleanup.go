@@ -10,6 +10,15 @@ type TaskSystemCleanupOutput struct {
 
 type DBCleanupOutput struct {
 	Error string `json:"error,omitempty"`
+	// OrphanedAppsDeleted are the apps removed because their project or env no
+	// longer exists.
+	OrphanedAppsDeleted []*OrphanedAppOutput `json:"orphanedAppsDeleted,omitempty"`
+}
+
+type OrphanedAppOutput struct {
+	ID    string `json:"id"`
+	Name  string `json:"name"`
+	Error string `json:"error,omitempty"`
 }
 
 type ClusterCleanupOutput struct {

@@ -35,7 +35,8 @@ type restoreWorld struct {
 	commandErr error
 	loaded     string
 	// the app
-	running bool
+	running  bool
+	startErr error
 	// the host: which paths exist
 	exists map[string]bool
 }
@@ -116,7 +117,7 @@ func (a fakeAppControl) Stop(_ context.Context, app *entity.App) error {
 func (a fakeAppControl) Start(_ context.Context, app *entity.App) error {
 	a.w.log("start %s", app.ID)
 	a.w.running = true
-	return nil
+	return a.w.startErr
 }
 
 func restoreReq(mod func(*databackupservice.RestoreReq)) *databackupservice.RestoreReq {
@@ -281,4 +282,16 @@ func TestRestoreCommandFailsWhenTheCommandFails(t *testing.T) {
 	err := w.service().Restore(context.Background(), database.Tx{}, restoreReq(commandRestore))
 
 	assert.ErrorContains(t, err, "exit code 3")
+}
+
+// An app that does not start again fails the restore, however the restore went:
+// a person has to know it is down.
+func TestRestoreVolumeFailsWhenTheAppDoesNotStartAgain(t *testing.T) {
+	w := &restoreWorld{running: true, startErr: errors.New("no suitable node")}
+
+	err := w.service().Restore(context.Background(), database.Tx{},
+		restoreReq(volumeRestore(base.BackupRestoreModeOverwrite, true)))
+
+	assert.ErrorContains(t, err, "no suitable node")
+	assert.Equal(t, "start app1", w.events[len(w.events)-1])
 }

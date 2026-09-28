@@ -108,10 +108,12 @@ func (s *service) restoreVolume(ctx context.Context, db database.Tx, req *databa
 	host := &nodeHost{run: s.hostRun, nodeID: appVolume.NodeID, nodeLabel: appVolume.NodeLabel}
 
 	if vol.StopApp {
-		restart, err := s.stopForRestore(ctx, req)
-		if err != nil {
+		var restart func() error
+		if restart, err = s.stopForRestore(ctx, req); err != nil {
 			return hperrors.Wrap(err)
 		}
+		// The restore's own error, joined with the app's failing to start: it is
+		// the returned err, not one of this block.
 		defer func() {
 			err = errors.Join(err, restart())
 		}()

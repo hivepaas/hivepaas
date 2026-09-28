@@ -373,6 +373,11 @@ export const settingsRouter: RouteObject = {
 
             return SettingsBackupSnapshotsRoute;
         }),
+        createSettingsModuleRoute(ROUTE.settings.backupSnapshots.restore.$pattern, "Backup Snapshots", async () => {
+            const { SettingsBackupSnapshotRestoreRoute } = await getLazyComponents();
+
+            return SettingsBackupSnapshotRestoreRoute;
+        }),
         createSettingsRoute(ROUTE.settings.backupRepos.$pattern, "Backup Repos", async () => {
             const { SettingsBackupReposRoute } = await getLazyComponents();
 

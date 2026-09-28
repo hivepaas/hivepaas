@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 
 import { cn } from "@/lib/utils";
 import { ListFilter } from "lucide-react";
@@ -8,6 +8,7 @@ import type { BackupSnapshot, BackupSnapshotScope } from "~/settings/domain";
 
 import { AppLink, TableActions } from "@application/shared/components";
 import { DEFAULT_PAGINATED_DATA, ROUTE } from "@application/shared/constants";
+import { useAppNavigate } from "@application/shared/hooks/router";
 import { useTableState } from "@application/shared/hooks/table";
 
 import { Button, DataTable } from "@/components/ui";
@@ -16,7 +17,7 @@ import { Badge } from "@/components/ui/badge";
 import { BackupSnapshotDeleteDialog } from "./backup-snapshot-delete-dialog.com";
 import { BackupSnapshotDetails } from "./backup-snapshot-details.com";
 import { BackupSnapshotFilterBar } from "./backup-snapshot-filter-bar.com";
-import { BackupSnapshotRestoreDrawer } from "./backup-snapshot-restore-drawer.com";
+import { snapshotRestoreRoute } from "./backup-snapshot-restore.helpers";
 import { BackupSnapshotTableDefs } from "./backup-snapshot-table.defs";
 import { type BackupSnapshotFilterValues, countActiveFilters, isTagFilter } from "./backup-snapshot-table.helpers";
 
@@ -55,7 +56,14 @@ export function BackupSnapshotTable({ scope }: Props) {
     const [isFilterOpen, setIsFilterOpen] = useState(() => countActiveFilters(filters) > 0);
     const [details, setDetails] = useState<BackupSnapshot | null>(null);
     const [deleting, setDeleting] = useState<BackupSnapshot | null>(null);
-    const [restoring, setRestoring] = useState<BackupSnapshot | null>(null);
+    const { navigate } = useAppNavigate();
+
+    const openRestore = useCallback(
+        (snapshot: BackupSnapshot) => {
+            navigate.modules(snapshotRestoreRoute(scope, snapshot.id));
+        },
+        [navigate, scope],
+    );
 
     const { data = { ...DEFAULT_PAGINATED_DATA, repos: [] }, isFetching } = BackupSnapshotQueries.useFindManyPaginated({
         scope,
@@ -79,10 +87,10 @@ export function BackupSnapshotTable({ scope }: Props) {
         () =>
             BackupSnapshotTableDefs.columns(scope, {
                 onViewDetails: setDetails,
-                onRestore: setRestoring,
+                onRestore: openRestore,
                 onDelete: setDeleting,
             }),
-        [scope],
+        [scope, openRestore],
     );
 
     const detailsRunRoute = details ? runRoute(scope, details) : undefined;
@@ -171,20 +179,11 @@ export function BackupSnapshotTable({ scope }: Props) {
                 }
                 onRestore={snapshot => {
                     setDetails(null);
-                    setRestoring(snapshot);
+                    openRestore(snapshot);
                 }}
                 onOpenChange={open => {
                     if (!open) {
                         setDetails(null);
-                    }
-                }}
-            />
-            <BackupSnapshotRestoreDrawer
-                scope={scope}
-                snapshot={restoring}
-                onOpenChange={open => {
-                    if (!open) {
-                        setRestoring(null);
                     }
                 }}
             />

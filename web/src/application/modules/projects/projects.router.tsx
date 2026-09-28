@@ -1033,6 +1033,14 @@ export const projectsRouter: RouteObject = {
                             },
                         },
                         {
+                            path: ROUTE.projects.single.providerConfiguration.backupSnapshots.restore.$pattern,
+                            lazy: async () => {
+                                const { ProjectBackupSnapshotRestoreRoute } = await getLazyComponents();
+
+                                return { Component: ProjectBackupSnapshotRestoreRoute };
+                            },
+                        },
+                        {
                             path: ROUTE.projects.single.providerConfiguration.backupRepos.$pattern,
                             lazy: async () => {
                                 const { ProjectBackupReposRoute } = await getLazyComponents();
@@ -1807,6 +1815,14 @@ export const projectsRouter: RouteObject = {
                                 const { AppBackupSnapshotsRoute } = await getLazyComponents();
 
                                 return { Component: AppBackupSnapshotsRoute };
+                            },
+                        },
+                        {
+                            path: ROUTE.projects.single.apps.single.configuration.backupSnapshots.restore.$pattern,
+                            lazy: async () => {
+                                const { AppBackupSnapshotRestoreRoute } = await getLazyComponents();
+
+                                return { Component: AppBackupSnapshotRestoreRoute };
                             },
                         },
                         {

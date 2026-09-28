@@ -1,4 +1,6 @@
-import type { BackupSnapshot, BackupSnapshotEntry } from "~/settings/domain";
+import type { BackupSnapshot, BackupSnapshotEntry, BackupSnapshotScope } from "~/settings/domain";
+
+import { ROUTE } from "@application/shared/constants";
 
 /** What a snapshot is restored as: a command's file, or a volume's directory. */
 export interface RestoreKind {
@@ -47,4 +49,40 @@ export function joinSnapshotPath(parent: string, name: string): string {
 export function parentSnapshotPath(path: string): string {
     const index = path.lastIndexOf("/");
     return index < 0 ? "" : path.slice(0, index);
+}
+
+/** Where a scope's snapshots are listed. */
+export function snapshotListRoute(scope: BackupSnapshotScope): string {
+    switch (scope.type) {
+        case "settings":
+            return ROUTE.settings.backupSnapshots.$route;
+        case "project":
+            return ROUTE.projects.single.providerConfiguration.backupSnapshots.$route(scope.projectId);
+        case "app":
+            return ROUTE.projects.single.apps.single.configuration.backupSnapshots.$route(
+                scope.projectId,
+                scope.env,
+                scope.appId,
+            );
+    }
+}
+
+/** Where a scope's snapshot is restored. */
+export function snapshotRestoreRoute(scope: BackupSnapshotScope, snapshotId: string): string {
+    switch (scope.type) {
+        case "settings":
+            return ROUTE.settings.backupSnapshots.restore.$route(snapshotId);
+        case "project":
+            return ROUTE.projects.single.providerConfiguration.backupSnapshots.restore.$route(
+                scope.projectId,
+                snapshotId,
+            );
+        case "app":
+            return ROUTE.projects.single.apps.single.configuration.backupSnapshots.restore.$route(
+                scope.projectId,
+                scope.env,
+                scope.appId,
+                snapshotId,
+            );
+    }
 }

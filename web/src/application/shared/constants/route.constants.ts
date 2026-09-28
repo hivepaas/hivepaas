@@ -400,6 +400,11 @@ export const ROUTE = {
         backupSnapshots: {
             $pattern: "integrations/backup-snapshots",
             $route: "/integrations/backup-snapshots/",
+
+            restore: {
+                $pattern: "integrations/backup-snapshots/:snapshotId/restore",
+                $route: (snapshotId: string) => `/integrations/backup-snapshots/${snapshotId}/restore/`,
+            },
         },
 
         backupRepos: {
@@ -692,6 +697,12 @@ export const ROUTE = {
                             $pattern: "projects/:id/:env/apps/:appId/backup-snapshots",
                             $route: (id: string, env: string, appId: string) =>
                                 `/projects/${id}/${env}/apps/${appId}/backup-snapshots/`,
+
+                            restore: {
+                                $pattern: "projects/:id/:env/apps/:appId/backup-snapshots/:snapshotId/restore",
+                                $route: (id: string, env: string, appId: string, snapshotId: string) =>
+                                    `/projects/${id}/${env}/apps/${appId}/backup-snapshots/${snapshotId}/restore/`,
+                            },
                         },
 
                         scheduledJobs: {
@@ -1071,6 +1082,12 @@ export const ROUTE = {
                 backupSnapshots: {
                     $pattern: "projects/:id/integrations/backup-snapshots",
                     $route: (id: string) => `/projects/${id}/integrations/backup-snapshots/`,
+
+                    restore: {
+                        $pattern: "projects/:id/integrations/backup-snapshots/:snapshotId/restore",
+                        $route: (id: string, snapshotId: string) =>
+                            `/projects/${id}/integrations/backup-snapshots/${snapshotId}/restore/`,
+                    },
                 },
 
                 backupRepos: {

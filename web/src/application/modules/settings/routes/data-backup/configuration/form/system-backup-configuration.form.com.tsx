@@ -1,16 +1,15 @@
-import React, { type PropsWithChildren, useEffect, useImperativeHandle, useMemo, useState } from "react";
+import React, { type PropsWithChildren, useId, useImperativeHandle, useMemo, useState } from "react";
 
 import { PasswordInput, RevealSecretsProvider } from "@components/ui/input-password";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { dashedBorderBox } from "@lib/styles";
 import { cn } from "@lib/utils";
 import { type FieldPath, FormProvider, useController, useForm, useFormContext, useWatch } from "react-hook-form";
-import { CloudStorageQueries } from "~/settings/data";
+import { BackupRepoQueries } from "~/settings/data";
 import { ConfirmRevealSecretsDialog, RevealSecretsButton } from "~/settings/module-shared/components";
 import { useNotificationSettingsSources, useSettingRevealSecrets } from "~/settings/module-shared/hooks";
-import type { SystemBackupSettings } from "~/system-settings/domain";
+import { SYSTEM_BACKUP_SPEC_SECRETS, type SystemBackupSettings } from "~/system-settings/domain";
 import { SectionHeader } from "~/system-settings/module-shared";
-import { ESystemBackupCompressionFormat, ESystemBackupEncryptionFormat } from "~/system-settings/module-shared/enums";
 
 import { AppLink, Combobox, InfoBlock, NextRunsField } from "@application/shared/components";
 import { DEFAULT_PAGINATED_DATA, ROUTE } from "@application/shared/constants";
@@ -60,14 +59,16 @@ function EnabledField() {
 
 function GeneralFields({ nextRuns }: { nextRuns: Date[] }) {
     const { control } = useFormContext<SchemaInput, unknown, SchemaOutput>();
-    const [cloudStorageSearch, setCloudStorageSearch] = useState("");
+    const [repositorySearch, setRepositorySearch] = useState("");
+    const includeDBId = useId();
+    const includeSpecId = useId();
 
     const {
-        data: { data: cloudStorages } = DEFAULT_PAGINATED_DATA,
+        data: { data: repositories } = DEFAULT_PAGINATED_DATA,
         isFetching,
         refetch,
         isRefetching,
-    } = CloudStorageQueries.useFindManyPaginated({ search: cloudStorageSearch });
+    } = BackupRepoQueries.useFindManyPaginated({ search: repositorySearch });
 
     const { field: scheduleMode } = useController({ control, name: "scheduleMode" });
     const {
@@ -82,47 +83,40 @@ function GeneralFields({ nextRuns }: { nextRuns: Date[] }) {
         field: scheduleFrom,
         fieldState: { error: scheduleFromError, invalid: isScheduleFromInvalid },
     } = useController({ control, name: "scheduleFrom" });
-    const { field: compressionFormat } = useController({ control, name: "compressionFormat" });
-    const { field: encryptionFormat } = useController({ control, name: "encryptionFormat" });
     const {
-        field: encryptionSecret,
-        fieldState: { error: encryptionSecretError, invalid: isEncryptionSecretInvalid },
-    } = useController({ control, name: "encryptionSecret" });
+        field: includeDB,
+        fieldState: { error: includeError },
+    } = useController({ control, name: "includeDB" });
+    const { field: includeSpec } = useController({ control, name: "includeSpec" });
+    const { field: specSecrets } = useController({ control, name: "specSecrets" });
     const {
-        field: cloudStorage,
-        fieldState: { error: cloudStorageError, invalid: isCloudStorageInvalid },
-    } = useController({ control, name: "cloudStorage" });
-    const { field: cloudStorageBucket } = useController({ control, name: "cloudStorageBucket" });
+        field: specPassphrase,
+        fieldState: { error: specPassphraseError, invalid: isSpecPassphraseInvalid },
+    } = useController({ control, name: "specPassphrase" });
     const {
-        field: cloudStorageDestinationDir,
-        fieldState: { error: cloudStorageDestinationDirError, invalid: isCloudStorageDestinationDirInvalid },
-    } = useController({ control, name: "cloudStorageDestinationDir" });
-
-    useEffect(() => {
-        if (encryptionFormat.value !== ESystemBackupEncryptionFormat.Age) {
-            encryptionSecret.onChange("");
-        }
-    }, [encryptionFormat.value, encryptionSecret]);
+        field: targetRepository,
+        fieldState: { error: targetRepositoryError, invalid: isTargetRepositoryInvalid },
+    } = useController({ control, name: "targetRepository" });
 
     const { canShowRevealButton, isDialogOpen, setIsDialogOpen, isRevealing, isRevealed, handleConfirmReveal } =
         useSettingRevealSecrets<SystemBackupSettings>({
             customPath: "/system/settings/backup",
             mode: "edit",
             onSuccess: data => {
-                if (data.encryption.secret) {
-                    encryptionSecret.onChange(data.encryption.secret);
+                if (data.specPassphrase) {
+                    specPassphrase.onChange(data.specPassphrase);
                 }
             },
         });
 
-    const shouldShowReveal = canShowRevealButton && encryptionFormat.value !== ESystemBackupEncryptionFormat.None;
+    const isEncrypted = includeSpec.value && specSecrets.value === SYSTEM_BACKUP_SPEC_SECRETS.Encrypted;
 
-    const cloudStorageOptions = useMemo(() => {
-        return cloudStorages.map(item => ({
+    const repositoryOptions = useMemo(() => {
+        return repositories.map(item => ({
             value: { id: item.id, name: item.name },
-            label: item.kind ? `${item.kind} ${item.name}` : item.name,
+            label: item.name,
         }));
-    }, [cloudStorages]);
+    }, [repositories]);
 
     return (
         <>
@@ -221,39 +215,73 @@ function GeneralFields({ nextRuns }: { nextRuns: Date[] }) {
 
                 <InfoBlock
                     titleWidth={220}
-                    title="Compress Backups"
+                    title="Back Up"
                 >
-                    <Tabs
-                        value={compressionFormat.value}
-                        onValueChange={compressionFormat.onChange}
-                    >
-                        <TabsList>
-                            <TabsTrigger value={ESystemBackupCompressionFormat.None}>Disabled</TabsTrigger>
-                            <TabsTrigger value={ESystemBackupCompressionFormat.Gzip}>Gzip</TabsTrigger>
-                            <TabsTrigger value={ESystemBackupCompressionFormat.Zstd}>Zstd</TabsTrigger>
-                        </TabsList>
-                    </Tabs>
+                    <FieldGroup>
+                        <Field>
+                            <div className="flex flex-col gap-2 text-sm">
+                                <div className="flex items-center gap-2">
+                                    <Checkbox
+                                        id={includeDBId}
+                                        checked={includeDB.value}
+                                        onCheckedChange={checked => {
+                                            includeDB.onChange(checked === true);
+                                        }}
+                                    />
+                                    <label htmlFor={includeDBId}>
+                                        Database: a dump of HivePaaS&apos;s own database
+                                    </label>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                    <Checkbox
+                                        id={includeSpecId}
+                                        checked={includeSpec.value}
+                                        onCheckedChange={checked => {
+                                            includeSpec.onChange(checked === true);
+                                        }}
+                                    />
+                                    <label htmlFor={includeSpecId}>
+                                        Spec: the configuration of every project, env and app, as Export writes it
+                                    </label>
+                                </div>
+                            </div>
+                            <FieldError errors={[includeError]} />
+                        </Field>
+                    </FieldGroup>
                 </InfoBlock>
 
-                <InfoBlock
-                    titleWidth={220}
-                    title="Encrypt Backups"
-                >
-                    <Tabs
-                        value={encryptionFormat.value}
-                        onValueChange={encryptionFormat.onChange}
-                    >
-                        <TabsList>
-                            <TabsTrigger value={ESystemBackupEncryptionFormat.None}>Disabled</TabsTrigger>
-                            <TabsTrigger value={ESystemBackupEncryptionFormat.Age}>Age</TabsTrigger>
-                        </TabsList>
-                    </Tabs>
-                </InfoBlock>
-
-                {encryptionFormat.value !== ESystemBackupEncryptionFormat.None && (
+                {includeSpec.value && (
                     <InfoBlock
                         titleWidth={220}
-                        title="Encryption Secret"
+                        title="Secrets in the Spec"
+                    >
+                        <div className="flex flex-col gap-2">
+                            <Tabs
+                                value={specSecrets.value}
+                                onValueChange={specSecrets.onChange}
+                            >
+                                <TabsList>
+                                    <TabsTrigger value={SYSTEM_BACKUP_SPEC_SECRETS.Encrypted}>Encrypted</TabsTrigger>
+                                    <TabsTrigger value={SYSTEM_BACKUP_SPEC_SECRETS.Omit}>Omit</TabsTrigger>
+                                    <TabsTrigger value={SYSTEM_BACKUP_SPEC_SECRETS.Plaintext}>Plaintext</TabsTrigger>
+                                </TabsList>
+                            </Tabs>
+                            <p className="text-sm text-muted-foreground max-w-[600px]">
+                                {specSecrets.value === SYSTEM_BACKUP_SPEC_SECRETS.Encrypted &&
+                                    "The spec is encrypted with a passphrase of its own, besides the repository's password. A lost passphrase is a spec whose secrets cannot be read."}
+                                {specSecrets.value === SYSTEM_BACKUP_SPEC_SECRETS.Omit &&
+                                    "The spec holds no secret: importing it asks for every one again."}
+                                {specSecrets.value === SYSTEM_BACKUP_SPEC_SECRETS.Plaintext &&
+                                    "The spec holds every secret as it is: whoever has the repository's password reads them."}
+                            </p>
+                        </div>
+                    </InfoBlock>
+                )}
+
+                {isEncrypted && (
+                    <InfoBlock
+                        titleWidth={220}
+                        title="Spec Passphrase"
                     >
                         <FieldGroup>
                             <Field>
@@ -261,15 +289,15 @@ function GeneralFields({ nextRuns }: { nextRuns: Date[] }) {
                                     <div className="w-full max-w-[400px]">
                                         <RevealSecretsProvider value={{ isRevealed }}>
                                             <PasswordInput
-                                                value={encryptionSecret.value}
-                                                onChange={encryptionSecret.onChange}
-                                                placeholder="password"
+                                                value={specPassphrase.value}
+                                                onChange={specPassphrase.onChange}
+                                                placeholder="passphrase"
                                                 className="w-full"
-                                                aria-invalid={isEncryptionSecretInvalid}
+                                                aria-invalid={isSpecPassphraseInvalid}
                                             />
                                         </RevealSecretsProvider>
                                     </div>
-                                    {shouldShowReveal && (
+                                    {canShowRevealButton && (
                                         <RevealSecretsButton
                                             onClick={() => {
                                                 setIsDialogOpen(true);
@@ -278,7 +306,7 @@ function GeneralFields({ nextRuns }: { nextRuns: Date[] }) {
                                         />
                                     )}
                                 </div>
-                                <FieldError errors={[encryptionSecretError]} />
+                                <FieldError errors={[specPassphraseError]} />
                             </Field>
                         </FieldGroup>
                         <ConfirmRevealSecretsDialog
@@ -290,23 +318,21 @@ function GeneralFields({ nextRuns }: { nextRuns: Date[] }) {
                     </InfoBlock>
                 )}
 
-                <Separator className="opacity-50" />
-
                 <InfoBlock
                     titleWidth={220}
-                    title="Save Backups in Cloud Storage"
+                    title="Backup Repository"
                 >
                     <FieldGroup>
                         <Field>
                             <Combobox
-                                options={cloudStorageOptions}
-                                value={cloudStorage.value?.id ?? null}
+                                options={repositoryOptions}
+                                value={targetRepository.value?.id ?? null}
                                 onChange={(_, option) => {
-                                    cloudStorage.onChange(option ?? undefined);
+                                    targetRepository.onChange(option ?? undefined);
                                 }}
-                                onSearch={setCloudStorageSearch}
-                                placeholder="Select Cloud Storage"
-                                emptyText="No cloud storages available"
+                                onSearch={setRepositorySearch}
+                                placeholder={targetRepository.value?.name ?? "Select a backup repository"}
+                                emptyText="No backup repositories at the global scope"
                                 className="max-w-[400px]"
                                 valueKey="id"
                                 searchable
@@ -314,53 +340,29 @@ function GeneralFields({ nextRuns }: { nextRuns: Date[] }) {
                                 loading={isFetching}
                                 onRefresh={() => void refetch()}
                                 isRefreshing={isRefetching}
-                                aria-invalid={isCloudStorageInvalid}
-                                splitLabelBadge
+                                aria-invalid={isTargetRepositoryInvalid}
                             />
-                            <FieldError errors={[cloudStorageError]} />
-                            <AppLink.Basic
-                                to={ROUTE.settings.cloudStorages.$route}
-                                target="_blank"
-                                className="text-xs text-blue-500"
-                                ignorePrevPath
-                            >
-                                Configure Cloud Storages
-                            </AppLink.Basic>
+                            <FieldError errors={[targetRepositoryError]} />
+                            <div className="flex gap-4">
+                                <AppLink.Basic
+                                    to={ROUTE.settings.backupRepos.$route}
+                                    target="_blank"
+                                    className="text-xs text-blue-500"
+                                    ignorePrevPath
+                                >
+                                    Configure Backup Repos
+                                </AppLink.Basic>
+                                <AppLink.Basic
+                                    to={`${ROUTE.settings.backupSnapshots.$route}?tag=${encodeURIComponent("hivepaas.source:system-backup")}`}
+                                    className="text-xs text-blue-500"
+                                    ignorePrevPath
+                                >
+                                    View snapshots
+                                </AppLink.Basic>
+                            </div>
                         </Field>
                     </FieldGroup>
                 </InfoBlock>
-
-                {cloudStorage.value && (
-                    <>
-                        <InfoBlock
-                            titleWidth={220}
-                            title="Bucket"
-                        >
-                            <Field>
-                                <Input
-                                    {...cloudStorageBucket}
-                                    placeholder="use default"
-                                    className="max-w-[400px]"
-                                />
-                            </Field>
-                        </InfoBlock>
-
-                        <InfoBlock
-                            titleWidth={220}
-                            title="Destination Directory"
-                        >
-                            <Field>
-                                <Input
-                                    {...cloudStorageDestinationDir}
-                                    placeholder="path/to/sub/dir"
-                                    className="max-w-[400px]"
-                                    aria-invalid={isCloudStorageDestinationDirInvalid}
-                                />
-                                <FieldError errors={[cloudStorageDestinationDirError]} />
-                            </Field>
-                        </InfoBlock>
-                    </>
-                )}
             </div>
         </>
     );

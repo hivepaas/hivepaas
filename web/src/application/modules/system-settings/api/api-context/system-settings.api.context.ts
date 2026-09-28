@@ -23,8 +23,6 @@ import {
     McpSettingsApiValidator,
     SystemBackupApi,
     SystemBackupApiValidator,
-    SystemBackupFileApi,
-    SystemBackupFileApiValidator,
     SystemBackupRepoCleanupApi,
     SystemBackupRepoCleanupApiValidator,
     SystemCleanupApi,
@@ -41,7 +39,6 @@ import {
 
 function createApi() {
     const systemBackupValidator = new SystemBackupApiValidator();
-    const systemBackupFileValidator = new SystemBackupFileApiValidator();
     const systemCleanupValidator = new SystemCleanupApiValidator();
     const systemSslRenewalValidator = new SystemSslRenewalApiValidator();
     const systemBackupRepoCleanupValidator = new SystemBackupRepoCleanupApiValidator();
@@ -73,7 +70,6 @@ function createApi() {
             traefikConfigOptions: new TraefikConfigOptionsApi(traefikConfigOptionsValidator),
             traefikRestart: new TraefikRestartApi(traefikRestartValidator),
             backup: new SystemBackupApi(systemBackupValidator),
-            backupFiles: new SystemBackupFileApi(systemBackupFileValidator),
             cleanup: new SystemCleanupApi(systemCleanupValidator),
             sslRenewal: new SystemSslRenewalApi(systemSslRenewalValidator),
             backupRepoCleanup: new SystemBackupRepoCleanupApi(systemBackupRepoCleanupValidator),

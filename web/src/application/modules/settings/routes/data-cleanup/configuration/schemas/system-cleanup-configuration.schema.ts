@@ -45,11 +45,6 @@ export const SystemCleanupConfigurationFormSchema = z.object({
         pruneContainers: z.boolean(),
         pruneBuildCache: z.boolean(),
     }),
-    backupCleanup: z.object({
-        enabled: z.boolean(),
-        localBackupRetention: z.string(),
-        cloudBackupRetention: z.string(),
-    }),
     cacheCleanup: z.object({
         enabled: z.boolean(),
         repoCacheRetention: z.string(),

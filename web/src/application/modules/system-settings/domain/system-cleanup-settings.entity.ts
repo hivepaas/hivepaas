@@ -30,12 +30,6 @@ export interface SystemCleanupClusterCleanup {
     pruneBuildCache: boolean;
 }
 
-export interface SystemCleanupBackupCleanup {
-    enabled: boolean;
-    cloudBackupRetention: string;
-    localBackupRetention: string;
-}
-
 export interface SystemCleanupCacheCleanup {
     enabled: boolean;
     repoCacheRetention: string;
@@ -63,7 +57,6 @@ export interface SystemCleanupSettings extends SettingsBaseEntity {
     schedule: SystemCleanupSchedule;
     dbObjectRetention: SystemCleanupDBObjectRetention;
     clusterCleanup: SystemCleanupClusterCleanup;
-    backupCleanup: SystemCleanupBackupCleanup;
     cacheCleanup: SystemCleanupCacheCleanup;
     fileCleanup: SystemCleanupFileCleanup;
     notification?: SystemCleanupNotification | null;

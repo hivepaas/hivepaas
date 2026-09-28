@@ -4,30 +4,10 @@ import type { ESettingStatus } from "@application/shared/enums";
 
 import type { OpenApiConstant } from "@infrastructure/api";
 
-import type { ESystemBackupCompressionFormat, ESystemBackupEncryptionFormat } from "../module-shared/enums";
-
 export interface SystemBackupSchedule {
     interval: string;
     cronExpr: string;
     initialTime?: Date | null;
-}
-
-export interface SystemBackupCompression {
-    format: ESystemBackupCompressionFormat;
-}
-
-export interface SystemBackupEncryption {
-    format: ESystemBackupEncryptionFormat;
-    secret: string;
-}
-
-export interface SystemBackupCloudStorage extends SettingsBaseEntity {
-    bucket?: string;
-    destinationDir: string;
-}
-
-export interface SystemBackupDBConfig {
-    backupDeletedObjects: boolean;
 }
 
 export interface SystemBackupNotification {
@@ -43,13 +23,27 @@ export interface SystemBackupNotification {
     failureUseDefault: boolean;
 }
 
+/** How a system backup's spec holds secrets, as a spec export's modes are. */
+export const SYSTEM_BACKUP_SPEC_SECRETS = {
+    Encrypted: "encrypted",
+    Omit: "omit",
+    Plaintext: "plaintext",
+} as const;
+
+export type SystemBackupSpecSecrets = (typeof SYSTEM_BACKUP_SPEC_SECRETS)[keyof typeof SYSTEM_BACKUP_SPEC_SECRETS];
+
 export interface SystemBackupSettings extends SettingsBaseEntity {
     status: OpenApiConstant<ESettingStatus>;
     schedule: SystemBackupSchedule;
-    compression: SystemBackupCompression;
-    encryption: SystemBackupEncryption;
-    cloudStorage?: SystemBackupCloudStorage | null;
-    dbBackupConfig: SystemBackupDBConfig;
+    /** What a run takes: HivePaaS's database, the spec of the whole installation, or both. */
+    includeDB: boolean;
+    includeSpec: boolean;
+    /** How the spec holds secrets: encrypted, omit, plaintext. */
+    specSecrets: SystemBackupSpecSecrets;
+    /** Masked once stored. */
+    specPassphrase: string;
+    /** A backup repository at the global scope; its status is "missing" when it is deleted. */
+    targetRepository?: { id: string; name: string; status: string } | null;
     notification?: SystemBackupNotification | null;
     secretMasked?: boolean;
     nextRuns: Date[];

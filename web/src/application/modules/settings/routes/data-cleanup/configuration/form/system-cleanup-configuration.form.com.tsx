@@ -419,74 +419,6 @@ function DockerSwarmCleanupOptionsFields() {
     );
 }
 
-function BackupCleanupOptionsFields() {
-    const { control } = useFormContext<SchemaInput, unknown, SchemaOutput>();
-    const { field: enabled } = useController({ control, name: "backupCleanup.enabled" });
-    const {
-        field: localBackupRetention,
-        fieldState: { error: localBackupRetentionError, invalid: isLocalBackupRetentionInvalid },
-    } = useController({ control, name: "backupCleanup.localBackupRetention" });
-    const {
-        field: cloudBackupRetention,
-        fieldState: { error: cloudBackupRetentionError, invalid: isCloudBackupRetentionInvalid },
-    } = useController({ control, name: "backupCleanup.cloudBackupRetention" });
-
-    return (
-        <>
-            <SectionHeader>Backup Cleanup Options</SectionHeader>
-            <div className="flex flex-col gap-6 px-3">
-                <InfoBlock
-                    titleWidth={220}
-                    title="Enabled"
-                >
-                    <Checkbox
-                        checked={enabled.value}
-                        onCheckedChange={enabled.onChange}
-                    />
-                </InfoBlock>
-
-                {enabled.value && (
-                    <>
-                        <InfoBlock
-                            titleWidth={220}
-                            title="Local Backup Retention"
-                        >
-                            <FieldGroup>
-                                <Field>
-                                    <Input
-                                        {...localBackupRetention}
-                                        placeholder="30d"
-                                        className="max-w-[400px]"
-                                        aria-invalid={isLocalBackupRetentionInvalid}
-                                    />
-                                    <FieldError errors={[localBackupRetentionError]} />
-                                </Field>
-                            </FieldGroup>
-                        </InfoBlock>
-
-                        <InfoBlock
-                            titleWidth={220}
-                            title="Cloud Backup Retention"
-                        >
-                            <FieldGroup>
-                                <Field>
-                                    <Input
-                                        {...cloudBackupRetention}
-                                        placeholder="30d"
-                                        className="max-w-[400px]"
-                                        aria-invalid={isCloudBackupRetentionInvalid}
-                                    />
-                                    <FieldError errors={[cloudBackupRetentionError]} />
-                                </Field>
-                            </FieldGroup>
-                        </InfoBlock>
-                    </>
-                )}
-            </div>
-        </>
-    );
-}
-
 function CacheCleanupOptionsFields() {
     const { control } = useFormContext<SchemaInput, unknown, SchemaOutput>();
     const { field: enabled } = useController({ control, name: "cacheCleanup.enabled" });
@@ -591,7 +523,6 @@ function EnabledCleanupConfigurationFields({ nextRuns, readOnly }: { nextRuns: D
             <GeneralFields nextRuns={nextRuns} />
             <DBCleanupOptionsFields />
             <DockerSwarmCleanupOptionsFields />
-            <BackupCleanupOptionsFields />
             <CacheCleanupOptionsFields />
             <FileCleanupOptionsFields />
             <NotificationFields readOnly={readOnly} />

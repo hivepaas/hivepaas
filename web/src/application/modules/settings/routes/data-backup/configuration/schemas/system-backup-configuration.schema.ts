@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { ESystemBackupCompressionFormat, ESystemBackupEncryptionFormat } from "~/system-settings/module-shared/enums";
+import { SYSTEM_BACKUP_SPEC_SECRETS } from "~/system-settings/domain";
 
 import { ESettingStatus } from "@application/shared/enums";
 
@@ -29,29 +29,32 @@ export const SystemBackupConfigurationFormSchema = z
         scheduleInterval: z.string(),
         scheduleCronExpr: z.string(),
         scheduleFrom: z.date().nullable(),
-        compressionFormat: z.nativeEnum(ESystemBackupCompressionFormat),
-        encryptionFormat: z.nativeEnum(ESystemBackupEncryptionFormat),
-        encryptionSecret: z.string(),
-        cloudStorage: SettingsRefSchema.optional(),
-        cloudStorageBucket: z.string(),
-        cloudStorageDestinationDir: z.string(),
-        backupDeletedObjects: z.boolean(),
+        includeDB: z.boolean(),
+        includeSpec: z.boolean(),
+        specSecrets: z.nativeEnum(SYSTEM_BACKUP_SPEC_SECRETS),
+        specPassphrase: z.string(),
+        targetRepository: SettingsRefSchema.optional(),
         notification: NotificationSchema,
     })
     .superRefine((data, ctx) => {
-        if (data.encryptionFormat !== ESystemBackupEncryptionFormat.None) {
-            if (!data.encryptionSecret.trim()) {
-                ctx.addIssue({
-                    code: z.ZodIssueCode.custom,
-                    path: ["encryptionSecret"],
-                    message: "Encryption secret is required",
-                });
-            } else if (data.encryptionSecret.length > 50) {
-                ctx.addIssue({
-                    code: z.ZodIssueCode.custom,
-                    path: ["encryptionSecret"],
-                    message: "Encryption secret must be at most 50 characters",
-                });
+        const issue = (message: string, path: string) => {
+            ctx.addIssue({ code: z.ZodIssueCode.custom, path: [path], message });
+        };
+        // A disabled backup is not asked for what it would take.
+        if (data.status !== ESettingStatus.Active) {
+            return;
+        }
+        if (!data.includeDB && !data.includeSpec) {
+            issue("Back up the database, the spec, or both", "includeDB");
+        }
+        if (!data.targetRepository) {
+            issue("Pick a backup repository", "targetRepository");
+        }
+        if (data.includeSpec && data.specSecrets === SYSTEM_BACKUP_SPEC_SECRETS.Encrypted) {
+            if (!data.specPassphrase) {
+                issue("A passphrase is required to encrypt the spec's secrets", "specPassphrase");
+            } else if (data.specPassphrase.length > 256) {
+                issue("At most 256 characters", "specPassphrase");
             }
         }
     });

@@ -1,10 +1,8 @@
-import type { SystemBackupSettings } from "~/system-settings/domain";
+import type { SystemBackupSettings, SystemBackupSpecSecrets } from "~/system-settings/domain";
 
 import type { ESettingStatus } from "@application/shared/enums";
 
 import type { ApiRequestBase, ApiResponseBase } from "@infrastructure/api";
-
-import type { ESystemBackupCompressionFormat, ESystemBackupEncryptionFormat } from "../../../module-shared/enums";
 
 export type SystemBackup_FindOne_Req = ApiRequestBase<Record<string, never>>;
 export type SystemBackup_FindOne_Res = ApiResponseBase<SystemBackupSettings>;
@@ -17,20 +15,12 @@ export type SystemBackup_UpdateOne_Payload = {
         cronExpr: string;
         initialTime?: Date;
     };
-    compression: {
-        format: ESystemBackupCompressionFormat;
-    };
-    encryption: {
-        format: ESystemBackupEncryptionFormat;
-        secret: string;
-    };
-    cloudStorage: {
+    includeDB: boolean;
+    includeSpec: boolean;
+    specSecrets: SystemBackupSpecSecrets;
+    specPassphrase: string;
+    targetRepository: {
         id: string;
-        bucket: string;
-        destinationDir: string;
-    };
-    dbBackupConfig: {
-        backupDeletedObjects: boolean;
     };
     notification: {
         success: {

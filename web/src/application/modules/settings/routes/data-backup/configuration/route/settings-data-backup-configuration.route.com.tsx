@@ -24,20 +24,12 @@ function mapFormValuesToPayload(values: SystemBackupConfigurationFormOutput, upd
             cronExpr: values.scheduleMode === SystemBackupScheduleMode.Cron ? values.scheduleCronExpr : "",
             ...(values.scheduleFrom ? { initialTime: values.scheduleFrom } : {}),
         },
-        compression: {
-            format: values.compressionFormat,
-        },
-        encryption: {
-            format: values.encryptionFormat,
-            secret: values.encryptionSecret,
-        },
-        cloudStorage: {
-            id: values.cloudStorage?.id ?? "",
-            bucket: values.cloudStorageBucket,
-            destinationDir: values.cloudStorageDestinationDir,
-        },
-        dbBackupConfig: {
-            backupDeletedObjects: values.backupDeletedObjects,
+        includeDB: values.includeDB,
+        includeSpec: values.includeSpec,
+        specSecrets: values.specSecrets,
+        specPassphrase: values.includeSpec ? values.specPassphrase : "",
+        targetRepository: {
+            id: values.targetRepository?.id ?? "",
         },
         notification: {
             successUseDefault: values.notification.successUseDefault,

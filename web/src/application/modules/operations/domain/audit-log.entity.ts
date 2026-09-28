@@ -35,6 +35,8 @@ export const AuditLogType = {
     SpecExport: "spec-export",
     SpecImport: "spec-import",
     McpToolCall: "mcp-tool-call",
+    /** A file taken out of a backup snapshot. */
+    BackupDownload: "backup-download",
 } as const;
 
 export type AuditLogType = (typeof AuditLogType)[keyof typeof AuditLogType];

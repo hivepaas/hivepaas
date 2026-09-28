@@ -29,11 +29,6 @@ export const emptySystemCleanupConfigurationFormDefaults: SystemCleanupConfigura
         pruneContainers: true,
         pruneBuildCache: true,
     },
-    backupCleanup: {
-        enabled: true,
-        localBackupRetention: "30d",
-        cloudBackupRetention: "30d",
-    },
     cacheCleanup: {
         enabled: true,
         repoCacheRetention: "30d",
@@ -75,11 +70,6 @@ export function mapSystemCleanupSettingsToFormInput(
             pruneNetworks: settings.clusterCleanup.pruneNetworks,
             pruneContainers: settings.clusterCleanup.pruneContainers,
             pruneBuildCache: settings.clusterCleanup.pruneBuildCache,
-        },
-        backupCleanup: {
-            enabled: settings.backupCleanup.enabled,
-            localBackupRetention: settings.backupCleanup.localBackupRetention,
-            cloudBackupRetention: settings.backupCleanup.cloudBackupRetention,
         },
         cacheCleanup: {
             enabled: settings.cacheCleanup.enabled,

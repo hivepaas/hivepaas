@@ -449,11 +449,6 @@ export const ROUTE = {
                 $route: "/settings/data-backup/configuration/",
             },
 
-            backupFiles: {
-                $pattern: "settings/data-backup/backup-files",
-                $route: "/settings/data-backup/backup-files/",
-            },
-
             actions: {
                 $pattern: "settings/data-backup/actions",
                 $route: "/settings/data-backup/actions/",

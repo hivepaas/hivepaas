@@ -1,27 +1,6 @@
 import { z } from "zod";
 import { SettingsBaseEntitySchema } from "~/settings/module-shared/schemas";
-
-import { ESystemBackupCompressionFormat, ESystemBackupEncryptionFormat } from "../enums";
-
-const SystemBackupCompressionSchema = z
-    .object({
-        format: z.nativeEnum(ESystemBackupCompressionFormat).default(ESystemBackupCompressionFormat.None),
-    })
-    .default({ format: ESystemBackupCompressionFormat.None });
-
-const SystemBackupEncryptionSchema = z
-    .object({
-        format: z.nativeEnum(ESystemBackupEncryptionFormat).default(ESystemBackupEncryptionFormat.None),
-        secret: z.string().default(""),
-    })
-    .default({ format: ESystemBackupEncryptionFormat.None, secret: "" });
-
-const SystemBackupCloudStorageSchema = SettingsBaseEntitySchema.omit({ description: true })
-    .extend({
-        bucket: z.string().default(""),
-        destinationDir: z.string().default(""),
-    })
-    .nullable();
+import { SYSTEM_BACKUP_SPEC_SECRETS } from "~/system-settings/domain";
 
 const SystemBackupScheduleSchema = z
     .object({
@@ -36,12 +15,6 @@ const SystemBackupScheduleSchema = z
         initialTime: initialTime ?? null,
     }))
     .default({ cronExpr: "", interval: "", initialTime: null });
-
-const SystemBackupDBConfigSchema = z
-    .object({
-        backupDeletedObjects: z.boolean(),
-    })
-    .default({ backupDeletedObjects: false });
 
 const SystemBackupNotificationRefSchema = z.object({
     id: z.string(),
@@ -60,10 +33,18 @@ const SystemBackupNotificationSchema = z
 export const SystemBackupSettingsEntitySchema = SettingsBaseEntitySchema.omit({ description: true }).extend({
     type: z.string(),
     schedule: SystemBackupScheduleSchema,
-    compression: SystemBackupCompressionSchema,
-    encryption: SystemBackupEncryptionSchema,
-    cloudStorage: SystemBackupCloudStorageSchema,
-    dbBackupConfig: SystemBackupDBConfigSchema,
+    includeDB: z.boolean().optional().default(false),
+    includeSpec: z.boolean().optional().default(false),
+    specSecrets: z.nativeEnum(SYSTEM_BACKUP_SPEC_SECRETS).catch(SYSTEM_BACKUP_SPEC_SECRETS.Encrypted),
+    specPassphrase: z.string().optional().default(""),
+    targetRepository: z
+        .object({
+            id: z.string(),
+            name: z.string().optional().default(""),
+            status: z.string().optional().default(""),
+        })
+        .nullish()
+        .transform(value => value ?? null),
     notification: SystemBackupNotificationSchema,
     secretMasked: z.boolean().optional(),
     nextRuns: z

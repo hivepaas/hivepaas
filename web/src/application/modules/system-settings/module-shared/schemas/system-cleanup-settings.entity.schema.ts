@@ -21,12 +21,6 @@ const SystemCleanupClusterCleanupSchema = z.object({
     pruneBuildCache: z.boolean(),
 });
 
-const SystemCleanupBackupCleanupSchema = z.object({
-    enabled: z.boolean(),
-    cloudBackupRetention: z.string(),
-    localBackupRetention: z.string(),
-});
-
 const SystemCleanupCacheCleanupSchema = z.object({
     enabled: z.boolean(),
     repoCacheRetention: z.string(),
@@ -69,7 +63,6 @@ export const SystemCleanupSettingsEntitySchema = SettingsBaseEntitySchema.omit({
     schedule: SystemCleanupScheduleSchema,
     dbObjectRetention: SystemCleanupDBObjectRetentionSchema,
     clusterCleanup: SystemCleanupClusterCleanupSchema,
-    backupCleanup: SystemCleanupBackupCleanupSchema,
     cacheCleanup: SystemCleanupCacheCleanupSchema,
     fileCleanup: SystemCleanupFileCleanupSchema,
     notification: SystemCleanupNotificationSchema,

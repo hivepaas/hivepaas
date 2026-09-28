@@ -39,11 +39,6 @@ export type SystemCleanup_UpdateOne_Payload = {
         pruneContainers: boolean;
         pruneBuildCache: boolean;
     };
-    backupCleanup: {
-        enabled: boolean;
-        cloudBackupRetention: string;
-        localBackupRetention: string;
-    };
     cacheCleanup: {
         enabled: boolean;
         repoCacheRetention: string;

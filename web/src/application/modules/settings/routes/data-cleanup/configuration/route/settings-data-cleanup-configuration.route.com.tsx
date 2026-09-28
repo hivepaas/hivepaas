@@ -42,11 +42,6 @@ function mapFormValuesToPayload(values: SystemCleanupConfigurationFormOutput, up
             pruneContainers: values.clusterCleanup.pruneContainers,
             pruneBuildCache: values.clusterCleanup.pruneBuildCache,
         },
-        backupCleanup: {
-            enabled: values.backupCleanup.enabled,
-            localBackupRetention: values.backupCleanup.localBackupRetention,
-            cloudBackupRetention: values.backupCleanup.cloudBackupRetention,
-        },
         cacheCleanup: {
             enabled: values.cacheCleanup.enabled,
             repoCacheRetention: values.cacheCleanup.repoCacheRetention,

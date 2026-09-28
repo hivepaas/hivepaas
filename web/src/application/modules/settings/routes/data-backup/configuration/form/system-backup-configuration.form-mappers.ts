@@ -1,6 +1,5 @@
-import type { SystemBackupSettings } from "~/system-settings/domain";
+import { SYSTEM_BACKUP_SPEC_SECRETS, type SystemBackupSettings } from "~/system-settings/domain";
 import { getScheduleModeFromCronExpr } from "~/system-settings/module-shared";
-import { ESystemBackupCompressionFormat, ESystemBackupEncryptionFormat } from "~/system-settings/module-shared/enums";
 
 import { ESettingStatus } from "@application/shared/enums";
 
@@ -12,13 +11,11 @@ export const emptySystemBackupConfigurationFormDefaults: SystemBackupConfigurati
     scheduleInterval: "24h",
     scheduleCronExpr: "",
     scheduleFrom: null,
-    compressionFormat: ESystemBackupCompressionFormat.Gzip,
-    encryptionFormat: ESystemBackupEncryptionFormat.None,
-    encryptionSecret: "",
-    cloudStorage: undefined,
-    cloudStorageBucket: "",
-    cloudStorageDestinationDir: "",
-    backupDeletedObjects: false,
+    includeDB: true,
+    includeSpec: false,
+    specSecrets: SYSTEM_BACKUP_SPEC_SECRETS.Encrypted,
+    specPassphrase: "",
+    targetRepository: undefined,
     notification: {
         successUseDefault: true,
         success: undefined,
@@ -34,18 +31,19 @@ export function mapSystemBackupSettingsToFormInput(settings: SystemBackupSetting
         scheduleInterval: settings.schedule.interval,
         scheduleCronExpr: settings.schedule.cronExpr,
         scheduleFrom: settings.schedule.initialTime ?? null,
-        compressionFormat: settings.compression.format,
-        encryptionFormat: settings.encryption.format,
-        encryptionSecret: settings.encryption.secret,
-        cloudStorage: settings.cloudStorage
+        includeDB: settings.includeDB,
+        includeSpec: settings.includeSpec,
+        specSecrets: settings.specSecrets,
+        specPassphrase: settings.specPassphrase,
+        targetRepository: settings.targetRepository
             ? {
-                  id: settings.cloudStorage.id,
-                  name: settings.cloudStorage.name,
+                  id: settings.targetRepository.id,
+                  name:
+                      settings.targetRepository.status === "missing"
+                          ? "Deleted repository"
+                          : settings.targetRepository.name,
               }
             : undefined,
-        cloudStorageBucket: settings.cloudStorage?.bucket ?? "",
-        cloudStorageDestinationDir: settings.cloudStorage?.destinationDir ?? "",
-        backupDeletedObjects: settings.dbBackupConfig.backupDeletedObjects,
         notification: {
             successUseDefault: settings.notification?.successUseDefault ?? true,
             success: settings.notification?.success,

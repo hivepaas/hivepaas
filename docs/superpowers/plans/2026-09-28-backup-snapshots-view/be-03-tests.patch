@@ -1,0 +1,176 @@
+diff --git a/hivepaas_app/interface/api/handler/basesettinghandler/backup_snapshot_request_test.go b/hivepaas_app/interface/api/handler/basesettinghandler/backup_snapshot_request_test.go
+new file mode 100644
+index 00000000..f2d47d7f
+--- /dev/null
++++ b/hivepaas_app/interface/api/handler/basesettinghandler/backup_snapshot_request_test.go
+@@ -0,0 +1,48 @@
++package basesettinghandler
++
++import (
++	"net/http"
++	"net/http/httptest"
++	"testing"
++	"time"
++
++	"github.com/gin-gonic/gin"
++	"github.com/stretchr/testify/assert"
++
++	"github.com/hivepaas/hivepaas/hivepaas_app/interface/api/handler"
++	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings/backupsnapshotuc/backupsnapshotdto"
++)
++
++// A snapshot list's filters read from the query: several repositories, apps and
++// tags, a date range, a search and a page; a sort asked for is dropped - newest
++// first, always.
++func TestBackupSnapshotListRequestParses(t *testing.T) {
++	gin.SetMode(gin.TestMode)
++	h := &handler.BaseHandler{}
++	req := backupsnapshotdto.NewListBackupSnapshotReq()
++	var parseErr error
++
++	engine := gin.New()
++	engine.GET("/", func(c *gin.Context) { parseErr = h.ParseAndValidateRequest(c, req, req.PagingReq()) })
++	engine.ServeHTTP(httptest.NewRecorder(), httptest.NewRequest(http.MethodGet,
++		"/?repo=01JAB9XED0GTXBSQDFVYAJ8WS1&repo=01JAB9XED0GTXBSQDFVYAJ8WS2&app=01M3HT2P22YRG4PE1GGSDABGDF"+
++			"&tag=env:prod&tag=db:main&fromDate=2026-09-01&toDate=2026-09-28&search=%20nightly%20"+
++			"&pageOffset=20&pageLimit=10&sort=-name", nil))
++
++	assert.NoError(t, parseErr)
++	assert.Equal(t, []string{"01JAB9XED0GTXBSQDFVYAJ8WS1", "01JAB9XED0GTXBSQDFVYAJ8WS2"}, req.RepoIDs)
++	assert.Equal(t, []string{"01M3HT2P22YRG4PE1GGSDABGDF"}, req.AppIDs)
++	assert.Equal(t, []string{"env:prod", "db:main"}, req.Tags)
++	assert.Equal(t, time.Date(2026, 9, 1, 0, 0, 0, 0, time.UTC), req.FromDate.ToTime().UTC())
++	assert.Equal(t, "nightly", req.Search)
++	assert.Equal(t, 20, req.Paging.Offset)
++	assert.Equal(t, 10, req.Paging.Limit)
++	assert.Empty(t, req.Paging.Sort)
++}
++
++// A tag without a key is refused.
++func TestBackupSnapshotListRequestRefusesABadTag(t *testing.T) {
++	req := backupsnapshotdto.NewListBackupSnapshotReq()
++	req.Tags = []string{"prod"}
++	assert.NotEmpty(t, req.Validate())
++}
+diff --git a/hivepaas_app/usecase/settings/backupsnapshotuc/backupsnapshotdto/transform_test.go b/hivepaas_app/usecase/settings/backupsnapshotuc/backupsnapshotdto/transform_test.go
+new file mode 100644
+index 00000000..6eecda58
+--- /dev/null
++++ b/hivepaas_app/usecase/settings/backupsnapshotuc/backupsnapshotdto/transform_test.go
+@@ -0,0 +1,69 @@
++package backupsnapshotdto
++
++import (
++	"testing"
++	"time"
++
++	"github.com/stretchr/testify/assert"
++
++	"github.com/hivepaas/hivepaas/hivepaas_app/base"
++	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
++)
++
++func snapshotRecord(t *testing.T, id string) *entity.Setting {
++	t.Helper()
++	s := &entity.Setting{ID: id, RefID: "r1", Type: base.SettingTypeBackupSnapshot, Name: "k1"}
++	s.MustSetData(&entity.BackupSnapshot{ID: "k1full", ShortID: "k1", Description: "nightly (run t1)",
++		Time: time.Date(2026, 9, 28, 1, 0, 0, 0, time.UTC), Paths: []string{"/j1"}, Hostname: "data-backup",
++		SizeBytes: 42})
++	return s
++}
++
++func refs() *SnapshotRefs {
++	job := &entity.Setting{ID: "j1", Name: "nightly", Type: base.SettingTypeSchedJob}
++	job.MustSetData(&entity.SchedJob{JobType: base.SchedJobTypeDataBackup,
++		DataBackup: &entity.SchedJobDataBackup{Source: base.SchedJobDataBackupSourceVolume}})
++	return &SnapshotRefs{
++		Repos: map[string]*entity.Setting{"r1": {ID: "r1", Name: "s3", Type: base.SettingTypeBackupRepo,
++			Status: base.SettingStatusActive}},
++		Apps: map[string]*entity.App{"a1": {ID: "a1", Name: "web", ProjectEnvID: "p1:dev"}},
++		Jobs: map[string]*entity.Setting{"j1": job},
++	}
++}
++
++// A snapshot reads with its repository, its app, its job and its run named, from
++// its tags; the source is its tag's, or its job's for a snapshot taken before
++// the tag.
++func TestTransformBackupSnapshot(t *testing.T) {
++	resp := TransformBackupSnapshot(snapshotRecord(t, "s1"),
++		[]string{"hivepaas.app:a1", "hivepaas.job:j1", "hivepaas.run:t1", "env:prod"}, refs())
++
++	assert.Equal(t, "s1", resp.ID)
++	assert.Equal(t, "k1full", resp.SnapshotID)
++	assert.Equal(t, "k1", resp.ShortID)
++	assert.Equal(t, int64(42), resp.SizeBytes)
++	assert.Equal(t, "s3", resp.Repo.Name)
++	assert.Equal(t, &SnapshotAppResp{ID: "a1", Name: "web", Env: "dev"}, resp.App)
++	assert.Equal(t, "nightly", resp.Job.Name)
++	assert.Equal(t, "t1", resp.RunID)
++	assert.Equal(t, base.SchedJobDataBackupSourceVolume, resp.Source, "from the job: no source tag")
++	assert.Equal(t, []string{"hivepaas.app:a1", "hivepaas.job:j1", "hivepaas.run:t1", "env:prod"}, resp.Tags)
++
++	tagged := TransformBackupSnapshot(snapshotRecord(t, "s2"),
++		[]string{"hivepaas.app:a1", "hivepaas.source:command"}, refs())
++	assert.Equal(t, base.SchedJobDataBackupSourceCommand, tagged.Source)
++}
++
++// An app or a job that is gone is still named, as deleted; a snapshot no data
++// backup took has neither.
++func TestTransformBackupSnapshotOfWhatIsGone(t *testing.T) {
++	resp := TransformBackupSnapshot(snapshotRecord(t, "s1"),
++		[]string{"hivepaas.app:gone-app", "hivepaas.job:gone-job"}, refs())
++	assert.Equal(t, &SnapshotAppResp{ID: "gone-app", Deleted: true}, resp.App)
++	assert.Equal(t, &SnapshotJobResp{ID: "gone-job", Deleted: true}, resp.Job)
++	assert.Empty(t, resp.Source)
++
++	plain := TransformBackupSnapshot(snapshotRecord(t, "s2"), []string{"env:prod"}, refs())
++	assert.Nil(t, plain.App)
++	assert.Nil(t, plain.Job)
++}
+diff --git a/hivepaas_app/usecase/settings/backupsnapshotuc/delete_test.go b/hivepaas_app/usecase/settings/backupsnapshotuc/delete_test.go
+new file mode 100644
+index 00000000..31a1751c
+--- /dev/null
++++ b/hivepaas_app/usecase/settings/backupsnapshotuc/delete_test.go
+@@ -0,0 +1,23 @@
++package backupsnapshotuc
++
++import (
++	"errors"
++	"fmt"
++	"testing"
++
++	"github.com/stretchr/testify/assert"
++
++	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
++	"github.com/hivepaas/hivepaas/services/backup"
++)
++
++// A snapshot the repository no longer holds counts as deleted; any other
++// failure stands, and the record stays for another try.
++func TestSnapshotGoneIsDeleted(t *testing.T) {
++	gone := hperrors.Wrap(fmt.Errorf("%w: k1", backup.ErrSnapshotNotFound))
++	assert.NoError(t, snapshotGoneIsDeleted(gone))
++	assert.NoError(t, snapshotGoneIsDeleted(nil))
++
++	refused := hperrors.Wrap(fmt.Errorf("%w: invalid repository password", backup.ErrCommandFailed))
++	assert.True(t, errors.Is(snapshotGoneIsDeleted(refused), backup.ErrCommandFailed))
++}
+diff --git a/services/backup/kopia/cmd_stderr_test.go b/services/backup/kopia/cmd_stderr_test.go
+index 144996ac..57631e80 100644
+--- a/services/backup/kopia/cmd_stderr_test.go
++++ b/services/backup/kopia/cmd_stderr_test.go
+@@ -71,3 +71,13 @@ func TestExecCommand_StderrStillReachesTheCaller(t *testing.T) {
+ 	assert.Empty(t, stdout.String())
+ 	assert.Contains(t, hperrors.GetErrorDetail(err, ""), "no such file or directory")
+ }
++
++// Deleting a snapshot the repository no longer holds says so, typed: the caller
++// counts it as deleted.
++func TestDeleteSnapshot_GoneIsNotFound(t *testing.T) {
++	c := clientPrinting("ERROR error deleting snapshots by root ID k1: no snapshots matched k1\n")
++
++	_, err := c.DeleteSnapshot(context.Background(), "k1")
++
++	assert.ErrorIs(t, err, backupmodel.ErrSnapshotNotFound)
++}

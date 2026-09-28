@@ -1,0 +1,712 @@
+diff --git a/hivepaas_app/usecase/settings/backupsnapshotuc/backupsnapshotdto/get.go b/hivepaas_app/usecase/settings/backupsnapshotuc/backupsnapshotdto/get.go
+new file mode 100644
+index 00000000..468ad111
+--- /dev/null
++++ b/hivepaas_app/usecase/settings/backupsnapshotuc/backupsnapshotdto/get.go
+@@ -0,0 +1,44 @@
++package backupsnapshotdto
++
++import (
++	vld "github.com/tiendc/go-validator"
++
++	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
++	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
++	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
++)
++
++type GetBackupSnapshotReq struct {
++	Scope *entity.ObjectScope `json:"-" mapstructure:"-"`
++	ID    string              `json:"-" mapstructure:"-"`
++}
++
++func NewGetBackupSnapshotReq() *GetBackupSnapshotReq {
++	return &GetBackupSnapshotReq{}
++}
++
++func (req *GetBackupSnapshotReq) Validate() hperrors.ValidationErrors {
++	return hperrors.NewValidationErrors(vld.Validate(basedto.ValidateID(&req.ID, true, "id")...))
++}
++
++type GetBackupSnapshotResp struct {
++	Meta *basedto.Meta       `json:"meta"`
++	Data *BackupSnapshotResp `json:"data"`
++}
++
++type DeleteBackupSnapshotReq struct {
++	Scope *entity.ObjectScope `json:"-" mapstructure:"-"`
++	ID    string              `json:"-" mapstructure:"-"`
++}
++
++func NewDeleteBackupSnapshotReq() *DeleteBackupSnapshotReq {
++	return &DeleteBackupSnapshotReq{}
++}
++
++func (req *DeleteBackupSnapshotReq) Validate() hperrors.ValidationErrors {
++	return hperrors.NewValidationErrors(vld.Validate(basedto.ValidateID(&req.ID, true, "id")...))
++}
++
++type DeleteBackupSnapshotResp struct {
++	Meta *basedto.Meta `json:"meta"`
++}
+diff --git a/hivepaas_app/usecase/settings/backupsnapshotuc/backupsnapshotdto/list.go b/hivepaas_app/usecase/settings/backupsnapshotuc/backupsnapshotdto/list.go
+new file mode 100644
+index 00000000..4ad39a33
+--- /dev/null
++++ b/hivepaas_app/usecase/settings/backupsnapshotuc/backupsnapshotdto/list.go
+@@ -0,0 +1,68 @@
++package backupsnapshotdto
++
++import (
++	"strings"
++
++	vld "github.com/tiendc/go-validator"
++
++	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
++	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
++	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
++	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/timeutil"
++	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings"
++)
++
++const (
++	maxFilterValues = 50
++	maxTagLen       = 200
++)
++
++type ListBackupSnapshotReq struct {
++	Scope *entity.ObjectScope `json:"-" mapstructure:"-"`
++
++	RepoIDs []string `json:"-" mapstructure:"repo"`
++	AppIDs  []string `json:"-" mapstructure:"app"`
++	// Tags are key:value, all of which a snapshot must carry.
++	Tags     []string      `json:"-" mapstructure:"tag"`
++	FromDate timeutil.Date `json:"-" mapstructure:"fromDate"`
++	ToDate   timeutil.Date `json:"-" mapstructure:"toDate"`
++	Search   string        `json:"-" mapstructure:"search"`
++
++	Paging basedto.Paging `json:"-"`
++}
++
++func NewListBackupSnapshotReq() *ListBackupSnapshotReq {
++	return &ListBackupSnapshotReq{}
++}
++
++// PagingReq is where a handler parses the page asked for.
++func (req *ListBackupSnapshotReq) PagingReq() *basedto.Paging {
++	return &req.Paging
++}
++
++func (req *ListBackupSnapshotReq) ModifyRequest() error {
++	req.Search = strings.TrimSpace(req.Search)
++	// Newest first, always: a snapshot's time is not a column to sort by.
++	req.Paging.Sort = nil
++	return nil
++}
++
++func (req *ListBackupSnapshotReq) Validate() hperrors.ValidationErrors {
++	var validators []vld.Validator
++	validators = append(validators, basedto.ValidateIDSlice(req.RepoIDs, true, 0, "repo")...)
++	validators = append(validators, basedto.ValidateIDSlice(req.AppIDs, true, 0, "app")...)
++	validators = append(validators, basedto.ValidateCond(len(req.RepoIDs) <= maxFilterValues &&
++		len(req.AppIDs) <= maxFilterValues && len(req.Tags) <= maxFilterValues, "repo|app|tag")...)
++	for _, tag := range req.Tags {
++		key, _, found := strings.Cut(tag, ":")
++		validators = append(validators, basedto.ValidateCond(found && key != "" && len(tag) <= maxTagLen, "tag")...)
++	}
++	return hperrors.NewValidationErrors(vld.Validate(validators...))
++}
++
++type ListBackupSnapshotResp struct {
++	Meta *basedto.ListMeta     `json:"meta"`
++	Data []*BackupSnapshotResp `json:"data"`
++	// Repos are the repositories the view reaches, for its filter and their Sync.
++	Repos []*settings.BaseSettingResp `json:"repos"`
++}
+diff --git a/hivepaas_app/usecase/settings/backupsnapshotuc/backupsnapshotdto/transform.go b/hivepaas_app/usecase/settings/backupsnapshotuc/backupsnapshotdto/transform.go
+new file mode 100644
+index 00000000..c8bdf0a5
+--- /dev/null
++++ b/hivepaas_app/usecase/settings/backupsnapshotuc/backupsnapshotdto/transform.go
+@@ -0,0 +1,109 @@
++package backupsnapshotdto
++
++import (
++	"time"
++
++	"github.com/hivepaas/hivepaas/hivepaas_app/base"
++	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
++	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/projecthelper"
++	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings"
++)
++
++// BackupSnapshotResp is a snapshot a repository holds, with where it came from.
++type BackupSnapshotResp struct {
++	// ID is the record's; SnapshotID the repository's.
++	ID          string    `json:"id"`
++	SnapshotID  string    `json:"snapshotId"`
++	ShortID     string    `json:"shortId"`
++	Time        time.Time `json:"time"`
++	SizeBytes   int64     `json:"sizeBytes"`
++	Description string    `json:"description,omitempty"`
++	Paths       []string  `json:"paths"`
++	Hostname    string    `json:"hostname,omitempty"`
++	Tags        []string  `json:"tags"`
++	// Source is command or volume; empty when not known.
++	Source base.SchedJobDataBackupSource `json:"source,omitempty"`
++	Repo   *settings.BaseSettingResp     `json:"repo"`
++	App    *SnapshotAppResp              `json:"app,omitempty"`
++	Job    *SnapshotJobResp              `json:"job,omitempty"`
++	// RunID is the task of the run that took the snapshot.
++	RunID string `json:"runId,omitempty"`
++}
++
++// SnapshotAppResp is the app a snapshot is of; Deleted when it is gone.
++type SnapshotAppResp struct {
++	ID      string `json:"id"`
++	Name    string `json:"name,omitempty"`
++	Env     string `json:"env,omitempty"`
++	Deleted bool   `json:"deleted,omitempty"`
++}
++
++// SnapshotJobResp is the job that took a snapshot; Deleted when it is gone.
++type SnapshotJobResp struct {
++	ID      string `json:"id"`
++	Name    string `json:"name,omitempty"`
++	Deleted bool   `json:"deleted,omitempty"`
++}
++
++// SnapshotRefs are what snapshots name, by ID.
++type SnapshotRefs struct {
++	Repos map[string]*entity.Setting
++	Apps  map[string]*entity.App
++	Jobs  map[string]*entity.Setting
++}
++
++// TransformBackupSnapshot is a snapshot record with its tags, named from refs.
++func TransformBackupSnapshot(record *entity.Setting, tags []string, refs *SnapshotRefs) *BackupSnapshotResp {
++	snapshot, _ := record.AsBackupSnapshot()
++	if snapshot == nil {
++		snapshot = &entity.BackupSnapshot{}
++	}
++	if tags == nil {
++		tags = []string{}
++	}
++	paths := snapshot.Paths
++	if paths == nil {
++		paths = []string{}
++	}
++	parsed := entity.ParseDataBackupSnapshotTags(tags)
++	resp := &BackupSnapshotResp{
++		ID:          record.ID,
++		SnapshotID:  snapshot.ID,
++		ShortID:     snapshot.ShortID,
++		Time:        snapshot.Time,
++		SizeBytes:   snapshot.SizeBytes,
++		Description: snapshot.Description,
++		Paths:       paths,
++		Hostname:    snapshot.Hostname,
++		Tags:        tags,
++		Source:      parsed.Source,
++		RunID:       parsed.RunID,
++	}
++
++	repoResp, _ := settings.TransformSettingBase(refs.Repos[record.RefID])
++	if repoResp == nil {
++		repoResp = settings.NewMissingSetting(record.RefID, base.SettingTypeBackupRepo)
++	}
++	resp.Repo = repoResp
++
++	if parsed.AppID != "" {
++		resp.App = &SnapshotAppResp{ID: parsed.AppID, Deleted: true}
++		if app := refs.Apps[parsed.AppID]; app != nil && app.DeletedAt.IsZero() {
++			_, env := projecthelper.ParseProjectEnvID(app.ProjectEnvID)
++			resp.App = &SnapshotAppResp{ID: app.ID, Name: app.Name, Env: env}
++		}
++	}
++	if parsed.JobID != "" {
++		resp.Job = &SnapshotJobResp{ID: parsed.JobID, Deleted: true}
++		if job := refs.Jobs[parsed.JobID]; job != nil && job.DeletedAt.IsZero() {
++			resp.Job = &SnapshotJobResp{ID: job.ID, Name: job.Name}
++			// A snapshot taken before the source tag: its job says.
++			if resp.Source == "" {
++				if schedJob, _ := job.AsSchedJob(); schedJob != nil && schedJob.DataBackup != nil {
++					resp.Source = schedJob.DataBackup.Source
++				}
++			}
++		}
++	}
++	return resp
++}
+diff --git a/hivepaas_app/usecase/settings/backupsnapshotuc/delete.go b/hivepaas_app/usecase/settings/backupsnapshotuc/delete.go
+new file mode 100644
+index 00000000..2d80e969
+--- /dev/null
++++ b/hivepaas_app/usecase/settings/backupsnapshotuc/delete.go
+@@ -0,0 +1,84 @@
++package backupsnapshotuc
++
++import (
++	"context"
++	"errors"
++
++	"github.com/hivepaas/hivepaas/hivepaas_app/base"
++	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
++	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
++	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
++	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
++	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/timeutil"
++	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/transaction"
++	"github.com/hivepaas/hivepaas/hivepaas_app/service/backupreposervice"
++	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings/backupsnapshotuc/backupsnapshotdto"
++	"github.com/hivepaas/hivepaas/services/backup"
++)
++
++// DeleteBackupSnapshot deletes a snapshot from its repository, then its record.
++// A snapshot the repository no longer holds counts as deleted.
++func (uc *UC) DeleteBackupSnapshot(
++	ctx context.Context,
++	auth *basedto.Auth,
++	req *backupsnapshotdto.DeleteBackupSnapshotReq,
++) (*backupsnapshotdto.DeleteBackupSnapshotResp, error) {
++	err := transaction.Execute(ctx, uc.DB, func(db database.Tx) error {
++		if err := uc.ScopeService.LoadObjectScopeData(ctx, db, req.Scope); err != nil {
++			return hperrors.Wrap(err)
++		}
++		record, repos, err := uc.findInReach(ctx, db, auth, req.Scope, req.ID, base.ActionTypeDelete)
++		if err != nil {
++			return hperrors.Wrap(err)
++		}
++		var repo *entity.Setting
++		for _, r := range repos {
++			if r.ID == record.RefID {
++				repo = r
++			}
++		}
++		if repo == nil || !repo.IsActive() {
++			return hperrors.NewArgumentInvalid("repo").
++				WithExtraDetail("the snapshot's repository must be active to delete from it")
++		}
++		snapshot, err := record.AsBackupSnapshot()
++		if err != nil {
++			return hperrors.Wrap(err)
++		}
++		repoScope, err := uc.ScopeService.LoadObjectScope(ctx, db, repo.Scope, repo.ObjectID, true)
++		if err != nil {
++			return hperrors.Wrap(err)
++		}
++		err = snapshotGoneIsDeleted(uc.backupRepoService.DeleteSnapshot(ctx, db, &backupreposervice.DeleteSnapshotReq{
++			RepoTarget: backupreposervice.RepoTarget{Scope: repoScope, RepoSetting: repo},
++			SnapshotID: snapshot.ID,
++		}))
++		if err != nil {
++			return hperrors.Wrap(err)
++		}
++
++		timeNow := timeutil.NowUTC()
++		record.UpdateVer++
++		record.UpdatedAt = timeNow
++		record.DeletedAt = timeNow
++		err = uc.SettingRepo.UpsertMulti(ctx, db, []*entity.Setting{record},
++			entity.SettingUpsertingConflictCols, entity.SettingUpsertingUpdateCols)
++		if err != nil {
++			return hperrors.Wrap(err)
++		}
++		return hperrors.Wrap(uc.TagRepo.DeleteAllByObjects(ctx, db, []string{record.ID}))
++	})
++	if err != nil {
++		return nil, hperrors.Wrap(err)
++	}
++	return &backupsnapshotdto.DeleteBackupSnapshotResp{}, nil
++}
++
++// snapshotGoneIsDeleted counts a snapshot the repository no longer holds -
++// deleted with kopia directly, or by an earlier try - as deleted.
++func snapshotGoneIsDeleted(err error) error {
++	if errors.Is(err, backup.ErrSnapshotNotFound) {
++		return nil
++	}
++	return err
++}
+diff --git a/hivepaas_app/usecase/settings/backupsnapshotuc/fetch.go b/hivepaas_app/usecase/settings/backupsnapshotuc/fetch.go
+new file mode 100644
+index 00000000..476832d8
+--- /dev/null
++++ b/hivepaas_app/usecase/settings/backupsnapshotuc/fetch.go
+@@ -0,0 +1,162 @@
++package backupsnapshotuc
++
++import (
++	"context"
++
++	"github.com/hivepaas/hivepaas/hivepaas_app/base"
++	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
++	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
++	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
++	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
++	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
++	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings/backupsnapshotuc/backupsnapshotdto"
++)
++
++// reachOf is a view's reach for a viewer acting with action, and the
++// repositories it takes in.
++func (uc *UC) reachOf(
++	ctx context.Context,
++	db database.IDB,
++	auth *basedto.Auth,
++	scope *entity.ObjectScope,
++	action base.ActionType,
++) (*snapshotReach, []*entity.Setting, error) {
++	repos, err := uc.reposOf(ctx, db, scope)
++	if err != nil {
++		return nil, nil, hperrors.Wrap(err)
++	}
++	apps, err := uc.appsOf(ctx, db, scope)
++	if err != nil {
++		return nil, nil, hperrors.Wrap(err)
++	}
++
++	visibility := uc.PermissionManager.NewVisibility(db, auth)
++	var visibilityErr error
++	allows := func(projectID, env string) bool {
++		allowed, err := visibility.AllowsProjectEnv(ctx, projectID, env, action)
++		if err != nil && visibilityErr == nil {
++			visibilityErr = err
++		}
++		return allowed
++	}
++	reach := computeReach(scope, repos, apps, allows)
++	if visibilityErr != nil {
++		return nil, nil, hperrors.Wrap(visibilityErr)
++	}
++	return reach, repos, nil
++}
++
++// reposOf are the repositories a view takes in: those its scope sees, and for a
++// project the repositories of its envs too.
++func (uc *UC) reposOf(ctx context.Context, db database.IDB, scope *entity.ObjectScope) ([]*entity.Setting, error) {
++	isRepo := bunex.SelectWhere("setting.type = ?", base.SettingTypeBackupRepo)
++	repos, _, err := uc.SettingRepo.List(ctx, db, scope, nil, isRepo)
++	if err != nil {
++		return nil, hperrors.Wrap(err)
++	}
++	if scope.ScopeType != base.ObjectScopeProject {
++		return repos, nil
++	}
++	envRepos, _, err := uc.SettingRepo.List(ctx, db, nil, nil, isRepo,
++		bunex.SelectWhere("setting.scope = ?", base.ObjectScopeProjectEnv),
++		bunex.SelectWhere("setting.object_id LIKE ?", scope.ProjectID+":%"),
++	)
++	if err != nil {
++		return nil, hperrors.Wrap(err)
++	}
++	return append(repos, envRepos...), nil
++}
++
++// appsOf are the apps whose snapshots a view shows.
++func (uc *UC) appsOf(ctx context.Context, db database.IDB, scope *entity.ObjectScope) ([]*entity.App, error) {
++	var opts []bunex.SelectQueryOption
++	projectID := ""
++	switch scope.ScopeType {
++	case base.ObjectScopeGlobal:
++	case base.ObjectScopeProject:
++		projectID = scope.ProjectID
++	case base.ObjectScopeProjectEnv:
++		projectID = scope.ProjectID
++		opts = append(opts, bunex.SelectWhere("app.project_env_id = ?", scope.ProjectEnvID))
++	case base.ObjectScopeApp:
++		projectID = scope.ProjectID
++		opts = append(opts, bunex.SelectWhere("app.id = ?", scope.AppID))
++	case base.ObjectScopeUser, base.ObjectScopeHivepaas:
++		// No view of snapshots lives there.
++		return nil, nil
++	}
++	apps, _, err := uc.appRepo.List(ctx, db, projectID, nil,
++		append(opts, bunex.SelectColumns("app.id", "app.name", "app.project_id", "app.project_env_id"))...)
++	return apps, hperrors.Wrap(err)
++}
++
++// snapshotRefs names what the snapshots' tags point at: their repositories,
++// apps and jobs, deleted ones included, so that they read as deleted.
++func (uc *UC) snapshotRefs(
++	ctx context.Context,
++	db database.IDB,
++	repos []*entity.Setting,
++	tagsByRecord map[string][]string,
++) (*backupsnapshotdto.SnapshotRefs, error) {
++	refs := &backupsnapshotdto.SnapshotRefs{
++		Repos: make(map[string]*entity.Setting, len(repos)),
++		Apps:  map[string]*entity.App{},
++		Jobs:  map[string]*entity.Setting{},
++	}
++	for _, repo := range repos {
++		refs.Repos[repo.ID] = repo
++	}
++	var appIDs, jobIDs []string
++	for _, tags := range tagsByRecord {
++		parsed := entity.ParseDataBackupSnapshotTags(tags)
++		if parsed.AppID != "" {
++			appIDs = append(appIDs, parsed.AppID)
++		}
++		if parsed.JobID != "" {
++			jobIDs = append(jobIDs, parsed.JobID)
++		}
++	}
++	if len(appIDs) > 0 {
++		apps, err := uc.appRepo.ListByIDs(ctx, db, "", appIDs, bunex.SelectWithDeleted())
++		if err != nil {
++			return nil, hperrors.Wrap(err)
++		}
++		for _, app := range apps {
++			refs.Apps[app.ID] = app
++		}
++	}
++	if len(jobIDs) > 0 {
++		jobs, _, err := uc.SettingRepo.List(ctx, db, nil, nil, bunex.SelectWithDeleted(),
++			bunex.SelectWhere("setting.id IN (?)", bunex.List(jobIDs)))
++		if err != nil {
++			return nil, hperrors.Wrap(err)
++		}
++		for _, job := range jobs {
++			refs.Jobs[job.ID] = job
++		}
++	}
++	return refs, nil
++}
++
++// tagsOf are the records' tags, by record, in their order.
++func (uc *UC) tagsOf(ctx context.Context, db database.IDB, records []*entity.Setting) (map[string][]string, error) {
++	byRecord := make(map[string][]string, len(records))
++	if len(records) == 0 {
++		return byRecord, nil
++	}
++	ids := make([]string, 0, len(records))
++	for _, record := range records {
++		ids = append(ids, record.ID)
++	}
++	tags, _, err := uc.TagRepo.List(ctx, db, nil,
++		bunex.SelectWhere("tag.object_id IN (?)", bunex.List(ids)),
++		bunex.SelectOrder("tag.object_id", "tag.index"),
++	)
++	if err != nil {
++		return nil, hperrors.Wrap(err)
++	}
++	for _, tag := range tags {
++		byRecord[tag.ObjectID] = append(byRecord[tag.ObjectID], tag.Tag)
++	}
++	return byRecord, nil
++}
+diff --git a/hivepaas_app/usecase/settings/backupsnapshotuc/get.go b/hivepaas_app/usecase/settings/backupsnapshotuc/get.go
+new file mode 100644
+index 00000000..1455908e
+--- /dev/null
++++ b/hivepaas_app/usecase/settings/backupsnapshotuc/get.go
+@@ -0,0 +1,62 @@
++package backupsnapshotuc
++
++import (
++	"context"
++
++	"github.com/hivepaas/hivepaas/hivepaas_app/base"
++	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
++	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
++	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
++	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
++	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings/backupsnapshotuc/backupsnapshotdto"
++)
++
++func (uc *UC) GetBackupSnapshot(
++	ctx context.Context,
++	auth *basedto.Auth,
++	req *backupsnapshotdto.GetBackupSnapshotReq,
++) (*backupsnapshotdto.GetBackupSnapshotResp, error) {
++	db := uc.DB
++	if err := uc.ScopeService.LoadObjectScopeData(ctx, db, req.Scope); err != nil {
++		return nil, hperrors.Wrap(err)
++	}
++	record, repos, err := uc.findInReach(ctx, db, auth, req.Scope, req.ID, base.ActionTypeRead)
++	if err != nil {
++		return nil, hperrors.Wrap(err)
++	}
++	tags, err := uc.tagsOf(ctx, db, []*entity.Setting{record})
++	if err != nil {
++		return nil, hperrors.Wrap(err)
++	}
++	refs, err := uc.snapshotRefs(ctx, db, repos, tags)
++	if err != nil {
++		return nil, hperrors.Wrap(err)
++	}
++	return &backupsnapshotdto.GetBackupSnapshotResp{
++		Data: backupsnapshotdto.TransformBackupSnapshot(record, tags[record.ID], refs),
++	}, nil
++}
++
++// findInReach is a snapshot of the view's reach, for a viewer acting with action;
++// not found when it is outside, as a snapshot that does not exist is.
++func (uc *UC) findInReach(
++	ctx context.Context,
++	db database.IDB,
++	auth *basedto.Auth,
++	scope *entity.ObjectScope,
++	id string,
++	action base.ActionType,
++) (*entity.Setting, []*entity.Setting, error) {
++	reach, repos, err := uc.reachOf(ctx, db, auth, scope, action)
++	if err != nil {
++		return nil, nil, hperrors.Wrap(err)
++	}
++	records, _, err := uc.SettingRepo.List(ctx, db, nil, nil, snapshotQueryOpts(reach, &snapshotFilter{ID: id})...)
++	if err != nil {
++		return nil, nil, hperrors.Wrap(err)
++	}
++	if len(records) == 0 {
++		return nil, nil, hperrors.NewNotFound("Backup snapshot")
++	}
++	return records[0], repos, nil
++}
+diff --git a/hivepaas_app/usecase/settings/backupsnapshotuc/list.go b/hivepaas_app/usecase/settings/backupsnapshotuc/list.go
+new file mode 100644
+index 00000000..18df334f
+--- /dev/null
++++ b/hivepaas_app/usecase/settings/backupsnapshotuc/list.go
+@@ -0,0 +1,63 @@
++package backupsnapshotuc
++
++import (
++	"context"
++
++	"github.com/hivepaas/hivepaas/hivepaas_app/base"
++	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
++	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
++	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings"
++	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings/backupsnapshotuc/backupsnapshotdto"
++)
++
++func (uc *UC) ListBackupSnapshot(
++	ctx context.Context,
++	auth *basedto.Auth,
++	req *backupsnapshotdto.ListBackupSnapshotReq,
++) (*backupsnapshotdto.ListBackupSnapshotResp, error) {
++	db := uc.DB
++	if err := uc.ScopeService.LoadObjectScopeData(ctx, db, req.Scope); err != nil {
++		return nil, hperrors.Wrap(err)
++	}
++	reach, repos, err := uc.reachOf(ctx, db, auth, req.Scope, base.ActionTypeRead)
++	if err != nil {
++		return nil, hperrors.Wrap(err)
++	}
++
++	filter := &snapshotFilter{RepoIDs: req.RepoIDs, AppIDs: req.AppIDs, Tags: req.Tags, Search: req.Search}
++	if !req.FromDate.IsZero() {
++		filter.From = req.FromDate.ToTime()
++	}
++	if !req.ToDate.IsZero() {
++		filter.Before = req.ToDate.AddDate(0, 0, 1).ToTime()
++	}
++	records, paging, err := uc.SettingRepo.List(ctx, db, nil, &req.Paging, snapshotQueryOpts(reach, filter)...)
++	if err != nil {
++		return nil, hperrors.Wrap(err)
++	}
++	tags, err := uc.tagsOf(ctx, db, records)
++	if err != nil {
++		return nil, hperrors.Wrap(err)
++	}
++	refs, err := uc.snapshotRefs(ctx, db, repos, tags)
++	if err != nil {
++		return nil, hperrors.Wrap(err)
++	}
++
++	resp := &backupsnapshotdto.ListBackupSnapshotResp{
++		Meta:  &basedto.ListMeta{Page: paging},
++		Data:  make([]*backupsnapshotdto.BackupSnapshotResp, 0, len(records)),
++		Repos: make([]*settings.BaseSettingResp, 0, len(repos)),
++	}
++	for _, record := range records {
++		resp.Data = append(resp.Data, backupsnapshotdto.TransformBackupSnapshot(record, tags[record.ID], refs))
++	}
++	for _, repo := range repos {
++		repoResp, err := settings.TransformSettingBase(repo)
++		if err != nil {
++			return nil, hperrors.Wrap(err)
++		}
++		resp.Repos = append(resp.Repos, repoResp)
++	}
++	return resp, nil
++}
+diff --git a/hivepaas_app/usecase/settings/backupsnapshotuc/query.go b/hivepaas_app/usecase/settings/backupsnapshotuc/query.go
+index 7a49f548..17714c37 100644
+--- a/hivepaas_app/usecase/settings/backupsnapshotuc/query.go
++++ b/hivepaas_app/usecase/settings/backupsnapshotuc/query.go
+@@ -17,9 +17,10 @@ type snapshotFilter struct {
+ 	RepoIDs []string
+ 	AppIDs  []string
+ 	// Tags are key:value, all of which a snapshot must carry.
+-	Tags   []string
+-	From   time.Time
+-	To     time.Time
++	Tags []string
++	From time.Time
++	// Before is the end of the range, left out.
++	Before time.Time
+ 	Search string
+ }
+ 
+@@ -77,8 +78,8 @@ func snapshotQueryOpts(reach *snapshotReach, filter *snapshotFilter) []bunex.Sel
+ 	if !filter.From.IsZero() {
+ 		opts = append(opts, bunex.SelectWhere(snapshotTime+" >= ?", filter.From))
+ 	}
+-	if !filter.To.IsZero() {
+-		opts = append(opts, bunex.SelectWhere(snapshotTime+" <= ?", filter.To))
++	if !filter.Before.IsZero() {
++		opts = append(opts, bunex.SelectWhere(snapshotTime+" < ?", filter.Before))
+ 	}
+ 	if filter.Search != "" {
+ 		keyword := bunex.MakeLikeOpStr(filter.Search, true)
+diff --git a/hivepaas_app/usecase/settings/backupsnapshotuc/uc.go b/hivepaas_app/usecase/settings/backupsnapshotuc/uc.go
+new file mode 100644
+index 00000000..df61d390
+--- /dev/null
++++ b/hivepaas_app/usecase/settings/backupsnapshotuc/uc.go
+@@ -0,0 +1,27 @@
++package backupsnapshotuc
++
++import (
++	"github.com/hivepaas/hivepaas/hivepaas_app/repository"
++	"github.com/hivepaas/hivepaas/hivepaas_app/service/backupreposervice"
++	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings"
++)
++
++// UC lists, reads and deletes the snapshots a scope's view reaches.
++type UC struct {
++	*settings.BaseUC
++
++	appRepo           repository.AppRepo
++	backupRepoService backupreposervice.Service
++}
++
++func New(
++	baseUC *settings.BaseUC,
++	appRepo repository.AppRepo,
++	backupRepoService backupreposervice.Service,
++) *UC {
++	return &UC{
++		BaseUC:            baseUC,
++		appRepo:           appRepo,
++		backupRepoService: backupRepoService,
++	}
++}
+diff --git a/services/backup/kopia/delete.go b/services/backup/kopia/delete.go
+index a403bf7a..cafa5f43 100644
+--- a/services/backup/kopia/delete.go
++++ b/services/backup/kopia/delete.go
+@@ -20,6 +20,11 @@ func (c *Client) DeleteSnapshot(
+ 	})
+ 	if err != nil {
+ 		errMsg := strings.TrimSpace(errBuf.String())
++		// A snapshot already gone - deleted with kopia directly, or by an earlier
++		// try - is what the caller asked for.
++		if strings.Contains(errMsg, "no snapshots matched") {
++			return res, hperrors.Wrap(fmt.Errorf("%w: %s", backupmodel.ErrSnapshotNotFound, snapshotID))
++		}
+ 		if errMsg != "" {
+ 			return res, hperrors.Wrap(fmt.Errorf("kopia delete snapshot failed: %s (err: %w)", errMsg, err))
+ 		}

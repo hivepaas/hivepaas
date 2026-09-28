@@ -1,0 +1,81 @@
+diff --git a/src/application/modules/operations/routes/tasks/building-blocks/task-summary-card/system-task-summary-card.com.tsx b/src/application/modules/operations/routes/tasks/building-blocks/task-summary-card/system-task-summary-card.com.tsx
+index 8619618e..4d7b26c6 100644
+--- a/src/application/modules/operations/routes/tasks/building-blocks/task-summary-card/system-task-summary-card.com.tsx
++++ b/src/application/modules/operations/routes/tasks/building-blocks/task-summary-card/system-task-summary-card.com.tsx
+@@ -8,7 +8,8 @@ import ReactTimeAgo from "react-time-ago";
+ import type { SystemTask } from "~/operations/domain";
+ import { SystemTaskStatus } from "~/operations/domain";
+ 
+-import { LogViewerActionButtons, PopConfirm } from "@application/shared/components";
++import { AppLink, LogViewerActionButtons, PopConfirm } from "@application/shared/components";
++import { ROUTE } from "@application/shared/constants";
+ import { formatDataSizeCompact } from "@application/shared/utils/data-size";
+ import { timeAgoFormatter } from "@application/shared/utils/time-ago";
+ 
+@@ -589,9 +590,22 @@ export function SystemTaskSummaryCard({
+                                 {task.dataBackup && (
+                                     <div>
+                                         <span className="text-muted-foreground">Snapshot:</span>{" "}
+-                                        <span className="font-mono text-foreground select-all">
+-                                            {task.dataBackup.snapshotId}
+-                                        </span>{" "}
++                                        {task.scopeProject && task.scopeApp?.env ? (
++                                            <AppLink.Modules
++                                                to={`${ROUTE.projects.single.apps.single.configuration.backupSnapshots.$route(
++                                                    task.scopeProject.id,
++                                                    task.scopeApp.env,
++                                                    task.scopeApp.id,
++                                                )}?tag=${encodeURIComponent(`hivepaas.run:${task.id}`)}`}
++                                                className="font-mono text-link hover:underline"
++                                            >
++                                                {task.dataBackup.snapshotId}
++                                            </AppLink.Modules>
++                                        ) : (
++                                            <span className="font-mono text-foreground select-all">
++                                                {task.dataBackup.snapshotId}
++                                            </span>
++                                        )}{" "}
+                                         <span className="text-muted-foreground">
+                                             ({formatDataSizeCompact(task.dataBackup.sizeBytes)})
+                                         </span>
+diff --git a/src/application/modules/projects/module-shared/definitions/tables/app-scheduled-jobs/building-blocks/view-tasks-cell.com.tsx b/src/application/modules/projects/module-shared/definitions/tables/app-scheduled-jobs/building-blocks/view-tasks-cell.com.tsx
+index 0b38858d..b40d22b0 100644
+--- a/src/application/modules/projects/module-shared/definitions/tables/app-scheduled-jobs/building-blocks/view-tasks-cell.com.tsx
++++ b/src/application/modules/projects/module-shared/definitions/tables/app-scheduled-jobs/building-blocks/view-tasks-cell.com.tsx
+@@ -1,18 +1,30 @@
+ import { memo } from "react";
+ 
+ import type { AppScheduledJob } from "~/projects/domain";
++import { EAppScheduledJobType } from "~/projects/module-shared/enums";
+ 
+ import { AppLink } from "@application/shared/components";
+ import { ROUTE } from "@application/shared/constants";
+ 
++/** A job's runs; a data backup's snapshots too. */
+ function View({ projectId, env, appId, scheduledJob }: Props) {
+     return (
+-        <AppLink.Basic
+-            className="text-sm font-medium text-link underline-offset-4"
+-            to={`${ROUTE.projects.single.apps.single.tasks.$route(projectId, env, appId)}?targetId=${scheduledJob.id}`}
+-        >
+-            View Runs
+-        </AppLink.Basic>
++        <div className="flex flex-col items-start gap-1">
++            <AppLink.Basic
++                className="text-sm font-medium text-link underline-offset-4"
++                to={`${ROUTE.projects.single.apps.single.tasks.$route(projectId, env, appId)}?targetId=${scheduledJob.id}`}
++            >
++                View Runs
++            </AppLink.Basic>
++            {scheduledJob.jobType === EAppScheduledJobType.DataBackup && (
++                <AppLink.Basic
++                    className="text-sm font-medium text-link underline-offset-4"
++                    to={`${ROUTE.projects.single.apps.single.configuration.backupSnapshots.$route(projectId, env, appId)}?tag=${encodeURIComponent(`hivepaas.job:${scheduledJob.id}`)}`}
++                >
++                    Snapshots
++                </AppLink.Basic>
++            )}
++        </div>
+     );
+ }
+ 

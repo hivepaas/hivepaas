@@ -1,0 +1,1600 @@
+diff --git a/src/application/modules/projects/layouts/single-app/configuration-layout/single-app-configuration-layout.com.tsx b/src/application/modules/projects/layouts/single-app/configuration-layout/single-app-configuration-layout.com.tsx
+index d322f7f7..ea087994 100644
+--- a/src/application/modules/projects/layouts/single-app/configuration-layout/single-app-configuration-layout.com.tsx
++++ b/src/application/modules/projects/layouts/single-app/configuration-layout/single-app-configuration-layout.com.tsx
+@@ -15,6 +15,7 @@ import {
+     FolderTree,
+     Globe,
+     HardDrive,
++    History,
+     KeyRound,
+     Layers,
+     type LucideIcon,
+@@ -229,6 +230,15 @@ function View({ children }: PropsWithChildren) {
+                             appId,
+                         ),
+                     },
++                    {
++                        label: "Backup Snapshots",
++                        icon: History,
++                        route: ROUTE.projects.single.apps.single.configuration.backupSnapshots.$route(
++                            projectId,
++                            env,
++                            appId,
++                        ),
++                    },
+                 ],
+             },
+             {
+diff --git a/src/application/modules/projects/module-shared/components/project-sidebar/project-with-sidebar.com.tsx b/src/application/modules/projects/module-shared/components/project-sidebar/project-with-sidebar.com.tsx
+index 28b6acd1..14d63007 100644
+--- a/src/application/modules/projects/module-shared/components/project-sidebar/project-with-sidebar.com.tsx
++++ b/src/application/modules/projects/module-shared/components/project-sidebar/project-with-sidebar.com.tsx
+@@ -16,6 +16,7 @@ import {
+     Globe,
+     Hammer,
+     HardDrive,
++    History,
+     KeyRound,
+     KeySquare,
+     Layers,
+@@ -227,6 +228,11 @@ function createProviderConfigurationSections(projectId: string): ProviderTabSect
+                     icon: Archive,
+                     route: ROUTE.projects.single.providerConfiguration.backupRepos.$route(projectId),
+                 },
++                {
++                    label: "Backup Snapshots",
++                    icon: History,
++                    route: ROUTE.projects.single.providerConfiguration.backupSnapshots.$route(projectId),
++                },
+                 {
+                     label: "Scheduled Jobs",
+                     icon: CalendarClock,
+diff --git a/src/application/modules/projects/projects.module.ts b/src/application/modules/projects/projects.module.ts
+index ee629155..6d2514e2 100644
+--- a/src/application/modules/projects/projects.module.ts
++++ b/src/application/modules/projects/projects.module.ts
+@@ -37,6 +37,7 @@ export {
+     ProjectCommandTemplateCreateRoute,
+     ProjectCommandTemplateEditRoute,
+     ProjectBackupReposRoute,
++    ProjectBackupSnapshotsRoute,
+     ProjectBackupRepoCreateRoute,
+     ProjectBackupRepoEditRoute,
+     ProjectNotificationTargetsRoute,
+@@ -101,6 +102,7 @@ export {
+     AppPeriodicJobHealthCheckCreateRoute,
+     AppPeriodicJobHealthCheckEditRoute,
+     AppScheduledJobsRoute,
++    AppBackupSnapshotsRoute,
+     AppScheduledJobCreateRoute,
+     AppJobSequenceCreateRoute,
+     AppDataBackupCreateRoute,
+diff --git a/src/application/modules/projects/projects.router.tsx b/src/application/modules/projects/projects.router.tsx
+index 7364b25f..bde23637 100644
+--- a/src/application/modules/projects/projects.router.tsx
++++ b/src/application/modules/projects/projects.router.tsx
+@@ -1024,6 +1024,14 @@ export const projectsRouter: RouteObject = {
+                                 };
+                             },
+                         },
++                        {
++                            path: ROUTE.projects.single.providerConfiguration.backupSnapshots.$pattern,
++                            lazy: async () => {
++                                const { ProjectBackupSnapshotsRoute } = await getLazyComponents();
++
++                                return { Component: ProjectBackupSnapshotsRoute };
++                            },
++                        },
+                         {
+                             path: ROUTE.projects.single.providerConfiguration.backupRepos.$pattern,
+                             lazy: async () => {
+@@ -1793,6 +1801,14 @@ export const projectsRouter: RouteObject = {
+                                 return { Component: AppPeriodicJobHealthCheckEditRoute };
+                             },
+                         },
++                        {
++                            path: ROUTE.projects.single.apps.single.configuration.backupSnapshots.$pattern,
++                            lazy: async () => {
++                                const { AppBackupSnapshotsRoute } = await getLazyComponents();
++
++                                return { Component: AppBackupSnapshotsRoute };
++                            },
++                        },
+                         {
+                             path: ROUTE.projects.single.apps.single.configuration.scheduledJobs.$pattern,
+                             lazy: async () => {
+diff --git a/src/application/modules/projects/routes/index.ts b/src/application/modules/projects/routes/index.ts
+index 2568626c..cf8de51e 100644
+--- a/src/application/modules/projects/routes/index.ts
++++ b/src/application/modules/projects/routes/index.ts
+@@ -34,6 +34,7 @@ export {
+     ProjectCommandTemplateCreateRoute,
+     ProjectCommandTemplateEditRoute,
+     ProjectBackupReposRoute,
++    ProjectBackupSnapshotsRoute,
+     ProjectBackupRepoCreateRoute,
+     ProjectBackupRepoEditRoute,
+     ProjectNotificationTargetsRoute,
+@@ -98,6 +99,7 @@ export {
+     AppPeriodicJobHealthCheckCreateRoute,
+     AppPeriodicJobHealthCheckEditRoute,
+     AppScheduledJobsRoute,
++    AppBackupSnapshotsRoute,
+     AppScheduledJobCreateRoute,
+     AppJobSequenceCreateRoute,
+     AppDataBackupCreateRoute,
+diff --git a/src/application/modules/projects/routes/single-project/configuration/backup-snapshots/index.ts b/src/application/modules/projects/routes/single-project/configuration/backup-snapshots/index.ts
+new file mode 100644
+index 00000000..e37ac0d8
+--- /dev/null
++++ b/src/application/modules/projects/routes/single-project/configuration/backup-snapshots/index.ts
+@@ -0,0 +1 @@
++export * from "./route";
+diff --git a/src/application/modules/projects/routes/single-project/configuration/backup-snapshots/route/index.ts b/src/application/modules/projects/routes/single-project/configuration/backup-snapshots/route/index.ts
+new file mode 100644
+index 00000000..e9ca67b8
+--- /dev/null
++++ b/src/application/modules/projects/routes/single-project/configuration/backup-snapshots/route/index.ts
+@@ -0,0 +1 @@
++export * from "./project-backup-snapshots.route.com";
+diff --git a/src/application/modules/projects/routes/single-project/configuration/backup-snapshots/route/project-backup-snapshots.route.com.tsx b/src/application/modules/projects/routes/single-project/configuration/backup-snapshots/route/project-backup-snapshots.route.com.tsx
+new file mode 100644
+index 00000000..29e26294
+--- /dev/null
++++ b/src/application/modules/projects/routes/single-project/configuration/backup-snapshots/route/project-backup-snapshots.route.com.tsx
+@@ -0,0 +1,25 @@
++import { useParams } from "react-router";
++import invariant from "tiny-invariant";
++import { getProjectEnvFilterParam, useSelectedProjectEnv } from "~/projects/module-shared/hooks";
++import { BackupSnapshotTable } from "~/settings/module-shared/components";
++
++import { ProjectProviderSettingsScopeHeader } from "@application/modules/projects/module-shared/components";
++
++/** A project's snapshots, or an env's when one is selected. */
++export function ProjectBackupSnapshotsRoute() {
++    const { id: projectId } = useParams<{ id: string }>();
++
++    invariant(projectId, "projectId must be defined");
++    const selectedEnv = useSelectedProjectEnv(projectId);
++    const scopedEnv = getProjectEnvFilterParam(selectedEnv);
++
++    return (
++        <div className="flex flex-col gap-4">
++            <ProjectProviderSettingsScopeHeader projectId={projectId} />
++            <BackupSnapshotTable
++                key={scopedEnv ?? "all"}
++                scope={{ type: "project", projectId, env: scopedEnv }}
++            />
++        </div>
++    );
++}
+diff --git a/src/application/modules/projects/routes/single-project/configuration/index.ts b/src/application/modules/projects/routes/single-project/configuration/index.ts
+index c440dd0d..96858a2d 100644
+--- a/src/application/modules/projects/routes/single-project/configuration/index.ts
++++ b/src/application/modules/projects/routes/single-project/configuration/index.ts
+@@ -18,6 +18,7 @@ export * from "./cloud-storages";
+ export * from "./command-pipes";
+ export * from "./command-templates";
+ export * from "./backup-repos";
++export * from "./backup-snapshots";
+ export * from "./notification-targets";
+ export * from "./build-settings";
+ export * from "./domain-settings";
+diff --git a/src/application/modules/projects/routes/single-project/single-app/configuration/backup-snapshots/app-backup-snapshots.route.com.tsx b/src/application/modules/projects/routes/single-project/single-app/configuration/backup-snapshots/app-backup-snapshots.route.com.tsx
+new file mode 100644
+index 00000000..30b4c7e7
+--- /dev/null
++++ b/src/application/modules/projects/routes/single-project/single-app/configuration/backup-snapshots/app-backup-snapshots.route.com.tsx
+@@ -0,0 +1,14 @@
++import { useParams } from "react-router";
++import invariant from "tiny-invariant";
++import { BackupSnapshotTable } from "~/settings/module-shared/components";
++
++/** An app's own snapshots, from every repository it sees. */
++export function AppBackupSnapshotsRoute() {
++    const { id: projectId, env, appId } = useParams<{ id: string; env: string; appId: string }>();
++
++    invariant(projectId, "projectId must be defined");
++    invariant(env, "env must be defined");
++    invariant(appId, "appId must be defined");
++
++    return <BackupSnapshotTable scope={{ type: "app", projectId, env, appId }} />;
++}
+diff --git a/src/application/modules/projects/routes/single-project/single-app/configuration/backup-snapshots/index.ts b/src/application/modules/projects/routes/single-project/single-app/configuration/backup-snapshots/index.ts
+new file mode 100644
+index 00000000..0c0e41a5
+--- /dev/null
++++ b/src/application/modules/projects/routes/single-project/single-app/configuration/backup-snapshots/index.ts
+@@ -0,0 +1 @@
++export * from "./app-backup-snapshots.route.com";
+diff --git a/src/application/modules/projects/routes/single-project/single-app/configuration/index.ts b/src/application/modules/projects/routes/single-project/single-app/configuration/index.ts
+index 1ac00922..555a3406 100644
+--- a/src/application/modules/projects/routes/single-project/single-app/configuration/index.ts
++++ b/src/application/modules/projects/routes/single-project/single-app/configuration/index.ts
+@@ -6,6 +6,7 @@ export * from "./routing-settings";
+ 
+ export * from "./periodic-jobs";
+ export * from "./scheduled-jobs";
++export * from "./backup-snapshots";
+ export * from "./env-variables";
+ export * from "./app-clone";
+ export * from "./feature-settings";
+diff --git a/src/application/modules/settings/api/api-context/settings.api.context.ts b/src/application/modules/settings/api/api-context/settings.api.context.ts
+index f31f28e0..65609acf 100644
+--- a/src/application/modules/settings/api/api-context/settings.api.context.ts
++++ b/src/application/modules/settings/api/api-context/settings.api.context.ts
+@@ -9,6 +9,8 @@ import {
+     AppPlacementSettingsApiValidator,
+     BackupRepoApi,
+     BackupRepoApiValidator,
++    BackupSnapshotApi,
++    BackupSnapshotApiValidator,
+     BasicAuthApi,
+     BasicAuthApiValidator,
+     CloudStorageApi,
+@@ -93,6 +95,7 @@ function createApi() {
+             imageBuildSettings: new ImageBuildSettingsApi(imageBuildSettingsValidator),
+             appPlacementSettings: new AppPlacementSettingsApi(appPlacementSettingsValidator),
+             backupRepo: new BackupRepoApi(new BackupRepoApiValidator()),
++            backupSnapshot: new BackupSnapshotApi(new BackupSnapshotApiValidator()),
+         },
+     };
+ }
+diff --git a/src/application/modules/settings/api/hooks/index.ts b/src/application/modules/settings/api/hooks/index.ts
+index 99b2e549..dfb253b5 100644
+--- a/src/application/modules/settings/api/hooks/index.ts
++++ b/src/application/modules/settings/api/hooks/index.ts
+@@ -19,3 +19,4 @@ export * from "./use-oauth.api";
+ export * from "./use-github-app.api";
+ export * from "./use-repo-webhook.api";
+ export * from "./use-backup-repo.api";
++export * from "./use-backup-snapshot.api";
+diff --git a/src/application/modules/settings/api/hooks/use-backup-snapshot.api.ts b/src/application/modules/settings/api/hooks/use-backup-snapshot.api.ts
+new file mode 100644
+index 00000000..cb29b11f
+--- /dev/null
++++ b/src/application/modules/settings/api/hooks/use-backup-snapshot.api.ts
+@@ -0,0 +1,64 @@
++import { use, useMemo } from "react";
++
++import { match } from "oxide.ts";
++import { SettingsApiContext } from "~/settings/api/api-context/settings.api.context";
++import type {
++    BackupSnapshot_DeleteOne_Req,
++    BackupSnapshot_FindManyPaginated_Req,
++    BackupSnapshot_FindOneById_Req,
++} from "~/settings/api/services/backup-snapshot-services";
++
++import { useApiErrorNotifications } from "@infrastructure/api";
++
++function createHook() {
++    return function useBackupSnapshotApi() {
++        const { api } = use(SettingsApiContext);
++        const { notifyError } = useApiErrorNotifications();
++
++        const queries = useMemo(
++            () => ({
++                findManyPaginated: async (data: BackupSnapshot_FindManyPaginated_Req["data"], signal?: AbortSignal) => {
++                    const result = await api.settings.backupSnapshot.findManyPaginated({ data }, signal);
++                    return match(result, {
++                        Ok: _ => _,
++                        Err: error => {
++                            notifyError({ message: "Failed to get backup snapshots", error });
++                            throw error;
++                        },
++                    });
++                },
++                findOneById: async (data: BackupSnapshot_FindOneById_Req["data"], signal?: AbortSignal) => {
++                    const result = await api.settings.backupSnapshot.findOneById({ data }, signal);
++                    return match(result, {
++                        Ok: _ => _,
++                        Err: error => {
++                            notifyError({ message: "Failed to get backup snapshot", error });
++                            throw error;
++                        },
++                    });
++                },
++            }),
++            [api, notifyError],
++        );
++
++        const mutations = useMemo(
++            () => ({
++                deleteOne: async (data: BackupSnapshot_DeleteOne_Req["data"]) => {
++                    const result = await api.settings.backupSnapshot.deleteOne({ data });
++                    return match(result, {
++                        Ok: _ => _,
++                        Err: error => {
++                            notifyError({ message: "Failed to delete backup snapshot", error });
++                            throw error;
++                        },
++                    });
++                },
++            }),
++            [api, notifyError],
++        );
++
++        return { queries, mutations };
++    };
++}
++
++export const useBackupSnapshotApi = createHook();
+diff --git a/src/application/modules/settings/api/services/backup-snapshot-services/backup-snapshot.api.contracts.ts b/src/application/modules/settings/api/services/backup-snapshot-services/backup-snapshot.api.contracts.ts
+new file mode 100644
+index 00000000..7e0df016
+--- /dev/null
++++ b/src/application/modules/settings/api/services/backup-snapshot-services/backup-snapshot.api.contracts.ts
+@@ -0,0 +1,41 @@
++import type { PaginationState } from "@infrastructure/data";
++import type { BackupSnapshot, BackupSnapshotRepoRef, BackupSnapshotScope } from "~/settings/domain";
++
++import type { ApiRequestBase, ApiResponseBase, ApiResponsePaginated } from "@infrastructure/api";
++
++/** What a view is narrowed to. The API takes several repositories and apps. */
++export type BackupSnapshot_Filters = {
++    repo?: string[];
++    app?: string[];
++    /** key:value, all of which must match. */
++    tag?: string[];
++    fromDate?: string;
++    toDate?: string;
++    search?: string;
++};
++
++export type BackupSnapshot_FindManyPaginated_Req = ApiRequestBase<
++    {
++        scope: BackupSnapshotScope;
++        pagination?: PaginationState;
++    } & BackupSnapshot_Filters
++>;
++
++export type BackupSnapshot_FindManyPaginated_Res = ApiResponsePaginated<BackupSnapshot> & {
++    /** The repositories the view reaches. */
++    repos: BackupSnapshotRepoRef[];
++};
++
++export type BackupSnapshot_FindOneById_Req = ApiRequestBase<{
++    scope: BackupSnapshotScope;
++    id: string;
++}>;
++
++export type BackupSnapshot_FindOneById_Res = ApiResponseBase<BackupSnapshot>;
++
++export type BackupSnapshot_DeleteOne_Req = ApiRequestBase<{
++    scope: BackupSnapshotScope;
++    id: string;
++}>;
++
++export type BackupSnapshot_DeleteOne_Res = ApiResponseBase<{ type: "success" }>;
+diff --git a/src/application/modules/settings/api/services/backup-snapshot-services/backup-snapshot.api.ts b/src/application/modules/settings/api/services/backup-snapshot-services/backup-snapshot.api.ts
+new file mode 100644
+index 00000000..7262de77
+--- /dev/null
++++ b/src/application/modules/settings/api/services/backup-snapshot-services/backup-snapshot.api.ts
+@@ -0,0 +1,92 @@
++import { Err, Ok, type Result } from "oxide.ts";
++import { catchError, from, lastValueFrom, map, of } from "rxjs";
++import type { BackupSnapshotScope } from "~/settings/domain";
++
++import { BaseApi, parseApiError } from "@infrastructure/api";
++
++import type {
++    BackupSnapshot_DeleteOne_Req,
++    BackupSnapshot_DeleteOne_Res,
++    BackupSnapshot_FindManyPaginated_Req,
++    BackupSnapshot_FindManyPaginated_Res,
++    BackupSnapshot_FindOneById_Req,
++    BackupSnapshot_FindOneById_Res,
++} from "./backup-snapshot.api.contracts";
++import type { BackupSnapshotApiValidator } from "./backup-snapshot.api.validator";
++
++/** Where a scope's snapshots are served. */
++export function getBackupSnapshotBasePath(scope: BackupSnapshotScope): string {
++    switch (scope.type) {
++        case "settings":
++            return "/settings/backup-snapshots";
++        case "project":
++            if (scope.env && scope.env !== "all") {
++                return `/projects/${scope.projectId}/${encodeURIComponent(scope.env)}/backup-snapshots`;
++            }
++            return `/projects/${scope.projectId}/backup-snapshots`;
++        case "app":
++            return `/projects/${scope.projectId}/${encodeURIComponent(scope.env)}/apps/${scope.appId}/backup-snapshots`;
++    }
++}
++
++export class BackupSnapshotApi extends BaseApi {
++    public constructor(private readonly validator: BackupSnapshotApiValidator) {
++        super();
++    }
++
++    async findManyPaginated(
++        request: BackupSnapshot_FindManyPaginated_Req,
++        signal?: AbortSignal,
++    ): Promise<Result<BackupSnapshot_FindManyPaginated_Res, Error>> {
++        const { scope, pagination, search, repo, app, tag, fromDate, toDate } = request.data;
++        const query = this.queryBuilder.getInstance();
++        query
++            .pagination(pagination)
++            .search(search)
++            .filterBy({
++                repo,
++                app,
++                tag,
++                fromDate: fromDate ? [fromDate] : undefined,
++                toDate: toDate ? [toDate] : undefined,
++            });
++
++        return lastValueFrom(
++            from(this.client.v1.get(getBackupSnapshotBasePath(scope), { params: query.build(), signal })).pipe(
++                map(this.validator.findManyPaginated),
++                map(res => Ok(res)),
++                catchError(error => of(Err(parseApiError(error)))),
++            ),
++        );
++    }
++
++    async findOneById(
++        request: BackupSnapshot_FindOneById_Req,
++        signal?: AbortSignal,
++    ): Promise<Result<BackupSnapshot_FindOneById_Res, Error>> {
++        const { scope, id } = request.data;
++
++        return lastValueFrom(
++            from(this.client.v1.get(`${getBackupSnapshotBasePath(scope)}/${id}`, { signal })).pipe(
++                map(this.validator.findOneById),
++                map(res => Ok(res)),
++                catchError(error => of(Err(parseApiError(error)))),
++            ),
++        );
++    }
++
++    async deleteOne(
++        request: BackupSnapshot_DeleteOne_Req,
++        signal?: AbortSignal,
++    ): Promise<Result<BackupSnapshot_DeleteOne_Res, Error>> {
++        const { scope, id } = request.data;
++
++        return lastValueFrom(
++            from(this.client.v1.delete(`${getBackupSnapshotBasePath(scope)}/${id}`, { signal })).pipe(
++                map(this.validator.deleteOne),
++                map(res => Ok(res)),
++                catchError(error => of(Err(parseApiError(error)))),
++            ),
++        );
++    }
++}
+diff --git a/src/application/modules/settings/api/services/backup-snapshot-services/backup-snapshot.api.validator.ts b/src/application/modules/settings/api/services/backup-snapshot-services/backup-snapshot.api.validator.ts
+new file mode 100644
+index 00000000..b8b6072b
+--- /dev/null
++++ b/src/application/modules/settings/api/services/backup-snapshot-services/backup-snapshot.api.validator.ts
+@@ -0,0 +1,90 @@
++import { type AxiosResponse } from "axios";
++import { z } from "zod";
++
++import { BaseMetaApiSchema, PagingMetaApiSchema, parseApiResponse } from "@infrastructure/api";
++
++import type {
++    BackupSnapshot_DeleteOne_Res,
++    BackupSnapshot_FindManyPaginated_Res,
++    BackupSnapshot_FindOneById_Res,
++} from "./backup-snapshot.api.contracts";
++
++const RepoRefSchema = z.object({
++    id: z.string(),
++    name: z.string().optional().default(""),
++    status: z.string().optional().default(""),
++    scope: z.string().optional(),
++});
++
++const BackupSnapshotSchema = z.object({
++    id: z.string(),
++    snapshotId: z.string().optional().default(""),
++    shortId: z.string().optional().default(""),
++    time: z.coerce.date(),
++    sizeBytes: z.number().optional().default(0),
++    description: z.string().optional().default(""),
++    paths: z
++        .array(z.string())
++        .nullish()
++        .transform(value => value ?? []),
++    hostname: z.string().optional().default(""),
++    tags: z
++        .array(z.string())
++        .nullish()
++        .transform(value => value ?? []),
++    source: z.string().optional().default(""),
++    repo: RepoRefSchema,
++    app: z
++        .object({
++            id: z.string(),
++            name: z.string().optional().default(""),
++            env: z.string().optional().default(""),
++            deleted: z.boolean().optional().default(false),
++        })
++        .nullish()
++        .transform(value => value ?? undefined),
++    job: z
++        .object({
++            id: z.string(),
++            name: z.string().optional().default(""),
++            deleted: z.boolean().optional().default(false),
++        })
++        .nullish()
++        .transform(value => value ?? undefined),
++    runId: z.string().optional().default(""),
++});
++
++const FindManyPaginatedSchema = z.object({
++    data: z.array(BackupSnapshotSchema),
++    meta: PagingMetaApiSchema,
++    repos: z
++        .array(RepoRefSchema)
++        .nullish()
++        .transform(value => value ?? []),
++});
++
++const FindOneByIdSchema = z.object({
++    data: BackupSnapshotSchema,
++    meta: BaseMetaApiSchema.nullish(),
++});
++
++const MetaOnlySchema = z.object({
++    meta: BaseMetaApiSchema.nullish(),
++});
++
++export class BackupSnapshotApiValidator {
++    findManyPaginated = (response: AxiosResponse): BackupSnapshot_FindManyPaginated_Res => {
++        const { data, meta, repos } = parseApiResponse({ response, schema: FindManyPaginatedSchema });
++        return { data, meta, repos };
++    };
++
++    findOneById = (response: AxiosResponse): BackupSnapshot_FindOneById_Res => {
++        const { data, meta } = parseApiResponse({ response, schema: FindOneByIdSchema });
++        return { data, meta };
++    };
++
++    deleteOne = (response: AxiosResponse): BackupSnapshot_DeleteOne_Res => {
++        parseApiResponse({ response, schema: MetaOnlySchema });
++        return { data: { type: "success" } };
++    };
++}
+diff --git a/src/application/modules/settings/api/services/backup-snapshot-services/index.ts b/src/application/modules/settings/api/services/backup-snapshot-services/index.ts
+new file mode 100644
+index 00000000..627d73cb
+--- /dev/null
++++ b/src/application/modules/settings/api/services/backup-snapshot-services/index.ts
+@@ -0,0 +1,3 @@
++export * from "./backup-snapshot.api";
++export * from "./backup-snapshot.api.contracts";
++export * from "./backup-snapshot.api.validator";
+diff --git a/src/application/modules/settings/api/services/index.ts b/src/application/modules/settings/api/services/index.ts
+index d22675fa..9318eb27 100644
+--- a/src/application/modules/settings/api/services/index.ts
++++ b/src/application/modules/settings/api/services/index.ts
+@@ -19,3 +19,4 @@ export * from "./oauth-services";
+ export * from "./github-app-services";
+ export * from "./repo-webhook-services";
+ export * from "./backup-repo-services";
++export * from "./backup-snapshot-services";
+diff --git a/src/application/modules/settings/data/commands/backup-snapshot.commands.ts b/src/application/modules/settings/data/commands/backup-snapshot.commands.ts
+new file mode 100644
+index 00000000..0e5b5d02
+--- /dev/null
++++ b/src/application/modules/settings/data/commands/backup-snapshot.commands.ts
+@@ -0,0 +1,26 @@
++import { type UseMutationOptions, useMutation, useQueryClient } from "@tanstack/react-query";
++import { useBackupSnapshotApi } from "~/settings/api/hooks";
++import type { BackupSnapshot_DeleteOne_Req, BackupSnapshot_DeleteOne_Res } from "~/settings/api/services";
++import { QK } from "~/settings/data/constants";
++
++type DeleteOneReq = BackupSnapshot_DeleteOne_Req["data"];
++type DeleteOneRes = BackupSnapshot_DeleteOne_Res;
++type DeleteOneOptions = Omit<UseMutationOptions<DeleteOneRes, Error, DeleteOneReq>, "mutationFn">;
++
++function useDeleteOne({ onSuccess, ...options }: DeleteOneOptions = {}) {
++    const { mutations } = useBackupSnapshotApi();
++    const queryClient = useQueryClient();
++
++    return useMutation({
++        mutationFn: mutations.deleteOne,
++        onSuccess: (response, ...rest) => {
++            void queryClient.invalidateQueries({ queryKey: [QK["settings.backup-snapshots.find-many-paginated"]] });
++            onSuccess?.(response, ...rest);
++        },
++        ...options,
++    });
++}
++
++export const BackupSnapshotCommands = Object.freeze({
++    useDeleteOne,
++});
+diff --git a/src/application/modules/settings/data/commands/index.ts b/src/application/modules/settings/data/commands/index.ts
+index a7705bd0..bed4f4a2 100644
+--- a/src/application/modules/settings/data/commands/index.ts
++++ b/src/application/modules/settings/data/commands/index.ts
+@@ -18,3 +18,4 @@ export * from "./oauth.commands";
+ export * from "./github-app.commands";
+ export * from "./repo-webhook.commands";
+ export * from "./backup-repo.commands";
++export * from "./backup-snapshot.commands";
+diff --git a/src/application/modules/settings/data/constants/settings.query-keys.ts b/src/application/modules/settings/data/constants/settings.query-keys.ts
+index 633eea45..25ed48c5 100644
+--- a/src/application/modules/settings/data/constants/settings.query-keys.ts
++++ b/src/application/modules/settings/data/constants/settings.query-keys.ts
+@@ -38,4 +38,6 @@ export const QK = {
+     "settings.app-placement-settings.find-one": "settings.app-placement-settings.find-one",
+     "settings.backup-repos.find-many-paginated": "settings.backup-repos.find-many-paginated",
+     "settings.backup-repos.find-one-by-id": "settings.backup-repos.find-one-by-id",
++    "settings.backup-snapshots.find-many-paginated": "settings.backup-snapshots.find-many-paginated",
++    "settings.backup-snapshots.find-one-by-id": "settings.backup-snapshots.find-one-by-id",
+ } as const;
+diff --git a/src/application/modules/settings/data/queries/backup-snapshot.queries.ts b/src/application/modules/settings/data/queries/backup-snapshot.queries.ts
+new file mode 100644
+index 00000000..d045d07a
+--- /dev/null
++++ b/src/application/modules/settings/data/queries/backup-snapshot.queries.ts
+@@ -0,0 +1,47 @@
++import { type UseQueryOptions, keepPreviousData, useQuery } from "@tanstack/react-query";
++import { useBackupSnapshotApi } from "~/settings/api/hooks";
++import type {
++    BackupSnapshot_FindManyPaginated_Req,
++    BackupSnapshot_FindManyPaginated_Res,
++    BackupSnapshot_FindOneById_Req,
++    BackupSnapshot_FindOneById_Res,
++} from "~/settings/api/services";
++import { QK } from "~/settings/data/constants";
++
++type FindManyPaginatedReq = BackupSnapshot_FindManyPaginated_Req["data"];
++type FindManyPaginatedRes = BackupSnapshot_FindManyPaginated_Res;
++
++function useFindManyPaginated(
++    request: FindManyPaginatedReq,
++    options: Omit<UseQueryOptions<FindManyPaginatedRes>, "queryKey" | "queryFn"> = {},
++) {
++    const { queries } = useBackupSnapshotApi();
++
++    return useQuery({
++        queryKey: [QK["settings.backup-snapshots.find-many-paginated"], request],
++        queryFn: ({ signal }) => queries.findManyPaginated(request, signal),
++        placeholderData: keepPreviousData,
++        ...options,
++    });
++}
++
++type FindOneByIdReq = BackupSnapshot_FindOneById_Req["data"];
++type FindOneByIdRes = BackupSnapshot_FindOneById_Res;
++
++function useFindOneById(
++    request: FindOneByIdReq,
++    options: Omit<UseQueryOptions<FindOneByIdRes>, "queryKey" | "queryFn"> = {},
++) {
++    const { queries } = useBackupSnapshotApi();
++
++    return useQuery({
++        queryKey: [QK["settings.backup-snapshots.find-one-by-id"], request],
++        queryFn: ({ signal }) => queries.findOneById(request, signal),
++        ...options,
++    });
++}
++
++export const BackupSnapshotQueries = Object.freeze({
++    useFindManyPaginated,
++    useFindOneById,
++});
+diff --git a/src/application/modules/settings/data/queries/index.ts b/src/application/modules/settings/data/queries/index.ts
+index 4dd63a7b..17a87db5 100644
+--- a/src/application/modules/settings/data/queries/index.ts
++++ b/src/application/modules/settings/data/queries/index.ts
+@@ -19,3 +19,4 @@ export * from "./oauth.queries";
+ export * from "./github-app.queries";
+ export * from "./repo-webhook.queries";
+ export * from "./backup-repo.queries";
++export * from "./backup-snapshot.queries";
+diff --git a/src/application/modules/settings/domain/backup-snapshot.entity.ts b/src/application/modules/settings/domain/backup-snapshot.entity.ts
+new file mode 100644
+index 00000000..c9ad4464
+--- /dev/null
++++ b/src/application/modules/settings/domain/backup-snapshot.entity.ts
+@@ -0,0 +1,34 @@
++/** A setting a snapshot names; its status is "missing" when it is deleted. */
++export interface BackupSnapshotRepoRef {
++    id: string;
++    name: string;
++    status: string;
++    scope?: string;
++}
++
++/** The scope a Backup Snapshots view is of. */
++export type BackupSnapshotScope =
++    | { type: "settings" }
++    | { type: "project"; projectId: string; env?: string }
++    | { type: "app"; projectId: string; env: string; appId: string };
++
++/** A snapshot a repository holds, with where it came from. */
++export interface BackupSnapshot {
++    /** The record's ID; snapshotId is the repository's. */
++    id: string;
++    snapshotId: string;
++    shortId: string;
++    time: Date;
++    sizeBytes: number;
++    description: string;
++    paths: string[];
++    hostname: string;
++    tags: string[];
++    /** command or volume; empty when not known. */
++    source: string;
++    repo: BackupSnapshotRepoRef;
++    app?: { id: string; name: string; env: string; deleted: boolean };
++    job?: { id: string; name: string; deleted: boolean };
++    /** The task of the run that took it. */
++    runId: string;
++}
+diff --git a/src/application/modules/settings/domain/index.ts b/src/application/modules/settings/domain/index.ts
+index 1964218f..44910c4f 100644
+--- a/src/application/modules/settings/domain/index.ts
++++ b/src/application/modules/settings/domain/index.ts
+@@ -20,3 +20,4 @@ export * from "./oauth.entity";
+ export * from "./github-app.entity";
+ export * from "./repo-webhook.entity";
+ export * from "./backup-repo.entity";
++export * from "./backup-snapshot.entity";
+diff --git a/src/application/modules/settings/module-shared/components/backup-snapshot-table/backup-snapshot-delete-dialog.com.tsx b/src/application/modules/settings/module-shared/components/backup-snapshot-table/backup-snapshot-delete-dialog.com.tsx
+new file mode 100644
+index 00000000..9b2a8cd3
+--- /dev/null
++++ b/src/application/modules/settings/module-shared/components/backup-snapshot-table/backup-snapshot-delete-dialog.com.tsx
+@@ -0,0 +1,97 @@
++import { useState } from "react";
++
++import { Button } from "@components/ui/button";
++import {
++    Dialog,
++    DialogActionFooter,
++    DialogBody,
++    DialogFixedContent,
++    DialogHeader,
++    DialogTitle,
++} from "@components/ui/dialog";
++import { AlertTriangle } from "lucide-react";
++import { toast } from "sonner";
++import { BackupSnapshotCommands } from "~/settings/data/commands";
++import type { BackupSnapshot, BackupSnapshotScope } from "~/settings/domain";
++
++import { Input } from "@/components/ui";
++
++/** Deleting a snapshot, confirmed by typing its short ID. */
++export function BackupSnapshotDeleteDialog({ scope, snapshot, onOpenChange }: Props) {
++    const [typed, setTyped] = useState("");
++    const { mutate: deleteOne, isPending } = BackupSnapshotCommands.useDeleteOne({
++        onSuccess: () => {
++            toast.success("Backup snapshot deleted");
++            setTyped("");
++            onOpenChange(false);
++        },
++    });
++
++    return (
++        <Dialog
++            open={Boolean(snapshot)}
++            onOpenChange={next => {
++                if (!isPending) {
++                    setTyped("");
++                    onOpenChange(next);
++                }
++            }}
++        >
++            <DialogFixedContent className="sm:max-w-[520px]">
++                <DialogHeader>
++                    <DialogTitle>Delete Backup Snapshot</DialogTitle>
++                </DialogHeader>
++                {snapshot && (
++                    <DialogBody className="flex flex-col gap-4">
++                        <p className="text-sm leading-6 text-foreground">
++                            The snapshot <span className="font-mono font-semibold">{snapshot.shortId}</span> is deleted
++                            from the repository <span className="font-semibold">{snapshot.repo.name}</span>. Its data
++                            cannot be restored afterwards.
++                        </p>
++                        <div className="flex items-center gap-2.5 rounded-md border border-destructive bg-destructive/10 px-3.5 py-2.5 text-sm text-destructive font-medium">
++                            <AlertTriangle className="size-4 shrink-0 text-destructive" />
++                            <span>Type the snapshot&apos;s short ID to confirm.</span>
++                        </div>
++                        <Input
++                            value={typed}
++                            onChange={event => {
++                                setTyped(event.target.value);
++                            }}
++                            placeholder={snapshot.shortId}
++                            className="font-mono"
++                        />
++                    </DialogBody>
++                )}
++                <DialogActionFooter className="flex justify-end">
++                    <Button
++                        variant="outline"
++                        disabled={isPending}
++                        onClick={() => {
++                            onOpenChange(false);
++                        }}
++                    >
++                        Cancel
++                    </Button>
++                    <Button
++                        variant="destructive"
++                        isLoading={isPending}
++                        disabled={typed.trim() !== snapshot?.shortId}
++                        onClick={() => {
++                            if (snapshot) {
++                                deleteOne({ scope, id: snapshot.id });
++                            }
++                        }}
++                    >
++                        Delete
++                    </Button>
++                </DialogActionFooter>
++            </DialogFixedContent>
++        </Dialog>
++    );
++}
++
++interface Props {
++    scope: BackupSnapshotScope;
++    snapshot: BackupSnapshot | null;
++    onOpenChange: (open: boolean) => void;
++}
+diff --git a/src/application/modules/settings/module-shared/components/backup-snapshot-table/backup-snapshot-details.com.tsx b/src/application/modules/settings/module-shared/components/backup-snapshot-table/backup-snapshot-details.com.tsx
+new file mode 100644
+index 00000000..78773454
+--- /dev/null
++++ b/src/application/modules/settings/module-shared/components/backup-snapshot-table/backup-snapshot-details.com.tsx
+@@ -0,0 +1,86 @@
++import { Badge } from "@components/ui/badge";
++import { format } from "date-fns";
++import type { BackupSnapshot } from "~/settings/domain";
++
++import { formatDataSizeCompact } from "@application/shared/utils/data-size";
++
++import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
++
++import { sourceLabel } from "./backup-snapshot-table.helpers";
++
++function Row({ label, children }: { label: string; children: React.ReactNode }) {
++    return (
++        <div className="flex flex-col gap-1">
++            <span className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">{label}</span>
++            <div className="text-sm text-foreground break-all">{children}</div>
++        </div>
++    );
++}
++
++/** A snapshot's details: what the table has no room for. */
++export function BackupSnapshotDetails({ snapshot, runLink, onOpenChange }: Props) {
++    return (
++        <Sheet
++            open={Boolean(snapshot)}
++            onOpenChange={onOpenChange}
++        >
++            <SheetContent className="sm:max-w-[520px] overflow-y-auto">
++                {snapshot && (
++                    <>
++                        <SheetHeader>
++                            <SheetTitle>Snapshot {snapshot.shortId}</SheetTitle>
++                            <SheetDescription>{format(snapshot.time, "yyyy-MM-dd HH:mm:ss")}</SheetDescription>
++                        </SheetHeader>
++                        <div className="flex flex-col gap-4 px-4 pb-6">
++                            <Row label="Snapshot ID">
++                                <span className="font-mono select-all">{snapshot.snapshotId}</span>
++                            </Row>
++                            <Row label="Repository">{snapshot.repo.name || snapshot.repo.id}</Row>
++                            <Row label="Size">{formatDataSizeCompact(snapshot.sizeBytes)}</Row>
++                            <Row label="Source">{sourceLabel(snapshot.source)}</Row>
++                            {snapshot.app && (
++                                <Row label="App">
++                                    {snapshot.app.deleted
++                                        ? `Deleted app ${snapshot.app.id}`
++                                        : `${snapshot.app.name} (${snapshot.app.env})`}
++                                </Row>
++                            )}
++                            {snapshot.job && (
++                                <Row label="Job">
++                                    {snapshot.job.deleted ? `Deleted job ${snapshot.job.id}` : snapshot.job.name}
++                                </Row>
++                            )}
++                            {snapshot.runId && <Row label="Run">{runLink ?? snapshot.runId}</Row>}
++                            {snapshot.description && <Row label="Description">{snapshot.description}</Row>}
++                            <Row label="Paths">
++                                <span className="font-mono">{snapshot.paths.join(", ") || "-"}</span>
++                            </Row>
++                            {snapshot.hostname && <Row label="Hostname">{snapshot.hostname}</Row>}
++                            <Row label="Tags">
++                                <div className="flex flex-wrap gap-1.5">
++                                    {snapshot.tags.length === 0 && "-"}
++                                    {snapshot.tags.map(tag => (
++                                        <Badge
++                                            key={tag}
++                                            variant="outline"
++                                            className="font-mono text-[11px]"
++                                        >
++                                            {tag}
++                                        </Badge>
++                                    ))}
++                                </div>
++                            </Row>
++                        </div>
++                    </>
++                )}
++            </SheetContent>
++        </Sheet>
++    );
++}
++
++interface Props {
++    snapshot: BackupSnapshot | null;
++    /** A link to the run that took the snapshot, when the view can make one. */
++    runLink?: React.ReactNode;
++    onOpenChange: (open: boolean) => void;
++}
+diff --git a/src/application/modules/settings/module-shared/components/backup-snapshot-table/backup-snapshot-table.com.tsx b/src/application/modules/settings/module-shared/components/backup-snapshot-table/backup-snapshot-table.com.tsx
+new file mode 100644
+index 00000000..ee238fff
+--- /dev/null
++++ b/src/application/modules/settings/module-shared/components/backup-snapshot-table/backup-snapshot-table.com.tsx
+@@ -0,0 +1,277 @@
++import { useMemo, useState } from "react";
++
++import { format } from "date-fns";
++import { X } from "lucide-react";
++import { useSearchParams } from "react-router";
++import { type SearchableFilterItem, SearchableFilterSelect } from "~/operations/routes/tasks";
++import { BackupSnapshotQueries } from "~/settings/data/queries";
++import type { BackupSnapshot, BackupSnapshotScope } from "~/settings/domain";
++
++import { AppLink, TableActions } from "@application/shared/components";
++import { DEFAULT_PAGINATED_DATA, ROUTE } from "@application/shared/constants";
++import { AppsPublicQueries } from "@application/shared/data-public/queries";
++import { useTableState } from "@application/shared/hooks/table";
++
++import { Button, DataTable, Input } from "@/components/ui";
++import { DateTimePicker } from "@/components/ui/date-time-picker";
++
++import { BackupSnapshotDeleteDialog } from "./backup-snapshot-delete-dialog.com";
++import { BackupSnapshotDetails } from "./backup-snapshot-details.com";
++import { BackupSnapshotTableDefs } from "./backup-snapshot-table.defs";
++import { isTagFilter } from "./backup-snapshot-table.helpers";
++
++const ALL = "all";
++const LIST_ALL_PAGE = { page: 1, size: 1000 };
++
++interface Filters {
++    repo?: string;
++    app?: string;
++    tags: string[];
++    fromDate?: string;
++    toDate?: string;
++}
++
++function FilterField({ label, children }: { label: string; children: React.ReactNode }) {
++    return (
++        <div className="flex flex-col gap-1.5 min-w-0">
++            <span className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">{label}</span>
++            {children}
++        </div>
++    );
++}
++
++/** The run that took a snapshot, where the view can link it. */
++function runRoute(scope: BackupSnapshotScope, snapshot: BackupSnapshot): string | undefined {
++    if (!snapshot.runId) {
++        return undefined;
++    }
++    if (scope.type === "settings") {
++        return ROUTE.operations.tasks.details.$route(snapshot.runId);
++    }
++    if (!snapshot.app || snapshot.app.deleted || !snapshot.app.env) {
++        return undefined;
++    }
++    return ROUTE.projects.single.apps.single.tasks.details.$route(
++        scope.projectId,
++        snapshot.app.env,
++        snapshot.app.id,
++        snapshot.runId,
++    );
++}
++
++/**
++ * The snapshots a scope sees, with their filters. A link in may set the filters
++ * through the URL: `repo`, `app` and `tag` (several).
++ */
++export function BackupSnapshotTable({ scope }: Props) {
++    const [searchParams] = useSearchParams();
++    const { pagination, setPagination, search, setSearch } = useTableState();
++    const [filters, setFilters] = useState<Filters>(() => ({
++        repo: searchParams.get("repo") ?? undefined,
++        app: searchParams.get("app") ?? undefined,
++        tags: searchParams.getAll("tag").filter(isTagFilter),
++    }));
++    const [tagInput, setTagInput] = useState("");
++    const [details, setDetails] = useState<BackupSnapshot | null>(null);
++    const [deleting, setDeleting] = useState<BackupSnapshot | null>(null);
++
++    const { data = { ...DEFAULT_PAGINATED_DATA, repos: [] }, isFetching } = BackupSnapshotQueries.useFindManyPaginated({
++        scope,
++        pagination,
++        search,
++        repo: filters.repo ? [filters.repo] : undefined,
++        app: filters.app ? [filters.app] : undefined,
++        tag: filters.tags.length > 0 ? filters.tags : undefined,
++        fromDate: filters.fromDate,
++        toDate: filters.toDate,
++    });
++
++    const projectId = scope.type === "settings" ? "" : scope.projectId;
++    const { data: appsData } = AppsPublicQueries.useFindMany(
++        { projectID: projectId, pagination: LIST_ALL_PAGE },
++        { enabled: scope.type === "project" },
++    );
++
++    const repoItems: SearchableFilterItem[] = useMemo(
++        () => [
++            { value: ALL, label: "All Repositories" },
++            ...data.repos.map(repo => ({ value: repo.id, label: repo.name, searchKey: repo.name })),
++        ],
++        [data.repos],
++    );
++    const appItems: SearchableFilterItem[] = useMemo(
++        () => [
++            { value: ALL, label: "All Apps" },
++            ...(appsData?.data ?? []).map(app => ({
++                value: app.id,
++                label: app.name,
++                searchKey: app.name,
++                avatar: { name: app.name },
++            })),
++        ],
++        [appsData?.data],
++    );
++
++    const columns = useMemo(
++        () =>
++            BackupSnapshotTableDefs.columns(scope, {
++                onViewDetails: setDetails,
++                onDelete: setDeleting,
++            }),
++        [scope],
++    );
++
++    function addTag() {
++        const tag = tagInput.trim();
++        if (!isTagFilter(tag) || filters.tags.includes(tag)) {
++            return;
++        }
++        setFilters({ ...filters, tags: [...filters.tags, tag] });
++        setTagInput("");
++    }
++
++    const detailsRunRoute = details ? runRoute(scope, details) : undefined;
++
++    return (
++        <div className="flex flex-col gap-4">
++            <p className="text-sm text-muted-foreground">
++                What each repository held when it was last synced. A repository&apos;s Sync, on its page, brings in what
++                changed outside HivePaaS.
++            </p>
++
++            <div className="rounded-lg border border-border/80 bg-card/60 p-3.5 sm:p-4 shadow-2xs flex flex-col gap-3.5">
++                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
++                    <FilterField label="Repository">
++                        <SearchableFilterSelect
++                            value={filters.repo ?? ALL}
++                            onValueChange={value => {
++                                setFilters({ ...filters, repo: value === ALL ? undefined : value });
++                            }}
++                            placeholder="All Repositories"
++                            searchPlaceholder="Search repositories..."
++                            emptyText="No repositories found."
++                            items={repoItems}
++                        />
++                    </FilterField>
++                    {scope.type === "project" && (
++                        <FilterField label="App">
++                            <SearchableFilterSelect
++                                value={filters.app ?? ALL}
++                                onValueChange={value => {
++                                    setFilters({ ...filters, app: value === ALL ? undefined : value });
++                                }}
++                                placeholder="All Apps"
++                                searchPlaceholder="Search apps..."
++                                emptyText="No apps found."
++                                items={appItems}
++                            />
++                        </FilterField>
++                    )}
++                    <FilterField label="Tag">
++                        <Input
++                            value={tagInput}
++                            onChange={event => {
++                                setTagInput(event.target.value);
++                            }}
++                            onKeyDown={event => {
++                                if (event.key === "Enter") {
++                                    event.preventDefault();
++                                    addTag();
++                                }
++                            }}
++                            placeholder="key:value, then Enter"
++                            className="h-9 text-xs sm:text-sm font-mono"
++                        />
++                    </FilterField>
++                    <FilterField label="From Date">
++                        <DateTimePicker
++                            value={filters.fromDate ? new Date(`${filters.fromDate}T00:00:00`) : undefined}
++                            onChange={date => {
++                                setFilters({ ...filters, fromDate: date ? format(date, "yyyy-MM-dd") : undefined });
++                            }}
++                            placeholder="From date"
++                            granularity="day"
++                            showClearButton
++                            className="h-9 text-xs sm:text-sm"
++                        />
++                    </FilterField>
++                    <FilterField label="To Date">
++                        <DateTimePicker
++                            value={filters.toDate ? new Date(`${filters.toDate}T00:00:00`) : undefined}
++                            onChange={date => {
++                                setFilters({ ...filters, toDate: date ? format(date, "yyyy-MM-dd") : undefined });
++                            }}
++                            placeholder="To date"
++                            granularity="day"
++                            showClearButton
++                            className="h-9 text-xs sm:text-sm"
++                        />
++                    </FilterField>
++                </div>
++                {filters.tags.length > 0 && (
++                    <div className="flex flex-wrap gap-2">
++                        {filters.tags.map(tag => (
++                            <Button
++                                key={tag}
++                                type="button"
++                                variant="outline"
++                                size="sm"
++                                className="h-7 gap-1 font-mono text-xs"
++                                onClick={() => {
++                                    setFilters({ ...filters, tags: filters.tags.filter(t => t !== tag) });
++                                }}
++                            >
++                                {tag}
++                                <X className="size-3" />
++                            </Button>
++                        ))}
++                    </div>
++                )}
++            </div>
++
++            <TableActions search={{ value: search, onChange: setSearch }} />
++            <DataTable
++                columns={columns}
++                data={data.data}
++                pageSize={pagination.size}
++                manualPagination
++                totalCount={data.meta.page.total}
++                enablePagination
++                isLoading={isFetching}
++                onPaginationChange={setPagination}
++            />
++
++            <BackupSnapshotDetails
++                snapshot={details}
++                runLink={
++                    detailsRunRoute && details ? (
++                        <AppLink.Modules
++                            to={detailsRunRoute}
++                            className="font-mono text-link hover:underline"
++                        >
++                            {details.runId}
++                        </AppLink.Modules>
++                    ) : undefined
++                }
++                onOpenChange={open => {
++                    if (!open) {
++                        setDetails(null);
++                    }
++                }}
++            />
++            <BackupSnapshotDeleteDialog
++                scope={scope}
++                snapshot={deleting}
++                onOpenChange={open => {
++                    if (!open) {
++                        setDeleting(null);
++                    }
++                }}
++            />
++        </div>
++    );
++}
++
++interface Props {
++    scope: BackupSnapshotScope;
++}
+diff --git a/src/application/modules/settings/module-shared/components/backup-snapshot-table/backup-snapshot-table.defs.tsx b/src/application/modules/settings/module-shared/components/backup-snapshot-table/backup-snapshot-table.defs.tsx
+new file mode 100644
+index 00000000..420fa731
+--- /dev/null
++++ b/src/application/modules/settings/module-shared/components/backup-snapshot-table/backup-snapshot-table.defs.tsx
+@@ -0,0 +1,179 @@
++import { Badge } from "@components/ui/badge";
++import { Button } from "@components/ui/button";
++import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@components/ui/dropdown-menu";
++import type { ColumnDef } from "@tanstack/react-table";
++import { format } from "date-fns";
++import { Copy, Info, MoreVertical, Trash2Icon } from "lucide-react";
++import { toast } from "sonner";
++import type { BackupSnapshot, BackupSnapshotScope } from "~/settings/domain";
++
++import { PermissionTooltipAction } from "@application/shared/permissions";
++import { formatDataSizeCompact } from "@application/shared/utils/data-size";
++
++import { snapshotScopeModuleId, sourceLabel, userTags } from "./backup-snapshot-table.helpers";
++
++export interface BackupSnapshotRowActions {
++    onViewDetails: (snapshot: BackupSnapshot) => void;
++    onDelete: (snapshot: BackupSnapshot) => void;
++}
++
++function MenuCell({ scope, snapshot, actions }: { scope: BackupSnapshotScope } & MenuProps) {
++    return (
++        <DropdownMenu>
++            <DropdownMenuTrigger asChild>
++                <Button
++                    variant="ghost"
++                    size="icon"
++                    className="h-8 w-8"
++                >
++                    <MoreVertical className="size-4" />
++                    <span className="sr-only">Actions menu</span>
++                </Button>
++            </DropdownMenuTrigger>
++            <DropdownMenuContent align="end">
++                <DropdownMenuItem
++                    onClick={() => {
++                        actions.onViewDetails(snapshot);
++                    }}
++                >
++                    <Info className="mr-2 size-4" />
++                    View details
++                </DropdownMenuItem>
++                <DropdownMenuItem
++                    onClick={() => {
++                        void navigator.clipboard.writeText(snapshot.snapshotId).then(() => {
++                            toast.success("Snapshot ID copied");
++                        });
++                    }}
++                >
++                    <Copy className="mr-2 size-4" />
++                    Copy ID
++                </DropdownMenuItem>
++                <PermissionTooltipAction
++                    id={snapshotScopeModuleId(scope)}
++                    action="delete"
++                    triggerClassName="w-full"
++                >
++                    {({ isDenied }) => (
++                        <DropdownMenuItem
++                            disabled={isDenied}
++                            className="text-destructive"
++                            onClick={() => {
++                                actions.onDelete(snapshot);
++                            }}
++                        >
++                            <Trash2Icon className="mr-2 size-4" />
++                            Delete
++                        </DropdownMenuItem>
++                    )}
++                </PermissionTooltipAction>
++            </DropdownMenuContent>
++        </DropdownMenu>
++    );
++}
++
++interface MenuProps {
++    snapshot: BackupSnapshot;
++    actions: BackupSnapshotRowActions;
++}
++
++function createColumns(scope: BackupSnapshotScope, actions: BackupSnapshotRowActions): ColumnDef<BackupSnapshot>[] {
++    const columns: ColumnDef<BackupSnapshot>[] = [
++        {
++            id: "time",
++            header: "Taken",
++            cell: ({ row: { original } }) => (
++                <span className="whitespace-nowrap">{format(original.time, "yyyy-MM-dd HH:mm")}</span>
++            ),
++        },
++        {
++            id: "shortId",
++            header: "Snapshot",
++            cell: ({ row: { original } }) => <span className="font-mono">{original.shortId}</span>,
++        },
++        {
++            id: "repo",
++            header: "Repository",
++            cell: ({ row: { original } }) => original.repo.name || original.repo.id,
++        },
++    ];
++    if (scope.type !== "app") {
++        columns.push({
++            id: "app",
++            header: "App",
++            cell: ({ row: { original } }) => {
++                if (!original.app) {
++                    return "-";
++                }
++                if (original.app.deleted) {
++                    return <span className="text-muted-foreground">Deleted app</span>;
++                }
++                return `${original.app.name} (${original.app.env})`;
++            },
++        });
++    }
++    columns.push(
++        {
++            id: "job",
++            header: "Job",
++            cell: ({ row: { original } }) => {
++                if (!original.job) {
++                    return "-";
++                }
++                return original.job.deleted ? (
++                    <span className="text-muted-foreground">Deleted job</span>
++                ) : (
++                    original.job.name
++                );
++            },
++        },
++        {
++            id: "source",
++            header: "Source",
++            meta: { align: "center", titleAlign: "center" },
++            cell: ({ row: { original } }) =>
++                original.source ? <Badge variant="secondary">{sourceLabel(original.source)}</Badge> : "-",
++        },
++        {
++            id: "size",
++            header: "Size",
++            meta: { align: "right", titleAlign: "right" },
++            cell: ({ row: { original } }) => formatDataSizeCompact(original.sizeBytes),
++        },
++        {
++            id: "tags",
++            header: "Tags",
++            cell: ({ row: { original } }) => (
++                <div className="flex flex-wrap gap-1">
++                    {userTags(original).map(tag => (
++                        <Badge
++                            key={tag}
++                            variant="outline"
++                            className="font-mono text-[11px]"
++                        >
++                            {tag}
++                        </Badge>
++                    ))}
++                </div>
++            ),
++        },
++        {
++            id: "actions",
++            header: "",
++            size: 56,
++            meta: { align: "center", titleAlign: "center" },
++            cell: ({ row: { original } }) => (
++                <MenuCell
++                    scope={scope}
++                    snapshot={original}
++                    actions={actions}
++                />
++            ),
++        },
++    );
++    return columns;
++}
++
++export const BackupSnapshotTableDefs = Object.freeze({
++    columns: createColumns,
++});
+diff --git a/src/application/modules/settings/module-shared/components/backup-snapshot-table/backup-snapshot-table.helpers.ts b/src/application/modules/settings/module-shared/components/backup-snapshot-table/backup-snapshot-table.helpers.ts
+new file mode 100644
+index 00000000..e0767af2
+--- /dev/null
++++ b/src/application/modules/settings/module-shared/components/backup-snapshot-table/backup-snapshot-table.helpers.ts
+@@ -0,0 +1,34 @@
++import type { BackupSnapshot, BackupSnapshotScope } from "~/settings/domain";
++
++import { MODULE_IDS } from "@application/shared/constants";
++
++/** HivePaaS's own tags: where a snapshot came from, shown in their own columns. */
++export const HIVEPAAS_TAG_PREFIX = "hivepaas.";
++
++/** A snapshot's own tags, those its job was given. */
++export function userTags(snapshot: BackupSnapshot): string[] {
++    return snapshot.tags.filter(tag => !tag.startsWith(HIVEPAAS_TAG_PREFIX));
++}
++
++/** The module whose permission a view's actions ask for. */
++export function snapshotScopeModuleId(scope: BackupSnapshotScope): string {
++    return scope.type === "settings" ? MODULE_IDS.Settings : MODULE_IDS.Project;
++}
++
++/** A source kind, as a person reads it. */
++export function sourceLabel(source: string): string {
++    switch (source) {
++        case "command":
++            return "Command";
++        case "volume":
++            return "Volume";
++        default:
++            return "-";
++    }
++}
++
++/** A tag filter is key:value. */
++export function isTagFilter(value: string): boolean {
++    const [key, ...rest] = value.split(":");
++    return Boolean(key) && rest.length > 0;
++}
+diff --git a/src/application/modules/settings/module-shared/components/backup-snapshot-table/index.ts b/src/application/modules/settings/module-shared/components/backup-snapshot-table/index.ts
+new file mode 100644
+index 00000000..d7244f59
+--- /dev/null
++++ b/src/application/modules/settings/module-shared/components/backup-snapshot-table/index.ts
+@@ -0,0 +1 @@
++export * from "./backup-snapshot-table.com";
+diff --git a/src/application/modules/settings/module-shared/components/index.ts b/src/application/modules/settings/module-shared/components/index.ts
+index a885f273..3e32f746 100644
+--- a/src/application/modules/settings/module-shared/components/index.ts
++++ b/src/application/modules/settings/module-shared/components/index.ts
+@@ -58,3 +58,4 @@ export * from "./settings-form-cancel-action";
+ export * from "./settings-form-route-header";
+ export * from "./confirm-reveal-secrets-dialog";
+ export * from "./reveal-secrets-button";
++export * from "./backup-snapshot-table";
+diff --git a/src/application/modules/settings/routes/backup-snapshots/index.ts b/src/application/modules/settings/routes/backup-snapshots/index.ts
+new file mode 100644
+index 00000000..e37ac0d8
+--- /dev/null
++++ b/src/application/modules/settings/routes/backup-snapshots/index.ts
+@@ -0,0 +1 @@
++export * from "./route";
+diff --git a/src/application/modules/settings/routes/backup-snapshots/route/index.ts b/src/application/modules/settings/routes/backup-snapshots/route/index.ts
+new file mode 100644
+index 00000000..b22e59b6
+--- /dev/null
++++ b/src/application/modules/settings/routes/backup-snapshots/route/index.ts
+@@ -0,0 +1 @@
++export * from "./settings-backup-snapshots.route.com";
+diff --git a/src/application/modules/settings/routes/backup-snapshots/route/settings-backup-snapshots.route.com.tsx b/src/application/modules/settings/routes/backup-snapshots/route/settings-backup-snapshots.route.com.tsx
+new file mode 100644
+index 00000000..60e8d0a3
+--- /dev/null
++++ b/src/application/modules/settings/routes/backup-snapshots/route/settings-backup-snapshots.route.com.tsx
+@@ -0,0 +1,11 @@
++import { listBox } from "@lib/styles";
++import { cn } from "@lib/utils";
++import { BackupSnapshotTable } from "~/settings/module-shared/components";
++
++export function SettingsBackupSnapshotsRoute() {
++    return (
++        <div className={cn(listBox)}>
++            <BackupSnapshotTable scope={{ type: "settings" }} />
++        </div>
++    );
++}
+diff --git a/src/application/modules/settings/routes/index.ts b/src/application/modules/settings/routes/index.ts
+index 10a15912..9c7a937b 100644
+--- a/src/application/modules/settings/routes/index.ts
++++ b/src/application/modules/settings/routes/index.ts
+@@ -16,6 +16,7 @@ export * from "./notification-targets";
+ export * from "./image-build";
+ export * from "./app-placement";
+ export * from "./backup-repos";
++export * from "./backup-snapshots";
+ export * from "./data-backup";
+ export * from "./data-cleanup";
+ export * from "./ssl-renewal";
+diff --git a/src/application/modules/settings/settings.module.ts b/src/application/modules/settings/settings.module.ts
+index 61888007..75cff97c 100644
+--- a/src/application/modules/settings/settings.module.ts
++++ b/src/application/modules/settings/settings.module.ts
+@@ -50,6 +50,7 @@ export {
+     SettingsImageBuildRoute,
+     SettingsAppPlacementRoute,
+     SettingsBackupReposRoute,
++    SettingsBackupSnapshotsRoute,
+     SettingsBackupRepoCreateRoute,
+     SettingsBackupRepoEditRoute,
+     SettingsDataBackupActionsRoute,
+diff --git a/src/application/modules/settings/settings.router.tsx b/src/application/modules/settings/settings.router.tsx
+index 5564da09..5cea186f 100644
+--- a/src/application/modules/settings/settings.router.tsx
++++ b/src/application/modules/settings/settings.router.tsx
+@@ -368,6 +368,11 @@ export const settingsRouter: RouteObject = {
+                 return SettingsNotificationTargetEditRoute;
+             },
+         ),
++        createSettingsRoute(ROUTE.settings.backupSnapshots.$pattern, "Backup Snapshots", async () => {
++            const { SettingsBackupSnapshotsRoute } = await getLazyComponents();
++
++            return SettingsBackupSnapshotsRoute;
++        }),
+         createSettingsRoute(ROUTE.settings.backupRepos.$pattern, "Backup Repos", async () => {
+             const { SettingsBackupReposRoute } = await getLazyComponents();
+ 
+diff --git a/src/application/shared/constants/route.constants.ts b/src/application/shared/constants/route.constants.ts
+index 8c981427..bbc18445 100644
+--- a/src/application/shared/constants/route.constants.ts
++++ b/src/application/shared/constants/route.constants.ts
+@@ -397,6 +397,11 @@ export const ROUTE = {
+             },
+         },
+ 
++        backupSnapshots: {
++            $pattern: "integrations/backup-snapshots",
++            $route: "/integrations/backup-snapshots/",
++        },
++
+         backupRepos: {
+             $pattern: "integrations/backup-repos",
+             $route: "/integrations/backup-repos/",
+@@ -683,6 +688,12 @@ export const ROUTE = {
+                             },
+                         },
+ 
++                        backupSnapshots: {
++                            $pattern: "projects/:id/:env/apps/:appId/backup-snapshots",
++                            $route: (id: string, env: string, appId: string) =>
++                                `/projects/${id}/${env}/apps/${appId}/backup-snapshots/`,
++                        },
++
+                         scheduledJobs: {
+                             $pattern: "projects/:id/:env/apps/:appId/sched-jobs",
+                             $route: (id: string, env: string, appId: string) =>
+@@ -1057,6 +1068,11 @@ export const ROUTE = {
+                     },
+                 },
+ 
++                backupSnapshots: {
++                    $pattern: "projects/:id/integrations/backup-snapshots",
++                    $route: (id: string) => `/projects/${id}/integrations/backup-snapshots/`,
++                },
++
+                 backupRepos: {
+                     $pattern: "projects/:id/integrations/backup-repos",
+                     $route: (id: string) => `/projects/${id}/integrations/backup-repos/`,
+diff --git a/src/application/shared/layouts/module/module-sidebar/module-sidebar.com.tsx b/src/application/shared/layouts/module/module-sidebar/module-sidebar.com.tsx
+index d0df5257..88132300 100644
+--- a/src/application/shared/layouts/module/module-sidebar/module-sidebar.com.tsx
++++ b/src/application/shared/layouts/module/module-sidebar/module-sidebar.com.tsx
+@@ -16,6 +16,7 @@ import {
+     Globe,
+     Hammer,
+     HardDrive,
++    History,
+     House,
+     IdCard,
+     Key,
+@@ -212,6 +213,12 @@ const navMain: SidebarItem[] = [
+                         route: ROUTE.settings.backupRepos.$route,
+                         pattern: ROUTE.settings.backupRepos.$pattern,
+                     },
++                    {
++                        title: "Backup Snapshots",
++                        icon: History,
++                        route: ROUTE.settings.backupSnapshots.$route,
++                        pattern: ROUTE.settings.backupSnapshots.$pattern,
++                    },
+                 ],
+             },
+             {

@@ -1,0 +1,181 @@
+diff --git a/hivepaas_app/usecase/settings/backupsnapshotuc/query.go b/hivepaas_app/usecase/settings/backupsnapshotuc/query.go
+new file mode 100644
+index 00000000..7a49f548
+--- /dev/null
++++ b/hivepaas_app/usecase/settings/backupsnapshotuc/query.go
+@@ -0,0 +1,99 @@
++package backupsnapshotuc
++
++import (
++	"time"
++
++	"github.com/tiendc/gofn"
++	"github.com/uptrace/bun"
++
++	"github.com/hivepaas/hivepaas/hivepaas_app/base"
++	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
++	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
++)
++
++// snapshotFilter is what a person narrows a view to.
++type snapshotFilter struct {
++	ID      string
++	RepoIDs []string
++	AppIDs  []string
++	// Tags are key:value, all of which a snapshot must carry.
++	Tags   []string
++	From   time.Time
++	To     time.Time
++	Search string
++}
++
++const (
++	// hasTagIn is a snapshot carrying one of the given tags.
++	hasTagIn = "EXISTS (SELECT 1 FROM tags AS t WHERE t.object_id = setting.id AND t.deleted_at IS NULL " +
++		"AND t.tag IN (?))"
++	hasTag = "EXISTS (SELECT 1 FROM tags AS t WHERE t.object_id = setting.id AND t.deleted_at IS NULL " +
++		"AND t.tag = ?)"
++	// ownedByNoLiveApp is a snapshot no app that still exists owns.
++	ownedByNoLiveApp = "setting.ref_id IN (?) AND NOT EXISTS (SELECT 1 FROM tags AS t " +
++		"JOIN apps AS a ON t.tag = '" + entity.DataBackupTagApp + ":' || a.id " +
++		"WHERE t.object_id = setting.id AND t.deleted_at IS NULL AND a.deleted_at IS NULL)"
++	snapshotTime = "(setting.data->>'time')::timestamptz"
++	nothing      = "1=0"
++)
++
++// snapshotQueryOpts lists the snapshots of a view's reach, narrowed by the
++// filter, newest first. The filter only narrows: a repository or an app outside
++// the reach lists nothing.
++func snapshotQueryOpts(reach *snapshotReach, filter *snapshotFilter) []bunex.SelectQueryOption {
++	opts := []bunex.SelectQueryOption{
++		bunex.SelectWhere("setting.type = ?", base.SettingTypeBackupSnapshot),
++		// An expression: SelectOrder would quote it as a column name.
++		func(q *bun.SelectQuery) *bun.SelectQuery { return q.OrderExpr(snapshotTime + " DESC") },
++	}
++
++	repoIDs := reach.repoIDs
++	if len(filter.RepoIDs) > 0 {
++		repoIDs = gofn.Intersection(repoIDs, filter.RepoIDs)
++	}
++	if len(repoIDs) == 0 || (len(reach.appIDs) == 0 && len(reach.ownerRepoIDs) == 0) {
++		return append(opts, bunex.SelectWhere(nothing))
++	}
++	opts = append(opts, bunex.SelectWhere("setting.ref_id IN (?)", bunex.List(repoIDs)))
++
++	var owned []bunex.SelectQueryOption
++	if len(reach.appIDs) > 0 {
++		owned = append(owned, bunex.SelectWhereOr(hasTagIn, bunex.List(appTags(reach.appIDs))))
++	}
++	if len(reach.ownerRepoIDs) > 0 {
++		owned = append(owned, bunex.SelectWhereOr(ownedByNoLiveApp, bunex.List(reach.ownerRepoIDs)))
++	}
++	opts = append(opts, bunex.SelectWhereGroup(owned...))
++
++	if filter.ID != "" {
++		opts = append(opts, bunex.SelectWhere("setting.id = ?", filter.ID))
++	}
++	if len(filter.AppIDs) > 0 {
++		opts = append(opts, bunex.SelectWhere(hasTagIn, bunex.List(appTags(filter.AppIDs))))
++	}
++	for _, tag := range filter.Tags {
++		opts = append(opts, bunex.SelectWhere(hasTag, tag))
++	}
++	if !filter.From.IsZero() {
++		opts = append(opts, bunex.SelectWhere(snapshotTime+" >= ?", filter.From))
++	}
++	if !filter.To.IsZero() {
++		opts = append(opts, bunex.SelectWhere(snapshotTime+" <= ?", filter.To))
++	}
++	if filter.Search != "" {
++		keyword := bunex.MakeLikeOpStr(filter.Search, true)
++		opts = append(opts, bunex.SelectWhereGroup(
++			bunex.SelectWhere("setting.name ILIKE ?", keyword),
++			bunex.SelectWhereOr("setting.data->>'description' ILIKE ?", keyword),
++		))
++	}
++	return opts
++}
++
++func appTags(appIDs []string) []string {
++	tags := make([]string, 0, len(appIDs))
++	for _, id := range appIDs {
++		tags = append(tags, entity.DataBackupTagApp+":"+id)
++	}
++	return tags
++}
+diff --git a/hivepaas_app/usecase/settings/backupsnapshotuc/reach.go b/hivepaas_app/usecase/settings/backupsnapshotuc/reach.go
+new file mode 100644
+index 00000000..e9d27d76
+--- /dev/null
++++ b/hivepaas_app/usecase/settings/backupsnapshotuc/reach.go
+@@ -0,0 +1,70 @@
++package backupsnapshotuc
++
++import (
++	"github.com/hivepaas/hivepaas/hivepaas_app/base"
++	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
++	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/projecthelper"
++)
++
++// snapshotReach is what a view may list: the snapshots of repoIDs owned by an
++// app of appIDs, or, owned by no app that still exists, those kept in a
++// repository of ownerRepoIDs.
++type snapshotReach struct {
++	repoIDs      []string
++	ownerRepoIDs []string
++	appIDs       []string
++}
++
++// computeReach decides a view's reach from the repositories and apps it takes
++// in, and whether its viewer may read an env (projectID, env).
++//
++// Every snapshot has an owner: the app its hivepaas.app tag names, or its
++// repository when it has none or that app is gone. A view keeps the snapshots
++// whose owner is inside it and readable by its viewer, so a project's view never
++// shows another project's app through a global repository they share.
++func computeReach(
++	scope *entity.ObjectScope,
++	repos []*entity.Setting,
++	apps []*entity.App,
++	allows func(projectID, env string) bool,
++) *snapshotReach {
++	reach := &snapshotReach{}
++	for _, repo := range repos {
++		reach.repoIDs = append(reach.repoIDs, repo.ID)
++		if ownsRepo(scope, repo, allows) {
++			reach.ownerRepoIDs = append(reach.ownerRepoIDs, repo.ID)
++		}
++	}
++	for _, app := range apps {
++		projectID, env := projecthelper.ParseProjectEnvID(app.ProjectEnvID)
++		if projectID == "" {
++			projectID = app.ProjectID
++		}
++		if allows(projectID, env) {
++			reach.appIDs = append(reach.appIDs, app.ID)
++		}
++	}
++	return reach
++}
++
++// ownsRepo says whether a view holds a repository's own snapshots - those no
++// app owns - and its viewer may read them.
++func ownsRepo(scope *entity.ObjectScope, repo *entity.Setting, allows func(projectID, env string) bool) bool {
++	switch scope.ScopeType { //nolint:exhaustive
++	case base.ObjectScopeGlobal:
++		return repo.Scope == base.ObjectScopeGlobal
++	case base.ObjectScopeProject:
++		if repo.Scope == base.ObjectScopeProject {
++			return repo.ObjectID == scope.ProjectID
++		}
++		if repo.Scope == base.ObjectScopeProjectEnv {
++			projectID, env := projecthelper.ParseProjectEnvID(repo.ObjectID)
++			return projectID == scope.ProjectID && allows(projectID, env)
++		}
++		return false
++	case base.ObjectScopeProjectEnv:
++		return repo.Scope == base.ObjectScopeProjectEnv && repo.ObjectID == scope.ProjectEnvID
++	}
++	// An app's view shows its own snapshots only.
++	return false
++}

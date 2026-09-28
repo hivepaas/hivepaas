@@ -79,7 +79,8 @@ These follow the routes of `backup-repos` at each scope:
   - `repo`, several;
   - `app`, several, not at the app scope;
   - `tag` as `key:value`, several, all of which must match;
-  - `from` and `to` on the time the snapshot was taken;
+  - `fromDate` and `toDate` (`YYYY-MM-DD`, both included) on the time the
+    snapshot was taken, as the tasks list names them;
   - `search` on the short ID or the description;
   - paging, newest first.
 - **A row** holds:
@@ -107,8 +108,9 @@ These follow the routes of `backup-repos` at each scope:
    for a repository on a volume).
 2. Then it deletes the record and its tags.
 
-It needs write access on the snapshot's owner, as §1 reads it for write, and an
-active repository. A snapshot already gone from the repository counts as deleted:
+It needs delete access on the scope, and on the snapshot's owner as §1 reads it,
+and an active repository. kopia's "no snapshots matched" answer is the engine's
+`ErrSnapshotNotFound`. A snapshot already gone from the repository counts as deleted:
 the record goes.
 
 **Errors:** a failed delete says why, with kopia's words, as every failed kopia
@@ -137,10 +139,13 @@ projects.
   - the size and the tags.
 - **Order:** newest first, paged.
 - **The filter bar,** laid out as Operations › Tasks' and the scheduled jobs':
-  - repository and app, several each;
-  - a tag `key:value`;
-  - a time range;
+  - a repository, one at a time - the API takes several;
+  - an app, one at a time, at the project and env views. The global view has
+    no app list to pick from; a tag `hivepaas.app:<id>` narrows it to an app;
+  - tags `key:value`, several, each added with Enter;
+  - a date range;
   - a search box.
+  A link in sets them through the URL: `repo`, `app` and `tag`.
 - **Above the table:** a note that the list is what the repositories held when
   they were last synced, with a link to each repository's page and its Sync
   action.

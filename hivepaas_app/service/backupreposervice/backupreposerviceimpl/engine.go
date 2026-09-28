@@ -9,6 +9,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/backupreposervice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/cloudstorageservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/nodeexecservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/volumeservice"
@@ -192,26 +193,71 @@ func (s *service) buildLocalStorage(
 	if err != nil {
 		return nil, hperrors.Wrap(err)
 	}
-	if clusterVolume.NodeID == "" && clusterVolume.NodeLabel == "" {
-		return nil, hperrors.Wrap(hperrors.ErrBackupRepoVolumeNodeRequired).WithParam("Name", setting.Name)
-	}
-
-	hostPath, err := s.resolveVolumeHostPath(ctx, setting, clusterVolume)
+	dir, err := s.volumeHostDir(ctx, setting, clusterVolume)
 	if err != nil {
 		return nil, hperrors.Wrap(err)
 	}
 
 	// The agent mounts the host root, so the repository path has to be expressed from inside it.
-	repoPath := filepath.Join(volumeservice.HostPathPrefix, hostPath)
+	repoPath := filepath.Join(volumeservice.HostPathPrefix, dir.Dir)
 	if prefix := normalizeStoragePrefix(repo.StoragePrefix); prefix != "" {
 		repoPath = filepath.Join(repoPath, prefix)
 	}
 
 	return &backup.StorageLocal{
 		Path:      repoPath,
-		NodeID:    clusterVolume.NodeID,
-		NodeLabel: clusterVolume.NodeLabel,
+		NodeID:    dir.NodeID,
+		NodeLabel: dir.NodeLabel,
+		Shared:    !clusterVolume.IsPinned(),
 	}, nil
+}
+
+// volumeHostDir is where a volume's data is on the host, and the node to reach it on.
+//
+// A pinned volume is on its node. A volume on all nodes is taken at its word that
+// every node sees the same data: it is reached on the node HivePaaS runs on, and
+// only when it is a bind directory - the one kind whose path is the same on every
+// node. A docker-managed volume is somewhere under each daemon's own root, and one
+// a driver mounts (NFS, CIFS) is on no host path at all.
+func (s *service) volumeHostDir(
+	ctx context.Context,
+	setting *entity.Setting,
+	clusterVolume *entity.ClusterVolume,
+) (*backupreposervice.VolumeHostDir, error) {
+	if clusterVolume.IsPinned() {
+		dir, err := s.resolveVolumeHostPath(ctx, setting, clusterVolume)
+		if err != nil {
+			return nil, hperrors.Wrap(err)
+		}
+		return &backupreposervice.VolumeHostDir{
+			Dir: dir, NodeID: clusterVolume.NodeID, NodeLabel: clusterVolume.NodeLabel,
+		}, nil
+	}
+
+	dir, isBind := bindDirectory(clusterVolume)
+	if !isBind {
+		return nil, hperrors.Wrap(hperrors.ErrBackupVolumeSharedNotBind).WithParam("Name", setting.Name)
+	}
+	nodeID, err := s.dockerManager.NodeCurrentID(ctx)
+	if err != nil {
+		return nil, hperrors.Wrap(err)
+	}
+	return &backupreposervice.VolumeHostDir{Dir: dir, NodeID: nodeID}, nil
+}
+
+// bindDirectory is the host directory a local volume binds, if it is a bind volume.
+func bindDirectory(clusterVolume *entity.ClusterVolume) (string, bool) {
+	device := clusterVolume.DriverOpts["device"]
+	if device == "" || !filepath.IsAbs(device) {
+		return "", false
+	}
+	if driver := clusterVolume.Driver; driver != "" && driver != "local" {
+		return "", false
+	}
+	if mountType := clusterVolume.DriverOpts["type"]; mountType != "" && mountType != "none" {
+		return "", false
+	}
+	return device, true
 }
 
 // resolveVolumeHostPath maps a volume onto its location on the host filesystem.

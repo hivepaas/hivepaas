@@ -161,4 +161,8 @@ type StorageLocal struct {
 	Path      string `json:"path"`
 	NodeID    string `json:"nodeId,omitempty"`
 	NodeLabel string `json:"nodeLabel,omitempty"`
+	// Shared says every node reaches the repository at Path: it is on shared
+	// storage mounted alike everywhere. The node is then only where its commands
+	// go by default.
+	Shared bool `json:"shared,omitempty"`
 }

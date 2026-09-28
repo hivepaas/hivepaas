@@ -70,10 +70,6 @@ func (s *service) FindAppVolume(
 	if err != nil {
 		return nil, hperrors.Wrap(err)
 	}
-	if volumeDir.NodeID == "" && volumeDir.NodeLabel == "" {
-		return nil, hperrors.NewArgumentInvalid("dataBackup.sourceVolume").
-			WithExtraDetail("the volume is pinned to no node: where to read it is not known")
-	}
 	return &databackupservice.AppVolume{
 		HostDir:   appVolumeDir(picked, volumeDir.Dir),
 		NodeID:    volumeDir.NodeID,

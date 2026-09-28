@@ -48,6 +48,7 @@ type Service interface {
 	BackupDirectory(ctx context.Context, db database.IDB, req *BackupDirectoryReq) (*BackupResp, error)
 	// DeleteSnapshot removes one snapshot from the repository.
 	DeleteSnapshot(ctx context.Context, db database.IDB, req *DeleteSnapshotReq) error
-	// VolumeHostDir is where a volume's data is on the host of its node, and that node.
+	// VolumeHostDir is where a volume's data is on the host of its node, and that node:
+	// for a volume on all nodes, the node HivePaaS runs on.
 	VolumeHostDir(ctx context.Context, volume *entity.Setting) (*VolumeHostDir, error)
 }

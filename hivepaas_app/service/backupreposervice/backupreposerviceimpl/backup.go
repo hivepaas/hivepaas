@@ -69,7 +69,7 @@ func (s *service) BackupDirectory(
 
 	var result backupmodel.BackupResult
 	if !repoServerNeeded(storage, false, req.NodeID, req.NodeLabel) {
-		result, err = s.backupWith(ctx, repo, storage, onDataNode, take)
+		result, err = s.backupWith(ctx, repo, storageOnDataNode(storage, req.NodeID, req.NodeLabel), onDataNode, take)
 	} else {
 		result, err = s.backupThroughServer(ctx, req.RepoSetting.ID, repo, storage, req.Source, req.Progress,
 			onDataNode, take)
@@ -158,8 +158,9 @@ func (s *service) backupThroughServer(
 }
 
 // repoServerNeeded says whether a backup needs the repository's server: a
-// repository on a volume is reached directly on its own node only, and there by
-// commands that carry no stdin.
+// repository on a volume is reached directly on its own node only - or on any
+// node, when it is on storage they all share - and there by commands that carry
+// no stdin.
 func repoServerNeeded(storage *backup.Storage, stream bool, nodeID, nodeLabel string) bool {
 	local := storage.StorageLocal
 	if local == nil {
@@ -167,6 +168,9 @@ func repoServerNeeded(storage *backup.Storage, stream bool, nodeID, nodeLabel st
 	}
 	if stream {
 		return true
+	}
+	if local.Shared {
+		return false
 	}
 	onRepoNode := (local.NodeID != "" && local.NodeID == nodeID) ||
 		(local.NodeLabel != "" && local.NodeLabel == nodeLabel)
@@ -197,13 +201,8 @@ func (s *service) VolumeHostDir(
 	if err != nil {
 		return nil, hperrors.Wrap(err)
 	}
-	dir, err := s.resolveVolumeHostPath(ctx, volume, clusterVolume)
-	if err != nil {
-		return nil, hperrors.Wrap(err)
-	}
-	return &backupreposervice.VolumeHostDir{
-		Dir: dir, NodeID: clusterVolume.NodeID, NodeLabel: clusterVolume.NodeLabel,
-	}, nil
+	dir, err := s.volumeHostDir(ctx, volume, clusterVolume)
+	return dir, hperrors.Wrap(err)
 }
 
 func (s *service) buildTargetEngine(
@@ -217,6 +216,20 @@ func (s *service) buildTargetEngine(
 	}
 	engine, err := s.buildEngine(ctx, db, target.Scope, repo, target.RepoSetting.ID, target.RefObjects)
 	return engine, hperrors.Wrap(err)
+}
+
+// storageOnDataNode is the repository's storage as reached from the data's node:
+// a repository every node reaches is reached from there, so its engine's commands
+// go there. Any other storage is itself.
+func storageOnDataNode(storage *backup.Storage, nodeID, nodeLabel string) *backup.Storage {
+	if storage.StorageLocal == nil || !storage.StorageLocal.Shared {
+		return storage
+	}
+	moved := *storage
+	local := *storage.StorageLocal
+	local.NodeID, local.NodeLabel = nodeID, nodeLabel
+	moved.StorageLocal = &local
+	return &moved
 }
 
 // onNodeExecutor runs a command the engine gives no node on the node asked for.

@@ -86,7 +86,9 @@ var (
 	// The repository lives on a node-local volume, so its location on the host must be resolvable
 	// before kopia can be pointed at it.
 	ErrBackupRepoVolumePathUnresolved = NewErr(ErrPreconditionFailed, "ERR_BACKUP_REPO_VOLUME_PATH_UNRESOLVED")
-	ErrBackupRepoVolumeNodeRequired   = NewErr(ErrBadRequest, "ERR_BACKUP_REPO_VOLUME_NODE_REQUIRED")
+	// A volume on all nodes is only one place when it is a bind directory on shared
+	// storage; any other is somewhere else on each node.
+	ErrBackupVolumeSharedNotBind = NewErr(ErrBadRequest, "ERR_BACKUP_VOLUME_SHARED_NOT_BIND")
 	// The repository was re-encrypted but the new password could not be stored, and putting the
 	// old one back failed too. Only a manual password change on the repository can fix it.
 	ErrBackupRepoPasswordOutOfSync = NewErr(ErrPreconditionFailed, "ERR_BACKUP_REPO_PASSWORD_OUT_OF_SYNC")

@@ -11,6 +11,7 @@ import (
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/services/docker"
 )
 
@@ -37,6 +38,15 @@ type recordingDockerManager struct {
 	inspected  []string
 	inspectRes *client.VolumeInspectResult
 	inspectErr error
+	// currentNode is the node this process's daemon is on.
+	currentNode string
+}
+
+func (m *recordingDockerManager) NodeCurrentID(context.Context) (string, error) {
+	if m.currentNode == "" {
+		return "", errors.New("docker daemon is not part of a swarm")
+	}
+	return m.currentNode, nil
 }
 
 func (m *recordingDockerManager) VolumeInspect(
@@ -107,4 +117,79 @@ func TestResolveVolumeHostPathInspectsByRefIDWhenNoDeviceIsRecorded(t *testing.T
 	assert.NoError(t, err)
 	assert.Equal(t, "/var/lib/docker/volumes/01JVOLULID/_data", hostPath)
 	assert.Equal(t, []string{"01JVOLULID"}, dockerManager.inspected)
+}
+
+// A volume on all nodes is a directory every node reaches at the same path -
+// shared storage mounted alike everywhere. A repository on it is reached from any
+// node; its commands go to the node HivePaaS runs on.
+func TestBuildLocalStorageTakesASharedBindVolumeOnTheCurrentNode(t *testing.T) {
+	dockerManager := &recordingDockerManager{currentNode: "node-mgr"}
+	s := &service{dockerManager: dockerManager}
+
+	setting := newVolumeSetting(t, "vol-shared", "01JVOLSHARED", "shared-vol", &entity.ClusterVolume{
+		Managed:    true,
+		Driver:     "local",
+		DriverOpts: map[string]string{"type": "none", "device": "/mnt/nfs/backups", "o": "bind,rw"},
+	})
+	repo := &entity.BackupRepo{Volume: entity.ObjectID{ID: "vol-shared"}, StoragePrefix: "kopia"}
+	refObjects := &entity.RefObjects{RefSettings: map[string]*entity.Setting{"vol-shared": setting}}
+
+	storage, err := s.buildLocalStorage(context.Background(), repo, refObjects)
+
+	assert.NoError(t, err)
+	assert.Equal(t, "/host/mnt/nfs/backups/kopia", storage.Path)
+	assert.Equal(t, "node-mgr", storage.NodeID)
+	assert.Empty(t, storage.NodeLabel)
+	assert.True(t, storage.Shared)
+	assert.Empty(t, dockerManager.inspected, "the setting answers this; docker must not be consulted")
+}
+
+// A volume on all nodes that is not a bind directory is somewhere else on each
+// node, or not on the host at all: a docker-managed local volume, an NFS volume
+// the driver mounts itself. No path works everywhere.
+func TestBuildLocalStorageRefusesASharedVolumeThatIsNotABindDirectory(t *testing.T) {
+	cases := map[string]map[string]string{
+		"a docker-managed local volume":  nil,
+		"a volume the NFS driver mounts": {"type": "nfs", "o": "addr=10.0.0.5,rw", "device": ":/exports/backups"},
+	}
+	for name, opts := range cases {
+		s := &service{dockerManager: &recordingDockerManager{currentNode: "node-mgr"}}
+		setting := newVolumeSetting(t, "vol-shared", "01JVOLSHARED", "shared-vol", &entity.ClusterVolume{
+			Managed: true, Driver: "local", DriverOpts: opts,
+		})
+		repo := &entity.BackupRepo{Volume: entity.ObjectID{ID: "vol-shared"}}
+		refObjects := &entity.RefObjects{RefSettings: map[string]*entity.Setting{"vol-shared": setting}}
+
+		_, err := s.buildLocalStorage(context.Background(), repo, refObjects)
+
+		assert.ErrorIs(t, err, hperrors.ErrBackupVolumeSharedNotBind, name)
+	}
+}
+
+// A volume a data backup reads, on all nodes: read on the node HivePaaS runs on.
+func TestVolumeHostDirOfASharedVolumeIsOnTheCurrentNode(t *testing.T) {
+	s := &service{dockerManager: &recordingDockerManager{currentNode: "node-mgr"}}
+	volume := newVolumeSetting(t, "vol-shared", "01JVOLSHARED", "shared-vol", &entity.ClusterVolume{
+		Managed:    true,
+		Driver:     "local",
+		DriverOpts: map[string]string{"type": "none", "device": "/mnt/nfs/data", "o": "bind"},
+	})
+
+	dir, err := s.VolumeHostDir(context.Background(), volume)
+
+	assert.NoError(t, err)
+	assert.Equal(t, "/mnt/nfs/data", dir.Dir)
+	assert.Equal(t, "node-mgr", dir.NodeID)
+	assert.Empty(t, dir.NodeLabel)
+}
+
+func TestVolumeHostDirRefusesASharedVolumeThatIsNotABindDirectory(t *testing.T) {
+	s := &service{dockerManager: &recordingDockerManager{currentNode: "node-mgr"}}
+	volume := newVolumeSetting(t, "vol-shared", "01JVOLSHARED", "shared-vol", &entity.ClusterVolume{
+		Managed: true, Driver: "local",
+	})
+
+	_, err := s.VolumeHostDir(context.Background(), volume)
+
+	assert.ErrorIs(t, err, hperrors.ErrBackupVolumeSharedNotBind)
 }

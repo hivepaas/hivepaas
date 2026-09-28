@@ -53,6 +53,7 @@ func (s *HTTPServer) registerSettingRoutes(apiGroup *gin.RouterGroup) {
 		backupSnapshotGroup.GET("/:itemID", settingHandler.GetBackupSnapshot)
 		backupSnapshotGroup.DELETE("/:itemID", settingHandler.DeleteBackupSnapshot)
 		backupSnapshotGroup.GET("/:itemID/entries", settingHandler.ListBackupSnapshotEntries)
+		backupSnapshotGroup.GET("/:itemID/download", settingHandler.DownloadBackupSnapshotFile)
 		backupSnapshotGroup.POST("/:itemID/restore", settingHandler.RestoreBackupSnapshot)
 
 		backupRepoGroup := settingGroup.Group("/backup-repos")

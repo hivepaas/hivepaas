@@ -1,7 +1,9 @@
 package basesettinghandler
 
 import (
+	"mime"
 	"net/http"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
 
@@ -142,4 +144,40 @@ func (h *Handler) RestoreBackupSnapshot(ctx *gin.Context, scopeType base.ObjectS
 		return
 	}
 	ctx.JSON(http.StatusOK, resp)
+}
+
+// DownloadBackupSnapshotFile writes a file of a snapshot to the response. It
+// needs write on the scope, and on the snapshot's owner, which the use case
+// checks. A failure once the headers are sent cuts the body short of its
+// Content-Length, which a client takes for a failed download.
+func (h *Handler) DownloadBackupSnapshotFile(ctx *gin.Context, scopeType base.ObjectScopeType) {
+	auth, scope, itemID, err := h.authBackupSnapshotScope(ctx, scopeType, base.ActionTypeWrite, "itemID")
+	if err != nil {
+		h.RenderError(ctx, err)
+		return
+	}
+	req := backupsnapshotdto.NewDownloadBackupSnapshotFileReq()
+	req.Scope = scope
+	req.ID = itemID
+	if err = h.ParseAndValidateRequest(ctx, req, nil); err != nil {
+		h.RenderError(ctx, err)
+		return
+	}
+	resp, err := h.BackupSnapshotUC.DownloadBackupSnapshotFile(h.RequestCtx(ctx), auth, req)
+	if err != nil {
+		h.RenderError(ctx, err)
+		return
+	}
+	writeDownloadHeaders(ctx, resp)
+	ctx.Status(http.StatusOK)
+	if err = resp.Write(h.RequestCtx(ctx), ctx.Writer); err != nil {
+		_ = ctx.Error(err)
+	}
+}
+
+// writeDownloadHeaders makes the response an attachment of the file's name and size.
+func writeDownloadHeaders(ctx *gin.Context, resp *backupsnapshotdto.DownloadBackupSnapshotFileResp) {
+	ctx.Header("Content-Disposition", mime.FormatMediaType("attachment", map[string]string{"filename": resp.FileName}))
+	ctx.Header("Content-Type", "application/octet-stream")
+	ctx.Header("Content-Length", strconv.FormatInt(resp.SizeBytes, 10))
 }

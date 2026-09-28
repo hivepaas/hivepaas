@@ -104,3 +104,23 @@ func (h *Handler) ListBackupSnapshotEntries(ctx *gin.Context) {
 func (h *Handler) RestoreBackupSnapshot(ctx *gin.Context) {
 	h.Handler.RestoreBackupSnapshot(ctx, base.ObjectScopeProject)
 }
+
+// DownloadBackupSnapshotFile Downloads a file of a backup snapshot
+// @Summary Downloads a file of a backup snapshot
+// @Description Streams a file of a snapshot the scope sees, to a caller who may write on the snapshot's owner;
+// @Description the download is recorded in the audit log
+// @Tags    project_settings
+// @Produce octet-stream
+// @Id      downloadProjectBackupSnapshotFile
+// @Param   projectID path string true "project ID"
+// @Param   itemID path string true "snapshot record ID"
+// @Param   path query string true "a file inside the snapshot"
+// @Success 200 {file} binary
+// @Failure 400 {object} hperrors.ErrorInfo
+// @Failure 403 {object} hperrors.ErrorInfo
+// @Failure 404 {object} hperrors.ErrorInfo
+// @Failure 500 {object} hperrors.ErrorInfo
+// @Router  /projects/{projectID}/backup-snapshots/{itemID}/download [get]
+func (h *Handler) DownloadBackupSnapshotFile(ctx *gin.Context) {
+	h.Handler.DownloadBackupSnapshotFile(ctx, base.ObjectScopeProject)
+}

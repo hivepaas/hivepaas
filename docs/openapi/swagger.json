@@ -4388,6 +4388,92 @@
         "tags" : [ "Project settings" ]
       }
     },
+    "/projects/{projectID}/backup-snapshots/{itemID}/download" : {
+      "get" : {
+        "description" : "Streams a file of a snapshot the scope sees, to a caller who may write on the snapshot's owner;\nthe download is recorded in the audit log",
+        "operationId" : "downloadProjectBackupSnapshotFile",
+        "parameters" : [ {
+          "description" : "project ID",
+          "in" : "path",
+          "name" : "projectID",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "snapshot record ID",
+          "in" : "path",
+          "name" : "itemID",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "a file inside the snapshot",
+          "in" : "query",
+          "name" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/octet-stream" : {
+                "schema" : {
+                  "format" : "binary",
+                  "type" : "string"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "400" : {
+            "content" : {
+              "application/octet-stream" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Bad Request"
+          },
+          "403" : {
+            "content" : {
+              "application/octet-stream" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Forbidden"
+          },
+          "404" : {
+            "content" : {
+              "application/octet-stream" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Not Found"
+          },
+          "500" : {
+            "content" : {
+              "application/octet-stream" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Internal Server Error"
+          }
+        },
+        "summary" : "Downloads a file of a backup snapshot",
+        "tags" : [ "project_settings" ]
+      }
+    },
     "/projects/{projectID}/backup-snapshots/{itemID}/entries" : {
       "get" : {
         "description" : "Lists a directory of a backup snapshot the scope sees: its files and directories, directories first",
@@ -15585,6 +15671,108 @@
         "tags" : [ "App settings" ]
       }
     },
+    "/projects/{projectID}/{projectEnv}/apps/{appID}/backup-snapshots/{itemID}/download" : {
+      "get" : {
+        "description" : "Streams a file of a snapshot the scope sees, to a caller who may write on the snapshot's owner;\nthe download is recorded in the audit log",
+        "operationId" : "downloadAppBackupSnapshotFile",
+        "parameters" : [ {
+          "description" : "project ID",
+          "in" : "path",
+          "name" : "projectID",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "project env",
+          "in" : "path",
+          "name" : "projectEnv",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "app ID",
+          "in" : "path",
+          "name" : "appID",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "snapshot record ID",
+          "in" : "path",
+          "name" : "itemID",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "a file inside the snapshot",
+          "in" : "query",
+          "name" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/octet-stream" : {
+                "schema" : {
+                  "format" : "binary",
+                  "type" : "string"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "400" : {
+            "content" : {
+              "application/octet-stream" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Bad Request"
+          },
+          "403" : {
+            "content" : {
+              "application/octet-stream" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Forbidden"
+          },
+          "404" : {
+            "content" : {
+              "application/octet-stream" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Not Found"
+          },
+          "500" : {
+            "content" : {
+              "application/octet-stream" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Internal Server Error"
+          }
+        },
+        "summary" : "Downloads a file of a backup snapshot",
+        "tags" : [ "app_settings" ]
+      }
+    },
     "/projects/{projectID}/{projectEnv}/apps/{appID}/backup-snapshots/{itemID}/entries" : {
       "get" : {
         "description" : "Lists a directory of a backup snapshot the scope sees: its files and directories, directories first",
@@ -24963,6 +25151,100 @@
         },
         "summary" : "Gets a backup snapshot",
         "tags" : [ "Project env settings" ]
+      }
+    },
+    "/projects/{projectID}/{projectEnv}/backup-snapshots/{itemID}/download" : {
+      "get" : {
+        "description" : "Streams a file of a snapshot the scope sees, to a caller who may write on the snapshot's owner;\nthe download is recorded in the audit log",
+        "operationId" : "downloadProjectEnvBackupSnapshotFile",
+        "parameters" : [ {
+          "description" : "project ID",
+          "in" : "path",
+          "name" : "projectID",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "project Env",
+          "in" : "path",
+          "name" : "projectEnv",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "snapshot record ID",
+          "in" : "path",
+          "name" : "itemID",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "a file inside the snapshot",
+          "in" : "query",
+          "name" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/octet-stream" : {
+                "schema" : {
+                  "format" : "binary",
+                  "type" : "string"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "400" : {
+            "content" : {
+              "application/octet-stream" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Bad Request"
+          },
+          "403" : {
+            "content" : {
+              "application/octet-stream" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Forbidden"
+          },
+          "404" : {
+            "content" : {
+              "application/octet-stream" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Not Found"
+          },
+          "500" : {
+            "content" : {
+              "application/octet-stream" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Internal Server Error"
+          }
+        },
+        "summary" : "Downloads a file of a backup snapshot",
+        "tags" : [ "project_env_settings" ]
       }
     },
     "/projects/{projectID}/{projectEnv}/backup-snapshots/{itemID}/entries" : {
@@ -36270,6 +36552,84 @@
         "tags" : [ "Global settings" ]
       }
     },
+    "/settings/backup-snapshots/{itemID}/download" : {
+      "get" : {
+        "description" : "Streams a file of a snapshot the scope sees, to a caller who may write on the snapshot's owner;\nthe download is recorded in the audit log",
+        "operationId" : "downloadSettingBackupSnapshotFile",
+        "parameters" : [ {
+          "description" : "snapshot record ID",
+          "in" : "path",
+          "name" : "itemID",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "a file inside the snapshot",
+          "in" : "query",
+          "name" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/octet-stream" : {
+                "schema" : {
+                  "format" : "binary",
+                  "type" : "string"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "400" : {
+            "content" : {
+              "application/octet-stream" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Bad Request"
+          },
+          "403" : {
+            "content" : {
+              "application/octet-stream" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Forbidden"
+          },
+          "404" : {
+            "content" : {
+              "application/octet-stream" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Not Found"
+          },
+          "500" : {
+            "content" : {
+              "application/octet-stream" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Internal Server Error"
+          }
+        },
+        "summary" : "Downloads a file of a backup snapshot",
+        "tags" : [ "settings" ]
+      }
+    },
     "/settings/backup-snapshots/{itemID}/entries" : {
       "get" : {
         "description" : "Lists a directory of a backup snapshot the scope sees: its files and directories, directories first",
@@ -44072,214 +44432,6 @@
         "summary" : "Executes the backup",
         "tags" : [ "System settings" ],
         "x-codegen-request-body-name" : "body"
-      }
-    },
-    "/system/settings/backup/files" : {
-      "get" : {
-        "description" : "Lists backup files",
-        "operationId" : "listSystemBackupFiles",
-        "parameters" : [ {
-          "description" : "`search=<target> (support *)`",
-          "in" : "query",
-          "name" : "search",
-          "schema" : {
-            "type" : "string"
-          }
-        }, {
-          "description" : "`pageOffset=offset`",
-          "in" : "query",
-          "name" : "pageOffset",
-          "schema" : {
-            "type" : "integer"
-          }
-        }, {
-          "description" : "`pageLimit=limit`",
-          "in" : "query",
-          "name" : "pageLimit",
-          "schema" : {
-            "type" : "integer"
-          }
-        }, {
-          "description" : "`sort=[-]field1|field2...`",
-          "in" : "query",
-          "name" : "sort",
-          "schema" : {
-            "type" : "string"
-          }
-        } ],
-        "responses" : {
-          "200" : {
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/filedto.ListFileResp"
-                }
-              }
-            },
-            "description" : "OK"
-          },
-          "400" : {
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
-                }
-              }
-            },
-            "description" : "Bad Request"
-          },
-          "500" : {
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
-                }
-              }
-            },
-            "description" : "Internal Server Error"
-          }
-        },
-        "summary" : "Lists backup files",
-        "tags" : [ "System settings" ]
-      }
-    },
-    "/system/settings/backup/files/{fileID}" : {
-      "delete" : {
-        "description" : "Deletes backup file",
-        "operationId" : "deleteSystemBackupFile",
-        "parameters" : [ {
-          "description" : "file setting ID",
-          "in" : "path",
-          "name" : "fileID",
-          "required" : true,
-          "schema" : {
-            "type" : "string"
-          }
-        } ],
-        "responses" : {
-          "200" : {
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/filedto.DeleteFileResp"
-                }
-              }
-            },
-            "description" : "OK"
-          },
-          "400" : {
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
-                }
-              }
-            },
-            "description" : "Bad Request"
-          },
-          "500" : {
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
-                }
-              }
-            },
-            "description" : "Internal Server Error"
-          }
-        },
-        "summary" : "Deletes backup file",
-        "tags" : [ "System settings" ]
-      },
-      "get" : {
-        "description" : "Gets backup file",
-        "operationId" : "getSystemBackupFile",
-        "parameters" : [ {
-          "description" : "file setting ID",
-          "in" : "path",
-          "name" : "fileID",
-          "required" : true,
-          "schema" : {
-            "type" : "string"
-          }
-        } ],
-        "responses" : {
-          "200" : {
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/filedto.GetFileResp"
-                }
-              }
-            },
-            "description" : "OK"
-          },
-          "400" : {
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
-                }
-              }
-            },
-            "description" : "Bad Request"
-          },
-          "500" : {
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
-                }
-              }
-            },
-            "description" : "Internal Server Error"
-          }
-        },
-        "summary" : "Gets backup file",
-        "tags" : [ "System settings" ]
-      }
-    },
-    "/system/settings/backup/files/{fileID}/download" : {
-      "get" : {
-        "description" : "Downloads a backup file",
-        "operationId" : "downloadSystemBackupFile",
-        "parameters" : [ {
-          "description" : "file setting ID",
-          "in" : "path",
-          "name" : "fileID",
-          "required" : true,
-          "schema" : {
-            "type" : "string"
-          }
-        } ],
-        "responses" : {
-          "200" : {
-            "content" : { },
-            "description" : "OK"
-          },
-          "400" : {
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
-                }
-              }
-            },
-            "description" : "Bad Request"
-          },
-          "500" : {
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
-                }
-              }
-            },
-            "description" : "Internal Server Error"
-          }
-        },
-        "summary" : "Downloads a backup file",
-        "tags" : [ "System settings" ]
       }
     },
     "/system/settings/cleanup" : {
@@ -67265,157 +67417,25 @@
         "required" : [ "cronExpr", "initialTime", "interval" ],
         "type" : "object"
       },
-      "systemsettings_systembackupdto.SystemBackupCloudStorageReq" : {
-        "properties" : {
-          "bucket" : {
-            "type" : "string"
-          },
-          "destinationDir" : {
-            "type" : "string"
-          },
-          "id" : {
-            "type" : "string"
-          }
-        },
-        "required" : [ "bucket", "destinationDir", "id" ],
-        "type" : "object"
-      },
-      "systemsettings_systembackupdto.SystemBackupCloudStorageResp" : {
-        "properties" : {
-          "bucket" : {
-            "type" : "string"
-          },
-          "createdAt" : {
-            "type" : "string"
-          },
-          "default" : {
-            "type" : "boolean"
-          },
-          "destinationDir" : {
-            "type" : "string"
-          },
-          "expireAt" : {
-            "type" : "string"
-          },
-          "id" : {
-            "type" : "string"
-          },
-          "inheritable" : {
-            "type" : "boolean"
-          },
-          "inherited" : {
-            "type" : "boolean"
-          },
-          "kind" : {
-            "type" : "string"
-          },
-          "name" : {
-            "type" : "string"
-          },
-          "size" : {
-            "type" : "integer"
-          },
-          "status" : {
-            "type" : "string"
-          },
-          "type" : {
-            "type" : "string"
-          },
-          "updateVer" : {
-            "type" : "integer"
-          },
-          "updatedAt" : {
-            "type" : "string"
-          }
-        },
-        "required" : [ "bucket", "createdAt", "default", "destinationDir", "expireAt", "id", "inheritable", "inherited", "kind", "name", "size", "status", "type", "updateVer", "updatedAt" ],
-        "type" : "object"
-      },
-      "systemsettings_systembackupdto.SystemBackupCompressionReq" : {
-        "properties" : {
-          "format" : {
-            "type" : "string"
-          }
-        },
-        "required" : [ "format" ],
-        "type" : "object"
-      },
-      "systemsettings_systembackupdto.SystemBackupCompressionResp" : {
-        "properties" : {
-          "format" : {
-            "type" : "string"
-          }
-        },
-        "required" : [ "format" ],
-        "type" : "object"
-      },
-      "systemsettings_systembackupdto.SystemBackupDBConfigReq" : {
-        "properties" : {
-          "backupDeletedObjects" : {
-            "type" : "boolean"
-          }
-        },
-        "required" : [ "backupDeletedObjects" ],
-        "type" : "object"
-      },
-      "systemsettings_systembackupdto.SystemBackupDBConfigResp" : {
-        "properties" : {
-          "backupDeletedObjects" : {
-            "type" : "boolean"
-          }
-        },
-        "required" : [ "backupDeletedObjects" ],
-        "type" : "object"
-      },
-      "systemsettings_systembackupdto.SystemBackupEncryptionReq" : {
-        "properties" : {
-          "format" : {
-            "type" : "string"
-          },
-          "secret" : {
-            "type" : "string"
-          }
-        },
-        "required" : [ "format", "secret" ],
-        "type" : "object"
-      },
-      "systemsettings_systembackupdto.SystemBackupEncryptionResp" : {
-        "properties" : {
-          "format" : {
-            "type" : "string"
-          },
-          "secret" : {
-            "type" : "string"
-          }
-        },
-        "required" : [ "format", "secret" ],
-        "type" : "object"
-      },
       "systemsettings_systembackupdto.SystemBackupResp" : {
         "properties" : {
-          "cloudStorage" : {
-            "$ref" : "#/components/schemas/systemsettings_systembackupdto.SystemBackupCloudStorageResp"
-          },
-          "compression" : {
-            "$ref" : "#/components/schemas/systemsettings_systembackupdto.SystemBackupCompressionResp"
-          },
           "createdAt" : {
             "type" : "string"
           },
-          "dbBackupConfig" : {
-            "$ref" : "#/components/schemas/systemsettings_systembackupdto.SystemBackupDBConfigResp"
-          },
           "default" : {
             "type" : "boolean"
-          },
-          "encryption" : {
-            "$ref" : "#/components/schemas/systemsettings_systembackupdto.SystemBackupEncryptionResp"
           },
           "expireAt" : {
             "type" : "string"
           },
           "id" : {
             "type" : "string"
+          },
+          "includeDB" : {
+            "type" : "boolean"
+          },
+          "includeSpec" : {
+            "type" : "boolean"
           },
           "inheritable" : {
             "type" : "boolean"
@@ -67448,8 +67468,18 @@
           "size" : {
             "type" : "integer"
           },
+          "specPassphrase" : {
+            "description" : "SpecPassphrase comes masked once it is stored.",
+            "type" : "string"
+          },
+          "specSecrets" : {
+            "type" : "string"
+          },
           "status" : {
             "type" : "string"
+          },
+          "targetRepository" : {
+            "$ref" : "#/components/schemas/settings.BaseSettingResp"
           },
           "type" : {
             "type" : "string"
@@ -67461,25 +67491,20 @@
             "type" : "string"
           }
         },
-        "required" : [ "cloudStorage", "compression", "createdAt", "dbBackupConfig", "default", "encryption", "expireAt", "id", "inheritable", "inherited", "kind", "name", "nextRuns", "notification", "schedule", "secretMasked", "size", "status", "type", "updateVer", "updatedAt" ],
+        "required" : [ "createdAt", "default", "expireAt", "id", "includeDB", "includeSpec", "inheritable", "inherited", "kind", "name", "nextRuns", "notification", "schedule", "secretMasked", "size", "specPassphrase", "specSecrets", "status", "targetRepository", "type", "updateVer", "updatedAt" ],
         "type" : "object"
       },
       "systemsettings_systembackupdto.UpdateSystemBackupReq" : {
         "properties" : {
-          "cloudStorage" : {
-            "$ref" : "#/components/schemas/systemsettings_systembackupdto.SystemBackupCloudStorageReq"
-          },
-          "compression" : {
-            "$ref" : "#/components/schemas/systemsettings_systembackupdto.SystemBackupCompressionReq"
-          },
-          "dbBackupConfig" : {
-            "$ref" : "#/components/schemas/systemsettings_systembackupdto.SystemBackupDBConfigReq"
-          },
           "default" : {
             "type" : "boolean"
           },
-          "encryption" : {
-            "$ref" : "#/components/schemas/systemsettings_systembackupdto.SystemBackupEncryptionReq"
+          "includeDB" : {
+            "description" : "What goes in: one at least.",
+            "type" : "boolean"
+          },
+          "includeSpec" : {
+            "type" : "boolean"
           },
           "inheritable" : {
             "type" : "boolean"
@@ -67490,14 +67515,31 @@
           "schedule" : {
             "$ref" : "#/components/schemas/systemsettings_systembackupdto.ScheduleReq"
           },
+          "specPassphrase" : {
+            "type" : "string"
+          },
+          "specSecrets" : {
+            "allOf" : [ {
+              "$ref" : "#/components/schemas/service_specservice_specmodel.SecretsMode"
+            } ],
+            "description" : "SpecSecrets is how the spec holds secrets; SpecPassphrase is required\nwhen they are encrypted.",
+            "type" : "object"
+          },
           "status" : {
             "type" : "string"
+          },
+          "targetRepository" : {
+            "allOf" : [ {
+              "$ref" : "#/components/schemas/basedto.ObjectIDReq"
+            } ],
+            "description" : "TargetRepository is a backup repository at the global scope.",
+            "type" : "object"
           },
           "updateVer" : {
             "type" : "integer"
           }
         },
-        "required" : [ "cloudStorage", "compression", "dbBackupConfig", "default", "encryption", "inheritable", "notification", "schedule", "status", "updateVer" ],
+        "required" : [ "default", "includeDB", "includeSpec", "inheritable", "notification", "schedule", "specPassphrase", "specSecrets", "status", "targetRepository", "updateVer" ],
         "type" : "object"
       },
       "systemsettings_systembackupdto.UpdateSystemBackupResp" : {
@@ -67625,36 +67667,6 @@
         "required" : [ "cronExpr", "initialTime", "interval" ],
         "type" : "object"
       },
-      "systemsettings_systemcleanupdto.SystemBackupCleanupReq" : {
-        "properties" : {
-          "cloudBackupRetention" : {
-            "type" : "string"
-          },
-          "enabled" : {
-            "type" : "boolean"
-          },
-          "localBackupRetention" : {
-            "type" : "string"
-          }
-        },
-        "required" : [ "cloudBackupRetention", "enabled", "localBackupRetention" ],
-        "type" : "object"
-      },
-      "systemsettings_systemcleanupdto.SystemBackupCleanupResp" : {
-        "properties" : {
-          "cloudBackupRetention" : {
-            "type" : "string"
-          },
-          "enabled" : {
-            "type" : "boolean"
-          },
-          "localBackupRetention" : {
-            "type" : "string"
-          }
-        },
-        "required" : [ "cloudBackupRetention", "enabled", "localBackupRetention" ],
-        "type" : "object"
-      },
       "systemsettings_systemcleanupdto.SystemCacheCleanupReq" : {
         "properties" : {
           "enabled" : {
@@ -67681,9 +67693,6 @@
       },
       "systemsettings_systemcleanupdto.SystemCleanupResp" : {
         "properties" : {
-          "backupCleanup" : {
-            "$ref" : "#/components/schemas/systemsettings_systemcleanupdto.SystemBackupCleanupResp"
-          },
           "cacheCleanup" : {
             "$ref" : "#/components/schemas/systemsettings_systemcleanupdto.SystemCacheCleanupResp"
           },
@@ -67749,7 +67758,7 @@
             "type" : "string"
           }
         },
-        "required" : [ "backupCleanup", "cacheCleanup", "clusterCleanup", "createdAt", "dbObjectRetention", "default", "expireAt", "fileCleanup", "id", "inheritable", "inherited", "kind", "name", "nextRuns", "notification", "schedule", "size", "status", "type", "updateVer", "updatedAt" ],
+        "required" : [ "cacheCleanup", "clusterCleanup", "createdAt", "dbObjectRetention", "default", "expireAt", "fileCleanup", "id", "inheritable", "inherited", "kind", "name", "nextRuns", "notification", "schedule", "size", "status", "type", "updateVer", "updatedAt" ],
         "type" : "object"
       },
       "systemsettings_systemcleanupdto.SystemClusterCleanupReq" : {
@@ -67832,9 +67841,6 @@
       },
       "systemsettings_systemcleanupdto.UpdateSystemCleanupReq" : {
         "properties" : {
-          "backupCleanup" : {
-            "$ref" : "#/components/schemas/systemsettings_systemcleanupdto.SystemBackupCleanupReq"
-          },
           "cacheCleanup" : {
             "$ref" : "#/components/schemas/systemsettings_systemcleanupdto.SystemCacheCleanupReq"
           },
@@ -67866,7 +67872,7 @@
             "type" : "integer"
           }
         },
-        "required" : [ "backupCleanup", "cacheCleanup", "clusterCleanup", "dbObjectRetention", "default", "fileCleanup", "inheritable", "notification", "schedule", "status", "updateVer" ],
+        "required" : [ "cacheCleanup", "clusterCleanup", "dbObjectRetention", "default", "fileCleanup", "inheritable", "notification", "schedule", "status", "updateVer" ],
         "type" : "object"
       },
       "systemsettings_systemcleanupdto.UpdateSystemCleanupResp" : {

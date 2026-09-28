@@ -53,3 +53,36 @@ func TestBackupSnapshotRestoreRequestParses(t *testing.T) {
 
 var _ = (*Handler).RestoreBackupSnapshot
 var _ = (*Handler).ListBackupSnapshotEntries
+
+// A download names its file in the query.
+func TestBackupSnapshotDownloadRequestParses(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+	h := &handler.BaseHandler{}
+	req := backupsnapshotdto.NewDownloadBackupSnapshotFileReq()
+	req.ID = "01JAB9XED0GTXBSQDFVYAJ8WS9"
+	var parseErr error
+
+	engine := gin.New()
+	engine.GET("/", func(c *gin.Context) { parseErr = h.ParseAndValidateRequest(c, req, nil) })
+	engine.ServeHTTP(httptest.NewRecorder(), httptest.NewRequest(http.MethodGet, "/?path=spec.tar.gz.age", nil))
+
+	assert.NoError(t, parseErr)
+	assert.Equal(t, "spec.tar.gz.age", req.Path)
+}
+
+var _ = (*Handler).DownloadBackupSnapshotFile
+
+// A download is an attachment of its own name and size.
+func TestDownloadHeaders(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+	rec := httptest.NewRecorder()
+	ctx, _ := gin.CreateTestContext(rec)
+
+	writeDownloadHeaders(ctx, &backupsnapshotdto.DownloadBackupSnapshotFileResp{
+		FileName: "spec.tar.gz.age", SizeBytes: 42,
+	})
+
+	assert.Equal(t, `attachment; filename=spec.tar.gz.age`, rec.Header().Get("Content-Disposition"))
+	assert.Equal(t, "application/octet-stream", rec.Header().Get("Content-Type"))
+	assert.Equal(t, "42", rec.Header().Get("Content-Length"))
+}

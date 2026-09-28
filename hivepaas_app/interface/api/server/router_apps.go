@@ -91,6 +91,7 @@ func (s *HTTPServer) registerAppRoutes(projectGroup, projectEnvGroup *gin.Router
 		backupSnapshotGroup.GET("/:itemID", appSettingsHandler.GetBackupSnapshot)
 		backupSnapshotGroup.DELETE("/:itemID", appSettingsHandler.DeleteBackupSnapshot)
 		backupSnapshotGroup.GET("/:itemID/entries", appSettingsHandler.ListBackupSnapshotEntries)
+		backupSnapshotGroup.GET("/:itemID/download", appSettingsHandler.DownloadBackupSnapshotFile)
 		backupSnapshotGroup.POST("/:itemID/restore", appSettingsHandler.RestoreBackupSnapshot)
 	}
 

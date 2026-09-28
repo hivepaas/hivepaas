@@ -266,6 +266,11 @@ const (
 	// record that an assistant, not a person at the dashboard, asked - reads
 	// included, since an assistant reading logs is worth being able to see.
 	AuditLogTypeMCPToolCall AuditLogType = "mcp-tool-call"
+
+	// AuditLogTypeBackupDownload records a file taken out of a backup snapshot:
+	// who took a copy of the data itself - an app's database dump, or HivePaaS's
+	// own - and from which snapshot. It is written before the file is read.
+	AuditLogTypeBackupDownload AuditLogType = "backup-download"
 )
 
 var AllAuditLogTypes = []AuditLogType{
@@ -298,6 +303,7 @@ var AllAuditLogTypes = []AuditLogType{
 	AuditLogTypeSpecExport,
 	AuditLogTypeSpecImport,
 	AuditLogTypeMCPToolCall,
+	AuditLogTypeBackupDownload,
 }
 
 // AuditLogSource is the way in - which endpoint, or which subsystem.

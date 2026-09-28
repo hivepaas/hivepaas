@@ -5,6 +5,7 @@ import (
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
+	"github.com/hivepaas/hivepaas/services/backup"
 )
 
 type Service interface {
@@ -46,6 +47,15 @@ type Service interface {
 	// its node, until the session is closed or ctx ends.
 	OpenRepoServer(ctx context.Context, db database.IDB, req *OpenRepoServerReq) (*RepoServerSession, error)
 	BackupDirectory(ctx context.Context, db database.IDB, req *BackupDirectoryReq) (*BackupResp, error)
+	// RestoreStream writes the file FileName of a snapshot to Stdout, the engine running in
+	// this process: through a repository server for a repository on a volume.
+	RestoreStream(ctx context.Context, db database.IDB, req *RestoreStreamReq) error
+	// RestoreDirectory restores a snapshot, or a directory of it, into a directory of a node's
+	// host, the engine running on that node through its agent: through a repository server when
+	// the repository is on a volume that node does not reach.
+	RestoreDirectory(ctx context.Context, db database.IDB, req *RestoreDirectoryReq) error
+	// ListEntries lists what a snapshot holds in one of its directories.
+	ListEntries(ctx context.Context, db database.IDB, req *ListEntriesReq) ([]backup.SnapshotEntry, error)
 	// DeleteSnapshot removes one snapshot from the repository.
 	DeleteSnapshot(ctx context.Context, db database.IDB, req *DeleteSnapshotReq) error
 	// VolumeHostDir is where a volume's data is on the host of its node, and that node:

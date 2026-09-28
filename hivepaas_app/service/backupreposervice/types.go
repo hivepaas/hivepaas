@@ -226,3 +226,37 @@ type VolumeHostDir struct {
 	NodeID    string
 	NodeLabel string
 }
+
+type RestoreStreamReq struct {
+	RepoTarget
+	SnapshotID string
+	// FileName is the file of the snapshot a stream backup took.
+	FileName string
+	Stdout   io.Writer
+	// Progress, when set, is told the steps the restore takes.
+	Progress func(msg string)
+	// OnConnected, when set, is called once the engine is connected: from then on
+	// the restore uses the database no more.
+	OnConnected func()
+}
+
+type RestoreDirectoryReq struct {
+	RepoTarget
+	SnapshotID string
+	// Path is a directory inside the snapshot to restore alone; "" for all of it.
+	Path string
+	// HostDir is where it goes, on the host of the node, which NodeID or
+	// NodeLabel names.
+	HostDir   string
+	NodeID    string
+	NodeLabel string
+	// Progress, when set, is told the steps the restore takes.
+	Progress func(msg string)
+}
+
+type ListEntriesReq struct {
+	RepoTarget
+	SnapshotID string
+	// Path is a directory inside the snapshot; "" for its root.
+	Path string
+}

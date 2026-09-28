@@ -1,0 +1,168 @@
+package backupreposerviceimpl
+
+import (
+	"context"
+	"strings"
+	"sync"
+	"testing"
+
+	"github.com/stretchr/testify/assert"
+
+	"github.com/hivepaas/hivepaas/hivepaas_app/base"
+	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
+	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
+	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/datakey"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/backupreposervice"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/nodeexecservice"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/settingservice"
+	"github.com/hivepaas/hivepaas/services/backup"
+)
+
+var dataKeyOnce sync.Once
+
+func useDataKey(t *testing.T) {
+	t.Helper()
+	dataKeyOnce.Do(func() {
+		key, err := datakey.Generate()
+		assert.NoError(t, err)
+		datakey.SetActive(key)
+	})
+}
+
+// refsLoaded answers that the references are loaded: the tests give them.
+type refsLoaded struct {
+	settingservice.Service
+}
+
+func (refsLoaded) LoadRefObjectsByIDs(context.Context, database.IDB, **entity.RefObjects,
+	*entity.ObjectScope, bool, *entity.RefObjectIDs) error {
+	return nil
+}
+
+// agentCommands records the commands run through agents, and where.
+type agentCommands struct {
+	mu   sync.Mutex
+	runs []nodeexecservice.CommandExecReq
+}
+
+func (a *agentCommands) ExecCommand(
+	_ context.Context,
+	req *nodeexecservice.CommandExecReq,
+) (*nodeexecservice.CommandExecResp, error) {
+	a.mu.Lock()
+	defer a.mu.Unlock()
+	a.runs = append(a.runs, *req)
+	return &nodeexecservice.CommandExecResp{}, nil
+}
+
+// kopiaArgs are the runs' kopia arguments after the config file, a line each,
+// with the node each ran on.
+func (a *agentCommands) kopiaArgs() []string {
+	var lines []string
+	for _, run := range a.runs {
+		args := run.Command[2:] // kopia --config-file=...
+		lines = append(lines, run.NodeID+run.NodeLabel+": "+strings.Join(args, " "))
+	}
+	return lines
+}
+
+// volumeRepoTarget is a repository on a bind volume pinned to node-2.
+func volumeRepoTarget(t *testing.T) backupreposervice.RepoTarget {
+	t.Helper()
+	useDataKey(t)
+	volume := newVolumeSetting(t, "vol-backups", "01JVOLULID", "backups", &entity.ClusterVolume{
+		NodeID: "node-2", Managed: true, Driver: "local",
+		DriverOpts: map[string]string{"type": "none", "device": "/srv/backups", "o": "bind"},
+	})
+	repo := &entity.BackupRepo{Engine: backup.EngineTypeKopia, Volume: entity.ObjectID{ID: "vol-backups"}}
+	repo.Password.Set("repo-password")
+	setting := &entity.Setting{ID: "repo1", Type: base.SettingTypeBackupRepo, Name: "r1",
+		Status: base.SettingStatusActive}
+	setting.MustSetData(repo)
+	return backupreposervice.RepoTarget{
+		Scope:       &entity.ObjectScope{ScopeType: base.ObjectScopeGlobal},
+		RepoSetting: setting,
+		RefObjects:  &entity.RefObjects{RefSettings: map[string]*entity.Setting{"vol-backups": volume}},
+	}
+}
+
+func restoreService(agent *fakeAgent, commands *agentCommands) *service {
+	s := agent.service()
+	s.dockerManager = &recordingDockerManager{}
+	s.settingService = refsLoaded{}
+	s.nodeExecService = commands
+	return s
+}
+
+// A directory is restored on its node. When that is the repository's node,
+// kopia reaches the repository there, without a server.
+func TestRestoreDirectoryOnTheRepositorysNode(t *testing.T) {
+	agent := &fakeAgent{addr: "10.0.1.5:10001"}
+	commands := &agentCommands{}
+
+	err := restoreService(agent, commands).RestoreDirectory(context.Background(), nil,
+		&backupreposervice.RestoreDirectoryReq{
+			RepoTarget: volumeRepoTarget(t), SnapshotID: "k1", Path: "uploads",
+			HostDir: "/srv/data/app1/uploads", NodeID: "node-2",
+		})
+
+	assert.NoError(t, err)
+	assert.Nil(t, agent.req, "no server")
+	lines := commands.kopiaArgs()
+	if assert.Len(t, lines, 2) {
+		assert.True(t, strings.HasPrefix(lines[0], "node-2: repository connect filesystem --path=/host/srv/backups"),
+			lines[0])
+		assert.Equal(t, "node-2: snapshot restore k1/uploads /host/srv/data/app1/uploads", lines[1])
+	}
+}
+
+// On another node than the repository's, kopia reaches it through a server run
+// on the repository's node, as the restore's own user.
+func TestRestoreDirectoryOnAnotherNodeGoesThroughAServer(t *testing.T) {
+	agent := &fakeAgent{addr: "10.0.1.5:10001"}
+	commands := &agentCommands{}
+
+	err := restoreService(agent, commands).RestoreDirectory(context.Background(), nil,
+		&backupreposervice.RestoreDirectoryReq{
+			RepoTarget: volumeRepoTarget(t), SnapshotID: "k1",
+			HostDir: "/srv/data/app1", NodeID: "node-3",
+		})
+
+	assert.NoError(t, err)
+	if assert.NotNil(t, agent.req) {
+		assert.Equal(t, "node-2", agent.addrNode)
+		assert.Equal(t, restoreServerUser, agent.req.Username)
+	}
+	assert.True(t, agent.closed)
+	lines := commands.kopiaArgs()
+	if assert.Len(t, lines, 3) {
+		assert.True(t, strings.HasPrefix(lines[0], "node-3: repository connect server --url=https://10.0.1.5:40123"),
+			lines[0])
+		assert.Equal(t, "node-3: snapshot restore k1 /host/srv/data/app1", lines[1])
+		assert.True(t, strings.HasPrefix(lines[2], "node-3: repository disconnect"), lines[2])
+	}
+}
+
+// A stream out of a repository on a volume is read here, through a server on
+// the repository's node: an agent's commands bring back no stream.
+func TestRestoreStreamOutOfAVolumeRepositoryGoesThroughAServer(t *testing.T) {
+	// Nothing listens there: the server is a fake, and kopia is refused at once.
+	agent := &fakeAgent{addr: "127.0.0.1:10001"}
+	commands := &agentCommands{}
+	var connected bool
+
+	err := restoreService(agent, commands).RestoreStream(context.Background(), nil,
+		&backupreposervice.RestoreStreamReq{
+			RepoTarget: volumeRepoTarget(t), SnapshotID: "k1", FileName: "db.sql",
+			Stdout: &strings.Builder{}, OnConnected: func() { connected = true },
+		})
+
+	// kopia runs in this process, against a server that is not there.
+	assert.Error(t, err)
+	if assert.NotNil(t, agent.req) {
+		assert.Equal(t, restoreServerUser, agent.req.Username)
+	}
+	assert.True(t, agent.closed)
+	assert.False(t, connected, "the engine never connected")
+	assert.Empty(t, commands.runs, "nothing ran through an agent")
+}

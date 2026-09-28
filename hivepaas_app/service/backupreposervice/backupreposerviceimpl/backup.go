@@ -105,20 +105,35 @@ func (s *service) backupWith(
 	storage *backup.Storage,
 	exec backupmodel.CommandExecutor,
 	take func(backup.Engine) (backupmodel.BackupResult, error),
-) (backupmodel.BackupResult, error) {
+) (result backupmodel.BackupResult, err error) {
+	err = s.runWith(ctx, repo, storage, exec, func(engine backup.Engine) error {
+		result, err = take(engine)
+		return err
+	})
+	return result, hperrors.Wrap(err)
+}
+
+// runWith connects an engine on the storage, its commands run by exec, and
+// runs fn with it.
+func (s *service) runWith(
+	ctx context.Context,
+	repo *entity.BackupRepo,
+	storage *backup.Storage,
+	exec backupmodel.CommandExecutor,
+	fn func(backup.Engine) error,
+) error {
 	engine, err := backup.NewEngine(repo.Engine, storage, exec)
 	if err != nil {
-		return backupmodel.BackupResult{}, hperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 	if err = engine.ConnectRepo(ctx); err != nil {
-		return backupmodel.BackupResult{}, hperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
-	return take(engine)
+	return fn(engine)
 }
 
 // backupThroughServer takes the backup through a repository server run for it on
 // the repository's node, as the identity of the snapshot's source, user@host.
-// The client's connection goes with the session.
 func (s *service) backupThroughServer(
 	ctx context.Context,
 	repoID string,
@@ -130,6 +145,26 @@ func (s *service) backupThroughServer(
 	take func(backup.Engine) (backupmodel.BackupResult, error),
 ) (result backupmodel.BackupResult, err error) {
 	username, _, _ := strings.Cut(source, ":")
+	err = s.throughServer(ctx, repoID, repo, storage, username, progress, exec, func(engine backup.Engine) error {
+		result, err = take(engine)
+		return err
+	})
+	return result, hperrors.Wrap(err)
+}
+
+// throughServer runs fn with an engine reaching the repository through a server
+// run for it on the repository's node, as username, user@host. The engine's
+// connection goes with the session.
+func (s *service) throughServer(
+	ctx context.Context,
+	repoID string,
+	repo *entity.BackupRepo,
+	storage *backup.Storage,
+	username string,
+	progress func(string),
+	exec backupmodel.CommandExecutor,
+	fn func(backup.Engine) error,
+) error {
 	say := func(msg string) {
 		if progress != nil {
 			progress(msg)
@@ -140,7 +175,7 @@ func (s *service) backupThroughServer(
 		node = storage.StorageLocal.NodeLabel
 	}
 	say("Starting the repository server on node " + node)
-	err = s.withRepoServer(ctx, storage, username, repoID, func(client *backup.Storage) error {
+	err := s.withRepoServer(ctx, storage, username, repoID, func(client *backup.Storage) error {
 		say("Repository server ready at " + client.StorageServer.URL)
 		engine, err := backup.NewEngine(repo.Engine, client, exec)
 		if err != nil {
@@ -150,11 +185,10 @@ func (s *service) backupThroughServer(
 			return hperrors.Wrap(err)
 		}
 		defer func() { _ = engine.DisconnectRepo(context.WithoutCancel(ctx)) }()
-		result, err = take(engine)
-		return hperrors.Wrap(err)
+		return hperrors.Wrap(fn(engine))
 	})
 	say("Repository server stopped")
-	return result, hperrors.Wrap(err)
+	return hperrors.Wrap(err)
 }
 
 // repoServerNeeded says whether a backup needs the repository's server: a

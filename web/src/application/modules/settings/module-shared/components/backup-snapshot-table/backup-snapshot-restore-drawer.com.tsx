@@ -182,7 +182,8 @@ function RestoreForm({
     if (isVolume && !isRelativeSubpath(subpath.trim())) {
         problems.push("The path is inside the volume: no leading '/', never above it with '..'.");
     }
-    const confirmed = Boolean(target) && typed.trim() === target?.name;
+    // An app whose name is not known cannot be confirmed by typing nothing.
+    const confirmed = Boolean(target?.name) && typed.trim() === target?.name;
 
     function submit() {
         if (!target || !kind) {

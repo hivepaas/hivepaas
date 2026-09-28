@@ -26,20 +26,19 @@ func TestRemapRefsRewritesObjectIDFields(t *testing.T) {
 	assert.Equal(t, "example.com", data.Domain, "non-reference fields must not move")
 }
 
-// SystemBackupCloudStorage is a bespoke struct holding a bare `ID string`, not
-// an ObjectID. A walk keyed on the ObjectID type misses it; this is the
-// regression guard for exactly that.
+// SchedJobCommandOutputFileStorage is a bespoke struct holding a bare `ID
+// string`, not an ObjectID. A walk keyed on the ObjectID type misses it; this is
+// the regression guard for exactly that.
 func TestRemapRefsRewritesBareIDFieldsInBespokeStructs(t *testing.T) {
-	data := &SystemBackup{
-		CloudStorage: SystemBackupCloudStorage{
-			ID:     "old-storage",
-			Bucket: "backups",
-		},
+	data := &SchedJob{
+		CommandOutput: &SchedJobCommandOutput{SaveToFile: &SchedJobCommandOutputSaveToFile{
+			Storage: SchedJobCommandOutputFileStorage{ID: "old-storage", Bucket: "backups"},
+		}},
 	}
 	err := RemapRefs(data, map[string]string{"old-storage": "new-storage"})
 	assert.NoError(t, err)
-	assert.Equal(t, "new-storage", data.CloudStorage.ID)
-	assert.Equal(t, "backups", data.CloudStorage.Bucket)
+	assert.Equal(t, "new-storage", data.CommandOutput.SaveToFile.Storage.ID)
+	assert.Equal(t, "backups", data.CommandOutput.SaveToFile.Storage.Bucket)
 }
 
 func TestRemapRefsRewritesSlicesAndNestedPointers(t *testing.T) {
@@ -120,13 +119,13 @@ func (d *unreachableRefData) Migrate(*Setting) (bool, error)       { return fals
 func TestReferencesAreHeldInShapesOtherThanObjectID(t *testing.T) {
 	objectIDType := reflect.TypeFor[ObjectID]()
 
-	backup := reflect.TypeFor[SystemBackup]()
-	cloudStorage, ok := backup.FieldByName("CloudStorage")
+	saveToFile := reflect.TypeFor[SchedJobCommandOutputSaveToFile]()
+	storage, ok := saveToFile.FieldByName("Storage")
 	assert.True(t, ok)
-	assert.NotEqual(t, objectIDType, cloudStorage.Type,
-		"SystemBackup.CloudStorage holds a reference but is not an ObjectID")
+	assert.NotEqual(t, objectIDType, storage.Type,
+		"SchedJobCommandOutputSaveToFile.Storage holds a reference but is not an ObjectID")
 
-	idField, ok := cloudStorage.Type.FieldByName("ID")
+	idField, ok := storage.Type.FieldByName("ID")
 	assert.True(t, ok, "and it carries the reference in a bare ID string")
 	assert.Equal(t, reflect.String, idField.Type.Kind())
 }

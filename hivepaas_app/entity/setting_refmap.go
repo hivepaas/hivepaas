@@ -13,7 +13,7 @@ import (
 //
 // It walks by value rather than by type. References are stored in at least four
 // different shapes - ObjectID, ObjectValue, ObjectIDSlice, and bespoke structs
-// carrying a bare `ID string` such as SystemBackupCloudStorage - and a walk that
+// carrying a bare `ID string` such as SchedJobCommandOutputFileStorage - and a walk that
 // recognized only the declared types would silently skip the last group. What
 // every shape has in common is the identifier itself, and GetRefObjectIDs
 // already reports exactly which identifiers are references, so that is what the

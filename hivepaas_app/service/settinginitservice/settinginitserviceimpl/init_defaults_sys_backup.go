@@ -15,14 +15,12 @@ import (
 )
 
 const (
-	sysBackupSettingName       = "System backup settings"
-	sysBackupJobName           = "System backup job"
-	sysBackupDefaultStatus     = base.SettingStatusDisabled      // Default to Disabled
-	sysBackupInterval          = timeutil.Duration(timeutil.Day) // daily
-	sysBackupMaxRetry          = 1
-	sysBackupRetryDelay        = timeutil.Duration(time.Second * 60)
-	sysBackupCompressionFormat = base.FileCompressionFormatGzip
-	sysBackupDeletedObjects    = true
+	sysBackupSettingName   = "System backup settings"
+	sysBackupJobName       = "System backup job"
+	sysBackupDefaultStatus = base.SettingStatusDisabled      // Default to Disabled
+	sysBackupInterval      = timeutil.Duration(timeutil.Day) // daily
+	sysBackupMaxRetry      = 1
+	sysBackupRetryDelay    = timeutil.Duration(time.Second * 60)
 )
 
 func (s *service) initDefaultSystemBackup(
@@ -46,15 +44,9 @@ func (s *service) initDefaultSystemBackup(
 			Interval:    sysBackupInterval,
 			InitialTime: time.Date(timeNow.Year(), timeNow.Month(), timeNow.Day(), 0, 30, 0, 0, time.UTC),
 		},
-		DBBackupConfig: entity.SystemBackupDBConfig{
-			BackupDeletedObjects: sysBackupDeletedObjects,
-		},
-		Compression: entity.SystemBackupCompression{
-			Format: sysBackupCompressionFormat,
-		},
-		Encryption: entity.SystemBackupEncryption{
-			Format: base.FileEncryptionNone,
-		},
+		// The database, into a repository the operator picks before enabling it.
+		IncludeDB:   true,
+		SpecSecrets: "encrypted",
 		Notification: &entity.BaseEventNotification{
 			SuccessUseDefault: true,
 			FailureUseDefault: true,

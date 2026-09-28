@@ -3,6 +3,7 @@ package systembackupuc
 import (
 	"context"
 	"errors"
+	"fmt"
 	"time"
 
 	"github.com/tiendc/gofn"
@@ -12,10 +13,11 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
+	"github.com/hivepaas/hivepaas/hivepaas_app/permission"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
-	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/secrethelper"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/timeutil"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/ulid"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/specservice/specmodel"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/systemsettings/systembackupuc/systembackupdto"
 )
@@ -121,16 +123,8 @@ func (uc *UC) loadSettingData(
 	data.JobScheduleChanges = !backup.Schedule.Equal(&data.NewBackup.Schedule)
 
 	req.KeepMaskedSecrets(data.NewBackup, backup)
-	encryptionSecretUnchanged, err := data.NewBackup.Encryption.Secret.Equal(&backup.Encryption.Secret)
-	if err != nil {
+	if err = uc.checkNewBackup(ctx, db, req.Auth, data.NewBackup); err != nil {
 		return hperrors.Wrap(err)
-	}
-	if !encryptionSecretUnchanged {
-		requirements := systembackupdto.EncryptionSecretRequirements
-		err = secrethelper.ValidateStrength(gofn.Must(data.NewBackup.Encryption.Secret.GetPlain()), &requirements)
-		if err != nil {
-			return hperrors.Wrap(err)
-		}
 	}
 
 	// Load sched job of the backup
@@ -165,6 +159,51 @@ func (uc *UC) loadSettingData(
 	}
 	data.JobSetting = jobSetting
 
+	return nil
+}
+
+// checkNewBackup refuses a repository that is not a global one, and a spec that
+// holds secrets from a person without the capability to reveal them.
+//
+// The gate is a mount's, the capability alone: the backup puts the secrets in a
+// repository, as a mount puts one in a container, and hands the caller nothing
+// in the clear - so the operator's flag on what the API returns does not apply.
+func (uc *UC) checkNewBackup(
+	ctx context.Context,
+	db database.IDB,
+	auth *basedto.Auth,
+	backup *entity.SystemBackup,
+) error {
+	if backup.TargetRepository.ID != "" {
+		repo, err := uc.SettingRepo.GetByID(ctx, db, nil, base.SettingTypeBackupRepo, backup.TargetRepository.ID, false)
+		if err != nil && !errors.Is(err, hperrors.ErrNotFound) {
+			return hperrors.Wrap(err)
+		}
+		if err = checkTargetRepository(repo); err != nil {
+			return hperrors.Wrap(err)
+		}
+	}
+	if !backup.IncludeSpec || !specmodel.SecretsMode(backup.SpecSecrets).RevealsSecrets() {
+		return nil
+	}
+	err := uc.PermissionManager.AuthorizeSecretMount(ctx, db, auth, &permission.RevealSubject{
+		Scope:   base.ObjectScopeGlobal,
+		Source:  base.AuditLogSourceAPIAction,
+		ResType: base.ResourceTypeSetting,
+		ResName: fmt.Sprintf("system backup spec (%s)", backup.SpecSecrets),
+	})
+	return hperrors.Wrap(err)
+}
+
+// checkTargetRepository is a backup repository at the global scope.
+func checkTargetRepository(repo *entity.Setting) error {
+	if repo == nil {
+		return hperrors.NewNotFound("Backup repository")
+	}
+	if repo.Scope != base.ObjectScopeGlobal {
+		return hperrors.NewArgumentInvalid("targetRepository").
+			WithExtraDetail("the system backup goes into a repository of the global scope")
+	}
 	return nil
 }
 

@@ -35,13 +35,15 @@ type GetSystemBackupResp struct {
 
 type SystemBackupResp struct {
 	*settings.BaseSettingResp
-	Schedule       *ScheduleResp                      `json:"schedule"`
-	Compression    *SystemBackupCompressionResp       `json:"compression"`
-	Encryption     *SystemBackupEncryptionResp        `json:"encryption"`
-	CloudStorage   *SystemBackupCloudStorageResp      `json:"cloudStorage"`
-	DBBackupConfig *SystemBackupDBConfigResp          `json:"dbBackupConfig"`
-	Notification   *basedto.BaseEventNotificationResp `json:"notification"`
-	SecretMasked   bool                               `json:"secretMasked,omitempty"`
+	Schedule    *ScheduleResp `json:"schedule"`
+	IncludeDB   bool          `json:"includeDB"`
+	IncludeSpec bool          `json:"includeSpec"`
+	SpecSecrets string        `json:"specSecrets,omitempty"`
+	// SpecPassphrase comes masked once it is stored.
+	SpecPassphrase   string                             `json:"specPassphrase,omitempty"`
+	TargetRepository *settings.BaseSettingResp          `json:"targetRepository,omitempty"`
+	Notification     *basedto.BaseEventNotificationResp `json:"notification"`
+	SecretMasked     bool                               `json:"secretMasked,omitempty"`
 
 	// Calculated fields
 	NextRuns []time.Time `json:"nextRuns"`
@@ -53,36 +55,17 @@ type ScheduleResp struct {
 	InitialTime time.Time         `json:"initialTime"`
 }
 
-type SystemBackupCompressionResp struct {
-	Format base.FileCompressionFormat `json:"format,omitempty"`
-}
-
-type SystemBackupEncryptionResp struct {
-	Format base.FileEncryptionFormat `json:"format,omitempty"`
-	Secret string                    `json:"secret,omitzero"`
-}
-
-func (resp *SystemBackupEncryptionResp) CopySecret(field entity.EncryptedField) error {
-	resp.Secret = field.String()
-	return nil
-}
-
-type SystemBackupCloudStorageResp struct {
-	*settings.BaseSettingResp
-	Bucket         string `json:"bucket,omitempty"`
-	DestinationDir string `json:"destinationDir,omitempty"`
-}
-
-type SystemBackupDBConfigResp struct {
-	BackupDeletedObjects bool `json:"backupDeletedObjects"`
-}
-
 func TransformSystemBackup(
 	setting *entity.Setting,
 	refObjects *entity.RefObjects,
 ) (resp *SystemBackupResp, err error) {
 	config := setting.MustAsSystemBackup()
-	if err = copier.Copy(&resp, config); err != nil {
+	resp = &SystemBackupResp{
+		IncludeDB:   config.IncludeDB,
+		IncludeSpec: config.IncludeSpec,
+		SpecSecrets: config.SpecSecrets,
+	}
+	if err = copier.Copy(&resp.Schedule, &config.Schedule); err != nil {
 		return nil, hperrors.Wrap(err)
 	}
 
@@ -91,25 +74,21 @@ func TransformSystemBackup(
 		return nil, hperrors.Wrap(err)
 	}
 
-	resp.SecretMasked = config.Encryption.Secret.IsEncrypted() || resp.Inherited
-	if resp.SecretMasked {
-		if resp.Encryption != nil {
-			resp.Encryption.Secret = basedto.MaskedSecret
-		}
+	resp.SpecPassphrase = config.SpecPassphrase.String()
+	resp.SecretMasked = config.SpecPassphrase.IsEncrypted() || resp.Inherited
+	if resp.SecretMasked && !config.SpecPassphrase.IsEmpty() {
+		resp.SpecPassphrase = basedto.MaskedSecret
 	}
 
 	if refObjects == nil {
 		refObjects = &entity.RefObjects{}
 	}
-
-	if config.CloudStorage.ID != "" {
-		itemResp, _ := settings.TransformSettingBase(refObjects.RefSettings[config.CloudStorage.ID])
-		if itemResp == nil {
-			itemResp = settings.NewMissingSetting(config.CloudStorage.ID, base.SettingTypeCloudStorage)
+	if config.TargetRepository.ID != "" {
+		repoResp, _ := settings.TransformSettingBase(refObjects.RefSettings[config.TargetRepository.ID])
+		if repoResp == nil {
+			repoResp = settings.NewMissingSetting(config.TargetRepository.ID, base.SettingTypeBackupRepo)
 		}
-		resp.CloudStorage.BaseSettingResp = itemResp
-	} else {
-		resp.CloudStorage = nil
+		resp.TargetRepository = repoResp
 	}
 
 	resp.Notification = basedto.TransformBaseEventNotification(config.Notification, refObjects)

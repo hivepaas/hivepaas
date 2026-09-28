@@ -9,23 +9,13 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
-	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/secrethelper"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/timeutil"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/specservice/specmodel"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings"
 )
 
-var (
-	EncryptionSecretRequirements = secrethelper.SecretStrengthRequirements{
-		MinLen:             secrethelper.DefaultSecretMinLen,
-		MaxLen:             secrethelper.DefaultSecretMaxLen,
-		RequiredLowercases: secrethelper.DefaultSecretRequiredLowercases,
-		RequiredUppercases: secrethelper.DefaultSecretRequiredUppercases,
-		RequiredDigits:     secrethelper.DefaultSecretRequiredDigits,
-		RequiredSpecials:   secrethelper.DefaultSecretRequiredSpecials,
-		MaxSimilarRun:      secrethelper.DefaultSecretMaxSimilarRun,
-		MaxSequenceRun:     secrethelper.DefaultSecretMaxSequenceRun,
-	}
-)
+// specPassphraseMaxLen is as long as a spec export's passphrase may be.
+const specPassphraseMaxLen = 256
 
 type UpdateSystemBackupReq struct {
 	settings.UpdateUniqueSettingReq
@@ -33,24 +23,35 @@ type UpdateSystemBackupReq struct {
 }
 
 type SystemBackupBaseReq struct {
-	Status         base.SettingStatus                `json:"status"`
-	Schedule       ScheduleReq                       `json:"schedule"`
-	Compression    SystemBackupCompressionReq        `json:"compression"`
-	Encryption     SystemBackupEncryptionReq         `json:"encryption"`
-	CloudStorage   SystemBackupCloudStorageReq       `json:"cloudStorage"`
-	DBBackupConfig SystemBackupDBConfigReq           `json:"dbBackupConfig"`
-	Notification   *basedto.BaseEventNotificationReq `json:"notification"`
+	Status   base.SettingStatus `json:"status"`
+	Schedule ScheduleReq        `json:"schedule"`
+	// What goes in: one at least.
+	IncludeDB   bool `json:"includeDB"`
+	IncludeSpec bool `json:"includeSpec"`
+	// SpecSecrets is how the spec holds secrets; SpecPassphrase is required
+	// when they are encrypted.
+	SpecSecrets    specmodel.SecretsMode `json:"specSecrets"`
+	SpecPassphrase string                `json:"specPassphrase"`
+	// TargetRepository is a backup repository at the global scope.
+	TargetRepository basedto.ObjectIDReq               `json:"targetRepository"`
+	Notification     *basedto.BaseEventNotificationReq `json:"notification"`
 }
 
 func (req *SystemBackupBaseReq) ToEntity() *entity.SystemBackup {
-	return &entity.SystemBackup{
-		Schedule:       req.Schedule.ToEntity(),
-		Compression:    req.Compression.ToEntity(),
-		Encryption:     req.Encryption.ToEntity(),
-		CloudStorage:   req.CloudStorage.ToEntity(),
-		DBBackupConfig: req.DBBackupConfig.ToEntity(),
-		Notification:   req.Notification.ToEntity(),
+	backup := &entity.SystemBackup{
+		Schedule:         req.Schedule.ToEntity(),
+		IncludeDB:        req.IncludeDB,
+		IncludeSpec:      req.IncludeSpec,
+		TargetRepository: entity.ObjectID{ID: req.TargetRepository.ID},
+		Notification:     req.Notification.ToEntity(),
 	}
+	if req.IncludeSpec {
+		backup.SpecSecrets = string(req.SpecSecrets)
+		if req.SpecSecrets == specmodel.SecretsModeEncrypted {
+			backup.SpecPassphrase = entity.NewEncryptedField(req.SpecPassphrase)
+		}
+	}
+	return backup
 }
 
 // KeepMaskedSecrets restores the stored values for the secrets the request only
@@ -59,8 +60,8 @@ func (req *SystemBackupBaseReq) KeepMaskedSecrets(backup, current *entity.System
 	if current == nil {
 		return
 	}
-	if basedto.IsMaskedSecret(req.Encryption.Secret) {
-		backup.Encryption.Secret = current.Encryption.Secret
+	if basedto.IsMaskedSecret(req.SpecPassphrase) && backup.SpecSecrets == string(specmodel.SecretsModeEncrypted) {
+		backup.SpecPassphrase = current.SpecPassphrase
 	}
 }
 
@@ -78,81 +79,6 @@ func (req *ScheduleReq) ToEntity() entity.SchedJobSchedule {
 	}
 }
 
-type SystemBackupCompressionReq struct {
-	Format base.FileCompressionFormat `json:"format,omitempty"`
-}
-
-func (req *SystemBackupCompressionReq) ToEntity() entity.SystemBackupCompression {
-	return entity.SystemBackupCompression{
-		Format: req.Format,
-	}
-}
-
-func (req *SystemBackupCompressionReq) validate(field string) (res []vld.Validator) {
-	if field != "" {
-		field += "."
-	}
-	res = append(res, basedto.ValidateStrIn(&req.Format, false,
-		base.AllFileCompressionFormats, field+"format")...)
-	return res
-}
-
-type SystemBackupEncryptionReq struct {
-	Format base.FileEncryptionFormat `json:"format,omitempty"`
-	Secret string                    `json:"secret,omitzero"`
-}
-
-func (req *SystemBackupEncryptionReq) ToEntity() entity.SystemBackupEncryption {
-	return entity.SystemBackupEncryption{
-		Format: req.Format,
-		Secret: entity.NewEncryptedField(req.Secret),
-	}
-}
-
-func (req *SystemBackupEncryptionReq) validate(field string) (res []vld.Validator) {
-	if field != "" {
-		field += "."
-	}
-	res = append(res, basedto.ValidateStrIn(&req.Format, false,
-		base.AllFileEncryptionFormats, field+"format")...)
-	res = append(res, basedto.ValidateStr(&req.Secret, req.Format != "", // required if set
-		1, EncryptionSecretRequirements.MaxLen, field+"secret")...)
-	res = append(res, basedto.ValidatePlainSecret(&req.Secret, field+"secret")...)
-	return res
-}
-
-type SystemBackupCloudStorageReq struct {
-	ID             string `json:"id"`
-	Bucket         string `json:"bucket"`
-	DestinationDir string `json:"destinationDir"`
-}
-
-func (req *SystemBackupCloudStorageReq) ToEntity() entity.SystemBackupCloudStorage {
-	return entity.SystemBackupCloudStorage{
-		ID:             req.ID,
-		Bucket:         req.Bucket,
-		DestinationDir: req.DestinationDir,
-	}
-}
-
-func (req *SystemBackupCloudStorageReq) validate(field string) (res []vld.Validator) {
-	if field != "" {
-		field += "."
-	}
-	res = append(res, basedto.ValidateID(&req.ID, false, field+"id")...)
-	return res
-}
-
-type SystemBackupDBConfigReq struct {
-	BackupDeletedObjects bool `json:"backupDeletedObjects"`
-}
-
-func (req *SystemBackupDBConfigReq) ToEntity() entity.SystemBackupDBConfig {
-	return entity.SystemBackupDBConfig{
-		BackupDeletedObjects: req.BackupDeletedObjects,
-	}
-}
-
 func (req *SystemBackupBaseReq) validate(field string) (res []vld.Validator) {
 	if field != "" {
 		field += "."
@@ -164,9 +90,16 @@ func (req *SystemBackupBaseReq) validate(field string) (res []vld.Validator) {
 	))
 	res = append(res, basedto.ValidateTime(&req.Schedule.InitialTime, true,
 		time.Now().Add(-timeutil.Dur365Days), time.Time{}, field+"schedule.initialTime")...)
-	res = append(res, req.Compression.validate(field+"compression")...)
-	res = append(res, req.Encryption.validate(field+"encryption")...)
-	res = append(res, req.CloudStorage.validate(field+"cloudStorage")...)
+	// A disabled backup is not asked for what it would take, nor where.
+	active := req.Status == base.SettingStatusActive
+	res = append(res, basedto.ValidateCond(!active || req.IncludeDB || req.IncludeSpec, field+"includeDB")...)
+	if req.IncludeSpec {
+		res = append(res, basedto.ValidateStrIn(&req.SpecSecrets, true, specmodel.AllSecretsModes,
+			field+"specSecrets")...)
+		res = append(res, basedto.ValidateStr(&req.SpecPassphrase,
+			req.SpecSecrets == specmodel.SecretsModeEncrypted, 1, specPassphraseMaxLen, field+"specPassphrase")...)
+	}
+	res = append(res, basedto.ValidateObjectIDReq(&req.TargetRepository, active, field+"targetRepository")...)
 	res = append(res, req.Notification.Validate(field+"notification")...)
 	return res
 }

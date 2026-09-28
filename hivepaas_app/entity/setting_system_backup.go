@@ -20,32 +20,38 @@ func (s *systemBackupParser) New() SettingData {
 	return &SystemBackup{}
 }
 
+// SystemBackup is what the system backup takes - HivePaaS's database, the
+// configuration spec of the whole installation, or both - and the backup
+// repository it goes into, one snapshot a run.
 type SystemBackup struct {
-	Schedule       SchedJobSchedule         `json:"schedule"`
-	Compression    SystemBackupCompression  `json:"compression,omitempty"`
-	Encryption     SystemBackupEncryption   `json:"encryption,omitempty"`
-	CloudStorage   SystemBackupCloudStorage `json:"cloudStorage,omitempty"`
-	DBBackupConfig SystemBackupDBConfig     `json:"dbBackupConfig"`
-	Notification   *BaseEventNotification   `json:"notification,omitempty"`
+	Schedule    SchedJobSchedule `json:"schedule"`
+	IncludeDB   bool             `json:"includeDB,omitempty"`
+	IncludeSpec bool             `json:"includeSpec,omitempty"`
+	// SpecSecrets is how the spec holds secrets, a spec export's secrets mode:
+	// encrypted, omit or plaintext. SpecPassphrase is what encrypted uses.
+	SpecSecrets    string         `json:"specSecrets,omitempty"`
+	SpecPassphrase EncryptedField `json:"specPassphrase,omitzero"`
+	// TargetRepository is a backup repository at the global scope.
+	TargetRepository ObjectID               `json:"targetRepository,omitzero"`
+	Notification     *BaseEventNotification `json:"notification,omitempty"`
 }
 
-type SystemBackupCompression struct {
-	Format base.FileCompressionFormat `json:"format,omitempty"`
-}
+// What a system backup's snapshot holds, by name.
+const (
+	SystemBackupIncludeDB   = "database"
+	SystemBackupIncludeSpec = "spec"
+)
 
-type SystemBackupEncryption struct {
-	Format base.FileEncryptionFormat `json:"format,omitempty"`
-	Secret EncryptedField            `json:"secret,omitzero"`
-}
-
-type SystemBackupCloudStorage struct {
-	ID             string `json:"id,omitempty"` // can be S3 setting ID
-	Bucket         string `json:"bucket,omitempty"`
-	DestinationDir string `json:"destinationDir,omitempty"`
-}
-
-type SystemBackupDBConfig struct {
-	BackupDeletedObjects bool `json:"backupDeletedObjects"`
+// Includes is what a run takes, by name.
+func (s *SystemBackup) Includes() []string {
+	var includes []string
+	if s.IncludeDB {
+		includes = append(includes, SystemBackupIncludeDB)
+	}
+	if s.IncludeSpec {
+		includes = append(includes, SystemBackupIncludeSpec)
+	}
+	return includes
 }
 
 func (s *SystemBackup) GetType() base.SettingType {
@@ -54,8 +60,8 @@ func (s *SystemBackup) GetType() base.SettingType {
 
 func (s *SystemBackup) GetRefObjectIDs() *RefObjectIDs {
 	refIDs := &RefObjectIDs{}
-	if s.CloudStorage.ID != "" {
-		refIDs.RefSettingIDs = append(refIDs.RefSettingIDs, s.CloudStorage.ID)
+	if s.TargetRepository.ID != "" {
+		refIDs.RefSettingIDs = append(refIDs.RefSettingIDs, s.TargetRepository.ID)
 	}
 	if s.Notification != nil {
 		refIDs.AddRefIDs(s.Notification.GetRefObjectIDs())
@@ -68,7 +74,7 @@ func (s *SystemBackup) GetResourceLinks(setting *Setting) []*ResLink {
 }
 
 func (s *SystemBackup) Decrypt() error {
-	_, err := s.Encryption.Secret.GetPlain()
+	_, err := s.SpecPassphrase.GetPlain()
 	if err != nil {
 		return hperrors.Wrap(err)
 	}

@@ -1,42 +1,35 @@
 package sysbackupserviceimpl
 
 import (
-	"archive/tar"
-	"compress/gzip"
 	"context"
-	"errors"
-	"io"
+	"fmt"
 	"os"
 	"path/filepath"
 	"time"
 
-	"filippo.io/age"
-	"github.com/klauspost/compress/zstd"
-
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
-	"github.com/hivepaas/hivepaas/hivepaas_app/config"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
-	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/fileutil"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/safego"
-	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/timeutil"
+	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/tasklog"
+	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/unit"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/backupreposervice"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/specservice"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/specservice/specmodel"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/sysbackupservice"
+	"github.com/hivepaas/hivepaas/services/backup"
 )
 
-type sysBackupData struct {
-	*sysbackupservice.SysBackupReq
-	TaskOutput *entity.TaskSystemBackupOutput
-	TimeNow    time.Time
-
-	BackupSaveDir string
-	TempDir       string
-
-	OutFileName   string
-	OutFilePath   string
-	LocalOutFile  *entity.File
-	RemoteOutFile *entity.File
-}
+const (
+	// systemBackupSource is what every system backup is recorded under: the
+	// repository's retention counts it apart from everything else.
+	systemBackupSource = "hivepaas@system-backup:/system"
+	systemBackupTag    = entity.DataBackupTagSource + ":system-backup"
+	// The files of a system backup's snapshot.
+	dbDumpFileName = "db.pg_dump"
+	specFileName   = "spec.tar.gz"
+)
 
 func (s *service) Backup(
 	ctx context.Context,
@@ -45,176 +38,175 @@ func (s *service) Backup(
 ) (resp *sysbackupservice.SysBackupResp, err error) {
 	defer safego.RecoverTo(&err)
 
-	resp = &sysbackupservice.SysBackupResp{}
-	data := &sysBackupData{
-		SysBackupReq: req,
-		TaskOutput: &entity.TaskSystemBackupOutput{
-			DBBackup: &entity.DBBackupOutput{},
-		},
-		TimeNow: timeutil.NowUTC(),
+	start := time.Now()
+	settings := req.SysBackupSettings
+	includes := settings.Includes()
+	if len(includes) == 0 {
+		return nil, hperrors.NewArgumentInvalid("includeDB").WithExtraDetail("the system backup takes nothing")
 	}
-
-	// Backup DB
-	err = s.sysBackup(ctx, db, data)
+	target, err := s.target(ctx, db, settings)
 	if err != nil {
 		return nil, hperrors.Wrap(err)
 	}
 
-	// Assign back the result output
-	data.Task.MustSetOutput(data.TaskOutput)
+	dir, err := s.workDir()
+	if err != nil {
+		return nil, hperrors.Wrap(err)
+	}
+	defer os.RemoveAll(dir)
+	snapshotDir := filepath.Join(dir, "snapshot")
+	if err = os.Mkdir(snapshotDir, base.DirModeDefault); err != nil {
+		return nil, hperrors.Wrap(err)
+	}
 
-	return resp, nil
+	if settings.IncludeDB {
+		logTo(ctx, req, "Dumping the database")
+		if err = s.dumpDB(ctx, filepath.Join(snapshotDir, dbDumpFileName), req.LogStore); err != nil {
+			return nil, hperrors.Wrap(fmt.Errorf("dumping the database: %w", err))
+		}
+	}
+	if settings.IncludeSpec {
+		logTo(ctx, req, "Exporting the spec")
+		if err = s.exportSpec(ctx, db, settings, dir, snapshotDir); err != nil {
+			return nil, hperrors.Wrap(fmt.Errorf("exporting the spec: %w", err))
+		}
+	}
+
+	logTo(ctx, req, "Taking the snapshot")
+	taken, err := s.backupRepoService.BackupLocalDirectory(ctx, db, &backupreposervice.BackupLocalDirectoryReq{
+		RepoTarget: *target, Dir: snapshotDir, Source: systemBackupSource,
+		Description: fmt.Sprintf("System backup (run %s)", req.Task.ID),
+		Tags:        []string{systemBackupTag, entity.DataBackupTagRun + ":" + req.Task.ID},
+		Progress:    func(msg string) { logTo(ctx, req, "%s", msg) },
+	})
+	if err != nil {
+		s.deleteRunSnapshots(context.WithoutCancel(ctx), db, req, target)
+		return nil, hperrors.Wrap(err)
+	}
+	if taken == nil || taken.Snapshot == nil || taken.Snapshot.Snapshot == nil {
+		return nil, hperrors.Wrap(hperrors.ErrInternal).WithMsgLog("the engine named no snapshot")
+	}
+
+	output := &entity.TaskSystemBackupOutput{
+		SnapshotID: taken.Snapshot.Snapshot.ID, SizeBytes: taken.Snapshot.Snapshot.SizeBytes, Includes: includes,
+	}
+	logTo(ctx, req, "Snapshot %s taken: %s in %s", output.SnapshotID, unit.DataSize(output.SizeBytes).String(),
+		time.Since(start).Truncate(time.Second))
+	if err = s.syncSnapshots(ctx, db, target); err != nil {
+		// The snapshot is taken: its record comes with the repository's next sync.
+		_ = req.LogStore.Add(ctx, tasklog.NewWarnFrame(
+			"The repository's snapshot list could not be updated: "+err.Error()+"\n", tasklog.TsNow))
+	}
+	req.Task.MustSetOutput(output)
+	return &sysbackupservice.SysBackupResp{}, nil
 }
 
-func (s *service) sysBackup(
+// target is the repository the backup goes into, which must be active.
+func (s *service) target(
 	ctx context.Context,
 	db database.IDB,
-	data *sysBackupData,
-) (err error) {
-	defer func() {
-		if err != nil {
-			data.TaskOutput.DBBackup.Error = err.Error()
-		}
-	}()
-
-	data.TempDir, err = fileutil.CreateTempDirInAppPath("", "sys-backup-*", 0)
+	settings *entity.SystemBackup,
+) (*backupreposervice.RepoTarget, error) {
+	repo, err := s.settingRepo.GetByID(ctx, db, nil, base.SettingTypeBackupRepo, settings.TargetRepository.ID, true)
 	if err != nil {
-		return hperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
-	defer os.RemoveAll(data.TempDir)
-
-	bakTmpFile, tarW, closer, err := s.sysBackupCreateWriter(data)
+	scope, err := s.repoScope(ctx, db, repo)
 	if err != nil {
-		return hperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
-	defer func() {
-		if closer != nil {
-			_ = closer()
-		}
-	}()
-
-	// Start the data backup
-	err = s.sysBackupDB(ctx, tarW, data)
-	if err != nil {
-		return hperrors.Wrap(err)
-	}
-
-	err = s.sysBackupFiles(ctx, tarW, data)
-	if err != nil {
-		return hperrors.Wrap(err)
-	}
-
-	_ = closer() // Flush data in writers
-	closer = nil
-
-	// Save the result in a local file
-	err = s.sysBackupSaveResultInLocal(ctx, db, bakTmpFile, data)
-	if err != nil {
-		return hperrors.Wrap(err)
-	}
-
-	// Upload backup file to cloud storage if configured
-	err = s.sysBackupSaveResultInStorage(ctx, db, data)
-	if err != nil {
-		return hperrors.Wrap(err)
-	}
-
-	return nil
+	return &backupreposervice.RepoTarget{Scope: scope, RepoSetting: repo}, nil
 }
 
-//nolint:gocognit
-func (s *service) sysBackupCreateWriter(
-	data *sysBackupData,
-) (tmpFileName string, tarW *tar.Writer, closer func() error, err error) {
-	// Make sure the backup directory exist
-	data.BackupSaveDir = config.Current().DataPathSystemBackupFiles().AbsPath()
-
-	err = os.MkdirAll(data.BackupSaveDir, base.DirModeDefault)
+// exportSpec exports the whole installation's spec into snapshotDir, as the
+// export names it: spec.tar.gz, and .age after it when it is encrypted.
+func (s *service) exportSpec(
+	ctx context.Context,
+	db database.IDB,
+	settings *entity.SystemBackup,
+	dir, snapshotDir string,
+) error {
+	workDir := filepath.Join(dir, "spec-work")
+	if err := os.Mkdir(workDir, base.DirModeDefault); err != nil {
+		return hperrors.Wrap(err)
+	}
+	mode := specmodel.SecretsMode(settings.SpecSecrets)
+	passphrase := ""
+	if mode == specmodel.SecretsModeEncrypted {
+		var err error
+		if passphrase, err = settings.SpecPassphrase.GetPlain(); err != nil {
+			return hperrors.Wrap(err)
+		}
+	}
+	exported, err := s.specService.Export(ctx, db, &specservice.ExportReq{
+		Scope: &entity.ObjectScope{ScopeType: base.ObjectScopeGlobal}, SecretsMode: mode, Passphrase: passphrase,
+		WorkDir: workDir,
+	})
 	if err != nil {
-		return "", nil, nil, hperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
+	name := specFileName
+	if filepath.Ext(exported.Filename) == ".age" {
+		name += ".age"
+	}
+	return hperrors.Wrap(os.Rename(exported.Path, filepath.Join(snapshotDir, name)))
+}
 
-	tmpFileName = filepath.Join(data.TempDir, "sys-backup")
-	tmpFile, err := os.Create(tmpFileName)
+// deleteRunSnapshots deletes what a failed run left in the repository: the
+// snapshots tagged with the run.
+func (s *service) deleteRunSnapshots(
+	ctx context.Context,
+	db database.IDB,
+	req *sysbackupservice.SysBackupReq,
+	target *backupreposervice.RepoTarget,
+) {
+	repo, err := target.RepoSetting.AsBackupRepo()
 	if err != nil {
-		return "", nil, nil, hperrors.Wrap(err)
+		return
 	}
-
-	var w io.Writer
-	var encW, gzW io.WriteCloser
-	var zstdW *zstd.Encoder
-	w = tmpFile
-
-	switch data.SysBackupSettings.Encryption.Format {
-	case base.FileEncryptionFormatAge:
-		encSecret, err := data.SysBackupSettings.Encryption.Secret.GetPlain()
-		if err != nil {
-			return "", nil, nil, hperrors.Wrap(err)
-		}
-		if encSecret == "" {
-			return "", nil, nil, hperrors.NewMissing("Encryption secret")
-		}
-		recipient, err := age.NewScryptRecipient(encSecret)
-		if err != nil {
-			return "", nil, nil, hperrors.Wrap(err)
-		}
-		encW, err = age.Encrypt(w, recipient)
-		if err != nil {
-			return "", nil, nil, hperrors.Wrap(err)
-		}
-		w = encW
-	case base.FileEncryptionNone: // Do nothing
-	default:
-		return "", nil, nil, hperrors.Wrap(hperrors.ErrEncryptionFormatUnsupported).
-			WithParam("Format", data.SysBackupSettings.Encryption.Format)
+	listed, err := s.backupRepoService.ListSnapshots(ctx, db, &backupreposervice.ListSnapshotsReq{
+		Scope: target.Scope, Repo: repo, RepoID: target.RepoSetting.ID,
+		Options: &backup.ListSnapshotsOptions{Tags: []string{entity.DataBackupTagRun + ":" + req.Task.ID}},
+	})
+	if err != nil {
+		_ = req.LogStore.Add(ctx, tasklog.NewWarnFrame(
+			"Could not look for a partial snapshot to delete: "+err.Error()+"\n", tasklog.TsNow))
+		return
 	}
-
-	switch data.SysBackupSettings.Compression.Format {
-	case base.FileCompressionFormatGzip:
-		gzW = gzip.NewWriter(w)
-		w = gzW
-	case base.FileCompressionFormatZstd:
-		zstdW, err = zstd.NewWriter(w)
+	for _, item := range listed.Snapshots {
+		if item.Snapshot == nil {
+			continue
+		}
+		err = s.backupRepoService.DeleteSnapshot(ctx, db, &backupreposervice.DeleteSnapshotReq{
+			RepoTarget: *target, SnapshotID: item.Snapshot.ID,
+		})
 		if err != nil {
-			return "", nil, nil, hperrors.Wrap(err)
+			_ = req.LogStore.Add(ctx, tasklog.NewWarnFrame(
+				fmt.Sprintf("Could not delete the partial snapshot %s: %v\n", item.Snapshot.ID, err), tasklog.TsNow))
+			continue
 		}
-		w = zstdW
-	case base.FileCompressionNone: // Do nothing
-	case base.FileCompressionFormatZip, base.FileCompressionFormatTar:
-		fallthrough
-	default:
-		return "", nil, nil, hperrors.Wrap(hperrors.ErrArchiveFormatUnsupported).
-			WithParam("Format", data.SysBackupSettings.Compression.Format)
+		logTo(ctx, req, "Deleted the partial snapshot %s", item.Snapshot.ID)
 	}
+}
 
-	tarW = tar.NewWriter(w)
-
-	closer = func() (err error) {
-		if tarW != nil {
-			if e := tarW.Close(); e != nil {
-				err = errors.Join(err, e)
-			}
-		}
-		if gzW != nil {
-			if e := gzW.Close(); e != nil {
-				err = errors.Join(err, e)
-			}
-		}
-		if zstdW != nil {
-			if e := zstdW.Close(); e != nil {
-				err = errors.Join(err, e)
-			}
-		}
-		if encW != nil {
-			if e := encW.Close(); e != nil {
-				err = errors.Join(err, e)
-			}
-		}
-		if e := tmpFile.Close(); e != nil {
-			err = errors.Join(err, e)
-		}
-		return err
+// syncSnapshots makes the repository's snapshot list match what it now holds.
+func (s *service) syncSnapshots(ctx context.Context, db database.Tx, target *backupreposervice.RepoTarget) error {
+	repo, err := target.RepoSetting.AsBackupRepo()
+	if err != nil {
+		return hperrors.Wrap(err)
 	}
+	listed, err := s.backupRepoService.ListSnapshots(ctx, db, &backupreposervice.ListSnapshotsReq{
+		Scope: target.Scope, Repo: repo, RepoID: target.RepoSetting.ID,
+	})
+	if err != nil {
+		return hperrors.Wrap(err)
+	}
+	_, err = s.backupRepoService.SyncRepoSnapshots(ctx, db, &backupreposervice.SyncRepoSnapshotsReq{
+		Scope: target.Scope, RepoSetting: target.RepoSetting, Remaining: listed.Snapshots,
+	})
+	return hperrors.Wrap(err)
+}
 
-	return tmpFileName, tarW, closer, nil
+func logTo(ctx context.Context, req *sysbackupservice.SysBackupReq, format string, args ...any) {
+	_ = req.LogStore.Add(ctx, tasklog.NewOutFrame(fmt.Sprintf(format, args...)+"\n", tasklog.TsNow))
 }

@@ -14,6 +14,7 @@ import {
     mapCommandToFormInput,
     mapSourceCommandToPayload,
 } from "~/projects/module-shared/components";
+import { PROJECT_FORM_CONTROL_MAX_WIDTH_CLASS } from "~/projects/module-shared/constants";
 import type { BackupSnapshot_Restore_Payload } from "~/settings/api/services";
 import { BackupSnapshotCommands } from "~/settings/data/commands";
 import { BackupSnapshotQueries } from "~/settings/data/queries";
@@ -44,7 +45,8 @@ import { BackupSnapshotRestoreTarget, type RestoreTarget } from "./backup-snapsh
 import { restoreKindNeedsListing, restoreKindOf, snapshotListRoute } from "./backup-snapshot-restore.helpers";
 
 const TITLE_WIDTH = 220;
-const CONTROL_CLASS = "max-w-[520px]";
+/** The form controls' width, as the project forms have it. */
+const CONTROL_CLASS = PROJECT_FORM_CONTROL_MAX_WIDTH_CLASS;
 const RESTORE_COMMAND_EXAMPLE = "psql -U $POSTGRES_USER $POSTGRES_DB";
 
 interface VolumeOption extends Record<string, unknown> {

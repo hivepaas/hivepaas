@@ -5,8 +5,10 @@ import (
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
+	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/copier"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/projecthelper"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings"
+	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings/commandtemplateuc/commandtemplatedto"
 )
 
 // BackupSnapshotResp is a snapshot a repository holds, with where it came from.
@@ -32,17 +34,24 @@ type BackupSnapshotResp struct {
 
 // SnapshotAppResp is the app a snapshot is of; Deleted when it is gone.
 type SnapshotAppResp struct {
-	ID      string `json:"id"`
-	Name    string `json:"name,omitempty"`
-	Env     string `json:"env,omitempty"`
-	Deleted bool   `json:"deleted,omitempty"`
+	ID        string `json:"id"`
+	Name      string `json:"name,omitempty"`
+	ProjectID string `json:"projectId,omitempty"`
+	Env       string `json:"env,omitempty"`
+	Deleted   bool   `json:"deleted,omitempty"`
 }
 
-// SnapshotJobResp is the job that took a snapshot; Deleted when it is gone.
+// SnapshotJobResp is the job that took a snapshot; Deleted when it is gone. It
+// says what a restore needs of it: the file a command's snapshot holds and the
+// command that loads it, or the volume a volume's was read from.
 type SnapshotJobResp struct {
-	ID      string `json:"id"`
-	Name    string `json:"name,omitempty"`
-	Deleted bool   `json:"deleted,omitempty"`
+	ID                  string                                  `json:"id"`
+	Name                string                                  `json:"name,omitempty"`
+	Deleted             bool                                    `json:"deleted,omitempty"`
+	FileName            string                                  `json:"fileName,omitempty"`
+	RestoreCommand      *commandtemplatedto.CommandTemplateResp `json:"restoreCommand,omitempty"`
+	SourceVolumeID      string                                  `json:"sourceVolumeId,omitempty"`
+	SourceVolumeSubpath string                                  `json:"sourceVolumeSubpath,omitempty"`
 }
 
 // SnapshotRefs are what snapshots name, by ID.
@@ -90,17 +99,27 @@ func TransformBackupSnapshot(record *entity.Setting, tags []string, refs *Snapsh
 		resp.App = &SnapshotAppResp{ID: parsed.AppID, Deleted: true}
 		if app := refs.Apps[parsed.AppID]; app != nil && app.DeletedAt.IsZero() {
 			_, env := projecthelper.ParseProjectEnvID(app.ProjectEnvID)
-			resp.App = &SnapshotAppResp{ID: app.ID, Name: app.Name, Env: env}
+			resp.App = &SnapshotAppResp{ID: app.ID, Name: app.Name, ProjectID: app.ProjectID, Env: env}
 		}
 	}
 	if parsed.JobID != "" {
 		resp.Job = &SnapshotJobResp{ID: parsed.JobID, Deleted: true}
 		if job := refs.Jobs[parsed.JobID]; job != nil && job.DeletedAt.IsZero() {
 			resp.Job = &SnapshotJobResp{ID: job.ID, Name: job.Name}
-			// A snapshot taken before the source tag: its job says.
-			if resp.Source == "" {
-				if schedJob, _ := job.AsSchedJob(); schedJob != nil && schedJob.DataBackup != nil {
-					resp.Source = schedJob.DataBackup.Source
+			if schedJob, _ := job.AsSchedJob(); schedJob != nil && schedJob.DataBackup != nil {
+				dataBackup := schedJob.DataBackup
+				// A snapshot taken before the source tag: its job says.
+				if resp.Source == "" {
+					resp.Source = dataBackup.Source
+				}
+				resp.Job.FileName = dataBackup.SourceFileName
+				resp.Job.SourceVolumeID = dataBackup.SourceVolume.ID
+				resp.Job.SourceVolumeSubpath = dataBackup.SourceVolumeSubpath
+				if dataBackup.RestoreCommand != nil {
+					_ = copier.Copy(&resp.Job.RestoreCommand, dataBackup.RestoreCommand)
+					// The job's form writes a script inline: one a setting holds is not
+					// loaded here, and the restore asks for it again.
+					commandtemplatedto.TransformScript(&dataBackup.RestoreCommand.Script, nil, resp.Job.RestoreCommand)
 				}
 			}
 		}

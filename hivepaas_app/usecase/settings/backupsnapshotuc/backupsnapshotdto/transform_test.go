@@ -26,7 +26,7 @@ func refs() *SnapshotRefs {
 	return &SnapshotRefs{
 		Repos: map[string]*entity.Setting{"r1": {ID: "r1", Name: "s3", Type: base.SettingTypeBackupRepo,
 			Status: base.SettingStatusActive}},
-		Apps: map[string]*entity.App{"a1": {ID: "a1", Name: "web", ProjectEnvID: "p1:dev"}},
+		Apps: map[string]*entity.App{"a1": {ID: "a1", Name: "web", ProjectID: "p1", ProjectEnvID: "p1:dev"}},
 		Jobs: map[string]*entity.Setting{"j1": job},
 	}
 }
@@ -43,7 +43,7 @@ func TestTransformBackupSnapshot(t *testing.T) {
 	assert.Equal(t, "k1", resp.ShortID)
 	assert.Equal(t, int64(42), resp.SizeBytes)
 	assert.Equal(t, "s3", resp.Repo.Name)
-	assert.Equal(t, &SnapshotAppResp{ID: "a1", Name: "web", Env: "dev"}, resp.App)
+	assert.Equal(t, &SnapshotAppResp{ID: "a1", Name: "web", ProjectID: "p1", Env: "dev"}, resp.App)
 	assert.Equal(t, "nightly", resp.Job.Name)
 	assert.Equal(t, "t1", resp.RunID)
 	assert.Equal(t, base.SchedJobDataBackupSourceVolume, resp.Source, "from the job: no source tag")
@@ -66,4 +66,26 @@ func TestTransformBackupSnapshotOfWhatIsGone(t *testing.T) {
 	plain := TransformBackupSnapshot(snapshotRecord(t, "s2"), []string{"env:prod"}, refs())
 	assert.Nil(t, plain.App)
 	assert.Nil(t, plain.Job)
+}
+
+var entityJobWithRestore = entity.SchedJob{JobType: base.SchedJobTypeDataBackup,
+	DataBackup: &entity.SchedJobDataBackup{
+		Source:        base.SchedJobDataBackupSourceCommand,
+		SourceCommand: &entity.CommandTemplate{Command: "pg_dump app"},
+		RestoreCommand: &entity.CommandTemplate{Command: "psql app",
+			Script: entity.ObjectValue{Value: "set -e\npsql app"}},
+		SourceFileName: "db.sql",
+	}}
+
+// A volume's job says where it read from: a restore puts it back there.
+func TestTransformBackupSnapshotGivesItsJobsVolume(t *testing.T) {
+	refs := refs()
+	refs.Jobs["j1"].MustSetData(&entity.SchedJob{JobType: base.SchedJobTypeDataBackup,
+		DataBackup: &entity.SchedJobDataBackup{Source: base.SchedJobDataBackupSourceVolume,
+			SourceVolume: entity.ObjectID{ID: "vol1"}, SourceVolumeSubpath: "data"}})
+
+	resp := TransformBackupSnapshot(snapshotRecord(t, "s1"), []string{"hivepaas.job:j1"}, refs)
+
+	assert.Equal(t, "vol1", resp.Job.SourceVolumeID)
+	assert.Equal(t, "data", resp.Job.SourceVolumeSubpath)
 }

@@ -38,4 +38,6 @@ export const QK = {
     "settings.app-placement-settings.find-one": "settings.app-placement-settings.find-one",
     "settings.backup-repos.find-many-paginated": "settings.backup-repos.find-many-paginated",
     "settings.backup-repos.find-one-by-id": "settings.backup-repos.find-one-by-id",
+    "settings.backup-snapshots.find-many-paginated": "settings.backup-snapshots.find-many-paginated",
+    "settings.backup-snapshots.find-one-by-id": "settings.backup-snapshots.find-one-by-id",
 } as const;

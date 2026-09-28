@@ -50,6 +50,7 @@ export {
     SettingsImageBuildRoute,
     SettingsAppPlacementRoute,
     SettingsBackupReposRoute,
+    SettingsBackupSnapshotsRoute,
     SettingsBackupRepoCreateRoute,
     SettingsBackupRepoEditRoute,
     SettingsDataBackupActionsRoute,

@@ -20,3 +20,4 @@ export * from "./oauth.entity";
 export * from "./github-app.entity";
 export * from "./repo-webhook.entity";
 export * from "./backup-repo.entity";
+export * from "./backup-snapshot.entity";

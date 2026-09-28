@@ -19,3 +19,4 @@ export * from "./use-oauth.api";
 export * from "./use-github-app.api";
 export * from "./use-repo-webhook.api";
 export * from "./use-backup-repo.api";
+export * from "./use-backup-snapshot.api";

@@ -58,3 +58,4 @@ export * from "./settings-form-cancel-action";
 export * from "./settings-form-route-header";
 export * from "./confirm-reveal-secrets-dialog";
 export * from "./reveal-secrets-button";
+export * from "./backup-snapshot-table";

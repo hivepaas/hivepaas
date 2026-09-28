@@ -6,6 +6,7 @@ export * from "./routing-settings";
 
 export * from "./periodic-jobs";
 export * from "./scheduled-jobs";
+export * from "./backup-snapshots";
 export * from "./env-variables";
 export * from "./app-clone";
 export * from "./feature-settings";

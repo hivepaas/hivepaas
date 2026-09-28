@@ -1025,6 +1025,14 @@ export const projectsRouter: RouteObject = {
                             },
                         },
                         {
+                            path: ROUTE.projects.single.providerConfiguration.backupSnapshots.$pattern,
+                            lazy: async () => {
+                                const { ProjectBackupSnapshotsRoute } = await getLazyComponents();
+
+                                return { Component: ProjectBackupSnapshotsRoute };
+                            },
+                        },
+                        {
                             path: ROUTE.projects.single.providerConfiguration.backupRepos.$pattern,
                             lazy: async () => {
                                 const { ProjectBackupReposRoute } = await getLazyComponents();
@@ -1791,6 +1799,14 @@ export const projectsRouter: RouteObject = {
                                 const { AppPeriodicJobHealthCheckEditRoute } = await getLazyComponents();
 
                                 return { Component: AppPeriodicJobHealthCheckEditRoute };
+                            },
+                        },
+                        {
+                            path: ROUTE.projects.single.apps.single.configuration.backupSnapshots.$pattern,
+                            lazy: async () => {
+                                const { AppBackupSnapshotsRoute } = await getLazyComponents();
+
+                                return { Component: AppBackupSnapshotsRoute };
                             },
                         },
                         {

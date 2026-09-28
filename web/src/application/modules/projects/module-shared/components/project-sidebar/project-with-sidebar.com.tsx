@@ -16,6 +16,7 @@ import {
     Globe,
     Hammer,
     HardDrive,
+    History,
     KeyRound,
     KeySquare,
     Layers,
@@ -226,6 +227,11 @@ function createProviderConfigurationSections(projectId: string): ProviderTabSect
                     label: "Backup Repos",
                     icon: Archive,
                     route: ROUTE.projects.single.providerConfiguration.backupRepos.$route(projectId),
+                },
+                {
+                    label: "Backup Snapshots",
+                    icon: History,
+                    route: ROUTE.projects.single.providerConfiguration.backupSnapshots.$route(projectId),
                 },
                 {
                     label: "Scheduled Jobs",

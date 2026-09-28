@@ -9,6 +9,8 @@ import {
     AppPlacementSettingsApiValidator,
     BackupRepoApi,
     BackupRepoApiValidator,
+    BackupSnapshotApi,
+    BackupSnapshotApiValidator,
     BasicAuthApi,
     BasicAuthApiValidator,
     CloudStorageApi,
@@ -93,6 +95,7 @@ function createApi() {
             imageBuildSettings: new ImageBuildSettingsApi(imageBuildSettingsValidator),
             appPlacementSettings: new AppPlacementSettingsApi(appPlacementSettingsValidator),
             backupRepo: new BackupRepoApi(new BackupRepoApiValidator()),
+            backupSnapshot: new BackupSnapshotApi(new BackupSnapshotApiValidator()),
         },
     };
 }

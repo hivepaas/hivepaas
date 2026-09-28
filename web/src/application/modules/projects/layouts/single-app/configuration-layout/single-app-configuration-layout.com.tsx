@@ -15,6 +15,7 @@ import {
     FolderTree,
     Globe,
     HardDrive,
+    History,
     KeyRound,
     Layers,
     type LucideIcon,
@@ -224,6 +225,15 @@ function View({ children }: PropsWithChildren) {
                         label: "Scheduled Jobs",
                         icon: CalendarClock,
                         route: ROUTE.projects.single.apps.single.configuration.scheduledJobs.$route(
+                            projectId,
+                            env,
+                            appId,
+                        ),
+                    },
+                    {
+                        label: "Backup Snapshots",
+                        icon: History,
+                        route: ROUTE.projects.single.apps.single.configuration.backupSnapshots.$route(
                             projectId,
                             env,
                             appId,

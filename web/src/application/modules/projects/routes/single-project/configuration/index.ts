@@ -18,6 +18,7 @@ export * from "./cloud-storages";
 export * from "./command-pipes";
 export * from "./command-templates";
 export * from "./backup-repos";
+export * from "./backup-snapshots";
 export * from "./notification-targets";
 export * from "./build-settings";
 export * from "./domain-settings";

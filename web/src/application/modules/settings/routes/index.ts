@@ -16,6 +16,7 @@ export * from "./notification-targets";
 export * from "./image-build";
 export * from "./app-placement";
 export * from "./backup-repos";
+export * from "./backup-snapshots";
 export * from "./data-backup";
 export * from "./data-cleanup";
 export * from "./ssl-renewal";

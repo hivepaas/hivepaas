@@ -48,9 +48,6 @@ const (
 
 	// File kinds of type `cache`, `tmp`
 	FileKindSourceCode FileKind = "source-code"
-
-	// File kinds of type `system`
-	FileKindSystemBackup FileKind = "system-backup"
 )
 
 var (
@@ -58,8 +55,6 @@ var (
 		FileKindBackupMysql, FileKindBackupPostgres, FileKindBackupRedis, FileKindBackupSqlServer}
 
 	AllFileCacheKinds = []FileKind{FileKindSourceCode}
-
-	AllFileSystemBackupKinds = []FileKind{FileKindSystemBackup}
 )
 
 type FileStorageType string

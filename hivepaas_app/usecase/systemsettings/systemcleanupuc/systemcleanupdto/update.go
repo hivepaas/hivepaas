@@ -23,7 +23,6 @@ type SystemCleanupBaseReq struct {
 	Schedule          ScheduleReq                       `json:"schedule"`
 	DBObjectRetention DBObjectRetentionReq              `json:"dbObjectRetention"`
 	ClusterCleanup    SystemClusterCleanupReq           `json:"clusterCleanup"`
-	BackupCleanup     SystemBackupCleanupReq            `json:"backupCleanup"`
 	CacheCleanup      SystemCacheCleanupReq             `json:"cacheCleanup"`
 	FileCleanup       SystemFileCleanupReq              `json:"fileCleanup"`
 	Notification      *basedto.BaseEventNotificationReq `json:"notification"`
@@ -34,7 +33,6 @@ func (req *SystemCleanupBaseReq) ToEntity() *entity.SystemCleanup {
 		Schedule:          req.Schedule.ToEntity(),
 		DBObjectRetention: req.DBObjectRetention.ToEntity(),
 		ClusterCleanup:    req.ClusterCleanup.ToEntity(),
-		BackupCleanup:     req.BackupCleanup.ToEntity(),
 		CacheCleanup:      req.CacheCleanup.ToEntity(),
 		FileCleanup:       req.FileCleanup.ToEntity(),
 		Notification:      req.Notification.ToEntity(),
@@ -54,7 +52,6 @@ func (req *SystemCleanupBaseReq) validate(field string) (res []vld.Validator) {
 		time.Now().Add(-timeutil.Dur365Days), time.Time{}, field+"schedule.initialTime")...)
 	res = append(res, req.DBObjectRetention.validate(field+"dbObjectRetention")...)
 	res = append(res, req.ClusterCleanup.validate(field+"clusterCleanup")...)
-	res = append(res, req.BackupCleanup.validate(field+"backupCleanup")...)
 	res = append(res, req.CacheCleanup.validate(field+"cacheCleanup")...)
 	res = append(res, req.FileCleanup.validate(field+"fileCleanup")...)
 	res = append(res, req.Notification.Validate(field+"notification")...)
@@ -139,36 +136,6 @@ func (req *SystemClusterCleanupReq) ToEntity() entity.SystemClusterCleanup {
 
 func (req *SystemClusterCleanupReq) validate(_ string) []vld.Validator {
 	return nil
-}
-
-type SystemBackupCleanupReq struct {
-	Enabled              bool              `json:"enabled"`
-	CloudBackupRetention timeutil.Duration `json:"cloudBackupRetention"`
-	LocalBackupRetention timeutil.Duration `json:"localBackupRetention"`
-}
-
-func (req *SystemBackupCleanupReq) ToEntity() entity.SystemBackupCleanup {
-	return entity.SystemBackupCleanup{
-		Enabled:              req.Enabled,
-		CloudBackupRetention: req.CloudBackupRetention,
-		LocalBackupRetention: req.LocalBackupRetention,
-	}
-}
-
-func (req *SystemBackupCleanupReq) validate(field string) (res []vld.Validator) {
-	if !req.Enabled {
-		return nil
-	}
-	if field != "" {
-		field += "."
-	}
-	durValid := req.CloudBackupRetention >= 0 && req.LocalBackupRetention >= 0
-	res = append(res, vld.Must(durValid).OnError(
-		vld.SetField(field+"duration values", nil),
-		vld.SetCustomKey("ERR_VLD_VALUE_MUST_GREATER_THAN"),
-		vld.SetParam("Min", 0),
-	))
-	return res
 }
 
 type SystemCacheCleanupReq struct {

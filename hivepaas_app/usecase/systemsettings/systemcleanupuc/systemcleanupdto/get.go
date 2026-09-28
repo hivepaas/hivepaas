@@ -37,7 +37,6 @@ type SystemCleanupResp struct {
 	Schedule          *ScheduleResp                      `json:"schedule"`
 	DBObjectRetention *DBObjectRetentionResp             `json:"dbObjectRetention"`
 	ClusterCleanup    *SystemClusterCleanupResp          `json:"clusterCleanup"`
-	BackupCleanup     *SystemBackupCleanupResp           `json:"backupCleanup"`
 	CacheCleanup      *SystemCacheCleanupResp            `json:"cacheCleanup"`
 	FileCleanup       *SystemFileCleanupResp             `json:"fileCleanup"`
 	Notification      *basedto.BaseEventNotificationResp `json:"notification"`
@@ -70,12 +69,6 @@ type SystemClusterCleanupResp struct {
 	PruneNetworks       bool              `json:"pruneNetworks"`
 	PruneContainers     bool              `json:"pruneContainers"`
 	PruneBuildCache     bool              `json:"pruneBuildCache"`
-}
-
-type SystemBackupCleanupResp struct {
-	Enabled              bool              `json:"enabled"`
-	CloudBackupRetention timeutil.Duration `json:"cloudBackupRetention"`
-	LocalBackupRetention timeutil.Duration `json:"localBackupRetention"`
 }
 
 type SystemCacheCleanupResp struct {

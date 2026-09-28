@@ -3,7 +3,6 @@ package entity
 type TaskSystemCleanupOutput struct {
 	DBCleanup      *DBCleanupOutput      `json:"dbCleanup"`
 	ClusterCleanup *ClusterCleanupOutput `json:"clusterCleanup"`
-	BackupCleanup  *BackupCleanupOutput  `json:"backupCleanup"`
 	CacheCleanup   *CacheCleanupOutput   `json:"cacheCleanup"`
 	FileCleanup    *FileCleanupOutput    `json:"fileCleanup"`
 }
@@ -42,12 +41,6 @@ type ClusterNodeCleanupOutput struct {
 	BuildCachesDeleted    int    `json:"buildCachesDeleted"`
 	BuildCachesPruneError string `json:"buildCachesPruneError,omitempty"`
 	SpaceReclaimed        uint64 `json:"spaceReclaimed"`
-}
-
-type BackupCleanupOutput struct {
-	Error               string `json:"error,omitempty"`
-	LocalBackupsDeleted int    `json:"localBackupsDeleted"`
-	CloudBackupsDeleted int    `json:"cloudBackupsDeleted"`
 }
 
 type CacheCleanupOutput struct {

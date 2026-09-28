@@ -22,8 +22,6 @@ const (
 	sysCleanupMaxRetry      = 1
 	sysCleanupRetryDelay    = timeutil.Duration(time.Second * 30)
 
-	sysCleanupBackupRetention = timeutil.Duration(timeutil.Day * 30)
-
 	dbObjectRetentionOfTasks          = timeutil.Duration(timeutil.Day * 90)
 	dbObjectRetentionOfSysErrors      = timeutil.Duration(timeutil.Day * 90)
 	dbObjectRetentionOfAuditLogs      = timeutil.Duration(timeutil.Day * 90)
@@ -74,11 +72,6 @@ func (s *service) initDefaultSystemCleanup(
 			PruneNetworks:       true,
 			PruneContainers:     true,
 			PruneBuildCache:     true,
-		},
-		BackupCleanup: entity.SystemBackupCleanup{
-			Enabled:              true,
-			LocalBackupRetention: sysCleanupBackupRetention,
-			CloudBackupRetention: sysCleanupBackupRetention,
 		},
 		CacheCleanup: entity.SystemCacheCleanup{
 			Enabled:            true,

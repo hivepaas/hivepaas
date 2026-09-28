@@ -137,13 +137,6 @@ func (cfg *Config) DataPathTraefikEtcDynamic() LocalPath {
 
 /// SYSTEM BACKUP
 
-func (cfg *Config) DataPathSystemBackup() LocalPath {
-	return LocalPath(filepath.Join("system", "backup"))
-}
-func (cfg *Config) DataPathSystemBackupFiles() LocalPath {
-	return cfg.DataPathSystemBackup().Join("files")
-}
-
 /// SYSTEM UPDATE
 
 func (cfg *Config) DataPathSystemUpdate() LocalPath {
@@ -180,8 +173,7 @@ func (cfg *Config) DataPathsToInitAtStartup() map[string]os.FileMode {
 
 		cfg.DataPathTraefikEtcDynamic().AbsPath(): base.DirModeDefault,
 
-		cfg.DataPathSystemBackupFiles().AbsPath(): base.DirModeDefault,
-		cfg.DataPathSystemCacheRepos().AbsPath():  base.DirModeDefault,
-		cfg.DataPathFiles().AbsPath():             base.DirModeDefault,
+		cfg.DataPathSystemCacheRepos().AbsPath(): base.DirModeDefault,
+		cfg.DataPathFiles().AbsPath():            base.DirModeDefault,
 	}
 }

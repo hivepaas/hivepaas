@@ -61,12 +61,6 @@ func (s *HTTPServer) registerSystemRoutes(apiGroup *gin.RouterGroup) {
 		backupGroup.GET("", systemSettingsHandler.GetBackupSettings)
 		backupGroup.PUT("", systemSettingsHandler.UpdateBackupSettings)
 		backupGroup.POST("/exec", systemSettingsHandler.ExecuteBackup)
-
-		// Backup files
-		backupGroup.GET("/files", systemSettingsHandler.ListBackupFiles)
-		backupGroup.GET("/files/:fileID", systemSettingsHandler.GetBackupFile)
-		backupGroup.GET("/files/:fileID/download", systemSettingsHandler.DownloadBackupFile)
-		backupGroup.DELETE("/files/:fileID", systemSettingsHandler.DeleteBackupFile)
 	}
 
 	{ // SSL renewal group

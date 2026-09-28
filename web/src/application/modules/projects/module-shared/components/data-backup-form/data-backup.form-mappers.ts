@@ -1,5 +1,9 @@
 import type { AppScheduledJobs_Command_Payload, AppScheduledJobs_Upsert_Payload } from "~/projects/api/services";
-import { APP_SCHEDULED_JOB_DEFAULT_CONSOLE_SIZE, type AppScheduledJob } from "~/projects/domain";
+import {
+    APP_SCHEDULED_JOB_DEFAULT_CONSOLE_SIZE,
+    type AppScheduledJob,
+    type AppScheduledJobCommand,
+} from "~/projects/domain";
 import {
     EAppScheduledJobScheduleMode,
     EAppScheduledJobTaskPriority,
@@ -43,6 +47,7 @@ export function createEmptyDataBackupFormDefaults(): DataBackupFormInput {
         source: ESchedJobDataBackupSource.Command,
         sourceCommand: emptySourceCommand(),
         sourceFileName: "",
+        restoreCommand: emptySourceCommand(),
         sourceVolume: null,
         sourceVolumeSubpath: "",
         targetRepository: null,
@@ -67,29 +72,36 @@ function refName(ref: { name: string; status: string }, deleted: string): string
     return ref.status === ESettingStatus.Missing ? deleted : ref.name;
 }
 
+/** A job's command as the command section edits it; an empty one for none. */
+function mapCommandToFormInput(
+    command: AppScheduledJobCommand | null | undefined,
+): DataBackupFormInput["sourceCommand"] {
+    if (!command) {
+        return emptySourceCommand();
+    }
+    const { script } = command;
+    return {
+        commandMode: script.trim().length > 0 ? DATA_BACKUP_COMMAND_MODE.Script : DATA_BACKUP_COMMAND_MODE.Command,
+        command: command.command,
+        script,
+        workingDir: command.workingDir,
+        tty: false,
+        consoleSize: { ...command.consoleSize },
+        envVars: command.envVars,
+        argGroups: command.argGroups,
+    };
+}
+
 export function mapDataBackupToFormInput(job: AppScheduledJob): DataBackupFormInput {
     const backup = job.dataBackup;
-    const command = backup?.sourceCommand;
-    const script = command?.script ?? "";
 
     return {
         name: job.name,
         ...mapJobScheduleToFormValues(job.schedule),
         source: backup?.source ?? ESchedJobDataBackupSource.Command,
-        sourceCommand: command
-            ? {
-                  commandMode:
-                      script.trim().length > 0 ? DATA_BACKUP_COMMAND_MODE.Script : DATA_BACKUP_COMMAND_MODE.Command,
-                  command: command.command,
-                  script,
-                  workingDir: command.workingDir,
-                  tty: false,
-                  consoleSize: { ...command.consoleSize },
-                  envVars: command.envVars,
-                  argGroups: command.argGroups,
-              }
-            : emptySourceCommand(),
+        sourceCommand: mapCommandToFormInput(backup?.sourceCommand),
         sourceFileName: backup?.sourceFileName ?? "",
+        restoreCommand: mapCommandToFormInput(backup?.restoreCommand),
         sourceVolume: backup?.sourceVolume
             ? { id: backup.sourceVolume.id, name: refName(backup.sourceVolume, "Deleted volume") }
             : null,
@@ -113,7 +125,15 @@ export function mapDataBackupToFormInput(job: AppScheduledJob): DataBackupFormIn
     };
 }
 
-/** The command runs without a TTY: its stdout is the backup, and a TTY would mix its stderr in. */
+/** Whether the command section holds a command: the restore command is optional. */
+function hasCommand(cmd: DataBackupFormOutput["sourceCommand"]): boolean {
+    return cmd.commandMode === DATA_BACKUP_COMMAND_MODE.Script ? cmd.script.trim().length > 0 : cmd.command.length > 0;
+}
+
+/**
+ * The command runs without a TTY: a backup's stdout is the backup, and a TTY would mix its stderr in; a
+ * restore's stdin is the backup, which a TTY would not pass through as is.
+ */
 function mapSourceCommandToPayload(cmd: DataBackupFormOutput["sourceCommand"]): AppScheduledJobs_Command_Payload {
     const isScript = cmd.commandMode === DATA_BACKUP_COMMAND_MODE.Script;
     return {
@@ -153,6 +173,9 @@ export function mapDataBackupFormToPayload(
                 ? {
                       sourceCommand: mapSourceCommandToPayload(values.sourceCommand),
                       sourceFileName: values.sourceFileName,
+                      ...(hasCommand(values.restoreCommand)
+                          ? { restoreCommand: mapSourceCommandToPayload(values.restoreCommand) }
+                          : {}),
                   }
                 : {
                       sourceVolume: { id: values.sourceVolume?.id ?? "" },

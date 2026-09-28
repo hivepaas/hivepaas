@@ -131,6 +131,8 @@ export interface AppScheduledJobDataBackup {
     source: ESchedJobDataBackupSource;
     sourceCommand: AppScheduledJobCommand | null;
     sourceFileName: string;
+    /** Loads the backup it reads on its stdin: what a restore offers to run. A command source's only. */
+    restoreCommand: AppScheduledJobCommand | null;
     sourceVolume: AppScheduledJobSettingRef | null;
     sourceVolumeSubpath: string;
     targetRepository: AppScheduledJobSettingRef;

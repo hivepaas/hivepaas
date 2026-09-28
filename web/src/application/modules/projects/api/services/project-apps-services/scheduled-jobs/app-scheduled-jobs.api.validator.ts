@@ -214,6 +214,7 @@ const DataBackupSchema = z
         source: z.nativeEnum(ESchedJobDataBackupSource),
         sourceCommand: CommandSchema,
         sourceFileName: z.string().optional().default(""),
+        restoreCommand: CommandSchema,
         sourceVolume: SettingRefSchema.nullish().transform(value => value ?? null),
         sourceVolumeSubpath: z.string().optional().default(""),
         targetRepository: SettingRefSchema,

@@ -80,6 +80,8 @@ export const DataBackupFormSchema = z
         source: z.nativeEnum(ESchedJobDataBackupSource),
         sourceCommand: SourceCommandSchema,
         sourceFileName: z.string().trim(),
+        /** Optional: empty when both the command and the script are. */
+        restoreCommand: SourceCommandSchema,
         sourceVolume: NamedRefSchema.nullable(),
         sourceVolumeSubpath: z.string().trim(),
         targetRepository: NamedRefSchema.nullable(),

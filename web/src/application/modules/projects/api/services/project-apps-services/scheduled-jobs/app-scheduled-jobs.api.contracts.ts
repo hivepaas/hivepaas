@@ -111,6 +111,7 @@ export type AppScheduledJobs_DataBackup_Payload = {
     source: ESchedJobDataBackupSource;
     sourceCommand?: AppScheduledJobs_Command_Payload;
     sourceFileName?: string;
+    restoreCommand?: AppScheduledJobs_Command_Payload;
     sourceVolume?: AppScheduledJobs_RefObject_Payload;
     sourceVolumeSubpath?: string;
     targetRepository: AppScheduledJobs_RefObject_Payload;

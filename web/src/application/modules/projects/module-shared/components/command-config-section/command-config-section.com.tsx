@@ -20,7 +20,7 @@ import { CommandTemplatePicker } from "./command-template-picker.com";
 const COMMAND_MODE = { Command: "command", Script: "script" } as const;
 
 interface Props {
-    label?: string;
+    label?: React.ReactNode;
     fieldPrefix?: string;
     showLoadTemplate?: boolean;
     templateProjectId?: string;

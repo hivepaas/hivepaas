@@ -311,6 +311,23 @@ export function DataBackupForm({
                             />
                         )}
 
+                        {isCommand && (
+                            <CommandConfigSection
+                                label={
+                                    <LabelWithInfo
+                                        label="Restore Command"
+                                        content="Optional. Loads a backup it reads on its stdin, such as psql -U $POSTGRES_USER $POSTGRES_DB. A restore of this job's snapshots offers it, and runs it in the app without a TTY."
+                                    />
+                                }
+                                fieldPrefix="restoreCommand"
+                                showLoadTemplate
+                                templateProjectId={projectId}
+                                templateEnv={env}
+                                readOnly={readOnly}
+                                showArgGroups
+                            />
+                        )}
+
                         <ContentBlock label="Repository">
                             <div className="flex flex-col gap-6">
                                 <InfoBlock

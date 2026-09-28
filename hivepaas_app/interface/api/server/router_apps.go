@@ -85,6 +85,13 @@ func (s *HTTPServer) registerAppRoutes(projectGroup, projectEnvGroup *gin.Router
 		envVarGroup.GET("/link-suggestions", appSettingsHandler.GetEnvLinkSuggestions)
 	}
 
+	{ // Backup snapshots of the app
+		backupSnapshotGroup := appGroup.Group("/:appID/backup-snapshots")
+		backupSnapshotGroup.GET("", appSettingsHandler.ListBackupSnapshot)
+		backupSnapshotGroup.GET("/:itemID", appSettingsHandler.GetBackupSnapshot)
+		backupSnapshotGroup.DELETE("/:itemID", appSettingsHandler.DeleteBackupSnapshot)
+	}
+
 	{ // Secrets
 		secretGroup := appGroup.Group("/:appID/secrets")
 		secretGroup.GET("", appSettingsHandler.ListSecret)

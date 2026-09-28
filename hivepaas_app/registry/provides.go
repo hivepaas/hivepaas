@@ -151,6 +151,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings/appfeaturesettingsuc"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings/appplacementsettingsuc"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings/backuprepouc"
+	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings/backupsnapshotuc"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings/basicauthuc"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings/cloudstorageuc"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings/commandpipeuc"
@@ -302,6 +303,7 @@ var Provides = []any{
 	auditloguc.New,
 	backuprepocleanupuc.New,
 	backuprepouc.New,
+	backupsnapshotuc.New,
 	basicauthuc.New,
 	keyauthuc.New,
 	binobjectuc.New,

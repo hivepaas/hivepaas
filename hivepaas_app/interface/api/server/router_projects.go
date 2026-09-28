@@ -71,6 +71,11 @@ func (s *HTTPServer) registerProjectRoutes(apiGroup *gin.RouterGroup) {
 	}
 
 	{ // Backup repository group
+		backupSnapshotGroup := projectGroup.Group("/:projectID/backup-snapshots")
+		backupSnapshotGroup.GET("", projectSettingsHandler.ListBackupSnapshot)
+		backupSnapshotGroup.GET("/:itemID", projectSettingsHandler.GetBackupSnapshot)
+		backupSnapshotGroup.DELETE("/:itemID", projectSettingsHandler.DeleteBackupSnapshot)
+
 		backupRepoGroup := projectGroup.Group("/:projectID/backup-repos")
 		backupRepoGroup.GET("/:itemID", projectSettingsHandler.GetBackupRepo)
 		backupRepoGroup.GET("", projectSettingsHandler.ListBackupRepo)

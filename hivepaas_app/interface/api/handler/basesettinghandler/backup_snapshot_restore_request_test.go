@@ -11,7 +11,6 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/interface/api/handler"
@@ -119,10 +118,12 @@ func TestADownloadOutlastsTheWriteTimeout(t *testing.T) {
 	defer server.Close()
 
 	resp, err := http.Get(server.URL) //nolint:noctx
-	require.NoError(t, err)
+	if !assert.NoError(t, err) {
+		return
+	}
 	defer resp.Body.Close()
 	body, err := io.ReadAll(resp.Body)
 
-	require.NoError(t, err)
+	assert.NoError(t, err)
 	assert.Len(t, body, len(chunk)*chunks)
 }

@@ -1,4 +1,3 @@
-import { formBox } from "@lib/styles";
 import { useParams } from "react-router";
 import invariant from "tiny-invariant";
 import { getProjectEnvFilterParam, useSelectedProjectEnv } from "~/projects/module-shared/hooks";
@@ -12,11 +11,9 @@ export function ProjectBackupSnapshotRestoreRoute() {
     const scopedEnv = getProjectEnvFilterParam(useSelectedProjectEnv(projectId));
 
     return (
-        <div className={formBox}>
-            <BackupSnapshotRestoreRoute
-                scope={{ type: "project", projectId, env: scopedEnv }}
-                snapshotId={snapshotId}
-            />
-        </div>
+        <BackupSnapshotRestoreRoute
+            scope={{ type: "project", projectId, env: scopedEnv }}
+            snapshotId={snapshotId}
+        />
     );
 }

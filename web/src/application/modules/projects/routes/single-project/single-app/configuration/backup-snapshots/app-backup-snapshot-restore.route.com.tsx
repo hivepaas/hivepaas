@@ -1,4 +1,3 @@
-import { formBox } from "@lib/styles";
 import { useParams } from "react-router";
 import invariant from "tiny-invariant";
 import { BackupSnapshotRestoreRoute } from "~/settings/module-shared/components";
@@ -17,11 +16,9 @@ export function AppBackupSnapshotRestoreRoute() {
     invariant(appId, "appId must be defined");
 
     return (
-        <div className={formBox}>
-            <BackupSnapshotRestoreRoute
-                scope={{ type: "app", projectId, env, appId }}
-                snapshotId={snapshotId}
-            />
-        </div>
+        <BackupSnapshotRestoreRoute
+            scope={{ type: "app", projectId, env, appId }}
+            snapshotId={snapshotId}
+        />
     );
 }

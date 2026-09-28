@@ -20,7 +20,7 @@ import (
 
 // dataBackupTagRun is the tag of every snapshot one run takes: what finds the
 // snapshot a failed command left behind when kopia did not name it.
-const dataBackupTagRun = "hivepaas.run"
+const dataBackupTagRun = entity.DataBackupTagRun
 
 // dataBackupSource and the job's ID are the source every snapshot of the job is
 // recorded under, whichever machine took it: kopia's retention goes by source,

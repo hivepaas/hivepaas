@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"maps"
 	"slices"
+	"strings"
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
@@ -42,17 +43,21 @@ func (b *SchedJobDataBackup) refSettingIDs() []string {
 
 // Snapshot tags HivePaaS puts on every snapshot a data backup takes.
 const (
-	DataBackupTagJob = "hivepaas.job"
-	DataBackupTagApp = "hivepaas.app"
+	DataBackupTagJob    = "hivepaas.job"
+	DataBackupTagApp    = "hivepaas.app"
+	DataBackupTagSource = "hivepaas.source"
+	// DataBackupTagRun is the task of the run that took the snapshot.
+	DataBackupTagRun = "hivepaas.run"
 )
 
 // SnapshotTags are the tags of a snapshot the job takes, as kopia takes them
-// (key:value): the job's and the app's, then the job's own, sorted.
+// (key:value): the job's, the app's and the source's, then the job's own, sorted.
 func (b *SchedJobDataBackup) SnapshotTags(jobID, appID string) []string {
 	tags := []string{DataBackupTagJob + ":" + jobID, DataBackupTagApp + ":" + appID}
 	if b == nil {
 		return tags
 	}
+	tags = append(tags, DataBackupTagSource+":"+string(b.Source))
 	for _, key := range slices.Sorted(maps.Keys(b.Tags)) {
 		tags = append(tags, key+":"+b.Tags[key])
 	}
@@ -81,4 +86,32 @@ func (t *Task) OutputAsDataBackup() (*SchedJobDataBackupResult, error) {
 		return nil, nil //nolint:nilnil // no snapshot: another job's output
 	}
 	return result, nil
+}
+
+// DataBackupSnapshotTags is what a snapshot's HivePaaS tags say of where it came
+// from; empty for a snapshot no data backup took.
+type DataBackupSnapshotTags struct {
+	AppID  string
+	JobID  string
+	RunID  string
+	Source base.SchedJobDataBackupSource
+}
+
+// ParseDataBackupSnapshotTags reads a snapshot's tags, key:value.
+func ParseDataBackupSnapshotTags(tags []string) *DataBackupSnapshotTags {
+	parsed := &DataBackupSnapshotTags{}
+	for _, tag := range tags {
+		key, value, _ := strings.Cut(tag, ":")
+		switch key {
+		case DataBackupTagApp:
+			parsed.AppID = value
+		case DataBackupTagJob:
+			parsed.JobID = value
+		case DataBackupTagRun:
+			parsed.RunID = value
+		case DataBackupTagSource:
+			parsed.Source = base.SchedJobDataBackupSource(value)
+		}
+	}
+	return parsed
 }

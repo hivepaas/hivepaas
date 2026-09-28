@@ -38,13 +38,25 @@ func TestSchedJobDataBackupOfACommandReferencesTheRepositoryOnly(t *testing.T) {
 	assert.Equal(t, []string{"repo1"}, job.GetRefObjectIDs().RefSettingIDs)
 }
 
-// A snapshot's tags carry the job and the app, then the job's own, as kopia
-// takes them: key:value, in a stable order.
+// A snapshot's tags carry the job, the app and the source, then the job's own,
+// as kopia takes them: key:value, in a stable order.
 func TestSchedJobDataBackupSnapshotTags(t *testing.T) {
-	backup := &SchedJobDataBackup{Tags: map[string]string{"env": "prod", "db": "main"}}
+	backup := &SchedJobDataBackup{Source: base.SchedJobDataBackupSourceCommand,
+		Tags: map[string]string{"env": "prod", "db": "main"}}
 
-	assert.Equal(t, []string{"hivepaas.job:j1", "hivepaas.app:a1", "db:main", "env:prod"},
+	assert.Equal(t, []string{"hivepaas.job:j1", "hivepaas.app:a1", "hivepaas.source:command", "db:main", "env:prod"},
 		backup.SnapshotTags("j1", "a1"))
+}
+
+// A snapshot's tags read back: which app, job, run and source it came from.
+func TestParseDataBackupSnapshotTags(t *testing.T) {
+	parsed := ParseDataBackupSnapshotTags([]string{
+		"hivepaas.job:j1", "hivepaas.app:a1", "hivepaas.run:t1", "hivepaas.source:volume", "env:prod",
+	})
+
+	assert.Equal(t, &DataBackupSnapshotTags{AppID: "a1", JobID: "j1", RunID: "t1",
+		Source: base.SchedJobDataBackupSourceVolume}, parsed)
+	assert.Equal(t, &DataBackupSnapshotTags{}, ParseDataBackupSnapshotTags([]string{"env:prod"}))
 }
 
 // A run's result is its task's output; a task that is no data backup's has none.

@@ -2,6 +2,7 @@ package containeragentuc
 
 import (
 	"context"
+	"errors"
 	"io"
 
 	"github.com/moby/moby/api/pkg/stdcopy"
@@ -74,22 +75,15 @@ func (uc *UC) ExecuteCommand(
 	defer attachResp.Close()
 
 	// 4. Start Goroutine B: gRPC client stdin/resize -> Docker exec input
-	go func() {
-		defer safego.RecoverWithLogger(uc.logger, "containeragent.execStdin")
-		for {
-			inReq, recvErr := stream.Recv()
-			if recvErr != nil {
-				return // Stream closed or EOF
-			}
-			if len(inReq.Stdin) > 0 && attachResp.Conn != nil {
-				_, _ = attachResp.Conn.Write(inReq.Stdin)
-			}
-			if inReq.Resize != nil {
+	if attachResp.Conn != nil {
+		go func() {
+			defer safego.RecoverWithLogger(uc.logger, "containeragent.execStdin")
+			forwardExecInput(stream.Recv, attachedStdin{attachResp}, func(width, height uint32) {
 				_, _ = uc.dockerManager.ContainerExecResize(context.Background(), createResp.ID,
-					uint(inReq.Resize.Width), uint(inReq.Resize.Height))
-			}
-		}
-	}()
+					uint(width), uint(height))
+			})
+		}()
+	}
 
 	// 5. Pipe Docker exec output -> gRPC stream (Tty vs non-Tty multiplexing)
 	var copyErr error
@@ -147,4 +141,45 @@ func (w *streamWriter) Write(p []byte) (n int, err error) {
 		return 0, hperrors.Wrap(sendErr)
 	}
 	return len(p), nil
+}
+
+// execStdin is an exec's input, which can be told it ended.
+type execStdin interface {
+	io.Writer
+	CloseWrite() error
+}
+
+// attachedStdin is a docker exec's attached input.
+type attachedStdin struct {
+	*client.ExecAttachResult
+}
+
+func (s attachedStdin) Write(p []byte) (int, error) {
+	return s.Conn.Write(p) //nolint:wrapcheck
+}
+
+// forwardExecInput passes what the client sends to the exec: stdin and resizes.
+// When the client has sent all it has, the exec's stdin is closed, so a command
+// reading to its end - psql loading a dump - ends too.
+func forwardExecInput(
+	recv func() (*containeragentdto.ExecInput, error),
+	stdin execStdin,
+	resize func(width, height uint32),
+) {
+	for {
+		inReq, err := recv()
+		if errors.Is(err, io.EOF) {
+			_ = stdin.CloseWrite()
+			return
+		}
+		if err != nil {
+			return // the stream broke: the exec goes with it
+		}
+		if len(inReq.Stdin) > 0 {
+			_, _ = stdin.Write(inReq.Stdin)
+		}
+		if inReq.Resize != nil {
+			resize(inReq.Resize.Width, inReq.Resize.Height)
+		}
+	}
 }

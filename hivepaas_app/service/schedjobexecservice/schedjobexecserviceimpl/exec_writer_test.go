@@ -3,6 +3,7 @@ package schedjobexecserviceimpl
 import (
 	"bytes"
 	"context"
+	"io"
 	"testing"
 
 	"github.com/moby/moby/client"
@@ -31,13 +32,21 @@ func (*commandServiceStub) BuildCommand(
 type fakeExec struct {
 	containerexecservice.Service
 	opts   client.ExecCreateOptions
+	app    *entity.App
 	output string
+	// stdin is what the command was given to read.
+	stdin string
 }
 
 func (f *fakeExec) ContainerExec(
 	_ context.Context, req *containerexecservice.ContainerExecReq,
 ) (*containerexecservice.ContainerExecResp, error) {
 	req.ExecOptions(&f.opts)
+	f.app = req.App
+	if req.StdinReader != nil {
+		in, _ := io.ReadAll(req.StdinReader)
+		f.stdin = string(in)
+	}
 	if req.StdoutWriter != nil {
 		_, _ = req.StdoutWriter.Write([]byte(f.output))
 	}

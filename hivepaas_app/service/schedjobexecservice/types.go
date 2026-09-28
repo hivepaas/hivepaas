@@ -25,6 +25,19 @@ type SchedJobExecReq struct {
 	StdoutWriter io.Writer
 }
 
+type RunCommandReq struct {
+	*queue.TaskExecData
+	App     *entity.App
+	Command *entity.CommandTemplate
+	// Stdin is what the command reads; its end is the command's input's end.
+	Stdin io.Reader
+}
+
+type RunCommandResp struct {
+	// ExitCode is the command's, when it ran to an end.
+	ExitCode *int
+}
+
 type SchedJobExecResp struct {
 	SkipResultNotification bool
 	// ExitCode is the command's, when it ran to an end.

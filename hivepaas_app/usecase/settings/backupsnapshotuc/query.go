@@ -17,9 +17,10 @@ type snapshotFilter struct {
 	RepoIDs []string
 	AppIDs  []string
 	// Tags are key:value, all of which a snapshot must carry.
-	Tags   []string
-	From   time.Time
-	To     time.Time
+	Tags []string
+	From time.Time
+	// Before is the end of the range, left out.
+	Before time.Time
 	Search string
 }
 
@@ -77,8 +78,8 @@ func snapshotQueryOpts(reach *snapshotReach, filter *snapshotFilter) []bunex.Sel
 	if !filter.From.IsZero() {
 		opts = append(opts, bunex.SelectWhere(snapshotTime+" >= ?", filter.From))
 	}
-	if !filter.To.IsZero() {
-		opts = append(opts, bunex.SelectWhere(snapshotTime+" <= ?", filter.To))
+	if !filter.Before.IsZero() {
+		opts = append(opts, bunex.SelectWhere(snapshotTime+" < ?", filter.Before))
 	}
 	if filter.Search != "" {
 		keyword := bunex.MakeLikeOpStr(filter.Search, true)

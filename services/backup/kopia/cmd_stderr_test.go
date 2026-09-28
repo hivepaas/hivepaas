@@ -71,3 +71,13 @@ func TestExecCommand_StderrStillReachesTheCaller(t *testing.T) {
 	assert.Empty(t, stdout.String())
 	assert.Contains(t, hperrors.GetErrorDetail(err, ""), "no such file or directory")
 }
+
+// Deleting a snapshot the repository no longer holds says so, typed: the caller
+// counts it as deleted.
+func TestDeleteSnapshot_GoneIsNotFound(t *testing.T) {
+	c := clientPrinting("ERROR error deleting snapshots by root ID k1: no snapshots matched k1\n")
+
+	_, err := c.DeleteSnapshot(context.Background(), "k1")
+
+	assert.ErrorIs(t, err, backupmodel.ErrSnapshotNotFound)
+}

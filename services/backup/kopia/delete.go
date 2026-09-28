@@ -20,6 +20,11 @@ func (c *Client) DeleteSnapshot(
 	})
 	if err != nil {
 		errMsg := strings.TrimSpace(errBuf.String())
+		// A snapshot already gone - deleted with kopia directly, or by an earlier
+		// try - is what the caller asked for.
+		if strings.Contains(errMsg, "no snapshots matched") {
+			return res, hperrors.Wrap(fmt.Errorf("%w: %s", backupmodel.ErrSnapshotNotFound, snapshotID))
+		}
 		if errMsg != "" {
 			return res, hperrors.Wrap(fmt.Errorf("kopia delete snapshot failed: %s (err: %w)", errMsg, err))
 		}

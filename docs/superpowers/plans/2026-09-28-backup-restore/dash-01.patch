@@ -1,0 +1,193 @@
+diff --git a/src/application/modules/projects/api/services/project-apps-services/scheduled-jobs/app-scheduled-jobs.api.contracts.ts b/src/application/modules/projects/api/services/project-apps-services/scheduled-jobs/app-scheduled-jobs.api.contracts.ts
+index da6a0880..1e0a765e 100644
+--- a/src/application/modules/projects/api/services/project-apps-services/scheduled-jobs/app-scheduled-jobs.api.contracts.ts
++++ b/src/application/modules/projects/api/services/project-apps-services/scheduled-jobs/app-scheduled-jobs.api.contracts.ts
+@@ -111,6 +111,7 @@ export type AppScheduledJobs_DataBackup_Payload = {
+     source: ESchedJobDataBackupSource;
+     sourceCommand?: AppScheduledJobs_Command_Payload;
+     sourceFileName?: string;
++    restoreCommand?: AppScheduledJobs_Command_Payload;
+     sourceVolume?: AppScheduledJobs_RefObject_Payload;
+     sourceVolumeSubpath?: string;
+     targetRepository: AppScheduledJobs_RefObject_Payload;
+diff --git a/src/application/modules/projects/api/services/project-apps-services/scheduled-jobs/app-scheduled-jobs.api.validator.ts b/src/application/modules/projects/api/services/project-apps-services/scheduled-jobs/app-scheduled-jobs.api.validator.ts
+index 0d19f379..86b28205 100644
+--- a/src/application/modules/projects/api/services/project-apps-services/scheduled-jobs/app-scheduled-jobs.api.validator.ts
++++ b/src/application/modules/projects/api/services/project-apps-services/scheduled-jobs/app-scheduled-jobs.api.validator.ts
+@@ -214,6 +214,7 @@ const DataBackupSchema = z
+         source: z.nativeEnum(ESchedJobDataBackupSource),
+         sourceCommand: CommandSchema,
+         sourceFileName: z.string().optional().default(""),
++        restoreCommand: CommandSchema,
+         sourceVolume: SettingRefSchema.nullish().transform(value => value ?? null),
+         sourceVolumeSubpath: z.string().optional().default(""),
+         targetRepository: SettingRefSchema,
+diff --git a/src/application/modules/projects/domain/apps/scheduled-job/app-scheduled-job.entity.ts b/src/application/modules/projects/domain/apps/scheduled-job/app-scheduled-job.entity.ts
+index 033ee024..271329a5 100644
+--- a/src/application/modules/projects/domain/apps/scheduled-job/app-scheduled-job.entity.ts
++++ b/src/application/modules/projects/domain/apps/scheduled-job/app-scheduled-job.entity.ts
+@@ -131,6 +131,8 @@ export interface AppScheduledJobDataBackup {
+     source: ESchedJobDataBackupSource;
+     sourceCommand: AppScheduledJobCommand | null;
+     sourceFileName: string;
++    /** Loads the backup it reads on its stdin: what a restore offers to run. A command source's only. */
++    restoreCommand: AppScheduledJobCommand | null;
+     sourceVolume: AppScheduledJobSettingRef | null;
+     sourceVolumeSubpath: string;
+     targetRepository: AppScheduledJobSettingRef;
+diff --git a/src/application/modules/projects/module-shared/components/command-config-section/command-config-section.com.tsx b/src/application/modules/projects/module-shared/components/command-config-section/command-config-section.com.tsx
+index 27302cc2..899555c9 100644
+--- a/src/application/modules/projects/module-shared/components/command-config-section/command-config-section.com.tsx
++++ b/src/application/modules/projects/module-shared/components/command-config-section/command-config-section.com.tsx
+@@ -20,7 +20,7 @@ import { CommandTemplatePicker } from "./command-template-picker.com";
+ const COMMAND_MODE = { Command: "command", Script: "script" } as const;
+ 
+ interface Props {
+-    label?: string;
++    label?: React.ReactNode;
+     fieldPrefix?: string;
+     showLoadTemplate?: boolean;
+     templateProjectId?: string;
+diff --git a/src/application/modules/projects/module-shared/components/data-backup-form/data-backup.form-mappers.ts b/src/application/modules/projects/module-shared/components/data-backup-form/data-backup.form-mappers.ts
+index c3c337dc..5afe025f 100644
+--- a/src/application/modules/projects/module-shared/components/data-backup-form/data-backup.form-mappers.ts
++++ b/src/application/modules/projects/module-shared/components/data-backup-form/data-backup.form-mappers.ts
+@@ -1,5 +1,9 @@
+ import type { AppScheduledJobs_Command_Payload, AppScheduledJobs_Upsert_Payload } from "~/projects/api/services";
+-import { APP_SCHEDULED_JOB_DEFAULT_CONSOLE_SIZE, type AppScheduledJob } from "~/projects/domain";
++import {
++    APP_SCHEDULED_JOB_DEFAULT_CONSOLE_SIZE,
++    type AppScheduledJob,
++    type AppScheduledJobCommand,
++} from "~/projects/domain";
+ import {
+     EAppScheduledJobScheduleMode,
+     EAppScheduledJobTaskPriority,
+@@ -43,6 +47,7 @@ export function createEmptyDataBackupFormDefaults(): DataBackupFormInput {
+         source: ESchedJobDataBackupSource.Command,
+         sourceCommand: emptySourceCommand(),
+         sourceFileName: "",
++        restoreCommand: emptySourceCommand(),
+         sourceVolume: null,
+         sourceVolumeSubpath: "",
+         targetRepository: null,
+@@ -67,29 +72,36 @@ function refName(ref: { name: string; status: string }, deleted: string): string
+     return ref.status === ESettingStatus.Missing ? deleted : ref.name;
+ }
+ 
++/** A job's command as the command section edits it; an empty one for none. */
++function mapCommandToFormInput(
++    command: AppScheduledJobCommand | null | undefined,
++): DataBackupFormInput["sourceCommand"] {
++    if (!command) {
++        return emptySourceCommand();
++    }
++    const { script } = command;
++    return {
++        commandMode: script.trim().length > 0 ? DATA_BACKUP_COMMAND_MODE.Script : DATA_BACKUP_COMMAND_MODE.Command,
++        command: command.command,
++        script,
++        workingDir: command.workingDir,
++        tty: false,
++        consoleSize: { ...command.consoleSize },
++        envVars: command.envVars,
++        argGroups: command.argGroups,
++    };
++}
++
+ export function mapDataBackupToFormInput(job: AppScheduledJob): DataBackupFormInput {
+     const backup = job.dataBackup;
+-    const command = backup?.sourceCommand;
+-    const script = command?.script ?? "";
+ 
+     return {
+         name: job.name,
+         ...mapJobScheduleToFormValues(job.schedule),
+         source: backup?.source ?? ESchedJobDataBackupSource.Command,
+-        sourceCommand: command
+-            ? {
+-                  commandMode:
+-                      script.trim().length > 0 ? DATA_BACKUP_COMMAND_MODE.Script : DATA_BACKUP_COMMAND_MODE.Command,
+-                  command: command.command,
+-                  script,
+-                  workingDir: command.workingDir,
+-                  tty: false,
+-                  consoleSize: { ...command.consoleSize },
+-                  envVars: command.envVars,
+-                  argGroups: command.argGroups,
+-              }
+-            : emptySourceCommand(),
++        sourceCommand: mapCommandToFormInput(backup?.sourceCommand),
+         sourceFileName: backup?.sourceFileName ?? "",
++        restoreCommand: mapCommandToFormInput(backup?.restoreCommand),
+         sourceVolume: backup?.sourceVolume
+             ? { id: backup.sourceVolume.id, name: refName(backup.sourceVolume, "Deleted volume") }
+             : null,
+@@ -113,7 +125,15 @@ export function mapDataBackupToFormInput(job: AppScheduledJob): DataBackupFormIn
+     };
+ }
+ 
+-/** The command runs without a TTY: its stdout is the backup, and a TTY would mix its stderr in. */
++/** Whether the command section holds a command: the restore command is optional. */
++function hasCommand(cmd: DataBackupFormOutput["sourceCommand"]): boolean {
++    return cmd.commandMode === DATA_BACKUP_COMMAND_MODE.Script ? cmd.script.trim().length > 0 : cmd.command.length > 0;
++}
++
++/**
++ * The command runs without a TTY: a backup's stdout is the backup, and a TTY would mix its stderr in; a
++ * restore's stdin is the backup, which a TTY would not pass through as is.
++ */
+ function mapSourceCommandToPayload(cmd: DataBackupFormOutput["sourceCommand"]): AppScheduledJobs_Command_Payload {
+     const isScript = cmd.commandMode === DATA_BACKUP_COMMAND_MODE.Script;
+     return {
+@@ -153,6 +173,9 @@ export function mapDataBackupFormToPayload(
+                 ? {
+                       sourceCommand: mapSourceCommandToPayload(values.sourceCommand),
+                       sourceFileName: values.sourceFileName,
++                      ...(hasCommand(values.restoreCommand)
++                          ? { restoreCommand: mapSourceCommandToPayload(values.restoreCommand) }
++                          : {}),
+                   }
+                 : {
+                       sourceVolume: { id: values.sourceVolume?.id ?? "" },
+diff --git a/src/application/modules/projects/module-shared/components/data-backup-form/data-backup.form.com.tsx b/src/application/modules/projects/module-shared/components/data-backup-form/data-backup.form.com.tsx
+index 94f801b1..92deb997 100644
+--- a/src/application/modules/projects/module-shared/components/data-backup-form/data-backup.form.com.tsx
++++ b/src/application/modules/projects/module-shared/components/data-backup-form/data-backup.form.com.tsx
+@@ -311,6 +311,23 @@ export function DataBackupForm({
+                             />
+                         )}
+ 
++                        {isCommand && (
++                            <CommandConfigSection
++                                label={
++                                    <LabelWithInfo
++                                        label="Restore Command"
++                                        content="Optional. Loads a backup it reads on its stdin, such as psql -U $POSTGRES_USER $POSTGRES_DB. A restore of this job's snapshots offers it, and runs it in the app without a TTY."
++                                    />
++                                }
++                                fieldPrefix="restoreCommand"
++                                showLoadTemplate
++                                templateProjectId={projectId}
++                                templateEnv={env}
++                                readOnly={readOnly}
++                                showArgGroups
++                            />
++                        )}
++
+                         <ContentBlock label="Repository">
+                             <div className="flex flex-col gap-6">
+                                 <InfoBlock
+diff --git a/src/application/modules/projects/module-shared/components/data-backup-form/data-backup.form.schema.ts b/src/application/modules/projects/module-shared/components/data-backup-form/data-backup.form.schema.ts
+index 26f9e16b..3b2b15b9 100644
+--- a/src/application/modules/projects/module-shared/components/data-backup-form/data-backup.form.schema.ts
++++ b/src/application/modules/projects/module-shared/components/data-backup-form/data-backup.form.schema.ts
+@@ -80,6 +80,8 @@ export const DataBackupFormSchema = z
+         source: z.nativeEnum(ESchedJobDataBackupSource),
+         sourceCommand: SourceCommandSchema,
+         sourceFileName: z.string().trim(),
++        /** Optional: empty when both the command and the script are. */
++        restoreCommand: SourceCommandSchema,
+         sourceVolume: NamedRefSchema.nullable(),
+         sourceVolumeSubpath: z.string().trim(),
+         targetRepository: NamedRefSchema.nullable(),

@@ -1,0 +1,252 @@
+diff --git a/services/backup/backupmodel/engine.go b/services/backup/backupmodel/engine.go
+index 1d3ec8c7..709ad27c 100644
+--- a/services/backup/backupmodel/engine.go
++++ b/services/backup/backupmodel/engine.go
+@@ -44,7 +44,11 @@ type Engine interface {
+ 	BackupStream(ctx context.Context, stdin io.Reader, filename string, opts *BackupOptions) (
+ 		BackupResult, error)
+ 
+-	// RestoreDirectory restores a snapshot's contents to a target local directory.
++	// ListEntries lists what a snapshot holds in one of its directories: path, "" for its root.
++	ListEntries(ctx context.Context, snapshotID string, path string) ([]SnapshotEntry, error)
++
++	// RestoreDirectory restores a snapshot's contents, or those of the directory opts.Path of it,
++	// to a target local directory.
+ 	RestoreDirectory(ctx context.Context, snapshotID string, targetDir string, opts *RestoreOptions) (
+ 		RestoreResult, error)
+ 
+diff --git a/services/backup/backupmodel/types.go b/services/backup/backupmodel/types.go
+index a8df9366..fcabc346 100644
+--- a/services/backup/backupmodel/types.go
++++ b/services/backup/backupmodel/types.go
+@@ -86,6 +86,16 @@ type BackupResult struct {
+ }
+ 
+ type RestoreOptions struct {
++	// Path is a directory inside the snapshot to restore alone; "" for all of it.
++	Path string `json:"path,omitempty"`
++}
++
++// SnapshotEntry is a file or a directory a snapshot holds.
++type SnapshotEntry struct {
++	Name string `json:"name"`
++	Dir  bool   `json:"dir,omitempty"`
++	// SizeBytes is a directory's too: all it holds.
++	SizeBytes int64 `json:"sizeBytes"`
+ }
+ 
+ type RestoreResult struct {
+diff --git a/services/backup/engine.go b/services/backup/engine.go
+index 66b88917..db859516 100644
+--- a/services/backup/engine.go
++++ b/services/backup/engine.go
+@@ -40,6 +40,8 @@ type (
+ 	StorageS3            = backupmodel.StorageS3
+ 	StorageServer        = backupmodel.StorageServer
+ 	StorageLocal         = backupmodel.StorageLocal
++	RestoreOptions       = backupmodel.RestoreOptions
++	SnapshotEntry        = backupmodel.SnapshotEntry
+ 	CommandExecReq       = backupmodel.CommandExecReq
+ 	CommandExecResp      = backupmodel.CommandExecResp
+ 	CommandExecutor      = backupmodel.CommandExecutor
+diff --git a/services/backup/kopia/entries.go b/services/backup/kopia/entries.go
+new file mode 100644
+index 00000000..67dd26bf
+--- /dev/null
++++ b/services/backup/kopia/entries.go
+@@ -0,0 +1,101 @@
++package kopia
++
++import (
++	"bytes"
++	"context"
++	"fmt"
++	"regexp"
++	"slices"
++	"strconv"
++	"strings"
++
++	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
++	"github.com/hivepaas/hivepaas/services/backup/backupmodel"
++)
++
++// entryLineRegex is a line of `kopia ls -l`: mode, size, date, time, zone,
++// object ID, then the name, which may hold spaces.
++var entryLineRegex = regexp.MustCompile(`^(\S+)\s+(\d+)\s+\S+\s+\S+\s+\S+\s+(\S+)\s+(.+)$`)
++
++// listedEntry is an entry with the object that holds its content.
++type listedEntry struct {
++	backupmodel.SnapshotEntry
++	objectID string
++}
++
++// ListEntries lists the directory path of the snapshot; "" for its root.
++func (c *Client) ListEntries(
++	ctx context.Context,
++	snapshotID string,
++	path string,
++) ([]backupmodel.SnapshotEntry, error) {
++	listed, err := c.listEntries(ctx, snapshotID, path)
++	if err != nil {
++		return nil, hperrors.Wrap(err)
++	}
++	entries := make([]backupmodel.SnapshotEntry, 0, len(listed))
++	for _, entry := range listed {
++		entries = append(entries, entry.SnapshotEntry)
++	}
++	return entries, nil
++}
++
++func (c *Client) listEntries(ctx context.Context, snapshotID string, path string) ([]listedEntry, error) {
++	var stdout bytes.Buffer
++	_, err := c.execCommand(ctx, []string{"ls", "-l", snapshotObjectPath(snapshotID, path)},
++		func(o *execOptions) {
++			o.stdout = &stdout
++		})
++	if err != nil {
++		return nil, hperrors.Wrap(err)
++	}
++	entries, err := parseEntries(stdout.String())
++	return entries, hperrors.Wrap(err)
++}
++
++// parseEntries reads what `kopia ls -l` prints, directories first, then by name.
++func parseEntries(out string) ([]listedEntry, error) {
++	var entries []listedEntry
++	for line := range strings.Lines(out) {
++		line = strings.TrimRight(line, "\r\n")
++		if strings.TrimSpace(line) == "" {
++			continue
++		}
++		match := entryLineRegex.FindStringSubmatch(line)
++		if match == nil {
++			return nil, fmt.Errorf("%w: unexpected kopia ls output: %q", backupmodel.ErrCommandFailed, line)
++		}
++		size, err := strconv.ParseInt(match[2], 10, 64)
++		if err != nil {
++			return nil, hperrors.Wrap(err)
++		}
++		name := strings.TrimSpace(match[4])
++		entries = append(entries, listedEntry{
++			SnapshotEntry: backupmodel.SnapshotEntry{
++				Name: strings.TrimSuffix(name, "/"), Dir: strings.HasPrefix(match[1], "d"), SizeBytes: size,
++			},
++			objectID: match[3],
++		})
++	}
++	// Directories first, then by name: kopia's own order is not one to rely on.
++	slices.SortStableFunc(entries, func(a, b listedEntry) int {
++		if a.Dir != b.Dir {
++			if a.Dir {
++				return -1
++			}
++			return 1
++		}
++		return strings.Compare(a.Name, b.Name)
++	})
++	return entries, nil
++}
++
++// snapshotObjectPath is a path inside a snapshot, as `ls` and `snapshot
++// restore` name it: the snapshot's ID, then the path.
++func snapshotObjectPath(snapshotID, path string) string {
++	path = strings.Trim(path, "/")
++	if path == "" {
++		return snapshotID
++	}
++	return snapshotID + "/" + path
++}
+diff --git a/services/backup/kopia/restore.go b/services/backup/kopia/restore.go
+index caa882fd..aeb1f975 100644
+--- a/services/backup/kopia/restore.go
++++ b/services/backup/kopia/restore.go
+@@ -1,56 +1,69 @@
+ package kopia
+ 
+ import (
+-	"bytes"
+ 	"context"
+ 	"fmt"
+ 	"io"
++	"path"
+ 	"strings"
+ 
+ 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
+ 	"github.com/hivepaas/hivepaas/services/backup/backupmodel"
+ )
+ 
++// RestoreDirectory restores the snapshot, or the directory opts.Path of it, into
++// targetDir. What is there already is overwritten where the snapshot has it, and
++// kept where it has not: kopia never deletes.
+ func (c *Client) RestoreDirectory(
+ 	ctx context.Context,
+ 	snapshotID string,
+ 	targetDir string,
+ 	opts *backupmodel.RestoreOptions,
+ ) (res backupmodel.RestoreResult, err error) {
+-	var errBuf bytes.Buffer
+-	_, err = c.execCommand(ctx, []string{cmdSnapshot, "restore", snapshotID, targetDir},
+-		func(o *execOptions) {
+-			o.stderr = &errBuf
+-		})
++	inside := ""
++	if opts != nil {
++		inside = opts.Path
++	}
++	_, err = c.execCommand(ctx, []string{cmdSnapshot, "restore", snapshotObjectPath(snapshotID, inside), targetDir})
+ 	if err != nil {
+-		errMsg := strings.TrimSpace(errBuf.String())
+-		if errMsg != "" {
+-			return res, hperrors.Wrap(fmt.Errorf("kopia restore failed: %s (err: %w)", errMsg, err))
+-		}
+-		return res, hperrors.Wrap(fmt.Errorf("kopia restore failed: %w", err))
++		return res, hperrors.Wrap(err)
+ 	}
+ 	return res, nil
+ }
+ 
++// RestoreStream writes the file filename of the snapshot to stdout: what a
++// stream backup took, as it was taken.
++//
++// `show` reads an object, which a snapshot's ID is not: the file's object is
++// found by listing the snapshot, which `ls` does by its ID.
+ func (c *Client) RestoreStream(
+ 	ctx context.Context,
+ 	snapshotID string,
+ 	filename string,
+ 	stdout io.Writer,
+-	opts *backupmodel.RestoreOptions,
++	_ *backupmodel.RestoreOptions,
+ ) (res backupmodel.RestoreResult, err error) {
+-	var errBuf bytes.Buffer
+-	_, err = c.execCommand(ctx, []string{"show", snapshotID + "/" + filename},
++	dir, name := path.Split(strings.Trim(filename, "/"))
++	entries, err := c.listEntries(ctx, snapshotID, dir)
++	if err != nil {
++		return res, hperrors.Wrap(err)
++	}
++	objectID := ""
++	for _, entry := range entries {
++		if entry.Name == name && !entry.Dir {
++			objectID = entry.objectID
++		}
++	}
++	if objectID == "" {
++		return res, hperrors.Wrap(fmt.Errorf("%w: the snapshot holds no file %s",
++			backupmodel.ErrSnapshotNotFound, filename))
++	}
++	_, err = c.execCommand(ctx, []string{"show", objectID},
+ 		func(o *execOptions) {
+ 			o.stdout = stdout
+-			o.stderr = &errBuf
+ 		})
+ 	if err != nil {
+-		errMsg := strings.TrimSpace(errBuf.String())
+-		if errMsg != "" {
+-			return res, hperrors.Wrap(fmt.Errorf("kopia show dump failed: %s (err: %w)", errMsg, err))
+-		}
+-		return res, hperrors.Wrap(fmt.Errorf("kopia show dump failed: %w", err))
++		return res, hperrors.Wrap(err)
+ 	}
+ 	return res, nil
+ }

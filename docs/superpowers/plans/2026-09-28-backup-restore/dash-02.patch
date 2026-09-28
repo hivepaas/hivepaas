@@ -1,0 +1,410 @@
+diff --git a/src/application/modules/settings/api/hooks/use-backup-snapshot.api.ts b/src/application/modules/settings/api/hooks/use-backup-snapshot.api.ts
+index cb29b11f..bb0a0723 100644
+--- a/src/application/modules/settings/api/hooks/use-backup-snapshot.api.ts
++++ b/src/application/modules/settings/api/hooks/use-backup-snapshot.api.ts
+@@ -4,8 +4,10 @@ import { match } from "oxide.ts";
+ import { SettingsApiContext } from "~/settings/api/api-context/settings.api.context";
+ import type {
+     BackupSnapshot_DeleteOne_Req,
++    BackupSnapshot_FindEntries_Req,
+     BackupSnapshot_FindManyPaginated_Req,
+     BackupSnapshot_FindOneById_Req,
++    BackupSnapshot_Restore_Req,
+ } from "~/settings/api/services/backup-snapshot-services";
+ 
+ import { useApiErrorNotifications } from "@infrastructure/api";
+@@ -27,6 +29,16 @@ function createHook() {
+                         },
+                     });
+                 },
++                findEntries: async (data: BackupSnapshot_FindEntries_Req["data"], signal?: AbortSignal) => {
++                    const result = await api.settings.backupSnapshot.findEntries({ data }, signal);
++                    return match(result, {
++                        Ok: _ => _,
++                        Err: error => {
++                            notifyError({ message: "Failed to list what the snapshot holds", error });
++                            throw error;
++                        },
++                    });
++                },
+                 findOneById: async (data: BackupSnapshot_FindOneById_Req["data"], signal?: AbortSignal) => {
+                     const result = await api.settings.backupSnapshot.findOneById({ data }, signal);
+                     return match(result, {
+@@ -43,6 +55,16 @@ function createHook() {
+ 
+         const mutations = useMemo(
+             () => ({
++                restore: async (data: BackupSnapshot_Restore_Req["data"]) => {
++                    const result = await api.settings.backupSnapshot.restore({ data });
++                    return match(result, {
++                        Ok: _ => _,
++                        Err: error => {
++                            notifyError({ message: "Failed to restore backup snapshot", error });
++                            throw error;
++                        },
++                    });
++                },
+                 deleteOne: async (data: BackupSnapshot_DeleteOne_Req["data"]) => {
+                     const result = await api.settings.backupSnapshot.deleteOne({ data });
+                     return match(result, {
+diff --git a/src/application/modules/settings/api/services/backup-snapshot-services/backup-snapshot.api.contracts.ts b/src/application/modules/settings/api/services/backup-snapshot-services/backup-snapshot.api.contracts.ts
+index 7e0df016..ca650a83 100644
+--- a/src/application/modules/settings/api/services/backup-snapshot-services/backup-snapshot.api.contracts.ts
++++ b/src/application/modules/settings/api/services/backup-snapshot-services/backup-snapshot.api.contracts.ts
+@@ -1,5 +1,12 @@
+ import type { PaginationState } from "@infrastructure/data";
+-import type { BackupSnapshot, BackupSnapshotRepoRef, BackupSnapshotScope } from "~/settings/domain";
++import type { AppScheduledJobs_Command_Payload } from "~/projects/api/services";
++import type {
++    BackupRestoreMode,
++    BackupSnapshot,
++    BackupSnapshotEntry,
++    BackupSnapshotRepoRef,
++    BackupSnapshotScope,
++} from "~/settings/domain";
+ 
+ import type { ApiRequestBase, ApiResponseBase, ApiResponsePaginated } from "@infrastructure/api";
+ 
+@@ -39,3 +46,31 @@ export type BackupSnapshot_DeleteOne_Req = ApiRequestBase<{
+ }>;
+ 
+ export type BackupSnapshot_DeleteOne_Res = ApiResponseBase<{ type: "success" }>;
++
++export type BackupSnapshot_FindEntries_Req = ApiRequestBase<{
++    scope: BackupSnapshotScope;
++    id: string;
++    /** A directory inside the snapshot; "" for its root. */
++    path: string;
++}>;
++
++export type BackupSnapshot_FindEntries_Res = ApiResponseBase<BackupSnapshotEntry[]>;
++
++/** A command snapshot's restore has `command`; a volume snapshot's the rest. */
++export type BackupSnapshot_Restore_Payload = {
++    targetApp: { id: string };
++    command?: AppScheduledJobs_Command_Payload;
++    volume?: { id: string };
++    subpath?: string;
++    snapshotPath?: string;
++    stopApp?: boolean;
++    mode?: BackupRestoreMode;
++};
++
++export type BackupSnapshot_Restore_Req = ApiRequestBase<{
++    scope: BackupSnapshotScope;
++    id: string;
++    payload: BackupSnapshot_Restore_Payload;
++}>;
++
++export type BackupSnapshot_Restore_Res = ApiResponseBase<{ taskId: string }>;
+diff --git a/src/application/modules/settings/api/services/backup-snapshot-services/backup-snapshot.api.ts b/src/application/modules/settings/api/services/backup-snapshot-services/backup-snapshot.api.ts
+index 7262de77..f48cf861 100644
+--- a/src/application/modules/settings/api/services/backup-snapshot-services/backup-snapshot.api.ts
++++ b/src/application/modules/settings/api/services/backup-snapshot-services/backup-snapshot.api.ts
+@@ -7,10 +7,14 @@ import { BaseApi, parseApiError } from "@infrastructure/api";
+ import type {
+     BackupSnapshot_DeleteOne_Req,
+     BackupSnapshot_DeleteOne_Res,
++    BackupSnapshot_FindEntries_Req,
++    BackupSnapshot_FindEntries_Res,
+     BackupSnapshot_FindManyPaginated_Req,
+     BackupSnapshot_FindManyPaginated_Res,
+     BackupSnapshot_FindOneById_Req,
+     BackupSnapshot_FindOneById_Res,
++    BackupSnapshot_Restore_Req,
++    BackupSnapshot_Restore_Res,
+ } from "./backup-snapshot.api.contracts";
+ import type { BackupSnapshotApiValidator } from "./backup-snapshot.api.validator";
+ 
+@@ -75,6 +79,41 @@ export class BackupSnapshotApi extends BaseApi {
+         );
+     }
+ 
++    async findEntries(
++        request: BackupSnapshot_FindEntries_Req,
++        signal?: AbortSignal,
++    ): Promise<Result<BackupSnapshot_FindEntries_Res, Error>> {
++        const { scope, id, path } = request.data;
++
++        return lastValueFrom(
++            from(
++                this.client.v1.get(`${getBackupSnapshotBasePath(scope)}/${id}/entries`, {
++                    params: path ? { path } : undefined,
++                    signal,
++                }),
++            ).pipe(
++                map(this.validator.findEntries),
++                map(res => Ok(res)),
++                catchError(error => of(Err(parseApiError(error)))),
++            ),
++        );
++    }
++
++    async restore(
++        request: BackupSnapshot_Restore_Req,
++        signal?: AbortSignal,
++    ): Promise<Result<BackupSnapshot_Restore_Res, Error>> {
++        const { scope, id, payload } = request.data;
++
++        return lastValueFrom(
++            from(this.client.v1.post(`${getBackupSnapshotBasePath(scope)}/${id}/restore`, payload, { signal })).pipe(
++                map(this.validator.restore),
++                map(res => Ok(res)),
++                catchError(error => of(Err(parseApiError(error)))),
++            ),
++        );
++    }
++
+     async deleteOne(
+         request: BackupSnapshot_DeleteOne_Req,
+         signal?: AbortSignal,
+diff --git a/src/application/modules/settings/api/services/backup-snapshot-services/backup-snapshot.api.validator.ts b/src/application/modules/settings/api/services/backup-snapshot-services/backup-snapshot.api.validator.ts
+index b8b6072b..d536d4bc 100644
+--- a/src/application/modules/settings/api/services/backup-snapshot-services/backup-snapshot.api.validator.ts
++++ b/src/application/modules/settings/api/services/backup-snapshot-services/backup-snapshot.api.validator.ts
+@@ -1,12 +1,16 @@
+ import { type AxiosResponse } from "axios";
+ import { z } from "zod";
++import { APP_SCHEDULED_JOB_DEFAULT_CONSOLE_SIZE } from "~/projects/domain";
++import { EAppScheduledJobArgSeparator } from "~/projects/module-shared/enums";
+ 
+ import { BaseMetaApiSchema, PagingMetaApiSchema, parseApiResponse } from "@infrastructure/api";
+ 
+ import type {
+     BackupSnapshot_DeleteOne_Res,
++    BackupSnapshot_FindEntries_Res,
+     BackupSnapshot_FindManyPaginated_Res,
+     BackupSnapshot_FindOneById_Res,
++    BackupSnapshot_Restore_Res,
+ } from "./backup-snapshot.api.contracts";
+ 
+ const RepoRefSchema = z.object({
+@@ -16,6 +20,62 @@ const RepoRefSchema = z.object({
+     scope: z.string().optional(),
+ });
+ 
++/** A job's command, as the job's form edits it. */
++const CommandSchema = z.object({
++    runInShell: z.string().optional().default(""),
++    command: z.string().optional().default(""),
++    script: z.string().optional().default(""),
++    workingDir: z.string().optional().default(""),
++    consoleSize: z
++        .object({ width: z.number(), height: z.number() })
++        .nullish()
++        .transform(value => value ?? { ...APP_SCHEDULED_JOB_DEFAULT_CONSOLE_SIZE }),
++    tty: z.boolean().optional().default(false),
++    envVars: z
++        .array(z.object({ key: z.string(), value: z.string(), isLiteral: z.boolean().optional().default(false) }))
++        .nullish()
++        .transform(value => value ?? []),
++    argGroups: z
++        .array(
++            z.object({
++                enabled: z.boolean().optional().default(false),
++                exportEnv: z.string().optional().default(""),
++                separator: z.nativeEnum(EAppScheduledJobArgSeparator).catch(EAppScheduledJobArgSeparator.Whitespace),
++                args: z
++                    .array(
++                        z.object({
++                            use: z.boolean().optional().default(false),
++                            name: z.string().optional().default(""),
++                            value: z.string().optional().default(""),
++                        }),
++                    )
++                    .nullish()
++                    .transform(value => value ?? []),
++            }),
++        )
++        .nullish()
++        .transform(value => value ?? []),
++});
++
++const EntrySchema = z.object({
++    name: z.string(),
++    dir: z.boolean().optional().default(false),
++    sizeBytes: z.number().optional().default(0),
++});
++
++const FindEntriesSchema = z.object({
++    data: z
++        .array(EntrySchema)
++        .nullish()
++        .transform(value => value ?? []),
++    meta: BaseMetaApiSchema.nullish(),
++});
++
++const RestoreSchema = z.object({
++    data: z.object({ task: z.object({ id: z.string() }) }),
++    meta: BaseMetaApiSchema.nullish(),
++});
++
+ const BackupSnapshotSchema = z.object({
+     id: z.string(),
+     snapshotId: z.string().optional().default(""),
+@@ -48,6 +108,10 @@ const BackupSnapshotSchema = z.object({
+             id: z.string(),
+             name: z.string().optional().default(""),
+             deleted: z.boolean().optional().default(false),
++            fileName: z.string().optional().default(""),
++            restoreCommand: CommandSchema.nullish().transform(value => value ?? undefined),
++            sourceVolumeId: z.string().optional().default(""),
++            sourceVolumeSubpath: z.string().optional().default(""),
+         })
+         .nullish()
+         .transform(value => value ?? undefined),
+@@ -83,6 +147,16 @@ export class BackupSnapshotApiValidator {
+         return { data, meta };
+     };
+ 
++    findEntries = (response: AxiosResponse): BackupSnapshot_FindEntries_Res => {
++        const { data, meta } = parseApiResponse({ response, schema: FindEntriesSchema });
++        return { data, meta };
++    };
++
++    restore = (response: AxiosResponse): BackupSnapshot_Restore_Res => {
++        const { data, meta } = parseApiResponse({ response, schema: RestoreSchema });
++        return { data: { taskId: data.task.id }, meta };
++    };
++
+     deleteOne = (response: AxiosResponse): BackupSnapshot_DeleteOne_Res => {
+         parseApiResponse({ response, schema: MetaOnlySchema });
+         return { data: { type: "success" } };
+diff --git a/src/application/modules/settings/data/commands/backup-snapshot.commands.ts b/src/application/modules/settings/data/commands/backup-snapshot.commands.ts
+index 0e5b5d02..a7fabc14 100644
+--- a/src/application/modules/settings/data/commands/backup-snapshot.commands.ts
++++ b/src/application/modules/settings/data/commands/backup-snapshot.commands.ts
+@@ -1,6 +1,11 @@
+ import { type UseMutationOptions, useMutation, useQueryClient } from "@tanstack/react-query";
+ import { useBackupSnapshotApi } from "~/settings/api/hooks";
+-import type { BackupSnapshot_DeleteOne_Req, BackupSnapshot_DeleteOne_Res } from "~/settings/api/services";
++import type {
++    BackupSnapshot_DeleteOne_Req,
++    BackupSnapshot_DeleteOne_Res,
++    BackupSnapshot_Restore_Req,
++    BackupSnapshot_Restore_Res,
++} from "~/settings/api/services";
+ import { QK } from "~/settings/data/constants";
+ 
+ type DeleteOneReq = BackupSnapshot_DeleteOne_Req["data"];
+@@ -21,6 +26,20 @@ function useDeleteOne({ onSuccess, ...options }: DeleteOneOptions = {}) {
+     });
+ }
+ 
++type RestoreReq = BackupSnapshot_Restore_Req["data"];
++type RestoreRes = BackupSnapshot_Restore_Res;
++type RestoreOptions = Omit<UseMutationOptions<RestoreRes, Error, RestoreReq>, "mutationFn">;
++
++function useRestore(options: RestoreOptions = {}) {
++    const { mutations } = useBackupSnapshotApi();
++
++    return useMutation({
++        mutationFn: mutations.restore,
++        ...options,
++    });
++}
++
+ export const BackupSnapshotCommands = Object.freeze({
+     useDeleteOne,
++    useRestore,
+ });
+diff --git a/src/application/modules/settings/data/constants/settings.query-keys.ts b/src/application/modules/settings/data/constants/settings.query-keys.ts
+index 25ed48c5..afdbfc2a 100644
+--- a/src/application/modules/settings/data/constants/settings.query-keys.ts
++++ b/src/application/modules/settings/data/constants/settings.query-keys.ts
+@@ -40,4 +40,5 @@ export const QK = {
+     "settings.backup-repos.find-one-by-id": "settings.backup-repos.find-one-by-id",
+     "settings.backup-snapshots.find-many-paginated": "settings.backup-snapshots.find-many-paginated",
+     "settings.backup-snapshots.find-one-by-id": "settings.backup-snapshots.find-one-by-id",
++    "settings.backup-snapshots.find-entries": "settings.backup-snapshots.find-entries",
+ } as const;
+diff --git a/src/application/modules/settings/data/queries/backup-snapshot.queries.ts b/src/application/modules/settings/data/queries/backup-snapshot.queries.ts
+index d045d07a..f9acf3c0 100644
+--- a/src/application/modules/settings/data/queries/backup-snapshot.queries.ts
++++ b/src/application/modules/settings/data/queries/backup-snapshot.queries.ts
+@@ -1,6 +1,8 @@
+ import { type UseQueryOptions, keepPreviousData, useQuery } from "@tanstack/react-query";
+ import { useBackupSnapshotApi } from "~/settings/api/hooks";
+ import type {
++    BackupSnapshot_FindEntries_Req,
++    BackupSnapshot_FindEntries_Res,
+     BackupSnapshot_FindManyPaginated_Req,
+     BackupSnapshot_FindManyPaginated_Res,
+     BackupSnapshot_FindOneById_Req,
+@@ -41,7 +43,26 @@ function useFindOneById(
+     });
+ }
+ 
++type FindEntriesReq = BackupSnapshot_FindEntries_Req["data"];
++type FindEntriesRes = BackupSnapshot_FindEntries_Res;
++
++/** A directory of a snapshot: what the repository says it holds does not change. */
++function useFindEntries(
++    request: FindEntriesReq,
++    options: Omit<UseQueryOptions<FindEntriesRes>, "queryKey" | "queryFn"> = {},
++) {
++    const { queries } = useBackupSnapshotApi();
++
++    return useQuery({
++        queryKey: [QK["settings.backup-snapshots.find-entries"], request],
++        queryFn: ({ signal }) => queries.findEntries(request, signal),
++        staleTime: Infinity,
++        ...options,
++    });
++}
++
+ export const BackupSnapshotQueries = Object.freeze({
+     useFindManyPaginated,
+     useFindOneById,
++    useFindEntries,
+ });
+diff --git a/src/application/modules/settings/domain/backup-snapshot.entity.ts b/src/application/modules/settings/domain/backup-snapshot.entity.ts
+index c9ad4464..98220610 100644
+--- a/src/application/modules/settings/domain/backup-snapshot.entity.ts
++++ b/src/application/modules/settings/domain/backup-snapshot.entity.ts
+@@ -1,3 +1,5 @@
++import type { AppScheduledJobCommand } from "~/projects/domain";
++
+ /** A setting a snapshot names; its status is "missing" when it is deleted. */
+ export interface BackupSnapshotRepoRef {
+     id: string;
+@@ -28,7 +30,38 @@ export interface BackupSnapshot {
+     source: string;
+     repo: BackupSnapshotRepoRef;
+     app?: { id: string; name: string; env: string; deleted: boolean };
+-    job?: { id: string; name: string; deleted: boolean };
++    job?: BackupSnapshotJob;
+     /** The task of the run that took it. */
+     runId: string;
+ }
++
++/**
++ * The job that took a snapshot, and what a restore needs of it: the file a command's snapshot holds and the
++ * command that loads it, or the volume a volume's was read from.
++ */
++export interface BackupSnapshotJob {
++    id: string;
++    name: string;
++    deleted: boolean;
++    fileName: string;
++    restoreCommand?: AppScheduledJobCommand;
++    sourceVolumeId: string;
++    sourceVolumeSubpath: string;
++}
++
++/** A file or a directory a snapshot holds; a directory's size is all it holds. */
++export interface BackupSnapshotEntry {
++    name: string;
++    dir: boolean;
++    sizeBytes: number;
++}
++
++/** How a restore writes a snapshot into a directory. */
++export const BACKUP_RESTORE_MODE = {
++    /** The directory is moved aside, and the snapshot restored into an empty one. */
++    Replace: "replace",
++    /** The snapshot's files are written over what is there. */
++    Overwrite: "overwrite",
++} as const;
++
++export type BackupRestoreMode = (typeof BACKUP_RESTORE_MODE)[keyof typeof BACKUP_RESTORE_MODE];

@@ -1,0 +1,105 @@
+diff --git a/hivepaas_app/entity/setting_sched_job_data_backup_test.go b/hivepaas_app/entity/setting_sched_job_data_backup_test.go
+index a5e5131f..b79b1e1d 100644
+--- a/hivepaas_app/entity/setting_sched_job_data_backup_test.go
++++ b/hivepaas_app/entity/setting_sched_job_data_backup_test.go
+@@ -101,3 +101,19 @@ func TestTaskOutputAsDataBackup(t *testing.T) {
+ 	assert.NoError(t, err, "read after the task's output was parsed as a sequence's run")
+ 	assert.Equal(t, "k1", result.SnapshotID)
+ }
++
++// A restore task's arguments come back as they went in.
++func TestTaskBackupRestoreArgs(t *testing.T) {
++	task := &Task{ID: "t1", Type: base.TaskTypeBackupRestore}
++	args := &TaskBackupRestoreArgs{
++		ProjectID: "p1", AppID: "a1", RepoID: "r1", SnapshotID: "k1",
++		Volume: ObjectID{ID: "vol1"}, SnapshotPath: "uploads", StopApp: true, Mode: base.BackupRestoreModeReplace,
++	}
++	assert.NoError(t, task.SetArgs(args))
++
++	read := &Task{ID: "t1", Type: base.TaskTypeBackupRestore, Args: task.Args}
++	got, err := read.ArgsAsBackupRestore()
++
++	assert.NoError(t, err)
++	assert.Equal(t, args, got)
++}
+diff --git a/hivepaas_app/tasks/taskbackuprestore/executor_test.go b/hivepaas_app/tasks/taskbackuprestore/executor_test.go
+new file mode 100644
+index 00000000..8da7a3eb
+--- /dev/null
++++ b/hivepaas_app/tasks/taskbackuprestore/executor_test.go
+@@ -0,0 +1,40 @@
++package taskbackuprestore
++
++import (
++	"testing"
++
++	"github.com/stretchr/testify/assert"
++
++	"github.com/hivepaas/hivepaas/hivepaas_app/base"
++	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
++	"github.com/hivepaas/hivepaas/hivepaas_app/service/backupreposervice"
++	"github.com/hivepaas/hivepaas/hivepaas_app/service/databackupservice"
++	"github.com/hivepaas/hivepaas/hivepaas_app/tasks/queue"
++)
++
++// A restore's arguments say which of the two it is: a command's, or a volume's.
++func TestRestoreReqOf(t *testing.T) {
++	exec := &queue.TaskExecData{Task: &entity.Task{ID: "t1"}}
++	app := &entity.App{ID: "app1"}
++	target := backupreposervice.RepoTarget{RepoSetting: &entity.Setting{ID: "repo1"}}
++
++	command := &entity.TaskBackupRestoreArgs{
++		SnapshotID: "k1", Command: &entity.CommandTemplate{Command: "psql app"}, FileName: "db.sql",
++	}
++	assert.Equal(t, &databackupservice.RestoreReq{
++		TaskExecData: exec, Target: target, SnapshotID: "k1", App: app,
++		Command: &databackupservice.RestoreCommand{Command: command.Command, FileName: "db.sql"},
++	}, restoreReqOf(exec, command, app, target))
++
++	volume := &entity.TaskBackupRestoreArgs{
++		SnapshotID: "k1", Volume: entity.ObjectID{ID: "vol1"}, Subpath: "data", SnapshotPath: "uploads",
++		StopApp: true, Mode: base.BackupRestoreModeReplace,
++	}
++	assert.Equal(t, &databackupservice.RestoreReq{
++		TaskExecData: exec, Target: target, SnapshotID: "k1", App: app,
++		Volume: &databackupservice.RestoreVolume{
++			VolumeID: "vol1", Subpath: "data", SnapshotPath: "uploads", StopApp: true,
++			Mode: base.BackupRestoreModeReplace,
++		},
++	}, restoreReqOf(exec, volume, app, target))
++}
+diff --git a/hivepaas_app/usecase/taskuc/taskdto/backup_restore_test.go b/hivepaas_app/usecase/taskuc/taskdto/backup_restore_test.go
+new file mode 100644
+index 00000000..d39855a2
+--- /dev/null
++++ b/hivepaas_app/usecase/taskuc/taskdto/backup_restore_test.go
+@@ -0,0 +1,29 @@
++package taskdto
++
++import (
++	"testing"
++
++	"github.com/stretchr/testify/assert"
++
++	"github.com/hivepaas/hivepaas/hivepaas_app/base"
++	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
++)
++
++// A restore's task says what it restored, from where, and how: its page links
++// to the snapshot.
++func TestTransformTaskGivesARestoresSnapshot(t *testing.T) {
++	task := &entity.Task{ID: "t1", Type: base.TaskTypeBackupRestore, TargetID: "s1"}
++	task.MustSetArgs(&entity.TaskBackupRestoreArgs{
++		RepoID: "r1", SnapshotID: "k1full", SnapshotPath: "uploads", Mode: base.BackupRestoreModeReplace,
++		StopApp: true,
++	})
++
++	resp, err := TransformTask(task, nil, entity.NewRefObjects())
++
++	assert.NoError(t, err)
++	assert.Equal(t, &TaskBackupRestoreResp{
++		SnapshotRecordID: "s1", RepoID: "r1", SnapshotID: "k1full", SnapshotPath: "uploads",
++		Mode: base.BackupRestoreModeReplace, StopApp: true,
++	}, resp.BackupRestore)
++	assert.Nil(t, resp.DataBackup)
++}

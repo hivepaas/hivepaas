@@ -1,0 +1,87 @@
+diff --git a/hivepaas_app/entity/setting_sched_job_data_backup_test.go b/hivepaas_app/entity/setting_sched_job_data_backup_test.go
+index 2ebd6102..a5e5131f 100644
+--- a/hivepaas_app/entity/setting_sched_job_data_backup_test.go
++++ b/hivepaas_app/entity/setting_sched_job_data_backup_test.go
+@@ -40,6 +40,20 @@ func TestSchedJobDataBackupOfACommandReferencesTheRepositoryOnly(t *testing.T) {
+ 
+ // A snapshot's tags carry the job, the app and the source, then the job's own,
+ // as kopia takes them: key:value, in a stable order.
++// The scripts its commands run are references too: they keep a script from
++// being deleted under the job.
++func TestSchedJobDataBackupReferencesItsCommandsScripts(t *testing.T) {
++	job := &SchedJob{JobType: base.SchedJobTypeDataBackup, DataBackup: &SchedJobDataBackup{
++		Source:           base.SchedJobDataBackupSourceCommand,
++		SourceCommand:    &CommandTemplate{Script: ObjectValue{ID: "dump-script"}},
++		RestoreCommand:   &CommandTemplate{Script: ObjectValue{ID: "load-script"}},
++		SourceFileName:   "db.sql",
++		TargetRepository: ObjectID{ID: "repo1"},
++	}}
++
++	assert.ElementsMatch(t, []string{"dump-script", "load-script", "repo1"}, job.GetRefObjectIDs().RefSettingIDs)
++}
++
+ func TestSchedJobDataBackupSnapshotTags(t *testing.T) {
+ 	backup := &SchedJobDataBackup{Source: base.SchedJobDataBackupSourceCommand,
+ 		Tags: map[string]string{"env": "prod", "db": "main"}}
+diff --git a/hivepaas_app/usecase/settings/schedjobuc/schedjobdto/data_backup_test.go b/hivepaas_app/usecase/settings/schedjobuc/schedjobdto/data_backup_test.go
+index 4fe15073..705b4e00 100644
+--- a/hivepaas_app/usecase/settings/schedjobuc/schedjobdto/data_backup_test.go
++++ b/hivepaas_app/usecase/settings/schedjobuc/schedjobdto/data_backup_test.go
+@@ -77,6 +77,57 @@ func TestADataBackupOfACommandNeedsTheCommandAndAFileName(t *testing.T) {
+ 	assert.Contains(t, invalidFields(t, req), "dataBackup.sourceVolume")
+ }
+ 
++// A command's backup may say how to load it back; the command gets its stdin,
++// so it runs without a TTY.
++func TestADataBackupOfACommandMayHaveARestoreCommand(t *testing.T) {
++	req := dataBackupReq(commandBackupReq())
++	req.DataBackup.RestoreCommand = &commandtemplatedto.CommandTemplateBaseReq{
++		Command: "psql -U app app", TTY: true,
++	}
++
++	assert.Equal(t, "", invalidFields(t, req))
++	job := req.ToEntity()
++	if assert.NotNil(t, job.DataBackup.RestoreCommand) {
++		assert.Equal(t, "psql -U app app", job.DataBackup.RestoreCommand.Command)
++		assert.False(t, job.DataBackup.RestoreCommand.TTY)
++	}
++
++	req = dataBackupReq(commandBackupReq())
++	req.DataBackup.RestoreCommand = &commandtemplatedto.CommandTemplateBaseReq{}
++	assert.Contains(t, invalidFields(t, req), "dataBackup.restoreCommand", "an empty command")
++}
++
++// A volume is restored by the engine: it has no restore command.
++func TestADataBackupOfAVolumeHasNoRestoreCommand(t *testing.T) {
++	req := dataBackupReq(volumeBackupReq(""))
++	req.DataBackup.RestoreCommand = &commandtemplatedto.CommandTemplateBaseReq{Command: "tar x"}
++
++	assert.Contains(t, invalidFields(t, req), "dataBackup.restoreCommand")
++}
++
++func TestTransformSchedJobGivesADataBackupsRestoreCommand(t *testing.T) {
++	job := &entity.SchedJob{
++		JobType: base.SchedJobTypeDataBackup,
++		App:     entity.ObjectID{ID: backupApp},
++		DataBackup: &entity.SchedJobDataBackup{
++			Source:           base.SchedJobDataBackupSourceCommand,
++			SourceCommand:    &entity.CommandTemplate{Command: "pg_dump app"},
++			RestoreCommand:   &entity.CommandTemplate{Command: "psql app"},
++			SourceFileName:   "db.sql",
++			TargetRepository: entity.ObjectID{ID: repoA},
++		},
++	}
++	setting := &entity.Setting{ID: "j1", Type: base.SettingTypeSchedJob, Name: "db"}
++	setting.MustSetData(job)
++
++	resp, err := TransformSchedJob(setting, entity.NewRefObjects(), false)
++
++	assert.NoError(t, err)
++	if assert.NotNil(t, resp.DataBackup) && assert.NotNil(t, resp.DataBackup.RestoreCommand) {
++		assert.Equal(t, "psql app", resp.DataBackup.RestoreCommand.Command)
++	}
++}
++
+ func TestADataBackupOfAVolume(t *testing.T) {
+ 	req := dataBackupReq(volumeBackupReq("uploads/2026"))
+ 

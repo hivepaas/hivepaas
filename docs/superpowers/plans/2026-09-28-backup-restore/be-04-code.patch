@@ -1,0 +1,254 @@
+diff --git a/hivepaas_app/service/backupreposervice/backupreposerviceimpl/backup.go b/hivepaas_app/service/backupreposervice/backupreposerviceimpl/backup.go
+index c073c8c4..8d7ff7be 100644
+--- a/hivepaas_app/service/backupreposervice/backupreposerviceimpl/backup.go
++++ b/hivepaas_app/service/backupreposervice/backupreposerviceimpl/backup.go
+@@ -105,20 +105,35 @@ func (s *service) backupWith(
+ 	storage *backup.Storage,
+ 	exec backupmodel.CommandExecutor,
+ 	take func(backup.Engine) (backupmodel.BackupResult, error),
+-) (backupmodel.BackupResult, error) {
++) (result backupmodel.BackupResult, err error) {
++	err = s.runWith(ctx, repo, storage, exec, func(engine backup.Engine) error {
++		result, err = take(engine)
++		return err
++	})
++	return result, hperrors.Wrap(err)
++}
++
++// runWith connects an engine on the storage, its commands run by exec, and
++// runs fn with it.
++func (s *service) runWith(
++	ctx context.Context,
++	repo *entity.BackupRepo,
++	storage *backup.Storage,
++	exec backupmodel.CommandExecutor,
++	fn func(backup.Engine) error,
++) error {
+ 	engine, err := backup.NewEngine(repo.Engine, storage, exec)
+ 	if err != nil {
+-		return backupmodel.BackupResult{}, hperrors.Wrap(err)
++		return hperrors.Wrap(err)
+ 	}
+ 	if err = engine.ConnectRepo(ctx); err != nil {
+-		return backupmodel.BackupResult{}, hperrors.Wrap(err)
++		return hperrors.Wrap(err)
+ 	}
+-	return take(engine)
++	return fn(engine)
+ }
+ 
+ // backupThroughServer takes the backup through a repository server run for it on
+ // the repository's node, as the identity of the snapshot's source, user@host.
+-// The client's connection goes with the session.
+ func (s *service) backupThroughServer(
+ 	ctx context.Context,
+ 	repoID string,
+@@ -130,6 +145,26 @@ func (s *service) backupThroughServer(
+ 	take func(backup.Engine) (backupmodel.BackupResult, error),
+ ) (result backupmodel.BackupResult, err error) {
+ 	username, _, _ := strings.Cut(source, ":")
++	err = s.throughServer(ctx, repoID, repo, storage, username, progress, exec, func(engine backup.Engine) error {
++		result, err = take(engine)
++		return err
++	})
++	return result, hperrors.Wrap(err)
++}
++
++// throughServer runs fn with an engine reaching the repository through a server
++// run for it on the repository's node, as username, user@host. The engine's
++// connection goes with the session.
++func (s *service) throughServer(
++	ctx context.Context,
++	repoID string,
++	repo *entity.BackupRepo,
++	storage *backup.Storage,
++	username string,
++	progress func(string),
++	exec backupmodel.CommandExecutor,
++	fn func(backup.Engine) error,
++) error {
+ 	say := func(msg string) {
+ 		if progress != nil {
+ 			progress(msg)
+@@ -140,7 +175,7 @@ func (s *service) backupThroughServer(
+ 		node = storage.StorageLocal.NodeLabel
+ 	}
+ 	say("Starting the repository server on node " + node)
+-	err = s.withRepoServer(ctx, storage, username, repoID, func(client *backup.Storage) error {
++	err := s.withRepoServer(ctx, storage, username, repoID, func(client *backup.Storage) error {
+ 		say("Repository server ready at " + client.StorageServer.URL)
+ 		engine, err := backup.NewEngine(repo.Engine, client, exec)
+ 		if err != nil {
+@@ -150,11 +185,10 @@ func (s *service) backupThroughServer(
+ 			return hperrors.Wrap(err)
+ 		}
+ 		defer func() { _ = engine.DisconnectRepo(context.WithoutCancel(ctx)) }()
+-		result, err = take(engine)
+-		return hperrors.Wrap(err)
++		return hperrors.Wrap(fn(engine))
+ 	})
+ 	say("Repository server stopped")
+-	return result, hperrors.Wrap(err)
++	return hperrors.Wrap(err)
+ }
+ 
+ // repoServerNeeded says whether a backup needs the repository's server: a
+diff --git a/hivepaas_app/service/backupreposervice/backupreposerviceimpl/restore.go b/hivepaas_app/service/backupreposervice/backupreposerviceimpl/restore.go
+new file mode 100644
+index 00000000..40307fe0
+--- /dev/null
++++ b/hivepaas_app/service/backupreposervice/backupreposerviceimpl/restore.go
+@@ -0,0 +1,83 @@
++package backupreposerviceimpl
++
++import (
++	"context"
++	"path/filepath"
++
++	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
++	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
++	"github.com/hivepaas/hivepaas/hivepaas_app/service/backupreposervice"
++	"github.com/hivepaas/hivepaas/hivepaas_app/service/volumeservice"
++	"github.com/hivepaas/hivepaas/services/backup"
++)
++
++// restoreServerUser is who a restore reads a repository server as. It writes
++// nothing, so it needs no source of its own.
++const restoreServerUser = "hivepaas@restore"
++
++func (s *service) RestoreStream(
++	ctx context.Context,
++	db database.IDB,
++	req *backupreposervice.RestoreStreamReq,
++) error {
++	repo, storage, err := s.targetStorage(ctx, db, &req.RepoTarget)
++	if err != nil {
++		return hperrors.Wrap(err)
++	}
++	read := func(engine backup.Engine) error {
++		if req.OnConnected != nil {
++			req.OnConnected()
++		}
++		_, err := engine.RestoreStream(ctx, req.SnapshotID, req.FileName, req.Stdout, nil)
++		return hperrors.Wrap(err)
++	}
++	if !repoServerNeeded(storage, true, "", "") {
++		return hperrors.Wrap(s.runWith(ctx, repo, storage, s.buildCommandExecutor(false), read))
++	}
++	// The agent's commands bring back no stream: kopia runs here, through the
++	// repository's server.
++	return hperrors.Wrap(s.throughServer(ctx, req.RepoSetting.ID, repo, storage, restoreServerUser, req.Progress,
++		s.buildCommandExecutor(false), read))
++}
++
++func (s *service) RestoreDirectory(
++	ctx context.Context,
++	db database.IDB,
++	req *backupreposervice.RestoreDirectoryReq,
++) error {
++	repo, storage, err := s.targetStorage(ctx, db, &req.RepoTarget)
++	if err != nil {
++		return hperrors.Wrap(err)
++	}
++	// The agent mounts the host root: the directory is expressed from inside it.
++	dir := filepath.Join(volumeservice.HostPathPrefix, req.HostDir)
++	restore := func(engine backup.Engine) error {
++		_, err := engine.RestoreDirectory(ctx, req.SnapshotID, dir, &backup.RestoreOptions{Path: req.Path})
++		return hperrors.Wrap(err)
++	}
++	// The directory is written where it is: kopia runs on its node, whatever the
++	// repository's storage would have chosen.
++	onDataNode := onNodeExecutor(s.buildCommandExecutor(true), req.NodeID, req.NodeLabel)
++	if !repoServerNeeded(storage, false, req.NodeID, req.NodeLabel) {
++		return hperrors.Wrap(s.runWith(ctx, repo, storageOnDataNode(storage, req.NodeID, req.NodeLabel),
++			onDataNode, restore))
++	}
++	return hperrors.Wrap(s.throughServer(ctx, req.RepoSetting.ID, repo, storage, restoreServerUser, req.Progress,
++		onDataNode, restore))
++}
++
++func (s *service) ListEntries(
++	ctx context.Context,
++	db database.IDB,
++	req *backupreposervice.ListEntriesReq,
++) ([]backup.SnapshotEntry, error) {
++	engine, err := s.buildTargetEngine(ctx, db, &req.RepoTarget)
++	if err != nil {
++		return nil, hperrors.Wrap(err)
++	}
++	if err = engine.ConnectRepo(ctx); err != nil {
++		return nil, hperrors.Wrap(err)
++	}
++	entries, err := engine.ListEntries(ctx, req.SnapshotID, req.Path)
++	return entries, hperrors.Wrap(err)
++}
+diff --git a/hivepaas_app/service/backupreposervice/service.go b/hivepaas_app/service/backupreposervice/service.go
+index bd93cf8d..bc059eb0 100644
+--- a/hivepaas_app/service/backupreposervice/service.go
++++ b/hivepaas_app/service/backupreposervice/service.go
+@@ -5,6 +5,7 @@ import (
+ 
+ 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
+ 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
++	"github.com/hivepaas/hivepaas/services/backup"
+ )
+ 
+ type Service interface {
+@@ -46,6 +47,15 @@ type Service interface {
+ 	// its node, until the session is closed or ctx ends.
+ 	OpenRepoServer(ctx context.Context, db database.IDB, req *OpenRepoServerReq) (*RepoServerSession, error)
+ 	BackupDirectory(ctx context.Context, db database.IDB, req *BackupDirectoryReq) (*BackupResp, error)
++	// RestoreStream writes the file FileName of a snapshot to Stdout, the engine running in
++	// this process: through a repository server for a repository on a volume.
++	RestoreStream(ctx context.Context, db database.IDB, req *RestoreStreamReq) error
++	// RestoreDirectory restores a snapshot, or a directory of it, into a directory of a node's
++	// host, the engine running on that node through its agent: through a repository server when
++	// the repository is on a volume that node does not reach.
++	RestoreDirectory(ctx context.Context, db database.IDB, req *RestoreDirectoryReq) error
++	// ListEntries lists what a snapshot holds in one of its directories.
++	ListEntries(ctx context.Context, db database.IDB, req *ListEntriesReq) ([]backup.SnapshotEntry, error)
+ 	// DeleteSnapshot removes one snapshot from the repository.
+ 	DeleteSnapshot(ctx context.Context, db database.IDB, req *DeleteSnapshotReq) error
+ 	// VolumeHostDir is where a volume's data is on the host of its node, and that node:
+diff --git a/hivepaas_app/service/backupreposervice/types.go b/hivepaas_app/service/backupreposervice/types.go
+index aca692d2..76b93e7c 100644
+--- a/hivepaas_app/service/backupreposervice/types.go
++++ b/hivepaas_app/service/backupreposervice/types.go
+@@ -226,3 +226,37 @@ type VolumeHostDir struct {
+ 	NodeID    string
+ 	NodeLabel string
+ }
++
++type RestoreStreamReq struct {
++	RepoTarget
++	SnapshotID string
++	// FileName is the file of the snapshot a stream backup took.
++	FileName string
++	Stdout   io.Writer
++	// Progress, when set, is told the steps the restore takes.
++	Progress func(msg string)
++	// OnConnected, when set, is called once the engine is connected: from then on
++	// the restore uses the database no more.
++	OnConnected func()
++}
++
++type RestoreDirectoryReq struct {
++	RepoTarget
++	SnapshotID string
++	// Path is a directory inside the snapshot to restore alone; "" for all of it.
++	Path string
++	// HostDir is where it goes, on the host of the node, which NodeID or
++	// NodeLabel names.
++	HostDir   string
++	NodeID    string
++	NodeLabel string
++	// Progress, when set, is told the steps the restore takes.
++	Progress func(msg string)
++}
++
++type ListEntriesReq struct {
++	RepoTarget
++	SnapshotID string
++	// Path is a directory inside the snapshot; "" for its root.
++	Path string
++}

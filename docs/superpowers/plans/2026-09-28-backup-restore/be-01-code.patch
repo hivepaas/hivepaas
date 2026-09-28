@@ -1,0 +1,98 @@
+diff --git a/hivepaas_app/entity/setting_sched_job_data_backup.go b/hivepaas_app/entity/setting_sched_job_data_backup.go
+index a0a72acb..8633a9c7 100644
+--- a/hivepaas_app/entity/setting_sched_job_data_backup.go
++++ b/hivepaas_app/entity/setting_sched_job_data_backup.go
+@@ -18,6 +18,10 @@ type SchedJobDataBackup struct {
+ 	// SourceFileName of the snapshot.
+ 	SourceCommand  *CommandTemplate `json:"sourceCommand,omitempty"`
+ 	SourceFileName string           `json:"sourceFileName,omitempty"`
++	// RestoreCommand reads a backup on its stdin and loads it into the app, e.g.
++	// `psql -U $POSTGRES_USER $POSTGRES_DB`: what a restore offers to run.
++	// Optional; a command source's only.
++	RestoreCommand *CommandTemplate `json:"restoreCommand,omitempty"`
+ 	// SourceVolume is a volume the app mounts, and SourceVolumeSubpath a path
+ 	// inside what the app sees of it; "" for all of it.
+ 	SourceVolume        ObjectID `json:"sourceVolume,omitzero"`
+@@ -32,6 +36,11 @@ func (b *SchedJobDataBackup) refSettingIDs() []string {
+ 		return nil
+ 	}
+ 	var ids []string
++	for _, command := range []*CommandTemplate{b.SourceCommand, b.RestoreCommand} {
++		if command != nil && command.Script.ID != "" {
++			ids = append(ids, command.Script.ID)
++		}
++	}
+ 	if b.SourceVolume.ID != "" {
+ 		ids = append(ids, b.SourceVolume.ID)
+ 	}
+diff --git a/hivepaas_app/usecase/settings/schedjobuc/schedjobdto/data_backup.go b/hivepaas_app/usecase/settings/schedjobuc/schedjobdto/data_backup.go
+index 95d49340..430670ec 100644
+--- a/hivepaas_app/usecase/settings/schedjobuc/schedjobdto/data_backup.go
++++ b/hivepaas_app/usecase/settings/schedjobuc/schedjobdto/data_backup.go
+@@ -37,6 +37,8 @@ type SchedJobDataBackupReq struct {
+ 	// SourceCommand runs in the job's app; its stdout is the file SourceFileName.
+ 	SourceCommand  *commandtemplatedto.CommandTemplateBaseReq `json:"sourceCommand"`
+ 	SourceFileName string                                     `json:"sourceFileName"`
++	// RestoreCommand loads a backup it reads on its stdin: a command source's only.
++	RestoreCommand *commandtemplatedto.CommandTemplateBaseReq `json:"restoreCommand"`
+ 	// SourceVolume is a volume the app mounts; SourceVolumeSubpath a path inside
+ 	// what the app sees of it, "" for all of it.
+ 	SourceVolume        basedto.ObjectIDReq `json:"sourceVolume"`
+@@ -58,6 +60,9 @@ func (req *SchedJobDataBackupReq) ToEntity() *entity.SchedJobDataBackup {
+ 	case base.SchedJobDataBackupSourceCommand:
+ 		res.SourceCommand = req.SourceCommand.ToEntity()
+ 		res.SourceFileName = req.SourceFileName
++		if req.RestoreCommand != nil {
++			res.RestoreCommand = req.RestoreCommand.ToEntity()
++		}
+ 	case base.SchedJobDataBackupSourceVolume:
+ 		res.SourceVolume = entity.ObjectID{ID: req.SourceVolume.ID}
+ 		res.SourceVolumeSubpath = req.SourceVolumeSubpath
+@@ -89,6 +94,15 @@ func (req *SchedJobDataBackupReq) modifyRequest() error {
+ 			return hperrors.Wrap(err)
+ 		}
+ 	}
++	if req.RestoreCommand != nil {
++		req.RestoreCommand.Name = "-"
++		req.RestoreCommand.Kind = ""
++		// It reads the backup on its stdin, which a TTY would not pass through as is.
++		req.RestoreCommand.TTY = false
++		if err := req.RestoreCommand.ModifyRequest(); err != nil {
++			return hperrors.Wrap(err)
++		}
++	}
+ 	return nil
+ }
+ 
+@@ -108,6 +122,10 @@ func (req *SchedJobDataBackupReq) validate(field string) (res []vld.Validator) {
+ 	}
+ 	res = append(res, basedto.ValidateCond(isCommand == dataBackupFileNameRegex.MatchString(req.SourceFileName),
+ 		field+"sourceFileName")...)
++	res = append(res, basedto.ValidateCond(isCommand || req.RestoreCommand == nil, field+"restoreCommand")...)
++	if req.RestoreCommand != nil {
++		res = append(res, req.RestoreCommand.Validate(field+"restoreCommand")...)
++	}
+ 
+ 	res = append(res, basedto.ValidateObjectIDReq(&req.SourceVolume, isVolume, field+"sourceVolume")...)
+ 	res = append(res, basedto.ValidateCond(isVolume || req.SourceVolume.ID == "", field+"sourceVolume")...)
+@@ -165,6 +183,7 @@ type SchedJobDataBackupResp struct {
+ 	Source              base.SchedJobDataBackupSource           `json:"source"`
+ 	SourceCommand       *commandtemplatedto.CommandTemplateResp `json:"sourceCommand,omitempty"`
+ 	SourceFileName      string                                  `json:"sourceFileName,omitempty"`
++	RestoreCommand      *commandtemplatedto.CommandTemplateResp `json:"restoreCommand,omitempty"`
+ 	SourceVolume        *settings.BaseSettingResp               `json:"sourceVolume,omitempty"`
+ 	SourceVolumeSubpath string                                  `json:"sourceVolumeSubpath,omitempty"`
+ 	TargetRepository    *settings.BaseSettingResp               `json:"targetRepository"`
+@@ -196,6 +215,12 @@ func TransformSchedJobDataBackup(
+ 		}
+ 		commandtemplatedto.TransformScript(&dataBackup.SourceCommand.Script, refObjects, resp.SourceCommand)
+ 	}
++	if dataBackup.RestoreCommand != nil {
++		if err := copier.Copy(&resp.RestoreCommand, dataBackup.RestoreCommand); err != nil {
++			return nil, hperrors.Wrap(err)
++		}
++		commandtemplatedto.TransformScript(&dataBackup.RestoreCommand.Script, refObjects, resp.RestoreCommand)
++	}
+ 	return resp, nil
+ }
+ 

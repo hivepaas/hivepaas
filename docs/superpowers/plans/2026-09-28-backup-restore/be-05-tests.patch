@@ -1,0 +1,161 @@
+diff --git a/hivepaas_app/service/schedjobexecservice/schedjobexecserviceimpl/exec_writer_test.go b/hivepaas_app/service/schedjobexecservice/schedjobexecserviceimpl/exec_writer_test.go
+index d8cbcdfd..c50c0c42 100644
+--- a/hivepaas_app/service/schedjobexecservice/schedjobexecserviceimpl/exec_writer_test.go
++++ b/hivepaas_app/service/schedjobexecservice/schedjobexecserviceimpl/exec_writer_test.go
+@@ -3,6 +3,7 @@ package schedjobexecserviceimpl
+ import (
+ 	"bytes"
+ 	"context"
++	"io"
+ 	"testing"
+ 
+ 	"github.com/moby/moby/client"
+@@ -31,13 +32,21 @@ func (*commandServiceStub) BuildCommand(
+ type fakeExec struct {
+ 	containerexecservice.Service
+ 	opts   client.ExecCreateOptions
++	app    *entity.App
+ 	output string
++	// stdin is what the command was given to read.
++	stdin string
+ }
+ 
+ func (f *fakeExec) ContainerExec(
+ 	_ context.Context, req *containerexecservice.ContainerExecReq,
+ ) (*containerexecservice.ContainerExecResp, error) {
+ 	req.ExecOptions(&f.opts)
++	f.app = req.App
++	if req.StdinReader != nil {
++		in, _ := io.ReadAll(req.StdinReader)
++		f.stdin = string(in)
++	}
+ 	if req.StdoutWriter != nil {
+ 		_, _ = req.StdoutWriter.Write([]byte(f.output))
+ 	}
+diff --git a/hivepaas_app/service/schedjobexecservice/schedjobexecserviceimpl/run_command_test.go b/hivepaas_app/service/schedjobexecservice/schedjobexecserviceimpl/run_command_test.go
+new file mode 100644
+index 00000000..216d1348
+--- /dev/null
++++ b/hivepaas_app/service/schedjobexecservice/schedjobexecserviceimpl/run_command_test.go
+@@ -0,0 +1,53 @@
++package schedjobexecserviceimpl
++
++import (
++	"context"
++	"strings"
++	"testing"
++
++	"github.com/stretchr/testify/assert"
++
++	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
++	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
++	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/tasklog"
++	"github.com/hivepaas/hivepaas/hivepaas_app/service/schedjobexecservice"
++	"github.com/hivepaas/hivepaas/hivepaas_app/tasks/queue"
++)
++
++// A command outside any job - a restore's - runs in the app it is given, reads
++// what it is given on its stdin, and has no TTY to mangle it.
++func TestRunCommandGivesTheCommandItsStdin(t *testing.T) {
++	exec := &fakeExec{}
++	svc := &service{containerExecService: exec, commandService: &commandServiceStub{}}
++	app := &entity.App{ID: "a2"}
++
++	resp, err := svc.RunCommand(context.Background(), database.Tx{}, &schedjobexecservice.RunCommandReq{
++		TaskExecData: &queue.TaskExecData{Task: &entity.Task{ID: "t1"}, LogStore: tasklog.NewNullStore()},
++		App:          app,
++		Command:      &entity.CommandTemplate{Command: "psql -U app app", TTY: true, WorkingDir: "/tmp"},
++		Stdin:        strings.NewReader("CREATE TABLE t();\n"),
++	})
++
++	assert.NoError(t, err)
++	assert.Same(t, app, exec.app)
++	assert.Equal(t, []string{"psql", "-U", "app", "app"}, exec.opts.Cmd)
++	assert.Equal(t, "/tmp", exec.opts.WorkingDir)
++	assert.False(t, exec.opts.TTY)
++	assert.True(t, exec.opts.AttachStdout)
++	assert.Equal(t, "CREATE TABLE t();\n", exec.stdin)
++	if assert.NotNil(t, resp.ExitCode) {
++		assert.Equal(t, 0, *resp.ExitCode)
++	}
++}
++
++func TestRunCommandRefusesAnEmptyCommand(t *testing.T) {
++	svc := &service{containerExecService: &fakeExec{}, commandService: &commandServiceStub{}}
++
++	_, err := svc.RunCommand(context.Background(), database.Tx{}, &schedjobexecservice.RunCommandReq{
++		TaskExecData: &queue.TaskExecData{Task: &entity.Task{ID: "t1"}, LogStore: tasklog.NewNullStore()},
++		App:          &entity.App{ID: "a2"},
++		Command:      &entity.CommandTemplate{},
++	})
++
++	assert.Error(t, err)
++}
+diff --git a/hivepaas_app/usecaseagent/containeragentuc/command_exec_test.go b/hivepaas_app/usecaseagent/containeragentuc/command_exec_test.go
+new file mode 100644
+index 00000000..04dd48d1
+--- /dev/null
++++ b/hivepaas_app/usecaseagent/containeragentuc/command_exec_test.go
+@@ -0,0 +1,62 @@
++package containeragentuc
++
++import (
++	"bytes"
++	"errors"
++	"io"
++	"testing"
++
++	"github.com/stretchr/testify/assert"
++
++	"github.com/hivepaas/hivepaas/hivepaas_app/usecaseagent/containeragentuc/containeragentdto"
++)
++
++// fakeStdin is a fake exec's input: what was written to it, and whether it was
++// closed.
++type fakeStdin struct {
++	bytes.Buffer
++	closed bool
++}
++
++func (s *fakeStdin) CloseWrite() error {
++	s.closed = true
++	return nil
++}
++
++func inputs(msgs []*containeragentdto.ExecInput, end error) func() (*containeragentdto.ExecInput, error) {
++	return func() (*containeragentdto.ExecInput, error) {
++		if len(msgs) == 0 {
++			return nil, end
++		}
++		msg := msgs[0]
++		msgs = msgs[1:]
++		return msg, nil
++	}
++}
++
++// When the client has sent all of the stdin, the command is told its input
++// ended: a command reading to the end, such as psql loading a dump, then
++// finishes rather than waits forever.
++func TestForwardExecInputClosesStdinWhenTheClientIsDone(t *testing.T) {
++	stdin := &fakeStdin{}
++	var resized []uint32
++
++	forwardExecInput(inputs([]*containeragentdto.ExecInput{
++		{Stdin: []byte("CREATE ")},
++		{Resize: &containeragentdto.ResizeOptions{Width: 80, Height: 24}},
++		{Stdin: []byte("TABLE t();\n")},
++	}, io.EOF), stdin, func(w, h uint32) { resized = append(resized, w, h) })
++
++	assert.Equal(t, "CREATE TABLE t();\n", stdin.String())
++	assert.Equal(t, []uint32{80, 24}, resized)
++	assert.True(t, stdin.closed)
++}
++
++// A stream that breaks is not an end of input: the exec goes with the stream.
++func TestForwardExecInputLeavesStdinOpenWhenTheStreamBreaks(t *testing.T) {
++	stdin := &fakeStdin{}
++
++	forwardExecInput(inputs(nil, errors.New("transport is closing")), stdin, func(uint32, uint32) {})
++
++	assert.False(t, stdin.closed)
++}

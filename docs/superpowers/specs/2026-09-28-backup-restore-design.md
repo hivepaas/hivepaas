@@ -58,14 +58,16 @@ opens the task's page.
 **A volume snapshot:**
 
 1. **The target directory** is the target app's own directory in the chosen
-   volume, plus the subpath. It is resolved as the data backup resolves its
+   volume, plus the subpath, plus the snapshot path: a directory of the
+   snapshot goes back to the same place under the target. It is created if it
+   is not there. It is resolved as the data backup resolves its
    source, and with the same node:
    - a pinned volume is on its node;
    - a volume on all nodes is reached on the node HivePaaS runs on.
 2. **Stop the app,** when asked: set it not running, and wait until none of
    its containers run.
 3. **Replace:** move the directory to `<dir>.before-restore-<YYYYMMDD-HHMMSS>`
-   and make it again, empty. Both steps run as commands of the agent on the
+   (UTC) and make it again, empty. Both steps run as commands of the agent on the
    volume's node.
 4. **Restore:** run `kopia snapshot restore <snapshot>[/<snapshotPath>] <dir>`
    on the volume's node.
@@ -88,7 +90,14 @@ opens the task's page.
 failure run.
 
 **One at a time.** One restore runs into an app at a time. A second one is
-refused while the first has not ended.
+refused while the first has not ended. The check reads the tasks without a
+lock: two requests in the same instant can both pass.
+
+**Once.** A restore's task never retries by itself: what a failed one left is
+for a person to look at.
+
+**Audit.** A restore is recorded against the target app, as an app update of
+the section `backup-restore`, with the snapshot, the repository and the mode.
 
 ## 2. Data and API
 
@@ -164,8 +173,15 @@ The response is `{ "taskId": "…" }`.
   Tasks.
 
 **Entries.** `GET …/entries?path=` lists what is in the snapshot at `path`
-(`kopia ls`): name, kind (file or directory), and size. It serves the dialog's
+(`kopia ls`): name, kind (file or directory), and size, directories first. It serves the dialog's
 picker for `snapshotPath`. It follows the Get endpoint's checks.
+
+**What a restore needs** comes with every snapshot the view lists:
+- its job's file name, restore command (an inline script only), source volume
+  and path;
+- its app's project.
+
+A restore's task gives its snapshot, repository, path and mode, for its page.
 
 **Errors** say why, with kopia's words, as every failed kopia command does. A
 failed restore leaves the target as it was:
@@ -176,7 +192,8 @@ failed restore leaves the target as it was:
 
 **Restore in the context menu** of every row of the Backup Snapshots views, and
 in the details drawer.
-- It is shown to a person who may write on at least one app the view reaches.
+- It is offered to a person who may write on the Project module; the server
+  checks write on the app it goes into.
 - For a snapshot whose repository is not active, it is disabled, with a tooltip
   saying why.
 
@@ -188,7 +205,8 @@ in the details drawer.
    - The default is the snapshot's app, when it exists and the person may write
      on it.
    - Another can be picked among the apps the view reaches: at the global view
-     by project, then env, then app; at the app view, the app itself.
+     by project, then app, each app with its env; at the app view, the app
+     itself.
    - When the target is not the snapshot's app, a line says: "The data of
      `<source app>` is loaded into `<target app>`."
 3. **A command snapshot:**
@@ -211,8 +229,8 @@ in the details drawer.
    - **Space:** the size of what is restored. Under Replace, a line adds:
      "This much free space is needed; the directory as it is now is kept as
      `….before-restore-…`."
-   - **Shared directory:** the other apps that mount the target directory, if
-     any, with a warning that they are not stopped.
+   - **Shared directory:** the apps given a directory of the target app's
+     storage, if any, with a warning that they are not stopped.
 5. **Confirmation:** typing the target app's name enables **Restore**.
 
 After Restore, the dashboard opens the new task's page.
@@ -276,6 +294,14 @@ for a command source only, with the same example.
 - a restore from a volume repository on another node, through the repository
   server;
 - canceling a restore.
+
+## Found on the way
+
+Two faults of what restore stands on, fixed with it:
+- An engine refused a storage that is only a repository server, so every
+  backup through a server failed.
+- The agent never closed a remote exec's stdin, so a command reading to the end
+  of its input, such as `psql`, never finished on another node.
 
 ## Not in this version
 

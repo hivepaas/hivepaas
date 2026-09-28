@@ -1,0 +1,1142 @@
+diff --git a/src/application/modules/operations/api/services/system-tasks-services/system-tasks.api.validator.ts b/src/application/modules/operations/api/services/system-tasks-services/system-tasks.api.validator.ts
+index beb4d4b4..4a752d23 100644
+--- a/src/application/modules/operations/api/services/system-tasks-services/system-tasks.api.validator.ts
++++ b/src/application/modules/operations/api/services/system-tasks-services/system-tasks.api.validator.ts
+@@ -155,6 +155,19 @@ const DataBackupSchema = z
+     .nullish()
+     .transform(value => value ?? undefined);
+ 
++const BackupRestoreSchema = z
++    .object({
++        snapshotRecordId: z.string().optional().default(""),
++        repoId: z.string().optional().default(""),
++        snapshotId: z.string().optional().default(""),
++        snapshotPath: z.string().optional().default(""),
++        fileName: z.string().optional().default(""),
++        mode: z.string().optional().default(""),
++        stopApp: z.boolean().optional().default(false),
++    })
++    .nullish()
++    .transform(value => value ?? undefined);
++
+ const SystemTaskSchema = z.object({
+     id: z.string(),
+     type: z.string().optional().default(""),
+@@ -169,6 +182,7 @@ const SystemTaskSchema = z.object({
+     sequenceRun: SequenceRunSchema,
+     trigger: TriggerSchema,
+     dataBackup: DataBackupSchema,
++    backupRestore: BackupRestoreSchema,
+     runAt: NullableDateSchema,
+     retryAt: NullableDateSchema,
+     startedAt: NullableDateSchema,
+diff --git a/src/application/modules/operations/domain/system-task.entity.ts b/src/application/modules/operations/domain/system-task.entity.ts
+index de4f87d3..60001659 100644
+--- a/src/application/modules/operations/domain/system-task.entity.ts
++++ b/src/application/modules/operations/domain/system-task.entity.ts
+@@ -118,6 +118,18 @@ export interface SystemTaskDataBackup {
+     sizeBytes: number;
+ }
+ 
++/** What a restore's task restored, from where, and how. */
++export interface SystemTaskBackupRestore {
++    /** The snapshot's record; snapshotId is the repository's. */
++    snapshotRecordId: string;
++    repoId: string;
++    snapshotId: string;
++    snapshotPath: string;
++    fileName: string;
++    mode: string;
++    stopApp: boolean;
++}
++
+ export interface SystemTask {
+     id: string;
+     type: string;
+@@ -132,6 +144,7 @@ export interface SystemTask {
+     sequenceRun?: SystemTaskSequenceRun;
+     trigger?: SystemTaskTrigger;
+     dataBackup?: SystemTaskDataBackup;
++    backupRestore?: SystemTaskBackupRestore;
+     runAt: Date | null;
+     retryAt: Date | null;
+     startedAt: Date | null;
+diff --git a/src/application/modules/operations/routes/tasks/building-blocks/system-tasks-filter-bar/system-tasks-filter-bar.com.tsx b/src/application/modules/operations/routes/tasks/building-blocks/system-tasks-filter-bar/system-tasks-filter-bar.com.tsx
+index 1b3784e3..05018b65 100644
+--- a/src/application/modules/operations/routes/tasks/building-blocks/system-tasks-filter-bar/system-tasks-filter-bar.com.tsx
++++ b/src/application/modules/operations/routes/tasks/building-blocks/system-tasks-filter-bar/system-tasks-filter-bar.com.tsx
+@@ -185,6 +185,7 @@ const ALL_TASK_TYPES_FALLBACK = [
+     "task:workflow",
+     "task:settings-revert",
+     "task:app-labels-sweep",
++    "task:backup-restore",
+ ];
+ 
+ export function SystemTasksFilterBar({ scope, filters, onChange, className }: SystemTasksFilterBarProps) {
+diff --git a/src/application/modules/operations/routes/tasks/building-blocks/task-summary-card/system-task-summary-card.com.tsx b/src/application/modules/operations/routes/tasks/building-blocks/task-summary-card/system-task-summary-card.com.tsx
+index 4d7b26c6..1d566eb5 100644
+--- a/src/application/modules/operations/routes/tasks/building-blocks/task-summary-card/system-task-summary-card.com.tsx
++++ b/src/application/modules/operations/routes/tasks/building-blocks/task-summary-card/system-task-summary-card.com.tsx
+@@ -587,6 +587,41 @@ export function SystemTaskSummaryCard({
+                                     </div>
+                                 )}
+ 
++                                {task.backupRestore && (
++                                    <div>
++                                        <span className="text-muted-foreground">Restored Snapshot:</span>{" "}
++                                        {task.scopeProject && task.scopeApp?.env ? (
++                                            <AppLink.Modules
++                                                to={`${ROUTE.projects.single.apps.single.configuration.backupSnapshots.$route(
++                                                    task.scopeProject.id,
++                                                    task.scopeApp.env,
++                                                    task.scopeApp.id,
++                                                )}?repo=${encodeURIComponent(task.backupRestore.repoId)}`}
++                                                className="font-mono text-link hover:underline"
++                                            >
++                                                {task.backupRestore.snapshotId}
++                                            </AppLink.Modules>
++                                        ) : (
++                                            <span className="font-mono text-foreground select-all">
++                                                {task.backupRestore.snapshotId}
++                                            </span>
++                                        )}
++                                        {task.backupRestore.snapshotPath && (
++                                            <span className="font-mono text-muted-foreground">
++                                                {" "}
++                                                /{task.backupRestore.snapshotPath}
++                                            </span>
++                                        )}
++                                        {task.backupRestore.mode && (
++                                            <span className="text-muted-foreground">
++                                                {" "}
++                                                ({task.backupRestore.mode === "replace" ? "replace" : "overwrite"}
++                                                {task.backupRestore.stopApp ? ", app stopped" : ""})
++                                            </span>
++                                        )}
++                                    </div>
++                                )}
++
+                                 {task.dataBackup && (
+                                     <div>
+                                         <span className="text-muted-foreground">Snapshot:</span>{" "}
+diff --git a/src/application/modules/projects/module-shared/components/data-backup-form/data-backup.form-mappers.ts b/src/application/modules/projects/module-shared/components/data-backup-form/data-backup.form-mappers.ts
+index 5afe025f..b545d156 100644
+--- a/src/application/modules/projects/module-shared/components/data-backup-form/data-backup.form-mappers.ts
++++ b/src/application/modules/projects/module-shared/components/data-backup-form/data-backup.form-mappers.ts
+@@ -26,7 +26,8 @@ import {
+     type DataBackupFormOutput,
+ } from "./data-backup.form.schema";
+ 
+-function emptySourceCommand(): DataBackupFormInput["sourceCommand"] {
++/** A command section with no command in it. */
++export function emptySourceCommand(): DataBackupFormInput["sourceCommand"] {
+     return {
+         commandMode: DATA_BACKUP_COMMAND_MODE.Command,
+         command: "",
+@@ -73,7 +74,7 @@ function refName(ref: { name: string; status: string }, deleted: string): string
+ }
+ 
+ /** A job's command as the command section edits it; an empty one for none. */
+-function mapCommandToFormInput(
++export function mapCommandToFormInput(
+     command: AppScheduledJobCommand | null | undefined,
+ ): DataBackupFormInput["sourceCommand"] {
+     if (!command) {
+@@ -126,7 +127,7 @@ export function mapDataBackupToFormInput(job: AppScheduledJob): DataBackupFormIn
+ }
+ 
+ /** Whether the command section holds a command: the restore command is optional. */
+-function hasCommand(cmd: DataBackupFormOutput["sourceCommand"]): boolean {
++export function hasCommand(cmd: DataBackupFormOutput["sourceCommand"]): boolean {
+     return cmd.commandMode === DATA_BACKUP_COMMAND_MODE.Script ? cmd.script.trim().length > 0 : cmd.command.length > 0;
+ }
+ 
+@@ -134,7 +135,9 @@ function hasCommand(cmd: DataBackupFormOutput["sourceCommand"]): boolean {
+  * The command runs without a TTY: a backup's stdout is the backup, and a TTY would mix its stderr in; a
+  * restore's stdin is the backup, which a TTY would not pass through as is.
+  */
+-function mapSourceCommandToPayload(cmd: DataBackupFormOutput["sourceCommand"]): AppScheduledJobs_Command_Payload {
++export function mapSourceCommandToPayload(
++    cmd: DataBackupFormOutput["sourceCommand"],
++): AppScheduledJobs_Command_Payload {
+     const isScript = cmd.commandMode === DATA_BACKUP_COMMAND_MODE.Script;
+     return {
+         command: isScript ? "" : cmd.command,
+diff --git a/src/application/modules/projects/module-shared/components/data-backup-form/data-backup.form.schema.ts b/src/application/modules/projects/module-shared/components/data-backup-form/data-backup.form.schema.ts
+index 3b2b15b9..80c08c4c 100644
+--- a/src/application/modules/projects/module-shared/components/data-backup-form/data-backup.form.schema.ts
++++ b/src/application/modules/projects/module-shared/components/data-backup-form/data-backup.form.schema.ts
+@@ -28,8 +28,8 @@ const NamedRefSchema = z.object({
+     name: z.string(),
+ });
+ 
+-/** The command section's fields, as `CommandConfigSection` edits them under `sourceCommand`. */
+-const SourceCommandSchema = z.object({
++/** The command section's fields, as `CommandConfigSection` edits them under `sourceCommand` or `restoreCommand`. */
++export const SourceCommandSchema = z.object({
+     commandMode: z.enum([DATA_BACKUP_COMMAND_MODE.Command, DATA_BACKUP_COMMAND_MODE.Script]),
+     command: z.string().trim(),
+     script: z.string(),
+@@ -142,4 +142,5 @@ export const DataBackupFormSchema = z
+     });
+ 
+ export type DataBackupFormInput = z.input<typeof DataBackupFormSchema>;
++export type CommandFormInput = z.input<typeof SourceCommandSchema>;
+ export type DataBackupFormOutput = z.output<typeof DataBackupFormSchema>;
+diff --git a/src/application/modules/settings/api/services/backup-snapshot-services/backup-snapshot.api.validator.ts b/src/application/modules/settings/api/services/backup-snapshot-services/backup-snapshot.api.validator.ts
+index d536d4bc..8c6f7b06 100644
+--- a/src/application/modules/settings/api/services/backup-snapshot-services/backup-snapshot.api.validator.ts
++++ b/src/application/modules/settings/api/services/backup-snapshot-services/backup-snapshot.api.validator.ts
+@@ -98,6 +98,7 @@ const BackupSnapshotSchema = z.object({
+         .object({
+             id: z.string(),
+             name: z.string().optional().default(""),
++            projectId: z.string().optional().default(""),
+             env: z.string().optional().default(""),
+             deleted: z.boolean().optional().default(false),
+         })
+diff --git a/src/application/modules/settings/domain/backup-snapshot.entity.ts b/src/application/modules/settings/domain/backup-snapshot.entity.ts
+index 98220610..8e563ef5 100644
+--- a/src/application/modules/settings/domain/backup-snapshot.entity.ts
++++ b/src/application/modules/settings/domain/backup-snapshot.entity.ts
+@@ -29,7 +29,7 @@ export interface BackupSnapshot {
+     /** command or volume; empty when not known. */
+     source: string;
+     repo: BackupSnapshotRepoRef;
+-    app?: { id: string; name: string; env: string; deleted: boolean };
++    app?: { id: string; name: string; projectId: string; env: string; deleted: boolean };
+     job?: BackupSnapshotJob;
+     /** The task of the run that took it. */
+     runId: string;
+diff --git a/src/application/modules/settings/module-shared/components/backup-snapshot-table/backup-snapshot-details.com.tsx b/src/application/modules/settings/module-shared/components/backup-snapshot-table/backup-snapshot-details.com.tsx
+index 65aa0a8f..0064c45e 100644
+--- a/src/application/modules/settings/module-shared/components/backup-snapshot-table/backup-snapshot-details.com.tsx
++++ b/src/application/modules/settings/module-shared/components/backup-snapshot-table/backup-snapshot-details.com.tsx
+@@ -1,13 +1,17 @@
+ import { cn } from "@/lib/utils";
+ import { Badge } from "@components/ui/badge";
++import { Button } from "@components/ui/button";
+ import { format } from "date-fns";
++import { ArchiveRestore } from "lucide-react";
+ import type { BackupSnapshot } from "~/settings/domain";
+ 
++import { MODULE_IDS } from "@application/shared/constants";
++import { PermissionTooltipAction } from "@application/shared/permissions";
+ import { formatDataSizeCompact } from "@application/shared/utils/data-size";
+ 
+ import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+ 
+-import { sourceLabel, tagClassName } from "./backup-snapshot-table.helpers";
++import { isRepoActive, sourceLabel, tagClassName } from "./backup-snapshot-table.helpers";
+ 
+ function Row({ label, children }: { label: string; children: React.ReactNode }) {
+     return (
+@@ -19,7 +23,7 @@ function Row({ label, children }: { label: string; children: React.ReactNode })
+ }
+ 
+ /** A snapshot's details: what the table has no room for. */
+-export function BackupSnapshotDetails({ snapshot, runLink, onOpenChange }: Props) {
++export function BackupSnapshotDetails({ snapshot, runLink, onRestore, onOpenChange }: Props) {
+     return (
+         <Sheet
+             open={Boolean(snapshot)}
+@@ -32,6 +36,26 @@ export function BackupSnapshotDetails({ snapshot, runLink, onOpenChange }: Props
+                             <SheetTitle>Snapshot {snapshot.shortId}</SheetTitle>
+                             <SheetDescription>{format(snapshot.time, "yyyy-MM-dd HH:mm:ss")}</SheetDescription>
+                         </SheetHeader>
++                        <div className="px-4">
++                            <PermissionTooltipAction
++                                id={MODULE_IDS.Project}
++                                action="write"
++                            >
++                                {({ isDenied }) => (
++                                    <Button
++                                        variant="outline"
++                                        size="sm"
++                                        disabled={isDenied || !isRepoActive(snapshot)}
++                                        onClick={() => {
++                                            onRestore(snapshot);
++                                        }}
++                                    >
++                                        <ArchiveRestore className="size-4" />
++                                        Restore
++                                    </Button>
++                                )}
++                            </PermissionTooltipAction>
++                        </div>
+                         <div className="flex flex-col gap-4 px-4 pb-6">
+                             <Row label="Snapshot ID">
+                                 <span className="font-mono select-all">{snapshot.snapshotId}</span>
+@@ -83,5 +107,7 @@ interface Props {
+     snapshot: BackupSnapshot | null;
+     /** A link to the run that took the snapshot, when the view can make one. */
+     runLink?: React.ReactNode;
++    /** Opens the snapshot's restore. */
++    onRestore: (snapshot: BackupSnapshot) => void;
+     onOpenChange: (open: boolean) => void;
+ }
+diff --git a/src/application/modules/settings/module-shared/components/backup-snapshot-table/backup-snapshot-path-picker.com.tsx b/src/application/modules/settings/module-shared/components/backup-snapshot-table/backup-snapshot-path-picker.com.tsx
+new file mode 100644
+index 00000000..62f97e73
+--- /dev/null
++++ b/src/application/modules/settings/module-shared/components/backup-snapshot-table/backup-snapshot-path-picker.com.tsx
+@@ -0,0 +1,145 @@
++import { useState } from "react";
++
++import { cn } from "@lib/utils";
++import { ChevronRight, File, Folder, Loader2 } from "lucide-react";
++import { BackupSnapshotQueries } from "~/settings/data/queries";
++import type { BackupSnapshotScope } from "~/settings/domain";
++
++import { formatDataSizeCompact } from "@application/shared/utils/data-size";
++
++import { Button } from "@/components/ui";
++
++import { joinSnapshotPath, parentSnapshotPath } from "./backup-snapshot-restore.helpers";
++
++/**
++ * Picks what of a snapshot to restore: all of it, or one of its directories, browsed a directory at a time.
++ * `onChange` is told the path and its size.
++ */
++export function BackupSnapshotPathPicker({ scope, snapshotRecordId, snapshotSize, value, onChange, disabled }: Props) {
++    const [browsed, setBrowsed] = useState(() => parentSnapshotPath(value));
++    const { data, isFetching } = BackupSnapshotQueries.useFindEntries({
++        scope,
++        id: snapshotRecordId,
++        path: browsed,
++    });
++    const entries = data?.data ?? [];
++    const crumbs = browsed ? browsed.split("/") : [];
++
++    return (
++        <div className="flex flex-col gap-2">
++            <label className="flex items-center gap-2 text-sm cursor-pointer">
++                <input
++                    type="radio"
++                    checked={value === ""}
++                    disabled={disabled}
++                    onChange={() => {
++                        onChange("", snapshotSize);
++                    }}
++                />
++                <span>All of it</span>
++                <span className="text-muted-foreground">({formatDataSizeCompact(snapshotSize)})</span>
++            </label>
++
++            <div className="rounded-md border border-border/80">
++                <div className="flex flex-wrap items-center gap-1 border-b border-border/60 px-2 py-1.5 text-xs">
++                    <Button
++                        type="button"
++                        variant="link"
++                        size="sm"
++                        className="h-auto p-0 text-xs"
++                        onClick={() => {
++                            setBrowsed("");
++                        }}
++                    >
++                        /
++                    </Button>
++                    {crumbs.map((crumb, index) => {
++                        const path = crumbs.slice(0, index + 1).join("/");
++                        return (
++                            <span
++                                key={path}
++                                className="flex items-center gap-1"
++                            >
++                                <ChevronRight className="size-3 text-muted-foreground" />
++                                <Button
++                                    type="button"
++                                    variant="link"
++                                    size="sm"
++                                    className="h-auto p-0 font-mono text-xs"
++                                    onClick={() => {
++                                        setBrowsed(path);
++                                    }}
++                                >
++                                    {crumb}
++                                </Button>
++                            </span>
++                        );
++                    })}
++                    {isFetching && <Loader2 className="ml-auto size-3 animate-spin text-muted-foreground" />}
++                </div>
++                <ul className="max-h-56 overflow-y-auto py-1 text-sm">
++                    {!isFetching && entries.length === 0 && (
++                        <li className="px-3 py-1.5 text-muted-foreground">Empty</li>
++                    )}
++                    {entries.map(entry => {
++                        const path = joinSnapshotPath(browsed, entry.name);
++                        return (
++                            <li
++                                key={path}
++                                className={cn(
++                                    "flex items-center gap-2 px-3 py-1",
++                                    !entry.dir && "text-muted-foreground",
++                                )}
++                            >
++                                {entry.dir ? (
++                                    <input
++                                        type="radio"
++                                        aria-label={`Restore ${path}`}
++                                        checked={value === path}
++                                        disabled={disabled}
++                                        onChange={() => {
++                                            onChange(path, entry.sizeBytes);
++                                        }}
++                                    />
++                                ) : (
++                                    <span className="w-[13px]" />
++                                )}
++                                {entry.dir ? (
++                                    <Folder className="size-4 shrink-0 text-muted-foreground" />
++                                ) : (
++                                    <File className="size-4 shrink-0" />
++                                )}
++                                {entry.dir ? (
++                                    <button
++                                        type="button"
++                                        className="truncate font-mono text-left hover:underline cursor-pointer"
++                                        onClick={() => {
++                                            setBrowsed(path);
++                                        }}
++                                    >
++                                        {entry.name}/
++                                    </button>
++                                ) : (
++                                    <span className="truncate font-mono">{entry.name}</span>
++                                )}
++                                <span className="ml-auto shrink-0 text-xs text-muted-foreground">
++                                    {formatDataSizeCompact(entry.sizeBytes)}
++                                </span>
++                            </li>
++                        );
++                    })}
++                </ul>
++            </div>
++        </div>
++    );
++}
++
++interface Props {
++    scope: BackupSnapshotScope;
++    snapshotRecordId: string;
++    snapshotSize: number;
++    /** A directory inside the snapshot; "" for all of it. */
++    value: string;
++    onChange: (path: string, sizeBytes: number) => void;
++    disabled?: boolean;
++}
+diff --git a/src/application/modules/settings/module-shared/components/backup-snapshot-table/backup-snapshot-restore-drawer.com.tsx b/src/application/modules/settings/module-shared/components/backup-snapshot-table/backup-snapshot-restore-drawer.com.tsx
+new file mode 100644
+index 00000000..0f19c36c
+--- /dev/null
++++ b/src/application/modules/settings/module-shared/components/backup-snapshot-table/backup-snapshot-restore-drawer.com.tsx
+@@ -0,0 +1,418 @@
++import { useId, useMemo, useState } from "react";
++
++import { format } from "date-fns";
++import { AlertTriangle, Loader2 } from "lucide-react";
++import { FormProvider, useForm } from "react-hook-form";
++import { toast } from "sonner";
++import { APP_CONFIGURATION_QUERY_OPTIONS, AppStorageSettingsQueries } from "~/projects/data";
++import {
++    CommandConfigSection,
++    type CommandFormInput,
++    emptySourceCommand,
++    hasCommand,
++    isRelativeSubpath,
++    mapCommandToFormInput,
++    mapSourceCommandToPayload,
++} from "~/projects/module-shared/components";
++import type { BackupSnapshot_Restore_Payload } from "~/settings/api/services";
++import { BackupSnapshotCommands } from "~/settings/data/commands";
++import { BackupSnapshotQueries } from "~/settings/data/queries";
++import {
++    BACKUP_RESTORE_MODE,
++    type BackupRestoreMode,
++    type BackupSnapshot,
++    type BackupSnapshotScope,
++} from "~/settings/domain";
++
++import { Combobox } from "@application/shared/components";
++import { ROUTE } from "@application/shared/constants";
++import { useAppNavigate } from "@application/shared/hooks/router";
++import { formatDataSizeCompact } from "@application/shared/utils/data-size";
++
++import { Button, Checkbox, Input, Tabs, TabsList, TabsTrigger } from "@/components/ui";
++import { Sheet, SheetContent, SheetDescription, SheetFooter, SheetHeader, SheetTitle } from "@/components/ui/sheet";
++
++import { BackupSnapshotPathPicker } from "./backup-snapshot-path-picker.com";
++import { BackupSnapshotRestoreTarget, type RestoreTarget } from "./backup-snapshot-restore-target.com";
++import { restoreKindNeedsListing, restoreKindOf } from "./backup-snapshot-restore.helpers";
++
++interface VolumeOption extends Record<string, unknown> {
++    id: string;
++    name: string;
++}
++
++const RESTORE_COMMAND_EXAMPLE = "psql -U $POSTGRES_USER $POSTGRES_DB";
++
++function Row({ label, children }: { label: React.ReactNode; children: React.ReactNode }) {
++    return (
++        <div className="flex flex-col gap-1.5">
++            <span className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">{label}</span>
++            <div className="text-sm text-foreground">{children}</div>
++        </div>
++    );
++}
++
++/** The snapshot's own app, when the view's viewer can pick it. */
++function defaultTarget(scope: BackupSnapshotScope, snapshot: BackupSnapshot): RestoreTarget | null {
++    const { app } = snapshot;
++    if (scope.type === "app") {
++        return {
++            id: scope.appId,
++            name: app?.id === scope.appId ? app.name : "",
++            projectId: scope.projectId,
++            env: scope.env,
++        };
++    }
++    if (!app || app.deleted || !app.projectId) {
++        return null;
++    }
++    if (scope.type === "project" && app.projectId !== scope.projectId) {
++        return null;
++    }
++    return { id: app.id, name: app.name, projectId: app.projectId, env: app.env };
++}
++
++/** Restoring a snapshot into an app: its target, how, and a confirmation. */
++export function BackupSnapshotRestoreDrawer({ scope, snapshot, onOpenChange }: Props) {
++    return (
++        <Sheet
++            open={Boolean(snapshot)}
++            onOpenChange={onOpenChange}
++        >
++            <SheetContent className="sm:max-w-[680px] overflow-y-auto">
++                {snapshot && (
++                    <RestoreForm
++                        key={snapshot.id}
++                        scope={scope}
++                        snapshot={snapshot}
++                        onDone={() => {
++                            onOpenChange(false);
++                        }}
++                    />
++                )}
++            </SheetContent>
++        </Sheet>
++    );
++}
++
++function RestoreForm({
++    scope,
++    snapshot,
++    onDone,
++}: {
++    scope: BackupSnapshotScope;
++    snapshot: BackupSnapshot;
++    onDone: () => void;
++}) {
++    const { navigate } = useAppNavigate();
++    const { job } = snapshot;
++
++    const needsListing = restoreKindNeedsListing(snapshot);
++    const { data: rootData, isFetching: isListing } = BackupSnapshotQueries.useFindEntries(
++        { scope, id: snapshot.id, path: "" },
++        { enabled: needsListing },
++    );
++    const kind = restoreKindOf(snapshot, needsListing ? rootData?.data : []);
++
++    const [target, setTarget] = useState<RestoreTarget | null>(() => defaultTarget(scope, snapshot));
++    const isSnapshotsApp = Boolean(target && snapshot.app && !snapshot.app.deleted && target.id === snapshot.app.id);
++    const [volumeId, setVolumeId] = useState(isSnapshotsApp ? (job?.sourceVolumeId ?? "") : "");
++    const [subpath, setSubpath] = useState(isSnapshotsApp ? (job?.sourceVolumeSubpath ?? "") : "");
++    const [snapshotPath, setSnapshotPath] = useState("");
++    const [pathSize, setPathSize] = useState(snapshot.sizeBytes);
++    const [mode, setMode] = useState<BackupRestoreMode>(BACKUP_RESTORE_MODE.Replace);
++    const [stopApp, setStopApp] = useState(true);
++    const [typed, setTyped] = useState("");
++    const stopAppId = useId();
++
++    const form = useForm<{ command: CommandFormInput }>({
++        defaultValues: {
++            command: job?.restoreCommand ? mapCommandToFormInput(job.restoreCommand) : emptySourceCommand(),
++        },
++    });
++
++    const isVolume = kind !== undefined && !kind.command;
++    const { data: storageData, isFetching: isStorageFetching } = AppStorageSettingsQueries.useFindOne(
++        { projectID: target?.projectId ?? "", env: target?.env ?? "", appID: target?.id ?? "" },
++        { ...APP_CONFIGURATION_QUERY_OPTIONS, enabled: isVolume && Boolean(target) },
++    );
++    // The volumes the app mounts as its own directory: where a volume's snapshot can go.
++    const volumeOptions = useMemo(() => {
++        const seen = new Set<string>();
++        return (storageData?.data.mounts ?? []).flatMap(mount => {
++            if (!mount.volumeId || mount.sourceApp?.appId || seen.has(mount.volumeId)) {
++                return [];
++            }
++            seen.add(mount.volumeId);
++            const label = mount.target ?? mount.volumeId;
++            return [{ value: { id: mount.volumeId, name: label } satisfies VolumeOption, label }];
++        });
++    }, [storageData]);
++    const borrowers = storageData?.data.borrowedBy ?? [];
++
++    const { mutate: restore, isPending } = BackupSnapshotCommands.useRestore({
++        onSuccess: response => {
++            toast.success("Restore started");
++            onDone();
++            if (target) {
++                navigate.modules(
++                    ROUTE.projects.single.apps.single.tasks.details.$route(
++                        target.projectId,
++                        target.env,
++                        target.id,
++                        response.data.taskId,
++                    ),
++                );
++            }
++        },
++    });
++
++    const replace = mode === BACKUP_RESTORE_MODE.Replace;
++    const commandValues = form.watch("command");
++    const problems: string[] = [];
++    if (!target) {
++        problems.push("Pick the app to restore into.");
++    }
++    if (kind?.command && !hasCommand(commandValues)) {
++        problems.push("Give the command that loads the file.");
++    }
++    if (isVolume && !volumeId) {
++        problems.push("Pick a volume the app mounts.");
++    }
++    if (isVolume && !isRelativeSubpath(subpath.trim())) {
++        problems.push("The path is inside the volume: no leading '/', never above it with '..'.");
++    }
++    const confirmed = Boolean(target) && typed.trim() === target?.name;
++
++    function submit() {
++        if (!target || !kind) {
++            return;
++        }
++        const payload: BackupSnapshot_Restore_Payload = kind.command
++            ? { targetApp: { id: target.id }, command: mapSourceCommandToPayload(form.getValues().command) }
++            : {
++                  targetApp: { id: target.id },
++                  volume: { id: volumeId },
++                  subpath: subpath.trim(),
++                  snapshotPath,
++                  stopApp: replace || stopApp,
++                  mode,
++              };
++        restore({ scope, id: snapshot.id, payload });
++    }
++
++    return (
++        <>
++            <SheetHeader>
++                <SheetTitle>Restore Snapshot {snapshot.shortId}</SheetTitle>
++                <SheetDescription>
++                    {format(snapshot.time, "yyyy-MM-dd HH:mm:ss")} · {snapshot.repo.name || snapshot.repo.id} ·{" "}
++                    {formatDataSizeCompact(snapshot.sizeBytes)}
++                    {snapshot.app && ` · ${snapshot.app.deleted ? "deleted app" : snapshot.app.name}`}
++                    {job && ` · ${job.deleted ? "deleted job" : job.name}`}
++                </SheetDescription>
++            </SheetHeader>
++
++            <div className="flex flex-col gap-5 px-4 pb-4">
++                <Row label="Restore into">
++                    <BackupSnapshotRestoreTarget
++                        scope={scope}
++                        value={target}
++                        onChange={next => {
++                            setTarget(next);
++                            setTyped("");
++                            const own = Boolean(next && snapshot.app && next.id === snapshot.app.id);
++                            setVolumeId(own ? (job?.sourceVolumeId ?? "") : "");
++                            setSubpath(own ? (job?.sourceVolumeSubpath ?? "") : "");
++                        }}
++                        disabled={isPending}
++                    />
++                    {target && snapshot.app && target.id !== snapshot.app.id && (
++                        <p className="mt-1.5 text-xs text-amber-700 dark:text-amber-400">
++                            The data of {snapshot.app.deleted ? "a deleted app" : snapshot.app.name} is loaded into{" "}
++                            {target.name}.
++                        </p>
++                    )}
++                </Row>
++
++                {kind === undefined && (
++                    <p className="flex items-center gap-2 text-sm text-muted-foreground">
++                        {isListing && <Loader2 className="size-4 animate-spin" />}
++                        Reading what the snapshot holds...
++                    </p>
++                )}
++
++                {kind?.command && (
++                    <FormProvider {...form}>
++                        <p className="text-sm text-muted-foreground">
++                            The command runs in a container of the app, and reads{" "}
++                            <span className="font-mono">{kind.fileName}</span> on its stdin, without a TTY. For example:{" "}
++                            <span className="font-mono">{RESTORE_COMMAND_EXAMPLE}</span>
++                        </p>
++                        <CommandConfigSection
++                            label="Restore Command"
++                            fieldPrefix="command"
++                            showLoadTemplate={Boolean(target)}
++                            templateProjectId={target?.projectId ?? ""}
++                            templateEnv={target?.env}
++                            readOnly={isPending}
++                            showArgGroups
++                        />
++                    </FormProvider>
++                )}
++
++                {isVolume && (
++                    <>
++                        <Row label="Volume">
++                            <Combobox<VolumeOption>
++                                options={volumeOptions}
++                                value={volumeId || null}
++                                onChange={(_, option) => {
++                                    setVolumeId(option?.id ?? "");
++                                }}
++                                placeholder="Select a mounted volume"
++                                emptyText={target ? "The app mounts no volume of its own" : "Pick an app first"}
++                                closeOnSelect
++                                loading={isStorageFetching}
++                                disabled={isPending || !target}
++                            />
++                        </Row>
++                        <Row label="Path in the volume">
++                            <Input
++                                value={subpath}
++                                onChange={event => {
++                                    setSubpath(event.target.value);
++                                }}
++                                placeholder="Empty for all of it, as the app sees it"
++                                className="font-mono"
++                                disabled={isPending}
++                            />
++                        </Row>
++                        <Row label="What to restore">
++                            <BackupSnapshotPathPicker
++                                scope={scope}
++                                snapshotRecordId={snapshot.id}
++                                snapshotSize={snapshot.sizeBytes}
++                                value={snapshotPath}
++                                onChange={(path, size) => {
++                                    setSnapshotPath(path);
++                                    setPathSize(size);
++                                }}
++                                disabled={isPending}
++                            />
++                        </Row>
++                        <Row label="How">
++                            <Tabs
++                                value={mode}
++                                onValueChange={value => {
++                                    setMode(value as BackupRestoreMode);
++                                }}
++                            >
++                                <TabsList>
++                                    <TabsTrigger
++                                        value={BACKUP_RESTORE_MODE.Replace}
++                                        disabled={isPending}
++                                    >
++                                        Replace
++                                    </TabsTrigger>
++                                    <TabsTrigger
++                                        value={BACKUP_RESTORE_MODE.Overwrite}
++                                        disabled={isPending}
++                                    >
++                                        Overwrite
++                                    </TabsTrigger>
++                                </TabsList>
++                            </Tabs>
++                            <p className="mt-1.5 text-xs text-muted-foreground">
++                                {replace
++                                    ? "The directory as it is now is moved aside, and the snapshot is restored into an empty one: the state at backup time. The old directory is kept as ….before-restore-…, for going back; delete it once you are sure."
++                                    : "The snapshot's files are written over what is there. Files made after the backup stay, and nothing is kept aside."}
++                            </p>
++                            {replace && (
++                                <p className="mt-1 text-xs text-muted-foreground">
++                                    This needs {formatDataSizeCompact(pathSize)} of free space on the volume.
++                                </p>
++                            )}
++                        </Row>
++                        <Row label="The app">
++                            <div className="flex items-center gap-2">
++                                <Checkbox
++                                    id={stopAppId}
++                                    checked={replace || stopApp}
++                                    onCheckedChange={checked => {
++                                        setStopApp(checked === true);
++                                    }}
++                                    disabled={isPending || replace}
++                                />
++                                <label htmlFor={stopAppId}>Stop the app while restoring</label>
++                            </div>
++                            <p className="mt-1.5 text-xs text-muted-foreground">
++                                {replace
++                                    ? "Replace always stops the app: its containers would go on writing to the directory moved aside."
++                                    : "A running app can write while its files are restored, and a database's files can end up broken. Leave it running only for static files, such as uploads."}
++                            </p>
++                            {borrowers.length > 0 && (
++                                <p className="mt-1 text-xs text-amber-700 dark:text-amber-400">
++                                    These apps were given a directory of {target?.name}&apos;s storage, and are not
++                                    stopped: {borrowers.map(borrower => borrower.name || borrower.appId).join(", ")}.
++                                </p>
++                            )}
++                        </Row>
++                    </>
++                )}
++
++                {kind && (
++                    <Row label="Confirm">
++                        <div className="flex items-center gap-2.5 rounded-md border border-destructive bg-destructive/10 px-3.5 py-2.5 text-sm text-destructive font-medium">
++                            <AlertTriangle className="size-4 shrink-0" />
++                            <span>
++                                The restore changes {target?.name ? `${target.name}'s` : "the app's"} data. Type the
++                                app&apos;s name to confirm.
++                            </span>
++                        </div>
++                        <Input
++                            value={typed}
++                            onChange={event => {
++                                setTyped(event.target.value);
++                            }}
++                            placeholder={target?.name ?? ""}
++                            className="mt-2"
++                            disabled={isPending || !target}
++                        />
++                        {problems.length > 0 && (
++                            <ul className="mt-2 list-disc pl-5 text-xs text-muted-foreground">
++                                {problems.map(problem => (
++                                    <li key={problem}>{problem}</li>
++                                ))}
++                            </ul>
++                        )}
++                    </Row>
++                )}
++            </div>
++
++            <SheetFooter className="flex-row justify-end gap-2">
++                <Button
++                    variant="outline"
++                    disabled={isPending}
++                    onClick={onDone}
++                >
++                    Cancel
++                </Button>
++                <Button
++                    variant="destructive"
++                    isLoading={isPending}
++                    disabled={!kind || problems.length > 0 || !confirmed}
++                    onClick={submit}
++                >
++                    Restore
++                </Button>
++            </SheetFooter>
++        </>
++    );
++}
++
++interface Props {
++    scope: BackupSnapshotScope;
++    snapshot: BackupSnapshot | null;
++    onOpenChange: (open: boolean) => void;
++}
+diff --git a/src/application/modules/settings/module-shared/components/backup-snapshot-table/backup-snapshot-restore-target.com.tsx b/src/application/modules/settings/module-shared/components/backup-snapshot-table/backup-snapshot-restore-target.com.tsx
+new file mode 100644
+index 00000000..54fd72f7
+--- /dev/null
++++ b/src/application/modules/settings/module-shared/components/backup-snapshot-table/backup-snapshot-restore-target.com.tsx
+@@ -0,0 +1,104 @@
++import { useMemo, useState } from "react";
++
++import { type SearchableFilterItem, SearchableFilterSelect } from "~/operations/routes/tasks";
++import type { BackupSnapshotScope } from "~/settings/domain";
++
++import { AppsPublicQueries, ProjectsPublicQueries } from "@application/shared/data-public/queries";
++
++/** The app a restore puts the data into. */
++export interface RestoreTarget {
++    id: string;
++    name: string;
++    projectId: string;
++    env: string;
++}
++
++const LIST_ALL_PAGE = { page: 1, size: 1000 };
++
++/**
++ * Picks the app a restore goes into, among the apps the view reaches: at the global view a project, then one of
++ * its apps; at a project's or an env's, one of its apps; at an app's, the app itself.
++ */
++export function BackupSnapshotRestoreTarget({ scope, value, onChange, disabled }: Props) {
++    const [pickedProjectId, setPickedProjectId] = useState(value?.projectId ?? "");
++    const projectId = scope.type === "settings" ? pickedProjectId : scope.projectId;
++    const env = scope.type === "project" ? scope.env : undefined;
++
++    const { data: projectsData } = ProjectsPublicQueries.useFindManyPaginated(
++        { pagination: LIST_ALL_PAGE },
++        { enabled: scope.type === "settings" },
++    );
++    const { data: appsData } = AppsPublicQueries.useFindMany(
++        { projectID: projectId, env, pagination: LIST_ALL_PAGE },
++        { enabled: scope.type !== "app" && Boolean(projectId) },
++    );
++
++    const projectItems: SearchableFilterItem[] = useMemo(
++        () =>
++            (projectsData?.data ?? []).map(project => ({
++                value: project.id,
++                label: project.name,
++                searchKey: project.name,
++                avatar: { name: project.name },
++            })),
++        [projectsData?.data],
++    );
++    const apps = useMemo(() => appsData?.data ?? [], [appsData?.data]);
++    const appItems: SearchableFilterItem[] = useMemo(
++        () =>
++            apps.map(app => ({
++                value: app.id,
++                label: app.name,
++                searchKey: `${app.name} ${app.env ?? ""}`,
++                badge: env ? undefined : app.env,
++                avatar: { name: app.name },
++            })),
++        [apps, env],
++    );
++
++    if (scope.type === "app") {
++        return <span className="text-sm font-medium">{value?.name ?? scope.appId}</span>;
++    }
++
++    return (
++        <div className="flex flex-col gap-2 sm:flex-row">
++            {scope.type === "settings" && (
++                <div className="sm:w-1/2">
++                    <SearchableFilterSelect
++                        value={pickedProjectId}
++                        onValueChange={id => {
++                            setPickedProjectId(id);
++                            onChange(null);
++                        }}
++                        placeholder="Select a project"
++                        searchPlaceholder="Search projects..."
++                        emptyText="No projects found."
++                        items={projectItems}
++                    />
++                </div>
++            )}
++            <div className={scope.type === "settings" ? "sm:w-1/2" : "w-full"}>
++                <SearchableFilterSelect
++                    value={value?.id ?? ""}
++                    onValueChange={id => {
++                        const app = apps.find(item => item.id === id);
++                        if (app && !disabled) {
++                            onChange({ id: app.id, name: app.name, projectId, env: app.env ?? env ?? "" });
++                        }
++                    }}
++                    placeholder={value?.name ?? "Select an app"}
++                    searchPlaceholder="Search apps..."
++                    emptyText={projectId ? "No apps found." : "Select a project first."}
++                    items={appItems}
++                />
++            </div>
++        </div>
++    );
++}
++
++interface Props {
++    scope: BackupSnapshotScope;
++    value: RestoreTarget | null;
++    onChange: (target: RestoreTarget | null) => void;
++    disabled?: boolean;
++}
+diff --git a/src/application/modules/settings/module-shared/components/backup-snapshot-table/backup-snapshot-restore.helpers.ts b/src/application/modules/settings/module-shared/components/backup-snapshot-table/backup-snapshot-restore.helpers.ts
+new file mode 100644
+index 00000000..047bc77a
+--- /dev/null
++++ b/src/application/modules/settings/module-shared/components/backup-snapshot-table/backup-snapshot-restore.helpers.ts
+@@ -0,0 +1,50 @@
++import type { BackupSnapshot, BackupSnapshotEntry } from "~/settings/domain";
++
++/** What a snapshot is restored as: a command's file, or a volume's directory. */
++export interface RestoreKind {
++    command: boolean;
++    /** The file a command's snapshot holds. */
++    fileName: string;
++}
++
++/**
++ * A snapshot's kind: its source's, as its tag or its job says. One whose source is not known - taken outside
++ * HivePaaS, or before the tag - goes by what it holds: one file is a command's. Undefined while its root is
++ * still being listed.
++ */
++export function restoreKindOf(
++    snapshot: BackupSnapshot,
++    root: BackupSnapshotEntry[] | undefined,
++): RestoreKind | undefined {
++    if (snapshot.source === "volume") {
++        return { command: false, fileName: "" };
++    }
++    const jobFileName = snapshot.job?.fileName ?? "";
++    if (snapshot.source === "command" && jobFileName) {
++        return { command: true, fileName: jobFileName };
++    }
++    if (!root) {
++        return undefined;
++    }
++    const [first] = root;
++    if (root.length === 1 && first && !first.dir) {
++        return { command: true, fileName: first.name };
++    }
++    return { command: false, fileName: "" };
++}
++
++/** Whether the kind can be known without listing the snapshot. */
++export function restoreKindNeedsListing(snapshot: BackupSnapshot): boolean {
++    return snapshot.source !== "volume" && !(snapshot.source === "command" && snapshot.job?.fileName);
++}
++
++/** A path inside a snapshot, one directory deeper. */
++export function joinSnapshotPath(parent: string, name: string): string {
++    return parent ? `${parent}/${name}` : name;
++}
++
++/** The directory a path inside a snapshot is in; "" for the root's. */
++export function parentSnapshotPath(path: string): string {
++    const index = path.lastIndexOf("/");
++    return index < 0 ? "" : path.slice(0, index);
++}
+diff --git a/src/application/modules/settings/module-shared/components/backup-snapshot-table/backup-snapshot-table.com.tsx b/src/application/modules/settings/module-shared/components/backup-snapshot-table/backup-snapshot-table.com.tsx
+index f5b61d8a..c666ef7e 100644
+--- a/src/application/modules/settings/module-shared/components/backup-snapshot-table/backup-snapshot-table.com.tsx
++++ b/src/application/modules/settings/module-shared/components/backup-snapshot-table/backup-snapshot-table.com.tsx
+@@ -16,6 +16,7 @@ import { Badge } from "@/components/ui/badge";
+ import { BackupSnapshotDeleteDialog } from "./backup-snapshot-delete-dialog.com";
+ import { BackupSnapshotDetails } from "./backup-snapshot-details.com";
+ import { BackupSnapshotFilterBar } from "./backup-snapshot-filter-bar.com";
++import { BackupSnapshotRestoreDrawer } from "./backup-snapshot-restore-drawer.com";
+ import { BackupSnapshotTableDefs } from "./backup-snapshot-table.defs";
+ import { type BackupSnapshotFilterValues, countActiveFilters, isTagFilter } from "./backup-snapshot-table.helpers";
+ 
+@@ -54,6 +55,7 @@ export function BackupSnapshotTable({ scope }: Props) {
+     const [isFilterOpen, setIsFilterOpen] = useState(() => countActiveFilters(filters) > 0);
+     const [details, setDetails] = useState<BackupSnapshot | null>(null);
+     const [deleting, setDeleting] = useState<BackupSnapshot | null>(null);
++    const [restoring, setRestoring] = useState<BackupSnapshot | null>(null);
+ 
+     const { data = { ...DEFAULT_PAGINATED_DATA, repos: [] }, isFetching } = BackupSnapshotQueries.useFindManyPaginated({
+         scope,
+@@ -77,6 +79,7 @@ export function BackupSnapshotTable({ scope }: Props) {
+         () =>
+             BackupSnapshotTableDefs.columns(scope, {
+                 onViewDetails: setDetails,
++                onRestore: setRestoring,
+                 onDelete: setDeleting,
+             }),
+         [scope],
+@@ -166,12 +169,25 @@ export function BackupSnapshotTable({ scope }: Props) {
+                         </AppLink.Modules>
+                     ) : undefined
+                 }
++                onRestore={snapshot => {
++                    setDetails(null);
++                    setRestoring(snapshot);
++                }}
+                 onOpenChange={open => {
+                     if (!open) {
+                         setDetails(null);
+                     }
+                 }}
+             />
++            <BackupSnapshotRestoreDrawer
++                scope={scope}
++                snapshot={restoring}
++                onOpenChange={open => {
++                    if (!open) {
++                        setRestoring(null);
++                    }
++                }}
++            />
+             <BackupSnapshotDeleteDialog
+                 scope={scope}
+                 snapshot={deleting}
+diff --git a/src/application/modules/settings/module-shared/components/backup-snapshot-table/backup-snapshot-table.defs.tsx b/src/application/modules/settings/module-shared/components/backup-snapshot-table/backup-snapshot-table.defs.tsx
+index e84bc735..ace1e577 100644
+--- a/src/application/modules/settings/module-shared/components/backup-snapshot-table/backup-snapshot-table.defs.tsx
++++ b/src/application/modules/settings/module-shared/components/backup-snapshot-table/backup-snapshot-table.defs.tsx
+@@ -4,17 +4,25 @@ import { Button } from "@components/ui/button";
+ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@components/ui/dropdown-menu";
+ import type { ColumnDef } from "@tanstack/react-table";
+ import { format } from "date-fns";
+-import { Copy, Info, MoreVertical, Trash2Icon } from "lucide-react";
++import { ArchiveRestore, Copy, Info, MoreVertical, Trash2Icon } from "lucide-react";
+ import { toast } from "sonner";
+ import type { BackupSnapshot, BackupSnapshotScope } from "~/settings/domain";
+ 
++import { MODULE_IDS } from "@application/shared/constants";
+ import { PermissionTooltipAction } from "@application/shared/permissions";
+ import { formatDataSizeCompact } from "@application/shared/utils/data-size";
+ 
+-import { snapshotScopeModuleId, sourceLabel, tagClassName, userTags } from "./backup-snapshot-table.helpers";
++import {
++    isRepoActive,
++    snapshotScopeModuleId,
++    sourceLabel,
++    tagClassName,
++    userTags,
++} from "./backup-snapshot-table.helpers";
+ 
+ export interface BackupSnapshotRowActions {
+     onViewDetails: (snapshot: BackupSnapshot) => void;
++    onRestore: (snapshot: BackupSnapshot) => void;
+     onDelete: (snapshot: BackupSnapshot) => void;
+ }
+ 
+@@ -50,6 +58,24 @@ function MenuCell({ scope, snapshot, actions }: { scope: BackupSnapshotScope } &
+                     <Copy className="mr-2 size-4" />
+                     Copy ID
+                 </DropdownMenuItem>
++                <PermissionTooltipAction
++                    id={MODULE_IDS.Project}
++                    action="write"
++                    triggerClassName="w-full"
++                >
++                    {({ isDenied }) => (
++                        <DropdownMenuItem
++                            disabled={isDenied || !isRepoActive(snapshot)}
++                            title={isRepoActive(snapshot) ? undefined : "The snapshot's repository is not active"}
++                            onClick={() => {
++                                actions.onRestore(snapshot);
++                            }}
++                        >
++                            <ArchiveRestore className="mr-2 size-4" />
++                            Restore
++                        </DropdownMenuItem>
++                    )}
++                </PermissionTooltipAction>
+                 <PermissionTooltipAction
+                     id={snapshotScopeModuleId(scope)}
+                     action="delete"
+diff --git a/src/application/modules/settings/module-shared/components/backup-snapshot-table/backup-snapshot-table.helpers.ts b/src/application/modules/settings/module-shared/components/backup-snapshot-table/backup-snapshot-table.helpers.ts
+index d88a0855..0e9cbf31 100644
+--- a/src/application/modules/settings/module-shared/components/backup-snapshot-table/backup-snapshot-table.helpers.ts
++++ b/src/application/modules/settings/module-shared/components/backup-snapshot-table/backup-snapshot-table.helpers.ts
+@@ -62,3 +62,8 @@ export interface BackupSnapshotFilterValues {
+ export function countActiveFilters(filters: BackupSnapshotFilterValues): number {
+     return [filters.repo, filters.app, filters.fromDate, filters.toDate].filter(Boolean).length + filters.tags.length;
+ }
++
++/** A snapshot is read, to restore it, from a repository that is active. */
++export function isRepoActive(snapshot: BackupSnapshot): boolean {
++    return snapshot.repo.status === "active";
++}

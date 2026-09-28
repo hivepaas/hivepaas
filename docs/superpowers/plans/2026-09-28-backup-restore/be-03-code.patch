@@ -1,0 +1,13 @@
+diff --git a/services/backup/factory.go b/services/backup/factory.go
+index 9b6ca9bd..89f115a7 100644
+--- a/services/backup/factory.go
++++ b/services/backup/factory.go
+@@ -15,7 +15,7 @@ func NewEngine(
+ 	if storageCfg == nil {
+ 		return nil, hperrors.Wrap(backupmodel.ErrStorageConfigRequired)
+ 	}
+-	if storageCfg.StorageS3 == nil && storageCfg.StorageLocal == nil {
++	if storageCfg.StorageS3 == nil && storageCfg.StorageLocal == nil && storageCfg.StorageServer == nil {
+ 		return nil, hperrors.Wrap(backupmodel.ErrStorageTypeRequired)
+ 	}
+ 

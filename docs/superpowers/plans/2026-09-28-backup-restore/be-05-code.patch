@@ -1,0 +1,191 @@
+diff --git a/hivepaas_app/service/schedjobexecservice/schedjobexecserviceimpl/run_command.go b/hivepaas_app/service/schedjobexecservice/schedjobexecserviceimpl/run_command.go
+new file mode 100644
+index 00000000..acdd107d
+--- /dev/null
++++ b/hivepaas_app/service/schedjobexecservice/schedjobexecserviceimpl/run_command.go
+@@ -0,0 +1,61 @@
++package schedjobexecserviceimpl
++
++import (
++	"context"
++	"time"
++
++	"github.com/moby/moby/client"
++
++	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
++	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
++	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/safego"
++	"github.com/hivepaas/hivepaas/hivepaas_app/service/containerexecservice"
++	"github.com/hivepaas/hivepaas/hivepaas_app/service/schedjobexecservice"
++)
++
++func (s *service) RunCommand(
++	ctx context.Context,
++	db database.Tx,
++	req *schedjobexecservice.RunCommandReq,
++) (_ *schedjobexecservice.RunCommandResp, err error) {
++	defer safego.RecoverTo(&err)
++
++	data := &execData{
++		SchedJobExecReq: &schedjobexecservice.SchedJobExecReq{TaskExecData: req.TaskExecData, DestApp: req.App},
++		Command:         req.Command,
++		TimeNow:         time.Now(),
++		db:              db,
++	}
++	cmd, err := s.calcCommand(ctx, data)
++	if err != nil {
++		return nil, hperrors.Wrap(err)
++	}
++	env, err := s.calcCommandEnv(ctx, db, data)
++	if err != nil {
++		return nil, hperrors.Wrap(err)
++	}
++
++	execResp, err := s.containerExecService.ContainerExec(ctx, &containerexecservice.ContainerExecReq{
++		App:         req.App,
++		LogStore:    req.LogStore,
++		StdinReader: req.Stdin,
++		ExecOptions: func(opts *client.ExecCreateOptions) {
++			opts.AttachStdout = true
++			opts.AttachStderr = true
++			opts.Cmd = cmd
++			opts.WorkingDir = req.Command.WorkingDir
++			opts.Env = env
++			// What it reads is data: a TTY would not pass it through as is.
++			opts.TTY = false
++		},
++	})
++	resp := &schedjobexecservice.RunCommandResp{}
++	if execResp != nil && execResp.ExecStarted {
++		exitCode := execResp.ExitCode
++		resp.ExitCode = &exitCode
++	}
++	if err != nil {
++		return resp, hperrors.Wrap(err)
++	}
++	return resp, nil
++}
+diff --git a/hivepaas_app/service/schedjobexecservice/service.go b/hivepaas_app/service/schedjobexecservice/service.go
+index 2fa7b220..f952cc66 100644
+--- a/hivepaas_app/service/schedjobexecservice/service.go
++++ b/hivepaas_app/service/schedjobexecservice/service.go
+@@ -8,4 +8,7 @@ import (
+ 
+ type Service interface {
+ 	SchedJobExec(ctx context.Context, db database.Tx, req *SchedJobExecReq) (*SchedJobExecResp, error)
++	// RunCommand runs a command in an app outside any job, reading Stdin: a
++	// restore's. Its output goes to the task's log.
++	RunCommand(ctx context.Context, db database.Tx, req *RunCommandReq) (*RunCommandResp, error)
+ }
+diff --git a/hivepaas_app/service/schedjobexecservice/types.go b/hivepaas_app/service/schedjobexecservice/types.go
+index 54c2eddf..60f0f4ee 100644
+--- a/hivepaas_app/service/schedjobexecservice/types.go
++++ b/hivepaas_app/service/schedjobexecservice/types.go
+@@ -25,6 +25,19 @@ type SchedJobExecReq struct {
+ 	StdoutWriter io.Writer
+ }
+ 
++type RunCommandReq struct {
++	*queue.TaskExecData
++	App     *entity.App
++	Command *entity.CommandTemplate
++	// Stdin is what the command reads; its end is the command's input's end.
++	Stdin io.Reader
++}
++
++type RunCommandResp struct {
++	// ExitCode is the command's, when it ran to an end.
++	ExitCode *int
++}
++
+ type SchedJobExecResp struct {
+ 	SkipResultNotification bool
+ 	// ExitCode is the command's, when it ran to an end.
+diff --git a/hivepaas_app/usecaseagent/containeragentuc/command_exec.go b/hivepaas_app/usecaseagent/containeragentuc/command_exec.go
+index 1bf37f3b..15ef4b3b 100644
+--- a/hivepaas_app/usecaseagent/containeragentuc/command_exec.go
++++ b/hivepaas_app/usecaseagent/containeragentuc/command_exec.go
+@@ -2,6 +2,7 @@ package containeragentuc
+ 
+ import (
+ 	"context"
++	"errors"
+ 	"io"
+ 
+ 	"github.com/moby/moby/api/pkg/stdcopy"
+@@ -74,22 +75,15 @@ func (uc *UC) ExecuteCommand(
+ 	defer attachResp.Close()
+ 
+ 	// 4. Start Goroutine B: gRPC client stdin/resize -> Docker exec input
+-	go func() {
+-		defer safego.RecoverWithLogger(uc.logger, "containeragent.execStdin")
+-		for {
+-			inReq, recvErr := stream.Recv()
+-			if recvErr != nil {
+-				return // Stream closed or EOF
+-			}
+-			if len(inReq.Stdin) > 0 && attachResp.Conn != nil {
+-				_, _ = attachResp.Conn.Write(inReq.Stdin)
+-			}
+-			if inReq.Resize != nil {
++	if attachResp.Conn != nil {
++		go func() {
++			defer safego.RecoverWithLogger(uc.logger, "containeragent.execStdin")
++			forwardExecInput(stream.Recv, attachedStdin{attachResp}, func(width, height uint32) {
+ 				_, _ = uc.dockerManager.ContainerExecResize(context.Background(), createResp.ID,
+-					uint(inReq.Resize.Width), uint(inReq.Resize.Height))
+-			}
+-		}
+-	}()
++					uint(width), uint(height))
++			})
++		}()
++	}
+ 
+ 	// 5. Pipe Docker exec output -> gRPC stream (Tty vs non-Tty multiplexing)
+ 	var copyErr error
+@@ -148,3 +142,44 @@ func (w *streamWriter) Write(p []byte) (n int, err error) {
+ 	}
+ 	return len(p), nil
+ }
++
++// execStdin is an exec's input, which can be told it ended.
++type execStdin interface {
++	io.Writer
++	CloseWrite() error
++}
++
++// attachedStdin is a docker exec's attached input.
++type attachedStdin struct {
++	*client.ExecAttachResult
++}
++
++func (s attachedStdin) Write(p []byte) (int, error) {
++	return s.Conn.Write(p) //nolint:wrapcheck
++}
++
++// forwardExecInput passes what the client sends to the exec: stdin and resizes.
++// When the client has sent all it has, the exec's stdin is closed, so a command
++// reading to its end - psql loading a dump - ends too.
++func forwardExecInput(
++	recv func() (*containeragentdto.ExecInput, error),
++	stdin execStdin,
++	resize func(width, height uint32),
++) {
++	for {
++		inReq, err := recv()
++		if errors.Is(err, io.EOF) {
++			_ = stdin.CloseWrite()
++			return
++		}
++		if err != nil {
++			return // the stream broke: the exec goes with it
++		}
++		if len(inReq.Stdin) > 0 {
++			_, _ = stdin.Write(inReq.Stdin)
++		}
++		if inReq.Resize != nil {
++			resize(inReq.Resize.Width, inReq.Resize.Height)
++		}
++	}
++}

@@ -99,3 +99,47 @@ func (h *Handler) DeleteBackupSnapshot(ctx *gin.Context, scopeType base.ObjectSc
 	}
 	ctx.JSON(http.StatusOK, resp)
 }
+
+func (h *Handler) ListBackupSnapshotEntries(ctx *gin.Context, scopeType base.ObjectScopeType) {
+	auth, scope, itemID, err := h.authBackupSnapshotScope(ctx, scopeType, base.ActionTypeRead, "itemID")
+	if err != nil {
+		h.RenderError(ctx, err)
+		return
+	}
+	req := backupsnapshotdto.NewListBackupSnapshotEntriesReq()
+	req.Scope = scope
+	req.ID = itemID
+	if err = h.ParseAndValidateRequest(ctx, req, nil); err != nil {
+		h.RenderError(ctx, err)
+		return
+	}
+	resp, err := h.BackupSnapshotUC.ListBackupSnapshotEntries(h.RequestCtx(ctx), auth, req)
+	if err != nil {
+		h.RenderError(ctx, err)
+		return
+	}
+	ctx.JSON(http.StatusOK, resp)
+}
+
+// RestoreBackupSnapshot reads the snapshot as the scope's viewer does; writing on
+// the app it goes into is the use case's to check.
+func (h *Handler) RestoreBackupSnapshot(ctx *gin.Context, scopeType base.ObjectScopeType) {
+	auth, scope, itemID, err := h.authBackupSnapshotScope(ctx, scopeType, base.ActionTypeRead, "itemID")
+	if err != nil {
+		h.RenderError(ctx, err)
+		return
+	}
+	req := backupsnapshotdto.NewRestoreBackupSnapshotReq()
+	req.Scope = scope
+	req.ID = itemID
+	if err = h.ParseAndValidateJSONBody(ctx, req); err != nil {
+		h.RenderError(ctx, err)
+		return
+	}
+	resp, err := h.BackupSnapshotUC.RestoreBackupSnapshot(h.RequestCtx(ctx), auth, req)
+	if err != nil {
+		h.RenderError(ctx, err)
+		return
+	}
+	ctx.JSON(http.StatusOK, resp)
+}

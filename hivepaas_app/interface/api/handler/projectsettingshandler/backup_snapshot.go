@@ -65,3 +65,42 @@ func (h *Handler) GetBackupSnapshot(ctx *gin.Context) {
 func (h *Handler) DeleteBackupSnapshot(ctx *gin.Context) {
 	h.Handler.DeleteBackupSnapshot(ctx, base.ObjectScopeProject)
 }
+
+// ListBackupSnapshotEntries Lists what a backup snapshot holds
+// @Summary Lists what a backup snapshot holds
+// @Description Lists a directory of a backup snapshot the scope sees: its files and directories, directories first
+// @Tags    project_settings
+// @Produce json
+// @Id      listProjectBackupSnapshotEntries
+// @Param   projectID path string true "project ID"
+// @Param   itemID path string true "snapshot record ID"
+// @Param   path query string false "a directory inside the snapshot; empty for its root"
+// @Success 200 {object} backupsnapshotdto.ListBackupSnapshotEntriesResp
+// @Failure 400 {object} hperrors.ErrorInfo
+// @Failure 404 {object} hperrors.ErrorInfo
+// @Failure 500 {object} hperrors.ErrorInfo
+// @Router  /projects/{projectID}/backup-snapshots/{itemID}/entries [get]
+func (h *Handler) ListBackupSnapshotEntries(ctx *gin.Context) {
+	h.Handler.ListBackupSnapshotEntries(ctx, base.ObjectScopeProject)
+}
+
+// RestoreBackupSnapshot Restores a backup snapshot into an app
+// @Summary Restores a backup snapshot into an app
+// @Description Records a task that puts a snapshot the scope sees back into an app the caller may change: a command
+// @Description snapshot through a command run in the app, a volume snapshot into a volume the app mounts
+// @Tags    project_settings
+// @Accept  json
+// @Produce json
+// @Id      restoreProjectBackupSnapshot
+// @Param   projectID path string true "project ID"
+// @Param   itemID path string true "snapshot record ID"
+// @Param   body body backupsnapshotdto.RestoreBackupSnapshotReq true "request data"
+// @Success 200 {object} backupsnapshotdto.RestoreBackupSnapshotResp
+// @Failure 400 {object} hperrors.ErrorInfo
+// @Failure 403 {object} hperrors.ErrorInfo
+// @Failure 404 {object} hperrors.ErrorInfo
+// @Failure 500 {object} hperrors.ErrorInfo
+// @Router  /projects/{projectID}/backup-snapshots/{itemID}/restore [post]
+func (h *Handler) RestoreBackupSnapshot(ctx *gin.Context) {
+	h.Handler.RestoreBackupSnapshot(ctx, base.ObjectScopeProject)
+}

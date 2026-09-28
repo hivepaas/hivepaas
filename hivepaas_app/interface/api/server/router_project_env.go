@@ -54,6 +54,8 @@ func (s *HTTPServer) registerProjectEnvRoutes(projectGroup *gin.RouterGroup) {
 		backupSnapshotGroup.GET("", projectEnvSettingsHandler.ListBackupSnapshot)
 		backupSnapshotGroup.GET("/:itemID", projectEnvSettingsHandler.GetBackupSnapshot)
 		backupSnapshotGroup.DELETE("/:itemID", projectEnvSettingsHandler.DeleteBackupSnapshot)
+		backupSnapshotGroup.GET("/:itemID/entries", projectEnvSettingsHandler.ListBackupSnapshotEntries)
+		backupSnapshotGroup.POST("/:itemID/restore", projectEnvSettingsHandler.RestoreBackupSnapshot)
 
 		backupRepoGroup := projectEnvGroup.Group("/backup-repos")
 		backupRepoGroup.GET("/:itemID", projectEnvSettingsHandler.GetBackupRepo)

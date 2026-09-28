@@ -4388,6 +4388,169 @@
         "tags" : [ "Project settings" ]
       }
     },
+    "/projects/{projectID}/backup-snapshots/{itemID}/entries" : {
+      "get" : {
+        "description" : "Lists a directory of a backup snapshot the scope sees: its files and directories, directories first",
+        "operationId" : "listProjectBackupSnapshotEntries",
+        "parameters" : [ {
+          "description" : "project ID",
+          "in" : "path",
+          "name" : "projectID",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "snapshot record ID",
+          "in" : "path",
+          "name" : "itemID",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "a directory inside the snapshot; empty for its root",
+          "in" : "query",
+          "name" : "path",
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/settings_backupsnapshotdto.ListBackupSnapshotEntriesResp"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "400" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Bad Request"
+          },
+          "404" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Not Found"
+          },
+          "500" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Internal Server Error"
+          }
+        },
+        "summary" : "Lists what a backup snapshot holds",
+        "tags" : [ "project_settings" ]
+      }
+    },
+    "/projects/{projectID}/backup-snapshots/{itemID}/restore" : {
+      "post" : {
+        "description" : "Records a task that puts a snapshot the scope sees back into an app the caller may change: a command\nsnapshot through a command run in the app, a volume snapshot into a volume the app mounts",
+        "operationId" : "restoreProjectBackupSnapshot",
+        "parameters" : [ {
+          "description" : "project ID",
+          "in" : "path",
+          "name" : "projectID",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "snapshot record ID",
+          "in" : "path",
+          "name" : "itemID",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/settings_backupsnapshotdto.RestoreBackupSnapshotReq"
+              }
+            }
+          },
+          "description" : "request data",
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/settings_backupsnapshotdto.RestoreBackupSnapshotResp"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "400" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Bad Request"
+          },
+          "403" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Forbidden"
+          },
+          "404" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Not Found"
+          },
+          "500" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Internal Server Error"
+          }
+        },
+        "summary" : "Restores a backup snapshot into an app",
+        "tags" : [ "project_settings" ],
+        "x-codegen-request-body-name" : "body"
+      }
+    },
     "/projects/{projectID}/basic-auth" : {
       "get" : {
         "description" : "Lists basic auth settings",
@@ -15422,6 +15585,201 @@
         "tags" : [ "App settings" ]
       }
     },
+    "/projects/{projectID}/{projectEnv}/apps/{appID}/backup-snapshots/{itemID}/entries" : {
+      "get" : {
+        "description" : "Lists a directory of a backup snapshot the scope sees: its files and directories, directories first",
+        "operationId" : "listAppBackupSnapshotEntries",
+        "parameters" : [ {
+          "description" : "project ID",
+          "in" : "path",
+          "name" : "projectID",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "project env",
+          "in" : "path",
+          "name" : "projectEnv",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "app ID",
+          "in" : "path",
+          "name" : "appID",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "snapshot record ID",
+          "in" : "path",
+          "name" : "itemID",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "a directory inside the snapshot; empty for its root",
+          "in" : "query",
+          "name" : "path",
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/settings_backupsnapshotdto.ListBackupSnapshotEntriesResp"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "400" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Bad Request"
+          },
+          "404" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Not Found"
+          },
+          "500" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Internal Server Error"
+          }
+        },
+        "summary" : "Lists what a backup snapshot holds",
+        "tags" : [ "app_settings" ]
+      }
+    },
+    "/projects/{projectID}/{projectEnv}/apps/{appID}/backup-snapshots/{itemID}/restore" : {
+      "post" : {
+        "description" : "Records a task that puts a snapshot the scope sees back into an app the caller may change: a command\nsnapshot through a command run in the app, a volume snapshot into a volume the app mounts",
+        "operationId" : "restoreAppBackupSnapshot",
+        "parameters" : [ {
+          "description" : "project ID",
+          "in" : "path",
+          "name" : "projectID",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "project env",
+          "in" : "path",
+          "name" : "projectEnv",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "app ID",
+          "in" : "path",
+          "name" : "appID",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "snapshot record ID",
+          "in" : "path",
+          "name" : "itemID",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/settings_backupsnapshotdto.RestoreBackupSnapshotReq"
+              }
+            }
+          },
+          "description" : "request data",
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/settings_backupsnapshotdto.RestoreBackupSnapshotResp"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "400" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Bad Request"
+          },
+          "403" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Forbidden"
+          },
+          "404" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Not Found"
+          },
+          "500" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Internal Server Error"
+          }
+        },
+        "summary" : "Restores a backup snapshot into an app",
+        "tags" : [ "app_settings" ],
+        "x-codegen-request-body-name" : "body"
+      }
+    },
     "/projects/{projectID}/{projectEnv}/apps/{appID}/clone-execute" : {
       "post" : {
         "description" : "Clones app",
@@ -24605,6 +24963,185 @@
         },
         "summary" : "Gets a backup snapshot",
         "tags" : [ "Project env settings" ]
+      }
+    },
+    "/projects/{projectID}/{projectEnv}/backup-snapshots/{itemID}/entries" : {
+      "get" : {
+        "description" : "Lists a directory of a backup snapshot the scope sees: its files and directories, directories first",
+        "operationId" : "listProjectEnvBackupSnapshotEntries",
+        "parameters" : [ {
+          "description" : "project ID",
+          "in" : "path",
+          "name" : "projectID",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "project Env",
+          "in" : "path",
+          "name" : "projectEnv",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "snapshot record ID",
+          "in" : "path",
+          "name" : "itemID",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "a directory inside the snapshot; empty for its root",
+          "in" : "query",
+          "name" : "path",
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/settings_backupsnapshotdto.ListBackupSnapshotEntriesResp"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "400" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Bad Request"
+          },
+          "404" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Not Found"
+          },
+          "500" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Internal Server Error"
+          }
+        },
+        "summary" : "Lists what a backup snapshot holds",
+        "tags" : [ "project_env_settings" ]
+      }
+    },
+    "/projects/{projectID}/{projectEnv}/backup-snapshots/{itemID}/restore" : {
+      "post" : {
+        "description" : "Records a task that puts a snapshot the scope sees back into an app the caller may change: a command\nsnapshot through a command run in the app, a volume snapshot into a volume the app mounts",
+        "operationId" : "restoreProjectEnvBackupSnapshot",
+        "parameters" : [ {
+          "description" : "project ID",
+          "in" : "path",
+          "name" : "projectID",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "project Env",
+          "in" : "path",
+          "name" : "projectEnv",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "snapshot record ID",
+          "in" : "path",
+          "name" : "itemID",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/settings_backupsnapshotdto.RestoreBackupSnapshotReq"
+              }
+            }
+          },
+          "description" : "request data",
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/settings_backupsnapshotdto.RestoreBackupSnapshotResp"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "400" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Bad Request"
+          },
+          "403" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Forbidden"
+          },
+          "404" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Not Found"
+          },
+          "500" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Internal Server Error"
+          }
+        },
+        "summary" : "Restores a backup snapshot into an app",
+        "tags" : [ "project_env_settings" ],
+        "x-codegen-request-body-name" : "body"
       }
     },
     "/projects/{projectID}/{projectEnv}/basic-auth" : {
@@ -35731,6 +36268,153 @@
         },
         "summary" : "Gets a backup snapshot",
         "tags" : [ "Global settings" ]
+      }
+    },
+    "/settings/backup-snapshots/{itemID}/entries" : {
+      "get" : {
+        "description" : "Lists a directory of a backup snapshot the scope sees: its files and directories, directories first",
+        "operationId" : "listSettingBackupSnapshotEntries",
+        "parameters" : [ {
+          "description" : "snapshot record ID",
+          "in" : "path",
+          "name" : "itemID",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "a directory inside the snapshot; empty for its root",
+          "in" : "query",
+          "name" : "path",
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/settings_backupsnapshotdto.ListBackupSnapshotEntriesResp"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "400" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Bad Request"
+          },
+          "404" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Not Found"
+          },
+          "500" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Internal Server Error"
+          }
+        },
+        "summary" : "Lists what a backup snapshot holds",
+        "tags" : [ "settings" ]
+      }
+    },
+    "/settings/backup-snapshots/{itemID}/restore" : {
+      "post" : {
+        "description" : "Records a task that puts a snapshot the scope sees back into an app the caller may change: a command\nsnapshot through a command run in the app, a volume snapshot into a volume the app mounts",
+        "operationId" : "restoreSettingBackupSnapshot",
+        "parameters" : [ {
+          "description" : "snapshot record ID",
+          "in" : "path",
+          "name" : "itemID",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/settings_backupsnapshotdto.RestoreBackupSnapshotReq"
+              }
+            }
+          },
+          "description" : "request data",
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/settings_backupsnapshotdto.RestoreBackupSnapshotResp"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "400" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Bad Request"
+          },
+          "403" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Forbidden"
+          },
+          "404" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Not Found"
+          },
+          "500" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Internal Server Error"
+          }
+        },
+        "summary" : "Restores a backup snapshot into an app",
+        "tags" : [ "settings" ],
+        "x-codegen-request-body-name" : "body"
       }
     },
     "/settings/basic-auth" : {
@@ -56405,6 +57089,22 @@
         "required" : [ "meta" ],
         "type" : "object"
       },
+      "settings_backupsnapshotdto.BackupSnapshotEntryResp" : {
+        "properties" : {
+          "dir" : {
+            "type" : "boolean"
+          },
+          "name" : {
+            "type" : "string"
+          },
+          "sizeBytes" : {
+            "description" : "SizeBytes is a directory's too: all it holds.",
+            "type" : "integer"
+          }
+        },
+        "required" : [ "dir", "name", "sizeBytes" ],
+        "type" : "object"
+      },
       "settings_backupsnapshotdto.BackupSnapshotResp" : {
         "properties" : {
           "app" : {
@@ -56483,6 +57183,21 @@
         "required" : [ "data", "meta" ],
         "type" : "object"
       },
+      "settings_backupsnapshotdto.ListBackupSnapshotEntriesResp" : {
+        "properties" : {
+          "data" : {
+            "items" : {
+              "$ref" : "#/components/schemas/settings_backupsnapshotdto.BackupSnapshotEntryResp"
+            },
+            "type" : "array"
+          },
+          "meta" : {
+            "$ref" : "#/components/schemas/basedto.Meta"
+          }
+        },
+        "required" : [ "data", "meta" ],
+        "type" : "object"
+      },
       "settings_backupsnapshotdto.ListBackupSnapshotResp" : {
         "properties" : {
           "data" : {
@@ -56505,6 +57220,67 @@
         "required" : [ "data", "meta", "repos" ],
         "type" : "object"
       },
+      "settings_backupsnapshotdto.RestoreBackupSnapshotDataResp" : {
+        "properties" : {
+          "task" : {
+            "allOf" : [ {
+              "$ref" : "#/components/schemas/basedto.ObjectIDResp"
+            } ],
+            "description" : "Task is the restore's.",
+            "type" : "object"
+          }
+        },
+        "required" : [ "task" ],
+        "type" : "object"
+      },
+      "settings_backupsnapshotdto.RestoreBackupSnapshotReq" : {
+        "properties" : {
+          "command" : {
+            "allOf" : [ {
+              "$ref" : "#/components/schemas/settings_commandtemplatedto.CommandTemplateBaseReq"
+            } ],
+            "description" : "Command loads the file of a command snapshot from its stdin.",
+            "type" : "object"
+          },
+          "mode" : {
+            "type" : "string"
+          },
+          "snapshotPath" : {
+            "description" : "SnapshotPath is a directory inside the snapshot to restore alone; \"\" for\nall of it.",
+            "type" : "string"
+          },
+          "stopApp" : {
+            "type" : "boolean"
+          },
+          "subpath" : {
+            "type" : "string"
+          },
+          "targetApp" : {
+            "$ref" : "#/components/schemas/basedto.ObjectIDReq"
+          },
+          "volume" : {
+            "allOf" : [ {
+              "$ref" : "#/components/schemas/basedto.ObjectIDReq"
+            } ],
+            "description" : "Volume is a volume the app mounts as its own directory; Subpath a path\ninside what the app sees of it, where the snapshot's root goes.",
+            "type" : "object"
+          }
+        },
+        "required" : [ "command", "mode", "snapshotPath", "stopApp", "subpath", "targetApp", "volume" ],
+        "type" : "object"
+      },
+      "settings_backupsnapshotdto.RestoreBackupSnapshotResp" : {
+        "properties" : {
+          "data" : {
+            "$ref" : "#/components/schemas/settings_backupsnapshotdto.RestoreBackupSnapshotDataResp"
+          },
+          "meta" : {
+            "$ref" : "#/components/schemas/basedto.Meta"
+          }
+        },
+        "required" : [ "data", "meta" ],
+        "type" : "object"
+      },
       "settings_backupsnapshotdto.SnapshotAppResp" : {
         "properties" : {
           "deleted" : {
@@ -56518,9 +57294,12 @@
           },
           "name" : {
             "type" : "string"
+          },
+          "projectId" : {
+            "type" : "string"
           }
         },
-        "required" : [ "deleted", "env", "id", "name" ],
+        "required" : [ "deleted", "env", "id", "name", "projectId" ],
         "type" : "object"
       },
       "settings_backupsnapshotdto.SnapshotJobResp" : {
@@ -56528,14 +57307,26 @@
           "deleted" : {
             "type" : "boolean"
           },
+          "fileName" : {
+            "type" : "string"
+          },
           "id" : {
             "type" : "string"
           },
           "name" : {
             "type" : "string"
+          },
+          "restoreCommand" : {
+            "$ref" : "#/components/schemas/settings_commandtemplatedto.CommandTemplateResp"
+          },
+          "sourceVolumeId" : {
+            "type" : "string"
+          },
+          "sourceVolumeSubpath" : {
+            "type" : "string"
           }
         },
-        "required" : [ "deleted", "id", "name" ],
+        "required" : [ "deleted", "fileName", "id", "name", "restoreCommand", "sourceVolumeId", "sourceVolumeSubpath" ],
         "type" : "object"
       },
       "settings_basicauthdto.BasicAuthResp" : {
@@ -61881,6 +62672,13 @@
       },
       "settings_schedjobdto.SchedJobDataBackupReq" : {
         "properties" : {
+          "restoreCommand" : {
+            "allOf" : [ {
+              "$ref" : "#/components/schemas/settings_commandtemplatedto.CommandTemplateBaseReq"
+            } ],
+            "description" : "RestoreCommand loads a backup it reads on its stdin: a command source's only.",
+            "type" : "object"
+          },
           "source" : {
             "type" : "string"
           },
@@ -61914,11 +62712,14 @@
             "$ref" : "#/components/schemas/basedto.ObjectIDReq"
           }
         },
-        "required" : [ "source", "sourceCommand", "sourceFileName", "sourceVolume", "sourceVolumeSubpath", "tags", "targetRepository" ],
+        "required" : [ "restoreCommand", "source", "sourceCommand", "sourceFileName", "sourceVolume", "sourceVolumeSubpath", "tags", "targetRepository" ],
         "type" : "object"
       },
       "settings_schedjobdto.SchedJobDataBackupResp" : {
         "properties" : {
+          "restoreCommand" : {
+            "$ref" : "#/components/schemas/settings_commandtemplatedto.CommandTemplateResp"
+          },
           "source" : {
             "type" : "string"
           },
@@ -61944,7 +62745,7 @@
             "$ref" : "#/components/schemas/settings.BaseSettingResp"
           }
         },
-        "required" : [ "source", "sourceCommand", "sourceFileName", "sourceVolume", "sourceVolumeSubpath", "tags", "targetRepository" ],
+        "required" : [ "restoreCommand", "source", "sourceCommand", "sourceFileName", "sourceVolume", "sourceVolumeSubpath", "tags", "targetRepository" ],
         "type" : "object"
       },
       "settings_schedjobdto.SchedJobResp" : {
@@ -67167,8 +67968,43 @@
         "required" : [ "id", "name", "type" ],
         "type" : "object"
       },
+      "taskdto.TaskBackupRestoreResp" : {
+        "properties" : {
+          "fileName" : {
+            "type" : "string"
+          },
+          "mode" : {
+            "type" : "string"
+          },
+          "repoId" : {
+            "type" : "string"
+          },
+          "snapshotId" : {
+            "type" : "string"
+          },
+          "snapshotPath" : {
+            "type" : "string"
+          },
+          "snapshotRecordId" : {
+            "description" : "SnapshotRecordID is the record's; SnapshotID the repository's.",
+            "type" : "string"
+          },
+          "stopApp" : {
+            "type" : "boolean"
+          }
+        },
+        "required" : [ "fileName", "mode", "repoId", "snapshotId", "snapshotPath", "snapshotRecordId", "stopApp" ],
+        "type" : "object"
+      },
       "taskdto.TaskResp" : {
         "properties" : {
+          "backupRestore" : {
+            "allOf" : [ {
+              "$ref" : "#/components/schemas/taskdto.TaskBackupRestoreResp"
+            } ],
+            "description" : "BackupRestore is what a restore's task restored, from where, and how.",
+            "type" : "object"
+          },
           "config" : {
             "allOf" : [ {
               "$ref" : "#/components/schemas/entity.TaskConfig"
@@ -67243,7 +68079,7 @@
             "type" : "string"
           }
         },
-        "required" : [ "config", "createdAt", "dataBackup", "endedAt", "id", "lastError", "retryAt", "runAt", "scopeApp", "scopeProject", "scopeUser", "sequenceRun", "startedAt", "status", "targetJob", "trigger", "type", "updateVer", "updatedAt" ],
+        "required" : [ "backupRestore", "config", "createdAt", "dataBackup", "endedAt", "id", "lastError", "retryAt", "runAt", "scopeApp", "scopeProject", "scopeUser", "sequenceRun", "startedAt", "status", "targetJob", "trigger", "type", "updateVer", "updatedAt" ],
         "type" : "object"
       },
       "taskdto.TaskStatusResp" : {

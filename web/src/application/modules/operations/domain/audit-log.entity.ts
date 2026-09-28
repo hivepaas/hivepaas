@@ -47,6 +47,7 @@ export const AuditLogSource = {
     ApiDelete: "api-delete",
     ApiAction: "api-action",
     Mcp: "mcp",
+    SystemCleanup: "system-cleanup",
 } as const;
 
 export type AuditLogSource = (typeof AuditLogSource)[keyof typeof AuditLogSource];

@@ -51,6 +51,8 @@ type TaskResp struct {
 	Trigger *TaskTriggerResp `json:"trigger,omitempty" copy:"-"`
 	// DataBackup is the snapshot a data backup's run took.
 	DataBackup *entity.SchedJobDataBackupResult `json:"dataBackup,omitempty" copy:"-"`
+	// BackupRestore is what a restore's task restored, from where, and how.
+	BackupRestore *TaskBackupRestoreResp `json:"backupRestore,omitempty" copy:"-"`
 
 	ScopeProject *projectdto.ProjectBaseResp `json:"scopeProject,omitempty"`
 	ScopeApp     *appdto.AppBaseResp         `json:"scopeApp,omitempty"`
@@ -63,6 +65,19 @@ type TaskResp struct {
 
 	CreatedAt time.Time `json:"createdAt"`
 	UpdatedAt time.Time `json:"updatedAt"`
+}
+
+// TaskBackupRestoreResp is a restore, as it was asked for; the file or volume it
+// went to is in its log.
+type TaskBackupRestoreResp struct {
+	// SnapshotRecordID is the record's; SnapshotID the repository's.
+	SnapshotRecordID string                 `json:"snapshotRecordId"`
+	RepoID           string                 `json:"repoId"`
+	SnapshotID       string                 `json:"snapshotId"`
+	SnapshotPath     string                 `json:"snapshotPath,omitempty"`
+	FileName         string                 `json:"fileName,omitempty"`
+	Mode             base.BackupRestoreMode `json:"mode,omitempty"`
+	StopApp          bool                   `json:"stopApp,omitempty"`
 }
 
 type TaskTargetJobResp struct {
@@ -103,6 +118,15 @@ func TransformTask(
 		}
 		resp.DataBackup, _ = task.OutputAsDataBackup()
 		resp.Trigger = transformTaskTrigger(task, refObjects)
+	}
+	if task.Type == base.TaskTypeBackupRestore {
+		// Arguments that do not parse are not shown rather than failing the answer.
+		if args, _ := task.ArgsAsBackupRestore(); args != nil {
+			resp.BackupRestore = &TaskBackupRestoreResp{
+				SnapshotRecordID: task.TargetID, RepoID: args.RepoID, SnapshotID: args.SnapshotID,
+				SnapshotPath: args.SnapshotPath, FileName: args.FileName, Mode: args.Mode, StopApp: args.StopApp,
+			}
+		}
 	}
 
 	return resp, nil

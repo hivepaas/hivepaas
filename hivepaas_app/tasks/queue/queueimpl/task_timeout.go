@@ -67,6 +67,8 @@ var taskTypeTimeouts = map[base.TaskType]time.Duration{
 	base.TaskTypeAppPreview:   taskDefaultTimeout,
 	base.TaskTypeSchedJobExec: taskDefaultTimeout,
 	base.TaskTypeWorkflow:     taskDefaultTimeout,
+	// A restore is bounded by the snapshot's size.
+	base.TaskTypeBackupRestore: taskDefaultTimeout,
 }
 
 // resolveTaskTimeout picks the timeout for a task: what the task asks for, else the ceiling for

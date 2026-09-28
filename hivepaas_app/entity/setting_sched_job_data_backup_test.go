@@ -101,3 +101,19 @@ func TestTaskOutputAsDataBackup(t *testing.T) {
 	assert.NoError(t, err, "read after the task's output was parsed as a sequence's run")
 	assert.Equal(t, "k1", result.SnapshotID)
 }
+
+// A restore task's arguments come back as they went in.
+func TestTaskBackupRestoreArgs(t *testing.T) {
+	task := &Task{ID: "t1", Type: base.TaskTypeBackupRestore}
+	args := &TaskBackupRestoreArgs{
+		ProjectID: "p1", AppID: "a1", RepoID: "r1", SnapshotID: "k1",
+		Volume: ObjectID{ID: "vol1"}, SnapshotPath: "uploads", StopApp: true, Mode: base.BackupRestoreModeReplace,
+	}
+	assert.NoError(t, task.SetArgs(args))
+
+	read := &Task{ID: "t1", Type: base.TaskTypeBackupRestore, Args: task.Args}
+	got, err := read.ArgsAsBackupRestore()
+
+	assert.NoError(t, err)
+	assert.Equal(t, args, got)
+}

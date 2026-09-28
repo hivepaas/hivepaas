@@ -34,19 +34,23 @@ const (
 	// date after one of those settings changed. It is recorded in the
 	// transaction that changes the setting. See service/settingmountservice.
 	TaskTypeSettingMountRefresh TaskType = "task:setting-mount-refresh"
+
+	// TaskTypeBackupRestore puts a backup snapshot back into an app. See
+	// service/databackupservice.
+	TaskTypeBackupRestore TaskType = "task:backup-restore"
 )
 
 var (
 	AllTaskTypes = []TaskType{TaskTypeDummy, TaskTypeAppDeploy, TaskTypeAppClone,
 		TaskTypeAppPreview, TaskTypeSchedJobExec, TaskTypePeriodicExec,
 		TaskTypeSystemUpdate, TaskTypeWorkflow, TaskTypeSettingsRevert, TaskTypeAppLabelsSweep,
-		TaskTypeSSLObtain, TaskTypeSettingMountRefresh}
+		TaskTypeSSLObtain, TaskTypeSettingMountRefresh, TaskTypeBackupRestore}
 
 	// These are listing types for front-end to show
 	AllGlobalTaskTypes   = gofn.Drop(AllTaskTypes, TaskTypeDummy)
 	AllHivepaasTaskTypes = []TaskType{}
 	AllProjectTaskTypes  = []TaskType{TaskTypeAppDeploy, TaskTypeAppClone,
-		TaskTypeAppPreview, TaskTypeSchedJobExec, TaskTypePeriodicExec}
+		TaskTypeAppPreview, TaskTypeSchedJobExec, TaskTypePeriodicExec, TaskTypeBackupRestore}
 	AllAppTaskTypes  = AllProjectTaskTypes
 	AllUserTaskTypes = []TaskType{}
 )

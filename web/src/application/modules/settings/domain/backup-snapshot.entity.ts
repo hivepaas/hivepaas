@@ -1,3 +1,5 @@
+import type { AppScheduledJobCommand } from "~/projects/domain";
+
 /** A setting a snapshot names; its status is "missing" when it is deleted. */
 export interface BackupSnapshotRepoRef {
     id: string;
@@ -28,7 +30,38 @@ export interface BackupSnapshot {
     source: string;
     repo: BackupSnapshotRepoRef;
     app?: { id: string; name: string; env: string; deleted: boolean };
-    job?: { id: string; name: string; deleted: boolean };
+    job?: BackupSnapshotJob;
     /** The task of the run that took it. */
     runId: string;
 }
+
+/**
+ * The job that took a snapshot, and what a restore needs of it: the file a command's snapshot holds and the
+ * command that loads it, or the volume a volume's was read from.
+ */
+export interface BackupSnapshotJob {
+    id: string;
+    name: string;
+    deleted: boolean;
+    fileName: string;
+    restoreCommand?: AppScheduledJobCommand;
+    sourceVolumeId: string;
+    sourceVolumeSubpath: string;
+}
+
+/** A file or a directory a snapshot holds; a directory's size is all it holds. */
+export interface BackupSnapshotEntry {
+    name: string;
+    dir: boolean;
+    sizeBytes: number;
+}
+
+/** How a restore writes a snapshot into a directory. */
+export const BACKUP_RESTORE_MODE = {
+    /** The directory is moved aside, and the snapshot restored into an empty one. */
+    Replace: "replace",
+    /** The snapshot's files are written over what is there. */
+    Overwrite: "overwrite",
+} as const;
+
+export type BackupRestoreMode = (typeof BACKUP_RESTORE_MODE)[keyof typeof BACKUP_RESTORE_MODE];

@@ -1,6 +1,8 @@
 import { type UseQueryOptions, keepPreviousData, useQuery } from "@tanstack/react-query";
 import { useBackupSnapshotApi } from "~/settings/api/hooks";
 import type {
+    BackupSnapshot_FindEntries_Req,
+    BackupSnapshot_FindEntries_Res,
     BackupSnapshot_FindManyPaginated_Req,
     BackupSnapshot_FindManyPaginated_Res,
     BackupSnapshot_FindOneById_Req,
@@ -41,7 +43,26 @@ function useFindOneById(
     });
 }
 
+type FindEntriesReq = BackupSnapshot_FindEntries_Req["data"];
+type FindEntriesRes = BackupSnapshot_FindEntries_Res;
+
+/** A directory of a snapshot: what the repository says it holds does not change. */
+function useFindEntries(
+    request: FindEntriesReq,
+    options: Omit<UseQueryOptions<FindEntriesRes>, "queryKey" | "queryFn"> = {},
+) {
+    const { queries } = useBackupSnapshotApi();
+
+    return useQuery({
+        queryKey: [QK["settings.backup-snapshots.find-entries"], request],
+        queryFn: ({ signal }) => queries.findEntries(request, signal),
+        staleTime: Infinity,
+        ...options,
+    });
+}
+
 export const BackupSnapshotQueries = Object.freeze({
     useFindManyPaginated,
     useFindOneById,
+    useFindEntries,
 });

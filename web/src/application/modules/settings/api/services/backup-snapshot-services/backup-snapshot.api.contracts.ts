@@ -1,5 +1,12 @@
 import type { PaginationState } from "@infrastructure/data";
-import type { BackupSnapshot, BackupSnapshotRepoRef, BackupSnapshotScope } from "~/settings/domain";
+import type { AppScheduledJobs_Command_Payload } from "~/projects/api/services";
+import type {
+    BackupRestoreMode,
+    BackupSnapshot,
+    BackupSnapshotEntry,
+    BackupSnapshotRepoRef,
+    BackupSnapshotScope,
+} from "~/settings/domain";
 
 import type { ApiRequestBase, ApiResponseBase, ApiResponsePaginated } from "@infrastructure/api";
 
@@ -39,3 +46,31 @@ export type BackupSnapshot_DeleteOne_Req = ApiRequestBase<{
 }>;
 
 export type BackupSnapshot_DeleteOne_Res = ApiResponseBase<{ type: "success" }>;
+
+export type BackupSnapshot_FindEntries_Req = ApiRequestBase<{
+    scope: BackupSnapshotScope;
+    id: string;
+    /** A directory inside the snapshot; "" for its root. */
+    path: string;
+}>;
+
+export type BackupSnapshot_FindEntries_Res = ApiResponseBase<BackupSnapshotEntry[]>;
+
+/** A command snapshot's restore has `command`; a volume snapshot's the rest. */
+export type BackupSnapshot_Restore_Payload = {
+    targetApp: { id: string };
+    command?: AppScheduledJobs_Command_Payload;
+    volume?: { id: string };
+    subpath?: string;
+    snapshotPath?: string;
+    stopApp?: boolean;
+    mode?: BackupRestoreMode;
+};
+
+export type BackupSnapshot_Restore_Req = ApiRequestBase<{
+    scope: BackupSnapshotScope;
+    id: string;
+    payload: BackupSnapshot_Restore_Payload;
+}>;
+
+export type BackupSnapshot_Restore_Res = ApiResponseBase<{ taskId: string }>;

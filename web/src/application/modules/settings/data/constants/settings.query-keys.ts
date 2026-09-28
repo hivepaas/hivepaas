@@ -40,4 +40,5 @@ export const QK = {
     "settings.backup-repos.find-one-by-id": "settings.backup-repos.find-one-by-id",
     "settings.backup-snapshots.find-many-paginated": "settings.backup-snapshots.find-many-paginated",
     "settings.backup-snapshots.find-one-by-id": "settings.backup-snapshots.find-one-by-id",
+    "settings.backup-snapshots.find-entries": "settings.backup-snapshots.find-entries",
 } as const;

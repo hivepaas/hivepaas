@@ -1,12 +1,16 @@
 import { type AxiosResponse } from "axios";
 import { z } from "zod";
+import { APP_SCHEDULED_JOB_DEFAULT_CONSOLE_SIZE } from "~/projects/domain";
+import { EAppScheduledJobArgSeparator } from "~/projects/module-shared/enums";
 
 import { BaseMetaApiSchema, PagingMetaApiSchema, parseApiResponse } from "@infrastructure/api";
 
 import type {
     BackupSnapshot_DeleteOne_Res,
+    BackupSnapshot_FindEntries_Res,
     BackupSnapshot_FindManyPaginated_Res,
     BackupSnapshot_FindOneById_Res,
+    BackupSnapshot_Restore_Res,
 } from "./backup-snapshot.api.contracts";
 
 const RepoRefSchema = z.object({
@@ -14,6 +18,62 @@ const RepoRefSchema = z.object({
     name: z.string().optional().default(""),
     status: z.string().optional().default(""),
     scope: z.string().optional(),
+});
+
+/** A job's command, as the job's form edits it. */
+const CommandSchema = z.object({
+    runInShell: z.string().optional().default(""),
+    command: z.string().optional().default(""),
+    script: z.string().optional().default(""),
+    workingDir: z.string().optional().default(""),
+    consoleSize: z
+        .object({ width: z.number(), height: z.number() })
+        .nullish()
+        .transform(value => value ?? { ...APP_SCHEDULED_JOB_DEFAULT_CONSOLE_SIZE }),
+    tty: z.boolean().optional().default(false),
+    envVars: z
+        .array(z.object({ key: z.string(), value: z.string(), isLiteral: z.boolean().optional().default(false) }))
+        .nullish()
+        .transform(value => value ?? []),
+    argGroups: z
+        .array(
+            z.object({
+                enabled: z.boolean().optional().default(false),
+                exportEnv: z.string().optional().default(""),
+                separator: z.nativeEnum(EAppScheduledJobArgSeparator).catch(EAppScheduledJobArgSeparator.Whitespace),
+                args: z
+                    .array(
+                        z.object({
+                            use: z.boolean().optional().default(false),
+                            name: z.string().optional().default(""),
+                            value: z.string().optional().default(""),
+                        }),
+                    )
+                    .nullish()
+                    .transform(value => value ?? []),
+            }),
+        )
+        .nullish()
+        .transform(value => value ?? []),
+});
+
+const EntrySchema = z.object({
+    name: z.string(),
+    dir: z.boolean().optional().default(false),
+    sizeBytes: z.number().optional().default(0),
+});
+
+const FindEntriesSchema = z.object({
+    data: z
+        .array(EntrySchema)
+        .nullish()
+        .transform(value => value ?? []),
+    meta: BaseMetaApiSchema.nullish(),
+});
+
+const RestoreSchema = z.object({
+    data: z.object({ task: z.object({ id: z.string() }) }),
+    meta: BaseMetaApiSchema.nullish(),
 });
 
 const BackupSnapshotSchema = z.object({
@@ -48,6 +108,10 @@ const BackupSnapshotSchema = z.object({
             id: z.string(),
             name: z.string().optional().default(""),
             deleted: z.boolean().optional().default(false),
+            fileName: z.string().optional().default(""),
+            restoreCommand: CommandSchema.nullish().transform(value => value ?? undefined),
+            sourceVolumeId: z.string().optional().default(""),
+            sourceVolumeSubpath: z.string().optional().default(""),
         })
         .nullish()
         .transform(value => value ?? undefined),
@@ -81,6 +145,16 @@ export class BackupSnapshotApiValidator {
     findOneById = (response: AxiosResponse): BackupSnapshot_FindOneById_Res => {
         const { data, meta } = parseApiResponse({ response, schema: FindOneByIdSchema });
         return { data, meta };
+    };
+
+    findEntries = (response: AxiosResponse): BackupSnapshot_FindEntries_Res => {
+        const { data, meta } = parseApiResponse({ response, schema: FindEntriesSchema });
+        return { data, meta };
+    };
+
+    restore = (response: AxiosResponse): BackupSnapshot_Restore_Res => {
+        const { data, meta } = parseApiResponse({ response, schema: RestoreSchema });
+        return { data: { taskId: data.task.id }, meta };
     };
 
     deleteOne = (response: AxiosResponse): BackupSnapshot_DeleteOne_Res => {

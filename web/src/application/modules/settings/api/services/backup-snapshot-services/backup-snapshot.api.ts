@@ -7,10 +7,14 @@ import { BaseApi, parseApiError } from "@infrastructure/api";
 import type {
     BackupSnapshot_DeleteOne_Req,
     BackupSnapshot_DeleteOne_Res,
+    BackupSnapshot_FindEntries_Req,
+    BackupSnapshot_FindEntries_Res,
     BackupSnapshot_FindManyPaginated_Req,
     BackupSnapshot_FindManyPaginated_Res,
     BackupSnapshot_FindOneById_Req,
     BackupSnapshot_FindOneById_Res,
+    BackupSnapshot_Restore_Req,
+    BackupSnapshot_Restore_Res,
 } from "./backup-snapshot.api.contracts";
 import type { BackupSnapshotApiValidator } from "./backup-snapshot.api.validator";
 
@@ -69,6 +73,41 @@ export class BackupSnapshotApi extends BaseApi {
         return lastValueFrom(
             from(this.client.v1.get(`${getBackupSnapshotBasePath(scope)}/${id}`, { signal })).pipe(
                 map(this.validator.findOneById),
+                map(res => Ok(res)),
+                catchError(error => of(Err(parseApiError(error)))),
+            ),
+        );
+    }
+
+    async findEntries(
+        request: BackupSnapshot_FindEntries_Req,
+        signal?: AbortSignal,
+    ): Promise<Result<BackupSnapshot_FindEntries_Res, Error>> {
+        const { scope, id, path } = request.data;
+
+        return lastValueFrom(
+            from(
+                this.client.v1.get(`${getBackupSnapshotBasePath(scope)}/${id}/entries`, {
+                    params: path ? { path } : undefined,
+                    signal,
+                }),
+            ).pipe(
+                map(this.validator.findEntries),
+                map(res => Ok(res)),
+                catchError(error => of(Err(parseApiError(error)))),
+            ),
+        );
+    }
+
+    async restore(
+        request: BackupSnapshot_Restore_Req,
+        signal?: AbortSignal,
+    ): Promise<Result<BackupSnapshot_Restore_Res, Error>> {
+        const { scope, id, payload } = request.data;
+
+        return lastValueFrom(
+            from(this.client.v1.post(`${getBackupSnapshotBasePath(scope)}/${id}/restore`, payload, { signal })).pipe(
+                map(this.validator.restore),
                 map(res => Ok(res)),
                 catchError(error => of(Err(parseApiError(error)))),
             ),

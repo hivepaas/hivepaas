@@ -1,6 +1,11 @@
 import { type UseMutationOptions, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useBackupSnapshotApi } from "~/settings/api/hooks";
-import type { BackupSnapshot_DeleteOne_Req, BackupSnapshot_DeleteOne_Res } from "~/settings/api/services";
+import type {
+    BackupSnapshot_DeleteOne_Req,
+    BackupSnapshot_DeleteOne_Res,
+    BackupSnapshot_Restore_Req,
+    BackupSnapshot_Restore_Res,
+} from "~/settings/api/services";
 import { QK } from "~/settings/data/constants";
 
 type DeleteOneReq = BackupSnapshot_DeleteOne_Req["data"];
@@ -21,6 +26,20 @@ function useDeleteOne({ onSuccess, ...options }: DeleteOneOptions = {}) {
     });
 }
 
+type RestoreReq = BackupSnapshot_Restore_Req["data"];
+type RestoreRes = BackupSnapshot_Restore_Res;
+type RestoreOptions = Omit<UseMutationOptions<RestoreRes, Error, RestoreReq>, "mutationFn">;
+
+function useRestore(options: RestoreOptions = {}) {
+    const { mutations } = useBackupSnapshotApi();
+
+    return useMutation({
+        mutationFn: mutations.restore,
+        ...options,
+    });
+}
+
 export const BackupSnapshotCommands = Object.freeze({
     useDeleteOne,
+    useRestore,
 });

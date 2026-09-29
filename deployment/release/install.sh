@@ -317,7 +317,7 @@ release_payload() {
 # built once and rebuilt only when the keys or the signature format change; its
 # digest is copied here from the "Release verifier" workflow (docs/RELEASING.md).
 # A test holds VERIFY_KEYS to the keys the app trusts.
-VERIFY_IMAGE=''
+VERIFY_IMAGE=ghcr.io/hivepaas/release-verify@sha256:35de0b938dbba7f06de41947d87dea67a284150a8ea3ad081c8c45d46f8b385a
 VERIFY_KEYS=sha256:fc4218bb0788a087f4dbe3737ccad268ed927b9d827bc6f5b578596a17d29d78
 
 # verify_release FILE: the release info inside release.signed.json, once the

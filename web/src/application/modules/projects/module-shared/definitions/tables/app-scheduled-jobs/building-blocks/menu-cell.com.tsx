@@ -17,7 +17,7 @@ function View({ projectId, env, appId, scheduledJob }: Props) {
     const [open, setOpen] = useState(false);
     const updateStatusDialog = useUpdateAppScheduledJobStatusDialog();
     const runNowTaskCreatedDialog = useRunNowTaskCreatedDialog();
-    const { canWrite, canDelete } = useConditionalModule({ id: MODULE_IDS.Project });
+    const { canWrite, canDelete, canExecute } = useConditionalModule({ id: MODULE_IDS.Project });
 
     const { mutate: runNow, isPending: isRunning } = AppScheduledJobsCommands.useRunNow({
         onSuccess: response => {
@@ -34,7 +34,7 @@ function View({ projectId, env, appId, scheduledJob }: Props) {
     });
 
     function handleRunNow() {
-        if (!canWrite) {
+        if (!canExecute) {
             return;
         }
 
@@ -69,7 +69,7 @@ function View({ projectId, env, appId, scheduledJob }: Props) {
                             setOpen(false);
                         }}
                     />
-                    {canWrite ? (
+                    {canExecute ? (
                         <Button
                             className="justify-start py-1.5"
                             variant="ghost"
@@ -82,7 +82,7 @@ function View({ projectId, env, appId, scheduledJob }: Props) {
                     ) : (
                         <PermissionTooltipAction
                             id={MODULE_IDS.Project}
-                            action="write"
+                            action="execute"
                             triggerClassName="w-full"
                         >
                             {({ isDenied }) => (

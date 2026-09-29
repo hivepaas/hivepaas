@@ -20,7 +20,7 @@ import { useConditionalModule } from "@application/shared/permissions";
 function View({ projectId, env, job }: Props) {
     const [open, setOpen] = useState(false);
     const { navigate } = useAppNavigate();
-    const { canWrite, canDelete } = useConditionalModule({ id: MODULE_IDS.Project });
+    const { canWrite, canDelete, canExecute } = useConditionalModule({ id: MODULE_IDS.Project });
 
     const { mutate: runNow, isPending: isRunning } = EnvScheduledJobsCommands.useRunNow({
         onSuccess: response => {
@@ -91,7 +91,7 @@ function View({ projectId, env, job }: Props) {
                             <Button
                                 className="justify-start py-1.5"
                                 variant="ghost"
-                                disabled={!canWrite || isRunning}
+                                disabled={!canExecute || isRunning}
                                 onClick={() => {
                                     runNow(request);
                                 }}

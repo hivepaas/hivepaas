@@ -28,7 +28,7 @@ export interface HivePaaSReleaseInfo {
 export type UpdateChange = "none" | "update" | "major" | "blocked" | "not-deployed";
 
 export interface UpdateComponent {
-    /** db, redis, traefik, victoria-logs, vlagent, registry, app or worker. */
+    /** db, redis, traefik, victoria-logs, vlagent, registry, agent, app or worker. */
     key: string;
     currentImage: string;
     targetImage: string;

@@ -8,6 +8,7 @@ const COMPONENT_NAMES: Record<string, string> = {
     "victoria-logs": "VictoriaLogs (log store)",
     "vlagent": "vlagent (log collector)",
     "registry": "Registry (zot)",
+    "agent": "HivePaaS agent",
     "app": "HivePaaS",
     "worker": "HivePaaS workers",
 };

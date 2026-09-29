@@ -20,6 +20,8 @@ import { SettingsScopeMenuButton } from "~/settings/module-shared/components";
 import { SETTINGS_ENTITY_TITLES } from "~/settings/module-shared/constants/settings-entity-titles";
 import { isInheritedProjectSetting } from "~/settings/module-shared/hooks";
 
+import { CopyIdMenuButton } from "@application/shared/components";
+
 import { Separator } from "@/components/ui";
 
 import type { BackupRepoTableScope } from "../../backup-repo-table.types";
@@ -151,6 +153,12 @@ function View({ scope, backupRepo }: Props) {
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
                     <div className="flex flex-col gap-0">
+                        <CopyIdMenuButton
+                            id={backupRepo.id}
+                            onCopied={() => {
+                                setOpen(false);
+                            }}
+                        />
                         <SettingsScopeMenuButton
                             scope={scope}
                             action="write"

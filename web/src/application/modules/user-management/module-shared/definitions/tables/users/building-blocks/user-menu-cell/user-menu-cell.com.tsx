@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import { UsersCommands } from "~/user-management/data/commands";
 import type { UserBase } from "~/user-management/domain";
 
+import { CopyIdMenuButton } from "@application/shared/components";
 import { PopConfirm } from "@application/shared/components/pop-confirm";
 import { MODULE_IDS } from "@application/shared/constants";
 import { EUserStatus } from "@application/shared/enums";
@@ -57,6 +58,12 @@ function View({ user }: Props) {
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
                 <div className="flex flex-col gap-0">
+                    <CopyIdMenuButton
+                        id={user.id}
+                        onCopied={() => {
+                            setOpen(false);
+                        }}
+                    />
                     {showActivateUser && (
                         <PermissionTooltipAction
                             id={MODULE_IDS.User}

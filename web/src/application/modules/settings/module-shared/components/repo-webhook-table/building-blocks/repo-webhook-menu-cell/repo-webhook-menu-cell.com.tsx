@@ -11,6 +11,8 @@ import type { SettingRepoWebhook } from "~/settings/domain";
 import { SettingsScopeMenuButton, SettingsScopePopConfirmButton } from "~/settings/module-shared/components";
 import { isInheritedProjectSetting } from "~/settings/module-shared/hooks";
 
+import { CopyIdMenuButton } from "@application/shared/components";
+
 import type { RepoWebhookTableScope } from "../../repo-webhook-table.types";
 
 function View({ scope, repoWebhook }: Props) {
@@ -79,6 +81,12 @@ function View({ scope, repoWebhook }: Props) {
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
                 <div className="flex flex-col gap-0">
+                    <CopyIdMenuButton
+                        id={repoWebhook.id}
+                        onCopied={() => {
+                            setOpen(false);
+                        }}
+                    />
                     <SettingsScopeMenuButton
                         scope={scope}
                         action="write"

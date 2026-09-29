@@ -8,7 +8,7 @@ import { AppSettingMountsCommands } from "~/projects/data/commands";
 import type { AppSettingMount } from "~/projects/domain";
 import { EProjectSecretStatus } from "~/projects/module-shared/enums";
 
-import { PopConfirm } from "@application/shared/components";
+import { CopyIdMenuButton, PopConfirm } from "@application/shared/components";
 import { MODULE_IDS } from "@application/shared/constants";
 import { PermissionTooltipAction, useConditionalModule } from "@application/shared/permissions";
 
@@ -53,6 +53,12 @@ function View({ projectId, env, appId, settingMount }: Props) {
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
                 <div className="flex flex-col gap-0">
+                    <CopyIdMenuButton
+                        id={settingMount.id}
+                        onCopied={() => {
+                            setOpen(false);
+                        }}
+                    />
                     <PermissionTooltipAction
                         id={MODULE_IDS.Project}
                         action="write"

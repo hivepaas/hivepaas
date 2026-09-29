@@ -8,7 +8,7 @@ import { useAppConfigFilesApi } from "~/projects/api/hooks/project-apps";
 import { AppConfigFilesCommands } from "~/projects/data/commands";
 import type { AppConfigFile } from "~/projects/domain";
 
-import { PopConfirm } from "@application/shared/components";
+import { CopyIdMenuButton, PopConfirm } from "@application/shared/components";
 import { MODULE_IDS } from "@application/shared/constants";
 import { PermissionTooltipAction, useConditionalModule } from "@application/shared/permissions";
 
@@ -72,6 +72,12 @@ function View({ projectId, env, appId, configFile }: Props) {
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
                 <div className="flex flex-col gap-0">
+                    <CopyIdMenuButton
+                        id={configFile.id}
+                        onCopied={() => {
+                            setOpen(false);
+                        }}
+                    />
                     <Button
                         className="justify-start py-1.5"
                         variant="ghost"

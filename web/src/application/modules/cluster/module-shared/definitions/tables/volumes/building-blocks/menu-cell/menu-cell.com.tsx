@@ -11,7 +11,7 @@ import type { ClusterVolume } from "~/cluster/domain";
 import type { VolumeManagementScope } from "~/cluster/module-shared/types";
 import { ProjectClusterVolumesCommands } from "~/projects/data/commands";
 
-import { PopConfirm } from "@application/shared/components";
+import { CopyIdMenuButton, PopConfirm } from "@application/shared/components";
 import { MODULE_IDS } from "@application/shared/constants";
 import { useConditionalModule, useConditionalProject } from "@application/shared/permissions";
 
@@ -93,6 +93,12 @@ function View({ volume, scope }: Props) {
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
                 <div className="flex flex-col gap-0">
+                    <CopyIdMenuButton
+                        id={volume.id}
+                        onCopied={() => {
+                            setOpen(false);
+                        }}
+                    />
                     <Button
                         className="justify-start py-1.5 w-full"
                         variant="ghost"

@@ -12,6 +12,8 @@ import { SettingsScopeMenuButton, SettingsScopePopConfirmButton } from "~/settin
 import { SETTINGS_ENTITY_TITLES } from "~/settings/module-shared/constants/settings-entity-titles";
 import { isInheritedProjectSetting } from "~/settings/module-shared/hooks";
 
+import { CopyIdMenuButton } from "@application/shared/components";
+
 import type { ImPlatformTableScope } from "../../im-platform-table.types";
 
 function View({ scope, imPlatform }: Props) {
@@ -81,6 +83,12 @@ function View({ scope, imPlatform }: Props) {
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
                 <div className="flex flex-col gap-0">
+                    <CopyIdMenuButton
+                        id={imPlatform.id}
+                        onCopied={() => {
+                            setOpen(false);
+                        }}
+                    />
                     <SettingsScopeMenuButton
                         scope={scope}
                         action="write"

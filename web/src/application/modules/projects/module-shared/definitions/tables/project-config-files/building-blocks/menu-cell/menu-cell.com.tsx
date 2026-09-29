@@ -7,7 +7,7 @@ import { toast } from "sonner";
 import { ProjectConfigFilesCommands } from "~/projects/data/commands";
 import type { ProjectConfigFile } from "~/projects/domain";
 
-import { PopConfirm } from "@application/shared/components";
+import { CopyIdMenuButton, PopConfirm } from "@application/shared/components";
 import { MODULE_IDS } from "@application/shared/constants";
 import { PermissionTooltipAction, useConditionalModule } from "@application/shared/permissions";
 
@@ -42,6 +42,12 @@ function View({ projectId, env, configFile }: Props) {
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
                 <div className="flex flex-col gap-0">
+                    <CopyIdMenuButton
+                        id={configFile.id}
+                        onCopied={() => {
+                            setOpen(false);
+                        }}
+                    />
                     {canDelete ? (
                         <PopConfirm
                             title="Delete Item"

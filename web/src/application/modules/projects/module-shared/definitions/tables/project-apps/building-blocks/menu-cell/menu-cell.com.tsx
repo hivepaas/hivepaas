@@ -5,6 +5,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger } from "@compone
 import { Copy, MoreVertical, Trash2 } from "lucide-react";
 import type { ProjectAppBaseRef } from "~/projects/domain";
 
+import { CopyIdMenuButton } from "@application/shared/components";
 import { MODULE_IDS, ROUTE } from "@application/shared/constants";
 import { useAppNavigate } from "@application/shared/hooks/router";
 import { useConditionalModule } from "@application/shared/permissions";
@@ -55,6 +56,12 @@ function View({ projectId, appId, appEnv, parentApp, hideClone = false }: Props)
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
                 <div className="flex flex-col gap-0">
+                    <CopyIdMenuButton
+                        id={appId}
+                        onCopied={() => {
+                            setOpen(false);
+                        }}
+                    />
                     {canShowClone && (
                         <Button
                             className="justify-start py-1.5"

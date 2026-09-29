@@ -11,7 +11,7 @@ import type { ClusterNetwork } from "~/cluster/domain";
 import type { NetworkManagementScope } from "~/cluster/module-shared/types";
 import { ProjectNetworksCommands } from "~/projects/data/commands";
 
-import { PopConfirm } from "@application/shared/components";
+import { CopyIdMenuButton, PopConfirm } from "@application/shared/components";
 import { MODULE_IDS } from "@application/shared/constants";
 import { useConditionalModule, useConditionalProject } from "@application/shared/permissions";
 
@@ -94,6 +94,12 @@ function View({ network, scope }: Props) {
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
                 <div className="flex flex-col gap-0">
+                    <CopyIdMenuButton
+                        id={network.id}
+                        onCopied={() => {
+                            setOpen(false);
+                        }}
+                    />
                     <Button
                         className="justify-start py-1.5 w-full"
                         variant="ghost"

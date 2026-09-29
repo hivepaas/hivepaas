@@ -14,6 +14,8 @@ import { SettingsScopeMenuButton, SettingsScopePopConfirmButton } from "~/settin
 import { SETTINGS_ENTITY_TITLES } from "~/settings/module-shared/constants/settings-entity-titles";
 import { isInheritedProjectSetting } from "~/settings/module-shared/hooks";
 
+import { CopyIdMenuButton } from "@application/shared/components";
+
 import type { SslCertTableScope } from "../../ssl-cert-table.types";
 
 function saveBlob(blob: Blob, filename: string) {
@@ -149,6 +151,12 @@ function View({ scope, sslCert }: Props) {
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
                 <div className="flex flex-col gap-0">
+                    <CopyIdMenuButton
+                        id={sslCert.id}
+                        onCopied={() => {
+                            setOpen(false);
+                        }}
+                    />
                     <SettingsScopeMenuButton
                         scope={scope}
                         action="read"

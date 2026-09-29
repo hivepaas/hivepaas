@@ -10,6 +10,8 @@ import type { ProjectCommandPipe } from "~/projects/domain";
 import { SettingsScopeMenuButton, SettingsScopePopConfirmButton } from "~/settings/module-shared/components";
 import { isInheritedProjectSetting } from "~/settings/module-shared/hooks";
 
+import { CopyIdMenuButton } from "@application/shared/components";
+
 const PROJECT_SCOPE = { type: "project" } as const;
 
 function View({ projectId, env, commandPipe }: Props) {
@@ -60,6 +62,12 @@ function View({ projectId, env, commandPipe }: Props) {
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
                 <div className="flex flex-col gap-0">
+                    <CopyIdMenuButton
+                        id={commandPipe.id}
+                        onCopied={() => {
+                            setOpen(false);
+                        }}
+                    />
                     <SettingsScopeMenuButton
                         scope={PROJECT_SCOPE}
                         action="write"

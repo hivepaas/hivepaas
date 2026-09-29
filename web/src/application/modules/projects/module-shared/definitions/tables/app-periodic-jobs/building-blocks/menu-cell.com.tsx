@@ -8,7 +8,7 @@ import { AppHealthChecksCommands } from "~/projects/data/commands";
 import { useUpdateAppHealthCheckStatusDialog } from "~/projects/dialogs/update-app-health-check-status";
 import type { AppHealthCheck } from "~/projects/domain";
 
-import { PopConfirm } from "@application/shared/components";
+import { CopyIdMenuButton, PopConfirm } from "@application/shared/components";
 import { MODULE_IDS } from "@application/shared/constants";
 import { PermissionTooltipAction, useConditionalModule } from "@application/shared/permissions";
 
@@ -46,6 +46,12 @@ function View({ projectId, env, appId, healthCheck }: Props) {
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
                 <div className="flex flex-col gap-0">
+                    <CopyIdMenuButton
+                        id={healthCheck.id}
+                        onCopied={() => {
+                            setOpen(false);
+                        }}
+                    />
                     {canWrite ? (
                         <Button
                             className="justify-start py-1.5"

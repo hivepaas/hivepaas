@@ -24,6 +24,8 @@ import type { SettingGithubApp } from "~/settings/domain";
 import { SettingsScopeMenuButton } from "~/settings/module-shared/components";
 import { isInheritedProjectSetting } from "~/settings/module-shared/hooks";
 
+import { CopyIdMenuButton } from "@application/shared/components";
+
 import { Separator } from "@/components/ui";
 
 import type { GithubAppTableScope } from "../../github-app-table.types";
@@ -115,6 +117,12 @@ function View({ scope, githubApp }: Props) {
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
                     <div className="flex flex-col gap-0">
+                        <CopyIdMenuButton
+                            id={githubApp.id}
+                            onCopied={() => {
+                                setOpen(false);
+                            }}
+                        />
                         <SettingsScopeMenuButton
                             scope={scope}
                             action="read"

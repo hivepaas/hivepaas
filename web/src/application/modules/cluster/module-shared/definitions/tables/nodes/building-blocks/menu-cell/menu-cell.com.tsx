@@ -7,7 +7,7 @@ import { toast } from "sonner";
 import { NodesCommands } from "~/cluster/data/commands";
 import type { NodeDetails } from "~/cluster/domain";
 
-import { PopConfirm } from "@application/shared/components";
+import { CopyIdMenuButton, PopConfirm } from "@application/shared/components";
 import { MODULE_IDS } from "@application/shared/constants";
 import { PermissionTooltipAction, useConditionalModule } from "@application/shared/permissions";
 
@@ -58,6 +58,12 @@ function View({ node }: Props) {
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
                 <div className="flex flex-col gap-0">
+                    <CopyIdMenuButton
+                        id={node.id}
+                        onCopied={() => {
+                            setOpen(false);
+                        }}
+                    />
                     {canDelete ? (
                         <PopConfirm
                             title="Delete Item"

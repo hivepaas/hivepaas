@@ -8,7 +8,7 @@ import { OAuthCommands } from "~/settings/data/commands";
 import { useUpdateOAuthStatusDialog } from "~/settings/dialogs/update-oauth-status";
 import type { SettingOAuth } from "~/settings/domain";
 
-import { PopConfirm } from "@application/shared/components";
+import { CopyIdMenuButton, PopConfirm } from "@application/shared/components";
 import { MODULE_IDS } from "@application/shared/constants";
 import { PermissionTooltipAction, useConditionalModule } from "@application/shared/permissions";
 
@@ -41,6 +41,12 @@ function View({ oauth }: Props) {
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
                 <div className="flex flex-col gap-0">
+                    <CopyIdMenuButton
+                        id={oauth.id}
+                        onCopied={() => {
+                            setOpen(false);
+                        }}
+                    />
                     <PermissionTooltipAction
                         id={MODULE_IDS.Settings}
                         action="write"

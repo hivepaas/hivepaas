@@ -7,7 +7,7 @@ import { toast } from "sonner";
 import { EnvScheduledJobsCommands } from "~/projects/data/commands";
 import type { EnvScheduledJob } from "~/projects/domain";
 
-import { PopConfirm } from "@application/shared/components";
+import { CopyIdMenuButton, PopConfirm } from "@application/shared/components";
 import { MODULE_IDS, ROUTE } from "@application/shared/constants";
 import { ESettingStatus } from "@application/shared/enums";
 import { useAppNavigate } from "@application/shared/hooks/router";
@@ -62,6 +62,12 @@ function View({ projectId, env, job }: Props) {
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
                 <div className="flex flex-col gap-0">
+                    <CopyIdMenuButton
+                        id={job.id}
+                        onCopied={() => {
+                            setOpen(false);
+                        }}
+                    />
                     {!isEnvJob && job.ownerApp && (
                         <Button
                             className="justify-start py-1.5"

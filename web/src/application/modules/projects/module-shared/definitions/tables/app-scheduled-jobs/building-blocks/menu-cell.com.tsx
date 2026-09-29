@@ -9,7 +9,7 @@ import { useRunNowTaskCreatedDialog } from "~/projects/dialogs/run-now-task-crea
 import { useUpdateAppScheduledJobStatusDialog } from "~/projects/dialogs/update-app-scheduled-job-status";
 import type { AppScheduledJob } from "~/projects/domain";
 
-import { PopConfirm } from "@application/shared/components";
+import { CopyIdMenuButton, PopConfirm } from "@application/shared/components";
 import { MODULE_IDS } from "@application/shared/constants";
 import { PermissionTooltipAction, useConditionalModule } from "@application/shared/permissions";
 
@@ -63,6 +63,12 @@ function View({ projectId, env, appId, scheduledJob }: Props) {
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
                 <div className="flex flex-col gap-0">
+                    <CopyIdMenuButton
+                        id={scheduledJob.id}
+                        onCopied={() => {
+                            setOpen(false);
+                        }}
+                    />
                     {canWrite ? (
                         <Button
                             className="justify-start py-1.5"

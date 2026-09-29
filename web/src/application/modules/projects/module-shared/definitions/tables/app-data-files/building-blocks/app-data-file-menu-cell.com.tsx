@@ -19,6 +19,7 @@ import { useAppDataFilesApi } from "~/projects/api/hooks/project-apps";
 import { AppDataFilesCommands } from "~/projects/data/commands";
 import type { AppDataFile } from "~/projects/domain";
 
+import { CopyIdMenuButton } from "@application/shared/components";
 import { MODULE_IDS } from "@application/shared/constants";
 import { PermissionTooltipAction } from "@application/shared/permissions";
 
@@ -96,6 +97,12 @@ function View({ projectId, env, appId, dataFile }: Props) {
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
                     <div className="flex flex-col gap-0">
+                        <CopyIdMenuButton
+                            id={dataFile.id}
+                            onCopied={() => {
+                                setMenuOpen(false);
+                            }}
+                        />
                         <Button
                             className="justify-start py-1.5"
                             variant="ghost"

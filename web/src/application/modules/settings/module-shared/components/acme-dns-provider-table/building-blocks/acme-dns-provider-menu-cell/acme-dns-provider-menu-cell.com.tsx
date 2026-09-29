@@ -12,6 +12,8 @@ import { SettingsScopeMenuButton, SettingsScopePopConfirmButton } from "~/settin
 import { SETTINGS_ENTITY_TITLES } from "~/settings/module-shared/constants/settings-entity-titles";
 import { isInheritedProjectSetting } from "~/settings/module-shared/hooks";
 
+import { CopyIdMenuButton } from "@application/shared/components";
+
 import type { AcmeDnsProviderTableScope } from "../../acme-dns-provider-table.types";
 
 function View({ scope, acmeDnsProvider }: Props) {
@@ -84,6 +86,12 @@ function View({ scope, acmeDnsProvider }: Props) {
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
                 <div className="flex flex-col gap-0">
+                    <CopyIdMenuButton
+                        id={acmeDnsProvider.id}
+                        onCopied={() => {
+                            setOpen(false);
+                        }}
+                    />
                     <SettingsScopeMenuButton
                         scope={scope}
                         action="write"

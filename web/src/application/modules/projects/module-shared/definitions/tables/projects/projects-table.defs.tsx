@@ -4,7 +4,7 @@ import { format } from "date-fns";
 import type { ProjectBaseEntity } from "~/projects/domain";
 import { ProjectStatusBadge } from "~/projects/module-shared/components";
 
-import { ActionsCell } from "./building-blocks";
+import { ActionsCell, MenuCell } from "./building-blocks";
 
 const columns: ColumnDef<ProjectBaseEntity>[] = [
     {
@@ -70,6 +70,20 @@ const columns: ColumnDef<ProjectBaseEntity>[] = [
             } catch {
                 return "-";
             }
+        },
+    },
+    {
+        id: "menu",
+        header: "",
+        enableResizing: false,
+        enableHiding: false,
+        minSize: 40,
+        size: 40,
+        cell: ({ row: { original } }) => <MenuCell id={original.id} />,
+        meta: {
+            align: "center",
+            titleAlign: "center",
+            sticky: "right",
         },
     },
 ];

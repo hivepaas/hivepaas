@@ -12,6 +12,8 @@ import { SettingsScopeMenuButton, SettingsScopePopConfirmButton } from "~/settin
 import { SETTINGS_ENTITY_TITLES } from "~/settings/module-shared/constants/settings-entity-titles";
 import { isInheritedProjectSetting } from "~/settings/module-shared/hooks";
 
+import { CopyIdMenuButton } from "@application/shared/components";
+
 import type { RegistryAuthTableScope } from "../../registry-auth-table.types";
 
 function View({ scope, registryAuth }: Props) {
@@ -82,6 +84,12 @@ function View({ scope, registryAuth }: Props) {
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
                 <div className="flex flex-col gap-0">
+                    <CopyIdMenuButton
+                        id={registryAuth.id}
+                        onCopied={() => {
+                            setOpen(false);
+                        }}
+                    />
                     <SettingsScopeMenuButton
                         scope={scope}
                         action="write"

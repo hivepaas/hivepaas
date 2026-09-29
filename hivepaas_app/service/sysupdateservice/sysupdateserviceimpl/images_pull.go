@@ -49,6 +49,7 @@ func (s *service) pullAllImages(
 
 	images := []string{
 		args.TargetVersion.AppImage,
+		args.TargetVersion.AgentImage,
 		args.TargetVersion.RedisImage,
 		args.TargetVersion.DbImage,
 		args.TargetVersion.TraefikImage,

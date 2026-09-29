@@ -25,6 +25,7 @@ type fakeHpApp struct {
 	db        *swarm.Service
 	worker    *swarm.Service
 	workerErr error
+	agent     *swarm.Service
 }
 
 func (f *fakeHpApp) GetHpDbSwarmService(_ context.Context) (*swarm.Service, error) {

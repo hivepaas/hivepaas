@@ -206,7 +206,15 @@ func (s *service) updateSystem(
 		return hperrors.Wrap(err)
 	}
 
-	// 5. The app and the worker last, and together.
+	// 5. The agent, before the app and the worker: the app that comes back
+	// works through it, so it should find the agent of its own release.
+	args := gofn.Must(data.Task.ArgsAsSystemUpdate())
+	err = s.updateAgentService(ctx, data, args)
+	if err != nil {
+		return hperrors.Wrap(err)
+	}
+
+	// 6. The app and the worker last, and together.
 	//
 	// They are what brings the system back, they run the same image, and each
 	// waits out its own 240s update monitor - so doing them one after the other
@@ -218,7 +226,6 @@ func (s *service) updateSystem(
 	//
 	// stopOnError is off: abandoning the worker halfway because the app failed
 	// saves nothing, and both failures are worth reporting.
-	args := gofn.Must(data.Task.ArgsAsSystemUpdate())
 	errMap := gofn.ExecTasksEx(ctx, 0, false,
 		func(ctx context.Context) error {
 			return s.updateMainAppService(ctx, data, args)

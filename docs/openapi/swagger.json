@@ -47730,6 +47730,10 @@
       },
       "service_hpappservice.ReleaseInfo" : {
         "properties" : {
+          "agentImage" : {
+            "description" : "AgentImage is the agent's, the service on every node the app works\nthrough. It is released with the app and moves with it; a release that\nnames none leaves the agent as it is.",
+            "type" : "string"
+          },
           "appImage" : {
             "type" : "string"
           },
@@ -47784,7 +47788,7 @@
             "type" : "string"
           }
         },
-        "required" : [ "appImage", "appVersion", "blockMajorUpgrade", "canUpdate", "dbImage", "notesUrl", "redisImage", "registryImage", "relation", "releaseDate", "templates", "traefikImage", "victoriaLogsImage", "vlagentImage" ],
+        "required" : [ "agentImage", "appImage", "appVersion", "blockMajorUpgrade", "canUpdate", "dbImage", "notesUrl", "redisImage", "registryImage", "relation", "releaseDate", "templates", "traefikImage", "victoriaLogsImage", "vlagentImage" ],
         "type" : "object"
       },
       "service_hpappservice.ReleaseRelation" : {

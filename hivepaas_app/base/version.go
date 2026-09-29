@@ -19,6 +19,7 @@ var StableVersion = &ReleaseInfo{
 	ReleaseDate:       timeutil.Date(time.Date(2026, time.January, 1, 0, 0, 0, 0, time.UTC)),
 	AppVersion:        "v0.1.0",
 	AppImage:          "hivepaas/hivepaas-dev:0.1.0",
+	AgentImage:        "hivepaas/hivepaas-agent-dev:0.1.0",
 	RedisImage:        "redis:8.6-alpine",
 	DbImage:           "postgres:18.3-alpine",
 	TraefikImage:      "traefik:v3.7",
@@ -42,6 +43,7 @@ var BetaVersion = &ReleaseInfo{
 	ReleaseDate:       timeutil.Date(time.Date(2026, time.January, 1, 0, 0, 0, 0, time.UTC)),
 	AppVersion:        "v0.1.0-beta1",
 	AppImage:          "hivepaas/hivepaas-dev:0.1.0",
+	AgentImage:        "hivepaas/hivepaas-agent-dev:0.1.0",
 	RedisImage:        "redis:8.6-alpine",
 	DbImage:           "postgres:18.3-alpine",
 	TraefikImage:      "traefik:v3.7",
@@ -62,14 +64,18 @@ var BetaVersion = &ReleaseInfo{
 // field each, because a version derived from the other's tag would be wrong in
 // silence on the first release where they do not.
 type ReleaseInfo struct {
-	ReleaseDate       timeutil.Date `json:"releaseDate"`
-	AppVersion        string        `json:"appVersion"`
-	AppImage          string        `json:"appImage"`
-	RedisImage        string        `json:"redisImage"`
-	DbImage           string        `json:"dbImage"`
-	TraefikImage      string        `json:"traefikImage"`
-	VictoriaLogsImage string        `json:"victoriaLogsImage"`
-	VlagentImage      string        `json:"vlagentImage"`
+	ReleaseDate timeutil.Date `json:"releaseDate"`
+	AppVersion  string        `json:"appVersion"`
+	AppImage    string        `json:"appImage"`
+	// AgentImage is the agent's, the service on every node the app works
+	// through. It is released with the app and moves with it; a release that
+	// names none leaves the agent as it is.
+	AgentImage        string `json:"agentImage,omitempty"`
+	RedisImage        string `json:"redisImage"`
+	DbImage           string `json:"dbImage"`
+	TraefikImage      string `json:"traefikImage"`
+	VictoriaLogsImage string `json:"victoriaLogsImage"`
+	VlagentImage      string `json:"vlagentImage"`
 	// RegistryImage is the registry HivePaaS runs for itself, when it runs one.
 	// The configuration HivePaaS writes for it is the configuration this version
 	// of zot accepts, so a bump is the trigger to re-check that.

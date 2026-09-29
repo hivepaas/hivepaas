@@ -68,6 +68,33 @@ func (s *service) getWorkerSwarmService(ctx context.Context) (*swarm.Service, er
 	return svc, nil
 }
 
+// updateAgentService moves the agent, the service on every node the app works
+// through, to the release's agent image. It runs before the app and the worker,
+// so the app that comes back finds the agent of its own release.
+func (s *service) updateAgentService(
+	ctx context.Context,
+	data *sysUpdateData,
+	args *entity.TaskSystemUpdateArgs,
+) error {
+	err := s.updateServiceImage(ctx, data, serviceImageUpdate{
+		What:        "hivepaas agent",
+		Component:   base.HivepaasAgentKey,
+		TargetImage: args.TargetVersion.AgentImage,
+		Fetch:       s.getAgentSwarmService,
+	})
+	return hperrors.Wrap(err)
+}
+
+// getAgentSwarmService reports a missing agent as no service rather than as an
+// error, as getWorkerSwarmService does: there is then nothing to move.
+func (s *service) getAgentSwarmService(ctx context.Context) (*swarm.Service, error) {
+	svc, err := s.hpAppService.GetHpAgentSwarmService(ctx)
+	if err != nil && !errors.Is(err, hperrors.ErrNotFound) {
+		return nil, hperrors.Wrap(err)
+	}
+	return svc, nil
+}
+
 // updateMainAppService and updateWorkerService take the parsed args rather than
 // reading them from the task, because they run concurrently with each other.
 // Task.ArgsAsSystemUpdate caches what it parses into the task, so the first call

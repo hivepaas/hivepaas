@@ -45,6 +45,7 @@ func (s *service) PlanUpdate(
 			}})
 	}
 	steps = append(steps,
+		planStep{key: base.HivepaasAgentKey, image: target.AgentImage, fetch: s.getAgentSwarmService},
 		planStep{key: base.HivepaasAppKey, image: target.AppImage, fetch: s.hpAppService.GetHpAppSwarmService},
 		planStep{key: base.HivepaasWorkerKey, image: target.AppImage, fetch: s.getWorkerSwarmService},
 	)

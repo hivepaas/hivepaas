@@ -312,6 +312,36 @@ release_payload() {
   printf '%s' "$payload" | base64 -d
 }
 
+# The image that checks release.signed.json's signatures (tools/releaseverify),
+# pinned by digest, and the fingerprint of the keys it trusts. The image is
+# built once and rebuilt only when the keys or the signature format change; its
+# digest is copied here from the "Release verifier" workflow (docs/RELEASING.md).
+# A test holds VERIFY_KEYS to the keys the app trusts.
+VERIFY_IMAGE=''
+VERIFY_KEYS=sha256:fc4218bb0788a087f4dbe3737ccad268ed927b9d827bc6f5b578596a17d29d78
+
+# verify_release FILE: the release info inside release.signed.json, once the
+# verifier has checked its signatures. The verifier runs with no network, no
+# root and nothing writable: it only reads the envelope and writes release.json.
+# Returns 3 when the signatures do not verify and 4 when the verifier cannot
+# run. Without a pinned verifier it checks the checksum only (release_payload),
+# and says so.
+verify_release() {
+  local status=0
+  if [ -z "$VERIFY_IMAGE" ]; then
+    warn "This installer pins no release verifier: the release info is checked against its checksum only."
+    release_payload "$1"
+    return
+  fi
+  docker run --rm -i --network none --read-only --user 65534:65534 \
+    --cap-drop ALL --security-opt no-new-privileges "$VERIFY_IMAGE" <"$1" || status=$?
+  case "$status" in
+    0) return 0 ;;
+    1) return 3 ;;
+    *) return 4 ;;
+  esac
+}
+
 # release_field FILE CHANNEL FIELD: one field of a channel of the release info.
 release_field() {
   jq -r --arg ch "$2" --arg f "$3" '.[$ch][$f] // empty' "$1"
@@ -1481,10 +1511,12 @@ fetch_release() {
   local url="${HIVEPAAS_RELEASE_URL:-$REPO_RAW/${HIVEPAAS_RELEASE_BRANCH:-release}/release.signed.json}" status=0
   curl -fsSL --retry 3 "$url" -o "$WORK_DIR/release.signed.json" 2>/dev/null ||
     die "Could not read the release info from $url. HIVEPAAS_RELEASE_BRANCH names the branch it is read from."
-  release_payload "$WORK_DIR/release.signed.json" >"$WORK_DIR/release.json" || status=$?
+  verify_release "$WORK_DIR/release.signed.json" >"$WORK_DIR/release.json" || status=$?
   case "$status" in
     0) ;;
     2) die "The release info from $url does not match its checksum; nothing is installed from it." ;;
+    3) die "The release info from $url is not signed by HivePaaS's release keys ($VERIFY_KEYS); nothing is installed from it." ;;
+    4) die "Could not run the release verifier $VERIFY_IMAGE; nothing is installed without it." ;;
     *) die "$url is not release info." ;;
   esac
   RELEASE_FILE=$WORK_DIR/release.json

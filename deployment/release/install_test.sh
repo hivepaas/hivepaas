@@ -274,6 +274,53 @@ test_release_payload_of_this_repo() {
   check_ok "its beta channel has an app image" test -n "$(release_field "$TMP/repo-release.json" beta appImage)"
 }
 
+# A stand-in for docker: records its arguments, and answers as DOCKER_EXIT says,
+# writing DOCKER_OUT to stdout on success as the verifier writes release.json.
+fake_docker() {
+  docker() {
+    printf '%s\n' "$*" >"$TMP/docker-args"
+    cat >/dev/null
+    if [ "${DOCKER_EXIT:-0}" = 0 ]; then printf '%s' "${DOCKER_OUT:-}"; fi
+    return "${DOCKER_EXIT:-0}"
+  }
+}
+
+test_verify_release_runs_the_pinned_verifier_shut_in() {
+  fake_docker
+  VERIFY_IMAGE=ghcr.io/hivepaas/release-verify@sha256:abc DOCKER_OUT="$RELEASE_JSON"
+  envelope "$TMP/ok.json" "$RELEASE_JSON"
+  verify_release "$TMP/ok.json" >"$TMP/out.json"
+  check "verified" 0 "$?"
+  check "the verifier's release.json is the result" "$RELEASE_JSON" "$(cat "$TMP/out.json")"
+  local args
+  args=$(cat "$TMP/docker-args")
+  check_contains "the pinned image" "$args" "ghcr.io/hivepaas/release-verify@sha256:abc"
+  check_contains "no network" "$args" "--network none"
+  check_contains "not root" "$args" "--user 65534:65534"
+  check_contains "read-only" "$args" "--read-only"
+}
+
+test_verify_release_refuses_what_does_not_verify() {
+  fake_docker
+  VERIFY_IMAGE=ghcr.io/hivepaas/release-verify@sha256:abc DOCKER_EXIT=1
+  envelope "$TMP/ok.json" "$RELEASE_JSON"
+  verify_release "$TMP/ok.json" >/dev/null
+  check "a signature that does not verify returns 3" 3 "$?"
+  DOCKER_EXIT=125
+  verify_release "$TMP/ok.json" >/dev/null
+  check "a verifier that cannot run returns 4" 4 "$?"
+}
+
+test_verify_release_without_a_pinned_verifier() {
+  fake_docker
+  rm -f "$TMP/docker-args"
+  VERIFY_IMAGE=''
+  envelope "$TMP/ok.json" "$RELEASE_JSON"
+  check "falls back to the checksum" "$RELEASE_JSON" "$(verify_release "$TMP/ok.json" 2>/dev/null)"
+  check_contains "and says so" "$(verify_release "$TMP/ok.json" 2>&1 >/dev/null)" "checksum only"
+  check_fails "docker is not run" test -e "$TMP/docker-args"
+}
+
 test_release_field() {
   printf '%s' "$RELEASE_JSON" >"$TMP/release.json"
   check "app image" hivepaas/hivepaas-dev:0.1.0 "$(release_field "$TMP/release.json" beta appImage)"

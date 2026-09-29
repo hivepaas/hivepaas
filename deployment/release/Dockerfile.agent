@@ -1,0 +1,61 @@
+# The HivePaaS agent image of a release. As deployment/release/Dockerfile: a
+# production build, kopia pinned by checksum, and only the configuration files a
+# release runs with.
+
+############################################################
+# Build agent
+FROM golang:1.27-alpine AS builder
+
+RUN apk update && \
+    apk add --no-cache -U tzdata make git build-base ca-certificates && \
+    rm -rf /var/cache/apk/*
+
+ENV CGO_ENABLED=0
+
+WORKDIR /build
+
+COPY . .
+
+RUN make mod
+RUN make build-agent-prod
+
+############################################################
+# The image
+FROM alpine:3.24
+ARG TARGETARCH
+ARG VERSION
+ARG REVISION
+
+LABEL org.opencontainers.image.title="HivePaaS agent" \
+      org.opencontainers.image.source="https://github.com/hivepaas/hivepaas" \
+      org.opencontainers.image.licenses="Apache-2.0" \
+      org.opencontainers.image.version="${VERSION}" \
+      org.opencontainers.image.revision="${REVISION}"
+
+WORKDIR /hivepaas
+
+RUN apk update && \
+    apk add --no-cache ca-certificates make openssl postgresql-client git git-lfs openssh-client rsync zstd lz4 docker-cli docker-cli-buildx && \
+    git lfs install --system && \
+    rm -rf /var/cache/apk/*
+
+# kopia, the backup engine: see deployment/release/Dockerfile.
+ARG KOPIA_VERSION=0.23.1
+RUN case "${TARGETARCH}" in \
+        amd64) KOPIA_ARCH="x64";   KOPIA_SHA256="416d0f84a3dbb321a8b2d8f0997b1a0a6e915babe79ee76fa6e4d2bd1e1c5178" ;; \
+        arm64) KOPIA_ARCH="arm64"; KOPIA_SHA256="a4ffbc019e0b0f932e2632054e73ec521dc1e80172a00095369c53ecf4e5a6cb" ;; \
+        *)     echo "unsupported TARGETARCH: ${TARGETARCH}" >&2; exit 1 ;; \
+    esac && \
+    wget -qO /tmp/kopia.tar.gz \
+        "https://github.com/kopia/kopia/releases/download/v${KOPIA_VERSION}/kopia-${KOPIA_VERSION}-linux-${KOPIA_ARCH}.tar.gz" && \
+    echo "${KOPIA_SHA256}  /tmp/kopia.tar.gz" | sha256sum -c - && \
+    tar -xzf /tmp/kopia.tar.gz -C /tmp && \
+    mv "/tmp/kopia-${KOPIA_VERSION}-linux-${KOPIA_ARCH}/kopia" /usr/local/bin/kopia && \
+    chmod +x /usr/local/bin/kopia && \
+    rm -rf /tmp/kopia* && \
+    kopia --version
+
+COPY --from=builder /build/hivepaas-agent .
+COPY --from=builder /build/config/config.production.toml /build/config/config.beta.toml ./config/
+
+CMD ["./hivepaas-agent"]

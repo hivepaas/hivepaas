@@ -77,7 +77,7 @@ export function Information() {
                             value={email.value}
                             onChange={email.onChange}
                             type="email"
-                            placeholder="tiendc@gmail.com"
+                            placeholder="you@example.com"
                             disabled
                         />
                         <FieldError errors={[errors.email]} />

@@ -16,6 +16,8 @@ import { Input } from "@/components/ui/input";
 
 import { SignInSchema, type SignInSchemaInput, type SignInSchemaOutput } from "../schemas";
 
+const DEV_SIGN_IN = { email: "tiendc@gmail.com", password: "abc123" };
+
 export function SignInForm({ loginOptions, isPending, onSubmit }: Props) {
     const {
         handleSubmit,
@@ -23,8 +25,9 @@ export function SignInForm({ loginOptions, isPending, onSubmit }: Props) {
         formState: { errors },
     } = useForm<SignInSchemaInput, unknown, SignInSchemaOutput>({
         defaultValues: {
-            email: "tiendc@gmail.com",
-            password: "abc123",
+            // The seeded account is filled in for development only: a built
+            // dashboard must not hand every visitor a login.
+            ...(import.meta.env.MODE === "development" ? DEV_SIGN_IN : { email: "", password: "" }),
             isTrustDevice: true,
         },
         resolver: zodResolver(SignInSchema),

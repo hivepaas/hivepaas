@@ -30,6 +30,8 @@ import {
     MapPin,
     MessageSquare,
     Network,
+    PanelLeftClose,
+    PanelLeftOpen,
     Puzzle,
     RefreshCw,
     Route,
@@ -45,12 +47,13 @@ import {
     Users,
     Webhook,
 } from "lucide-react";
-import { useLocation } from "react-router";
+import { Link, useLocation } from "react-router";
 
 import { MODULE_IDS, ROUTE, type ResourceModuleId } from "@application/shared/constants";
 import { useProfileContext } from "@application/shared/context";
 import { type ModuleId, type ModulePermission, useConditionalModuleCollections } from "@application/shared/permissions";
 
+import { Button, Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui";
 import {
     Sidebar,
     SidebarContent,
@@ -502,7 +505,7 @@ function filterSidebarItems(
 export function ModuleSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     const { profile } = useProfileContext();
     const { map: modulePermissionMap } = useConditionalModuleCollections();
-    const { isMobile, setOpenMobile } = useSidebar();
+    const { isMobile, setOpenMobile, toggleSidebar } = useSidebar();
     const location = useLocation();
 
     React.useEffect(() => {
@@ -524,8 +527,62 @@ export function ModuleSidebar({ ...props }: React.ComponentProps<typeof Sidebar>
             collapsible="icon"
             {...props}
         >
-            <SidebarHeader className="items-center justify-center p-2">
-                <LogoIcon className="x-logo h-12 w-12 text-foreground" />
+            <SidebarHeader className="p-2">
+                {/* Expanded state: Prominent Logo + HivePaaS brand + Collapse button */}
+                <div className="flex items-center justify-between px-2 py-1 group-data-[collapsible=icon]:hidden">
+                    <Link
+                        to={ROUTE.home.$route}
+                        className="flex items-center gap-2.5 overflow-hidden rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                    >
+                        <LogoIcon className="x-logo size-11 shrink-0 text-foreground" />
+                        <span className="font-bold text-lg tracking-tight text-foreground truncate">HivePaaS</span>
+                    </Link>
+                    <Tooltip>
+                        <TooltipTrigger asChild>
+                            <Button
+                                variant="ghost"
+                                size="icon"
+                                className="size-8 text-muted-foreground hover:text-foreground hover:bg-accent shrink-0"
+                                onClick={toggleSidebar}
+                                aria-label="Collapse sidebar"
+                            >
+                                <PanelLeftClose className="size-4" />
+                            </Button>
+                        </TooltipTrigger>
+                        <TooltipContent side="right">Collapse sidebar</TooltipContent>
+                    </Tooltip>
+                </div>
+
+                {/* Collapsed state: Logo on top + Expand button below */}
+                <div className="hidden group-data-[collapsible=icon]:flex flex-col items-center gap-2 py-1">
+                    <Tooltip>
+                        <TooltipTrigger asChild>
+                            <Link
+                                to={ROUTE.home.$route}
+                                className="flex items-center justify-center rounded-md hover:opacity-80 transition-opacity focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                                aria-label="HivePaaS Home"
+                            >
+                                <LogoIcon className="x-logo size-9 text-foreground" />
+                            </Link>
+                        </TooltipTrigger>
+                        <TooltipContent side="right">HivePaaS</TooltipContent>
+                    </Tooltip>
+
+                    <Tooltip>
+                        <TooltipTrigger asChild>
+                            <Button
+                                variant="ghost"
+                                size="icon"
+                                className="size-8 text-muted-foreground hover:text-foreground hover:bg-accent shrink-0"
+                                onClick={toggleSidebar}
+                                aria-label="Expand sidebar"
+                            >
+                                <PanelLeftOpen className="size-4" />
+                            </Button>
+                        </TooltipTrigger>
+                        <TooltipContent side="right">Expand sidebar</TooltipContent>
+                    </Tooltip>
+                </div>
             </SidebarHeader>
             <SidebarContent>
                 <NavMain items={navigationItems} />

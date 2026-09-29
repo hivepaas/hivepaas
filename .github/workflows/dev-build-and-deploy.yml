@@ -112,6 +112,9 @@ jobs:
   deploy-app:
     needs: create-image-manifest
     runs-on: ubuntu-latest
+    # The dev server's SSH key and address are the development environment's
+    # secrets, as the Docker Hub credentials are.
+    environment: development
     steps:
       - name: Deploy HivePaaS via SSH Key
         env:

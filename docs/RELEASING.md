@@ -35,15 +35,22 @@ installation run them.
 
 ## Once, before the first release
 
-1. **GitHub environment `release`** (Settings › Environments): required reviewers,
-   the maintainers who may release. Every job that pushes an image waits for one.
+1. **GitHub environment `release`** (Settings › Environments):
+   - required reviewers, the maintainers who may release. Every job that pushes
+     an image waits for one;
+   - **Deployment branches and tags › Selected branches and tags**: the tag
+     rules `v*` and `verify-v*`, and no branch. Only a release tag or a verifier
+     tag can push an image; a run from a branch is refused ("not allowed to
+     deploy to release due to environment protection rules").
+
    No secret is needed: the workflows push to GHCR with their own `GITHUB_TOKEN`.
-2. **The release verifier** (see [below](#the-release-verifier)): run the
-   *Release verifier* workflow once, with version `1`, and pin what its summary
-   prints in `deployment/release/install.sh`. The Release workflow refuses a tag
+2. **The release verifier** (see [below](#the-release-verifier)): tag `main`
+   with `verify-v1` and push the tag, which runs the *Release verifier*
+   workflow; pin what its summary prints in `deployment/release/install.sh`. The Release workflow refuses a tag
    while `VERIFY_IMAGE` is empty.
 3. **Rulesets** (Settings › Rules), in both `hivepaas` and `hivepaas-dashboard`:
-   - tags `v*`: only maintainers create them; no update, no deletion;
+   - tags `v*` (and `verify-v*` in `hivepaas`): only maintainers create them; no
+     update, no deletion;
    - branch `release` (backend): no force push, no deletion, changes through a
      pull request.
 4. **The `release` branch.** Installations and the installer read
@@ -190,7 +197,8 @@ VERIFY_KEYS=sha256:…    # the fingerprint of the keys inside it
 ```
 
 It is built once and reused by every release. Build a new one (the *Release
-verifier* workflow, by hand or with a tag `verify-v<N>`, the next `N`) only when:
+verifier* workflow, through a tag `verify-v<N>` with the next `N`: the
+`release` environment accepts no branch) only when:
 - a key is added or removed in `releasekeys/`: `go test ./tools/releaseverify/`
   fails until `VERIFY_KEYS` in `install.sh` is the new fingerprint, and so does
   every release until then;

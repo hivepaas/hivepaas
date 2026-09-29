@@ -1,6 +1,8 @@
 <div align="center">
 
-# 🐝 HivePaaS
+<img src="docs/assets/logo.svg" alt="HivePaaS logo" width="96" height="96">
+
+# HivePaaS
 
 **A lightweight, self-hosted, and modern Platform-as-a-Service (PaaS) built on Docker Swarm.**
 

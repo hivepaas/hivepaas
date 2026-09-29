@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 36 36" width="36" height="36" fill="none">
+  <!-- Top Row (2 circles) -->
+  <circle cx="12.98" cy="9.30" r="4.3" fill="#543d2b" />
+  <circle cx="23.02" cy="9.30" r="4.3" fill="#f59e0b" />
+
+  <!-- Middle Row (3 circles) -->
+  <circle cx="7.95" cy="18.00" r="4.3" fill="#543d2b" />
+  <circle cx="18.00" cy="18.00" r="4.3" fill="#f59e0b" />
+  <circle cx="28.05" cy="18.00" r="4.3" fill="#f59e0b" />
+
+  <!-- Bottom Row (2 circles) -->
+  <circle cx="12.98" cy="26.70" r="4.3" fill="#543d2b" />
+  <circle cx="23.02" cy="26.70" r="4.3" fill="#f59e0b" />
+</svg>

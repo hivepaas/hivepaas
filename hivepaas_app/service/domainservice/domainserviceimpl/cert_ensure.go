@@ -122,7 +122,7 @@ func (s *service) certProvidersFor(
 	scope *entity.ObjectScope,
 	certType base.SSLCertType,
 ) (certProviders, error) {
-	acme, err := s.firstSettingID(ctx, db, scope, base.SettingTypeAcmeDnsProvider)
+	acme, err := s.preferredSettingID(ctx, db, scope, base.SettingTypeAcmeDnsProvider)
 	if err != nil {
 		return certProviders{}, hperrors.Wrap(err)
 	}
@@ -215,9 +215,10 @@ func (s *service) certPolicyFor(
 	return domainSettings.CertSettings, nil
 }
 
-// firstSettingID is the first active setting of a type the scope can see - the
-// DNS provider an installation configured, where there is one.
-func (s *service) firstSettingID(
+// preferredSettingID is the active setting of a type the scope can see that
+// obtaining goes through - the DNS provider an installation configured, where
+// there is one; see preferredSetting for which of several.
+func (s *service) preferredSettingID(
 	ctx context.Context,
 	db database.IDB,
 	scope *entity.ObjectScope,
@@ -230,10 +231,11 @@ func (s *service) firstSettingID(
 	if err != nil {
 		return entity.ObjectID{}, hperrors.Wrap(err)
 	}
-	if len(settings) == 0 {
+	setting := preferredSetting(settings, scope)
+	if setting == nil {
 		return entity.ObjectID{}, nil
 	}
-	return entity.ObjectID{ID: settings[0].ID}, nil
+	return entity.ObjectID{ID: setting.ID}, nil
 }
 
 // defaultProviderFor is the account a certificate is obtained through, when the
@@ -253,19 +255,19 @@ func (s *service) defaultProviderFor(
 	if err != nil {
 		return entity.ObjectID{}, hperrors.Wrap(err)
 	}
-	var fallback *entity.Setting
-	for _, setting := range settings {
-		if certType != "" && setting.Kind == string(certType) {
+	if certType != "" {
+		ofType := gofn.Filter(settings, func(setting *entity.Setting) bool {
+			return setting.Kind == string(certType)
+		})
+		if setting := preferredSetting(ofType, scope); setting != nil {
 			return entity.ObjectID{ID: setting.ID}, nil
 		}
-		if setting.Default && fallback == nil {
-			fallback = setting
-		}
 	}
-	if fallback == nil {
-		return entity.ObjectID{}, nil
+	defaults := gofn.Filter(settings, func(setting *entity.Setting) bool { return setting.Default })
+	if setting := preferredSetting(defaults, scope); setting != nil {
+		return entity.ObjectID{ID: setting.ID}, nil
 	}
-	return entity.ObjectID{ID: fallback.ID}, nil
+	return entity.ObjectID{}, nil
 }
 
 // certSettingNamed finds the certificate setting already responsible for a name,

@@ -1,6 +1,4 @@
-<!-- Concept 1 Balanced Circles (Classic Bronze & Amber) -->
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 36 36" width="36" height="36" fill="none">
-  <!-- Concept 1 Balanced Circles: 7-circle cluster (2 - 3 - 2) with r=4.3 -->
   <!-- Top Row (2 circles) -->
   <circle cx="12.98" cy="9.30" r="4.3" fill="#543d2b" />
   <circle cx="23.02" cy="9.30" r="4.3" fill="#f59e0b" />

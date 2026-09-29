@@ -72,8 +72,9 @@ The example is `v1.0.0-beta1`; for a stable release read `StableVersion` for
    [base/version.go](../hivepaas_app/base/version.go), `BetaVersion`:
    - `AppVersion: "v1.0.0-beta1"`, exactly the tag;
    - `ReleaseDate`: the day you publish;
-   - `AppImage: "hivepaas/hivepaas:1.0.0-beta1"` (the tag; the digest does not
-     exist yet), and the other images this release runs.
+   - `AppImage: "hivepaas/hivepaas:1.0.0-beta1"` and
+     `AgentImage: "hivepaas/hivepaas-agent:1.0.0-beta1"` (the tags; the digests
+     do not exist yet), and the other images this release runs.
 
    Merge it to `main`. The workflow refuses a tag that is not this `AppVersion`.
 
@@ -161,10 +162,8 @@ migration and `blockMajorUpgrade` run for the first time there.
   the sha256 inside the same file, which catches corruption, not a forged file.
   `scripts/release-sign.sh` already verifies these signatures with openssl, so
   the installer can do the same with the public keys written into it.
-- **An in-app update does not update the agent.** The update plan
-  (`sysupdateservice/…/plan.go`) covers the database, cache, traefik, logs, the
-  registry, app and worker; the agent keeps the image it was installed with, and
-  `release.json`'s `agentImage` is read by the installer only. Fix before the
-  beta1 → beta2 update test, or that test runs a new app against an old agent.
+- **`agentImage` must be in every release from now on.** An update moves the
+  agent to it before the app; a release that names none leaves the agent where
+  it is, and the new app then runs against the old agent.
 - **Images other than app and agent** are pinned by tag in the compiled
   `version.go`; pin them by digest in `release.json` at least.

@@ -8,6 +8,8 @@ import { WebglAddon } from "@xterm/addon-webgl";
 import { Terminal } from "@xterm/xterm";
 import "@xterm/xterm/css/xterm.css";
 
+import { MONO_FONT_FAMILY, SYSTEM_MONO_FONT_FAMILY, whenMonoFontLoaded } from "@application/shared/utils";
+
 import { DEFAULT_SEARCH_MODE, LogsViewerToolbar, type SearchMode } from "./building-blocks";
 import {
     DEFAULT_DOWNLOAD_FILE_NAME,
@@ -152,7 +154,7 @@ export function LogsViewer({
             cursorBlink: false,
             cursorStyle: "bar",
             cursorInactiveStyle: "none",
-            fontFamily: "Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace",
+            fontFamily: SYSTEM_MONO_FONT_FAMILY,
             fontSize: LOG_FONT_SIZES[0],
             scrollback: TERMINAL_SCROLLBACK,
             theme: currentTheme.theme,
@@ -191,6 +193,10 @@ export function LogsViewer({
         resizeObserver.observe(frame);
         window.addEventListener("resize", updateDimensions);
         updateDimensions();
+        const cancelMonoFont = whenMonoFontLoaded(terminal.options.fontSize ?? LOG_FONT_SIZES[0], () => {
+            terminal.options.fontFamily = MONO_FONT_FAMILY;
+            updateDimensions();
+        });
 
         isTerminalReadyRef.current = true;
 
@@ -206,6 +212,7 @@ export function LogsViewer({
         }
 
         return () => {
+            cancelMonoFont();
             isTerminalReadyRef.current = false;
             resizeObserver.disconnect();
             window.removeEventListener("resize", updateDimensions);

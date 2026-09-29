@@ -36,6 +36,7 @@ import {
     useFullViewHeight,
     useTerminalTheme,
 } from "@application/shared/components/logs-viewer";
+import { MONO_FONT_FAMILY, SYSTEM_MONO_FONT_FAMILY, whenMonoFontLoaded } from "@application/shared/utils";
 
 import { AppTerminalCommandTemplatePanel } from "./app-terminal-command-template-panel.com";
 import styles from "./app-terminal-panel.module.scss";
@@ -363,7 +364,7 @@ export function AppTerminalPanel({
             cursorBlink: true,
             cursorStyle: "bar",
             fontSize: currentFontSize,
-            fontFamily: "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace",
+            fontFamily: SYSTEM_MONO_FONT_FAMILY,
             scrollback: TERMINAL_SCROLLBACK,
             theme: currentTheme.theme,
         });
@@ -424,8 +425,13 @@ export function AppTerminalPanel({
         window.addEventListener("resize", handleWindowResize);
 
         scheduleFitAndResize();
+        const cancelMonoFont = whenMonoFontLoaded(terminal.options.fontSize ?? currentFontSize, () => {
+            terminal.options.fontFamily = MONO_FONT_FAMILY;
+            scheduleFitAndResize();
+        });
 
         return () => {
+            cancelMonoFont();
             closeConnection();
             searchDisposable.dispose();
             searchAddon.dispose();

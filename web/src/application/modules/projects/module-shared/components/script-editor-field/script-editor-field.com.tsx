@@ -7,6 +7,8 @@ import "prismjs/themes/prism-tomorrow.css";
 import type { FieldError as ReactHookFormFieldError } from "react-hook-form";
 import Editor from "react-simple-code-editor";
 
+import { MONO_FONT_FAMILY } from "@application/shared/utils";
+
 import { Button, FieldError } from "@/components/ui";
 import {
     Dialog,
@@ -74,8 +76,7 @@ export function ScriptEditorField({ value, onChange, invalid, error, readOnly = 
                                 readOnly={readOnly}
                                 style={{
                                     minHeight: "100%",
-                                    fontFamily:
-                                        "'Fira Code', 'Fira Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace'",
+                                    fontFamily: MONO_FONT_FAMILY,
                                     fontSize: 14,
                                     lineHeight: 1.6,
                                     backgroundColor: "#1e1e1e",

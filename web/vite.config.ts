@@ -1,11 +1,38 @@
 import tailwindcss from "@tailwindcss/vite";
 import react from "@vitejs/plugin-react";
+import fs from "node:fs";
 import path from "node:path";
-import { defineConfig, loadEnv } from "vite";
+import { type Plugin, defineConfig, loadEnv } from "vite";
 import checker from "vite-plugin-checker";
 import license from "vite-plugin-license";
 import svgr from "vite-plugin-svgr";
 import tsconfigPaths from "vite-tsconfig-paths";
+
+/** The fonts the dashboard ships, imported from CSS. */
+const FONT_PACKAGES = ["@fontsource-variable/geist", "@fontsource-variable/geist-mono"];
+
+/**
+ * Appends the fonts' notices to THIRD-PARTY-NOTICES.txt. The license plugin
+ * only sees what JavaScript imports, and the fonts come in through CSS; their
+ * license, the OFL, asks for its text to go with the font files.
+ */
+function fontNotices(): Plugin {
+    return {
+        name: "font-notices",
+        apply: "build",
+        closeBundle() {
+            const notices = FONT_PACKAGES.map(name => {
+                const dir = path.join(__dirname, "node_modules", name);
+                const { version } = JSON.parse(fs.readFileSync(path.join(dir, "package.json"), "utf-8")) as {
+                    version: string;
+                };
+                const text = fs.readFileSync(path.join(dir, "LICENSE"), "utf-8");
+                return `\n---\n\nName: ${name}\nVersion: ${version}\nLicense: OFL-1.1\nLicense Text:\n===\n\n${text}`;
+            });
+            fs.appendFileSync(path.join(__dirname, "dist", "THIRD-PARTY-NOTICES.txt"), notices.join(""));
+        },
+    };
+}
 
 export default defineConfig(({ mode }) => {
     const env = loadEnv(mode, process.cwd(), "");
@@ -78,6 +105,7 @@ export default defineConfig(({ mode }) => {
                     },
                 },
             }),
+            fontNotices(),
         ],
         build: {
             chunkSizeWarningLimit: 800,

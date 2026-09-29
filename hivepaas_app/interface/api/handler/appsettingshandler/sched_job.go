@@ -140,7 +140,7 @@ func (h *Handler) DeleteAppSchedJob(ctx *gin.Context) {
 // @Failure 500 {object} hperrors.ErrorInfo
 // @Router  /projects/{projectID}/{projectEnv}/apps/{appID}/sched-jobs/{itemID}/exec [post]
 func (h *Handler) ExecuteAppSchedJob(ctx *gin.Context) {
-	auth, projectID, projectEnvID, appID, jobID, err := h.GetAuthAppSettings(ctx, base.ActionTypeRead, "itemID")
+	auth, projectID, projectEnvID, appID, jobID, err := h.GetAuthAppSettings(ctx, base.ActionTypeExecute, "itemID")
 	if err != nil {
 		h.RenderError(ctx, err)
 		return

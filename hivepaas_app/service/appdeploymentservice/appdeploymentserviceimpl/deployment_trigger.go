@@ -47,11 +47,13 @@ func (s *service) fireDeployEndedEvent(ctx context.Context, data *appDeploymentD
 		return
 	}
 	var event base.SchedJobTriggerEvent
-	switch data.Deployment.Status { //nolint:exhaustive // the deploy has not ended otherwise
+	switch data.Deployment.Status { // the deploy has not ended otherwise
 	case base.DeploymentStatusDone:
 		event = base.SchedJobTriggerPostDeploy
 	case base.DeploymentStatusFailed:
 		event = base.SchedJobTriggerDeployFailed
+	case base.DeploymentStatusNotStarted, base.DeploymentStatusInProgress, base.DeploymentStatusCanceled:
+		fallthrough
 	default:
 		return
 	}

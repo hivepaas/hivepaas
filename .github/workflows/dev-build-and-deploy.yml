@@ -44,6 +44,9 @@ jobs:
 
     # Dynamically select the correct runner machine from the matrix
     runs-on: ${{ matrix.runner }}
+    # The Docker Hub credentials are the development environment's secrets,
+    # which only dev-* tags may read.
+    environment: development
 
     steps:
       -
@@ -78,6 +81,7 @@ jobs:
   create-image-manifest:
     needs: build-image
     runs-on: ubuntu-latest # This can run on standard AMD64 since it's just pushing text
+    environment: development
 
     steps:
       -

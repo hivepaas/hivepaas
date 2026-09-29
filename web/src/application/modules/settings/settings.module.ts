@@ -56,6 +56,7 @@ export {
     SettingsBackupRepoEditRoute,
     SettingsDataBackupActionsRoute,
     SettingsDataBackupConfigurationRoute,
+    SettingsDataBackupSnapshotsRoute,
     SettingsDataCleanupActionsRoute,
     SettingsDataCleanupConfigurationRoute,
     SettingsSslRenewalActionsRoute,

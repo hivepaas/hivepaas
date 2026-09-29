@@ -42,15 +42,16 @@ function runRoute(scope: BackupSnapshotScope, snapshot: BackupSnapshot): string 
 
 /**
  * The snapshots a scope sees, with their filters. A link in may set the filters
- * through the URL: `repo`, `app` and `tag` (several).
+ * through the URL: `repo`, `app` and `tag` (several). `fixedTags` narrow the list
+ * for good: they are not shown as filters, and Clear Filter keeps them.
  */
-export function BackupSnapshotTable({ scope }: Props) {
+export function BackupSnapshotTable({ scope, fixedTags = [] }: Props) {
     const [searchParams] = useSearchParams();
     const { pagination, setPagination, search, setSearch } = useTableState();
     const [filters, setFilters] = useState<BackupSnapshotFilterValues>(() => ({
         repo: searchParams.get("repo") ?? undefined,
         app: searchParams.get("app") ?? undefined,
-        tags: searchParams.getAll("tag").filter(isTagFilter),
+        tags: searchParams.getAll("tag").filter(tag => isTagFilter(tag) && !fixedTags.includes(tag)),
     }));
     // Open from the start when a link in set a filter, so it shows.
     const [isFilterOpen, setIsFilterOpen] = useState(() => countActiveFilters(filters) > 0);
@@ -71,7 +72,7 @@ export function BackupSnapshotTable({ scope }: Props) {
         search,
         repo: filters.repo ? [filters.repo] : undefined,
         app: filters.app ? [filters.app] : undefined,
-        tag: filters.tags.length > 0 ? filters.tags : undefined,
+        tag: fixedTags.length + filters.tags.length > 0 ? [...fixedTags, ...filters.tags] : undefined,
         fromDate: filters.fromDate,
         toDate: filters.toDate,
     });
@@ -203,4 +204,6 @@ export function BackupSnapshotTable({ scope }: Props) {
 
 interface Props {
     scope: BackupSnapshotScope;
+    /** Tags every snapshot listed carries, whatever the filters. */
+    fixedTags?: string[];
 }

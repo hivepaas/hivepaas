@@ -1,6 +1,6 @@
 import { type PropsWithChildren, memo } from "react";
 
-import { Play, Settings } from "lucide-react";
+import { History, Play, Settings } from "lucide-react";
 import { SystemSettingsSidebarLayout, type SystemSettingsTabSection } from "~/system-settings/module-shared";
 
 import { ROUTE } from "@application/shared/constants";
@@ -13,6 +13,11 @@ const sections: SystemSettingsTabSection[] = [
                 label: "Configuration",
                 route: ROUTE.appSettings.dataBackup.configuration.$route,
                 icon: Settings,
+            },
+            {
+                label: "Snapshots",
+                route: ROUTE.appSettings.dataBackup.snapshots.$route,
+                icon: History,
             },
             {
                 label: "Actions",

@@ -13,6 +13,7 @@ import { PermissionTooltipAction } from "@application/shared/permissions";
 import { formatDataSizeCompact } from "@application/shared/utils/data-size";
 
 import {
+    canRestoreSnapshot,
     isRepoActive,
     snapshotScopeModuleId,
     sourceLabel,
@@ -58,24 +59,26 @@ function MenuCell({ scope, snapshot, actions }: { scope: BackupSnapshotScope } &
                     <Copy className="mr-2 size-4" />
                     Copy ID
                 </DropdownMenuItem>
-                <PermissionTooltipAction
-                    id={MODULE_IDS.Project}
-                    action="write"
-                    triggerClassName="w-full"
-                >
-                    {({ isDenied }) => (
-                        <DropdownMenuItem
-                            disabled={isDenied || !isRepoActive(snapshot)}
-                            title={isRepoActive(snapshot) ? undefined : "The snapshot's repository is not active"}
-                            onClick={() => {
-                                actions.onRestore(snapshot);
-                            }}
-                        >
-                            <ArchiveRestore className="mr-2 size-4" />
-                            Restore
-                        </DropdownMenuItem>
-                    )}
-                </PermissionTooltipAction>
+                {canRestoreSnapshot(snapshot) && (
+                    <PermissionTooltipAction
+                        id={MODULE_IDS.Project}
+                        action="write"
+                        triggerClassName="w-full"
+                    >
+                        {({ isDenied }) => (
+                            <DropdownMenuItem
+                                disabled={isDenied || !isRepoActive(snapshot)}
+                                title={isRepoActive(snapshot) ? undefined : "The snapshot's repository is not active"}
+                                onClick={() => {
+                                    actions.onRestore(snapshot);
+                                }}
+                            >
+                                <ArchiveRestore className="mr-2 size-4" />
+                                Restore
+                            </DropdownMenuItem>
+                        )}
+                    </PermissionTooltipAction>
+                )}
                 <PermissionTooltipAction
                     id={snapshotScopeModuleId(scope)}
                     action="delete"

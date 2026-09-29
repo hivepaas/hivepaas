@@ -12,7 +12,13 @@ import { formatDataSizeCompact } from "@application/shared/utils/data-size";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 
 import { BackupSnapshotFiles } from "./backup-snapshot-files.com";
-import { isRepoActive, snapshotScopeModuleId, sourceLabel, tagClassName } from "./backup-snapshot-table.helpers";
+import {
+    canRestoreSnapshot,
+    isRepoActive,
+    snapshotScopeModuleId,
+    sourceLabel,
+    tagClassName,
+} from "./backup-snapshot-table.helpers";
 
 function Row({ label, children }: { label: string; children: React.ReactNode }) {
     return (
@@ -39,26 +45,28 @@ export function BackupSnapshotDetails({ scope, snapshot, runLink, onRestore, onO
                             <SheetTitle>Snapshot {snapshot.shortId}</SheetTitle>
                             <SheetDescription>{format(snapshot.time, "yyyy-MM-dd HH:mm:ss")}</SheetDescription>
                         </SheetHeader>
-                        <div className="px-4">
-                            <PermissionTooltipAction
-                                id={MODULE_IDS.Project}
-                                action="write"
-                            >
-                                {({ isDenied }) => (
-                                    <Button
-                                        variant="outline"
-                                        size="sm"
-                                        disabled={isDenied || !isRepoActive(snapshot)}
-                                        onClick={() => {
-                                            onRestore(snapshot);
-                                        }}
-                                    >
-                                        <ArchiveRestore className="size-4" />
-                                        Restore
-                                    </Button>
-                                )}
-                            </PermissionTooltipAction>
-                        </div>
+                        {canRestoreSnapshot(snapshot) && (
+                            <div className="px-4">
+                                <PermissionTooltipAction
+                                    id={MODULE_IDS.Project}
+                                    action="write"
+                                >
+                                    {({ isDenied }) => (
+                                        <Button
+                                            variant="outline"
+                                            size="sm"
+                                            disabled={isDenied || !isRepoActive(snapshot)}
+                                            onClick={() => {
+                                                onRestore(snapshot);
+                                            }}
+                                        >
+                                            <ArchiveRestore className="size-4" />
+                                            Restore
+                                        </Button>
+                                    )}
+                                </PermissionTooltipAction>
+                            </div>
+                        )}
                         <div className="flex flex-col gap-4 px-4 pb-6">
                             <Row label="Snapshot ID">
                                 <span className="font-mono select-all">{snapshot.snapshotId}</span>

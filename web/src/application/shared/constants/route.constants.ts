@@ -449,6 +449,11 @@ export const ROUTE = {
                 $route: "/settings/data-backup/configuration/",
             },
 
+            snapshots: {
+                $pattern: "settings/data-backup/snapshots",
+                $route: "/settings/data-backup/snapshots/",
+            },
+
             actions: {
                 $pattern: "settings/data-backup/actions",
                 $route: "/settings/data-backup/actions/",

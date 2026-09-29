@@ -637,9 +637,9 @@ export function SystemTaskSummaryCard({
                                                 {task.dataBackup.snapshotId}
                                             </AppLink.Modules>
                                         ) : !task.scopeProject ? (
-                                            // A system backup's run: its snapshot is in a repository of the global scope.
+                                            // A system backup's run: its snapshot is listed with the system backup's.
                                             <AppLink.Modules
-                                                to={`${ROUTE.settings.backupSnapshots.$route}?tag=${encodeURIComponent(
+                                                to={`${ROUTE.appSettings.dataBackup.snapshots.$route}?tag=${encodeURIComponent(
                                                     `hivepaas.run:${task.id}`,
                                                 )}`}
                                                 className="font-mono text-link hover:underline"

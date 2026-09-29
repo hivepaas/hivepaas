@@ -15,6 +15,17 @@ export function snapshotScopeModuleId(scope: BackupSnapshotScope): string {
     return scope.type === "settings" ? MODULE_IDS.Settings : MODULE_IDS.Project;
 }
 
+/** The tag every system backup's snapshot carries. */
+export const SYSTEM_BACKUP_SOURCE_TAG = "hivepaas.source:system-backup";
+
+/**
+ * Whether a snapshot can be restored from the dashboard. A system backup's cannot: its files are downloaded, and
+ * HivePaaS's own database is restored by hand.
+ */
+export function canRestoreSnapshot(snapshot: BackupSnapshot): boolean {
+    return snapshot.source !== "system-backup";
+}
+
 /** A source kind, as a person reads it. */
 export function sourceLabel(source: string): string {
     switch (source) {

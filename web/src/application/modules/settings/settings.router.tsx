@@ -430,6 +430,14 @@ export const settingsRouter: RouteObject = {
                     },
                 },
                 {
+                    path: "snapshots",
+                    lazy: async () => {
+                        const { SettingsDataBackupSnapshotsRoute } = await getLazyComponents();
+
+                        return { Component: SettingsDataBackupSnapshotsRoute };
+                    },
+                },
+                {
                     path: "actions",
                     lazy: async () => {
                         const { SettingsDataBackupActionsRoute } = await getLazyComponents();

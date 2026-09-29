@@ -353,7 +353,7 @@ function GeneralFields({ nextRuns }: { nextRuns: Date[] }) {
                                     Configure Backup Repos
                                 </AppLink.Basic>
                                 <AppLink.Basic
-                                    to={`${ROUTE.settings.backupSnapshots.$route}?tag=${encodeURIComponent("hivepaas.source:system-backup")}`}
+                                    to={ROUTE.appSettings.dataBackup.snapshots.$route}
                                     className="text-xs text-blue-500"
                                     ignorePrevPath
                                 >

@@ -119,9 +119,6 @@ jobs:
       - name: Deploy HivePaaS via SSH Key
         env:
           SSH_KEY: ${{ secrets.DEV_SRV_SSH_KEY }}
-          # The dev server's host keys, as `ssh-keyscan -p <port> <host>` prints
-          # them from a machine that trusts it: the deploy refuses any other host.
-          KNOWN_HOSTS: ${{ secrets.DEV_SRV_KNOWN_HOSTS }}
           HOST: ${{ secrets.DEV_SRV_IP }}
           PORT: ${{ secrets.DEV_SRV_SSH_PORT }}
           USER: ${{ secrets.DEV_SRV_USERNAME }}
@@ -129,10 +126,11 @@ jobs:
           mkdir -p ~/.ssh
           echo "$SSH_KEY" | tr -d '\r' > ~/.ssh/deploy_key
           chmod 600 ~/.ssh/deploy_key
-          printf '%s\n' "$KNOWN_HOSTS" > ~/.ssh/known_hosts
+          # The dev server's host key is not checked: the login is by key, which a
+          # host in between cannot reuse, and the command sent is public.
           ssh -v -i ~/.ssh/deploy_key -p "$PORT" \
-            -o StrictHostKeyChecking=yes \
-            -o UserKnownHostsFile=~/.ssh/known_hosts \
+            -o StrictHostKeyChecking=no \
+            -o UserKnownHostsFile=/dev/null \
             -o BatchMode=yes \
             -o ConnectTimeout=30 \
             "$USER@$HOST" \

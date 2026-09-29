@@ -10,6 +10,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
+	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/safego"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/tasklog"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/unit"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/backupreposervice"
@@ -113,16 +114,24 @@ func (s *service) backupCommand(
 	connected := make(chan struct{})
 	done := make(chan streamed, 1)
 	go func() {
-		resp, err := s.backupRepoService.BackupStream(streamCtx, db, &backupreposervice.BackupStreamReq{
+		var (
+			resp *backupreposervice.BackupResp
+			err  error
+		)
+		// Sent whatever happens, a panic's included: the caller waits on done.
+		defer func() {
+			// Whatever the engine did not read is not waited for.
+			_ = reader.CloseWithError(io.ErrClosedPipe)
+			done <- streamed{resp: resp, err: err, stoppedByUs: streamCtx.Err() != nil}
+		}()
+		defer safego.RecoverTo(&err)
+		resp, err = s.backupRepoService.BackupStream(streamCtx, db, &backupreposervice.BackupStreamReq{
 			RepoTarget: target, Stdin: reader, FileName: dataBackup.SourceFileName, Tags: tags,
 			Source:      dataBackupSource + req.JobSetting.ID,
 			Description: description,
 			Progress:    logProgress(ctx, req),
 			OnConnected: func() { close(connected) },
 		})
-		// Whatever the engine did not read is not waited for.
-		_ = reader.CloseWithError(io.ErrClosedPipe)
-		done <- streamed{resp: resp, err: err, stoppedByUs: streamCtx.Err() != nil}
 	}()
 
 	select {

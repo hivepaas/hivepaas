@@ -11,6 +11,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
+	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/safego"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/tasklog"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/backupreposervice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/databackupservice"
@@ -48,14 +49,19 @@ func (s *service) restoreCommand(ctx context.Context, db database.Tx, req *datab
 	connected := make(chan struct{})
 	done := make(chan error, 1)
 	go func() {
-		err := s.backupRepoService.RestoreStream(streamCtx, db, &backupreposervice.RestoreStreamReq{
+		var err error
+		// Whatever happens, a panic's included: the command reads to the end of the
+		// stream, an error ends it too and is the command's to see, and the caller
+		// waits on done.
+		defer func() {
+			_ = writer.CloseWithError(err)
+			done <- err
+		}()
+		defer safego.RecoverTo(&err)
+		err = s.backupRepoService.RestoreStream(streamCtx, db, &backupreposervice.RestoreStreamReq{
 			RepoTarget: req.Target, SnapshotID: req.SnapshotID, FileName: req.Command.FileName,
 			Stdout: writer, Progress: logRestoreProgress(ctx, req), OnConnected: func() { close(connected) },
 		})
-		// The command reads to the end of the stream: an error ends it too, and it
-		// is the command's to see.
-		_ = writer.CloseWithError(err)
-		done <- err
 	}()
 
 	select {

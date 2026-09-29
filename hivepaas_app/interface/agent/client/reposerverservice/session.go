@@ -12,6 +12,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/interface/agent/client"
 	agentproto "github.com/hivepaas/hivepaas/hivepaas_app/interface/agent/proto"
+	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/safego"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecaseagent/reposerveragentuc"
 )
 
@@ -78,11 +79,18 @@ func openOn(ctx context.Context, conn grpc.ClientConnInterface, req *reposervera
 		done:        make(chan struct{}),
 	}
 	go func() {
+		var err error
 		defer close(session.done)
+		// Set before done closes, a panic's included, so Err reads it once Done does.
+		defer func() {
+			if err != nil {
+				session.err = hperrors.Wrap(err)
+			}
+		}()
+		defer safego.RecoverTo(&err)
 		// The agent sends nothing more: the stream ends with the server.
-		_, err := stream.Recv()
-		if err != nil && !errors.Is(err, io.EOF) && streamCtx.Err() == nil {
-			session.err = hperrors.Wrap(err)
+		if _, recvErr := stream.Recv(); recvErr != nil && !errors.Is(recvErr, io.EOF) && streamCtx.Err() == nil {
+			err = recvErr
 		}
 	}()
 	return session, nil

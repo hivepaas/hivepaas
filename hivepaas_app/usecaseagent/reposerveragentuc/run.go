@@ -193,7 +193,12 @@ func (uc *UC) runStep(ctx context.Context, env []string, args ...string) error {
 		return hperrors.Wrap(err)
 	}
 	done := make(chan error, 1)
-	go func() { done <- cmd.Wait() }()
+	go func() {
+		var err error
+		defer func() { done <- err }()
+		defer safego.RecoverTo(&err)
+		err = cmd.Wait()
+	}()
 	select {
 	case err := <-done:
 		if err != nil {
@@ -244,6 +249,11 @@ func newServerOutput() *serverOutput {
 }
 
 func (o *serverOutput) scan(reader io.Reader) {
+	// Whatever stops the scan - the end, a line too long for the scanner, a
+	// panic - the rest is drained, so the server never blocks writing to a pipe
+	// nobody reads.
+	defer func() { _, _ = io.Copy(io.Discard, reader) }()
+	defer safego.Recover("reposerver.output")
 	scanner := bufio.NewScanner(reader)
 	var fingerprint string
 	port := 0

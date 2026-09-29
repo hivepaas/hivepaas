@@ -5,6 +5,7 @@ import (
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	agentproto "github.com/hivepaas/hivepaas/hivepaas_app/interface/agent/proto"
+	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/safego"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecaseagent/reposerveragentuc"
 )
 
@@ -25,8 +26,9 @@ func RepoServer(runner Runner, stream agentproto.RepoServerService_RepoServerSer
 	defer cancel()
 	// The client's half-close, or anything else it sends, ends the session.
 	go func() {
+		defer cancel()
+		defer safego.Recover("reposerver.client-close")
 		_, _ = stream.Recv()
-		cancel()
 	}()
 
 	err = runner.Run(ctx, &reposerveragentuc.RunReq{

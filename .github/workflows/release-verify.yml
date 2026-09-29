@@ -1,17 +1,12 @@
 name: 'Release verifier'
 
 # Builds the image the installer checks release.signed.json with
-# (tools/releaseverify), for amd64 and arm64, and pushes it to GHCR. Run it by
-# hand, or with a tag verify-v<N>, only when the release keys or the signature
-# format change: installers pin the image by digest, so a new one reaches them
+# (tools/releaseverify), for amd64 and arm64, and pushes it to GHCR, on a tag
+# verify-v<N> - the release environment accepts no branch. Tag only when the
+# release keys or the signature format change: installers pin the image by digest, so a new one reaches them
 # only through install.sh (VERIFY_IMAGE, VERIFY_KEYS; see docs/RELEASING.md).
 
 on:
-  workflow_dispatch:
-    inputs:
-      version:
-        description: 'The image tag, e.g. 1'
-        required: true
   push:
     tags:
       - 'verify-v[0-9]+'
@@ -45,10 +40,8 @@ jobs:
 
       - name: Version
         id: meta
-        env:
-          INPUT_VERSION: ${{ inputs.version }}
         run: |
-          version=${INPUT_VERSION:-${GITHUB_REF_NAME#verify-v}}
+          version=${GITHUB_REF_NAME#verify-v}
           [[ $version =~ ^[0-9]+$ ]] || { echo "::error::the version is a number, not '$version'"; exit 1; }
           echo "version=$version" >> "$GITHUB_OUTPUT"
 

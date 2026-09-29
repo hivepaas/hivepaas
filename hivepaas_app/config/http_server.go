@@ -5,7 +5,7 @@ import (
 )
 
 type HTTPServer struct {
-	BasePath         string   `toml:"base_path" env:"HP_HTTP_SERVER_BASE_PATH" default:"/_"`
+	BasePath         string   `toml:"base_path" env:"HP_HTTP_SERVER_BASE_PATH" default:"/api"`
 	Port             int      `toml:"port" env:"HP_HTTP_SERVER_PORT" default:"10000"`
 	CORSAllowOrigins []string `toml:"cors_allow_origins" env:"HP_HTTP_SERVER_CORS_ALLOW_ORIGINS"`
 

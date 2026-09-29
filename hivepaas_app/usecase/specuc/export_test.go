@@ -232,7 +232,7 @@ func TestExportSpecSetsTheDownloadFilename(t *testing.T) {
 
 // The passphrase must never be reachable as a query parameter. The access log
 // records the full path including the query - a running instance logged
-// `path=/_/spec/export?secretsMode=omit` - and this installation's own logging
+// `path=/api/spec/export?secretsMode=omit` - and this installation's own logging
 // subsystem ships those lines to a searchable store.
 func TestExportSpecReqCarriesThePassphraseInTheBodyOnly(t *testing.T) {
 	field, ok := reflect.TypeFor[specdto.ExportSpecReq]().FieldByName("Passphrase")

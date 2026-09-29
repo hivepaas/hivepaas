@@ -70,6 +70,11 @@ func (cfg *Config) SsoBaseCallbackURL() string {
 	return gofn.Must(url.JoinPath(cfg.BaseAPIURL(), "auth/sso/callback"))
 }
 
+// SsoAuthPath is where a login with a provider begins, as the dashboard links it.
+func (cfg *Config) SsoAuthPath(id string) string {
+	return gofn.Must(url.JoinPath(cfg.HTTPServer.BasePath, "auth/sso", id))
+}
+
 func (cfg *Config) SsoCallbackURL(id string) string {
 	return gofn.Must(url.JoinPath(cfg.SsoBaseCallbackURL(), id))
 }

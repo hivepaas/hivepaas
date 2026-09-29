@@ -7,11 +7,15 @@ import (
 	"strings"
 
 	"github.com/gin-gonic/gin"
+
+	"github.com/hivepaas/hivepaas/hivepaas_app/config"
 )
 
-var (
-	notStaticPrefixes = []string{"/_/"}
-)
+// isAPIPath is whether a request path is the API's, under its configured base
+// path: never a static file, and never sent to the dashboard's index.
+func isAPIPath(requestPath string) bool {
+	return strings.HasPrefix(requestPath, strings.TrimSuffix(config.Current().HTTPServer.BasePath, "/")+"/")
+}
 
 const INDEX = "index.html"
 
@@ -60,10 +64,8 @@ func localFile(root string, indexes bool, cacheControl string) *localFileSystem 
 }
 
 func (l *localFileSystem) Exists(prefix string, filepath string) bool {
-	for _, v := range notStaticPrefixes {
-		if strings.HasPrefix(filepath, v) {
-			return false
-		}
+	if isAPIPath(filepath) {
+		return false
 	}
 	if p := strings.TrimPrefix(filepath, prefix); len(p) < len(filepath) {
 		name := path.Join(l.root, p)
@@ -102,10 +104,8 @@ func embedFile(fs http.FileSystem, cacheControl string) *embedFileSystem {
 }
 
 func (e *embedFileSystem) Exists(prefix string, filepath string) bool {
-	for _, v := range notStaticPrefixes {
-		if strings.HasPrefix(filepath, v) {
-			return false
-		}
+	if isAPIPath(filepath) {
+		return false
 	}
 	p := strings.TrimPrefix(filepath, prefix)
 	if p == "" || p == "/" {
@@ -126,10 +126,8 @@ func (e *embedFileSystem) CacheControlHeader() string {
 func StaticServeRedirect(urlPrefix string) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		requestPath := c.Request.URL.Path
-		for _, v := range notStaticPrefixes {
-			if strings.HasPrefix(requestPath, v) {
-				return
-			}
+		if isAPIPath(requestPath) {
+			return
 		}
 		requestPath = strings.TrimPrefix(requestPath, urlPrefix)
 		redirect := "/?next=" + requestPath + "?" + c.Request.URL.RawQuery

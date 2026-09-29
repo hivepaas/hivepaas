@@ -6,6 +6,7 @@ import (
 	"github.com/tiendc/gofn"
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
+	"github.com/hivepaas/hivepaas/hivepaas_app/config"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
@@ -32,6 +33,7 @@ func (uc *UC) GetLoginOptions(
 		return nil, hperrors.Wrap(err)
 	}
 
+	cfg := config.Current()
 	var resp []*sessiondto.LoginOptionResp
 	for _, setting := range settings {
 		if setting.Type == base.SettingTypeGithubApp {
@@ -46,7 +48,7 @@ func (uc *UC) GetLoginOptions(
 			Type:    oauthType,
 			Name:    setting.Name,
 			Icon:    gofn.Coalesce(mapProviderIcon[oauthType], string(oauthType)),
-			AuthURL: "/_/auth/sso/" + setting.ID,
+			AuthURL: cfg.SsoAuthPath(setting.ID),
 		})
 	}
 

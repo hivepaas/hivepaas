@@ -112,14 +112,14 @@ pass "the install"
 
 HOST_IP=$(in_dind "ip route get 1.1.1.1 | awk '{for (i = 1; i < NF; i++) if (\$i == \"src\") print \$(i + 1)}'")
 expect "the dashboard by domain" 200 "$(in_dind "curl -sk -o /dev/null -w '%{http_code}' \
-  --resolve $DOMAIN:443:127.0.0.1 https://$DOMAIN/_/ping")"
+  --resolve $DOMAIN:443:127.0.0.1 https://$DOMAIN/api/ping")"
 expect "the dashboard by address" 200 "$(in_dind "curl -sk -o /dev/null -w '%{http_code}' https://$HOST_IP/")"
 expect "http by address goes to https" "302 https://$HOST_IP/" "$(in_dind "curl -s -o /dev/null \
   -w '%{http_code} %{redirect_url}' http://$HOST_IP/")"
 login() {
   in_dind "curl -sk -o /dev/null -w '%{http_code}' -H 'Content-Type: application/json' -H 'Origin: https://$1' \
     --resolve $DOMAIN:443:127.0.0.1 -d '{\"username\":\"admin\",\"password\":\"$2\"}' \
-    https://$1/_/auth/login-with-password"
+    https://$1/api/auth/login-with-password"
 }
 expect "the admin signs in" 200 "$(login "$DOMAIN" "$PASSWORD")"
 expect "the admin signs in by address" 200 "$(login "$HOST_IP" "$PASSWORD")"
@@ -218,7 +218,7 @@ expect "after it, the app's update stands" "" "$(in_dind 'docker service inspect
   --format "{{if .UpdateStatus}}{{.UpdateStatus.State}}{{end}}"' | grep rollback || true)"
 expect "and every system service has OOM priority -500 again" "-500 -500 -500 -500 -500 -500 -500" "$(oom_priorities)"
 expect "and the dashboard answers" 200 "$(in_dind "curl -sk -o /dev/null -w '%{http_code}' \
-  --resolve $DOMAIN:443:127.0.0.1 https://$DOMAIN/_/ping")"
+  --resolve $DOMAIN:443:127.0.0.1 https://$DOMAIN/api/ping")"
 
 # stack_rm: the stack removed, as a person would, and waited for; the database
 # volume and the app data stay.

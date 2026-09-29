@@ -140,7 +140,7 @@ func NewHandlerRegistry(
 }
 
 func (s *HTTPServer) registerRoutes() {
-	s.engine.GET("/_/ping", routePing)
+	s.engine.GET(s.config.HTTPServer.BasePath+"/ping", routePing)
 	s.engine.NoRoute(routeNotFound)
 
 	// Swagger server

@@ -254,4 +254,4 @@ smee-run:
 	# RUN ONCE go install -v github.com/chmouel/gosmee@latest
 	# github app id: 01JAB9XED0GTXBSQDFVYAJ8WJ1
 	# webhook id: 01JAB9XED0GTXBSQDFVYAJ8WO1 (github), 01JAB9XED0GTXBSQDFVYAJ8WO2 (gitlab), 01JAB9XED0GTXBSQDFVYAJ8WO3 (gitea)
-	gosmee client --saveDir tmp/gosmee/savedreplay https://smee.io/RBNiNjxieUIWZ6Ej http://localhost:10000/_/webhooks/01JAB9XED0GTXBSQDFVYAJ8WJ1
+	gosmee client --saveDir tmp/gosmee/savedreplay https://smee.io/RBNiNjxieUIWZ6Ej http://localhost:10000/api/webhooks/01JAB9XED0GTXBSQDFVYAJ8WJ1

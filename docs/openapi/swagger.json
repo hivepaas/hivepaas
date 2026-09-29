@@ -5,7 +5,7 @@
       "name" : "HivePaaS",
       "url" : "https://github.com/hivepaas/hivepaas/issues"
     },
-    "description" : "The REST API of HivePaaS, the one its dashboard uses. Every path is under the install's\nAPI base path, `/_`: `GET https://<your HivePaaS domain>/_/projects` lists the projects.\n\n## Authentication\n\nA request authenticates one of two ways:\n\n- **An API key**, in the headers `HIVEPAAS-API-KEY-ID` and `HIVEPAAS-API-SECRET-KEY`.\nA user creates their keys in the dashboard, among their account's settings, or with\n`POST /users/current/settings/api-keys`. A key acts as its user, within the limits it\nwas created with. Scripts and integrations use this.\n- **A session's access token**, in the header `Authorization: Bearer <access token>`.\nA login such as `POST /auth/login-with-password` gives it, and it expires within\nminutes: `POST /sessions/refresh` renews it. The dashboard uses this.\n\nA request with neither is answered `401`. The logins, the sign-up and password reset\nsteps, the webhooks and the public images need neither.\n\n## Errors\n\nA request that fails is answered with a 4xx or 5xx status and an `hperrors.ErrorInfo`\nbody, whose `code` names the error, such as `ERR_NO_SESSION`.",
+    "description" : "The REST API of HivePaaS, the one its dashboard uses. Every path is under the install's\nAPI base path, `/api`: `GET https://<your HivePaaS domain>/api/projects` lists the projects.\n\n## Authentication\n\nA request authenticates one of two ways:\n\n- **An API key**, in the headers `HIVEPAAS-API-KEY-ID` and `HIVEPAAS-API-SECRET-KEY`.\nA user creates their keys in the dashboard, among their account's settings, or with\n`POST /users/current/settings/api-keys`. A key acts as its user, within the limits it\nwas created with. Scripts and integrations use this.\n- **A session's access token**, in the header `Authorization: Bearer <access token>`.\nA login such as `POST /auth/login-with-password` gives it, and it expires within\nminutes: `POST /sessions/refresh` renews it. The dashboard uses this.\n\nA request with neither is answered `401`. The logins, the sign-up and password reset\nsteps, the webhooks and the public images need neither.\n\n## Errors\n\nA request that fails is answered with a 4xx or 5xx status and an `hperrors.ErrorInfo`\nbody, whose `code` names the error, such as `ERR_NO_SESSION`.",
     "license" : {
       "name" : "Apache 2.0",
       "url" : "https://github.com/hivepaas/hivepaas/blob/main/LICENSE"
@@ -14,7 +14,7 @@
     "version" : "0.1"
   },
   "servers" : [ {
-    "url" : "/_"
+    "url" : "/api"
   } ],
   "security" : [ {
     "APIKeyID" : [ ],
@@ -64714,7 +64714,7 @@
       "specdto.ExportSpecReq" : {
         "properties" : {
           "passphrase" : {
-            "description" : "Passphrase is required when SecretsMode is encrypted, and arrives in the\nrequest body rather than the query string.\n\nThat is why these endpoints are POST rather than GET. The access log\nrecords the full path including the query - verified against a running\ninstance, which logged `path=/_/spec/export?secretsMode=omit` - and this\ninstallation's own logging subsystem ships those lines to a searchable\nstore along with Traefik's access logs. A passphrase in the URL would be\nretained there in plain text. Being a POST also keeps the response, which\nmay contain every secret in the scope, out of any intermediary cache.",
+            "description" : "Passphrase is required when SecretsMode is encrypted, and arrives in the\nrequest body rather than the query string.\n\nThat is why these endpoints are POST rather than GET. The access log\nrecords the full path including the query - verified against a running\ninstance, which logged `path=/api/spec/export?secretsMode=omit` - and this\ninstallation's own logging subsystem ships those lines to a searchable\nstore along with Traefik's access logs. A passphrase in the URL would be\nretained there in plain text. Being a POST also keeps the response, which\nmay contain every secret in the scope, out of any intermediary cache.",
             "type" : "string"
           },
           "secretsMode" : {

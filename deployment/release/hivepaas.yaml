@@ -164,7 +164,7 @@ services:
     image: ${HIVEPAAS_IMAGE_APP:?}
     stop_grace_period: 10m
     healthcheck:
-      test: ["CMD", "wget", "-q", "--spider", "http://127.0.0.1:10000/_/ping"]
+      test: ["CMD", "wget", "-q", "--spider", "http://127.0.0.1:10000/api/ping"]
       start_period: 120s
       start_interval: 5s
       interval: 30s

@@ -17,7 +17,7 @@ import (
 // real handlers and their permission checks, the real database. It runs only
 // when HP_TEST_MCP_URL is set, with
 //
-//	HP_TEST_MCP_URL     the endpoint, such as http://localhost:8080/_/mcp
+//	HP_TEST_MCP_URL     the endpoint, such as http://localhost:8080/api/mcp
 //	HP_TEST_MCP_KEY     an API key as <keyId>:<secret>
 //	HP_TEST_MCP_APP     an app to read, as <project>/<env>/<app>
 //	HP_TEST_MCP_WRITE   1 to also plan and apply a restart of that app: the

@@ -306,7 +306,7 @@ services:
     # Both have to fit inside monitor, or Swarm calls the update converged before
     # a broken task can be marked unhealthy, and it is never rolled back.
     healthcheck:
-      test: ["CMD", "wget", "-q", "--spider", "http://127.0.0.1:10000/_/ping"]
+      test: ["CMD", "wget", "-q", "--spider", "http://127.0.0.1:10000/api/ping"]
       start_period: 120s
       start_interval: 5s
       interval: 30s

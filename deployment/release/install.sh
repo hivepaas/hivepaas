@@ -1813,7 +1813,7 @@ update_ip_routes() {
 
 dashboard_answers() {
   curl -fsSk --max-time 5 --resolve "$HIVEPAAS_APP_DOMAIN:443:127.0.0.1" \
-    "https://$HIVEPAAS_APP_DOMAIN/_/ping" >/dev/null 2>&1
+    "https://$HIVEPAAS_APP_DOMAIN/api/ping" >/dev/null 2>&1
 }
 
 wait_for_dashboard() {
@@ -1843,7 +1843,7 @@ cert_wait_seconds() {
 # - the one HivePaaS asks Let's Encrypt for on its first boot.
 dashboard_trusted() {
   curl -fsS --max-time 5 --resolve "$HIVEPAAS_APP_DOMAIN:443:127.0.0.1" \
-    "https://$HIVEPAAS_APP_DOMAIN/_/ping" >/dev/null 2>&1
+    "https://$HIVEPAAS_APP_DOMAIN/api/ping" >/dev/null 2>&1
 }
 
 # wait_for_trusted_cert LIMIT: CERT_TRUSTED=1 once the dashboard has its

@@ -13,7 +13,7 @@ run the backend you want for the change you are making.
 | The dashboard, hot reload | `yarn dev` in `../hivepaas-dashboard`       | http://localhost:4321 |
 | The backend as a real swarm service | `make local-app-up` + `make local-agent-up` | https://localhost |
 | Extra swarm nodes | `make local-node-up` | `docker node ls` |
-| A configuration snapshot | `GET /_/spec/export` | a `.tar.gz` of YAML, §6 |
+| A configuration snapshot | `GET /api/spec/export` | a `.tar.gz` of YAML, §6 |
 | App templates from a local checkout | `HP_TEMPLATES_DIR=../app-templates make local-app-run` | the project Store tab, §7 |
 
 Sign in with `admin` / `abc123`.
@@ -125,10 +125,10 @@ Run the backend as in §2, then in the dashboard repo:
 yarn dev
 ```
 
-Vite serves on `PORT` (4321 in its `.env.development`) and forwards `/_` to
+Vite serves on `PORT` (4321 in its `.env.development`) and forwards `/api` to
 `http://localhost:10000`, websockets included.
 
-Leave `VITE_HP_DASHBOARD_BASE_URL` **empty** for this. The app then calls `/_/…`
+Leave `VITE_HP_DASHBOARD_BASE_URL` **empty** for this. The app then calls `/api/…`
 on its own origin and the proxy carries the request; point it at an absolute
 backend URL and the browser stops treating the call as same-origin, so the
 httpOnly refresh cookie is not attached and you get bounced to the sign-in page
@@ -241,10 +241,10 @@ what is configured. The design is in
 [specs/2026-09-16-config-spec-export-design.md](superpowers/specs/2026-09-16-config-spec-export-design.md).
 
 ```
-POST /_/spec/export
-POST /_/projects/:projectID/spec/export
-POST /_/projects/:projectID/:projectEnv/spec/export
-POST /_/projects/:projectID/:projectEnv/apps/:appID/spec/export
+POST /api/spec/export
+POST /api/projects/:projectID/spec/export
+POST /api/projects/:projectID/:projectEnv/spec/export
+POST /api/projects/:projectID/:projectEnv/apps/:appID/spec/export
 ```
 
 POST rather than GET for a read, because the passphrase travels in the body.
@@ -257,7 +257,7 @@ Exporting a scope exports everything below it, and nothing beside it.
 
 ### Trying it locally
 
-Dev routes sit under `/_/internal` behind basic auth, and `dev-mode-login` takes
+Dev routes sit under `/api/internal` behind basic auth, and `dev-mode-login` takes
 its argument as a **query parameter**, not a JSON body:
 
 ```bash
@@ -269,12 +269,12 @@ USER_ID=$(PGPASSWORD=abc123 psql -h localhost -p 35432 -U hivepaas -d hivepaas \
   -tAc "SELECT id FROM users WHERE username = 'admin' AND deleted_at IS NULL")
 
 TOKEN=$(curl -sS -u hivepaas:abc123 -X POST \
-  "http://localhost:10000/_/internal/dev-helper/dev-mode-login?userId=$USER_ID" \
+  "http://localhost:10000/api/internal/dev-helper/dev-mode-login?userId=$USER_ID" \
   | python3 -c 'import json,sys; print(json.load(sys.stdin)["data"]["accessToken"])')
 
 curl -sS -D headers.txt -X POST -H "Authorization: Bearer $TOKEN" \
   -H 'Content-Type: application/json' -d '{"secretsMode":"omit"}' \
-  -o spec.tar.gz 'http://localhost:10000/_/spec/export'
+  -o spec.tar.gz 'http://localhost:10000/api/spec/export'
 
 mkdir -p out && tar -xzf spec.tar.gz -C out
 ```

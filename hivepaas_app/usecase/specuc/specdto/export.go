@@ -27,7 +27,7 @@ type ExportSpecReq struct {
 	//
 	// That is why these endpoints are POST rather than GET. The access log
 	// records the full path including the query - verified against a running
-	// instance, which logged `path=/_/spec/export?secretsMode=omit` - and this
+	// instance, which logged `path=/api/spec/export?secretsMode=omit` - and this
 	// installation's own logging subsystem ships those lines to a searchable
 	// store along with Traefik's access logs. A passphrase in the URL would be
 	// retained there in plain text. Being a POST also keeps the response, which

@@ -45,7 +45,7 @@ type HTTPServer struct {
 // @title HivePaaS API
 // @version 0.1
 // @description The REST API of HivePaaS, the one its dashboard uses. Every path is under the install's
-// @description API base path, `/_`: `GET https://<your HivePaaS domain>/_/projects` lists the projects.
+// @description API base path, `/api`: `GET https://<your HivePaaS domain>/api/projects` lists the projects.
 // @description
 // @description ## Authentication
 // @description
@@ -70,7 +70,7 @@ type HTTPServer struct {
 // @contact.url https://github.com/hivepaas/hivepaas/issues
 // @license.name Apache 2.0
 // @license.url https://github.com/hivepaas/hivepaas/blob/main/LICENSE
-// @BasePath /_
+// @BasePath /api
 //
 // @security APIKeyID || APISecretKey
 // @security BearerToken

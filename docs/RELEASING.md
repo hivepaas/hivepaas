@@ -7,9 +7,10 @@ of every release, a beta (`v1.0.0-beta1`) or a stable one (`v1.0.0`).
 
 | Piece | Where | Made by | Trusted because |
 |---|---|---|---|
-| App and agent images | Docker Hub `hivepaas/hivepaas`, `hivepaas/hivepaas-agent` | the Release workflow, on a tag | `release.json` names them by digest |
-| `release.json` / `release.signed.json` | the `release` branch | you, signed offline with `make release-sign` | the app refuses it without both signatures ([releasekeys](../hivepaas_app/service/hpappservice/hpappserviceimpl/releasekeys/README.md)) |
-| `install.sh` | the GitHub Release of the tag | the Release workflow | the tag, protected; see [Known gaps](#known-gaps-before-100) |
+| App and agent images | GHCR `ghcr.io/hivepaas/hivepaas`, `ghcr.io/hivepaas/hivepaas-agent` | the Release workflow, on a tag | `release.json` names them by digest |
+| `release.json` / `release.signed.json` | the `release` branch | you, signed offline with `make release-sign` | the app refuses it without both signatures ([releasekeys](../hivepaas_app/pkg/releasesig/releasekeys/README.md)), and so does the installer, through its verifier image |
+| `install.sh` | the GitHub Release of the tag | the Release workflow | the tag, protected |
+| The release verifier image | GHCR `ghcr.io/hivepaas/release-verify` | the Release verifier workflow, rarely | `install.sh` pins it by digest |
 | `get.hivepaas.com` | a redirect to that `install.sh` | you | the domain's own protection |
 
 The workflow never signs and never publishes: the signing keys stay on the
@@ -34,12 +35,13 @@ installation run them.
 
 ## Once, before the first release
 
-1. **Docker Hub.** Create `hivepaas/hivepaas` and `hivepaas/hivepaas-agent`, and
-   an access token that can push to those two repositories only.
-2. **GitHub environment `release`** (Settings › Environments): required reviewers
-   (the maintainers who may release), and the secrets `DOCKERHUB_USERNAME` and
-   `DOCKERHUB_TOKEN` with the token above. The build jobs wait for a reviewer
-   before they can read them.
+1. **GitHub environment `release`** (Settings › Environments): required reviewers,
+   the maintainers who may release. Every job that pushes an image waits for one.
+   No secret is needed: the workflows push to GHCR with their own `GITHUB_TOKEN`.
+2. **The release verifier** (see [below](#the-release-verifier)): run the
+   *Release verifier* workflow once, with version `1`, and pin what its summary
+   prints in `deployment/release/install.sh`. The Release workflow refuses a tag
+   while `VERIFY_IMAGE` is empty.
 3. **Rulesets** (Settings › Rules), in both `hivepaas` and `hivepaas-dashboard`:
    - tags `v*`: only maintainers create them; no update, no deletion;
    - branch `release` (backend): no force push, no deletion, changes through a
@@ -48,7 +50,7 @@ installation run them.
    `release.signed.json` from it (`app_release_info.go`, `install.sh`). It does
    not exist until the first release creates it (step 7 below).
 5. **Signing keys.** Check that the two `*.pub.pem` in
-   [releasekeys](../hivepaas_app/service/hpappservice/hpappserviceimpl/releasekeys/)
+   [releasekeys](../hivepaas_app/pkg/releasesig/releasekeys/)
    are the public halves of the keys on the offline machine, not test keys: every
    binary trusts them until a later release rotates them.
 6. **Dev deploys.** The dev workflow's secrets are the GitHub environment
@@ -74,8 +76,8 @@ The example is `v1.0.0-beta1`; for a stable release read `StableVersion` for
    [base/version.go](../hivepaas_app/base/version.go), `BetaVersion`:
    - `AppVersion: "v1.0.0-beta1"`, exactly the tag;
    - `ReleaseDate`: the day you publish;
-   - `AppImage: "hivepaas/hivepaas:1.0.0-beta1"` and
-     `AgentImage: "hivepaas/hivepaas-agent:1.0.0-beta1"` (the tags; the digests
+   - `AppImage: "ghcr.io/hivepaas/hivepaas:1.0.0-beta1"` and
+     `AgentImage: "ghcr.io/hivepaas/hivepaas-agent:1.0.0-beta1"` (the tags; the digests
      do not exist yet), and the other images this release runs.
 
    Merge it to `main`. The workflow refuses a tag that is not this `AppVersion`.
@@ -99,7 +101,7 @@ The example is `v1.0.0-beta1`; for a stable release read `StableVersion` for
 
 5. **release.json.** Update the `beta` entry: `appVersion`, `releaseDate`,
    `appImage` and `agentImage` as `digests.txt` gives them
-   (`hivepaas/hivepaas:1.0.0-beta1@sha256:…`), the other images (by digest too,
+   (`ghcr.io/hivepaas/hivepaas:1.0.0-beta1@sha256:…`), the other images (by digest too,
    preferably), and `templates` if the app templates moved. Keep what the entry of
    the other channel says.
 
@@ -153,17 +155,53 @@ migration and `blockMajorUpgrade` run for the first time there.
   (a pull request reverting step 8). Installations stop being offered the release;
   those that already updated stay on it until a fixed release (`beta2`, or
   `1.0.1`) supersedes it. Move the channel's image tag back with
-  `docker buildx imagetools create -t hivepaas/hivepaas:beta hivepaas/hivepaas:<previous>`,
+  `docker buildx imagetools create -t ghcr.io/hivepaas/hivepaas:beta ghcr.io/hivepaas/hivepaas:<previous>`,
   and the redirect of `get.hivepaas.com`.
 - Never move or delete a pushed version tag or image tag: installations and
   `release.json` refer to them.
 
+## GHCR packages
+
+The first push of each image creates its package under the `hivepaas`
+organization, private. Once, for each of `hivepaas`, `hivepaas-agent` and
+`release-verify` (github.com/orgs/hivepaas/packages › the package › Package
+settings):
+- **Change visibility › Public**, or servers cannot pull it. If GitHub refuses,
+  allow public packages in Organization settings › Packages.
+- **Manage Actions access**: `hivepaas/hivepaas` with **Write**, if the package
+  is not already linked to the repository (the images' `source` label links it).
+
+Public packages cost nothing in storage or transfer. A public package version
+cannot be deleted once the package has more than 5,000 downloads, and a
+version's per-architecture tags (`1.0.0-beta1-amd64`, `-arm64`) are what its
+multi-arch tag points to: delete neither.
+
+## The release verifier
+
+A server's openssl is too old for the release signatures (ML-DSA-65 and
+Ed25519ctx), so the installer checks `release.signed.json` with a small image,
+`tools/releaseverify`, built from `deployment/release/Dockerfile.verify`. It
+carries the keys of [releasekeys](../hivepaas_app/pkg/releasesig/releasekeys/)
+and runs with no network, no root and nothing writable. `install.sh` pins it:
+
+```bash
+VERIFY_IMAGE=ghcr.io/hivepaas/release-verify@sha256:…
+VERIFY_KEYS=sha256:…    # the fingerprint of the keys inside it
+```
+
+It is built once and reused by every release. Build a new one (the *Release
+verifier* workflow, by hand or with a tag `verify-v<N>`, the next `N`) only when:
+- a key is added or removed in `releasekeys/`: `go test ./tools/releaseverify/`
+  fails until `VERIFY_KEYS` in `install.sh` is the new fingerprint, and so does
+  every release until then;
+- the signature format changes;
+- Go fixes a vulnerability in the crypto it uses.
+
+Then put the two lines the workflow's summary prints into `install.sh`, through
+a pull request, and release as usual.
+
 ## Known gaps before 1.0.0
 
-- **The installer does not verify `release.signed.json`'s signatures.** It checks
-  the sha256 inside the same file, which catches corruption, not a forged file.
-  `scripts/release-sign.sh` already verifies these signatures with openssl, so
-  the installer can do the same with the public keys written into it.
 - **`agentImage` must be in every release from now on.** An update moves the
   agent to it before the app; a release that names none leaves the agent where
   it is, and the new app then runs against the old agent.

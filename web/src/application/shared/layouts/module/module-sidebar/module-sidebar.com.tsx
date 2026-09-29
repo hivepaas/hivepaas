@@ -534,7 +534,7 @@ export function ModuleSidebar({ ...props }: React.ComponentProps<typeof Sidebar>
                         to={ROUTE.home.$route}
                         className="flex items-center gap-2.5 overflow-hidden rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                     >
-                        <LogoIcon className="x-logo size-11 shrink-0 text-foreground" />
+                        <LogoIcon className="x-logo size-10 shrink-0 text-foreground" />
                         <span className="font-bold text-lg tracking-tight text-foreground truncate">HivePaaS</span>
                     </Link>
                     <Tooltip>

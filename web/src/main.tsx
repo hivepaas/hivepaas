@@ -2,8 +2,11 @@ import { StrictMode } from "react";
 
 import { createRoot } from "react-dom/client";
 
-import "@fontsource-variable/geist";
-import "@fontsource-variable/geist-mono";
+import "@fontsource-variable/ibm-plex-sans";
+import "@fontsource/ibm-plex-mono/400";
+import "@fontsource/ibm-plex-mono/500";
+import "@fontsource/ibm-plex-mono/600";
+import "@fontsource/ibm-plex-mono/700";
 import { DeviceInfo } from "@infrastructure/device";
 
 import { EnvConfig } from "@config";

@@ -2,7 +2,7 @@ import { parseEnv, z } from "znv";
 
 const parsedConfig = parseEnv(import.meta.env, {
     VITE_HP_DASHBOARD_BASE_URL: z.string().optional().default(""),
-    VITE_HP_API_BASE_PATH: z.string().optional().default("/_"),
+    VITE_HP_API_BASE_PATH: z.string().optional().default("/api"),
 });
 
 function stripTrailingSlash(value: string): string {
@@ -24,11 +24,11 @@ function resolveDashboardBaseUrl(envValue: string): string {
 }
 
 function joinApiBaseUrl(dashboardBaseUrl: string, apiBasePath: string): string {
-    return `${stripTrailingSlash(dashboardBaseUrl)}${ensureLeadingSlash(apiBasePath.trim() || "/_")}`;
+    return `${stripTrailingSlash(dashboardBaseUrl)}${ensureLeadingSlash(apiBasePath.trim() || "/api")}`;
 }
 
 const dashboardBaseUrl = resolveDashboardBaseUrl(parsedConfig.VITE_HP_DASHBOARD_BASE_URL);
-const apiBasePath = ensureLeadingSlash(parsedConfig.VITE_HP_API_BASE_PATH.trim() || "/_");
+const apiBasePath = ensureLeadingSlash(parsedConfig.VITE_HP_API_BASE_PATH.trim() || "/api");
 
 /**
  * Values from environment variables, resolved once at boot

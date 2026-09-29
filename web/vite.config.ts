@@ -23,16 +23,18 @@ export default defineConfig(({ mode }) => {
      * the moment the access token expires.
      *
      * Only takes effect when VITE_HP_DASHBOARD_BASE_URL is empty, which is what
-     * makes the app call /_/... on its own origin instead of an absolute URL.
+     * makes the app call /api/... on its own origin instead of an absolute URL.
+     * The prefix is matched with its slash, so a dashboard path that merely
+     * starts with the same letters stays with the dev server.
      */
-    const API_BASE_PATH = env["VITE_HP_API_BASE_PATH"] || "/_";
+    const API_BASE_PATH = (env["VITE_HP_API_BASE_PATH"] || "/api").replace(/\/+$/, "");
     const API_PROXY_TARGET = env["VITE_HP_API_PROXY_TARGET"] || "http://localhost:10000";
 
     return {
         server: {
             port: PORT,
             proxy: {
-                [API_BASE_PATH]: {
+                [`${API_BASE_PATH}/`]: {
                     target: API_PROXY_TARGET,
                     changeOrigin: true,
                     // Websockets too - the log and terminal streams are here.

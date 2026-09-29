@@ -17,11 +17,19 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/releasesig"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/releasesig/releasekeys"
 )
+
+// must stops the test on err. testify's require is not vendored in the main
+// checkout, so this stands in for it.
+func must(t *testing.T, err error) {
+	t.Helper()
+	if err != nil {
+		t.Fatal(err)
+	}
+}
 
 type signer struct {
 	id, alg string
@@ -32,25 +40,25 @@ type signer struct {
 func signers(t *testing.T) (map[string][]byte, []signer) {
 	t.Helper()
 	edPub, edPriv, err := ed25519.GenerateKey(rand.Reader)
-	require.NoError(t, err)
+	must(t, err)
 	ml, err := mldsa.GenerateKey(mldsa.MLDSA65())
-	require.NoError(t, err)
+	must(t, err)
 	keys := []signer{
 		{id: "t-ed", alg: releasesig.AlgEd25519, pub: edPub, sign: func(data []byte) []byte {
 			sig, err := edPriv.Sign(nil, data, &ed25519.Options{Context: releasesig.Context})
-			require.NoError(t, err)
+			must(t, err)
 			return sig
 		}},
 		{id: "t-ml", alg: releasesig.AlgMLDSA65, pub: ml.PublicKey(), sign: func(data []byte) []byte {
 			sig, err := ml.SignDeterministic(data, &mldsa.Options{Context: releasesig.Context})
-			require.NoError(t, err)
+			must(t, err)
 			return sig
 		}},
 	}
 	pems := map[string][]byte{}
 	for _, k := range keys {
 		der, err := x509.MarshalPKIXPublicKey(k.pub)
-		require.NoError(t, err)
+		must(t, err)
 		pems[k.id] = pem.EncodeToMemory(&pem.Block{Type: "PUBLIC KEY", Bytes: der})
 	}
 	return pems, keys
@@ -66,7 +74,7 @@ func envelopeOf(t *testing.T, data []byte, keys ...signer) []byte {
 		})
 	}
 	content, err := json.Marshal(env)
-	require.NoError(t, err)
+	must(t, err)
 	return content
 }
 
@@ -111,12 +119,12 @@ func TestAnAlteredPayloadIsRefused(t *testing.T) {
 	pems, keys := signers(t)
 	env := envelopeOf(t, []byte(`{"beta":{"appImage":"a"}}`), keys...)
 	var parsed releasesig.Envelope
-	require.NoError(t, json.Unmarshal(env, &parsed))
+	must(t, json.Unmarshal(env, &parsed))
 	forged := []byte(`{"beta":{"appImage":"b"}}`)
 	sum := sha256.Sum256(forged)
 	parsed.Payload, parsed.SHA256 = base64.StdEncoding.EncodeToString(forged), hex.EncodeToString(sum[:])
 	altered, err := json.Marshal(parsed)
-	require.NoError(t, err)
+	must(t, err)
 
 	code, out, _ := runWith(t, pems, altered)
 
@@ -138,9 +146,9 @@ func TestTheFingerprintIsOfTheKeysItTrusts(t *testing.T) {
 // installers verifying with keys the app no longer trusts: this is where it fails.
 func TestTheInstallerNamesTheFingerprintOfTheTrustedKeys(t *testing.T) {
 	script, err := os.ReadFile("../../deployment/release/install.sh")
-	require.NoError(t, err)
+	must(t, err)
 	pems, err := releasekeys.Embedded()
-	require.NoError(t, err)
+	must(t, err)
 
 	want := "VERIFY_KEYS=" + releasekeys.Fingerprint(pems)
 	assert.True(t, strings.Contains(string(script), "\n"+want+"\n"),

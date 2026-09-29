@@ -12,7 +12,6 @@ import (
 	"encoding/json"
 	"encoding/pem"
 	"testing"
-	"testing/fstest"
 
 	"github.com/stretchr/testify/assert"
 
@@ -119,31 +118,6 @@ func TestReleaseInfoURL(t *testing.T) {
 		config.SetCurrent(&config.Config{Env: env})
 		assert.Equal(t, want, releaseInfoURL(), env)
 	}
-}
-
-func TestLoadReleaseSigningKeys(t *testing.T) {
-	keys, err := loadReleaseSigningKeys(fstest.MapFS{
-		"releasekeys/README.md":        {Data: []byte("docs")},
-		"releasekeys/2026-ed.pub.pem":  {Data: []byte("ed")},
-		"releasekeys/2026-ml.pub.pem":  {Data: []byte("ml")},
-		"releasekeys/2026-ed.key":      {Data: []byte("never embedded as a key")},
-		"releasekeys/nested/x.pub.pem": {Data: []byte("not at top level")},
-		"elsewhere/2026-other.pub.pem": {Data: []byte("outside the directory")},
-	})
-	assert.NoError(t, err)
-	assert.Equal(t, map[string][]byte{"2026-ed": []byte("ed"), "2026-ml": []byte("ml")}, keys)
-}
-
-// The embedded keys are otherwise only ever exercised against the live
-// release.json; a bad file would surface as "updates stopped working" in the field.
-func TestEmbeddedReleaseSigningKeys(t *testing.T) {
-	keys, err := loadReleaseSigningKeys(releaseKeysFS)
-	assert.NoError(t, err)
-	if len(keys) == 0 {
-		t.Skip("no release signing keys in releasekeys/ yet")
-	}
-	_, err = releasesig.ParsePublicKeys(keys)
-	assert.NoError(t, err)
 }
 
 // Both channels are measured against the release running, whichever channel

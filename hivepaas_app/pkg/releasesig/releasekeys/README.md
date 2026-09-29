@@ -1,7 +1,8 @@
 # Release signing keys
 
 The public keys `release.json` is accepted from. Every `*.pub.pem` file here is
-compiled into the binary; the file name without `.pub.pem` is the key id that
+compiled into the app and into the installer's verifier image
+(`tools/releaseverify`); the file name without `.pub.pem` is the key id that
 `release.signed.json` refers to.
 
 `release.json` must carry a valid **ed25519** and a valid **ML-DSA-65** signature,
@@ -22,7 +23,10 @@ and copy only the `.pub.pem` files here. The `.key` files never leave that machi
 
 A binary keeps trusting the keys it was built with, so:
 
-1. Add the new key's `.pub.pem` here, next to the old one, and release.
+1. Add the new key's `.pub.pem` here, next to the old one. Rebuild the
+   verifier image (the "Release verifier" workflow) and pin its digest and key
+   fingerprint in `deployment/release/install.sh` (`VERIFY_IMAGE`,
+   `VERIFY_KEYS`); a test fails until `VERIFY_KEYS` matches. Then release.
 2. Once that release is widely installed, sign with the new key (`make release-sign`).
    Older binaries skip the signature by a key they do not know and still require
    one by a key they do, so sign with both old and new keys for as long as older

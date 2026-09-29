@@ -11,6 +11,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/httputil"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/releasesig"
+	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/releasesig/releasekeys"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/version"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/hpappservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/systemappservice"
@@ -40,7 +41,7 @@ func releaseInfoURL() string {
 }
 
 func (s *service) GetAppReleaseInfo(ctx context.Context) (*hpappservice.AppReleaseInfo, error) {
-	keys, err := loadReleaseSigningKeys(releaseKeysFS)
+	keys, err := releasekeys.Embedded()
 	if err != nil {
 		return nil, hperrors.Wrap(err)
 	}

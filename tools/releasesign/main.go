@@ -185,7 +185,7 @@ func runKeygen(args []string) error {
 
 	fmt.Printf("%s key %q\n", *alg, *keyID)
 	fmt.Printf("  private: %s (keep offline, never commit)\n", privPath)
-	fmt.Printf("  public:  %s (copy into hivepaas_app/service/hpappservice/hpappserviceimpl/releasekeys/)\n",
+	fmt.Printf("  public:  %s (copy into hivepaas_app/pkg/releasesig/releasekeys/)\n",
 		pubPath)
 	return nil
 }

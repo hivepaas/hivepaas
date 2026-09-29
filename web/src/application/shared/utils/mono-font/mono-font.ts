@@ -1,11 +1,8 @@
 /** The system's monospace faces: what shows while the dashboard's own is loading. */
 export const SYSTEM_MONO_FONT_FAMILY = "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace";
 
-/** The name of the dashboard's monospace face, bundled in main.tsx. */
-const MONO_FONT_NAME = "IBM Plex Mono";
-
 /** The dashboard's monospace face, for code, scripts, logs and terminals. */
-export const MONO_FONT_FAMILY = `'${MONO_FONT_NAME}', ${SYSTEM_MONO_FONT_FAMILY}`;
+export const MONO_FONT_FAMILY = `'Geist Mono Variable', ${SYSTEM_MONO_FONT_FAMILY}`;
 
 /**
  * Calls `onLoaded` once the dashboard's monospace face has loaded at `fontSize`. A terminal measures its
@@ -16,7 +13,7 @@ export function whenMonoFontLoaded(fontSize: number, onLoaded: () => void): () =
     let cancelled = false;
 
     document.fonts
-        .load(`${String(fontSize)}px '${MONO_FONT_NAME}'`)
+        .load(`${String(fontSize)}px 'Geist Mono Variable'`)
         .then(() => {
             if (!cancelled) {
                 onLoaded();

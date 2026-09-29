@@ -9,7 +9,7 @@ import svgr from "vite-plugin-svgr";
 import tsconfigPaths from "vite-tsconfig-paths";
 
 /** The fonts the dashboard ships, imported from CSS. */
-const FONT_PACKAGES = ["@fontsource-variable/ibm-plex-sans", "@fontsource/ibm-plex-mono"];
+const FONT_PACKAGES = ["@fontsource-variable/geist", "@fontsource-variable/geist-mono"];
 
 /**
  * Appends the fonts' notices to THIRD-PARTY-NOTICES.txt. The license plugin

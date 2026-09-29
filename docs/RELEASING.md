@@ -51,9 +51,11 @@ installation run them.
    [releasekeys](../hivepaas_app/service/hpappservice/hpappserviceimpl/releasekeys/)
    are the public halves of the keys on the offline machine, not test keys: every
    binary trusts them until a later release rotates them.
-6. **Dev deploys.** Add the secret `DEV_SRV_KNOWN_HOSTS`: the dev server's host
-   keys, from `ssh-keyscan -p <port> <host>` run where you already trust that
-   server. The dev workflow refuses any other host key.
+6. **Dev deploys.** The dev workflow's secrets are the GitHub environment
+   `development`'s, which only `dev-*` tags may use: `DOCKERHUB_USERNAME` and
+   `DOCKERHUB_TOKEN` (a token that pushes to the `-dev` repositories only), and
+   `DEV_SRV_SSH_KEY`, `DEV_SRV_IP`, `DEV_SRV_SSH_PORT`, `DEV_SRV_USERNAME`. The
+   dev server's host key is not checked.
 7. **`get.hivepaas.com`**: a redirect only, never a copy of the script.
    - HTTPS only; plain HTTP answers with a redirect to HTTPS and nothing else.
    - HSTS on `hivepaas.com`; a CAA record naming the CA you use; registrar lock

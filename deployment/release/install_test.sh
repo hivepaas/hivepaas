@@ -960,6 +960,25 @@ test_save_log() {
     stat -f %Lp "$TMP/data/install.log")"
 }
 
+test_install_ref() {
+  check "a development copy reads main" main "$(install_ref)"
+  HIVEPAAS_INSTALL_REF=v9.9.9
+  check "the setting wins" v9.9.9 "$(install_ref)"
+}
+
+test_bake_install_ref() {
+  local baked="$TMP/install.baked.sh"
+  check_ok "a release tag is written in" \
+    "$HERE/../../scripts/release/bake-install-ref.sh" "$HERE/install.sh" "$baked" v1.0.0-beta1
+  check "the installer reads the tag" v1.0.0-beta1 \
+    "$(HIVEPAAS_INSTALL_LIB=1 bash -c '. "$1"; install_ref' _ "$baked")"
+  check_fails "not a release tag" \
+    "$HERE/../../scripts/release/bake-install-ref.sh" "$HERE/install.sh" "$TMP/x.sh" 'main; rm -rf /'
+  printf '#!/usr/bin/env bash\n' >"$TMP/no-default.sh"
+  check_fails "an installer without the default line" \
+    "$HERE/../../scripts/release/bake-install-ref.sh" "$TMP/no-default.sh" "$TMP/y.sh" v1.0.0
+}
+
 # ------------------------------------------------------------------- Runner
 
 for t in $(declare -F | awk '$3 ~ /^test_/ {print $3}'); do

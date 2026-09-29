@@ -2,7 +2,7 @@
 #
 # Installs HivePaaS on this server.
 #
-#   curl -fsSL https://raw.githubusercontent.com/hivepaas/hivepaas/main/deployment/release/install.sh | sudo bash
+#   curl -fsSL https://get.hivepaas.com | sudo bash
 #
 # It installs Docker when it is missing, makes the server a single-node swarm
 # and deploys the HivePaaS stack of a release channel, beta for now. The
@@ -1340,6 +1340,16 @@ ensure_docker() {
 SUBNET=10.11.0.0/16
 SUBNET_GATEWAY=10.11.0.1
 REPO_RAW=https://raw.githubusercontent.com/hivepaas/hivepaas
+# The ref the stack files are downloaded from: the release's own tag in an
+# installer attached to a release, where the release workflow writes it
+# (scripts/release/bake-install-ref.sh), so the stack matches the installer.
+# main in the repository's copy.
+INSTALL_REF_DEFAULT=main
+
+# install_ref: the ref this run downloads the stack files from.
+install_ref() {
+  printf '%s' "${HIVEPAAS_INSTALL_REF:-$INSTALL_REF_DEFAULT}"
+}
 
 ensure_swarm() {
   local state node
@@ -1417,7 +1427,7 @@ fetch_install_file() {
   if [ -n "${HIVEPAAS_INSTALL_FILES_DIR:-}" ]; then
     cp "$HIVEPAAS_INSTALL_FILES_DIR/$1" "$tmp"
   else
-    curl -fsSL --retry 3 "$REPO_RAW/${HIVEPAAS_INSTALL_REF:-main}/deployment/release/$1" -o "$tmp"
+    curl -fsSL --retry 3 "$REPO_RAW/$(install_ref)/deployment/release/$1" -o "$tmp"
   fi || {
     rm -f "$tmp"
     die "Could not get $1."
@@ -1941,7 +1951,7 @@ finish_install() {
 # silent_hint: how to install without being asked, for the next server.
 silent_hint() {
   info "To install without questions, fill in the settings file and pass it:"
-  info "  curl -fsSLO $REPO_RAW/${HIVEPAAS_INSTALL_REF:-main}/deployment/release/install.env"
+  info "  curl -fsSLO $REPO_RAW/$(install_ref)/deployment/release/install.env"
   info "  sudo bash install.sh --config install.env --yes"
 }
 
@@ -2011,7 +2021,8 @@ Settings, from the environment or --config (the environment wins):
   HIVEPAAS_UPGRADE_DOCKER=true upgrade Docker to its latest release without asking
   HIVEPAAS_AGENT_IMAGE         the agent's image (default: from the release)
   HIVEPAAS_RELEASE_BRANCH      the branch the release info is read from (default: release)
-  HIVEPAAS_INSTALL_REF         the ref the stack files are downloaded from (default: main)
+  HIVEPAAS_INSTALL_REF         the ref the stack files are downloaded from (default:
+                               the release this installer came with)
   HIVEPAAS_EXISTING_DB         keep or reset, when this server has the database of an
                                earlier HivePaaS; asked when not set, and never assumed
   HIVEPAAS_DB_PASSWORD         with keep: the database's password, when

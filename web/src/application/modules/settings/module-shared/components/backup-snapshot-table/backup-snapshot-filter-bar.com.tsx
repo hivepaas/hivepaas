@@ -72,7 +72,14 @@ export function BackupSnapshotFilterBar({ scope, repos, filters, onChange }: Pro
 
     return (
         <div className="rounded-lg border border-border/80 bg-card/60 p-3.5 sm:p-4 shadow-2xs backdrop-blur-xs flex flex-col gap-3.5 transition-all duration-200">
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
+            {/* One column per field on a wide screen, so the row fills the panel: a
+                project's snapshots have the App field too. */}
+            <div
+                className={cn(
+                    "grid grid-cols-1 sm:grid-cols-2 gap-3",
+                    scope.type === "project" ? "md:grid-cols-3 lg:grid-cols-5" : "lg:grid-cols-4",
+                )}
+            >
                 <FilterField label="Repository">
                     <SearchableFilterSelect
                         value={filters.repo ?? ALL}

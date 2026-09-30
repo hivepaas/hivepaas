@@ -1,7 +1,6 @@
 import { memo } from "react";
 
-import { cn } from "@/lib/utils";
-import { Badge } from "@components/ui/badge";
+import { Badge, type BadgeTone } from "@components/ui/badge";
 
 import { ESecuritySettings } from "@application/shared/enums";
 
@@ -12,14 +11,14 @@ function View({ securityOption }: Props) {
         [ESecuritySettings.EnforceSSO]: "Enforce SSO",
     };
 
-    const securityColorMap: Record<ESecuritySettings, string> = {
-        [ESecuritySettings.PasswordOnly]: "bg-orange-400 text-white",
-        [ESecuritySettings.Password2FA]: "bg-green-500 text-white",
-        [ESecuritySettings.EnforceSSO]: "bg-blue-600 text-white",
+    const securityToneMap: Partial<Record<string, BadgeTone>> = {
+        [ESecuritySettings.PasswordOnly]: "orange",
+        [ESecuritySettings.Password2FA]: "green",
+        [ESecuritySettings.EnforceSSO]: "blue",
     };
 
     return (
-        <Badge className={cn(securityColorMap[securityOption] || "bg-primary text-primary-foreground")}>
+        <Badge tone={securityToneMap[securityOption] ?? "neutral"}>
             {securityMap[securityOption] || securityOption}
         </Badge>
     );

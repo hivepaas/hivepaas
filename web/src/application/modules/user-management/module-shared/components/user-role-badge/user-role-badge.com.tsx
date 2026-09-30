@@ -1,7 +1,6 @@
 import { memo } from "react";
 
-import { cn } from "@/lib/utils";
-import { Badge } from "@components/ui/badge";
+import { Badge, type BadgeTone } from "@components/ui/badge";
 
 import { EUserRole } from "@application/shared/enums";
 
@@ -11,16 +10,12 @@ function View({ role }: Props) {
         [EUserRole.Member]: "Member",
     };
 
-    const roleColorMap: Record<EUserRole, string> = {
-        [EUserRole.Admin]: "bg-primary text-white",
-        [EUserRole.Member]: "bg-purple-500 text-white",
+    const roleToneMap: Partial<Record<string, BadgeTone>> = {
+        [EUserRole.Admin]: "amber",
+        [EUserRole.Member]: "purple",
     };
 
-    return (
-        <Badge className={cn(roleColorMap[role] || "bg-primary text-primary-foreground")}>
-            {roleMap[role] || role}
-        </Badge>
-    );
+    return <Badge tone={roleToneMap[role] ?? "neutral"}>{roleMap[role] || role}</Badge>;
 }
 
 interface Props {

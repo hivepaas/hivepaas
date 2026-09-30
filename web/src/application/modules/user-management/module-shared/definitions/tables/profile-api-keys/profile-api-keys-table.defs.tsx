@@ -38,38 +38,10 @@ const columns: ColumnDef<ProfileApiKey>[] = [
             if (!accessAction) return "-";
             return (
                 <div className="flex items-center gap-2">
-                    {accessAction.read && (
-                        <Badge
-                            variant="default"
-                            className="bg-blue-500"
-                        >
-                            Read
-                        </Badge>
-                    )}
-                    {accessAction.execute && (
-                        <Badge
-                            variant="default"
-                            className="bg-violet-500"
-                        >
-                            Execute
-                        </Badge>
-                    )}
-                    {accessAction.write && (
-                        <Badge
-                            variant="default"
-                            className="bg-orange-500"
-                        >
-                            Write
-                        </Badge>
-                    )}
-                    {accessAction.delete && (
-                        <Badge
-                            variant="default"
-                            className="bg-red-500"
-                        >
-                            Delete
-                        </Badge>
-                    )}
+                    {accessAction.read && <Badge tone="blue">Read</Badge>}
+                    {accessAction.execute && <Badge tone="violet">Execute</Badge>}
+                    {accessAction.write && <Badge tone="orange">Write</Badge>}
+                    {accessAction.delete && <Badge tone="red">Delete</Badge>}
                 </div>
             );
         },

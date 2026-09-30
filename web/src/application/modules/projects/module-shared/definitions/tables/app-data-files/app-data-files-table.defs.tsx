@@ -29,7 +29,7 @@ function createColumns(projectId: string, env: string, appId: string): ColumnDef
             accessorKey: "type",
             header: "Type",
             enableSorting: false,
-            cell: ({ row: { original } }) => <Badge className="bg-sky-500 text-white">{original.type}</Badge>,
+            cell: ({ row: { original } }) => <Badge tone="sky">{original.type}</Badge>,
             meta: {
                 align: "center",
                 titleAlign: "center",
@@ -44,7 +44,7 @@ function createColumns(projectId: string, env: string, appId: string): ColumnDef
                     return "-";
                 }
 
-                return <Badge className="bg-indigo-500 text-white">{original.kind}</Badge>;
+                return <Badge tone="indigo">{original.kind}</Badge>;
             },
             meta: {
                 align: "center",

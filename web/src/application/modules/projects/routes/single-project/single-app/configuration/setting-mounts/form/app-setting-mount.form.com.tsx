@@ -294,7 +294,7 @@ export function AppSettingMountForm({
                                                 {row.part}
                                             </label>
                                             {row.gated && (
-                                                <Badge className="bg-amber-500 text-white">
+                                                <Badge tone="amber">
                                                     <LockIcon className="size-3" /> Sensitive
                                                 </Badge>
                                             )}

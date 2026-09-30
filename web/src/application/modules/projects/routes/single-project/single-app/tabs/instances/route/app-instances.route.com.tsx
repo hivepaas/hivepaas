@@ -1,7 +1,7 @@
 import { Fragment, useEffect, useMemo, useState } from "react";
 
 import { cn } from "@/lib/utils";
-import { Badge } from "@components/ui/badge";
+import { Badge, type BadgeTone } from "@components/ui/badge";
 import { dashedBorderBox, listBox } from "@lib/styles";
 import { useParams } from "react-router";
 import invariant from "tiny-invariant";
@@ -26,9 +26,9 @@ const TASK_STATE_CLASS_NAMES: Record<string, string> = {
     failed: "bg-red-500 text-white hover:bg-red-500/90",
 };
 
-const NODE_ROLE_CLASS_NAMES: Record<string, string> = {
-    manager: "bg-primary text-white",
-    worker: "bg-blue-500 text-white",
+const NODE_ROLE_TONES: Record<string, BadgeTone> = {
+    manager: "amber",
+    worker: "blue",
 };
 
 function useCurrentTime(): Date {
@@ -162,12 +162,17 @@ function NodeRoleBadge({ node }: { node: AppServiceTaskNode | null }) {
         return <span>-</span>;
     }
 
-    const className =
-        normalizedRole === "manager" && node?.isLeader
-            ? "bg-purple-500 text-white"
-            : (NODE_ROLE_CLASS_NAMES[normalizedRole] ?? "bg-primary text-primary-foreground");
+    const tone: BadgeTone =
+        normalizedRole === "manager" && node?.isLeader ? "purple" : (NODE_ROLE_TONES[normalizedRole] ?? "neutral");
 
-    return <Badge className={cn("h-7 px-3", className)}>{getNodeRoleLabel(node)}</Badge>;
+    return (
+        <Badge
+            tone={tone}
+            className="h-7 px-3"
+        >
+            {getNodeRoleLabel(node)}
+        </Badge>
+    );
 }
 
 function InstancesTableSkeleton() {

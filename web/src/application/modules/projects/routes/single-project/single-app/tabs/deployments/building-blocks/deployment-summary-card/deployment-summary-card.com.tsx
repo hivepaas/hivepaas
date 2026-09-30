@@ -359,7 +359,10 @@ export function DeploymentSummaryCard({
                         {deployment.trigger?.source === EAppDeploymentTriggerSource.RepoWebhook && (
                             <>
                                 <span className="text-muted-foreground/40 select-none">•</span>
-                                <Badge className="h-5 px-1.5 text-xs bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 hover:bg-emerald-500/20 border-emerald-500/30">
+                                <Badge
+                                    tone="emerald"
+                                    className="h-5 px-1.5 text-xs"
+                                >
                                     Webhook
                                 </Badge>
                             </>
@@ -493,7 +496,10 @@ export function DeploymentSummaryCard({
                             )}
 
                             {deployment.trigger?.source === EAppDeploymentTriggerSource.RepoWebhook && (
-                                <Badge className="h-7 px-2.5 text-xs bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 hover:bg-emerald-500/20 border border-emerald-500/30">
+                                <Badge
+                                    tone="emerald"
+                                    className="h-7 px-2.5 text-xs"
+                                >
                                     Webhook
                                 </Badge>
                             )}
@@ -775,7 +781,10 @@ export function DeploymentSummaryCard({
                                     {deployment.trigger?.source === EAppDeploymentTriggerSource.RepoWebhook && (
                                         <div className="flex items-center gap-1.5 shrink-0">
                                             <span className="text-muted-foreground">Trigger:</span>
-                                            <Badge className="h-5 px-1.5 text-xs bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border border-emerald-500/30">
+                                            <Badge
+                                                tone="emerald"
+                                                className="h-5 px-1.5 text-xs"
+                                            >
                                                 Webhook
                                             </Badge>
                                         </div>

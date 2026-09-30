@@ -43,7 +43,7 @@ function createColumns(projectId: string, env?: string): ColumnDef<ProjectComman
             cell: ({ row: { original } }) => (
                 <div className="flex items-center justify-center gap-2">
                     <SettingStatusBadge status={original.status} />
-                    {original.inherited && <Badge className="bg-purple-500 text-white">Inherited</Badge>}
+                    {original.inherited && <Badge tone="purple">Inherited</Badge>}
                 </div>
             ),
         },

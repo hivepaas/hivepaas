@@ -1,6 +1,5 @@
 import { useMemo, useState } from "react";
 
-import { cn } from "@/lib/utils";
 import { Field, FieldError, FieldGroup } from "@components/ui";
 import { useController, useFormContext } from "react-hook-form";
 import { useParams } from "react-router";
@@ -12,14 +11,14 @@ import { AppLink, Combobox, type ComboboxOption, InfoBlock } from "@application/
 import { DEFAULT_PAGINATED_DATA, ROUTE } from "@application/shared/constants";
 import { ESettingType } from "@application/shared/enums";
 
-import { Badge } from "@/components/ui/badge";
+import { Badge, type BadgeTone } from "@/components/ui/badge";
 
 import {
     type AppConfigDeploymentSettingsFormSchemaInput,
     type AppConfigDeploymentSettingsFormSchemaOutput,
 } from "../../schemas";
 
-function getGitCredentialBadge(cred?: { type?: string; kind?: string }) {
+function getGitCredentialBadge(cred?: { type?: string; kind?: string }): { label: string; tone: BadgeTone } {
     const type = cred?.type ?? "";
     const defaultKind = type === ESettingType.GithubApp || type === "github-app" ? "github" : "git";
     const rawKind = (cred?.kind ?? defaultKind).toLowerCase();
@@ -28,19 +27,19 @@ function getGitCredentialBadge(cred?: { type?: string; kind?: string }) {
     if (type === ESettingType.GithubApp || type === "github-app") {
         return {
             label: "github-app",
-            className: "bg-purple-600 text-white dark:bg-purple-600",
+            tone: "purple",
         };
     }
     if (type === ESettingType.SSHKey || type === "ssh-key") {
         return {
             label: `${cleanKind}-ssh-key`,
-            className: "bg-emerald-600 text-white dark:bg-emerald-600",
+            tone: "emerald",
         };
     }
     // Token / Access Token
     return {
         label: `${cleanKind}-token`,
-        className: "bg-blue-600 text-white dark:bg-blue-600",
+        tone: "blue",
     };
 }
 
@@ -92,10 +91,8 @@ export function GitCredentialSelect({ readOnly = false }: Props) {
         return (
             <span className="flex min-w-0 max-w-full items-center gap-2 text-left">
                 <Badge
-                    className={cn(
-                        "max-w-none shrink-0 rounded-md px-1.5 text-xs font-medium leading-none border-transparent",
-                        badge.className,
-                    )}
+                    tone={badge.tone}
+                    className="max-w-none shrink-0 rounded-md px-1.5 text-xs font-medium leading-none"
                 >
                     {badge.label}
                 </Badge>

@@ -71,7 +71,7 @@ function createColumns(projectId: string, env: string, appId: string): ColumnDef
             cell: ({ row: { original } }) => (
                 <div className="flex items-center justify-center gap-2">
                     <ProjectSecretStatusBadge status={original.status} />
-                    {original.inheritable && <Badge className="bg-purple-500 text-white">Inheritable</Badge>}
+                    {original.inheritable && <Badge tone="purple">Inheritable</Badge>}
                 </div>
             ),
             meta: { align: "center", titleAlign: "center" },

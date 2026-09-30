@@ -984,7 +984,10 @@ function ComponentsSection({ components }: { components: AppTemplateComponent[] 
 
                             <div className="flex flex-wrap items-center gap-1.5">
                                 {component.primary && (
-                                    <Badge className="text-[10px] px-2 py-0.5 bg-amber-500/15 text-amber-700 dark:text-amber-400 border-amber-500/40 hover:bg-amber-500/15">
+                                    <Badge
+                                        tone="amber"
+                                        className="text-[10px] px-2 py-0.5"
+                                    >
                                         Primary
                                     </Badge>
                                 )}

@@ -46,7 +46,7 @@ function createColumns(projectId: string, env: string, appId: string): ColumnDef
                 return (
                     <div className="flex items-center justify-center gap-2">
                         <ProjectSecretStatusBadge status={status} />
-                        {original.inherited && <Badge className="bg-purple-500 text-white">Inherited</Badge>}
+                        {original.inherited && <Badge tone="purple">Inherited</Badge>}
                     </div>
                 );
             },

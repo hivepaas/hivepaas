@@ -9,10 +9,10 @@ import { EditCell, MenuCell } from "./building-blocks";
 
 function HealthCheckTypeBadge({ type }: { type: AppHealthCheck["healthcheckType"] }) {
     if (type === EAppHealthCheckType.REST) {
-        return <Badge className="bg-yellow-400 text-white hover:bg-yellow-400/90">REST</Badge>;
+        return <Badge tone="yellow">REST</Badge>;
     }
 
-    return <Badge className="bg-purple-500 text-white hover:bg-purple-500/90">GRPC</Badge>;
+    return <Badge tone="purple">GRPC</Badge>;
 }
 
 function createColumns(projectId: string, env: string, appId: string): ColumnDef<AppHealthCheck>[] {

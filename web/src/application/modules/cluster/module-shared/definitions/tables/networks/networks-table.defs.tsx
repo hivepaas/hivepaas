@@ -55,7 +55,7 @@ function createColumns(scope: NetworkManagementScope): ColumnDef<ClusterNetwork>
                               return "-";
                           }
 
-                          return <Badge className="bg-purple-500 text-white">Inherited</Badge>;
+                          return <Badge tone="purple">Inherited</Badge>;
                       },
                   } satisfies ColumnDef<ClusterNetwork>,
               ]

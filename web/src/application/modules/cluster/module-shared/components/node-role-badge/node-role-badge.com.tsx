@@ -1,13 +1,12 @@
 import { memo } from "react";
 
-import { cn } from "@/lib/utils";
-import { Badge } from "@components/ui/badge";
+import { Badge, type BadgeTone } from "@components/ui/badge";
 import { ENodeRole } from "~/cluster/module-shared/enums";
 
 function View({ role, isLeader }: Props) {
-    const roleColorMap: Record<ENodeRole, string> = {
-        [ENodeRole.Manager]: "bg-primary text-white",
-        [ENodeRole.Worker]: "bg-blue-500 text-white",
+    const roleToneMap: Record<ENodeRole, BadgeTone> = {
+        [ENodeRole.Manager]: "amber",
+        [ENodeRole.Worker]: "blue",
     };
 
     const roleMap: Record<ENodeRole, string> = {
@@ -17,10 +16,15 @@ function View({ role, isLeader }: Props) {
 
     // If role is manager and isLeader is true, show "Leader" instead
     const displayText = role === ENodeRole.Manager && isLeader ? "Leader" : roleMap[role];
-    const displayColor = role === ENodeRole.Manager && isLeader ? "bg-purple-500 text-white" : roleColorMap[role];
+    const displayTone: BadgeTone = role === ENodeRole.Manager && isLeader ? "purple" : roleToneMap[role];
 
     return (
-        <Badge className={cn(displayColor || "bg-primary text-primary-foreground", "h-6")}>{displayText || role}</Badge>
+        <Badge
+            tone={displayTone}
+            className="h-6"
+        >
+            {displayText || role}
+        </Badge>
     );
 }
 

@@ -1,4 +1,4 @@
-import { Badge } from "@components/ui/badge";
+import { Badge, type BadgeTone } from "@components/ui/badge";
 import { Checkbox } from "@components/ui/checkbox";
 import type { ColumnDef } from "@tanstack/react-table";
 import type { ProjectCommandTemplate } from "~/projects/domain";
@@ -10,18 +10,18 @@ import { ProjectCommandTemplateEditCell } from "./project-command-template-edit-
 import { toCommandTemplateExternalHref } from "./project-command-template-external-href";
 import { ProjectCommandTemplateMenuCell } from "./project-command-template-menu-cell.com";
 
-function getKindClassName(kind: ProjectCommandTemplate["kind"]): string {
+function getKindTone(kind: ProjectCommandTemplate["kind"]): BadgeTone {
     switch (kind) {
         case ECommandTemplateKind.Database:
-            return "bg-emerald-300 text-white";
+            return "emerald";
         case ECommandTemplateKind.Backup:
-            return "bg-blue-300 text-white";
+            return "blue";
         case ECommandTemplateKind.Deployment:
-            return "bg-purple-300 text-white";
+            return "purple";
         case ECommandTemplateKind.Diagnostics:
-            return "bg-amber-300 text-white";
+            return "amber";
         default:
-            return "bg-slate-300 text-white";
+            return "neutral";
     }
 }
 
@@ -60,7 +60,7 @@ function createColumns(projectId: string, env?: string): ColumnDef<ProjectComman
             },
             cell: ({ row: { original } }) => (
                 <div className="flex justify-center">
-                    <Badge className={getKindClassName(original.kind)}>{original.kind}</Badge>
+                    <Badge tone={getKindTone(original.kind)}>{original.kind}</Badge>
                 </div>
             ),
         },
@@ -116,7 +116,7 @@ function createColumns(projectId: string, env?: string): ColumnDef<ProjectComman
             cell: ({ row: { original } }) => (
                 <div className="flex items-center justify-center gap-2">
                     <SettingStatusBadge status={original.status} />
-                    {original.inherited && <Badge className="bg-purple-500 text-white">Inherited</Badge>}
+                    {original.inherited && <Badge tone="purple">Inherited</Badge>}
                 </div>
             ),
         },

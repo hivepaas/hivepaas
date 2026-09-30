@@ -1,6 +1,6 @@
 import React, { type ReactNode } from "react";
 
-import { Badge } from "@components/ui/badge";
+import { Badge, type BadgeTone } from "@components/ui/badge";
 import { Button } from "@components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger } from "@components/ui/dropdown-menu";
 import { type ColumnDef } from "@tanstack/react-table";
@@ -14,7 +14,7 @@ import { PermissionTooltipAction } from "@application/shared/permissions";
 
 type StorageMountWithId = AppStorageMount & { _id: string };
 
-const MOUNT_TYPE_BADGE_CLASS = "bg-cyan-500 text-white";
+const MOUNT_TYPE_BADGE_TONE: BadgeTone = "cyan";
 
 function getSourceDisplay(mount: AppStorageMount): ReactNode {
     return mount.source ?? "-";
@@ -99,7 +99,7 @@ export function createStorageTableColumns(
                 const { type } = row.original;
                 if (!type) return <div className="font-medium">-</div>;
 
-                return <Badge className={MOUNT_TYPE_BADGE_CLASS}>{type}</Badge>;
+                return <Badge tone={MOUNT_TYPE_BADGE_TONE}>{type}</Badge>;
             },
             meta: {
                 align: "left",

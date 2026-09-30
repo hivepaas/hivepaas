@@ -974,7 +974,8 @@ test_install_env_template() {
   read_kv_file "$file" collect
   check "the required settings, to fill in" "HIVEPAAS_ADMIN_EMAIL=|HIVEPAAS_ADMIN_PASSWORD=|HIVEPAAS_APP_DOMAIN=|" \
     "$COLLECTED"
-  for key in $(usage | grep -oE 'HIVEPAAS_[A-Z_]+' | sort -u); do
+  # The settings an install uses; those for trying a release are the help's alone.
+  for key in $(usage | sed -n '/^Settings/,/^$/p' | grep -oE 'HIVEPAAS_[A-Z_]+' | sort -u); do
     check_contains "it explains $key" "$(cat "$file")" "$key"
   done
 }

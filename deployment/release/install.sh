@@ -2060,16 +2060,18 @@ Settings, from the environment or --config (the environment wins):
   HIVEPAAS_SWAP_SIZE_MB        the swap file's size (default: 2048)
   HIVEPAAS_EARLYOOM=false      do not install earlyoom
   HIVEPAAS_UPGRADE_DOCKER=true upgrade Docker to its latest release without asking
-  HIVEPAAS_AGENT_IMAGE         the agent's image (default: from the release)
-  HIVEPAAS_RELEASE_BRANCH      the branch the release info is read from (default: release)
-  HIVEPAAS_INSTALL_REF         the ref the stack files are downloaded from (default:
-                               the release this installer came with)
   HIVEPAAS_EXISTING_DB         keep or reset, when this server has the database of an
                                earlier HivePaaS; asked when not set, and never assumed
   HIVEPAAS_DB_PASSWORD         with keep: the database's password, when
                                <data dir>/credentials.txt is gone
   HIVEPAAS_CERT_WAIT_SECONDS   how long to wait for the dashboard's certificate from
                                Let's Encrypt before saying done (default: 20)
+
+For trying a release before it is published; an install never needs them:
+  HIVEPAAS_RELEASE_BRANCH      the branch the release info is read from (default: release)
+  HIVEPAAS_INSTALL_REF         the ref the stack files are downloaded from (default:
+                               the release this installer came with)
+  HIVEPAAS_AGENT_IMAGE         the agent's image (default: from the release)
 
 Silent install - a settings file to fill in, with every setting explained:
   curl -fsSLO https://raw.githubusercontent.com/hivepaas/hivepaas/main/deployment/release/install.env

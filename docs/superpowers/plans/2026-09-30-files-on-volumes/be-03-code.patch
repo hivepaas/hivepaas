@@ -1,0 +1,782 @@
+diff --git a/hivepaas_app/base/file.go b/hivepaas_app/base/file.go
+index 35be77cd..82aeb6d2 100644
+--- a/hivepaas_app/base/file.go
++++ b/hivepaas_app/base/file.go
+@@ -60,10 +60,12 @@ var (
+ type FileStorageType string
+ 
+ const (
+-	FileStorageLocal FileStorageType = "local"
+-	FileStorageCloud FileStorageType = "cloud"
++	// FileStorageVolume is a file on a volume: the ClusterVolume its StorageID
++	// names, or HivePaaS's own data directory when it names none.
++	FileStorageVolume FileStorageType = "volume"
++	FileStorageCloud  FileStorageType = "cloud"
+ )
+ 
+ var (
+-	AllFileStorageTypes = []FileStorageType{FileStorageLocal, FileStorageCloud}
++	AllFileStorageTypes = []FileStorageType{FileStorageVolume, FileStorageCloud}
+ )
+diff --git a/hivepaas_app/entity/file.go b/hivepaas_app/entity/file.go
+index 64a417f9..275b4b86 100644
+--- a/hivepaas_app/entity/file.go
++++ b/hivepaas_app/entity/file.go
+@@ -55,8 +55,8 @@ func (f *File) IsActive() bool {
+ 	return f.Status == base.FileStatusActive
+ }
+ 
+-func (f *File) IsInLocalStorage() bool {
+-	return f.StorageType == base.FileStorageLocal
++func (f *File) IsOnVolume() bool {
++	return f.StorageType == base.FileStorageVolume
+ }
+ 
+ func (f *File) IsInCloudStorage() bool {
+diff --git a/hivepaas_app/hperrors/errors_infra.go b/hivepaas_app/hperrors/errors_infra.go
+index 3e9a6447..67c59a8b 100644
+--- a/hivepaas_app/hperrors/errors_infra.go
++++ b/hivepaas_app/hperrors/errors_infra.go
+@@ -28,6 +28,9 @@ var (
+ 	// A file path that leaves the volume directory it is given in: an absolute
+ 	// path, a "..", or a symbolic link out.
+ 	ErrFilePathOutsideRoot = NewErr(ErrArgumentInvalid, "ERR_FILE_PATH_OUTSIDE_ROOT")
++	// A volume HivePaaS cannot keep files on: one pinned by a label that names no
++	// node or several, so which node holds the files cannot be told.
++	ErrVolumeCannotHoldFiles = NewErr(ErrPreconditionFailed, "ERR_VOLUME_CANNOT_HOLD_FILES")
+ 	// A mount whose directory is not the app's own: another app's, a whole volume,
+ 	// or a bind HivePaaS did not make.
+ 	ErrStoragePermissionsNotResettable = NewErr(ErrPreconditionFailed, "ERR_STORAGE_PERMISSIONS_NOT_RESETTABLE")
+diff --git a/hivepaas_app/pkg/translation/messages/en/errors.infra.en.toml b/hivepaas_app/pkg/translation/messages/en/errors.infra.en.toml
+index 042d26ef..56185cca 100644
+--- a/hivepaas_app/pkg/translation/messages/en/errors.infra.en.toml
++++ b/hivepaas_app/pkg/translation/messages/en/errors.infra.en.toml
+@@ -19,6 +19,7 @@ ERR_ARCHIVE_FORMAT_UNSUPPORTED = "Archive format '{{.Format}}' is not supported"
+ ERR_ENCRYPTION_FORMAT_UNSUPPORTED = "Encryption format '{{.Format}}' is not supported"
+ ERR_STORAGE_TYPE_UNSUPPORTED = "Storage type '{{.Type}}' is not supported"
+ ERR_FILE_PATH_OUTSIDE_ROOT = "Path '{{.Path}}' is not inside the directory '{{.Root}}'"
++ERR_VOLUME_CANNOT_HOLD_FILES = "Volume '{{.Name}}' cannot hold HivePaaS's files: it is pinned to the label '{{.Label}}', which {{.Nodes}} nodes carry, not one"
+ ERR_STORAGE_PERMISSIONS_NOT_RESETTABLE = "The storage at '{{.Target}}' is not a directory of this app's own, so its permissions cannot be reset"
+ ERR_STORAGE_PERMISSIONS_NOT_RESET = "The permissions of some files in '{{.Path}}' could not be changed"
+ 
+diff --git a/hivepaas_app/service/agentservice/agentserviceimpl/agent.go b/hivepaas_app/service/agentservice/agentserviceimpl/agent.go
+index a268c248..34342a54 100644
+--- a/hivepaas_app/service/agentservice/agentserviceimpl/agent.go
++++ b/hivepaas_app/service/agentservice/agentserviceimpl/agent.go
+@@ -55,9 +55,20 @@ func (s *service) GetAgentAddrForNode(ctx context.Context, nodeID string) (strin
+ }
+ 
+ func (s *service) GetAgentAddrForNodeLabel(ctx context.Context, nodeLabel string) (string, error) {
++	nodeIDs, err := s.NodeIDsWithLabel(ctx, nodeLabel)
++	if err != nil {
++		return "", hperrors.Wrap(err)
++	}
++	if len(nodeIDs) == 0 {
++		return "", hperrors.Wrap(hperrors.ErrNodeWithLabelNotAvailable).WithParam("Label", nodeLabel)
++	}
++	return s.GetAgentAddrForNode(ctx, nodeIDs[0])
++}
++
++func (s *service) NodeIDsWithLabel(ctx context.Context, nodeLabel string) ([]string, error) {
+ 	nodeLabel = strings.TrimSpace(nodeLabel)
+ 	if nodeLabel == "" {
+-		return "", hperrors.Wrap(hperrors.ErrNodeWithLabelNotAvailable).WithParam("Label", nodeLabel)
++		return nil, hperrors.Wrap(hperrors.ErrNodeWithLabelNotAvailable).WithParam("Label", nodeLabel)
+ 	}
+ 
+ 	parts := strings.SplitN(nodeLabel, "=", 2) //nolint:mnd
+@@ -70,24 +81,18 @@ func (s *service) GetAgentAddrForNodeLabel(ctx context.Context, nodeLabel string
+ 
+ 	nodesResp, err := s.dockerManager.NodeList(ctx)
+ 	if err != nil {
+-		return "", hperrors.Wrap(err)
++		return nil, hperrors.Wrap(err)
+ 	}
+ 
+-	var nodeID string
++	var nodeIDs []string
+ 	for i := range nodesResp.Items {
+ 		node := nodesResp.Items[i]
+ 		if node.Status.State != swarm.NodeStateReady {
+ 			continue
+ 		}
+-		if actualVal, ok := node.Spec.Labels[key]; ok {
+-			if !hasVal || actualVal == val {
+-				nodeID = node.ID
+-				break
+-			}
++		if actualVal, ok := node.Spec.Labels[key]; ok && (!hasVal || actualVal == val) {
++			nodeIDs = append(nodeIDs, node.ID)
+ 		}
+ 	}
+-	if nodeID == "" {
+-		return "", hperrors.Wrap(hperrors.ErrNodeWithLabelNotAvailable).WithParam("Label", nodeLabel)
+-	}
+-	return s.GetAgentAddrForNode(ctx, nodeID)
++	return nodeIDs, nil
+ }
+diff --git a/hivepaas_app/service/agentservice/service.go b/hivepaas_app/service/agentservice/service.go
+index c4b897f6..050e14be 100644
+--- a/hivepaas_app/service/agentservice/service.go
++++ b/hivepaas_app/service/agentservice/service.go
+@@ -7,4 +7,6 @@ import (
+ type Service interface {
+ 	GetAgentAddrForNode(ctx context.Context, nodeID string) (string, error)
+ 	GetAgentAddrForNodeLabel(ctx context.Context, nodeLabel string) (string, error)
++	// NodeIDsWithLabel is every ready node carrying the label, key or key=value.
++	NodeIDsWithLabel(ctx context.Context, nodeLabel string) ([]string, error)
+ }
+diff --git a/hivepaas_app/service/fileservice/fileserviceimpl/access.go b/hivepaas_app/service/fileservice/fileserviceimpl/access.go
+new file mode 100644
+index 00000000..ff04a4d1
+--- /dev/null
++++ b/hivepaas_app/service/fileservice/fileserviceimpl/access.go
+@@ -0,0 +1,319 @@
++package fileserviceimpl
++
++import (
++	"context"
++	"errors"
++	"io"
++	"os"
++	"path/filepath"
++	"strings"
++
++	"github.com/hivepaas/hivepaas/hivepaas_app/base"
++	"github.com/hivepaas/hivepaas/hivepaas_app/config"
++	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
++	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
++	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
++	agentfile "github.com/hivepaas/hivepaas/hivepaas_app/interface/agent/client/fileservice"
++	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
++	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/safego"
++	"github.com/hivepaas/hivepaas/hivepaas_app/service/cloudstorageservice"
++	"github.com/hivepaas/hivepaas/hivepaas_app/service/fileservice"
++	"github.com/hivepaas/hivepaas/hivepaas_app/service/volumeservice"
++)
++
++// dirModeOwn is for the directories a file's path needs on the system volume.
++const dirModeOwn = 0o700
++
++// Open reads a file.
++func (s *service) Open(ctx context.Context, db database.IDB, file *entity.File) (io.ReadCloser, error) {
++	switch file.StorageType {
++	case base.FileStorageVolume:
++		if file.StorageID == "" {
++			path, err := systemPath(file.Path)
++			if err != nil {
++				return nil, hperrors.Wrap(err)
++			}
++			f, err := os.Open(path) //nolint:gosec // held inside the data directory above
++			return f, notFoundOr(err)
++		}
++		agent, root, err := s.volumeAgent(ctx, db, file.StorageID)
++		if err != nil {
++			return nil, hperrors.Wrap(err)
++		}
++		reader, err := agent.Read(ctx, root, file.Path)
++		if err != nil {
++			_ = agent.Close()
++			return nil, hperrors.Wrap(err)
++		}
++		return &closingBoth{ReadCloser: reader, agent: agent}, nil
++	case base.FileStorageCloud:
++		return s.openCloud(ctx, db, file)
++	default:
++		return nil, hperrors.Wrap(hperrors.ErrStorageTypeUnsupported).WithParam("Type", file.StorageType)
++	}
++}
++
++// Create writes a file. What is written reaches its place once the writer is
++// closed without error: a failed write leaves no file, and replaces none.
++func (s *service) Create(ctx context.Context, db database.IDB, file *entity.File) (fileservice.FileWriter, error) {
++	if file.StorageType != base.FileStorageVolume {
++		return nil, hperrors.Wrap(hperrors.ErrStorageTypeUnsupported).WithParam("Type", file.StorageType)
++	}
++	if file.StorageID == "" {
++		return createSystemFile(file.Path)
++	}
++	agent, root, err := s.volumeAgent(ctx, db, file.StorageID)
++	if err != nil {
++		return nil, hperrors.Wrap(err)
++	}
++
++	pr, pw := io.Pipe()
++	w := &agentWriter{PipeWriter: pw, done: make(chan error, 1)}
++	go func() {
++		var writeErr error
++		defer func() {
++			_ = agent.Close()
++			_ = pr.CloseWithError(writeErr)
++			w.done <- writeErr
++		}()
++		defer safego.RecoverTo(&writeErr)
++		_, writeErr = agent.Write(ctx, root, file.Path, pr)
++	}()
++	return w, nil
++}
++
++// Remove removes a file. A file already gone is removed.
++func (s *service) Remove(ctx context.Context, db database.IDB, file *entity.File) error {
++	switch file.StorageType {
++	case base.FileStorageVolume:
++		if file.StorageID == "" {
++			path, err := systemPath(file.Path)
++			if err != nil {
++				return hperrors.Wrap(err)
++			}
++			if err = os.Remove(path); err != nil && !errors.Is(err, os.ErrNotExist) {
++				return hperrors.Wrap(err)
++			}
++			return nil
++		}
++		agent, root, err := s.volumeAgent(ctx, db, file.StorageID)
++		if err != nil {
++			return hperrors.Wrap(err)
++		}
++		defer agent.Close()
++		return hperrors.Wrap(agent.Remove(ctx, root, file.Path))
++	case base.FileStorageCloud:
++		return s.removeCloud(ctx, db, file)
++	default:
++		return hperrors.Wrap(hperrors.ErrStorageTypeUnsupported).WithParam("Type", file.StorageType)
++	}
++}
++
++// Stat is a file's size, as it is stored now.
++func (s *service) Stat(ctx context.Context, db database.IDB, file *entity.File) (int64, error) {
++	switch file.StorageType {
++	case base.FileStorageVolume:
++		if file.StorageID == "" {
++			path, err := systemPath(file.Path)
++			if err != nil {
++				return 0, hperrors.Wrap(err)
++			}
++			info, err := os.Stat(path)
++			if err != nil {
++				return 0, notFoundOr(err)
++			}
++			return info.Size(), nil
++		}
++		agent, root, err := s.volumeAgent(ctx, db, file.StorageID)
++		if err != nil {
++			return 0, hperrors.Wrap(err)
++		}
++		defer agent.Close()
++		size, err := agent.Stat(ctx, root, file.Path)
++		return size, hperrors.Wrap(err)
++	case base.FileStorageCloud:
++		return file.Size, nil
++	default:
++		return 0, hperrors.Wrap(hperrors.ErrStorageTypeUnsupported).WithParam("Type", file.StorageType)
++	}
++}
++
++// CountOnVolume counts the files a volume holds. Deleting a volume is refused
++// while it is not zero; deleting the files with the volume would remove each of
++// them through Remove.
++func (s *service) CountOnVolume(ctx context.Context, db database.IDB, volumeID string) (int, error) {
++	files, _, err := s.fileRepo.List(ctx, db, nil,
++		bunex.SelectColumns("file.id"),
++		bunex.SelectWhere("file.storage_type = ?", base.FileStorageVolume),
++		bunex.SelectWhere("file.storage_id = ?", volumeID),
++		bunex.SelectWhere("file.deleted IS NOT TRUE"),
++	)
++	if err != nil {
++		return 0, hperrors.Wrap(err)
++	}
++	return len(files), nil
++}
++
++// volumeAgent is the agent that reaches a volume's files, and the volume's
++// directory on its host: the node the volume is pinned to, or, for a volume
++// every node shares, the node asking.
++func (s *service) volumeAgent(
++	ctx context.Context,
++	db database.IDB,
++	volumeID string,
++) (agentfile.FileServiceClient, string, error) {
++	setting, err := s.settingRepo.GetByID(ctx, db, nil, base.SettingTypeClusterVolume, volumeID, false)
++	if err != nil {
++		return nil, "", hperrors.Wrap(err)
++	}
++	dir, err := volumeservice.ResolveHostDir(ctx, s.dockerManager, setting)
++	if err != nil {
++		return nil, "", hperrors.Wrap(err)
++	}
++
++	nodeID := dir.NodeID
++	if nodeID == "" {
++		nodeIDs, err := s.agentService.NodeIDsWithLabel(ctx, dir.NodeLabel)
++		if err != nil {
++			return nil, "", hperrors.Wrap(err)
++		}
++		if len(nodeIDs) != 1 {
++			return nil, "", hperrors.Wrap(hperrors.ErrVolumeCannotHoldFiles).
++				WithParam("Name", setting.Name).WithParam("Label", dir.NodeLabel).WithParam("Nodes", len(nodeIDs))
++		}
++		nodeID = nodeIDs[0]
++	}
++
++	addr, err := s.agentService.GetAgentAddrForNode(ctx, nodeID)
++	if err != nil {
++		return nil, "", hperrors.Wrap(err)
++	}
++	agent, err := s.agentFiles(addr)
++	if err != nil {
++		return nil, "", hperrors.Wrap(err)
++	}
++	return agent, dir.Dir, nil
++}
++
++// systemPath is a path on the system volume, HivePaaS's data directory, which
++// must stay inside it.
++func systemPath(path string) (string, error) {
++	clean := filepath.Clean(path)
++	if path == "" || filepath.IsAbs(path) || clean == "." || clean == ".." ||
++		strings.HasPrefix(clean, ".."+string(filepath.Separator)) {
++		return "", hperrors.Wrap(hperrors.ErrFilePathOutsideRoot).
++			WithParam("Path", path).WithParam("Root", config.Current().AppPath)
++	}
++	return filepath.Join(config.Current().AppPath, clean), nil
++}
++
++// createSystemFile writes a file on the system volume through a temporary file,
++// renamed into place on Close.
++func createSystemFile(path string) (fileservice.FileWriter, error) {
++	target, err := systemPath(path)
++	if err != nil {
++		return nil, hperrors.Wrap(err)
++	}
++	if err = os.MkdirAll(filepath.Dir(target), dirModeOwn); err != nil {
++		return nil, hperrors.Wrap(err)
++	}
++	temp, err := os.CreateTemp(filepath.Dir(target), "."+filepath.Base(target)+".tmp-*")
++	if err != nil {
++		return nil, hperrors.Wrap(err)
++	}
++	return &renamingWriter{File: temp, target: target}, nil
++}
++
++// renamingWriter is a temporary file that becomes target when closed. Abort
++// discards it instead.
++type renamingWriter struct {
++	*os.File
++	target string
++	failed bool
++}
++
++func (w *renamingWriter) Write(p []byte) (int, error) {
++	n, err := w.File.Write(p)
++	if err != nil {
++		w.failed = true
++	}
++	return n, err //nolint:wrapcheck
++}
++
++func (w *renamingWriter) Close() error {
++	if err := w.File.Close(); err != nil || w.failed {
++		_ = os.Remove(w.Name())
++		return hperrors.Wrap(errors.Join(err, errWriteFailed))
++	}
++	if err := os.Rename(w.Name(), w.target); err != nil {
++		_ = os.Remove(w.Name())
++		return hperrors.Wrap(err)
++	}
++	return nil
++}
++
++func (w *renamingWriter) Abort(error) {
++	_ = w.File.Close()
++	_ = os.Remove(w.Name())
++}
++
++var errWriteFailed = errors.New("the file was not written whole")
++
++// agentWriter feeds an agent's write; Close waits for the agent's answer.
++type agentWriter struct {
++	*io.PipeWriter
++	done chan error
++}
++
++func (w *agentWriter) Close() error {
++	_ = w.PipeWriter.Close()
++	return hperrors.Wrap(<-w.done)
++}
++
++// Abort ends the agent's write with err, which makes the agent drop it.
++func (w *agentWriter) Abort(err error) {
++	_ = w.CloseWithError(err)
++	<-w.done
++}
++
++// closingBoth is a reader whose agent connection closes with it.
++type closingBoth struct {
++	io.ReadCloser
++	agent agentfile.FileServiceClient
++}
++
++func (c *closingBoth) Close() error {
++	err := c.ReadCloser.Close()
++	_ = c.agent.Close()
++	return hperrors.Wrap(err)
++}
++
++func (s *service) openCloud(ctx context.Context, db database.IDB, file *entity.File) (io.ReadCloser, error) {
++	if file.Storage == nil {
++		return nil, hperrors.NewInactive("Storage setting")
++	}
++	switch base.CloudStorageKind(file.Storage.Kind) {
++	case base.CloudStorageKindS3:
++		s3Client, err := cloudstorageservice.NewS3Client(ctx, db, file.Storage, nil)
++		if err != nil {
++			return nil, hperrors.Wrap(err)
++		}
++		object, err := s3Client.GetObject(ctx, file.Bucket, file.Path)
++		if err != nil {
++			return nil, hperrors.Wrap(err)
++		}
++		return object.Body, nil
++	default:
++		return nil, hperrors.NewUnsupported("Storage type")
++	}
++}
++
++func notFoundOr(err error) error {
++	if err == nil {
++		return nil
++	}
++	if errors.Is(err, os.ErrNotExist) {
++		return hperrors.NewNotFound("File")
++	}
++	return hperrors.Wrap(err)
++}
+diff --git a/hivepaas_app/service/fileservice/fileserviceimpl/delete.go b/hivepaas_app/service/fileservice/fileserviceimpl/delete.go
+index 0ef9d5a8..af9d0c35 100644
+--- a/hivepaas_app/service/fileservice/fileserviceimpl/delete.go
++++ b/hivepaas_app/service/fileservice/fileserviceimpl/delete.go
+@@ -3,15 +3,14 @@ package fileserviceimpl
+ import (
+ 	"context"
+ 	"errors"
+-	"os"
+-	"path/filepath"
+ 	"time"
+ 
+ 	"github.com/tiendc/gofn"
+ 
+ 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
+-	"github.com/hivepaas/hivepaas/hivepaas_app/config"
++	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
+ 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
++	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
+ 	"github.com/hivepaas/hivepaas/hivepaas_app/service/cloudstorageservice"
+ 	"github.com/hivepaas/hivepaas/hivepaas_app/service/fileservice"
+ )
+@@ -23,67 +22,30 @@ func (s *service) DeleteFileData(
+ 	if req.RetryDelay <= 0 {
+ 		req.RetryDelay = 3 * time.Second //nolint:mnd
+ 	}
+-	switch req.File.StorageType {
+-	case base.FileStorageLocal:
+-		err = s.deleteLocalFile(ctx, req)
+-	case base.FileStorageCloud:
+-		err = s.deleteCloudFile(ctx, req)
+-	}
+-	if err != nil {
+-		return nil, hperrors.Wrap(err)
+-	}
+-	return &fileservice.DeleteDataResp{}, nil
+-}
+-
+-func (s *service) deleteLocalFile(
+-	ctx context.Context,
+-	req *fileservice.DeleteDataReq,
+-) error {
+-	filePath := filepath.Join(config.Current().AppPath, req.File.Path)
+ 	// TODO: create an async task for deleting the file later
+-	err := gofn.ExecRetryCtx(ctx, func() error {
+-		err := os.Remove(filePath)
+-		if err != nil {
+-			return hperrors.Wrap(err)
+-		}
+-		return nil
++	err = gofn.ExecRetryCtx(ctx, func() error {
++		return s.Remove(ctx, req.DB, req.File)
+ 	}, req.RetryMax, req.RetryDelay)
+ 	if err != nil {
+-		return hperrors.Wrap(err)
++		return nil, hperrors.Wrap(err)
+ 	}
+-	return nil
++	return &fileservice.DeleteDataResp{}, nil
+ }
+ 
+-func (s *service) deleteCloudFile(
+-	ctx context.Context,
+-	req *fileservice.DeleteDataReq,
+-) (err error) {
+-	file := req.File
++func (s *service) removeCloud(ctx context.Context, db database.IDB, file *entity.File) error {
+ 	if file.Storage == nil {
+ 		return hperrors.NewInactive("Storage setting")
+ 	}
+-
+ 	switch base.CloudStorageKind(file.Storage.Kind) {
+ 	case base.CloudStorageKindS3:
+-		s3Client, err := cloudstorageservice.NewS3Client(ctx, req.DB, file.Storage, nil)
++		s3Client, err := cloudstorageservice.NewS3Client(ctx, db, file.Storage, nil)
+ 		if err != nil {
+ 			return hperrors.Wrap(err)
+ 		}
+-
+-		// TODO: create an async task for deleting the file later
+-		err = gofn.ExecRetryCtx(ctx, func() error {
+-			err = s3Client.DeleteObject(ctx, file.Bucket, file.Path)
+-			if err != nil && !errors.Is(err, hperrors.ErrNotFound) {
+-				return hperrors.Wrap(err)
+-			}
+-			return nil
+-		}, req.RetryMax, req.RetryDelay)
+-		if err != nil {
++		if err = s3Client.DeleteObject(ctx, file.Bucket, file.Path); err != nil && !errors.Is(err, hperrors.ErrNotFound) {
+ 			return hperrors.Wrap(err)
+ 		}
+-
+ 		return nil
+-
+ 	default:
+ 		return hperrors.NewUnsupported("Storage type")
+ 	}
+diff --git a/hivepaas_app/service/fileservice/fileserviceimpl/get_download_url.go b/hivepaas_app/service/fileservice/fileserviceimpl/get_download_url.go
+index 06d3c1cd..a56d2c95 100644
+--- a/hivepaas_app/service/fileservice/fileserviceimpl/get_download_url.go
++++ b/hivepaas_app/service/fileservice/fileserviceimpl/get_download_url.go
+@@ -20,7 +20,7 @@ func (s *service) GetDownloadURL(
+ 	req *fileservice.GetDownloadURLReq,
+ ) (*fileservice.GetDownloadURLResp, error) {
+ 	file := req.File
+-	if file.StorageType == base.FileStorageLocal || !req.CloudPresign {
++	if file.StorageType == base.FileStorageVolume || !req.CloudPresign {
+ 		token, err := s.GenerateDownloadToken(auth.User.ID, req.File.ID, req.RequireLogin, req.Expiration)
+ 		if err != nil {
+ 			return nil, hperrors.Wrap(err)
+diff --git a/hivepaas_app/service/fileservice/fileserviceimpl/service.go b/hivepaas_app/service/fileservice/fileserviceimpl/service.go
+index 57c05468..2ef12ea7 100644
+--- a/hivepaas_app/service/fileservice/fileserviceimpl/service.go
++++ b/hivepaas_app/service/fileservice/fileserviceimpl/service.go
+@@ -1,18 +1,33 @@
+ package fileserviceimpl
+ 
+ import (
++	agentfile "github.com/hivepaas/hivepaas/hivepaas_app/interface/agent/client/fileservice"
+ 	"github.com/hivepaas/hivepaas/hivepaas_app/repository"
++	"github.com/hivepaas/hivepaas/hivepaas_app/service/agentservice"
+ 	"github.com/hivepaas/hivepaas/hivepaas_app/service/fileservice"
++	"github.com/hivepaas/hivepaas/services/docker"
+ )
+ 
+ func New(
+ 	fileRepo repository.FileRepo,
++	settingRepo repository.SettingRepo,
++	dockerManager docker.Manager,
++	agentService agentservice.Service,
+ ) fileservice.Service {
+ 	return &service{
+-		fileRepo: fileRepo,
++		fileRepo:      fileRepo,
++		settingRepo:   settingRepo,
++		dockerManager: dockerManager,
++		agentService:  agentService,
++		agentFiles:    agentfile.NewFileServiceClient,
+ 	}
+ }
+ 
+ type service struct {
+-	fileRepo repository.FileRepo
++	fileRepo      repository.FileRepo
++	settingRepo   repository.SettingRepo
++	dockerManager docker.Manager
++	agentService  agentservice.Service
++	// agentFiles connects to the file service of the agent at an address.
++	agentFiles func(agentAddr string) (agentfile.FileServiceClient, error)
+ }
+diff --git a/hivepaas_app/service/fileservice/fileserviceimpl/upload.go b/hivepaas_app/service/fileservice/fileserviceimpl/upload.go
+index 205ee3ac..911ddedc 100644
+--- a/hivepaas_app/service/fileservice/fileserviceimpl/upload.go
++++ b/hivepaas_app/service/fileservice/fileserviceimpl/upload.go
+@@ -108,7 +108,7 @@ func (s *service) uploadItem(
+ 	_ context.Context,
+ 	req *uploadItemReq,
+ ) (*uploadItemResp, error) {
+-	if req.file.StorageType == base.FileStorageLocal {
++	if req.file.StorageType == base.FileStorageVolume {
+ 		return s.uploadItemToLocal(req)
+ 	}
+ 	return nil, hperrors.NewNotImplemented()
+diff --git a/hivepaas_app/service/fileservice/service.go b/hivepaas_app/service/fileservice/service.go
+index 0e32623f..157abb3d 100644
+--- a/hivepaas_app/service/fileservice/service.go
++++ b/hivepaas_app/service/fileservice/service.go
+@@ -2,9 +2,11 @@ package fileservice
+ 
+ import (
+ 	"context"
++	"io"
+ 	"time"
+ 
+ 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
++	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
+ 	"github.com/hivepaas/hivepaas/hivepaas_app/entity/appentity"
+ 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
+ )
+@@ -20,4 +22,17 @@ type Service interface {
+ 	Upload(ctx context.Context, db database.IDB, req *UploadReq) (*UploadResp, error)
+ 
+ 	DeleteFileData(ctx context.Context, req *DeleteDataReq) (*DeleteDataResp, error)
++
++	// Open, Create, Remove and Stat reach a file's content wherever it is stored:
++	// on the system volume, on a ClusterVolume through the agent of its node, or
++	// in the cloud. Nothing else joins a file's path with a directory.
++	Open(ctx context.Context, db database.IDB, file *entity.File) (io.ReadCloser, error)
++	// Create writes a file on a volume. What is written reaches its place once the
++	// writer is closed without error; Abort leaves nothing.
++	Create(ctx context.Context, db database.IDB, file *entity.File) (FileWriter, error)
++	// Remove removes a file; one already gone is removed.
++	Remove(ctx context.Context, db database.IDB, file *entity.File) error
++	Stat(ctx context.Context, db database.IDB, file *entity.File) (int64, error)
++	// CountOnVolume counts the files a volume holds.
++	CountOnVolume(ctx context.Context, db database.IDB, volumeID string) (int, error)
+ }
+diff --git a/hivepaas_app/service/fileservice/types.go b/hivepaas_app/service/fileservice/types.go
+index 9b11aac1..cd3b9251 100644
+--- a/hivepaas_app/service/fileservice/types.go
++++ b/hivepaas_app/service/fileservice/types.go
+@@ -59,3 +59,12 @@ type DeleteDataReq struct {
+ 
+ type DeleteDataResp struct {
+ }
++
++/// ACCESS
++
++// FileWriter is a file being written. Close keeps what was written; Abort
++// discards it, and the file is left as it was.
++type FileWriter interface {
++	io.WriteCloser
++	Abort(err error)
++}
+diff --git a/hivepaas_app/service/nodeexecservice/nodeexecserviceimpl/node_exec_test.go b/hivepaas_app/service/nodeexecservice/nodeexecserviceimpl/node_exec_test.go
+index 388eb608..06337fdc 100644
+--- a/hivepaas_app/service/nodeexecservice/nodeexecserviceimpl/node_exec_test.go
++++ b/hivepaas_app/service/nodeexecservice/nodeexecserviceimpl/node_exec_test.go
+@@ -29,6 +29,10 @@ func (m *mockAgentService) GetAgentAddrForNodeLabel(ctx context.Context, nodeLab
+ 	return "", assert.AnError
+ }
+ 
++func (m *mockAgentService) NodeIDsWithLabel(context.Context, string) ([]string, error) {
++	return nil, assert.AnError
++}
++
+ func TestExecCommand_AgentAddressError(t *testing.T) {
+ 	mockAgent := &mockAgentService{
+ 		addrByID:    make(map[string]string),
+diff --git a/hivepaas_app/service/repocheckoutservice/repocheckoutserviceimpl/repo_cache.go b/hivepaas_app/service/repocheckoutservice/repocheckoutserviceimpl/repo_cache.go
+index d0852fde..fe7f6d43 100644
+--- a/hivepaas_app/service/repocheckoutservice/repocheckoutserviceimpl/repo_cache.go
++++ b/hivepaas_app/service/repocheckoutservice/repocheckoutserviceimpl/repo_cache.go
+@@ -66,7 +66,7 @@ func (s *service) loadRepoCache(
+ 		if err != nil && !errors.Is(err, hperrors.ErrNotFound) {
+ 			return hperrors.Wrap(err)
+ 		}
+-		if file == nil || file.StorageType != base.FileStorageLocal {
++		if file == nil || file.StorageType != base.FileStorageVolume {
+ 			return nil
+ 		}
+ 		data.RepoCacheFile = file
+@@ -130,7 +130,7 @@ func (s *service) saveRepoCache(
+ 			Status:      base.FileStatusActive,
+ 			Key:         data.RepoSource.RepoID,
+ 			Mimetype:    "application/octet-stream",
+-			StorageType: base.FileStorageLocal,
++			StorageType: base.FileStorageVolume,
+ 		}
+ 	}
+ 	for {
+diff --git a/hivepaas_app/service/schedjobexecservice/schedjobexecserviceimpl/exec_output.go b/hivepaas_app/service/schedjobexecservice/schedjobexecserviceimpl/exec_output.go
+index 924e2ec0..00c282b4 100644
+--- a/hivepaas_app/service/schedjobexecservice/schedjobexecserviceimpl/exec_output.go
++++ b/hivepaas_app/service/schedjobexecservice/schedjobexecserviceimpl/exec_output.go
+@@ -90,7 +90,7 @@ func (s *service) cleanup(
+ 	execErr error,
+ 	data *execData,
+ ) {
+-	if execErr != nil && data.File != nil && data.File.StorageType == base.FileStorageLocal {
++	if execErr != nil && data.File != nil && data.File.StorageType == base.FileStorageVolume {
+ 		_ = os.RemoveAll(filepath.Join(config.Current().AppPath, data.File.Path))
+ 	}
+ }
+diff --git a/hivepaas_app/service/schedjobexecservice/schedjobexecserviceimpl/exec_output_to_file.go b/hivepaas_app/service/schedjobexecservice/schedjobexecserviceimpl/exec_output_to_file.go
+index a8ce7964..97ee5bce 100644
+--- a/hivepaas_app/service/schedjobexecservice/schedjobexecserviceimpl/exec_output_to_file.go
++++ b/hivepaas_app/service/schedjobexecservice/schedjobexecserviceimpl/exec_output_to_file.go
+@@ -163,7 +163,7 @@ func (s *service) initOutputFile(
+ 		Status:      base.FileStatusActive,
+ 		Name:        fileName,
+ 		Mimetype:    "application/octet-stream",
+-		StorageType: base.FileStorageLocal,
++		StorageType: base.FileStorageVolume,
+ 		CreatedAt:   data.TimeNow,
+ 		UpdatedAt:   data.TimeNow,
+ 	}
+diff --git a/hivepaas_app/service/syscleanupservice/syscleanupserviceimpl/sys_cleanup_cache.go b/hivepaas_app/service/syscleanupservice/syscleanupserviceimpl/sys_cleanup_cache.go
+index a454c395..742b01fa 100644
+--- a/hivepaas_app/service/syscleanupservice/syscleanupserviceimpl/sys_cleanup_cache.go
++++ b/hivepaas_app/service/syscleanupservice/syscleanupserviceimpl/sys_cleanup_cache.go
+@@ -65,7 +65,7 @@ func (s *service) sysCleanupCacheRepoSource(
+ 		bunex.SelectWhereIf(scopeObjectID != "", "file.object_id = ?", scopeObjectID),
+ 		bunex.SelectWhere("file.type = ?", base.FileTypeCache),
+ 		bunex.SelectWhereIn("file.kind IN (?)", base.AllFileCacheKinds...),
+-		bunex.SelectWhere("file.storage_type = ?", base.FileStorageLocal),
++		bunex.SelectWhere("file.storage_type = ?", base.FileStorageVolume),
+ 		bunex.SelectWhere("file.updated_at < ?", timeNow.Add(-retention)),
+ 	)
+ 	if err != nil {
+diff --git a/hivepaas_app/usecase/fileuc/delete.go b/hivepaas_app/usecase/fileuc/delete.go
+index 7bdb6031..0d9ac790 100644
+--- a/hivepaas_app/usecase/fileuc/delete.go
++++ b/hivepaas_app/usecase/fileuc/delete.go
+@@ -43,7 +43,7 @@ func (uc *UC) DeleteFile(
+ 		}
+ 
+ 		deletePhysicalFile := false
+-		if req.DeletePermanently || (req.DeletePermanentlyIfLocal && file.StorageType == base.FileStorageLocal) {
++		if req.DeletePermanently || (req.DeletePermanentlyIfLocal && file.StorageType == base.FileStorageVolume) {
+ 			deletePhysicalFile = true
+ 			_, err := uc.fileService.DeleteFileData(ctx, &fileservice.DeleteDataReq{
+ 				DB:       db,
+diff --git a/hivepaas_app/usecase/fileuc/download.go b/hivepaas_app/usecase/fileuc/download.go
+index 059a8c6b..aad3bf9f 100644
+--- a/hivepaas_app/usecase/fileuc/download.go
++++ b/hivepaas_app/usecase/fileuc/download.go
+@@ -55,7 +55,7 @@ func (uc *UC) DownloadFile(
+ 	}
+ 
+ 	switch file.StorageType {
+-	case base.FileStorageLocal:
++	case base.FileStorageVolume:
+ 		return uc.downloadLocalFile(ctx, req, file)
+ 	case base.FileStorageCloud:
+ 		return uc.downloadCloudFile(ctx, req, file)
+diff --git a/hivepaas_app/usecase/settings/imagebuildsettingsuc/repo_cache_info.go b/hivepaas_app/usecase/settings/imagebuildsettingsuc/repo_cache_info.go
+index f0ed90cd..585afe82 100644
+--- a/hivepaas_app/usecase/settings/imagebuildsettingsuc/repo_cache_info.go
++++ b/hivepaas_app/usecase/settings/imagebuildsettingsuc/repo_cache_info.go
+@@ -19,7 +19,7 @@ func (uc *UC) GetRepoCacheInfo(
+ 	listOpts := []bunex.SelectQueryOption{
+ 		bunex.SelectWhere("file.type = ?", base.FileTypeCache),
+ 		bunex.SelectWhereIn("file.kind IN (?)", base.AllFileCacheKinds...),
+-		bunex.SelectWhere("file.storage_type = ?", base.FileStorageLocal),
++		bunex.SelectWhere("file.storage_type = ?", base.FileStorageVolume),
+ 		bunex.SelectWhere("file.deleted IS NOT TRUE"),
+ 	}
+ 	if !req.Scope.IsGlobalScope() {

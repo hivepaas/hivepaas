@@ -1,0 +1,338 @@
+diff --git a/hivepaas_app/service/fileservice/fileserviceimpl/access.go b/hivepaas_app/service/fileservice/fileserviceimpl/access.go
+index ff04a4d1..99aebdec 100644
+--- a/hivepaas_app/service/fileservice/fileserviceimpl/access.go
++++ b/hivepaas_app/service/fileservice/fileserviceimpl/access.go
+@@ -154,6 +154,26 @@ func (s *service) CountOnVolume(ctx context.Context, db database.IDB, volumeID s
+ 	return len(files), nil
+ }
+ 
++// ProjectVolume is the project's default volume: the one its creation made and
++// marks default, or the one set as default since.
++func (s *service) ProjectVolume(ctx context.Context, db database.IDB, projectID string) (*entity.Setting, error) {
++	volumes, _, err := s.settingRepo.List(ctx, db,
++		&entity.ObjectScope{ScopeType: base.ObjectScopeProject, ProjectID: projectID}, nil,
++		bunex.SelectWhere("setting.type = ?", base.SettingTypeClusterVolume),
++		bunex.SelectWhere("setting.status = ?", base.SettingStatusActive),
++		bunex.SelectWhere("setting.is_default = TRUE"),
++	)
++	if err != nil {
++		return nil, hperrors.Wrap(err)
++	}
++	for _, v := range volumes {
++		if v.ObjectID == projectID {
++			return v, nil
++		}
++	}
++	return nil, hperrors.NewNotFound("Project default volume")
++}
++
+ // volumeAgent is the agent that reaches a volume's files, and the volume's
+ // directory on its host: the node the volume is pinned to, or, for a volume
+ // every node shares, the node asking.
+diff --git a/hivepaas_app/service/fileservice/fileserviceimpl/upload.go b/hivepaas_app/service/fileservice/fileserviceimpl/upload.go
+index 911ddedc..ef9fb9ee 100644
+--- a/hivepaas_app/service/fileservice/fileserviceimpl/upload.go
++++ b/hivepaas_app/service/fileservice/fileserviceimpl/upload.go
+@@ -3,9 +3,7 @@ package fileserviceimpl
+ import (
+ 	"context"
+ 	"errors"
+-	"fmt"
+ 	"io"
+-	"os"
+ 	"path/filepath"
+ 	"strings"
+ 
+@@ -31,30 +29,28 @@ func (s *service) Upload(
+ 	files := make([]*entity.File, 0, len(req.Items))
+ 	timeNow := timeutil.NowUTC()
+ 
+-	var fileDir string
+-	switch req.FileType { //nolint
+-	case base.FileTypeTmp:
+-		fileDir = config.Current().DataPathFiles().RelPath()
+-	default:
+-		// Do nothing
++	place, err := s.uploadPlace(ctx, db, req)
++	if err != nil {
++		return nil, hperrors.Wrap(err)
+ 	}
+ 
+ 	for _, item := range req.Items {
+ 		fileName := gofn.LastOr(strings.Split(item.FilePath, "/"), "")
+ 		mimetype := fileutil.TypeByExtension(filepath.Ext(fileName))
++		fileID := gofn.Must(ulid.NewStringULID())
+ 		file := &entity.File{
+-			ID:          gofn.Must(ulid.NewStringULID()),
++			ID:          fileID,
+ 			Scope:       req.Scope.ScopeType,
+ 			ObjectID:    req.Scope.ScopeObjectID(),
+ 			Status:      base.FileStatusActive,
+ 			Type:        req.FileType,
+ 			Kind:        string(req.FileKind),
+ 			Name:        fileName,
+-			Path:        filepath.Join(fileDir, fileName),
++			Path:        place.path(fileID + "-" + fileName),
+ 			Size:        item.FileSize,
+ 			Mimetype:    gofn.Coalesce(mimetype, "application/octet-stream"),
+ 			StorageType: req.StorageType,
+-			StorageID:   req.StorageID,
++			StorageID:   gofn.Coalesce(place.volumeID, req.StorageID),
+ 			CreatedAt:   timeNow,
+ 			UpdatedAt:   timeNow,
+ 		}
+@@ -76,7 +72,7 @@ func (s *service) Upload(
+ 
+ 	errMap := gofn.ExecTaskFuncEx(ctx, req.ParallelUploads, true,
+ 		func(ctx context.Context, r *uploadItemReq) error {
+-			resp, err := s.uploadItem(ctx, r)
++			resp, err := s.uploadItem(ctx, db, r)
+ 			if err == nil {
+ 				responses[r.index] = resp
+ 			}
+@@ -105,30 +101,53 @@ type uploadItemResp struct {
+ }
+ 
+ func (s *service) uploadItem(
+-	_ context.Context,
++	ctx context.Context,
++	db database.IDB,
+ 	req *uploadItemReq,
+ ) (*uploadItemResp, error) {
+-	if req.file.StorageType == base.FileStorageVolume {
+-		return s.uploadItemToLocal(req)
++	if req.file.StorageType != base.FileStorageVolume {
++		return nil, hperrors.NewNotImplemented()
+ 	}
+-	return nil, hperrors.NewNotImplemented()
+-}
+-
+-func (s *service) uploadItemToLocal(
+-	req *uploadItemReq,
+-) (*uploadItemResp, error) {
+-	filePath := filepath.Join(config.Current().AppPath, req.file.Path)
+-	file, err := os.Create(filePath)
++	w, err := s.Create(ctx, db, req.file)
+ 	if err != nil {
+-		return nil, fmt.Errorf("failed to open file for writing: %w", err)
++		return nil, hperrors.Wrap(err)
+ 	}
+-	defer file.Close()
+-
+-	// TODO: use sync.Pool with io.CopyBuffer here
+-
+-	_, err = io.Copy(file, req.FileData)
+-	if err != nil {
+-		return nil, fmt.Errorf("failed to transfer data from reader to file: %w", err)
++	if _, err = io.Copy(w, req.FileData); err != nil {
++		w.Abort(err)
++		return nil, hperrors.Wrap(err)
++	}
++	if err = w.Close(); err != nil {
++		return nil, hperrors.Wrap(err)
+ 	}
+ 	return &uploadItemResp{}, nil
+ }
++
++// uploadPlace is where an upload's files go: a file uploaded to an app, to its
++// project's default volume, in HivePaaS's own directory; any other, to the
++// system volume.
++func (s *service) uploadPlace(ctx context.Context, db database.IDB, req *fileservice.UploadReq) (*uploadPlace, error) {
++	if req.StorageType != base.FileStorageVolume {
++		return &uploadPlace{path: func(name string) string { return name }}, nil
++	}
++	if req.Scope.ScopeType == base.ObjectScopeApp && req.App != nil {
++		volume, err := s.ProjectVolume(ctx, db, req.App.ProjectID)
++		if err != nil {
++			return nil, hperrors.Wrap(err)
++		}
++		envKey := req.App.ProjectEnvID
++		if req.App.ProjectEnv != nil {
++			envKey = req.App.ProjectEnv.Key
++		}
++		return &uploadPlace{volumeID: volume.ID, path: func(name string) string {
++			return fileservice.AppFilePath(fileservice.FilesDirUploads, envKey, req.App.Key, name)
++		}}, nil
++	}
++	return &uploadPlace{path: func(name string) string {
++		return filepath.Join(config.Current().DataPathFiles().RelPath(), name)
++	}}, nil
++}
++
++type uploadPlace struct {
++	volumeID string
++	path     func(name string) string
++}
+diff --git a/hivepaas_app/service/fileservice/placement.go b/hivepaas_app/service/fileservice/placement.go
+new file mode 100644
+index 00000000..49150e68
+--- /dev/null
++++ b/hivepaas_app/service/fileservice/placement.go
+@@ -0,0 +1,28 @@
++package fileservice
++
++import (
++	"path/filepath"
++)
++
++const (
++	// ProjectFilesDir is HivePaaS's own directory in a project's default volume:
++	// no app mounts it, since an app's volumes are made in <project>/<env>/<app>.
++	ProjectFilesDir = ".hivepaas"
++
++	// The kinds of file HivePaaS keeps there.
++	FilesDirUploads   = "files"
++	FilesDirJobOutput = "job-output"
++	FilesDirRepoCache = "cache/repos"
++)
++
++// AppFilePath is where a file of an app goes in its project's default volume:
++// .hivepaas/<dir>/<env>/<app>/<name>.
++func AppFilePath(dir, envKey, appKey, name string) string {
++	return filepath.Join(ProjectFilesDir, dir, envKey, appKey, name)
++}
++
++// ProjectFilePath is where a file of a project goes in its default volume:
++// .hivepaas/<dir>/<name>.
++func ProjectFilePath(dir, name string) string {
++	return filepath.Join(ProjectFilesDir, dir, name)
++}
+diff --git a/hivepaas_app/service/fileservice/service.go b/hivepaas_app/service/fileservice/service.go
+index 157abb3d..400f79c5 100644
+--- a/hivepaas_app/service/fileservice/service.go
++++ b/hivepaas_app/service/fileservice/service.go
+@@ -33,6 +33,8 @@ type Service interface {
+ 	// Remove removes a file; one already gone is removed.
+ 	Remove(ctx context.Context, db database.IDB, file *entity.File) error
+ 	Stat(ctx context.Context, db database.IDB, file *entity.File) (int64, error)
++	// ProjectVolume is the project's default volume, where the files of its apps go.
++	ProjectVolume(ctx context.Context, db database.IDB, projectID string) (*entity.Setting, error)
+ 	// CountOnVolume counts the files a volume holds.
+ 	CountOnVolume(ctx context.Context, db database.IDB, volumeID string) (int, error)
+ }
+diff --git a/hivepaas_app/service/fileservice/types.go b/hivepaas_app/service/fileservice/types.go
+index cd3b9251..e49e6c48 100644
+--- a/hivepaas_app/service/fileservice/types.go
++++ b/hivepaas_app/service/fileservice/types.go
+@@ -27,8 +27,11 @@ type GetDownloadURLResp struct {
+ /// UPLOAD
+ 
+ type UploadReq struct {
+-	Items           []*UploadItemReq
+-	Scope           *entity.ObjectScope
++	Items []*UploadItemReq
++	Scope *entity.ObjectScope
++	// App is the scope's app, with its env, for a file uploaded to an app: it goes
++	// to the project's default volume.
++	App             *entity.App
+ 	FileType        base.FileType
+ 	FileKind        base.FileKind
+ 	StorageType     base.FileStorageType
+diff --git a/hivepaas_app/usecase/fileuc/delete.go b/hivepaas_app/usecase/fileuc/delete.go
+index 0d9ac790..f3f096e0 100644
+--- a/hivepaas_app/usecase/fileuc/delete.go
++++ b/hivepaas_app/usecase/fileuc/delete.go
+@@ -43,7 +43,7 @@ func (uc *UC) DeleteFile(
+ 		}
+ 
+ 		deletePhysicalFile := false
+-		if req.DeletePermanently || (req.DeletePermanentlyIfLocal && file.StorageType == base.FileStorageVolume) {
++		if req.DeletePermanently || (req.DeletePermanentlyIfOnVolume && file.StorageType == base.FileStorageVolume) {
+ 			deletePhysicalFile = true
+ 			_, err := uc.fileService.DeleteFileData(ctx, &fileservice.DeleteDataReq{
+ 				DB:       db,
+diff --git a/hivepaas_app/usecase/fileuc/download.go b/hivepaas_app/usecase/fileuc/download.go
+index aad3bf9f..f8f19347 100644
+--- a/hivepaas_app/usecase/fileuc/download.go
++++ b/hivepaas_app/usecase/fileuc/download.go
+@@ -3,15 +3,12 @@ package fileuc
+ import (
+ 	"context"
+ 	"net/url"
+-	"os"
+-	"path/filepath"
+ 	"time"
+ 
+ 	"github.com/tiendc/gofn"
+ 
+ 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
+ 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
+-	"github.com/hivepaas/hivepaas/hivepaas_app/config"
+ 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
+ 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
+ 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
+@@ -56,7 +53,7 @@ func (uc *UC) DownloadFile(
+ 
+ 	switch file.StorageType {
+ 	case base.FileStorageVolume:
+-		return uc.downloadLocalFile(ctx, req, file)
++		return uc.downloadVolumeFile(ctx, req, file)
+ 	case base.FileStorageCloud:
+ 		return uc.downloadCloudFile(ctx, req, file)
+ 	default:
+@@ -64,8 +61,8 @@ func (uc *UC) DownloadFile(
+ 	}
+ }
+ 
+-func (uc *UC) downloadLocalFile(
+-	_ context.Context,
++func (uc *UC) downloadVolumeFile(
++	ctx context.Context,
+ 	req *filedto.DownloadFileReq,
+ 	file *entity.File,
+ ) (_ *filedto.DownloadFileResp, err error) {
+@@ -78,16 +75,10 @@ func (uc *UC) downloadLocalFile(
+ 		},
+ 	}
+ 
+-	filePath := filepath.Join(config.Current().AppPath, file.Path)
+-	reader, err := os.Open(filePath)
++	reader, err := uc.fileService.Open(ctx, uc.db, file)
+ 	if err != nil {
+ 		return nil, hperrors.Wrap(err)
+ 	}
+-	defer func() {
+-		if err != nil {
+-			_ = reader.Close()
+-		}
+-	}()
+ 	respData.Content = reader
+ 	return &filedto.DownloadFileResp{Data: respData}, nil
+ }
+diff --git a/hivepaas_app/usecase/fileuc/filedto/delete.go b/hivepaas_app/usecase/fileuc/filedto/delete.go
+index 4265aee5..ec8f50f7 100644
+--- a/hivepaas_app/usecase/fileuc/filedto/delete.go
++++ b/hivepaas_app/usecase/fileuc/filedto/delete.go
+@@ -9,13 +9,13 @@ import (
+ )
+ 
+ type DeleteFileReq struct {
+-	ID                       string                `json:"-" mapstructure:"-"`
+-	Scope                    *base.ObjectScopeType `json:"-" mapstructure:"-"`
+-	ObjectID                 string                `json:"-" mapstructure:"-"`
+-	Types                    []base.FileType       `json:"-" mapstructure:"-"`
+-	Kinds                    []base.FileKind       `json:"-"`
+-	DeletePermanentlyIfLocal bool                  `json:"-" mapstructure:"deletePermanentlyIfLocal"`
+-	DeletePermanently        bool                  `json:"-" mapstructure:"deletePermanently"`
++	ID                          string                `json:"-" mapstructure:"-"`
++	Scope                       *base.ObjectScopeType `json:"-" mapstructure:"-"`
++	ObjectID                    string                `json:"-" mapstructure:"-"`
++	Types                       []base.FileType       `json:"-" mapstructure:"-"`
++	Kinds                       []base.FileKind       `json:"-"`
++	DeletePermanentlyIfOnVolume bool                  `json:"-" mapstructure:"deletePermanentlyIfOnVolume"`
++	DeletePermanently           bool                  `json:"-" mapstructure:"deletePermanently"`
+ }
+ 
+ func NewDeleteFileReq() *DeleteFileReq {
+diff --git a/hivepaas_app/usecase/fileuc/upload.go b/hivepaas_app/usecase/fileuc/upload.go
+index 3cb7fb66..4e7a47d5 100644
+--- a/hivepaas_app/usecase/fileuc/upload.go
++++ b/hivepaas_app/usecase/fileuc/upload.go
+@@ -28,6 +28,7 @@ func (uc *UC) Upload(
+ 		StorageType: req.StorageType,
+ 		StorageID:   req.StorageID,
+ 		Scope:       req.Scope,
++		App:         uploadData.ScopeApp,
+ 		SaveToDB:    true,
+ 	}
+ 

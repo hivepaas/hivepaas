@@ -1,0 +1,121 @@
+diff --git a/hivepaas_app/config/path.go b/hivepaas_app/config/path.go
+index 8ef146de..517ca522 100644
+--- a/hivepaas_app/config/path.go
++++ b/hivepaas_app/config/path.go
+@@ -148,15 +148,6 @@ func (cfg *Config) DataPathSystemUpdate() LocalPath {
+ 	return LocalPath(filepath.Join("system", "update"))
+ }
+ 
+-/// SYSTEM CACHE
+-
+-func (cfg *Config) DataPathSystemCache() LocalPath {
+-	return LocalPath(filepath.Join("system", "cache"))
+-}
+-func (cfg *Config) DataPathSystemCacheRepos() LocalPath {
+-	return cfg.DataPathSystemCache().Join("repos")
+-}
+-
+ /// UPLOAD FILES
+ 
+ func (cfg *Config) DataPathFiles() LocalPath {
+@@ -178,7 +169,6 @@ func (cfg *Config) DataPathsToInitAtStartup() map[string]os.FileMode {
+ 
+ 		cfg.DataPathTraefikEtcDynamic().AbsPath(): base.DirModeDefault,
+ 
+-		cfg.DataPathSystemCacheRepos().AbsPath(): base.DirModeDefault,
+-		cfg.DataPathFiles().AbsPath():            base.DirModeDefault,
++		cfg.DataPathFiles().AbsPath(): base.DirModeDefault,
+ 	}
+ }
+diff --git a/hivepaas_app/db/seed/seed.sql b/hivepaas_app/db/seed/seed.sql
+index 0b364530..4772fd1f 100644
+--- a/hivepaas_app/db/seed/seed.sql
++++ b/hivepaas_app/db/seed/seed.sql
+@@ -219,12 +219,12 @@ ON CONFLICT DO NOTHING;
+ -- Files
+ INSERT INTO files (id, scope, object_id, type, kind, key, status, name, path, size, storage_type, storage_id, created_at, updated_at)
+ VALUES ('01JAB9XED0GTXBSQDFVYAJ8WF1', 'app', '01JAB9XED0GTXBSQDFVYAJ8WD1', 'data-file', 'postgres-backup', NULL, 'active',
+-        'test1.txt', 'files/test1.txt', 1234, 'local', NULL,
++        'test1.txt', 'files/test1.txt', 1234, 'volume', NULL,
+         '2025-10-01 00:00:00', '2025-10-01 00:00:00'),
+        ('01JAB9XED0GTXBSQDFVYAJ8WF2', 'app', '01JAB9XED0GTXBSQDFVYAJ8WD1', 'data-file', 'mysql-backup', NULL, 'active',
+-        'test2.txt', 'files/test2.txt', 12345, 'local', NULL,
++        'test2.txt', 'files/test2.txt', 12345, 'volume', NULL,
+         '2025-10-01 00:00:00', '2025-10-01 00:00:00'),
+        ('01JAB9XED0GTXBSQDFVYAJ8WF3', 'app', '01JAB9XED0GTXBSQDFVYAJ8WD1', 'data-file', 'postgres-backup', NULL, 'active',
+-        'test3.txt', 'files/test3.txt', 54321, 'local', NULL,
++        'test3.txt', 'files/test3.txt', 54321, 'volume', NULL,
+         '2025-10-01 00:00:00', '2025-10-01 00:00:00')
+ ON CONFLICT DO NOTHING;
+diff --git a/hivepaas_app/hperrors/errors_infra.go b/hivepaas_app/hperrors/errors_infra.go
+index 67c59a8b..21c8e337 100644
+--- a/hivepaas_app/hperrors/errors_infra.go
++++ b/hivepaas_app/hperrors/errors_infra.go
+@@ -31,6 +31,8 @@ var (
+ 	// A volume HivePaaS cannot keep files on: one pinned by a label that names no
+ 	// node or several, so which node holds the files cannot be told.
+ 	ErrVolumeCannotHoldFiles = NewErr(ErrPreconditionFailed, "ERR_VOLUME_CANNOT_HOLD_FILES")
++	// A volume holding HivePaaS's files is not deleted from under them.
++	ErrVolumeHasFiles = NewErr(ErrPreconditionFailed, "ERR_VOLUME_HAS_FILES")
+ 	// A mount whose directory is not the app's own: another app's, a whole volume,
+ 	// or a bind HivePaaS did not make.
+ 	ErrStoragePermissionsNotResettable = NewErr(ErrPreconditionFailed, "ERR_STORAGE_PERMISSIONS_NOT_RESETTABLE")
+diff --git a/hivepaas_app/pkg/translation/messages/en/errors.infra.en.toml b/hivepaas_app/pkg/translation/messages/en/errors.infra.en.toml
+index 56185cca..bd141b9e 100644
+--- a/hivepaas_app/pkg/translation/messages/en/errors.infra.en.toml
++++ b/hivepaas_app/pkg/translation/messages/en/errors.infra.en.toml
+@@ -20,6 +20,7 @@ ERR_ENCRYPTION_FORMAT_UNSUPPORTED = "Encryption format '{{.Format}}' is not supp
+ ERR_STORAGE_TYPE_UNSUPPORTED = "Storage type '{{.Type}}' is not supported"
+ ERR_FILE_PATH_OUTSIDE_ROOT = "Path '{{.Path}}' is not inside the directory '{{.Root}}'"
+ ERR_VOLUME_CANNOT_HOLD_FILES = "Volume '{{.Name}}' cannot hold HivePaaS's files: it is pinned to the label '{{.Label}}', which {{.Nodes}} nodes carry, not one"
++ERR_VOLUME_HAS_FILES = "Volume '{{.Name}}' holds {{.Count}} files of HivePaaS: repository caches, job outputs or data files. Delete them first"
+ ERR_STORAGE_PERMISSIONS_NOT_RESETTABLE = "The storage at '{{.Target}}' is not a directory of this app's own, so its permissions cannot be reset"
+ ERR_STORAGE_PERMISSIONS_NOT_RESET = "The permissions of some files in '{{.Path}}' could not be changed"
+ 
+diff --git a/hivepaas_app/usecase/cluster/volumeuc/delete.go b/hivepaas_app/usecase/cluster/volumeuc/delete.go
+index bcd539a0..242c1e06 100644
+--- a/hivepaas_app/usecase/cluster/volumeuc/delete.go
++++ b/hivepaas_app/usecase/cluster/volumeuc/delete.go
+@@ -4,8 +4,10 @@ import (
+ 	"context"
+ 
+ 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
++	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
+ 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
+ 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
++	"github.com/hivepaas/hivepaas/hivepaas_app/service/fileservice"
+ 	"github.com/hivepaas/hivepaas/hivepaas_app/service/volumeservice"
+ 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/cluster/volumeuc/volumedto"
+ 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings"
+@@ -24,6 +26,9 @@ func (uc *UC) DeleteVolume(
+ 			db database.Tx,
+ 			data *settings.DeleteSettingData,
+ 		) error {
++			if err := refuseVolumeWithFiles(ctx, db, uc.FileService, data.Setting); err != nil {
++				return hperrors.Wrap(err)
++			}
+ 			if data.Setting.ObjectID == req.Scope.ScopeObjectID() {
+ 				// Retrying rather than removing once: deleting a volume
+ 				// normally follows removing whatever was using it, and swarm
+@@ -51,3 +56,21 @@ func (uc *UC) DeleteVolume(
+ 
+ 	return &volumedto.DeleteVolumeResp{}, nil
+ }
++
++// refuseVolumeWithFiles refuses to delete a volume that still holds HivePaaS's
++// files. Deleting them with it would remove each through the file layer.
++func refuseVolumeWithFiles(
++	ctx context.Context,
++	db database.IDB,
++	files fileservice.Service,
++	volume *entity.Setting,
++) error {
++	count, err := files.CountOnVolume(ctx, db, volume.ID)
++	if err != nil {
++		return hperrors.Wrap(err)
++	}
++	if count > 0 {
++		return hperrors.Wrap(hperrors.ErrVolumeHasFiles).WithParam("Name", volume.Name).WithParam("Count", count)
++	}
++	return nil
++}

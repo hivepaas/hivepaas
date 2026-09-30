@@ -1,0 +1,95 @@
+diff --git a/src/application/modules/projects/api/services/project-apps-services/data-files/app-data-files.api.ts b/src/application/modules/projects/api/services/project-apps-services/data-files/app-data-files.api.ts
+index 4df69826..38472d7c 100644
+--- a/src/application/modules/projects/api/services/project-apps-services/data-files/app-data-files.api.ts
++++ b/src/application/modules/projects/api/services/project-apps-services/data-files/app-data-files.api.ts
+@@ -13,6 +13,7 @@ import type {
+     AppDataFiles_UploadLocal_Req,
+     AppDataFiles_UploadLocal_Res,
+ } from "~/projects/api/services/project-apps-services/data-files";
++import { AppDataFileStorageType } from "~/projects/domain";
+ 
+ import { BaseApi, parseApiError } from "@infrastructure/api";
+ 
+@@ -93,7 +94,7 @@ export class AppDataFilesApi extends BaseApi {
+         formData.append("scope", "app");
+         formData.append("projectId", projectID);
+         formData.append("appId", appID);
+-        formData.append("storageType", "local");
++        formData.append("storageType", AppDataFileStorageType.Volume);
+         for (const file of files) {
+             formData.append("file", file);
+         }
+diff --git a/src/application/modules/projects/domain/apps/data-file/app-data-file.entity.ts b/src/application/modules/projects/domain/apps/data-file/app-data-file.entity.ts
+index 1e488ac0..432a66ef 100644
+--- a/src/application/modules/projects/domain/apps/data-file/app-data-file.entity.ts
++++ b/src/application/modules/projects/domain/apps/data-file/app-data-file.entity.ts
+@@ -1,5 +1,6 @@
+ export const AppDataFileStorageType = {
+-    Local: "local",
++    /** On a volume of HivePaaS: the project's default volume, for an app's file. */
++    Volume: "volume",
+     Cloud: "cloud",
+ } as const;
+ 
+diff --git a/src/application/modules/projects/module-shared/definitions/tables/app-data-files/app-data-files-table.defs.tsx b/src/application/modules/projects/module-shared/definitions/tables/app-data-files/app-data-files-table.defs.tsx
+index a9118fe7..11c5cd20 100644
+--- a/src/application/modules/projects/module-shared/definitions/tables/app-data-files/app-data-files-table.defs.tsx
++++ b/src/application/modules/projects/module-shared/definitions/tables/app-data-files/app-data-files-table.defs.tsx
+@@ -1,7 +1,7 @@
+ import { Badge } from "@components/ui/badge";
+ import type { ColumnDef } from "@tanstack/react-table";
+ import { format } from "date-fns";
+-import type { AppDataFile } from "~/projects/domain";
++import { type AppDataFile, AppDataFileStorageType } from "~/projects/domain";
+ 
+ import { getFriendlyDataSize } from "@application/shared/utils/data-size";
+ 
+@@ -10,7 +10,7 @@ import { AppDataFileMenuCell } from "./building-blocks";
+ const MAX_STORAGE_LABEL_LENGTH = 20;
+ 
+ function getStorageLabel(file: AppDataFile): string {
+-    const label = file.storageType === "local" ? "local" : (file.storage?.name ?? "-");
++    const label = file.storageType === AppDataFileStorageType.Volume ? "HivePaaS" : (file.storage?.name ?? "-");
+ 
+     if (label.length <= MAX_STORAGE_LABEL_LENGTH) {
+         return label;
+diff --git a/src/application/modules/projects/module-shared/definitions/tables/app-data-files/building-blocks/app-data-file-menu-cell.com.tsx b/src/application/modules/projects/module-shared/definitions/tables/app-data-files/building-blocks/app-data-file-menu-cell.com.tsx
+index b26d3e6d..806b8b49 100644
+--- a/src/application/modules/projects/module-shared/definitions/tables/app-data-files/building-blocks/app-data-file-menu-cell.com.tsx
++++ b/src/application/modules/projects/module-shared/definitions/tables/app-data-files/building-blocks/app-data-file-menu-cell.com.tsx
+@@ -17,7 +17,7 @@ import { DownloadIcon, MoreVertical, Trash2Icon } from "lucide-react";
+ import { toast } from "sonner";
+ import { useAppDataFilesApi } from "~/projects/api/hooks/project-apps";
+ import { AppDataFilesCommands } from "~/projects/data/commands";
+-import type { AppDataFile } from "~/projects/domain";
++import { type AppDataFile, AppDataFileStorageType } from "~/projects/domain";
+ 
+ import { CopyIdMenuButton } from "@application/shared/components";
+ import { MODULE_IDS } from "@application/shared/constants";
+@@ -36,7 +36,7 @@ function View({ projectId, env, appId, dataFile }: Props) {
+         },
+     });
+ 
+-    const isLocalFile = dataFile.storageType === "local";
++    const isOnVolume = dataFile.storageType === AppDataFileStorageType.Volume;
+ 
+     async function handleDownload() {
+         try {
+@@ -75,7 +75,7 @@ function View({ projectId, env, appId, dataFile }: Props) {
+             env,
+             appID: appId,
+             dataFileID: dataFile.id,
+-            deletePermanently: isLocalFile || deletePermanently,
++            deletePermanently: isOnVolume || deletePermanently,
+         });
+     }
+ 
+@@ -148,7 +148,7 @@ function View({ projectId, env, appId, dataFile }: Props) {
+                         <DialogTitle>Delete file: {dataFile.name}</DialogTitle>
+                     </DialogHeader>
+                     <DialogBody className="flex flex-col gap-4">
+-                        {isLocalFile ? (
++                        {isOnVolume ? (
+                             <div className={cn(dashedBorderBox)}>
+                                 <span className="font-semibold text-orange-500">Warning:</span> This will delete the
+                                 database record and permanently erase the physical file from the storage system. Once

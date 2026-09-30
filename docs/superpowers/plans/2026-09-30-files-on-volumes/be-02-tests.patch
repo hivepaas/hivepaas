@@ -1,0 +1,258 @@
+diff --git a/hivepaas_app/interface/agent/client/fileservice/service_test.go b/hivepaas_app/interface/agent/client/fileservice/service_test.go
+new file mode 100644
+index 00000000..eb1c6f66
+--- /dev/null
++++ b/hivepaas_app/interface/agent/client/fileservice/service_test.go
+@@ -0,0 +1,122 @@
++package fileservice
++
++import (
++	"context"
++	"io"
++	"net"
++	"os"
++	"path/filepath"
++	"strings"
++	"testing"
++
++	"github.com/stretchr/testify/assert"
++	"google.golang.org/grpc"
++
++	"github.com/hivepaas/hivepaas/hivepaas_app/config"
++	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
++	agentproto "github.com/hivepaas/hivepaas/hivepaas_app/interface/agent/proto"
++	serverfile "github.com/hivepaas/hivepaas/hivepaas_app/interface/agent/server/fileservice"
++	"github.com/hivepaas/hivepaas/hivepaas_app/usecaseagent/fileagentuc"
++)
++
++// agentFiles is the agent's file service over a test directory standing for the
++// node's filesystem.
++type agentFiles struct {
++	agentproto.UnimplementedFileServiceServer
++	uc *fileagentuc.UC
++}
++
++func (a *agentFiles) FileRead(req *agentproto.FileReq, s grpc.ServerStreamingServer[agentproto.FileChunk]) error {
++	return serverfile.FileRead(a.uc, req, s)
++}
++
++func (a *agentFiles) FileWrite(s grpc.ClientStreamingServer[agentproto.FileWriteReq, agentproto.FileWriteResp]) error {
++	return serverfile.FileWrite(a.uc, s)
++}
++
++func (a *agentFiles) FileRemove(_ context.Context, req *agentproto.FileReq) (*agentproto.FileRemoveResp, error) {
++	return serverfile.FileRemove(a.uc, req)
++}
++
++func (a *agentFiles) FileStat(_ context.Context, req *agentproto.FileReq) (*agentproto.FileStatResp, error) {
++	return serverfile.FileStat(a.uc, req)
++}
++
++// startAgent serves the file service on a local port, over host/.
++func startAgent(t *testing.T) (FileServiceClient, string) {
++	t.Helper()
++	config.SetCurrent(&config.Config{})
++	t.Cleanup(func() { config.SetCurrent(nil) })
++
++	host := t.TempDir()
++	if err := os.MkdirAll(filepath.Join(host, "srv/vol"), 0o755); err != nil {
++		t.Fatal(err)
++	}
++	listener, err := net.Listen("tcp", "127.0.0.1:0")
++	if err != nil {
++		t.Fatal(err)
++	}
++	// As the agent's own server does, errors cross as gRPC statuses.
++	server := grpc.NewServer(
++		grpc.ChainUnaryInterceptor(func(ctx context.Context, req any, _ *grpc.UnaryServerInfo,
++			handler grpc.UnaryHandler) (any, error) {
++			resp, err := handler(ctx, req)
++			return resp, hperrors.ToGRPCError(err)
++		}),
++		grpc.ChainStreamInterceptor(func(srv any, ss grpc.ServerStream, _ *grpc.StreamServerInfo,
++			handler grpc.StreamHandler) error {
++			return hperrors.ToGRPCError(handler(srv, ss))
++		}),
++	)
++	agentproto.RegisterFileServiceServer(server, &agentFiles{uc: fileagentuc.NewOnHost(nil, host)})
++	go func() { _ = server.Serve(listener) }()
++	t.Cleanup(server.Stop)
++
++	c, err := NewFileServiceClient(listener.Addr().String())
++	if err != nil {
++		t.Fatal(err)
++	}
++	t.Cleanup(func() { _ = c.Close() })
++	return c, host
++}
++
++// A file larger than one message goes to the agent and comes back whole.
++func TestAFileGoesThroughTheAgentAndBack(t *testing.T) {
++	c, host := startAgent(t)
++	ctx := context.Background()
++	content := strings.Repeat("0123456789abcdef", 20000) // 320 KB: five messages
++
++	size, err := c.Write(ctx, "/srv/vol", ".hivepaas/job-output/prod/web/out.sql", strings.NewReader(content))
++	assert.NoError(t, err)
++	assert.Equal(t, int64(len(content)), size)
++	onDisk, _ := os.ReadFile(filepath.Join(host, "srv/vol/.hivepaas/job-output/prod/web/out.sql"))
++	assert.Equal(t, content, string(onDisk))
++
++	stated, err := c.Stat(ctx, "/srv/vol", ".hivepaas/job-output/prod/web/out.sql")
++	assert.NoError(t, err)
++	assert.Equal(t, size, stated)
++
++	reader, err := c.Read(ctx, "/srv/vol", ".hivepaas/job-output/prod/web/out.sql")
++	if assert.NoError(t, err) {
++		back, err := io.ReadAll(reader)
++		assert.NoError(t, err)
++		assert.NoError(t, reader.Close())
++		assert.Equal(t, content, string(back))
++	}
++
++	assert.NoError(t, c.Remove(ctx, "/srv/vol", ".hivepaas/job-output/prod/web/out.sql"))
++	_, err = c.Read(ctx, "/srv/vol", ".hivepaas/job-output/prod/web/out.sql")
++	assert.ErrorIs(t, err, hperrors.ErrNotFound)
++	_, err = c.Stat(ctx, "/srv/vol", ".hivepaas/job-output/prod/web/out.sql")
++	assert.ErrorIs(t, err, hperrors.ErrNotFound)
++}
++
++// The agent refuses a path out of the volume, and the refusal reaches the caller.
++func TestTheAgentRefusesAPathOutOfTheVolume(t *testing.T) {
++	c, _ := startAgent(t)
++
++	_, err := c.Write(context.Background(), "/srv/vol", "../../etc/cron.d/x", strings.NewReader("x"))
++
++	assert.Error(t, err)
++	assert.Contains(t, err.Error(), "is not inside the directory")
++}
+diff --git a/hivepaas_app/usecaseagent/fileagentuc/file_test.go b/hivepaas_app/usecaseagent/fileagentuc/file_test.go
+new file mode 100644
+index 00000000..e0578307
+--- /dev/null
++++ b/hivepaas_app/usecaseagent/fileagentuc/file_test.go
+@@ -0,0 +1,124 @@
++package fileagentuc
++
++import (
++	"context"
++	"errors"
++	"io"
++	"os"
++	"path/filepath"
++	"strings"
++	"testing"
++
++	"github.com/stretchr/testify/assert"
++
++	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
++)
++
++// newHostUC is the use case over a fake host: host/ stands for the node's /,
++// and the volume's directory is /srv/vol on it.
++func newHostUC(t *testing.T) (*UC, string) {
++	t.Helper()
++	host := t.TempDir()
++	if err := os.MkdirAll(filepath.Join(host, "srv", "vol"), 0o755); err != nil {
++		t.Fatal(err)
++	}
++	return &UC{hostPrefix: host}, host
++}
++
++const root = "/srv/vol"
++
++func TestAFileIsWrittenReadStatedAndRemovedInsideTheRoot(t *testing.T) {
++	uc, host := newHostUC(t)
++	ctx := context.Background()
++
++	size, err := uc.Write(ctx, root, ".hivepaas/cache/repos/r1.tar.lz4", strings.NewReader("cache bytes"))
++	assert.NoError(t, err)
++	assert.Equal(t, int64(len("cache bytes")), size)
++
++	info, err := os.Stat(filepath.Join(host, "srv/vol/.hivepaas"))
++	if assert.NoError(t, err) {
++		assert.Equal(t, os.FileMode(0o700), info.Mode().Perm(), "HivePaaS's own directory")
++	}
++
++	stated, err := uc.Stat(root, ".hivepaas/cache/repos/r1.tar.lz4")
++	assert.NoError(t, err)
++	assert.Equal(t, size, stated)
++
++	reader, readSize, err := uc.Open(root, ".hivepaas/cache/repos/r1.tar.lz4")
++	if assert.NoError(t, err) {
++		content, _ := io.ReadAll(reader)
++		_ = reader.Close()
++		assert.Equal(t, "cache bytes", string(content))
++		assert.Equal(t, size, readSize)
++	}
++
++	assert.NoError(t, uc.Remove(root, ".hivepaas/cache/repos/r1.tar.lz4"))
++	_, err = uc.Stat(root, ".hivepaas/cache/repos/r1.tar.lz4")
++	assert.ErrorIs(t, err, hperrors.ErrNotFound)
++	assert.NoError(t, uc.Remove(root, ".hivepaas/cache/repos/r1.tar.lz4"), "removing what is gone is done")
++}
++
++// Nothing a caller passes reaches outside the volume's directory.
++func TestAPathLeavingTheRootIsRefused(t *testing.T) {
++	uc, host := newHostUC(t)
++	if err := os.WriteFile(filepath.Join(host, "etc-passwd"), []byte("secret"), 0o600); err != nil {
++		t.Fatal(err)
++	}
++	if err := os.Symlink(host, filepath.Join(host, "srv/vol/escape")); err != nil {
++		t.Fatal(err)
++	}
++
++	for _, path := range []string{"../../etc-passwd", "/etc-passwd", "a/../../x", "", ".", "escape/etc-passwd"} {
++		_, err := uc.Stat(root, path)
++		assert.ErrorIs(t, err, hperrors.ErrFilePathOutsideRoot, "stat %q", path)
++		_, _, err = uc.Open(root, path)
++		assert.ErrorIs(t, err, hperrors.ErrFilePathOutsideRoot, "open %q", path)
++		_, err = uc.Write(context.Background(), root, path, strings.NewReader("x"))
++		assert.ErrorIs(t, err, hperrors.ErrFilePathOutsideRoot, "write %q", path)
++		assert.ErrorIs(t, uc.Remove(root, path), hperrors.ErrFilePathOutsideRoot, "remove %q", path)
++	}
++	_, err := uc.Stat("/", "etc-passwd")
++	assert.ErrorIs(t, err, hperrors.ErrFilePathOutsideRoot, "the host's root is no volume")
++	_, err = uc.Stat("srv/vol", "x")
++	assert.ErrorIs(t, err, hperrors.ErrFilePathOutsideRoot, "a relative root")
++}
++
++type failingReader struct{ sent bool }
++
++func (r *failingReader) Read(p []byte) (int, error) {
++	if !r.sent {
++		r.sent = true
++		return copy(p, "half"), nil
++	}
++	return 0, errors.New("connection lost")
++}
++
++// A write that fails half way leaves nothing: neither the file nor its
++// temporary.
++func TestAFailedWriteLeavesNothing(t *testing.T) {
++	uc, host := newHostUC(t)
++
++	_, err := uc.Write(context.Background(), root, "out/f.bin", &failingReader{})
++
++	assert.Error(t, err)
++	entries, _ := os.ReadDir(filepath.Join(host, "srv/vol/out"))
++	assert.Empty(t, entries)
++}
++
++// A write replaces what was there only once it has all of it.
++func TestAWriteReplacesTheFileWhole(t *testing.T) {
++	uc, host := newHostUC(t)
++	ctx := context.Background()
++	_, err := uc.Write(ctx, root, "f.txt", strings.NewReader("old"))
++	assert.NoError(t, err)
++
++	_, err = uc.Write(ctx, root, "f.txt", &failingReader{})
++	assert.Error(t, err)
++	content, _ := os.ReadFile(filepath.Join(host, "srv/vol/f.txt"))
++	assert.Equal(t, "old", string(content))
++
++	_, err = uc.Write(ctx, root, "f.txt", strings.NewReader("new"))
++	assert.NoError(t, err)
++	content, _ = os.ReadFile(filepath.Join(host, "srv/vol/f.txt"))
++	assert.Equal(t, "new", string(content))
++}

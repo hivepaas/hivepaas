@@ -58,7 +58,10 @@ type File struct {
 ```
 
 - `base.FileStorageLocal` is replaced by `base.FileStorageVolume` (`"volume"`),
-  in the create migration of the `files` table, the API and the dashboard.
+  in the API, the seed data and the dashboard. The column is a free `VARCHAR`,
+  so no migration changes; a database that is kept needs
+  `UPDATE files SET storage_type = 'volume' WHERE storage_type = 'local'`, and
+  its files are then on the system volume, where their paths already point.
 - `StorageID` already exists; it names the volume as it names the cloud
   storage.
 - `Path` is relative to the volume's directory. It never starts with `/` and
@@ -68,7 +71,7 @@ type File struct {
 
 | File | Scope | Volume | Path in it |
 |---|---|---|---|
-| Repository cache | project | the project's default volume | `.hivepaas/cache/repos/<id>.<ext>` |
+| Repository cache | project | the project's default volume | `.hivepaas/cache/repos/<id>.<random>.<ext>` |
 | Scheduled job output, not to the cloud | app | the project's default volume | `.hivepaas/job-output/<env>/<app>/<id>-<name>` |
 | A file uploaded to an app (data files) | app | the project's default volume | `.hivepaas/files/<env>/<app>/<id>-<name>` |
 | A file uploaded at any other scope (`tmp`) | global, user | the system volume | `files/<id>-<name>` |
@@ -96,7 +99,7 @@ The rules of a backup repository on a volume (`volumeHostDir`), with one more:
 | pinned by `NodeLabel`, matching several or none | no: which node holds the files cannot be told | - |
 | a bind directory, unpinned (shared) | yes | the node that needs the file |
 | NFS or docker-managed, unpinned | no, as for backup repositories | - |
-| a node no longer in the cluster | no | - |
+| a node no longer in the cluster | no: the agent service's own error, no agent on that node | - |
 
 When the project's default volume cannot hold files:
 - **the repository cache** is skipped: the deployment logs a warning naming the
@@ -113,22 +116,28 @@ In `fileservice`, used by everything that touches a file's content:
 Open(ctx, db, file *entity.File) (io.ReadCloser, error)
 // Create writes a file: to a temporary name first, renamed into place when
 // the writer is closed without error, so no half-written file is ever found.
-Create(ctx, db, file *entity.File) (io.WriteCloser, error)
+// Abort discards what was written instead.
+Create(ctx, db, file *entity.File) (FileWriter, error)
 // Remove removes the file; a file already gone is not an error.
 Remove(ctx, db, file *entity.File) error
 // Stat is the file's size, or not found.
 Stat(ctx, db, file *entity.File) (int64, error)
 // CountOnVolume counts the files a volume holds.
 CountOnVolume(ctx, db, volumeID string) (int, error)
+// ProjectVolume is the project's default volume.
+ProjectVolume(ctx, db, projectID string) (*entity.Setting, error)
 ```
 
 - **`cloud`**: the S3 code that exists today.
 - **The system volume**: directly under `config.AppPath`, as today.
-- **A `ClusterVolume`**: `volumeHostDir` resolves its directory on the host and
-  its node - moved from `backupreposervice` to `volumeservice`, so backups and
+- **A `ClusterVolume`**: `volumeservice.ResolveHostDir` resolves its directory
+  on the host and its node - moved from `backupreposervice`, so backups and
   files resolve volumes the same way. The layer then calls the agent of that
   node, **even when it is this node**: the app's container mounts the data
   directories, not every volume. One path, the same everywhere.
+- **The repository cache passes through the checkout's temporary directory**:
+  the archiver works on paths, so the archive is compressed there and copied to
+  the volume, and copied back to be unpacked.
 - **The callers change to it**: `fileuc` (upload, download, delete),
   `fileservice` (upload, delete), the repository cache (load, save, cleanup,
   size), the scheduled job's output (write, remove on failure). No code outside

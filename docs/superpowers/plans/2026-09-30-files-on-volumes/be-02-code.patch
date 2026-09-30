@@ -1,0 +1,1405 @@
+diff --git a/hivepaas_app/cmd/agent/main.go b/hivepaas_app/cmd/agent/main.go
+index 2067abd2..590a1bd8 100644
+--- a/hivepaas_app/cmd/agent/main.go
++++ b/hivepaas_app/cmd/agent/main.go
+@@ -30,6 +30,7 @@ func main() {
+ 				agentproto.RegisterNodeServiceServer(s, agentSrv)
+ 				agentproto.RegisterRepoServerServiceServer(s, agentSrv)
+ 				agentproto.RegisterVolumeServiceServer(s, agentSrv)
++				agentproto.RegisterFileServiceServer(s, agentSrv)
+ 			}
+ 		})
+ 	provides = append(provides, registry.Provides...)
+diff --git a/hivepaas_app/hperrors/errors_infra.go b/hivepaas_app/hperrors/errors_infra.go
+index e268cdc3..3e9a6447 100644
+--- a/hivepaas_app/hperrors/errors_infra.go
++++ b/hivepaas_app/hperrors/errors_infra.go
+@@ -25,6 +25,9 @@ var (
+ 	ErrArchiveFormatUnsupported    = NewErr(ErrUnsupported, "ERR_ARCHIVE_FORMAT_UNSUPPORTED")
+ 	ErrEncryptionFormatUnsupported = NewErr(ErrUnsupported, "ERR_ENCRYPTION_FORMAT_UNSUPPORTED")
+ 	ErrStorageTypeUnsupported      = NewErr(ErrUnsupported, "ERR_STORAGE_TYPE_UNSUPPORTED")
++	// A file path that leaves the volume directory it is given in: an absolute
++	// path, a "..", or a symbolic link out.
++	ErrFilePathOutsideRoot = NewErr(ErrArgumentInvalid, "ERR_FILE_PATH_OUTSIDE_ROOT")
+ 	// A mount whose directory is not the app's own: another app's, a whole volume,
+ 	// or a bind HivePaaS did not make.
+ 	ErrStoragePermissionsNotResettable = NewErr(ErrPreconditionFailed, "ERR_STORAGE_PERMISSIONS_NOT_RESETTABLE")
+diff --git a/hivepaas_app/interface/agent/client/fileservice/service.go b/hivepaas_app/interface/agent/client/fileservice/service.go
+new file mode 100644
+index 00000000..df92f4c4
+--- /dev/null
++++ b/hivepaas_app/interface/agent/client/fileservice/service.go
+@@ -0,0 +1,166 @@
++// Package fileservice is the app's client of the agent's file service: files
++// inside a volume's directory on the agent's node.
++package fileservice
++
++import (
++	"context"
++	"errors"
++	"io"
++
++	"google.golang.org/grpc"
++	"google.golang.org/grpc/codes"
++	"google.golang.org/grpc/credentials/insecure"
++	"google.golang.org/grpc/status"
++
++	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
++	"github.com/hivepaas/hivepaas/hivepaas_app/interface/agent/client"
++	agentproto "github.com/hivepaas/hivepaas/hivepaas_app/interface/agent/proto"
++	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/safego"
++)
++
++// writeChunkSize is what one message of a write carries.
++const writeChunkSize = 64 * 1024
++
++// FileServiceClient reaches the files inside root, a volume's directory on the
++// agent's node. path is relative to root.
++type FileServiceClient interface {
++	Read(ctx context.Context, root, path string) (io.ReadCloser, error)
++	Write(ctx context.Context, root, path string, content io.Reader) (int64, error)
++	Remove(ctx context.Context, root, path string) error
++	Stat(ctx context.Context, root, path string) (int64, error)
++	Close() error
++}
++
++type grpcFileServiceClient struct {
++	protoClient agentproto.FileServiceClient
++	conn        *grpc.ClientConn
++}
++
++func NewFileServiceClient(agentAddr string) (FileServiceClient, error) {
++	conn, err := grpc.NewClient(agentAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
++	if err != nil {
++		return nil, hperrors.Wrap(err)
++	}
++	return &grpcFileServiceClient{conn: conn, protoClient: agentproto.NewFileServiceClient(conn)}, nil
++}
++
++func (c *grpcFileServiceClient) Close() error {
++	return hperrors.Wrap(c.conn.Close())
++}
++
++func (c *grpcFileServiceClient) Read(ctx context.Context, root, path string) (io.ReadCloser, error) {
++	authCtx, cancel := client.CreateAuthCtxWithCancel(ctx)
++	stream, err := c.protoClient.FileRead(authCtx, &agentproto.FileReq{Root: root, Path: path})
++	if err != nil {
++		cancel()
++		return nil, fromAgent(err)
++	}
++	// The first message tells a missing file from a file, before the caller is
++	// handed a reader.
++	first, err := stream.Recv()
++	if err != nil && !errors.Is(err, io.EOF) {
++		cancel()
++		return nil, fromAgent(err)
++	}
++
++	pr, pw := io.Pipe()
++	go func() {
++		var copyErr error
++		defer func() { _ = pw.CloseWithError(copyErr) }()
++		defer safego.RecoverTo(&copyErr)
++		if first == nil {
++			return
++		}
++		if _, copyErr = pw.Write(first.GetChunk()); copyErr != nil {
++			return
++		}
++		for {
++			msg, recvErr := stream.Recv()
++			if recvErr != nil {
++				if !errors.Is(recvErr, io.EOF) {
++					copyErr = fromAgent(recvErr)
++				}
++				return
++			}
++			if _, copyErr = pw.Write(msg.GetChunk()); copyErr != nil {
++				return
++			}
++		}
++	}()
++	return &cancelingReader{PipeReader: pr, cancel: cancel}, nil
++}
++
++func (c *grpcFileServiceClient) Write(ctx context.Context, root, path string, content io.Reader) (int64, error) {
++	authCtx, cancel := client.CreateAuthCtxWithCancel(ctx)
++	defer cancel()
++
++	stream, err := c.protoClient.FileWrite(authCtx)
++	if err != nil {
++		return 0, fromAgent(err)
++	}
++	if err = stream.Send(&agentproto.FileWriteReq{
++		Value: &agentproto.FileWriteReq_Target{Target: &agentproto.FileReq{Root: root, Path: path}},
++	}); err != nil {
++		return 0, fromAgent(err)
++	}
++
++	buf := make([]byte, writeChunkSize)
++	for {
++		n, readErr := content.Read(buf)
++		if n > 0 {
++			if err = stream.Send(&agentproto.FileWriteReq{
++				Value: &agentproto.FileWriteReq_Chunk{Chunk: buf[:n]},
++			}); err != nil {
++				return 0, fromAgent(err)
++			}
++		}
++		if readErr != nil {
++			if errors.Is(readErr, io.EOF) {
++				break
++			}
++			// Canceling the stream makes the agent drop what it has written.
++			return 0, hperrors.Wrap(readErr)
++		}
++	}
++	resp, err := stream.CloseAndRecv()
++	if err != nil {
++		return 0, fromAgent(err)
++	}
++	return resp.GetSize(), nil
++}
++
++func (c *grpcFileServiceClient) Remove(ctx context.Context, root, path string) error {
++	_, err := c.protoClient.FileRemove(client.CreateAuthCtx(ctx), &agentproto.FileReq{Root: root, Path: path})
++	return fromAgent(err)
++}
++
++func (c *grpcFileServiceClient) Stat(ctx context.Context, root, path string) (int64, error) {
++	resp, err := c.protoClient.FileStat(client.CreateAuthCtx(ctx), &agentproto.FileReq{Root: root, Path: path})
++	if err != nil {
++		return 0, fromAgent(err)
++	}
++	return resp.GetSize(), nil
++}
++
++// fromAgent is an agent's answer as HivePaaS's errors: a file the agent did not
++// find is not found here too.
++func fromAgent(err error) error {
++	if err == nil {
++		return nil
++	}
++	if st, ok := status.FromError(err); ok && st.Code() == codes.NotFound {
++		return hperrors.NewNotFound("File").WithCause(err)
++	}
++	return hperrors.Wrap(err)
++}
++
++// cancelingReader ends the stream when the reader is closed early.
++type cancelingReader struct {
++	*io.PipeReader
++	cancel context.CancelFunc
++}
++
++func (r *cancelingReader) Close() error {
++	r.cancel()
++	return hperrors.Wrap(r.PipeReader.Close())
++}
+diff --git a/hivepaas_app/interface/agent/proto/file.pb.go b/hivepaas_app/interface/agent/proto/file.pb.go
+new file mode 100644
+index 00000000..cc602e70
+--- /dev/null
++++ b/hivepaas_app/interface/agent/proto/file.pb.go
+@@ -0,0 +1,419 @@
++// Code generated by protoc-gen-go. DO NOT EDIT.
++// versions:
++// 	protoc-gen-go v1.36.12
++// 	protoc        v7.35.1
++// source: file.proto
++
++package agentproto
++
++import (
++	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
++	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
++	reflect "reflect"
++	sync "sync"
++	unsafe "unsafe"
++)
++
++const (
++	// Verify that this generated code is sufficiently up-to-date.
++	_ = protoimpl.EnforceVersion(20 - protoimpl.MinVersion)
++	// Verify that runtime/protoimpl is sufficiently up-to-date.
++	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
++)
++
++type FileReq struct {
++	state protoimpl.MessageState `protogen:"open.v1"`
++	// root is the volume's directory on the host.
++	Root string `protobuf:"bytes,1,opt,name=root,proto3" json:"root,omitempty"`
++	// path is inside root.
++	Path          string `protobuf:"bytes,2,opt,name=path,proto3" json:"path,omitempty"`
++	unknownFields protoimpl.UnknownFields
++	sizeCache     protoimpl.SizeCache
++}
++
++func (x *FileReq) Reset() {
++	*x = FileReq{}
++	mi := &file_file_proto_msgTypes[0]
++	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
++	ms.StoreMessageInfo(mi)
++}
++
++func (x *FileReq) String() string {
++	return protoimpl.X.MessageStringOf(x)
++}
++
++func (*FileReq) ProtoMessage() {}
++
++func (x *FileReq) ProtoReflect() protoreflect.Message {
++	mi := &file_file_proto_msgTypes[0]
++	if x != nil {
++		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
++		if ms.LoadMessageInfo() == nil {
++			ms.StoreMessageInfo(mi)
++		}
++		return ms
++	}
++	return mi.MessageOf(x)
++}
++
++// Deprecated: Use FileReq.ProtoReflect.Descriptor instead.
++func (*FileReq) Descriptor() ([]byte, []int) {
++	return file_file_proto_rawDescGZIP(), []int{0}
++}
++
++func (x *FileReq) GetRoot() string {
++	if x != nil {
++		return x.Root
++	}
++	return ""
++}
++
++func (x *FileReq) GetPath() string {
++	if x != nil {
++		return x.Path
++	}
++	return ""
++}
++
++type FileChunk struct {
++	state         protoimpl.MessageState `protogen:"open.v1"`
++	Chunk         []byte                 `protobuf:"bytes,1,opt,name=chunk,proto3" json:"chunk,omitempty"`
++	unknownFields protoimpl.UnknownFields
++	sizeCache     protoimpl.SizeCache
++}
++
++func (x *FileChunk) Reset() {
++	*x = FileChunk{}
++	mi := &file_file_proto_msgTypes[1]
++	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
++	ms.StoreMessageInfo(mi)
++}
++
++func (x *FileChunk) String() string {
++	return protoimpl.X.MessageStringOf(x)
++}
++
++func (*FileChunk) ProtoMessage() {}
++
++func (x *FileChunk) ProtoReflect() protoreflect.Message {
++	mi := &file_file_proto_msgTypes[1]
++	if x != nil {
++		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
++		if ms.LoadMessageInfo() == nil {
++			ms.StoreMessageInfo(mi)
++		}
++		return ms
++	}
++	return mi.MessageOf(x)
++}
++
++// Deprecated: Use FileChunk.ProtoReflect.Descriptor instead.
++func (*FileChunk) Descriptor() ([]byte, []int) {
++	return file_file_proto_rawDescGZIP(), []int{1}
++}
++
++func (x *FileChunk) GetChunk() []byte {
++	if x != nil {
++		return x.Chunk
++	}
++	return nil
++}
++
++type FileWriteReq struct {
++	state protoimpl.MessageState `protogen:"open.v1"`
++	// Types that are valid to be assigned to Value:
++	//
++	//	*FileWriteReq_Target
++	//	*FileWriteReq_Chunk
++	Value         isFileWriteReq_Value `protobuf_oneof:"value"`
++	unknownFields protoimpl.UnknownFields
++	sizeCache     protoimpl.SizeCache
++}
++
++func (x *FileWriteReq) Reset() {
++	*x = FileWriteReq{}
++	mi := &file_file_proto_msgTypes[2]
++	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
++	ms.StoreMessageInfo(mi)
++}
++
++func (x *FileWriteReq) String() string {
++	return protoimpl.X.MessageStringOf(x)
++}
++
++func (*FileWriteReq) ProtoMessage() {}
++
++func (x *FileWriteReq) ProtoReflect() protoreflect.Message {
++	mi := &file_file_proto_msgTypes[2]
++	if x != nil {
++		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
++		if ms.LoadMessageInfo() == nil {
++			ms.StoreMessageInfo(mi)
++		}
++		return ms
++	}
++	return mi.MessageOf(x)
++}
++
++// Deprecated: Use FileWriteReq.ProtoReflect.Descriptor instead.
++func (*FileWriteReq) Descriptor() ([]byte, []int) {
++	return file_file_proto_rawDescGZIP(), []int{2}
++}
++
++func (x *FileWriteReq) GetValue() isFileWriteReq_Value {
++	if x != nil {
++		return x.Value
++	}
++	return nil
++}
++
++func (x *FileWriteReq) GetTarget() *FileReq {
++	if x != nil {
++		if x, ok := x.Value.(*FileWriteReq_Target); ok {
++			return x.Target
++		}
++	}
++	return nil
++}
++
++func (x *FileWriteReq) GetChunk() []byte {
++	if x != nil {
++		if x, ok := x.Value.(*FileWriteReq_Chunk); ok {
++			return x.Chunk
++		}
++	}
++	return nil
++}
++
++type isFileWriteReq_Value interface {
++	isFileWriteReq_Value()
++}
++
++type FileWriteReq_Target struct {
++	Target *FileReq `protobuf:"bytes,1,opt,name=target,proto3,oneof"`
++}
++
++type FileWriteReq_Chunk struct {
++	Chunk []byte `protobuf:"bytes,2,opt,name=chunk,proto3,oneof"`
++}
++
++func (*FileWriteReq_Target) isFileWriteReq_Value() {}
++
++func (*FileWriteReq_Chunk) isFileWriteReq_Value() {}
++
++type FileWriteResp struct {
++	state         protoimpl.MessageState `protogen:"open.v1"`
++	Size          int64                  `protobuf:"varint,1,opt,name=size,proto3" json:"size,omitempty"`
++	unknownFields protoimpl.UnknownFields
++	sizeCache     protoimpl.SizeCache
++}
++
++func (x *FileWriteResp) Reset() {
++	*x = FileWriteResp{}
++	mi := &file_file_proto_msgTypes[3]
++	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
++	ms.StoreMessageInfo(mi)
++}
++
++func (x *FileWriteResp) String() string {
++	return protoimpl.X.MessageStringOf(x)
++}
++
++func (*FileWriteResp) ProtoMessage() {}
++
++func (x *FileWriteResp) ProtoReflect() protoreflect.Message {
++	mi := &file_file_proto_msgTypes[3]
++	if x != nil {
++		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
++		if ms.LoadMessageInfo() == nil {
++			ms.StoreMessageInfo(mi)
++		}
++		return ms
++	}
++	return mi.MessageOf(x)
++}
++
++// Deprecated: Use FileWriteResp.ProtoReflect.Descriptor instead.
++func (*FileWriteResp) Descriptor() ([]byte, []int) {
++	return file_file_proto_rawDescGZIP(), []int{3}
++}
++
++func (x *FileWriteResp) GetSize() int64 {
++	if x != nil {
++		return x.Size
++	}
++	return 0
++}
++
++type FileRemoveResp struct {
++	state         protoimpl.MessageState `protogen:"open.v1"`
++	unknownFields protoimpl.UnknownFields
++	sizeCache     protoimpl.SizeCache
++}
++
++func (x *FileRemoveResp) Reset() {
++	*x = FileRemoveResp{}
++	mi := &file_file_proto_msgTypes[4]
++	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
++	ms.StoreMessageInfo(mi)
++}
++
++func (x *FileRemoveResp) String() string {
++	return protoimpl.X.MessageStringOf(x)
++}
++
++func (*FileRemoveResp) ProtoMessage() {}
++
++func (x *FileRemoveResp) ProtoReflect() protoreflect.Message {
++	mi := &file_file_proto_msgTypes[4]
++	if x != nil {
++		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
++		if ms.LoadMessageInfo() == nil {
++			ms.StoreMessageInfo(mi)
++		}
++		return ms
++	}
++	return mi.MessageOf(x)
++}
++
++// Deprecated: Use FileRemoveResp.ProtoReflect.Descriptor instead.
++func (*FileRemoveResp) Descriptor() ([]byte, []int) {
++	return file_file_proto_rawDescGZIP(), []int{4}
++}
++
++type FileStatResp struct {
++	state         protoimpl.MessageState `protogen:"open.v1"`
++	Size          int64                  `protobuf:"varint,1,opt,name=size,proto3" json:"size,omitempty"`
++	unknownFields protoimpl.UnknownFields
++	sizeCache     protoimpl.SizeCache
++}
++
++func (x *FileStatResp) Reset() {
++	*x = FileStatResp{}
++	mi := &file_file_proto_msgTypes[5]
++	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
++	ms.StoreMessageInfo(mi)
++}
++
++func (x *FileStatResp) String() string {
++	return protoimpl.X.MessageStringOf(x)
++}
++
++func (*FileStatResp) ProtoMessage() {}
++
++func (x *FileStatResp) ProtoReflect() protoreflect.Message {
++	mi := &file_file_proto_msgTypes[5]
++	if x != nil {
++		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
++		if ms.LoadMessageInfo() == nil {
++			ms.StoreMessageInfo(mi)
++		}
++		return ms
++	}
++	return mi.MessageOf(x)
++}
++
++// Deprecated: Use FileStatResp.ProtoReflect.Descriptor instead.
++func (*FileStatResp) Descriptor() ([]byte, []int) {
++	return file_file_proto_rawDescGZIP(), []int{5}
++}
++
++func (x *FileStatResp) GetSize() int64 {
++	if x != nil {
++		return x.Size
++	}
++	return 0
++}
++
++var File_file_proto protoreflect.FileDescriptor
++
++const file_file_proto_rawDesc = "" +
++	"\n" +
++	"\n" +
++	"file.proto\x12\x05agent\"1\n" +
++	"\aFileReq\x12\x12\n" +
++	"\x04root\x18\x01 \x01(\tR\x04root\x12\x12\n" +
++	"\x04path\x18\x02 \x01(\tR\x04path\"!\n" +
++	"\tFileChunk\x12\x14\n" +
++	"\x05chunk\x18\x01 \x01(\fR\x05chunk\"Y\n" +
++	"\fFileWriteReq\x12(\n" +
++	"\x06target\x18\x01 \x01(\v2\x0e.agent.FileReqH\x00R\x06target\x12\x16\n" +
++	"\x05chunk\x18\x02 \x01(\fH\x00R\x05chunkB\a\n" +
++	"\x05value\"#\n" +
++	"\rFileWriteResp\x12\x12\n" +
++	"\x04size\x18\x01 \x01(\x03R\x04size\"\x10\n" +
++	"\x0eFileRemoveResp\"\"\n" +
++	"\fFileStatResp\x12\x12\n" +
++	"\x04size\x18\x01 \x01(\x03R\x04size2\xdd\x01\n" +
++	"\vFileService\x12.\n" +
++	"\bFileRead\x12\x0e.agent.FileReq\x1a\x10.agent.FileChunk0\x01\x128\n" +
++	"\tFileWrite\x12\x13.agent.FileWriteReq\x1a\x14.agent.FileWriteResp(\x01\x123\n" +
++	"\n" +
++	"FileRemove\x12\x0e.agent.FileReq\x1a\x15.agent.FileRemoveResp\x12/\n" +
++	"\bFileStat\x12\x0e.agent.FileReq\x1a\x13.agent.FileStatRespBLZJgithub.com/hivepaas/hivepaas/hivepaas_app/interface/agent/proto;agentprotob\x06proto3"
++
++var (
++	file_file_proto_rawDescOnce sync.Once
++	file_file_proto_rawDescData []byte
++)
++
++func file_file_proto_rawDescGZIP() []byte {
++	file_file_proto_rawDescOnce.Do(func() {
++		file_file_proto_rawDescData = protoimpl.X.CompressGZIP(unsafe.Slice(unsafe.StringData(file_file_proto_rawDesc), len(file_file_proto_rawDesc)))
++	})
++	return file_file_proto_rawDescData
++}
++
++var file_file_proto_msgTypes = make([]protoimpl.MessageInfo, 6)
++var file_file_proto_goTypes = []any{
++	(*FileReq)(nil),        // 0: agent.FileReq
++	(*FileChunk)(nil),      // 1: agent.FileChunk
++	(*FileWriteReq)(nil),   // 2: agent.FileWriteReq
++	(*FileWriteResp)(nil),  // 3: agent.FileWriteResp
++	(*FileRemoveResp)(nil), // 4: agent.FileRemoveResp
++	(*FileStatResp)(nil),   // 5: agent.FileStatResp
++}
++var file_file_proto_depIdxs = []int32{
++	0, // 0: agent.FileWriteReq.target:type_name -> agent.FileReq
++	0, // 1: agent.FileService.FileRead:input_type -> agent.FileReq
++	2, // 2: agent.FileService.FileWrite:input_type -> agent.FileWriteReq
++	0, // 3: agent.FileService.FileRemove:input_type -> agent.FileReq
++	0, // 4: agent.FileService.FileStat:input_type -> agent.FileReq
++	1, // 5: agent.FileService.FileRead:output_type -> agent.FileChunk
++	3, // 6: agent.FileService.FileWrite:output_type -> agent.FileWriteResp
++	4, // 7: agent.FileService.FileRemove:output_type -> agent.FileRemoveResp
++	5, // 8: agent.FileService.FileStat:output_type -> agent.FileStatResp
++	5, // [5:9] is the sub-list for method output_type
++	1, // [1:5] is the sub-list for method input_type
++	1, // [1:1] is the sub-list for extension type_name
++	1, // [1:1] is the sub-list for extension extendee
++	0, // [0:1] is the sub-list for field type_name
++}
++
++func init() { file_file_proto_init() }
++func file_file_proto_init() {
++	if File_file_proto != nil {
++		return
++	}
++	file_file_proto_msgTypes[2].OneofWrappers = []any{
++		(*FileWriteReq_Target)(nil),
++		(*FileWriteReq_Chunk)(nil),
++	}
++	type x struct{}
++	out := protoimpl.TypeBuilder{
++		File: protoimpl.DescBuilder{
++			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
++			RawDescriptor: unsafe.Slice(unsafe.StringData(file_file_proto_rawDesc), len(file_file_proto_rawDesc)),
++			NumEnums:      0,
++			NumMessages:   6,
++			NumExtensions: 0,
++			NumServices:   1,
++		},
++		GoTypes:           file_file_proto_goTypes,
++		DependencyIndexes: file_file_proto_depIdxs,
++		MessageInfos:      file_file_proto_msgTypes,
++	}.Build()
++	File_file_proto = out.File
++	file_file_proto_goTypes = nil
++	file_file_proto_depIdxs = nil
++}
+diff --git a/hivepaas_app/interface/agent/proto/file.proto b/hivepaas_app/interface/agent/proto/file.proto
+new file mode 100644
+index 00000000..5c0a7c10
+--- /dev/null
++++ b/hivepaas_app/interface/agent/proto/file.proto
+@@ -0,0 +1,50 @@
++syntax = "proto3";
++
++package agent;
++
++option go_package = "github.com/hivepaas/hivepaas/hivepaas_app/interface/agent/proto;agentproto";
++
++// FileService reads and writes HivePaaS's files inside a volume's directory on
++// this node. A path never leaves the directory it is given in.
++service FileService {
++  // FileRead streams a file.
++  rpc FileRead(FileReq) returns (stream FileChunk);
++
++  // FileWrite writes a file: the first message names it, the rest are its
++  // content. The file is replaced whole once the stream ends without error.
++  rpc FileWrite(stream FileWriteReq) returns (FileWriteResp);
++
++  // FileRemove removes a file; one already gone is removed.
++  rpc FileRemove(FileReq) returns (FileRemoveResp);
++
++  // FileStat gives a file's size.
++  rpc FileStat(FileReq) returns (FileStatResp);
++}
++
++message FileReq {
++  // root is the volume's directory on the host.
++  string root = 1;
++  // path is inside root.
++  string path = 2;
++}
++
++message FileChunk {
++  bytes chunk = 1;
++}
++
++message FileWriteReq {
++  oneof value {
++    FileReq target = 1;
++    bytes chunk = 2;
++  }
++}
++
++message FileWriteResp {
++  int64 size = 1;
++}
++
++message FileRemoveResp {}
++
++message FileStatResp {
++  int64 size = 1;
++}
+diff --git a/hivepaas_app/interface/agent/proto/file_grpc.pb.go b/hivepaas_app/interface/agent/proto/file_grpc.pb.go
+new file mode 100644
+index 00000000..6af943f7
+--- /dev/null
++++ b/hivepaas_app/interface/agent/proto/file_grpc.pb.go
+@@ -0,0 +1,248 @@
++// Code generated by protoc-gen-go-grpc. DO NOT EDIT.
++// versions:
++// - protoc-gen-go-grpc v1.6.2
++// - protoc             v7.35.1
++// source: file.proto
++
++package agentproto
++
++import (
++	context "context"
++	grpc "google.golang.org/grpc"
++	codes "google.golang.org/grpc/codes"
++	status "google.golang.org/grpc/status"
++)
++
++// This is a compile-time assertion to ensure that this generated file
++// is compatible with the grpc package it is being compiled against.
++// Requires gRPC-Go v1.64.0 or later.
++const _ = grpc.SupportPackageIsVersion9
++
++const (
++	FileService_FileRead_FullMethodName   = "/agent.FileService/FileRead"
++	FileService_FileWrite_FullMethodName  = "/agent.FileService/FileWrite"
++	FileService_FileRemove_FullMethodName = "/agent.FileService/FileRemove"
++	FileService_FileStat_FullMethodName   = "/agent.FileService/FileStat"
++)
++
++// FileServiceClient is the client API for FileService service.
++//
++// For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
++//
++// FileService reads and writes HivePaaS's files inside a volume's directory on
++// this node. A path never leaves the directory it is given in.
++type FileServiceClient interface {
++	// FileRead streams a file.
++	FileRead(ctx context.Context, in *FileReq, opts ...grpc.CallOption) (grpc.ServerStreamingClient[FileChunk], error)
++	// FileWrite writes a file: the first message names it, the rest are its
++	// content. The file is replaced whole once the stream ends without error.
++	FileWrite(ctx context.Context, opts ...grpc.CallOption) (grpc.ClientStreamingClient[FileWriteReq, FileWriteResp], error)
++	// FileRemove removes a file; one already gone is removed.
++	FileRemove(ctx context.Context, in *FileReq, opts ...grpc.CallOption) (*FileRemoveResp, error)
++	// FileStat gives a file's size.
++	FileStat(ctx context.Context, in *FileReq, opts ...grpc.CallOption) (*FileStatResp, error)
++}
++
++type fileServiceClient struct {
++	cc grpc.ClientConnInterface
++}
++
++func NewFileServiceClient(cc grpc.ClientConnInterface) FileServiceClient {
++	return &fileServiceClient{cc}
++}
++
++func (c *fileServiceClient) FileRead(ctx context.Context, in *FileReq, opts ...grpc.CallOption) (grpc.ServerStreamingClient[FileChunk], error) {
++	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
++	stream, err := c.cc.NewStream(ctx, &FileService_ServiceDesc.Streams[0], FileService_FileRead_FullMethodName, cOpts...)
++	if err != nil {
++		return nil, err
++	}
++	x := &grpc.GenericClientStream[FileReq, FileChunk]{ClientStream: stream}
++	if err := x.ClientStream.SendMsg(in); err != nil {
++		return nil, err
++	}
++	if err := x.ClientStream.CloseSend(); err != nil {
++		return nil, err
++	}
++	return x, nil
++}
++
++// This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
++type FileService_FileReadClient = grpc.ServerStreamingClient[FileChunk]
++
++func (c *fileServiceClient) FileWrite(ctx context.Context, opts ...grpc.CallOption) (grpc.ClientStreamingClient[FileWriteReq, FileWriteResp], error) {
++	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
++	stream, err := c.cc.NewStream(ctx, &FileService_ServiceDesc.Streams[1], FileService_FileWrite_FullMethodName, cOpts...)
++	if err != nil {
++		return nil, err
++	}
++	x := &grpc.GenericClientStream[FileWriteReq, FileWriteResp]{ClientStream: stream}
++	return x, nil
++}
++
++// This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
++type FileService_FileWriteClient = grpc.ClientStreamingClient[FileWriteReq, FileWriteResp]
++
++func (c *fileServiceClient) FileRemove(ctx context.Context, in *FileReq, opts ...grpc.CallOption) (*FileRemoveResp, error) {
++	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
++	out := new(FileRemoveResp)
++	err := c.cc.Invoke(ctx, FileService_FileRemove_FullMethodName, in, out, cOpts...)
++	if err != nil {
++		return nil, err
++	}
++	return out, nil
++}
++
++func (c *fileServiceClient) FileStat(ctx context.Context, in *FileReq, opts ...grpc.CallOption) (*FileStatResp, error) {
++	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
++	out := new(FileStatResp)
++	err := c.cc.Invoke(ctx, FileService_FileStat_FullMethodName, in, out, cOpts...)
++	if err != nil {
++		return nil, err
++	}
++	return out, nil
++}
++
++// FileServiceServer is the server API for FileService service.
++// All implementations must embed UnimplementedFileServiceServer
++// for forward compatibility.
++//
++// FileService reads and writes HivePaaS's files inside a volume's directory on
++// this node. A path never leaves the directory it is given in.
++type FileServiceServer interface {
++	// FileRead streams a file.
++	FileRead(*FileReq, grpc.ServerStreamingServer[FileChunk]) error
++	// FileWrite writes a file: the first message names it, the rest are its
++	// content. The file is replaced whole once the stream ends without error.
++	FileWrite(grpc.ClientStreamingServer[FileWriteReq, FileWriteResp]) error
++	// FileRemove removes a file; one already gone is removed.
++	FileRemove(context.Context, *FileReq) (*FileRemoveResp, error)
++	// FileStat gives a file's size.
++	FileStat(context.Context, *FileReq) (*FileStatResp, error)
++	mustEmbedUnimplementedFileServiceServer()
++}
++
++// UnimplementedFileServiceServer must be embedded to have
++// forward compatible implementations.
++//
++// NOTE: this should be embedded by value instead of pointer to avoid a nil
++// pointer dereference when methods are called.
++type UnimplementedFileServiceServer struct{}
++
++func (UnimplementedFileServiceServer) FileRead(*FileReq, grpc.ServerStreamingServer[FileChunk]) error {
++	return status.Error(codes.Unimplemented, "method FileRead not implemented")
++}
++func (UnimplementedFileServiceServer) FileWrite(grpc.ClientStreamingServer[FileWriteReq, FileWriteResp]) error {
++	return status.Error(codes.Unimplemented, "method FileWrite not implemented")
++}
++func (UnimplementedFileServiceServer) FileRemove(context.Context, *FileReq) (*FileRemoveResp, error) {
++	return nil, status.Error(codes.Unimplemented, "method FileRemove not implemented")
++}
++func (UnimplementedFileServiceServer) FileStat(context.Context, *FileReq) (*FileStatResp, error) {
++	return nil, status.Error(codes.Unimplemented, "method FileStat not implemented")
++}
++func (UnimplementedFileServiceServer) mustEmbedUnimplementedFileServiceServer() {}
++func (UnimplementedFileServiceServer) testEmbeddedByValue()                     {}
++
++// UnsafeFileServiceServer may be embedded to opt out of forward compatibility for this service.
++// Use of this interface is not recommended, as added methods to FileServiceServer will
++// result in compilation errors.
++type UnsafeFileServiceServer interface {
++	mustEmbedUnimplementedFileServiceServer()
++}
++
++func RegisterFileServiceServer(s grpc.ServiceRegistrar, srv FileServiceServer) {
++	// If the following call panics, it indicates UnimplementedFileServiceServer was
++	// embedded by pointer and is nil.  This will cause panics if an
++	// unimplemented method is ever invoked, so we test this at initialization
++	// time to prevent it from happening at runtime later due to I/O.
++	if t, ok := srv.(interface{ testEmbeddedByValue() }); ok {
++		t.testEmbeddedByValue()
++	}
++	s.RegisterService(&FileService_ServiceDesc, srv)
++}
++
++func _FileService_FileRead_Handler(srv interface{}, stream grpc.ServerStream) error {
++	m := new(FileReq)
++	if err := stream.RecvMsg(m); err != nil {
++		return err
++	}
++	return srv.(FileServiceServer).FileRead(m, &grpc.GenericServerStream[FileReq, FileChunk]{ServerStream: stream})
++}
++
++// This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
++type FileService_FileReadServer = grpc.ServerStreamingServer[FileChunk]
++
++func _FileService_FileWrite_Handler(srv interface{}, stream grpc.ServerStream) error {
++	return srv.(FileServiceServer).FileWrite(&grpc.GenericServerStream[FileWriteReq, FileWriteResp]{ServerStream: stream})
++}
++
++// This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
++type FileService_FileWriteServer = grpc.ClientStreamingServer[FileWriteReq, FileWriteResp]
++
++func _FileService_FileRemove_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
++	in := new(FileReq)
++	if err := dec(in); err != nil {
++		return nil, err
++	}
++	if interceptor == nil {
++		return srv.(FileServiceServer).FileRemove(ctx, in)
++	}
++	info := &grpc.UnaryServerInfo{
++		Server:     srv,
++		FullMethod: FileService_FileRemove_FullMethodName,
++	}
++	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
++		return srv.(FileServiceServer).FileRemove(ctx, req.(*FileReq))
++	}
++	return interceptor(ctx, in, info, handler)
++}
++
++func _FileService_FileStat_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
++	in := new(FileReq)
++	if err := dec(in); err != nil {
++		return nil, err
++	}
++	if interceptor == nil {
++		return srv.(FileServiceServer).FileStat(ctx, in)
++	}
++	info := &grpc.UnaryServerInfo{
++		Server:     srv,
++		FullMethod: FileService_FileStat_FullMethodName,
++	}
++	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
++		return srv.(FileServiceServer).FileStat(ctx, req.(*FileReq))
++	}
++	return interceptor(ctx, in, info, handler)
++}
++
++// FileService_ServiceDesc is the grpc.ServiceDesc for FileService service.
++// It's only intended for direct use with grpc.RegisterService,
++// and not to be introspected or modified (even as a copy)
++var FileService_ServiceDesc = grpc.ServiceDesc{
++	ServiceName: "agent.FileService",
++	HandlerType: (*FileServiceServer)(nil),
++	Methods: []grpc.MethodDesc{
++		{
++			MethodName: "FileRemove",
++			Handler:    _FileService_FileRemove_Handler,
++		},
++		{
++			MethodName: "FileStat",
++			Handler:    _FileService_FileStat_Handler,
++		},
++	},
++	Streams: []grpc.StreamDesc{
++		{
++			StreamName:    "FileRead",
++			Handler:       _FileService_FileRead_Handler,
++			ServerStreams: true,
++		},
++		{
++			StreamName:    "FileWrite",
++			Handler:       _FileService_FileWrite_Handler,
++			ClientStreams: true,
++		},
++	},
++	Metadata: "file.proto",
++}
+diff --git a/hivepaas_app/interface/agent/proto/generate.go b/hivepaas_app/interface/agent/proto/generate.go
+index ba947aea..8d49ec88 100644
+--- a/hivepaas_app/interface/agent/proto/generate.go
++++ b/hivepaas_app/interface/agent/proto/generate.go
+@@ -8,3 +8,4 @@ package agentproto
+ //go:generate protoc --go_out=. --go_opt=paths=source_relative --go-grpc_out=. --go-grpc_opt=paths=source_relative volume.proto
+ //go:generate protoc --go_out=. --go_opt=paths=source_relative --go-grpc_out=. --go-grpc_opt=paths=source_relative docker_api.proto
+ //go:generate protoc --go_out=. --go_opt=paths=source_relative --go-grpc_out=. --go-grpc_opt=paths=source_relative repo_server.proto
++//go:generate protoc --go_out=. --go_opt=paths=source_relative --go-grpc_out=. --go-grpc_opt=paths=source_relative file.proto
+diff --git a/hivepaas_app/interface/agent/server/fileservice/file.go b/hivepaas_app/interface/agent/server/fileservice/file.go
+new file mode 100644
+index 00000000..4a2e1509
+--- /dev/null
++++ b/hivepaas_app/interface/agent/server/fileservice/file.go
+@@ -0,0 +1,107 @@
++// Package fileservice is the agent's gRPC face of fileagentuc.
++package fileservice
++
++import (
++	"errors"
++	"io"
++
++	"google.golang.org/grpc"
++
++	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
++	agentproto "github.com/hivepaas/hivepaas/hivepaas_app/interface/agent/proto"
++	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/safego"
++	"github.com/hivepaas/hivepaas/hivepaas_app/usecaseagent/fileagentuc"
++)
++
++// chunkSize is what one message of a read carries.
++const chunkSize = 64 * 1024
++
++func FileRead(
++	uc *fileagentuc.UC,
++	req *agentproto.FileReq,
++	stream grpc.ServerStreamingServer[agentproto.FileChunk],
++) error {
++	reader, _, err := uc.Open(req.GetRoot(), req.GetPath())
++	if err != nil {
++		return hperrors.Wrap(err)
++	}
++	defer reader.Close()
++
++	buf := make([]byte, chunkSize)
++	for {
++		n, readErr := reader.Read(buf)
++		if n > 0 {
++			if err := stream.Send(&agentproto.FileChunk{Chunk: buf[:n]}); err != nil {
++				return hperrors.Wrap(err)
++			}
++		}
++		if readErr != nil {
++			if errors.Is(readErr, io.EOF) {
++				return nil
++			}
++			return hperrors.Wrap(readErr)
++		}
++	}
++}
++
++func FileWrite(
++	uc *fileagentuc.UC,
++	stream grpc.ClientStreamingServer[agentproto.FileWriteReq, agentproto.FileWriteResp],
++) error {
++	first, err := stream.Recv()
++	if err != nil {
++		return hperrors.Wrap(err)
++	}
++	target := first.GetTarget()
++	if target == nil {
++		return hperrors.NewMissing("File target")
++	}
++
++	pr, pw := io.Pipe()
++	go feedWrite(stream, pw)
++
++	size, err := uc.Write(stream.Context(), target.GetRoot(), target.GetPath(), pr)
++	_ = pr.CloseWithError(err)
++	if err != nil {
++		return hperrors.Wrap(err)
++	}
++	return hperrors.Wrap(stream.SendAndClose(&agentproto.FileWriteResp{Size: size}))
++}
++
++// feedWrite copies the chunks the client streams into pw, and ends it: cleanly
++// when the client has sent everything, with the error otherwise.
++func feedWrite(
++	stream grpc.ClientStreamingServer[agentproto.FileWriteReq, agentproto.FileWriteResp],
++	pw *io.PipeWriter,
++) {
++	var err error
++	defer func() { _ = pw.CloseWithError(err) }()
++	defer safego.RecoverTo(&err)
++	for {
++		msg, recvErr := stream.Recv()
++		if recvErr != nil {
++			if !errors.Is(recvErr, io.EOF) {
++				err = hperrors.Wrap(recvErr)
++			}
++			return
++		}
++		if _, err = pw.Write(msg.GetChunk()); err != nil {
++			return
++		}
++	}
++}
++
++func FileRemove(uc *fileagentuc.UC, req *agentproto.FileReq) (*agentproto.FileRemoveResp, error) {
++	if err := uc.Remove(req.GetRoot(), req.GetPath()); err != nil {
++		return nil, hperrors.Wrap(err)
++	}
++	return &agentproto.FileRemoveResp{}, nil
++}
++
++func FileStat(uc *fileagentuc.UC, req *agentproto.FileReq) (*agentproto.FileStatResp, error) {
++	size, err := uc.Stat(req.GetRoot(), req.GetPath())
++	if err != nil {
++		return nil, hperrors.Wrap(err)
++	}
++	return &agentproto.FileStatResp{Size: size}, nil
++}
+diff --git a/hivepaas_app/interface/agent/server/server.go b/hivepaas_app/interface/agent/server/server.go
+index a83e8411..d7846cb5 100644
+--- a/hivepaas_app/interface/agent/server/server.go
++++ b/hivepaas_app/interface/agent/server/server.go
+@@ -8,6 +8,7 @@ import (
+ 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/logging"
+ 	"github.com/hivepaas/hivepaas/hivepaas_app/usecaseagent/containeragentuc"
+ 	"github.com/hivepaas/hivepaas/hivepaas_app/usecaseagent/dockerapiagentuc"
++	"github.com/hivepaas/hivepaas/hivepaas_app/usecaseagent/fileagentuc"
+ 	"github.com/hivepaas/hivepaas/hivepaas_app/usecaseagent/imagebuildagentuc"
+ 	"github.com/hivepaas/hivepaas/hivepaas_app/usecaseagent/nodeagentuc"
+ 	"github.com/hivepaas/hivepaas/hivepaas_app/usecaseagent/nodecleanupagentuc"
+@@ -19,6 +20,7 @@ type AgentServer struct {
+ 	agentproto.UnimplementedAgentServiceServer
+ 	agentproto.UnimplementedContainerServiceServer
+ 	agentproto.UnimplementedDockerAPIServiceServer
++	agentproto.UnimplementedFileServiceServer
+ 	agentproto.UnimplementedImageBuildServiceServer
+ 	agentproto.UnimplementedNodeCleanupServiceServer
+ 	agentproto.UnimplementedNodeServiceServer
+@@ -27,6 +29,7 @@ type AgentServer struct {
+ 	logger             logging.Logger
+ 	containerAgentUC   *containeragentuc.UC
+ 	dockerAPIAgentUC   *dockerapiagentuc.UC
++	fileAgentUC        *fileagentuc.UC
+ 	imageBuildAgentUC  *imagebuildagentuc.UC
+ 	nodeAgentUC        *nodeagentuc.UC
+ 	nodeCleanupAgentUC *nodecleanupagentuc.UC
+@@ -38,6 +41,7 @@ func NewAgentServer(
+ 	logger logging.Logger,
+ 	containerAgentUC *containeragentuc.UC,
+ 	dockerAPIAgentUC *dockerapiagentuc.UC,
++	fileAgentUC *fileagentuc.UC,
+ 	imageBuildAgentUC *imagebuildagentuc.UC,
+ 	nodeAgentUC *nodeagentuc.UC,
+ 	nodeCleanupAgentUC *nodecleanupagentuc.UC,
+@@ -49,6 +53,7 @@ func NewAgentServer(
+ 		logger:             logger,
+ 		containerAgentUC:   containerAgentUC,
+ 		dockerAPIAgentUC:   dockerAPIAgentUC,
++		fileAgentUC:        fileAgentUC,
+ 		imageBuildAgentUC:  imageBuildAgentUC,
+ 		nodeAgentUC:        nodeAgentUC,
+ 		nodeCleanupAgentUC: nodeCleanupAgentUC,
+diff --git a/hivepaas_app/interface/agent/server/server_file.go b/hivepaas_app/interface/agent/server/server_file.go
+new file mode 100644
+index 00000000..f654f3fb
+--- /dev/null
++++ b/hivepaas_app/interface/agent/server/server_file.go
+@@ -0,0 +1,37 @@
++package server
++
++import (
++	"context"
++
++	"google.golang.org/grpc"
++
++	agentproto "github.com/hivepaas/hivepaas/hivepaas_app/interface/agent/proto"
++	"github.com/hivepaas/hivepaas/hivepaas_app/interface/agent/server/fileservice"
++)
++
++func (s *AgentServer) FileRead(
++	req *agentproto.FileReq,
++	stream grpc.ServerStreamingServer[agentproto.FileChunk],
++) error {
++	return fileservice.FileRead(s.fileAgentUC, req, stream) //nolint:wrapcheck
++}
++
++func (s *AgentServer) FileWrite(
++	stream grpc.ClientStreamingServer[agentproto.FileWriteReq, agentproto.FileWriteResp],
++) error {
++	return fileservice.FileWrite(s.fileAgentUC, stream) //nolint:wrapcheck
++}
++
++func (s *AgentServer) FileRemove(
++	_ context.Context,
++	req *agentproto.FileReq,
++) (*agentproto.FileRemoveResp, error) {
++	return fileservice.FileRemove(s.fileAgentUC, req) //nolint:wrapcheck
++}
++
++func (s *AgentServer) FileStat(
++	_ context.Context,
++	req *agentproto.FileReq,
++) (*agentproto.FileStatResp, error) {
++	return fileservice.FileStat(s.fileAgentUC, req) //nolint:wrapcheck
++}
+diff --git a/hivepaas_app/pkg/translation/messages/en/errors.infra.en.toml b/hivepaas_app/pkg/translation/messages/en/errors.infra.en.toml
+index c8019da8..042d26ef 100644
+--- a/hivepaas_app/pkg/translation/messages/en/errors.infra.en.toml
++++ b/hivepaas_app/pkg/translation/messages/en/errors.infra.en.toml
+@@ -18,6 +18,7 @@ ERR_FILE_NAME_TOO_LONG = "File name must contain less than {{.MaxNameLen}} chara
+ ERR_ARCHIVE_FORMAT_UNSUPPORTED = "Archive format '{{.Format}}' is not supported"
+ ERR_ENCRYPTION_FORMAT_UNSUPPORTED = "Encryption format '{{.Format}}' is not supported"
+ ERR_STORAGE_TYPE_UNSUPPORTED = "Storage type '{{.Type}}' is not supported"
++ERR_FILE_PATH_OUTSIDE_ROOT = "Path '{{.Path}}' is not inside the directory '{{.Root}}'"
+ ERR_STORAGE_PERMISSIONS_NOT_RESETTABLE = "The storage at '{{.Target}}' is not a directory of this app's own, so its permissions cannot be reset"
+ ERR_STORAGE_PERMISSIONS_NOT_RESET = "The permissions of some files in '{{.Path}}' could not be changed"
+ 
+diff --git a/hivepaas_app/registry/provides.go b/hivepaas_app/registry/provides.go
+index e6fc812d..0afc4e8c 100644
+--- a/hivepaas_app/registry/provides.go
++++ b/hivepaas_app/registry/provides.go
+@@ -198,6 +198,7 @@ import (
+ 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/webhookuc"
+ 	"github.com/hivepaas/hivepaas/hivepaas_app/usecaseagent/containeragentuc"
+ 	"github.com/hivepaas/hivepaas/hivepaas_app/usecaseagent/dockerapiagentuc"
++	"github.com/hivepaas/hivepaas/hivepaas_app/usecaseagent/fileagentuc"
+ 	"github.com/hivepaas/hivepaas/hivepaas_app/usecaseagent/imagebuildagentuc"
+ 	"github.com/hivepaas/hivepaas/hivepaas_app/usecaseagent/nodeagentuc"
+ 	"github.com/hivepaas/hivepaas/hivepaas_app/usecaseagent/nodecleanupagentuc"
+@@ -475,4 +476,5 @@ var Provides = []any{
+ 	reposerveragentuc.New,
+ 	nodecleanupagentuc.New,
+ 	volumeagentuc.New,
++	fileagentuc.New,
+ }
+diff --git a/hivepaas_app/usecaseagent/fileagentuc/file.go b/hivepaas_app/usecaseagent/fileagentuc/file.go
+new file mode 100644
+index 00000000..34bc531b
+--- /dev/null
++++ b/hivepaas_app/usecaseagent/fileagentuc/file.go
+@@ -0,0 +1,196 @@
++package fileagentuc
++
++import (
++	"context"
++	"errors"
++	"io"
++	"os"
++	"path/filepath"
++	"strings"
++
++	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
++)
++
++// dirModeOwn is for the directories a file's path needs: HivePaaS's own.
++const dirModeOwn = 0o700
++
++// Open reads a file inside root, a volume's directory on the host, and gives its size.
++func (uc *UC) Open(root, path string) (io.ReadCloser, int64, error) {
++	target, err := uc.existingTarget(root, path)
++	if err != nil {
++		return nil, 0, hperrors.Wrap(err)
++	}
++	file, err := os.Open(target) //nolint:gosec // held inside root above
++	if err != nil {
++		return nil, 0, notFoundOr(err)
++	}
++	info, err := file.Stat()
++	if err != nil {
++		_ = file.Close()
++		return nil, 0, hperrors.Wrap(err)
++	}
++	return file, info.Size(), nil
++}
++
++// Stat is the size of a file inside root.
++func (uc *UC) Stat(root, path string) (int64, error) {
++	target, err := uc.existingTarget(root, path)
++	if err != nil {
++		return 0, hperrors.Wrap(err)
++	}
++	info, err := os.Stat(target)
++	if err != nil {
++		return 0, notFoundOr(err)
++	}
++	return info.Size(), nil
++}
++
++// Remove removes a file inside root. A file already gone is removed.
++func (uc *UC) Remove(root, path string) error {
++	target, err := uc.existingTarget(root, path)
++	if err != nil {
++		if errors.Is(err, hperrors.ErrNotFound) {
++			return nil
++		}
++		return hperrors.Wrap(err)
++	}
++	if err = os.Remove(target); err != nil && !errors.Is(err, os.ErrNotExist) {
++		return hperrors.Wrap(err)
++	}
++	return nil
++}
++
++// Write writes content to a file inside root, making the directories it needs
++// with mode 0700. It writes a temporary file next to it and renames it into
++// place once content has ended without error: the file is replaced whole or not
++// at all, and a failed write leaves nothing behind.
++func (uc *UC) Write(ctx context.Context, root, path string, content io.Reader) (_ int64, err error) {
++	realRoot, rel, err := uc.resolveRoot(root, path)
++	if err != nil {
++		return 0, hperrors.Wrap(err)
++	}
++	target := filepath.Join(realRoot, rel)
++	if err = holdInside(realRoot, nearestExisting(filepath.Dir(target)), path); err != nil {
++		return 0, hperrors.Wrap(err)
++	}
++	if err = os.MkdirAll(filepath.Dir(target), dirModeOwn); err != nil {
++		return 0, hperrors.Wrap(err)
++	}
++	if err = holdInside(realRoot, filepath.Dir(target), path); err != nil {
++		return 0, hperrors.Wrap(err)
++	}
++
++	temp, err := os.CreateTemp(filepath.Dir(target), "."+filepath.Base(target)+".tmp-*")
++	if err != nil {
++		return 0, hperrors.Wrap(err)
++	}
++	defer func() {
++		if err != nil {
++			_ = temp.Close()
++			_ = os.Remove(temp.Name())
++		}
++	}()
++
++	size, err := io.Copy(temp, &ctxReader{ctx: ctx, r: content})
++	if err != nil {
++		return 0, hperrors.Wrap(err)
++	}
++	if err = temp.Close(); err != nil {
++		return 0, hperrors.Wrap(err)
++	}
++	if err = os.Rename(temp.Name(), target); err != nil {
++		return 0, hperrors.Wrap(err)
++	}
++	return size, nil
++}
++
++// existingTarget is path inside root, resolved through its symbolic links, which
++// must still be inside root.
++func (uc *UC) existingTarget(root, path string) (string, error) {
++	realRoot, rel, err := uc.resolveRoot(root, path)
++	if err != nil {
++		return "", hperrors.Wrap(err)
++	}
++	target, err := filepath.EvalSymlinks(filepath.Join(realRoot, rel))
++	if err != nil {
++		if errors.Is(err, os.ErrNotExist) {
++			// A path whose existing part leaves root is refused, not reported missing.
++			if err := holdInside(realRoot, nearestExisting(filepath.Join(realRoot, rel)), path); err != nil {
++				return "", hperrors.Wrap(err)
++			}
++		}
++		return "", notFoundOr(err)
++	}
++	if err = holdInside(realRoot, target, path); err != nil {
++		return "", hperrors.Wrap(err)
++	}
++	return target, nil
++}
++
++// resolveRoot is root as this agent sees it, with its symbolic links resolved,
++// and path cleaned. The root is a volume's absolute directory, never the host's
++// own root; the path is relative to it and never climbs out.
++func (uc *UC) resolveRoot(root, path string) (realRoot, rel string, err error) {
++	outside := hperrors.Wrap(hperrors.ErrFilePathOutsideRoot).WithParam("Path", path).WithParam("Root", root)
++	cleanRoot := filepath.Clean(root)
++	if !filepath.IsAbs(root) || cleanRoot == "/" {
++		return "", "", outside
++	}
++	rel = filepath.Clean(path)
++	if path == "" || filepath.IsAbs(path) || rel == "." || rel == ".." ||
++		strings.HasPrefix(rel, ".."+string(filepath.Separator)) {
++		return "", "", outside
++	}
++	realRoot, err = filepath.EvalSymlinks(filepath.Join(uc.hostPrefix, cleanRoot))
++	if err != nil {
++		return "", "", notFoundOr(err)
++	}
++	return realRoot, rel, nil
++}
++
++// holdInside refuses a resolved path that is not realRoot or below it.
++func holdInside(realRoot, resolved, path string) error {
++	real, err := filepath.EvalSymlinks(resolved)
++	if err != nil {
++		return notFoundOr(err)
++	}
++	rel, err := filepath.Rel(realRoot, real)
++	if err != nil || rel == ".." || strings.HasPrefix(rel, ".."+string(filepath.Separator)) {
++		return hperrors.Wrap(hperrors.ErrFilePathOutsideRoot).WithParam("Path", path).WithParam("Root", realRoot)
++	}
++	return nil
++}
++
++// nearestExisting is path, or the closest of its parents that exists.
++func nearestExisting(path string) string {
++	for {
++		if _, err := os.Lstat(path); err == nil {
++			return path
++		}
++		parent := filepath.Dir(path)
++		if parent == path {
++			return path
++		}
++		path = parent
++	}
++}
++
++func notFoundOr(err error) error {
++	if errors.Is(err, os.ErrNotExist) {
++		return hperrors.NewNotFound("File")
++	}
++	return hperrors.Wrap(err)
++}
++
++// ctxReader stops a copy once its context is done.
++type ctxReader struct {
++	ctx context.Context //nolint:containedctx // bounds one copy
++	r   io.Reader
++}
++
++func (c *ctxReader) Read(p []byte) (int, error) {
++	if err := c.ctx.Err(); err != nil {
++		return 0, err //nolint:wrapcheck
++	}
++	return c.r.Read(p) //nolint:wrapcheck
++}
+diff --git a/hivepaas_app/usecaseagent/fileagentuc/uc.go b/hivepaas_app/usecaseagent/fileagentuc/uc.go
+new file mode 100644
+index 00000000..f96dc1f5
+--- /dev/null
++++ b/hivepaas_app/usecaseagent/fileagentuc/uc.go
+@@ -0,0 +1,25 @@
++// Package fileagentuc is the agent's side of files on volumes: it reads, writes,
++// stats and removes a file inside a volume's directory on this node, and nothing
++// outside it.
++package fileagentuc
++
++import (
++	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/logging"
++	"github.com/hivepaas/hivepaas/hivepaas_app/service/volumeservice"
++)
++
++type UC struct {
++	logger logging.Logger
++	// hostPrefix is where the agent sees the node's filesystem.
++	hostPrefix string
++}
++
++func New(logger logging.Logger) *UC {
++	return &UC{logger: logger, hostPrefix: volumeservice.HostPathPrefix}
++}
++
++// NewOnHost is New with the node's filesystem seen at hostPrefix rather than at
++// /host: an agent whose host is mounted elsewhere, or a test's directory.
++func NewOnHost(logger logging.Logger, hostPrefix string) *UC {
++	return &UC{logger: logger, hostPrefix: hostPrefix}
++}

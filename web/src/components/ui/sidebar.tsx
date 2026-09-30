@@ -180,6 +180,12 @@ function Sidebar({
                         } as React.CSSProperties
                     }
                     side={side}
+                    onOpenAutoFocus={event => {
+                        // Focus the panel, not its first button: a button focused on open
+                        // shows its tooltip over the sidebar that was just opened.
+                        event.preventDefault();
+                        (event.currentTarget as HTMLElement | null)?.focus();
+                    }}
                 >
                     <SheetHeader className="sr-only">
                         <SheetTitle>Sidebar</SheetTitle>

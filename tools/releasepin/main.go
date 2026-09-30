@@ -1,0 +1,143 @@
+// Command releasepin pins every image release.json names to the digest its tag
+// points to now: `redis:8.6-alpine` becomes `redis:8.6-alpine@sha256:…`.
+//
+// A signed release is only a claim about what runs if what it names cannot
+// change: a tag can be re-pushed, a digest cannot. The digest is the image
+// index's, so one pin serves every architecture.
+//
+//	go run ./tools/releasepin              # pin release.json in place
+//	go run ./tools/releasepin -check       # only report what is not pinned to the current digest
+//
+// It needs docker with buildx, and asks the registries; run it before
+// `make release-sign`, never after.
+package main
+
+import (
+	"bytes"
+	"encoding/json"
+	"errors"
+	"flag"
+	"fmt"
+	"os"
+	"os/exec"
+	"regexp"
+	"strings"
+)
+
+// imageField is a `"somethingImage": "reference"` line of release.json.
+var imageField = regexp.MustCompile(`("[A-Za-z]+Image"\s*:\s*")([^"]+)(")`)
+
+// patchTag is a tag with three numbers, 8.6.2-alpine or v1.52.0: one release.
+// A tag with fewer may be following a line - redis 8.6 is whatever 8.6.x is
+// newest - and names less than its digest pins. Postgres, which numbers its
+// releases with two (18.3), is flagged too: this cannot tell the two apart.
+var patchTag = regexp.MustCompile(`^v?\d+\.\d+\.\d+`)
+
+type report struct {
+	// Changed are the references whose pin was added or moved, as `old -> new`.
+	Changed []string
+	// Floating are the tags that name less than a patch.
+	Floating []string
+}
+
+// pin pins every image of release to its tag's current digest, keeping every
+// other byte of the file as it is.
+func pin(release []byte, resolve func(ref string) (string, error)) ([]byte, report, error) {
+	var rep report
+	var failed error
+	out := imageField.ReplaceAllFunc(release, func(match []byte) []byte {
+		if failed != nil {
+			return match
+		}
+		parts := imageField.FindSubmatch(match)
+		current := string(parts[2])
+		name, _, _ := strings.Cut(current, "@")
+
+		digest, err := resolve(name)
+		if err != nil {
+			failed = fmt.Errorf("%s: %w", name, err)
+			return match
+		}
+		pinned := name + "@" + digest
+		if pinned != current {
+			rep.Changed = append(rep.Changed, current+" -> "+pinned)
+		}
+		if !namesAPatch(name) {
+			rep.Floating = append(rep.Floating, name)
+		}
+		return []byte(string(parts[1]) + pinned + string(parts[3]))
+	})
+	if failed != nil {
+		return nil, rep, failed
+	}
+	return out, rep, nil
+}
+
+// namesAPatch reports whether a reference's tag has three version numbers.
+func namesAPatch(ref string) bool {
+	slash := strings.LastIndex(ref, "/")
+	colon := strings.LastIndex(ref, ":")
+	if colon < slash {
+		return false // no tag: latest
+	}
+	return patchTag.MatchString(ref[colon+1:])
+}
+
+// resolveWithDocker asks the registry, through docker buildx, for the digest of
+// the image index a tag points to.
+func resolveWithDocker(ref string) (string, error) {
+	var stdout, stderr bytes.Buffer
+	cmd := exec.Command("docker", "buildx", "imagetools", "inspect", "--format", "{{json .Manifest}}", ref)
+	cmd.Stdout, cmd.Stderr = &stdout, &stderr
+	if err := cmd.Run(); err != nil {
+		return "", fmt.Errorf("docker buildx imagetools inspect: %w: %s", err, strings.TrimSpace(stderr.String()))
+	}
+	var manifest struct {
+		Digest string `json:"digest"`
+	}
+	if err := json.Unmarshal(stdout.Bytes(), &manifest); err != nil {
+		return "", fmt.Errorf("reading the manifest of %s: %w", ref, err)
+	}
+	if !strings.HasPrefix(manifest.Digest, "sha256:") {
+		return "", errors.New("no digest for " + ref)
+	}
+	return manifest.Digest, nil
+}
+
+func main() {
+	file := flag.String("file", "release.json", "the release file to pin")
+	check := flag.Bool("check", false, "report what is not pinned to the current digest, and change nothing")
+	flag.Parse()
+
+	release, err := os.ReadFile(*file)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		os.Exit(1)
+	}
+	out, rep, err := pin(release, resolveWithDocker)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, "not pinned:", err)
+		os.Exit(1)
+	}
+	for _, change := range rep.Changed {
+		fmt.Println(change)
+	}
+	for _, ref := range rep.Floating {
+		fmt.Printf("note: %s may name a line rather than one release; the digest pins it, the name does not say which\n", ref)
+	}
+	switch {
+	case *check && len(rep.Changed) > 0:
+		fmt.Fprintf(os.Stderr, "%d image(s) are not pinned to their current digest\n", len(rep.Changed))
+		os.Exit(1)
+	case *check:
+		fmt.Println("every image is pinned to its current digest")
+	case len(rep.Changed) == 0:
+		fmt.Println("nothing to change")
+	default:
+		if err := os.WriteFile(*file, out, 0o644); err != nil { //nolint:gosec // a file of the repository
+			fmt.Fprintln(os.Stderr, err)
+			os.Exit(1)
+		}
+		fmt.Printf("pinned %d image(s) in %s\n", len(rep.Changed), *file)
+	}
+}

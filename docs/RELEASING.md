@@ -108,9 +108,16 @@ The example is `v1.0.0-beta1`; for a stable release read `StableVersion` for
 
 5. **release.json.** Update the `beta` entry: `appVersion`, `releaseDate`,
    `appImage` and `agentImage` as `digests.txt` gives them
-   (`ghcr.io/hivepaas/hivepaas:1.0.0-beta1@sha256:…`), the other images (by digest too,
-   preferably), and `templates` if the app templates moved. Keep what the entry of
-   the other channel says.
+   (`ghcr.io/hivepaas/hivepaas:1.0.0-beta1@sha256:…`), the other images, and
+   `templates` if the app templates moved. Keep what the entry of the other
+   channel says. Then pin every image to its digest:
+   ```bash
+   make release-pin        # writes tag@sha256:… for each image; make release-pin-check only reports
+   ```
+   Name each image by a tag that says its version (`traefik:v3.7.2`, not
+   `traefik:v3.7`): the digest fixes the image, the tag is what people read, and
+   the updater decides "newer" from the tag. To ship a rebuild under the same tag,
+   the new digest is enough: an installation pinned to the old one updates.
 
 6. **Sign, on the offline machine**, with the reviewed tool pinned in the
    Makefile:
@@ -214,4 +221,4 @@ a pull request, and release as usual.
   agent to it before the app; a release that names none leaves the agent where
   it is, and the new app then runs against the old agent.
 - **Images other than app and agent** are pinned by tag in the compiled
-  `version.go`; pin them by digest in `release.json` at least.
+  `version.go`; `release.json` pins them by digest (`make release-pin`).

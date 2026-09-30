@@ -70,6 +70,14 @@ trivy:
 # working tree: moving the pin is how a reviewed change to tools/releasesign
 # reaches the keys. See the script.
 #   make release-sign KEYS="/offline/2026_ed.key /offline/2026_ml.key"
+# Pins every image release.json names to the digest its tag points to now, so the
+# signed file names images that cannot change (needs docker with buildx). Run it
+# before release-sign. `make release-pin-check` only reports.
+release-pin:
+	@go run ./tools/releasepin
+release-pin-check:
+	@go run ./tools/releasepin -check
+
 RELEASESIGN_SHA := 921f4a7263a6819aed7e8d8f69fcc1259af46255
 release-sign:
 	@RELEASESIGN_SHA="$(RELEASESIGN_SHA)" KEYS="$(KEYS)" IN="$(IN)" OUT="$(OUT)" ./scripts/release-sign.sh

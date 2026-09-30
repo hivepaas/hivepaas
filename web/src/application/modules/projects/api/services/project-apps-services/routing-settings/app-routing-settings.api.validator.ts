@@ -50,7 +50,6 @@ const HttpCompressionConfigSchema = z.object({
     excludedContentTypes: z.array(z.string()).nullish(),
     includedContentTypes: z.array(z.string()).nullish(),
     minResponseBody: z.string(),
-    defaultEncoding: z.string(),
 });
 
 const HttpRateLimitConfigSchema = z.object({
@@ -182,7 +181,6 @@ function mapCompressionConfig(
         excludedContentTypes: raw.excludedContentTypes ?? [],
         includedContentTypes: raw.includedContentTypes ?? [],
         minResponseBody: raw.minResponseBody,
-        defaultEncoding: raw.defaultEncoding,
     };
 }
 

@@ -2,7 +2,6 @@ import { useEffect, useState } from "react";
 
 import { Button, Checkbox, FieldError, Input } from "@components/ui";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@components/ui/collapsible";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@components/ui/select";
 import { Textarea } from "@components/ui/textarea";
 import { ChevronDown, ChevronRight, X } from "lucide-react";
 import { useController, useFormContext } from "react-hook-form";
@@ -38,10 +37,6 @@ export function CompressionConfigSection({
         AppConfigHttpSettingsFormSchemaOutput
     >();
 
-    const {
-        field: defaultEncoding,
-        fieldState: { error: defaultEncodingError, invalid: isDefaultEncodingInvalid },
-    } = useController({ control, name: `${prefix}.defaultEncoding` as never });
     const {
         field: minResponseBody,
         fieldState: { error: minResponseBodyError, invalid: isMinResponseBodyInvalid },
@@ -130,32 +125,12 @@ export function CompressionConfigSection({
                         <>
                             <InfoBlock
                                 titleWidth={240}
-                                title="Default Encoding"
+                                title="Encodings"
                             >
-                                <Select
-                                    value={defaultEncoding.value}
-                                    onValueChange={value => {
-                                        if (readOnly) {
-                                            return;
-                                        }
-
-                                        defaultEncoding.onChange(value);
-                                    }}
-                                    disabled={readOnly}
-                                >
-                                    <SelectTrigger
-                                        className="max-w-[100px]"
-                                        aria-invalid={isDefaultEncodingInvalid}
-                                    >
-                                        <SelectValue placeholder="..." />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        <SelectItem value="br">brotli</SelectItem>
-                                        <SelectItem value="zstd">zstd</SelectItem>
-                                        <SelectItem value="gzip">gzip</SelectItem>
-                                    </SelectContent>
-                                </Select>
-                                <FieldError errors={[defaultEncodingError]} />
+                                <span className="text-sm text-muted-foreground">
+                                    zstd, brotli, gzip: the first one the client accepts. A client that sends no
+                                    Accept-Encoding gets the response uncompressed.
+                                </span>
                             </InfoBlock>
 
                             <InfoBlock

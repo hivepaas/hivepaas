@@ -37,7 +37,6 @@ export const HttpCompressionConfigSchema = z.object({
     excludedContentTypes: z.string(),
     includedContentTypes: z.string(),
     minResponseBody: z.string(),
-    defaultEncoding: z.string(),
 });
 
 export const HttpRateLimitConfigSchema = z.object({
@@ -184,7 +183,6 @@ export function createDefaultCompressionConfig(): z.infer<typeof HttpCompression
         excludedContentTypes: "",
         includedContentTypes: "",
         minResponseBody: "1kb",
-        defaultEncoding: "br",
     };
 }
 

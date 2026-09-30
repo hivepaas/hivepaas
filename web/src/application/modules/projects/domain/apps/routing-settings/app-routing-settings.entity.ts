@@ -80,7 +80,6 @@ export type AppRoutingCompressionConfig = {
     excludedContentTypes: string[];
     includedContentTypes: string[];
     minResponseBody: string;
-    defaultEncoding: string;
 };
 
 export type AppRoutingRateLimitConfig = {

@@ -71,7 +71,6 @@ function mapDomainToFormInput(
                   excludedContentTypes: domain.compressionConfig.excludedContentTypes.join("\n"),
                   includedContentTypes: domain.compressionConfig.includedContentTypes.join("\n"),
                   minResponseBody: domain.compressionConfig.minResponseBody,
-                  defaultEncoding: domain.compressionConfig.defaultEncoding,
               }
             : undefined,
         rateLimitConfig: domain.rateLimitConfig
@@ -146,7 +145,6 @@ function mapDomainToFormInput(
                       excludedContentTypes: path.compressionConfig.excludedContentTypes.join("\n"),
                       includedContentTypes: path.compressionConfig.includedContentTypes.join("\n"),
                       minResponseBody: path.compressionConfig.minResponseBody,
-                      defaultEncoding: path.compressionConfig.defaultEncoding,
                   }
                 : undefined,
             rateLimitConfig: path.rateLimitConfig
@@ -262,7 +260,6 @@ export function mapFormValuesToPayload(
                           .map(item => item.trim())
                           .filter(Boolean),
                       minResponseBody: domain.compressionConfig.minResponseBody,
-                      defaultEncoding: domain.compressionConfig.defaultEncoding,
                   }
                 : null,
             rateLimitConfig: domain.rateLimitConfig
@@ -349,7 +346,6 @@ export function mapFormValuesToPayload(
                               .map(item => item.trim())
                               .filter(Boolean),
                           minResponseBody: path.compressionConfig.minResponseBody,
-                          defaultEncoding: path.compressionConfig.defaultEncoding,
                       }
                     : null,
                 rateLimitConfig: path.rateLimitConfig

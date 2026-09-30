@@ -256,3 +256,19 @@ func TestAnAgentWithoutTheCallSaysSo(t *testing.T) {
 
 	assert.ErrorContains(t, err, "Unimplemented")
 }
+
+// A panic while the agent handles a build ends that build with an error: it
+// does not take the agent down with every other build running on it.
+func TestAPanicInABuildDoesNotTakeTheAgentDown(t *testing.T) {
+	dir, _ := checkout(t)
+	svc := &builds{build: func(context.Context, *imagebuildservice.ImageBuildReq) (
+		*imagebuildservice.ImageBuildResp, error) {
+		panic("a nil map in the build")
+	}}
+	c, tempBase := startAgent(t, svc)
+
+	_, err := c.ImageBuild(context.Background(), &imagebuildagentdto.ImageBuildReq{TaskID: "t1"}, sendDir(dir))
+
+	assert.ErrorContains(t, err, "a nil map in the build")
+	assert.Empty(t, sourcesLeft(t, tempBase))
+}

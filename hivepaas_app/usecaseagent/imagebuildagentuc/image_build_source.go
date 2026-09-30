@@ -27,7 +27,15 @@ func (uc *UC) ImageBuildFromSource(
 	ctx context.Context,
 	req *imagebuildagentdto.ImageBuildReq,
 	source io.Reader,
-) (*imagebuildagentdto.ImageBuildResp, error) {
+) (resp *imagebuildagentdto.ImageBuildResp, err error) {
+	// The agent's stream calls have no recovery of their own: a panic here would
+	// take the agent down with every other build running on it.
+	defer func() {
+		if r := recover(); r != nil {
+			resp, err = nil, hperrors.NewPanic(r)
+		}
+	}()
+
 	tempDir, err := fileutil.CreateTempDir(uc.tempBaseDir, "*", sourceDirMode)
 	if err != nil {
 		return nil, hperrors.Wrap(err)

@@ -1,13 +1,14 @@
 package server
 
 import (
+	"google.golang.org/grpc"
+
 	agentproto "github.com/hivepaas/hivepaas/hivepaas_app/interface/agent/proto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/interface/agent/server/imagebuildservice"
 )
 
-func (s *AgentServer) ImageBuild(
-	req *agentproto.ImageBuildReq,
-	stream agentproto.ImageBuildService_ImageBuildServer,
+func (s *AgentServer) ImageBuildFromSource(
+	stream grpc.BidiStreamingServer[agentproto.ImageBuildMsg, agentproto.ImageBuildResp],
 ) error {
-	return imagebuildservice.ImageBuild(s.imageBuildAgentUC, req, stream) //nolint:wrapcheck
+	return imagebuildservice.ImageBuildFromSource(s.imageBuildAgentUC, stream) //nolint:wrapcheck
 }

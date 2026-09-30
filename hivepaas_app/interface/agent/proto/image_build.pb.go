@@ -21,6 +21,88 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
+type ImageBuildMsg struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// Types that are valid to be assigned to Value:
+	//
+	//	*ImageBuildMsg_Req
+	//	*ImageBuildMsg_SourceChunk
+	Value         isImageBuildMsg_Value `protobuf_oneof:"value"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ImageBuildMsg) Reset() {
+	*x = ImageBuildMsg{}
+	mi := &file_image_build_proto_msgTypes[0]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ImageBuildMsg) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ImageBuildMsg) ProtoMessage() {}
+
+func (x *ImageBuildMsg) ProtoReflect() protoreflect.Message {
+	mi := &file_image_build_proto_msgTypes[0]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ImageBuildMsg.ProtoReflect.Descriptor instead.
+func (*ImageBuildMsg) Descriptor() ([]byte, []int) {
+	return file_image_build_proto_rawDescGZIP(), []int{0}
+}
+
+func (x *ImageBuildMsg) GetValue() isImageBuildMsg_Value {
+	if x != nil {
+		return x.Value
+	}
+	return nil
+}
+
+func (x *ImageBuildMsg) GetReq() *ImageBuildReq {
+	if x != nil {
+		if x, ok := x.Value.(*ImageBuildMsg_Req); ok {
+			return x.Req
+		}
+	}
+	return nil
+}
+
+func (x *ImageBuildMsg) GetSourceChunk() []byte {
+	if x != nil {
+		if x, ok := x.Value.(*ImageBuildMsg_SourceChunk); ok {
+			return x.SourceChunk
+		}
+	}
+	return nil
+}
+
+type isImageBuildMsg_Value interface {
+	isImageBuildMsg_Value()
+}
+
+type ImageBuildMsg_Req struct {
+	Req *ImageBuildReq `protobuf:"bytes,1,opt,name=req,proto3,oneof"` // first, once
+}
+
+type ImageBuildMsg_SourceChunk struct {
+	SourceChunk []byte `protobuf:"bytes,2,opt,name=source_chunk,json=sourceChunk,proto3,oneof"` // then the source (tar, zstd), in order
+}
+
+func (*ImageBuildMsg_Req) isImageBuildMsg_Value() {}
+
+func (*ImageBuildMsg_SourceChunk) isImageBuildMsg_Value() {}
+
 type ImageBuildReq struct {
 	state              protoimpl.MessageState `protogen:"open.v1"`
 	TaskId             string                 `protobuf:"bytes,1,opt,name=task_id,json=taskId,proto3" json:"task_id,omitempty"`
@@ -31,8 +113,6 @@ type ImageBuildReq struct {
 	ImageBuildSettings *ImageBuildSettings    `protobuf:"bytes,7,opt,name=image_build_settings,json=imageBuildSettings,proto3" json:"image_build_settings,omitempty"`
 	NoCache            bool                   `protobuf:"varint,8,opt,name=no_cache,json=noCache,proto3" json:"no_cache,omitempty"`
 	BuildId            string                 `protobuf:"bytes,9,opt,name=build_id,json=buildId,proto3" json:"build_id,omitempty"`
-	CheckoutDir        string                 `protobuf:"bytes,10,opt,name=checkout_dir,json=checkoutDir,proto3" json:"checkout_dir,omitempty"`
-	TempDir            string                 `protobuf:"bytes,11,opt,name=temp_dir,json=tempDir,proto3" json:"temp_dir,omitempty"`
 	// Tags this one deployment asked for, without the environment prefix, which
 	// the build adds. An agent older than the server ignores them and pushes the
 	// commit tag alone.
@@ -43,7 +123,7 @@ type ImageBuildReq struct {
 
 func (x *ImageBuildReq) Reset() {
 	*x = ImageBuildReq{}
-	mi := &file_image_build_proto_msgTypes[0]
+	mi := &file_image_build_proto_msgTypes[1]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -55,7 +135,7 @@ func (x *ImageBuildReq) String() string {
 func (*ImageBuildReq) ProtoMessage() {}
 
 func (x *ImageBuildReq) ProtoReflect() protoreflect.Message {
-	mi := &file_image_build_proto_msgTypes[0]
+	mi := &file_image_build_proto_msgTypes[1]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -68,7 +148,7 @@ func (x *ImageBuildReq) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ImageBuildReq.ProtoReflect.Descriptor instead.
 func (*ImageBuildReq) Descriptor() ([]byte, []int) {
-	return file_image_build_proto_rawDescGZIP(), []int{0}
+	return file_image_build_proto_rawDescGZIP(), []int{1}
 }
 
 func (x *ImageBuildReq) GetTaskId() string {
@@ -127,20 +207,6 @@ func (x *ImageBuildReq) GetBuildId() string {
 	return ""
 }
 
-func (x *ImageBuildReq) GetCheckoutDir() string {
-	if x != nil {
-		return x.CheckoutDir
-	}
-	return ""
-}
-
-func (x *ImageBuildReq) GetTempDir() string {
-	if x != nil {
-		return x.TempDir
-	}
-	return ""
-}
-
 func (x *ImageBuildReq) GetImageTags() []string {
 	if x != nil {
 		return x.ImageTags
@@ -160,7 +226,7 @@ type DeploymentDockerfile struct {
 
 func (x *DeploymentDockerfile) Reset() {
 	*x = DeploymentDockerfile{}
-	mi := &file_image_build_proto_msgTypes[1]
+	mi := &file_image_build_proto_msgTypes[2]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -172,7 +238,7 @@ func (x *DeploymentDockerfile) String() string {
 func (*DeploymentDockerfile) ProtoMessage() {}
 
 func (x *DeploymentDockerfile) ProtoReflect() protoreflect.Message {
-	mi := &file_image_build_proto_msgTypes[1]
+	mi := &file_image_build_proto_msgTypes[2]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -185,7 +251,7 @@ func (x *DeploymentDockerfile) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeploymentDockerfile.ProtoReflect.Descriptor instead.
 func (*DeploymentDockerfile) Descriptor() ([]byte, []int) {
-	return file_image_build_proto_rawDescGZIP(), []int{1}
+	return file_image_build_proto_rawDescGZIP(), []int{2}
 }
 
 func (x *DeploymentDockerfile) GetSource() string {
@@ -229,7 +295,7 @@ type ImageBuildSettings struct {
 
 func (x *ImageBuildSettings) Reset() {
 	*x = ImageBuildSettings{}
-	mi := &file_image_build_proto_msgTypes[2]
+	mi := &file_image_build_proto_msgTypes[3]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -241,7 +307,7 @@ func (x *ImageBuildSettings) String() string {
 func (*ImageBuildSettings) ProtoMessage() {}
 
 func (x *ImageBuildSettings) ProtoReflect() protoreflect.Message {
-	mi := &file_image_build_proto_msgTypes[2]
+	mi := &file_image_build_proto_msgTypes[3]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -254,7 +320,7 @@ func (x *ImageBuildSettings) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ImageBuildSettings.ProtoReflect.Descriptor instead.
 func (*ImageBuildSettings) Descriptor() ([]byte, []int) {
-	return file_image_build_proto_rawDescGZIP(), []int{2}
+	return file_image_build_proto_rawDescGZIP(), []int{3}
 }
 
 func (x *ImageBuildSettings) GetWorkers() *ImageBuildWorkerSettings {
@@ -303,7 +369,7 @@ type ImageBuildWorkerSettings struct {
 
 func (x *ImageBuildWorkerSettings) Reset() {
 	*x = ImageBuildWorkerSettings{}
-	mi := &file_image_build_proto_msgTypes[3]
+	mi := &file_image_build_proto_msgTypes[4]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -315,7 +381,7 @@ func (x *ImageBuildWorkerSettings) String() string {
 func (*ImageBuildWorkerSettings) ProtoMessage() {}
 
 func (x *ImageBuildWorkerSettings) ProtoReflect() protoreflect.Message {
-	mi := &file_image_build_proto_msgTypes[3]
+	mi := &file_image_build_proto_msgTypes[4]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -328,7 +394,7 @@ func (x *ImageBuildWorkerSettings) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ImageBuildWorkerSettings.ProtoReflect.Descriptor instead.
 func (*ImageBuildWorkerSettings) Descriptor() ([]byte, []int) {
-	return file_image_build_proto_rawDescGZIP(), []int{3}
+	return file_image_build_proto_rawDescGZIP(), []int{4}
 }
 
 func (x *ImageBuildWorkerSettings) GetNodeIds() []string {
@@ -364,7 +430,7 @@ type ImageBuildResourceSettings struct {
 
 func (x *ImageBuildResourceSettings) Reset() {
 	*x = ImageBuildResourceSettings{}
-	mi := &file_image_build_proto_msgTypes[4]
+	mi := &file_image_build_proto_msgTypes[5]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -376,7 +442,7 @@ func (x *ImageBuildResourceSettings) String() string {
 func (*ImageBuildResourceSettings) ProtoMessage() {}
 
 func (x *ImageBuildResourceSettings) ProtoReflect() protoreflect.Message {
-	mi := &file_image_build_proto_msgTypes[4]
+	mi := &file_image_build_proto_msgTypes[5]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -389,7 +455,7 @@ func (x *ImageBuildResourceSettings) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ImageBuildResourceSettings.ProtoReflect.Descriptor instead.
 func (*ImageBuildResourceSettings) Descriptor() ([]byte, []int) {
-	return file_image_build_proto_rawDescGZIP(), []int{4}
+	return file_image_build_proto_rawDescGZIP(), []int{5}
 }
 
 func (x *ImageBuildResourceSettings) GetCpus() uint32 {
@@ -429,7 +495,7 @@ type ImageBuildSourceSettings struct {
 
 func (x *ImageBuildSourceSettings) Reset() {
 	*x = ImageBuildSourceSettings{}
-	mi := &file_image_build_proto_msgTypes[5]
+	mi := &file_image_build_proto_msgTypes[6]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -441,7 +507,7 @@ func (x *ImageBuildSourceSettings) String() string {
 func (*ImageBuildSourceSettings) ProtoMessage() {}
 
 func (x *ImageBuildSourceSettings) ProtoReflect() protoreflect.Message {
-	mi := &file_image_build_proto_msgTypes[5]
+	mi := &file_image_build_proto_msgTypes[6]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -454,7 +520,7 @@ func (x *ImageBuildSourceSettings) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ImageBuildSourceSettings.ProtoReflect.Descriptor instead.
 func (*ImageBuildSourceSettings) Descriptor() ([]byte, []int) {
-	return file_image_build_proto_rawDescGZIP(), []int{5}
+	return file_image_build_proto_rawDescGZIP(), []int{6}
 }
 
 func (x *ImageBuildSourceSettings) GetRepoCache() bool {
@@ -477,7 +543,7 @@ type ImageBuildResp struct {
 
 func (x *ImageBuildResp) Reset() {
 	*x = ImageBuildResp{}
-	mi := &file_image_build_proto_msgTypes[6]
+	mi := &file_image_build_proto_msgTypes[7]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -489,7 +555,7 @@ func (x *ImageBuildResp) String() string {
 func (*ImageBuildResp) ProtoMessage() {}
 
 func (x *ImageBuildResp) ProtoReflect() protoreflect.Message {
-	mi := &file_image_build_proto_msgTypes[6]
+	mi := &file_image_build_proto_msgTypes[7]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -502,7 +568,7 @@ func (x *ImageBuildResp) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ImageBuildResp.ProtoReflect.Descriptor instead.
 func (*ImageBuildResp) Descriptor() ([]byte, []int) {
-	return file_image_build_proto_rawDescGZIP(), []int{6}
+	return file_image_build_proto_rawDescGZIP(), []int{7}
 }
 
 func (x *ImageBuildResp) GetValue() isImageBuildResp_Value {
@@ -557,7 +623,7 @@ type LogFrame struct {
 
 func (x *LogFrame) Reset() {
 	*x = LogFrame{}
-	mi := &file_image_build_proto_msgTypes[7]
+	mi := &file_image_build_proto_msgTypes[8]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -569,7 +635,7 @@ func (x *LogFrame) String() string {
 func (*LogFrame) ProtoMessage() {}
 
 func (x *LogFrame) ProtoReflect() protoreflect.Message {
-	mi := &file_image_build_proto_msgTypes[7]
+	mi := &file_image_build_proto_msgTypes[8]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -582,7 +648,7 @@ func (x *LogFrame) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use LogFrame.ProtoReflect.Descriptor instead.
 func (*LogFrame) Descriptor() ([]byte, []int) {
-	return file_image_build_proto_rawDescGZIP(), []int{7}
+	return file_image_build_proto_rawDescGZIP(), []int{8}
 }
 
 func (x *LogFrame) GetType() string {
@@ -615,7 +681,7 @@ type ImageBuildResult struct {
 
 func (x *ImageBuildResult) Reset() {
 	*x = ImageBuildResult{}
-	mi := &file_image_build_proto_msgTypes[8]
+	mi := &file_image_build_proto_msgTypes[9]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -627,7 +693,7 @@ func (x *ImageBuildResult) String() string {
 func (*ImageBuildResult) ProtoMessage() {}
 
 func (x *ImageBuildResult) ProtoReflect() protoreflect.Message {
-	mi := &file_image_build_proto_msgTypes[8]
+	mi := &file_image_build_proto_msgTypes[9]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -640,7 +706,7 @@ func (x *ImageBuildResult) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ImageBuildResult.ProtoReflect.Descriptor instead.
 func (*ImageBuildResult) Descriptor() ([]byte, []int) {
-	return file_image_build_proto_rawDescGZIP(), []int{8}
+	return file_image_build_proto_rawDescGZIP(), []int{9}
 }
 
 func (x *ImageBuildResult) GetImageTags() []string {
@@ -654,7 +720,11 @@ var File_image_build_proto protoreflect.FileDescriptor
 
 const file_image_build_proto_rawDesc = "" +
 	"\n" +
-	"\x11image_build.proto\x12\x05agent\"\xbe\x03\n" +
+	"\x11image_build.proto\x12\x05agent\"g\n" +
+	"\rImageBuildMsg\x12(\n" +
+	"\x03req\x18\x01 \x01(\v2\x14.agent.ImageBuildReqH\x00R\x03req\x12#\n" +
+	"\fsource_chunk\x18\x02 \x01(\fH\x00R\vsourceChunkB\a\n" +
+	"\x05value\"\xa4\x03\n" +
 	"\rImageBuildReq\x12\x17\n" +
 	"\atask_id\x18\x01 \x01(\tR\x06taskId\x12\x15\n" +
 	"\x06app_id\x18\x02 \x01(\tR\x05appId\x12\x1f\n" +
@@ -666,13 +736,11 @@ const file_image_build_proto_rawDesc = "" +
 	"\x13push_to_registry_id\x18\x06 \x01(\tR\x10pushToRegistryId\x12K\n" +
 	"\x14image_build_settings\x18\a \x01(\v2\x19.agent.ImageBuildSettingsR\x12imageBuildSettings\x12\x19\n" +
 	"\bno_cache\x18\b \x01(\bR\anoCache\x12\x19\n" +
-	"\bbuild_id\x18\t \x01(\tR\abuildId\x12!\n" +
-	"\fcheckout_dir\x18\n" +
-	" \x01(\tR\vcheckoutDir\x12\x19\n" +
-	"\btemp_dir\x18\v \x01(\tR\atempDir\x12\x1d\n" +
+	"\bbuild_id\x18\t \x01(\tR\abuildId\x12\x1d\n" +
 	"\n" +
-	"image_tags\x18\f \x03(\tR\timageTagsJ\x04\b\x05\x10\x06R\n" +
-	"image_name\"y\n" +
+	"image_tags\x18\f \x03(\tR\timageTagsJ\x04\b\x05\x10\x06J\x04\b\n" +
+	"\x10\vJ\x04\b\v\x10\fR\n" +
+	"image_nameR\fcheckout_dirR\btemp_dir\"y\n" +
 	"\x14DeploymentDockerfile\x12\x16\n" +
 	"\x06source\x18\x01 \x01(\tR\x06source\x12\x12\n" +
 	"\x04path\x18\x02 \x01(\tR\x04path\x12\x18\n" +
@@ -708,10 +776,9 @@ const file_image_build_proto_rawDesc = "" +
 	"\x02ts\x18\x03 \x01(\x03R\x02ts\"1\n" +
 	"\x10ImageBuildResult\x12\x1d\n" +
 	"\n" +
-	"image_tags\x18\x01 \x03(\tR\timageTags2P\n" +
-	"\x11ImageBuildService\x12;\n" +
-	"\n" +
-	"ImageBuild\x12\x14.agent.ImageBuildReq\x1a\x15.agent.ImageBuildResp0\x01BLZJgithub.com/hivepaas/hivepaas/hivepaas_app/interface/agent/proto;agentprotob\x06proto3"
+	"image_tags\x18\x01 \x03(\tR\timageTags2\\\n" +
+	"\x11ImageBuildService\x12G\n" +
+	"\x14ImageBuildFromSource\x12\x14.agent.ImageBuildMsg\x1a\x15.agent.ImageBuildResp(\x010\x01BLZJgithub.com/hivepaas/hivepaas/hivepaas_app/interface/agent/proto;agentprotob\x06proto3"
 
 var (
 	file_image_build_proto_rawDescOnce sync.Once
@@ -725,33 +792,35 @@ func file_image_build_proto_rawDescGZIP() []byte {
 	return file_image_build_proto_rawDescData
 }
 
-var file_image_build_proto_msgTypes = make([]protoimpl.MessageInfo, 9)
+var file_image_build_proto_msgTypes = make([]protoimpl.MessageInfo, 10)
 var file_image_build_proto_goTypes = []any{
-	(*ImageBuildReq)(nil),              // 0: agent.ImageBuildReq
-	(*DeploymentDockerfile)(nil),       // 1: agent.DeploymentDockerfile
-	(*ImageBuildSettings)(nil),         // 2: agent.ImageBuildSettings
-	(*ImageBuildWorkerSettings)(nil),   // 3: agent.ImageBuildWorkerSettings
-	(*ImageBuildResourceSettings)(nil), // 4: agent.ImageBuildResourceSettings
-	(*ImageBuildSourceSettings)(nil),   // 5: agent.ImageBuildSourceSettings
-	(*ImageBuildResp)(nil),             // 6: agent.ImageBuildResp
-	(*LogFrame)(nil),                   // 7: agent.LogFrame
-	(*ImageBuildResult)(nil),           // 8: agent.ImageBuildResult
+	(*ImageBuildMsg)(nil),              // 0: agent.ImageBuildMsg
+	(*ImageBuildReq)(nil),              // 1: agent.ImageBuildReq
+	(*DeploymentDockerfile)(nil),       // 2: agent.DeploymentDockerfile
+	(*ImageBuildSettings)(nil),         // 3: agent.ImageBuildSettings
+	(*ImageBuildWorkerSettings)(nil),   // 4: agent.ImageBuildWorkerSettings
+	(*ImageBuildResourceSettings)(nil), // 5: agent.ImageBuildResourceSettings
+	(*ImageBuildSourceSettings)(nil),   // 6: agent.ImageBuildSourceSettings
+	(*ImageBuildResp)(nil),             // 7: agent.ImageBuildResp
+	(*LogFrame)(nil),                   // 8: agent.LogFrame
+	(*ImageBuildResult)(nil),           // 9: agent.ImageBuildResult
 }
 var file_image_build_proto_depIdxs = []int32{
-	1, // 0: agent.ImageBuildReq.dockerfile:type_name -> agent.DeploymentDockerfile
-	2, // 1: agent.ImageBuildReq.image_build_settings:type_name -> agent.ImageBuildSettings
-	3, // 2: agent.ImageBuildSettings.workers:type_name -> agent.ImageBuildWorkerSettings
-	4, // 3: agent.ImageBuildSettings.resources:type_name -> agent.ImageBuildResourceSettings
-	5, // 4: agent.ImageBuildSettings.sources:type_name -> agent.ImageBuildSourceSettings
-	7, // 5: agent.ImageBuildResp.log:type_name -> agent.LogFrame
-	8, // 6: agent.ImageBuildResp.result:type_name -> agent.ImageBuildResult
-	0, // 7: agent.ImageBuildService.ImageBuild:input_type -> agent.ImageBuildReq
-	6, // 8: agent.ImageBuildService.ImageBuild:output_type -> agent.ImageBuildResp
-	8, // [8:9] is the sub-list for method output_type
-	7, // [7:8] is the sub-list for method input_type
-	7, // [7:7] is the sub-list for extension type_name
-	7, // [7:7] is the sub-list for extension extendee
-	0, // [0:7] is the sub-list for field type_name
+	1, // 0: agent.ImageBuildMsg.req:type_name -> agent.ImageBuildReq
+	2, // 1: agent.ImageBuildReq.dockerfile:type_name -> agent.DeploymentDockerfile
+	3, // 2: agent.ImageBuildReq.image_build_settings:type_name -> agent.ImageBuildSettings
+	4, // 3: agent.ImageBuildSettings.workers:type_name -> agent.ImageBuildWorkerSettings
+	5, // 4: agent.ImageBuildSettings.resources:type_name -> agent.ImageBuildResourceSettings
+	6, // 5: agent.ImageBuildSettings.sources:type_name -> agent.ImageBuildSourceSettings
+	8, // 6: agent.ImageBuildResp.log:type_name -> agent.LogFrame
+	9, // 7: agent.ImageBuildResp.result:type_name -> agent.ImageBuildResult
+	0, // 8: agent.ImageBuildService.ImageBuildFromSource:input_type -> agent.ImageBuildMsg
+	7, // 9: agent.ImageBuildService.ImageBuildFromSource:output_type -> agent.ImageBuildResp
+	9, // [9:10] is the sub-list for method output_type
+	8, // [8:9] is the sub-list for method input_type
+	8, // [8:8] is the sub-list for extension type_name
+	8, // [8:8] is the sub-list for extension extendee
+	0, // [0:8] is the sub-list for field type_name
 }
 
 func init() { file_image_build_proto_init() }
@@ -759,7 +828,11 @@ func file_image_build_proto_init() {
 	if File_image_build_proto != nil {
 		return
 	}
-	file_image_build_proto_msgTypes[6].OneofWrappers = []any{
+	file_image_build_proto_msgTypes[0].OneofWrappers = []any{
+		(*ImageBuildMsg_Req)(nil),
+		(*ImageBuildMsg_SourceChunk)(nil),
+	}
+	file_image_build_proto_msgTypes[7].OneofWrappers = []any{
 		(*ImageBuildResp_Log)(nil),
 		(*ImageBuildResp_Result)(nil),
 	}
@@ -769,7 +842,7 @@ func file_image_build_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_image_build_proto_rawDesc), len(file_image_build_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   9,
+			NumMessages:   10,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

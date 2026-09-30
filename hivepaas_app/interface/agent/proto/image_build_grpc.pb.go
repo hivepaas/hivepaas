@@ -19,14 +19,17 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	ImageBuildService_ImageBuild_FullMethodName = "/agent.ImageBuildService/ImageBuild"
+	ImageBuildService_ImageBuildFromSource_FullMethodName = "/agent.ImageBuildService/ImageBuildFromSource"
 )
 
 // ImageBuildServiceClient is the client API for ImageBuildService service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type ImageBuildServiceClient interface {
-	ImageBuild(ctx context.Context, in *ImageBuildReq, opts ...grpc.CallOption) (grpc.ServerStreamingClient[ImageBuildResp], error)
+	// ImageBuildFromSource builds an image from the source sent in the call: the
+	// request first, then the packed source in chunks. The agent unpacks it in a
+	// temporary directory of its own and removes it when the call ends.
+	ImageBuildFromSource(ctx context.Context, opts ...grpc.CallOption) (grpc.BidiStreamingClient[ImageBuildMsg, ImageBuildResp], error)
 }
 
 type imageBuildServiceClient struct {
@@ -37,30 +40,27 @@ func NewImageBuildServiceClient(cc grpc.ClientConnInterface) ImageBuildServiceCl
 	return &imageBuildServiceClient{cc}
 }
 
-func (c *imageBuildServiceClient) ImageBuild(ctx context.Context, in *ImageBuildReq, opts ...grpc.CallOption) (grpc.ServerStreamingClient[ImageBuildResp], error) {
+func (c *imageBuildServiceClient) ImageBuildFromSource(ctx context.Context, opts ...grpc.CallOption) (grpc.BidiStreamingClient[ImageBuildMsg, ImageBuildResp], error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	stream, err := c.cc.NewStream(ctx, &ImageBuildService_ServiceDesc.Streams[0], ImageBuildService_ImageBuild_FullMethodName, cOpts...)
+	stream, err := c.cc.NewStream(ctx, &ImageBuildService_ServiceDesc.Streams[0], ImageBuildService_ImageBuildFromSource_FullMethodName, cOpts...)
 	if err != nil {
 		return nil, err
 	}
-	x := &grpc.GenericClientStream[ImageBuildReq, ImageBuildResp]{ClientStream: stream}
-	if err := x.ClientStream.SendMsg(in); err != nil {
-		return nil, err
-	}
-	if err := x.ClientStream.CloseSend(); err != nil {
-		return nil, err
-	}
+	x := &grpc.GenericClientStream[ImageBuildMsg, ImageBuildResp]{ClientStream: stream}
 	return x, nil
 }
 
 // This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
-type ImageBuildService_ImageBuildClient = grpc.ServerStreamingClient[ImageBuildResp]
+type ImageBuildService_ImageBuildFromSourceClient = grpc.BidiStreamingClient[ImageBuildMsg, ImageBuildResp]
 
 // ImageBuildServiceServer is the server API for ImageBuildService service.
 // All implementations must embed UnimplementedImageBuildServiceServer
 // for forward compatibility.
 type ImageBuildServiceServer interface {
-	ImageBuild(*ImageBuildReq, grpc.ServerStreamingServer[ImageBuildResp]) error
+	// ImageBuildFromSource builds an image from the source sent in the call: the
+	// request first, then the packed source in chunks. The agent unpacks it in a
+	// temporary directory of its own and removes it when the call ends.
+	ImageBuildFromSource(grpc.BidiStreamingServer[ImageBuildMsg, ImageBuildResp]) error
 	mustEmbedUnimplementedImageBuildServiceServer()
 }
 
@@ -71,8 +71,8 @@ type ImageBuildServiceServer interface {
 // pointer dereference when methods are called.
 type UnimplementedImageBuildServiceServer struct{}
 
-func (UnimplementedImageBuildServiceServer) ImageBuild(*ImageBuildReq, grpc.ServerStreamingServer[ImageBuildResp]) error {
-	return status.Error(codes.Unimplemented, "method ImageBuild not implemented")
+func (UnimplementedImageBuildServiceServer) ImageBuildFromSource(grpc.BidiStreamingServer[ImageBuildMsg, ImageBuildResp]) error {
+	return status.Error(codes.Unimplemented, "method ImageBuildFromSource not implemented")
 }
 func (UnimplementedImageBuildServiceServer) mustEmbedUnimplementedImageBuildServiceServer() {}
 func (UnimplementedImageBuildServiceServer) testEmbeddedByValue()                           {}
@@ -95,16 +95,12 @@ func RegisterImageBuildServiceServer(s grpc.ServiceRegistrar, srv ImageBuildServ
 	s.RegisterService(&ImageBuildService_ServiceDesc, srv)
 }
 
-func _ImageBuildService_ImageBuild_Handler(srv interface{}, stream grpc.ServerStream) error {
-	m := new(ImageBuildReq)
-	if err := stream.RecvMsg(m); err != nil {
-		return err
-	}
-	return srv.(ImageBuildServiceServer).ImageBuild(m, &grpc.GenericServerStream[ImageBuildReq, ImageBuildResp]{ServerStream: stream})
+func _ImageBuildService_ImageBuildFromSource_Handler(srv interface{}, stream grpc.ServerStream) error {
+	return srv.(ImageBuildServiceServer).ImageBuildFromSource(&grpc.GenericServerStream[ImageBuildMsg, ImageBuildResp]{ServerStream: stream})
 }
 
 // This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
-type ImageBuildService_ImageBuildServer = grpc.ServerStreamingServer[ImageBuildResp]
+type ImageBuildService_ImageBuildFromSourceServer = grpc.BidiStreamingServer[ImageBuildMsg, ImageBuildResp]
 
 // ImageBuildService_ServiceDesc is the grpc.ServiceDesc for ImageBuildService service.
 // It's only intended for direct use with grpc.RegisterService,
@@ -115,9 +111,10 @@ var ImageBuildService_ServiceDesc = grpc.ServiceDesc{
 	Methods:     []grpc.MethodDesc{},
 	Streams: []grpc.StreamDesc{
 		{
-			StreamName:    "ImageBuild",
-			Handler:       _ImageBuildService_ImageBuild_Handler,
+			StreamName:    "ImageBuildFromSource",
+			Handler:       _ImageBuildService_ImageBuildFromSource_Handler,
 			ServerStreams: true,
+			ClientStreams: true,
 		},
 	},
 	Metadata: "image_build.proto",

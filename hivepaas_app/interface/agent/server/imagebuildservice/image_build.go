@@ -1,6 +1,8 @@
 package imagebuildservice
 
 import (
+	"google.golang.org/grpc"
+
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
@@ -12,13 +14,19 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecaseagent/imagebuildagentuc/imagebuildagentdto"
 )
 
-func ImageBuild(
+// ImageBuildFromSource builds an image from the source the call carries: the
+// request in its first message, the packed source in those that follow.
+func ImageBuildFromSource(
 	uc *imagebuildagentuc.UC,
-	req *agentproto.ImageBuildReq,
-	stream agentproto.ImageBuildService_ImageBuildServer,
+	stream grpc.BidiStreamingServer[agentproto.ImageBuildMsg, agentproto.ImageBuildResp],
 ) error {
+	first, err := stream.Recv()
+	if err != nil {
+		return hperrors.ToGRPCError(err) //nolint:wrapcheck
+	}
+	req := first.GetReq()
 	if req == nil {
-		return nil
+		return hperrors.ToGRPCError(hperrors.NewMissing("Image build request")) //nolint:wrapcheck
 	}
 
 	var dockerfile entity.DeploymentDockerfile
@@ -71,8 +79,6 @@ func ImageBuild(
 			ImageBuildSettings: buildSettings,
 			NoCache:            req.GetNoCache(),
 			BuildID:            req.GetBuildId(),
-			CheckoutDir:        req.GetCheckoutDir(),
-			TempDir:            req.GetTempDir(),
 		},
 		SendLog: func(frames []*tasklog.LogFrame) error {
 			for _, frame := range frames {
@@ -93,7 +99,7 @@ func ImageBuild(
 		},
 	}
 
-	resp, err := uc.ImageBuild(stream.Context(), dtoReq)
+	resp, err := uc.ImageBuildFromSource(stream.Context(), dtoReq, &sourceReader{stream: stream})
 	if err != nil {
 		return hperrors.ToGRPCError(err) //nolint:wrapcheck
 	}
@@ -112,4 +118,23 @@ func ImageBuild(
 	}
 
 	return nil
+}
+
+// sourceReader is the packed source, read from the chunks that follow the request.
+type sourceReader struct {
+	stream grpc.BidiStreamingServer[agentproto.ImageBuildMsg, agentproto.ImageBuildResp]
+	chunk  []byte
+}
+
+func (r *sourceReader) Read(p []byte) (int, error) {
+	for len(r.chunk) == 0 {
+		msg, err := r.stream.Recv()
+		if err != nil {
+			return 0, err //nolint:wrapcheck // io.EOF ends the source
+		}
+		r.chunk = msg.GetSourceChunk()
+	}
+	n := copy(p, r.chunk)
+	r.chunk = r.chunk[n:]
+	return n, nil
 }

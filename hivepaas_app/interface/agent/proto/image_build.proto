@@ -5,7 +5,17 @@ package agent;
 option go_package = "github.com/hivepaas/hivepaas/hivepaas_app/interface/agent/proto;agentproto";
 
 service ImageBuildService {
-  rpc ImageBuild(ImageBuildReq) returns (stream ImageBuildResp);
+  // ImageBuildFromSource builds an image from the source sent in the call: the
+  // request first, then the packed source in chunks. The agent unpacks it in a
+  // temporary directory of its own and removes it when the call ends.
+  rpc ImageBuildFromSource(stream ImageBuildMsg) returns (stream ImageBuildResp);
+}
+
+message ImageBuildMsg {
+  oneof value {
+    ImageBuildReq req = 1;   // first, once
+    bytes source_chunk = 2;  // then the source (tar, zstd), in order
+  }
 }
 
 message ImageBuildReq {
@@ -19,8 +29,8 @@ message ImageBuildReq {
   ImageBuildSettings image_build_settings = 7;
   bool no_cache = 8;
   string build_id = 9;
-  string checkout_dir = 10;
-  string temp_dir = 11;
+  reserved 10, 11;             // were checkout_dir and temp_dir: the agent has its own
+  reserved "checkout_dir", "temp_dir";
   // Tags this one deployment asked for, without the environment prefix, which
   // the build adds. An agent older than the server ignores them and pushes the
   // commit tag alone.

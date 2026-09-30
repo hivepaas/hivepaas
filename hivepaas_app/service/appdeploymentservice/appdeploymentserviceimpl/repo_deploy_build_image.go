@@ -3,6 +3,7 @@ package appdeploymentserviceimpl
 import (
 	"context"
 	"fmt"
+	"io"
 	"time"
 
 	"github.com/tiendc/gofn"
@@ -11,8 +12,10 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	imagebuildserviceclient "github.com/hivepaas/hivepaas/hivepaas_app/interface/agent/client/imagebuildservice"
+	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/srcpack"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/tasklog"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/timeutil"
+	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/unit"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/imagebuildservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecaseagent/imagebuildagentuc/imagebuildagentdto"
 )
@@ -106,7 +109,9 @@ func (s *service) repoDeployStepImageBuild(
 		}
 
 		timeStart := time.Now()
-		buildResp, err := agentClient.ImageBuild(ctx, agentReq)
+		buildResp, err := agentClient.ImageBuild(ctx, agentReq, func(w io.Writer) error {
+			return sendBuildSource(ctx, data, w)
+		})
 		if err != nil {
 			if time.Since(timeStart) < 10*time.Second && ctx.Err() == nil { //nolint:mnd
 				// If any error occurs within 10s, we can fall back to the current node.
@@ -132,6 +137,22 @@ func (s *service) repoDeployStepImageBuild(
 
 	data.Deployment.Output.ImageTags = buildResp.ImageTags
 
+	return nil
+}
+
+// sendBuildSource sends the checkout to the build node: the agent there cannot
+// read this node's directory, so the source travels with the build's call.
+func sendBuildSource(ctx context.Context, data *repoDeploymentData, w io.Writer) error {
+	_ = data.LogStore.Add(ctx, tasklog.NewOutFrame("Sending the source to the build node...", tasklog.TsNow))
+	start := time.Now()
+	sent, err := srcpack.Pack(ctx, data.CheckoutDir, w)
+	if err != nil {
+		return hperrors.Wrap(err)
+	}
+	_ = data.LogStore.Add(ctx, tasklog.NewOutFrame(
+		fmt.Sprintf("Source sent: %d files, %s, in %s", sent.Files, unit.DataSize(sent.Bytes).HR(),
+			time.Since(start).Truncate(time.Millisecond)),
+		tasklog.TsNow))
 	return nil
 }
 

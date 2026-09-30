@@ -1,6 +1,7 @@
 package imagebuildagentuc
 
 import (
+	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/logging"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/appservice"
@@ -15,6 +16,9 @@ type UC struct {
 
 	appService        appservice.Service
 	imageBuildService imagebuildservice.Service
+
+	// tempBaseDir is where the sources sent for a build are unpacked, by day.
+	tempBaseDir string
 }
 
 func New(
@@ -32,5 +36,13 @@ func New(
 
 		appService:        appService,
 		imageBuildService: imageBuildService,
+
+		tempBaseDir: base.BaseTempDirDefault,
 	}
+}
+
+// WithTempBaseDir makes the agent unpack sources under dir.
+func (uc *UC) WithTempBaseDir(dir string) *UC {
+	uc.tempBaseDir = dir
+	return uc
 }

@@ -1,6 +1,7 @@
 package imagebuildservice
 
 import (
+	"bufio"
 	"context"
 	"errors"
 	"io"
@@ -12,12 +13,23 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/interface/agent/client"
 	agentproto "github.com/hivepaas/hivepaas/hivepaas_app/interface/agent/proto"
+	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/safego"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/tasklog"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecaseagent/imagebuildagentuc/imagebuildagentdto"
 )
 
+// sourceChunkSize is how much of the packed source one message carries.
+const sourceChunkSize = 1 << 20
+
 type ImageBuildServiceClient interface {
-	ImageBuild(ctx context.Context, req *imagebuildagentdto.ImageBuildReq) (*imagebuildagentdto.ImageBuildResp, error)
+	// ImageBuild builds an image on the agent's node from the source sendSource
+	// writes: the checkout, packed (see srcpack.Pack). The agent keeps its copy
+	// only as long as the call lasts.
+	ImageBuild(
+		ctx context.Context,
+		req *imagebuildagentdto.ImageBuildReq,
+		sendSource func(w io.Writer) error,
+	) (*imagebuildagentdto.ImageBuildResp, error)
 	Close() error
 }
 
@@ -49,8 +61,11 @@ func (c *grpcImageBuildServiceClient) Close() error {
 func (c *grpcImageBuildServiceClient) ImageBuild(
 	ctx context.Context,
 	req *imagebuildagentdto.ImageBuildReq,
+	sendSource func(w io.Writer) error,
 ) (*imagebuildagentdto.ImageBuildResp, error) {
-	authCtx := client.CreateAuthCtx(ctx)
+	// Canceling ends the call on the agent, which then drops the source it has.
+	authCtx, cancel := client.CreateAuthCtxWithCancel(ctx)
+	defer cancel()
 
 	var protoDockerfile *agentproto.DeploymentDockerfile
 	if req.Dockerfile.Source != "" || req.Dockerfile.Path != "" || req.Dockerfile.Content != "" ||
@@ -101,15 +116,92 @@ func (c *grpcImageBuildServiceClient) ImageBuild(
 		ImageBuildSettings: protoBuildSettings,
 		NoCache:            req.NoCache,
 		BuildId:            req.BuildID,
-		CheckoutDir:        req.CheckoutDir,
-		TempDir:            req.TempDir,
 	}
 
-	stream, err := c.protoClient.ImageBuild(authCtx, protoReq)
+	stream, err := c.protoClient.ImageBuildFromSource(authCtx)
 	if err != nil {
 		return nil, hperrors.Wrap(err)
 	}
 
+	// The source is sent while the agent's answers are read: the agent may end
+	// the call, with its reason, before the whole source has left.
+	sent := make(chan error, 1)
+	go func() {
+		var sendErr error
+		defer func() {
+			if sendErr != nil {
+				cancel()
+			}
+			sent <- sendErr
+		}()
+		defer safego.RecoverTo(&sendErr)
+		sendErr = sendBuild(stream, protoReq, sendSource)
+	}()
+
+	respDTO, recvErr := c.receive(ctx, stream, req)
+	cancel()
+	if sendErr := <-sent; sendErr != nil {
+		// Why the source could not be sent is the cause; the agent only saw the call end.
+		return nil, hperrors.Wrap(sendErr)
+	}
+	if recvErr != nil {
+		return nil, hperrors.Wrap(recvErr)
+	}
+	return respDTO, nil
+}
+
+// sendBuild sends the request, then the source in chunks, then ends the sending
+// side. When the stream itself refuses a message the agent has ended the call,
+// and its reason is what the receiving side reads: that is not an error here.
+func sendBuild(
+	stream grpc.BidiStreamingClient[agentproto.ImageBuildMsg, agentproto.ImageBuildResp],
+	req *agentproto.ImageBuildReq,
+	sendSource func(w io.Writer) error,
+) error {
+	if err := stream.Send(&agentproto.ImageBuildMsg{Value: &agentproto.ImageBuildMsg_Req{Req: req}}); err != nil {
+		return nil //nolint:nilerr // the receiving side reports why the call ended
+	}
+	chunks := &chunkWriter{stream: stream}
+	buffered := bufio.NewWriterSize(chunks, sourceChunkSize)
+	err := sendSource(buffered)
+	if err == nil {
+		err = buffered.Flush()
+	}
+	if chunks.ended {
+		return nil
+	}
+	if err != nil {
+		return hperrors.Wrap(err)
+	}
+	_ = stream.CloseSend()
+	return nil
+}
+
+// chunkWriter sends what it is given as one chunk of the source.
+type chunkWriter struct {
+	stream grpc.BidiStreamingClient[agentproto.ImageBuildMsg, agentproto.ImageBuildResp]
+	// ended is set once the stream refused a chunk: the call is over.
+	ended bool
+}
+
+func (w *chunkWriter) Write(p []byte) (int, error) {
+	// A copy: the message may still be in use after Send returns, and p is reused.
+	chunk := append([]byte(nil), p...)
+	err := w.stream.Send(&agentproto.ImageBuildMsg{Value: &agentproto.ImageBuildMsg_SourceChunk{SourceChunk: chunk}})
+	if err != nil {
+		w.ended = true
+		return 0, err //nolint:wrapcheck
+	}
+	return len(p), nil
+}
+
+// receive reads the agent's answers to the end of the call: its logs, passed on
+// as they come, and the result.
+func (c *grpcImageBuildServiceClient) receive(
+	ctx context.Context,
+	stream grpc.BidiStreamingClient[agentproto.ImageBuildMsg, agentproto.ImageBuildResp],
+	req *imagebuildagentdto.ImageBuildReq,
+) (*imagebuildagentdto.ImageBuildResp, error) {
 	respDTO := &imagebuildagentdto.ImageBuildResp{}
 
 	for {

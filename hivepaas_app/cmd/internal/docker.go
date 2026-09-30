@@ -40,9 +40,11 @@ func InitDockerManager(
 	lc.Append(fx.Hook{
 		OnStart: func(startCtx context.Context) error {
 			logger.Info("initializing docker manager ...")
-			err := syncSwarmObjects(ctx, db, clusterService, networkService, volumeService)
-			if err != nil {
-				return hperrors.Wrap(err)
+			if syncsSwarmObjectsAtStartup(cfg.RunMode) {
+				err := syncSwarmObjects(ctx, db, clusterService, networkService, volumeService)
+				if err != nil {
+					return hperrors.Wrap(err)
+				}
 			}
 			if cfg.RunMode == config.RunModeApp || cfg.RunMode == config.RunModeAppAndWorker {
 				go registerSwarmNodeEvents(ctx, manager, clusterService, logger)
@@ -56,6 +58,15 @@ func InitDockerManager(
 		},
 	})
 	return nil
+}
+
+// syncsSwarmObjectsAtStartup says whether a process of this run mode syncs the
+// swarm's nodes, networks and volumes with the database when it starts. An
+// agent does not: it runs on every node, and a worker node's docker refuses to
+// list the swarm's state ("This node is not a swarm manager"), which would keep
+// the agent from starting there. The app and the worker run on manager nodes.
+func syncsSwarmObjectsAtStartup(runMode string) bool {
+	return runMode != config.RunModeAgent
 }
 
 func syncSwarmObjects(

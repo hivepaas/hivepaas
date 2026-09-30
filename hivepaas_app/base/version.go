@@ -14,7 +14,6 @@ const CurrentVersion = VersionCodeV1
 
 const StableVersionCode = VersionCodeV1
 
-// TODO: update these info later
 var StableVersion = &ReleaseInfo{
 	ReleaseDate:       timeutil.Date(time.Date(2026, time.January, 1, 0, 0, 0, 0, time.UTC)),
 	AppVersion:        "v0.1.0",
@@ -31,8 +30,8 @@ var StableVersion = &ReleaseInfo{
 
 	Templates: &TemplatesRef{
 		Repo:        "hivepaas/app-templates",
-		Commit:      "814917c4414b73cfe742904dd779b871a086e7d1",
-		IndexSHA256: "375f4ae6c03d4a771e261aeef6b07798dd8d0e0db8e3a6ebf269ab7ff51e8604",
+		Commit:      "b495ab97464767c5c936a1bb4a8381fb680047f5",
+		IndexSHA256: "89cbe671b6ddf01d544eee20875d54a328e6e9f69d9c418a7fb9eb9cd8db0b13",
 	},
 }
 
@@ -40,8 +39,8 @@ const BetaVersionCode = VersionCodeV1
 
 // TODO: update these info later
 var BetaVersion = &ReleaseInfo{
-	ReleaseDate:       timeutil.Date(time.Date(2026, time.January, 1, 0, 0, 0, 0, time.UTC)),
-	AppVersion:        "v0.1.0-beta1",
+	ReleaseDate:       timeutil.Date(time.Date(2026, time.October, 1, 0, 0, 0, 0, time.UTC)),
+	AppVersion:        "v1.0.0-beta1",
 	AppImage:          "hivepaas/hivepaas-dev:0.1.0",
 	AgentImage:        "hivepaas/hivepaas-agent-dev:0.1.0",
 	RedisImage:        "redis:8.6-alpine",

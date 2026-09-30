@@ -63,6 +63,7 @@ func InitGrpcServer(
 		),
 		grpc.ChainStreamInterceptor(
 			streamAuthInterceptor(),
+			streamLoggingAndRecoveryInterceptor(logger),
 		),
 	}
 
@@ -124,6 +125,40 @@ func unaryLoggingAndRecoveryInterceptor(logger logging.Logger) grpc.UnaryServerI
 		}
 
 		return resp, hperrors.Wrap(err)
+	}
+}
+
+// Stream interceptor doing for a stream call what the unary one does: a panic
+// in one call (a file transfer, a build) must not take the agent down with
+// every other call running on it.
+func streamLoggingAndRecoveryInterceptor(logger logging.Logger) grpc.StreamServerInterceptor {
+	return func(
+		srv any,
+		ss grpc.ServerStream,
+		info *grpc.StreamServerInfo,
+		handler grpc.StreamHandler,
+	) (err error) {
+		startTime := time.Now()
+
+		defer func() {
+			if r := recover(); r != nil {
+				logger.Errorf("[gRPC Panic] Recovered from panic in stream %s: %v", info.FullMethod, r)
+				err = status.Errorf(codes.Internal, "internal server error: panic recovered")
+			}
+		}()
+
+		logger.Infof("[gRPC Stream] Start - Method: %s", info.FullMethod)
+		err = handler(srv, ss)
+
+		duration := time.Since(startTime)
+		if err != nil {
+			err = hperrors.ToGRPCError(err)
+			logger.Errorf("[gRPC Stream] Fail - Method: %s, Duration: %s, Error: %v", info.FullMethod, duration, err)
+		} else {
+			logger.Infof("[gRPC Stream] Success - Method: %s, Duration: %s", info.FullMethod, duration)
+		}
+
+		return hperrors.Wrap(err)
 	}
 }
 

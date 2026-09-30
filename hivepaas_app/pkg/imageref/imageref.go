@@ -127,6 +127,15 @@ func IsUpgrade(current, target string) (bool, string) {
 		return true, "image changed from " + cur.Repository + " to " + tgt.Repository
 	}
 	if cur.Tag == tgt.Tag {
+		// A digest the release pins says which build of the tag it means; one it
+		// does not pin leaves any build of the tag good enough, since a digest also
+		// moves when a tag is merely re-pushed.
+		if tgt.Digest != "" && tgt.Digest != cur.Digest {
+			if cur.Digest == "" {
+				return true, "pinning " + tgt.Repository + ":" + tgt.Tag + " to " + tgt.Digest
+			}
+			return true, "rebuilt " + tgt.Repository + ":" + tgt.Tag + ": " + cur.Digest + " to " + tgt.Digest
+		}
 		return false, "already at " + tgt.Repository + ":" + tgt.Tag
 	}
 

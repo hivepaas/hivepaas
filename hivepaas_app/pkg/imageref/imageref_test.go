@@ -194,3 +194,28 @@ func TestSameRepository(t *testing.T) {
 	assert.False(t, imageref.SameRepository("postgres:18.6", "ghcr.io/library/postgres:18.6"))
 	assert.False(t, imageref.SameRepository("postgres:18.6", "mirror.example.com/library/postgres:18.6"))
 }
+
+// A release that pins a tag to a digest has said which image it means. The same
+// tag rebuilt - a base image patched, a security fix - is a new digest under the
+// old tag, and reaches a server only if the digest counts.
+func TestIsUpgradeAppliesAPinnedRebuildOfTheSameTag(t *testing.T) {
+	got, reason := imageref.IsUpgrade("postgres:18.3-alpine@sha256:aaaa", "postgres:18.3-alpine@sha256:bbbb")
+
+	assert.True(t, got, reason)
+	assert.Contains(t, reason, "sha256:bbbb")
+}
+
+// The image the release pins, already running, is left alone.
+func TestIsUpgradeKeepsThePinnedImageThatRuns(t *testing.T) {
+	got, reason := imageref.IsUpgrade("postgres:18.3-alpine@sha256:aaaa", "postgres:18.3-alpine@sha256:aaaa")
+
+	assert.False(t, got, reason)
+}
+
+// A service whose spec names no digest may be running any build of the tag: a
+// release that pins one is applied, and after that the two compare.
+func TestIsUpgradeAppliesAPinWhenTheRunningImageIsNotPinned(t *testing.T) {
+	got, reason := imageref.IsUpgrade("postgres:18.3-alpine", "postgres:18.3-alpine@sha256:bbbb")
+
+	assert.True(t, got, reason)
+}

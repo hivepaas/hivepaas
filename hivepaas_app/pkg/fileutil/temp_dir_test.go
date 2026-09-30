@@ -1,0 +1,46 @@
+package fileutil
+
+import (
+	"os"
+	"path/filepath"
+	"testing"
+	"time"
+
+	"github.com/stretchr/testify/assert"
+)
+
+func mustMkdir(t *testing.T, path string) {
+	t.Helper()
+	if err := os.MkdirAll(path, 0o700); err != nil {
+		t.Fatal(err)
+	}
+}
+
+// Temporary directories are made by day, so a day's worth goes at once: those
+// of a day before the threshold go, later ones and everything else stay.
+func TestRemoveDatedTempDirsRemovesTheDaysBeforeTheThreshold(t *testing.T) {
+	base := t.TempDir()
+	mustMkdir(t, filepath.Join(base, "2026-09-25", "abc", "checkout"))
+	mustMkdir(t, filepath.Join(base, "2026-09-28", "def"))
+	mustMkdir(t, filepath.Join(base, "backup-repos", "r1"))
+	if err := os.WriteFile(filepath.Join(base, "2026-09-20"), []byte("a file, not a day"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+
+	removed, err := RemoveDatedTempDirs(base, time.Date(2026, 9, 27, 12, 0, 0, 0, time.UTC))
+
+	assert.NoError(t, err)
+	assert.Equal(t, 1, removed)
+	assert.NoDirExists(t, filepath.Join(base, "2026-09-25"))
+	assert.DirExists(t, filepath.Join(base, "2026-09-28", "def"))
+	assert.DirExists(t, filepath.Join(base, "backup-repos", "r1"))
+	assert.FileExists(t, filepath.Join(base, "2026-09-20"))
+}
+
+// A base directory that was never made has nothing to remove.
+func TestRemoveDatedTempDirsOfAMissingBaseIsNothing(t *testing.T) {
+	removed, err := RemoveDatedTempDirs(filepath.Join(t.TempDir(), "none"), time.Now())
+
+	assert.NoError(t, err)
+	assert.Zero(t, removed)
+}

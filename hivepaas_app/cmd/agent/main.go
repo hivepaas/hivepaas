@@ -6,9 +6,11 @@ import (
 	"go.uber.org/fx"
 	"google.golang.org/grpc"
 
+	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/cmd/internal"
 	agentproto "github.com/hivepaas/hivepaas/hivepaas_app/interface/agent/proto"
 	agentserver "github.com/hivepaas/hivepaas/hivepaas_app/interface/agent/server"
+	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/fileutil"
 	"github.com/hivepaas/hivepaas/hivepaas_app/registry"
 )
 
@@ -46,9 +48,17 @@ func main() {
 		fx.Invoke(internal.InitDockerManager),
 		fx.Invoke(internal.InitSystemSettings),
 		fx.Invoke(internal.InitSystemEventBus),
+		fx.Invoke(sweepTempDirs),
 		fx.Invoke(internal.InitGrpcServer),
 		fx.Invoke(internal.InitDockerAPIHost),
 	)
 
 	app.Run()
+}
+
+// sweepTempDirs removes the temporary directories an agent killed during a
+// build left behind. It runs before the agent serves: no build is running yet,
+// so every day's directory is stale, today's included.
+func sweepTempDirs() {
+	_, _ = fileutil.RemoveDatedTempDirs(base.BaseTempDirDefault, time.Now())
 }

@@ -53,3 +53,33 @@ func CreateTempDirInAppPath(baseDir, pattern string, perm os.FileMode) (dir stri
 
 	return dir, nil
 }
+
+// TempDirRetentionDays is how long a day's temporary directories are kept by the
+// cleanups, in case whatever made them is still running.
+const TempDirRetentionDays = 3
+
+// RemoveDatedTempDirs removes the directories of baseDir named after a day
+// (YYYY-MM-DD, as CreateTempDir makes them) earlier than before, and says how
+// many went. Anything else in baseDir is left alone.
+func RemoveDatedTempDirs(baseDir string, before time.Time) (removed int, err error) {
+	entries, err := os.ReadDir(baseDir)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return 0, nil
+		}
+		return 0, hperrors.Wrap(err)
+	}
+	for _, entry := range entries {
+		if !entry.IsDir() {
+			continue
+		}
+		day, err := time.Parse(time.DateOnly, entry.Name())
+		if err != nil || !day.Before(before) {
+			continue
+		}
+		if os.RemoveAll(filepath.Join(baseDir, entry.Name())) == nil {
+			removed++
+		}
+	}
+	return removed, nil
+}

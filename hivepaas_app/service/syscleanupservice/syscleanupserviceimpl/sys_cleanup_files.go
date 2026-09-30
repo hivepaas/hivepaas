@@ -3,13 +3,13 @@ package syscleanupserviceimpl
 import (
 	"context"
 	"errors"
-	"os"
 	"path/filepath"
 	"time"
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/config"
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
+	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/fileutil"
 )
 
 func (s *service) sysCleanupFiles(
@@ -42,35 +42,15 @@ func (s *service) sysCleanupTempFiles(
 	}
 
 	baseDirs := []string{base.BaseTempDirDefault, filepath.Join(config.Current().AppPath, "tmp")}
-	threshold := time.Now().AddDate(0, 0, -3) //nolint:mnd
+	threshold := time.Now().AddDate(0, 0, -fileutil.TempDirRetentionDays)
 	if data.CleanupFilesTemp == base.CleanupFlagForce {
 		threshold = time.Now()
 	}
 
+	var errs []error
 	for _, baseDir := range baseDirs {
-		entries, err := os.ReadDir(baseDir)
-		if err != nil {
-			if os.IsNotExist(err) {
-				return nil
-			}
-			return hperrors.Wrap(err)
-		}
-
-		for _, entry := range entries {
-			if !entry.IsDir() {
-				continue
-			}
-
-			dirTime, err := time.Parse(time.DateOnly, entry.Name())
-			if err != nil {
-				continue
-			}
-
-			if dirTime.Before(threshold) {
-				_ = os.RemoveAll(filepath.Join(baseDir, entry.Name()))
-			}
-		}
+		_, err := fileutil.RemoveDatedTempDirs(baseDir, threshold)
+		errs = append(errs, err)
 	}
-
-	return nil
+	return hperrors.Wrap(errors.Join(errs...))
 }

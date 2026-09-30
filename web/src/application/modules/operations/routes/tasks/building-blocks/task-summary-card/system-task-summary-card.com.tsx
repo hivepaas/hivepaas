@@ -85,7 +85,16 @@ function StatusBadge({ status }: { status: SystemTaskStatus }) {
 }
 
 function JobBadge({ kind }: { kind: string }) {
-    return <Badge className="h-7 bg-sky-400 px-3 text-sm text-white hover:bg-sky-400/90">{kind}</Badge>;
+    // The task type's shape, with a tint of its own: the two read as a pair, and
+    // the status badge stays the only solid one.
+    return (
+        <Badge
+            variant="outline"
+            className="h-7 px-3 text-sm font-mono rounded-md border-sky-500/30 bg-sky-500/10 text-sky-700 dark:text-sky-400"
+        >
+            {kind}
+        </Badge>
+    );
 }
 
 function TaskTypeBadge({ type }: { type: string }) {

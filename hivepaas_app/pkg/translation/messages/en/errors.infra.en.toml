@@ -20,6 +20,7 @@ ERR_ENCRYPTION_FORMAT_UNSUPPORTED = "Encryption format '{{.Format}}' is not supp
 ERR_STORAGE_TYPE_UNSUPPORTED = "Storage type '{{.Type}}' is not supported"
 ERR_FILE_PATH_OUTSIDE_ROOT = "Path '{{.Path}}' is not inside the directory '{{.Root}}'"
 ERR_VOLUME_CANNOT_HOLD_FILES = "Volume '{{.Name}}' cannot hold HivePaaS's files: it is pinned to the label '{{.Label}}', which {{.Nodes}} nodes carry, not one"
+ERR_VOLUME_HAS_FILES = "Volume '{{.Name}}' holds {{.Count}} files of HivePaaS: repository caches, job outputs or data files. Delete them first"
 ERR_STORAGE_PERMISSIONS_NOT_RESETTABLE = "The storage at '{{.Target}}' is not a directory of this app's own, so its permissions cannot be reset"
 ERR_STORAGE_PERMISSIONS_NOT_RESET = "The permissions of some files in '{{.Path}}' could not be changed"
 

@@ -31,6 +31,8 @@ var (
 	// A volume HivePaaS cannot keep files on: one pinned by a label that names no
 	// node or several, so which node holds the files cannot be told.
 	ErrVolumeCannotHoldFiles = NewErr(ErrPreconditionFailed, "ERR_VOLUME_CANNOT_HOLD_FILES")
+	// A volume holding HivePaaS's files is not deleted from under them.
+	ErrVolumeHasFiles = NewErr(ErrPreconditionFailed, "ERR_VOLUME_HAS_FILES")
 	// A mount whose directory is not the app's own: another app's, a whole volume,
 	// or a bind HivePaaS did not make.
 	ErrStoragePermissionsNotResettable = NewErr(ErrPreconditionFailed, "ERR_STORAGE_PERMISSIONS_NOT_RESETTABLE")

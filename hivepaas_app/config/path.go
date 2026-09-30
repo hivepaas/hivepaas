@@ -148,15 +148,6 @@ func (cfg *Config) DataPathSystemUpdate() LocalPath {
 	return LocalPath(filepath.Join("system", "update"))
 }
 
-/// SYSTEM CACHE
-
-func (cfg *Config) DataPathSystemCache() LocalPath {
-	return LocalPath(filepath.Join("system", "cache"))
-}
-func (cfg *Config) DataPathSystemCacheRepos() LocalPath {
-	return cfg.DataPathSystemCache().Join("repos")
-}
-
 /// UPLOAD FILES
 
 func (cfg *Config) DataPathFiles() LocalPath {
@@ -178,7 +169,6 @@ func (cfg *Config) DataPathsToInitAtStartup() map[string]os.FileMode {
 
 		cfg.DataPathTraefikEtcDynamic().AbsPath(): base.DirModeDefault,
 
-		cfg.DataPathSystemCacheRepos().AbsPath(): base.DirModeDefault,
-		cfg.DataPathFiles().AbsPath():            base.DirModeDefault,
+		cfg.DataPathFiles().AbsPath(): base.DirModeDefault,
 	}
 }

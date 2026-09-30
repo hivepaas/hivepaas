@@ -36,7 +36,7 @@ func (s *service) initDefaultAppPlacementSettings(
 	}
 	appPlacement := &entity.AppPlacementSettings{
 		ExcludeBuildNodes:   true,
-		ExcludeManagerNodes: true,
+		ExcludeManagerNodes: false,
 	}
 	appPlacementSetting.MustSetData(appPlacement)
 

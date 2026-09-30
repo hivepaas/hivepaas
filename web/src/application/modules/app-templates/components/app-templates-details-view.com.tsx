@@ -13,6 +13,7 @@ import {
     HardDrive,
     Info,
     KeyRound,
+    Layers,
     Lock,
     Rocket,
     Scale,
@@ -35,10 +36,22 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Skeleton } from "@/components/ui/skeleton";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 
-import type { AppTemplateDependency, AppTemplateDetail, AppTemplateParam, AppTemplateSummary } from "../api";
+import type {
+    AppTemplateComponent,
+    AppTemplateDependency,
+    AppTemplateDetail,
+    AppTemplateParam,
+    AppTemplateSummary,
+} from "../api";
 import { useGetAppTemplate } from "../data";
 import { useDeployTemplateDialogState } from "../dialogs";
-import { describeCapabilities, describeDockerApi, grantedByTemplate, grantedDockerApiByTemplate } from "../utils";
+import {
+    describeCapabilities,
+    describeDockerApi,
+    describePort,
+    grantedByTemplate,
+    grantedDockerApiByTemplate,
+} from "../utils";
 
 interface AppTemplatesDetailsViewProps {
     templateName: string;
@@ -582,7 +595,12 @@ export function AppTemplatesDetailsView({
                         </CardContent>
                     </Card>
 
-                    {/* SECTION 3: Dependent Services */}
+                    {/* SECTION 3: Components */}
+                    {!isLoading && templateDetail?.components && templateDetail.components.length > 0 && (
+                        <ComponentsSection components={templateDetail.components} />
+                    )}
+
+                    {/* SECTION 3b: Dependent Services */}
                     {!isLoading && templateDetail?.dependencies && templateDetail.dependencies.length > 0 && (
                         <Card className="border-border/70 shadow-xs py-0 gap-0">
                             <div className="flex items-center justify-between px-4 sm:px-5 py-3 border-b border-border/40 min-h-[46px]">
@@ -915,6 +933,93 @@ export function AppTemplatesDetailsView({
                 </div>
             </div>
         </div>
+    );
+}
+
+/**
+ * The apps a template that creates several makes for itself - as against its
+ * dependencies, which are apps of other templates. The primary one takes the
+ * template's domains; the others are reached only by the apps beside them.
+ */
+function ComponentsSection({ components }: { components: AppTemplateComponent[] }) {
+    return (
+        <Card className="border-border/70 shadow-xs py-0 gap-0">
+            <div className="flex items-center justify-between px-4 sm:px-5 py-3 border-b border-border/40 min-h-[46px]">
+                <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
+                    <Layers className="size-4 text-amber-600 dark:text-amber-400" />
+                    Components
+                </h3>
+                <span className="text-xs text-muted-foreground">
+                    {components.length} {components.length === 1 ? "component" : "components"}
+                </span>
+            </div>
+            <CardContent className="px-4 sm:px-5 py-4 space-y-4">
+                <p className="text-xs text-muted-foreground leading-relaxed">
+                    This template deploys these apps together, as parts of one application. The primary component takes
+                    the domains; the others are reached only from inside it.
+                </p>
+
+                <div className="rounded-xl border border-border/70 divide-y divide-border/40">
+                    {components.map(component => (
+                        <div
+                            key={component.name}
+                            className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 px-4 py-3"
+                        >
+                            <div className="flex items-center gap-2.5 min-w-0">
+                                <div className="flex size-8 shrink-0 items-center justify-center rounded-lg border border-border/70 bg-background p-1.5 shadow-2xs">
+                                    <Container
+                                        className={cn(
+                                            "size-4",
+                                            component.primary ? "text-amber-500" : "text-muted-foreground",
+                                        )}
+                                    />
+                                </div>
+                                <div className="flex items-center gap-2 min-w-0">
+                                    <span className="text-sm font-semibold text-foreground truncate">
+                                        {component.title || component.name}
+                                    </span>
+                                    <span className="text-xs font-mono text-muted-foreground">({component.name})</span>
+                                </div>
+                            </div>
+
+                            <div className="flex flex-wrap items-center gap-1.5">
+                                {component.primary && (
+                                    <Badge className="text-[10px] px-2 py-0.5 bg-amber-500/15 text-amber-700 dark:text-amber-400 border-amber-500/40 hover:bg-amber-500/15">
+                                        Primary
+                                    </Badge>
+                                )}
+                                {(component.publishedPorts ?? []).map(port => (
+                                    <Badge
+                                        key={`${port.target}/${port.protocol}`}
+                                        variant="outline"
+                                        className="text-[10px] font-mono px-2 py-0.5 bg-background"
+                                        title={`Container port ${port.target}`}
+                                    >
+                                        {describePort({ app: component.title, port })}
+                                    </Badge>
+                                ))}
+                                {component.capabilities && (
+                                    <Badge
+                                        variant="outline"
+                                        className="text-[10px] px-2 py-0.5 border-orange-500/40 text-orange-700 dark:text-orange-400"
+                                    >
+                                        Elevated privileges
+                                    </Badge>
+                                )}
+                                {component.dockerApi && (
+                                    <Badge
+                                        variant="outline"
+                                        className="text-[10px] px-2 py-0.5 border-sky-500/40 text-sky-700 dark:text-sky-400"
+                                    >
+                                        Docker API
+                                    </Badge>
+                                )}
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            </CardContent>
+        </Card>
     );
 }
 

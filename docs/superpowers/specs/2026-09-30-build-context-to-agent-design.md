@@ -64,6 +64,8 @@ In `repoDeployStepImageBuild`, on the agent path only:
   and symbolic links as links. Anything else (devices, sockets) is skipped;
 - log, in the deployment's log, the number of files and the size sent, and the
   time it took;
+- when packing itself fails, that is the error the deployment gets: the agent
+  only sees the call canceled, and drops what it received;
 - the fallback stays: an error within the first 10 seconds builds on the
   current node instead. The checkout is still on the app, so nothing is lost.
 
@@ -80,7 +82,8 @@ deployment's log. App and agent are updated together.
   build, on:
   - an entry whose path is absolute or leaves the directory (`..`);
   - an entry written through a symbolic link unpacked earlier;
-  - an entry type other than a file, a directory or a symbolic link.
+  - an entry type other than a file, a directory or a symbolic link;
+  - an entry whose place is already taken (a duplicate in the stream).
 
   A symbolic link's target is kept as it is: a link pointing outside is only a
   name, and buildx does not follow links out of its context.
@@ -96,8 +99,9 @@ An agent killed during a build leaves its directory. Two sweeps remove it:
 
 - **when the agent starts**, everything under `/tmp/hivepaas` that is a dated
   directory goes: no build is running yet;
-- **at each node cleanup**, dated directories older than 3 days go, the rule
-  the app's own cleanup applies (`sysCleanupTempFiles`). The two share one
+- **at each node cleanup** (when the cluster cleanup is enabled), dated
+  directories older than 3 days go, the rule the app's own cleanup applies
+  (`sysCleanupTempFiles`). The two share one
   function, `fileutil.RemoveDatedTempDirs(baseDir, before)`.
 
 Directories under `/tmp/hivepaas` that are not dates (`backup-repos`) are not

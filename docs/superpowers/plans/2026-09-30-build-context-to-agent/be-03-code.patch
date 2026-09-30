@@ -1,0 +1,1028 @@
+diff --git a/hivepaas_app/interface/agent/client/imagebuildservice/service.go b/hivepaas_app/interface/agent/client/imagebuildservice/service.go
+index e3f3e37b..1dec49e1 100644
+--- a/hivepaas_app/interface/agent/client/imagebuildservice/service.go
++++ b/hivepaas_app/interface/agent/client/imagebuildservice/service.go
+@@ -1,6 +1,7 @@
+ package imagebuildservice
+ 
+ import (
++	"bufio"
+ 	"context"
+ 	"errors"
+ 	"io"
+@@ -12,12 +13,23 @@ import (
+ 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
+ 	"github.com/hivepaas/hivepaas/hivepaas_app/interface/agent/client"
+ 	agentproto "github.com/hivepaas/hivepaas/hivepaas_app/interface/agent/proto"
++	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/safego"
+ 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/tasklog"
+ 	"github.com/hivepaas/hivepaas/hivepaas_app/usecaseagent/imagebuildagentuc/imagebuildagentdto"
+ )
+ 
++// sourceChunkSize is how much of the packed source one message carries.
++const sourceChunkSize = 1 << 20
++
+ type ImageBuildServiceClient interface {
+-	ImageBuild(ctx context.Context, req *imagebuildagentdto.ImageBuildReq) (*imagebuildagentdto.ImageBuildResp, error)
++	// ImageBuild builds an image on the agent's node from the source sendSource
++	// writes: the checkout, packed (see srcpack.Pack). The agent keeps its copy
++	// only as long as the call lasts.
++	ImageBuild(
++		ctx context.Context,
++		req *imagebuildagentdto.ImageBuildReq,
++		sendSource func(w io.Writer) error,
++	) (*imagebuildagentdto.ImageBuildResp, error)
+ 	Close() error
+ }
+ 
+@@ -49,8 +61,11 @@ func (c *grpcImageBuildServiceClient) Close() error {
+ func (c *grpcImageBuildServiceClient) ImageBuild(
+ 	ctx context.Context,
+ 	req *imagebuildagentdto.ImageBuildReq,
++	sendSource func(w io.Writer) error,
+ ) (*imagebuildagentdto.ImageBuildResp, error) {
+-	authCtx := client.CreateAuthCtx(ctx)
++	// Canceling ends the call on the agent, which then drops the source it has.
++	authCtx, cancel := client.CreateAuthCtxWithCancel(ctx)
++	defer cancel()
+ 
+ 	var protoDockerfile *agentproto.DeploymentDockerfile
+ 	if req.Dockerfile.Source != "" || req.Dockerfile.Path != "" || req.Dockerfile.Content != "" ||
+@@ -101,15 +116,92 @@ func (c *grpcImageBuildServiceClient) ImageBuild(
+ 		ImageBuildSettings: protoBuildSettings,
+ 		NoCache:            req.NoCache,
+ 		BuildId:            req.BuildID,
+-		CheckoutDir:        req.CheckoutDir,
+-		TempDir:            req.TempDir,
+ 	}
+ 
+-	stream, err := c.protoClient.ImageBuild(authCtx, protoReq)
++	stream, err := c.protoClient.ImageBuildFromSource(authCtx)
+ 	if err != nil {
+ 		return nil, hperrors.Wrap(err)
+ 	}
+ 
++	// The source is sent while the agent's answers are read: the agent may end
++	// the call, with its reason, before the whole source has left.
++	sent := make(chan error, 1)
++	go func() {
++		var sendErr error
++		defer func() {
++			if sendErr != nil {
++				cancel()
++			}
++			sent <- sendErr
++		}()
++		defer safego.RecoverTo(&sendErr)
++		sendErr = sendBuild(stream, protoReq, sendSource)
++	}()
++
++	respDTO, recvErr := c.receive(ctx, stream, req)
++	cancel()
++	if sendErr := <-sent; sendErr != nil {
++		// Why the source could not be sent is the cause; the agent only saw the call end.
++		return nil, hperrors.Wrap(sendErr)
++	}
++	if recvErr != nil {
++		return nil, hperrors.Wrap(recvErr)
++	}
++	return respDTO, nil
++}
++
++// sendBuild sends the request, then the source in chunks, then ends the sending
++// side. When the stream itself refuses a message the agent has ended the call,
++// and its reason is what the receiving side reads: that is not an error here.
++func sendBuild(
++	stream grpc.BidiStreamingClient[agentproto.ImageBuildMsg, agentproto.ImageBuildResp],
++	req *agentproto.ImageBuildReq,
++	sendSource func(w io.Writer) error,
++) error {
++	if err := stream.Send(&agentproto.ImageBuildMsg{Value: &agentproto.ImageBuildMsg_Req{Req: req}}); err != nil {
++		return nil //nolint:nilerr // the receiving side reports why the call ended
++	}
++	chunks := &chunkWriter{stream: stream}
++	buffered := bufio.NewWriterSize(chunks, sourceChunkSize)
++	err := sendSource(buffered)
++	if err == nil {
++		err = buffered.Flush()
++	}
++	if chunks.ended {
++		return nil
++	}
++	if err != nil {
++		return hperrors.Wrap(err)
++	}
++	_ = stream.CloseSend()
++	return nil
++}
++
++// chunkWriter sends what it is given as one chunk of the source.
++type chunkWriter struct {
++	stream grpc.BidiStreamingClient[agentproto.ImageBuildMsg, agentproto.ImageBuildResp]
++	// ended is set once the stream refused a chunk: the call is over.
++	ended bool
++}
++
++func (w *chunkWriter) Write(p []byte) (int, error) {
++	// A copy: the message may still be in use after Send returns, and p is reused.
++	chunk := append([]byte(nil), p...)
++	err := w.stream.Send(&agentproto.ImageBuildMsg{Value: &agentproto.ImageBuildMsg_SourceChunk{SourceChunk: chunk}})
++	if err != nil {
++		w.ended = true
++		return 0, err //nolint:wrapcheck
++	}
++	return len(p), nil
++}
++
++// receive reads the agent's answers to the end of the call: its logs, passed on
++// as they come, and the result.
++func (c *grpcImageBuildServiceClient) receive(
++	ctx context.Context,
++	stream grpc.BidiStreamingClient[agentproto.ImageBuildMsg, agentproto.ImageBuildResp],
++	req *imagebuildagentdto.ImageBuildReq,
++) (*imagebuildagentdto.ImageBuildResp, error) {
+ 	respDTO := &imagebuildagentdto.ImageBuildResp{}
+ 
+ 	for {
+diff --git a/hivepaas_app/interface/agent/proto/image_build.pb.go b/hivepaas_app/interface/agent/proto/image_build.pb.go
+index 205c7764..6d194f36 100644
+--- a/hivepaas_app/interface/agent/proto/image_build.pb.go
++++ b/hivepaas_app/interface/agent/proto/image_build.pb.go
+@@ -21,6 +21,88 @@ const (
+ 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
+ )
+ 
++type ImageBuildMsg struct {
++	state protoimpl.MessageState `protogen:"open.v1"`
++	// Types that are valid to be assigned to Value:
++	//
++	//	*ImageBuildMsg_Req
++	//	*ImageBuildMsg_SourceChunk
++	Value         isImageBuildMsg_Value `protobuf_oneof:"value"`
++	unknownFields protoimpl.UnknownFields
++	sizeCache     protoimpl.SizeCache
++}
++
++func (x *ImageBuildMsg) Reset() {
++	*x = ImageBuildMsg{}
++	mi := &file_image_build_proto_msgTypes[0]
++	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
++	ms.StoreMessageInfo(mi)
++}
++
++func (x *ImageBuildMsg) String() string {
++	return protoimpl.X.MessageStringOf(x)
++}
++
++func (*ImageBuildMsg) ProtoMessage() {}
++
++func (x *ImageBuildMsg) ProtoReflect() protoreflect.Message {
++	mi := &file_image_build_proto_msgTypes[0]
++	if x != nil {
++		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
++		if ms.LoadMessageInfo() == nil {
++			ms.StoreMessageInfo(mi)
++		}
++		return ms
++	}
++	return mi.MessageOf(x)
++}
++
++// Deprecated: Use ImageBuildMsg.ProtoReflect.Descriptor instead.
++func (*ImageBuildMsg) Descriptor() ([]byte, []int) {
++	return file_image_build_proto_rawDescGZIP(), []int{0}
++}
++
++func (x *ImageBuildMsg) GetValue() isImageBuildMsg_Value {
++	if x != nil {
++		return x.Value
++	}
++	return nil
++}
++
++func (x *ImageBuildMsg) GetReq() *ImageBuildReq {
++	if x != nil {
++		if x, ok := x.Value.(*ImageBuildMsg_Req); ok {
++			return x.Req
++		}
++	}
++	return nil
++}
++
++func (x *ImageBuildMsg) GetSourceChunk() []byte {
++	if x != nil {
++		if x, ok := x.Value.(*ImageBuildMsg_SourceChunk); ok {
++			return x.SourceChunk
++		}
++	}
++	return nil
++}
++
++type isImageBuildMsg_Value interface {
++	isImageBuildMsg_Value()
++}
++
++type ImageBuildMsg_Req struct {
++	Req *ImageBuildReq `protobuf:"bytes,1,opt,name=req,proto3,oneof"` // first, once
++}
++
++type ImageBuildMsg_SourceChunk struct {
++	SourceChunk []byte `protobuf:"bytes,2,opt,name=source_chunk,json=sourceChunk,proto3,oneof"` // then the source (tar, zstd), in order
++}
++
++func (*ImageBuildMsg_Req) isImageBuildMsg_Value() {}
++
++func (*ImageBuildMsg_SourceChunk) isImageBuildMsg_Value() {}
++
+ type ImageBuildReq struct {
+ 	state              protoimpl.MessageState `protogen:"open.v1"`
+ 	TaskId             string                 `protobuf:"bytes,1,opt,name=task_id,json=taskId,proto3" json:"task_id,omitempty"`
+@@ -31,8 +113,6 @@ type ImageBuildReq struct {
+ 	ImageBuildSettings *ImageBuildSettings    `protobuf:"bytes,7,opt,name=image_build_settings,json=imageBuildSettings,proto3" json:"image_build_settings,omitempty"`
+ 	NoCache            bool                   `protobuf:"varint,8,opt,name=no_cache,json=noCache,proto3" json:"no_cache,omitempty"`
+ 	BuildId            string                 `protobuf:"bytes,9,opt,name=build_id,json=buildId,proto3" json:"build_id,omitempty"`
+-	CheckoutDir        string                 `protobuf:"bytes,10,opt,name=checkout_dir,json=checkoutDir,proto3" json:"checkout_dir,omitempty"`
+-	TempDir            string                 `protobuf:"bytes,11,opt,name=temp_dir,json=tempDir,proto3" json:"temp_dir,omitempty"`
+ 	// Tags this one deployment asked for, without the environment prefix, which
+ 	// the build adds. An agent older than the server ignores them and pushes the
+ 	// commit tag alone.
+@@ -43,7 +123,7 @@ type ImageBuildReq struct {
+ 
+ func (x *ImageBuildReq) Reset() {
+ 	*x = ImageBuildReq{}
+-	mi := &file_image_build_proto_msgTypes[0]
++	mi := &file_image_build_proto_msgTypes[1]
+ 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+ 	ms.StoreMessageInfo(mi)
+ }
+@@ -55,7 +135,7 @@ func (x *ImageBuildReq) String() string {
+ func (*ImageBuildReq) ProtoMessage() {}
+ 
+ func (x *ImageBuildReq) ProtoReflect() protoreflect.Message {
+-	mi := &file_image_build_proto_msgTypes[0]
++	mi := &file_image_build_proto_msgTypes[1]
+ 	if x != nil {
+ 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+ 		if ms.LoadMessageInfo() == nil {
+@@ -68,7 +148,7 @@ func (x *ImageBuildReq) ProtoReflect() protoreflect.Message {
+ 
+ // Deprecated: Use ImageBuildReq.ProtoReflect.Descriptor instead.
+ func (*ImageBuildReq) Descriptor() ([]byte, []int) {
+-	return file_image_build_proto_rawDescGZIP(), []int{0}
++	return file_image_build_proto_rawDescGZIP(), []int{1}
+ }
+ 
+ func (x *ImageBuildReq) GetTaskId() string {
+@@ -127,20 +207,6 @@ func (x *ImageBuildReq) GetBuildId() string {
+ 	return ""
+ }
+ 
+-func (x *ImageBuildReq) GetCheckoutDir() string {
+-	if x != nil {
+-		return x.CheckoutDir
+-	}
+-	return ""
+-}
+-
+-func (x *ImageBuildReq) GetTempDir() string {
+-	if x != nil {
+-		return x.TempDir
+-	}
+-	return ""
+-}
+-
+ func (x *ImageBuildReq) GetImageTags() []string {
+ 	if x != nil {
+ 		return x.ImageTags
+@@ -160,7 +226,7 @@ type DeploymentDockerfile struct {
+ 
+ func (x *DeploymentDockerfile) Reset() {
+ 	*x = DeploymentDockerfile{}
+-	mi := &file_image_build_proto_msgTypes[1]
++	mi := &file_image_build_proto_msgTypes[2]
+ 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+ 	ms.StoreMessageInfo(mi)
+ }
+@@ -172,7 +238,7 @@ func (x *DeploymentDockerfile) String() string {
+ func (*DeploymentDockerfile) ProtoMessage() {}
+ 
+ func (x *DeploymentDockerfile) ProtoReflect() protoreflect.Message {
+-	mi := &file_image_build_proto_msgTypes[1]
++	mi := &file_image_build_proto_msgTypes[2]
+ 	if x != nil {
+ 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+ 		if ms.LoadMessageInfo() == nil {
+@@ -185,7 +251,7 @@ func (x *DeploymentDockerfile) ProtoReflect() protoreflect.Message {
+ 
+ // Deprecated: Use DeploymentDockerfile.ProtoReflect.Descriptor instead.
+ func (*DeploymentDockerfile) Descriptor() ([]byte, []int) {
+-	return file_image_build_proto_rawDescGZIP(), []int{1}
++	return file_image_build_proto_rawDescGZIP(), []int{2}
+ }
+ 
+ func (x *DeploymentDockerfile) GetSource() string {
+@@ -229,7 +295,7 @@ type ImageBuildSettings struct {
+ 
+ func (x *ImageBuildSettings) Reset() {
+ 	*x = ImageBuildSettings{}
+-	mi := &file_image_build_proto_msgTypes[2]
++	mi := &file_image_build_proto_msgTypes[3]
+ 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+ 	ms.StoreMessageInfo(mi)
+ }
+@@ -241,7 +307,7 @@ func (x *ImageBuildSettings) String() string {
+ func (*ImageBuildSettings) ProtoMessage() {}
+ 
+ func (x *ImageBuildSettings) ProtoReflect() protoreflect.Message {
+-	mi := &file_image_build_proto_msgTypes[2]
++	mi := &file_image_build_proto_msgTypes[3]
+ 	if x != nil {
+ 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+ 		if ms.LoadMessageInfo() == nil {
+@@ -254,7 +320,7 @@ func (x *ImageBuildSettings) ProtoReflect() protoreflect.Message {
+ 
+ // Deprecated: Use ImageBuildSettings.ProtoReflect.Descriptor instead.
+ func (*ImageBuildSettings) Descriptor() ([]byte, []int) {
+-	return file_image_build_proto_rawDescGZIP(), []int{2}
++	return file_image_build_proto_rawDescGZIP(), []int{3}
+ }
+ 
+ func (x *ImageBuildSettings) GetWorkers() *ImageBuildWorkerSettings {
+@@ -303,7 +369,7 @@ type ImageBuildWorkerSettings struct {
+ 
+ func (x *ImageBuildWorkerSettings) Reset() {
+ 	*x = ImageBuildWorkerSettings{}
+-	mi := &file_image_build_proto_msgTypes[3]
++	mi := &file_image_build_proto_msgTypes[4]
+ 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+ 	ms.StoreMessageInfo(mi)
+ }
+@@ -315,7 +381,7 @@ func (x *ImageBuildWorkerSettings) String() string {
+ func (*ImageBuildWorkerSettings) ProtoMessage() {}
+ 
+ func (x *ImageBuildWorkerSettings) ProtoReflect() protoreflect.Message {
+-	mi := &file_image_build_proto_msgTypes[3]
++	mi := &file_image_build_proto_msgTypes[4]
+ 	if x != nil {
+ 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+ 		if ms.LoadMessageInfo() == nil {
+@@ -328,7 +394,7 @@ func (x *ImageBuildWorkerSettings) ProtoReflect() protoreflect.Message {
+ 
+ // Deprecated: Use ImageBuildWorkerSettings.ProtoReflect.Descriptor instead.
+ func (*ImageBuildWorkerSettings) Descriptor() ([]byte, []int) {
+-	return file_image_build_proto_rawDescGZIP(), []int{3}
++	return file_image_build_proto_rawDescGZIP(), []int{4}
+ }
+ 
+ func (x *ImageBuildWorkerSettings) GetNodeIds() []string {
+@@ -364,7 +430,7 @@ type ImageBuildResourceSettings struct {
+ 
+ func (x *ImageBuildResourceSettings) Reset() {
+ 	*x = ImageBuildResourceSettings{}
+-	mi := &file_image_build_proto_msgTypes[4]
++	mi := &file_image_build_proto_msgTypes[5]
+ 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+ 	ms.StoreMessageInfo(mi)
+ }
+@@ -376,7 +442,7 @@ func (x *ImageBuildResourceSettings) String() string {
+ func (*ImageBuildResourceSettings) ProtoMessage() {}
+ 
+ func (x *ImageBuildResourceSettings) ProtoReflect() protoreflect.Message {
+-	mi := &file_image_build_proto_msgTypes[4]
++	mi := &file_image_build_proto_msgTypes[5]
+ 	if x != nil {
+ 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+ 		if ms.LoadMessageInfo() == nil {
+@@ -389,7 +455,7 @@ func (x *ImageBuildResourceSettings) ProtoReflect() protoreflect.Message {
+ 
+ // Deprecated: Use ImageBuildResourceSettings.ProtoReflect.Descriptor instead.
+ func (*ImageBuildResourceSettings) Descriptor() ([]byte, []int) {
+-	return file_image_build_proto_rawDescGZIP(), []int{4}
++	return file_image_build_proto_rawDescGZIP(), []int{5}
+ }
+ 
+ func (x *ImageBuildResourceSettings) GetCpus() uint32 {
+@@ -429,7 +495,7 @@ type ImageBuildSourceSettings struct {
+ 
+ func (x *ImageBuildSourceSettings) Reset() {
+ 	*x = ImageBuildSourceSettings{}
+-	mi := &file_image_build_proto_msgTypes[5]
++	mi := &file_image_build_proto_msgTypes[6]
+ 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+ 	ms.StoreMessageInfo(mi)
+ }
+@@ -441,7 +507,7 @@ func (x *ImageBuildSourceSettings) String() string {
+ func (*ImageBuildSourceSettings) ProtoMessage() {}
+ 
+ func (x *ImageBuildSourceSettings) ProtoReflect() protoreflect.Message {
+-	mi := &file_image_build_proto_msgTypes[5]
++	mi := &file_image_build_proto_msgTypes[6]
+ 	if x != nil {
+ 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+ 		if ms.LoadMessageInfo() == nil {
+@@ -454,7 +520,7 @@ func (x *ImageBuildSourceSettings) ProtoReflect() protoreflect.Message {
+ 
+ // Deprecated: Use ImageBuildSourceSettings.ProtoReflect.Descriptor instead.
+ func (*ImageBuildSourceSettings) Descriptor() ([]byte, []int) {
+-	return file_image_build_proto_rawDescGZIP(), []int{5}
++	return file_image_build_proto_rawDescGZIP(), []int{6}
+ }
+ 
+ func (x *ImageBuildSourceSettings) GetRepoCache() bool {
+@@ -477,7 +543,7 @@ type ImageBuildResp struct {
+ 
+ func (x *ImageBuildResp) Reset() {
+ 	*x = ImageBuildResp{}
+-	mi := &file_image_build_proto_msgTypes[6]
++	mi := &file_image_build_proto_msgTypes[7]
+ 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+ 	ms.StoreMessageInfo(mi)
+ }
+@@ -489,7 +555,7 @@ func (x *ImageBuildResp) String() string {
+ func (*ImageBuildResp) ProtoMessage() {}
+ 
+ func (x *ImageBuildResp) ProtoReflect() protoreflect.Message {
+-	mi := &file_image_build_proto_msgTypes[6]
++	mi := &file_image_build_proto_msgTypes[7]
+ 	if x != nil {
+ 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+ 		if ms.LoadMessageInfo() == nil {
+@@ -502,7 +568,7 @@ func (x *ImageBuildResp) ProtoReflect() protoreflect.Message {
+ 
+ // Deprecated: Use ImageBuildResp.ProtoReflect.Descriptor instead.
+ func (*ImageBuildResp) Descriptor() ([]byte, []int) {
+-	return file_image_build_proto_rawDescGZIP(), []int{6}
++	return file_image_build_proto_rawDescGZIP(), []int{7}
+ }
+ 
+ func (x *ImageBuildResp) GetValue() isImageBuildResp_Value {
+@@ -557,7 +623,7 @@ type LogFrame struct {
+ 
+ func (x *LogFrame) Reset() {
+ 	*x = LogFrame{}
+-	mi := &file_image_build_proto_msgTypes[7]
++	mi := &file_image_build_proto_msgTypes[8]
+ 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+ 	ms.StoreMessageInfo(mi)
+ }
+@@ -569,7 +635,7 @@ func (x *LogFrame) String() string {
+ func (*LogFrame) ProtoMessage() {}
+ 
+ func (x *LogFrame) ProtoReflect() protoreflect.Message {
+-	mi := &file_image_build_proto_msgTypes[7]
++	mi := &file_image_build_proto_msgTypes[8]
+ 	if x != nil {
+ 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+ 		if ms.LoadMessageInfo() == nil {
+@@ -582,7 +648,7 @@ func (x *LogFrame) ProtoReflect() protoreflect.Message {
+ 
+ // Deprecated: Use LogFrame.ProtoReflect.Descriptor instead.
+ func (*LogFrame) Descriptor() ([]byte, []int) {
+-	return file_image_build_proto_rawDescGZIP(), []int{7}
++	return file_image_build_proto_rawDescGZIP(), []int{8}
+ }
+ 
+ func (x *LogFrame) GetType() string {
+@@ -615,7 +681,7 @@ type ImageBuildResult struct {
+ 
+ func (x *ImageBuildResult) Reset() {
+ 	*x = ImageBuildResult{}
+-	mi := &file_image_build_proto_msgTypes[8]
++	mi := &file_image_build_proto_msgTypes[9]
+ 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+ 	ms.StoreMessageInfo(mi)
+ }
+@@ -627,7 +693,7 @@ func (x *ImageBuildResult) String() string {
+ func (*ImageBuildResult) ProtoMessage() {}
+ 
+ func (x *ImageBuildResult) ProtoReflect() protoreflect.Message {
+-	mi := &file_image_build_proto_msgTypes[8]
++	mi := &file_image_build_proto_msgTypes[9]
+ 	if x != nil {
+ 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+ 		if ms.LoadMessageInfo() == nil {
+@@ -640,7 +706,7 @@ func (x *ImageBuildResult) ProtoReflect() protoreflect.Message {
+ 
+ // Deprecated: Use ImageBuildResult.ProtoReflect.Descriptor instead.
+ func (*ImageBuildResult) Descriptor() ([]byte, []int) {
+-	return file_image_build_proto_rawDescGZIP(), []int{8}
++	return file_image_build_proto_rawDescGZIP(), []int{9}
+ }
+ 
+ func (x *ImageBuildResult) GetImageTags() []string {
+@@ -654,7 +720,11 @@ var File_image_build_proto protoreflect.FileDescriptor
+ 
+ const file_image_build_proto_rawDesc = "" +
+ 	"\n" +
+-	"\x11image_build.proto\x12\x05agent\"\xbe\x03\n" +
++	"\x11image_build.proto\x12\x05agent\"g\n" +
++	"\rImageBuildMsg\x12(\n" +
++	"\x03req\x18\x01 \x01(\v2\x14.agent.ImageBuildReqH\x00R\x03req\x12#\n" +
++	"\fsource_chunk\x18\x02 \x01(\fH\x00R\vsourceChunkB\a\n" +
++	"\x05value\"\xa4\x03\n" +
+ 	"\rImageBuildReq\x12\x17\n" +
+ 	"\atask_id\x18\x01 \x01(\tR\x06taskId\x12\x15\n" +
+ 	"\x06app_id\x18\x02 \x01(\tR\x05appId\x12\x1f\n" +
+@@ -666,13 +736,11 @@ const file_image_build_proto_rawDesc = "" +
+ 	"\x13push_to_registry_id\x18\x06 \x01(\tR\x10pushToRegistryId\x12K\n" +
+ 	"\x14image_build_settings\x18\a \x01(\v2\x19.agent.ImageBuildSettingsR\x12imageBuildSettings\x12\x19\n" +
+ 	"\bno_cache\x18\b \x01(\bR\anoCache\x12\x19\n" +
+-	"\bbuild_id\x18\t \x01(\tR\abuildId\x12!\n" +
+-	"\fcheckout_dir\x18\n" +
+-	" \x01(\tR\vcheckoutDir\x12\x19\n" +
+-	"\btemp_dir\x18\v \x01(\tR\atempDir\x12\x1d\n" +
++	"\bbuild_id\x18\t \x01(\tR\abuildId\x12\x1d\n" +
+ 	"\n" +
+-	"image_tags\x18\f \x03(\tR\timageTagsJ\x04\b\x05\x10\x06R\n" +
+-	"image_name\"y\n" +
++	"image_tags\x18\f \x03(\tR\timageTagsJ\x04\b\x05\x10\x06J\x04\b\n" +
++	"\x10\vJ\x04\b\v\x10\fR\n" +
++	"image_nameR\fcheckout_dirR\btemp_dir\"y\n" +
+ 	"\x14DeploymentDockerfile\x12\x16\n" +
+ 	"\x06source\x18\x01 \x01(\tR\x06source\x12\x12\n" +
+ 	"\x04path\x18\x02 \x01(\tR\x04path\x12\x18\n" +
+@@ -708,10 +776,9 @@ const file_image_build_proto_rawDesc = "" +
+ 	"\x02ts\x18\x03 \x01(\x03R\x02ts\"1\n" +
+ 	"\x10ImageBuildResult\x12\x1d\n" +
+ 	"\n" +
+-	"image_tags\x18\x01 \x03(\tR\timageTags2P\n" +
+-	"\x11ImageBuildService\x12;\n" +
+-	"\n" +
+-	"ImageBuild\x12\x14.agent.ImageBuildReq\x1a\x15.agent.ImageBuildResp0\x01BLZJgithub.com/hivepaas/hivepaas/hivepaas_app/interface/agent/proto;agentprotob\x06proto3"
++	"image_tags\x18\x01 \x03(\tR\timageTags2\\\n" +
++	"\x11ImageBuildService\x12G\n" +
++	"\x14ImageBuildFromSource\x12\x14.agent.ImageBuildMsg\x1a\x15.agent.ImageBuildResp(\x010\x01BLZJgithub.com/hivepaas/hivepaas/hivepaas_app/interface/agent/proto;agentprotob\x06proto3"
+ 
+ var (
+ 	file_image_build_proto_rawDescOnce sync.Once
+@@ -725,33 +792,35 @@ func file_image_build_proto_rawDescGZIP() []byte {
+ 	return file_image_build_proto_rawDescData
+ }
+ 
+-var file_image_build_proto_msgTypes = make([]protoimpl.MessageInfo, 9)
++var file_image_build_proto_msgTypes = make([]protoimpl.MessageInfo, 10)
+ var file_image_build_proto_goTypes = []any{
+-	(*ImageBuildReq)(nil),              // 0: agent.ImageBuildReq
+-	(*DeploymentDockerfile)(nil),       // 1: agent.DeploymentDockerfile
+-	(*ImageBuildSettings)(nil),         // 2: agent.ImageBuildSettings
+-	(*ImageBuildWorkerSettings)(nil),   // 3: agent.ImageBuildWorkerSettings
+-	(*ImageBuildResourceSettings)(nil), // 4: agent.ImageBuildResourceSettings
+-	(*ImageBuildSourceSettings)(nil),   // 5: agent.ImageBuildSourceSettings
+-	(*ImageBuildResp)(nil),             // 6: agent.ImageBuildResp
+-	(*LogFrame)(nil),                   // 7: agent.LogFrame
+-	(*ImageBuildResult)(nil),           // 8: agent.ImageBuildResult
++	(*ImageBuildMsg)(nil),              // 0: agent.ImageBuildMsg
++	(*ImageBuildReq)(nil),              // 1: agent.ImageBuildReq
++	(*DeploymentDockerfile)(nil),       // 2: agent.DeploymentDockerfile
++	(*ImageBuildSettings)(nil),         // 3: agent.ImageBuildSettings
++	(*ImageBuildWorkerSettings)(nil),   // 4: agent.ImageBuildWorkerSettings
++	(*ImageBuildResourceSettings)(nil), // 5: agent.ImageBuildResourceSettings
++	(*ImageBuildSourceSettings)(nil),   // 6: agent.ImageBuildSourceSettings
++	(*ImageBuildResp)(nil),             // 7: agent.ImageBuildResp
++	(*LogFrame)(nil),                   // 8: agent.LogFrame
++	(*ImageBuildResult)(nil),           // 9: agent.ImageBuildResult
+ }
+ var file_image_build_proto_depIdxs = []int32{
+-	1, // 0: agent.ImageBuildReq.dockerfile:type_name -> agent.DeploymentDockerfile
+-	2, // 1: agent.ImageBuildReq.image_build_settings:type_name -> agent.ImageBuildSettings
+-	3, // 2: agent.ImageBuildSettings.workers:type_name -> agent.ImageBuildWorkerSettings
+-	4, // 3: agent.ImageBuildSettings.resources:type_name -> agent.ImageBuildResourceSettings
+-	5, // 4: agent.ImageBuildSettings.sources:type_name -> agent.ImageBuildSourceSettings
+-	7, // 5: agent.ImageBuildResp.log:type_name -> agent.LogFrame
+-	8, // 6: agent.ImageBuildResp.result:type_name -> agent.ImageBuildResult
+-	0, // 7: agent.ImageBuildService.ImageBuild:input_type -> agent.ImageBuildReq
+-	6, // 8: agent.ImageBuildService.ImageBuild:output_type -> agent.ImageBuildResp
+-	8, // [8:9] is the sub-list for method output_type
+-	7, // [7:8] is the sub-list for method input_type
+-	7, // [7:7] is the sub-list for extension type_name
+-	7, // [7:7] is the sub-list for extension extendee
+-	0, // [0:7] is the sub-list for field type_name
++	1, // 0: agent.ImageBuildMsg.req:type_name -> agent.ImageBuildReq
++	2, // 1: agent.ImageBuildReq.dockerfile:type_name -> agent.DeploymentDockerfile
++	3, // 2: agent.ImageBuildReq.image_build_settings:type_name -> agent.ImageBuildSettings
++	4, // 3: agent.ImageBuildSettings.workers:type_name -> agent.ImageBuildWorkerSettings
++	5, // 4: agent.ImageBuildSettings.resources:type_name -> agent.ImageBuildResourceSettings
++	6, // 5: agent.ImageBuildSettings.sources:type_name -> agent.ImageBuildSourceSettings
++	8, // 6: agent.ImageBuildResp.log:type_name -> agent.LogFrame
++	9, // 7: agent.ImageBuildResp.result:type_name -> agent.ImageBuildResult
++	0, // 8: agent.ImageBuildService.ImageBuildFromSource:input_type -> agent.ImageBuildMsg
++	7, // 9: agent.ImageBuildService.ImageBuildFromSource:output_type -> agent.ImageBuildResp
++	9, // [9:10] is the sub-list for method output_type
++	8, // [8:9] is the sub-list for method input_type
++	8, // [8:8] is the sub-list for extension type_name
++	8, // [8:8] is the sub-list for extension extendee
++	0, // [0:8] is the sub-list for field type_name
+ }
+ 
+ func init() { file_image_build_proto_init() }
+@@ -759,7 +828,11 @@ func file_image_build_proto_init() {
+ 	if File_image_build_proto != nil {
+ 		return
+ 	}
+-	file_image_build_proto_msgTypes[6].OneofWrappers = []any{
++	file_image_build_proto_msgTypes[0].OneofWrappers = []any{
++		(*ImageBuildMsg_Req)(nil),
++		(*ImageBuildMsg_SourceChunk)(nil),
++	}
++	file_image_build_proto_msgTypes[7].OneofWrappers = []any{
+ 		(*ImageBuildResp_Log)(nil),
+ 		(*ImageBuildResp_Result)(nil),
+ 	}
+@@ -769,7 +842,7 @@ func file_image_build_proto_init() {
+ 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
+ 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_image_build_proto_rawDesc), len(file_image_build_proto_rawDesc)),
+ 			NumEnums:      0,
+-			NumMessages:   9,
++			NumMessages:   10,
+ 			NumExtensions: 0,
+ 			NumServices:   1,
+ 		},
+diff --git a/hivepaas_app/interface/agent/proto/image_build.proto b/hivepaas_app/interface/agent/proto/image_build.proto
+index 266e7d4b..d584e00d 100644
+--- a/hivepaas_app/interface/agent/proto/image_build.proto
++++ b/hivepaas_app/interface/agent/proto/image_build.proto
+@@ -5,7 +5,17 @@ package agent;
+ option go_package = "github.com/hivepaas/hivepaas/hivepaas_app/interface/agent/proto;agentproto";
+ 
+ service ImageBuildService {
+-  rpc ImageBuild(ImageBuildReq) returns (stream ImageBuildResp);
++  // ImageBuildFromSource builds an image from the source sent in the call: the
++  // request first, then the packed source in chunks. The agent unpacks it in a
++  // temporary directory of its own and removes it when the call ends.
++  rpc ImageBuildFromSource(stream ImageBuildMsg) returns (stream ImageBuildResp);
++}
++
++message ImageBuildMsg {
++  oneof value {
++    ImageBuildReq req = 1;   // first, once
++    bytes source_chunk = 2;  // then the source (tar, zstd), in order
++  }
+ }
+ 
+ message ImageBuildReq {
+@@ -19,8 +29,8 @@ message ImageBuildReq {
+   ImageBuildSettings image_build_settings = 7;
+   bool no_cache = 8;
+   string build_id = 9;
+-  string checkout_dir = 10;
+-  string temp_dir = 11;
++  reserved 10, 11;             // were checkout_dir and temp_dir: the agent has its own
++  reserved "checkout_dir", "temp_dir";
+   // Tags this one deployment asked for, without the environment prefix, which
+   // the build adds. An agent older than the server ignores them and pushes the
+   // commit tag alone.
+diff --git a/hivepaas_app/interface/agent/proto/image_build_grpc.pb.go b/hivepaas_app/interface/agent/proto/image_build_grpc.pb.go
+index 69bb2b2f..0fcc0a8c 100644
+--- a/hivepaas_app/interface/agent/proto/image_build_grpc.pb.go
++++ b/hivepaas_app/interface/agent/proto/image_build_grpc.pb.go
+@@ -19,14 +19,17 @@ import (
+ const _ = grpc.SupportPackageIsVersion9
+ 
+ const (
+-	ImageBuildService_ImageBuild_FullMethodName = "/agent.ImageBuildService/ImageBuild"
++	ImageBuildService_ImageBuildFromSource_FullMethodName = "/agent.ImageBuildService/ImageBuildFromSource"
+ )
+ 
+ // ImageBuildServiceClient is the client API for ImageBuildService service.
+ //
+ // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
+ type ImageBuildServiceClient interface {
+-	ImageBuild(ctx context.Context, in *ImageBuildReq, opts ...grpc.CallOption) (grpc.ServerStreamingClient[ImageBuildResp], error)
++	// ImageBuildFromSource builds an image from the source sent in the call: the
++	// request first, then the packed source in chunks. The agent unpacks it in a
++	// temporary directory of its own and removes it when the call ends.
++	ImageBuildFromSource(ctx context.Context, opts ...grpc.CallOption) (grpc.BidiStreamingClient[ImageBuildMsg, ImageBuildResp], error)
+ }
+ 
+ type imageBuildServiceClient struct {
+@@ -37,30 +40,27 @@ func NewImageBuildServiceClient(cc grpc.ClientConnInterface) ImageBuildServiceCl
+ 	return &imageBuildServiceClient{cc}
+ }
+ 
+-func (c *imageBuildServiceClient) ImageBuild(ctx context.Context, in *ImageBuildReq, opts ...grpc.CallOption) (grpc.ServerStreamingClient[ImageBuildResp], error) {
++func (c *imageBuildServiceClient) ImageBuildFromSource(ctx context.Context, opts ...grpc.CallOption) (grpc.BidiStreamingClient[ImageBuildMsg, ImageBuildResp], error) {
+ 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+-	stream, err := c.cc.NewStream(ctx, &ImageBuildService_ServiceDesc.Streams[0], ImageBuildService_ImageBuild_FullMethodName, cOpts...)
++	stream, err := c.cc.NewStream(ctx, &ImageBuildService_ServiceDesc.Streams[0], ImageBuildService_ImageBuildFromSource_FullMethodName, cOpts...)
+ 	if err != nil {
+ 		return nil, err
+ 	}
+-	x := &grpc.GenericClientStream[ImageBuildReq, ImageBuildResp]{ClientStream: stream}
+-	if err := x.ClientStream.SendMsg(in); err != nil {
+-		return nil, err
+-	}
+-	if err := x.ClientStream.CloseSend(); err != nil {
+-		return nil, err
+-	}
++	x := &grpc.GenericClientStream[ImageBuildMsg, ImageBuildResp]{ClientStream: stream}
+ 	return x, nil
+ }
+ 
+ // This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
+-type ImageBuildService_ImageBuildClient = grpc.ServerStreamingClient[ImageBuildResp]
++type ImageBuildService_ImageBuildFromSourceClient = grpc.BidiStreamingClient[ImageBuildMsg, ImageBuildResp]
+ 
+ // ImageBuildServiceServer is the server API for ImageBuildService service.
+ // All implementations must embed UnimplementedImageBuildServiceServer
+ // for forward compatibility.
+ type ImageBuildServiceServer interface {
+-	ImageBuild(*ImageBuildReq, grpc.ServerStreamingServer[ImageBuildResp]) error
++	// ImageBuildFromSource builds an image from the source sent in the call: the
++	// request first, then the packed source in chunks. The agent unpacks it in a
++	// temporary directory of its own and removes it when the call ends.
++	ImageBuildFromSource(grpc.BidiStreamingServer[ImageBuildMsg, ImageBuildResp]) error
+ 	mustEmbedUnimplementedImageBuildServiceServer()
+ }
+ 
+@@ -71,8 +71,8 @@ type ImageBuildServiceServer interface {
+ // pointer dereference when methods are called.
+ type UnimplementedImageBuildServiceServer struct{}
+ 
+-func (UnimplementedImageBuildServiceServer) ImageBuild(*ImageBuildReq, grpc.ServerStreamingServer[ImageBuildResp]) error {
+-	return status.Error(codes.Unimplemented, "method ImageBuild not implemented")
++func (UnimplementedImageBuildServiceServer) ImageBuildFromSource(grpc.BidiStreamingServer[ImageBuildMsg, ImageBuildResp]) error {
++	return status.Error(codes.Unimplemented, "method ImageBuildFromSource not implemented")
+ }
+ func (UnimplementedImageBuildServiceServer) mustEmbedUnimplementedImageBuildServiceServer() {}
+ func (UnimplementedImageBuildServiceServer) testEmbeddedByValue()                           {}
+@@ -95,16 +95,12 @@ func RegisterImageBuildServiceServer(s grpc.ServiceRegistrar, srv ImageBuildServ
+ 	s.RegisterService(&ImageBuildService_ServiceDesc, srv)
+ }
+ 
+-func _ImageBuildService_ImageBuild_Handler(srv interface{}, stream grpc.ServerStream) error {
+-	m := new(ImageBuildReq)
+-	if err := stream.RecvMsg(m); err != nil {
+-		return err
+-	}
+-	return srv.(ImageBuildServiceServer).ImageBuild(m, &grpc.GenericServerStream[ImageBuildReq, ImageBuildResp]{ServerStream: stream})
++func _ImageBuildService_ImageBuildFromSource_Handler(srv interface{}, stream grpc.ServerStream) error {
++	return srv.(ImageBuildServiceServer).ImageBuildFromSource(&grpc.GenericServerStream[ImageBuildMsg, ImageBuildResp]{ServerStream: stream})
+ }
+ 
+ // This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
+-type ImageBuildService_ImageBuildServer = grpc.ServerStreamingServer[ImageBuildResp]
++type ImageBuildService_ImageBuildFromSourceServer = grpc.BidiStreamingServer[ImageBuildMsg, ImageBuildResp]
+ 
+ // ImageBuildService_ServiceDesc is the grpc.ServiceDesc for ImageBuildService service.
+ // It's only intended for direct use with grpc.RegisterService,
+@@ -115,9 +111,10 @@ var ImageBuildService_ServiceDesc = grpc.ServiceDesc{
+ 	Methods:     []grpc.MethodDesc{},
+ 	Streams: []grpc.StreamDesc{
+ 		{
+-			StreamName:    "ImageBuild",
+-			Handler:       _ImageBuildService_ImageBuild_Handler,
++			StreamName:    "ImageBuildFromSource",
++			Handler:       _ImageBuildService_ImageBuildFromSource_Handler,
+ 			ServerStreams: true,
++			ClientStreams: true,
+ 		},
+ 	},
+ 	Metadata: "image_build.proto",
+diff --git a/hivepaas_app/interface/agent/server/imagebuildservice/image_build.go b/hivepaas_app/interface/agent/server/imagebuildservice/image_build.go
+index 84541843..faecea5a 100644
+--- a/hivepaas_app/interface/agent/server/imagebuildservice/image_build.go
++++ b/hivepaas_app/interface/agent/server/imagebuildservice/image_build.go
+@@ -1,6 +1,8 @@
+ package imagebuildservice
+ 
+ import (
++	"google.golang.org/grpc"
++
+ 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
+ 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
+ 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
+@@ -12,13 +14,19 @@ import (
+ 	"github.com/hivepaas/hivepaas/hivepaas_app/usecaseagent/imagebuildagentuc/imagebuildagentdto"
+ )
+ 
+-func ImageBuild(
++// ImageBuildFromSource builds an image from the source the call carries: the
++// request in its first message, the packed source in those that follow.
++func ImageBuildFromSource(
+ 	uc *imagebuildagentuc.UC,
+-	req *agentproto.ImageBuildReq,
+-	stream agentproto.ImageBuildService_ImageBuildServer,
++	stream grpc.BidiStreamingServer[agentproto.ImageBuildMsg, agentproto.ImageBuildResp],
+ ) error {
++	first, err := stream.Recv()
++	if err != nil {
++		return hperrors.ToGRPCError(err) //nolint:wrapcheck
++	}
++	req := first.GetReq()
+ 	if req == nil {
+-		return nil
++		return hperrors.ToGRPCError(hperrors.NewMissing("Image build request")) //nolint:wrapcheck
+ 	}
+ 
+ 	var dockerfile entity.DeploymentDockerfile
+@@ -71,8 +79,6 @@ func ImageBuild(
+ 			ImageBuildSettings: buildSettings,
+ 			NoCache:            req.GetNoCache(),
+ 			BuildID:            req.GetBuildId(),
+-			CheckoutDir:        req.GetCheckoutDir(),
+-			TempDir:            req.GetTempDir(),
+ 		},
+ 		SendLog: func(frames []*tasklog.LogFrame) error {
+ 			for _, frame := range frames {
+@@ -93,7 +99,7 @@ func ImageBuild(
+ 		},
+ 	}
+ 
+-	resp, err := uc.ImageBuild(stream.Context(), dtoReq)
++	resp, err := uc.ImageBuildFromSource(stream.Context(), dtoReq, &sourceReader{stream: stream})
+ 	if err != nil {
+ 		return hperrors.ToGRPCError(err) //nolint:wrapcheck
+ 	}
+@@ -113,3 +119,22 @@ func ImageBuild(
+ 
+ 	return nil
+ }
++
++// sourceReader is the packed source, read from the chunks that follow the request.
++type sourceReader struct {
++	stream grpc.BidiStreamingServer[agentproto.ImageBuildMsg, agentproto.ImageBuildResp]
++	chunk  []byte
++}
++
++func (r *sourceReader) Read(p []byte) (int, error) {
++	for len(r.chunk) == 0 {
++		msg, err := r.stream.Recv()
++		if err != nil {
++			return 0, err //nolint:wrapcheck // io.EOF ends the source
++		}
++		r.chunk = msg.GetSourceChunk()
++	}
++	n := copy(p, r.chunk)
++	r.chunk = r.chunk[n:]
++	return n, nil
++}
+diff --git a/hivepaas_app/interface/agent/server/server_image_build.go b/hivepaas_app/interface/agent/server/server_image_build.go
+index ef13ab33..a35358b1 100644
+--- a/hivepaas_app/interface/agent/server/server_image_build.go
++++ b/hivepaas_app/interface/agent/server/server_image_build.go
+@@ -1,13 +1,14 @@
+ package server
+ 
+ import (
++	"google.golang.org/grpc"
++
+ 	agentproto "github.com/hivepaas/hivepaas/hivepaas_app/interface/agent/proto"
+ 	"github.com/hivepaas/hivepaas/hivepaas_app/interface/agent/server/imagebuildservice"
+ )
+ 
+-func (s *AgentServer) ImageBuild(
+-	req *agentproto.ImageBuildReq,
+-	stream agentproto.ImageBuildService_ImageBuildServer,
++func (s *AgentServer) ImageBuildFromSource(
++	stream grpc.BidiStreamingServer[agentproto.ImageBuildMsg, agentproto.ImageBuildResp],
+ ) error {
+-	return imagebuildservice.ImageBuild(s.imageBuildAgentUC, req, stream) //nolint:wrapcheck
++	return imagebuildservice.ImageBuildFromSource(s.imageBuildAgentUC, stream) //nolint:wrapcheck
+ }
+diff --git a/hivepaas_app/service/appdeploymentservice/appdeploymentserviceimpl/repo_deploy_build_image.go b/hivepaas_app/service/appdeploymentservice/appdeploymentserviceimpl/repo_deploy_build_image.go
+index 948d4e57..183c6221 100644
+--- a/hivepaas_app/service/appdeploymentservice/appdeploymentserviceimpl/repo_deploy_build_image.go
++++ b/hivepaas_app/service/appdeploymentservice/appdeploymentserviceimpl/repo_deploy_build_image.go
+@@ -3,6 +3,7 @@ package appdeploymentserviceimpl
+ import (
+ 	"context"
+ 	"fmt"
++	"io"
+ 	"time"
+ 
+ 	"github.com/tiendc/gofn"
+@@ -11,8 +12,10 @@ import (
+ 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
+ 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
+ 	imagebuildserviceclient "github.com/hivepaas/hivepaas/hivepaas_app/interface/agent/client/imagebuildservice"
++	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/srcpack"
+ 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/tasklog"
+ 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/timeutil"
++	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/unit"
+ 	"github.com/hivepaas/hivepaas/hivepaas_app/service/imagebuildservice"
+ 	"github.com/hivepaas/hivepaas/hivepaas_app/usecaseagent/imagebuildagentuc/imagebuildagentdto"
+ )
+@@ -106,7 +109,9 @@ func (s *service) repoDeployStepImageBuild(
+ 		}
+ 
+ 		timeStart := time.Now()
+-		buildResp, err := agentClient.ImageBuild(ctx, agentReq)
++		buildResp, err := agentClient.ImageBuild(ctx, agentReq, func(w io.Writer) error {
++			return sendBuildSource(ctx, data, w)
++		})
+ 		if err != nil {
+ 			if time.Since(timeStart) < 10*time.Second && ctx.Err() == nil { //nolint:mnd
+ 				// If any error occurs within 10s, we can fall back to the current node.
+@@ -135,6 +140,22 @@ func (s *service) repoDeployStepImageBuild(
+ 	return nil
+ }
+ 
++// sendBuildSource sends the checkout to the build node: the agent there cannot
++// read this node's directory, so the source travels with the build's call.
++func sendBuildSource(ctx context.Context, data *repoDeploymentData, w io.Writer) error {
++	_ = data.LogStore.Add(ctx, tasklog.NewOutFrame("Sending the source to the build node...", tasklog.TsNow))
++	start := time.Now()
++	sent, err := srcpack.Pack(ctx, data.CheckoutDir, w)
++	if err != nil {
++		return hperrors.Wrap(err)
++	}
++	_ = data.LogStore.Add(ctx, tasklog.NewOutFrame(
++		fmt.Sprintf("Source sent: %d files, %s, in %s", sent.Files, unit.DataSize(sent.Bytes).HR(),
++			time.Since(start).Truncate(time.Millisecond)),
++		tasklog.TsNow))
++	return nil
++}
++
+ func (s *service) repoDeployStepGetBuildNode(
+ 	ctx context.Context,
+ 	data *repoDeploymentData,
+diff --git a/hivepaas_app/usecaseagent/imagebuildagentuc/image_build_source.go b/hivepaas_app/usecaseagent/imagebuildagentuc/image_build_source.go
+new file mode 100644
+index 00000000..14bf8124
+--- /dev/null
++++ b/hivepaas_app/usecaseagent/imagebuildagentuc/image_build_source.go
+@@ -0,0 +1,48 @@
++package imagebuildagentuc
++
++import (
++	"context"
++	"io"
++	"os"
++	"path/filepath"
++
++	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
++	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/fileutil"
++	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/srcpack"
++	"github.com/hivepaas/hivepaas/hivepaas_app/usecaseagent/imagebuildagentuc/imagebuildagentdto"
++)
++
++const (
++	// sourceDirMode keeps a build's source, which may hold secrets, to the agent.
++	sourceDirMode = 0o700
++	// sourceCheckoutDir is the source's directory inside the build's own.
++	sourceCheckoutDir = "checkout"
++)
++
++// ImageBuildFromSource builds an image from a source sent by the app, which
++// checked it out on another node. The source is unpacked in a directory of this
++// build's own under the day's temporary directory, and removed when the build
++// ends, however it ends.
++func (uc *UC) ImageBuildFromSource(
++	ctx context.Context,
++	req *imagebuildagentdto.ImageBuildReq,
++	source io.Reader,
++) (*imagebuildagentdto.ImageBuildResp, error) {
++	tempDir, err := fileutil.CreateTempDir(uc.tempBaseDir, "*", sourceDirMode)
++	if err != nil {
++		return nil, hperrors.Wrap(err)
++	}
++	defer os.RemoveAll(tempDir)
++
++	checkoutDir := filepath.Join(tempDir, sourceCheckoutDir)
++	if err = os.Mkdir(checkoutDir, sourceDirMode); err != nil {
++		return nil, hperrors.Wrap(err)
++	}
++	if _, err = srcpack.Unpack(ctx, source, checkoutDir); err != nil {
++		return nil, hperrors.Wrap(err)
++	}
++
++	req.CheckoutDir = checkoutDir
++	req.TempDir = tempDir
++	return uc.ImageBuild(ctx, req)
++}
+diff --git a/hivepaas_app/usecaseagent/imagebuildagentuc/uc.go b/hivepaas_app/usecaseagent/imagebuildagentuc/uc.go
+index 56999eed..b37ef357 100644
+--- a/hivepaas_app/usecaseagent/imagebuildagentuc/uc.go
++++ b/hivepaas_app/usecaseagent/imagebuildagentuc/uc.go
+@@ -1,6 +1,7 @@
+ package imagebuildagentuc
+ 
+ import (
++	"github.com/hivepaas/hivepaas/hivepaas_app/base"
+ 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
+ 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/logging"
+ 	"github.com/hivepaas/hivepaas/hivepaas_app/service/appservice"
+@@ -15,6 +16,9 @@ type UC struct {
+ 
+ 	appService        appservice.Service
+ 	imageBuildService imagebuildservice.Service
++
++	// tempBaseDir is where the sources sent for a build are unpacked, by day.
++	tempBaseDir string
+ }
+ 
+ func New(
+@@ -32,5 +36,13 @@ func New(
+ 
+ 		appService:        appService,
+ 		imageBuildService: imageBuildService,
++
++		tempBaseDir: base.BaseTempDirDefault,
+ 	}
+ }
++
++// WithTempBaseDir makes the agent unpack sources under dir.
++func (uc *UC) WithTempBaseDir(dir string) *UC {
++	uc.tempBaseDir = dir
++	return uc
++}

@@ -1,0 +1,160 @@
+diff --git a/hivepaas_app/cmd/agent/main.go b/hivepaas_app/cmd/agent/main.go
+index 590a1bd8..bcac01be 100644
+--- a/hivepaas_app/cmd/agent/main.go
++++ b/hivepaas_app/cmd/agent/main.go
+@@ -6,9 +6,11 @@ import (
+ 	"go.uber.org/fx"
+ 	"google.golang.org/grpc"
+ 
++	"github.com/hivepaas/hivepaas/hivepaas_app/base"
+ 	"github.com/hivepaas/hivepaas/hivepaas_app/cmd/internal"
+ 	agentproto "github.com/hivepaas/hivepaas/hivepaas_app/interface/agent/proto"
+ 	agentserver "github.com/hivepaas/hivepaas/hivepaas_app/interface/agent/server"
++	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/fileutil"
+ 	"github.com/hivepaas/hivepaas/hivepaas_app/registry"
+ )
+ 
+@@ -46,9 +48,17 @@ func main() {
+ 		fx.Invoke(internal.InitDockerManager),
+ 		fx.Invoke(internal.InitSystemSettings),
+ 		fx.Invoke(internal.InitSystemEventBus),
++		fx.Invoke(sweepTempDirs),
+ 		fx.Invoke(internal.InitGrpcServer),
+ 		fx.Invoke(internal.InitDockerAPIHost),
+ 	)
+ 
+ 	app.Run()
+ }
++
++// sweepTempDirs removes the temporary directories an agent killed during a
++// build left behind. It runs before the agent serves: no build is running yet,
++// so every day's directory is stale, today's included.
++func sweepTempDirs() {
++	_, _ = fileutil.RemoveDatedTempDirs(base.BaseTempDirDefault, time.Now())
++}
+diff --git a/hivepaas_app/pkg/fileutil/temp_dir.go b/hivepaas_app/pkg/fileutil/temp_dir.go
+index ef51d764..f4b05b70 100644
+--- a/hivepaas_app/pkg/fileutil/temp_dir.go
++++ b/hivepaas_app/pkg/fileutil/temp_dir.go
+@@ -53,3 +53,33 @@ func CreateTempDirInAppPath(baseDir, pattern string, perm os.FileMode) (dir stri
+ 
+ 	return dir, nil
+ }
++
++// TempDirRetentionDays is how long a day's temporary directories are kept by the
++// cleanups, in case whatever made them is still running.
++const TempDirRetentionDays = 3
++
++// RemoveDatedTempDirs removes the directories of baseDir named after a day
++// (YYYY-MM-DD, as CreateTempDir makes them) earlier than before, and says how
++// many went. Anything else in baseDir is left alone.
++func RemoveDatedTempDirs(baseDir string, before time.Time) (removed int, err error) {
++	entries, err := os.ReadDir(baseDir)
++	if err != nil {
++		if os.IsNotExist(err) {
++			return 0, nil
++		}
++		return 0, hperrors.Wrap(err)
++	}
++	for _, entry := range entries {
++		if !entry.IsDir() {
++			continue
++		}
++		day, err := time.Parse(time.DateOnly, entry.Name())
++		if err != nil || !day.Before(before) {
++			continue
++		}
++		if os.RemoveAll(filepath.Join(baseDir, entry.Name())) == nil {
++			removed++
++		}
++	}
++	return removed, nil
++}
+diff --git a/hivepaas_app/service/syscleanupservice/syscleanupserviceimpl/sys_cleanup_files.go b/hivepaas_app/service/syscleanupservice/syscleanupserviceimpl/sys_cleanup_files.go
+index a3e4c277..b895d7ae 100644
+--- a/hivepaas_app/service/syscleanupservice/syscleanupserviceimpl/sys_cleanup_files.go
++++ b/hivepaas_app/service/syscleanupservice/syscleanupserviceimpl/sys_cleanup_files.go
+@@ -3,13 +3,13 @@ package syscleanupserviceimpl
+ import (
+ 	"context"
+ 	"errors"
+-	"os"
+ 	"path/filepath"
+ 	"time"
+ 
+ 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
+ 	"github.com/hivepaas/hivepaas/hivepaas_app/config"
+ 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
++	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/fileutil"
+ )
+ 
+ func (s *service) sysCleanupFiles(
+@@ -42,35 +42,15 @@ func (s *service) sysCleanupTempFiles(
+ 	}
+ 
+ 	baseDirs := []string{base.BaseTempDirDefault, filepath.Join(config.Current().AppPath, "tmp")}
+-	threshold := time.Now().AddDate(0, 0, -3) //nolint:mnd
++	threshold := time.Now().AddDate(0, 0, -fileutil.TempDirRetentionDays)
+ 	if data.CleanupFilesTemp == base.CleanupFlagForce {
+ 		threshold = time.Now()
+ 	}
+ 
++	var errs []error
+ 	for _, baseDir := range baseDirs {
+-		entries, err := os.ReadDir(baseDir)
+-		if err != nil {
+-			if os.IsNotExist(err) {
+-				return nil
+-			}
+-			return hperrors.Wrap(err)
+-		}
+-
+-		for _, entry := range entries {
+-			if !entry.IsDir() {
+-				continue
+-			}
+-
+-			dirTime, err := time.Parse(time.DateOnly, entry.Name())
+-			if err != nil {
+-				continue
+-			}
+-
+-			if dirTime.Before(threshold) {
+-				_ = os.RemoveAll(filepath.Join(baseDir, entry.Name()))
+-			}
+-		}
++		_, err := fileutil.RemoveDatedTempDirs(baseDir, threshold)
++		errs = append(errs, err)
+ 	}
+-
+-	return nil
++	return hperrors.Wrap(errors.Join(errs...))
+ }
+diff --git a/hivepaas_app/usecaseagent/nodecleanupagentuc/node_cleanup.go b/hivepaas_app/usecaseagent/nodecleanupagentuc/node_cleanup.go
+index 838e259f..25c869b5 100644
+--- a/hivepaas_app/usecaseagent/nodecleanupagentuc/node_cleanup.go
++++ b/hivepaas_app/usecaseagent/nodecleanupagentuc/node_cleanup.go
+@@ -2,9 +2,12 @@ package nodecleanupagentuc
+ 
+ import (
+ 	"context"
++	"time"
+ 
++	"github.com/hivepaas/hivepaas/hivepaas_app/base"
+ 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
+ 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
++	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/fileutil"
+ 	"github.com/hivepaas/hivepaas/hivepaas_app/tasks/queue"
+ 	"github.com/hivepaas/hivepaas/hivepaas_app/usecaseagent/nodecleanupagentuc/nodecleanupagentdto"
+ )
+@@ -25,6 +28,10 @@ func (uc *UC) NodeCleanup(
+ 		req.Task = &entity.Task{ID: req.TaskID}
+ 	}
+ 
++	// What a build killed half way left in this node's temporary directory.
++	_, _ = fileutil.RemoveDatedTempDirs(base.BaseTempDirDefault,
++		time.Now().AddDate(0, 0, -fileutil.TempDirRetentionDays))
++
+ 	resp, err := uc.clusterCleanupService.Cleanup(ctx, &req.ClusterCleanupReq)
+ 	if err != nil {
+ 		return nil, hperrors.Wrap(err)

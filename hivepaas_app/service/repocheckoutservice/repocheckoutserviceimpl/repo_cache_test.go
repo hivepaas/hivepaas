@@ -6,6 +6,7 @@ import (
 	"errors"
 	"io"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"testing"
 
@@ -14,6 +15,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
+	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/filearchiver"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/fileservice"
 )
 
@@ -91,4 +93,58 @@ func TestARepositoryCacheNeedsAProjectVolume(t *testing.T) {
 	err := s.placeRepoCache(context.Background(), "p-none", &entity.File{Name: "x"})
 
 	assert.True(t, errors.Is(err, hperrors.ErrNotFound))
+}
+
+// The copy a cache is unpacked from keeps the archive's whole extension. The
+// archiver tells the format from the name: with only the last part (".lz4" of
+// ".tar.lz4") it took the cache for a single compressed file, unpacked no
+// repository, and every deployment fell back to a fresh clone.
+func TestAFetchedCacheArchiveKeepsItsFormat(t *testing.T) {
+	name := "01JAB9XED0GTXBSQDFVYAJ8WF1.9f3c1de0" + repoCacheArchiveFormat.FileExtDefault()
+	file := &entity.File{Name: name, Path: ".hivepaas/cache/repos/" + name}
+	files := &fakeFiles{files: map[string][]byte{file.Path: []byte("archive bytes")}}
+	s := &service{fileService: files}
+
+	fetched, err := s.fetchCacheArchive(context.Background(), nil, file, t.TempDir())
+
+	assert.NoError(t, err)
+	assert.Equal(t, repoCacheArchiveFormat, filearchiver.DetectArchiveFormat(fetched))
+}
+
+// A checkout stored as a cache comes back a git repository: packed, stored
+// through the file layer, fetched and unpacked with the real archiver.
+func TestACachedCheckoutComesBackAGitRepository(t *testing.T) {
+	for _, tool := range []string{"tar", "lz4"} {
+		if _, err := exec.LookPath(tool); err != nil {
+			t.Skipf("%s is not installed", tool)
+		}
+	}
+	checkout := filepath.Join(t.TempDir(), "checkout")
+	assert.NoError(t, os.MkdirAll(filepath.Join(checkout, ".git"), 0o755))
+	assert.NoError(t, os.WriteFile(filepath.Join(checkout, ".git", "HEAD"), []byte("ref: refs/heads/main\n"), 0o600))
+	assert.NoError(t, os.WriteFile(filepath.Join(checkout, "main.go"), []byte("package main\n"), 0o600))
+
+	name := "01JAB9XED0GTXBSQDFVYAJ8WF1.9f3c1de0" + repoCacheArchiveFormat.FileExtDefault()
+	file := &entity.File{Name: name, Path: ".hivepaas/cache/repos/" + name}
+	s := &service{fileService: &fakeFiles{files: map[string][]byte{}}}
+
+	packed := filepath.Join(t.TempDir(), name)
+	_, err := filearchiver.Compress(checkout, packed, repoCacheArchiveFormat, repoCacheArchiveCompressionLevel)
+	if !assert.NoError(t, err) {
+		return
+	}
+	_, err = s.storeCacheArchive(context.Background(), packed, file)
+	assert.NoError(t, err)
+
+	fetched, err := s.fetchCacheArchive(context.Background(), nil, file, t.TempDir())
+	if !assert.NoError(t, err) {
+		return
+	}
+	restored := filepath.Join(t.TempDir(), "checkout")
+	_, err = filearchiver.Decompress(fetched, restored, filearchiver.ArchiveFormatAuto)
+	assert.NoError(t, err)
+
+	head, err := os.ReadFile(filepath.Join(restored, ".git", "HEAD"))
+	assert.NoError(t, err)
+	assert.Equal(t, "ref: refs/heads/main\n", string(head))
 }

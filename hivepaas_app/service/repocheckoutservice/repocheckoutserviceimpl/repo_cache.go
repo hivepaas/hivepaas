@@ -269,7 +269,9 @@ func (s *service) fetchCacheArchive(
 	}
 	defer reader.Close()
 
-	local, err := os.CreateTemp(tempDir, "repo-cache-*"+filepath.Ext(file.Name))
+	// The copy ends with the archive's own name: the archiver tells the format
+	// from the whole extension (".tar.lz4"), which filepath.Ext would cut to ".lz4".
+	local, err := os.CreateTemp(tempDir, "repo-cache-*-"+filepath.Base(file.Name))
 	if err != nil {
 		return "", hperrors.Wrap(err)
 	}

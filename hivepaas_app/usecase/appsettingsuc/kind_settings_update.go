@@ -36,10 +36,7 @@ func (uc *UC) UpdateAppKindSettings(
 		}
 
 		persistingData = &persistingAppData{}
-		err = uc.prepareUpdatingAppKindSettings(ctx, req, data, persistingData)
-		if err != nil {
-			return hperrors.Wrap(err)
-		}
+		uc.prepareUpdatingAppKindSettings(req, data, persistingData)
 
 		err = uc.persistData(ctx, db, persistingData)
 		if err != nil {
@@ -65,6 +62,7 @@ type updateAppKindSettingsData struct {
 	KindSetting     *entity.Setting
 	NewKindSettings *entity.AppKindSettings
 	RoutingSetting  *entity.Setting
+	RoutingChanged  bool
 	RefObjects      *entity.RefObjects
 }
 
@@ -114,10 +112,19 @@ func (uc *UC) loadAppKindSettingsForUpdate(
 	data.NewKindSettings = newKindSettings
 	data.RoutingSetting = routingSetting
 
-	// Make sure all reference settings used in this settings exist actively
+	// Make sure all reference settings used in this settings exist actively. A
+	// port change applies the routing settings again, which needs what they
+	// refer to as well: their certificates, their basic auth.
+	refIDs := newKindSettings.GetRefObjectIDs()
+	if routingSetting != nil {
+		routingSettings := routingSetting.MustAsAppRoutingSettings()
+		if int(req.Port) != routingSettings.Port {
+			refIDs.AddRefIDs(routingSettings.GetRefObjectIDs())
+		}
+	}
 	refObjects := entity.NewRefObjects()
 	err = uc.settingService.LoadRefObjectsByIDs(ctx, db, &refObjects, app.GetObjectScope(),
-		true, newKindSettings.GetRefObjectIDs())
+		true, refIDs)
 	if err != nil {
 		return hperrors.Wrap(err)
 	}
@@ -127,11 +134,10 @@ func (uc *UC) loadAppKindSettingsForUpdate(
 }
 
 func (uc *UC) prepareUpdatingAppKindSettings(
-	ctx context.Context,
 	req *appsettingsdto.UpdateAppKindSettingsReq,
 	data *updateAppKindSettingsData,
 	persistingData *persistingAppData,
-) error {
+) {
 	app := data.App
 	setting := data.KindSetting
 	timeNow := timeutil.NowUTC()
@@ -154,26 +160,41 @@ func (uc *UC) prepareUpdatingAppKindSettings(
 	setting.MustSetData(data.NewKindSettings)
 	persistingData.UpsertingSettings = append(persistingData.UpsertingSettings, setting)
 
-	// Apply changes to routing settings
-	err := uc.updateRoutingSettingsOnKindChange(ctx, req, data, persistingData)
-	if err != nil {
-		return hperrors.Wrap(err)
-	}
-
-	return nil
+	// The app's port is part of what it is, and lives in its routing settings.
+	uc.updateRoutingPortOnKindChange(req, data, persistingData)
 }
 
-//nolint:unparam
-func (uc *UC) updateRoutingSettingsOnKindChange(
-	_ context.Context,
+// updateRoutingPortOnKindChange moves the app's port, and its domains' that
+// pointed at it, when the kind settings change it. It is all the kind settings
+// do to routing: domains, their certificates and TLS passthrough belong to the
+// routing settings alone - the kind settings used to write them too, and
+// wiped a database's domains whenever it was saved without a certificate
+// picked, as with one still being obtained.
+func (uc *UC) updateRoutingPortOnKindChange(
 	req *appsettingsdto.UpdateAppKindSettingsReq,
 	data *updateAppKindSettingsData,
 	persistingData *persistingAppData,
-) error {
+) {
 	app := data.App
-	kindSettings := data.NewKindSettings
 	routingSetting := data.RoutingSetting
 	timeNow := timeutil.NowUTC()
+
+	var routingSettings *entity.AppRoutingSettings
+	if routingSetting != nil {
+		routingSettings = routingSetting.MustAsAppRoutingSettings()
+	} else {
+		routingSettings = &entity.AppRoutingSettings{}
+	}
+	if int(req.Port) == routingSettings.Port {
+		return
+	}
+
+	for _, domain := range routingSettings.Domains {
+		if domain.ContainerPort == routingSettings.Port {
+			domain.ContainerPort = int(req.Port)
+		}
+	}
+	routingSettings.Port = int(req.Port)
 
 	if routingSetting == nil {
 		routingSetting = &entity.Setting{
@@ -182,77 +203,17 @@ func (uc *UC) updateRoutingSettingsOnKindChange(
 			ObjectID:  app.ID,
 			Type:      base.SettingTypeAppRouting,
 			CreatedAt: timeNow,
-			UpdatedAt: timeNow,
 			Version:   entity.CurrentAppRoutingSettingsVersion,
 		}
 		data.RoutingSetting = routingSetting
 	}
-	routingSettings := routingSetting.MustAsAppRoutingSettings()
-
-	// Apply port change
-	if int(req.Port) != routingSettings.Port {
-		for _, domain := range routingSettings.Domains {
-			if domain.ContainerPort == routingSettings.Port {
-				domain.ContainerPort = int(req.Port)
-			}
-		}
-		routingSettings.Port = int(req.Port)
-	}
-
-	hasPort := routingSettings.Port > 0
-	var firstDomain *entity.AppDomain
-
-	switch kindSettings.Category {
-	case base.AppCategoryDatabase:
-		if hasPort && req.Database.SSLCert.ID != "" {
-			if len(routingSettings.Domains) == 0 {
-				routingSettings.ExposePublicly = true
-				firstDomain = &entity.AppDomain{
-					Enabled:       true,
-					ContainerPort: routingSettings.Port,
-					Protocol:      base.NetworkProtocolTCP,
-				}
-				routingSettings.Domains = append(routingSettings.Domains, firstDomain)
-			} else {
-				firstDomain = routingSettings.Domains[0]
-			}
-			firstDomain.TLSPassthrough = req.Database.TLSPassthrough
-			firstDomain.SSLCert = *req.Database.SSLCert.ToEntity()
-		} else {
-			routingSettings.ExposePublicly = false
-			routingSettings.Domains = nil
-		}
-	case base.AppCategoryCache:
-		if hasPort && req.Cache.SSLCert.ID != "" {
-			if len(routingSettings.Domains) == 0 {
-				routingSettings.ExposePublicly = true
-				firstDomain = &entity.AppDomain{
-					Enabled:       true,
-					ContainerPort: routingSettings.Port,
-					Protocol:      base.NetworkProtocolTCP,
-				}
-				routingSettings.Domains = append(routingSettings.Domains, firstDomain)
-			} else {
-				firstDomain = routingSettings.Domains[0]
-			}
-			firstDomain.SSLCert = *req.Cache.SSLCert.ToEntity()
-		} else {
-			routingSettings.ExposePublicly = false
-			routingSettings.Domains = nil
-		}
-	case base.AppCategoryWebapp, base.AppCategoryStorage:
-		// Their domains are the ordinary routing ones, changed on the routing
-		// screen; nothing here decides them from the kind.
-	}
-
 	routingSetting.UpdateVer++
 	routingSetting.UpdatedAt = timeNow
 	routingSetting.ExpireAt = time.Time{}
 	routingSetting.Status = base.SettingStatusActive
 	routingSetting.MustSetData(routingSettings)
 	persistingData.UpsertingSettings = append(persistingData.UpsertingSettings, routingSetting)
-
-	return nil
+	data.RoutingChanged = true
 }
 
 func (uc *UC) postTxAppKindSettings(
@@ -260,12 +221,14 @@ func (uc *UC) postTxAppKindSettings(
 	db database.IDB,
 	data *updateAppKindSettingsData,
 ) error {
-	err := uc.applyAppRoutingSettingsOnKindChange(ctx, db, data)
-	if err != nil {
-		return hperrors.Wrap(err)
+	if data.RoutingChanged {
+		err := uc.applyAppRoutingSettingsOnKindChange(ctx, db, data)
+		if err != nil {
+			return hperrors.Wrap(err)
+		}
 	}
 
-	err = uc.applyAppEnvVarsOnKindChange(ctx, db, data)
+	err := uc.applyAppEnvVarsOnKindChange(ctx, db, data)
 	if err != nil {
 		return hperrors.Wrap(err)
 	}

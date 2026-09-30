@@ -48637,12 +48637,9 @@
           },
           "persistenceMode" : {
             "type" : "string"
-          },
-          "sslCert" : {
-            "$ref" : "#/components/schemas/basedto.ObjectIDReq"
           }
         },
-        "required" : [ "evictionRule", "maxMemory", "password", "persistenceMode", "sslCert" ],
+        "required" : [ "evictionRule", "maxMemory", "password", "persistenceMode" ],
         "type" : "object"
       },
       "appsettingsdto.AppKindCacheResp" : {
@@ -48658,12 +48655,9 @@
           },
           "persistenceMode" : {
             "type" : "string"
-          },
-          "sslCert" : {
-            "$ref" : "#/components/schemas/settings.BaseSettingResp"
           }
         },
-        "required" : [ "evictionRule", "maxMemory", "password", "persistenceMode", "sslCert" ],
+        "required" : [ "evictionRule", "maxMemory", "password", "persistenceMode" ],
         "type" : "object"
       },
       "appsettingsdto.AppKindDatabaseReq" : {
@@ -48677,20 +48671,14 @@
           "rootPassword" : {
             "type" : "string"
           },
-          "sslCert" : {
-            "$ref" : "#/components/schemas/basedto.ObjectIDReq"
-          },
           "sslMode" : {
             "type" : "string"
-          },
-          "tlsPassthrough" : {
-            "type" : "boolean"
           },
           "username" : {
             "type" : "string"
           }
         },
-        "required" : [ "dbName", "password", "rootPassword", "sslCert", "sslMode", "tlsPassthrough", "username" ],
+        "required" : [ "dbName", "password", "rootPassword", "sslMode", "username" ],
         "type" : "object"
       },
       "appsettingsdto.AppKindDatabaseResp" : {
@@ -48704,20 +48692,14 @@
           "rootPassword" : {
             "type" : "string"
           },
-          "sslCert" : {
-            "$ref" : "#/components/schemas/settings.BaseSettingResp"
-          },
           "sslMode" : {
             "type" : "string"
-          },
-          "tlsPassthrough" : {
-            "type" : "boolean"
           },
           "username" : {
             "type" : "string"
           }
         },
-        "required" : [ "dbName", "password", "rootPassword", "sslCert", "sslMode", "tlsPassthrough", "username" ],
+        "required" : [ "dbName", "password", "rootPassword", "sslMode", "username" ],
         "type" : "object"
       },
       "appsettingsdto.AppKindSettingsResp" : {

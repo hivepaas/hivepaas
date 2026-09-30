@@ -125,13 +125,11 @@ func (req *AppKindWebappReq) validate(_ string) (res []vld.Validator) {
 }
 
 type AppKindDatabaseReq struct {
-	DbName         string               `json:"dbName"`
-	Username       string               `json:"username"`
-	Password       string               `json:"password"`
-	RootPassword   string               `json:"rootPassword"`
-	SSLMode        base.DatabaseSSLMode `json:"sslMode"`
-	SSLCert        basedto.ObjectIDReq  `json:"sslCert"`
-	TLSPassthrough bool                 `json:"tlsPassthrough"`
+	DbName       string               `json:"dbName"`
+	Username     string               `json:"username"`
+	Password     string               `json:"password"`
+	RootPassword string               `json:"rootPassword"`
+	SSLMode      base.DatabaseSSLMode `json:"sslMode"`
 }
 
 func (req *AppKindDatabaseReq) ToEntity() *entity.AppKindDatabase {
@@ -159,16 +157,14 @@ func (req *AppKindDatabaseReq) validate(field string) (res []vld.Validator) {
 	res = append(res, basedto.ValidatePlainSecret(&req.Password, field+"password")...)
 	res = append(res, basedto.ValidatePlainSecret(&req.RootPassword, field+"rootPassword")...)
 	res = append(res, basedto.ValidateStrIn(&req.SSLMode, true, base.AllDatabaseSslModes, field+"sslMode")...)
-	res = append(res, basedto.ValidateObjectIDReq(&req.SSLCert, false, field+"sslCert")...)
 	return res
 }
 
 type AppKindCacheReq struct {
-	Password        string              `json:"password" copy:"-"`
-	MaxMemory       unit.DataSize       `json:"maxMemory" swaggertype:"string"`
-	EvictionRule    string              `json:"evictionRule"`
-	PersistenceMode string              `json:"persistenceMode"`
-	SSLCert         basedto.ObjectIDReq `json:"sslCert"`
+	Password        string        `json:"password" copy:"-"`
+	MaxMemory       unit.DataSize `json:"maxMemory" swaggertype:"string"`
+	EvictionRule    string        `json:"evictionRule"`
+	PersistenceMode string        `json:"persistenceMode"`
 }
 
 func (req *AppKindCacheReq) ToEntity() *entity.AppKindCache {
@@ -193,7 +189,6 @@ func (req *AppKindCacheReq) validate(field string) (res []vld.Validator) {
 	res = append(res, basedto.ValidatePlainSecret(&req.Password, field+"password")...)
 	res = append(res, basedto.ValidateStr(&req.EvictionRule, false, 1, cacheConfigMax, field+"evictionRule")...)
 	res = append(res, basedto.ValidateStr(&req.PersistenceMode, false, 1, cacheConfigMax, field+"persistenceMode")...)
-	res = append(res, basedto.ValidateObjectIDReq(&req.SSLCert, false, field+"sslCert")...)
 	return res
 }
 

@@ -2,7 +2,6 @@ package appsettingsdto
 
 import (
 	vld "github.com/tiendc/go-validator"
-	"github.com/tiendc/gofn"
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
@@ -10,7 +9,6 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/copier"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/unit"
-	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings"
 )
 
 type GetAppKindSettingsReq struct {
@@ -56,13 +54,11 @@ type AppKindWebappResp struct {
 }
 
 type AppKindDatabaseResp struct {
-	DbName         string                    `json:"dbName,omitempty"`
-	Username       string                    `json:"username,omitempty"`
-	Password       string                    `json:"password,omitzero" copy:"-"`
-	RootPassword   string                    `json:"rootPassword,omitzero" copy:"-"`
-	SSLMode        base.DatabaseSSLMode      `json:"sslMode,omitempty"`
-	SSLCert        *settings.BaseSettingResp `json:"sslCert,omitempty"`
-	TLSPassthrough bool                      `json:"tlsPassthrough,omitempty"`
+	DbName       string               `json:"dbName,omitempty"`
+	Username     string               `json:"username,omitempty"`
+	Password     string               `json:"password,omitzero" copy:"-"`
+	RootPassword string               `json:"rootPassword,omitzero" copy:"-"`
+	SSLMode      base.DatabaseSSLMode `json:"sslMode,omitempty"`
 }
 
 func (resp *AppKindDatabaseResp) CopyPassword(field entity.EncryptedField) error {
@@ -76,11 +72,10 @@ func (resp *AppKindDatabaseResp) CopyRootPassword(field entity.EncryptedField) e
 }
 
 type AppKindCacheResp struct {
-	Password        string                    `json:"password,omitempty" copy:"-"`
-	MaxMemory       unit.DataSize             `json:"maxMemory,omitempty" swaggertype:"string"`
-	EvictionRule    string                    `json:"evictionRule,omitempty"`
-	PersistenceMode string                    `json:"persistenceMode,omitempty"`
-	SSLCert         *settings.BaseSettingResp `json:"sslCert,omitempty"`
+	Password        string        `json:"password,omitempty" copy:"-"`
+	MaxMemory       unit.DataSize `json:"maxMemory,omitempty" swaggertype:"string"`
+	EvictionRule    string        `json:"evictionRule,omitempty"`
+	PersistenceMode string        `json:"persistenceMode,omitempty"`
 }
 
 func (resp *AppKindCacheResp) CopyPassword(field entity.EncryptedField) error {
@@ -104,7 +99,6 @@ type AppKindSettingsTransformInput struct {
 	App            *entity.App
 	KindSetting    *entity.Setting
 	RoutingSetting *entity.Setting
-	RefObjects     *entity.RefObjects
 	MaskSecrets    bool
 }
 
@@ -162,19 +156,6 @@ func TransformAppKindDatabase(
 	}
 
 	dbResp := resp.Database
-	refObjects := input.RefObjects
-
-	if input.RoutingSetting != nil {
-		routingSettings := input.RoutingSetting.MustAsAppRoutingSettings()
-		activeDomain, _ := gofn.First(routingSettings.GetActiveDomains())
-		if activeDomain != nil && activeDomain.SSLCert.ID != "" {
-			itemResp, _ := settings.TransformSettingBase(refObjects.RefSettings[activeDomain.SSLCert.ID])
-			if itemResp == nil {
-				itemResp = settings.NewMissingSetting(activeDomain.SSLCert.ID, base.SettingTypeSSLCert)
-			}
-			dbResp.SSLCert = itemResp
-		}
-	}
 
 	if input.MaskSecrets {
 		if !kindSettings.Database.Password.IsEmpty() {
@@ -206,19 +187,6 @@ func TransformAppKindCache(
 	}
 
 	cacheResp := resp.Cache
-	refObjects := input.RefObjects
-
-	if input.RoutingSetting != nil {
-		routingSettings := input.RoutingSetting.MustAsAppRoutingSettings()
-		activeDomain, _ := gofn.First(routingSettings.GetActiveDomains())
-		if activeDomain != nil && activeDomain.SSLCert.ID != "" {
-			itemResp, _ := settings.TransformSettingBase(refObjects.RefSettings[activeDomain.SSLCert.ID])
-			if itemResp == nil {
-				itemResp = settings.NewMissingSetting(activeDomain.SSLCert.ID, base.SettingTypeSSLCert)
-			}
-			cacheResp.SSLCert = itemResp
-		}
-	}
 
 	if input.MaskSecrets {
 		if !kindSettings.Cache.Password.IsEmpty() {

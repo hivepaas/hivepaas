@@ -1,5 +1,6 @@
 export const AppDataFileStorageType = {
-    Local: "local",
+    /** On a volume of HivePaaS: the project's default volume, for an app's file. */
+    Volume: "volume",
     Cloud: "cloud",
 } as const;
 

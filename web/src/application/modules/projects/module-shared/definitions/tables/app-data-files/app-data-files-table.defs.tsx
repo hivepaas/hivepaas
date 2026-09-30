@@ -1,7 +1,7 @@
 import { Badge } from "@components/ui/badge";
 import type { ColumnDef } from "@tanstack/react-table";
 import { format } from "date-fns";
-import type { AppDataFile } from "~/projects/domain";
+import { type AppDataFile, AppDataFileStorageType } from "~/projects/domain";
 
 import { getFriendlyDataSize } from "@application/shared/utils/data-size";
 
@@ -10,7 +10,7 @@ import { AppDataFileMenuCell } from "./building-blocks";
 const MAX_STORAGE_LABEL_LENGTH = 20;
 
 function getStorageLabel(file: AppDataFile): string {
-    const label = file.storageType === "local" ? "local" : (file.storage?.name ?? "-");
+    const label = file.storageType === AppDataFileStorageType.Volume ? "HivePaaS" : (file.storage?.name ?? "-");
 
     if (label.length <= MAX_STORAGE_LABEL_LENGTH) {
         return label;

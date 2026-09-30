@@ -17,7 +17,7 @@ import { DownloadIcon, MoreVertical, Trash2Icon } from "lucide-react";
 import { toast } from "sonner";
 import { useAppDataFilesApi } from "~/projects/api/hooks/project-apps";
 import { AppDataFilesCommands } from "~/projects/data/commands";
-import type { AppDataFile } from "~/projects/domain";
+import { type AppDataFile, AppDataFileStorageType } from "~/projects/domain";
 
 import { CopyIdMenuButton } from "@application/shared/components";
 import { MODULE_IDS } from "@application/shared/constants";
@@ -36,7 +36,7 @@ function View({ projectId, env, appId, dataFile }: Props) {
         },
     });
 
-    const isLocalFile = dataFile.storageType === "local";
+    const isOnVolume = dataFile.storageType === AppDataFileStorageType.Volume;
 
     async function handleDownload() {
         try {
@@ -75,7 +75,7 @@ function View({ projectId, env, appId, dataFile }: Props) {
             env,
             appID: appId,
             dataFileID: dataFile.id,
-            deletePermanently: isLocalFile || deletePermanently,
+            deletePermanently: isOnVolume || deletePermanently,
         });
     }
 
@@ -148,7 +148,7 @@ function View({ projectId, env, appId, dataFile }: Props) {
                         <DialogTitle>Delete file: {dataFile.name}</DialogTitle>
                     </DialogHeader>
                     <DialogBody className="flex flex-col gap-4">
-                        {isLocalFile ? (
+                        {isOnVolume ? (
                             <div className={cn(dashedBorderBox)}>
                                 <span className="font-semibold text-orange-500">Warning:</span> This will delete the
                                 database record and permanently erase the physical file from the storage system. Once

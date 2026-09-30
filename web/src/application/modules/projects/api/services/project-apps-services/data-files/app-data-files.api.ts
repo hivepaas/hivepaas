@@ -13,6 +13,7 @@ import type {
     AppDataFiles_UploadLocal_Req,
     AppDataFiles_UploadLocal_Res,
 } from "~/projects/api/services/project-apps-services/data-files";
+import { AppDataFileStorageType } from "~/projects/domain";
 
 import { BaseApi, parseApiError } from "@infrastructure/api";
 
@@ -93,7 +94,7 @@ export class AppDataFilesApi extends BaseApi {
         formData.append("scope", "app");
         formData.append("projectId", projectID);
         formData.append("appId", appID);
-        formData.append("storageType", "local");
+        formData.append("storageType", AppDataFileStorageType.Volume);
         for (const file of files) {
             formData.append("file", file);
         }

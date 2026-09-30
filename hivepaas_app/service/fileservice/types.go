@@ -27,8 +27,11 @@ type GetDownloadURLResp struct {
 /// UPLOAD
 
 type UploadReq struct {
-	Items           []*UploadItemReq
-	Scope           *entity.ObjectScope
+	Items []*UploadItemReq
+	Scope *entity.ObjectScope
+	// App is the scope's app, with its env, for a file uploaded to an app: it goes
+	// to the project's default volume.
+	App             *entity.App
 	FileType        base.FileType
 	FileKind        base.FileKind
 	StorageType     base.FileStorageType

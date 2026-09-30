@@ -28,6 +28,7 @@ func (uc *UC) Upload(
 		StorageType: req.StorageType,
 		StorageID:   req.StorageID,
 		Scope:       req.Scope,
+		App:         uploadData.ScopeApp,
 		SaveToDB:    true,
 	}
 

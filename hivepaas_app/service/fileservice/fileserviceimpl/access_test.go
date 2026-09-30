@@ -12,6 +12,7 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
+	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/config"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
@@ -20,6 +21,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
 	"github.com/hivepaas/hivepaas/hivepaas_app/repository"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/agentservice"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/fileservice"
 	"github.com/hivepaas/hivepaas/services/docker"
 )
 
@@ -284,4 +286,75 @@ func TestAnAbortedWriteLeavesNothing(t *testing.T) {
 	entries, _ := os.ReadDir(filepath.Join(appPath, "files"))
 	assert.Empty(t, entries)
 	assert.Empty(t, disk.files)
+}
+
+func (f *fakeVolumes) List(
+	_ context.Context, _ database.IDB, scope *entity.ObjectScope, _ *basedto.Paging, _ ...bunex.SelectQueryOption,
+) ([]*entity.Setting, *basedto.PagingMeta, error) {
+	var found []*entity.Setting
+	for _, v := range f.volumes {
+		if v.Default && v.ObjectID == scope.ProjectID {
+			found = append(found, v)
+		}
+	}
+	return found, nil, nil
+}
+
+func projectDefaultVolume(t *testing.T, projectID, dir string) *entity.Setting {
+	t.Helper()
+	v := volume(t, "vol-"+projectID, &entity.ClusterVolume{NodeID: "node-2", Driver: "local", DriverOpts: bindOpts(dir)})
+	v.Default, v.ObjectID, v.Scope = true, projectID, base.ObjectScopeProject
+	return v
+}
+
+// A file uploaded to an app goes to its project's default volume, in
+// HivePaaS's own directory, by env and app.
+func TestAFileUploadedToAnAppGoesToItsProjectVolume(t *testing.T) {
+	s, disk := newAccessService(t, projectDefaultVolume(t, "p1", "/srv/project_data/shop"))
+	s.fileRepo = nil
+	app := &entity.App{ID: "a1", Key: "web", ProjectID: "p1", ProjectEnv: &entity.ProjectEnv{Key: "prod"}}
+
+	resp, err := s.Upload(context.Background(), nil, &fileservice.UploadReq{
+		Scope:       &entity.ObjectScope{ScopeType: base.ObjectScopeApp, AppID: "a1", ProjectID: "p1"},
+		App:         app,
+		FileType:    base.FileTypeDataFile,
+		StorageType: base.FileStorageVolume,
+		Items: []*fileservice.UploadItemReq{
+			{FilePath: "dump.sql", FileSize: 4, FileData: io.NopCloser(strings.NewReader("data"))},
+		},
+	})
+
+	if assert.NoError(t, err) && assert.Len(t, resp.Files, 1) {
+		file := resp.Files[0]
+		assert.Equal(t, "vol-p1", file.StorageID)
+		assert.Equal(t, ".hivepaas/files/prod/web/"+file.ID+"-dump.sql", file.Path)
+		assert.Equal(t, "data", disk.files["agent@node-2:/srv/project_data/shop|"+file.Path])
+	}
+}
+
+// A file uploaded anywhere else is on the system volume, named by its id so two
+// files of one name never meet.
+func TestAFileUploadedOutsideAProjectIsOnTheSystemVolume(t *testing.T) {
+	appPath := t.TempDir()
+	config.SetCurrent(&config.Config{AppPath: appPath})
+	t.Cleanup(func() { config.SetCurrent(nil) })
+	s, disk := newAccessService(t)
+
+	resp, err := s.Upload(context.Background(), nil, &fileservice.UploadReq{
+		Scope:       &entity.ObjectScope{ScopeType: base.ObjectScopeUser, UserID: "u1"},
+		FileType:    base.FileTypeTmp,
+		StorageType: base.FileStorageVolume,
+		Items: []*fileservice.UploadItemReq{
+			{FilePath: "logo.png", FileSize: 3, FileData: io.NopCloser(strings.NewReader("png"))},
+		},
+	})
+
+	if assert.NoError(t, err) && assert.Len(t, resp.Files, 1) {
+		file := resp.Files[0]
+		assert.Empty(t, file.StorageID)
+		assert.Equal(t, "files/"+file.ID+"-logo.png", file.Path)
+		onDisk, _ := os.ReadFile(filepath.Join(appPath, file.Path))
+		assert.Equal(t, "png", string(onDisk))
+	}
+	assert.Empty(t, disk.calls)
 }

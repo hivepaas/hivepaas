@@ -3,15 +3,12 @@ package fileuc
 import (
 	"context"
 	"net/url"
-	"os"
-	"path/filepath"
 	"time"
 
 	"github.com/tiendc/gofn"
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
-	"github.com/hivepaas/hivepaas/hivepaas_app/config"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
@@ -56,7 +53,7 @@ func (uc *UC) DownloadFile(
 
 	switch file.StorageType {
 	case base.FileStorageVolume:
-		return uc.downloadLocalFile(ctx, req, file)
+		return uc.downloadVolumeFile(ctx, req, file)
 	case base.FileStorageCloud:
 		return uc.downloadCloudFile(ctx, req, file)
 	default:
@@ -64,8 +61,8 @@ func (uc *UC) DownloadFile(
 	}
 }
 
-func (uc *UC) downloadLocalFile(
-	_ context.Context,
+func (uc *UC) downloadVolumeFile(
+	ctx context.Context,
 	req *filedto.DownloadFileReq,
 	file *entity.File,
 ) (_ *filedto.DownloadFileResp, err error) {
@@ -78,16 +75,10 @@ func (uc *UC) downloadLocalFile(
 		},
 	}
 
-	filePath := filepath.Join(config.Current().AppPath, file.Path)
-	reader, err := os.Open(filePath)
+	reader, err := uc.fileService.Open(ctx, uc.db, file)
 	if err != nil {
 		return nil, hperrors.Wrap(err)
 	}
-	defer func() {
-		if err != nil {
-			_ = reader.Close()
-		}
-	}()
 	respData.Content = reader
 	return &filedto.DownloadFileResp{Data: respData}, nil
 }

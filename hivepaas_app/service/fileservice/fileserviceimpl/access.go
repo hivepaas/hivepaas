@@ -154,6 +154,26 @@ func (s *service) CountOnVolume(ctx context.Context, db database.IDB, volumeID s
 	return len(files), nil
 }
 
+// ProjectVolume is the project's default volume: the one its creation made and
+// marks default, or the one set as default since.
+func (s *service) ProjectVolume(ctx context.Context, db database.IDB, projectID string) (*entity.Setting, error) {
+	volumes, _, err := s.settingRepo.List(ctx, db,
+		&entity.ObjectScope{ScopeType: base.ObjectScopeProject, ProjectID: projectID}, nil,
+		bunex.SelectWhere("setting.type = ?", base.SettingTypeClusterVolume),
+		bunex.SelectWhere("setting.status = ?", base.SettingStatusActive),
+		bunex.SelectWhere("setting.is_default = TRUE"),
+	)
+	if err != nil {
+		return nil, hperrors.Wrap(err)
+	}
+	for _, v := range volumes {
+		if v.ObjectID == projectID {
+			return v, nil
+		}
+	}
+	return nil, hperrors.NewNotFound("Project default volume")
+}
+
 // volumeAgent is the agent that reaches a volume's files, and the volume's
 // directory on its host: the node the volume is pinned to, or, for a volume
 // every node shares, the node asking.

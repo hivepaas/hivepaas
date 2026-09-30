@@ -33,6 +33,8 @@ type Service interface {
 	// Remove removes a file; one already gone is removed.
 	Remove(ctx context.Context, db database.IDB, file *entity.File) error
 	Stat(ctx context.Context, db database.IDB, file *entity.File) (int64, error)
+	// ProjectVolume is the project's default volume, where the files of its apps go.
+	ProjectVolume(ctx context.Context, db database.IDB, projectID string) (*entity.Setting, error)
 	// CountOnVolume counts the files a volume holds.
 	CountOnVolume(ctx context.Context, db database.IDB, volumeID string) (int, error)
 }

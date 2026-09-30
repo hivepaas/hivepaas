@@ -9,13 +9,13 @@ import (
 )
 
 type DeleteFileReq struct {
-	ID                       string                `json:"-" mapstructure:"-"`
-	Scope                    *base.ObjectScopeType `json:"-" mapstructure:"-"`
-	ObjectID                 string                `json:"-" mapstructure:"-"`
-	Types                    []base.FileType       `json:"-" mapstructure:"-"`
-	Kinds                    []base.FileKind       `json:"-"`
-	DeletePermanentlyIfLocal bool                  `json:"-" mapstructure:"deletePermanentlyIfLocal"`
-	DeletePermanently        bool                  `json:"-" mapstructure:"deletePermanently"`
+	ID                          string                `json:"-" mapstructure:"-"`
+	Scope                       *base.ObjectScopeType `json:"-" mapstructure:"-"`
+	ObjectID                    string                `json:"-" mapstructure:"-"`
+	Types                       []base.FileType       `json:"-" mapstructure:"-"`
+	Kinds                       []base.FileKind       `json:"-"`
+	DeletePermanentlyIfOnVolume bool                  `json:"-" mapstructure:"deletePermanentlyIfOnVolume"`
+	DeletePermanently           bool                  `json:"-" mapstructure:"deletePermanently"`
 }
 
 func NewDeleteFileReq() *DeleteFileReq {

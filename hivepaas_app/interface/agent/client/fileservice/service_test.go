@@ -120,3 +120,44 @@ func TestTheAgentRefusesAPathOutOfTheVolume(t *testing.T) {
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "is not inside the directory")
 }
+
+// endless never runs out: a write of it ends only when the agent ends it.
+type endless struct{}
+
+func (endless) Read(p []byte) (int, error) { return len(p), nil }
+
+// When the agent ends a write half way, the caller gets the agent's reason, not
+// the bare EOF a send on an ended stream returns.
+func TestAWriteTheAgentEndsGivesTheAgentsReason(t *testing.T) {
+	c, _ := startAgent(t)
+
+	_, err := c.Write(context.Background(), "/srv/vol", "../../etc/cron.d/x", endless{})
+
+	assert.Error(t, err)
+	assert.NotErrorIs(t, err, io.EOF)
+	assert.Contains(t, err.Error(), "is not inside the directory")
+}
+
+// An agent without the file service (an older image) says so.
+func TestAWriteToAnAgentWithoutTheFileServiceSaysSo(t *testing.T) {
+	listener, err := net.Listen("tcp", "127.0.0.1:0")
+	if err != nil {
+		t.Fatal(err)
+	}
+	server := grpc.NewServer()
+	go func() { _ = server.Serve(listener) }()
+	t.Cleanup(server.Stop)
+	config.SetCurrent(&config.Config{})
+	t.Cleanup(func() { config.SetCurrent(nil) })
+	c, err := NewFileServiceClient(listener.Addr().String())
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { _ = c.Close() })
+
+	_, err = c.Write(context.Background(), "/srv/vol", "a.txt", endless{})
+
+	assert.Error(t, err)
+	assert.NotErrorIs(t, err, io.EOF)
+	assert.Contains(t, err.Error(), "Unimplemented")
+}

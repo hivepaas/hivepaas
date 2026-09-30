@@ -101,7 +101,7 @@ func (c *grpcFileServiceClient) Write(ctx context.Context, root, path string, co
 	if err = stream.Send(&agentproto.FileWriteReq{
 		Value: &agentproto.FileWriteReq_Target{Target: &agentproto.FileReq{Root: root, Path: path}},
 	}); err != nil {
-		return 0, fromAgent(err)
+		return 0, fromAgent(sendError(stream, err))
 	}
 
 	buf := make([]byte, writeChunkSize)
@@ -111,7 +111,7 @@ func (c *grpcFileServiceClient) Write(ctx context.Context, root, path string, co
 			if err = stream.Send(&agentproto.FileWriteReq{
 				Value: &agentproto.FileWriteReq_Chunk{Chunk: buf[:n]},
 			}); err != nil {
-				return 0, fromAgent(err)
+				return 0, fromAgent(sendError(stream, err))
 			}
 		}
 		if readErr != nil {
@@ -127,6 +127,21 @@ func (c *grpcFileServiceClient) Write(ctx context.Context, root, path string, co
 		return 0, fromAgent(err)
 	}
 	return resp.GetSize(), nil
+}
+
+// sendError is why a send failed. A send on a stream the agent has ended
+// returns a bare io.EOF; the agent's reason is what the stream then answers.
+func sendError(
+	stream grpc.ClientStreamingClient[agentproto.FileWriteReq, agentproto.FileWriteResp],
+	err error,
+) error {
+	if !errors.Is(err, io.EOF) {
+		return err
+	}
+	if _, recvErr := stream.CloseAndRecv(); recvErr != nil {
+		return recvErr //nolint:wrapcheck // wrapped by the caller
+	}
+	return err
 }
 
 func (c *grpcFileServiceClient) Remove(ctx context.Context, root, path string) error {

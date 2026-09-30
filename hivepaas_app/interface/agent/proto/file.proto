@@ -1,0 +1,50 @@
+syntax = "proto3";
+
+package agent;
+
+option go_package = "github.com/hivepaas/hivepaas/hivepaas_app/interface/agent/proto;agentproto";
+
+// FileService reads and writes HivePaaS's files inside a volume's directory on
+// this node. A path never leaves the directory it is given in.
+service FileService {
+  // FileRead streams a file.
+  rpc FileRead(FileReq) returns (stream FileChunk);
+
+  // FileWrite writes a file: the first message names it, the rest are its
+  // content. The file is replaced whole once the stream ends without error.
+  rpc FileWrite(stream FileWriteReq) returns (FileWriteResp);
+
+  // FileRemove removes a file; one already gone is removed.
+  rpc FileRemove(FileReq) returns (FileRemoveResp);
+
+  // FileStat gives a file's size.
+  rpc FileStat(FileReq) returns (FileStatResp);
+}
+
+message FileReq {
+  // root is the volume's directory on the host.
+  string root = 1;
+  // path is inside root.
+  string path = 2;
+}
+
+message FileChunk {
+  bytes chunk = 1;
+}
+
+message FileWriteReq {
+  oneof value {
+    FileReq target = 1;
+    bytes chunk = 2;
+  }
+}
+
+message FileWriteResp {
+  int64 size = 1;
+}
+
+message FileRemoveResp {}
+
+message FileStatResp {
+  int64 size = 1;
+}

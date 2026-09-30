@@ -8,6 +8,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/logging"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecaseagent/containeragentuc"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecaseagent/dockerapiagentuc"
+	"github.com/hivepaas/hivepaas/hivepaas_app/usecaseagent/fileagentuc"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecaseagent/imagebuildagentuc"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecaseagent/nodeagentuc"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecaseagent/nodecleanupagentuc"
@@ -19,6 +20,7 @@ type AgentServer struct {
 	agentproto.UnimplementedAgentServiceServer
 	agentproto.UnimplementedContainerServiceServer
 	agentproto.UnimplementedDockerAPIServiceServer
+	agentproto.UnimplementedFileServiceServer
 	agentproto.UnimplementedImageBuildServiceServer
 	agentproto.UnimplementedNodeCleanupServiceServer
 	agentproto.UnimplementedNodeServiceServer
@@ -27,6 +29,7 @@ type AgentServer struct {
 	logger             logging.Logger
 	containerAgentUC   *containeragentuc.UC
 	dockerAPIAgentUC   *dockerapiagentuc.UC
+	fileAgentUC        *fileagentuc.UC
 	imageBuildAgentUC  *imagebuildagentuc.UC
 	nodeAgentUC        *nodeagentuc.UC
 	nodeCleanupAgentUC *nodecleanupagentuc.UC
@@ -38,6 +41,7 @@ func NewAgentServer(
 	logger logging.Logger,
 	containerAgentUC *containeragentuc.UC,
 	dockerAPIAgentUC *dockerapiagentuc.UC,
+	fileAgentUC *fileagentuc.UC,
 	imageBuildAgentUC *imagebuildagentuc.UC,
 	nodeAgentUC *nodeagentuc.UC,
 	nodeCleanupAgentUC *nodecleanupagentuc.UC,
@@ -49,6 +53,7 @@ func NewAgentServer(
 		logger:             logger,
 		containerAgentUC:   containerAgentUC,
 		dockerAPIAgentUC:   dockerAPIAgentUC,
+		fileAgentUC:        fileAgentUC,
 		imageBuildAgentUC:  imageBuildAgentUC,
 		nodeAgentUC:        nodeAgentUC,
 		nodeCleanupAgentUC: nodeCleanupAgentUC,

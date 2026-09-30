@@ -25,6 +25,9 @@ var (
 	ErrArchiveFormatUnsupported    = NewErr(ErrUnsupported, "ERR_ARCHIVE_FORMAT_UNSUPPORTED")
 	ErrEncryptionFormatUnsupported = NewErr(ErrUnsupported, "ERR_ENCRYPTION_FORMAT_UNSUPPORTED")
 	ErrStorageTypeUnsupported      = NewErr(ErrUnsupported, "ERR_STORAGE_TYPE_UNSUPPORTED")
+	// A file path that leaves the volume directory it is given in: an absolute
+	// path, a "..", or a symbolic link out.
+	ErrFilePathOutsideRoot = NewErr(ErrArgumentInvalid, "ERR_FILE_PATH_OUTSIDE_ROOT")
 	// A mount whose directory is not the app's own: another app's, a whole volume,
 	// or a bind HivePaaS did not make.
 	ErrStoragePermissionsNotResettable = NewErr(ErrPreconditionFailed, "ERR_STORAGE_PERMISSIONS_NOT_RESETTABLE")

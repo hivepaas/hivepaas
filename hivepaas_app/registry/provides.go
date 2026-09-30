@@ -198,6 +198,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/webhookuc"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecaseagent/containeragentuc"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecaseagent/dockerapiagentuc"
+	"github.com/hivepaas/hivepaas/hivepaas_app/usecaseagent/fileagentuc"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecaseagent/imagebuildagentuc"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecaseagent/nodeagentuc"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecaseagent/nodecleanupagentuc"
@@ -475,4 +476,5 @@ var Provides = []any{
 	reposerveragentuc.New,
 	nodecleanupagentuc.New,
 	volumeagentuc.New,
+	fileagentuc.New,
 }

@@ -1,6 +1,5 @@
-import { Checkbox, Field, FieldError, FieldGroup, Input } from "@components/ui";
+import { Field, FieldError, FieldGroup, Input } from "@components/ui";
 import { useController, useFormContext } from "react-hook-form";
-import { TlsPassthroughMountNote } from "~/projects/module-shared/components";
 import { PROJECT_FORM_CONTROL_MAX_WIDTH_CLASS } from "~/projects/module-shared/constants";
 
 import { InfoBlock, LabelWithInfo } from "@application/shared/components";
@@ -11,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { type AppConfigKindSettingsFormSchemaInput, type AppConfigKindSettingsFormSchemaOutput } from "../schemas";
 
 import { CredentialApplyInfo } from "./credential-apply-info.com";
-import { KindSslCertSelect } from "./kind-ssl-cert-select.com";
+import { KindExposureInfo } from "./kind-exposure-info.com";
 
 interface Props {
     readOnly?: boolean;
@@ -56,8 +55,6 @@ export function DatabaseKindFields({ readOnly = false }: Props) {
         field: sslMode,
         fieldState: { error: sslModeError },
     } = useController({ control, name: "database.sslMode" });
-
-    const { field: tlsPassthrough } = useController({ control, name: "database.tlsPassthrough" });
 
     return (
         <>
@@ -198,36 +195,7 @@ export function DatabaseKindFields({ readOnly = false }: Props) {
                 </FieldGroup>
             </InfoBlock>
 
-            <KindSslCertSelect
-                name="database.sslCert"
-                readOnly={readOnly}
-            />
-
-            <InfoBlock
-                titleWidth={220}
-                title={
-                    <LabelWithInfo
-                        label="TLS Passthrough"
-                        content="When enabled, incoming TLS connection is passed directly to the database container without SSL termination at the edge proxy."
-                    />
-                }
-            >
-                <div className="flex items-center gap-2 pt-1.5">
-                    <Checkbox
-                        checked={Boolean(tlsPassthrough.value)}
-                        onCheckedChange={val => {
-                            if (readOnly) return;
-                            tlsPassthrough.onChange(Boolean(val));
-                        }}
-                        disabled={readOnly}
-                    />
-                    <span className="text-sm text-muted-foreground">
-                        Pass encrypted TLS traffic directly to container
-                    </span>
-                </div>
-            </InfoBlock>
-
-            {tlsPassthrough.value && <TlsPassthroughMountNote />}
+            <KindExposureInfo />
         </>
     );
 }

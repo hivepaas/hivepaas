@@ -46,8 +46,6 @@ function mapFormValuesToPayload(
                       password: values.database?.password ?? "",
                       rootPassword: values.database?.rootPassword ?? "",
                       sslMode: values.database?.sslMode ?? "disable",
-                      sslCert: values.database?.sslCert?.id ? { id: values.database.sslCert.id } : null,
-                      tlsPassthrough: values.database?.tlsPassthrough ?? false,
                   },
               }
             : {}),
@@ -58,7 +56,6 @@ function mapFormValuesToPayload(
                       maxMemory: values.cache?.maxMemory ?? "",
                       evictionRule: values.cache?.evictionRule ?? "",
                       persistenceMode: values.cache?.persistenceMode ?? "",
-                      sslCert: values.cache?.sslCert?.id ? { id: values.cache.sslCert.id } : null,
                   },
               }
             : {}),

@@ -15,8 +15,6 @@ export interface AppKindDatabase {
     password?: string;
     rootPassword?: string;
     sslMode: EDatabaseSSLMode;
-    sslCert?: { id: string; name?: string } | null;
-    tlsPassthrough?: boolean;
 }
 
 export interface AppKindCache {
@@ -24,7 +22,6 @@ export interface AppKindCache {
     maxMemory?: string;
     evictionRule?: string;
     persistenceMode?: string;
-    sslCert?: { id: string; name?: string } | null;
 }
 
 export interface AppKindStorage {
@@ -59,15 +56,12 @@ export interface AppKindSettingsUpdatePayload {
         password?: string;
         rootPassword?: string;
         sslMode: EDatabaseSSLMode;
-        sslCert?: { id: string } | null;
-        tlsPassthrough?: boolean;
     };
     cache?: {
         password?: string;
         maxMemory?: string;
         evictionRule?: string;
         persistenceMode?: string;
-        sslCert?: { id: string } | null;
     };
     storage?: {
         keyId?: string;

@@ -49,15 +49,12 @@ function mapDefaultValues(data?: AppKindSettings): SchemaInput {
             password: data.database?.password ?? "",
             rootPassword: data.database?.rootPassword ?? "",
             sslMode: data.database?.sslMode ?? "disable",
-            sslCert: data.database?.sslCert ? { id: data.database.sslCert.id, name: data.database.sslCert.name } : null,
-            tlsPassthrough: data.database?.tlsPassthrough ?? false,
         },
         cache: {
             password: data.cache?.password ?? "",
             maxMemory: data.cache?.maxMemory ?? "",
             evictionRule: data.cache?.evictionRule ?? "",
             persistenceMode: data.cache?.persistenceMode ?? "",
-            sslCert: data.cache?.sslCert ? { id: data.cache.sslCert.id, name: data.cache.sslCert.name } : null,
         },
         storage: {
             keyId: data.storage?.keyId ?? "",

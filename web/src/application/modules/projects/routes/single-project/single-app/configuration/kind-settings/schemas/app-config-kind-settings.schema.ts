@@ -8,13 +8,6 @@ export const AppConfigKindSettingsDatabaseFormSchema = z.object({
     password: z.string(),
     rootPassword: z.string(),
     sslMode: z.enum(["disable", "prefer", "require", "verify-ca", "verify-full"]),
-    sslCert: z
-        .object({
-            id: z.string(),
-            name: z.string().optional(),
-        })
-        .nullish(),
-    tlsPassthrough: z.boolean(),
 });
 
 export const AppConfigKindSettingsCacheFormSchema = z.object({
@@ -24,12 +17,6 @@ export const AppConfigKindSettingsCacheFormSchema = z.object({
     }),
     evictionRule: z.string().max(100, "Eviction rule must be at most 100 characters"),
     persistenceMode: z.string().max(100, "Persistence mode must be at most 100 characters"),
-    sslCert: z
-        .object({
-            id: z.string(),
-            name: z.string().optional(),
-        })
-        .nullish(),
 });
 
 export const AppConfigKindSettingsStorageFormSchema = z.object({

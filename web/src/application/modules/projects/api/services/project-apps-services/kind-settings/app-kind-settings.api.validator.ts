@@ -20,13 +20,6 @@ const DatabaseSchema = z
         password: OptionalStringSchema,
         rootPassword: OptionalStringSchema,
         sslMode: SSLModeSchema.optional().default("disable"),
-        sslCert: z
-            .object({
-                id: z.string(),
-                name: z.string().optional(),
-            })
-            .nullish(),
-        tlsPassthrough: z.boolean().optional().default(false),
     })
     .nullish();
 
@@ -36,12 +29,6 @@ const CacheSchema = z
         maxMemory: OptionalStringSchema,
         evictionRule: OptionalStringSchema,
         persistenceMode: OptionalStringSchema,
-        sslCert: z
-            .object({
-                id: z.string(),
-                name: z.string().optional(),
-            })
-            .nullish(),
     })
     .nullish();
 

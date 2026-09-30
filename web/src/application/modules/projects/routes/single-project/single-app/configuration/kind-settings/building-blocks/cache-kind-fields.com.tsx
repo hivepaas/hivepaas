@@ -10,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { type AppConfigKindSettingsFormSchemaInput, type AppConfigKindSettingsFormSchemaOutput } from "../schemas";
 
 import { CredentialApplyInfo } from "./credential-apply-info.com";
-import { KindSslCertSelect } from "./kind-ssl-cert-select.com";
+import { KindExposureInfo } from "./kind-exposure-info.com";
 
 interface Props {
     readOnly?: boolean;
@@ -216,10 +216,7 @@ export function CacheKindFields({ readOnly = false }: Props) {
                 </FieldGroup>
             </InfoBlock>
 
-            <KindSslCertSelect
-                name="cache.sslCert"
-                readOnly={readOnly}
-            />
+            <KindExposureInfo />
         </>
     );
 }

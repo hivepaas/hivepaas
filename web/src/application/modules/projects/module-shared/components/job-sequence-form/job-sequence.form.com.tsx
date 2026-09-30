@@ -31,7 +31,7 @@ const TITLE_WIDTH = 220;
 /** What a step's command is told, and how it hands values to the steps after it. */
 function StepEnvironmentHelp() {
     return (
-        <div className={cn(dashedBorderBox, "flex max-w-[720px] flex-col gap-2 text-sm leading-normal")}>
+        <div className={cn(dashedBorderBox, "flex flex-col gap-2 text-sm leading-normal")}>
             <p>
                 A step whose job runs a command is told how the steps before it went, in its environment:{" "}
                 <code>HIVEPAAS_SEQ_STEP</code> and <code>HIVEPAAS_SEQ_STEPS</code> (its number and the count),{" "}

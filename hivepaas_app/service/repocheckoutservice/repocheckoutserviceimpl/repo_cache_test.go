@@ -1,0 +1,94 @@
+package repocheckoutserviceimpl
+
+import (
+	"bytes"
+	"context"
+	"errors"
+	"io"
+	"os"
+	"path/filepath"
+	"testing"
+
+	"github.com/stretchr/testify/assert"
+
+	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
+	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/fileservice"
+)
+
+// fakeFiles keeps files in memory, by path.
+type fakeFiles struct {
+	fileservice.Service
+	files   map[string][]byte
+	volumes map[string]*entity.Setting
+}
+
+func (f *fakeFiles) Open(_ context.Context, _ database.IDB, file *entity.File) (io.ReadCloser, error) {
+	content, ok := f.files[file.Path]
+	if !ok {
+		return nil, hperrors.NewNotFound("File")
+	}
+	return io.NopCloser(bytes.NewReader(content)), nil
+}
+
+type memWriter struct {
+	bytes.Buffer
+	keep func([]byte)
+}
+
+func (w *memWriter) Close() error { w.keep(w.Bytes()); return nil }
+func (w *memWriter) Abort(error)  {}
+
+func (f *fakeFiles) Create(_ context.Context, _ database.IDB, file *entity.File) (fileservice.FileWriter, error) {
+	return &memWriter{keep: func(b []byte) { f.files[file.Path] = append([]byte(nil), b...) }}, nil
+}
+
+func (f *fakeFiles) ProjectVolume(_ context.Context, _ database.IDB, projectID string) (*entity.Setting, error) {
+	if v := f.volumes[projectID]; v != nil {
+		return v, nil
+	}
+	return nil, hperrors.NewNotFound("Project default volume")
+}
+
+// The archive a cache is made into is stored through the file layer, and read
+// back the same way.
+func TestARepositoryCacheArchiveGoesThroughTheFileLayer(t *testing.T) {
+	files := &fakeFiles{files: map[string][]byte{}}
+	s := &service{fileService: files}
+	archive := filepath.Join(t.TempDir(), "made.tar.lz4")
+	assert.NoError(t, os.WriteFile(archive, []byte("archive bytes"), 0o600))
+	file := &entity.File{Path: ".hivepaas/cache/repos/01J.tar.lz4"}
+
+	size, err := s.storeCacheArchive(context.Background(), archive, file)
+	assert.NoError(t, err)
+	assert.Equal(t, int64(len("archive bytes")), size)
+	assert.Equal(t, "archive bytes", string(files.files[".hivepaas/cache/repos/01J.tar.lz4"]))
+
+	fetched, err := s.fetchCacheArchive(context.Background(), nil, file, t.TempDir())
+	assert.NoError(t, err)
+	content, _ := os.ReadFile(fetched)
+	assert.Equal(t, "archive bytes", string(content))
+}
+
+// The cache of a project goes to its default volume, in HivePaaS's directory.
+func TestARepositoryCacheIsPlacedInTheProjectVolume(t *testing.T) {
+	files := &fakeFiles{volumes: map[string]*entity.Setting{"p1": {ID: "vol-p1"}}}
+	s := &service{fileService: files}
+	file := &entity.File{Name: "01J.abcd.tar.lz4"}
+
+	err := s.placeRepoCache(context.Background(), "p1", file)
+
+	assert.NoError(t, err)
+	assert.Equal(t, "vol-p1", file.StorageID)
+	assert.Equal(t, ".hivepaas/cache/repos/01J.abcd.tar.lz4", file.Path)
+}
+
+// A project without a default volume keeps no cache; the checkout goes on.
+func TestARepositoryCacheNeedsAProjectVolume(t *testing.T) {
+	s := &service{fileService: &fakeFiles{}}
+
+	err := s.placeRepoCache(context.Background(), "p-none", &entity.File{Name: "x"})
+
+	assert.True(t, errors.Is(err, hperrors.ErrNotFound))
+}

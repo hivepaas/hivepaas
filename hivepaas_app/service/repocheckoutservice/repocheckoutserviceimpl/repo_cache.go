@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"io"
 	"os"
 	"path/filepath"
 	"time"
@@ -11,7 +12,6 @@ import (
 	"github.com/tiendc/gofn"
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
-	"github.com/hivepaas/hivepaas/hivepaas_app/config"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
@@ -21,6 +21,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/timeutil"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/transaction"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/ulid"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/fileservice"
 )
 
 const (
@@ -38,14 +39,20 @@ func (s *service) loadRepoCache(
 		return nil
 	}
 
+	var cacheErr error
 	defer func() {
 		if err != nil || recover() != nil {
+			cacheErr = err
 			data.RepoCacheLoaded = false
 			if err = s.resetCheckoutDir(data); err != nil {
 				err = hperrors.Wrap(err)
 			} else {
 				err = nil
 			}
+		}
+		if cacheErr != nil {
+			_ = data.LogStore.Add(ctx, tasklog.NewWarnFrame("Repository cache not used: "+cacheErr.Error(),
+				tasklog.TsNow))
 		}
 		if data.RepoCacheLoaded {
 			_ = data.LogStore.Add(ctx, tasklog.NewOutFrame("Repository cache found. Try to use the cache.",
@@ -71,11 +78,14 @@ func (s *service) loadRepoCache(
 		}
 		data.RepoCacheFile = file
 
-		rootDir := config.Current().AppPath
-		filePath := filepath.Join(rootDir, file.Path)
-		if _, err := os.Stat(filePath); os.IsNotExist(err) {
+		filePath, err := s.fetchCacheArchive(ctx, db, file, data.TempDir)
+		if errors.Is(err, hperrors.ErrNotFound) {
 			return nil
 		}
+		if err != nil {
+			return hperrors.Wrap(err)
+		}
+		defer os.Remove(filePath)
 
 		errStr, err := filearchiver.Decompress(filePath, data.CheckoutDir, filearchiver.ArchiveFormatAuto)
 		if err != nil {
@@ -136,43 +146,45 @@ func (s *service) saveRepoCache(
 	for {
 		newCacheFile.Name = fmt.Sprintf("%v.%v%v", newCacheFile.ID, gofn.RandTokenAsHex(4), //nolint:mnd
 			repoCacheArchiveFormat.FileExtDefault())
-		newCacheFile.Path = filepath.Join(config.Current().DataPathSystemCacheRepos().RelPath(), newCacheFile.Name)
 		if data.RepoCacheFile == nil || data.RepoCacheFile.Name != newCacheFile.Name {
 			break
 		}
 	}
+	if err = s.placeRepoCache(ctx, data.App.ProjectID, newCacheFile); err != nil {
+		return hperrors.Wrap(err)
+	}
 	newCacheFile.UpdatedAt = timeNow
 	newCacheFile.Deleted = false
 
-	rootDir := config.Current().AppPath
-	newFilePath := filepath.Join(rootDir, newCacheFile.Path)
-	fileEntitySaved := false
+	archivePath := filepath.Join(data.TempDir, newCacheFile.Name)
+	defer os.Remove(archivePath)
+	fileStored, fileEntitySaved := false, false
 
 	defer func() {
+		cleanupCtx := context.WithoutCancel(ctx)
 		if err == nil && recover() == nil && fileEntitySaved {
 			// Remove the old cache file as it becomes orphaned
 			if data.RepoCacheFile != nil {
-				oldFilePath := filepath.Join(rootDir, data.RepoCacheFile.Path)
-				_ = os.RemoveAll(oldFilePath)
+				_ = s.fileService.Remove(cleanupCtx, s.db, data.RepoCacheFile)
 			}
-		} else {
+		} else if fileStored {
 			// Remove the new cache file as saving file record in DB failed
-			_ = os.RemoveAll(newFilePath)
+			_ = s.fileService.Remove(cleanupCtx, s.db, newCacheFile)
 		}
 	}()
 
-	errStr, err := filearchiver.Compress(data.CheckoutDir, newFilePath,
+	errStr, err := filearchiver.Compress(data.CheckoutDir, archivePath,
 		repoCacheArchiveFormat, repoCacheArchiveCompressionLevel)
 	if err != nil {
 		return hperrors.Wrap(err)
 	}
 	s.addCmdOutToLogs(ctx, errStr, err != nil, data.LogStore)
 
-	newCacheFileInfo, err := os.Stat(newFilePath)
+	newCacheFile.Size, err = s.storeCacheArchive(ctx, archivePath, newCacheFile)
 	if err != nil {
 		return hperrors.Wrap(err)
 	}
-	newCacheFile.Size = newCacheFileInfo.Size()
+	fileStored = true
 
 	err = transaction.Execute(ctx, s.db, func(db database.Tx) error {
 		repoID := data.RepoSource.RepoID
@@ -204,4 +216,71 @@ func (s *service) saveRepoCache(
 		return hperrors.Wrap(err)
 	}
 	return nil
+}
+
+// placeRepoCache puts a project's repository cache on the project's default
+// volume, in HivePaaS's own directory.
+func (s *service) placeRepoCache(ctx context.Context, projectID string, file *entity.File) error {
+	volume, err := s.fileService.ProjectVolume(ctx, s.db, projectID)
+	if err != nil {
+		return hperrors.Wrap(err)
+	}
+	file.StorageType = base.FileStorageVolume
+	file.StorageID = volume.ID
+	file.Path = fileservice.ProjectFilePath(fileservice.FilesDirRepoCache, file.Name)
+	return nil
+}
+
+// storeCacheArchive writes the archive made in this process's temporary
+// directory to the cache file's place, and gives its size.
+func (s *service) storeCacheArchive(ctx context.Context, archivePath string, file *entity.File) (int64, error) {
+	archive, err := os.Open(archivePath) //nolint:gosec // a file this process made
+	if err != nil {
+		return 0, hperrors.Wrap(err)
+	}
+	defer archive.Close()
+
+	w, err := s.fileService.Create(ctx, s.db, file)
+	if err != nil {
+		return 0, hperrors.Wrap(err)
+	}
+	size, err := io.Copy(w, archive)
+	if err != nil {
+		w.Abort(err)
+		return 0, hperrors.Wrap(err)
+	}
+	if err = w.Close(); err != nil {
+		return 0, hperrors.Wrap(err)
+	}
+	return size, nil
+}
+
+// fetchCacheArchive copies a cache file into tempDir, where the archiver can
+// read it, and gives the copy's path.
+func (s *service) fetchCacheArchive(
+	ctx context.Context,
+	db database.IDB,
+	file *entity.File,
+	tempDir string,
+) (_ string, err error) {
+	reader, err := s.fileService.Open(ctx, db, file)
+	if err != nil {
+		return "", hperrors.Wrap(err)
+	}
+	defer reader.Close()
+
+	local, err := os.CreateTemp(tempDir, "repo-cache-*"+filepath.Ext(file.Name))
+	if err != nil {
+		return "", hperrors.Wrap(err)
+	}
+	defer func() {
+		_ = local.Close()
+		if err != nil {
+			_ = os.Remove(local.Name())
+		}
+	}()
+	if _, err = io.Copy(local, reader); err != nil {
+		return "", hperrors.Wrap(err)
+	}
+	return local.Name(), nil
 }

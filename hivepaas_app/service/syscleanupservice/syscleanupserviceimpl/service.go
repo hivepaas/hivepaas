@@ -6,6 +6,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/appservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/auditservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/clustercleanupservice"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/fileservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/syscleanupservice"
 	"github.com/hivepaas/hivepaas/services/docker"
 )
@@ -25,6 +26,7 @@ type service struct {
 	agentService          agentservice.Service
 	appService            appservice.Service
 	auditService          auditservice.Service
+	fileService           fileservice.Service
 
 	dockerManager docker.Manager
 }
@@ -44,6 +46,7 @@ func New(
 	agentService agentservice.Service,
 	appService appservice.Service,
 	auditService auditservice.Service,
+	fileService fileservice.Service,
 
 	dockerManager docker.Manager,
 ) syscleanupservice.Service {
@@ -62,6 +65,7 @@ func New(
 		agentService:          agentService,
 		appService:            appService,
 		auditService:          auditService,
+		fileService:           fileService,
 
 		dockerManager: dockerManager,
 	}

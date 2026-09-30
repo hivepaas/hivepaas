@@ -3,13 +3,10 @@ package syscleanupserviceimpl
 import (
 	"context"
 	"errors"
-	"os"
-	"path/filepath"
 
 	"github.com/tiendc/gofn"
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
-	"github.com/hivepaas/hivepaas/hivepaas_app/config"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
@@ -83,10 +80,9 @@ func (s *service) sysCleanupCacheRepoSource(
 		return hperrors.Wrap(err)
 	}
 
-	// Delete real files in local
-	rootDir := config.Current().AppPath
+	// Delete the files themselves, wherever their volume is
 	for _, file := range deletingFiles {
-		err := os.Remove(filepath.Join(rootDir, file.Path))
+		err := s.fileService.Remove(ctx, db, file)
 		if err != nil {
 			_ = data.LogStore.Add(ctx, tasklog.NewOutFrame("Failed to remove outdated cache file: "+
 				file.Path+" with error: "+err.Error(), tasklog.TsNow))

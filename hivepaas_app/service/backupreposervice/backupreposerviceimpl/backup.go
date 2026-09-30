@@ -259,12 +259,8 @@ func (s *service) DeleteSnapshot(
 func (s *service) VolumeHostDir(
 	ctx context.Context,
 	volume *entity.Setting,
-) (*backupreposervice.VolumeHostDir, error) {
-	clusterVolume, err := volume.AsClusterVolume()
-	if err != nil {
-		return nil, hperrors.Wrap(err)
-	}
-	dir, err := s.volumeHostDir(ctx, volume, clusterVolume)
+) (*volumeservice.HostDir, error) {
+	dir, err := volumeservice.ResolveHostDir(ctx, s.dockerManager, volume)
 	return dir, hperrors.Wrap(err)
 }
 

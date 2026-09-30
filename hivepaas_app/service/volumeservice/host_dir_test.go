@@ -1,0 +1,104 @@
+package volumeservice
+
+import (
+	"context"
+	"testing"
+
+	"github.com/moby/moby/api/types/volume"
+	"github.com/moby/moby/client"
+	"github.com/stretchr/testify/assert"
+
+	"github.com/hivepaas/hivepaas/hivepaas_app/base"
+	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
+	"github.com/hivepaas/hivepaas/services/docker"
+)
+
+func volumeSetting(t *testing.T, vol *entity.ClusterVolume) *entity.Setting {
+	t.Helper()
+	setting := &entity.Setting{ID: "vol-1", RefID: "01JREF", Type: base.SettingTypeClusterVolume, Name: "data"}
+	assert.NoError(t, setting.SetData(vol))
+	return &entity.Setting{ID: setting.ID, RefID: setting.RefID, Name: setting.Name, Type: setting.Type,
+		Data: setting.Data}
+}
+
+// hostDirDocker answers the two questions resolving a volume may ask docker;
+// anything else panics through the nil embedded interface.
+type hostDirDocker struct {
+	docker.Manager
+	currentNode string
+	inspected   []string
+	inspectRes  *client.VolumeInspectResult
+}
+
+func (d *hostDirDocker) NodeCurrentID(context.Context) (string, error) { return d.currentNode, nil }
+
+func (d *hostDirDocker) VolumeInspect(
+	_ context.Context, volumeID string, _ ...docker.VolumeInspectOption,
+) (*client.VolumeInspectResult, error) {
+	d.inspected = append(d.inspected, volumeID)
+	if d.inspectRes == nil {
+		return nil, hperrors.Wrap(hperrors.ErrInfraNotFound)
+	}
+	return d.inspectRes, nil
+}
+
+// A volume pinned to a node is on that node, at the directory it binds; the
+// setting says so without asking docker.
+func TestResolveHostDirOfAPinnedBindVolume(t *testing.T) {
+	d := &hostDirDocker{}
+	setting := volumeSetting(t, &entity.ClusterVolume{
+		NodeID: "node-2", Driver: "local",
+		DriverOpts: map[string]string{"type": "none", "device": "/srv/project_data/p1", "o": "bind,rw"},
+	})
+
+	dir, err := ResolveHostDir(context.Background(), d, setting)
+
+	assert.NoError(t, err)
+	assert.Equal(t, &HostDir{Dir: "/srv/project_data/p1", NodeID: "node-2"}, dir)
+	assert.Empty(t, d.inspected)
+}
+
+// A pinned volume with no device recorded is under the daemon's own volume
+// root, found by asking docker for it by its docker-side identity.
+func TestResolveHostDirInspectsAVolumeWithoutADevice(t *testing.T) {
+	d := &hostDirDocker{inspectRes: &client.VolumeInspectResult{
+		Volume: volume.Volume{Mountpoint: "/var/lib/docker/volumes/01JREF/_data"},
+	}}
+	setting := volumeSetting(t, &entity.ClusterVolume{NodeLabel: "disk=ssd"})
+
+	dir, err := ResolveHostDir(context.Background(), d, setting)
+
+	assert.NoError(t, err)
+	assert.Equal(t, &HostDir{Dir: "/var/lib/docker/volumes/01JREF/_data", NodeLabel: "disk=ssd"}, dir)
+	assert.Equal(t, []string{"01JREF"}, d.inspected)
+}
+
+// An unpinned bind volume is the same directory on every node: reached on the
+// node asking.
+func TestResolveHostDirOfASharedBindVolumeIsOnTheCurrentNode(t *testing.T) {
+	d := &hostDirDocker{currentNode: "node-mgr"}
+	setting := volumeSetting(t, &entity.ClusterVolume{
+		Driver: "local", DriverOpts: map[string]string{"type": "none", "device": "/mnt/nfs/data", "o": "bind"},
+	})
+
+	dir, err := ResolveHostDir(context.Background(), d, setting)
+
+	assert.NoError(t, err)
+	assert.Equal(t, &HostDir{Dir: "/mnt/nfs/data", NodeID: "node-mgr", Shared: true}, dir)
+}
+
+// An unpinned volume that is not a bind is somewhere else on each node, or on
+// no host path at all.
+func TestResolveHostDirRefusesASharedVolumeThatIsNotABind(t *testing.T) {
+	for name, opts := range map[string]map[string]string{
+		"docker-managed": nil,
+		"nfs":            {"type": "nfs", "o": "addr=10.0.0.5,rw", "device": ":/exports/data"},
+	} {
+		setting := volumeSetting(t, &entity.ClusterVolume{Driver: "local", DriverOpts: opts})
+
+		_, err := ResolveHostDir(context.Background(), &hostDirDocker{currentNode: "node-mgr"}, setting)
+
+		assert.ErrorIs(t, err, hperrors.ErrBackupVolumeSharedNotBind, name)
+	}
+}

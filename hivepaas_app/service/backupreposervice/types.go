@@ -220,13 +220,6 @@ type DeleteSnapshotReq struct {
 	SnapshotID string
 }
 
-// VolumeHostDir is a volume's directory on its node's host.
-type VolumeHostDir struct {
-	Dir       string
-	NodeID    string
-	NodeLabel string
-}
-
 type RestoreStreamReq struct {
 	RepoTarget
 	SnapshotID string

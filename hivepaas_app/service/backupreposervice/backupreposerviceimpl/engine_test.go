@@ -5,7 +5,6 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/moby/moby/api/types/volume"
 	"github.com/moby/moby/client"
 	"github.com/stretchr/testify/assert"
 
@@ -93,30 +92,6 @@ func TestBuildLocalStorageUsesTheRecordedDeviceWithoutAskingDocker(t *testing.T)
 	assert.Equal(t, "/host/srv/backups/team-a", storage.Path)
 	assert.Equal(t, "node-2", storage.NodeID)
 	assert.Empty(t, dockerManager.inspected, "the setting answers this; docker must not be consulted")
-}
-
-// A volume with no device recorded - discovered before backfill ran, or a plain
-// local volume whose data is under the daemon's own volume root - still has to
-// be inspected, and by the docker-side identity rather than the human name.
-func TestResolveVolumeHostPathInspectsByRefIDWhenNoDeviceIsRecorded(t *testing.T) {
-	dockerManager := &recordingDockerManager{
-		inspectRes: &client.VolumeInspectResult{
-			Volume: volume.Volume{Mountpoint: "/var/lib/docker/volumes/01JVOLULID/_data"},
-		},
-	}
-	s := &service{dockerManager: dockerManager}
-
-	setting := newVolumeSetting(t, "vol-backups", "01JVOLULID", "backups", &entity.ClusterVolume{
-		NodeID: "node-1",
-	})
-	clusterVolume, err := setting.AsClusterVolume()
-	assert.NoError(t, err)
-
-	hostPath, err := s.resolveVolumeHostPath(context.Background(), setting, clusterVolume)
-
-	assert.NoError(t, err)
-	assert.Equal(t, "/var/lib/docker/volumes/01JVOLULID/_data", hostPath)
-	assert.Equal(t, []string{"01JVOLULID"}, dockerManager.inspected)
 }
 
 // A volume on all nodes is a directory every node reaches at the same path -

@@ -5,6 +5,7 @@ import (
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/volumeservice"
 	"github.com/hivepaas/hivepaas/services/backup"
 )
 
@@ -63,5 +64,5 @@ type Service interface {
 	DeleteSnapshot(ctx context.Context, db database.IDB, req *DeleteSnapshotReq) error
 	// VolumeHostDir is where a volume's data is on the host of its node, and that node:
 	// for a volume on all nodes, the node HivePaaS runs on.
-	VolumeHostDir(ctx context.Context, volume *entity.Setting) (*VolumeHostDir, error)
+	VolumeHostDir(ctx context.Context, volume *entity.Setting) (*volumeservice.HostDir, error)
 }

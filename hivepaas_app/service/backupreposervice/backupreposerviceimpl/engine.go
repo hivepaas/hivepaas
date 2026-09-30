@@ -9,7 +9,6 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
-	"github.com/hivepaas/hivepaas/hivepaas_app/service/backupreposervice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/cloudstorageservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/nodeexecservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/volumeservice"
@@ -189,11 +188,7 @@ func (s *service) buildLocalStorage(
 		return nil, hperrors.Wrap(hperrors.ErrSettingNotFound).WithParam("Name", repo.Volume.ID)
 	}
 
-	clusterVolume, err := setting.AsClusterVolume()
-	if err != nil {
-		return nil, hperrors.Wrap(err)
-	}
-	dir, err := s.volumeHostDir(ctx, setting, clusterVolume)
+	dir, err := volumeservice.ResolveHostDir(ctx, s.dockerManager, setting)
 	if err != nil {
 		return nil, hperrors.Wrap(err)
 	}
@@ -208,96 +203,8 @@ func (s *service) buildLocalStorage(
 		Path:      repoPath,
 		NodeID:    dir.NodeID,
 		NodeLabel: dir.NodeLabel,
-		Shared:    !clusterVolume.IsPinned(),
+		Shared:    dir.Shared,
 	}, nil
-}
-
-// volumeHostDir is where a volume's data is on the host, and the node to reach it on.
-//
-// A pinned volume is on its node. A volume on all nodes is taken at its word that
-// every node sees the same data: it is reached on the node HivePaaS runs on, and
-// only when it is a bind directory - the one kind whose path is the same on every
-// node. A docker-managed volume is somewhere under each daemon's own root, and one
-// a driver mounts (NFS, CIFS) is on no host path at all.
-func (s *service) volumeHostDir(
-	ctx context.Context,
-	setting *entity.Setting,
-	clusterVolume *entity.ClusterVolume,
-) (*backupreposervice.VolumeHostDir, error) {
-	if clusterVolume.IsPinned() {
-		dir, err := s.resolveVolumeHostPath(ctx, setting, clusterVolume)
-		if err != nil {
-			return nil, hperrors.Wrap(err)
-		}
-		return &backupreposervice.VolumeHostDir{
-			Dir: dir, NodeID: clusterVolume.NodeID, NodeLabel: clusterVolume.NodeLabel,
-		}, nil
-	}
-
-	dir, isBind := bindDirectory(clusterVolume)
-	if !isBind {
-		return nil, hperrors.Wrap(hperrors.ErrBackupVolumeSharedNotBind).WithParam("Name", setting.Name)
-	}
-	nodeID, err := s.dockerManager.NodeCurrentID(ctx)
-	if err != nil {
-		return nil, hperrors.Wrap(err)
-	}
-	return &backupreposervice.VolumeHostDir{Dir: dir, NodeID: nodeID}, nil
-}
-
-// bindDirectory is the host directory a local volume binds, if it is a bind volume.
-func bindDirectory(clusterVolume *entity.ClusterVolume) (string, bool) {
-	device := clusterVolume.DriverOpts["device"]
-	if device == "" || !filepath.IsAbs(device) {
-		return "", false
-	}
-	if driver := clusterVolume.Driver; driver != "" && driver != "local" {
-		return "", false
-	}
-	if mountType := clusterVolume.DriverOpts["type"]; mountType != "" && mountType != "none" {
-		return "", false
-	}
-	return device, true
-}
-
-// resolveVolumeHostPath maps a volume onto its location on the host filesystem.
-//
-// The setting is asked first, because asking docker cannot work any more: volumes materialize
-// lazily, so one pinned to another node exists in no daemon this process can reach, and the
-// repository would fail for good rather than merely be slow to resolve. The recorded `device` is
-// the same string VolumeInspect used to report in Options["device"], so a repository backed by a
-// bind volume gets exactly the path it always got.
-//
-// Inspecting is kept for a volume whose specification records no device - one discovered before
-// backfill ran, or a plain local volume whose data sits under the daemon's own volume root and can
-// only be located by asking it. That lookup goes by RefID: the docker-side identity is a ULID for
-// a volume created on this branch, and only the pre-branch volumes it also covers ever had a
-// docker name equal to Setting.Name.
-func (s *service) resolveVolumeHostPath(
-	ctx context.Context,
-	setting *entity.Setting,
-	clusterVolume *entity.ClusterVolume,
-) (string, error) {
-	// Volumes created with `--opt device=/path` are bind mounts: the device is the real location,
-	// the docker-managed mountpoint is only a symlink target.
-	if clusterVolume != nil {
-		if devicePath := clusterVolume.DriverOpts["device"]; devicePath != "" {
-			return devicePath, nil
-		}
-	}
-
-	inspectResp, err := s.dockerManager.VolumeInspect(ctx, setting.RefID)
-	if err != nil {
-		return "", hperrors.Wrap(hperrors.ErrBackupRepoVolumePathUnresolved).WithParam("Name", setting.Name)
-	}
-
-	if devicePath := inspectResp.Volume.Options["device"]; devicePath != "" {
-		return devicePath, nil
-	}
-	if inspectResp.Volume.Mountpoint != "" {
-		return inspectResp.Volume.Mountpoint, nil
-	}
-	return "", hperrors.Wrap(hperrors.ErrBackupRepoVolumePathUnresolved).WithParam("Name", setting.Name)
 }
 
 // engineConfigFilePath gives each repository its own engine config file.

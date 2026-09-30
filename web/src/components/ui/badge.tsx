@@ -126,4 +126,49 @@ function Badge({
     );
 }
 
+/**
+ * What a status means, whatever it is the status of. A status badge takes its
+ * color from its meaning, so that "failed" is the same red on a task, a
+ * deployment and a node.
+ *
+ * - `success`: working, done, allowed.
+ * - `failure`: failed, down, disabled, missing, expired.
+ * - `progress`: happening now.
+ * - `waiting`: queued, not started.
+ * - `attention`: works, or will, but wants a look: pending, locked, degraded, skipped.
+ * - `inactive`: stopped on purpose or no longer there: canceled, paused, shut down.
+ * - `info`: neither good nor bad.
+ */
+export type StatusMeaning = "success" | "failure" | "progress" | "waiting" | "attention" | "inactive" | "info";
+
+export const STATUS_TONES: Record<StatusMeaning, BadgeTone> = {
+    success: "green",
+    failure: "red",
+    progress: "purple",
+    waiting: "blue",
+    attention: "amber",
+    inactive: "neutral",
+    info: "sky",
+};
+
+/** The classes of a solid badge for a status of this meaning. */
+export function statusClassName(meaning: StatusMeaning): string {
+    return SOLID_TONE_CLASS_NAMES[STATUS_TONES[meaning]];
+}
+
+const STATUS_DOT_CLASS_NAMES: Record<StatusMeaning, string> = {
+    success: "bg-green-500",
+    failure: "bg-red-600",
+    progress: "bg-purple-500",
+    waiting: "bg-blue-500",
+    attention: "bg-amber-500",
+    inactive: "bg-slate-500",
+    info: "bg-sky-500",
+};
+
+/** The fill of a status dot of this meaning: the badge's color without its text. */
+export function statusDotClassName(meaning: StatusMeaning): string {
+    return STATUS_DOT_CLASS_NAMES[meaning];
+}
+
 export { Badge, badgeVariants };

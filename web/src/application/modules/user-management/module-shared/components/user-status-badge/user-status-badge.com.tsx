@@ -1,7 +1,7 @@
 import { memo } from "react";
 
 import { cn } from "@/lib/utils";
-import { Badge } from "@components/ui/badge";
+import { Badge, statusClassName } from "@components/ui/badge";
 
 import { EUserStatus } from "@application/shared/enums";
 
@@ -28,10 +28,10 @@ function View({ status }: Props) {
     };
 
     const statusColorMap: Partial<Record<EUserStatus, string>> = {
-        [EUserStatus.Active]: "bg-green-500 text-white",
-        [EUserStatus.Pending]: "bg-orange-400 text-white",
-        [EUserStatus.Disabled]: "bg-red-500 text-white",
-        [EUserStatus.Missing]: "bg-red-500 text-white",
+        [EUserStatus.Active]: statusClassName("success"),
+        [EUserStatus.Pending]: statusClassName("attention"),
+        [EUserStatus.Disabled]: statusClassName("failure"),
+        [EUserStatus.Missing]: statusClassName("failure"),
     };
 
     return (

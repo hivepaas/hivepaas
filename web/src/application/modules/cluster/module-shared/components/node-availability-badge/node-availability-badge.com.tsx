@@ -1,7 +1,7 @@
 import { memo } from "react";
 
 import { cn } from "@/lib/utils";
-import { Badge } from "@components/ui/badge";
+import { Badge, statusClassName } from "@components/ui/badge";
 import { ENodeAvailability } from "~/cluster/module-shared/enums";
 
 function View({ availability }: Props) {
@@ -12,9 +12,9 @@ function View({ availability }: Props) {
     };
 
     const availabilityColorMap: Record<ENodeAvailability, string> = {
-        [ENodeAvailability.Active]: "bg-green-500 text-white",
-        [ENodeAvailability.Pause]: "bg-purple-500 text-white",
-        [ENodeAvailability.Drain]: "bg-orange-500 text-white",
+        [ENodeAvailability.Active]: statusClassName("success"),
+        [ENodeAvailability.Pause]: statusClassName("inactive"),
+        [ENodeAvailability.Drain]: statusClassName("attention"),
     };
 
     return (

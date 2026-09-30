@@ -1,7 +1,7 @@
 import { type KeyboardEvent, type MouseEvent, type ReactNode, useState } from "react";
 
 import { cn } from "@/lib/utils";
-import { Badge } from "@components/ui/badge";
+import { Badge, statusClassName } from "@components/ui/badge";
 import { dashedBorderBox } from "@lib/styles";
 import { format } from "date-fns";
 import { Box, ChevronDown, Clock, FileText, FolderGit2, GitBranch, GitCommit, Info } from "lucide-react";
@@ -29,11 +29,11 @@ const STATUS_LABELS: Partial<Record<EAppDeploymentStatus, string>> = {
 };
 
 const STATUS_CLASS_NAMES: Partial<Record<EAppDeploymentStatus, string>> = {
-    [EAppDeploymentStatus.Done]: "bg-green-500 text-white hover:bg-green-500/90",
-    [EAppDeploymentStatus.Failed]: "bg-red-500 text-white hover:bg-red-500/90",
-    [EAppDeploymentStatus.InProgress]: "bg-purple-400 text-white hover:bg-purple-400/90",
-    [EAppDeploymentStatus.NotStarted]: "bg-blue-400 text-white hover:bg-blue-400/90",
-    [EAppDeploymentStatus.Canceled]: "bg-zinc-500 text-white hover:bg-zinc-500/90",
+    [EAppDeploymentStatus.Done]: statusClassName("success"),
+    [EAppDeploymentStatus.Failed]: statusClassName("failure"),
+    [EAppDeploymentStatus.InProgress]: statusClassName("progress"),
+    [EAppDeploymentStatus.NotStarted]: statusClassName("waiting"),
+    [EAppDeploymentStatus.Canceled]: statusClassName("inactive"),
 };
 
 const STATUS_BORDER_CLASS_NAMES: Partial<Record<EAppDeploymentStatus, string>> = {

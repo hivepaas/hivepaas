@@ -1,7 +1,7 @@
 import { type KeyboardEvent, type ReactNode, useState } from "react";
 
 import { cn } from "@/lib/utils";
-import { Badge } from "@components/ui/badge";
+import { Badge, statusClassName } from "@components/ui/badge";
 import { format } from "date-fns";
 import { Calendar, ChevronDown, Clock, FolderTree, ShieldCheck } from "lucide-react";
 import ReactTimeAgo from "react-time-ago";
@@ -27,11 +27,11 @@ const STATUS_LABELS: Record<SystemTaskStatus, string> = {
 };
 
 const STATUS_CLASS_NAMES: Record<SystemTaskStatus, string> = {
-    [SystemTaskStatus.Done]: "bg-green-500 text-white hover:bg-green-500/90",
-    [SystemTaskStatus.Failed]: "bg-red-500 text-white hover:bg-red-500/90",
-    [SystemTaskStatus.InProgress]: "bg-purple-400 text-white hover:bg-purple-400/90",
-    [SystemTaskStatus.NotStarted]: "bg-blue-400 text-white hover:bg-blue-400/90",
-    [SystemTaskStatus.Canceled]: "bg-amber-500 text-white hover:bg-amber-500/90",
+    [SystemTaskStatus.Done]: statusClassName("success"),
+    [SystemTaskStatus.Failed]: statusClassName("failure"),
+    [SystemTaskStatus.InProgress]: statusClassName("progress"),
+    [SystemTaskStatus.NotStarted]: statusClassName("waiting"),
+    [SystemTaskStatus.Canceled]: statusClassName("inactive"),
 };
 
 const STATUS_BORDER_CLASS_NAMES: Record<SystemTaskStatus, string> = {

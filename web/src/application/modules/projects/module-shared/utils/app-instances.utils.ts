@@ -1,3 +1,4 @@
+import { statusClassName, statusDotClassName } from "@components/ui/badge";
 import type { AppServiceTask } from "~/projects/domain";
 
 /** Polling interval shared by every view that watches app service tasks. */
@@ -51,17 +52,17 @@ export function resolveAppReplicasStatus(running: number, desired: number): AppR
 }
 
 export const APP_REPLICAS_STATUS_DOT_CLASS: Record<AppReplicasStatus, string> = {
-    healthy: "bg-green-500",
-    degraded: "bg-orange-500",
-    down: "bg-red-500",
-    over: "bg-blue-500",
+    healthy: statusDotClassName("success"),
+    degraded: statusDotClassName("attention"),
+    down: statusDotClassName("failure"),
+    over: statusDotClassName("info"),
 };
 
 export const APP_REPLICAS_STATUS_BADGE_CLASS: Record<AppReplicasStatus, string> = {
-    healthy: "bg-green-500 text-white",
-    degraded: "bg-orange-500 text-white",
-    down: "bg-red-500 text-white",
-    over: "bg-blue-500 text-white",
+    healthy: statusClassName("success"),
+    degraded: statusClassName("attention"),
+    down: statusClassName("failure"),
+    over: statusClassName("info"),
 };
 
 export function getAppReplicasStatusLabel(running: number, desired: number): string {

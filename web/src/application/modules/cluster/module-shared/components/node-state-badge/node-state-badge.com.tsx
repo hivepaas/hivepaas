@@ -1,7 +1,7 @@
 import { memo } from "react";
 
 import { cn } from "@/lib/utils";
-import { Badge } from "@components/ui/badge";
+import { Badge, statusClassName } from "@components/ui/badge";
 import { ENodeState } from "~/cluster/module-shared/enums";
 
 function View({ state }: Props) {
@@ -13,10 +13,10 @@ function View({ state }: Props) {
     };
 
     const stateColorMap: Record<ENodeState, string> = {
-        [ENodeState.Unknown]: "bg-orange-500 text-white",
-        [ENodeState.Down]: "bg-red-500 text-white",
-        [ENodeState.Ready]: "bg-green-500 text-white",
-        [ENodeState.Disconnected]: "bg-purple-500 text-white",
+        [ENodeState.Unknown]: statusClassName("attention"),
+        [ENodeState.Down]: statusClassName("failure"),
+        [ENodeState.Ready]: statusClassName("success"),
+        [ENodeState.Disconnected]: statusClassName("inactive"),
     };
 
     return (

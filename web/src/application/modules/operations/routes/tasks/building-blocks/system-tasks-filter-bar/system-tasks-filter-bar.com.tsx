@@ -9,7 +9,7 @@ import { type SystemTaskScope, SystemTaskStatus } from "~/operations/domain";
 import { AppsPublicQueries, ProjectsPublicQueries } from "@application/shared/data-public/queries";
 
 import { Avatar } from "@/components/ui/avatar";
-import { Badge } from "@/components/ui/badge";
+import { Badge, statusClassName } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { DateTimePicker } from "@/components/ui/date-time-picker";
@@ -168,11 +168,11 @@ const STATUS_LABELS: Record<SystemTaskStatus, string> = {
 };
 
 const STATUS_BADGE_CLASS_NAMES: Record<SystemTaskStatus, string> = {
-    [SystemTaskStatus.Done]: "bg-green-500 text-white hover:bg-green-500/90",
-    [SystemTaskStatus.Failed]: "bg-red-500 text-white hover:bg-red-500/90",
-    [SystemTaskStatus.InProgress]: "bg-purple-400 text-white hover:bg-purple-400/90",
-    [SystemTaskStatus.NotStarted]: "bg-blue-400 text-white hover:bg-blue-400/90",
-    [SystemTaskStatus.Canceled]: "bg-amber-500 text-white hover:bg-amber-500/90",
+    [SystemTaskStatus.Done]: statusClassName("success"),
+    [SystemTaskStatus.Failed]: statusClassName("failure"),
+    [SystemTaskStatus.InProgress]: statusClassName("progress"),
+    [SystemTaskStatus.NotStarted]: statusClassName("waiting"),
+    [SystemTaskStatus.Canceled]: statusClassName("inactive"),
 };
 
 const ALL_TASK_TYPES_FALLBACK = [

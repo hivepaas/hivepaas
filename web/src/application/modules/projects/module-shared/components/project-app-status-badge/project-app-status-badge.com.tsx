@@ -1,7 +1,7 @@
 import { memo } from "react";
 
 import { cn } from "@/lib/utils";
-import { Badge } from "@components/ui/badge";
+import { Badge, statusClassName } from "@components/ui/badge";
 import { EProjectAppStatus } from "~/projects/module-shared/enums";
 
 import type { OpenApiConstant } from "@infrastructure/api";
@@ -28,11 +28,11 @@ function View({ status }: Props) {
     };
 
     const statusColorMap: Partial<Record<EProjectAppStatus, string>> = {
-        [EProjectAppStatus.Active]: "bg-green-500 text-white",
-        [EProjectAppStatus.Locked]: "bg-orange-500 text-white",
-        [EProjectAppStatus.Disabled]: "bg-red-500 text-white",
-        [EProjectAppStatus.Deleting]: "bg-purple-500 text-white",
-        [EProjectAppStatus.Missing]: "bg-red-500 text-white",
+        [EProjectAppStatus.Active]: statusClassName("success"),
+        [EProjectAppStatus.Locked]: statusClassName("attention"),
+        [EProjectAppStatus.Disabled]: statusClassName("failure"),
+        [EProjectAppStatus.Deleting]: statusClassName("progress"),
+        [EProjectAppStatus.Missing]: statusClassName("failure"),
     };
 
     return (

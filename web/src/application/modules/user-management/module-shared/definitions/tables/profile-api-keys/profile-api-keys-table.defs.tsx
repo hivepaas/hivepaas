@@ -1,4 +1,4 @@
-import { Badge } from "@components/ui/badge";
+import { Badge, statusClassName } from "@components/ui/badge";
 import type { ColumnDef } from "@tanstack/react-table";
 import { format } from "date-fns";
 
@@ -51,10 +51,10 @@ const columns: ColumnDef<ProfileApiKey>[] = [
         cell: ({ row: { original } }) => {
             const { status } = original;
             const statusColorMap: Partial<Record<EProfileApiKeyStatus, string>> = {
-                [EProfileApiKeyStatus.Active]: "bg-green-500",
-                [EProfileApiKeyStatus.Disabled]: "bg-red-500",
-                [EProfileApiKeyStatus.Expired]: "bg-yellow-500",
-                [EProfileApiKeyStatus.Missing]: "bg-red-500",
+                [EProfileApiKeyStatus.Active]: statusClassName("success"),
+                [EProfileApiKeyStatus.Disabled]: statusClassName("failure"),
+                [EProfileApiKeyStatus.Expired]: statusClassName("failure"),
+                [EProfileApiKeyStatus.Missing]: statusClassName("failure"),
             };
             const statusMap: Partial<Record<EProfileApiKeyStatus, string>> = {
                 [EProfileApiKeyStatus.Active]: "Active",

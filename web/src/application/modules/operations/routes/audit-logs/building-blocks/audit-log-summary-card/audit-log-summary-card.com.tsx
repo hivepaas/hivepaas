@@ -8,7 +8,7 @@ import { AuditLogsQueries } from "~/operations/data";
 import { type AuditLog, AuditLogResult, type AuditLogScope } from "~/operations/domain";
 
 import { Avatar } from "@/components/ui/avatar";
-import { Badge } from "@/components/ui/badge";
+import { Badge, statusClassName } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 
 const RESULT_BORDER_CLASS_NAMES: Record<string, string> = {
@@ -17,8 +17,8 @@ const RESULT_BORDER_CLASS_NAMES: Record<string, string> = {
 };
 
 const RESULT_BADGE_CLASS_NAMES: Record<string, string> = {
-    [AuditLogResult.Allowed]: "bg-green-500 text-white hover:bg-green-500/90",
-    [AuditLogResult.Denied]: "bg-red-500 text-white hover:bg-red-500/90",
+    [AuditLogResult.Allowed]: statusClassName("success"),
+    [AuditLogResult.Denied]: statusClassName("failure"),
 };
 
 function formatDateTime(date: Date | null): string {
@@ -42,7 +42,7 @@ export function ResultBadge({ result }: { result: string }) {
         ? RESULT_BADGE_CLASS_NAMES[AuditLogResult.Allowed]
         : isDenied
           ? RESULT_BADGE_CLASS_NAMES[AuditLogResult.Denied]
-          : "bg-slate-500 text-white hover:bg-slate-500/90";
+          : statusClassName("inactive");
 
     const label = isAllowed ? "Allowed" : isDenied ? "Denied" : result;
 

@@ -1,4 +1,4 @@
-import { Badge } from "@components/ui/badge";
+import { Badge, statusClassName } from "@components/ui/badge";
 import { Popover, PopoverContent, PopoverTrigger } from "@components/ui/popover";
 import { cn } from "@lib/utils";
 import type { SystemTaskSequenceRun, SystemTaskSequenceStep } from "~/operations/domain";
@@ -7,11 +7,11 @@ import { SystemTaskSequenceStepStatus } from "~/operations/domain";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui";
 
 const STATUS_CLASS: Record<SystemTaskSequenceStep["status"], string> = {
-    [SystemTaskSequenceStepStatus.Pending]: "bg-muted text-muted-foreground",
-    [SystemTaskSequenceStepStatus.Running]: "bg-purple-500 text-white",
-    [SystemTaskSequenceStepStatus.Done]: "bg-green-600 text-white",
-    [SystemTaskSequenceStepStatus.Failed]: "bg-destructive text-white",
-    [SystemTaskSequenceStepStatus.Skipped]: "bg-amber-500 text-white",
+    [SystemTaskSequenceStepStatus.Pending]: statusClassName("waiting"),
+    [SystemTaskSequenceStepStatus.Running]: statusClassName("progress"),
+    [SystemTaskSequenceStepStatus.Done]: statusClassName("success"),
+    [SystemTaskSequenceStepStatus.Failed]: statusClassName("failure"),
+    [SystemTaskSequenceStepStatus.Skipped]: statusClassName("attention"),
 };
 
 function formatStepDuration(step: SystemTaskSequenceStep, now: Date): string {

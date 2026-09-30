@@ -1,7 +1,7 @@
 import { Fragment, useEffect, useMemo, useState } from "react";
 
 import { cn } from "@/lib/utils";
-import { Badge, type BadgeTone } from "@components/ui/badge";
+import { Badge, type BadgeTone, statusClassName } from "@components/ui/badge";
 import { dashedBorderBox, listBox } from "@lib/styles";
 import { useParams } from "react-router";
 import invariant from "tiny-invariant";
@@ -20,10 +20,10 @@ const TABLE_COLUMN_COUNT = 7;
 const EMPTY_INSTANCES: AppServiceTask[] = [];
 
 const TASK_STATE_CLASS_NAMES: Record<string, string> = {
-    running: "bg-green-500 text-white hover:bg-green-500/90",
-    shutdown: "bg-pink-400 text-white hover:bg-pink-400/90",
-    complete: "bg-purple-500 text-white hover:bg-purple-500/90",
-    failed: "bg-red-500 text-white hover:bg-red-500/90",
+    running: statusClassName("success"),
+    shutdown: statusClassName("inactive"),
+    complete: statusClassName("info"),
+    failed: statusClassName("failure"),
 };
 
 const NODE_ROLE_TONES: Record<string, BadgeTone> = {
@@ -150,7 +150,7 @@ function StateBadge({ state }: { state: string | null | undefined }) {
     }
 
     const normalizedState = normalize(state);
-    const className = TASK_STATE_CLASS_NAMES[normalizedState] ?? "bg-cyan-500 text-white hover:bg-cyan-500/90";
+    const className = TASK_STATE_CLASS_NAMES[normalizedState] ?? statusClassName("info");
 
     return <Badge className={cn("h-7 px-3", className)}>{formatStateLabel(state)}</Badge>;
 }

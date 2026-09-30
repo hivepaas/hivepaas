@@ -1,6 +1,7 @@
 import React from "react";
 
-import { Badge } from "@components/ui/badge";
+import { Badge, statusClassName } from "@components/ui/badge";
+import { cn } from "@lib/utils";
 import { type AppSettingMount, SETTING_MOUNT_REASONS, type SettingMountReason } from "~/projects/domain";
 
 function reasonText(reason: string): string {
@@ -18,7 +19,7 @@ function View({ settingMount }: Props) {
     if (state.reason) {
         return (
             <div className="flex flex-col gap-1">
-                <Badge className="w-fit bg-amber-500 text-white">Not mounted</Badge>
+                <Badge className={cn("w-fit", statusClassName("attention"))}>Not mounted</Badge>
                 <span className="text-xs text-muted-foreground">{reasonText(state.reason)}</span>
             </div>
         );
@@ -26,7 +27,7 @@ function View({ settingMount }: Props) {
 
     return (
         <div className="flex flex-col gap-1">
-            <Badge className="w-fit bg-green-600 text-white">Mounted</Badge>
+            <Badge className={cn("w-fit", statusClassName("success"))}>Mounted</Badge>
             {state.mounted.map(path => (
                 <code
                     key={path}

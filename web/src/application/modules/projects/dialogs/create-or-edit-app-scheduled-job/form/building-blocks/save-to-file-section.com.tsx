@@ -167,7 +167,7 @@ export function SaveToFileSection({ projectId, env, readOnly = false }: Props) {
                 )}
 
                 <InfoBlock
-                    title="Save File in Cloud Storage"
+                    title="Cloud Storage (optional)"
                     titleWidth={220}
                 >
                     <FieldGroup>
@@ -198,6 +198,12 @@ export function SaveToFileSection({ projectId, env, readOnly = false }: Props) {
                             >
                                 Configure Cloud Storages
                             </AppLink.Modules>
+                            {/* Where the file goes is not obvious from an empty select. */}
+                            <p className="text-xs text-muted-foreground">
+                                {storage.value
+                                    ? "The file is uploaded to this storage's bucket."
+                                    : "With no storage selected, the file is kept on the project's default volume and can be downloaded from the app's Data Files."}
+                            </p>
                         </Field>
                     </FieldGroup>
                 </InfoBlock>

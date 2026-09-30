@@ -103,6 +103,31 @@ func TestApplyAppConfig(t *testing.T) {
 		assert.Equal(t, "5432", labels["traefik.tcp.services.tcp-svc-my-app-2.loadbalancer.server.port"])
 	})
 
+	t.Run("TCP domain ending TLS accepts PostgreSQL's ALPN", func(t *testing.T) {
+		data := &appConfigData{
+			ApplyAppConfigReq: &traefikservice.ApplyAppConfigReq{
+				App:             &entity.App{Key: "my_db"},
+				RoutingSettings: &entity.AppRoutingSettings{Port: 5432},
+			},
+		}
+		domain := &entity.AppDomain{
+			Enabled:  true,
+			Domain:   "db.myapp.com",
+			Protocol: base.NetworkProtocolTCP,
+		}
+		labels := map[string]string{}
+		traefikConfig := &AppTraefikConfig{}
+
+		err := s.collectDomainConfig(domain, 0, labels, traefikConfig, data)
+		assert.NoError(t, err)
+
+		assert.Equal(t, "tcp-my-db@file", labels["traefik.tcp.routers.tcp-router-my-db-0.tls.options"])
+		assert.NotContains(t, labels, "traefik.tcp.routers.tcp-router-my-db-0.tls.passthrough")
+		assert.True(t, data.hasFileConfig)
+		assert.Contains(t, traefikConfig.TLS.Options["tcp-my-db"].ALPNProtocols, "postgresql")
+		assert.Contains(t, traefikConfig.TLS.Options["tcp-my-db"].ALPNProtocols, "http/1.1")
+	})
+
 	t.Run("ExposePublicly disabled cleans labels", func(t *testing.T) {
 		app := &entity.App{
 			Key: "my_app",

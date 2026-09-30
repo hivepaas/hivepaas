@@ -187,7 +187,10 @@ func kindEnvVars(kindSettings *entity.AppKindSettings) ([]*envvarservice.EnvVar,
 				},
 			},
 			sharedEnv(base.AppSystemEnvVarDatabaseName, db.DbName),
-			sharedEnv(base.AppSystemEnvVarSSLMode, string(db.SSLMode)),
+			// Left unset, it is "disable", as the dashboard shows it: an empty
+			// value makes libpq refuse the URL it ends up in ("sslmode=").
+			sharedEnv(base.AppSystemEnvVarSSLMode,
+				string(gofn.Coalesce(db.SSLMode, base.DatabaseSslModeDisable))),
 		}, nil
 
 	case kindSettings.Category == base.AppCategoryStorage && kindSettings.Storage != nil:

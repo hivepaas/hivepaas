@@ -45,6 +45,22 @@ func TestKindEnvVars_Database(t *testing.T) {
 		"the root password stays with the app that owns it")
 }
 
+func TestKindEnvVars_DatabaseSSLModeUnsetIsDisable(t *testing.T) {
+	kind := &entity.AppKindSettings{
+		Category: base.AppCategoryDatabase,
+		Engine:   "postgres",
+		Database: &entity.AppKindDatabase{DbName: "app", Username: "app"},
+	}
+
+	envs, err := kindEnvVars(kind)
+	assert.NoError(t, err)
+
+	byKey := envByKey(t, envs)
+	assert.Equal(t, string(base.DatabaseSslModeDisable), byKey[base.AppSystemEnvVarSSLMode].Value,
+		"libpq refuses an empty sslmode")
+	assert.True(t, byKey[base.AppSystemEnvVarSSLMode].IsShared)
+}
+
 func TestKindEnvVars_Cache(t *testing.T) {
 	kind := &entity.AppKindSettings{
 		Category: base.AppCategoryCache,

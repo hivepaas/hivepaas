@@ -39,7 +39,7 @@ type appConfigData struct {
 	*traefikservice.ApplyAppConfigReq
 	confData         *AppTraefikConfig
 	traefikSvc       *swarm.Service
-	hasCerts         bool
+	hasFileConfig    bool
 	tcpPortsNeedOpen []string
 
 	// proxySettings is nil until something in this apply needs to know which
@@ -52,7 +52,12 @@ type AppTraefikConfig struct {
 }
 
 type AppTraefikTLS struct {
-	Certificates []AppTraefikTLSCertificate `yaml:"certificates,omitempty"`
+	Certificates []AppTraefikTLSCertificate       `yaml:"certificates,omitempty"`
+	Options      map[string]*AppTraefikTLSOptions `yaml:"options,omitempty"`
+}
+
+type AppTraefikTLSOptions struct {
+	ALPNProtocols []string `yaml:"alpnProtocols,omitempty"`
 }
 
 type AppTraefikTLSCertificate struct {
@@ -94,7 +99,7 @@ func (s *service) ApplyAppConfig(
 	s.updateSwarmServiceLabels(data.Service, labels)
 
 	// 3. Write or delete YAML file
-	if data.hasCerts {
+	if data.hasFileConfig {
 		err := s.writeAppConfigFile(data)
 		if err != nil {
 			return nil, hperrors.Wrap(err)
@@ -185,10 +190,13 @@ func (s *service) collectDomainConfig(
 
 		if domain.TLSPassthrough {
 			labels[fmt.Sprintf("traefik.tcp.routers.%s.tls.passthrough", routerName)] = labelValueTrue
-		} else if domain.SSLCert.ID != "" {
+		} else {
 			if s.addTLSCertificate(traefikConfig, domain.SSLCert.ID) {
-				data.hasCerts = true
+				data.hasFileConfig = true
 			}
+			optionsName := s.addTCPTLSOptions(traefikConfig, appKey)
+			labels[fmt.Sprintf("traefik.tcp.routers.%s.tls.options", routerName)] = optionsName + "@file"
+			data.hasFileConfig = true
 		}
 
 		labels[fmt.Sprintf("traefik.tcp.services.%s.loadbalancer.server.port", serviceName)] = strconv.Itoa(containerPort)
@@ -279,7 +287,7 @@ func (s *service) collectDomainConfig(
 	}
 
 	if s.addTLSCertificate(traefikConfig, domain.SSLCert.ID) {
-		data.hasCerts = true
+		data.hasFileConfig = true
 	}
 
 	return nil
@@ -774,6 +782,30 @@ func (s *service) addTLSCertificate(
 		})
 	}
 	return true
+}
+
+// tcpTLSALPNProtocols are the protocols a TCP router ending TLS accepts in the
+// handshake: Traefik's defaults, and PostgreSQL's. libpq 17 and later ask for
+// "postgresql", and give up on a server that picks none of what they offered -
+// which Traefik's default options do, as they do not list it.
+var tcpTLSALPNProtocols = []string{"postgresql", "h2", "http/1.1", "acme-tls/1"}
+
+// addTCPTLSOptions adds the TLS options the app's TCP routers ending TLS use,
+// and returns their name. It is the app's own, as the options live in the app's
+// file, and two files defining the same options would conflict.
+func (s *service) addTCPTLSOptions(
+	traefikConfig *AppTraefikConfig,
+	appKey string,
+) string {
+	name := "tcp-" + appKey
+	if traefikConfig.TLS == nil {
+		traefikConfig.TLS = &AppTraefikTLS{}
+	}
+	if traefikConfig.TLS.Options == nil {
+		traefikConfig.TLS.Options = map[string]*AppTraefikTLSOptions{}
+	}
+	traefikConfig.TLS.Options[name] = &AppTraefikTLSOptions{ALPNProtocols: tcpTLSALPNProtocols}
+	return name
 }
 
 func (s *service) writeAppConfigFile(

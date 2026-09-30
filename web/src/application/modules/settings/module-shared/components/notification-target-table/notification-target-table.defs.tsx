@@ -1,23 +1,12 @@
-import { Badge, type BadgeTone } from "@components/ui/badge";
+import { Badge } from "@components/ui/badge";
 import type { ColumnDef } from "@tanstack/react-table";
 import { format } from "date-fns";
 import type { SettingNotification } from "~/settings/domain";
 import { SettingStatusBadge } from "~/settings/module-shared/components";
+import { channelTone } from "~/settings/module-shared/constants";
 
 import { NotificationTargetEditCell, NotificationTargetMenuCell } from "./building-blocks";
 import type { NotificationTargetTableScope } from "./notification-target-table.types";
-
-/** The color of a target's badge, by the kind of target. */
-const TARGET_TONES: Record<string, BadgeTone> = {
-    email: "blue",
-    slack: "purple",
-    discord: "indigo",
-    telegram: "sky",
-    lark: "teal",
-};
-
-/** A kind of target added later, until it is given a color of its own. */
-const OTHER_TARGET_TONE: BadgeTone = "amber";
 
 function getTargets(notification: SettingNotification): string[] {
     const targets: string[] = [];
@@ -53,7 +42,7 @@ function TargetBadges({ notification }: { notification: SettingNotification }) {
             {targets.map(target => (
                 <Badge
                     key={target}
-                    tone={TARGET_TONES[target] ?? OTHER_TARGET_TONE}
+                    tone={channelTone(target)}
                 >
                     {target}
                 </Badge>

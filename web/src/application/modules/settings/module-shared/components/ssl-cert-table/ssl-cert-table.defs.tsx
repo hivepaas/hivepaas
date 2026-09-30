@@ -13,6 +13,7 @@ import type { SslCertTableScope } from "./ssl-cert-table.types";
 function getCertTypeTone(certType: SettingSslCert["certType"]): BadgeTone {
     switch (certType) {
         case ESslCertType.Custom:
+            return "blue";
         case ESslCertType.SelfSigned:
             return "neutral";
         default:

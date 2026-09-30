@@ -137,7 +137,11 @@ function createColumns(scope: BackupSnapshotScope, actions: BackupSnapshotRowAct
                 if (original.app.deleted) {
                     return <span className="text-muted-foreground">Deleted app</span>;
                 }
-                return `${original.app.name} (${original.app.env})`;
+                return (
+                    <Badge tone="cyan">
+                        {original.app.name} ({original.app.env})
+                    </Badge>
+                );
             },
         });
     }

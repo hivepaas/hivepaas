@@ -37,7 +37,17 @@ function createColumns(scope: RegistryAuthTableScope): ColumnDef<SettingRegistry
             accessorKey: "address",
             header: "Address",
             enableSorting: true,
-            cell: ({ row: { original } }) => <div className="break-all">{original.address || "-"}</div>,
+            cell: ({ row: { original } }) =>
+                original.address ? (
+                    <Badge
+                        tone="neutral"
+                        className="font-mono max-w-full whitespace-normal break-all"
+                    >
+                        {original.address}
+                    </Badge>
+                ) : (
+                    "-"
+                ),
         },
         {
             accessorKey: "username",

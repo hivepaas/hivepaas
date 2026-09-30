@@ -37,6 +37,17 @@ function createColumns(scope: KeyAuthTableScope): ColumnDef<SettingKeyAuth>[] {
             accessorKey: "keyId",
             header: "Key ID",
             enableSorting: true,
+            cell: ({ row: { original } }) =>
+                original.keyId ? (
+                    <Badge
+                        tone="neutral"
+                        className="font-mono"
+                    >
+                        {original.keyId}
+                    </Badge>
+                ) : (
+                    "-"
+                ),
         },
         {
             accessorKey: "status",

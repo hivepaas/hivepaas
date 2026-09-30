@@ -37,7 +37,7 @@ function createColumns(scope: AcmeDnsProviderTableScope): ColumnDef<SettingAcmeD
         {
             accessorKey: "kind",
             header: "Provider",
-            cell: ({ row: { original } }) => formatAcmeDnsProviderKind(original.kind),
+            cell: ({ row: { original } }) => <Badge tone="indigo">{formatAcmeDnsProviderKind(original.kind)}</Badge>,
         },
         {
             accessorKey: "status",

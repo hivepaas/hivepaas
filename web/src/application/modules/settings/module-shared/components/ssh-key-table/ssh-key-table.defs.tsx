@@ -4,6 +4,8 @@ import { format } from "date-fns";
 import type { SettingSSHKey } from "~/settings/domain";
 import { SettingStatusBadge } from "~/settings/module-shared/components";
 
+import { ESSHKeyKind } from "@application/shared/enums";
+
 import { SSHKeyEditCell, SSHKeyMenuCell } from "./building-blocks";
 import type { SSHKeyTableScope } from "./ssh-key-table.types";
 
@@ -15,6 +17,20 @@ function formatKeyType(keyType?: string) {
     }
 
     return keyType;
+}
+
+/** The color of a key's algorithm; one not named, or not known, is neutral. */
+function keyTypeTone(keyType?: string): BadgeTone {
+    switch (keyType?.toLowerCase()) {
+        case "ed25519":
+            return "emerald";
+        case "rsa":
+            return "amber";
+        case "ecdsa":
+            return "blue";
+        default:
+            return "neutral";
+    }
 }
 
 function createColumns(scope: SSHKeyTableScope): ColumnDef<SettingSSHKey>[] {
@@ -42,18 +58,22 @@ function createColumns(scope: SSHKeyTableScope): ColumnDef<SettingSSHKey>[] {
         {
             accessorKey: "kind",
             header: "Type",
-            cell: ({ row: { original } }) => {
-                if (!original.kind) return "-";
-
-                return <Badge tone={SSH_KEY_KIND_BADGE_TONE}>{original.kind}</Badge>;
-            },
+            // A key stored with no kind is a plain git key: the form shows it as one.
+            cell: ({ row: { original } }) => (
+                <Badge tone={SSH_KEY_KIND_BADGE_TONE}>{original.kind ? original.kind : ESSHKeyKind.Git}</Badge>
+            ),
         },
         {
             accessorKey: "keyType",
             header: "Key Type",
-            cell: ({ row: { original } }) => {
-                return formatKeyType(original.keyType);
-            },
+            cell: ({ row: { original } }) => (
+                <Badge
+                    tone={keyTypeTone(original.keyType)}
+                    className="font-mono"
+                >
+                    {formatKeyType(original.keyType)}
+                </Badge>
+            ),
         },
         {
             accessorKey: "status",

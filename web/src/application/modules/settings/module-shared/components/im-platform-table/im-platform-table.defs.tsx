@@ -1,8 +1,9 @@
-import { Badge, type BadgeTone } from "@components/ui/badge";
+import { Badge } from "@components/ui/badge";
 import type { ColumnDef } from "@tanstack/react-table";
 import { format } from "date-fns";
 import type { SettingImService } from "~/settings/domain";
 import { SettingStatusBadge } from "~/settings/module-shared/components";
+import { channelTone } from "~/settings/module-shared/constants";
 
 import { EImServiceKind } from "@application/shared/enums";
 
@@ -21,21 +22,6 @@ function formatKind(kind: SettingImService["kind"]): string {
             return "Lark";
         default:
             return kind;
-    }
-}
-
-function getKindTone(kind: SettingImService["kind"]): BadgeTone {
-    switch (kind) {
-        case EImServiceKind.Slack:
-            return "lime";
-        case EImServiceKind.Discord:
-            return "blue";
-        case EImServiceKind.Telegram:
-            return "cyan";
-        case EImServiceKind.Lark:
-            return "sky";
-        default:
-            return "neutral";
     }
 }
 
@@ -74,7 +60,7 @@ function createColumns(scope: ImPlatformTableScope): ColumnDef<SettingImService>
             },
             cell: ({ row: { original } }) => (
                 <div className="flex justify-center">
-                    <Badge tone={getKindTone(original.kind)}>{formatKind(original.kind)}</Badge>
+                    <Badge tone={channelTone(original.kind)}>{formatKind(original.kind)}</Badge>
                 </div>
             ),
         },

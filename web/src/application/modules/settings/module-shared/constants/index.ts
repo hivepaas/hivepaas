@@ -4,3 +4,4 @@ export * from "./settings-form-layout.constants";
 export * from "./ssl-provider.constants";
 export * from "./acme-dns-provider.constants";
 export * from "./repo-webhook.constants";
+export * from "./channel-tones.constants";

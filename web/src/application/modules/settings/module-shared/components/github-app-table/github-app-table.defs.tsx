@@ -37,7 +37,8 @@ function createColumns(scope: GithubAppTableScope): ColumnDef<SettingGithubApp>[
             accessorKey: "organization",
             header: "Organization",
             enableSorting: true,
-            cell: ({ row: { original } }) => original.organization || "-",
+            cell: ({ row: { original } }) =>
+                original.organization ? <Badge tone="sky">{original.organization}</Badge> : "-",
         },
         {
             accessorKey: "appId",

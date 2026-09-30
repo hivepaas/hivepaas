@@ -35,6 +35,22 @@ message ImageBuildReq {
   // the build adds. An agent older than the server ignores them and pushes the
   // commit tag alone.
   repeated string image_tags = 12;
+  // What the build takes from settings, resolved by the app, which has the key
+  // stored secrets are opened with. The agent has none and opens nothing.
+  ImageBuildInputs inputs = 13;
+}
+
+message ImageBuildInputs {
+  map<string, string> env_vars = 1;
+  repeated ImageBuildRegistryAuth registry_auths = 2;
+  ImageBuildRegistryAuth push_registry = 3;  // unset when the image is not pushed
+  repeated string secrets = 4;               // values to keep out of the logs
+}
+
+message ImageBuildRegistryAuth {
+  string address = 1;
+  string username = 2;
+  string password = 3;
 }
 
 message DeploymentDockerfile {

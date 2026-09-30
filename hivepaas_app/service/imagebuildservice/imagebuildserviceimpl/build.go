@@ -6,7 +6,6 @@ import (
 
 	"github.com/moby/moby/api/types/registry"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/tasklog"
@@ -16,6 +15,8 @@ import (
 type imageBuildData struct {
 	*imagebuildservice.ImageBuildReq
 	Resp *imagebuildservice.ImageBuildResp
+
+	Inputs *imagebuildservice.BuildInputs
 
 	ImageTags     []string
 	EnvVars       map[string]*string
@@ -42,9 +43,14 @@ func (s *service) ImageBuild(
 		}
 	}()
 
-	err = s.loadBuildData(ctx, db, data)
+	data.Inputs, err = s.buildInputs(ctx, db, req)
 	if err != nil {
 		return nil, hperrors.Wrap(err)
+	}
+	data.EnvVars = data.Inputs.EnvVars
+	data.RegistryAuths = data.Inputs.RegistryAuths
+	if len(data.Inputs.Secrets) > 0 {
+		data.LogStore.UpdateRedactorAddSecrets(data.Inputs.Secrets)
 	}
 
 	err = s.imageBuild(ctx, db, data)
@@ -63,22 +69,4 @@ func (s *service) ImageBuild(
 	}
 
 	return resp, err
-}
-
-func (s *service) loadBuildData(
-	ctx context.Context,
-	db database.IDB,
-	data *imageBuildData,
-) error {
-	refIDs := &entity.RefObjectIDs{}
-	if data.PushToRegistry.ID != "" {
-		refIDs.RefSettingIDs = append(refIDs.RefSettingIDs, data.PushToRegistry.ID)
-	}
-
-	err := s.settingService.LoadRefObjectsByIDs(ctx, db, &data.RefObjects, data.App.GetObjectScope(),
-		true, refIDs)
-	if err != nil {
-		return hperrors.Wrap(err)
-	}
-	return nil
 }

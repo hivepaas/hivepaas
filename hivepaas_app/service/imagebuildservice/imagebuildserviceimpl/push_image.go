@@ -24,11 +24,10 @@ func (s *service) imagePush(
 	_ = data.LogStore.Add(ctx, tasklog.NewOutFrame("Start pushing image to registry...",
 		tasklog.TsNow))
 
-	regAuth := data.RefObjects.RefSettings[data.PushToRegistry.ID]
-	if regAuth == nil {
+	if data.Inputs.PushRegistry == nil {
 		return hperrors.NewMissing("Registry auth setting")
 	}
-	regAuthHeader, err := regAuth.MustAsRegistryAuth().GenerateAuthHeader()
+	regAuthHeader, err := pushAuthHeader(data.Inputs)
 	if err != nil {
 		return hperrors.Wrap(err)
 	}

@@ -5,19 +5,21 @@ import (
 
 	"github.com/tiendc/gofn"
 
+	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/envutil"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/envvarservice"
 )
 
+// calcBuildEnvVars is an app's build variables, and the secret values in them.
 func (s *service) calcBuildEnvVars(
 	ctx context.Context,
 	db database.IDB,
-	data *imageBuildData,
-) (map[string]*string, error) {
+	app *entity.App,
+) (envVars map[string]*string, secretValues []string, err error) {
 	envResp, err := s.envVarService.BuildEnvVarsInApp(ctx, db, &envvarservice.BuildEnvVarsInAppReq{
-		App: data.App,
+		App: app,
 		LoadOptions: envvarservice.EnvLoadOptions{
 			BuildPhase: true,
 		},
@@ -26,29 +28,26 @@ func (s *service) calcBuildEnvVars(
 		},
 	})
 	if err != nil {
-		return nil, hperrors.Wrap(err)
+		return nil, nil, hperrors.Wrap(err)
 	}
 
-	if len(envResp.EnvVars) > 0 {
-		secrets := make(map[string]struct{}, 10) //nolint:mnd
-		for _, env := range envResp.EnvVars {
-			for secret := range env.RefSecrets {
-				plainSecret, err := secret.Value.GetPlain()
-				if err != nil {
-					return nil, hperrors.Wrap(err)
-				}
-				secrets[plainSecret] = struct{}{}
+	secrets := make(map[string]struct{}, 10) //nolint:mnd
+	for _, env := range envResp.EnvVars {
+		for secret := range env.RefSecrets {
+			plainSecret, err := secret.Value.GetPlain()
+			if err != nil {
+				return nil, nil, hperrors.Wrap(err)
 			}
+			secrets[plainSecret] = struct{}{}
 		}
-		data.LogStore.UpdateRedactorAddSecrets(gofn.MapKeys(secrets))
 	}
 
-	result := make(map[string]*string, len(envResp.EnvVars))
+	envVars = make(map[string]*string, len(envResp.EnvVars))
 	for _, envVar := range envResp.EnvVars {
-		result[envVar.Key] = &envVar.Value
+		envVars[envVar.Key] = &envVar.Value
 	}
 
-	return result, nil
+	return envVars, gofn.MapKeys(secrets), nil
 }
 
 func (s *service) calcSafeEnvVars() []string {

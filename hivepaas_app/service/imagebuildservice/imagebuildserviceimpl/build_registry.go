@@ -10,22 +10,25 @@ import (
 	"github.com/moby/moby/api/types/registry"
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
+	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
 )
 
+// calcBuildRegistryAuths is the project's registries by address, with their
+// passwords opened, and those passwords.
 func (s *service) calcBuildRegistryAuths(
 	ctx context.Context,
 	db database.IDB,
-	data *imageBuildData,
-) (map[string]registry.AuthConfig, error) {
-	settings, _, err := s.settingRepo.List(ctx, db, data.App.Project.GetObjectScope(), nil,
+	app *entity.App,
+) (map[string]registry.AuthConfig, []string, error) {
+	settings, _, err := s.settingRepo.List(ctx, db, app.Project.GetObjectScope(), nil,
 		bunex.SelectWhere("setting.type = ?", base.SettingTypeRegistryAuth),
 		bunex.SelectWhere("setting.status = ?", base.SettingStatusActive),
 	)
 	if err != nil {
-		return nil, hperrors.Wrap(err)
+		return nil, nil, hperrors.Wrap(err)
 	}
 
 	result := make(map[string]registry.AuthConfig, len(settings))
@@ -33,11 +36,11 @@ func (s *service) calcBuildRegistryAuths(
 	for _, setting := range settings {
 		regAuth, err := setting.AsRegistryAuth()
 		if err != nil {
-			return nil, hperrors.Wrap(err)
+			return nil, nil, hperrors.Wrap(err)
 		}
 		password, err := regAuth.Password.GetPlain()
 		if err != nil {
-			return nil, hperrors.Wrap(err)
+			return nil, nil, hperrors.Wrap(err)
 		}
 		if password != "" {
 			secrets = append(secrets, password)
@@ -49,11 +52,7 @@ func (s *service) calcBuildRegistryAuths(
 		}
 	}
 
-	if data.LogStore != nil && len(secrets) > 0 {
-		data.LogStore.UpdateRedactorAddSecrets(secrets)
-	}
-
-	return result, nil
+	return result, secrets, nil
 }
 
 func (s *service) prepareDockerConfigDir(

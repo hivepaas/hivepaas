@@ -11,6 +11,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/logging/mocks"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/srcpack"
@@ -30,6 +31,14 @@ func packedSource(t *testing.T) *bytes.Buffer {
 		t.Fatal(err)
 	}
 	return &packed
+}
+
+// givenInputs is a build request as the app sends it: with its inputs resolved.
+func givenInputs(taskID string) *imagebuildagentdto.ImageBuildReq {
+	return &imagebuildagentdto.ImageBuildReq{
+		TaskID:        taskID,
+		ImageBuildReq: imagebuildservice.ImageBuildReq{Inputs: &imagebuildservice.BuildInputs{}},
+	}
 }
 
 // leftovers are the build directories still in the agent's temporary directory.
@@ -59,7 +68,7 @@ func TestTheBuildRunsOnTheSourceItWasSent(t *testing.T) {
 	uc := New(&mocks.Logger{}, nil, nil, nil, mockSvc).WithTempBaseDir(tempBase)
 
 	resp, err := uc.ImageBuildFromSource(context.Background(),
-		&imagebuildagentdto.ImageBuildReq{TaskID: "t1"}, packedSource(t))
+		givenInputs("t1"), packedSource(t))
 
 	assert.NoError(t, err)
 	if assert.NotNil(t, resp) {
@@ -83,7 +92,7 @@ func TestTheSourceIsRemovedAfterAFailedBuild(t *testing.T) {
 	uc := New(&mocks.Logger{}, nil, nil, nil, mockSvc).WithTempBaseDir(tempBase)
 
 	_, err := uc.ImageBuildFromSource(context.Background(),
-		&imagebuildagentdto.ImageBuildReq{TaskID: "t1"}, packedSource(t))
+		givenInputs("t1"), packedSource(t))
 
 	assert.ErrorContains(t, err, "the Dockerfile does not build")
 	assert.Empty(t, leftovers(t, tempBase))
@@ -103,9 +112,32 @@ func TestASourceThatDoesNotUnpackIsNotBuilt(t *testing.T) {
 	uc := New(&mocks.Logger{}, nil, nil, nil, mockSvc).WithTempBaseDir(tempBase)
 
 	_, err := uc.ImageBuildFromSource(context.Background(),
-		&imagebuildagentdto.ImageBuildReq{TaskID: "t1"}, strings.NewReader("not a packed source"))
+		givenInputs("t1"), strings.NewReader("not a packed source"))
 
 	assert.Error(t, err)
+	assert.False(t, built)
+	assert.Empty(t, leftovers(t, tempBase))
+}
+
+// An agent has no key to open a stored secret with. A build that comes without
+// its inputs is refused before anything is unpacked, rather than failing later
+// on the first secret it would have to open.
+func TestABuildWithoutItsInputsIsRefused(t *testing.T) {
+	tempBase := t.TempDir()
+	built := false
+	mockSvc := &mockImageBuildService{
+		buildFunc: func(context.Context, database.IDB, *imagebuildservice.ImageBuildReq) (
+			*imagebuildservice.ImageBuildResp, error) {
+			built = true
+			return &imagebuildservice.ImageBuildResp{}, nil
+		},
+	}
+	uc := New(&mocks.Logger{}, nil, nil, nil, mockSvc).WithTempBaseDir(tempBase)
+
+	_, err := uc.ImageBuildFromSource(context.Background(),
+		&imagebuildagentdto.ImageBuildReq{TaskID: "t1"}, packedSource(t))
+
+	assert.ErrorIs(t, err, hperrors.ErrMissing)
 	assert.False(t, built)
 	assert.Empty(t, leftovers(t, tempBase))
 }

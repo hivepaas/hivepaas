@@ -15,6 +15,7 @@ import (
 	agentproto "github.com/hivepaas/hivepaas/hivepaas_app/interface/agent/proto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/safego"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/tasklog"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/imagebuildservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecaseagent/imagebuildagentuc/imagebuildagentdto"
 )
 
@@ -63,6 +64,12 @@ func (c *grpcImageBuildServiceClient) ImageBuild(
 	req *imagebuildagentdto.ImageBuildReq,
 	sendSource func(w io.Writer) error,
 ) (*imagebuildagentdto.ImageBuildResp, error) {
+	// The agent cannot open a stored secret: what the build reads from settings
+	// goes with the request, resolved here.
+	if req.Inputs == nil {
+		return nil, hperrors.NewMissing("Image build inputs")
+	}
+
 	// Canceling ends the call on the agent, which then drops the source it has.
 	authCtx, cancel := client.CreateAuthCtxWithCancel(ctx)
 	defer cancel()
@@ -116,6 +123,7 @@ func (c *grpcImageBuildServiceClient) ImageBuild(
 		ImageBuildSettings: protoBuildSettings,
 		NoCache:            req.NoCache,
 		BuildId:            req.BuildID,
+		Inputs:             inputsToProto(req.Inputs),
 	}
 
 	stream, err := c.protoClient.ImageBuildFromSource(authCtx)
@@ -148,6 +156,29 @@ func (c *grpcImageBuildServiceClient) ImageBuild(
 		return nil, hperrors.Wrap(recvErr)
 	}
 	return respDTO, nil
+}
+
+func inputsToProto(inputs *imagebuildservice.BuildInputs) *agentproto.ImageBuildInputs {
+	out := &agentproto.ImageBuildInputs{
+		EnvVars: make(map[string]string, len(inputs.EnvVars)),
+		Secrets: inputs.Secrets,
+	}
+	for key, value := range inputs.EnvVars {
+		if value != nil {
+			out.EnvVars[key] = *value
+		}
+	}
+	for _, auth := range inputs.RegistryAuths {
+		out.RegistryAuths = append(out.RegistryAuths, &agentproto.ImageBuildRegistryAuth{
+			Address: auth.ServerAddress, Username: auth.Username, Password: auth.Password,
+		})
+	}
+	if push := inputs.PushRegistry; push != nil {
+		out.PushRegistry = &agentproto.ImageBuildRegistryAuth{
+			Address: push.ServerAddress, Username: push.Username, Password: push.Password,
+		}
+	}
+	return out
 }
 
 // sendBuild sends the request, then the source in chunks, then ends the sending

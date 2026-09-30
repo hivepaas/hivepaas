@@ -32,6 +32,12 @@ func (m *mockImageBuildService) ImageBuild(
 	return &imagebuildservice.ImageBuildResp{}, nil
 }
 
+func (m *mockImageBuildService) ResolveBuildInputs(
+	context.Context, database.IDB, *imagebuildservice.ImageBuildReq,
+) (*imagebuildservice.BuildInputs, error) {
+	panic("an agent has no key to open a secret with: it must not resolve a build's inputs")
+}
+
 func (m *mockImageBuildService) SelectBuildWorkerNode(
 	ctx context.Context,
 	buildSetting *entity.ImageBuildSettings,

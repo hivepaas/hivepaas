@@ -12,6 +12,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/moby/moby/api/types/registry"
 	"github.com/stretchr/testify/assert"
 	"google.golang.org/grpc"
 
@@ -112,6 +113,14 @@ func checkout(t *testing.T) (dir string, big []byte) {
 	return dir, big
 }
 
+// withInputs is a build request as the app sends it: with its inputs resolved.
+func withInputs() *imagebuildagentdto.ImageBuildReq {
+	return &imagebuildagentdto.ImageBuildReq{
+		TaskID:        "t1",
+		ImageBuildReq: imagebuildservice.ImageBuildReq{Inputs: &imagebuildservice.BuildInputs{}},
+	}
+}
+
 func sendDir(dir string) func(io.Writer) error {
 	return func(w io.Writer) error {
 		_, err := srcpack.Pack(context.Background(), dir, w)
@@ -143,6 +152,18 @@ func TestAnAgentBuildsTheSourceItIsSent(t *testing.T) {
 	}}
 	c, tempBase := startAgent(t, svc)
 
+	npmToken := "tok-123"
+	inputs := &imagebuildservice.BuildInputs{
+		EnvVars: map[string]*string{"NPM_TOKEN": &npmToken},
+		RegistryAuths: map[string]registry.AuthConfig{
+			"docker.io": {Username: "puller", Password: "pull-pass", ServerAddress: "docker.io"},
+		},
+		PushRegistry: &registry.AuthConfig{
+			Username: "hivepaas", Password: "push-pass", ServerAddress: "registry.example.com",
+		},
+		Secrets: []string{"tok-123", "pull-pass", "push-pass"},
+	}
+
 	var logs []string
 	resp, err := c.ImageBuild(context.Background(), &imagebuildagentdto.ImageBuildReq{
 		TaskID: "t1",
@@ -153,6 +174,7 @@ func TestAnAgentBuildsTheSourceItIsSent(t *testing.T) {
 			BuildID:    "b1",
 			// The app's own directory, which the agent must not be told to use.
 			CheckoutDir: dir,
+			Inputs:      inputs,
 		},
 		SendLog: func(frames []*tasklog.LogFrame) error {
 			for _, f := range frames {
@@ -173,6 +195,8 @@ func TestAnAgentBuildsTheSourceItIsSent(t *testing.T) {
 		assert.Equal(t, "Dockerfile", got.Dockerfile.Path)
 		assert.Equal(t, "b1", got.BuildID)
 		assert.NotEqual(t, dir, got.CheckoutDir)
+		// What the app resolved arrives whole: the agent opens no secret itself.
+		assert.Equal(t, inputs, got.Inputs)
 	}
 	assert.Equal(t, big, gotBig)
 	assert.Empty(t, sourcesLeft(t, tempBase))
@@ -187,7 +211,7 @@ func TestAFailedBuildGivesTheAgentsReason(t *testing.T) {
 	}}
 	c, tempBase := startAgent(t, svc)
 
-	_, err := c.ImageBuild(context.Background(), &imagebuildagentdto.ImageBuildReq{TaskID: "t1"}, sendDir(dir))
+	_, err := c.ImageBuild(context.Background(), withInputs(), sendDir(dir))
 
 	assert.ErrorContains(t, err, "Dockerfile")
 	assert.NotErrorIs(t, err, io.EOF)
@@ -214,7 +238,7 @@ func TestACanceledBuildLeavesNoSourceOnTheAgent(t *testing.T) {
 		<-building
 		cancel()
 	}()
-	_, err := c.ImageBuild(ctx, &imagebuildagentdto.ImageBuildReq{TaskID: "t1"}, sendDir(dir))
+	_, err := c.ImageBuild(ctx, withInputs(), sendDir(dir))
 
 	assert.Error(t, err)
 	select {
@@ -235,7 +259,7 @@ func TestASourceThatFailsToPackIsNotBuilt(t *testing.T) {
 	}}
 	c, tempBase := startAgent(t, svc)
 
-	_, err := c.ImageBuild(context.Background(), &imagebuildagentdto.ImageBuildReq{TaskID: "t1"},
+	_, err := c.ImageBuild(context.Background(), withInputs(),
 		func(w io.Writer) error {
 			_, _ = w.Write([]byte("half a source"))
 			return errors.New("the checkout cannot be read")
@@ -252,7 +276,7 @@ func TestAnAgentWithoutTheCallSaysSo(t *testing.T) {
 	dir, _ := checkout(t)
 	c, _ := startAgent(t, nil)
 
-	_, err := c.ImageBuild(context.Background(), &imagebuildagentdto.ImageBuildReq{TaskID: "t1"}, sendDir(dir))
+	_, err := c.ImageBuild(context.Background(), withInputs(), sendDir(dir))
 
 	assert.ErrorContains(t, err, "Unimplemented")
 }
@@ -267,8 +291,43 @@ func TestAPanicInABuildDoesNotTakeTheAgentDown(t *testing.T) {
 	}}
 	c, tempBase := startAgent(t, svc)
 
-	_, err := c.ImageBuild(context.Background(), &imagebuildagentdto.ImageBuildReq{TaskID: "t1"}, sendDir(dir))
+	_, err := c.ImageBuild(context.Background(), withInputs(), sendDir(dir))
 
 	assert.ErrorContains(t, err, "a nil map in the build")
 	assert.Empty(t, sourcesLeft(t, tempBase))
+}
+
+// A build without a push registry arrives with none, not with an empty one the
+// agent would try to push to.
+func TestABuildThatIsNotPushedArrivesWithoutARegistry(t *testing.T) {
+	dir, _ := checkout(t)
+	var got *imagebuildservice.BuildInputs
+	svc := &builds{build: func(_ context.Context, req *imagebuildservice.ImageBuildReq) (
+		*imagebuildservice.ImageBuildResp, error) {
+		got = req.Inputs
+		return &imagebuildservice.ImageBuildResp{}, nil
+	}}
+	c, _ := startAgent(t, svc)
+
+	_, err := c.ImageBuild(context.Background(), withInputs(), sendDir(dir))
+
+	assert.NoError(t, err)
+	if assert.NotNil(t, got) {
+		assert.Nil(t, got.PushRegistry)
+	}
+}
+
+// The app always resolves a build's inputs before sending it to an agent.
+func TestABuildIsNotSentWithoutItsInputs(t *testing.T) {
+	dir, _ := checkout(t)
+	svc := &builds{build: func(context.Context, *imagebuildservice.ImageBuildReq) (
+		*imagebuildservice.ImageBuildResp, error) {
+		return &imagebuildservice.ImageBuildResp{}, nil
+	}}
+	c, _ := startAgent(t, svc)
+
+	_, err := c.ImageBuild(context.Background(), &imagebuildagentdto.ImageBuildReq{TaskID: "t1"}, sendDir(dir))
+
+	assert.ErrorIs(t, err, hperrors.ErrMissing)
+	assert.Zero(t, svc.called())
 }

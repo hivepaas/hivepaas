@@ -99,6 +99,16 @@ func (s *service) repoDeployStepImageBuild(
 			fmt.Sprintf("Starting build process on worker node '%s' (id '%s')...", nodeName, nodeID),
 			tasklog.TsNow))
 
+		// The agent has no key to open a stored secret with: what the build reads
+		// from settings is resolved here and goes with the request.
+		if buildReq.Inputs == nil {
+			buildReq.Inputs, err = s.imageBuildService.ResolveBuildInputs(ctx, db, buildReq)
+			if err != nil {
+				return hperrors.Wrap(err)
+			}
+			data.LogStore.UpdateRedactorAddSecrets(buildReq.Inputs.Secrets)
+		}
+
 		agentReq := &imagebuildagentdto.ImageBuildReq{
 			TaskID:        data.Task.ID,
 			AppID:         data.App.ID,

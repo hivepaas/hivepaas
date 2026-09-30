@@ -36,6 +36,12 @@ func (uc *UC) ImageBuildFromSource(
 		}
 	}()
 
+	// An agent has no key to open a stored secret with: the app resolves what the
+	// build reads from settings and sends it along.
+	if req.Inputs == nil {
+		return nil, hperrors.NewMissing("Image build inputs")
+	}
+
 	tempDir, err := fileutil.CreateTempDir(uc.tempBaseDir, "*", sourceDirMode)
 	if err != nil {
 		return nil, hperrors.Wrap(err)

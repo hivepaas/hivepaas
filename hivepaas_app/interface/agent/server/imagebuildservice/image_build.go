@@ -1,6 +1,7 @@
 package imagebuildservice
 
 import (
+	"github.com/moby/moby/api/types/registry"
 	"google.golang.org/grpc"
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
@@ -79,6 +80,7 @@ func ImageBuildFromSource(
 			ImageBuildSettings: buildSettings,
 			NoCache:            req.GetNoCache(),
 			BuildID:            req.GetBuildId(),
+			Inputs:             inputsFromProto(req.GetInputs()),
 		},
 		SendLog: func(frames []*tasklog.LogFrame) error {
 			for _, frame := range frames {
@@ -118,6 +120,38 @@ func ImageBuildFromSource(
 	}
 
 	return nil
+}
+
+// inputsFromProto is what the app resolved for the build. A request without it
+// stays without it, and the agent refuses the build.
+func inputsFromProto(in *agentproto.ImageBuildInputs) *imagebuildservice.BuildInputs {
+	if in == nil {
+		return nil
+	}
+	out := &imagebuildservice.BuildInputs{
+		EnvVars:       make(map[string]*string, len(in.GetEnvVars())),
+		RegistryAuths: make(map[string]registry.AuthConfig, len(in.GetRegistryAuths())),
+		Secrets:       in.GetSecrets(),
+	}
+	for key, value := range in.GetEnvVars() {
+		out.EnvVars[key] = &value
+	}
+	for _, auth := range in.GetRegistryAuths() {
+		out.RegistryAuths[auth.GetAddress()] = registryAuthFromProto(auth)
+	}
+	if push := in.GetPushRegistry(); push != nil {
+		auth := registryAuthFromProto(push)
+		out.PushRegistry = &auth
+	}
+	return out
+}
+
+func registryAuthFromProto(auth *agentproto.ImageBuildRegistryAuth) registry.AuthConfig {
+	return registry.AuthConfig{
+		Username:      auth.GetUsername(),
+		Password:      auth.GetPassword(),
+		ServerAddress: auth.GetAddress(),
+	}
 }
 
 // sourceReader is the packed source, read from the chunks that follow the request.

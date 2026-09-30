@@ -19,6 +19,11 @@ function formatKeyType(keyType?: string) {
     return keyType;
 }
 
+/** A key stored with no kind, or an empty one, is a plain git key. */
+function sshKeyKind(kind?: string): string {
+    return kind === undefined || kind === "" ? ESSHKeyKind.Git : kind;
+}
+
 /** The color of a key's algorithm; one not named, or not known, is neutral. */
 function keyTypeTone(keyType?: string): BadgeTone {
     switch (keyType?.toLowerCase()) {
@@ -59,9 +64,7 @@ function createColumns(scope: SSHKeyTableScope): ColumnDef<SettingSSHKey>[] {
             accessorKey: "kind",
             header: "Type",
             // A key stored with no kind is a plain git key: the form shows it as one.
-            cell: ({ row: { original } }) => (
-                <Badge tone={SSH_KEY_KIND_BADGE_TONE}>{original.kind ? original.kind : ESSHKeyKind.Git}</Badge>
-            ),
+            cell: ({ row: { original } }) => <Badge tone={SSH_KEY_KIND_BADGE_TONE}>{sshKeyKind(original.kind)}</Badge>,
         },
         {
             accessorKey: "keyType",

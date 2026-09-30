@@ -6,7 +6,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"os"
 	"path/filepath"
 	"strings"
 	"time"
@@ -17,12 +16,12 @@ import (
 	"github.com/tiendc/gofn"
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
-	"github.com/hivepaas/hivepaas/hivepaas_app/config"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/safego"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/ulid"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/cloudstorageservice"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/fileservice"
 )
 
 //nolint:gocognit
@@ -39,7 +38,7 @@ func (s *service) initOutputWriterToFile(
 
 	var baseWriter io.WriteCloser
 
-	if data.File.StorageID != "" {
+	if data.File.StorageType == base.FileStorageCloud {
 		pr, pw := io.Pipe()
 		data.uploadErrChan = make(chan error, 1)
 		go func() {
@@ -62,13 +61,13 @@ func (s *service) initOutputWriterToFile(
 			closeFunc: func() error { return pw.Close() },
 		}
 	} else {
-		destFilePath := filepath.Join(config.Current().AppPath, data.File.Path)
-		f, err := os.Create(destFilePath)
+		fileWriter, err := s.fileService.Create(ctx, data.db, data.File)
 		if err != nil {
 			return nil, hperrors.Wrap(err)
 		}
 		baseWriter = &writeCloserWrapper{
-			Writer: &countingWriter{w: f, n: &data.File.Size},
+			Writer:    &countingWriter{w: fileWriter, n: &data.File.Size},
+			closeFunc: fileWriter.Close,
 		}
 	}
 
@@ -189,7 +188,18 @@ func (s *service) initOutputFile(
 			return s3Client.UploadEx(ctx, data.File.Bucket, objectKey, 0, 0, content)
 		}
 	} else {
-		data.File.Path = filepath.Join(config.Current().DataPathFiles().RelPath(), data.File.ID+"-"+fileName)
+		// On the project's default volume, in HivePaaS's own directory.
+		volume, err := s.fileService.ProjectVolume(ctx, data.db, data.DestApp.ProjectID)
+		if err != nil {
+			return hperrors.Wrap(err)
+		}
+		envKey := data.DestApp.ProjectEnvID
+		if data.DestApp.ProjectEnv != nil {
+			envKey = data.DestApp.ProjectEnv.Key
+		}
+		data.File.StorageID = volume.ID
+		data.File.Path = fileservice.AppFilePath(fileservice.FilesDirJobOutput, envKey, data.DestApp.Key,
+			data.File.ID+"-"+fileName)
 	}
 
 	return nil

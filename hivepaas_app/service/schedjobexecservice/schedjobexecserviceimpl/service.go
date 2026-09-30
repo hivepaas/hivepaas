@@ -5,12 +5,14 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/appservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/commandservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/containerexecservice"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/fileservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/schedjobexecservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/schedjobservice"
 )
 
 type service struct {
-	fileRepo repository.FileRepo
+	fileRepo    repository.FileRepo
+	fileService fileservice.Service
 
 	appService           appservice.Service
 	commandService       commandservice.Service
@@ -20,6 +22,7 @@ type service struct {
 
 func New(
 	fileRepo repository.FileRepo,
+	fileService fileservice.Service,
 
 	appService appservice.Service,
 	commandService commandservice.Service,
@@ -27,7 +30,8 @@ func New(
 	schedJobService schedjobservice.Service,
 ) schedjobexecservice.Service {
 	return &service{
-		fileRepo: fileRepo,
+		fileRepo:    fileRepo,
+		fileService: fileService,
 
 		appService:           appService,
 		commandService:       commandService,

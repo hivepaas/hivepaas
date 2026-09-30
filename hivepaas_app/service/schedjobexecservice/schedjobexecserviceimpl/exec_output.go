@@ -4,11 +4,8 @@ import (
 	"context"
 	"errors"
 	"io"
-	"os"
-	"path/filepath"
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
-	"github.com/hivepaas/hivepaas/hivepaas_app/config"
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 )
@@ -86,11 +83,14 @@ func (s *service) finalize(
 	return nil
 }
 
+// cleanup removes the output file of a run that failed: it is kept only with its
+// record, which a failed run never writes.
 func (s *service) cleanup(
+	ctx context.Context,
 	execErr error,
 	data *execData,
 ) {
 	if execErr != nil && data.File != nil && data.File.StorageType == base.FileStorageVolume {
-		_ = os.RemoveAll(filepath.Join(config.Current().AppPath, data.File.Path))
+		_ = s.fileService.Remove(context.WithoutCancel(ctx), data.db, data.File)
 	}
 }

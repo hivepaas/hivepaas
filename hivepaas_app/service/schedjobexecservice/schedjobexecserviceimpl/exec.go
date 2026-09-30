@@ -78,7 +78,9 @@ func (s *service) SchedJobExec(
 		}
 	}
 
-	defer s.cleanup(err, data)
+	// Deferred through a closure, so it sees the error the run ends with rather
+	// than the one it had when deferred.
+	defer func() { s.cleanup(ctx, err, data) }()
 
 	execResp, err := s.containerExecService.ContainerExec(ctx, &containerexecservice.ContainerExecReq{
 		App:                    req.DestApp,

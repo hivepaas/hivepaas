@@ -3,15 +3,14 @@ package fileserviceimpl
 import (
 	"context"
 	"errors"
-	"os"
-	"path/filepath"
 	"time"
 
 	"github.com/tiendc/gofn"
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
-	"github.com/hivepaas/hivepaas/hivepaas_app/config"
+	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
+	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/cloudstorageservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/fileservice"
 )
@@ -23,67 +22,30 @@ func (s *service) DeleteFileData(
 	if req.RetryDelay <= 0 {
 		req.RetryDelay = 3 * time.Second //nolint:mnd
 	}
-	switch req.File.StorageType {
-	case base.FileStorageLocal:
-		err = s.deleteLocalFile(ctx, req)
-	case base.FileStorageCloud:
-		err = s.deleteCloudFile(ctx, req)
-	}
+	// TODO: create an async task for deleting the file later
+	err = gofn.ExecRetryCtx(ctx, func() error {
+		return s.Remove(ctx, req.DB, req.File)
+	}, req.RetryMax, req.RetryDelay)
 	if err != nil {
 		return nil, hperrors.Wrap(err)
 	}
 	return &fileservice.DeleteDataResp{}, nil
 }
 
-func (s *service) deleteLocalFile(
-	ctx context.Context,
-	req *fileservice.DeleteDataReq,
-) error {
-	filePath := filepath.Join(config.Current().AppPath, req.File.Path)
-	// TODO: create an async task for deleting the file later
-	err := gofn.ExecRetryCtx(ctx, func() error {
-		err := os.Remove(filePath)
-		if err != nil {
-			return hperrors.Wrap(err)
-		}
-		return nil
-	}, req.RetryMax, req.RetryDelay)
-	if err != nil {
-		return hperrors.Wrap(err)
-	}
-	return nil
-}
-
-func (s *service) deleteCloudFile(
-	ctx context.Context,
-	req *fileservice.DeleteDataReq,
-) (err error) {
-	file := req.File
+func (s *service) removeCloud(ctx context.Context, db database.IDB, file *entity.File) error {
 	if file.Storage == nil {
 		return hperrors.NewInactive("Storage setting")
 	}
-
 	switch base.CloudStorageKind(file.Storage.Kind) {
 	case base.CloudStorageKindS3:
-		s3Client, err := cloudstorageservice.NewS3Client(ctx, req.DB, file.Storage, nil)
+		s3Client, err := cloudstorageservice.NewS3Client(ctx, db, file.Storage, nil)
 		if err != nil {
 			return hperrors.Wrap(err)
 		}
-
-		// TODO: create an async task for deleting the file later
-		err = gofn.ExecRetryCtx(ctx, func() error {
-			err = s3Client.DeleteObject(ctx, file.Bucket, file.Path)
-			if err != nil && !errors.Is(err, hperrors.ErrNotFound) {
-				return hperrors.Wrap(err)
-			}
-			return nil
-		}, req.RetryMax, req.RetryDelay)
-		if err != nil {
+		if err = s3Client.DeleteObject(ctx, file.Bucket, file.Path); err != nil && !errors.Is(err, hperrors.ErrNotFound) {
 			return hperrors.Wrap(err)
 		}
-
 		return nil
-
 	default:
 		return hperrors.NewUnsupported("Storage type")
 	}

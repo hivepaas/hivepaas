@@ -55,9 +55,20 @@ func (s *service) GetAgentAddrForNode(ctx context.Context, nodeID string) (strin
 }
 
 func (s *service) GetAgentAddrForNodeLabel(ctx context.Context, nodeLabel string) (string, error) {
+	nodeIDs, err := s.NodeIDsWithLabel(ctx, nodeLabel)
+	if err != nil {
+		return "", hperrors.Wrap(err)
+	}
+	if len(nodeIDs) == 0 {
+		return "", hperrors.Wrap(hperrors.ErrNodeWithLabelNotAvailable).WithParam("Label", nodeLabel)
+	}
+	return s.GetAgentAddrForNode(ctx, nodeIDs[0])
+}
+
+func (s *service) NodeIDsWithLabel(ctx context.Context, nodeLabel string) ([]string, error) {
 	nodeLabel = strings.TrimSpace(nodeLabel)
 	if nodeLabel == "" {
-		return "", hperrors.Wrap(hperrors.ErrNodeWithLabelNotAvailable).WithParam("Label", nodeLabel)
+		return nil, hperrors.Wrap(hperrors.ErrNodeWithLabelNotAvailable).WithParam("Label", nodeLabel)
 	}
 
 	parts := strings.SplitN(nodeLabel, "=", 2) //nolint:mnd
@@ -70,24 +81,18 @@ func (s *service) GetAgentAddrForNodeLabel(ctx context.Context, nodeLabel string
 
 	nodesResp, err := s.dockerManager.NodeList(ctx)
 	if err != nil {
-		return "", hperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 
-	var nodeID string
+	var nodeIDs []string
 	for i := range nodesResp.Items {
 		node := nodesResp.Items[i]
 		if node.Status.State != swarm.NodeStateReady {
 			continue
 		}
-		if actualVal, ok := node.Spec.Labels[key]; ok {
-			if !hasVal || actualVal == val {
-				nodeID = node.ID
-				break
-			}
+		if actualVal, ok := node.Spec.Labels[key]; ok && (!hasVal || actualVal == val) {
+			nodeIDs = append(nodeIDs, node.ID)
 		}
 	}
-	if nodeID == "" {
-		return "", hperrors.Wrap(hperrors.ErrNodeWithLabelNotAvailable).WithParam("Label", nodeLabel)
-	}
-	return s.GetAgentAddrForNode(ctx, nodeID)
+	return nodeIDs, nil
 }

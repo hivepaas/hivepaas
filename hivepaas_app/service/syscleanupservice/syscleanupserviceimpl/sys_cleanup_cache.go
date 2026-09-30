@@ -65,7 +65,7 @@ func (s *service) sysCleanupCacheRepoSource(
 		bunex.SelectWhereIf(scopeObjectID != "", "file.object_id = ?", scopeObjectID),
 		bunex.SelectWhere("file.type = ?", base.FileTypeCache),
 		bunex.SelectWhereIn("file.kind IN (?)", base.AllFileCacheKinds...),
-		bunex.SelectWhere("file.storage_type = ?", base.FileStorageLocal),
+		bunex.SelectWhere("file.storage_type = ?", base.FileStorageVolume),
 		bunex.SelectWhere("file.updated_at < ?", timeNow.Add(-retention)),
 	)
 	if err != nil {

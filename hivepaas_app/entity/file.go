@@ -55,8 +55,8 @@ func (f *File) IsActive() bool {
 	return f.Status == base.FileStatusActive
 }
 
-func (f *File) IsInLocalStorage() bool {
-	return f.StorageType == base.FileStorageLocal
+func (f *File) IsOnVolume() bool {
+	return f.StorageType == base.FileStorageVolume
 }
 
 func (f *File) IsInCloudStorage() bool {

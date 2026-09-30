@@ -108,7 +108,7 @@ func (s *service) uploadItem(
 	_ context.Context,
 	req *uploadItemReq,
 ) (*uploadItemResp, error) {
-	if req.file.StorageType == base.FileStorageLocal {
+	if req.file.StorageType == base.FileStorageVolume {
 		return s.uploadItemToLocal(req)
 	}
 	return nil, hperrors.NewNotImplemented()

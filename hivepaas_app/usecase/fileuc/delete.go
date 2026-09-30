@@ -43,7 +43,7 @@ func (uc *UC) DeleteFile(
 		}
 
 		deletePhysicalFile := false
-		if req.DeletePermanently || (req.DeletePermanentlyIfLocal && file.StorageType == base.FileStorageLocal) {
+		if req.DeletePermanently || (req.DeletePermanentlyIfLocal && file.StorageType == base.FileStorageVolume) {
 			deletePhysicalFile = true
 			_, err := uc.fileService.DeleteFileData(ctx, &fileservice.DeleteDataReq{
 				DB:       db,

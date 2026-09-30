@@ -163,7 +163,7 @@ func (s *service) initOutputFile(
 		Status:      base.FileStatusActive,
 		Name:        fileName,
 		Mimetype:    "application/octet-stream",
-		StorageType: base.FileStorageLocal,
+		StorageType: base.FileStorageVolume,
 		CreatedAt:   data.TimeNow,
 		UpdatedAt:   data.TimeNow,
 	}

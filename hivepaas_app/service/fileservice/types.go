@@ -59,3 +59,12 @@ type DeleteDataReq struct {
 
 type DeleteDataResp struct {
 }
+
+/// ACCESS
+
+// FileWriter is a file being written. Close keeps what was written; Abort
+// discards it, and the file is left as it was.
+type FileWriter interface {
+	io.WriteCloser
+	Abort(err error)
+}

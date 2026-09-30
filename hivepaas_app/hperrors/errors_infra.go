@@ -28,6 +28,9 @@ var (
 	// A file path that leaves the volume directory it is given in: an absolute
 	// path, a "..", or a symbolic link out.
 	ErrFilePathOutsideRoot = NewErr(ErrArgumentInvalid, "ERR_FILE_PATH_OUTSIDE_ROOT")
+	// A volume HivePaaS cannot keep files on: one pinned by a label that names no
+	// node or several, so which node holds the files cannot be told.
+	ErrVolumeCannotHoldFiles = NewErr(ErrPreconditionFailed, "ERR_VOLUME_CANNOT_HOLD_FILES")
 	// A mount whose directory is not the app's own: another app's, a whole volume,
 	// or a bind HivePaaS did not make.
 	ErrStoragePermissionsNotResettable = NewErr(ErrPreconditionFailed, "ERR_STORAGE_PERMISSIONS_NOT_RESETTABLE")

@@ -66,7 +66,7 @@ func (s *service) loadRepoCache(
 		if err != nil && !errors.Is(err, hperrors.ErrNotFound) {
 			return hperrors.Wrap(err)
 		}
-		if file == nil || file.StorageType != base.FileStorageLocal {
+		if file == nil || file.StorageType != base.FileStorageVolume {
 			return nil
 		}
 		data.RepoCacheFile = file
@@ -130,7 +130,7 @@ func (s *service) saveRepoCache(
 			Status:      base.FileStatusActive,
 			Key:         data.RepoSource.RepoID,
 			Mimetype:    "application/octet-stream",
-			StorageType: base.FileStorageLocal,
+			StorageType: base.FileStorageVolume,
 		}
 	}
 	for {

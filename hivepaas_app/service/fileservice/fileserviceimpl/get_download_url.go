@@ -20,7 +20,7 @@ func (s *service) GetDownloadURL(
 	req *fileservice.GetDownloadURLReq,
 ) (*fileservice.GetDownloadURLResp, error) {
 	file := req.File
-	if file.StorageType == base.FileStorageLocal || !req.CloudPresign {
+	if file.StorageType == base.FileStorageVolume || !req.CloudPresign {
 		token, err := s.GenerateDownloadToken(auth.User.ID, req.File.ID, req.RequireLogin, req.Expiration)
 		if err != nil {
 			return nil, hperrors.Wrap(err)

@@ -60,10 +60,12 @@ var (
 type FileStorageType string
 
 const (
-	FileStorageLocal FileStorageType = "local"
-	FileStorageCloud FileStorageType = "cloud"
+	// FileStorageVolume is a file on a volume: the ClusterVolume its StorageID
+	// names, or HivePaaS's own data directory when it names none.
+	FileStorageVolume FileStorageType = "volume"
+	FileStorageCloud  FileStorageType = "cloud"
 )
 
 var (
-	AllFileStorageTypes = []FileStorageType{FileStorageLocal, FileStorageCloud}
+	AllFileStorageTypes = []FileStorageType{FileStorageVolume, FileStorageCloud}
 )

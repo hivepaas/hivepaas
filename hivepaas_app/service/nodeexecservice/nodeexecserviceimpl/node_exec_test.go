@@ -29,6 +29,10 @@ func (m *mockAgentService) GetAgentAddrForNodeLabel(ctx context.Context, nodeLab
 	return "", assert.AnError
 }
 
+func (m *mockAgentService) NodeIDsWithLabel(context.Context, string) ([]string, error) {
+	return nil, assert.AnError
+}
+
 func TestExecCommand_AgentAddressError(t *testing.T) {
 	mockAgent := &mockAgentService{
 		addrByID:    make(map[string]string),

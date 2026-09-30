@@ -55,7 +55,7 @@ func (uc *UC) DownloadFile(
 	}
 
 	switch file.StorageType {
-	case base.FileStorageLocal:
+	case base.FileStorageVolume:
 		return uc.downloadLocalFile(ctx, req, file)
 	case base.FileStorageCloud:
 		return uc.downloadCloudFile(ctx, req, file)

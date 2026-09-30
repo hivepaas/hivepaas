@@ -1,4 +1,4 @@
-import { Badge } from "@components/ui/badge";
+import { Badge, type BadgeTone } from "@components/ui/badge";
 import type { ColumnDef } from "@tanstack/react-table";
 import { format } from "date-fns";
 import type { SettingEmail } from "~/settings/domain";
@@ -20,14 +20,14 @@ function formatKind(kind: SettingEmail["kind"]): string {
     }
 }
 
-function getKindClassName(kind: SettingEmail["kind"]): string {
+function getKindTone(kind: SettingEmail["kind"]): BadgeTone {
     switch (kind) {
         case EEmailKind.SMTP:
-            return "bg-emerald-300 text-white";
+            return "emerald";
         case EEmailKind.HTTP:
-            return "bg-slate-300 text-white";
+            return "neutral";
         default:
-            return "bg-muted text-muted-foreground";
+            return "neutral";
     }
 }
 
@@ -71,7 +71,7 @@ function createColumns(scope: EmailAccountTableScope): ColumnDef<SettingEmail>[]
             },
             cell: ({ row: { original } }) => (
                 <div className="flex justify-center">
-                    <Badge className={getKindClassName(original.kind)}>{formatKind(original.kind)}</Badge>
+                    <Badge tone={getKindTone(original.kind)}>{formatKind(original.kind)}</Badge>
                 </div>
             ),
         },
@@ -85,9 +85,7 @@ function createColumns(scope: EmailAccountTableScope): ColumnDef<SettingEmail>[]
             cell: ({ row: { original } }) => (
                 <div className="flex items-center justify-center gap-2">
                     <SettingStatusBadge status={original.status} />
-                    {scope.type === "project" && original.inherited && (
-                        <Badge className="bg-purple-500 text-white">Inherited</Badge>
-                    )}
+                    {scope.type === "project" && original.inherited && <Badge tone="purple">Inherited</Badge>}
                 </div>
             ),
         },

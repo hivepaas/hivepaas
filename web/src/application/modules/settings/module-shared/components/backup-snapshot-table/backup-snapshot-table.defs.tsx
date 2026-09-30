@@ -1,4 +1,3 @@
-import { cn } from "@/lib/utils";
 import { Badge } from "@components/ui/badge";
 import { Button } from "@components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@components/ui/dropdown-menu";
@@ -17,7 +16,7 @@ import {
     isRepoActive,
     snapshotScopeModuleId,
     sourceLabel,
-    tagClassName,
+    tagTone,
     userTags,
 } from "./backup-snapshot-table.helpers";
 
@@ -178,8 +177,8 @@ function createColumns(scope: BackupSnapshotScope, actions: BackupSnapshotRowAct
                     {userTags(original).map(tag => (
                         <Badge
                             key={tag}
-                            variant="outline"
-                            className={cn("font-mono text-[11px]", tagClassName(tag))}
+                            tone={tagTone(tag)}
+                            className="font-mono text-[11px]"
                         >
                             {tag}
                         </Badge>

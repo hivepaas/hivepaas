@@ -34,7 +34,7 @@ function createColumns(scope: CloudStorageTableScope): ColumnDef<SettingCloudSto
             header: "Provider",
             cell: ({ row: { original } }) => {
                 if (!original.kind) return "-";
-                return <Badge className="bg-blue-500 text-white">{original.kind}</Badge>;
+                return <Badge tone="blue">{original.kind}</Badge>;
             },
         },
         {
@@ -54,9 +54,7 @@ function createColumns(scope: CloudStorageTableScope): ColumnDef<SettingCloudSto
             cell: ({ row: { original } }) => (
                 <div className="flex items-center justify-center gap-2">
                     <SettingStatusBadge status={original.status} />
-                    {scope.type === "project" && original.inherited && (
-                        <Badge className="bg-purple-500 text-white">Inherited</Badge>
-                    )}
+                    {scope.type === "project" && original.inherited && <Badge tone="purple">Inherited</Badge>}
                 </div>
             ),
         },

@@ -12,7 +12,7 @@ import { Input } from "@/components/ui";
 import { Badge } from "@/components/ui/badge";
 import { DateTimePicker } from "@/components/ui/date-time-picker";
 
-import { type BackupSnapshotFilterValues, isTagFilter, tagClassName } from "./backup-snapshot-table.helpers";
+import { type BackupSnapshotFilterValues, isTagFilter, tagTone } from "./backup-snapshot-table.helpers";
 
 const ALL = "all";
 const LIST_ALL_PAGE = { page: 1, size: 1000 };
@@ -153,8 +153,8 @@ export function BackupSnapshotFilterBar({ scope, repos, filters, onChange }: Pro
                         <Badge
                             key={tag}
                             asChild
-                            variant="outline"
-                            className={cn("h-7 gap-1 px-2 font-mono text-xs cursor-pointer", tagClassName(tag))}
+                            tone={tagTone(tag)}
+                            className="h-7 gap-1 px-2 font-mono text-xs cursor-pointer"
                         >
                             <button
                                 type="button"

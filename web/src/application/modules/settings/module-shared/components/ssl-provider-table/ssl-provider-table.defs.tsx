@@ -43,7 +43,7 @@ function createColumns(scope: SslProviderTableScope): ColumnDef<SettingSslProvid
             },
             cell: ({ row: { original } }) => (
                 <div className="flex justify-center">
-                    <Badge className="bg-emerald-300 text-white">{formatSslProviderKind(original.kind)}</Badge>
+                    <Badge tone="emerald">{formatSslProviderKind(original.kind)}</Badge>
                 </div>
             ),
         },
@@ -62,9 +62,7 @@ function createColumns(scope: SslProviderTableScope): ColumnDef<SettingSslProvid
             cell: ({ row: { original } }) => (
                 <div className="flex items-center justify-center gap-2">
                     <SettingStatusBadge status={original.status} />
-                    {scope.type === "project" && original.inherited && (
-                        <Badge className="bg-purple-500 text-white">Inherited</Badge>
-                    )}
+                    {scope.type === "project" && original.inherited && <Badge tone="purple">Inherited</Badge>}
                 </div>
             ),
         },

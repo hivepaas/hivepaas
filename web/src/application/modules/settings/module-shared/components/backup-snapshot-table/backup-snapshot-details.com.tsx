@@ -1,4 +1,3 @@
-import { cn } from "@/lib/utils";
 import { Badge } from "@components/ui/badge";
 import { Button } from "@components/ui/button";
 import { format } from "date-fns";
@@ -17,7 +16,7 @@ import {
     isRepoActive,
     snapshotScopeModuleId,
     sourceLabel,
-    tagClassName,
+    tagTone,
 } from "./backup-snapshot-table.helpers";
 
 function Row({ label, children }: { label: string; children: React.ReactNode }) {
@@ -105,8 +104,8 @@ export function BackupSnapshotDetails({ scope, snapshot, runLink, onRestore, onO
                                     {snapshot.tags.map(tag => (
                                         <Badge
                                             key={tag}
-                                            variant="outline"
-                                            className={cn("font-mono text-[11px]", tagClassName(tag))}
+                                            tone={tagTone(tag)}
+                                            className="font-mono text-[11px]"
                                         >
                                             {tag}
                                         </Badge>

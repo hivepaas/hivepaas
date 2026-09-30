@@ -1,4 +1,4 @@
-import { Badge } from "@components/ui/badge";
+import { Badge, type BadgeTone } from "@components/ui/badge";
 import type { ColumnDef } from "@tanstack/react-table";
 import { format } from "date-fns";
 import type { SettingImService } from "~/settings/domain";
@@ -24,18 +24,18 @@ function formatKind(kind: SettingImService["kind"]): string {
     }
 }
 
-function getKindClassName(kind: SettingImService["kind"]): string {
+function getKindTone(kind: SettingImService["kind"]): BadgeTone {
     switch (kind) {
         case EImServiceKind.Slack:
-            return "bg-lime-300 text-white";
+            return "lime";
         case EImServiceKind.Discord:
-            return "bg-blue-300 text-white";
+            return "blue";
         case EImServiceKind.Telegram:
-            return "bg-cyan-500 text-white";
+            return "cyan";
         case EImServiceKind.Lark:
-            return "bg-sky-500 text-white";
+            return "sky";
         default:
-            return "bg-muted text-muted-foreground";
+            return "neutral";
     }
 }
 
@@ -74,7 +74,7 @@ function createColumns(scope: ImPlatformTableScope): ColumnDef<SettingImService>
             },
             cell: ({ row: { original } }) => (
                 <div className="flex justify-center">
-                    <Badge className={getKindClassName(original.kind)}>{formatKind(original.kind)}</Badge>
+                    <Badge tone={getKindTone(original.kind)}>{formatKind(original.kind)}</Badge>
                 </div>
             ),
         },
@@ -88,9 +88,7 @@ function createColumns(scope: ImPlatformTableScope): ColumnDef<SettingImService>
             cell: ({ row: { original } }) => (
                 <div className="flex items-center justify-center gap-2">
                     <SettingStatusBadge status={original.status} />
-                    {scope.type === "project" && original.inherited && (
-                        <Badge className="bg-purple-500 text-white">Inherited</Badge>
-                    )}
+                    {scope.type === "project" && original.inherited && <Badge tone="purple">Inherited</Badge>}
                 </div>
             ),
         },

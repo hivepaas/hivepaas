@@ -1,7 +1,6 @@
 import { memo } from "react";
 
-import { Badge } from "@components/ui/badge";
-import { cn } from "@lib/utils";
+import { Badge, type BadgeTone } from "@components/ui/badge";
 
 import { ESettingStatus } from "@application/shared/enums";
 
@@ -19,6 +18,14 @@ function formatStatusLabel(status: string) {
         .replace(/\b\w/g, char => char.toUpperCase());
 }
 
+const STATUS_TONES: Partial<Record<string, BadgeTone>> = {
+    [ESettingStatus.Active]: "green",
+    [ESettingStatus.Disabled]: "red",
+    [ESettingStatus.Expired]: "red",
+    [ESettingStatus.Pending]: "amber",
+    [ESettingStatus.Missing]: "red",
+};
+
 function View({ status }: Props) {
     const label =
         status === ESettingStatus.Active
@@ -35,13 +42,9 @@ function View({ status }: Props) {
 
     return (
         <Badge
-            className={cn(
-                status === ESettingStatus.Active && "bg-green-500 text-white",
-                status === ESettingStatus.Disabled && "bg-red-600 text-white",
-                status === ESettingStatus.Expired && "bg-red-500 text-white",
-                status === ESettingStatus.Pending && "bg-amber-500 text-white",
-                status === ESettingStatus.Missing && "bg-red-600 text-white",
-            )}
+            // A status is the one solid badge of a row. One this does not know keeps the default look.
+            tone={STATUS_TONES[status]}
+            appearance="solid"
         >
             {label}
         </Badge>

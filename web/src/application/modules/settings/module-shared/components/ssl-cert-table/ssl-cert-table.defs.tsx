@@ -1,4 +1,4 @@
-import { Badge } from "@components/ui/badge";
+import { Badge, type BadgeTone } from "@components/ui/badge";
 import type { ColumnDef } from "@tanstack/react-table";
 import { format } from "date-fns";
 import type { SettingSslCert } from "~/settings/domain";
@@ -10,13 +10,13 @@ import { ESslCertType } from "@application/shared/enums";
 import { SslCertEditCell, SslCertMenuCell } from "./building-blocks";
 import type { SslCertTableScope } from "./ssl-cert-table.types";
 
-function getCertTypeClassName(certType: SettingSslCert["certType"]): string {
+function getCertTypeTone(certType: SettingSslCert["certType"]): BadgeTone {
     switch (certType) {
         case ESslCertType.Custom:
         case ESslCertType.SelfSigned:
-            return "bg-slate-300 text-white";
+            return "neutral";
         default:
-            return "bg-emerald-300 text-white";
+            return "emerald";
     }
 }
 
@@ -61,9 +61,7 @@ function createColumns(scope: SslCertTableScope): ColumnDef<SettingSslCert>[] {
             },
             cell: ({ row: { original } }) => (
                 <div className="flex justify-center">
-                    <Badge className={getCertTypeClassName(original.certType)}>
-                        {formatSslCertType(original.certType)}
-                    </Badge>
+                    <Badge tone={getCertTypeTone(original.certType)}>{formatSslCertType(original.certType)}</Badge>
                 </div>
             ),
         },
@@ -77,9 +75,7 @@ function createColumns(scope: SslCertTableScope): ColumnDef<SettingSslCert>[] {
             cell: ({ row: { original } }) => (
                 <div className="flex items-center justify-center gap-2">
                     <SettingStatusBadge status={original.status} />
-                    {scope.type === "project" && original.inherited && (
-                        <Badge className="bg-purple-500 text-white">Inherited</Badge>
-                    )}
+                    {scope.type === "project" && original.inherited && <Badge tone="purple">Inherited</Badge>}
                 </div>
             ),
         },

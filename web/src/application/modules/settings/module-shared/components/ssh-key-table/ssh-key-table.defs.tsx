@@ -1,4 +1,4 @@
-import { Badge } from "@components/ui/badge";
+import { Badge, type BadgeTone } from "@components/ui/badge";
 import type { ColumnDef } from "@tanstack/react-table";
 import { format } from "date-fns";
 import type { SettingSSHKey } from "~/settings/domain";
@@ -7,7 +7,7 @@ import { SettingStatusBadge } from "~/settings/module-shared/components";
 import { SSHKeyEditCell, SSHKeyMenuCell } from "./building-blocks";
 import type { SSHKeyTableScope } from "./ssh-key-table.types";
 
-const SSH_KEY_KIND_BADGE_CLASSNAME = "bg-sky-500 text-white";
+const SSH_KEY_KIND_BADGE_TONE: BadgeTone = "sky";
 
 function formatKeyType(keyType?: string) {
     if (keyType === undefined || keyType === "") {
@@ -45,7 +45,7 @@ function createColumns(scope: SSHKeyTableScope): ColumnDef<SettingSSHKey>[] {
             cell: ({ row: { original } }) => {
                 if (!original.kind) return "-";
 
-                return <Badge className={SSH_KEY_KIND_BADGE_CLASSNAME}>{original.kind}</Badge>;
+                return <Badge tone={SSH_KEY_KIND_BADGE_TONE}>{original.kind}</Badge>;
             },
         },
         {
@@ -62,9 +62,7 @@ function createColumns(scope: SSHKeyTableScope): ColumnDef<SettingSSHKey>[] {
             cell: ({ row: { original } }) => (
                 <div className="flex items-center justify-center gap-2">
                     <SettingStatusBadge status={original.status} />
-                    {scope.type === "project" && original.inherited && (
-                        <Badge className="bg-purple-500 text-white">Inherited</Badge>
-                    )}
+                    {scope.type === "project" && original.inherited && <Badge tone="purple">Inherited</Badge>}
                 </div>
             ),
         },

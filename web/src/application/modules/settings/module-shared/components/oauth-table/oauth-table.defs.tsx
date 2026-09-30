@@ -28,7 +28,7 @@ function createColumns(): ColumnDef<SettingOAuth>[] {
             header: "Provider",
             cell: ({ row: { original } }) => {
                 if (!original.kind) return "-";
-                return <Badge className="bg-sky-500 text-white">{original.kind}</Badge>;
+                return <Badge tone="sky">{original.kind}</Badge>;
             },
         },
         {

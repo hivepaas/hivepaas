@@ -1,4 +1,4 @@
-import { Badge } from "@components/ui/badge";
+import { Badge, type BadgeTone } from "@components/ui/badge";
 import type { ColumnDef } from "@tanstack/react-table";
 import { format } from "date-fns";
 import type { SettingAccessToken } from "~/settings/domain";
@@ -9,22 +9,22 @@ import { EAccessTokenKind } from "@application/shared/enums";
 import type { AccessTokenTableScope } from "./access-token-table.types";
 import { AccessTokenEditCell, AccessTokenMenuCell } from "./building-blocks";
 
-function getAccessTokenKindClassName(kind: SettingAccessToken["kind"]): string {
+function getAccessTokenKindTone(kind: SettingAccessToken["kind"]): BadgeTone {
     switch (kind) {
         case EAccessTokenKind.Bitbucket:
-            return "bg-blue-600 text-white";
+            return "blue";
         case EAccessTokenKind.Cloudflare:
-            return "bg-orange-500 text-white";
+            return "orange";
         case EAccessTokenKind.Github:
-            return "bg-sky-500 text-white";
+            return "sky";
         case EAccessTokenKind.Gitlab:
-            return "bg-indigo-500 text-white";
+            return "indigo";
         case EAccessTokenKind.Gitea:
-            return "bg-fuchsia-500 text-white";
+            return "fuchsia";
         case EAccessTokenKind.Gogs:
-            return "bg-amber-400 text-white";
+            return "amber";
         default:
-            return "bg-violet-500 text-white";
+            return "violet";
     }
 }
 
@@ -55,7 +55,7 @@ function createColumns(scope: AccessTokenTableScope): ColumnDef<SettingAccessTok
             header: "Type",
             cell: ({ row: { original } }) => {
                 if (!original.kind) return "-";
-                return <Badge className={getAccessTokenKindClassName(original.kind)}>{original.kind}</Badge>;
+                return <Badge tone={getAccessTokenKindTone(original.kind)}>{original.kind}</Badge>;
             },
         },
         {
@@ -70,9 +70,7 @@ function createColumns(scope: AccessTokenTableScope): ColumnDef<SettingAccessTok
             cell: ({ row: { original } }) => (
                 <div className="flex items-center justify-center gap-2">
                     <SettingStatusBadge status={original.status} />
-                    {scope.type === "project" && original.inherited && (
-                        <Badge className="bg-purple-500 text-white">Inherited</Badge>
-                    )}
+                    {scope.type === "project" && original.inherited && <Badge tone="purple">Inherited</Badge>}
                 </div>
             ),
         },

@@ -1,28 +1,22 @@
 import { memo } from "react";
 
-import { Badge } from "@components/ui/badge";
-import { cn } from "@lib/utils";
+import { Badge, type BadgeTone } from "@components/ui/badge";
 import { formatRepoWebhookKind } from "~/settings/module-shared/constants";
 import { ERepoWebhookKind } from "~/settings/module-shared/enums";
+
+const KIND_TONES: Partial<Record<string, BadgeTone>> = {
+    [ERepoWebhookKind.Github]: "sky",
+    [ERepoWebhookKind.Gitlab]: "indigo",
+    [ERepoWebhookKind.Gitea]: "fuchsia",
+    [ERepoWebhookKind.Gogs]: "yellow",
+    [ERepoWebhookKind.Bitbucket]: "purple",
+};
 
 function View({ kind }: Props) {
     const isKnownKind = Object.values(ERepoWebhookKind).includes(kind as ERepoWebhookKind);
     const label = formatRepoWebhookKind(kind);
 
-    return (
-        <Badge
-            className={cn(
-                kind === ERepoWebhookKind.Github && "bg-sky-500 text-white",
-                kind === ERepoWebhookKind.Gitlab && "bg-indigo-500 text-white",
-                kind === ERepoWebhookKind.Gitea && "bg-fuchsia-500 text-white",
-                kind === ERepoWebhookKind.Gogs && "bg-yellow-500 text-white",
-                kind === ERepoWebhookKind.Bitbucket && "bg-purple-500 text-white",
-                !isKnownKind && "bg-purple-500 text-white",
-            )}
-        >
-            {label || "-"}
-        </Badge>
-    );
+    return <Badge tone={(isKnownKind ? KIND_TONES[kind] : undefined) ?? "purple"}>{label || "-"}</Badge>;
 }
 
 interface Props {

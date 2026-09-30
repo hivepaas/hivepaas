@@ -17,6 +17,8 @@ import { TablePagination } from "@/components/ui";
 import { DeploymentSummaryCard, DeploymentSummaryCardSkeleton, useDeploymentCurrentTime } from "../building-blocks";
 import { showDeploymentCancelToast } from "../utils";
 
+const DEPLOYMENTS_REFETCH_INTERVAL_MS = 5_000;
+
 export function AppDeploymentsRoute() {
     const { id: projectId, env, appId } = useParams<{ id: string; env: string; appId: string }>();
     const { pagination, setPagination, sorting, search, setSearch } = useTableState();
@@ -26,15 +28,21 @@ export function AppDeploymentsRoute() {
     invariant(env, "env must be defined");
     invariant(appId, "appId must be defined");
 
-    const { data: { data: deployments, meta } = DEFAULT_PAGINATED_DATA, isFetching } =
-        AppDeploymentsQueries.useFindManyPaginated({
-            projectID: projectId,
-            env,
-            appID: appId,
-            pagination,
-            sorting,
-            search,
-        });
+    // The list is read again every few seconds: a deployment started elsewhere (a
+    // webhook, another tab) appears, and one that is running moves on, without a
+    // reload. The skeleton is for the first load only, not for these refreshes.
+    const { data: { data: deployments, meta } = DEFAULT_PAGINATED_DATA, isLoading } =
+        AppDeploymentsQueries.useFindManyPaginated(
+            {
+                projectID: projectId,
+                env,
+                appID: appId,
+                pagination,
+                sorting,
+                search,
+            },
+            { refetchInterval: DEPLOYMENTS_REFETCH_INTERVAL_MS },
+        );
 
     const hasActiveDeployment = useMemo(
         () => deployments.some(deployment => deployment.status === EAppDeploymentStatus.InProgress),
@@ -69,7 +77,7 @@ export function AppDeploymentsRoute() {
                 />
 
                 <div className="flex flex-col gap-4">
-                    {isFetching && deployments.length === 0 ? (
+                    {isLoading && deployments.length === 0 ? (
                         <>
                             <DeploymentSummaryCardSkeleton />
                             <DeploymentSummaryCardSkeleton />

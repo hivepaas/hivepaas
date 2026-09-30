@@ -24,6 +24,8 @@ import {
 } from "../task-summary-card/system-task-summary-card.com";
 import { useSystemTaskCurrentTime } from "../task-summary-card/system-task-summary-card.hooks";
 
+const TASKS_REFETCH_INTERVAL_MS = 5_000;
+
 export interface SystemTasksListProps {
     scope?: SystemTaskScope;
     initialFilters?: SystemTaskFilterValues;
@@ -73,8 +75,11 @@ export function SystemTasksList({
         setPagination(prev => ({ ...prev, page: 1 }));
     }
 
-    const { data: { data: tasks, meta } = DEFAULT_PAGINATED_DATA, isFetching } =
-        SystemTasksQueries.useFindManyPaginated({
+    // The list is read again every few seconds: a task started elsewhere appears,
+    // and one that is running moves on, without a reload. The skeleton is for the
+    // first load only, not for these refreshes.
+    const { data: { data: tasks, meta } = DEFAULT_PAGINATED_DATA, isLoading } = SystemTasksQueries.useFindManyPaginated(
+        {
             scope,
             pagination,
             sorting,
@@ -87,7 +92,9 @@ export function SystemTasksList({
             projectID: filters.projectId,
             appID: filters.appId,
             scopeOnly: filters.scopeOnly,
-        });
+        },
+        { refetchInterval: TASKS_REFETCH_INTERVAL_MS },
+    );
 
     const hasActiveTask = useMemo(() => tasks.some(task => task.status === SystemTaskStatus.InProgress), [tasks]);
     const now = useSystemTaskCurrentTime(hasActiveTask);
@@ -151,7 +158,7 @@ export function SystemTasksList({
             )}
 
             <div className="flex flex-col gap-4">
-                {isFetching && tasks.length === 0 ? (
+                {isLoading && tasks.length === 0 ? (
                     <>
                         <SystemTaskSummaryCardSkeleton />
                         <SystemTaskSummaryCardSkeleton />

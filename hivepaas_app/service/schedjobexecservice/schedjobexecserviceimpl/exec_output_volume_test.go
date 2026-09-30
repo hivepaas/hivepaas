@@ -66,11 +66,11 @@ func (r *insertedFiles) Insert(
 	return nil
 }
 
-func saveToFileJob() *entity.Setting {
+func saveToFileJob(fileName string) *entity.Setting {
 	setting := &entity.Setting{ID: "j1", Type: base.SettingTypeSchedJob}
 	setting.MustSetData(&entity.SchedJob{Command: &entity.CommandTemplate{Command: "pg_dump app"},
 		CommandOutput: &entity.SchedJobCommandOutput{Enabled: true, SaveToFile: &entity.SchedJobCommandOutputSaveToFile{
-			FileName:          "dump.sql",
+			FileName:          fileName,
 			CompressionFormat: base.FileCompressionNone,
 			EncryptionFormat:  base.FileEncryptionNone,
 		}}})
@@ -79,6 +79,13 @@ func saveToFileJob() *entity.Setting {
 
 func runSaveToFile(t *testing.T, exec containerexecservice.Service) (*volumeFiles, *insertedFiles, error) {
 	t.Helper()
+	return runSaveToFileNamed(t, exec, "dump.sql")
+}
+
+func runSaveToFileNamed(
+	t *testing.T, exec containerexecservice.Service, fileName string,
+) (*volumeFiles, *insertedFiles, error) {
+	t.Helper()
 	files := &volumeFiles{files: map[string]string{}, volumes: map[string]*entity.Setting{"p1": {ID: "vol-p1"}}}
 	repo := &insertedFiles{}
 	svc := &service{containerExecService: exec, commandService: &commandServiceStub{}, fileService: files,
@@ -86,7 +93,7 @@ func runSaveToFile(t *testing.T, exec containerexecservice.Service) (*volumeFile
 
 	_, err := svc.SchedJobExec(context.Background(), database.Tx{}, &schedjobexecservice.SchedJobExecReq{
 		TaskExecData:    &queue.TaskExecData{Task: &entity.Task{ID: "t1"}, LogStore: tasklog.NewNullStore()},
-		SchedJobSetting: saveToFileJob(),
+		SchedJobSetting: saveToFileJob(fileName),
 		DestApp: &entity.App{ID: "a1", Key: "web", ProjectID: "p1",
 			ProjectEnv: &entity.ProjectEnv{Key: "prod"}},
 	})
@@ -125,4 +132,24 @@ func TestAFailedJobLeavesNoOutputFile(t *testing.T) {
 	assert.Empty(t, repo.inserted)
 	assert.Empty(t, files.files)
 	assert.Len(t, files.removed, 1)
+}
+
+// A file name that climbs out of the app's own directory is refused: the volume
+// also holds the data of the project's other apps.
+func TestAJobOutputNamedOutOfItsDirectoryIsRefused(t *testing.T) {
+	files, repo, err := runSaveToFileNamed(t, &fakeExec{output: "dump data"}, "x/../../../../../prod/db/data")
+
+	assert.ErrorIs(t, err, hperrors.ErrFilePathOutsideRoot)
+	assert.Empty(t, repo.inserted)
+	assert.Empty(t, files.files)
+}
+
+// A file name with a directory of its own stays inside the app's directory.
+func TestAJobOutputNamedWithADirectoryStaysInside(t *testing.T) {
+	_, repo, err := runSaveToFileNamed(t, &fakeExec{output: "dump data"}, "daily/dump.sql")
+
+	assert.NoError(t, err)
+	if assert.Len(t, repo.inserted, 1) {
+		assert.Equal(t, ".hivepaas/job-output/prod/web/"+repo.inserted[0].ID+"-daily/dump.sql", repo.inserted[0].Path)
+	}
 }

@@ -197,9 +197,16 @@ func (s *service) initOutputFile(
 		if data.DestApp.ProjectEnv != nil {
 			envKey = data.DestApp.ProjectEnv.Key
 		}
+		// The file name is the job's to choose, and the volume also holds the
+		// project's other apps: it stays in this app's directory.
+		appDir := fileservice.AppFilePath(fileservice.FilesDirJobOutput, envKey, data.DestApp.Key, "")
+		path := filepath.Join(appDir, data.File.ID+"-"+fileName)
+		if !strings.HasPrefix(path, appDir+string(filepath.Separator)) {
+			return hperrors.Wrap(hperrors.ErrFilePathOutsideRoot).
+				WithParam("Path", fileName).WithParam("Root", appDir)
+		}
 		data.File.StorageID = volume.ID
-		data.File.Path = fileservice.AppFilePath(fileservice.FilesDirJobOutput, envKey, data.DestApp.Key,
-			data.File.ID+"-"+fileName)
+		data.File.Path = path
 	}
 
 	return nil

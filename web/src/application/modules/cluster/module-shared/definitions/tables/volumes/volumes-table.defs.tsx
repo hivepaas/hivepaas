@@ -1,4 +1,4 @@
-import { Badge } from "@components/ui/badge";
+import { Badge, type BadgeTone } from "@components/ui/badge";
 import type { ColumnDef } from "@tanstack/react-table";
 import { format } from "date-fns";
 import type { ClusterVolume } from "~/cluster/domain";
@@ -7,6 +7,20 @@ import { getClusterVolumeTypeLabel } from "~/cluster/module-shared/utils";
 import { SettingStatusBadge } from "~/settings/module-shared/components";
 
 import { ActionsCell, MenuCell } from "./building-blocks";
+
+/** The color of a local volume's type; one not known is neutral. */
+function volumeTypeTone(type: string): BadgeTone {
+    switch (type.toLowerCase()) {
+        case "bind":
+            return "amber";
+        case "nfs":
+            return "blue";
+        case "tmpfs":
+            return "purple";
+        default:
+            return "neutral";
+    }
+}
 
 function createColumns(scope: VolumeManagementScope): ColumnDef<ClusterVolume>[] {
     return [
@@ -41,6 +55,7 @@ function createColumns(scope: VolumeManagementScope): ColumnDef<ClusterVolume>[]
                 align: "center",
                 titleAlign: "center",
             },
+            cell: ({ row: { original } }) => (original.driver ? <Badge tone="sky">{original.driver}</Badge> : "-"),
         },
         {
             id: "volumeType",
@@ -49,7 +64,11 @@ function createColumns(scope: VolumeManagementScope): ColumnDef<ClusterVolume>[]
                 align: "center",
                 titleAlign: "center",
             },
-            cell: ({ row: { original } }) => getClusterVolumeTypeLabel(original),
+            cell: ({ row: { original } }) => {
+                const type = getClusterVolumeTypeLabel(original);
+
+                return type === "-" ? type : <Badge tone={volumeTypeTone(type)}>{type}</Badge>;
+            },
         },
         {
             accessorKey: "status",

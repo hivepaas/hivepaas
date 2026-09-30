@@ -127,6 +127,14 @@ function createColumns(
         {
             accessorKey: "key",
             header: "Key",
+            cell: ({ row: { original } }) => (
+                <Badge
+                    tone="neutral"
+                    className="font-mono"
+                >
+                    {original.key}
+                </Badge>
+            ),
         },
         {
             header: "Replicas",

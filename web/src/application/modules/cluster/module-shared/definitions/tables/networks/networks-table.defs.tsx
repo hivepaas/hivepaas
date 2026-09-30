@@ -1,5 +1,5 @@
 import { Checkbox } from "@components/ui";
-import { Badge } from "@components/ui/badge";
+import { Badge, type BadgeTone } from "@components/ui/badge";
 import type { ColumnDef } from "@tanstack/react-table";
 import { format } from "date-fns";
 import type { ClusterNetwork } from "~/cluster/domain";
@@ -15,6 +15,20 @@ function BooleanCell({ value }: { value: boolean }) {
             aria-label={value ? "Enabled" : "Disabled"}
         />
     );
+}
+
+/** The color of a network's driver; one not known is neutral. */
+function networkDriverTone(driver: string): BadgeTone {
+    switch (driver.toLowerCase()) {
+        case "overlay":
+            return "blue";
+        case "bridge":
+            return "teal";
+        case "host":
+            return "amber";
+        default:
+            return "neutral";
+    }
 }
 
 function createColumns(scope: NetworkManagementScope): ColumnDef<ClusterNetwork>[] {
@@ -67,6 +81,8 @@ function createColumns(scope: NetworkManagementScope): ColumnDef<ClusterNetwork>
                 align: "center",
                 titleAlign: "center",
             },
+            cell: ({ row: { original } }) =>
+                original.driver ? <Badge tone={networkDriverTone(original.driver)}>{original.driver}</Badge> : "-",
         },
         {
             accessorKey: "attachable",

@@ -1,4 +1,5 @@
 import { cn } from "@/lib/utils";
+import { Badge } from "@components/ui/badge";
 import type { ColumnDef } from "@tanstack/react-table";
 import { Eye } from "lucide-react";
 import type { ProjectAppDetails, ProjectEnvEntity } from "~/projects/domain";
@@ -122,6 +123,14 @@ function createColumns(projectId: string, projectEnvs: readonly ProjectEnvEntity
         {
             accessorKey: "key",
             header: "Key",
+            cell: ({ row: { original } }) => (
+                <Badge
+                    tone="neutral"
+                    className="font-mono"
+                >
+                    {original.key}
+                </Badge>
+            ),
         },
         {
             id: "replicas",

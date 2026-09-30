@@ -1,4 +1,5 @@
 import { Avatar } from "@components/ui/avatar";
+import { Badge } from "@components/ui/badge";
 import type { ColumnDef } from "@tanstack/react-table";
 import { format } from "date-fns";
 import type { ProjectBaseEntity } from "~/projects/domain";
@@ -37,6 +38,14 @@ const columns: ColumnDef<ProjectBaseEntity>[] = [
     {
         accessorKey: "key",
         header: "Key",
+        cell: ({ row: { original } }) => (
+            <Badge
+                tone="neutral"
+                className="font-mono"
+            >
+                {original.key}
+            </Badge>
+        ),
     },
     {
         header: "Status",

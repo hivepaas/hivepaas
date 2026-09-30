@@ -107,7 +107,6 @@ func (s *service) SetupRoutingSettingsDefault(
 		domain.CompressionConfig = &entity.HTTPCompressionConfig{
 			Enabled:         true,
 			MinResponseBody: unit.KB, // 1kb
-			DefaultEncoding: "br",    // brotli
 		}
 
 		for _, limit := range apiRateLimits {

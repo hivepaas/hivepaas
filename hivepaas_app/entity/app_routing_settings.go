@@ -85,7 +85,6 @@ type HTTPCompressionConfig struct {
 	ExcludedContentTypes []string      `json:"excludedContentTypes,omitempty"`
 	IncludedContentTypes []string      `json:"includedContentTypes,omitempty"`
 	MinResponseBody      unit.DataSize `json:"minResponseBody,omitempty"`
-	DefaultEncoding      string        `json:"defaultEncoding,omitempty"`
 }
 
 type HTTPHeaderConfig struct {

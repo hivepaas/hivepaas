@@ -319,7 +319,6 @@ type HTTPCompressionConfigReq struct {
 	IncludedContentTypes []string      `json:"includedContentTypes"`
 	ExcludedContentTypes []string      `json:"excludedContentTypes"`
 	MinResponseBody      unit.DataSize `json:"minResponseBody"`
-	DefaultEncoding      string        `json:"defaultEncoding"`
 }
 
 func (req *HTTPCompressionConfigReq) ToEntity() *entity.HTTPCompressionConfig {
@@ -331,7 +330,6 @@ func (req *HTTPCompressionConfigReq) ToEntity() *entity.HTTPCompressionConfig {
 		IncludedContentTypes: req.IncludedContentTypes,
 		ExcludedContentTypes: req.ExcludedContentTypes,
 		MinResponseBody:      req.MinResponseBody,
-		DefaultEncoding:      req.DefaultEncoding,
 	}
 }
 

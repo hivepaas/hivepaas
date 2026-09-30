@@ -49906,9 +49906,6 @@
       },
       "appsettingsdto.HTTPCompressionConfigReq" : {
         "properties" : {
-          "defaultEncoding" : {
-            "type" : "string"
-          },
           "enabled" : {
             "type" : "boolean"
           },
@@ -49928,14 +49925,11 @@
             "type" : "integer"
           }
         },
-        "required" : [ "defaultEncoding", "enabled", "excludedContentTypes", "includedContentTypes", "minResponseBody" ],
+        "required" : [ "enabled", "excludedContentTypes", "includedContentTypes", "minResponseBody" ],
         "type" : "object"
       },
       "appsettingsdto.HTTPCompressionConfigResp" : {
         "properties" : {
-          "defaultEncoding" : {
-            "type" : "string"
-          },
           "enabled" : {
             "type" : "boolean"
           },
@@ -49955,7 +49949,7 @@
             "type" : "integer"
           }
         },
-        "required" : [ "defaultEncoding", "enabled", "excludedContentTypes", "includedContentTypes", "minResponseBody" ],
+        "required" : [ "enabled", "excludedContentTypes", "includedContentTypes", "minResponseBody" ],
         "type" : "object"
       },
       "appsettingsdto.HTTPHeaderConfigReq" : {

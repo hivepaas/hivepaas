@@ -508,6 +508,10 @@ func (s *service) hasTraefikTrustedIPs(traefikSvc *swarm.Service) bool {
 	return false
 }
 
+// compressionEncodings is Traefik's compress.encodings: what it supports, in the
+// order it prefers them.
+const compressionEncodings = "zstd,br,gzip"
+
 func (s *service) createCompressionConfig(
 	compCfg *entity.HTTPCompressionConfig,
 	routerName string,
@@ -531,10 +535,11 @@ func (s *service) createCompressionConfig(
 		labels[fmt.Sprintf("traefik.http.middlewares.%s.compress.minresponsebodybytes", mwName)] =
 			strconv.FormatInt(compCfg.MinResponseBody.Bytes(), 10)
 	}
-	if compCfg.DefaultEncoding != "" {
-		labels[fmt.Sprintf("traefik.http.middlewares.%s.compress.defaultencoding", mwName)] =
-			compCfg.DefaultEncoding
-	}
+	// The encodings a response may be compressed with, the most preferred first:
+	// a client gets the first one its Accept-Encoding allows. No default encoding
+	// is named: that would compress for a client that sent no Accept-Encoding,
+	// which has not said it can read any of them.
+	labels[fmt.Sprintf("traefik.http.middlewares.%s.compress.encodings", mwName)] = compressionEncodings
 	*middlewares = append(*middlewares, mwName+middlewareProvider)
 }
 

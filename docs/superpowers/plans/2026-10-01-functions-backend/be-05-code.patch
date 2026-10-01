@@ -1,0 +1,1107 @@
+diff --git a/docs/openapi/swagger.json b/docs/openapi/swagger.json
+index 8e119941..67ec8d77 100644
+--- a/docs/openapi/swagger.json
++++ b/docs/openapi/swagger.json
+@@ -47506,6 +47506,9 @@
+           "command" : {
+             "type" : "string"
+           },
++          "functionSource" : {
++            "$ref" : "#/components/schemas/entity.DeploymentFunctionSource"
++          },
+           "imageSource" : {
+             "$ref" : "#/components/schemas/entity.DeploymentImageSource"
+           },
+@@ -47525,7 +47528,7 @@
+             "type" : "string"
+           }
+         },
+-        "required" : [ "activeMethod", "command", "imageSource", "notification", "postDeploymentCommand", "preDeploymentCommand", "repoSource", "workingDir" ],
++        "required" : [ "activeMethod", "command", "functionSource", "imageSource", "notification", "postDeploymentCommand", "preDeploymentCommand", "repoSource", "workingDir" ],
+         "type" : "object"
+       },
+       "entity.BaseEventNotification" : {
+@@ -47564,6 +47567,55 @@
+         "required" : [ "content", "path", "scanPath", "source" ],
+         "type" : "object"
+       },
++      "entity.DeploymentFunctionSource" : {
++        "properties" : {
++          "code" : {
++            "allOf" : [ {
++              "$ref" : "#/components/schemas/entity.FunctionCode"
++            } ],
++            "description" : "Code is inline, as written in the dashboard's editor, or a repository.",
++            "type" : "object"
++          },
++          "contract" : {
++            "description" : "Contract is the version of the handler contract: v1.",
++            "type" : "string"
++          },
++          "entrypoint" : {
++            "allOf" : [ {
++              "$ref" : "#/components/schemas/entity.FunctionEntrypoint"
++            } ],
++            "description" : "Entrypoint is the file and the name of the handler in it.",
++            "type" : "object"
++          },
++          "maxBodySize" : {
++            "type" : "integer"
++          },
++          "maxConcurrency" : {
++            "type" : "integer"
++          },
++          "pushToRegistry" : {
++            "description" : "PushToRegistry is the registry the built image goes to, which a cluster of\nseveral nodes needs.",
++            "type" : "string"
++          },
++          "runtime" : {
++            "description" : "Runtime is the language and its line: node24, python313, go127.",
++            "type" : "string"
++          },
++          "systemPackages" : {
++            "description" : "SystemPackages are Debian packages installed before the libraries:\n\"libpq-dev\", or \"ffmpeg=7:5.1.6-0+deb12u1\".",
++            "items" : {
++              "type" : "string"
++            },
++            "type" : "array"
++          },
++          "timeout" : {
++            "description" : "Limits of one call.",
++            "type" : "string"
++          }
++        },
++        "required" : [ "code", "contract", "entrypoint", "maxBodySize", "maxConcurrency", "pushToRegistry", "runtime", "systemPackages", "timeout" ],
++        "type" : "object"
++      },
+       "entity.DeploymentImageSource" : {
+         "properties" : {
+           "image" : {
+@@ -47653,6 +47705,88 @@
+         "required" : [ "content", "fromAddress", "fromName", "password", "subject", "toAddress", "toAddresses" ],
+         "type" : "object"
+       },
++      "entity.FunctionCode" : {
++        "properties" : {
++          "dir" : {
++            "description" : "Dir is where the function is in the repository, for a repository holding\nseveral.",
++            "type" : "string"
++          },
++          "inline" : {
++            "$ref" : "#/components/schemas/entity.FunctionInlineCode"
++          },
++          "repo" : {
++            "$ref" : "#/components/schemas/entity.FunctionRepoCode"
++          }
++        },
++        "required" : [ "dir", "inline", "repo" ],
++        "type" : "object"
++      },
++      "entity.FunctionEntrypoint" : {
++        "properties" : {
++          "file" : {
++            "description" : "File is the handler's file, relative to the function's root; for Go, the\ndirectory of the handler's package.",
++            "type" : "string"
++          },
++          "handler" : {
++            "description" : "Handler is the name of the handler in it.",
++            "type" : "string"
++          }
++        },
++        "required" : [ "file", "handler" ],
++        "type" : "object"
++      },
++      "entity.FunctionFile" : {
++        "properties" : {
++          "content" : {
++            "type" : "string"
++          },
++          "path" : {
++            "type" : "string"
++          }
++        },
++        "required" : [ "content", "path" ],
++        "type" : "object"
++      },
++      "entity.FunctionInlineCode" : {
++        "properties" : {
++          "files" : {
++            "items" : {
++              "$ref" : "#/components/schemas/entity.FunctionFile"
++            },
++            "type" : "array"
++          }
++        },
++        "required" : [ "files" ],
++        "type" : "object"
++      },
++      "entity.FunctionRepoCode" : {
++        "properties" : {
++          "commitHash" : {
++            "type" : "string"
++          },
++          "credentials" : {
++            "$ref" : "#/components/schemas/entity.RepoCredentials"
++          },
++          "repoId" : {
++            "type" : "string"
++          },
++          "repoOptions" : {
++            "$ref" : "#/components/schemas/entity.DeploymentRepoOptions"
++          },
++          "repoRef" : {
++            "description" : "can be branch name, tag...",
++            "type" : "string"
++          },
++          "repoType" : {
++            "type" : "string"
++          },
++          "repoURL" : {
++            "type" : "string"
++          }
++        },
++        "required" : [ "commitHash", "credentials", "repoId", "repoOptions", "repoRef", "repoType", "repoURL" ],
++        "type" : "object"
++      },
+       "entity.RepoCredentials" : {
+         "properties" : {
+           "id" : {
+@@ -49177,6 +49311,78 @@
+         "required" : [ "content", "path", "scanPath", "source" ],
+         "type" : "object"
+       },
++      "appsettingsdto.DeploymentFunctionSourceReq" : {
++        "properties" : {
++          "code" : {
++            "$ref" : "#/components/schemas/appsettingsdto.FunctionCodeReq"
++          },
++          "contract" : {
++            "type" : "string"
++          },
++          "entrypoint" : {
++            "$ref" : "#/components/schemas/appsettingsdto.FunctionEntrypointReq"
++          },
++          "maxBodySize" : {
++            "type" : "string"
++          },
++          "maxConcurrency" : {
++            "type" : "integer"
++          },
++          "pushToRegistry" : {
++            "$ref" : "#/components/schemas/basedto.ObjectIDReq"
++          },
++          "runtime" : {
++            "type" : "string"
++          },
++          "systemPackages" : {
++            "items" : {
++              "type" : "string"
++            },
++            "type" : "array"
++          },
++          "timeout" : {
++            "type" : "string"
++          }
++        },
++        "required" : [ "code", "contract", "entrypoint", "maxBodySize", "maxConcurrency", "pushToRegistry", "runtime", "systemPackages", "timeout" ],
++        "type" : "object"
++      },
++      "appsettingsdto.DeploymentFunctionSourceResp" : {
++        "properties" : {
++          "code" : {
++            "$ref" : "#/components/schemas/appsettingsdto.FunctionCodeResp"
++          },
++          "contract" : {
++            "type" : "string"
++          },
++          "entrypoint" : {
++            "$ref" : "#/components/schemas/appsettingsdto.FunctionEntrypointResp"
++          },
++          "maxBodySize" : {
++            "type" : "string"
++          },
++          "maxConcurrency" : {
++            "type" : "integer"
++          },
++          "pushToRegistry" : {
++            "$ref" : "#/components/schemas/settings.BaseSettingResp"
++          },
++          "runtime" : {
++            "type" : "string"
++          },
++          "systemPackages" : {
++            "items" : {
++              "type" : "string"
++            },
++            "type" : "array"
++          },
++          "timeout" : {
++            "type" : "string"
++          }
++        },
++        "required" : [ "code", "contract", "entrypoint", "maxBodySize", "maxConcurrency", "pushToRegistry", "runtime", "systemPackages", "timeout" ],
++        "type" : "object"
++      },
+       "appsettingsdto.DeploymentImageNamingResp" : {
+         "properties" : {
+           "repoName" : {
+@@ -49316,6 +49522,9 @@
+           "command" : {
+             "type" : "string"
+           },
++          "functionSource" : {
++            "$ref" : "#/components/schemas/appsettingsdto.DeploymentFunctionSourceResp"
++          },
+           "image" : {
+             "allOf" : [ {
+               "$ref" : "#/components/schemas/appsettingsdto.DeploymentImageNamingResp"
+@@ -49345,7 +49554,7 @@
+             "type" : "string"
+           }
+         },
+-        "required" : [ "activeMethod", "command", "image", "imageSource", "notification", "postDeploymentCommand", "preDeploymentCommand", "repoSource", "updateVer", "workingDir" ],
++        "required" : [ "activeMethod", "command", "functionSource", "image", "imageSource", "notification", "postDeploymentCommand", "preDeploymentCommand", "repoSource", "updateVer", "workingDir" ],
+         "type" : "object"
+       },
+       "appsettingsdto.DockerfileTemplateResp" : {
+@@ -49707,6 +49916,159 @@
+         "required" : [ "meta" ],
+         "type" : "object"
+       },
++      "appsettingsdto.FunctionCodeReq" : {
++        "properties" : {
++          "dir" : {
++            "type" : "string"
++          },
++          "inline" : {
++            "$ref" : "#/components/schemas/appsettingsdto.FunctionInlineCodeReq"
++          },
++          "repo" : {
++            "$ref" : "#/components/schemas/appsettingsdto.FunctionRepoCodeReq"
++          }
++        },
++        "required" : [ "dir", "inline", "repo" ],
++        "type" : "object"
++      },
++      "appsettingsdto.FunctionCodeResp" : {
++        "properties" : {
++          "dir" : {
++            "type" : "string"
++          },
++          "inline" : {
++            "$ref" : "#/components/schemas/appsettingsdto.FunctionInlineCodeResp"
++          },
++          "repo" : {
++            "$ref" : "#/components/schemas/appsettingsdto.FunctionRepoCodeResp"
++          }
++        },
++        "required" : [ "dir", "inline", "repo" ],
++        "type" : "object"
++      },
++      "appsettingsdto.FunctionEntrypointReq" : {
++        "properties" : {
++          "file" : {
++            "type" : "string"
++          },
++          "handler" : {
++            "type" : "string"
++          }
++        },
++        "required" : [ "file", "handler" ],
++        "type" : "object"
++      },
++      "appsettingsdto.FunctionEntrypointResp" : {
++        "properties" : {
++          "file" : {
++            "type" : "string"
++          },
++          "handler" : {
++            "type" : "string"
++          }
++        },
++        "required" : [ "file", "handler" ],
++        "type" : "object"
++      },
++      "appsettingsdto.FunctionFileReq" : {
++        "properties" : {
++          "content" : {
++            "type" : "string"
++          },
++          "path" : {
++            "type" : "string"
++          }
++        },
++        "required" : [ "content", "path" ],
++        "type" : "object"
++      },
++      "appsettingsdto.FunctionFileResp" : {
++        "properties" : {
++          "content" : {
++            "type" : "string"
++          },
++          "path" : {
++            "type" : "string"
++          }
++        },
++        "required" : [ "content", "path" ],
++        "type" : "object"
++      },
++      "appsettingsdto.FunctionInlineCodeReq" : {
++        "properties" : {
++          "files" : {
++            "items" : {
++              "$ref" : "#/components/schemas/appsettingsdto.FunctionFileReq"
++            },
++            "type" : "array"
++          }
++        },
++        "required" : [ "files" ],
++        "type" : "object"
++      },
++      "appsettingsdto.FunctionInlineCodeResp" : {
++        "properties" : {
++          "files" : {
++            "items" : {
++              "$ref" : "#/components/schemas/appsettingsdto.FunctionFileResp"
++            },
++            "type" : "array"
++          }
++        },
++        "required" : [ "files" ],
++        "type" : "object"
++      },
++      "appsettingsdto.FunctionRepoCodeReq" : {
++        "properties" : {
++          "commitHash" : {
++            "type" : "string"
++          },
++          "credentials" : {
++            "$ref" : "#/components/schemas/basedto.ObjectIDReq"
++          },
++          "repoOptions" : {
++            "$ref" : "#/components/schemas/appsettingsdto.DeploymentRepoOptionsReq"
++          },
++          "repoRef" : {
++            "type" : "string"
++          },
++          "repoType" : {
++            "type" : "string"
++          },
++          "repoURL" : {
++            "type" : "string"
++          }
++        },
++        "required" : [ "commitHash", "credentials", "repoOptions", "repoRef", "repoType", "repoURL" ],
++        "type" : "object"
++      },
++      "appsettingsdto.FunctionRepoCodeResp" : {
++        "properties" : {
++          "commitHash" : {
++            "type" : "string"
++          },
++          "credentials" : {
++            "$ref" : "#/components/schemas/settings.BaseSettingResp"
++          },
++          "repoId" : {
++            "type" : "string"
++          },
++          "repoOptions" : {
++            "$ref" : "#/components/schemas/appsettingsdto.DeploymentRepoOptionsResp"
++          },
++          "repoRef" : {
++            "type" : "string"
++          },
++          "repoType" : {
++            "type" : "string"
++          },
++          "repoURL" : {
++            "type" : "string"
++          }
++        },
++        "required" : [ "commitHash", "credentials", "repoId", "repoOptions", "repoRef", "repoType", "repoURL" ],
++        "type" : "object"
++      },
+       "appsettingsdto.GenericResource" : {
+         "properties" : {
+           "kind" : {
+@@ -51251,6 +51613,13 @@
+           "command" : {
+             "type" : "string"
+           },
++          "functionSource" : {
++            "allOf" : [ {
++              "$ref" : "#/components/schemas/appsettingsdto.DeploymentFunctionSourceReq"
++            } ],
++            "description" : "FunctionSource is a function's: its code, its runtime and its limits.",
++            "type" : "object"
++          },
+           "imageSource" : {
+             "$ref" : "#/components/schemas/appsettingsdto.DeploymentImageSourceReq"
+           },
+@@ -51273,7 +51642,7 @@
+             "type" : "string"
+           }
+         },
+-        "required" : [ "activeMethod", "command", "imageSource", "notification", "postDeploymentCommand", "preDeploymentCommand", "repoSource", "updateVer", "workingDir" ],
++        "required" : [ "activeMethod", "command", "functionSource", "imageSource", "notification", "postDeploymentCommand", "preDeploymentCommand", "repoSource", "updateVer", "workingDir" ],
+         "type" : "object"
+       },
+       "appsettingsdto.UpdateAppDeploymentSettingsResp" : {
+diff --git a/hivepaas_app/base/app_kind.go b/hivepaas_app/base/app_kind.go
+index 89563782..7bff1bbe 100644
+--- a/hivepaas_app/base/app_kind.go
++++ b/hivepaas_app/base/app_kind.go
+@@ -7,11 +7,14 @@ const (
+ 	AppCategoryWebapp   AppCategory = "webapp"
+ 	AppCategoryCache    AppCategory = "cache"
+ 	AppCategoryStorage  AppCategory = "storage"
++	// AppCategoryFunction is a function: a handler HivePaaS runs on a runtime of
++	// its own. An app is one from its creation, and stays one.
++	AppCategoryFunction AppCategory = "function"
+ )
+ 
+ var (
+ 	AllAppCategories = []AppCategory{AppCategoryDatabase, AppCategoryWebapp, AppCategoryCache,
+-		AppCategoryStorage}
++		AppCategoryStorage, AppCategoryFunction}
+ )
+ 
+ type DatabaseSSLMode string
+diff --git a/hivepaas_app/base/env_var.go b/hivepaas_app/base/env_var.go
+index ad0bed75..f6e573a7 100644
+--- a/hivepaas_app/base/env_var.go
++++ b/hivepaas_app/base/env_var.go
+@@ -115,7 +115,7 @@ func AppKindSharedEnvVars(category AppCategory) []string {
+ 		return []string{AppSystemEnvVarPassword, AppSystemEnvVarPasswordURLEncoded}
+ 	case AppCategoryStorage:
+ 		return []string{AppSystemEnvVarKeyID, AppSystemEnvVarSecret, AppSystemEnvVarBucket, AppSystemEnvVarRegion}
+-	case AppCategoryWebapp:
++	case AppCategoryWebapp, AppCategoryFunction:
+ 		return nil
+ 	}
+ 	return nil
+diff --git a/hivepaas_app/entity/app_kind_settings.go b/hivepaas_app/entity/app_kind_settings.go
+index 73598303..8c578cc3 100644
+--- a/hivepaas_app/entity/app_kind_settings.go
++++ b/hivepaas_app/entity/app_kind_settings.go
+@@ -105,3 +105,14 @@ func (s *Setting) AsAppKindSettings() (*AppKindSettings, error) {
+ func (s *Setting) MustAsAppKindSettings() *AppKindSettings {
+ 	return gofn.Must(s.AsAppKindSettings())
+ }
++
++// IsFunctionKind says whether a setting is the kind of a function. An app is a
++// function from its creation and stays one, so what its other settings may say
++// follows from it.
++func IsFunctionKind(setting *Setting) bool {
++	if setting == nil || setting.Type != base.SettingTypeAppKind {
++		return false
++	}
++	kind, err := setting.AsAppKindSettings()
++	return err == nil && kind.Category == base.AppCategoryFunction
++}
+diff --git a/hivepaas_app/hperrors/errors_project_app.go b/hivepaas_app/hperrors/errors_project_app.go
+index c7b712fe..577a42af 100644
+--- a/hivepaas_app/hperrors/errors_project_app.go
++++ b/hivepaas_app/hperrors/errors_project_app.go
+@@ -27,6 +27,12 @@ var (
+ 	ErrBuildSecretDeclaredAsArg = NewErr(ErrNotAllowed, "ERR_BUILD_SECRET_DECLARED_AS_ARG")
+ 	// A function whose runtime the running release names no image for.
+ 	ErrFunctionRuntimeUnavailable = NewErr(ErrUnsupported, "ERR_FUNCTION_RUNTIME_UNAVAILABLE")
++	// A function is deployed from its code, and only a function is: the
++	// deployment method follows the app's kind.
++	ErrDeploymentMethodFunctionRequired  = NewErr(ErrPreconditionFailed, "ERR_DEPLOYMENT_METHOD_FUNCTION_REQUIRED")
++	ErrDeploymentMethodFunctionUnallowed = NewErr(ErrPreconditionFailed, "ERR_DEPLOYMENT_METHOD_FUNCTION_UNALLOWED")
++	// An app is a function from its creation, and stays one.
++	ErrAppKindFunctionUnchangeable = NewErr(ErrNonEditable, "ERR_APP_KIND_FUNCTION_UNCHANGEABLE")
+ )
+ 
+ // Errors for sources
+diff --git a/hivepaas_app/interface/mcp/tools_app_actions.go b/hivepaas_app/interface/mcp/tools_app_actions.go
+index e10d63e3..01e80b39 100644
+--- a/hivepaas_app/interface/mcp/tools_app_actions.go
++++ b/hivepaas_app/interface/mcp/tools_app_actions.go
+@@ -2,6 +2,8 @@ package mcp
+ 
+ import (
+ 	"context"
++	"crypto/sha256"
++	"encoding/hex"
+ 	"encoding/json"
+ 	"fmt"
+ 	"net/http"
+@@ -56,7 +58,7 @@ func planRestartAppTool() Tool {
+ 
+ // redeployDescs describe the deploy endpoint's request.
+ var redeployDescs = map[string]string{
+-	"noCache": "a repository app: true to build without the build cache; an image app ignores it",
++	"noCache": "a repository app or a function: true to build without the build cache; an image app ignores it",
+ 	"changeId": "the change this deploys, kept on the deployment's trigger. pr-<number> names a pull request " +
+ 		"of the app's repository, which HivePaaS then comments on with how the deployment went",
+ }
+@@ -69,6 +71,9 @@ type deploySource struct {
+ 	Repo   string `json:"repo,omitempty"`
+ 	Ref    string `json:"ref,omitempty"`
+ 	Commit string `json:"commit,omitempty"`
++	// Code is a digest of a function's inline code: an edit to any of its files
++	// is a source that moved.
++	Code string `json:"code,omitempty"`
+ }
+ 
+ type redeployPlan struct {
+@@ -88,7 +93,8 @@ func planRedeployAppTool() Tool {
+ 	return planToolWith("plan_redeploy_app", "Plan a redeploy",
+ 		"Plans POST /projects/{project}/{env}/apps/{app}/deploy: a new deployment of the app from its "+
+ 			"source as its deployment settings say - an image app pulls its image again, a repository app is "+
+-			"built from its branch's newest commit - and, once it succeeds, the app's containers replaced. "+
++			"built from its branch's newest commit, a function from its code - and, once it succeeds, the "+
++			"app's containers replaced. "+
+ 			"The plan shows those settings; to deploy another tag or branch, change them with "+
+ 			"plan_update_app_settings first. Applied, it answers the deployment's id and the task that "+
+ 			"carries it out; a plan whose settings changed since is refused. Nothing happens until apply_plan.",
+@@ -176,10 +182,31 @@ func deploySourceOf(s *appsettingsdto.DeploymentSettingsResp) deploySource {
+ 				s.RepoSource.CommitHash
+ 		}
+ 	case base.DeploymentMethodFunction:
++		if s.FunctionSource != nil && s.FunctionSource.Code != nil {
++			code := s.FunctionSource.Code
++			if code.Repo != nil {
++				out.Repo, out.Ref, out.Commit = withoutUserinfo(code.Repo.RepoURL), code.Repo.RepoRef,
++					code.Repo.CommitHash
++			}
++			out.Code = inlineCodeDigest(code.Inline)
++		}
+ 	}
+ 	return out
+ }
+ 
++// inlineCodeDigest is a function's inline code in a few bytes, or nothing for
++// code in a repository.
++func inlineCodeDigest(code *appsettingsdto.FunctionInlineCodeResp) string {
++	if code == nil {
++		return ""
++	}
++	sum := sha256.New()
++	for _, file := range code.Files {
++		_, _ = fmt.Fprintf(sum, "%d:%s%d:%s", len(file.Path), file.Path, len(file.Content), file.Content)
++	}
++	return hex.EncodeToString(sum.Sum(nil))[:16]
++}
++
+ // redeployCheck is what a redeploy plan keeps to check: the source it saw, and
+ // the app it is of.
+ type redeployCheck struct {
+diff --git a/hivepaas_app/pkg/translation/messages/en/errors.project_app.en.toml b/hivepaas_app/pkg/translation/messages/en/errors.project_app.en.toml
+index 272b06a5..d84bf420 100644
+--- a/hivepaas_app/pkg/translation/messages/en/errors.project_app.en.toml
++++ b/hivepaas_app/pkg/translation/messages/en/errors.project_app.en.toml
+@@ -34,3 +34,8 @@ ERR_GIT_LOG_OUTPUT_UNEXPECTED = "Git log output is unexpected: {{.Output}}"
+ 
+ # Build errors
+ ERR_FUNCTION_RUNTIME_UNAVAILABLE = "This release of HivePaaS has no image for the function runtime {{.Runtime}}"
++
++# Function errors
++ERR_DEPLOYMENT_METHOD_FUNCTION_REQUIRED = "A function is deployed from its code: its deployment method is 'function'"
++ERR_DEPLOYMENT_METHOD_FUNCTION_UNALLOWED = "Only an app created as a function is deployed from a function's code"
++ERR_APP_KIND_FUNCTION_UNCHANGEABLE = "A function stays a function, and an app becomes one only when it is created as one"
+diff --git a/hivepaas_app/service/appcloneservice/appcloneserviceimpl/clone_2_settings.go b/hivepaas_app/service/appcloneservice/appcloneserviceimpl/clone_2_settings.go
+index 1cae49bc..4e3ac7e3 100644
+--- a/hivepaas_app/service/appcloneservice/appcloneserviceimpl/clone_2_settings.go
++++ b/hivepaas_app/service/appcloneservice/appcloneserviceimpl/clone_2_settings.go
+@@ -114,6 +114,10 @@ func (s *service) onCloneSettingDefault(
+ 		return setting, nil
+ 	case base.SettingTypeAppDeployment:
+ 		return s.onCloneDeploymentSettingDefault(setting, data)
++	case base.SettingTypeAppKind:
++		// A function's kind goes with its code: the clone is a function when it
++		// takes the function's deployment settings.
++		return gofn.If(settings.CloneDeploymentSettings && entity.IsFunctionKind(setting), setting, nil), nil
+ 	case base.SettingTypeAppRouting:
+ 		return s.onCloneRoutingSettingDefault(setting, data)
+ 	case base.SettingTypeAppFeatures:
+diff --git a/hivepaas_app/service/appdeploymentservice/appdeploymentserviceimpl/build_source_check.go b/hivepaas_app/service/appdeploymentservice/appdeploymentserviceimpl/build_source_check.go
+new file mode 100644
+index 00000000..de329175
+--- /dev/null
++++ b/hivepaas_app/service/appdeploymentservice/appdeploymentserviceimpl/build_source_check.go
+@@ -0,0 +1,45 @@
++package appdeploymentserviceimpl
++
++import (
++	"context"
++
++	"github.com/hivepaas/hivepaas/hivepaas_app/base"
++	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
++	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/githelper"
++	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/gittool"
++	"github.com/hivepaas/hivepaas/hivepaas_app/service/appdeploymentservice"
++)
++
++func (s *service) CheckBuildSource(
++	ctx context.Context,
++	req *appdeploymentservice.CheckBuildSourceReq,
++) error {
++	// When the cluster has multiple nodes, the result image must be pushed to a registry
++	// that can be accessed by all the nodes in the cluster.
++	isMultiNode, err := s.clusterService.IsMultiNode(ctx)
++	if err != nil {
++		return hperrors.Wrap(err)
++	}
++	if isMultiNode && req.PushToRegistry.ID == "" {
++		return hperrors.Wrap(hperrors.ErrMultiNodeClusterRequireRegistryForImages)
++	}
++
++	repoSource := req.RepoSource
++	if repoSource == nil {
++		return nil
++	}
++	// Validate existence of repo and ref
++	switch repoSource.RepoType { //nolint:gocritic
++	case base.RepoTypeGit:
++		// TODO: do not check commit hash for now, that's so slow
++		err := gittool.ValidateWithGitCli(ctx, &gittool.ValidationOptions{
++			URL:           repoSource.RepoURL,
++			Credentials:   req.RefObjects.RefSettings[repoSource.Credentials.ID],
++			ReferenceName: githelper.ReferenceName(repoSource.RepoRef),
++		})
++		if err != nil {
++			return hperrors.Wrap(err)
++		}
++	}
++	return nil
++}
+diff --git a/hivepaas_app/service/appdeploymentservice/service.go b/hivepaas_app/service/appdeploymentservice/service.go
+index 0045d592..d05037b7 100644
+--- a/hivepaas_app/service/appdeploymentservice/service.go
++++ b/hivepaas_app/service/appdeploymentservice/service.go
+@@ -12,4 +12,9 @@ type Service interface {
+ 		args DeploymentArgs) (*entity.Deployment, *entity.Task, error)
+ 
+ 	Deploy(ctx context.Context, db database.Tx, req *AppDeploymentReq) (*AppDeploymentResp, error)
++
++	// CheckBuildSource checks what a build will need before its settings are
++	// saved: a registry for its image when the cluster has several nodes, and
++	// the repository and ref it checks out, if it checks out one.
++	CheckBuildSource(ctx context.Context, req *CheckBuildSourceReq) error
+ }
+diff --git a/hivepaas_app/service/appdeploymentservice/types.go b/hivepaas_app/service/appdeploymentservice/types.go
+index 042834f0..736f98df 100644
+--- a/hivepaas_app/service/appdeploymentservice/types.go
++++ b/hivepaas_app/service/appdeploymentservice/types.go
+@@ -21,3 +21,14 @@ type DeploymentArgs struct {
+ 	// ImageTags carry no environment prefix; the build adds it.
+ 	ImageTags []string
+ }
++
++// CheckBuildSourceReq is what a build from a repository or from a function's
++// code is about to be configured with.
++type CheckBuildSourceReq struct {
++	// RepoSource is the repository the build checks out, nil for none.
++	RepoSource     *entity.DeploymentRepoSource
++	PushToRegistry entity.ObjectID
++	// RefObjects hold the settings the repository source refers to: its
++	// credentials.
++	RefObjects *entity.RefObjects
++}
+diff --git a/hivepaas_app/service/envvarservice/envlink/recipes.go b/hivepaas_app/service/envvarservice/envlink/recipes.go
+index 187983d6..2dbd6e30 100644
+--- a/hivepaas_app/service/envvarservice/envlink/recipes.go
++++ b/hivepaas_app/service/envvarservice/envlink/recipes.go
+@@ -47,7 +47,7 @@ func Suggest(target *Target, facts *Facts) []*Group {
+ 		groups = cacheGroups(r, EngineFamily(target.Engine), facts.HasPassword)
+ 	case base.AppCategoryStorage:
+ 		groups = []*Group{storageGroup(r)}
+-	case base.AppCategoryWebapp:
++	case base.AppCategoryWebapp, base.AppCategoryFunction:
+ 		groups = []*Group{addressGroup(r, target)}
+ 	default:
+ 		address := addressGroup(r, target)
+diff --git a/hivepaas_app/usecase/appsettingsuc/appsettingsdto/deployment_function_source_get.go b/hivepaas_app/usecase/appsettingsuc/appsettingsdto/deployment_function_source_get.go
+new file mode 100644
+index 00000000..239b8da2
+--- /dev/null
++++ b/hivepaas_app/usecase/appsettingsuc/appsettingsdto/deployment_function_source_get.go
+@@ -0,0 +1,84 @@
++package appsettingsdto
++
++import (
++	"github.com/hivepaas/hivepaas/hivepaas_app/base"
++	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
++	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/timeutil"
++	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/unit"
++	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings"
++)
++
++// DeploymentFunctionSourceResp is a function's source as its deployment
++// settings answer it: what DeploymentFunctionSourceReq takes back, the settings
++// it refers to shown as settings.
++type DeploymentFunctionSourceResp struct {
++	Runtime        base.FunctionRuntime      `json:"runtime"`
++	Contract       base.FunctionContract     `json:"contract"`
++	Entrypoint     *FunctionEntrypointResp   `json:"entrypoint"`
++	Code           *FunctionCodeResp         `json:"code"`
++	SystemPackages []string                  `json:"systemPackages"`
++	Timeout        timeutil.Duration         `json:"timeout" swaggertype:"string"`
++	MaxConcurrency int                       `json:"maxConcurrency"`
++	MaxBodySize    unit.DataSize             `json:"maxBodySize" swaggertype:"string"`
++	PushToRegistry *settings.BaseSettingResp `json:"pushToRegistry"`
++}
++
++type FunctionEntrypointResp struct {
++	File    string `json:"file"`
++	Handler string `json:"handler"`
++}
++
++type FunctionCodeResp struct {
++	Inline *FunctionInlineCodeResp `json:"inline,omitempty"`
++	Repo   *FunctionRepoCodeResp   `json:"repo,omitempty"`
++	Dir    string                  `json:"dir,omitempty"`
++}
++
++type FunctionInlineCodeResp struct {
++	Files []*FunctionFileResp `json:"files"`
++}
++
++type FunctionFileResp struct {
++	Path    string `json:"path"`
++	Content string `json:"content"`
++}
++
++type FunctionRepoCodeResp struct {
++	RepoType    base.RepoType              `json:"repoType"`
++	RepoID      string                     `json:"repoId"`
++	RepoURL     string                     `json:"repoURL"`
++	RepoRef     string                     `json:"repoRef"`
++	CommitHash  string                     `json:"commitHash"`
++	RepoOptions *DeploymentRepoOptionsResp `json:"repoOptions"`
++	Credentials *settings.BaseSettingResp  `json:"credentials"`
++}
++
++// transformFunctionSource shows the settings a function's source refers to as
++// settings: a registry, the repository's credentials.
++func transformFunctionSource(resp *DeploymentFunctionSourceResp, refObjects *entity.RefObjects) {
++	if resp == nil {
++		return
++	}
++	resp.PushToRegistry = refSettingResp(resp.PushToRegistry, refObjects, base.SettingTypeRegistryAuth)
++	if resp.Code != nil && resp.Code.Repo != nil {
++		resp.Code.Repo.Credentials = refSettingResp(resp.Code.Repo.Credentials, refObjects,
++			base.SettingTypeAccessToken)
++	}
++}
++
++// refSettingResp is a setting referred to, as a response shows it: nothing when
++// none is set, and missing when it is gone.
++func refSettingResp(
++	ref *settings.BaseSettingResp,
++	refObjects *entity.RefObjects,
++	typ base.SettingType,
++) *settings.BaseSettingResp {
++	if ref == nil || ref.ID == "" {
++		return nil
++	}
++	itemResp, _ := settings.TransformSettingBase(refObjects.RefSettings[ref.ID])
++	if itemResp == nil {
++		itemResp = settings.NewMissingSetting(ref.ID, typ)
++	}
++	return itemResp
++}
+diff --git a/hivepaas_app/usecase/appsettingsuc/appsettingsdto/deployment_settings_get.go b/hivepaas_app/usecase/appsettingsuc/appsettingsdto/deployment_settings_get.go
+index d37e3536..6aba7e41 100644
+--- a/hivepaas_app/usecase/appsettingsuc/appsettingsdto/deployment_settings_get.go
++++ b/hivepaas_app/usecase/appsettingsuc/appsettingsdto/deployment_settings_get.go
+@@ -37,9 +37,10 @@ type GetAppDeploymentSettingsResp struct {
+ }
+ 
+ type DeploymentSettingsResp struct {
+-	ImageSource  *DeploymentImageSourceResp `json:"imageSource,omitempty"`
+-	RepoSource   *DeploymentRepoSourceResp  `json:"repoSource,omitempty"`
+-	ActiveMethod base.DeploymentMethod      `json:"activeMethod"`
++	ImageSource    *DeploymentImageSourceResp    `json:"imageSource,omitempty"`
++	RepoSource     *DeploymentRepoSourceResp     `json:"repoSource,omitempty"`
++	FunctionSource *DeploymentFunctionSourceResp `json:"functionSource,omitempty"`
++	ActiveMethod   base.DeploymentMethod         `json:"activeMethod"`
+ 
+ 	Command               string `json:"command,omitempty"`
+ 	WorkingDir            string `json:"workingDir,omitempty"`
+@@ -165,6 +166,8 @@ func TransformDeploymentSettings(
+ 		}
+ 	}
+ 
++	transformFunctionSource(resp.FunctionSource, refObjects)
++
+ 	if appDeploymentSettings != nil {
+ 		resp.Notification = basedto.TransformBaseEventNotification(appDeploymentSettings.Notification, refObjects)
+ 	}
+diff --git a/hivepaas_app/usecase/appsettingsuc/appsettingsdto/deployment_settings_update.go b/hivepaas_app/usecase/appsettingsuc/appsettingsdto/deployment_settings_update.go
+index 32eff88a..85f7b95a 100644
+--- a/hivepaas_app/usecase/appsettingsuc/appsettingsdto/deployment_settings_update.go
++++ b/hivepaas_app/usecase/appsettingsuc/appsettingsdto/deployment_settings_update.go
+@@ -28,9 +28,11 @@ type UpdateAppDeploymentSettingsReq struct {
+ }
+ 
+ type DeploymentSettingsReq struct {
+-	ImageSource  *DeploymentImageSourceReq `json:"imageSource"`
+-	RepoSource   *DeploymentRepoSourceReq  `json:"repoSource"`
+-	ActiveMethod base.DeploymentMethod     `json:"activeMethod"`
++	ImageSource *DeploymentImageSourceReq `json:"imageSource"`
++	RepoSource  *DeploymentRepoSourceReq  `json:"repoSource"`
++	// FunctionSource is a function's: its code, its runtime and its limits.
++	FunctionSource *DeploymentFunctionSourceReq `json:"functionSource"`
++	ActiveMethod   base.DeploymentMethod        `json:"activeMethod"`
+ 
+ 	Command               string `json:"command"`
+ 	WorkingDir            string `json:"workingDir"`
+@@ -47,10 +49,17 @@ func (req *DeploymentSettingsReq) ToEntity() (*entity.AppDeploymentSettings, err
+ 	if err != nil {
+ 		return nil, hperrors.Wrap(err)
+ 	}
++	var functionSource *entity.DeploymentFunctionSource
++	if req.FunctionSource != nil {
++		if functionSource, err = req.FunctionSource.ToEntity(); err != nil {
++			return nil, hperrors.Wrap(err)
++		}
++	}
+ 	return &entity.AppDeploymentSettings{
+-		ImageSource:  req.ImageSource.ToEntity(),
+-		RepoSource:   repoSourceEntity,
+-		ActiveMethod: req.ActiveMethod,
++		ImageSource:    req.ImageSource.ToEntity(),
++		RepoSource:     repoSourceEntity,
++		FunctionSource: functionSource,
++		ActiveMethod:   req.ActiveMethod,
+ 
+ 		Command:               req.Command,
+ 		WorkingDir:            req.WorkingDir,
+@@ -196,6 +205,15 @@ func NewUpdateAppDeploymentSettingsReq() *UpdateAppDeploymentSettingsReq {
+ 	return &UpdateAppDeploymentSettingsReq{}
+ }
+ 
++// ModifyRequest implements interface basedto.ReqModifier: a function's source
++// takes its runtime's defaults before it is checked.
++func (req *UpdateAppDeploymentSettingsReq) ModifyRequest() error {
++	if req.DeploymentSettingsReq != nil && req.FunctionSource != nil {
++		req.FunctionSource.Normalize()
++	}
++	return nil
++}
++
+ // Validate implements interface basedto.ReqValidator
+ func (req *UpdateAppDeploymentSettingsReq) Validate() hperrors.ValidationErrors {
+ 	validators := make([]vld.Validator, 0, 10) //nolint:mnd
+@@ -206,6 +224,15 @@ func (req *UpdateAppDeploymentSettingsReq) Validate() hperrors.ValidationErrors
+ 	validators = append(validators, req.RepoSource.validate("repoSource")...)
+ 	validators = append(validators, basedto.ValidateStrIn(&req.ActiveMethod, true,
+ 		base.AllDeploymentMethods, "activeMethod")...)
++	if req.ActiveMethod == base.DeploymentMethodFunction {
++		validators = append(validators, vld.Must(req.FunctionSource != nil).OnError(
++			vld.SetField("functionSource", nil),
++			vld.SetCustomKey("ERR_VLD_VALUE_REQUIRED"),
++		))
++	}
++	if req.FunctionSource != nil {
++		validators = append(validators, req.FunctionSource.Validate("functionSource")...)
++	}
+ 	validators = append(validators, req.Notification.Validate("notification")...)
+ 	// TODO: add validation for deployment settings input
+ 	return hperrors.NewValidationErrors(vld.Validate(validators...))
+diff --git a/hivepaas_app/usecase/appsettingsuc/appsettingsdto/kind_settings_update.go b/hivepaas_app/usecase/appsettingsuc/appsettingsdto/kind_settings_update.go
+index a03a7c99..13998242 100644
+--- a/hivepaas_app/usecase/appsettingsuc/appsettingsdto/kind_settings_update.go
++++ b/hivepaas_app/usecase/appsettingsuc/appsettingsdto/kind_settings_update.go
+@@ -101,6 +101,8 @@ func (req *AppKindSettingsReq) validate(field string) (res []vld.Validator) {
+ 	case base.AppCategoryStorage:
+ 		res = append(res, basedto.ValidateCond(req.Storage != nil, field+"storage")...)
+ 		res = append(res, req.Storage.validate(field+"storage")...)
++	case base.AppCategoryFunction:
++		// A function's settings are its deployment settings' function source.
+ 	}
+ 	return res
+ }
+@@ -196,6 +198,15 @@ func NewUpdateAppKindSettingsReq() *UpdateAppKindSettingsReq {
+ 	return &UpdateAppKindSettingsReq{}
+ }
+ 
++// ModifyRequest implements interface basedto.ReqModifier: a function listens
++// on its runtime's port, which a request does not move.
++func (req *UpdateAppKindSettingsReq) ModifyRequest() error {
++	if req.AppKindSettingsReq != nil && req.Category == base.AppCategoryFunction {
++		req.Port = base.FunctionPort
++	}
++	return nil
++}
++
+ // Validate implements interface basedto.ReqValidator
+ func (req *UpdateAppKindSettingsReq) Validate() hperrors.ValidationErrors {
+ 	validators := make([]vld.Validator, 0, 5) //nolint:mnd
+diff --git a/hivepaas_app/usecase/appsettingsuc/deployment_settings_update.go b/hivepaas_app/usecase/appsettingsuc/deployment_settings_update.go
+index cc141793..4b685e2f 100644
+--- a/hivepaas_app/usecase/appsettingsuc/deployment_settings_update.go
++++ b/hivepaas_app/usecase/appsettingsuc/deployment_settings_update.go
+@@ -13,8 +13,6 @@ import (
+ 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
+ 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/auditdetail"
+ 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
+-	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/githelper"
+-	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/gittool"
+ 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/timeutil"
+ 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/transaction"
+ 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/ulid"
+@@ -95,7 +93,7 @@ func (uc *UC) loadAppDeploymentSettingsForUpdate(
+ 		),
+ 		bunex.SelectRelation("ProjectEnv"),
+ 		bunex.SelectRelation("Settings",
+-			bunex.SelectWhere("setting.type = ?", base.SettingTypeAppDeployment),
++			bunex.SelectWhereIn("setting.type IN (?)", base.SettingTypeAppDeployment, base.SettingTypeAppKind),
+ 		),
+ 	)
+ 	if err != nil {
+@@ -115,6 +113,12 @@ func (uc *UC) loadAppDeploymentSettingsForUpdate(
+ 	}
+ 	data.NewDeploymentSettings = newDeploymentSettings
+ 
++	err = checkDeploymentOfKind(entity.IsFunctionKind(app.GetSettingByType(base.SettingTypeAppKind)),
++		newDeploymentSettings)
++	if err != nil {
++		return hperrors.Wrap(err)
++	}
++
+ 	// Make sure all reference settings used in this settings exist actively
+ 	refObjects := entity.NewRefObjects()
+ 	err = uc.settingService.LoadRefObjectsByIDs(ctx, db, &refObjects, app.GetObjectScope(),
+@@ -123,32 +127,24 @@ func (uc *UC) loadAppDeploymentSettingsForUpdate(
+ 		return hperrors.Wrap(err)
+ 	}
+ 
+-	if newDeploymentSettings.ActiveMethod == base.DeploymentMethodRepo {
+-		repoSource := newDeploymentSettings.RepoSource
+-
+-		// When the cluster has multiple nodes, the result image must be pushed to a registry
+-		// that can be accessed by all the nodes in the cluster.
+-		isMultiNode, err := uc.clusterService.IsMultiNode(ctx)
+-		if err != nil {
+-			return hperrors.Wrap(err)
+-		}
+-		if isMultiNode && repoSource.PushToRegistry.ID == "" {
+-			return hperrors.Wrap(hperrors.ErrMultiNodeClusterRequireRegistryForImages)
+-		}
+-
+-		// Validate existence of repo and ref
+-		switch repoSource.RepoType { //nolint:gocritic
+-		case base.RepoTypeGit:
+-			// TODO: do not check commit hash for now, that's so slow
+-			err := gittool.ValidateWithGitCli(ctx, &gittool.ValidationOptions{
+-				URL:           repoSource.RepoURL,
+-				Credentials:   refObjects.RefSettings[repoSource.Credentials.ID],
+-				ReferenceName: githelper.ReferenceName(repoSource.RepoRef),
+-			})
+-			if err != nil {
+-				return hperrors.Wrap(err)
+-			}
++	// A build checks out its source and pushes its image: what it will need is
++	// checked before the settings are saved.
++	checkReq := &appdeploymentservice.CheckBuildSourceReq{RefObjects: refObjects}
++	switch newDeploymentSettings.ActiveMethod {
++	case base.DeploymentMethodRepo:
++		checkReq.RepoSource = newDeploymentSettings.RepoSource
++		checkReq.PushToRegistry = newDeploymentSettings.RepoSource.PushToRegistry
++	case base.DeploymentMethodFunction:
++		functionSource := newDeploymentSettings.FunctionSource
++		if functionSource.Code.Repo != nil {
++			checkReq.RepoSource = functionSource.Code.Repo.RepoSource()
+ 		}
++		checkReq.PushToRegistry = functionSource.PushToRegistry
++	case base.DeploymentMethodImage:
++		return nil
++	}
++	if err = uc.appDeploymentService.CheckBuildSource(ctx, checkReq); err != nil {
++		return hperrors.Wrap(err)
+ 	}
+ 
+ 	return nil
+diff --git a/hivepaas_app/usecase/appsettingsuc/function_rules.go b/hivepaas_app/usecase/appsettingsuc/function_rules.go
+new file mode 100644
+index 00000000..d94bf16f
+--- /dev/null
++++ b/hivepaas_app/usecase/appsettingsuc/function_rules.go
+@@ -0,0 +1,44 @@
++package appsettingsuc
++
++import (
++	"github.com/hivepaas/hivepaas/hivepaas_app/base"
++	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
++	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
++)
++
++// A function is an app from its creation: its kind says so, and its other
++// settings follow. These are the rules its settings' updates keep.
++
++// checkDeploymentOfKind refuses deployment settings that do not suit the app: a
++// function is deployed from its code, and only a function keeps a function's
++// source.
++func checkDeploymentOfKind(function bool, settings *entity.AppDeploymentSettings) error {
++	isFunctionMethod := settings.ActiveMethod == base.DeploymentMethodFunction
++	switch {
++	case function && !isFunctionMethod:
++		return hperrors.Wrap(hperrors.ErrDeploymentMethodFunctionRequired)
++	case !function && (isFunctionMethod || settings.FunctionSource != nil):
++		return hperrors.Wrap(hperrors.ErrDeploymentMethodFunctionUnallowed)
++	}
++	return nil
++}
++
++// checkKindCategoryChange refuses a kind that makes a function another app, or
++// another app a function: an app becomes a function only when it is created as
++// one.
++func checkKindCategoryChange(current *entity.AppKindSettings, next base.AppCategory) error {
++	wasFunction := current != nil && current.Category == base.AppCategoryFunction
++	if wasFunction != (next == base.AppCategoryFunction) {
++		return hperrors.Wrap(hperrors.ErrAppKindFunctionUnchangeable)
++	}
++	return nil
++}
++
++// fixFunctionRouting points a function's routing at the port its runtime
++// listens on: the app's port, and every domain's.
++func fixFunctionRouting(routing *entity.AppRoutingSettings) {
++	routing.Port = base.FunctionPort
++	for _, domain := range routing.Domains {
++		domain.ContainerPort = base.FunctionPort
++	}
++}
+diff --git a/hivepaas_app/usecase/appsettingsuc/kind_settings_update.go b/hivepaas_app/usecase/appsettingsuc/kind_settings_update.go
+index 73b78826..15fa4929 100644
+--- a/hivepaas_app/usecase/appsettingsuc/kind_settings_update.go
++++ b/hivepaas_app/usecase/appsettingsuc/kind_settings_update.go
+@@ -105,6 +105,9 @@ func (uc *UC) loadAppKindSettingsForUpdate(
+ 	if kindSetting != nil {
+ 		currKindSettings = kindSetting.MustAsAppKindSettings()
+ 	}
++	if err = checkKindCategoryChange(currKindSettings, req.Category); err != nil {
++		return hperrors.Wrap(err)
++	}
+ 	newKindSettings := req.ToEntity()
+ 	req.KeepMaskedSecrets(newKindSettings, currKindSettings)
+ 
+diff --git a/hivepaas_app/usecase/appsettingsuc/routing_settings_update.go b/hivepaas_app/usecase/appsettingsuc/routing_settings_update.go
+index 09730d64..7e9f1100 100644
+--- a/hivepaas_app/usecase/appsettingsuc/routing_settings_update.go
++++ b/hivepaas_app/usecase/appsettingsuc/routing_settings_update.go
+@@ -108,7 +108,7 @@ func (uc *UC) loadAppRoutingSettingsForUpdate(
+ 		),
+ 		bunex.SelectRelation("ProjectEnv"),
+ 		bunex.SelectRelation("Settings",
+-			bunex.SelectWhere("setting.type = ?", base.SettingTypeAppRouting),
++			bunex.SelectWhereIn("setting.type IN (?)", base.SettingTypeAppRouting, base.SettingTypeAppKind),
+ 		),
+ 	)
+ 	if err != nil {
+@@ -122,6 +122,9 @@ func (uc *UC) loadAppRoutingSettingsForUpdate(
+ 	}
+ 
+ 	newRoutingSettings := req.ToEntity()
++	if entity.IsFunctionKind(app.GetSettingByType(base.SettingTypeAppKind)) {
++		fixFunctionRouting(newRoutingSettings)
++	}
+ 	data.NewRoutingSettings = newRoutingSettings
+ 
+ 	// Make sure all reference settings used in these settings exist actively

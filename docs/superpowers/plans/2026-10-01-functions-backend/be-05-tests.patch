@@ -1,0 +1,377 @@
+diff --git a/hivepaas_app/entity/app_kind_function_test.go b/hivepaas_app/entity/app_kind_function_test.go
+new file mode 100644
+index 00000000..16fa12ab
+--- /dev/null
++++ b/hivepaas_app/entity/app_kind_function_test.go
+@@ -0,0 +1,24 @@
++package entity
++
++import (
++	"testing"
++
++	"github.com/stretchr/testify/assert"
++
++	"github.com/hivepaas/hivepaas/hivepaas_app/base"
++)
++
++func kindSetting(t *testing.T, category base.AppCategory) *Setting {
++	t.Helper()
++	setting := &Setting{ID: "kind-1", Type: base.SettingTypeAppKind, Status: base.SettingStatusActive}
++	assert.NoError(t, setting.SetData(&AppKindSettings{Category: category}))
++	return setting
++}
++
++// An app is a function by its kind.
++func TestAnAppIsAFunctionByItsKind(t *testing.T) {
++	assert.True(t, IsFunctionKind(kindSetting(t, base.AppCategoryFunction)))
++	assert.False(t, IsFunctionKind(kindSetting(t, base.AppCategoryWebapp)))
++	assert.False(t, IsFunctionKind(nil))
++	assert.False(t, IsFunctionKind(&Setting{Type: base.SettingTypeAppRouting}))
++}
+diff --git a/hivepaas_app/interface/mcp/tools_function_test.go b/hivepaas_app/interface/mcp/tools_function_test.go
+new file mode 100644
+index 00000000..cbc5c355
+--- /dev/null
++++ b/hivepaas_app/interface/mcp/tools_function_test.go
+@@ -0,0 +1,50 @@
++package mcp
++
++import (
++	"testing"
++
++	"github.com/stretchr/testify/assert"
++
++	"github.com/hivepaas/hivepaas/hivepaas_app/base"
++	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/appsettingsuc/appsettingsdto"
++)
++
++func inlineFunctionSettings(content string) *appsettingsdto.DeploymentSettingsResp {
++	return &appsettingsdto.DeploymentSettingsResp{
++		ActiveMethod: base.DeploymentMethodFunction,
++		FunctionSource: &appsettingsdto.DeploymentFunctionSourceResp{
++			Runtime: base.FunctionRuntimeNode24,
++			Code: &appsettingsdto.FunctionCodeResp{Inline: &appsettingsdto.FunctionInlineCodeResp{
++				Files: []*appsettingsdto.FunctionFileResp{{Path: "index.js", Content: content}},
++			}},
++		},
++	}
++}
++
++// A redeploy of a function sees its code: code changed since the plan is a
++// source changed since the plan.
++func TestARedeployOfAFunctionSeesItsCode(t *testing.T) {
++	before := deploySourceOf(inlineFunctionSettings("export default () => 1"))
++	after := deploySourceOf(inlineFunctionSettings("export default () => 2"))
++
++	assert.Equal(t, string(base.DeploymentMethodFunction), before.Method)
++	assert.NotEmpty(t, before.Code)
++	assert.NotEqual(t, before, after)
++	assert.Equal(t, "the function's code", before.describe())
++}
++
++func TestARedeployOfAFunctionInARepositorySeesItsCommit(t *testing.T) {
++	source := deploySourceOf(&appsettingsdto.DeploymentSettingsResp{
++		ActiveMethod: base.DeploymentMethodFunction,
++		FunctionSource: &appsettingsdto.DeploymentFunctionSourceResp{
++			Runtime: base.FunctionRuntimeGo127,
++			Code: &appsettingsdto.FunctionCodeResp{Repo: &appsettingsdto.FunctionRepoCodeResp{
++				RepoURL: "https://token@github.com/acme/fns.git", RepoRef: "refs/heads/main", CommitHash: "abc123",
++			}},
++		},
++	})
++
++	assert.Equal(t, "https://github.com/acme/fns.git", source.Repo)
++	assert.Equal(t, "abc123", source.Commit)
++	assert.Equal(t, "https://github.com/acme/fns.git refs/heads/main", source.describe())
++}
+diff --git a/hivepaas_app/service/appcloneservice/appcloneserviceimpl/clone_2_settings_test.go b/hivepaas_app/service/appcloneservice/appcloneserviceimpl/clone_2_settings_test.go
+index 4c941143..caf742ac 100644
+--- a/hivepaas_app/service/appcloneservice/appcloneserviceimpl/clone_2_settings_test.go
++++ b/hivepaas_app/service/appcloneservice/appcloneserviceimpl/clone_2_settings_test.go
+@@ -60,3 +60,30 @@ func TestACloneCopiesInheritableEntriesWithTheirSources(t *testing.T) {
+ 		assert.Equal(t, "shared", withoutGated[0].Name)
+ 	}
+ }
++
++func kindOf(t *testing.T, category base.AppCategory) *entity.Setting {
++	t.Helper()
++	setting := &entity.Setting{ID: "kind-1", Type: base.SettingTypeAppKind, Status: base.SettingStatusActive}
++	assert.NoError(t, setting.SetData(&entity.AppKindSettings{Category: category}))
++	return setting
++}
++
++// A function's clone is a function when it takes the function's code: its kind
++// goes with its deployment settings. Without them the clone is an app like any
++// other's, as before.
++func TestAFunctionsCloneIsAFunctionWhenItTakesItsCode(t *testing.T) {
++	withCode := &appCloneData{AppCloneReq: &appcloneservice.AppCloneReq{
++		CloneSettings: &entity.AppCloneSettings{CloneDeploymentSettings: true}}}
++	withoutCode := &appCloneData{AppCloneReq: &appcloneservice.AppCloneReq{CloneSettings: &entity.AppCloneSettings{}}}
++	function := kindOf(t, base.AppCategoryFunction)
++
++	kept, err := (&service{}).onCloneSettingDefault(function, withCode)
++	assert.NoError(t, err)
++	assert.Same(t, function, kept)
++	dropped, err := (&service{}).onCloneSettingDefault(function, withoutCode)
++	assert.NoError(t, err)
++	assert.Nil(t, dropped)
++	webapp, err := (&service{}).onCloneSettingDefault(kindOf(t, base.AppCategoryWebapp), withCode)
++	assert.NoError(t, err)
++	assert.Nil(t, webapp)
++}
+diff --git a/hivepaas_app/service/appdeploymentservice/appdeploymentserviceimpl/build_source_check_test.go b/hivepaas_app/service/appdeploymentservice/appdeploymentserviceimpl/build_source_check_test.go
+new file mode 100644
+index 00000000..8092eb65
+--- /dev/null
++++ b/hivepaas_app/service/appdeploymentservice/appdeploymentserviceimpl/build_source_check_test.go
+@@ -0,0 +1,36 @@
++package appdeploymentserviceimpl
++
++import (
++	"context"
++	"testing"
++
++	"github.com/stretchr/testify/assert"
++
++	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
++	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
++	"github.com/hivepaas/hivepaas/hivepaas_app/service/appdeploymentservice"
++	"github.com/hivepaas/hivepaas/hivepaas_app/service/clusterservice"
++)
++
++// fakeClusterService answers whether the cluster has several nodes.
++type fakeClusterService struct {
++	clusterservice.Service
++	multiNode bool
++}
++
++func (f *fakeClusterService) IsMultiNode(context.Context) (bool, error) {
++	return f.multiNode, nil
++}
++
++// A build on a cluster of several nodes pushes its image to a registry every
++// node pulls from: without one, the settings are refused before they are saved.
++func TestABuildOnSeveralNodesNeedsARegistry(t *testing.T) {
++	several := &service{clusterService: &fakeClusterService{multiNode: true}}
++	one := &service{clusterService: &fakeClusterService{}}
++	withRegistry := &appdeploymentservice.CheckBuildSourceReq{PushToRegistry: entity.ObjectID{ID: "registry-1"}}
++
++	assert.ErrorIs(t, several.CheckBuildSource(context.Background(), &appdeploymentservice.CheckBuildSourceReq{}),
++		hperrors.ErrMultiNodeClusterRequireRegistryForImages)
++	assert.NoError(t, several.CheckBuildSource(context.Background(), withRegistry))
++	assert.NoError(t, one.CheckBuildSource(context.Background(), &appdeploymentservice.CheckBuildSourceReq{}))
++}
+diff --git a/hivepaas_app/service/envvarservice/envlink/envlink_test.go b/hivepaas_app/service/envvarservice/envlink/envlink_test.go
+index dd8b7c2d..9a2045a9 100644
+--- a/hivepaas_app/service/envvarservice/envlink/envlink_test.go
++++ b/hivepaas_app/service/envvarservice/envlink/envlink_test.go
+@@ -65,6 +65,7 @@ func TestEachCategoryAndFamilyHasARecipe(t *testing.T) {
+ 		"other cache":  {&Target{Key: "c", Category: cache, Engine: "hazelcast"}, []string{"individual"}},
+ 		"storage":      {&Target{Key: "s3", Category: base.AppCategoryStorage, Engine: "minio"}, []string{"s3"}},
+ 		"webapp":       {&Target{Key: "api", Category: base.AppCategoryWebapp}, []string{"addresses"}},
++		"function":     {&Target{Key: "fn", Category: base.AppCategoryFunction}, []string{"addresses"}},
+ 		"without kind": {&Target{Key: "api"}, []string{"addresses"}},
+ 	} {
+ 		groups := Suggest(tc.target, ready)
+@@ -86,6 +87,7 @@ func TestRecipesNameOnlySharedVariables(t *testing.T) {
+ 		{Key: "a", Category: base.AppCategoryCache, Engine: "x"},
+ 		{Key: "a", Category: base.AppCategoryStorage},
+ 		{Key: "a", Category: base.AppCategoryWebapp},
++		{Key: "a", Category: base.AppCategoryFunction},
+ 	} {
+ 		allowed := map[string]bool{}
+ 		for _, name := range append(append([]string{}, base.AppCommonSharedEnvVars...),
+@@ -122,6 +124,13 @@ func TestATargetWithoutAKindSaysWhy(t *testing.T) {
+ 	assert.Contains(t, groups[0].Warnings, "API declares no kind, so only its addresses and shared variables are offered.")
+ }
+ 
++// A function is called at its address, as a web app is: it declares its kind.
++func TestAFunctionIsLinkedToByItsAddress(t *testing.T) {
++	groups := Suggest(&Target{Key: "fn", Name: "FN", Category: base.AppCategoryFunction}, ready)
++	assert.Equal(t, []string{"addresses"}, groupIDs(groups))
++	assert.Empty(t, groups[0].Warnings)
++}
++
+ func TestTheTargetsSharedVariablesComeLast(t *testing.T) {
+ 	groups := Suggest(&Target{Key: "api", Name: "API", Category: base.AppCategoryWebapp},
+ 		&Facts{HasPort: true, SharedVars: []string{"TOKEN_URL", "API_VERSION"}})
+diff --git a/hivepaas_app/usecase/appsettingsuc/appsettingsdto/deployment_settings_function_test.go b/hivepaas_app/usecase/appsettingsuc/appsettingsdto/deployment_settings_function_test.go
+new file mode 100644
+index 00000000..f553f35f
+--- /dev/null
++++ b/hivepaas_app/usecase/appsettingsuc/appsettingsdto/deployment_settings_function_test.go
+@@ -0,0 +1,107 @@
++package appsettingsdto
++
++import (
++	"testing"
++
++	"github.com/stretchr/testify/assert"
++
++	"github.com/hivepaas/hivepaas/hivepaas_app/base"
++	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
++	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
++	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/translation"
++)
++
++func functionSettingsReq(source *DeploymentFunctionSourceReq) *UpdateAppDeploymentSettingsReq {
++	return &UpdateAppDeploymentSettingsReq{
++		ProjectID:    "01J0000000000000000000PRJ1",
++		ProjectEnvID: "01J0000000000000000000ENV1",
++		AppID:        "01J0000000000000000000APP1",
++		DeploymentSettingsReq: &DeploymentSettingsReq{
++			ActiveMethod:   base.DeploymentMethodFunction,
++			FunctionSource: source,
++		},
++	}
++}
++
++// A function's deployment settings carry its source, normalized on the way in.
++func TestAFunctionsDeploymentSettingsCarryItsSource(t *testing.T) {
++	req := functionSettingsReq(inlineSource(" python313 ", file("./main.py", "def handler(req, ctx): pass")))
++
++	assert.NoError(t, req.ModifyRequest())
++	assert.Empty(t, req.Validate())
++	settings, err := req.ToEntity()
++
++	assert.NoError(t, err)
++	assert.Equal(t, base.FunctionRuntimePython313, settings.FunctionSource.Runtime)
++	assert.Equal(t, "main.py", settings.FunctionSource.Code.Inline.Files[0].Path)
++	assert.Equal(t, "handler", settings.FunctionSource.Entrypoint.Handler)
++}
++
++// pathsOf are the fields validation errors are on.
++func pathsOf(errs hperrors.ValidationErrors) []string {
++	var paths []string
++	for _, inner := range errs.Build(translation.LangEn).InnerErrors {
++		paths = append(paths, inner.Path)
++	}
++	return paths
++}
++
++func TestTheFunctionMethodWithoutASourceIsRefused(t *testing.T) {
++	req := functionSettingsReq(nil)
++
++	assert.NoError(t, req.ModifyRequest())
++
++	assert.Equal(t, []string{"functionSource"}, pathsOf(req.Validate()))
++}
++
++// A function's source is sent back with the settings: its code, and the
++// settings it refers to as settings.
++func TestAFunctionsSourceIsSentWithItsSettings(t *testing.T) {
++	source := &entity.DeploymentFunctionSource{
++		Runtime: base.FunctionRuntimeNode24, Contract: base.FunctionContractV1,
++		Entrypoint: entity.FunctionEntrypoint{File: "index.js", Handler: "default"},
++		Code: entity.FunctionCode{Dir: "fns/hello", Repo: &entity.FunctionRepoCode{
++			RepoType: base.RepoTypeGit, RepoURL: "https://github.com/acme/fns.git", RepoRef: "refs/heads/main",
++			Credentials: entity.RepoCredentials{ID: "cred-1"},
++		}},
++		SystemPackages: []string{"ffmpeg"},
++		MaxConcurrency: 16,
++		PushToRegistry: entity.ObjectID{ID: "registry-1"},
++	}
++	setting := &entity.Setting{ID: "setting-1", Type: base.SettingTypeAppDeployment}
++	assert.NoError(t, setting.SetData(&entity.AppDeploymentSettings{
++		ActiveMethod: base.DeploymentMethodFunction, FunctionSource: source}))
++	registry := &entity.Setting{ID: "registry-1", Type: base.SettingTypeRegistryAuth, Name: "ghcr"}
++	refObjects := entity.NewRefObjects()
++	refObjects.RefSettings["registry-1"] = registry
++
++	resp, err := TransformDeploymentSettings(&AppDeploymentSettingsTransformInput{
++		DeploymentSettings: setting, RefObjects: refObjects})
++
++	assert.NoError(t, err)
++	fn := resp.FunctionSource
++	assert.Equal(t, base.FunctionRuntimeNode24, fn.Runtime)
++	assert.Equal(t, "index.js", fn.Entrypoint.File)
++	assert.Equal(t, "fns/hello", fn.Code.Dir)
++	assert.Equal(t, "https://github.com/acme/fns.git", fn.Code.Repo.RepoURL)
++	assert.Equal(t, []string{"ffmpeg"}, fn.SystemPackages)
++	assert.Equal(t, "ghcr", fn.PushToRegistry.Name)
++	// A credential that is gone is shown as missing rather than dropped.
++	assert.Equal(t, "cred-1", fn.Code.Repo.Credentials.ID)
++}
++
++// A function's kind is a function's, at the port its runtime listens on: a
++// request cannot move it.
++func TestAFunctionsKindKeepsItsRuntimesPort(t *testing.T) {
++	req := &UpdateAppKindSettingsReq{
++		ProjectID:          "01J0000000000000000000PRJ1",
++		ProjectEnvID:       "01J0000000000000000000ENV1",
++		AppID:              "01J0000000000000000000APP1",
++		AppKindSettingsReq: &AppKindSettingsReq{Category: base.AppCategoryFunction, Port: 3000},
++	}
++
++	assert.NoError(t, req.ModifyRequest())
++
++	assert.Equal(t, uint(base.FunctionPort), req.Port)
++	assert.Empty(t, req.Validate())
++}
+diff --git a/hivepaas_app/usecase/appsettingsuc/function_rules_test.go b/hivepaas_app/usecase/appsettingsuc/function_rules_test.go
+new file mode 100644
+index 00000000..9c1b1b78
+--- /dev/null
++++ b/hivepaas_app/usecase/appsettingsuc/function_rules_test.go
+@@ -0,0 +1,61 @@
++package appsettingsuc
++
++import (
++	"testing"
++
++	"github.com/stretchr/testify/assert"
++
++	"github.com/hivepaas/hivepaas/hivepaas_app/base"
++	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
++	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
++)
++
++func deploymentOf(method base.DeploymentMethod, source *entity.DeploymentFunctionSource) *entity.AppDeploymentSettings {
++	return &entity.AppDeploymentSettings{ActiveMethod: method, FunctionSource: source}
++}
++
++// A function is deployed from its code, and nothing but a function is
++// deployed as one or keeps a function's source.
++func TestAFunctionIsDeployedAsOne(t *testing.T) {
++	source := &entity.DeploymentFunctionSource{Runtime: base.FunctionRuntimeNode24}
++
++	assert.NoError(t, checkDeploymentOfKind(true, deploymentOf(base.DeploymentMethodFunction, source)))
++	assert.NoError(t, checkDeploymentOfKind(false, deploymentOf(base.DeploymentMethodRepo, nil)))
++	assert.ErrorIs(t, checkDeploymentOfKind(true, deploymentOf(base.DeploymentMethodImage, source)),
++		hperrors.ErrDeploymentMethodFunctionRequired)
++	assert.ErrorIs(t, checkDeploymentOfKind(false, deploymentOf(base.DeploymentMethodFunction, source)),
++		hperrors.ErrDeploymentMethodFunctionUnallowed)
++	assert.ErrorIs(t, checkDeploymentOfKind(false, deploymentOf(base.DeploymentMethodImage, source)),
++		hperrors.ErrDeploymentMethodFunctionUnallowed)
++}
++
++// A function is created as one and stays one.
++func TestAFunctionStaysAFunction(t *testing.T) {
++	function := &entity.AppKindSettings{Category: base.AppCategoryFunction}
++	webapp := &entity.AppKindSettings{Category: base.AppCategoryWebapp}
++
++	assert.NoError(t, checkKindCategoryChange(function, base.AppCategoryFunction))
++	assert.NoError(t, checkKindCategoryChange(webapp, base.AppCategoryDatabase))
++	assert.NoError(t, checkKindCategoryChange(nil, base.AppCategoryWebapp))
++	assert.ErrorIs(t, checkKindCategoryChange(function, base.AppCategoryWebapp),
++		hperrors.ErrAppKindFunctionUnchangeable)
++	assert.ErrorIs(t, checkKindCategoryChange(webapp, base.AppCategoryFunction),
++		hperrors.ErrAppKindFunctionUnchangeable)
++	assert.ErrorIs(t, checkKindCategoryChange(nil, base.AppCategoryFunction),
++		hperrors.ErrAppKindFunctionUnchangeable)
++}
++
++// A function's routing points at the port its runtime listens on, whatever
++// the request said.
++func TestAFunctionsRoutingPointsAtItsRuntimesPort(t *testing.T) {
++	routing := &entity.AppRoutingSettings{Port: 3000, Domains: []*entity.AppDomain{
++		{Domain: "fn.example.com", ContainerPort: 3000}, {Domain: "fn2.example.com", ContainerPort: 9000},
++	}}
++
++	fixFunctionRouting(routing)
++
++	assert.Equal(t, base.FunctionPort, routing.Port)
++	for _, domain := range routing.Domains {
++		assert.Equal(t, base.FunctionPort, domain.ContainerPort)
++	}
++}

@@ -1,0 +1,230 @@
+diff --git a/hivepaas_app/interface/api/server/router_apps_test.go b/hivepaas_app/interface/api/server/router_apps_test.go
+new file mode 100644
+index 00000000..f424c0ec
+--- /dev/null
++++ b/hivepaas_app/interface/api/server/router_apps_test.go
+@@ -0,0 +1,18 @@
++package server
++
++import (
++	"net/http"
++	"testing"
++
++	"github.com/stretchr/testify/assert"
++)
++
++// A function is created among its environment's apps, beside an app from a
++// template, without taking the place of an app's id.
++func TestAFunctionIsCreatedAmongTheEnvsApps(t *testing.T) {
++	routes := projectRoutes(t)
++
++	assert.True(t, routes[http.MethodPost+" /projects/:projectID/:projectEnv/apps/function"])
++	assert.True(t, routes[http.MethodPost+" /projects/:projectID/:projectEnv/apps/from-template"])
++	assert.True(t, routes[http.MethodPut+" /projects/:projectID/:projectEnv/apps/:appID"])
++}
+diff --git a/hivepaas_app/usecase/appuc/appdto/create_function_test.go b/hivepaas_app/usecase/appuc/appdto/create_function_test.go
+new file mode 100644
+index 00000000..ad9e6ce7
+--- /dev/null
++++ b/hivepaas_app/usecase/appuc/appdto/create_function_test.go
+@@ -0,0 +1,86 @@
++package appdto
++
++import (
++	"testing"
++
++	"github.com/stretchr/testify/assert"
++
++	"github.com/hivepaas/hivepaas/hivepaas_app/base"
++	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
++	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/translation"
++	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/appsettingsuc/appsettingsdto"
++)
++
++func createFunctionReq(source *appsettingsdto.DeploymentFunctionSourceReq) *CreateFunctionReq {
++	return &CreateFunctionReq{
++		ProjectID:    "01J0000000000000000000PRJ1",
++		ProjectEnvID: "01J0000000000000000000ENV1",
++		AppBaseReq:   &AppBaseReq{Name: "  hello  ", Status: base.AppStatusActive},
++		Source:       source,
++	}
++}
++
++// pathsOf are the fields validation errors are on.
++func pathsOf(errs hperrors.ValidationErrors) []string {
++	var paths []string
++	for _, inner := range errs.Build(translation.LangEn).InnerErrors {
++		paths = append(paths, inner.Path)
++	}
++	return paths
++}
++
++// A function is created from a name and its source, which takes its runtime's
++// defaults before it is checked.
++func TestAFunctionIsCreatedFromItsSource(t *testing.T) {
++	req := createFunctionReq(&appsettingsdto.DeploymentFunctionSourceReq{
++		Runtime: base.FunctionRuntimeNode24,
++		Code: appsettingsdto.FunctionCodeReq{Inline: &appsettingsdto.FunctionInlineCodeReq{
++			Files: []*appsettingsdto.FunctionFileReq{{Path: "index.js", Content: "export default () => ({})"}},
++		}},
++	})
++
++	assert.NoError(t, req.ModifyRequest())
++
++	assert.Empty(t, req.Validate())
++	assert.Equal(t, "hello", req.Name)
++	assert.Equal(t, "index.js", req.Source.Entrypoint.File)
++	assert.Equal(t, base.FunctionContractV1, req.Source.Contract)
++}
++
++func TestAFunctionWithoutASourceIsRefused(t *testing.T) {
++	req := createFunctionReq(nil)
++
++	assert.NoError(t, req.ModifyRequest())
++
++	assert.Equal(t, []string{"source"}, pathsOf(req.Validate()))
++}
++
++// What is wrong with a function's source is said of the source's own field.
++func TestAFunctionsSourceIsCheckedAsItsSettingsWouldBe(t *testing.T) {
++	req := createFunctionReq(&appsettingsdto.DeploymentFunctionSourceReq{
++		Runtime: base.FunctionRuntimeNode24,
++		Code: appsettingsdto.FunctionCodeReq{Inline: &appsettingsdto.FunctionInlineCodeReq{
++			Files: []*appsettingsdto.FunctionFileReq{{Path: "index.js", Content: "export default () => ({})"}},
++		}},
++		SystemPackages: []string{"ffmpeg; rm -rf /"},
++	})
++
++	assert.NoError(t, req.ModifyRequest())
++
++	assert.Equal(t, []string{"source.systemPackages[0]"}, pathsOf(req.Validate()))
++}
++
++// A request that names no function is refused as one, not taken without a name.
++func TestAFunctionWithoutANameIsRefused(t *testing.T) {
++	req := createFunctionReq(&appsettingsdto.DeploymentFunctionSourceReq{
++		Runtime: base.FunctionRuntimeNode24,
++		Code: appsettingsdto.FunctionCodeReq{Inline: &appsettingsdto.FunctionInlineCodeReq{
++			Files: []*appsettingsdto.FunctionFileReq{{Path: "index.js", Content: "export default () => ({})"}},
++		}},
++	})
++	req.AppBaseReq = nil
++
++	assert.NoError(t, req.ModifyRequest())
++
++	assert.ElementsMatch(t, []string{"name", "status"}, pathsOf(req.Validate()))
++}
+diff --git a/hivepaas_app/usecase/appuc/create_function_test.go b/hivepaas_app/usecase/appuc/create_function_test.go
+new file mode 100644
+index 00000000..92d9905a
+--- /dev/null
++++ b/hivepaas_app/usecase/appuc/create_function_test.go
+@@ -0,0 +1,108 @@
++package appuc
++
++import (
++	"context"
++	"testing"
++	"time"
++
++	"github.com/stretchr/testify/assert"
++
++	"github.com/hivepaas/hivepaas/hivepaas_app/base"
++	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
++	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
++	"github.com/hivepaas/hivepaas/hivepaas_app/service/appdeploymentservice"
++	"github.com/hivepaas/hivepaas/hivepaas_app/service/settingservice"
++)
++
++// fakeSettingService loads the settings a function's source refers to, and
++// keeps where it was asked to look.
++type fakeSettingService struct {
++	settingservice.Service
++	loaded map[string]*entity.Setting
++	scope  *entity.ObjectScope
++	refIDs *entity.RefObjectIDs
++}
++
++func (f *fakeSettingService) LoadRefObjectsByIDs(
++	_ context.Context, _ database.IDB, refObjects **entity.RefObjects,
++	scope *entity.ObjectScope, _ bool, refIDs *entity.RefObjectIDs,
++) error {
++	f.scope, f.refIDs = scope, refIDs
++	if *refObjects == nil {
++		*refObjects = entity.NewRefObjects()
++	}
++	for id, setting := range f.loaded {
++		(*refObjects).RefSettings[id] = setting
++	}
++	return nil
++}
++
++// fakeDeploymentService keeps the build source it was asked to check.
++type fakeDeploymentService struct {
++	appdeploymentservice.Service
++	checked *appdeploymentservice.CheckBuildSourceReq
++}
++
++func (f *fakeDeploymentService) CheckBuildSource(
++	_ context.Context, req *appdeploymentservice.CheckBuildSourceReq,
++) error {
++	f.checked = req
++	return nil
++}
++
++// A function's source is checked in its environment before anything is
++// created: the settings it refers to, and what its build will need.
++func TestAFunctionsSourceIsCheckedInItsEnvironmentFirst(t *testing.T) {
++	credentials := &entity.Setting{ID: "cred-1", Type: base.SettingTypeAccessToken}
++	settings := &fakeSettingService{loaded: map[string]*entity.Setting{"cred-1": credentials}}
++	deployments := &fakeDeploymentService{}
++	uc := &UC{settingService: settings, appDeploymentService: deployments}
++	source := &entity.DeploymentFunctionSource{
++		Runtime: base.FunctionRuntimeGo127,
++		Code: entity.FunctionCode{Dir: "fns/hello", Repo: &entity.FunctionRepoCode{
++			RepoType: base.RepoTypeGit, RepoURL: "https://github.com/acme/fns.git", RepoRef: "refs/heads/main",
++			Credentials: entity.RepoCredentials{ID: "cred-1"},
++		}},
++		PushToRegistry: entity.ObjectID{ID: "registry-1"},
++	}
++
++	err := uc.checkFunctionSource(context.Background(), "project-1", "env-1", source)
++
++	assert.NoError(t, err)
++	assert.Equal(t, base.ObjectScopeProjectEnv, settings.scope.ScopeType)
++	assert.Equal(t, "project-1", settings.scope.ProjectID)
++	assert.Equal(t, "env-1", settings.scope.ProjectEnvID)
++	assert.ElementsMatch(t, []string{"cred-1", "registry-1"}, settings.refIDs.RefSettingIDs)
++	assert.Equal(t, "https://github.com/acme/fns.git", deployments.checked.RepoSource.RepoURL)
++	assert.Equal(t, "registry-1", deployments.checked.PushToRegistry.ID)
++	assert.Same(t, credentials, deployments.checked.RefObjects.RefSettings["cred-1"])
++}
++
++// A function is created with its kind, its source to deploy, and its routing
++// at the port its runtime listens on.
++func TestAFunctionIsCreatedWithItsKindSourceAndPort(t *testing.T) {
++	app := &entity.App{ID: "app-1"}
++	source := &entity.DeploymentFunctionSource{Runtime: base.FunctionRuntimeNode24}
++	timeNow := time.Date(2026, 10, 1, 0, 0, 0, 0, time.UTC)
++
++	settings := functionSettings(app, source, timeNow)
++
++	byType := map[base.SettingType]*entity.Setting{}
++	for _, setting := range settings {
++		assert.Equal(t, "app-1", setting.ObjectID)
++		assert.Equal(t, base.ObjectScopeApp, setting.Scope)
++		assert.Equal(t, base.SettingStatusActive, setting.Status)
++		assert.Equal(t, timeNow, setting.CreatedAt)
++		assert.NotEmpty(t, setting.ID)
++		byType[setting.Type] = setting
++	}
++	assert.Len(t, byType, 3)
++	assert.True(t, entity.IsFunctionKind(byType[base.SettingTypeAppKind]))
++	deployment := byType[base.SettingTypeAppDeployment].MustAsAppDeploymentSettings()
++	assert.Equal(t, base.DeploymentMethodFunction, deployment.ActiveMethod)
++	assert.Equal(t, base.FunctionRuntimeNode24, deployment.FunctionSource.Runtime)
++	assert.Equal(t, base.FunctionPort, byType[base.SettingTypeAppRouting].MustAsAppRoutingSettings().Port)
++	// What a clone copies: its deployment and routing settings, as an app's.
++	assert.True(t, byType[base.SettingTypeAppDeployment].Inheritable)
++	assert.True(t, byType[base.SettingTypeAppRouting].Inheritable)
++}

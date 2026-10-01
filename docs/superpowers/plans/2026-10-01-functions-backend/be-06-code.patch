@@ -1,0 +1,523 @@
+diff --git a/docs/openapi/swagger.json b/docs/openapi/swagger.json
+index 67ec8d77..8912bc85 100644
+--- a/docs/openapi/swagger.json
++++ b/docs/openapi/swagger.json
+@@ -15156,6 +15156,85 @@
+         "x-codegen-request-body-name" : "body"
+       }
+     },
++    "/projects/{projectID}/{projectEnv}/apps/function" : {
++      "post" : {
++        "description" : "Creates an app of kind function from its source, and queues its first deployment.",
++        "operationId" : "createFunction",
++        "parameters" : [ {
++          "description" : "project ID",
++          "in" : "path",
++          "name" : "projectID",
++          "required" : true,
++          "schema" : {
++            "type" : "string"
++          }
++        }, {
++          "description" : "project env",
++          "in" : "path",
++          "name" : "projectEnv",
++          "required" : true,
++          "schema" : {
++            "type" : "string"
++          }
++        } ],
++        "requestBody" : {
++          "content" : {
++            "*/*" : {
++              "schema" : {
++                "$ref" : "#/components/schemas/appdto.CreateFunctionReq"
++              }
++            }
++          },
++          "description" : "request data",
++          "required" : true
++        },
++        "responses" : {
++          "201" : {
++            "content" : {
++              "application/json" : {
++                "schema" : {
++                  "$ref" : "#/components/schemas/appdto.CreateFunctionResp"
++                }
++              }
++            },
++            "description" : "Created"
++          },
++          "400" : {
++            "content" : {
++              "application/json" : {
++                "schema" : {
++                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
++                }
++              }
++            },
++            "description" : "Bad Request"
++          },
++          "404" : {
++            "content" : {
++              "application/json" : {
++                "schema" : {
++                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
++                }
++              }
++            },
++            "description" : "Not Found"
++          },
++          "500" : {
++            "content" : {
++              "application/json" : {
++                "schema" : {
++                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
++                }
++              }
++            },
++            "description" : "Internal Server Error"
++          }
++        },
++        "summary" : "Creates a function",
++        "tags" : [ "Apps" ],
++        "x-codegen-request-body-name" : "body"
++      }
++    },
+     "/projects/{projectID}/{projectEnv}/apps/{appID}" : {
+       "delete" : {
+         "description" : "Deletes an app",
+@@ -53295,6 +53374,61 @@
+         "required" : [ "data", "meta" ],
+         "type" : "object"
+       },
++      "appdto.CreateFunctionDataResp" : {
++        "properties" : {
++          "deploymentId" : {
++            "type" : "string"
++          },
++          "id" : {
++            "type" : "string"
++          },
++          "taskId" : {
++            "type" : "string"
++          }
++        },
++        "required" : [ "deploymentId", "id", "taskId" ],
++        "type" : "object"
++      },
++      "appdto.CreateFunctionReq" : {
++        "properties" : {
++          "name" : {
++            "type" : "string"
++          },
++          "note" : {
++            "type" : "string"
++          },
++          "source" : {
++            "allOf" : [ {
++              "$ref" : "#/components/schemas/appsettingsdto.DeploymentFunctionSourceReq"
++            } ],
++            "description" : "Source is what the function's deployment settings take: its code, its\nruntime and its limits.",
++            "type" : "object"
++          },
++          "status" : {
++            "type" : "string"
++          },
++          "tags" : {
++            "items" : {
++              "type" : "string"
++            },
++            "type" : "array"
++          }
++        },
++        "required" : [ "name", "note", "source", "status", "tags" ],
++        "type" : "object"
++      },
++      "appdto.CreateFunctionResp" : {
++        "properties" : {
++          "data" : {
++            "$ref" : "#/components/schemas/appdto.CreateFunctionDataResp"
++          },
++          "meta" : {
++            "$ref" : "#/components/schemas/basedto.Meta"
++          }
++        },
++        "required" : [ "data", "meta" ],
++        "type" : "object"
++      },
+       "appdto.DeleteAppReq" : {
+         "type" : "object"
+       },
+diff --git a/hivepaas_app/interface/api/handler/apphandler/create_function.go b/hivepaas_app/interface/api/handler/apphandler/create_function.go
+new file mode 100644
+index 00000000..6938bf50
+--- /dev/null
++++ b/hivepaas_app/interface/api/handler/apphandler/create_function.go
+@@ -0,0 +1,49 @@
++package apphandler
++
++import (
++	"net/http"
++
++	"github.com/gin-gonic/gin"
++
++	"github.com/hivepaas/hivepaas/hivepaas_app/base"
++	_ "github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
++	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/appuc/appdto"
++)
++
++// CreateFunction Creates a function
++// @Summary Creates a function
++// @Description Creates an app of kind function from its source, and queues its first deployment.
++// @Tags    Apps
++// @Produce json
++// @Id      createFunction
++// @Param   projectID path string true "project ID"
++// @Param   projectEnv path string true "project env"
++// @Param   body body appdto.CreateFunctionReq true "request data"
++// @Success 201 {object} appdto.CreateFunctionResp
++// @Failure 400 {object} hperrors.ErrorInfo
++// @Failure 404 {object} hperrors.ErrorInfo
++// @Failure 500 {object} hperrors.ErrorInfo
++// @Router  /projects/{projectID}/{projectEnv}/apps/function [post]
++func (h *Handler) CreateFunction(ctx *gin.Context) {
++	auth, projectID, projectEnvID, _, err := h.GetAuthInEnv(ctx, base.ActionTypeWrite, false)
++	if err != nil {
++		h.RenderError(ctx, err)
++		return
++	}
++
++	req := appdto.NewCreateFunctionReq()
++	req.ProjectID = projectID
++	req.ProjectEnvID = projectEnvID
++	if err = h.ParseAndValidateJSONBody(ctx, req); err != nil {
++		h.RenderError(ctx, err)
++		return
++	}
++
++	resp, err := h.appUC.CreateFunction(h.RequestCtx(ctx), auth, req)
++	if err != nil {
++		h.RenderError(ctx, err)
++		return
++	}
++
++	ctx.JSON(http.StatusCreated, resp)
++}
+diff --git a/hivepaas_app/interface/api/server/router_apps.go b/hivepaas_app/interface/api/server/router_apps.go
+index 6cfbeb87..b21696bd 100644
+--- a/hivepaas_app/interface/api/server/router_apps.go
++++ b/hivepaas_app/interface/api/server/router_apps.go
+@@ -23,6 +23,7 @@ func (s *HTTPServer) registerAppRoutes(projectGroup, projectEnvGroup *gin.Router
+ 		appGroup.GET("", appHandler.ListAppInEnv)
+ 		// Creation & Update
+ 		appGroup.POST("", appHandler.CreateApp)
++		appGroup.POST("/function", appHandler.CreateFunction)
+ 		appGroup.POST("/from-template", s.handlerRegistry.appTemplateHandler.CreateAppFromTemplate)
+ 		appGroup.POST("/from-template/preflight", s.handlerRegistry.appTemplateHandler.PreflightAppFromTemplate)
+ 		appGroup.PUT("/:appID", appHandler.UpdateApp)
+diff --git a/hivepaas_app/usecase/appuc/appdto/create_function.go b/hivepaas_app/usecase/appuc/appdto/create_function.go
+new file mode 100644
+index 00000000..388395e5
+--- /dev/null
++++ b/hivepaas_app/usecase/appuc/appdto/create_function.go
+@@ -0,0 +1,65 @@
++package appdto
++
++import (
++	vld "github.com/tiendc/go-validator"
++
++	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
++	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
++	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/appsettingsuc/appsettingsdto"
++)
++
++// CreateFunctionReq creates a function: an app of kind function, built from its
++// source and deployed as soon as it exists.
++type CreateFunctionReq struct {
++	ProjectID    string `json:"-"`
++	ProjectEnvID string `json:"-"`
++	*AppBaseReq
++	// Source is what the function's deployment settings take: its code, its
++	// runtime and its limits.
++	Source *appsettingsdto.DeploymentFunctionSourceReq `json:"source"`
++}
++
++func NewCreateFunctionReq() *CreateFunctionReq {
++	return &CreateFunctionReq{}
++}
++
++// ModifyRequest implements interface basedto.ReqModifier
++func (req *CreateFunctionReq) ModifyRequest() error {
++	// A body without the app's fields has them empty, which is refused below.
++	if req.AppBaseReq == nil {
++		req.AppBaseReq = &AppBaseReq{}
++	}
++	if err := req.modifyRequest(); err != nil {
++		return hperrors.Wrap(err)
++	}
++	if req.Source != nil {
++		req.Source.Normalize()
++	}
++	return nil
++}
++
++// Validate implements interface basedto.ReqValidator
++func (req *CreateFunctionReq) Validate() hperrors.ValidationErrors {
++	validators := make([]vld.Validator, 0, 10) //nolint:mnd
++	validators = append(validators, basedto.ValidateID(&req.ProjectID, true, "projectId")...)
++	validators = append(validators, basedto.ValidateID(&req.ProjectEnvID, true, "projectEnv")...)
++	validators = append(validators, req.validate("")...)
++	validators = append(validators, vld.Must(req.Source != nil).OnError(
++		vld.SetField("source", nil),
++		vld.SetCustomKey("ERR_VLD_VALUE_REQUIRED"),
++	))
++	validators = append(validators, req.Source.Validate("source")...)
++	return hperrors.NewValidationErrors(vld.Validate(validators...))
++}
++
++type CreateFunctionResp struct {
++	Meta *basedto.Meta           `json:"meta"`
++	Data *CreateFunctionDataResp `json:"data"`
++}
++
++// CreateFunctionDataResp is the function created, and its first deployment.
++type CreateFunctionDataResp struct {
++	ID           string `json:"id"`
++	DeploymentID string `json:"deploymentId"`
++	TaskID       string `json:"taskId"`
++}
+diff --git a/hivepaas_app/usecase/appuc/create_function.go b/hivepaas_app/usecase/appuc/create_function.go
+new file mode 100644
+index 00000000..f6744496
+--- /dev/null
++++ b/hivepaas_app/usecase/appuc/create_function.go
+@@ -0,0 +1,160 @@
++package appuc
++
++import (
++	"context"
++	"errors"
++	"time"
++
++	"github.com/moby/moby/api/types/swarm"
++	"github.com/tiendc/gofn"
++
++	"github.com/hivepaas/hivepaas/hivepaas_app/base"
++	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
++	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
++	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
++	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
++	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/auditdetail"
++	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/transaction"
++	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/ulid"
++	"github.com/hivepaas/hivepaas/hivepaas_app/service/appdeploymentservice"
++	"github.com/hivepaas/hivepaas/hivepaas_app/service/appprovisionservice"
++	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/appuc/appdto"
++)
++
++// CreateFunction creates a function: an app of kind function whose deployment
++// settings are its source, deployed as soon as it exists. An app becomes a
++// function only this way.
++func (uc *UC) CreateFunction(
++	ctx context.Context,
++	auth *basedto.Auth,
++	req *appdto.CreateFunctionReq,
++) (resp *appdto.CreateFunctionResp, err error) {
++	source, err := req.Source.ToEntity()
++	if err != nil {
++		return nil, hperrors.Wrap(err)
++	}
++	// Before the transaction: checking the repository reaches it, and nothing is
++	// locked while it does.
++	if err = uc.checkFunctionSource(ctx, req.ProjectID, req.ProjectEnvID, source); err != nil {
++		return nil, hperrors.Wrap(err)
++	}
++
++	var provisioned *appprovisionservice.ProvisionAppsResp
++	committed := false
++	defer func() {
++		if rec := recover(); rec != nil {
++			err = errors.Join(err, hperrors.NewPanic(rec))
++		}
++		// The swarm service is created inside the transaction but is not part of
++		// it: a rolled-back request would leave it behind with nothing recorded.
++		if err != nil && !committed && provisioned != nil {
++			if cleanupErr := provisioned.Cleanup(context.WithoutCancel(ctx)); cleanupErr != nil {
++				err = errors.Join(err, cleanupErr)
++			}
++		}
++	}()
++
++	var created *appprovisionservice.ProvisionAppResp
++	err = transaction.Execute(ctx, uc.db, func(db database.Tx) error {
++		var txErr error
++		provisioned, txErr = uc.appProvisionService.ProvisionApps(ctx, db, &appprovisionservice.ProvisionAppsReq{
++			Apps: []*appprovisionservice.ProvisionAppReq{{
++				ProjectID:    req.ProjectID,
++				ProjectEnvID: req.ProjectEnvID,
++				Name:         req.Name,
++				Status:       req.Status,
++				Note:         req.Note,
++				Tags:         req.Tags,
++				Configure: func(_ context.Context, _ database.IDB, app *entity.App, _ *swarm.ServiceSpec) (
++					[]*entity.Setting, error) {
++					return functionSettings(app, source, app.CreatedAt), nil
++				},
++				Deployment: &appprovisionservice.FirstDeployment{
++					Source:   base.DeploymentTriggerSourceUser,
++					SourceID: auth.User.ID,
++				},
++			}},
++		})
++		if txErr != nil {
++			return hperrors.Wrap(txErr)
++		}
++		created = provisioned.Apps[0]
++		return uc.recordAppWrite(ctx, db, auth, created.App,
++			base.AuditLogTypeAppCreate, base.AuditLogSourceAPICreate, "create", auditdetail.New().
++				Set("projectId", created.App.ProjectID).
++				Set("envId", created.App.ProjectEnvID).
++				Set("serviceId", created.App.ServiceID).
++				Set("runtime", string(source.Runtime)))
++	})
++	if err != nil {
++		return nil, hperrors.Wrap(err)
++	}
++	committed = true
++
++	// A task can be picked up only once its row exists, which is once the
++	// transaction has committed.
++	if err = uc.taskQueue.ScheduleTask(ctx, created.DeploymentTask); err != nil {
++		return nil, hperrors.Wrap(err)
++	}
++	if err = uc.taskQueue.ScheduleTask(ctx, created.CertTasks...); err != nil {
++		return nil, hperrors.Wrap(err)
++	}
++
++	return &appdto.CreateFunctionResp{Data: &appdto.CreateFunctionDataResp{
++		ID:           created.App.ID,
++		DeploymentID: created.Deployment.ID,
++		TaskID:       created.DeploymentTask.ID,
++	}}, nil
++}
++
++// checkFunctionSource checks a function's source in the environment it is
++// created in: the settings it refers to exist there and are active, and its
++// build has what it will need.
++func (uc *UC) checkFunctionSource(
++	ctx context.Context,
++	projectID, projectEnvID string,
++	source *entity.DeploymentFunctionSource,
++) error {
++	deployment := &entity.AppDeploymentSettings{ActiveMethod: base.DeploymentMethodFunction, FunctionSource: source}
++	env := &entity.ProjectEnv{ID: projectEnvID, ProjectID: projectID}
++	refObjects := entity.NewRefObjects()
++	err := uc.settingService.LoadRefObjectsByIDs(ctx, uc.db, &refObjects, env.GetObjectScope(), true,
++		deployment.GetRefObjectIDs())
++	if err != nil {
++		return hperrors.Wrap(err)
++	}
++
++	checkReq := &appdeploymentservice.CheckBuildSourceReq{PushToRegistry: source.PushToRegistry, RefObjects: refObjects}
++	if source.Code.Repo != nil {
++		checkReq.RepoSource = source.Code.Repo.RepoSource()
++	}
++	return hperrors.Wrap(uc.appDeploymentService.CheckBuildSource(ctx, checkReq))
++}
++
++// functionSettings are what a function is created with: its kind, its source
++// to deploy, and its routing at the port its runtime listens on.
++func functionSettings(app *entity.App, source *entity.DeploymentFunctionSource, timeNow time.Time) []*entity.Setting {
++	newSetting := func(typ base.SettingType, version int, inheritable bool, data entity.SettingData) *entity.Setting {
++		setting := &entity.Setting{
++			ID:          gofn.Must(ulid.NewStringULID()),
++			Scope:       base.ObjectScopeApp,
++			ObjectID:    app.ID,
++			Type:        typ,
++			Status:      base.SettingStatusActive,
++			Inheritable: inheritable,
++			Version:     version,
++			CreatedAt:   timeNow,
++			UpdatedAt:   timeNow,
++		}
++		setting.MustSetData(data)
++		return setting
++	}
++	return []*entity.Setting{
++		newSetting(base.SettingTypeAppKind, entity.CurrentAppKindSettingsVersion, false,
++			&entity.AppKindSettings{Category: base.AppCategoryFunction}),
++		newSetting(base.SettingTypeAppDeployment, entity.CurrentAppDeploymentSettingsVersion, true,
++			&entity.AppDeploymentSettings{ActiveMethod: base.DeploymentMethodFunction, FunctionSource: source}),
++		newSetting(base.SettingTypeAppRouting, entity.CurrentAppRoutingSettingsVersion, true,
++			&entity.AppRoutingSettings{Port: base.FunctionPort}),
++	}
++}
+diff --git a/hivepaas_app/usecase/appuc/uc.go b/hivepaas_app/usecase/appuc/uc.go
+index 0b9252fb..815ea941 100644
+--- a/hivepaas_app/usecase/appuc/uc.go
++++ b/hivepaas_app/usecase/appuc/uc.go
+@@ -4,6 +4,7 @@ import (
+ 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
+ 	"github.com/hivepaas/hivepaas/hivepaas_app/repository"
+ 	"github.com/hivepaas/hivepaas/hivepaas_app/service/appcloneservice"
++	"github.com/hivepaas/hivepaas/hivepaas_app/service/appdeploymentservice"
+ 	"github.com/hivepaas/hivepaas/hivepaas_app/service/appprovisionservice"
+ 	"github.com/hivepaas/hivepaas/hivepaas_app/service/appservice"
+ 	"github.com/hivepaas/hivepaas/hivepaas_app/service/auditservice"
+@@ -12,12 +13,14 @@ import (
+ 	"github.com/hivepaas/hivepaas/hivepaas_app/service/loggingservice"
+ 	"github.com/hivepaas/hivepaas/hivepaas_app/service/schedjobtriggerservice"
+ 	"github.com/hivepaas/hivepaas/hivepaas_app/service/settingservice"
++	"github.com/hivepaas/hivepaas/hivepaas_app/tasks/queue"
+ 	"github.com/hivepaas/hivepaas/services/docker"
+ )
+ 
+ type UC struct {
+ 	db            *database.DB
+ 	dockerManager docker.Manager
++	taskQueue     queue.TaskQueue
+ 
+ 	appRepo       repository.AppRepo
+ 	binObjectRepo repository.BinObjectRepo
+@@ -25,6 +28,7 @@ type UC struct {
+ 
+ 	auditService           auditservice.Service
+ 	appCloneService        appcloneservice.Service
++	appDeploymentService   appdeploymentservice.Service
+ 	appProvisionService    appprovisionservice.Service
+ 	appService             appservice.Service
+ 	schedJobTriggerService schedjobtriggerservice.Service
+@@ -37,6 +41,7 @@ type UC struct {
+ func New(
+ 	db *database.DB,
+ 	dockerManager docker.Manager,
++	taskQueue queue.TaskQueue,
+ 
+ 	appRepo repository.AppRepo,
+ 	binObjectRepo repository.BinObjectRepo,
+@@ -44,6 +49,7 @@ func New(
+ 
+ 	auditService auditservice.Service,
+ 	appCloneService appcloneservice.Service,
++	appDeploymentService appdeploymentservice.Service,
+ 	appProvisionService appprovisionservice.Service,
+ 	appService appservice.Service,
+ 	schedJobTriggerService schedjobtriggerservice.Service,
+@@ -55,6 +61,7 @@ func New(
+ 	return &UC{
+ 		db:            db,
+ 		dockerManager: dockerManager,
++		taskQueue:     taskQueue,
+ 
+ 		appRepo:       appRepo,
+ 		binObjectRepo: binObjectRepo,
+@@ -62,6 +69,7 @@ func New(
+ 
+ 		auditService:           auditService,
+ 		appCloneService:        appCloneService,
++		appDeploymentService:   appDeploymentService,
+ 		appProvisionService:    appProvisionService,
+ 		appService:             appService,
+ 		schedJobTriggerService: schedJobTriggerService,

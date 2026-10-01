@@ -395,3 +395,22 @@ settled what the sections above now say:
   timeout;
 - a Go test run takes well under a second, not 2 to 5;
 - the details of the contract are in `CONTRACT.md` of `function-runtimes`.
+
+## Changes after part 2's plan
+
+Writing the backend's part (`docs/superpowers/plans/2026-10-01-functions-backend.md`)
+settled what follows; the sections above are read with it:
+
+- the lock file of inline code is not saved back after a deployment's build:
+  part 3's test run returns it and the editor adds it to the code; until then a
+  build without one says so in its log;
+- `FunctionCode.Repo` is a repository of its own type - type, URL, ref, commit,
+  options, credentials - without a repository source's Dockerfile and registry;
+- the function's source names the registry its image is pushed to, which a
+  cluster of several nodes needs, as a repository's does;
+- the `HP_FN_*` limits are the image's `ENV`, written by the Dockerfile;
+- a function is created by `POST /projects/{project}/{env}/apps/function`;
+- the container settings keep what is fixed for a function, as a deployment
+  does; a clone that takes a function's deployment settings is a function;
+- a function is not part of a spec yet: export leaves it out, and a template or
+  an import refuses it.

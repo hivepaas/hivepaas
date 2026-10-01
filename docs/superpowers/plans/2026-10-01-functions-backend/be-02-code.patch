@@ -1,0 +1,577 @@
+diff --git a/hivepaas_app/base/function.go b/hivepaas_app/base/function.go
+index 90be214f..33930b86 100644
+--- a/hivepaas_app/base/function.go
++++ b/hivepaas_app/base/function.go
+@@ -1,5 +1,12 @@
+ package base
+ 
++import (
++	"regexp"
++	"time"
++
++	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/unit"
++)
++
+ // FunctionRuntime is a function's language and its line. It names the runtime
+ // image the function is built on, function-runtime-<runtime>, released from the
+ // repository hivepaas/function-runtimes.
+@@ -32,3 +39,57 @@ func (r FunctionRuntime) Compiled() bool {
+ func FunctionBuildImageKey(runtime FunctionRuntime) string {
+ 	return string(runtime) + "-build"
+ }
++
++// DefaultEntrypoint is where the runtime finds the handler when a function does
++// not say: the handler's file (for Go, its package's directory) and its name.
++func (r FunctionRuntime) DefaultEntrypoint() (file, handler string) {
++	switch r {
++	case FunctionRuntimeNode24:
++		return "index.js", "default"
++	case FunctionRuntimePython313:
++		return "main.py", "handler"
++	case FunctionRuntimeGo127:
++		return ".", "Handle"
++	}
++	return "", ""
++}
++
++// FunctionContract is the version of the contract between a handler and its
++// runtime. A runtime image's major version is its contract's.
++type FunctionContract string
++
++const (
++	FunctionContractV1 FunctionContract = "v1"
++)
++
++var (
++	AllFunctionContracts = []FunctionContract{FunctionContractV1}
++)
++
++// What one call of a function may take, and how much code a function carries
++// inline. A function that says nothing gets the defaults, which are the
++// runtime's own.
++const (
++	FunctionPort                  = 8080
++	FunctionTimeoutDefault        = 30 * time.Second
++	FunctionTimeoutMin            = time.Second
++	FunctionTimeoutMax            = 15 * time.Minute
++	FunctionMaxConcurrencyDefault = 16
++	FunctionMaxConcurrencyMax     = 1000
++	FunctionMaxBodySizeDefault    = 6 * unit.MB
++	FunctionMaxBodySizeMin        = unit.KB
++	FunctionMaxBodySizeMax        = 100 * unit.MB
++	FunctionInlineCodeMaxSize     = unit.MB
++	FunctionInlineCodeMaxFiles    = 100
++	FunctionSystemPackagesMax     = 50
++)
++
++// FunctionReservedDir is the directory of a function's source that is
++// HivePaaS's own: the Dockerfile it writes for the function goes there.
++const FunctionReservedDir = ".hivepaas"
++
++// FunctionSystemPackagePattern is a Debian package name, with an optional
++// =version: lowercase letters, digits, '+', '-' and '.', starting with a letter
++// or a digit. A package reaches a RUN line of the function's Dockerfile, so
++// nothing else may pass.
++var FunctionSystemPackagePattern = regexp.MustCompile(`^[a-z0-9][a-z0-9+.-]+(=[A-Za-z0-9.+~:-]+)?$`)
+diff --git a/hivepaas_app/entity/app_deployment_function.go b/hivepaas_app/entity/app_deployment_function.go
+new file mode 100644
+index 00000000..62a4a1b7
+--- /dev/null
++++ b/hivepaas_app/entity/app_deployment_function.go
+@@ -0,0 +1,85 @@
++package entity
++
++import (
++	"github.com/hivepaas/hivepaas/hivepaas_app/base"
++	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/timeutil"
++	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/unit"
++)
++
++// DeploymentFunctionSource is what a function is deployed from: its code, the
++// runtime that runs it, and the limits of one call. HivePaaS writes the
++// function's Dockerfile from it.
++type DeploymentFunctionSource struct {
++	// Runtime is the language and its line: node24, python313, go127.
++	Runtime base.FunctionRuntime `json:"runtime"`
++	// Contract is the version of the handler contract: v1.
++	Contract base.FunctionContract `json:"contract"`
++	// Entrypoint is the file and the name of the handler in it.
++	Entrypoint FunctionEntrypoint `json:"entrypoint"`
++	// Code is inline, as written in the dashboard's editor, or a repository.
++	Code FunctionCode `json:"code"`
++	// SystemPackages are Debian packages installed before the libraries:
++	// "libpq-dev", or "ffmpeg=7:5.1.6-0+deb12u1".
++	SystemPackages []string `json:"systemPackages,omitempty"`
++	// Limits of one call.
++	Timeout        timeutil.Duration `json:"timeout"`
++	MaxConcurrency int               `json:"maxConcurrency"`
++	MaxBodySize    unit.DataSize     `json:"maxBodySize"`
++	// PushToRegistry is the registry the built image goes to, which a cluster of
++	// several nodes needs.
++	PushToRegistry ObjectID `json:"pushToRegistry,omitzero"`
++}
++
++// FunctionEntrypoint is where the runtime finds the handler.
++type FunctionEntrypoint struct {
++	// File is the handler's file, relative to the function's root; for Go, the
++	// directory of the handler's package.
++	File string `json:"file"`
++	// Handler is the name of the handler in it.
++	Handler string `json:"handler"`
++}
++
++// FunctionCode is where a function's code is: inline or in a repository.
++type FunctionCode struct {
++	Inline *FunctionInlineCode `json:"inline,omitempty"`
++	Repo   *FunctionRepoCode   `json:"repo,omitempty"`
++	// Dir is where the function is in the repository, for a repository holding
++	// several.
++	Dir string `json:"dir,omitempty"`
++}
++
++// FunctionInlineCode is code kept in the setting itself, so that a deployment's
++// snapshot of its settings holds the code it ran.
++type FunctionInlineCode struct {
++	Files []*FunctionFile `json:"files"`
++}
++
++// FunctionFile is one file of inline code, by its path in the function.
++type FunctionFile struct {
++	Path    string `json:"path"`
++	Content string `json:"content"`
++}
++
++// FunctionRepoCode is a repository holding a function's code.
++type FunctionRepoCode struct {
++	RepoType    base.RepoType         `json:"repoType"`
++	RepoID      string                `json:"repoId"`
++	RepoURL     string                `json:"repoURL"`
++	RepoRef     string                `json:"repoRef"` // can be branch name, tag...
++	CommitHash  string                `json:"commitHash,omitempty"`
++	RepoOptions DeploymentRepoOptions `json:"repoOptions"`
++	Credentials RepoCredentials       `json:"credentials,omitzero"`
++}
++
++// RepoSource is the repository as a checkout takes it.
++func (c *FunctionRepoCode) RepoSource() *DeploymentRepoSource {
++	return &DeploymentRepoSource{
++		RepoType:    c.RepoType,
++		RepoID:      c.RepoID,
++		RepoURL:     c.RepoURL,
++		RepoRef:     c.RepoRef,
++		CommitHash:  c.CommitHash,
++		RepoOptions: c.RepoOptions,
++		Credentials: c.Credentials,
++	}
++}
+diff --git a/hivepaas_app/entity/app_deployment_settings.go b/hivepaas_app/entity/app_deployment_settings.go
+index a7389f85..bcdc8826 100644
+--- a/hivepaas_app/entity/app_deployment_settings.go
++++ b/hivepaas_app/entity/app_deployment_settings.go
+@@ -21,9 +21,10 @@ func (s *appDeploymentSettingsParser) New() SettingData {
+ }
+ 
+ type AppDeploymentSettings struct {
+-	ImageSource  *DeploymentImageSource `json:"imageSource"`
+-	RepoSource   *DeploymentRepoSource  `json:"repoSource"`
+-	ActiveMethod base.DeploymentMethod  `json:"activeMethod"`
++	ImageSource    *DeploymentImageSource    `json:"imageSource"`
++	RepoSource     *DeploymentRepoSource     `json:"repoSource"`
++	FunctionSource *DeploymentFunctionSource `json:"functionSource,omitempty"`
++	ActiveMethod   base.DeploymentMethod     `json:"activeMethod"`
+ 
+ 	Command               string `json:"command,omitempty"`
+ 	WorkingDir            string `json:"workingDir,omitempty"`
+@@ -88,6 +89,9 @@ func (s *AppDeploymentSettings) GetRegistryAuthIDs() (res []string) {
+ 	if s.RepoSource != nil && s.RepoSource.PushToRegistry.ID != "" {
+ 		res = append(res, s.RepoSource.PushToRegistry.ID)
+ 	}
++	if s.FunctionSource != nil && s.FunctionSource.PushToRegistry.ID != "" {
++		res = append(res, s.FunctionSource.PushToRegistry.ID)
++	}
+ 	res = gofn.ToSet(res)
+ 	return
+ }
+@@ -96,6 +100,9 @@ func (s *AppDeploymentSettings) GetGitCredentialIDs() (res []string) {
+ 	if s.RepoSource != nil && s.RepoSource.Credentials.ID != "" {
+ 		res = append(res, s.RepoSource.Credentials.ID)
+ 	}
++	if s.FunctionSource != nil && s.FunctionSource.Code.Repo != nil && s.FunctionSource.Code.Repo.Credentials.ID != "" {
++		res = append(res, s.FunctionSource.Code.Repo.Credentials.ID)
++	}
+ 	res = gofn.ToSet(res)
+ 	return
+ }
+diff --git a/hivepaas_app/pkg/translation/messages/en/errors.validation.en.toml b/hivepaas_app/pkg/translation/messages/en/errors.validation.en.toml
+index c89f24e9..43571f78 100644
+--- a/hivepaas_app/pkg/translation/messages/en/errors.validation.en.toml
++++ b/hivepaas_app/pkg/translation/messages/en/errors.validation.en.toml
+@@ -63,5 +63,12 @@ ERR_VLD_PROJECT_ENV_ID_MISMATCHED = "Project environment does not belong to this
+ # USERS
+ ERR_VLD_ADMIN_SECURITY_OPTION_WEAK = "An administrator cannot sign in with a password alone. Choose a security option that adds a second factor."
+ 
++# FUNCTIONS
++ERR_VLD_FUNCTION_ENTRYPOINT_INVALID = "The entrypoint must be a file of the function its runtime can load: a .js, .mjs or .cjs file for Node.js, a .py file for Python, the directory of the handler's package for Go"
++ERR_VLD_FUNCTION_HANDLER_INVALID = "The handler must be a name the runtime can call: for Go, an exported name such as Handle"
++ERR_VLD_FUNCTION_FILE_PATH_INVALID = "A path must be relative, stay inside the function, and use only letters, digits, '.', '_', '-' and '/'"
++ERR_VLD_FUNCTION_CODE_TOO_LARGE = "The function's code is {{.Actual}}, over the {{.Max}} a function kept inline may have. Put larger code in a repository"
++ERR_VLD_DEBIAN_PACKAGE_INVALID = "A Debian package is a name of lowercase letters, digits, '+', '-' and '.', with an optional =version"
++
+ # INFRA
+ ERR_VLD_DOCKER_LABEL_UNALLOWED = "Docker object label '{{.Label}}' is unallowed"
+diff --git a/hivepaas_app/usecase/appsettingsuc/appsettingsdto/deployment_function_source.go b/hivepaas_app/usecase/appsettingsuc/appsettingsdto/deployment_function_source.go
+new file mode 100644
+index 00000000..e08b3c7a
+--- /dev/null
++++ b/hivepaas_app/usecase/appsettingsuc/appsettingsdto/deployment_function_source.go
+@@ -0,0 +1,350 @@
++package appsettingsdto
++
++import (
++	"fmt"
++	"path"
++	"regexp"
++	"slices"
++	"strings"
++
++	vld "github.com/tiendc/go-validator"
++	"github.com/tiendc/gofn"
++
++	"github.com/hivepaas/hivepaas/hivepaas_app/base"
++	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
++	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
++	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
++	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/githelper"
++	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/timeutil"
++	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/unit"
++	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/vcsurl"
++)
++
++const (
++	functionPathMaxLen = 255
++)
++
++var (
++	// functionPathRegex is a path spelled plainly: no space, no quote, nothing a
++	// Dockerfile or a shell would read as more than a name.
++	functionPathRegex = regexp.MustCompile(`^[A-Za-z0-9._/-]+$`)
++	// functionHandlerRegexes are the names each runtime can call.
++	functionHandlerRegexes = map[base.FunctionRuntime]*regexp.Regexp{
++		base.FunctionRuntimeNode24:    regexp.MustCompile(`^[A-Za-z_$][A-Za-z0-9_$]*$`),
++		base.FunctionRuntimePython313: regexp.MustCompile(`^[A-Za-z_][A-Za-z0-9_]*$`),
++		base.FunctionRuntimeGo127:     regexp.MustCompile(`^[A-Z][A-Za-z0-9_]*$`),
++	}
++	// functionEntrypointExts are the extensions of a handler's file, for the
++	// runtimes whose entrypoint is a file.
++	functionEntrypointExts = map[base.FunctionRuntime][]string{
++		base.FunctionRuntimeNode24:    {".js", ".mjs", ".cjs"},
++		base.FunctionRuntimePython313: {".py"},
++	}
++)
++
++// DeploymentFunctionSourceReq is what a function is deployed from. Normalize it,
++// then Validate it, then turn it into its entity.
++type DeploymentFunctionSourceReq struct {
++	Runtime        base.FunctionRuntime  `json:"runtime"`
++	Contract       base.FunctionContract `json:"contract"`
++	Entrypoint     FunctionEntrypointReq `json:"entrypoint"`
++	Code           FunctionCodeReq       `json:"code"`
++	SystemPackages []string              `json:"systemPackages"`
++	Timeout        timeutil.Duration     `json:"timeout" swaggertype:"string"`
++	MaxConcurrency int                   `json:"maxConcurrency"`
++	MaxBodySize    unit.DataSize         `json:"maxBodySize" swaggertype:"string"`
++	PushToRegistry basedto.ObjectIDReq   `json:"pushToRegistry"`
++}
++
++type FunctionEntrypointReq struct {
++	File    string `json:"file"`
++	Handler string `json:"handler"`
++}
++
++type FunctionCodeReq struct {
++	Inline *FunctionInlineCodeReq `json:"inline"`
++	Repo   *FunctionRepoCodeReq   `json:"repo"`
++	Dir    string                 `json:"dir"`
++}
++
++type FunctionInlineCodeReq struct {
++	Files []*FunctionFileReq `json:"files"`
++}
++
++type FunctionFileReq struct {
++	Path    string `json:"path"`
++	Content string `json:"content"`
++}
++
++type FunctionRepoCodeReq struct {
++	RepoType    base.RepoType            `json:"repoType"`
++	RepoURL     string                   `json:"repoURL"`
++	RepoRef     string                   `json:"repoRef"`
++	CommitHash  string                   `json:"commitHash"`
++	RepoOptions DeploymentRepoOptionsReq `json:"repoOptions"`
++	Credentials basedto.ObjectIDReq      `json:"credentials"`
++}
++
++// Normalize folds the source into one spelling, and fills in what it leaves
++// out with the runtime's defaults.
++func (req *DeploymentFunctionSourceReq) Normalize() {
++	if req == nil {
++		return
++	}
++	req.Runtime = base.FunctionRuntime(strings.ToLower(strings.TrimSpace(string(req.Runtime))))
++	req.Contract = base.FunctionContract(strings.TrimSpace(string(req.Contract)))
++	if req.Contract == "" {
++		req.Contract = base.FunctionContractV1
++	}
++
++	defaultFile, defaultHandler := req.Runtime.DefaultEntrypoint()
++	req.Entrypoint.File = cleanFunctionPath(req.Entrypoint.File)
++	if req.Entrypoint.File == "" {
++		req.Entrypoint.File = defaultFile
++	}
++	req.Entrypoint.Handler = strings.TrimSpace(req.Entrypoint.Handler)
++	if req.Entrypoint.Handler == "" {
++		req.Entrypoint.Handler = defaultHandler
++	}
++
++	req.Code.Dir = cleanFunctionPath(req.Code.Dir)
++	if req.Code.Dir == "." {
++		req.Code.Dir = ""
++	}
++	if req.Code.Inline != nil {
++		req.Code.Inline.Files = gofn.Filter(req.Code.Inline.Files, func(f *FunctionFileReq) bool { return f != nil })
++		for _, f := range req.Code.Inline.Files {
++			f.Path = cleanFunctionPath(f.Path)
++		}
++	}
++	if req.Code.Repo != nil {
++		req.Code.Repo.RepoURL = strings.TrimSpace(req.Code.Repo.RepoURL)
++		req.Code.Repo.RepoRef = strings.TrimSpace(req.Code.Repo.RepoRef)
++	}
++
++	packages := make([]string, 0, len(req.SystemPackages))
++	for _, pkg := range req.SystemPackages {
++		if pkg = strings.TrimSpace(pkg); pkg != "" && !slices.Contains(packages, pkg) {
++			packages = append(packages, pkg)
++		}
++	}
++	req.SystemPackages = packages
++
++	if req.Timeout == 0 {
++		req.Timeout = timeutil.Duration(base.FunctionTimeoutDefault)
++	}
++	if req.MaxConcurrency == 0 {
++		req.MaxConcurrency = base.FunctionMaxConcurrencyDefault
++	}
++	if req.MaxBodySize == 0 {
++		req.MaxBodySize = base.FunctionMaxBodySizeDefault
++	}
++}
++
++// cleanFunctionPath trims a path and cleans it: "./src//index.js" is
++// "src/index.js". A path that leaves the function stays one, for Validate.
++func cleanFunctionPath(p string) string {
++	if p = strings.TrimSpace(p); p == "" {
++		return ""
++	}
++	return path.Clean(p)
++}
++
++// functionPathOK says whether p names a place inside a function: relative,
++// within it, and spelled plainly. "." - the function's root - is a place for a
++// directory only.
++func functionPathOK(p string, dir bool) bool {
++	if p == "" || len(p) > functionPathMaxLen || path.IsAbs(p) || !functionPathRegex.MatchString(p) {
++		return false
++	}
++	if p == "." {
++		return dir
++	}
++	for part := range strings.SplitSeq(p, "/") {
++		if part == "" || part == "." || part == ".." {
++			return false
++		}
++	}
++	return true
++}
++
++func functionPathReserved(p string) bool {
++	return p == base.FunctionReservedDir || strings.HasPrefix(p, base.FunctionReservedDir+"/")
++}
++
++// Validate checks the source, once normalized. field is where it is in the
++// request.
++func (req *DeploymentFunctionSourceReq) Validate(field string) (res []vld.Validator) {
++	if req == nil {
++		return
++	}
++	if field != "" {
++		field += "."
++	}
++	res = append(res, basedto.ValidateStrIn(&req.Runtime, true, base.AllFunctionRuntimes, field+"runtime")...)
++	res = append(res, basedto.ValidateStrIn(&req.Contract, true, base.AllFunctionContracts, field+"contract")...)
++	res = append(res, req.validateEntrypoint(field+"entrypoint.")...)
++	res = append(res, req.Code.validate(field+"code")...)
++
++	res = append(res, basedto.ValidateSliceEx(req.SystemPackages, true, 0, base.FunctionSystemPackagesMax, nil,
++		field+"systemPackages")...)
++	for i, pkg := range req.SystemPackages {
++		res = append(res, vld.Must(base.FunctionSystemPackagePattern.MatchString(pkg)).OnError(
++			vld.SetField(fmt.Sprintf("%ssystemPackages[%d]", field, i), nil),
++			vld.SetCustomKey("ERR_VLD_DEBIAN_PACKAGE_INVALID"),
++		))
++	}
++
++	res = append(res, basedto.ValidateDuration(&req.Timeout, true, timeutil.Duration(base.FunctionTimeoutMin),
++		timeutil.Duration(base.FunctionTimeoutMax), field+"timeout")...)
++	res = append(res, basedto.ValidateNumber(&req.MaxConcurrency, true, 1, base.FunctionMaxConcurrencyMax,
++		field+"maxConcurrency")...)
++	res = append(res, basedto.ValidateNumber(&req.MaxBodySize, true, base.FunctionMaxBodySizeMin,
++		base.FunctionMaxBodySizeMax, field+"maxBodySize")...)
++	res = append(res, basedto.ValidateObjectIDReq(&req.PushToRegistry, false, field+"pushToRegistry")...)
++	return res
++}
++
++func (req *DeploymentFunctionSourceReq) validateEntrypoint(field string) (res []vld.Validator) {
++	file, handler := req.Entrypoint.File, req.Entrypoint.Handler
++	fileOK := functionPathOK(file, true)
++	if exts, ok := functionEntrypointExts[req.Runtime]; ok {
++		fileOK = functionPathOK(file, false) && slices.Contains(exts, path.Ext(file))
++	}
++	res = append(res, vld.Must(fileOK).OnError(
++		vld.SetField(field+"file", nil),
++		vld.SetCustomKey("ERR_VLD_FUNCTION_ENTRYPOINT_INVALID"),
++	))
++	if handlerRegex, ok := functionHandlerRegexes[req.Runtime]; ok {
++		res = append(res, vld.Must(handlerRegex.MatchString(handler)).OnError(
++			vld.SetField(field+"handler", nil),
++			vld.SetCustomKey("ERR_VLD_FUNCTION_HANDLER_INVALID"),
++		))
++	}
++	return res
++}
++
++func (req *FunctionCodeReq) validate(field string) (res []vld.Validator) {
++	res = append(res, vld.Must((req.Inline != nil) != (req.Repo != nil)).OnError(
++		vld.SetField(field, nil),
++		vld.SetCustomKey("ERR_VLD_VALUE_REQUIRED_ONLY"),
++	))
++	if req.Inline != nil {
++		res = append(res, req.Inline.validate(field+".inline")...)
++		// A directory picks a function among several in a repository.
++		res = append(res, vld.Must(req.Dir == "").OnError(
++			vld.SetField(field+".dir", nil),
++			vld.SetCustomKey("ERR_VLD_FIELD_UNALLOWED"),
++		))
++	}
++	if req.Repo != nil {
++		res = append(res, req.Repo.validate(field+".repo.")...)
++		if req.Dir != "" {
++			res = append(res, vld.Must(functionPathOK(req.Dir, false)).OnError(
++				vld.SetField(field+".dir", nil),
++				vld.SetCustomKey("ERR_VLD_FUNCTION_FILE_PATH_INVALID"),
++			))
++		}
++	}
++	return res
++}
++
++func (req *FunctionInlineCodeReq) validate(field string) (res []vld.Validator) {
++	files := req.Files
++	res = append(res, basedto.ValidateSliceEx(files, false, 1, base.FunctionInlineCodeMaxFiles, nil,
++		field+".files")...)
++	res = append(res, basedto.ValidateObjectSliceBy(files, false, true, nil,
++		func(f *FunctionFileReq) string { return f.Path }, field+".files")...)
++
++	size := unit.DataSize(0)
++	for i, f := range files {
++		size += unit.DataSize(len(f.Content))
++		pathField := fmt.Sprintf("%s.files[%d].path", field, i)
++		if !functionPathOK(f.Path, false) {
++			res = append(res, vld.Must(false).OnError(
++				vld.SetField(pathField, nil),
++				vld.SetCustomKey("ERR_VLD_FUNCTION_FILE_PATH_INVALID"),
++			))
++			continue
++		}
++		res = append(res, vld.Must(!functionPathReserved(f.Path)).OnError(
++			vld.SetField(pathField, nil),
++			vld.SetCustomKey("ERR_VLD_VALUE_RESERVED"),
++			vld.SetParam("Value", base.FunctionReservedDir),
++		))
++	}
++	res = append(res, vld.Must(size <= base.FunctionInlineCodeMaxSize).OnError(
++		vld.SetField(field, nil),
++		vld.SetCustomKey("ERR_VLD_FUNCTION_CODE_TOO_LARGE"),
++		vld.SetParam("Max", base.FunctionInlineCodeMaxSize.HR()),
++		vld.SetParam("Actual", size.HR()),
++	))
++	return res
++}
++
++func (req *FunctionRepoCodeReq) validate(field string) (res []vld.Validator) {
++	res = append(res, basedto.ValidateStrIn(&req.RepoType, true, base.AllRepoTypes, field+"repoType")...)
++	res = append(res, basedto.ValidateGitRepoURL(&req.RepoURL, true, field+"repoURL")...)
++	res = append(res, basedto.ValidateStr(&req.RepoRef, false, 1, repoRefMaxLen, field+"repoRef")...)
++	res = append(res, basedto.ValidateGitCommitHash(&req.CommitHash, false, field+"commitHash")...)
++	res = append(res, basedto.ValidateObjectIDReq(&req.Credentials, false, field+"credentials")...)
++	return res
++}
++
++// ToEntity is the source as it is stored, once normalized and validated.
++func (req *DeploymentFunctionSourceReq) ToEntity() (*entity.DeploymentFunctionSource, error) {
++	if req == nil {
++		return nil, nil
++	}
++	code := entity.FunctionCode{Dir: req.Code.Dir}
++	if req.Code.Inline != nil {
++		code.Inline = &entity.FunctionInlineCode{
++			Files: gofn.MapSlice(req.Code.Inline.Files, func(f *FunctionFileReq) *entity.FunctionFile {
++				return &entity.FunctionFile{Path: f.Path, Content: f.Content}
++			}),
++		}
++	}
++	if req.Code.Repo != nil {
++		repo, err := req.Code.Repo.toEntity()
++		if err != nil {
++			return nil, hperrors.Wrap(err)
++		}
++		code.Repo = repo
++	}
++	var packages []string
++	if len(req.SystemPackages) > 0 {
++		packages = slices.Clone(req.SystemPackages)
++	}
++	return &entity.DeploymentFunctionSource{
++		Runtime:        req.Runtime,
++		Contract:       req.Contract,
++		Entrypoint:     entity.FunctionEntrypoint{File: req.Entrypoint.File, Handler: req.Entrypoint.Handler},
++		Code:           code,
++		SystemPackages: packages,
++		Timeout:        req.Timeout,
++		MaxConcurrency: req.MaxConcurrency,
++		MaxBodySize:    req.MaxBodySize,
++		PushToRegistry: entity.ObjectID{ID: req.PushToRegistry.ID},
++	}, nil
++}
++
++func (req *FunctionRepoCodeReq) toEntity() (*entity.FunctionRepoCode, error) {
++	repoRef := req.RepoRef
++	switch req.RepoType { //nolint:gocritic
++	case base.RepoTypeGit:
++		repoRef = string(githelper.NormalizeRepoRef(repoRef))
++	}
++	parsedRepoURL, err := vcsurl.Parse(req.RepoURL)
++	if err != nil {
++		return nil, hperrors.Wrap(err)
++	}
++	return &entity.FunctionRepoCode{
++		RepoType:    req.RepoType,
++		RepoID:      parsedRepoURL.ID,
++		RepoURL:     req.RepoURL,
++		RepoRef:     repoRef,
++		CommitHash:  req.CommitHash,
++		RepoOptions: req.RepoOptions.ToEntity(),
++		Credentials: entity.RepoCredentials{ID: req.Credentials.ID},
++	}, nil
++}

@@ -1,0 +1,95 @@
+diff --git a/hivepaas_app/service/specservice/specmodel/issue.go b/hivepaas_app/service/specservice/specmodel/issue.go
+index 4b49f538..429f80c5 100644
+--- a/hivepaas_app/service/specservice/specmodel/issue.go
++++ b/hivepaas_app/service/specservice/specmodel/issue.go
+@@ -17,12 +17,13 @@ const (
+ 	SeverityWarning Severity = "warning"
+ )
+ 
+-// Issue codes. Export emits the first four; the rest belong to the import
++// Issue codes. Export emits the first five; the rest belong to the import
+ // contract, and are declared here so both halves name the same things.
+ const (
+ 	CodeTypeUnclassified   = "TYPE_UNCLASSIFIED"
+ 	CodeTypeSkipped        = "TYPE_SKIPPED"
+ 	CodePreviewAppSkipped  = "PREVIEW_APP_SKIPPED"
++	CodeFunctionSkipped    = "FUNCTION_SKIPPED"
+ 	CodeServiceUnavailable = "SERVICE_UNAVAILABLE"
+ 	CodeRefNotFound        = "REF_NOT_FOUND"
+ 	CodeRefNotSelected     = "REF_NOT_SELECTED"
+diff --git a/hivepaas_app/service/specservice/specserviceimpl/build_settings.go b/hivepaas_app/service/specservice/specserviceimpl/build_settings.go
+index bb022b2c..888f974b 100644
+--- a/hivepaas_app/service/specservice/specserviceimpl/build_settings.go
++++ b/hivepaas_app/service/specservice/specserviceimpl/build_settings.go
+@@ -29,9 +29,29 @@ func (s *service) buildKind(_ context.Context, state *buildState) error {
+ 	if !slices.Contains(base.AllAppCategories, kind.Category) {
+ 		return invalidBlock(block, "category %q is not one of %v", kind.Category, base.AllAppCategories)
+ 	}
++	if kind.Category == base.AppCategoryFunction {
++		return invalidBlock(block, errFunctionNotInSpec)
++	}
+ 	return state.addSetting(base.SettingTypeAppKind, entity.CurrentAppKindSettingsVersion, false, kind)
+ }
+ 
++// errFunctionNotInSpec is why a spec does not make a function: a function is
++// created as one, through the checks creating it makes, and is not part of a
++// spec yet - export leaves functions out.
++const errFunctionNotInSpec = "a function is created as one, from its source; functions are not part of a spec yet"
++
++// isFunctionSetting says whether an imported setting makes an app a function,
++// or deploys one from a function's code.
++func isFunctionSetting(data entity.SettingData) bool {
++	switch data := data.(type) {
++	case *entity.AppKindSettings:
++		return data.Category == base.AppCategoryFunction
++	case *entity.AppDeploymentSettings:
++		return data.ActiveMethod == base.DeploymentMethodFunction || data.FunctionSource != nil
++	}
++	return false
++}
++
+ func (s *service) buildEnvVars(_ context.Context, state *buildState) error {
+ 	block := specmodel.BlockSettingsEnvVars
+ 	envVars := &entity.EnvVars{}
+@@ -216,6 +236,9 @@ func (state *buildState) addImportedSetting(typ base.SettingType, key string, bo
+ 	if err != nil {
+ 		return err
+ 	}
++	if isFunctionSetting(parsed) {
++		return invalidBlock(block, errFunctionNotInSpec)
++	}
+ 	setting.ID = gofn.Must(ulid.NewStringULID())
+ 	setting.Scope = base.ObjectScopeApp
+ 	setting.ObjectID = state.req.App.ID
+diff --git a/hivepaas_app/service/specservice/specserviceimpl/walk.go b/hivepaas_app/service/specservice/specserviceimpl/walk.go
+index 5e75a2b4..bc673eba 100644
+--- a/hivepaas_app/service/specservice/specserviceimpl/walk.go
++++ b/hivepaas_app/service/specservice/specserviceimpl/walk.go
+@@ -2,6 +2,7 @@ package specserviceimpl
+ 
+ import (
+ 	"context"
++	"slices"
+ 	"sort"
+ 
+ 	"github.com/moby/moby/api/types/swarm"
+@@ -224,6 +225,19 @@ func (s *service) gatherEnv(
+ 		if err != nil {
+ 			return nil, hperrors.Wrap(err)
+ 		}
++		// A function is not part of a spec yet: its code is in its deployment
++		// settings, which an import would write without the checks creating a
++		// function makes. It is reported, like a preview app, so that an
++		// operator looking for it finds out why it is not in the bundle.
++		if slices.ContainsFunc(appSettings, entity.IsFunctionKind) {
++			report.Add(specmodel.Issue{
++				Severity: specmodel.SeveritySkipped,
++				Code:     specmodel.CodeFunctionSkipped,
++				Path:     appPath,
++				Action:   "not exported; functions are not part of a spec yet",
++			})
++			continue
++		}
+ 		out.apps = append(out.apps, &appUnit{
+ 			app: app,
+ 			unit: add(&scopeUnit{

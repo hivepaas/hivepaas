@@ -1,0 +1,577 @@
+diff --git a/hivepaas_app/base/app_deployment.go b/hivepaas_app/base/app_deployment.go
+index 05276412..51531ed6 100644
+--- a/hivepaas_app/base/app_deployment.go
++++ b/hivepaas_app/base/app_deployment.go
+@@ -5,8 +5,11 @@ type DeploymentMethod string
+ const (
+ 	DeploymentMethodImage DeploymentMethod = `image`
+ 	DeploymentMethodRepo  DeploymentMethod = "repo"
++	// DeploymentMethodFunction builds a function's code on its runtime's image,
++	// with the Dockerfile HivePaaS writes for it.
++	DeploymentMethodFunction DeploymentMethod = "function"
+ )
+ 
+ var (
+-	AllDeploymentMethods = []DeploymentMethod{DeploymentMethodImage, DeploymentMethodRepo}
++	AllDeploymentMethods = []DeploymentMethod{DeploymentMethodImage, DeploymentMethodRepo, DeploymentMethodFunction}
+ )
+diff --git a/hivepaas_app/interface/mcp/tools_app_actions.go b/hivepaas_app/interface/mcp/tools_app_actions.go
+index 2eb7f04c..e10d63e3 100644
+--- a/hivepaas_app/interface/mcp/tools_app_actions.go
++++ b/hivepaas_app/interface/mcp/tools_app_actions.go
+@@ -139,8 +139,11 @@ func makeRedeployPlan(ref *appRef, settings *appsettingsdto.DeploymentSettingsRe
+ 
+ // describe is a source in a few words, for a summary.
+ func (s deploySource) describe() string {
+-	if s.Method == string(base.DeploymentMethodImage) {
++	switch {
++	case s.Method == string(base.DeploymentMethodImage):
+ 		return s.Image
++	case s.Method == string(base.DeploymentMethodFunction) && s.Repo == "":
++		return "the function's code"
+ 	}
+ 	return strings.TrimSpace(s.Repo + " " + s.Ref)
+ }
+@@ -172,6 +175,7 @@ func deploySourceOf(s *appsettingsdto.DeploymentSettingsResp) deploySource {
+ 			out.Repo, out.Ref, out.Commit = withoutUserinfo(s.RepoSource.RepoURL), s.RepoSource.RepoRef,
+ 				s.RepoSource.CommitHash
+ 		}
++	case base.DeploymentMethodFunction:
+ 	}
+ 	return out
+ }
+diff --git a/hivepaas_app/service/appdeploymentservice/appdeploymentserviceimpl/deployment.go b/hivepaas_app/service/appdeploymentservice/appdeploymentserviceimpl/deployment.go
+index c9bcc92a..88b581a2 100644
+--- a/hivepaas_app/service/appdeploymentservice/appdeploymentserviceimpl/deployment.go
++++ b/hivepaas_app/service/appdeploymentservice/appdeploymentserviceimpl/deployment.go
+@@ -82,6 +82,8 @@ func (s *service) Deploy(
+ 		err = s.deployFromImage(ctx, db, data)
+ 	case base.DeploymentMethodRepo:
+ 		err = s.deployFromRepo(ctx, db, data)
++	case base.DeploymentMethodFunction:
++		err = s.deployFromFunction(ctx, db, data)
+ 	}
+ 
+ 	return resp, err
+diff --git a/hivepaas_app/service/appdeploymentservice/appdeploymentserviceimpl/deployment_notification.go b/hivepaas_app/service/appdeploymentservice/appdeploymentserviceimpl/deployment_notification.go
+index efb256e9..f342d5fa 100644
+--- a/hivepaas_app/service/appdeploymentservice/appdeploymentserviceimpl/deployment_notification.go
++++ b/hivepaas_app/service/appdeploymentservice/appdeploymentserviceimpl/deployment_notification.go
+@@ -91,5 +91,14 @@ func (s *service) buildDeploymentNotifMsgData(
+ 		}
+ 	case base.DeploymentMethodImage:
+ 		msgData.Image = deployment.Settings.ImageSource.Image
++	case base.DeploymentMethodFunction:
++		if source := deployment.Settings.FunctionSource; source != nil && source.Code.Repo != nil {
++			msgData.RepoURL = source.Code.Repo.RepoURL
++			msgData.RepoRef = source.Code.Repo.RepoRef
++			if deployment.Output != nil {
++				msgData.CommitMsg = deployment.Output.CommitTitle
++				msgData.CommitAuthor = deployment.Output.CommitAuthor
++			}
++		}
+ 	}
+ }
+diff --git a/hivepaas_app/service/appdeploymentservice/appdeploymentserviceimpl/function_deploy.go b/hivepaas_app/service/appdeploymentservice/appdeploymentserviceimpl/function_deploy.go
+new file mode 100644
+index 00000000..64784a7f
+--- /dev/null
++++ b/hivepaas_app/service/appdeploymentservice/appdeploymentserviceimpl/function_deploy.go
+@@ -0,0 +1,212 @@
++package appdeploymentserviceimpl
++
++import (
++	"context"
++	"errors"
++	"fmt"
++	"os"
++	"path/filepath"
++
++	"github.com/tiendc/gofn"
++
++	"github.com/hivepaas/hivepaas/hivepaas_app/base"
++	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
++	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
++	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
++	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/tasklog"
++	"github.com/hivepaas/hivepaas/hivepaas_app/service/functionservice/functionbuild"
++	"github.com/hivepaas/hivepaas/hivepaas_app/service/imagebuildservice"
++	"github.com/hivepaas/hivepaas/hivepaas_app/service/repocheckoutservice"
++	"github.com/hivepaas/hivepaas/hivepaas_app/service/systemappservice"
++)
++
++const (
++	stepFunctionSource = "function-source"
++)
++
++// deployFromFunction deploys a function: its code, inline or from its
++// repository, is built on its runtime's image with the Dockerfile HivePaaS
++// writes for it, then runs as the app's service.
++func (s *service) deployFromFunction(
++	ctx context.Context,
++	db database.Tx,
++	deplData *appDeploymentData,
++) (err error) {
++	data := &repoDeploymentData{appDeploymentData: deplData}
++	defer s.repoDeployStepCleanup(data) //nolint:errcheck
++	defer func() {
++		if data.IsTaskCanceled() || errors.Is(err, context.Canceled) {
++			err = nil
++		}
++	}()
++	source := data.Deployment.Settings.FunctionSource
++	if source == nil {
++		return hperrors.Wrap(hperrors.ErrUnconfigured).WithParam("Name", "Function source")
++	}
++
++	// 0. Prepare
++	if err = s.deployStepPrepareBuild(ctx, db, data, source.PushToRegistry); err != nil {
++		return hperrors.Wrap(err)
++	}
++	if data.IsTaskCanceled() {
++		return nil
++	}
++
++	// 1. The function's source
++	if err = s.functionDeployStepSource(ctx, data); err != nil {
++		return hperrors.Wrap(err)
++	}
++	if data.IsTaskCanceled() {
++		return nil
++	}
++
++	// 2. Build image
++	if err = s.functionDeployStepImageBuild(ctx, db, data); err != nil {
++		return hperrors.Wrap(err)
++	}
++	if data.IsTaskCanceled() {
++		return nil
++	}
++
++	// From now until the end of the deployment, the app is locked against
++	// another deployment, as a repository's is.
++	shouldContinue, err := s.lockDockerServiceForDeployment(ctx, db, data.appDeploymentData)
++	if err != nil {
++		return hperrors.Wrap(err)
++	}
++	if !shouldContinue {
++		data.DeploymentCanceled = true
++		return nil
++	}
++
++	// 3. Pre-deployment command execution, and the jobs waited for
++	if err = s.deployStepExecCmd(ctx, data.appDeploymentData, true); err != nil {
++		return hperrors.Wrap(err)
++	}
++	if err = s.deployStepPreDeployJobs(ctx, data.appDeploymentData); err != nil {
++		return hperrors.Wrap(err)
++	}
++
++	// 4. Apply image to service
++	if err = s.functionDeployStepServiceApply(ctx, db, data); err != nil {
++		return hperrors.Wrap(err)
++	}
++
++	// 5. Post-deployment command execution
++	if err = s.deployStepExecCmd(ctx, data.appDeploymentData, false); err != nil {
++		return hperrors.Wrap(err)
++	}
++	return nil
++}
++
++// functionDeployStepSource puts the function's code in the checkout directory:
++// its inline files, or its repository checked out. The build's context is the
++// function's own directory.
++func (s *service) functionDeployStepSource(
++	ctx context.Context,
++	data *repoDeploymentData,
++) error {
++	data.Step = stepFunctionSource
++	code := data.Deployment.Settings.FunctionSource.Code
++
++	switch {
++	case code.Inline != nil:
++		_ = data.LogStore.Add(ctx, tasklog.NewOutFrame(
++			fmt.Sprintf("Writing the function's %d file(s)...", len(code.Inline.Files)), tasklog.TsNow))
++		if err := os.MkdirAll(data.CheckoutDir, 0o700); err != nil { //nolint:mnd
++			return hperrors.Wrap(err)
++		}
++		if err := functionbuild.WriteInlineCode(data.CheckoutDir, code.Inline); err != nil {
++			return hperrors.Wrap(err)
++		}
++		data.ContextDir = data.CheckoutDir
++
++	case code.Repo != nil:
++		repoSource := code.Repo.RepoSource()
++		checkoutReq := &repocheckoutservice.RepoCheckoutReq{
++			App:         data.App,
++			RepoSource:  repoSource,
++			CredSetting: data.RefObjects.RefSettings[repoSource.Credentials.ID],
++			RefObjects:  data.RefObjects,
++			LogStore:    data.LogStore,
++			TempDir:     data.TempDir,
++			CheckoutDir: data.CheckoutDir,
++			NoCache: data.DeployArgs.NoCache ||
++				(data.ImageBuildSettings != nil && data.ImageBuildSettings.NoCache),
++		}
++		checkoutResp, err := s.repoCheckoutService.Checkout(ctx, checkoutReq)
++		if err != nil {
++			return hperrors.Wrap(err)
++		}
++		code.Repo.CommitHash = checkoutResp.CommitHash
++		output := data.Deployment.Output
++		output.CommitHash = checkoutResp.CommitHash
++		output.CommitMessage = checkoutResp.CommitMessage
++		output.CommitTitle = checkoutResp.CommitTitle
++		output.CommitAuthor = checkoutResp.CommitAuthor
++
++		data.ContextDir = filepath.Join(data.CheckoutDir, filepath.FromSlash(code.Dir))
++		if info, err := os.Stat(data.ContextDir); err != nil || !info.IsDir() {
++			_ = data.LogStore.Add(ctx, tasklog.NewErrFrame(fmt.Sprintf(
++				"The repository has no directory '%s' at commit %s.", code.Dir, checkoutResp.CommitHash),
++				tasklog.TsNow))
++			return hperrors.NewNotFound("Function directory")
++		}
++
++	default:
++		return hperrors.Wrap(hperrors.ErrUnconfigured).WithParam("Name", "Function code")
++	}
++	return nil
++}
++
++// functionDeployStepImageBuild builds the function from the Dockerfile written
++// for it. The build's inputs are resolved first: the Dockerfile mounts each of
++// the build's secrets into the install step, so it needs their names.
++func (s *service) functionDeployStepImageBuild(
++	ctx context.Context,
++	db database.Tx,
++	data *repoDeploymentData,
++) error {
++	source := data.Deployment.Settings.FunctionSource
++	inputs, err := s.imageBuildService.ResolveBuildInputs(ctx, db, &imagebuildservice.ImageBuildReq{
++		App:            data.App,
++		PushToRegistry: source.PushToRegistry,
++	})
++	if err != nil {
++		return hperrors.Wrap(err)
++	}
++	data.LogStore.UpdateRedactorAddSecrets(inputs.Secrets)
++
++	dockerfile, err := functionbuild.Dockerfile(&functionbuild.DockerfileReq{
++		Source:       source,
++		Images:       systemappservice.CurrentRelease().FunctionRuntimes,
++		SourceDir:    data.contextDir(),
++		BuildArgs:    gofn.MapKeys(inputs.EnvVars),
++		BuildSecrets: gofn.MapKeys(inputs.SecretEnvVars),
++	})
++	if err != nil {
++		return hperrors.Wrap(err)
++	}
++	for _, note := range dockerfile.Notes {
++		_ = data.LogStore.Add(ctx, tasklog.NewWarnFrame(note, tasklog.TsNow))
++	}
++
++	// Inline code has no commit: its image is tagged after its content.
++	commitHash := ""
++	if source.Code.Repo != nil {
++		commitHash = source.Code.Repo.CommitHash
++	} else if source.Code.Inline != nil {
++		commitHash = functionbuild.ContentHash(source.Code.Inline, dockerfile.Content)
++	}
++
++	return s.deployStepImageBuild(ctx, db, data, &imageBuildTarget{
++		CommitHash: commitHash,
++		Dockerfile: entity.DeploymentDockerfile{
++			Source:  base.DockerfileSourceManual,
++			Path:    functionbuild.DockerfilePath,
++			Content: dockerfile.Content,
++		},
++		PushToRegistry: source.PushToRegistry,
++		Inputs:         inputs,
++	})
++}
+diff --git a/hivepaas_app/service/appdeploymentservice/appdeploymentserviceimpl/function_deploy_apply_svc.go b/hivepaas_app/service/appdeploymentservice/appdeploymentserviceimpl/function_deploy_apply_svc.go
+new file mode 100644
+index 00000000..e7432ff3
+--- /dev/null
++++ b/hivepaas_app/service/appdeploymentservice/appdeploymentserviceimpl/function_deploy_apply_svc.go
+@@ -0,0 +1,106 @@
++package appdeploymentserviceimpl
++
++import (
++	"context"
++	"time"
++
++	"github.com/moby/moby/api/types/swarm"
++	"github.com/moby/moby/client"
++
++	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
++	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
++	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
++	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/timeutil"
++	"github.com/hivepaas/hivepaas/hivepaas_app/service/placementservice"
++	"github.com/hivepaas/hivepaas/services/docker/dockerhelper"
++)
++
++// functionStopGraceMargin is how much longer than one call's timeout a stopping
++// function is given: the runtime lets the running calls finish, for at most one
++// timeout, and needs a moment to exit after them.
++const functionStopGraceMargin = 10 * time.Second
++
++func (s *service) functionDeployStepServiceApply(
++	ctx context.Context,
++	db database.IDB,
++	data *repoDeploymentData,
++) (err error) {
++	data.Step = stepServiceApply
++	source := data.Deployment.Settings.FunctionSource
++
++	s.addStepStartLog(ctx, data.appDeploymentData, "Applying changes to service...")
++	defer s.addStepEndLog(ctx, data.appDeploymentData, timeutil.NowUTC(), err)
++
++	var regAuthHeader string
++	if source.PushToRegistry.ID != "" {
++		regAuth := data.RefObjects.RefSettings[source.PushToRegistry.ID]
++		if regAuth == nil {
++			return hperrors.NewMissing("Registry auth to pull image")
++		}
++		regAuthHeader, err = regAuth.MustAsRegistryAuth().GenerateAuthHeader()
++		if err != nil {
++			return hperrors.Wrap(err)
++		}
++	}
++
++	queryRegistry := false
++	placementReq := &placementservice.ApplyPlacementSettingsReq{
++		App:                data.App,
++		SkipSavingToDocker: true,
++	}
++
++	if err = s.prepareDockerAPI(ctx, db, data.appDeploymentData); err != nil {
++		return hperrors.Wrap(err)
++	}
++
++	err = s.dockerManager.ServiceUpdateFunc(ctx, data.App.ServiceID, nil,
++		func(i int, svc *swarm.Service) (bool, error) {
++			if i > 0 {
++				queryRegistry = true
++			}
++			contSpec := svc.Spec.TaskTemplate.ContainerSpec
++			contSpec.Image = data.Deployment.Output.ImageTags[0]
++			applyFunctionContainer(contSpec, source)
++			s.applyContainerInit(ctx, data.appDeploymentData, contSpec)
++
++			// The socket and the network follow the app's access on every
++			// deployment, whatever a screen or an older release left on the service.
++			if err := s.dockerAPIService.ApplyToService(ctx, db, data.App.ID, &svc.Spec); err != nil {
++				return false, hperrors.Wrap(err)
++			}
++			// Mounted settings too: a refresh that failed is put right here.
++			if err := s.settingMountService.ApplyToService(ctx, db, data.App, &svc.Spec); err != nil {
++				return false, hperrors.Wrap(err)
++			}
++
++			placementReq.Service = svc
++			if _, err := s.placementService.ApplyPlacementSettings(ctx, db, placementReq); err != nil {
++				return false, hperrors.Wrap(err)
++			}
++			return true, nil
++		}, dockerServiceApplyRetryMax, 0,
++		func(options *client.ServiceUpdateOptions) {
++			options.EncodedRegistryAuth = regAuthHeader
++			options.QueryRegistry = queryRegistry
++		})
++	if err != nil {
++		return hperrors.Wrap(err)
++	}
++	// What the update replaced goes once nothing references it; what is still
++	// held is left to the next sweep rather than failing the deployment.
++	_ = s.settingMountService.Sweep(ctx, data.App)
++
++	return nil
++}
++
++// applyFunctionContainer gives a function's container what is fixed for a
++// function: the runtime's command, working directory and health check, whatever
++// a deployment setting or an earlier image left; and a stop grace period that
++// lets the calls running at a stop finish.
++func applyFunctionContainer(contSpec *swarm.ContainerSpec, source *entity.DeploymentFunctionSource) {
++	contSpec.Dir = ""
++	dockerhelper.ContainerCommandApply(contSpec, "")
++	contSpec.Healthcheck = nil
++	grace := time.Duration(source.Timeout) + functionStopGraceMargin
++	contSpec.StopGracePeriod = &grace
++}
+diff --git a/hivepaas_app/service/appdeploymentservice/appdeploymentserviceimpl/repo_deploy.go b/hivepaas_app/service/appdeploymentservice/appdeploymentserviceimpl/repo_deploy.go
+index f48fd39f..0ca4f187 100644
+--- a/hivepaas_app/service/appdeploymentservice/appdeploymentserviceimpl/repo_deploy.go
++++ b/hivepaas_app/service/appdeploymentservice/appdeploymentserviceimpl/repo_deploy.go
+@@ -27,6 +27,17 @@ type repoDeploymentData struct {
+ 
+ 	TempDir     string
+ 	CheckoutDir string
++	// ContextDir is the build's context when it is not the whole checkout: a
++	// function's directory in its repository.
++	ContextDir string
++}
++
++// contextDir is what the build is given as its context.
++func (data *repoDeploymentData) contextDir() string {
++	if data.ContextDir != "" {
++		return data.ContextDir
++	}
++	return data.CheckoutDir
+ }
+ 
+ func (s *service) deployFromRepo(
+@@ -46,7 +57,7 @@ func (s *service) deployFromRepo(
+ 	}()
+ 
+ 	// 0. Prepare
+-	err = s.repoDeployStepPrepare(ctx, db, data)
++	err = s.deployStepPrepareBuild(ctx, db, data, data.Deployment.Settings.RepoSource.PushToRegistry)
+ 	if err != nil {
+ 		return hperrors.Wrap(err)
+ 	}
+@@ -115,10 +126,14 @@ func (s *service) deployFromRepo(
+ 	return nil
+ }
+ 
+-func (s *service) repoDeployStepPrepare(
++// deployStepPrepareBuild makes the directories a build works in and loads its
++// settings. A build on a cluster of several nodes whose image goes to no
++// registry is warned about: the other nodes cannot pull it.
++func (s *service) deployStepPrepareBuild(
+ 	ctx context.Context,
+ 	db database.IDB,
+ 	data *repoDeploymentData,
++	pushToRegistry entity.ObjectID,
+ ) (err error) {
+ 	deployment := data.Deployment
+ 
+@@ -141,7 +156,7 @@ func (s *service) repoDeployStepPrepare(
+ 	if err != nil {
+ 		return hperrors.Wrap(err)
+ 	}
+-	if data.IsMultiNode && deployment.Settings.RepoSource.PushToRegistry.ID == "" {
++	if data.IsMultiNode && pushToRegistry.ID == "" {
+ 		warn := "[WARN] The cluster is multi-node, but no target registry is configured to push the built image. " +
+ 			"The image will not be accessible from other nodes in the cluster."
+ 		deployment.Output.Errors = append(deployment.Output.Errors, warn)
+diff --git a/hivepaas_app/service/appdeploymentservice/appdeploymentserviceimpl/repo_deploy_build_image.go b/hivepaas_app/service/appdeploymentservice/appdeploymentserviceimpl/repo_deploy_build_image.go
+index 40482bc3..7249a236 100644
+--- a/hivepaas_app/service/appdeploymentservice/appdeploymentserviceimpl/repo_deploy_build_image.go
++++ b/hivepaas_app/service/appdeploymentservice/appdeploymentserviceimpl/repo_deploy_build_image.go
+@@ -9,6 +9,7 @@ import (
+ 	"github.com/tiendc/gofn"
+ 
+ 	"github.com/hivepaas/hivepaas/hivepaas_app/config"
++	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
+ 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
+ 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
+ 	imagebuildserviceclient "github.com/hivepaas/hivepaas/hivepaas_app/interface/agent/client/imagebuildservice"
+@@ -25,14 +26,37 @@ const (
+ 	buildWorkerNodePollInterval = 3 * time.Second
+ )
+ 
++// imageBuildTarget is what a deployment builds: its Dockerfile, the commit its
++// image is tagged after, the registry it goes to, and the build's inputs when
++// the deployment resolved them first.
++type imageBuildTarget struct {
++	CommitHash     string
++	Dockerfile     entity.DeploymentDockerfile
++	PushToRegistry entity.ObjectID
++	Inputs         *imagebuildservice.BuildInputs
++}
++
+ func (s *service) repoDeployStepImageBuild(
+ 	ctx context.Context,
+ 	db database.Tx,
+ 	data *repoDeploymentData,
++) error {
++	repoSource := data.Deployment.Settings.RepoSource
++	return s.deployStepImageBuild(ctx, db, data, &imageBuildTarget{
++		CommitHash:     repoSource.CommitHash,
++		Dockerfile:     repoSource.Dockerfile,
++		PushToRegistry: repoSource.PushToRegistry,
++	})
++}
++
++// deployStepImageBuild builds the deployment's image, on a build node.
++func (s *service) deployStepImageBuild(
++	ctx context.Context,
++	db database.Tx,
++	data *repoDeploymentData,
++	target *imageBuildTarget,
+ ) (err error) {
+ 	data.Step = stepImageBuild
+-	deployment := data.Deployment
+-	repoSource := deployment.Settings.RepoSource
+ 
+ 	s.addStepStartLog(ctx, data.appDeploymentData, "Start building docker image...")
+ 	defer s.addStepEndLog(ctx, data.appDeploymentData, timeutil.NowUTC(), err)
+@@ -43,13 +67,14 @@ func (s *service) repoDeployStepImageBuild(
+ 		// registers reaching the deployment's transaction.
+ 		TaskExecData:       data.SubTask(data.Task),
+ 		App:                data.App,
+-		CommitHash:         repoSource.CommitHash,
+-		Dockerfile:         repoSource.Dockerfile,
++		CommitHash:         target.CommitHash,
++		Dockerfile:         target.Dockerfile,
+ 		ImageTags:          data.DeployArgs.ImageTags,
+-		PushToRegistry:     repoSource.PushToRegistry,
++		PushToRegistry:     target.PushToRegistry,
+ 		ImageBuildSettings: data.ImageBuildSettings,
+ 		BuildID:            data.Task.ID,
+-		CheckoutDir:        data.CheckoutDir,
++		CheckoutDir:        data.contextDir(),
++		Inputs:             target.Inputs,
+ 	}
+ 	if data.DeployArgs.NoCache || (data.ImageBuildSettings != nil && data.ImageBuildSettings.NoCache) {
+ 		buildReq.NoCache = true
+@@ -155,7 +180,7 @@ func (s *service) repoDeployStepImageBuild(
+ func sendBuildSource(ctx context.Context, data *repoDeploymentData, w io.Writer) error {
+ 	_ = data.LogStore.Add(ctx, tasklog.NewOutFrame("Sending the source to the build node...", tasklog.TsNow))
+ 	start := time.Now()
+-	sent, err := srcpack.Pack(ctx, data.CheckoutDir, w)
++	sent, err := srcpack.Pack(ctx, data.contextDir(), w)
+ 	if err != nil {
+ 		return hperrors.Wrap(err)
+ 	}
+diff --git a/hivepaas_app/service/functionservice/functionbuild/functionbuild.go b/hivepaas_app/service/functionservice/functionbuild/functionbuild.go
+index 11df74e9..fe1076d2 100644
+--- a/hivepaas_app/service/functionservice/functionbuild/functionbuild.go
++++ b/hivepaas_app/service/functionservice/functionbuild/functionbuild.go
+@@ -6,6 +6,9 @@ package functionbuild
+ 
+ import (
+ 	"bufio"
++	"crypto/sha256"
++	"encoding/binary"
++	"encoding/hex"
+ 	"encoding/json"
+ 	"fmt"
+ 	"os"
+@@ -314,3 +317,22 @@ func WriteInlineCode(dir string, code *entity.FunctionInlineCode) error {
+ 	}
+ 	return nil
+ }
++
++// ContentHash is a hash of a function's inline code and its Dockerfile: what
++// its image is tagged after, inline code having no commit. The order of the
++// files does not change it.
++func ContentHash(code *entity.FunctionInlineCode, dockerfile string) string {
++	h := sha256.New()
++	write := func(value string) {
++		_ = binary.Write(h, binary.BigEndian, uint64(len(value)))
++		_, _ = h.Write([]byte(value))
++	}
++	files := slices.Clone(code.Files)
++	slices.SortFunc(files, func(a, b *entity.FunctionFile) int { return strings.Compare(a.Path, b.Path) })
++	for _, f := range files {
++		write(f.Path)
++		write(f.Content)
++	}
++	write(dockerfile)
++	return hex.EncodeToString(h.Sum(nil))
++}

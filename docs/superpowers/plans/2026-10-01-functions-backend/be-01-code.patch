@@ -1,0 +1,234 @@
+diff --git a/docs/openapi/swagger.json b/docs/openapi/swagger.json
+index 3efe8a68..8e119941 100644
+--- a/docs/openapi/swagger.json
++++ b/docs/openapi/swagger.json
+@@ -47826,6 +47826,13 @@
+           "dbImage" : {
+             "type" : "string"
+           },
++          "functionRuntimes" : {
++            "additionalProperties" : {
++              "type" : "string"
++            },
++            "description" : "FunctionRuntimes are the images functions are built on, by runtime\n(node24, go127; go127-build for the image Go functions compile in). A\nfunction built under a release uses the image this release names, and\nkeeps it until it is deployed again. The images are released from the\nrepository hivepaas/function-runtimes.",
++            "type" : "object"
++          },
+           "notesUrl" : {
+             "description" : "NotesURL is where the release's notes are read: what changed, and what to\nknow before moving to it. Absent means the release published none.",
+             "type" : "string"
+@@ -47860,7 +47867,7 @@
+             "type" : "string"
+           }
+         },
+-        "required" : [ "agentImage", "appImage", "appVersion", "blockMajorUpgrade", "canUpdate", "dbImage", "notesUrl", "redisImage", "registryImage", "relation", "releaseDate", "templates", "traefikImage", "victoriaLogsImage", "vlagentImage" ],
++        "required" : [ "agentImage", "appImage", "appVersion", "blockMajorUpgrade", "canUpdate", "dbImage", "functionRuntimes", "notesUrl", "redisImage", "registryImage", "relation", "releaseDate", "templates", "traefikImage", "victoriaLogsImage", "vlagentImage" ],
+         "type" : "object"
+       },
+       "service_hpappservice.ReleaseRelation" : {
+diff --git a/hivepaas_app/base/function.go b/hivepaas_app/base/function.go
+new file mode 100644
+index 00000000..90be214f
+--- /dev/null
++++ b/hivepaas_app/base/function.go
+@@ -0,0 +1,34 @@
++package base
++
++// FunctionRuntime is a function's language and its line. It names the runtime
++// image the function is built on, function-runtime-<runtime>, released from the
++// repository hivepaas/function-runtimes.
++type FunctionRuntime string
++
++const (
++	FunctionRuntimeNode24    FunctionRuntime = "node24"
++	FunctionRuntimePython313 FunctionRuntime = "python313"
++	FunctionRuntimeGo127     FunctionRuntime = "go127"
++)
++
++var (
++	AllFunctionRuntimes = []FunctionRuntime{FunctionRuntimeNode24, FunctionRuntimePython313, FunctionRuntimeGo127}
++)
++
++// Compiled says whether the runtime's functions are compiled, in a build image
++// of their own, before they run on the runtime image.
++func (r FunctionRuntime) Compiled() bool {
++	switch r {
++	case FunctionRuntimeGo127:
++		return true
++	case FunctionRuntimeNode24, FunctionRuntimePython313:
++		return false
++	}
++	return false
++}
++
++// FunctionBuildImageKey is the key of a compiled runtime's build image among a
++// release's function runtimes: function-runtime-go127-build is "go127-build".
++func FunctionBuildImageKey(runtime FunctionRuntime) string {
++	return string(runtime) + "-build"
++}
+diff --git a/hivepaas_app/base/version.go b/hivepaas_app/base/version.go
+index fdf8fbde..8990cde1 100644
+--- a/hivepaas_app/base/version.go
++++ b/hivepaas_app/base/version.go
+@@ -25,6 +25,7 @@ var StableVersion = &ReleaseInfo{
+ 	VictoriaLogsImage: "victoriametrics/victoria-logs:v1.52.0",
+ 	VlagentImage:      "victoriametrics/vlagent:v1.52.0",
+ 	RegistryImage:     "ghcr.io/project-zot/zot:v2.1.21",
++	FunctionRuntimes:  functionRuntimesV1(),
+ 
+ 	BlockMajorUpgrade: []string{HivepaasDbKey},
+ 
+@@ -49,10 +50,26 @@ var BetaVersion = &ReleaseInfo{
+ 	VictoriaLogsImage: "victoriametrics/victoria-logs:v1.52.0",
+ 	VlagentImage:      "victoriametrics/vlagent:v1.52.0",
+ 	RegistryImage:     "ghcr.io/project-zot/zot:v2.1.21",
++	FunctionRuntimes:  functionRuntimesV1(),
+ 
+ 	BlockMajorUpgrade: []string{HivepaasDbKey},
+ }
+ 
++// functionRuntimesV1 are the images of function-runtimes v1.0.0, the first
++// release of the function contract v1.
++func functionRuntimesV1() map[string]string {
++	return map[string]string{
++		"node24": "ghcr.io/hivepaas/function-runtime-node24:1.0.0" +
++			"@sha256:a4560e0017d5c80f64973473bdf9612ed335b2ea79a7cf7cb39da259ea636970",
++		"python313": "ghcr.io/hivepaas/function-runtime-python313:1.0.0" +
++			"@sha256:9d3a28bc48cbbd41d1c7728e2b1a9bb53b5cf97a3d32ebfa8b1f84450c7b6bf2",
++		"go127": "ghcr.io/hivepaas/function-runtime-go127:1.0.0" +
++			"@sha256:31fce6af839d98fdad7ae982ea8ed2696b8f8aaefca0866a50a227f57bd3e169",
++		"go127-build": "ghcr.io/hivepaas/function-runtime-go127-build:1.0.0" +
++			"@sha256:c18ddbeb26c9d22b081cb21a330994952ab219c72fbcaf9b2bd2855fe30ec631",
++	}
++}
++
+ // ReleaseInfo is what a release says to run. It is mirrored by release.json,
+ // which is the copy an installation fetches to find out a newer one exists; the
+ // values below are the copy compiled into the binary, and the two have to be
+@@ -79,6 +96,12 @@ type ReleaseInfo struct {
+ 	// The configuration HivePaaS writes for it is the configuration this version
+ 	// of zot accepts, so a bump is the trigger to re-check that.
+ 	RegistryImage string `json:"registryImage"`
++	// FunctionRuntimes are the images functions are built on, by runtime
++	// (node24, go127; go127-build for the image Go functions compile in). A
++	// function built under a release uses the image this release names, and
++	// keeps it until it is deployed again. The images are released from the
++	// repository hivepaas/function-runtimes.
++	FunctionRuntimes map[string]string `json:"functionRuntimes,omitempty"`
+ 
+ 	// BlockMajorUpgrade names the components whose image may not cross a major
+ 	// version in this release, by the same keys as HivepaasDbKey and friends.
+diff --git a/release.json b/release.json
+index af0364c4..802a9f04 100644
+--- a/release.json
++++ b/release.json
+@@ -9,6 +9,12 @@
+     "victoriaLogsImage": "victoriametrics/victoria-logs:v1.52.0",
+     "vlagentImage": "victoriametrics/vlagent:v1.52.0",
+     "registryImage": "ghcr.io/project-zot/zot:v2.1.21",
++    "functionRuntimes": {
++      "node24": "ghcr.io/hivepaas/function-runtime-node24:1.0.0@sha256:a4560e0017d5c80f64973473bdf9612ed335b2ea79a7cf7cb39da259ea636970",
++      "python313": "ghcr.io/hivepaas/function-runtime-python313:1.0.0@sha256:9d3a28bc48cbbd41d1c7728e2b1a9bb53b5cf97a3d32ebfa8b1f84450c7b6bf2",
++      "go127": "ghcr.io/hivepaas/function-runtime-go127:1.0.0@sha256:31fce6af839d98fdad7ae982ea8ed2696b8f8aaefca0866a50a227f57bd3e169",
++      "go127-build": "ghcr.io/hivepaas/function-runtime-go127-build:1.0.0@sha256:c18ddbeb26c9d22b081cb21a330994952ab219c72fbcaf9b2bd2855fe30ec631"
++    },
+     "blockMajorUpgrade": [
+       "db"
+     ],
+diff --git a/tools/releasepin/main.go b/tools/releasepin/main.go
+index 56146c8c..16d8553d 100644
+--- a/tools/releasepin/main.go
++++ b/tools/releasepin/main.go
+@@ -1,5 +1,6 @@
+ // Command releasepin pins every image release.json names to the digest its tag
+-// points to now: `redis:8.6-alpine` becomes `redis:8.6-alpine@sha256:…`.
++// points to now: `redis:8.6-alpine` becomes `redis:8.6-alpine@sha256:…`. That is
++// each `…Image` field, and each image of the `functionRuntimes` map.
+ //
+ // A signed release is only a claim about what runs if what it names cannot
+ // change: a tag can be re-pushed, a digest cannot. The digest is the image
+@@ -21,12 +22,20 @@ import (
+ 	"os"
+ 	"os/exec"
+ 	"regexp"
++	"slices"
+ 	"strings"
+ )
+ 
+ // imageField is a `"somethingImage": "reference"` line of release.json.
+ var imageField = regexp.MustCompile(`("[A-Za-z]+Image"\s*:\s*")([^"]+)(")`)
+ 
++// functionRuntimes is the `"functionRuntimes": {…}` map of a release, and
++// runtimeField one `"runtime": "reference"` line of it.
++var (
++	functionRuntimes = regexp.MustCompile(`("functionRuntimes"\s*:\s*\{)([^}]*)(\})`)
++	runtimeField     = regexp.MustCompile(`("[a-z0-9-]+"\s*:\s*")([^"]+)(")`)
++)
++
+ // patchTag is a tag with three numbers, 8.6.2-alpine or v1.52.0: one release.
+ // A tag with fewer may be following a line - redis 8.6 is whatever 8.6.x is
+ // newest - and names less than its digest pins. Postgres, which numbers its
+@@ -43,34 +52,51 @@ type report struct {
+ // pin pins every image of release to its tag's current digest, keeping every
+ // other byte of the file as it is.
+ func pin(release []byte, resolve func(ref string) (string, error)) ([]byte, report, error) {
+-	var rep report
+-	var failed error
+-	out := imageField.ReplaceAllFunc(release, func(match []byte) []byte {
+-		if failed != nil {
++	p := &pinner{resolve: resolve}
++	out := p.pinMatches(release, imageField)
++	out = functionRuntimes.ReplaceAllFunc(out, func(block []byte) []byte {
++		parts := functionRuntimes.FindSubmatch(block)
++		return slices.Concat(parts[1], p.pinMatches(parts[2], runtimeField), parts[3])
++	})
++	if p.failed != nil {
++		return nil, p.report, p.failed
++	}
++	return out, p.report, nil
++}
++
++// pinner pins references, and remembers what it changed and the first
++// reference it could not resolve.
++type pinner struct {
++	resolve func(ref string) (string, error)
++	report  report
++	failed  error
++}
++
++// pinMatches pins the reference of every match of field in text: the match's
++// second group.
++func (p *pinner) pinMatches(text []byte, field *regexp.Regexp) []byte {
++	return field.ReplaceAllFunc(text, func(match []byte) []byte {
++		if p.failed != nil {
+ 			return match
+ 		}
+-		parts := imageField.FindSubmatch(match)
++		parts := field.FindSubmatch(match)
+ 		current := string(parts[2])
+ 		name, _, _ := strings.Cut(current, "@")
+ 
+-		digest, err := resolve(name)
++		digest, err := p.resolve(name)
+ 		if err != nil {
+-			failed = fmt.Errorf("%s: %w", name, err)
++			p.failed = fmt.Errorf("%s: %w", name, err)
+ 			return match
+ 		}
+ 		pinned := name + "@" + digest
+ 		if pinned != current {
+-			rep.Changed = append(rep.Changed, current+" -> "+pinned)
++			p.report.Changed = append(p.report.Changed, current+" -> "+pinned)
+ 		}
+ 		if !namesAPatch(name) {
+-			rep.Floating = append(rep.Floating, name)
++			p.report.Floating = append(p.report.Floating, name)
+ 		}
+ 		return []byte(string(parts[1]) + pinned + string(parts[3]))
+ 	})
+-	if failed != nil {
+-		return nil, rep, failed
+-	}
+-	return out, rep, nil
+ }
+ 
+ // namesAPatch reports whether a reference's tag has three version numbers.

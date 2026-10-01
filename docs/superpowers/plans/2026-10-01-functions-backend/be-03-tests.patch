@@ -1,0 +1,404 @@
+diff --git a/hivepaas_app/service/functionservice/functionbuild/functionbuild_test.go b/hivepaas_app/service/functionservice/functionbuild/functionbuild_test.go
+new file mode 100644
+index 00000000..fd3cad08
+--- /dev/null
++++ b/hivepaas_app/service/functionservice/functionbuild/functionbuild_test.go
+@@ -0,0 +1,257 @@
++package functionbuild
++
++import (
++	"os"
++	"path/filepath"
++	"strings"
++	"testing"
++	"time"
++
++	"github.com/stretchr/testify/assert"
++
++	"github.com/hivepaas/hivepaas/hivepaas_app/base"
++	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
++	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
++	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/timeutil"
++	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/unit"
++)
++
++var images = map[string]string{
++	"node24":      "ghcr.io/hivepaas/function-runtime-node24:1.0.0@sha256:node",
++	"python313":   "ghcr.io/hivepaas/function-runtime-python313:1.0.0@sha256:python",
++	"go127":       "ghcr.io/hivepaas/function-runtime-go127:1.0.0@sha256:go",
++	"go127-build": "ghcr.io/hivepaas/function-runtime-go127-build:1.0.0@sha256:gobuild",
++}
++
++func source(runtime base.FunctionRuntime) *entity.DeploymentFunctionSource {
++	file, handler := runtime.DefaultEntrypoint()
++	return &entity.DeploymentFunctionSource{
++		Runtime:        runtime,
++		Contract:       base.FunctionContractV1,
++		Entrypoint:     entity.FunctionEntrypoint{File: file, Handler: handler},
++		Timeout:        timeutil.Duration(30 * time.Second),
++		MaxConcurrency: 16,
++		MaxBodySize:    6 * unit.MB,
++	}
++}
++
++// sourceDir is a function's source holding files, by path.
++func sourceDir(t *testing.T, files map[string]string) string {
++	t.Helper()
++	dir := t.TempDir()
++	for name, content := range files {
++		path := filepath.Join(dir, name)
++		assert.NoError(t, os.MkdirAll(filepath.Dir(path), 0o755))
++		assert.NoError(t, os.WriteFile(path, []byte(content), 0o600))
++	}
++	return dir
++}
++
++// A Node.js function's libraries are installed from its manifest, its lock file
++// and its .npmrc alone, so that a change to its code alone does not install
++// them again; the build's secrets reach the install, its other variables too.
++func TestANodeFunctionInstallsItsLibrariesBeforeItsCode(t *testing.T) {
++	src := source(base.FunctionRuntimeNode24)
++	src.SystemPackages = []string{"ffmpeg", "libpq5"}
++	dir := sourceDir(t, map[string]string{
++		"index.js": "export default () => {}", "package.json": `{"dependencies": {"pg": "^8"}}`,
++		"package-lock.json": "{}", ".npmrc": "//registry.npmjs.org/:_authToken=${NPM_TOKEN}",
++	})
++
++	resp, err := Dockerfile(&DockerfileReq{
++		Source: src, Images: images, SourceDir: dir,
++		BuildArgs: []string{"NPM_CONFIG_LOGLEVEL"}, BuildSecrets: []string{"NPM_TOKEN", "GH_TOKEN"},
++	})
++
++	assert.NoError(t, err)
++	assert.Equal(t, `# The Dockerfile HivePaaS writes for a function: runtime node24, contract v1.
++FROM ghcr.io/hivepaas/function-runtime-node24:1.0.0@sha256:node AS base
++USER root
++RUN apt-get update \
++    && apt-get install -y --no-install-recommends ffmpeg libpq5 \
++    && rm -rf /var/lib/apt/lists/*
++USER hivepaas
++
++FROM base AS deps
++COPY --chown=hivepaas:hivepaas package.json package-lock.json .npmrc /app/
++ARG NPM_CONFIG_LOGLEVEL
++RUN --mount=type=secret,id=GH_TOKEN,env=GH_TOKEN --mount=type=secret,id=NPM_TOKEN,env=NPM_TOKEN \
++    hivepaas-runtime deps
++
++FROM deps
++COPY --chown=hivepaas:hivepaas . /app/
++ENV HP_FN_ENTRYPOINT="index.js" \
++    HP_FN_HANDLER="default" \
++    HP_FN_TIMEOUT_MS=30000 \
++    HP_FN_MAX_CONCURRENCY=16 \
++    HP_FN_MAX_BODY_SIZE=6291456
++`, resp.Content)
++	assert.Empty(t, resp.Notes)
++}
++
++// Without a manifest there is nothing to install, and no package is no root.
++func TestAFunctionWithoutLibrariesHasNoInstallStep(t *testing.T) {
++	dir := sourceDir(t, map[string]string{"main.py": "def handler(req, ctx): pass"})
++
++	resp, err := Dockerfile(&DockerfileReq{Source: source(base.FunctionRuntimePython313), Images: images,
++		SourceDir: dir})
++
++	assert.NoError(t, err)
++	assert.Equal(t, `# The Dockerfile HivePaaS writes for a function: runtime python313, contract v1.
++FROM ghcr.io/hivepaas/function-runtime-python313:1.0.0@sha256:python AS base
++
++FROM base
++COPY --chown=hivepaas:hivepaas . /app/
++ENV HP_FN_ENTRYPOINT="main.py" \
++    HP_FN_HANDLER="handler" \
++    HP_FN_TIMEOUT_MS=30000 \
++    HP_FN_MAX_CONCURRENCY=16 \
++    HP_FN_MAX_BODY_SIZE=6291456
++`, resp.Content)
++	assert.Empty(t, resp.Notes)
++}
++
++// A manifest without its lock file is installed all the same, and the build log
++// says the versions are being resolved.
++func TestALockFileThatIsMissingIsNoted(t *testing.T) {
++	dir := sourceDir(t, map[string]string{"main.py": "", "requirements.txt": "requests==2.32.3\n"})
++
++	resp, err := Dockerfile(&DockerfileReq{Source: source(base.FunctionRuntimePython313), Images: images,
++		SourceDir: dir})
++
++	assert.NoError(t, err)
++	assert.Contains(t, resp.Content, "COPY --chown=hivepaas:hivepaas requirements.txt /app/\nRUN hivepaas-runtime deps\n")
++	assert.Len(t, resp.Notes, 1)
++	assert.Contains(t, resp.Notes[0], "requirements.lock")
++}
++
++// A library from the function's own files is not in the install step's copy:
++// the code goes in first, whole.
++func TestLibrariesFromTheFunctionsOwnFilesAreInstalledWithItsCode(t *testing.T) {
++	for name, files := range map[string]map[string]string{
++		"an npm file: dependency": {"package.json": `{"dependencies": {"lib": "file:./lib"}}`,
++			"package-lock.json": "{}"},
++		"a wheel next to requirements.txt": {"requirements.txt": "./wheels/lib-1.0-py3-none-any.whl\n",
++			"requirements.lock": ""},
++		"a Go module replaced by a directory": {"go.mod": "module fn\n\nreplace example.com/lib => ./lib\n",
++			"go.sum": ""},
++	} {
++		t.Run(name, func(t *testing.T) {
++			runtime := base.FunctionRuntimeNode24
++			switch {
++			case files["requirements.txt"] != "":
++				runtime = base.FunctionRuntimePython313
++			case files["go.mod"] != "":
++				runtime = base.FunctionRuntimeGo127
++			}
++
++			resp, err := Dockerfile(&DockerfileReq{Source: source(runtime), Images: images,
++				SourceDir: sourceDir(t, files)})
++
++			assert.NoError(t, err)
++			assert.Contains(t, resp.Content, "COPY --chown=hivepaas:hivepaas . /app/\nRUN hivepaas-runtime deps\n")
++			assert.Equal(t, 1, strings.Count(resp.Content, "COPY --chown=hivepaas:hivepaas . /app/"))
++			assert.Len(t, resp.Notes, 1)
++		})
++	}
++}
++
++// A Go function is compiled in the build image and runs on the slim one, which
++// gets the Debian packages too.
++func TestAGoFunctionIsCompiledThenRunOnTheSlimImage(t *testing.T) {
++	src := source(base.FunctionRuntimeGo127)
++	src.SystemPackages = []string{"ca-certificates"}
++	dir := sourceDir(t, map[string]string{"go.mod": "module fn\n", "go.sum": "", "fn.go": "package fn"})
++
++	resp, err := Dockerfile(&DockerfileReq{Source: src, Images: images, SourceDir: dir,
++		BuildSecrets: []string{"GOPROXY"}})
++
++	assert.NoError(t, err)
++	assert.Equal(t, `# The Dockerfile HivePaaS writes for a function: runtime go127, contract v1.
++FROM ghcr.io/hivepaas/function-runtime-go127-build:1.0.0@sha256:gobuild AS base
++USER root
++RUN apt-get update \
++    && apt-get install -y --no-install-recommends ca-certificates \
++    && rm -rf /var/lib/apt/lists/*
++USER hivepaas
++
++FROM base AS deps
++COPY --chown=hivepaas:hivepaas go.mod go.sum /app/
++RUN --mount=type=secret,id=GOPROXY,env=GOPROXY \
++    hivepaas-runtime deps
++
++FROM deps AS build
++COPY --chown=hivepaas:hivepaas . /app/
++ENV HP_FN_ENTRYPOINT="." \
++    HP_FN_HANDLER="Handle"
++RUN --mount=type=secret,id=GOPROXY,env=GOPROXY \
++    hivepaas-runtime build
++
++FROM ghcr.io/hivepaas/function-runtime-go127:1.0.0@sha256:go
++USER root
++RUN apt-get update \
++    && apt-get install -y --no-install-recommends ca-certificates \
++    && rm -rf /var/lib/apt/lists/*
++USER hivepaas
++COPY --from=build --chown=hivepaas:hivepaas /app /app
++ENV HP_FN_ENTRYPOINT="." \
++    HP_FN_HANDLER="Handle" \
++    HP_FN_TIMEOUT_MS=30000 \
++    HP_FN_MAX_CONCURRENCY=16 \
++    HP_FN_MAX_BODY_SIZE=6291456
++`, resp.Content)
++}
++
++// A Node.js export may be named with a '$', which a Dockerfile would expand.
++func TestAHandlerNameStaysAsItIs(t *testing.T) {
++	src := source(base.FunctionRuntimeNode24)
++	src.Entrypoint.Handler = "$handle"
++
++	resp, err := Dockerfile(&DockerfileReq{Source: src, Images: images, SourceDir: t.TempDir()})
++
++	assert.NoError(t, err)
++	assert.Contains(t, resp.Content, `HP_FN_HANDLER="\$handle"`)
++}
++
++// A runtime the release has no image for cannot be built, nor can a package
++// that is not a package's name.
++func TestWhatCannotBeBuiltIsRefused(t *testing.T) {
++	_, err := Dockerfile(&DockerfileReq{Source: source(base.FunctionRuntimeGo127),
++		Images: map[string]string{"go127": images["go127"]}, SourceDir: t.TempDir()})
++	assert.ErrorIs(t, err, hperrors.ErrFunctionRuntimeUnavailable)
++
++	src := source(base.FunctionRuntimeNode24)
++	src.SystemPackages = []string{"curl; rm -rf /"}
++	_, err = Dockerfile(&DockerfileReq{Source: src, Images: images, SourceDir: t.TempDir()})
++	assert.ErrorIs(t, err, hperrors.ErrValueInvalid)
++}
++
++func TestInlineCodeIsWrittenWhereItSays(t *testing.T) {
++	dir := t.TempDir()
++
++	err := WriteInlineCode(dir, &entity.FunctionInlineCode{Files: []*entity.FunctionFile{
++		{Path: "index.js", Content: "export default () => {}"},
++		{Path: "lib/util/strings.js", Content: "export const a = 1"},
++	}})
++
++	assert.NoError(t, err)
++	content, _ := os.ReadFile(filepath.Join(dir, "lib", "util", "strings.js"))
++	assert.Equal(t, "export const a = 1", string(content))
++	info, _ := os.Stat(filepath.Join(dir, "index.js"))
++	assert.Equal(t, os.FileMode(0o644), info.Mode().Perm())
++}
++
++func TestInlineCodeOutsideTheFunctionIsNotWritten(t *testing.T) {
++	for _, path := range []string{"../escape.js", "/etc/escape.js", ".hivepaas/Dockerfile", ""} {
++		dir := filepath.Join(t.TempDir(), "fn")
++		assert.NoError(t, os.MkdirAll(dir, 0o755))
++
++		err := WriteInlineCode(dir, &entity.FunctionInlineCode{Files: []*entity.FunctionFile{
++			{Path: path, Content: "x"},
++		}})
++
++		assert.ErrorIs(t, err, hperrors.ErrValueInvalid, path)
++		_, statErr := os.Stat(filepath.Join(filepath.Dir(dir), "escape.js"))
++		assert.True(t, os.IsNotExist(statErr), path)
++	}
++}
+diff --git a/hivepaas_app/service/functionservice/functionbuild/real_build_test.go b/hivepaas_app/service/functionservice/functionbuild/real_build_test.go
+new file mode 100644
+index 00000000..6311dd1d
+--- /dev/null
++++ b/hivepaas_app/service/functionservice/functionbuild/real_build_test.go
+@@ -0,0 +1,135 @@
++package functionbuild
++
++import (
++	"encoding/base64"
++	"encoding/json"
++	"os"
++	"os/exec"
++	"path/filepath"
++	"strings"
++	"testing"
++
++	"github.com/stretchr/testify/assert"
++
++	"github.com/hivepaas/hivepaas/hivepaas_app/base"
++	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
++)
++
++// realFunctions are a function of each runtime that uses a library from its
++// package registry and a Debian package, so that a build installs both.
++var realFunctions = map[base.FunctionRuntime][]*entity.FunctionFile{
++	base.FunctionRuntimeNode24: {
++		{Path: "package.json", Content: `{"type": "module", "dependencies": {"ms": "2.1.3"}}`},
++		{Path: "index.js", Content: `import { execSync } from 'node:child_process'
++import ms from 'ms'
++
++export default () => ({ body: { library: String(ms('1m')), tool: execSync('jq --version').toString().trim() } })
++`},
++	},
++	base.FunctionRuntimePython313: {
++		{Path: "requirements.txt", Content: "six==1.17.0\n"},
++		{Path: "main.py", Content: `import subprocess
++
++import six
++
++
++def handler(req, ctx):
++    tool = subprocess.run(["jq", "--version"], capture_output=True, text=True).stdout.strip()
++    return {"body": {"library": six.__version__, "tool": tool}}
++`},
++	},
++	base.FunctionRuntimeGo127: {
++		{Path: "go.mod", Content: "module example.com/fn\n\ngo 1.27\n"},
++		{Path: "fn.go", Content: `package fn
++
++import (
++	"context"
++	"os/exec"
++	"strings"
++
++	"github.com/google/uuid"
++	"github.com/hivepaas/function-runtimes/hivepaas"
++)
++
++func Handle(ctx context.Context, req *hivepaas.Request) (*hivepaas.Response, error) {
++	tool, err := exec.Command("jq", "--version").Output()
++	if err != nil {
++		return nil, err
++	}
++	return hivepaas.JSON(200, map[string]string{
++		"library": uuid.NewSHA1(uuid.NameSpaceURL, []byte("hivepaas")).String()[:8],
++		"tool":    strings.TrimSpace(string(tool)),
++	})
++}
++`},
++	},
++}
++
++var realLibraryValues = map[base.FunctionRuntime]string{
++	base.FunctionRuntimeNode24:    "60000",
++	base.FunctionRuntimePython313: "1.17.0",
++	base.FunctionRuntimeGo127:     uuidOfHivepaas,
++}
++
++// uuidOfHivepaas is the first part of uuid.NewSHA1(uuid.NameSpaceURL, "hivepaas").
++const uuidOfHivepaas = "a7b554de"
++
++// End to end, with docker's own builder and the release's runtime images: a
++// function of each runtime is built from the Dockerfile written for it, with
++// its library, a Debian package and a build secret, then called once. It pulls
++// the images and the libraries, so it runs only when HIVEPAAS_DOCKER_TESTS=1.
++func TestAFunctionOfEachRuntimeBuildsOnTheReleasesImages(t *testing.T) {
++	if os.Getenv("HIVEPAAS_DOCKER_TESTS") != "1" {
++		t.Skip("set HIVEPAAS_DOCKER_TESTS=1 to build functions with docker")
++	}
++	for runtime, files := range realFunctions {
++		t.Run(string(runtime), func(t *testing.T) {
++			dir := t.TempDir()
++			assert.NoError(t, WriteInlineCode(dir, &entity.FunctionInlineCode{Files: files}))
++			src := source(runtime)
++			src.SystemPackages = []string{"jq"}
++			resp, err := Dockerfile(&DockerfileReq{Source: src, Images: base.BetaVersion.FunctionRuntimes,
++				SourceDir: dir, BuildArgs: []string{"HP_TEST_ARG"}, BuildSecrets: []string{"HP_TEST_SECRET"}})
++			if !assert.NoError(t, err) {
++				return
++			}
++			assert.NoError(t, os.MkdirAll(filepath.Join(dir, base.FunctionReservedDir), 0o755))
++			assert.NoError(t, os.WriteFile(filepath.Join(dir, DockerfilePath), []byte(resp.Content), 0o600))
++			tag := "hivepaas-test-function-" + string(runtime)
++			t.Cleanup(func() { _ = exec.Command("docker", "rmi", "-f", tag).Run() })
++
++			// No --builder: docker's default builder, not one this test would create.
++			build := exec.Command("docker", "buildx", "build", "--load", "-f", DockerfilePath, "-t", tag,
++				"--build-arg", "HP_TEST_ARG=arg", "--secret", "id=HP_TEST_SECRET,env=HP_BUILD_SECRET_0", ".")
++			build.Dir, build.Env = dir, append(os.Environ(), "HP_BUILD_SECRET_0=s3cr3t-value")
++			out, err := build.CombinedOutput()
++			if !assert.NoError(t, err, string(out)) {
++				return
++			}
++
++			call := exec.Command("docker", "run", "--rm", "-i", "--network", "none", tag, "hivepaas-runtime", "invoke")
++			call.Stdin = strings.NewReader(`{}`)
++			out, err = call.Output()
++			if !assert.NoError(t, err, string(out)) {
++				return
++			}
++			lines := strings.Split(strings.TrimSpace(string(out)), "\n")
++			var result struct {
++				Status int    `json:"status"`
++				Body   string `json:"body"`
++			}
++			assert.NoError(t, json.Unmarshal([]byte(strings.TrimPrefix(lines[len(lines)-1], "#hivepaas-result ")),
++				&result))
++			body, _ := base64.StdEncoding.DecodeString(result.Body)
++			var got map[string]string
++			assert.NoError(t, json.Unmarshal(body, &got), string(body))
++			assert.Equal(t, 200, result.Status)
++			assert.Equal(t, realLibraryValues[runtime], got["library"])
++			assert.True(t, strings.HasPrefix(got["tool"], "jq-"), got["tool"])
++
++			history, err := exec.Command("docker", "history", "--no-trunc", tag).CombinedOutput()
++			assert.NoError(t, err)
++			assert.NotContains(t, string(history), "s3cr3t-value")
++		})
++	}
++}

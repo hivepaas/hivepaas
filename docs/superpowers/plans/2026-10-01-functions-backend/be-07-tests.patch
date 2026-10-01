@@ -1,0 +1,109 @@
+diff --git a/hivepaas_app/service/specservice/specserviceimpl/build_import_test.go b/hivepaas_app/service/specservice/specserviceimpl/build_import_test.go
+index 7d0c6a1a..e6fbe6e7 100644
+--- a/hivepaas_app/service/specservice/specserviceimpl/build_import_test.go
++++ b/hivepaas_app/service/specservice/specserviceimpl/build_import_test.go
+@@ -76,6 +76,25 @@ func TestBuildAppImportsAnExportedDocument(t *testing.T) {
+ 	assert.GreaterOrEqual(t, secret, 0, "the entry's id is taken out before it is decoded")
+ }
+ 
++// A function is not part of a spec yet: an import makes neither a function nor
++// an app deployed from a function's code.
++func TestBuildAppDoesNotImportAFunction(t *testing.T) {
++	for name, doc := range map[string]string{
++		"its kind":   "settings:\n  kind: {category: function}\n",
++		"its source": "deployment:\n  source:\n    activeMethod: function\n    functionSource: {runtime: node24}\n",
++	} {
++		t.Run(name, func(t *testing.T) {
++			useDataKey(t)
++			req := buildReq(t, doc)
++			req.Import = true
++
++			_, err := (&service{volumeService: &fakeBuildVolumeService{}}).BuildApp(context.Background(), nil, req)
++
++			assert.ErrorIs(t, err, hperrors.ErrSpecBlockInvalid)
++		})
++	}
++}
++
+ // A template still cannot say what only an export can.
+ func TestBuildAppKeepsTheTemplateGate(t *testing.T) {
+ 	svc := &service{volumeService: &fakeBuildVolumeService{}}
+diff --git a/hivepaas_app/service/specservice/specserviceimpl/build_test.go b/hivepaas_app/service/specservice/specserviceimpl/build_test.go
+index 39732a5b..7a216a3e 100644
+--- a/hivepaas_app/service/specservice/specserviceimpl/build_test.go
++++ b/hivepaas_app/service/specservice/specserviceimpl/build_test.go
+@@ -270,6 +270,9 @@ func TestBuildAppRefuses(t *testing.T) {
+ 		"unknown kind field": {
+ 			"settings:\n  kind: {category: cache, flavor: x}\n", hperrors.ErrSpecBlockInvalid,
+ 		},
++		"a function": {
++			"settings:\n  kind: {category: function}\n", hperrors.ErrSpecBlockInvalid,
++		},
+ 		"port out of range": {
+ 			"settings:\n  routing: {port: 70000}\n", hperrors.ErrSpecBlockInvalid,
+ 		},
+diff --git a/hivepaas_app/service/specservice/specserviceimpl/export_test.go b/hivepaas_app/service/specservice/specserviceimpl/export_test.go
+index caa5aaea..818cfeaa 100644
+--- a/hivepaas_app/service/specservice/specserviceimpl/export_test.go
++++ b/hivepaas_app/service/specservice/specserviceimpl/export_test.go
+@@ -401,12 +401,32 @@ func exportFixture(t *testing.T) specservice.Service {
+ 		ID: "app_3", Key: "backend-pr-42", Name: "PR 42", ProjectID: "p1",
+ 		ProjectEnvID: "p1:dev", ParentID: "app_1",
+ 	}
++	function := &entity.App{
++		ID: "app_4", Key: "hello", Name: "Hello", ProjectID: "p1",
++		ProjectEnvID: "p1:dev", Status: base.AppStatusActive,
++	}
++	functionKind := &entity.Setting{
++		ID: "kind_4", Type: base.SettingTypeAppKind, Scope: base.ObjectScopeApp,
++		ObjectID: "app_4", Status: base.SettingStatusActive, Version: entity.CurrentAppKindSettingsVersion,
++	}
++	assert.NoError(t, functionKind.SetData(&entity.AppKindSettings{Category: base.AppCategoryFunction}))
++	functionSource := &entity.Setting{
++		ID: "deploy_4", Type: base.SettingTypeAppDeployment, Scope: base.ObjectScopeApp,
++		ObjectID: "app_4", Status: base.SettingStatusActive, Version: entity.CurrentAppDeploymentSettingsVersion,
++	}
++	assert.NoError(t, functionSource.SetData(&entity.AppDeploymentSettings{
++		ActiveMethod: base.DeploymentMethodFunction,
++		FunctionSource: &entity.DeploymentFunctionSource{Runtime: base.FunctionRuntimeNode24,
++			Code: entity.FunctionCode{Inline: &entity.FunctionInlineCode{Files: []*entity.FunctionFile{
++				{Path: "index.js", Content: "export default () => ({})"},
++			}}}},
++	}))
+ 
+ 	all := []*entity.Setting{cert, apiKey, routing, secret, mountEntry, kind, projectVolume, sharedVolume,
+-		projectConfig, envConfig, appJob, envSeq}
++		projectConfig, envConfig, appJob, envSeq, functionKind, functionSource}
+ 
+ 	svc := New(
+-		&fakeAppRepo{apps: []*entity.App{deployed, undeployed, preview}},
++		&fakeAppRepo{apps: []*entity.App{deployed, undeployed, preview, function}},
+ 		&fakeProjectEnvRepo{envs: []*entity.ProjectEnv{env}},
+ 		&fakeProjectRepo{projects: []*entity.Project{proj, hive}},
+ 		settingRepo,
+@@ -608,6 +628,25 @@ func TestExportSkipsApiKeysAndPreviewApps(t *testing.T) {
+ 	assert.Positive(t, codes[specmodel.CodePreviewAppSkipped], "so is the preview app")
+ }
+ 
++// A function is not part of a spec yet: it is left out, and the report says
++// so, where an operator looking for it finds why.
++func TestExportSkipsAFunction(t *testing.T) {
++	path, report := runExport(t, specmodel.SecretsModeOmit, "")
++
++	env := readFromArchive(t, path, "projects/project_a/envs/dev.yaml")
++	assert.NotContains(t, env, "hello")
++	assert.NotContains(t, env, "export default")
++
++	var skipped []string
++	for _, issue := range report.Issues {
++		if issue.Code == specmodel.CodeFunctionSkipped {
++			assert.Equal(t, specmodel.SeveritySkipped, issue.Severity)
++			skipped = append(skipped, issue.Path)
++		}
++	}
++	assert.Equal(t, []string{"projects/project_a/envs/dev/apps/hello"}, skipped)
++}
++
+ // An app with no service is normal, not an error: two of five user apps in a
+ // development installation are in that state.
+ func TestExportHandlesAnUndeployedApp(t *testing.T) {

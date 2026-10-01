@@ -1,0 +1,108 @@
+diff --git a/hivepaas_app/base/function_test.go b/hivepaas_app/base/function_test.go
+new file mode 100644
+index 00000000..6edd7a5a
+--- /dev/null
++++ b/hivepaas_app/base/function_test.go
+@@ -0,0 +1,39 @@
++package base_test
++
++import (
++	"regexp"
++	"testing"
++
++	"github.com/stretchr/testify/assert"
++
++	"github.com/hivepaas/hivepaas/hivepaas_app/base"
++)
++
++// Each release names, for every function runtime, the image its functions are
++// built on, pinned by digest. A runtime that compiles its functions names its
++// build image as well.
++func TestEachReleaseNamesAnImageForEveryFunctionRuntime(t *testing.T) {
++	pinned := regexp.MustCompile(`^ghcr\.io/hivepaas/function-runtime-[a-z0-9-]+:\d+\.\d+\.\d+@sha256:[0-9a-f]{64}$`)
++	for name, release := range map[string]*base.ReleaseInfo{"stable": base.StableVersion, "beta": base.BetaVersion} {
++		want := map[string]bool{}
++		for _, runtime := range base.AllFunctionRuntimes {
++			want[string(runtime)] = true
++			if runtime.Compiled() {
++				want[base.FunctionBuildImageKey(runtime)] = true
++			}
++		}
++		assert.Len(t, release.FunctionRuntimes, len(want), name)
++		for key, image := range release.FunctionRuntimes {
++			assert.True(t, want[key], "%s names a runtime that does not exist: %s", name, key)
++			assert.Regexp(t, pinned, image, name)
++			assert.Contains(t, image, "/function-runtime-"+key+":", name)
++		}
++	}
++}
++
++func TestOnlyGoIsCompiled(t *testing.T) {
++	assert.True(t, base.FunctionRuntimeGo127.Compiled())
++	assert.False(t, base.FunctionRuntimeNode24.Compiled())
++	assert.False(t, base.FunctionRuntimePython313.Compiled())
++	assert.Equal(t, "go127-build", base.FunctionBuildImageKey(base.FunctionRuntimeGo127))
++}
+diff --git a/hivepaas_app/service/hpappservice/hpappserviceimpl/release_templates_test.go b/hivepaas_app/service/hpappservice/hpappserviceimpl/release_templates_test.go
+index e1b1660b..07a24060 100644
+--- a/hivepaas_app/service/hpappservice/hpappserviceimpl/release_templates_test.go
++++ b/hivepaas_app/service/hpappservice/hpappserviceimpl/release_templates_test.go
+@@ -74,3 +74,13 @@ func TestRepoReleaseJSONDecodes(t *testing.T) {
+ 	_, err = decodeReleaseInfo(data)
+ 	assert.NoError(t, err)
+ }
++
++// release.json mirrors the release compiled into the binary, function runtimes
++// included: the images it names are the ones this binary builds functions on.
++func TestRepoReleaseJSONNamesTheCompiledFunctionRuntimes(t *testing.T) {
++	data, err := os.ReadFile("../../../../release.json")
++	assert.NoError(t, err)
++	info, err := decodeReleaseInfo(data)
++	assert.NoError(t, err)
++	assert.Equal(t, base.BetaVersion.FunctionRuntimes, info.Beta.FunctionRuntimes)
++}
+diff --git a/tools/releasepin/main_test.go b/tools/releasepin/main_test.go
+index 90eaad36..7518b496 100644
+--- a/tools/releasepin/main_test.go
++++ b/tools/releasepin/main_test.go
+@@ -80,3 +80,40 @@ func TestAnImageTheRegistryDoesNotKnowIsAnError(t *testing.T) {
+ 
+ 	assert.ErrorContains(t, err, "manifest unknown")
+ }
++
++const releaseWithFunctions = `{
++  "beta": {
++    "appImage": "ghcr.io/hivepaas/hivepaas:1.0.0-beta1@sha256:app",
++    "functionRuntimes": {
++      "node24": "ghcr.io/hivepaas/function-runtime-node24:1.0.0",
++      "go127-build": "ghcr.io/hivepaas/function-runtime-go127-build:1.0.0@sha256:old"
++    },
++    "blockMajorUpgrade": [
++      "db"
++    ]
++  }
++}
++`
++
++// The images functions are built on are released with HivePaaS too, in a map
++// of their own, and are pinned like every other image.
++func TestFunctionRuntimesArePinnedToo(t *testing.T) {
++	registry := digests{
++		"ghcr.io/hivepaas/hivepaas:1.0.0-beta1":               "sha256:app",
++		"ghcr.io/hivepaas/function-runtime-node24:1.0.0":      "sha256:node",
++		"ghcr.io/hivepaas/function-runtime-go127-build:1.0.0": "sha256:gobuild",
++	}
++
++	out, report, err := pin([]byte(releaseWithFunctions), registry.resolve)
++
++	assert.NoError(t, err)
++	want := strings.NewReplacer(
++		`"ghcr.io/hivepaas/function-runtime-node24:1.0.0"`,
++		`"ghcr.io/hivepaas/function-runtime-node24:1.0.0@sha256:node"`,
++		`"ghcr.io/hivepaas/function-runtime-go127-build:1.0.0@sha256:old"`,
++		`"ghcr.io/hivepaas/function-runtime-go127-build:1.0.0@sha256:gobuild"`,
++	).Replace(releaseWithFunctions)
++	assert.Equal(t, want, string(out))
++	assert.Len(t, report.Changed, 2)
++	assert.Empty(t, report.Floating)
++}

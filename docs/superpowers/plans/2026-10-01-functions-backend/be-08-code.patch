@@ -1,0 +1,147 @@
+diff --git a/hivepaas_app/service/appdeploymentservice/appdeploymentserviceimpl/function_deploy_apply_svc.go b/hivepaas_app/service/appdeploymentservice/appdeploymentserviceimpl/function_deploy_apply_svc.go
+index e7432ff3..dc623f42 100644
+--- a/hivepaas_app/service/appdeploymentservice/appdeploymentserviceimpl/function_deploy_apply_svc.go
++++ b/hivepaas_app/service/appdeploymentservice/appdeploymentserviceimpl/function_deploy_apply_svc.go
+@@ -2,24 +2,17 @@ package appdeploymentserviceimpl
+ 
+ import (
+ 	"context"
+-	"time"
+ 
+ 	"github.com/moby/moby/api/types/swarm"
+ 	"github.com/moby/moby/client"
+ 
+-	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
+ 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
+ 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
+ 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/timeutil"
++	"github.com/hivepaas/hivepaas/hivepaas_app/service/functionservice/functioncontainer"
+ 	"github.com/hivepaas/hivepaas/hivepaas_app/service/placementservice"
+-	"github.com/hivepaas/hivepaas/services/docker/dockerhelper"
+ )
+ 
+-// functionStopGraceMargin is how much longer than one call's timeout a stopping
+-// function is given: the runtime lets the running calls finish, for at most one
+-// timeout, and needs a moment to exit after them.
+-const functionStopGraceMargin = 10 * time.Second
+-
+ func (s *service) functionDeployStepServiceApply(
+ 	ctx context.Context,
+ 	db database.IDB,
+@@ -60,7 +53,7 @@ func (s *service) functionDeployStepServiceApply(
+ 			}
+ 			contSpec := svc.Spec.TaskTemplate.ContainerSpec
+ 			contSpec.Image = data.Deployment.Output.ImageTags[0]
+-			applyFunctionContainer(contSpec, source)
++			functioncontainer.ApplyFixed(contSpec, source)
+ 			s.applyContainerInit(ctx, data.appDeploymentData, contSpec)
+ 
+ 			// The socket and the network follow the app's access on every
+@@ -92,15 +85,3 @@ func (s *service) functionDeployStepServiceApply(
+ 
+ 	return nil
+ }
+-
+-// applyFunctionContainer gives a function's container what is fixed for a
+-// function: the runtime's command, working directory and health check, whatever
+-// a deployment setting or an earlier image left; and a stop grace period that
+-// lets the calls running at a stop finish.
+-func applyFunctionContainer(contSpec *swarm.ContainerSpec, source *entity.DeploymentFunctionSource) {
+-	contSpec.Dir = ""
+-	dockerhelper.ContainerCommandApply(contSpec, "")
+-	contSpec.Healthcheck = nil
+-	grace := time.Duration(source.Timeout) + functionStopGraceMargin
+-	contSpec.StopGracePeriod = &grace
+-}
+diff --git a/hivepaas_app/service/functionservice/functioncontainer/functioncontainer.go b/hivepaas_app/service/functionservice/functioncontainer/functioncontainer.go
+new file mode 100644
+index 00000000..0d666516
+--- /dev/null
++++ b/hivepaas_app/service/functionservice/functioncontainer/functioncontainer.go
+@@ -0,0 +1,29 @@
++// Package functioncontainer is what is fixed for a function's container,
++// whatever a deployment or a screen would otherwise set.
++package functioncontainer
++
++import (
++	"time"
++
++	"github.com/moby/moby/api/types/swarm"
++
++	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
++	"github.com/hivepaas/hivepaas/services/docker/dockerhelper"
++)
++
++// StopGraceMargin is how much longer than one call's timeout a stopping
++// function is given: the runtime lets the running calls finish, for at most one
++// timeout, and needs a moment to exit after them.
++const StopGraceMargin = 10 * time.Second
++
++// ApplyFixed gives a function's container what is fixed for a function: the
++// runtime's command, working directory and health check, whatever a setting or
++// an earlier image left; and a stop grace period that lets the calls running
++// at a stop finish.
++func ApplyFixed(contSpec *swarm.ContainerSpec, source *entity.DeploymentFunctionSource) {
++	contSpec.Dir = ""
++	dockerhelper.ContainerCommandApply(contSpec, "")
++	contSpec.Healthcheck = nil
++	grace := time.Duration(source.Timeout) + StopGraceMargin
++	contSpec.StopGracePeriod = &grace
++}
+diff --git a/hivepaas_app/usecase/appsettingsuc/container_settings_update.go b/hivepaas_app/usecase/appsettingsuc/container_settings_update.go
+index 9a138bd3..582e5b4f 100644
+--- a/hivepaas_app/usecase/appsettingsuc/container_settings_update.go
++++ b/hivepaas_app/usecase/appsettingsuc/container_settings_update.go
+@@ -18,6 +18,7 @@ import (
+ 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/reflectutil"
+ 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/transaction"
+ 	"github.com/hivepaas/hivepaas/hivepaas_app/service/appservice"
++	"github.com/hivepaas/hivepaas/hivepaas_app/service/functionservice/functioncontainer"
+ 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/appsettingsuc/appsettingsdto"
+ 	"github.com/hivepaas/hivepaas/services/docker/dockerhelper"
+ )
+@@ -51,6 +52,9 @@ func (uc *UC) UpdateAppContainerSettings(
+ type updateAppContainerSettingsData struct {
+ 	App     *entity.App
+ 	Service *swarm.Service
++	// FunctionSource is a function's source, nil for another app: what is fixed
++	// for a function's container stays as it is.
++	FunctionSource *entity.DeploymentFunctionSource
+ }
+ 
+ func (uc *UC) loadAppContainerSettingsForUpdate(
+@@ -66,11 +70,23 @@ func (uc *UC) loadAppContainerSettingsForUpdate(
+ 			bunex.SelectExcludeColumns(entity.ProjectDefaultExcludeColumns...),
+ 		),
+ 		bunex.SelectRelation("ProjectEnv"),
++		bunex.SelectRelation("Settings",
++			bunex.SelectWhereIn("setting.type IN (?)", base.SettingTypeAppKind, base.SettingTypeAppDeployment),
++		),
+ 	)
+ 	if err != nil {
+ 		return hperrors.Wrap(err)
+ 	}
+ 	data.App = app
++	if entity.IsFunctionKind(app.GetSettingByType(base.SettingTypeAppKind)) {
++		if deployment := app.GetSettingByType(base.SettingTypeAppDeployment); deployment != nil {
++			deploymentSettings, err := deployment.AsAppDeploymentSettings()
++			if err != nil {
++				return hperrors.Wrap(err)
++			}
++			data.FunctionSource = deploymentSettings.FunctionSource
++		}
++	}
+ 
+ 	service, err := uc.clusterService.ServiceInspect(ctx, app.ServiceID, false)
+ 	if err != nil {
+@@ -113,6 +129,10 @@ func (uc *UC) prepareUpdatingAppContainerSettings(
+ 	uc.prepareUpdatingAppContainerPrivileges(req, data)
+ 	uc.prepareUpdatingAppContainerRestartPolicy(req, data)
+ 	uc.prepareUpdatingAppContainerLogDriver(req, data)
++
++	if data.FunctionSource != nil {
++		functioncontainer.ApplyFixed(containerSpec, data.FunctionSource)
++	}
+ }
+ 
+ func (uc *UC) prepareUpdatingAppContainerHealthcheck(

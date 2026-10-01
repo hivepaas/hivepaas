@@ -6,7 +6,6 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/copier"
-	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/timeutil"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings/sslcertuc/sslcertdto"
 )
@@ -38,24 +37,15 @@ type RoutingSettingsResp struct {
 }
 
 type DomainResp struct {
-	Enabled         bool                     `json:"enabled"`
-	Domain          string                   `json:"domain"`
-	SSLCert         *sslcertdto.SSLCertResp  `json:"sslCert,omitempty"`
-	ClientConfig    *HTTPClientConfigResp    `json:"clientConfig,omitempty"`
-	RateLimitConfig *HTTPRateLimitConfigResp `json:"rateLimitConfig,omitempty"`
+	Enabled      bool                    `json:"enabled"`
+	Domain       string                  `json:"domain"`
+	SSLCert      *sslcertdto.SSLCertResp `json:"sslCert,omitempty"`
+	ClientConfig *HTTPClientConfigResp   `json:"clientConfig,omitempty"`
 }
 
 type HTTPClientConfigResp struct {
 	Enabled    bool     `json:"enabled"`
 	AllowedIPs []string `json:"allowedIPs"`
-}
-
-type HTTPRateLimitConfigResp struct {
-	Enabled        bool              `json:"enabled"`
-	Average        int               `json:"average"`
-	Period         timeutil.Duration `json:"period"`
-	Burst          int               `json:"burst"`
-	MaxInFlightReq int               `json:"maxInFlightReq"`
 }
 
 type RoutingSettingsTransformInput struct {

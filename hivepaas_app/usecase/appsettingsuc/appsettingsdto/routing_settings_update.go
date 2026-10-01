@@ -2,6 +2,7 @@ package appsettingsdto
 
 import (
 	"fmt"
+	"math"
 	"strings"
 	"unicode"
 
@@ -482,11 +483,21 @@ func (req *HTTPRateLimitConfigReq) modifyRequest() error {
 	return nil
 }
 
-//nolint:unparam
+// validate refuses a limit turned on with nothing set: Traefik builds no rate
+// limit without an average, nor an in-flight one without an amount, and a router
+// that looks limited and is not is worse than one plainly unlimited.
 func (req *HTTPRateLimitConfigReq) validate(field string) (res []vld.Validator) {
 	if req == nil || !req.Enabled {
 		return
 	}
+	res = append(res, basedto.ValidateNumber(&req.Average, false, 0, math.MaxInt32, field+".average")...)
+	res = append(res, basedto.ValidateNumber(&req.Burst, false, 0, math.MaxInt32, field+".burst")...)
+	res = append(res, basedto.ValidateNumber(&req.MaxInFlightReq, false, 0, math.MaxInt32,
+		field+".maxInFlightReq")...)
+	res = append(res, vld.Must(req.Average > 0 || req.MaxInFlightReq > 0).OnError(
+		vld.SetField(field+".average", nil),
+		vld.SetCustomKey("ERR_VLD_RATE_LIMIT_EMPTY"),
+	))
 	return res
 }
 

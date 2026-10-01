@@ -65780,14 +65780,11 @@
           "enabled" : {
             "type" : "boolean"
           },
-          "rateLimitConfig" : {
-            "$ref" : "#/components/schemas/system_hpappsettingsdto.HTTPRateLimitConfigReq"
-          },
           "sslCert" : {
             "$ref" : "#/components/schemas/basedto.ObjectIDReq"
           }
         },
-        "required" : [ "clientConfig", "domain", "enabled", "rateLimitConfig", "sslCert" ],
+        "required" : [ "clientConfig", "domain", "enabled", "sslCert" ],
         "type" : "object"
       },
       "system_hpappsettingsdto.DomainResp" : {
@@ -65801,14 +65798,11 @@
           "enabled" : {
             "type" : "boolean"
           },
-          "rateLimitConfig" : {
-            "$ref" : "#/components/schemas/system_hpappsettingsdto.HTTPRateLimitConfigResp"
-          },
           "sslCert" : {
             "$ref" : "#/components/schemas/settings_sslcertdto.SSLCertResp"
           }
         },
-        "required" : [ "clientConfig", "domain", "enabled", "rateLimitConfig", "sslCert" ],
+        "required" : [ "clientConfig", "domain", "enabled", "sslCert" ],
         "type" : "object"
       },
       "system_hpappsettingsdto.GetRequestInfoResp" : {
@@ -65887,48 +65881,6 @@
           }
         },
         "required" : [ "allowedIPs", "enabled" ],
-        "type" : "object"
-      },
-      "system_hpappsettingsdto.HTTPRateLimitConfigReq" : {
-        "properties" : {
-          "average" : {
-            "type" : "integer"
-          },
-          "burst" : {
-            "type" : "integer"
-          },
-          "enabled" : {
-            "type" : "boolean"
-          },
-          "maxInFlightReq" : {
-            "type" : "integer"
-          },
-          "period" : {
-            "type" : "string"
-          }
-        },
-        "required" : [ "average", "burst", "enabled", "maxInFlightReq", "period" ],
-        "type" : "object"
-      },
-      "system_hpappsettingsdto.HTTPRateLimitConfigResp" : {
-        "properties" : {
-          "average" : {
-            "type" : "integer"
-          },
-          "burst" : {
-            "type" : "integer"
-          },
-          "enabled" : {
-            "type" : "boolean"
-          },
-          "maxInFlightReq" : {
-            "type" : "integer"
-          },
-          "period" : {
-            "type" : "string"
-          }
-        },
-        "required" : [ "average", "burst", "enabled", "maxInFlightReq", "period" ],
         "type" : "object"
       },
       "system_hpappsettingsdto.HivePaaSAppSettingsReq" : {

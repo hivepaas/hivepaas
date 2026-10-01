@@ -88,3 +88,15 @@ func TestSetupRoutingSettingsDefaultIsIdempotent(t *testing.T) {
 	assert.Equal(t, first, len(routing.Domains[0].Paths))
 	assert.Equal(t, len(apiRateLimits), first)
 }
+
+// The domain as a whole carries no limit: it would count every script of the
+// dashboard as well as the API, and lock the operator out of the page that lifts
+// it. One saved before is dropped on the next update.
+func TestSetupRoutingSettingsDefaultDropsTheDomainWideLimit(t *testing.T) {
+	routing := setupRoutingTest(t)
+	routing.Domains[0].RateLimitConfig = &entity.HTTPRateLimitConfig{Enabled: true, Average: 10, Burst: 20}
+	(&service{}).SetupRoutingSettingsDefault(routing)
+
+	assert.Nil(t, routing.Domains[0].RateLimitConfig)
+	assert.True(t, pathOf(routing.Domains[0], "/api/v1/auth").RateLimitConfig.Enabled, "the paths keep theirs")
+}

@@ -108,6 +108,11 @@ func (s *service) SetupRoutingSettingsDefault(
 			Enabled:         true,
 			MinResponseBody: unit.KB, // 1kb
 		}
+		// No limit on the domain as a whole. It would count every request to it
+		// - each script and stylesheet of the dashboard as well as the API - and
+		// any number low enough to stop someone locks the operator out of the
+		// page they would lift it from. The paths below carry the limits.
+		domain.RateLimitConfig = nil
 
 		for _, limit := range apiRateLimits {
 			pathCfg := ensurePathConfig(domain, filepath.Join(cfg.HTTPServer.BasePath, limit.SubPath))

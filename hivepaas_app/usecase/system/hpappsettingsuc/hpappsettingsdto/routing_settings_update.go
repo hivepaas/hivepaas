@@ -50,11 +50,10 @@ func (req *UpdateRoutingSettingsReq) ApplyTo(setting *entity.AppRoutingSettings)
 }
 
 type DomainReq struct {
-	Enabled         bool                    `json:"enabled"`
-	Domain          string                  `json:"domain"`
-	SSLCert         basedto.ObjectIDReq     `json:"sslCert"`
-	ClientConfig    *HTTPClientConfigReq    `json:"clientConfig"`
-	RateLimitConfig *HTTPRateLimitConfigReq `json:"rateLimitConfig"`
+	Enabled      bool                 `json:"enabled"`
+	Domain       string               `json:"domain"`
+	SSLCert      basedto.ObjectIDReq  `json:"sslCert"`
+	ClientConfig *HTTPClientConfigReq `json:"clientConfig"`
 }
 
 func (req *DomainReq) ApplyTo(targetDomain *entity.AppDomain) error {
@@ -73,17 +72,6 @@ func (req *DomainReq) ApplyTo(targetDomain *entity.AppDomain) error {
 		targetDomain.ClientConfig = nil
 	}
 
-	if req.RateLimitConfig != nil {
-		if targetDomain.RateLimitConfig == nil {
-			targetDomain.RateLimitConfig = &entity.HTTPRateLimitConfig{}
-		}
-		if err := req.RateLimitConfig.ApplyTo(targetDomain.RateLimitConfig); err != nil {
-			return hperrors.Wrap(err)
-		}
-	} else {
-		targetDomain.RateLimitConfig = nil
-	}
-
 	return nil
 }
 
@@ -94,9 +82,6 @@ func (req *DomainReq) modifyRequest() error {
 	}
 	req.Domain = strings.ToLower(strings.TrimSpace(req.Domain))
 	if err := req.ClientConfig.modifyRequest(); err != nil {
-		return hperrors.Wrap(err)
-	}
-	if err := req.RateLimitConfig.modifyRequest(); err != nil {
 		return hperrors.Wrap(err)
 	}
 	return nil
@@ -113,7 +98,6 @@ func (req *DomainReq) validate(field string) (res []vld.Validator) {
 	res = append(res, basedto.ValidateDomain(&req.Domain, true, base.DomainNameMaxLen,
 		false, field+"domain")...)
 	res = append(res, req.ClientConfig.validate(field+"clientConfig")...)
-	res = append(res, req.RateLimitConfig.validate(field+"rateLimitConfig")...)
 	return res
 }
 
@@ -148,39 +132,6 @@ func (req *HTTPClientConfigReq) validate(field string) (res []vld.Validator) {
 	// is the dashboard. See also ensureStillReachable, which needs these parseable
 	// to tell whether the caller would still get in.
 	res = append(res, basedto.ValidateIPOrCIDRSlice(req.AllowedIPs, 0, field+"allowedIPs")...)
-	return res
-}
-
-type HTTPRateLimitConfigReq struct {
-	Enabled        bool              `json:"enabled"`
-	Average        int               `json:"average"`
-	Period         timeutil.Duration `json:"period"`
-	Burst          int               `json:"burst"`
-	MaxInFlightReq int               `json:"maxInFlightReq"`
-}
-
-func (req *HTTPRateLimitConfigReq) ApplyTo(rateLimitConfig *entity.HTTPRateLimitConfig) error {
-	rateLimitConfig.Enabled = req.Enabled
-	rateLimitConfig.Average = req.Average
-	rateLimitConfig.Period = req.Period
-	rateLimitConfig.Burst = req.Burst
-	rateLimitConfig.MaxInFlightReq = req.MaxInFlightReq
-	return nil
-}
-
-//nolint:unparam
-func (req *HTTPRateLimitConfigReq) modifyRequest() error {
-	if req == nil {
-		return nil
-	}
-	return nil
-}
-
-//nolint:unparam
-func (req *HTTPRateLimitConfigReq) validate(field string) (res []vld.Validator) {
-	if req == nil || !req.Enabled {
-		return
-	}
 	return res
 }
 

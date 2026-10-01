@@ -64,8 +64,9 @@ export function AppCodeRoute() {
         );
     }
 
+    // The editor and the test panel side by side want more room than a list.
     return (
-        <div className={cn(listBox)}>
+        <div className={cn(listBox, "max-w-[1800px]")}>
             <FunctionCodeWorkspace
                 key={settings.updateVer}
                 projectId={projectId}

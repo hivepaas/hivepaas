@@ -42,6 +42,8 @@ export type AppRoutingDomain = {
     sslCert?: { id: string; name: string } | null;
     containerPort: number;
     tlsPassthrough?: boolean;
+    /** Protocols a TCP domain ending TLS accepts beyond the ones HivePaaS lists. */
+    extraAlpnProtocols?: string[];
     forceHttps?: boolean;
     basicAuth?: AppRoutingBasicAuthConfig | null;
     lbConfig?: AppRoutingLBConfig | null;
@@ -139,6 +141,7 @@ export type AppRoutingSettingsUpdateDomain = {
     sslCert: AppRoutingSettingsObjectIdReq;
     containerPort: number;
     tlsPassthrough: boolean;
+    extraAlpnProtocols: string[];
     forceHttps: boolean;
     basicAuth: AppRoutingBasicAuthConfigReq;
     lbConfig?: AppRoutingLBConfig | null;

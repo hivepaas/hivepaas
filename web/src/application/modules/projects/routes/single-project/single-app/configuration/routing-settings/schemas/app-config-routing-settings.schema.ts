@@ -86,6 +86,16 @@ export const HttpPathConfigSchema = z.object({
 
 const DOMAIN_MAX_LEN = 100; // mirrors backend base.DomainNameMaxLen
 
+// Mirror the backend's limits on a domain's extra ALPN protocols.
+const ALPN_PROTOCOLS_MAX = 10;
+const ALPN_PROTOCOL_MAX_LEN = 255;
+const ALPN_PROTOCOL_PATTERN = /^[\x21-\x7e]+$/;
+
+/** The protocols typed in, separated by commas or spaces. */
+export function parseAlpnProtocols(value: string): string[] {
+    return value.split(/[\s,]+/).filter(Boolean);
+}
+
 export const DomainFormSchema = z
     .object({
         enabled: z.boolean(),
@@ -94,6 +104,7 @@ export const DomainFormSchema = z
         containerPort: z.number().int().min(1).max(65535),
         overridePort: z.boolean().optional(),
         tlsPassthrough: z.boolean(),
+        extraAlpnProtocols: z.string(),
         domainRedirect: z.string(),
         sslCert: HttpSettingsRefSchema.nullable().optional(),
         forceHttps: z.boolean(),
@@ -132,6 +143,19 @@ export const DomainFormSchema = z
                 path: ["domainRedirect"],
                 message: "Enter a valid domain (e.g. other-domain.com)",
             });
+        }
+
+        const alpn = parseAlpnProtocols(values.extraAlpnProtocols);
+        const alpnError =
+            alpn.length > ALPN_PROTOCOLS_MAX
+                ? `At most ${ALPN_PROTOCOLS_MAX} protocols`
+                : alpn.find(p => p.length > ALPN_PROTOCOL_MAX_LEN || !ALPN_PROTOCOL_PATTERN.test(p))
+                  ? "A protocol is up to 255 printable ASCII characters (e.g. x-amzn-mqtt-ca)"
+                  : new Set(alpn).size !== alpn.length
+                    ? "A protocol is listed twice"
+                    : null;
+        if (alpnError) {
+            ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["extraAlpnProtocols"], message: alpnError });
         }
     });
 
@@ -232,6 +256,7 @@ export const emptyDomain: z.input<typeof DomainFormSchema> = {
     containerPort: 0,
     overridePort: false,
     tlsPassthrough: false,
+    extraAlpnProtocols: "",
     domainRedirect: "",
     forceHttps: true,
     lbConfig: createDefaultLBConfig(),

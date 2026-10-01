@@ -8,7 +8,7 @@ import { ERoutingProtocol } from "~/projects/module-shared/enums";
 
 import { InfoBlock } from "@application/shared/components";
 
-import { ContainerPort, RedirectTo, SslCert } from "../form-components";
+import { ContainerPort, ExtraAlpnProtocols, RedirectTo, SslCert } from "../form-components";
 import { type AppConfigHttpSettingsFormSchemaInput, type AppConfigHttpSettingsFormSchemaOutput } from "../schemas";
 
 const PROTOCOL_OPTIONS: OptionCard<ERoutingProtocol>[] = [
@@ -53,6 +53,7 @@ export function DomainGeneralFields({ domainIndex, readOnly = false }: DomainGen
     const currentProtocol = protocol.value;
     const isHttp = currentProtocol === ERoutingProtocol.HTTP;
     const isUdp = currentProtocol === ERoutingProtocol.UDP;
+    const isTcp = currentProtocol === ERoutingProtocol.TCP;
 
     return (
         <div className="flex flex-col gap-6">
@@ -106,6 +107,13 @@ export function DomainGeneralFields({ domainIndex, readOnly = false }: DomainGen
                     </InfoBlock>
 
                     {tlsPassthrough.value && <TlsPassthroughMountNote />}
+
+                    {isTcp && !tlsPassthrough.value && (
+                        <ExtraAlpnProtocols
+                            domainIndex={domainIndex}
+                            readOnly={readOnly}
+                        />
+                    )}
 
                     {isHttp && (
                         <InfoBlock

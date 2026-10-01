@@ -10,6 +10,7 @@ import {
     type AppConfigRoutingSettingsFormSchemaOutput,
     createDefaultLBConfig,
     emptyDomain,
+    parseAlpnProtocols,
 } from "../schemas";
 
 function isLBStrategy(value: string): value is (typeof ELBStrategy)[keyof typeof ELBStrategy] {
@@ -33,6 +34,7 @@ function mapDomainToFormInput(
         containerPort,
         overridePort: isOverridePort,
         tlsPassthrough: domain.tlsPassthrough ?? false,
+        extraAlpnProtocols: (domain.extraAlpnProtocols ?? []).join(", "),
         domainRedirect: domain.domainRedirect ?? "",
         sslCert: domain.sslCert?.id ? { id: domain.sslCert.id, name: domain.sslCert.name } : null,
         forceHttps: domain.forceHttps ?? false,
@@ -207,6 +209,10 @@ export function mapFormValuesToPayload(
             protocol: domain.protocol,
             containerPort: domain.containerPort,
             tlsPassthrough: domain.tlsPassthrough,
+            extraAlpnProtocols:
+                domain.protocol === ERoutingProtocol.TCP && !domain.tlsPassthrough
+                    ? parseAlpnProtocols(domain.extraAlpnProtocols)
+                    : [],
             domainRedirect: domain.domainRedirect,
             sslCert: { id: domain.sslCert?.id ?? "" },
             forceHttps: domain.forceHttps,

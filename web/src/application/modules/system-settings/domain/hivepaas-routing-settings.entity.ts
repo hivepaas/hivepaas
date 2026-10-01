@@ -10,20 +10,11 @@ export type HivePaaSRoutingClientConfig = {
     allowedIPs: string[];
 };
 
-export type HivePaaSRoutingRateLimitConfig = {
-    enabled: boolean;
-    average: number;
-    period: string;
-    burst: number;
-    maxInFlightReq: number;
-};
-
 export type HivePaaSRoutingDomain = {
     enabled: boolean;
     domain: string;
     sslCert?: HivePaaSRoutingSslCertRef | null;
     clientConfig?: HivePaaSRoutingClientConfig | null;
-    rateLimitConfig?: HivePaaSRoutingRateLimitConfig | null;
 };
 
 export type HivePaaSRoutingSettings = {
@@ -41,7 +32,6 @@ export type HivePaaSRoutingSettingsUpdateDomain = {
     domain: string;
     sslCert: HivePaaSRoutingSettingsObjectIdReq;
     clientConfig?: HivePaaSRoutingClientConfig | null;
-    rateLimitConfig?: HivePaaSRoutingRateLimitConfig | null;
 };
 
 export type HivePaaSRoutingSettingsUpdatePayload = {

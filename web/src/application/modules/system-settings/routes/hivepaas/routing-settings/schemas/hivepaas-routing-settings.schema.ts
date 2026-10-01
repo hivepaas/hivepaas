@@ -17,15 +17,6 @@ export const RoutingClientConfigSchema = z.object({
 });
 export const HttpClientConfigSchema = RoutingClientConfigSchema;
 
-export const RoutingRateLimitConfigSchema = z.object({
-    enabled: z.boolean(),
-    average: z.number().min(0),
-    period: z.string(),
-    burst: z.number().min(0),
-    maxInFlightReq: z.number().min(0),
-});
-export const HttpRateLimitConfigSchema = RoutingRateLimitConfigSchema;
-
 const DOMAIN_MAX_LEN = 100;
 
 export const DomainFormSchema = z
@@ -34,7 +25,6 @@ export const DomainFormSchema = z
         domain: z.string(),
         sslCert: RoutingSettingsRefSchema.nullable().optional(),
         clientConfig: RoutingClientConfigSchema,
-        rateLimitConfig: RoutingRateLimitConfigSchema,
     })
     .superRefine((values, ctx) => {
         const domain = values.domain.trim();
@@ -71,21 +61,10 @@ export function createDefaultClientConfig(): z.infer<typeof RoutingClientConfigS
     };
 }
 
-export function createDefaultRateLimitConfig(): z.infer<typeof RoutingRateLimitConfigSchema> {
-    return {
-        enabled: false,
-        average: 10,
-        period: "1m",
-        burst: 20,
-        maxInFlightReq: 10,
-    };
-}
-
 export const emptyDomain: z.input<typeof DomainFormSchema> = {
     enabled: true,
     domain: "",
     clientConfig: createDefaultClientConfig(),
-    rateLimitConfig: createDefaultRateLimitConfig(),
 };
 
 export const emptyHivePaaSRoutingSettingsFormDefaults: HivePaaSRoutingSettingsFormInput = {

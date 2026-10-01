@@ -3,13 +3,11 @@ import { z } from "zod";
 import type {
     HivePaaSRoutingClientConfig,
     HivePaaSRoutingDomain,
-    HivePaaSRoutingRateLimitConfig,
     SettingsPendingChange,
 } from "~/system-settings/domain";
 import type {
     HivePaaSRoutingClientConfigSchema,
     HivePaaSRoutingDomainSchema,
-    HivePaaSRoutingRateLimitConfigSchema,
     SettingsPendingChangeSchema,
 } from "~/system-settings/module-shared/schemas";
 import {
@@ -83,28 +81,12 @@ function mapClientConfig(
     };
 }
 
-function mapRateLimitConfig(
-    raw: z.infer<typeof HivePaaSRoutingRateLimitConfigSchema> | null | undefined,
-): HivePaaSRoutingRateLimitConfig | null {
-    if (raw == null) {
-        return null;
-    }
-    return {
-        enabled: raw.enabled,
-        average: raw.average,
-        period: raw.period,
-        burst: raw.burst,
-        maxInFlightReq: raw.maxInFlightReq,
-    };
-}
-
 function mapDomain(raw: z.infer<typeof HivePaaSRoutingDomainSchema>): HivePaaSRoutingDomain {
     return {
         enabled: raw.enabled,
         domain: raw.domain,
         sslCert: mapSettingRef(raw.sslCert ?? undefined),
         clientConfig: mapClientConfig(raw.clientConfig ?? undefined),
-        rateLimitConfig: mapRateLimitConfig(raw.rateLimitConfig ?? undefined),
     };
 }
 

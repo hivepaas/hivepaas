@@ -9,7 +9,7 @@ import type { HivePaaSRoutingSettings } from "~/system-settings/domain";
 
 import type { ValidationException } from "@infrastructure/exceptions/validation";
 
-import { ClientConfigSection, DomainSelector, RateLimitConfigSection } from "../building-blocks";
+import { ClientConfigSection, DomainSelector } from "../building-blocks";
 import { SslCert } from "../form-components/ssl-cert";
 import {
     type HivePaaSRoutingSettingsFormInput,
@@ -74,10 +74,6 @@ function ConditionalDomainDetailSections({
                 />
                 <ClientConfigSection
                     prefix={`domains.${activeDomainIndex}.clientConfig`}
-                    readOnly={readOnly}
-                />
-                <RateLimitConfigSection
-                    prefix={`domains.${activeDomainIndex}.rateLimitConfig`}
                     readOnly={readOnly}
                 />
             </div>

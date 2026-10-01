@@ -39,13 +39,26 @@ export const HttpCompressionConfigSchema = z.object({
     minResponseBody: z.string(),
 });
 
-export const HttpRateLimitConfigSchema = z.object({
-    enabled: z.boolean(),
-    average: z.number().min(0),
-    period: z.string(),
-    burst: z.number().min(0),
-    maxInFlightReq: z.number().min(0),
-});
+export const HttpRateLimitConfigSchema = z
+    .object({
+        enabled: z.boolean(),
+        average: z.number().min(0).optional(),
+        period: z.string(),
+        burst: z.number().min(0).optional(),
+        maxInFlightReq: z.number().min(0).optional(),
+    })
+    .superRefine((values, ctx) => {
+        // Traefik builds no limit without an average or an in-flight amount: one
+        // turned on with neither looks set and limits nothing. The server refuses
+        // it too.
+        if (values.enabled && !values.average && !values.maxInFlightReq) {
+            ctx.addIssue({
+                code: z.ZodIssueCode.custom,
+                path: ["average"],
+                message: "Set an average, or a maximum of in-flight requests",
+            });
+        }
+    });
 
 export const HttpPathRewriteConfigSchema = z.object({
     enabled: z.boolean(),
@@ -210,13 +223,14 @@ export function createDefaultCompressionConfig(): z.infer<typeof HttpCompression
     };
 }
 
+/** Left empty, so the fields show their placeholders: a number put in for the user would be taken for advice. */
 export function createDefaultRateLimitConfig(): z.infer<typeof HttpRateLimitConfigSchema> {
     return {
         enabled: true,
-        average: 0,
+        average: undefined,
         period: "",
-        burst: 0,
-        maxInFlightReq: 0,
+        burst: undefined,
+        maxInFlightReq: undefined,
     };
 }
 

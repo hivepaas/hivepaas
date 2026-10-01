@@ -3,6 +3,8 @@ import { useEffect, useState } from "react";
 import { Button, Checkbox, FieldError, Input } from "@components/ui";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@components/ui/collapsible";
 import { InputNumber } from "@components/ui/input-number";
+import { dashedBorderBox } from "@lib/styles";
+import { cn } from "@lib/utils";
 import { ChevronDown, ChevronRight, X } from "lucide-react";
 import { useController, useFormContext } from "react-hook-form";
 
@@ -12,6 +14,8 @@ import { type AppConfigHttpSettingsFormSchemaInput, type AppConfigHttpSettingsFo
 
 interface RateLimitConfigSectionProps {
     prefix: string;
+    /** Whether the limit is on the domain, or on a path that is all of it ("/" as a prefix). */
+    coversWholeDomain?: boolean;
     autoExpandToken?: number;
     readOnly?: boolean;
     onRemove?: () => void;
@@ -19,6 +23,7 @@ interface RateLimitConfigSectionProps {
 
 export function RateLimitConfigSection({
     prefix,
+    coversWholeDomain = false,
     autoExpandToken,
     readOnly = false,
     onRemove,
@@ -141,6 +146,18 @@ export function RateLimitConfigSection({
                     </InfoBlock>
                     {isEnabled && (
                         <>
+                            {/* A page view is not one request: its scripts, stylesheets, images and API
+                                calls each count, so a limit sized for an API turns away ordinary
+                                visitors when it is on the whole domain. */}
+                            {coversWholeDomain && (
+                                <div className={cn(dashedBorderBox, "text-sm")}>
+                                    <span className="font-semibold text-orange-500">Note:</span> This limit counts every
+                                    request to the domain, per client IP: each page, script, stylesheet and image as
+                                    well as API calls. One page view of a web app can make dozens of them, so a low
+                                    limit here turns away ordinary visitors. Set it generously, or put a tighter limit
+                                    on a path such as <code>/api</code> instead.
+                                </div>
+                            )}
                             <InfoBlock
                                 titleWidth={240}
                                 title="Average"

@@ -78,10 +78,10 @@ function mapDomainToFormInput(
         rateLimitConfig: domain.rateLimitConfig
             ? {
                   enabled: domain.rateLimitConfig.enabled,
-                  average: domain.rateLimitConfig.average,
+                  average: domain.rateLimitConfig.average || undefined,
                   period: domain.rateLimitConfig.period,
-                  burst: domain.rateLimitConfig.burst,
-                  maxInFlightReq: domain.rateLimitConfig.maxInFlightReq,
+                  burst: domain.rateLimitConfig.burst || undefined,
+                  maxInFlightReq: domain.rateLimitConfig.maxInFlightReq || undefined,
               }
             : undefined,
         pathRewriteConfig: domain.pathRewriteConfig
@@ -152,10 +152,10 @@ function mapDomainToFormInput(
             rateLimitConfig: path.rateLimitConfig
                 ? {
                       enabled: path.rateLimitConfig.enabled,
-                      average: path.rateLimitConfig.average,
+                      average: path.rateLimitConfig.average || undefined,
                       period: path.rateLimitConfig.period,
-                      burst: path.rateLimitConfig.burst,
-                      maxInFlightReq: path.rateLimitConfig.maxInFlightReq,
+                      burst: path.rateLimitConfig.burst || undefined,
+                      maxInFlightReq: path.rateLimitConfig.maxInFlightReq || undefined,
                   }
                 : undefined,
             pathRewriteConfig: path.pathRewriteConfig
@@ -271,10 +271,10 @@ export function mapFormValuesToPayload(
             rateLimitConfig: domain.rateLimitConfig
                 ? {
                       enabled: domain.rateLimitConfig.enabled,
-                      average: domain.rateLimitConfig.average,
+                      average: domain.rateLimitConfig.average ?? 0,
                       period: domain.rateLimitConfig.period,
-                      burst: domain.rateLimitConfig.burst,
-                      maxInFlightReq: domain.rateLimitConfig.maxInFlightReq,
+                      burst: domain.rateLimitConfig.burst ?? 0,
+                      maxInFlightReq: domain.rateLimitConfig.maxInFlightReq ?? 0,
                   }
                 : null,
             pathRewriteConfig: domain.pathRewriteConfig
@@ -357,10 +357,10 @@ export function mapFormValuesToPayload(
                 rateLimitConfig: path.rateLimitConfig
                     ? {
                           enabled: path.rateLimitConfig.enabled,
-                          average: path.rateLimitConfig.average,
+                          average: path.rateLimitConfig.average ?? 0,
                           period: path.rateLimitConfig.period,
-                          burst: path.rateLimitConfig.burst,
-                          maxInFlightReq: path.rateLimitConfig.maxInFlightReq,
+                          burst: path.rateLimitConfig.burst ?? 0,
+                          maxInFlightReq: path.rateLimitConfig.maxInFlightReq ?? 0,
                       }
                     : null,
                 pathRewriteConfig: path.pathRewriteConfig

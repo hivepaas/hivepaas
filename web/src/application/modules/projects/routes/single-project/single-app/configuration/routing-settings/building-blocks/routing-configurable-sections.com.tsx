@@ -1,6 +1,7 @@
 import { useState } from "react";
 
 import { useFormContext, useWatch } from "react-hook-form";
+import { EHttpPathMode } from "~/projects/module-shared/enums";
 
 import {
     type AppConfigRoutingSettingsFormSchemaInput,
@@ -30,6 +31,10 @@ export function RoutingConfigurableSections({ basePath, readOnly = false }: Rout
     >();
     const segment = useWatch({ control, name: basePath as never }) as Record<string, unknown> | undefined;
     const setFormValue = setValue as (name: string, value: unknown, opts?: object) => void;
+    // A limit on the domain, or on a path that is all of it, counts every request
+    // a page makes - see RateLimitConfigSection.
+    const coversWholeDomain =
+        !basePath.includes(".paths.") || (segment?.["mode"] === EHttpPathMode.Prefix && segment["path"] === "/");
     const [expandSignal, setExpandSignal] = useState<{ key: ConfigSectionKey; seq: number } | null>(null);
 
     const removeSection = (fieldPath: string) => {
@@ -111,6 +116,7 @@ export function RoutingConfigurableSections({ basePath, readOnly = false }: Rout
             {segment?.["rateLimitConfig"] != null && (
                 <RateLimitConfigSection
                     prefix={`${basePath}.rateLimitConfig`}
+                    coversWholeDomain={coversWholeDomain}
                     readOnly={readOnly}
                     autoExpandToken={expandSignal?.key === "rateLimitConfig" ? expandSignal.seq : undefined}
                     onRemove={() => {

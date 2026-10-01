@@ -9,7 +9,6 @@ import {
     type HivePaaSRoutingSettingsFormInput,
     type HivePaaSRoutingSettingsFormOutput,
     createDefaultClientConfig,
-    createDefaultRateLimitConfig,
 } from "../schemas";
 
 function mapDomainToFormInput(domain: HivePaaSRoutingDomain): HivePaaSRoutingSettingsFormInput["domains"][number] {
@@ -23,15 +22,6 @@ function mapDomainToFormInput(domain: HivePaaSRoutingDomain): HivePaaSRoutingSet
                   allowedIPs: domain.clientConfig.allowedIPs.join(","),
               }
             : createDefaultClientConfig(),
-        rateLimitConfig: domain.rateLimitConfig
-            ? {
-                  enabled: domain.rateLimitConfig.enabled,
-                  average: domain.rateLimitConfig.average,
-                  period: domain.rateLimitConfig.period,
-                  burst: domain.rateLimitConfig.burst,
-                  maxInFlightReq: domain.rateLimitConfig.maxInFlightReq,
-              }
-            : createDefaultRateLimitConfig(),
     };
 }
 
@@ -60,13 +50,6 @@ export function mapFormValuesToPayload(
                     .split(",")
                     .map(s => s.trim())
                     .filter(Boolean),
-            },
-            rateLimitConfig: {
-                enabled: domain.rateLimitConfig.enabled,
-                average: domain.rateLimitConfig.average,
-                period: domain.rateLimitConfig.period,
-                burst: domain.rateLimitConfig.burst,
-                maxInFlightReq: domain.rateLimitConfig.maxInFlightReq,
             },
         })),
     };

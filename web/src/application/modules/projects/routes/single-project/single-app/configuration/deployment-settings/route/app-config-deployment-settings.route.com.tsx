@@ -17,6 +17,7 @@ import { isValidationException } from "@infrastructure/api";
 
 import { ValidationException } from "@infrastructure/exceptions/validation";
 
+import { FunctionSettings } from "../../function-settings";
 import { AppConfigDeploymentSettingsForm } from "../form";
 import { type AppConfigDeploymentSettingsFormSchemaOutput } from "../schemas";
 import { type AppConfigDeploymentSettingsFormRef } from "../types";
@@ -145,13 +146,23 @@ export function AppConfigDeploymentSettingsRoute() {
         return <AppLoader />;
     }
 
+    // A function's deployment settings are its runtime and its code's place.
+    if (data?.data.activeMethod === EAppDeploymentMethod.Function) {
+        return (
+            <FunctionSettings
+                projectId={projectId}
+                env={env}
+                appId={appId}
+                settings={data.data}
+            />
+        );
+    }
+
     return (
         <div className="flex flex-col gap-4">
             <AppConfigDeploymentSettingsForm
                 ref={formRef}
-                defaultValues={
-                    data?.data && data.data.activeMethod !== EAppDeploymentMethod.Function ? data.data : undefined
-                }
+                defaultValues={data?.data}
                 onSubmit={handleSubmit}
                 readOnly={!canWrite}
             >

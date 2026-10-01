@@ -24,10 +24,13 @@ import {
     Rocket,
     Settings,
     Sliders,
+    SquareFunction,
     TrendingUp,
 } from "lucide-react";
 import { useLocation, useNavigate, useParams } from "react-router";
 import invariant from "tiny-invariant";
+import { ProjectAppsQueries } from "~/projects/data";
+import { isFunctionApp } from "~/projects/module-shared/utils";
 
 import { AppLink } from "@application/shared/components";
 import { ROUTE } from "@application/shared/constants";
@@ -80,6 +83,14 @@ function View({ children }: PropsWithChildren) {
 
     const location = useLocation();
     const navigate = useNavigate();
+    // The header asks for the same app: this reads it from the cache.
+    const { data: appResponse } = ProjectAppsQueries.useFindOneById({
+        projectID: projectId,
+        env,
+        appID: appId,
+        getStats: true,
+    });
+    const isFunction = appResponse ? isFunctionApp(appResponse.data) : false;
 
     const sections: TabSection[] = useMemo(
         () => [
@@ -91,18 +102,23 @@ function View({ children }: PropsWithChildren) {
                         icon: Settings,
                         route: ROUTE.projects.single.apps.single.configuration.general.$route(projectId, env, appId),
                     },
+                    // A function's kind is fixed: it is a function.
+                    ...(isFunction
+                        ? []
+                        : [
+                              {
+                                  label: "App Kind",
+                                  icon: Boxes,
+                                  route: ROUTE.projects.single.apps.single.configuration.kindSettings.$route(
+                                      projectId,
+                                      env,
+                                      appId,
+                                  ),
+                              },
+                          ]),
                     {
-                        label: "App Kind",
-                        icon: Boxes,
-                        route: ROUTE.projects.single.apps.single.configuration.kindSettings.$route(
-                            projectId,
-                            env,
-                            appId,
-                        ),
-                    },
-                    {
-                        label: "Deployment Settings",
-                        icon: Rocket,
+                        label: isFunction ? "Function" : "Deployment Settings",
+                        icon: isFunction ? SquareFunction : Rocket,
                         route: ROUTE.projects.single.apps.single.configuration.deploymentSettings.$route(
                             projectId,
                             env,
@@ -267,7 +283,7 @@ function View({ children }: PropsWithChildren) {
                 ],
             },
         ],
-        [projectId, env, appId],
+        [projectId, env, appId, isFunction],
     );
 
     const allTabs = useMemo(() => sections.flatMap(sec => sec.items), [sections]);

@@ -1,6 +1,7 @@
 export * from "./general";
 export * from "./kind-settings";
 export * from "./deployment-settings";
+export * from "./function-settings";
 export * from "./container-settings";
 export * from "./routing-settings";
 

@@ -47506,6 +47506,9 @@
           "command" : {
             "type" : "string"
           },
+          "functionSource" : {
+            "$ref" : "#/components/schemas/entity.DeploymentFunctionSource"
+          },
           "imageSource" : {
             "$ref" : "#/components/schemas/entity.DeploymentImageSource"
           },
@@ -47525,7 +47528,7 @@
             "type" : "string"
           }
         },
-        "required" : [ "activeMethod", "command", "imageSource", "notification", "postDeploymentCommand", "preDeploymentCommand", "repoSource", "workingDir" ],
+        "required" : [ "activeMethod", "command", "functionSource", "imageSource", "notification", "postDeploymentCommand", "preDeploymentCommand", "repoSource", "workingDir" ],
         "type" : "object"
       },
       "entity.BaseEventNotification" : {
@@ -47562,6 +47565,55 @@
           }
         },
         "required" : [ "content", "path", "scanPath", "source" ],
+        "type" : "object"
+      },
+      "entity.DeploymentFunctionSource" : {
+        "properties" : {
+          "code" : {
+            "allOf" : [ {
+              "$ref" : "#/components/schemas/entity.FunctionCode"
+            } ],
+            "description" : "Code is inline, as written in the dashboard's editor, or a repository.",
+            "type" : "object"
+          },
+          "contract" : {
+            "description" : "Contract is the version of the handler contract: v1.",
+            "type" : "string"
+          },
+          "entrypoint" : {
+            "allOf" : [ {
+              "$ref" : "#/components/schemas/entity.FunctionEntrypoint"
+            } ],
+            "description" : "Entrypoint is the file and the name of the handler in it.",
+            "type" : "object"
+          },
+          "maxBodySize" : {
+            "type" : "integer"
+          },
+          "maxConcurrency" : {
+            "type" : "integer"
+          },
+          "pushToRegistry" : {
+            "description" : "PushToRegistry is the registry the built image goes to, which a cluster of\nseveral nodes needs.",
+            "type" : "string"
+          },
+          "runtime" : {
+            "description" : "Runtime is the language and its line: node24, python313, go127.",
+            "type" : "string"
+          },
+          "systemPackages" : {
+            "description" : "SystemPackages are Debian packages installed before the libraries:\n\"libpq-dev\", or \"ffmpeg=7:5.1.6-0+deb12u1\".",
+            "items" : {
+              "type" : "string"
+            },
+            "type" : "array"
+          },
+          "timeout" : {
+            "description" : "Limits of one call.",
+            "type" : "string"
+          }
+        },
+        "required" : [ "code", "contract", "entrypoint", "maxBodySize", "maxConcurrency", "pushToRegistry", "runtime", "systemPackages", "timeout" ],
         "type" : "object"
       },
       "entity.DeploymentImageSource" : {
@@ -47651,6 +47703,88 @@
           }
         },
         "required" : [ "content", "fromAddress", "fromName", "password", "subject", "toAddress", "toAddresses" ],
+        "type" : "object"
+      },
+      "entity.FunctionCode" : {
+        "properties" : {
+          "dir" : {
+            "description" : "Dir is where the function is in the repository, for a repository holding\nseveral.",
+            "type" : "string"
+          },
+          "inline" : {
+            "$ref" : "#/components/schemas/entity.FunctionInlineCode"
+          },
+          "repo" : {
+            "$ref" : "#/components/schemas/entity.FunctionRepoCode"
+          }
+        },
+        "required" : [ "dir", "inline", "repo" ],
+        "type" : "object"
+      },
+      "entity.FunctionEntrypoint" : {
+        "properties" : {
+          "file" : {
+            "description" : "File is the handler's file, relative to the function's root; for Go, the\ndirectory of the handler's package.",
+            "type" : "string"
+          },
+          "handler" : {
+            "description" : "Handler is the name of the handler in it.",
+            "type" : "string"
+          }
+        },
+        "required" : [ "file", "handler" ],
+        "type" : "object"
+      },
+      "entity.FunctionFile" : {
+        "properties" : {
+          "content" : {
+            "type" : "string"
+          },
+          "path" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "content", "path" ],
+        "type" : "object"
+      },
+      "entity.FunctionInlineCode" : {
+        "properties" : {
+          "files" : {
+            "items" : {
+              "$ref" : "#/components/schemas/entity.FunctionFile"
+            },
+            "type" : "array"
+          }
+        },
+        "required" : [ "files" ],
+        "type" : "object"
+      },
+      "entity.FunctionRepoCode" : {
+        "properties" : {
+          "commitHash" : {
+            "type" : "string"
+          },
+          "credentials" : {
+            "$ref" : "#/components/schemas/entity.RepoCredentials"
+          },
+          "repoId" : {
+            "type" : "string"
+          },
+          "repoOptions" : {
+            "$ref" : "#/components/schemas/entity.DeploymentRepoOptions"
+          },
+          "repoRef" : {
+            "description" : "can be branch name, tag...",
+            "type" : "string"
+          },
+          "repoType" : {
+            "type" : "string"
+          },
+          "repoURL" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "commitHash", "credentials", "repoId", "repoOptions", "repoRef", "repoType", "repoURL" ],
         "type" : "object"
       },
       "entity.RepoCredentials" : {
@@ -49177,6 +49311,78 @@
         "required" : [ "content", "path", "scanPath", "source" ],
         "type" : "object"
       },
+      "appsettingsdto.DeploymentFunctionSourceReq" : {
+        "properties" : {
+          "code" : {
+            "$ref" : "#/components/schemas/appsettingsdto.FunctionCodeReq"
+          },
+          "contract" : {
+            "type" : "string"
+          },
+          "entrypoint" : {
+            "$ref" : "#/components/schemas/appsettingsdto.FunctionEntrypointReq"
+          },
+          "maxBodySize" : {
+            "type" : "string"
+          },
+          "maxConcurrency" : {
+            "type" : "integer"
+          },
+          "pushToRegistry" : {
+            "$ref" : "#/components/schemas/basedto.ObjectIDReq"
+          },
+          "runtime" : {
+            "type" : "string"
+          },
+          "systemPackages" : {
+            "items" : {
+              "type" : "string"
+            },
+            "type" : "array"
+          },
+          "timeout" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "code", "contract", "entrypoint", "maxBodySize", "maxConcurrency", "pushToRegistry", "runtime", "systemPackages", "timeout" ],
+        "type" : "object"
+      },
+      "appsettingsdto.DeploymentFunctionSourceResp" : {
+        "properties" : {
+          "code" : {
+            "$ref" : "#/components/schemas/appsettingsdto.FunctionCodeResp"
+          },
+          "contract" : {
+            "type" : "string"
+          },
+          "entrypoint" : {
+            "$ref" : "#/components/schemas/appsettingsdto.FunctionEntrypointResp"
+          },
+          "maxBodySize" : {
+            "type" : "string"
+          },
+          "maxConcurrency" : {
+            "type" : "integer"
+          },
+          "pushToRegistry" : {
+            "$ref" : "#/components/schemas/settings.BaseSettingResp"
+          },
+          "runtime" : {
+            "type" : "string"
+          },
+          "systemPackages" : {
+            "items" : {
+              "type" : "string"
+            },
+            "type" : "array"
+          },
+          "timeout" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "code", "contract", "entrypoint", "maxBodySize", "maxConcurrency", "pushToRegistry", "runtime", "systemPackages", "timeout" ],
+        "type" : "object"
+      },
       "appsettingsdto.DeploymentImageNamingResp" : {
         "properties" : {
           "repoName" : {
@@ -49316,6 +49522,9 @@
           "command" : {
             "type" : "string"
           },
+          "functionSource" : {
+            "$ref" : "#/components/schemas/appsettingsdto.DeploymentFunctionSourceResp"
+          },
           "image" : {
             "allOf" : [ {
               "$ref" : "#/components/schemas/appsettingsdto.DeploymentImageNamingResp"
@@ -49345,7 +49554,7 @@
             "type" : "string"
           }
         },
-        "required" : [ "activeMethod", "command", "image", "imageSource", "notification", "postDeploymentCommand", "preDeploymentCommand", "repoSource", "updateVer", "workingDir" ],
+        "required" : [ "activeMethod", "command", "functionSource", "image", "imageSource", "notification", "postDeploymentCommand", "preDeploymentCommand", "repoSource", "updateVer", "workingDir" ],
         "type" : "object"
       },
       "appsettingsdto.DockerfileTemplateResp" : {
@@ -49705,6 +49914,159 @@
           }
         },
         "required" : [ "meta" ],
+        "type" : "object"
+      },
+      "appsettingsdto.FunctionCodeReq" : {
+        "properties" : {
+          "dir" : {
+            "type" : "string"
+          },
+          "inline" : {
+            "$ref" : "#/components/schemas/appsettingsdto.FunctionInlineCodeReq"
+          },
+          "repo" : {
+            "$ref" : "#/components/schemas/appsettingsdto.FunctionRepoCodeReq"
+          }
+        },
+        "required" : [ "dir", "inline", "repo" ],
+        "type" : "object"
+      },
+      "appsettingsdto.FunctionCodeResp" : {
+        "properties" : {
+          "dir" : {
+            "type" : "string"
+          },
+          "inline" : {
+            "$ref" : "#/components/schemas/appsettingsdto.FunctionInlineCodeResp"
+          },
+          "repo" : {
+            "$ref" : "#/components/schemas/appsettingsdto.FunctionRepoCodeResp"
+          }
+        },
+        "required" : [ "dir", "inline", "repo" ],
+        "type" : "object"
+      },
+      "appsettingsdto.FunctionEntrypointReq" : {
+        "properties" : {
+          "file" : {
+            "type" : "string"
+          },
+          "handler" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "file", "handler" ],
+        "type" : "object"
+      },
+      "appsettingsdto.FunctionEntrypointResp" : {
+        "properties" : {
+          "file" : {
+            "type" : "string"
+          },
+          "handler" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "file", "handler" ],
+        "type" : "object"
+      },
+      "appsettingsdto.FunctionFileReq" : {
+        "properties" : {
+          "content" : {
+            "type" : "string"
+          },
+          "path" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "content", "path" ],
+        "type" : "object"
+      },
+      "appsettingsdto.FunctionFileResp" : {
+        "properties" : {
+          "content" : {
+            "type" : "string"
+          },
+          "path" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "content", "path" ],
+        "type" : "object"
+      },
+      "appsettingsdto.FunctionInlineCodeReq" : {
+        "properties" : {
+          "files" : {
+            "items" : {
+              "$ref" : "#/components/schemas/appsettingsdto.FunctionFileReq"
+            },
+            "type" : "array"
+          }
+        },
+        "required" : [ "files" ],
+        "type" : "object"
+      },
+      "appsettingsdto.FunctionInlineCodeResp" : {
+        "properties" : {
+          "files" : {
+            "items" : {
+              "$ref" : "#/components/schemas/appsettingsdto.FunctionFileResp"
+            },
+            "type" : "array"
+          }
+        },
+        "required" : [ "files" ],
+        "type" : "object"
+      },
+      "appsettingsdto.FunctionRepoCodeReq" : {
+        "properties" : {
+          "commitHash" : {
+            "type" : "string"
+          },
+          "credentials" : {
+            "$ref" : "#/components/schemas/basedto.ObjectIDReq"
+          },
+          "repoOptions" : {
+            "$ref" : "#/components/schemas/appsettingsdto.DeploymentRepoOptionsReq"
+          },
+          "repoRef" : {
+            "type" : "string"
+          },
+          "repoType" : {
+            "type" : "string"
+          },
+          "repoURL" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "commitHash", "credentials", "repoOptions", "repoRef", "repoType", "repoURL" ],
+        "type" : "object"
+      },
+      "appsettingsdto.FunctionRepoCodeResp" : {
+        "properties" : {
+          "commitHash" : {
+            "type" : "string"
+          },
+          "credentials" : {
+            "$ref" : "#/components/schemas/settings.BaseSettingResp"
+          },
+          "repoId" : {
+            "type" : "string"
+          },
+          "repoOptions" : {
+            "$ref" : "#/components/schemas/appsettingsdto.DeploymentRepoOptionsResp"
+          },
+          "repoRef" : {
+            "type" : "string"
+          },
+          "repoType" : {
+            "type" : "string"
+          },
+          "repoURL" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "commitHash", "credentials", "repoId", "repoOptions", "repoRef", "repoType", "repoURL" ],
         "type" : "object"
       },
       "appsettingsdto.GenericResource" : {
@@ -51251,6 +51613,13 @@
           "command" : {
             "type" : "string"
           },
+          "functionSource" : {
+            "allOf" : [ {
+              "$ref" : "#/components/schemas/appsettingsdto.DeploymentFunctionSourceReq"
+            } ],
+            "description" : "FunctionSource is a function's: its code, its runtime and its limits.",
+            "type" : "object"
+          },
           "imageSource" : {
             "$ref" : "#/components/schemas/appsettingsdto.DeploymentImageSourceReq"
           },
@@ -51273,7 +51642,7 @@
             "type" : "string"
           }
         },
-        "required" : [ "activeMethod", "command", "imageSource", "notification", "postDeploymentCommand", "preDeploymentCommand", "repoSource", "updateVer", "workingDir" ],
+        "required" : [ "activeMethod", "command", "functionSource", "imageSource", "notification", "postDeploymentCommand", "preDeploymentCommand", "repoSource", "updateVer", "workingDir" ],
         "type" : "object"
       },
       "appsettingsdto.UpdateAppDeploymentSettingsResp" : {

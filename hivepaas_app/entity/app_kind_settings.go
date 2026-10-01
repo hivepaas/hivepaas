@@ -105,3 +105,14 @@ func (s *Setting) AsAppKindSettings() (*AppKindSettings, error) {
 func (s *Setting) MustAsAppKindSettings() *AppKindSettings {
 	return gofn.Must(s.AsAppKindSettings())
 }
+
+// IsFunctionKind says whether a setting is the kind of a function. An app is a
+// function from its creation and stays one, so what its other settings may say
+// follows from it.
+func IsFunctionKind(setting *Setting) bool {
+	if setting == nil || setting.Type != base.SettingTypeAppKind {
+		return false
+	}
+	kind, err := setting.AsAppKindSettings()
+	return err == nil && kind.Category == base.AppCategoryFunction
+}

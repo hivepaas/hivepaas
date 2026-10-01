@@ -65,6 +65,7 @@ func TestEachCategoryAndFamilyHasARecipe(t *testing.T) {
 		"other cache":  {&Target{Key: "c", Category: cache, Engine: "hazelcast"}, []string{"individual"}},
 		"storage":      {&Target{Key: "s3", Category: base.AppCategoryStorage, Engine: "minio"}, []string{"s3"}},
 		"webapp":       {&Target{Key: "api", Category: base.AppCategoryWebapp}, []string{"addresses"}},
+		"function":     {&Target{Key: "fn", Category: base.AppCategoryFunction}, []string{"addresses"}},
 		"without kind": {&Target{Key: "api"}, []string{"addresses"}},
 	} {
 		groups := Suggest(tc.target, ready)
@@ -86,6 +87,7 @@ func TestRecipesNameOnlySharedVariables(t *testing.T) {
 		{Key: "a", Category: base.AppCategoryCache, Engine: "x"},
 		{Key: "a", Category: base.AppCategoryStorage},
 		{Key: "a", Category: base.AppCategoryWebapp},
+		{Key: "a", Category: base.AppCategoryFunction},
 	} {
 		allowed := map[string]bool{}
 		for _, name := range append(append([]string{}, base.AppCommonSharedEnvVars...),
@@ -120,6 +122,13 @@ func TestATargetWithoutAPortIsWarnedAbout(t *testing.T) {
 func TestATargetWithoutAKindSaysWhy(t *testing.T) {
 	groups := Suggest(&Target{Key: "api", Name: "API"}, ready)
 	assert.Contains(t, groups[0].Warnings, "API declares no kind, so only its addresses and shared variables are offered.")
+}
+
+// A function is called at its address, as a web app is: it declares its kind.
+func TestAFunctionIsLinkedToByItsAddress(t *testing.T) {
+	groups := Suggest(&Target{Key: "fn", Name: "FN", Category: base.AppCategoryFunction}, ready)
+	assert.Equal(t, []string{"addresses"}, groupIDs(groups))
+	assert.Empty(t, groups[0].Warnings)
 }
 
 func TestTheTargetsSharedVariablesComeLast(t *testing.T) {

@@ -7,11 +7,14 @@ const (
 	AppCategoryWebapp   AppCategory = "webapp"
 	AppCategoryCache    AppCategory = "cache"
 	AppCategoryStorage  AppCategory = "storage"
+	// AppCategoryFunction is a function: a handler HivePaaS runs on a runtime of
+	// its own. An app is one from its creation, and stays one.
+	AppCategoryFunction AppCategory = "function"
 )
 
 var (
 	AllAppCategories = []AppCategory{AppCategoryDatabase, AppCategoryWebapp, AppCategoryCache,
-		AppCategoryStorage}
+		AppCategoryStorage, AppCategoryFunction}
 )
 
 type DatabaseSSLMode string

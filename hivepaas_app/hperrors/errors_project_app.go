@@ -27,6 +27,12 @@ var (
 	ErrBuildSecretDeclaredAsArg = NewErr(ErrNotAllowed, "ERR_BUILD_SECRET_DECLARED_AS_ARG")
 	// A function whose runtime the running release names no image for.
 	ErrFunctionRuntimeUnavailable = NewErr(ErrUnsupported, "ERR_FUNCTION_RUNTIME_UNAVAILABLE")
+	// A function is deployed from its code, and only a function is: the
+	// deployment method follows the app's kind.
+	ErrDeploymentMethodFunctionRequired  = NewErr(ErrPreconditionFailed, "ERR_DEPLOYMENT_METHOD_FUNCTION_REQUIRED")
+	ErrDeploymentMethodFunctionUnallowed = NewErr(ErrPreconditionFailed, "ERR_DEPLOYMENT_METHOD_FUNCTION_UNALLOWED")
+	// An app is a function from its creation, and stays one.
+	ErrAppKindFunctionUnchangeable = NewErr(ErrNonEditable, "ERR_APP_KIND_FUNCTION_UNCHANGEABLE")
 )
 
 // Errors for sources

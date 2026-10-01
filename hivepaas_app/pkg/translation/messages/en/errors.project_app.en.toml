@@ -34,3 +34,8 @@ ERR_GIT_LOG_OUTPUT_UNEXPECTED = "Git log output is unexpected: {{.Output}}"
 
 # Build errors
 ERR_FUNCTION_RUNTIME_UNAVAILABLE = "This release of HivePaaS has no image for the function runtime {{.Runtime}}"
+
+# Function errors
+ERR_DEPLOYMENT_METHOD_FUNCTION_REQUIRED = "A function is deployed from its code: its deployment method is 'function'"
+ERR_DEPLOYMENT_METHOD_FUNCTION_UNALLOWED = "Only an app created as a function is deployed from a function's code"
+ERR_APP_KIND_FUNCTION_UNCHANGEABLE = "A function stays a function, and an app becomes one only when it is created as one"

@@ -60,3 +60,30 @@ func TestACloneCopiesInheritableEntriesWithTheirSources(t *testing.T) {
 		assert.Equal(t, "shared", withoutGated[0].Name)
 	}
 }
+
+func kindOf(t *testing.T, category base.AppCategory) *entity.Setting {
+	t.Helper()
+	setting := &entity.Setting{ID: "kind-1", Type: base.SettingTypeAppKind, Status: base.SettingStatusActive}
+	assert.NoError(t, setting.SetData(&entity.AppKindSettings{Category: category}))
+	return setting
+}
+
+// A function's clone is a function when it takes the function's code: its kind
+// goes with its deployment settings. Without them the clone is an app like any
+// other's, as before.
+func TestAFunctionsCloneIsAFunctionWhenItTakesItsCode(t *testing.T) {
+	withCode := &appCloneData{AppCloneReq: &appcloneservice.AppCloneReq{
+		CloneSettings: &entity.AppCloneSettings{CloneDeploymentSettings: true}}}
+	withoutCode := &appCloneData{AppCloneReq: &appcloneservice.AppCloneReq{CloneSettings: &entity.AppCloneSettings{}}}
+	function := kindOf(t, base.AppCategoryFunction)
+
+	kept, err := (&service{}).onCloneSettingDefault(function, withCode)
+	assert.NoError(t, err)
+	assert.Same(t, function, kept)
+	dropped, err := (&service{}).onCloneSettingDefault(function, withoutCode)
+	assert.NoError(t, err)
+	assert.Nil(t, dropped)
+	webapp, err := (&service{}).onCloneSettingDefault(kindOf(t, base.AppCategoryWebapp), withCode)
+	assert.NoError(t, err)
+	assert.Nil(t, webapp)
+}

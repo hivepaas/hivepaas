@@ -37,9 +37,10 @@ type GetAppDeploymentSettingsResp struct {
 }
 
 type DeploymentSettingsResp struct {
-	ImageSource  *DeploymentImageSourceResp `json:"imageSource,omitempty"`
-	RepoSource   *DeploymentRepoSourceResp  `json:"repoSource,omitempty"`
-	ActiveMethod base.DeploymentMethod      `json:"activeMethod"`
+	ImageSource    *DeploymentImageSourceResp    `json:"imageSource,omitempty"`
+	RepoSource     *DeploymentRepoSourceResp     `json:"repoSource,omitempty"`
+	FunctionSource *DeploymentFunctionSourceResp `json:"functionSource,omitempty"`
+	ActiveMethod   base.DeploymentMethod         `json:"activeMethod"`
 
 	Command               string `json:"command,omitempty"`
 	WorkingDir            string `json:"workingDir,omitempty"`
@@ -164,6 +165,8 @@ func TransformDeploymentSettings(
 			resp.RepoSource.PushToRegistry = nil
 		}
 	}
+
+	transformFunctionSource(resp.FunctionSource, refObjects)
 
 	if appDeploymentSettings != nil {
 		resp.Notification = basedto.TransformBaseEventNotification(appDeploymentSettings.Notification, refObjects)

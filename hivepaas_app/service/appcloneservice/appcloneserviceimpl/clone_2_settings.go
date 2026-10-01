@@ -114,6 +114,10 @@ func (s *service) onCloneSettingDefault(
 		return setting, nil
 	case base.SettingTypeAppDeployment:
 		return s.onCloneDeploymentSettingDefault(setting, data)
+	case base.SettingTypeAppKind:
+		// A function's kind goes with its code: the clone is a function when it
+		// takes the function's deployment settings.
+		return gofn.If(settings.CloneDeploymentSettings && entity.IsFunctionKind(setting), setting, nil), nil
 	case base.SettingTypeAppRouting:
 		return s.onCloneRoutingSettingDefault(setting, data)
 	case base.SettingTypeAppFeatures:

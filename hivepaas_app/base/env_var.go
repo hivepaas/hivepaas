@@ -115,7 +115,7 @@ func AppKindSharedEnvVars(category AppCategory) []string {
 		return []string{AppSystemEnvVarPassword, AppSystemEnvVarPasswordURLEncoded}
 	case AppCategoryStorage:
 		return []string{AppSystemEnvVarKeyID, AppSystemEnvVarSecret, AppSystemEnvVarBucket, AppSystemEnvVarRegion}
-	case AppCategoryWebapp:
+	case AppCategoryWebapp, AppCategoryFunction:
 		return nil
 	}
 	return nil

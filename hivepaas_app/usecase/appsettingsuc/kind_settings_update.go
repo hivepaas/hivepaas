@@ -105,6 +105,9 @@ func (uc *UC) loadAppKindSettingsForUpdate(
 	if kindSetting != nil {
 		currKindSettings = kindSetting.MustAsAppKindSettings()
 	}
+	if err = checkKindCategoryChange(currKindSettings, req.Category); err != nil {
+		return hperrors.Wrap(err)
+	}
 	newKindSettings := req.ToEntity()
 	req.KeepMaskedSecrets(newKindSettings, currKindSettings)
 

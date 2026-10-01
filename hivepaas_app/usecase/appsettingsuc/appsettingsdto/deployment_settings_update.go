@@ -28,9 +28,11 @@ type UpdateAppDeploymentSettingsReq struct {
 }
 
 type DeploymentSettingsReq struct {
-	ImageSource  *DeploymentImageSourceReq `json:"imageSource"`
-	RepoSource   *DeploymentRepoSourceReq  `json:"repoSource"`
-	ActiveMethod base.DeploymentMethod     `json:"activeMethod"`
+	ImageSource *DeploymentImageSourceReq `json:"imageSource"`
+	RepoSource  *DeploymentRepoSourceReq  `json:"repoSource"`
+	// FunctionSource is a function's: its code, its runtime and its limits.
+	FunctionSource *DeploymentFunctionSourceReq `json:"functionSource"`
+	ActiveMethod   base.DeploymentMethod        `json:"activeMethod"`
 
 	Command               string `json:"command"`
 	WorkingDir            string `json:"workingDir"`
@@ -47,10 +49,17 @@ func (req *DeploymentSettingsReq) ToEntity() (*entity.AppDeploymentSettings, err
 	if err != nil {
 		return nil, hperrors.Wrap(err)
 	}
+	var functionSource *entity.DeploymentFunctionSource
+	if req.FunctionSource != nil {
+		if functionSource, err = req.FunctionSource.ToEntity(); err != nil {
+			return nil, hperrors.Wrap(err)
+		}
+	}
 	return &entity.AppDeploymentSettings{
-		ImageSource:  req.ImageSource.ToEntity(),
-		RepoSource:   repoSourceEntity,
-		ActiveMethod: req.ActiveMethod,
+		ImageSource:    req.ImageSource.ToEntity(),
+		RepoSource:     repoSourceEntity,
+		FunctionSource: functionSource,
+		ActiveMethod:   req.ActiveMethod,
 
 		Command:               req.Command,
 		WorkingDir:            req.WorkingDir,
@@ -196,6 +205,15 @@ func NewUpdateAppDeploymentSettingsReq() *UpdateAppDeploymentSettingsReq {
 	return &UpdateAppDeploymentSettingsReq{}
 }
 
+// ModifyRequest implements interface basedto.ReqModifier: a function's source
+// takes its runtime's defaults before it is checked.
+func (req *UpdateAppDeploymentSettingsReq) ModifyRequest() error {
+	if req.DeploymentSettingsReq != nil && req.FunctionSource != nil {
+		req.FunctionSource.Normalize()
+	}
+	return nil
+}
+
 // Validate implements interface basedto.ReqValidator
 func (req *UpdateAppDeploymentSettingsReq) Validate() hperrors.ValidationErrors {
 	validators := make([]vld.Validator, 0, 10) //nolint:mnd
@@ -206,6 +224,15 @@ func (req *UpdateAppDeploymentSettingsReq) Validate() hperrors.ValidationErrors 
 	validators = append(validators, req.RepoSource.validate("repoSource")...)
 	validators = append(validators, basedto.ValidateStrIn(&req.ActiveMethod, true,
 		base.AllDeploymentMethods, "activeMethod")...)
+	if req.ActiveMethod == base.DeploymentMethodFunction {
+		validators = append(validators, vld.Must(req.FunctionSource != nil).OnError(
+			vld.SetField("functionSource", nil),
+			vld.SetCustomKey("ERR_VLD_VALUE_REQUIRED"),
+		))
+	}
+	if req.FunctionSource != nil {
+		validators = append(validators, req.FunctionSource.Validate("functionSource")...)
+	}
 	validators = append(validators, req.Notification.Validate("notification")...)
 	// TODO: add validation for deployment settings input
 	return hperrors.NewValidationErrors(vld.Validate(validators...))

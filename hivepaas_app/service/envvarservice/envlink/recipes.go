@@ -47,7 +47,7 @@ func Suggest(target *Target, facts *Facts) []*Group {
 		groups = cacheGroups(r, EngineFamily(target.Engine), facts.HasPassword)
 	case base.AppCategoryStorage:
 		groups = []*Group{storageGroup(r)}
-	case base.AppCategoryWebapp:
+	case base.AppCategoryWebapp, base.AppCategoryFunction:
 		groups = []*Group{addressGroup(r, target)}
 	default:
 		address := addressGroup(r, target)

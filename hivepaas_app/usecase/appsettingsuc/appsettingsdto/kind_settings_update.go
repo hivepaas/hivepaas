@@ -101,6 +101,8 @@ func (req *AppKindSettingsReq) validate(field string) (res []vld.Validator) {
 	case base.AppCategoryStorage:
 		res = append(res, basedto.ValidateCond(req.Storage != nil, field+"storage")...)
 		res = append(res, req.Storage.validate(field+"storage")...)
+	case base.AppCategoryFunction:
+		// A function's settings are its deployment settings' function source.
 	}
 	return res
 }
@@ -194,6 +196,15 @@ func (req *AppKindCacheReq) validate(field string) (res []vld.Validator) {
 
 func NewUpdateAppKindSettingsReq() *UpdateAppKindSettingsReq {
 	return &UpdateAppKindSettingsReq{}
+}
+
+// ModifyRequest implements interface basedto.ReqModifier: a function listens
+// on its runtime's port, which a request does not move.
+func (req *UpdateAppKindSettingsReq) ModifyRequest() error {
+	if req.AppKindSettingsReq != nil && req.Category == base.AppCategoryFunction {
+		req.Port = base.FunctionPort
+	}
+	return nil
 }
 
 // Validate implements interface basedto.ReqValidator

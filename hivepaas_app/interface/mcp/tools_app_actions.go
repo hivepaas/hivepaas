@@ -2,6 +2,8 @@ package mcp
 
 import (
 	"context"
+	"crypto/sha256"
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -56,7 +58,7 @@ func planRestartAppTool() Tool {
 
 // redeployDescs describe the deploy endpoint's request.
 var redeployDescs = map[string]string{
-	"noCache": "a repository app: true to build without the build cache; an image app ignores it",
+	"noCache": "a repository app or a function: true to build without the build cache; an image app ignores it",
 	"changeId": "the change this deploys, kept on the deployment's trigger. pr-<number> names a pull request " +
 		"of the app's repository, which HivePaaS then comments on with how the deployment went",
 }
@@ -69,6 +71,9 @@ type deploySource struct {
 	Repo   string `json:"repo,omitempty"`
 	Ref    string `json:"ref,omitempty"`
 	Commit string `json:"commit,omitempty"`
+	// Code is a digest of a function's inline code: an edit to any of its files
+	// is a source that moved.
+	Code string `json:"code,omitempty"`
 }
 
 type redeployPlan struct {
@@ -88,7 +93,8 @@ func planRedeployAppTool() Tool {
 	return planToolWith("plan_redeploy_app", "Plan a redeploy",
 		"Plans POST /projects/{project}/{env}/apps/{app}/deploy: a new deployment of the app from its "+
 			"source as its deployment settings say - an image app pulls its image again, a repository app is "+
-			"built from its branch's newest commit - and, once it succeeds, the app's containers replaced. "+
+			"built from its branch's newest commit, a function from its code - and, once it succeeds, the "+
+			"app's containers replaced. "+
 			"The plan shows those settings; to deploy another tag or branch, change them with "+
 			"plan_update_app_settings first. Applied, it answers the deployment's id and the task that "+
 			"carries it out; a plan whose settings changed since is refused. Nothing happens until apply_plan.",
@@ -176,8 +182,29 @@ func deploySourceOf(s *appsettingsdto.DeploymentSettingsResp) deploySource {
 				s.RepoSource.CommitHash
 		}
 	case base.DeploymentMethodFunction:
+		if s.FunctionSource != nil && s.FunctionSource.Code != nil {
+			code := s.FunctionSource.Code
+			if code.Repo != nil {
+				out.Repo, out.Ref, out.Commit = withoutUserinfo(code.Repo.RepoURL), code.Repo.RepoRef,
+					code.Repo.CommitHash
+			}
+			out.Code = inlineCodeDigest(code.Inline)
+		}
 	}
 	return out
+}
+
+// inlineCodeDigest is a function's inline code in a few bytes, or nothing for
+// code in a repository.
+func inlineCodeDigest(code *appsettingsdto.FunctionInlineCodeResp) string {
+	if code == nil {
+		return ""
+	}
+	sum := sha256.New()
+	for _, file := range code.Files {
+		_, _ = fmt.Fprintf(sum, "%d:%s%d:%s", len(file.Path), file.Path, len(file.Content), file.Content)
+	}
+	return hex.EncodeToString(sum.Sum(nil))[:16]
 }
 
 // redeployCheck is what a redeploy plan keeps to check: the source it saw, and

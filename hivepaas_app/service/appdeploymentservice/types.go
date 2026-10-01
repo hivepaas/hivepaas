@@ -21,3 +21,14 @@ type DeploymentArgs struct {
 	// ImageTags carry no environment prefix; the build adds it.
 	ImageTags []string
 }
+
+// CheckBuildSourceReq is what a build from a repository or from a function's
+// code is about to be configured with.
+type CheckBuildSourceReq struct {
+	// RepoSource is the repository the build checks out, nil for none.
+	RepoSource     *entity.DeploymentRepoSource
+	PushToRegistry entity.ObjectID
+	// RefObjects hold the settings the repository source refers to: its
+	// credentials.
+	RefObjects *entity.RefObjects
+}

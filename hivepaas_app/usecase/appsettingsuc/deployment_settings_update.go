@@ -13,8 +13,6 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/auditdetail"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
-	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/githelper"
-	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/gittool"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/timeutil"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/transaction"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/ulid"
@@ -95,7 +93,7 @@ func (uc *UC) loadAppDeploymentSettingsForUpdate(
 		),
 		bunex.SelectRelation("ProjectEnv"),
 		bunex.SelectRelation("Settings",
-			bunex.SelectWhere("setting.type = ?", base.SettingTypeAppDeployment),
+			bunex.SelectWhereIn("setting.type IN (?)", base.SettingTypeAppDeployment, base.SettingTypeAppKind),
 		),
 	)
 	if err != nil {
@@ -115,6 +113,12 @@ func (uc *UC) loadAppDeploymentSettingsForUpdate(
 	}
 	data.NewDeploymentSettings = newDeploymentSettings
 
+	err = checkDeploymentOfKind(entity.IsFunctionKind(app.GetSettingByType(base.SettingTypeAppKind)),
+		newDeploymentSettings)
+	if err != nil {
+		return hperrors.Wrap(err)
+	}
+
 	// Make sure all reference settings used in this settings exist actively
 	refObjects := entity.NewRefObjects()
 	err = uc.settingService.LoadRefObjectsByIDs(ctx, db, &refObjects, app.GetObjectScope(),
@@ -123,32 +127,24 @@ func (uc *UC) loadAppDeploymentSettingsForUpdate(
 		return hperrors.Wrap(err)
 	}
 
-	if newDeploymentSettings.ActiveMethod == base.DeploymentMethodRepo {
-		repoSource := newDeploymentSettings.RepoSource
-
-		// When the cluster has multiple nodes, the result image must be pushed to a registry
-		// that can be accessed by all the nodes in the cluster.
-		isMultiNode, err := uc.clusterService.IsMultiNode(ctx)
-		if err != nil {
-			return hperrors.Wrap(err)
+	// A build checks out its source and pushes its image: what it will need is
+	// checked before the settings are saved.
+	checkReq := &appdeploymentservice.CheckBuildSourceReq{RefObjects: refObjects}
+	switch newDeploymentSettings.ActiveMethod {
+	case base.DeploymentMethodRepo:
+		checkReq.RepoSource = newDeploymentSettings.RepoSource
+		checkReq.PushToRegistry = newDeploymentSettings.RepoSource.PushToRegistry
+	case base.DeploymentMethodFunction:
+		functionSource := newDeploymentSettings.FunctionSource
+		if functionSource.Code.Repo != nil {
+			checkReq.RepoSource = functionSource.Code.Repo.RepoSource()
 		}
-		if isMultiNode && repoSource.PushToRegistry.ID == "" {
-			return hperrors.Wrap(hperrors.ErrMultiNodeClusterRequireRegistryForImages)
-		}
-
-		// Validate existence of repo and ref
-		switch repoSource.RepoType { //nolint:gocritic
-		case base.RepoTypeGit:
-			// TODO: do not check commit hash for now, that's so slow
-			err := gittool.ValidateWithGitCli(ctx, &gittool.ValidationOptions{
-				URL:           repoSource.RepoURL,
-				Credentials:   refObjects.RefSettings[repoSource.Credentials.ID],
-				ReferenceName: githelper.ReferenceName(repoSource.RepoRef),
-			})
-			if err != nil {
-				return hperrors.Wrap(err)
-			}
-		}
+		checkReq.PushToRegistry = functionSource.PushToRegistry
+	case base.DeploymentMethodImage:
+		return nil
+	}
+	if err = uc.appDeploymentService.CheckBuildSource(ctx, checkReq); err != nil {
+		return hperrors.Wrap(err)
 	}
 
 	return nil

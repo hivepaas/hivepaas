@@ -108,7 +108,7 @@ func (uc *UC) loadAppRoutingSettingsForUpdate(
 		),
 		bunex.SelectRelation("ProjectEnv"),
 		bunex.SelectRelation("Settings",
-			bunex.SelectWhere("setting.type = ?", base.SettingTypeAppRouting),
+			bunex.SelectWhereIn("setting.type IN (?)", base.SettingTypeAppRouting, base.SettingTypeAppKind),
 		),
 	)
 	if err != nil {
@@ -122,6 +122,9 @@ func (uc *UC) loadAppRoutingSettingsForUpdate(
 	}
 
 	newRoutingSettings := req.ToEntity()
+	if entity.IsFunctionKind(app.GetSettingByType(base.SettingTypeAppKind)) {
+		fixFunctionRouting(newRoutingSettings)
+	}
 	data.NewRoutingSettings = newRoutingSettings
 
 	// Make sure all reference settings used in these settings exist actively

@@ -469,3 +469,12 @@ settled what follows:
 - as a step, it hands on `STATUS` and, when the body is text, `BODY` cut at
   16 KB;
 - no trigger runs a call yet, and MCP does not plan one.
+
+## Changes after part 5
+
+- creating a function may give it a domain (`domain` of `POST …/apps/function`;
+  "Expose at a domain" in the dialog, off by default, offered as
+  `<name>.<project root domain>`): the function is public there from its first
+  deployment, with HTTPS forced, and the certificate that covers the domain is
+  attached - or obtained when the project obtains them - as for a template's
+  app. Without a matching certificate, Traefik answers with its own default one.

@@ -25,6 +25,10 @@ type CreateAPIKeyReq struct {
 	// and the easiest thing to end up with by saying nothing.
 	AccessAction *base.AccessActions `json:"accessAction"`
 	ExpireAt     time.Time           `json:"expireAt"`
+	// Capabilities are those of the owner's the key may use - revealing secrets.
+	// None by default: a key given to a script or an assistant should not hand
+	// it passwords and keys in the clear unless somebody chose that.
+	Capabilities []base.ResourceCapability `json:"capabilities"`
 }
 
 func NewCreateAPIKeyReq() *CreateAPIKeyReq {
@@ -44,6 +48,8 @@ func (req *CreateAPIKeyReq) Validate() hperrors.ValidationErrors {
 	// omission: it cannot do any work, so it is a mistake either way.
 	validators = append(validators, basedto.ValidateCond(
 		req.AccessAction != nil && !req.AccessAction.IsNoAccess(), "accessAction")...)
+	validators = append(validators, basedto.ValidateSlice(req.Capabilities, true, 0,
+		base.APIKeyCapabilities, "capabilities")...)
 	return hperrors.NewValidationErrors(vld.Validate(validators...))
 }
 

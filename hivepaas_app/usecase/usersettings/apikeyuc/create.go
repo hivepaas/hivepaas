@@ -31,6 +31,9 @@ func (uc *UC) CreateAPIKey(
 	if err := uc.authorizeAPIKeyCreate(ctx, auth); err != nil {
 		return nil, hperrors.Wrap(err)
 	}
+	if err := uc.authorizeAPIKeyCapabilities(ctx, auth, req.Capabilities); err != nil {
+		return nil, hperrors.Wrap(err)
+	}
 
 	actingUser := auth.User.User
 	// Generate key and secret
@@ -54,6 +57,7 @@ func (uc *UC) CreateAPIKey(
 				KeyID:        keyID,
 				SecretKey:    entity.NewHashField(secretKey),
 				AccessAction: req.AccessAction,
+				Capabilities: req.Capabilities,
 			})
 			if err != nil {
 				return hperrors.Wrap(err)
@@ -87,6 +91,28 @@ func (uc *UC) CreateAPIKey(
 			SecretKey: secretKey,
 		},
 	}, nil
+}
+
+// authorizeAPIKeyCapabilities refuses giving a key a capability its creator does
+// not hold: a key never does more than its owner may.
+func (uc *UC) authorizeAPIKeyCapabilities(
+	ctx context.Context,
+	auth *basedto.Auth,
+	capabilities []base.ResourceCapability,
+) error {
+	for _, capability := range capabilities {
+		has, err := uc.PermissionManager.HasCapability(ctx, uc.DB, auth, capability)
+		if err != nil {
+			return hperrors.Wrap(err)
+		}
+		if !has {
+			if capability == base.ResourceCapSecretReveal {
+				return hperrors.Wrap(hperrors.ErrUserNotHavePermissionOnRevealSecrets)
+			}
+			return hperrors.Wrap(hperrors.ErrForbidden).WithMsgLog("the key's creator lacks %s", capability)
+		}
+	}
+	return nil
 }
 
 // authorizeAPIKeyCreate checks the capability and records the attempt either way.

@@ -15,6 +15,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/permission"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
+	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/jwtsession"
 	"github.com/hivepaas/hivepaas/hivepaas_app/repository"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/auditservice"
 )
@@ -288,4 +289,51 @@ func TestAuthorizeSecretMountRecordsADenial(t *testing.T) {
 	may, err := mgr.MayMountSecrets(context.Background(), nil, plainAuth())
 	assert.NoError(t, err)
 	assert.False(t, may)
+}
+
+// adminKeyAuth is a session of an admin's API key, given the capabilities.
+func adminKeyAuth(capabilities ...base.ResourceCapability) *basedto.Auth {
+	auth := adminAuth()
+	auth.User.AuthClaims = &jwtsession.AuthClaims{UserID: "usr_admin", IsAPIKey: true, APIKeyID: "key_1",
+		AccessAction: &base.AccessActions{Read: true}, Capabilities: capabilities}
+	return auth
+}
+
+// A key reveals nothing it was not given - even an admin's, even read-only,
+// which a key once did: the account's capability was the only gate.
+func TestAKeyRevealsOnlyWhenGivenTheCapability(t *testing.T) {
+	enableReveal(t, true)
+	mgr, audit := newRevealManager(nil)
+
+	err := mgr.AuthorizeSecretReveal(context.Background(), nil, adminKeyAuth(), joinTokenSubject())
+	if !errors.Is(err, hperrors.ErrUserNotHavePermissionOnRevealSecrets) {
+		t.Fatalf("a key without the capability must be refused, got %v", err)
+	}
+	if len(audit.entries) != 1 || audit.entries[0].Result != base.AuditLogResultDenied {
+		t.Fatalf("the refusal must be recorded, got %+v", audit.entries)
+	}
+
+	err = mgr.AuthorizeSecretReveal(context.Background(), nil, adminKeyAuth(base.ResourceCapSecretReveal),
+		joinTokenSubject())
+	if err != nil {
+		t.Fatalf("a key given the capability, of an owner who holds it, must be allowed: %v", err)
+	}
+
+	if may, _ := mgr.MayMountSecrets(context.Background(), nil, adminKeyAuth()); may {
+		t.Error("mounting a secret is revealing it to the container: a key without the capability may not")
+	}
+}
+
+// A key's capability never adds to its owner's.
+func TestAKeysCapabilityDoesNotWidenItsOwners(t *testing.T) {
+	enableReveal(t, true)
+	mgr, _ := newRevealManager(nil)
+	auth := plainAuth()
+	auth.User.AuthClaims = &jwtsession.AuthClaims{UserID: "usr_1", IsAPIKey: true,
+		Capabilities: []base.ResourceCapability{base.ResourceCapSecretReveal}}
+
+	err := mgr.AuthorizeSecretReveal(context.Background(), nil, auth, joinTokenSubject())
+	if !errors.Is(err, hperrors.ErrUserNotHavePermissionOnRevealSecrets) {
+		t.Fatalf("the owner lacks it, so the key does too; got %v", err)
+	}
 }

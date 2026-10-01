@@ -11,6 +11,10 @@ type BaseCreateSessionReq struct {
 	User         *entity.User
 	IsAPIKey     bool
 	AccessAction *base.AccessActions
+	// APIKeyID and Capabilities are a session of a key's: the key's setting id,
+	// and the capabilities it was given.
+	APIKeyID     string
+	Capabilities []base.ResourceCapability
 
 	// StartedAt is when the login that began this session happened, for a request
 	// that is renewing one. Zero starts a new session from now, which is what a

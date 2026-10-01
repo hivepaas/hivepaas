@@ -39,6 +39,8 @@ type APIKeyResp struct {
 	// full authority, and copying it into a value field reported it as granting
 	// nothing at all: the most dangerous key on the list looked like the safest.
 	AccessAction *base.AccessActions `json:"accessAction"`
+	// Capabilities are those of its owner's the key may use; empty, none.
+	Capabilities []base.ResourceCapability `json:"capabilities"`
 }
 
 func TransformAPIKey(
@@ -53,6 +55,9 @@ func TransformAPIKey(
 	resp.BaseSettingResp, err = settings.TransformSettingBase(setting)
 	if err != nil {
 		return nil, hperrors.Wrap(err)
+	}
+	if resp.Capabilities == nil {
+		resp.Capabilities = []base.ResourceCapability{}
 	}
 	return resp, nil
 }

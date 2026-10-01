@@ -64,5 +64,7 @@ func (uc *UC) GetCurrentUserByAPIKey(ctx context.Context, keyID, secret string) 
 		UserID:       user.ID,
 		IsAPIKey:     true,
 		AccessAction: apiKey.AccessAction,
+		APIKeyID:     apiKeySetting.ID,
+		Capabilities: apiKey.Capabilities,
 	}}, nil
 }

@@ -105,12 +105,14 @@ func TestATokenCannotBeForged(t *testing.T) {
 // install's password is not in it.
 func TestAPlanIsUnreadableAtRest(t *testing.T) {
 	repo := newMemPlans()
-	_, _, err := savePlan(context.Background(), repo, callerOf("u1", "key1"), testPlan())
+	// The user id is long enough not to turn up in random bytes by chance, as a
+	// two-letter one now and then did.
+	_, _, err := savePlan(context.Background(), repo, callerOf("usr_plan_owner", "key1"), testPlan())
 	if !assert.NoError(t, err) || !assert.Len(t, repo.plans, 1) {
 		t.FailNow()
 	}
 	for _, sealed := range repo.plans {
-		for _, clear := range []string{"hunter2", "s3cr3t", "from-template", "install postgres", "u1"} {
+		for _, clear := range []string{"hunter2", "s3cr3t", "from-template", "install postgres", "usr_plan_owner"} {
 			assert.False(t, bytes.Contains(sealed, []byte(clear)), clear)
 		}
 	}

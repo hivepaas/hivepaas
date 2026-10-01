@@ -23,6 +23,10 @@ type APIKey struct {
 	KeyID        string              `json:"keyId"`
 	SecretKey    HashField           `json:"secretKey"`
 	AccessAction *base.AccessActions `json:"accessAction,omitempty"`
+	// Capabilities are the owner's capabilities the key may use; it uses no other.
+	// A key stored before they existed has none: a key carries only what its
+	// creator chose to give it.
+	Capabilities []base.ResourceCapability `json:"capabilities,omitempty"`
 }
 
 func (s *APIKey) GetType() base.SettingType {

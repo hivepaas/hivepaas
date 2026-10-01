@@ -39,6 +39,8 @@ func (uc *UC) LoginWithAPIKey(
 		User:         dbUser,
 		IsAPIKey:     true,
 		AccessAction: apiKey.AccessAction,
+		APIKeyID:     apiKeySetting.ID,
+		Capabilities: apiKey.Capabilities,
 		Method:       auditMethodAPIKey,
 	})
 	if err != nil {

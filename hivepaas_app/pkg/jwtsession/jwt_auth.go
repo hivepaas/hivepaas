@@ -1,6 +1,7 @@
 package jwtsession
 
 import (
+	"slices"
 	"time"
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
@@ -26,6 +27,20 @@ type AuthClaims struct {
 	StartedAt int64 `json:"startedAt,omitempty"`
 
 	AccessAction *base.AccessActions `json:"access,omitempty"`
+
+	// APIKeyID is the setting id of the key a session of a key was signed into
+	// with: its renewal reads the key again, so a key revoked or narrowed since
+	// stops or narrows the session too.
+	APIKeyID string `json:"apiKeyId,omitempty"`
+	// Capabilities are those a session of a key may use, of its owner's. A
+	// session of a person is not limited by them.
+	Capabilities []base.ResourceCapability `json:"caps,omitempty"`
+}
+
+// LimitsCapability reports whether the session may not use a capability its
+// owner holds: a session of a key, which was not given it.
+func (c *AuthClaims) LimitsCapability(capability base.ResourceCapability) bool {
+	return c != nil && c.IsAPIKey && !slices.Contains(c.Capabilities, capability)
 }
 
 // SessionStartedAt is when this session's login happened, or the zero time when

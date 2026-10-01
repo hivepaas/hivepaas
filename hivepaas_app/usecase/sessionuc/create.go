@@ -40,6 +40,8 @@ func (uc *UC) createSession(
 		UserID:       req.User.ID,
 		IsAPIKey:     req.IsAPIKey,
 		AccessAction: req.AccessAction,
+		APIKeyID:     req.APIKeyID,
+		Capabilities: req.Capabilities,
 	}
 
 	// Decided per session rather than once at startup, because the answer depends

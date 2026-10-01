@@ -105,6 +105,10 @@ const (
 
 var (
 	AllResourceCapabilities = []ResourceCapability{ResourceCapSecretReveal, ResourceCapAPIKeyCreate}
+
+	// APIKeyCapabilities are those a key may be given. Minting a key is not one
+	// of them: a session of a key may not mint keys at all.
+	APIKeyCapabilities = []ResourceCapability{ResourceCapSecretReveal}
 )
 
 type ActionType string

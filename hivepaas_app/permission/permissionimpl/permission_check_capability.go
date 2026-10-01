@@ -50,6 +50,11 @@ func (p *manager) HasCapability(
 	auth *basedto.Auth,
 	capability base.ResourceCapability,
 ) (bool, error) {
+	// A session of a key uses only the capabilities the key was given - checked
+	// before the account's, which an admin passes whatever it asks.
+	if auth != nil && auth.User != nil && auth.User.AuthClaims.LimitsCapability(capability) {
+		return false, nil
+	}
 	hasPerm, err := p.CheckAccess(ctx, db, auth, &permission.CapabilityCheck{
 		Capability: capability,
 	})

@@ -68296,6 +68296,13 @@
             "description" : "A pointer, because null and \"no actions\" are opposite answers and this\nfield used to report them as the same one. A key stored without a limit -\nwhich is every key created before it became required - carries its owner's\nfull authority, and copying it into a value field reported it as granting\nnothing at all: the most dangerous key on the list looked like the safest.",
             "type" : "object"
           },
+          "capabilities" : {
+            "description" : "Capabilities are those of its owner's the key may use; empty, none.",
+            "items" : {
+              "type" : "string"
+            },
+            "type" : "array"
+          },
           "createdAt" : {
             "type" : "string"
           },
@@ -68339,7 +68346,7 @@
             "type" : "string"
           }
         },
-        "required" : [ "accessAction", "createdAt", "default", "expireAt", "id", "inheritable", "inherited", "keyId", "kind", "name", "size", "status", "type", "updateVer", "updatedAt" ],
+        "required" : [ "accessAction", "capabilities", "createdAt", "default", "expireAt", "id", "inheritable", "inherited", "keyId", "kind", "name", "size", "status", "type", "updateVer", "updatedAt" ],
         "type" : "object"
       },
       "usersettings_apikeydto.CreateAPIKeyReq" : {
@@ -68350,6 +68357,13 @@
             } ],
             "description" : "AccessAction narrows what the key may do below what its owner may do; it\nnever widens anything. It is required: left unset the key carries the\nowner's full authority, which is the last thing anyone chooses on purpose\nand the easiest thing to end up with by saying nothing.",
             "type" : "object"
+          },
+          "capabilities" : {
+            "description" : "Capabilities are those of the owner's the key may use - revealing secrets.\nNone by default: a key given to a script or an assistant should not hand\nit passwords and keys in the clear unless somebody chose that.",
+            "items" : {
+              "type" : "string"
+            },
+            "type" : "array"
           },
           "default" : {
             "type" : "boolean"
@@ -68364,7 +68378,7 @@
             "type" : "string"
           }
         },
-        "required" : [ "accessAction", "default", "expireAt", "inheritable", "name" ],
+        "required" : [ "accessAction", "capabilities", "default", "expireAt", "inheritable", "name" ],
         "type" : "object"
       },
       "usersettings_apikeydto.CreateAPIKeyResp" : {

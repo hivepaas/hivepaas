@@ -1,0 +1,236 @@
+diff --git a/hivepaas_app/registry/provides.go b/hivepaas_app/registry/provides.go
+index 63d5f38c..427c0c7b 100644
+--- a/hivepaas_app/registry/provides.go
++++ b/hivepaas_app/registry/provides.go
+@@ -73,6 +73,7 @@ import (
+ 	"github.com/hivepaas/hivepaas/hivepaas_app/service/emailservice/emailserviceimpl"
+ 	"github.com/hivepaas/hivepaas/hivepaas_app/service/envvarservice/envvarserviceimpl"
+ 	"github.com/hivepaas/hivepaas/hivepaas_app/service/fileservice/fileserviceimpl"
++	"github.com/hivepaas/hivepaas/hivepaas_app/service/functionservice/functionserviceimpl"
+ 	"github.com/hivepaas/hivepaas/hivepaas_app/service/getstartedservice/getstartedserviceimpl"
+ 	"github.com/hivepaas/hivepaas/hivepaas_app/service/healthcheckservice/healthcheckserviceimpl"
+ 	"github.com/hivepaas/hivepaas/hivepaas_app/service/hpappservice/hpappserviceimpl"
+@@ -397,6 +398,7 @@ var Provides = []any{
+ 	fileserviceimpl.New,
+ 	healthcheckserviceimpl.New,
+ 	hpappserviceimpl.New,
++	functionserviceimpl.New,
+ 	imagebuildserviceimpl.New,
+ 	loggingserviceimpl.New,
+ 	registryserviceimpl.New,
+diff --git a/hivepaas_app/service/functionservice/functionserviceimpl/service.go b/hivepaas_app/service/functionservice/functionserviceimpl/service.go
+new file mode 100644
+index 00000000..583b5954
+--- /dev/null
++++ b/hivepaas_app/service/functionservice/functionserviceimpl/service.go
+@@ -0,0 +1,70 @@
++package functionserviceimpl
++
++import (
++	"context"
++	"errors"
++
++	"github.com/hivepaas/hivepaas/hivepaas_app/base"
++	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
++	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
++	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
++	"github.com/hivepaas/hivepaas/hivepaas_app/interface/agent/client/functionservice"
++	"github.com/hivepaas/hivepaas/hivepaas_app/repository"
++	"github.com/hivepaas/hivepaas/hivepaas_app/service/agentservice"
++	"github.com/hivepaas/hivepaas/hivepaas_app/service/clusterservice"
++	fnservice "github.com/hivepaas/hivepaas/hivepaas_app/service/functionservice"
++	"github.com/hivepaas/hivepaas/hivepaas_app/service/functionservice/functiontest"
++	"github.com/hivepaas/hivepaas/hivepaas_app/service/imagebuildservice"
++	"github.com/hivepaas/hivepaas/hivepaas_app/service/networkservice"
++	"github.com/hivepaas/hivepaas/services/docker"
++)
++
++// runner runs a test run on this node.
++type runner interface {
++	Run(ctx context.Context, req *functiontest.RunReq) (*functiontest.RunResp, error)
++}
++
++type service struct {
++	imageBuildService imagebuildservice.Service
++	clusterService    clusterservice.Service
++	networkService    networkservice.Service
++	agentService      agentservice.Service
++
++	localRunner       runner
++	newAgentClient    func(addr string) (functionservice.FunctionServiceClient, error)
++	loadBuildSettings func(ctx context.Context, db database.IDB, app *entity.App) (*entity.ImageBuildSettings, error)
++}
++
++func New(
++	dockerManager docker.Manager,
++	settingRepo repository.SettingRepo,
++	imageBuildService imagebuildservice.Service,
++	clusterService clusterservice.Service,
++	networkService networkservice.Service,
++	agentService agentservice.Service,
++) fnservice.Service {
++	return &service{
++		imageBuildService: imageBuildService,
++		clusterService:    clusterService,
++		networkService:    networkService,
++		agentService:      agentService,
++		localRunner: &functiontest.Runner{
++			Docker:  dockerManager,
++			Builder: functiontest.NewLibrariesBuilder(imageBuildService),
++			TempDir: base.BaseTempDirDefault,
++		},
++		newAgentClient: functionservice.NewFunctionServiceClient,
++		loadBuildSettings: func(ctx context.Context, db database.IDB, app *entity.App) (
++			*entity.ImageBuildSettings, error) {
++			setting, err := settingRepo.GetSingle(ctx, db, app.Project.GetObjectScope(), base.SettingTypeImageBuild,
++				true)
++			if err != nil {
++				if errors.Is(err, hperrors.ErrNotFound) {
++					return nil, nil
++				}
++				return nil, hperrors.Wrap(err)
++			}
++			return setting.MustAsImageBuildSettings(), nil
++		},
++	}
++}
+diff --git a/hivepaas_app/service/functionservice/functionserviceimpl/test_run.go b/hivepaas_app/service/functionservice/functionserviceimpl/test_run.go
+new file mode 100644
+index 00000000..7e522872
+--- /dev/null
++++ b/hivepaas_app/service/functionservice/functionserviceimpl/test_run.go
+@@ -0,0 +1,99 @@
++package functionserviceimpl
++
++import (
++	"context"
++
++	"github.com/hivepaas/hivepaas/hivepaas_app/config"
++	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
++	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
++	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
++	fnservice "github.com/hivepaas/hivepaas/hivepaas_app/service/functionservice"
++	"github.com/hivepaas/hivepaas/hivepaas_app/service/functionservice/functiontest"
++	"github.com/hivepaas/hivepaas/hivepaas_app/service/imagebuildservice"
++	"github.com/hivepaas/hivepaas/hivepaas_app/service/systemappservice"
++)
++
++func (s *service) TestRun(
++	ctx context.Context,
++	db database.IDB,
++	req *fnservice.TestRunReq,
++) (*functiontest.RunResp, error) {
++	runReq, buildSettings, err := s.runReq(ctx, db, req)
++	if err != nil {
++		return nil, err
++	}
++
++	// A build node, as for a build: the run installs the libraries there, and
++	// its slot is given back when the run ends.
++	node, err := s.imageBuildService.SelectBuildWorkerNode(ctx, buildSettings)
++	if err != nil {
++		return nil, hperrors.Wrap(err)
++	}
++	defer node.ReleaseNode()
++	if node.Node == nil {
++		return nil, hperrors.NewUnavailable("Build worker node (every one is at its maximum of builds)")
++	}
++
++	remote := node.Node.ID != "" && node.Node.ID != node.CurrentNodeID
++	if config.Current().DevMode.Enabled && config.Current().DevMode.ForceAgentLocal {
++		remote = true
++	}
++	if !remote {
++		resp, err := s.localRunner.Run(ctx, runReq)
++		return resp, hperrors.Wrap(err)
++	}
++
++	addr, err := s.agentService.GetAgentAddrForNode(ctx, node.Node.ID)
++	if err != nil {
++		return nil, hperrors.Wrap(err)
++	}
++	agent, err := s.newAgentClient(addr)
++	if err != nil {
++		return nil, hperrors.Wrap(err)
++	}
++	defer agent.Close()
++	resp, err := agent.TestRun(ctx, runReq)
++	return resp, hperrors.Wrap(err)
++}
++
++// runReq is the run of the function as it is deployed: its build's inputs for
++// the install, its environment, its resources and its network as its service
++// has them, on the runtime images of the release running now.
++func (s *service) runReq(
++	ctx context.Context,
++	db database.IDB,
++	req *fnservice.TestRunReq,
++) (*functiontest.RunReq, *entity.ImageBuildSettings, error) {
++	app := req.App
++	inputs, err := s.imageBuildService.ResolveBuildInputs(ctx, db, &imagebuildservice.ImageBuildReq{App: app})
++	if err != nil {
++		return nil, nil, hperrors.Wrap(err)
++	}
++	buildSettings, err := s.loadBuildSettings(ctx, db, app)
++	if err != nil {
++		return nil, nil, err
++	}
++	svc, err := s.clusterService.ServiceInspect(ctx, app.ServiceID, false)
++	if err != nil {
++		return nil, nil, hperrors.Wrap(err)
++	}
++
++	runReq := &functiontest.RunReq{
++		Source:        req.Source,
++		Files:         req.Files,
++		Request:       req.Request,
++		Images:        systemappservice.CurrentRelease().FunctionRuntimes,
++		Inputs:        inputs,
++		BuildSettings: buildSettings,
++		Network:       s.networkService.GetProjectNetworkName(app.Project, app.ProjectEnv.Name),
++	}
++	task := svc.Spec.TaskTemplate
++	if task.ContainerSpec != nil {
++		runReq.Env = task.ContainerSpec.Env
++	}
++	if task.Resources != nil && task.Resources.Limits != nil {
++		runReq.NanoCPUs = task.Resources.Limits.NanoCPUs
++		runReq.MemoryBytes = task.Resources.Limits.MemoryBytes
++	}
++	return runReq, buildSettings, nil
++}
+diff --git a/hivepaas_app/service/functionservice/service.go b/hivepaas_app/service/functionservice/service.go
+new file mode 100644
+index 00000000..6080efd3
+--- /dev/null
++++ b/hivepaas_app/service/functionservice/service.go
+@@ -0,0 +1,29 @@
++// Package functionservice is what HivePaaS does with functions beyond their
++// deployment: their test runs. Its packages hold the parts: functionbuild the
++// Dockerfiles, functioncontainer what is fixed for a function's container,
++// functiontest a test run on a node.
++package functionservice
++
++import (
++	"context"
++
++	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
++	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
++	"github.com/hivepaas/hivepaas/hivepaas_app/service/functionservice/functiontest"
++)
++
++type Service interface {
++	// TestRun calls a function once with code not yet saved, on a build node
++	// chosen as for a build, and says what came back.
++	TestRun(ctx context.Context, db database.IDB, req *TestRunReq) (*functiontest.RunResp, error)
++}
++
++type TestRunReq struct {
++	// App is the function, with its Project and ProjectEnv.
++	App *entity.App
++	// Source is the function's saved source: its runtime, entrypoint, Debian
++	// packages and limits. Its code is Files.
++	Source  *entity.DeploymentFunctionSource
++	Files   []*entity.FunctionFile
++	Request *functiontest.Request
++}

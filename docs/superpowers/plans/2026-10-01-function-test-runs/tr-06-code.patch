@@ -1,0 +1,660 @@
+diff --git a/docs/openapi/swagger.json b/docs/openapi/swagger.json
+index a90aec41..6e513895 100644
+--- a/docs/openapi/swagger.json
++++ b/docs/openapi/swagger.json
+@@ -19137,6 +19137,93 @@
+         "x-codegen-request-body-name" : "body"
+       }
+     },
++    "/projects/{projectID}/{projectEnv}/apps/{appID}/function/test-run" : {
++      "post" : {
++        "description" : "Calls the function once with the code sent, not yet saved, and a request, in a throwaway\ncontainer on a build node, with the function's variables and secrets.",
++        "operationId" : "testRunFunction",
++        "parameters" : [ {
++          "description" : "project ID",
++          "in" : "path",
++          "name" : "projectID",
++          "required" : true,
++          "schema" : {
++            "type" : "string"
++          }
++        }, {
++          "description" : "project env",
++          "in" : "path",
++          "name" : "projectEnv",
++          "required" : true,
++          "schema" : {
++            "type" : "string"
++          }
++        }, {
++          "description" : "app ID",
++          "in" : "path",
++          "name" : "appID",
++          "required" : true,
++          "schema" : {
++            "type" : "string"
++          }
++        } ],
++        "requestBody" : {
++          "content" : {
++            "*/*" : {
++              "schema" : {
++                "$ref" : "#/components/schemas/appdto.TestRunFunctionReq"
++              }
++            }
++          },
++          "description" : "request data",
++          "required" : true
++        },
++        "responses" : {
++          "200" : {
++            "content" : {
++              "application/json" : {
++                "schema" : {
++                  "$ref" : "#/components/schemas/appdto.TestRunFunctionResp"
++                }
++              }
++            },
++            "description" : "OK"
++          },
++          "400" : {
++            "content" : {
++              "application/json" : {
++                "schema" : {
++                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
++                }
++              }
++            },
++            "description" : "Bad Request"
++          },
++          "404" : {
++            "content" : {
++              "application/json" : {
++                "schema" : {
++                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
++                }
++              }
++            },
++            "description" : "Not Found"
++          },
++          "500" : {
++            "content" : {
++              "application/json" : {
++                "schema" : {
++                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
++                }
++              }
++            },
++            "description" : "Internal Server Error"
++          }
++        },
++        "summary" : "Runs a function once",
++        "tags" : [ "Apps" ],
++        "x-codegen-request-body-name" : "body"
++      }
++    },
+     "/projects/{projectID}/{projectEnv}/apps/{appID}/kind-settings" : {
+       "get" : {
+         "description" : "Gets app kind settings",
+@@ -53579,6 +53666,123 @@
+         "required" : [ "enabled", "supportedShells" ],
+         "type" : "object"
+       },
++      "appdto.TestRunFunctionDataResp" : {
++        "properties" : {
++          "body" : {
++            "items" : {
++              "type" : "integer"
++            },
++            "type" : "array"
++          },
++          "bodyTruncated" : {
++            "type" : "boolean"
++          },
++          "durationMs" : {
++            "type" : "number"
++          },
++          "error" : {
++            "type" : "string"
++          },
++          "exitCode" : {
++            "type" : "integer"
++          },
++          "headers" : {
++            "additionalProperties" : {
++              "items" : {
++                "type" : "string"
++              },
++              "type" : "array"
++            },
++            "type" : "object"
++          },
++          "librariesBuilt" : {
++            "type" : "boolean"
++          },
++          "librariesLog" : {
++            "type" : "string"
++          },
++          "lockFiles" : {
++            "items" : {
++              "$ref" : "#/components/schemas/appsettingsdto.FunctionFileResp"
++            },
++            "type" : "array"
++          },
++          "logs" : {
++            "type" : "string"
++          },
++          "logsTruncated" : {
++            "type" : "boolean"
++          },
++          "outcome" : {
++            "type" : "string"
++          },
++          "requestId" : {
++            "type" : "string"
++          },
++          "status" : {
++            "type" : "integer"
++          }
++        },
++        "required" : [ "body", "bodyTruncated", "durationMs", "error", "exitCode", "headers", "librariesBuilt", "librariesLog", "lockFiles", "logs", "logsTruncated", "outcome", "requestId", "status" ],
++        "type" : "object"
++      },
++      "appdto.TestRunFunctionReq" : {
++        "properties" : {
++          "code" : {
++            "$ref" : "#/components/schemas/appsettingsdto.FunctionInlineCodeReq"
++          },
++          "request" : {
++            "$ref" : "#/components/schemas/appdto.TestRunRequestReq"
++          }
++        },
++        "required" : [ "code", "request" ],
++        "type" : "object"
++      },
++      "appdto.TestRunFunctionResp" : {
++        "properties" : {
++          "data" : {
++            "$ref" : "#/components/schemas/appdto.TestRunFunctionDataResp"
++          },
++          "meta" : {
++            "$ref" : "#/components/schemas/basedto.Meta"
++          }
++        },
++        "required" : [ "data", "meta" ],
++        "type" : "object"
++      },
++      "appdto.TestRunRequestReq" : {
++        "properties" : {
++          "body" : {
++            "type" : "string"
++          },
++          "headers" : {
++            "additionalProperties" : {
++              "items" : {
++                "type" : "string"
++              },
++              "type" : "array"
++            },
++            "type" : "object"
++          },
++          "method" : {
++            "type" : "string"
++          },
++          "path" : {
++            "type" : "string"
++          },
++          "query" : {
++            "additionalProperties" : {
++              "items" : {
++                "type" : "string"
++              },
++              "type" : "array"
++            },
++            "type" : "object"
++          }
++        },
++        "required" : [ "body", "headers", "method", "path", "query" ],
++        "type" : "object"
++      },
+       "appdto.UpdateAppPhotoReq" : {
+         "properties" : {
+           "dataBase64" : {
+diff --git a/hivepaas_app/hperrors/errors_project_app.go b/hivepaas_app/hperrors/errors_project_app.go
+index 577a42af..907bcaa0 100644
+--- a/hivepaas_app/hperrors/errors_project_app.go
++++ b/hivepaas_app/hperrors/errors_project_app.go
+@@ -33,6 +33,8 @@ var (
+ 	ErrDeploymentMethodFunctionUnallowed = NewErr(ErrPreconditionFailed, "ERR_DEPLOYMENT_METHOD_FUNCTION_UNALLOWED")
+ 	// An app is a function from its creation, and stays one.
+ 	ErrAppKindFunctionUnchangeable = NewErr(ErrNonEditable, "ERR_APP_KIND_FUNCTION_UNCHANGEABLE")
++	// What only a function has: a test run, say.
++	ErrAppNotFunction = NewErr(ErrPreconditionFailed, "ERR_APP_NOT_FUNCTION")
+ )
+ 
+ // Errors for sources
+diff --git a/hivepaas_app/interface/api/handler/apphandler/test_run_function.go b/hivepaas_app/interface/api/handler/apphandler/test_run_function.go
+new file mode 100644
+index 00000000..f3b70a8d
+--- /dev/null
++++ b/hivepaas_app/interface/api/handler/apphandler/test_run_function.go
+@@ -0,0 +1,61 @@
++package apphandler
++
++import (
++	"net/http"
++	"time"
++
++	"github.com/gin-gonic/gin"
++
++	"github.com/hivepaas/hivepaas/hivepaas_app/base"
++	_ "github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
++	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/appuc/appdto"
++)
++
++// testRunWriteTimeout lifts the server's write timeout for a test run: its
++// first run on a node may install the libraries, which takes minutes. It is the
++// use case's own limit and a minute for the answer.
++const testRunWriteTimeout = 16 * time.Minute
++
++// TestRunFunction Runs a function once
++// @Summary Runs a function once
++// @Description Calls the function once with the code sent, not yet saved, and a request, in a throwaway
++// @Description container on a build node, with the function's variables and secrets.
++// @Tags    Apps
++// @Produce json
++// @Id      testRunFunction
++// @Param   projectID path string true "project ID"
++// @Param   projectEnv path string true "project env"
++// @Param   appID path string true "app ID"
++// @Param   body body appdto.TestRunFunctionReq true "request data"
++// @Success 200 {object} appdto.TestRunFunctionResp
++// @Failure 400 {object} hperrors.ErrorInfo
++// @Failure 404 {object} hperrors.ErrorInfo
++// @Failure 500 {object} hperrors.ErrorInfo
++// @Router  /projects/{projectID}/{projectEnv}/apps/{appID}/function/test-run [post]
++func (h *Handler) TestRunFunction(ctx *gin.Context) {
++	auth, projectID, projectEnvID, appID, err := h.GetAuth(ctx, base.ActionTypeWrite)
++	if err != nil {
++		h.RenderError(ctx, err)
++		return
++	}
++
++	req := appdto.NewTestRunFunctionReq()
++	req.ProjectID = projectID
++	req.ProjectEnvID = projectEnvID
++	req.AppID = appID
++	if err = h.ParseAndValidateJSONBody(ctx, req); err != nil {
++		h.RenderError(ctx, err)
++		return
++	}
++
++	if err = http.NewResponseController(ctx.Writer).SetWriteDeadline(time.Now().Add(testRunWriteTimeout)); err != nil {
++		_ = ctx.Error(err)
++	}
++	resp, err := h.appUC.TestRunFunction(h.RequestCtx(ctx), auth, req)
++	if err != nil {
++		h.RenderError(ctx, err)
++		return
++	}
++
++	ctx.JSON(http.StatusOK, resp)
++}
+diff --git a/hivepaas_app/interface/api/server/router_apps.go b/hivepaas_app/interface/api/server/router_apps.go
+index b21696bd..aa2540da 100644
+--- a/hivepaas_app/interface/api/server/router_apps.go
++++ b/hivepaas_app/interface/api/server/router_apps.go
+@@ -24,6 +24,7 @@ func (s *HTTPServer) registerAppRoutes(projectGroup, projectEnvGroup *gin.Router
+ 		// Creation & Update
+ 		appGroup.POST("", appHandler.CreateApp)
+ 		appGroup.POST("/function", appHandler.CreateFunction)
++		appGroup.POST("/:appID/function/test-run", appHandler.TestRunFunction)
+ 		appGroup.POST("/from-template", s.handlerRegistry.appTemplateHandler.CreateAppFromTemplate)
+ 		appGroup.POST("/from-template/preflight", s.handlerRegistry.appTemplateHandler.PreflightAppFromTemplate)
+ 		appGroup.PUT("/:appID", appHandler.UpdateApp)
+diff --git a/hivepaas_app/pkg/translation/messages/en/errors.project_app.en.toml b/hivepaas_app/pkg/translation/messages/en/errors.project_app.en.toml
+index d84bf420..2125d85f 100644
+--- a/hivepaas_app/pkg/translation/messages/en/errors.project_app.en.toml
++++ b/hivepaas_app/pkg/translation/messages/en/errors.project_app.en.toml
+@@ -39,3 +39,4 @@ ERR_FUNCTION_RUNTIME_UNAVAILABLE = "This release of HivePaaS has no image for th
+ ERR_DEPLOYMENT_METHOD_FUNCTION_REQUIRED = "A function is deployed from its code: its deployment method is 'function'"
+ ERR_DEPLOYMENT_METHOD_FUNCTION_UNALLOWED = "Only an app created as a function is deployed from a function's code"
+ ERR_APP_KIND_FUNCTION_UNCHANGEABLE = "A function stays a function, and an app becomes one only when it is created as one"
++ERR_APP_NOT_FUNCTION = "App '{{.Name}}' is not a function"
+diff --git a/hivepaas_app/usecase/appsettingsuc/appsettingsdto/deployment_function_source.go b/hivepaas_app/usecase/appsettingsuc/appsettingsdto/deployment_function_source.go
+index e08b3c7a..8bf8d2dd 100644
+--- a/hivepaas_app/usecase/appsettingsuc/appsettingsdto/deployment_function_source.go
++++ b/hivepaas_app/usecase/appsettingsuc/appsettingsdto/deployment_function_source.go
+@@ -111,12 +111,7 @@ func (req *DeploymentFunctionSourceReq) Normalize() {
+ 	if req.Code.Dir == "." {
+ 		req.Code.Dir = ""
+ 	}
+-	if req.Code.Inline != nil {
+-		req.Code.Inline.Files = gofn.Filter(req.Code.Inline.Files, func(f *FunctionFileReq) bool { return f != nil })
+-		for _, f := range req.Code.Inline.Files {
+-			f.Path = cleanFunctionPath(f.Path)
+-		}
+-	}
++	req.Code.Inline.Normalize()
+ 	if req.Code.Repo != nil {
+ 		req.Code.Repo.RepoURL = strings.TrimSpace(req.Code.Repo.RepoURL)
+ 		req.Code.Repo.RepoRef = strings.TrimSpace(req.Code.Repo.RepoRef)
+@@ -249,6 +244,31 @@ func (req *FunctionCodeReq) validate(field string) (res []vld.Validator) {
+ 	return res
+ }
+ 
++// Normalize cleans the files' paths: "./src//index.js" is "src/index.js".
++func (req *FunctionInlineCodeReq) Normalize() {
++	if req == nil {
++		return
++	}
++	req.Files = gofn.Filter(req.Files, func(f *FunctionFileReq) bool { return f != nil })
++	for _, f := range req.Files {
++		f.Path = cleanFunctionPath(f.Path)
++	}
++}
++
++// Validate checks inline code against its limits, field naming the code.
++func (req *FunctionInlineCodeReq) Validate(field string) []vld.Validator {
++	return req.validate(field)
++}
++
++// ToEntity is the code as it is kept, once normalized and validated.
++func (req *FunctionInlineCodeReq) ToEntity() *entity.FunctionInlineCode {
++	return &entity.FunctionInlineCode{
++		Files: gofn.MapSlice(req.Files, func(f *FunctionFileReq) *entity.FunctionFile {
++			return &entity.FunctionFile{Path: f.Path, Content: f.Content}
++		}),
++	}
++}
++
+ func (req *FunctionInlineCodeReq) validate(field string) (res []vld.Validator) {
+ 	files := req.Files
+ 	res = append(res, basedto.ValidateSliceEx(files, false, 1, base.FunctionInlineCodeMaxFiles, nil,
+@@ -298,11 +318,7 @@ func (req *DeploymentFunctionSourceReq) ToEntity() (*entity.DeploymentFunctionSo
+ 	}
+ 	code := entity.FunctionCode{Dir: req.Code.Dir}
+ 	if req.Code.Inline != nil {
+-		code.Inline = &entity.FunctionInlineCode{
+-			Files: gofn.MapSlice(req.Code.Inline.Files, func(f *FunctionFileReq) *entity.FunctionFile {
+-				return &entity.FunctionFile{Path: f.Path, Content: f.Content}
+-			}),
+-		}
++		code.Inline = req.Code.Inline.ToEntity()
+ 	}
+ 	if req.Code.Repo != nil {
+ 		repo, err := req.Code.Repo.toEntity()
+diff --git a/hivepaas_app/usecase/appuc/appdto/test_run_function.go b/hivepaas_app/usecase/appuc/appdto/test_run_function.go
+new file mode 100644
+index 00000000..6a5916a8
+--- /dev/null
++++ b/hivepaas_app/usecase/appuc/appdto/test_run_function.go
+@@ -0,0 +1,138 @@
++package appdto
++
++import (
++	"net/http"
++	"slices"
++	"strings"
++
++	vld "github.com/tiendc/go-validator"
++
++	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
++	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
++	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/unit"
++	"github.com/hivepaas/hivepaas/hivepaas_app/service/functionservice/functiontest"
++	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/appsettingsuc/appsettingsdto"
++)
++
++const (
++	// testRunBodyMax is the largest body a test run sends: the request travels
++	// to the build node with the code, in one message.
++	testRunBodyMax = unit.MB
++	testRunPathMax = 2048
++)
++
++var testRunMethods = []string{http.MethodGet, http.MethodHead, http.MethodPost, http.MethodPut, http.MethodPatch,
++	http.MethodDelete, http.MethodOptions}
++
++// TestRunFunctionReq is a test run: the function's code as the editor has it,
++// not yet saved, and the request to call it with.
++type TestRunFunctionReq struct {
++	ProjectID    string                                `json:"-"`
++	ProjectEnvID string                                `json:"-"`
++	AppID        string                                `json:"-"`
++	Code         *appsettingsdto.FunctionInlineCodeReq `json:"code"`
++	Request      *TestRunRequestReq                    `json:"request"`
++}
++
++// TestRunRequestReq is the request a test run calls the handler with. Its body
++// is text.
++type TestRunRequestReq struct {
++	Method  string              `json:"method"`
++	Path    string              `json:"path"`
++	Query   map[string][]string `json:"query"`
++	Headers map[string][]string `json:"headers"`
++	Body    string              `json:"body"`
++}
++
++func NewTestRunFunctionReq() *TestRunFunctionReq {
++	return &TestRunFunctionReq{}
++}
++
++// ModifyRequest implements interface basedto.ReqModifier: GET / unless the
++// request says otherwise, header names in lower case as the runtime gives them.
++func (req *TestRunFunctionReq) ModifyRequest() error {
++	req.Code.Normalize()
++	if req.Request == nil {
++		req.Request = &TestRunRequestReq{}
++	}
++	r := req.Request
++	r.Method = strings.ToUpper(strings.TrimSpace(r.Method))
++	if r.Method == "" {
++		r.Method = http.MethodGet
++	}
++	r.Path = strings.TrimSpace(r.Path)
++	if !strings.HasPrefix(r.Path, "/") {
++		r.Path = "/" + r.Path
++	}
++	if r.Headers != nil {
++		headers := make(map[string][]string, len(r.Headers))
++		for name, values := range r.Headers {
++			name = strings.ToLower(strings.TrimSpace(name))
++			headers[name] = append(headers[name], values...)
++		}
++		r.Headers = headers
++	}
++	return nil
++}
++
++// Validate implements interface basedto.ReqValidator
++func (req *TestRunFunctionReq) Validate() hperrors.ValidationErrors {
++	validators := make([]vld.Validator, 0, 10) //nolint:mnd
++	validators = append(validators, basedto.ValidateID(&req.ProjectID, true, "projectId")...)
++	validators = append(validators, basedto.ValidateID(&req.ProjectEnvID, true, "projectEnv")...)
++	validators = append(validators, basedto.ValidateID(&req.AppID, true, "appId")...)
++	validators = append(validators, vld.Must(req.Code != nil).OnError(
++		vld.SetField("code", nil),
++		vld.SetCustomKey("ERR_VLD_VALUE_REQUIRED"),
++	))
++	if req.Code != nil {
++		validators = append(validators, req.Code.Validate("code")...)
++	}
++	if r := req.Request; r != nil {
++		validators = append(validators, vld.Must(slices.Contains(testRunMethods, r.Method)).OnError(
++			vld.SetField("request.method", nil),
++			vld.SetCustomKey("ERR_VLD_VALUE_NOT_IN_LIST"),
++		))
++		validators = append(validators, basedto.ValidateStr(&r.Path, true, 1, testRunPathMax, "request.path")...)
++		validators = append(validators, basedto.ValidateStr(&r.Body, false, 0, int(testRunBodyMax),
++			"request.body")...)
++	}
++	return hperrors.NewValidationErrors(vld.Validate(validators...))
++}
++
++// ToRunRequest is the request as a test run sends it.
++func (req *TestRunFunctionReq) ToRunRequest() *functiontest.Request {
++	r := req.Request
++	return &functiontest.Request{
++		Method:  r.Method,
++		Path:    r.Path,
++		Query:   r.Query,
++		Headers: r.Headers,
++		Body:    []byte(r.Body),
++	}
++}
++
++type TestRunFunctionResp struct {
++	Meta *basedto.Meta            `json:"meta"`
++	Data *TestRunFunctionDataResp `json:"data"`
++}
++
++// TestRunFunctionDataResp is what a test run brought back. Body is base64, as
++// a response may not be text; BodyTruncated and LogsTruncated say what was cut
++// at 1 MB. LockFiles are lock files the run made, for the editor to add.
++type TestRunFunctionDataResp struct {
++	Outcome        string                             `json:"outcome"`
++	Status         int                                `json:"status,omitempty"`
++	Headers        map[string][]string                `json:"headers,omitempty"`
++	Body           []byte                             `json:"body,omitempty"`
++	BodyTruncated  bool                               `json:"bodyTruncated,omitempty"`
++	RequestID      string                             `json:"requestId,omitempty"`
++	DurationMs     float64                            `json:"durationMs,omitempty"`
++	Logs           string                             `json:"logs"`
++	LogsTruncated  bool                               `json:"logsTruncated,omitempty"`
++	Error          string                             `json:"error,omitempty"`
++	ExitCode       int64                              `json:"exitCode"`
++	LibrariesBuilt bool                               `json:"librariesBuilt"`
++	LibrariesLog   string                             `json:"librariesLog,omitempty"`
++	LockFiles      []*appsettingsdto.FunctionFileResp `json:"lockFiles,omitempty"`
++}
+diff --git a/hivepaas_app/usecase/appuc/test_run_function.go b/hivepaas_app/usecase/appuc/test_run_function.go
+new file mode 100644
+index 00000000..b3fb5bac
+--- /dev/null
++++ b/hivepaas_app/usecase/appuc/test_run_function.go
+@@ -0,0 +1,88 @@
++package appuc
++
++import (
++	"context"
++	"time"
++
++	"github.com/hivepaas/hivepaas/hivepaas_app/base"
++	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
++	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
++	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
++	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
++	"github.com/hivepaas/hivepaas/hivepaas_app/service/functionservice"
++	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/appsettingsuc/appsettingsdto"
++	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/appuc/appdto"
++)
++
++// testRunTimeout bounds a test run, its libraries' install included: the first
++// run of a function may pull its runtime's image and install its libraries.
++const testRunTimeout = 15 * time.Minute
++
++// TestRunFunction calls a function once with the code the editor has, not yet
++// saved, on a build node. It runs the code with the function's variables and
++// secrets: only someone who can change the function may.
++func (uc *UC) TestRunFunction(
++	ctx context.Context,
++	_ *basedto.Auth,
++	req *appdto.TestRunFunctionReq,
++) (*appdto.TestRunFunctionResp, error) {
++	app, err := uc.appService.LoadApp(ctx, uc.db, req.ProjectID, req.AppID, true, true,
++		bunex.SelectExcludeColumns(entity.AppDefaultExcludeColumns...),
++		bunex.SelectRelation("Project",
++			bunex.SelectExcludeColumns(entity.ProjectDefaultExcludeColumns...),
++		),
++		bunex.SelectRelation("ProjectEnv"),
++		bunex.SelectRelation("Settings",
++			bunex.SelectWhereIn("setting.type IN (?)", base.SettingTypeAppKind, base.SettingTypeAppDeployment),
++		),
++	)
++	if err != nil {
++		return nil, hperrors.Wrap(err)
++	}
++	if !entity.IsFunctionKind(app.GetSettingByType(base.SettingTypeAppKind)) {
++		return nil, hperrors.Wrap(hperrors.ErrAppNotFunction).WithParam("Name", app.Name)
++	}
++	var source *entity.DeploymentFunctionSource
++	if setting := app.GetSettingByType(base.SettingTypeAppDeployment); setting != nil {
++		deployment, err := setting.AsAppDeploymentSettings()
++		if err != nil {
++			return nil, hperrors.Wrap(err)
++		}
++		source = deployment.FunctionSource
++	}
++	if source == nil {
++		return nil, hperrors.Wrap(hperrors.ErrUnconfigured).WithParam("Name", "Function source")
++	}
++
++	ctx, cancel := context.WithTimeout(ctx, testRunTimeout)
++	defer cancel()
++	resp, err := uc.functionService.TestRun(ctx, uc.db, &functionservice.TestRunReq{
++		App:     app,
++		Source:  source,
++		Files:   req.Code.ToEntity().Files,
++		Request: req.ToRunRequest(),
++	})
++	if err != nil {
++		return nil, hperrors.Wrap(err)
++	}
++
++	data := &appdto.TestRunFunctionDataResp{
++		Outcome:        string(resp.Outcome),
++		Status:         resp.Status,
++		Headers:        resp.Headers,
++		Body:           resp.Body,
++		BodyTruncated:  resp.BodyTruncated,
++		RequestID:      resp.RequestID,
++		DurationMs:     resp.DurationMs,
++		Logs:           resp.Logs,
++		LogsTruncated:  resp.LogsTruncated,
++		Error:          resp.Error,
++		ExitCode:       resp.ExitCode,
++		LibrariesBuilt: resp.LibrariesBuilt,
++		LibrariesLog:   resp.LibrariesLog,
++	}
++	for _, f := range resp.LockFiles {
++		data.LockFiles = append(data.LockFiles, &appsettingsdto.FunctionFileResp{Path: f.Path, Content: f.Content})
++	}
++	return &appdto.TestRunFunctionResp{Data: data}, nil
++}
+diff --git a/hivepaas_app/usecase/appuc/uc.go b/hivepaas_app/usecase/appuc/uc.go
+index 815ea941..7ce1b3ba 100644
+--- a/hivepaas_app/usecase/appuc/uc.go
++++ b/hivepaas_app/usecase/appuc/uc.go
+@@ -10,6 +10,7 @@ import (
+ 	"github.com/hivepaas/hivepaas/hivepaas_app/service/auditservice"
+ 	"github.com/hivepaas/hivepaas/hivepaas_app/service/clusterservice"
+ 	"github.com/hivepaas/hivepaas/hivepaas_app/service/containerexecservice"
++	"github.com/hivepaas/hivepaas/hivepaas_app/service/functionservice"
+ 	"github.com/hivepaas/hivepaas/hivepaas_app/service/loggingservice"
+ 	"github.com/hivepaas/hivepaas/hivepaas_app/service/schedjobtriggerservice"
+ 	"github.com/hivepaas/hivepaas/hivepaas_app/service/settingservice"
+@@ -34,6 +35,7 @@ type UC struct {
+ 	schedJobTriggerService schedjobtriggerservice.Service
+ 	clusterService         clusterservice.Service
+ 	containerExecService   containerexecservice.Service
++	functionService        functionservice.Service
+ 	settingService         settingservice.Service
+ 	loggingService         loggingservice.Service
+ }
+@@ -55,6 +57,7 @@ func New(
+ 	schedJobTriggerService schedjobtriggerservice.Service,
+ 	clusterService clusterservice.Service,
+ 	containerExecService containerexecservice.Service,
++	functionService functionservice.Service,
+ 	settingService settingservice.Service,
+ 	loggingService loggingservice.Service,
+ ) *UC {
+@@ -75,6 +78,7 @@ func New(
+ 		schedJobTriggerService: schedJobTriggerService,
+ 		clusterService:         clusterService,
+ 		containerExecService:   containerExecService,
++		functionService:        functionService,
+ 		settingService:         settingService,
+ 		loggingService:         loggingService,
+ 	}

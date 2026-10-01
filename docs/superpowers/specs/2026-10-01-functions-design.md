@@ -414,3 +414,22 @@ settled what follows; the sections above are read with it:
   does; a clone that takes a function's deployment settings is a function;
 - a function is not part of a spec yet: export leaves it out, and a template or
   an import refuses it.
+
+## Changes after part 3's plan
+
+Writing the test runs (`docs/superpowers/plans/2026-10-01-function-test-runs.md`)
+settled what follows:
+
+- a test run takes the code, as files, and a request; the runtime, entrypoint,
+  Debian packages and limits are the function's saved settings;
+- its environment, CPU and memory limits are the function's service's, and its
+  container joins the project's network, so it reaches the project's apps;
+- the call is synchronous, bounded to 15 minutes; the install's log comes back
+  with the answer rather than as it happens;
+- the libraries' image is removed by the cluster cleanup's image prune, as any
+  image no container uses;
+- a test run does not wait for a build slot: with every build node busy it
+  fails;
+- outcomes beyond the runtime's: the install failed, the handler could not be
+  loaded, the request could not be read, the container was killed past the
+  timeout, or it ended without a result.

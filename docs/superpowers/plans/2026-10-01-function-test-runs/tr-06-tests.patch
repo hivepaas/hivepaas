@@ -1,0 +1,213 @@
+diff --git a/hivepaas_app/interface/api/server/router_apps_test.go b/hivepaas_app/interface/api/server/router_apps_test.go
+index f424c0ec..af8edd8f 100644
+--- a/hivepaas_app/interface/api/server/router_apps_test.go
++++ b/hivepaas_app/interface/api/server/router_apps_test.go
+@@ -16,3 +16,10 @@ func TestAFunctionIsCreatedAmongTheEnvsApps(t *testing.T) {
+ 	assert.True(t, routes[http.MethodPost+" /projects/:projectID/:projectEnv/apps/from-template"])
+ 	assert.True(t, routes[http.MethodPut+" /projects/:projectID/:projectEnv/apps/:appID"])
+ }
++
++// A function's test run is a call on the app.
++func TestAFunctionIsTestRunOnItsApp(t *testing.T) {
++	routes := projectRoutes(t)
++
++	assert.True(t, routes[http.MethodPost+" /projects/:projectID/:projectEnv/apps/:appID/function/test-run"])
++}
+diff --git a/hivepaas_app/usecase/appuc/appdto/test_run_function_test.go b/hivepaas_app/usecase/appuc/appdto/test_run_function_test.go
+new file mode 100644
+index 00000000..1b758ff1
+--- /dev/null
++++ b/hivepaas_app/usecase/appuc/appdto/test_run_function_test.go
+@@ -0,0 +1,79 @@
++package appdto
++
++import (
++	"strings"
++	"testing"
++
++	"github.com/stretchr/testify/assert"
++
++	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/unit"
++	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/appsettingsuc/appsettingsdto"
++)
++
++func testRunReq(request *TestRunRequestReq) *TestRunFunctionReq {
++	return &TestRunFunctionReq{
++		ProjectID:    "01J0000000000000000000PRJ1",
++		ProjectEnvID: "01J0000000000000000000ENV1",
++		AppID:        "01J0000000000000000000APP1",
++		Code: &appsettingsdto.FunctionInlineCodeReq{Files: []*appsettingsdto.FunctionFileReq{
++			{Path: "./index.js", Content: "export default () => ({})"},
++		}},
++		Request: request,
++	}
++}
++
++// A test run takes the code as the editor has it and a request, which says
++// only what it needs to: GET / by default.
++func TestATestRunTakesTheCodeAndARequest(t *testing.T) {
++	req := testRunReq(nil)
++
++	assert.NoError(t, req.ModifyRequest())
++
++	assert.Empty(t, req.Validate())
++	assert.Equal(t, "index.js", req.Code.Files[0].Path)
++	assert.Equal(t, "GET", req.Request.Method)
++	assert.Equal(t, "/", req.Request.Path)
++	run := req.ToRunRequest()
++	assert.Equal(t, "GET", run.Method)
++	assert.Equal(t, "index.js", req.Code.ToEntity().Files[0].Path)
++}
++
++func TestATestRunRequestIsNormalized(t *testing.T) {
++	req := testRunReq(&TestRunRequestReq{Method: " post ", Path: "items/7", Body: `{"a":1}`,
++		Headers: map[string][]string{"Content-Type": {"application/json"}}})
++
++	assert.NoError(t, req.ModifyRequest())
++
++	assert.Empty(t, req.Validate())
++	run := req.ToRunRequest()
++	assert.Equal(t, "POST", run.Method)
++	assert.Equal(t, "/items/7", run.Path)
++	assert.Equal(t, []byte(`{"a":1}`), run.Body)
++	assert.Equal(t, []string{"application/json"}, run.Headers["content-type"], "header names in lower case")
++}
++
++func TestWhatATestRunCannotTakeIsRefused(t *testing.T) {
++	for name, tc := range map[string]struct {
++		req  *TestRunFunctionReq
++		want string
++	}{
++		"no code": {func() *TestRunFunctionReq {
++			req := testRunReq(nil)
++			req.Code = nil
++			return req
++		}(), "code"},
++		"a path outside the function": {func() *TestRunFunctionReq {
++			req := testRunReq(nil)
++			req.Code.Files[0].Path = "../index.js"
++			return req
++		}(), "code.files[0].path"},
++		"a method HTTP does not have": {testRunReq(&TestRunRequestReq{Method: "BREW"}), "request.method"},
++		"a body over 1 MB": {testRunReq(&TestRunRequestReq{Body: strings.Repeat("x", int(unit.MB)+1)}),
++			"request.body"},
++	} {
++		t.Run(name, func(t *testing.T) {
++			assert.NoError(t, tc.req.ModifyRequest())
++			assert.Contains(t, pathsOf(tc.req.Validate()), tc.want)
++		})
++	}
++}
+diff --git a/hivepaas_app/usecase/appuc/test_run_function_test.go b/hivepaas_app/usecase/appuc/test_run_function_test.go
+new file mode 100644
+index 00000000..9e013373
+--- /dev/null
++++ b/hivepaas_app/usecase/appuc/test_run_function_test.go
+@@ -0,0 +1,107 @@
++package appuc
++
++import (
++	"context"
++	"testing"
++	"time"
++
++	"github.com/stretchr/testify/assert"
++
++	"github.com/hivepaas/hivepaas/hivepaas_app/base"
++	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
++	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
++	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
++	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
++	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
++	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/timeutil"
++	"github.com/hivepaas/hivepaas/hivepaas_app/service/appservice"
++	fnservice "github.com/hivepaas/hivepaas/hivepaas_app/service/functionservice"
++	"github.com/hivepaas/hivepaas/hivepaas_app/service/functionservice/functiontest"
++	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/appsettingsuc/appsettingsdto"
++	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/appuc/appdto"
++)
++
++// fakeApps loads one app.
++type fakeApps struct {
++	appservice.Service
++	app *entity.App
++}
++
++func (f *fakeApps) LoadApp(
++	_ context.Context, _ database.IDB, _, _ string, _, _ bool, _ ...bunex.SelectQueryOption,
++) (*entity.App, error) {
++	return f.app, nil
++}
++
++// fakeFunctions runs test runs, and keeps the one it was asked for.
++type fakeFunctions struct {
++	fnservice.Service
++	got      *fnservice.TestRunReq
++	deadline time.Time
++}
++
++func (f *fakeFunctions) TestRun(
++	ctx context.Context, _ database.IDB, req *fnservice.TestRunReq,
++) (*functiontest.RunResp, error) {
++	f.got = req
++	f.deadline, _ = ctx.Deadline()
++	return &functiontest.RunResp{
++		Outcome: functiontest.OutcomeOK, Status: 200, Body: []byte("hi"), Logs: "hello\n",
++		LockFiles: []*entity.FunctionFile{{Path: "package-lock.json", Content: "{}"}},
++	}, nil
++}
++
++func appWithSettings(t *testing.T, category base.AppCategory, source *entity.DeploymentFunctionSource) *entity.App {
++	t.Helper()
++	kind := &entity.Setting{Type: base.SettingTypeAppKind, Status: base.SettingStatusActive}
++	assert.NoError(t, kind.SetData(&entity.AppKindSettings{Category: category}))
++	deployment := &entity.Setting{Type: base.SettingTypeAppDeployment, Status: base.SettingStatusActive}
++	assert.NoError(t, deployment.SetData(&entity.AppDeploymentSettings{ActiveMethod: base.DeploymentMethodFunction,
++		FunctionSource: source}))
++	return &entity.App{ID: "app-1", Name: "hello", Settings: []*entity.Setting{kind, deployment}}
++}
++
++func testRunFunctionReq() *appdto.TestRunFunctionReq {
++	req := &appdto.TestRunFunctionReq{
++		ProjectID: "p", ProjectEnvID: "e", AppID: "app-1",
++		Code: &appsettingsdto.FunctionInlineCodeReq{Files: []*appsettingsdto.FunctionFileReq{
++			{Path: "index.js", Content: "export default () => 'hi'"},
++		}},
++	}
++	_ = req.ModifyRequest()
++	return req
++}
++
++// A test run is the function's: its saved settings, the code sent, the request
++// sent; and what comes back is answered as it came, within a time limit.
++func TestATestRunCallsTheFunctionWithTheCodeSent(t *testing.T) {
++	source := &entity.DeploymentFunctionSource{Runtime: base.FunctionRuntimeNode24,
++		Timeout: timeutil.Duration(30 * time.Second)}
++	functions := &fakeFunctions{}
++	uc := &UC{appService: &fakeApps{app: appWithSettings(t, base.AppCategoryFunction, source)},
++		functionService: functions}
++
++	resp, err := uc.TestRunFunction(context.Background(), &basedto.Auth{}, testRunFunctionReq())
++
++	assert.NoError(t, err)
++	assert.Equal(t, base.FunctionRuntimeNode24, functions.got.Source.Runtime)
++	assert.Equal(t, "index.js", functions.got.Files[0].Path)
++	assert.Equal(t, "GET", functions.got.Request.Method)
++	assert.WithinDuration(t, time.Now().Add(testRunTimeout), functions.deadline, time.Minute)
++	data := resp.Data
++	assert.Equal(t, "ok", data.Outcome)
++	assert.Equal(t, 200, data.Status)
++	assert.Equal(t, []byte("hi"), data.Body)
++	assert.Equal(t, "hello\n", data.Logs)
++	assert.Equal(t, "package-lock.json", data.LockFiles[0].Path)
++}
++
++// Only a function has test runs.
++func TestAnAppThatIsNotAFunctionHasNoTestRun(t *testing.T) {
++	uc := &UC{appService: &fakeApps{app: appWithSettings(t, base.AppCategoryWebapp, nil)},
++		functionService: &fakeFunctions{}}
++
++	_, err := uc.TestRunFunction(context.Background(), &basedto.Auth{}, testRunFunctionReq())
++
++	assert.ErrorIs(t, err, hperrors.ErrAppNotFunction)
++}

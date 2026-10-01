@@ -1,0 +1,1554 @@
+diff --git a/hivepaas_app/cmd/agent/main.go b/hivepaas_app/cmd/agent/main.go
+index bcac01be..de6e9638 100644
+--- a/hivepaas_app/cmd/agent/main.go
++++ b/hivepaas_app/cmd/agent/main.go
+@@ -33,6 +33,7 @@ func main() {
+ 				agentproto.RegisterRepoServerServiceServer(s, agentSrv)
+ 				agentproto.RegisterVolumeServiceServer(s, agentSrv)
+ 				agentproto.RegisterFileServiceServer(s, agentSrv)
++				agentproto.RegisterFunctionServiceServer(s, agentSrv)
+ 			}
+ 		})
+ 	provides = append(provides, registry.Provides...)
+diff --git a/hivepaas_app/interface/agent/client/functionservice/service.go b/hivepaas_app/interface/agent/client/functionservice/service.go
+new file mode 100644
+index 00000000..15a6c70d
+--- /dev/null
++++ b/hivepaas_app/interface/agent/client/functionservice/service.go
+@@ -0,0 +1,147 @@
++// Package functionservice calls an agent's function service: a test run on the
++// agent's node.
++package functionservice
++
++import (
++	"context"
++	"time"
++
++	"google.golang.org/grpc"
++	"google.golang.org/grpc/credentials/insecure"
++
++	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
++	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
++	"github.com/hivepaas/hivepaas/hivepaas_app/interface/agent/client"
++	clientbuild "github.com/hivepaas/hivepaas/hivepaas_app/interface/agent/client/imagebuildservice"
++	agentproto "github.com/hivepaas/hivepaas/hivepaas_app/interface/agent/proto"
++	"github.com/hivepaas/hivepaas/hivepaas_app/service/functionservice/functiontest"
++)
++
++// maxAnswerSize is how large a test run's answer may be: a body and logs of a
++// megabyte each, lock files, the install's log - over gRPC's default of 4 MB.
++const maxAnswerSize = 16 << 20
++
++type FunctionServiceClient interface {
++	// TestRun runs a function's test run on the agent's node.
++	TestRun(ctx context.Context, req *functiontest.RunReq) (*functiontest.RunResp, error)
++	Close() error
++}
++
++type grpcFunctionServiceClient struct {
++	protoClient agentproto.FunctionServiceClient
++	conn        *grpc.ClientConn
++}
++
++func NewFunctionServiceClient(agentAddr string) (FunctionServiceClient, error) {
++	conn, err := grpc.NewClient(agentAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
++	if err != nil {
++		return nil, hperrors.Wrap(err)
++	}
++	return &grpcFunctionServiceClient{conn: conn, protoClient: agentproto.NewFunctionServiceClient(conn)}, nil
++}
++
++func (c *grpcFunctionServiceClient) Close() error {
++	if c.conn != nil {
++		if err := c.conn.Close(); err != nil {
++			return hperrors.Wrap(err)
++		}
++	}
++	return nil
++}
++
++func (c *grpcFunctionServiceClient) TestRun(
++	ctx context.Context,
++	req *functiontest.RunReq,
++) (*functiontest.RunResp, error) {
++	// The agent cannot open a stored secret: what the install reads from
++	// settings goes with the request, resolved here.
++	if req.Inputs == nil {
++		return nil, hperrors.NewMissing("Function test run inputs")
++	}
++	resp, err := c.protoClient.FunctionTestRun(client.CreateAuthCtx(ctx), runReqToProto(req),
++		grpc.MaxCallRecvMsgSize(maxAnswerSize))
++	if err != nil {
++		return nil, hperrors.Wrap(err)
++	}
++	return runRespFromProto(resp), nil
++}
++
++func runReqToProto(req *functiontest.RunReq) *agentproto.FunctionTestRunReq {
++	src := req.Source
++	files := make([]*agentproto.FunctionFile, 0, len(req.Files))
++	for _, f := range req.Files {
++		files = append(files, &agentproto.FunctionFile{Path: f.Path, Content: f.Content})
++	}
++	out := &agentproto.FunctionTestRunReq{
++		Source: &agentproto.FunctionSource{
++			Runtime:           string(src.Runtime),
++			Contract:          string(src.Contract),
++			EntrypointFile:    src.Entrypoint.File,
++			EntrypointHandler: src.Entrypoint.Handler,
++			SystemPackages:    src.SystemPackages,
++			TimeoutMs:         time.Duration(src.Timeout).Milliseconds(),
++			MaxConcurrency:    int64(src.MaxConcurrency),
++			MaxBodySize:       src.MaxBodySize.Bytes(),
++		},
++		Files:         files,
++		Images:        req.Images,
++		Inputs:        clientbuild.InputsToProto(req.Inputs),
++		BuildSettings: clientbuild.BuildSettingsToProto(req.BuildSettings),
++		Env:           req.Env,
++		Network:       req.Network,
++		NanoCpus:      req.NanoCPUs,
++		MemoryBytes:   req.MemoryBytes,
++	}
++	if r := req.Request; r != nil {
++		out.Request = &agentproto.FunctionRequest{
++			Method: r.Method, Path: r.Path, Query: valuesToProto(r.Query), Headers: valuesToProto(r.Headers),
++			Body: r.Body,
++		}
++	}
++	return out
++}
++
++func runRespFromProto(resp *agentproto.FunctionTestRunResp) *functiontest.RunResp {
++	var lockFiles []*entity.FunctionFile
++	for _, f := range resp.GetLockFiles() {
++		lockFiles = append(lockFiles, &entity.FunctionFile{Path: f.GetPath(), Content: f.GetContent()})
++	}
++	return &functiontest.RunResp{
++		Outcome:        functiontest.Outcome(resp.GetOutcome()),
++		Status:         int(resp.GetStatus()),
++		Headers:        valuesFromProto(resp.GetHeaders()),
++		Body:           resp.GetBody(),
++		BodyTruncated:  resp.GetBodyTruncated(),
++		RequestID:      resp.GetRequestId(),
++		DurationMs:     resp.GetDurationMs(),
++		Logs:           resp.GetLogs(),
++		LogsTruncated:  resp.GetLogsTruncated(),
++		Error:          resp.GetError(),
++		ExitCode:       resp.GetExitCode(),
++		LibrariesBuilt: resp.GetLibrariesBuilt(),
++		LibrariesLog:   resp.GetLibrariesLog(),
++		LockFiles:      lockFiles,
++	}
++}
++
++func valuesToProto(values map[string][]string) map[string]*agentproto.FunctionValues {
++	if values == nil {
++		return nil
++	}
++	out := make(map[string]*agentproto.FunctionValues, len(values))
++	for name, v := range values {
++		out[name] = &agentproto.FunctionValues{Values: v}
++	}
++	return out
++}
++
++func valuesFromProto(values map[string]*agentproto.FunctionValues) map[string][]string {
++	if len(values) == 0 {
++		return nil
++	}
++	out := make(map[string][]string, len(values))
++	for name, v := range values {
++		out[name] = v.GetValues()
++	}
++	return out
++}
+diff --git a/hivepaas_app/interface/agent/client/imagebuildservice/service.go b/hivepaas_app/interface/agent/client/imagebuildservice/service.go
+index b4c3f191..d814d23f 100644
+--- a/hivepaas_app/interface/agent/client/imagebuildservice/service.go
++++ b/hivepaas_app/interface/agent/client/imagebuildservice/service.go
+@@ -10,6 +10,7 @@ import (
+ 	"google.golang.org/grpc"
+ 	"google.golang.org/grpc/credentials/insecure"
+ 
++	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
+ 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
+ 	"github.com/hivepaas/hivepaas/hivepaas_app/interface/agent/client"
+ 	agentproto "github.com/hivepaas/hivepaas/hivepaas_app/interface/agent/proto"
+@@ -85,28 +86,7 @@ func (c *grpcImageBuildServiceClient) ImageBuild(
+ 		}
+ 	}
+ 
+-	var protoBuildSettings *agentproto.ImageBuildSettings
+-	//nolint:gosec
+-	if req.ImageBuildSettings != nil {
+-		protoBuildSettings = &agentproto.ImageBuildSettings{
+-			NoCache:   req.ImageBuildSettings.NoCache,
+-			NoVerbose: req.ImageBuildSettings.NoVerbose,
+-			Workers: &agentproto.ImageBuildWorkerSettings{
+-				NodeIds:        req.ImageBuildSettings.Workers.NodeIDs,
+-				NodeLabels:     req.ImageBuildSettings.Workers.NodeLabels,
+-				MaxParallelism: uint32(req.ImageBuildSettings.Workers.MaxParallelism),
+-			},
+-			Resources: &agentproto.ImageBuildResourceSettings{
+-				Cpus:    uint32(req.ImageBuildSettings.Resources.CPUs),
+-				Mem:     uint64(req.ImageBuildSettings.Resources.Mem),
+-				MemSwap: uint64(req.ImageBuildSettings.Resources.MemSwap),
+-				ShmSize: uint64(req.ImageBuildSettings.Resources.ShmSize),
+-			},
+-			Sources: &agentproto.ImageBuildSourceSettings{
+-				RepoCache: req.ImageBuildSettings.Sources.RepoCache,
+-			},
+-		}
+-	}
++	protoBuildSettings := BuildSettingsToProto(req.ImageBuildSettings)
+ 
+ 	appID := req.AppID
+ 	if appID == "" && req.App != nil {
+@@ -123,7 +103,7 @@ func (c *grpcImageBuildServiceClient) ImageBuild(
+ 		ImageBuildSettings: protoBuildSettings,
+ 		NoCache:            req.NoCache,
+ 		BuildId:            req.BuildID,
+-		Inputs:             inputsToProto(req.Inputs),
++		Inputs:             InputsToProto(req.Inputs),
+ 	}
+ 
+ 	stream, err := c.protoClient.ImageBuildFromSource(authCtx)
+@@ -158,7 +138,35 @@ func (c *grpcImageBuildServiceClient) ImageBuild(
+ 	return respDTO, nil
+ }
+ 
+-func inputsToProto(inputs *imagebuildservice.BuildInputs) *agentproto.ImageBuildInputs {
++// BuildSettingsToProto is an app's build settings as the agent takes them, nil
++// for none.
++func BuildSettingsToProto(settings *entity.ImageBuildSettings) *agentproto.ImageBuildSettings {
++	if settings == nil {
++		return nil
++	}
++	//nolint:gosec
++	return &agentproto.ImageBuildSettings{
++		NoCache:   settings.NoCache,
++		NoVerbose: settings.NoVerbose,
++		Workers: &agentproto.ImageBuildWorkerSettings{
++			NodeIds:        settings.Workers.NodeIDs,
++			NodeLabels:     settings.Workers.NodeLabels,
++			MaxParallelism: uint32(settings.Workers.MaxParallelism),
++		},
++		Resources: &agentproto.ImageBuildResourceSettings{
++			Cpus:    uint32(settings.Resources.CPUs),
++			Mem:     uint64(settings.Resources.Mem),
++			MemSwap: uint64(settings.Resources.MemSwap),
++			ShmSize: uint64(settings.Resources.ShmSize),
++		},
++		Sources: &agentproto.ImageBuildSourceSettings{
++			RepoCache: settings.Sources.RepoCache,
++		},
++	}
++}
++
++// InputsToProto is what the app resolved for a build, as the agent takes it.
++func InputsToProto(inputs *imagebuildservice.BuildInputs) *agentproto.ImageBuildInputs {
+ 	out := &agentproto.ImageBuildInputs{
+ 		EnvVars:       make(map[string]string, len(inputs.EnvVars)),
+ 		SecretEnvVars: inputs.SecretEnvVars,
+diff --git a/hivepaas_app/interface/agent/proto/function.pb.go b/hivepaas_app/interface/agent/proto/function.pb.go
+new file mode 100644
+index 00000000..50d6ab3a
+--- /dev/null
++++ b/hivepaas_app/interface/agent/proto/function.pb.go
+@@ -0,0 +1,708 @@
++// Code generated by protoc-gen-go. DO NOT EDIT.
++// versions:
++// 	protoc-gen-go v1.36.12
++// 	protoc        v7.35.1
++// source: function.proto
++
++package agentproto
++
++import (
++	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
++	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
++	reflect "reflect"
++	sync "sync"
++	unsafe "unsafe"
++)
++
++const (
++	// Verify that this generated code is sufficiently up-to-date.
++	_ = protoimpl.EnforceVersion(20 - protoimpl.MinVersion)
++	// Verify that runtime/protoimpl is sufficiently up-to-date.
++	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
++)
++
++type FunctionFile struct {
++	state         protoimpl.MessageState `protogen:"open.v1"`
++	Path          string                 `protobuf:"bytes,1,opt,name=path,proto3" json:"path,omitempty"`
++	Content       string                 `protobuf:"bytes,2,opt,name=content,proto3" json:"content,omitempty"`
++	unknownFields protoimpl.UnknownFields
++	sizeCache     protoimpl.SizeCache
++}
++
++func (x *FunctionFile) Reset() {
++	*x = FunctionFile{}
++	mi := &file_function_proto_msgTypes[0]
++	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
++	ms.StoreMessageInfo(mi)
++}
++
++func (x *FunctionFile) String() string {
++	return protoimpl.X.MessageStringOf(x)
++}
++
++func (*FunctionFile) ProtoMessage() {}
++
++func (x *FunctionFile) ProtoReflect() protoreflect.Message {
++	mi := &file_function_proto_msgTypes[0]
++	if x != nil {
++		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
++		if ms.LoadMessageInfo() == nil {
++			ms.StoreMessageInfo(mi)
++		}
++		return ms
++	}
++	return mi.MessageOf(x)
++}
++
++// Deprecated: Use FunctionFile.ProtoReflect.Descriptor instead.
++func (*FunctionFile) Descriptor() ([]byte, []int) {
++	return file_function_proto_rawDescGZIP(), []int{0}
++}
++
++func (x *FunctionFile) GetPath() string {
++	if x != nil {
++		return x.Path
++	}
++	return ""
++}
++
++func (x *FunctionFile) GetContent() string {
++	if x != nil {
++		return x.Content
++	}
++	return ""
++}
++
++// FunctionValues are the values of one query parameter or header.
++type FunctionValues struct {
++	state         protoimpl.MessageState `protogen:"open.v1"`
++	Values        []string               `protobuf:"bytes,1,rep,name=values,proto3" json:"values,omitempty"`
++	unknownFields protoimpl.UnknownFields
++	sizeCache     protoimpl.SizeCache
++}
++
++func (x *FunctionValues) Reset() {
++	*x = FunctionValues{}
++	mi := &file_function_proto_msgTypes[1]
++	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
++	ms.StoreMessageInfo(mi)
++}
++
++func (x *FunctionValues) String() string {
++	return protoimpl.X.MessageStringOf(x)
++}
++
++func (*FunctionValues) ProtoMessage() {}
++
++func (x *FunctionValues) ProtoReflect() protoreflect.Message {
++	mi := &file_function_proto_msgTypes[1]
++	if x != nil {
++		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
++		if ms.LoadMessageInfo() == nil {
++			ms.StoreMessageInfo(mi)
++		}
++		return ms
++	}
++	return mi.MessageOf(x)
++}
++
++// Deprecated: Use FunctionValues.ProtoReflect.Descriptor instead.
++func (*FunctionValues) Descriptor() ([]byte, []int) {
++	return file_function_proto_rawDescGZIP(), []int{1}
++}
++
++func (x *FunctionValues) GetValues() []string {
++	if x != nil {
++		return x.Values
++	}
++	return nil
++}
++
++// FunctionSource is what a test run takes of the function's settings.
++type FunctionSource struct {
++	state             protoimpl.MessageState `protogen:"open.v1"`
++	Runtime           string                 `protobuf:"bytes,1,opt,name=runtime,proto3" json:"runtime,omitempty"`
++	Contract          string                 `protobuf:"bytes,2,opt,name=contract,proto3" json:"contract,omitempty"`
++	EntrypointFile    string                 `protobuf:"bytes,3,opt,name=entrypoint_file,json=entrypointFile,proto3" json:"entrypoint_file,omitempty"`
++	EntrypointHandler string                 `protobuf:"bytes,4,opt,name=entrypoint_handler,json=entrypointHandler,proto3" json:"entrypoint_handler,omitempty"`
++	SystemPackages    []string               `protobuf:"bytes,5,rep,name=system_packages,json=systemPackages,proto3" json:"system_packages,omitempty"`
++	TimeoutMs         int64                  `protobuf:"varint,6,opt,name=timeout_ms,json=timeoutMs,proto3" json:"timeout_ms,omitempty"`
++	MaxConcurrency    int64                  `protobuf:"varint,7,opt,name=max_concurrency,json=maxConcurrency,proto3" json:"max_concurrency,omitempty"`
++	MaxBodySize       int64                  `protobuf:"varint,8,opt,name=max_body_size,json=maxBodySize,proto3" json:"max_body_size,omitempty"`
++	unknownFields     protoimpl.UnknownFields
++	sizeCache         protoimpl.SizeCache
++}
++
++func (x *FunctionSource) Reset() {
++	*x = FunctionSource{}
++	mi := &file_function_proto_msgTypes[2]
++	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
++	ms.StoreMessageInfo(mi)
++}
++
++func (x *FunctionSource) String() string {
++	return protoimpl.X.MessageStringOf(x)
++}
++
++func (*FunctionSource) ProtoMessage() {}
++
++func (x *FunctionSource) ProtoReflect() protoreflect.Message {
++	mi := &file_function_proto_msgTypes[2]
++	if x != nil {
++		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
++		if ms.LoadMessageInfo() == nil {
++			ms.StoreMessageInfo(mi)
++		}
++		return ms
++	}
++	return mi.MessageOf(x)
++}
++
++// Deprecated: Use FunctionSource.ProtoReflect.Descriptor instead.
++func (*FunctionSource) Descriptor() ([]byte, []int) {
++	return file_function_proto_rawDescGZIP(), []int{2}
++}
++
++func (x *FunctionSource) GetRuntime() string {
++	if x != nil {
++		return x.Runtime
++	}
++	return ""
++}
++
++func (x *FunctionSource) GetContract() string {
++	if x != nil {
++		return x.Contract
++	}
++	return ""
++}
++
++func (x *FunctionSource) GetEntrypointFile() string {
++	if x != nil {
++		return x.EntrypointFile
++	}
++	return ""
++}
++
++func (x *FunctionSource) GetEntrypointHandler() string {
++	if x != nil {
++		return x.EntrypointHandler
++	}
++	return ""
++}
++
++func (x *FunctionSource) GetSystemPackages() []string {
++	if x != nil {
++		return x.SystemPackages
++	}
++	return nil
++}
++
++func (x *FunctionSource) GetTimeoutMs() int64 {
++	if x != nil {
++		return x.TimeoutMs
++	}
++	return 0
++}
++
++func (x *FunctionSource) GetMaxConcurrency() int64 {
++	if x != nil {
++		return x.MaxConcurrency
++	}
++	return 0
++}
++
++func (x *FunctionSource) GetMaxBodySize() int64 {
++	if x != nil {
++		return x.MaxBodySize
++	}
++	return 0
++}
++
++type FunctionRequest struct {
++	state         protoimpl.MessageState     `protogen:"open.v1"`
++	Method        string                     `protobuf:"bytes,1,opt,name=method,proto3" json:"method,omitempty"`
++	Path          string                     `protobuf:"bytes,2,opt,name=path,proto3" json:"path,omitempty"`
++	Query         map[string]*FunctionValues `protobuf:"bytes,3,rep,name=query,proto3" json:"query,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
++	Headers       map[string]*FunctionValues `protobuf:"bytes,4,rep,name=headers,proto3" json:"headers,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
++	Body          []byte                     `protobuf:"bytes,5,opt,name=body,proto3" json:"body,omitempty"`
++	unknownFields protoimpl.UnknownFields
++	sizeCache     protoimpl.SizeCache
++}
++
++func (x *FunctionRequest) Reset() {
++	*x = FunctionRequest{}
++	mi := &file_function_proto_msgTypes[3]
++	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
++	ms.StoreMessageInfo(mi)
++}
++
++func (x *FunctionRequest) String() string {
++	return protoimpl.X.MessageStringOf(x)
++}
++
++func (*FunctionRequest) ProtoMessage() {}
++
++func (x *FunctionRequest) ProtoReflect() protoreflect.Message {
++	mi := &file_function_proto_msgTypes[3]
++	if x != nil {
++		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
++		if ms.LoadMessageInfo() == nil {
++			ms.StoreMessageInfo(mi)
++		}
++		return ms
++	}
++	return mi.MessageOf(x)
++}
++
++// Deprecated: Use FunctionRequest.ProtoReflect.Descriptor instead.
++func (*FunctionRequest) Descriptor() ([]byte, []int) {
++	return file_function_proto_rawDescGZIP(), []int{3}
++}
++
++func (x *FunctionRequest) GetMethod() string {
++	if x != nil {
++		return x.Method
++	}
++	return ""
++}
++
++func (x *FunctionRequest) GetPath() string {
++	if x != nil {
++		return x.Path
++	}
++	return ""
++}
++
++func (x *FunctionRequest) GetQuery() map[string]*FunctionValues {
++	if x != nil {
++		return x.Query
++	}
++	return nil
++}
++
++func (x *FunctionRequest) GetHeaders() map[string]*FunctionValues {
++	if x != nil {
++		return x.Headers
++	}
++	return nil
++}
++
++func (x *FunctionRequest) GetBody() []byte {
++	if x != nil {
++		return x.Body
++	}
++	return nil
++}
++
++type FunctionTestRunReq struct {
++	state         protoimpl.MessageState `protogen:"open.v1"`
++	Source        *FunctionSource        `protobuf:"bytes,1,opt,name=source,proto3" json:"source,omitempty"`
++	Files         []*FunctionFile        `protobuf:"bytes,2,rep,name=files,proto3" json:"files,omitempty"`
++	Request       *FunctionRequest       `protobuf:"bytes,3,opt,name=request,proto3" json:"request,omitempty"`
++	Images        map[string]string      `protobuf:"bytes,4,rep,name=images,proto3" json:"images,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
++	Inputs        *ImageBuildInputs      `protobuf:"bytes,5,opt,name=inputs,proto3" json:"inputs,omitempty"`
++	BuildSettings *ImageBuildSettings    `protobuf:"bytes,6,opt,name=build_settings,json=buildSettings,proto3" json:"build_settings,omitempty"` // unset when the app has none
++	Env           []string               `protobuf:"bytes,7,rep,name=env,proto3" json:"env,omitempty"`
++	Network       string                 `protobuf:"bytes,8,opt,name=network,proto3" json:"network,omitempty"`
++	NanoCpus      int64                  `protobuf:"varint,9,opt,name=nano_cpus,json=nanoCpus,proto3" json:"nano_cpus,omitempty"`
++	MemoryBytes   int64                  `protobuf:"varint,10,opt,name=memory_bytes,json=memoryBytes,proto3" json:"memory_bytes,omitempty"`
++	unknownFields protoimpl.UnknownFields
++	sizeCache     protoimpl.SizeCache
++}
++
++func (x *FunctionTestRunReq) Reset() {
++	*x = FunctionTestRunReq{}
++	mi := &file_function_proto_msgTypes[4]
++	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
++	ms.StoreMessageInfo(mi)
++}
++
++func (x *FunctionTestRunReq) String() string {
++	return protoimpl.X.MessageStringOf(x)
++}
++
++func (*FunctionTestRunReq) ProtoMessage() {}
++
++func (x *FunctionTestRunReq) ProtoReflect() protoreflect.Message {
++	mi := &file_function_proto_msgTypes[4]
++	if x != nil {
++		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
++		if ms.LoadMessageInfo() == nil {
++			ms.StoreMessageInfo(mi)
++		}
++		return ms
++	}
++	return mi.MessageOf(x)
++}
++
++// Deprecated: Use FunctionTestRunReq.ProtoReflect.Descriptor instead.
++func (*FunctionTestRunReq) Descriptor() ([]byte, []int) {
++	return file_function_proto_rawDescGZIP(), []int{4}
++}
++
++func (x *FunctionTestRunReq) GetSource() *FunctionSource {
++	if x != nil {
++		return x.Source
++	}
++	return nil
++}
++
++func (x *FunctionTestRunReq) GetFiles() []*FunctionFile {
++	if x != nil {
++		return x.Files
++	}
++	return nil
++}
++
++func (x *FunctionTestRunReq) GetRequest() *FunctionRequest {
++	if x != nil {
++		return x.Request
++	}
++	return nil
++}
++
++func (x *FunctionTestRunReq) GetImages() map[string]string {
++	if x != nil {
++		return x.Images
++	}
++	return nil
++}
++
++func (x *FunctionTestRunReq) GetInputs() *ImageBuildInputs {
++	if x != nil {
++		return x.Inputs
++	}
++	return nil
++}
++
++func (x *FunctionTestRunReq) GetBuildSettings() *ImageBuildSettings {
++	if x != nil {
++		return x.BuildSettings
++	}
++	return nil
++}
++
++func (x *FunctionTestRunReq) GetEnv() []string {
++	if x != nil {
++		return x.Env
++	}
++	return nil
++}
++
++func (x *FunctionTestRunReq) GetNetwork() string {
++	if x != nil {
++		return x.Network
++	}
++	return ""
++}
++
++func (x *FunctionTestRunReq) GetNanoCpus() int64 {
++	if x != nil {
++		return x.NanoCpus
++	}
++	return 0
++}
++
++func (x *FunctionTestRunReq) GetMemoryBytes() int64 {
++	if x != nil {
++		return x.MemoryBytes
++	}
++	return 0
++}
++
++type FunctionTestRunResp struct {
++	state          protoimpl.MessageState     `protogen:"open.v1"`
++	Outcome        string                     `protobuf:"bytes,1,opt,name=outcome,proto3" json:"outcome,omitempty"`
++	Status         int32                      `protobuf:"varint,2,opt,name=status,proto3" json:"status,omitempty"`
++	Headers        map[string]*FunctionValues `protobuf:"bytes,3,rep,name=headers,proto3" json:"headers,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
++	Body           []byte                     `protobuf:"bytes,4,opt,name=body,proto3" json:"body,omitempty"`
++	BodyTruncated  bool                       `protobuf:"varint,5,opt,name=body_truncated,json=bodyTruncated,proto3" json:"body_truncated,omitempty"`
++	RequestId      string                     `protobuf:"bytes,6,opt,name=request_id,json=requestId,proto3" json:"request_id,omitempty"`
++	DurationMs     float64                    `protobuf:"fixed64,7,opt,name=duration_ms,json=durationMs,proto3" json:"duration_ms,omitempty"`
++	Logs           string                     `protobuf:"bytes,8,opt,name=logs,proto3" json:"logs,omitempty"`
++	LogsTruncated  bool                       `protobuf:"varint,9,opt,name=logs_truncated,json=logsTruncated,proto3" json:"logs_truncated,omitempty"`
++	Error          string                     `protobuf:"bytes,10,opt,name=error,proto3" json:"error,omitempty"`
++	ExitCode       int64                      `protobuf:"varint,11,opt,name=exit_code,json=exitCode,proto3" json:"exit_code,omitempty"`
++	LibrariesBuilt bool                       `protobuf:"varint,12,opt,name=libraries_built,json=librariesBuilt,proto3" json:"libraries_built,omitempty"`
++	LibrariesLog   string                     `protobuf:"bytes,13,opt,name=libraries_log,json=librariesLog,proto3" json:"libraries_log,omitempty"`
++	LockFiles      []*FunctionFile            `protobuf:"bytes,14,rep,name=lock_files,json=lockFiles,proto3" json:"lock_files,omitempty"`
++	unknownFields  protoimpl.UnknownFields
++	sizeCache      protoimpl.SizeCache
++}
++
++func (x *FunctionTestRunResp) Reset() {
++	*x = FunctionTestRunResp{}
++	mi := &file_function_proto_msgTypes[5]
++	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
++	ms.StoreMessageInfo(mi)
++}
++
++func (x *FunctionTestRunResp) String() string {
++	return protoimpl.X.MessageStringOf(x)
++}
++
++func (*FunctionTestRunResp) ProtoMessage() {}
++
++func (x *FunctionTestRunResp) ProtoReflect() protoreflect.Message {
++	mi := &file_function_proto_msgTypes[5]
++	if x != nil {
++		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
++		if ms.LoadMessageInfo() == nil {
++			ms.StoreMessageInfo(mi)
++		}
++		return ms
++	}
++	return mi.MessageOf(x)
++}
++
++// Deprecated: Use FunctionTestRunResp.ProtoReflect.Descriptor instead.
++func (*FunctionTestRunResp) Descriptor() ([]byte, []int) {
++	return file_function_proto_rawDescGZIP(), []int{5}
++}
++
++func (x *FunctionTestRunResp) GetOutcome() string {
++	if x != nil {
++		return x.Outcome
++	}
++	return ""
++}
++
++func (x *FunctionTestRunResp) GetStatus() int32 {
++	if x != nil {
++		return x.Status
++	}
++	return 0
++}
++
++func (x *FunctionTestRunResp) GetHeaders() map[string]*FunctionValues {
++	if x != nil {
++		return x.Headers
++	}
++	return nil
++}
++
++func (x *FunctionTestRunResp) GetBody() []byte {
++	if x != nil {
++		return x.Body
++	}
++	return nil
++}
++
++func (x *FunctionTestRunResp) GetBodyTruncated() bool {
++	if x != nil {
++		return x.BodyTruncated
++	}
++	return false
++}
++
++func (x *FunctionTestRunResp) GetRequestId() string {
++	if x != nil {
++		return x.RequestId
++	}
++	return ""
++}
++
++func (x *FunctionTestRunResp) GetDurationMs() float64 {
++	if x != nil {
++		return x.DurationMs
++	}
++	return 0
++}
++
++func (x *FunctionTestRunResp) GetLogs() string {
++	if x != nil {
++		return x.Logs
++	}
++	return ""
++}
++
++func (x *FunctionTestRunResp) GetLogsTruncated() bool {
++	if x != nil {
++		return x.LogsTruncated
++	}
++	return false
++}
++
++func (x *FunctionTestRunResp) GetError() string {
++	if x != nil {
++		return x.Error
++	}
++	return ""
++}
++
++func (x *FunctionTestRunResp) GetExitCode() int64 {
++	if x != nil {
++		return x.ExitCode
++	}
++	return 0
++}
++
++func (x *FunctionTestRunResp) GetLibrariesBuilt() bool {
++	if x != nil {
++		return x.LibrariesBuilt
++	}
++	return false
++}
++
++func (x *FunctionTestRunResp) GetLibrariesLog() string {
++	if x != nil {
++		return x.LibrariesLog
++	}
++	return ""
++}
++
++func (x *FunctionTestRunResp) GetLockFiles() []*FunctionFile {
++	if x != nil {
++		return x.LockFiles
++	}
++	return nil
++}
++
++var File_function_proto protoreflect.FileDescriptor
++
++const file_function_proto_rawDesc = "" +
++	"\n" +
++	"\x0efunction.proto\x12\x05agent\x1a\x11image_build.proto\"<\n" +
++	"\fFunctionFile\x12\x12\n" +
++	"\x04path\x18\x01 \x01(\tR\x04path\x12\x18\n" +
++	"\acontent\x18\x02 \x01(\tR\acontent\"(\n" +
++	"\x0eFunctionValues\x12\x16\n" +
++	"\x06values\x18\x01 \x03(\tR\x06values\"\xb3\x02\n" +
++	"\x0eFunctionSource\x12\x18\n" +
++	"\aruntime\x18\x01 \x01(\tR\aruntime\x12\x1a\n" +
++	"\bcontract\x18\x02 \x01(\tR\bcontract\x12'\n" +
++	"\x0fentrypoint_file\x18\x03 \x01(\tR\x0eentrypointFile\x12-\n" +
++	"\x12entrypoint_handler\x18\x04 \x01(\tR\x11entrypointHandler\x12'\n" +
++	"\x0fsystem_packages\x18\x05 \x03(\tR\x0esystemPackages\x12\x1d\n" +
++	"\n" +
++	"timeout_ms\x18\x06 \x01(\x03R\ttimeoutMs\x12'\n" +
++	"\x0fmax_concurrency\x18\a \x01(\x03R\x0emaxConcurrency\x12\"\n" +
++	"\rmax_body_size\x18\b \x01(\x03R\vmaxBodySize\"\xed\x02\n" +
++	"\x0fFunctionRequest\x12\x16\n" +
++	"\x06method\x18\x01 \x01(\tR\x06method\x12\x12\n" +
++	"\x04path\x18\x02 \x01(\tR\x04path\x127\n" +
++	"\x05query\x18\x03 \x03(\v2!.agent.FunctionRequest.QueryEntryR\x05query\x12=\n" +
++	"\aheaders\x18\x04 \x03(\v2#.agent.FunctionRequest.HeadersEntryR\aheaders\x12\x12\n" +
++	"\x04body\x18\x05 \x01(\fR\x04body\x1aO\n" +
++	"\n" +
++	"QueryEntry\x12\x10\n" +
++	"\x03key\x18\x01 \x01(\tR\x03key\x12+\n" +
++	"\x05value\x18\x02 \x01(\v2\x15.agent.FunctionValuesR\x05value:\x028\x01\x1aQ\n" +
++	"\fHeadersEntry\x12\x10\n" +
++	"\x03key\x18\x01 \x01(\tR\x03key\x12+\n" +
++	"\x05value\x18\x02 \x01(\v2\x15.agent.FunctionValuesR\x05value:\x028\x01\"\xf9\x03\n" +
++	"\x12FunctionTestRunReq\x12-\n" +
++	"\x06source\x18\x01 \x01(\v2\x15.agent.FunctionSourceR\x06source\x12)\n" +
++	"\x05files\x18\x02 \x03(\v2\x13.agent.FunctionFileR\x05files\x120\n" +
++	"\arequest\x18\x03 \x01(\v2\x16.agent.FunctionRequestR\arequest\x12=\n" +
++	"\x06images\x18\x04 \x03(\v2%.agent.FunctionTestRunReq.ImagesEntryR\x06images\x12/\n" +
++	"\x06inputs\x18\x05 \x01(\v2\x17.agent.ImageBuildInputsR\x06inputs\x12@\n" +
++	"\x0ebuild_settings\x18\x06 \x01(\v2\x19.agent.ImageBuildSettingsR\rbuildSettings\x12\x10\n" +
++	"\x03env\x18\a \x03(\tR\x03env\x12\x18\n" +
++	"\anetwork\x18\b \x01(\tR\anetwork\x12\x1b\n" +
++	"\tnano_cpus\x18\t \x01(\x03R\bnanoCpus\x12!\n" +
++	"\fmemory_bytes\x18\n" +
++	" \x01(\x03R\vmemoryBytes\x1a9\n" +
++	"\vImagesEntry\x12\x10\n" +
++	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
++	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"\xc8\x04\n" +
++	"\x13FunctionTestRunResp\x12\x18\n" +
++	"\aoutcome\x18\x01 \x01(\tR\aoutcome\x12\x16\n" +
++	"\x06status\x18\x02 \x01(\x05R\x06status\x12A\n" +
++	"\aheaders\x18\x03 \x03(\v2'.agent.FunctionTestRunResp.HeadersEntryR\aheaders\x12\x12\n" +
++	"\x04body\x18\x04 \x01(\fR\x04body\x12%\n" +
++	"\x0ebody_truncated\x18\x05 \x01(\bR\rbodyTruncated\x12\x1d\n" +
++	"\n" +
++	"request_id\x18\x06 \x01(\tR\trequestId\x12\x1f\n" +
++	"\vduration_ms\x18\a \x01(\x01R\n" +
++	"durationMs\x12\x12\n" +
++	"\x04logs\x18\b \x01(\tR\x04logs\x12%\n" +
++	"\x0elogs_truncated\x18\t \x01(\bR\rlogsTruncated\x12\x14\n" +
++	"\x05error\x18\n" +
++	" \x01(\tR\x05error\x12\x1b\n" +
++	"\texit_code\x18\v \x01(\x03R\bexitCode\x12'\n" +
++	"\x0flibraries_built\x18\f \x01(\bR\x0elibrariesBuilt\x12#\n" +
++	"\rlibraries_log\x18\r \x01(\tR\flibrariesLog\x122\n" +
++	"\n" +
++	"lock_files\x18\x0e \x03(\v2\x13.agent.FunctionFileR\tlockFiles\x1aQ\n" +
++	"\fHeadersEntry\x12\x10\n" +
++	"\x03key\x18\x01 \x01(\tR\x03key\x12+\n" +
++	"\x05value\x18\x02 \x01(\v2\x15.agent.FunctionValuesR\x05value:\x028\x012[\n" +
++	"\x0fFunctionService\x12H\n" +
++	"\x0fFunctionTestRun\x12\x19.agent.FunctionTestRunReq\x1a\x1a.agent.FunctionTestRunRespBLZJgithub.com/hivepaas/hivepaas/hivepaas_app/interface/agent/proto;agentprotob\x06proto3"
++
++var (
++	file_function_proto_rawDescOnce sync.Once
++	file_function_proto_rawDescData []byte
++)
++
++func file_function_proto_rawDescGZIP() []byte {
++	file_function_proto_rawDescOnce.Do(func() {
++		file_function_proto_rawDescData = protoimpl.X.CompressGZIP(unsafe.Slice(unsafe.StringData(file_function_proto_rawDesc), len(file_function_proto_rawDesc)))
++	})
++	return file_function_proto_rawDescData
++}
++
++var file_function_proto_msgTypes = make([]protoimpl.MessageInfo, 10)
++var file_function_proto_goTypes = []any{
++	(*FunctionFile)(nil),        // 0: agent.FunctionFile
++	(*FunctionValues)(nil),      // 1: agent.FunctionValues
++	(*FunctionSource)(nil),      // 2: agent.FunctionSource
++	(*FunctionRequest)(nil),     // 3: agent.FunctionRequest
++	(*FunctionTestRunReq)(nil),  // 4: agent.FunctionTestRunReq
++	(*FunctionTestRunResp)(nil), // 5: agent.FunctionTestRunResp
++	nil,                         // 6: agent.FunctionRequest.QueryEntry
++	nil,                         // 7: agent.FunctionRequest.HeadersEntry
++	nil,                         // 8: agent.FunctionTestRunReq.ImagesEntry
++	nil,                         // 9: agent.FunctionTestRunResp.HeadersEntry
++	(*ImageBuildInputs)(nil),    // 10: agent.ImageBuildInputs
++	(*ImageBuildSettings)(nil),  // 11: agent.ImageBuildSettings
++}
++var file_function_proto_depIdxs = []int32{
++	6,  // 0: agent.FunctionRequest.query:type_name -> agent.FunctionRequest.QueryEntry
++	7,  // 1: agent.FunctionRequest.headers:type_name -> agent.FunctionRequest.HeadersEntry
++	2,  // 2: agent.FunctionTestRunReq.source:type_name -> agent.FunctionSource
++	0,  // 3: agent.FunctionTestRunReq.files:type_name -> agent.FunctionFile
++	3,  // 4: agent.FunctionTestRunReq.request:type_name -> agent.FunctionRequest
++	8,  // 5: agent.FunctionTestRunReq.images:type_name -> agent.FunctionTestRunReq.ImagesEntry
++	10, // 6: agent.FunctionTestRunReq.inputs:type_name -> agent.ImageBuildInputs
++	11, // 7: agent.FunctionTestRunReq.build_settings:type_name -> agent.ImageBuildSettings
++	9,  // 8: agent.FunctionTestRunResp.headers:type_name -> agent.FunctionTestRunResp.HeadersEntry
++	0,  // 9: agent.FunctionTestRunResp.lock_files:type_name -> agent.FunctionFile
++	1,  // 10: agent.FunctionRequest.QueryEntry.value:type_name -> agent.FunctionValues
++	1,  // 11: agent.FunctionRequest.HeadersEntry.value:type_name -> agent.FunctionValues
++	1,  // 12: agent.FunctionTestRunResp.HeadersEntry.value:type_name -> agent.FunctionValues
++	4,  // 13: agent.FunctionService.FunctionTestRun:input_type -> agent.FunctionTestRunReq
++	5,  // 14: agent.FunctionService.FunctionTestRun:output_type -> agent.FunctionTestRunResp
++	14, // [14:15] is the sub-list for method output_type
++	13, // [13:14] is the sub-list for method input_type
++	13, // [13:13] is the sub-list for extension type_name
++	13, // [13:13] is the sub-list for extension extendee
++	0,  // [0:13] is the sub-list for field type_name
++}
++
++func init() { file_function_proto_init() }
++func file_function_proto_init() {
++	if File_function_proto != nil {
++		return
++	}
++	file_image_build_proto_init()
++	type x struct{}
++	out := protoimpl.TypeBuilder{
++		File: protoimpl.DescBuilder{
++			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
++			RawDescriptor: unsafe.Slice(unsafe.StringData(file_function_proto_rawDesc), len(file_function_proto_rawDesc)),
++			NumEnums:      0,
++			NumMessages:   10,
++			NumExtensions: 0,
++			NumServices:   1,
++		},
++		GoTypes:           file_function_proto_goTypes,
++		DependencyIndexes: file_function_proto_depIdxs,
++		MessageInfos:      file_function_proto_msgTypes,
++	}.Build()
++	File_function_proto = out.File
++	file_function_proto_goTypes = nil
++	file_function_proto_depIdxs = nil
++}
+diff --git a/hivepaas_app/interface/agent/proto/function.proto b/hivepaas_app/interface/agent/proto/function.proto
+new file mode 100644
+index 00000000..a4dea2a0
+--- /dev/null
++++ b/hivepaas_app/interface/agent/proto/function.proto
+@@ -0,0 +1,74 @@
++syntax = "proto3";
++
++package agent;
++
++option go_package = "github.com/hivepaas/hivepaas/hivepaas_app/interface/agent/proto;agentproto";
++
++import "image_build.proto";
++
++service FunctionService {
++  // FunctionTestRun calls a function once on the agent's node: its libraries'
++  // image built or found there, its code and the request in a throwaway
++  // container. See service/functionservice/functiontest.
++  rpc FunctionTestRun(FunctionTestRunReq) returns (FunctionTestRunResp);
++}
++
++message FunctionFile {
++  string path = 1;
++  string content = 2;
++}
++
++// FunctionValues are the values of one query parameter or header.
++message FunctionValues {
++  repeated string values = 1;
++}
++
++// FunctionSource is what a test run takes of the function's settings.
++message FunctionSource {
++  string runtime = 1;
++  string contract = 2;
++  string entrypoint_file = 3;
++  string entrypoint_handler = 4;
++  repeated string system_packages = 5;
++  int64 timeout_ms = 6;
++  int64 max_concurrency = 7;
++  int64 max_body_size = 8;
++}
++
++message FunctionRequest {
++  string method = 1;
++  string path = 2;
++  map<string, FunctionValues> query = 3;
++  map<string, FunctionValues> headers = 4;
++  bytes body = 5;
++}
++
++message FunctionTestRunReq {
++  FunctionSource source = 1;
++  repeated FunctionFile files = 2;
++  FunctionRequest request = 3;
++  map<string, string> images = 4;
++  ImageBuildInputs inputs = 5;
++  ImageBuildSettings build_settings = 6;  // unset when the app has none
++  repeated string env = 7;
++  string network = 8;
++  int64 nano_cpus = 9;
++  int64 memory_bytes = 10;
++}
++
++message FunctionTestRunResp {
++  string outcome = 1;
++  int32 status = 2;
++  map<string, FunctionValues> headers = 3;
++  bytes body = 4;
++  bool body_truncated = 5;
++  string request_id = 6;
++  double duration_ms = 7;
++  string logs = 8;
++  bool logs_truncated = 9;
++  string error = 10;
++  int64 exit_code = 11;
++  bool libraries_built = 12;
++  string libraries_log = 13;
++  repeated FunctionFile lock_files = 14;
++}
+diff --git a/hivepaas_app/interface/agent/proto/function_grpc.pb.go b/hivepaas_app/interface/agent/proto/function_grpc.pb.go
+new file mode 100644
+index 00000000..c5081fe6
+--- /dev/null
++++ b/hivepaas_app/interface/agent/proto/function_grpc.pb.go
+@@ -0,0 +1,127 @@
++// Code generated by protoc-gen-go-grpc. DO NOT EDIT.
++// versions:
++// - protoc-gen-go-grpc v1.6.2
++// - protoc             v7.35.1
++// source: function.proto
++
++package agentproto
++
++import (
++	context "context"
++	grpc "google.golang.org/grpc"
++	codes "google.golang.org/grpc/codes"
++	status "google.golang.org/grpc/status"
++)
++
++// This is a compile-time assertion to ensure that this generated file
++// is compatible with the grpc package it is being compiled against.
++// Requires gRPC-Go v1.64.0 or later.
++const _ = grpc.SupportPackageIsVersion9
++
++const (
++	FunctionService_FunctionTestRun_FullMethodName = "/agent.FunctionService/FunctionTestRun"
++)
++
++// FunctionServiceClient is the client API for FunctionService service.
++//
++// For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
++type FunctionServiceClient interface {
++	// FunctionTestRun calls a function once on the agent's node: its libraries'
++	// image built or found there, its code and the request in a throwaway
++	// container. See service/functionservice/functiontest.
++	FunctionTestRun(ctx context.Context, in *FunctionTestRunReq, opts ...grpc.CallOption) (*FunctionTestRunResp, error)
++}
++
++type functionServiceClient struct {
++	cc grpc.ClientConnInterface
++}
++
++func NewFunctionServiceClient(cc grpc.ClientConnInterface) FunctionServiceClient {
++	return &functionServiceClient{cc}
++}
++
++func (c *functionServiceClient) FunctionTestRun(ctx context.Context, in *FunctionTestRunReq, opts ...grpc.CallOption) (*FunctionTestRunResp, error) {
++	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
++	out := new(FunctionTestRunResp)
++	err := c.cc.Invoke(ctx, FunctionService_FunctionTestRun_FullMethodName, in, out, cOpts...)
++	if err != nil {
++		return nil, err
++	}
++	return out, nil
++}
++
++// FunctionServiceServer is the server API for FunctionService service.
++// All implementations must embed UnimplementedFunctionServiceServer
++// for forward compatibility.
++type FunctionServiceServer interface {
++	// FunctionTestRun calls a function once on the agent's node: its libraries'
++	// image built or found there, its code and the request in a throwaway
++	// container. See service/functionservice/functiontest.
++	FunctionTestRun(context.Context, *FunctionTestRunReq) (*FunctionTestRunResp, error)
++	mustEmbedUnimplementedFunctionServiceServer()
++}
++
++// UnimplementedFunctionServiceServer must be embedded to have
++// forward compatible implementations.
++//
++// NOTE: this should be embedded by value instead of pointer to avoid a nil
++// pointer dereference when methods are called.
++type UnimplementedFunctionServiceServer struct{}
++
++func (UnimplementedFunctionServiceServer) FunctionTestRun(context.Context, *FunctionTestRunReq) (*FunctionTestRunResp, error) {
++	return nil, status.Error(codes.Unimplemented, "method FunctionTestRun not implemented")
++}
++func (UnimplementedFunctionServiceServer) mustEmbedUnimplementedFunctionServiceServer() {}
++func (UnimplementedFunctionServiceServer) testEmbeddedByValue()                         {}
++
++// UnsafeFunctionServiceServer may be embedded to opt out of forward compatibility for this service.
++// Use of this interface is not recommended, as added methods to FunctionServiceServer will
++// result in compilation errors.
++type UnsafeFunctionServiceServer interface {
++	mustEmbedUnimplementedFunctionServiceServer()
++}
++
++func RegisterFunctionServiceServer(s grpc.ServiceRegistrar, srv FunctionServiceServer) {
++	// If the following call panics, it indicates UnimplementedFunctionServiceServer was
++	// embedded by pointer and is nil.  This will cause panics if an
++	// unimplemented method is ever invoked, so we test this at initialization
++	// time to prevent it from happening at runtime later due to I/O.
++	if t, ok := srv.(interface{ testEmbeddedByValue() }); ok {
++		t.testEmbeddedByValue()
++	}
++	s.RegisterService(&FunctionService_ServiceDesc, srv)
++}
++
++func _FunctionService_FunctionTestRun_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
++	in := new(FunctionTestRunReq)
++	if err := dec(in); err != nil {
++		return nil, err
++	}
++	if interceptor == nil {
++		return srv.(FunctionServiceServer).FunctionTestRun(ctx, in)
++	}
++	info := &grpc.UnaryServerInfo{
++		Server:     srv,
++		FullMethod: FunctionService_FunctionTestRun_FullMethodName,
++	}
++	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
++		return srv.(FunctionServiceServer).FunctionTestRun(ctx, req.(*FunctionTestRunReq))
++	}
++	return interceptor(ctx, in, info, handler)
++}
++
++// FunctionService_ServiceDesc is the grpc.ServiceDesc for FunctionService service.
++// It's only intended for direct use with grpc.RegisterService,
++// and not to be introspected or modified (even as a copy)
++var FunctionService_ServiceDesc = grpc.ServiceDesc{
++	ServiceName: "agent.FunctionService",
++	HandlerType: (*FunctionServiceServer)(nil),
++	Methods: []grpc.MethodDesc{
++		{
++			MethodName: "FunctionTestRun",
++			Handler:    _FunctionService_FunctionTestRun_Handler,
++		},
++	},
++	Streams:  []grpc.StreamDesc{},
++	Metadata: "function.proto",
++}
+diff --git a/hivepaas_app/interface/agent/proto/generate.go b/hivepaas_app/interface/agent/proto/generate.go
+index 8d49ec88..9e6a41ab 100644
+--- a/hivepaas_app/interface/agent/proto/generate.go
++++ b/hivepaas_app/interface/agent/proto/generate.go
+@@ -9,3 +9,4 @@ package agentproto
+ //go:generate protoc --go_out=. --go_opt=paths=source_relative --go-grpc_out=. --go-grpc_opt=paths=source_relative docker_api.proto
+ //go:generate protoc --go_out=. --go_opt=paths=source_relative --go-grpc_out=. --go-grpc_opt=paths=source_relative repo_server.proto
+ //go:generate protoc --go_out=. --go_opt=paths=source_relative --go-grpc_out=. --go-grpc_opt=paths=source_relative file.proto
++//go:generate protoc --go_out=. --go_opt=paths=source_relative --go-grpc_out=. --go-grpc_opt=paths=source_relative function.proto
+diff --git a/hivepaas_app/interface/agent/server/functionservice/test_run.go b/hivepaas_app/interface/agent/server/functionservice/test_run.go
+new file mode 100644
+index 00000000..3638e657
+--- /dev/null
++++ b/hivepaas_app/interface/agent/server/functionservice/test_run.go
+@@ -0,0 +1,113 @@
++// Package functionservice serves the agent's function calls: a test run on its
++// node.
++package functionservice
++
++import (
++	"context"
++	"time"
++
++	"github.com/hivepaas/hivepaas/hivepaas_app/base"
++	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
++	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
++	agentproto "github.com/hivepaas/hivepaas/hivepaas_app/interface/agent/proto"
++	serverbuild "github.com/hivepaas/hivepaas/hivepaas_app/interface/agent/server/imagebuildservice"
++	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/timeutil"
++	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/unit"
++	"github.com/hivepaas/hivepaas/hivepaas_app/service/functionservice/functiontest"
++	"github.com/hivepaas/hivepaas/hivepaas_app/usecaseagent/functionagentuc"
++)
++
++// FunctionTestRun runs the test run the call carries, on this node.
++func FunctionTestRun(
++	ctx context.Context,
++	uc *functionagentuc.UC,
++	req *agentproto.FunctionTestRunReq,
++) (*agentproto.FunctionTestRunResp, error) {
++	resp, err := uc.TestRun(ctx, runReqFromProto(req))
++	if err != nil {
++		return nil, hperrors.ToGRPCError(err) //nolint:wrapcheck
++	}
++	return runRespToProto(resp), nil
++}
++
++func runReqFromProto(req *agentproto.FunctionTestRunReq) *functiontest.RunReq {
++	src := req.GetSource()
++	files := make([]*entity.FunctionFile, 0, len(req.GetFiles()))
++	for _, f := range req.GetFiles() {
++		files = append(files, &entity.FunctionFile{Path: f.GetPath(), Content: f.GetContent()})
++	}
++	request := req.GetRequest()
++	return &functiontest.RunReq{
++		Source: &entity.DeploymentFunctionSource{
++			Runtime:        base.FunctionRuntime(src.GetRuntime()),
++			Contract:       base.FunctionContract(src.GetContract()),
++			Entrypoint:     entity.FunctionEntrypoint{File: src.GetEntrypointFile(), Handler: src.GetEntrypointHandler()},
++			SystemPackages: src.GetSystemPackages(),
++			Timeout:        timeutil.Duration(time.Duration(src.GetTimeoutMs()) * time.Millisecond),
++			MaxConcurrency: int(src.GetMaxConcurrency()),
++			MaxBodySize:    unit.DataSize(src.GetMaxBodySize()),
++		},
++		Files: files,
++		Request: &functiontest.Request{
++			Method:  request.GetMethod(),
++			Path:    request.GetPath(),
++			Query:   valuesFromProto(request.GetQuery()),
++			Headers: valuesFromProto(request.GetHeaders()),
++			Body:    request.GetBody(),
++		},
++		Images:        req.GetImages(),
++		Inputs:        serverbuild.InputsFromProto(req.GetInputs()),
++		BuildSettings: serverbuild.BuildSettingsFromProto(req.GetBuildSettings()),
++		Env:           req.GetEnv(),
++		Network:       req.GetNetwork(),
++		NanoCPUs:      req.GetNanoCpus(),
++		MemoryBytes:   req.GetMemoryBytes(),
++	}
++}
++
++func runRespToProto(resp *functiontest.RunResp) *agentproto.FunctionTestRunResp {
++	lockFiles := make([]*agentproto.FunctionFile, 0, len(resp.LockFiles))
++	for _, f := range resp.LockFiles {
++		lockFiles = append(lockFiles, &agentproto.FunctionFile{Path: f.Path, Content: f.Content})
++	}
++	return &agentproto.FunctionTestRunResp{
++		Outcome:        string(resp.Outcome),
++		Status:         int32(resp.Status), //nolint:gosec // an HTTP status
++		Headers:        valuesToProto(resp.Headers),
++		Body:           resp.Body,
++		BodyTruncated:  resp.BodyTruncated,
++		RequestId:      resp.RequestID,
++		DurationMs:     resp.DurationMs,
++		Logs:           resp.Logs,
++		LogsTruncated:  resp.LogsTruncated,
++		Error:          resp.Error,
++		ExitCode:       resp.ExitCode,
++		LibrariesBuilt: resp.LibrariesBuilt,
++		LibrariesLog:   resp.LibrariesLog,
++		LockFiles:      lockFiles,
++	}
++}
++
++// valuesToProto is a query's or headers' values by name, as the agent's calls
++// carry them; nil for none.
++func valuesToProto(values map[string][]string) map[string]*agentproto.FunctionValues {
++	if values == nil {
++		return nil
++	}
++	out := make(map[string]*agentproto.FunctionValues, len(values))
++	for name, v := range values {
++		out[name] = &agentproto.FunctionValues{Values: v}
++	}
++	return out
++}
++
++func valuesFromProto(values map[string]*agentproto.FunctionValues) map[string][]string {
++	if len(values) == 0 {
++		return nil
++	}
++	out := make(map[string][]string, len(values))
++	for name, v := range values {
++		out[name] = v.GetValues()
++	}
++	return out
++}
+diff --git a/hivepaas_app/interface/agent/server/imagebuildservice/image_build.go b/hivepaas_app/interface/agent/server/imagebuildservice/image_build.go
+index b01469e6..78c103e0 100644
+--- a/hivepaas_app/interface/agent/server/imagebuildservice/image_build.go
++++ b/hivepaas_app/interface/agent/server/imagebuildservice/image_build.go
+@@ -40,34 +40,7 @@ func ImageBuildFromSource(
+ 		}
+ 	}
+ 
+-	var buildSettings *entity.ImageBuildSettings
+-	//nolint:gosec
+-	if bs := req.GetImageBuildSettings(); bs != nil {
+-		buildSettings = &entity.ImageBuildSettings{
+-			NoCache:   bs.GetNoCache(),
+-			NoVerbose: bs.GetNoVerbose(),
+-		}
+-		if bs.GetWorkers() != nil {
+-			buildSettings.Workers = entity.ImageBuildWorkerSettings{
+-				NodeIDs:        bs.GetWorkers().GetNodeIds(),
+-				NodeLabels:     bs.GetWorkers().GetNodeLabels(),
+-				MaxParallelism: int(bs.GetWorkers().GetMaxParallelism()),
+-			}
+-		}
+-		if bs.GetResources() != nil {
+-			buildSettings.Resources = entity.ImageBuildResourceSettings{
+-				CPUs:    uint(bs.GetResources().GetCpus()),
+-				Mem:     unit.DataSize(bs.GetResources().GetMem()),
+-				MemSwap: unit.DataSize(bs.GetResources().GetMemSwap()),
+-				ShmSize: unit.DataSize(bs.GetResources().GetShmSize()),
+-			}
+-		}
+-		if bs.GetSources() != nil {
+-			buildSettings.Sources = entity.ImageBuildSourceSettings{
+-				RepoCache: bs.GetSources().GetRepoCache(),
+-			}
+-		}
+-	}
++	buildSettings := BuildSettingsFromProto(req.GetImageBuildSettings())
+ 
+ 	dtoReq := &imagebuildagentdto.ImageBuildReq{
+ 		TaskID: req.GetTaskId(),
+@@ -80,7 +53,7 @@ func ImageBuildFromSource(
+ 			ImageBuildSettings: buildSettings,
+ 			NoCache:            req.GetNoCache(),
+ 			BuildID:            req.GetBuildId(),
+-			Inputs:             inputsFromProto(req.GetInputs()),
++			Inputs:             InputsFromProto(req.GetInputs()),
+ 		},
+ 		SendLog: func(frames []*tasklog.LogFrame) error {
+ 			for _, frame := range frames {
+@@ -122,9 +95,44 @@ func ImageBuildFromSource(
+ 	return nil
+ }
+ 
+-// inputsFromProto is what the app resolved for the build. A request without it
++// BuildSettingsFromProto is an app's build settings as the agent was given
++// them, nil for none.
++//
++//nolint:gosec // the sizes are what the app sent, from settings of the same types
++func BuildSettingsFromProto(bs *agentproto.ImageBuildSettings) *entity.ImageBuildSettings {
++	if bs == nil {
++		return nil
++	}
++	buildSettings := &entity.ImageBuildSettings{
++		NoCache:   bs.GetNoCache(),
++		NoVerbose: bs.GetNoVerbose(),
++	}
++	if bs.GetWorkers() != nil {
++		buildSettings.Workers = entity.ImageBuildWorkerSettings{
++			NodeIDs:        bs.GetWorkers().GetNodeIds(),
++			NodeLabels:     bs.GetWorkers().GetNodeLabels(),
++			MaxParallelism: int(bs.GetWorkers().GetMaxParallelism()),
++		}
++	}
++	if bs.GetResources() != nil {
++		buildSettings.Resources = entity.ImageBuildResourceSettings{
++			CPUs:    uint(bs.GetResources().GetCpus()),
++			Mem:     unit.DataSize(bs.GetResources().GetMem()),
++			MemSwap: unit.DataSize(bs.GetResources().GetMemSwap()),
++			ShmSize: unit.DataSize(bs.GetResources().GetShmSize()),
++		}
++	}
++	if bs.GetSources() != nil {
++		buildSettings.Sources = entity.ImageBuildSourceSettings{
++			RepoCache: bs.GetSources().GetRepoCache(),
++		}
++	}
++	return buildSettings
++}
++
++// InputsFromProto is what the app resolved for a build. A request without it
+ // stays without it, and the agent refuses the build.
+-func inputsFromProto(in *agentproto.ImageBuildInputs) *imagebuildservice.BuildInputs {
++func InputsFromProto(in *agentproto.ImageBuildInputs) *imagebuildservice.BuildInputs {
+ 	if in == nil {
+ 		return nil
+ 	}
+diff --git a/hivepaas_app/interface/agent/server/server.go b/hivepaas_app/interface/agent/server/server.go
+index d7846cb5..474a2932 100644
+--- a/hivepaas_app/interface/agent/server/server.go
++++ b/hivepaas_app/interface/agent/server/server.go
+@@ -9,6 +9,7 @@ import (
+ 	"github.com/hivepaas/hivepaas/hivepaas_app/usecaseagent/containeragentuc"
+ 	"github.com/hivepaas/hivepaas/hivepaas_app/usecaseagent/dockerapiagentuc"
+ 	"github.com/hivepaas/hivepaas/hivepaas_app/usecaseagent/fileagentuc"
++	"github.com/hivepaas/hivepaas/hivepaas_app/usecaseagent/functionagentuc"
+ 	"github.com/hivepaas/hivepaas/hivepaas_app/usecaseagent/imagebuildagentuc"
+ 	"github.com/hivepaas/hivepaas/hivepaas_app/usecaseagent/nodeagentuc"
+ 	"github.com/hivepaas/hivepaas/hivepaas_app/usecaseagent/nodecleanupagentuc"
+@@ -21,6 +22,7 @@ type AgentServer struct {
+ 	agentproto.UnimplementedContainerServiceServer
+ 	agentproto.UnimplementedDockerAPIServiceServer
+ 	agentproto.UnimplementedFileServiceServer
++	agentproto.UnimplementedFunctionServiceServer
+ 	agentproto.UnimplementedImageBuildServiceServer
+ 	agentproto.UnimplementedNodeCleanupServiceServer
+ 	agentproto.UnimplementedNodeServiceServer
+@@ -30,6 +32,7 @@ type AgentServer struct {
+ 	containerAgentUC   *containeragentuc.UC
+ 	dockerAPIAgentUC   *dockerapiagentuc.UC
+ 	fileAgentUC        *fileagentuc.UC
++	functionAgentUC    *functionagentuc.UC
+ 	imageBuildAgentUC  *imagebuildagentuc.UC
+ 	nodeAgentUC        *nodeagentuc.UC
+ 	nodeCleanupAgentUC *nodecleanupagentuc.UC
+@@ -42,6 +45,7 @@ func NewAgentServer(
+ 	containerAgentUC *containeragentuc.UC,
+ 	dockerAPIAgentUC *dockerapiagentuc.UC,
+ 	fileAgentUC *fileagentuc.UC,
++	functionAgentUC *functionagentuc.UC,
+ 	imageBuildAgentUC *imagebuildagentuc.UC,
+ 	nodeAgentUC *nodeagentuc.UC,
+ 	nodeCleanupAgentUC *nodecleanupagentuc.UC,
+@@ -54,6 +58,7 @@ func NewAgentServer(
+ 		containerAgentUC:   containerAgentUC,
+ 		dockerAPIAgentUC:   dockerAPIAgentUC,
+ 		fileAgentUC:        fileAgentUC,
++		functionAgentUC:    functionAgentUC,
+ 		imageBuildAgentUC:  imageBuildAgentUC,
+ 		nodeAgentUC:        nodeAgentUC,
+ 		nodeCleanupAgentUC: nodeCleanupAgentUC,
+diff --git a/hivepaas_app/interface/agent/server/server_function.go b/hivepaas_app/interface/agent/server/server_function.go
+new file mode 100644
+index 00000000..1257edec
+--- /dev/null
++++ b/hivepaas_app/interface/agent/server/server_function.go
+@@ -0,0 +1,15 @@
++package server
++
++import (
++	"context"
++
++	agentproto "github.com/hivepaas/hivepaas/hivepaas_app/interface/agent/proto"
++	"github.com/hivepaas/hivepaas/hivepaas_app/interface/agent/server/functionservice"
++)
++
++func (s *AgentServer) FunctionTestRun(
++	ctx context.Context,
++	req *agentproto.FunctionTestRunReq,
++) (*agentproto.FunctionTestRunResp, error) {
++	return functionservice.FunctionTestRun(ctx, s.functionAgentUC, req) //nolint:wrapcheck
++}
+diff --git a/hivepaas_app/registry/provides.go b/hivepaas_app/registry/provides.go
+index 0afc4e8c..63d5f38c 100644
+--- a/hivepaas_app/registry/provides.go
++++ b/hivepaas_app/registry/provides.go
+@@ -199,6 +199,7 @@ import (
+ 	"github.com/hivepaas/hivepaas/hivepaas_app/usecaseagent/containeragentuc"
+ 	"github.com/hivepaas/hivepaas/hivepaas_app/usecaseagent/dockerapiagentuc"
+ 	"github.com/hivepaas/hivepaas/hivepaas_app/usecaseagent/fileagentuc"
++	"github.com/hivepaas/hivepaas/hivepaas_app/usecaseagent/functionagentuc"
+ 	"github.com/hivepaas/hivepaas/hivepaas_app/usecaseagent/imagebuildagentuc"
+ 	"github.com/hivepaas/hivepaas/hivepaas_app/usecaseagent/nodeagentuc"
+ 	"github.com/hivepaas/hivepaas/hivepaas_app/usecaseagent/nodecleanupagentuc"
+@@ -471,6 +472,7 @@ var Provides = []any{
+ 	// Use case: Agent
+ 	containeragentuc.New,
+ 	dockerapiagentuc.New,
++	functionagentuc.New,
+ 	imagebuildagentuc.New,
+ 	nodeagentuc.New,
+ 	reposerveragentuc.New,
+diff --git a/hivepaas_app/usecaseagent/functionagentuc/uc.go b/hivepaas_app/usecaseagent/functionagentuc/uc.go
+new file mode 100644
+index 00000000..076f324a
+--- /dev/null
++++ b/hivepaas_app/usecaseagent/functionagentuc/uc.go
+@@ -0,0 +1,59 @@
++// Package functionagentuc is what an agent does for functions: their test runs,
++// on its node.
++package functionagentuc
++
++import (
++	"context"
++
++	"github.com/hivepaas/hivepaas/hivepaas_app/base"
++	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
++	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/logging"
++	"github.com/hivepaas/hivepaas/hivepaas_app/service/functionservice/functiontest"
++	"github.com/hivepaas/hivepaas/hivepaas_app/service/imagebuildservice"
++	"github.com/hivepaas/hivepaas/services/docker"
++)
++
++// Runner runs a test run on this node; functiontest.Runner is the one an agent
++// has.
++type Runner interface {
++	Run(ctx context.Context, req *functiontest.RunReq) (*functiontest.RunResp, error)
++}
++
++type UC struct {
++	logger logging.Logger
++	runner Runner
++}
++
++func New(
++	logger logging.Logger,
++	dockerManager docker.Manager,
++	imageBuildService imagebuildservice.Service,
++) *UC {
++	return &UC{
++		logger: logger,
++		runner: &functiontest.Runner{
++			Docker:  dockerManager,
++			Builder: functiontest.NewLibrariesBuilder(imageBuildService),
++			TempDir: base.BaseTempDirDefault,
++		},
++	}
++}
++
++// WithRunner makes the agent run test runs with runner.
++func (uc *UC) WithRunner(runner Runner) *UC {
++	uc.runner = runner
++	return uc
++}
++
++// TestRun runs a function's test run on this node.
++func (uc *UC) TestRun(ctx context.Context, req *functiontest.RunReq) (resp *functiontest.RunResp, err error) {
++	// The agent's calls have no recovery of their own: a panic here would take
++	// the agent down with every build and run on it.
++	defer func() {
++		if r := recover(); r != nil {
++			resp, err = nil, hperrors.NewPanic(r)
++		}
++	}()
++	resp, err = uc.runner.Run(ctx, req)
++	return resp, hperrors.Wrap(err)
++}

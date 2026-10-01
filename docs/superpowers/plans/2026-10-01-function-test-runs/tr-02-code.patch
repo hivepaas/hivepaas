@@ -1,0 +1,68 @@
+diff --git a/hivepaas_app/service/imagebuildservice/imagebuildserviceimpl/build_image.go b/hivepaas_app/service/imagebuildservice/imagebuildserviceimpl/build_image.go
+index 422d0a97..9069b85a 100644
+--- a/hivepaas_app/service/imagebuildservice/imagebuildserviceimpl/build_image.go
++++ b/hivepaas_app/service/imagebuildservice/imagebuildserviceimpl/build_image.go
+@@ -20,7 +20,7 @@ func (s *service) imageBuild(
+ 		return hperrors.NewMissing("Registry auth to push image")
+ 	}
+ 
+-	data.ImageTags, err = buildImageReferences(data.App, data.CommitHash, data.ImageTags, pushRegistry(data.Inputs))
++	data.ImageTags, err = imageReferences(data.ImageBuildReq, data.Inputs)
+ 	if err != nil {
+ 		return hperrors.Wrap(err)
+ 	}
+diff --git a/hivepaas_app/service/imagebuildservice/imagebuildserviceimpl/helper.go b/hivepaas_app/service/imagebuildservice/imagebuildserviceimpl/helper.go
+index d92e7350..7750c478 100644
+--- a/hivepaas_app/service/imagebuildservice/imagebuildserviceimpl/helper.go
++++ b/hivepaas_app/service/imagebuildservice/imagebuildserviceimpl/helper.go
+@@ -3,8 +3,21 @@ package imagebuildserviceimpl
+ import (
+ 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
+ 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
++	"github.com/hivepaas/hivepaas/hivepaas_app/service/imagebuildservice"
+ )
+ 
++// imageReferences is every name a build tags its image with: a local image's
++// own name alone, or the app's names.
++func imageReferences(
++	req *imagebuildservice.ImageBuildReq,
++	inputs *imagebuildservice.BuildInputs,
++) ([]string, error) {
++	if req.LocalImage != "" {
++		return []string{req.LocalImage}, nil
++	}
++	return buildImageReferences(req.App, req.CommitHash, req.ImageTags, pushRegistry(inputs))
++}
++
+ // buildImageReferences is every name the built image is tagged with, in the order
+ // they are applied.
+ //
+diff --git a/hivepaas_app/service/imagebuildservice/imagebuildserviceimpl/push_image.go b/hivepaas_app/service/imagebuildservice/imagebuildserviceimpl/push_image.go
+index a938baab..9b8b9e97 100644
+--- a/hivepaas_app/service/imagebuildservice/imagebuildserviceimpl/push_image.go
++++ b/hivepaas_app/service/imagebuildservice/imagebuildserviceimpl/push_image.go
+@@ -17,7 +17,7 @@ func (s *service) imagePush(
+ 	ctx context.Context,
+ 	data *imageBuildData,
+ ) (err error) {
+-	if data.PushToRegistry.ID == "" {
++	if data.PushToRegistry.ID == "" || data.LocalImage != "" {
+ 		return nil
+ 	}
+ 
+diff --git a/hivepaas_app/service/imagebuildservice/types.go b/hivepaas_app/service/imagebuildservice/types.go
+index 259fc3e8..d8ccd70a 100644
+--- a/hivepaas_app/service/imagebuildservice/types.go
++++ b/hivepaas_app/service/imagebuildservice/types.go
+@@ -23,6 +23,11 @@ type ImageBuildReq struct {
+ 	NoCache            bool
+ 	BuildID            string
+ 
++	// LocalImage, when set, is the image's only name: no app names it, and it
++	// stays on the node it is built on, never pushed. A function's libraries are
++	// built this way, for its test runs.
++	LocalImage string
++
+ 	CheckoutDir string
+ 	TempDir     string // can be empty
+ 

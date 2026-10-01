@@ -1,0 +1,637 @@
+diff --git a/hivepaas_app/service/functionservice/functiontest/builder.go b/hivepaas_app/service/functionservice/functiontest/builder.go
+new file mode 100644
+index 00000000..8bb38e0f
+--- /dev/null
++++ b/hivepaas_app/service/functionservice/functiontest/builder.go
+@@ -0,0 +1,89 @@
++package functiontest
++
++import (
++	"context"
++	"strings"
++	"sync"
++
++	"github.com/tiendc/gofn"
++
++	"github.com/hivepaas/hivepaas/hivepaas_app/base"
++	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
++	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
++	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/tasklog"
++	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/ulid"
++	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/unit"
++	"github.com/hivepaas/hivepaas/hivepaas_app/service/functionservice/functionbuild"
++	"github.com/hivepaas/hivepaas/hivepaas_app/service/imagebuildservice"
++	"github.com/hivepaas/hivepaas/hivepaas_app/tasks/queue"
++)
++
++// LibrariesLogMax is how much of an install's log comes back: its end, where
++// an error is.
++const LibrariesLogMax = 64 * unit.KB
++
++// NewLibrariesBuilder builds libraries images through the image build service,
++// on this node, as local images.
++func NewLibrariesBuilder(builds imagebuildservice.Service) LibrariesBuilder {
++	return &imageBuildLibraries{builds: builds}
++}
++
++type imageBuildLibraries struct {
++	builds imagebuildservice.Service
++}
++
++func (b *imageBuildLibraries) BuildLibraries(ctx context.Context, req *LibrariesBuildReq) (string, error) {
++	log := &tailLog{max: int(LibrariesLogMax)}
++	logStore := tasklog.NewForwardStore("function-test:libraries",
++		func(_ context.Context, frames []*tasklog.LogFrame) error {
++			for _, frame := range frames {
++				log.add(frame.Data)
++			}
++			return nil
++		})
++	_, err := b.builds.ImageBuild(ctx, nil, &imagebuildservice.ImageBuildReq{
++		TaskExecData: &queue.TaskExecData{
++			Task:     &entity.Task{ID: gofn.Must(ulid.NewStringULID())},
++			LogStore: logStore,
++		},
++		Dockerfile: entity.DeploymentDockerfile{
++			Source:  base.DockerfileSourceManual,
++			Path:    functionbuild.DockerfilePath,
++			Content: req.Dockerfile,
++		},
++		LocalImage:         req.Image,
++		ImageBuildSettings: req.BuildSettings,
++		CheckoutDir:        req.ContextDir,
++		TempDir:            req.TempDir,
++		Inputs:             req.Inputs,
++	})
++	return log.String(), hperrors.Wrap(err)
++}
++
++// tailLog keeps the last max bytes of the lines it is given.
++type tailLog struct {
++	mu  sync.Mutex
++	max int
++	buf strings.Builder
++}
++
++func (l *tailLog) add(line string) {
++	l.mu.Lock()
++	defer l.mu.Unlock()
++	l.buf.WriteString(line + "\n")
++	if l.buf.Len() > 2*l.max {
++		kept := l.buf.String()[l.buf.Len()-l.max:]
++		l.buf.Reset()
++		l.buf.WriteString(kept)
++	}
++}
++
++func (l *tailLog) String() string {
++	l.mu.Lock()
++	defer l.mu.Unlock()
++	out := l.buf.String()
++	if len(out) > l.max {
++		out = out[len(out)-l.max:]
++	}
++	return out
++}
+diff --git a/hivepaas_app/service/functionservice/functiontest/functiontest.go b/hivepaas_app/service/functionservice/functiontest/functiontest.go
+new file mode 100644
+index 00000000..4b6f702e
+--- /dev/null
++++ b/hivepaas_app/service/functionservice/functiontest/functiontest.go
+@@ -0,0 +1,135 @@
++// Package functiontest runs a function's test run on the node it is given:
++// the handler called once, with code not yet saved, in a throwaway container
++// started from the function's libraries' image. See part 3 of
++// docs/superpowers/specs/2026-10-01-functions-design.md.
++package functiontest
++
++import (
++	"context"
++	"time"
++
++	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
++	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/unit"
++	"github.com/hivepaas/hivepaas/hivepaas_app/service/imagebuildservice"
++)
++
++const (
++	// ResultMarker starts the last line invoke writes: its result.
++	ResultMarker = "#hivepaas-result "
++	// RuntimeUID is the runtime images' user, who owns /app: the code a test
++	// run copies in is that user's, since npm and go mod tidy write there.
++	RuntimeUID = 10001
++	// BodyMax and LogsMax are how much of a response's body and of a call's
++	// log come back; the rest is cut.
++	BodyMax = unit.MB
++	LogsMax = unit.MB
++
++	// requestPath is where the request goes in the container, for invoke to
++	// read on its standard input.
++	requestPath = "/tmp/hivepaas-request.json"
++	// killMargin is how long a container may outlive the call's timeout, to
++	// start and to write its result; compiledKillMargin is a compiled runtime's,
++	// which builds the function first and may download its modules.
++	killMargin         = 30 * time.Second
++	compiledKillMargin = 5 * time.Minute
++)
++
++// Outcome is how a test run ended: as the runtime says, when it wrote a result,
++// or else as HivePaaS saw it.
++type Outcome string
++
++const (
++	OutcomeOK      Outcome = "ok"
++	OutcomeError   Outcome = "error"
++	OutcomeTimeout Outcome = "timeout"
++	// OutcomeLibrariesFailed is an install that failed: there is no container.
++	OutcomeLibrariesFailed Outcome = "libraries-failed"
++	// OutcomeNotLoaded is a handler that could not be loaded, or built.
++	OutcomeNotLoaded Outcome = "not-loaded"
++	// OutcomeBadRequest is a request the runtime could not read.
++	OutcomeBadRequest Outcome = "bad-request"
++	// OutcomeKilled is a container that outlived the call's timeout and its
++	// margin.
++	OutcomeKilled Outcome = "killed"
++	// OutcomeNoResult is a container that ended without a result: killed for
++	// its memory, say. Its exit code says how.
++	OutcomeNoResult Outcome = "no-result"
++)
++
++// Request is the request a test run calls the handler with, as invoke reads it.
++type Request struct {
++	Method  string              `json:"method,omitempty"`
++	Path    string              `json:"path,omitempty"`
++	Query   map[string][]string `json:"query,omitempty"`
++	Headers map[string][]string `json:"headers,omitempty"`
++	Body    []byte              `json:"body,omitempty"`
++}
++
++// RunReq is a test run on the node it runs on.
++type RunReq struct {
++	// Source is the function's settings: its runtime, entrypoint, Debian
++	// packages and limits. Its code is Files, not yet saved.
++	Source *entity.DeploymentFunctionSource
++	Files  []*entity.FunctionFile
++	// Request is the request the handler is called with.
++	Request *Request
++	// Images are the release's runtime images, by runtime.
++	Images map[string]string
++	// Inputs are the build's, for the install of the libraries: its variables,
++	// its secrets, the project's registries.
++	Inputs *imagebuildservice.BuildInputs
++	// BuildSettings are the app's build settings, for the install's resources.
++	BuildSettings *entity.ImageBuildSettings
++	// Env is the function's environment, as its service has it.
++	Env []string
++	// Network is the network the function's service is on, empty for docker's
++	// default.
++	Network string
++	// NanoCPUs and MemoryBytes are the function's limits, zero for none.
++	NanoCPUs    int64
++	MemoryBytes int64
++}
++
++// RunResp is what a test run brings back.
++type RunResp struct {
++	Outcome Outcome
++	// Status, Headers and Body are the handler's response, when the runtime
++	// wrote a result.
++	Status        int
++	Headers       map[string][]string
++	Body          []byte
++	BodyTruncated bool
++	RequestID     string
++	DurationMs    float64
++	// Logs are what the call wrote on its standard output, its result aside.
++	Logs          string
++	LogsTruncated bool
++	// Error is what the runtime wrote on its standard error.
++	Error string
++	// ExitCode is the container's.
++	ExitCode int64
++	// LibrariesBuilt says whether this run installed the libraries, and
++	// LibrariesLog is the install's log when it did.
++	LibrariesBuilt bool
++	LibrariesLog   string
++	// LockFiles are the lock files the run made or changed, for the editor to
++	// add to the code.
++	LockFiles []*entity.FunctionFile
++}
++
++// LibrariesBuildReq is the build of a libraries image on this node.
++type LibrariesBuildReq struct {
++	// Image is the image's name, local to the node.
++	Image      string
++	Dockerfile string
++	// ContextDir holds the function's files and the Dockerfile.
++	ContextDir    string
++	TempDir       string
++	Inputs        *imagebuildservice.BuildInputs
++	BuildSettings *entity.ImageBuildSettings
++}
++
++// LibrariesBuilder builds a libraries image, and says what the build wrote.
++type LibrariesBuilder interface {
++	BuildLibraries(ctx context.Context, req *LibrariesBuildReq) (log string, err error)
++}
+diff --git a/hivepaas_app/service/functionservice/functiontest/run.go b/hivepaas_app/service/functionservice/functiontest/run.go
+new file mode 100644
+index 00000000..e46794ba
+--- /dev/null
++++ b/hivepaas_app/service/functionservice/functiontest/run.go
+@@ -0,0 +1,395 @@
++package functiontest
++
++import (
++	"archive/tar"
++	"bytes"
++	"context"
++	"encoding/json"
++	"errors"
++	"fmt"
++	"io"
++	"maps"
++	"os"
++	"path/filepath"
++	"slices"
++	"strings"
++	"time"
++
++	"github.com/moby/moby/api/pkg/stdcopy"
++	"github.com/moby/moby/api/types/container"
++	"github.com/moby/moby/client"
++	"github.com/tiendc/gofn"
++
++	"github.com/hivepaas/hivepaas/hivepaas_app/base"
++	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
++	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
++	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/fileutil"
++	"github.com/hivepaas/hivepaas/hivepaas_app/service/functionservice/functionbuild"
++	"github.com/hivepaas/hivepaas/services/docker"
++)
++
++// removeTimeout bounds the removal of a run's container, which happens however
++// the run ends, a canceled one included.
++const removeTimeout = 30 * time.Second
++
++// Runner runs test runs on this node.
++type Runner struct {
++	Docker  docker.Manager
++	Builder LibrariesBuilder
++	// TempDir is where a run writes the function's files for its libraries'
++	// build; the run removes what it wrote.
++	TempDir string
++	// KillMargin replaces how long a container may outlive the call's timeout;
++	// zero keeps the runtime's.
++	KillMargin time.Duration
++}
++
++// Run calls the function once: its libraries' image built or found, a
++// container made from it with the code and the request copied in, invoke run
++// in it, what it wrote read, and the container removed.
++func (r *Runner) Run(ctx context.Context, req *RunReq) (*RunResp, error) {
++	dir, err := fileutil.CreateTempDir(r.TempDir, "function-test-*", 0o700) //nolint:mnd
++	if err != nil {
++		return nil, hperrors.Wrap(err)
++	}
++	defer os.RemoveAll(dir)
++	contextDir := filepath.Join(dir, "code")
++	if err = os.Mkdir(contextDir, 0o700); err != nil { //nolint:mnd
++		return nil, hperrors.Wrap(err)
++	}
++	if err = functionbuild.WriteInlineCode(contextDir, &entity.FunctionInlineCode{Files: req.Files}); err != nil {
++		return nil, hperrors.Wrap(err)
++	}
++
++	resp := &RunResp{}
++	image, err := r.librariesImage(ctx, req, contextDir, dir, resp)
++	if err != nil || resp.Outcome != "" {
++		return resp, err
++	}
++
++	created, err := r.Docker.ContainerCreate(ctx, func(opts *client.ContainerCreateOptions) {
++		*opts = containerOptions(req, image)
++	})
++	if err != nil {
++		return nil, hperrors.Wrap(err)
++	}
++	defer func() {
++		removeCtx, cancel := context.WithTimeout(context.WithoutCancel(ctx), removeTimeout)
++		defer cancel()
++		_, _ = r.Docker.ContainerRemove(removeCtx, created.ID, func(opts *client.ContainerRemoveOptions) {
++			opts.Force = true
++		})
++	}()
++
++	if err = r.copyIn(ctx, created.ID, req); err != nil {
++		return nil, err
++	}
++	if _, err = r.Docker.ContainerStart(ctx, created.ID); err != nil {
++		return nil, hperrors.Wrap(err)
++	}
++	exitCode, killed, err := r.wait(ctx, created.ID, req)
++	if err != nil {
++		return nil, err
++	}
++	if err = r.readOutput(ctx, created.ID, resp); err != nil {
++		return nil, err
++	}
++	resp.ExitCode = exitCode
++	switch {
++	case killed:
++		resp.Outcome = OutcomeKilled
++	case exitCode == 2: //nolint:mnd // the contract's: the request could not be read
++		resp.Outcome = OutcomeBadRequest
++	case exitCode == 3: //nolint:mnd // the contract's: the handler could not be loaded or built
++		resp.Outcome = OutcomeNotLoaded
++	case resp.Outcome == "":
++		resp.Outcome = OutcomeNoResult
++	}
++	if resp.LockFiles, err = r.lockFiles(ctx, created.ID, req); err != nil {
++		return nil, err
++	}
++	return resp, nil
++}
++
++// librariesImage is the image the run starts from: the libraries' image, built
++// when this node does not have it, or the runtime's, pulled when it does not.
++// A build that fails ends the run, its outcome in resp.
++func (r *Runner) librariesImage(
++	ctx context.Context,
++	req *RunReq,
++	contextDir, tempDir string,
++	resp *RunResp,
++) (string, error) {
++	libs, err := functionbuild.Libraries(&functionbuild.DockerfileReq{
++		Source:       req.Source,
++		Images:       req.Images,
++		SourceDir:    contextDir,
++		BuildArgs:    gofn.MapKeys(req.Inputs.EnvVars),
++		BuildSecrets: gofn.MapKeys(req.Inputs.SecretEnvVars),
++	})
++	if err != nil {
++		return "", hperrors.Wrap(err)
++	}
++	found, err := r.hasImage(ctx, libs.Image)
++	if err != nil || found {
++		return libs.Image, err
++	}
++
++	if libs.Dockerfile == "" {
++		pull, err := r.Docker.ImagePull(ctx, libs.Image)
++		if err != nil {
++			return "", hperrors.Wrap(err)
++		}
++		defer pull.Close()
++		return libs.Image, hperrors.Wrap(pull.Wait(ctx))
++	}
++
++	log, err := r.Builder.BuildLibraries(ctx, &LibrariesBuildReq{
++		Image:         libs.Image,
++		Dockerfile:    libs.Dockerfile,
++		ContextDir:    contextDir,
++		TempDir:       tempDir,
++		Inputs:        req.Inputs,
++		BuildSettings: req.BuildSettings,
++	})
++	resp.LibrariesBuilt, resp.LibrariesLog = true, log
++	if err != nil {
++		if ctx.Err() != nil {
++			return "", hperrors.Wrap(ctx.Err())
++		}
++		resp.Outcome = OutcomeLibrariesFailed
++		resp.Error = err.Error()
++	}
++	return libs.Image, nil
++}
++
++func (r *Runner) hasImage(ctx context.Context, image string) (bool, error) {
++	_, err := r.Docker.ImageInspect(ctx, image)
++	switch {
++	case err == nil:
++		return true, nil
++	case errors.Is(err, hperrors.ErrInfraNotFound):
++		return false, nil
++	}
++	return false, hperrors.Wrap(err)
++}
++
++// containerOptions is the run's container: the function's environment with its
++// limits, its network and its resources, and no published port. Its name and
++// labels make it a temporary one, which the cluster cleanup removes should this
++// run not.
++func containerOptions(req *RunReq, image string) client.ContainerCreateOptions {
++	return client.ContainerCreateOptions{
++		Name: docker.TempContainerPrefix + "fn-" + gofn.RandString(8), //nolint:mnd
++		Config: &container.Config{
++			Image: image,
++			Cmd:   []string{"sh", "-c", "exec hivepaas-runtime invoke < " + requestPath},
++			Env:   containerEnv(req),
++			Labels: map[string]string{
++				docker.LabelTempResource:  docker.LabelTempResourceVal,
++				docker.LabelTempCreatedAt: time.Now().UTC().Format(time.RFC3339),
++			},
++		},
++		HostConfig: &container.HostConfig{
++			NetworkMode: container.NetworkMode(req.Network),
++			Resources: container.Resources{
++				NanoCPUs: req.NanoCPUs,
++				Memory:   req.MemoryBytes,
++			},
++		},
++	}
++}
++
++// containerEnv is the function's environment, then its entrypoint and limits:
++// whatever its environment says of those, its settings decide.
++func containerEnv(req *RunReq) []string {
++	src := req.Source
++	env := slices.DeleteFunc(slices.Clone(req.Env), func(v string) bool {
++		return strings.HasPrefix(v, "HP_FN_")
++	})
++	return append(env,
++		"HP_FN_ENTRYPOINT="+src.Entrypoint.File,
++		"HP_FN_HANDLER="+src.Entrypoint.Handler,
++		fmt.Sprintf("HP_FN_TIMEOUT_MS=%d", time.Duration(src.Timeout).Milliseconds()),
++		fmt.Sprintf("HP_FN_MAX_CONCURRENCY=%d", src.MaxConcurrency),
++		fmt.Sprintf("HP_FN_MAX_BODY_SIZE=%d", src.MaxBodySize.Bytes()),
++	)
++}
++
++// copyIn copies the code into /app and the request where the command reads it,
++// both owned by the runtime's user.
++func (r *Runner) copyIn(ctx context.Context, containerID string, req *RunReq) error {
++	code, err := tarOf(req.Files)
++	if err != nil {
++		return err
++	}
++	_, err = r.Docker.ContainerCopyTo(ctx, containerID, "/app", code, docker.ContainerCopyToWithCopyUIDGID(true))
++	if err != nil {
++		return hperrors.Wrap(err)
++	}
++
++	request, err := json.Marshal(req.Request)
++	if err != nil {
++		return hperrors.Wrap(err)
++	}
++	content, err := tarOf([]*entity.FunctionFile{{Path: filepath.Base(requestPath), Content: string(request)}})
++	if err != nil {
++		return err
++	}
++	_, err = r.Docker.ContainerCopyTo(ctx, containerID, filepath.Dir(requestPath), content,
++		docker.ContainerCopyToWithCopyUIDGID(true))
++	return hperrors.Wrap(err)
++}
++
++// tarOf is files as a tar, owned by the runtime's user.
++func tarOf(files []*entity.FunctionFile) (io.Reader, error) {
++	var buf bytes.Buffer
++	writer := tar.NewWriter(&buf)
++	dirs := map[string]bool{}
++	for _, file := range files {
++		for dir := filepath.Dir(file.Path); dir != "." && !dirs[dir]; dir = filepath.Dir(dir) {
++			dirs[dir] = true
++		}
++	}
++	for _, dir := range slices.Sorted(maps.Keys(dirs)) {
++		err := writer.WriteHeader(&tar.Header{Typeflag: tar.TypeDir, Name: dir + "/", Mode: 0o755, //nolint:mnd
++			Uid: RuntimeUID, Gid: RuntimeUID})
++		if err != nil {
++			return nil, hperrors.Wrap(err)
++		}
++	}
++	for _, file := range files {
++		err := writer.WriteHeader(&tar.Header{Typeflag: tar.TypeReg, Name: file.Path, Mode: 0o644, //nolint:mnd
++			Size: int64(len(file.Content)), Uid: RuntimeUID, Gid: RuntimeUID})
++		if err != nil {
++			return nil, hperrors.Wrap(err)
++		}
++		if _, err = writer.Write([]byte(file.Content)); err != nil {
++			return nil, hperrors.Wrap(err)
++		}
++	}
++	return &buf, hperrors.Wrap(writer.Close())
++}
++
++// wait waits for the container to exit, and kills it when it outlives the
++// call's timeout and its margin.
++func (r *Runner) wait(ctx context.Context, containerID string, req *RunReq) (exitCode int64, killed bool, _ error) {
++	margin := killMargin
++	if req.Source.Runtime.Compiled() {
++		margin = compiledKillMargin
++	}
++	if r.KillMargin > 0 {
++		margin = r.KillMargin
++	}
++	waitCtx, cancel := context.WithTimeout(ctx, time.Duration(req.Source.Timeout)+margin)
++	defer cancel()
++
++	waited := r.Docker.ContainerWait(waitCtx, containerID, func(opts *client.ContainerWaitOptions) {
++		opts.Condition = container.WaitConditionNotRunning
++	})
++	select {
++	case result := <-waited.Result:
++		return result.StatusCode, false, nil
++	case err := <-waited.Error:
++		if waitCtx.Err() == nil {
++			return 0, false, hperrors.Wrap(err)
++		}
++	case <-waitCtx.Done():
++	}
++	if ctx.Err() != nil {
++		return 0, false, hperrors.Wrap(ctx.Err())
++	}
++	if _, err := r.Docker.ContainerKill(ctx, containerID, "KILL"); err != nil {
++		return 0, false, hperrors.Wrap(err)
++	}
++	return 0, true, nil
++}
++
++// readOutput reads what the container wrote: the result, the call's log and
++// its standard error.
++func (r *Runner) readOutput(ctx context.Context, containerID string, resp *RunResp) error {
++	logs, err := r.Docker.ContainerLogs(ctx, containerID, func(opts *client.ContainerLogsOptions) {
++		opts.ShowStdout, opts.ShowStderr = true, true
++	})
++	if err != nil {
++		return hperrors.Wrap(err)
++	}
++	defer logs.Close()
++	var stdout, stderr bytes.Buffer
++	if _, err = stdcopy.StdCopy(&stdout, &stderr, logs); err != nil {
++		return hperrors.Wrap(err)
++	}
++	resp.Error = stderr.String()
++
++	out := stdout.String()
++	if i := strings.LastIndex(out, ResultMarker); i >= 0 && (i == 0 || out[i-1] == '\n') {
++		if err = readResult(strings.TrimSpace(out[i+len(ResultMarker):]), resp); err != nil {
++			return err
++		}
++		out = out[:i]
++	}
++	if len(out) > int(LogsMax) {
++		out, resp.LogsTruncated = out[len(out)-int(LogsMax):], true
++	}
++	resp.Logs = out
++	return nil
++}
++
++func readResult(line string, resp *RunResp) error {
++	var result struct {
++		Status     int                 `json:"status"`
++		Headers    map[string][]string `json:"headers"`
++		Body       []byte              `json:"body"`
++		RequestID  string              `json:"requestId"`
++		DurationMs float64             `json:"durationMs"`
++		Outcome    Outcome             `json:"outcome"`
++	}
++	if err := json.Unmarshal([]byte(line), &result); err != nil {
++		return hperrors.Wrap(err)
++	}
++	resp.Outcome, resp.Status, resp.Headers = result.Outcome, result.Status, result.Headers
++	resp.RequestID, resp.DurationMs = result.RequestID, result.DurationMs
++	resp.Body = result.Body
++	if len(resp.Body) > int(BodyMax) {
++		resp.Body, resp.BodyTruncated = resp.Body[:BodyMax], true
++	}
++	return nil
++}
++
++// lockFiles are the runtime's lock files the run made or changed: the ones the
++// code sent did not have, or had otherwise.
++func (r *Runner) lockFiles(ctx context.Context, containerID string, req *RunReq) ([]*entity.FunctionFile, error) {
++	var out []*entity.FunctionFile
++	for _, name := range functionbuild.LockFiles(req.Source.Runtime) {
++		content, found, err := r.readFile(ctx, containerID, "/app/"+name)
++		if err != nil {
++			return nil, err
++		}
++		sent, _ := gofn.Find(req.Files, func(f *entity.FunctionFile) bool { return f.Path == name })
++		if found && (sent == nil || sent.Content != content) {
++			out = append(out, &entity.FunctionFile{Path: name, Content: content})
++		}
++	}
++	return out, nil
++}
++
++func (r *Runner) readFile(ctx context.Context, containerID, path string) (string, bool, error) {
++	copied, err := r.Docker.ContainerCopyFrom(ctx, containerID, path)
++	if errors.Is(err, hperrors.ErrInfraNotFound) {
++		return "", false, nil
++	}
++	if err != nil {
++		return "", false, hperrors.Wrap(err)
++	}
++	defer copied.Content.Close()
++	reader := tar.NewReader(copied.Content)
++	if _, err = reader.Next(); err != nil {
++		return "", false, hperrors.Wrap(err)
++	}
++	// A lock file is code the editor adds: it has the inline code's limit.
++	content, err := io.ReadAll(io.LimitReader(reader, base.FunctionInlineCodeMaxSize.Bytes()))
++	if err != nil {
++		return "", false, hperrors.Wrap(err)
++	}
++	return string(content), true, nil
++}

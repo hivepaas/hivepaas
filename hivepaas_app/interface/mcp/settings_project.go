@@ -37,7 +37,7 @@ var projectSettingsKinds = []projectSettingsKind{
 			underProject: func() any { return &projectsettingsdto.UpdateProjectEnvVarsReq{} },
 			underEnv:     func() any { return &projectenvsettingsdto.UpdateProjectEnvEnvVarsReq{} },
 		}},
-	{name: "domain", path: "/domain-settings",
+	{name: paramDomain, path: "/domain-settings",
 		newGet: map[under]func() any{
 			underProject: func() any { return &domainsettingsdto.DomainSettingsResp{} },
 		}},

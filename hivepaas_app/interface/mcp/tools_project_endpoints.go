@@ -54,8 +54,8 @@ func projectEndpoints() []getEndpoint { //nolint:funlen // a table
 			paths: atProjectOrEnv("/ssl-certs"),
 			query: &sslcertdto.ListSSLCertReq{},
 			params: settingListParams(map[string]string{
-				argKind:  "only certificates of these types: " + statusValues(base.AllSSLCertTypes),
-				"domain": "only the certificates covering this domain",
+				argKind:     "only certificates of these types: " + statusValues(base.AllSSLCertTypes),
+				paramDomain: "only the certificates covering this domain",
 			}),
 			answer: func() any { return &sslcertdto.ListSSLCertResp{} },
 		},

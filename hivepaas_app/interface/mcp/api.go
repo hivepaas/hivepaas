@@ -56,6 +56,7 @@ const (
 	argKind       = "kind"
 	paramSearch   = "search"
 	paramFromDate = "fromDate"
+	paramDomain   = "domain"
 	paramToDate   = "toDate"
 	paramStatus   = "status"
 	paramGetStats = "getStats"

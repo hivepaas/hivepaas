@@ -2,6 +2,7 @@ package docker
 
 import (
 	"context"
+	"strings"
 	"time"
 
 	"github.com/moby/moby/api/types/swarm"
@@ -34,6 +35,13 @@ func (m *manager) ServiceTaskList(
 	desiredStates []swarm.TaskState,
 	options ...TaskListOption,
 ) (*client.TaskListResult, error) {
+	// No service, no tasks. Docker reads the filter as a prefix of a service's
+	// name or id, and an empty one is a prefix of all: asked about an app never
+	// deployed, it refused with "service is ambiguous" - or, on a swarm of one
+	// service, answered that service's tasks as the app's.
+	if strings.TrimSpace(serviceID) == "" {
+		return &client.TaskListResult{Items: []swarm.Task{}}, nil
+	}
 	options = append(options, func(opts *client.TaskListOptions) {
 		FilterAdd(&opts.Filters, "service", serviceID)
 		for _, state := range desiredStates {

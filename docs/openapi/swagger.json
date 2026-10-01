@@ -15156,6 +15156,85 @@
         "x-codegen-request-body-name" : "body"
       }
     },
+    "/projects/{projectID}/{projectEnv}/apps/function" : {
+      "post" : {
+        "description" : "Creates an app of kind function from its source, and queues its first deployment.",
+        "operationId" : "createFunction",
+        "parameters" : [ {
+          "description" : "project ID",
+          "in" : "path",
+          "name" : "projectID",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "project env",
+          "in" : "path",
+          "name" : "projectEnv",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "*/*" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/appdto.CreateFunctionReq"
+              }
+            }
+          },
+          "description" : "request data",
+          "required" : true
+        },
+        "responses" : {
+          "201" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/appdto.CreateFunctionResp"
+                }
+              }
+            },
+            "description" : "Created"
+          },
+          "400" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Bad Request"
+          },
+          "404" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Not Found"
+          },
+          "500" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Internal Server Error"
+          }
+        },
+        "summary" : "Creates a function",
+        "tags" : [ "Apps" ],
+        "x-codegen-request-body-name" : "body"
+      }
+    },
     "/projects/{projectID}/{projectEnv}/apps/{appID}" : {
       "delete" : {
         "description" : "Deletes an app",
@@ -53287,6 +53366,61 @@
         "properties" : {
           "data" : {
             "$ref" : "#/components/schemas/basedto.ObjectIDResp"
+          },
+          "meta" : {
+            "$ref" : "#/components/schemas/basedto.Meta"
+          }
+        },
+        "required" : [ "data", "meta" ],
+        "type" : "object"
+      },
+      "appdto.CreateFunctionDataResp" : {
+        "properties" : {
+          "deploymentId" : {
+            "type" : "string"
+          },
+          "id" : {
+            "type" : "string"
+          },
+          "taskId" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "deploymentId", "id", "taskId" ],
+        "type" : "object"
+      },
+      "appdto.CreateFunctionReq" : {
+        "properties" : {
+          "name" : {
+            "type" : "string"
+          },
+          "note" : {
+            "type" : "string"
+          },
+          "source" : {
+            "allOf" : [ {
+              "$ref" : "#/components/schemas/appsettingsdto.DeploymentFunctionSourceReq"
+            } ],
+            "description" : "Source is what the function's deployment settings take: its code, its\nruntime and its limits.",
+            "type" : "object"
+          },
+          "status" : {
+            "type" : "string"
+          },
+          "tags" : {
+            "items" : {
+              "type" : "string"
+            },
+            "type" : "array"
+          }
+        },
+        "required" : [ "name", "note", "source", "status", "tags" ],
+        "type" : "object"
+      },
+      "appdto.CreateFunctionResp" : {
+        "properties" : {
+          "data" : {
+            "$ref" : "#/components/schemas/appdto.CreateFunctionDataResp"
           },
           "meta" : {
             "$ref" : "#/components/schemas/basedto.Meta"

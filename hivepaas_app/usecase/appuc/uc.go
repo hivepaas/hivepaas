@@ -4,6 +4,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/repository"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/appcloneservice"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/appdeploymentservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/appprovisionservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/appservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/auditservice"
@@ -12,12 +13,14 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/loggingservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/schedjobtriggerservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/settingservice"
+	"github.com/hivepaas/hivepaas/hivepaas_app/tasks/queue"
 	"github.com/hivepaas/hivepaas/services/docker"
 )
 
 type UC struct {
 	db            *database.DB
 	dockerManager docker.Manager
+	taskQueue     queue.TaskQueue
 
 	appRepo       repository.AppRepo
 	binObjectRepo repository.BinObjectRepo
@@ -25,6 +28,7 @@ type UC struct {
 
 	auditService           auditservice.Service
 	appCloneService        appcloneservice.Service
+	appDeploymentService   appdeploymentservice.Service
 	appProvisionService    appprovisionservice.Service
 	appService             appservice.Service
 	schedJobTriggerService schedjobtriggerservice.Service
@@ -37,6 +41,7 @@ type UC struct {
 func New(
 	db *database.DB,
 	dockerManager docker.Manager,
+	taskQueue queue.TaskQueue,
 
 	appRepo repository.AppRepo,
 	binObjectRepo repository.BinObjectRepo,
@@ -44,6 +49,7 @@ func New(
 
 	auditService auditservice.Service,
 	appCloneService appcloneservice.Service,
+	appDeploymentService appdeploymentservice.Service,
 	appProvisionService appprovisionservice.Service,
 	appService appservice.Service,
 	schedJobTriggerService schedjobtriggerservice.Service,
@@ -55,6 +61,7 @@ func New(
 	return &UC{
 		db:            db,
 		dockerManager: dockerManager,
+		taskQueue:     taskQueue,
 
 		appRepo:       appRepo,
 		binObjectRepo: binObjectRepo,
@@ -62,6 +69,7 @@ func New(
 
 		auditService:           auditService,
 		appCloneService:        appCloneService,
+		appDeploymentService:   appDeploymentService,
 		appProvisionService:    appProvisionService,
 		appService:             appService,
 		schedJobTriggerService: schedJobTriggerService,

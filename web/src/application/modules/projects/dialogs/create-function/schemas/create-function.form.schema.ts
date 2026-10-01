@@ -24,6 +24,26 @@ const CredentialsRefSchema = z
     })
     .nullable();
 
+/** A domain name without a wildcard: labels of letters, digits and '-', at least two. */
+const DOMAIN_PATTERN = /^(?=.{1,253}$)([a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?$/i;
+
+/**
+ * The domain a function is offered at: its name as a DNS label, under the
+ * project's root domain; empty when there is no root domain.
+ */
+export function suggestFunctionDomain(name: string, rootDomain: string): string {
+    const label = name
+        .toLowerCase()
+        .replace(/[^a-z0-9-]+/g, "-")
+        .replace(/^-+/, "")
+        .slice(0, 63)
+        .replace(/-+$/, "");
+    if (!rootDomain || !label) {
+        return "";
+    }
+    return `${label}.${rootDomain}`;
+}
+
 const CreateFunctionFormSchemaBase = z.object({
     name: z
         .string({
@@ -39,6 +59,9 @@ const CreateFunctionFormSchemaBase = z.object({
     repoRef: z.string().trim(),
     dir: z.string().trim(),
     credentials: CredentialsRefSchema,
+    /** Whether the function is routed at domain from its first deployment. */
+    expose: z.boolean(),
+    domain: z.string().trim(),
 });
 
 export function createCreateFunctionFormSchema(
@@ -50,6 +73,13 @@ export function createCreateFunctionFormSchema(
                 code: z.ZodIssueCode.custom,
                 path: ["env"],
                 message: "Environment must be one of the project environments",
+            });
+        }
+        if (values.expose && !DOMAIN_PATTERN.test(values.domain)) {
+            ctx.addIssue({
+                code: z.ZodIssueCode.custom,
+                path: ["domain"],
+                message: "A domain name, such as hello.example.com",
             });
         }
         if (values.codeSource !== EFunctionCodeSource.Repository) {

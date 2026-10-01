@@ -57,6 +57,7 @@ export function CreateFunctionDialog() {
             note: "",
             tags: [],
             source: createFunctionSource(values),
+            ...(values.expose ? { domain: values.domain } : {}),
         });
     }
 

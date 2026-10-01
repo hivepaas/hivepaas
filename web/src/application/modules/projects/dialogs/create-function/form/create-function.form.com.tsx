@@ -3,6 +3,7 @@ import React, { useEffect, useMemo } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { FileCode, GitBranch } from "lucide-react";
 import { useController, useForm } from "react-hook-form";
+import { ProjectDomainSettingsQueries } from "~/projects/data/queries";
 import { type ProjectEnvEntity } from "~/projects/domain";
 import {
     GitCredentialCombobox,
@@ -17,6 +18,7 @@ import { ALL_FUNCTION_RUNTIMES, EFunctionRuntime, FUNCTION_RUNTIME_LABELS } from
 import { InfoBlock, LabelWithInfo } from "@application/shared/components";
 
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import { DialogActionFooter, DialogBody } from "@/components/ui/dialog";
 import { Field, FieldError, FieldGroup } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
@@ -27,6 +29,7 @@ import {
     type CreateFunctionFormOutput,
     EFunctionCodeSource,
     createCreateFunctionFormSchema,
+    suggestFunctionDomain,
 } from "../schemas";
 
 const CODE_SOURCE_OPTIONS: OptionCard<EFunctionCodeSource>[] = [
@@ -79,6 +82,8 @@ export function CreateFunctionForm({
             repoRef: "",
             dir: "",
             credentials: null,
+            expose: false,
+            domain: "",
         },
         resolver: zodResolver(schema),
         mode: "onSubmit",
@@ -109,6 +114,19 @@ export function CreateFunctionForm({
     const { field: repoRef } = useController({ name: "repoRef", control });
     const { field: dir } = useController({ name: "dir", control });
     const { field: credentials } = useController({ name: "credentials", control });
+    const { field: expose } = useController({ name: "expose", control });
+    const { field: domain } = useController({ name: "domain", control });
+
+    // The project's root domain, under which a function is offered a domain.
+    const { data: domainSettings } = ProjectDomainSettingsQueries.useFindOne({ projectID: projectId });
+    const rootDomain = domainSettings?.data.rootDomain ?? "";
+
+    function changeExpose(checked: boolean) {
+        expose.onChange(checked);
+        if (checked && domain.value === "") {
+            setValue("domain", suggestFunctionDomain(watch("name"), rootDomain));
+        }
+    }
 
     function onValid(values: CreateFunctionFormOutput) {
         if (readOnly) {
@@ -354,6 +372,47 @@ export function CreateFunctionForm({
                             </InfoBlock>
                         </>
                     )}
+
+                    <InfoBlock
+                        titleWidth={150}
+                        title={
+                            <LabelWithInfo
+                                label="Domain"
+                                content="Off: the function is reached in its project, by its name, and by its scheduled calls."
+                            />
+                        }
+                    >
+                        <FieldGroup>
+                            <Field>
+                                <div className="flex items-center gap-2 text-sm">
+                                    <Checkbox
+                                        id="create-function-expose"
+                                        checked={expose.value}
+                                        onCheckedChange={checked => {
+                                            changeExpose(checked === true);
+                                        }}
+                                        disabled={readOnly}
+                                    />
+                                    <label htmlFor="create-function-expose">Expose at a domain</label>
+                                </div>
+                                {expose.value && (
+                                    <>
+                                        <Input
+                                            {...domain}
+                                            placeholder="hello.example.com"
+                                            aria-invalid={Boolean(errors.domain)}
+                                        />
+                                        <FieldError errors={[errors.domain]} />
+                                        <p className="text-xs text-muted-foreground">
+                                            Routed over HTTPS, forced; turn it off in the routing settings. A
+                                            certificate that covers the domain is attached, or obtained when the project
+                                            obtains them; otherwise the proxy&apos;s own answers.
+                                        </p>
+                                    </>
+                                )}
+                            </Field>
+                        </FieldGroup>
+                    </InfoBlock>
                 </fieldset>
             </DialogBody>
             <DialogActionFooter>

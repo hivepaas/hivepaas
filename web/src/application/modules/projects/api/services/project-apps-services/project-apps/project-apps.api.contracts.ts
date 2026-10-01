@@ -44,6 +44,8 @@ export type ProjectApps_CreateFunction_Req = ApiRequestBase<
     {
         projectID: string;
         source: FunctionSourcePayload;
+        /** Where the function is routed over HTTPS from its first deployment; none when left out. */
+        domain?: string;
     } & Pick<ProjectAppBase, "name" | "env" | "note" | "tags">
 >;
 

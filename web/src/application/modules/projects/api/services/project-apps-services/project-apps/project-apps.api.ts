@@ -140,7 +140,7 @@ export class ProjectAppsApi extends BaseApi {
         request: ProjectApps_CreateFunction_Req,
         signal?: AbortSignal,
     ): Promise<Result<ProjectApps_CreateFunction_Res, Error>> {
-        const { projectID, name, env, note, tags, source } = request.data;
+        const { projectID, name, env, note, tags, source, domain } = request.data;
 
         const json = {
             name: JsonTransformer.string({ data: name }),
@@ -148,6 +148,7 @@ export class ProjectAppsApi extends BaseApi {
             tags: JsonTransformer.array({ data: tags }),
             status: EProjectAppStatus.Active,
             source: functionSourceToJson(source),
+            ...(domain ? { domain } : {}),
         };
 
         return lastValueFrom(

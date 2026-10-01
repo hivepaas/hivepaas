@@ -1,47 +1,16 @@
-import { useMemo, useState } from "react";
-
 import { Field, FieldError, FieldGroup } from "@components/ui";
 import { useController, useFormContext } from "react-hook-form";
 import { useParams } from "react-router";
 import invariant from "tiny-invariant";
-import { ProjectGitCredentialsQueries } from "~/projects/data/queries";
+import { GitCredentialCombobox, GitCredentialLinks } from "~/projects/module-shared/components";
 import { PROJECT_FORM_CONTROL_MAX_WIDTH_CLASS } from "~/projects/module-shared/constants";
 
-import { AppLink, Combobox, type ComboboxOption, InfoBlock } from "@application/shared/components";
-import { DEFAULT_PAGINATED_DATA, ROUTE } from "@application/shared/constants";
-import { ESettingType } from "@application/shared/enums";
-
-import { Badge, type BadgeTone } from "@/components/ui/badge";
+import { InfoBlock } from "@application/shared/components";
 
 import {
     type AppConfigDeploymentSettingsFormSchemaInput,
     type AppConfigDeploymentSettingsFormSchemaOutput,
 } from "../../schemas";
-
-function getGitCredentialBadge(cred?: { type?: string; kind?: string }): { label: string; tone: BadgeTone } {
-    const type = cred?.type ?? "";
-    const defaultKind = type === ESettingType.GithubApp || type === "github-app" ? "github" : "git";
-    const rawKind = (cred?.kind ?? defaultKind).toLowerCase();
-    const cleanKind = rawKind.replace(/-(app|token|ssh-key)$/, "");
-
-    if (type === ESettingType.GithubApp || type === "github-app") {
-        return {
-            label: "github-app",
-            tone: "purple",
-        };
-    }
-    if (type === ESettingType.SSHKey || type === "ssh-key") {
-        return {
-            label: `${cleanKind}-ssh-key`,
-            tone: "emerald",
-        };
-    }
-    // Token / Access Token
-    return {
-        label: `${cleanKind}-token`,
-        tone: "blue",
-    };
-}
 
 export function GitCredentialSelect({ readOnly = false }: Props) {
     const { id: projectId, env } = useParams<{ id: string; env: string }>();
@@ -54,52 +23,10 @@ export function GitCredentialSelect({ readOnly = false }: Props) {
         AppConfigDeploymentSettingsFormSchemaOutput
     >();
 
-    const [searchQuery, setSearchQuery] = useState("");
-
-    const {
-        data: { data: credentials } = DEFAULT_PAGINATED_DATA,
-        isFetching,
-        refetch,
-        isRefetching,
-    } = ProjectGitCredentialsQueries.useFindManyPaginated({
-        projectID: projectId,
-        env,
-        search: searchQuery,
-    });
-
     const {
         field: credentialsField,
         fieldState: { invalid: isCredentialsInvalid, error: credentialsError },
     } = useController({ control, name: "repoSource.credentials" });
-
-    const comboboxOptions = useMemo(() => {
-        return credentials.map(cred => {
-            const badge = getGitCredentialBadge(cred);
-            return {
-                value: { id: cred.id, name: cred.name, type: cred.type, kind: cred.kind },
-                label: `${badge.label} ${cred.name}`,
-            };
-        });
-    }, [credentials]);
-
-    const renderCredentialOption = (
-        option: ComboboxOption<{ id: string; name: string; type?: string; kind?: string }>,
-    ) => {
-        const cred = option.value;
-        const matchedCred = credentials.find(c => c.id === cred.id);
-        const badge = getGitCredentialBadge(matchedCred ?? cred);
-        return (
-            <span className="flex min-w-0 max-w-full items-center gap-2 text-left">
-                <Badge
-                    tone={badge.tone}
-                    className="max-w-none shrink-0 rounded-md px-1.5 text-xs font-medium leading-none"
-                >
-                    {badge.label}
-                </Badge>
-                <span className="min-w-0 flex-1 truncate font-normal">{cred.name || matchedCred?.name}</span>
-            </span>
-        );
-    };
 
     return (
         <InfoBlock
@@ -108,61 +35,17 @@ export function GitCredentialSelect({ readOnly = false }: Props) {
         >
             <FieldGroup>
                 <Field>
-                    <Combobox
-                        options={comboboxOptions}
-                        value={credentialsField.value?.id ?? null}
-                        onChange={(_, option) => {
-                            if (readOnly) {
-                                return;
-                            }
-
-                            credentialsField.onChange(option ?? null);
-                        }}
-                        onSearch={setSearchQuery}
-                        placeholder="Select git credentials"
-                        searchable
-                        closeOnSelect
-                        emptyText="No git credentials available"
+                    <GitCredentialCombobox
+                        projectId={projectId}
+                        env={env}
+                        value={credentialsField.value ?? null}
+                        onChange={credentialsField.onChange}
+                        readOnly={readOnly}
+                        invalid={isCredentialsInvalid}
                         className={PROJECT_FORM_CONTROL_MAX_WIDTH_CLASS}
-                        valueKey="id"
-                        aria-invalid={isCredentialsInvalid}
-                        loading={isFetching}
-                        onRefresh={() => void refetch()}
-                        isRefreshing={isRefetching}
-                        renderOption={renderCredentialOption}
-                        renderSelectedOption={renderCredentialOption}
-                        disabled={readOnly}
                     />
                     <FieldError errors={[credentialsError]} />
-                    <div className="text-xs">
-                        Configure{" "}
-                        <AppLink.Basic
-                            to={ROUTE.projects.single.providerConfiguration.githubApps.$route(projectId)}
-                            className="text-link"
-                            target="_blank"
-                            rel="noopener noreferrer"
-                        >
-                            Github Apps
-                        </AppLink.Basic>
-                        ,{" "}
-                        <AppLink.Basic
-                            to={ROUTE.projects.single.providerConfiguration.accessTokens.$route(projectId)}
-                            className="text-link"
-                            target="_blank"
-                            rel="noopener noreferrer"
-                        >
-                            Access Tokens
-                        </AppLink.Basic>
-                        ,{" "}
-                        <AppLink.Basic
-                            to={ROUTE.projects.single.providerConfiguration.sshKeys.$route(projectId)}
-                            className="text-link"
-                            target="_blank"
-                            rel="noopener noreferrer"
-                        >
-                            SSH Keys
-                        </AppLink.Basic>
-                    </div>
+                    <GitCredentialLinks projectId={projectId} />
                 </Field>
             </FieldGroup>
         </InfoBlock>

@@ -3,6 +3,7 @@ import { useEffect, useMemo } from "react";
 import { CircleHelp, Plus } from "lucide-react";
 import { useNavigate } from "react-router";
 import { ProjectAppsQueries, ProjectsQueries } from "~/projects/data/queries";
+import { useCreateFunctionDialog } from "~/projects/dialogs/create-function";
 import { useCreateProjectAppDialog } from "~/projects/dialogs/create-project-app";
 import type { ProjectAppDetails, ProjectEnvEntity } from "~/projects/domain";
 import { ProjectEnvScopeBadge } from "~/projects/module-shared/components";
@@ -42,6 +43,12 @@ export function ProjectAppsTable({ projectId }: Props) {
         initialEnv: env,
         onClose: () => {
             actions.close();
+        },
+    });
+    const { actions: createFunctionActions } = useCreateFunctionDialog({
+        initialEnv: env,
+        onClose: () => {
+            createFunctionActions.close();
         },
     });
     const { canWrite } = useConditionalModule({ id: MODULE_IDS.Project });
@@ -126,28 +133,48 @@ export function ProjectAppsTable({ projectId }: Props) {
         </Button>
     );
 
-    const renderAddButton = !canWrite ? (
-        <PermissionTooltipAction
-            id={MODULE_IDS.Project}
-            action="write"
+    const addNewFunctionButton = (
+        <Button
+            variant="outline"
+            disabled={isAddButtonDisabled}
+            onClick={() => {
+                if (!canWrite) {
+                    return;
+                }
+
+                createFunctionActions.open(projectId);
+            }}
         >
-            {() => addNewAppButton}
-        </PermissionTooltipAction>
-    ) : isAddButtonDisabled ? (
-        <Tooltip>
-            <TooltipTrigger asChild>
-                <span className="inline-flex">{addNewAppButton}</span>
-            </TooltipTrigger>
-            <TooltipContent side="top">Project is not active. Activate the project to add a new app.</TooltipContent>
-        </Tooltip>
-    ) : (
-        addNewAppButton
+            <Plus /> New Function
+        </Button>
     );
+
+    const renderAddButton = (button: React.ReactElement) =>
+        !canWrite ? (
+            <PermissionTooltipAction
+                id={MODULE_IDS.Project}
+                action="write"
+            >
+                {() => button}
+            </PermissionTooltipAction>
+        ) : isAddButtonDisabled ? (
+            <Tooltip>
+                <TooltipTrigger asChild>
+                    <span className="inline-flex">{button}</span>
+                </TooltipTrigger>
+                <TooltipContent side="top">
+                    Project is not active. Activate the project to add a new app.
+                </TooltipContent>
+            </Tooltip>
+        ) : (
+            button
+        );
 
     const renderActions = (
         <>
             {newFromTemplateButton}
-            {renderAddButton}
+            {renderAddButton(addNewFunctionButton)}
+            {renderAddButton(addNewAppButton)}
         </>
     );
 

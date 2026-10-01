@@ -1680,6 +1680,19 @@ export const projectsRouter: RouteObject = {
                     element: <LegacyScheduledJobTaskDetailsRedirect />,
                 },
                 /**
+                 * Single App – Code (a function's)
+                 */
+                {
+                    path: ROUTE.projects.single.apps.single.code.$pattern,
+                    lazy: async () => {
+                        const { AppCodeRoute } = await getLazyComponents();
+
+                        return {
+                            Component: AppCodeRoute,
+                        };
+                    },
+                },
+                /**
                  * Single App – Logs
                  */
                 {

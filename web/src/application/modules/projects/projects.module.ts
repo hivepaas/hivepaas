@@ -86,6 +86,7 @@ export {
     AppDeploymentDetailsRoute,
     AppDeploymentsRoute,
     AppInstancesRoute,
+    AppCodeRoute,
     AppLogsRoute,
     AppTerminalRoute,
     AppPreviewDeploymentCreateRoute,

@@ -9,7 +9,11 @@ import invariant from "tiny-invariant";
 import { AppServiceTasksQueries, ProjectAppsCommands, ProjectAppsQueries, ProjectsQueries } from "~/projects/data";
 import { AppInstancesCountBadge, ProjectAppStatusBadge, ProjectEnvFilter } from "~/projects/module-shared/components";
 import { EProjectAppStatus } from "~/projects/module-shared/enums";
-import { APP_SERVICE_TASKS_REFETCH_INTERVAL_MS, computeAppInstancesHealth } from "~/projects/module-shared/utils";
+import {
+    APP_SERVICE_TASKS_REFETCH_INTERVAL_MS,
+    computeAppInstancesHealth,
+    isFunctionApp,
+} from "~/projects/module-shared/utils";
 
 import { PopConfirm, TabNavigation } from "@application/shared/components";
 import { ROUTE } from "@application/shared/constants";
@@ -121,6 +125,14 @@ function View({ projectId, env, appId }: Props) {
     ];
 
     const links = [
+        ...(isFunctionApp(appData)
+            ? [
+                  {
+                      route: ROUTE.projects.single.apps.single.code.$route(projectId, env, appId),
+                      label: "Code",
+                  },
+              ]
+            : []),
         {
             route: ROUTE.projects.single.apps.single.configuration.general.$route(projectId, env, appId),
             label: "Settings",

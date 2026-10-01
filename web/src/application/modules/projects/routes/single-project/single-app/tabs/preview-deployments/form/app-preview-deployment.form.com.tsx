@@ -24,6 +24,8 @@ import {
     type PreviewDeploymentTrigger,
 } from "../schemas";
 
+import { PreviewWithheldSecretsWarning } from "./preview-withheld-secrets-warning.com";
+
 const INFO_BLOCK_TITLE_WIDTH = 240;
 
 type PreparedPreview = AppPreviews_PrepareCreate_Res["data"];
@@ -127,6 +129,13 @@ export function AppPreviewDeploymentForm({
                             </TabsList>
                         </Tabs>
                     </InfoBlock>
+
+                    <PreviewWithheldSecretsWarning
+                        projectId={projectId}
+                        env={env}
+                        appId={appId}
+                        secrets={preparedPreview.withheldSecrets}
+                    />
 
                     {!isDashboardUI && (
                         <div className={cn(dashedBorderBox, "space-y-4")}>

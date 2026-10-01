@@ -28,6 +28,8 @@ export type AppPreviews_PrepareCreate_Res = ApiResponseBase<{
     canListPullRequests: boolean;
     canCloneDbApps: boolean;
     canSkipCloningDbApps: boolean;
+    /** The app's secrets the preview goes without, not being inheritable, and the variables using them. */
+    withheldSecrets: { name: string; envVars: string[] }[];
 }>;
 
 export type AppPreviews_CreateOne_Req = ApiRequestBase<{

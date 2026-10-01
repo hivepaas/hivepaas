@@ -34,6 +34,18 @@ const PrepareCreateSchema = z.object({
             .boolean()
             .nullish()
             .transform(value => value ?? false),
+        withheldSecrets: z
+            .array(
+                z.object({
+                    name: z.string(),
+                    envVars: z
+                        .array(z.string())
+                        .nullish()
+                        .transform(value => value ?? []),
+                }),
+            )
+            .nullish()
+            .transform(value => value ?? []),
     }),
     meta: BaseMetaApiSchema.nullish(),
 });

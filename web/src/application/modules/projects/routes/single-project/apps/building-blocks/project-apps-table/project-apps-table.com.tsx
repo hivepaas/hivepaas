@@ -1,11 +1,16 @@
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import { CircleHelp, Plus } from "lucide-react";
 import { useNavigate } from "react-router";
 import { ProjectAppsQueries, ProjectsQueries } from "~/projects/data/queries";
 import { useCreateFunctionDialog } from "~/projects/dialogs/create-function";
 import { useCreateProjectAppDialog } from "~/projects/dialogs/create-project-app";
-import type { ProjectAppDetails, ProjectEnvEntity } from "~/projects/domain";
+import {
+    ALL_APP_CATEGORIES,
+    APP_CATEGORY_FUNCTION,
+    type ProjectAppDetails,
+    type ProjectEnvEntity,
+} from "~/projects/domain";
 import { ProjectEnvScopeBadge } from "~/projects/module-shared/components";
 import { ProjectAppsTableDefs } from "~/projects/module-shared/definitions/tables/project-apps";
 import { EProjectStatus } from "~/projects/module-shared/enums";
@@ -21,6 +26,7 @@ import { useTableState } from "@application/shared/hooks/table";
 import { PermissionTooltipAction, useConditionalModule } from "@application/shared/permissions";
 
 import { Button, DataTable, Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 const EMPTY_PROJECT_ENVS: ProjectEnvEntity[] = [];
 
@@ -34,11 +40,23 @@ function getScopeTooltip(selectedEnv: string): string {
 
 const PROJECT_APPS_REFETCH_INTERVAL_MS = 5_000;
 
+/**
+ * Which apps the list shows: all of them, the functions, or the others.
+ */
+const APP_KIND_FILTERS = {
+    all: { label: "All kinds", category: undefined },
+    functions: { label: "Functions", category: [APP_CATEGORY_FUNCTION] },
+    apps: { label: "Apps", category: ALL_APP_CATEGORIES },
+} as const satisfies Record<string, { label: string; category: readonly string[] | undefined }>;
+
+type AppKindFilter = keyof typeof APP_KIND_FILTERS;
+
 export function ProjectAppsTable({ projectId }: Props) {
     const navigate = useNavigate();
     const { pagination, setPagination, sorting, setSorting, search, setSearch } = useTableState();
     const selectedEnv = useSelectedProjectEnv(projectId);
     const env = getProjectEnvFilterParam(selectedEnv);
+    const [kindFilter, setKindFilter] = useState<AppKindFilter>("all");
     const { actions } = useCreateProjectAppDialog({
         initialEnv: env,
         onClose: () => {
@@ -55,7 +73,7 @@ export function ProjectAppsTable({ projectId }: Props) {
 
     useEffect(() => {
         setPagination(prev => ({ ...prev, page: 1 }));
-    }, [env, setPagination]);
+    }, [env, kindFilter, setPagination]);
 
     const {
         data: { data: rawApps, meta } = DEFAULT_PAGINATED_DATA,
@@ -71,6 +89,7 @@ export function ProjectAppsTable({ projectId }: Props) {
             env,
             getStats: true,
             getChildApps: true,
+            ...(APP_KIND_FILTERS[kindFilter].category ? { category: [...APP_KIND_FILTERS[kindFilter].category] } : {}),
         },
         {
             refetchInterval: PROJECT_APPS_REFETCH_INTERVAL_MS,
@@ -205,6 +224,31 @@ export function ProjectAppsTable({ projectId }: Props) {
             </div>
             <TableActions
                 search={{ value: search, onChange: setSearch }}
+                renderAfterSearch={
+                    <Select
+                        value={kindFilter}
+                        onValueChange={value => {
+                            setKindFilter(value as AppKindFilter);
+                        }}
+                    >
+                        <SelectTrigger
+                            className="w-[140px]"
+                            aria-label="Kind of app"
+                        >
+                            <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                            {Object.entries(APP_KIND_FILTERS).map(([value, filter]) => (
+                                <SelectItem
+                                    key={value}
+                                    value={value}
+                                >
+                                    {filter.label}
+                                </SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
+                }
                 renderActions={renderActions}
             />
             <DataTable

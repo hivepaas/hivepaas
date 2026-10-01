@@ -9,6 +9,7 @@ import { ProjectAppStatusBadge, ProjectEnvBadge } from "~/projects/module-shared
 import {
     APP_REPLICAS_STATUS_DOT_CLASS,
     getAppReplicasStatusLabel,
+    isFunctionApp,
     resolveAppReplicasStatus,
 } from "~/projects/module-shared/utils";
 
@@ -104,6 +105,14 @@ function createColumns(
                         >
                             {app.name}
                         </span>
+                        {isFunctionApp(app) && (
+                            <Badge
+                                variant="outline"
+                                className="text-[10px] h-4 px-1.5 py-0 font-normal text-violet-700 dark:text-violet-300 border-violet-500/40 bg-violet-500/10 shrink-0"
+                            >
+                                function
+                            </Badge>
+                        )}
                         {isChild && (
                             <Badge
                                 variant="secondary"

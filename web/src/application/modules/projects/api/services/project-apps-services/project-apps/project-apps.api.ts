@@ -2,6 +2,8 @@ import { Err, Ok, type Result } from "oxide.ts";
 import { catchError, from, lastValueFrom, map, of } from "rxjs";
 import type {
     ProjectAppsApiValidator,
+    ProjectApps_CreateFunction_Req,
+    ProjectApps_CreateFunction_Res,
     ProjectApps_CreateOne_Req,
     ProjectApps_CreateOne_Res,
     ProjectApps_DeleteOne_Req,
@@ -29,6 +31,8 @@ import { EProjectAppStatus } from "~/projects/module-shared/enums";
 
 import { BaseApi, JsonTransformer, parseApiError } from "@infrastructure/api";
 
+import { functionSourceToJson } from "../deployment-settings/app-deployment-settings.api";
+
 export class ProjectAppsApi extends BaseApi {
     public constructor(private readonly validator: ProjectAppsApiValidator) {
         super();
@@ -41,7 +45,7 @@ export class ProjectAppsApi extends BaseApi {
         request: ProjectApps_FindManyPaginated_Req,
         signal?: AbortSignal,
     ): Promise<Result<ProjectApps_FindManyPaginated_Res, Error>> {
-        const { projectID, search, pagination, sorting, env, getStats, getChildApps } = request.data;
+        const { projectID, search, pagination, sorting, env, getStats, getChildApps, category } = request.data;
 
         const query = this.queryBuilder.getInstance();
 
@@ -56,6 +60,7 @@ export class ProjectAppsApi extends BaseApi {
                         ...query.build(),
                         ...(getStats === undefined ? {} : { getStats }),
                         ...(getChildApps === undefined ? {} : { getChildApps }),
+                        ...(category && category.length > 0 ? { category: category.join(",") } : {}),
                     },
                     signal,
                 }),
@@ -122,6 +127,36 @@ export class ProjectAppsApi extends BaseApi {
                 }),
             ).pipe(
                 map(this.validator.createOne),
+                map(res => Ok(res)),
+                catchError(error => of(Err(parseApiError(error)))),
+            ),
+        );
+    }
+
+    /**
+     * Create a function
+     */
+    async createFunction(
+        request: ProjectApps_CreateFunction_Req,
+        signal?: AbortSignal,
+    ): Promise<Result<ProjectApps_CreateFunction_Res, Error>> {
+        const { projectID, name, env, note, tags, source } = request.data;
+
+        const json = {
+            name: JsonTransformer.string({ data: name }),
+            note: JsonTransformer.string({ data: note }),
+            tags: JsonTransformer.array({ data: tags }),
+            status: EProjectAppStatus.Active,
+            source: functionSourceToJson(source),
+        };
+
+        return lastValueFrom(
+            from(
+                this.client.v1.post(`/projects/${projectID}/${env}/apps/function`, json, {
+                    signal,
+                }),
+            ).pipe(
+                map(this.validator.createFunction),
                 map(res => Ok(res)),
                 catchError(error => of(Err(parseApiError(error)))),
             ),

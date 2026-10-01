@@ -2,7 +2,7 @@ import React, { type PropsWithChildren, useImperativeHandle } from "react";
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { type FieldErrors, FormProvider, useForm } from "react-hook-form";
-import { type AppDeploymentSettings } from "~/projects/domain";
+import { type ImageMethod, type RepoMethod } from "~/projects/domain";
 import { EAppDeploymentMethod } from "~/projects/module-shared/enums";
 
 import { ContentBlock } from "@application/shared/components";
@@ -27,7 +27,7 @@ import { type AppConfigDeploymentSettingsFormRef } from "../types";
 type SchemaInput = AppConfigDeploymentSettingsFormSchemaInput;
 type SchemaOutput = AppConfigDeploymentSettingsFormSchemaOutput;
 
-function mapDefaultValues(data: AppDeploymentSettings): SchemaInput {
+function mapDefaultValues(data: RepoMethod | ImageMethod): SchemaInput {
     const base = {
         command: data.command ?? "",
         workingDir: data.workingDir ?? "",
@@ -214,7 +214,8 @@ export function AppConfigDeploymentSettingsForm({ ref, defaultValues, onSubmit, 
 
 type Props = PropsWithChildren<{
     ref?: React.Ref<AppConfigDeploymentSettingsFormRef>;
-    defaultValues?: AppDeploymentSettings;
+    /** A repository's or an image's settings: a function's have a form of their own. */
+    defaultValues?: RepoMethod | ImageMethod;
     onSubmit: (values: SchemaOutput) => void;
     readOnly?: boolean;
 }>;

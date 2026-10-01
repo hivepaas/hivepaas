@@ -37,6 +37,7 @@ export const ProjectAppSchema: z.ZodType<ProjectAppDetails, z.ZodTypeDef, unknow
         tags: z.array(z.string()),
         key: z.string(),
         updateVer: z.number(),
+        category: OptionalStringSchema,
         stats: ProjectAppStatsSchema.nullable(),
         parentApp: ProjectAppParentSchema,
         childApps: z.array(ProjectAppSchema).optional(),

@@ -8,6 +8,7 @@ import {
 import { type ApiRequestBase, type ApiResponseBase } from "@infrastructure/api";
 
 import { type AppDeploymentSettings } from "../../../../domain/apps/deployment-settings";
+import { type FunctionFile } from "../../../../domain/apps/function";
 
 export type AppDeploymentSettings_FindOne_Req = ApiRequestBase<{ projectID: string; env: string; appID: string }>;
 export type AppDeploymentSettings_FindOne_Res = ApiResponseBase<AppDeploymentSettings>;
@@ -66,12 +67,46 @@ type AppDeploymentSettings_UpdateRepoPayload = AppDeploymentSettings_UpdateBaseP
     };
 };
 
+/**
+ * A function's source as the API takes it: what FunctionSource says, the
+ * settings it refers to by id.
+ */
+export type FunctionSourcePayload = {
+    runtime: string;
+    contract: string;
+    entrypoint: { file: string; handler: string };
+    code: {
+        inline?: { files: FunctionFile[] };
+        repo?: {
+            repoType: string;
+            repoUrl: string;
+            repoRef: string;
+            commitHash: string;
+            credentials: { id: string };
+        };
+        dir: string;
+    };
+    systemPackages: string[];
+    timeout: string;
+    maxConcurrency: number;
+    maxBodySize: string;
+    pushToRegistry: { id: string };
+};
+
+type AppDeploymentSettings_UpdateFunctionPayload = AppDeploymentSettings_UpdateBasePayload & {
+    activeMethod: typeof EAppDeploymentMethod.Function;
+    functionSource: FunctionSourcePayload;
+};
+
 export type AppDeploymentSettings_UpdateOne_Req = ApiRequestBase<{
     projectID: string;
     env: string;
     appID: string;
     updateVer: number;
-    payload: AppDeploymentSettings_UpdateImagePayload | AppDeploymentSettings_UpdateRepoPayload;
+    payload:
+        | AppDeploymentSettings_UpdateImagePayload
+        | AppDeploymentSettings_UpdateRepoPayload
+        | AppDeploymentSettings_UpdateFunctionPayload;
 }>;
 export type AppDeploymentSettings_UpdateOne_Res = ApiResponseBase<{ type: "success" }>;
 

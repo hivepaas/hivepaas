@@ -11,6 +11,7 @@ import {
     type AppDeploymentSettings_GetDockerfileTemplate_Res,
     type AppDeploymentSettings_UpdateOne_Req,
     type AppDeploymentSettings_UpdateOne_Res,
+    type FunctionSourcePayload,
 } from "./app-deployment-settings.api.contracts";
 import { type AppDeploymentSettingsApiValidator } from "./app-deployment-settings.api.validator";
 
@@ -45,6 +46,21 @@ export class AppDeploymentSettingsApi extends BaseApi {
         signal?: AbortSignal,
     ): Promise<Result<AppDeploymentSettings_UpdateOne_Res, Error>> {
         const { projectID, env, appID, updateVer, payload } = req.data;
+        if (payload.activeMethod === EAppDeploymentMethod.Function) {
+            return lastValueFrom(
+                from(
+                    this.client.v1.put(
+                        `/projects/${projectID}/${env}/apps/${appID}/deployment-settings`,
+                        { ...payload, updateVer, functionSource: functionSourceToJson(payload.functionSource) },
+                        { signal },
+                    ),
+                ).pipe(
+                    map(() => Ok({ data: { type: "success" } } as const)),
+                    catchError(error => of(Err(parseApiError(error)))),
+                ),
+            );
+        }
+
         const json =
             payload.activeMethod === EAppDeploymentMethod.Repo
                 ? {
@@ -107,4 +123,29 @@ export class AppDeploymentSettingsApi extends BaseApi {
             ),
         );
     }
+}
+
+/**
+ * A function's source as the API reads it: the repository's URL is `repoURL`.
+ */
+export function functionSourceToJson(source: FunctionSourcePayload): Record<string, unknown> {
+    const { repo, ...code } = source.code;
+
+    return {
+        ...source,
+        code: {
+            ...code,
+            ...(repo
+                ? {
+                      repo: {
+                          repoType: repo.repoType,
+                          repoURL: repo.repoUrl,
+                          repoRef: repo.repoRef,
+                          commitHash: repo.commitHash,
+                          credentials: repo.credentials,
+                      },
+                  }
+                : {}),
+        },
+    };
 }

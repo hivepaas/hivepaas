@@ -4,6 +4,7 @@ export * from "./data-file";
 export * from "./container-settings";
 export * from "./deployment";
 export * from "./deployment-settings";
+export * from "./function";
 export * from "./feature-settings";
 export * from "./clone-settings";
 export * from "./health-check";

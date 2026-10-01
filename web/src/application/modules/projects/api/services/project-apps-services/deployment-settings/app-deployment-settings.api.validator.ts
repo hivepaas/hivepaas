@@ -1,6 +1,12 @@
 import { type AxiosResponse } from "axios";
 import { z } from "zod";
-import { EAppDeploymentMethod, EBuildTool, EDockerfileSource, ERepoType } from "~/projects/module-shared/enums";
+import {
+    EAppDeploymentMethod,
+    EBuildTool,
+    EDockerfileSource,
+    EFunctionRuntime,
+    ERepoType,
+} from "~/projects/module-shared/enums";
 import { SettingsBaseEntitySchema } from "~/settings/module-shared/schemas";
 
 import { BaseMetaApiSchema, parseApiResponse } from "@infrastructure/api";
@@ -118,6 +124,67 @@ const ImageMethodSchema = BaseDeploymentSettingsSchema.extend({
     imageSource: ImageSourceSchema,
 });
 
+const FunctionFileSchema = z.object({ path: z.string(), content: OptionalStringSchema });
+
+export const FunctionSourceSchema = z.object({
+    runtime: z.nativeEnum(EFunctionRuntime),
+    contract: OptionalStringSchema,
+    entrypoint: z
+        .object({ file: OptionalStringSchema, handler: OptionalStringSchema })
+        .nullish()
+        .transform(value => value ?? { file: "", handler: "" }),
+    code: z
+        .object({
+            inline: z
+                .object({
+                    files: z
+                        .array(FunctionFileSchema)
+                        .nullish()
+                        .transform(value => value ?? []),
+                })
+                .nullish()
+                .transform(value => value ?? null),
+            repo: z
+                .preprocess(
+                    value => {
+                        if (!value || typeof value !== "object") {
+                            return value;
+                        }
+                        const input = value as Record<string, unknown>;
+                        return { ...input, repoUrl: input["repoUrl"] ?? input["repoURL"] };
+                    },
+                    z.object({
+                        repoType: OptionalStringSchema,
+                        repoUrl: OptionalStringSchema,
+                        repoRef: OptionalStringSchema,
+                        commitHash: OptionalStringSchema,
+                        credentials: SettingsRefSchema,
+                    }),
+                )
+                .nullish()
+                .transform(value => value ?? null),
+            dir: OptionalStringSchema,
+        })
+        .nullish()
+        .transform(value => value ?? { inline: null, repo: null, dir: "" }),
+    systemPackages: z
+        .array(z.string())
+        .nullish()
+        .transform(value => value ?? []),
+    timeout: OptionalStringSchema,
+    maxConcurrency: z
+        .number()
+        .nullish()
+        .transform(value => value ?? 0),
+    maxBodySize: OptionalStringSchema,
+    pushToRegistry: SettingsRefSchema,
+});
+
+const FunctionMethodSchema = BaseDeploymentSettingsSchema.extend({
+    activeMethod: z.literal(EAppDeploymentMethod.Function),
+    functionSource: FunctionSourceSchema,
+});
+
 const AppDeploymentSettingsSchema = z.preprocess(
     value => {
         if (!value || typeof value !== "object") {
@@ -132,7 +199,8 @@ const AppDeploymentSettingsSchema = z.preprocess(
 
         if (
             input["activeMethod"] === EAppDeploymentMethod.Repo ||
-            input["activeMethod"] === EAppDeploymentMethod.Image
+            input["activeMethod"] === EAppDeploymentMethod.Image ||
+            input["activeMethod"] === EAppDeploymentMethod.Function
         ) {
             return input;
         }
@@ -144,7 +212,7 @@ const AppDeploymentSettingsSchema = z.preprocess(
             updateVer: input["updateVer"] ?? 0,
         };
     },
-    z.discriminatedUnion("activeMethod", [RepoMethodSchema, ImageMethodSchema]),
+    z.discriminatedUnion("activeMethod", [RepoMethodSchema, ImageMethodSchema, FunctionMethodSchema]),
 );
 
 const FindOneSchema = z.object({

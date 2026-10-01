@@ -149,7 +149,9 @@ export function AppConfigDeploymentSettingsRoute() {
         <div className="flex flex-col gap-4">
             <AppConfigDeploymentSettingsForm
                 ref={formRef}
-                defaultValues={data?.data}
+                defaultValues={
+                    data?.data && data.data.activeMethod !== EAppDeploymentMethod.Function ? data.data : undefined
+                }
                 onSubmit={handleSubmit}
                 readOnly={!canWrite}
             >

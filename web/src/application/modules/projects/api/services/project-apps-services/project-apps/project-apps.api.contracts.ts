@@ -4,6 +4,8 @@ import type { EProjectAppStatus } from "~/projects/module-shared/enums";
 
 import { type ApiRequestBase, type ApiResponseBase, type ApiResponsePaginated } from "@infrastructure/api";
 
+import { type FunctionSourcePayload } from "../deployment-settings/app-deployment-settings.api.contracts";
+
 /**
  * Find many project apps paginated
  */
@@ -15,6 +17,8 @@ export type ProjectApps_FindManyPaginated_Req = ApiRequestBase<{
     env?: string;
     getStats?: boolean;
     getChildApps?: boolean;
+    /** Keeps the apps of these categories; an app that declares no kind is a webapp. */
+    category?: string[];
 }>;
 
 export type ProjectApps_FindManyPaginated_Res = ApiResponsePaginated<ProjectAppDetails>;
@@ -30,6 +34,23 @@ export type ProjectApps_CreateOne_Req = ApiRequestBase<
 
 export type ProjectApps_CreateOne_Res = ApiResponseBase<{
     id: string;
+}>;
+
+/**
+ * Create a function: an app of kind function, deployed from its source as
+ * soon as it exists.
+ */
+export type ProjectApps_CreateFunction_Req = ApiRequestBase<
+    {
+        projectID: string;
+        source: FunctionSourcePayload;
+    } & Pick<ProjectAppBase, "name" | "env" | "note" | "tags">
+>;
+
+export type ProjectApps_CreateFunction_Res = ApiResponseBase<{
+    id: string;
+    deploymentId: string;
+    taskId: string;
 }>;
 
 /**

@@ -11,6 +11,7 @@ export * from "./use-app-container-settings.api";
 export * from "./use-app-container-files.api";
 export * from "./use-app-deployment-settings.api";
 export * from "./use-app-feature-settings.api";
+export * from "./use-app-function.api";
 export * from "./use-app-clone-settings.api";
 export * from "./use-app-network-settings.api";
 export * from "./use-app-service-settings.api";

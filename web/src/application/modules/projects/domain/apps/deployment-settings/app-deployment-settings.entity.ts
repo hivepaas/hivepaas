@@ -6,6 +6,8 @@ import {
 } from "~/projects/module-shared/enums";
 import { type SettingsBaseEntity } from "~/settings/domain";
 
+import { type FunctionSource } from "../function";
+
 export type DeploymentDockerfile = {
     source: EDockerfileSource;
     path: string;
@@ -64,4 +66,9 @@ export type BaseDeploymentSettings = {
     updateVer: number;
 };
 
-export type AppDeploymentSettings = RepoMethod | ImageMethod;
+export type FunctionMethod = BaseDeploymentSettings & {
+    activeMethod: typeof EAppDeploymentMethod.Function;
+    functionSource: FunctionSource;
+};
+
+export type AppDeploymentSettings = RepoMethod | ImageMethod | FunctionMethod;

@@ -3,6 +3,7 @@ export * from "./e.app-build-tool";
 export * from "./e.app-deployment-method";
 export * from "./e.app-deployment-status";
 export * from "./e.app-deployment-trigger-source";
+export * from "./e.function-runtime";
 export * from "./e.app-health-check-grpc-status";
 export * from "./e.app-health-check-grpc-version";
 export * from "./e.app-health-check-rest-method";

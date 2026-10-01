@@ -3,6 +3,7 @@ import { use, useMemo } from "react";
 import { match } from "oxide.ts";
 import { ProjectsApiContext } from "~/projects/api/api-context";
 import type {
+    ProjectApps_CreateFunction_Req,
     ProjectApps_CreateOne_Req,
     ProjectApps_DeleteOne_Req,
     ProjectApps_Deploy_Req,
@@ -91,6 +92,26 @@ function createHook() {
                         Err: error => {
                             notifyError({
                                 message: "Failed to create project app",
+                                error,
+                            });
+
+                            throw error;
+                        },
+                    });
+                },
+                /**
+                 * Create a function
+                 */
+                createFunction: async (data: ProjectApps_CreateFunction_Req["data"]) => {
+                    const result = await api.projects.apps.$.createFunction({
+                        data,
+                    });
+
+                    return match(result, {
+                        Ok: _ => _,
+                        Err: error => {
+                            notifyError({
+                                message: "Failed to create function",
                                 error,
                             });
 

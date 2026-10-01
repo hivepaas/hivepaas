@@ -1,6 +1,7 @@
 import { type AxiosResponse } from "axios";
 import { z } from "zod";
 import type {
+    ProjectApps_CreateFunction_Res,
     ProjectApps_CreateOne_Res,
     ProjectApps_Deploy_Res,
     ProjectApps_DetectPhoto_Res,
@@ -26,6 +27,18 @@ const FindManyPaginatedSchema = z.object({
 const CreateOneSchema = z.object({
     data: z.object({
         id: z.string(),
+    }),
+    meta: BaseMetaApiSchema.nullable(),
+});
+
+/**
+ * Create function API response schema
+ */
+const CreateFunctionSchema = z.object({
+    data: z.object({
+        id: z.string(),
+        deploymentId: z.string(),
+        taskId: z.string(),
     }),
     meta: BaseMetaApiSchema.nullable(),
 });
@@ -79,6 +92,16 @@ export class ProjectAppsApiValidator {
         return parseApiResponse({
             response,
             schema: CreateOneSchema,
+        });
+    };
+
+    /**
+     * Validate and transform create function API response
+     */
+    createFunction = (response: AxiosResponse): ProjectApps_CreateFunction_Res => {
+        return parseApiResponse({
+            response,
+            schema: CreateFunctionSchema,
         });
     };
 

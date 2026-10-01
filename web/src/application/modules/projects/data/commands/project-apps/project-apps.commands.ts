@@ -1,6 +1,8 @@
 import { type UseMutationOptions, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useProjectAppsApi } from "~/projects/api/hooks";
 import type {
+    ProjectApps_CreateFunction_Req,
+    ProjectApps_CreateFunction_Res,
     ProjectApps_CreateOne_Req,
     ProjectApps_CreateOne_Res,
     ProjectApps_DeleteOne_Req,
@@ -38,6 +40,33 @@ function useCreateOne({ onSuccess, ...options }: CreateOneOptions = {}) {
 
     return useMutation({
         mutationFn: mutations.createOne,
+        onSuccess: (response, ...rest) => {
+            void queryClient.invalidateQueries({
+                queryKey: [QK["projects.apps.$.find-many-paginated"]],
+            });
+
+            if (onSuccess) {
+                onSuccess(response, ...rest);
+            }
+        },
+        ...options,
+    });
+}
+
+/**
+ * Create a function command
+ */
+type CreateFunctionReq = ProjectApps_CreateFunction_Req["data"];
+type CreateFunctionRes = ProjectApps_CreateFunction_Res;
+type CreateFunctionOptions = Omit<UseMutationOptions<CreateFunctionRes, Error, CreateFunctionReq>, "mutationFn">;
+
+function useCreateFunction({ onSuccess, ...options }: CreateFunctionOptions = {}) {
+    const { mutations } = useProjectAppsApi();
+
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: mutations.createFunction,
         onSuccess: (response, ...rest) => {
             void queryClient.invalidateQueries({
                 queryKey: [QK["projects.apps.$.find-many-paginated"]],
@@ -260,6 +289,7 @@ function useDetectPhoto({ onSuccess, ...options }: DetectPhotoOptions = {}) {
 
 export const ProjectAppsCommands = Object.freeze({
     useCreateOne,
+    useCreateFunction,
     useDeleteOne,
     useUpdateOne,
     useUpdateStatus,

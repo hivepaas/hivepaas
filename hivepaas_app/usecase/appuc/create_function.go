@@ -38,6 +38,9 @@ func (uc *UC) CreateFunction(
 	if err = uc.checkFunctionSource(ctx, req.ProjectID, req.ProjectEnvID, source); err != nil {
 		return nil, hperrors.Wrap(err)
 	}
+	if err = uc.checkFunctionDomain(ctx, req.ProjectID, req.Domain); err != nil {
+		return nil, hperrors.Wrap(err)
+	}
 
 	var provisioned *appprovisionservice.ProvisionAppsResp
 	committed := false
@@ -67,7 +70,7 @@ func (uc *UC) CreateFunction(
 				Tags:         req.Tags,
 				Configure: func(_ context.Context, _ database.IDB, app *entity.App, _ *swarm.ServiceSpec) (
 					[]*entity.Setting, error) {
-					return functionSettings(app, source, app.CreatedAt), nil
+					return functionSettings(app, source, req.Domain, app.CreatedAt), nil
 				},
 				Deployment: &appprovisionservice.FirstDeployment{
 					Source:   base.DeploymentTriggerSourceUser,
@@ -131,9 +134,29 @@ func (uc *UC) checkFunctionSource(
 	return hperrors.Wrap(uc.appDeploymentService.CheckBuildSource(ctx, checkReq))
 }
 
+// checkFunctionDomain checks the domain a function is created at, as a
+// template's are: the project may use it, and no other app holds it.
+func (uc *UC) checkFunctionDomain(ctx context.Context, projectID, domain string) error {
+	if domain == "" {
+		return nil
+	}
+	domains := []string{domain}
+	if err := uc.domainService.VerifyProjectDomains(ctx, uc.db, projectID, domains); err != nil {
+		return hperrors.Wrap(err)
+	}
+	return hperrors.Wrap(uc.domainService.VerifyDomainsAvailable(ctx, uc.db, domains, nil))
+}
+
 // functionSettings are what a function is created with: its kind, its source
-// to deploy, and its routing at the port its runtime listens on.
-func functionSettings(app *entity.App, source *entity.DeploymentFunctionSource, timeNow time.Time) []*entity.Setting {
+// to deploy, and its routing at the port its runtime listens on - at domain when
+// one is given, public and over HTTPS. Provisioning attaches the certificate
+// that covers the domain, or starts obtaining one, as it does for a template's.
+func functionSettings(
+	app *entity.App,
+	source *entity.DeploymentFunctionSource,
+	domain string,
+	timeNow time.Time,
+) []*entity.Setting {
 	newSetting := func(typ base.SettingType, version int, inheritable bool, data entity.SettingData) *entity.Setting {
 		setting := &entity.Setting{
 			ID:          gofn.Must(ulid.NewStringULID()),
@@ -155,6 +178,25 @@ func functionSettings(app *entity.App, source *entity.DeploymentFunctionSource, 
 		newSetting(base.SettingTypeAppDeployment, entity.CurrentAppDeploymentSettingsVersion, true,
 			&entity.AppDeploymentSettings{ActiveMethod: base.DeploymentMethodFunction, FunctionSource: source}),
 		newSetting(base.SettingTypeAppRouting, entity.CurrentAppRoutingSettingsVersion, true,
-			&entity.AppRoutingSettings{Port: base.FunctionPort}),
+			functionRouting(domain)),
 	}
+}
+
+// functionRouting is a function's routing: its runtime's port, and the domain it
+// is public at, if any. HTTPS is forced: Traefik answers it whatever the
+// certificate, and whoever wants plain HTTP turns it off in the routing settings.
+func functionRouting(domain string) *entity.AppRoutingSettings {
+	routing := &entity.AppRoutingSettings{Port: base.FunctionPort}
+	if domain == "" {
+		return routing
+	}
+	routing.ExposePublicly = true
+	routing.Domains = []*entity.AppDomain{{
+		Enabled:       true,
+		Domain:        domain,
+		Protocol:      base.NetworkProtocolHTTP,
+		ContainerPort: base.FunctionPort,
+		ForceHttps:    true,
+	}}
+	return routing
 }

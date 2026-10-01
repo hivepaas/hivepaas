@@ -84,3 +84,34 @@ func TestAFunctionWithoutANameIsRefused(t *testing.T) {
 
 	assert.ElementsMatch(t, []string{"name", "status"}, pathsOf(req.Validate()))
 }
+
+// A function may ask for a domain to be routed at, written one way.
+func TestAFunctionMayAskForADomain(t *testing.T) {
+	req := createFunctionReq(nodeSource())
+	req.Domain = "  Hello.Example.com. "
+
+	assert.NoError(t, req.ModifyRequest())
+
+	assert.Empty(t, req.Validate())
+	assert.Equal(t, "hello.example.com", req.Domain)
+}
+
+func TestAFunctionsDomainIsADomainName(t *testing.T) {
+	for _, domain := range []string{"not a domain", "*.example.com", "http://hello.example.com"} {
+		req := createFunctionReq(nodeSource())
+		req.Domain = domain
+
+		assert.NoError(t, req.ModifyRequest())
+
+		assert.Equal(t, []string{"domain"}, pathsOf(req.Validate()), domain)
+	}
+}
+
+func nodeSource() *appsettingsdto.DeploymentFunctionSourceReq {
+	return &appsettingsdto.DeploymentFunctionSourceReq{
+		Runtime: base.FunctionRuntimeNode24,
+		Code: appsettingsdto.FunctionCodeReq{Inline: &appsettingsdto.FunctionInlineCodeReq{
+			Files: []*appsettingsdto.FunctionFileReq{{Path: "index.js", Content: "export default () => ({})"}},
+		}},
+	}
+}

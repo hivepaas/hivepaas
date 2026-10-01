@@ -53556,6 +53556,10 @@
       },
       "appdto.CreateFunctionReq" : {
         "properties" : {
+          "domain" : {
+            "description" : "Domain is where the function is routed from its first deployment, over\nHTTPS; empty for none - it is reached in its project, by its service's name.",
+            "type" : "string"
+          },
           "name" : {
             "type" : "string"
           },
@@ -53579,7 +53583,7 @@
             "type" : "array"
           }
         },
-        "required" : [ "name", "note", "source", "status", "tags" ],
+        "required" : [ "domain", "name", "note", "source", "status", "tags" ],
         "type" : "object"
       },
       "appdto.CreateFunctionResp" : {

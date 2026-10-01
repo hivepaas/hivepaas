@@ -1,8 +1,11 @@
 package appdto
 
 import (
+	"strings"
+
 	vld "github.com/tiendc/go-validator"
 
+	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/appsettingsuc/appsettingsdto"
@@ -17,6 +20,9 @@ type CreateFunctionReq struct {
 	// Source is what the function's deployment settings take: its code, its
 	// runtime and its limits.
 	Source *appsettingsdto.DeploymentFunctionSourceReq `json:"source"`
+	// Domain is where the function is routed from its first deployment, over
+	// HTTPS; empty for none - it is reached in its project, by its service's name.
+	Domain string `json:"domain"`
 }
 
 func NewCreateFunctionReq() *CreateFunctionReq {
@@ -35,6 +41,7 @@ func (req *CreateFunctionReq) ModifyRequest() error {
 	if req.Source != nil {
 		req.Source.Normalize()
 	}
+	req.Domain = strings.TrimSuffix(strings.ToLower(strings.TrimSpace(req.Domain)), ".")
 	return nil
 }
 
@@ -49,6 +56,10 @@ func (req *CreateFunctionReq) Validate() hperrors.ValidationErrors {
 		vld.SetCustomKey("ERR_VLD_VALUE_REQUIRED"),
 	))
 	validators = append(validators, req.Source.Validate("source")...)
+	if req.Domain != "" {
+		validators = append(validators, basedto.ValidateDomain(&req.Domain, false, base.DomainNameMaxLen,
+			false, "domain")...)
+	}
 	return hperrors.NewValidationErrors(vld.Validate(validators...))
 }
 

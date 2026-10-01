@@ -9,8 +9,10 @@ import (
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/appdeploymentservice"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/domainservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/settingservice"
 )
 
@@ -85,7 +87,7 @@ func TestAFunctionIsCreatedWithItsKindSourceAndPort(t *testing.T) {
 	source := &entity.DeploymentFunctionSource{Runtime: base.FunctionRuntimeNode24}
 	timeNow := time.Date(2026, 10, 1, 0, 0, 0, 0, time.UTC)
 
-	settings := functionSettings(app, source, timeNow)
+	settings := functionSettings(app, source, "", timeNow)
 
 	byType := map[base.SettingType]*entity.Setting{}
 	for _, setting := range settings {
@@ -101,8 +103,84 @@ func TestAFunctionIsCreatedWithItsKindSourceAndPort(t *testing.T) {
 	deployment := byType[base.SettingTypeAppDeployment].MustAsAppDeploymentSettings()
 	assert.Equal(t, base.DeploymentMethodFunction, deployment.ActiveMethod)
 	assert.Equal(t, base.FunctionRuntimeNode24, deployment.FunctionSource.Runtime)
-	assert.Equal(t, base.FunctionPort, byType[base.SettingTypeAppRouting].MustAsAppRoutingSettings().Port)
+	routing := byType[base.SettingTypeAppRouting].MustAsAppRoutingSettings()
+	assert.Equal(t, base.FunctionPort, routing.Port)
+	assert.False(t, routing.ExposePublicly, "a function is not public unless asked")
+	assert.Empty(t, routing.Domains)
 	// What a clone copies: its deployment and routing settings, as an app's.
 	assert.True(t, byType[base.SettingTypeAppDeployment].Inheritable)
 	assert.True(t, byType[base.SettingTypeAppRouting].Inheritable)
+}
+
+// A function created at a domain is routed there from its first deployment:
+// public, over HTTPS, at its runtime's port.
+func TestAFunctionAskedForADomainIsRoutedThere(t *testing.T) {
+	app := &entity.App{ID: "app-1"}
+	source := &entity.DeploymentFunctionSource{Runtime: base.FunctionRuntimeNode24}
+
+	settings := functionSettings(app, source, "hello.example.com", time.Now())
+
+	var routing *entity.AppRoutingSettings
+	for _, setting := range settings {
+		if setting.Type == base.SettingTypeAppRouting {
+			routing = setting.MustAsAppRoutingSettings()
+		}
+	}
+	if !assert.NotNil(t, routing) {
+		return
+	}
+	assert.True(t, routing.ExposePublicly)
+	assert.Equal(t, []*entity.AppDomain{{
+		Enabled:       true,
+		Domain:        "hello.example.com",
+		Protocol:      base.NetworkProtocolHTTP,
+		ContainerPort: base.FunctionPort,
+		ForceHttps:    true,
+	}}, routing.Domains)
+	assert.Equal(t, []string{"hello.example.com"}, routing.GetActiveDomainNames())
+}
+
+// fakeDomainService says whether a project may use a domain and whether it is
+// free, and keeps what it was asked.
+type fakeDomainService struct {
+	domainservice.Service
+	notAllowed, taken error
+	verified, checked []string
+	projectID         string
+}
+
+func (f *fakeDomainService) VerifyProjectDomains(
+	_ context.Context, _ database.IDB, projectID string, domains []string,
+) error {
+	f.projectID, f.verified = projectID, domains
+	return f.notAllowed
+}
+
+func (f *fakeDomainService) VerifyDomainsAvailable(
+	_ context.Context, _ database.IDB, domains []string, _ []string,
+) error {
+	f.checked = domains
+	return f.taken
+}
+
+// A function's domain is checked before anything is created, as a template's
+// domains are: the project may use it, and no other app holds it.
+func TestAFunctionsDomainIsCheckedInItsProjectFirst(t *testing.T) {
+	domains := &fakeDomainService{}
+	uc := &UC{domainService: domains}
+
+	assert.NoError(t, uc.checkFunctionDomain(context.Background(), "project-1", "hello.example.com"))
+	assert.Equal(t, "project-1", domains.projectID)
+	assert.Equal(t, []string{"hello.example.com"}, domains.verified)
+	assert.Equal(t, []string{"hello.example.com"}, domains.checked)
+
+	domains = &fakeDomainService{taken: hperrors.Wrap(hperrors.ErrDomainInUse)}
+	uc = &UC{domainService: domains}
+	assert.ErrorIs(t, uc.checkFunctionDomain(context.Background(), "project-1", "hello.example.com"),
+		hperrors.ErrDomainInUse)
+
+	domains = &fakeDomainService{}
+	uc = &UC{domainService: domains}
+	assert.NoError(t, uc.checkFunctionDomain(context.Background(), "project-1", ""))
+	assert.Nil(t, domains.verified, "no domain, nothing to check")
 }

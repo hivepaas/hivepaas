@@ -79,6 +79,55 @@ var manifests = map[base.FunctionRuntime]manifest{
 // a compiled runtime its build image, come from the release.
 func Dockerfile(req *DockerfileReq) (*DockerfileResp, error) {
 	src := req.Source
+	st, err := writeStages(req, "The Dockerfile HivePaaS writes for a function")
+	if err != nil {
+		return nil, err
+	}
+	w := st.w
+
+	if src.Runtime.Compiled() {
+		fmt.Fprintf(w, "\nFROM %s AS build\n", st.last)
+		if !st.codeCopied {
+			w.WriteString("COPY --chown=hivepaas:hivepaas . /app/\n")
+		}
+		writeEnv(w, entrypointEnv(src))
+		writeArgs(w, req.BuildArgs)
+		writeRun(w, req.BuildSecrets, "hivepaas-runtime build")
+
+		fmt.Fprintf(w, "\nFROM %s\n", st.runImage)
+		writeSystemPackages(w, src.SystemPackages)
+		w.WriteString("COPY --from=build --chown=hivepaas:hivepaas /app /app\n")
+	} else {
+		fmt.Fprintf(w, "\nFROM %s\n", st.last)
+		if !st.codeCopied {
+			w.WriteString("COPY --chown=hivepaas:hivepaas . /app/\n")
+		}
+	}
+	writeEnv(w, append(entrypointEnv(src), limitsEnv(src)...))
+
+	return &DockerfileResp{Content: w.String(), Notes: st.notes}, nil
+}
+
+// stages is what a function's Dockerfile and its libraries' have in common: the
+// image the function starts from, with its Debian packages, then the install
+// of its libraries.
+type stages struct {
+	w *strings.Builder
+	// runImage is the image the function runs on, and baseImage the one it is
+	// built on: the build image for a compiled runtime.
+	runImage, baseImage string
+	// last is the stage the code goes on: "deps" after an install, else "base".
+	last string
+	// codeCopied says whether the install needed the whole code.
+	codeCopied bool
+	// installedFrom are the files of the function the install copied, none when
+	// there is no install; codeCopied stands for every file.
+	installedFrom []string
+	notes         []string
+}
+
+func writeStages(req *DockerfileReq, title string) (*stages, error) {
+	src := req.Source
 	m, ok := manifests[src.Runtime]
 	if !ok {
 		return nil, hperrors.Wrap(hperrors.ErrFunctionRuntimeUnavailable).WithParam("Runtime", src.Runtime)
@@ -99,10 +148,9 @@ func Dockerfile(req *DockerfileReq) (*DockerfileResp, error) {
 		}
 	}
 
-	resp := &DockerfileResp{}
-	w := &strings.Builder{}
-	fmt.Fprintf(w, "# The Dockerfile HivePaaS writes for a function: runtime %s, contract %s.\n", src.Runtime,
-		src.Contract)
+	st := &stages{w: &strings.Builder{}, runImage: runImage, baseImage: baseImage, last: "base"}
+	w := st.w
+	fmt.Fprintf(w, "# %s: runtime %s, contract %s.\n", title, src.Runtime, src.Contract)
 	fmt.Fprintf(w, "FROM %s AS base\n", baseImage)
 	writeSystemPackages(w, src.SystemPackages)
 
@@ -110,55 +158,33 @@ func Dockerfile(req *DockerfileReq) (*DockerfileResp, error) {
 	// alone, so that a change to the code alone installs nothing again. A
 	// manifest that names libraries from the function's own files needs them
 	// there: the code goes in first, whole.
-	stage, codeCopied := "base", false
 	manifestContent, hasManifest := readFile(req.SourceDir, m.file)
-	if hasManifest {
-		w.WriteString("\nFROM base AS deps\n")
-		if m.localDeps(manifestContent) {
-			w.WriteString("COPY --chown=hivepaas:hivepaas . /app/\n")
-			codeCopied = true
-			resp.Notes = append(resp.Notes, fmt.Sprintf("%s names libraries from the function's own files: "+
-				"they are installed with its code, on every build.", m.file))
-		} else {
-			files := []string{m.file}
-			for _, name := range append([]string{m.lock}, m.settings...) {
-				if _, ok := readFile(req.SourceDir, name); ok {
-					files = append(files, name)
-				}
-			}
-			fmt.Fprintf(w, "COPY --chown=hivepaas:hivepaas %s /app/\n", strings.Join(files, " "))
-		}
-		if _, ok := readFile(req.SourceDir, m.lock); !ok {
-			resp.Notes = append(resp.Notes, fmt.Sprintf("The function has no %s: this build resolves the "+
-				"libraries' versions, and a later build may resolve others.", m.lock))
-		}
-		writeArgs(w, req.BuildArgs)
-		writeRun(w, req.BuildSecrets, "hivepaas-runtime deps")
-		stage = "deps"
+	if !hasManifest {
+		return st, nil
 	}
-
-	if src.Runtime.Compiled() {
-		fmt.Fprintf(w, "\nFROM %s AS build\n", stage)
-		if !codeCopied {
-			w.WriteString("COPY --chown=hivepaas:hivepaas . /app/\n")
-		}
-		writeEnv(w, entrypointEnv(src))
-		writeArgs(w, req.BuildArgs)
-		writeRun(w, req.BuildSecrets, "hivepaas-runtime build")
-
-		fmt.Fprintf(w, "\nFROM %s\n", runImage)
-		writeSystemPackages(w, src.SystemPackages)
-		w.WriteString("COPY --from=build --chown=hivepaas:hivepaas /app /app\n")
+	w.WriteString("\nFROM base AS deps\n")
+	if m.localDeps(manifestContent) {
+		w.WriteString("COPY --chown=hivepaas:hivepaas . /app/\n")
+		st.codeCopied = true
+		st.notes = append(st.notes, fmt.Sprintf("%s names libraries from the function's own files: "+
+			"they are installed with its code, on every build.", m.file))
 	} else {
-		fmt.Fprintf(w, "\nFROM %s\n", stage)
-		if !codeCopied {
-			w.WriteString("COPY --chown=hivepaas:hivepaas . /app/\n")
+		st.installedFrom = []string{m.file}
+		for _, name := range append([]string{m.lock}, m.settings...) {
+			if _, ok := readFile(req.SourceDir, name); ok {
+				st.installedFrom = append(st.installedFrom, name)
+			}
 		}
+		fmt.Fprintf(w, "COPY --chown=hivepaas:hivepaas %s /app/\n", strings.Join(st.installedFrom, " "))
 	}
-	writeEnv(w, append(entrypointEnv(src), limitsEnv(src)...))
-
-	resp.Content = w.String()
-	return resp, nil
+	if _, ok := readFile(req.SourceDir, m.lock); !ok {
+		st.notes = append(st.notes, fmt.Sprintf("The function has no %s: this build resolves the "+
+			"libraries' versions, and a later build may resolve others.", m.lock))
+	}
+	writeArgs(w, req.BuildArgs)
+	writeRun(w, req.BuildSecrets, "hivepaas-runtime deps")
+	st.last = "deps"
+	return st, nil
 }
 
 func runtimeImage(images map[string]string, key string) (string, error) {

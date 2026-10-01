@@ -282,7 +282,13 @@ services:
       # HP_STORAGE_PROJECT_DATA_HOST_DIR: /data/hivepaas-projects
       HP_USER_ADMIN_USERNAME: admin
       HP_USER_ADMIN_EMAIL: admin@hivepaasdomain.name
-      HP_USER_ADMIN_PASSWORD: abc123
+      # One password for the dev server, from the deploy workflow's DEV_PASSWORD
+      # secret (install.sh refuses to run without it): every user's, set on each
+      # start, and the internal dev-helper routes' basic auth. The seed's and
+      # config's own are in this public repository.
+      HP_USER_ADMIN_PASSWORD: ${HP_DEV_PASSWORD}
+      HP_DEV_MODE_USER_PASSWORD: ${HP_DEV_PASSWORD}
+      HP_SESSION_BASIC_AUTH_PASSWORD: ${HP_DEV_PASSWORD}
       HP_AGENT_SECRET_TOKEN: abc123
     volumes:
       - ${PWD}/hivepaas:/var/lib/hivepaas
@@ -365,7 +371,8 @@ services:
       HP_RUN_MODE: worker
       HP_USER_ADMIN_USERNAME: admin
       HP_USER_ADMIN_EMAIL: admin@hivepaasdomain.name
-      HP_USER_ADMIN_PASSWORD: abc123
+      HP_USER_ADMIN_PASSWORD: ${HP_DEV_PASSWORD}
+      HP_DEV_MODE_USER_PASSWORD: ${HP_DEV_PASSWORD}
       HP_AGENT_SECRET_TOKEN: abc123
     volumes:
       - ${PWD}/hivepaas:/var/lib/hivepaas

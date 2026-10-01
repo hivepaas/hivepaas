@@ -2,6 +2,15 @@
 
 set -eo pipefail
 
+# The dev server's one password: every user's, and the internal routes'. The
+# deploy workflow sends it from its DEV_PASSWORD secret; see hivepaas.yaml.
+# Without it the seed's password, which is public, would be the one in use.
+if [ -z "${HP_DEV_PASSWORD:-}" ]; then
+  echo "ERROR: HP_DEV_PASSWORD is not set. It becomes every user's password on the dev server." >&2
+  exit 1
+fi
+export HP_DEV_PASSWORD
+
 echo "---------------------------------------------------------------"
 echo "INSTALL HivePaaS"
 echo "---------------------------------------------------------------"

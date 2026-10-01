@@ -122,16 +122,20 @@ jobs:
           HOST: ${{ secrets.DEV_SRV_IP }}
           PORT: ${{ secrets.DEV_SRV_SSH_PORT }}
           USER: ${{ secrets.DEV_SRV_USERNAME }}
+          # Every user's password on the dev server; see deployment/dev/hivepaas.yaml.
+          DEV_PASSWORD: ${{ secrets.DEV_PASSWORD }}
         run: |
           mkdir -p ~/.ssh
           echo "$SSH_KEY" | tr -d '\r' > ~/.ssh/deploy_key
           chmod 600 ~/.ssh/deploy_key
           # The dev server's host key is not checked: the login is by key, which a
-          # host in between cannot reuse, and the command sent is public.
-          ssh -v -i ~/.ssh/deploy_key -p "$PORT" \
+          # host in between cannot reuse, and the command sent is public. The
+          # password goes on stdin, not in the command, which the server's
+          # process list would show.
+          printf '%s\n' "$DEV_PASSWORD" | ssh -v -i ~/.ssh/deploy_key -p "$PORT" \
             -o StrictHostKeyChecking=no \
             -o UserKnownHostsFile=/dev/null \
             -o BatchMode=yes \
             -o ConnectTimeout=30 \
             "$USER@$HOST" \
-            'curl -sL "https://raw.githubusercontent.com/hivepaas/hivepaas/main/deployment/dev/install.sh" | bash'
+            'IFS= read -r HP_DEV_PASSWORD && export HP_DEV_PASSWORD && curl -sL "https://raw.githubusercontent.com/hivepaas/hivepaas/main/deployment/dev/install.sh" | bash'

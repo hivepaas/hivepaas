@@ -27,6 +27,8 @@ func main() {
 		fx.Invoke(internal.InitCache),
 		fx.Invoke(internal.InitDockerManager),
 		fx.Invoke(internal.SystemInstallation),
+		// After SystemInstallation: the users it creates get the password too.
+		fx.Invoke(internal.DevResetUserPasswords),
 		fx.Invoke(internal.InitSystemSettings),
 		fx.Invoke(internal.InitSystemEventBus),
 		fx.Invoke(internal.InitTaskQueue),

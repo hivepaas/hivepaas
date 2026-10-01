@@ -25,6 +25,8 @@ var (
 	// A build variable that uses a secret, which the Dockerfile declares with ARG:
 	// a build argument's value is written into the image's history.
 	ErrBuildSecretDeclaredAsArg = NewErr(ErrNotAllowed, "ERR_BUILD_SECRET_DECLARED_AS_ARG")
+	// A function whose runtime the running release names no image for.
+	ErrFunctionRuntimeUnavailable = NewErr(ErrUnsupported, "ERR_FUNCTION_RUNTIME_UNAVAILABLE")
 )
 
 // Errors for sources

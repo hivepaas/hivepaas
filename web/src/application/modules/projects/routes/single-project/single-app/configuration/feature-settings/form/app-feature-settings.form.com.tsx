@@ -8,7 +8,7 @@ import { type FieldPath, FormProvider, useController, useForm, useFormContext, u
 import { useUpdateEffect } from "react-use";
 import type { AppFeatureSettings } from "~/projects/domain";
 
-import { ContentBlock, InfoBlock } from "@application/shared/components";
+import { ContentBlock, InfoBlock, LabelWithInfo } from "@application/shared/components";
 
 import type { ValidationException } from "@infrastructure/exceptions/validation";
 
@@ -50,6 +50,7 @@ function mapFeatureSettingsToFormInput(data: AppFeatureSettings): SchemaInput {
                 ...(app.photo !== undefined ? { photo: app.photo } : {}),
             })),
             autoCloneApps: data.previewSettings.autoCloneApps,
+            allowPRComments: data.previewSettings.allowPRComments,
             commands: data.previewSettings.commands.map(cmd => ({
                 id: cmd.id,
                 name: cmd.name,
@@ -119,6 +120,39 @@ function AutoCloneDbAppsField() {
                     field.onChange(value === true);
                 }}
             />
+        </InfoBlock>
+    );
+}
+
+function AllowPRCommentsField() {
+    const { control } = useFormContext<SchemaInput, unknown, SchemaOutput>();
+    const { field } = useController({ control, name: "previewSettings.allowPRComments" });
+
+    return (
+        <InfoBlock
+            title={
+                <LabelWithInfo
+                    label="Allow PR Comments"
+                    content="Lets a comment on a pull request run /hivepaas deploy and /hivepaas cancel for this app. Off, a comment is answered with where to turn it on, and previews are made from the dashboard."
+                />
+            }
+            titleWidth={FEATURE_SETTINGS_TITLE_WIDTH}
+        >
+            <div className="flex flex-col gap-2">
+                <Checkbox
+                    checked={field.value}
+                    onCheckedChange={value => {
+                        field.onChange(value === true);
+                    }}
+                />
+                {field.value && (
+                    <p className={cn(dashedBorderBox, "text-sm")}>
+                        <span className="font-semibold text-orange-500">Warning:</span> A comment deploys the pull
+                        request&apos;s code with this app&apos;s variables and secrets. On a public repository, anyone
+                        who can comment can do it.
+                    </p>
+                )}
+            </div>
         </InfoBlock>
     );
 }
@@ -238,6 +272,7 @@ export function AppFeatureSettingsForm({
                                     <FeatureToggleField name="previewSettings.enabled" />
                                     {previewSettingsEnabled && (
                                         <>
+                                            <AllowPRCommentsField />
                                             <PreviewCreationDelayField />
                                             <AppPreviewWarningBox />
                                             <DbAppsToCloneFields

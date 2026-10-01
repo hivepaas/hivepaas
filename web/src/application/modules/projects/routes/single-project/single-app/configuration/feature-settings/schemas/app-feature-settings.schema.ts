@@ -26,6 +26,7 @@ export const AppFeatureSettingsFormSchema = z.object({
         creationDelay: z.string().trim(),
         appsToClone: z.array(AppFeaturePreviewAppRefSchema),
         autoCloneApps: z.boolean(),
+        allowPRComments: z.boolean(),
         commands: z.array(AppFeaturePreviewCommandRefSchema),
     }),
 });
@@ -51,6 +52,7 @@ export const emptyAppFeatureSettingsFormDefaults: AppFeatureSettingsFormSchemaIn
         creationDelay: DEFAULT_PREVIEW_CREATION_DELAY,
         appsToClone: [],
         autoCloneApps: false,
+        allowPRComments: false,
         commands: [],
     },
 };

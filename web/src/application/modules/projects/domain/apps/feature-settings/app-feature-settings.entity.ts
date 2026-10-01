@@ -24,6 +24,8 @@ export type AppFeaturePreviewSettings = {
     creationDelay: string;
     appsToClone: AppFeaturePreviewAppRef[];
     autoCloneApps: boolean;
+    /** Lets a pull request's comments run /hivepaas deploy and /hivepaas cancel. */
+    allowPRComments: boolean;
     commands: AppFeaturePreviewCommandRef[];
 };
 

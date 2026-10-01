@@ -34,6 +34,7 @@ const AppFeaturePreviewSettingsSchema = z
         creationDelay: z.string().optional().default(""),
         appsToClone: z.array(AppFeaturePreviewAppRefSchema).optional().default([]),
         autoCloneApps: z.boolean().optional().default(false),
+        allowPRComments: z.boolean().optional().default(false),
         commands: z.array(AppFeaturePreviewCommandRefSchema).optional().default([]),
     })
     .nullish()
@@ -42,6 +43,7 @@ const AppFeaturePreviewSettingsSchema = z
         creationDelay: value?.creationDelay ?? "",
         appsToClone: value?.appsToClone ?? [],
         autoCloneApps: value?.autoCloneApps ?? false,
+        allowPRComments: value?.allowPRComments ?? false,
         commands: value?.commands ?? [],
     }));
 

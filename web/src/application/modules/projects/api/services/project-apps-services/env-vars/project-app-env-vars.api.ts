@@ -13,6 +13,8 @@ import type {
     ProjectAppEnvVars_FindLinkTargets_Res,
     ProjectAppEnvVars_FindOne_Req,
     ProjectAppEnvVars_FindOne_Res,
+    ProjectAppEnvVars_FindSelfSuggestions_Req,
+    ProjectAppEnvVars_FindSelfSuggestions_Res,
     ProjectAppEnvVars_UpdateOne_Req,
     ProjectAppEnvVars_UpdateOne_Res,
 } from "./project-app-env-vars.api.contracts";
@@ -154,6 +156,26 @@ export class ProjectAppEnvVarsApi extends BaseApi {
                 }),
             ).pipe(
                 map(this.validator.findLinkSuggestions),
+                map(res => Ok(res)),
+                catchError(error => of(Err(parseApiError(error)))),
+            ),
+        );
+    }
+
+    async findSelfSuggestions(
+        request: ProjectAppEnvVars_FindSelfSuggestions_Req,
+        signal?: AbortSignal,
+    ): Promise<Result<ProjectAppEnvVars_FindSelfSuggestions_Res, Error>> {
+        const { projectID, env, appID, engine } = request.data;
+
+        return lastValueFrom(
+            from(
+                this.client.v1.get(`/projects/${projectID}/${env}/apps/${appID}/env-vars/self-suggestions`, {
+                    params: engine ? { engine } : {},
+                    signal,
+                }),
+            ).pipe(
+                map(this.validator.findSelfSuggestions),
                 map(res => Ok(res)),
                 catchError(error => of(Err(parseApiError(error)))),
             ),

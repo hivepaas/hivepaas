@@ -5,6 +5,7 @@ import type {
     ProjectAppEnvVars_FindLinkSuggestions_Res,
     ProjectAppEnvVars_FindLinkTargets_Res,
     ProjectAppEnvVars_FindOne_Res,
+    ProjectAppEnvVars_FindSelfSuggestions_Res,
 } from "~/projects/api/services";
 
 import { BaseMetaApiSchema, parseApiResponse } from "@infrastructure/api";
@@ -122,6 +123,42 @@ const FindLinkSuggestionsSchema = z.object({
     meta: BaseMetaApiSchema.nullable().optional().default(null),
 });
 
+const EnvSelfEngineSchema = z.object({
+    id: z.string(),
+    title: z.string(),
+    category: z.string().optional().default(""),
+    image: z.string().optional().default(""),
+    initOnly: z.boolean().optional().default(false),
+});
+
+const FindSelfSuggestionsSchema = z.object({
+    data: z.object({
+        engines: z
+            .array(EnvSelfEngineSchema)
+            .nullable()
+            .transform(value => value ?? []),
+        appEngine: z.string().optional().default(""),
+        engine: EnvSelfEngineSchema.nullable().optional().default(null),
+        vars: z
+            .array(
+                z.object({
+                    key: z.string(),
+                    value: z.string(),
+                    description: z.string().optional().default(""),
+                }),
+            )
+            .nullable()
+            .transform(value => value ?? []),
+        command: z.string().optional().default(""),
+        warnings: z
+            .array(z.string())
+            .nullable()
+            .optional()
+            .transform(value => value ?? []),
+    }),
+    meta: BaseMetaApiSchema.nullable().optional().default(null),
+});
+
 export class ProjectAppEnvVarsApiValidator {
     /**
      * Validate and transform find one project app env vars API response
@@ -170,5 +207,9 @@ export class ProjectAppEnvVarsApiValidator {
 
     findLinkSuggestions = (response: AxiosResponse): ProjectAppEnvVars_FindLinkSuggestions_Res => {
         return parseApiResponse({ response, schema: FindLinkSuggestionsSchema });
+    };
+
+    findSelfSuggestions = (response: AxiosResponse): ProjectAppEnvVars_FindSelfSuggestions_Res => {
+        return parseApiResponse({ response, schema: FindSelfSuggestionsSchema });
     };
 }

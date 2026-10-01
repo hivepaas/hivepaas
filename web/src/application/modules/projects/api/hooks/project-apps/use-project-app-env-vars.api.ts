@@ -7,6 +7,7 @@ import type {
     ProjectAppEnvVars_FindLinkSuggestions_Req,
     ProjectAppEnvVars_FindLinkTargets_Req,
     ProjectAppEnvVars_FindOne_Req,
+    ProjectAppEnvVars_FindSelfSuggestions_Req,
     ProjectAppEnvVars_UpdateOne_Req,
 } from "~/projects/api/services";
 
@@ -58,6 +59,19 @@ function createHook() {
                     signal?: AbortSignal,
                 ) => {
                     const result = await api.projects.apps.envVars.$.findLinkSuggestions({ data }, signal);
+
+                    return match(result, {
+                        Ok: _ => _,
+                        Err: error => {
+                            throw error;
+                        },
+                    });
+                },
+                findSelfSuggestions: async (
+                    data: ProjectAppEnvVars_FindSelfSuggestions_Req["data"],
+                    signal?: AbortSignal,
+                ) => {
+                    const result = await api.projects.apps.envVars.$.findSelfSuggestions({ data }, signal);
 
                     return match(result, {
                         Ok: _ => _,

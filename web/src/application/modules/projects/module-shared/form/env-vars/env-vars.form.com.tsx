@@ -2,7 +2,7 @@ import React from "react";
 
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@components/ui/accordion";
 import { Button } from "@components/ui/button";
-import { Link2 } from "lucide-react";
+import { Link2, Sparkles } from "lucide-react";
 
 import { ConfigVariables } from "@application/shared/form";
 
@@ -17,10 +17,22 @@ function View({
     notice,
     onShowFinalValues,
     onLinkApp,
+    onSuggestEnv,
 }: Props) {
     const extraActions =
-        onShowFinalValues || onLinkApp ? (
+        onShowFinalValues || onLinkApp || onSuggestEnv ? (
             <div className="flex items-center gap-2">
+                {onSuggestEnv && (
+                    <Button
+                        type="button"
+                        variant="outline"
+                        onClick={onSuggestEnv}
+                        className="w-fit"
+                    >
+                        <Sparkles className="size-4" />
+                        Suggest Env
+                    </Button>
+                )}
                 {onLinkApp && (
                     <Button
                         type="button"
@@ -105,6 +117,8 @@ type Props = {
     onShowFinalValues?: () => void;
     /** Opens the Link App dialog: the app screen only. */
     onLinkApp?: () => void;
+    /** Opens the Suggest Env dialog: the app screen's runtime variables only. */
+    onSuggestEnv?: () => void;
 };
 
 export const EnvVarsBaseForm = React.memo(View);

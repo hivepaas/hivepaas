@@ -7,6 +7,8 @@ import type {
     ProjectAppEnvVars_FindLinkTargets_Res,
     ProjectAppEnvVars_FindOne_Req,
     ProjectAppEnvVars_FindOne_Res,
+    ProjectAppEnvVars_FindSelfSuggestions_Req,
+    ProjectAppEnvVars_FindSelfSuggestions_Res,
 } from "~/projects/api/services";
 import { QK } from "~/projects/data/constants";
 
@@ -57,8 +59,25 @@ function useFindLinkSuggestions(request: FindLinkSuggestionsReq, options: FindLi
     });
 }
 
+type FindSelfSuggestionsReq = ProjectAppEnvVars_FindSelfSuggestions_Req["data"];
+type FindSelfSuggestionsOptions = Omit<
+    UseQueryOptions<ProjectAppEnvVars_FindSelfSuggestions_Res>,
+    "queryKey" | "queryFn"
+>;
+
+function useFindSelfSuggestions(request: FindSelfSuggestionsReq, options: FindSelfSuggestionsOptions = {}) {
+    const { queries } = useProjectAppEnvVarsApi();
+
+    return useQuery({
+        queryKey: [QK["projects.apps.env-vars.$.find-self-suggestions"], request],
+        queryFn: ({ signal }) => queries.findSelfSuggestions(request, signal),
+        ...options,
+    });
+}
+
 export const ProjectAppEnvVarsQueries = Object.freeze({
     useFindOne,
     useFindLinkTargets,
     useFindLinkSuggestions,
+    useFindSelfSuggestions,
 });

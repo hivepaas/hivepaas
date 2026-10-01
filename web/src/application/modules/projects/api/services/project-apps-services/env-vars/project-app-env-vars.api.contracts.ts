@@ -96,3 +96,32 @@ export type ProjectAppEnvVars_FindLinkSuggestions_Res = ApiResponseBase<{
     target: EnvLinkTarget;
     groups: EnvLinkGroup[];
 }>;
+
+/** An engine whose official image the self suggestions are for. */
+export type EnvSelfEngine = {
+    id: string;
+    title: string;
+    category: string;
+    image: string;
+    /** The image reads the variables only when it creates its data. */
+    initOnly: boolean;
+};
+
+export type ProjectAppEnvVars_FindSelfSuggestions_Req = ApiRequestBase<{
+    projectID: string;
+    env: string;
+    appID: string;
+    /** The engine to suggest for; the app's App Kind engine when empty. */
+    engine: string;
+}>;
+export type ProjectAppEnvVars_FindSelfSuggestions_Res = ApiResponseBase<{
+    engines: EnvSelfEngine[];
+    /** The engine of the list App Kind names, or empty. */
+    appEngine: string;
+    /** The engine suggested for, or null when none is known. */
+    engine: EnvSelfEngine | null;
+    vars: EnvLinkVar[];
+    /** What to run the image with, for an engine that reads no variable. */
+    command: string;
+    warnings: string[];
+}>;

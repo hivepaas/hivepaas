@@ -23,6 +23,7 @@ import {
     type AppConfigEnvVarsFormSchemaInput,
     type AppConfigEnvVarsFormSchemaOutput,
 } from "../schemas";
+import { SuggestEnvDialog } from "../suggest-env";
 import { type AppConfigEnvVarsFormRef } from "../types";
 
 const DEFAULTS: AppConfigEnvVarsFormSchemaInput = {
@@ -121,6 +122,7 @@ export const AppConfigEnvVarsForm = React.forwardRef<AppConfigEnvVarsFormRef, Pr
 
     const [finalValuesOpen, setFinalValuesOpen] = useState(false);
     const [linkSection, setLinkSection] = useState<LinkSection | null>(null);
+    const [suggestOpen, setSuggestOpen] = useState(false);
     const [finalValuesItems, setFinalValuesItems] = useState<FinalEnvValueItem[]>([]);
     const [finalValuesSectionTitle, setFinalValuesSectionTitle] = useState("Build Time Env Variables");
 
@@ -366,6 +368,13 @@ export const AppConfigEnvVarsForm = React.forwardRef<AppConfigEnvVarsFormRef, Pr
                                           setLinkSection("runtime");
                                       }
                             }
+                            onSuggestEnv={
+                                readOnly
+                                    ? undefined
+                                    : () => {
+                                          setSuggestOpen(true);
+                                      }
+                            }
                         />
 
                         {children}
@@ -383,6 +392,15 @@ export const AppConfigEnvVarsForm = React.forwardRef<AppConfigEnvVarsFormRef, Pr
                 }}
                 existingKeys={existingKeys}
                 onAdd={addLinkedVars}
+            />
+
+            <SuggestEnvDialog
+                open={suggestOpen}
+                onOpenChange={setSuggestOpen}
+                existingKeys={() => existingKeys("runtime")}
+                onAdd={vars => {
+                    addLinkedVars("runtime", vars);
+                }}
             />
 
             <FinalEnvValuesDialog

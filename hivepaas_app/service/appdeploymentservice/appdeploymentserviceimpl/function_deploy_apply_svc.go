@@ -2,23 +2,16 @@ package appdeploymentserviceimpl
 
 import (
 	"context"
-	"time"
 
 	"github.com/moby/moby/api/types/swarm"
 	"github.com/moby/moby/client"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/timeutil"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/functionservice/functioncontainer"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/placementservice"
-	"github.com/hivepaas/hivepaas/services/docker/dockerhelper"
 )
-
-// functionStopGraceMargin is how much longer than one call's timeout a stopping
-// function is given: the runtime lets the running calls finish, for at most one
-// timeout, and needs a moment to exit after them.
-const functionStopGraceMargin = 10 * time.Second
 
 func (s *service) functionDeployStepServiceApply(
 	ctx context.Context,
@@ -60,7 +53,7 @@ func (s *service) functionDeployStepServiceApply(
 			}
 			contSpec := svc.Spec.TaskTemplate.ContainerSpec
 			contSpec.Image = data.Deployment.Output.ImageTags[0]
-			applyFunctionContainer(contSpec, source)
+			functioncontainer.ApplyFixed(contSpec, source)
 			s.applyContainerInit(ctx, data.appDeploymentData, contSpec)
 
 			// The socket and the network follow the app's access on every
@@ -91,16 +84,4 @@ func (s *service) functionDeployStepServiceApply(
 	_ = s.settingMountService.Sweep(ctx, data.App)
 
 	return nil
-}
-
-// applyFunctionContainer gives a function's container what is fixed for a
-// function: the runtime's command, working directory and health check, whatever
-// a deployment setting or an earlier image left; and a stop grace period that
-// lets the calls running at a stop finish.
-func applyFunctionContainer(contSpec *swarm.ContainerSpec, source *entity.DeploymentFunctionSource) {
-	contSpec.Dir = ""
-	dockerhelper.ContainerCommandApply(contSpec, "")
-	contSpec.Healthcheck = nil
-	grace := time.Duration(source.Timeout) + functionStopGraceMargin
-	contSpec.StopGracePeriod = &grace
 }

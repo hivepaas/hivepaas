@@ -18,6 +18,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/reflectutil"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/transaction"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/appservice"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/functionservice/functioncontainer"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/appsettingsuc/appsettingsdto"
 	"github.com/hivepaas/hivepaas/services/docker/dockerhelper"
 )
@@ -51,6 +52,9 @@ func (uc *UC) UpdateAppContainerSettings(
 type updateAppContainerSettingsData struct {
 	App     *entity.App
 	Service *swarm.Service
+	// FunctionSource is a function's source, nil for another app: what is fixed
+	// for a function's container stays as it is.
+	FunctionSource *entity.DeploymentFunctionSource
 }
 
 func (uc *UC) loadAppContainerSettingsForUpdate(
@@ -66,11 +70,23 @@ func (uc *UC) loadAppContainerSettingsForUpdate(
 			bunex.SelectExcludeColumns(entity.ProjectDefaultExcludeColumns...),
 		),
 		bunex.SelectRelation("ProjectEnv"),
+		bunex.SelectRelation("Settings",
+			bunex.SelectWhereIn("setting.type IN (?)", base.SettingTypeAppKind, base.SettingTypeAppDeployment),
+		),
 	)
 	if err != nil {
 		return hperrors.Wrap(err)
 	}
 	data.App = app
+	if entity.IsFunctionKind(app.GetSettingByType(base.SettingTypeAppKind)) {
+		if deployment := app.GetSettingByType(base.SettingTypeAppDeployment); deployment != nil {
+			deploymentSettings, err := deployment.AsAppDeploymentSettings()
+			if err != nil {
+				return hperrors.Wrap(err)
+			}
+			data.FunctionSource = deploymentSettings.FunctionSource
+		}
+	}
 
 	service, err := uc.clusterService.ServiceInspect(ctx, app.ServiceID, false)
 	if err != nil {
@@ -113,6 +129,10 @@ func (uc *UC) prepareUpdatingAppContainerSettings(
 	uc.prepareUpdatingAppContainerPrivileges(req, data)
 	uc.prepareUpdatingAppContainerRestartPolicy(req, data)
 	uc.prepareUpdatingAppContainerLogDriver(req, data)
+
+	if data.FunctionSource != nil {
+		functioncontainer.ApplyFixed(containerSpec, data.FunctionSource)
+	}
 }
 
 func (uc *UC) prepareUpdatingAppContainerHealthcheck(

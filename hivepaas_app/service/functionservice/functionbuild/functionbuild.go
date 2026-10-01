@@ -6,6 +6,9 @@ package functionbuild
 
 import (
 	"bufio"
+	"crypto/sha256"
+	"encoding/binary"
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"os"
@@ -313,4 +316,23 @@ func WriteInlineCode(dir string, code *entity.FunctionInlineCode) error {
 		}
 	}
 	return nil
+}
+
+// ContentHash is a hash of a function's inline code and its Dockerfile: what
+// its image is tagged after, inline code having no commit. The order of the
+// files does not change it.
+func ContentHash(code *entity.FunctionInlineCode, dockerfile string) string {
+	h := sha256.New()
+	write := func(value string) {
+		_ = binary.Write(h, binary.BigEndian, uint64(len(value)))
+		_, _ = h.Write([]byte(value))
+	}
+	files := slices.Clone(code.Files)
+	slices.SortFunc(files, func(a, b *entity.FunctionFile) int { return strings.Compare(a.Path, b.Path) })
+	for _, f := range files {
+		write(f.Path)
+		write(f.Content)
+	}
+	write(dockerfile)
+	return hex.EncodeToString(h.Sum(nil))
 }

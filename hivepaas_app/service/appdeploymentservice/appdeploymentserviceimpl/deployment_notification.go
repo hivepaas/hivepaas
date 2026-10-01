@@ -91,5 +91,14 @@ func (s *service) buildDeploymentNotifMsgData(
 		}
 	case base.DeploymentMethodImage:
 		msgData.Image = deployment.Settings.ImageSource.Image
+	case base.DeploymentMethodFunction:
+		if source := deployment.Settings.FunctionSource; source != nil && source.Code.Repo != nil {
+			msgData.RepoURL = source.Code.Repo.RepoURL
+			msgData.RepoRef = source.Code.Repo.RepoRef
+			if deployment.Output != nil {
+				msgData.CommitMsg = deployment.Output.CommitTitle
+				msgData.CommitAuthor = deployment.Output.CommitAuthor
+			}
+		}
 	}
 }

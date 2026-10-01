@@ -139,8 +139,11 @@ func makeRedeployPlan(ref *appRef, settings *appsettingsdto.DeploymentSettingsRe
 
 // describe is a source in a few words, for a summary.
 func (s deploySource) describe() string {
-	if s.Method == string(base.DeploymentMethodImage) {
+	switch {
+	case s.Method == string(base.DeploymentMethodImage):
 		return s.Image
+	case s.Method == string(base.DeploymentMethodFunction) && s.Repo == "":
+		return "the function's code"
 	}
 	return strings.TrimSpace(s.Repo + " " + s.Ref)
 }
@@ -172,6 +175,7 @@ func deploySourceOf(s *appsettingsdto.DeploymentSettingsResp) deploySource {
 			out.Repo, out.Ref, out.Commit = withoutUserinfo(s.RepoSource.RepoURL), s.RepoSource.RepoRef,
 				s.RepoSource.CommitHash
 		}
+	case base.DeploymentMethodFunction:
 	}
 	return out
 }

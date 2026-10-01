@@ -82,6 +82,8 @@ func (s *service) Deploy(
 		err = s.deployFromImage(ctx, db, data)
 	case base.DeploymentMethodRepo:
 		err = s.deployFromRepo(ctx, db, data)
+	case base.DeploymentMethodFunction:
+		err = s.deployFromFunction(ctx, db, data)
 	}
 
 	return resp, err

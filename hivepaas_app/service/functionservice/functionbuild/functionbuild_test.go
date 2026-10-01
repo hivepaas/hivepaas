@@ -255,3 +255,26 @@ func TestInlineCodeOutsideTheFunctionIsNotWritten(t *testing.T) {
 		assert.True(t, os.IsNotExist(statErr), path)
 	}
 }
+
+// Inline code has no commit: its image is tagged after its content, the
+// Dockerfile included, so that the same function builds to the same tag.
+func TestTheSameFunctionHasTheSameContentHash(t *testing.T) {
+	code := &entity.FunctionInlineCode{Files: []*entity.FunctionFile{
+		{Path: "index.js", Content: "a"}, {Path: "lib.js", Content: "b"},
+	}}
+	reordered := &entity.FunctionInlineCode{Files: []*entity.FunctionFile{code.Files[1], code.Files[0]}}
+
+	hash := ContentHash(code, "FROM x")
+
+	assert.Len(t, hash, 64)
+	assert.Equal(t, hash, ContentHash(reordered, "FROM x"))
+	assert.NotEqual(t, hash, ContentHash(code, "FROM y"))
+	assert.NotEqual(t, hash, ContentHash(&entity.FunctionInlineCode{Files: []*entity.FunctionFile{
+		{Path: "index.js", Content: "a"}, {Path: "lib.js", Content: "c"},
+	}}, "FROM x"))
+	assert.NotEqual(t, ContentHash(&entity.FunctionInlineCode{Files: []*entity.FunctionFile{
+		{Path: "ab", Content: "c"},
+	}}, ""), ContentHash(&entity.FunctionInlineCode{Files: []*entity.FunctionFile{
+		{Path: "a", Content: "bc"},
+	}}, ""))
+}

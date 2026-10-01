@@ -9,6 +9,7 @@ import (
 	"github.com/tiendc/gofn"
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/config"
+	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	imagebuildserviceclient "github.com/hivepaas/hivepaas/hivepaas_app/interface/agent/client/imagebuildservice"
@@ -25,14 +26,37 @@ const (
 	buildWorkerNodePollInterval = 3 * time.Second
 )
 
+// imageBuildTarget is what a deployment builds: its Dockerfile, the commit its
+// image is tagged after, the registry it goes to, and the build's inputs when
+// the deployment resolved them first.
+type imageBuildTarget struct {
+	CommitHash     string
+	Dockerfile     entity.DeploymentDockerfile
+	PushToRegistry entity.ObjectID
+	Inputs         *imagebuildservice.BuildInputs
+}
+
 func (s *service) repoDeployStepImageBuild(
 	ctx context.Context,
 	db database.Tx,
 	data *repoDeploymentData,
+) error {
+	repoSource := data.Deployment.Settings.RepoSource
+	return s.deployStepImageBuild(ctx, db, data, &imageBuildTarget{
+		CommitHash:     repoSource.CommitHash,
+		Dockerfile:     repoSource.Dockerfile,
+		PushToRegistry: repoSource.PushToRegistry,
+	})
+}
+
+// deployStepImageBuild builds the deployment's image, on a build node.
+func (s *service) deployStepImageBuild(
+	ctx context.Context,
+	db database.Tx,
+	data *repoDeploymentData,
+	target *imageBuildTarget,
 ) (err error) {
 	data.Step = stepImageBuild
-	deployment := data.Deployment
-	repoSource := deployment.Settings.RepoSource
 
 	s.addStepStartLog(ctx, data.appDeploymentData, "Start building docker image...")
 	defer s.addStepEndLog(ctx, data.appDeploymentData, timeutil.NowUTC(), err)
@@ -43,13 +67,14 @@ func (s *service) repoDeployStepImageBuild(
 		// registers reaching the deployment's transaction.
 		TaskExecData:       data.SubTask(data.Task),
 		App:                data.App,
-		CommitHash:         repoSource.CommitHash,
-		Dockerfile:         repoSource.Dockerfile,
+		CommitHash:         target.CommitHash,
+		Dockerfile:         target.Dockerfile,
 		ImageTags:          data.DeployArgs.ImageTags,
-		PushToRegistry:     repoSource.PushToRegistry,
+		PushToRegistry:     target.PushToRegistry,
 		ImageBuildSettings: data.ImageBuildSettings,
 		BuildID:            data.Task.ID,
-		CheckoutDir:        data.CheckoutDir,
+		CheckoutDir:        data.contextDir(),
+		Inputs:             target.Inputs,
 	}
 	if data.DeployArgs.NoCache || (data.ImageBuildSettings != nil && data.ImageBuildSettings.NoCache) {
 		buildReq.NoCache = true
@@ -155,7 +180,7 @@ func (s *service) repoDeployStepImageBuild(
 func sendBuildSource(ctx context.Context, data *repoDeploymentData, w io.Writer) error {
 	_ = data.LogStore.Add(ctx, tasklog.NewOutFrame("Sending the source to the build node...", tasklog.TsNow))
 	start := time.Now()
-	sent, err := srcpack.Pack(ctx, data.CheckoutDir, w)
+	sent, err := srcpack.Pack(ctx, data.contextDir(), w)
 	if err != nil {
 		return hperrors.Wrap(err)
 	}

@@ -27,6 +27,17 @@ type repoDeploymentData struct {
 
 	TempDir     string
 	CheckoutDir string
+	// ContextDir is the build's context when it is not the whole checkout: a
+	// function's directory in its repository.
+	ContextDir string
+}
+
+// contextDir is what the build is given as its context.
+func (data *repoDeploymentData) contextDir() string {
+	if data.ContextDir != "" {
+		return data.ContextDir
+	}
+	return data.CheckoutDir
 }
 
 func (s *service) deployFromRepo(
@@ -46,7 +57,7 @@ func (s *service) deployFromRepo(
 	}()
 
 	// 0. Prepare
-	err = s.repoDeployStepPrepare(ctx, db, data)
+	err = s.deployStepPrepareBuild(ctx, db, data, data.Deployment.Settings.RepoSource.PushToRegistry)
 	if err != nil {
 		return hperrors.Wrap(err)
 	}
@@ -115,10 +126,14 @@ func (s *service) deployFromRepo(
 	return nil
 }
 
-func (s *service) repoDeployStepPrepare(
+// deployStepPrepareBuild makes the directories a build works in and loads its
+// settings. A build on a cluster of several nodes whose image goes to no
+// registry is warned about: the other nodes cannot pull it.
+func (s *service) deployStepPrepareBuild(
 	ctx context.Context,
 	db database.IDB,
 	data *repoDeploymentData,
+	pushToRegistry entity.ObjectID,
 ) (err error) {
 	deployment := data.Deployment
 
@@ -141,7 +156,7 @@ func (s *service) repoDeployStepPrepare(
 	if err != nil {
 		return hperrors.Wrap(err)
 	}
-	if data.IsMultiNode && deployment.Settings.RepoSource.PushToRegistry.ID == "" {
+	if data.IsMultiNode && pushToRegistry.ID == "" {
 		warn := "[WARN] The cluster is multi-node, but no target registry is configured to push the built image. " +
 			"The image will not be accessible from other nodes in the cluster."
 		deployment.Output.Errors = append(deployment.Output.Errors, warn)

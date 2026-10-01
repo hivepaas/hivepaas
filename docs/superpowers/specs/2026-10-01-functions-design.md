@@ -452,3 +452,20 @@ settled what follows:
   defaults until its settings change them;
 - the lock file a test run made is added to the editor's files with one button,
   and saved with the code.
+
+## Changes after part 5's plan
+
+Writing the scheduled calls (`docs/superpowers/plans/2026-10-01-function-invoke-job.md`)
+settled what follows:
+
+- a function's call lives in the function, at the app scope only, and only a
+  function has one; an env's job sequence runs it as a step, as any app job;
+- its request is a method, a path with its query, headers and a text body; a
+  GET or HEAD sends no body;
+- the call's log streams into the run's log; the response is kept in the run,
+  its body cut at 64 KB, even when its status fails the run;
+- an exit of invoke without a result, an outcome other than ok, or a status of
+  400 or more fails the run;
+- as a step, it hands on `STATUS` and, when the body is text, `BODY` cut at
+  16 KB;
+- no trigger runs a call yet, and MCP does not plan one.

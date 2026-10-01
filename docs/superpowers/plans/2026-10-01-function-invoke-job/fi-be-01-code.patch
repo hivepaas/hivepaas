@@ -1,0 +1,494 @@
+diff --git a/docs/openapi/swagger.json b/docs/openapi/swagger.json
+index 61358fd9..68bc3869 100644
+--- a/docs/openapi/swagger.json
++++ b/docs/openapi/swagger.json
+@@ -63464,6 +63464,13 @@
+           "default" : {
+             "type" : "boolean"
+           },
++          "functionInvoke" : {
++            "allOf" : [ {
++              "$ref" : "#/components/schemas/settings_schedjobdto.SchedJobFunctionInvokeReq"
++            } ],
++            "description" : "FunctionInvoke is a function-invoke's request; left out for every other\ntype.",
++            "type" : "object"
++          },
+           "inheritable" : {
+             "type" : "boolean"
+           },
+@@ -63518,7 +63525,7 @@
+             "type" : "array"
+           }
+         },
+-        "required" : [ "app", "command", "commandOutput", "controlDisabled", "dataBackup", "default", "inheritable", "jobType", "maxRetry", "name", "notification", "priority", "retryBackoff", "retryBackoffJitter", "retryDelay", "retryDelayIncr", "retryDelayMax", "schedule", "sequence", "timeout", "triggers" ],
++        "required" : [ "app", "command", "commandOutput", "controlDisabled", "dataBackup", "default", "functionInvoke", "inheritable", "jobType", "maxRetry", "name", "notification", "priority", "retryBackoff", "retryBackoffJitter", "retryDelay", "retryDelayIncr", "retryDelayMax", "schedule", "sequence", "timeout", "triggers" ],
+         "type" : "object"
+       },
+       "settings_schedjobdto.CreateSchedJobResp" : {
+@@ -63568,6 +63575,9 @@
+           "expireAt" : {
+             "type" : "string"
+           },
++          "functionInvoke" : {
++            "$ref" : "#/components/schemas/settings_schedjobdto.SchedJobFunctionInvokeResp"
++          },
+           "id" : {
+             "type" : "string"
+           },
+@@ -63654,7 +63664,7 @@
+             "type" : "string"
+           }
+         },
+-        "required" : [ "app", "command", "commandOutput", "controlDisabled", "createdAt", "dataBackup", "default", "expireAt", "id", "inheritable", "inherited", "jobType", "kind", "maxRetry", "name", "nextRuns", "notification", "ownerApp", "priority", "retryBackoff", "retryBackoffJitter", "retryDelay", "retryDelayIncr", "retryDelayMax", "schedule", "scope", "sequence", "size", "status", "timeout", "triggers", "type", "updateVer", "updatedAt" ],
++        "required" : [ "app", "command", "commandOutput", "controlDisabled", "createdAt", "dataBackup", "default", "expireAt", "functionInvoke", "id", "inheritable", "inherited", "jobType", "kind", "maxRetry", "name", "nextRuns", "notification", "ownerApp", "priority", "retryBackoff", "retryBackoffJitter", "retryDelay", "retryDelayIncr", "retryDelayMax", "schedule", "scope", "sequence", "size", "status", "timeout", "triggers", "type", "updateVer", "updatedAt" ],
+         "type" : "object"
+       },
+       "settings_schedjobdto.ExecuteSchedJobDataResp" : {
+@@ -63801,6 +63811,54 @@
+         "required" : [ "restoreCommand", "source", "sourceCommand", "sourceFileName", "sourceVolume", "sourceVolumeSubpath", "tags", "targetRepository" ],
+         "type" : "object"
+       },
++      "settings_schedjobdto.SchedJobFunctionInvokeReq" : {
++        "properties" : {
++          "body" : {
++            "type" : "string"
++          },
++          "headers" : {
++            "additionalProperties" : {
++              "items" : {
++                "type" : "string"
++              },
++              "type" : "array"
++            },
++            "type" : "object"
++          },
++          "method" : {
++            "type" : "string"
++          },
++          "path" : {
++            "type" : "string"
++          }
++        },
++        "required" : [ "body", "headers", "method", "path" ],
++        "type" : "object"
++      },
++      "settings_schedjobdto.SchedJobFunctionInvokeResp" : {
++        "properties" : {
++          "body" : {
++            "type" : "string"
++          },
++          "headers" : {
++            "additionalProperties" : {
++              "items" : {
++                "type" : "string"
++              },
++              "type" : "array"
++            },
++            "type" : "object"
++          },
++          "method" : {
++            "type" : "string"
++          },
++          "path" : {
++            "type" : "string"
++          }
++        },
++        "required" : [ "body", "headers", "method", "path" ],
++        "type" : "object"
++      },
+       "settings_schedjobdto.SchedJobResp" : {
+         "properties" : {
+           "app" : {
+@@ -63827,6 +63885,9 @@
+           "expireAt" : {
+             "type" : "string"
+           },
++          "functionInvoke" : {
++            "$ref" : "#/components/schemas/settings_schedjobdto.SchedJobFunctionInvokeResp"
++          },
+           "id" : {
+             "type" : "string"
+           },
+@@ -63907,7 +63968,7 @@
+             "type" : "string"
+           }
+         },
+-        "required" : [ "app", "command", "commandOutput", "controlDisabled", "createdAt", "dataBackup", "default", "expireAt", "id", "inheritable", "inherited", "jobType", "kind", "maxRetry", "name", "nextRuns", "notification", "priority", "retryBackoff", "retryBackoffJitter", "retryDelay", "retryDelayIncr", "retryDelayMax", "schedule", "sequence", "size", "status", "timeout", "triggers", "type", "updateVer", "updatedAt" ],
++        "required" : [ "app", "command", "commandOutput", "controlDisabled", "createdAt", "dataBackup", "default", "expireAt", "functionInvoke", "id", "inheritable", "inherited", "jobType", "kind", "maxRetry", "name", "nextRuns", "notification", "priority", "retryBackoff", "retryBackoffJitter", "retryDelay", "retryDelayIncr", "retryDelayMax", "schedule", "sequence", "size", "status", "timeout", "triggers", "type", "updateVer", "updatedAt" ],
+         "type" : "object"
+       },
+       "settings_schedjobdto.SchedJobSequenceReq" : {
+@@ -64081,6 +64142,13 @@
+           "default" : {
+             "type" : "boolean"
+           },
++          "functionInvoke" : {
++            "allOf" : [ {
++              "$ref" : "#/components/schemas/settings_schedjobdto.SchedJobFunctionInvokeReq"
++            } ],
++            "description" : "FunctionInvoke is a function-invoke's request; left out for every other\ntype.",
++            "type" : "object"
++          },
+           "inheritable" : {
+             "type" : "boolean"
+           },
+@@ -64138,7 +64206,7 @@
+             "type" : "integer"
+           }
+         },
+-        "required" : [ "app", "command", "commandOutput", "controlDisabled", "dataBackup", "default", "inheritable", "jobType", "maxRetry", "name", "notification", "priority", "retryBackoff", "retryBackoffJitter", "retryDelay", "retryDelayIncr", "retryDelayMax", "schedule", "sequence", "timeout", "triggers", "updateVer" ],
++        "required" : [ "app", "command", "commandOutput", "controlDisabled", "dataBackup", "default", "functionInvoke", "inheritable", "jobType", "maxRetry", "name", "notification", "priority", "retryBackoff", "retryBackoffJitter", "retryDelay", "retryDelayIncr", "retryDelayMax", "schedule", "sequence", "timeout", "triggers", "updateVer" ],
+         "type" : "object"
+       },
+       "settings_schedjobdto.UpdateSchedJobResp" : {
+diff --git a/hivepaas_app/base/sched_job.go b/hivepaas_app/base/sched_job.go
+index 8a8aacee..f0104c56 100644
+--- a/hivepaas_app/base/sched_job.go
++++ b/hivepaas_app/base/sched_job.go
+@@ -14,12 +14,15 @@ const (
+ 	SchedJobTypeJobSequence SchedJobType = "job-sequence"
+ 	// SchedJobTypeDataBackup takes a snapshot of an app's data into a backup repository.
+ 	SchedJobTypeDataBackup SchedJobType = "data-backup"
++	// SchedJobTypeFunctionInvoke calls a function once: its runtime's invoke, in a
++	// running task of the function.
++	SchedJobTypeFunctionInvoke SchedJobType = "function-invoke"
+ )
+ 
+ var (
+ 	AllSchedJobTypes = []SchedJobType{SchedJobTypeContainerCommand, SchedJobTypeSystemCleanup,
+ 		SchedJobTypeSystemBackup, SchedJobTypeSSLRenewal, SchedJobTypeBackupRepoCleanup, SchedJobTypeJobSequence,
+-		SchedJobTypeDataBackup}
++		SchedJobTypeDataBackup, SchedJobTypeFunctionInvoke}
+ )
+ 
+ // SchedJobDataBackupSource is what a data backup reads: a command's output, or a
+diff --git a/hivepaas_app/entity/setting_sched_job.go b/hivepaas_app/entity/setting_sched_job.go
+index d7c1cb13..845019f4 100644
+--- a/hivepaas_app/entity/setting_sched_job.go
++++ b/hivepaas_app/entity/setting_sched_job.go
+@@ -50,6 +50,9 @@ type SchedJob struct {
+ 	Triggers []*SchedJobTrigger `json:"triggers,omitempty"`
+ 	// DataBackup is what a data-backup job backs up and where; nil for every other type.
+ 	DataBackup *SchedJobDataBackup `json:"dataBackup,omitempty"`
++	// FunctionInvoke is the request a function-invoke job calls its function
++	// with; nil for every other type.
++	FunctionInvoke *SchedJobFunctionInvoke `json:"functionInvoke,omitempty"`
+ }
+ 
+ type SchedJobSchedule struct {
+diff --git a/hivepaas_app/entity/setting_sched_job_function_invoke.go b/hivepaas_app/entity/setting_sched_job_function_invoke.go
+new file mode 100644
+index 00000000..6d4a38a0
+--- /dev/null
++++ b/hivepaas_app/entity/setting_sched_job_function_invoke.go
+@@ -0,0 +1,13 @@
++package entity
++
++// SchedJobFunctionInvoke is the request a function-invoke job calls its
++// function with, as the runtime's invoke reads it: the query is in the path,
++// the body is text.
++type SchedJobFunctionInvoke struct {
++	Method string `json:"method"`
++	// Path is the path the handler sees, with its query: "/report?day=today".
++	Path string `json:"path"`
++	// Headers are by name, in lower case.
++	Headers map[string][]string `json:"headers,omitempty"`
++	Body    string              `json:"body,omitempty"`
++}
+diff --git a/hivepaas_app/interface/mcp/tools_sched_write.go b/hivepaas_app/interface/mcp/tools_sched_write.go
+index 9d55305e..63f67d53 100644
+--- a/hivepaas_app/interface/mcp/tools_sched_write.go
++++ b/hivepaas_app/interface/mcp/tools_sched_write.go
+@@ -75,6 +75,8 @@ var schedJobDescs = func() map[string]string {
+ 			"other scheduled jobs in order, is made in the dashboard",
+ 		"dataBackup": "not used here: this plans a command that runs in an app; a data backup, which takes " +
+ 			"a snapshot of a command's output or of a volume into a backup repository, is made in the dashboard",
++		"functionInvoke": "not used here: this plans a command that runs in an app; a function's call on a " +
++			"schedule, which sends the function a request, is made in the dashboard",
+ 		"triggers": "events of this app that also run the job, beside its schedule: pre-deploy, post-deploy, " +
+ 			"deploy-failed, health-down, health-up, app-enabled, app-disabled; up to 10",
+ 	}
+diff --git a/hivepaas_app/usecase/settings/schedjobuc/create.go b/hivepaas_app/usecase/settings/schedjobuc/create.go
+index 4e86152e..0ad175a5 100644
+--- a/hivepaas_app/usecase/settings/schedjobuc/create.go
++++ b/hivepaas_app/usecase/settings/schedjobuc/create.go
+@@ -56,6 +56,9 @@ func (uc *UC) CreateSchedJob(
+ 			if err := uc.checkDataBackup(ctx, db, req.Scope, schedJob); err != nil {
+ 				return hperrors.Wrap(err)
+ 			}
++			if err := uc.checkFunctionInvoke(ctx, db, req.Scope, schedJob); err != nil {
++				return hperrors.Wrap(err)
++			}
+ 			if err := uc.checkPermissionPipeToApp(ctx, db, auth, schedJob); err != nil {
+ 				return hperrors.Wrap(err)
+ 			}
+diff --git a/hivepaas_app/usecase/settings/schedjobuc/function_invoke.go b/hivepaas_app/usecase/settings/schedjobuc/function_invoke.go
+new file mode 100644
+index 00000000..65ca139f
+--- /dev/null
++++ b/hivepaas_app/usecase/settings/schedjobuc/function_invoke.go
+@@ -0,0 +1,50 @@
++package schedjobuc
++
++import (
++	"context"
++
++	"github.com/hivepaas/hivepaas/hivepaas_app/base"
++	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
++	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
++	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
++	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
++	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/settinghelper"
++)
++
++// checkFunctionInvoke refuses a function's call that is not in its own app, or
++// in an app that is not a function.
++func (uc *UC) checkFunctionInvoke(
++	ctx context.Context,
++	db database.IDB,
++	scope *entity.ObjectScope,
++	job *entity.SchedJob,
++) error {
++	if job.JobType != base.SchedJobTypeFunctionInvoke {
++		return nil
++	}
++	settings, _, err := uc.SettingRepo.List(ctx, db, nil, nil,
++		bunex.SelectWhere("setting.type = ?", base.SettingTypeAppKind),
++		bunex.SelectWhere("setting.status = ?", base.SettingStatusActive),
++		bunex.SelectWhere("setting.object_id = ?", scope.AppID),
++	)
++	if err != nil {
++		return hperrors.Wrap(err)
++	}
++	err = checkFunctionInvokeApp(scope, job, settinghelper.FindSettingByType(settings, base.SettingTypeAppKind))
++	return hperrors.Wrap(err)
++}
++
++// checkFunctionInvokeApp refuses a function's call whose app is not the
++// scope's, or whose kind - the scope app's - is not a function.
++func checkFunctionInvokeApp(scope *entity.ObjectScope, job *entity.SchedJob, kind *entity.Setting) error {
++	if job.JobType != base.SchedJobTypeFunctionInvoke {
++		return nil
++	}
++	if job.App.ID != scope.AppID {
++		return hperrors.NewArgumentInvalid("app").WithExtraDetail("a function's call runs in the function")
++	}
++	if !entity.IsFunctionKind(kind) {
++		return hperrors.NewArgumentInvalid("jobType").WithExtraDetail("only a function is called")
++	}
++	return nil
++}
+diff --git a/hivepaas_app/usecase/settings/schedjobuc/schedjobdto/create.go b/hivepaas_app/usecase/settings/schedjobuc/schedjobdto/create.go
+index 3679008e..7d59b472 100644
+--- a/hivepaas_app/usecase/settings/schedjobuc/schedjobdto/create.go
++++ b/hivepaas_app/usecase/settings/schedjobuc/schedjobdto/create.go
+@@ -54,6 +54,9 @@ type SchedJobBaseReq struct {
+ 	// DataBackup is a data-backup's source and repository; left out for every
+ 	// other type.
+ 	DataBackup *SchedJobDataBackupReq `json:"dataBackup"`
++	// FunctionInvoke is a function-invoke's request; left out for every other
++	// type.
++	FunctionInvoke *SchedJobFunctionInvokeReq `json:"functionInvoke"`
+ }
+ 
+ func (req *SchedJobBaseReq) ToEntity() *entity.SchedJob {
+@@ -82,6 +85,9 @@ func (req *SchedJobBaseReq) ToEntity() *entity.SchedJob {
+ 	if req.JobType == base.SchedJobTypeDataBackup {
+ 		res.DataBackup = req.DataBackup.ToEntity()
+ 	}
++	if req.JobType == base.SchedJobTypeFunctionInvoke {
++		res.FunctionInvoke = req.FunctionInvoke.ToEntity()
++	}
+ 	return res
+ }
+ 
+@@ -109,6 +115,7 @@ func (req *SchedJobBaseReq) modifyRequest() error {
+ 	if err := req.DataBackup.modifyRequest(); err != nil {
+ 		return hperrors.Wrap(err)
+ 	}
++	req.FunctionInvoke.modifyRequest()
+ 	if req.CommandOutput != nil && req.CommandOutput.PipeToApp != nil {
+ 		req.CommandOutput.PipeToApp.Command.Name = "-"
+ 		req.CommandOutput.PipeToApp.Command.Kind = ""
+@@ -144,6 +151,7 @@ func (req *SchedJobBaseReq) validate(field string) (res []vld.Validator) {
+ 	res = append(res, req.validateSequenceFields(field)...)
+ 	res = append(res, req.validateTriggers(field)...)
+ 	res = append(res, req.validateDataBackupFields(field)...)
++	res = append(res, req.validateFunctionInvokeFields(field)...)
+ 	return res
+ }
+ 
+diff --git a/hivepaas_app/usecase/settings/schedjobuc/schedjobdto/function_invoke.go b/hivepaas_app/usecase/settings/schedjobuc/schedjobdto/function_invoke.go
+new file mode 100644
+index 00000000..fc68af24
+--- /dev/null
++++ b/hivepaas_app/usecase/settings/schedjobuc/schedjobdto/function_invoke.go
+@@ -0,0 +1,129 @@
++package schedjobdto
++
++import (
++	"net/http"
++	"regexp"
++	"slices"
++	"strings"
++
++	vld "github.com/tiendc/go-validator"
++
++	"github.com/hivepaas/hivepaas/hivepaas_app/base"
++	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
++	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
++	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/unit"
++)
++
++const (
++	maxFunctionInvokePathLen = 2048
++	maxFunctionInvokeHeaders = 50
++	// maxFunctionInvokeBody is a test run's: the request travels the same way.
++	maxFunctionInvokeBody = int(unit.MB)
++)
++
++var (
++	functionInvokeMethods = []string{http.MethodGet, http.MethodHead, http.MethodPost, http.MethodPut,
++		http.MethodPatch, http.MethodDelete, http.MethodOptions}
++	// functionInvokePathRegex is a path with its query, without a space or a
++	// control character.
++	functionInvokePathRegex = regexp.MustCompile(`^/[^\s\x00-\x1f\x7f]*$`)
++	// functionInvokeHeaderNameRegex is an HTTP token, in lower case.
++	functionInvokeHeaderNameRegex = regexp.MustCompile("^[a-z0-9!#$%&'*+.^_`|~-]+$")
++)
++
++// SchedJobFunctionInvokeReq is the request a function-invoke job calls its
++// function with: the query in the path, the body as text.
++type SchedJobFunctionInvokeReq struct {
++	Method  string              `json:"method"`
++	Path    string              `json:"path"`
++	Headers map[string][]string `json:"headers"`
++	Body    string              `json:"body"`
++}
++
++func (req *SchedJobFunctionInvokeReq) ToEntity() *entity.SchedJobFunctionInvoke {
++	if req == nil {
++		return nil
++	}
++	res := &entity.SchedJobFunctionInvoke{Method: req.Method, Path: req.Path, Headers: req.Headers, Body: req.Body}
++	if len(res.Headers) == 0 {
++		res.Headers = nil
++	}
++	return res
++}
++
++// modifyRequest spells the request one way: the method in upper case, GET when
++// left out; the path from the root, "/" when left out; header names in lower
++// case.
++func (req *SchedJobFunctionInvokeReq) modifyRequest() {
++	if req == nil {
++		return
++	}
++	req.Method = strings.ToUpper(strings.TrimSpace(req.Method))
++	if req.Method == "" {
++		req.Method = http.MethodGet
++	}
++	req.Path = strings.TrimSpace(req.Path)
++	if !strings.HasPrefix(req.Path, "/") {
++		req.Path = "/" + req.Path
++	}
++	headers := make(map[string][]string, len(req.Headers))
++	for name, values := range req.Headers {
++		name = strings.ToLower(strings.TrimSpace(name))
++		headers[name] = append(headers[name], values...)
++	}
++	req.Headers = headers
++}
++
++func (req *SchedJobFunctionInvokeReq) validate(field string) (res []vld.Validator) {
++	res = append(res, basedto.ValidateCond(req != nil, field)...)
++	if req == nil {
++		return res
++	}
++	field += "."
++	res = append(res, basedto.ValidateCond(slices.Contains(functionInvokeMethods, req.Method), field+"method")...)
++	res = append(res, basedto.ValidateCond(len(req.Path) <= maxFunctionInvokePathLen &&
++		functionInvokePathRegex.MatchString(req.Path), field+"path")...)
++	res = append(res, basedto.ValidateCond(validFunctionInvokeHeaders(req.Headers), field+"headers")...)
++	sendsBody := req.Method != http.MethodGet && req.Method != http.MethodHead
++	res = append(res, basedto.ValidateCond(len(req.Body) <= maxFunctionInvokeBody && (sendsBody || req.Body == ""),
++		field+"body")...)
++	return res
++}
++
++func validFunctionInvokeHeaders(headers map[string][]string) bool {
++	if len(headers) > maxFunctionInvokeHeaders {
++		return false
++	}
++	for name, values := range headers {
++		if !functionInvokeHeaderNameRegex.MatchString(name) {
++			return false
++		}
++		for _, value := range values {
++			if strings.ContainsAny(value, "\r\n\x00") {
++				return false
++			}
++		}
++	}
++	return true
++}
++
++// validateFunctionInvokeFields is what a job's type says about its request: a
++// function-invoke has one, runs no command of its own and names its app; any
++// other type has none.
++func (req *SchedJobBaseReq) validateFunctionInvokeFields(field string) (res []vld.Validator) {
++	if req.JobType != base.SchedJobTypeFunctionInvoke {
++		return basedto.ValidateCond(req.FunctionInvoke == nil, field+"functionInvoke")
++	}
++	res = append(res, req.FunctionInvoke.validate(field+"functionInvoke")...)
++	res = append(res, basedto.ValidateCond(req.Command == nil, field+"command")...)
++	res = append(res, basedto.ValidateCond(req.CommandOutput == nil, field+"commandOutput")...)
++	res = append(res, basedto.ValidateObjectIDReq(&req.App, true, field+"app")...)
++	return res
++}
++
++type SchedJobFunctionInvokeResp struct {
++	Method  string              `json:"method"`
++	Path    string              `json:"path"`
++	Headers map[string][]string `json:"headers,omitempty"`
++	Body    string              `json:"body,omitempty"`
++}
+diff --git a/hivepaas_app/usecase/settings/schedjobuc/schedjobdto/get.go b/hivepaas_app/usecase/settings/schedjobuc/schedjobdto/get.go
+index 67a0b4bb..acd9e37f 100644
+--- a/hivepaas_app/usecase/settings/schedjobuc/schedjobdto/get.go
++++ b/hivepaas_app/usecase/settings/schedjobuc/schedjobdto/get.go
+@@ -56,6 +56,7 @@ type SchedJobResp struct {
+ 	Sequence           *SchedJobSequenceResp                   `json:"sequence,omitempty" copy:"-"`
+ 	Triggers           []*SchedJobTriggerResp                  `json:"triggers,omitempty" copy:"-"`
+ 	DataBackup         *SchedJobDataBackupResp                 `json:"dataBackup,omitempty" copy:"-"`
++	FunctionInvoke     *SchedJobFunctionInvokeResp             `json:"functionInvoke,omitempty"`
+ 
+ 	// Calculated fields
+ 	NextRuns []time.Time `json:"nextRuns,omitempty"`
+diff --git a/hivepaas_app/usecase/settings/schedjobuc/sequence.go b/hivepaas_app/usecase/settings/schedjobuc/sequence.go
+index 467a18ee..6e24aab5 100644
+--- a/hivepaas_app/usecase/settings/schedjobuc/sequence.go
++++ b/hivepaas_app/usecase/settings/schedjobuc/sequence.go
+@@ -21,6 +21,8 @@ func checkJobTypeInScope(scopeType base.ObjectScopeType, jobType base.SchedJobTy
+ 	switch {
+ 	case jobType == base.SchedJobTypeDataBackup && scopeType != base.ObjectScopeApp:
+ 		return hperrors.NewArgumentInvalid("jobType").WithExtraDetail("a data backup belongs to an app")
++	case jobType == base.SchedJobTypeFunctionInvoke && scopeType != base.ObjectScopeApp:
++		return hperrors.NewArgumentInvalid("jobType").WithExtraDetail("a function's call belongs to the function")
+ 	case isSequence && scopeType != base.ObjectScopeApp && scopeType != base.ObjectScopeProjectEnv:
+ 		return hperrors.NewArgumentInvalid("jobType").
+ 			WithExtraDetail("a job sequence belongs to an app or a project env")
+diff --git a/hivepaas_app/usecase/settings/schedjobuc/update.go b/hivepaas_app/usecase/settings/schedjobuc/update.go
+index 868614b8..07a924e2 100644
+--- a/hivepaas_app/usecase/settings/schedjobuc/update.go
++++ b/hivepaas_app/usecase/settings/schedjobuc/update.go
+@@ -52,6 +52,9 @@ func (uc *UC) UpdateSchedJob(
+ 			if err := uc.checkDataBackup(ctx, db, req.Scope, newJob); err != nil {
+ 				return hperrors.Wrap(err)
+ 			}
++			if err := uc.checkFunctionInvoke(ctx, db, req.Scope, newJob); err != nil {
++				return hperrors.Wrap(err)
++			}
+ 			if err := uc.checkPermissionPipeToApp(ctx, db, auth, newJob); err != nil {
+ 				return hperrors.Wrap(err)
+ 			}

@@ -1,0 +1,1142 @@
+diff --git a/src/application/modules/projects/api/services/project-apps-services/scheduled-jobs/app-scheduled-jobs.api.contracts.ts b/src/application/modules/projects/api/services/project-apps-services/scheduled-jobs/app-scheduled-jobs.api.contracts.ts
+index 1e0a765e..b4aebea3 100644
+--- a/src/application/modules/projects/api/services/project-apps-services/scheduled-jobs/app-scheduled-jobs.api.contracts.ts
++++ b/src/application/modules/projects/api/services/project-apps-services/scheduled-jobs/app-scheduled-jobs.api.contracts.ts
+@@ -118,11 +118,19 @@ export type AppScheduledJobs_DataBackup_Payload = {
+     tags?: Record<string, string>;
+ };
+ 
++/** A function's call: the request it sends, its query in the path. */
++export type AppScheduledJobs_FunctionInvoke_Payload = {
++    method: string;
++    path: string;
++    headers?: Record<string, string[]>;
++    body?: string;
++};
++
+ /**
+  * A job to create or update. A container command has `app` and `command`; a job
+  * sequence has `sequence` and neither of those; a data backup has `app` and
+- * `dataBackup`. `schedule` is null for a job run
+- * by hand or by a sequence.
++ * `dataBackup`; a function's call has `app` and `functionInvoke`. `schedule` is
++ * null for a job run by hand or by a sequence.
+  */
+ export type AppScheduledJobs_Upsert_Payload = {
+     inheritable: boolean;
+@@ -143,6 +151,7 @@ export type AppScheduledJobs_Upsert_Payload = {
+     commandOutput?: AppScheduledJobs_CommandOutput_Payload;
+     sequence?: AppScheduledJobs_Sequence_Payload;
+     dataBackup?: AppScheduledJobs_DataBackup_Payload;
++    functionInvoke?: AppScheduledJobs_FunctionInvoke_Payload;
+     triggers?: AppScheduledJobs_Trigger_Payload[];
+     notification: AppScheduledJobs_Notification_Payload;
+ };
+diff --git a/src/application/modules/projects/api/services/project-apps-services/scheduled-jobs/app-scheduled-jobs.api.validator.ts b/src/application/modules/projects/api/services/project-apps-services/scheduled-jobs/app-scheduled-jobs.api.validator.ts
+index 86b28205..ae85c668 100644
+--- a/src/application/modules/projects/api/services/project-apps-services/scheduled-jobs/app-scheduled-jobs.api.validator.ts
++++ b/src/application/modules/projects/api/services/project-apps-services/scheduled-jobs/app-scheduled-jobs.api.validator.ts
+@@ -226,6 +226,19 @@ const DataBackupSchema = z
+     .nullish()
+     .transform(value => value ?? null);
+ 
++const FunctionInvokeSchema = z
++    .object({
++        method: z.string(),
++        path: z.string(),
++        headers: z
++            .record(z.array(z.string()))
++            .nullish()
++            .transform(value => value ?? {}),
++        body: z.string().optional().default(""),
++    })
++    .nullish()
++    .transform(value => value ?? null);
++
+ const TriggerSchema = z.object({
+     event: z.nativeEnum(ESchedJobTriggerEvent),
+     apps: z
+@@ -264,6 +277,7 @@ export const AppScheduledJobSchema = z.object({
+     notification: NotificationSchema,
+     sequence: SequenceSchema,
+     dataBackup: DataBackupSchema,
++    functionInvoke: FunctionInvokeSchema,
+     // An event the dashboard does not know yet is left out, not a failed list.
+     triggers: z
+         .array(z.unknown())
+diff --git a/src/application/modules/projects/domain/apps/scheduled-job/app-scheduled-job.entity.ts b/src/application/modules/projects/domain/apps/scheduled-job/app-scheduled-job.entity.ts
+index 271329a5..4359206c 100644
+--- a/src/application/modules/projects/domain/apps/scheduled-job/app-scheduled-job.entity.ts
++++ b/src/application/modules/projects/domain/apps/scheduled-job/app-scheduled-job.entity.ts
+@@ -139,6 +139,15 @@ export interface AppScheduledJobDataBackup {
+     tags: Record<string, string>;
+ }
+ 
++/** The request a function's call sends: the query in the path, the body as text. */
++export interface AppScheduledJobFunctionInvoke {
++    method: string;
++    path: string;
++    /** By name, in lower case. */
++    headers: Record<string, string[]>;
++    body: string;
++}
++
+ export interface AppScheduledJob {
+     id: string;
+     type: string;
+@@ -170,6 +179,7 @@ export interface AppScheduledJob {
+     command: AppScheduledJobCommand | null;
+     commandOutput?: AppScheduledJobCommandOutput | null;
+     dataBackup: AppScheduledJobDataBackup | null;
++    functionInvoke: AppScheduledJobFunctionInvoke | null;
+     notification: AppScheduledJobNotification | null;
+     nextRuns: Date[];
+ }
+diff --git a/src/application/modules/projects/module-shared/components/function-invoke-form/function-invoke.form-mappers.ts b/src/application/modules/projects/module-shared/components/function-invoke-form/function-invoke.form-mappers.ts
+new file mode 100644
+index 00000000..1d9aa151
+--- /dev/null
++++ b/src/application/modules/projects/module-shared/components/function-invoke-form/function-invoke.form-mappers.ts
+@@ -0,0 +1,112 @@
++import type { AppScheduledJobs_Upsert_Payload } from "~/projects/api/services";
++import type { AppScheduledJob } from "~/projects/domain";
++import {
++    EAppScheduledJobScheduleMode,
++    EAppScheduledJobTaskPriority,
++    EAppScheduledJobType,
++} from "~/projects/module-shared/enums";
++import { headerLinesOf, parseHeaderLines } from "~/projects/module-shared/utils";
++
++import {
++    createDefaultJobScheduleFormValues,
++    mapJobScheduleFormValuesToPayload,
++    mapJobScheduleToFormValues,
++} from "../job-schedule-fields";
++
++import {
++    FUNCTION_INVOKE_METHODS,
++    type FunctionInvokeFormInput,
++    type FunctionInvokeFormOutput,
++    methodSendsNoBody,
++} from "./function-invoke.form.schema";
++
++/** A new call is a GET of the root, run by hand until given a schedule, and can be canceled. */
++export function createEmptyFunctionInvokeFormDefaults(): FunctionInvokeFormInput {
++    return {
++        name: "",
++        ...createDefaultJobScheduleFormValues(EAppScheduledJobScheduleMode.None),
++        method: "GET",
++        path: "/",
++        headers: "",
++        body: "",
++        timeout: "",
++        maxRetry: 0,
++        retryDelay: "",
++        priority: EAppScheduledJobTaskPriority.Default,
++        controlEnabled: true,
++        notification: {
++            successUseDefault: true,
++            success: undefined,
++            failureUseDefault: true,
++            failure: undefined,
++        },
++    };
++}
++
++/** A method the form does not offer reads as GET. */
++function knownMethod(method: string | undefined): FunctionInvokeFormInput["method"] {
++    return FUNCTION_INVOKE_METHODS.find(item => item === method) ?? "GET";
++}
++
++export function mapFunctionInvokeToFormInput(job: AppScheduledJob): FunctionInvokeFormInput {
++    const invoke = job.functionInvoke;
++
++    return {
++        name: job.name,
++        ...mapJobScheduleToFormValues(job.schedule),
++        method: knownMethod(invoke?.method),
++        path: invoke?.path ?? "/",
++        headers: headerLinesOf(invoke?.headers ?? {}),
++        body: invoke?.body ?? "",
++        timeout: job.timeout,
++        maxRetry: job.maxRetry,
++        retryDelay: job.retryDelay,
++        priority: job.priority,
++        controlEnabled: !job.controlDisabled,
++        notification: {
++            successUseDefault: job.notification?.successUseDefault ?? true,
++            success: job.notification?.success,
++            failureUseDefault: job.notification?.failureUseDefault ?? true,
++            failure: job.notification?.failure,
++        },
++    };
++}
++
++/** A function's call is its app's: the function it calls. A method without a body sends none. */
++export function mapFunctionInvokeFormToPayload(
++    values: FunctionInvokeFormOutput,
++    appId: string,
++): AppScheduledJobs_Upsert_Payload {
++    const headers = parseHeaderLines(values.headers);
++
++    return {
++        inheritable: false,
++        default: false,
++        name: values.name,
++        jobType: EAppScheduledJobType.FunctionInvoke,
++        schedule: mapJobScheduleFormValuesToPayload(values),
++        app: { id: appId },
++        priority: values.priority,
++        maxRetry: values.maxRetry ?? 0,
++        ...(values.retryDelay ? { retryDelay: values.retryDelay } : {}),
++        retryBackoff: false,
++        ...(values.timeout ? { timeout: values.timeout } : {}),
++        controlDisabled: !values.controlEnabled,
++        functionInvoke: {
++            method: values.method,
++            path: values.path || "/",
++            ...(Object.keys(headers).length > 0 ? { headers } : {}),
++            ...(!methodSendsNoBody(values.method) && values.body ? { body: values.body } : {}),
++        },
++        notification: {
++            successUseDefault: values.notification.successUseDefault,
++            ...(!values.notification.successUseDefault && values.notification.success
++                ? { success: values.notification.success }
++                : {}),
++            failureUseDefault: values.notification.failureUseDefault,
++            ...(!values.notification.failureUseDefault && values.notification.failure
++                ? { failure: values.notification.failure }
++                : {}),
++        },
++    };
++}
+diff --git a/src/application/modules/projects/module-shared/components/function-invoke-form/function-invoke.form.com.tsx b/src/application/modules/projects/module-shared/components/function-invoke-form/function-invoke.form.com.tsx
+new file mode 100644
+index 00000000..caa9a737
+--- /dev/null
++++ b/src/application/modules/projects/module-shared/components/function-invoke-form/function-invoke.form.com.tsx
+@@ -0,0 +1,380 @@
++import { useMemo } from "react";
++
++import { zodResolver } from "@hookform/resolvers/zod";
++import { FormProvider, useController, useForm, useFormState } from "react-hook-form";
++import { useUpdateEffect } from "react-use";
++import type { AppScheduledJob } from "~/projects/domain";
++import { PROJECT_FORM_CONTROL_MAX_WIDTH_CLASS } from "~/projects/module-shared/constants";
++import { useProjectNotificationSettingsSources } from "~/projects/module-shared/hooks";
++
++import { ContentBlock, FormActionBar, InfoBlock, LabelWithInfo } from "@application/shared/components";
++import { NotificationSettings } from "@application/shared/form";
++
++import { Button, Checkbox, Field, FieldError, FieldGroup, Input } from "@/components/ui";
++import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
++import { Textarea } from "@/components/ui/textarea";
++
++import { JobScheduleFields, PriorityTabsField } from "../job-schedule-fields";
++
++import { createEmptyFunctionInvokeFormDefaults, mapFunctionInvokeToFormInput } from "./function-invoke.form-mappers";
++import {
++    FUNCTION_INVOKE_METHODS,
++    type FunctionInvokeFormInput,
++    type FunctionInvokeFormOutput,
++    FunctionInvokeFormSchema,
++    methodSendsNoBody,
++} from "./function-invoke.form.schema";
++
++const TITLE_WIDTH = 220;
++
++/**
++ * A function's call on a schedule: the request it sends. The runtime's invoke
++ * answers it in a running instance of the function; a status of 400 or more
++ * fails the run.
++ */
++export function FunctionInvokeForm({
++    projectId,
++    env,
++    isPending,
++    onSubmit,
++    initialValues,
++    onHasChanges,
++    readOnly = false,
++    stickyActions = false,
++    onClose,
++}: Props) {
++    const defaultValues = useMemo(
++        () => (initialValues ? mapFunctionInvokeToFormInput(initialValues) : createEmptyFunctionInvokeFormDefaults()),
++        [initialValues],
++    );
++
++    const methods = useForm<FunctionInvokeFormInput, unknown, FunctionInvokeFormOutput>({
++        defaultValues,
++        resolver: zodResolver(FunctionInvokeFormSchema),
++        mode: "onSubmit",
++    });
++    const {
++        control,
++        handleSubmit,
++        formState: { errors },
++    } = methods;
++    const { isDirty } = useFormState({ control });
++
++    useUpdateEffect(() => {
++        methods.reset(defaultValues);
++    }, [defaultValues]);
++
++    useUpdateEffect(() => {
++        onHasChanges?.(readOnly ? false : isDirty);
++    }, [isDirty, readOnly]);
++
++    const { sources: notificationSources, manageLink: notificationManageLink } = useProjectNotificationSettingsSources(
++        projectId,
++        env,
++    );
++
++    const { field: name, fieldState: nameState } = useController({ control, name: "name" });
++    const { field: method } = useController({ control, name: "method" });
++    const { field: path, fieldState: pathState } = useController({ control, name: "path" });
++    const { field: headers, fieldState: headersState } = useController({ control, name: "headers" });
++    const { field: body, fieldState: bodyState } = useController({ control, name: "body" });
++    const { field: timeout, fieldState: timeoutState } = useController({ control, name: "timeout" });
++    const { field: maxRetry, fieldState: maxRetryState } = useController({ control, name: "maxRetry" });
++    const { field: retryDelay, fieldState: retryDelayState } = useController({ control, name: "retryDelay" });
++    const { field: priority } = useController({ control, name: "priority" });
++    const { field: controlEnabled } = useController({ control, name: "controlEnabled" });
++
++    return (
++        <FormProvider {...methods}>
++            <form
++                onSubmit={event => {
++                    event.preventDefault();
++                    if (readOnly) {
++                        return;
++                    }
++
++                    void handleSubmit(values => {
++                        onSubmit(values);
++                    })(event);
++                }}
++                className="min-h-0 flex flex-1 flex-col"
++            >
++                <fieldset className="contents">
++                    <FieldGroup className="gap-6">
++                        <InfoBlock
++                            titleWidth={TITLE_WIDTH}
++                            title={
++                                <LabelWithInfo
++                                    label="Name"
++                                    isRequired
++                                />
++                            }
++                        >
++                            <Field>
++                                <Input
++                                    {...name}
++                                    placeholder="nightly report"
++                                    aria-invalid={nameState.invalid}
++                                    className={PROJECT_FORM_CONTROL_MAX_WIDTH_CLASS}
++                                    disabled={readOnly}
++                                />
++                                <FieldError errors={[errors.name]} />
++                            </Field>
++                        </InfoBlock>
++
++                        <ContentBlock label="Request">
++                            <div className="flex flex-col gap-6">
++                                <p className="text-sm text-muted-foreground">
++                                    The function answers it in one of its running instances. A status of 400 or more
++                                    fails the run; the response is the run&apos;s output.
++                                </p>
++
++                                <InfoBlock
++                                    title="Method"
++                                    titleWidth={TITLE_WIDTH}
++                                >
++                                    <Select
++                                        value={method.value}
++                                        onValueChange={method.onChange}
++                                        disabled={readOnly}
++                                    >
++                                        <SelectTrigger className="w-40">
++                                            <SelectValue />
++                                        </SelectTrigger>
++                                        <SelectContent>
++                                            {FUNCTION_INVOKE_METHODS.map(item => (
++                                                <SelectItem
++                                                    key={item}
++                                                    value={item}
++                                                >
++                                                    {item}
++                                                </SelectItem>
++                                            ))}
++                                        </SelectContent>
++                                    </Select>
++                                </InfoBlock>
++
++                                <InfoBlock
++                                    title={
++                                        <LabelWithInfo
++                                            label="Path"
++                                            content="The path the handler sees, with its query."
++                                        />
++                                    }
++                                    titleWidth={TITLE_WIDTH}
++                                >
++                                    <Field>
++                                        <Input
++                                            {...path}
++                                            placeholder="/report?day=today"
++                                            className={`${PROJECT_FORM_CONTROL_MAX_WIDTH_CLASS} font-mono`}
++                                            aria-invalid={pathState.invalid}
++                                            disabled={readOnly}
++                                        />
++                                        <FieldError errors={[errors.path]} />
++                                    </Field>
++                                </InfoBlock>
++
++                                <InfoBlock
++                                    title={
++                                        <LabelWithInfo
++                                            label="Headers"
++                                            content="One per line, as name: value."
++                                        />
++                                    }
++                                    titleWidth={TITLE_WIDTH}
++                                >
++                                    <Field>
++                                        <Textarea
++                                            {...headers}
++                                            placeholder="content-type: application/json"
++                                            rows={3}
++                                            className={`${PROJECT_FORM_CONTROL_MAX_WIDTH_CLASS} font-mono text-xs`}
++                                            aria-invalid={headersState.invalid}
++                                            disabled={readOnly}
++                                        />
++                                        <FieldError errors={[errors.headers]} />
++                                    </Field>
++                                </InfoBlock>
++
++                                {!methodSendsNoBody(method.value) && (
++                                    <InfoBlock
++                                        title="Body"
++                                        titleWidth={TITLE_WIDTH}
++                                    >
++                                        <Field>
++                                            <Textarea
++                                                {...body}
++                                                placeholder='{"day":"today"}'
++                                                rows={6}
++                                                className={`${PROJECT_FORM_CONTROL_MAX_WIDTH_CLASS} font-mono text-xs`}
++                                                aria-invalid={bodyState.invalid}
++                                                disabled={readOnly}
++                                            />
++                                            <FieldError errors={[errors.body]} />
++                                        </Field>
++                                    </InfoBlock>
++                                )}
++                            </div>
++                        </ContentBlock>
++
++                        <ContentBlock label="Scheduling">
++                            <div className="flex flex-col gap-6">
++                                <InfoBlock
++                                    title="Priority"
++                                    titleWidth={TITLE_WIDTH}
++                                >
++                                    <PriorityTabsField
++                                        value={priority.value}
++                                        onChange={priority.onChange}
++                                        readOnly={readOnly}
++                                    />
++                                </InfoBlock>
++
++                                <JobScheduleFields
++                                    titleWidth={TITLE_WIDTH}
++                                    nextRuns={initialValues?.nextRuns ?? []}
++                                    readOnly={readOnly}
++                                />
++
++                                <InfoBlock
++                                    title={
++                                        <LabelWithInfo
++                                            label="Timeout"
++                                            content="The run's, beside the function's own timeout of a call."
++                                        />
++                                    }
++                                    titleWidth={TITLE_WIDTH}
++                                >
++                                    <Field>
++                                        <Input
++                                            {...timeout}
++                                            placeholder="5m, 1h30m"
++                                            className="max-w-[400px]"
++                                            aria-invalid={timeoutState.invalid}
++                                            disabled={readOnly}
++                                        />
++                                        <FieldError errors={[errors.timeout]} />
++                                    </Field>
++                                </InfoBlock>
++
++                                <InfoBlock
++                                    title="Retry"
++                                    titleWidth={TITLE_WIDTH}
++                                >
++                                    <div className="flex flex-wrap items-start gap-4">
++                                        <Field className="w-auto">
++                                            <Input
++                                                ref={maxRetry.ref}
++                                                name={maxRetry.name}
++                                                type="number"
++                                                inputMode="numeric"
++                                                min={0}
++                                                value={maxRetry.value ?? ""}
++                                                onBlur={maxRetry.onBlur}
++                                                onChange={event => {
++                                                    const next = Number(event.target.value);
++                                                    maxRetry.onChange(
++                                                        event.target.value === "" || !Number.isFinite(next)
++                                                            ? undefined
++                                                            : next,
++                                                    );
++                                                }}
++                                                placeholder="max, 0"
++                                                className="w-24"
++                                                aria-invalid={maxRetryState.invalid}
++                                                disabled={readOnly}
++                                            />
++                                            <FieldError errors={[errors.maxRetry]} />
++                                        </Field>
++                                        <Field className="w-auto">
++                                            <Input
++                                                {...retryDelay}
++                                                placeholder="delay, 1m"
++                                                className="w-24"
++                                                aria-invalid={retryDelayState.invalid}
++                                                disabled={readOnly}
++                                            />
++                                            <FieldError errors={[errors.retryDelay]} />
++                                        </Field>
++                                    </div>
++                                </InfoBlock>
++
++                                <InfoBlock
++                                    title="Allow Canceling"
++                                    titleWidth={TITLE_WIDTH}
++                                >
++                                    <Checkbox
++                                        checked={controlEnabled.value}
++                                        onCheckedChange={checked => {
++                                            controlEnabled.onChange(checked === true);
++                                        }}
++                                        disabled={readOnly}
++                                    />
++                                </InfoBlock>
++                            </div>
++                        </ContentBlock>
++
++                        <ContentBlock label="Notification Configuration">
++                            <NotificationSettings<FunctionInvokeFormInput>
++                                names={{
++                                    successUseDefault: "notification.successUseDefault",
++                                    success: "notification.success",
++                                    failureUseDefault: "notification.failureUseDefault",
++                                    failure: "notification.failure",
++                                }}
++                                sources={notificationSources}
++                                manageLink={notificationManageLink}
++                                readOnly={readOnly}
++                                titleWidth={TITLE_WIDTH}
++                            />
++                        </ContentBlock>
++                    </FieldGroup>
++
++                    <FormActionBar sticky={stickyActions}>
++                        {readOnly ? (
++                            <Button
++                                type="button"
++                                onClick={onClose}
++                                className="min-w-[100px]"
++                            >
++                                Close
++                            </Button>
++                        ) : (
++                            <>
++                                <Button
++                                    type="button"
++                                    variant="outline"
++                                    className="min-w-[100px]"
++                                    disabled={isPending}
++                                    onClick={onClose}
++                                >
++                                    Cancel
++                                </Button>
++                                <Button
++                                    type="submit"
++                                    isLoading={isPending}
++                                    className="min-w-[100px]"
++                                >
++                                    Save
++                                </Button>
++                            </>
++                        )}
++                    </FormActionBar>
++                </fieldset>
++            </form>
++        </FormProvider>
++    );
++}
++
++interface Props {
++    projectId: string;
++    env: string;
++    isPending: boolean;
++    onSubmit: (values: FunctionInvokeFormOutput) => void;
++    initialValues?: AppScheduledJob;
++    onHasChanges?: (dirty: boolean) => void;
++    readOnly?: boolean;
++    stickyActions?: boolean;
++    onClose?: () => void;
++}
+diff --git a/src/application/modules/projects/module-shared/components/function-invoke-form/function-invoke.form.schema.ts b/src/application/modules/projects/module-shared/components/function-invoke-form/function-invoke.form.schema.ts
+new file mode 100644
+index 00000000..2e055de5
+--- /dev/null
++++ b/src/application/modules/projects/module-shared/components/function-invoke-form/function-invoke.form.schema.ts
+@@ -0,0 +1,99 @@
++import { z } from "zod";
++import { EAppScheduledJobScheduleMode, EAppScheduledJobTaskPriority } from "~/projects/module-shared/enums";
++
++/** The methods a function's call sends, as the server takes them. */
++export const FUNCTION_INVOKE_METHODS = ["GET", "POST", "PUT", "PATCH", "DELETE", "HEAD", "OPTIONS"] as const;
++
++/** A method that sends no body. */
++export function methodSendsNoBody(method: string): boolean {
++    return method === "GET" || method === "HEAD";
++}
++
++/** The server's limits: a test run's body, a path with its query, the headers. */
++const BODY_MAX_BYTES = 1024 * 1024;
++const PATH_MAX_LENGTH = 2048;
++const HEADERS_MAX = 50;
++/** An HTTP header's name: a token. */
++const HEADER_NAME_PATTERN = /^[A-Za-z0-9!#$%&'*+.^_`|~-]+$/;
++
++const NamedRefSchema = z.object({
++    id: z.string(),
++    name: z.string(),
++});
++
++/** A path with its query, without a space or a control character. */
++function isPlainPath(path: string): boolean {
++    if (/\s/.test(path)) {
++        return false;
++    }
++    for (let i = 0; i < path.length; i++) {
++        const code = path.charCodeAt(i);
++        if (code < 0x20 || code === 0x7f) {
++            return false;
++        }
++    }
++    return true;
++}
++
++/** Why header lines cannot be sent, or null when they can. */
++export function headerLinesProblem(headerLines: string): string | null {
++    const lines = headerLines.split("\n").filter(line => line.trim() !== "");
++    const names = new Set<string>();
++    for (const line of lines) {
++        const separator = line.indexOf(":");
++        const name = separator > 0 ? line.slice(0, separator).trim() : "";
++        if (!HEADER_NAME_PATTERN.test(name)) {
++            return `"${line.trim()}" is not "name: value"`;
++        }
++        names.add(name.toLowerCase());
++    }
++    if (names.size > HEADERS_MAX) {
++        return `At most ${HEADERS_MAX} headers`;
++    }
++    return null;
++}
++
++export const FunctionInvokeFormSchema = z
++    .object({
++        name: z.string().trim().min(1, "Name is required"),
++        scheduleMode: z.nativeEnum(EAppScheduledJobScheduleMode),
++        scheduleInterval: z.string().trim(),
++        scheduleCronExpr: z.string().trim(),
++        scheduleFrom: z.date().nullable(),
++        scheduleTo: z.date().nullable(),
++        method: z.enum(FUNCTION_INVOKE_METHODS),
++        path: z.string().trim(),
++        /** One per line, as "name: value". */
++        headers: z.string(),
++        body: z.string(),
++        timeout: z.string().trim(),
++        maxRetry: z.number().int().min(0, "Max retry must be greater than or equal to 0").optional(),
++        retryDelay: z.string().trim(),
++        priority: z.nativeEnum(EAppScheduledJobTaskPriority),
++        controlEnabled: z.boolean(),
++        notification: z.object({
++            successUseDefault: z.boolean(),
++            success: NamedRefSchema.optional(),
++            failureUseDefault: z.boolean(),
++            failure: NamedRefSchema.optional(),
++        }),
++    })
++    .superRefine((value, ctx) => {
++        const issue = (message: string, path: string[]) => {
++            ctx.addIssue({ code: z.ZodIssueCode.custom, message, path });
++        };
++
++        if (value.path.length > PATH_MAX_LENGTH || !isPlainPath(value.path)) {
++            issue(`A path with its query, without spaces, up to ${PATH_MAX_LENGTH} characters`, ["path"]);
++        }
++        const headersProblem = headerLinesProblem(value.headers);
++        if (headersProblem) {
++            issue(headersProblem, ["headers"]);
++        }
++        if (!methodSendsNoBody(value.method) && new TextEncoder().encode(value.body).length > BODY_MAX_BYTES) {
++            issue("At most 1 MB", ["body"]);
++        }
++    });
++
++export type FunctionInvokeFormInput = z.input<typeof FunctionInvokeFormSchema>;
++export type FunctionInvokeFormOutput = z.output<typeof FunctionInvokeFormSchema>;
+diff --git a/src/application/modules/projects/module-shared/components/function-invoke-form/index.ts b/src/application/modules/projects/module-shared/components/function-invoke-form/index.ts
+new file mode 100644
+index 00000000..5aa13735
+--- /dev/null
++++ b/src/application/modules/projects/module-shared/components/function-invoke-form/index.ts
+@@ -0,0 +1,3 @@
++export * from "./function-invoke.form.com";
++export * from "./function-invoke.form-mappers";
++export * from "./function-invoke.form.schema";
+diff --git a/src/application/modules/projects/module-shared/components/index.ts b/src/application/modules/projects/module-shared/components/index.ts
+index 6088edb1..0ce595fc 100644
+--- a/src/application/modules/projects/module-shared/components/index.ts
++++ b/src/application/modules/projects/module-shared/components/index.ts
+@@ -26,6 +26,7 @@ export * from "./job-schedule-fields";
+ export * from "./job-sequence-form";
+ export * from "./job-triggers-field";
+ export * from "./data-backup-form";
++export * from "./function-invoke-form";
+ export * from "./function-code-editor";
+ export * from "./git-credential-combobox";
+ export * from "./push-to-registry-combobox";
+diff --git a/src/application/modules/projects/module-shared/definitions/tables/app-scheduled-jobs/building-blocks/name-cell.com.tsx b/src/application/modules/projects/module-shared/definitions/tables/app-scheduled-jobs/building-blocks/name-cell.com.tsx
+index 1707545d..9cf9cb67 100644
+--- a/src/application/modules/projects/module-shared/definitions/tables/app-scheduled-jobs/building-blocks/name-cell.com.tsx
++++ b/src/application/modules/projects/module-shared/definitions/tables/app-scheduled-jobs/building-blocks/name-cell.com.tsx
+@@ -7,7 +7,10 @@ import { EAppScheduledJobType } from "~/projects/module-shared/enums";
+ 
+ import { ESettingStatus } from "@application/shared/enums";
+ 
+-/** A job's name; a sequence is tagged with its step count, a data backup with its repository. */
++/**
++ * A job's name; a sequence is tagged with its step count, a data backup with its
++ * repository, a function's call with its request.
++ */
+ function View({ job }: Props) {
+     const steps = job.sequence?.steps.length ?? 0;
+ 
+@@ -27,6 +30,14 @@ function View({ job }: Props) {
+                         : job.dataBackup.targetRepository.name}
+                 </Badge>
+             )}
++            {job.jobType === EAppScheduledJobType.FunctionInvoke && job.functionInvoke && (
++                <Badge
++                    variant="secondary"
++                    className="font-mono"
++                >
++                    Call · {job.functionInvoke.method} {job.functionInvoke.path}
++                </Badge>
++            )}
+             {job.triggers.map(trigger => (
+                 <Badge
+                     key={`${trigger.event}-${trigger.apps.map(app => app.id).join(",")}`}
+diff --git a/src/application/modules/projects/module-shared/enums/e.app-scheduled-job-type.ts b/src/application/modules/projects/module-shared/enums/e.app-scheduled-job-type.ts
+index 3f3f3504..a519a373 100644
+--- a/src/application/modules/projects/module-shared/enums/e.app-scheduled-job-type.ts
++++ b/src/application/modules/projects/module-shared/enums/e.app-scheduled-job-type.ts
+@@ -6,6 +6,8 @@ export const EAppScheduledJobType = {
+     BackupRepoCleanup: "backup-repo-cleanup",
+     JobSequence: "job-sequence",
+     DataBackup: "data-backup",
++    /** Calls a function once with a request: its runtime's invoke, in a running task of the function. */
++    FunctionInvoke: "function-invoke",
+ } as const;
+ 
+ export type EAppScheduledJobType = (typeof EAppScheduledJobType)[keyof typeof EAppScheduledJobType];
+diff --git a/src/application/modules/projects/module-shared/utils/function-test.utils.ts b/src/application/modules/projects/module-shared/utils/function-test.utils.ts
+index 3eecfe7c..a5714c6d 100644
+--- a/src/application/modules/projects/module-shared/utils/function-test.utils.ts
++++ b/src/application/modules/projects/module-shared/utils/function-test.utils.ts
+@@ -20,6 +20,22 @@ export function buildTestRequest(
+         (query[name] ??= []).push(value);
+     }
+ 
++    const headers = parseHeaderLines(headerLines);
++
++    return {
++        method,
++        path: rawPath.startsWith("/") ? rawPath : `/${rawPath}`,
++        query,
++        headers,
++        body: method === "GET" || method === "HEAD" ? "" : body,
++    };
++}
++
++/**
++ * Headers written one per line as "name: value", by name in lower case. A line
++ * without a name is left out.
++ */
++export function parseHeaderLines(headerLines: string): Record<string, string[]> {
+     const headers: Record<string, string[]> = {};
+     for (const line of headerLines.split("\n")) {
+         const separator = line.indexOf(":");
+@@ -31,14 +47,14 @@ export function buildTestRequest(
+             (headers[name] ??= []).push(line.slice(separator + 1).trim());
+         }
+     }
++    return headers;
++}
+ 
+-    return {
+-        method,
+-        path: rawPath.startsWith("/") ? rawPath : `/${rawPath}`,
+-        query,
+-        headers,
+-        body: method === "GET" || method === "HEAD" ? "" : body,
+-    };
++/** Headers as lines of "name: value", as parseHeaderLines reads them back. */
++export function headerLinesOf(headers: Record<string, string[]>): string {
++    return Object.entries(headers)
++        .flatMap(([name, values]) => values.map(value => `${name}: ${value}`))
++        .join("\n");
+ }
+ 
+ /**
+diff --git a/src/application/modules/projects/projects.module.ts b/src/application/modules/projects/projects.module.ts
+index 46db31b7..5408e9dc 100644
+--- a/src/application/modules/projects/projects.module.ts
++++ b/src/application/modules/projects/projects.module.ts
+@@ -109,6 +109,7 @@ export {
+     AppScheduledJobCreateRoute,
+     AppJobSequenceCreateRoute,
+     AppDataBackupCreateRoute,
++    AppFunctionInvokeCreateRoute,
+     AppScheduledJobEditRoute,
+     AppFeatureSettingsRoute,
+     AppCloneSettingsRoute,
+diff --git a/src/application/modules/projects/projects.router.tsx b/src/application/modules/projects/projects.router.tsx
+index e9fa0e92..eccf6d50 100644
+--- a/src/application/modules/projects/projects.router.tsx
++++ b/src/application/modules/projects/projects.router.tsx
+@@ -1871,6 +1871,15 @@ export const projectsRouter: RouteObject = {
+                                 return { Component: AppDataBackupCreateRoute };
+                             },
+                         },
++                        {
++                            path: ROUTE.projects.single.apps.single.configuration.scheduledJobs.createFunctionInvoke
++                                .$pattern,
++                            lazy: async () => {
++                                const { AppFunctionInvokeCreateRoute } = await getLazyComponents();
++
++                                return { Component: AppFunctionInvokeCreateRoute };
++                            },
++                        },
+                         {
+                             path: ROUTE.projects.single.apps.single.configuration.scheduledJobs.edit.$pattern,
+                             lazy: async () => {
+diff --git a/src/application/modules/projects/routes/index.ts b/src/application/modules/projects/routes/index.ts
+index 8aaa5b7b..277961ed 100644
+--- a/src/application/modules/projects/routes/index.ts
++++ b/src/application/modules/projects/routes/index.ts
+@@ -106,6 +106,7 @@ export {
+     AppScheduledJobCreateRoute,
+     AppJobSequenceCreateRoute,
+     AppDataBackupCreateRoute,
++    AppFunctionInvokeCreateRoute,
+     AppScheduledJobEditRoute,
+     AppFeatureSettingsRoute,
+     AppCloneSettingsRoute,
+diff --git a/src/application/modules/projects/routes/single-project/configuration/scheduled-jobs/building-blocks/env-scheduled-jobs-filter-bar.com.tsx b/src/application/modules/projects/routes/single-project/configuration/scheduled-jobs/building-blocks/env-scheduled-jobs-filter-bar.com.tsx
+index 7006e218..4f5bc715 100644
+--- a/src/application/modules/projects/routes/single-project/configuration/scheduled-jobs/building-blocks/env-scheduled-jobs-filter-bar.com.tsx
++++ b/src/application/modules/projects/routes/single-project/configuration/scheduled-jobs/building-blocks/env-scheduled-jobs-filter-bar.com.tsx
+@@ -18,6 +18,7 @@ const JOB_TYPES = [
+     EAppScheduledJobType.JobSequence,
+     EAppScheduledJobType.ContainerCommand,
+     EAppScheduledJobType.DataBackup,
++    EAppScheduledJobType.FunctionInvoke,
+ ];
+ const STATUSES = [ESettingStatus.Active, ESettingStatus.Disabled, ESettingStatus.Pending];
+ 
+diff --git a/src/application/modules/projects/routes/single-project/single-app/configuration/scheduled-jobs/edit/app-scheduled-job-edit.route.com.tsx b/src/application/modules/projects/routes/single-project/single-app/configuration/scheduled-jobs/edit/app-scheduled-job-edit.route.com.tsx
+index 2c95d7ea..dfc68b1d 100644
+--- a/src/application/modules/projects/routes/single-project/single-app/configuration/scheduled-jobs/edit/app-scheduled-job-edit.route.com.tsx
++++ b/src/application/modules/projects/routes/single-project/single-app/configuration/scheduled-jobs/edit/app-scheduled-job-edit.route.com.tsx
+@@ -7,9 +7,10 @@ import { AppLoader } from "@application/shared/components";
+ 
+ import { AppDataBackupFormRoute } from "../data-backup";
+ import { AppScheduledJobFormRoute } from "../form-route";
++import { AppFunctionInvokeFormRoute } from "../function-invoke";
+ import { AppJobSequenceFormRoute } from "../sequence";
+ 
+-/** Opens the form the job's type needs: a sequence and a data backup have their own. */
++/** Opens the form the job's type needs: a sequence, a data backup and a function's call have their own. */
+ export function AppScheduledJobEditRoute() {
+     const {
+         id: projectId,
+@@ -66,6 +67,18 @@ export function AppScheduledJobEditRoute() {
+         );
+     }
+ 
++    if (job.jobType === EAppScheduledJobType.FunctionInvoke) {
++        return (
++            <AppFunctionInvokeFormRoute
++                mode="edit"
++                projectId={projectId}
++                env={env}
++                appId={appId}
++                scheduledJob={job}
++            />
++        );
++    }
++
+     return (
+         <AppScheduledJobFormRoute
+             mode="edit"
+diff --git a/src/application/modules/projects/routes/single-project/single-app/configuration/scheduled-jobs/function-invoke/app-function-invoke-create.route.com.tsx b/src/application/modules/projects/routes/single-project/single-app/configuration/scheduled-jobs/function-invoke/app-function-invoke-create.route.com.tsx
+new file mode 100644
+index 00000000..c0fdd3b7
+--- /dev/null
++++ b/src/application/modules/projects/routes/single-project/single-app/configuration/scheduled-jobs/function-invoke/app-function-invoke-create.route.com.tsx
+@@ -0,0 +1,21 @@
++import { useParams } from "react-router";
++import invariant from "tiny-invariant";
++
++import { AppFunctionInvokeFormRoute } from "./app-function-invoke-form-route.com";
++
++export function AppFunctionInvokeCreateRoute() {
++    const { id: projectId, env, appId } = useParams<{ id: string; env: string; appId: string }>();
++
++    invariant(projectId, "projectId must be defined");
++    invariant(env, "env must be defined");
++    invariant(appId, "appId must be defined");
++
++    return (
++        <AppFunctionInvokeFormRoute
++            mode="create"
++            projectId={projectId}
++            env={env}
++            appId={appId}
++        />
++    );
++}
+diff --git a/src/application/modules/projects/routes/single-project/single-app/configuration/scheduled-jobs/function-invoke/app-function-invoke-form-route.com.tsx b/src/application/modules/projects/routes/single-project/single-app/configuration/scheduled-jobs/function-invoke/app-function-invoke-form-route.com.tsx
+new file mode 100644
+index 00000000..58de9cb3
+--- /dev/null
++++ b/src/application/modules/projects/routes/single-project/single-app/configuration/scheduled-jobs/function-invoke/app-function-invoke-form-route.com.tsx
+@@ -0,0 +1,105 @@
++import { useState } from "react";
++
++import { toast } from "sonner";
++import { AppScheduledJobsCommands } from "~/projects/data";
++import type { AppScheduledJob } from "~/projects/domain";
++import {
++    FunctionInvokeForm,
++    type FunctionInvokeFormOutput,
++    mapFunctionInvokeFormToPayload,
++} from "~/projects/module-shared/components";
++
++import { AppLoader, RouteFormHeader } from "@application/shared/components";
++import { MODULE_IDS, ROUTE } from "@application/shared/constants";
++import { useAppNavigate } from "@application/shared/hooks/router";
++import { useConditionalModule } from "@application/shared/permissions";
++
++export function AppFunctionInvokeFormRoute({ mode, projectId, env, appId, scheduledJob }: Props) {
++    const [hasChanges, setHasChanges] = useState(false);
++    const { canWrite } = useConditionalModule({ id: MODULE_IDS.Project });
++    const { navigate } = useAppNavigate();
++
++    function navigateToList() {
++        navigate.modules(ROUTE.projects.single.apps.single.configuration.scheduledJobs.$route(projectId, env, appId), {
++            ignorePrevPath: true,
++        });
++    }
++
++    const { mutate: createOne, isPending: isCreating } = AppScheduledJobsCommands.useCreateOne({
++        onSuccess: () => {
++            toast.success("Function call created successfully");
++            navigateToList();
++        },
++    });
++    const { mutate: updateOne, isPending: isUpdating } = AppScheduledJobsCommands.useUpdateOne({
++        onSuccess: () => {
++            toast.success("Function call updated successfully");
++            navigateToList();
++        },
++    });
++
++    function onSubmit(values: FunctionInvokeFormOutput) {
++        if (!canWrite) {
++            return;
++        }
++
++        const payload = mapFunctionInvokeFormToPayload(values, appId);
++        if (mode === "edit" && scheduledJob) {
++            updateOne({
++                projectID: projectId,
++                env,
++                appID: appId,
++                scheduledJobID: scheduledJob.id,
++                payload: { ...payload, updateVer: scheduledJob.updateVer },
++            });
++            return;
++        }
++
++        createOne({ projectID: projectId, env, appID: appId, payload });
++    }
++
++    function handleClose() {
++        if (isCreating || isUpdating) {
++            return;
++        }
++
++        if (canWrite && hasChanges && !window.confirm("Are you sure you want to close without saving changes?")) {
++            return;
++        }
++
++        navigateToList();
++    }
++
++    return (
++        <div className="flex w-full flex-col">
++            <RouteFormHeader title={mode === "create" ? "Create Function Call" : "Edit Function Call"} />
++
++            {mode === "edit" && !scheduledJob ? (
++                <div className="flex min-h-[220px] items-center justify-center">
++                    <AppLoader />
++                </div>
++            ) : (
++                <FunctionInvokeForm
++                    projectId={projectId}
++                    env={env}
++                    isPending={isCreating || isUpdating}
++                    onSubmit={onSubmit}
++                    onHasChanges={setHasChanges}
++                    initialValues={scheduledJob}
++                    readOnly={!canWrite}
++                    stickyActions
++                    onClose={handleClose}
++                />
++            )}
++        </div>
++    );
++}
++
++interface Props {
++    mode: "create" | "edit";
++    projectId: string;
++    env: string;
++    appId: string;
++    /** The function's call being edited. */
++    scheduledJob?: AppScheduledJob;
++}
+diff --git a/src/application/modules/projects/routes/single-project/single-app/configuration/scheduled-jobs/function-invoke/index.ts b/src/application/modules/projects/routes/single-project/single-app/configuration/scheduled-jobs/function-invoke/index.ts
+new file mode 100644
+index 00000000..610cf24e
+--- /dev/null
++++ b/src/application/modules/projects/routes/single-project/single-app/configuration/scheduled-jobs/function-invoke/index.ts
+@@ -0,0 +1,2 @@
++export * from "./app-function-invoke-create.route.com";
++export * from "./app-function-invoke-form-route.com";
+diff --git a/src/application/modules/projects/routes/single-project/single-app/configuration/scheduled-jobs/index.ts b/src/application/modules/projects/routes/single-project/single-app/configuration/scheduled-jobs/index.ts
+index b66d7ec4..e816c3c4 100644
+--- a/src/application/modules/projects/routes/single-project/single-app/configuration/scheduled-jobs/index.ts
++++ b/src/application/modules/projects/routes/single-project/single-app/configuration/scheduled-jobs/index.ts
+@@ -4,3 +4,4 @@ export * from "./create";
+ export * from "./edit";
+ export * from "./sequence";
+ export * from "./data-backup";
++export * from "./function-invoke";
+diff --git a/src/application/modules/projects/routes/single-project/single-app/configuration/scheduled-jobs/route/app-scheduled-jobs.route.com.tsx b/src/application/modules/projects/routes/single-project/single-app/configuration/scheduled-jobs/route/app-scheduled-jobs.route.com.tsx
+index 1532f5e5..cc2c1773 100644
+--- a/src/application/modules/projects/routes/single-project/single-app/configuration/scheduled-jobs/route/app-scheduled-jobs.route.com.tsx
++++ b/src/application/modules/projects/routes/single-project/single-app/configuration/scheduled-jobs/route/app-scheduled-jobs.route.com.tsx
+@@ -4,8 +4,9 @@ import { Plus } from "lucide-react";
+ import { useParams } from "react-router";
+ import invariant from "tiny-invariant";
+ import { APP_CONFIGURATION_QUERY_OPTIONS } from "~/projects/data/constants";
+-import { AppScheduledJobsQueries } from "~/projects/data/queries";
++import { AppScheduledJobsQueries, ProjectAppsQueries } from "~/projects/data/queries";
+ import { AppScheduledJobsTableDefs } from "~/projects/module-shared/definitions/tables/app-scheduled-jobs";
++import { isFunctionApp } from "~/projects/module-shared/utils";
+ 
+ import { AppLink, TableActions } from "@application/shared/components";
+ import { DEFAULT_PAGINATED_DATA, MODULE_IDS, ROUTE } from "@application/shared/constants";
+@@ -43,6 +44,15 @@ export function AppScheduledJobsRoute() {
+         APP_CONFIGURATION_QUERY_OPTIONS,
+     );
+ 
++    // The header asks for the same app: this reads it from the cache.
++    const { data: appResponse } = ProjectAppsQueries.useFindOneById({
++        projectID: projectId,
++        env,
++        appID: appId,
++        getStats: true,
++    });
++    const isFunction = appResponse ? isFunctionApp(appResponse.data) : false;
++
+     const isFeatureDisabled = error instanceof Error && isFeatureDisabledException(error);
+     const columns = useMemo(() => AppScheduledJobsTableDefs.columns(projectId, env, appId), [projectId, env, appId]);
+ 
+@@ -72,6 +82,30 @@ export function AppScheduledJobsRoute() {
+                 search={{ value: search, onChange: setSearch }}
+                 renderActions={
+                     <div className="flex flex-wrap gap-3">
++                        {isFunction && (
++                            <PermissionTooltipAction
++                                id={MODULE_IDS.Project}
++                                action="write"
++                            >
++                                {({ isDenied }) => (
++                                    <Button
++                                        variant="outline"
++                                        onClick={() => {
++                                            navigate.modules(
++                                                ROUTE.projects.single.apps.single.configuration.scheduledJobs.createFunctionInvoke.$route(
++                                                    projectId,
++                                                    env,
++                                                    appId,
++                                                ),
++                                            );
++                                        }}
++                                        disabled={isDenied}
++                                    >
++                                        <Plus className="size-4" /> New Function Call
++                                    </Button>
++                                )}
++                            </PermissionTooltipAction>
++                        )}
+                         <PermissionTooltipAction
+                             id={MODULE_IDS.Project}
+                             action="write"
+diff --git a/src/application/shared/constants/route.constants.ts b/src/application/shared/constants/route.constants.ts
+index b5941780..92f1593b 100644
+--- a/src/application/shared/constants/route.constants.ts
++++ b/src/application/shared/constants/route.constants.ts
+@@ -728,6 +728,12 @@ export const ROUTE = {
+                                     `/projects/${id}/${env}/apps/${appId}/sched-jobs/create-data-backup/`,
+                             },
+ 
++                            createFunctionInvoke: {
++                                $pattern: "projects/:id/:env/apps/:appId/sched-jobs/create-function-invoke",
++                                $route: (id: string, env: string, appId: string) =>
++                                    `/projects/${id}/${env}/apps/${appId}/sched-jobs/create-function-invoke/`,
++                            },
++
+                             edit: {
+                                 $pattern: "projects/:id/:env/apps/:appId/sched-jobs/:scheduledJobId/edit",
+                                 $route: (id: string, env: string, appId: string, scheduledJobId: string) =>

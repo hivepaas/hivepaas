@@ -1,0 +1,363 @@
+diff --git a/docs/openapi/swagger.json b/docs/openapi/swagger.json
+index 68bc3869..156dcba8 100644
+--- a/docs/openapi/swagger.json
++++ b/docs/openapi/swagger.json
+@@ -47991,6 +47991,44 @@
+         "required" : [ "sizeBytes", "snapshotId" ],
+         "type" : "object"
+       },
++      "entity.SchedJobFunctionInvokeResult" : {
++        "properties" : {
++          "body" : {
++            "description" : "Body is in base64; BodyTruncated says it was cut.",
++            "items" : {
++              "type" : "integer"
++            },
++            "type" : "array"
++          },
++          "bodyTruncated" : {
++            "type" : "boolean"
++          },
++          "durationMs" : {
++            "type" : "number"
++          },
++          "headers" : {
++            "additionalProperties" : {
++              "items" : {
++                "type" : "string"
++              },
++              "type" : "array"
++            },
++            "type" : "object"
++          },
++          "outcome" : {
++            "description" : "Outcome is the runtime's: ok, error or timeout.",
++            "type" : "string"
++          },
++          "requestId" : {
++            "type" : "string"
++          },
++          "status" : {
++            "type" : "integer"
++          }
++        },
++        "required" : [ "body", "bodyTruncated", "durationMs", "headers", "outcome", "requestId", "status" ],
++        "type" : "object"
++      },
+       "entity.SchedJobSeqRun" : {
+         "properties" : {
+           "currentStep" : {
+@@ -68952,6 +68990,13 @@
+           "endedAt" : {
+             "type" : "string"
+           },
++          "functionInvoke" : {
++            "allOf" : [ {
++              "$ref" : "#/components/schemas/entity.SchedJobFunctionInvokeResult"
++            } ],
++            "description" : "FunctionInvoke is the response a function's call got; its body is in\nbase64.",
++            "type" : "object"
++          },
+           "id" : {
+             "type" : "string"
+           },
+@@ -69006,7 +69051,7 @@
+             "type" : "string"
+           }
+         },
+-        "required" : [ "backupRestore", "config", "createdAt", "dataBackup", "endedAt", "id", "lastError", "retryAt", "runAt", "scopeApp", "scopeProject", "scopeUser", "sequenceRun", "startedAt", "status", "targetJob", "trigger", "type", "updateVer", "updatedAt" ],
++        "required" : [ "backupRestore", "config", "createdAt", "dataBackup", "endedAt", "functionInvoke", "id", "lastError", "retryAt", "runAt", "scopeApp", "scopeProject", "scopeUser", "sequenceRun", "startedAt", "status", "targetJob", "trigger", "type", "updateVer", "updatedAt" ],
+         "type" : "object"
+       },
+       "taskdto.TaskStatusResp" : {
+diff --git a/hivepaas_app/entity/setting_sched_job_function_invoke.go b/hivepaas_app/entity/setting_sched_job_function_invoke.go
+index 6d4a38a0..a4492329 100644
+--- a/hivepaas_app/entity/setting_sched_job_function_invoke.go
++++ b/hivepaas_app/entity/setting_sched_job_function_invoke.go
+@@ -1,5 +1,11 @@
+ package entity
+ 
++import (
++	"encoding/json"
++
++	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
++)
++
+ // SchedJobFunctionInvoke is the request a function-invoke job calls its
+ // function with, as the runtime's invoke reads it: the query is in the path,
+ // the body is text.
+@@ -11,3 +17,34 @@ type SchedJobFunctionInvoke struct {
+ 	Headers map[string][]string `json:"headers,omitempty"`
+ 	Body    string              `json:"body,omitempty"`
+ }
++
++// SchedJobFunctionInvokeResult is what a function's call answered: its task's
++// output.
++type SchedJobFunctionInvokeResult struct {
++	// Outcome is the runtime's: ok, error or timeout.
++	Outcome string              `json:"outcome"`
++	Status  int                 `json:"status"`
++	Headers map[string][]string `json:"headers,omitempty"`
++	// Body is in base64; BodyTruncated says it was cut.
++	Body          []byte  `json:"body,omitempty"`
++	BodyTruncated bool    `json:"bodyTruncated,omitempty"`
++	RequestID     string  `json:"requestId,omitempty"`
++	DurationMs    float64 `json:"durationMs"`
++}
++
++// OutputAsFunctionInvoke is the response a function's call got; nil for a task
++// that holds none, another job's among them.
++func (t *Task) OutputAsFunctionInvoke() (*SchedJobFunctionInvokeResult, error) {
++	if t.Output == "" {
++		return nil, nil //nolint:nilnil // no output, no response
++	}
++	// Read apart from the task's parsed output, as a data backup's is.
++	result := &SchedJobFunctionInvokeResult{}
++	if err := json.Unmarshal([]byte(t.Output), result); err != nil {
++		return nil, hperrors.Wrap(err)
++	}
++	if result.Outcome == "" {
++		return nil, nil //nolint:nilnil // no outcome: another job's output
++	}
++	return result, nil
++}
+diff --git a/hivepaas_app/service/schedjobexecservice/schedjobexecserviceimpl/exec.go b/hivepaas_app/service/schedjobexecservice/schedjobexecserviceimpl/exec.go
+index 928941b7..908bd6e8 100644
+--- a/hivepaas_app/service/schedjobexecservice/schedjobexecserviceimpl/exec.go
++++ b/hivepaas_app/service/schedjobexecservice/schedjobexecserviceimpl/exec.go
+@@ -89,6 +89,7 @@ func (s *service) SchedJobExec(
+ 		TaskFindRetryDelay:     req.TaskFindRetryDelay,
+ 		LogStore:               req.LogStore,
+ 		StdoutWriter:           stdoutWriter,
++		StdinReader:            req.Stdin,
+ 		ExecOptions: func(opts *client.ExecCreateOptions) {
+ 			opts.AttachStdout = true
+ 			opts.AttachStderr = true
+diff --git a/hivepaas_app/service/schedjobexecservice/types.go b/hivepaas_app/service/schedjobexecservice/types.go
+index 60f0f4ee..20e8cd21 100644
+--- a/hivepaas_app/service/schedjobexecservice/types.go
++++ b/hivepaas_app/service/schedjobexecservice/types.go
+@@ -23,6 +23,8 @@ type SchedJobExecReq struct {
+ 	// StdoutWriter takes the command's stdout in place of the job's command output,
+ 	// without a TTY: a data backup streams it into its repository.
+ 	StdoutWriter io.Writer
++	// Stdin is what the command reads: a function's call, its request.
++	Stdin io.Reader
+ }
+ 
+ type RunCommandReq struct {
+diff --git a/hivepaas_app/tasks/taskschedjobexec/function_invoke.go b/hivepaas_app/tasks/taskschedjobexec/function_invoke.go
+new file mode 100644
+index 00000000..7a6ae380
+--- /dev/null
++++ b/hivepaas_app/tasks/taskschedjobexec/function_invoke.go
+@@ -0,0 +1,173 @@
++package taskschedjobexec
++
++import (
++	"bytes"
++	"context"
++	"encoding/json"
++	"fmt"
++	"strconv"
++	"strings"
++	"unicode/utf8"
++
++	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
++	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
++	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
++	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/tasklog"
++	"github.com/hivepaas/hivepaas/hivepaas_app/service/functionservice/functioninvoke"
++	"github.com/hivepaas/hivepaas/hivepaas_app/service/schedjobexecservice"
++)
++
++const (
++	// invokeBodyMax is how much of a response's body a run keeps, in its task
++	// and its log.
++	invokeBodyMax = 64 * 1024
++	// invokeStepBodyMax is how much of it a step hands on: the steps after it
++	// read it in their environment.
++	invokeStepBodyMax = 16 * 1024
++	// invokeStatusFailed is the first status that fails a run.
++	invokeStatusFailed = 400
++	// invokeExitBadRequest and invokeExitNotLoaded are invoke's exits without a
++	// result.
++	invokeExitBadRequest = 2
++	invokeExitNotLoaded  = 3
++)
++
++// invokeFunction calls the job's function once: the runtime's invoke, in a
++// running task of the function, reads the job's request on its stdin. The
++// call's log goes to the run's, the response to the task's output, or, as a
++// step of a sequence, to the steps after it. A status of 400 or more fails the
++// run, as an outcome other than ok does.
++func (e *Executor) invokeFunction(
++	ctx context.Context,
++	db database.Tx,
++	run *jobRun,
++	job *entity.SchedJob,
++) (*jobResult, error) {
++	request, err := json.Marshal(functioninvoke.RequestOf(job.FunctionInvoke))
++	if err != nil {
++		return nil, hperrors.Wrap(err)
++	}
++	logStore := run.execData.LogStore
++	output := functioninvoke.NewOutputWriter(func(line []byte) {
++		_ = logStore.Add(ctx, tasklog.NewOutFrame(string(line), tasklog.TsNow))
++	})
++
++	result := &jobResult{}
++	resp, err := e.schedJobExecService.SchedJobExec(ctx, db, &schedjobexecservice.SchedJobExecReq{
++		TaskExecData:    run.execData,
++		SchedJobSetting: run.jobSetting,
++		DestApp:         run.refObjects.RefApps[job.App.ID],
++		Sequence:        run.sequence,
++		Command:         &entity.CommandTemplate{Command: strings.Join(functioninvoke.Command, " ")},
++		Stdin:           bytes.NewReader(request),
++		StdoutWriter:    output,
++	})
++	output.Flush()
++	if resp != nil {
++		result.skipNotification = resp.SkipResultNotification
++		result.exitCode = resp.ExitCode
++	}
++	if err != nil {
++		if hint := invokeExitHint(resp); hint != "" {
++			_ = logStore.Add(ctx, tasklog.NewErrFrame(hint, tasklog.TsNow))
++		}
++		return result, hperrors.Wrap(err)
++	}
++
++	invoked, err := readInvokeResult(output)
++	if err != nil {
++		_ = logStore.Add(ctx, tasklog.NewErrFrame(err.Error(), tasklog.TsNow))
++		return result, hperrors.Wrap(err)
++	}
++	_ = logStore.Add(ctx, tasklog.NewOutFrame(describeInvokeResult(invoked), tasklog.TsNow))
++	if run.sequence == nil {
++		run.execData.Task.MustSetOutput(invoked)
++	}
++	result.outputs = invokeOutputs(invoked)
++
++	switch {
++	case invoked.Outcome != invokeOutcomeOK:
++		return result, invokeFailed(fmt.Sprintf("the call ended with outcome %s", invoked.Outcome))
++	case invoked.Status >= invokeStatusFailed:
++		return result, invokeFailed(fmt.Sprintf("the function answered %d", invoked.Status))
++	}
++	return result, nil
++}
++
++// invokeOutcomeOK is the runtime's outcome of a handler that returned.
++const invokeOutcomeOK = "ok"
++
++// invokeFailed is a call that failed, saying why.
++func invokeFailed(why string) error {
++	return hperrors.Wrap(hperrors.ErrInfraActionFailed).WithParam("Error", why)
++}
++
++// readInvokeResult is the response invoke wrote, its body cut to what a run
++// keeps.
++func readInvokeResult(output *functioninvoke.OutputWriter) (*entity.SchedJobFunctionInvokeResult, error) {
++	if output.ResultTooLarge() {
++		return nil, invokeFailed("the function's response was too large to be read")
++	}
++	if output.Result() == nil {
++		return nil, invokeFailed("the runtime wrote no result of the call")
++	}
++	parsed, err := functioninvoke.ParseResult(string(output.Result()))
++	if err != nil {
++		return nil, hperrors.Wrap(err)
++	}
++	result := &entity.SchedJobFunctionInvokeResult{Outcome: parsed.Outcome, Status: parsed.Status,
++		Headers: parsed.Headers, Body: parsed.Body, RequestID: parsed.RequestID, DurationMs: parsed.DurationMs}
++	if len(result.Body) > invokeBodyMax {
++		result.Body, result.BodyTruncated = result.Body[:invokeBodyMax], true
++	}
++	return result, nil
++}
++
++// describeInvokeResult is the response as the run's log shows it: its status
++// and duration, then its body when it is text.
++func describeInvokeResult(result *entity.SchedJobFunctionInvokeResult) string {
++	var sb strings.Builder
++	fmt.Fprintf(&sb, "The function answered %d in %.1f ms (outcome %s)\n", result.Status, result.DurationMs,
++		result.Outcome)
++	switch {
++	case len(result.Body) == 0:
++	case utf8.Valid(result.Body):
++		sb.Write(result.Body)
++		if result.BodyTruncated {
++			sb.WriteString("\n… cut at 64 KB")
++		}
++		sb.WriteString("\n")
++	default:
++		fmt.Fprintf(&sb, "%d bytes that are not text\n", len(result.Body))
++	}
++	return sb.String()
++}
++
++// invokeOutputs is what a call tells the steps after it: its status, and its
++// body when it is text, cut to what an environment holds.
++func invokeOutputs(result *entity.SchedJobFunctionInvokeResult) map[string]string {
++	outputs := map[string]string{"STATUS": strconv.Itoa(result.Status)}
++	if len(result.Body) > 0 && utf8.Valid(result.Body) {
++		body := result.Body
++		if len(body) > invokeStepBodyMax {
++			body = body[:invokeStepBodyMax]
++		}
++		outputs["BODY"] = string(body)
++	}
++	return outputs
++}
++
++// invokeExitHint says what an exit of invoke without a result means, beside
++// the runtime's own message in the log.
++func invokeExitHint(resp *schedjobexecservice.SchedJobExecResp) string {
++	if resp == nil || resp.ExitCode == nil {
++		return ""
++	}
++	switch *resp.ExitCode {
++	case invokeExitBadRequest:
++		return "The runtime could not read the job's request"
++	case invokeExitNotLoaded:
++		return "The function's handler could not be loaded: its error is above"
++	}
++	return ""
++}
+diff --git a/hivepaas_app/tasks/taskschedjobexec/job_run.go b/hivepaas_app/tasks/taskschedjobexec/job_run.go
+index d7be2b90..6edd855f 100644
+--- a/hivepaas_app/tasks/taskschedjobexec/job_run.go
++++ b/hivepaas_app/tasks/taskschedjobexec/job_run.go
+@@ -130,6 +130,9 @@ func (e *Executor) runJob(ctx context.Context, db database.Tx, run *jobRun) (*jo
+ 		}
+ 		result.outputs = dataBackupOutputs(resp.Result)
+ 
++	case base.SchedJobTypeFunctionInvoke:
++		return e.invokeFunction(ctx, db, run, schedJob)
++
+ 	case base.SchedJobTypeJobSequence:
+ 		// Never a step: a sequence does not run another (checked on save).
+ 		return nil, hperrors.NewUnsupported("A job sequence as a step")
+diff --git a/hivepaas_app/usecase/taskuc/taskdto/get.go b/hivepaas_app/usecase/taskuc/taskdto/get.go
+index 95e24f48..e0bcc603 100644
+--- a/hivepaas_app/usecase/taskuc/taskdto/get.go
++++ b/hivepaas_app/usecase/taskuc/taskdto/get.go
+@@ -51,6 +51,9 @@ type TaskResp struct {
+ 	Trigger *TaskTriggerResp `json:"trigger,omitempty" copy:"-"`
+ 	// DataBackup is the snapshot a data backup's run took.
+ 	DataBackup *entity.SchedJobDataBackupResult `json:"dataBackup,omitempty" copy:"-"`
++	// FunctionInvoke is the response a function's call got; its body is in
++	// base64.
++	FunctionInvoke *entity.SchedJobFunctionInvokeResult `json:"functionInvoke,omitempty" copy:"-"`
+ 	// BackupRestore is what a restore's task restored, from where, and how.
+ 	BackupRestore *TaskBackupRestoreResp `json:"backupRestore,omitempty" copy:"-"`
+ 
+@@ -117,6 +120,7 @@ func TransformTask(
+ 			resp.SequenceRun = run
+ 		}
+ 		resp.DataBackup, _ = task.OutputAsDataBackup()
++		resp.FunctionInvoke, _ = task.OutputAsFunctionInvoke()
+ 		resp.Trigger = transformTaskTrigger(task, refObjects)
+ 	}
+ 	if task.Type == base.TaskTypeBackupRestore {

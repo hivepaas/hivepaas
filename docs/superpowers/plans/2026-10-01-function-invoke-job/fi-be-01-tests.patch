@@ -1,0 +1,157 @@
+diff --git a/hivepaas_app/usecase/settings/schedjobuc/function_invoke_test.go b/hivepaas_app/usecase/settings/schedjobuc/function_invoke_test.go
+new file mode 100644
+index 00000000..a1fb79c2
+--- /dev/null
++++ b/hivepaas_app/usecase/settings/schedjobuc/function_invoke_test.go
+@@ -0,0 +1,50 @@
++package schedjobuc
++
++import (
++	"errors"
++	"testing"
++
++	"github.com/stretchr/testify/assert"
++
++	"github.com/hivepaas/hivepaas/hivepaas_app/base"
++	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
++	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
++)
++
++func TestFunctionCallsLiveInApps(t *testing.T) {
++	assert.NoError(t, checkJobTypeInScope(base.ObjectScopeApp, base.SchedJobTypeFunctionInvoke))
++	for _, scope := range []base.ObjectScopeType{base.ObjectScopeGlobal, base.ObjectScopeProject,
++		base.ObjectScopeProjectEnv} {
++		err := checkJobTypeInScope(scope, base.SchedJobTypeFunctionInvoke)
++		assert.True(t, errors.Is(err, hperrors.ErrArgumentInvalid), "%s: got %v", scope, err)
++	}
++}
++
++func kindSetting(t *testing.T, category base.AppCategory) *entity.Setting {
++	t.Helper()
++	setting := &entity.Setting{Type: base.SettingTypeAppKind}
++	assert.NoError(t, setting.SetData(&entity.AppKindSettings{Category: category}))
++	return setting
++}
++
++// A function is called in its own app, and only a function is.
++func TestAFunctionCallIsItsFunctionsOwn(t *testing.T) {
++	scope := &entity.ObjectScope{ScopeType: base.ObjectScopeApp, AppID: "app-1"}
++	job := &entity.SchedJob{JobType: base.SchedJobTypeFunctionInvoke, App: entity.ObjectID{ID: "app-1"},
++		FunctionInvoke: &entity.SchedJobFunctionInvoke{Method: "GET", Path: "/"}}
++	function := kindSetting(t, base.AppCategoryFunction)
++	assert.NoError(t, checkFunctionInvokeApp(scope, job, function))
++
++	other := *job
++	other.App.ID = "app-2"
++	err := checkFunctionInvokeApp(scope, &other, function)
++	assert.True(t, errors.Is(err, hperrors.ErrArgumentInvalid), "another app: got %v", err)
++
++	for _, kind := range []*entity.Setting{nil, kindSetting(t, base.AppCategoryWebapp)} {
++		err = checkFunctionInvokeApp(scope, job, kind)
++		assert.True(t, errors.Is(err, hperrors.ErrArgumentInvalid), "not a function: got %v", err)
++	}
++
++	assert.NoError(t, checkFunctionInvokeApp(scope, &entity.SchedJob{JobType: base.SchedJobTypeContainerCommand},
++		nil), "another type is not checked")
++}
+diff --git a/hivepaas_app/usecase/settings/schedjobuc/schedjobdto/function_invoke_test.go b/hivepaas_app/usecase/settings/schedjobuc/schedjobdto/function_invoke_test.go
+new file mode 100644
+index 00000000..8524bd7d
+--- /dev/null
++++ b/hivepaas_app/usecase/settings/schedjobuc/schedjobdto/function_invoke_test.go
+@@ -0,0 +1,95 @@
++package schedjobdto
++
++import (
++	"fmt"
++	"strings"
++	"testing"
++
++	"github.com/stretchr/testify/assert"
++
++	"github.com/hivepaas/hivepaas/hivepaas_app/base"
++	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
++	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings/commandtemplateuc/commandtemplatedto"
++)
++
++const functionApp = "01JAB9XED0GTXBSQDFVYAJ8WB4"
++
++func functionInvokeReq(invoke *SchedJobFunctionInvokeReq) *CreateSchedJobReq {
++	req := NewCreateSchedJobReq()
++	req.SchedJobBaseReq = &SchedJobBaseReq{
++		Name:           "nightly report",
++		JobType:        base.SchedJobTypeFunctionInvoke,
++		App:            basedto.ObjectIDReq{ID: functionApp},
++		FunctionInvoke: invoke,
++	}
++	return req
++}
++
++func TestAFunctionCallIsItsRequest(t *testing.T) {
++	req := functionInvokeReq(&SchedJobFunctionInvokeReq{
++		Method:  " post ",
++		Path:    "reports/daily?format=csv",
++		Headers: map[string][]string{"Content-Type": {"application/json"}, "X-Trace": {"a", "b"}},
++		Body:    `{"day":"today"}`,
++	})
++
++	assert.Equal(t, "", invalidFields(t, req))
++	job := req.ToEntity()
++	if assert.NotNil(t, job.FunctionInvoke) {
++		assert.Equal(t, "POST", job.FunctionInvoke.Method)
++		assert.Equal(t, "/reports/daily?format=csv", job.FunctionInvoke.Path)
++		assert.Equal(t, map[string][]string{"content-type": {"application/json"}, "x-trace": {"a", "b"}},
++			job.FunctionInvoke.Headers, "header names are lower case, as invoke reads them")
++		assert.Equal(t, `{"day":"today"}`, job.FunctionInvoke.Body)
++	}
++	assert.Nil(t, job.Command, "a call runs the runtime's invoke, not a command of the job's")
++}
++
++func TestAFunctionCallDefaultsToAGetOfTheRoot(t *testing.T) {
++	req := functionInvokeReq(&SchedJobFunctionInvokeReq{})
++
++	assert.Equal(t, "", invalidFields(t, req))
++	job := req.ToEntity()
++	assert.Equal(t, "GET", job.FunctionInvoke.Method)
++	assert.Equal(t, "/", job.FunctionInvoke.Path)
++	assert.Nil(t, job.FunctionInvoke.Headers)
++}
++
++func TestAFunctionCallRefusesWhatInvokeCannotSend(t *testing.T) {
++	cases := map[string]*SchedJobFunctionInvokeReq{
++		"functionInvoke.method":  {Method: "FETCH"},
++		"functionInvoke.path":    {Path: "/a b"},
++		"functionInvoke.path ":   {Path: "/" + strings.Repeat("a", 2048)},
++		"functionInvoke.headers": {Headers: map[string][]string{"bad name": {"x"}}},
++		"functionInvoke.body":    {Method: "POST", Body: strings.Repeat("a", 1024*1024+1)},
++		"functionInvoke.body ":   {Method: "GET", Body: "a GET sends no body"},
++	}
++	for field, invoke := range cases {
++		assert.Contains(t, invalidFields(t, functionInvokeReq(invoke)), strings.TrimSpace(field), field)
++	}
++
++	many := map[string][]string{}
++	for i := range 51 {
++		many[fmt.Sprintf("x-h%d", i)] = []string{"v"}
++	}
++	assert.Contains(t, invalidFields(t, functionInvokeReq(&SchedJobFunctionInvokeReq{Headers: many})),
++		"functionInvoke.headers")
++}
++
++func TestAFunctionCallIsOnlyAFunctionInvokesAndNeedsItsApp(t *testing.T) {
++	req := functionInvokeReq(nil)
++	assert.Contains(t, invalidFields(t, req), "functionInvoke")
++
++	req = functionInvokeReq(&SchedJobFunctionInvokeReq{})
++	req.App = basedto.ObjectIDReq{}
++	assert.Contains(t, invalidFields(t, req), "app")
++
++	req = functionInvokeReq(&SchedJobFunctionInvokeReq{})
++	req.Command = &commandtemplatedto.CommandTemplateBaseReq{Command: "echo hi"}
++	assert.Contains(t, invalidFields(t, req), "command")
++
++	req = functionInvokeReq(&SchedJobFunctionInvokeReq{})
++	req.JobType = base.SchedJobTypeContainerCommand
++	req.Command = &commandtemplatedto.CommandTemplateBaseReq{Command: "echo hi"}
++	assert.Contains(t, invalidFields(t, req), "functionInvoke")
++}

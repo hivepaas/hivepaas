@@ -1,0 +1,166 @@
+diff --git a/src/application/modules/operations/api/services/system-tasks-services/system-tasks.api.validator.ts b/src/application/modules/operations/api/services/system-tasks-services/system-tasks.api.validator.ts
+index 4a752d23..283aa797 100644
+--- a/src/application/modules/operations/api/services/system-tasks-services/system-tasks.api.validator.ts
++++ b/src/application/modules/operations/api/services/system-tasks-services/system-tasks.api.validator.ts
+@@ -155,6 +155,35 @@ const DataBackupSchema = z
+     .nullish()
+     .transform(value => value ?? undefined);
+ 
++/** A response's body, which may not be text: base64 on the wire, bytes here. */
++const Base64BytesSchema = z
++    .string()
++    .nullish()
++    .transform(value => {
++        const binary = atob(value ?? "");
++        const bytes = new Uint8Array(binary.length);
++        for (let i = 0; i < binary.length; i++) {
++            bytes[i] = binary.charCodeAt(i);
++        }
++        return bytes;
++    });
++
++const FunctionInvokeSchema = z
++    .object({
++        outcome: z.string(),
++        status: z.number().optional().default(0),
++        headers: z
++            .record(z.array(z.string()))
++            .nullish()
++            .transform(value => value ?? {}),
++        body: Base64BytesSchema,
++        bodyTruncated: z.boolean().optional().default(false),
++        requestId: z.string().optional().default(""),
++        durationMs: z.number().optional().default(0),
++    })
++    .nullish()
++    .transform(value => value ?? undefined);
++
+ const BackupRestoreSchema = z
+     .object({
+         snapshotRecordId: z.string().optional().default(""),
+@@ -182,6 +211,7 @@ const SystemTaskSchema = z.object({
+     sequenceRun: SequenceRunSchema,
+     trigger: TriggerSchema,
+     dataBackup: DataBackupSchema,
++    functionInvoke: FunctionInvokeSchema,
+     backupRestore: BackupRestoreSchema,
+     runAt: NullableDateSchema,
+     retryAt: NullableDateSchema,
+diff --git a/src/application/modules/operations/domain/system-task.entity.ts b/src/application/modules/operations/domain/system-task.entity.ts
+index 60001659..112bdc12 100644
+--- a/src/application/modules/operations/domain/system-task.entity.ts
++++ b/src/application/modules/operations/domain/system-task.entity.ts
+@@ -118,6 +118,19 @@ export interface SystemTaskDataBackup {
+     sizeBytes: number;
+ }
+ 
++/** What a function's call answered: the runtime's outcome, and the response. */
++export interface SystemTaskFunctionInvoke {
++    /** ok, error or timeout. */
++    outcome: string;
++    status: number;
++    headers: Record<string, string[]>;
++    /** Decoded from base64; cut at 64 KB when bodyTruncated. */
++    body: Uint8Array;
++    bodyTruncated: boolean;
++    requestId: string;
++    durationMs: number;
++}
++
+ /** What a restore's task restored, from where, and how. */
+ export interface SystemTaskBackupRestore {
+     /** The snapshot's record; snapshotId is the repository's. */
+@@ -144,6 +157,7 @@ export interface SystemTask {
+     sequenceRun?: SystemTaskSequenceRun;
+     trigger?: SystemTaskTrigger;
+     dataBackup?: SystemTaskDataBackup;
++    functionInvoke?: SystemTaskFunctionInvoke;
+     backupRestore?: SystemTaskBackupRestore;
+     runAt: Date | null;
+     retryAt: Date | null;
+diff --git a/src/application/modules/operations/routes/tasks/building-blocks/task-summary-card/function-invoke-response.com.tsx b/src/application/modules/operations/routes/tasks/building-blocks/task-summary-card/function-invoke-response.com.tsx
+new file mode 100644
+index 00000000..f6764d10
+--- /dev/null
++++ b/src/application/modules/operations/routes/tasks/building-blocks/task-summary-card/function-invoke-response.com.tsx
+@@ -0,0 +1,54 @@
++import { Badge } from "@components/ui/badge";
++import type { SystemTaskFunctionInvoke } from "~/operations/domain";
++
++/** A response's body as text, or how many bytes of something else. */
++function bodyText(body: Uint8Array): string {
++    try {
++        return new TextDecoder("utf-8", { fatal: true }).decode(body);
++    } catch {
++        return `${body.length} bytes that are not text`;
++    }
++}
++
++/** The status and duration of a function's call, beside the run's other details. */
++export function FunctionInvokeSummary({ response }: Props) {
++    const failed = response.outcome !== "ok" || response.status >= 400;
++
++    return (
++        <div>
++            <span className="text-muted-foreground">Response:</span>{" "}
++            <Badge
++                tone={failed ? "red" : "green"}
++                className="font-mono"
++            >
++                {response.status}
++            </Badge>{" "}
++            <span className="text-muted-foreground">
++                in {response.durationMs.toFixed(1)} ms
++                {response.outcome !== "ok" ? ` (${response.outcome})` : ""}
++            </span>
++        </div>
++    );
++}
++
++/** The body of a function's response, as the run kept it. */
++export function FunctionInvokeBody({ response }: Props) {
++    if (response.body.length === 0) {
++        return null;
++    }
++
++    return (
++        <div className="flex flex-col gap-1.5 pt-1">
++            <span className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
++                Response Body
++            </span>
++            <pre className="max-h-80 overflow-auto rounded-md border bg-muted p-3 font-mono text-xs whitespace-pre-wrap break-all select-all">
++                {bodyText(response.body) + (response.bodyTruncated ? "\n… cut at 64 KB" : "")}
++            </pre>
++        </div>
++    );
++}
++
++interface Props {
++    response: SystemTaskFunctionInvoke;
++}
+diff --git a/src/application/modules/operations/routes/tasks/building-blocks/task-summary-card/system-task-summary-card.com.tsx b/src/application/modules/operations/routes/tasks/building-blocks/task-summary-card/system-task-summary-card.com.tsx
+index 22c648d3..3dcbbb6d 100644
+--- a/src/application/modules/operations/routes/tasks/building-blocks/task-summary-card/system-task-summary-card.com.tsx
++++ b/src/application/modules/operations/routes/tasks/building-blocks/task-summary-card/system-task-summary-card.com.tsx
+@@ -18,6 +18,8 @@ import { Avatar } from "@/components/ui/avatar";
+ 
+ import { SequenceRunSteps } from "../sequence-run-steps";
+ 
++import { FunctionInvokeBody, FunctionInvokeSummary } from "./function-invoke-response.com";
++
+ const STATUS_LABELS: Record<SystemTaskStatus, string> = {
+     [SystemTaskStatus.Done]: "Done",
+     [SystemTaskStatus.Failed]: "Failed",
+@@ -665,8 +667,12 @@ export function SystemTaskSummaryCard({
+                                         </span>
+                                     </div>
+                                 )}
++
++                                {task.functionInvoke && <FunctionInvokeSummary response={task.functionInvoke} />}
+                             </div>
+ 
++                            {task.functionInvoke && <FunctionInvokeBody response={task.functionInvoke} />}
++
+                             {/* Error Banner */}
+                             {task.lastError.trim() && (
+                                 <div className="flex flex-col gap-1.5 pt-1">

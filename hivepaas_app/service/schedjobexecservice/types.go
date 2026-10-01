@@ -23,6 +23,8 @@ type SchedJobExecReq struct {
 	// StdoutWriter takes the command's stdout in place of the job's command output,
 	// without a TTY: a data backup streams it into its repository.
 	StdoutWriter io.Writer
+	// Stdin is what the command reads: a function's call, its request.
+	Stdin io.Reader
 }
 
 type RunCommandReq struct {

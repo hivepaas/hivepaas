@@ -32,3 +32,18 @@ func TestTransformTaskGivesNoSnapshotForASequencesRun(t *testing.T) {
 	assert.Nil(t, resp.DataBackup)
 	assert.NotNil(t, resp.SequenceRun)
 }
+
+// A function call's run gives the response, and neither a snapshot nor a
+// sequence run.
+func TestTransformTaskGivesAFunctionCallsResponse(t *testing.T) {
+	task := &entity.Task{ID: "t1", Type: base.TaskTypeSchedJobExec}
+	result := &entity.SchedJobFunctionInvokeResult{Outcome: "ok", Status: 404, Body: []byte("no")}
+	task.MustSetOutput(result)
+
+	resp, err := TransformTask(task, nil, entity.NewRefObjects())
+
+	assert.NoError(t, err)
+	assert.Equal(t, result, resp.FunctionInvoke)
+	assert.Nil(t, resp.DataBackup)
+	assert.Nil(t, resp.SequenceRun)
+}

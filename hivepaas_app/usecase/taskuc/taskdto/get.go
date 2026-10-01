@@ -51,6 +51,9 @@ type TaskResp struct {
 	Trigger *TaskTriggerResp `json:"trigger,omitempty" copy:"-"`
 	// DataBackup is the snapshot a data backup's run took.
 	DataBackup *entity.SchedJobDataBackupResult `json:"dataBackup,omitempty" copy:"-"`
+	// FunctionInvoke is the response a function's call got; its body is in
+	// base64.
+	FunctionInvoke *entity.SchedJobFunctionInvokeResult `json:"functionInvoke,omitempty" copy:"-"`
 	// BackupRestore is what a restore's task restored, from where, and how.
 	BackupRestore *TaskBackupRestoreResp `json:"backupRestore,omitempty" copy:"-"`
 
@@ -117,6 +120,7 @@ func TransformTask(
 			resp.SequenceRun = run
 		}
 		resp.DataBackup, _ = task.OutputAsDataBackup()
+		resp.FunctionInvoke, _ = task.OutputAsFunctionInvoke()
 		resp.Trigger = transformTaskTrigger(task, refObjects)
 	}
 	if task.Type == base.TaskTypeBackupRestore {

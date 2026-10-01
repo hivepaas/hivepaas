@@ -47991,6 +47991,44 @@
         "required" : [ "sizeBytes", "snapshotId" ],
         "type" : "object"
       },
+      "entity.SchedJobFunctionInvokeResult" : {
+        "properties" : {
+          "body" : {
+            "description" : "Body is in base64; BodyTruncated says it was cut.",
+            "items" : {
+              "type" : "integer"
+            },
+            "type" : "array"
+          },
+          "bodyTruncated" : {
+            "type" : "boolean"
+          },
+          "durationMs" : {
+            "type" : "number"
+          },
+          "headers" : {
+            "additionalProperties" : {
+              "items" : {
+                "type" : "string"
+              },
+              "type" : "array"
+            },
+            "type" : "object"
+          },
+          "outcome" : {
+            "description" : "Outcome is the runtime's: ok, error or timeout.",
+            "type" : "string"
+          },
+          "requestId" : {
+            "type" : "string"
+          },
+          "status" : {
+            "type" : "integer"
+          }
+        },
+        "required" : [ "body", "bodyTruncated", "durationMs", "headers", "outcome", "requestId", "status" ],
+        "type" : "object"
+      },
       "entity.SchedJobSeqRun" : {
         "properties" : {
           "currentStep" : {
@@ -68952,6 +68990,13 @@
           "endedAt" : {
             "type" : "string"
           },
+          "functionInvoke" : {
+            "allOf" : [ {
+              "$ref" : "#/components/schemas/entity.SchedJobFunctionInvokeResult"
+            } ],
+            "description" : "FunctionInvoke is the response a function's call got; its body is in\nbase64.",
+            "type" : "object"
+          },
           "id" : {
             "type" : "string"
           },
@@ -69006,7 +69051,7 @@
             "type" : "string"
           }
         },
-        "required" : [ "backupRestore", "config", "createdAt", "dataBackup", "endedAt", "id", "lastError", "retryAt", "runAt", "scopeApp", "scopeProject", "scopeUser", "sequenceRun", "startedAt", "status", "targetJob", "trigger", "type", "updateVer", "updatedAt" ],
+        "required" : [ "backupRestore", "config", "createdAt", "dataBackup", "endedAt", "functionInvoke", "id", "lastError", "retryAt", "runAt", "scopeApp", "scopeProject", "scopeUser", "sequenceRun", "startedAt", "status", "targetJob", "trigger", "type", "updateVer", "updatedAt" ],
         "type" : "object"
       },
       "taskdto.TaskStatusResp" : {

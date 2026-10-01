@@ -130,6 +130,9 @@ func (e *Executor) runJob(ctx context.Context, db database.Tx, run *jobRun) (*jo
 		}
 		result.outputs = dataBackupOutputs(resp.Result)
 
+	case base.SchedJobTypeFunctionInvoke:
+		return e.invokeFunction(ctx, db, run, schedJob)
+
 	case base.SchedJobTypeJobSequence:
 		// Never a step: a sequence does not run another (checked on save).
 		return nil, hperrors.NewUnsupported("A job sequence as a step")

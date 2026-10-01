@@ -89,6 +89,7 @@ func (s *service) SchedJobExec(
 		TaskFindRetryDelay:     req.TaskFindRetryDelay,
 		LogStore:               req.LogStore,
 		StdoutWriter:           stdoutWriter,
+		StdinReader:            req.Stdin,
 		ExecOptions: func(opts *client.ExecCreateOptions) {
 			opts.AttachStdout = true
 			opts.AttachStderr = true

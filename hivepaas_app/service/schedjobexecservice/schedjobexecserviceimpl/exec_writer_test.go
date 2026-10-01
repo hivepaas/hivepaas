@@ -77,3 +77,27 @@ func TestSchedJobExecRunsAGivenCommandIntoAGivenWriter(t *testing.T) {
 	assert.False(t, exec.opts.TTY)
 	assert.Equal(t, "dump", out.String())
 }
+
+// A function's call gives the runtime its request to read.
+func TestSchedJobExecGivesTheCommandItsStdin(t *testing.T) {
+	exec := &fakeExec{output: "out"}
+	svc := &service{containerExecService: exec, commandService: &commandServiceStub{}}
+	setting := &entity.Setting{ID: "j1", Type: base.SettingTypeSchedJob}
+	setting.MustSetData(&entity.SchedJob{JobType: base.SchedJobTypeFunctionInvoke})
+	var out bytes.Buffer
+
+	_, err := svc.SchedJobExec(context.Background(), database.Tx{}, &schedjobexecservice.SchedJobExecReq{
+		TaskExecData:    &queue.TaskExecData{Task: &entity.Task{ID: "t1"}, LogStore: tasklog.NewNullStore()},
+		SchedJobSetting: setting,
+		DestApp:         &entity.App{ID: "a1"},
+		Command:         &entity.CommandTemplate{Command: "hivepaas-runtime invoke"},
+		Stdin:           bytes.NewReader([]byte(`{"method":"GET"}`)),
+		StdoutWriter:    &out,
+	})
+
+	assert.NoError(t, err)
+	assert.Equal(t, []string{"hivepaas-runtime", "invoke"}, exec.opts.Cmd)
+	assert.Equal(t, `{"method":"GET"}`, exec.stdin)
+	assert.False(t, exec.opts.TTY)
+	assert.Equal(t, "out", out.String())
+}

@@ -171,11 +171,20 @@ function View({ children }: PropsWithChildren) {
                             appId,
                         ),
                     },
-                    {
-                        label: "Data Files",
-                        icon: FolderTree,
-                        route: ROUTE.projects.single.apps.single.configuration.dataFiles.$route(projectId, env, appId),
-                    },
+                    // Data files are a database's dumps: a function keeps none.
+                    ...(isFunction
+                        ? []
+                        : [
+                              {
+                                  label: "Data Files",
+                                  icon: FolderTree,
+                                  route: ROUTE.projects.single.apps.single.configuration.dataFiles.$route(
+                                      projectId,
+                                      env,
+                                      appId,
+                                  ),
+                              },
+                          ]),
                 ],
             },
             {

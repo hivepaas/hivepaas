@@ -8,6 +8,7 @@ import { AppFeatureSettingsCommands, AppFeatureSettingsQueries, ProjectAppsQueri
 import { APP_CONFIGURATION_QUERY_OPTIONS } from "~/projects/data/constants";
 import type { AppFeatureSettings } from "~/projects/domain";
 import { ProjectPermissionSubmitButton } from "~/projects/module-shared/components";
+import { isFunctionApp } from "~/projects/module-shared/utils";
 
 import { AppLoader, FormActionBar } from "@application/shared/components";
 import { MODULE_IDS } from "@application/shared/constants";
@@ -65,6 +66,8 @@ export function AppFeatureSettingsRoute() {
         appID: appId,
     });
     const isPreviewApp = Boolean(appData?.data.parentApp);
+    // A preview is built from a repository source: a function has none.
+    const isFunction = appData ? isFunctionApp(appData.data) : false;
 
     const { data, isLoading, error, refetch } = AppFeatureSettingsQueries.useFindOne(
         {
@@ -133,7 +136,7 @@ export function AppFeatureSettingsRoute() {
             defaultValues={data.data}
             onSubmit={handleSubmit}
             readOnly={!canWrite}
-            hidePreviewSettings={isPreviewApp}
+            hidePreviewSettings={isPreviewApp || isFunction}
         >
             <FormActionBar>
                 <ProjectPermissionSubmitButton isPending={isPending} />

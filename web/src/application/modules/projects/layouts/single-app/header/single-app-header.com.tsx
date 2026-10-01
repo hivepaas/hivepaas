@@ -171,7 +171,8 @@ function View({ projectId, env, appId }: Props) {
             route: ROUTE.projects.single.apps.single.terminal.$route(projectId, env, appId),
             label: "Terminal",
         },
-        ...(!isChildApp
+        // A preview is built from a repository source: a function has none.
+        ...(!isChildApp && !isFunctionApp(appData)
             ? [
                   {
                       route: ROUTE.projects.single.apps.single.previewDeployments.$route(projectId, env, appId),

@@ -92,6 +92,8 @@ export type Profile_CreateOneApiKey_Req = ApiRequestBase<{
         delete: boolean;
     };
     expireAt?: Date;
+    /** The owner's capabilities the key may use; none when left out. */
+    capabilities?: string[];
 }>;
 
 export type Profile_CreateOneApiKey_Res = ApiResponseBase<{

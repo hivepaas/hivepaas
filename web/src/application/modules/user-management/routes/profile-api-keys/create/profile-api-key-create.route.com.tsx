@@ -44,6 +44,7 @@ export function ProfileApiKeyCreateRoute() {
                 name: values.name,
                 accessAction: values.accessAction,
                 expireAt: values.expireAt,
+                capabilities: values.allowRevealSecrets ? [CAPABILITY_IDS.SecretReveal] : [],
             },
             {
                 onSuccess: response => {

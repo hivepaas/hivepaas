@@ -13,6 +13,8 @@ export interface ProfileApiKey {
         write: boolean;
         delete: boolean;
     } | null;
+    /** The owner's capabilities the key may use, such as cap::secret::reveal. */
+    capabilities: string[];
     expireAt?: Date;
     status: OpenApiConstant<EProfileApiKeyStatus>;
 }

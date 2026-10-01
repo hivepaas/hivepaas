@@ -8,6 +8,8 @@ export const CreateProfileApiKeyFormSchema = z.object({
         write: z.boolean(),
         delete: z.boolean(),
     }),
+    /** Gives the key the owner's capability to reveal secrets. */
+    allowRevealSecrets: z.boolean().optional().default(false),
     expireAt: z
         .date()
         .refine(

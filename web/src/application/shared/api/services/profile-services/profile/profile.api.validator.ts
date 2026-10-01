@@ -39,6 +39,10 @@ const ProfileApiKeySchema = z.object({
         })
         .nullable()
         .optional(),
+    capabilities: z
+        .array(z.string())
+        .nullish()
+        .transform(value => value ?? []),
     expireAt: z.coerce.date().optional(),
     status: z.string(),
 });
@@ -97,6 +101,7 @@ export class ProfileApiValidator {
                 keyId: apiKey.keyId,
                 updateVer: apiKey.updateVer,
                 accessAction: apiKey.accessAction ?? null,
+                capabilities: apiKey.capabilities,
                 expireAt: apiKey.expireAt,
                 status: apiKey.status,
             })),

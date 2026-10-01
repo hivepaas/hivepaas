@@ -5,6 +5,8 @@ import { type FieldErrors, useController, useForm, useFormState } from "react-ho
 import { useUpdateEffect } from "react-use";
 
 import { InfoBlock, LabelWithInfo } from "@application/shared/components";
+import { CAPABILITY_IDS } from "@application/shared/constants";
+import { useCapability } from "@application/shared/permissions";
 
 import { Checkbox } from "@/components/ui/checkbox";
 import { DateTimePicker } from "@/components/ui/date-time-picker";
@@ -28,6 +30,7 @@ export function CreateProfileApiKeyForm({ formId, onSubmit, onHasChanges }: Prop
         defaultValues: {
             name: "",
             accessAction: { read: true, execute: false, write: false, delete: false },
+            allowRevealSecrets: false,
             expireAt: undefined,
         },
         resolver: zodResolver(CreateProfileApiKeyFormSchema),
@@ -52,6 +55,13 @@ export function CreateProfileApiKeyForm({ formId, onSubmit, onHasChanges }: Prop
         name: "accessAction",
         control,
     });
+
+    const { field: allowRevealSecrets } = useController({
+        name: "allowRevealSecrets",
+        control,
+    });
+    // Only a capability the owner holds may be given to a key.
+    const { hasCapability: canRevealSecrets } = useCapability(CAPABILITY_IDS.SecretReveal);
 
     const {
         field: expireAt,
@@ -192,6 +202,46 @@ export function CreateProfileApiKeyForm({ formId, onSubmit, onHasChanges }: Prop
                         </div>
                         <FieldError errors={[errors.accessAction]} />
                     </InfoBlock>
+
+                    {canRevealSecrets && (
+                        <InfoBlock
+                            title={
+                                <LabelWithInfo
+                                    label="Capabilities"
+                                    content="What of your capabilities the key may use. A key uses none unless given it here."
+                                />
+                            }
+                            titleWidth={220}
+                        >
+                            <div className="flex flex-col gap-2">
+                                <div className="flex items-center gap-2">
+                                    <Checkbox
+                                        id="allowRevealSecrets"
+                                        checked={allowRevealSecrets.value}
+                                        onCheckedChange={checked => {
+                                            allowRevealSecrets.onChange(checked === true);
+                                        }}
+                                    />
+                                    <label
+                                        htmlFor="allowRevealSecrets"
+                                        className="text-sm font-medium leading-none"
+                                    >
+                                        Reveal secrets
+                                    </label>
+                                </div>
+                                <p
+                                    className={cn(
+                                        "text-xs text-muted-foreground",
+                                        PROFILE_API_KEY_FORM_CONTROL_MAX_WIDTH_CLASS,
+                                    )}
+                                >
+                                    Lets the key read passwords, private keys and other secrets in the clear, and mount
+                                    them into apps. Leave it off for a key given to a script or an AI assistant that
+                                    does not need them.
+                                </p>
+                            </div>
+                        </InfoBlock>
+                    )}
 
                     <InfoBlock
                         title={<LabelWithInfo label="Access Expiration" />}

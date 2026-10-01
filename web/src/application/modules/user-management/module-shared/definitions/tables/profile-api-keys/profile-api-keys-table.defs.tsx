@@ -2,6 +2,7 @@ import { Badge, statusClassName } from "@components/ui/badge";
 import type { ColumnDef } from "@tanstack/react-table";
 import { format } from "date-fns";
 
+import { CAPABILITY_IDS } from "@application/shared/constants";
 import type { ProfileApiKey } from "@application/shared/entities/profile";
 import { EProfileApiKeyStatus } from "@application/shared/enums";
 
@@ -42,6 +43,9 @@ const columns: ColumnDef<ProfileApiKey>[] = [
                     {accessAction.execute && <Badge tone="violet">Execute</Badge>}
                     {accessAction.write && <Badge tone="orange">Write</Badge>}
                     {accessAction.delete && <Badge tone="red">Delete</Badge>}
+                    {original.capabilities.includes(CAPABILITY_IDS.SecretReveal) && (
+                        <Badge tone="red">Reveal secrets</Badge>
+                    )}
                 </div>
             );
         },

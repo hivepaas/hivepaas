@@ -17,6 +17,7 @@ import { Copy } from "lucide-react";
 import { useUpdateEffect } from "react-use";
 import { toast } from "sonner";
 
+import { CAPABILITY_IDS } from "@application/shared/constants";
 import { ProfileCommands } from "@application/shared/data/commands";
 
 import { CreateProfileApiKeyForm } from "../form";
@@ -44,6 +45,7 @@ export function CreateProfileApiKeyDialog() {
                 name: values.name,
                 accessAction: values.accessAction,
                 expireAt: values.expireAt,
+                capabilities: values.allowRevealSecrets ? [CAPABILITY_IDS.SecretReveal] : [],
             },
             {
                 onSuccess: response => {

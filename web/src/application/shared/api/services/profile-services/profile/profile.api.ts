@@ -180,11 +180,12 @@ export class ProfileApi extends BaseApi {
         request: Profile_CreateOneApiKey_Req,
         signal?: AbortSignal,
     ): Promise<Result<Profile_CreateOneApiKey_Res, Error>> {
-        const { name, accessAction, expireAt } = request.data;
+        const { name, accessAction, expireAt, capabilities } = request.data;
 
         const json = {
             name,
             accessAction,
+            capabilities: capabilities ?? [],
             expireAt: expireAt ? JsonTransformer.date({ data: expireAt, some: date => date.toISOString() }) : null,
         };
 

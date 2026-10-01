@@ -86,3 +86,43 @@ func (h *Handler) GetEnvLinkSuggestions(ctx *gin.Context) {
 
 	ctx.JSON(http.StatusOK, resp)
 }
+
+// GetEnvSelfSuggestions Suggests the env vars an engine's image reads to set itself up
+// @Summary Suggests the env vars an engine's image reads to set itself up
+// @Description Suggests the env vars an engine's image reads to set itself up, such as
+// @Description POSTGRES_PASSWORD, each a reference to the credentials the app's App Kind publishes
+// @Tags    App settings
+// @Produce json
+// @Id      getAppEnvSelfSuggestions
+// @Param   projectID path string true "project ID"
+// @Param   projectEnv path string true "project env"
+// @Param   appID path string true "app ID"
+// @Param   engine query string false "the engine to suggest for; App Kind's when not given"
+// @Success 200 {object} appsettingsdto.GetEnvSelfSuggestionsResp
+// @Failure 400 {object} hperrors.ErrorInfo
+// @Failure 500 {object} hperrors.ErrorInfo
+// @Router  /projects/{projectID}/{projectEnv}/apps/{appID}/env-vars/self-suggestions [get]
+func (h *Handler) GetEnvSelfSuggestions(ctx *gin.Context) {
+	auth, projectID, projectEnvID, appID, err := h.GetAuth(ctx, base.ActionTypeRead)
+	if err != nil {
+		h.RenderError(ctx, err)
+		return
+	}
+
+	req := appsettingsdto.NewGetEnvSelfSuggestionsReq()
+	req.ProjectID = projectID
+	req.ProjectEnvID = projectEnvID
+	req.AppID = appID
+	if err := h.ParseAndValidateRequest(ctx, req, nil); err != nil {
+		h.RenderError(ctx, err)
+		return
+	}
+
+	resp, err := h.appSettingsUC.GetEnvSelfSuggestions(h.RequestCtx(ctx), auth, req)
+	if err != nil {
+		h.RenderError(ctx, err)
+		return
+	}
+
+	ctx.JSON(http.StatusOK, resp)
+}

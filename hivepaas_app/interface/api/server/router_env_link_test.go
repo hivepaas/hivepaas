@@ -12,4 +12,5 @@ func TestAppEnvVarsHaveLinkRoutes(t *testing.T) {
 	base := "/projects/:projectID/:projectEnv/apps/:appID/env-vars"
 	assert.True(t, routes[http.MethodGet+" "+base+"/link-targets"])
 	assert.True(t, routes[http.MethodGet+" "+base+"/link-suggestions"])
+	assert.True(t, routes[http.MethodGet+" "+base+"/self-suggestions"])
 }

@@ -18846,6 +18846,78 @@
         "tags" : [ "App settings" ]
       }
     },
+    "/projects/{projectID}/{projectEnv}/apps/{appID}/env-vars/self-suggestions" : {
+      "get" : {
+        "description" : "Suggests the env vars an engine's image reads to set itself up, such as\nPOSTGRES_PASSWORD, each a reference to the credentials the app's App Kind publishes",
+        "operationId" : "getAppEnvSelfSuggestions",
+        "parameters" : [ {
+          "description" : "project ID",
+          "in" : "path",
+          "name" : "projectID",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "project env",
+          "in" : "path",
+          "name" : "projectEnv",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "app ID",
+          "in" : "path",
+          "name" : "appID",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "the engine to suggest for; App Kind's when not given",
+          "in" : "query",
+          "name" : "engine",
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/appsettingsdto.GetEnvSelfSuggestionsResp"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "400" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Bad Request"
+          },
+          "500" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Internal Server Error"
+          }
+        },
+        "summary" : "Suggests the env vars an engine's image reads to set itself up",
+        "tags" : [ "App settings" ]
+      }
+    },
     "/projects/{projectID}/{projectEnv}/apps/{appID}/feature-settings" : {
       "get" : {
         "description" : "Gets app feature settings",
@@ -49515,6 +49587,68 @@
         "required" : [ "description", "key", "value" ],
         "type" : "object"
       },
+      "appsettingsdto.EnvSelfEngineResp" : {
+        "properties" : {
+          "category" : {
+            "type" : "string"
+          },
+          "id" : {
+            "type" : "string"
+          },
+          "image" : {
+            "type" : "string"
+          },
+          "initOnly" : {
+            "description" : "InitOnly says the image reads the variables only when it creates its data.",
+            "type" : "boolean"
+          },
+          "title" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "category", "id", "image", "initOnly", "title" ],
+        "type" : "object"
+      },
+      "appsettingsdto.EnvSelfSuggestionsResp" : {
+        "properties" : {
+          "appEngine" : {
+            "description" : "AppEngine is the engine of Engines App Kind names, or empty.",
+            "type" : "string"
+          },
+          "command" : {
+            "description" : "Command is what to run the image with, for an engine that reads no\nvariable, such as Redis.",
+            "type" : "string"
+          },
+          "engine" : {
+            "allOf" : [ {
+              "$ref" : "#/components/schemas/appsettingsdto.EnvSelfEngineResp"
+            } ],
+            "description" : "Engine is the engine suggested for: the one asked, else App Kind's; nil\nwhen neither is one of Engines.",
+            "type" : "object"
+          },
+          "engines" : {
+            "description" : "Engines are those suggestions are made for.",
+            "items" : {
+              "$ref" : "#/components/schemas/appsettingsdto.EnvSelfEngineResp"
+            },
+            "type" : "array"
+          },
+          "vars" : {
+            "items" : {
+              "$ref" : "#/components/schemas/appsettingsdto.EnvLinkVarResp"
+            },
+            "type" : "array"
+          },
+          "warnings" : {
+            "items" : {
+              "type" : "string"
+            },
+            "type" : "array"
+          }
+        },
+        "required" : [ "appEngine", "command", "engine", "engines", "vars", "warnings" ],
+        "type" : "object"
+      },
       "appsettingsdto.EnvVarsResp" : {
         "properties" : {
           "buildtimeEnvVars" : {
@@ -49741,6 +49875,18 @@
         "properties" : {
           "data" : {
             "$ref" : "#/components/schemas/appsettingsdto.EnvLinkSuggestionsResp"
+          },
+          "meta" : {
+            "$ref" : "#/components/schemas/basedto.Meta"
+          }
+        },
+        "required" : [ "data", "meta" ],
+        "type" : "object"
+      },
+      "appsettingsdto.GetEnvSelfSuggestionsResp" : {
+        "properties" : {
+          "data" : {
+            "$ref" : "#/components/schemas/appsettingsdto.EnvSelfSuggestionsResp"
           },
           "meta" : {
             "$ref" : "#/components/schemas/basedto.Meta"

@@ -16,12 +16,14 @@ import (
 const (
 	pathEnvLinkTargets     = "/env-vars/link-targets"
 	pathEnvLinkSuggestions = "/env-vars/link-suggestions"
+	pathEnvSelfSuggestions = "/env-vars/self-suggestions"
 )
 
 // EnvLinkEndpoints are the routes the env link tools use, as method and path
 // under an app, so that the server's tests can find each in its router.
 func EnvLinkEndpoints() []string {
-	return []string{http.MethodGet + " " + pathEnvLinkTargets, http.MethodGet + " " + pathEnvLinkSuggestions}
+	return []string{http.MethodGet + " " + pathEnvLinkTargets, http.MethodGet + " " + pathEnvLinkSuggestions,
+		http.MethodGet + " " + pathEnvSelfSuggestions}
 }
 
 var listEnvLinkTargetsEndpoint = getEndpoint{
@@ -31,6 +33,23 @@ var listEnvLinkTargetsEndpoint = getEndpoint{
 		"engine. get_env_link_suggestions answers the env vars that link to one.",
 	paths:  map[under]string{underApp: pathEnvLinkTargets},
 	answer: func() any { return &appsettingsdto.ListEnvLinkTargetsResp{} },
+}
+
+var getEnvSelfSuggestionsEndpoint = getEndpoint{
+	name: "get_env_self_suggestions", title: "Suggest an engine's own env vars",
+	description: "GET /projects/{project}/{env}/apps/{app}" + pathEnvSelfSuggestions + ". The env vars an " +
+		"engine's official image reads to set itself up - POSTGRES_USER, POSTGRES_PASSWORD, POSTGRES_DB for " +
+		"PostgreSQL - each a reference such as ${HIVEPAAS_PASSWORD} to the credentials the app's own kind " +
+		"settings publish, so they are kept in one place. For an app run from an engine's image by hand; an " +
+		"app from the app store has them. For Redis and Valkey, which read none, a command to run instead. " +
+		"warnings say what the kind settings lack; an engine with initOnly reads them only when it creates " +
+		"its data. Give the vars to plan_update_app_settings, kind env-vars, and a command as deployment's command.",
+	paths: map[under]string{underApp: pathEnvSelfSuggestions},
+	query: &appsettingsdto.GetEnvSelfSuggestionsReq{},
+	params: map[string]string{
+		"engine": "the engine to suggest for, one of data.engines' ids; the app's App Kind engine when not given",
+	},
+	answer: func() any { return &appsettingsdto.GetEnvSelfSuggestionsResp{} },
 }
 
 // ---- get_env_link_suggestions ----

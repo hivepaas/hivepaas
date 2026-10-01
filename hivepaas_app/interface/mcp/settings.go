@@ -111,13 +111,14 @@ type settingsAnswer struct {
 func getAppSettingsTool() Tool {
 	return readTool("get_app_settings", "Read an app's settings",
 		"Reads one kind of an app's settings, as the dashboard's page for it does: env-vars, deployment "+
-			"(its source: image, or repository and branch), routing (the container port, whether the app is "+
-			"exposed, and its domains - HTTP ones, and the TCP ones that reach a database or cache from "+
-			"outside, each with its certificate, TLS passthrough and extraAlpnProtocols), service (replicas, "+
-			"command), network (published ports), resource (CPU and memory), container, storage (mounts), "+
-			"feature, kind (the database or cache it is: engine, version, credentials, sslMode - not its "+
-			"domains, which are routing's) or docker-api. Secrets are masked. Only the kind asked for is read. "+
-			"To connect an app to a database, get_env_link_suggestions answers the env vars.",
+			"(its source: image, or repository and branch; and its command), routing (the container port, "+
+			"whether the app is exposed, and its domains - HTTP ones, and the TCP ones that reach a database "+
+			"or cache from outside, each with its certificate, TLS passthrough and extraAlpnProtocols), "+
+			"service (replicas), network (published ports), resource (CPU and memory), container, storage "+
+			"(mounts), feature, kind (the database or cache it is: engine, version, credentials, sslMode - "+
+			"not its domains, which are routing's) or docker-api. Secrets are masked. Only the kind asked for "+
+			"is read. To connect an app to a database, get_env_link_suggestions answers the env vars; for an "+
+			"engine's image to set itself up, get_env_self_suggestions.",
 		func(ctx context.Context, call *Call, in settingsInput) (settingsAnswer, error) {
 			kind, err := findSettingsKind(in.Kind)
 			if err != nil {

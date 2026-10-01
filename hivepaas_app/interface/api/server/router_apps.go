@@ -83,6 +83,7 @@ func (s *HTTPServer) registerAppRoutes(projectGroup, projectEnvGroup *gin.Router
 		envVarGroup.POST("/compute", appSettingsHandler.BuildEnvVars)
 		envVarGroup.GET("/link-targets", appSettingsHandler.ListEnvLinkTargets)
 		envVarGroup.GET("/link-suggestions", appSettingsHandler.GetEnvLinkSuggestions)
+		envVarGroup.GET("/self-suggestions", appSettingsHandler.GetEnvSelfSuggestions)
 	}
 
 	{ // Backup snapshots of the app

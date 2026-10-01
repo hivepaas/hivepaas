@@ -100,16 +100,40 @@ func pick[T any](what, input, lister string, items []T, name func(T) named) (T, 
 		input, len(exact), what, strings.Join(candidates, ", "))}
 }
 
-// resolveEnv finds a project, then one of its envs.
-func resolveEnv(ctx context.Context, call *Call, project, env string) (*envRef, error) {
+// projectRef is one project, as the API's paths name it.
+type projectRef struct {
+	ProjectID  string
+	ProjectKey string
+}
+
+// path is the project's base path, followed by suffix.
+func (r *projectRef) path(suffix string) string {
+	return "/projects/" + url.PathEscape(r.ProjectID) + suffix
+}
+
+// resolveProject finds a project.
+func resolveProject(ctx context.Context, call *Call, project string) (*projectRef, error) {
+	p, err := pickProject(ctx, call, project)
+	if err != nil {
+		return nil, err
+	}
+	return &projectRef{ProjectID: p.ID, ProjectKey: p.Key}, nil
+}
+
+func pickProject(ctx context.Context, call *Call, project string) (*projectdto.ProjectResp, error) {
 	projects, err := listProjects(ctx, call, "")
 	if err != nil {
 		return nil, err
 	}
-	p, err := pick(argProject, project, "list_projects", slices.DeleteFunc(projects, isNil),
+	return pick(argProject, project, "list_projects", slices.DeleteFunc(projects, isNil),
 		func(p *projectdto.ProjectResp) named {
 			return named{id: p.ID, key: p.Key, name: p.Name}
 		})
+}
+
+// resolveEnv finds a project, then one of its envs.
+func resolveEnv(ctx context.Context, call *Call, project, env string) (*envRef, error) {
+	p, err := pickProject(ctx, call, project)
 	if err != nil {
 		return nil, err
 	}

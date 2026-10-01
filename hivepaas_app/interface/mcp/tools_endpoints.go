@@ -55,7 +55,7 @@ var settingStatuses = statusValues(gofn.Drop(base.AllSettingStatuses, base.Setti
 var projectStatuses = statusValues(gofn.Drop(base.AllProjectStatuses, base.ProjectStatusMissing))
 
 func getEndpoints() []getEndpoint { //nolint:funlen // a table
-	return []getEndpoint{
+	return append([]getEndpoint{
 		{
 			name: "list_projects", title: "List projects",
 			description: "GET /projects. Lists the projects the API key's user can see, each with its envs " +
@@ -178,12 +178,12 @@ func getEndpoints() []getEndpoint { //nolint:funlen // a table
 			paths: map[under]string{underNothing: "/system/tasks", underEnv: "/tasks", underApp: "/tasks"},
 			query: &taskdto.ListTaskReq{},
 			params: pagingParams(map[string]string{
-				paramSearch: "text in the task's type, ignoring case; * matches anything",
-				"type":      "only tasks of these types: " + statusValues(base.AllTaskTypes),
-				paramStatus: "only tasks in these states: " + statusValues(base.AllTaskStatuses),
-				"targetId":  "only the tasks run for these objects, by id: a scheduled job's id for its runs",
-				"fromDate":  "only tasks created on or after this date, YYYY-MM-DD",
-				"toDate":    "only tasks created on or before this date, YYYY-MM-DD",
+				paramSearch:   "text in the task's type, ignoring case; * matches anything",
+				"type":        "only tasks of these types: " + statusValues(base.AllTaskTypes),
+				paramStatus:   "only tasks in these states: " + statusValues(base.AllTaskStatuses),
+				"targetId":    "only the tasks run for these objects, by id: a scheduled job's id for its runs",
+				paramFromDate: "only tasks created on or after this date, YYYY-MM-DD",
+				paramToDate:   "only tasks created on or before this date, YYYY-MM-DD",
 				"scopeOnly": "true for the tasks of the scope itself only, not those of what is in it - an " +
 					"env's own, not its apps'",
 				"projectId":    "with no project given: only the tasks of the project of this id",
@@ -217,11 +217,12 @@ func getEndpoints() []getEndpoint { //nolint:funlen // a table
 		},
 		{
 			name: "list_volumes", title: "List volumes",
-			description: "GET /projects/{project}/{env}/cluster-volumes, or /cluster/volumes when no project is " +
+			description: "GET /projects/{project}[/{env}]/cluster-volumes, or /cluster/volumes when no project is " +
 				"given: the swarm volumes an env's apps may use - each with its id, name, driver, the node it is " +
 				"pinned to, and how many containers use it (refCount). A template parameter of type volume, such " +
 				"as a database's dataVolume, takes one's id.",
-			paths: map[under]string{underNothing: "/cluster/volumes", underEnv: "/cluster-volumes"},
+			paths: map[under]string{underNothing: "/cluster/volumes", underProject: "/cluster-volumes",
+				underEnv: "/cluster-volumes"},
 			query: &volumedto.ListVolumeReq{},
 			params: pagingParams(map[string]string{
 				paramSearch: descSearchName,
@@ -303,5 +304,5 @@ func getEndpoints() []getEndpoint { //nolint:funlen // a table
 			answer: func() any { return &schedjobdto.ListSchedJobResp{} },
 		},
 		listEnvLinkTargetsEndpoint,
-	}
+	}, projectEndpoints()...)
 }

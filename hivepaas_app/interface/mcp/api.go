@@ -55,6 +55,8 @@ const (
 	argName       = "name"
 	argKind       = "kind"
 	paramSearch   = "search"
+	paramFromDate = "fromDate"
+	paramToDate   = "toDate"
 	paramStatus   = "status"
 	paramGetStats = "getStats"
 	typeString    = "string"
@@ -214,18 +216,24 @@ type under int
 
 const (
 	underNothing under = iota
+	underProject
 	underEnv
 	underApp
 )
 
+const descProjectArg = "the project's key, name or id; list_projects lists them"
+
 // scopeArgs are the tool arguments that name what an endpoint is under.
 var scopeArgs = map[under][]scopeArg{
+	underProject: {
+		{argProject, descProjectArg},
+	},
 	underEnv: {
-		{argProject, "the project's key, name or id; list_projects lists them"},
+		{argProject, descProjectArg},
 		{argEnv, "the env's name, such as production; list_projects lists each project's envs"},
 	},
 	underApp: {
-		{argProject, "the project's key, name or id; list_projects lists them"},
+		{argProject, descProjectArg},
 		{argEnv, "the env's name, such as production; list_projects lists each project's envs"},
 		{argApp, "the app's key, name or id; list_apps lists them"},
 	},
@@ -251,6 +259,12 @@ type place struct {
 func resolvePlace(ctx context.Context, call *Call, u under, args map[string]any) (*place, error) {
 	str := func(name string) string { s, _ := args[name].(string); return strings.TrimSpace(s) }
 	switch u {
+	case underProject:
+		ref, err := resolveProject(ctx, call, str(argProject))
+		if err != nil {
+			return nil, err
+		}
+		return &place{path: ref.path("")}, nil
 	case underEnv:
 		ref, err := resolveEnv(ctx, call, str(argProject), str(argEnv))
 		if err != nil {

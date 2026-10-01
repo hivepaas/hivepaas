@@ -2,6 +2,7 @@ package mcp
 
 import (
 	"encoding/json"
+	"fmt"
 	"reflect"
 	"testing"
 	"time"
@@ -96,7 +97,20 @@ var putOnly = map[string]string{
 // Every field a PUT takes is one its GET answers, so that a plan changing one
 // field sends the others as they are.
 func TestEverySettingsKindsPutFieldIsAnswered(t *testing.T) {
+	type pair struct {
+		name              string
+		newGet, newUpdate func() any
+	}
+	var pairs []pair
 	for _, kind := range appSettingsKinds {
+		pairs = append(pairs, pair{kind.name, kind.newGet, kind.newUpdate})
+	}
+	for _, kind := range projectSettingsKinds {
+		for u, newUpdate := range kind.newUpdate {
+			pairs = append(pairs, pair{fmt.Sprintf("%s (under %d)", kind.name, u), kind.newGet[u], newUpdate})
+		}
+	}
+	for _, kind := range pairs {
 		full := kind.newUpdate()
 		fill(reflect.ValueOf(full), 0)
 		fullRaw, err := json.Marshal(full)

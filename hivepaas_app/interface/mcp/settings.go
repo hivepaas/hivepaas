@@ -222,40 +222,66 @@ func planUpdateAppSettingsTool() Tool {
 func makeSettingsPlan(ref *appRef, kind *settingsKind, current, changes map[string]any) (
 	settingsPlan, *storedPlan, error) {
 	out := settingsPlan{App: ref.AppKey, Project: ref.ProjectKey, Env: ref.Env, Kind: kind.name}
+	diff, err := diffSettings(kind.name, kind.newUpdate, current, changes)
+	if err != nil {
+		return settingsPlan{}, nil, err
+	}
+	out.Changes, out.Ignored = diff.changes, diff.ignored
+	if diff.body == nil {
+		return out, nil, nil
+	}
+	return out, &storedPlan{Method: http.MethodPut, Path: ref.path(kind.path), Body: diff.body,
+		Summary: fmt.Sprintf("change %s settings of %s in %s/%s: %s", kind.name, ref.AppKey, ref.ProjectKey,
+			ref.Env, describePaths(diff.paths()))}, nil
+}
+
+// settingsDiff is what a settings change would do: each value that changes,
+// the fields of the patch the PUT does not take, and the PUT's body - nil when
+// nothing changes.
+type settingsDiff struct {
+	changes []fieldChange
+	ignored []string
+	body    []byte
+}
+
+func (d settingsDiff) paths() []string {
+	paths := make([]string, 0, len(d.changes))
+	for _, change := range d.changes {
+		paths = append(paths, change.Path)
+	}
+	return paths
+}
+
+// diffSettings patches settings read as current, and puts both through the
+// PUT's request type: what the PUT does not take falls away, and what is left
+// is compared.
+func diffSettings(kindName string, newUpdate func() any, current, changes map[string]any) (settingsDiff, error) {
 	currentRaw, err := json.Marshal(current)
 	if err != nil {
-		return settingsPlan{}, nil, fmt.Errorf("mcp: encoding a plan: %w", err)
+		return settingsDiff{}, fmt.Errorf("mcp: encoding a plan: %w", err)
 	}
-	before, err := through(currentRaw, kind.newUpdate())
+	before, err := through(currentRaw, newUpdate())
 	if err != nil {
-		return settingsPlan{}, nil, fmt.Errorf("mcp: %s settings do not fit their own update: %w", kind.name, err)
+		return settingsDiff{}, fmt.Errorf("mcp: %s settings do not fit their own update: %w", kindName, err)
 	}
 	patchedRaw, err := json.Marshal(mergePatch(current, changes))
 	if err != nil {
-		return settingsPlan{}, nil, fmt.Errorf("mcp: encoding a plan: %w", err)
+		return settingsDiff{}, fmt.Errorf("mcp: encoding a plan: %w", err)
 	}
-	after, err := through(patchedRaw, kind.newUpdate())
+	after, err := through(patchedRaw, newUpdate())
 	if err != nil {
-		return settingsPlan{}, nil, &InputError{Message: fmt.Sprintf(
-			"the changes do not fit the %s settings: %v", kind.name, err)}
+		return settingsDiff{}, &InputError{Message: fmt.Sprintf(
+			"the changes do not fit the %s settings: %v", kindName, err)}
 	}
-	out.Changes = diffFields(before, after)
-	out.Ignored = droppedFields(changes, after)
-	if len(out.Changes) == 0 {
-		out.Changes = []fieldChange{}
-		return out, nil, nil
+	diff := settingsDiff{changes: diffFields(before, after), ignored: droppedFields(changes, after)}
+	if len(diff.changes) == 0 {
+		diff.changes = []fieldChange{}
+		return diff, nil
 	}
-	body, err := json.Marshal(after)
-	if err != nil {
-		return settingsPlan{}, nil, fmt.Errorf("mcp: encoding a plan: %w", err)
+	if diff.body, err = json.Marshal(after); err != nil {
+		return settingsDiff{}, fmt.Errorf("mcp: encoding a plan: %w", err)
 	}
-	paths := make([]string, 0, len(out.Changes))
-	for _, change := range out.Changes {
-		paths = append(paths, change.Path)
-	}
-	return out, &storedPlan{Method: http.MethodPut, Path: ref.path(kind.path), Body: body,
-		Summary: fmt.Sprintf("change %s settings of %s in %s/%s: %s", kind.name, ref.AppKey, ref.ProjectKey,
-			ref.Env, describePaths(paths))}, nil
+	return diff, nil
 }
 
 // settingsRefused words the refusal of settings changed since the plan: every

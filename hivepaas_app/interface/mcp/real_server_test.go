@@ -67,6 +67,12 @@ func TestAgainstARealServer(t *testing.T) {
 		{"search_app_logs", merge(inApp, map[string]any{"limit": 20}), true}, // refused when logging is off
 		{"get_app_settings", merge(inApp, map[string]any{"kind": "env-vars"}), false},
 		{"list_env_link_targets", inApp, false},
+		{"get_project_settings", map[string]any{"project": app[0], "kind": "env-vars"}, false},
+		{"get_project_settings", merge(inEnv, map[string]any{"kind": "env-vars"}), false},
+		{"list_ssl_certs", inEnv, false},
+		{"list_secrets", inEnv, false},
+		{"list_audit_logs", merge(inEnv, map[string]any{"pageLimit": 5}), false},
+		{"list_backup_snapshots", inEnv, false},
 		{"list_attention", nil, false},
 		{"list_tasks", merge(inEnv, map[string]any{"pageLimit": 5, "sort": "-createdAt"}), false},
 		{"list_nodes", nil, false},

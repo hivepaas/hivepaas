@@ -9,6 +9,7 @@ func Tools() []Tool {
 		getTaskLogsTool(),
 		getAppSettingsTool(),
 		getEnvLinkSuggestionsTool(),
+		getProjectSettingsTool(),
 		preflightInstallTool(),
 		explainScheduleTool(),
 		planRestartAppTool(),
@@ -17,6 +18,7 @@ func Tools() []Tool {
 		planCancelDeploymentTool(),
 		planInstallAppTool(),
 		planUpdateAppSettingsTool(),
+		planUpdateProjectSettingsTool(),
 		planCreateSchedJobTool(),
 		applyPlanTool(),
 	)

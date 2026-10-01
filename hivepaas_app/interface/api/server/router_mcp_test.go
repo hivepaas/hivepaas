@@ -22,3 +22,31 @@ func TestMCPSettingsKindsAreRoutes(t *testing.T) {
 		assert.True(t, routes[method+" "+app+path], "missing route %s %s", method, app+path)
 	}
 }
+
+// The project and env read tools' endpoints are routes, under a project and
+// under an env.
+func TestMCPProjectEndpointsAreRoutes(t *testing.T) {
+	routes := projectRoutes(t)
+	projectPaths, envPaths := mcp.ProjectEndpoints()
+	for _, path := range projectPaths {
+		assert.True(t, routes["GET /projects/:projectID"+path], "missing route GET %s under a project", path)
+	}
+	for _, path := range envPaths {
+		assert.True(t, routes["GET /projects/:projectID/:projectEnv"+path], "missing route GET %s under an env", path)
+	}
+}
+
+// The project settings kinds are routes, under a project and under an env.
+func TestMCPProjectSettingsKindsAreRoutes(t *testing.T) {
+	routes := projectRoutes(t)
+	projectRoutes, envRoutes := mcp.ProjectSettingsEndpoints()
+	for _, endpoint := range projectRoutes {
+		method, path, _ := strings.Cut(endpoint, " ")
+		assert.True(t, routes[method+" /projects/:projectID"+path], "missing route %s under a project", endpoint)
+	}
+	for _, endpoint := range envRoutes {
+		method, path, _ := strings.Cut(endpoint, " ")
+		assert.True(t, routes[method+" /projects/:projectID/:projectEnv"+path], "missing route %s under an env",
+			endpoint)
+	}
+}

@@ -1,0 +1,74 @@
+syntax = "proto3";
+
+package agent;
+
+option go_package = "github.com/hivepaas/hivepaas/hivepaas_app/interface/agent/proto;agentproto";
+
+import "image_build.proto";
+
+service FunctionService {
+  // FunctionTestRun calls a function once on the agent's node: its libraries'
+  // image built or found there, its code and the request in a throwaway
+  // container. See service/functionservice/functiontest.
+  rpc FunctionTestRun(FunctionTestRunReq) returns (FunctionTestRunResp);
+}
+
+message FunctionFile {
+  string path = 1;
+  string content = 2;
+}
+
+// FunctionValues are the values of one query parameter or header.
+message FunctionValues {
+  repeated string values = 1;
+}
+
+// FunctionSource is what a test run takes of the function's settings.
+message FunctionSource {
+  string runtime = 1;
+  string contract = 2;
+  string entrypoint_file = 3;
+  string entrypoint_handler = 4;
+  repeated string system_packages = 5;
+  int64 timeout_ms = 6;
+  int64 max_concurrency = 7;
+  int64 max_body_size = 8;
+}
+
+message FunctionRequest {
+  string method = 1;
+  string path = 2;
+  map<string, FunctionValues> query = 3;
+  map<string, FunctionValues> headers = 4;
+  bytes body = 5;
+}
+
+message FunctionTestRunReq {
+  FunctionSource source = 1;
+  repeated FunctionFile files = 2;
+  FunctionRequest request = 3;
+  map<string, string> images = 4;
+  ImageBuildInputs inputs = 5;
+  ImageBuildSettings build_settings = 6;  // unset when the app has none
+  repeated string env = 7;
+  string network = 8;
+  int64 nano_cpus = 9;
+  int64 memory_bytes = 10;
+}
+
+message FunctionTestRunResp {
+  string outcome = 1;
+  int32 status = 2;
+  map<string, FunctionValues> headers = 3;
+  bytes body = 4;
+  bool body_truncated = 5;
+  string request_id = 6;
+  double duration_ms = 7;
+  string logs = 8;
+  bool logs_truncated = 9;
+  string error = 10;
+  int64 exit_code = 11;
+  bool libraries_built = 12;
+  string libraries_log = 13;
+  repeated FunctionFile lock_files = 14;
+}

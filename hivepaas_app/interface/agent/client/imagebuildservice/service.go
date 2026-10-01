@@ -10,6 +10,7 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 
+	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/interface/agent/client"
 	agentproto "github.com/hivepaas/hivepaas/hivepaas_app/interface/agent/proto"
@@ -85,28 +86,7 @@ func (c *grpcImageBuildServiceClient) ImageBuild(
 		}
 	}
 
-	var protoBuildSettings *agentproto.ImageBuildSettings
-	//nolint:gosec
-	if req.ImageBuildSettings != nil {
-		protoBuildSettings = &agentproto.ImageBuildSettings{
-			NoCache:   req.ImageBuildSettings.NoCache,
-			NoVerbose: req.ImageBuildSettings.NoVerbose,
-			Workers: &agentproto.ImageBuildWorkerSettings{
-				NodeIds:        req.ImageBuildSettings.Workers.NodeIDs,
-				NodeLabels:     req.ImageBuildSettings.Workers.NodeLabels,
-				MaxParallelism: uint32(req.ImageBuildSettings.Workers.MaxParallelism),
-			},
-			Resources: &agentproto.ImageBuildResourceSettings{
-				Cpus:    uint32(req.ImageBuildSettings.Resources.CPUs),
-				Mem:     uint64(req.ImageBuildSettings.Resources.Mem),
-				MemSwap: uint64(req.ImageBuildSettings.Resources.MemSwap),
-				ShmSize: uint64(req.ImageBuildSettings.Resources.ShmSize),
-			},
-			Sources: &agentproto.ImageBuildSourceSettings{
-				RepoCache: req.ImageBuildSettings.Sources.RepoCache,
-			},
-		}
-	}
+	protoBuildSettings := BuildSettingsToProto(req.ImageBuildSettings)
 
 	appID := req.AppID
 	if appID == "" && req.App != nil {
@@ -123,7 +103,7 @@ func (c *grpcImageBuildServiceClient) ImageBuild(
 		ImageBuildSettings: protoBuildSettings,
 		NoCache:            req.NoCache,
 		BuildId:            req.BuildID,
-		Inputs:             inputsToProto(req.Inputs),
+		Inputs:             InputsToProto(req.Inputs),
 	}
 
 	stream, err := c.protoClient.ImageBuildFromSource(authCtx)
@@ -158,7 +138,35 @@ func (c *grpcImageBuildServiceClient) ImageBuild(
 	return respDTO, nil
 }
 
-func inputsToProto(inputs *imagebuildservice.BuildInputs) *agentproto.ImageBuildInputs {
+// BuildSettingsToProto is an app's build settings as the agent takes them, nil
+// for none.
+func BuildSettingsToProto(settings *entity.ImageBuildSettings) *agentproto.ImageBuildSettings {
+	if settings == nil {
+		return nil
+	}
+	//nolint:gosec
+	return &agentproto.ImageBuildSettings{
+		NoCache:   settings.NoCache,
+		NoVerbose: settings.NoVerbose,
+		Workers: &agentproto.ImageBuildWorkerSettings{
+			NodeIds:        settings.Workers.NodeIDs,
+			NodeLabels:     settings.Workers.NodeLabels,
+			MaxParallelism: uint32(settings.Workers.MaxParallelism),
+		},
+		Resources: &agentproto.ImageBuildResourceSettings{
+			Cpus:    uint32(settings.Resources.CPUs),
+			Mem:     uint64(settings.Resources.Mem),
+			MemSwap: uint64(settings.Resources.MemSwap),
+			ShmSize: uint64(settings.Resources.ShmSize),
+		},
+		Sources: &agentproto.ImageBuildSourceSettings{
+			RepoCache: settings.Sources.RepoCache,
+		},
+	}
+}
+
+// InputsToProto is what the app resolved for a build, as the agent takes it.
+func InputsToProto(inputs *imagebuildservice.BuildInputs) *agentproto.ImageBuildInputs {
 	out := &agentproto.ImageBuildInputs{
 		EnvVars:       make(map[string]string, len(inputs.EnvVars)),
 		SecretEnvVars: inputs.SecretEnvVars,

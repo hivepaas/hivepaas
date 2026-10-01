@@ -1,0 +1,158 @@
+package functionservice
+
+import (
+	"context"
+	"net"
+	"strings"
+	"testing"
+	"time"
+
+	"github.com/moby/moby/api/types/registry"
+	"github.com/stretchr/testify/assert"
+	"google.golang.org/grpc"
+
+	"github.com/hivepaas/hivepaas/hivepaas_app/base"
+	"github.com/hivepaas/hivepaas/hivepaas_app/config"
+	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
+	agentproto "github.com/hivepaas/hivepaas/hivepaas_app/interface/agent/proto"
+	serverfunction "github.com/hivepaas/hivepaas/hivepaas_app/interface/agent/server/functionservice"
+	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/logging/mocks"
+	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/timeutil"
+	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/unit"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/functionservice/functiontest"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/imagebuildservice"
+	"github.com/hivepaas/hivepaas/hivepaas_app/usecaseagent/functionagentuc"
+)
+
+// fakeRunner is the agent's node: it keeps the run it was asked for and
+// answers what the test says.
+type fakeRunner struct {
+	got  *functiontest.RunReq
+	resp *functiontest.RunResp
+	err  error
+}
+
+func (f *fakeRunner) Run(_ context.Context, req *functiontest.RunReq) (*functiontest.RunResp, error) {
+	f.got = req
+	return f.resp, f.err
+}
+
+type agentFunctions struct {
+	agentproto.UnimplementedFunctionServiceServer
+	uc *functionagentuc.UC
+}
+
+func (a *agentFunctions) FunctionTestRun(
+	ctx context.Context, req *agentproto.FunctionTestRunReq,
+) (*agentproto.FunctionTestRunResp, error) {
+	return serverfunction.FunctionTestRun(ctx, a.uc, req)
+}
+
+func startAgent(t *testing.T, runner *fakeRunner) FunctionServiceClient {
+	t.Helper()
+	config.SetCurrent(&config.Config{})
+	t.Cleanup(func() { config.SetCurrent(nil) })
+
+	listener, err := net.Listen("tcp", "127.0.0.1:0")
+	if err != nil {
+		t.Fatal(err)
+	}
+	server := grpc.NewServer()
+	agentproto.RegisterFunctionServiceServer(server, &agentFunctions{
+		uc: functionagentuc.New(&mocks.Logger{}, nil, nil).WithRunner(runner),
+	})
+	go func() { _ = server.Serve(listener) }()
+	t.Cleanup(server.Stop)
+
+	c, err := NewFunctionServiceClient(listener.Addr().String())
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { _ = c.Close() })
+	return c
+}
+
+func fullRunReq() *functiontest.RunReq {
+	value := "production"
+	return &functiontest.RunReq{
+		Source: &entity.DeploymentFunctionSource{
+			Runtime: base.FunctionRuntimeNode24, Contract: base.FunctionContractV1,
+			Entrypoint:     entity.FunctionEntrypoint{File: "src/index.js", Handler: "handler"},
+			SystemPackages: []string{"ffmpeg", "libpq5=15.8-0+deb13u1"},
+			Timeout:        timeutil.Duration(45 * time.Second),
+			MaxConcurrency: 4,
+			MaxBodySize:    2 * unit.MB,
+		},
+		Files: []*entity.FunctionFile{{Path: "src/index.js", Content: "export const handler = () => 1"},
+			{Path: "package.json", Content: "{}"}},
+		Request: &functiontest.Request{
+			Method: "PUT", Path: "/items/7", Query: map[string][]string{"tag": {"a", "b"}},
+			Headers: map[string][]string{"content-type": {"application/json"}}, Body: []byte{0, 1, 2, 255},
+		},
+		Images: map[string]string{"node24": "ghcr.io/hivepaas/function-runtime-node24:1.0.0@sha256:x"},
+		Inputs: &imagebuildservice.BuildInputs{
+			EnvVars:       map[string]*string{"NODE_ENV": &value},
+			SecretEnvVars: map[string]string{"NPM_TOKEN": "t0ken"},
+			RegistryAuths: map[string]registry.AuthConfig{
+				"registry.example.com": {ServerAddress: "registry.example.com", Username: "u", Password: "p"},
+			},
+			Secrets: []string{"t0ken", "p"},
+		},
+		BuildSettings: &entity.ImageBuildSettings{NoCache: true, Resources: entity.ImageBuildResourceSettings{
+			CPUs: 2, Mem: 2 * unit.GB}},
+		Env:         []string{"GREETING=hello", "DATABASE_URL=postgres://db/app"},
+		Network:     "shop_dev_net",
+		NanoCPUs:    500_000_000,
+		MemoryBytes: 256 << 20,
+	}
+}
+
+func fullRunResp() *functiontest.RunResp {
+	return &functiontest.RunResp{
+		Outcome: functiontest.OutcomeOK, Status: 201,
+		Headers: map[string][]string{"x-request-id": {"req-1"}, "set-cookie": {"a=1", "b=2"}},
+		Body:    []byte(`{"id":7}`), BodyTruncated: true, RequestID: "req-1", DurationMs: 12.5,
+		Logs: "line 1\nline 2\n", LogsTruncated: true, Error: "warning\n", ExitCode: 0,
+		LibrariesBuilt: true, LibrariesLog: "#5 DONE 1.2s\n",
+		LockFiles: []*entity.FunctionFile{{Path: "package-lock.json", Content: `{"lockfileVersion": 3}`}},
+	}
+}
+
+// A test run on another node is the same run there: everything the app sends
+// reaches the agent's runner, and everything it answers comes back.
+func TestATestRunCrossesToTheAgentAndBack(t *testing.T) {
+	runner := &fakeRunner{resp: fullRunResp()}
+	c := startAgent(t, runner)
+
+	resp, err := c.TestRun(context.Background(), fullRunReq())
+
+	assert.NoError(t, err)
+	assert.Equal(t, fullRunReq(), runner.got)
+	assert.Equal(t, fullRunResp(), resp)
+}
+
+// What a run brings back may exceed gRPC's usual 4 MB: a body and logs of 1 MB
+// each, and lock files.
+func TestALargeAnswerComesBack(t *testing.T) {
+	big := fullRunResp()
+	big.Body = []byte(strings.Repeat("b", int(unit.MB)))
+	big.Logs = strings.Repeat("l", int(unit.MB))
+	big.LockFiles = []*entity.FunctionFile{{Path: "go.mod", Content: strings.Repeat("m", int(unit.MB))},
+		{Path: "go.sum", Content: strings.Repeat("s", int(unit.MB))}}
+	c := startAgent(t, &fakeRunner{resp: big})
+
+	resp, err := c.TestRun(context.Background(), fullRunReq())
+
+	assert.NoError(t, err)
+	assert.Len(t, resp.Body, int(unit.MB))
+	assert.Len(t, resp.LockFiles, 2)
+}
+
+func TestARunThatCannotBeMadeIsAnError(t *testing.T) {
+	c := startAgent(t, &fakeRunner{err: hperrors.Wrap(hperrors.ErrFunctionRuntimeUnavailable)})
+
+	_, err := c.TestRun(context.Background(), fullRunReq())
+
+	assert.Error(t, err)
+}

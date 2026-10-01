@@ -40,34 +40,7 @@ func ImageBuildFromSource(
 		}
 	}
 
-	var buildSettings *entity.ImageBuildSettings
-	//nolint:gosec
-	if bs := req.GetImageBuildSettings(); bs != nil {
-		buildSettings = &entity.ImageBuildSettings{
-			NoCache:   bs.GetNoCache(),
-			NoVerbose: bs.GetNoVerbose(),
-		}
-		if bs.GetWorkers() != nil {
-			buildSettings.Workers = entity.ImageBuildWorkerSettings{
-				NodeIDs:        bs.GetWorkers().GetNodeIds(),
-				NodeLabels:     bs.GetWorkers().GetNodeLabels(),
-				MaxParallelism: int(bs.GetWorkers().GetMaxParallelism()),
-			}
-		}
-		if bs.GetResources() != nil {
-			buildSettings.Resources = entity.ImageBuildResourceSettings{
-				CPUs:    uint(bs.GetResources().GetCpus()),
-				Mem:     unit.DataSize(bs.GetResources().GetMem()),
-				MemSwap: unit.DataSize(bs.GetResources().GetMemSwap()),
-				ShmSize: unit.DataSize(bs.GetResources().GetShmSize()),
-			}
-		}
-		if bs.GetSources() != nil {
-			buildSettings.Sources = entity.ImageBuildSourceSettings{
-				RepoCache: bs.GetSources().GetRepoCache(),
-			}
-		}
-	}
+	buildSettings := BuildSettingsFromProto(req.GetImageBuildSettings())
 
 	dtoReq := &imagebuildagentdto.ImageBuildReq{
 		TaskID: req.GetTaskId(),
@@ -80,7 +53,7 @@ func ImageBuildFromSource(
 			ImageBuildSettings: buildSettings,
 			NoCache:            req.GetNoCache(),
 			BuildID:            req.GetBuildId(),
-			Inputs:             inputsFromProto(req.GetInputs()),
+			Inputs:             InputsFromProto(req.GetInputs()),
 		},
 		SendLog: func(frames []*tasklog.LogFrame) error {
 			for _, frame := range frames {
@@ -122,9 +95,44 @@ func ImageBuildFromSource(
 	return nil
 }
 
-// inputsFromProto is what the app resolved for the build. A request without it
+// BuildSettingsFromProto is an app's build settings as the agent was given
+// them, nil for none.
+//
+//nolint:gosec // the sizes are what the app sent, from settings of the same types
+func BuildSettingsFromProto(bs *agentproto.ImageBuildSettings) *entity.ImageBuildSettings {
+	if bs == nil {
+		return nil
+	}
+	buildSettings := &entity.ImageBuildSettings{
+		NoCache:   bs.GetNoCache(),
+		NoVerbose: bs.GetNoVerbose(),
+	}
+	if bs.GetWorkers() != nil {
+		buildSettings.Workers = entity.ImageBuildWorkerSettings{
+			NodeIDs:        bs.GetWorkers().GetNodeIds(),
+			NodeLabels:     bs.GetWorkers().GetNodeLabels(),
+			MaxParallelism: int(bs.GetWorkers().GetMaxParallelism()),
+		}
+	}
+	if bs.GetResources() != nil {
+		buildSettings.Resources = entity.ImageBuildResourceSettings{
+			CPUs:    uint(bs.GetResources().GetCpus()),
+			Mem:     unit.DataSize(bs.GetResources().GetMem()),
+			MemSwap: unit.DataSize(bs.GetResources().GetMemSwap()),
+			ShmSize: unit.DataSize(bs.GetResources().GetShmSize()),
+		}
+	}
+	if bs.GetSources() != nil {
+		buildSettings.Sources = entity.ImageBuildSourceSettings{
+			RepoCache: bs.GetSources().GetRepoCache(),
+		}
+	}
+	return buildSettings
+}
+
+// InputsFromProto is what the app resolved for a build. A request without it
 // stays without it, and the agent refuses the build.
-func inputsFromProto(in *agentproto.ImageBuildInputs) *imagebuildservice.BuildInputs {
+func InputsFromProto(in *agentproto.ImageBuildInputs) *imagebuildservice.BuildInputs {
 	if in == nil {
 		return nil
 	}

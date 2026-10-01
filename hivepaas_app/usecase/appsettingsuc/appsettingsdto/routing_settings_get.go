@@ -57,6 +57,8 @@ type DomainResp struct {
 	SSLCert        *sslcertdto.SSLCertResp `json:"sslCert,omitempty"`
 	TLSPassthrough bool                    `json:"tlsPassthrough,omitempty"`
 
+	ExtraALPNProtocols []string `json:"extraAlpnProtocols,omitempty"`
+
 	// HTTP (layer 7) configuration
 	DomainRedirect       string                        `json:"domainRedirect,omitempty"`
 	ForceHttps           bool                          `json:"forceHttps,omitempty"`

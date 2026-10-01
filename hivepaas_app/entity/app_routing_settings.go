@@ -39,6 +39,10 @@ type AppDomain struct {
 	ContainerPort  int                  `json:"containerPort,omitempty"`
 	TLSPassthrough bool                 `json:"tlsPassthrough,omitempty"`
 	SSLCert        ObjectID             `json:"sslCert,omitzero"`
+	// ExtraALPNProtocols are protocols a TCP domain ending TLS accepts in the
+	// handshake beyond those HivePaaS lists for every such domain - for a client
+	// that offers one HivePaaS does not know of, and is refused without it.
+	ExtraALPNProtocols []string `json:"extraAlpnProtocols,omitempty"`
 
 	// HTTP (layer 7) configuration
 	DomainRedirect       string                    `json:"domainRedirect,omitempty"`

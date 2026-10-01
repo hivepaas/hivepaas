@@ -49305,6 +49305,13 @@
           "enabled" : {
             "type" : "boolean"
           },
+          "extraAlpnProtocols" : {
+            "description" : "ExtraALPNProtocols apply to a TCP domain ending TLS, and are dropped\nfrom any other.",
+            "items" : {
+              "type" : "string"
+            },
+            "type" : "array"
+          },
           "forceHttps" : {
             "type" : "boolean"
           },
@@ -49339,7 +49346,7 @@
             "$ref" : "#/components/schemas/appsettingsdto.HTTPWebsocketConfigReq"
           }
         },
-        "required" : [ "basicAuth", "circuitBreakerConfig", "clientConfig", "compressionConfig", "containerPort", "domain", "domainRedirect", "enabled", "forceHttps", "headerConfig", "lbConfig", "pathRewriteConfig", "paths", "protocol", "rateLimitConfig", "sslCert", "tlsPassthrough", "websocketConfig" ],
+        "required" : [ "basicAuth", "circuitBreakerConfig", "clientConfig", "compressionConfig", "containerPort", "domain", "domainRedirect", "enabled", "extraAlpnProtocols", "forceHttps", "headerConfig", "lbConfig", "pathRewriteConfig", "paths", "protocol", "rateLimitConfig", "sslCert", "tlsPassthrough", "websocketConfig" ],
         "type" : "object"
       },
       "appsettingsdto.DomainResp" : {
@@ -49368,6 +49375,12 @@
           },
           "enabled" : {
             "type" : "boolean"
+          },
+          "extraAlpnProtocols" : {
+            "items" : {
+              "type" : "string"
+            },
+            "type" : "array"
           },
           "forceHttps" : {
             "type" : "boolean"
@@ -49403,7 +49416,7 @@
             "$ref" : "#/components/schemas/appsettingsdto.HTTPWebsocketConfigResp"
           }
         },
-        "required" : [ "basicAuth", "circuitBreakerConfig", "clientConfig", "compressionConfig", "containerPort", "domain", "domainRedirect", "enabled", "forceHttps", "headerConfig", "lbConfig", "pathRewriteConfig", "paths", "protocol", "rateLimitConfig", "sslCert", "tlsPassthrough", "websocketConfig" ],
+        "required" : [ "basicAuth", "circuitBreakerConfig", "clientConfig", "compressionConfig", "containerPort", "domain", "domainRedirect", "enabled", "extraAlpnProtocols", "forceHttps", "headerConfig", "lbConfig", "pathRewriteConfig", "paths", "protocol", "rateLimitConfig", "sslCert", "tlsPassthrough", "websocketConfig" ],
         "type" : "object"
       },
       "appsettingsdto.EndpointSpec" : {

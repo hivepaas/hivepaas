@@ -194,7 +194,7 @@ func (s *service) collectDomainConfig(
 			if s.addTLSCertificate(traefikConfig, domain.SSLCert.ID) {
 				data.hasFileConfig = true
 			}
-			optionsName := s.addTCPTLSOptions(traefikConfig, appKey)
+			optionsName := s.addTCPTLSOptions(traefikConfig, appKey, domainIndex, domain.ExtraALPNProtocols)
 			labels[fmt.Sprintf("traefik.tcp.routers.%s.tls.options", routerName)] = optionsName + "@file"
 			data.hasFileConfig = true
 		}
@@ -785,26 +785,43 @@ func (s *service) addTLSCertificate(
 }
 
 // tcpTLSALPNProtocols are the protocols a TCP router ending TLS accepts in the
-// handshake: Traefik's defaults, and PostgreSQL's. libpq 17 and later ask for
-// "postgresql", and give up on a server that picks none of what they offered -
-// which Traefik's default options do, as they do not list it.
-var tcpTLSALPNProtocols = []string{"postgresql", "h2", "http/1.1", "acme-tls/1"}
+// handshake: the IANA-registered ones of the services that sit behind such a
+// router, then Traefik's defaults. A client that offers protocols and gets none
+// back is refused by Traefik ("no application protocol") - libpq 17 and later
+// ("postgresql"), SQL Server's strict encryption ("tds/8.0"), kdig's DNS over
+// TLS ("dot"), MQTT clients asked to ("mqtt"). One that offers none is not
+// affected, and one only ever gets back a protocol it offered itself, so the
+// list can grow without changing anything for the clients it already served.
+var tcpTLSALPNProtocols = []string{
+	"postgresql", "tds/8.0", "mqtt", "imap", "pop3", "managesieve", "xmpp-client", "xmpp-server", "dot",
+	"h2", "http/1.1", "acme-tls/1",
+}
 
-// addTCPTLSOptions adds the TLS options the app's TCP routers ending TLS use,
-// and returns their name. It is the app's own, as the options live in the app's
-// file, and two files defining the same options would conflict.
+// addTCPTLSOptions adds the TLS options a TCP router of the app ending TLS uses,
+// and returns their name. They are the app's own, as they live in the app's
+// file, and two files defining the same options would conflict: one set for
+// every such domain of the app, and one of a domain's own when it accepts
+// protocols beyond the usual - its own first, as Traefik picks the first of its
+// list the client offered.
 func (s *service) addTCPTLSOptions(
 	traefikConfig *AppTraefikConfig,
 	appKey string,
+	domainIndex int,
+	extraALPNProtocols []string,
 ) string {
 	name := "tcp-" + appKey
+	protocols := tcpTLSALPNProtocols
+	if len(extraALPNProtocols) > 0 {
+		name = fmt.Sprintf("tcp-%s-%d", appKey, domainIndex)
+		protocols = gofn.ToSet(gofn.Concat(extraALPNProtocols, tcpTLSALPNProtocols))
+	}
 	if traefikConfig.TLS == nil {
 		traefikConfig.TLS = &AppTraefikTLS{}
 	}
 	if traefikConfig.TLS.Options == nil {
 		traefikConfig.TLS.Options = map[string]*AppTraefikTLSOptions{}
 	}
-	traefikConfig.TLS.Options[name] = &AppTraefikTLSOptions{ALPNProtocols: tcpTLSALPNProtocols}
+	traefikConfig.TLS.Options[name] = &AppTraefikTLSOptions{ALPNProtocols: protocols}
 	return name
 }
 

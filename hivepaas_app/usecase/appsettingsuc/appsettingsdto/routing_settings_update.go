@@ -44,6 +44,9 @@ type DomainReq struct {
 	ContainerPort  int                  `json:"containerPort"`
 	SSLCert        basedto.ObjectIDReq  `json:"sslCert"`
 	TLSPassthrough bool                 `json:"tlsPassthrough"`
+	// ExtraALPNProtocols apply to a TCP domain ending TLS, and are dropped
+	// from any other.
+	ExtraALPNProtocols []string `json:"extraAlpnProtocols"`
 
 	// HTTP (layer 7) configuration
 	DomainRedirect       string                       `json:"domainRedirect"`
@@ -65,6 +68,10 @@ func (req *DomainReq) ToEntity() *entity.AppDomain {
 	if proto == "" {
 		proto = base.NetworkProtocolHTTP
 	}
+	var extraALPN []string
+	if proto == base.NetworkProtocolTCP && !req.TLSPassthrough {
+		extraALPN = req.ExtraALPNProtocols
+	}
 	return &entity.AppDomain{
 		Enabled:              req.Enabled,
 		Domain:               req.Domain,
@@ -72,6 +79,7 @@ func (req *DomainReq) ToEntity() *entity.AppDomain {
 		ContainerPort:        req.ContainerPort,
 		SSLCert:              entity.ObjectID{ID: req.SSLCert.ID},
 		TLSPassthrough:       req.TLSPassthrough,
+		ExtraALPNProtocols:   extraALPN,
 		DomainRedirect:       req.DomainRedirect,
 		ForceHttps:           req.ForceHttps,
 		LBConfig:             req.LBConfig.ToEntity(),
@@ -98,6 +106,8 @@ func (req *DomainReq) modifyRequest() error {
 		req.Protocol = base.NetworkProtocolHTTP
 	}
 	req.Domain = strings.ToLower(strings.TrimSpace(req.Domain))
+	req.ExtraALPNProtocols = gofn.Filter(gofn.MapSlice(req.ExtraALPNProtocols, strings.TrimSpace),
+		func(p string) bool { return p != "" })
 	if req.Protocol == base.NetworkProtocolHTTP {
 		if err := req.LBConfig.modifyRequest(); err != nil {
 			return hperrors.Wrap(err)
@@ -138,7 +148,7 @@ func (req *DomainReq) modifyRequest() error {
 //nolint:unparam
 func (req *DomainReq) validate(field string) (res []vld.Validator) {
 	if req == nil {
-		return
+		return nil
 	}
 	if field != "" {
 		field += "."
@@ -147,6 +157,10 @@ func (req *DomainReq) validate(field string) (res []vld.Validator) {
 	res = append(res, basedto.ValidateDomain(&req.Domain, true, base.DomainNameMaxLen,
 		false, field+"domain")...)
 	res = append(res, basedto.ValidatePort(&req.ContainerPort, false, 1, field+"containerPort")...)
+
+	if req.Protocol == base.NetworkProtocolTCP {
+		res = append(res, basedto.ValidateALPNProtocols(req.ExtraALPNProtocols, field+"extraAlpnProtocols")...)
+	}
 
 	if req.Protocol == base.NetworkProtocolHTTP {
 		res = append(res, basedto.ValidateDomain(&req.DomainRedirect, false, base.DomainNameMaxLen,

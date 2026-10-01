@@ -128,6 +128,33 @@ func TestApplyAppConfig(t *testing.T) {
 		assert.Contains(t, traefikConfig.TLS.Options["tcp-my-db"].ALPNProtocols, "http/1.1")
 	})
 
+	t.Run("TCP domain with extra ALPN protocols gets options of its own", func(t *testing.T) {
+		data := &appConfigData{
+			ApplyAppConfigReq: &traefikservice.ApplyAppConfigReq{
+				App:             &entity.App{Key: "my_broker"},
+				RoutingSettings: &entity.AppRoutingSettings{Port: 8883},
+			},
+		}
+		labels := map[string]string{}
+		traefikConfig := &AppTraefikConfig{}
+
+		for i, domain := range []*entity.AppDomain{
+			{Enabled: true, Domain: "mqtt.myapp.com", Protocol: base.NetworkProtocolTCP},
+			{Enabled: true, Domain: "iot.myapp.com", Protocol: base.NetworkProtocolTCP,
+				ExtraALPNProtocols: []string{"x-amzn-mqtt-ca", "mqtt"}},
+		} {
+			assert.NoError(t, s.collectDomainConfig(domain, i, labels, traefikConfig, data))
+		}
+
+		assert.Equal(t, "tcp-my-broker@file", labels["traefik.tcp.routers.tcp-router-my-broker-0.tls.options"])
+		assert.Equal(t, "tcp-my-broker-1@file", labels["traefik.tcp.routers.tcp-router-my-broker-1.tls.options"])
+		assert.Equal(t, tcpTLSALPNProtocols, traefikConfig.TLS.Options["tcp-my-broker"].ALPNProtocols)
+
+		own := traefikConfig.TLS.Options["tcp-my-broker-1"].ALPNProtocols
+		assert.Equal(t, []string{"x-amzn-mqtt-ca", "mqtt"}, own[:2], "the domain's own come first")
+		assert.Len(t, own, len(tcpTLSALPNProtocols)+1, "the usual ones too, without repeating mqtt")
+	})
+
 	t.Run("ExposePublicly disabled cleans labels", func(t *testing.T) {
 		app := &entity.App{
 			Key: "my_app",

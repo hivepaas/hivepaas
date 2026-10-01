@@ -17,6 +17,7 @@ func Tools() []Tool {
 		planSetAppRunningTool(),
 		planCancelDeploymentTool(),
 		planInstallAppTool(),
+		planCreateAppTool(),
 		planUpdateAppSettingsTool(),
 		planUpdateProjectSettingsTool(),
 		planCreateSchedJobTool(),

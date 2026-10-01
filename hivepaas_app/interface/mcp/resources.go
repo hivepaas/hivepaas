@@ -20,6 +20,9 @@ const (
 	dockerAPIURI      = "hivepaas://docs/docker-api"
 	databasesURI      = "hivepaas://docs/databases"
 	markdownMIME      = "text/markdown"
+
+	descPromptProject = "the project's key or name"
+	descPromptEnv     = "the env's name, such as prod"
 )
 
 // dockerAPIGuide is the dashboard's permissions guide, as text. Kept beside
@@ -105,8 +108,8 @@ func addPrompts(s *mcpsdk.Server, a access) {
 		Title:       "Why is this app not working?",
 		Description: "Looks at an app's containers, deployments and logs, and says what is wrong.",
 		Arguments: []*mcpsdk.PromptArgument{
-			{Name: argProject, Description: "the project's key or name", Required: true},
-			{Name: argEnv, Description: "the env's name, such as prod", Required: true},
+			{Name: argProject, Description: descPromptProject, Required: true},
+			{Name: argEnv, Description: descPromptEnv, Required: true},
 			{Name: argApp, Description: "the app's key or name", Required: true},
 		},
 	}, func(_ context.Context, req *mcpsdk.GetPromptRequest) (*mcpsdk.GetPromptResult, error) {
@@ -146,6 +149,57 @@ func addPrompts(s *mcpsdk.Server, a access) {
 	})
 
 	databasePrompts(s, a)
+	deployImagePrompt(s, a)
+}
+
+// deployImagePrompt is running an image of the person's own: an app created
+// empty, given its image, port and variables, then deployed - a plan each, as
+// the dashboard takes them one screen at a time.
+func deployImagePrompt(s *mcpsdk.Server, a access) {
+	s.AddPrompt(&mcpsdk.Prompt{
+		Name:        "deploy_image",
+		Title:       "Run a Docker image",
+		Description: "Creates an app for an image of your own, gives it its port, domain and variables, and starts it.",
+		Arguments: []*mcpsdk.PromptArgument{
+			{Name: argProject, Description: descPromptProject, Required: true},
+			{Name: argEnv, Description: descPromptEnv, Required: true},
+			{Name: "image", Description: "the image, such as ghcr.io/acme/api:1.4", Required: true},
+			{Name: argName, Description: "the app's name; left out, ask me"},
+			{Name: paramDomain, Description: "a domain to serve it at, for an image that serves HTTP"},
+		},
+	}, func(_ context.Context, req *mcpsdk.GetPromptRequest) (*mcpsdk.GetPromptResult, error) {
+		args := req.Params.Arguments
+		name := "a name I give - ask me"
+		if args[argName] != "" {
+			name = args[argName]
+		}
+		domain := "a domain, if I want one - ask me"
+		if args[paramDomain] != "" {
+			domain = args[paramDomain]
+		}
+		text := "Run the image " + args["image"] + " on HivePaaS, in " + args[argProject] + ", env " +
+			args[argEnv] + ", as an app named " + name + ". If an app store template runs the same software " +
+			"(search_templates), tell me first: it comes set up.\n\n" +
+			"1. plan_create_app. If the image is private, list_registry_auths for the credentials to pull it.\n" +
+			"2. plan_update_app_settings, kind deployment: activeMethod image, imageSource.image the image " +
+			"(and imageSource.registryAuth, if private).\n" +
+			"3. If it serves HTTP: plan_update_app_settings, kind routing - the port it listens on, ask me " +
+			"if you do not know it, exposePublicly true and " + domain + ".\n" +
+			"4. Its variables: ask me which it needs; for a database of the env, get_env_link_suggestions " +
+			"(the resource " + databasesURI + "). plan_update_app_settings, kind env-vars.\n" +
+			"5. plan_redeploy_app, then get_app_deployment and get_app_status until it runs, and " +
+			"get_app_logs if it does not.\n\n"
+		switch {
+		case a.serves(NeedWrite) && a.serves(NeedExecute):
+			text += "Show me each plan, and apply it only once I agree."
+		case a.serves(NeedWrite):
+			text += "Show me each plan, and apply it only once I agree. This key cannot deploy - that takes " +
+				"Execute: once it is set up, say so, and that the dashboard's Deploy starts it."
+		default:
+			text += changeEnding(a, "")
+		}
+		return userPrompt(text), nil
+	})
 }
 
 // databasePrompts are the prompts about databases: connecting an app to one,
@@ -153,8 +207,8 @@ func addPrompts(s *mcpsdk.Server, a access) {
 func databasePrompts(s *mcpsdk.Server, a access) {
 	appArgs := func(appDesc string) []*mcpsdk.PromptArgument {
 		return []*mcpsdk.PromptArgument{
-			{Name: argProject, Description: "the project's key or name", Required: true},
-			{Name: argEnv, Description: "the env's name, such as prod", Required: true},
+			{Name: argProject, Description: descPromptProject, Required: true},
+			{Name: argEnv, Description: descPromptEnv, Required: true},
 			{Name: argApp, Description: appDesc, Required: true},
 		}
 	}
@@ -182,7 +236,7 @@ func databasePrompts(s *mcpsdk.Server, a access) {
 			"2. get_app_settings, kind env-vars: say which of the names it has already, and do not " +
 			"replace one without asking me.\n" +
 			"3. Say any warning the suggestions carry, such as a target with no port.\n\n" +
-			changeEnding(a, NeedWrite, "plan_update_app_settings, kind env-vars, with the variables "+
+			changeEnding(a, "plan_update_app_settings, kind env-vars, with the variables "+
 				"added to runtimeEnvVars and the others kept")), nil
 	})
 
@@ -209,7 +263,7 @@ func databasePrompts(s *mcpsdk.Server, a access) {
 			"command, and its warnings.\n" +
 			"3. If the engine reads them only on its first start (initOnly) and the app has run before, " +
 			"tell me they will not change the password of data it has already.\n\n" +
-			changeEnding(a, NeedWrite, "plan_update_app_settings - kind env-vars for the variables, "+
+			changeEnding(a, "plan_update_app_settings - kind env-vars for the variables, "+
 				"the others kept; kind deployment for a command")), nil
 	})
 
@@ -234,7 +288,7 @@ func databasePrompts(s *mcpsdk.Server, a access) {
 			"2. get_app_settings, kind routing: its port and the domains it has. Keep them.\n" +
 			"3. Ask me whether Traefik should end TLS (the usual) or pass it through to the database, " +
 			"which then needs its own certificate mounted.\n\n" +
-			changeEnding(a, NeedWrite, "plan_update_app_settings, kind routing: exposePublicly true, and "+
+			changeEnding(a, "plan_update_app_settings, kind routing: exposePublicly true, and "+
 				"the domain added with protocol tcp and the database's port as containerPort, the others "+
 				"kept") +
 			" Then tell me to open the port in the firewall, and give me a command to connect with, " +
@@ -244,9 +298,9 @@ func databasePrompts(s *mcpsdk.Server, a access) {
 
 // changeEnding is how a task that changes settings ends: planned and applied
 // once the person agrees, or said, when this key or server may not.
-func changeEnding(a access, need Need, plan string) string {
+func changeEnding(a access, plan string) string {
 	switch {
-	case a.serves(need):
+	case a.serves(NeedWrite):
 		return "Then " + plan + ". Show me the plan, and apply it only once I agree."
 	case !a.changesAllowed:
 		return "Change nothing: changes are off on this server. Say what to change, and that the " +

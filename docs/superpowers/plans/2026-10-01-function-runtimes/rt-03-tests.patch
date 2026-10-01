@@ -1,0 +1,1008 @@
+diff --git a/conformance/conformance_test.go b/conformance/conformance_test.go
+new file mode 100644
+index 0000000..5345bde
+--- /dev/null
++++ b/conformance/conformance_test.go
+@@ -0,0 +1,62 @@
++//go:build conformance
++
++// Package conformance checks every runtime image against CONTRACT.md. For each
++// runtime it builds the runtime's image and the fixture function on it
++// (fixtures/<runtime>), then calls the fixture through serve and invoke.
++//
++// It needs Docker, and Docker Hub for the base images:
++//
++//	go test -tags conformance ./conformance/
++//	RUNTIMES=node24 go test -tags conformance ./conformance/
++//
++// The images it builds are removed afterwards, unless KEEP_IMAGES is set.
++package conformance
++
++import (
++	"os"
++	"slices"
++	"strings"
++	"testing"
++)
++
++// runtimeDef is a runtime of runtimes/.
++type runtimeDef struct {
++	name string
++	// compiled runtimes build the function in a build image of their own, and
++	// load nothing when they start: a handler that is missing fails the build.
++	compiled bool
++}
++
++var runtimes = []runtimeDef{
++	{name: "go127", compiled: true},
++}
++
++func TestConformance(t *testing.T) {
++	for _, rt := range selectedRuntimes(t) {
++		t.Run(rt.name, func(t *testing.T) {
++			imgs := buildImages(t, rt)
++			t.Run("image", func(t *testing.T) { checkImages(t, imgs) })
++			t.Run("serve", func(t *testing.T) { checkServe(t, rt, imgs) })
++			t.Run("invoke", func(t *testing.T) { checkInvoke(t, rt, imgs) })
++		})
++	}
++}
++
++// selectedRuntimes are the runtimes RUNTIMES names, comma separated; all when
++// it is empty.
++func selectedRuntimes(t *testing.T) []runtimeDef {
++	names := strings.FieldsFunc(os.Getenv("RUNTIMES"), func(r rune) bool { return r == ',' || r == ' ' })
++	if len(names) == 0 {
++		return runtimes
++	}
++	var selected []runtimeDef
++	for _, rt := range runtimes {
++		if slices.Contains(names, rt.name) {
++			selected = append(selected, rt)
++		}
++	}
++	if len(selected) != len(names) {
++		t.Fatalf("RUNTIMES=%q names a runtime that is not one of %v", os.Getenv("RUNTIMES"), runtimes)
++	}
++	return selected
++}
+diff --git a/conformance/docker_test.go b/conformance/docker_test.go
+new file mode 100644
+index 0000000..6723c49
+--- /dev/null
++++ b/conformance/docker_test.go
+@@ -0,0 +1,272 @@
++//go:build conformance
++
++package conformance
++
++import (
++	"bytes"
++	"encoding/json"
++	"errors"
++	"io"
++	"net/http"
++	"os"
++	"os/exec"
++	"path/filepath"
++	"slices"
++	"strings"
++	"testing"
++	"time"
++)
++
++// images are what the suite built for one runtime.
++type images struct {
++	// runtime is the runtime's image, and build its build image (compiled
++	// runtimes only).
++	runtime, build string
++	// fixture is the fixture function, ready to serve and invoke.
++	fixture string
++	// source is the fixture not built yet, in the build image (compiled
++	// runtimes only): what a test run starts from.
++	source string
++}
++
++func buildImages(t *testing.T, rt runtimeDef) images {
++	t.Helper()
++	root, err := filepath.Abs("..")
++	if err != nil {
++		t.Fatal(err)
++	}
++	dockerfile := filepath.Join(root, "runtimes", rt.name, "Dockerfile")
++	fixtureDir := filepath.Join(root, "conformance", "fixtures", rt.name)
++	fixtureDockerfile := filepath.Join(fixtureDir, "Dockerfile")
++	imgs := images{
++		runtime: "hp-conformance/runtime-" + rt.name,
++		fixture: "hp-conformance/fixture-" + rt.name,
++	}
++	// The fixture builds without a network: everything it needs is in it.
++	fixtureArgs := []string{"--network", "none", "--build-arg", "RUNTIME=" + imgs.runtime}
++
++	if rt.compiled {
++		imgs.build = imgs.runtime + "-build"
++		imgs.source = imgs.fixture + "-source"
++		buildImage(t, imgs.runtime, dockerfile, root, "--target", "run")
++		buildImage(t, imgs.build, dockerfile, root, "--target", "build")
++		fixtureArgs = append(fixtureArgs, "--build-arg", "BUILD_RUNTIME="+imgs.build)
++		buildImage(t, imgs.source, fixtureDockerfile, fixtureDir, append(fixtureArgs, "--target", "source")...)
++	} else {
++		buildImage(t, imgs.runtime, dockerfile, root)
++	}
++	buildImage(t, imgs.fixture, fixtureDockerfile, fixtureDir, fixtureArgs...)
++	return imgs
++}
++
++func buildImage(t *testing.T, tag, dockerfile, contextDir string, args ...string) {
++	t.Helper()
++	docker(t, append(append([]string{"build", "-t", tag, "-f", dockerfile}, args...), contextDir)...)
++	if os.Getenv("KEEP_IMAGES") == "" {
++		t.Cleanup(func() { _ = exec.Command("docker", "rmi", "-f", tag).Run() })
++	}
++}
++
++// result is what a docker command did.
++type result struct {
++	stdout, stderr string
++	code           int
++	took           time.Duration
++}
++
++// dockerRun runs the docker command line with stdin. A failure to start
++// docker fails the test; the command's own exit code is in the result.
++func dockerRun(t *testing.T, stdin string, args ...string) result {
++	t.Helper()
++	cmd := exec.Command("docker", args...)
++	var stdout, stderr bytes.Buffer
++	cmd.Stdin, cmd.Stdout, cmd.Stderr = strings.NewReader(stdin), &stdout, &stderr
++	start := time.Now()
++	err := cmd.Run()
++	r := result{stdout: stdout.String(), stderr: stderr.String(), took: time.Since(start)}
++	var exitErr *exec.ExitError
++	switch {
++	case errors.As(err, &exitErr):
++		r.code = exitErr.ExitCode()
++	case err != nil:
++		t.Fatalf("docker %s: %v", strings.Join(args, " "), err)
++	}
++	return r
++}
++
++// docker runs the docker command line and returns its output. The test fails
++// when the command does.
++func docker(t *testing.T, args ...string) string {
++	t.Helper()
++	r := dockerRun(t, "", args...)
++	if r.code != 0 {
++		t.Fatalf("docker %s: exit %d\n%s\n%s", strings.Join(args, " "), r.code, lastLines(r.stdout), lastLines(r.stderr))
++	}
++	return r.stdout
++}
++
++func lastLines(s string) string {
++	lines := strings.Split(strings.TrimRight(s, "\n"), "\n")
++	if len(lines) > 30 {
++		lines = lines[len(lines)-30:]
++	}
++	return strings.Join(lines, "\n")
++}
++
++// container is a fixture serving on a port of this host.
++type container struct {
++	id  string
++	url string
++}
++
++// startServe runs image's serve with env, and waits for it to answer.
++func startServe(t *testing.T, image string, env ...string) *container {
++	t.Helper()
++	args := []string{"run", "-d", "-p", "127.0.0.1::8080"}
++	for _, e := range env {
++		args = append(args, "-e", e)
++	}
++	id := strings.TrimSpace(docker(t, append(args, image)...))
++	t.Cleanup(func() { _ = exec.Command("docker", "rm", "-f", id).Run() })
++	address := strings.TrimSpace(docker(t, "port", id, "8080/tcp"))
++	c := &container{id: id, url: "http://" + strings.Split(address, "\n")[0]}
++
++	deadline := time.Now().Add(30 * time.Second)
++	for {
++		resp, err := http.Get(c.url + "/_hivepaas/health")
++		if err == nil {
++			_ = resp.Body.Close()
++			return c
++		}
++		if time.Now().After(deadline) {
++			stdout, stderr := c.logs(t)
++			t.Fatalf("%s did not answer: %v\n%s\n%s", image, err, stdout, stderr)
++		}
++		time.Sleep(100 * time.Millisecond)
++	}
++}
++
++// response is what a call answered.
++type response struct {
++	status int
++	header http.Header
++	body   []byte
++	err    error // of a call made in the background
++}
++
++func (r response) json(t *testing.T) map[string]any {
++	t.Helper()
++	var v map[string]any
++	if err := json.Unmarshal(r.body, &v); err != nil {
++		t.Fatalf("the body %q is not a JSON object: %v", r.body, err)
++	}
++	return v
++}
++
++var client = &http.Client{Timeout: 15 * time.Second}
++
++func (c *container) call(t *testing.T, method, path string, body []byte, headers map[string]string) response {
++	t.Helper()
++	r := c.do(method, path, bytes.NewReader(body), headers)
++	if r.err != nil {
++		t.Fatalf("%s %s: %v", method, path, r.err)
++	}
++	return r
++}
++
++// chunked sends body without a length, in chunks, as a proxy streaming a
++// request does.
++func (c *container) chunked(t *testing.T, path string, body []byte) response {
++	t.Helper()
++	r := c.do(http.MethodPost, path, io.MultiReader(bytes.NewReader(body)), nil)
++	if r.err != nil {
++		t.Fatalf("POST %s: %v", path, r.err)
++	}
++	return r
++}
++
++// background makes a GET in the background; its response comes on the channel.
++func (c *container) background(path string) <-chan response {
++	done := make(chan response, 1)
++	go func() { done <- c.do(http.MethodGet, path, http.NoBody, nil) }()
++	return done
++}
++
++func (c *container) do(method, path string, body io.Reader, headers map[string]string) response {
++	req, err := http.NewRequest(method, c.url+path, body)
++	if err != nil {
++		return response{err: err}
++	}
++	for k, v := range headers {
++		req.Header.Set(k, v)
++	}
++	resp, err := client.Do(req)
++	if err != nil {
++		return response{err: err}
++	}
++	defer resp.Body.Close()
++	b, err := io.ReadAll(resp.Body)
++	return response{status: resp.StatusCode, header: resp.Header, body: b, err: err}
++}
++
++func (c *container) get(t *testing.T, path string) response {
++	t.Helper()
++	return c.call(t, http.MethodGet, path, nil, nil)
++}
++
++func (c *container) logs(t *testing.T) (stdout, stderr string) {
++	t.Helper()
++	r := dockerRun(t, "", "logs", c.id)
++	return r.stdout, r.stderr
++}
++
++// hasLog says whether a line of the container's log, on standard output or
++// standard error, satisfies match.
++func (c *container) hasLog(t *testing.T, stream string, match func(line string) bool) bool {
++	t.Helper()
++	stdout, stderr := c.logs(t)
++	text := stdout
++	if stream == "stderr" {
++		text = stderr
++	}
++	return slices.ContainsFunc(strings.Split(text, "\n"), match)
++}
++
++// waitForLog waits for a line of the container's log that satisfies match, on
++// standard output or standard error.
++func (c *container) waitForLog(t *testing.T, stream string, match func(line string) bool) {
++	t.Helper()
++	deadline := time.Now().Add(5 * time.Second)
++	for {
++		stdout, stderr := c.logs(t)
++		text := stdout
++		if stream == "stderr" {
++			text = stderr
++		}
++		for _, line := range strings.Split(text, "\n") {
++			if match(line) {
++				return
++			}
++		}
++		if time.Now().After(deadline) {
++			t.Fatalf("no such line on %s:\n%s", stream, text)
++		}
++		time.Sleep(100 * time.Millisecond)
++	}
++}
++
++// jsonLine is the JSON log line of kind hp ("invocation", "log") for the call
++// requestID.
++func (c *container) jsonLine(t *testing.T, hp, requestID string) map[string]any {
++	t.Helper()
++	var found map[string]any
++	c.waitForLog(t, "stdout", func(line string) bool {
++		var v map[string]any
++		if json.Unmarshal([]byte(line), &v) != nil || v["hp"] != hp || v["requestId"] != requestID {
++			return false
++		}
++		found = v
++		return true
++	})
++	return found
++}
+diff --git a/conformance/fixtures/go127/Dockerfile b/conformance/fixtures/go127/Dockerfile
+new file mode 100644
+index 0000000..158dbb6
+--- /dev/null
++++ b/conformance/fixtures/go127/Dockerfile
+@@ -0,0 +1,15 @@
++# The fixture on the Go runtime, built as HivePaaS builds a function: compiled
++# in the build image, run in the runtime image. The `source` stage is the
++# function before it is built, as a test run has it.
++ARG BUILD_RUNTIME
++ARG RUNTIME
++
++FROM ${BUILD_RUNTIME} AS source
++COPY --chown=hivepaas:hivepaas . /app/
++RUN hivepaas-runtime deps
++
++FROM source AS built
++RUN hivepaas-runtime build
++
++FROM ${RUNTIME}
++COPY --from=built --chown=hivepaas:hivepaas /app /app
+diff --git a/conformance/fixtures/go127/fixture.go b/conformance/fixtures/go127/fixture.go
+new file mode 100644
+index 0000000..7447c86
+--- /dev/null
++++ b/conformance/fixtures/go127/fixture.go
+@@ -0,0 +1,67 @@
++// Package fixture is the function the conformance suite calls: each path shows
++// one thing the contract promises.
++package fixture
++
++import (
++	"context"
++	"errors"
++	"os"
++	"strconv"
++	"strings"
++	"time"
++
++	"example.com/fixturelib"
++	"github.com/hivepaas/function-runtimes/hivepaas"
++)
++
++// Handle answers by path.
++func Handle(ctx context.Context, req *hivepaas.Request) (*hivepaas.Response, error) {
++	q := req.Query
++	switch req.Path {
++	case "/":
++		return nil, nil
++	case "/json":
++		return hivepaas.JSON(200, map[string]string{"hello": q.Get("name")})
++	case "/text":
++		return hivepaas.Text(200, "hello"), nil
++	case "/bytes":
++		return &hivepaas.Response{Body: []byte{0, 1, 2, 255}}, nil
++	case "/echo":
++		return hivepaas.JSON(200, map[string]any{
++			"method":    req.Method,
++			"path":      req.Path,
++			"query":     q.Get("a"),
++			"queryAll":  q["a"],
++			"header":    req.Headers.Get("X-Custom"),
++			"body":      req.Text(),
++			"requestId": hivepaas.RequestID(ctx),
++		})
++	case "/status":
++		code, _ := strconv.Atoi(q.Get("code"))
++		return &hivepaas.Response{Status: code}, nil
++	case "/error":
++		return nil, errors.New("fixture failure")
++	case "/slow":
++		ms, _ := strconv.Atoi(q.Get("ms"))
++		time.Sleep(time.Duration(ms) * time.Millisecond) // past the timeout on purpose
++		return hivepaas.Text(200, "slow done"), nil
++	case "/big":
++		n, _ := strconv.Atoi(q.Get("bytes"))
++		return hivepaas.Text(200, strings.Repeat("x", n)), nil
++	case "/invalid":
++		return &hivepaas.Response{Status: 42}, nil
++	case "/env":
++		return hivepaas.Text(200, os.Getenv("GREETING")), nil
++	case "/deadline":
++		deadline, _ := ctx.Deadline()
++		return hivepaas.JSON(200, map[string]int64{"remainingMs": time.Until(deadline).Milliseconds()})
++	case "/log":
++		hivepaas.Log(ctx, "fixture log line")
++		return hivepaas.Text(200, "logged"), nil
++	case "/whoami":
++		return hivepaas.JSON(200, map[string]int{"uid": os.Getuid(), "gid": os.Getgid()})
++	case "/lib":
++		return hivepaas.Text(200, fixturelib.Name()), nil
++	}
++	return hivepaas.JSON(404, map[string]string{"error": "no route"})
++}
+diff --git a/conformance/fixtures/go127/fixturelib/fixturelib.go b/conformance/fixtures/go127/fixturelib/fixturelib.go
+new file mode 100644
+index 0000000..c7d951a
+--- /dev/null
++++ b/conformance/fixtures/go127/fixturelib/fixturelib.go
+@@ -0,0 +1,5 @@
++// Package fixturelib is a library of the fixture, from a module of its own.
++package fixturelib
++
++// Name says where it comes from.
++func Name() string { return "from lib" }
+diff --git a/conformance/fixtures/go127/fixturelib/go.mod b/conformance/fixtures/go127/fixturelib/go.mod
+new file mode 100644
+index 0000000..5c7f347
+--- /dev/null
++++ b/conformance/fixtures/go127/fixturelib/go.mod
+@@ -0,0 +1,3 @@
++module example.com/fixturelib
++
++go 1.27
+diff --git a/conformance/fixtures/go127/go.mod b/conformance/fixtures/go127/go.mod
+new file mode 100644
+index 0000000..4fa69b5
+--- /dev/null
++++ b/conformance/fixtures/go127/go.mod
+@@ -0,0 +1,7 @@
++module example.com/fixture
++
++go 1.27
++
++require example.com/fixturelib v0.0.0
++
++replace example.com/fixturelib => ./fixturelib
+diff --git a/conformance/invoke_test.go b/conformance/invoke_test.go
+new file mode 100644
+index 0000000..c64cfe5
+--- /dev/null
++++ b/conformance/invoke_test.go
+@@ -0,0 +1,198 @@
++//go:build conformance
++
++package conformance
++
++import (
++	"encoding/base64"
++	"encoding/json"
++	"reflect"
++	"strings"
++	"testing"
++	"time"
++)
++
++const resultMarker = "#hivepaas-result "
++
++// invokeResult is the line after the marker.
++type invokeResult struct {
++	Status     int                 `json:"status"`
++	Headers    map[string][]string `json:"headers"`
++	Body       string              `json:"body"`
++	RequestID  string              `json:"requestId"`
++	DurationMs *float64            `json:"durationMs"`
++	Outcome    string              `json:"outcome"`
++}
++
++func (r invokeResult) body(t *testing.T) []byte {
++	t.Helper()
++	b, err := base64.StdEncoding.DecodeString(r.Body)
++	if err != nil {
++		t.Fatalf("the result's body is not base64: %v", err)
++	}
++	return b
++}
++
++// invoke runs the image's invoke with input on its standard input, without a
++// network, as a test run does.
++func invoke(t *testing.T, image, input string, env ...string) result {
++	t.Helper()
++	args := []string{"run", "--rm", "-i", "--network", "none"}
++	for _, e := range env {
++		args = append(args, "-e", e)
++	}
++	return dockerRun(t, input, append(args, image, "hivepaas-runtime", "invoke")...)
++}
++
++// parseResult reads the result from the last line of the output, which must
++// be the result's.
++func parseResult(t *testing.T, r result) invokeResult {
++	t.Helper()
++	if r.code != 0 {
++		t.Fatalf("exit %d\n%s\n%s", r.code, r.stdout, r.stderr)
++	}
++	lines := strings.Split(strings.TrimRight(r.stdout, "\n"), "\n")
++	payload, ok := strings.CutPrefix(lines[len(lines)-1], resultMarker)
++	if !ok {
++		t.Fatalf("the last line is not the result:\n%s\n%s", r.stdout, r.stderr)
++	}
++	var res invokeResult
++	if err := json.Unmarshal([]byte(payload), &res); err != nil {
++		t.Fatalf("the result is not JSON: %v", err)
++	}
++	if res.DurationMs == nil {
++		t.Errorf("the result has no duration: %s", payload)
++	}
++	return res
++}
++
++func checkInvoke(t *testing.T, rt runtimeDef, imgs images) {
++	t.Run("the request reaches the handler, the result is the last line", func(t *testing.T) {
++		input := `{"method":"post","path":"/echo","query":{"a":["1","2"]},` +
++			`"headers":{"x-custom":["v"],"x-request-id":["inv-echo"]},` +
++			`"body":"` + base64.StdEncoding.EncodeToString([]byte("payload")) + `"}`
++
++		r := invoke(t, imgs.fixture, input)
++
++		res := parseResult(t, r)
++		if res.Status != 200 || res.Outcome != "ok" || res.RequestID != "inv-echo" {
++			t.Errorf("result %+v", res)
++		}
++		var got map[string]any
++		if err := json.Unmarshal(res.body(t), &got); err != nil {
++			t.Fatalf("the body is not JSON: %v", err)
++		}
++		want := map[string]any{
++			"method": "POST", "path": "/echo", "query": "1", "queryAll": []any{"1", "2"},
++			"header": "v", "body": "payload", "requestId": "inv-echo",
++		}
++		if !reflect.DeepEqual(got, want) {
++			t.Errorf("body %v, want %v", got, want)
++		}
++		if !reflect.DeepEqual(res.Headers["content-type"], []string{"application/json"}) ||
++			!reflect.DeepEqual(res.Headers["x-request-id"], []string{"inv-echo"}) {
++			t.Errorf("headers %v", res.Headers)
++		}
++		if !strings.Contains(r.stdout, `"hp":"invocation"`) {
++			t.Errorf("no invocation line before the result:\n%s", r.stdout)
++		}
++	})
++
++	t.Run("an empty request is a GET of the root", func(t *testing.T) {
++		res := parseResult(t, invoke(t, imgs.fixture, `{}`))
++		if res.Status != 204 || res.Body != "" {
++			t.Errorf("result %+v", res)
++		}
++	})
++
++	t.Run("a failed call is a result", func(t *testing.T) {
++		r := invoke(t, imgs.fixture, `{"path":"/error"}`)
++
++		if res := parseResult(t, r); res.Status != 500 || res.Outcome != "error" {
++			t.Errorf("result %+v", res)
++		}
++		if !strings.Contains(r.stderr, "fixture failure") {
++			t.Errorf("the error is not on standard error:\n%s", r.stderr)
++		}
++	})
++
++	t.Run("a call is answered at its timeout", func(t *testing.T) {
++		r := invoke(t, imgs.fixture, `{"path":"/slow","query":{"ms":["8000"]}}`, "HP_FN_TIMEOUT_MS=1000")
++
++		if res := parseResult(t, r); res.Status != 504 || res.Outcome != "timeout" {
++			t.Errorf("result %+v", res)
++		}
++		if r.took > 6*time.Second {
++			t.Errorf("invoke took %v", r.took)
++		}
++	})
++
++	t.Run("a handler's log line comes before the result", func(t *testing.T) {
++		r := invoke(t, imgs.fixture, `{"path":"/log","headers":{"x-request-id":["inv-log"]}}`)
++
++		parseResult(t, r)
++		if !strings.Contains(r.stdout, `"msg":"fixture log line"`) || !strings.Contains(r.stdout, `"requestId":"inv-log"`) {
++			t.Errorf("no log line:\n%s", r.stdout)
++		}
++	})
++
++	t.Run("a body over the limit", func(t *testing.T) {
++		body := base64.StdEncoding.EncodeToString([]byte(strings.Repeat("x", 17)))
++		r := invoke(t, imgs.fixture, `{"path":"/echo","body":"`+body+`"}`, "HP_FN_MAX_BODY_SIZE=16")
++
++		if res := parseResult(t, r); res.Status != 413 || res.Outcome != "request_too_large" {
++			t.Errorf("result %+v", res)
++		}
++	})
++
++	t.Run("a request that cannot be read", func(t *testing.T) {
++		r := invoke(t, imgs.fixture, `not json`)
++
++		if r.code != 2 || strings.Contains(r.stdout, resultMarker) {
++			t.Errorf("exit %d\n%s", r.code, r.stdout)
++		}
++	})
++
++	// The image keeps the lock file its build made; deps installs from it
++	// again, as a test run's libraries image does, without a network.
++	t.Run("deps again, from the lock file the build made", func(t *testing.T) {
++		image := imgs.fixture
++		if rt.compiled {
++			image = imgs.source
++		}
++
++		r := dockerRun(t, `{"path":"/lib"}`, "run", "--rm", "-i", "--network", "none", image,
++			"sh", "-c", "hivepaas-runtime deps >&2 && hivepaas-runtime invoke")
++
++		if res := parseResult(t, r); res.Status != 200 || string(res.body(t)) != "from lib" {
++			t.Errorf("result %+v\n%s", res, r.stderr)
++		}
++	})
++
++	t.Run("a handler that cannot be loaded", func(t *testing.T) {
++		image, handler, says := imgs.fixture, "HP_FN_HANDLER=missing", "the handler could not be loaded"
++		if rt.compiled {
++			image, handler, says = imgs.source, "HP_FN_HANDLER=Missing", "the function does not compile"
++		}
++
++		r := invoke(t, image, `{}`, handler)
++
++		if r.code != 3 || strings.Contains(r.stdout, resultMarker) || !strings.Contains(r.stderr, says) {
++			t.Errorf("exit %d\n%s\n%s", r.code, r.stdout, r.stderr)
++		}
++	})
++
++	if rt.compiled {
++		t.Run("a function not built yet is built first", func(t *testing.T) {
++			r := invoke(t, imgs.source, `{"path":"/text"}`)
++
++			if res := parseResult(t, r); res.Status != 200 || string(res.body(t)) != "hello" {
++				t.Errorf("result %+v", res)
++			}
++			for _, line := range strings.Split(strings.TrimSpace(r.stdout), "\n") {
++				if !strings.HasPrefix(line, "{") && !strings.HasPrefix(line, resultMarker) {
++					t.Errorf("a line on standard output that is neither log nor result: %q", line)
++				}
++			}
++		})
++	}
++}
+diff --git a/conformance/serve_test.go b/conformance/serve_test.go
+new file mode 100644
+index 0000000..9ffc341
+--- /dev/null
++++ b/conformance/serve_test.go
+@@ -0,0 +1,325 @@
++//go:build conformance
++
++package conformance
++
++import (
++	"bytes"
++	"encoding/json"
++	"io"
++	"net"
++	"net/http"
++	"reflect"
++	"regexp"
++	"strings"
++	"testing"
++	"time"
++)
++
++func checkImages(t *testing.T, imgs images) {
++	for _, image := range []string{imgs.runtime, imgs.build, imgs.fixture} {
++		if image == "" {
++			continue
++		}
++		var cfg struct {
++			User         string
++			WorkingDir   string
++			ExposedPorts map[string]any
++			Cmd          []string
++			Healthcheck  struct{ Test []string }
++		}
++		out := docker(t, "image", "inspect", "--format", "{{json .Config}}", image)
++		if err := json.Unmarshal([]byte(out), &cfg); err != nil {
++			t.Fatalf("%s: %v", image, err)
++		}
++		if cfg.User != "hivepaas" || cfg.WorkingDir != "/app" {
++			t.Errorf("%s: user %q, working directory %q", image, cfg.User, cfg.WorkingDir)
++		}
++		if _, ok := cfg.ExposedPorts["8080/tcp"]; !ok {
++			t.Errorf("%s: exposed ports %v", image, cfg.ExposedPorts)
++		}
++		if !reflect.DeepEqual(cfg.Cmd, []string{"hivepaas-runtime", "serve"}) {
++			t.Errorf("%s: command %q", image, cfg.Cmd)
++		}
++		if !reflect.DeepEqual(cfg.Healthcheck.Test, []string{"CMD", "hivepaas-runtime", "health"}) {
++			t.Errorf("%s: health check %q", image, cfg.Healthcheck.Test)
++		}
++	}
++}
++
++func checkServe(t *testing.T, rt runtimeDef, imgs images) {
++	c := startServe(t, imgs.fixture, "HP_FN_TIMEOUT_MS=1000", "HP_FN_MAX_BODY_SIZE=4096", "GREETING=hi")
++
++	t.Run("a body is sent with the type it has", func(t *testing.T) {
++		for _, tc := range []struct{ path, contentType, body string }{
++			{"/json?name=Ada", "application/json", `{"hello":"Ada"}`},
++			{"/text", "text/plain; charset=utf-8", "hello"},
++			{"/bytes", "application/octet-stream", "\x00\x01\x02\xff"},
++		} {
++			r := c.get(t, tc.path)
++			if r.status != http.StatusOK || r.header.Get("Content-Type") != tc.contentType {
++				t.Errorf("%s: %d %q", tc.path, r.status, r.header.Get("Content-Type"))
++			}
++			if !sameBody(r.body, []byte(tc.body)) {
++				t.Errorf("%s: body %q, want %q", tc.path, r.body, tc.body)
++			}
++		}
++	})
++
++	t.Run("the handler sees the request as sent", func(t *testing.T) {
++		r := c.call(t, http.MethodPost, "/echo?a=1&a=2", []byte("payload"),
++			map[string]string{"X-Custom": "v", "X-Request-Id": "conf-echo"})
++
++		want := map[string]any{
++			"method": "POST", "path": "/echo", "query": "1", "queryAll": []any{"1", "2"},
++			"header": "v", "body": "payload", "requestId": "conf-echo",
++		}
++		if got := r.json(t); r.status != http.StatusOK || !reflect.DeepEqual(got, want) {
++			t.Errorf("%d %v, want %v", r.status, got, want)
++		}
++	})
++
++	t.Run("a status of the handler's own, or no content", func(t *testing.T) {
++		if r := c.get(t, "/status?code=201"); r.status != http.StatusCreated {
++			t.Errorf("/status?code=201: %d", r.status)
++		}
++		if r := c.get(t, "/"); r.status != http.StatusNoContent || len(r.body) != 0 {
++			t.Errorf("/: %d %q", r.status, r.body)
++		}
++		r := c.call(t, http.MethodHead, "/text", nil, nil)
++		if r.status != http.StatusOK || len(r.body) != 0 || r.header.Get("Content-Length") != "5" {
++			t.Errorf("HEAD /text: %d %q, length %q", r.status, r.body, r.header.Get("Content-Length"))
++		}
++	})
++
++	t.Run("an error says nothing of itself", func(t *testing.T) {
++		r := c.call(t, http.MethodGet, "/error", nil, map[string]string{"X-Request-Id": "conf-error"})
++
++		if body := r.json(t); r.status != 500 || body["error"] != "internal error" || body["requestId"] != "conf-error" {
++			t.Errorf("%d %v", r.status, body)
++		}
++		if bytes.Contains(r.body, []byte("fixture failure")) {
++			t.Error("the error's text was sent")
++		}
++		c.waitForLog(t, "stderr", func(line string) bool {
++			return strings.Contains(line, "hivepaas: call conf-error failed") && strings.Contains(line, "fixture failure")
++		})
++		if line := c.jsonLine(t, "invocation", "conf-error"); line["outcome"] != "error" || line["status"] != 500.0 {
++			t.Errorf("invocation line %v", line)
++		}
++	})
++
++	t.Run("a status that is not one is an error", func(t *testing.T) {
++		if r := c.get(t, "/invalid"); r.status != 500 || r.json(t)["error"] != "internal error" {
++			t.Errorf("%d %q", r.status, r.body)
++		}
++	})
++
++	t.Run("a call is answered at its timeout", func(t *testing.T) {
++		start := time.Now()
++		r := c.call(t, http.MethodGet, "/slow?ms=3000", nil, map[string]string{"X-Request-Id": "conf-slow"})
++
++		if r.status != http.StatusGatewayTimeout || r.json(t)["error"] != "timeout" {
++			t.Errorf("%d %q", r.status, r.body)
++		}
++		if took := time.Since(start); took > 2500*time.Millisecond {
++			t.Errorf("answered after %v", took)
++		}
++		if line := c.jsonLine(t, "invocation", "conf-slow"); line["outcome"] != "timeout" {
++			t.Errorf("invocation line %v", line)
++		}
++	})
++
++	t.Run("bodies over the limit", func(t *testing.T) {
++		over := bytes.Repeat([]byte("x"), 4097)
++		r := c.call(t, http.MethodPost, "/echo", over, map[string]string{"X-Request-Id": "conf-413"})
++		if r.status != http.StatusRequestEntityTooLarge || r.json(t)["error"] != "request too large" {
++			t.Errorf("a request body over the limit: %d %q", r.status, r.body)
++		}
++		if line := c.jsonLine(t, "invocation", "conf-413"); line["outcome"] != "request_too_large" {
++			t.Errorf("invocation line %v", line)
++		}
++
++		r = c.call(t, http.MethodGet, "/big?bytes=4097", nil, map[string]string{"X-Request-Id": "conf-big"})
++		if r.status != 500 || r.json(t)["error"] != "internal error" {
++			t.Errorf("a response body over the limit: %d %q", r.status, r.body)
++		}
++		if line := c.jsonLine(t, "invocation", "conf-big"); line["outcome"] != "response_too_large" {
++			t.Errorf("invocation line %v", line)
++		}
++
++		if r := c.call(t, http.MethodPost, "/text", bytes.Repeat([]byte("x"), 4096), nil); r.status != 200 {
++			t.Errorf("a request body at the limit: %d", r.status)
++		}
++	})
++
++	t.Run("a body sent in chunks", func(t *testing.T) {
++		r := c.chunked(t, "/echo", []byte("payload"))
++		if r.status != http.StatusOK || r.json(t)["body"] != "payload" {
++			t.Errorf("a body in chunks: %d %q", r.status, r.body)
++		}
++		if r := c.chunked(t, "/text", bytes.Repeat([]byte("x"), 4096)); r.status != http.StatusOK {
++			t.Errorf("a body in chunks at the limit: %d", r.status)
++		}
++		if r := c.chunked(t, "/text", bytes.Repeat([]byte("x"), 4097)); r.status != http.StatusRequestEntityTooLarge {
++			t.Errorf("a body in chunks over the limit: %d %q", r.status, r.body)
++		}
++	})
++
++	t.Run("a request whose body does not arrive is dropped", func(t *testing.T) {
++		conn, err := net.Dial("tcp", strings.TrimPrefix(c.url, "http://"))
++		if err != nil {
++			t.Fatal(err)
++		}
++		defer conn.Close()
++		start := time.Now()
++		_, err = io.WriteString(conn, "POST /echo HTTP/1.1\r\nHost: fixture\r\nX-Request-Id: conf-stalled\r\n"+
++			"Content-Length: 10\r\n\r\nabc")
++		if err != nil {
++			t.Fatal(err)
++		}
++		_ = conn.SetReadDeadline(time.Now().Add(5 * time.Second))
++
++		answer, _ := io.ReadAll(conn) // until the runtime closes the connection
++
++		if len(answer) != 0 {
++			t.Errorf("answered %q", answer)
++		}
++		if took := time.Since(start); took < 900*time.Millisecond || took > 4*time.Second {
++			t.Errorf("the connection was closed after %v; the timeout is 1s", took)
++		}
++		time.Sleep(200 * time.Millisecond)
++		if c.hasLog(t, "stdout", func(line string) bool { return strings.Contains(line, "conf-stalled") }) {
++			t.Error("a call was logged")
++		}
++	})
++
++	t.Run("the function's environment and user", func(t *testing.T) {
++		if r := c.get(t, "/env"); string(r.body) != "hi" {
++			t.Errorf("/env: %q", r.body)
++		}
++		if body := c.get(t, "/whoami").json(t); body["uid"] != 10001.0 || body["gid"] != 10001.0 {
++			t.Errorf("/whoami: %v", body)
++		}
++		if r := c.get(t, "/lib"); string(r.body) != "from lib" {
++			t.Errorf("/lib: %d %q", r.status, r.body)
++		}
++		remaining, _ := c.get(t, "/deadline").json(t)["remainingMs"].(float64)
++		if remaining <= 0 || remaining > 1000 {
++			t.Errorf("/deadline: %v ms left", remaining)
++		}
++	})
++
++	t.Run("every call has an id and a log line", func(t *testing.T) {
++		r := c.call(t, http.MethodGet, "/json?token=secret", nil, map[string]string{"X-Request-Id": "conf-id.1_A"})
++		if got := r.header.Get("X-Request-Id"); got != "conf-id.1_A" {
++			t.Errorf("x-request-id %q", got)
++		}
++		line := c.jsonLine(t, "invocation", "conf-id.1_A")
++		if line["method"] != "GET" || line["path"] != "/json" || line["status"] != 200.0 || line["outcome"] != "ok" {
++			t.Errorf("invocation line %v", line)
++		}
++		if _, ok := line["durationMs"].(float64); !ok {
++			t.Errorf("invocation line without a duration: %v", line)
++		}
++
++		made := c.call(t, http.MethodGet, "/text", nil, map[string]string{"X-Request-Id": "not an id"})
++		if id := made.header.Get("X-Request-Id"); !regexp.MustCompile(`^[A-Za-z0-9._-]{1,128}$`).MatchString(id) ||
++			id == "not an id" {
++			t.Errorf("made id %q", id)
++		}
++	})
++
++	t.Run("a handler's log line carries its call's id", func(t *testing.T) {
++		c.call(t, http.MethodGet, "/log", nil, map[string]string{"X-Request-Id": "conf-log"})
++		if line := c.jsonLine(t, "log", "conf-log"); line["msg"] != "fixture log line" {
++			t.Errorf("log line %v", line)
++		}
++	})
++
++	t.Run("the runtime's paths", func(t *testing.T) {
++		if r := c.get(t, "/_hivepaas/health"); r.status != 200 || r.json(t)["status"] != "ok" {
++			t.Errorf("health: %d %q", r.status, r.body)
++		}
++		if r := c.get(t, "/_hivepaas/anything"); r.status != 404 || r.json(t)["error"] != "not found" {
++			t.Errorf("/_hivepaas/anything: %d %q", r.status, r.body)
++		}
++	})
++
++	t.Run("docker sees it healthy", func(t *testing.T) {
++		deadline := time.Now().Add(30 * time.Second)
++		for {
++			status := strings.TrimSpace(docker(t, "inspect", "--format", "{{.State.Health.Status}}", c.id))
++			if status == "healthy" {
++				return
++			}
++			if time.Now().After(deadline) {
++				t.Fatalf("health is %q", status)
++			}
++			time.Sleep(250 * time.Millisecond)
++		}
++	})
++
++	t.Run("calls over the concurrency are turned away", func(t *testing.T) {
++		one := startServe(t, imgs.fixture, "HP_FN_MAX_CONCURRENCY=1", "HP_FN_TIMEOUT_MS=5000")
++		slow := one.background("/slow?ms=1500")
++		time.Sleep(500 * time.Millisecond)
++
++		r := one.get(t, "/text")
++
++		if r.status != http.StatusTooManyRequests || r.header.Get("Retry-After") != "1" ||
++			r.json(t)["error"] != "too many requests" {
++			t.Errorf("%d, Retry-After %q, %q", r.status, r.header.Get("Retry-After"), r.body)
++		}
++		if r := <-slow; r.err != nil || r.status != 200 {
++			t.Errorf("the running call: %d %v", r.status, r.err)
++		}
++	})
++
++	t.Run("stopping lets the running call finish", func(t *testing.T) {
++		stopped := startServe(t, imgs.fixture, "HP_FN_TIMEOUT_MS=5000")
++		slow := stopped.background("/slow?ms=1000")
++		time.Sleep(300 * time.Millisecond)
++
++		start := time.Now()
++		docker(t, "stop", "--time", "10", stopped.id)
++
++		if took := time.Since(start); took > 4*time.Second {
++			t.Errorf("stopping took %v, for a call of 1s", took)
++		}
++		if r := <-slow; r.err != nil || r.status != 200 || string(r.body) != "slow done" {
++			t.Errorf("the running call: %d %q %v", r.status, r.body, r.err)
++		}
++		if code := strings.TrimSpace(docker(t, "inspect", "--format", "{{.State.ExitCode}}", stopped.id)); code != "0" {
++			t.Errorf("exit code %s", code)
++		}
++	})
++
++	if !rt.compiled {
++		t.Run("a handler that cannot be loaded", func(t *testing.T) {
++			broken := startServe(t, imgs.fixture, "HP_FN_HANDLER=missing")
++
++			if r := broken.get(t, "/_hivepaas/health"); r.status != 503 || r.json(t)["status"] != "unavailable" {
++				t.Errorf("health: %d %q", r.status, r.body)
++			}
++			r := broken.call(t, http.MethodGet, "/text", nil, map[string]string{"X-Request-Id": "conf-broken"})
++			if r.status != 500 || r.json(t)["error"] != "internal error" {
++				t.Errorf("a call: %d %q", r.status, r.body)
++			}
++			if line := broken.jsonLine(t, "invocation", "conf-broken"); line["outcome"] != "not_loaded" {
++				t.Errorf("invocation line %v", line)
++			}
++			broken.waitForLog(t, "stderr", func(line string) bool {
++				return strings.Contains(line, "hivepaas: the handler could not be loaded")
++			})
++		})
++	}
++}
++
++// sameBody compares bodies, as JSON when both are.
++func sameBody(got, want []byte) bool {
++	var g, w any
++	if json.Unmarshal(got, &g) == nil && json.Unmarshal(want, &w) == nil {
++		return reflect.DeepEqual(g, w)
++	}
++	return bytes.Equal(got, want)
++}

@@ -1,0 +1,330 @@
+diff --git a/.github/workflows/release.yml b/.github/workflows/release.yml
+new file mode 100644
+index 0000000..87c892b
+--- /dev/null
++++ b/.github/workflows/release.yml
+@@ -0,0 +1,200 @@
++name: 'Release'
++
++# A version tag (v1.0.0, v1.1.0-rc1) builds that version's runtime images for
++# amd64 and arm64, and drafts a GitHub Release with their digests, which
++# HivePaaS's release.json names under functionRuntimes. The version's major is
++# the contract's (CONTRACT.md).
++
++on:
++  push:
++    tags:
++      - 'v[0-9]+.[0-9]+.[0-9]+'
++      - 'v[0-9]+.[0-9]+.[0-9]+-*'
++
++permissions:
++  contents: read
++
++concurrency:
++  group: release-${{ github.ref_name }}
++  cancel-in-progress: false
++
++env:
++  IMAGES: node24 python313 go127 go127-build
++
++jobs:
++  check:
++    name: Check the tag
++    runs-on: ubuntu-24.04
++    outputs:
++      version: ${{ steps.meta.outputs.version }}
++      major: ${{ steps.meta.outputs.major }}
++      prerelease: ${{ steps.meta.outputs.prerelease }}
++    steps:
++      - name: Checkout
++        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
++        with:
++          persist-credentials: false
++
++      - name: Setup Go
++        uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
++        with:
++          go-version-file: go.mod
++
++      - name: Version
++        id: meta
++        run: |
++          version=${GITHUB_REF_NAME#v}
++          if [[ $version == *-* ]]; then prerelease=true; else prerelease=false; fi
++          {
++            echo "version=$version"
++            echo "major=${version%%.*}"
++            echo "prerelease=$prerelease"
++          } >> "$GITHUB_OUTPUT"
++
++      - name: The contract has the version's major
++        env:
++          MAJOR: ${{ steps.meta.outputs.major }}
++        run: |
++          grep -q "^## v$MAJOR\$" CONTRACT.md ||
++            { echo "::error::CONTRACT.md has no contract v$MAJOR for this tag"; exit 1; }
++
++      - name: Test
++        run: go test -count=1 ./...
++
++      - name: Conformance
++        run: go test -tags conformance -count=1 ./conformance/
++
++  build:
++    name: Build ${{ matrix.image }} (${{ matrix.arch }})
++    needs: check
++    environment: release
++    permissions:
++      contents: read
++      packages: write
++    strategy:
++      matrix:
++        image: [node24, python313, go127, go127-build]
++        arch: [amd64, arm64]
++        include:
++          - { image: node24, dockerfile: runtimes/node24/Dockerfile, target: '' }
++          - { image: python313, dockerfile: runtimes/python313/Dockerfile, target: '' }
++          - { image: go127, dockerfile: runtimes/go127/Dockerfile, target: run }
++          - { image: go127-build, dockerfile: runtimes/go127/Dockerfile, target: build }
++          - { arch: amd64, runner: ubuntu-24.04 }
++          - { arch: arm64, runner: ubuntu-24.04-arm }
++    runs-on: ${{ matrix.runner }}
++    steps:
++      - name: Checkout
++        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
++        with:
++          persist-credentials: false
++
++      - name: Set up Docker Buildx
++        uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
++
++      - name: Log in to GHCR
++        uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4.6.0
++        with:
++          registry: ghcr.io
++          username: ${{ github.actor }}
++          password: ${{ github.token }}
++
++      - name: Build and push
++        uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
++        with:
++          context: .
++          file: ${{ matrix.dockerfile }}
++          target: ${{ matrix.target }}
++          platforms: linux/${{ matrix.arch }}
++          push: true
++          provenance: mode=max
++          sbom: true
++          build-args: |
++            VERSION=${{ needs.check.outputs.version }}
++          labels: |
++            org.opencontainers.image.source=https://github.com/hivepaas/function-runtimes
++            org.opencontainers.image.version=${{ needs.check.outputs.version }}
++            org.opencontainers.image.revision=${{ github.sha }}
++            org.opencontainers.image.licenses=Apache-2.0
++          tags: ghcr.io/hivepaas/function-runtime-${{ matrix.image }}:${{ needs.check.outputs.version }}-${{ matrix.arch }}
++
++  manifest:
++    name: Multi-arch images
++    needs: [check, build]
++    environment: release
++    runs-on: ubuntu-24.04
++    permissions:
++      contents: read
++      packages: write
++    steps:
++      - name: Log in to GHCR
++        uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4.6.0
++        with:
++          registry: ghcr.io
++          username: ${{ github.actor }}
++          password: ${{ github.token }}
++
++      - name: Set up Docker Buildx
++        uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
++
++      # The version's tag never moves once pushed. The major's tag (1) follows
++      # the newest release of that contract; HivePaaS names images by version
++      # and digest, never by it.
++      - name: Create the manifests
++        env:
++          VERSION: ${{ needs.check.outputs.version }}
++          MAJOR: ${{ needs.check.outputs.major }}
++          PRERELEASE: ${{ needs.check.outputs.prerelease }}
++        run: |
++          for name in $IMAGES; do
++            image=ghcr.io/hivepaas/function-runtime-$name
++            tags=(-t "$image:$VERSION")
++            if [ "$PRERELEASE" = false ]; then tags+=(-t "$image:$MAJOR"); fi
++            docker buildx imagetools create "${tags[@]}" "$image:$VERSION-amd64" "$image:$VERSION-arm64"
++          done
++
++      - name: Record the digests
++        env:
++          VERSION: ${{ needs.check.outputs.version }}
++        run: |
++          digest() { docker buildx imagetools inspect "$1" --format '{{json .Manifest}}' | jq -r .digest; }
++          for name in $IMAGES; do
++            image=ghcr.io/hivepaas/function-runtime-$name:$VERSION
++            echo "$name=$image@$(digest "$image")"
++          done > digests.txt
++          {
++            echo '### Images'
++            echo '```'
++            cat digests.txt
++            echo '```'
++            echo "Copy these into HivePaaS's release.json, under functionRuntimes."
++          } >> "$GITHUB_STEP_SUMMARY"
++
++      - name: Keep the digests
++        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
++        with:
++          name: digests
++          path: digests.txt
++
++  draft:
++    name: Draft the GitHub Release
++    needs: [check, manifest]
++    runs-on: ubuntu-24.04
++    permissions:
++      contents: write
++    steps:
++      - name: Get the digests
++        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
++        with:
++          name: digests
++          path: dist
++
++      - name: Create the draft
++        env:
++          GH_TOKEN: ${{ github.token }}
++          GH_REPO: ${{ github.repository }}
++          PRERELEASE: ${{ needs.check.outputs.prerelease }}
++        run: |
++          args=(--draft --verify-tag --generate-notes --title "Function runtimes $GITHUB_REF_NAME")
++          if [ "$PRERELEASE" = true ]; then args+=(--prerelease); fi
++          gh release create "$GITHUB_REF_NAME" "${args[@]}" dist/digests.txt
+diff --git a/.github/workflows/test.yml b/.github/workflows/test.yml
+new file mode 100644
+index 0000000..65c4ee7
+--- /dev/null
++++ b/.github/workflows/test.yml
+@@ -0,0 +1,89 @@
++name: 'Test'
++
++on:
++  push:
++    branches: [main]
++  pull_request:
++
++permissions:
++  contents: read
++
++jobs:
++  go:
++    name: Go
++    runs-on: ubuntu-24.04
++    steps:
++      - name: Checkout
++        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
++        with:
++          persist-credentials: false
++
++      - name: Setup Go
++        uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
++        with:
++          go-version-file: go.mod
++
++      - name: Lint
++        run: docker run --rm -v "$PWD:/src" -w /src golangci/golangci-lint:v2.13.0 golangci-lint run --build-tags conformance ./...
++
++      - name: Test
++        run: go test -race -count=1 ./...
++
++      - name: Shell scripts
++        run: shellcheck runtimes/go127/hivepaas-runtime runtimes/python313/hivepaas-runtime
++
++  node:
++    name: Node.js runtime
++    runs-on: ubuntu-24.04
++    steps:
++      - name: Checkout
++        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
++        with:
++          persist-credentials: false
++
++      - name: Test
++        run: docker run --rm -v "$PWD:/src:ro" -w /src node:24-trixie-slim node --test 'runtimes/node24/test/*.test.mjs'
++
++  python:
++    name: Python runtime
++    runs-on: ubuntu-24.04
++    steps:
++      - name: Checkout
++        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
++        with:
++          persist-credentials: false
++
++      - name: Test
++        run: >-
++          docker run --rm -v "$PWD:/src:ro" -w /src
++          -e PYTHONPATH=/src/runtimes/python313/runtime -e PYTHONDONTWRITEBYTECODE=1
++          python:3.13-slim-trixie python -m unittest discover -s runtimes/python313/tests
++
++  # Every image, built and called the way HivePaaS will, on both architectures
++  # it is published for.
++  conformance:
++    name: Conformance (${{ matrix.runtime }}, ${{ matrix.arch }})
++    strategy:
++      fail-fast: false
++      matrix:
++        runtime: [go127, node24, python313]
++        arch: [amd64, arm64]
++        include:
++          - { arch: amd64, runner: ubuntu-24.04 }
++          - { arch: arm64, runner: ubuntu-24.04-arm }
++    runs-on: ${{ matrix.runner }}
++    steps:
++      - name: Checkout
++        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
++        with:
++          persist-credentials: false
++
++      - name: Setup Go
++        uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
++        with:
++          go-version-file: go.mod
++
++      - name: Conformance
++        env:
++          RUNTIMES: ${{ matrix.runtime }}
++        run: go test -tags conformance -count=1 -v ./conformance/
+diff --git a/README.md b/README.md
+index 350fcfe..1fe253e 100644
+--- a/README.md
++++ b/README.md
+@@ -39,6 +39,24 @@ go test -tags conformance ./conformance/         # every runtime image, with doc
+ RUNTIMES=node24 go test -tags conformance ./conformance/
+ ```
+ 
++The Node.js and Python runtimes have unit tests of their own, run in their base
++images:
++
++```bash
++docker run --rm -v "$PWD:/src:ro" -w /src node:24-trixie-slim node --test 'runtimes/node24/test/*.test.mjs'
++docker run --rm -v "$PWD:/src:ro" -w /src -e PYTHONPATH=/src/runtimes/python313/runtime \
++  python:3.13-slim-trixie python -m unittest discover -s runtimes/python313/tests
++```
++
++## Releasing
++
++A tag `vX.Y.Z` on `main` builds every image for amd64 and arm64, pushes
++`function-runtime-<runtime>:X.Y.Z` (and `:X` for a release that is not a
++prerelease) to GHCR, and drafts a GitHub Release listing each image by digest.
++Those lines go into HivePaaS's `release.json`, under `functionRuntimes`. The
++tag's major is the contract's: a change that breaks the contract is a new major,
++with its own section in [CONTRACT.md](CONTRACT.md).
++
+ ## License
+ 
+ Apache License 2.0.

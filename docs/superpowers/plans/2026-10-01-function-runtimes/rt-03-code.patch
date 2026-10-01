@@ -1,0 +1,199 @@
+diff --git a/runtimes/go127/Dockerfile b/runtimes/go127/Dockerfile
+new file mode 100644
+index 0000000..65cce9c
+--- /dev/null
++++ b/runtimes/go127/Dockerfile
+@@ -0,0 +1,49 @@
++# syntax=docker/dockerfile:1
++# The Go runtime, built from the repository's root. Its `build` target compiles
++# a function and is published as function-runtime-go127-build; its `run` target
++# runs what was compiled and is published as function-runtime-go127:
++#
++#   docker build -f runtimes/go127/Dockerfile --target build -t fn-go127-build .
++#   docker build -f runtimes/go127/Dockerfile --target run -t fn-go127 .
++
++ARG VERSION=1.0.0-dev
++
++FROM golang:1.27-trixie AS build
++ARG VERSION
++RUN groupadd --gid 10001 hivepaas \
++    && useradd --uid 10001 --gid 10001 --create-home --shell /usr/sbin/nologin hivepaas \
++    && mkdir /app \
++    && chown hivepaas:hivepaas /app
++COPY go.mod /hivepaas/go/
++COPY hivepaas/ /hivepaas/go/hivepaas/
++COPY runtimes/go127/hivepaas-runtime /usr/local/bin/
++ENV HP_RUNTIME_VERSION=v${VERSION} \
++    GOTOOLCHAIN=local \
++    GOCACHE=/home/hivepaas/.cache/go-build
++USER hivepaas
++WORKDIR /app
++# One function built here leaves the runtime and the standard library it uses
++# compiled in the cache, so that a function's build compiles only the function.
++COPY --chown=hivepaas:hivepaas runtimes/go127/warmup/ /app/
++RUN hivepaas-runtime build \
++    && rm -rf /app/* /app/.hivepaas
++EXPOSE 8080
++HEALTHCHECK --interval=10s --timeout=3s --start-period=30s --start-interval=1s --retries=3 \
++    CMD ["hivepaas-runtime", "health"]
++CMD ["hivepaas-runtime", "serve"]
++
++FROM debian:trixie-slim AS run
++RUN apt-get update \
++    && apt-get install -y --no-install-recommends ca-certificates tzdata \
++    && rm -rf /var/lib/apt/lists/* \
++    && groupadd --gid 10001 hivepaas \
++    && useradd --uid 10001 --gid 10001 --create-home --shell /usr/sbin/nologin hivepaas \
++    && mkdir /app \
++    && chown hivepaas:hivepaas /app
++COPY runtimes/go127/hivepaas-runtime /usr/local/bin/
++USER hivepaas
++WORKDIR /app
++EXPOSE 8080
++HEALTHCHECK --interval=10s --timeout=3s --start-period=30s --start-interval=1s --retries=3 \
++    CMD ["hivepaas-runtime", "health"]
++CMD ["hivepaas-runtime", "serve"]
+diff --git a/runtimes/go127/hivepaas-runtime b/runtimes/go127/hivepaas-runtime
+new file mode 100755
+index 0000000..094c470
+--- /dev/null
++++ b/runtimes/go127/hivepaas-runtime
+@@ -0,0 +1,109 @@
++#!/bin/sh
++# hivepaas-runtime for Go. deps and build turn the function's module in /app
++# into /app/.hivepaas/function, in the build image; serve, invoke and health run
++# that binary, which holds the runtime. See CONTRACT.md.
++set -eu
++
++app=/app
++binary=$app/.hivepaas/function
++runtime_module=github.com/hivepaas/function-runtimes
++runtime_dir=/hivepaas/go
++
++fail() {
++	echo "hivepaas: $*" >&2
++	exit 3
++}
++
++need_toolchain() {
++	command -v go >/dev/null 2>&1 ||
++		fail "this image only runs a built function; $1 in function-runtime-go127-build"
++}
++
++# with_runtime runs a command with the runtime module required at this image's
++# version and replaced by its copy here, then takes the replacement out of
++# go.mod: the function's go.mod stays one that builds anywhere.
++with_runtime() {
++	go mod edit -require="$runtime_module@$HP_RUNTIME_VERSION" -replace="$runtime_module=$runtime_dir"
++	status=0
++	"$@" || status=$?
++	go mod edit -dropreplace="$runtime_module"
++	return "$status"
++}
++
++deps() {
++	need_toolchain "install the libraries"
++	cd "$app"
++	[ -f go.mod ] || return 0
++	with_runtime go mod download
++}
++
++build() {
++	need_toolchain "build the function"
++	cd "$app"
++	[ -f go.mod ] || fail "the function has no go.mod"
++	handler=${HP_FN_HANDLER:-Handle}
++	entrypoint=${HP_FN_ENTRYPOINT:-.}
++	printf '%s\n' "$handler" | grep -Eq '^[A-Z][A-Za-z0-9_]*$' ||
++		fail "HP_FN_HANDLER is \"$handler\", which is not an exported Go name"
++	case "/$entrypoint/" in
++	*/../* | //*) fail "HP_FN_ENTRYPOINT is \"$entrypoint\", which is not a directory of the module" ;;
++	esac
++
++	with_runtime go mod tidy || fail "go mod tidy failed"
++	package=$(go list -m)
++	entrypoint=${entrypoint#./}
++	entrypoint=${entrypoint%/}
++	if [ -n "$entrypoint" ] && [ "$entrypoint" != . ]; then
++		package=$package/$entrypoint
++	fi
++	go_version=$(go env GOVERSION)
++	go_version=${go_version#go}
++
++	work=$(mktemp -d)
++	trap 'rm -rf "$work"' EXIT
++	mkdir "$work/main"
++	printf 'module hivepaas.local/main\n\ngo %s\n' "$go_version" >"$work/main/go.mod"
++	cat >"$work/main/main.go" <<MAIN
++package main
++
++import (
++	"github.com/hivepaas/function-runtimes/hivepaas/serve"
++
++	function "$package"
++)
++
++func main() { serve.Main(function.$handler) }
++MAIN
++	cat >"$work/go.work" <<WORK
++go $go_version
++
++use (
++	$app
++	./main
++)
++
++replace $runtime_module => $runtime_dir
++WORK
++	mkdir -p "$app/.hivepaas"
++	GOWORK="$work/go.work" go build -trimpath -o "$binary" hivepaas.local/main ||
++		fail "the function does not compile"
++	rm -rf "$work"
++	trap - EXIT
++}
++
++command=${1:-serve}
++case "$command" in
++deps) deps ;;
++build) build ;;
++serve | invoke | health)
++	if [ ! -x "$binary" ]; then
++		[ "$command" != health ] || fail "the function is not built"
++		build >&2
++	fi
++	exec "$binary" "$@"
++	;;
++*)
++	echo "usage: hivepaas-runtime serve|invoke|health|deps|build" >&2
++	exit 2
++	;;
++esac
+diff --git a/runtimes/go127/warmup/go.mod b/runtimes/go127/warmup/go.mod
+new file mode 100644
+index 0000000..b84395a
+--- /dev/null
++++ b/runtimes/go127/warmup/go.mod
+@@ -0,0 +1,3 @@
++module warmup
++
++go 1.27
+diff --git a/runtimes/go127/warmup/warmup.go b/runtimes/go127/warmup/warmup.go
+new file mode 100644
+index 0000000..15ced63
+--- /dev/null
++++ b/runtimes/go127/warmup/warmup.go
+@@ -0,0 +1,14 @@
++// Package warmup is the function the build image compiles once, so that the
++// runtime and the standard library it uses are in the image's build cache.
++package warmup
++
++import (
++	"context"
++
++	"github.com/hivepaas/function-runtimes/hivepaas"
++)
++
++// Handle answers nothing.
++func Handle(context.Context, *hivepaas.Request) (*hivepaas.Response, error) {
++	return nil, nil
++}

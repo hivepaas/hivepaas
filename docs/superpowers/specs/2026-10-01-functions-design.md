@@ -21,7 +21,8 @@ next to it rather than in place of it.
 1. **A function is an app.** Its kind settings say category `function`; its
    deployment method is `function`. Everything an app has, a function has.
 2. **HivePaaS writes its own runtimes**, in the repository
-   `hivepaas/function-runtimes`: one per language, on Debian slim.
+   `hivepaas/function-runtimes`: one per language, on Debian slim (Go compiles
+   in the full `golang` image, and runs on slim).
 3. **The contract between a handler and its runtime is versioned.** A function
    records its runtime (`node24`) and its contract (`v1`). A later contract runs
    beside this one; nothing moves a function to it but its author.
@@ -99,6 +100,9 @@ type FunctionInlineCode struct {
   working directory do not apply.
 - **The health check** is the image's own (`HEALTHCHECK` in the runtime image),
   which Swarm already waits for during a rolling update.
+- **Stopping:** on `SIGTERM` the runtime lets running calls finish, for at most
+  one timeout; the service's stop grace period is set above the function's
+  timeout so that Swarm does not kill them first.
 
 ## 2. The runtime contract, v1
 
@@ -110,17 +114,24 @@ reference. In short:
 - `ghcr.io/hivepaas/function-runtime-<runtime>:<version>`, for example
   `function-runtime-node24:1.0.0`. The version's major is the contract's: every
   `1.x.y` speaks v1.
-- Debian slim, the runtime in `/hivepaas/runtime`, the function in `/app`, a
-  user of its own (`hivepaas`, uid 10001): the function never runs as root.
+- Debian slim, the runtime in `/hivepaas`, the function in `/app` with its
+  libraries (`node_modules`, the virtual environment `.venv`), a user of its own
+  (`hivepaas`, uid 10001): the function never runs as root.
+- Go has two images: `function-runtime-go127-build` compiles a function with the
+  runtime into one binary, and `function-runtime-go127`, without the toolchain,
+  runs it.
 
 ### Two ways to run it
 
 - **Serve:** `hivepaas-runtime serve` answers HTTP on port 8080. Paths under
   `/_hivepaas/` are the runtime's: `/_hivepaas/health` for the health check.
 - **Invoke:** `hivepaas-runtime invoke` reads one request, as JSON, on its
-  standard input, calls the handler once, writes the response, as JSON, on its
-  standard output, and exits. Logs go to standard error. A test run and a
-  scheduled call use this; neither needs a port or a network.
+  standard input, calls the handler once, writes the call's log and then the
+  result, as JSON on a last line behind a marker, on its standard output, and
+  exits; errors go to standard error. A test run and a scheduled call use this;
+  neither needs a port or a network.
+- **Deps:** `hivepaas-runtime deps` installs the function's libraries from its
+  manifest, making the lock file when there is none; **build** (Go) compiles.
 
 ### The handler
 
@@ -144,8 +155,9 @@ func Handle(ctx context.Context, req *hivepaas.Request) (*hivepaas.Response, err
 }
 ```
 
-The Go types are a small module of the same repository
-(`github.com/hivepaas/function-runtimes/go/hivepaas`).
+The Go types are the package `github.com/hivepaas/function-runtimes/hivepaas`,
+of the module at the repository's root, so that a tag is both the images'
+version and the module's.
 
 - **The request:** method, path, query (a name to its values), headers, the body
   as bytes, with helpers to read it as text or JSON.
@@ -174,24 +186,30 @@ The Go types are a small module of the same repository
 
 ```dockerfile
 FROM ghcr.io/hivepaas/function-runtime-node24:1.0.0@sha256:… AS base
-# only when the function names Debian packages
+# only when the function names Debian packages; the image runs as hivepaas
+USER root
 RUN apt-get update && apt-get install -y --no-install-recommends libpq-dev \
     && rm -rf /var/lib/apt/lists/*
+USER hivepaas
 
 FROM base AS deps
-COPY package.json package-lock.json /app/
-RUN --mount=type=secret,id=NPM_TOKEN,env=NPM_TOKEN npm ci --omit=dev
+COPY --chown=hivepaas:hivepaas package.json package-lock.json /app/
+RUN --mount=type=secret,id=NPM_TOKEN,env=NPM_TOKEN hivepaas-runtime deps
 
 FROM deps
-COPY . /app/
+COPY --chown=hivepaas:hivepaas . /app/
 ```
 
    - Each layer is cached by what it is built from: the runtime image, then the
      package list, then the manifest and its lock file. A change to the code
      alone rebuilds only the last layer.
-   - **Python** installs with `uv` into a virtual environment in the image;
-     **Go** adds a step that compiles the function with the runtime into one
-     binary.
+   - **The install is the runtime's `deps`**: `npm ci`, or `npm install` that
+     makes the lock file; `uv pip compile` then `uv pip sync` into the virtual
+     environment `/app/.venv`; `go mod download`.
+   - **Go** has two more stages: the build image runs `hivepaas-runtime build`,
+     which tidies `go.mod` and `go.sum` and compiles the function with the
+     runtime into one binary; the last stage is the slim `function-runtime-go127`
+     with the Debian packages and `/app` copied from the build.
    - **Every build variable that uses a secret is mounted into the install
      step**, so a private npm or Python registry works, the way the build-secret
      change made every build read secrets.
@@ -200,7 +218,8 @@ COPY . /app/
      refused.
 3. **The lock file:** a build that finds a manifest without its lock file
    resolves the versions and makes one (`package-lock.json`,
-   `requirements.lock`, `go.sum`). For inline code, HivePaaS saves it with the
+   `requirements.lock`; for Go, `go.mod` and `go.sum`, which `build` tidies from
+   the code's imports). For inline code, HivePaaS saves it with the
    function's files, so the next build installs the same versions. For a
    repository, the build log says that the lock file is missing.
 4. **Then the build and the deployment of any app**: buildx, on the build node,
@@ -216,7 +235,8 @@ map of their own:
 "functionRuntimes": {
   "node24": "ghcr.io/hivepaas/function-runtime-node24:1.0.0@sha256:…",
   "python313": "ghcr.io/hivepaas/function-runtime-python313:1.0.0@sha256:…",
-  "go127": "ghcr.io/hivepaas/function-runtime-go127:1.0.0@sha256:…"
+  "go127": "ghcr.io/hivepaas/function-runtime-go127:1.0.0@sha256:…",
+  "go127-build": "ghcr.io/hivepaas/function-runtime-go127-build:1.0.0@sha256:…"
 }
 ```
 
@@ -254,8 +274,12 @@ app ──▶ dashboard: status, headers, body, logs, duration, a lock file if o
   the editor adds to the code for the author to save.
 - **How long it takes** (estimated from a container measured on a laptop, not
   yet on a server): about 0.5 to 1.5 seconds for Node.js or Python when the
-  libraries are already installed, 2 to 5 seconds for Go, which compiles; the
-  first run after the libraries change adds their install.
+  libraries are already installed; for Go, a container that tidies, compiles and
+  calls took about 0.4 seconds, the standard library and the runtime being
+  compiled in the build image already. The first run after the libraries change
+  adds their install.
+- **The code copied into the container belongs to uid 10001**: `go mod tidy` and
+  `npm` write into `/app`.
 
 ## 5. Calling a function
 
@@ -333,8 +357,9 @@ Each part has its own plan and its own review:
 
 - **The runtimes:** the conformance suite against each image, in both modes: a
   JSON and a text response, a raised error, a timeout, the concurrency limit, a
-  body over the limit, the health check, the per-call log line, a library and a
-  Debian package used by a handler.
+  body over the limit, the health check, the per-call log line, a library used
+  by a handler. A Debian package is installed by the generated Dockerfile and is
+  checked with it, in part 2.
 - **The backend:** the generated Dockerfile for each runtime, with and without
   packages, libraries, a lock file and build secrets; package names refused;
   inline code limits; a function's fixed port and command; the test run's
@@ -352,3 +377,21 @@ Each part has its own plan and its own review:
 - Triggers other than HTTP and schedules.
 - Metrics in the dashboard.
 - Runtimes a user brings.
+
+## Changes after part 1's plan
+
+Writing the runtimes (`docs/superpowers/plans/2026-10-01-function-runtimes.md`)
+settled what the sections above now say:
+
+- the Go module is the repository's root, not `go/hivepaas`;
+- Go has a build image and a slim run image, and `release.json` names both;
+- every runtime has `deps`, which the generated Dockerfile and the test run's
+  libraries image call instead of the package manager;
+- invoke writes its result on standard output as a marked last line, after the
+  call's log, instead of keeping the log on standard error;
+- the images run as `hivepaas`, so the Dockerfile switches to root for Debian
+  packages;
+- a stopping instance finishes its calls, so the stop grace period follows the
+  timeout;
+- a Go test run takes well under a second, not 2 to 5;
+- the details of the contract are in `CONTRACT.md` of `function-runtimes`.

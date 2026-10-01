@@ -1,0 +1,115 @@
+diff --git a/go.mod b/go.mod
+new file mode 100644
+index 0000000..96c811f
+--- /dev/null
++++ b/go.mod
+@@ -0,0 +1,3 @@
++module github.com/hivepaas/function-runtimes
++
++go 1.27
+diff --git a/hivepaas/hivepaas_test.go b/hivepaas/hivepaas_test.go
+new file mode 100644
+index 0000000..b9fbfad
+--- /dev/null
++++ b/hivepaas/hivepaas_test.go
+@@ -0,0 +1,100 @@
++package hivepaas_test
++
++import (
++	"context"
++	"net/http"
++	"net/url"
++	"testing"
++
++	"github.com/hivepaas/function-runtimes/hivepaas"
++)
++
++func TestARequestBodyReadsAsTextAndAsJSON(t *testing.T) {
++	req := &hivepaas.Request{Body: []byte(`{"name":"Ada"}`)}
++
++	if got := req.Text(); got != `{"name":"Ada"}` {
++		t.Fatalf("Text() = %q", got)
++	}
++	var v struct{ Name string }
++	if err := req.JSON(&v); err != nil || v.Name != "Ada" {
++		t.Fatalf("JSON() = %+v, %v", v, err)
++	}
++}
++
++func TestABodyThatIsNotJSONSaysSo(t *testing.T) {
++	req := &hivepaas.Request{Body: []byte("not json")}
++
++	var v any
++	if err := req.JSON(&v); err == nil {
++		t.Fatal("JSON() of a body that is not JSON returned no error")
++	}
++}
++
++func TestQueryAndHeadersAreTheStandardLibrarysOwn(t *testing.T) {
++	req := &hivepaas.Request{
++		Query:   url.Values{"a": {"1", "2"}},
++		Headers: http.Header{"X-Custom": {"v"}},
++	}
++
++	if req.Query.Get("a") != "1" || len(req.Query["a"]) != 2 {
++		t.Fatalf("query = %v", req.Query)
++	}
++	if req.Headers.Get("x-custom") != "v" {
++		t.Fatalf("headers = %v", req.Headers)
++	}
++}
++
++func TestAJSONResponseCarriesItsContentType(t *testing.T) {
++	resp, err := hivepaas.JSON(201, map[string]string{"hello": "Ada"})
++	if err != nil {
++		t.Fatal(err)
++	}
++
++	if resp.Status != 201 || string(resp.Body) != `{"hello":"Ada"}` {
++		t.Fatalf("response = %d %q", resp.Status, resp.Body)
++	}
++	if got := resp.Headers.Get("Content-Type"); got != "application/json" {
++		t.Fatalf("content type = %q", got)
++	}
++}
++
++func TestAValueThatCannotBeJSONIsAnError(t *testing.T) {
++	if _, err := hivepaas.JSON(200, func() {}); err == nil {
++		t.Fatal("JSON() of a function returned no error")
++	}
++}
++
++func TestATextResponseIsUTF8PlainText(t *testing.T) {
++	resp := hivepaas.Text(200, "hello")
++
++	if string(resp.Body) != "hello" || resp.Headers.Get("Content-Type") != "text/plain; charset=utf-8" {
++		t.Fatalf("response = %q %v", resp.Body, resp.Headers)
++	}
++}
++
++// The runtime gives a call its id and a logger; a handler reads them back from
++// its context.
++func TestTheCallsIDAndLoggerTravelInItsContext(t *testing.T) {
++	var logged []string
++	ctx := hivepaas.WithInvocation(context.Background(), "req-1", func(msg string) {
++		logged = append(logged, msg)
++	})
++
++	hivepaas.Log(ctx, "processing %s", "Ada")
++
++	if got := hivepaas.RequestID(ctx); got != "req-1" {
++		t.Fatalf("RequestID() = %q", got)
++	}
++	if len(logged) != 1 || logged[0] != "processing Ada" {
++		t.Fatalf("logged = %q", logged)
++	}
++}
++
++// Outside a call - a handler's own test - logging does not fail.
++func TestLoggingOutsideACallDoesNotPanic(t *testing.T) {
++	hivepaas.Log(context.Background(), "no call here")
++
++	if got := hivepaas.RequestID(context.Background()); got != "" {
++		t.Fatalf("RequestID() outside a call = %q", got)
++	}
++}

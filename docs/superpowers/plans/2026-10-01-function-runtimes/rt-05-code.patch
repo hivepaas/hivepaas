@@ -1,0 +1,731 @@
+diff --git a/.gitignore b/.gitignore
+index ab28b17..aefeba6 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -1,2 +1,6 @@
+ # Built by a function, never committed
+ .hivepaas/
++# Left by running the runtimes' tests and fixtures by hand
++__pycache__/
++node_modules/
++*.whl
+diff --git a/runtimes/python313/Dockerfile b/runtimes/python313/Dockerfile
+new file mode 100644
+index 0000000..aa706e3
+--- /dev/null
++++ b/runtimes/python313/Dockerfile
+@@ -0,0 +1,31 @@
++# syntax=docker/dockerfile:1
++# The Python runtime, built from the repository's root:
++#
++#   docker build -f runtimes/python313/Dockerfile -t fn-python313 .
++
++FROM ghcr.io/astral-sh/uv:0.9 AS uv
++
++FROM python:3.13-slim-trixie
++COPY --from=uv /uv /usr/local/bin/
++RUN groupadd --gid 10001 hivepaas \
++    && useradd --uid 10001 --gid 10001 --create-home --shell /usr/sbin/nologin hivepaas \
++    && mkdir /app \
++    && chown hivepaas:hivepaas /app
++COPY runtimes/python313/runtime/ /hivepaas/runtime/
++COPY runtimes/python313/hivepaas-runtime /usr/local/bin/
++RUN python -m compileall -q /hivepaas/runtime
++ENV VIRTUAL_ENV=/app/.venv \
++    PATH=/app/.venv/bin:$PATH \
++    PYTHONPATH=/hivepaas/runtime \
++    PYTHONSAFEPATH=1 \
++    PYTHONUNBUFFERED=1 \
++    UV_PYTHON_DOWNLOADS=never \
++    UV_NO_CACHE=1 \
++    UV_COMPILE_BYTECODE=1
++USER hivepaas
++WORKDIR /app
++RUN uv venv --quiet /app/.venv
++EXPOSE 8080
++HEALTHCHECK --interval=10s --timeout=3s --start-period=30s --start-interval=1s --retries=3 \
++    CMD ["hivepaas-runtime", "health"]
++CMD ["hivepaas-runtime", "serve"]
+diff --git a/runtimes/python313/hivepaas-runtime b/runtimes/python313/hivepaas-runtime
+new file mode 100755
+index 0000000..4d8030a
+--- /dev/null
++++ b/runtimes/python313/hivepaas-runtime
+@@ -0,0 +1,3 @@
++#!/bin/sh
++# hivepaas-runtime for Python, run by the function's virtual environment.
++exec python -m hivepaas_runtime "$@"
+diff --git a/runtimes/python313/runtime/hivepaas_runtime/__init__.py b/runtimes/python313/runtime/hivepaas_runtime/__init__.py
+new file mode 100644
+index 0000000..fc8359a
+--- /dev/null
++++ b/runtimes/python313/runtime/hivepaas_runtime/__init__.py
+@@ -0,0 +1 @@
++"""The Python function runtime. See CONTRACT.md at the repository's root."""
+diff --git a/runtimes/python313/runtime/hivepaas_runtime/__main__.py b/runtimes/python313/runtime/hivepaas_runtime/__main__.py
+new file mode 100644
+index 0000000..045f9ca
+--- /dev/null
++++ b/runtimes/python313/runtime/hivepaas_runtime/__main__.py
+@@ -0,0 +1,66 @@
++"""hivepaas-runtime for Python: serve, invoke, health and deps."""
++
++import os
++import subprocess
++import sys
++import urllib.error
++import urllib.request
++
++from .runtime import APP_DIR, ConfigError, Runtime, load_config
++from .server import serve
++
++USAGE = "usage: hivepaas-runtime serve|invoke|health|deps"
++HEALTH_TIMEOUT_S = 3
++
++
++def main(argv: list[str]) -> int:
++    command = argv[1] if len(argv) > 1 else "serve"
++    if command == "deps":
++        return deps()
++    if command not in ("serve", "invoke", "health"):
++        print(USAGE, file=sys.stderr)
++        return 2
++    try:
++        cfg = load_config(os.environ)
++    except ConfigError as error:
++        print(f"hivepaas: {error}", file=sys.stderr)
++        return 2
++    if command == "health":
++        return health(cfg.port)
++    runtime = Runtime.load(cfg)
++    if command == "invoke":
++        code = runtime.invoke(sys.stdin.buffer.read())
++        sys.stdout.flush()
++        sys.stderr.flush()
++        os._exit(code)  # at once: a handler still running past its timeout is done with
++    return serve(runtime)
++
++
++def health(port: int) -> int:
++    """Asks the server on this container: 0 when it answers 200."""
++    opener = urllib.request.build_opener(urllib.request.ProxyHandler({}))  # never through a proxy
++    try:
++        with opener.open(f"http://127.0.0.1:{port}/_hivepaas/health", timeout=HEALTH_TIMEOUT_S):
++            return 0
++    except urllib.error.HTTPError as error:
++        print(f"hivepaas: health is {error.code}", file=sys.stderr)
++    except OSError as error:
++        print(f"hivepaas: {error}", file=sys.stderr)
++    return 1
++
++
++def deps() -> int:
++    """Installs requirements.txt into /app/.venv, resolving requirements.lock first when there is none."""
++    if not os.path.exists(f"{APP_DIR}/requirements.txt"):
++        return 0
++    if not os.path.exists(f"{APP_DIR}/requirements.lock"):
++        compiled = subprocess.run(
++            ["uv", "pip", "compile", "--quiet", "requirements.txt", "--output-file", "requirements.lock"],
++            cwd=APP_DIR, check=False)
++        if compiled.returncode != 0:
++            return compiled.returncode
++    return subprocess.run(["uv", "pip", "sync", "requirements.lock"], cwd=APP_DIR, check=False).returncode
++
++
++if __name__ == "__main__":
++    sys.exit(main(sys.argv))
+diff --git a/runtimes/python313/runtime/hivepaas_runtime/runtime.py b/runtimes/python313/runtime/hivepaas_runtime/runtime.py
+new file mode 100644
+index 0000000..b69301c
+--- /dev/null
++++ b/runtimes/python313/runtime/hivepaas_runtime/runtime.py
+@@ -0,0 +1,431 @@
++"""How a handler is loaded and called, and what its calls answer."""
++
++import asyncio
++import base64
++import binascii
++import concurrent.futures
++import importlib
++import inspect
++import json
++import os
++import re
++import secrets
++import sys
++import threading
++import time
++import traceback
++import urllib.parse
++from collections.abc import Callable, Mapping
++from dataclasses import dataclass, field
++
++APP_DIR = "/app"
++RESULT_MARKER = "#hivepaas-result "
++# Longer than a proxy in front keeps an idle connection (Traefik: 90s).
++IDLE_TIMEOUT_S = 300
++
++_REQUEST_ID = re.compile(r"[A-Za-z0-9._-]{1,128}")
++_WHOLE_NUMBER = re.compile(r"\+?[0-9]+")
++_TOKEN = re.compile(r"[!#$%&'*+\-.^_`|~0-9A-Za-z]+")
++_BAD_VALUE = re.compile(r"[\r\n\x00]")
++_MAX_LIMIT = 2147483647
++_BODYLESS = (204, 304)
++
++
++class ConfigError(Exception):
++    """A configuration the runtime cannot start with."""
++
++
++class CallError(Exception):
++    """A call that failed; outcome says how."""
++
++    def __init__(self, message: str, outcome: str = "error"):
++        super().__init__(message)
++        self.outcome = outcome
++
++
++@dataclass(frozen=True)
++class Config:
++    entrypoint: str = "main.py"
++    handler: str = "handler"
++    port: int = 8080
++    timeout_ms: int = 30000
++    max_concurrency: int = 16
++    max_body_size: int = 6291456
++
++
++def load_config(env: Mapping[str, str]) -> Config:
++    entrypoint = env.get("HP_FN_ENTRYPOINT") or "main.py"
++    resolved = os.path.normpath(os.path.join(APP_DIR, entrypoint))
++    if os.path.isabs(entrypoint) or not resolved.startswith(APP_DIR + os.sep) or not entrypoint.endswith(".py"):
++        raise ConfigError(f'HP_FN_ENTRYPOINT is "{entrypoint}", which is not a Python file of the function')
++    return Config(
++        entrypoint=entrypoint,
++        handler=env.get("HP_FN_HANDLER") or "handler",
++        port=_positive(env, "HP_FN_PORT", 8080),
++        timeout_ms=_positive(env, "HP_FN_TIMEOUT_MS", 30000),
++        max_concurrency=_positive(env, "HP_FN_MAX_CONCURRENCY", 16),
++        max_body_size=_positive(env, "HP_FN_MAX_BODY_SIZE", 6291456),
++    )
++
++
++def _positive(env: Mapping[str, str], name: str, fallback: int) -> int:
++    value = env.get(name)
++    if not value:
++        return fallback
++    if not _WHOLE_NUMBER.fullmatch(value) or not 0 < int(value) <= _MAX_LIMIT:
++        raise ConfigError(f'{name} is "{value}", which is not a positive whole number')
++    return int(value)
++
++
++def load_handler(app_dir: str, cfg: Config) -> Callable:
++    """The function cfg.handler names in the entrypoint's module. The module is
++    imported by name, with app_dir first on the module path."""
++    if app_dir in sys.path:
++        sys.path.remove(app_dir)
++    sys.path.insert(0, app_dir)
++    module = importlib.import_module(os.path.normpath(cfg.entrypoint)[: -len(".py")].replace(os.sep, "."))
++    handler = getattr(module, cfg.handler, None)
++    if not callable(handler):
++        raise CallError(f'{cfg.entrypoint} has no function "{cfg.handler}"')
++    return handler
++
++
++class Request:
++    """The request a handler is given."""
++
++    __slots__ = ("method", "path", "query", "query_all", "headers", "body")
++
++    def __init__(self, method: str, path: str, query: dict, query_all: dict, headers: dict, body: bytes):
++        self.method = method
++        self.path = path
++        self.query = query
++        self.query_all = query_all
++        self.headers = headers
++        self.body = body
++
++    def text(self) -> str:
++        return self.body.decode("utf-8", errors="replace")
++
++    def json(self):
++        return json.loads(self.body)
++
++
++class Context:
++    """A call's id, when it times out (seconds since the epoch), and a logger
++    whose lines carry the id."""
++
++    __slots__ = ("request_id", "deadline", "_log")
++
++    def __init__(self, request_id: str, deadline: float, log: Callable[[str], None]):
++        self.request_id = request_id
++        self.deadline = deadline
++        self._log = log
++
++    def log(self, *args) -> None:
++        self._log(" ".join(str(arg) for arg in args))
++
++
++def request_of(method: str, raw_path: str, header_pairs, body: bytes) -> Request:
++    path, _, query_string = raw_path.partition("?")
++    query_all: dict[str, list[str]] = {}
++    for name, value in urllib.parse.parse_qsl(query_string, keep_blank_values=True):
++        query_all.setdefault(name, []).append(value)
++    headers: dict[str, str] = {}
++    for name, value in header_pairs:
++        key = name.lower()
++        headers[key] = f"{headers[key]}, {value}" if key in headers else value
++    query = {name: values[0] for name, values in query_all.items()}
++    return Request(method.upper(), path, query, query_all, headers, body)
++
++
++@dataclass
++class Answer:
++    status: int
++    headers: dict = field(default_factory=dict)
++    body: bytes = b""
++    outcome: str = "ok"
++    duration_ms: float = 0
++
++
++def to_answer(value, max_body_size: int) -> Answer:
++    """The answer to what a handler returned; a CallError when it is not a response."""
++    if value is None:
++        return Answer(204)
++    if not isinstance(value, Mapping):
++        raise CallError("the handler returned what is not a response: a dict with status, headers and body")
++    status = value.get("status")
++    if status is None:
++        status = 200
++    if type(status) is not int or not 200 <= status <= 599:
++        raise CallError(f"the response's status {status!r} is not a whole number from 200 to 599")
++    headers = _headers_of(value.get("headers"))
++    body, content_type = _body_of(value.get("body"))
++    if len(body) > max_body_size:
++        raise CallError(
++            f"the response's body of {len(body)} bytes is larger than HP_FN_MAX_BODY_SIZE, {max_body_size}",
++            "response_too_large",
++        )
++    if status in _BODYLESS:
++        return Answer(status, headers)
++    if body and content_type and "content-type" not in headers:
++        headers["content-type"] = content_type
++    return Answer(status, headers, body)
++
++
++def _headers_of(given) -> dict:
++    if given is None:
++        return {}
++    if not isinstance(given, Mapping):
++        raise CallError("the response's headers are not a dict")
++    headers = {}
++    for name, value in given.items():
++        values = [str(one) for one in value] if isinstance(value, (list, tuple)) else [str(value)]
++        if not isinstance(name, str) or not _TOKEN.fullmatch(name):
++            raise CallError(f"the response's header {name!r} has a name that cannot be sent")
++        if any(_BAD_VALUE.search(one) for one in values):
++            raise CallError(f"the response's header {name!r} has a value that cannot be sent")
++        headers[name.lower()] = values if isinstance(value, (list, tuple)) else values[0]
++    return headers
++
++
++def _body_of(body) -> tuple[bytes, str | None]:
++    if body is None:
++        return b"", None
++    if isinstance(body, str):
++        return body.encode("utf-8"), "text/plain; charset=utf-8"
++    if isinstance(body, (bytes, bytearray, memoryview)):
++        return bytes(body), "application/octet-stream"
++    try:
++        text = json.dumps(body, separators=(",", ":"), ensure_ascii=False, allow_nan=False)
++    except (TypeError, ValueError) as error:
++        raise CallError(f"the response's body cannot be JSON: {error}") from None
++    return text.encode("utf-8"), "application/json"
++
++
++def failure(status: int, message: str, request_id: str, outcome: str) -> Answer:
++    """An answer the runtime makes itself."""
++    return Answer(status, {"content-type": "application/json"},
++                  _compact({"error": message, "requestId": request_id}).encode(), outcome)
++
++
++def _own(status: int, value: dict) -> Answer:
++    return Answer(status, {"content-type": "application/json"}, _compact(value).encode())
++
++
++def request_id_of(sent: str | None) -> str:
++    """The request's own id when the contract accepts it, else a new one."""
++    return sent if sent and _REQUEST_ID.fullmatch(sent) else secrets.token_hex(16)
++
++
++def _compact(value) -> str:
++    return json.dumps(value, separators=(",", ":"), ensure_ascii=False)
++
++
++def _describe(error: BaseException) -> str:
++    if isinstance(error, CallError):
++        return str(error)
++    summary = "".join(traceback.format_exception_only(error)).strip()
++    return f"{summary}\n" + "".join(traceback.format_exception(error)).rstrip()
++
++
++def _is_async(fn) -> bool:
++    return inspect.iscoroutinefunction(fn) or inspect.iscoroutinefunction(type(fn).__call__)
++
++
++async def _awaited(awaitable):
++    return await awaitable
++
++
++def _printer(stream_name: str) -> Callable[[str], None]:
++    lock = threading.Lock()
++
++    def write(text: str) -> None:
++        with lock:
++            stream = getattr(sys, stream_name)
++            stream.write(text + "\n")
++            stream.flush()
++
++    return write
++
++
++class Runtime:
++    """Runs one handler under the configured limits."""
++
++    def __init__(self, handler, cfg: Config, out=None, err=None):
++        self.handler = handler  # None when it could not be loaded
++        self.cfg = cfg
++        self.running = 0  # calls whose handler has not returned
++        self.answering = 0  # HTTP requests being answered
++        self.stopping = False
++        self.closed = False
++        self._lock = threading.Lock()
++        self._write = out or _printer("stdout")
++        self._error = err or _printer("stderr")
++        self._pool = concurrent.futures.ThreadPoolExecutor(cfg.max_concurrency, thread_name_prefix="hivepaas-call")
++        self._loop = None
++        if handler is not None and _is_async(handler):
++            # Coroutines share one event loop, as in any asyncio server.
++            self._loop = asyncio.new_event_loop()
++            threading.Thread(target=self._loop.run_forever, daemon=True, name="hivepaas-loop").start()
++
++    @classmethod
++    def load(cls, cfg: Config, out=None, err=None) -> "Runtime":
++        """A runtime for the function in /app. A handler that cannot be loaded is logged."""
++        try:
++            handler = load_handler(APP_DIR, cfg)
++        except (Exception, SystemExit) as error:
++            (err or _printer("stderr"))(f"hivepaas: the handler could not be loaded: {_describe(error)}")
++            handler = None
++        return cls(handler, cfg, out, err)
++
++    def close(self) -> None:
++        self._pool.shutdown(wait=False, cancel_futures=True)
++        if self._loop is not None:
++            self._loop.call_soon_threadsafe(self._loop.stop)
++
++    def out(self, line: str) -> None:
++        if not self.closed:
++            self._write(line)
++
++    def log_line(self, value: dict) -> None:
++        self.out(_compact(value))
++
++    def log_invocation(self, request_id: str, method: str, path: str, answer: Answer) -> None:
++        self.log_line({"hp": "invocation", "requestId": request_id, "method": method, "path": path,
++                       "status": answer.status, "durationMs": answer.duration_ms, "outcome": answer.outcome})
++
++    def try_reserve(self) -> bool:
++        """Takes a place among the running calls, when there is one."""
++        with self._lock:
++            if self.running >= self.cfg.max_concurrency:
++                return False
++            self.running += 1
++            return True
++
++    def _release(self) -> None:
++        with self._lock:
++            self.running -= 1
++
++    def begin_answer(self) -> None:
++        with self._lock:
++            self.answering += 1
++
++    def end_answer(self) -> None:
++        with self._lock:
++            self.answering -= 1
++
++    def call(self, request: Request, request_id: str) -> Answer:
++        """Runs the handler on request within the timeout. The caller took a
++        place for it; the place is given back when the handler returns, which
++        may be after the call was answered."""
++        start = time.perf_counter()
++        timeout = self.cfg.timeout_ms / 1000
++        ctx = Context(request_id, time.time() + timeout,
++                      lambda msg: self.log_line({"hp": "log", "requestId": request_id, "msg": msg}))
++        if self._loop is not None:
++            future = asyncio.run_coroutine_threadsafe(self._run_async(request, ctx), self._loop)
++        else:
++            future = self._pool.submit(self._run_sync, request, ctx)
++        try:
++            future.result(timeout=timeout)
++        except (KeyboardInterrupt, SystemExit):
++            raise
++        except BaseException:  # what the handler did is read from the future below
++            pass
++        if not future.done():
++            future.cancel()  # a coroutine is cancelled; a function runs on, in its place
++            return self._timed(failure(504, "timeout", request_id, "timeout"), start)
++        if future.cancelled():
++            return self._failed(request_id, CallError("the handler was cancelled"), start)
++        error = future.exception()
++        if error is not None:
++            return self._failed(request_id, error, start)
++        try:
++            answer = to_answer(future.result(), self.cfg.max_body_size)
++        except CallError as error:
++            return self._failed(request_id, error, start)
++        return self._timed(answer, start)
++
++    def _run_sync(self, request: Request, ctx: Context):
++        try:
++            value = self.handler(request, ctx)
++            if inspect.isawaitable(value):  # a function that returned a coroutine
++                value = asyncio.run(_awaited(value))
++            return value
++        finally:
++            self._release()
++
++    async def _run_async(self, request: Request, ctx: Context):
++        try:
++            return await self.handler(request, ctx)
++        finally:
++            self._release()
++
++    def _failed(self, request_id: str, error: BaseException, start: float) -> Answer:
++        self._error(f"hivepaas: call {request_id} failed: {_describe(error)}")
++        outcome = error.outcome if isinstance(error, CallError) else "error"
++        return self._timed(failure(500, "internal error", request_id, outcome), start)
++
++    @staticmethod
++    def _timed(answer: Answer, start: float) -> Answer:
++        answer.duration_ms = round((time.perf_counter() - start) * 1000, 3)
++        return answer
++
++    def own_path(self, path: str) -> Answer:
++        if path == "/_hivepaas/health":
++            return _own(503, {"status": "unavailable"}) if self.handler is None else _own(200, {"status": "ok"})
++        return _own(404, {"error": "not found"})
++
++    def invoke(self, data: bytes) -> int:
++        """Calls the handler once with the request in data; returns the exit code."""
++        if self.handler is None:
++            return 3
++        try:
++            method, path, raw_path, header_pairs, body = _invoke_request(data)
++        except ValueError as error:
++            self._error(f"hivepaas: {error}")
++            return 2
++        request_id = request_id_of(next((v for n, v in header_pairs if n.lower() == "x-request-id"), None))
++        if len(body) > self.cfg.max_body_size:
++            answer = failure(413, "request too large", request_id, "request_too_large")
++        else:
++            self.try_reserve()
++            answer = self.call(request_of(method, raw_path, header_pairs, body), request_id)
++        self.log_invocation(request_id, method.upper(), path, answer)
++        headers = {name: value if isinstance(value, list) else [value] for name, value in answer.headers.items()}
++        headers["x-request-id"] = [request_id]
++        self.out(RESULT_MARKER + _compact({
++            "status": answer.status, "headers": headers, "body": base64.b64encode(answer.body).decode(),
++            "requestId": request_id, "durationMs": answer.duration_ms, "outcome": answer.outcome,
++        }))
++        self.closed = True  # nothing after the result, even from a handler still running
++        return 0
++
++
++def _invoke_request(data: bytes):
++    try:
++        given = json.loads(data)
++    except (ValueError, UnicodeDecodeError) as error:
++        raise ValueError(f"the request is not JSON: {error}") from None
++    if not isinstance(given, dict):
++        raise ValueError("the request is not a JSON object")
++    encoded = given.get("body") or ""
++    try:
++        if not isinstance(encoded, str):
++            raise binascii.Error
++        body = base64.b64decode(encoded, validate=True)
++    except binascii.Error:
++        raise ValueError("the request's body is not base64") from None
++    path = str(given.get("path") or "/")
++    query = urllib.parse.urlencode(_pairs(given.get("query"), "query"))
++    method = str(given.get("method") or "GET")
++    return method, path, f"{path}?{query}" if query else path, _pairs(given.get("headers"), "headers"), body
++
++
++def _pairs(given, what: str) -> list[tuple[str, str]]:
++    if given is None:
++        return []
++    if not isinstance(given, dict):
++        raise ValueError(f"the request's {what} is not an object")
++    return [(name, str(value)) for name, values in given.items()
++            for value in (values if isinstance(values, list) else [values])]
+diff --git a/runtimes/python313/runtime/hivepaas_runtime/server.py b/runtimes/python313/runtime/hivepaas_runtime/server.py
+new file mode 100644
+index 0000000..3646b28
+--- /dev/null
++++ b/runtimes/python313/runtime/hivepaas_runtime/server.py
+@@ -0,0 +1,152 @@
++"""serve: the HTTP server."""
++
++import http.server
++import signal
++import sys
++import threading
++import time
++
++from .runtime import IDLE_TIMEOUT_S, Answer, Runtime, failure, request_id_of, request_of
++
++_TOO_LARGE = object()
++_BODYLESS = (204, 304)
++# Headers the runtime sets itself.
++_OWN_HEADERS = ("content-length", "transfer-encoding", "x-request-id")
++
++
++class _Server(http.server.ThreadingHTTPServer):
++    daemon_threads = True
++
++    def handle_error(self, request, client_address):
++        if not isinstance(sys.exc_info()[1], (ConnectionError, TimeoutError)):  # a client that went away
++            super().handle_error(request, client_address)
++
++
++def serve(runtime: Runtime) -> int:
++    """Answers until SIGTERM, then lets the running calls finish, for at most one timeout."""
++    server = _Server(("", runtime.cfg.port), _handler_class(runtime))
++    threading.Thread(target=server.serve_forever, daemon=True, name="hivepaas-server").start()
++    stop = threading.Event()
++    for signum in (signal.SIGTERM, signal.SIGINT):
++        signal.signal(signum, lambda *_: stop.set())
++    while not stop.wait(1):
++        pass
++    runtime.stopping = True
++    server.shutdown()
++    server.server_close()
++    deadline = time.monotonic() + runtime.cfg.timeout_ms / 1000
++    while runtime.answering > 0 and time.monotonic() < deadline:
++        time.sleep(0.05)
++    return 0
++
++
++def _handler_class(runtime: Runtime):
++    class Handler(http.server.BaseHTTPRequestHandler):
++        protocol_version = "HTTP/1.1"
++        timeout = IDLE_TIMEOUT_S
++        # Headers and body go out in two writes; with Nagle's algorithm the
++        # second waits for the client's delayed ACK, some 40 ms.
++        disable_nagle_algorithm = True
++
++        def __getattr__(self, name):
++            if name.startswith("do_"):  # every method reaches the function
++                return self._answer
++            raise AttributeError(name)
++
++        def log_message(self, format, *args):  # the runtime logs its own lines
++            pass
++
++        def send_response(self, code, message=None):  # without a Server header
++            self.send_response_only(code, message)
++            self.send_header("Date", self.date_time_string())
++
++        def _answer(self):
++            runtime.begin_answer()
++            try:
++                self._answer_one()
++            finally:
++                runtime.end_answer()
++
++        def _answer_one(self):
++            request_id = request_id_of(self.headers.get("x-request-id"))
++            path = self.path.partition("?")[0]
++            if path.startswith("/_hivepaas/"):
++                self._send(request_id, runtime.own_path(path))
++                return
++            method = self.command.upper()
++
++            def answer(a: Answer, close: bool = False) -> None:
++                runtime.log_invocation(request_id, method, path, a)
++                self._send(request_id, a, close)
++
++            try:
++                body = self._read_body()
++            except (OSError, ValueError):
++                self.close_connection = True  # the body did not arrive: not a call
++                return
++            if body is _TOO_LARGE:
++                # What is left of the body is not read: the connection closes.
++                answer(failure(413, "request too large", request_id, "request_too_large"), close=True)
++            elif runtime.handler is None:
++                answer(failure(500, "internal error", request_id, "not_loaded"))
++            elif not runtime.try_reserve():
++                throttled = failure(429, "too many requests", request_id, "throttled")
++                throttled.headers["retry-after"] = "1"
++                answer(throttled)
++            else:
++                answer(runtime.call(request_of(self.command, self.path, self.headers.items(), body), request_id))
++
++        def _read_body(self):
++            limit = runtime.cfg.max_body_size
++            self.connection.settimeout(runtime.cfg.timeout_ms / 1000)
++            try:
++                if "chunked" in self.headers.get("transfer-encoding", "").lower():
++                    return self._read_chunked(limit)
++                length = int(self.headers.get("content-length") or 0)
++                if length < 0:
++                    raise ValueError("a negative content length")
++                if length > limit:
++                    return _TOO_LARGE
++                body = self.rfile.read(length)
++                if len(body) < length:
++                    raise ConnectionError("the client went away")
++                return body
++            finally:
++                self.connection.settimeout(IDLE_TIMEOUT_S)
++
++        def _read_chunked(self, limit: int):
++            chunks, size = [], 0
++            while True:
++                line = self.rfile.readline(65537)
++                if not line.endswith(b"\n"):
++                    raise ConnectionError("a chunk's size did not arrive")
++                chunk_size = int(line.split(b";", 1)[0].strip(), 16)
++                if chunk_size == 0:
++                    while self.rfile.readline(65537) not in (b"\r\n", b"\n", b""):
++                        pass  # trailers
++                    return b"".join(chunks)
++                size += chunk_size
++                if size > limit:
++                    return _TOO_LARGE
++                chunk = self.rfile.read(chunk_size)
++                if len(chunk) < chunk_size or self.rfile.read(2) != b"\r\n":
++                    raise ConnectionError("a chunk did not arrive")
++                chunks.append(chunk)
++
++        def _send(self, request_id: str, answer: Answer, close: bool = False) -> None:
++            self.send_response(answer.status)
++            for name, value in answer.headers.items():
++                if name in _OWN_HEADERS:
++                    continue
++                for one in value if isinstance(value, list) else [value]:
++                    self.send_header(name, one)
++            self.send_header("x-request-id", request_id)
++            if answer.status not in _BODYLESS:
++                self.send_header("content-length", str(len(answer.body)))
++            if close or runtime.stopping:
++                self.send_header("connection", "close")
++            self.end_headers()
++            if self.command != "HEAD" and answer.status not in _BODYLESS and answer.body:
++                self.wfile.write(answer.body)
++
++    return Handler

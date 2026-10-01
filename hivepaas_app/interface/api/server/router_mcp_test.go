@@ -50,3 +50,12 @@ func TestMCPProjectSettingsKindsAreRoutes(t *testing.T) {
 			endpoint)
 	}
 }
+
+// plan_run_sched_job lists an app's or an env's jobs and runs one.
+func TestMCPSchedJobRunRoutes(t *testing.T) {
+	routes := projectRoutes(t)
+	for _, base := range []string{"/projects/:projectID/:projectEnv/apps/:appID", "/projects/:projectID/:projectEnv"} {
+		assert.True(t, routes["GET "+base+"/sched-jobs"], "missing route GET %s/sched-jobs", base)
+		assert.True(t, routes["POST "+base+"/sched-jobs/:itemID/exec"], "missing route POST %s/sched-jobs/:itemID/exec", base)
+	}
+}

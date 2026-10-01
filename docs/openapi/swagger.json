@@ -19137,6 +19137,93 @@
         "x-codegen-request-body-name" : "body"
       }
     },
+    "/projects/{projectID}/{projectEnv}/apps/{appID}/function/test-run" : {
+      "post" : {
+        "description" : "Calls the function once with the code sent, not yet saved, and a request, in a throwaway\ncontainer on a build node, with the function's variables and secrets.",
+        "operationId" : "testRunFunction",
+        "parameters" : [ {
+          "description" : "project ID",
+          "in" : "path",
+          "name" : "projectID",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "project env",
+          "in" : "path",
+          "name" : "projectEnv",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "app ID",
+          "in" : "path",
+          "name" : "appID",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "*/*" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/appdto.TestRunFunctionReq"
+              }
+            }
+          },
+          "description" : "request data",
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/appdto.TestRunFunctionResp"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "400" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Bad Request"
+          },
+          "404" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Not Found"
+          },
+          "500" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Internal Server Error"
+          }
+        },
+        "summary" : "Runs a function once",
+        "tags" : [ "Apps" ],
+        "x-codegen-request-body-name" : "body"
+      }
+    },
     "/projects/{projectID}/{projectEnv}/apps/{appID}/kind-settings" : {
       "get" : {
         "description" : "Gets app kind settings",
@@ -53599,6 +53686,123 @@
           }
         },
         "required" : [ "enabled", "supportedShells" ],
+        "type" : "object"
+      },
+      "appdto.TestRunFunctionDataResp" : {
+        "properties" : {
+          "body" : {
+            "items" : {
+              "type" : "integer"
+            },
+            "type" : "array"
+          },
+          "bodyTruncated" : {
+            "type" : "boolean"
+          },
+          "durationMs" : {
+            "type" : "number"
+          },
+          "error" : {
+            "type" : "string"
+          },
+          "exitCode" : {
+            "type" : "integer"
+          },
+          "headers" : {
+            "additionalProperties" : {
+              "items" : {
+                "type" : "string"
+              },
+              "type" : "array"
+            },
+            "type" : "object"
+          },
+          "librariesBuilt" : {
+            "type" : "boolean"
+          },
+          "librariesLog" : {
+            "type" : "string"
+          },
+          "lockFiles" : {
+            "items" : {
+              "$ref" : "#/components/schemas/appsettingsdto.FunctionFileResp"
+            },
+            "type" : "array"
+          },
+          "logs" : {
+            "type" : "string"
+          },
+          "logsTruncated" : {
+            "type" : "boolean"
+          },
+          "outcome" : {
+            "type" : "string"
+          },
+          "requestId" : {
+            "type" : "string"
+          },
+          "status" : {
+            "type" : "integer"
+          }
+        },
+        "required" : [ "body", "bodyTruncated", "durationMs", "error", "exitCode", "headers", "librariesBuilt", "librariesLog", "lockFiles", "logs", "logsTruncated", "outcome", "requestId", "status" ],
+        "type" : "object"
+      },
+      "appdto.TestRunFunctionReq" : {
+        "properties" : {
+          "code" : {
+            "$ref" : "#/components/schemas/appsettingsdto.FunctionInlineCodeReq"
+          },
+          "request" : {
+            "$ref" : "#/components/schemas/appdto.TestRunRequestReq"
+          }
+        },
+        "required" : [ "code", "request" ],
+        "type" : "object"
+      },
+      "appdto.TestRunFunctionResp" : {
+        "properties" : {
+          "data" : {
+            "$ref" : "#/components/schemas/appdto.TestRunFunctionDataResp"
+          },
+          "meta" : {
+            "$ref" : "#/components/schemas/basedto.Meta"
+          }
+        },
+        "required" : [ "data", "meta" ],
+        "type" : "object"
+      },
+      "appdto.TestRunRequestReq" : {
+        "properties" : {
+          "body" : {
+            "type" : "string"
+          },
+          "headers" : {
+            "additionalProperties" : {
+              "items" : {
+                "type" : "string"
+              },
+              "type" : "array"
+            },
+            "type" : "object"
+          },
+          "method" : {
+            "type" : "string"
+          },
+          "path" : {
+            "type" : "string"
+          },
+          "query" : {
+            "additionalProperties" : {
+              "items" : {
+                "type" : "string"
+              },
+              "type" : "array"
+            },
+            "type" : "object"
+          }
+        },
+        "required" : [ "body", "headers", "method", "path", "query" ],
         "type" : "object"
       },
       "appdto.UpdateAppPhotoReq" : {

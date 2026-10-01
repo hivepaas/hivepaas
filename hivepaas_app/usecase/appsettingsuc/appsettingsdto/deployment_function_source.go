@@ -111,12 +111,7 @@ func (req *DeploymentFunctionSourceReq) Normalize() {
 	if req.Code.Dir == "." {
 		req.Code.Dir = ""
 	}
-	if req.Code.Inline != nil {
-		req.Code.Inline.Files = gofn.Filter(req.Code.Inline.Files, func(f *FunctionFileReq) bool { return f != nil })
-		for _, f := range req.Code.Inline.Files {
-			f.Path = cleanFunctionPath(f.Path)
-		}
-	}
+	req.Code.Inline.Normalize()
 	if req.Code.Repo != nil {
 		req.Code.Repo.RepoURL = strings.TrimSpace(req.Code.Repo.RepoURL)
 		req.Code.Repo.RepoRef = strings.TrimSpace(req.Code.Repo.RepoRef)
@@ -249,6 +244,31 @@ func (req *FunctionCodeReq) validate(field string) (res []vld.Validator) {
 	return res
 }
 
+// Normalize cleans the files' paths: "./src//index.js" is "src/index.js".
+func (req *FunctionInlineCodeReq) Normalize() {
+	if req == nil {
+		return
+	}
+	req.Files = gofn.Filter(req.Files, func(f *FunctionFileReq) bool { return f != nil })
+	for _, f := range req.Files {
+		f.Path = cleanFunctionPath(f.Path)
+	}
+}
+
+// Validate checks inline code against its limits, field naming the code.
+func (req *FunctionInlineCodeReq) Validate(field string) []vld.Validator {
+	return req.validate(field)
+}
+
+// ToEntity is the code as it is kept, once normalized and validated.
+func (req *FunctionInlineCodeReq) ToEntity() *entity.FunctionInlineCode {
+	return &entity.FunctionInlineCode{
+		Files: gofn.MapSlice(req.Files, func(f *FunctionFileReq) *entity.FunctionFile {
+			return &entity.FunctionFile{Path: f.Path, Content: f.Content}
+		}),
+	}
+}
+
 func (req *FunctionInlineCodeReq) validate(field string) (res []vld.Validator) {
 	files := req.Files
 	res = append(res, basedto.ValidateSliceEx(files, false, 1, base.FunctionInlineCodeMaxFiles, nil,
@@ -298,11 +318,7 @@ func (req *DeploymentFunctionSourceReq) ToEntity() (*entity.DeploymentFunctionSo
 	}
 	code := entity.FunctionCode{Dir: req.Code.Dir}
 	if req.Code.Inline != nil {
-		code.Inline = &entity.FunctionInlineCode{
-			Files: gofn.MapSlice(req.Code.Inline.Files, func(f *FunctionFileReq) *entity.FunctionFile {
-				return &entity.FunctionFile{Path: f.Path, Content: f.Content}
-			}),
-		}
+		code.Inline = req.Code.Inline.ToEntity()
 	}
 	if req.Code.Repo != nil {
 		repo, err := req.Code.Repo.toEntity()

@@ -24,6 +24,7 @@ func (s *HTTPServer) registerAppRoutes(projectGroup, projectEnvGroup *gin.Router
 		// Creation & Update
 		appGroup.POST("", appHandler.CreateApp)
 		appGroup.POST("/function", appHandler.CreateFunction)
+		appGroup.POST("/:appID/function/test-run", appHandler.TestRunFunction)
 		appGroup.POST("/from-template", s.handlerRegistry.appTemplateHandler.CreateAppFromTemplate)
 		appGroup.POST("/from-template/preflight", s.handlerRegistry.appTemplateHandler.PreflightAppFromTemplate)
 		appGroup.PUT("/:appID", appHandler.UpdateApp)

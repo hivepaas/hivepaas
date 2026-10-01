@@ -10,6 +10,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/auditservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/clusterservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/containerexecservice"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/functionservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/loggingservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/schedjobtriggerservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/settingservice"
@@ -34,6 +35,7 @@ type UC struct {
 	schedJobTriggerService schedjobtriggerservice.Service
 	clusterService         clusterservice.Service
 	containerExecService   containerexecservice.Service
+	functionService        functionservice.Service
 	settingService         settingservice.Service
 	loggingService         loggingservice.Service
 }
@@ -55,6 +57,7 @@ func New(
 	schedJobTriggerService schedjobtriggerservice.Service,
 	clusterService clusterservice.Service,
 	containerExecService containerexecservice.Service,
+	functionService functionservice.Service,
 	settingService settingservice.Service,
 	loggingService loggingservice.Service,
 ) *UC {
@@ -75,6 +78,7 @@ func New(
 		schedJobTriggerService: schedJobTriggerService,
 		clusterService:         clusterService,
 		containerExecService:   containerExecService,
+		functionService:        functionService,
 		settingService:         settingService,
 		loggingService:         loggingService,
 	}

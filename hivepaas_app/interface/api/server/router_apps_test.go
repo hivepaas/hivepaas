@@ -16,3 +16,10 @@ func TestAFunctionIsCreatedAmongTheEnvsApps(t *testing.T) {
 	assert.True(t, routes[http.MethodPost+" /projects/:projectID/:projectEnv/apps/from-template"])
 	assert.True(t, routes[http.MethodPut+" /projects/:projectID/:projectEnv/apps/:appID"])
 }
+
+// A function's test run is a call on the app.
+func TestAFunctionIsTestRunOnItsApp(t *testing.T) {
+	routes := projectRoutes(t)
+
+	assert.True(t, routes[http.MethodPost+" /projects/:projectID/:projectEnv/apps/:appID/function/test-run"])
+}

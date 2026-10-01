@@ -18,6 +18,8 @@ import { Avatar } from "@/components/ui/avatar";
 
 import { SequenceRunSteps } from "../sequence-run-steps";
 
+import { FunctionInvokeBody, FunctionInvokeSummary } from "./function-invoke-response.com";
+
 const STATUS_LABELS: Record<SystemTaskStatus, string> = {
     [SystemTaskStatus.Done]: "Done",
     [SystemTaskStatus.Failed]: "Failed",
@@ -665,7 +667,11 @@ export function SystemTaskSummaryCard({
                                         </span>
                                     </div>
                                 )}
+
+                                {task.functionInvoke && <FunctionInvokeSummary response={task.functionInvoke} />}
                             </div>
+
+                            {task.functionInvoke && <FunctionInvokeBody response={task.functionInvoke} />}
 
                             {/* Error Banner */}
                             {task.lastError.trim() && (

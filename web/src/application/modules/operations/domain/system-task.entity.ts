@@ -118,6 +118,19 @@ export interface SystemTaskDataBackup {
     sizeBytes: number;
 }
 
+/** What a function's call answered: the runtime's outcome, and the response. */
+export interface SystemTaskFunctionInvoke {
+    /** ok, error or timeout. */
+    outcome: string;
+    status: number;
+    headers: Record<string, string[]>;
+    /** Decoded from base64; cut at 64 KB when bodyTruncated. */
+    body: Uint8Array;
+    bodyTruncated: boolean;
+    requestId: string;
+    durationMs: number;
+}
+
 /** What a restore's task restored, from where, and how. */
 export interface SystemTaskBackupRestore {
     /** The snapshot's record; snapshotId is the repository's. */
@@ -144,6 +157,7 @@ export interface SystemTask {
     sequenceRun?: SystemTaskSequenceRun;
     trigger?: SystemTaskTrigger;
     dataBackup?: SystemTaskDataBackup;
+    functionInvoke?: SystemTaskFunctionInvoke;
     backupRestore?: SystemTaskBackupRestore;
     runAt: Date | null;
     retryAt: Date | null;

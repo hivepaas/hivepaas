@@ -155,6 +155,35 @@ const DataBackupSchema = z
     .nullish()
     .transform(value => value ?? undefined);
 
+/** A response's body, which may not be text: base64 on the wire, bytes here. */
+const Base64BytesSchema = z
+    .string()
+    .nullish()
+    .transform(value => {
+        const binary = atob(value ?? "");
+        const bytes = new Uint8Array(binary.length);
+        for (let i = 0; i < binary.length; i++) {
+            bytes[i] = binary.charCodeAt(i);
+        }
+        return bytes;
+    });
+
+const FunctionInvokeSchema = z
+    .object({
+        outcome: z.string(),
+        status: z.number().optional().default(0),
+        headers: z
+            .record(z.array(z.string()))
+            .nullish()
+            .transform(value => value ?? {}),
+        body: Base64BytesSchema,
+        bodyTruncated: z.boolean().optional().default(false),
+        requestId: z.string().optional().default(""),
+        durationMs: z.number().optional().default(0),
+    })
+    .nullish()
+    .transform(value => value ?? undefined);
+
 const BackupRestoreSchema = z
     .object({
         snapshotRecordId: z.string().optional().default(""),
@@ -182,6 +211,7 @@ const SystemTaskSchema = z.object({
     sequenceRun: SequenceRunSchema,
     trigger: TriggerSchema,
     dataBackup: DataBackupSchema,
+    functionInvoke: FunctionInvokeSchema,
     backupRestore: BackupRestoreSchema,
     runAt: NullableDateSchema,
     retryAt: NullableDateSchema,

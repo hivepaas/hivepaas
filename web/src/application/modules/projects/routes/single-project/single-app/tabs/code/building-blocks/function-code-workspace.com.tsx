@@ -73,7 +73,7 @@ export function FunctionCodeWorkspace({ projectId, env, appId, settings, readOnl
                 ) : null}
             </div>
             <div className="flex flex-col gap-4 xl:flex-row">
-                <div className="flex min-h-[480px] min-w-0 flex-1 flex-col gap-4 lg:flex-row">
+                <div className="flex min-h-[800px] min-w-0 flex-1 flex-col gap-4 lg:flex-row">
                     <FunctionFiles
                         files={files}
                         selectedPath={selected?.path ?? ""}

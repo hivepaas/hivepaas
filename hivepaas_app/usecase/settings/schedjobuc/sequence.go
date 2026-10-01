@@ -21,6 +21,8 @@ func checkJobTypeInScope(scopeType base.ObjectScopeType, jobType base.SchedJobTy
 	switch {
 	case jobType == base.SchedJobTypeDataBackup && scopeType != base.ObjectScopeApp:
 		return hperrors.NewArgumentInvalid("jobType").WithExtraDetail("a data backup belongs to an app")
+	case jobType == base.SchedJobTypeFunctionInvoke && scopeType != base.ObjectScopeApp:
+		return hperrors.NewArgumentInvalid("jobType").WithExtraDetail("a function's call belongs to the function")
 	case isSequence && scopeType != base.ObjectScopeApp && scopeType != base.ObjectScopeProjectEnv:
 		return hperrors.NewArgumentInvalid("jobType").
 			WithExtraDetail("a job sequence belongs to an app or a project env")

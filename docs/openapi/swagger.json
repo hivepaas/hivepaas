@@ -63464,6 +63464,13 @@
           "default" : {
             "type" : "boolean"
           },
+          "functionInvoke" : {
+            "allOf" : [ {
+              "$ref" : "#/components/schemas/settings_schedjobdto.SchedJobFunctionInvokeReq"
+            } ],
+            "description" : "FunctionInvoke is a function-invoke's request; left out for every other\ntype.",
+            "type" : "object"
+          },
           "inheritable" : {
             "type" : "boolean"
           },
@@ -63518,7 +63525,7 @@
             "type" : "array"
           }
         },
-        "required" : [ "app", "command", "commandOutput", "controlDisabled", "dataBackup", "default", "inheritable", "jobType", "maxRetry", "name", "notification", "priority", "retryBackoff", "retryBackoffJitter", "retryDelay", "retryDelayIncr", "retryDelayMax", "schedule", "sequence", "timeout", "triggers" ],
+        "required" : [ "app", "command", "commandOutput", "controlDisabled", "dataBackup", "default", "functionInvoke", "inheritable", "jobType", "maxRetry", "name", "notification", "priority", "retryBackoff", "retryBackoffJitter", "retryDelay", "retryDelayIncr", "retryDelayMax", "schedule", "sequence", "timeout", "triggers" ],
         "type" : "object"
       },
       "settings_schedjobdto.CreateSchedJobResp" : {
@@ -63567,6 +63574,9 @@
           },
           "expireAt" : {
             "type" : "string"
+          },
+          "functionInvoke" : {
+            "$ref" : "#/components/schemas/settings_schedjobdto.SchedJobFunctionInvokeResp"
           },
           "id" : {
             "type" : "string"
@@ -63654,7 +63664,7 @@
             "type" : "string"
           }
         },
-        "required" : [ "app", "command", "commandOutput", "controlDisabled", "createdAt", "dataBackup", "default", "expireAt", "id", "inheritable", "inherited", "jobType", "kind", "maxRetry", "name", "nextRuns", "notification", "ownerApp", "priority", "retryBackoff", "retryBackoffJitter", "retryDelay", "retryDelayIncr", "retryDelayMax", "schedule", "scope", "sequence", "size", "status", "timeout", "triggers", "type", "updateVer", "updatedAt" ],
+        "required" : [ "app", "command", "commandOutput", "controlDisabled", "createdAt", "dataBackup", "default", "expireAt", "functionInvoke", "id", "inheritable", "inherited", "jobType", "kind", "maxRetry", "name", "nextRuns", "notification", "ownerApp", "priority", "retryBackoff", "retryBackoffJitter", "retryDelay", "retryDelayIncr", "retryDelayMax", "schedule", "scope", "sequence", "size", "status", "timeout", "triggers", "type", "updateVer", "updatedAt" ],
         "type" : "object"
       },
       "settings_schedjobdto.ExecuteSchedJobDataResp" : {
@@ -63801,6 +63811,54 @@
         "required" : [ "restoreCommand", "source", "sourceCommand", "sourceFileName", "sourceVolume", "sourceVolumeSubpath", "tags", "targetRepository" ],
         "type" : "object"
       },
+      "settings_schedjobdto.SchedJobFunctionInvokeReq" : {
+        "properties" : {
+          "body" : {
+            "type" : "string"
+          },
+          "headers" : {
+            "additionalProperties" : {
+              "items" : {
+                "type" : "string"
+              },
+              "type" : "array"
+            },
+            "type" : "object"
+          },
+          "method" : {
+            "type" : "string"
+          },
+          "path" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "body", "headers", "method", "path" ],
+        "type" : "object"
+      },
+      "settings_schedjobdto.SchedJobFunctionInvokeResp" : {
+        "properties" : {
+          "body" : {
+            "type" : "string"
+          },
+          "headers" : {
+            "additionalProperties" : {
+              "items" : {
+                "type" : "string"
+              },
+              "type" : "array"
+            },
+            "type" : "object"
+          },
+          "method" : {
+            "type" : "string"
+          },
+          "path" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "body", "headers", "method", "path" ],
+        "type" : "object"
+      },
       "settings_schedjobdto.SchedJobResp" : {
         "properties" : {
           "app" : {
@@ -63826,6 +63884,9 @@
           },
           "expireAt" : {
             "type" : "string"
+          },
+          "functionInvoke" : {
+            "$ref" : "#/components/schemas/settings_schedjobdto.SchedJobFunctionInvokeResp"
           },
           "id" : {
             "type" : "string"
@@ -63907,7 +63968,7 @@
             "type" : "string"
           }
         },
-        "required" : [ "app", "command", "commandOutput", "controlDisabled", "createdAt", "dataBackup", "default", "expireAt", "id", "inheritable", "inherited", "jobType", "kind", "maxRetry", "name", "nextRuns", "notification", "priority", "retryBackoff", "retryBackoffJitter", "retryDelay", "retryDelayIncr", "retryDelayMax", "schedule", "sequence", "size", "status", "timeout", "triggers", "type", "updateVer", "updatedAt" ],
+        "required" : [ "app", "command", "commandOutput", "controlDisabled", "createdAt", "dataBackup", "default", "expireAt", "functionInvoke", "id", "inheritable", "inherited", "jobType", "kind", "maxRetry", "name", "nextRuns", "notification", "priority", "retryBackoff", "retryBackoffJitter", "retryDelay", "retryDelayIncr", "retryDelayMax", "schedule", "sequence", "size", "status", "timeout", "triggers", "type", "updateVer", "updatedAt" ],
         "type" : "object"
       },
       "settings_schedjobdto.SchedJobSequenceReq" : {
@@ -64081,6 +64142,13 @@
           "default" : {
             "type" : "boolean"
           },
+          "functionInvoke" : {
+            "allOf" : [ {
+              "$ref" : "#/components/schemas/settings_schedjobdto.SchedJobFunctionInvokeReq"
+            } ],
+            "description" : "FunctionInvoke is a function-invoke's request; left out for every other\ntype.",
+            "type" : "object"
+          },
           "inheritable" : {
             "type" : "boolean"
           },
@@ -64138,7 +64206,7 @@
             "type" : "integer"
           }
         },
-        "required" : [ "app", "command", "commandOutput", "controlDisabled", "dataBackup", "default", "inheritable", "jobType", "maxRetry", "name", "notification", "priority", "retryBackoff", "retryBackoffJitter", "retryDelay", "retryDelayIncr", "retryDelayMax", "schedule", "sequence", "timeout", "triggers", "updateVer" ],
+        "required" : [ "app", "command", "commandOutput", "controlDisabled", "dataBackup", "default", "functionInvoke", "inheritable", "jobType", "maxRetry", "name", "notification", "priority", "retryBackoff", "retryBackoffJitter", "retryDelay", "retryDelayIncr", "retryDelayMax", "schedule", "sequence", "timeout", "triggers", "updateVer" ],
         "type" : "object"
       },
       "settings_schedjobdto.UpdateSchedJobResp" : {

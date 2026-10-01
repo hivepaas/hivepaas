@@ -56,6 +56,7 @@ type SchedJobResp struct {
 	Sequence           *SchedJobSequenceResp                   `json:"sequence,omitempty" copy:"-"`
 	Triggers           []*SchedJobTriggerResp                  `json:"triggers,omitempty" copy:"-"`
 	DataBackup         *SchedJobDataBackupResp                 `json:"dataBackup,omitempty" copy:"-"`
+	FunctionInvoke     *SchedJobFunctionInvokeResp             `json:"functionInvoke,omitempty"`
 
 	// Calculated fields
 	NextRuns []time.Time `json:"nextRuns,omitempty"`

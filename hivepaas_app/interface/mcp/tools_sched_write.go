@@ -75,6 +75,8 @@ var schedJobDescs = func() map[string]string {
 			"other scheduled jobs in order, is made in the dashboard",
 		"dataBackup": "not used here: this plans a command that runs in an app; a data backup, which takes " +
 			"a snapshot of a command's output or of a volume into a backup repository, is made in the dashboard",
+		"functionInvoke": "not used here: this plans a command that runs in an app; a function's call on a " +
+			"schedule, which sends the function a request, is made in the dashboard",
 		"triggers": "events of this app that also run the job, beside its schedule: pre-deploy, post-deploy, " +
 			"deploy-failed, health-down, health-up, app-enabled, app-disabled; up to 10",
 	}

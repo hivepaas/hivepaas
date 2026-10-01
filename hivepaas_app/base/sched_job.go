@@ -14,12 +14,15 @@ const (
 	SchedJobTypeJobSequence SchedJobType = "job-sequence"
 	// SchedJobTypeDataBackup takes a snapshot of an app's data into a backup repository.
 	SchedJobTypeDataBackup SchedJobType = "data-backup"
+	// SchedJobTypeFunctionInvoke calls a function once: its runtime's invoke, in a
+	// running task of the function.
+	SchedJobTypeFunctionInvoke SchedJobType = "function-invoke"
 )
 
 var (
 	AllSchedJobTypes = []SchedJobType{SchedJobTypeContainerCommand, SchedJobTypeSystemCleanup,
 		SchedJobTypeSystemBackup, SchedJobTypeSSLRenewal, SchedJobTypeBackupRepoCleanup, SchedJobTypeJobSequence,
-		SchedJobTypeDataBackup}
+		SchedJobTypeDataBackup, SchedJobTypeFunctionInvoke}
 )
 
 // SchedJobDataBackupSource is what a data backup reads: a command's output, or a

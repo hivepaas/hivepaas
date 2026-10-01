@@ -50,6 +50,9 @@ type SchedJob struct {
 	Triggers []*SchedJobTrigger `json:"triggers,omitempty"`
 	// DataBackup is what a data-backup job backs up and where; nil for every other type.
 	DataBackup *SchedJobDataBackup `json:"dataBackup,omitempty"`
+	// FunctionInvoke is the request a function-invoke job calls its function
+	// with; nil for every other type.
+	FunctionInvoke *SchedJobFunctionInvoke `json:"functionInvoke,omitempty"`
 }
 
 type SchedJobSchedule struct {

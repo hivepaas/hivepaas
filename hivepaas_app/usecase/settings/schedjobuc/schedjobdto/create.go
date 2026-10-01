@@ -54,6 +54,9 @@ type SchedJobBaseReq struct {
 	// DataBackup is a data-backup's source and repository; left out for every
 	// other type.
 	DataBackup *SchedJobDataBackupReq `json:"dataBackup"`
+	// FunctionInvoke is a function-invoke's request; left out for every other
+	// type.
+	FunctionInvoke *SchedJobFunctionInvokeReq `json:"functionInvoke"`
 }
 
 func (req *SchedJobBaseReq) ToEntity() *entity.SchedJob {
@@ -82,6 +85,9 @@ func (req *SchedJobBaseReq) ToEntity() *entity.SchedJob {
 	if req.JobType == base.SchedJobTypeDataBackup {
 		res.DataBackup = req.DataBackup.ToEntity()
 	}
+	if req.JobType == base.SchedJobTypeFunctionInvoke {
+		res.FunctionInvoke = req.FunctionInvoke.ToEntity()
+	}
 	return res
 }
 
@@ -109,6 +115,7 @@ func (req *SchedJobBaseReq) modifyRequest() error {
 	if err := req.DataBackup.modifyRequest(); err != nil {
 		return hperrors.Wrap(err)
 	}
+	req.FunctionInvoke.modifyRequest()
 	if req.CommandOutput != nil && req.CommandOutput.PipeToApp != nil {
 		req.CommandOutput.PipeToApp.Command.Name = "-"
 		req.CommandOutput.PipeToApp.Command.Kind = ""
@@ -144,6 +151,7 @@ func (req *SchedJobBaseReq) validate(field string) (res []vld.Validator) {
 	res = append(res, req.validateSequenceFields(field)...)
 	res = append(res, req.validateTriggers(field)...)
 	res = append(res, req.validateDataBackupFields(field)...)
+	res = append(res, req.validateFunctionInvokeFields(field)...)
 	return res
 }
 

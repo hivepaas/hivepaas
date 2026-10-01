@@ -17,7 +17,7 @@ func (s *service) imagePush(
 	ctx context.Context,
 	data *imageBuildData,
 ) (err error) {
-	if data.PushToRegistry.ID == "" {
+	if data.PushToRegistry.ID == "" || data.LocalImage != "" {
 		return nil
 	}
 

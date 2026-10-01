@@ -3,7 +3,20 @@ package imagebuildserviceimpl
 import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/imagebuildservice"
 )
+
+// imageReferences is every name a build tags its image with: a local image's
+// own name alone, or the app's names.
+func imageReferences(
+	req *imagebuildservice.ImageBuildReq,
+	inputs *imagebuildservice.BuildInputs,
+) ([]string, error) {
+	if req.LocalImage != "" {
+		return []string{req.LocalImage}, nil
+	}
+	return buildImageReferences(req.App, req.CommitHash, req.ImageTags, pushRegistry(inputs))
+}
 
 // buildImageReferences is every name the built image is tagged with, in the order
 // they are applied.

@@ -23,6 +23,11 @@ type ImageBuildReq struct {
 	NoCache            bool
 	BuildID            string
 
+	// LocalImage, when set, is the image's only name: no app names it, and it
+	// stays on the node it is built on, never pushed. A function's libraries are
+	// built this way, for its test runs.
+	LocalImage string
+
 	CheckoutDir string
 	TempDir     string // can be empty
 

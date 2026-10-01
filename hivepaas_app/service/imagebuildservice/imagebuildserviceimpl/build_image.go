@@ -20,7 +20,7 @@ func (s *service) imageBuild(
 		return hperrors.NewMissing("Registry auth to push image")
 	}
 
-	data.ImageTags, err = buildImageReferences(data.App, data.CommitHash, data.ImageTags, pushRegistry(data.Inputs))
+	data.ImageTags, err = imageReferences(data.ImageBuildReq, data.Inputs)
 	if err != nil {
 		return hperrors.Wrap(err)
 	}

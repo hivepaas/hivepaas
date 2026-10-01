@@ -9,6 +9,12 @@
     "victoriaLogsImage": "victoriametrics/victoria-logs:v1.52.0",
     "vlagentImage": "victoriametrics/vlagent:v1.52.0",
     "registryImage": "ghcr.io/project-zot/zot:v2.1.21",
+    "functionRuntimes": {
+      "node24": "ghcr.io/hivepaas/function-runtime-node24:1.0.0@sha256:a4560e0017d5c80f64973473bdf9612ed335b2ea79a7cf7cb39da259ea636970",
+      "python313": "ghcr.io/hivepaas/function-runtime-python313:1.0.0@sha256:9d3a28bc48cbbd41d1c7728e2b1a9bb53b5cf97a3d32ebfa8b1f84450c7b6bf2",
+      "go127": "ghcr.io/hivepaas/function-runtime-go127:1.0.0@sha256:31fce6af839d98fdad7ae982ea8ed2696b8f8aaefca0866a50a227f57bd3e169",
+      "go127-build": "ghcr.io/hivepaas/function-runtime-go127-build:1.0.0@sha256:c18ddbeb26c9d22b081cb21a330994952ab219c72fbcaf9b2bd2855fe30ec631"
+    },
     "blockMajorUpgrade": [
       "db"
     ],

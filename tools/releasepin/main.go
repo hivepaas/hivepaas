@@ -1,5 +1,6 @@
 // Command releasepin pins every image release.json names to the digest its tag
-// points to now: `redis:8.6-alpine` becomes `redis:8.6-alpine@sha256:…`.
+// points to now: `redis:8.6-alpine` becomes `redis:8.6-alpine@sha256:…`. That is
+// each `…Image` field, and each image of the `functionRuntimes` map.
 //
 // A signed release is only a claim about what runs if what it names cannot
 // change: a tag can be re-pushed, a digest cannot. The digest is the image
@@ -21,11 +22,19 @@ import (
 	"os"
 	"os/exec"
 	"regexp"
+	"slices"
 	"strings"
 )
 
 // imageField is a `"somethingImage": "reference"` line of release.json.
 var imageField = regexp.MustCompile(`("[A-Za-z]+Image"\s*:\s*")([^"]+)(")`)
+
+// functionRuntimes is the `"functionRuntimes": {…}` map of a release, and
+// runtimeField one `"runtime": "reference"` line of it.
+var (
+	functionRuntimes = regexp.MustCompile(`("functionRuntimes"\s*:\s*\{)([^}]*)(\})`)
+	runtimeField     = regexp.MustCompile(`("[a-z0-9-]+"\s*:\s*")([^"]+)(")`)
+)
 
 // patchTag is a tag with three numbers, 8.6.2-alpine or v1.52.0: one release.
 // A tag with fewer may be following a line - redis 8.6 is whatever 8.6.x is
@@ -43,34 +52,51 @@ type report struct {
 // pin pins every image of release to its tag's current digest, keeping every
 // other byte of the file as it is.
 func pin(release []byte, resolve func(ref string) (string, error)) ([]byte, report, error) {
-	var rep report
-	var failed error
-	out := imageField.ReplaceAllFunc(release, func(match []byte) []byte {
-		if failed != nil {
+	p := &pinner{resolve: resolve}
+	out := p.pinMatches(release, imageField)
+	out = functionRuntimes.ReplaceAllFunc(out, func(block []byte) []byte {
+		parts := functionRuntimes.FindSubmatch(block)
+		return slices.Concat(parts[1], p.pinMatches(parts[2], runtimeField), parts[3])
+	})
+	if p.failed != nil {
+		return nil, p.report, p.failed
+	}
+	return out, p.report, nil
+}
+
+// pinner pins references, and remembers what it changed and the first
+// reference it could not resolve.
+type pinner struct {
+	resolve func(ref string) (string, error)
+	report  report
+	failed  error
+}
+
+// pinMatches pins the reference of every match of field in text: the match's
+// second group.
+func (p *pinner) pinMatches(text []byte, field *regexp.Regexp) []byte {
+	return field.ReplaceAllFunc(text, func(match []byte) []byte {
+		if p.failed != nil {
 			return match
 		}
-		parts := imageField.FindSubmatch(match)
+		parts := field.FindSubmatch(match)
 		current := string(parts[2])
 		name, _, _ := strings.Cut(current, "@")
 
-		digest, err := resolve(name)
+		digest, err := p.resolve(name)
 		if err != nil {
-			failed = fmt.Errorf("%s: %w", name, err)
+			p.failed = fmt.Errorf("%s: %w", name, err)
 			return match
 		}
 		pinned := name + "@" + digest
 		if pinned != current {
-			rep.Changed = append(rep.Changed, current+" -> "+pinned)
+			p.report.Changed = append(p.report.Changed, current+" -> "+pinned)
 		}
 		if !namesAPatch(name) {
-			rep.Floating = append(rep.Floating, name)
+			p.report.Floating = append(p.report.Floating, name)
 		}
 		return []byte(string(parts[1]) + pinned + string(parts[3]))
 	})
-	if failed != nil {
-		return nil, rep, failed
-	}
-	return out, rep, nil
 }
 
 // namesAPatch reports whether a reference's tag has three version numbers.

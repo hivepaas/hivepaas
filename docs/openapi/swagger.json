@@ -47826,6 +47826,13 @@
           "dbImage" : {
             "type" : "string"
           },
+          "functionRuntimes" : {
+            "additionalProperties" : {
+              "type" : "string"
+            },
+            "description" : "FunctionRuntimes are the images functions are built on, by runtime\n(node24, go127; go127-build for the image Go functions compile in). A\nfunction built under a release uses the image this release names, and\nkeeps it until it is deployed again. The images are released from the\nrepository hivepaas/function-runtimes.",
+            "type" : "object"
+          },
           "notesUrl" : {
             "description" : "NotesURL is where the release's notes are read: what changed, and what to\nknow before moving to it. Absent means the release published none.",
             "type" : "string"
@@ -47860,7 +47867,7 @@
             "type" : "string"
           }
         },
-        "required" : [ "agentImage", "appImage", "appVersion", "blockMajorUpgrade", "canUpdate", "dbImage", "notesUrl", "redisImage", "registryImage", "relation", "releaseDate", "templates", "traefikImage", "victoriaLogsImage", "vlagentImage" ],
+        "required" : [ "agentImage", "appImage", "appVersion", "blockMajorUpgrade", "canUpdate", "dbImage", "functionRuntimes", "notesUrl", "redisImage", "registryImage", "relation", "releaseDate", "templates", "traefikImage", "victoriaLogsImage", "vlagentImage" ],
         "type" : "object"
       },
       "service_hpappservice.ReleaseRelation" : {

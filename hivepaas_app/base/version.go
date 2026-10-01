@@ -25,6 +25,7 @@ var StableVersion = &ReleaseInfo{
 	VictoriaLogsImage: "victoriametrics/victoria-logs:v1.52.0",
 	VlagentImage:      "victoriametrics/vlagent:v1.52.0",
 	RegistryImage:     "ghcr.io/project-zot/zot:v2.1.21",
+	FunctionRuntimes:  functionRuntimesV1(),
 
 	BlockMajorUpgrade: []string{HivepaasDbKey},
 
@@ -49,8 +50,24 @@ var BetaVersion = &ReleaseInfo{
 	VictoriaLogsImage: "victoriametrics/victoria-logs:v1.52.0",
 	VlagentImage:      "victoriametrics/vlagent:v1.52.0",
 	RegistryImage:     "ghcr.io/project-zot/zot:v2.1.21",
+	FunctionRuntimes:  functionRuntimesV1(),
 
 	BlockMajorUpgrade: []string{HivepaasDbKey},
+}
+
+// functionRuntimesV1 are the images of function-runtimes v1.0.0, the first
+// release of the function contract v1.
+func functionRuntimesV1() map[string]string {
+	return map[string]string{
+		"node24": "ghcr.io/hivepaas/function-runtime-node24:1.0.0" +
+			"@sha256:a4560e0017d5c80f64973473bdf9612ed335b2ea79a7cf7cb39da259ea636970",
+		"python313": "ghcr.io/hivepaas/function-runtime-python313:1.0.0" +
+			"@sha256:9d3a28bc48cbbd41d1c7728e2b1a9bb53b5cf97a3d32ebfa8b1f84450c7b6bf2",
+		"go127": "ghcr.io/hivepaas/function-runtime-go127:1.0.0" +
+			"@sha256:31fce6af839d98fdad7ae982ea8ed2696b8f8aaefca0866a50a227f57bd3e169",
+		"go127-build": "ghcr.io/hivepaas/function-runtime-go127-build:1.0.0" +
+			"@sha256:c18ddbeb26c9d22b081cb21a330994952ab219c72fbcaf9b2bd2855fe30ec631",
+	}
 }
 
 // ReleaseInfo is what a release says to run. It is mirrored by release.json,
@@ -79,6 +96,12 @@ type ReleaseInfo struct {
 	// The configuration HivePaaS writes for it is the configuration this version
 	// of zot accepts, so a bump is the trigger to re-check that.
 	RegistryImage string `json:"registryImage"`
+	// FunctionRuntimes are the images functions are built on, by runtime
+	// (node24, go127; go127-build for the image Go functions compile in). A
+	// function built under a release uses the image this release names, and
+	// keeps it until it is deployed again. The images are released from the
+	// repository hivepaas/function-runtimes.
+	FunctionRuntimes map[string]string `json:"functionRuntimes,omitempty"`
 
 	// BlockMajorUpgrade names the components whose image may not cross a major
 	// version in this release, by the same keys as HivepaasDbKey and friends.

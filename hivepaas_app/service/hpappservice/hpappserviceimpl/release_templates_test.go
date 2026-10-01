@@ -74,3 +74,13 @@ func TestRepoReleaseJSONDecodes(t *testing.T) {
 	_, err = decodeReleaseInfo(data)
 	assert.NoError(t, err)
 }
+
+// release.json mirrors the release compiled into the binary, function runtimes
+// included: the images it names are the ones this binary builds functions on.
+func TestRepoReleaseJSONNamesTheCompiledFunctionRuntimes(t *testing.T) {
+	data, err := os.ReadFile("../../../../release.json")
+	assert.NoError(t, err)
+	info, err := decodeReleaseInfo(data)
+	assert.NoError(t, err)
+	assert.Equal(t, base.BetaVersion.FunctionRuntimes, info.Beta.FunctionRuntimes)
+}

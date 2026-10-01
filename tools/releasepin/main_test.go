@@ -80,3 +80,40 @@ func TestAnImageTheRegistryDoesNotKnowIsAnError(t *testing.T) {
 
 	assert.ErrorContains(t, err, "manifest unknown")
 }
+
+const releaseWithFunctions = `{
+  "beta": {
+    "appImage": "ghcr.io/hivepaas/hivepaas:1.0.0-beta1@sha256:app",
+    "functionRuntimes": {
+      "node24": "ghcr.io/hivepaas/function-runtime-node24:1.0.0",
+      "go127-build": "ghcr.io/hivepaas/function-runtime-go127-build:1.0.0@sha256:old"
+    },
+    "blockMajorUpgrade": [
+      "db"
+    ]
+  }
+}
+`
+
+// The images functions are built on are released with HivePaaS too, in a map
+// of their own, and are pinned like every other image.
+func TestFunctionRuntimesArePinnedToo(t *testing.T) {
+	registry := digests{
+		"ghcr.io/hivepaas/hivepaas:1.0.0-beta1":               "sha256:app",
+		"ghcr.io/hivepaas/function-runtime-node24:1.0.0":      "sha256:node",
+		"ghcr.io/hivepaas/function-runtime-go127-build:1.0.0": "sha256:gobuild",
+	}
+
+	out, report, err := pin([]byte(releaseWithFunctions), registry.resolve)
+
+	assert.NoError(t, err)
+	want := strings.NewReplacer(
+		`"ghcr.io/hivepaas/function-runtime-node24:1.0.0"`,
+		`"ghcr.io/hivepaas/function-runtime-node24:1.0.0@sha256:node"`,
+		`"ghcr.io/hivepaas/function-runtime-go127-build:1.0.0@sha256:old"`,
+		`"ghcr.io/hivepaas/function-runtime-go127-build:1.0.0@sha256:gobuild"`,
+	).Replace(releaseWithFunctions)
+	assert.Equal(t, want, string(out))
+	assert.Len(t, report.Changed, 2)
+	assert.Empty(t, report.Floating)
+}

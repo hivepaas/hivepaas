@@ -2,16 +2,19 @@ package webhookuc
 
 import (
 	"context"
+	"net/url"
 	"strconv"
 	"strings"
 	"sync"
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
+	"github.com/hivepaas/hivepaas/hivepaas_app/config"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/githelper"
+	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/projecthelper"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/safego"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/vcsurl"
 )
@@ -127,14 +130,14 @@ func (uc *UC) handlePRCommentDeploy(
 	repoRef string,
 	data *handleRepoWebhookData,
 ) {
-	if !app.IsPreviewApp() {
-		previewSettings, err := uc.loadAppPreviewSettings(ctx, db, app)
-		if err != nil || previewSettings == nil || !previewSettings.Enabled {
-			_ = uc.sendPRComment(ctx, db, prCommentEvent, data, app, buildPreviewDisabledComment(app.Name))
-			return
-		}
+	previewSettings, refusal := uc.prCommentsGate(ctx, db, app)
+	if refusal != "" {
+		_ = uc.sendPRComment(ctx, db, prCommentEvent, data, app, refusal)
+		return
+	}
 
-		err = uc.createAppPreview(ctx, app, prCommentEvent, repoRef, data.WebhookSetting.ID, previewSettings)
+	if !app.IsPreviewApp() {
+		err := uc.createAppPreview(ctx, app, prCommentEvent, repoRef, data.WebhookSetting.ID, previewSettings)
 		if err != nil {
 			_ = uc.sendPRComment(ctx, db, prCommentEvent, data, app, buildDeployFailedComment(app.Name, err))
 			return
@@ -164,12 +167,74 @@ func (uc *UC) handlePRCommentCancel(
 	repoRef string,
 	data *handleRepoWebhookData,
 ) {
+	if _, refusal := uc.prCommentsGate(ctx, db, app); refusal != "" {
+		_ = uc.sendPRComment(ctx, db, prCommentEvent, data, app, refusal)
+		return
+	}
+
 	err := uc.deleteAppPreview(ctx, app, repoRef)
 	if err != nil {
 		_ = uc.sendPRComment(ctx, db, prCommentEvent, data, app, buildDeployFailedComment(app.Name, err))
 		return
 	}
 	_ = uc.sendPRComment(ctx, db, prCommentEvent, data, app, buildCancelPreviewComment())
+}
+
+// prCommentsGate decides whether a pull request's comments may run commands on
+// an app, by the preview settings of the app the previews are of - the app's
+// own, or a preview's parent's. It answers those settings, and the reply that
+// refuses the command, or "" when it may run.
+func (uc *UC) prCommentsGate(
+	ctx context.Context,
+	db database.IDB,
+	app *entity.App,
+) (*entity.AppFeaturePreviewSettings, string) {
+	ownerID := app.ID
+	if app.IsPreviewApp() {
+		ownerID = app.ParentID
+	}
+	owner, featureSettings, err := uc.appService.LoadAppWithFeatureSettings(ctx, db, app.ProjectID, ownerID,
+		false, false)
+	if err != nil || owner == nil {
+		return nil, buildPreviewDisabledComment(app.Name)
+	}
+	var previewSettings *entity.AppFeaturePreviewSettings
+	if featureSettings != nil {
+		previewSettings = featureSettings.PreviewSettings
+	}
+	dashboardURL := ""
+	if cfg := config.Current(); cfg != nil {
+		dashboardURL = cfg.BaseDashboardURL()
+	}
+	return previewSettings, prCommentsRefusal(owner, previewSettings, dashboardURL)
+}
+
+// prCommentsRefusal is the reply refusing a comment's command on the app the
+// previews are of: previews off, or comments not allowed to run commands. ""
+// when neither.
+func prCommentsRefusal(owner *entity.App, previewSettings *entity.AppFeaturePreviewSettings,
+	dashboardURL string) string {
+	switch {
+	case previewSettings == nil || !previewSettings.Enabled:
+		return buildPreviewDisabledComment(owner.Name)
+	case !previewSettings.AllowPRComments:
+		return buildPRCommentsDisabledComment(owner.Name, featureSettingsURL(dashboardURL, owner))
+	}
+	return ""
+}
+
+// featureSettingsURL is the dashboard's page of an app's feature settings, or
+// "" when the dashboard's address is not known.
+func featureSettingsURL(dashboardURL string, app *entity.App) string {
+	projectID, env := projecthelper.ParseProjectEnvID(app.ProjectEnvID)
+	if dashboardURL == "" || projectID == "" || env == "" {
+		return ""
+	}
+	u, err := url.JoinPath(dashboardURL, "projects", projectID, env, "apps", app.ID, "feature-settings")
+	if err != nil {
+		return ""
+	}
+	return u + "/"
 }
 
 //nolint:gocognit,gocyclo

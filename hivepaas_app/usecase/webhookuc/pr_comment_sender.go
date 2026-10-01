@@ -69,6 +69,18 @@ func buildPreviewDisabledComment(appName string) string {
 		"on the HivePaaS Dashboard to use this command.", appName)
 }
 
+// buildPRCommentsDisabledComment refuses a comment's command on an app whose
+// previews are not run from comments, saying where that is turned on.
+func buildPRCommentsDisabledComment(appName, settingsURL string) string {
+	where := "**Feature Settings**"
+	if settingsURL != "" {
+		where = "[**Feature Settings**](" + settingsURL + ")"
+	}
+	return fmt.Sprintf("⚠️ **Pull request comments cannot deploy or cancel previews of application `%s`.**\n\n"+
+		"To use `/hivepaas deploy` and `/hivepaas cancel`, turn on **Allow PR Comments** under App Preview, "+
+		"in the application's %s on the HivePaaS Dashboard.", appName, where)
+}
+
 func buildNoActivePreviewComment() string {
 	return "ℹ️ **No active preview deployment found for this pull request.**"
 }

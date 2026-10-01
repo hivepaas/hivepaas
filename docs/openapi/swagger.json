@@ -56607,6 +56607,10 @@
       },
       "settings_appfeaturesettingsdto.AppFeaturePreviewSettingsReq" : {
         "properties" : {
+          "allowPRComments" : {
+            "description" : "AllowPRComments lets a pull request's comments deploy and cancel its preview.",
+            "type" : "boolean"
+          },
           "appsToClone" : {
             "items" : {
               "$ref" : "#/components/schemas/basedto.ObjectIDReq"
@@ -56629,11 +56633,15 @@
             "type" : "boolean"
           }
         },
-        "required" : [ "appsToClone", "autoCloneApps", "commands", "creationDelay", "enabled" ],
+        "required" : [ "allowPRComments", "appsToClone", "autoCloneApps", "commands", "creationDelay", "enabled" ],
         "type" : "object"
       },
       "settings_appfeaturesettingsdto.AppFeaturePreviewSettingsResp" : {
         "properties" : {
+          "allowPRComments" : {
+            "description" : "AllowPRComments lets a pull request's comments deploy and cancel its preview.",
+            "type" : "boolean"
+          },
           "appsToClone" : {
             "items" : {
               "$ref" : "#/components/schemas/appdto.AppBaseResp"
@@ -56656,7 +56664,7 @@
             "type" : "boolean"
           }
         },
-        "required" : [ "appsToClone", "autoCloneApps", "commands", "creationDelay", "enabled" ],
+        "required" : [ "allowPRComments", "appsToClone", "autoCloneApps", "commands", "creationDelay", "enabled" ],
         "type" : "object"
       },
       "settings_appfeaturesettingsdto.AppFeatureSchedJobSettingsReq" : {

@@ -58,6 +58,8 @@ type AppFeaturePreviewSettingsResp struct {
 	AppsToClone   []*appdto.AppBaseResp       `json:"appsToClone,omitempty" copy:"-"`
 	AutoCloneApps bool                        `json:"autoCloneApps,omitempty"`
 	Commands      []*settings.BaseSettingResp `json:"commands,omitempty" copy:"-"`
+	// AllowPRComments lets a pull request's comments deploy and cancel its preview.
+	AllowPRComments bool `json:"allowPRComments"`
 }
 
 type AppFeatureSettingsTransformInput struct {

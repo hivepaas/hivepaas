@@ -105,6 +105,8 @@ type AppFeaturePreviewSettingsReq struct {
 	AppsToClone   basedto.ObjectIDSliceReq `json:"appsToClone"`
 	AutoCloneApps bool                     `json:"autoCloneApps"`
 	Commands      basedto.ObjectIDSliceReq `json:"commands"`
+	// AllowPRComments lets a pull request's comments deploy and cancel its preview.
+	AllowPRComments bool `json:"allowPRComments"`
 }
 
 func (req *AppFeaturePreviewSettingsReq) ToEntity() *entity.AppFeaturePreviewSettings {
@@ -117,6 +119,8 @@ func (req *AppFeaturePreviewSettingsReq) ToEntity() *entity.AppFeaturePreviewSet
 		AppsToClone:   req.AppsToClone.ToEntity(),
 		AutoCloneApps: req.AutoCloneApps,
 		Commands:      req.Commands.ToEntity(),
+
+		AllowPRComments: req.AllowPRComments,
 	}
 }
 

@@ -45,6 +45,11 @@ type AppFeaturePreviewSettings struct {
 	AppsToClone   ObjectIDSlice     `json:"appsToClone,omitempty"`
 	AutoCloneApps bool              `json:"autoCloneApps,omitempty"`
 	Commands      ObjectIDSlice     `json:"commands,omitempty"`
+	// AllowPRComments lets a pull request's comments run /hivepaas deploy and
+	// /hivepaas cancel. Off unless turned on: a comment deploys the pull
+	// request's code with the app's variables and secrets, and on a public
+	// repository anybody may comment.
+	AllowPRComments bool `json:"allowPRComments,omitempty"`
 }
 
 func (s *AppFeatureSettings) GetType() base.SettingType {

@@ -333,6 +333,13 @@ export const AppConfigEnvVarsForm = React.forwardRef<AppConfigEnvVarsFormRef, Pr
                                       }
                             }
                         />
+                        {/* How a build reads a secret: the backend refuses the old way, ARG. */}
+                        <p className="text-xs text-muted-foreground">
+                            A buildtime variable whose value uses a secret reaches the build as a secret, not as a build
+                            argument, so the image never records it. Read it in the Dockerfile with{" "}
+                            <code>RUN --mount=type=secret,id=NAME,env=NAME &lt;command&gt;</code>; a Dockerfile that
+                            declares it with <code>ARG</code> is refused.
+                        </p>
                         <Separator className="opacity-50" />
                         {inheritedValues && (
                             <InheritedEnvVarsAccordion

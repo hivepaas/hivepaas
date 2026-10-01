@@ -160,8 +160,9 @@ func (c *grpcImageBuildServiceClient) ImageBuild(
 
 func inputsToProto(inputs *imagebuildservice.BuildInputs) *agentproto.ImageBuildInputs {
 	out := &agentproto.ImageBuildInputs{
-		EnvVars: make(map[string]string, len(inputs.EnvVars)),
-		Secrets: inputs.Secrets,
+		EnvVars:       make(map[string]string, len(inputs.EnvVars)),
+		SecretEnvVars: inputs.SecretEnvVars,
+		Secrets:       inputs.Secrets,
 	}
 	for key, value := range inputs.EnvVars {
 		if value != nil {

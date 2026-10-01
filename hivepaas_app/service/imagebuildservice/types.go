@@ -36,8 +36,13 @@ type ImageBuildReq struct {
 // opened: the app resolves it, where the data encryption key is, and a build
 // anywhere else works from it without reading a setting.
 type BuildInputs struct {
-	// EnvVars are the build's variables, passed as build arguments.
+	// EnvVars are the build's variables that use no secret, passed as build
+	// arguments.
 	EnvVars map[string]*string
+	// SecretEnvVars are the build's variables that use a secret, by name. They
+	// reach the build as BuildKit secrets, never as build arguments: the value of
+	// a build argument is written into the image's history.
+	SecretEnvVars map[string]string
 	// RegistryAuths are the project's registries, by address: what the build
 	// signs in to for the images it pulls.
 	RegistryAuths map[string]registry.AuthConfig

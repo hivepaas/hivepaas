@@ -152,9 +152,10 @@ func TestAnAgentBuildsTheSourceItIsSent(t *testing.T) {
 	}}
 	c, tempBase := startAgent(t, svc)
 
-	npmToken := "tok-123"
+	npmToken, nodeEnv := "tok-123", "production"
 	inputs := &imagebuildservice.BuildInputs{
-		EnvVars: map[string]*string{"NPM_TOKEN": &npmToken},
+		EnvVars:       map[string]*string{"NODE_ENV": &nodeEnv},
+		SecretEnvVars: map[string]string{"NPM_TOKEN": npmToken},
 		RegistryAuths: map[string]registry.AuthConfig{
 			"docker.io": {Username: "puller", Password: "pull-pass", ServerAddress: "docker.io"},
 		},

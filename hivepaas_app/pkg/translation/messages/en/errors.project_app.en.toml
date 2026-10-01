@@ -20,6 +20,7 @@ ERR_APP_CLONE_SETTING_REQUIRED = "Clone settings are required to configured in a
 ERR_MULTI_NODE_CLUSTER_REQUIRE_REGISTRY_FOR_IMAGES = "Multi-node cluster reuquires an accessible registry for the built images"
 ERR_DEPLOYMENT_METHOD_REPO_REQUIRED = "App is required to be deployed from a repo source"
 ERR_FEATURE_DISABLED = "Feature '{{.Name}}' is disabled"
+ERR_BUILD_SECRET_DECLARED_AS_ARG = "The build variables {{.Names}} use secrets, and the Dockerfile declares them with ARG, which would write their values into the image's history. Remove the ARG and read each one through a secret mount: RUN --mount=type=secret,id={{.Example}},env={{.Example}} <command>"
 
 # Source errors
 ERR_REPO_NOT_FOUND = "Repo '{{.Repo}}' is not found"

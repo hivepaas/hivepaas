@@ -45,6 +45,9 @@ message ImageBuildInputs {
   repeated ImageBuildRegistryAuth registry_auths = 2;
   ImageBuildRegistryAuth push_registry = 3;  // unset when the image is not pushed
   repeated string secrets = 4;               // values to keep out of the logs
+  // Variables that use a secret, given to the build as BuildKit secrets rather
+  // than build arguments, which the image would record.
+  map<string, string> secret_env_vars = 5;
 }
 
 message ImageBuildRegistryAuth {

@@ -22,6 +22,9 @@ var (
 	ErrMultiNodeClusterRequireRegistryForImages = NewErr(ErrPreconditionRequired, "ERR_MULTI_NODE_CLUSTER_REQUIRE_REGISTRY_FOR_IMAGES") //nolint:lll
 	ErrDeploymentMethodRepoRequired             = NewErr(ErrUnconfigured, "ERR_DEPLOYMENT_METHOD_REPO_REQUIRED")
 	ErrFeatureDisabled                          = NewErr(ErrInactive, "ERR_FEATURE_DISABLED")
+	// A build variable that uses a secret, which the Dockerfile declares with ARG:
+	// a build argument's value is written into the image's history.
+	ErrBuildSecretDeclaredAsArg = NewErr(ErrNotAllowed, "ERR_BUILD_SECRET_DECLARED_AS_ARG")
 )
 
 // Errors for sources

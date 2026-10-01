@@ -31,5 +31,9 @@ func (s *service) imageBuild(
 		return hperrors.Wrap(err)
 	}
 
+	if err = checkSecretsNotDeclaredAsArg(data); err != nil {
+		return hperrors.Wrap(err)
+	}
+
 	return s.buildImageWithDocker(ctx, db, data)
 }

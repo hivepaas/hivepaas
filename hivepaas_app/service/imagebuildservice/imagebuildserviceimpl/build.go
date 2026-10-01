@@ -20,6 +20,7 @@ type imageBuildData struct {
 
 	ImageTags     []string
 	EnvVars       map[string]*string
+	SecretEnvVars map[string]string
 	RegistryAuths map[string]registry.AuthConfig
 }
 
@@ -48,6 +49,7 @@ func (s *service) ImageBuild(
 		return nil, hperrors.Wrap(err)
 	}
 	data.EnvVars = data.Inputs.EnvVars
+	data.SecretEnvVars = data.Inputs.SecretEnvVars
 	data.RegistryAuths = data.Inputs.RegistryAuths
 	if len(data.Inputs.Secrets) > 0 {
 		data.LogStore.UpdateRedactorAddSecrets(data.Inputs.Secrets)

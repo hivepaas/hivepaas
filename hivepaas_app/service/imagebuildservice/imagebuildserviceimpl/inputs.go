@@ -33,11 +33,11 @@ func (s *service) ResolveBuildInputs(
 		secrets[auth.Password] = struct{}{}
 	}
 
-	envVars, envSecrets, err := s.calcBuildEnvVars(ctx, db, req.App)
+	envVars, secretEnvVars, envSecrets, err := s.calcBuildEnvVars(ctx, db, req.App)
 	if err != nil {
 		return nil, hperrors.Wrap(err)
 	}
-	inputs.EnvVars = envVars
+	inputs.EnvVars, inputs.SecretEnvVars = envVars, secretEnvVars
 
 	auths, authSecrets, err := s.calcBuildRegistryAuths(ctx, db, req.App)
 	if err != nil {

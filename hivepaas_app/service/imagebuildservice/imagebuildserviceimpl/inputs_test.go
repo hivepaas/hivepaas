@@ -98,6 +98,8 @@ func TestResolvingInputsOpensTheSecretsABuildReads(t *testing.T) {
 		envVarService: &buildEnv{vars: []*envvarservice.EnvVar{{
 			EnvVar:     &entity.EnvVar{Key: "NPM_TOKEN", Value: "tok-123"},
 			RefSecrets: map[*entity.Secret]struct{}{{Key: "npm", Value: sealed(t, "tok-123")}: {}},
+		}, {
+			EnvVar: &entity.EnvVar{Key: "NODE_ENV", Value: "production"},
 		}}},
 	}
 
@@ -109,8 +111,12 @@ func TestResolvingInputsOpensTheSecretsABuildReads(t *testing.T) {
 	if !assert.NoError(t, err) || !assert.NotNil(t, inputs) {
 		return
 	}
-	if assert.Contains(t, inputs.EnvVars, "NPM_TOKEN") {
-		assert.Equal(t, "tok-123", *inputs.EnvVars["NPM_TOKEN"])
+	// A variable that uses a secret reaches the build as a secret, never as a
+	// build argument: a build argument is written into the image's history.
+	assert.Equal(t, map[string]string{"NPM_TOKEN": "tok-123"}, inputs.SecretEnvVars)
+	assert.NotContains(t, inputs.EnvVars, "NPM_TOKEN")
+	if assert.Contains(t, inputs.EnvVars, "NODE_ENV") {
+		assert.Equal(t, "production", *inputs.EnvVars["NODE_ENV"])
 	}
 	assert.Equal(t, registry.AuthConfig{Username: "puller", Password: "pull-pass", ServerAddress: "docker.io"},
 		inputs.RegistryAuths["docker.io"])

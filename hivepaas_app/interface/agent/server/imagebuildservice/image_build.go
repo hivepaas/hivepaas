@@ -131,6 +131,7 @@ func inputsFromProto(in *agentproto.ImageBuildInputs) *imagebuildservice.BuildIn
 	out := &imagebuildservice.BuildInputs{
 		EnvVars:       make(map[string]*string, len(in.GetEnvVars())),
 		RegistryAuths: make(map[string]registry.AuthConfig, len(in.GetRegistryAuths())),
+		SecretEnvVars: in.GetSecretEnvVars(),
 		Secrets:       in.GetSecrets(),
 	}
 	for key, value := range in.GetEnvVars() {

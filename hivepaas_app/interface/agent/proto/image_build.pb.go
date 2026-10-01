@@ -230,6 +230,9 @@ type ImageBuildInputs struct {
 	RegistryAuths []*ImageBuildRegistryAuth `protobuf:"bytes,2,rep,name=registry_auths,json=registryAuths,proto3" json:"registry_auths,omitempty"`
 	PushRegistry  *ImageBuildRegistryAuth   `protobuf:"bytes,3,opt,name=push_registry,json=pushRegistry,proto3" json:"push_registry,omitempty"` // unset when the image is not pushed
 	Secrets       []string                  `protobuf:"bytes,4,rep,name=secrets,proto3" json:"secrets,omitempty"`                               // values to keep out of the logs
+	// Variables that use a secret, given to the build as BuildKit secrets rather
+	// than build arguments, which the image would record.
+	SecretEnvVars map[string]string `protobuf:"bytes,5,rep,name=secret_env_vars,json=secretEnvVars,proto3" json:"secret_env_vars,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -288,6 +291,13 @@ func (x *ImageBuildInputs) GetPushRegistry() *ImageBuildRegistryAuth {
 func (x *ImageBuildInputs) GetSecrets() []string {
 	if x != nil {
 		return x.Secrets
+	}
+	return nil
+}
+
+func (x *ImageBuildInputs) GetSecretEnvVars() map[string]string {
+	if x != nil {
+		return x.SecretEnvVars
 	}
 	return nil
 }
@@ -879,13 +889,17 @@ const file_image_build_proto_rawDesc = "" +
 	"image_tags\x18\f \x03(\tR\timageTags\x12/\n" +
 	"\x06inputs\x18\r \x01(\v2\x17.agent.ImageBuildInputsR\x06inputsJ\x04\b\x05\x10\x06J\x04\b\n" +
 	"\x10\vJ\x04\b\v\x10\fR\n" +
-	"image_nameR\fcheckout_dirR\btemp_dir\"\xb3\x02\n" +
+	"image_nameR\fcheckout_dirR\btemp_dir\"\xc9\x03\n" +
 	"\x10ImageBuildInputs\x12?\n" +
 	"\benv_vars\x18\x01 \x03(\v2$.agent.ImageBuildInputs.EnvVarsEntryR\aenvVars\x12D\n" +
 	"\x0eregistry_auths\x18\x02 \x03(\v2\x1d.agent.ImageBuildRegistryAuthR\rregistryAuths\x12B\n" +
 	"\rpush_registry\x18\x03 \x01(\v2\x1d.agent.ImageBuildRegistryAuthR\fpushRegistry\x12\x18\n" +
-	"\asecrets\x18\x04 \x03(\tR\asecrets\x1a:\n" +
+	"\asecrets\x18\x04 \x03(\tR\asecrets\x12R\n" +
+	"\x0fsecret_env_vars\x18\x05 \x03(\v2*.agent.ImageBuildInputs.SecretEnvVarsEntryR\rsecretEnvVars\x1a:\n" +
 	"\fEnvVarsEntry\x12\x10\n" +
+	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
+	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\x1a@\n" +
+	"\x12SecretEnvVarsEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
 	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"j\n" +
 	"\x16ImageBuildRegistryAuth\x12\x18\n" +
@@ -943,7 +957,7 @@ func file_image_build_proto_rawDescGZIP() []byte {
 	return file_image_build_proto_rawDescData
 }
 
-var file_image_build_proto_msgTypes = make([]protoimpl.MessageInfo, 13)
+var file_image_build_proto_msgTypes = make([]protoimpl.MessageInfo, 14)
 var file_image_build_proto_goTypes = []any{
 	(*ImageBuildMsg)(nil),              // 0: agent.ImageBuildMsg
 	(*ImageBuildReq)(nil),              // 1: agent.ImageBuildReq
@@ -958,6 +972,7 @@ var file_image_build_proto_goTypes = []any{
 	(*LogFrame)(nil),                   // 10: agent.LogFrame
 	(*ImageBuildResult)(nil),           // 11: agent.ImageBuildResult
 	nil,                                // 12: agent.ImageBuildInputs.EnvVarsEntry
+	nil,                                // 13: agent.ImageBuildInputs.SecretEnvVarsEntry
 }
 var file_image_build_proto_depIdxs = []int32{
 	1,  // 0: agent.ImageBuildMsg.req:type_name -> agent.ImageBuildReq
@@ -967,18 +982,19 @@ var file_image_build_proto_depIdxs = []int32{
 	12, // 4: agent.ImageBuildInputs.env_vars:type_name -> agent.ImageBuildInputs.EnvVarsEntry
 	3,  // 5: agent.ImageBuildInputs.registry_auths:type_name -> agent.ImageBuildRegistryAuth
 	3,  // 6: agent.ImageBuildInputs.push_registry:type_name -> agent.ImageBuildRegistryAuth
-	6,  // 7: agent.ImageBuildSettings.workers:type_name -> agent.ImageBuildWorkerSettings
-	7,  // 8: agent.ImageBuildSettings.resources:type_name -> agent.ImageBuildResourceSettings
-	8,  // 9: agent.ImageBuildSettings.sources:type_name -> agent.ImageBuildSourceSettings
-	10, // 10: agent.ImageBuildResp.log:type_name -> agent.LogFrame
-	11, // 11: agent.ImageBuildResp.result:type_name -> agent.ImageBuildResult
-	0,  // 12: agent.ImageBuildService.ImageBuildFromSource:input_type -> agent.ImageBuildMsg
-	9,  // 13: agent.ImageBuildService.ImageBuildFromSource:output_type -> agent.ImageBuildResp
-	13, // [13:14] is the sub-list for method output_type
-	12, // [12:13] is the sub-list for method input_type
-	12, // [12:12] is the sub-list for extension type_name
-	12, // [12:12] is the sub-list for extension extendee
-	0,  // [0:12] is the sub-list for field type_name
+	13, // 7: agent.ImageBuildInputs.secret_env_vars:type_name -> agent.ImageBuildInputs.SecretEnvVarsEntry
+	6,  // 8: agent.ImageBuildSettings.workers:type_name -> agent.ImageBuildWorkerSettings
+	7,  // 9: agent.ImageBuildSettings.resources:type_name -> agent.ImageBuildResourceSettings
+	8,  // 10: agent.ImageBuildSettings.sources:type_name -> agent.ImageBuildSourceSettings
+	10, // 11: agent.ImageBuildResp.log:type_name -> agent.LogFrame
+	11, // 12: agent.ImageBuildResp.result:type_name -> agent.ImageBuildResult
+	0,  // 13: agent.ImageBuildService.ImageBuildFromSource:input_type -> agent.ImageBuildMsg
+	9,  // 14: agent.ImageBuildService.ImageBuildFromSource:output_type -> agent.ImageBuildResp
+	14, // [14:15] is the sub-list for method output_type
+	13, // [13:14] is the sub-list for method input_type
+	13, // [13:13] is the sub-list for extension type_name
+	13, // [13:13] is the sub-list for extension extendee
+	0,  // [0:13] is the sub-list for field type_name
 }
 
 func init() { file_image_build_proto_init() }
@@ -1000,7 +1016,7 @@ func file_image_build_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_image_build_proto_rawDesc), len(file_image_build_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   13,
+			NumMessages:   14,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

@@ -1,0 +1,1358 @@
+diff --git a/src/application/modules/projects/dialogs-container/dialogs-container.com.tsx b/src/application/modules/projects/dialogs-container/dialogs-container.com.tsx
+index 9c48a489..1232c843 100644
+--- a/src/application/modules/projects/dialogs-container/dialogs-container.com.tsx
++++ b/src/application/modules/projects/dialogs-container/dialogs-container.com.tsx
+@@ -19,6 +19,7 @@ import {
+     ConfirmProjectDangerActionDialog,
+     useConfirmProjectDangerActionDialogState,
+ } from "~/projects/dialogs/confirm-project-danger-action";
++import { CreateFunctionDialog, useCreateFunctionDialogState } from "~/projects/dialogs/create-function";
+ import { CreateProjectDialog, useCreateProjectDialogState } from "~/projects/dialogs/create-project";
+ import { CreateProjectAppDialog, useCreateProjectAppDialogState } from "~/projects/dialogs/create-project-app";
+ import {
+@@ -100,6 +101,7 @@ function View() {
+     const location = useLocation();
+     const createProjectDialog = useCreateProjectDialogState();
+     const createProjectAppDialog = useCreateProjectAppDialogState();
++    const createFunctionDialog = useCreateFunctionDialogState();
+     const updateAppHealthCheckStatusDialog = useUpdateAppHealthCheckStatusDialogState();
+     const updateAppScheduledJobStatusDialog = useUpdateAppScheduledJobStatusDialogState();
+     const runNowTaskCreatedDialog = useRunNowTaskCreatedDialogState();
+@@ -137,6 +139,7 @@ function View() {
+     useUpdateEffect(() => {
+         createProjectDialog.destroy();
+         createProjectAppDialog.destroy();
++        createFunctionDialog.destroy();
+         updateAppHealthCheckStatusDialog.destroy();
+         updateAppScheduledJobStatusDialog.destroy();
+         runNowTaskCreatedDialog.destroy();
+@@ -176,6 +179,7 @@ function View() {
+         <>
+             <CreateProjectDialog />
+             <CreateProjectAppDialog />
++            <CreateFunctionDialog />
+             <UpdateAppHealthCheckStatusDialog />
+             <UpdateAppScheduledJobStatusDialog />
+             <RunNowTaskCreatedDialog />
+diff --git a/src/application/modules/projects/dialogs/create-function/dialog/create-function.dialog.com.tsx b/src/application/modules/projects/dialogs/create-function/dialog/create-function.dialog.com.tsx
+new file mode 100644
+index 00000000..6b4c1664
+--- /dev/null
++++ b/src/application/modules/projects/dialogs/create-function/dialog/create-function.dialog.com.tsx
+@@ -0,0 +1,99 @@
++import React, { useEffect, useState } from "react";
++
++import { Dialog, DialogFixedContent, DialogHeader, DialogTitle } from "@components/ui/dialog";
++import { useNavigate } from "react-router";
++import { toast } from "sonner";
++import { ProjectAppsCommands } from "~/projects/data/commands";
++import { ProjectsQueries } from "~/projects/data/queries";
++
++import { MODULE_IDS, ROUTE } from "@application/shared/constants";
++import { useConditionalModule } from "@application/shared/permissions";
++
++import { CreateFunctionForm } from "../form";
++import { useCreateFunctionDialogState } from "../hooks";
++import { type CreateFunctionFormOutput, createFunctionSource } from "../schemas";
++
++export function CreateFunctionDialog() {
++    const navigate = useNavigate();
++    const { state, props: dialogOptions, ...actions } = useCreateFunctionDialogState();
++    const [hasChanges, setHasChanges] = useState(false);
++    const { canWrite } = useConditionalModule({ id: MODULE_IDS.Project });
++
++    const open = state.mode !== "closed";
++    const { projectId } = state;
++    const { data: projectData } = ProjectsQueries.useFindOneById(
++        { projectID: projectId ?? "" },
++        { enabled: Boolean(projectId) },
++    );
++    const envs = projectData?.data.envs ?? [];
++
++    const { mutate: createFunction, isPending } = ProjectAppsCommands.useCreateFunction({
++        onSuccess: (response, request) => {
++            toast.success("Function created, its first deployment has started");
++            actions.close();
++            // A function's own page opens on its code.
++            void navigate(
++                ROUTE.projects.single.apps.single.code.$route(request.projectID, request.env, response.data.id),
++            );
++        },
++    });
++
++    useEffect(() => {
++        if (state.mode === "closed") {
++            setHasChanges(false);
++        }
++    }, [state.mode]);
++
++    function onSubmit(values: CreateFunctionFormOutput) {
++        if (!projectId || !canWrite) {
++            return;
++        }
++
++        createFunction({
++            projectID: projectId,
++            name: values.name,
++            env: values.env,
++            note: "",
++            tags: [],
++            source: createFunctionSource(values),
++        });
++    }
++
++    function handleClose(): void {
++        if (canWrite && hasChanges) {
++            const userConfirmed: boolean = window.confirm("Are you sure you want to close without saving changes?");
++            if (!userConfirmed) {
++                return;
++            }
++        }
++
++        setHasChanges(false);
++        actions.close();
++    }
++
++    if (!projectId) {
++        return null;
++    }
++
++    return (
++        <Dialog
++            open={open}
++            onOpenChange={handleClose}
++        >
++            <DialogFixedContent className="sm:max-w-[650px]">
++                <DialogHeader>
++                    <DialogTitle>Create Function</DialogTitle>
++                </DialogHeader>
++                <CreateFunctionForm
++                    projectId={projectId}
++                    envs={envs}
++                    initialEnv={dialogOptions?.initialEnv}
++                    isPending={isPending}
++                    readOnly={!canWrite}
++                    onSubmit={onSubmit}
++                    onHasChanges={setHasChanges}
++                />
++            </DialogFixedContent>
++        </Dialog>
++    );
++}
+diff --git a/src/application/modules/projects/dialogs/create-function/dialog/index.ts b/src/application/modules/projects/dialogs/create-function/dialog/index.ts
+new file mode 100644
+index 00000000..2c8eed85
+--- /dev/null
++++ b/src/application/modules/projects/dialogs/create-function/dialog/index.ts
+@@ -0,0 +1 @@
++export * from "./create-function.dialog.com";
+diff --git a/src/application/modules/projects/dialogs/create-function/form/create-function.form.com.tsx b/src/application/modules/projects/dialogs/create-function/form/create-function.form.com.tsx
+new file mode 100644
+index 00000000..ee64aac8
+--- /dev/null
++++ b/src/application/modules/projects/dialogs/create-function/form/create-function.form.com.tsx
+@@ -0,0 +1,380 @@
++import React, { useEffect, useMemo } from "react";
++
++import { zodResolver } from "@hookform/resolvers/zod";
++import { FileCode, GitBranch } from "lucide-react";
++import { useController, useForm } from "react-hook-form";
++import { type ProjectEnvEntity } from "~/projects/domain";
++import {
++    GitCredentialCombobox,
++    GitCredentialLinks,
++    type OptionCard,
++    OptionCardGroup,
++    ProjectEnvBadge,
++} from "~/projects/module-shared/components";
++import { FUNCTION_TEMPLATES } from "~/projects/module-shared/constants";
++import { ALL_FUNCTION_RUNTIMES, EFunctionRuntime, FUNCTION_RUNTIME_LABELS } from "~/projects/module-shared/enums";
++
++import { InfoBlock, LabelWithInfo } from "@application/shared/components";
++
++import { Button } from "@/components/ui/button";
++import { DialogActionFooter, DialogBody } from "@/components/ui/dialog";
++import { Field, FieldError, FieldGroup } from "@/components/ui/field";
++import { Input } from "@/components/ui/input";
++import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
++
++import {
++    type CreateFunctionFormInput,
++    type CreateFunctionFormOutput,
++    EFunctionCodeSource,
++    createCreateFunctionFormSchema,
++} from "../schemas";
++
++const CODE_SOURCE_OPTIONS: OptionCard<EFunctionCodeSource>[] = [
++    {
++        value: EFunctionCodeSource.Template,
++        label: "Write it here",
++        description: "Start from the runtime's template, and edit the code in the function's Code tab.",
++        icon: FileCode,
++    },
++    {
++        value: EFunctionCodeSource.Repository,
++        label: "From a repository",
++        description: "Build the function from a git repository's code.",
++        icon: GitBranch,
++    },
++];
++
++export function CreateFunctionForm({
++    projectId,
++    envs,
++    initialEnv,
++    isPending,
++    readOnly = false,
++    onSubmit,
++    onHasChanges,
++}: Props) {
++    const envNames = useMemo(() => envs.map(env => env.name), [envs]);
++    const defaultEnv = useMemo(() => {
++        if (initialEnv && envNames.includes(initialEnv)) {
++            return initialEnv;
++        }
++
++        return envs[0]?.name ?? "";
++    }, [envNames, envs, initialEnv]);
++    const schema = useMemo(() => createCreateFunctionFormSchema(envNames), [envNames]);
++
++    const {
++        handleSubmit,
++        control,
++        formState: { errors, isDirty },
++        watch,
++        setValue,
++    } = useForm<CreateFunctionFormInput, unknown, CreateFunctionFormOutput>({
++        defaultValues: {
++            name: "",
++            env: defaultEnv,
++            runtime: EFunctionRuntime.Node24,
++            codeSource: EFunctionCodeSource.Template,
++            repoUrl: "",
++            repoRef: "",
++            dir: "",
++            credentials: null,
++        },
++        resolver: zodResolver(schema),
++        mode: "onSubmit",
++    });
++
++    useEffect(() => {
++        onHasChanges?.(readOnly ? false : isDirty);
++    }, [isDirty, onHasChanges, readOnly]);
++
++    const selectedEnvName = watch("env");
++    const runtime = watch("runtime") as EFunctionRuntime;
++    const codeSource = watch("codeSource");
++    const selectedEnv = envs.find(env => env.name === selectedEnvName);
++
++    useEffect(() => {
++        const currentEnvExists = envs.some(env => env.name === selectedEnvName);
++
++        if (!currentEnvExists && selectedEnvName !== defaultEnv) {
++            setValue("env", defaultEnv, { shouldDirty: false });
++        }
++    }, [defaultEnv, envs, selectedEnvName, setValue]);
++
++    const { field: name } = useController({ name: "name", control });
++    const { field: env } = useController({ name: "env", control });
++    const { field: runtimeField } = useController({ name: "runtime", control });
++    const { field: codeSourceField } = useController({ name: "codeSource", control });
++    const { field: repoUrl } = useController({ name: "repoUrl", control });
++    const { field: repoRef } = useController({ name: "repoRef", control });
++    const { field: dir } = useController({ name: "dir", control });
++    const { field: credentials } = useController({ name: "credentials", control });
++
++    function onValid(values: CreateFunctionFormOutput) {
++        if (readOnly) {
++            return;
++        }
++
++        void onSubmit(values);
++    }
++
++    return (
++        <form
++            onSubmit={event => {
++                event.preventDefault();
++                void handleSubmit(onValid)(event);
++            }}
++            className="min-h-0 flex flex-1 flex-col"
++        >
++            <DialogBody className="flex flex-col gap-6">
++                <fieldset
++                    disabled={readOnly}
++                    className="m-0 flex min-w-0 flex-col gap-6 border-0 p-0"
++                >
++                    <InfoBlock
++                        titleWidth={150}
++                        title={
++                            <LabelWithInfo
++                                label="Name"
++                                isRequired
++                            />
++                        }
++                    >
++                        <FieldGroup>
++                            <Field>
++                                <Input
++                                    id="name"
++                                    {...name}
++                                    placeholder="E.g. hello"
++                                    aria-invalid={Boolean(errors.name)}
++                                />
++                                <FieldError errors={[errors.name]} />
++                            </Field>
++                        </FieldGroup>
++                    </InfoBlock>
++
++                    <InfoBlock
++                        titleWidth={150}
++                        title={
++                            <LabelWithInfo
++                                label="Environment"
++                                isRequired
++                            />
++                        }
++                    >
++                        <FieldGroup>
++                            <Field>
++                                <Select
++                                    value={env.value}
++                                    onValueChange={value => {
++                                        env.onChange(value);
++                                        // Credentials are an env's: another env lists its own.
++                                        setValue("credentials", null);
++                                    }}
++                                    disabled={readOnly || envs.length === 0}
++                                >
++                                    <SelectTrigger
++                                        aria-invalid={Boolean(errors.env)}
++                                        className="px-2"
++                                    >
++                                        {selectedEnv ? (
++                                            <ProjectEnvBadge
++                                                name={selectedEnv.name}
++                                                color={selectedEnv.color}
++                                            />
++                                        ) : (
++                                            <span className="text-muted-foreground">
++                                                {envs.length === 0 ? "No environments" : "Select environment"}
++                                            </span>
++                                        )}
++                                    </SelectTrigger>
++                                    <SelectContent>
++                                        {envs.map(projectEnv => (
++                                            <SelectItem
++                                                key={projectEnv.name}
++                                                value={projectEnv.name}
++                                            >
++                                                <ProjectEnvBadge
++                                                    name={projectEnv.name}
++                                                    color={projectEnv.color}
++                                                />
++                                            </SelectItem>
++                                        ))}
++                                    </SelectContent>
++                                </Select>
++                                <FieldError errors={[errors.env]} />
++                            </Field>
++                        </FieldGroup>
++                    </InfoBlock>
++
++                    <InfoBlock
++                        titleWidth={150}
++                        title={
++                            <LabelWithInfo
++                                label="Runtime"
++                                isRequired
++                            />
++                        }
++                    >
++                        <FieldGroup>
++                            <Field>
++                                <Select
++                                    value={runtimeField.value}
++                                    onValueChange={runtimeField.onChange}
++                                    disabled={readOnly}
++                                >
++                                    <SelectTrigger>
++                                        <SelectValue />
++                                    </SelectTrigger>
++                                    <SelectContent>
++                                        {ALL_FUNCTION_RUNTIMES.map(item => (
++                                            <SelectItem
++                                                key={item}
++                                                value={item}
++                                            >
++                                                {FUNCTION_RUNTIME_LABELS[item]}
++                                            </SelectItem>
++                                        ))}
++                                    </SelectContent>
++                                </Select>
++                                <FieldError errors={[errors.runtime]} />
++                            </Field>
++                        </FieldGroup>
++                    </InfoBlock>
++
++                    <InfoBlock
++                        titleWidth={150}
++                        title={<LabelWithInfo label="Code" />}
++                    >
++                        <FieldGroup>
++                            <Field>
++                                <OptionCardGroup
++                                    options={CODE_SOURCE_OPTIONS}
++                                    value={codeSourceField.value}
++                                    onChange={codeSourceField.onChange}
++                                    className="grid-cols-1 sm:grid-cols-2"
++                                    readOnly={readOnly}
++                                />
++                                {codeSource === EFunctionCodeSource.Template && (
++                                    <p className="text-xs text-muted-foreground">
++                                        Starts with{" "}
++                                        {FUNCTION_TEMPLATES[runtime].map(file => (
++                                            <code
++                                                key={file.path}
++                                                className="mr-1 rounded bg-muted px-1"
++                                            >
++                                                {file.path}
++                                            </code>
++                                        ))}
++                                    </p>
++                                )}
++                            </Field>
++                        </FieldGroup>
++                    </InfoBlock>
++
++                    {codeSource === EFunctionCodeSource.Repository && (
++                        <>
++                            <InfoBlock
++                                titleWidth={150}
++                                title={
++                                    <LabelWithInfo
++                                        label="Repository URL"
++                                        isRequired
++                                    />
++                                }
++                            >
++                                <FieldGroup>
++                                    <Field>
++                                        <Input
++                                            {...repoUrl}
++                                            placeholder="https://github.com/owner/repo.git"
++                                            aria-invalid={Boolean(errors.repoUrl)}
++                                        />
++                                        <FieldError errors={[errors.repoUrl]} />
++                                    </Field>
++                                </FieldGroup>
++                            </InfoBlock>
++
++                            <InfoBlock
++                                titleWidth={150}
++                                title={
++                                    <LabelWithInfo
++                                        label="Ref"
++                                        content="A branch, a tag or a commit; the default branch when empty."
++                                    />
++                                }
++                            >
++                                <FieldGroup>
++                                    <Field>
++                                        <Input
++                                            {...repoRef}
++                                            placeholder="main"
++                                        />
++                                    </Field>
++                                </FieldGroup>
++                            </InfoBlock>
++
++                            <InfoBlock
++                                titleWidth={150}
++                                title={
++                                    <LabelWithInfo
++                                        label="Directory"
++                                        content="The function's directory in the repository; its root when empty."
++                                    />
++                                }
++                            >
++                                <FieldGroup>
++                                    <Field>
++                                        <Input
++                                            {...dir}
++                                            placeholder="functions/hello"
++                                            aria-invalid={Boolean(errors.dir)}
++                                        />
++                                        <FieldError errors={[errors.dir]} />
++                                    </Field>
++                                </FieldGroup>
++                            </InfoBlock>
++
++                            <InfoBlock
++                                titleWidth={150}
++                                title={<LabelWithInfo label="Git Credentials" />}
++                            >
++                                <FieldGroup>
++                                    <Field>
++                                        <GitCredentialCombobox
++                                            projectId={projectId}
++                                            env={selectedEnvName}
++                                            value={credentials.value}
++                                            onChange={credentials.onChange}
++                                            readOnly={readOnly}
++                                        />
++                                        <GitCredentialLinks projectId={projectId} />
++                                    </Field>
++                                </FieldGroup>
++                            </InfoBlock>
++                        </>
++                    )}
++                </fieldset>
++            </DialogBody>
++            <DialogActionFooter>
++                <Button
++                    type="submit"
++                    isLoading={isPending}
++                    disabled={readOnly}
++                >
++                    Create Function
++                </Button>
++            </DialogActionFooter>
++        </form>
++    );
++}
++
++interface Props {
++    projectId: string;
++    envs: ProjectEnvEntity[];
++    initialEnv?: string;
++    isPending: boolean;
++    readOnly?: boolean;
++    onSubmit: (values: CreateFunctionFormOutput) => Promise<void> | void;
++    onHasChanges?: (dirty: boolean) => void;
++}
+diff --git a/src/application/modules/projects/dialogs/create-function/form/index.ts b/src/application/modules/projects/dialogs/create-function/form/index.ts
+new file mode 100644
+index 00000000..02e95ef9
+--- /dev/null
++++ b/src/application/modules/projects/dialogs/create-function/form/index.ts
+@@ -0,0 +1 @@
++export * from "./create-function.form.com";
+diff --git a/src/application/modules/projects/dialogs/create-function/hooks/index.ts b/src/application/modules/projects/dialogs/create-function/hooks/index.ts
+new file mode 100644
+index 00000000..75e11aaa
+--- /dev/null
++++ b/src/application/modules/projects/dialogs/create-function/hooks/index.ts
+@@ -0,0 +1,2 @@
++export * from "./use-create-function.dialog";
++export * from "./use-create-function.dialog.state";
+diff --git a/src/application/modules/projects/dialogs/create-function/hooks/use-create-function.dialog.state.ts b/src/application/modules/projects/dialogs/create-function/hooks/use-create-function.dialog.state.ts
+new file mode 100644
+index 00000000..78544953
+--- /dev/null
++++ b/src/application/modules/projects/dialogs/create-function/hooks/use-create-function.dialog.state.ts
+@@ -0,0 +1,62 @@
++import { create } from "zustand";
++
++import { type CreateFunctionDialogOptions, type CreateFunctionDialogState } from "../types";
++
++type State = CreateFunctionDialogState & CreateFunctionDialogOptions;
++
++interface Actions {
++    open: (projectId: string, options?: CreateFunctionDialogOptions) => void;
++    close: () => void;
++    clear: () => void;
++    destroy: () => void;
++}
++
++export const useCreateFunctionDialogState = create<State & Actions>()(set => ({
++    state: {
++        mode: "closed",
++        projectId: null,
++    },
++
++    props: {},
++
++    open: (projectId, options = {}) => {
++        set({
++            state: {
++                mode: "open",
++                projectId,
++            },
++            ...options,
++        });
++    },
++
++    close: () => {
++        set({
++            state: {
++                mode: "closed",
++                projectId: null,
++            },
++        });
++    },
++
++    clear: () => {
++        set({
++            props: {},
++        });
++    },
++
++    destroy: () => {
++        set(state => {
++            if (state.state.mode === "closed") {
++                return state;
++            }
++
++            return {
++                state: {
++                    mode: "closed",
++                    projectId: null,
++                },
++                props: {},
++            };
++        });
++    },
++}));
+diff --git a/src/application/modules/projects/dialogs/create-function/hooks/use-create-function.dialog.ts b/src/application/modules/projects/dialogs/create-function/hooks/use-create-function.dialog.ts
+new file mode 100644
+index 00000000..1338a42a
+--- /dev/null
++++ b/src/application/modules/projects/dialogs/create-function/hooks/use-create-function.dialog.ts
+@@ -0,0 +1,23 @@
++import { type CreateFunctionDialogOptions } from "../types";
++
++import { useCreateFunctionDialogState } from "./use-create-function.dialog.state";
++
++function createHook() {
++    return function useCreateFunctionDialog(props: CreateFunctionDialogOptions["props"] = {}) {
++        const { state, props: _, ...actions } = useCreateFunctionDialogState();
++
++        return {
++            state,
++            actions: {
++                open: (projectId: string) => {
++                    actions.open(projectId, { props });
++                },
++                close: () => {
++                    actions.close();
++                },
++            },
++        };
++    };
++}
++
++export const useCreateFunctionDialog = createHook();
+diff --git a/src/application/modules/projects/dialogs/create-function/index.ts b/src/application/modules/projects/dialogs/create-function/index.ts
+new file mode 100644
+index 00000000..51ab79e9
+--- /dev/null
++++ b/src/application/modules/projects/dialogs/create-function/index.ts
+@@ -0,0 +1,2 @@
++export * from "./hooks";
++export * from "./dialog";
+diff --git a/src/application/modules/projects/dialogs/create-function/schemas/create-function.form.schema.ts b/src/application/modules/projects/dialogs/create-function/schemas/create-function.form.schema.ts
+new file mode 100644
+index 00000000..83505251
+--- /dev/null
++++ b/src/application/modules/projects/dialogs/create-function/schemas/create-function.form.schema.ts
+@@ -0,0 +1,113 @@
++import { z } from "zod";
++import { type FunctionSourcePayload } from "~/projects/api/services";
++import { FUNCTION_TEMPLATES } from "~/projects/module-shared/constants";
++import { ALL_FUNCTION_RUNTIMES, ERepoType } from "~/projects/module-shared/enums";
++import { functionFilePathProblem } from "~/projects/module-shared/utils";
++
++/**
++ * Where a new function's code comes from: its runtime's template, edited in
++ * the dashboard afterwards, or a repository.
++ */
++export const EFunctionCodeSource = {
++    Template: "template",
++    Repository: "repository",
++} as const;
++
++export type EFunctionCodeSource = (typeof EFunctionCodeSource)[keyof typeof EFunctionCodeSource];
++
++const CredentialsRefSchema = z
++    .object({
++        id: z.string(),
++        name: z.string(),
++        type: z.string().optional(),
++        kind: z.string().optional(),
++    })
++    .nullable();
++
++const CreateFunctionFormSchemaBase = z.object({
++    name: z
++        .string({
++            required_error: "Name is required",
++        })
++        .trim()
++        .min(1, "Name is required"),
++    // A function is created in an env: it is deployed as soon as it exists.
++    env: z.string().min(1, "Environment is required").max(50, "Environment must be at most 50 characters"),
++    runtime: z.enum(ALL_FUNCTION_RUNTIMES as [string, ...string[]]),
++    codeSource: z.nativeEnum(EFunctionCodeSource),
++    repoUrl: z.string().trim(),
++    repoRef: z.string().trim(),
++    dir: z.string().trim(),
++    credentials: CredentialsRefSchema,
++});
++
++export function createCreateFunctionFormSchema(
++    envNames: string[] = [],
++): z.ZodEffects<typeof CreateFunctionFormSchemaBase> {
++    return CreateFunctionFormSchemaBase.superRefine((values, ctx) => {
++        if (values.env !== "" && !envNames.includes(values.env)) {
++            ctx.addIssue({
++                code: z.ZodIssueCode.custom,
++                path: ["env"],
++                message: "Environment must be one of the project environments",
++            });
++        }
++        if (values.codeSource !== EFunctionCodeSource.Repository) {
++            return;
++        }
++        if (values.repoUrl === "") {
++            ctx.addIssue({
++                code: z.ZodIssueCode.custom,
++                path: ["repoUrl"],
++                message: "Repository URL is required",
++            });
++        }
++        const dirProblem = values.dir === "" ? null : functionFilePathProblem(values.dir, []);
++        if (dirProblem) {
++            ctx.addIssue({
++                code: z.ZodIssueCode.custom,
++                path: ["dir"],
++                message: dirProblem,
++            });
++        }
++    });
++}
++
++export type CreateFunctionFormInput = z.input<ReturnType<typeof createCreateFunctionFormSchema>>;
++export type CreateFunctionFormOutput = z.output<ReturnType<typeof createCreateFunctionFormSchema>>;
++
++/**
++ * What a function is created from, by the form: the runtime's template, or the
++ * repository. What the form leaves out - the entrypoint, the limits - the
++ * backend fills in with the runtime's defaults.
++ */
++export function createFunctionSource(values: CreateFunctionFormOutput): FunctionSourcePayload {
++    const runtime = values.runtime as keyof typeof FUNCTION_TEMPLATES;
++    const fromRepository = values.codeSource === EFunctionCodeSource.Repository;
++
++    return {
++        runtime,
++        contract: "",
++        entrypoint: { file: "", handler: "" },
++        code: fromRepository
++            ? {
++                  repo: {
++                      repoType: ERepoType.Git,
++                      repoUrl: values.repoUrl,
++                      repoRef: values.repoRef,
++                      commitHash: "",
++                      credentials: { id: values.credentials?.id ?? "" },
++                  },
++                  dir: values.dir,
++              }
++            : {
++                  inline: { files: FUNCTION_TEMPLATES[runtime] },
++                  dir: "",
++              },
++        systemPackages: [],
++        timeout: "",
++        maxConcurrency: 0,
++        maxBodySize: "",
++        pushToRegistry: { id: "" },
++    };
++}
+diff --git a/src/application/modules/projects/dialogs/create-function/schemas/index.ts b/src/application/modules/projects/dialogs/create-function/schemas/index.ts
+new file mode 100644
+index 00000000..bfac33d4
+--- /dev/null
++++ b/src/application/modules/projects/dialogs/create-function/schemas/index.ts
+@@ -0,0 +1 @@
++export * from "./create-function.form.schema";
+diff --git a/src/application/modules/projects/dialogs/create-function/types/create-function.dialog.type.ts b/src/application/modules/projects/dialogs/create-function/types/create-function.dialog.type.ts
+new file mode 100644
+index 00000000..d3efbe77
+--- /dev/null
++++ b/src/application/modules/projects/dialogs/create-function/types/create-function.dialog.type.ts
+@@ -0,0 +1,20 @@
++export interface CreateFunctionDialogState {
++    state:
++        | {
++              mode: "open";
++              projectId: string;
++          }
++        | {
++              mode: "closed";
++              projectId: null;
++          };
++}
++
++export interface CreateFunctionDialogOptions {
++    props?: {
++        initialEnv?: string;
++        onClose?: () => void;
++        onSuccess?: () => void;
++        onError?: (error: Error) => void;
++    };
++}
+diff --git a/src/application/modules/projects/dialogs/create-function/types/index.ts b/src/application/modules/projects/dialogs/create-function/types/index.ts
+new file mode 100644
+index 00000000..4d2e3828
+--- /dev/null
++++ b/src/application/modules/projects/dialogs/create-function/types/index.ts
+@@ -0,0 +1 @@
++export * from "./create-function.dialog.type";
+diff --git a/src/application/modules/projects/module-shared/components/git-credential-combobox/git-credential-combobox.com.tsx b/src/application/modules/projects/module-shared/components/git-credential-combobox/git-credential-combobox.com.tsx
+new file mode 100644
+index 00000000..9b340806
+--- /dev/null
++++ b/src/application/modules/projects/module-shared/components/git-credential-combobox/git-credential-combobox.com.tsx
+@@ -0,0 +1,164 @@
++import { useMemo, useState } from "react";
++
++import { ProjectGitCredentialsQueries } from "~/projects/data/queries";
++
++import { AppLink, Combobox, type ComboboxOption } from "@application/shared/components";
++import { DEFAULT_PAGINATED_DATA, ROUTE } from "@application/shared/constants";
++import { ESettingType } from "@application/shared/enums";
++
++import { Badge, type BadgeTone } from "@/components/ui/badge";
++
++export type GitCredentialOption = { id: string; name: string; type?: string; kind?: string };
++
++function getGitCredentialBadge(cred?: { type?: string; kind?: string }): { label: string; tone: BadgeTone } {
++    const type = cred?.type ?? "";
++    const defaultKind = type === ESettingType.GithubApp || type === "github-app" ? "github" : "git";
++    const rawKind = (cred?.kind ?? defaultKind).toLowerCase();
++    const cleanKind = rawKind.replace(/-(app|token|ssh-key)$/, "");
++
++    if (type === ESettingType.GithubApp || type === "github-app") {
++        return {
++            label: "github-app",
++            tone: "purple",
++        };
++    }
++    if (type === ESettingType.SSHKey || type === "ssh-key") {
++        return {
++            label: `${cleanKind}-ssh-key`,
++            tone: "emerald",
++        };
++    }
++    // Token / Access Token
++    return {
++        label: `${cleanKind}-token`,
++        tone: "blue",
++    };
++}
++
++/**
++ * A pick among the git credentials an env of a project can use.
++ */
++export function GitCredentialCombobox({
++    projectId,
++    env,
++    value,
++    onChange,
++    readOnly = false,
++    invalid = false,
++    className,
++}: GitCredentialComboboxProps) {
++    const [searchQuery, setSearchQuery] = useState("");
++
++    const {
++        data: { data: credentials } = DEFAULT_PAGINATED_DATA,
++        isFetching,
++        refetch,
++        isRefetching,
++    } = ProjectGitCredentialsQueries.useFindManyPaginated({
++        projectID: projectId,
++        env,
++        search: searchQuery,
++    });
++
++    const comboboxOptions = useMemo(() => {
++        return credentials.map(cred => {
++            const badge = getGitCredentialBadge(cred);
++            return {
++                value: { id: cred.id, name: cred.name, type: cred.type, kind: cred.kind },
++                label: `${badge.label} ${cred.name}`,
++            };
++        });
++    }, [credentials]);
++
++    const renderCredentialOption = (option: ComboboxOption<GitCredentialOption>) => {
++        const cred = option.value;
++        const matchedCred = credentials.find(c => c.id === cred.id);
++        const badge = getGitCredentialBadge(matchedCred ?? cred);
++        return (
++            <span className="flex min-w-0 max-w-full items-center gap-2 text-left">
++                <Badge
++                    tone={badge.tone}
++                    className="max-w-none shrink-0 rounded-md px-1.5 text-xs font-medium leading-none"
++                >
++                    {badge.label}
++                </Badge>
++                <span className="min-w-0 flex-1 truncate font-normal">{cred.name || matchedCred?.name}</span>
++            </span>
++        );
++    };
++
++    return (
++        <Combobox
++            options={comboboxOptions}
++            value={value?.id ?? null}
++            onChange={(_, option) => {
++                if (readOnly) {
++                    return;
++                }
++
++                onChange(option ?? null);
++            }}
++            onSearch={setSearchQuery}
++            placeholder="Select git credentials"
++            searchable
++            closeOnSelect
++            emptyText="No git credentials available"
++            className={className}
++            valueKey="id"
++            aria-invalid={invalid}
++            loading={isFetching}
++            onRefresh={() => void refetch()}
++            isRefreshing={isRefetching}
++            renderOption={renderCredentialOption}
++            renderSelectedOption={renderCredentialOption}
++            disabled={readOnly}
++        />
++    );
++}
++
++/**
++ * Where a project's git credentials are configured.
++ */
++export function GitCredentialLinks({ projectId }: { projectId: string }) {
++    return (
++        <div className="text-xs">
++            Configure{" "}
++            <AppLink.Basic
++                to={ROUTE.projects.single.providerConfiguration.githubApps.$route(projectId)}
++                className="text-link"
++                target="_blank"
++                rel="noopener noreferrer"
++            >
++                Github Apps
++            </AppLink.Basic>
++            ,{" "}
++            <AppLink.Basic
++                to={ROUTE.projects.single.providerConfiguration.accessTokens.$route(projectId)}
++                className="text-link"
++                target="_blank"
++                rel="noopener noreferrer"
++            >
++                Access Tokens
++            </AppLink.Basic>
++            ,{" "}
++            <AppLink.Basic
++                to={ROUTE.projects.single.providerConfiguration.sshKeys.$route(projectId)}
++                className="text-link"
++                target="_blank"
++                rel="noopener noreferrer"
++            >
++                SSH Keys
++            </AppLink.Basic>
++        </div>
++    );
++}
++
++export interface GitCredentialComboboxProps {
++    projectId: string;
++    env: string;
++    value: GitCredentialOption | null;
++    onChange: (value: GitCredentialOption | null) => void;
++    readOnly?: boolean;
++    invalid?: boolean;
++    className?: string;
++}
+diff --git a/src/application/modules/projects/module-shared/components/git-credential-combobox/index.ts b/src/application/modules/projects/module-shared/components/git-credential-combobox/index.ts
+new file mode 100644
+index 00000000..9f106785
+--- /dev/null
++++ b/src/application/modules/projects/module-shared/components/git-credential-combobox/index.ts
+@@ -0,0 +1 @@
++export * from "./git-credential-combobox.com";
+diff --git a/src/application/modules/projects/module-shared/components/index.ts b/src/application/modules/projects/module-shared/components/index.ts
+index 4534ba40..2350d501 100644
+--- a/src/application/modules/projects/module-shared/components/index.ts
++++ b/src/application/modules/projects/module-shared/components/index.ts
+@@ -27,3 +27,4 @@ export * from "./job-sequence-form";
+ export * from "./job-triggers-field";
+ export * from "./data-backup-form";
+ export * from "./function-code-editor";
++export * from "./git-credential-combobox";
+diff --git a/src/application/modules/projects/module-shared/constants/function-templates.constants.ts b/src/application/modules/projects/module-shared/constants/function-templates.constants.ts
+new file mode 100644
+index 00000000..912e19fc
+--- /dev/null
++++ b/src/application/modules/projects/module-shared/constants/function-templates.constants.ts
+@@ -0,0 +1,76 @@
++import { type FunctionFile } from "~/projects/domain";
++
++import { EFunctionRuntime } from "../enums";
++
++/**
++ * The code a new function starts from, per runtime: a handler that answers
++ * `?name=Ada` with `{"hello":"Ada"}`. Each was built and called with its
++ * runtime's image.
++ */
++export const FUNCTION_TEMPLATES: Record<EFunctionRuntime, FunctionFile[]> = {
++    [EFunctionRuntime.Node24]: [
++        {
++            path: "package.json",
++            content: `{
++  "type": "module"
++}
++`,
++        },
++        {
++            path: "index.js",
++            content: `// A function answers one request: it returns { status, headers, body }.
++// A body that is an object is sent as JSON.
++export default async function (req, ctx) {
++    ctx.log(\`\${req.method} \${req.path}\`);
++    const name = req.query.name ?? "world";
++
++    return { status: 200, body: { hello: name } };
++}
++`,
++        },
++    ],
++    [EFunctionRuntime.Python313]: [
++        {
++            path: "main.py",
++            content: `# A function answers one request: it returns a dict of status, headers, body.
++# A body that is a dict is sent as JSON.
++def handler(req, ctx):
++    ctx.log(f"{req.method} {req.path}")
++    name = req.query.get("name", "world")
++
++    return {"status": 200, "body": {"hello": name}}
++`,
++        },
++    ],
++    [EFunctionRuntime.Go127]: [
++        {
++            path: "go.mod",
++            content: `module example.com/function
++
++go 1.27
++`,
++        },
++        {
++            path: "handler.go",
++            content: `package function
++
++import (
++\t"context"
++
++\t"github.com/hivepaas/function-runtimes/hivepaas"
++)
++
++// Handle answers one request.
++func Handle(ctx context.Context, req *hivepaas.Request) (*hivepaas.Response, error) {
++\thivepaas.Log(ctx, "%s %s", req.Method, req.Path)
++\tname := req.Query.Get("name")
++\tif name == "" {
++\t\tname = "world"
++\t}
++
++\treturn hivepaas.JSON(200, map[string]string{"hello": name})
++}
++`,
++        },
++    ],
++};
+diff --git a/src/application/modules/projects/module-shared/constants/index.ts b/src/application/modules/projects/module-shared/constants/index.ts
+index ccaa59b9..511f8468 100644
+--- a/src/application/modules/projects/module-shared/constants/index.ts
++++ b/src/application/modules/projects/module-shared/constants/index.ts
+@@ -1,2 +1,3 @@
+ export * from "./project-env.constants";
+ export * from "./project-form-layout.constants";
++export * from "./function-templates.constants";
+diff --git a/src/application/modules/projects/routes/single-project/apps/building-blocks/project-apps-table/project-apps-table.com.tsx b/src/application/modules/projects/routes/single-project/apps/building-blocks/project-apps-table/project-apps-table.com.tsx
+index ee984bd2..e04bce9d 100644
+--- a/src/application/modules/projects/routes/single-project/apps/building-blocks/project-apps-table/project-apps-table.com.tsx
++++ b/src/application/modules/projects/routes/single-project/apps/building-blocks/project-apps-table/project-apps-table.com.tsx
+@@ -3,6 +3,7 @@ import { useEffect, useMemo } from "react";
+ import { CircleHelp, Plus } from "lucide-react";
+ import { useNavigate } from "react-router";
+ import { ProjectAppsQueries, ProjectsQueries } from "~/projects/data/queries";
++import { useCreateFunctionDialog } from "~/projects/dialogs/create-function";
+ import { useCreateProjectAppDialog } from "~/projects/dialogs/create-project-app";
+ import type { ProjectAppDetails, ProjectEnvEntity } from "~/projects/domain";
+ import { ProjectEnvScopeBadge } from "~/projects/module-shared/components";
+@@ -44,6 +45,12 @@ export function ProjectAppsTable({ projectId }: Props) {
+             actions.close();
+         },
+     });
++    const { actions: createFunctionActions } = useCreateFunctionDialog({
++        initialEnv: env,
++        onClose: () => {
++            createFunctionActions.close();
++        },
++    });
+     const { canWrite } = useConditionalModule({ id: MODULE_IDS.Project });
+ 
+     useEffect(() => {
+@@ -126,28 +133,48 @@ export function ProjectAppsTable({ projectId }: Props) {
+         </Button>
+     );
+ 
+-    const renderAddButton = !canWrite ? (
+-        <PermissionTooltipAction
+-            id={MODULE_IDS.Project}
+-            action="write"
++    const addNewFunctionButton = (
++        <Button
++            variant="outline"
++            disabled={isAddButtonDisabled}
++            onClick={() => {
++                if (!canWrite) {
++                    return;
++                }
++
++                createFunctionActions.open(projectId);
++            }}
+         >
+-            {() => addNewAppButton}
+-        </PermissionTooltipAction>
+-    ) : isAddButtonDisabled ? (
+-        <Tooltip>
+-            <TooltipTrigger asChild>
+-                <span className="inline-flex">{addNewAppButton}</span>
+-            </TooltipTrigger>
+-            <TooltipContent side="top">Project is not active. Activate the project to add a new app.</TooltipContent>
+-        </Tooltip>
+-    ) : (
+-        addNewAppButton
++            <Plus /> New Function
++        </Button>
+     );
+ 
++    const renderAddButton = (button: React.ReactElement) =>
++        !canWrite ? (
++            <PermissionTooltipAction
++                id={MODULE_IDS.Project}
++                action="write"
++            >
++                {() => button}
++            </PermissionTooltipAction>
++        ) : isAddButtonDisabled ? (
++            <Tooltip>
++                <TooltipTrigger asChild>
++                    <span className="inline-flex">{button}</span>
++                </TooltipTrigger>
++                <TooltipContent side="top">
++                    Project is not active. Activate the project to add a new app.
++                </TooltipContent>
++            </Tooltip>
++        ) : (
++            button
++        );
++
+     const renderActions = (
+         <>
+             {newFromTemplateButton}
+-            {renderAddButton}
++            {renderAddButton(addNewFunctionButton)}
++            {renderAddButton(addNewAppButton)}
+         </>
+     );
+ 
+diff --git a/src/application/modules/projects/routes/single-project/single-app/configuration/deployment-settings/form-components/git-credential-select/git-credential-select.com.tsx b/src/application/modules/projects/routes/single-project/single-app/configuration/deployment-settings/form-components/git-credential-select/git-credential-select.com.tsx
+index a4e60f73..f9bc51b3 100644
+--- a/src/application/modules/projects/routes/single-project/single-app/configuration/deployment-settings/form-components/git-credential-select/git-credential-select.com.tsx
++++ b/src/application/modules/projects/routes/single-project/single-app/configuration/deployment-settings/form-components/git-credential-select/git-credential-select.com.tsx
+@@ -1,48 +1,17 @@
+-import { useMemo, useState } from "react";
+-
+ import { Field, FieldError, FieldGroup } from "@components/ui";
+ import { useController, useFormContext } from "react-hook-form";
+ import { useParams } from "react-router";
+ import invariant from "tiny-invariant";
+-import { ProjectGitCredentialsQueries } from "~/projects/data/queries";
++import { GitCredentialCombobox, GitCredentialLinks } from "~/projects/module-shared/components";
+ import { PROJECT_FORM_CONTROL_MAX_WIDTH_CLASS } from "~/projects/module-shared/constants";
+ 
+-import { AppLink, Combobox, type ComboboxOption, InfoBlock } from "@application/shared/components";
+-import { DEFAULT_PAGINATED_DATA, ROUTE } from "@application/shared/constants";
+-import { ESettingType } from "@application/shared/enums";
+-
+-import { Badge, type BadgeTone } from "@/components/ui/badge";
++import { InfoBlock } from "@application/shared/components";
+ 
+ import {
+     type AppConfigDeploymentSettingsFormSchemaInput,
+     type AppConfigDeploymentSettingsFormSchemaOutput,
+ } from "../../schemas";
+ 
+-function getGitCredentialBadge(cred?: { type?: string; kind?: string }): { label: string; tone: BadgeTone } {
+-    const type = cred?.type ?? "";
+-    const defaultKind = type === ESettingType.GithubApp || type === "github-app" ? "github" : "git";
+-    const rawKind = (cred?.kind ?? defaultKind).toLowerCase();
+-    const cleanKind = rawKind.replace(/-(app|token|ssh-key)$/, "");
+-
+-    if (type === ESettingType.GithubApp || type === "github-app") {
+-        return {
+-            label: "github-app",
+-            tone: "purple",
+-        };
+-    }
+-    if (type === ESettingType.SSHKey || type === "ssh-key") {
+-        return {
+-            label: `${cleanKind}-ssh-key`,
+-            tone: "emerald",
+-        };
+-    }
+-    // Token / Access Token
+-    return {
+-        label: `${cleanKind}-token`,
+-        tone: "blue",
+-    };
+-}
+-
+ export function GitCredentialSelect({ readOnly = false }: Props) {
+     const { id: projectId, env } = useParams<{ id: string; env: string }>();
+     invariant(projectId, "projectId must be defined");
+@@ -54,53 +23,11 @@ export function GitCredentialSelect({ readOnly = false }: Props) {
+         AppConfigDeploymentSettingsFormSchemaOutput
+     >();
+ 
+-    const [searchQuery, setSearchQuery] = useState("");
+-
+-    const {
+-        data: { data: credentials } = DEFAULT_PAGINATED_DATA,
+-        isFetching,
+-        refetch,
+-        isRefetching,
+-    } = ProjectGitCredentialsQueries.useFindManyPaginated({
+-        projectID: projectId,
+-        env,
+-        search: searchQuery,
+-    });
+-
+     const {
+         field: credentialsField,
+         fieldState: { invalid: isCredentialsInvalid, error: credentialsError },
+     } = useController({ control, name: "repoSource.credentials" });
+ 
+-    const comboboxOptions = useMemo(() => {
+-        return credentials.map(cred => {
+-            const badge = getGitCredentialBadge(cred);
+-            return {
+-                value: { id: cred.id, name: cred.name, type: cred.type, kind: cred.kind },
+-                label: `${badge.label} ${cred.name}`,
+-            };
+-        });
+-    }, [credentials]);
+-
+-    const renderCredentialOption = (
+-        option: ComboboxOption<{ id: string; name: string; type?: string; kind?: string }>,
+-    ) => {
+-        const cred = option.value;
+-        const matchedCred = credentials.find(c => c.id === cred.id);
+-        const badge = getGitCredentialBadge(matchedCred ?? cred);
+-        return (
+-            <span className="flex min-w-0 max-w-full items-center gap-2 text-left">
+-                <Badge
+-                    tone={badge.tone}
+-                    className="max-w-none shrink-0 rounded-md px-1.5 text-xs font-medium leading-none"
+-                >
+-                    {badge.label}
+-                </Badge>
+-                <span className="min-w-0 flex-1 truncate font-normal">{cred.name || matchedCred?.name}</span>
+-            </span>
+-        );
+-    };
+-
+     return (
+         <InfoBlock
+             titleWidth={220}
+@@ -108,61 +35,17 @@ export function GitCredentialSelect({ readOnly = false }: Props) {
+         >
+             <FieldGroup>
+                 <Field>
+-                    <Combobox
+-                        options={comboboxOptions}
+-                        value={credentialsField.value?.id ?? null}
+-                        onChange={(_, option) => {
+-                            if (readOnly) {
+-                                return;
+-                            }
+-
+-                            credentialsField.onChange(option ?? null);
+-                        }}
+-                        onSearch={setSearchQuery}
+-                        placeholder="Select git credentials"
+-                        searchable
+-                        closeOnSelect
+-                        emptyText="No git credentials available"
++                    <GitCredentialCombobox
++                        projectId={projectId}
++                        env={env}
++                        value={credentialsField.value ?? null}
++                        onChange={credentialsField.onChange}
++                        readOnly={readOnly}
++                        invalid={isCredentialsInvalid}
+                         className={PROJECT_FORM_CONTROL_MAX_WIDTH_CLASS}
+-                        valueKey="id"
+-                        aria-invalid={isCredentialsInvalid}
+-                        loading={isFetching}
+-                        onRefresh={() => void refetch()}
+-                        isRefreshing={isRefetching}
+-                        renderOption={renderCredentialOption}
+-                        renderSelectedOption={renderCredentialOption}
+-                        disabled={readOnly}
+                     />
+                     <FieldError errors={[credentialsError]} />
+-                    <div className="text-xs">
+-                        Configure{" "}
+-                        <AppLink.Basic
+-                            to={ROUTE.projects.single.providerConfiguration.githubApps.$route(projectId)}
+-                            className="text-link"
+-                            target="_blank"
+-                            rel="noopener noreferrer"
+-                        >
+-                            Github Apps
+-                        </AppLink.Basic>
+-                        ,{" "}
+-                        <AppLink.Basic
+-                            to={ROUTE.projects.single.providerConfiguration.accessTokens.$route(projectId)}
+-                            className="text-link"
+-                            target="_blank"
+-                            rel="noopener noreferrer"
+-                        >
+-                            Access Tokens
+-                        </AppLink.Basic>
+-                        ,{" "}
+-                        <AppLink.Basic
+-                            to={ROUTE.projects.single.providerConfiguration.sshKeys.$route(projectId)}
+-                            className="text-link"
+-                            target="_blank"
+-                            rel="noopener noreferrer"
+-                        >
+-                            SSH Keys
+-                        </AppLink.Basic>
+-                    </div>
++                    <GitCredentialLinks projectId={projectId} />
+                 </Field>
+             </FieldGroup>
+         </InfoBlock>

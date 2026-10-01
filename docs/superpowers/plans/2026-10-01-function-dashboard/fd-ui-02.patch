@@ -1,0 +1,676 @@
+diff --git a/src/application/modules/projects/layouts/single-app/header/single-app-header.com.tsx b/src/application/modules/projects/layouts/single-app/header/single-app-header.com.tsx
+index 6ae6ce5e..c2ff0859 100644
+--- a/src/application/modules/projects/layouts/single-app/header/single-app-header.com.tsx
++++ b/src/application/modules/projects/layouts/single-app/header/single-app-header.com.tsx
+@@ -9,7 +9,11 @@ import invariant from "tiny-invariant";
+ import { AppServiceTasksQueries, ProjectAppsCommands, ProjectAppsQueries, ProjectsQueries } from "~/projects/data";
+ import { AppInstancesCountBadge, ProjectAppStatusBadge, ProjectEnvFilter } from "~/projects/module-shared/components";
+ import { EProjectAppStatus } from "~/projects/module-shared/enums";
+-import { APP_SERVICE_TASKS_REFETCH_INTERVAL_MS, computeAppInstancesHealth } from "~/projects/module-shared/utils";
++import {
++    APP_SERVICE_TASKS_REFETCH_INTERVAL_MS,
++    computeAppInstancesHealth,
++    isFunctionApp,
++} from "~/projects/module-shared/utils";
+ 
+ import { PopConfirm, TabNavigation } from "@application/shared/components";
+ import { ROUTE } from "@application/shared/constants";
+@@ -121,6 +125,14 @@ function View({ projectId, env, appId }: Props) {
+     ];
+ 
+     const links = [
++        ...(isFunctionApp(appData)
++            ? [
++                  {
++                      route: ROUTE.projects.single.apps.single.code.$route(projectId, env, appId),
++                      label: "Code",
++                  },
++              ]
++            : []),
+         {
+             route: ROUTE.projects.single.apps.single.configuration.general.$route(projectId, env, appId),
+             label: "Settings",
+diff --git a/src/application/modules/projects/module-shared/components/function-code-editor/function-code-editor.com.tsx b/src/application/modules/projects/module-shared/components/function-code-editor/function-code-editor.com.tsx
+new file mode 100644
+index 00000000..e5922f86
+--- /dev/null
++++ b/src/application/modules/projects/module-shared/components/function-code-editor/function-code-editor.com.tsx
+@@ -0,0 +1,60 @@
++import { useId } from "react";
++
++import Prism from "prismjs";
++import "prismjs/components/prism-go";
++import "prismjs/components/prism-json";
++import "prismjs/components/prism-python";
++import "prismjs/themes/prism-tomorrow.css";
++import Editor from "react-simple-code-editor";
++
++import { MONO_FONT_FAMILY } from "@application/shared/utils";
++
++import { type CodeLanguage, languageOfPath } from "../../utils";
++
++function highlight(code: string, language: CodeLanguage): string {
++    const grammar = language === "plain" ? undefined : Prism.languages[language];
++
++    if (!grammar) {
++        return code.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;");
++    }
++
++    return Prism.highlight(code, grammar, language);
++}
++
++/**
++ * An editor for one file of a function's code, highlighted after its extension:
++ * JavaScript, Python, Go, JSON.
++ */
++export function FunctionCodeEditor({ path, value, onChange, readOnly = false }: Props) {
++    const generatedId = useId();
++    const language = languageOfPath(path);
++
++    return (
++        <div className="min-h-0 flex-1 overflow-auto rounded-md bg-[#1e1e1e]">
++            <Editor
++                value={value}
++                onValueChange={onChange}
++                highlight={code => highlight(code, language)}
++                padding={16}
++                textareaId={`function-code-${generatedId}`}
++                readOnly={readOnly}
++                style={{
++                    minHeight: "100%",
++                    fontFamily: MONO_FONT_FAMILY,
++                    fontSize: 14,
++                    lineHeight: 1.6,
++                    backgroundColor: "#1e1e1e",
++                    color: "#f8f8f2",
++                    outline: "none",
++                }}
++            />
++        </div>
++    );
++}
++
++interface Props {
++    path: string;
++    value: string;
++    onChange: (value: string) => void;
++    readOnly?: boolean;
++}
+diff --git a/src/application/modules/projects/module-shared/components/function-code-editor/index.ts b/src/application/modules/projects/module-shared/components/function-code-editor/index.ts
+new file mode 100644
+index 00000000..cc579d59
+--- /dev/null
++++ b/src/application/modules/projects/module-shared/components/function-code-editor/index.ts
+@@ -0,0 +1 @@
++export * from "./function-code-editor.com";
+diff --git a/src/application/modules/projects/module-shared/components/index.ts b/src/application/modules/projects/module-shared/components/index.ts
+index 1a97ce38..4534ba40 100644
+--- a/src/application/modules/projects/module-shared/components/index.ts
++++ b/src/application/modules/projects/module-shared/components/index.ts
+@@ -26,3 +26,4 @@ export * from "./job-schedule-fields";
+ export * from "./job-sequence-form";
+ export * from "./job-triggers-field";
+ export * from "./data-backup-form";
++export * from "./function-code-editor";
+diff --git a/src/application/modules/projects/module-shared/utils/function-source.utils.ts b/src/application/modules/projects/module-shared/utils/function-source.utils.ts
+new file mode 100644
+index 00000000..cc0de16f
+--- /dev/null
++++ b/src/application/modules/projects/module-shared/utils/function-source.utils.ts
+@@ -0,0 +1,126 @@
++import { type AppDeploymentSettings_UpdateOne_Req, type FunctionSourcePayload } from "~/projects/api/services";
++import { APP_CATEGORY_FUNCTION, type FunctionFile, type FunctionMethod, type FunctionSource } from "~/projects/domain";
++
++/**
++ * Whether an app is a function: its kind's category says so.
++ */
++export function isFunctionApp(app: { category: string }): boolean {
++    return app.category === APP_CATEGORY_FUNCTION;
++}
++
++/**
++ * The directory HivePaaS keeps in a function's code, for its Dockerfile.
++ */
++export const FUNCTION_RESERVED_DIR = ".hivepaas";
++
++const FUNCTION_FILE_PATH_PATTERN = /^[A-Za-z0-9._/-]+$/;
++
++/**
++ * Why a path cannot be a file of the function's code, or null when it can:
++ * relative, plain, inside the function, not HivePaaS's, not taken.
++ */
++export function functionFilePathProblem(path: string, takenPaths: string[]): string | null {
++    const parts = path.split("/");
++    if (path === "" || !FUNCTION_FILE_PATH_PATTERN.test(path) || path.startsWith("/")) {
++        return "Use letters, digits, '.', '_', '-' and '/'";
++    }
++    if (parts.some(part => part === "" || part === "." || part === "..")) {
++        return "A path stays inside the function";
++    }
++    if (parts[0] === FUNCTION_RESERVED_DIR) {
++        return `${FUNCTION_RESERVED_DIR} is HivePaaS's`;
++    }
++    if (takenPaths.includes(path)) {
++        return "There is a file of that name";
++    }
++    return null;
++}
++
++export type CodeLanguage = "javascript" | "python" | "go" | "json" | "plain";
++
++/**
++ * The language a file of a function is highlighted as, by its extension.
++ */
++export function languageOfPath(path: string): CodeLanguage {
++    const extension = path.slice(path.lastIndexOf(".") + 1).toLowerCase();
++    switch (extension) {
++        case "js":
++        case "mjs":
++        case "cjs":
++        case "ts":
++            return "javascript";
++        case "py":
++            return "python";
++        case "go":
++        case "mod":
++        case "sum":
++            return "go";
++        case "json":
++            return "json";
++        default:
++            return "plain";
++    }
++}
++
++/**
++ * A function's source as the API takes it back: the settings it refers to by
++ * id, its inline files replaced when files are given.
++ */
++export function functionSourceToPayload(source: FunctionSource, files?: FunctionFile[]): FunctionSourcePayload {
++    const inline = files ? { files } : source.code.inline;
++
++    return {
++        runtime: source.runtime,
++        contract: source.contract,
++        entrypoint: source.entrypoint,
++        code: {
++            ...(inline ? { inline: { files: inline.files } } : {}),
++            ...(source.code.repo && !files
++                ? {
++                      repo: {
++                          repoType: source.code.repo.repoType,
++                          repoUrl: source.code.repo.repoUrl,
++                          repoRef: source.code.repo.repoRef,
++                          commitHash: source.code.repo.commitHash,
++                          credentials: { id: source.code.repo.credentials?.id ?? "" },
++                      },
++                  }
++                : {}),
++            dir: files ? "" : source.code.dir,
++        },
++        systemPackages: source.systemPackages,
++        timeout: source.timeout,
++        maxConcurrency: source.maxConcurrency,
++        maxBodySize: source.maxBodySize,
++        pushToRegistry: { id: source.pushToRegistry?.id ?? "" },
++    };
++}
++
++type UpdatePayload = AppDeploymentSettings_UpdateOne_Req["data"]["payload"];
++
++/**
++ * A function's deployment settings as the API takes them back, with its source
++ * replaced: what saving the function's code or its settings sends.
++ */
++export function functionSettingsToPayload(settings: FunctionMethod, source: FunctionSourcePayload): UpdatePayload {
++    const { notification } = settings;
++
++    return {
++        activeMethod: settings.activeMethod,
++        command: settings.command ?? "",
++        workingDir: settings.workingDir ?? "",
++        preDeploymentCommand: settings.preDeploymentCommand ?? "",
++        postDeploymentCommand: settings.postDeploymentCommand ?? "",
++        notification: {
++            successUseDefault: notification?.successUseDefault ?? true,
++            ...(notification && !notification.successUseDefault && notification.success
++                ? { success: { id: notification.success.id } }
++                : {}),
++            failureUseDefault: notification?.failureUseDefault ?? true,
++            ...(notification && !notification.failureUseDefault && notification.failure
++                ? { failure: { id: notification.failure.id } }
++                : {}),
++        },
++        functionSource: source,
++    };
++}
+diff --git a/src/application/modules/projects/module-shared/utils/index.ts b/src/application/modules/projects/module-shared/utils/index.ts
+index a125e1da..d6d7ae58 100644
+--- a/src/application/modules/projects/module-shared/utils/index.ts
++++ b/src/application/modules/projects/module-shared/utils/index.ts
+@@ -1,3 +1,4 @@
+ export * from "./app-instances.utils";
+ export * from "./git-repository.utils";
+ export * from "./selector-dialog.utils";
++export * from "./function-source.utils";
+diff --git a/src/application/modules/projects/projects.module.ts b/src/application/modules/projects/projects.module.ts
+index 154a3da9..46db31b7 100644
+--- a/src/application/modules/projects/projects.module.ts
++++ b/src/application/modules/projects/projects.module.ts
+@@ -86,6 +86,7 @@ export {
+     AppDeploymentDetailsRoute,
+     AppDeploymentsRoute,
+     AppInstancesRoute,
++    AppCodeRoute,
+     AppLogsRoute,
+     AppTerminalRoute,
+     AppPreviewDeploymentCreateRoute,
+diff --git a/src/application/modules/projects/projects.router.tsx b/src/application/modules/projects/projects.router.tsx
+index 23670f06..e9fa0e92 100644
+--- a/src/application/modules/projects/projects.router.tsx
++++ b/src/application/modules/projects/projects.router.tsx
+@@ -1679,6 +1679,19 @@ export const projectsRouter: RouteObject = {
+                     path: LEGACY_APP_SCHEDULED_JOB_TASKS_PATTERNS.taskDetails,
+                     element: <LegacyScheduledJobTaskDetailsRedirect />,
+                 },
++                /**
++                 * Single App – Code (a function's)
++                 */
++                {
++                    path: ROUTE.projects.single.apps.single.code.$pattern,
++                    lazy: async () => {
++                        const { AppCodeRoute } = await getLazyComponents();
++
++                        return {
++                            Component: AppCodeRoute,
++                        };
++                    },
++                },
+                 /**
+                  * Single App – Logs
+                  */
+diff --git a/src/application/modules/projects/routes/index.ts b/src/application/modules/projects/routes/index.ts
+index 23b63a1f..8aaa5b7b 100644
+--- a/src/application/modules/projects/routes/index.ts
++++ b/src/application/modules/projects/routes/index.ts
+@@ -83,6 +83,7 @@ export {
+     AppDeploymentDetailsRoute,
+     AppDeploymentsRoute,
+     AppInstancesRoute,
++    AppCodeRoute,
+     AppLogsRoute,
+     AppTerminalRoute,
+     AppPreviewDeploymentCreateRoute,
+diff --git a/src/application/modules/projects/routes/single-project/single-app/tabs/code/building-blocks/function-code-workspace.com.tsx b/src/application/modules/projects/routes/single-project/single-app/tabs/code/building-blocks/function-code-workspace.com.tsx
+new file mode 100644
+index 00000000..b6d44967
+--- /dev/null
++++ b/src/application/modules/projects/routes/single-project/single-app/tabs/code/building-blocks/function-code-workspace.com.tsx
+@@ -0,0 +1,113 @@
++import { useState } from "react";
++
++import { Rocket, Undo2 } from "lucide-react";
++import { toast } from "sonner";
++import { AppDeploymentSettingsCommands } from "~/projects/data";
++import { type FunctionFile, type FunctionMethod } from "~/projects/domain";
++import { FunctionCodeEditor } from "~/projects/module-shared/components";
++import { functionSettingsToPayload, functionSourceToPayload } from "~/projects/module-shared/utils";
++
++import { Button } from "@/components/ui";
++
++import { FunctionFiles } from "./function-files.com";
++
++/**
++ * A function's inline code: its files, one in the editor, saved and deployed
++ * together. A save sends the function's settings back with these files.
++ */
++export function FunctionCodeWorkspace({ projectId, env, appId, settings, readOnly, children }: Props) {
++    const savedFiles = settings.functionSource.code.inline?.files ?? [];
++    const [files, setFiles] = useState<FunctionFile[]>(savedFiles);
++    const [selectedPath, setSelectedPath] = useState(savedFiles[0]?.path ?? "");
++    const selected = files.find(file => file.path === selectedPath) ?? files[0];
++    const isDirty = JSON.stringify(files) !== JSON.stringify(savedFiles);
++
++    const { mutate: save, isPending } = AppDeploymentSettingsCommands.useUpdateOne({
++        onSuccess: () => {
++            toast.success("Code saved, deployment started");
++        },
++    });
++
++    function handleChange(content: string) {
++        if (!selected) {
++            return;
++        }
++        setFiles(current => current.map(file => (file.path === selected.path ? { ...file, content } : file)));
++    }
++
++    function handleSave() {
++        save({
++            projectID: projectId,
++            env,
++            appID: appId,
++            updateVer: settings.updateVer,
++            payload: functionSettingsToPayload(settings, functionSourceToPayload(settings.functionSource, files)),
++        });
++    }
++
++    return (
++        <div className="flex flex-col gap-4">
++            <div className="flex flex-wrap items-center justify-between gap-2">
++                <span className="text-sm text-muted-foreground">{isDirty ? "Changes not saved" : "No changes"}</span>
++                {!readOnly ? (
++                    <div className="flex gap-2">
++                        <Button
++                            type="button"
++                            variant="outline"
++                            disabled={!isDirty || isPending}
++                            onClick={() => {
++                                setFiles(savedFiles);
++                            }}
++                        >
++                            <Undo2 /> Discard
++                        </Button>
++                        <Button
++                            type="button"
++                            disabled={!isDirty}
++                            isLoading={isPending}
++                            onClick={handleSave}
++                        >
++                            <Rocket /> Save & Deploy
++                        </Button>
++                    </div>
++                ) : null}
++            </div>
++            <div className="flex flex-col gap-4 xl:flex-row">
++                <div className="flex min-h-[480px] min-w-0 flex-1 flex-col gap-4 lg:flex-row">
++                    <FunctionFiles
++                        files={files}
++                        selectedPath={selected?.path ?? ""}
++                        readOnly={readOnly}
++                        onSelect={setSelectedPath}
++                        onAdd={path => {
++                            setFiles(current => [...current, { path, content: "" }]);
++                            setSelectedPath(path);
++                        }}
++                        onRemove={path => {
++                            setFiles(current => current.filter(file => file.path !== path));
++                        }}
++                    />
++                    {selected ? (
++                        <FunctionCodeEditor
++                            path={selected.path}
++                            value={selected.content}
++                            onChange={handleChange}
++                            readOnly={readOnly}
++                        />
++                    ) : null}
++                </div>
++                {children?.(files, setFiles)}
++            </div>
++        </div>
++    );
++}
++
++interface Props {
++    projectId: string;
++    env: string;
++    appId: string;
++    settings: FunctionMethod;
++    readOnly: boolean;
++    /** What sits beside the editor - the test panel - given the files as edited. */
++    children?: (files: FunctionFile[], setFiles: (files: FunctionFile[]) => void) => React.ReactNode;
++}
+diff --git a/src/application/modules/projects/routes/single-project/single-app/tabs/code/building-blocks/function-files.com.tsx b/src/application/modules/projects/routes/single-project/single-app/tabs/code/building-blocks/function-files.com.tsx
+new file mode 100644
+index 00000000..003c0a3a
+--- /dev/null
++++ b/src/application/modules/projects/routes/single-project/single-app/tabs/code/building-blocks/function-files.com.tsx
+@@ -0,0 +1,116 @@
++import { useState } from "react";
++
++import { cn } from "@lib/utils";
++import { FilePlus, Trash2 } from "lucide-react";
++import { type FunctionFile } from "~/projects/domain";
++import { functionFilePathProblem } from "~/projects/module-shared/utils";
++
++import { PopConfirm } from "@application/shared/components";
++
++import { Button, Input } from "@/components/ui";
++
++/**
++ * The files of a function's code: one to edit at a time, a file to add, one to
++ * remove.
++ */
++export function FunctionFiles({ files, selectedPath, readOnly, onSelect, onAdd, onRemove }: Props) {
++    const [newPath, setNewPath] = useState("");
++    const takenPaths = files.map(file => file.path);
++    const problem = newPath === "" ? null : functionFilePathProblem(newPath, takenPaths);
++
++    function handleAdd() {
++        if (newPath === "" || problem) {
++            return;
++        }
++        onAdd(newPath);
++        setNewPath("");
++    }
++
++    return (
++        <div className="flex w-full flex-col gap-2 lg:w-56 lg:shrink-0">
++            <ul className="flex flex-col gap-0.5">
++                {files.map(file => (
++                    <li
++                        key={file.path}
++                        className={cn(
++                            "group flex items-center justify-between gap-1 rounded-md px-2 py-1 text-sm",
++                            file.path === selectedPath ? "bg-accent font-medium" : "hover:bg-accent/50",
++                        )}
++                    >
++                        <button
++                            type="button"
++                            className="min-w-0 flex-1 truncate text-left font-mono"
++                            onClick={() => {
++                                onSelect(file.path);
++                            }}
++                        >
++                            {file.path}
++                        </button>
++                        {!readOnly && files.length > 1 ? (
++                            <PopConfirm
++                                title={`Remove ${file.path}?`}
++                                description="The file is removed from the code; saving deploys the code without it."
++                                confirmText="Remove"
++                                variant="destructive"
++                                onConfirm={() => {
++                                    onRemove(file.path);
++                                }}
++                            >
++                                <Button
++                                    type="button"
++                                    variant="ghost"
++                                    size="icon-sm"
++                                    className="size-6 opacity-0 group-hover:opacity-100"
++                                    aria-label={`Remove ${file.path}`}
++                                >
++                                    <Trash2 className="size-3.5" />
++                                </Button>
++                            </PopConfirm>
++                        ) : null}
++                    </li>
++                ))}
++            </ul>
++            {!readOnly ? (
++                <form
++                    className="flex flex-col gap-1"
++                    onSubmit={event => {
++                        event.preventDefault();
++                        handleAdd();
++                    }}
++                >
++                    <div className="flex gap-1">
++                        <Input
++                            value={newPath}
++                            onChange={event => {
++                                setNewPath(event.target.value.trim());
++                            }}
++                            placeholder="lib/util.js"
++                            className="h-8 font-mono text-xs"
++                            aria-invalid={Boolean(problem)}
++                            aria-label="New file's path"
++                        />
++                        <Button
++                            type="submit"
++                            variant="outline"
++                            size="icon-sm"
++                            disabled={newPath === "" || Boolean(problem)}
++                            aria-label="Add the file"
++                        >
++                            <FilePlus />
++                        </Button>
++                    </div>
++                    {problem ? <span className="text-xs text-destructive">{problem}</span> : null}
++                </form>
++            ) : null}
++        </div>
++    );
++}
++
++interface Props {
++    files: FunctionFile[];
++    selectedPath: string;
++    readOnly: boolean;
++    onSelect: (path: string) => void;
++    onAdd: (path: string) => void;
++    onRemove: (path: string) => void;
++}
+diff --git a/src/application/modules/projects/routes/single-project/single-app/tabs/code/building-blocks/index.ts b/src/application/modules/projects/routes/single-project/single-app/tabs/code/building-blocks/index.ts
+new file mode 100644
+index 00000000..2b6e401e
+--- /dev/null
++++ b/src/application/modules/projects/routes/single-project/single-app/tabs/code/building-blocks/index.ts
+@@ -0,0 +1,2 @@
++export * from "./function-files.com";
++export * from "./function-code-workspace.com";
+diff --git a/src/application/modules/projects/routes/single-project/single-app/tabs/code/index.ts b/src/application/modules/projects/routes/single-project/single-app/tabs/code/index.ts
+new file mode 100644
+index 00000000..e37ac0d8
+--- /dev/null
++++ b/src/application/modules/projects/routes/single-project/single-app/tabs/code/index.ts
+@@ -0,0 +1 @@
++export * from "./route";
+diff --git a/src/application/modules/projects/routes/single-project/single-app/tabs/code/route/app-code.route.com.tsx b/src/application/modules/projects/routes/single-project/single-app/tabs/code/route/app-code.route.com.tsx
+new file mode 100644
+index 00000000..2b6380ab
+--- /dev/null
++++ b/src/application/modules/projects/routes/single-project/single-app/tabs/code/route/app-code.route.com.tsx
+@@ -0,0 +1,78 @@
++import { listBox } from "@lib/styles";
++import { cn } from "@lib/utils";
++import { useParams } from "react-router";
++import invariant from "tiny-invariant";
++import { AppDeploymentSettingsQueries } from "~/projects/data";
++import { APP_CONFIGURATION_QUERY_OPTIONS } from "~/projects/data/constants";
++import { EAppDeploymentMethod } from "~/projects/module-shared/enums";
++
++import { AppLink, AppLoader } from "@application/shared/components";
++import { MODULE_IDS, ROUTE } from "@application/shared/constants";
++import { useConditionalModule } from "@application/shared/permissions";
++
++import { FunctionCodeWorkspace } from "../building-blocks";
++
++/**
++ * A function's code: its files in the editor, saved and deployed together.
++ */
++export function AppCodeRoute() {
++    const { id: projectId, env, appId } = useParams<{ id: string; env: string; appId: string }>();
++    invariant(projectId, "projectId must be defined");
++    invariant(env, "env must be defined");
++    invariant(appId, "appId must be defined");
++
++    const { canWrite } = useConditionalModule({ id: MODULE_IDS.Project });
++    const { data, isLoading } = AppDeploymentSettingsQueries.useFindOne(
++        { projectID: projectId, env, appID: appId },
++        APP_CONFIGURATION_QUERY_OPTIONS,
++    );
++    const settings = data?.data;
++
++    if (isLoading || !settings) {
++        return <AppLoader />;
++    }
++
++    if (settings.activeMethod !== EAppDeploymentMethod.Function) {
++        return (
++            <div className={cn(listBox, "text-sm text-muted-foreground")}>
++                This app is not a function: its code is not kept here.
++            </div>
++        );
++    }
++
++    const { repo } = settings.functionSource.code;
++    if (repo) {
++        return (
++            <div className={cn(listBox, "flex flex-col gap-1 text-sm")}>
++                <span>The function&apos;s code is in a repository, where it is edited:</span>
++                <span className="font-mono">
++                    {repo.repoUrl} {repo.repoRef}
++                    {settings.functionSource.code.dir ? ` - ${settings.functionSource.code.dir}` : ""}
++                </span>
++                <AppLink.Basic
++                    to={ROUTE.projects.single.apps.single.configuration.deploymentSettings.$route(
++                        projectId,
++                        env,
++                        appId,
++                    )}
++                    className="text-link"
++                >
++                    Change the repository in the function&apos;s settings
++                </AppLink.Basic>
++            </div>
++        );
++    }
++
++    return (
++        <div className={cn(listBox)}>
++            <FunctionCodeWorkspace
++                key={settings.updateVer}
++                projectId={projectId}
++                env={env}
++                appId={appId}
++                settings={settings}
++                readOnly={!canWrite}
++            />
++        </div>
++    );
++}
+diff --git a/src/application/modules/projects/routes/single-project/single-app/tabs/code/route/index.ts b/src/application/modules/projects/routes/single-project/single-app/tabs/code/route/index.ts
+new file mode 100644
+index 00000000..c6450d7c
+--- /dev/null
++++ b/src/application/modules/projects/routes/single-project/single-app/tabs/code/route/index.ts
+@@ -0,0 +1 @@
++export * from "./app-code.route.com";
+diff --git a/src/application/modules/projects/routes/single-project/single-app/tabs/index.ts b/src/application/modules/projects/routes/single-project/single-app/tabs/index.ts
+index 1e6d6254..6268d588 100644
+--- a/src/application/modules/projects/routes/single-project/single-app/tabs/index.ts
++++ b/src/application/modules/projects/routes/single-project/single-app/tabs/index.ts
+@@ -4,3 +4,4 @@ export * from "./logs";
+ export * from "./terminal";
+ export * from "./preview-deployments";
+ export * from "./tasks";
++export * from "./code";
+diff --git a/src/application/shared/constants/route.constants.ts b/src/application/shared/constants/route.constants.ts
+index 35f6d635..b5941780 100644
+--- a/src/application/shared/constants/route.constants.ts
++++ b/src/application/shared/constants/route.constants.ts
+@@ -896,6 +896,12 @@ export const ROUTE = {
+                         },
+                     },
+ 
++                    code: {
++                        $pattern: "projects/:id/:env/apps/:appId/code",
++                        $route: (id: string, env: string, appId: string) =>
++                            `/projects/${id}/${env}/apps/${appId}/code/`,
++                    },
++
+                     logs: {
+                         $pattern: "projects/:id/:env/apps/:appId/logs",
+                         $route: (id: string, env: string, appId: string) =>

@@ -1,0 +1,1180 @@
+diff --git a/src/application/modules/projects/layouts/single-app/configuration-layout/single-app-configuration-layout.com.tsx b/src/application/modules/projects/layouts/single-app/configuration-layout/single-app-configuration-layout.com.tsx
+index ea087994..6e650191 100644
+--- a/src/application/modules/projects/layouts/single-app/configuration-layout/single-app-configuration-layout.com.tsx
++++ b/src/application/modules/projects/layouts/single-app/configuration-layout/single-app-configuration-layout.com.tsx
+@@ -24,10 +24,13 @@ import {
+     Rocket,
+     Settings,
+     Sliders,
++    SquareFunction,
+     TrendingUp,
+ } from "lucide-react";
+ import { useLocation, useNavigate, useParams } from "react-router";
+ import invariant from "tiny-invariant";
++import { ProjectAppsQueries } from "~/projects/data";
++import { isFunctionApp } from "~/projects/module-shared/utils";
+ 
+ import { AppLink } from "@application/shared/components";
+ import { ROUTE } from "@application/shared/constants";
+@@ -80,6 +83,14 @@ function View({ children }: PropsWithChildren) {
+ 
+     const location = useLocation();
+     const navigate = useNavigate();
++    // The header asks for the same app: this reads it from the cache.
++    const { data: appResponse } = ProjectAppsQueries.useFindOneById({
++        projectID: projectId,
++        env,
++        appID: appId,
++        getStats: true,
++    });
++    const isFunction = appResponse ? isFunctionApp(appResponse.data) : false;
+ 
+     const sections: TabSection[] = useMemo(
+         () => [
+@@ -91,18 +102,23 @@ function View({ children }: PropsWithChildren) {
+                         icon: Settings,
+                         route: ROUTE.projects.single.apps.single.configuration.general.$route(projectId, env, appId),
+                     },
++                    // A function's kind is fixed: it is a function.
++                    ...(isFunction
++                        ? []
++                        : [
++                              {
++                                  label: "App Kind",
++                                  icon: Boxes,
++                                  route: ROUTE.projects.single.apps.single.configuration.kindSettings.$route(
++                                      projectId,
++                                      env,
++                                      appId,
++                                  ),
++                              },
++                          ]),
+                     {
+-                        label: "App Kind",
+-                        icon: Boxes,
+-                        route: ROUTE.projects.single.apps.single.configuration.kindSettings.$route(
+-                            projectId,
+-                            env,
+-                            appId,
+-                        ),
+-                    },
+-                    {
+-                        label: "Deployment Settings",
+-                        icon: Rocket,
++                        label: isFunction ? "Function" : "Deployment Settings",
++                        icon: isFunction ? SquareFunction : Rocket,
+                         route: ROUTE.projects.single.apps.single.configuration.deploymentSettings.$route(
+                             projectId,
+                             env,
+@@ -267,7 +283,7 @@ function View({ children }: PropsWithChildren) {
+                 ],
+             },
+         ],
+-        [projectId, env, appId],
++        [projectId, env, appId, isFunction],
+     );
+ 
+     const allTabs = useMemo(() => sections.flatMap(sec => sec.items), [sections]);
+diff --git a/src/application/modules/projects/module-shared/components/index.ts b/src/application/modules/projects/module-shared/components/index.ts
+index 2350d501..6088edb1 100644
+--- a/src/application/modules/projects/module-shared/components/index.ts
++++ b/src/application/modules/projects/module-shared/components/index.ts
+@@ -28,3 +28,4 @@ export * from "./job-triggers-field";
+ export * from "./data-backup-form";
+ export * from "./function-code-editor";
+ export * from "./git-credential-combobox";
++export * from "./push-to-registry-combobox";
+diff --git a/src/application/modules/projects/module-shared/components/push-to-registry-combobox/index.ts b/src/application/modules/projects/module-shared/components/push-to-registry-combobox/index.ts
+new file mode 100644
+index 00000000..a451724c
+--- /dev/null
++++ b/src/application/modules/projects/module-shared/components/push-to-registry-combobox/index.ts
+@@ -0,0 +1 @@
++export * from "./push-to-registry-combobox.com";
+diff --git a/src/application/modules/projects/module-shared/components/push-to-registry-combobox/push-to-registry-combobox.com.tsx b/src/application/modules/projects/module-shared/components/push-to-registry-combobox/push-to-registry-combobox.com.tsx
+new file mode 100644
+index 00000000..98931491
+--- /dev/null
++++ b/src/application/modules/projects/module-shared/components/push-to-registry-combobox/push-to-registry-combobox.com.tsx
+@@ -0,0 +1,111 @@
++import { useMemo, useState } from "react";
++
++import { ProjectRegistryAuthQueries } from "~/projects/data/queries";
++
++import { AppLink, Combobox } from "@application/shared/components";
++import { DEFAULT_PAGINATED_DATA, ROUTE } from "@application/shared/constants";
++
++export type RegistryOption = { id: string; name: string };
++
++const NONE_REGISTRY_OPTION = {
++    value: { id: "", name: "None" },
++    label: "none None",
++};
++
++/**
++ * A pick of the registry an image is pushed to after its build, or none.
++ */
++export function PushToRegistryCombobox({
++    projectId,
++    env,
++    value,
++    onChange,
++    readOnly = false,
++    invalid = false,
++    className,
++}: PushToRegistryComboboxProps) {
++    const [searchQuery, setSearchQuery] = useState("");
++
++    const {
++        data: { data: registryAuths } = DEFAULT_PAGINATED_DATA,
++        isFetching,
++        refetch,
++        isRefetching,
++    } = ProjectRegistryAuthQueries.useFindManyPaginated({
++        projectID: projectId,
++        env,
++        search: searchQuery,
++    });
++
++    const comboboxOptions = useMemo(() => {
++        const registryOptions = registryAuths.map(auth => {
++            const badge = auth.address.trim() || "none";
++            return {
++                value: { id: auth.id, name: auth.name },
++                label: `${badge} ${auth.name}`,
++            };
++        });
++
++        return [NONE_REGISTRY_OPTION, ...registryOptions];
++    }, [registryAuths]);
++
++    return (
++        <Combobox
++            options={comboboxOptions}
++            value={value?.id ?? ""}
++            onChange={(_, option) => {
++                if (readOnly) {
++                    return;
++                }
++
++                if (!option || option.id === "") {
++                    onChange(undefined);
++                    return;
++                }
++
++                onChange(option);
++            }}
++            onSearch={setSearchQuery}
++            placeholder="Select registry to push image to"
++            searchable
++            closeOnSelect
++            emptyText="No registry to push image to available"
++            className={className}
++            valueKey="id"
++            aria-invalid={invalid}
++            loading={isFetching}
++            onRefresh={() => void refetch()}
++            isRefreshing={isRefetching}
++            splitLabelBadge
++            disabled={readOnly}
++        />
++    );
++}
++
++/**
++ * Where a project's registry credentials are configured.
++ */
++export function RegistryCredentialsLink({ projectId }: { projectId: string }) {
++    return (
++        <div className="text-xs">
++            <AppLink.Basic
++                to={ROUTE.projects.single.providerConfiguration.registryAuth.$route(projectId)}
++                className="text-link"
++                target="_blank"
++                rel="noopener noreferrer"
++            >
++                Configure Registry Credentials
++            </AppLink.Basic>
++        </div>
++    );
++}
++
++export interface PushToRegistryComboboxProps {
++    projectId: string;
++    env: string;
++    value: RegistryOption | null | undefined;
++    onChange: (value: RegistryOption | undefined) => void;
++    readOnly?: boolean;
++    invalid?: boolean;
++    className?: string;
++}
+diff --git a/src/application/modules/projects/routes/single-project/single-app/configuration/deployment-settings/form-components/push-to-registry-select/push-to-registry-select.com.tsx b/src/application/modules/projects/routes/single-project/single-app/configuration/deployment-settings/form-components/push-to-registry-select/push-to-registry-select.com.tsx
+index 10fcc316..01f30ac0 100644
+--- a/src/application/modules/projects/routes/single-project/single-app/configuration/deployment-settings/form-components/push-to-registry-select/push-to-registry-select.com.tsx
++++ b/src/application/modules/projects/routes/single-project/single-app/configuration/deployment-settings/form-components/push-to-registry-select/push-to-registry-select.com.tsx
+@@ -1,25 +1,17 @@
+-import { useMemo, useState } from "react";
+-
+ import { Field, FieldError } from "@components/ui";
+ import { useController, useFormContext } from "react-hook-form";
+ import { useParams } from "react-router";
+ import invariant from "tiny-invariant";
+-import { ProjectRegistryAuthQueries } from "~/projects/data/queries";
++import { PushToRegistryCombobox, RegistryCredentialsLink } from "~/projects/module-shared/components";
+ import { PROJECT_FORM_CONTROL_MAX_WIDTH_CLASS } from "~/projects/module-shared/constants";
+ 
+-import { AppLink, Combobox, InfoBlock } from "@application/shared/components";
+-import { DEFAULT_PAGINATED_DATA, ROUTE } from "@application/shared/constants";
++import { InfoBlock } from "@application/shared/components";
+ 
+ import {
+     type AppConfigDeploymentSettingsFormSchemaInput,
+     type AppConfigDeploymentSettingsFormSchemaOutput,
+ } from "../../schemas";
+ 
+-const NONE_REGISTRY_OPTION = {
+-    value: { id: "", name: "None" },
+-    label: "none None",
+-};
+-
+ export function PushToRegistrySelect({ readOnly = false }: Props) {
+     const { id: projectId, env } = useParams<{ id: string; env: string }>();
+     invariant(projectId, "projectId must be defined");
+@@ -31,82 +23,28 @@ export function PushToRegistrySelect({ readOnly = false }: Props) {
+         AppConfigDeploymentSettingsFormSchemaOutput
+     >();
+ 
+-    const [searchQuery, setSearchQuery] = useState("");
+-
+-    const {
+-        data: { data: registryAuths } = DEFAULT_PAGINATED_DATA,
+-        isFetching,
+-        refetch,
+-        isRefetching,
+-    } = ProjectRegistryAuthQueries.useFindManyPaginated({
+-        projectID: projectId,
+-        env,
+-        search: searchQuery,
+-    });
+-
+     const {
+         field: pushToRegistry,
+         fieldState: { invalid: isPushToRegistryInvalid, error: pushToRegistryError },
+     } = useController({ control, name: "repoSource.pushToRegistry" });
+ 
+-    const comboboxOptions = useMemo(() => {
+-        const registryOptions = registryAuths.map(auth => {
+-            const badge = auth.address.trim() || "none";
+-            return {
+-                value: { id: auth.id, name: auth.name },
+-                label: `${badge} ${auth.name}`,
+-            };
+-        });
+-
+-        return [NONE_REGISTRY_OPTION, ...registryOptions];
+-    }, [registryAuths]);
+-
+     return (
+         <InfoBlock
+             titleWidth={220}
+             title="Registry To Push Image To"
+         >
+             <Field>
+-                <Combobox
+-                    options={comboboxOptions}
+-                    value={pushToRegistry.value?.id ?? ""}
+-                    onChange={(_, option) => {
+-                        if (readOnly) {
+-                            return;
+-                        }
+-
+-                        if (!option || option.id === "") {
+-                            pushToRegistry.onChange(undefined);
+-                            return;
+-                        }
+-
+-                        pushToRegistry.onChange(option);
+-                    }}
+-                    onSearch={setSearchQuery}
+-                    placeholder="Select registry to push image to"
+-                    searchable
+-                    closeOnSelect
+-                    emptyText="No registry to push image to available"
++                <PushToRegistryCombobox
++                    projectId={projectId}
++                    env={env}
++                    value={pushToRegistry.value}
++                    onChange={pushToRegistry.onChange}
++                    readOnly={readOnly}
++                    invalid={isPushToRegistryInvalid}
+                     className={PROJECT_FORM_CONTROL_MAX_WIDTH_CLASS}
+-                    valueKey="id"
+-                    aria-invalid={isPushToRegistryInvalid}
+-                    loading={isFetching}
+-                    onRefresh={() => void refetch()}
+-                    isRefreshing={isRefetching}
+-                    splitLabelBadge
+-                    disabled={readOnly}
+                 />
+                 <FieldError errors={[pushToRegistryError]} />
+-                <div className="text-xs">
+-                    <AppLink.Basic
+-                        to={ROUTE.projects.single.providerConfiguration.registryAuth.$route(projectId)}
+-                        className="text-link"
+-                        target="_blank"
+-                        rel="noopener noreferrer"
+-                    >
+-                        Configure Registry Credentials
+-                    </AppLink.Basic>
+-                </div>
++                <RegistryCredentialsLink projectId={projectId} />
+             </Field>
+         </InfoBlock>
+     );
+diff --git a/src/application/modules/projects/routes/single-project/single-app/configuration/deployment-settings/route/app-config-deployment-settings.route.com.tsx b/src/application/modules/projects/routes/single-project/single-app/configuration/deployment-settings/route/app-config-deployment-settings.route.com.tsx
+index dc2cc2dc..fa8a737c 100644
+--- a/src/application/modules/projects/routes/single-project/single-app/configuration/deployment-settings/route/app-config-deployment-settings.route.com.tsx
++++ b/src/application/modules/projects/routes/single-project/single-app/configuration/deployment-settings/route/app-config-deployment-settings.route.com.tsx
+@@ -17,6 +17,7 @@ import { isValidationException } from "@infrastructure/api";
+ 
+ import { ValidationException } from "@infrastructure/exceptions/validation";
+ 
++import { FunctionSettings } from "../../function-settings";
+ import { AppConfigDeploymentSettingsForm } from "../form";
+ import { type AppConfigDeploymentSettingsFormSchemaOutput } from "../schemas";
+ import { type AppConfigDeploymentSettingsFormRef } from "../types";
+@@ -145,13 +146,23 @@ export function AppConfigDeploymentSettingsRoute() {
+         return <AppLoader />;
+     }
+ 
++    // A function's deployment settings are its runtime and its code's place.
++    if (data?.data.activeMethod === EAppDeploymentMethod.Function) {
++        return (
++            <FunctionSettings
++                projectId={projectId}
++                env={env}
++                appId={appId}
++                settings={data.data}
++            />
++        );
++    }
++
+     return (
+         <div className="flex flex-col gap-4">
+             <AppConfigDeploymentSettingsForm
+                 ref={formRef}
+-                defaultValues={
+-                    data?.data && data.data.activeMethod !== EAppDeploymentMethod.Function ? data.data : undefined
+-                }
++                defaultValues={data?.data}
+                 onSubmit={handleSubmit}
+                 readOnly={!canWrite}
+             >
+diff --git a/src/application/modules/projects/routes/single-project/single-app/configuration/function-settings/form/function-settings.form.com.tsx b/src/application/modules/projects/routes/single-project/single-app/configuration/function-settings/form/function-settings.form.com.tsx
+new file mode 100644
+index 00000000..a3b2f102
+--- /dev/null
++++ b/src/application/modules/projects/routes/single-project/single-app/configuration/function-settings/form/function-settings.form.com.tsx
+@@ -0,0 +1,505 @@
++import React, { type PropsWithChildren, useImperativeHandle } from "react";
++
++import { Field, FieldError, FieldGroup, Input } from "@components/ui";
++import { zodResolver } from "@hookform/resolvers/zod";
++import { FileCode, GitBranch } from "lucide-react";
++import { useController, useForm } from "react-hook-form";
++import { type FunctionSource } from "~/projects/domain";
++import {
++    GitCredentialCombobox,
++    GitCredentialLinks,
++    type OptionCard,
++    OptionCardGroup,
++    PushToRegistryCombobox,
++    RegistryCredentialsLink,
++} from "~/projects/module-shared/components";
++import { PROJECT_FORM_CONTROL_MAX_WIDTH_CLASS } from "~/projects/module-shared/constants";
++import {
++    ALL_FUNCTION_RUNTIMES,
++    type EFunctionRuntime,
++    FUNCTION_RUNTIME_DEFAULT_ENTRYPOINT,
++    FUNCTION_RUNTIME_LABELS,
++} from "~/projects/module-shared/enums";
++
++import { ContentBlock, InfoBlock, LabelWithInfo } from "@application/shared/components";
++
++import { type ValidationException } from "@infrastructure/exceptions/validation";
++
++import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
++import { TagInput } from "@/components/ui/tag-input";
++
++import {
++    EFunctionCodeLocation,
++    type FunctionSettingsFormInput,
++    type FunctionSettingsFormOutput,
++    FunctionSettingsFormSchema,
++    functionSettingsDefaultValues,
++    functionSettingsErrorField,
++} from "../schemas";
++
++const CODE_LOCATION_OPTIONS: OptionCard<EFunctionCodeLocation>[] = [
++    {
++        value: EFunctionCodeLocation.Inline,
++        label: "Written here",
++        description: "The code is edited in the Code tab.",
++        icon: FileCode,
++    },
++    {
++        value: EFunctionCodeLocation.Repository,
++        label: "From a repository",
++        description: "The function is built from a git repository's code.",
++        icon: GitBranch,
++    },
++];
++
++const TITLE_WIDTH = 220;
++
++export interface FunctionSettingsFormRef {
++    /** Puts a backend's validation errors on the fields they are about. */
++    onError: (error: ValidationException) => void;
++}
++
++export function FunctionSettingsForm({ ref, projectId, env, source, onSubmit, readOnly = false, children }: Props) {
++    const {
++        control,
++        handleSubmit,
++        watch,
++        getValues,
++        setValue,
++        setError,
++        formState: { errors },
++    } = useForm<FunctionSettingsFormInput, unknown, FunctionSettingsFormOutput>({
++        defaultValues: functionSettingsDefaultValues(source),
++        resolver: zodResolver(FunctionSettingsFormSchema),
++        mode: "onSubmit",
++    });
++
++    useImperativeHandle(
++        ref,
++        () => ({
++            onError(error: ValidationException) {
++                error.errors.forEach(({ path, message }) => {
++                    const field = functionSettingsErrorField(path);
++                    if (field) {
++                        setError(field, { message, type: "manual" });
++                    }
++                });
++            },
++        }),
++        [setError],
++    );
++
++    const runtime = watch("runtime") as EFunctionRuntime;
++    const codeLocation = watch("codeLocation");
++
++    const { field: runtimeField } = useController({ control, name: "runtime" });
++    const { field: entrypointFile } = useController({ control, name: "entrypointFile" });
++    const { field: entrypointHandler } = useController({ control, name: "entrypointHandler" });
++    const { field: timeout } = useController({ control, name: "timeout" });
++    const { field: maxConcurrency } = useController({ control, name: "maxConcurrency" });
++    const { field: maxBodySize } = useController({ control, name: "maxBodySize" });
++    const { field: systemPackages } = useController({ control, name: "systemPackages" });
++    const { field: codeLocationField } = useController({ control, name: "codeLocation" });
++    const { field: repoUrl } = useController({ control, name: "repoUrl" });
++    const { field: repoRef } = useController({ control, name: "repoRef" });
++    const { field: dir } = useController({ control, name: "dir" });
++    const { field: credentials } = useController({ control, name: "credentials" });
++    const { field: pushToRegistry } = useController({ control, name: "pushToRegistry" });
++
++    // An entrypoint left at its runtime's default follows the runtime.
++    function changeRuntime(next: string) {
++        const previous = FUNCTION_RUNTIME_DEFAULT_ENTRYPOINT[getValues("runtime") as EFunctionRuntime];
++        const nextDefault = FUNCTION_RUNTIME_DEFAULT_ENTRYPOINT[next as EFunctionRuntime];
++        if (getValues("entrypointFile") === previous.file) {
++            setValue("entrypointFile", nextDefault.file, { shouldDirty: true });
++        }
++        if (getValues("entrypointHandler") === previous.handler) {
++            setValue("entrypointHandler", nextDefault.handler, { shouldDirty: true });
++        }
++        runtimeField.onChange(next);
++    }
++
++    function onValid(values: FunctionSettingsFormOutput) {
++        if (readOnly) {
++            return;
++        }
++
++        onSubmit(values);
++    }
++
++    const defaultEntrypoint = FUNCTION_RUNTIME_DEFAULT_ENTRYPOINT[runtime];
++
++    return (
++        <div className="pt-2">
++            <form
++                onSubmit={event => {
++                    event.preventDefault();
++                    void handleSubmit(onValid)(event);
++                }}
++                className="flex flex-col gap-6"
++            >
++                <fieldset
++                    disabled={readOnly}
++                    className="contents"
++                >
++                    <ContentBlock label="Runtime">
++                        <div className="flex flex-col gap-6">
++                            <InfoBlock
++                                titleWidth={TITLE_WIDTH}
++                                title={
++                                    <LabelWithInfo
++                                        label="Runtime"
++                                        isRequired
++                                    />
++                                }
++                            >
++                                <FieldGroup>
++                                    <Field>
++                                        <Select
++                                            value={runtimeField.value}
++                                            onValueChange={changeRuntime}
++                                            disabled={readOnly}
++                                        >
++                                            <SelectTrigger className={PROJECT_FORM_CONTROL_MAX_WIDTH_CLASS}>
++                                                <SelectValue />
++                                            </SelectTrigger>
++                                            <SelectContent>
++                                                {ALL_FUNCTION_RUNTIMES.map(item => (
++                                                    <SelectItem
++                                                        key={item}
++                                                        value={item}
++                                                    >
++                                                        {FUNCTION_RUNTIME_LABELS[item]}
++                                                    </SelectItem>
++                                                ))}
++                                            </SelectContent>
++                                        </Select>
++                                        <FieldError errors={[errors.runtime]} />
++                                        {runtime !== source.runtime &&
++                                            codeLocation === EFunctionCodeLocation.Inline && (
++                                                <p className="text-xs text-muted-foreground">
++                                                    The code stays as it is: rewrite it for the new runtime in the Code
++                                                    tab.
++                                                </p>
++                                            )}
++                                    </Field>
++                                </FieldGroup>
++                            </InfoBlock>
++
++                            <InfoBlock
++                                titleWidth={TITLE_WIDTH}
++                                title={
++                                    <LabelWithInfo
++                                        label="Entrypoint File"
++                                        content="The file of the handler; for Go, the directory of its package."
++                                    />
++                                }
++                            >
++                                <FieldGroup>
++                                    <Field>
++                                        <Input
++                                            {...entrypointFile}
++                                            placeholder={defaultEntrypoint.file}
++                                            className={PROJECT_FORM_CONTROL_MAX_WIDTH_CLASS}
++                                            aria-invalid={Boolean(errors.entrypointFile)}
++                                        />
++                                        <FieldError errors={[errors.entrypointFile]} />
++                                    </Field>
++                                </FieldGroup>
++                            </InfoBlock>
++
++                            <InfoBlock
++                                titleWidth={TITLE_WIDTH}
++                                title={
++                                    <LabelWithInfo
++                                        label="Handler"
++                                        content="The name the file exports the handler by."
++                                    />
++                                }
++                            >
++                                <FieldGroup>
++                                    <Field>
++                                        <Input
++                                            {...entrypointHandler}
++                                            placeholder={defaultEntrypoint.handler}
++                                            className={PROJECT_FORM_CONTROL_MAX_WIDTH_CLASS}
++                                            aria-invalid={Boolean(errors.entrypointHandler)}
++                                        />
++                                        <FieldError errors={[errors.entrypointHandler]} />
++                                    </Field>
++                                </FieldGroup>
++                            </InfoBlock>
++
++                            <InfoBlock
++                                titleWidth={TITLE_WIDTH}
++                                title={
++                                    <LabelWithInfo
++                                        label="Debian Packages"
++                                        content="Installed into the function's image, e.g. ffmpeg or libvips=8.14.1-3."
++                                    />
++                                }
++                            >
++                                <FieldGroup>
++                                    <Field>
++                                        <TagInput
++                                            tags={systemPackages.value}
++                                            onCreate={pkg => {
++                                                const name = pkg.trim();
++                                                if (!readOnly && name !== "" && !systemPackages.value.includes(name)) {
++                                                    systemPackages.onChange([...systemPackages.value, name]);
++                                                }
++                                            }}
++                                            onDelete={pkg => {
++                                                if (!readOnly) {
++                                                    systemPackages.onChange(
++                                                        systemPackages.value.filter(item => item !== pkg),
++                                                    );
++                                                }
++                                            }}
++                                            placeholder="Enter a package"
++                                            disabled={readOnly}
++                                        />
++                                        <FieldError errors={[errors.systemPackages]} />
++                                    </Field>
++                                </FieldGroup>
++                            </InfoBlock>
++                        </div>
++                    </ContentBlock>
++
++                    <ContentBlock label="Limits Of A Call">
++                        <div className="flex flex-col gap-6">
++                            <InfoBlock
++                                titleWidth={TITLE_WIDTH}
++                                title={
++                                    <LabelWithInfo
++                                        label="Timeout"
++                                        isRequired
++                                        content="How long a call may take, from 1s to 15m, e.g. 30s or 2m."
++                                    />
++                                }
++                            >
++                                <FieldGroup>
++                                    <Field>
++                                        <Input
++                                            {...timeout}
++                                            placeholder="30s"
++                                            className={PROJECT_FORM_CONTROL_MAX_WIDTH_CLASS}
++                                            aria-invalid={Boolean(errors.timeout)}
++                                        />
++                                        <FieldError errors={[errors.timeout]} />
++                                    </Field>
++                                </FieldGroup>
++                            </InfoBlock>
++
++                            <InfoBlock
++                                titleWidth={TITLE_WIDTH}
++                                title={
++                                    <LabelWithInfo
++                                        label="Concurrency"
++                                        isRequired
++                                        content="How many calls one instance answers at once; the others wait."
++                                    />
++                                }
++                            >
++                                <FieldGroup>
++                                    <Field>
++                                        <Input
++                                            type="number"
++                                            min={1}
++                                            max={1000}
++                                            name={maxConcurrency.name}
++                                            ref={maxConcurrency.ref}
++                                            value={String(maxConcurrency.value)}
++                                            onChange={maxConcurrency.onChange}
++                                            onBlur={maxConcurrency.onBlur}
++                                            className={PROJECT_FORM_CONTROL_MAX_WIDTH_CLASS}
++                                            aria-invalid={Boolean(errors.maxConcurrency)}
++                                        />
++                                        <FieldError errors={[errors.maxConcurrency]} />
++                                    </Field>
++                                </FieldGroup>
++                            </InfoBlock>
++
++                            <InfoBlock
++                                titleWidth={TITLE_WIDTH}
++                                title={
++                                    <LabelWithInfo
++                                        label="Body Size"
++                                        isRequired
++                                        content="The largest request body a call takes, from 1kb to 100mb, e.g. 6mb."
++                                    />
++                                }
++                            >
++                                <FieldGroup>
++                                    <Field>
++                                        <Input
++                                            {...maxBodySize}
++                                            placeholder="6mb"
++                                            className={PROJECT_FORM_CONTROL_MAX_WIDTH_CLASS}
++                                            aria-invalid={Boolean(errors.maxBodySize)}
++                                        />
++                                        <FieldError errors={[errors.maxBodySize]} />
++                                    </Field>
++                                </FieldGroup>
++                            </InfoBlock>
++                        </div>
++                    </ContentBlock>
++
++                    <ContentBlock label="Code">
++                        <div className="flex flex-col gap-6">
++                            <OptionCardGroup
++                                options={CODE_LOCATION_OPTIONS}
++                                value={codeLocationField.value}
++                                onChange={codeLocationField.onChange}
++                                className="grid-cols-1 sm:grid-cols-2 max-w-[600px]"
++                                readOnly={readOnly}
++                            />
++
++                            {codeLocation === EFunctionCodeLocation.Inline && source.code.repo && (
++                                <p className="text-xs text-muted-foreground">
++                                    The code starts from the runtime&apos;s template, to edit in the Code tab.
++                                </p>
++                            )}
++
++                            {codeLocation === EFunctionCodeLocation.Repository && (
++                                <>
++                                    {source.code.inline && (
++                                        <p className="text-xs text-muted-foreground">
++                                            Saving drops the code written here: the function is built from the
++                                            repository.
++                                        </p>
++                                    )}
++                                    <InfoBlock
++                                        titleWidth={TITLE_WIDTH}
++                                        title={
++                                            <LabelWithInfo
++                                                label="Repository URL"
++                                                isRequired
++                                            />
++                                        }
++                                    >
++                                        <FieldGroup>
++                                            <Field>
++                                                <Input
++                                                    {...repoUrl}
++                                                    placeholder="https://github.com/owner/repo.git"
++                                                    className={PROJECT_FORM_CONTROL_MAX_WIDTH_CLASS}
++                                                    aria-invalid={Boolean(errors.repoUrl)}
++                                                />
++                                                <FieldError errors={[errors.repoUrl]} />
++                                            </Field>
++                                        </FieldGroup>
++                                    </InfoBlock>
++
++                                    <InfoBlock
++                                        titleWidth={TITLE_WIDTH}
++                                        title={
++                                            <LabelWithInfo
++                                                label="Ref"
++                                                content="A branch, a tag or a commit; the default branch when empty."
++                                            />
++                                        }
++                                    >
++                                        <FieldGroup>
++                                            <Field>
++                                                <Input
++                                                    {...repoRef}
++                                                    placeholder="main"
++                                                    className={PROJECT_FORM_CONTROL_MAX_WIDTH_CLASS}
++                                                    aria-invalid={Boolean(errors.repoRef)}
++                                                />
++                                                <FieldError errors={[errors.repoRef]} />
++                                            </Field>
++                                        </FieldGroup>
++                                    </InfoBlock>
++
++                                    <InfoBlock
++                                        titleWidth={TITLE_WIDTH}
++                                        title={
++                                            <LabelWithInfo
++                                                label="Directory"
++                                                content="The function's directory in the repository; its root when empty."
++                                            />
++                                        }
++                                    >
++                                        <FieldGroup>
++                                            <Field>
++                                                <Input
++                                                    {...dir}
++                                                    placeholder="functions/hello"
++                                                    className={PROJECT_FORM_CONTROL_MAX_WIDTH_CLASS}
++                                                    aria-invalid={Boolean(errors.dir)}
++                                                />
++                                                <FieldError errors={[errors.dir]} />
++                                            </Field>
++                                        </FieldGroup>
++                                    </InfoBlock>
++
++                                    <InfoBlock
++                                        titleWidth={TITLE_WIDTH}
++                                        title="Git Credentials"
++                                    >
++                                        <FieldGroup>
++                                            <Field>
++                                                <GitCredentialCombobox
++                                                    projectId={projectId}
++                                                    env={env}
++                                                    value={credentials.value ?? null}
++                                                    onChange={credentials.onChange}
++                                                    readOnly={readOnly}
++                                                    invalid={Boolean(errors.credentials)}
++                                                    className={PROJECT_FORM_CONTROL_MAX_WIDTH_CLASS}
++                                                />
++                                                <FieldError errors={[errors.credentials]} />
++                                                <GitCredentialLinks projectId={projectId} />
++                                            </Field>
++                                        </FieldGroup>
++                                    </InfoBlock>
++                                </>
++                            )}
++                        </div>
++                    </ContentBlock>
++
++                    <ContentBlock label="Image">
++                        <div className="flex flex-col gap-6">
++                            <InfoBlock
++                                titleWidth={TITLE_WIDTH}
++                                title={
++                                    <LabelWithInfo
++                                        label="Registry To Push Image To"
++                                        content="A cluster of several nodes pulls the function's image from it."
++                                    />
++                                }
++                            >
++                                <Field>
++                                    <PushToRegistryCombobox
++                                        projectId={projectId}
++                                        env={env}
++                                        value={pushToRegistry.value}
++                                        onChange={pushToRegistry.onChange}
++                                        readOnly={readOnly}
++                                        invalid={Boolean(errors.pushToRegistry)}
++                                        className={PROJECT_FORM_CONTROL_MAX_WIDTH_CLASS}
++                                    />
++                                    <FieldError errors={[errors.pushToRegistry]} />
++                                    <RegistryCredentialsLink projectId={projectId} />
++                                </Field>
++                            </InfoBlock>
++                        </div>
++                    </ContentBlock>
++
++                    {children}
++                </fieldset>
++            </form>
++        </div>
++    );
++}
++
++type Props = PropsWithChildren<{
++    ref?: React.Ref<FunctionSettingsFormRef>;
++    projectId: string;
++    env: string;
++    source: FunctionSource;
++    onSubmit: (values: FunctionSettingsFormOutput) => void;
++    readOnly?: boolean;
++}>;
+diff --git a/src/application/modules/projects/routes/single-project/single-app/configuration/function-settings/form/index.ts b/src/application/modules/projects/routes/single-project/single-app/configuration/function-settings/form/index.ts
+new file mode 100644
+index 00000000..09c0b413
+--- /dev/null
++++ b/src/application/modules/projects/routes/single-project/single-app/configuration/function-settings/form/index.ts
+@@ -0,0 +1 @@
++export * from "./function-settings.form.com";
+diff --git a/src/application/modules/projects/routes/single-project/single-app/configuration/function-settings/function-settings.com.tsx b/src/application/modules/projects/routes/single-project/single-app/configuration/function-settings/function-settings.com.tsx
+new file mode 100644
+index 00000000..73359238
+--- /dev/null
++++ b/src/application/modules/projects/routes/single-project/single-app/configuration/function-settings/function-settings.com.tsx
+@@ -0,0 +1,82 @@
++import { useRef } from "react";
++
++import { toast } from "sonner";
++import { AppDeploymentSettingsCommands } from "~/projects/data";
++import { type FunctionMethod } from "~/projects/domain";
++import { ProjectPermissionSubmitButton } from "~/projects/module-shared/components";
++import { functionSettingsToPayload } from "~/projects/module-shared/utils";
++
++import { FormActionBar } from "@application/shared/components";
++import { MODULE_IDS } from "@application/shared/constants";
++import { useConditionalModule } from "@application/shared/permissions";
++
++import { isValidationException } from "@infrastructure/api";
++
++import { ValidationException } from "@infrastructure/exceptions/validation";
++
++import { FunctionSettingsForm, type FunctionSettingsFormRef } from "./form";
++import { type FunctionSettingsFormOutput, functionSettingsToSource } from "./schemas";
++
++/**
++ * A function's deployment settings: its runtime, its limits, where its code is.
++ * Saving them deploys the function.
++ */
++export function FunctionSettings({ projectId, env, appId, settings }: Props) {
++    const formRef = useRef<FunctionSettingsFormRef>(null);
++    const { canWrite } = useConditionalModule({ id: MODULE_IDS.Project });
++
++    const { mutate: update, isPending } = AppDeploymentSettingsCommands.useUpdateOne({
++        onSuccess: () => {
++            toast.success("Function settings saved, a deployment has started");
++        },
++        // The failure itself is notified by the API's hook: this puts it on its fields.
++        onError: err => {
++            if (isValidationException(err)) {
++                formRef.current?.onError(ValidationException.fromHttp(err));
++            }
++        },
++    });
++
++    function handleSubmit(values: FunctionSettingsFormOutput) {
++        if (!canWrite) {
++            return;
++        }
++
++        update({
++            projectID: projectId,
++            env,
++            appID: appId,
++            updateVer: settings.updateVer,
++            payload: functionSettingsToPayload(settings, functionSettingsToSource(values, settings.functionSource)),
++        });
++    }
++
++    return (
++        <div className="flex flex-col gap-4">
++            <FunctionSettingsForm
++                // Saved settings come back with a new version: the form starts again from them.
++                key={settings.updateVer}
++                ref={formRef}
++                projectId={projectId}
++                env={env}
++                source={settings.functionSource}
++                onSubmit={handleSubmit}
++                readOnly={!canWrite}
++            >
++                <FormActionBar>
++                    <ProjectPermissionSubmitButton
++                        isPending={isPending}
++                        label="Save & Deploy"
++                    />
++                </FormActionBar>
++            </FunctionSettingsForm>
++        </div>
++    );
++}
++
++interface Props {
++    projectId: string;
++    env: string;
++    appId: string;
++    settings: FunctionMethod;
++}
+diff --git a/src/application/modules/projects/routes/single-project/single-app/configuration/function-settings/index.ts b/src/application/modules/projects/routes/single-project/single-app/configuration/function-settings/index.ts
+new file mode 100644
+index 00000000..42bbe5d9
+--- /dev/null
++++ b/src/application/modules/projects/routes/single-project/single-app/configuration/function-settings/index.ts
+@@ -0,0 +1 @@
++export * from "./function-settings.com";
+diff --git a/src/application/modules/projects/routes/single-project/single-app/configuration/function-settings/schemas/function-settings.form.schema.ts b/src/application/modules/projects/routes/single-project/single-app/configuration/function-settings/schemas/function-settings.form.schema.ts
+new file mode 100644
+index 00000000..a421c693
+--- /dev/null
++++ b/src/application/modules/projects/routes/single-project/single-app/configuration/function-settings/schemas/function-settings.form.schema.ts
+@@ -0,0 +1,170 @@
++import { z } from "zod";
++import { type FunctionSourcePayload } from "~/projects/api/services";
++import { type FunctionSource } from "~/projects/domain";
++import { FUNCTION_TEMPLATES } from "~/projects/module-shared/constants";
++import { ALL_FUNCTION_RUNTIMES, type EFunctionRuntime, ERepoType } from "~/projects/module-shared/enums";
++import { functionFilePathProblem, functionSourceToPayload } from "~/projects/module-shared/utils";
++
++/**
++ * Where a function's code is: in the dashboard's editor, or in a repository.
++ */
++export const EFunctionCodeLocation = {
++    Inline: "inline",
++    Repository: "repository",
++} as const;
++
++export type EFunctionCodeLocation = (typeof EFunctionCodeLocation)[keyof typeof EFunctionCodeLocation];
++
++const SettingsRefSchema = z
++    .object({
++        id: z.string(),
++        name: z.string(),
++        type: z.string().optional(),
++        kind: z.string().optional(),
++    })
++    .nullish();
++
++// The same names the backend takes: a Debian package, with an optional version.
++const DEBIAN_PACKAGE_PATTERN = /^[a-z0-9][a-z0-9+.-]+(=[A-Za-z0-9.+~:-]+)?$/;
++
++export const FunctionSettingsFormSchema = z
++    .object({
++        runtime: z.enum(ALL_FUNCTION_RUNTIMES as [string, ...string[]]),
++        entrypointFile: z.string().trim(),
++        entrypointHandler: z.string().trim(),
++        timeout: z.string().trim().min(1, "Timeout is required"),
++        maxConcurrency: z.coerce
++            .number({ invalid_type_error: "Concurrency is a number" })
++            .int("Concurrency is a whole number")
++            .min(1, "At least 1")
++            .max(1000, "At most 1000"),
++        maxBodySize: z.string().trim().min(1, "Body size is required"),
++        systemPackages: z.array(z.string()),
++        codeLocation: z.nativeEnum(EFunctionCodeLocation),
++        repoUrl: z.string().trim(),
++        repoRef: z.string().trim(),
++        dir: z.string().trim(),
++        credentials: SettingsRefSchema,
++        pushToRegistry: SettingsRefSchema,
++    })
++    .superRefine((values, ctx) => {
++        values.systemPackages.forEach(pkg => {
++            if (!DEBIAN_PACKAGE_PATTERN.test(pkg)) {
++                ctx.addIssue({
++                    code: z.ZodIssueCode.custom,
++                    path: ["systemPackages"],
++                    message: `"${pkg}" is not a Debian package name`,
++                });
++            }
++        });
++        if (values.codeLocation !== EFunctionCodeLocation.Repository) {
++            return;
++        }
++        if (values.repoUrl === "") {
++            ctx.addIssue({
++                code: z.ZodIssueCode.custom,
++                path: ["repoUrl"],
++                message: "Repository URL is required",
++            });
++        }
++        const dirProblem = values.dir === "" ? null : functionFilePathProblem(values.dir, []);
++        if (dirProblem) {
++            ctx.addIssue({
++                code: z.ZodIssueCode.custom,
++                path: ["dir"],
++                message: dirProblem,
++            });
++        }
++    });
++
++export type FunctionSettingsFormInput = z.input<typeof FunctionSettingsFormSchema>;
++export type FunctionSettingsFormOutput = z.output<typeof FunctionSettingsFormSchema>;
++
++/**
++ * The form's values for a function's source.
++ */
++export function functionSettingsDefaultValues(source: FunctionSource): FunctionSettingsFormInput {
++    const { repo } = source.code;
++
++    return {
++        runtime: source.runtime,
++        entrypointFile: source.entrypoint.file,
++        entrypointHandler: source.entrypoint.handler,
++        timeout: source.timeout,
++        maxConcurrency: source.maxConcurrency,
++        maxBodySize: source.maxBodySize,
++        systemPackages: source.systemPackages,
++        codeLocation: repo ? EFunctionCodeLocation.Repository : EFunctionCodeLocation.Inline,
++        repoUrl: repo?.repoUrl ?? "",
++        repoRef: repo?.repoRef ?? "",
++        dir: repo ? source.code.dir : "",
++        credentials: repo?.credentials ?? null,
++        pushToRegistry: source.pushToRegistry,
++    };
++}
++
++/**
++ * The source the form's values make of the function's: the code stays where it
++ * is unless the form moves it. Code moved into the editor starts from what the
++ * function had there, or from the runtime's template.
++ */
++export function functionSettingsToSource(
++    values: FunctionSettingsFormOutput,
++    source: FunctionSource,
++): FunctionSourcePayload {
++    const runtime = values.runtime as EFunctionRuntime;
++    const fromRepository = values.codeLocation === EFunctionCodeLocation.Repository;
++    const files = source.code.inline?.files.length ? source.code.inline.files : FUNCTION_TEMPLATES[runtime];
++    const base = functionSourceToPayload(source, fromRepository ? undefined : files);
++
++    return {
++        ...base,
++        runtime,
++        entrypoint: { file: values.entrypointFile, handler: values.entrypointHandler },
++        code: fromRepository
++            ? {
++                  repo: {
++                      repoType: ERepoType.Git,
++                      repoUrl: values.repoUrl,
++                      repoRef: values.repoRef,
++                      // A commit pins the ref it was read from; another ref starts afresh.
++                      commitHash:
++                          source.code.repo?.repoUrl === values.repoUrl && source.code.repo.repoRef === values.repoRef
++                              ? source.code.repo.commitHash
++                              : "",
++                      credentials: { id: values.credentials?.id ?? "" },
++                  },
++                  dir: values.dir,
++              }
++            : base.code,
++        systemPackages: values.systemPackages,
++        timeout: values.timeout,
++        maxConcurrency: values.maxConcurrency,
++        maxBodySize: values.maxBodySize,
++        pushToRegistry: { id: values.pushToRegistry?.id ?? "" },
++    };
++}
++
++const FUNCTION_SOURCE_ERROR_FIELDS: Record<string, keyof FunctionSettingsFormInput> = {
++    "runtime": "runtime",
++    "entrypoint.file": "entrypointFile",
++    "entrypoint.handler": "entrypointHandler",
++    "timeout": "timeout",
++    "maxConcurrency": "maxConcurrency",
++    "maxBodySize": "maxBodySize",
++    "systemPackages": "systemPackages",
++    "code.repo.repoURL": "repoUrl",
++    "code.repo.repoRef": "repoRef",
++    "code.repo.credentials": "credentials",
++    "code.dir": "dir",
++    "pushToRegistry": "pushToRegistry",
++};
++
++/**
++ * The form's field a backend's validation error is about, or null when the
++ * error is about something the form does not show.
++ */
++export function functionSettingsErrorField(path: string): keyof FunctionSettingsFormInput | null {
++    const inSource = path.replace(/^functionSource\./, "").replace(/\[\d+\]$/, "");
++    return FUNCTION_SOURCE_ERROR_FIELDS[inSource] ?? null;
++}
+diff --git a/src/application/modules/projects/routes/single-project/single-app/configuration/function-settings/schemas/index.ts b/src/application/modules/projects/routes/single-project/single-app/configuration/function-settings/schemas/index.ts
+new file mode 100644
+index 00000000..8b61648a
+--- /dev/null
++++ b/src/application/modules/projects/routes/single-project/single-app/configuration/function-settings/schemas/index.ts
+@@ -0,0 +1 @@
++export * from "./function-settings.form.schema";
+diff --git a/src/application/modules/projects/routes/single-project/single-app/configuration/index.ts b/src/application/modules/projects/routes/single-project/single-app/configuration/index.ts
+index 555a3406..66e0284e 100644
+--- a/src/application/modules/projects/routes/single-project/single-app/configuration/index.ts
++++ b/src/application/modules/projects/routes/single-project/single-app/configuration/index.ts
+@@ -1,6 +1,7 @@
+ export * from "./general";
+ export * from "./kind-settings";
+ export * from "./deployment-settings";
++export * from "./function-settings";
+ export * from "./container-settings";
+ export * from "./routing-settings";
+ 

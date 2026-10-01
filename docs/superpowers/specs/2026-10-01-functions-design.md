@@ -433,3 +433,22 @@ settled what follows:
 - outcomes beyond the runtime's: the install failed, the handler could not be
   loaded, the request could not be read, the container was killed past the
   timeout, or it ended without a result.
+
+## Changes after part 4's plan
+
+Writing the dashboard (`docs/superpowers/plans/2026-10-01-function-dashboard.md`)
+settled what follows:
+
+- an app answers its category, and the app list filters on it
+  (`category=function`, or `category=webapp,database`; an app without a kind is
+  a webapp): the badge and the filter need no other call;
+- the test panel is inside the Code tab, beside the editor, and runs the
+  editor's files; the Code tab is a function's first;
+- the function's settings take the place of its deployment settings, under the
+  name "Function", with the code's place (the editor or a repository) and the
+  registry its image is pushed to; "App Kind" is not shown for a function;
+- creating a function asks a name, an env, a runtime and the code's source (the
+  runtime's template or a repository); its entrypoint and limits are the
+  defaults until its settings change them;
+- the lock file a test run made is added to the editor's files with one button,
+  and saved with the code.

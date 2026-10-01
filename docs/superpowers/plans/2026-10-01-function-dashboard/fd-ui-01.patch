@@ -1,0 +1,1057 @@
+diff --git a/src/application/modules/projects/api/api-context/projects.api.context.ts b/src/application/modules/projects/api/api-context/projects.api.context.ts
+index 18271655..bbb00460 100644
+--- a/src/application/modules/projects/api/api-context/projects.api.context.ts
++++ b/src/application/modules/projects/api/api-context/projects.api.context.ts
+@@ -18,6 +18,8 @@ import {
+     AppDeploymentsApiValidator,
+     AppFeatureSettingsApi,
+     AppFeatureSettingsApiValidator,
++    AppFunctionApi,
++    AppFunctionApiValidator,
+     AppHealthChecksApi,
+     AppHealthChecksApiValidator,
+     AppLogsApi,
+@@ -163,6 +165,7 @@ function createApi() {
+     const appDeploymentsApi = new AppDeploymentsApi(appDeploymentsApiValidator);
+     const appPreviewsApiValidator = new AppPreviewsApiValidator();
+     const appDeploymentSettingsApiValidator = new AppDeploymentSettingsApiValidator();
++    const appFunctionApiValidator = new AppFunctionApiValidator();
+     const appFeatureSettingsApiValidator = new AppFeatureSettingsApiValidator();
+     const appCloneSettingsApiValidator = new AppCloneSettingsApiValidator();
+     const appHealthChecksApiValidator = new AppHealthChecksApiValidator();
+@@ -245,6 +248,9 @@ function createApi() {
+                 deploymentSettings: {
+                     $: new AppDeploymentSettingsApi(appDeploymentSettingsApiValidator),
+                 },
++                function: {
++                    $: new AppFunctionApi(appFunctionApiValidator),
++                },
+                 featureSettings: {
+                     $: new AppFeatureSettingsApi(appFeatureSettingsApiValidator),
+                 },
+diff --git a/src/application/modules/projects/api/hooks/project-apps/index.ts b/src/application/modules/projects/api/hooks/project-apps/index.ts
+index 406b395a..f3c5b46d 100644
+--- a/src/application/modules/projects/api/hooks/project-apps/index.ts
++++ b/src/application/modules/projects/api/hooks/project-apps/index.ts
+@@ -11,6 +11,7 @@ export * from "./use-app-container-settings.api";
+ export * from "./use-app-container-files.api";
+ export * from "./use-app-deployment-settings.api";
+ export * from "./use-app-feature-settings.api";
++export * from "./use-app-function.api";
+ export * from "./use-app-clone-settings.api";
+ export * from "./use-app-network-settings.api";
+ export * from "./use-app-service-settings.api";
+diff --git a/src/application/modules/projects/api/hooks/project-apps/use-app-function.api.ts b/src/application/modules/projects/api/hooks/project-apps/use-app-function.api.ts
+new file mode 100644
+index 00000000..b748953f
+--- /dev/null
++++ b/src/application/modules/projects/api/hooks/project-apps/use-app-function.api.ts
+@@ -0,0 +1,32 @@
++import { use, useMemo } from "react";
++
++import { match } from "oxide.ts";
++
++import { type AppFunction_TestRun_Req } from "../../../api/services";
++import { ProjectsApiContext } from "../../api-context/projects.api.context";
++
++function createHook() {
++    return function useAppFunctionApi() {
++        const { api } = use(ProjectsApiContext);
++
++        const mutations = useMemo(
++            () => ({
++                // A failed run is shown in the test panel, not as a notification.
++                testRun: async (request: AppFunction_TestRun_Req["data"]) => {
++                    const result = await api.projects.apps.function.$.testRun({ data: request });
++                    return match(result, {
++                        Ok: _ => _,
++                        Err: error => {
++                            throw error;
++                        },
++                    });
++                },
++            }),
++            [api],
++        );
++
++        return { mutations };
++    };
++}
++
++export const useAppFunctionApi = createHook();
+diff --git a/src/application/modules/projects/api/hooks/project-apps/use-project-apps.api.ts b/src/application/modules/projects/api/hooks/project-apps/use-project-apps.api.ts
+index c4b78088..c8e45ab8 100644
+--- a/src/application/modules/projects/api/hooks/project-apps/use-project-apps.api.ts
++++ b/src/application/modules/projects/api/hooks/project-apps/use-project-apps.api.ts
+@@ -3,6 +3,7 @@ import { use, useMemo } from "react";
+ import { match } from "oxide.ts";
+ import { ProjectsApiContext } from "~/projects/api/api-context";
+ import type {
++    ProjectApps_CreateFunction_Req,
+     ProjectApps_CreateOne_Req,
+     ProjectApps_DeleteOne_Req,
+     ProjectApps_Deploy_Req,
+@@ -98,6 +99,26 @@ function createHook() {
+                         },
+                     });
+                 },
++                /**
++                 * Create a function
++                 */
++                createFunction: async (data: ProjectApps_CreateFunction_Req["data"]) => {
++                    const result = await api.projects.apps.$.createFunction({
++                        data,
++                    });
++
++                    return match(result, {
++                        Ok: _ => _,
++                        Err: error => {
++                            notifyError({
++                                message: "Failed to create function",
++                                error,
++                            });
++
++                            throw error;
++                        },
++                    });
++                },
+                 /**
+                  * Delete a project app
+                  */
+diff --git a/src/application/modules/projects/api/services/project-apps-services/deployment-settings/app-deployment-settings.api.contracts.ts b/src/application/modules/projects/api/services/project-apps-services/deployment-settings/app-deployment-settings.api.contracts.ts
+index c4100ad1..d5ec7cc0 100644
+--- a/src/application/modules/projects/api/services/project-apps-services/deployment-settings/app-deployment-settings.api.contracts.ts
++++ b/src/application/modules/projects/api/services/project-apps-services/deployment-settings/app-deployment-settings.api.contracts.ts
+@@ -8,6 +8,7 @@ import {
+ import { type ApiRequestBase, type ApiResponseBase } from "@infrastructure/api";
+ 
+ import { type AppDeploymentSettings } from "../../../../domain/apps/deployment-settings";
++import { type FunctionFile } from "../../../../domain/apps/function";
+ 
+ export type AppDeploymentSettings_FindOne_Req = ApiRequestBase<{ projectID: string; env: string; appID: string }>;
+ export type AppDeploymentSettings_FindOne_Res = ApiResponseBase<AppDeploymentSettings>;
+@@ -66,12 +67,46 @@ type AppDeploymentSettings_UpdateRepoPayload = AppDeploymentSettings_UpdateBaseP
+     };
+ };
+ 
++/**
++ * A function's source as the API takes it: what FunctionSource says, the
++ * settings it refers to by id.
++ */
++export type FunctionSourcePayload = {
++    runtime: string;
++    contract: string;
++    entrypoint: { file: string; handler: string };
++    code: {
++        inline?: { files: FunctionFile[] };
++        repo?: {
++            repoType: string;
++            repoUrl: string;
++            repoRef: string;
++            commitHash: string;
++            credentials: { id: string };
++        };
++        dir: string;
++    };
++    systemPackages: string[];
++    timeout: string;
++    maxConcurrency: number;
++    maxBodySize: string;
++    pushToRegistry: { id: string };
++};
++
++type AppDeploymentSettings_UpdateFunctionPayload = AppDeploymentSettings_UpdateBasePayload & {
++    activeMethod: typeof EAppDeploymentMethod.Function;
++    functionSource: FunctionSourcePayload;
++};
++
+ export type AppDeploymentSettings_UpdateOne_Req = ApiRequestBase<{
+     projectID: string;
+     env: string;
+     appID: string;
+     updateVer: number;
+-    payload: AppDeploymentSettings_UpdateImagePayload | AppDeploymentSettings_UpdateRepoPayload;
++    payload:
++        | AppDeploymentSettings_UpdateImagePayload
++        | AppDeploymentSettings_UpdateRepoPayload
++        | AppDeploymentSettings_UpdateFunctionPayload;
+ }>;
+ export type AppDeploymentSettings_UpdateOne_Res = ApiResponseBase<{ type: "success" }>;
+ 
+diff --git a/src/application/modules/projects/api/services/project-apps-services/deployment-settings/app-deployment-settings.api.ts b/src/application/modules/projects/api/services/project-apps-services/deployment-settings/app-deployment-settings.api.ts
+index 1b747d62..22aa030a 100644
+--- a/src/application/modules/projects/api/services/project-apps-services/deployment-settings/app-deployment-settings.api.ts
++++ b/src/application/modules/projects/api/services/project-apps-services/deployment-settings/app-deployment-settings.api.ts
+@@ -11,6 +11,7 @@ import {
+     type AppDeploymentSettings_GetDockerfileTemplate_Res,
+     type AppDeploymentSettings_UpdateOne_Req,
+     type AppDeploymentSettings_UpdateOne_Res,
++    type FunctionSourcePayload,
+ } from "./app-deployment-settings.api.contracts";
+ import { type AppDeploymentSettingsApiValidator } from "./app-deployment-settings.api.validator";
+ 
+@@ -45,6 +46,21 @@ export class AppDeploymentSettingsApi extends BaseApi {
+         signal?: AbortSignal,
+     ): Promise<Result<AppDeploymentSettings_UpdateOne_Res, Error>> {
+         const { projectID, env, appID, updateVer, payload } = req.data;
++        if (payload.activeMethod === EAppDeploymentMethod.Function) {
++            return lastValueFrom(
++                from(
++                    this.client.v1.put(
++                        `/projects/${projectID}/${env}/apps/${appID}/deployment-settings`,
++                        { ...payload, updateVer, functionSource: functionSourceToJson(payload.functionSource) },
++                        { signal },
++                    ),
++                ).pipe(
++                    map(() => Ok({ data: { type: "success" } } as const)),
++                    catchError(error => of(Err(parseApiError(error)))),
++                ),
++            );
++        }
++
+         const json =
+             payload.activeMethod === EAppDeploymentMethod.Repo
+                 ? {
+@@ -108,3 +124,28 @@ export class AppDeploymentSettingsApi extends BaseApi {
+         );
+     }
+ }
++
++/**
++ * A function's source as the API reads it: the repository's URL is `repoURL`.
++ */
++export function functionSourceToJson(source: FunctionSourcePayload): Record<string, unknown> {
++    const { repo, ...code } = source.code;
++
++    return {
++        ...source,
++        code: {
++            ...code,
++            ...(repo
++                ? {
++                      repo: {
++                          repoType: repo.repoType,
++                          repoURL: repo.repoUrl,
++                          repoRef: repo.repoRef,
++                          commitHash: repo.commitHash,
++                          credentials: repo.credentials,
++                      },
++                  }
++                : {}),
++        },
++    };
++}
+diff --git a/src/application/modules/projects/api/services/project-apps-services/deployment-settings/app-deployment-settings.api.validator.ts b/src/application/modules/projects/api/services/project-apps-services/deployment-settings/app-deployment-settings.api.validator.ts
+index 502577f2..6fa43495 100644
+--- a/src/application/modules/projects/api/services/project-apps-services/deployment-settings/app-deployment-settings.api.validator.ts
++++ b/src/application/modules/projects/api/services/project-apps-services/deployment-settings/app-deployment-settings.api.validator.ts
+@@ -1,6 +1,12 @@
+ import { type AxiosResponse } from "axios";
+ import { z } from "zod";
+-import { EAppDeploymentMethod, EBuildTool, EDockerfileSource, ERepoType } from "~/projects/module-shared/enums";
++import {
++    EAppDeploymentMethod,
++    EBuildTool,
++    EDockerfileSource,
++    EFunctionRuntime,
++    ERepoType,
++} from "~/projects/module-shared/enums";
+ import { SettingsBaseEntitySchema } from "~/settings/module-shared/schemas";
+ 
+ import { BaseMetaApiSchema, parseApiResponse } from "@infrastructure/api";
+@@ -118,6 +124,67 @@ const ImageMethodSchema = BaseDeploymentSettingsSchema.extend({
+     imageSource: ImageSourceSchema,
+ });
+ 
++const FunctionFileSchema = z.object({ path: z.string(), content: OptionalStringSchema });
++
++export const FunctionSourceSchema = z.object({
++    runtime: z.nativeEnum(EFunctionRuntime),
++    contract: OptionalStringSchema,
++    entrypoint: z
++        .object({ file: OptionalStringSchema, handler: OptionalStringSchema })
++        .nullish()
++        .transform(value => value ?? { file: "", handler: "" }),
++    code: z
++        .object({
++            inline: z
++                .object({
++                    files: z
++                        .array(FunctionFileSchema)
++                        .nullish()
++                        .transform(value => value ?? []),
++                })
++                .nullish()
++                .transform(value => value ?? null),
++            repo: z
++                .preprocess(
++                    value => {
++                        if (!value || typeof value !== "object") {
++                            return value;
++                        }
++                        const input = value as Record<string, unknown>;
++                        return { ...input, repoUrl: input["repoUrl"] ?? input["repoURL"] };
++                    },
++                    z.object({
++                        repoType: OptionalStringSchema,
++                        repoUrl: OptionalStringSchema,
++                        repoRef: OptionalStringSchema,
++                        commitHash: OptionalStringSchema,
++                        credentials: SettingsRefSchema,
++                    }),
++                )
++                .nullish()
++                .transform(value => value ?? null),
++            dir: OptionalStringSchema,
++        })
++        .nullish()
++        .transform(value => value ?? { inline: null, repo: null, dir: "" }),
++    systemPackages: z
++        .array(z.string())
++        .nullish()
++        .transform(value => value ?? []),
++    timeout: OptionalStringSchema,
++    maxConcurrency: z
++        .number()
++        .nullish()
++        .transform(value => value ?? 0),
++    maxBodySize: OptionalStringSchema,
++    pushToRegistry: SettingsRefSchema,
++});
++
++const FunctionMethodSchema = BaseDeploymentSettingsSchema.extend({
++    activeMethod: z.literal(EAppDeploymentMethod.Function),
++    functionSource: FunctionSourceSchema,
++});
++
+ const AppDeploymentSettingsSchema = z.preprocess(
+     value => {
+         if (!value || typeof value !== "object") {
+@@ -132,7 +199,8 @@ const AppDeploymentSettingsSchema = z.preprocess(
+ 
+         if (
+             input["activeMethod"] === EAppDeploymentMethod.Repo ||
+-            input["activeMethod"] === EAppDeploymentMethod.Image
++            input["activeMethod"] === EAppDeploymentMethod.Image ||
++            input["activeMethod"] === EAppDeploymentMethod.Function
+         ) {
+             return input;
+         }
+@@ -144,7 +212,7 @@ const AppDeploymentSettingsSchema = z.preprocess(
+             updateVer: input["updateVer"] ?? 0,
+         };
+     },
+-    z.discriminatedUnion("activeMethod", [RepoMethodSchema, ImageMethodSchema]),
++    z.discriminatedUnion("activeMethod", [RepoMethodSchema, ImageMethodSchema, FunctionMethodSchema]),
+ );
+ 
+ const FindOneSchema = z.object({
+diff --git a/src/application/modules/projects/api/services/project-apps-services/function/app-function.api.contracts.ts b/src/application/modules/projects/api/services/project-apps-services/function/app-function.api.contracts.ts
+new file mode 100644
+index 00000000..29de0962
+--- /dev/null
++++ b/src/application/modules/projects/api/services/project-apps-services/function/app-function.api.contracts.ts
+@@ -0,0 +1,21 @@
++import { type ApiRequestBase, type ApiResponseBase } from "@infrastructure/api";
++
++import {
++    type FunctionFile,
++    type FunctionTestRequest,
++    type FunctionTestRunResult,
++} from "../../../../domain/apps/function";
++
++/**
++ * A test run: the function's code as the editor has it, not yet saved, and the
++ * request to call it with.
++ */
++export type AppFunction_TestRun_Req = ApiRequestBase<{
++    projectID: string;
++    env: string;
++    appID: string;
++    files: FunctionFile[];
++    request: FunctionTestRequest;
++}>;
++
++export type AppFunction_TestRun_Res = ApiResponseBase<FunctionTestRunResult>;
+diff --git a/src/application/modules/projects/api/services/project-apps-services/function/app-function.api.ts b/src/application/modules/projects/api/services/project-apps-services/function/app-function.api.ts
+new file mode 100644
+index 00000000..7e74a8fe
+--- /dev/null
++++ b/src/application/modules/projects/api/services/project-apps-services/function/app-function.api.ts
+@@ -0,0 +1,35 @@
++import { Err, Ok, type Result } from "oxide.ts";
++import { catchError, from, lastValueFrom, map, of } from "rxjs";
++
++import { BaseApi, parseApiError } from "@infrastructure/api";
++
++import { type AppFunction_TestRun_Req, type AppFunction_TestRun_Res } from "./app-function.api.contracts";
++import { type AppFunctionApiValidator } from "./app-function.api.validator";
++
++export class AppFunctionApi extends BaseApi {
++    constructor(private readonly validator: AppFunctionApiValidator) {
++        super();
++    }
++
++    /**
++     * Calls the function once with the code sent, on a build node. The first run
++     * after the libraries change installs them, which takes minutes.
++     */
++    async testRun(req: AppFunction_TestRun_Req, signal?: AbortSignal): Promise<Result<AppFunction_TestRun_Res, Error>> {
++        const { projectID, env, appID, files, request } = req.data;
++
++        return lastValueFrom(
++            from(
++                this.client.v1.post(
++                    `/projects/${projectID}/${env}/apps/${appID}/function/test-run`,
++                    { code: { files }, request },
++                    { signal },
++                ),
++            ).pipe(
++                map(this.validator.testRun),
++                map(res => Ok(res)),
++                catchError(error => of(Err(parseApiError(error)))),
++            ),
++        );
++    }
++}
+diff --git a/src/application/modules/projects/api/services/project-apps-services/function/app-function.api.validator.ts b/src/application/modules/projects/api/services/project-apps-services/function/app-function.api.validator.ts
+new file mode 100644
+index 00000000..6e921de4
+--- /dev/null
++++ b/src/application/modules/projects/api/services/project-apps-services/function/app-function.api.validator.ts
+@@ -0,0 +1,78 @@
++import { type AxiosResponse } from "axios";
++import { z } from "zod";
++
++import { BaseMetaApiSchema, parseApiResponse } from "@infrastructure/api";
++
++import { type AppFunction_TestRun_Res } from "./app-function.api.contracts";
++
++const OptionalStringSchema = z
++    .string()
++    .nullish()
++    .transform(value => value ?? "");
++
++/**
++ * A response's body, which may not be text: base64 on the wire, bytes here.
++ */
++const Base64BytesSchema = z
++    .string()
++    .nullish()
++    .transform(value => {
++        const binary = atob(value ?? "");
++        const bytes = new Uint8Array(binary.length);
++        for (let i = 0; i < binary.length; i++) {
++            bytes[i] = binary.charCodeAt(i);
++        }
++        return bytes;
++    });
++
++const ValuesSchema = z
++    .record(z.array(z.string()))
++    .nullish()
++    .transform(value => value ?? {});
++
++const TestRunSchema = z.object({
++    data: z.object({
++        outcome: z.string(),
++        status: z
++            .number()
++            .nullish()
++            .transform(value => value ?? 0),
++        headers: ValuesSchema,
++        body: Base64BytesSchema,
++        bodyTruncated: z
++            .boolean()
++            .nullish()
++            .transform(value => value ?? false),
++        requestId: OptionalStringSchema,
++        durationMs: z
++            .number()
++            .nullish()
++            .transform(value => value ?? 0),
++        logs: OptionalStringSchema,
++        logsTruncated: z
++            .boolean()
++            .nullish()
++            .transform(value => value ?? false),
++        error: OptionalStringSchema,
++        exitCode: z
++            .number()
++            .nullish()
++            .transform(value => value ?? 0),
++        librariesBuilt: z
++            .boolean()
++            .nullish()
++            .transform(value => value ?? false),
++        librariesLog: OptionalStringSchema,
++        lockFiles: z
++            .array(z.object({ path: z.string(), content: OptionalStringSchema }))
++            .nullish()
++            .transform(value => value ?? []),
++    }),
++    meta: BaseMetaApiSchema.nullable(),
++});
++
++export class AppFunctionApiValidator {
++    testRun = (response: AxiosResponse): AppFunction_TestRun_Res => {
++        return parseApiResponse({ response, schema: TestRunSchema });
++    };
++}
+diff --git a/src/application/modules/projects/api/services/project-apps-services/function/index.ts b/src/application/modules/projects/api/services/project-apps-services/function/index.ts
+new file mode 100644
+index 00000000..11454e2e
+--- /dev/null
++++ b/src/application/modules/projects/api/services/project-apps-services/function/index.ts
+@@ -0,0 +1,3 @@
++export * from "./app-function.api.contracts";
++export * from "./app-function.api.validator";
++export * from "./app-function.api";
+diff --git a/src/application/modules/projects/api/services/project-apps-services/index.ts b/src/application/modules/projects/api/services/project-apps-services/index.ts
+index 33703cd2..ea9c702e 100644
+--- a/src/application/modules/projects/api/services/project-apps-services/index.ts
++++ b/src/application/modules/projects/api/services/project-apps-services/index.ts
+@@ -6,6 +6,7 @@ export * from "./deployments";
+ export * from "./deployment-settings";
+ export * from "./env-vars";
+ export * from "./feature-settings";
++export * from "./function";
+ export * from "./clone-settings";
+ export * from "./previews";
+ export * from "./secrets";
+diff --git a/src/application/modules/projects/api/services/project-apps-services/project-apps/project-apps.api.contracts.ts b/src/application/modules/projects/api/services/project-apps-services/project-apps/project-apps.api.contracts.ts
+index 4273dd2d..012e0497 100644
+--- a/src/application/modules/projects/api/services/project-apps-services/project-apps/project-apps.api.contracts.ts
++++ b/src/application/modules/projects/api/services/project-apps-services/project-apps/project-apps.api.contracts.ts
+@@ -4,6 +4,8 @@ import type { EProjectAppStatus } from "~/projects/module-shared/enums";
+ 
+ import { type ApiRequestBase, type ApiResponseBase, type ApiResponsePaginated } from "@infrastructure/api";
+ 
++import { type FunctionSourcePayload } from "../deployment-settings/app-deployment-settings.api.contracts";
++
+ /**
+  * Find many project apps paginated
+  */
+@@ -15,6 +17,8 @@ export type ProjectApps_FindManyPaginated_Req = ApiRequestBase<{
+     env?: string;
+     getStats?: boolean;
+     getChildApps?: boolean;
++    /** Keeps the apps of these categories; an app that declares no kind is a webapp. */
++    category?: string[];
+ }>;
+ 
+ export type ProjectApps_FindManyPaginated_Res = ApiResponsePaginated<ProjectAppDetails>;
+@@ -32,6 +36,23 @@ export type ProjectApps_CreateOne_Res = ApiResponseBase<{
+     id: string;
+ }>;
+ 
++/**
++ * Create a function: an app of kind function, deployed from its source as
++ * soon as it exists.
++ */
++export type ProjectApps_CreateFunction_Req = ApiRequestBase<
++    {
++        projectID: string;
++        source: FunctionSourcePayload;
++    } & Pick<ProjectAppBase, "name" | "env" | "note" | "tags">
++>;
++
++export type ProjectApps_CreateFunction_Res = ApiResponseBase<{
++    id: string;
++    deploymentId: string;
++    taskId: string;
++}>;
++
+ /**
+  * Find one project app by id
+  */
+diff --git a/src/application/modules/projects/api/services/project-apps-services/project-apps/project-apps.api.schemas.ts b/src/application/modules/projects/api/services/project-apps-services/project-apps/project-apps.api.schemas.ts
+index 15f90e04..0a4f44b5 100644
+--- a/src/application/modules/projects/api/services/project-apps-services/project-apps/project-apps.api.schemas.ts
++++ b/src/application/modules/projects/api/services/project-apps-services/project-apps/project-apps.api.schemas.ts
+@@ -37,6 +37,7 @@ export const ProjectAppSchema: z.ZodType<ProjectAppDetails, z.ZodTypeDef, unknow
+         tags: z.array(z.string()),
+         key: z.string(),
+         updateVer: z.number(),
++        category: OptionalStringSchema,
+         stats: ProjectAppStatsSchema.nullable(),
+         parentApp: ProjectAppParentSchema,
+         childApps: z.array(ProjectAppSchema).optional(),
+diff --git a/src/application/modules/projects/api/services/project-apps-services/project-apps/project-apps.api.ts b/src/application/modules/projects/api/services/project-apps-services/project-apps/project-apps.api.ts
+index 2908e588..c8d0ac93 100644
+--- a/src/application/modules/projects/api/services/project-apps-services/project-apps/project-apps.api.ts
++++ b/src/application/modules/projects/api/services/project-apps-services/project-apps/project-apps.api.ts
+@@ -2,6 +2,8 @@ import { Err, Ok, type Result } from "oxide.ts";
+ import { catchError, from, lastValueFrom, map, of } from "rxjs";
+ import type {
+     ProjectAppsApiValidator,
++    ProjectApps_CreateFunction_Req,
++    ProjectApps_CreateFunction_Res,
+     ProjectApps_CreateOne_Req,
+     ProjectApps_CreateOne_Res,
+     ProjectApps_DeleteOne_Req,
+@@ -29,6 +31,8 @@ import { EProjectAppStatus } from "~/projects/module-shared/enums";
+ 
+ import { BaseApi, JsonTransformer, parseApiError } from "@infrastructure/api";
+ 
++import { functionSourceToJson } from "../deployment-settings/app-deployment-settings.api";
++
+ export class ProjectAppsApi extends BaseApi {
+     public constructor(private readonly validator: ProjectAppsApiValidator) {
+         super();
+@@ -41,7 +45,7 @@ export class ProjectAppsApi extends BaseApi {
+         request: ProjectApps_FindManyPaginated_Req,
+         signal?: AbortSignal,
+     ): Promise<Result<ProjectApps_FindManyPaginated_Res, Error>> {
+-        const { projectID, search, pagination, sorting, env, getStats, getChildApps } = request.data;
++        const { projectID, search, pagination, sorting, env, getStats, getChildApps, category } = request.data;
+ 
+         const query = this.queryBuilder.getInstance();
+ 
+@@ -56,6 +60,7 @@ export class ProjectAppsApi extends BaseApi {
+                         ...query.build(),
+                         ...(getStats === undefined ? {} : { getStats }),
+                         ...(getChildApps === undefined ? {} : { getChildApps }),
++                        ...(category && category.length > 0 ? { category: category.join(",") } : {}),
+                     },
+                     signal,
+                 }),
+@@ -128,6 +133,36 @@ export class ProjectAppsApi extends BaseApi {
+         );
+     }
+ 
++    /**
++     * Create a function
++     */
++    async createFunction(
++        request: ProjectApps_CreateFunction_Req,
++        signal?: AbortSignal,
++    ): Promise<Result<ProjectApps_CreateFunction_Res, Error>> {
++        const { projectID, name, env, note, tags, source } = request.data;
++
++        const json = {
++            name: JsonTransformer.string({ data: name }),
++            note: JsonTransformer.string({ data: note }),
++            tags: JsonTransformer.array({ data: tags }),
++            status: EProjectAppStatus.Active,
++            source: functionSourceToJson(source),
++        };
++
++        return lastValueFrom(
++            from(
++                this.client.v1.post(`/projects/${projectID}/${env}/apps/function`, json, {
++                    signal,
++                }),
++            ).pipe(
++                map(this.validator.createFunction),
++                map(res => Ok(res)),
++                catchError(error => of(Err(parseApiError(error)))),
++            ),
++        );
++    }
++
+     /**
+      * Delete a project app
+      */
+diff --git a/src/application/modules/projects/api/services/project-apps-services/project-apps/project-apps.api.validator.ts b/src/application/modules/projects/api/services/project-apps-services/project-apps/project-apps.api.validator.ts
+index 31d8872a..1688ec7f 100644
+--- a/src/application/modules/projects/api/services/project-apps-services/project-apps/project-apps.api.validator.ts
++++ b/src/application/modules/projects/api/services/project-apps-services/project-apps/project-apps.api.validator.ts
+@@ -1,6 +1,7 @@
+ import { type AxiosResponse } from "axios";
+ import { z } from "zod";
+ import type {
++    ProjectApps_CreateFunction_Res,
+     ProjectApps_CreateOne_Res,
+     ProjectApps_Deploy_Res,
+     ProjectApps_DetectPhoto_Res,
+@@ -30,6 +31,18 @@ const CreateOneSchema = z.object({
+     meta: BaseMetaApiSchema.nullable(),
+ });
+ 
++/**
++ * Create function API response schema
++ */
++const CreateFunctionSchema = z.object({
++    data: z.object({
++        id: z.string(),
++        deploymentId: z.string(),
++        taskId: z.string(),
++    }),
++    meta: BaseMetaApiSchema.nullable(),
++});
++
+ /**
+  * Deploy project app API response schema
+  */
+@@ -82,6 +95,16 @@ export class ProjectAppsApiValidator {
+         });
+     };
+ 
++    /**
++     * Validate and transform create function API response
++     */
++    createFunction = (response: AxiosResponse): ProjectApps_CreateFunction_Res => {
++        return parseApiResponse({
++            response,
++            schema: CreateFunctionSchema,
++        });
++    };
++
+     /**
+      * Validate and transform deploy project app API response
+      */
+diff --git a/src/application/modules/projects/data/commands/project-apps/app-function.commands.ts b/src/application/modules/projects/data/commands/project-apps/app-function.commands.ts
+new file mode 100644
+index 00000000..a29fcef6
+--- /dev/null
++++ b/src/application/modules/projects/data/commands/project-apps/app-function.commands.ts
+@@ -0,0 +1,24 @@
++import { type UseMutationOptions, useMutation } from "@tanstack/react-query";
++
++import { useAppFunctionApi } from "../../../api/hooks/project-apps";
++import { type AppFunction_TestRun_Req, type AppFunction_TestRun_Res } from "../../../api/services";
++
++type TestRunReq = AppFunction_TestRun_Req["data"];
++type TestRunRes = AppFunction_TestRun_Res;
++type TestRunOptions = Omit<UseMutationOptions<TestRunRes, Error, TestRunReq>, "mutationFn">;
++
++/**
++ * Test-runs a function: nothing it changes is cached, so nothing is invalidated.
++ */
++function useTestRun(options: TestRunOptions = {}) {
++    const { mutations } = useAppFunctionApi();
++
++    return useMutation({
++        mutationFn: mutations.testRun,
++        ...options,
++    });
++}
++
++export const AppFunctionCommands = Object.freeze({
++    useTestRun,
++});
+diff --git a/src/application/modules/projects/data/commands/project-apps/index.ts b/src/application/modules/projects/data/commands/project-apps/index.ts
+index b0513f61..53813892 100644
+--- a/src/application/modules/projects/data/commands/project-apps/index.ts
++++ b/src/application/modules/projects/data/commands/project-apps/index.ts
+@@ -10,6 +10,7 @@ export * from "./app-container-settings.commands";
+ export * from "./app-container-files.commands";
+ export * from "./app-deployment-settings.commands";
+ export * from "./app-feature-settings.commands";
++export * from "./app-function.commands";
+ export * from "./app-clone-settings.commands";
+ export * from "./app-network-settings.commands";
+ export * from "./app-service-settings.commands";
+diff --git a/src/application/modules/projects/data/commands/project-apps/project-apps.commands.ts b/src/application/modules/projects/data/commands/project-apps/project-apps.commands.ts
+index 5dfe4104..a0b01280 100644
+--- a/src/application/modules/projects/data/commands/project-apps/project-apps.commands.ts
++++ b/src/application/modules/projects/data/commands/project-apps/project-apps.commands.ts
+@@ -1,6 +1,8 @@
+ import { type UseMutationOptions, useMutation, useQueryClient } from "@tanstack/react-query";
+ import { useProjectAppsApi } from "~/projects/api/hooks";
+ import type {
++    ProjectApps_CreateFunction_Req,
++    ProjectApps_CreateFunction_Res,
+     ProjectApps_CreateOne_Req,
+     ProjectApps_CreateOne_Res,
+     ProjectApps_DeleteOne_Req,
+@@ -51,6 +53,33 @@ function useCreateOne({ onSuccess, ...options }: CreateOneOptions = {}) {
+     });
+ }
+ 
++/**
++ * Create a function command
++ */
++type CreateFunctionReq = ProjectApps_CreateFunction_Req["data"];
++type CreateFunctionRes = ProjectApps_CreateFunction_Res;
++type CreateFunctionOptions = Omit<UseMutationOptions<CreateFunctionRes, Error, CreateFunctionReq>, "mutationFn">;
++
++function useCreateFunction({ onSuccess, ...options }: CreateFunctionOptions = {}) {
++    const { mutations } = useProjectAppsApi();
++
++    const queryClient = useQueryClient();
++
++    return useMutation({
++        mutationFn: mutations.createFunction,
++        onSuccess: (response, ...rest) => {
++            void queryClient.invalidateQueries({
++                queryKey: [QK["projects.apps.$.find-many-paginated"]],
++            });
++
++            if (onSuccess) {
++                onSuccess(response, ...rest);
++            }
++        },
++        ...options,
++    });
++}
++
+ /**
+  * Delete a project app command
+  */
+@@ -260,6 +289,7 @@ function useDetectPhoto({ onSuccess, ...options }: DetectPhotoOptions = {}) {
+ 
+ export const ProjectAppsCommands = Object.freeze({
+     useCreateOne,
++    useCreateFunction,
+     useDeleteOne,
+     useUpdateOne,
+     useUpdateStatus,
+diff --git a/src/application/modules/projects/domain/apps/base/app.details.entity.ts b/src/application/modules/projects/domain/apps/base/app.details.entity.ts
+index c065d513..baed0755 100644
+--- a/src/application/modules/projects/domain/apps/base/app.details.entity.ts
++++ b/src/application/modules/projects/domain/apps/base/app.details.entity.ts
+@@ -3,6 +3,8 @@ import type { ProjectAppBase, ProjectAppBaseRef } from "./app.base.entity";
+ export interface ProjectAppDetails extends ProjectAppBase {
+     key: string;
+     updateVer: number;
++    /** What the app is - "function", "database" - empty when it declares no kind. */
++    category: string;
+     accessLinks: string[];
+     parentApp: ProjectAppBaseRef | null;
+     stats: {
+diff --git a/src/application/modules/projects/domain/apps/deployment-settings/app-deployment-settings.entity.ts b/src/application/modules/projects/domain/apps/deployment-settings/app-deployment-settings.entity.ts
+index 7bb49db4..0cde59d9 100644
+--- a/src/application/modules/projects/domain/apps/deployment-settings/app-deployment-settings.entity.ts
++++ b/src/application/modules/projects/domain/apps/deployment-settings/app-deployment-settings.entity.ts
+@@ -6,6 +6,8 @@ import {
+ } from "~/projects/module-shared/enums";
+ import { type SettingsBaseEntity } from "~/settings/domain";
+ 
++import { type FunctionSource } from "../function";
++
+ export type DeploymentDockerfile = {
+     source: EDockerfileSource;
+     path: string;
+@@ -64,4 +66,9 @@ export type BaseDeploymentSettings = {
+     updateVer: number;
+ };
+ 
+-export type AppDeploymentSettings = RepoMethod | ImageMethod;
++export type FunctionMethod = BaseDeploymentSettings & {
++    activeMethod: typeof EAppDeploymentMethod.Function;
++    functionSource: FunctionSource;
++};
++
++export type AppDeploymentSettings = RepoMethod | ImageMethod | FunctionMethod;
+diff --git a/src/application/modules/projects/domain/apps/function/app-function.entity.ts b/src/application/modules/projects/domain/apps/function/app-function.entity.ts
+new file mode 100644
+index 00000000..b484c481
+--- /dev/null
++++ b/src/application/modules/projects/domain/apps/function/app-function.entity.ts
+@@ -0,0 +1,86 @@
++import type { EFunctionRuntime } from "~/projects/module-shared/enums";
++import type { SettingsBaseEntity } from "~/settings/domain";
++
++/**
++ * The kind category of an app that is a function.
++ */
++export const APP_CATEGORY_FUNCTION = "function";
++
++export type FunctionFile = {
++    path: string;
++    content: string;
++};
++
++export type FunctionRepoCode = {
++    repoType: string;
++    repoUrl: string;
++    repoRef: string;
++    commitHash: string;
++    credentials: SettingsBaseEntity | null;
++};
++
++/**
++ * What a function is deployed from: its code, inline or in a repository, the
++ * runtime that runs it, and the limits of one call.
++ */
++export type FunctionSource = {
++    runtime: EFunctionRuntime;
++    contract: string;
++    entrypoint: { file: string; handler: string };
++    code: {
++        inline: { files: FunctionFile[] } | null;
++        repo: FunctionRepoCode | null;
++        dir: string;
++    };
++    systemPackages: string[];
++    /** A duration, as "30s" or "2m". */
++    timeout: string;
++    maxConcurrency: number;
++    /** A size, as "6MB". */
++    maxBodySize: string;
++    pushToRegistry: SettingsBaseEntity | null;
++};
++
++/**
++ * The request a test run calls the function with. Its body is text.
++ */
++export type FunctionTestRequest = {
++    method: string;
++    path: string;
++    query: Record<string, string[]>;
++    headers: Record<string, string[]>;
++    body: string;
++};
++
++/**
++ * How a test run ended: as the runtime says (ok, error, timeout), or as
++ * HivePaaS saw it.
++ */
++export type FunctionTestOutcome =
++    | "ok"
++    | "error"
++    | "timeout"
++    | "libraries-failed"
++    | "not-loaded"
++    | "bad-request"
++    | "killed"
++    | "no-result";
++
++export type FunctionTestRunResult = {
++    /** A FunctionTestOutcome, or an outcome a later backend adds. */
++    outcome: string;
++    status: number;
++    headers: Record<string, string[]>;
++    /** The response's body, decoded from base64. */
++    body: Uint8Array;
++    bodyTruncated: boolean;
++    requestId: string;
++    durationMs: number;
++    logs: string;
++    logsTruncated: boolean;
++    error: string;
++    exitCode: number;
++    librariesBuilt: boolean;
++    librariesLog: string;
++    lockFiles: FunctionFile[];
++};
+diff --git a/src/application/modules/projects/domain/apps/function/index.ts b/src/application/modules/projects/domain/apps/function/index.ts
+new file mode 100644
+index 00000000..9a833ab6
+--- /dev/null
++++ b/src/application/modules/projects/domain/apps/function/index.ts
+@@ -0,0 +1 @@
++export * from "./app-function.entity";
+diff --git a/src/application/modules/projects/domain/apps/index.ts b/src/application/modules/projects/domain/apps/index.ts
+index 63ca8a76..ab82168d 100644
+--- a/src/application/modules/projects/domain/apps/index.ts
++++ b/src/application/modules/projects/domain/apps/index.ts
+@@ -4,6 +4,7 @@ export * from "./data-file";
+ export * from "./container-settings";
+ export * from "./deployment";
+ export * from "./deployment-settings";
++export * from "./function";
+ export * from "./feature-settings";
+ export * from "./clone-settings";
+ export * from "./health-check";
+diff --git a/src/application/modules/projects/module-shared/enums/e.app-deployment-method.ts b/src/application/modules/projects/module-shared/enums/e.app-deployment-method.ts
+index d8733f1c..f66409e2 100644
+--- a/src/application/modules/projects/module-shared/enums/e.app-deployment-method.ts
++++ b/src/application/modules/projects/module-shared/enums/e.app-deployment-method.ts
+@@ -1,6 +1,7 @@
+ export const EAppDeploymentMethod = {
+     Repo: "repo",
+     Image: "image",
++    Function: "function",
+ } as const;
+ 
+ export type EAppDeploymentMethod = (typeof EAppDeploymentMethod)[keyof typeof EAppDeploymentMethod];
+diff --git a/src/application/modules/projects/module-shared/enums/e.function-runtime.ts b/src/application/modules/projects/module-shared/enums/e.function-runtime.ts
+new file mode 100644
+index 00000000..158c1dfb
+--- /dev/null
++++ b/src/application/modules/projects/module-shared/enums/e.function-runtime.ts
+@@ -0,0 +1,32 @@
++/**
++ * The runtimes a function runs on, as HivePaaS releases their images.
++ */
++export const EFunctionRuntime = {
++    Node24: "node24",
++    Python313: "python313",
++    Go127: "go127",
++} as const;
++
++export type EFunctionRuntime = (typeof EFunctionRuntime)[keyof typeof EFunctionRuntime];
++
++export const ALL_FUNCTION_RUNTIMES: EFunctionRuntime[] = [
++    EFunctionRuntime.Node24,
++    EFunctionRuntime.Python313,
++    EFunctionRuntime.Go127,
++];
++
++export const FUNCTION_RUNTIME_LABELS: Record<EFunctionRuntime, string> = {
++    [EFunctionRuntime.Node24]: "Node.js 24",
++    [EFunctionRuntime.Python313]: "Python 3.13",
++    [EFunctionRuntime.Go127]: "Go 1.27",
++};
++
++/**
++ * Where the runtime finds the handler when a function does not say: the file
++ * (for Go, the package's directory) and the handler's name.
++ */
++export const FUNCTION_RUNTIME_DEFAULT_ENTRYPOINT: Record<EFunctionRuntime, { file: string; handler: string }> = {
++    [EFunctionRuntime.Node24]: { file: "index.js", handler: "default" },
++    [EFunctionRuntime.Python313]: { file: "main.py", handler: "handler" },
++    [EFunctionRuntime.Go127]: { file: ".", handler: "Handle" },
++};
+diff --git a/src/application/modules/projects/module-shared/enums/index.ts b/src/application/modules/projects/module-shared/enums/index.ts
+index f9bab337..16bb9302 100644
+--- a/src/application/modules/projects/module-shared/enums/index.ts
++++ b/src/application/modules/projects/module-shared/enums/index.ts
+@@ -3,6 +3,7 @@ export * from "./e.app-build-tool";
+ export * from "./e.app-deployment-method";
+ export * from "./e.app-deployment-status";
+ export * from "./e.app-deployment-trigger-source";
++export * from "./e.function-runtime";
+ export * from "./e.app-health-check-grpc-status";
+ export * from "./e.app-health-check-grpc-version";
+ export * from "./e.app-health-check-rest-method";
+diff --git a/src/application/modules/projects/routes/single-project/single-app/configuration/deployment-settings/form/app-config-deployment-settings.form.com.tsx b/src/application/modules/projects/routes/single-project/single-app/configuration/deployment-settings/form/app-config-deployment-settings.form.com.tsx
+index ccb3255a..9e55019b 100644
+--- a/src/application/modules/projects/routes/single-project/single-app/configuration/deployment-settings/form/app-config-deployment-settings.form.com.tsx
++++ b/src/application/modules/projects/routes/single-project/single-app/configuration/deployment-settings/form/app-config-deployment-settings.form.com.tsx
+@@ -2,7 +2,7 @@ import React, { type PropsWithChildren, useImperativeHandle } from "react";
+ 
+ import { zodResolver } from "@hookform/resolvers/zod";
+ import { type FieldErrors, FormProvider, useForm } from "react-hook-form";
+-import { type AppDeploymentSettings } from "~/projects/domain";
++import { type ImageMethod, type RepoMethod } from "~/projects/domain";
+ import { EAppDeploymentMethod } from "~/projects/module-shared/enums";
+ 
+ import { ContentBlock } from "@application/shared/components";
+@@ -27,7 +27,7 @@ import { type AppConfigDeploymentSettingsFormRef } from "../types";
+ type SchemaInput = AppConfigDeploymentSettingsFormSchemaInput;
+ type SchemaOutput = AppConfigDeploymentSettingsFormSchemaOutput;
+ 
+-function mapDefaultValues(data: AppDeploymentSettings): SchemaInput {
++function mapDefaultValues(data: RepoMethod | ImageMethod): SchemaInput {
+     const base = {
+         command: data.command ?? "",
+         workingDir: data.workingDir ?? "",
+@@ -214,7 +214,8 @@ export function AppConfigDeploymentSettingsForm({ ref, defaultValues, onSubmit,
+ 
+ type Props = PropsWithChildren<{
+     ref?: React.Ref<AppConfigDeploymentSettingsFormRef>;
+-    defaultValues?: AppDeploymentSettings;
++    /** A repository's or an image's settings: a function's have a form of their own. */
++    defaultValues?: RepoMethod | ImageMethod;
+     onSubmit: (values: SchemaOutput) => void;
+     readOnly?: boolean;
+ }>;
+diff --git a/src/application/modules/projects/routes/single-project/single-app/configuration/deployment-settings/route/app-config-deployment-settings.route.com.tsx b/src/application/modules/projects/routes/single-project/single-app/configuration/deployment-settings/route/app-config-deployment-settings.route.com.tsx
+index 0fa21379..dc2cc2dc 100644
+--- a/src/application/modules/projects/routes/single-project/single-app/configuration/deployment-settings/route/app-config-deployment-settings.route.com.tsx
++++ b/src/application/modules/projects/routes/single-project/single-app/configuration/deployment-settings/route/app-config-deployment-settings.route.com.tsx
+@@ -149,7 +149,9 @@ export function AppConfigDeploymentSettingsRoute() {
+         <div className="flex flex-col gap-4">
+             <AppConfigDeploymentSettingsForm
+                 ref={formRef}
+-                defaultValues={data?.data}
++                defaultValues={
++                    data?.data && data.data.activeMethod !== EAppDeploymentMethod.Function ? data.data : undefined
++                }
+                 onSubmit={handleSubmit}
+                 readOnly={!canWrite}
+             >

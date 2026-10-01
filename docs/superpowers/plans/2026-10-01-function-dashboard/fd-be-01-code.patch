@@ -1,0 +1,234 @@
+diff --git a/docs/openapi/swagger.json b/docs/openapi/swagger.json
+index 254d3387..f590bb10 100644
+--- a/docs/openapi/swagger.json
++++ b/docs/openapi/swagger.json
+@@ -3255,6 +3255,13 @@
+           "schema" : {
+             "type" : "string"
+           }
++        }, {
++          "description" : "`category=function`, or `category=webapp,database`; no kind is webapp",
++          "in" : "query",
++          "name" : "category",
++          "schema" : {
++            "type" : "string"
++          }
+         }, {
+           "description" : "`search=<target> (support *)`",
+           "in" : "query",
+@@ -14926,6 +14933,13 @@
+           "schema" : {
+             "type" : "string"
+           }
++        }, {
++          "description" : "`category=function`, or `category=webapp,database`; no kind is webapp",
++          "in" : "query",
++          "name" : "category",
++          "schema" : {
++            "type" : "string"
++          }
+         }, {
+           "description" : "`search=<target> (support *)`",
+           "in" : "query",
+@@ -53361,6 +53375,10 @@
+             },
+             "type" : "array"
+           },
++          "category" : {
++            "description" : "Category is what the app is - function, database, webapp - and is empty\nfor an app that declares no kind.",
++            "type" : "string"
++          },
+           "childApps" : {
+             "items" : {
+               "$ref" : "#/components/schemas/appdto.AppResp"
+@@ -53432,7 +53450,7 @@
+             "type" : "string"
+           }
+         },
+-        "required" : [ "accessLinks", "childApps", "createdAt", "engine", "env", "id", "key", "logicalChildApps", "name", "note", "parentApp", "photo", "project", "stats", "status", "tags", "updateVer", "updatedAt" ],
++        "required" : [ "accessLinks", "category", "childApps", "createdAt", "engine", "env", "id", "key", "logicalChildApps", "name", "note", "parentApp", "photo", "project", "stats", "status", "tags", "updateVer", "updatedAt" ],
+         "type" : "object"
+       },
+       "appdto.AppStatsResp" : {
+diff --git a/hivepaas_app/interface/api/handler/apphandler/get_in_env.go b/hivepaas_app/interface/api/handler/apphandler/get_in_env.go
+index 93967a84..2017e1fc 100644
+--- a/hivepaas_app/interface/api/handler/apphandler/get_in_env.go
++++ b/hivepaas_app/interface/api/handler/apphandler/get_in_env.go
+@@ -19,6 +19,7 @@ import (
+ // @Param   projectID path string true "project ID"
+ // @Param   projectEnv path string true "project Env"
+ // @Param   status query string false "`status=<target>`"
++// @Param   category query string false "`category=function`, or `category=webapp,database`; no kind is webapp"
+ // @Param   search query string false "`search=<target> (support *)`"
+ // @Param   pageOffset query int false "`pageOffset=offset`"
+ // @Param   pageLimit query int false "`pageLimit=limit`"
+diff --git a/hivepaas_app/interface/api/handler/apphandler/get_in_project.go b/hivepaas_app/interface/api/handler/apphandler/get_in_project.go
+index f231b6df..72c2dd42 100644
+--- a/hivepaas_app/interface/api/handler/apphandler/get_in_project.go
++++ b/hivepaas_app/interface/api/handler/apphandler/get_in_project.go
+@@ -18,6 +18,7 @@ import (
+ // @Id      listProjectApp
+ // @Param   projectID path string true "project ID"
+ // @Param   status query string false "`status=<target>`"
++// @Param   category query string false "`category=function`, or `category=webapp,database`; no kind is webapp"
+ // @Param   search query string false "`search=<target> (support *)`"
+ // @Param   pageOffset query int false "`pageOffset=offset`"
+ // @Param   pageLimit query int false "`pageLimit=limit`"
+diff --git a/hivepaas_app/interface/mcp/tools_endpoints.go b/hivepaas_app/interface/mcp/tools_endpoints.go
+index 11e4d873..2026d35a 100644
+--- a/hivepaas_app/interface/mcp/tools_endpoints.go
++++ b/hivepaas_app/interface/mcp/tools_endpoints.go
+@@ -70,14 +70,16 @@ func getEndpoints() []getEndpoint { //nolint:funlen // a table
+ 		{
+ 			name: "list_apps", title: "List an env's apps",
+ 			description: "GET /projects/{project}/{env}/apps. Lists the apps of one env of a project: each " +
+-				"app's key and name, status, engine (the database or cache it is, if any) and links. An app " +
+-				"made by another - a template's component or dependency, a preview - is listed inside it, " +
+-				"under childApps and logicalChildApps, when getChildApps is true.",
++				"app's key and name, status, category (a function, a database...), engine (the database or " +
++				"cache it is, if any) and links. An app made by another - a template's component or " +
++				"dependency, a preview - is listed inside it, under childApps and logicalChildApps, when " +
++				"getChildApps is true.",
+ 			paths: map[under]string{underEnv: "/apps"},
+ 			query: &appdto.ListAppReq{},
+ 			params: pagingParams(map[string]string{
+ 				paramSearch:    descSearchNameNote,
+ 				paramStatus:    "only apps in these states: " + statusValues(base.AllAppStatuses),
++				"category":     "only apps of these categories, " + statusValues(base.AllAppCategories) + "; no kind is webapp",
+ 				"parentId":     "only the apps made by the app of this id, such as its previews",
+ 				paramGetStats:  "true to answer each app's running, desired and completed containers, under stats",
+ 				"getChildApps": "true to answer the apps each app made, inside it",
+diff --git a/hivepaas_app/usecase/appuc/appdto/get.go b/hivepaas_app/usecase/appuc/appdto/get.go
+index a59396c4..0be34372 100644
+--- a/hivepaas_app/usecase/appuc/appdto/get.go
++++ b/hivepaas_app/usecase/appuc/appdto/get.go
+@@ -54,6 +54,9 @@ type AppResp struct {
+ 	// Engine is what the app says it runs - postgres, mysql, n8n - and is empty
+ 	// for an app that was not created from a template, which declares no kind.
+ 	Engine string `json:"engine,omitempty" copy:"-"` // manual copy, from the kind setting
++	// Category is what the app is - function, database, webapp - and is empty
++	// for an app that declares no kind.
++	Category base.AppCategory `json:"category,omitempty" copy:"-"` // manual copy, from the kind setting
+ 
+ 	ChildApps        []*AppResp `json:"childApps,omitempty" copy:"-"`
+ 	LogicalChildApps []*AppResp `json:"logicalChildApps,omitempty" copy:"-"`
+@@ -106,6 +109,7 @@ func TransformApp(app *entity.App, input *AppTransformationInput) (resp *AppResp
+ 	resp.Stats = TransformAppStats(app, input)
+ 	resp.AccessLinks = TransformAppAccessLinks(app)
+ 	resp.Engine = TransformAppEngine(app)
++	resp.Category = TransformAppCategory(app)
+ 	if app.ParentID != "" {
+ 		resp.ParentApp = gofn.Coalesce(TransformAppBase(app.ParentApp), &AppBaseResp{ID: app.ParentID})
+ 	} else {
+@@ -158,6 +162,20 @@ func TransformAppEngine(app *entity.App) string {
+ 	return kind.Engine
+ }
+ 
++// TransformAppCategory reads the category off the app's kind setting, and
++// answers empty when that setting was not loaded or the app has none.
++func TransformAppCategory(app *entity.App) base.AppCategory {
++	setting := app.GetSettingByType(base.SettingTypeAppKind)
++	if setting == nil {
++		return ""
++	}
++	kind, err := setting.AsAppKindSettings()
++	if err != nil {
++		return ""
++	}
++	return kind.Category
++}
++
+ func TransformAppAccessLinks(app *entity.App) (resp []string) {
+ 	setting := app.GetSettingByType(base.SettingTypeAppRouting)
+ 	if setting == nil {
+diff --git a/hivepaas_app/usecase/appuc/appdto/list.go b/hivepaas_app/usecase/appuc/appdto/list.go
+index 6bd278f3..89b235ff 100644
+--- a/hivepaas_app/usecase/appuc/appdto/list.go
++++ b/hivepaas_app/usecase/appuc/appdto/list.go
+@@ -14,9 +14,12 @@ type ListAppReq struct {
+ 	ProjectEnvID string           `json:"-"`
+ 	ParentID     string           `json:"-" mapstructure:"parentId"`
+ 	Status       []base.AppStatus `json:"-" mapstructure:"status"`
+-	Search       string           `json:"-" mapstructure:"search"`
+-	GetStats     bool             `json:"-" mapstructure:"getStats"`
+-	GetChildApps bool             `json:"-" mapstructure:"getChildApps"`
++	// Category keeps the apps of these categories; an app that declares no kind
++	// is a webapp.
++	Category     []base.AppCategory `json:"-" mapstructure:"category"`
++	Search       string             `json:"-" mapstructure:"search"`
++	GetStats     bool               `json:"-" mapstructure:"getStats"`
++	GetChildApps bool               `json:"-" mapstructure:"getChildApps"`
+ 
+ 	Paging basedto.Paging `json:"-"`
+ }
+@@ -37,6 +40,8 @@ func (req *ListAppReq) Validate() hperrors.ValidationErrors {
+ 	validators = append(validators, basedto.ValidateID(&req.ParentID, false, "parentId")...)
+ 	validators = append(validators, basedto.ValidateSlice(req.Status, true, 0,
+ 		base.AllAppStatuses, "status")...)
++	validators = append(validators, basedto.ValidateSlice(req.Category, true, 0,
++		base.AllAppCategories, "category")...)
+ 	return hperrors.NewValidationErrors(vld.Validate(validators...))
+ }
+ 
+diff --git a/hivepaas_app/usecase/appuc/get.go b/hivepaas_app/usecase/appuc/get.go
+index 354e37f9..67d1b576 100644
+--- a/hivepaas_app/usecase/appuc/get.go
++++ b/hivepaas_app/usecase/appuc/get.go
+@@ -29,8 +29,9 @@ func (uc *UC) GetApp(
+ 			bunex.SelectOrder("index"),
+ 		),
+ 		bunex.SelectRelation("Settings",
+-			// NOTE: load routing settings to extract active domain names of the app
+-			bunex.SelectWhere("setting.type = ?", base.SettingTypeAppRouting),
++			// NOTE: load routing settings to extract active domain names of the app,
++			// and the kind to say what the app is
++			bunex.SelectWhereIn("setting.type IN (?)", base.SettingTypeAppRouting, base.SettingTypeAppKind),
+ 		),
+ 	)
+ 	if err != nil {
+diff --git a/hivepaas_app/usecase/appuc/list.go b/hivepaas_app/usecase/appuc/list.go
+index 636c67bb..cdb977a1 100644
+--- a/hivepaas_app/usecase/appuc/list.go
++++ b/hivepaas_app/usecase/appuc/list.go
+@@ -2,10 +2,12 @@ package appuc
+ 
+ import (
+ 	"context"
++	"slices"
+ 
+ 	"github.com/moby/moby/api/types/swarm"
+ 	"github.com/moby/moby/client"
+ 	"github.com/tiendc/gofn"
++	"github.com/uptrace/bun"
+ 
+ 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
+ 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
+@@ -83,6 +85,9 @@ func (uc *UC) ListApp(
+ 			bunex.SelectWhereIn("app.status IN (?)", req.Status...),
+ 		)
+ 	}
++	if len(req.Category) > 0 {
++		listOpts = append(listOpts, appCategoryFilter(req.Category))
++	}
+ 
+ 	// Filter by search keyword
+ 	if req.Search != "" {
+@@ -214,3 +219,18 @@ func (uc *UC) loadAppSwarmServices(
+ 
+ 	return resp, nil
+ }
++
++// appCategoryFilter keeps the apps of the categories given, by their kind
++// setting. An app without one is a webapp, as its kind settings answer it.
++func appCategoryFilter(categories []base.AppCategory) bunex.SelectQueryOption {
++	const kindOf = "SELECT 1 FROM settings AS kind WHERE kind.object_id = app.id AND kind.type = ? " +
++		"AND kind.deleted_at IS NULL"
++	opts := []bunex.SelectQueryOption{
++		bunex.SelectWhere("EXISTS ("+kindOf+" AND kind.data->>'category' IN (?))",
++			base.SettingTypeAppKind, bun.List(categories)),
++	}
++	if slices.Contains(categories, base.AppCategoryWebapp) {
++		opts = append(opts, bunex.SelectWhereOr("NOT EXISTS ("+kindOf+")", base.SettingTypeAppKind))
++	}
++	return bunex.SelectWhereGroup(opts...)
++}

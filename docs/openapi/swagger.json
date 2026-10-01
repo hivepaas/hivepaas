@@ -3256,6 +3256,13 @@
             "type" : "string"
           }
         }, {
+          "description" : "`category=function`, or `category=webapp,database`; no kind is webapp",
+          "in" : "query",
+          "name" : "category",
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
           "description" : "`search=<target> (support *)`",
           "in" : "query",
           "name" : "search",
@@ -14923,6 +14930,13 @@
           "description" : "`status=<target>`",
           "in" : "query",
           "name" : "status",
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "`category=function`, or `category=webapp,database`; no kind is webapp",
+          "in" : "query",
+          "name" : "category",
           "schema" : {
             "type" : "string"
           }
@@ -53361,6 +53375,10 @@
             },
             "type" : "array"
           },
+          "category" : {
+            "description" : "Category is what the app is - function, database, webapp - and is empty\nfor an app that declares no kind.",
+            "type" : "string"
+          },
           "childApps" : {
             "items" : {
               "$ref" : "#/components/schemas/appdto.AppResp"
@@ -53432,7 +53450,7 @@
             "type" : "string"
           }
         },
-        "required" : [ "accessLinks", "childApps", "createdAt", "engine", "env", "id", "key", "logicalChildApps", "name", "note", "parentApp", "photo", "project", "stats", "status", "tags", "updateVer", "updatedAt" ],
+        "required" : [ "accessLinks", "category", "childApps", "createdAt", "engine", "env", "id", "key", "logicalChildApps", "name", "note", "parentApp", "photo", "project", "stats", "status", "tags", "updateVer", "updatedAt" ],
         "type" : "object"
       },
       "appdto.AppStatsResp" : {

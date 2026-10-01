@@ -2,10 +2,12 @@ package appuc
 
 import (
 	"context"
+	"slices"
 
 	"github.com/moby/moby/api/types/swarm"
 	"github.com/moby/moby/client"
 	"github.com/tiendc/gofn"
+	"github.com/uptrace/bun"
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
@@ -82,6 +84,9 @@ func (uc *UC) ListApp(
 		listOpts = append(listOpts,
 			bunex.SelectWhereIn("app.status IN (?)", req.Status...),
 		)
+	}
+	if len(req.Category) > 0 {
+		listOpts = append(listOpts, appCategoryFilter(req.Category))
 	}
 
 	// Filter by search keyword
@@ -213,4 +218,19 @@ func (uc *UC) loadAppSwarmServices(
 	}
 
 	return resp, nil
+}
+
+// appCategoryFilter keeps the apps of the categories given, by their kind
+// setting. An app without one is a webapp, as its kind settings answer it.
+func appCategoryFilter(categories []base.AppCategory) bunex.SelectQueryOption {
+	const kindOf = "SELECT 1 FROM settings AS kind WHERE kind.object_id = app.id AND kind.type = ? " +
+		"AND kind.deleted_at IS NULL"
+	opts := []bunex.SelectQueryOption{
+		bunex.SelectWhere("EXISTS ("+kindOf+" AND kind.data->>'category' IN (?))",
+			base.SettingTypeAppKind, bun.List(categories)),
+	}
+	if slices.Contains(categories, base.AppCategoryWebapp) {
+		opts = append(opts, bunex.SelectWhereOr("NOT EXISTS ("+kindOf+")", base.SettingTypeAppKind))
+	}
+	return bunex.SelectWhereGroup(opts...)
 }

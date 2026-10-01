@@ -54,6 +54,9 @@ type AppResp struct {
 	// Engine is what the app says it runs - postgres, mysql, n8n - and is empty
 	// for an app that was not created from a template, which declares no kind.
 	Engine string `json:"engine,omitempty" copy:"-"` // manual copy, from the kind setting
+	// Category is what the app is - function, database, webapp - and is empty
+	// for an app that declares no kind.
+	Category base.AppCategory `json:"category,omitempty" copy:"-"` // manual copy, from the kind setting
 
 	ChildApps        []*AppResp `json:"childApps,omitempty" copy:"-"`
 	LogicalChildApps []*AppResp `json:"logicalChildApps,omitempty" copy:"-"`
@@ -106,6 +109,7 @@ func TransformApp(app *entity.App, input *AppTransformationInput) (resp *AppResp
 	resp.Stats = TransformAppStats(app, input)
 	resp.AccessLinks = TransformAppAccessLinks(app)
 	resp.Engine = TransformAppEngine(app)
+	resp.Category = TransformAppCategory(app)
 	if app.ParentID != "" {
 		resp.ParentApp = gofn.Coalesce(TransformAppBase(app.ParentApp), &AppBaseResp{ID: app.ParentID})
 	} else {
@@ -156,6 +160,20 @@ func TransformAppEngine(app *entity.App) string {
 		return ""
 	}
 	return kind.Engine
+}
+
+// TransformAppCategory reads the category off the app's kind setting, and
+// answers empty when that setting was not loaded or the app has none.
+func TransformAppCategory(app *entity.App) base.AppCategory {
+	setting := app.GetSettingByType(base.SettingTypeAppKind)
+	if setting == nil {
+		return ""
+	}
+	kind, err := setting.AsAppKindSettings()
+	if err != nil {
+		return ""
+	}
+	return kind.Category
 }
 
 func TransformAppAccessLinks(app *entity.App) (resp []string) {

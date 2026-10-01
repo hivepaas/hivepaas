@@ -70,14 +70,16 @@ func getEndpoints() []getEndpoint { //nolint:funlen // a table
 		{
 			name: "list_apps", title: "List an env's apps",
 			description: "GET /projects/{project}/{env}/apps. Lists the apps of one env of a project: each " +
-				"app's key and name, status, engine (the database or cache it is, if any) and links. An app " +
-				"made by another - a template's component or dependency, a preview - is listed inside it, " +
-				"under childApps and logicalChildApps, when getChildApps is true.",
+				"app's key and name, status, category (a function, a database...), engine (the database or " +
+				"cache it is, if any) and links. An app made by another - a template's component or " +
+				"dependency, a preview - is listed inside it, under childApps and logicalChildApps, when " +
+				"getChildApps is true.",
 			paths: map[under]string{underEnv: "/apps"},
 			query: &appdto.ListAppReq{},
 			params: pagingParams(map[string]string{
 				paramSearch:    descSearchNameNote,
 				paramStatus:    "only apps in these states: " + statusValues(base.AllAppStatuses),
+				"category":     "only apps of these categories, " + statusValues(base.AllAppCategories) + "; no kind is webapp",
 				"parentId":     "only the apps made by the app of this id, such as its previews",
 				paramGetStats:  "true to answer each app's running, desired and completed containers, under stats",
 				"getChildApps": "true to answer the apps each app made, inside it",

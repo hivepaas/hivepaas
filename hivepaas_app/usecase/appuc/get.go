@@ -29,8 +29,9 @@ func (uc *UC) GetApp(
 			bunex.SelectOrder("index"),
 		),
 		bunex.SelectRelation("Settings",
-			// NOTE: load routing settings to extract active domain names of the app
-			bunex.SelectWhere("setting.type = ?", base.SettingTypeAppRouting),
+			// NOTE: load routing settings to extract active domain names of the app,
+			// and the kind to say what the app is
+			bunex.SelectWhereIn("setting.type IN (?)", base.SettingTypeAppRouting, base.SettingTypeAppKind),
 		),
 	)
 	if err != nil {

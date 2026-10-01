@@ -19,6 +19,7 @@ import (
 // @Param   projectID path string true "project ID"
 // @Param   projectEnv path string true "project Env"
 // @Param   status query string false "`status=<target>`"
+// @Param   category query string false "`category=function`, or `category=webapp,database`; no kind is webapp"
 // @Param   search query string false "`search=<target> (support *)`"
 // @Param   pageOffset query int false "`pageOffset=offset`"
 // @Param   pageLimit query int false "`pageLimit=limit`"

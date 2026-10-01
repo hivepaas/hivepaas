@@ -14,9 +14,12 @@ type ListAppReq struct {
 	ProjectEnvID string           `json:"-"`
 	ParentID     string           `json:"-" mapstructure:"parentId"`
 	Status       []base.AppStatus `json:"-" mapstructure:"status"`
-	Search       string           `json:"-" mapstructure:"search"`
-	GetStats     bool             `json:"-" mapstructure:"getStats"`
-	GetChildApps bool             `json:"-" mapstructure:"getChildApps"`
+	// Category keeps the apps of these categories; an app that declares no kind
+	// is a webapp.
+	Category     []base.AppCategory `json:"-" mapstructure:"category"`
+	Search       string             `json:"-" mapstructure:"search"`
+	GetStats     bool               `json:"-" mapstructure:"getStats"`
+	GetChildApps bool               `json:"-" mapstructure:"getChildApps"`
 
 	Paging basedto.Paging `json:"-"`
 }
@@ -37,6 +40,8 @@ func (req *ListAppReq) Validate() hperrors.ValidationErrors {
 	validators = append(validators, basedto.ValidateID(&req.ParentID, false, "parentId")...)
 	validators = append(validators, basedto.ValidateSlice(req.Status, true, 0,
 		base.AllAppStatuses, "status")...)
+	validators = append(validators, basedto.ValidateSlice(req.Category, true, 0,
+		base.AllAppCategories, "category")...)
 	return hperrors.NewValidationErrors(vld.Validate(validators...))
 }
 

@@ -10,12 +10,13 @@ import (
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/unit"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/functionservice/functioninvoke"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/imagebuildservice"
 )
 
 const (
 	// ResultMarker starts the last line invoke writes: its result.
-	ResultMarker = "#hivepaas-result "
+	ResultMarker = functioninvoke.ResultMarker
 	// RuntimeUID is the runtime images' user, who owns /app: the code a test
 	// run copies in is that user's, since npm and go mod tidy write there.
 	RuntimeUID = 10001
@@ -57,13 +58,7 @@ const (
 )
 
 // Request is the request a test run calls the handler with, as invoke reads it.
-type Request struct {
-	Method  string              `json:"method,omitempty"`
-	Path    string              `json:"path,omitempty"`
-	Query   map[string][]string `json:"query,omitempty"`
-	Headers map[string][]string `json:"headers,omitempty"`
-	Body    []byte              `json:"body,omitempty"`
-}
+type Request = functioninvoke.Request
 
 // RunReq is a test run on the node it runs on.
 type RunReq struct {

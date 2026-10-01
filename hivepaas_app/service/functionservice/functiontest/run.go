@@ -25,6 +25,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/fileutil"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/functionservice/functionbuild"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/functionservice/functioninvoke"
 	"github.com/hivepaas/hivepaas/services/docker"
 )
 
@@ -336,18 +337,11 @@ func (r *Runner) readOutput(ctx context.Context, containerID string, resp *RunRe
 }
 
 func readResult(line string, resp *RunResp) error {
-	var result struct {
-		Status     int                 `json:"status"`
-		Headers    map[string][]string `json:"headers"`
-		Body       []byte              `json:"body"`
-		RequestID  string              `json:"requestId"`
-		DurationMs float64             `json:"durationMs"`
-		Outcome    Outcome             `json:"outcome"`
-	}
-	if err := json.Unmarshal([]byte(line), &result); err != nil {
+	result, err := functioninvoke.ParseResult(line)
+	if err != nil {
 		return hperrors.Wrap(err)
 	}
-	resp.Outcome, resp.Status, resp.Headers = result.Outcome, result.Status, result.Headers
+	resp.Outcome, resp.Status, resp.Headers = Outcome(result.Outcome), result.Status, result.Headers
 	resp.RequestID, resp.DurationMs = result.RequestID, result.DurationMs
 	resp.Body = result.Body
 	if len(resp.Body) > int(BodyMax) {

@@ -26,6 +26,7 @@ export * from "./job-schedule-fields";
 export * from "./job-sequence-form";
 export * from "./job-triggers-field";
 export * from "./data-backup-form";
+export * from "./function-invoke-form";
 export * from "./function-code-editor";
 export * from "./git-credential-combobox";
 export * from "./push-to-registry-combobox";

@@ -106,6 +106,7 @@ export {
     AppScheduledJobCreateRoute,
     AppJobSequenceCreateRoute,
     AppDataBackupCreateRoute,
+    AppFunctionInvokeCreateRoute,
     AppScheduledJobEditRoute,
     AppFeatureSettingsRoute,
     AppCloneSettingsRoute,

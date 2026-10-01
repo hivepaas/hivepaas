@@ -18,6 +18,7 @@ const JOB_TYPES = [
     EAppScheduledJobType.JobSequence,
     EAppScheduledJobType.ContainerCommand,
     EAppScheduledJobType.DataBackup,
+    EAppScheduledJobType.FunctionInvoke,
 ];
 const STATUSES = [ESettingStatus.Active, ESettingStatus.Disabled, ESettingStatus.Pending];
 

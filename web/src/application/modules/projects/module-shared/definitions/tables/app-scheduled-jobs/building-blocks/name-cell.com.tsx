@@ -7,7 +7,10 @@ import { EAppScheduledJobType } from "~/projects/module-shared/enums";
 
 import { ESettingStatus } from "@application/shared/enums";
 
-/** A job's name; a sequence is tagged with its step count, a data backup with its repository. */
+/**
+ * A job's name; a sequence is tagged with its step count, a data backup with its
+ * repository, a function's call with its request.
+ */
 function View({ job }: Props) {
     const steps = job.sequence?.steps.length ?? 0;
 
@@ -25,6 +28,14 @@ function View({ job }: Props) {
                     {job.dataBackup.targetRepository.status === ESettingStatus.Missing
                         ? "deleted repository"
                         : job.dataBackup.targetRepository.name}
+                </Badge>
+            )}
+            {job.jobType === EAppScheduledJobType.FunctionInvoke && job.functionInvoke && (
+                <Badge
+                    variant="secondary"
+                    className="font-mono"
+                >
+                    Call · {job.functionInvoke.method} {job.functionInvoke.path}
                 </Badge>
             )}
             {job.triggers.map(trigger => (

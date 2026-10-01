@@ -20,6 +20,22 @@ export function buildTestRequest(
         (query[name] ??= []).push(value);
     }
 
+    const headers = parseHeaderLines(headerLines);
+
+    return {
+        method,
+        path: rawPath.startsWith("/") ? rawPath : `/${rawPath}`,
+        query,
+        headers,
+        body: method === "GET" || method === "HEAD" ? "" : body,
+    };
+}
+
+/**
+ * Headers written one per line as "name: value", by name in lower case. A line
+ * without a name is left out.
+ */
+export function parseHeaderLines(headerLines: string): Record<string, string[]> {
     const headers: Record<string, string[]> = {};
     for (const line of headerLines.split("\n")) {
         const separator = line.indexOf(":");
@@ -31,14 +47,14 @@ export function buildTestRequest(
             (headers[name] ??= []).push(line.slice(separator + 1).trim());
         }
     }
+    return headers;
+}
 
-    return {
-        method,
-        path: rawPath.startsWith("/") ? rawPath : `/${rawPath}`,
-        query,
-        headers,
-        body: method === "GET" || method === "HEAD" ? "" : body,
-    };
+/** Headers as lines of "name: value", as parseHeaderLines reads them back. */
+export function headerLinesOf(headers: Record<string, string[]>): string {
+    return Object.entries(headers)
+        .flatMap(([name, values]) => values.map(value => `${name}: ${value}`))
+        .join("\n");
 }
 
 /**

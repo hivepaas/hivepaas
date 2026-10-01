@@ -7,9 +7,10 @@ import { AppLoader } from "@application/shared/components";
 
 import { AppDataBackupFormRoute } from "../data-backup";
 import { AppScheduledJobFormRoute } from "../form-route";
+import { AppFunctionInvokeFormRoute } from "../function-invoke";
 import { AppJobSequenceFormRoute } from "../sequence";
 
-/** Opens the form the job's type needs: a sequence and a data backup have their own. */
+/** Opens the form the job's type needs: a sequence, a data backup and a function's call have their own. */
 export function AppScheduledJobEditRoute() {
     const {
         id: projectId,
@@ -57,6 +58,18 @@ export function AppScheduledJobEditRoute() {
     if (job.jobType === EAppScheduledJobType.DataBackup) {
         return (
             <AppDataBackupFormRoute
+                mode="edit"
+                projectId={projectId}
+                env={env}
+                appId={appId}
+                scheduledJob={job}
+            />
+        );
+    }
+
+    if (job.jobType === EAppScheduledJobType.FunctionInvoke) {
+        return (
+            <AppFunctionInvokeFormRoute
                 mode="edit"
                 projectId={projectId}
                 env={env}

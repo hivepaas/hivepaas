@@ -139,6 +139,15 @@ export interface AppScheduledJobDataBackup {
     tags: Record<string, string>;
 }
 
+/** The request a function's call sends: the query in the path, the body as text. */
+export interface AppScheduledJobFunctionInvoke {
+    method: string;
+    path: string;
+    /** By name, in lower case. */
+    headers: Record<string, string[]>;
+    body: string;
+}
+
 export interface AppScheduledJob {
     id: string;
     type: string;
@@ -170,6 +179,7 @@ export interface AppScheduledJob {
     command: AppScheduledJobCommand | null;
     commandOutput?: AppScheduledJobCommandOutput | null;
     dataBackup: AppScheduledJobDataBackup | null;
+    functionInvoke: AppScheduledJobFunctionInvoke | null;
     notification: AppScheduledJobNotification | null;
     nextRuns: Date[];
 }

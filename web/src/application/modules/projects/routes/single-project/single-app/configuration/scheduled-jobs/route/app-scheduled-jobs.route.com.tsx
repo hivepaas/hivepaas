@@ -4,8 +4,9 @@ import { Plus } from "lucide-react";
 import { useParams } from "react-router";
 import invariant from "tiny-invariant";
 import { APP_CONFIGURATION_QUERY_OPTIONS } from "~/projects/data/constants";
-import { AppScheduledJobsQueries } from "~/projects/data/queries";
+import { AppScheduledJobsQueries, ProjectAppsQueries } from "~/projects/data/queries";
 import { AppScheduledJobsTableDefs } from "~/projects/module-shared/definitions/tables/app-scheduled-jobs";
+import { isFunctionApp } from "~/projects/module-shared/utils";
 
 import { AppLink, TableActions } from "@application/shared/components";
 import { DEFAULT_PAGINATED_DATA, MODULE_IDS, ROUTE } from "@application/shared/constants";
@@ -43,6 +44,15 @@ export function AppScheduledJobsRoute() {
         APP_CONFIGURATION_QUERY_OPTIONS,
     );
 
+    // The header asks for the same app: this reads it from the cache.
+    const { data: appResponse } = ProjectAppsQueries.useFindOneById({
+        projectID: projectId,
+        env,
+        appID: appId,
+        getStats: true,
+    });
+    const isFunction = appResponse ? isFunctionApp(appResponse.data) : false;
+
     const isFeatureDisabled = error instanceof Error && isFeatureDisabledException(error);
     const columns = useMemo(() => AppScheduledJobsTableDefs.columns(projectId, env, appId), [projectId, env, appId]);
 
@@ -72,6 +82,30 @@ export function AppScheduledJobsRoute() {
                 search={{ value: search, onChange: setSearch }}
                 renderActions={
                     <div className="flex flex-wrap gap-3">
+                        {isFunction && (
+                            <PermissionTooltipAction
+                                id={MODULE_IDS.Project}
+                                action="write"
+                            >
+                                {({ isDenied }) => (
+                                    <Button
+                                        variant="outline"
+                                        onClick={() => {
+                                            navigate.modules(
+                                                ROUTE.projects.single.apps.single.configuration.scheduledJobs.createFunctionInvoke.$route(
+                                                    projectId,
+                                                    env,
+                                                    appId,
+                                                ),
+                                            );
+                                        }}
+                                        disabled={isDenied}
+                                    >
+                                        <Plus className="size-4" /> New Function Call
+                                    </Button>
+                                )}
+                            </PermissionTooltipAction>
+                        )}
                         <PermissionTooltipAction
                             id={MODULE_IDS.Project}
                             action="write"

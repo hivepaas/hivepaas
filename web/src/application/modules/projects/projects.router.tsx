@@ -1872,6 +1872,15 @@ export const projectsRouter: RouteObject = {
                             },
                         },
                         {
+                            path: ROUTE.projects.single.apps.single.configuration.scheduledJobs.createFunctionInvoke
+                                .$pattern,
+                            lazy: async () => {
+                                const { AppFunctionInvokeCreateRoute } = await getLazyComponents();
+
+                                return { Component: AppFunctionInvokeCreateRoute };
+                            },
+                        },
+                        {
                             path: ROUTE.projects.single.apps.single.configuration.scheduledJobs.edit.$pattern,
                             lazy: async () => {
                                 const { AppScheduledJobEditRoute } = await getLazyComponents();

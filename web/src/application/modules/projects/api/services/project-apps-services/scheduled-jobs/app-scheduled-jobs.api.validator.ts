@@ -226,6 +226,19 @@ const DataBackupSchema = z
     .nullish()
     .transform(value => value ?? null);
 
+const FunctionInvokeSchema = z
+    .object({
+        method: z.string(),
+        path: z.string(),
+        headers: z
+            .record(z.array(z.string()))
+            .nullish()
+            .transform(value => value ?? {}),
+        body: z.string().optional().default(""),
+    })
+    .nullish()
+    .transform(value => value ?? null);
+
 const TriggerSchema = z.object({
     event: z.nativeEnum(ESchedJobTriggerEvent),
     apps: z
@@ -264,6 +277,7 @@ export const AppScheduledJobSchema = z.object({
     notification: NotificationSchema,
     sequence: SequenceSchema,
     dataBackup: DataBackupSchema,
+    functionInvoke: FunctionInvokeSchema,
     // An event the dashboard does not know yet is left out, not a failed list.
     triggers: z
         .array(z.unknown())

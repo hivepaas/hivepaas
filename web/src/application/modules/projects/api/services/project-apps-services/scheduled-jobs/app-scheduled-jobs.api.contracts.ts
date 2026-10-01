@@ -118,11 +118,19 @@ export type AppScheduledJobs_DataBackup_Payload = {
     tags?: Record<string, string>;
 };
 
+/** A function's call: the request it sends, its query in the path. */
+export type AppScheduledJobs_FunctionInvoke_Payload = {
+    method: string;
+    path: string;
+    headers?: Record<string, string[]>;
+    body?: string;
+};
+
 /**
  * A job to create or update. A container command has `app` and `command`; a job
  * sequence has `sequence` and neither of those; a data backup has `app` and
- * `dataBackup`. `schedule` is null for a job run
- * by hand or by a sequence.
+ * `dataBackup`; a function's call has `app` and `functionInvoke`. `schedule` is
+ * null for a job run by hand or by a sequence.
  */
 export type AppScheduledJobs_Upsert_Payload = {
     inheritable: boolean;
@@ -143,6 +151,7 @@ export type AppScheduledJobs_Upsert_Payload = {
     commandOutput?: AppScheduledJobs_CommandOutput_Payload;
     sequence?: AppScheduledJobs_Sequence_Payload;
     dataBackup?: AppScheduledJobs_DataBackup_Payload;
+    functionInvoke?: AppScheduledJobs_FunctionInvoke_Payload;
     triggers?: AppScheduledJobs_Trigger_Payload[];
     notification: AppScheduledJobs_Notification_Payload;
 };

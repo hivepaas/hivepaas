@@ -13,7 +13,7 @@ import (
 // pointers allocated, lists of one, strings "x", numbers 1. It is what a GET
 // could answer at its fullest, to push through the PUT's type.
 func fill(v reflect.Value, depth int) {
-	if depth > 8 { //nolint:mnd
+	if depth > 16 { //nolint:mnd
 		return
 	}
 	switch v.Kind() { //nolint:exhaustive // the kinds the API's types are made of
@@ -80,6 +80,84 @@ func TestEverySettingsKindsGetFitsItsUpdate(t *testing.T) {
 		if assert.NoError(t, err, "%s: the PUT's type takes what the GET answers", kind.name) {
 			assert.Contains(t, body, updateVerField, "%s: the plan's updateVer reaches the PUT", kind.name)
 		}
+	}
+}
+
+// putOnly are the fields of a PUT its GET does not answer, each for a reason:
+// any other such field the plan would send empty, putting back what the
+// person set elsewhere - as a database's kind settings once turned TLS
+// passthrough off, answering it never and taking it always.
+var putOnly = map[string]string{
+	"deployment .imageSource.enabled": "taken, and not used",
+	"deployment .repoSource.enabled":  "taken, and not used",
+	"storage .resetStorage":           "an action, off unless asked for",
+}
+
+// Every field a PUT takes is one its GET answers, so that a plan changing one
+// field sends the others as they are.
+func TestEverySettingsKindsPutFieldIsAnswered(t *testing.T) {
+	for _, kind := range appSettingsKinds {
+		full := kind.newUpdate()
+		fill(reflect.ValueOf(full), 0)
+		fullRaw, err := json.Marshal(full)
+		if !assert.NoError(t, err, kind.name) {
+			continue
+		}
+		var taken map[string]any
+		assert.NoError(t, json.Unmarshal(fullRaw, &taken))
+
+		get := kind.newGet()
+		fill(reflect.ValueOf(get), 0)
+		getRaw, err := json.Marshal(get)
+		if !assert.NoError(t, err, kind.name) {
+			continue
+		}
+		sent, err := through(getRaw, kind.newUpdate())
+		if !assert.NoError(t, err, kind.name) {
+			continue
+		}
+
+		takenLeaves, sentLeaves := map[string]bool{}, map[string]bool{}
+		setLeaves("", taken, takenLeaves)
+		setLeaves("", sent, sentLeaves)
+		for path, set := range takenLeaves {
+			if !set || sentLeaves[path] {
+				continue
+			}
+			_, known := putOnly[kind.name+" "+path]
+			assert.True(t, known, "%s: the PUT takes %s, which the GET never answers", kind.name, path)
+		}
+	}
+}
+
+// setLeaves marks each leaf of a decoded JSON value by its path - a list's
+// items under [] - as set or empty.
+func setLeaves(prefix string, v any, out map[string]bool) {
+	switch t := v.(type) {
+	case map[string]any:
+		if len(t) == 0 {
+			out[prefix] = out[prefix] || false
+		}
+		for k, e := range t {
+			setLeaves(prefix+"."+k, e, out)
+		}
+	case []any:
+		if len(t) == 0 {
+			out[prefix+"[]"] = out[prefix+"[]"] || false
+		}
+		for _, e := range t {
+			setLeaves(prefix+"[]", e, out)
+		}
+	case nil:
+		out[prefix] = out[prefix] || false
+	case string:
+		out[prefix] = out[prefix] || t != ""
+	case float64:
+		out[prefix] = out[prefix] || t != 0
+	case bool:
+		out[prefix] = out[prefix] || t
+	default:
+		out[prefix] = true
 	}
 }
 

@@ -302,5 +302,6 @@ func getEndpoints() []getEndpoint { //nolint:funlen // a table
 			}),
 			answer: func() any { return &schedjobdto.ListSchedJobResp{} },
 		},
+		listEnvLinkTargetsEndpoint,
 	}
 }

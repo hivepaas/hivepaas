@@ -8,6 +8,7 @@ func Tools() []Tool {
 		getAppDeploymentLogsTool(),
 		getTaskLogsTool(),
 		getAppSettingsTool(),
+		getEnvLinkSuggestionsTool(),
 		preflightInstallTool(),
 		explainScheduleTool(),
 		planRestartAppTool(),

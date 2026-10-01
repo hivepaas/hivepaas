@@ -5,12 +5,13 @@ import invariant from "tiny-invariant";
 import { AppDeploymentSettingsQueries } from "~/projects/data";
 import { APP_CONFIGURATION_QUERY_OPTIONS } from "~/projects/data/constants";
 import { EAppDeploymentMethod } from "~/projects/module-shared/enums";
+import { withLockFiles } from "~/projects/module-shared/utils";
 
 import { AppLink, AppLoader } from "@application/shared/components";
 import { MODULE_IDS, ROUTE } from "@application/shared/constants";
 import { useConditionalModule } from "@application/shared/permissions";
 
-import { FunctionCodeWorkspace } from "../building-blocks";
+import { FunctionCodeWorkspace, FunctionTestPanel } from "../building-blocks";
 
 /**
  * A function's code: its files in the editor, saved and deployed together.
@@ -72,7 +73,20 @@ export function AppCodeRoute() {
                 appId={appId}
                 settings={settings}
                 readOnly={!canWrite}
-            />
+            >
+                {(files, setFiles) => (
+                    <FunctionTestPanel
+                        projectId={projectId}
+                        env={env}
+                        appId={appId}
+                        files={files}
+                        readOnly={!canWrite}
+                        onAddFiles={lockFiles => {
+                            setFiles(withLockFiles(files, lockFiles));
+                        }}
+                    />
+                )}
+            </FunctionCodeWorkspace>
         </div>
     );
 }

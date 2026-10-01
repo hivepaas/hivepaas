@@ -1,0 +1,354 @@
+# Functions
+
+A function is code that answers a request: a handler, not a server. Its author
+writes the handler, picks a language, and gets an HTTP endpoint and a job that
+can run on a schedule, without a Dockerfile, a port or a health check.
+
+HivePaaS already runs apps. A function is one: it is built, deployed, routed,
+configured and watched the way an app is. What a function adds is the part an
+app's author writes themselves - a server around the code - and the things that
+only make sense when the unit is one call rather than one process: a timeout per
+call, a log line per call, a test run of one call.
+
+This design covers the first version. It is built so that what comes after it -
+scale to zero, asynchronous calls, other triggers, other languages - is added
+next to it rather than in place of it.
+
+---
+
+## Decisions
+
+1. **A function is an app.** Its kind settings say category `function`; its
+   deployment method is `function`. Everything an app has, a function has.
+2. **HivePaaS writes its own runtimes**, in the repository
+   `hivepaas/function-runtimes`: one per language, on Debian slim.
+3. **The contract between a handler and its runtime is versioned.** A function
+   records its runtime (`node24`) and its contract (`v1`). A later contract runs
+   beside this one; nothing moves a function to it but its author.
+4. **The first runtimes are Node.js 24, Python 3.13 and Go 1.27**: the current
+   long-term or stable line of each.
+5. **Code comes from the dashboard's editor or from a repository.** Libraries
+   are declared the language's own way (`package.json`, `requirements.txt`,
+   `go.mod`). Debian packages can be added.
+6. **A deployment is a build through the existing pipeline**: HivePaaS writes
+   the Dockerfile, and the build runs where any build runs, on another node
+   included, with build secrets as BuildKit secrets.
+7. **A test run calls the handler once**, with code not yet saved, in a
+   throwaway container on a build node, with the function's own variables and
+   secrets.
+8. **Calls are synchronous.** HTTP through the app's routing; a schedule through
+   a new kind of scheduled job.
+9. **A function always runs at least one instance.** Scaling to zero is for
+   later.
+
+## 1. The model
+
+### A function is an app
+
+- **Identity:** the app's kind settings (`AppKindSettings`) gain the category
+  `function`. It is set when the function is created and cannot be changed: a
+  function does not become a web app, or the reverse.
+- **What is deployed:** the app's deployment settings gain the method
+  `function` and its source:
+
+```go
+type DeploymentFunctionSource struct {
+    // Runtime is the language and its line: node24, python313, go127.
+    Runtime string `json:"runtime"`
+    // Contract is the version of the handler contract: v1.
+    Contract string `json:"contract"`
+    // Entrypoint is the file and the name of the handler in it.
+    Entrypoint FunctionEntrypoint `json:"entrypoint"`
+    // Code is inline (the dashboard's editor) or a repository.
+    Code FunctionCode `json:"code"`
+    // SystemPackages are Debian packages installed before the libraries:
+    // "libpq-dev", or "ffmpeg=7:5.1.6-0+deb12u1".
+    SystemPackages []string `json:"systemPackages,omitempty"`
+    // Limits of one call.
+    Timeout        timeutil.Duration `json:"timeout"`        // default 30s, at most 15m
+    MaxConcurrency int               `json:"maxConcurrency"` // calls at once per instance, default 16
+    MaxBodySize    unit.DataSize     `json:"maxBodySize"`    // request and response, default 6 MB
+}
+
+type FunctionCode struct {
+    Inline *FunctionInlineCode   `json:"inline,omitempty"`
+    Repo   *DeploymentRepoSource `json:"repo,omitempty"`
+    // Dir is where the function is in the repository, for a repository holding
+    // several.
+    Dir string `json:"dir,omitempty"`
+}
+
+type FunctionInlineCode struct {
+    Files []FunctionFile `json:"files"` // path relative to the function's root, and content
+}
+```
+
+- **Inline code is kept in the setting**, so a deployment's snapshot of its
+  settings holds the exact code it ran, and redeploying an old deployment rolls
+  the code back with it. Its limits: 1 MB in all, 100 files, paths relative and
+  without `..`.
+- **Everything about a function is in its deployment settings**, limits
+  included: they reach the running function as configuration of its container,
+  so they take effect on a deployment and are recorded with it.
+
+### What is fixed for a function
+
+- **The container port** is the runtime's (8080). The routing settings keep
+  their domains; the dashboard does not ask for a port.
+- **The command** is the runtime's. The deployment settings' command and
+  working directory do not apply.
+- **The health check** is the image's own (`HEALTHCHECK` in the runtime image),
+  which Swarm already waits for during a rolling update.
+
+## 2. The runtime contract, v1
+
+The repository `function-runtimes` holds the contract (`CONTRACT.md`) as its
+reference. In short:
+
+### The image
+
+- `ghcr.io/hivepaas/function-runtime-<runtime>:<version>`, for example
+  `function-runtime-node24:1.0.0`. The version's major is the contract's: every
+  `1.x.y` speaks v1.
+- Debian slim, the runtime in `/hivepaas/runtime`, the function in `/app`, a
+  user of its own (`hivepaas`, uid 10001): the function never runs as root.
+
+### Two ways to run it
+
+- **Serve:** `hivepaas-runtime serve` answers HTTP on port 8080. Paths under
+  `/_hivepaas/` are the runtime's: `/_hivepaas/health` for the health check.
+- **Invoke:** `hivepaas-runtime invoke` reads one request, as JSON, on its
+  standard input, calls the handler once, writes the response, as JSON, on its
+  standard output, and exits. Logs go to standard error. A test run and a
+  scheduled call use this; neither needs a port or a network.
+
+### The handler
+
+```js
+// Node.js: index.js
+export default async function handler(req, ctx) {
+  return { status: 200, body: { hello: req.query.name } }
+}
+```
+
+```python
+# Python: main.py (def or async def)
+def handler(req, ctx):
+    return {"status": 200, "body": {"hello": req.query.get("name")}}
+```
+
+```go
+// Go: package function
+func Handle(ctx context.Context, req *hivepaas.Request) (*hivepaas.Response, error) {
+    return &hivepaas.Response{Status: 200, Body: []byte("hello")}, nil
+}
+```
+
+The Go types are a small module of the same repository
+(`github.com/hivepaas/function-runtimes/go/hivepaas`).
+
+- **The request:** method, path, query (a name to its values), headers, the body
+  as bytes, with helpers to read it as text or JSON.
+- **The context:** the request's id, its deadline, a logger whose lines carry
+  the id.
+- **The response:** status (200 when not given), headers, body. A body that is
+  an object or a list is sent as JSON.
+- **What the runtime answers on its own:**
+  - the handler raised an error: `500`, with the request's id and nothing of the
+    error, which is in the log;
+  - the call outlived its timeout: `504`;
+  - all the instance's concurrent calls are taken: `429`, with `Retry-After`;
+  - the request or the response is larger than the limit: `413`, or `500`.
+- **Configuration**, from the container's environment: the entrypoint, the
+  handler's name, the timeout, the concurrency and the body size, as
+  `HP_FN_*` variables HivePaaS sets from the deployment settings. The function's
+  own variables are in the same environment.
+- **A log line per call**, on standard output, as JSON: the request's id,
+  method, path, status, duration, and whether it timed out or failed.
+
+## 3. Building a function
+
+1. **The source** is written into the build's checkout directory: the inline
+   files, or the repository checked out as for an app (its directory, if set).
+2. **HivePaaS writes the Dockerfile**, given to the build as a manual one:
+
+```dockerfile
+FROM ghcr.io/hivepaas/function-runtime-node24:1.0.0@sha256:… AS base
+# only when the function names Debian packages
+RUN apt-get update && apt-get install -y --no-install-recommends libpq-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+FROM base AS deps
+COPY package.json package-lock.json /app/
+RUN --mount=type=secret,id=NPM_TOKEN,env=NPM_TOKEN npm ci --omit=dev
+
+FROM deps
+COPY . /app/
+```
+
+   - Each layer is cached by what it is built from: the runtime image, then the
+     package list, then the manifest and its lock file. A change to the code
+     alone rebuilds only the last layer.
+   - **Python** installs with `uv` into a virtual environment in the image;
+     **Go** adds a step that compiles the function with the runtime into one
+     binary.
+   - **Every build variable that uses a secret is mounted into the install
+     step**, so a private npm or Python registry works, the way the build-secret
+     change made every build read secrets.
+   - **A Debian package name is checked** before it reaches the Dockerfile:
+     letters, digits, `+`, `-`, `.`, and an optional `=version`. Anything else is
+     refused.
+3. **The lock file:** a build that finds a manifest without its lock file
+   resolves the versions and makes one (`package-lock.json`,
+   `requirements.lock`, `go.sum`). For inline code, HivePaaS saves it with the
+   function's files, so the next build installs the same versions. For a
+   repository, the build log says that the lock file is missing.
+4. **Then the build and the deployment of any app**: buildx, on the build node,
+   the push to the registry if one is set, the service updated.
+
+### Which runtime image
+
+The runtime images are released by HivePaaS, like its system images: they are
+built in `function-runtimes`, and `release.json` names each by its digest, in a
+map of their own:
+
+```json
+"functionRuntimes": {
+  "node24": "ghcr.io/hivepaas/function-runtime-node24:1.0.0@sha256:…",
+  "python313": "ghcr.io/hivepaas/function-runtime-python313:1.0.0@sha256:…",
+  "go127": "ghcr.io/hivepaas/function-runtime-go127:1.0.0@sha256:…"
+}
+```
+
+`make release-pin` pins them with the other images. A function built under a
+release uses the runtime image that release names; a running function keeps the
+image it was built with until it is deployed again.
+
+## 4. A test run
+
+```
+dashboard ── code (not saved) and a request ──▶ app
+app: the function's variables and secrets, resolved as for a build
+app ── code and request ──▶ agent of a build node
+agent: the libraries' image, built once per manifest and lock file
+       a throwaway container from it: code copied in, `invoke`, the request on stdin
+       the response and the logs; the container removed
+app ──▶ dashboard: status, headers, body, logs, duration, a lock file if one was made
+```
+
+- **The API:** a call on the function, taking files and a request (method, path,
+  query, headers, body). Only someone who can change the function can run it:
+  it runs the code with the function's secrets.
+- **Where:** a build node, chosen as for a build; the code travels in the call,
+  as a build's source does.
+- **The libraries' image** is built on that node with buildx and kept,
+  named after a hash of the runtime image, the Debian packages, the manifest and
+  the lock file. A test run with the same libraries does not install them again.
+  Node cleanup removes these images with the build cache.
+- **The container** is created through Docker's API, not its command line, so
+  the variables are not on a command line: no published port, the function's
+  memory and CPU limits, stopped when the call outlives its timeout and removed
+  in every case.
+- **What comes back:** the response, its body cut at 1 MB for display; the
+  handler's logs; the duration; a lock file the libraries' install made, which
+  the editor adds to the code for the author to save.
+- **How long it takes** (estimated from a container measured on a laptop, not
+  yet on a server): about 0.5 to 1.5 seconds for Node.js or Python when the
+  libraries are already installed, 2 to 5 seconds for Go, which compiles; the
+  first run after the libraries change adds their install.
+
+## 5. Calling a function
+
+- **HTTP:** the app's routing, its domains, its Basic Auth and Key Auth: a
+  request reaches the runtime's server through Traefik like any app.
+- **On a schedule:** a new scheduled job type, `function-invoke`. Its settings
+  are the request: method, path, headers, body. It runs `hivepaas-runtime invoke`
+  in a running task of the function, through the container exec the
+  `container-command` jobs use; the response is the job's output, and a status
+  of 400 or more fails the job.
+- **From another app of the project:** by the service's name on the project's
+  network, as any app reaches another.
+
+## 6. The dashboard
+
+- **Create a function:** a name, a runtime, a starting template per runtime, and
+  the code's source: the editor or a repository.
+- **The function's page:**
+  - **Code:** the editor with several files (the handler, the manifest, other
+    files), with syntax for JavaScript, Python, Go and JSON, beside the bash and
+    Dockerfile it has.
+  - **Test:** a request (method, path, query, headers, body), a Run button, and
+    the response, the logs and the duration.
+  - **Settings:** runtime, entrypoint, timeout, concurrency, body size, Debian
+    packages.
+  - The app's own pages: deployments, logs, variables and secrets, domains,
+    scheduled jobs.
+- **App lists** show a function with a `function` badge, and can filter on it.
+
+## 7. Room to grow
+
+Each of these is added next to what is here, with a default that keeps today's
+behaviour:
+
+| Later | How it fits |
+|---|---|
+| Another language or line (Python 3.14, Bun) | a new runtime id and image; existing functions keep theirs |
+| A contract v2 | a new major of the runtime images; a function moves to it only when its author does |
+| Scale to zero | `MinInstances`, defaulting to 1 |
+| Asynchronous calls | an invocation mode, defaulting to synchronous |
+| Other triggers (an event, a webhook with a queue) | new trigger types beside the scheduled job |
+| Metrics (calls, errors, p95) | read from the log line every call already writes |
+| TypeScript | Node.js 24 strips types itself; the runtime can load `.ts` files |
+
+## 8. What goes where
+
+- **`hivepaas/function-runtimes`** (Apache-2.0, public):
+  - `CONTRACT.md`, the contract, by version;
+  - one directory per runtime: its server and invoke modes, its Dockerfile, its
+    tests;
+  - the Go module of the types a Go handler uses;
+  - a conformance suite: the same cases run against every runtime image, through
+    `serve` and through `invoke`;
+  - CI: the suite on every pull request; on a tag, the images built for amd64
+    and arm64 and pushed to GHCR.
+- **`hivepaas`**: the model, the generated Dockerfile, the test run (API and
+  agent), the scheduled job type, the runtime images in `release.json`.
+- **`hivepaas-dashboard`**: creating a function, the editor, the test panel, the
+  settings, the badges.
+
+## 9. In five parts
+
+Each part has its own plan and its own review:
+
+1. **The runtimes**, in `function-runtimes`: the contract, three runtimes, the
+   conformance suite, the images. Usable with `docker run` before HivePaaS knows
+   about them.
+2. **Functions in the backend:** the model, the generated Dockerfile, the
+   deployment, the routing.
+3. **Test runs:** the API, the agent's call, the libraries' image.
+4. **The dashboard.**
+5. **Scheduled calls:** the `function-invoke` job type.
+
+## 10. Testing
+
+- **The runtimes:** the conformance suite against each image, in both modes: a
+  JSON and a text response, a raised error, a timeout, the concurrency limit, a
+  body over the limit, the health check, the per-call log line, a library and a
+  Debian package used by a handler.
+- **The backend:** the generated Dockerfile for each runtime, with and without
+  packages, libraries, a lock file and build secrets; package names refused;
+  inline code limits; a function's fixed port and command; the test run's
+  container settings (no published port, limits, removal) against a fake Docker
+  API; the job type's request and its failure on a 400.
+- **Live, on the Linux server:** a function per runtime created in the editor,
+  test-run, deployed, called over HTTP and on a schedule; one from a repository
+  with a private library; one with a Debian package.
+
+## Later
+
+- Scale to zero, after measuring how long Swarm takes to start a service from
+  nothing on the server.
+- Asynchronous calls with a queue and retries.
+- Triggers other than HTTP and schedules.
+- Metrics in the dashboard.
+- Runtimes a user brings.

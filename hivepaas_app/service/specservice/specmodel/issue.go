@@ -17,12 +17,13 @@ const (
 	SeverityWarning Severity = "warning"
 )
 
-// Issue codes. Export emits the first four; the rest belong to the import
+// Issue codes. Export emits the first five; the rest belong to the import
 // contract, and are declared here so both halves name the same things.
 const (
 	CodeTypeUnclassified   = "TYPE_UNCLASSIFIED"
 	CodeTypeSkipped        = "TYPE_SKIPPED"
 	CodePreviewAppSkipped  = "PREVIEW_APP_SKIPPED"
+	CodeFunctionSkipped    = "FUNCTION_SKIPPED"
 	CodeServiceUnavailable = "SERVICE_UNAVAILABLE"
 	CodeRefNotFound        = "REF_NOT_FOUND"
 	CodeRefNotSelected     = "REF_NOT_SELECTED"

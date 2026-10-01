@@ -2,6 +2,7 @@ package specserviceimpl
 
 import (
 	"context"
+	"slices"
 	"sort"
 
 	"github.com/moby/moby/api/types/swarm"
@@ -223,6 +224,19 @@ func (s *service) gatherEnv(
 			[]base.ObjectScopeType{base.ObjectScopeApp}, app.ID)
 		if err != nil {
 			return nil, hperrors.Wrap(err)
+		}
+		// A function is not part of a spec yet: its code is in its deployment
+		// settings, which an import would write without the checks creating a
+		// function makes. It is reported, like a preview app, so that an
+		// operator looking for it finds out why it is not in the bundle.
+		if slices.ContainsFunc(appSettings, entity.IsFunctionKind) {
+			report.Add(specmodel.Issue{
+				Severity: specmodel.SeveritySkipped,
+				Code:     specmodel.CodeFunctionSkipped,
+				Path:     appPath,
+				Action:   "not exported; functions are not part of a spec yet",
+			})
+			continue
 		}
 		out.apps = append(out.apps, &appUnit{
 			app: app,

@@ -270,6 +270,9 @@ func TestBuildAppRefuses(t *testing.T) {
 		"unknown kind field": {
 			"settings:\n  kind: {category: cache, flavor: x}\n", hperrors.ErrSpecBlockInvalid,
 		},
+		"a function": {
+			"settings:\n  kind: {category: function}\n", hperrors.ErrSpecBlockInvalid,
+		},
 		"port out of range": {
 			"settings:\n  routing: {port: 70000}\n", hperrors.ErrSpecBlockInvalid,
 		},

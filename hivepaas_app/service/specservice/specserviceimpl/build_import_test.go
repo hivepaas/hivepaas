@@ -76,6 +76,25 @@ func TestBuildAppImportsAnExportedDocument(t *testing.T) {
 	assert.GreaterOrEqual(t, secret, 0, "the entry's id is taken out before it is decoded")
 }
 
+// A function is not part of a spec yet: an import makes neither a function nor
+// an app deployed from a function's code.
+func TestBuildAppDoesNotImportAFunction(t *testing.T) {
+	for name, doc := range map[string]string{
+		"its kind":   "settings:\n  kind: {category: function}\n",
+		"its source": "deployment:\n  source:\n    activeMethod: function\n    functionSource: {runtime: node24}\n",
+	} {
+		t.Run(name, func(t *testing.T) {
+			useDataKey(t)
+			req := buildReq(t, doc)
+			req.Import = true
+
+			_, err := (&service{volumeService: &fakeBuildVolumeService{}}).BuildApp(context.Background(), nil, req)
+
+			assert.ErrorIs(t, err, hperrors.ErrSpecBlockInvalid)
+		})
+	}
+}
+
 // A template still cannot say what only an export can.
 func TestBuildAppKeepsTheTemplateGate(t *testing.T) {
 	svc := &service{volumeService: &fakeBuildVolumeService{}}

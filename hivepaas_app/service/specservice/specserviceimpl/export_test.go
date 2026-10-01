@@ -401,12 +401,32 @@ func exportFixture(t *testing.T) specservice.Service {
 		ID: "app_3", Key: "backend-pr-42", Name: "PR 42", ProjectID: "p1",
 		ProjectEnvID: "p1:dev", ParentID: "app_1",
 	}
+	function := &entity.App{
+		ID: "app_4", Key: "hello", Name: "Hello", ProjectID: "p1",
+		ProjectEnvID: "p1:dev", Status: base.AppStatusActive,
+	}
+	functionKind := &entity.Setting{
+		ID: "kind_4", Type: base.SettingTypeAppKind, Scope: base.ObjectScopeApp,
+		ObjectID: "app_4", Status: base.SettingStatusActive, Version: entity.CurrentAppKindSettingsVersion,
+	}
+	assert.NoError(t, functionKind.SetData(&entity.AppKindSettings{Category: base.AppCategoryFunction}))
+	functionSource := &entity.Setting{
+		ID: "deploy_4", Type: base.SettingTypeAppDeployment, Scope: base.ObjectScopeApp,
+		ObjectID: "app_4", Status: base.SettingStatusActive, Version: entity.CurrentAppDeploymentSettingsVersion,
+	}
+	assert.NoError(t, functionSource.SetData(&entity.AppDeploymentSettings{
+		ActiveMethod: base.DeploymentMethodFunction,
+		FunctionSource: &entity.DeploymentFunctionSource{Runtime: base.FunctionRuntimeNode24,
+			Code: entity.FunctionCode{Inline: &entity.FunctionInlineCode{Files: []*entity.FunctionFile{
+				{Path: "index.js", Content: "export default () => ({})"},
+			}}}},
+	}))
 
 	all := []*entity.Setting{cert, apiKey, routing, secret, mountEntry, kind, projectVolume, sharedVolume,
-		projectConfig, envConfig, appJob, envSeq}
+		projectConfig, envConfig, appJob, envSeq, functionKind, functionSource}
 
 	svc := New(
-		&fakeAppRepo{apps: []*entity.App{deployed, undeployed, preview}},
+		&fakeAppRepo{apps: []*entity.App{deployed, undeployed, preview, function}},
 		&fakeProjectEnvRepo{envs: []*entity.ProjectEnv{env}},
 		&fakeProjectRepo{projects: []*entity.Project{proj, hive}},
 		settingRepo,
@@ -606,6 +626,25 @@ func TestExportSkipsApiKeysAndPreviewApps(t *testing.T) {
 	}
 	assert.Positive(t, codes[specmodel.CodeTypeSkipped], "the api key is reported")
 	assert.Positive(t, codes[specmodel.CodePreviewAppSkipped], "so is the preview app")
+}
+
+// A function is not part of a spec yet: it is left out, and the report says
+// so, where an operator looking for it finds why.
+func TestExportSkipsAFunction(t *testing.T) {
+	path, report := runExport(t, specmodel.SecretsModeOmit, "")
+
+	env := readFromArchive(t, path, "projects/project_a/envs/dev.yaml")
+	assert.NotContains(t, env, "hello")
+	assert.NotContains(t, env, "export default")
+
+	var skipped []string
+	for _, issue := range report.Issues {
+		if issue.Code == specmodel.CodeFunctionSkipped {
+			assert.Equal(t, specmodel.SeveritySkipped, issue.Severity)
+			skipped = append(skipped, issue.Path)
+		}
+	}
+	assert.Equal(t, []string{"projects/project_a/envs/dev/apps/hello"}, skipped)
 }
 
 // An app with no service is normal, not an error: two of five user apps in a

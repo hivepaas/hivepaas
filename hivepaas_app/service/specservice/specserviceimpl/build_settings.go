@@ -29,7 +29,27 @@ func (s *service) buildKind(_ context.Context, state *buildState) error {
 	if !slices.Contains(base.AllAppCategories, kind.Category) {
 		return invalidBlock(block, "category %q is not one of %v", kind.Category, base.AllAppCategories)
 	}
+	if kind.Category == base.AppCategoryFunction {
+		return invalidBlock(block, errFunctionNotInSpec)
+	}
 	return state.addSetting(base.SettingTypeAppKind, entity.CurrentAppKindSettingsVersion, false, kind)
+}
+
+// errFunctionNotInSpec is why a spec does not make a function: a function is
+// created as one, through the checks creating it makes, and is not part of a
+// spec yet - export leaves functions out.
+const errFunctionNotInSpec = "a function is created as one, from its source; functions are not part of a spec yet"
+
+// isFunctionSetting says whether an imported setting makes an app a function,
+// or deploys one from a function's code.
+func isFunctionSetting(data entity.SettingData) bool {
+	switch data := data.(type) {
+	case *entity.AppKindSettings:
+		return data.Category == base.AppCategoryFunction
+	case *entity.AppDeploymentSettings:
+		return data.ActiveMethod == base.DeploymentMethodFunction || data.FunctionSource != nil
+	}
+	return false
 }
 
 func (s *service) buildEnvVars(_ context.Context, state *buildState) error {
@@ -215,6 +235,9 @@ func (state *buildState) addImportedSetting(typ base.SettingType, key string, bo
 	setting, parsed, err := decodeImportedSetting(block, typ, key, body)
 	if err != nil {
 		return err
+	}
+	if isFunctionSetting(parsed) {
+		return invalidBlock(block, errFunctionNotInSpec)
 	}
 	setting.ID = gofn.Must(ulid.NewStringULID())
 	setting.Scope = base.ObjectScopeApp

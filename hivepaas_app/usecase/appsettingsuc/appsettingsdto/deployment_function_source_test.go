@@ -1,0 +1,235 @@
+package appsettingsdto
+
+import (
+	"fmt"
+	"strings"
+	"testing"
+	"time"
+
+	"github.com/stretchr/testify/assert"
+	vld "github.com/tiendc/go-validator"
+
+	"github.com/hivepaas/hivepaas/hivepaas_app/base"
+	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
+	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
+	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/timeutil"
+	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/unit"
+)
+
+func inlineSource(runtime base.FunctionRuntime, files ...*FunctionFileReq) *DeploymentFunctionSourceReq {
+	return &DeploymentFunctionSourceReq{
+		Runtime: runtime,
+		Code:    FunctionCodeReq{Inline: &FunctionInlineCodeReq{Files: files}},
+	}
+}
+
+func file(path, content string) *FunctionFileReq {
+	return &FunctionFileReq{Path: path, Content: content}
+}
+
+// errorsOf normalizes the source the way a request is, validates it, and returns
+// each error as "field: key".
+func errorsOf(req *DeploymentFunctionSourceReq) []string {
+	req.Normalize()
+	var out []string
+	for _, err := range vld.Validate(req.Validate("functionSource")...) {
+		field := ""
+		if f := err.Field(); f != nil {
+			field = f.PathString(true, ".")
+		}
+		key, _ := err.CustomKey().(string)
+		out = append(out, field+": "+key)
+	}
+	return out
+}
+
+func TestAFunctionSourceTakesItsRuntimesDefaults(t *testing.T) {
+	for runtime, entrypoint := range map[base.FunctionRuntime]FunctionEntrypointReq{
+		base.FunctionRuntimeNode24:    {File: "index.js", Handler: "default"},
+		base.FunctionRuntimePython313: {File: "main.py", Handler: "handler"},
+		base.FunctionRuntimeGo127:     {File: ".", Handler: "Handle"},
+	} {
+		req := inlineSource(runtime, file("a", "x"))
+
+		req.Normalize()
+
+		assert.Equal(t, base.FunctionContractV1, req.Contract, runtime)
+		assert.Equal(t, entrypoint, req.Entrypoint, runtime)
+		assert.Equal(t, timeutil.Duration(30*time.Second), req.Timeout, runtime)
+		assert.Equal(t, 16, req.MaxConcurrency, runtime)
+		assert.Equal(t, 6*unit.MB, req.MaxBodySize, runtime)
+	}
+}
+
+// Spellings of the same thing become one before anything is checked.
+func TestAFunctionSourceIsNormalized(t *testing.T) {
+	req := inlineSource(" Node24 ", file(" ./src/index.js ", "x"))
+	req.Entrypoint = FunctionEntrypointReq{File: "./src/index.js", Handler: " handle "}
+	req.SystemPackages = []string{" ffmpeg ", "", "libpq5", "ffmpeg"}
+
+	req.Normalize()
+
+	assert.Equal(t, base.FunctionRuntimeNode24, req.Runtime)
+	assert.Equal(t, FunctionEntrypointReq{File: "src/index.js", Handler: "handle"}, req.Entrypoint)
+	assert.Equal(t, "src/index.js", req.Code.Inline.Files[0].Path)
+	assert.Equal(t, []string{"ffmpeg", "libpq5"}, req.SystemPackages)
+	assert.Empty(t, errorsOf(req))
+}
+
+func TestAFunctionSourceOfEachRuntimeIsValid(t *testing.T) {
+	for _, req := range []*DeploymentFunctionSourceReq{
+		inlineSource(base.FunctionRuntimeNode24, file("index.js", "export default () => {}"),
+			file("package.json", "{}")),
+		inlineSource(base.FunctionRuntimePython313, file("main.py", "def handler(req, ctx): pass"),
+			file("lib/helper.py", "")),
+		inlineSource(base.FunctionRuntimeGo127, file("go.mod", "module fn"), file("fn.go", "package fn")),
+		{
+			Runtime: base.FunctionRuntimeNode24,
+			Code: FunctionCodeReq{Dir: "functions/hello", Repo: &FunctionRepoCodeReq{
+				RepoType: base.RepoTypeGit, RepoURL: "https://github.com/acme/fns.git", RepoRef: "main",
+			}},
+			SystemPackages: []string{"ffmpeg", "libpq-dev=17.6-0+deb13u1", "g++"},
+			PushToRegistry: basedto.ObjectIDReq{ID: "01J0000000000000000000REG1"},
+		},
+	} {
+		assert.Empty(t, errorsOf(req), req.Runtime)
+	}
+}
+
+func TestAFunctionSourceThatCannotBeRunIsRefused(t *testing.T) {
+	big := strings.Repeat("x", int(unit.MB)/2+1)
+	manyFiles := make([]*FunctionFileReq, 0, 101)
+	for i := range 101 {
+		manyFiles = append(manyFiles, file(fmt.Sprintf("f%d.js", i), ""))
+	}
+	cases := map[string]struct {
+		req  *DeploymentFunctionSourceReq
+		want string
+	}{
+		"an unknown runtime": {inlineSource("ruby34", file("a.rb", "")),
+			"functionSource.runtime: ERR_VLD_VALUE_NOT_IN_LIST"},
+		"a contract that does not exist": {func() *DeploymentFunctionSourceReq {
+			req := inlineSource(base.FunctionRuntimeNode24, file("index.js", ""))
+			req.Contract = "v2"
+			return req
+		}(), "functionSource.contract: ERR_VLD_VALUE_NOT_IN_LIST"},
+		"a Node.js handler file that is not JavaScript": {func() *DeploymentFunctionSourceReq {
+			req := inlineSource(base.FunctionRuntimeNode24, file("main.py", ""))
+			req.Entrypoint.File = "main.py"
+			return req
+		}(), "functionSource.entrypoint.file: ERR_VLD_FUNCTION_ENTRYPOINT_INVALID"},
+		"an entrypoint outside the function": {func() *DeploymentFunctionSourceReq {
+			req := inlineSource(base.FunctionRuntimePython313, file("main.py", ""))
+			req.Entrypoint.File = "../main.py"
+			return req
+		}(), "functionSource.entrypoint.file: ERR_VLD_FUNCTION_ENTRYPOINT_INVALID"},
+		"a Go handler that is not exported": {func() *DeploymentFunctionSourceReq {
+			req := inlineSource(base.FunctionRuntimeGo127, file("fn.go", ""))
+			req.Entrypoint.Handler = "handle"
+			return req
+		}(), "functionSource.entrypoint.handler: ERR_VLD_FUNCTION_HANDLER_INVALID"},
+		"a Python handler that is not a name": {func() *DeploymentFunctionSourceReq {
+			req := inlineSource(base.FunctionRuntimePython313, file("main.py", ""))
+			req.Entrypoint.Handler = "my-handler"
+			return req
+		}(), "functionSource.entrypoint.handler: ERR_VLD_FUNCTION_HANDLER_INVALID"},
+		"no code": {&DeploymentFunctionSourceReq{Runtime: base.FunctionRuntimeNode24},
+			"functionSource.code: ERR_VLD_VALUE_REQUIRED_ONLY"},
+		"code inline and in a repository": {func() *DeploymentFunctionSourceReq {
+			req := inlineSource(base.FunctionRuntimeNode24, file("index.js", ""))
+			req.Code.Repo = &FunctionRepoCodeReq{RepoType: base.RepoTypeGit, RepoURL: "https://github.com/a/b.git"}
+			return req
+		}(), "functionSource.code: ERR_VLD_VALUE_REQUIRED_ONLY"},
+		"inline code without a file": {inlineSource(base.FunctionRuntimeNode24),
+			"functionSource.code.inline.files: ERR_VLD_VALUE_REQUIRED"},
+		"too many files": {inlineSource(base.FunctionRuntimeNode24, manyFiles...),
+			"functionSource.code.inline.files: ERR_VLD_VALUE_TOO_MANY"},
+		"too much code": {inlineSource(base.FunctionRuntimeNode24, file("index.js", big), file("b.js", big)),
+			"functionSource.code.inline: ERR_VLD_FUNCTION_CODE_TOO_LARGE"},
+		"one file twice": {inlineSource(base.FunctionRuntimeNode24, file("index.js", ""), file("./index.js", "")),
+			"functionSource.code.inline.files: ERR_VLD_VALUES_NON_UNIQUE"},
+		"a file outside the function": {inlineSource(base.FunctionRuntimeNode24, file("index.js", ""),
+			file("../etc/passwd", "")), "functionSource.code.inline.files[1].path: ERR_VLD_FUNCTION_FILE_PATH_INVALID"},
+		"a file at an absolute path": {inlineSource(base.FunctionRuntimeNode24, file("index.js", ""),
+			file("/etc/passwd", "")), "functionSource.code.inline.files[1].path: ERR_VLD_FUNCTION_FILE_PATH_INVALID"},
+		"a file with a name HivePaaS keeps": {inlineSource(base.FunctionRuntimeNode24, file("index.js", ""),
+			file(".hivepaas/Dockerfile", "")), "functionSource.code.inline.files[1].path: ERR_VLD_VALUE_RESERVED"},
+		"a directory for inline code": {func() *DeploymentFunctionSourceReq {
+			req := inlineSource(base.FunctionRuntimeNode24, file("index.js", ""))
+			req.Code.Dir = "fns"
+			return req
+		}(), "functionSource.code.dir: ERR_VLD_FIELD_UNALLOWED"},
+		"a directory outside the repository": {&DeploymentFunctionSourceReq{
+			Runtime: base.FunctionRuntimeNode24,
+			Code: FunctionCodeReq{Dir: "../fns", Repo: &FunctionRepoCodeReq{
+				RepoType: base.RepoTypeGit, RepoURL: "https://github.com/acme/fns.git"}},
+		}, "functionSource.code.dir: ERR_VLD_FUNCTION_FILE_PATH_INVALID"},
+		"a repository that is not one": {&DeploymentFunctionSourceReq{
+			Runtime: base.FunctionRuntimeNode24,
+			Code:    FunctionCodeReq{Repo: &FunctionRepoCodeReq{RepoType: base.RepoTypeGit, RepoURL: "not a url"}},
+		}, "functionSource.code.repo.repoURL: ERR_VLD_URL_INVALID"},
+		"a package name a shell would read": {func() *DeploymentFunctionSourceReq {
+			req := inlineSource(base.FunctionRuntimeNode24, file("index.js", ""))
+			req.SystemPackages = []string{"ffmpeg", "curl;rm -rf /"}
+			return req
+		}(), "functionSource.systemPackages[1]: ERR_VLD_DEBIAN_PACKAGE_INVALID"},
+		"a timeout over 15 minutes": {func() *DeploymentFunctionSourceReq {
+			req := inlineSource(base.FunctionRuntimeNode24, file("index.js", ""))
+			req.Timeout = timeutil.Duration(16 * time.Minute)
+			return req
+		}(), "functionSource.timeout: ERR_VLD_VALUE_NOT_IN_RANGE"},
+		"a timeout under a second": {func() *DeploymentFunctionSourceReq {
+			req := inlineSource(base.FunctionRuntimeNode24, file("index.js", ""))
+			req.Timeout = timeutil.Duration(500 * time.Millisecond)
+			return req
+		}(), "functionSource.timeout: ERR_VLD_VALUE_NOT_IN_RANGE"},
+		"too many calls at once": {func() *DeploymentFunctionSourceReq {
+			req := inlineSource(base.FunctionRuntimeNode24, file("index.js", ""))
+			req.MaxConcurrency = 1001
+			return req
+		}(), "functionSource.maxConcurrency: ERR_VLD_VALUE_NOT_IN_RANGE"},
+		"a body limit over 100 MB": {func() *DeploymentFunctionSourceReq {
+			req := inlineSource(base.FunctionRuntimeNode24, file("index.js", ""))
+			req.MaxBodySize = 101 * unit.MB
+			return req
+		}(), "functionSource.maxBodySize: ERR_VLD_VALUE_NOT_IN_RANGE"},
+	}
+	for name, tc := range cases {
+		t.Run(name, func(t *testing.T) {
+			assert.Contains(t, errorsOf(tc.req), tc.want)
+		})
+	}
+}
+
+func TestAFunctionSourceBecomesItsEntity(t *testing.T) {
+	req := &DeploymentFunctionSourceReq{
+		Runtime: base.FunctionRuntimeGo127,
+		Code: FunctionCodeReq{Dir: "fns/hello", Repo: &FunctionRepoCodeReq{
+			RepoType: base.RepoTypeGit, RepoURL: "https://github.com/acme/fns.git", RepoRef: "main",
+			RepoOptions: DeploymentRepoOptionsReq{GitLFSEnabled: true},
+			Credentials: basedto.ObjectIDReq{ID: "cred-1"},
+		}},
+		SystemPackages: []string{"ffmpeg"},
+		PushToRegistry: basedto.ObjectIDReq{ID: "registry-1"},
+	}
+	req.Normalize()
+
+	source, err := req.ToEntity()
+
+	assert.NoError(t, err)
+	assert.Equal(t, &entity.DeploymentFunctionSource{
+		Runtime:    base.FunctionRuntimeGo127,
+		Contract:   base.FunctionContractV1,
+		Entrypoint: entity.FunctionEntrypoint{File: ".", Handler: "Handle"},
+		Code: entity.FunctionCode{Dir: "fns/hello", Repo: &entity.FunctionRepoCode{
+			RepoType: base.RepoTypeGit, RepoID: "github.com/acme/fns", RepoURL: "https://github.com/acme/fns.git",
+			RepoRef: "refs/heads/main", RepoOptions: entity.DeploymentRepoOptions{GitLFSEnabled: true},
+			Credentials: entity.RepoCredentials{ID: "cred-1"},
+		}},
+		SystemPackages: []string{"ffmpeg"},
+		Timeout:        timeutil.Duration(30 * time.Second),
+		MaxConcurrency: 16,
+		MaxBodySize:    6 * unit.MB,
+		PushToRegistry: entity.ObjectID{ID: "registry-1"},
+	}, source)
+}

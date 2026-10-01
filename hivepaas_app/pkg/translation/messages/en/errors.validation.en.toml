@@ -63,5 +63,12 @@ ERR_VLD_PROJECT_ENV_ID_MISMATCHED = "Project environment does not belong to this
 # USERS
 ERR_VLD_ADMIN_SECURITY_OPTION_WEAK = "An administrator cannot sign in with a password alone. Choose a security option that adds a second factor."
 
+# FUNCTIONS
+ERR_VLD_FUNCTION_ENTRYPOINT_INVALID = "The entrypoint must be a file of the function its runtime can load: a .js, .mjs or .cjs file for Node.js, a .py file for Python, the directory of the handler's package for Go"
+ERR_VLD_FUNCTION_HANDLER_INVALID = "The handler must be a name the runtime can call: for Go, an exported name such as Handle"
+ERR_VLD_FUNCTION_FILE_PATH_INVALID = "A path must be relative, stay inside the function, and use only letters, digits, '.', '_', '-' and '/'"
+ERR_VLD_FUNCTION_CODE_TOO_LARGE = "The function's code is {{.Actual}}, over the {{.Max}} a function kept inline may have. Put larger code in a repository"
+ERR_VLD_DEBIAN_PACKAGE_INVALID = "A Debian package is a name of lowercase letters, digits, '+', '-' and '.', with an optional =version"
+
 # INFRA
 ERR_VLD_DOCKER_LABEL_UNALLOWED = "Docker object label '{{.Label}}' is unallowed"

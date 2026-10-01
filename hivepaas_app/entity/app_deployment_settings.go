@@ -21,9 +21,10 @@ func (s *appDeploymentSettingsParser) New() SettingData {
 }
 
 type AppDeploymentSettings struct {
-	ImageSource  *DeploymentImageSource `json:"imageSource"`
-	RepoSource   *DeploymentRepoSource  `json:"repoSource"`
-	ActiveMethod base.DeploymentMethod  `json:"activeMethod"`
+	ImageSource    *DeploymentImageSource    `json:"imageSource"`
+	RepoSource     *DeploymentRepoSource     `json:"repoSource"`
+	FunctionSource *DeploymentFunctionSource `json:"functionSource,omitempty"`
+	ActiveMethod   base.DeploymentMethod     `json:"activeMethod"`
 
 	Command               string `json:"command,omitempty"`
 	WorkingDir            string `json:"workingDir,omitempty"`
@@ -88,6 +89,9 @@ func (s *AppDeploymentSettings) GetRegistryAuthIDs() (res []string) {
 	if s.RepoSource != nil && s.RepoSource.PushToRegistry.ID != "" {
 		res = append(res, s.RepoSource.PushToRegistry.ID)
 	}
+	if s.FunctionSource != nil && s.FunctionSource.PushToRegistry.ID != "" {
+		res = append(res, s.FunctionSource.PushToRegistry.ID)
+	}
 	res = gofn.ToSet(res)
 	return
 }
@@ -95,6 +99,9 @@ func (s *AppDeploymentSettings) GetRegistryAuthIDs() (res []string) {
 func (s *AppDeploymentSettings) GetGitCredentialIDs() (res []string) {
 	if s.RepoSource != nil && s.RepoSource.Credentials.ID != "" {
 		res = append(res, s.RepoSource.Credentials.ID)
+	}
+	if s.FunctionSource != nil && s.FunctionSource.Code.Repo != nil && s.FunctionSource.Code.Repo.Credentials.ID != "" {
+		res = append(res, s.FunctionSource.Code.Repo.Credentials.ID)
 	}
 	res = gofn.ToSet(res)
 	return

@@ -1,5 +1,6 @@
 import { cn } from "@/lib/utils";
 import {
+    BookOpen,
     ChevronsUpDown,
     LogOut,
     type LucideIcon,
@@ -12,6 +13,7 @@ import {
 import invariant from "tiny-invariant";
 
 import { type ColorMode, useColorModeContext } from "@application/shared/color-mode";
+import { DOCS_URL } from "@application/shared/constants";
 import { useProfileContext } from "@application/shared/context";
 import { SessionCommands } from "@application/shared/data/commands";
 import { useCreateFeedbackDialog } from "@application/shared/dialogs";
@@ -145,6 +147,16 @@ export function NavUser({ user }: { user: Profile }) {
                         </DropdownMenuGroup>
                         <DropdownMenuSeparator />
                         <DropdownMenuGroup>
+                            <DropdownMenuItem asChild>
+                                <a
+                                    href={DOCS_URL}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                >
+                                    <BookOpen />
+                                    Documentation
+                                </a>
+                            </DropdownMenuItem>
                             <DropdownMenuItem asChild>
                                 <a
                                     href="https://discord.gg/2TgD3zDb2e"

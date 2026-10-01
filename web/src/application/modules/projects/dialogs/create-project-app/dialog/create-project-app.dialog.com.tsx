@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 
 import { Dialog, DialogFixedContent, DialogHeader, DialogTitle } from "@components/ui/dialog";
+import { Separator } from "@components/ui/separator";
 import { toast } from "sonner";
 import { ProjectAppsCommands } from "~/projects/data/commands";
 import { ProjectsQueries } from "~/projects/data/queries";
@@ -78,6 +79,9 @@ export function CreateProjectAppDialog() {
                 <DialogHeader>
                     <DialogTitle>Create App</DialogTitle>
                 </DialogHeader>
+                <div className="px-4">
+                    <Separator className="opacity-50" />
+                </div>
                 <CreateProjectAppForm
                     envs={envs}
                     initialEnv={dialogOptions?.initialEnv}

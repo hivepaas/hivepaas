@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 
 import { Dialog, DialogFixedContent, DialogHeader, DialogTitle } from "@components/ui/dialog";
+import { Separator } from "@components/ui/separator";
 import { useNavigate } from "react-router";
 import { toast } from "sonner";
 import { ProjectAppsCommands } from "~/projects/data/commands";
@@ -84,6 +85,9 @@ export function CreateFunctionDialog() {
                 <DialogHeader>
                     <DialogTitle>Create Function</DialogTitle>
                 </DialogHeader>
+                <div className="px-4">
+                    <Separator className="opacity-50" />
+                </div>
                 <CreateFunctionForm
                     projectId={projectId}
                     envs={envs}

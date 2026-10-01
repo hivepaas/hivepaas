@@ -2,8 +2,6 @@ package apppreviewserviceimpl
 
 import (
 	"context"
-	"fmt"
-	"strings"
 
 	"github.com/moby/moby/api/types/swarm"
 
@@ -89,9 +87,16 @@ func (s *service) onCloneRoutingSetting(
 		if !domain.Enabled {
 			continue
 		}
-		subdomain := strings.TrimSuffix(data.CalcSubdomain, "."+domain.Domain)
-		domain.Domain = fmt.Sprintf("%v.%v", subdomain, domain.Domain)
-		// TODO: handle SSL cert
+		name, err := previewDomain(data.CalcSubdomain, domain.Domain)
+		if err != nil {
+			return nil, hperrors.Wrap(err)
+		}
+		domain.Domain = name
+		// The app's certificate is for the app's name. Left without one, the
+		// domain is given a certificate when the copy's routing is applied: a
+		// wildcard that covers it if there is one - the app's own, usually -
+		// or one obtained for it.
+		domain.SSLCert = entity.ObjectID{}
 		routingSettings.Domains = append(routingSettings.Domains, domain)
 		activeDomains = append(activeDomains, domain.Domain)
 	}

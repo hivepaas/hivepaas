@@ -14,6 +14,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/githelper"
+	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/logging"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/projecthelper"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/safego"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/vcsurl"
@@ -147,7 +148,8 @@ func (uc *UC) handlePRCommentDeploy(
 		if !prCommentEvent.previewDeployNoCloneDB {
 			cloneDBApps = cloneDBApps || (previewSettings.AutoCloneApps && len(previewSettings.AppsToClone) > 0)
 		}
-		_ = uc.sendPRComment(ctx, db, prCommentEvent, data, app, buildDeployPreviewComment(cloneDBApps))
+		_ = uc.sendPRComment(ctx, db, prCommentEvent, data, app,
+			buildDeployPreviewComment(cloneDBApps, uc.withheldSecretsNote(ctx, db, app)))
 	} else {
 		// TODO: find the SHA of the head commit of the PR (change id)
 		err := uc.createAppDeployment(ctx, app, "", data.WebhookSetting.ID)
@@ -155,7 +157,8 @@ func (uc *UC) handlePRCommentDeploy(
 			_ = uc.sendPRComment(ctx, db, prCommentEvent, data, app, buildDeployFailedComment(app.Name, err))
 			return
 		}
-		_ = uc.sendPRComment(ctx, db, prCommentEvent, data, app, buildDeployPreviewComment(true))
+		_ = uc.sendPRComment(ctx, db, prCommentEvent, data, app,
+			buildDeployPreviewComment(true, uc.withheldSecretsNote(ctx, db, app)))
 	}
 }
 
@@ -223,14 +226,51 @@ func prCommentsRefusal(owner *entity.App, previewSettings *entity.AppFeaturePrev
 	return ""
 }
 
+// withheldSecretsNote is the reply's warning of the secrets the previews of the
+// app go without - the app's, or a preview's parent's - or "" when there are none.
+// It only warns: failing to work them out leaves it out.
+func (uc *UC) withheldSecretsNote(ctx context.Context, db database.IDB, app *entity.App) string {
+	owner := app
+	if app.IsPreviewApp() {
+		var err error
+		owner, err = uc.appService.LoadApp(ctx, db, app.ProjectID, app.ParentID, false, false,
+			bunex.SelectExcludeColumns(entity.AppDefaultExcludeColumns...),
+			bunex.SelectRelation("Project",
+				bunex.SelectExcludeColumns(entity.ProjectDefaultExcludeColumns...),
+			),
+			bunex.SelectRelation("ProjectEnv"),
+		)
+		if err != nil {
+			logging.Warnf("webhook: loading the parent of preview %s: %v", app.ID, err)
+			return ""
+		}
+	}
+	secrets, err := uc.appPreviewService.WithheldSecrets(ctx, db, owner)
+	if err != nil {
+		logging.Warnf("webhook: working out the secrets a preview of app %s goes without: %v", owner.ID, err)
+		return ""
+	}
+	dashboardURL := ""
+	if cfg := config.Current(); cfg != nil {
+		dashboardURL = cfg.BaseDashboardURL()
+	}
+	return buildWithheldSecretsNote(owner.Name, appPageURL(dashboardURL, owner, "secrets"), secrets)
+}
+
 // featureSettingsURL is the dashboard's page of an app's feature settings, or
 // "" when the dashboard's address is not known.
 func featureSettingsURL(dashboardURL string, app *entity.App) string {
+	return appPageURL(dashboardURL, app, "feature-settings")
+}
+
+// appPageURL is a page of an app on the dashboard, such as its secrets, or ""
+// when the dashboard's address is not known.
+func appPageURL(dashboardURL string, app *entity.App, page string) string {
 	projectID, env := projecthelper.ParseProjectEnvID(app.ProjectEnvID)
 	if dashboardURL == "" || projectID == "" || env == "" {
 		return ""
 	}
-	u, err := url.JoinPath(dashboardURL, "projects", projectID, env, "apps", app.ID, "feature-settings")
+	u, err := url.JoinPath(dashboardURL, "projects", projectID, env, "apps", app.ID, page)
 	if err != nil {
 		return ""
 	}

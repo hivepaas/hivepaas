@@ -48682,9 +48682,16 @@
           },
           "repoURL" : {
             "type" : "string"
+          },
+          "withheldSecrets" : {
+            "description" : "WithheldSecrets are the app's secrets the preview goes without, not being\ninheritable, and the variables that come out empty in it for that.",
+            "items" : {
+              "$ref" : "#/components/schemas/apppreviewdto.WithheldSecretResp"
+            },
+            "type" : "array"
           }
         },
-        "required" : [ "canCloneDbApps", "canListBranches", "canListPullRequests", "canSkipCloningDbApps", "enabled", "repoCredentials", "repoURL" ],
+        "required" : [ "canCloneDbApps", "canListBranches", "canListPullRequests", "canSkipCloningDbApps", "enabled", "repoCredentials", "repoURL", "withheldSecrets" ],
         "type" : "object"
       },
       "apppreviewdto.PrepareCreatePreviewReq" : {
@@ -48700,6 +48707,21 @@
           }
         },
         "required" : [ "data", "meta" ],
+        "type" : "object"
+      },
+      "apppreviewdto.WithheldSecretResp" : {
+        "properties" : {
+          "envVars" : {
+            "items" : {
+              "type" : "string"
+            },
+            "type" : "array"
+          },
+          "name" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "envVars", "name" ],
         "type" : "object"
       },
       "appsettingsdto.AppArmorOpts" : {

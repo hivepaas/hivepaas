@@ -16,4 +16,6 @@ type Service interface {
 
 	CreateAppPreviewTask(app *entity.App, args *entity.TaskAppPreviewArgs) (*entity.Task, error)
 	CreatePreview(ctx context.Context, db database.Tx, req *CreatePreviewReq) (*CreatePreviewResp, error)
+
+	WithheldSecrets(ctx context.Context, db database.IDB, app *entity.App) ([]*WithheldSecret, error)
 }

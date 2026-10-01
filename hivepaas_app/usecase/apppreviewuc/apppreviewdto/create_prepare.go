@@ -38,4 +38,12 @@ type PrepareCreatePreviewDataResp struct {
 	CanListPullRequests  bool                  `json:"canListPullRequests"`
 	CanCloneDBApps       bool                  `json:"canCloneDbApps"`
 	CanSkipCloningDBApps bool                  `json:"canSkipCloningDbApps"`
+	// WithheldSecrets are the app's secrets the preview goes without, not being
+	// inheritable, and the variables that come out empty in it for that.
+	WithheldSecrets []*WithheldSecretResp `json:"withheldSecrets"`
+}
+
+type WithheldSecretResp struct {
+	Name    string   `json:"name"`
+	EnvVars []string `json:"envVars"`
 }

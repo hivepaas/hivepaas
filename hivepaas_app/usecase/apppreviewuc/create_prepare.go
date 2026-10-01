@@ -8,6 +8,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
+	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/logging"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/apppreviewuc/apppreviewdto"
 )
 
@@ -64,6 +65,8 @@ func (uc *UC) PrepareCreatePreview(
 		return nil, hperrors.Wrap(err)
 	}
 
+	resp.Data.WithheldSecrets = uc.withheldSecrets(ctx, app)
+
 	resp.Data.RepoURL = repoSource.RepoURL
 	if repoSource.Credentials.ID != "" {
 		resp.Data.RepoCredentials = &basedto.ObjectIDResp{ID: repoSource.Credentials.ID}
@@ -78,4 +81,19 @@ func (uc *UC) PrepareCreatePreview(
 	}
 
 	return resp, nil
+}
+
+// withheldSecrets warns of the secrets a preview of the app would go without. It
+// only warns: failing to work them out leaves the warning out, not the preview.
+func (uc *UC) withheldSecrets(ctx context.Context, app *entity.App) []*apppreviewdto.WithheldSecretResp {
+	secrets, err := uc.appPreviewService.WithheldSecrets(ctx, uc.db, app)
+	if err != nil {
+		logging.Warnf("app preview: working out the secrets a preview of app %s goes without: %v", app.ID, err)
+		return nil
+	}
+	res := make([]*apppreviewdto.WithheldSecretResp, 0, len(secrets))
+	for _, secret := range secrets {
+		res = append(res, &apppreviewdto.WithheldSecretResp{Name: secret.Name, EnvVars: secret.EnvVars})
+	}
+	return res
 }

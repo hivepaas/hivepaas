@@ -19,3 +19,10 @@ type CreatePreviewResp struct {
 	DeploymentTask *entity.Task
 	OnCleanup      func(error) error
 }
+
+// WithheldSecret is a secret of an app its previews go without, not being
+// inheritable, and the app's variables that use it: in a preview they are empty.
+type WithheldSecret struct {
+	Name    string
+	EnvVars []string
+}

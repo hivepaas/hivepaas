@@ -118,7 +118,7 @@ func TestBuildInvalidCommandComment(t *testing.T) {
 
 func TestBuildDeployPreviewComment(t *testing.T) {
 	t.Run("Without clone DB apps (shows migration warning)", func(t *testing.T) {
-		comment := buildDeployPreviewComment(false)
+		comment := buildDeployPreviewComment(false, "")
 		assert.Contains(t, comment, "🚀 **HivePaaS is preparing a preview deployment for this pull request...**")
 		assert.Contains(t, comment, "> ⚠️ **Warning:** Database cloning is not enabled for this preview deployment")
 		assert.Contains(t, comment, "<details>")
@@ -127,7 +127,7 @@ func TestBuildDeployPreviewComment(t *testing.T) {
 	})
 
 	t.Run("With clone DB apps (hides migration warning)", func(t *testing.T) {
-		comment := buildDeployPreviewComment(true)
+		comment := buildDeployPreviewComment(true, "")
 		assert.Contains(t, comment, "🚀 **HivePaaS is preparing a preview deployment for this pull request...**")
 		assert.False(t, strings.Contains(comment, "> ⚠️ **Warning:** Database cloning is not enabled"))
 		assert.Contains(t, comment, "<details>")

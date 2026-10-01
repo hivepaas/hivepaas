@@ -10,6 +10,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/vcsurl"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/apppreviewservice"
 	"github.com/hivepaas/hivepaas/services/git/gitapi"
 )
 
@@ -40,18 +41,45 @@ func buildInvalidCommandComment(commandText string) string {
 		commandText, prCommentHelpBody)
 }
 
-func buildDeployPreviewComment(cloneDBApps bool) string {
+// buildDeployPreviewComment answers a deploy command, with the warnings that go
+// with it: the database shared with the app, and withheldNote, the secrets the
+// preview goes without.
+func buildDeployPreviewComment(cloneDBApps bool, withheldNote string) string {
 	var sb strings.Builder
 	sb.WriteString("🚀 **HivePaaS is preparing a preview deployment for this pull request...**\n\n")
 
 	if !cloneDBApps {
 		sb.WriteString(prCommentDBWarning)
 	}
+	sb.WriteString(withheldNote)
 
 	sb.WriteString("<details>\n<summary>📖 <b>Available commands and options</b></summary>\n\n")
 	sb.WriteString(prCommentHelpBody)
 	sb.WriteString("\n</details>")
 
+	return sb.String()
+}
+
+// buildWithheldSecretsNote warns that the preview goes without the app's secrets
+// that are not inheritable, and empties the variables using them. It names the
+// secrets and the variables - never a value - and says where to change that.
+// "" when there are none.
+func buildWithheldSecretsNote(appName, secretsURL string, secrets []*apppreviewservice.WithheldSecret) string {
+	if len(secrets) == 0 {
+		return ""
+	}
+	where := "**Secrets**"
+	if secretsURL != "" {
+		where = "[**Secrets**](" + secretsURL + ")"
+	}
+	var sb strings.Builder
+	fmt.Fprintf(&sb, "> ⚠️ **Warning:** These secrets of `%s` are not inheritable, so the preview does not get "+
+		"them, and the variables using them are empty in it:\n>\n", appName)
+	for _, secret := range secrets {
+		fmt.Fprintf(&sb, "> - `%s`, used by `%s`\n", secret.Name, strings.Join(secret.EnvVars, "`, `"))
+	}
+	fmt.Fprintf(&sb, ">\n> To give the preview a secret, turn on **Inheritable** for it in the application's %s "+
+		"on the HivePaaS Dashboard, then deploy the preview again.\n\n", where)
 	return sb.String()
 }
 

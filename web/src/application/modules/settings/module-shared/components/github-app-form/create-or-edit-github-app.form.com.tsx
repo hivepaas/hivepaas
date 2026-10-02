@@ -285,7 +285,8 @@ export function CreateOrEditGithubAppForm({
                         title={
                             <LabelWithInfo
                                 label="Client ID"
-                                isRequired
+                                isRequired={ssoEnabled.value}
+                                content="The app's OAuth client: needed only to sign users in through GitHub (SSO Enabled)."
                             />
                         }
                     >
@@ -305,7 +306,8 @@ export function CreateOrEditGithubAppForm({
                         title={
                             <LabelWithInfo
                                 label="Client Secret"
-                                isRequired
+                                isRequired={ssoEnabled.value}
+                                content="The app's OAuth client: needed only to sign users in through GitHub (SSO Enabled)."
                             />
                         }
                     >
@@ -343,7 +345,12 @@ export function CreateOrEditGithubAppForm({
                             </InfoBlock>
                             <InfoBlock
                                 titleWidth={220}
-                                title={<LabelWithInfo label="Webhook Secret" />}
+                                title={
+                                    <LabelWithInfo
+                                        label="Webhook Secret"
+                                        content="Set on the app's webhook on GitHub each time the app is saved here."
+                                    />
+                                }
                             >
                                 <div className={SETTINGS_FORM_CONTROL_MAX_WIDTH_CLASS}>
                                     <PasswordInput

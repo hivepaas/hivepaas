@@ -105,6 +105,12 @@ func toFunctionMetricsData(rangeName string, w window, stats *logging.Invocation
 		Totals:      countsResp(stats.Totals),
 		ByOutcome:   stats.ByOutcome,
 		Series:      make([]*appdto.FunctionMetricsPointResp, 0, len(stats.Buckets)),
+		ByPath:      make([]*appdto.FunctionMetricsPathResp, 0, len(stats.ByPath)),
+	}
+	for _, p := range stats.ByPath {
+		data.ByPath = append(data.ByPath, &appdto.FunctionMetricsPathResp{
+			Method: p.Method, Path: p.Path, FunctionMetricsCountsResp: *countsResp(p.InvocationCounts),
+		})
 	}
 	for _, b := range stats.Buckets {
 		data.Series = append(data.Series, &appdto.FunctionMetricsPointResp{
@@ -116,6 +122,7 @@ func toFunctionMetricsData(rangeName string, w window, stats *logging.Invocation
 
 func countsResp(c logging.InvocationCounts) *appdto.FunctionMetricsCountsResp {
 	return &appdto.FunctionMetricsCountsResp{
-		Calls: c.Calls, Failed: c.Failed, Errors5xx: c.Errors5xx, P50: c.P50, P95: c.P95, P99: c.P99,
+		Calls: c.Calls, Failed: c.Failed, Errors4xx: c.Errors4xx, Errors5xx: c.Errors5xx,
+		P50: c.P50, P95: c.P95, P99: c.P99,
 	}
 }

@@ -64,6 +64,7 @@ type (
 	InvocationStatsResp = loggingmodel.InvocationStatsResp
 	InvocationCounts    = loggingmodel.InvocationCounts
 	InvocationBucket    = loggingmodel.InvocationBucket
+	InvocationPath      = loggingmodel.InvocationPath
 )
 
 // MaxQueryLimit caps how many lines one query returns.

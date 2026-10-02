@@ -55,6 +55,7 @@ func TestFunctionMetricsAreTheFunctionsAndEveryStepIsAPoint(t *testing.T) {
 	if assert.NotNil(t, b.got) {
 		assert.Equal(t, []logging.FieldMatch{{Field: "attrs." + appservice.LabelLogAppID, Value: "FN1"}}, b.got.Match)
 		assert.Equal(t, time.Minute, b.got.Step)
+		assert.Equal(t, 20, b.got.TopPaths)
 	}
 	if assert.Len(t, got.Buckets, 5) {
 		for i, bucket := range got.Buckets {

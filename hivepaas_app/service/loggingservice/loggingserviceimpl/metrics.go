@@ -13,6 +13,10 @@ import (
 	"github.com/hivepaas/hivepaas/services/logging/vlagent"
 )
 
+// functionMetricsTopPaths is how many paths a function's metrics count apart:
+// the most called, enough to tell a function's own paths from a scanner's.
+const functionMetricsTopPaths = 20
+
 // FunctionMetrics counts a function's calls in its stored logs.
 //
 // The scope is app's, as for QueryAppLogs. The backend leaves out the steps
@@ -33,10 +37,11 @@ func (s *service) FunctionMetrics(
 		return nil, hperrors.Wrap(err)
 	}
 	resp, err := backend.InvocationStats(ctx, &logging.InvocationStatsReq{
-		Match: []logging.FieldMatch{{Field: vlagent.AttrField(appservice.LabelLogAppID), Value: app.ID}},
-		Start: q.Start,
-		End:   q.End,
-		Step:  q.Step,
+		Match:    []logging.FieldMatch{{Field: vlagent.AttrField(appservice.LabelLogAppID), Value: app.ID}},
+		Start:    q.Start,
+		End:      q.End,
+		Step:     q.Step,
+		TopPaths: functionMetricsTopPaths,
 	})
 	if err != nil {
 		return nil, hperrors.Wrap(err)

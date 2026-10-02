@@ -17,18 +17,20 @@ import (
 
 func statsReq(step time.Duration) *loggingmodel.InvocationStatsReq {
 	return &loggingmodel.InvocationStatsReq{
-		Match: []loggingmodel.FieldMatch{{Field: appField, Value: "FN1"}},
-		Start: time.Date(2026, 10, 2, 0, 0, 0, 0, time.UTC),
-		End:   time.Date(2026, 10, 3, 0, 0, 0, 0, time.UTC),
-		Step:  step,
+		Match:    []loggingmodel.FieldMatch{{Field: appField, Value: "FN1"}},
+		Start:    time.Date(2026, 10, 2, 0, 0, 0, 0, time.UTC),
+		End:      time.Date(2026, 10, 3, 0, 0, 0, 0, time.UTC),
+		Step:     step,
+		TopPaths: 20,
 	}
 }
 
 const statsHead = `"attrs.hivepaas.app.id":="FN1" AND "\"hp\":\"invocation\""` +
-	` | unpack_json from _msg fields (hp, outcome, status, durationMs) result_prefix "app."` +
+	` | unpack_json from _msg fields (hp, method, path, outcome, status, durationMs) result_prefix "app."` +
 	` | filter "app.hp":="invocation"`
 
 const statsCounts = ` count() calls, count() if ("app.outcome":!="ok") failed,` +
+	` count() if ("app.status":>=400 "app.status":<500) errors4xx,` +
 	` count() if ("app.status":>=500) errors5xx, quantile(0.5, "app.durationMs") p50,` +
 	` quantile(0.95, "app.durationMs") p95, quantile(0.99, "app.durationMs") p99`
 
@@ -39,6 +41,8 @@ func TestInvocationStatsQueriesCountTheAppsInvocationLines(t *testing.T) {
 	assert.Equal(t, statsHead+" | stats by (_time:900s)"+statsCounts+" | sort by (_time)", q.Series)
 	assert.Equal(t, statsHead+" | stats"+statsCounts, q.Totals)
 	assert.Equal(t, statsHead+` | stats by ("app.outcome") count() calls`, q.Outcomes)
+	assert.Equal(t, statsHead+` | stats by ("app.method", "app.path")`+statsCounts+
+		` | sort by (calls desc, "app.path", "app.method") limit 20`, q.Paths)
 }
 
 func TestInvocationStatsQueriesRefuseNoScopeAndNoStep(t *testing.T) {
@@ -54,6 +58,11 @@ func TestInvocationStatsQueriesRefuseNoScopeAndNoStep(t *testing.T) {
 	req = statsReq(1500 * time.Millisecond)
 	_, err = BuildInvocationStatsQueries(req)
 	assert.ErrorIs(t, err, loggingmodel.ErrQueryInvalid, "a step is whole seconds")
+
+	req = statsReq(time.Minute)
+	req.TopPaths = 0
+	_, err = BuildInvocationStatsQueries(req)
+	assert.ErrorIs(t, err, loggingmodel.ErrQueryInvalid, "the paths are a number of them")
 }
 
 func TestInvocationStatsQueriesQuoteTheScope(t *testing.T) {
@@ -82,6 +91,11 @@ func TestInvocationStatsReadsTheThreeAnswers(t *testing.T) {
 				`"p50":"10","p95":"12","p99":"12.5"}`+"\n")
 		case strings.Contains(q, `by ("app.outcome")`):
 			_, _ = io.WriteString(w, `{"app.outcome":"ok","calls":"4"}`+"\n"+`{"app.outcome":"error","calls":"1"}`+"\n")
+		case strings.Contains(q, `by ("app.method", "app.path")`):
+			_, _ = io.WriteString(w, `{"app.method":"GET","app.path":"/","calls":"3","failed":"1","errors4xx":"0",`+
+				`"errors5xx":"1","p50":"20","p95":"40","p99":"41"}`+"\n"+
+				`{"app.method":"GET","app.path":"/.env","calls":"2","failed":"0","errors4xx":"2","errors5xx":"0",`+
+				`"p50":"1","p95":"2","p99":"2"}`+"\n")
 		default:
 			_, _ = io.WriteString(w, `{"calls":"5","failed":"1","errors5xx":"1","p50":"15","p95":"40","p99":"41"}`+"\n")
 		}
@@ -102,8 +116,14 @@ func TestInvocationStatsReadsTheThreeAnswers(t *testing.T) {
 		},
 		Totals:    loggingmodel.InvocationCounts{Calls: 5, Failed: 1, Errors5xx: 1, P50: f(15), P95: f(40), P99: f(41)},
 		ByOutcome: map[string]int64{"ok": 4, "error": 1},
+		ByPath: []*loggingmodel.InvocationPath{
+			{Method: "GET", Path: "/", InvocationCounts: loggingmodel.InvocationCounts{
+				Calls: 3, Failed: 1, Errors5xx: 1, P50: f(20), P95: f(40), P99: f(41)}},
+			{Method: "GET", Path: "/.env", InvocationCounts: loggingmodel.InvocationCounts{
+				Calls: 2, Errors4xx: 2, P50: f(1), P95: f(2), P99: f(2)}},
+		},
 	}, got)
-	if assert.Len(t, forms, 3) {
+	if assert.Len(t, forms, 4) {
 		for _, form := range forms {
 			assert.Equal(t, "2026-10-02T00:00:00Z", form.Get("start"))
 			assert.Equal(t, "2026-10-03T00:00:00Z", form.Get("end"))
@@ -116,7 +136,7 @@ func TestInvocationStatsReadsTheThreeAnswers(t *testing.T) {
 func TestInvocationStatsWithoutACallHasNoDurations(t *testing.T) {
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		body, _ := io.ReadAll(r.Body)
-		if strings.Contains(string(body), "by+%28_time") || strings.Contains(string(body), "outcome") {
+		if strings.Contains(string(body), "by+%28") {
 			return
 		}
 		_, _ = io.WriteString(w, `{"calls":"0","failed":"0","errors5xx":"0","p50":"NaN","p95":"NaN","p99":""}`+"\n")
@@ -130,4 +150,5 @@ func TestInvocationStatsWithoutACallHasNoDurations(t *testing.T) {
 	assert.Empty(t, got.Buckets)
 	assert.Equal(t, loggingmodel.InvocationCounts{}, got.Totals)
 	assert.Empty(t, got.ByOutcome)
+	assert.Empty(t, got.ByPath)
 }

@@ -88,23 +88,28 @@ func (uc *UC) installGithubAppWebhook(
 		return hperrors.Wrap(err)
 	}
 
-	shouldSet := true
-	if !update {
-		hook, err := client.GetAppHookConfig(ctx)
-		if err != nil {
-			return hperrors.Wrap(err)
-		}
-		shouldSet = gofn.PtrValueOrEmpty(hook.URL) != githubApp.WebhookURL
+	// The hook is set every time, its secret with it: GitHub signs deliveries
+	// with the secret it holds, and HivePaaS checks them with the one above.
+	set, err := appHookConfig(githubApp)
+	if err != nil {
+		return hperrors.Wrap(err)
 	}
-
-	if shouldSet {
-		err = client.UpdateAppHookConfig(ctx, func(opts *gogithub.HookConfig) {
-			opts.ContentType = new("json")
-			opts.URL = &githubApp.WebhookURL
-		})
-		if err != nil {
-			return hperrors.Wrap(err)
-		}
+	if err = client.UpdateAppHookConfig(ctx, set); err != nil {
+		return hperrors.Wrap(err)
 	}
 	return nil
+}
+
+// appHookConfig is the app's hook as HivePaaS receives it: its URL, JSON, and
+// the secret its deliveries are signed with.
+func appHookConfig(githubApp *entity.GithubApp) (func(*gogithub.HookConfig), error) {
+	secret, err := githubApp.WebhookSecret.GetPlain()
+	if err != nil {
+		return nil, hperrors.Wrap(err)
+	}
+	return func(opts *gogithub.HookConfig) {
+		opts.ContentType = new("json")
+		opts.URL = new(githubApp.WebhookURL)
+		opts.Secret = new(secret)
+	}, nil
 }

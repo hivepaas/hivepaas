@@ -71,9 +71,17 @@ func (req *GithubAppBaseReq) modifyRequest() error {
 	return nil
 }
 
+// validate asks for what the app is used with: its id, installation and private
+// key read repositories; the client's id and secret are OAuth, for signing in.
 func (req *GithubAppBaseReq) validate(_ string) []vld.Validator {
-	// TODO: add the remaining validation
 	var res []vld.Validator
+	res = append(res, basedto.ValidateRequiredField(&req.GhAppID, "appId")...)
+	res = append(res, basedto.ValidateRequiredField(&req.GhInstallationID, "installationId")...)
+	res = append(res, basedto.ValidateRequiredField(&req.PrivateKey, "privateKey")...)
+	if req.SSOEnabled {
+		res = append(res, basedto.ValidateRequiredField(&req.ClientID, "clientId")...)
+		res = append(res, basedto.ValidateRequiredField(&req.ClientSecret, "clientSecret")...)
+	}
 	res = append(res, basedto.ValidatePlainSecret(&req.ClientSecret, "clientSecret")...)
 	res = append(res, basedto.ValidatePlainSecret(&req.PrivateKey, "privateKey")...)
 	return res

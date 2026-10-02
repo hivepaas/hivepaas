@@ -86,6 +86,12 @@ const DeploymentSettingsSchema = z.preprocess(
 
         const input = value as Record<string, unknown>;
 
+        // A function shows its repository as a repo deployment does; inline code has none.
+        if (input["activeMethod"] === EAppDeploymentMethod.Function) {
+            const functionSource = input["functionSource"] as { code?: { repo?: unknown } } | null | undefined;
+            return { ...input, repoSource: functionSource?.code?.repo ?? null };
+        }
+
         if (input["activeMethod"] !== EAppDeploymentMethod.Repo) {
             return input;
         }
@@ -105,6 +111,12 @@ const DeploymentSettingsSchema = z.preprocess(
         z
             .object({
                 activeMethod: z.literal(EAppDeploymentMethod.Image),
+            })
+            .passthrough(),
+        z
+            .object({
+                activeMethod: z.literal(EAppDeploymentMethod.Function),
+                repoSource: DeploymentRepoSourceSchema.nullable(),
             })
             .passthrough(),
     ]),

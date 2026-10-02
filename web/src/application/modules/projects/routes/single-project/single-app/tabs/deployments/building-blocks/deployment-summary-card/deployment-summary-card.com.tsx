@@ -6,7 +6,7 @@ import { dashedBorderBox } from "@lib/styles";
 import { format } from "date-fns";
 import { Box, ChevronDown, Clock, FileText, FolderGit2, GitBranch, GitCommit, Info } from "lucide-react";
 import ReactTimeAgo from "react-time-ago";
-import type { AppDeployment, AppDeploymentSourceUser } from "~/projects/domain";
+import type { AppDeployment, AppDeploymentRepoSnapshot, AppDeploymentSourceUser } from "~/projects/domain";
 import {
     EAppDeploymentMethod,
     EAppDeploymentStatus,
@@ -88,12 +88,23 @@ function shouldShowDuration(deployment: AppDeployment): deployment is AppDeploym
 }
 
 type RepoDeployment = AppDeployment & {
-    settings: Extract<AppDeployment["settings"], { activeMethod: typeof EAppDeploymentMethod.Repo }>;
+    settings: { repoSource: AppDeploymentRepoSnapshot };
 };
 
+/** A deployment built from a repository: an app's repo source, or a function's code in one. */
 function isRepoDeployment(deployment: AppDeployment): deployment is RepoDeployment {
-    return deployment.settings.activeMethod === EAppDeploymentMethod.Repo;
+    const { settings } = deployment;
+    return (
+        settings.activeMethod === EAppDeploymentMethod.Repo ||
+        (settings.activeMethod === EAppDeploymentMethod.Function && settings.repoSource !== null)
+    );
 }
+
+const DEPLOYMENT_METHOD_LABELS: Record<AppDeployment["settings"]["activeMethod"], string> = {
+    [EAppDeploymentMethod.Repo]: "Git Repository",
+    [EAppDeploymentMethod.Image]: "Docker Image",
+    [EAppDeploymentMethod.Function]: "Function",
+};
 
 function stopCardClick(event: MouseEvent<HTMLElement>) {
     event.stopPropagation();
@@ -835,9 +846,7 @@ export function DeploymentSummaryCard({
                                 <div>
                                     <span className="text-muted-foreground">Method:</span>{" "}
                                     <span className="text-foreground font-medium capitalize">
-                                        {deployment.settings.activeMethod === EAppDeploymentMethod.Repo
-                                            ? "Git Repository"
-                                            : "Docker Image"}
+                                        {DEPLOYMENT_METHOD_LABELS[deployment.settings.activeMethod]}
                                     </span>
                                 </div>
 

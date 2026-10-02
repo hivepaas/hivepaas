@@ -35,19 +35,30 @@ export interface AppDeploymentOutput {
     imageTags: string[];
 }
 
+export type AppDeploymentRepoSnapshot = {
+    repoUrl: string;
+    repoRef: string;
+};
+
 type AppDeploymentRepoSettingsSnapshot = {
     activeMethod: typeof EAppDeploymentMethod.Repo;
-    repoSource: {
-        repoUrl: string;
-        repoRef: string;
-    };
+    repoSource: AppDeploymentRepoSnapshot;
 };
 
 type AppDeploymentImageSettingsSnapshot = {
     activeMethod: typeof EAppDeploymentMethod.Image;
 };
 
-export type AppDeploymentSettingsSnapshot = AppDeploymentRepoSettingsSnapshot | AppDeploymentImageSettingsSnapshot;
+/** A function's deployment: its repository, or null for inline code. */
+type AppDeploymentFunctionSettingsSnapshot = {
+    activeMethod: typeof EAppDeploymentMethod.Function;
+    repoSource: AppDeploymentRepoSnapshot | null;
+};
+
+export type AppDeploymentSettingsSnapshot =
+    | AppDeploymentRepoSettingsSnapshot
+    | AppDeploymentImageSettingsSnapshot
+    | AppDeploymentFunctionSettingsSnapshot;
 
 export interface AppDeployment {
     id: string;

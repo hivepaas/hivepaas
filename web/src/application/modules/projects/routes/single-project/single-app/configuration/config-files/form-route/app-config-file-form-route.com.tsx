@@ -156,6 +156,7 @@ export function AppConfigFileFormRoute({ mode, projectId, appId, env, configFile
                     onHasChanges={setHasChanges}
                     isEditMode={isEditMode}
                     initialValues={initialValues}
+                    currentBinaryContent={configFile?.base64 ? configFile.content : undefined}
                     readOnly={!canWrite}
                     stickyActions
                     onClose={handleClose}

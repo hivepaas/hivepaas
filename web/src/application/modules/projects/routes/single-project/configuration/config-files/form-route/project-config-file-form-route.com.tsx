@@ -156,6 +156,7 @@ export function ProjectConfigFileFormRoute({ mode, projectId, configFileId }: Pr
                     onHasChanges={setHasChanges}
                     isEditMode={isEditMode}
                     initialValues={initialValues}
+                    currentBinaryContent={configFile?.base64 ? configFile.content : undefined}
                     readOnly={!canWrite || isInherited}
                     stickyActions
                     onClose={handleClose}

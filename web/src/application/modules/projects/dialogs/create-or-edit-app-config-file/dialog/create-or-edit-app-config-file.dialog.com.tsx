@@ -164,6 +164,9 @@ export function CreateOrEditAppConfigFileDialog() {
                     isEditMode={isEditMode}
                     initialValues={initialValues}
                     readOnly={!canWrite}
+                    currentBinaryContent={
+                        state.mode === "edit" && state.configFile.base64 ? state.configFile.content : undefined
+                    }
                 />
             </DialogFixedContent>
         </Dialog>

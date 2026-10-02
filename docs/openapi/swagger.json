@@ -19151,6 +19151,78 @@
         "x-codegen-request-body-name" : "body"
       }
     },
+    "/projects/{projectID}/{projectEnv}/apps/{appID}/function-metrics" : {
+      "get" : {
+        "description" : "Counts a function's calls over a range ending now, from the invocation line its runtime writes\nfor every call into its logs: how many, how many failed - an outcome other than ok - how many\nthe handler answered 5xx, and the handler's duration's p50, p95 and p99, in milliseconds, which\nare close rather than exact. One point per step, oldest first: 1 min for 1h, 5 min for 6h,\n15 min for 24h, 1 h for 7d. When the logs cannot be read, `available` is false and `reason`\nsays why, as for the logs' history.",
+        "operationId" : "getFunctionMetrics",
+        "parameters" : [ {
+          "description" : "project ID",
+          "in" : "path",
+          "name" : "projectID",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "project env",
+          "in" : "path",
+          "name" : "projectEnv",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "app ID",
+          "in" : "path",
+          "name" : "appID",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "1h, 6h, 24h or 7d; default 24h",
+          "in" : "query",
+          "name" : "range",
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/appdto.GetFunctionMetricsResp"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "400" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Bad Request"
+          },
+          "500" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Internal Server Error"
+          }
+        },
+        "summary" : "Gets a function's metrics",
+        "tags" : [ "Apps" ]
+      }
+    },
     "/projects/{projectID}/{projectEnv}/apps/{appID}/function/test-run" : {
       "post" : {
         "description" : "Calls the function once with the code sent, not yet saved, and a request, in a throwaway\ncontainer on a build node, with the function's variables and secrets.",
@@ -53634,6 +53706,102 @@
         "required" : [ "data", "meta" ],
         "type" : "object"
       },
+      "appdto.FunctionMetricsCountsResp" : {
+        "properties" : {
+          "calls" : {
+            "type" : "integer"
+          },
+          "errors5xx" : {
+            "type" : "integer"
+          },
+          "failed" : {
+            "type" : "integer"
+          },
+          "p50" : {
+            "type" : "number"
+          },
+          "p95" : {
+            "type" : "number"
+          },
+          "p99" : {
+            "type" : "number"
+          }
+        },
+        "required" : [ "calls", "errors5xx", "failed", "p50", "p95", "p99" ],
+        "type" : "object"
+      },
+      "appdto.FunctionMetricsDataResp" : {
+        "properties" : {
+          "available" : {
+            "type" : "boolean"
+          },
+          "byOutcome" : {
+            "additionalProperties" : {
+              "type" : "integer"
+            },
+            "type" : "object"
+          },
+          "clamped" : {
+            "description" : "Clamped says the range reaches past what the logs keep: it starts where\nthey do.",
+            "type" : "boolean"
+          },
+          "end" : {
+            "type" : "string"
+          },
+          "range" : {
+            "type" : "string"
+          },
+          "reason" : {
+            "type" : "string"
+          },
+          "series" : {
+            "description" : "Series has one point per step, oldest first.",
+            "items" : {
+              "$ref" : "#/components/schemas/appdto.FunctionMetricsPointResp"
+            },
+            "type" : "array"
+          },
+          "start" : {
+            "description" : "Start and End bound the range: whole steps, End past now.",
+            "type" : "string"
+          },
+          "stepSeconds" : {
+            "type" : "integer"
+          },
+          "totals" : {
+            "$ref" : "#/components/schemas/appdto.FunctionMetricsCountsResp"
+          }
+        },
+        "required" : [ "available", "byOutcome", "clamped", "end", "range", "reason", "series", "start", "stepSeconds", "totals" ],
+        "type" : "object"
+      },
+      "appdto.FunctionMetricsPointResp" : {
+        "properties" : {
+          "calls" : {
+            "type" : "integer"
+          },
+          "errors5xx" : {
+            "type" : "integer"
+          },
+          "failed" : {
+            "type" : "integer"
+          },
+          "p50" : {
+            "type" : "number"
+          },
+          "p95" : {
+            "type" : "number"
+          },
+          "p99" : {
+            "type" : "number"
+          },
+          "time" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "calls", "errors5xx", "failed", "p50", "p95", "p99", "time" ],
+        "type" : "object"
+      },
       "appdto.GetAppLogHistoryResp" : {
         "properties" : {
           "data" : {
@@ -53674,6 +53842,18 @@
         "properties" : {
           "data" : {
             "$ref" : "#/components/schemas/appdto.AppResp"
+          },
+          "meta" : {
+            "$ref" : "#/components/schemas/basedto.Meta"
+          }
+        },
+        "required" : [ "data", "meta" ],
+        "type" : "object"
+      },
+      "appdto.GetFunctionMetricsResp" : {
+        "properties" : {
+          "data" : {
+            "$ref" : "#/components/schemas/appdto.FunctionMetricsDataResp"
           },
           "meta" : {
             "$ref" : "#/components/schemas/basedto.Meta"

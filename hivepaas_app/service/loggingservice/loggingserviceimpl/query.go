@@ -29,18 +29,7 @@ func (s *service) QueryAppLogs(
 		// An empty value would match every line that carries no app at all.
 		return nil, hperrors.Wrap(logging.ErrQueryScopeRequired)
 	}
-	cfg, err := s.loadEnabledSettings(ctx, db)
-	if err != nil {
-		return nil, hperrors.Wrap(err)
-	}
-
-	ep, err := queryEndpoint(cfg)
-	if err != nil {
-		return nil, hperrors.Wrap(err)
-	}
-
-	backend, err := s.newBackend(logging.BackendType(cfg.Backend.Type),
-		&logging.BackendConfig{VictoriaLogs: &victorialogs.Config{Endpoint: *ep}})
+	backend, err := s.queryBackend(ctx, db)
 	if err != nil {
 		return nil, hperrors.Wrap(err)
 	}
@@ -55,6 +44,21 @@ func (s *service) QueryAppLogs(
 		Limit:   q.Limit,
 	})
 	return resp, hperrors.Wrap(err)
+}
+
+// queryBackend is the client of the backend the stored logs are read from.
+func (s *service) queryBackend(ctx context.Context, db database.IDB) (logging.Backend, error) {
+	cfg, err := s.loadEnabledSettings(ctx, db)
+	if err != nil {
+		return nil, hperrors.Wrap(err)
+	}
+	ep, err := queryEndpoint(cfg)
+	if err != nil {
+		return nil, hperrors.Wrap(err)
+	}
+	backend, err := s.newBackend(logging.BackendType(cfg.Backend.Type),
+		&logging.BackendConfig{VictoriaLogs: &victorialogs.Config{Endpoint: *ep}})
+	return backend, hperrors.Wrap(err)
 }
 
 // AppHistory says whether stored logs can be shown for the app.

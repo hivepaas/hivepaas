@@ -150,3 +150,46 @@ func (h *Handler) GetAppLogHistory(ctx *gin.Context) {
 	}
 	ctx.JSON(http.StatusOK, resp)
 }
+
+// GetFunctionMetrics Gets a function's metrics
+// @Summary Gets a function's metrics
+// @Description Counts a function's calls over a range ending now, from the invocation line its runtime writes
+// @Description for every call into its logs: how many, how many failed - an outcome other than ok - how many
+// @Description the handler answered 5xx, and the handler's duration's p50, p95 and p99, in milliseconds, which
+// @Description are close rather than exact. One point per step, oldest first: 1 min for 1h, 5 min for 6h,
+// @Description 15 min for 24h, 1 h for 7d. When the logs cannot be read, `available` is false and `reason`
+// @Description says why, as for the logs' history.
+// @Tags    Apps
+// @Produce json
+// @Id      getFunctionMetrics
+// @Param   projectID path string true "project ID"
+// @Param   projectEnv path string true "project env"
+// @Param   appID path string true "app ID"
+// @Param   range query string false "1h, 6h, 24h or 7d; default 24h"
+// @Success 200 {object} appdto.GetFunctionMetricsResp
+// @Failure 400 {object} hperrors.ErrorInfo
+// @Failure 500 {object} hperrors.ErrorInfo
+// @Router  /projects/{projectID}/{projectEnv}/apps/{appID}/function-metrics [get]
+func (h *Handler) GetFunctionMetrics(ctx *gin.Context) {
+	auth, projectID, projectEnvID, appID, err := h.GetAuth(ctx, base.ActionTypeRead)
+	if err != nil {
+		h.RenderError(ctx, err)
+		return
+	}
+
+	req := appdto.NewGetFunctionMetricsReq()
+	req.ProjectID = projectID
+	req.ProjectEnvID = projectEnvID
+	req.AppID = appID
+	if err := h.ParseAndValidateRequest(ctx, req, nil); err != nil {
+		h.RenderError(ctx, err)
+		return
+	}
+
+	resp, err := h.appUC.GetFunctionMetrics(h.RequestCtx(ctx), auth, req)
+	if err != nil {
+		h.RenderError(ctx, err)
+		return
+	}
+	ctx.JSON(http.StatusOK, resp)
+}

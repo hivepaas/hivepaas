@@ -121,3 +121,11 @@ type AppHistory struct {
 	// backend is not one HivePaaS keeps: see retentionOf.
 	Retention timeutil.Duration
 }
+
+// FunctionMetricsQuery is a function's calls over [Start, End), by Step. Start
+// and End are whole steps.
+type FunctionMetricsQuery struct {
+	Start time.Time
+	End   time.Time
+	Step  time.Duration
+}

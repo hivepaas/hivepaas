@@ -30,4 +30,10 @@ type Service interface {
 	// AppHistory says whether stored logs can be shown for the app, and if not,
 	// why - so the dashboard can say so instead of showing an empty list.
 	AppHistory(ctx context.Context, db database.IDB, app *entity.App) (*AppHistory, error)
+
+	// FunctionMetrics counts a function's calls in its stored logs: one point
+	// per step of the range, a step without a call one with no calls. The app's
+	// identity is put into the query here, as for QueryAppLogs.
+	FunctionMetrics(ctx context.Context, db database.IDB, app *entity.App,
+		q *FunctionMetricsQuery) (*logging.InvocationStatsResp, error)
 }

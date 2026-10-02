@@ -97,7 +97,7 @@ services:
       labels:
         - "hivepaas.app.info={\"name\":\"traefik\",\"key\":\"traefik\"}"
         # The dashboard at traefik.dev.hivepaas.com, behind the dev server's one
-        # password (user "dev"), as adminer is; see install.sh.
+        # password (user "admin"), as adminer is; see install.sh.
         - "traefik.enable=true"
         - "traefik.http.routers.traefik-dashboard.rule=Host(`traefik.dev.hivepaas.com`)"
         - "traefik.http.routers.traefik-dashboard.entrypoints=websecure"
@@ -221,7 +221,7 @@ services:
         - "traefik.http.routers.adminer.tls=true"
         # Adminer reaches the database with the seed's password, which is public:
         # the page itself asks for the dev server's one password first (user
-        # "dev"). install.sh hashes it into HP_DEV_BASIC_AUTH; the hash, not the
+        # "admin"). install.sh hashes it into HP_DEV_BASIC_AUTH; the hash, not the
         # password, is what the label carries.
         - "traefik.http.routers.adminer.middlewares=adminer-auth"
         - "traefik.http.middlewares.adminer-auth.basicauth.users=${HP_DEV_BASIC_AUTH}"

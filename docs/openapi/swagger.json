@@ -63098,8 +63098,19 @@
           "default" : {
             "type" : "boolean"
           },
+          "ecr" : {
+            "allOf" : [ {
+              "$ref" : "#/components/schemas/settings_registryauthdto.RegistryAuthECRReq"
+            } ],
+            "description" : "ECR is the AWS keys of an aws-ecr credential; the account and region are\nread from its address.",
+            "type" : "object"
+          },
           "inheritable" : {
             "type" : "boolean"
+          },
+          "kind" : {
+            "description" : "Kind is how it signs in: empty for a username and a password, aws-ecr for\nAWS keys that get Amazon ECR tokens.",
+            "type" : "string"
           },
           "name" : {
             "type" : "string"
@@ -63114,7 +63125,7 @@
             "type" : "string"
           }
         },
-        "required" : [ "address", "default", "inheritable", "name", "password", "readonly", "username" ],
+        "required" : [ "address", "default", "ecr", "inheritable", "kind", "name", "password", "readonly", "username" ],
         "type" : "object"
       },
       "settings_registryauthdto.CreateRegistryAuthResp" : {
@@ -63165,6 +63176,42 @@
         "required" : [ "data", "meta" ],
         "type" : "object"
       },
+      "settings_registryauthdto.RegistryAuthECRReq" : {
+        "properties" : {
+          "accessKeyId" : {
+            "type" : "string"
+          },
+          "roleArn" : {
+            "type" : "string"
+          },
+          "secretAccessKey" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "accessKeyId", "roleArn", "secretAccessKey" ],
+        "type" : "object"
+      },
+      "settings_registryauthdto.RegistryAuthECRResp" : {
+        "properties" : {
+          "accessKeyId" : {
+            "type" : "string"
+          },
+          "region" : {
+            "type" : "string"
+          },
+          "roleArn" : {
+            "type" : "string"
+          },
+          "secretAccessKey" : {
+            "type" : "string"
+          },
+          "tokenExpiresAt" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "accessKeyId", "region", "roleArn", "secretAccessKey", "tokenExpiresAt" ],
+        "type" : "object"
+      },
       "settings_registryauthdto.RegistryAuthResp" : {
         "properties" : {
           "address" : {
@@ -63175,6 +63222,13 @@
           },
           "default" : {
             "type" : "boolean"
+          },
+          "ecr" : {
+            "allOf" : [ {
+              "$ref" : "#/components/schemas/settings_registryauthdto.RegistryAuthECRResp"
+            } ],
+            "description" : "AWSECR is an aws-ecr credential's keys. Named apart from the entity's ECR\nso the copier leaves it to TransformRegistryAuth.",
+            "type" : "object"
           },
           "expireAt" : {
             "type" : "string"
@@ -63222,12 +63276,23 @@
             "type" : "string"
           }
         },
-        "required" : [ "address", "createdAt", "default", "expireAt", "id", "inheritable", "inherited", "kind", "name", "password", "readonly", "secretMasked", "size", "status", "type", "updateVer", "updatedAt", "username" ],
+        "required" : [ "address", "createdAt", "default", "ecr", "expireAt", "id", "inheritable", "inherited", "kind", "name", "password", "readonly", "secretMasked", "size", "status", "type", "updateVer", "updatedAt", "username" ],
         "type" : "object"
       },
       "settings_registryauthdto.TestRegistryAuthConnReq" : {
         "properties" : {
           "address" : {
+            "type" : "string"
+          },
+          "ecr" : {
+            "allOf" : [ {
+              "$ref" : "#/components/schemas/settings_registryauthdto.RegistryAuthECRReq"
+            } ],
+            "description" : "ECR is the AWS keys of an aws-ecr credential; the account and region are\nread from its address.",
+            "type" : "object"
+          },
+          "kind" : {
+            "description" : "Kind is how it signs in: empty for a username and a password, aws-ecr for\nAWS keys that get Amazon ECR tokens.",
             "type" : "string"
           },
           "name" : {
@@ -63243,7 +63308,7 @@
             "type" : "string"
           }
         },
-        "required" : [ "address", "name", "password", "readonly", "username" ],
+        "required" : [ "address", "ecr", "kind", "name", "password", "readonly", "username" ],
         "type" : "object"
       },
       "settings_registryauthdto.TestRegistryAuthConnResp" : {
@@ -63263,8 +63328,19 @@
           "default" : {
             "type" : "boolean"
           },
+          "ecr" : {
+            "allOf" : [ {
+              "$ref" : "#/components/schemas/settings_registryauthdto.RegistryAuthECRReq"
+            } ],
+            "description" : "ECR is the AWS keys of an aws-ecr credential; the account and region are\nread from its address.",
+            "type" : "object"
+          },
           "inheritable" : {
             "type" : "boolean"
+          },
+          "kind" : {
+            "description" : "Kind is how it signs in: empty for a username and a password, aws-ecr for\nAWS keys that get Amazon ECR tokens.",
+            "type" : "string"
           },
           "name" : {
             "type" : "string"
@@ -63282,7 +63358,7 @@
             "type" : "string"
           }
         },
-        "required" : [ "address", "default", "inheritable", "name", "password", "readonly", "updateVer", "username" ],
+        "required" : [ "address", "default", "ecr", "inheritable", "kind", "name", "password", "readonly", "updateVer", "username" ],
         "type" : "object"
       },
       "settings_registryauthdto.UpdateRegistryAuthResp" : {

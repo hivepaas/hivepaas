@@ -27,3 +27,18 @@ type RegistryCleanupMode string
 const (
 	RegistryCleanupModePolicy RegistryCleanupMode = "policy"
 )
+
+// RegistryAuthKind is how a registry credential signs in.
+type RegistryAuthKind string
+
+const (
+	// RegistryAuthKindBasic is a username and a password, used as they are.
+	RegistryAuthKindBasic RegistryAuthKind = ""
+	// RegistryAuthKindAWSECR is AWS keys, from which a token for Amazon ECR is
+	// got when one is needed: ECR's own password expires after 12 hours.
+	RegistryAuthKindAWSECR RegistryAuthKind = "aws-ecr"
+)
+
+var (
+	AllRegistryAuthKinds = []RegistryAuthKind{RegistryAuthKindBasic, RegistryAuthKindAWSECR}
+)

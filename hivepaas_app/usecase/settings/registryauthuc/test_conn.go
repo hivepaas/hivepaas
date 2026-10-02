@@ -15,10 +15,16 @@ func (uc *UC) TestRegistryAuthConn(
 	auth *basedto.Auth,
 	req *registryauthdto.TestRegistryAuthConnReq,
 ) (*registryauthdto.TestRegistryAuthConnResp, error) {
-	_, err := uc.dockerManager.RegistryLogin(ctx, func(opts *client.RegistryLoginOptions) {
-		opts.Username = req.Username
-		opts.Password = req.Password
-		opts.ServerAddress = req.Address
+	// An ECR credential signs in with a token got for its keys now, kept
+	// nowhere: the credential being tested may not be saved.
+	login, err := uc.registryAuthService.TryAuth(ctx, req.ToEntity())
+	if err != nil {
+		return nil, hperrors.Wrap(err)
+	}
+	_, err = uc.dockerManager.RegistryLogin(ctx, func(opts *client.RegistryLoginOptions) {
+		opts.Username = login.Username
+		opts.Password = login.Password
+		opts.ServerAddress = login.ServerAddress
 	})
 	if err != nil {
 		return nil, hperrors.Wrap(err)

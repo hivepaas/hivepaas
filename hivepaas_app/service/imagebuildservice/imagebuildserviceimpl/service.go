@@ -5,6 +5,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/repository"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/envvarservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/imagebuildservice"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/registryauthservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/settingservice"
 	"github.com/hivepaas/hivepaas/services/docker"
 )
@@ -18,6 +19,9 @@ type service struct {
 
 	envVarService  envvarservice.Service
 	settingService settingservice.Service
+	// registryAuthService answers a registry credential as Docker takes it - an
+	// ECR one with a token got for it.
+	registryAuthService registryauthservice.Service
 }
 
 func New(
@@ -29,6 +33,7 @@ func New(
 
 	envVarService envvarservice.Service,
 	settingService settingservice.Service,
+	registryAuthService registryauthservice.Service,
 ) imagebuildservice.Service {
 	return &service{
 		redisClient:   redisClient,
@@ -37,7 +42,8 @@ func New(
 
 		settingRepo: settingRepo,
 
-		envVarService:  envVarService,
-		settingService: settingService,
+		envVarService:       envVarService,
+		settingService:      settingService,
+		registryAuthService: registryAuthService,
 	}
 }

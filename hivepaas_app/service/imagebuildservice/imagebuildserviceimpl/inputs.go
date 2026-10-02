@@ -71,19 +71,11 @@ func (s *service) resolvePushRegistry(
 	if setting == nil {
 		return nil, hperrors.NewMissing("Registry auth to push image")
 	}
-	regAuth, err := setting.AsRegistryAuth()
+	auth, err := s.registryAuthService.AuthConfig(ctx, setting)
 	if err != nil {
 		return nil, hperrors.Wrap(err)
 	}
-	password, err := regAuth.Password.GetPlain()
-	if err != nil {
-		return nil, hperrors.Wrap(err)
-	}
-	return &registry.AuthConfig{
-		Username:      regAuth.Username,
-		Password:      password,
-		ServerAddress: regAuth.Address,
-	}, nil
+	return auth, nil
 }
 
 // buildInputs is the inputs a build works from: the ones it was given, or, for

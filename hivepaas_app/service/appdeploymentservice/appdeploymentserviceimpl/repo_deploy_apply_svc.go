@@ -32,7 +32,10 @@ func (s *service) repoDeployStepServiceApply(
 	var regAuthHeader string
 	if repoSource.PushToRegistry.ID != "" {
 		regAuth := data.RefObjects.RefSettings[repoSource.PushToRegistry.ID]
-		regAuthHeader, err = regAuth.MustAsRegistryAuth().GenerateAuthHeader()
+		if regAuth == nil {
+			return hperrors.NewMissing("Registry auth to pull image")
+		}
+		regAuthHeader, err = s.registryAuthService.AuthHeader(ctx, regAuth)
 		if err != nil {
 			return hperrors.Wrap(err)
 		}

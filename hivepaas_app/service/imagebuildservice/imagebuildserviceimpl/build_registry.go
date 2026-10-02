@@ -14,6 +14,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
+	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/logging"
 )
 
 // calcBuildRegistryAuths is the project's registries by address, with their
@@ -34,22 +35,21 @@ func (s *service) calcBuildRegistryAuths(
 	result := make(map[string]registry.AuthConfig, len(settings))
 	secrets := make([]string, 0, len(settings))
 	for _, setting := range settings {
-		regAuth, err := setting.AsRegistryAuth()
+		auth, err := s.registryAuthService.AuthConfig(ctx, setting)
 		if err != nil {
+			// An ECR credential whose keys AWS refuses is left out rather than
+			// failing a build that may not pull from it; one that does fails
+			// on the pull, which says so.
+			if regAuth, _ := setting.AsRegistryAuth(); regAuth != nil && regAuth.Kind == base.RegistryAuthKindAWSECR {
+				logging.Warnf("image build: registry credential %s left out: %v", setting.ID, err)
+				continue
+			}
 			return nil, nil, hperrors.Wrap(err)
 		}
-		password, err := regAuth.Password.GetPlain()
-		if err != nil {
-			return nil, nil, hperrors.Wrap(err)
+		if auth.Password != "" {
+			secrets = append(secrets, auth.Password)
 		}
-		if password != "" {
-			secrets = append(secrets, password)
-		}
-		result[regAuth.Address] = registry.AuthConfig{
-			Username:      regAuth.Username,
-			Password:      password,
-			ServerAddress: regAuth.Address,
-		}
+		result[auth.ServerAddress] = *auth
 	}
 
 	return result, secrets, nil

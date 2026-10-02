@@ -1,6 +1,10 @@
 package entity
 
 import (
+	"errors"
+	"regexp"
+	"time"
+
 	"github.com/moby/moby/api/types/registry"
 	"github.com/tiendc/gofn"
 
@@ -12,6 +16,9 @@ import (
 const (
 	CurrentRegistryAuthVersion = 1
 )
+
+var errECRNeedsToken = errors.New("an Amazon ECR credential signs in with a token got for it, " +
+	"not a password: use the registry auth service")
 
 var _ = registerSettingParser(base.SettingTypeRegistryAuth, &registryAuthParser{})
 
@@ -31,14 +38,61 @@ func (s *registryAuthParser) New() SettingData {
 const RegistryAuthManagedBySystemRegistry = "system-registry"
 
 type RegistryAuth struct {
-	Username string         `json:"username"`
-	Password EncryptedField `json:"password"`
-	Address  string         `json:"address"`
-	Readonly bool           `json:"readonly,omitempty"`
+	// Kind is how it signs in: a username and a password (empty), or AWS keys
+	// for Amazon ECR.
+	Kind     base.RegistryAuthKind `json:"kind,omitempty"`
+	Username string                `json:"username"`
+	Password EncryptedField        `json:"password"`
+	Address  string                `json:"address"`
+	Readonly bool                  `json:"readonly,omitempty"`
 	// ManagedBy names what created the credential and keeps it, when that is not
 	// an operator. It cannot be set or cleared through the API: an edit carries
 	// it over.
 	ManagedBy string `json:"managedBy,omitempty"`
+	// ECR is the AWS side of an Amazon ECR credential.
+	ECR *RegistryAuthECR `json:"ecr,omitempty"`
+	// Token is the last ECR token got for the credential, and TokenExpiresAt
+	// when it stops working. They are derived from the keys: never answered by
+	// the API, never exported, and cleared when the keys change.
+	Token          EncryptedField `json:"token,omitzero"`
+	TokenExpiresAt time.Time      `json:"tokenExpiresAt,omitzero"`
+}
+
+// RegistryAuthECR is what signs in to Amazon ECR: AWS keys, and a role they
+// assume first when one is named. The registry's account and region are in its
+// address, <account>.dkr.ecr.<region>.amazonaws.com.
+type RegistryAuthECR struct {
+	Region          string         `json:"region"`
+	AccessKeyID     string         `json:"accessKeyId"`
+	SecretAccessKey EncryptedField `json:"secretAccessKey"`
+	RoleARN         string         `json:"roleArn,omitempty"`
+}
+
+// ecrAddressRegex is an ECR registry's address: its account and its region.
+var ecrAddressRegex = regexp.MustCompile(
+	`^([0-9]{12})\.dkr\.ecr(?:-fips)?\.([a-z]{2}(?:-[a-z]+)+-[0-9])\.amazonaws\.com(?:\.cn)?$`)
+
+// ParseECRAddress is the account and the region of an ECR registry's address;
+// ok is false for an address that is not one.
+func ParseECRAddress(address string) (account, region string, ok bool) {
+	m := ecrAddressRegex.FindStringSubmatch(address)
+	if m == nil {
+		return "", "", false
+	}
+	return m[1], m[2], true
+}
+
+// SameECRKeys reports whether two credentials sign in to ECR the same way: a
+// token got with one is good for the other.
+func (s *RegistryAuth) SameECRKeys(other *RegistryAuth) bool {
+	if s.ECR == nil || other == nil || other.ECR == nil || s.Address != other.Address {
+		return false
+	}
+	secret, err1 := s.ECR.SecretAccessKey.GetPlain()
+	otherSecret, err2 := other.ECR.SecretAccessKey.GetPlain()
+	return err1 == nil && err2 == nil && secret == otherSecret &&
+		s.ECR.AccessKeyID == other.ECR.AccessKeyID && s.ECR.RoleARN == other.ECR.RoleARN &&
+		s.ECR.Region == other.ECR.Region
 }
 
 func (s *RegistryAuth) GetType() base.SettingType {
@@ -53,15 +107,28 @@ func (s *RegistryAuth) GetResourceLinks(setting *Setting) []*ResLink {
 	return s.GetRefObjectIDs().GetResourceLinks(base.ResourceTypeSetting, setting.ID)
 }
 
+// Decrypt reveals the credential's secrets: its password, its AWS secret key.
+// The token is not one of them: it is never answered.
 func (s *RegistryAuth) Decrypt() error {
 	_, err := s.Password.GetPlain()
 	if err != nil {
 		return hperrors.Wrap(err)
 	}
+	if s.ECR != nil {
+		if _, err = s.ECR.SecretAccessKey.GetPlain(); err != nil {
+			return hperrors.Wrap(err)
+		}
+	}
 	return nil
 }
 
+// GenerateAuthHeader is the credential as Docker's X-Registry-Auth, for a
+// username and a password. An ECR credential has no password to give: its token
+// is got by the registry auth service, which every use goes through.
 func (s *RegistryAuth) GenerateAuthHeader() (string, error) {
+	if s.Kind == base.RegistryAuthKindAWSECR {
+		return "", hperrors.NewInfra(errECRNeedsToken)
+	}
 	password, err := s.Password.GetPlain()
 	if err != nil {
 		return "", hperrors.Wrap(err)

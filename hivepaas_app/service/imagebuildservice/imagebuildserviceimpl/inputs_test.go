@@ -17,6 +17,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/repository"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/envvarservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/imagebuildservice"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/registryauthservice/registryauthserviceimpl"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/settingservice"
 )
 
@@ -89,6 +90,7 @@ func (e *buildEnv) BuildEnvVarsInApp(
 func TestResolvingInputsOpensTheSecretsABuildReads(t *testing.T) {
 	withDataKey(t)
 	s := &service{
+		registryAuthService: registryauthserviceimpl.New(nil, nil),
 		settingRepo: &projectRegistries{settings: []*entity.Setting{
 			registrySetting(t, "r1", "docker.io", "puller", "pull-pass"),
 		}},
@@ -130,9 +132,10 @@ func TestResolvingInputsOpensTheSecretsABuildReads(t *testing.T) {
 func TestResolvingInputsNeedsTheRegistryToPushTo(t *testing.T) {
 	withDataKey(t)
 	s := &service{
-		settingRepo:    &projectRegistries{},
-		settingService: &refSettings{settings: map[string]*entity.Setting{}},
-		envVarService:  &buildEnv{},
+		registryAuthService: registryauthserviceimpl.New(nil, nil),
+		settingRepo:         &projectRegistries{},
+		settingService:      &refSettings{settings: map[string]*entity.Setting{}},
+		envVarService:       &buildEnv{},
 	}
 
 	_, err := s.ResolveBuildInputs(context.Background(), nil, &imagebuildservice.ImageBuildReq{

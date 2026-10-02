@@ -127,6 +127,20 @@ func (loggingSpecPolicy) Strip(data SettingData) {
 	logging.Backend.Query = nil
 }
 
+// registryAuthSpecPolicy drops the ECR token a credential keeps: it is got from
+// the keys, it expires within 12 hours, and it is a credential - nothing a spec
+// should carry, in any secrets mode.
+type registryAuthSpecPolicy struct{}
+
+func (registryAuthSpecPolicy) Decide(*Setting) SpecDecision { return SpecDecision{Export: true} }
+
+func (registryAuthSpecPolicy) Strip(data SettingData) {
+	if auth, ok := data.(*RegistryAuth); ok {
+		auth.Token = EncryptedField{}
+		auth.TokenExpiresAt = time.Time{}
+	}
+}
+
 // registrySpecPolicy drops the ids provisioning wrote. The app and the registry
 // auth are created by Apply on whatever installation the spec lands on, so
 // carrying the ids of another installation's objects describes nothing that
@@ -168,6 +182,7 @@ var (
 	_ = registerSpecPolicy(base.SettingTypeAppRouting, appRoutingSpecPolicy{})
 	_ = registerSpecPolicy(base.SettingTypeLogging, loggingSpecPolicy{})
 	_ = registerSpecPolicy(base.SettingTypeRegistry, registrySpecPolicy{})
+	_ = registerSpecPolicy(base.SettingTypeRegistryAuth, registryAuthSpecPolicy{})
 
 	// Everything else is exported whole. Keeping this list explicit rather than
 	// defaulting to "export" is what makes a new setting type show up in the
@@ -203,7 +218,6 @@ var (
 		base.SettingTypeOAuth,
 		base.SettingTypePeriodicJob,
 		base.SettingTypeProject,
-		base.SettingTypeRegistryAuth,
 		base.SettingTypeRepoWebhook,
 		base.SettingTypeSSHKey,
 		base.SettingTypeSSLCert,

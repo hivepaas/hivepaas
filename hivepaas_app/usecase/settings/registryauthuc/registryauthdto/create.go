@@ -1,6 +1,7 @@
 package registryauthdto
 
 import (
+	"regexp"
 	"strings"
 
 	vld "github.com/tiendc/go-validator"
@@ -18,6 +19,16 @@ const (
 	// passwordMaxLen fits a Google Artifact Registry service account's JSON
 	// key, user _json_key_base64: about 3 KB in base64.
 	passwordMaxLen = 8 * 1024
+
+	awsKeyIDMinLen   = 16
+	awsKeyIDMaxLen   = 128
+	awsSecretMaxLen  = 128
+	awsRoleARNMaxLen = 2048
+)
+
+var (
+	awsKeyIDRegex   = regexp.MustCompile(`^[A-Z0-9]+$`)
+	awsRoleARNRegex = regexp.MustCompile(`^arn:aws(-cn|-us-gov)?:iam::[0-9]{12}:role/[\w+=,.@/-]+$`)
 )
 
 type CreateRegistryAuthReq struct {
@@ -26,14 +37,41 @@ type CreateRegistryAuthReq struct {
 }
 
 type RegistryAuthBaseReq struct {
-	Name     string `json:"name"`
-	Address  string `json:"address"`
-	Username string `json:"username"`
-	Password string `json:"password"`
-	Readonly bool   `json:"readonly"`
+	Name string `json:"name"`
+	// Kind is how it signs in: empty for a username and a password, aws-ecr for
+	// AWS keys that get Amazon ECR tokens.
+	Kind     base.RegistryAuthKind `json:"kind"`
+	Address  string                `json:"address"`
+	Username string                `json:"username"`
+	Password string                `json:"password"`
+	Readonly bool                  `json:"readonly"`
+	// ECR is the AWS keys of an aws-ecr credential; the account and region are
+	// read from its address.
+	ECR *RegistryAuthECRReq `json:"ecr"`
+}
+
+type RegistryAuthECRReq struct {
+	AccessKeyID     string `json:"accessKeyId"`
+	SecretAccessKey string `json:"secretAccessKey"`
+	RoleARN         string `json:"roleArn"`
 }
 
 func (req *RegistryAuthBaseReq) ToEntity() *entity.RegistryAuth {
+	if req.Kind == base.RegistryAuthKindAWSECR && req.ECR != nil {
+		_, region, _ := entity.ParseECRAddress(req.Address)
+		return &entity.RegistryAuth{
+			Kind:     req.Kind,
+			Username: "AWS",
+			Address:  req.Address,
+			Readonly: req.Readonly,
+			ECR: &entity.RegistryAuthECR{
+				Region:          region,
+				AccessKeyID:     req.ECR.AccessKeyID,
+				SecretAccessKey: entity.NewEncryptedField(req.ECR.SecretAccessKey),
+				RoleARN:         req.ECR.RoleARN,
+			},
+		}
+	}
 	return &entity.RegistryAuth{
 		Username: req.Username,
 		Password: entity.NewEncryptedField(req.Password),
@@ -45,9 +83,13 @@ func (req *RegistryAuthBaseReq) ToEntity() *entity.RegistryAuth {
 // SecretFields lists the request's secret values in one place, so the paths that
 // care about them do not each restate the list.
 func (req *RegistryAuthBaseReq) SecretFields() []basedto.SecretField {
-	return []basedto.SecretField{
+	fields := []basedto.SecretField{
 		{Path: "password", Value: &req.Password},
 	}
+	if req.ECR != nil {
+		fields = append(fields, basedto.SecretField{Path: "ecr.secretAccessKey", Value: &req.ECR.SecretAccessKey})
+	}
+	return fields
 }
 
 // KeepMaskedSecrets restores the stored values for the secrets the request only
@@ -59,12 +101,30 @@ func (req *RegistryAuthBaseReq) KeepMaskedSecrets(regAuth, current *entity.Regis
 	if basedto.IsMaskedSecret(req.Password) {
 		regAuth.Password = current.Password
 	}
+	if req.ECR != nil && regAuth.ECR != nil && current.ECR != nil && basedto.IsMaskedSecret(req.ECR.SecretAccessKey) {
+		regAuth.ECR.SecretAccessKey = current.ECR.SecretAccessKey
+	}
+}
+
+// KeepToken carries the ECR token kept in the credential over to its new data
+// while it signs in as before; new keys, or a new registry, start without one.
+func KeepToken(regAuth, current *entity.RegistryAuth) {
+	if current != nil && regAuth.SameECRKeys(current) {
+		regAuth.Token = current.Token
+		regAuth.TokenExpiresAt = current.TokenExpiresAt
+	}
 }
 
 func (req *RegistryAuthBaseReq) modifyRequest() error {
 	req.Name = strings.TrimSpace(req.Name)
 	req.Address = strings.ToLower(strings.TrimSpace(req.Address))
 	req.Username = strings.TrimSpace(req.Username)
+	req.Kind = base.RegistryAuthKind(strings.TrimSpace(string(req.Kind)))
+	if req.ECR != nil {
+		req.ECR.AccessKeyID = strings.TrimSpace(req.ECR.AccessKeyID)
+		req.ECR.SecretAccessKey = strings.TrimSpace(req.ECR.SecretAccessKey)
+		req.ECR.RoleARN = strings.TrimSpace(req.ECR.RoleARN)
+	}
 	return nil
 }
 
@@ -74,9 +134,39 @@ func (req *RegistryAuthBaseReq) validate(field string) (res []vld.Validator) {
 	}
 	res = append(res, basedto.ValidateStr(&req.Name, true, 1, base.SettingNameMaxLen, field+"name")...)
 	res = append(res, basedto.ValidateStr(&req.Address, true, 1, addressMaxLen, field+"address")...)
+	res = append(res, basedto.ValidateStrIn(&req.Kind, false, base.AllRegistryAuthKinds, field+"kind")...)
+	if req.Kind == base.RegistryAuthKindAWSECR {
+		return append(res, req.validateECR(field)...)
+	}
 	res = append(res, basedto.ValidateStr(&req.Username, true, 1, usernameMaxLen, field+"username")...)
 	res = append(res, basedto.ValidateStr(&req.Password, true, 1, passwordMaxLen, field+"password")...)
 	res = append(res, basedto.ValidatePlainSecret(&req.Password, field+"password")...)
+	res = append(res, basedto.ValidateCond(req.ECR == nil, field+"ecr")...)
+	return res
+}
+
+// validateECR is an aws-ecr credential: an ECR registry's address, AWS keys,
+// and no username or password of its own.
+func (req *RegistryAuthBaseReq) validateECR(field string) (res []vld.Validator) {
+	_, _, isECR := entity.ParseECRAddress(req.Address)
+	res = append(res, basedto.ValidateCond(isECR, field+"address")...)
+	res = append(res, basedto.ValidateCond(req.Username == "" || req.Username == "AWS", field+"username")...)
+	res = append(res, basedto.ValidateCond(req.Password == "", field+"password")...)
+	res = append(res, basedto.ValidateCond(req.ECR != nil, field+"ecr")...)
+	if req.ECR == nil {
+		return res
+	}
+	ecr := req.ECR
+	res = append(res, basedto.ValidateStr(&ecr.AccessKeyID, true, awsKeyIDMinLen, awsKeyIDMaxLen,
+		field+"ecr.accessKeyId")...)
+	res = append(res, basedto.ValidateCond(ecr.AccessKeyID == "" || awsKeyIDRegex.MatchString(ecr.AccessKeyID),
+		field+"ecr.accessKeyId")...)
+	res = append(res, basedto.ValidateStr(&ecr.SecretAccessKey, true, 1, awsSecretMaxLen,
+		field+"ecr.secretAccessKey")...)
+	res = append(res, basedto.ValidatePlainSecret(&ecr.SecretAccessKey, field+"ecr.secretAccessKey")...)
+	res = append(res, basedto.ValidateStr(&ecr.RoleARN, false, 0, awsRoleARNMaxLen, field+"ecr.roleArn")...)
+	res = append(res, basedto.ValidateCond(ecr.RoleARN == "" || awsRoleARNRegex.MatchString(ecr.RoleARN),
+		field+"ecr.roleArn")...)
 	return res
 }
 

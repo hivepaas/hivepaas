@@ -14,6 +14,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/imagebuildservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/notificationservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/placementservice"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/registryauthservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/repocheckoutservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/schedjobtriggerservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/settingmountservice"
@@ -40,9 +41,12 @@ type service struct {
 	imageBuildService    imagebuildservice.Service
 	notificationService  notificationservice.Service
 	placementService     placementservice.Service
-	repoCheckoutService  repocheckoutservice.Service
-	settingService       settingservice.Service
-	settingMountService  settingmountservice.Service
+	// registryAuthService answers a registry credential as Docker takes it - an
+	// ECR one with a token fresh enough to hand to Swarm.
+	registryAuthService registryauthservice.Service
+	repoCheckoutService repocheckoutservice.Service
+	settingService      settingservice.Service
+	settingMountService settingmountservice.Service
 	// schedJobTriggerService runs the jobs listening to the deploy's events.
 	schedJobTriggerService schedjobtriggerservice.Service
 }
@@ -66,6 +70,7 @@ func New(
 	imageBuildService imagebuildservice.Service,
 	notificationService notificationservice.Service,
 	placementService placementservice.Service,
+	registryAuthService registryauthservice.Service,
 	repoCheckoutService repocheckoutservice.Service,
 	settingService settingservice.Service,
 	settingMountService settingmountservice.Service,
@@ -90,6 +95,7 @@ func New(
 		imageBuildService:      imageBuildService,
 		notificationService:    notificationService,
 		placementService:       placementService,
+		registryAuthService:    registryAuthService,
 		repoCheckoutService:    repoCheckoutService,
 		settingService:         settingService,
 		settingMountService:    settingMountService,

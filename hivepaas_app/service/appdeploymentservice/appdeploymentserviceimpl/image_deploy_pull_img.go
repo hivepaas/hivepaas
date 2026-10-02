@@ -25,7 +25,10 @@ func (s *service) imageDeployStepImagePull(
 
 	if imageSource.RegistryAuth.ID != "" {
 		regAuth := data.RefObjects.RefSettings[imageSource.RegistryAuth.ID]
-		data.RegAuthHeader, err = regAuth.MustAsRegistryAuth().GenerateAuthHeader()
+		if regAuth == nil {
+			return hperrors.NewMissing("Registry auth to pull image")
+		}
+		data.RegAuthHeader, err = s.registryAuthService.AuthHeader(ctx, regAuth)
 		if err != nil {
 			return hperrors.Wrap(err)
 		}

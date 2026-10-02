@@ -30,7 +30,7 @@ func (s *service) functionDeployStepServiceApply(
 		if regAuth == nil {
 			return hperrors.NewMissing("Registry auth to pull image")
 		}
-		regAuthHeader, err = regAuth.MustAsRegistryAuth().GenerateAuthHeader()
+		regAuthHeader, err = s.registryAuthService.AuthHeader(ctx, regAuth)
 		if err != nil {
 			return hperrors.Wrap(err)
 		}

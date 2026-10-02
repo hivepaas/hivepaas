@@ -3,7 +3,7 @@ package tracerr
 import (
 	"fmt"
 
-	goerrors "github.com/go-errors/errors"
+	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/errstack"
 )
 
 // Wrap wraps an error with adding stack trace
@@ -11,7 +11,7 @@ func Wrap(err error, msg ...string) error {
 	if err == nil {
 		return nil
 	}
-	err = goerrors.Wrap(err, 1)
+	err = errstack.Wrap(err, 1)
 	if len(msg) == 0 {
 		return err
 	}

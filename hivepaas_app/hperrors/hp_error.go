@@ -7,9 +7,9 @@ import (
 	"net/http"
 	"strings"
 
-	goerrors "github.com/go-errors/errors"
 	"github.com/hashicorp/go-multierror"
 
+	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/errstack"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/logging"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/translation"
 )
@@ -357,7 +357,7 @@ func Wrap(err error) HPError {
 			params:             map[string]any{},
 			tParams:            map[string]any{},
 			fallbackToErrorMsg: true,
-			err:                goerrors.Wrap(err, 1),
+			err:                errstack.Wrap(err, 1),
 		}
 	}
 

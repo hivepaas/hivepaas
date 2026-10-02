@@ -28,7 +28,6 @@ require (
 	github.com/gin-gonic/gin v1.12.0
 	github.com/go-acme/lego/v5 v5.5.2
 	github.com/go-co-op/gocron/v2 v2.22.0
-	github.com/go-errors/errors v1.5.1
 	github.com/go-playground/webhooks/v6 v6.4.0
 	github.com/go-redsync/redsync/v4 v4.18.0
 	github.com/gogits/go-gogs-client v0.0.0-20210131175652-1d7215cd8d85

@@ -10,6 +10,12 @@ if [ -z "${HP_DEV_PASSWORD:-}" ]; then
   exit 1
 fi
 export HP_DEV_PASSWORD
+# The same password, as a Traefik basic auth user, for the pages that put the
+# dev server's tools on the internet (adminer). Traefik takes MD5 (apr1), SHA1
+# or bcrypt; openssl makes apr1, and reads the password from stdin so it is not
+# on a command line.
+HP_DEV_BASIC_AUTH="dev:$(printf '%s' "$HP_DEV_PASSWORD" | openssl passwd -apr1 -stdin)"
+export HP_DEV_BASIC_AUTH
 
 echo "---------------------------------------------------------------"
 echo "INSTALL HivePaaS"

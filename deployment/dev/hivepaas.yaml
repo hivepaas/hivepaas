@@ -201,8 +201,20 @@ services:
         - "traefik.http.routers.adminer.rule=Host(`adminer.dev.hivepaas.com`)"
         - "traefik.http.routers.adminer.entrypoints=websecure"
         - "traefik.http.routers.adminer.tls=true"
+        # Adminer reaches the database with the seed's password, which is public:
+        # the page itself asks for the dev server's one password first (user
+        # "dev"). install.sh hashes it into HP_DEV_BASIC_AUTH; the hash, not the
+        # password, is what the label carries.
+        - "traefik.http.routers.adminer.middlewares=adminer-auth"
+        - "traefik.http.middlewares.adminer-auth.basicauth.users=${HP_DEV_BASIC_AUTH}"
+        - "traefik.http.middlewares.adminer-auth.basicauth.realm=adminer"
+        # Plain HTTP only redirects: basic auth sent over it would be readable on
+        # the way.
         - "traefik.http.routers.adminer-http.rule=Host(`adminer.dev.hivepaas.com`)"
         - "traefik.http.routers.adminer-http.entrypoints=web"
+        - "traefik.http.routers.adminer-http.middlewares=adminer-https"
+        - "traefik.http.middlewares.adminer-https.redirectscheme.scheme=https"
+        - "traefik.http.middlewares.adminer-https.redirectscheme.permanent=true"
         - "traefik.http.services.adminer.loadbalancer.server.port=8080"
         - "traefik.swarm.network=hivepaas_net"
       placement:

@@ -15,7 +15,14 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 
 import { LOG_HISTORY_UNAVAILABLE_TEXT } from "../../logs/building-blocks";
-import { CallsChart, DurationChart, METRICS_RANGES, storeMetricsRange, storedMetricsRange } from "../building-blocks";
+import {
+    CallsChart,
+    DurationChart,
+    METRICS_RANGES,
+    MetricsPaths,
+    storeMetricsRange,
+    storedMetricsRange,
+} from "../building-blocks";
 
 /**
  * A function's calls over a range ending now - how many, how many failed, how
@@ -124,6 +131,16 @@ export function AppMetricsRoute() {
                                 ))}
                         </section>
                     )}
+                    {metrics.byPath.length > 0 && (
+                        <section className="flex flex-col gap-1">
+                            <h3 className="text-sm font-medium">Paths</h3>
+                            <p className="text-xs text-muted-foreground">
+                                The 20 most called. A path no handler serves - /.env, /.git/config - is a scanner trying
+                                the function&apos;s domain; a handler answering 404 to it shows it under 4xx.
+                            </p>
+                            <MetricsPaths paths={metrics.byPath} />
+                        </section>
+                    )}
                     <p className="text-xs text-muted-foreground">
                         Counted from the line the runtime writes for every call: HTTP requests and scheduled calls
                         through the function&apos;s server. Durations are the handler&apos;s, close rather than exact.
@@ -140,11 +157,12 @@ function MetricsTotals({ totals }: { totals: FunctionMetricsCounts }) {
         { label: "Calls", value: totals.calls.toLocaleString() },
         { label: "Failed", value: `${failureRate.toFixed(failureRate < 10 ? 2 : 1)}%` },
         { label: "p95", value: totals.p95 === null ? "-" : `${totals.p95.toFixed(1)} ms` },
+        { label: "4xx", value: totals.errors4xx.toLocaleString() },
         { label: "5xx", value: totals.errors5xx.toLocaleString() },
     ];
 
     return (
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-5">
             {items.map(item => (
                 <div
                     key={item.label}

@@ -92,11 +92,12 @@ export type AppLogs_GetFunctionMetrics_Req = ApiRequestBase<{
     range: FunctionMetricsRange;
 }>;
 
-/** A set of calls: how many, how many failed, how many answered 5xx, and the
- *  handler's duration in milliseconds - null without a call. */
+/** A set of calls: how many, how many failed, how many answered 4xx and 5xx,
+ *  and the handler's duration in milliseconds - null without a call. */
 export interface FunctionMetricsCounts {
     calls: number;
     failed: number;
+    errors4xx: number;
     errors5xx: number;
     p50: number | null;
     p95: number | null;
@@ -105,6 +106,12 @@ export interface FunctionMetricsCounts {
 
 export interface FunctionMetricsPoint extends FunctionMetricsCounts {
     time: string;
+}
+
+/** The calls of one method and path. */
+export interface FunctionMetricsPath extends FunctionMetricsCounts {
+    method: string;
+    path: string;
 }
 
 export type AppLogs_GetFunctionMetrics_Res = ApiResponseBase<{
@@ -121,4 +128,6 @@ export type AppLogs_GetFunctionMetrics_Res = ApiResponseBase<{
     byOutcome: Record<string, number>;
     /** One point per step, oldest first. */
     series: FunctionMetricsPoint[];
+    /** The most called methods and paths, the most called first. */
+    byPath: FunctionMetricsPath[];
 }>;

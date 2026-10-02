@@ -81,6 +81,7 @@ const GetHistorySchema = z.object({
 const FunctionMetricsCountsSchema = z.object({
     calls: z.number().catch(0),
     failed: z.number().catch(0),
+    errors4xx: z.number().catch(0),
     errors5xx: z.number().catch(0),
     p50: z
         .number()
@@ -122,6 +123,10 @@ const GetFunctionMetricsSchema = z.object({
             .transform(value => value ?? {}),
         series: z
             .array(FunctionMetricsCountsSchema.extend({ time: z.string() }))
+            .nullish()
+            .transform(value => value ?? []),
+        byPath: z
+            .array(FunctionMetricsCountsSchema.extend({ method: z.string().catch(""), path: z.string().catch("") }))
             .nullish()
             .transform(value => value ?? []),
     }),

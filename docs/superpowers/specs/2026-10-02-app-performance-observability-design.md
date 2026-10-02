@@ -242,8 +242,15 @@ The dashboard has no chart library yet; a small one (uPlot) is added.
 
 ## Phases
 
-1. **Container resources** - the agent's cgroup rows through vlagent, the API,
-   the tab with CPU and memory. No eBPF; every node.
+1. **Container resources** (done: backend bf7ee931, dashboard 499e0cdb) - the
+   agent's cgroup rows, the API, the tab with CPU and memory. No eBPF; every
+   node. As built, the transport changed: the agent writes its rows to its own
+   stdout, `"hp":"resources"`, and the log collector takes them with its other
+   lines - no network path, vlagent's buffer, the external backend's
+   credentials and forwards. Its lines carry `hivepaas.component=agent`
+   (pkg/logidentity, shared with Traefik's); an existing install gets it with
+   the agent's next image update. Rows are written only while stored logs are
+   on. Checked against a real container's cgroup on a local node.
 2. **HTTP numbers from Traefik** (done: backend b0822c28, dashboard 58349d98)
    - the access log as JSON (query dropped, IP kept), its lines labelled, the
    API's queries per app, path and replica, the tab's requests, errors and

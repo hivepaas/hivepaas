@@ -69,6 +69,9 @@ var manifests = map[base.FunctionRuntime]manifest{
 	base.FunctionRuntimeNode24: {
 		file: "package.json", lock: "package-lock.json", settings: []string{".npmrc"}, localDeps: npmLocalDeps,
 	},
+	base.FunctionRuntimeBun1: {
+		file: "package.json", lock: "bun.lock", settings: []string{".npmrc", "bunfig.toml"}, localDeps: npmLocalDeps,
+	},
 	base.FunctionRuntimePython313: {
 		file: "requirements.txt", lock: "requirements.lock", settings: []string{"uv.toml"}, localDeps: pipLocalDeps,
 	},

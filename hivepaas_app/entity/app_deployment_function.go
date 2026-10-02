@@ -10,7 +10,7 @@ import (
 // runtime that runs it, and the limits of one call. HivePaaS writes the
 // function's Dockerfile from it.
 type DeploymentFunctionSource struct {
-	// Runtime is the language and its line: node24, python313, go127.
+	// Runtime is the language and its line: node24, bun1, python313, go127.
 	Runtime base.FunctionRuntime `json:"runtime"`
 	// Contract is the version of the handler contract: v1.
 	Contract base.FunctionContract `json:"contract"`

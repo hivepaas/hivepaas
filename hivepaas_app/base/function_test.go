@@ -34,6 +34,18 @@ func TestEachReleaseNamesAnImageForEveryFunctionRuntime(t *testing.T) {
 func TestOnlyGoIsCompiled(t *testing.T) {
 	assert.True(t, base.FunctionRuntimeGo127.Compiled())
 	assert.False(t, base.FunctionRuntimeNode24.Compiled())
+	assert.False(t, base.FunctionRuntimeBun1.Compiled())
 	assert.False(t, base.FunctionRuntimePython313.Compiled())
 	assert.Equal(t, "go127-build", base.FunctionBuildImageKey(base.FunctionRuntimeGo127))
+}
+
+// Bun runs the JavaScript runtime's code: a handler is named and its file
+// spelled as on Node.js, and TypeScript is where a function starts.
+func TestBunTakesWhatNodeTakesAndStartsInTypeScript(t *testing.T) {
+	file, handler := base.FunctionRuntimeBun1.DefaultEntrypoint()
+	assert.Equal(t, [2]string{"index.ts", "default"}, [2]string{file, handler})
+	assert.Equal(t, base.FunctionEntrypointExts[base.FunctionRuntimeNode24],
+		base.FunctionEntrypointExts[base.FunctionRuntimeBun1])
+	assert.Equal(t, base.FunctionHandlerPatterns[base.FunctionRuntimeNode24],
+		base.FunctionHandlerPatterns[base.FunctionRuntimeBun1])
 }

@@ -47778,7 +47778,7 @@
             "type" : "string"
           },
           "runtime" : {
-            "description" : "Runtime is the language and its line: node24, python313, go127.",
+            "description" : "Runtime is the language and its line: node24, bun1, python313, go127.",
             "type" : "string"
           },
           "systemPackages" : {

@@ -3,7 +3,9 @@ package loggingserviceimpl
 import (
 	"context"
 	"errors"
+	"strings"
 
+	"github.com/hivepaas/hivepaas/hivepaas_app/config"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
@@ -122,12 +124,22 @@ func historyReason(r loggingservice.ExcludedReason) loggingservice.HistoryUnavai
 // service name over the API's private network, or the one the operator named.
 func queryEndpoint(cfg *entity.LoggingSettings) (*logging.Endpoint, error) {
 	if cfg.Backend.Managed {
-		return &logging.Endpoint{URL: backendBaseURL()}, nil
+		return &logging.Endpoint{URL: managedQueryURL(config.Current())}, nil
 	}
 	if !hasQueryEndpoint(cfg) {
 		return nil, hperrors.Wrap(hperrors.ErrLoggingQueryEndpointMissing)
 	}
 	return toEndpoint(cfg.Backend.Query)
+}
+
+// managedQueryURL is where the managed backend is read: by its service name, or
+// in dev mode through the URL the environment gives, for a backend run on the
+// host. Ingest is not concerned: the collector runs in the swarm.
+func managedQueryURL(c *config.Config) string {
+	if c != nil && c.DevMode.Enabled && c.DevMode.LoggingQueryURL != "" {
+		return strings.TrimRight(c.DevMode.LoggingQueryURL, "/")
+	}
+	return backendBaseURL()
 }
 
 // hasQueryEndpoint says whether there is anywhere to read from.

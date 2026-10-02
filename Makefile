@@ -192,6 +192,20 @@ local-app-run:
 local-agent-run:
 	@./scripts/dev/local-run.sh agent
 
+# The managed logs backend is reached by its service name on hivepaas_local_net,
+# which the host cannot resolve. This forwards 127.0.0.1:9428 to it, where
+# local-app-run reads it (HP_DEV_MODE_LOGGING_QUERY_URL).
+LOGGING_PROXY_NAME := hivepaas-dev-logging-proxy
+local-logging-proxy:
+	@docker rm -f $(LOGGING_PROXY_NAME) >/dev/null 2>&1 || true
+	@docker run -d --rm --name $(LOGGING_PROXY_NAME) --network hivepaas_local_net \
+		-p 127.0.0.1:9428:9428 alpine/socat:1.8.0.3 \
+		tcp-listen:9428,fork,reuseaddr tcp-connect:victoria-logs:9428 >/dev/null
+	@echo "logs backend at http://127.0.0.1:9428"
+
+local-logging-proxy-down:
+	@docker rm -f $(LOGGING_PROXY_NAME) >/dev/null 2>&1 || true
+
 # ----- Run the local build as swarm services -----
 # For what running on the host cannot reach: the app's own swarm service, the
 # updater, placement, `platform = "remote"`. See scripts/dev/local-swarm.sh.

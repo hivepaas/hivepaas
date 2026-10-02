@@ -17,6 +17,8 @@ LOCAL_CONFIG="config/config.local.toml"
 # container sees its data at /var/lib/hivepaas while docker binds it from the host
 # path - but running on the host there is no boundary between them.
 LOCAL_APP_PATH="$(pwd)/.appdata/hivepaas"
+# The managed logs backend is read through `make local-logging-proxy`: its
+# service name resolves only inside the swarm.
 
 case "${1:-}" in
 app)
@@ -24,6 +26,7 @@ app)
   HP_CONFIG_FILE="$LOCAL_CONFIG" \
     HP_APP_PATH="$LOCAL_APP_PATH" \
     HP_STORAGE_HOST_DIR="$LOCAL_APP_PATH" \
+    HP_DEV_MODE_LOGGING_QUERY_URL="${HP_DEV_MODE_LOGGING_QUERY_URL:-http://127.0.0.1:9428}" \
     exec go run ./hivepaas_app/cmd/app/...
   ;;
 agent)

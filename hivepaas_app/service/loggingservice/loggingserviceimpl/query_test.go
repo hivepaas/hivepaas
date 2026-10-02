@@ -7,6 +7,7 @@ import (
 	"github.com/moby/moby/api/types/swarm"
 	"github.com/stretchr/testify/assert"
 
+	"github.com/hivepaas/hivepaas/hivepaas_app/config"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/appservice"
@@ -157,4 +158,31 @@ func TestAppHistory(t *testing.T) {
 			assert.Equal(t, tc.want, *got)
 		})
 	}
+}
+
+// A backend run natively in dev mode cannot resolve the managed backend's
+// service name; it reads through the URL its environment gives instead.
+func TestADevBackendReadsAManagedBackendThroughItsQueryURL(t *testing.T) {
+	config.SetCurrent(&config.Config{DevMode: config.DevMode{Enabled: true, LoggingQueryURL: "http://127.0.0.1:9428/"}})
+	t.Cleanup(func() { config.SetCurrent(nil) })
+	s := newTestService(&fakeDocker{}, storedSetting(t, enabledConfig()))
+	fb := withFakeBackend(s)
+
+	_, err := s.QueryAppLogs(context.Background(), nil, &entity.App{ID: "APP1"}, &loggingservice.AppLogQuery{Limit: 1})
+
+	assert.NoError(t, err)
+	assert.Equal(t, "http://127.0.0.1:9428", fb.endpoint.URL)
+}
+
+// Outside dev mode the URL is ignored: a server reads by service name.
+func TestOutsideDevModeTheQueryURLIsIgnored(t *testing.T) {
+	config.SetCurrent(&config.Config{DevMode: config.DevMode{LoggingQueryURL: "http://127.0.0.1:9428"}})
+	t.Cleanup(func() { config.SetCurrent(nil) })
+	s := newTestService(&fakeDocker{}, storedSetting(t, enabledConfig()))
+	fb := withFakeBackend(s)
+
+	_, err := s.QueryAppLogs(context.Background(), nil, &entity.App{ID: "APP1"}, &loggingservice.AppLogQuery{Limit: 1})
+
+	assert.NoError(t, err)
+	assert.Equal(t, backendBaseURL(), fb.endpoint.URL)
 }

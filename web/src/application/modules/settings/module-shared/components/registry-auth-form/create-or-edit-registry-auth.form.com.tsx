@@ -226,7 +226,7 @@ export function CreateOrEditRegistryAuthForm({
                                 isRequired
                                 content={
                                     isEcr
-                                        ? "The registry of your AWS account: <account>.dkr.ecr.<region>.amazonaws.com. Its region is read from it."
+                                        ? "The registry of your AWS account: <account>.dkr.ecr.<region>.amazonaws.com, or the dual-stack <account>.dkr-ecr.<region>.on.aws. Its region is read from it."
                                         : undefined
                                 }
                             />

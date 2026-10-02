@@ -1,14 +1,25 @@
 import { z } from "zod";
 import { ERegistryAuthKind } from "~/settings/domain";
 
-/** An Amazon ECR registry's address, as the API reads its account and region from it. */
-export const ECR_ADDRESS_REGEX =
-    /^([0-9]{12})\.dkr\.ecr(?:-fips)?\.([a-z]{2}(?:-[a-z]+)+-[0-9])\.amazonaws\.com(?:\.cn)?$/;
-const AWS_ROLE_ARN_REGEX = /^arn:aws(-cn|-us-gov)?:iam::[0-9]{12}:role\/[\w+=,.@/-]+$/;
+/**
+ * An Amazon ECR registry's addresses, as the API reads its region from them: the
+ * API checks the address, this only shows the region.
+ */
+const ECR_ADDRESS_REGEXES = [
+    /^([0-9]{12})\.dkr\.ecr(?:-fips)?\.([a-z]{2}(?:-[a-z]+)+-[0-9])\.amazonaws\.com(?:\.cn)?$/,
+    /^([0-9]{12})\.dkr-ecr\.([a-z]{2}(?:-[a-z]+)+-[0-9])\.on\.aws$/,
+];
 
 /** The region of an Amazon ECR registry's address, or "" for any other address. */
 export function ecrRegionOf(address: string): string {
-    return ECR_ADDRESS_REGEX.exec(address.trim().toLowerCase())?.[2] ?? "";
+    const value = address.trim().toLowerCase();
+    for (const regex of ECR_ADDRESS_REGEXES) {
+        const region = regex.exec(value)?.[2];
+        if (region) {
+            return region;
+        }
+    }
+    return "";
 }
 
 export const CreateOrEditRegistryAuthFormSchema = z
@@ -27,22 +38,8 @@ export const CreateOrEditRegistryAuthFormSchema = z
     })
     .superRefine((values, ctx) => {
         if (values.kind === ERegistryAuthKind.AwsEcr) {
-            if (!ECR_ADDRESS_REGEX.test(values.address.toLowerCase())) {
-                ctx.addIssue({
-                    code: "custom",
-                    path: ["address"],
-                    message: "An Amazon ECR registry: <account>.dkr.ecr.<region>.amazonaws.com",
-                });
-            }
             if (!values.ecrKeyAuth?.id) {
                 ctx.addIssue({ code: "custom", path: ["ecrKeyAuth"], message: "Key auth is required" });
-            }
-            if (values.ecrRoleArn && !AWS_ROLE_ARN_REGEX.test(values.ecrRoleArn)) {
-                ctx.addIssue({
-                    code: "custom",
-                    path: ["ecrRoleArn"],
-                    message: "An IAM role's ARN: arn:aws:iam::<account>:role/<name>",
-                });
             }
             return;
         }

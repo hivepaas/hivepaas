@@ -7,6 +7,7 @@ import { type ProjectEnvEntity } from "~/projects/domain";
 import {
     GitCredentialCombobox,
     GitCredentialLinks,
+    GitRepositoryUrlInput,
     type OptionCard,
     OptionCardGroup,
     ProjectEnvBadge,
@@ -320,6 +321,24 @@ export function CreateFunctionForm({
                         <>
                             <InfoBlock
                                 titleWidth={150}
+                                title={<LabelWithInfo label="Git Credentials" />}
+                            >
+                                <FieldGroup>
+                                    <Field>
+                                        <GitCredentialCombobox
+                                            projectId={projectId}
+                                            env={selectedEnvName}
+                                            value={credentials.value}
+                                            onChange={credentials.onChange}
+                                            readOnly={readOnly}
+                                        />
+                                        <GitCredentialLinks projectId={projectId} />
+                                    </Field>
+                                </FieldGroup>
+                            </InfoBlock>
+
+                            <InfoBlock
+                                titleWidth={150}
                                 title={
                                     <LabelWithInfo
                                         label="Repository URL"
@@ -329,10 +348,14 @@ export function CreateFunctionForm({
                             >
                                 <FieldGroup>
                                     <Field>
-                                        <Input
-                                            {...repoUrl}
-                                            placeholder="https://github.com/owner/repo.git"
-                                            aria-invalid={Boolean(errors.repoUrl)}
+                                        <GitRepositoryUrlInput
+                                            projectId={projectId}
+                                            env={selectedEnvName}
+                                            credentials={credentials.value}
+                                            value={repoUrl.value}
+                                            onChange={repoUrl.onChange}
+                                            invalid={Boolean(errors.repoUrl)}
+                                            readOnly={readOnly}
                                         />
                                         <FieldError errors={[errors.repoUrl]} />
                                     </Field>
@@ -375,24 +398,6 @@ export function CreateFunctionForm({
                                             aria-invalid={Boolean(errors.dir)}
                                         />
                                         <FieldError errors={[errors.dir]} />
-                                    </Field>
-                                </FieldGroup>
-                            </InfoBlock>
-
-                            <InfoBlock
-                                titleWidth={150}
-                                title={<LabelWithInfo label="Git Credentials" />}
-                            >
-                                <FieldGroup>
-                                    <Field>
-                                        <GitCredentialCombobox
-                                            projectId={projectId}
-                                            env={selectedEnvName}
-                                            value={credentials.value}
-                                            onChange={credentials.onChange}
-                                            readOnly={readOnly}
-                                        />
-                                        <GitCredentialLinks projectId={projectId} />
                                     </Field>
                                 </FieldGroup>
                             </InfoBlock>

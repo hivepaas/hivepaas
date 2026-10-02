@@ -30,3 +30,4 @@ export * from "./function-invoke-form";
 export * from "./function-code-editor";
 export * from "./git-credential-combobox";
 export * from "./push-to-registry-combobox";
+export * from "./git-repository-url-input";

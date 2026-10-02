@@ -8,6 +8,7 @@ import { type FunctionSource } from "~/projects/domain";
 import {
     GitCredentialCombobox,
     GitCredentialLinks,
+    GitRepositoryUrlInput,
     type OptionCard,
     OptionCardGroup,
     PushToRegistryCombobox,
@@ -371,6 +372,27 @@ export function FunctionSettingsForm({ ref, projectId, env, source, onSubmit, re
                                     )}
                                     <InfoBlock
                                         titleWidth={TITLE_WIDTH}
+                                        title="Git Credentials"
+                                    >
+                                        <FieldGroup>
+                                            <Field>
+                                                <GitCredentialCombobox
+                                                    projectId={projectId}
+                                                    env={env}
+                                                    value={credentials.value ?? null}
+                                                    onChange={credentials.onChange}
+                                                    readOnly={readOnly}
+                                                    invalid={Boolean(errors.credentials)}
+                                                    className={PROJECT_FORM_CONTROL_MAX_WIDTH_CLASS}
+                                                />
+                                                <FieldError errors={[errors.credentials]} />
+                                                <GitCredentialLinks projectId={projectId} />
+                                            </Field>
+                                        </FieldGroup>
+                                    </InfoBlock>
+
+                                    <InfoBlock
+                                        titleWidth={TITLE_WIDTH}
                                         title={
                                             <LabelWithInfo
                                                 label="Repository URL"
@@ -380,12 +402,17 @@ export function FunctionSettingsForm({ ref, projectId, env, source, onSubmit, re
                                     >
                                         <FieldGroup>
                                             <Field>
-                                                <Input
-                                                    {...repoUrl}
-                                                    placeholder="https://github.com/owner/repo.git"
-                                                    className={PROJECT_FORM_CONTROL_MAX_WIDTH_CLASS}
-                                                    aria-invalid={Boolean(errors.repoUrl)}
-                                                />
+                                                <div className={PROJECT_FORM_CONTROL_MAX_WIDTH_CLASS}>
+                                                    <GitRepositoryUrlInput
+                                                        projectId={projectId}
+                                                        env={env}
+                                                        credentials={credentials.value}
+                                                        value={repoUrl.value}
+                                                        onChange={repoUrl.onChange}
+                                                        invalid={Boolean(errors.repoUrl)}
+                                                        readOnly={readOnly}
+                                                    />
+                                                </div>
                                                 <FieldError errors={[errors.repoUrl]} />
                                             </Field>
                                         </FieldGroup>
@@ -431,27 +458,6 @@ export function FunctionSettingsForm({ ref, projectId, env, source, onSubmit, re
                                                     aria-invalid={Boolean(errors.dir)}
                                                 />
                                                 <FieldError errors={[errors.dir]} />
-                                            </Field>
-                                        </FieldGroup>
-                                    </InfoBlock>
-
-                                    <InfoBlock
-                                        titleWidth={TITLE_WIDTH}
-                                        title="Git Credentials"
-                                    >
-                                        <FieldGroup>
-                                            <Field>
-                                                <GitCredentialCombobox
-                                                    projectId={projectId}
-                                                    env={env}
-                                                    value={credentials.value ?? null}
-                                                    onChange={credentials.onChange}
-                                                    readOnly={readOnly}
-                                                    invalid={Boolean(errors.credentials)}
-                                                    className={PROJECT_FORM_CONTROL_MAX_WIDTH_CLASS}
-                                                />
-                                                <FieldError errors={[errors.credentials]} />
-                                                <GitCredentialLinks projectId={projectId} />
                                             </Field>
                                         </FieldGroup>
                                     </InfoBlock>

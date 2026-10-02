@@ -55,20 +55,21 @@ var BetaVersion = &ReleaseInfo{
 	BlockMajorUpgrade: []string{HivepaasDbKey},
 }
 
-// functionRuntimesV1 are the images of function-runtimes v1.1.0, a release of
-// the function contract v1: bun1, and the Python runtime on asyncio.
+// functionRuntimesV1 are the images of function-runtimes v1.2.0, a release of
+// the function contract v1: hivepaas-runtime call, which hands a scheduled
+// call to the function's serve.
 func functionRuntimesV1() map[string]string {
 	return map[string]string{
-		"node24": "ghcr.io/hivepaas/function-runtime-node24:1.1.0" +
-			"@sha256:aa3b2512af56279e5aa66f7b4711992f49d790895f480874ddfa19dd8739626a",
-		"bun1": "ghcr.io/hivepaas/function-runtime-bun1:1.1.0" +
-			"@sha256:c81ab193a77fee526065865c16cb4fe2fd5a70141510441479ff4a119009f2f8",
-		"python313": "ghcr.io/hivepaas/function-runtime-python313:1.1.0" +
-			"@sha256:a8c5b1ced158ac0d13fef847b2586a208bfcc8b1a3838206969db8a0e266b576",
-		"go127": "ghcr.io/hivepaas/function-runtime-go127:1.1.0" +
-			"@sha256:4c4ef3297b98ce9af8e5f181dc690898aab54fec4159ba9f1f54ebc7503b46ac",
-		"go127-build": "ghcr.io/hivepaas/function-runtime-go127-build:1.1.0" +
-			"@sha256:477ed08c87aa582258b691e22ea8b5fbb82e74fa1c12171744ee8452adaf85a9",
+		"node24": "ghcr.io/hivepaas/function-runtime-node24:1.2.0" +
+			"@sha256:dd905254ef4cd7b88bb73d37f75fcaa9b700c3ed521bcb8e3eac424e2229d779",
+		"bun1": "ghcr.io/hivepaas/function-runtime-bun1:1.2.0" +
+			"@sha256:f950403f2c15f9d353f9567799f0aec3b9065d67eb7dfdf43690fc8e9388ddeb",
+		"python313": "ghcr.io/hivepaas/function-runtime-python313:1.2.0" +
+			"@sha256:db4db45c8f28701d33ae7ec60c4f334bc6b25b8d733639d5dbc5584f309ce6ea",
+		"go127": "ghcr.io/hivepaas/function-runtime-go127:1.2.0" +
+			"@sha256:44f0507bbead6dfe0bbb4ca9511dc0354968ed86985d6787916887c2326cb946",
+		"go127-build": "ghcr.io/hivepaas/function-runtime-go127-build:1.2.0" +
+			"@sha256:0dcdffd4d417296b4848f58442aab018a8a96ca5080ff052b5a7d6540b59c9eb",
 	}
 }
 

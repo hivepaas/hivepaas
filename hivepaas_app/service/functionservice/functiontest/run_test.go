@@ -284,3 +284,13 @@ func TestARunWithoutAResultSaysHowItEnded(t *testing.T) {
 	assert.Equal(t, OutcomeNoResult, resp.Outcome)
 	assert.Equal(t, int64(137), resp.ExitCode)
 }
+
+// A test run's container serves nothing: the image's health check, which asks
+// the server, is not run in it.
+func TestATestRunsContainerHasNoHealthCheck(t *testing.T) {
+	opts := containerOptions(runReq(), "fn-image")
+
+	if assert.NotNil(t, opts.Config.Healthcheck) {
+		assert.Equal(t, []string{"NONE"}, opts.Config.Healthcheck.Test)
+	}
+}

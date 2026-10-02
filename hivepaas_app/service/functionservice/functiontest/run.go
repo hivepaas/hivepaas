@@ -176,9 +176,10 @@ func (r *Runner) hasImage(ctx context.Context, image string) (bool, error) {
 }
 
 // containerOptions is the run's container: the function's environment with its
-// limits, its network and its resources, and no published port. Its name and
-// labels make it a temporary one, which the cluster cleanup removes should this
-// run not.
+// limits, its network and its resources, and no published port. It serves
+// nothing, so the image's health check, which asks the server, is not run. Its
+// name and labels make it a temporary one, which the cluster cleanup removes
+// should this run not.
 func containerOptions(req *RunReq, image string) client.ContainerCreateOptions {
 	return client.ContainerCreateOptions{
 		Name: docker.TempContainerPrefix + "fn-" + gofn.RandString(8), //nolint:mnd
@@ -186,6 +187,8 @@ func containerOptions(req *RunReq, image string) client.ContainerCreateOptions {
 			Image: image,
 			Cmd:   []string{"sh", "-c", "exec hivepaas-runtime invoke < " + requestPath},
 			Env:   containerEnv(req),
+			// NONE turns off the health check the image declares.
+			Healthcheck: &container.HealthConfig{Test: []string{"NONE"}},
 			Labels: map[string]string{
 				docker.LabelTempResource:  docker.LabelTempResourceVal,
 				docker.LabelTempCreatedAt: time.Now().UTC().Format(time.RFC3339),

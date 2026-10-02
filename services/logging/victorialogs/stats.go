@@ -19,17 +19,24 @@ import (
 // lines; the filter after the unpacking is what decides.
 const invocationPhrase = `"hp":"invocation"`
 
+var (
+	methodField = strconv.Quote(UnpackPrefix + "method")
+	pathField   = strconv.Quote(UnpackPrefix + "path")
+)
+
 // invocationCounts are the counts every stats query asks for.
 const invocationCounts = ` count() calls, count() if ("app.outcome":!="ok") failed,` +
+	` count() if ("app.status":>=400 "app.status":<500) errors4xx,` +
 	` count() if ("app.status":>=500) errors5xx, quantile(0.5, "app.durationMs") p50,` +
 	` quantile(0.95, "app.durationMs") p95, quantile(0.99, "app.durationMs") p99`
 
-// InvocationStatsQueries are the three queries a function's metrics take: by
-// step, in all, and by outcome.
+// InvocationStatsQueries are the four queries a function's metrics take: by
+// step, in all, by outcome, and by method and path.
 type InvocationStatsQueries struct {
 	Series   string
 	Totals   string
 	Outcomes string
+	Paths    string
 }
 
 // BuildInvocationStatsQueries turns a request into LogsQL by the rules
@@ -42,6 +49,9 @@ func BuildInvocationStatsQueries(req *loggingmodel.InvocationStatsReq) (*Invocat
 	if req.Step < time.Second || req.Step%time.Second != 0 {
 		return nil, hperrors.Wrap(loggingmodel.ErrQueryInvalid).WithExtraDetail("the step must be whole seconds")
 	}
+	if req.TopPaths <= 0 {
+		return nil, hperrors.Wrap(loggingmodel.ErrQueryInvalid).WithExtraDetail("the paths must be a number of them")
+	}
 	filters := make([]string, 0, len(req.Match)+1)
 	for _, m := range req.Match {
 		if m.Field == "" {
@@ -51,16 +61,20 @@ func BuildInvocationStatsQueries(req *loggingmodel.InvocationStatsReq) (*Invocat
 	}
 	filters = append(filters, strconv.Quote(invocationPhrase))
 	head := strings.Join(filters, " AND ") +
-		` | unpack_json from _msg fields (hp, outcome, status, durationMs) result_prefix ` + strconv.Quote(UnpackPrefix) +
+		` | unpack_json from _msg fields (hp, method, path, outcome, status, durationMs) result_prefix ` +
+		strconv.Quote(UnpackPrefix) +
 		` | filter ` + strconv.Quote(UnpackPrefix+"hp") + `:="invocation"`
 	return &InvocationStatsQueries{
 		Series:   fmt.Sprintf("%s | stats by (_time:%ds)%s | sort by (_time)", head, req.Step/time.Second, invocationCounts),
 		Totals:   head + " | stats" + invocationCounts,
 		Outcomes: head + ` | stats by (` + strconv.Quote(UnpackPrefix+"outcome") + `) count() calls`,
+		// Ties keep one order, so that the same calls list the same paths.
+		Paths: fmt.Sprintf("%s | stats by (%s, %s)%s | sort by (calls desc, %s, %s) limit %d", head,
+			methodField, pathField, invocationCounts, pathField, methodField, req.TopPaths),
 	}, nil
 }
 
-// InvocationStats counts a function's invocation lines: three queries, built
+// InvocationStats counts a function's invocation lines: four queries, built
 // by BuildInvocationStatsQueries, over the request's range.
 func (c *Client) InvocationStats(
 	ctx context.Context, req *loggingmodel.InvocationStatsReq,
@@ -101,6 +115,16 @@ func (c *Client) InvocationStats(
 			out.ByOutcome[row[UnpackPrefix+"outcome"]] = calls
 		}
 	}
+
+	rows, err = c.rows(ctx, q.Paths, req.Start, req.End)
+	if err != nil {
+		return nil, hperrors.Wrap(err)
+	}
+	for _, row := range rows {
+		out.ByPath = append(out.ByPath, &loggingmodel.InvocationPath{
+			Method: row[UnpackPrefix+"method"], Path: row[UnpackPrefix+"path"], InvocationCounts: countsOf(row),
+		})
+	}
 	return out, nil
 }
 
@@ -131,7 +155,8 @@ func (c *Client) rows(ctx context.Context, q string, start, end time.Time) ([]ma
 
 func countsOf(row map[string]string) loggingmodel.InvocationCounts {
 	counts := loggingmodel.InvocationCounts{
-		Calls: whole(row["calls"]), Failed: whole(row["failed"]), Errors5xx: whole(row["errors5xx"]),
+		Calls: whole(row["calls"]), Failed: whole(row["failed"]),
+		Errors4xx: whole(row["errors4xx"]), Errors5xx: whole(row["errors5xx"]),
 	}
 	if counts.Calls > 0 {
 		counts.P50, counts.P95, counts.P99 = number(row["p50"]), number(row["p95"]), number(row["p99"])

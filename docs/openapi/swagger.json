@@ -53733,6 +53733,9 @@
           "calls" : {
             "type" : "integer"
           },
+          "errors4xx" : {
+            "type" : "integer"
+          },
           "errors5xx" : {
             "type" : "integer"
           },
@@ -53749,7 +53752,7 @@
             "type" : "number"
           }
         },
-        "required" : [ "calls", "errors5xx", "failed", "p50", "p95", "p99" ],
+        "required" : [ "calls", "errors4xx", "errors5xx", "failed", "p50", "p95", "p99" ],
         "type" : "object"
       },
       "appdto.FunctionMetricsDataResp" : {
@@ -53762,6 +53765,13 @@
               "type" : "integer"
             },
             "type" : "object"
+          },
+          "byPath" : {
+            "description" : "ByPath is the most called methods and paths, the most called first.",
+            "items" : {
+              "$ref" : "#/components/schemas/appdto.FunctionMetricsPathResp"
+            },
+            "type" : "array"
           },
           "clamped" : {
             "description" : "Clamped says the range reaches past what the logs keep: it starts where\nthey do.",
@@ -53794,12 +53804,48 @@
             "$ref" : "#/components/schemas/appdto.FunctionMetricsCountsResp"
           }
         },
-        "required" : [ "available", "byOutcome", "clamped", "end", "range", "reason", "series", "start", "stepSeconds", "totals" ],
+        "required" : [ "available", "byOutcome", "byPath", "clamped", "end", "range", "reason", "series", "start", "stepSeconds", "totals" ],
+        "type" : "object"
+      },
+      "appdto.FunctionMetricsPathResp" : {
+        "properties" : {
+          "calls" : {
+            "type" : "integer"
+          },
+          "errors4xx" : {
+            "type" : "integer"
+          },
+          "errors5xx" : {
+            "type" : "integer"
+          },
+          "failed" : {
+            "type" : "integer"
+          },
+          "method" : {
+            "type" : "string"
+          },
+          "p50" : {
+            "type" : "number"
+          },
+          "p95" : {
+            "type" : "number"
+          },
+          "p99" : {
+            "type" : "number"
+          },
+          "path" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "calls", "errors4xx", "errors5xx", "failed", "method", "p50", "p95", "p99", "path" ],
         "type" : "object"
       },
       "appdto.FunctionMetricsPointResp" : {
         "properties" : {
           "calls" : {
+            "type" : "integer"
+          },
+          "errors4xx" : {
             "type" : "integer"
           },
           "errors5xx" : {
@@ -53821,7 +53867,7 @@
             "type" : "string"
           }
         },
-        "required" : [ "calls", "errors5xx", "failed", "p50", "p95", "p99", "time" ],
+        "required" : [ "calls", "errors4xx", "errors5xx", "failed", "p50", "p95", "p99", "time" ],
         "type" : "object"
       },
       "appdto.GetAppLogHistoryResp" : {

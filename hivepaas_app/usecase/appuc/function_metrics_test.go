@@ -55,15 +55,29 @@ func TestMetricsDataAreTheCountsAsTheAPIWritesThem(t *testing.T) {
 				P50: p(10), P95: p(20), P99: p(30)}},
 			{Time: at.Add(time.Minute)},
 		},
-		Totals:    logging.InvocationCounts{Calls: 3, Failed: 1, Errors5xx: 1, P50: p(10), P95: p(20), P99: p(30)},
+		Totals: logging.InvocationCounts{Calls: 3, Failed: 1, Errors4xx: 1, Errors5xx: 1,
+			P50: p(10), P95: p(20), P99: p(30)},
 		ByOutcome: map[string]int64{"ok": 2, "error": 1},
+		ByPath: []*logging.InvocationPath{
+			{Method: "GET", Path: "/", InvocationCounts: logging.InvocationCounts{Calls: 2, Failed: 1, Errors5xx: 1,
+				P95: p(20)}},
+			{Method: "GET", Path: "/.env", InvocationCounts: logging.InvocationCounts{Calls: 1, Errors4xx: 1, P95: p(1)}},
+		},
 	})
 
 	assert.True(t, data.Available)
 	assert.Equal(t, "1h", data.Range)
 	assert.Equal(t, 60, data.StepSeconds)
 	assert.Equal(t, int64(3), data.Totals.Calls)
+	assert.Equal(t, int64(1), data.Totals.Errors4xx)
 	assert.Equal(t, map[string]int64{"ok": 2, "error": 1}, data.ByOutcome)
+	if assert.Len(t, data.ByPath, 2) {
+		assert.Equal(t, "GET", data.ByPath[0].Method)
+		assert.Equal(t, "/", data.ByPath[0].Path)
+		assert.Equal(t, int64(2), data.ByPath[0].Calls)
+		assert.Equal(t, "/.env", data.ByPath[1].Path)
+		assert.Equal(t, int64(1), data.ByPath[1].Errors4xx)
+	}
 	if assert.Len(t, data.Series, 2) {
 		assert.Equal(t, at, data.Series[0].Time)
 		assert.Equal(t, 20.0, *data.Series[0].P95)

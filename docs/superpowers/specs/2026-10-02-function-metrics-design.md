@@ -121,7 +121,6 @@ chart, and a new dependency.
 
 ## Later
 
-- Metrics by path.
 - Alerts on failure rate or p95.
 - A metrics store, when autoscaling needs numbers every few seconds.
 
@@ -144,3 +143,20 @@ settled what follows:
 - **The live test** (`stats_live_test.go`) ran against VictoriaLogs v1.52.0: an
   app's handler lines that mention an invocation, and another app's line naming
   this one, are not counted.
+
+## Added: calls by path
+
+On a server the first day's calls were mostly scanners - `/.env`, `/.git/config`,
+`/wp-login.php` - which the totals cannot tell from a function's own. A fourth
+query counts the calls by method and path, the 20 most called first, ties in
+path order:
+
+```
+… | stats by ("app.method", "app.path") <the counts> | sort by (calls desc, "app.path", "app.method") limit 20
+```
+
+The counts gain `errors4xx` (`"app.status":>=400 "app.status":<500`), in the
+totals and by path: a handler that answers 404 to what it does not serve shows
+the scanners there. The Metrics tab lists the paths under the charts. A path is
+counted as the runtime wrote it, ids and all: a function serving `/users/123`
+has as many paths as users, and only the 20 most called are listed.

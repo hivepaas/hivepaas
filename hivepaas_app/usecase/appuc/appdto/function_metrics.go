@@ -57,16 +57,19 @@ type FunctionMetricsDataResp struct {
 	Clamped   bool                       `json:"clamped"`
 	Totals    *FunctionMetricsCountsResp `json:"totals,omitempty"`
 	ByOutcome map[string]int64           `json:"byOutcome,omitempty"`
+	// ByPath is the most called methods and paths, the most called first.
+	ByPath []*FunctionMetricsPathResp `json:"byPath,omitempty"`
 	// Series has one point per step, oldest first.
 	Series []*FunctionMetricsPointResp `json:"series,omitempty"`
 }
 
 // FunctionMetricsCountsResp are a set of calls: how many, how many failed - an
-// outcome other than ok - how many the handler answered 5xx, and how long the
-// handler ran, in milliseconds, none without a call.
+// outcome other than ok - how many the handler answered 4xx and 5xx, and how
+// long the handler ran, in milliseconds, none without a call.
 type FunctionMetricsCountsResp struct {
 	Calls     int64    `json:"calls"`
 	Failed    int64    `json:"failed"`
+	Errors4xx int64    `json:"errors4xx"`
 	Errors5xx int64    `json:"errors5xx"`
 	P50       *float64 `json:"p50"`
 	P95       *float64 `json:"p95"`
@@ -76,5 +79,12 @@ type FunctionMetricsCountsResp struct {
 // FunctionMetricsPointResp is the calls of one step, Time its start.
 type FunctionMetricsPointResp struct {
 	Time time.Time `json:"time"`
+	FunctionMetricsCountsResp
+}
+
+// FunctionMetricsPathResp is the calls of one method and path.
+type FunctionMetricsPathResp struct {
+	Method string `json:"method"`
+	Path   string `json:"path"`
 	FunctionMetricsCountsResp
 }

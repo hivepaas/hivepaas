@@ -222,14 +222,17 @@ type InvocationStatsReq struct {
 	End   time.Time
 	// Step is the buckets' width, in whole seconds.
 	Step time.Duration
+	// TopPaths is how many of the most called paths are counted apart.
+	TopPaths int
 }
 
 // InvocationCounts are a set of calls: how many, how many failed - an outcome
-// other than ok - and how many the handler answered 5xx, and how long the
+// other than ok - how many the handler answered 4xx and 5xx, and how long the
 // handler ran, in milliseconds. The durations are nil without a call.
 type InvocationCounts struct {
 	Calls     int64
 	Failed    int64
+	Errors4xx int64
 	Errors5xx int64
 	P50       *float64
 	P95       *float64
@@ -242,10 +245,19 @@ type InvocationBucket struct {
 	InvocationCounts
 }
 
+// InvocationPath is the calls of one method and path.
+type InvocationPath struct {
+	Method string
+	Path   string
+	InvocationCounts
+}
+
 // InvocationStatsResp is a range's calls: by step, oldest first, a step
-// without a call left out; in all; and by outcome.
+// without a call left out; in all; by outcome; and by method and path, the most
+// called first, as many as TopPaths.
 type InvocationStatsResp struct {
 	Buckets   []*InvocationBucket
 	Totals    InvocationCounts
 	ByOutcome map[string]int64
+	ByPath    []*InvocationPath
 }

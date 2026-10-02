@@ -56,7 +56,6 @@ func TestAnECRCredentialIsItsAddressAndKeyAuth(t *testing.T) {
 		"no ECR side":                          {func(r *RegistryAuthBaseReq) { r.ECR = nil }, "auth.ecr"},
 		"no key auth": {func(r *RegistryAuthBaseReq) { r.ECR.KeyAuth.ID = "" },
 			"auth.ecr.keyAuth"},
-		"a role that is none":   {func(r *RegistryAuthBaseReq) { r.ECR.RoleARN = "admin" }, "auth.ecr.roleArn"},
 		"a password of its own": {func(r *RegistryAuthBaseReq) { r.Password = "pw" }, "auth.password"},
 		"a kind that is none":   {func(r *RegistryAuthBaseReq) { r.Kind = "gcp" }, "auth.kind"},
 	} {

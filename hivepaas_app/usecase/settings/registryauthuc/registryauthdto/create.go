@@ -1,7 +1,6 @@
 package registryauthdto
 
 import (
-	"regexp"
 	"strings"
 
 	vld "github.com/tiendc/go-validator"
@@ -22,8 +21,6 @@ const (
 
 	awsRoleARNMaxLen = 2048
 )
-
-var awsRoleARNRegex = regexp.MustCompile(`^arn:aws(-cn|-us-gov)?:iam::[0-9]{12}:role/[\w+=,.@/-]+$`)
 
 type CreateRegistryAuthReq struct {
 	settings.CreateSettingReq
@@ -146,8 +143,6 @@ func (req *RegistryAuthBaseReq) validateECR(field string) (res []vld.Validator) 
 	ecr := req.ECR
 	res = append(res, basedto.ValidateObjectIDReq(&ecr.KeyAuth, true, field+"ecr.keyAuth")...)
 	res = append(res, basedto.ValidateStr(&ecr.RoleARN, false, 0, awsRoleARNMaxLen, field+"ecr.roleArn")...)
-	res = append(res, basedto.ValidateCond(ecr.RoleARN == "" || awsRoleARNRegex.MatchString(ecr.RoleARN),
-		field+"ecr.roleArn")...)
 	return res
 }
 

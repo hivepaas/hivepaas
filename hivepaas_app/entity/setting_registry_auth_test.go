@@ -15,13 +15,15 @@ func TestAnECRAddressGivesItsAccountAndRegion(t *testing.T) {
 		"123456789012.dkr.ecr.eu-west-1.amazonaws.com":          {"123456789012", "eu-west-1"},
 		"123456789012.dkr.ecr-fips.us-gov-west-1.amazonaws.com": {"123456789012", "us-gov-west-1"},
 		"123456789012.dkr.ecr.cn-north-1.amazonaws.com.cn":      {"123456789012", "cn-north-1"},
+		"123456789012.dkr-ecr.us-west-1.on.aws":                 {"123456789012", "us-west-1"},
 	} {
 		account, region, ok := ParseECRAddress(address)
 		assert.True(t, ok, address)
 		assert.Equal(t, want, [2]string{account, region}, address)
 	}
 	for _, address := range []string{"ghcr.io", "1234.dkr.ecr.eu-west-1.amazonaws.com",
-		"123456789012.dkr.ecr.eu-west-1.amazonaws.com.evil.test", "public.ecr.aws"} {
+		"123456789012.dkr.ecr.eu-west-1.amazonaws.com.evil.test", "public.ecr.aws",
+		"123456789012.dkr-ecr.us-west-1.on.aws.evil.test", "evil.test/123456789012.dkr.ecr.eu-west-1.amazonaws.com"} {
 		_, _, ok := ParseECRAddress(address)
 		assert.False(t, ok, address)
 	}

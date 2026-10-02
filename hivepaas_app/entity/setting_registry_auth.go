@@ -71,18 +71,25 @@ type RegistryAuthECR struct {
 	RoleARN string   `json:"roleArn,omitempty"`
 }
 
-// ecrAddressRegex is an ECR registry's address: its account and its region.
-var ecrAddressRegex = regexp.MustCompile(
-	`^([0-9]{12})\.dkr\.ecr(?:-fips)?\.([a-z]{2}(?:-[a-z]+)+-[0-9])\.amazonaws\.com(?:\.cn)?$`)
+// ecrAddressRegexes are an ECR registry's addresses, each giving its account
+// and its region: <account>.dkr.ecr[-fips].<region>.amazonaws.com[.cn], and
+// the dual-stack <account>.dkr-ecr.<region>.on.aws.
+var ecrAddressRegexes = []*regexp.Regexp{
+	regexp.MustCompile(`^([0-9]{12})\.dkr\.ecr(?:-fips)?\.([a-z]{2}(?:-[a-z]+)+-[0-9])\.amazonaws\.com(?:\.cn)?$`),
+	regexp.MustCompile(`^([0-9]{12})\.dkr-ecr\.([a-z]{2}(?:-[a-z]+)+-[0-9])\.on\.aws$`),
+}
 
 // ParseECRAddress is the account and the region of an ECR registry's address;
-// ok is false for an address that is not one.
+// ok is false for an address that is not one. It is what keeps a token on its
+// way to AWS: Docker hands the token to the address, so an address that were
+// anyone's would be given the token of a key auth it may not read.
 func ParseECRAddress(address string) (account, region string, ok bool) {
-	m := ecrAddressRegex.FindStringSubmatch(address)
-	if m == nil {
-		return "", "", false
+	for _, re := range ecrAddressRegexes {
+		if m := re.FindStringSubmatch(address); m != nil {
+			return m[1], m[2], true
+		}
 	}
-	return m[1], m[2], true
+	return "", "", false
 }
 
 // SameECRKeys reports whether two credentials sign in to ECR the same way: a

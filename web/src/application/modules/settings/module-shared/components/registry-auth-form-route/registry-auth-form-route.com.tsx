@@ -5,7 +5,7 @@ import { ProjectRegistryAuthCommands } from "~/projects/data/commands";
 import { ProjectRegistryAuthQueries } from "~/projects/data/queries";
 import { RegistryAuthCommands } from "~/settings/data/commands";
 import { RegistryAuthQueries } from "~/settings/data/queries";
-import type { SettingRegistryAuth } from "~/settings/domain";
+import { ERegistryAuthKind, type SettingRegistryAuth } from "~/settings/domain";
 import { CreateOrEditRegistryAuthForm } from "~/settings/module-shared/components/registry-auth-form";
 import type {
     CreateOrEditRegistryAuthFormInput,
@@ -103,9 +103,7 @@ export function RegistryAuthFormRoute({ mode, scope, registryAuthId }: Props) {
             inheritable: values.inheritable,
             default: values.default,
             name: values.name,
-            address: values.address,
-            username: values.username,
-            password: values.password,
+            ...signInPayload(values),
             readonly: values.readonly,
         };
     }
@@ -147,9 +145,7 @@ export function RegistryAuthFormRoute({ mode, scope, registryAuthId }: Props) {
         testConnection({
             payload: {
                 name: values.name,
-                address: values.address,
-                username: values.username,
-                password: values.password,
+                ...signInPayload(values),
                 readonly: values.readonly,
             },
         });
@@ -195,9 +191,16 @@ export function RegistryAuthFormRoute({ mode, scope, registryAuthId }: Props) {
     const initialValues: Partial<CreateOrEditRegistryAuthFormInput> | undefined = activeRegistryAuth
         ? {
               name: activeRegistryAuth.name,
+              kind:
+                  activeRegistryAuth.kind === ERegistryAuthKind.AwsEcr
+                      ? ERegistryAuthKind.AwsEcr
+                      : ERegistryAuthKind.Basic,
               address: activeRegistryAuth.address,
               username: activeRegistryAuth.username,
               password: activeRegistryAuth.password,
+              ecrAccessKeyId: activeRegistryAuth.ecr?.accessKeyId ?? "",
+              ecrSecretAccessKey: activeRegistryAuth.ecr?.secretAccessKey ?? "",
+              ecrRoleArn: activeRegistryAuth.ecr?.roleArn ?? "",
               readonly: activeRegistryAuth.readonly,
               inheritable: Boolean(activeRegistryAuth.inheritable),
               default: activeRegistryAuth.default ?? false,
@@ -247,6 +250,7 @@ export function RegistryAuthFormRoute({ mode, scope, registryAuthId }: Props) {
                         onHasChanges={setHasChanges}
                         savedVersion={saveRevision}
                         initialValues={initialValues}
+                        ecrTokenExpiresAt={activeRegistryAuth?.ecr ? activeRegistryAuth.ecr.tokenExpiresAt : undefined}
                         showAvailableInProjects
                         isProjectScope={scope.type === "project"}
                         readOnlyInherited={readOnlyInherited}
@@ -257,6 +261,34 @@ export function RegistryAuthFormRoute({ mode, scope, registryAuthId }: Props) {
             )}
         </div>
     );
+}
+
+/**
+ * How the credential signs in: a username and a password, or, for Amazon ECR,
+ * AWS keys - its username is AWS and its password a token HivePaaS gets.
+ */
+function signInPayload(values: CreateOrEditRegistryAuthFormOutput) {
+    if (values.kind === ERegistryAuthKind.AwsEcr) {
+        return {
+            kind: ERegistryAuthKind.AwsEcr,
+            address: values.address,
+            username: "",
+            password: "",
+            ecr: {
+                accessKeyId: values.ecrAccessKeyId,
+                secretAccessKey: values.ecrSecretAccessKey,
+                roleArn: values.ecrRoleArn,
+            },
+        };
+    }
+
+    return {
+        kind: ERegistryAuthKind.Basic,
+        address: values.address,
+        username: values.username,
+        password: values.password,
+        ecr: null,
+    };
 }
 
 function getRegistryAuthListRoute(scope: RegistryAuthTableScope) {

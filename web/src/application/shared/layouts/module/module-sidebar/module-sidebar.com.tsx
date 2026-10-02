@@ -20,6 +20,7 @@ import {
     House,
     IdCard,
     Key,
+    KeyRound,
     KeySquare,
     Layers,
     LayoutGrid,
@@ -292,6 +293,13 @@ const navMain: SidebarItem[] = [
                         moduleId: MODULE_IDS.System,
                         route: ROUTE.appSettings.sslRenewal.configuration.$route,
                         pattern: ROUTE.appSettings.sslRenewal.$pattern,
+                    },
+                    {
+                        title: "Registry Auth Renewal",
+                        icon: KeyRound,
+                        moduleId: MODULE_IDS.System,
+                        route: ROUTE.appSettings.registryAuthRenewal.configuration.$route,
+                        pattern: ROUTE.appSettings.registryAuthRenewal.$pattern,
                     },
                     {
                         title: "Data Backup",

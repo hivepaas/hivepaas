@@ -1,7 +1,7 @@
 import { Badge } from "@components/ui/badge";
 import type { ColumnDef } from "@tanstack/react-table";
 import { format } from "date-fns";
-import type { SettingRegistryAuth } from "~/settings/domain";
+import { ERegistryAuthKind, type SettingRegistryAuth } from "~/settings/domain";
 import { SettingStatusBadge } from "~/settings/module-shared/components";
 
 import { RegistryAuthEditCell, RegistryAuthMenuCell } from "./building-blocks";
@@ -53,6 +53,12 @@ function createColumns(scope: RegistryAuthTableScope): ColumnDef<SettingRegistry
             accessorKey: "username",
             header: "Username",
             enableSorting: true,
+            cell: ({ row: { original } }) =>
+                original.kind === ERegistryAuthKind.AwsEcr ? (
+                    <Badge tone="amber">Amazon ECR</Badge>
+                ) : (
+                    original.username || "-"
+                ),
         },
         {
             accessorKey: "status",

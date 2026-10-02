@@ -490,6 +490,21 @@ export const ROUTE = {
             },
         },
 
+        registryAuthRenewal: {
+            $pattern: "settings/registry-auth-renewal",
+            $route: "/settings/registry-auth-renewal/configuration/",
+
+            configuration: {
+                $pattern: "settings/registry-auth-renewal/configuration",
+                $route: "/settings/registry-auth-renewal/configuration/",
+            },
+
+            actions: {
+                $pattern: "settings/registry-auth-renewal/actions",
+                $route: "/settings/registry-auth-renewal/actions/",
+            },
+        },
+
         backupRepoCleanup: {
             $pattern: "settings/backup-repo-cleanup",
             $route: "/settings/backup-repo-cleanup/configuration/",

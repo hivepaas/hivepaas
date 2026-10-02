@@ -112,6 +112,7 @@ const SYSTEM_HREF: Record<string, string> = {
     "hivepaas-service": ROUTE.systemSettings.hivepaas.general.$route,
     "image-build": ROUTE.appSettings.imageBuild.$route,
     "ssl-renewal": ROUTE.appSettings.sslRenewal.configuration.$route,
+    "registry-auth-renewal": ROUTE.appSettings.registryAuthRenewal.configuration.$route,
     "system-backup": ROUTE.appSettings.dataBackup.configuration.$route,
     "system-cleanup": ROUTE.appSettings.dataCleanup.configuration.$route,
     "traefik-service": ROUTE.systemSettings.traefik.general.$route,

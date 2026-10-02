@@ -27,6 +27,8 @@ import {
     SystemBackupRepoCleanupApiValidator,
     SystemCleanupApi,
     SystemCleanupApiValidator,
+    SystemRegistryAuthRenewalApi,
+    SystemRegistryAuthRenewalApiValidator,
     SystemSslRenewalApi,
     SystemSslRenewalApiValidator,
     TraefikConfigOptionsApi,
@@ -41,6 +43,7 @@ function createApi() {
     const systemBackupValidator = new SystemBackupApiValidator();
     const systemCleanupValidator = new SystemCleanupApiValidator();
     const systemSslRenewalValidator = new SystemSslRenewalApiValidator();
+    const systemRegistryAuthRenewalValidator = new SystemRegistryAuthRenewalApiValidator();
     const systemBackupRepoCleanupValidator = new SystemBackupRepoCleanupApiValidator();
     const hivePaaSServiceSettingsValidator = new HivePaaSServiceSettingsApiValidator();
     const hivePaaSRoutingSettingsValidator = new HivePaaSRoutingSettingsApiValidator();
@@ -72,6 +75,7 @@ function createApi() {
             backup: new SystemBackupApi(systemBackupValidator),
             cleanup: new SystemCleanupApi(systemCleanupValidator),
             sslRenewal: new SystemSslRenewalApi(systemSslRenewalValidator),
+            registryAuthRenewal: new SystemRegistryAuthRenewalApi(systemRegistryAuthRenewalValidator),
             backupRepoCleanup: new SystemBackupRepoCleanupApi(systemBackupRepoCleanupValidator),
             mcpSettings: new McpSettingsApi(new McpSettingsApiValidator()),
         },

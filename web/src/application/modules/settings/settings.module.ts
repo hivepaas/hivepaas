@@ -61,6 +61,8 @@ export {
     SettingsDataCleanupConfigurationRoute,
     SettingsSslRenewalActionsRoute,
     SettingsSslRenewalConfigurationRoute,
+    SettingsRegistryAuthRenewalActionsRoute,
+    SettingsRegistryAuthRenewalConfigurationRoute,
     SettingsBackupRepoCleanupActionsRoute,
     SettingsBackupRepoCleanupConfigurationRoute,
 } from "./routes";
@@ -73,7 +75,13 @@ export { SettingsDialogsContainer } from "./dialogs-container";
 /**
  * Layouts
  */
-export { DataBackupLayout, DataCleanupLayout, SslRenewalLayout, BackupRepoCleanupLayout } from "./layouts";
+export {
+    DataBackupLayout,
+    DataCleanupLayout,
+    SslRenewalLayout,
+    RegistryAuthRenewalLayout,
+    BackupRepoCleanupLayout,
+} from "./layouts";
 
 /**
  * Dialogs

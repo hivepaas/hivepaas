@@ -3,6 +3,7 @@ export const EAppScheduledJobType = {
     SystemCleanup: "system-cleanup",
     SystemBackup: "system-backup",
     SSLRenewal: "ssl-renewal",
+    RegistryAuthRenewal: "registry-auth-renewal",
     BackupRepoCleanup: "backup-repo-cleanup",
     JobSequence: "job-sequence",
     DataBackup: "data-backup",

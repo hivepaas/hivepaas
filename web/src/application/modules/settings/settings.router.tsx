@@ -541,6 +541,52 @@ export const settingsRouter: RouteObject = {
         },
         {
             lazy: async () => {
+                const { RegistryAuthRenewalLayout } = await getLazyComponents();
+
+                return {
+                    element: (
+                        <ConditionalModule id={MODULE_IDS.System}>
+                            <ModuleTitle title="Registry Auth Renewal">
+                                <RegistryAuthRenewalLayout>
+                                    <Outlet />
+                                </RegistryAuthRenewalLayout>
+                            </ModuleTitle>
+                        </ConditionalModule>
+                    ),
+                };
+            },
+            path: ROUTE.appSettings.registryAuthRenewal.$pattern,
+            children: [
+                {
+                    index: true,
+                    element: (
+                        <AppNavigate.Basic
+                            to={ROUTE.appSettings.registryAuthRenewal.configuration.$route}
+                            replace
+                            ignorePrevPath
+                        />
+                    ),
+                },
+                {
+                    path: "configuration",
+                    lazy: async () => {
+                        const { SettingsRegistryAuthRenewalConfigurationRoute } = await getLazyComponents();
+
+                        return { Component: SettingsRegistryAuthRenewalConfigurationRoute };
+                    },
+                },
+                {
+                    path: "actions",
+                    lazy: async () => {
+                        const { SettingsRegistryAuthRenewalActionsRoute } = await getLazyComponents();
+
+                        return { Component: SettingsRegistryAuthRenewalActionsRoute };
+                    },
+                },
+            ],
+        },
+        {
+            lazy: async () => {
                 const { BackupRepoCleanupLayout } = await getLazyComponents();
 
                 return {

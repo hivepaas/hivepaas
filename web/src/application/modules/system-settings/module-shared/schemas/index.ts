@@ -1,6 +1,7 @@
 export * from "./system-backup-settings.entity.schema";
 export * from "./system-cleanup-settings.entity.schema";
 export * from "./system-ssl-renewal-settings.entity.schema";
+export * from "./system-registry-auth-renewal-settings.entity.schema";
 export * from "./system-backup-repo-cleanup-settings.entity.schema";
 export * from "./settings-probation.entity.schema";
 export * from "./hivepaas-service-settings.entity.schema";

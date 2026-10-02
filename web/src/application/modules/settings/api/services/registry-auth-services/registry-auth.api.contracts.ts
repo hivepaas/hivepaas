@@ -19,6 +19,13 @@ export type RegistryAuth_FindOneById_Req = ApiRequestBase<{
 
 export type RegistryAuth_FindOneById_Res = ApiResponseBase<SettingRegistryAuth>;
 
+/** An Amazon ECR credential's AWS keys; the region is read from the address. */
+export type RegistryAuth_Ecr_Payload = {
+    accessKeyId: string;
+    secretAccessKey: string;
+    roleArn: string;
+};
+
 export type RegistryAuth_CreateOne_Payload = {
     inheritable: boolean;
     default: boolean;
@@ -27,6 +34,8 @@ export type RegistryAuth_CreateOne_Payload = {
     username: string;
     password: string;
     readonly: boolean;
+    kind: string;
+    ecr: RegistryAuth_Ecr_Payload | null;
 };
 
 export type RegistryAuth_CreateOne_Req = ApiRequestBase<{
@@ -44,6 +53,8 @@ export type RegistryAuth_UpdateOne_Payload = {
     username: string;
     password: string;
     readonly: boolean;
+    kind: string;
+    ecr: RegistryAuth_Ecr_Payload | null;
 };
 
 export type RegistryAuth_UpdateOne_Req = ApiRequestBase<{
@@ -80,6 +91,8 @@ export type RegistryAuth_TestConn_Payload = {
     username: string;
     password: string;
     readonly: boolean;
+    kind: string;
+    ecr: RegistryAuth_Ecr_Payload | null;
 };
 
 export type RegistryAuth_TestConn_Req = ApiRequestBase<{

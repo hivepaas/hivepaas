@@ -200,3 +200,55 @@ func TestTheFunctionsGuideAndPrompt(t *testing.T) {
 	text = promptText(t, w.session(t, "reader"), "deploy_function", args)
 	assert.Contains(t, text, "Change nothing: this key may not")
 }
+
+// A scheduled job of a function sends it a request: jobType function-invoke,
+// set by the tool, with no command.
+func TestSchedulingAFunctionsCall(t *testing.T) {
+	w := newFunctionWorld(t)
+	session := w.session(t, "key1")
+	text, isErr := callTool(t, session, "plan_create_sched_job", map[string]any{
+		"project": "shop", "env": "prod", "app": "api", "name": "nightly report",
+		"schedule":       map[string]any{"cronExpr": "0 3 * * *"},
+		"functionInvoke": map[string]any{"method": "post", "path": "report", "body": `{"day":"yesterday"}`},
+	})
+	assert.False(t, isErr, text)
+	assert.Contains(t, text, "function-invoke")
+	assert.Empty(t, w.routes.writes())
+
+	text, isErr = callTool(t, session, "apply_plan", map[string]any{"planToken": planOf(t, text).PlanToken})
+	assert.False(t, isErr, text)
+	if sent := w.routes.writes(); assert.Len(t, sent, 1) {
+		assert.Equal(t, "/projects/p1/prod/apps/a1/sched-jobs", sent[0].Path)
+		body := sentBody(t, sent[0])
+		assert.Equal(t, "function-invoke", body["jobType"])
+		assert.Nil(t, body["command"])
+		invoke := body["functionInvoke"].(map[string]any)
+		assert.Equal(t, "post", invoke["method"], "the endpoint puts it in upper case")
+		assert.JSONEq(t, `{"day":"yesterday"}`, invoke["body"].(string))
+	}
+}
+
+// A function's call is only for a function, runs no command, and a job is one
+// or the other.
+func TestAFunctionsCallThatCannotBeScheduled(t *testing.T) {
+	w := newFunctionWorld(t)
+	session := w.session(t, "key1")
+	schedule := map[string]any{"cronExpr": "@daily"}
+	call := map[string]any{"path": "/"}
+	for name, c := range map[string]struct {
+		args map[string]any
+		want string
+	}{
+		"an app that is no function": {map[string]any{"app": "worker", "functionInvoke": call},
+			"worker is not a function"},
+		"a command too": {map[string]any{"app": "api", "functionInvoke": call,
+			"command": map[string]any{"command": "echo hi"}}, "not both"},
+		"neither": {map[string]any{"app": "api"}, "command is required"},
+	} {
+		c.args["project"], c.args["env"], c.args["name"], c.args["schedule"] = "shop", "prod", "job", schedule
+		text, isErr := callTool(t, session, "plan_create_sched_job", c.args)
+		assert.True(t, isErr, name)
+		assert.Contains(t, text, c.want, name)
+	}
+	assert.Empty(t, w.routes.writes())
+}

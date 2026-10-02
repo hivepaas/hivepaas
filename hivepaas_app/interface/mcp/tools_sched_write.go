@@ -59,7 +59,7 @@ var schedJobDescs = func() map[string]string {
 		"retryDelayMax":      "the longest a retry waits, however the wait grows",
 		"timeout":            "how long a run may take before it is stopped, up to 24h; 3h when not given",
 		"controlDisabled":    "true for runs that cannot be canceled once started",
-		"command":            "what runs, in the app's container",
+		"command":            "what runs, in the app's container. Give it or functionInvoke, not both",
 		"commandOutput": "what is done with what the command prints, when enabled: saved to a file in a " +
 			"storage (saveToFile) or given as input to a command in another app (pipeToApp), one of them",
 		"commandOutput.saveToFile": "fileName and filePath in the storage; fileKind, such as postgres-backup, " +
@@ -75,8 +75,13 @@ var schedJobDescs = func() map[string]string {
 			"other scheduled jobs in order, is made in the dashboard",
 		"dataBackup": "not used here: this plans a command that runs in an app; a data backup, which takes " +
 			"a snapshot of a command's output or of a volume into a backup repository, is made in the dashboard",
-		"functionInvoke": "not used here: this plans a command that runs in an app; a function's call on a " +
-			"schedule, which sends the function a request, is made in the dashboard",
+		"functionInvoke": "instead of command, for a function: the request each run sends it - its " +
+			"response is the run's output. Give it or command, not both",
+		"functionInvoke.method": "the request's method: GET, HEAD, POST, PUT, PATCH, DELETE or OPTIONS; GET " +
+			"when not given",
+		"functionInvoke.path":    "the request's path, with its query if it has one; / when not given",
+		"functionInvoke.headers": "the request's headers, a list of values per name; up to 50",
+		"functionInvoke.body":    "the request's body, as text, up to 1 MiB; none for GET or HEAD",
 		"triggers": "events of this app that also run the job, beside its schedule: pre-deploy, post-deploy, " +
 			"deploy-failed, health-down, health-up, app-enabled, app-disabled; up to 10",
 	}
@@ -133,14 +138,15 @@ const schedJobRuns = 5
 
 func planCreateSchedJobTool() Tool {
 	return planToolWith("plan_create_sched_job", "Plan a scheduled job",
-		"Plans POST /projects/{project}/{env}/apps/{app}/sched-jobs: a job that runs a command in the app's "+
-			"container on a schedule, as the dashboard's app Scheduled jobs do. The app's scheduled jobs "+
-			"feature must be on. The plan is the request - its app, and jobType container-command, are set "+
-			"by the tool - and the job's first five runs; initialTime is fixed at the plan's time when not "+
-			"given, so the runs shown are the job's. Nothing is created until apply_plan.",
+		"Plans POST /projects/{project}/{env}/apps/{app}/sched-jobs: a job that, on a schedule, runs a "+
+			"command in the app's container - or, for a function, sends it a request (functionInvoke) - as "+
+			"the dashboard's app Scheduled jobs do. The app's scheduled jobs feature must be on. The plan is "+
+			"the request - its app, and jobType container-command or function-invoke, are set by the tool - "+
+			"and the job's first five runs; initialTime is fixed at the plan's time when not given, so the "+
+			"runs shown are the job's. Nothing is created until apply_plan.",
 		NeedWrite, &applier{follow: "list_sched_jobs with the app lists it; list_tasks with type " +
 			string(base.TaskTypeSchedJobExec) + " and targetId the job's id shows its runs."},
-		bodyInput(underApp, &schedjobdto.SchedJobBaseReq{}, schedJobDescs, []string{argName, "schedule", "command"},
+		bodyInput(underApp, &schedjobdto.SchedJobBaseReq{}, schedJobDescs, []string{argName, "schedule"},
 			argApp, "jobType"),
 		func(ctx context.Context, call *Call, in schedJobArgs) (schedJobPlan, *storedPlan, error) {
 			project, _ := in[argProject].(string)
@@ -160,7 +166,9 @@ func planCreateSchedJobTool() Tool {
 				return schedJobPlan{}, nil, &InputError{Message: "schedule is required"}
 			}
 			body.App = basedto.ObjectIDReq{ID: ref.AppID}
-			body.JobType = base.SchedJobTypeContainerCommand
+			if body.JobType, err = schedJobType(ctx, call, ref, body); err != nil {
+				return schedJobPlan{}, nil, err
+			}
 			if body.Notification == nil { // as the dashboard's form starts
 				body.Notification = &basedto.BaseEventNotificationReq{SuccessUseDefault: true, FailureUseDefault: true}
 			}
@@ -184,4 +192,34 @@ func planCreateSchedJobTool() Tool {
 				Summary: fmt.Sprintf("schedule %q in %s of %s/%s", body.Name, ref.AppKey, ref.ProjectKey,
 					ref.Env)}, nil
 		})
+}
+
+// schedJobType is the job's type by what it was given: a command, or a
+// function's request. A request is only for a function, and runs nothing else.
+func schedJobType(ctx context.Context, call *Call, ref *appRef, body *schedjobdto.SchedJobBaseReq) (
+	base.SchedJobType, error) {
+	if body.FunctionInvoke == nil {
+		if body.Command == nil {
+			return "", &InputError{Message: "command is required: what runs in the app's container - or, " +
+				"for a function, functionInvoke, the request to send it"}
+		}
+		return base.SchedJobTypeContainerCommand, nil
+	}
+	if body.Command != nil || body.CommandOutput != nil {
+		return "", &InputError{Message: "a function's call runs no command: give functionInvoke, or " +
+			"command, not both"}
+	}
+	var resp struct {
+		Data struct {
+			ActiveMethod base.DeploymentMethod `json:"activeMethod"`
+		} `json:"data"`
+	}
+	if err := call.Get(ctx, ref.path("/deployment-settings"), nil, &resp); err != nil {
+		return "", err
+	}
+	if resp.Data.ActiveMethod != base.DeploymentMethodFunction {
+		return "", &InputError{Message: ref.AppKey + " is not a function: functionInvoke is for a " +
+			"function; give command, what runs in its container"}
+	}
+	return base.SchedJobTypeFunctionInvoke, nil
 }

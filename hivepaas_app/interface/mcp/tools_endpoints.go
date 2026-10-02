@@ -77,12 +77,12 @@ func getEndpoints() []getEndpoint { //nolint:funlen // a table
 			paths: map[under]string{underEnv: "/apps"},
 			query: &appdto.ListAppReq{},
 			params: pagingParams(map[string]string{
-				paramSearch:    descSearchNameNote,
-				paramStatus:    "only apps in these states: " + statusValues(base.AllAppStatuses),
-				"category":     "only apps of these categories, " + statusValues(base.AllAppCategories) + "; no kind is webapp",
-				"parentId":     "only the apps made by the app of this id, such as its previews",
-				paramGetStats:  "true to answer each app's running, desired and completed containers, under stats",
-				"getChildApps": "true to answer the apps each app made, inside it",
+				paramSearch:       descSearchNameNote,
+				paramStatus:       "only apps in these states: " + statusValues(base.AllAppStatuses),
+				paramCategory:     "only apps of these categories, " + statusValues(base.AllAppCategories) + "; no kind is webapp",
+				"parentId":        "only the apps made by the app of this id, such as its previews",
+				paramGetStats:     "true to answer each app's running, desired and completed containers, under stats",
+				paramGetChildApps: "true to answer the apps each app made, inside it",
 			}),
 			answer: func() any { return &appdto.ListAppResp{} },
 		},
@@ -159,6 +159,23 @@ func getEndpoints() []getEndpoint { //nolint:funlen // a table
 				"streams":   "only lines of these streams: stdout, stderr",
 			},
 			answer: func() any { return &appdto.GetAppLogHistoryResp{} },
+		},
+		{
+			name: "list_app_previews", title: "List an app's previews",
+			description: "GET /projects/{project}/{env}/apps/{app}/previews. An app's previews - the copies " +
+				"made of it for pull requests or branches, each an app of its own made under it - with their " +
+				"key, name and status. A preview's domains are the app's, prefixed: pr-42-shop.example.com for " +
+				"pull request 42 of shop.example.com. get_app and the other app tools read one by its key; " +
+				"plan_create_preview makes one.",
+			paths: map[under]string{underApp: "/previews"},
+			query: &appdto.ListAppReq{},
+			omit:  []string{"parentId", paramCategory, paramGetChildApps},
+			params: pagingParams(map[string]string{
+				paramSearch:   descSearchNameNote,
+				paramStatus:   "only previews in these states: " + statusValues(base.AllAppStatuses),
+				paramGetStats: "true to answer each preview's running, desired and completed containers, under stats",
+			}),
+			answer: func() any { return &appdto.ListAppResp{} },
 		},
 		{
 			name: "get_function_metrics", title: "Get a function's calls",

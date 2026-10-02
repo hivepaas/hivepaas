@@ -45,7 +45,8 @@ func (r *writeRoutes) writes() []sentRequest {
 func (r *writeRoutes) add(api *gin.RouterGroup) {
 	api.Use(func(ctx *gin.Context) {
 		if ctx.Request.Method != http.MethodGet && !strings.HasSuffix(ctx.Request.URL.Path, "/preflight") &&
-			!strings.HasSuffix(ctx.Request.URL.Path, "/calc-next-runs") {
+			!strings.HasSuffix(ctx.Request.URL.Path, "/calc-next-runs") &&
+			!strings.HasSuffix(ctx.Request.URL.Path, "/previews/prepare") {
 			body, _ := io.ReadAll(ctx.Request.Body)
 			r.mu.Lock()
 			r.sent = append(r.sent, sentRequest{ctx.Request.Method,

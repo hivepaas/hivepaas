@@ -78,9 +78,9 @@ number of calls running at once per instance (16). They are fields of
 
 Created with a domain, a function is routed there over HTTPS from its first
 deployment. Without one it is reached inside its project, by its service's
-name, on port 8080. A scheduled job of type `function-invoke`, made in the
-dashboard, calls it with a request on a schedule; `plan_run_sched_job` runs one
-now.
+name, on port 8080. A scheduled job calls it with a request on a schedule:
+`plan_create_sched_job` with `functionInvoke` (method, path, headers, body)
+instead of a command; `plan_run_sched_job` runs one now.
 
 ## Trying and watching it
 

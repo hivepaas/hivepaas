@@ -1,0 +1,49 @@
+diff --git a/src/application/modules/projects/module-shared/constants/function-templates.constants.ts b/src/application/modules/projects/module-shared/constants/function-templates.constants.ts
+index 2d59b58e..1e54724d 100644
+--- a/src/application/modules/projects/module-shared/constants/function-templates.constants.ts
++++ b/src/application/modules/projects/module-shared/constants/function-templates.constants.ts
+@@ -33,7 +33,8 @@ export default async function (req, ctx) {
+         {
+             path: "main.py",
+             content: `# A function answers one request: it returns a dict of status, headers, body.
+-# A body that is a dict is sent as JSON.
++# A body that is a dict is sent as JSON. An async def handler is the fastest,
++# but must not block: blocking code (time.sleep, requests) belongs in a def.
+ def handler(req, ctx):
+     ctx.log(f"{req.method} {req.path}")
+     name = req.query.get("name", "world")
+diff --git a/src/application/modules/projects/routes/single-project/single-app/configuration/function-settings/form/function-settings.form.com.tsx b/src/application/modules/projects/routes/single-project/single-app/configuration/function-settings/form/function-settings.form.com.tsx
+index d36a102c..44d10189 100644
+--- a/src/application/modules/projects/routes/single-project/single-app/configuration/function-settings/form/function-settings.form.com.tsx
++++ b/src/application/modules/projects/routes/single-project/single-app/configuration/function-settings/form/function-settings.form.com.tsx
+@@ -17,6 +17,7 @@ import {
+ import { PROJECT_FORM_CONTROL_MAX_WIDTH_CLASS } from "~/projects/module-shared/constants";
+ import {
+     ALL_FUNCTION_RUNTIMES,
++    EFunctionRuntime,
+     functionRuntimeDefaultEntrypoint,
+     functionRuntimeLabel,
+     isKnownFunctionRuntime,
+@@ -302,7 +303,7 @@ export function FunctionSettingsForm({ ref, projectId, env, source, onSubmit, re
+                                     <LabelWithInfo
+                                         label="Concurrency"
+                                         isRequired
+-                                        content="How many calls one instance answers at once; the others wait."
++                                        content="How many calls one instance runs at once; a call over it is answered 429."
+                                     />
+                                 }
+                             >
+@@ -321,6 +322,13 @@ export function FunctionSettingsForm({ ref, projectId, env, source, onSubmit, re
+                                             aria-invalid={Boolean(errors.maxConcurrency)}
+                                         />
+                                         <FieldError errors={[errors.maxConcurrency]} />
++                                        {runtime === EFunctionRuntime.Python313 && (
++                                            <p className="text-xs text-muted-foreground">
++                                                Python serves with a process per CPU, at most this many and one per 128
++                                                MiB of a memory limit. Set WEB_CONCURRENCY in the function&apos;s
++                                                environment to choose.
++                                            </p>
++                                        )}
+                                     </Field>
+                                 </FieldGroup>
+                             </InfoBlock>

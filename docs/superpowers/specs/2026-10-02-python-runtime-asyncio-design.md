@@ -205,3 +205,29 @@ runtime image; one deployed before keeps its image until then.
 - A setting for the number of processes in the function's settings, in place
   of the variable.
 - uvloop, if the loop rather than the handler's thread becomes what costs.
+
+## Changes after the plan
+
+Writing and measuring the plan's code
+(`docs/superpowers/plans/2026-10-02-python-runtime.md`) settled what follows:
+
+- **The server is an `asyncio.Protocol`**, its connections reading into a buffer
+  and their deadlines looked at four times a second, not asyncio's streams: on
+  streams it answered 7,700/s (`def`) and 23,000/s (`async def`) on 1 CPU, as a
+  protocol 9,000/s and 35,700/s.
+- **A coroutine handler is awaited under the call's timeout**, not run as a task
+  of its own: it is cancelled at the timeout, and one that holds on past its
+  cancellation delays its 504 as long.
+- **What it does, measured** as in the table above: a `def` handler 9,000/s on
+  1 CPU (2.6 times `1.0.0`) and 32,000/s with 4 processes on 4 CPUs (6.4 times);
+  an `async def` handler 35,700/s and 106,000/s. "3 times on 1 CPU" is not
+  reached: the threads a `def` handler runs in cost it, and fewer of them would
+  answer faster (16,500/s with one) but let a blocking handler hold its process.
+- **The shared count has no lock**: each worker writes its own count, so a
+  worker killed at any moment leaves nothing held; two workers taking the last
+  place at the same instant may both have it.
+- **HTTP/1.0**: `1.0.0` kept a connection a request asked to keep, but its
+  answer did not say `Connection: keep-alive`, so an HTTP/1.0 client - `ab -k` -
+  waited for the connection to close. The new check reads the answer's header.
+- **The dashboard's Concurrency help** said that calls over the concurrency
+  wait; they are answered 429, and it says so now.

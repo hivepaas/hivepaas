@@ -1,0 +1,1076 @@
+diff --git a/CONTRACT.md b/CONTRACT.md
+index 5c685dd..4571470 100644
+--- a/CONTRACT.md
++++ b/CONTRACT.md
+@@ -51,6 +51,7 @@ From the environment. The function's own variables are in the same environment.
+ | `HP_FN_MAX_CONCURRENCY` | Calls one instance takes at once. | `16` |
+ | `HP_FN_MAX_BODY_SIZE` | Bytes of a request body, and of a response body. | `6291456` (6 MiB) |
+ | `HP_FN_PORT` | The port `serve` listens on. | `8080` |
++| `WEB_CONCURRENCY` | Python: how many processes `serve` runs, at most `HP_FN_MAX_CONCURRENCY`. | as many as the container's CPUs, below |
+ 
+ A value that is not a positive whole number stops the runtime before it serves.
+ 
+@@ -86,6 +87,17 @@ def handler(req, ctx):
+     return {"status": 200, "body": {"hello": req.query.get("name")}}
+ ```
+ 
++Python serves with several processes, each loading the handler itself: as
++many as the container's CPUs - its CPU quota, rounded up, else the CPUs it may
++run on - at most `HP_FN_MAX_CONCURRENCY`, and at most one per 128 MiB of its
++memory limit; `WEB_CONCURRENCY` sets the number. What a module keeps in memory
++is its process's; `HP_FN_MAX_CONCURRENCY` counts the calls of every process
++together. A coroutine runs on its process's event loop: one that blocks holds
++up the other calls of its process, and its timeout is answered only when it
++gives the loop back. Blocking code belongs in a plain function, which runs in a
++thread. `serve` says on standard error, as it starts, `hivepaas: serving with
++4 processes`.
++
+ Go. A package of the function's module; the types are the package
+ `github.com/hivepaas/function-runtimes/hivepaas`:
+ 
+@@ -169,7 +181,11 @@ answered at once, but it keeps its place among the running calls until the
+ handler returns, so the concurrency limit counts what really runs.
+ 
+ `serve` keeps an idle connection for 5 minutes, longer than a proxy in front of
+-it keeps one, so that the proxy is the one that closes it.
++it keeps one, so that the proxy is the one that closes it. A connection is kept
++between calls: for HTTP/1.1 unless the request says `Connection: close`; for
++HTTP/1.0 when the request says `Connection: keep-alive`, which the answer says
++back. `serve` listens on IPv6 and IPv4 where the host has both, on IPv4
++otherwise.
+ 
+ ### Paths of the runtime
+ 
+@@ -201,7 +217,9 @@ with the context's logger is:
+ {"hp":"log","requestId":"…","msg":"…"}
+ ```
+ 
+-What the handler prints itself is passed through as it is. The runtime's own
++What the handler prints itself is passed through as it is. Python's processes
++write to the same standard output: a line of more than 4 KiB may interleave
++with one another process writes at the same moment. The runtime's own
+ errors - a handler that could not be loaded, an error a handler raised - go to
+ standard error, as text: a first line `hivepaas: call <id> failed: <error>`, or
+ `hivepaas: the handler could not be loaded: <error>`, then the stack where
+diff --git a/README.md b/README.md
+index 7135e31..4c178c1 100644
+--- a/README.md
++++ b/README.md
+@@ -6,7 +6,7 @@ turns a handler into a server.
+ | Runtime | Language | Image |
+ |---|---|---|
+ | `node24` | Node.js 24: JavaScript, and TypeScript with its types removed | `ghcr.io/hivepaas/function-runtime-node24` |
+-| `python313` | Python 3.13 | `ghcr.io/hivepaas/function-runtime-python313` |
++| `python313` | Python 3.13, a process per CPU | `ghcr.io/hivepaas/function-runtime-python313` |
+ | `go127` | Go 1.27 | `ghcr.io/hivepaas/function-runtime-go127`, compiled in `function-runtime-go127-build` |
+ 
+ What a handler can count on, and what the images promise, is the contract:
+diff --git a/runtimes/python313/runtime/hivepaas_runtime/__main__.py b/runtimes/python313/runtime/hivepaas_runtime/__main__.py
+index 045f9ca..f96d289 100644
+--- a/runtimes/python313/runtime/hivepaas_runtime/__main__.py
++++ b/runtimes/python313/runtime/hivepaas_runtime/__main__.py
+@@ -6,8 +6,8 @@ import sys
+ import urllib.error
+ import urllib.request
+ 
++from . import processes
+ from .runtime import APP_DIR, ConfigError, Runtime, load_config
+-from .server import serve
+ 
+ USAGE = "usage: hivepaas-runtime serve|invoke|health|deps"
+ HEALTH_TIMEOUT_S = 3
+@@ -27,13 +27,18 @@ def main(argv: list[str]) -> int:
+         return 2
+     if command == "health":
+         return health(cfg.port)
+-    runtime = Runtime.load(cfg)
+     if command == "invoke":
+-        code = runtime.invoke(sys.stdin.buffer.read())
+-        sys.stdout.flush()
+-        sys.stderr.flush()
+-        os._exit(code)  # at once: a handler still running past its timeout is done with
+-    return serve(runtime)
++        code = Runtime.load(cfg).invoke(sys.stdin.buffer.read())
++    else:
++        try:
++            count = processes.process_count(os.environ, cfg)
++        except ConfigError as error:
++            print(f"hivepaas: {error}", file=sys.stderr)
++            return 2
++        code = processes.serve(cfg, count)
++    sys.stdout.flush()
++    sys.stderr.flush()
++    os._exit(code)  # at once: a handler still running past its timeout is done with
+ 
+ 
+ def health(port: int) -> int:
+diff --git a/runtimes/python313/runtime/hivepaas_runtime/processes.py b/runtimes/python313/runtime/hivepaas_runtime/processes.py
+new file mode 100644
+index 0000000..30f1036
+--- /dev/null
++++ b/runtimes/python313/runtime/hivepaas_runtime/processes.py
+@@ -0,0 +1,232 @@
++"""serve with several processes: how many, the running calls they count
++together, and the first process, which starts them and watches over them."""
++
++import math
++import mmap
++import os
++import signal
++import sys
++import threading
++import time
++import traceback
++from collections.abc import Callable, Mapping
++
++from . import server
++from .runtime import Config, Runtime, positive_whole_number
++
++CGROUP = "/sys/fs/cgroup"
++# A process is given at least this much of a memory limit.
++MEMORY_PER_PROCESS = 128 * 1024 * 1024
++# A cgroup v1 limit this large is no limit.
++_UNLIMITED = 1 << 60
++# A worker that exits is started again at most this often.
++RESTART_EVERY_S = 1
++# How long past the timeout a stopping worker is waited for before it is killed.
++KILL_AFTER_S = 5
++_POLL_S = 0.05
++
++
++def process_count(env: Mapping[str, str], cfg: Config, cgroup: str = CGROUP,
++                  cpu_count: Callable[[], int | None] = os.process_cpu_count) -> int:
++    """How many processes serve: WEB_CONCURRENCY when it is set; otherwise the
++    CPUs the container may use, within one per MEMORY_PER_PROCESS of its memory
++    limit. Never more than HP_FN_MAX_CONCURRENCY, never fewer than one."""
++    given = env.get("WEB_CONCURRENCY")
++    if given:
++        return min(positive_whole_number("WEB_CONCURRENCY", given), cfg.max_concurrency)
++    count = min(_cpu_quota(cgroup) or cpu_count() or 1, cfg.max_concurrency)
++    memory = _memory_limit(cgroup)
++    if memory is not None:
++        count = min(count, memory // MEMORY_PER_PROCESS)
++    return max(1, count)
++
++
++def _read(cgroup: str, path: str) -> str | None:
++    try:
++        with open(os.path.join(cgroup, path)) as f:
++            return f.read().strip()
++    except OSError:
++        return None
++
++
++def _cpu_quota(cgroup: str) -> int | None:
++    """The CPUs of the cgroup's quota, rounded up; None without a quota."""
++    v2 = _read(cgroup, "cpu.max")
++    if v2 is not None:
++        quota, _, period = v2.partition(" ")
++    else:
++        quota, period = _read(cgroup, "cpu/cpu.cfs_quota_us"), _read(cgroup, "cpu/cpu.cfs_period_us")
++    try:
++        quota_us, period_us = int(quota), int(period)
++    except (TypeError, ValueError):
++        return None  # "max", or nothing to read
++    if quota_us <= 0 or period_us <= 0:
++        return None
++    return math.ceil(quota_us / period_us)
++
++
++def _memory_limit(cgroup: str) -> int | None:
++    """The cgroup's memory limit in bytes; None without one."""
++    value = _read(cgroup, "memory.max")
++    if value is None:
++        value = _read(cgroup, "memory/memory.limit_in_bytes")
++    try:
++        limit = int(value)
++    except (TypeError, ValueError):
++        return None  # "max", or nothing to read
++    return limit if 0 < limit < _UNLIMITED else None
++
++
++class SharedPlaces:
++    """The running calls of each worker, in memory every worker shares: a worker
++    writes its own count only, and reads the others'. Two workers taking the
++    last place at the same instant may both have it; there is no lock a dying
++    worker could keep."""
++
++    def __init__(self, workers: int):
++        self._memory = mmap.mmap(-1, 8 * workers)  # anonymous and shared: forked workers see it
++        self.counts = memoryview(self._memory).cast("q")
++
++    def of(self, index: int) -> "WorkerPlaces":
++        return WorkerPlaces(self, index)
++
++    def reset(self, index: int) -> None:
++        """Gives back a worker's places: it is dead, or not started yet."""
++        self.counts[index] = 0
++
++    def total(self) -> int:
++        return sum(self.counts)
++
++
++class WorkerPlaces:
++    """One worker's view of SharedPlaces, what its Runtime takes places from."""
++
++    def __init__(self, shared: SharedPlaces, index: int):
++        self._shared = shared
++        self._index = index
++        self._lock = threading.Lock()  # the loop takes, the handlers' threads give
++
++    def take(self, limit: int) -> bool:
++        with self._lock:
++            if self._shared.total() >= limit:
++                return False
++            self._shared.counts[self._index] += 1
++            return True
++
++    def give(self) -> None:
++        with self._lock:
++            self._shared.counts[self._index] -= 1
++
++
++def serve(cfg: Config, count: int) -> int:
++    """Answers on HP_FN_PORT with count processes until SIGTERM. One process
++    serves itself; several are workers of this one."""
++    sock = server.listen(cfg.port)
++    print(f"hivepaas: serving with {count} process{'' if count == 1 else 'es'}", file=sys.stderr, flush=True)
++    if count == 1:
++        return server.serve(Runtime.load(cfg), sock)
++    return _Supervisor(cfg, sock, count).run()
++
++
++class _Supervisor:
++    """The first process: it holds the socket, starts the workers, starts again
++    one that exits, and stops them all on SIGTERM."""
++
++    def __init__(self, cfg: Config, sock, count: int):
++        self.cfg = cfg
++        self.sock = sock
++        self.count = count
++        self.places = SharedPlaces(count)
++        self.workers: dict[int, int] = {}  # pid -> index
++        self.started = [0.0] * count
++        self.stopping = False
++
++    def run(self) -> int:
++        for signum in (signal.SIGTERM, signal.SIGINT):
++            signal.signal(signum, self._stop)
++        for index in range(self.count):
++            self._start(index)
++        waiting: list[int] = []  # workers to start again
++        while not self.stopping:
++            for index in self._reap():
++                waiting.append(index)
++            now = time.monotonic()
++            for index in [i for i in waiting if now - self.started[i] >= RESTART_EVERY_S]:
++                waiting.remove(index)
++                self._start(index)
++            time.sleep(_POLL_S)
++        return self._stop_workers()
++
++    def _stop(self, *_):
++        self.stopping = True
++
++    def _start(self, index: int) -> None:
++        self.places.reset(index)
++        self.started[index] = time.monotonic()
++        sys.stdout.flush()
++        sys.stderr.flush()
++        pid = os.fork()
++        if pid == 0:
++            os._exit(self._work(index))
++        self.workers[pid] = index
++
++    def _work(self, index: int) -> int:
++        """A worker: the handler is loaded here, after the fork, never before it."""
++        code = 1
++        try:
++            for signum in (signal.SIGTERM, signal.SIGINT):
++                signal.signal(signum, signal.SIG_DFL)
++            runtime = Runtime.load(self.cfg, places=self.places.of(index))
++            code = server.serve(runtime, self.sock)
++        except BaseException:
++            traceback.print_exc()
++        finally:
++            sys.stdout.flush()
++            sys.stderr.flush()
++        return code
++
++    def _reap(self) -> list[int]:
++        """The workers that exited since the last look, by index; each said on stderr."""
++        exited = []
++        while self.workers:
++            try:
++                pid, status = os.waitpid(-1, os.WNOHANG)
++            except ChildProcessError:
++                break
++            if pid == 0:
++                break
++            index = self.workers.pop(pid, None)
++            if index is None:
++                continue
++            self.places.reset(index)
++            if not self.stopping:
++                print(f"hivepaas: process {pid} exited ({_how(status)}); starting another",
++                      file=sys.stderr, flush=True)
++            exited.append(index)
++        return exited
++
++    def _stop_workers(self) -> int:
++        self.sock.close()
++        for pid in list(self.workers):
++            _kill(pid, signal.SIGTERM)
++        deadline = time.monotonic() + self.cfg.timeout_ms / 1000 + KILL_AFTER_S
++        while self.workers and time.monotonic() < deadline:
++            self._reap()
++            time.sleep(_POLL_S)
++        for pid in list(self.workers):
++            _kill(pid, signal.SIGKILL)
++            os.waitpid(pid, 0)
++        return 0
++
++
++def _kill(pid: int, signum: int) -> None:
++    try:
++        os.kill(pid, signum)
++    except ProcessLookupError:
++        pass
++
++
++def _how(status: int) -> str:
++    if os.WIFSIGNALED(status):
++        return f"signal {os.WTERMSIG(status)}"
++    return f"code {os.waitstatus_to_exitcode(status)}"
+diff --git a/runtimes/python313/runtime/hivepaas_runtime/runtime.py b/runtimes/python313/runtime/hivepaas_runtime/runtime.py
+index b69301c..27cd751 100644
+--- a/runtimes/python313/runtime/hivepaas_runtime/runtime.py
++++ b/runtimes/python313/runtime/hivepaas_runtime/runtime.py
+@@ -72,6 +72,11 @@ def _positive(env: Mapping[str, str], name: str, fallback: int) -> int:
+     value = env.get(name)
+     if not value:
+         return fallback
++    return positive_whole_number(name, value)
++
++
++def positive_whole_number(name: str, value: str) -> int:
++    """value as a positive whole number; a ConfigError naming name when it is not one."""
+     if not _WHOLE_NUMBER.fullmatch(value) or not 0 < int(value) <= _MAX_LIMIT:
+         raise ConfigError(f'{name} is "{value}", which is not a positive whole number')
+     return int(value)
+@@ -248,41 +253,73 @@ def _printer(stream_name: str) -> Callable[[str], None]:
+     return write
+ 
+ 
++class LocalPlaces:
++    """The running calls of one process."""
++
++    def __init__(self):
++        self._lock = threading.Lock()
++        self._count = 0
++
++    def take(self, limit: int) -> bool:
++        with self._lock:
++            if self._count >= limit:
++                return False
++            self._count += 1
++            return True
++
++    def give(self) -> None:
++        with self._lock:
++            self._count -= 1
++
++
+ class Runtime:
+-    """Runs one handler under the configured limits."""
++    """Runs one handler under the configured limits. places counts the running
++    calls: this process's, or, given, every worker's of an instance."""
+ 
+-    def __init__(self, handler, cfg: Config, out=None, err=None):
++    def __init__(self, handler, cfg: Config, out=None, err=None, places=None):
+         self.handler = handler  # None when it could not be loaded
+         self.cfg = cfg
+-        self.running = 0  # calls whose handler has not returned
+-        self.answering = 0  # HTTP requests being answered
+         self.stopping = False
+         self.closed = False
+-        self._lock = threading.Lock()
++        self._places = places or LocalPlaces()
+         self._write = out or _printer("stdout")
+         self._error = err or _printer("stderr")
+-        self._pool = concurrent.futures.ThreadPoolExecutor(cfg.max_concurrency, thread_name_prefix="hivepaas-call")
+-        self._loop = None
+-        if handler is not None and _is_async(handler):
+-            # Coroutines share one event loop, as in any asyncio server.
+-            self._loop = asyncio.new_event_loop()
+-            threading.Thread(target=self._loop.run_forever, daemon=True, name="hivepaas-loop").start()
++        self._is_async = handler is not None and _is_async(handler)
++        self._lock = threading.Lock()
++        self._pool = None  # made at the first call of a function
++        self._loop = None  # made at the first call of a coroutine by call, which invoke uses
+ 
+     @classmethod
+-    def load(cls, cfg: Config, out=None, err=None) -> "Runtime":
++    def load(cls, cfg: Config, out=None, err=None, places=None) -> "Runtime":
+         """A runtime for the function in /app. A handler that cannot be loaded is logged."""
+         try:
+             handler = load_handler(APP_DIR, cfg)
+         except (Exception, SystemExit) as error:
+             (err or _printer("stderr"))(f"hivepaas: the handler could not be loaded: {_describe(error)}")
+             handler = None
+-        return cls(handler, cfg, out, err)
++        return cls(handler, cfg, out, err, places)
+ 
+     def close(self) -> None:
+-        self._pool.shutdown(wait=False, cancel_futures=True)
++        if self._pool is not None:
++            self._pool.shutdown(wait=False, cancel_futures=True)
+         if self._loop is not None:
+             self._loop.call_soon_threadsafe(self._loop.stop)
+ 
++    def _executor(self) -> concurrent.futures.ThreadPoolExecutor:
++        with self._lock:
++            if self._pool is None:
++                self._pool = concurrent.futures.ThreadPoolExecutor(self.cfg.max_concurrency,
++                                                                   thread_name_prefix="hivepaas-call")
++            return self._pool
++
++    def _own_loop(self) -> asyncio.AbstractEventLoop:
++        """The loop call runs coroutines on, in a thread of its own."""
++        with self._lock:
++            if self._loop is None:
++                self._loop = asyncio.new_event_loop()
++                threading.Thread(target=self._loop.run_forever, daemon=True, name="hivepaas-loop").start()
++            return self._loop
++
+     def out(self, line: str) -> None:
+         if not self.closed:
+             self._write(line)
+@@ -296,36 +333,26 @@ class Runtime:
+ 
+     def try_reserve(self) -> bool:
+         """Takes a place among the running calls, when there is one."""
+-        with self._lock:
+-            if self.running >= self.cfg.max_concurrency:
+-                return False
+-            self.running += 1
+-            return True
++        return self._places.take(self.cfg.max_concurrency)
+ 
+     def _release(self) -> None:
+-        with self._lock:
+-            self.running -= 1
++        self._places.give()
+ 
+-    def begin_answer(self) -> None:
+-        with self._lock:
+-            self.answering += 1
+-
+-    def end_answer(self) -> None:
+-        with self._lock:
+-            self.answering -= 1
++    def _context(self, request_id: str, timeout: float) -> Context:
++        return Context(request_id, time.time() + timeout,
++                       lambda msg: self.log_line({"hp": "log", "requestId": request_id, "msg": msg}))
+ 
+     def call(self, request: Request, request_id: str) -> Answer:
+-        """Runs the handler on request within the timeout. The caller took a
+-        place for it; the place is given back when the handler returns, which
+-        may be after the call was answered."""
++        """Runs the handler on request within the timeout, blocking: invoke's
++        way. The caller took a place for it; the place is given back when the
++        handler returns, which may be after the call was answered."""
+         start = time.perf_counter()
+         timeout = self.cfg.timeout_ms / 1000
+-        ctx = Context(request_id, time.time() + timeout,
+-                      lambda msg: self.log_line({"hp": "log", "requestId": request_id, "msg": msg}))
+-        if self._loop is not None:
+-            future = asyncio.run_coroutine_threadsafe(self._run_async(request, ctx), self._loop)
++        ctx = self._context(request_id, timeout)
++        if self._is_async:
++            future = asyncio.run_coroutine_threadsafe(self._run_async(request, ctx), self._own_loop())
+         else:
+-            future = self._pool.submit(self._run_sync, request, ctx)
++            future = self._executor().submit(self._run_sync, request, ctx)
+         try:
+             future.result(timeout=timeout)
+         except (KeyboardInterrupt, SystemExit):
+@@ -335,6 +362,39 @@ class Runtime:
+         if not future.done():
+             future.cancel()  # a coroutine is cancelled; a function runs on, in its place
+             return self._timed(failure(504, "timeout", request_id, "timeout"), start)
++        return self._settled(future, request_id, start)
++
++    async def call_async(self, request: Request, request_id: str) -> Answer:
++        """Runs the handler on request within the timeout: serve's way. A
++        coroutine runs on the running loop, cancelled at the timeout - one that
++        blocks holds the loop up; a function runs in a thread, and on past its
++        timeout. The place the caller took is given back as call's is."""
++        start = time.perf_counter()
++        timeout = self.cfg.timeout_ms / 1000
++        ctx = self._context(request_id, timeout)
++        try:
++            async with asyncio.timeout(timeout) as limit:
++                if self._is_async:
++                    value = await self._run_async(request, ctx)
++                else:
++                    value = await asyncio.get_running_loop().run_in_executor(
++                        self._executor(), self._run_sync, request, ctx)
++        except TimeoutError as error:
++            if limit.expired():
++                return self._timed(failure(504, "timeout", request_id, "timeout"), start)
++            return self._failed(request_id, error, start)  # the handler's own
++        except asyncio.CancelledError:
++            raise
++        except BaseException as error:
++            return self._failed(request_id, error, start)
++        try:
++            answer = to_answer(value, self.cfg.max_body_size)
++        except CallError as error:
++            return self._failed(request_id, error, start)
++        return self._timed(answer, start)
++
++    def _settled(self, future, request_id: str, start: float) -> Answer:
++        """The answer to a call whose handler is done, from its future."""
+         if future.cancelled():
+             return self._failed(request_id, CallError("the handler was cancelled"), start)
+         error = future.exception()
+diff --git a/runtimes/python313/runtime/hivepaas_runtime/server.py b/runtimes/python313/runtime/hivepaas_runtime/server.py
+index 3646b28..591dffc 100644
+--- a/runtimes/python313/runtime/hivepaas_runtime/server.py
++++ b/runtimes/python313/runtime/hivepaas_runtime/server.py
+@@ -1,152 +1,391 @@
+-"""serve: the HTTP server."""
++"""serve: the HTTP server, on asyncio, one per process. A connection reads
++what arrives into a buffer and takes requests from it; a call runs as a task of
++its own, one at a time per connection."""
+ 
+-import http.server
++import asyncio
++import email.utils
++import http
++import re
+ import signal
+-import sys
+-import threading
++import socket
+ import time
+ 
+ from .runtime import IDLE_TIMEOUT_S, Answer, Runtime, failure, request_id_of, request_of
+ 
+-_TOO_LARGE = object()
++# The head of a request - its line and its headers - is read whole within this
++# long of its first byte, and is at most HEAD_MAX bytes.
++HEAD_TIMEOUT_S = 10
++HEAD_MAX = 65536
++BACKLOG = 1024
++# How often the connections' deadlines are looked at.
++_SWEEP_S = 0.25
++# A chunk's size line, or a trailer, longer than this cannot be read.
++_LINE_MAX = 8192
++
+ _BODYLESS = (204, 304)
+ # Headers the runtime sets itself.
+-_OWN_HEADERS = ("content-length", "transfer-encoding", "x-request-id")
+-
+-
+-class _Server(http.server.ThreadingHTTPServer):
+-    daemon_threads = True
+-
+-    def handle_error(self, request, client_address):
+-        if not isinstance(sys.exc_info()[1], (ConnectionError, TimeoutError)):  # a client that went away
+-            super().handle_error(request, client_address)
+-
+-
+-def serve(runtime: Runtime) -> int:
+-    """Answers until SIGTERM, then lets the running calls finish, for at most one timeout."""
+-    server = _Server(("", runtime.cfg.port), _handler_class(runtime))
+-    threading.Thread(target=server.serve_forever, daemon=True, name="hivepaas-server").start()
+-    stop = threading.Event()
+-    for signum in (signal.SIGTERM, signal.SIGINT):
+-        signal.signal(signum, lambda *_: stop.set())
+-    while not stop.wait(1):
+-        pass
+-    runtime.stopping = True
+-    server.shutdown()
+-    server.server_close()
+-    deadline = time.monotonic() + runtime.cfg.timeout_ms / 1000
+-    while runtime.answering > 0 and time.monotonic() < deadline:
+-        time.sleep(0.05)
+-    return 0
+-
+-
+-def _handler_class(runtime: Runtime):
+-    class Handler(http.server.BaseHTTPRequestHandler):
+-        protocol_version = "HTTP/1.1"
+-        timeout = IDLE_TIMEOUT_S
+-        # Headers and body go out in two writes; with Nagle's algorithm the
+-        # second waits for the client's delayed ACK, some 40 ms.
+-        disable_nagle_algorithm = True
+-
+-        def __getattr__(self, name):
+-            if name.startswith("do_"):  # every method reaches the function
+-                return self._answer
+-            raise AttributeError(name)
+-
+-        def log_message(self, format, *args):  # the runtime logs its own lines
+-            pass
+-
+-        def send_response(self, code, message=None):  # without a Server header
+-            self.send_response_only(code, message)
+-            self.send_header("Date", self.date_time_string())
+-
+-        def _answer(self):
+-            runtime.begin_answer()
+-            try:
+-                self._answer_one()
+-            finally:
+-                runtime.end_answer()
+-
+-        def _answer_one(self):
+-            request_id = request_id_of(self.headers.get("x-request-id"))
+-            path = self.path.partition("?")[0]
+-            if path.startswith("/_hivepaas/"):
+-                self._send(request_id, runtime.own_path(path))
+-                return
+-            method = self.command.upper()
+-
+-            def answer(a: Answer, close: bool = False) -> None:
+-                runtime.log_invocation(request_id, method, path, a)
+-                self._send(request_id, a, close)
+-
+-            try:
+-                body = self._read_body()
+-            except (OSError, ValueError):
+-                self.close_connection = True  # the body did not arrive: not a call
+-                return
+-            if body is _TOO_LARGE:
+-                # What is left of the body is not read: the connection closes.
+-                answer(failure(413, "request too large", request_id, "request_too_large"), close=True)
+-            elif runtime.handler is None:
+-                answer(failure(500, "internal error", request_id, "not_loaded"))
+-            elif not runtime.try_reserve():
+-                throttled = failure(429, "too many requests", request_id, "throttled")
+-                throttled.headers["retry-after"] = "1"
+-                answer(throttled)
+-            else:
+-                answer(runtime.call(request_of(self.command, self.path, self.headers.items(), body), request_id))
+-
+-        def _read_body(self):
+-            limit = runtime.cfg.max_body_size
+-            self.connection.settimeout(runtime.cfg.timeout_ms / 1000)
+-            try:
+-                if "chunked" in self.headers.get("transfer-encoding", "").lower():
+-                    return self._read_chunked(limit)
+-                length = int(self.headers.get("content-length") or 0)
+-                if length < 0:
+-                    raise ValueError("a negative content length")
+-                if length > limit:
+-                    return _TOO_LARGE
+-                body = self.rfile.read(length)
+-                if len(body) < length:
+-                    raise ConnectionError("the client went away")
+-                return body
+-            finally:
+-                self.connection.settimeout(IDLE_TIMEOUT_S)
+-
+-        def _read_chunked(self, limit: int):
+-            chunks, size = [], 0
+-            while True:
+-                line = self.rfile.readline(65537)
+-                if not line.endswith(b"\n"):
+-                    raise ConnectionError("a chunk's size did not arrive")
+-                chunk_size = int(line.split(b";", 1)[0].strip(), 16)
+-                if chunk_size == 0:
+-                    while self.rfile.readline(65537) not in (b"\r\n", b"\n", b""):
+-                        pass  # trailers
+-                    return b"".join(chunks)
+-                size += chunk_size
+-                if size > limit:
+-                    return _TOO_LARGE
+-                chunk = self.rfile.read(chunk_size)
+-                if len(chunk) < chunk_size or self.rfile.read(2) != b"\r\n":
+-                    raise ConnectionError("a chunk did not arrive")
+-                chunks.append(chunk)
+-
+-        def _send(self, request_id: str, answer: Answer, close: bool = False) -> None:
+-            self.send_response(answer.status)
+-            for name, value in answer.headers.items():
+-                if name in _OWN_HEADERS:
++_OWN_HEADERS = ("content-length", "transfer-encoding", "x-request-id", "connection")
++_TOKEN = re.compile(r"[!#$%&'*+\-.^_`|~0-9A-Za-z]+")
++_REASONS = {status.value: status.phrase for status in http.HTTPStatus}
++_TRAILERS = -1  # what a chunked body's reader expects after its last chunk
++
++
++class BadRequest(Exception):
++    """A request that cannot be read: answered with status, and the connection closed."""
++
++    def __init__(self, status: int = 400):
++        super().__init__(status)
++        self.status = status
++
++
++def listen(port: int) -> socket.socket:
++    """A socket listening on port, IPv6 and IPv4; IPv4 alone where the host has no IPv6."""
++    try:
++        sock = socket.socket(socket.AF_INET6, socket.SOCK_STREAM)
++        try:
++            sock.setsockopt(socket.IPPROTO_IPV6, socket.IPV6_V6ONLY, 0)
++            sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
++            sock.bind(("::", port))
++        except OSError:
++            sock.close()
++            raise
++    except OSError:
++        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
++        sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
++        sock.bind(("0.0.0.0", port))
++    sock.listen(BACKLOG)
++    sock.setblocking(False)
++    return sock
++
++
++def serve(runtime: Runtime, sock: socket.socket) -> int:
++    """Answers on sock until SIGTERM, then lets the running calls finish, for at most one timeout."""
++
++    async def main() -> int:
++        server = Server(runtime)
++        await server.start(sock)
++        stop = asyncio.Event()
++        loop = asyncio.get_running_loop()
++        for signum in (signal.SIGTERM, signal.SIGINT):
++            loop.add_signal_handler(signum, stop.set)
++        await stop.wait()
++        await server.stop()
++        return 0
++
++    return asyncio.run(main())
++
++
++class Server:
++    """The connections of one process, and the calls they carry."""
++
++    def __init__(self, runtime: Runtime):
++        self.runtime = runtime
++        self.connections: set[_Connection] = set()
++        self.busy = 0  # requests being answered
++        self._server = None
++        self._sweeper = None
++        self._date = (0, "")
++
++    async def start(self, sock: socket.socket) -> None:
++        loop = asyncio.get_running_loop()
++        self._server = await loop.create_server(lambda: _Connection(self), sock=sock)
++        self._sweeper = loop.call_later(_SWEEP_S, self._sweep)
++
++    async def stop(self) -> None:
++        """Takes no new connection, closes the idle ones, and waits for the
++        running calls, at most one timeout; what they answer closes their
++        connection."""
++        if self._server is None:
++            return
++        self.runtime.stopping = True
++        self._server.close()
++        self._server = None
++        for connection in list(self.connections):
++            if not connection.busy:
++                connection.close()
++        deadline = time.monotonic() + self.runtime.cfg.timeout_ms / 1000
++        while self.busy > 0 and time.monotonic() < deadline:
++            await asyncio.sleep(0.05)
++        if self._sweeper is not None:
++            self._sweeper.cancel()
++
++    def _sweep(self) -> None:
++        """Closes the connections past their deadline: idle, a head or a body that does not arrive."""
++        loop = asyncio.get_running_loop()
++        now = loop.time()
++        for connection in list(self.connections):
++            if connection.deadline is not None and connection.deadline <= now:
++                connection.close()
++        self._sweeper = loop.call_later(_SWEEP_S, self._sweep)
++
++    def date(self) -> str:
++        """The Date header's value, made once a second."""
++        second = int(time.time())
++        if self._date[0] != second:
++            self._date = (second, email.utils.formatdate(second, usegmt=True))
++        return self._date[1]
++
++
++class _Head:
++    """A request's line and headers, as read."""
++
++    __slots__ = ("method", "target", "version", "headers", "_by_name")
++
++    def __init__(self, method: str, target: str, version: str, headers: list[tuple[str, str]]):
++        self.method = method
++        self.target = target
++        self.version = version
++        self.headers = headers
++        self._by_name: dict[str, list[str]] = {}
++        for name, value in headers:
++            self._by_name.setdefault(name.lower(), []).append(value)
++
++    def values(self, name: str) -> list[str]:
++        return self._by_name.get(name, [])
++
++    def first(self, name: str) -> str | None:
++        found = self.values(name)
++        return found[0] if found else None
++
++    def tokens(self, name: str) -> set[str]:
++        return {token.strip().lower() for value in self.values(name) for token in value.split(",")}
++
++
++class _Connection(asyncio.Protocol):
++    """One client's connection: requests taken from what it sends, answered in order."""
++
++    def __init__(self, server: Server):
++        self.server = server
++        self.runtime = server.runtime
++        self.loop = asyncio.get_running_loop()
++        self.transport = None
++        self.buffer = bytearray()
++        self.busy = False  # a request is being answered
++        self.ended = False  # the client sends no more
++        self.deadline = None  # when, waiting, the connection is closed
++        self.head = None  # the request whose body is being read
++        self.chunked = False
++        self.length = 0
++        self.chunks: list[bytes] = []
++        self.chunk_left = None  # None: a size line is next
++
++    def connection_made(self, transport) -> None:
++        self.transport = transport
++        self.server.connections.add(self)
++        self._wait(IDLE_TIMEOUT_S)
++
++    def connection_lost(self, exc) -> None:
++        self.server.connections.discard(self)
++        self.deadline = None
++
++    def data_received(self, data: bytes) -> None:
++        self.buffer += data
++        if not self.busy:
++            self._advance()
++
++    def eof_received(self) -> bool:
++        self.ended = True
++        if not self.busy:
++            self.close()
++        return True  # a call being answered still writes its answer
++
++    def close(self) -> None:
++        self.deadline = None
++        if self.transport is not None:
++            self.transport.close()
++
++    def _wait(self, seconds: float) -> None:
++        self.deadline = self.loop.time() + seconds
++
++    def _advance(self) -> None:
++        """Takes the requests the buffer holds whole, one at a time."""
++        try:
++            while not self.busy and not self.transport.is_closing():
++                if self.head is None and not self._take_head():
++                    return
++                body = self._take_body()
++                if body is None:
++                    return
++                head, self.head = self.head, None
++                self._dispatch(head, body)
++        except BadRequest as bad:
++            self._refuse(bad.status)
++
++    def _take_head(self) -> bool:
++        while self.buffer[:2] == b"\r\n":  # empty lines before a request are allowed
++            del self.buffer[:2]
++        end = self.buffer.find(b"\r\n\r\n", 0, HEAD_MAX + 4)
++        if end < 0:
++            if len(self.buffer) > HEAD_MAX:
++                raise BadRequest(431)
++            if not self.buffer:
++                self._wait(IDLE_TIMEOUT_S)
++            elif self.deadline is None or self.deadline - self.loop.time() > HEAD_TIMEOUT_S:
++                self._wait(HEAD_TIMEOUT_S)
++            return False
++        head = _parse_head(bytes(self.buffer[:end]))
++        del self.buffer[:end + 4]
++        self.chunked, self.length = _framing(head)
++        self.chunks, self.chunk_left = [], None
++        self.head = head
++        if self.chunked or self.length:
++            self._wait(self.runtime.cfg.timeout_ms / 1000)
++            fits = self.chunked or self.length <= self.runtime.cfg.max_body_size
++            if fits and head.version == "HTTP/1.1" and "100-continue" in head.tokens("expect"):
++                self.transport.write(b"HTTP/1.1 100 Continue\r\n\r\n")
++        return True
++
++    def _take_body(self):
++        """The body, once whole; None until then; TOO_LARGE past the limit."""
++        limit = self.runtime.cfg.max_body_size
++        if not self.chunked:
++            if self.length > limit:
++                return _TOO_LARGE
++            if len(self.buffer) < self.length:
++                return None
++            body = bytes(self.buffer[:self.length])
++            del self.buffer[:self.length]
++            return body
++        while True:
++            if self.chunk_left is None or self.chunk_left == _TRAILERS:
++                end = self.buffer.find(b"\r\n", 0, _LINE_MAX)
++                if end < 0:
++                    if len(self.buffer) > _LINE_MAX:
++                        raise BadRequest()
++                    return None
++                line = bytes(self.buffer[:end])
++                del self.buffer[:end + 2]
++                if self.chunk_left == _TRAILERS:
++                    if not line:
++                        return b"".join(self.chunks)
++                    continue
++                try:
++                    size = int(line.split(b";", 1)[0].strip(), 16)
++                except ValueError:
++                    raise BadRequest() from None
++                if size == 0:
++                    self.chunk_left = _TRAILERS
+                     continue
+-                for one in value if isinstance(value, list) else [value]:
+-                    self.send_header(name, one)
+-            self.send_header("x-request-id", request_id)
+-            if answer.status not in _BODYLESS:
+-                self.send_header("content-length", str(len(answer.body)))
+-            if close or runtime.stopping:
+-                self.send_header("connection", "close")
+-            self.end_headers()
+-            if self.command != "HEAD" and answer.status not in _BODYLESS and answer.body:
+-                self.wfile.write(answer.body)
+-
+-    return Handler
++                self.length += size
++                if self.length > limit:
++                    return _TOO_LARGE
++                self.chunk_left = size
++            else:
++                if len(self.buffer) < self.chunk_left + 2:
++                    return None
++                if self.buffer[self.chunk_left:self.chunk_left + 2] != b"\r\n":
++                    raise BadRequest()
++                self.chunks.append(bytes(self.buffer[:self.chunk_left]))
++                del self.buffer[:self.chunk_left + 2]
++                self.chunk_left = None
++
++    def _dispatch(self, head: _Head, body) -> None:
++        """Answers a request read whole: at once what the runtime answers itself,
++        in a task what the handler does."""
++        self.deadline = None
++        runtime = self.runtime
++        if head.version == "HTTP/1.1":
++            keep = "close" not in head.tokens("connection")
++        else:
++            keep = "keep-alive" in head.tokens("connection")
++        keep = keep and body is not _TOO_LARGE  # what is left of a body refused is not read
++        request_id = request_id_of(head.first("x-request-id"))
++        path = head.target.partition("?")[0]
++        if path.startswith("/_hivepaas/"):
++            self._send(head, request_id, runtime.own_path(path), keep)
++            return
++        if body is _TOO_LARGE:
++            answer = failure(413, "request too large", request_id, "request_too_large")
++        elif runtime.handler is None:
++            answer = failure(500, "internal error", request_id, "not_loaded")
++        elif not runtime.try_reserve():
++            answer = failure(429, "too many requests", request_id, "throttled")
++            answer.headers["retry-after"] = "1"
++        else:
++            self.busy = True
++            self.server.busy += 1
++            self.loop.create_task(self._call(head, body, request_id, path, keep))
++            return
++        runtime.log_invocation(request_id, head.method.upper(), path, answer)
++        self._send(head, request_id, answer, keep)
++
++    async def _call(self, head: _Head, body: bytes, request_id: str, path: str, keep: bool) -> None:
++        try:
++            answer = await self.runtime.call_async(request_of(head.method, head.target, head.headers, body),
++                                                   request_id)
++            self.runtime.log_invocation(request_id, head.method.upper(), path, answer)
++            self.busy = False
++            self._send(head, request_id, answer, keep)
++        finally:
++            self.busy = False
++            self.server.busy -= 1
++        if not self.transport.is_closing():
++            self._advance()
++
++    def _send(self, head: _Head, request_id: str, answer: Answer, keep: bool) -> None:
++        """Writes the answer; closes the connection after it unless it is kept."""
++        keep = keep and not self.ended and not self.runtime.stopping
++        lines = [f"HTTP/1.1 {answer.status} {_REASONS.get(answer.status, '')}", f"date: {self.server.date()}"]
++        for name, value in answer.headers.items():
++            if name in _OWN_HEADERS:
++                continue
++            for one in value if isinstance(value, list) else [value]:
++                lines.append(f"{name}: {one}")
++        lines.append(f"x-request-id: {request_id}")
++        bodyless = answer.status in _BODYLESS
++        if not bodyless:
++            lines.append(f"content-length: {len(answer.body)}")
++        if not keep:
++            lines.append("connection: close")
++        elif head.version == "HTTP/1.0":
++            lines.append("connection: keep-alive")
++        data = ("\r\n".join(lines) + "\r\n\r\n").encode("latin-1")
++        if head.method != "HEAD" and not bodyless:
++            data += answer.body
++        if self.transport.is_closing():
++            return
++        self.transport.write(data)
++        if keep:
++            self._wait(IDLE_TIMEOUT_S)
++        else:
++            self.close()
++
++    def _refuse(self, status: int) -> None:
++        if not self.transport.is_closing():
++            self.transport.write((f"HTTP/1.1 {status} {_REASONS.get(status, '')}\r\ndate: {self.server.date()}\r\n"
++                                  f"content-length: 0\r\nconnection: close\r\n\r\n").encode("latin-1"))
++        self.close()
++
++
++_TOO_LARGE = object()
++
++
++def _parse_head(raw: bytes) -> _Head:
++    lines = raw.split(b"\r\n")
++    parts = lines[0].decode("latin-1").split(" ")
++    if len(parts) != 3 or not _TOKEN.fullmatch(parts[0]) or not parts[1] or parts[2] not in ("HTTP/1.1", "HTTP/1.0"):
++        raise BadRequest()
++    headers = []
++    for line in lines[1:]:
++        name, colon, value = line.decode("latin-1").partition(":")
++        if not colon or not _TOKEN.fullmatch(name):
++            raise BadRequest()
++        headers.append((name, value.strip(" \t")))
++    return _Head(parts[0], parts[1], parts[2], headers)
++
++
++def _framing(head: _Head) -> tuple[bool, int]:
++    """Whether the body comes in chunks, else its length. A request that says
++    both, or either in a way that cannot be read, is refused."""
++    lengths = set(head.values("content-length"))
++    encodings = head.values("transfer-encoding")
++    if encodings:
++        if lengths or not encodings[-1].lower().rstrip().endswith("chunked"):
++            raise BadRequest()
++        return True, 0
++    if not lengths:
++        return False, 0
++    length = next(iter(lengths))
++    if len(lengths) != 1 or not length.isdigit():
++        raise BadRequest()
++    return False, int(length)

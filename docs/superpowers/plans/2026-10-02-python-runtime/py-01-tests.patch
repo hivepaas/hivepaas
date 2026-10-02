@@ -1,0 +1,728 @@
+diff --git a/conformance/conformance_test.go b/conformance/conformance_test.go
+index 71e5fc5..2d66137 100644
+--- a/conformance/conformance_test.go
++++ b/conformance/conformance_test.go
+@@ -27,12 +27,15 @@ type runtimeDef struct {
+ 	compiled bool
+ 	// typeScript is how the runtime runs a TypeScript handler.
+ 	typeScript typeScript
++	// processes: the runtime serves with several processes, as many as
++	// WEB_CONCURRENCY says; serve's checks run with several and with one.
++	processes bool
+ }
+ 
+ var runtimes = []runtimeDef{
+ 	{name: "go127", compiled: true},
+ 	{name: "node24", typeScript: typesRemoved},
+-	{name: "python313"},
++	{name: "python313", processes: true},
+ }
+ 
+ func TestConformance(t *testing.T) {
+@@ -41,6 +44,12 @@ func TestConformance(t *testing.T) {
+ 			imgs := buildImages(t, rt)
+ 			t.Run("image", func(t *testing.T) { checkImages(t, imgs) })
+ 			t.Run("serve", func(t *testing.T) { checkServe(t, rt, imgs) })
++			if rt.processes {
++				one := imgs
++				one.env = []string{"WEB_CONCURRENCY=1"}
++				t.Run("serve, one process", func(t *testing.T) { checkServe(t, rt, one) })
++				t.Run("processes", func(t *testing.T) { checkProcesses(t, imgs) })
++			}
+ 			t.Run("invoke", func(t *testing.T) { checkInvoke(t, rt, imgs) })
+ 			if rt.typeScript != noTypeScript {
+ 				t.Run("typescript", func(t *testing.T) { checkTypeScript(t, rt, imgs) })
+diff --git a/conformance/docker_test.go b/conformance/docker_test.go
+index 6723c49..8f88d1d 100644
+--- a/conformance/docker_test.go
++++ b/conformance/docker_test.go
+@@ -27,6 +27,14 @@ type images struct {
+ 	// source is the fixture not built yet, in the build image (compiled
+ 	// runtimes only): what a test run starts from.
+ 	source string
++	// env is given to every fixture serve starts, before a check's own.
++	env []string
++}
++
++// serve starts the fixture's serve with the images' env, then env.
++func (imgs images) serve(t *testing.T, env ...string) *container {
++	t.Helper()
++	return startServe(t, imgs.fixture, append(slices.Clone(imgs.env), env...)...)
+ }
+ 
+ func buildImages(t *testing.T, rt runtimeDef) images {
+diff --git a/conformance/fixtures/python313/main.py b/conformance/fixtures/python313/main.py
+index 6d39e0a..896c08f 100644
+--- a/conformance/fixtures/python313/main.py
++++ b/conformance/fixtures/python313/main.py
+@@ -48,6 +48,8 @@ def handler(req, ctx):
+         case "/log":
+             ctx.log("fixture log line")
+             return {"body": "logged"}
++        case "/pid":
++            return {"body": {"pid": os.getpid()}}
+         case "/whoami":
+             return {"body": {"uid": os.getuid(), "gid": os.getgid()}}
+         case "/lib":
+diff --git a/conformance/processes_test.go b/conformance/processes_test.go
+new file mode 100644
+index 0000000..d6795ca
+--- /dev/null
++++ b/conformance/processes_test.go
+@@ -0,0 +1,125 @@
++//go:build conformance
++
++package conformance
++
++import (
++	"io"
++	"net/http"
++	"strconv"
++	"strings"
++	"testing"
++	"time"
++)
++
++// fresh calls the fixture on a connection of its own, as a new client does:
++// the connection is taken by whichever process accepts it first.
++func (c *container) fresh(path string) response {
++	client := &http.Client{Timeout: 15 * time.Second, Transport: &http.Transport{DisableKeepAlives: true}}
++	resp, err := client.Get(c.url + path)
++	if err != nil {
++		return response{err: err}
++	}
++	defer resp.Body.Close()
++	b, err := io.ReadAll(resp.Body)
++	return response{status: resp.StatusCode, header: resp.Header, body: b, err: err}
++}
++
++// pids are the processes that answer /pid, asked over new connections until
++// want of them answered.
++func (c *container) pids(t *testing.T, want int) map[int]bool {
++	t.Helper()
++	seen := map[int]bool{}
++	for range 300 {
++		r := c.fresh("/pid")
++		if r.err != nil || r.status != 200 {
++			t.Fatalf("/pid: %d %q %v", r.status, r.body, r.err)
++		}
++		seen[int(r.json(t)["pid"].(float64))] = true
++		if len(seen) >= want {
++			break
++		}
++	}
++	if len(seen) != want {
++		t.Fatalf("%d processes answered, want %d: %v", len(seen), want, seen)
++	}
++	return seen
++}
++
++// checkProcesses checks a runtime that serves with several processes.
++func checkProcesses(t *testing.T, imgs images) {
++	t.Run("WEB_CONCURRENCY sets how many processes serve", func(t *testing.T) {
++		c := imgs.serve(t, "WEB_CONCURRENCY=3")
++
++		c.pids(t, 3)
++		c.waitForLog(t, "stderr", func(line string) bool { return line == "hivepaas: serving with 3 processes" })
++	})
++
++	t.Run("the processes count their calls together", func(t *testing.T) {
++		c := imgs.serve(t, "WEB_CONCURRENCY=2", "HP_FN_MAX_CONCURRENCY=2", "HP_FN_TIMEOUT_MS=5000")
++		first, second := c.background("/slow?ms=2000"), c.background("/slow?ms=2000")
++		time.Sleep(700 * time.Millisecond)
++
++		for i := range 6 {
++			if r := c.fresh("/text"); r.err != nil || r.status != http.StatusTooManyRequests {
++				t.Errorf("call %d: %d %v", i, r.status, r.err)
++			}
++		}
++		for _, slow := range []<-chan response{first, second} {
++			if r := <-slow; r.err != nil || r.status != 200 {
++				t.Errorf("a running call: %d %v", r.status, r.err)
++			}
++		}
++	})
++
++	t.Run("a process that dies is replaced", func(t *testing.T) {
++		c := imgs.serve(t, "WEB_CONCURRENCY=2")
++		before := c.pids(t, 2)
++		var killed int
++		for pid := range before {
++			killed = pid
++			break
++		}
++		docker(t, "exec", c.id, "sh", "-c", "kill -9 "+strconv.Itoa(killed)) // kill is the shell's own
++
++		c.waitForLog(t, "stderr", func(line string) bool {
++			return strings.HasPrefix(line, "hivepaas: process "+strconv.Itoa(killed)+" exited (signal 9)")
++		})
++		deadline := time.Now().Add(10 * time.Second)
++		for {
++			after := c.pids(t, 1)
++			newcomer := false
++			for pid := range after {
++				if pid == killed {
++					t.Fatalf("the killed process %d answered", killed)
++				}
++				newcomer = newcomer || !before[pid]
++			}
++			if newcomer {
++				return
++			}
++			if time.Now().After(deadline) {
++				t.Fatal("no process took the dead one's place")
++			}
++			time.Sleep(100 * time.Millisecond)
++		}
++	})
++
++	t.Run("stopping several processes lets a running call finish", func(t *testing.T) {
++		stopped := imgs.serve(t, "WEB_CONCURRENCY=3", "HP_FN_TIMEOUT_MS=5000")
++		slow := stopped.background("/slow?ms=1000")
++		time.Sleep(300 * time.Millisecond)
++
++		start := time.Now()
++		docker(t, "stop", "--time", "10", stopped.id)
++
++		if took := time.Since(start); took > 4*time.Second {
++			t.Errorf("stopping took %v, for a call of 1s", took)
++		}
++		if r := <-slow; r.err != nil || r.status != 200 || string(r.body) != "slow done" {
++			t.Errorf("the running call: %d %q %v", r.status, r.body, r.err)
++		}
++		if code := strings.TrimSpace(docker(t, "inspect", "--format", "{{.State.ExitCode}}", stopped.id)); code != "0" {
++			t.Errorf("exit code %s", code)
++		}
++	})
++}
+diff --git a/conformance/serve_test.go b/conformance/serve_test.go
+index a40158f..1a1edbe 100644
+--- a/conformance/serve_test.go
++++ b/conformance/serve_test.go
+@@ -3,6 +3,7 @@
+ package conformance
+ 
+ import (
++	"bufio"
+ 	"bytes"
+ 	"encoding/json"
+ 	"io"
+@@ -48,7 +49,7 @@ func checkImages(t *testing.T, imgs images) {
+ }
+ 
+ func checkServe(t *testing.T, rt runtimeDef, imgs images) {
+-	c := startServe(t, imgs.fixture, "HP_FN_TIMEOUT_MS=1000", "HP_FN_MAX_BODY_SIZE=4096", "GREETING=hi")
++	c := imgs.serve(t, "HP_FN_TIMEOUT_MS=1000", "HP_FN_MAX_BODY_SIZE=4096", "GREETING=hi")
+ 
+ 	t.Run("a body is sent with the type it has", func(t *testing.T) {
+ 		for _, tc := range []struct{ path, contentType, body string }{
+@@ -252,6 +253,47 @@ func checkServe(t *testing.T, rt runtimeDef, imgs images) {
+ 		}
+ 	})
+ 
++	t.Run("an HTTP/1.0 connection asked to be kept is kept", func(t *testing.T) {
++		conn, err := net.Dial("tcp", strings.TrimPrefix(c.url, "http://"))
++		if err != nil {
++			t.Fatal(err)
++		}
++		defer conn.Close()
++		_ = conn.SetDeadline(time.Now().Add(5 * time.Second))
++		reader := bufio.NewReader(conn)
++		for i := range 2 {
++			if _, err := io.WriteString(conn, "GET /text HTTP/1.0\r\nConnection: keep-alive\r\n\r\n"); err != nil {
++				t.Fatalf("request %d: %v", i, err)
++			}
++			resp, err := http.ReadResponse(reader, nil)
++			if err != nil {
++				t.Fatalf("response %d: %v", i, err)
++			}
++			body, _ := io.ReadAll(resp.Body)
++			_ = resp.Body.Close()
++			// An HTTP/1.0 client keeps the connection only when the answer says so.
++			if resp.StatusCode != 200 || string(body) != "hello" ||
++				!strings.EqualFold(resp.Header.Get("Connection"), "keep-alive") {
++				t.Errorf("response %d: %d %q, Connection %q", i, resp.StatusCode, body, resp.Header.Get("Connection"))
++			}
++		}
++	})
++
++	t.Run("it answers on IPv4, and on IPv6 where its container has it", func(t *testing.T) {
++		hosts := []string{"127.0.0.1"}
++		if strings.TrimSpace(docker(t, "exec", c.id, "cat", "/proc/net/if_inet6")) != "" {
++			hosts = append(hosts, "::1")
++		}
++		for _, host := range hosts {
++			script := `exec 3<>/dev/tcp/` + host + `/8080 && ` +
++				`printf 'GET /_hivepaas/health HTTP/1.0\r\n\r\n' >&3 && cat <&3`
++			out := docker(t, "exec", c.id, "bash", "-c", script)
++			if !strings.Contains(out, " 200 ") || !strings.Contains(out, `"ok"`) {
++				t.Errorf("%s: %q", host, out)
++			}
++		}
++	})
++
+ 	t.Run("the runtime's paths", func(t *testing.T) {
+ 		if r := c.get(t, "/_hivepaas/health"); r.status != 200 || r.json(t)["status"] != "ok" {
+ 			t.Errorf("health: %d %q", r.status, r.body)
+@@ -276,7 +318,7 @@ func checkServe(t *testing.T, rt runtimeDef, imgs images) {
+ 	})
+ 
+ 	t.Run("calls over the concurrency are turned away", func(t *testing.T) {
+-		one := startServe(t, imgs.fixture, "HP_FN_MAX_CONCURRENCY=1", "HP_FN_TIMEOUT_MS=5000")
++		one := imgs.serve(t, "HP_FN_MAX_CONCURRENCY=1", "HP_FN_TIMEOUT_MS=5000")
+ 		slow := one.background("/slow?ms=1500")
+ 		time.Sleep(500 * time.Millisecond)
+ 
+@@ -292,7 +334,7 @@ func checkServe(t *testing.T, rt runtimeDef, imgs images) {
+ 	})
+ 
+ 	t.Run("stopping lets the running call finish", func(t *testing.T) {
+-		stopped := startServe(t, imgs.fixture, "HP_FN_TIMEOUT_MS=5000")
++		stopped := imgs.serve(t, "HP_FN_TIMEOUT_MS=5000")
+ 		slow := stopped.background("/slow?ms=1000")
+ 		time.Sleep(300 * time.Millisecond)
+ 
+@@ -312,7 +354,7 @@ func checkServe(t *testing.T, rt runtimeDef, imgs images) {
+ 
+ 	if !rt.compiled {
+ 		t.Run("a handler that cannot be loaded", func(t *testing.T) {
+-			broken := startServe(t, imgs.fixture, "HP_FN_HANDLER=missing")
++			broken := imgs.serve(t, "HP_FN_HANDLER=missing")
+ 
+ 			if r := broken.get(t, "/_hivepaas/health"); r.status != 503 || r.json(t)["status"] != "unavailable" {
+ 				t.Errorf("health: %d %q", r.status, r.body)
+diff --git a/conformance/typescript_test.go b/conformance/typescript_test.go
+index 1c5fd7b..1d6fa75 100644
+--- a/conformance/typescript_test.go
++++ b/conformance/typescript_test.go
+@@ -25,7 +25,7 @@ func checkTypeScript(t *testing.T, rt runtimeDef, imgs images) {
+ 	const want = `{"hello":"Ada"}`
+ 
+ 	t.Run("a TypeScript handler, served", func(t *testing.T) {
+-		c := startServe(t, imgs.fixture, "HP_FN_ENTRYPOINT=typed.ts")
++		c := imgs.serve(t, "HP_FN_ENTRYPOINT=typed.ts")
+ 
+ 		if r := c.get(t, "/?name=Ada"); r.status != 200 || !sameBody(r.body, []byte(want)) {
+ 			t.Errorf("%d %q", r.status, r.body)
+diff --git a/runtimes/python313/tests/test_processes.py b/runtimes/python313/tests/test_processes.py
+new file mode 100644
+index 0000000..7b23ec0
+--- /dev/null
++++ b/runtimes/python313/tests/test_processes.py
+@@ -0,0 +1,88 @@
++"""How many processes serve, and the count of running calls they share."""
++
++import os
++import tempfile
++import unittest
++
++from hivepaas_runtime.processes import SharedPlaces, process_count
++from hivepaas_runtime.runtime import ConfigError, load_config
++
++MIB = 1024 * 1024
++
++
++class ProcessCountTest(unittest.TestCase):
++    def cgroup(self, files):
++        """A cgroup directory holding files, by path."""
++        root = tempfile.mkdtemp()
++        for path, text in files.items():
++            full = os.path.join(root, path)
++            os.makedirs(os.path.dirname(full), exist_ok=True)
++            with open(full, "w") as f:
++                f.write(text + "\n")
++        return root
++
++    def count(self, files=None, env=None, cpus=8, max_concurrency="16"):
++        cfg = load_config({"HP_FN_MAX_CONCURRENCY": max_concurrency})
++        return process_count(env or {}, cfg, cgroup=self.cgroup(files or {}), cpu_count=lambda: cpus)
++
++    def test_without_limits_one_process_per_cpu(self):
++        self.assertEqual(self.count({"cpu.max": "max 100000", "memory.max": "max"}), 8)
++        self.assertEqual(self.count(), 8, "no cgroup files")
++
++    def test_a_cpu_quota_rounded_up(self):
++        self.assertEqual(self.count({"cpu.max": "150000 100000"}), 2)
++        self.assertEqual(self.count({"cpu.max": "50000 100000"}), 1)
++        self.assertEqual(self.count({"cpu/cpu.cfs_quota_us": "300000", "cpu/cpu.cfs_period_us": "100000"}), 3)
++        self.assertEqual(self.count({"cpu/cpu.cfs_quota_us": "-1", "cpu/cpu.cfs_period_us": "100000"}), 8)
++
++    def test_at_most_the_concurrency(self):
++        self.assertEqual(self.count(cpus=64), 16)
++        self.assertEqual(self.count(max_concurrency="3"), 3)
++
++    def test_at_most_one_per_128_mib_of_a_memory_limit(self):
++        self.assertEqual(self.count({"memory.max": str(256 * MIB)}), 2)
++        self.assertEqual(self.count({"memory.max": str(100 * MIB)}), 1)
++        self.assertEqual(self.count({"memory/memory.limit_in_bytes": str(512 * MIB)}), 4)
++        self.assertEqual(self.count({"memory/memory.limit_in_bytes": "9223372036854771712"}), 8, "v1's unlimited")
++
++    def test_web_concurrency_sets_it_within_the_concurrency(self):
++        self.assertEqual(self.count(env={"WEB_CONCURRENCY": "3"}, cpus=1), 3)
++        self.assertEqual(self.count(env={"WEB_CONCURRENCY": "1"}), 1)
++        self.assertEqual(self.count(env={"WEB_CONCURRENCY": "40"}), 16)
++        self.assertEqual(self.count(env={"WEB_CONCURRENCY": ""}), 8, "empty is not set")
++        for value in ["0", "-2", "auto", "1.5"]:
++            with self.assertRaisesRegex(ConfigError, "WEB_CONCURRENCY"):
++                self.count(env={"WEB_CONCURRENCY": value})
++
++
++class SharedPlacesTest(unittest.TestCase):
++    def test_the_workers_count_their_calls_together(self):
++        shared = SharedPlaces(2)
++        first, second = shared.of(0), shared.of(1)
++        self.assertTrue(first.take(2))
++        self.assertTrue(second.take(2))
++        self.assertFalse(first.take(2))
++        self.assertFalse(second.take(2))
++        second.give()
++        self.assertTrue(first.take(2))
++        self.assertEqual(shared.total(), 2)
++
++    def test_a_dead_workers_places_are_given_back(self):
++        shared = SharedPlaces(2)
++        self.assertTrue(shared.of(1).take(1))
++        self.assertFalse(shared.of(0).take(1))
++        shared.reset(1)
++        self.assertTrue(shared.of(0).take(1))
++
++    def test_a_forked_worker_counts_in_the_memory_the_first_process_reads(self):
++        shared = SharedPlaces(2)
++        pid = os.fork()
++        if pid == 0:
++            os._exit(0 if shared.of(1).take(5) else 1)
++        _, status = os.waitpid(pid, 0)
++        self.assertEqual(os.waitstatus_to_exitcode(status), 0)
++        self.assertEqual(shared.total(), 1)
++
++
++if __name__ == "__main__":
++    unittest.main()
+diff --git a/runtimes/python313/tests/test_runtime.py b/runtimes/python313/tests/test_runtime.py
+index 38e934d..b8c89dc 100644
+--- a/runtimes/python313/tests/test_runtime.py
++++ b/runtimes/python313/tests/test_runtime.py
+@@ -228,5 +228,102 @@ class CallTest(unittest.TestCase):
+         self.assertIn("base64", "\n".join(errors))
+ 
+ 
++class CallAsyncTest(unittest.IsolatedAsyncioTestCase):
++    """How serve calls a handler: on its event loop for a coroutine, in a thread
++    for a function."""
++
++    def runtime(self, handler, timeout_ms=1000, max_concurrency=16):
++        lines, errors = [], []
++        cfg = load_config({"HP_FN_TIMEOUT_MS": str(timeout_ms), "HP_FN_MAX_CONCURRENCY": str(max_concurrency)})
++        runtime = Runtime(handler, cfg, out=lines.append, err=errors.append)
++        self.addCleanup(runtime.close)
++        return runtime, lines
++
++    async def call(self, runtime, request_id="id-1"):
++        self.assertTrue(runtime.try_reserve())
++        return await runtime.call_async(request_of("GET", "/", [], b""), request_id)
++
++    async def test_a_coroutine_runs_on_the_callers_loop(self):
++        loop = asyncio.get_running_loop()
++
++        async def handler(req, ctx):
++            ctx.log("on", "loop")
++            return {"body": "same loop" if asyncio.get_running_loop() is loop else "another loop"}
++
++        runtime, lines = self.runtime(handler)
++        answer = await self.call(runtime)
++        self.assertEqual((answer.status, answer.body, answer.outcome), (200, b"same loop", "ok"))
++        self.assertIn('{"hp":"log","requestId":"id-1","msg":"on loop"}', lines)
++
++    async def test_a_function_runs_in_a_thread_and_keeps_its_place_past_its_timeout(self):
++        release = threading.Event()
++        loop_thread = threading.current_thread()
++        threads = []
++
++        def handler(req, ctx):
++            threads.append(threading.current_thread())
++            release.wait(5)
++
++        runtime, _ = self.runtime(handler, timeout_ms=50, max_concurrency=1)
++        answer = await self.call(runtime)
++        self.assertEqual((answer.status, answer.outcome), (504, "timeout"))
++        self.assertIsNot(threads[0], loop_thread)
++        self.assertFalse(runtime.try_reserve())
++        release.set()
++        for _ in range(200):
++            if runtime.try_reserve():
++                break
++            await asyncio.sleep(0.005)
++        else:
++            self.fail("the place was not given back")
++
++    async def test_a_coroutine_is_cancelled_at_its_timeout_and_gives_its_place_back(self):
++        cancelled = asyncio.Event()
++
++        async def handler(req, ctx):
++            try:
++                await asyncio.sleep(5)
++            except asyncio.CancelledError:
++                cancelled.set()
++                raise
++
++        runtime, _ = self.runtime(handler, timeout_ms=50, max_concurrency=1)
++        answer = await self.call(runtime)
++        self.assertEqual((answer.status, answer.outcome), (504, "timeout"))
++        await asyncio.wait_for(cancelled.wait(), 1)
++        await asyncio.sleep(0)
++        self.assertTrue(runtime.try_reserve())
++
++    async def test_an_error_is_logged_and_not_sent(self):
++        async def handler(req, ctx):
++            raise ValueError("fixture failure")
++
++        lines, errors = [], []
++        runtime = Runtime(handler, load_config({}), out=lines.append, err=errors.append)
++        self.addCleanup(runtime.close)
++        self.assertTrue(runtime.try_reserve())
++        answer = await runtime.call_async(request_of("GET", "/", [], b""), "id-err")
++        self.assertEqual((answer.status, answer.outcome), (500, "error"))
++        self.assertTrue(errors[0].startswith("hivepaas: call id-err failed: ValueError: fixture failure"))
++
++    async def test_places_are_taken_from_what_the_runtime_is_given(self):
++        class Places:
++            def __init__(self):
++                self.taken = []
++
++            def take(self, limit):
++                self.taken.append(limit)
++                return False
++
++            def give(self):
++                pass
++
++        places = Places()
++        runtime = Runtime(lambda req, ctx: None, load_config({"HP_FN_MAX_CONCURRENCY": "7"}), places=places)
++        self.addCleanup(runtime.close)
++        self.assertFalse(runtime.try_reserve())
++        self.assertEqual(places.taken, [7])
++
++
+ if __name__ == "__main__":
+     unittest.main()
+diff --git a/runtimes/python313/tests/test_server.py b/runtimes/python313/tests/test_server.py
+new file mode 100644
+index 0000000..a33ef0c
+--- /dev/null
++++ b/runtimes/python313/tests/test_server.py
+@@ -0,0 +1,215 @@
++"""The server, as a client on a socket meets it: how a request is read, when a
++connection is kept, what the server answers itself, and how it stops."""
++
++import asyncio
++import json
++import socket
++import unittest
++
++from hivepaas_runtime.runtime import Runtime, load_config
++from hivepaas_runtime.server import Server, listen
++
++
++def handler(req, ctx):
++    if req.path == "/slow":
++        import time
++        time.sleep(float(req.query["s"]))
++        return {"body": "slow done"}
++    if req.path == "/empty":
++        return None
++    return {"body": {"method": req.method, "path": req.path, "body": req.text(),
++                     "custom": req.headers.get("x-custom"), "query": req.query_all}}
++
++
++class ServerTest(unittest.IsolatedAsyncioTestCase):
++    async def asyncSetUp(self):
++        await self.start()
++
++    async def start(self, env=None, fn=handler):
++        cfg = load_config({"HP_FN_TIMEOUT_MS": "1000", "HP_FN_MAX_BODY_SIZE": "200", **(env or {})})
++        self.lines, self.errors = [], []
++        self.runtime = Runtime(fn, cfg, out=self.lines.append, err=self.errors.append)
++        self.addCleanup(self.runtime.close)
++        sock = listen(0)
++        self.port = sock.getsockname()[1]
++        self.server = Server(self.runtime)
++        await self.server.start(sock)
++        self.addAsyncCleanup(self.server.stop)
++
++    async def connect(self):
++        reader, writer = await asyncio.open_connection("127.0.0.1", self.port)
++        self.addCleanup(writer.close)
++        return reader, writer
++
++    async def response(self, reader):
++        """A response: its status, its headers by lower-case name, its body."""
++        head = await asyncio.wait_for(reader.readuntil(b"\r\n\r\n"), 5)
++        lines = head.decode("latin-1").split("\r\n")
++        status = int(lines[0].split(" ")[1])
++        headers = {}
++        for line in lines[1:]:
++            if line:
++                name, _, value = line.partition(":")
++                headers[name.strip().lower()] = value.strip()
++        body = await reader.readexactly(int(headers.get("content-length", "0")))
++        return status, headers, body
++
++    async def closed(self, reader):
++        return await asyncio.wait_for(reader.read(), 5) == b""
++
++    async def test_a_request_is_answered_and_its_connection_kept(self):
++        reader, writer = await self.connect()
++        for body in (b"one", b"two"):
++            writer.write(b"POST /echo?a=1&a=2 HTTP/1.1\r\nHost: x\r\nX-Custom: v\r\nContent-Length: 3\r\n\r\n" + body)
++            status, headers, answered = await self.response(reader)
++            self.assertEqual(status, 200)
++            self.assertEqual(json.loads(answered), {"method": "POST", "path": "/echo", "body": body.decode(),
++                                                    "custom": "v", "query": {"a": ["1", "2"]}})
++            self.assertEqual(headers["content-type"], "application/json")
++            self.assertIn("x-request-id", headers)
++            self.assertIn("date", headers)
++            self.assertNotIn("server", headers)
++        self.assertEqual(sum('"hp":"invocation"' in line for line in self.lines), 2)
++
++    async def test_a_head_that_arrives_in_pieces(self):
++        reader, writer = await self.connect()
++        for piece in (b"GET /pie", b"ces HTTP/1.1\r\nHo", b"st: x\r\n", b"\r\n"):
++            writer.write(piece)
++            await writer.drain()
++            await asyncio.sleep(0.02)
++        status, _, body = await self.response(reader)
++        self.assertEqual((status, json.loads(body)["path"]), (200, "/pieces"))
++
++    async def test_pipelined_requests_are_answered_in_order(self):
++        reader, writer = await self.connect()
++        writer.write(b"GET /first HTTP/1.1\r\nHost: x\r\n\r\nGET /second HTTP/1.1\r\nHost: x\r\n\r\n")
++        paths = [json.loads((await self.response(reader))[2])["path"] for _ in range(2)]
++        self.assertEqual(paths, ["/first", "/second"])
++
++    async def test_http_1_0_keeps_a_connection_only_when_asked(self):
++        reader, writer = await self.connect()
++        writer.write(b"GET /once HTTP/1.0\r\n\r\n")
++        status, headers, _ = await self.response(reader)
++        self.assertEqual(status, 200)
++        self.assertTrue(await self.closed(reader))
++
++        reader, writer = await self.connect()
++        for path in (b"/kept", b"/again"):
++            writer.write(b"GET " + path + b" HTTP/1.0\r\nConnection: keep-alive\r\n\r\n")
++            status, headers, body = await self.response(reader)
++            self.assertEqual((status, headers.get("connection")), (200, "keep-alive"))
++            self.assertEqual(json.loads(body)["path"], path.decode())
++
++    async def test_http_1_1_closes_when_asked(self):
++        reader, writer = await self.connect()
++        writer.write(b"GET /bye HTTP/1.1\r\nHost: x\r\nConnection: close\r\n\r\n")
++        status, headers, _ = await self.response(reader)
++        self.assertEqual((status, headers.get("connection")), (200, "close"))
++        self.assertTrue(await self.closed(reader))
++
++    async def test_a_body_in_chunks(self):
++        reader, writer = await self.connect()
++        writer.write(b"POST /echo HTTP/1.1\r\nHost: x\r\nTransfer-Encoding: chunked\r\n\r\n"
++                     b"3\r\nabc\r\n4;ext=1\r\ndefg\r\n0\r\nTrailer: t\r\n\r\n")
++        status, _, body = await self.response(reader)
++        self.assertEqual((status, json.loads(body)["body"]), (200, "abcdefg"))
++
++    async def test_a_body_over_the_limit_is_refused_and_the_connection_closed(self):
++        for request in (b"POST /echo HTTP/1.1\r\nHost: x\r\nContent-Length: 201\r\n\r\n",
++                        b"POST /echo HTTP/1.1\r\nHost: x\r\nTransfer-Encoding: chunked\r\n\r\nc9\r\n" + b"x" * 201):
++            reader, writer = await self.connect()
++            writer.write(request)
++            status, headers, body = await self.response(reader)
++            self.assertEqual((status, headers.get("connection"), json.loads(body)["error"]),
++                             (413, "close", "request too large"))
++            self.assertTrue(await self.closed(reader))
++        self.assertTrue(any('"outcome":"request_too_large"' in line for line in self.lines))
++
++    async def test_100_continue_is_sent_before_the_body_is_read(self):
++        reader, writer = await self.connect()
++        writer.write(b"POST /echo HTTP/1.1\r\nHost: x\r\nExpect: 100-continue\r\nContent-Length: 2\r\n\r\n")
++        interim = await asyncio.wait_for(reader.readuntil(b"\r\n\r\n"), 5)
++        self.assertTrue(interim.startswith(b"HTTP/1.1 100"))
++        writer.write(b"ok")
++        status, _, body = await self.response(reader)
++        self.assertEqual((status, json.loads(body)["body"]), (200, "ok"))
++
++    async def test_a_body_that_does_not_arrive_is_no_call(self):
++        reader, writer = await self.connect()
++        writer.write(b"POST /echo HTTP/1.1\r\nHost: x\r\nX-Request-Id: stalled\r\nContent-Length: 10\r\n\r\nabc")
++        self.assertTrue(await self.closed(reader))  # after the timeout, 1s
++        self.assertFalse(any("stalled" in line for line in self.lines))
++
++    async def test_what_cannot_be_read_is_refused_and_closed(self):
++        for request, status in [(b"NOT HTTP\r\n\r\n", 400),
++                                (b"GET / HTTP/1.1\r\nBad Header\r\n\r\n", 400),
++                                (b"GET / HTTP/1.1\r\nContent-Length: 1\r\nTransfer-Encoding: chunked\r\n\r\n", 400),
++                                (b"GET / HTTP/1.1\r\nX-Big: " + b"x" * 70000 + b"\r\n\r\n", 431)]:
++            reader, writer = await self.connect()
++            writer.write(request)
++            answered, headers, _ = await self.response(reader)
++            self.assertEqual((answered, headers.get("connection")), (status, "close"), request[:30])
++            self.assertTrue(await self.closed(reader))
++        self.assertFalse(any('"hp":"invocation"' in line for line in self.lines))
++
++    async def test_the_runtimes_paths_read_their_body_and_are_not_logged(self):
++        reader, writer = await self.connect()
++        writer.write(b"POST /_hivepaas/health HTTP/1.1\r\nHost: x\r\nContent-Length: 4\r\n\r\nbody"
++                     b"GET /after HTTP/1.1\r\nHost: x\r\n\r\n")
++        status, _, body = await self.response(reader)
++        self.assertEqual((status, json.loads(body)), (200, {"status": "ok"}))
++        status, _, body = await self.response(reader)
++        self.assertEqual((status, json.loads(body)["path"]), (200, "/after"))
++        self.assertFalse(any("/_hivepaas" in line for line in self.lines))
++
++    async def test_head_and_no_content_send_no_body(self):
++        reader, writer = await self.connect()
++        writer.write(b"HEAD /echo HTTP/1.1\r\nHost: x\r\n\r\n")
++        head = await asyncio.wait_for(reader.readuntil(b"\r\n\r\n"), 5)
++        self.assertIn(b"content-length: ", head.lower())
++        writer.write(b"GET /empty HTTP/1.1\r\nHost: x\r\n\r\n")
++        head = await asyncio.wait_for(reader.readuntil(b"\r\n\r\n"), 5)
++        self.assertTrue(head.startswith(b"HTTP/1.1 204"), head)  # nothing of HEAD's body came before it
++        self.assertNotIn(b"content-length", head.lower())
++
++    async def test_calls_over_the_concurrency_are_turned_away(self):
++        await self.server.stop()
++        await self.start({"HP_FN_MAX_CONCURRENCY": "1", "HP_FN_TIMEOUT_MS": "3000"})
++        slow_reader, slow_writer = await self.connect()
++        slow_writer.write(b"GET /slow?s=0.5 HTTP/1.1\r\nHost: x\r\n\r\n")
++        await asyncio.sleep(0.2)
++        reader, writer = await self.connect()
++        writer.write(b"GET /echo HTTP/1.1\r\nHost: x\r\n\r\n")
++        status, headers, _ = await self.response(reader)
++        self.assertEqual((status, headers.get("retry-after")), (429, "1"))
++        self.assertEqual((await self.response(slow_reader))[0], 200)
++
++    async def test_stopping_closes_idle_connections_and_lets_a_running_call_finish(self):
++        await self.server.stop()
++        await self.start({"HP_FN_TIMEOUT_MS": "3000"})
++        idle_reader, _ = await self.connect()
++        reader, writer = await self.connect()
++        writer.write(b"GET /slow?s=0.5 HTTP/1.1\r\nHost: x\r\n\r\n")
++        await asyncio.sleep(0.2)
++
++        stopped = asyncio.ensure_future(self.server.stop())
++        self.assertTrue(await self.closed(idle_reader))
++        status, headers, body = await self.response(reader)
++        self.assertEqual((status, headers.get("connection"), body), (200, "close", b"slow done"))
++        await asyncio.wait_for(stopped, 5)
++        with self.assertRaises(OSError):
++            await asyncio.open_connection("127.0.0.1", self.port)
++
++
++class ListenTest(unittest.TestCase):
++    def test_it_listens_on_ipv6_and_ipv4_where_there_is_ipv6(self):
++        sock = listen(0)
++        self.addCleanup(sock.close)
++        port = sock.getsockname()[1]
++        socket.create_connection(("127.0.0.1", port), timeout=2).close()
++        if sock.family == socket.AF_INET6:
++            socket.create_connection(("::1", port), timeout=2).close()
++
++
++if __name__ == "__main__":
++    unittest.main()

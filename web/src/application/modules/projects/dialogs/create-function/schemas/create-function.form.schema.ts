@@ -61,6 +61,8 @@ const CreateFunctionFormSchemaBase = z.object({
     credentials: CredentialsRefSchema,
     /** Whether a push to the ref deploys the function. */
     autoDeploy: z.boolean(),
+    /** The registry the built image is pushed to; a cluster of several nodes needs one. */
+    pushToRegistry: z.object({ id: z.string(), name: z.string() }).nullable(),
     /** Whether the function is routed at domain from its first deployment. */
     expose: z.boolean(),
     domain: z.string().trim(),
@@ -151,6 +153,6 @@ export function createFunctionSource(values: CreateFunctionFormOutput): Function
         timeout: "",
         maxConcurrency: 0,
         maxBodySize: "",
-        pushToRegistry: { id: "" },
+        pushToRegistry: { id: values.pushToRegistry?.id ?? "" },
     };
 }

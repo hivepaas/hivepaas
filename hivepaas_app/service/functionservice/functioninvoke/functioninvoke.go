@@ -28,6 +28,11 @@ const (
 // Command is the runtime's invoke, on the PATH of every runtime image.
 var Command = []string{"hivepaas-runtime", "invoke"}
 
+// CallCommand is the runtime's call, which hands the request invoke reads to the
+// function's serve and writes its answer as invoke's result. Runtimes before
+// 1.2.0 have none: it exits 2 with their usage.
+var CallCommand = []string{"hivepaas-runtime", "call"}
+
 // Request is a request as invoke reads it. Every field may be left out: the
 // method is then GET, the path /, the body empty.
 type Request struct {

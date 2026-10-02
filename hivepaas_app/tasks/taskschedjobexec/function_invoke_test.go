@@ -21,25 +21,49 @@ import (
 )
 
 // fakeInvoke stands for the job exec service: it takes the command and its
-// stdin, and writes what invoke would have written.
+// stdin, and writes what the runtime would have written. callExit, when set,
+// is what call exits with, without a result: 2 for an image without call.
 type fakeInvoke struct {
 	schedjobexecservice.Service
 	req      *schedjobexecservice.SchedJobExecReq
+	commands []string
+	stdins   []string
 	stdin    string
 	output   string
 	exitCode int
 	err      error
+	callExit int
 }
 
 func (f *fakeInvoke) SchedJobExec(
 	_ context.Context, _ database.Tx, req *schedjobexecservice.SchedJobExecReq,
 ) (*schedjobexecservice.SchedJobExecResp, error) {
 	f.req = req
+	f.commands = append(f.commands, req.Command.Command)
 	in, _ := io.ReadAll(req.Stdin)
 	f.stdin = string(in)
+	f.stdins = append(f.stdins, f.stdin)
+	if f.callExit != 0 && req.Command.Command == "hivepaas-runtime call" {
+		exitCode := f.callExit
+		return &schedjobexecservice.SchedJobExecResp{ExitCode: &exitCode}, hperrors.Wrap(hperrors.ErrInfraActionFailed)
+	}
 	_, _ = req.StdoutWriter.Write([]byte(f.output))
 	exitCode := f.exitCode
 	return &schedjobexecservice.SchedJobExecResp{ExitCode: &exitCode}, f.err
+}
+
+// loggedLines are what the run wrote to its log.
+func loggedLines(run *jobRun) *[]string {
+	var lines []string
+	store := tasklog.NewNullStore()
+	store.SetOnForward(func(_ context.Context, frames []*tasklog.LogFrame) error {
+		for _, frame := range frames {
+			lines = append(lines, frame.Data)
+		}
+		return nil
+	})
+	run.execData.LogStore = store
+	return &lines
 }
 
 // resultLine is the line invoke ends with, for a response.
@@ -73,7 +97,7 @@ func TestAFunctionCallSendsItsRequestAndKeepsTheResponse(t *testing.T) {
 	result, err := e.runJob(context.Background(), database.Tx{}, run)
 
 	assert.NoError(t, err)
-	assert.Equal(t, "hivepaas-runtime invoke", exec.req.Command.Command)
+	assert.Equal(t, []string{"hivepaas-runtime call"}, exec.commands, "through the function's serve")
 	assert.Equal(t, "fn", exec.req.DestApp.ID)
 	assert.JSONEq(t, `{"method":"POST","path":"/report","query":{"day":["1"]},"body":"Z28="}`, exec.stdin)
 	output, _ := task.OutputAsFunctionInvoke()
@@ -173,4 +197,49 @@ func TestAFunctionCallWithoutItsRequestFails(t *testing.T) {
 
 	assert.True(t, errors.Is(err, hperrors.ErrInfraActionFailed), "got %v", err)
 	assert.Nil(t, exec.req, "the function is not called")
+}
+
+// The call's log is serve's, in the app's logs: the run says where.
+func TestAFunctionCallSaysWhereItsLogIs(t *testing.T) {
+	exec := &fakeInvoke{output: resultLine(200, "ok", "done")}
+	run, _ := invokeRun(nil)
+	lines := loggedLines(run)
+
+	_, err := (&Executor{schedJobExecService: exec}).runJob(context.Background(), database.Tx{}, run)
+
+	assert.NoError(t, err)
+	assert.Contains(t, *lines, "The call's log is in the app's logs, request r1")
+}
+
+// A function built on a runtime before 1.2.0 has no call: it exits 2, and the
+// same request goes to invoke, as before.
+func TestAFunctionWithoutCallIsCalledThroughInvoke(t *testing.T) {
+	exec := &fakeInvoke{output: resultLine(200, "ok", "done"), callExit: 2}
+	run, task := invokeRun(nil)
+
+	_, err := (&Executor{schedJobExecService: exec}).runJob(context.Background(), database.Tx{}, run)
+
+	assert.NoError(t, err)
+	assert.Equal(t, []string{"hivepaas-runtime call", "hivepaas-runtime invoke"}, exec.commands)
+	if assert.Len(t, exec.stdins, 2) {
+		assert.Equal(t, exec.stdins[0], exec.stdins[1], "the same request")
+	}
+	output, _ := task.OutputAsFunctionInvoke()
+	if assert.NotNil(t, output) {
+		assert.Equal(t, 200, output.Status)
+	}
+}
+
+// call exits 3 when the function's serve does not answer on the instance: the
+// run fails and says so, without trying invoke.
+func TestAFunctionWhoseServerDoesNotAnswerFailsTheRun(t *testing.T) {
+	exec := &fakeInvoke{output: resultLine(200, "ok", "done"), callExit: 3}
+	run, _ := invokeRun(nil)
+	lines := loggedLines(run)
+
+	_, err := (&Executor{schedJobExecService: exec}).runJob(context.Background(), database.Tx{}, run)
+
+	assert.True(t, errors.Is(err, hperrors.ErrInfraActionFailed), "got %v", err)
+	assert.Equal(t, []string{"hivepaas-runtime call"}, exec.commands)
+	assert.Contains(t, *lines, "The function's server does not answer on its instance")
 }

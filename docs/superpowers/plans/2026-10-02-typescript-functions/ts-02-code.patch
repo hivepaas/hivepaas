@@ -1,0 +1,93 @@
+diff --git a/CONTRACT.md b/CONTRACT.md
+index fcfa3c7..5c685dd 100644
+--- a/CONTRACT.md
++++ b/CONTRACT.md
+@@ -45,7 +45,7 @@ From the environment. The function's own variables are in the same environment.
+ 
+ | Variable | Meaning | Default |
+ |---|---|---|
+-| `HP_FN_ENTRYPOINT` | Node.js, Python: the file of the handler, relative to `/app`. Go: the package's directory, relative to the module. | `index.js`, `main.py`, `.` |
++| `HP_FN_ENTRYPOINT` | Node.js, Python: the file of the handler, relative to `/app` - for Node.js a `.js`, `.mjs` or `.cjs` file, or TypeScript's `.ts`, `.mts` or `.cts`. Go: the package's directory, relative to the module. | `index.js`, `main.py`, `.` |
+ | `HP_FN_HANDLER` | The handler's name. | `default` (Node.js), `handler` (Python), `Handle` (Go) |
+ | `HP_FN_TIMEOUT_MS` | How long one call may take. | `30000` |
+ | `HP_FN_MAX_CONCURRENCY` | Calls one instance takes at once. | `16` |
+@@ -68,6 +68,16 @@ export default async function (req, ctx) {
+ }
+ ```
+ 
++TypeScript, on Node.js. A `.ts`, `.mts` or `.cts` file runs as Node.js 24 runs
++it: its types are removed as it loads, and are not checked. Only syntax that
++can be removed is allowed - no `enum`, no `namespace` holding values, no
++parameter properties, no `import x = require(...)`, no decorators: a file with
++one cannot be loaded. An import names the file with its extension
++(`./lib/util.ts`), and a type from another file is imported with
++`import type`. `.mts` is an ES module, `.cts` CommonJS, and `.ts` follows
++`package.json`'s `"type"`. `tsconfig.json` is not read, and a `.ts` file under
++`node_modules` is not run.
++
+ Python. The handler may be a function or a coroutine. `/app` is first on the
+ module path, so the function's own modules import by name:
+ 
+diff --git a/README.md b/README.md
+index 1fe253e..7135e31 100644
+--- a/README.md
++++ b/README.md
+@@ -5,7 +5,7 @@ turns a handler into a server.
+ 
+ | Runtime | Language | Image |
+ |---|---|---|
+-| `node24` | Node.js 24 | `ghcr.io/hivepaas/function-runtime-node24` |
++| `node24` | Node.js 24: JavaScript, and TypeScript with its types removed | `ghcr.io/hivepaas/function-runtime-node24` |
+ | `python313` | Python 3.13 | `ghcr.io/hivepaas/function-runtime-python313` |
+ | `go127` | Go 1.27 | `ghcr.io/hivepaas/function-runtime-go127`, compiled in `function-runtime-go127-build` |
+ 
+diff --git a/conformance/fixtures/node24/enum.ts b/conformance/fixtures/node24/enum.ts
+new file mode 100644
+index 0000000..ed2f118
+--- /dev/null
++++ b/conformance/fixtures/node24/enum.ts
+@@ -0,0 +1,6 @@
++// An enum is TypeScript that cannot be removed: Node.js cannot load this file.
++enum Greeting {
++  Hello = 'hello',
++}
++
++export default () => ({ body: Greeting.Hello })
+diff --git a/conformance/fixtures/node24/typed-lib/greet.ts b/conformance/fixtures/node24/typed-lib/greet.ts
+new file mode 100644
+index 0000000..a093544
+--- /dev/null
++++ b/conformance/fixtures/node24/typed-lib/greet.ts
+@@ -0,0 +1,5 @@
++import type { Greeting } from './types.ts'
++
++export function greet(name: string): Greeting {
++  return { hello: name }
++}
+diff --git a/conformance/fixtures/node24/typed-lib/types.ts b/conformance/fixtures/node24/typed-lib/types.ts
+new file mode 100644
+index 0000000..baa3bf1
+--- /dev/null
++++ b/conformance/fixtures/node24/typed-lib/types.ts
+@@ -0,0 +1,3 @@
++export interface Greeting {
++  hello: string
++}
+diff --git a/conformance/fixtures/node24/typed.ts b/conformance/fixtures/node24/typed.ts
+new file mode 100644
+index 0000000..ff87c70
+--- /dev/null
++++ b/conformance/fixtures/node24/typed.ts
+@@ -0,0 +1,12 @@
++// The fixture's TypeScript handler: Node.js removes its types as it loads it.
++// It imports a file of its own and a type, each by its file's name.
++import { greet } from './typed-lib/greet.ts'
++import type { Greeting } from './typed-lib/types.ts'
++
++interface Request {
++  query: Record<string, string | undefined>
++}
++
++export default async function (req: Request): Promise<{ body: Greeting }> {
++  return { body: greet(req.query.name ?? 'world') }
++}

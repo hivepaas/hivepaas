@@ -1,0 +1,58 @@
+diff --git a/hivepaas_app/service/specservice/specserviceimpl/function_source_test.go b/hivepaas_app/service/specservice/specserviceimpl/function_source_test.go
+index 4701da7d..71ca8332 100644
+--- a/hivepaas_app/service/specservice/specserviceimpl/function_source_test.go
++++ b/hivepaas_app/service/specservice/specserviceimpl/function_source_test.go
+@@ -53,8 +53,12 @@ func functionSourceCases() map[string]*entity.DeploymentFunctionSource {
+ 		"valid repository": repoSource("https://github.com/acme/fns.git"),
+ 		"unknown runtime":  with(func(s *entity.DeploymentFunctionSource) { s.Runtime = "cobol" }),
+ 		"wrong extension":  with(func(s *entity.DeploymentFunctionSource) { s.Entrypoint.File = "main.py" }),
+-		"handler":          with(func(s *entity.DeploymentFunctionSource) { s.Entrypoint.Handler = "1x" }),
+-		"no code":          with(func(s *entity.DeploymentFunctionSource) { s.Code.Inline = nil }),
++		"typescript":       with(func(s *entity.DeploymentFunctionSource) { s.Entrypoint.File = "src/index.ts" }),
++		"typescript in python": with(func(s *entity.DeploymentFunctionSource) {
++			s.Runtime, s.Entrypoint.File = base.FunctionRuntimePython313, "index.ts"
++		}),
++		"handler": with(func(s *entity.DeploymentFunctionSource) { s.Entrypoint.Handler = "1x" }),
++		"no code": with(func(s *entity.DeploymentFunctionSource) { s.Code.Inline = nil }),
+ 		"both codes": with(func(s *entity.DeploymentFunctionSource) {
+ 			s.Code.Repo = repoSource("https://github.com/acme/fns.git").Code.Repo
+ 		}),
+@@ -94,3 +98,13 @@ func TestAnImportedFunctionSourceIsCheckedAsTheAPIChecksIt(t *testing.T) {
+ 		assert.Equal(t, apiRefuses, len(problems) > 0, "%s: problems %v", name, problems)
+ 	}
+ }
++
++// A Node.js function written in TypeScript is imported as the API takes it.
++func TestAnImportedTypeScriptFunctionIsValid(t *testing.T) {
++	source := inlineSource(&entity.FunctionFile{Path: "index.ts", Content: "export default () => ({})"})
++	source.Entrypoint.File = "index.ts"
++
++	normalizeFunctionSource(source)
++
++	assert.Empty(t, functionSourceProblems(source))
++}
+diff --git a/hivepaas_app/usecase/appsettingsuc/appsettingsdto/deployment_function_source_test.go b/hivepaas_app/usecase/appsettingsuc/appsettingsdto/deployment_function_source_test.go
+index 437dd593..c71a8f52 100644
+--- a/hivepaas_app/usecase/appsettingsuc/appsettingsdto/deployment_function_source_test.go
++++ b/hivepaas_app/usecase/appsettingsuc/appsettingsdto/deployment_function_source_test.go
+@@ -96,6 +96,20 @@ func TestAFunctionSourceOfEachRuntimeIsValid(t *testing.T) {
+ 	}
+ }
+ 
++// Node.js 24 runs TypeScript by removing its types: a handler's file may be
++// TypeScript there, and nowhere else.
++func TestANodeJSHandlerMayBeTypeScript(t *testing.T) {
++	for _, entrypoint := range []string{"index.ts", "src/handler.mts", "main.cts"} {
++		req := inlineSource(base.FunctionRuntimeNode24, file(entrypoint, "export default () => ({})"))
++		req.Entrypoint.File = entrypoint
++		assert.Empty(t, errorsOf(req), entrypoint)
++	}
++
++	req := inlineSource(base.FunctionRuntimePython313, file("index.ts", ""))
++	req.Entrypoint.File = "index.ts"
++	assert.Equal(t, []string{"functionSource.entrypoint.file: ERR_VLD_FUNCTION_ENTRYPOINT_INVALID"}, errorsOf(req))
++}
++
+ func TestAFunctionSourceThatCannotBeRunIsRefused(t *testing.T) {
+ 	big := strings.Repeat("x", int(unit.MB)/2+1)
+ 	manyFiles := make([]*FunctionFileReq, 0, 101)

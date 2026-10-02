@@ -1,0 +1,89 @@
+diff --git a/conformance/conformance_test.go b/conformance/conformance_test.go
+index 2d3358e..71e5fc5 100644
+--- a/conformance/conformance_test.go
++++ b/conformance/conformance_test.go
+@@ -25,11 +25,13 @@ type runtimeDef struct {
+ 	// compiled runtimes build the function in a build image of their own, and
+ 	// load nothing when they start: a handler that is missing fails the build.
+ 	compiled bool
++	// typeScript is how the runtime runs a TypeScript handler.
++	typeScript typeScript
+ }
+ 
+ var runtimes = []runtimeDef{
+ 	{name: "go127", compiled: true},
+-	{name: "node24"},
++	{name: "node24", typeScript: typesRemoved},
+ 	{name: "python313"},
+ }
+ 
+@@ -40,6 +42,9 @@ func TestConformance(t *testing.T) {
+ 			t.Run("image", func(t *testing.T) { checkImages(t, imgs) })
+ 			t.Run("serve", func(t *testing.T) { checkServe(t, rt, imgs) })
+ 			t.Run("invoke", func(t *testing.T) { checkInvoke(t, rt, imgs) })
++			if rt.typeScript != noTypeScript {
++				t.Run("typescript", func(t *testing.T) { checkTypeScript(t, rt, imgs) })
++			}
+ 		})
+ 	}
+ }
+diff --git a/conformance/typescript_test.go b/conformance/typescript_test.go
+new file mode 100644
+index 0000000..1c5fd7b
+--- /dev/null
++++ b/conformance/typescript_test.go
+@@ -0,0 +1,54 @@
++//go:build conformance
++
++package conformance
++
++import (
++	"strings"
++	"testing"
++)
++
++// typeScript is how a runtime runs TypeScript.
++type typeScript int
++
++const (
++	// noTypeScript: the runtime runs no TypeScript.
++	noTypeScript typeScript = iota
++	// typesRemoved: the types are removed as a file loads, and syntax that
++	// cannot be removed - an enum - cannot be loaded.
++	typesRemoved
++)
++
++// checkTypeScript calls the fixture's TypeScript handler, typed.ts, through
++// serve and invoke: it imports a file of its own and a type, with their
++// extensions.
++func checkTypeScript(t *testing.T, rt runtimeDef, imgs images) {
++	const want = `{"hello":"Ada"}`
++
++	t.Run("a TypeScript handler, served", func(t *testing.T) {
++		c := startServe(t, imgs.fixture, "HP_FN_ENTRYPOINT=typed.ts")
++
++		if r := c.get(t, "/?name=Ada"); r.status != 200 || !sameBody(r.body, []byte(want)) {
++			t.Errorf("%d %q", r.status, r.body)
++		}
++	})
++
++	t.Run("a TypeScript handler, invoked", func(t *testing.T) {
++		r := invoke(t, imgs.fixture, `{"query":{"name":["Ada"]}}`, "HP_FN_ENTRYPOINT=typed.ts")
++
++		if res := parseResult(t, r); res.Status != 200 || !sameBody(res.body(t), []byte(want)) {
++			t.Errorf("result %+v\n%s", res, lastLines(r.stderr))
++		}
++	})
++
++	if rt.typeScript == typesRemoved {
++		t.Run("an enum cannot be loaded: the types are only removed", func(t *testing.T) {
++			r := invoke(t, imgs.fixture, `{}`, "HP_FN_ENTRYPOINT=enum.ts")
++
++			// Node.js names the syntax it cannot remove.
++			if r.code != 3 || !strings.Contains(r.stderr, "the handler could not be loaded") ||
++				!strings.Contains(r.stderr, "ERR_UNSUPPORTED_TYPESCRIPT_SYNTAX") {
++				t.Errorf("exit %d\n%s", r.code, lastLines(r.stderr))
++			}
++		})
++	}
++}

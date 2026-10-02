@@ -1,0 +1,324 @@
+diff --git a/src/application/modules/projects/dialogs/create-function/form/create-function.form.com.tsx b/src/application/modules/projects/dialogs/create-function/form/create-function.form.com.tsx
+index 1dbe487d..68ee2e2d 100644
+--- a/src/application/modules/projects/dialogs/create-function/form/create-function.form.com.tsx
++++ b/src/application/modules/projects/dialogs/create-function/form/create-function.form.com.tsx
+@@ -12,8 +12,15 @@ import {
+     OptionCardGroup,
+     ProjectEnvBadge,
+ } from "~/projects/module-shared/components";
+-import { FUNCTION_TEMPLATES } from "~/projects/module-shared/constants";
+-import { ALL_FUNCTION_RUNTIMES, EFunctionRuntime, FUNCTION_RUNTIME_LABELS } from "~/projects/module-shared/enums";
++import { functionTemplateOf } from "~/projects/module-shared/constants";
++import {
++    ALL_FUNCTION_RUNTIMES,
++    EFunctionLanguage,
++    EFunctionRuntime,
++    FUNCTION_LANGUAGE_LABELS,
++    FUNCTION_RUNTIMES_WITH_LANGUAGES,
++    FUNCTION_RUNTIME_LABELS,
++} from "~/projects/module-shared/enums";
+ 
+ import { InfoBlock, LabelWithInfo } from "@application/shared/components";
+ import { getDefaultDomain } from "@application/shared/utils/domain";
+@@ -78,6 +85,7 @@ export function CreateFunctionForm({
+             name: "",
+             env: defaultEnv,
+             runtime: EFunctionRuntime.Node24,
++            language: EFunctionLanguage.JavaScript,
+             codeSource: EFunctionCodeSource.Template,
+             repoUrl: "",
+             repoRef: "",
+@@ -96,6 +104,8 @@ export function CreateFunctionForm({
+ 
+     const selectedEnvName = watch("env");
+     const runtime = watch("runtime") as EFunctionRuntime;
++    const language = watch("language");
++    const hasLanguages = FUNCTION_RUNTIMES_WITH_LANGUAGES.includes(runtime);
+     const codeSource = watch("codeSource");
+     const selectedEnv = envs.find(env => env.name === selectedEnvName);
+ 
+@@ -110,6 +120,7 @@ export function CreateFunctionForm({
+     const { field: name } = useController({ name: "name", control });
+     const { field: env } = useController({ name: "env", control });
+     const { field: runtimeField } = useController({ name: "runtime", control });
++    const { field: languageField } = useController({ name: "language", control });
+     const { field: codeSourceField } = useController({ name: "codeSource", control });
+     const { field: repoUrl } = useController({ name: "repoUrl", control });
+     const { field: repoRef } = useController({ name: "repoRef", control });
+@@ -287,6 +298,42 @@ export function CreateFunctionForm({
+                         </FieldGroup>
+                     </InfoBlock>
+ 
++                    {hasLanguages && (
++                        <InfoBlock
++                            titleWidth={150}
++                            title={
++                                <LabelWithInfo
++                                    label="Language"
++                                    content="Node.js runs TypeScript by removing its types: they are not checked, and enum and namespace are not allowed."
++                                />
++                            }
++                        >
++                            <FieldGroup>
++                                <Field>
++                                    <Select
++                                        value={languageField.value}
++                                        onValueChange={languageField.onChange}
++                                        disabled={readOnly}
++                                    >
++                                        <SelectTrigger>
++                                            <SelectValue />
++                                        </SelectTrigger>
++                                        <SelectContent>
++                                            {Object.values(EFunctionLanguage).map(item => (
++                                                <SelectItem
++                                                    key={item}
++                                                    value={item}
++                                                >
++                                                    {FUNCTION_LANGUAGE_LABELS[item]}
++                                                </SelectItem>
++                                            ))}
++                                        </SelectContent>
++                                    </Select>
++                                </Field>
++                            </FieldGroup>
++                        </InfoBlock>
++                    )}
++
+                     <InfoBlock
+                         titleWidth={150}
+                         title={<LabelWithInfo label="Code" />}
+@@ -303,7 +350,7 @@ export function CreateFunctionForm({
+                                 {codeSource === EFunctionCodeSource.Template && (
+                                     <p className="text-xs text-muted-foreground">
+                                         Starts with{" "}
+-                                        {FUNCTION_TEMPLATES[runtime].map(file => (
++                                        {functionTemplateOf(runtime, language).files.map(file => (
+                                             <code
+                                                 key={file.path}
+                                                 className="mr-1 rounded bg-muted px-1"
+diff --git a/src/application/modules/projects/dialogs/create-function/schemas/create-function.form.schema.ts b/src/application/modules/projects/dialogs/create-function/schemas/create-function.form.schema.ts
+index 9f7147b1..50546426 100644
+--- a/src/application/modules/projects/dialogs/create-function/schemas/create-function.form.schema.ts
++++ b/src/application/modules/projects/dialogs/create-function/schemas/create-function.form.schema.ts
+@@ -1,7 +1,12 @@
+ import { z } from "zod";
+ import { type FunctionSourcePayload } from "~/projects/api/services";
+-import { FUNCTION_TEMPLATES } from "~/projects/module-shared/constants";
+-import { ALL_FUNCTION_RUNTIMES, ERepoType } from "~/projects/module-shared/enums";
++import { functionTemplateOf } from "~/projects/module-shared/constants";
++import {
++    ALL_FUNCTION_RUNTIMES,
++    EFunctionLanguage,
++    type EFunctionRuntime,
++    ERepoType,
++} from "~/projects/module-shared/enums";
+ import { functionFilePathProblem } from "~/projects/module-shared/utils";
+ 
+ /**
+@@ -47,6 +52,8 @@ const CreateFunctionFormSchemaBase = z.object({
+     // A function is created in an env: it is deployed as soon as it exists.
+     env: z.string().min(1, "Environment is required").max(50, "Environment must be at most 50 characters"),
+     runtime: z.enum(ALL_FUNCTION_RUNTIMES as [string, ...string[]]),
++    /** For a runtime that takes either language: the template and the entrypoint. */
++    language: z.nativeEnum(EFunctionLanguage),
+     codeSource: z.nativeEnum(EFunctionCodeSource),
+     repoUrl: z.string().trim(),
+     repoRef: z.string().trim(),
+@@ -100,18 +107,21 @@ export type CreateFunctionFormInput = z.input<ReturnType<typeof createCreateFunc
+ export type CreateFunctionFormOutput = z.output<ReturnType<typeof createCreateFunctionFormSchema>>;
+ 
+ /**
+- * What a function is created from, by the form: the runtime's template, or the
+- * repository. What the form leaves out - the entrypoint, the limits - the
+- * backend fills in with the runtime's defaults.
++ * What a function is created from, by the form: the template of its runtime and
++ * language, or the repository. What the form leaves out - the entrypoint of
++ * JavaScript, the limits - the backend fills in with the runtime's defaults; a
++ * TypeScript function's entrypoint is the template's, index.ts, from a
++ * repository too.
+  */
+ export function createFunctionSource(values: CreateFunctionFormOutput): FunctionSourcePayload {
+-    const runtime = values.runtime as keyof typeof FUNCTION_TEMPLATES;
++    const runtime = values.runtime as EFunctionRuntime;
+     const fromRepository = values.codeSource === EFunctionCodeSource.Repository;
++    const template = functionTemplateOf(runtime, values.language);
+ 
+     return {
+         runtime,
+         contract: "",
+-        entrypoint: { file: "", handler: "" },
++        entrypoint: { file: template.entrypoint, handler: "" },
+         code: fromRepository
+             ? {
+                   repo: {
+@@ -124,7 +134,7 @@ export function createFunctionSource(values: CreateFunctionFormOutput): Function
+                   dir: values.dir,
+               }
+             : {
+-                  inline: { files: FUNCTION_TEMPLATES[runtime] },
++                  inline: { files: template.files },
+                   dir: "",
+               },
+         systemPackages: [],
+diff --git a/src/application/modules/projects/module-shared/components/function-code-editor/function-code-editor.com.tsx b/src/application/modules/projects/module-shared/components/function-code-editor/function-code-editor.com.tsx
+index e5922f86..a6d95ee9 100644
+--- a/src/application/modules/projects/module-shared/components/function-code-editor/function-code-editor.com.tsx
++++ b/src/application/modules/projects/module-shared/components/function-code-editor/function-code-editor.com.tsx
+@@ -4,6 +4,7 @@ import Prism from "prismjs";
+ import "prismjs/components/prism-go";
+ import "prismjs/components/prism-json";
+ import "prismjs/components/prism-python";
++import "prismjs/components/prism-typescript";
+ import "prismjs/themes/prism-tomorrow.css";
+ import Editor from "react-simple-code-editor";
+ 
+@@ -23,7 +24,7 @@ function highlight(code: string, language: CodeLanguage): string {
+ 
+ /**
+  * An editor for one file of a function's code, highlighted after its extension:
+- * JavaScript, Python, Go, JSON.
++ * JavaScript, TypeScript, Python, Go, JSON.
+  */
+ export function FunctionCodeEditor({ path, value, onChange, readOnly = false }: Props) {
+     const generatedId = useId();
+diff --git a/src/application/modules/projects/module-shared/constants/function-templates.constants.ts b/src/application/modules/projects/module-shared/constants/function-templates.constants.ts
+index 912e19fc..2d59b58e 100644
+--- a/src/application/modules/projects/module-shared/constants/function-templates.constants.ts
++++ b/src/application/modules/projects/module-shared/constants/function-templates.constants.ts
+@@ -1,6 +1,6 @@
+ import { type FunctionFile } from "~/projects/domain";
+ 
+-import { EFunctionRuntime } from "../enums";
++import { EFunctionLanguage, EFunctionRuntime } from "../enums";
+ 
+ /**
+  * The code a new function starts from, per runtime: a handler that answers
+@@ -74,3 +74,69 @@ func Handle(ctx context.Context, req *hivepaas.Request) (*hivepaas.Response, err
+         },
+     ],
+ };
++
++/**
++ * A Node.js function in TypeScript: Node.js removes the types as it loads the
++ * file, so the handler's request, context and response are typed in it.
++ */
++export const FUNCTION_TYPESCRIPT_TEMPLATE: FunctionFile[] = [
++    {
++        path: "package.json",
++        content: `{
++  "type": "module"
++}
++`,
++    },
++    {
++        path: "index.ts",
++        content: `// A function answers one request: it returns { status, headers, body }.
++// A body that is an object is sent as JSON. Node.js runs this file by
++// removing its types: they are not checked, and syntax that cannot be
++// removed - enum, namespace - is not allowed.
++interface Request {
++    method: string;
++    path: string;
++    query: Record<string, string | undefined>;
++    queryAll: Record<string, string[] | undefined>;
++    headers: Record<string, string | undefined>;
++    body: Buffer;
++    text(): string;
++    json(): unknown;
++}
++
++interface Context {
++    requestId: string;
++    deadline: number;
++    signal: AbortSignal;
++    log(...args: unknown[]): void;
++}
++
++interface Response {
++    status?: number;
++    headers?: Record<string, string | string[]>;
++    body?: unknown;
++}
++
++export default async function (req: Request, ctx: Context): Promise<Response> {
++    ctx.log(\`\${req.method} \${req.path}\`);
++    const name = req.query.name ?? "world";
++
++    return { status: 200, body: { hello: name } };
++}
++`,
++    },
++];
++
++/**
++ * What a new function starts from: its files and its entrypoint, empty for the
++ * runtime's default. TypeScript is for the runtimes that take either language.
++ */
++export function functionTemplateOf(
++    runtime: EFunctionRuntime,
++    language: EFunctionLanguage,
++): { files: FunctionFile[]; entrypoint: string } {
++    if (language === EFunctionLanguage.TypeScript && runtime === EFunctionRuntime.Node24) {
++        return { files: FUNCTION_TYPESCRIPT_TEMPLATE, entrypoint: "index.ts" };
++    }
++    return { files: FUNCTION_TEMPLATES[runtime], entrypoint: "" };
++}
+diff --git a/src/application/modules/projects/module-shared/enums/e.function-runtime.ts b/src/application/modules/projects/module-shared/enums/e.function-runtime.ts
+index 90b494ff..b54a8d8a 100644
+--- a/src/application/modules/projects/module-shared/enums/e.function-runtime.ts
++++ b/src/application/modules/projects/module-shared/enums/e.function-runtime.ts
+@@ -15,6 +15,27 @@ export const ALL_FUNCTION_RUNTIMES: EFunctionRuntime[] = [
+     EFunctionRuntime.Go127,
+ ];
+ 
++/**
++ * The language a Node.js function is written in. Node.js runs TypeScript by
++ * removing its types as it loads a file.
++ */
++export const EFunctionLanguage = {
++    JavaScript: "javascript",
++    TypeScript: "typescript",
++} as const;
++
++export type EFunctionLanguage = (typeof EFunctionLanguage)[keyof typeof EFunctionLanguage];
++
++export const FUNCTION_LANGUAGE_LABELS: Record<EFunctionLanguage, string> = {
++    [EFunctionLanguage.JavaScript]: "JavaScript",
++    [EFunctionLanguage.TypeScript]: "TypeScript",
++};
++
++/**
++ * The runtimes whose functions may be written in either language.
++ */
++export const FUNCTION_RUNTIMES_WITH_LANGUAGES: EFunctionRuntime[] = [EFunctionRuntime.Node24];
++
+ export const FUNCTION_RUNTIME_LABELS: Record<EFunctionRuntime, string> = {
+     [EFunctionRuntime.Node24]: "Node.js 24",
+     [EFunctionRuntime.Python313]: "Python 3.13",
+diff --git a/src/application/modules/projects/module-shared/utils/function-source.utils.ts b/src/application/modules/projects/module-shared/utils/function-source.utils.ts
+index cc0de16f..0a841b84 100644
+--- a/src/application/modules/projects/module-shared/utils/function-source.utils.ts
++++ b/src/application/modules/projects/module-shared/utils/function-source.utils.ts
+@@ -36,7 +36,7 @@ export function functionFilePathProblem(path: string, takenPaths: string[]): str
+     return null;
+ }
+ 
+-export type CodeLanguage = "javascript" | "python" | "go" | "json" | "plain";
++export type CodeLanguage = "javascript" | "typescript" | "python" | "go" | "json" | "plain";
+ 
+ /**
+  * The language a file of a function is highlighted as, by its extension.
+@@ -47,8 +47,11 @@ export function languageOfPath(path: string): CodeLanguage {
+         case "js":
+         case "mjs":
+         case "cjs":
+-        case "ts":
+             return "javascript";
++        case "ts":
++        case "mts":
++        case "cts":
++            return "typescript";
+         case "py":
+             return "python";
+         case "go":

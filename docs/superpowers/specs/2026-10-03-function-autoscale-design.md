@@ -142,5 +142,12 @@ The function's **Settings → Availability & Scaling**, an **Autoscale** section
    listing every function it scaled - the history per function filters its
    output by app.
 2. The settings section, the paused state, the replicas on the Metrics tab and
-   the history; MCP; docs.
+   the history; MCP; docs. **Done**. As built: the section has its own Save, as
+   it has its own endpoint; it cannot be turned on while the logs cannot be
+   read, and says it is paused for a function not in Replicated mode; saving
+   the service's settings keeps an autoscaled function's replicas; the history
+   is the job's saved tasks whose output names the function (`@>` on the JSON),
+   the last 20 of a week; the Metrics tab's replicas over the range are rebuilt
+   from those scalings and the count now; MCP reads and updates it as the
+   `autoscale` kind of the app settings tools.
 3. Later: other apps, from Traefik's requests and the agent's CPU rows.

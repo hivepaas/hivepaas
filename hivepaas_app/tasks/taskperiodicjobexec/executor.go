@@ -8,6 +8,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/logging"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/safego"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/functionautoscaleservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/healthcheckservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/tasks/queue"
 )
@@ -16,7 +17,8 @@ type Executor struct {
 	logger logging.Logger
 	db     *database.DB
 
-	healthcheckService healthcheckservice.Service
+	healthcheckService       healthcheckservice.Service
+	functionAutoscaleService functionautoscaleservice.Service
 }
 
 func NewExecutor(
@@ -25,12 +27,14 @@ func NewExecutor(
 	taskQueue queue.TaskQueue,
 
 	healthcheckService healthcheckservice.Service,
+	functionAutoscaleService functionautoscaleservice.Service,
 ) *Executor {
 	e := &Executor{
 		logger: logger,
 		db:     db,
 
-		healthcheckService: healthcheckService,
+		healthcheckService:       healthcheckService,
+		functionAutoscaleService: functionAutoscaleService,
 	}
 	taskQueue.RegisterPeriodicExecutor(e.execute)
 	return e
@@ -56,6 +60,10 @@ func (e *Executor) execute(
 			Healthcheck:      execData.PeriodicSetting.MustAsPeriodicJob().Healthcheck,
 		})
 		if err != nil {
+			return hperrors.Wrap(err)
+		}
+	case base.PeriodicKindFunctionAutoscale:
+		if err = e.functionAutoscaleService.Run(ctx, execData); err != nil {
 			return hperrors.Wrap(err)
 		}
 	default:

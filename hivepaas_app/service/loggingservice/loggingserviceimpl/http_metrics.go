@@ -9,6 +9,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/appservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/loggingservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/traefikservice"
 	"github.com/hivepaas/hivepaas/services/logging"
@@ -112,6 +113,30 @@ func (s *service) ResourceMetrics(
 	}
 	resp.Buckets = everyResourceStep(resp.Buckets, q.Start, q.End, q.Step)
 	return resp, nil
+}
+
+// FunctionLoad implements loggingservice.Service. The calls are each
+// function's by the app identity the daemon wrote into its lines.
+func (s *service) FunctionLoad(
+	ctx context.Context,
+	db database.IDB,
+	appIDs []string,
+	start, end time.Time,
+) (map[string]*logging.InvocationLoad, error) {
+	if len(appIDs) == 0 {
+		return map[string]*logging.InvocationLoad{}, nil
+	}
+	backend, err := s.queryBackend(ctx, db)
+	if err != nil {
+		return nil, hperrors.Wrap(err)
+	}
+	resp, err := backend.InvocationLoad(ctx, &logging.InvocationLoadReq{
+		Field: vlagent.AttrField(appservice.LabelLogAppID), AppIDs: appIDs, Start: start, End: end,
+	})
+	if err != nil {
+		return nil, hperrors.Wrap(err)
+	}
+	return resp.ByApp, nil
 }
 
 // everyResourceStep is everyStep for usage.

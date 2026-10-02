@@ -379,3 +379,28 @@ type ResourceStatsResp struct {
 	Buckets    []*ResourceBucket
 	Containers []*ResourceContainer
 }
+
+// InvocationLoadReq asks how busy functions were over [Start, End): their
+// invocation lines, by the app identity in Field the daemon wrote into them.
+type InvocationLoadReq struct {
+	Field  string
+	AppIDs []string
+	Start  time.Time
+	End    time.Time
+}
+
+// InvocationLoad is one function's calls that ended in the range: the time
+// they took, summed, in milliseconds - divided by the range, the calls it had
+// in flight on average - how many, and how many it turned away for having
+// Concurrency calls already ("throttled").
+type InvocationLoad struct {
+	BusyMs    float64
+	Calls     int64
+	Throttled int64
+}
+
+// InvocationLoadResp is each function's load, by app id; one with no call in
+// the range is not in it.
+type InvocationLoadResp struct {
+	ByApp map[string]*InvocationLoad
+}

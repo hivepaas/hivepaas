@@ -14,7 +14,9 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/dockerapiservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/domainservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/envvarservice"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/functionautoscaleservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/hpappservice"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/loggingservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/networkservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/placementservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/settingservice"
@@ -42,7 +44,9 @@ type UC struct {
 	dockerAPIService     dockerapiservice.Service
 	domainService        domainservice.Service
 	envVarService        envvarservice.Service
+	functionAutoscale    functionautoscaleservice.Service
 	hpAppService         hpappservice.Service
+	loggingService       loggingservice.Service
 	networkService       networkservice.Service
 	placementService     placementservice.Service
 	settingService       settingservice.Service
@@ -71,7 +75,9 @@ func New(
 	dockerAPIService dockerapiservice.Service,
 	domainService domainservice.Service,
 	envVarService envvarservice.Service,
+	functionAutoscale functionautoscaleservice.Service,
 	hpAppService hpappservice.Service,
+	loggingService loggingservice.Service,
 	networkService networkservice.Service,
 	placementService placementservice.Service,
 	settingService settingservice.Service,
@@ -99,7 +105,9 @@ func New(
 		dockerAPIService:     dockerAPIService,
 		domainService:        domainService,
 		envVarService:        envVarService,
+		functionAutoscale:    functionAutoscale,
 		hpAppService:         hpAppService,
+		loggingService:       loggingService,
 		networkService:       networkService,
 		placementService:     placementService,
 		settingService:       settingService,

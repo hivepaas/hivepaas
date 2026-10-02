@@ -71,6 +71,7 @@ var importPolicies = map[base.SettingType]importPolicy{
 
 	base.SettingTypeSchedJob:            {skip: reasonSchedulesTasks},
 	base.SettingTypePeriodicJob:         {skip: reasonSchedulesTasks},
+	base.SettingTypeAppAutoscale:        {skip: reasonSchedulesTasks},
 	base.SettingTypeAppDockerAPI:        {skip: reasonGrantsDockerAPI},
 	base.SettingTypeAppSettingMount:     {skip: reasonMountsSettings},
 	base.SettingTypeBackupRepoCleanup:   {skip: reasonSchedulesTasks},

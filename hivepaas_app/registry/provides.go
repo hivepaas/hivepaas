@@ -73,6 +73,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/emailservice/emailserviceimpl"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/envvarservice/envvarserviceimpl"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/fileservice/fileserviceimpl"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/functionautoscaleservice/functionautoscaleserviceimpl"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/functionservice/functionserviceimpl"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/getstartedservice/getstartedserviceimpl"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/healthcheckservice/healthcheckserviceimpl"
@@ -406,6 +407,7 @@ var Provides = []any{
 	loggingserviceimpl.New,
 	registryserviceimpl.New,
 	registryauthserviceimpl.New,
+	functionautoscaleserviceimpl.New,
 	systemappserviceimpl.New,
 	attentionserviceimpl.New,
 	networkserviceimpl.New,

@@ -191,6 +191,7 @@ var (
 	_ = registerDefaultSpecPolicies(
 		base.SettingTypeAccessToken,
 		base.SettingTypeAcmeDnsProvider,
+		base.SettingTypeAppAutoscale,
 		base.SettingTypeAppClone,
 		base.SettingTypeAppDeployment,
 		base.SettingTypeAppDockerAPI,

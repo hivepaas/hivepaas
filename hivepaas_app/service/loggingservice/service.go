@@ -2,6 +2,7 @@ package loggingservice
 
 import (
 	"context"
+	"time"
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
@@ -53,4 +54,10 @@ type Service interface {
 	// agent's identity and the app's id are put into the query here.
 	ResourceMetrics(ctx context.Context, db database.IDB, app *entity.App,
 		q *FunctionMetricsQuery) (*logging.ResourceStatsResp, error)
+
+	// FunctionLoad says how busy functions were over [start, end), by app id,
+	// in one query: what autoscale decides from. It fails, rather than answer
+	// nothing, when the logs cannot be read: no data is not no load.
+	FunctionLoad(ctx context.Context, db database.IDB, appIDs []string,
+		start, end time.Time) (map[string]*logging.InvocationLoad, error)
 }

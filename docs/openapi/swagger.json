@@ -15464,6 +15464,146 @@
         "x-codegen-request-body-name" : "body"
       }
     },
+    "/projects/{projectID}/{projectEnv}/apps/{appID}/autoscale" : {
+      "get" : {
+        "description" : "Gets a function's autoscale: on or off, its minimum and maximum replicas, the share of an\ninstance's Concurrency it keeps busy (target, percent) and how long its load stays low before it\nscales in; its replicas now; and, when on but unable to act, why it is paused - its calls, read\nfrom its stored logs, cannot be read.",
+        "operationId" : "getAppAutoscale",
+        "parameters" : [ {
+          "description" : "project ID",
+          "in" : "path",
+          "name" : "projectID",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "project env",
+          "in" : "path",
+          "name" : "projectEnv",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "app ID",
+          "in" : "path",
+          "name" : "appID",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/appsettingsdto.GetAppAutoscaleResp"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "400" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Bad Request"
+          },
+          "500" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Internal Server Error"
+          }
+        },
+        "summary" : "Gets a function's autoscale",
+        "tags" : [ "App settings" ]
+      },
+      "put" : {
+        "description" : "Updates a function's autoscale. Turning it on needs its stored logs, which it reads its calls\nfrom; it brings the function within its bounds at once, a stopped function staying stopped.\nTurning it off leaves the replicas as they are.",
+        "operationId" : "updateAppAutoscale",
+        "parameters" : [ {
+          "description" : "project ID",
+          "in" : "path",
+          "name" : "projectID",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "project env",
+          "in" : "path",
+          "name" : "projectEnv",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "app ID",
+          "in" : "path",
+          "name" : "appID",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "*/*" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/appsettingsdto.UpdateAppAutoscaleReq"
+              }
+            }
+          },
+          "description" : "request data",
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/appsettingsdto.UpdateAppAutoscaleResp"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "400" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Bad Request"
+          },
+          "500" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Internal Server Error"
+          }
+        },
+        "summary" : "Updates a function's autoscale",
+        "tags" : [ "App settings" ],
+        "x-codegen-request-body-name" : "body"
+      }
+    },
     "/projects/{projectID}/{projectEnv}/apps/{appID}/backup-snapshots" : {
       "get" : {
         "description" : "Lists the snapshots of the backup repositories the scope sees, those of its apps and repositories\nthe caller may read, newest first",
@@ -49238,6 +49378,38 @@
         "required" : [ "mode" ],
         "type" : "object"
       },
+      "appsettingsdto.AppAutoscaleResp" : {
+        "properties" : {
+          "enabled" : {
+            "type" : "boolean"
+          },
+          "maxReplicas" : {
+            "type" : "integer"
+          },
+          "minReplicas" : {
+            "type" : "integer"
+          },
+          "paused" : {
+            "description" : "Paused is why autoscale cannot act: its calls cannot be read (a reason\nof the logs' history, such as disabled).",
+            "type" : "string"
+          },
+          "replicas" : {
+            "description" : "Replicas is the function's now; 0 when it is stopped.",
+            "type" : "integer"
+          },
+          "scaleInDelay" : {
+            "type" : "string"
+          },
+          "target" : {
+            "type" : "integer"
+          },
+          "updateVer" : {
+            "type" : "integer"
+          }
+        },
+        "required" : [ "enabled", "maxReplicas", "minReplicas", "paused", "replicas", "scaleInDelay", "target", "updateVer" ],
+        "type" : "object"
+      },
       "appsettingsdto.AppCloneRoutingDomainSettingsReq" : {
         "properties" : {
           "sourceDomain" : {
@@ -50701,6 +50873,18 @@
         "required" : [ "kind", "value" ],
         "type" : "object"
       },
+      "appsettingsdto.GetAppAutoscaleResp" : {
+        "properties" : {
+          "data" : {
+            "$ref" : "#/components/schemas/appsettingsdto.AppAutoscaleResp"
+          },
+          "meta" : {
+            "$ref" : "#/components/schemas/basedto.Meta"
+          }
+        },
+        "required" : [ "data", "meta" ],
+        "type" : "object"
+      },
       "appsettingsdto.GetAppCloneSettingsResp" : {
         "properties" : {
           "data" : {
@@ -52043,6 +52227,39 @@
             "type" : "integer"
           }
         },
+        "type" : "object"
+      },
+      "appsettingsdto.UpdateAppAutoscaleReq" : {
+        "properties" : {
+          "enabled" : {
+            "type" : "boolean"
+          },
+          "maxReplicas" : {
+            "type" : "integer"
+          },
+          "minReplicas" : {
+            "type" : "integer"
+          },
+          "scaleInDelay" : {
+            "type" : "string"
+          },
+          "target" : {
+            "type" : "integer"
+          },
+          "updateVer" : {
+            "type" : "integer"
+          }
+        },
+        "required" : [ "enabled", "maxReplicas", "minReplicas", "scaleInDelay", "target", "updateVer" ],
+        "type" : "object"
+      },
+      "appsettingsdto.UpdateAppAutoscaleResp" : {
+        "properties" : {
+          "meta" : {
+            "$ref" : "#/components/schemas/basedto.Meta"
+          }
+        },
+        "required" : [ "meta" ],
         "type" : "object"
       },
       "appsettingsdto.UpdateAppCloneSettingsReq" : {

@@ -12,6 +12,8 @@ type Backend interface {
 	HTTPStats(ctx context.Context, req *HTTPStatsReq) (*HTTPStatsResp, error)
 	// ResourceStats reads an app's containers' usage from the agent's rows.
 	ResourceStats(ctx context.Context, req *ResourceStatsReq) (*ResourceStatsResp, error)
+	// InvocationLoad says how busy functions were, all in one query.
+	InvocationLoad(ctx context.Context, req *InvocationLoadReq) (*InvocationLoadResp, error)
 	Ping(ctx context.Context) error
 }
 

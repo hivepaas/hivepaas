@@ -78,6 +78,10 @@ type (
 	ResourceUsage     = loggingmodel.ResourceUsage
 	ResourceBucket    = loggingmodel.ResourceBucket
 	ResourceContainer = loggingmodel.ResourceContainer
+
+	InvocationLoadReq  = loggingmodel.InvocationLoadReq
+	InvocationLoad     = loggingmodel.InvocationLoad
+	InvocationLoadResp = loggingmodel.InvocationLoadResp
 )
 
 // MaxQueryLimit caps how many lines one query returns.

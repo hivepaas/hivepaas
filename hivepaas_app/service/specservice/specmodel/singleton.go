@@ -18,6 +18,7 @@ import "github.com/hivepaas/hivepaas/hivepaas_app/base"
 // guards that distinction, because getting it wrong loses every row but one.
 var singletonBlockNames = map[base.SettingType]string{
 	base.SettingTypeApp:           "app",
+	base.SettingTypeAppAutoscale:  "autoscale",
 	base.SettingTypeAppClone:      "clone",
 	base.SettingTypeAppDeployment: "source", // lifted into deployment.source
 	base.SettingTypeAppDockerAPI:  "dockerApi",

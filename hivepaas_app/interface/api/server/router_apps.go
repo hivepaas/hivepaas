@@ -64,6 +64,8 @@ func (s *HTTPServer) registerAppRoutes(projectGroup, projectEnvGroup *gin.Router
 		appGroup.GET("/:appID/resource-settings", appSettingsHandler.GetAppResourceSettings)
 		appGroup.PUT("/:appID/resource-settings", appSettingsHandler.UpdateAppResourceSettings)
 		appGroup.GET("/:appID/docker-api-settings", appSettingsHandler.GetAppDockerAPISettings)
+		appGroup.GET("/:appID/autoscale", appSettingsHandler.GetAppAutoscale)
+		appGroup.PUT("/:appID/autoscale", appSettingsHandler.UpdateAppAutoscale)
 		appGroup.PUT("/:appID/docker-api-settings", appSettingsHandler.UpdateAppDockerAPISettings)
 		appGroup.GET("/:appID/storage-settings", appSettingsHandler.GetAppStorageSettings)
 		appGroup.PUT("/:appID/storage-settings", appSettingsHandler.UpdateAppStorageSettings)

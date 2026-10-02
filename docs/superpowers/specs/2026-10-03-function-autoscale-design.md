@@ -135,7 +135,12 @@ The function's **Settings → Availability & Scaling**, an **Autoscale** section
 
 1. The setting, the periodic job, the query and the decision, the service
    update and the saved tasks; tests against a fake swarm and a live
-   VictoriaLogs.
+   VictoriaLogs. **Done**, with `GET/PUT .../apps/{app}/autoscale`. As built:
+   the job's setting is made once and turned on and off by its status, not
+   removed; a function whose service lacks its log identity is passed over,
+   as its calls would read as none; a saved task is the job's, one a run,
+   listing every function it scaled - the history per function filters its
+   output by app.
 2. The settings section, the paused state, the replicas on the Metrics tab and
    the history; MCP; docs.
 3. Later: other apps, from Traefik's requests and the agent's CPU rows.

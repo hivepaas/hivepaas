@@ -111,7 +111,8 @@ type settingsAnswer struct {
 func getAppSettingsTool() Tool {
 	return readTool("get_app_settings", "Read an app's settings",
 		"Reads one kind of an app's settings, as the dashboard's page for it does: env-vars, deployment "+
-			"(its source: image, or repository and branch; and its command), routing (the container port, "+
+			"(its source: image, repository and branch, or a function's runtime, entrypoint and code; and its "+
+			"command), routing (the container port, "+
 			"whether the app is exposed, and its domains - HTTP ones, and the TCP ones that reach a database "+
 			"or cache from outside, each with its certificate, TLS passthrough and extraAlpnProtocols), "+
 			"service (replicas), network (published ports), resource (CPU and memory), container, storage "+

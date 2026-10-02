@@ -19,6 +19,7 @@ const (
 	templateURIPrefix = "hivepaas://templates/"
 	dockerAPIURI      = "hivepaas://docs/docker-api"
 	databasesURI      = "hivepaas://docs/databases"
+	functionsURI      = "hivepaas://docs/functions"
 	markdownMIME      = "text/markdown"
 
 	descPromptProject = "the project's key or name"
@@ -36,6 +37,12 @@ var dockerAPIGuide string
 //
 //go:embed docs/databases.md
 var databasesGuide string
+
+// functionsGuide is how a function is written and run - its runtimes, its
+// handler, its libraries and limits - as the function tools need it.
+//
+//go:embed docs/functions.md
+var functionsGuide string
 
 func addResources(s *mcpsdk.Server, deps *Deps) {
 	s.AddResourceTemplate(&mcpsdk.ResourceTemplate{
@@ -69,6 +76,18 @@ func addResources(s *mcpsdk.Server, deps *Deps) {
 	}, func(_ context.Context, req *mcpsdk.ReadResourceRequest) (*mcpsdk.ReadResourceResult, error) {
 		return &mcpsdk.ReadResourceResult{Contents: []*mcpsdk.ResourceContents{
 			{URI: req.Params.URI, MIMEType: markdownMIME, Text: databasesGuide},
+		}}, nil
+	})
+
+	s.AddResource(&mcpsdk.Resource{
+		URI:         functionsURI,
+		Name:        "functions",
+		Title:       "Functions on HivePaaS",
+		Description: "Writing a function's handler for each runtime, its libraries and limits, trying and watching it.",
+		MIMEType:    markdownMIME,
+	}, func(_ context.Context, req *mcpsdk.ReadResourceRequest) (*mcpsdk.ReadResourceResult, error) {
+		return &mcpsdk.ReadResourceResult{Contents: []*mcpsdk.ResourceContents{
+			{URI: req.Params.URI, MIMEType: markdownMIME, Text: functionsGuide},
 		}}, nil
 	})
 }
@@ -150,6 +169,7 @@ func addPrompts(s *mcpsdk.Server, a access) {
 
 	databasePrompts(s, a)
 	deployImagePrompt(s, a)
+	deployFunctionPrompt(s, a)
 }
 
 // deployImagePrompt is running an image of the person's own: an app created
@@ -195,6 +215,54 @@ func deployImagePrompt(s *mcpsdk.Server, a access) {
 		case a.serves(NeedWrite):
 			text += "Show me each plan, and apply it only once I agree. This key cannot deploy - that takes " +
 				"Execute: once it is set up, say so, and that the dashboard's Deploy starts it."
+		default:
+			text += changeEnding(a, "")
+		}
+		return userPrompt(text), nil
+	})
+}
+
+// deployFunctionPrompt is a function from code the model writes with the
+// person: tried before it is created, then created and deployed in one plan.
+func deployFunctionPrompt(s *mcpsdk.Server, a access) {
+	s.AddPrompt(&mcpsdk.Prompt{
+		Name:        "deploy_function",
+		Title:       "Deploy a function",
+		Description: "Writes a function with you, creates it on a runtime, deploys it and tries it.",
+		Arguments: []*mcpsdk.PromptArgument{
+			{Name: argProject, Description: descPromptProject, Required: true},
+			{Name: argEnv, Description: descPromptEnv, Required: true},
+			{Name: "what", Description: "what the function does, such as resizing an uploaded image", Required: true},
+			{Name: "runtime", Description: "node24, bun1, python313 or go127; left out, propose one"},
+			{Name: paramDomain, Description: "a domain to serve it at; left out, it is reached inside the project"},
+		},
+	}, func(_ context.Context, req *mcpsdk.GetPromptRequest) (*mcpsdk.GetPromptResult, error) {
+		args := req.Params.Arguments
+		runtime := "a runtime you propose and I agree to"
+		if args["runtime"] != "" {
+			runtime = args["runtime"]
+		}
+		domain := "no domain unless I give one"
+		if args[paramDomain] != "" {
+			domain = "the domain " + args[paramDomain]
+		}
+		text := "Write a function that " + args["what"] + ", and run it on HivePaaS in " + args[argProject] +
+			", env " + args[argEnv] + ", on " + runtime + ", with " + domain + ". Read the resource " +
+			functionsURI + " first: how a handler is written for each runtime.\n\n" +
+			"1. Write the code - every file, with the library manifest if it needs libraries - and show it " +
+			"to me.\n" +
+			"2. plan_create_function with the files. Once it is applied, list_app_deployments with the new " +
+			"id until its first deployment ends, and get_app_status that it runs.\n" +
+			"3. plan_test_run_function with a request that shows it working, and show me the answer and the " +
+			"log. When it fails, fix the code, test-run the fix with files, then save it with " +
+			"plan_update_app_settings, kind deployment, and deploy it with plan_redeploy_app.\n" +
+			"4. get_function_metrics and search_app_logs show how its calls go.\n\n"
+		switch {
+		case a.serves(NeedWrite) && a.serves(NeedExecute):
+			text += "Show me each plan, and apply it only once I agree."
+		case a.serves(NeedWrite):
+			text += "Show me each plan, and apply it only once I agree. This key cannot redeploy - that " +
+				"takes Execute: a fix is saved, and the dashboard's Deploy deploys it."
 		default:
 			text += changeEnding(a, "")
 		}

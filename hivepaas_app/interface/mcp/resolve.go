@@ -153,7 +153,7 @@ func resolveApp(ctx context.Context, call *Call, project, env, app string) (*app
 	if err != nil {
 		return nil, err
 	}
-	apps, err := listApps(ctx, call, ref, false)
+	apps, err := listApps(ctx, call, ref)
 	if err != nil {
 		return nil, err
 	}
@@ -168,11 +168,8 @@ func resolveApp(ctx context.Context, call *Call, project, env, app string) (*app
 
 // listApps asks the env's app list, as the caller: every app, those that
 // belong to another app included, the way a name may refer to any of them.
-func listApps(ctx context.Context, call *Call, ref *envRef, stats bool) ([]listedApp, error) {
+func listApps(ctx context.Context, call *Call, ref *envRef) ([]listedApp, error) {
 	query := url.Values{paramPageLimit: {strconv.Itoa(maxListed)}, "getChildApps": {paramTrue}}
-	if stats {
-		query.Set(paramGetStats, paramTrue)
-	}
 	var resp appdto.ListAppResp
 	if err := call.Get(ctx, ref.path("/apps"), query, &resp); err != nil {
 		return nil, err

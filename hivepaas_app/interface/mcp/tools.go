@@ -18,6 +18,8 @@ func Tools() []Tool {
 		planCancelDeploymentTool(),
 		planInstallAppTool(),
 		planCreateAppTool(),
+		planCreateFunctionTool(),
+		planTestRunFunctionTool(),
 		planUpdateAppSettingsTool(),
 		planUpdateProjectSettingsTool(),
 		planCreateSchedJobTool(),

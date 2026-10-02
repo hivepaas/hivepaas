@@ -52,16 +52,14 @@ func planCreateAppTool() Tool {
 			if err != nil {
 				return createAppPlan{}, nil, err
 			}
-			apps, err := listApps(ctx, call, ref, false)
+			apps, err := listApps(ctx, call, ref)
 			if err != nil {
 				return createAppPlan{}, nil, err
 			}
-			for _, a := range apps {
-				if strings.EqualFold(a.Name, name) || strings.EqualFold(a.Key, name) {
-					return createAppPlan{}, nil, &InputError{Message: fmt.Sprintf(
-						"%s/%s has an app named %s already (%s): choose another name, or change that one",
-						ref.ProjectKey, ref.Env, name, a.Key)}
-				}
+			if a := appNamed(apps, name); a != nil {
+				return createAppPlan{}, nil, &InputError{Message: fmt.Sprintf(
+					"%s/%s has an app named %s already (%s): choose another name, or change that one",
+					ref.ProjectKey, ref.Env, name, a.Key)}
 			}
 
 			body := &appdto.AppBaseReq{Name: name, Status: base.AppStatusActive, Note: in.Note, Tags: in.Tags}

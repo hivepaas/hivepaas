@@ -75,7 +75,7 @@ func getEnvLinkSuggestionsTool() Tool {
 			if err != nil {
 				return nil, err
 			}
-			apps, err := listApps(ctx, call, ref, false)
+			apps, err := listApps(ctx, call, ref)
 			if err != nil {
 				return nil, err
 			}

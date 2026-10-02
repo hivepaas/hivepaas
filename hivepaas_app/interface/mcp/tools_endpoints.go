@@ -161,6 +161,19 @@ func getEndpoints() []getEndpoint { //nolint:funlen // a table
 			answer: func() any { return &appdto.GetAppLogHistoryResp{} },
 		},
 		{
+			name: "get_function_metrics", title: "Get a function's calls",
+			description: "GET /projects/{project}/{env}/apps/{app}/function-metrics. A function's calls over a " +
+				"range ending now, counted from the line its runtime logs for every call: how many, how many " +
+				"failed (an outcome other than ok), how many its handler answered 5xx, and its duration's p50, " +
+				"p95 and p99 in milliseconds - close, not exact - in totals, by outcome, and as series, a point " +
+				"per step, oldest first. available is false, with a reason, when its logs cannot be read: the " +
+				"app's logging feature off, or the logging stack not running. Only a function has them.",
+			paths:  map[under]string{underApp: "/function-metrics"},
+			query:  &appdto.GetFunctionMetricsReq{},
+			params: map[string]string{"range": "1h, 6h, 24h or 7d; 24h when not given"},
+			answer: func() any { return &appdto.GetFunctionMetricsResp{} },
+		},
+		{
 			name: "list_attention", title: "What needs attention",
 			description: "GET /home/attention. What the dashboard's Home page says needs attention and the API " +
 				"key's user may see: apps whose containers do not all run or keep restarting, nodes that are " +

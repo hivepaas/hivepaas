@@ -36,4 +36,15 @@ type Service interface {
 	// identity is put into the query here, as for QueryAppLogs.
 	FunctionMetrics(ctx context.Context, db database.IDB, app *entity.App,
 		q *FunctionMetricsQuery) (*logging.InvocationStatsResp, error)
+
+	// ProxyHistory says whether the proxy's stored lines can be read, as
+	// AppHistory does for an app's: an app's HTTP numbers are counted from them,
+	// whatever the app's own log driver.
+	ProxyHistory(ctx context.Context, db database.IDB) (*AppHistory, error)
+
+	// HTTPMetrics counts an app's requests in the proxy's access log: one point
+	// per step of the range, a step without a request one with none. The proxy's
+	// identity and the app's services are put into the query here.
+	HTTPMetrics(ctx context.Context, db database.IDB, app *entity.App,
+		q *FunctionMetricsQuery) (*logging.HTTPStatsResp, error)
 }

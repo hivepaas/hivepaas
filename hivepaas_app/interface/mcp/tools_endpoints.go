@@ -191,6 +191,22 @@ func getEndpoints() []getEndpoint { //nolint:funlen // a table
 			answer: func() any { return &appdto.GetFunctionMetricsResp{} },
 		},
 		{
+			name: "get_app_http_metrics", title: "Get an app's requests",
+			description: "GET /projects/{project}/{env}/apps/{app}/http-metrics. An app's requests over a range " +
+				"ending now, counted from the proxy's access log: how many, how many the client got a 4xx and " +
+				"a 5xx for, how many the proxy could not get to the app at all (unreachable: no replica " +
+				"answered), and how long they took end to end - p50, p95 and p99 in milliseconds, close, not " +
+				"exact - in totals, by method and path (numbers and ids as :n and :id), by replica, and as " +
+				"series, a point per step, oldest first. available is false, with a reason, when they cannot " +
+				"be counted: the app has no domain (not-exposed), the proxy's access log is off, not JSON or " +
+				"unlabelled (an admin saves System > Traefik > Config Options with Access Log on), or the " +
+				"logging stack is not running.",
+			paths:  map[under]string{underApp: "/http-metrics"},
+			query:  &appdto.GetAppHTTPMetricsReq{},
+			params: map[string]string{"range": "1h, 6h, 24h or 7d; 24h when not given"},
+			answer: func() any { return &appdto.GetAppHTTPMetricsResp{} },
+		},
+		{
 			name: "list_attention", title: "What needs attention",
 			description: "GET /home/attention. What the dashboard's Home page says needs attention and the API " +
 				"key's user may see: apps whose containers do not all run or keep restarting, nodes that are " +

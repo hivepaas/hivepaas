@@ -21,3 +21,14 @@ const (
 var (
 	AllLoggingCollectorTypes = []LoggingCollectorType{LoggingCollectorTypeVlagent}
 )
+
+// LabelLogComponent is the container label naming which of HivePaaS's own
+// services a container is. As an app's id is, it is copied into every line the
+// container writes by the json-file driver's `labels` option - by the daemon,
+// not by the container - which is what lets a query trust that a line is, say,
+// the proxy's and not one an app printed to look like it.
+const LabelLogComponent = "hivepaas.component"
+
+// LogComponentTraefik is the proxy's LabelLogComponent: its access log is
+// where an app's HTTP numbers are counted from.
+const LogComponentTraefik = "traefik"

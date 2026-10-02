@@ -19310,6 +19310,78 @@
         "x-codegen-request-body-name" : "body"
       }
     },
+    "/projects/{projectID}/{projectEnv}/apps/{appID}/http-metrics" : {
+      "get" : {
+        "description" : "Counts an app's requests over a range ending now, from the proxy's access log: how many,\nhow many the client got a 4xx and a 5xx for, how many the proxy could not get to the app at\nall (unreachable), and how long they took end to end - p50, p95 and p99, in milliseconds,\nclose rather than exact. In totals, by method and path (numbers and ids replaced by :n and\n:id), by replica, and as series: one point per step, oldest first, as for a function's\nmetrics. `available` is false, with a `reason`, when they cannot be counted: the app has no\ndomain (not-exposed), the proxy's access log is off, not JSON or unlabelled, or the logs\ncannot be read.",
+        "operationId" : "getAppHTTPMetrics",
+        "parameters" : [ {
+          "description" : "project ID",
+          "in" : "path",
+          "name" : "projectID",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "project env",
+          "in" : "path",
+          "name" : "projectEnv",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "app ID",
+          "in" : "path",
+          "name" : "appID",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "1h, 6h, 24h or 7d; default 24h",
+          "in" : "query",
+          "name" : "range",
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/appdto.GetAppHTTPMetricsResp"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "400" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Bad Request"
+          },
+          "500" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Internal Server Error"
+          }
+        },
+        "summary" : "Gets an app's HTTP metrics",
+        "tags" : [ "Apps" ]
+      }
+    },
     "/projects/{projectID}/{projectEnv}/apps/{appID}/kind-settings" : {
       "get" : {
         "description" : "Gets app kind settings",
@@ -53570,6 +53642,177 @@
         "required" : [ "env", "id", "key", "name", "photo", "status" ],
         "type" : "object"
       },
+      "appdto.AppHTTPCountsResp" : {
+        "properties" : {
+          "errors4xx" : {
+            "type" : "integer"
+          },
+          "errors5xx" : {
+            "type" : "integer"
+          },
+          "p50" : {
+            "type" : "number"
+          },
+          "p95" : {
+            "type" : "number"
+          },
+          "p99" : {
+            "type" : "number"
+          },
+          "requests" : {
+            "type" : "integer"
+          },
+          "unreachable" : {
+            "type" : "integer"
+          }
+        },
+        "required" : [ "errors4xx", "errors5xx", "p50", "p95", "p99", "requests", "unreachable" ],
+        "type" : "object"
+      },
+      "appdto.AppHTTPMetricsDataResp" : {
+        "properties" : {
+          "available" : {
+            "type" : "boolean"
+          },
+          "byPath" : {
+            "items" : {
+              "$ref" : "#/components/schemas/appdto.AppHTTPPathResp"
+            },
+            "type" : "array"
+          },
+          "byReplica" : {
+            "items" : {
+              "$ref" : "#/components/schemas/appdto.AppHTTPReplicaResp"
+            },
+            "type" : "array"
+          },
+          "clamped" : {
+            "description" : "Clamped says the range reaches past what the logs keep: it starts where\nthey do.",
+            "type" : "boolean"
+          },
+          "end" : {
+            "type" : "string"
+          },
+          "range" : {
+            "type" : "string"
+          },
+          "reason" : {
+            "type" : "string"
+          },
+          "series" : {
+            "description" : "Series has one point per step, oldest first.",
+            "items" : {
+              "$ref" : "#/components/schemas/appdto.AppHTTPPointResp"
+            },
+            "type" : "array"
+          },
+          "start" : {
+            "description" : "Start and End bound the range: whole steps, End past now.",
+            "type" : "string"
+          },
+          "stepSeconds" : {
+            "type" : "integer"
+          },
+          "totals" : {
+            "$ref" : "#/components/schemas/appdto.AppHTTPCountsResp"
+          }
+        },
+        "required" : [ "available", "byPath", "byReplica", "clamped", "end", "range", "reason", "series", "start", "stepSeconds", "totals" ],
+        "type" : "object"
+      },
+      "appdto.AppHTTPPathResp" : {
+        "properties" : {
+          "errors4xx" : {
+            "type" : "integer"
+          },
+          "errors5xx" : {
+            "type" : "integer"
+          },
+          "method" : {
+            "type" : "string"
+          },
+          "p50" : {
+            "type" : "number"
+          },
+          "p95" : {
+            "type" : "number"
+          },
+          "p99" : {
+            "type" : "number"
+          },
+          "path" : {
+            "type" : "string"
+          },
+          "requests" : {
+            "type" : "integer"
+          },
+          "unreachable" : {
+            "type" : "integer"
+          }
+        },
+        "required" : [ "errors4xx", "errors5xx", "method", "p50", "p95", "p99", "path", "requests", "unreachable" ],
+        "type" : "object"
+      },
+      "appdto.AppHTTPPointResp" : {
+        "properties" : {
+          "errors4xx" : {
+            "type" : "integer"
+          },
+          "errors5xx" : {
+            "type" : "integer"
+          },
+          "p50" : {
+            "type" : "number"
+          },
+          "p95" : {
+            "type" : "number"
+          },
+          "p99" : {
+            "type" : "number"
+          },
+          "requests" : {
+            "type" : "integer"
+          },
+          "time" : {
+            "type" : "string"
+          },
+          "unreachable" : {
+            "type" : "integer"
+          }
+        },
+        "required" : [ "errors4xx", "errors5xx", "p50", "p95", "p99", "requests", "time", "unreachable" ],
+        "type" : "object"
+      },
+      "appdto.AppHTTPReplicaResp" : {
+        "properties" : {
+          "address" : {
+            "type" : "string"
+          },
+          "errors4xx" : {
+            "type" : "integer"
+          },
+          "errors5xx" : {
+            "type" : "integer"
+          },
+          "p50" : {
+            "type" : "number"
+          },
+          "p95" : {
+            "type" : "number"
+          },
+          "p99" : {
+            "type" : "number"
+          },
+          "requests" : {
+            "type" : "integer"
+          },
+          "unreachable" : {
+            "type" : "integer"
+          }
+        },
+        "required" : [ "address", "errors4xx", "errors5xx", "p50", "p95", "p99", "requests", "unreachable" ],
+        "type" : "object"
+      },
       "appdto.AppLogHistoryDataResp" : {
         "properties" : {
           "logs" : {
@@ -54010,6 +54253,18 @@
           }
         },
         "required" : [ "calls", "errors4xx", "errors5xx", "failed", "p50", "p95", "p99", "time" ],
+        "type" : "object"
+      },
+      "appdto.GetAppHTTPMetricsResp" : {
+        "properties" : {
+          "data" : {
+            "$ref" : "#/components/schemas/appdto.AppHTTPMetricsDataResp"
+          },
+          "meta" : {
+            "$ref" : "#/components/schemas/basedto.Meta"
+          }
+        },
+        "required" : [ "data", "meta" ],
         "type" : "object"
       },
       "appdto.GetAppLogHistoryResp" : {

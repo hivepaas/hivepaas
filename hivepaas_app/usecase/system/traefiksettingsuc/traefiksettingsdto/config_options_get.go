@@ -87,6 +87,8 @@ func TransformStartupCommand(
 			resp.LogLevel = val
 		case "accesslog":
 			resp.AccessLog = isBoolTrue(val)
+		case "accesslog.format", "accesslog.fields.queryparameters.defaultmode":
+			// The Access Log option's own, not an argument of the operator's.
 		case "entrypoints.websecure.http3":
 			resp.HTTP3 = isBoolTrue(val)
 		case "experimental.fastproxy":

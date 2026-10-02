@@ -261,3 +261,64 @@ type InvocationStatsResp struct {
 	ByOutcome map[string]int64
 	ByPath    []*InvocationPath
 }
+
+// HTTPStatsReq counts the requests the proxy's access log records for one
+// app: the lines in Match - the proxy's own, by the identity the daemon wrote -
+// whose service matches ServicePattern, a regular expression.
+type HTTPStatsReq struct {
+	Match          []FieldMatch
+	ServicePattern string
+	Start          time.Time
+	End            time.Time
+	// Step is the buckets' width, in whole seconds.
+	Step time.Duration
+	// TopPaths and TopReplicas are how many of the most requested paths and
+	// replicas are counted apart.
+	TopPaths    int
+	TopReplicas int
+}
+
+// HTTPCounts are a set of requests: how many, how many the client got a 4xx
+// and a 5xx for, how many the proxy could not get to the app at all - a 502,
+// 503 or 504 with no answer from it - and how long they took end to end, in
+// milliseconds. The durations are nil without a request.
+type HTTPCounts struct {
+	Requests    int64
+	Errors4xx   int64
+	Errors5xx   int64
+	Unreachable int64
+	P50         *float64
+	P95         *float64
+	P99         *float64
+}
+
+// HTTPBucket is the requests of one step, Time its start.
+type HTTPBucket struct {
+	Time time.Time
+	HTTPCounts
+}
+
+// HTTPPath is the requests of one method and path, the path's numbers and ids
+// replaced by :n and :id.
+type HTTPPath struct {
+	Method string
+	Path   string
+	HTTPCounts
+}
+
+// HTTPReplica is the requests one replica answered, by its address; an empty
+// one is the requests no replica answered.
+type HTTPReplica struct {
+	Address string
+	HTTPCounts
+}
+
+// HTTPStatsResp is a range's requests: by step, oldest first, a step without a
+// request left out; in all; by method and path and by replica, the most
+// requested first.
+type HTTPStatsResp struct {
+	Buckets   []*HTTPBucket
+	Totals    HTTPCounts
+	ByPath    []*HTTPPath
+	ByReplica []*HTTPReplica
+}

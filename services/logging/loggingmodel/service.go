@@ -8,6 +8,8 @@ type Backend interface {
 	Query(ctx context.Context, req *QueryReq) (*QueryResp, error)
 	// InvocationStats counts a function's invocation lines.
 	InvocationStats(ctx context.Context, req *InvocationStatsReq) (*InvocationStatsResp, error)
+	// HTTPStats counts an app's requests in the proxy's access log.
+	HTTPStats(ctx context.Context, req *HTTPStatsReq) (*HTTPStatsResp, error)
 	Ping(ctx context.Context) error
 }
 

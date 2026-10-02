@@ -8,6 +8,7 @@ import (
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/traefikservice"
 )
 
 func (s *service) updateTraefikService(
@@ -22,6 +23,11 @@ func (s *service) updateTraefikService(
 		TargetImage: args.TargetVersion.TraefikImage,
 		Fetch: func(ctx context.Context) (*swarm.Service, error) {
 			return s.traefikService.GetTraefikSwarmService(ctx)
+		},
+		// The image change restarts traefik anyway: its lines get its
+		// identity on the way, for its access log to be counted from.
+		Mutate: func(spec *swarm.ServiceSpec) {
+			traefikservice.WithAccessLogIdentity(spec)
 		},
 	})
 	return hperrors.Wrap(err)

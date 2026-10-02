@@ -151,6 +151,51 @@ func (h *Handler) GetAppLogHistory(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, resp)
 }
 
+// GetAppHTTPMetrics Gets an app's HTTP metrics
+// @Summary Gets an app's HTTP metrics
+// @Description Counts an app's requests over a range ending now, from the proxy's access log: how many,
+// @Description how many the client got a 4xx and a 5xx for, how many the proxy could not get to the app at
+// @Description all (unreachable), and how long they took end to end - p50, p95 and p99, in milliseconds,
+// @Description close rather than exact. In totals, by method and path (numbers and ids replaced by :n and
+// @Description :id), by replica, and as series: one point per step, oldest first, as for a function's
+// @Description metrics. `available` is false, with a `reason`, when they cannot be counted: the app has no
+// @Description domain (not-exposed), the proxy's access log is off, not JSON or unlabelled, or the logs
+// @Description cannot be read.
+// @Tags    Apps
+// @Produce json
+// @Id      getAppHTTPMetrics
+// @Param   projectID path string true "project ID"
+// @Param   projectEnv path string true "project env"
+// @Param   appID path string true "app ID"
+// @Param   range query string false "1h, 6h, 24h or 7d; default 24h"
+// @Success 200 {object} appdto.GetAppHTTPMetricsResp
+// @Failure 400 {object} hperrors.ErrorInfo
+// @Failure 500 {object} hperrors.ErrorInfo
+// @Router  /projects/{projectID}/{projectEnv}/apps/{appID}/http-metrics [get]
+func (h *Handler) GetAppHTTPMetrics(ctx *gin.Context) {
+	auth, projectID, projectEnvID, appID, err := h.GetAuth(ctx, base.ActionTypeRead)
+	if err != nil {
+		h.RenderError(ctx, err)
+		return
+	}
+
+	req := appdto.NewGetAppHTTPMetricsReq()
+	req.ProjectID = projectID
+	req.ProjectEnvID = projectEnvID
+	req.AppID = appID
+	if err := h.ParseAndValidateRequest(ctx, req, nil); err != nil {
+		h.RenderError(ctx, err)
+		return
+	}
+
+	resp, err := h.appUC.GetAppHTTPMetrics(h.RequestCtx(ctx), auth, req)
+	if err != nil {
+		h.RenderError(ctx, err)
+		return
+	}
+	ctx.JSON(http.StatusOK, resp)
+}
+
 // GetFunctionMetrics Gets a function's metrics
 // @Summary Gets a function's metrics
 // @Description Counts a function's calls over a range ending now, from the invocation line its runtime writes

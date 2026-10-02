@@ -21,6 +21,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/transaction"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/ulid"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/settingsprobationservice"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/traefikservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/system/traefiksettingsuc/traefiksettingsdto"
 	"github.com/hivepaas/hivepaas/services/traefik/traefikhelper"
 )
@@ -284,6 +285,9 @@ func (uc *UC) applyConfigOptionsToTraefikService(
 				svc.Spec.TaskTemplate.ContainerSpec = &swarm.ContainerSpec{}
 			}
 			svc.Spec.TaskTemplate.ContainerSpec.Args = data.NewArgs
+			// The command change restarts traefik anyway: its lines get its
+			// identity on the way, for its access log to be counted from.
+			traefikservice.WithAccessLogIdentity(&svc.Spec)
 			return true, nil
 		}, serviceUpdateMaxRetry, 0)
 	if err != nil {
@@ -320,7 +324,7 @@ func (uc *UC) buildStartupCommand(
 			}
 		}
 		if cmd.AccessLog {
-			newArgs = append(newArgs, "--accesslog=true")
+			newArgs = append(newArgs, base.TraefikAccessLogArgs...)
 		}
 		if cmd.HTTP3 {
 			newArgs = append(newArgs, "--entrypoints.websecure.http3=true")
@@ -331,7 +335,12 @@ func (uc *UC) buildStartupCommand(
 
 		for _, kv := range cmd.ParsedArgs {
 			switch kv[0] {
-			case "log", "log.level", "accesslog", "entrypoints.websecure.http3", "experimental.fastproxy":
+			case "log", "log.level", "entrypoints.websecure.http3", "experimental.fastproxy":
+				continue
+			}
+			// The access log's format and fields are the Access Log option's:
+			// an app's HTTP numbers are read from it in that shape.
+			if base.IsTraefikAccessLogArg(kv[0]) {
 				continue
 			}
 			switch {

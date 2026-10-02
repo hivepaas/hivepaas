@@ -33,6 +33,8 @@ services:
       - "--log=true"
       - "--log.level=DEBUG"
       - "--accesslog=true"
+      - "--accesslog.format=json"
+      - "--accesslog.fields.queryparameters.defaultmode=drop"
     # Traefik had neither a healthcheck nor an update_config, which made every
     # UpdateFailureActionRollback the code sets on this service inert - swarm's
     # default monitor is 5s, so an update was called converged before anything
@@ -63,6 +65,11 @@ services:
     # already generous; it is kept tighter than the app's 120s because traefik
     # being wrong takes every ingress down with it, and the rollback verdict is
     # worth having sooner.
+    # The proxy's identity in its own log lines, copied into each by json-file's
+    # `labels` option below: an app's HTTP numbers are counted from its access
+    # log, and only from lines the daemon marked as the proxy's.
+    labels:
+      - "hivepaas.component=traefik"
     healthcheck:
       test: ["CMD", "wget", "-q", "--spider", "http://127.0.0.1:8082/ping"]
       start_period: 60s
@@ -135,6 +142,7 @@ services:
         max-size: 50m
         max-file: "5"
         compress: "true"
+        labels: hivepaas.component
 
   db:
     image: postgres:18-alpine

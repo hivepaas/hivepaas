@@ -103,6 +103,23 @@ defined`.
 Any scalar in it can be overridden by an `HP_`-prefixed environment variable
 (`HP_HTTP_SERVER_PORT`, `HP_DB_HOST`, `HP_RUN_MODE`, …).
 
+### Stored logs, metrics
+
+With logging on and its backend managed, the API reads VictoriaLogs at
+`http://victoria-logs:9428` - a service name on `hivepaas_local_net`, which a
+process on the host cannot resolve: the Logs tab's History, and a function's
+Metrics, answer that the backend is unreachable. Forward a port to it:
+
+```bash
+make local-logging-proxy        # 127.0.0.1:9428 -> victoria-logs:9428
+make local-logging-proxy-down
+```
+
+`make local-app-run` reads the backend there
+(`HP_DEV_MODE_LOGGING_QUERY_URL=http://127.0.0.1:9428`, dev mode only); an IDE
+run needs the variable in its environment. Ingest is not concerned: the
+collector runs in the swarm and writes by service name.
+
 ## 3. The dashboard
 
 ### Bundled into the backend

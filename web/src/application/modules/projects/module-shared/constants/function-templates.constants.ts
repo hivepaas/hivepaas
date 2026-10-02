@@ -29,6 +29,52 @@ export default async function (req, ctx) {
 `,
         },
     ],
+    [EFunctionRuntime.Bun1]: [
+        {
+            path: "package.json",
+            content: `{
+  "type": "module"
+}
+`,
+        },
+        {
+            path: "index.ts",
+            content: `// A function answers one request: it returns { status, headers, body }.
+// A body that is an object is sent as JSON. Bun runs TypeScript whole; its
+// types are not checked.
+interface Request {
+    method: string;
+    path: string;
+    query: Record<string, string | undefined>;
+    queryAll: Record<string, string[] | undefined>;
+    headers: Record<string, string | undefined>;
+    body: Buffer;
+    text(): string;
+    json(): unknown;
+}
+
+interface Context {
+    requestId: string;
+    deadline: number;
+    signal: AbortSignal;
+    log(...args: unknown[]): void;
+}
+
+interface Response {
+    status?: number;
+    headers?: Record<string, string | string[]>;
+    body?: unknown;
+}
+
+export default async function (req: Request, ctx: Context): Promise<Response> {
+    ctx.log(\`\${req.method} \${req.path}\`);
+    const name = req.query.name ?? "world";
+
+    return { status: 200, body: { hello: name } };
+}
+`,
+        },
+    ],
     [EFunctionRuntime.Python313]: [
         {
             path: "main.py",

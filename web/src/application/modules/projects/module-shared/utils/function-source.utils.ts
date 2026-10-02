@@ -36,7 +36,7 @@ export function functionFilePathProblem(path: string, takenPaths: string[]): str
     return null;
 }
 
-export type CodeLanguage = "javascript" | "python" | "go" | "json" | "plain";
+export type CodeLanguage = "javascript" | "typescript" | "python" | "go" | "json" | "plain";
 
 /**
  * The language a file of a function is highlighted as, by its extension.
@@ -47,8 +47,11 @@ export function languageOfPath(path: string): CodeLanguage {
         case "js":
         case "mjs":
         case "cjs":
-        case "ts":
             return "javascript";
+        case "ts":
+        case "mts":
+        case "cts":
+            return "typescript";
         case "py":
             return "python";
         case "go":

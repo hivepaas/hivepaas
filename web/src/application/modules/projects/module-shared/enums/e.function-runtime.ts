@@ -15,6 +15,27 @@ export const ALL_FUNCTION_RUNTIMES: EFunctionRuntime[] = [
     EFunctionRuntime.Go127,
 ];
 
+/**
+ * The language a Node.js function is written in. Node.js runs TypeScript by
+ * removing its types as it loads a file.
+ */
+export const EFunctionLanguage = {
+    JavaScript: "javascript",
+    TypeScript: "typescript",
+} as const;
+
+export type EFunctionLanguage = (typeof EFunctionLanguage)[keyof typeof EFunctionLanguage];
+
+export const FUNCTION_LANGUAGE_LABELS: Record<EFunctionLanguage, string> = {
+    [EFunctionLanguage.JavaScript]: "JavaScript",
+    [EFunctionLanguage.TypeScript]: "TypeScript",
+};
+
+/**
+ * The runtimes whose functions may be written in either language.
+ */
+export const FUNCTION_RUNTIMES_WITH_LANGUAGES: EFunctionRuntime[] = [EFunctionRuntime.Node24];
+
 export const FUNCTION_RUNTIME_LABELS: Record<EFunctionRuntime, string> = {
     [EFunctionRuntime.Node24]: "Node.js 24",
     [EFunctionRuntime.Python313]: "Python 3.13",

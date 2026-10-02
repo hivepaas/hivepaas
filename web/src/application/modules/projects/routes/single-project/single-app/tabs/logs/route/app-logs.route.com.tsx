@@ -3,7 +3,7 @@ import { type SetStateAction, useCallback, useEffect, useMemo, useState } from "
 import { cn } from "@/lib/utils";
 import type { WebSocketReadyState } from "@infrastructure/websocket";
 import { listBox } from "@lib/styles";
-import { useParams } from "react-router";
+import { useParams, useSearchParams } from "react-router";
 import invariant from "tiny-invariant";
 import { AppLogsQueries } from "~/projects/data";
 
@@ -26,7 +26,10 @@ const DEFAULT_LOG_LINES = 100;
 
 export function AppLogsRoute() {
     const { id: projectID, env, appId: appID } = useParams<{ id: string; env: string; appId: string }>();
-    const [activeTab, setActiveTab] = useState(AGGREGATION_TAB_ID);
+    // ?search=<text> opens the history, searched for text: a call's request id, say.
+    const [searchParams] = useSearchParams();
+    const initialSearch = searchParams.get("search") ?? "";
+    const [activeTab, setActiveTab] = useState(initialSearch ? HISTORY_TAB_ID : AGGREGATION_TAB_ID);
     const {
         isFullscreen,
         toggleFullscreen,
@@ -239,6 +242,7 @@ export function AppLogsRoute() {
                                         projectID={projectID}
                                         env={env}
                                         appID={appID}
+                                        initialSearch={initialSearch}
                                         history={infoResponse?.data.history}
                                         lines={tabState.lines}
                                         since={tabState.since}

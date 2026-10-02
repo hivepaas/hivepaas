@@ -52,6 +52,7 @@ export function AppLogsHistory({
     projectID,
     env,
     appID,
+    initialSearch = "",
     history,
     lines,
     since,
@@ -66,8 +67,8 @@ export function AppLogsHistory({
     onSinceChange,
     onDurationChange,
 }: AppLogsHistoryProps) {
-    const [searchDraft, setSearchDraft] = useState("");
-    const [search, setSearch] = useState("");
+    const [searchDraft, setSearchDraft] = useState(initialSearch);
+    const [search, setSearch] = useState(initialSearch);
     const [searchMode, setSearchMode] = useState<SearchMode>(DEFAULT_SEARCH_MODE);
     // A pattern that is not a regular expression yet would come back from the
     // server as an invalid query. Catching it here keeps the round trip, and
@@ -278,6 +279,8 @@ interface AppLogsHistoryProps {
     projectID: string;
     env: string;
     appID: string;
+    /** What the history is searched for as it opens. */
+    initialSearch?: string;
     history: AppLogHistoryInfo | undefined;
     lines: number | undefined;
     since: Date | undefined;

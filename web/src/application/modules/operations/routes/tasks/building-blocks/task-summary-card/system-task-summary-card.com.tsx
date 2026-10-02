@@ -668,7 +668,20 @@ export function SystemTaskSummaryCard({
                                     </div>
                                 )}
 
-                                {task.functionInvoke && <FunctionInvokeSummary response={task.functionInvoke} />}
+                                {task.functionInvoke && (
+                                    <FunctionInvokeSummary
+                                        response={task.functionInvoke}
+                                        logsHref={
+                                            task.scopeProject && task.scopeApp?.env && task.functionInvoke.requestId
+                                                ? `${ROUTE.projects.single.apps.single.logs.$route(
+                                                      task.scopeProject.id,
+                                                      task.scopeApp.env,
+                                                      task.scopeApp.id,
+                                                  )}?search=${encodeURIComponent(task.functionInvoke.requestId)}`
+                                                : undefined
+                                        }
+                                    />
+                                )}
                             </div>
 
                             {task.functionInvoke && <FunctionInvokeBody response={task.functionInvoke} />}

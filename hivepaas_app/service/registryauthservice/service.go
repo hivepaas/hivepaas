@@ -35,6 +35,15 @@ type Service interface {
 	// Renew hands the Swarm services pulling with an ECR credential a token
 	// that lives past the next renewal, their specs otherwise as they are.
 	Renew(ctx context.Context, db database.IDB, req *RenewReq) (*RenewResp, error)
+
+	// RecordRenewal inserts with db a task of the renewal's job for the
+	// credentials, every ECR one when none are named, for the caller to
+	// schedule once db has committed. It is nil when the renewal is off or not
+	// made yet.
+	RecordRenewal(ctx context.Context, db database.IDB, authIDs []string) (*entity.Task, error)
+	// RecordRenewalForKeyAuth is RecordRenewal for the active ECR credentials
+	// whose keys are in the key auth; nil when none are.
+	RecordRenewalForKeyAuth(ctx context.Context, db database.IDB, keyAuthID string) (*entity.Task, error)
 }
 
 type RenewReq struct {

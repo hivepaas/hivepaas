@@ -2,6 +2,7 @@ package registryauthserviceimpl
 
 import (
 	"context"
+	"errors"
 	"time"
 
 	"github.com/moby/moby/api/types/registry"
@@ -15,6 +16,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/transaction"
 	"github.com/hivepaas/hivepaas/hivepaas_app/repository"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/registryauthservice"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/schedjobservice"
 	"github.com/hivepaas/hivepaas/services/docker"
 )
 
@@ -22,12 +24,14 @@ import (
 const ecrUsername = "AWS"
 
 type service struct {
-	db            database.IDB
-	dockerManager docker.Manager
-	appRepo       repository.AppRepo
-	settingRepo   repository.SettingRepo
-	ecr           ecrTokens
-	now           func() time.Time
+	db              database.IDB
+	dockerManager   docker.Manager
+	appRepo         repository.AppRepo
+	settingRepo     repository.SettingRepo
+	taskRepo        repository.TaskRepo
+	schedJobService schedjobservice.Service
+	ecr             ecrTokens
+	now             func() time.Time
 	// inTx runs fn in a transaction of its own: the database's, or the tests'.
 	inTx func(ctx context.Context, fn func(tx database.Tx) error) error
 	// interval is the renewal's, as its setting says now.
@@ -43,8 +47,11 @@ func New(
 	dockerManager docker.Manager,
 	appRepo repository.AppRepo,
 	settingRepo repository.SettingRepo,
+	taskRepo repository.TaskRepo,
+	schedJobService schedjobservice.Service,
 ) registryauthservice.Service {
 	s := &service{db: db, dockerManager: dockerManager, appRepo: appRepo, settingRepo: settingRepo,
+		taskRepo: taskRepo, schedJobService: schedJobService,
 		ecr: awsECR{}, now: timeutil.NowUTC,
 		inTx: func(ctx context.Context, fn func(tx database.Tx) error) error {
 			return transaction.Execute(ctx, db, fn)
@@ -106,7 +113,11 @@ func (s *service) ecrTokenFor(
 	auth *entity.RegistryAuth,
 	interval time.Duration,
 ) (*ecrToken, error) {
-	if token, ok := s.freshToken(auth, interval); ok {
+	keys, err := s.keysOf(ctx, s.db, auth)
+	if err != nil {
+		return nil, err
+	}
+	if token, ok := s.freshToken(auth, keys, interval); ok {
 		return token, nil
 	}
 	return s.renewToken(ctx, setting, interval)
@@ -116,7 +127,11 @@ func (s *service) TryAuth(ctx context.Context, auth *entity.RegistryAuth) (*regi
 	if auth.Kind != base.RegistryAuthKindAWSECR {
 		return basicConfig(auth)
 	}
-	token, err := s.getToken(ctx, auth)
+	keys, err := s.keysOf(ctx, s.db, auth)
+	if err != nil {
+		return nil, err
+	}
+	token, err := s.getToken(ctx, auth, keys)
 	if err != nil {
 		return nil, err
 	}
@@ -131,10 +146,11 @@ func basicConfig(auth *entity.RegistryAuth) (*registry.AuthConfig, error) {
 	return &registry.AuthConfig{Username: auth.Username, Password: password, ServerAddress: auth.Address}, nil
 }
 
-// freshToken is the token kept in the credential while it has long enough to
-// live to be handed to Swarm.
-func (s *service) freshToken(auth *entity.RegistryAuth, interval time.Duration) (*ecrToken, bool) {
-	if auth.Token.IsEmpty() || auth.TokenExpiresAt.Sub(s.now()) < interval+registryauthservice.TokenMargin {
+// freshToken is the token kept in the credential while it was got with the key
+// auth as it is now, and has long enough to live to be handed to Swarm.
+func (s *service) freshToken(auth *entity.RegistryAuth, keys *ecrKeys, interval time.Duration) (*ecrToken, bool) {
+	if auth.Token.IsEmpty() || auth.TokenKeyVer != keys.keyVer ||
+		auth.TokenExpiresAt.Sub(s.now()) < interval+registryauthservice.TokenMargin {
 		return nil, false
 	}
 	token, err := auth.Token.GetPlain()
@@ -164,16 +180,21 @@ func (s *service) renewToken(
 		if err != nil {
 			return hperrors.Wrap(err)
 		}
-		if kept, ok := s.freshToken(auth, interval); ok { // got by another while this one waited
+		keys, err := s.keysOf(ctx, db, auth)
+		if err != nil {
+			return err
+		}
+		if kept, ok := s.freshToken(auth, keys, interval); ok { // got by another while this one waited
 			token = kept
 			return nil
 		}
-		got, err := s.getToken(ctx, auth)
+		got, err := s.getToken(ctx, auth, keys)
 		if err != nil {
 			return err
 		}
 		auth.Token = entity.NewEncryptedField(got.password)
 		auth.TokenExpiresAt = got.expiresAt
+		auth.TokenKeyVer = keys.keyVer
 		if err = current.SetData(auth); err != nil {
 			return hperrors.Wrap(err)
 		}
@@ -189,17 +210,41 @@ func (s *service) renewToken(
 	return token, nil
 }
 
-// getToken asks AWS for a token with the credential's keys.
-func (s *service) getToken(ctx context.Context, auth *entity.RegistryAuth) (*ecrToken, error) {
-	if auth.ECR == nil {
+// keysOf is the credential's AWS keys, from its key auth: one that is gone, or
+// turned off, is the credential's error, worded.
+func (s *service) keysOf(ctx context.Context, db database.IDB, auth *entity.RegistryAuth) (*ecrKeys, error) {
+	if auth.ECR == nil || auth.ECR.KeyAuth.ID == "" {
 		return nil, hperrors.NewArgumentInvalid("registry credential").
-			WithExtraDetail("The Amazon ECR credential for %s has no AWS keys.", auth.Address)
+			WithExtraDetail("The Amazon ECR credential for %s has no key auth.", auth.Address)
 	}
-	secret, err := auth.ECR.SecretAccessKey.GetPlain()
+	setting, err := s.settingRepo.GetByID(ctx, db, nil, base.SettingTypeKeyAuth, auth.ECR.KeyAuth.ID, false)
+	if errors.Is(err, hperrors.ErrNotFound) {
+		return nil, hperrors.NewArgumentInvalid("registry credential").WithCause(err).
+			WithExtraDetail("The key auth of the Amazon ECR credential for %s no longer exists.", auth.Address)
+	}
 	if err != nil {
 		return nil, hperrors.Wrap(err)
 	}
-	token, err := s.ecr.Token(ctx, auth.ECR, secret)
+	if setting.Status != base.SettingStatusActive {
+		return nil, hperrors.NewArgumentInvalid("registry credential").
+			WithExtraDetail("The key auth %s of the Amazon ECR credential for %s is not active.",
+				setting.Name, auth.Address)
+	}
+	keyAuth, err := setting.AsKeyAuth()
+	if err != nil {
+		return nil, hperrors.Wrap(err)
+	}
+	secret, err := keyAuth.SecretKey.GetPlain()
+	if err != nil {
+		return nil, hperrors.Wrap(err)
+	}
+	return &ecrKeys{region: auth.ECR.Region, keyID: keyAuth.KeyID, secret: secret, roleARN: auth.ECR.RoleARN,
+		keyVer: setting.UpdateVer}, nil
+}
+
+// getToken asks AWS for a token with the credential's keys.
+func (s *service) getToken(ctx context.Context, auth *entity.RegistryAuth, keys *ecrKeys) (*ecrToken, error) {
+	token, err := s.ecr.Token(ctx, keys)
 	if err != nil {
 		return nil, hperrors.NewArgumentInvalid("registry credential").WithCause(err).
 			WithExtraDetail("The AWS keys of the Amazon ECR credential for %s were refused: %v", auth.Address, err)

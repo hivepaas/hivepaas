@@ -2,7 +2,7 @@ package registryauthrenewaluc
 
 import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/repository"
-	"github.com/hivepaas/hivepaas/hivepaas_app/service/schedjobservice"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/registryauthservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/tasks/queue"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings"
 )
@@ -12,7 +12,7 @@ type UC struct {
 
 	taskRepo repository.TaskRepo
 
-	schedJobService schedjobservice.Service
+	registryAuthService registryauthservice.Service
 
 	*settings.BaseUC
 }
@@ -22,7 +22,7 @@ func New(
 
 	taskRepo repository.TaskRepo,
 
-	schedJobService schedjobservice.Service,
+	registryAuthService registryauthservice.Service,
 
 	baseUC *settings.BaseUC,
 ) *UC {
@@ -31,7 +31,7 @@ func New(
 
 		taskRepo: taskRepo,
 
-		schedJobService: schedJobService,
+		registryAuthService: registryAuthService,
 
 		BaseUC: baseUC,
 	}

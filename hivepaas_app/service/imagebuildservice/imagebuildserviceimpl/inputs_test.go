@@ -90,7 +90,7 @@ func (e *buildEnv) BuildEnvVarsInApp(
 func TestResolvingInputsOpensTheSecretsABuildReads(t *testing.T) {
 	withDataKey(t)
 	s := &service{
-		registryAuthService: registryauthserviceimpl.New(nil, nil, nil, nil),
+		registryAuthService: registryauthserviceimpl.New(nil, nil, nil, nil, nil, nil),
 		settingRepo: &projectRegistries{settings: []*entity.Setting{
 			registrySetting(t, "r1", "docker.io", "puller", "pull-pass"),
 		}},
@@ -132,7 +132,7 @@ func TestResolvingInputsOpensTheSecretsABuildReads(t *testing.T) {
 func TestResolvingInputsNeedsTheRegistryToPushTo(t *testing.T) {
 	withDataKey(t)
 	s := &service{
-		registryAuthService: registryauthserviceimpl.New(nil, nil, nil, nil),
+		registryAuthService: registryauthserviceimpl.New(nil, nil, nil, nil, nil, nil),
 		settingRepo:         &projectRegistries{},
 		settingService:      &refSettings{settings: map[string]*entity.Setting{}},
 		envVarService:       &buildEnv{},

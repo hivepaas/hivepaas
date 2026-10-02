@@ -18,9 +18,9 @@ func registryAuthRoutes(api *gin.RouterGroup) {
 				"password": "********", "secretMasked": true},
 			{"id": "ra2", "name": "ecr", "kind": "aws-ecr", "address": "123456789012.dkr.ecr.eu-west-1.amazonaws.com",
 				"username": "AWS", "password": "", "secretMasked": true, "token": "tok-secret-value",
-				"ecr": gin.H{"region": "eu-west-1", "accessKeyId": "AKIAEXAMPLE000000000",
-					"secretAccessKey": "********", "tokenExpiresAt": "2026-10-03T00:00:00Z",
-					"token": "tok-secret-value"}},
+				"ecr": gin.H{"region": "eu-west-1", "keyAuth": gin.H{"id": "ka1", "name": "aws-pull"},
+					"tokenExpiresAt": "2026-10-03T00:00:00Z",
+					"token":          "tok-secret-value"}},
 		}})
 	})
 }
@@ -38,7 +38,7 @@ func TestRegistryAuthsShowTheirKindAndNeverAToken(t *testing.T) {
 	assert.Contains(t, text, `"kind":"aws-ecr"`)
 	assert.Contains(t, text, `"region":"eu-west-1"`)
 	assert.Contains(t, text, `"tokenExpiresAt":"2026-10-03T00:00:00Z"`)
-	assert.Contains(t, text, `"secretAccessKey":"********"`)
+	assert.Contains(t, text, `"name":"aws-pull"`)
 	assert.NotContains(t, text, "tok-secret-value")
 	assert.NotContains(t, text, `"token"`)
 }

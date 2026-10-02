@@ -36,6 +36,7 @@ type settingStore struct {
 	repository.SettingRepo
 	auths       []*entity.Setting
 	deployments []*entity.Setting
+	keys        map[string]*entity.Setting
 }
 
 func (f *settingStore) List(_ context.Context, _ database.IDB, _ *entity.ObjectScope, _ *basedto.Paging,
@@ -54,8 +55,11 @@ func (f *settingStore) List(_ context.Context, _ database.IDB, _ *entity.ObjectS
 	return rows, nil, nil
 }
 
-func (f *settingStore) GetByID(_ context.Context, _ database.IDB, _ *entity.ObjectScope, _ base.SettingType,
+func (f *settingStore) GetByID(_ context.Context, _ database.IDB, _ *entity.ObjectScope, typ base.SettingType,
 	id string, _ bool, _ ...bunex.SelectQueryOption) (*entity.Setting, error) {
+	if typ == base.SettingTypeKeyAuth {
+		return keyAuthIn(f.keys, id)
+	}
 	for _, setting := range f.auths {
 		if setting.ID == id {
 			copied := *setting
@@ -145,6 +149,9 @@ func ecrAuth(t *testing.T, id, address, token string, expiresAt time.Time) *enti
 	setting.ID, setting.Name, setting.Status = id, id, base.SettingStatusActive
 	auth := setting.MustAsRegistryAuth()
 	auth.Address = address
+	if _, region, ok := entity.ParseECRAddress(address); ok {
+		auth.ECR.Region = region
+	}
 	setting.MustSetData(auth)
 	return setting
 }
@@ -253,11 +260,15 @@ func TestRenewUsesAKeptTokenThatOutlivesTheNextRun(t *testing.T) {
 // Keys AWS refuses fail their credential - kept in the output, and the run - but
 // the other credentials' services are still renewed.
 func TestRenewKeepsGoingPastARefusedCredential(t *testing.T) {
-	refused := ecrAuth(t, "ra2", otherHost, "", time.Time{})
+	refused := ecrAuth(t, "ra2", ecrHost, "", time.Time{})
 	refusedAuth := refused.MustAsRegistryAuth()
-	refusedAuth.ECR.AccessKeyID = "AKIAREVOKED000000000"
+	refusedAuth.ECR.KeyAuth.ID = "ka-revoked"
 	refused.MustSetData(refusedAuth)
 	store := &settingStore{
+		keys: map[string]*entity.Setting{
+			"ka1":        keyAuth("ka1", "AKIAEXAMPLE000000000", "s3cret", 1, base.SettingStatusActive),
+			"ka-revoked": keyAuth("ka-revoked", "AKIAREVOKED000000000", "s3cret", 1, base.SettingStatusActive),
+		},
 		auths: []*entity.Setting{ecrAuth(t, "ra1", ecrHost, "", time.Time{}), refused},
 		deployments: []*entity.Setting{
 			deploymentOf("app1", imageApp("ra1")),
@@ -270,7 +281,7 @@ func TestRenewKeepsGoingPastARefusedCredential(t *testing.T) {
 	}}
 	sw := &fakeSwarm{services: map[string]*swarm.Service{
 		"svc1": swarmService("svc1", ecrHost+"/web"),
-		"svc2": swarmService("svc2", otherHost+"/api"),
+		"svc2": swarmService("svc2", ecrHost+"/api"),
 	}}
 
 	resp, err := renew(newRenewService(store, apps, sw, &fakeECR{}), 6*time.Hour)

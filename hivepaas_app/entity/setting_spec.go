@@ -138,6 +138,7 @@ func (registryAuthSpecPolicy) Strip(data SettingData) {
 	if auth, ok := data.(*RegistryAuth); ok {
 		auth.Token = EncryptedField{}
 		auth.TokenExpiresAt = time.Time{}
+		auth.TokenKeyVer = 0
 	}
 }
 

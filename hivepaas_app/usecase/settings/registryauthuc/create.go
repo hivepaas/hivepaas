@@ -29,6 +29,9 @@ func (uc *UC) CreateRegistryAuth(
 			pData *settings.PersistingSettingCreationData,
 		) error {
 			pData.Setting.Kind = req.Address
+			if err := uc.checkKeyAuth(ctx, db, regAuth); err != nil {
+				return err
+			}
 			err := pData.Setting.SetData(regAuth)
 			if err != nil {
 				return hperrors.Wrap(err)

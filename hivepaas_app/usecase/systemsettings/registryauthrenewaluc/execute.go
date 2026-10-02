@@ -21,9 +21,17 @@ func (uc *UC) ExecuteRegistryAuthRenewal(
 	req *registryauthrenewaldto.ExecuteRegistryAuthRenewalReq,
 ) (*registryauthrenewaldto.ExecuteRegistryAuthRenewalResp, error) {
 	req.Type = currentSettingType
-	task, err := uc.scheduleRenewal(ctx, uc.DB, req.TargetAuths.ToEntity(), true)
+	// Run Now asks for the renewal turned on, as SSL renewal's does.
+	if _, _, err := uc.getRenewalSettingAndJob(ctx, uc.DB, true); err != nil {
+		return nil, hperrors.Wrap(err)
+	}
+	task, err := uc.scheduleRenewal(ctx, req.TargetAuths.ToEntity().ToIDStringSlice())
 	if err != nil {
 		return nil, hperrors.Wrap(err)
+	}
+	if task == nil {
+		return nil, hperrors.NewArgumentInvalid("registry auth renewal").
+			WithExtraDetail("The registry auth renewal's job is turned off.")
 	}
 
 	return &registryauthrenewaldto.ExecuteRegistryAuthRenewalResp{
@@ -31,23 +39,6 @@ func (uc *UC) ExecuteRegistryAuthRenewal(
 			Task: &basedto.ObjectIDResp{ID: task.ID},
 		},
 	}, nil
-}
-
-// RenewOnSave runs the renewal at once for a credential whose AWS keys were
-// saved: its services get a token got with the new keys. A renewal turned off,
-// or not made yet, is not run. The task is inserted with db, the caller's
-// transaction, and scheduled by the function returned, to call once that has
-// committed.
-func (uc *UC) RenewOnSave(ctx context.Context, db database.IDB, authID string) (schedule func(), err error) {
-	jobSetting, err := uc.activeJob(ctx, db)
-	if err != nil || jobSetting == nil {
-		return func() {}, err
-	}
-	task, err := uc.insertRenewalTask(ctx, db, jobSetting, entity.ObjectIDSlice{{ID: authID}})
-	if err != nil {
-		return nil, hperrors.Wrap(err)
-	}
-	return func() { _ = uc.taskQueue.ScheduleTask(context.WithoutCancel(ctx), task) }, nil
 }
 
 // RenewIfStale runs the renewal at start when its last run ended longer ago than
@@ -84,51 +75,21 @@ func (uc *UC) RenewIfStale(ctx context.Context) (bool, error) {
 		return false, nil
 	}
 
-	if _, err = uc.scheduleRenewal(ctx, uc.DB, nil, false); err != nil {
+	task, err := uc.scheduleRenewal(ctx, nil)
+	if err != nil {
 		return false, hperrors.Wrap(err)
 	}
-	return true, nil
+	return task != nil, nil
 }
 
-// scheduleRenewal inserts a renewal task for the targets, every ECR credential
-// when none, and schedules it.
-func (uc *UC) scheduleRenewal(
-	ctx context.Context,
-	db database.IDB,
-	targets entity.ObjectIDSlice,
-	requireSettingActive bool,
-) (*entity.Task, error) {
-	_, jobSetting, err := uc.getRenewalSettingAndJob(ctx, db, requireSettingActive)
-	if err != nil {
-		return nil, hperrors.Wrap(err)
-	}
-	task, err := uc.insertRenewalTask(ctx, db, jobSetting, targets)
-	if err != nil {
+// scheduleRenewal records a renewal task for the credentials, every ECR one
+// when none, and schedules it; nil when the renewal is off.
+func (uc *UC) scheduleRenewal(ctx context.Context, authIDs []string) (*entity.Task, error) {
+	task, err := uc.registryAuthService.RecordRenewal(ctx, uc.DB, authIDs)
+	if err != nil || task == nil {
 		return nil, hperrors.Wrap(err)
 	}
 	if err = uc.taskQueue.ScheduleTask(ctx, task); err != nil {
-		return nil, hperrors.Wrap(err)
-	}
-	return task, nil
-}
-
-func (uc *UC) insertRenewalTask(
-	ctx context.Context,
-	db database.IDB,
-	jobSetting *entity.Setting,
-	targets entity.ObjectIDSlice,
-) (*entity.Task, error) {
-	timeNow := timeutil.NowUTC()
-	// A task's run time is unique for its job: one a scheduled run already
-	// has is moved by a second.
-	task, err := uc.schedJobService.CreateSchedJobTask(jobSetting, timeNow.Add(time.Second), timeNow)
-	if err != nil {
-		return nil, hperrors.Wrap(err)
-	}
-	if len(targets) > 0 {
-		task.MustSetArgs(&entity.TaskRegistryAuthRenewalArgs{TargetAuths: targets})
-	}
-	if err = uc.taskRepo.Insert(ctx, db, task); err != nil {
 		return nil, hperrors.Wrap(err)
 	}
 	return task, nil

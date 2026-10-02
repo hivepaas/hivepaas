@@ -63244,7 +63244,7 @@
             "allOf" : [ {
               "$ref" : "#/components/schemas/settings_registryauthdto.RegistryAuthECRReq"
             } ],
-            "description" : "ECR is the AWS keys of an aws-ecr credential; the account and region are\nread from its address.",
+            "description" : "ECR is the AWS side of an aws-ecr credential; the account and region are\nread from its address.",
             "type" : "object"
           },
           "inheritable" : {
@@ -63320,23 +63320,29 @@
       },
       "settings_registryauthdto.RegistryAuthECRReq" : {
         "properties" : {
-          "accessKeyId" : {
-            "type" : "string"
+          "keyAuth" : {
+            "allOf" : [ {
+              "$ref" : "#/components/schemas/basedto.ObjectIDReq"
+            } ],
+            "description" : "KeyAuth is the key auth holding the AWS access key id and secret key.",
+            "type" : "object"
           },
           "roleArn" : {
-            "type" : "string"
-          },
-          "secretAccessKey" : {
+            "description" : "RoleARN, when set, is assumed with the keys first.",
             "type" : "string"
           }
         },
-        "required" : [ "accessKeyId", "roleArn", "secretAccessKey" ],
+        "required" : [ "keyAuth", "roleArn" ],
         "type" : "object"
       },
       "settings_registryauthdto.RegistryAuthECRResp" : {
         "properties" : {
-          "accessKeyId" : {
-            "type" : "string"
+          "keyAuth" : {
+            "allOf" : [ {
+              "$ref" : "#/components/schemas/settings.BaseSettingResp"
+            } ],
+            "description" : "KeyAuth is the key auth holding the AWS keys: its id and name, or its id\nalone and missing when it no longer exists. Never its keys, which are the\nkey auth's to reveal.",
+            "type" : "object"
           },
           "region" : {
             "type" : "string"
@@ -63344,14 +63350,11 @@
           "roleArn" : {
             "type" : "string"
           },
-          "secretAccessKey" : {
-            "type" : "string"
-          },
           "tokenExpiresAt" : {
             "type" : "string"
           }
         },
-        "required" : [ "accessKeyId", "region", "roleArn", "secretAccessKey", "tokenExpiresAt" ],
+        "required" : [ "keyAuth", "region", "roleArn", "tokenExpiresAt" ],
         "type" : "object"
       },
       "settings_registryauthdto.RegistryAuthResp" : {
@@ -63430,7 +63433,7 @@
             "allOf" : [ {
               "$ref" : "#/components/schemas/settings_registryauthdto.RegistryAuthECRReq"
             } ],
-            "description" : "ECR is the AWS keys of an aws-ecr credential; the account and region are\nread from its address.",
+            "description" : "ECR is the AWS side of an aws-ecr credential; the account and region are\nread from its address.",
             "type" : "object"
           },
           "kind" : {
@@ -63474,7 +63477,7 @@
             "allOf" : [ {
               "$ref" : "#/components/schemas/settings_registryauthdto.RegistryAuthECRReq"
             } ],
-            "description" : "ECR is the AWS keys of an aws-ecr credential; the account and region are\nread from its address.",
+            "description" : "ECR is the AWS side of an aws-ecr credential; the account and region are\nread from its address.",
             "type" : "object"
           },
           "inheritable" : {

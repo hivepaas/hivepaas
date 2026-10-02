@@ -28,7 +28,7 @@ const ecrAddress = "123456789012.dkr.ecr.eu-west-1.amazonaws.com"
 
 func ecrReq() *RegistryAuthBaseReq {
 	return &RegistryAuthBaseReq{Name: "ecr", Kind: base.RegistryAuthKindAWSECR, Address: ecrAddress,
-		ECR: &RegistryAuthECRReq{AccessKeyID: "AKIAEXAMPLE000000000", SecretAccessKey: "s3cret"}}
+		ECR: &RegistryAuthECRReq{KeyAuth: basedto.ObjectIDReq{ID: "ka1"}}}
 }
 
 func invalidFields(req *RegistryAuthBaseReq) []string {
@@ -41,7 +41,7 @@ func invalidFields(req *RegistryAuthBaseReq) []string {
 	return out
 }
 
-func TestAnECRCredentialIsItsAddressAndKeys(t *testing.T) {
+func TestAnECRCredentialIsItsAddressAndKeyAuth(t *testing.T) {
 	assert.Empty(t, invalidFields(ecrReq()))
 
 	withRole := ecrReq()
@@ -53,11 +53,9 @@ func TestAnECRCredentialIsItsAddressAndKeys(t *testing.T) {
 		field  string
 	}{
 		"an address that is no ECR registry's": {func(r *RegistryAuthBaseReq) { r.Address = "ghcr.io" }, "auth.address"},
-		"no keys":                              {func(r *RegistryAuthBaseReq) { r.ECR = nil }, "auth.ecr"},
-		"a key id that is none": {func(r *RegistryAuthBaseReq) { r.ECR.AccessKeyID = "akia-lower" },
-			"auth.ecr.accessKeyId"},
-		"no secret": {func(r *RegistryAuthBaseReq) { r.ECR.SecretAccessKey = "" },
-			"auth.ecr.secretAccessKey"},
+		"no ECR side":                          {func(r *RegistryAuthBaseReq) { r.ECR = nil }, "auth.ecr"},
+		"no key auth": {func(r *RegistryAuthBaseReq) { r.ECR.KeyAuth.ID = "" },
+			"auth.ecr.keyAuth"},
 		"a role that is none":   {func(r *RegistryAuthBaseReq) { r.ECR.RoleARN = "admin" }, "auth.ecr.roleArn"},
 		"a password of its own": {func(r *RegistryAuthBaseReq) { r.Password = "pw" }, "auth.password"},
 		"a kind that is none":   {func(r *RegistryAuthBaseReq) { r.Kind = "gcp" }, "auth.kind"},
@@ -68,45 +66,45 @@ func TestAnECRCredentialIsItsAddressAndKeys(t *testing.T) {
 	}
 
 	basic := &RegistryAuthBaseReq{Name: "hub", Address: "docker.io", Username: "bot", Password: "pw",
-		ECR: &RegistryAuthECRReq{AccessKeyID: "AKIAEXAMPLE000000000"}}
+		ECR: &RegistryAuthECRReq{KeyAuth: basedto.ObjectIDReq{ID: "ka1"}}}
 	assert.Contains(t, invalidFields(basic), "auth.ecr", "keys on a username and password credential")
 }
 
 func TestAnECRCredentialsRegionIsItsAddresss(t *testing.T) {
 	auth := ecrReq().ToEntity()
 	assert.Equal(t, "eu-west-1", auth.ECR.Region)
+	assert.Equal(t, "ka1", auth.ECR.KeyAuth.ID)
 	assert.Equal(t, "AWS", auth.Username)
 	assert.True(t, auth.Password.IsEmpty())
+	assert.Equal(t, []string{"ka1"}, auth.GetRefObjectIDs().RefSettingIDs)
 }
 
-// An edit that leaves the keys masked keeps them, and the token with them; new
-// keys start without a token.
-func TestAnEditKeepsTheKeysAndTokenItDoesNotChange(t *testing.T) {
+// An edit that leaves the key auth, role and registry as they were keeps the
+// token, and the key auth's version it was got with; another key auth starts
+// without one.
+func TestAnEditKeepsTheTokenWhileItSignsInTheSameWay(t *testing.T) {
 	current := ecrReq().ToEntity()
 	current.Token = entity.NewEncryptedField("tok")
 	current.TokenExpiresAt = time.Now().Add(10 * time.Hour)
+	current.TokenKeyVer = 3
 
 	edit := ecrReq()
 	edit.Name = "renamed"
-	edit.ECR.SecretAccessKey = basedto.MaskedSecret
 	auth := edit.ToEntity()
-	edit.KeepMaskedSecrets(auth, current)
 	KeepToken(auth, current)
-	secret, _ := auth.ECR.SecretAccessKey.GetPlain()
-	assert.Equal(t, "s3cret", secret)
 	token, _ := auth.Token.GetPlain()
 	assert.Equal(t, "tok", token)
+	assert.Equal(t, 3, auth.TokenKeyVer)
 
-	rotated := ecrReq()
-	rotated.ECR.SecretAccessKey = "n3w"
-	auth = rotated.ToEntity()
-	rotated.KeepMaskedSecrets(auth, current)
+	relinked := ecrReq()
+	relinked.ECR.KeyAuth.ID = "ka2"
+	auth = relinked.ToEntity()
 	KeepToken(auth, current)
-	assert.True(t, auth.Token.IsEmpty(), "new keys, no token")
+	assert.True(t, auth.Token.IsEmpty(), "another key auth, no token")
 }
 
-// The API answers the keys - the secret masked - and when the token expires,
-// never the token.
+// The API answers the key auth as a reference and when the token expires:
+// never the token, never a key.
 func TestTheAnswerNeverHoldsTheToken(t *testing.T) {
 	auth := ecrReq().ToEntity()
 	auth.Token = entity.NewEncryptedField("tok-secret-value")
@@ -114,15 +112,20 @@ func TestTheAnswerNeverHoldsTheToken(t *testing.T) {
 	setting := &entity.Setting{ID: "ra1", Type: base.SettingTypeRegistryAuth, Kind: ecrAddress,
 		Status: base.SettingStatusActive}
 	setting.MustSetData(auth)
-	// Read back as stored: the secrets encrypted, as a GET finds them.
-	reread := &entity.Setting{ID: "ra1", Type: base.SettingTypeRegistryAuth, Kind: ecrAddress,
-		Status: base.SettingStatusActive, Data: setting.Data}
-	resp, err := TransformRegistryAuth(reread, nil)
+	keyAuth := &entity.Setting{ID: "ka1", Name: "aws-pull", Type: base.SettingTypeKeyAuth,
+		Status: base.SettingStatusActive}
+	keyAuth.MustSetData(&entity.KeyAuth{KeyID: "AKIAEXAMPLE000000000", SecretKey: entity.NewEncryptedField("s3cret")})
+	refs := entity.NewRefObjects()
+	refs.RefSettings["ka1"] = keyAuth
+
+	resp, err := TransformRegistryAuth(setting, refs)
 	assert.NoError(t, err)
 	raw, _ := json.Marshal(resp)
 	assert.NotContains(t, string(raw), "tok-secret-value")
 	assert.NotContains(t, string(raw), "s3cret")
-	assert.Equal(t, basedto.MaskedSecret, resp.AWSECR.SecretAccessKey)
+	assert.NotContains(t, string(raw), "AKIAEXAMPLE")
+	assert.Equal(t, "ka1", resp.AWSECR.KeyAuth.ID)
+	assert.Equal(t, "aws-pull", resp.AWSECR.KeyAuth.Name)
 	assert.Equal(t, "eu-west-1", resp.AWSECR.Region)
 	assert.Equal(t, auth.TokenExpiresAt, resp.AWSECR.TokenExpiresAt)
 	assert.Equal(t, base.RegistryAuthKindAWSECR, resp.Kind)

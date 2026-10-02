@@ -39,7 +39,7 @@ const RegistryAuthManagedBySystemRegistry = "system-registry"
 
 type RegistryAuth struct {
 	// Kind is how it signs in: a username and a password (empty), or AWS keys
-	// for Amazon ECR.
+	// for Amazon ECR, kept in a key auth.
 	Kind     base.RegistryAuthKind `json:"kind,omitempty"`
 	Username string                `json:"username"`
 	Password EncryptedField        `json:"password"`
@@ -53,19 +53,22 @@ type RegistryAuth struct {
 	ECR *RegistryAuthECR `json:"ecr,omitempty"`
 	// Token is the last ECR token got for the credential, and TokenExpiresAt
 	// when it stops working. They are derived from the keys: never answered by
-	// the API, never exported, and cleared when the keys change.
+	// the API, never exported, and cleared when the credential's ECR side
+	// changes.
 	Token          EncryptedField `json:"token,omitzero"`
 	TokenExpiresAt time.Time      `json:"tokenExpiresAt,omitzero"`
+	// TokenKeyVer is the key auth's version the token was got with: a token got
+	// with keys since edited is not used.
+	TokenKeyVer int `json:"tokenKeyVer,omitzero"`
 }
 
-// RegistryAuthECR is what signs in to Amazon ECR: AWS keys, and a role they
-// assume first when one is named. The registry's account and region are in its
-// address, <account>.dkr.ecr.<region>.amazonaws.com.
+// RegistryAuthECR is what signs in to Amazon ECR: the AWS keys of a key auth,
+// and a role they assume first when one is named. The registry's account and
+// region are in its address, <account>.dkr.ecr.<region>.amazonaws.com.
 type RegistryAuthECR struct {
-	Region          string         `json:"region"`
-	AccessKeyID     string         `json:"accessKeyId"`
-	SecretAccessKey EncryptedField `json:"secretAccessKey"`
-	RoleARN         string         `json:"roleArn,omitempty"`
+	Region  string   `json:"region"`
+	KeyAuth ObjectID `json:"keyAuth"`
+	RoleARN string   `json:"roleArn,omitempty"`
 }
 
 // ecrAddressRegex is an ECR registry's address: its account and its region.
@@ -83,15 +86,13 @@ func ParseECRAddress(address string) (account, region string, ok bool) {
 }
 
 // SameECRKeys reports whether two credentials sign in to ECR the same way: a
-// token got with one is good for the other.
+// token got with one is good for the other. The key auth's own edits are told
+// apart by TokenKeyVer.
 func (s *RegistryAuth) SameECRKeys(other *RegistryAuth) bool {
 	if s.ECR == nil || other == nil || other.ECR == nil || s.Address != other.Address {
 		return false
 	}
-	secret, err1 := s.ECR.SecretAccessKey.GetPlain()
-	otherSecret, err2 := other.ECR.SecretAccessKey.GetPlain()
-	return err1 == nil && err2 == nil && secret == otherSecret &&
-		s.ECR.AccessKeyID == other.ECR.AccessKeyID && s.ECR.RoleARN == other.ECR.RoleARN &&
+	return s.ECR.KeyAuth.ID == other.ECR.KeyAuth.ID && s.ECR.RoleARN == other.ECR.RoleARN &&
 		s.ECR.Region == other.ECR.Region
 }
 
@@ -99,25 +100,26 @@ func (s *RegistryAuth) GetType() base.SettingType {
 	return base.SettingTypeRegistryAuth
 }
 
+// GetRefObjectIDs is the key auth of an ECR credential: linked, it is shown as
+// in use, and saving checks the credential's scope can see it.
 func (s *RegistryAuth) GetRefObjectIDs() *RefObjectIDs {
-	return &RefObjectIDs{}
+	refIDs := &RefObjectIDs{}
+	if s.ECR != nil && s.ECR.KeyAuth.ID != "" {
+		refIDs.RefSettingIDs = append(refIDs.RefSettingIDs, s.ECR.KeyAuth.ID)
+	}
+	return refIDs
 }
 
 func (s *RegistryAuth) GetResourceLinks(setting *Setting) []*ResLink {
 	return s.GetRefObjectIDs().GetResourceLinks(base.ResourceTypeSetting, setting.ID)
 }
 
-// Decrypt reveals the credential's secrets: its password, its AWS secret key.
-// The token is not one of them: it is never answered.
+// Decrypt reveals the credential's password. An ECR credential's keys are the
+// key auth's to reveal, and the token is never answered.
 func (s *RegistryAuth) Decrypt() error {
 	_, err := s.Password.GetPlain()
 	if err != nil {
 		return hperrors.Wrap(err)
-	}
-	if s.ECR != nil {
-		if _, err = s.ECR.SecretAccessKey.GetPlain(); err != nil {
-			return hperrors.Wrap(err)
-		}
 	}
 	return nil
 }

@@ -80,6 +80,27 @@ type RegistryAuthECR struct {
   the app and worker are not always on EC2.
 - A setting migration is not needed: `kind` empty is today's behaviour.
 
+### Revised: the keys are a key auth's
+
+The AWS keys are not kept in the credential: `RegistryAuthECR` is
+`{Region, KeyAuth ObjectID, RoleARN}`, and the access key id and secret key are
+those of the linked **key auth**, as an S3 cloud storage's are. One IAM key can
+serve ECR and a backup bucket and is rotated in one place; the credential has no
+secret of its own to mask, reveal or export.
+
+- **Linked as a reference** (`GetRefObjectIDs`): saving checks the credential's
+  scope can see the key auth, and that it is one; the key auth shows in use.
+  Test Connection asks that the caller may read the key auth.
+- **A token is bound to the key auth's version**: `TokenKeyVer` is the key
+  auth's `updateVer` when the token was got, and a token got with keys since
+  edited is not used, however long it has left.
+- **An edit renews at once**, through the settings' event service, in the
+  edit's transaction, scheduled once it commits: a key auth whose keys change,
+  or that is turned back on, records a renewal for the active ECR credentials
+  using it; an ECR credential linked to another key auth, role or registry, or
+  turned back on, records one for itself. A key auth turned off is not run:
+  the next scheduled run fails, worded, and notifies.
+
 ### Getting a token: when it is needed, kept in the database
 
 `registryauthservice` (new, or in `registryservice`) answers what Docker takes:

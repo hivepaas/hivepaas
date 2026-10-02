@@ -12,8 +12,6 @@ import (
 	"github.com/aws/aws-sdk-go-v2/credentials/stscreds"
 	"github.com/aws/aws-sdk-go-v2/service/ecr"
 	"github.com/aws/aws-sdk-go-v2/service/sts"
-
-	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 )
 
 // ecrToken is a token ECR gave: the password docker logs in with, as user AWS,
@@ -23,9 +21,19 @@ type ecrToken struct {
 	expiresAt time.Time
 }
 
+// ecrKeys is what signs in to ECR, as AWS takes it: the key auth's keys, and
+// the credential's region and role. keyVer is the key auth's version.
+type ecrKeys struct {
+	region  string
+	keyID   string
+	secret  string
+	roleARN string
+	keyVer  int
+}
+
 // ecrTokens gets ECR tokens; the tests give a fake.
 type ecrTokens interface {
-	Token(ctx context.Context, auth *entity.RegistryAuthECR, secret string) (*ecrToken, error)
+	Token(ctx context.Context, keys *ecrKeys) (*ecrToken, error)
 }
 
 // awsECR asks AWS: GetAuthorizationToken with the keys, after assuming the role
@@ -38,16 +46,16 @@ const ecrCallTimeout = 30 * time.Second
 
 var errNoAuthorizationData = errors.New("ECR answered no authorization data")
 
-func (awsECR) Token(ctx context.Context, auth *entity.RegistryAuthECR, secret string) (*ecrToken, error) {
+func (awsECR) Token(ctx context.Context, keys *ecrKeys) (*ecrToken, error) {
 	ctx, cancel := context.WithTimeout(ctx, ecrCallTimeout)
 	defer cancel()
 
 	cfg := aws.Config{
-		Region:      auth.Region,
-		Credentials: aws.NewCredentialsCache(credentials.NewStaticCredentialsProvider(auth.AccessKeyID, secret, "")),
+		Region:      keys.region,
+		Credentials: aws.NewCredentialsCache(credentials.NewStaticCredentialsProvider(keys.keyID, keys.secret, "")),
 	}
-	if auth.RoleARN != "" {
-		cfg.Credentials = aws.NewCredentialsCache(stscreds.NewAssumeRoleProvider(sts.NewFromConfig(cfg), auth.RoleARN,
+	if keys.roleARN != "" {
+		cfg.Credentials = aws.NewCredentialsCache(stscreds.NewAssumeRoleProvider(sts.NewFromConfig(cfg), keys.roleARN,
 			func(o *stscreds.AssumeRoleOptions) { o.RoleSessionName = "hivepaas-registry" }))
 	}
 	out, err := ecr.NewFromConfig(cfg).GetAuthorizationToken(ctx, &ecr.GetAuthorizationTokenInput{})

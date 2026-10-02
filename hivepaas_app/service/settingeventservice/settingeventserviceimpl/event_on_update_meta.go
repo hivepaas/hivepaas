@@ -18,5 +18,8 @@ func (s *service) OnUpdateStatus(
 		_ = s.systemEventBus.Publish(ctx, base.SystemEventPeriodicSettingsReload)
 	}
 
+	if err = s.recordRegistryAuthRenewal(ctx, db, event); err != nil {
+		return err
+	}
 	return s.recordMountRefresh(ctx, db, &event.Tasks, event.Setting)
 }

@@ -39,27 +39,32 @@ type fakeECR struct {
 	err   error
 }
 
-func (f *fakeECR) Token(_ context.Context, auth *entity.RegistryAuthECR, secret string) (*ecrToken, error) {
+func (f *fakeECR) Token(_ context.Context, keys *ecrKeys) (*ecrToken, error) {
 	f.calls++
 	if f.err != nil {
 		return nil, f.err
 	}
-	if auth.AccessKeyID != "AKIAEXAMPLE000000000" || secret != "s3cret" {
+	if keys.keyID != "AKIAEXAMPLE000000000" || keys.secret != "s3cret" {
 		return nil, errors.New("UnrecognizedClientException: the security token included in the request is invalid")
 	}
 	return &ecrToken{password: "tok-" + string(rune('0'+f.calls)), expiresAt: now.Add(12 * time.Hour)}, nil
 }
 
 // settingRow is the credential's row: what GetByID reads, what Update writes.
+// Its key auths are keys, ka1 alone when none are given.
 type settingRow struct {
 	repository.SettingRepo
 	row     *entity.Setting
+	keys    map[string]*entity.Setting
 	locked  bool
 	updates []string
 }
 
-func (r *settingRow) GetByID(_ context.Context, _ database.IDB, _ *entity.ObjectScope, _ base.SettingType,
-	_ string, _ bool, opts ...bunex.SelectQueryOption) (*entity.Setting, error) {
+func (r *settingRow) GetByID(_ context.Context, _ database.IDB, _ *entity.ObjectScope, typ base.SettingType,
+	id string, _ bool, opts ...bunex.SelectQueryOption) (*entity.Setting, error) {
+	if typ == base.SettingTypeKeyAuth {
+		return keyAuthIn(r.keys, id)
+	}
 	r.locked = len(opts) > 0
 	copied := *r.row
 	return &copied, nil
@@ -72,16 +77,36 @@ func (r *settingRow) Update(_ context.Context, _ database.IDB, setting *entity.S
 	return nil
 }
 
+// keyAuth is a key auth at a version, as a setting.
+func keyAuth(id, keyID, secret string, ver int, status base.SettingStatus) *entity.Setting {
+	setting := &entity.Setting{ID: id, Name: id, Type: base.SettingTypeKeyAuth, Status: status, UpdateVer: ver}
+	setting.MustSetData(&entity.KeyAuth{KeyID: keyID, SecretKey: entity.NewEncryptedField(secret)})
+	return setting
+}
+
+func keyAuthIn(keys map[string]*entity.Setting, id string) (*entity.Setting, error) {
+	if keys == nil {
+		keys = map[string]*entity.Setting{
+			"ka1": keyAuth("ka1", "AKIAEXAMPLE000000000", "s3cret", 1, base.SettingStatusActive)}
+	}
+	if setting := keys[id]; setting != nil {
+		return setting, nil
+	}
+	return nil, hperrors.NewNotFound("Setting")
+}
+
+// ecrSetting is a credential linked to key auth ka1, with a token got with its
+// version 1.
 func ecrSetting(t *testing.T, token string, expiresAt time.Time) *entity.Setting {
 	t.Helper()
 	auth := &entity.RegistryAuth{
 		Kind: base.RegistryAuthKindAWSECR, Username: "AWS", Address: "123456789012.dkr.ecr.eu-west-1.amazonaws.com",
-		ECR: &entity.RegistryAuthECR{Region: "eu-west-1", AccessKeyID: "AKIAEXAMPLE000000000",
-			SecretAccessKey: entity.NewEncryptedField("s3cret")},
+		ECR:            &entity.RegistryAuthECR{Region: "eu-west-1", KeyAuth: entity.ObjectID{ID: "ka1"}},
 		TokenExpiresAt: expiresAt,
 	}
 	if token != "" {
 		auth.Token = entity.NewEncryptedField(token)
+		auth.TokenKeyVer = 1
 	}
 	setting := &entity.Setting{ID: "ra1", Type: base.SettingTypeRegistryAuth, UpdateVer: 4}
 	setting.MustSetData(auth)
@@ -124,6 +149,7 @@ func TestATokenTooOldToHandOverIsGotAgainAndKept(t *testing.T) {
 		token, _ := kept.Token.GetPlain()
 		assert.Equal(t, "tok-1", token)
 		assert.Equal(t, now.Add(12*time.Hour), kept.TokenExpiresAt)
+		assert.Equal(t, 1, kept.TokenKeyVer, "bound to the key auth's version")
 		assert.Equal(t, 4, row.row.UpdateVer, "the version is the person's, not the token's")
 		assert.NotContains(t, row.updates[0], "tok-1", "kept encrypted")
 	}
@@ -141,13 +167,42 @@ func TestATokenGotByAnotherWhileWaitingIsUsed(t *testing.T) {
 	assert.Empty(t, row.updates)
 }
 
+// A token got with keys the key auth no longer has is not used, however long
+// it has left: one is got with the keys as they are.
+func TestATokenGotWithEditedKeysIsGotAgain(t *testing.T) {
+	setting := ecrSetting(t, "old-keys", now.Add(11*time.Hour))
+	row := &settingRow{row: setting, keys: map[string]*entity.Setting{
+		"ka1": keyAuth("ka1", "AKIAEXAMPLE000000000", "s3cret", 2, base.SettingStatusActive)}}
+	ecr := &fakeECR{}
+	auth, err := newTestService(row, ecr).AuthConfig(context.Background(), setting)
+	assert.NoError(t, err)
+	assert.Equal(t, "tok-1", auth.Password)
+	assert.Equal(t, 1, ecr.calls)
+	assert.Equal(t, 2, row.row.MustAsRegistryAuth().TokenKeyVer)
+}
+
+// A key auth that is gone, or turned off, is the credential's error, worded;
+// AWS is not asked.
+func TestAMissingOrDisabledKeyAuthIsWorded(t *testing.T) {
+	for keys, want := range map[string]map[string]*entity.Setting{
+		"no longer exists": {},
+		"is not active": {"ka1": keyAuth("ka1", "AKIAEXAMPLE000000000", "s3cret", 1,
+			base.SettingStatusDisabled)},
+	} {
+		setting := ecrSetting(t, "", time.Time{})
+		ecr := &fakeECR{}
+		_, err := newTestService(&settingRow{row: setting, keys: want}, ecr).AuthConfig(context.Background(), setting)
+		info, _ := hperrors.ParseError(err, translation.LangEn)
+		assert.Contains(t, info.Detail, keys)
+		assert.Zero(t, ecr.calls)
+	}
+}
+
 // Keys AWS refuses are the caller's error, naming the registry.
 func TestKeysAWSRefusesAreWorded(t *testing.T) {
 	setting := ecrSetting(t, "", time.Time{})
-	auth := setting.MustAsRegistryAuth()
-	auth.ECR.SecretAccessKey = entity.NewEncryptedField("wrong")
-	setting.MustSetData(auth)
-	row := &settingRow{row: setting}
+	row := &settingRow{row: setting, keys: map[string]*entity.Setting{
+		"ka1": keyAuth("ka1", "AKIAEXAMPLE000000000", "wrong", 1, base.SettingStatusActive)}}
 	_, err := newTestService(row, &fakeECR{}).AuthConfig(context.Background(), setting)
 	info, _ := hperrors.ParseError(err, translation.LangEn)
 	assert.Contains(t, info.Detail, "123456789012.dkr.ecr.eu-west-1.amazonaws.com were refused")

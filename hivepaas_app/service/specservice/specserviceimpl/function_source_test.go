@@ -54,6 +54,7 @@ func functionSourceCases() map[string]*entity.DeploymentFunctionSource {
 		"unknown runtime":  with(func(s *entity.DeploymentFunctionSource) { s.Runtime = "cobol" }),
 		"wrong extension":  with(func(s *entity.DeploymentFunctionSource) { s.Entrypoint.File = "main.py" }),
 		"typescript":       with(func(s *entity.DeploymentFunctionSource) { s.Entrypoint.File = "src/index.ts" }),
+		"bun":              with(func(s *entity.DeploymentFunctionSource) { s.Runtime = base.FunctionRuntimeBun1 }),
 		"typescript in python": with(func(s *entity.DeploymentFunctionSource) {
 			s.Runtime, s.Entrypoint.File = base.FunctionRuntimePython313, "index.ts"
 		}),

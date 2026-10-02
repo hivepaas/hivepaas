@@ -18,6 +18,7 @@ import (
 
 var images = map[string]string{
 	"node24":      "ghcr.io/hivepaas/function-runtime-node24:1.0.0@sha256:node",
+	"bun1":        "ghcr.io/hivepaas/function-runtime-bun1:1.1.0@sha256:bun",
 	"python313":   "ghcr.io/hivepaas/function-runtime-python313:1.0.0@sha256:python",
 	"go127":       "ghcr.io/hivepaas/function-runtime-go127:1.0.0@sha256:go",
 	"go127-build": "ghcr.io/hivepaas/function-runtime-go127-build:1.0.0@sha256:gobuild",
@@ -87,6 +88,36 @@ ENV HP_FN_ENTRYPOINT="index.js" \
     HP_FN_MAX_BODY_SIZE=6291456
 `, resp.Content)
 	assert.Empty(t, resp.Notes)
+}
+
+// A Bun function's libraries are installed from package.json and Bun's own lock
+// file, with the settings Bun reads, before its code.
+func TestABunFunctionInstallsFromBunsLockFile(t *testing.T) {
+	dir := sourceDir(t, map[string]string{
+		"index.ts": "export default () => ({})", "package.json": `{"dependencies": {"ms": "2.1.3"}}`,
+		"bun.lock": "{}", "bunfig.toml": "[install]\n", ".npmrc": "registry=https://registry.npmjs.org/",
+	})
+
+	resp, err := Dockerfile(&DockerfileReq{Source: source(base.FunctionRuntimeBun1), Images: images, SourceDir: dir})
+
+	assert.NoError(t, err)
+	assert.Equal(t, `# The Dockerfile HivePaaS writes for a function: runtime bun1, contract v1.
+FROM ghcr.io/hivepaas/function-runtime-bun1:1.1.0@sha256:bun AS base
+
+FROM base AS deps
+COPY --chown=hivepaas:hivepaas package.json bun.lock .npmrc bunfig.toml /app/
+RUN hivepaas-runtime deps
+
+FROM deps
+COPY --chown=hivepaas:hivepaas . /app/
+ENV HP_FN_ENTRYPOINT="index.ts" \
+    HP_FN_HANDLER="default" \
+    HP_FN_TIMEOUT_MS=30000 \
+    HP_FN_MAX_CONCURRENCY=16 \
+    HP_FN_MAX_BODY_SIZE=6291456
+`, resp.Content)
+	assert.Empty(t, resp.Notes)
+	assert.Equal(t, []string{"bun.lock"}, LockFiles(base.FunctionRuntimeBun1))
 }
 
 // Without a manifest there is nothing to install, and no package is no root.

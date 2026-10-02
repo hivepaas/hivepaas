@@ -58,6 +58,19 @@ export default (req) => {
 		},
 		"package-lock.json",
 	},
+	base.FunctionRuntimeBun1: {
+		entity.FunctionEntrypoint{File: "index.ts", Handler: "default"},
+		[]*entity.FunctionFile{
+			{Path: "package.json", Content: `{"type": "module", "dependencies": {"ms": "2.1.3"}}`},
+			{Path: "index.ts", Content: `import ms from 'ms'
+export default (req: { text(): string }) => {
+  console.log('called with', req.text())
+  return { body: { got: req.text(), library: String(ms('1m')), env: process.env.GREETING } }
+}
+`},
+		},
+		"bun.lock",
+	},
 	base.FunctionRuntimePython313: {
 		entity.FunctionEntrypoint{File: "main.py", Handler: "handler"},
 		[]*entity.FunctionFile{

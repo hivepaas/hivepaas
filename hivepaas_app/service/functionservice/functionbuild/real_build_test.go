@@ -26,6 +26,14 @@ import ms from 'ms'
 export default () => ({ body: { library: String(ms('1m')), tool: execSync('jq --version').toString().trim() } })
 `},
 	},
+	base.FunctionRuntimeBun1: {
+		{Path: "package.json", Content: `{"type": "module", "dependencies": {"ms": "2.1.3"}}`},
+		{Path: "index.ts", Content: `import { execSync } from 'node:child_process'
+import ms from 'ms'
+
+export default () => ({ body: { library: String(ms('1m')), tool: execSync('jq --version').toString().trim() } })
+`},
+	},
 	base.FunctionRuntimePython313: {
 		{Path: "requirements.txt", Content: "six==1.17.0\n"},
 		{Path: "main.py", Content: `import subprocess
@@ -67,6 +75,7 @@ func Handle(ctx context.Context, req *hivepaas.Request) (*hivepaas.Response, err
 
 var realLibraryValues = map[base.FunctionRuntime]string{
 	base.FunctionRuntimeNode24:    "60000",
+	base.FunctionRuntimeBun1:      "60000",
 	base.FunctionRuntimePython313: "1.17.0",
 	base.FunctionRuntimeGo127:     uuidOfHivepaas,
 }

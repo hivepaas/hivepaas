@@ -46,6 +46,7 @@ func errorsOf(req *DeploymentFunctionSourceReq) []string {
 func TestAFunctionSourceTakesItsRuntimesDefaults(t *testing.T) {
 	for runtime, entrypoint := range map[base.FunctionRuntime]FunctionEntrypointReq{
 		base.FunctionRuntimeNode24:    {File: "index.js", Handler: "default"},
+		base.FunctionRuntimeBun1:      {File: "index.ts", Handler: "default"},
 		base.FunctionRuntimePython313: {File: "main.py", Handler: "handler"},
 		base.FunctionRuntimeGo127:     {File: ".", Handler: "Handle"},
 	} {
@@ -80,6 +81,8 @@ func TestAFunctionSourceOfEachRuntimeIsValid(t *testing.T) {
 	for _, req := range []*DeploymentFunctionSourceReq{
 		inlineSource(base.FunctionRuntimeNode24, file("index.js", "export default () => {}"),
 			file("package.json", "{}")),
+		inlineSource(base.FunctionRuntimeBun1, file("index.ts", "export default () => ({})"),
+			file("package.json", "{}"), file("bun.lock", "{}")),
 		inlineSource(base.FunctionRuntimePython313, file("main.py", "def handler(req, ctx): pass"),
 			file("lib/helper.py", "")),
 		inlineSource(base.FunctionRuntimeGo127, file("go.mod", "module fn"), file("fn.go", "package fn")),

@@ -244,9 +244,21 @@ The dashboard has no chart library yet; a small one (uPlot) is added.
 
 1. **Container resources** - the agent's cgroup rows through vlagent, the API,
    the tab with CPU and memory. No eBPF; every node.
-2. **HTTP numbers from Traefik** - the access log as JSON (query dropped, IP
-   kept), its lines labelled, the API's queries per app, path and replica, the
-   tab's requests, errors and latency. No eBPF; every node.
+2. **HTTP numbers from Traefik** (done: backend b0822c28, dashboard 58349d98)
+   - the access log as JSON (query dropped, IP kept), its lines labelled, the
+   API's queries per app, path and replica, the tab's requests, errors and
+   latency. No eBPF; every node. As built:
+   - Traefik's routers, services and middlewares are named by the app's id
+     first (f45814d3): by key, two apps of one key - or one named "app", like
+     HivePaaS's own - made Traefik drop both routes. An app's lines are its
+     services', `^svc-<id>-[0-9]+@swarm$`, matched exactly.
+   - The lines are the proxy's by `attrs.hivepaas.component=traefik`, a
+     container label json-file copies into each; a live test checks that a
+     line an app printed is not counted.
+   - New installs have it in the stack. An existing one gets it when an
+     administrator saves Config Options with Access Log on - that option now
+     writes the JSON form, and the apply adds the label - or with Traefik's
+     next image update; until then the tab says why it is empty.
 3. **Calls and inside the app** - OBI run by the agent, opt-in per node:
    calls between apps, to databases and outside hosts, route templates.
 4. **Traces** - sampling, the trace list and waterfall, the link to logs.

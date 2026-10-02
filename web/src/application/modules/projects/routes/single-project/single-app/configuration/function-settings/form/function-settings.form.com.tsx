@@ -1,6 +1,6 @@
 import React, { type PropsWithChildren, useImperativeHandle } from "react";
 
-import { Field, FieldError, FieldGroup, Input } from "@components/ui";
+import { Checkbox, Field, FieldError, FieldGroup, Input } from "@components/ui";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { FileCode, GitBranch } from "lucide-react";
 import { useController, useForm } from "react-hook-form";
@@ -107,6 +107,7 @@ export function FunctionSettingsForm({ ref, projectId, env, source, onSubmit, re
     const { field: repoRef } = useController({ control, name: "repoRef" });
     const { field: dir } = useController({ control, name: "dir" });
     const { field: credentials } = useController({ control, name: "credentials" });
+    const { field: autoDeploy } = useController({ control, name: "autoDeploy" });
     const { field: pushToRegistry } = useController({ control, name: "pushToRegistry" });
 
     // An entrypoint left at its runtime's default follows the runtime.
@@ -477,6 +478,37 @@ export function FunctionSettingsForm({ ref, projectId, env, source, onSubmit, re
                                                     aria-invalid={Boolean(errors.dir)}
                                                 />
                                                 <FieldError errors={[errors.dir]} />
+                                            </Field>
+                                        </FieldGroup>
+                                    </InfoBlock>
+
+                                    <InfoBlock
+                                        titleWidth={TITLE_WIDTH}
+                                        title={
+                                            <LabelWithInfo
+                                                label="Deploy on Push"
+                                                content="A push to the ref deploys the function, once the repository's webhook or GitHub App tells HivePaaS of it."
+                                            />
+                                        }
+                                    >
+                                        <FieldGroup>
+                                            <Field>
+                                                <div className="flex items-center gap-3">
+                                                    <Checkbox
+                                                        id="function-auto-deploy"
+                                                        checked={autoDeploy.value}
+                                                        onCheckedChange={checked => {
+                                                            autoDeploy.onChange(checked === true);
+                                                        }}
+                                                        disabled={readOnly}
+                                                    />
+                                                    <label
+                                                        htmlFor="function-auto-deploy"
+                                                        className="text-sm"
+                                                    >
+                                                        Deploy when the ref is pushed
+                                                    </label>
+                                                </div>
                                             </Field>
                                         </FieldGroup>
                                     </InfoBlock>

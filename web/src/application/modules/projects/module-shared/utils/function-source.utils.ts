@@ -86,6 +86,7 @@ export function functionSourceToPayload(source: FunctionSource, files?: Function
                           repoRef: source.code.repo.repoRef,
                           commitHash: source.code.repo.commitHash,
                           credentials: { id: source.code.repo.credentials?.id ?? "" },
+                          autoDeploy: source.code.repo.autoDeploy,
                       },
                   }
                 : {}),

@@ -59,6 +59,8 @@ const CreateFunctionFormSchemaBase = z.object({
     repoRef: z.string().trim(),
     dir: z.string().trim(),
     credentials: CredentialsRefSchema,
+    /** Whether a push to the ref deploys the function. */
+    autoDeploy: z.boolean(),
     /** Whether the function is routed at domain from its first deployment. */
     expose: z.boolean(),
     domain: z.string().trim(),
@@ -90,6 +92,13 @@ export function createCreateFunctionFormSchema(
                 code: z.ZodIssueCode.custom,
                 path: ["repoUrl"],
                 message: "Repository URL is required",
+            });
+        }
+        if (values.autoDeploy && values.repoRef === "") {
+            ctx.addIssue({
+                code: z.ZodIssueCode.custom,
+                path: ["repoRef"],
+                message: "Deploying on push needs a branch",
             });
         }
         const dirProblem = values.dir === "" ? null : functionFilePathProblem(values.dir, []);
@@ -130,6 +139,7 @@ export function createFunctionSource(values: CreateFunctionFormOutput): Function
                       repoRef: values.repoRef,
                       commitHash: "",
                       credentials: { id: values.credentials?.id ?? "" },
+                      autoDeploy: values.autoDeploy,
                   },
                   dir: values.dir,
               }

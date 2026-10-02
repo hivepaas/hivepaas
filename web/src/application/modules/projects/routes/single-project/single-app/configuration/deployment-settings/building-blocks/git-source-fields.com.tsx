@@ -25,6 +25,7 @@ export function GitSourceFields({ readOnly = false }: Props) {
 
     const gitSubmodulesOptionId = "repo-options-git-submodules";
     const gitLfsOptionId = "repo-options-git-lfs";
+    const autoDeployId = "repo-auto-deploy";
     const [isBranchesDialogOpen, setBranchesDialogOpen] = useState(false);
 
     const { control } = useFormContext<
@@ -61,6 +62,12 @@ export function GitSourceFields({ readOnly = false }: Props) {
     const { field: gitLfsEnabled } = useController({
         control,
         name: `repoSource.repoOptions.${EDeploymentRepoOption.GitLfsEnabled}`,
+        defaultValue: true,
+    });
+
+    const { field: autoDeploy } = useController({
+        control,
+        name: "repoSource.autoDeploy",
         defaultValue: true,
     });
 
@@ -159,6 +166,33 @@ export function GitSourceFields({ readOnly = false }: Props) {
                             Git LFS
                         </label>
                     </div>
+                </div>
+            </InfoBlock>
+
+            <InfoBlock
+                titleWidth={220}
+                title={
+                    <LabelWithInfo
+                        label="Deploy on Push"
+                        content="A push to the branch deploys the app, once the repository's webhook or GitHub App tells HivePaaS of it. The deployment builds the pushed commit, and clears the commit hash above."
+                    />
+                }
+            >
+                <div className="flex items-center gap-3">
+                    <Checkbox
+                        id={autoDeployId}
+                        checked={autoDeploy.value}
+                        onCheckedChange={checked => {
+                            autoDeploy.onChange(checked === true);
+                        }}
+                        disabled={readOnly}
+                    />
+                    <label
+                        htmlFor={autoDeployId}
+                        className="text-sm"
+                    >
+                        Deploy when the branch is pushed
+                    </label>
                 </div>
             </InfoBlock>
 

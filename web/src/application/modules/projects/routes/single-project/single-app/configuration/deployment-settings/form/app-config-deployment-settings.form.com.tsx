@@ -76,6 +76,7 @@ function mapDefaultValues(data: RepoMethod | ImageMethod): SchemaInput {
                 pushToRegistry: data.repoSource.pushToRegistry
                     ? { id: data.repoSource.pushToRegistry.id, name: data.repoSource.pushToRegistry.name }
                     : undefined,
+                autoDeploy: data.repoSource.autoDeploy,
             },
         };
     }

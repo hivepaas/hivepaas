@@ -64,6 +64,8 @@ type AppDeploymentSettings_UpdateRepoPayload = AppDeploymentSettings_UpdateBaseP
         pushToRegistry: {
             id: string;
         };
+        /** Whether a push to repoRef, received by a repo webhook, deploys the app. */
+        autoDeploy: boolean;
     };
 };
 
@@ -83,6 +85,8 @@ export type FunctionSourcePayload = {
             repoRef: string;
             commitHash: string;
             credentials: { id: string };
+            /** Whether a push to repoRef, received by a repo webhook, deploys the function. */
+            autoDeploy: boolean;
         };
         dir: string;
     };

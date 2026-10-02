@@ -27,6 +27,8 @@ export type RepoMethod = BaseDeploymentSettings & {
         credentials: SettingsBaseEntity | null;
         dockerfile: DeploymentDockerfile;
         pushToRegistry: SettingsBaseEntity | null;
+        /** Whether a push to repoRef, received by a repo webhook, deploys the app. */
+        autoDeploy: boolean;
     };
 };
 

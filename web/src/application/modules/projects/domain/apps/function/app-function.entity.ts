@@ -16,6 +16,8 @@ export type FunctionRepoCode = {
     repoRef: string;
     commitHash: string;
     credentials: SettingsBaseEntity | null;
+    /** Whether a push to repoRef, received by a repo webhook, deploys the function. */
+    autoDeploy: boolean;
 };
 
 /**

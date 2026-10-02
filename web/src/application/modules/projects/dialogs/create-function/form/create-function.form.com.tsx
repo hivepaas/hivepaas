@@ -91,6 +91,7 @@ export function CreateFunctionForm({
             repoRef: "",
             dir: "",
             credentials: null,
+            autoDeploy: true,
             expose: false,
             domain: "",
         },
@@ -126,6 +127,7 @@ export function CreateFunctionForm({
     const { field: repoRef } = useController({ name: "repoRef", control });
     const { field: dir } = useController({ name: "dir", control });
     const { field: credentials } = useController({ name: "credentials", control });
+    const { field: autoDeploy } = useController({ name: "autoDeploy", control });
     const { field: expose } = useController({ name: "expose", control });
     const { field: domain } = useController({ name: "domain", control });
 
@@ -423,7 +425,9 @@ export function CreateFunctionForm({
                                         <Input
                                             {...repoRef}
                                             placeholder="main"
+                                            aria-invalid={Boolean(errors.repoRef)}
                                         />
+                                        <FieldError errors={[errors.repoRef]} />
                                     </Field>
                                 </FieldGroup>
                             </InfoBlock>
@@ -445,6 +449,34 @@ export function CreateFunctionForm({
                                             aria-invalid={Boolean(errors.dir)}
                                         />
                                         <FieldError errors={[errors.dir]} />
+                                    </Field>
+                                </FieldGroup>
+                            </InfoBlock>
+
+                            <InfoBlock
+                                titleWidth={150}
+                                title={
+                                    <LabelWithInfo
+                                        label="Deploy on Push"
+                                        content="A push to the ref deploys the function, once the repository's webhook or GitHub App tells HivePaaS of it."
+                                    />
+                                }
+                            >
+                                <FieldGroup>
+                                    <Field>
+                                        <div className="flex items-center gap-2 text-sm">
+                                            <Checkbox
+                                                id="create-function-auto-deploy"
+                                                checked={autoDeploy.value}
+                                                onCheckedChange={checked => {
+                                                    autoDeploy.onChange(checked === true);
+                                                }}
+                                                disabled={readOnly}
+                                            />
+                                            <label htmlFor="create-function-auto-deploy">
+                                                Deploy when the ref is pushed
+                                            </label>
+                                        </div>
                                     </Field>
                                 </FieldGroup>
                             </InfoBlock>

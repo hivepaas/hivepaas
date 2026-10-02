@@ -74,6 +74,7 @@ export class AppDeploymentSettingsApi extends BaseApi {
                           commitHash: payload.repoSource.commitHash,
                           repoOptions: payload.repoSource.repoOptions,
                           credentials: payload.repoSource.credentials,
+                          autoDeploy: payload.repoSource.autoDeploy,
                           dockerfile: {
                               source: payload.repoSource.dockerfile.source,
                               path: payload.repoSource.dockerfile.path,
@@ -143,6 +144,7 @@ export function functionSourceToJson(source: FunctionSourcePayload): Record<stri
                           repoRef: repo.repoRef,
                           commitHash: repo.commitHash,
                           credentials: repo.credentials,
+                          autoDeploy: repo.autoDeploy,
                       },
                   }
                 : {}),

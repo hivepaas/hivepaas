@@ -91,6 +91,7 @@ const RepoSourceSchema = z.preprocess(
         credentials: SettingsRefSchema,
         dockerfile: DockerfileSchema,
         pushToRegistry: SettingsRefSchema,
+        autoDeploy: z.boolean().optional().default(true),
     }),
 );
 
@@ -154,6 +155,7 @@ export const FunctionSourceSchema = z.object({
                         repoRef: OptionalStringSchema,
                         commitHash: OptionalStringSchema,
                         credentials: SettingsRefSchema,
+                        autoDeploy: z.boolean().optional().default(false),
                     }),
                 )
                 .nullish()

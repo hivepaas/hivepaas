@@ -45,6 +45,7 @@ export const FunctionSettingsFormSchema = z
         repoRef: z.string().trim(),
         dir: z.string().trim(),
         credentials: SettingsRefSchema,
+        autoDeploy: z.boolean(),
         pushToRegistry: SettingsRefSchema,
     })
     .superRefine((values, ctx) => {
@@ -65,6 +66,13 @@ export const FunctionSettingsFormSchema = z
                 code: z.ZodIssueCode.custom,
                 path: ["repoUrl"],
                 message: "Repository URL is required",
+            });
+        }
+        if (values.autoDeploy && values.repoRef === "") {
+            ctx.addIssue({
+                code: z.ZodIssueCode.custom,
+                path: ["repoRef"],
+                message: "Deploying on push needs a branch",
             });
         }
         const dirProblem = values.dir === "" ? null : functionFilePathProblem(values.dir, []);
@@ -99,6 +107,8 @@ export function functionSettingsDefaultValues(source: FunctionSource): FunctionS
         repoRef: repo?.repoRef ?? "",
         dir: repo ? source.code.dir : "",
         credentials: repo?.credentials ?? null,
+        // Code moved into a repository deploys on push, as a new function's does.
+        autoDeploy: repo?.autoDeploy ?? true,
         pushToRegistry: source.pushToRegistry,
     };
 }
@@ -134,6 +144,7 @@ export function functionSettingsToSource(
                               ? source.code.repo.commitHash
                               : "",
                       credentials: { id: values.credentials?.id ?? "" },
+                      autoDeploy: values.autoDeploy,
                   },
                   dir: values.dir,
               }

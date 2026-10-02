@@ -45170,6 +45170,148 @@
         "x-codegen-request-body-name" : "body"
       }
     },
+    "/system/settings/registry-auth-renewal" : {
+      "get" : {
+        "description" : "Gets registry auth renewal settings",
+        "operationId" : "getRegistryAuthRenewalSettings",
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/systemsettings_registryauthrenewaldto.GetRegistryAuthRenewalResp"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "400" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Bad Request"
+          },
+          "500" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Internal Server Error"
+          }
+        },
+        "summary" : "Gets registry auth renewal settings",
+        "tags" : [ "System settings" ]
+      },
+      "put" : {
+        "description" : "Updates registry auth renewal settings",
+        "operationId" : "updateRegistryAuthRenewalSettings",
+        "requestBody" : {
+          "content" : {
+            "*/*" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/systemsettings_registryauthrenewaldto.UpdateRegistryAuthRenewalReq"
+              }
+            }
+          },
+          "description" : "request data",
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/systemsettings_registryauthrenewaldto.UpdateRegistryAuthRenewalResp"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "400" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Bad Request"
+          },
+          "500" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Internal Server Error"
+          }
+        },
+        "summary" : "Updates registry auth renewal settings",
+        "tags" : [ "System settings" ],
+        "x-codegen-request-body-name" : "body"
+      }
+    },
+    "/system/settings/registry-auth-renewal/exec" : {
+      "post" : {
+        "description" : "Runs the registry auth renewal now",
+        "operationId" : "executeRegistryAuthRenewal",
+        "requestBody" : {
+          "content" : {
+            "*/*" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/systemsettings_registryauthrenewaldto.ExecuteRegistryAuthRenewalReq"
+              }
+            }
+          },
+          "description" : "request data",
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/systemsettings_registryauthrenewaldto.ExecuteRegistryAuthRenewalResp"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "400" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Bad Request"
+          },
+          "500" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Internal Server Error"
+          }
+        },
+        "summary" : "Runs the registry auth renewal now",
+        "tags" : [ "System settings" ],
+        "x-codegen-request-body-name" : "body"
+      }
+    },
     "/system/settings/registry/probe-domain" : {
       "post" : {
         "description" : "Reports whether a proxy answers instead of the registry, which is advisory",
@@ -68081,6 +68223,167 @@
         "type" : "object"
       },
       "systemsettings_mcpdto.UpdateMCPSettingsResp" : {
+        "properties" : {
+          "meta" : {
+            "$ref" : "#/components/schemas/basedto.Meta"
+          }
+        },
+        "required" : [ "meta" ],
+        "type" : "object"
+      },
+      "systemsettings_registryauthrenewaldto.ExecuteRegistryAuthRenewalDataResp" : {
+        "properties" : {
+          "task" : {
+            "$ref" : "#/components/schemas/basedto.ObjectIDResp"
+          }
+        },
+        "required" : [ "task" ],
+        "type" : "object"
+      },
+      "systemsettings_registryauthrenewaldto.ExecuteRegistryAuthRenewalReq" : {
+        "properties" : {
+          "targetAuths" : {
+            "description" : "TargetAuths are the credentials to renew; every Amazon ECR one when empty.",
+            "items" : {
+              "$ref" : "#/components/schemas/basedto.ObjectIDReq"
+            },
+            "type" : "array"
+          }
+        },
+        "required" : [ "targetAuths" ],
+        "type" : "object"
+      },
+      "systemsettings_registryauthrenewaldto.ExecuteRegistryAuthRenewalResp" : {
+        "properties" : {
+          "data" : {
+            "$ref" : "#/components/schemas/systemsettings_registryauthrenewaldto.ExecuteRegistryAuthRenewalDataResp"
+          },
+          "meta" : {
+            "$ref" : "#/components/schemas/basedto.Meta"
+          }
+        },
+        "required" : [ "data", "meta" ],
+        "type" : "object"
+      },
+      "systemsettings_registryauthrenewaldto.GetRegistryAuthRenewalResp" : {
+        "properties" : {
+          "data" : {
+            "$ref" : "#/components/schemas/systemsettings_registryauthrenewaldto.RegistryAuthRenewalResp"
+          },
+          "meta" : {
+            "$ref" : "#/components/schemas/basedto.Meta"
+          }
+        },
+        "required" : [ "data", "meta" ],
+        "type" : "object"
+      },
+      "systemsettings_registryauthrenewaldto.RegistryAuthRenewalResp" : {
+        "properties" : {
+          "createdAt" : {
+            "type" : "string"
+          },
+          "default" : {
+            "type" : "boolean"
+          },
+          "expireAt" : {
+            "type" : "string"
+          },
+          "id" : {
+            "type" : "string"
+          },
+          "inheritable" : {
+            "type" : "boolean"
+          },
+          "inherited" : {
+            "type" : "boolean"
+          },
+          "kind" : {
+            "type" : "string"
+          },
+          "name" : {
+            "type" : "string"
+          },
+          "nextRuns" : {
+            "description" : "Calculated fields",
+            "items" : {
+              "type" : "string"
+            },
+            "type" : "array"
+          },
+          "notification" : {
+            "$ref" : "#/components/schemas/basedto.BaseEventNotificationResp"
+          },
+          "schedule" : {
+            "$ref" : "#/components/schemas/systemsettings_registryauthrenewaldto.ScheduleResp"
+          },
+          "size" : {
+            "type" : "integer"
+          },
+          "status" : {
+            "type" : "string"
+          },
+          "type" : {
+            "type" : "string"
+          },
+          "updateVer" : {
+            "type" : "integer"
+          },
+          "updatedAt" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "createdAt", "default", "expireAt", "id", "inheritable", "inherited", "kind", "name", "nextRuns", "notification", "schedule", "size", "status", "type", "updateVer", "updatedAt" ],
+        "type" : "object"
+      },
+      "systemsettings_registryauthrenewaldto.ScheduleReq" : {
+        "properties" : {
+          "initialTime" : {
+            "type" : "string"
+          },
+          "interval" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "initialTime", "interval" ],
+        "type" : "object"
+      },
+      "systemsettings_registryauthrenewaldto.ScheduleResp" : {
+        "properties" : {
+          "initialTime" : {
+            "type" : "string"
+          },
+          "interval" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "initialTime", "interval" ],
+        "type" : "object"
+      },
+      "systemsettings_registryauthrenewaldto.UpdateRegistryAuthRenewalReq" : {
+        "properties" : {
+          "default" : {
+            "type" : "boolean"
+          },
+          "inheritable" : {
+            "type" : "boolean"
+          },
+          "notification" : {
+            "$ref" : "#/components/schemas/basedto.BaseEventNotificationReq"
+          },
+          "schedule" : {
+            "$ref" : "#/components/schemas/systemsettings_registryauthrenewaldto.ScheduleReq"
+          },
+          "status" : {
+            "type" : "string"
+          },
+          "updateVer" : {
+            "type" : "integer"
+          }
+        },
+        "required" : [ "default", "inheritable", "notification", "schedule", "status", "updateVer" ],
+        "type" : "object"
+      },
+      "systemsettings_registryauthrenewaldto.UpdateRegistryAuthRenewalResp" : {
         "properties" : {
           "meta" : {
             "$ref" : "#/components/schemas/basedto.Meta"

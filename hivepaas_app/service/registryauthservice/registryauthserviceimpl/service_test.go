@@ -90,7 +90,8 @@ func ecrSetting(t *testing.T, token string, expiresAt time.Time) *entity.Setting
 
 func newTestService(row *settingRow, ecr *fakeECR) *service {
 	return &service{settingRepo: row, ecr: ecr, now: func() time.Time { return now },
-		inTx: func(ctx context.Context, fn func(tx database.Tx) error) error { return fn(database.Tx{}) }}
+		inTx:     func(ctx context.Context, fn func(tx database.Tx) error) error { return fn(database.Tx{}) },
+		interval: func(context.Context) time.Duration { return entity.RegistryAuthRenewalIntervalDefault }}
 }
 
 // A token kept while it lives the renewal's interval and an hour more is used

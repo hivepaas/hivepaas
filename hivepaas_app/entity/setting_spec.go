@@ -223,6 +223,7 @@ var (
 		base.SettingTypeSSLCert,
 		base.SettingTypeSSLProvider,
 		base.SettingTypeSSLRenewal,
+		base.SettingTypeRegistryAuthRenewal,
 		base.SettingTypeSchedJob,
 		base.SettingTypeScript,
 		base.SettingTypeSecret,

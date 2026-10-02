@@ -22,22 +22,53 @@ import (
 const ecrUsername = "AWS"
 
 type service struct {
-	settingRepo repository.SettingRepo
-	ecr         ecrTokens
-	now         func() time.Time
+	db            database.IDB
+	dockerManager docker.Manager
+	appRepo       repository.AppRepo
+	settingRepo   repository.SettingRepo
+	ecr           ecrTokens
+	now           func() time.Time
 	// inTx runs fn in a transaction of its own: the database's, or the tests'.
 	inTx func(ctx context.Context, fn func(tx database.Tx) error) error
+	// interval is the renewal's, as its setting says now.
+	interval func(ctx context.Context) time.Duration
 }
 
 // New builds the registry auth service. fx wires the arguments from the
 // provider list in registry/provides.go.
 //
 //nolint:ireturn // the constructor of a service returns its interface
-func New(db *database.DB, settingRepo repository.SettingRepo) registryauthservice.Service {
-	return &service{settingRepo: settingRepo, ecr: awsECR{}, now: timeutil.NowUTC,
+func New(
+	db *database.DB,
+	dockerManager docker.Manager,
+	appRepo repository.AppRepo,
+	settingRepo repository.SettingRepo,
+) registryauthservice.Service {
+	s := &service{db: db, dockerManager: dockerManager, appRepo: appRepo, settingRepo: settingRepo,
+		ecr: awsECR{}, now: timeutil.NowUTC,
 		inTx: func(ctx context.Context, fn func(tx database.Tx) error) error {
 			return transaction.Execute(ctx, db, fn)
 		}}
+	s.interval = s.renewalInterval
+	return s
+}
+
+// renewalInterval is the renewal setting's interval; the default when it cannot
+// be read, which is what a new installation has.
+func (s *service) renewalInterval(ctx context.Context) time.Duration {
+	if s.settingRepo == nil {
+		return entity.RegistryAuthRenewalIntervalDefault
+	}
+	setting, err := s.settingRepo.GetSingle(ctx, s.db, entity.NewObjectScopeGlobal(),
+		base.SettingTypeRegistryAuthRenewal, false)
+	if err != nil {
+		return entity.RegistryAuthRenewalIntervalDefault
+	}
+	renewal, err := setting.AsRegistryAuthRenewal()
+	if err != nil {
+		return entity.RegistryAuthRenewalIntervalDefault
+	}
+	return renewal.Interval()
 }
 
 func (s *service) AuthHeader(ctx context.Context, setting *entity.Setting) (string, error) {
@@ -60,15 +91,25 @@ func (s *service) AuthConfig(ctx context.Context, setting *entity.Setting) (*reg
 	if auth.Kind != base.RegistryAuthKindAWSECR {
 		return basicConfig(auth)
 	}
-	if token, ok := s.freshToken(auth); ok {
-		return &registry.AuthConfig{Username: ecrUsername, Password: token, ServerAddress: auth.Address}, nil
-	}
-
-	token, err := s.renewToken(ctx, setting)
+	token, err := s.ecrTokenFor(ctx, setting, auth, s.interval(ctx))
 	if err != nil {
 		return nil, err
 	}
-	return &registry.AuthConfig{Username: ecrUsername, Password: token, ServerAddress: auth.Address}, nil
+	return &registry.AuthConfig{Username: ecrUsername, Password: token.password, ServerAddress: auth.Address}, nil
+}
+
+// ecrTokenFor is a token for an ECR credential that lives the interval and
+// TokenMargin more: the one kept, or one got now and kept.
+func (s *service) ecrTokenFor(
+	ctx context.Context,
+	setting *entity.Setting,
+	auth *entity.RegistryAuth,
+	interval time.Duration,
+) (*ecrToken, error) {
+	if token, ok := s.freshToken(auth, interval); ok {
+		return token, nil
+	}
+	return s.renewToken(ctx, setting, interval)
 }
 
 func (s *service) TryAuth(ctx context.Context, auth *entity.RegistryAuth) (*registry.AuthConfig, error) {
@@ -92,16 +133,15 @@ func basicConfig(auth *entity.RegistryAuth) (*registry.AuthConfig, error) {
 
 // freshToken is the token kept in the credential while it has long enough to
 // live to be handed to Swarm.
-func (s *service) freshToken(auth *entity.RegistryAuth) (string, bool) {
-	if auth.Token.IsEmpty() ||
-		auth.TokenExpiresAt.Sub(s.now()) < registryauthservice.RenewalInterval+registryauthservice.TokenMargin {
-		return "", false
+func (s *service) freshToken(auth *entity.RegistryAuth, interval time.Duration) (*ecrToken, bool) {
+	if auth.Token.IsEmpty() || auth.TokenExpiresAt.Sub(s.now()) < interval+registryauthservice.TokenMargin {
+		return nil, false
 	}
 	token, err := auth.Token.GetPlain()
 	if err != nil || token == "" {
-		return "", false
+		return nil, false
 	}
-	return token, true
+	return &ecrToken{password: token, expiresAt: auth.TokenExpiresAt}, true
 }
 
 // renewToken gets a token and keeps it in the credential, in a transaction of
@@ -109,7 +149,11 @@ func (s *service) freshToken(auth *entity.RegistryAuth) (string, bool) {
 // once, one asks AWS and the others find its token. The token's two fields are
 // written alone, without the setting's version, so that a person editing the
 // credential does not lose their edit to a version conflict.
-func (s *service) renewToken(ctx context.Context, setting *entity.Setting) (token string, err error) {
+func (s *service) renewToken(
+	ctx context.Context,
+	setting *entity.Setting,
+	interval time.Duration,
+) (token *ecrToken, err error) {
 	err = s.inTx(ctx, func(db database.Tx) error {
 		current, err := s.settingRepo.GetByID(ctx, db, nil, base.SettingTypeRegistryAuth, setting.ID, false,
 			bunex.SelectFor("UPDATE"))
@@ -120,7 +164,7 @@ func (s *service) renewToken(ctx context.Context, setting *entity.Setting) (toke
 		if err != nil {
 			return hperrors.Wrap(err)
 		}
-		if kept, ok := s.freshToken(auth); ok { // got by another while this one waited
+		if kept, ok := s.freshToken(auth, interval); ok { // got by another while this one waited
 			token = kept
 			return nil
 		}
@@ -136,11 +180,11 @@ func (s *service) renewToken(ctx context.Context, setting *entity.Setting) (toke
 		if err = s.settingRepo.Update(ctx, db, current, bunex.UpdateColumns("data")); err != nil {
 			return hperrors.Wrap(err)
 		}
-		token = got.password
+		token = got
 		return nil
 	})
 	if err != nil {
-		return "", hperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 	return token, nil
 }

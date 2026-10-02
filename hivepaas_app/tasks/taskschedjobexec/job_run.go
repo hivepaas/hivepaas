@@ -9,6 +9,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/backuprepocleanupservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/databackupservice"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/registryauthservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/schedjobexecservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/sslrenewalservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/sysbackupservice"
@@ -102,6 +103,15 @@ func (e *Executor) runJob(ctx context.Context, db database.Tx, run *jobRun) (*jo
 		}
 		result.skipNotification = resp.SkipResultNotification
 
+	case base.SchedJobTypeRegistryAuthRenewal:
+		setting := run.refObjects.RefSettings[schedJob.TargetSetting.ID]
+		if setting == nil {
+			return nil, hperrors.NewNotFound("Registry auth renewal settings")
+		}
+		if err := e.renewRegistryAuths(ctx, db, run, setting.MustAsRegistryAuthRenewal()); err != nil {
+			return nil, hperrors.Wrap(err)
+		}
+
 	case base.SchedJobTypeBackupRepoCleanup:
 		setting := run.refObjects.RefSettings[schedJob.TargetSetting.ID]
 		if setting == nil {
@@ -139,4 +149,31 @@ func (e *Executor) runJob(ctx context.Context, db database.Tx, run *jobRun) (*jo
 	}
 
 	return result, nil
+}
+
+// renewRegistryAuths runs a registry auth renewal: for the credentials the task
+// names, or all of them. What it did is the task's output, failures included.
+func (e *Executor) renewRegistryAuths(
+	ctx context.Context,
+	db database.Tx,
+	run *jobRun,
+	renewal *entity.RegistryAuthRenewal,
+) error {
+	task := run.execData.Task
+	args, err := task.ArgsAsRegistryAuthRenewal()
+	if err != nil {
+		return hperrors.Wrap(err)
+	}
+	req := &registryauthservice.RenewReq{TaskExecData: run.execData, Interval: renewal.Interval()}
+	if args != nil {
+		req.TargetAuths = args.TargetAuths.ToIDStringSlice()
+	}
+	resp, err := e.registryAuthService.Renew(ctx, db, req)
+	if resp != nil && resp.Output != nil {
+		task.MustSetOutput(resp.Output)
+	}
+	if err != nil {
+		return hperrors.Wrap(err)
+	}
+	return nil
 }

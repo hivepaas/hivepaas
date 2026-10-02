@@ -124,6 +124,16 @@ func (s *service) InitDefaultsWithTx(
 		}
 	}
 
+	// Registry auth renewal settings
+	if !gofn.ContainBy(settings, func(item *entity.Setting) bool {
+		return item.Type == base.SettingTypeRegistryAuthRenewal
+	}) {
+		err = s.initDefaultRegistryAuthRenewal(ctx, db, timeNow)
+		if err != nil {
+			return hperrors.Wrap(err)
+		}
+	}
+
 	// Backup repo cleanup settings
 	if !gofn.ContainBy(settings, func(item *entity.Setting) bool {
 		return item.Type == base.SettingTypeBackupRepoCleanup

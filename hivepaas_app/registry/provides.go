@@ -190,6 +190,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/systemsettings/backuprepocleanupuc"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/systemsettings/logginguc"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/systemsettings/mcpuc"
+	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/systemsettings/registryauthrenewaluc"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/systemsettings/registryuc"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/systemsettings/sslrenewaluc"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/systemsettings/systembackupuc"
@@ -350,6 +351,7 @@ var Provides = []any{
 	sslcertuc.New,
 	sslprovideruc.New,
 	sslrenewaluc.New,
+	registryauthrenewaluc.New,
 	mcpuc.New,
 	mcp.NewServices,
 	supportuc.New,

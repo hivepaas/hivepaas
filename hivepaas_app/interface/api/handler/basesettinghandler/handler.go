@@ -40,6 +40,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/systemsettings/backuprepocleanupuc"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/systemsettings/logginguc"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/systemsettings/mcpuc"
+	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/systemsettings/registryauthrenewaluc"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/systemsettings/registryuc"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/systemsettings/sslrenewaluc"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/systemsettings/systembackupuc"
@@ -90,6 +91,7 @@ type Handler struct {
 	SSLCertUC              *sslcertuc.UC
 	SSLProviderUC          *sslprovideruc.UC
 	SSLRenewalUC           *sslrenewaluc.UC
+	RegistryAuthRenewalUC  *registryauthrenewaluc.UC
 	SystemBackupUC         *systembackupuc.UC
 	SystemCleanupUC        *systemcleanupuc.UC
 }
@@ -137,6 +139,7 @@ func New(
 	sslCertUC *sslcertuc.UC,
 	sslProviderUC *sslprovideruc.UC,
 	sslRenewalUC *sslrenewaluc.UC,
+	registryAuthRenewalUC *registryauthrenewaluc.UC,
 	systemBackupUC *systembackupuc.UC,
 	systemCleanupUC *systemcleanupuc.UC,
 ) *Handler {
@@ -183,6 +186,7 @@ func New(
 		SSLCertUC:              sslCertUC,
 		SSLProviderUC:          sslProviderUC,
 		SSLRenewalUC:           sslRenewalUC,
+		RegistryAuthRenewalUC:  registryAuthRenewalUC,
 		SystemBackupUC:         systemBackupUC,
 		SystemCleanupUC:        systemCleanupUC,
 	}

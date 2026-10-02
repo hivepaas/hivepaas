@@ -21,6 +21,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/backuprepocleanupservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/databackupservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/notificationservice"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/registryauthservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/schedjobexecservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/scopeservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/settingservice"
@@ -42,6 +43,7 @@ type Executor struct {
 	backupRepoCleanupService backuprepocleanupservice.Service
 	dataBackupService        databackupservice.Service
 	notificationService      notificationservice.Service
+	registryAuthService      registryauthservice.Service
 	schedJobExecService      schedjobexecservice.Service
 	scopeService             scopeservice.Service
 	settingService           settingservice.Service
@@ -63,6 +65,7 @@ func NewExecutor(
 	backupRepoCleanupService backuprepocleanupservice.Service,
 	dataBackupService databackupservice.Service,
 	notificationService notificationservice.Service,
+	registryAuthService registryauthservice.Service,
 	schedJobExecService schedjobexecservice.Service,
 	scopeService scopeservice.Service,
 	settingService settingservice.Service,
@@ -82,6 +85,7 @@ func NewExecutor(
 		backupRepoCleanupService: backupRepoCleanupService,
 		dataBackupService:        dataBackupService,
 		notificationService:      notificationService,
+		registryAuthService:      registryAuthService,
 		schedJobExecService:      schedJobExecService,
 		scopeService:             scopeService,
 		settingService:           settingService,

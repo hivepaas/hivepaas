@@ -167,9 +167,14 @@ things the same check showed:
   cannot be read back, so renewal does not try to compare it - it sends the
   fresh one.
 
-A service whose update fails is retried at the next run, and listed on the
-credential's page with the error. With no ECR credential, a run does nothing:
-no AWS call, no update.
+A service whose image is not in the credential's registry - its app's
+credential changed and not yet deployed - is skipped rather than handed another
+registry's token; one with no service, an app never deployed, too.
+
+A service whose update fails is retried at the next run, and kept in the run's
+output (`failures`: the credential, the app, the error) for the credential's
+page; the run fails, and its notification says so. With no ECR credential, a run
+does nothing: no AWS call, no update.
 
 **Installations that exist already** get the setting and its job too:
 `InitDefaults` runs at the first installation and when a system setting is
@@ -221,10 +226,14 @@ username and a password as today's are.
    refusing ECR; tests with a fake ECR client - a token decoded, stored, used
    while it has the interval and an hour left, got again after, an AWS error
    worded, never answered.
-3. **Renewal**: the setting and its job, `InitDefaults` at start, the run on save
-   and at start, the services found and updated with their tasks left alone,
-   failures kept for the page; tests against a fake Docker, and one on a real
-   service of HivePaaS's that its task keeps its id.
+3. **Renewal** (done): the setting and its job, `InitDefaults` at start, the run
+   on save and at start, the services found and updated with their tasks left
+   alone, failures kept for the page; tests against a fake Docker. **Checked on
+   a local swarm**: a service created through the API, as HivePaaS creates
+   them, renewed twice by the renewal's own update kept its task. The Docker
+   client shortens a Docker Hub image to its familiar name
+   (`docker.io/library/busybox` is stored as `busybox`); an ECR image keeps its
+   host, which is what the image check reads.
 4. **API, dashboard, export, MCP, docs.**
 5. Later, the same `Kind` for Google Artifact Registry and Azure ACR when they
    are used with short-lived tokens.

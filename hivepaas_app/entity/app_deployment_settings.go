@@ -99,6 +99,27 @@ func (s *AppDeploymentSettings) GetRegistryAuthIDs() (res []string) {
 	return
 }
 
+// ServiceRegistryAuthID is the registry credential the app's service pulls its
+// image with, by the active method: the image's credential, or that of the
+// registry a build pushes to. Empty when it pulls without one.
+func (s *AppDeploymentSettings) ServiceRegistryAuthID() string {
+	switch s.ActiveMethod {
+	case base.DeploymentMethodImage:
+		if s.ImageSource != nil {
+			return s.ImageSource.RegistryAuth.ID
+		}
+	case base.DeploymentMethodRepo:
+		if s.RepoSource != nil {
+			return s.RepoSource.PushToRegistry.ID
+		}
+	case base.DeploymentMethodFunction:
+		if s.FunctionSource != nil {
+			return s.FunctionSource.PushToRegistry.ID
+		}
+	}
+	return ""
+}
+
 func (s *AppDeploymentSettings) GetGitCredentialIDs() (res []string) {
 	if s.RepoSource != nil && s.RepoSource.Credentials.ID != "" {
 		res = append(res, s.RepoSource.Credentials.ID)

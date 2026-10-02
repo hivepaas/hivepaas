@@ -70,6 +70,13 @@ func (s *HTTPServer) registerSystemRoutes(apiGroup *gin.RouterGroup) {
 		sslRenewalGroup.POST("/exec", systemSettingsHandler.ExecuteSSLRenewal)
 	}
 
+	{ // Registry auth renewal group
+		registryAuthRenewalGroup := systemSettingGroup.Group("/registry-auth-renewal")
+		registryAuthRenewalGroup.GET("", systemSettingsHandler.GetRegistryAuthRenewalSettings)
+		registryAuthRenewalGroup.PUT("", systemSettingsHandler.UpdateRegistryAuthRenewalSettings)
+		registryAuthRenewalGroup.POST("/exec", systemSettingsHandler.ExecuteRegistryAuthRenewal)
+	}
+
 	{ // Backup repo cleanup group
 		backupRepoCleanupGroup := systemSettingGroup.Group("/backup-repo-cleanup")
 		backupRepoCleanupGroup.GET("", systemSettingsHandler.GetBackupRepoCleanupSettings)

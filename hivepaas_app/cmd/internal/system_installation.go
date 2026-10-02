@@ -55,6 +55,13 @@ func SystemInstallation(
 					return fmt.Errorf("failed to initialize system data: %w", err)
 				}
 				firstBootRan.Store(true)
+			} else {
+				// An upgrade gets the defaults its version added - a setting
+				// and its job - without waiting for someone to open one. A
+				// failure is logged: opening the setting makes it again.
+				if err = settingInitService.InitDefaults(ctx, db); err != nil {
+					logger.Errorf("failed to initialize default settings: %v", err)
+				}
 			}
 			// The data exists, whoever made it: what the first boot needed is
 			// not kept on disk a moment longer.

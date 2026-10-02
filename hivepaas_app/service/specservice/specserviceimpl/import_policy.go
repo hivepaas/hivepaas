@@ -69,14 +69,15 @@ var importPolicies = map[base.SettingType]importPolicy{
 		return hperrors.Wrap(s.sslService.WriteCertFiles(true, settings...))
 	}},
 
-	base.SettingTypeSchedJob:          {skip: reasonSchedulesTasks},
-	base.SettingTypePeriodicJob:       {skip: reasonSchedulesTasks},
-	base.SettingTypeAppDockerAPI:      {skip: reasonGrantsDockerAPI},
-	base.SettingTypeAppSettingMount:   {skip: reasonMountsSettings},
-	base.SettingTypeBackupRepoCleanup: {skip: reasonSchedulesTasks},
-	base.SettingTypeSSLRenewal:        {skip: reasonSchedulesTasks},
-	base.SettingTypeSystemBackup:      {skip: reasonSchedulesTasks},
-	base.SettingTypeSystemCleanup:     {skip: reasonSchedulesTasks},
+	base.SettingTypeSchedJob:            {skip: reasonSchedulesTasks},
+	base.SettingTypePeriodicJob:         {skip: reasonSchedulesTasks},
+	base.SettingTypeAppDockerAPI:        {skip: reasonGrantsDockerAPI},
+	base.SettingTypeAppSettingMount:     {skip: reasonMountsSettings},
+	base.SettingTypeBackupRepoCleanup:   {skip: reasonSchedulesTasks},
+	base.SettingTypeSSLRenewal:          {skip: reasonSchedulesTasks},
+	base.SettingTypeRegistryAuthRenewal: {skip: reasonSchedulesTasks},
+	base.SettingTypeSystemBackup:        {skip: reasonSchedulesTasks},
+	base.SettingTypeSystemCleanup:       {skip: reasonSchedulesTasks},
 	base.SettingTypeBackupRepo: {
 		skip: "writing it initializes the repository, which import does not do yet",
 	},

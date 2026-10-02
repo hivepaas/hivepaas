@@ -17,12 +17,15 @@ const (
 	// SchedJobTypeFunctionInvoke calls a function once: its runtime's invoke, in a
 	// running task of the function.
 	SchedJobTypeFunctionInvoke SchedJobType = "function-invoke"
+	// SchedJobTypeRegistryAuthRenewal hands the services that pull from Amazon ECR
+	// a token fresh enough to outlive the next run.
+	SchedJobTypeRegistryAuthRenewal SchedJobType = "registry-auth-renewal"
 )
 
 var (
 	AllSchedJobTypes = []SchedJobType{SchedJobTypeContainerCommand, SchedJobTypeSystemCleanup,
 		SchedJobTypeSystemBackup, SchedJobTypeSSLRenewal, SchedJobTypeBackupRepoCleanup, SchedJobTypeJobSequence,
-		SchedJobTypeDataBackup, SchedJobTypeFunctionInvoke}
+		SchedJobTypeDataBackup, SchedJobTypeFunctionInvoke, SchedJobTypeRegistryAuthRenewal}
 )
 
 // SchedJobDataBackupSource is what a data backup reads: a command's output, or a

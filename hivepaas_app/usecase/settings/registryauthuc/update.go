@@ -3,6 +3,7 @@ package registryauthuc
 import (
 	"context"
 
+	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
@@ -18,6 +19,7 @@ func (uc *UC) UpdateRegistryAuth(
 	req.Type = currentSettingType
 	req.Auth = auth
 	regAuth := req.ToEntity()
+	scheduleRenewal := func() {}
 	_, err := uc.UpdateSetting(ctx, &req.UpdateSettingReq, &settings.UpdateSettingData{
 		VerifyingName:   req.Name,
 		VerifyingRefIDs: regAuth.GetRefObjectIDs(),
@@ -43,10 +45,26 @@ func (uc *UC) UpdateRegistryAuth(
 			}
 			return nil
 		},
+		AfterPersisting: func(
+			ctx context.Context,
+			db database.Tx,
+			data *settings.UpdateSettingData,
+			pData *settings.PersistingSettingData,
+		) (err error) {
+			// New AWS keys: the services pulling with the credential get a
+			// token from them now rather than at the next scheduled run.
+			if regAuth.Kind != base.RegistryAuthKindAWSECR || !regAuth.Token.IsEmpty() ||
+				pData.Setting.Status != base.SettingStatusActive {
+				return nil
+			}
+			scheduleRenewal, err = uc.registryAuthRenewalUC.RenewOnSave(ctx, db, pData.Setting.ID)
+			return hperrors.Wrap(err)
+		},
 	})
 	if err != nil {
 		return nil, hperrors.Wrap(err)
 	}
+	scheduleRenewal()
 
 	return &registryauthdto.UpdateRegistryAuthResp{}, nil
 }

@@ -51,12 +51,15 @@ const (
 	SettingTypeSSLCert           SettingType = "ssl-cert"
 	SettingTypeSSLProvider       SettingType = "ssl-provider"
 	SettingTypeSSLRenewal        SettingType = "ssl-renewal"
-	SettingTypeSchedJob          SettingType = "sched-job"
-	SettingTypeSecret            SettingType = "secret"
-	SettingTypeSystemBackup      SettingType = "system-backup"
-	SettingTypeSystemCleanup     SettingType = "system-cleanup"
-	SettingTypeTraefikConfig     SettingType = "traefik-config"
-	SettingTypeTraefikService    SettingType = "traefik-service"
+	// SettingTypeRegistryAuthRenewal is when the Amazon ECR tokens Swarm keeps in
+	// services are renewed.
+	SettingTypeRegistryAuthRenewal SettingType = "registry-auth-renewal"
+	SettingTypeSchedJob            SettingType = "sched-job"
+	SettingTypeSecret              SettingType = "secret"
+	SettingTypeSystemBackup        SettingType = "system-backup"
+	SettingTypeSystemCleanup       SettingType = "system-cleanup"
+	SettingTypeTraefikConfig       SettingType = "traefik-config"
+	SettingTypeTraefikService      SettingType = "traefik-service"
 )
 
 var (

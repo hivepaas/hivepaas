@@ -12,8 +12,15 @@ import {
     OptionCardGroup,
     ProjectEnvBadge,
 } from "~/projects/module-shared/components";
-import { FUNCTION_TEMPLATES } from "~/projects/module-shared/constants";
-import { ALL_FUNCTION_RUNTIMES, EFunctionRuntime, FUNCTION_RUNTIME_LABELS } from "~/projects/module-shared/enums";
+import { functionTemplateOf } from "~/projects/module-shared/constants";
+import {
+    ALL_FUNCTION_RUNTIMES,
+    EFunctionLanguage,
+    EFunctionRuntime,
+    FUNCTION_LANGUAGE_LABELS,
+    FUNCTION_RUNTIMES_WITH_LANGUAGES,
+    FUNCTION_RUNTIME_LABELS,
+} from "~/projects/module-shared/enums";
 
 import { InfoBlock, LabelWithInfo } from "@application/shared/components";
 import { getDefaultDomain } from "@application/shared/utils/domain";
@@ -78,6 +85,7 @@ export function CreateFunctionForm({
             name: "",
             env: defaultEnv,
             runtime: EFunctionRuntime.Node24,
+            language: EFunctionLanguage.JavaScript,
             codeSource: EFunctionCodeSource.Template,
             repoUrl: "",
             repoRef: "",
@@ -96,6 +104,8 @@ export function CreateFunctionForm({
 
     const selectedEnvName = watch("env");
     const runtime = watch("runtime") as EFunctionRuntime;
+    const language = watch("language");
+    const hasLanguages = FUNCTION_RUNTIMES_WITH_LANGUAGES.includes(runtime);
     const codeSource = watch("codeSource");
     const selectedEnv = envs.find(env => env.name === selectedEnvName);
 
@@ -110,6 +120,7 @@ export function CreateFunctionForm({
     const { field: name } = useController({ name: "name", control });
     const { field: env } = useController({ name: "env", control });
     const { field: runtimeField } = useController({ name: "runtime", control });
+    const { field: languageField } = useController({ name: "language", control });
     const { field: codeSourceField } = useController({ name: "codeSource", control });
     const { field: repoUrl } = useController({ name: "repoUrl", control });
     const { field: repoRef } = useController({ name: "repoRef", control });
@@ -287,6 +298,42 @@ export function CreateFunctionForm({
                         </FieldGroup>
                     </InfoBlock>
 
+                    {hasLanguages && (
+                        <InfoBlock
+                            titleWidth={150}
+                            title={
+                                <LabelWithInfo
+                                    label="Language"
+                                    content="Node.js runs TypeScript by removing its types: they are not checked, and enum and namespace are not allowed."
+                                />
+                            }
+                        >
+                            <FieldGroup>
+                                <Field>
+                                    <Select
+                                        value={languageField.value}
+                                        onValueChange={languageField.onChange}
+                                        disabled={readOnly}
+                                    >
+                                        <SelectTrigger>
+                                            <SelectValue />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            {Object.values(EFunctionLanguage).map(item => (
+                                                <SelectItem
+                                                    key={item}
+                                                    value={item}
+                                                >
+                                                    {FUNCTION_LANGUAGE_LABELS[item]}
+                                                </SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
+                                </Field>
+                            </FieldGroup>
+                        </InfoBlock>
+                    )}
+
                     <InfoBlock
                         titleWidth={150}
                         title={<LabelWithInfo label="Code" />}
@@ -303,7 +350,7 @@ export function CreateFunctionForm({
                                 {codeSource === EFunctionCodeSource.Template && (
                                     <p className="text-xs text-muted-foreground">
                                         Starts with{" "}
-                                        {FUNCTION_TEMPLATES[runtime].map(file => (
+                                        {functionTemplateOf(runtime, language).files.map(file => (
                                             <code
                                                 key={file.path}
                                                 className="mr-1 rounded bg-muted px-1"

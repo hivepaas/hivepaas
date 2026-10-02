@@ -1,7 +1,12 @@
 import { z } from "zod";
 import { type FunctionSourcePayload } from "~/projects/api/services";
-import { FUNCTION_TEMPLATES } from "~/projects/module-shared/constants";
-import { ALL_FUNCTION_RUNTIMES, ERepoType } from "~/projects/module-shared/enums";
+import { functionTemplateOf } from "~/projects/module-shared/constants";
+import {
+    ALL_FUNCTION_RUNTIMES,
+    EFunctionLanguage,
+    type EFunctionRuntime,
+    ERepoType,
+} from "~/projects/module-shared/enums";
 import { functionFilePathProblem } from "~/projects/module-shared/utils";
 
 /**
@@ -47,6 +52,8 @@ const CreateFunctionFormSchemaBase = z.object({
     // A function is created in an env: it is deployed as soon as it exists.
     env: z.string().min(1, "Environment is required").max(50, "Environment must be at most 50 characters"),
     runtime: z.enum(ALL_FUNCTION_RUNTIMES as [string, ...string[]]),
+    /** For a runtime that takes either language: the template and the entrypoint. */
+    language: z.nativeEnum(EFunctionLanguage),
     codeSource: z.nativeEnum(EFunctionCodeSource),
     repoUrl: z.string().trim(),
     repoRef: z.string().trim(),
@@ -100,18 +107,21 @@ export type CreateFunctionFormInput = z.input<ReturnType<typeof createCreateFunc
 export type CreateFunctionFormOutput = z.output<ReturnType<typeof createCreateFunctionFormSchema>>;
 
 /**
- * What a function is created from, by the form: the runtime's template, or the
- * repository. What the form leaves out - the entrypoint, the limits - the
- * backend fills in with the runtime's defaults.
+ * What a function is created from, by the form: the template of its runtime and
+ * language, or the repository. What the form leaves out - the entrypoint of
+ * JavaScript, the limits - the backend fills in with the runtime's defaults; a
+ * TypeScript function's entrypoint is the template's, index.ts, from a
+ * repository too.
  */
 export function createFunctionSource(values: CreateFunctionFormOutput): FunctionSourcePayload {
-    const runtime = values.runtime as keyof typeof FUNCTION_TEMPLATES;
+    const runtime = values.runtime as EFunctionRuntime;
     const fromRepository = values.codeSource === EFunctionCodeSource.Repository;
+    const template = functionTemplateOf(runtime, values.language);
 
     return {
         runtime,
         contract: "",
-        entrypoint: { file: "", handler: "" },
+        entrypoint: { file: template.entrypoint, handler: "" },
         code: fromRepository
             ? {
                   repo: {
@@ -124,7 +134,7 @@ export function createFunctionSource(values: CreateFunctionFormOutput): Function
                   dir: values.dir,
               }
             : {
-                  inline: { files: FUNCTION_TEMPLATES[runtime] },
+                  inline: { files: template.files },
                   dir: "",
               },
         systemPackages: [],

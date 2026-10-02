@@ -4,6 +4,7 @@ import Prism from "prismjs";
 import "prismjs/components/prism-go";
 import "prismjs/components/prism-json";
 import "prismjs/components/prism-python";
+import "prismjs/components/prism-typescript";
 import "prismjs/themes/prism-tomorrow.css";
 import Editor from "react-simple-code-editor";
 
@@ -23,7 +24,7 @@ function highlight(code: string, language: CodeLanguage): string {
 
 /**
  * An editor for one file of a function's code, highlighted after its extension:
- * JavaScript, Python, Go, JSON.
+ * JavaScript, TypeScript, Python, Go, JSON.
  */
 export function FunctionCodeEditor({ path, value, onChange, readOnly = false }: Props) {
     const generatedId = useId();

@@ -33,6 +33,7 @@ const (
 	CodeFunctionKindMismatch  = "FUNCTION_KIND_MISMATCH"
 	CodeAppKindChanged        = "APP_KIND_CHANGED"
 	CodeFunctionBuildSource   = "FUNCTION_BUILD_SOURCE"
+	CodeFunctionCallOnApp     = "FUNCTION_CALL_ON_APP"
 )
 
 // Note codes. A note says what import does, and needs no acceptance.

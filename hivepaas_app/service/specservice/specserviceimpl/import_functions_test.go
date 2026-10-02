@@ -176,3 +176,31 @@ func TestApplyRefusesAFunctionTheChecksBlock(t *testing.T) {
 	assert.ErrorIs(t, err, hperrors.ErrSpecImportBlocked)
 	assert.Empty(t, svc.appProvisionService.(*fakeProvisionService).reqs)
 }
+
+// functionCallJob is a function-invoke job as a bundle holds it, at an app.
+func functionCallJob() map[string]any {
+	return map[string]any{"nightly": map[string]any{
+		"jobType":        "function-invoke",
+		"functionInvoke": map[string]any{"method": "POST", "path": "/report"},
+	}}
+}
+
+// A function's call lives in a function, as saving one requires: an app that
+// is no function cannot be given one by an import.
+func TestImportBlocksAFunctionCallOnAnAppThatIsNoFunction(t *testing.T) {
+	svc, bundle := planFixture(t)
+	addReport(bundle, kindBody("webapp"), imageSource("nginx:1.27"),
+		map[string]any{"schedJobs": functionCallJob()})
+
+	out := plan(t, svc, bundle, specmodel.ImportOptions{})
+
+	assert.Equal(t, []string{specmodel.CodeFunctionCallOnApp}, blockedCodes(node(t, out, reportPath)))
+
+	svc, bundle = planFixture(t)
+	addReport(bundle, kindBody("function"), functionSourceBody("node24"),
+		map[string]any{"schedJobs": functionCallJob()})
+
+	out = plan(t, svc, bundle, specmodel.ImportOptions{})
+
+	assert.Empty(t, blockedCodes(node(t, out, reportPath)), "a function's own call is imported with it")
+}

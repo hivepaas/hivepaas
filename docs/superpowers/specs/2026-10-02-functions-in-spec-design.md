@@ -152,7 +152,8 @@ is refused, as when it is saved, where its app is not a function.
   validation failed; the detail names the field and the reason),
   `FUNCTION_KIND_MISMATCH` (kind and source disagree), `APP_KIND_CHANGED` (a
   function onto another kind, or the reverse), `FUNCTION_BUILD_SOURCE` (the
-  repository or the registry check failed).
+  repository or the registry check failed), `FUNCTION_CALL_ON_APP` (a
+  `function-invoke` job on an app that is no function).
 
 ## Testing
 

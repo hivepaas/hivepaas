@@ -23,10 +23,10 @@ func (n appNature) isFunction() bool {
 
 // checkFunctions holds a function to what creating one checks, whichever way
 // the import writes it: its kind and its source agree, an app keeps its kind,
-// its source is valid, and a cluster of several nodes has a registry to push
-// its image to. What fails is blocked: nothing of the import is written. The
-// functions found are remembered, for the writer to pin their routing to their
-// runtime's port.
+// its source is valid, a cluster of several nodes has a registry to push its
+// image to, and a function's call is only ever a function's job. What fails is
+// blocked: nothing of the import is written. The functions found are
+// remembered, for the writer to pin their routing to their runtime's port.
 func (p *planner) checkFunctions(ctx context.Context) error {
 	p.functionApps = map[string]bool{}
 	var multiNode *bool
@@ -60,6 +60,11 @@ func (p *planner) checkFunction(ctx context.Context, node *specmodel.PlanNode, m
 		after.source = bundled.source
 	}
 	p.functionApps[node.Path] = after.isFunction()
+	if !after.isFunction() && writesFunctionCall(node, p.apps[node.Path].doc) {
+		p.block(node, specmodel.CodeFunctionCallOnApp, nil,
+			"nothing can be imported: a function's call is a job of the function it calls, and this app is "+
+				"no function")
+	}
 	if !writesKind && !writesSource {
 		return nil
 	}
@@ -102,6 +107,23 @@ func (p *planner) checkFunction(ctx context.Context, node *specmodel.PlanNode, m
 				"and the function names none to push it to")
 	}
 	return nil
+}
+
+// writesFunctionCall says whether a node writes a function-invoke job of its
+// app.
+func writesFunctionCall(node *specmodel.PlanNode, doc *specmodel.AppDoc) bool {
+	name := specmodel.CollectionBlockName(base.SettingTypeSchedJob)
+	if doc == nil || !writesBlock(node, "settings."+name) {
+		return false
+	}
+	jobs, _ := doc.Settings[name].(map[string]any)
+	for _, job := range jobs {
+		body, _ := job.(map[string]any)
+		if jobType, _ := body["jobType"].(string); base.SchedJobType(jobType) == base.SchedJobTypeFunctionInvoke {
+			return true
+		}
+	}
+	return false
 }
 
 func (p *planner) block(node *specmodel.PlanNode, code string, detail map[string]any, action string) {

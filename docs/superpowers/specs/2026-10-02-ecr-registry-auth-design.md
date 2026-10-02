@@ -61,20 +61,19 @@ type RegistryAuth struct {
 }
 
 type RegistryAuthECR struct {
+	// Region is read from the address.
 	Region          string         `json:"region"`
 	AccessKeyID     string         `json:"accessKeyId"`
 	SecretAccessKey EncryptedField `json:"secretAccessKey"`
 	// RoleARN, when set, is assumed with the keys above first.
 	RoleARN string `json:"roleArn,omitempty"`
-	// RegistryID is the account whose registry it signs in to; the keys'
-	// own when empty.
-	RegistryID string `json:"registryId,omitempty"`
 }
 ```
 
-- `Address` is the registry's, `<account>.dkr.ecr.<region>.amazonaws.com`,
-  filled in from the token's `proxyEndpoint` when the credential is tested or
-  saved; `Username` is `AWS`; `Password` stays empty.
+- `Address` is given, as for any credential - it is in the images' names - and
+  must be an ECR registry's, `<account>.dkr.ecr[-fips].<region>.amazonaws.com[.cn]`:
+  its account and region are read from it, so no AWS call is needed to save
+  one. `Username` is `AWS`; `Password` stays empty.
 - The secret access key is an `EncryptedField`, masked as a password is.
 - Keys on the host (the EC2 instance's role, through the SDK's default chain)
   are a later option: they make the credential depend on which node asks, and
@@ -89,9 +88,11 @@ type RegistryAuthECR struct {
 // AuthConfig is the credential as Docker takes it: a username and password
 // credential as stored; an ECR one with a token that lives at least as long
 // as the renewal's interval and an hour more.
-AuthConfig(ctx context.Context, db database.IDB, setting *entity.Setting) (*registry.AuthConfig, error)
+AuthConfig(ctx context.Context, setting *entity.Setting) (*registry.AuthConfig, error)
 // AuthHeader is AuthConfig, encoded as Docker's X-Registry-Auth.
-AuthHeader(ctx context.Context, db database.IDB, setting *entity.Setting) (string, error)
+AuthHeader(ctx context.Context, setting *entity.Setting) (string, error)
+// TryAuth is AuthConfig for a credential not saved, such as one tested.
+TryAuth(ctx context.Context, auth *entity.RegistryAuth) (*registry.AuthConfig, error)
 ```
 
 - **The token is got when it is needed**, not on a timer: a deploy, a build, a
@@ -111,7 +112,9 @@ AuthHeader(ctx context.Context, db database.IDB, setting *entity.Setting) (strin
   bumping `updateVer`**: a renewal must not make the person editing the
   credential lose their edit to a version conflict. The row is locked
   (`SELECT ... FOR UPDATE`) while a token is got, so two deploys at once ask AWS
-  once.
+  once. The transaction is the service's own, on the database rather than the
+  caller's: a deploy's transaction does not hold the credential's row while it
+  builds, and the token is kept whether the deploy succeeds or not.
 - **Saving new keys clears the token.** It is never in an API answer, the
   audit log, an export or MCP: `registryauthdto` and the spec export leave it
   out, and a test fails if one does not.
@@ -181,9 +184,9 @@ that a missing default is made whatever is opened.
 - **Test connection** gets a token and pings the registry's `/v2/` with it;
   its answer fills `Address`.
 - The credential's form: **Kind** - *Username and password* / *Amazon ECR*;
-  for ECR: **Region**, **Access Key ID**, **Secret Access Key**, **Role ARN**
-  (optional), **Registry ID** (optional). The page shows when the token was
-  last got and the renewal's last result.
+  for ECR: the **Address**, **Access Key ID**, **Secret Access Key** and
+  **Role ARN** (optional). The page shows when the token expires and the
+  renewal's last result.
 - **System → Registry Auth Renewal**, beside SSL Renewal: the interval, the
   notification, Run Now, the last runs; turning it off with an ECR credential
   in use warns that their apps cannot be pulled on another node after 12
@@ -213,7 +216,7 @@ username and a password as today's are.
    `GetAuthorizationToken` answer, to pin the decoding - it needs an AWS
    account.
 1. **The longer password**, for Google's JSON key: on its own, small, now.
-2. **Backend**: the kind and its fields, the token service and its rule, the
+2. **Backend** (done, 00cadc0f, with the API's request and answer): the kind and its fields, the token service and its rule, the
    token's own update and lock, every use moved onto it, `GenerateAuthHeader`
    refusing ECR; tests with a fake ECR client - a token decoded, stored, used
    while it has the interval and an hour left, got again after, an AWS error

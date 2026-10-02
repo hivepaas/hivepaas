@@ -8,6 +8,7 @@ import type {
     AppLogs_GetInfo_Res,
     AppLogs_GetLogs_Req,
     AppLogs_GetLogs_Res,
+    AppLogs_GetResourceMetrics_Req,
 } from "~/projects/api/services";
 import { QK } from "~/projects/data/constants";
 
@@ -79,10 +80,21 @@ function useGetHttpMetrics(request: AppLogs_GetHttpMetrics_Req["data"], options:
     });
 }
 
+function useGetResourceMetrics(request: AppLogs_GetResourceMetrics_Req["data"], options: { enabled?: boolean } = {}) {
+    const { queries } = useAppLogsApi();
+
+    return useQuery({
+        queryKey: [QK["projects.apps.resource-metrics.$.get"], request],
+        queryFn: ({ signal }) => queries.getResourceMetrics(request, signal),
+        ...options,
+    });
+}
+
 export const AppLogsQueries = Object.freeze({
     useGetInfo,
     useGetLogs,
     useGetHistory,
     useGetFunctionMetrics,
     useGetHttpMetrics,
+    useGetResourceMetrics,
 });

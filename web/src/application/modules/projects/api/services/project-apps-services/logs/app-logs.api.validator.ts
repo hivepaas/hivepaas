@@ -6,6 +6,7 @@ import type {
     AppLogs_GetHttpMetrics_Res,
     AppLogs_GetInfo_Res,
     AppLogs_GetLogs_Res,
+    AppLogs_GetResourceMetrics_Res,
 } from "~/projects/api/services";
 
 import { BaseMetaApiSchema, parseApiResponse } from "@infrastructure/api";
@@ -199,6 +200,83 @@ const GetHttpMetricsSchema = z.object({
     meta: BaseMetaApiSchema.nullable(),
 });
 
+const nullableNumber = z
+    .number()
+    .nullish()
+    .transform(value => value ?? null);
+
+const GetResourceMetricsSchema = z.object({
+    data: z.object({
+        available: z.boolean().catch(false),
+        reason: z
+            .enum([
+                "disabled",
+                "apps-not-collected",
+                "no-query-endpoint",
+                "driver-unreadable",
+                "identity-missing",
+                "agent-unlabelled",
+            ])
+            .nullish()
+            .catch(null)
+            .transform(value => value ?? null),
+        range: z.enum(["1h", "6h", "24h", "7d"]).catch("24h"),
+        start: z
+            .string()
+            .nullish()
+            .transform(value => value ?? null),
+        end: z
+            .string()
+            .nullish()
+            .transform(value => value ?? null),
+        stepSeconds: z.number().catch(0),
+        clamped: z.boolean().catch(false),
+        totals: z
+            .object({
+                cpu: nullableNumber,
+                cpuPeak: nullableNumber,
+                cpuLimit: z.number().catch(0),
+                memoryPeak: nullableNumber,
+                memoryLimit: z.number().catch(0),
+                oomKills: z.number().catch(0),
+            })
+            .nullish()
+            .transform(value => value ?? null),
+        series: z
+            .array(
+                z.object({
+                    time: z.string(),
+                    cpu: nullableNumber,
+                    cpuLimit: z.number().catch(0),
+                    memory: nullableNumber,
+                    memoryLimit: z.number().catch(0),
+                    oomKills: z.number().catch(0),
+                    netRx: z.number().catch(0),
+                    netTx: z.number().catch(0),
+                    ioRead: z.number().catch(0),
+                    ioWrite: z.number().catch(0),
+                }),
+            )
+            .nullish()
+            .transform(value => value ?? []),
+        containers: z
+            .array(
+                z.object({
+                    container: z.string().catch(""),
+                    cpu: z.number().catch(0),
+                    cpuPeak: z.number().catch(0),
+                    memory: z.number().catch(0),
+                    memoryLimit: z.number().catch(0),
+                    oomKills: z.number().catch(0),
+                    lastSeen: z.string().catch(""),
+                }),
+            )
+            .nullish()
+            .transform(value => value ?? []),
+    }),
+    meta: BaseMetaApiSchema.nullable(),
+});
+
 export class AppLogsApiValidator {
     getInfo = (response: AxiosResponse): AppLogs_GetInfo_Res => {
         return parseApiResponse({
@@ -223,6 +301,13 @@ export class AppLogsApiValidator {
         return parseApiResponse({
             response,
             schema: GetHistorySchema,
+        });
+    };
+
+    getResourceMetrics = (response: AxiosResponse): AppLogs_GetResourceMetrics_Res => {
+        return parseApiResponse({
+            response,
+            schema: GetResourceMetricsSchema,
         });
     };
 

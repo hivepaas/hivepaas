@@ -12,6 +12,8 @@ import type {
     AppLogs_GetInfo_Res,
     AppLogs_GetLogs_Req,
     AppLogs_GetLogs_Res,
+    AppLogs_GetResourceMetrics_Req,
+    AppLogs_GetResourceMetrics_Res,
 } from "~/projects/api/services";
 
 import { BaseApi, parseApiError } from "@infrastructure/api";
@@ -90,6 +92,26 @@ export class AppLogsApi extends BaseApi {
                 }),
             ).pipe(
                 map(this.validator.getHistory),
+                map(res => Ok(res)),
+                catchError(error => of(Err(parseApiError(error)))),
+            ),
+        );
+    }
+
+    async getResourceMetrics(
+        request: AppLogs_GetResourceMetrics_Req,
+        signal?: AbortSignal,
+    ): Promise<Result<AppLogs_GetResourceMetrics_Res, Error>> {
+        const { projectID, env, appID, range } = request.data;
+
+        return lastValueFrom(
+            from(
+                this.client.v1.get(`/projects/${projectID}/${env}/apps/${appID}/resource-metrics`, {
+                    params: { range },
+                    signal,
+                }),
+            ).pipe(
+                map(this.validator.getResourceMetrics),
                 map(res => Ok(res)),
                 catchError(error => of(Err(parseApiError(error)))),
             ),

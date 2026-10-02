@@ -10,6 +10,7 @@ import type {
     AppLogHistoryReason,
     AppLogs_GetFunctionMetrics_Res,
     AppLogs_GetHttpMetrics_Res,
+    AppLogs_GetResourceMetrics_Res,
     FunctionMetricsCounts,
     FunctionMetricsRange,
     HttpMetricsCounts,
@@ -27,22 +28,29 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { LOG_HISTORY_UNAVAILABLE_TEXT } from "../../logs/building-blocks";
 import {
     CallsChart,
+    CpuChart,
     DurationChart,
     HttpPaths,
     HttpReplicas,
     METRICS_RANGES,
+    MemoryChart,
     MetricsPaths,
+    NetworkChart,
     RequestsChart,
+    ResourceContainers,
+    formatBytes,
+    formatCores,
     storeMetricsRange,
     storedMetricsRange,
 } from "../building-blocks";
 
-type MetricsView = "calls" | "http";
+type MetricsView = "calls" | "http" | "resources";
 
 /**
  * An app's numbers over a range ending now: its HTTP requests, counted from
- * Traefik's access log, for every app reached by a domain; and a function's
- * calls, counted from the invocation line its runtime writes for every call.
+ * Traefik's access log, for every app reached by a domain; its containers' CPU
+ * and memory, from the rows the agent writes; and a function's calls, counted
+ * from the invocation line its runtime writes for every call.
  */
 export function AppMetricsRoute() {
     const { id: projectID, env, appId: appID } = useParams<{ id: string; env: string; appId: string }>();
@@ -54,16 +62,20 @@ export function AppMetricsRoute() {
     const { data: app } = ProjectAppsQueries.useFindOneById({ projectID, env, appID, getStats: true });
     const isFunction = app ? isFunctionApp(app.data) : false;
 
-    const [view, setView] = useState<MetricsView>("calls");
-    const activeView: MetricsView = isFunction ? view : "http";
+    const [view, setView] = useState<MetricsView | null>(null);
+    // A function opens on its calls, any other app on its requests.
+    const activeView: MetricsView = view ?? (isFunction ? "calls" : "http");
     const [range, setRange] = useState<FunctionMetricsRange>(storedMetricsRange);
 
     const request = { projectID, env, appID, range };
     const callsQuery = AppLogsQueries.useGetFunctionMetrics(request, {
-        enabled: Boolean(app) && activeView === "calls",
+        enabled: Boolean(app) && isFunction && activeView === "calls",
     });
     const httpQuery = AppLogsQueries.useGetHttpMetrics(request, { enabled: Boolean(app) && activeView === "http" });
-    const activeQuery = activeView === "calls" ? callsQuery : httpQuery;
+    const resourcesQuery = AppLogsQueries.useGetResourceMetrics(request, {
+        enabled: Boolean(app) && activeView === "resources",
+    });
+    const activeQuery = { calls: callsQuery, http: httpQuery, resources: resourcesQuery }[activeView];
 
     function chooseRange(next: FunctionMetricsRange) {
         setRange(next);
@@ -74,19 +86,18 @@ export function AppMetricsRoute() {
         <div className={cn(listBox, "flex flex-col gap-4")}>
             <div className="flex flex-wrap items-center justify-between gap-2">
                 <div className="flex flex-wrap items-center gap-3">
-                    {isFunction && (
-                        <Tabs
-                            value={view}
-                            onValueChange={value => {
-                                setView(value as MetricsView);
-                            }}
-                        >
-                            <TabsList>
-                                <TabsTrigger value="calls">Calls</TabsTrigger>
-                                <TabsTrigger value="http">HTTP</TabsTrigger>
-                            </TabsList>
-                        </Tabs>
-                    )}
+                    <Tabs
+                        value={activeView}
+                        onValueChange={value => {
+                            setView(value as MetricsView);
+                        }}
+                    >
+                        <TabsList>
+                            {isFunction && <TabsTrigger value="calls">Calls</TabsTrigger>}
+                            <TabsTrigger value="http">HTTP</TabsTrigger>
+                            <TabsTrigger value="resources">Resources</TabsTrigger>
+                        </TabsList>
+                    </Tabs>
                     <div className="flex gap-1">
                         {METRICS_RANGES.map(item => (
                             <Button
@@ -122,6 +133,12 @@ export function AppMetricsRoute() {
                 <FunctionCallsView
                     metrics={callsQuery.data?.data}
                     isLoading={callsQuery.isLoading}
+                    range={range}
+                />
+            ) : activeView === "resources" ? (
+                <ResourcesView
+                    metrics={resourcesQuery.data?.data}
+                    isLoading={resourcesQuery.isLoading}
                     range={range}
                 />
             ) : (
@@ -245,6 +262,95 @@ function HttpTotals({ totals }: { totals: HttpMetricsCounts }) {
     return <TotalsGrid items={items} />;
 }
 
+function ResourcesView({ metrics, isLoading, range }: ResourcesViewProps) {
+    if (isLoading || !metrics) {
+        return <AppLoader />;
+    }
+    if (!metrics.available) {
+        const { reason } = metrics;
+
+        return (
+            <div className="flex flex-col gap-1 text-sm text-muted-foreground">
+                <span>
+                    {reason === "agent-unlabelled"
+                        ? "The HivePaaS agent does not mark its lines yet. It does from its next update, when HivePaaS is updated."
+                        : reason
+                          ? LOG_HISTORY_UNAVAILABLE_TEXT[reason]
+                          : "The app's CPU and memory cannot be read."}
+                </span>
+                {(reason === "disabled" || reason === "apps-not-collected") && (
+                    <AppLink.Modules
+                        to={ROUTE.systemSettings.logging.configuration.$route}
+                        className="text-link"
+                    >
+                        Logging settings
+                    </AppLink.Modules>
+                )}
+            </div>
+        );
+    }
+
+    const { totals } = metrics;
+
+    return (
+        <>
+            {metrics.clamped && (
+                <p className="text-xs text-muted-foreground">
+                    The logs are kept for less than this range: the charts start where they do.
+                </p>
+            )}
+            {totals && (
+                <TotalsGrid
+                    items={[
+                        { label: "CPU", value: formatCores(totals.cpu) },
+                        { label: "CPU peak", value: formatCores(totals.cpuPeak) },
+                        {
+                            label: "CPU limit",
+                            value: totals.cpuLimit > 0 ? formatCores(totals.cpuLimit) : "None",
+                        },
+                        { label: "Memory peak", value: formatBytes(totals.memoryPeak) },
+                        {
+                            label: "OOM kills",
+                            value: totals.oomKills.toLocaleString(),
+                        },
+                    ]}
+                />
+            )}
+            <section className="flex flex-col gap-1">
+                <h3 className="text-sm font-medium">CPU</h3>
+                <CpuChart
+                    series={metrics.series}
+                    range={range}
+                />
+            </section>
+            <section className="flex flex-col gap-1">
+                <h3 className="text-sm font-medium">Memory</h3>
+                <MemoryChart
+                    series={metrics.series}
+                    range={range}
+                />
+            </section>
+            <section className="flex flex-col gap-1">
+                <h3 className="text-sm font-medium">Network</h3>
+                <NetworkChart
+                    series={metrics.series}
+                    range={range}
+                />
+            </section>
+            {metrics.containers.length > 0 && (
+                <section className="flex flex-col gap-1">
+                    <h3 className="text-sm font-medium">Containers</h3>
+                    <ResourceContainers containers={metrics.containers} />
+                </section>
+            )}
+            <p className="text-xs text-muted-foreground">
+                Read every 15 seconds from each container&apos;s cgroup by the HivePaaS agent on its node, the
+                containers summed. Memory is the working set, as <code>docker stats</code> counts it.
+            </p>
+        </>
+    );
+}
+
 function FunctionCallsView({ metrics, isLoading, range }: CallsViewProps) {
     if (isLoading || !metrics) {
         return <AppLoader />;
@@ -356,6 +462,12 @@ function TotalsGrid({ items }: { items: { label: string; value: string }[] }) {
 
 interface HttpViewProps {
     metrics: AppLogs_GetHttpMetrics_Res["data"] | undefined;
+    isLoading: boolean;
+    range: FunctionMetricsRange;
+}
+
+interface ResourcesViewProps {
+    metrics: AppLogs_GetResourceMetrics_Res["data"] | undefined;
     isLoading: boolean;
     range: FunctionMetricsRange;
 }

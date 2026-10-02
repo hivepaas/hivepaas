@@ -8,6 +8,7 @@ import type {
     AppLogs_GetHttpMetrics_Req,
     AppLogs_GetInfo_Req,
     AppLogs_GetLogs_Req,
+    AppLogs_GetResourceMetrics_Req,
 } from "~/projects/api/services";
 
 import { useApiErrorNotifications } from "@infrastructure/api";
@@ -42,6 +43,21 @@ function createHook() {
                         Err: error => {
                             notifyError({
                                 message: "Failed to get app logs",
+                                error,
+                            });
+
+                            throw error;
+                        },
+                    });
+                },
+                getResourceMetrics: async (data: AppLogs_GetResourceMetrics_Req["data"], signal?: AbortSignal) => {
+                    const result = await api.projects.apps.logs.$.getResourceMetrics({ data }, signal);
+
+                    return match(result, {
+                        Ok: _ => _,
+                        Err: error => {
+                            notifyError({
+                                message: "Failed to get the app's CPU and memory",
                                 error,
                             });
 

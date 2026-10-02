@@ -185,3 +185,56 @@ export type AppLogs_GetHttpMetrics_Res = ApiResponseBase<{
     byPath: HttpMetricsPath[];
     byReplica: HttpMetricsReplica[];
 }>;
+
+/** Why an app's CPU and memory cannot be read: its logs' reasons, and the agent's. */
+export type AppResourceMetricsReason = AppLogHistoryReason | "agent-unlabelled";
+
+export type AppLogs_GetResourceMetrics_Req = AppLogs_GetFunctionMetrics_Req;
+
+/** One step's usage, the containers summed: CPU in cores and memory in bytes, null
+ *  without a row, each with its limit - 0 for none; network and disk in bytes a second. */
+export interface ResourceMetricsPoint {
+    time: string;
+    cpu: number | null;
+    cpuLimit: number;
+    memory: number | null;
+    memoryLimit: number;
+    oomKills: number;
+    netRx: number;
+    netTx: number;
+    ioRead: number;
+    ioWrite: number;
+}
+
+export interface ResourceMetricsTotals {
+    cpu: number | null;
+    cpuPeak: number | null;
+    cpuLimit: number;
+    memoryPeak: number | null;
+    memoryLimit: number;
+    oomKills: number;
+}
+
+/** One container over the range, by its short id. */
+export interface ResourceMetricsContainer {
+    container: string;
+    cpu: number;
+    cpuPeak: number;
+    memory: number;
+    memoryLimit: number;
+    oomKills: number;
+    lastSeen: string;
+}
+
+export type AppLogs_GetResourceMetrics_Res = ApiResponseBase<{
+    available: boolean;
+    reason: AppResourceMetricsReason | null;
+    range: FunctionMetricsRange;
+    start: string | null;
+    end: string | null;
+    stepSeconds: number;
+    clamped: boolean;
+    totals: ResourceMetricsTotals | null;
+    series: ResourceMetricsPoint[];
+    containers: ResourceMetricsContainer[];
+}>;

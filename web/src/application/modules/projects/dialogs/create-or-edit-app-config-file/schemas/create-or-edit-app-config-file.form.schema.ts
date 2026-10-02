@@ -12,13 +12,20 @@ export const CreateOrEditAppConfigFileFormSchema = z
             .min(1, "Name is required"),
         valueType: z.enum(["text", "binary"]),
         isEditMode: z.boolean(),
+        /** The type of the content being edited; null for a new config file. */
+        initialValueType: z.enum(["text", "binary"]).nullable(),
         textValue: z.string(),
         binaryFile: z.custom<File>().nullable(),
         inheritable: z.boolean(),
     })
     .superRefine((value, ctx) => {
+        // A text config file is edited in place, so its value is always there: an
+        // emptied one would be read as "keep the content" by the backend. Only a
+        // binary file left as it was keeps its content without a new upload.
+        const keepsBinary = value.isEditMode && value.initialValueType === "binary";
+
         if (value.valueType === "text") {
-            if (!value.textValue.trim() && !value.isEditMode) {
+            if (!value.textValue.trim()) {
                 ctx.addIssue({
                     code: z.ZodIssueCode.custom,
                     message: "Value is required",
@@ -35,7 +42,7 @@ export const CreateOrEditAppConfigFileFormSchema = z
             }
         }
 
-        if (value.valueType === "binary" && !value.binaryFile && !value.isEditMode) {
+        if (value.valueType === "binary" && !value.binaryFile && !keepsBinary) {
             ctx.addIssue({
                 code: z.ZodIssueCode.custom,
                 message: "File is required",

@@ -36,7 +36,10 @@ export function CreateOrEditAppConfigFileForm({
             name: initialValues?.name ?? "",
             valueType: initialValues?.valueType ?? "text",
             isEditMode,
-            textValue: "",
+            initialValueType: isEditMode ? (initialValues?.valueType ?? null) : null,
+            // A text config file's content is shown and edited in place; a
+            // binary one is replaced by an upload.
+            textValue: initialValues?.textValue ?? "",
             binaryFile: null,
             // New settings are available unless the person says otherwise.
             inheritable: initialValues?.inheritable ?? true,
@@ -46,6 +49,7 @@ export function CreateOrEditAppConfigFileForm({
     });
 
     const valueType = useWatch({ control, name: "valueType" });
+    const keepsBinary = isEditMode && initialValues?.valueType === "binary";
     const selectedFile = useWatch({ control, name: "binaryFile" });
 
     useEffect(() => {
@@ -164,7 +168,7 @@ export function CreateOrEditAppConfigFileForm({
                             title={
                                 <LabelWithInfo
                                     label="Value"
-                                    isRequired={!isEditMode}
+                                    isRequired
                                 />
                             }
                         >
@@ -173,9 +177,7 @@ export function CreateOrEditAppConfigFileForm({
                                     <Textarea
                                         id="app-config-file-text-value"
                                         {...textValue}
-                                        placeholder={
-                                            isEditMode ? "Leave empty to keep current content" : "Enter config content"
-                                        }
+                                        placeholder="Enter config content"
                                         rows={8}
                                         aria-invalid={isTextValueInvalid}
                                         className="w-full"
@@ -191,7 +193,7 @@ export function CreateOrEditAppConfigFileForm({
                             title={
                                 <LabelWithInfo
                                     label="Value"
-                                    isRequired={!isEditMode}
+                                    isRequired={!keepsBinary}
                                 />
                             }
                         >
@@ -210,7 +212,7 @@ export function CreateOrEditAppConfigFileForm({
                                         </Button>
                                         <span className="truncate text-sm text-muted-foreground">
                                             {selectedFile?.name ??
-                                                (isEditMode ? "Leave empty to keep current content" : "")}
+                                                (keepsBinary ? "Leave empty to keep current content" : "")}
                                         </span>
                                     </div>
                                     <Input

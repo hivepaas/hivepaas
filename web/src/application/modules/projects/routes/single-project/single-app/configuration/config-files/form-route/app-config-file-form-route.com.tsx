@@ -132,6 +132,7 @@ export function AppConfigFileFormRoute({ mode, projectId, appId, env, configFile
             ? {
                   name: configFile.name,
                   valueType: configFile.base64 ? ("binary" as const) : ("text" as const),
+                  textValue: configFile.base64 ? "" : configFile.content,
                   inheritable: configFile.inheritable,
               }
             : undefined;

@@ -139,6 +139,7 @@ export function CreateOrEditAppConfigFileDialog() {
             ? {
                   name: state.configFile.name,
                   valueType: state.configFile.base64 ? ("binary" as const) : ("text" as const),
+                  textValue: state.configFile.base64 ? "" : state.configFile.content,
                   inheritable: state.configFile.inheritable,
               }
             : undefined;

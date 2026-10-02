@@ -1,0 +1,171 @@
+diff --git a/conformance/conformance_test.go b/conformance/conformance_test.go
+index 8b2c7f1..29a557e 100644
+--- a/conformance/conformance_test.go
++++ b/conformance/conformance_test.go
+@@ -30,6 +30,10 @@ type runtimeDef struct {
+ 	// processes: the runtime serves with several processes, as many as
+ 	// WEB_CONCURRENCY says; serve's checks run with several and with one.
+ 	processes bool
++	// closesHTTP10: the runtime closes an HTTP/1.0 connection after its
++	// answer, which says so, even when the request asks to keep it - Bun's
++	// node:http does.
++	closesHTTP10 bool
+ 	// fixture is the directory of fixtures/ the runtime's fixture is built
+ 	// from, when it is not the runtime's name: runtimes of one language share
+ 	// it.
+@@ -46,6 +50,7 @@ func (rt runtimeDef) fixtureName() string {
+ var runtimes = []runtimeDef{
+ 	{name: "go127", compiled: true},
+ 	{name: "node24", typeScript: typesRemoved, fixture: "js"},
++	{name: "bun1", typeScript: wholeTypeScript, closesHTTP10: true, fixture: "js"},
+ 	{name: "python313", processes: true},
+ }
+ 
+diff --git a/conformance/fixtures/js/Dockerfile b/conformance/fixtures/js/Dockerfile
+index 0d9e048..7f89514 100644
+--- a/conformance/fixtures/js/Dockerfile
++++ b/conformance/fixtures/js/Dockerfile
+@@ -1,4 +1,4 @@
+-# The fixture on the Node.js runtime, built as HivePaaS builds a function.
++# The fixture on the JavaScript runtimes, built as HivePaaS builds a function.
+ ARG RUNTIME
+ FROM ${RUNTIME}
+ COPY --chown=hivepaas:hivepaas . /app/
+diff --git a/conformance/fixtures/js/index.ts b/conformance/fixtures/js/index.ts
+new file mode 100644
+index 0000000..2e175fe
+--- /dev/null
++++ b/conformance/fixtures/js/index.ts
+@@ -0,0 +1,2 @@
++// Bun's default entrypoint: the fixture's handler, as index.js has it.
++export { default } from './index.js'
+diff --git a/conformance/fixtures/js/whole.ts b/conformance/fixtures/js/whole.ts
+new file mode 100644
+index 0000000..0b6cdee
+--- /dev/null
++++ b/conformance/fixtures/js/whole.ts
+@@ -0,0 +1,14 @@
++// TypeScript that is more than types: an enum, and an import that leaves out
++// its extension. A runtime that transpiles TypeScript runs it; one that only
++// removes types cannot load it.
++import { greet } from './typed-lib/greet'
++
++enum Greeting {
++  Hello = 'hello',
++}
++
++interface Request {
++  query: Record<string, string | undefined>
++}
++
++export default (req: Request) => ({ body: greet(req.query.name ?? Greeting.Hello) })
+diff --git a/conformance/serve_test.go b/conformance/serve_test.go
+index 1a1edbe..625d1f6 100644
+--- a/conformance/serve_test.go
++++ b/conformance/serve_test.go
+@@ -253,7 +253,7 @@ func checkServe(t *testing.T, rt runtimeDef, imgs images) {
+ 		}
+ 	})
+ 
+-	t.Run("an HTTP/1.0 connection asked to be kept is kept", func(t *testing.T) {
++	t.Run("an HTTP/1.0 connection asked to be kept is kept, or said to close", func(t *testing.T) {
+ 		conn, err := net.Dial("tcp", strings.TrimPrefix(c.url, "http://"))
+ 		if err != nil {
+ 			t.Fatal(err)
+@@ -261,6 +261,24 @@ func checkServe(t *testing.T, rt runtimeDef, imgs images) {
+ 		defer conn.Close()
+ 		_ = conn.SetDeadline(time.Now().Add(5 * time.Second))
+ 		reader := bufio.NewReader(conn)
++		if rt.closesHTTP10 {
++			// Said, so that an HTTP/1.0 client does not wait for more.
++			_, _ = io.WriteString(conn, "GET /text HTTP/1.0\r\nConnection: keep-alive\r\n\r\n")
++			resp, err := http.ReadResponse(reader, nil)
++			if err != nil {
++				t.Fatal(err)
++			}
++			_, _ = io.ReadAll(resp.Body)
++			_ = resp.Body.Close()
++			// Go reads "Connection: close" into Close, and takes it out of the headers.
++			if resp.StatusCode != 200 || !resp.Close {
++				t.Errorf("%d, close %v", resp.StatusCode, resp.Close)
++			}
++			if _, err := reader.ReadByte(); err != io.EOF {
++				t.Errorf("the connection was kept: %v", err)
++			}
++			return
++		}
+ 		for i := range 2 {
+ 			if _, err := io.WriteString(conn, "GET /text HTTP/1.0\r\nConnection: keep-alive\r\n\r\n"); err != nil {
+ 				t.Fatalf("request %d: %v", i, err)
+diff --git a/conformance/typescript_test.go b/conformance/typescript_test.go
+index 1d6fa75..bf7f77f 100644
+--- a/conformance/typescript_test.go
++++ b/conformance/typescript_test.go
+@@ -16,6 +16,9 @@ const (
+ 	// typesRemoved: the types are removed as a file loads, and syntax that
+ 	// cannot be removed - an enum - cannot be loaded.
+ 	typesRemoved
++	// wholeTypeScript: TypeScript is transpiled - an enum runs, an import may
++	// leave out its extension.
++	wholeTypeScript
+ )
+ 
+ // checkTypeScript calls the fixture's TypeScript handler, typed.ts, through
+@@ -40,6 +43,21 @@ func checkTypeScript(t *testing.T, rt runtimeDef, imgs images) {
+ 		}
+ 	})
+ 
++	if rt.typeScript == wholeTypeScript {
++		t.Run("TypeScript whole: an enum, an import without its extension", func(t *testing.T) {
++			for input, want := range map[string]string{
++				`{"query":{"name":["Ada"]}}`: `{"hello":"Ada"}`,
++				`{}`:                         `{"hello":"hello"}`,
++			} {
++				r := invoke(t, imgs.fixture, input, "HP_FN_ENTRYPOINT=whole.ts")
++
++				if res := parseResult(t, r); res.Status != 200 || !sameBody(res.body(t), []byte(want)) {
++					t.Errorf("%s: result %+v\n%s", input, res, lastLines(r.stderr))
++				}
++			}
++		})
++	}
++
+ 	if rt.typeScript == typesRemoved {
+ 		t.Run("an enum cannot be loaded: the types are only removed", func(t *testing.T) {
+ 			r := invoke(t, imgs.fixture, `{}`, "HP_FN_ENTRYPOINT=enum.ts")
+diff --git a/runtimes/js/test/runtime.test.mjs b/runtimes/js/test/runtime.test.mjs
+index 42ee0a8..29b2913 100644
+--- a/runtimes/js/test/runtime.test.mjs
++++ b/runtimes/js/test/runtime.test.mjs
+@@ -6,7 +6,7 @@ import { tmpdir } from 'node:os'
+ import path from 'node:path'
+ import { test } from 'node:test'
+ 
+-import { loadConfig, loadHandler, requestOf, Runtime, toAnswer } from '../runtime/runtime.mjs'
++import { depsCommand, loadConfig, loadHandler, requestOf, Runtime, toAnswer } from '../runtime/runtime.mjs'
+ 
+ const defaults = loadConfig({})
+ 
+@@ -17,6 +17,22 @@ test('the defaults are the contract’s', () => {
+   })
+ })
+ 
++test('Bun’s default entrypoint is TypeScript', () => {
++  assert.equal(loadConfig({}, 'bun').entrypoint, 'index.ts')
++  assert.equal(loadConfig({}, 'node').entrypoint, 'index.js')
++  assert.equal(loadConfig({ HP_FN_ENTRYPOINT: 'main.mjs' }, 'bun').entrypoint, 'main.mjs')
++})
++
++test('deps installs with the engine’s own manager, from its lock file when there is one', () => {
++  const npm = ['--omit=dev', '--no-audit', '--no-fund', '--cache', '/tmp/hivepaas-deps-cache']
++  assert.deepEqual(depsCommand('node', true), { command: 'npm', args: ['ci', ...npm], env: {} })
++  assert.deepEqual(depsCommand('node', false), { command: 'npm', args: ['install', ...npm], env: {} })
++  const bunEnv = { BUN_INSTALL_CACHE_DIR: '/tmp/hivepaas-deps-cache' }
++  assert.deepEqual(depsCommand('bun', true),
++    { command: 'bun', args: ['install', '--production', '--frozen-lockfile'], env: bunEnv })
++  assert.deepEqual(depsCommand('bun', false), { command: 'bun', args: ['install', '--production'], env: bunEnv })
++})
++
+ test('the environment sets the limits', () => {
+   const cfg = loadConfig({
+     HP_FN_ENTRYPOINT: 'src/main.mjs', HP_FN_HANDLER: 'hello', HP_FN_PORT: '9000',

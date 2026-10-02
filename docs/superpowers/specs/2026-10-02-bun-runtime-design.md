@@ -126,3 +126,25 @@ what they say today.
 - A server on `Bun.serve`, if the 6 % becomes worth a second server.
 - Bun's own APIs (`Bun.sql`, `Bun.redis`) said in the contract, for what a
   function may count on.
+
+## Changes after the plan
+
+Writing the plan (`docs/superpowers/plans/2026-10-02-bun-runtime.md`) settled
+what follows:
+
+- **Bun closes an HTTP/1.0 connection after each answer**, even one the request
+  asks to keep, and says `Connection: close`, so an HTTP/1.0 client does not wait
+  for more. Node.js keeps it; Bun's `node:http` does not, with or without the
+  header set by hand. The contract says so, and the conformance check takes a
+  stated close for Bun (`runtimeDef.closesHTTP10`). A proxy in front speaks
+  HTTP/1.1, so a function never meets it there.
+- **One fixture for both JavaScript runtimes**, `conformance/fixtures/js`, which
+  gains `index.ts` - Bun's default entrypoint - re-exporting `index.js`'s
+  handler, and `whole.ts`, an `enum` and an import without its extension, which
+  Bun runs.
+- **Bun reads `package-lock.json`** to write `bun.lock` when there is none,
+  checked with a `file:` library; `deps` downloads into
+  `/tmp/hivepaas-deps-cache`, for both engines, and removes it.
+- **A Bun function's install step** copies `bunfig.toml` beside `.npmrc`.
+- **HivePaaS takes `bun1` with its pin**: a test asks every runtime for one, so
+  the backend's task runs after the release, with the five images' digests.

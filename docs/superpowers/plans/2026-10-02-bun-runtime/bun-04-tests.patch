@@ -1,0 +1,156 @@
+diff --git a/hivepaas_app/base/function_test.go b/hivepaas_app/base/function_test.go
+index 6edd7a5a..0db29b84 100644
+--- a/hivepaas_app/base/function_test.go
++++ b/hivepaas_app/base/function_test.go
+@@ -34,6 +34,18 @@ func TestEachReleaseNamesAnImageForEveryFunctionRuntime(t *testing.T) {
+ func TestOnlyGoIsCompiled(t *testing.T) {
+ 	assert.True(t, base.FunctionRuntimeGo127.Compiled())
+ 	assert.False(t, base.FunctionRuntimeNode24.Compiled())
++	assert.False(t, base.FunctionRuntimeBun1.Compiled())
+ 	assert.False(t, base.FunctionRuntimePython313.Compiled())
+ 	assert.Equal(t, "go127-build", base.FunctionBuildImageKey(base.FunctionRuntimeGo127))
+ }
++
++// Bun runs the JavaScript runtime's code: a handler is named and its file
++// spelled as on Node.js, and TypeScript is where a function starts.
++func TestBunTakesWhatNodeTakesAndStartsInTypeScript(t *testing.T) {
++	file, handler := base.FunctionRuntimeBun1.DefaultEntrypoint()
++	assert.Equal(t, [2]string{"index.ts", "default"}, [2]string{file, handler})
++	assert.Equal(t, base.FunctionEntrypointExts[base.FunctionRuntimeNode24],
++		base.FunctionEntrypointExts[base.FunctionRuntimeBun1])
++	assert.Equal(t, base.FunctionHandlerPatterns[base.FunctionRuntimeNode24],
++		base.FunctionHandlerPatterns[base.FunctionRuntimeBun1])
++}
+diff --git a/hivepaas_app/service/functionservice/functionbuild/functionbuild_test.go b/hivepaas_app/service/functionservice/functionbuild/functionbuild_test.go
+index d0294ff0..a11a17df 100644
+--- a/hivepaas_app/service/functionservice/functionbuild/functionbuild_test.go
++++ b/hivepaas_app/service/functionservice/functionbuild/functionbuild_test.go
+@@ -18,6 +18,7 @@ import (
+ 
+ var images = map[string]string{
+ 	"node24":      "ghcr.io/hivepaas/function-runtime-node24:1.0.0@sha256:node",
++	"bun1":        "ghcr.io/hivepaas/function-runtime-bun1:1.1.0@sha256:bun",
+ 	"python313":   "ghcr.io/hivepaas/function-runtime-python313:1.0.0@sha256:python",
+ 	"go127":       "ghcr.io/hivepaas/function-runtime-go127:1.0.0@sha256:go",
+ 	"go127-build": "ghcr.io/hivepaas/function-runtime-go127-build:1.0.0@sha256:gobuild",
+@@ -89,6 +90,36 @@ ENV HP_FN_ENTRYPOINT="index.js" \
+ 	assert.Empty(t, resp.Notes)
+ }
+ 
++// A Bun function's libraries are installed from package.json and Bun's own lock
++// file, with the settings Bun reads, before its code.
++func TestABunFunctionInstallsFromBunsLockFile(t *testing.T) {
++	dir := sourceDir(t, map[string]string{
++		"index.ts": "export default () => ({})", "package.json": `{"dependencies": {"ms": "2.1.3"}}`,
++		"bun.lock": "{}", "bunfig.toml": "[install]\n", ".npmrc": "registry=https://registry.npmjs.org/",
++	})
++
++	resp, err := Dockerfile(&DockerfileReq{Source: source(base.FunctionRuntimeBun1), Images: images, SourceDir: dir})
++
++	assert.NoError(t, err)
++	assert.Equal(t, `# The Dockerfile HivePaaS writes for a function: runtime bun1, contract v1.
++FROM ghcr.io/hivepaas/function-runtime-bun1:1.1.0@sha256:bun AS base
++
++FROM base AS deps
++COPY --chown=hivepaas:hivepaas package.json bun.lock .npmrc bunfig.toml /app/
++RUN hivepaas-runtime deps
++
++FROM deps
++COPY --chown=hivepaas:hivepaas . /app/
++ENV HP_FN_ENTRYPOINT="index.ts" \
++    HP_FN_HANDLER="default" \
++    HP_FN_TIMEOUT_MS=30000 \
++    HP_FN_MAX_CONCURRENCY=16 \
++    HP_FN_MAX_BODY_SIZE=6291456
++`, resp.Content)
++	assert.Empty(t, resp.Notes)
++	assert.Equal(t, []string{"bun.lock"}, LockFiles(base.FunctionRuntimeBun1))
++}
++
+ // Without a manifest there is nothing to install, and no package is no root.
+ func TestAFunctionWithoutLibrariesHasNoInstallStep(t *testing.T) {
+ 	dir := sourceDir(t, map[string]string{"main.py": "def handler(req, ctx): pass"})
+diff --git a/hivepaas_app/service/functionservice/functionbuild/real_build_test.go b/hivepaas_app/service/functionservice/functionbuild/real_build_test.go
+index 6311dd1d..8ead9f12 100644
+--- a/hivepaas_app/service/functionservice/functionbuild/real_build_test.go
++++ b/hivepaas_app/service/functionservice/functionbuild/real_build_test.go
+@@ -23,6 +23,14 @@ var realFunctions = map[base.FunctionRuntime][]*entity.FunctionFile{
+ 		{Path: "index.js", Content: `import { execSync } from 'node:child_process'
+ import ms from 'ms'
+ 
++export default () => ({ body: { library: String(ms('1m')), tool: execSync('jq --version').toString().trim() } })
++`},
++	},
++	base.FunctionRuntimeBun1: {
++		{Path: "package.json", Content: `{"type": "module", "dependencies": {"ms": "2.1.3"}}`},
++		{Path: "index.ts", Content: `import { execSync } from 'node:child_process'
++import ms from 'ms'
++
+ export default () => ({ body: { library: String(ms('1m')), tool: execSync('jq --version').toString().trim() } })
+ `},
+ 	},
+@@ -67,6 +75,7 @@ func Handle(ctx context.Context, req *hivepaas.Request) (*hivepaas.Response, err
+ 
+ var realLibraryValues = map[base.FunctionRuntime]string{
+ 	base.FunctionRuntimeNode24:    "60000",
++	base.FunctionRuntimeBun1:      "60000",
+ 	base.FunctionRuntimePython313: "1.17.0",
+ 	base.FunctionRuntimeGo127:     uuidOfHivepaas,
+ }
+diff --git a/hivepaas_app/service/functionservice/functiontest/real_run_test.go b/hivepaas_app/service/functionservice/functiontest/real_run_test.go
+index d7f25a2d..090cd912 100644
+--- a/hivepaas_app/service/functionservice/functiontest/real_run_test.go
++++ b/hivepaas_app/service/functionservice/functiontest/real_run_test.go
+@@ -58,6 +58,19 @@ export default (req) => {
+ 		},
+ 		"package-lock.json",
+ 	},
++	base.FunctionRuntimeBun1: {
++		entity.FunctionEntrypoint{File: "index.ts", Handler: "default"},
++		[]*entity.FunctionFile{
++			{Path: "package.json", Content: `{"type": "module", "dependencies": {"ms": "2.1.3"}}`},
++			{Path: "index.ts", Content: `import ms from 'ms'
++export default (req: { text(): string }) => {
++  console.log('called with', req.text())
++  return { body: { got: req.text(), library: String(ms('1m')), env: process.env.GREETING } }
++}
++`},
++		},
++		"bun.lock",
++	},
+ 	base.FunctionRuntimePython313: {
+ 		entity.FunctionEntrypoint{File: "main.py", Handler: "handler"},
+ 		[]*entity.FunctionFile{
+diff --git a/hivepaas_app/service/specservice/specserviceimpl/function_source_test.go b/hivepaas_app/service/specservice/specserviceimpl/function_source_test.go
+index 71ca8332..1e2362c8 100644
+--- a/hivepaas_app/service/specservice/specserviceimpl/function_source_test.go
++++ b/hivepaas_app/service/specservice/specserviceimpl/function_source_test.go
+@@ -54,6 +54,7 @@ func functionSourceCases() map[string]*entity.DeploymentFunctionSource {
+ 		"unknown runtime":  with(func(s *entity.DeploymentFunctionSource) { s.Runtime = "cobol" }),
+ 		"wrong extension":  with(func(s *entity.DeploymentFunctionSource) { s.Entrypoint.File = "main.py" }),
+ 		"typescript":       with(func(s *entity.DeploymentFunctionSource) { s.Entrypoint.File = "src/index.ts" }),
++		"bun":              with(func(s *entity.DeploymentFunctionSource) { s.Runtime = base.FunctionRuntimeBun1 }),
+ 		"typescript in python": with(func(s *entity.DeploymentFunctionSource) {
+ 			s.Runtime, s.Entrypoint.File = base.FunctionRuntimePython313, "index.ts"
+ 		}),
+diff --git a/hivepaas_app/usecase/appsettingsuc/appsettingsdto/deployment_function_source_test.go b/hivepaas_app/usecase/appsettingsuc/appsettingsdto/deployment_function_source_test.go
+index c71a8f52..337f7221 100644
+--- a/hivepaas_app/usecase/appsettingsuc/appsettingsdto/deployment_function_source_test.go
++++ b/hivepaas_app/usecase/appsettingsuc/appsettingsdto/deployment_function_source_test.go
+@@ -46,6 +46,7 @@ func errorsOf(req *DeploymentFunctionSourceReq) []string {
+ func TestAFunctionSourceTakesItsRuntimesDefaults(t *testing.T) {
+ 	for runtime, entrypoint := range map[base.FunctionRuntime]FunctionEntrypointReq{
+ 		base.FunctionRuntimeNode24:    {File: "index.js", Handler: "default"},
++		base.FunctionRuntimeBun1:      {File: "index.ts", Handler: "default"},
+ 		base.FunctionRuntimePython313: {File: "main.py", Handler: "handler"},
+ 		base.FunctionRuntimeGo127:     {File: ".", Handler: "Handle"},
+ 	} {
+@@ -80,6 +81,8 @@ func TestAFunctionSourceOfEachRuntimeIsValid(t *testing.T) {
+ 	for _, req := range []*DeploymentFunctionSourceReq{
+ 		inlineSource(base.FunctionRuntimeNode24, file("index.js", "export default () => {}"),
+ 			file("package.json", "{}")),
++		inlineSource(base.FunctionRuntimeBun1, file("index.ts", "export default () => ({})"),
++			file("package.json", "{}"), file("bun.lock", "{}")),
+ 		inlineSource(base.FunctionRuntimePython313, file("main.py", "def handler(req, ctx): pass"),
+ 			file("lib/helper.py", "")),
+ 		inlineSource(base.FunctionRuntimeGo127, file("go.mod", "module fn"), file("fn.go", "package fn")),

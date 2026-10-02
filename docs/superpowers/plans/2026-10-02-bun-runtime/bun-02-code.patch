@@ -1,0 +1,311 @@
+diff --git a/.github/workflows/release.yml b/.github/workflows/release.yml
+index 87c892b..fddea32 100644
+--- a/.github/workflows/release.yml
++++ b/.github/workflows/release.yml
+@@ -19,7 +19,7 @@ concurrency:
+   cancel-in-progress: false
+ 
+ env:
+-  IMAGES: node24 python313 go127 go127-build
++  IMAGES: node24 bun1 python313 go127 go127-build
+ 
+ jobs:
+   check:
+@@ -73,10 +73,11 @@ jobs:
+       packages: write
+     strategy:
+       matrix:
+-        image: [node24, python313, go127, go127-build]
++        image: [node24, bun1, python313, go127, go127-build]
+         arch: [amd64, arm64]
+         include:
+           - { image: node24, dockerfile: runtimes/node24/Dockerfile, target: '' }
++          - { image: bun1, dockerfile: runtimes/bun1/Dockerfile, target: '' }
+           - { image: python313, dockerfile: runtimes/python313/Dockerfile, target: '' }
+           - { image: go127, dockerfile: runtimes/go127/Dockerfile, target: run }
+           - { image: go127-build, dockerfile: runtimes/go127/Dockerfile, target: build }
+diff --git a/.github/workflows/test.yml b/.github/workflows/test.yml
+index 062c838..6811f1f 100644
+--- a/.github/workflows/test.yml
++++ b/.github/workflows/test.yml
+@@ -30,7 +30,7 @@ jobs:
+         run: go test -race -count=1 ./...
+ 
+       - name: Shell scripts
+-        run: shellcheck runtimes/go127/hivepaas-runtime runtimes/python313/hivepaas-runtime
++        run: shellcheck runtimes/go127/hivepaas-runtime runtimes/python313/hivepaas-runtime runtimes/bun1/hivepaas-runtime
+ 
+   node:
+     name: Node.js runtime
+@@ -66,7 +66,7 @@ jobs:
+     strategy:
+       fail-fast: false
+       matrix:
+-        runtime: [go127, node24, python313]
++        runtime: [go127, node24, bun1, python313]
+         arch: [amd64, arm64]
+         include:
+           - { arch: amd64, runner: ubuntu-24.04 }
+diff --git a/CONTRACT.md b/CONTRACT.md
+index 4571470..3a1d9fe 100644
+--- a/CONTRACT.md
++++ b/CONTRACT.md
+@@ -14,11 +14,11 @@ every `1.x.y` image keeps v1. A later contract is a new major, beside this one.
+ | | |
+ |---|---|
+ | Name | `ghcr.io/hivepaas/function-runtime-<runtime>:<version>` |
+-| Runtimes | `node24`, `python313`, `go127` |
++| Runtimes | `node24`, `bun1`, `python313`, `go127` |
+ | Go's build image | `ghcr.io/hivepaas/function-runtime-go127-build:<version>`. A Go function is compiled in this image, which holds the toolchain, and runs in `function-runtime-go127`, which does not. |
+-| Base | Debian 13 (trixie), slim; Go's build image is the full `golang` image |
++| Base | Debian 13 (trixie), slim - Bun's is `oven/bun`'s slim image, on it; Go's build image is the full `golang` image |
+ | The function's code | `/app`, the working directory |
+-| The function's libraries | Node.js: `/app/node_modules`. Python: the virtual environment `/app/.venv`. Go: the module cache, in the build image. |
++| The function's libraries | Node.js and Bun: `/app/node_modules`. Python: the virtual environment `/app/.venv`. Go: the module cache, in the build image. |
+ | The runtime's own code | `/hivepaas`, and the command `hivepaas-runtime` on the `PATH` |
+ | User | `hivepaas`, uid and gid 10001. The function never runs as root. |
+ | Port | 8080 (`HP_FN_PORT`) |
+@@ -32,7 +32,7 @@ every `1.x.y` image keeps v1. A later contract is a new major, beside this one.
+ | `serve` | Answers HTTP until stopped. On `SIGTERM` it takes no new connection, waits for the running calls, at most one timeout, and exits. |
+ | `invoke` | Calls the handler once, with a request read on standard input, and exits. |
+ | `health` | Exits 0 when the server on this container answers its health check. |
+-| `deps` | Installs the function's libraries from its manifest in `/app`. Node.js: `package.json`, with `npm ci`, or `npm install` that makes `package-lock.json` when there is none. Python: `requirements.txt`, resolved into `requirements.lock` when there is none, then installed into `/app/.venv` with `uv`. Go, in the build image: the modules `go.mod` requires. Without a manifest it does nothing. |
++| `deps` | Installs the function's libraries from its manifest in `/app`. Node.js: `package.json`, with `npm ci`, or `npm install` that makes `package-lock.json` when there is none. Bun: `package.json`, with `bun install --frozen-lockfile`, or `bun install` that makes `bun.lock` when there is none - from `package-lock.json` when there is one. Python: `requirements.txt`, resolved into `requirements.lock` when there is none, then installed into `/app/.venv` with `uv`. Go, in the build image: the modules `go.mod` requires. Without a manifest it does nothing. |
+ | `build` | Go only, in the build image: compiles the function in `/app` with the runtime into `/app/.hivepaas/function`. It first tidies `go.mod` and `go.sum`: what the code imports is added, at the versions it resolves, and the runtime module is required at the image's version. In the build image, `serve` and `invoke` build first when the function is not built. |
+ 
+ A command exits 2 when it, its configuration or its input cannot be used, and
+@@ -45,8 +45,8 @@ From the environment. The function's own variables are in the same environment.
+ 
+ | Variable | Meaning | Default |
+ |---|---|---|
+-| `HP_FN_ENTRYPOINT` | Node.js, Python: the file of the handler, relative to `/app` - for Node.js a `.js`, `.mjs` or `.cjs` file, or TypeScript's `.ts`, `.mts` or `.cts`. Go: the package's directory, relative to the module. | `index.js`, `main.py`, `.` |
+-| `HP_FN_HANDLER` | The handler's name. | `default` (Node.js), `handler` (Python), `Handle` (Go) |
++| `HP_FN_ENTRYPOINT` | Node.js, Bun, Python: the file of the handler, relative to `/app` - for Node.js and Bun a `.js`, `.mjs` or `.cjs` file, or TypeScript's `.ts`, `.mts` or `.cts`. Go: the package's directory, relative to the module. | `index.js` (Node.js), `index.ts` (Bun), `main.py`, `.` |
++| `HP_FN_HANDLER` | The handler's name. | `default` (Node.js, Bun), `handler` (Python), `Handle` (Go) |
+ | `HP_FN_TIMEOUT_MS` | How long one call may take. | `30000` |
+ | `HP_FN_MAX_CONCURRENCY` | Calls one instance takes at once. | `16` |
+ | `HP_FN_MAX_BODY_SIZE` | Bytes of a request body, and of a response body. | `6291456` (6 MiB) |
+@@ -60,7 +60,7 @@ compiled in.
+ 
+ ### The handler
+ 
+-Node.js. The module may be ES or CommonJS; the handler is its default export, or
++Node.js and Bun. The module may be ES or CommonJS; the handler is its default export, or
+ the export `HP_FN_HANDLER` names:
+ 
+ ```js
+@@ -79,6 +79,10 @@ one cannot be loaded. An import names the file with its extension
+ `package.json`'s `"type"`. `tsconfig.json` is not read, and a `.ts` file under
+ `node_modules` is not run.
+ 
++TypeScript, on Bun, runs whole: Bun transpiles it, `enum`, `namespace` and
++parameter properties included; an import may leave out `.ts`, and
++`tsconfig.json`'s `paths` apply. Its types are not checked either.
++
+ Python. The handler may be a function or a coroutine. `/app` is first on the
+ module path, so the function's own modules import by name:
+ 
+@@ -109,7 +113,7 @@ func Handle(ctx context.Context, req *hivepaas.Request) (*hivepaas.Response, err
+ 
+ ### The request
+ 
+-| | Node.js | Python | Go |
++| | Node.js, Bun | Python | Go |
+ |---|---|---|---|
+ | Method, in upper case | `req.method` | `req.method` | `req.Method` |
+ | Path, without the query, as sent (still percent-encoded) | `req.path` | `req.path` | `req.Path` |
+@@ -120,7 +124,7 @@ func Handle(ctx context.Context, req *hivepaas.Request) (*hivepaas.Response, err
+ | Body, as text | `req.text()` | `req.text()` | `req.Text()` |
+ | Body, as JSON | `req.json()` | `req.json()` | `req.JSON(&v)` |
+ 
+-A header sent several times is, in Node.js and Python, one value, its values
++A header sent several times is, in Node.js, Bun and Python, one value, its values
+ joined by `, `; in Go, `req.Headers.Get(name)` is its first value and
+ `req.Headers.Values(name)` every one. `host` is among the headers.
+ 
+@@ -131,7 +135,7 @@ not see it and nothing is logged.
+ 
+ ### The context
+ 
+-| | Node.js | Python | Go |
++| | Node.js, Bun | Python | Go |
+ |---|---|---|---|
+ | The call's id | `ctx.requestId` | `ctx.request_id` | `hivepaas.RequestID(ctx)` |
+ | When the call times out | `ctx.deadline` (milliseconds since the epoch) | `ctx.deadline` (seconds since the epoch) | `ctx.Deadline()` |
+@@ -144,7 +148,7 @@ carries it in `X-Request-Id`.
+ 
+ ### The response
+ 
+-Node.js and Python: an object (a dict) with any of `status`, `headers`, `body`;
++Node.js, Bun and Python: an object (a dict) with any of `status`, `headers`, `body`;
+ or nothing. `headers` maps a name to a value, or to a list of values for a
+ header sent several times.
+ 
+@@ -184,7 +188,7 @@ handler returns, so the concurrency limit counts what really runs.
+ it keeps one, so that the proxy is the one that closes it. A connection is kept
+ between calls: for HTTP/1.1 unless the request says `Connection: close`; for
+ HTTP/1.0 when the request says `Connection: keep-alive`, which the answer says
+-back. `serve` listens on IPv6 and IPv4 where the host has both, on IPv4
++back - but Bun, whose answer to HTTP/1.0 says `Connection: close` and closes. `serve` listens on IPv6 and IPv4 where the host has both, on IPv4
+ otherwise.
+ 
+ ### Paths of the runtime
+diff --git a/README.md b/README.md
+index f18649c..05822a9 100644
+--- a/README.md
++++ b/README.md
+@@ -6,6 +6,7 @@ turns a handler into a server.
+ | Runtime | Language | Image |
+ |---|---|---|
+ | `node24` | Node.js 24: JavaScript, and TypeScript with its types removed | `ghcr.io/hivepaas/function-runtime-node24` |
++| `bun1` | Bun 1: JavaScript, and TypeScript whole | `ghcr.io/hivepaas/function-runtime-bun1` |
+ | `python313` | Python 3.13, a process per CPU | `ghcr.io/hivepaas/function-runtime-python313` |
+ | `go127` | Go 1.27 | `ghcr.io/hivepaas/function-runtime-go127`, compiled in `function-runtime-go127-build` |
+ 
+diff --git a/runtimes/bun1/Dockerfile b/runtimes/bun1/Dockerfile
+new file mode 100644
+index 0000000..7f2cd2d
+--- /dev/null
++++ b/runtimes/bun1/Dockerfile
+@@ -0,0 +1,20 @@
++# syntax=docker/dockerfile:1
++# The Bun runtime, built from the repository's root. It runs the JavaScript
++# runtime's code, which Node.js runs too, on Bun:
++#
++#   docker build -f runtimes/bun1/Dockerfile -t fn-bun1 .
++
++FROM oven/bun:1.4.2-slim
++RUN groupadd --gid 10001 hivepaas \
++    && useradd --uid 10001 --gid 10001 --create-home --shell /usr/sbin/nologin hivepaas \
++    && mkdir /app \
++    && chown hivepaas:hivepaas /app
++COPY runtimes/js/runtime/ /hivepaas/runtime/
++COPY runtimes/bun1/hivepaas-runtime /usr/local/bin/
++ENV NODE_ENV=production
++USER hivepaas
++WORKDIR /app
++EXPOSE 8080
++HEALTHCHECK --interval=10s --timeout=3s --start-period=30s --start-interval=1s --retries=3 \
++    CMD ["hivepaas-runtime", "health"]
++CMD ["hivepaas-runtime", "serve"]
+diff --git a/runtimes/bun1/hivepaas-runtime b/runtimes/bun1/hivepaas-runtime
+new file mode 100755
+index 0000000..5ad19bf
+--- /dev/null
++++ b/runtimes/bun1/hivepaas-runtime
+@@ -0,0 +1,4 @@
++#!/bin/sh
++# hivepaas-runtime for Bun: the JavaScript runtime's code, run by Bun. See
++# CONTRACT.md.
++exec bun /hivepaas/runtime/main.mjs "$@"
+diff --git a/runtimes/js/runtime/main.mjs b/runtimes/js/runtime/main.mjs
+index 8051d2a..56ea977 100644
+--- a/runtimes/js/runtime/main.mjs
++++ b/runtimes/js/runtime/main.mjs
+@@ -1,12 +1,12 @@
+ #!/usr/bin/env node
+-// hivepaas-runtime for Node.js: serve, invoke, health and deps, as CONTRACT.md
+-// at the repository's root says.
++// hivepaas-runtime for Node.js and Bun: serve, invoke, health and deps, as
++// CONTRACT.md at the repository's root says.
+ import { spawnSync } from 'node:child_process'
+ import { existsSync, rmSync } from 'node:fs'
+ import http from 'node:http'
+ import { text } from 'node:stream/consumers'
+ 
+-import { APP_DIR, ConfigError, loadConfig, Runtime } from './runtime.mjs'
++import { APP_DIR, ConfigError, DEPS_CACHE, depsCommand, engine, LOCK_FILES, loadConfig, Runtime } from './runtime.mjs'
+ 
+ const USAGE = 'usage: hivepaas-runtime serve|invoke|health|deps'
+ // Longer than a proxy in front keeps an idle connection (Traefik: 90s).
+@@ -74,18 +74,15 @@ function health(cfg) {
+   })
+ }
+ 
+-/** deps installs package.json's dependencies; npm install makes the lock file when there is none. */
++/** deps installs package.json's dependencies with the engine's manager, which makes the lock file when there is none. */
+ function deps() {
+   if (!existsSync(`${APP_DIR}/package.json`)) return 0
+-  const install = existsSync(`${APP_DIR}/package-lock.json`) ? 'ci' : 'install'
+-  const cache = '/tmp/hivepaas-npm-cache'
+-  const npm = spawnSync('npm', [install, '--omit=dev', '--no-audit', '--no-fund', '--cache', cache], {
+-    cwd: APP_DIR,
+-    stdio: 'inherit',
+-  })
+-  rmSync(cache, { recursive: true, force: true })
+-  if (npm.error) console.error(`hivepaas: ${npm.error.message}`)
+-  return npm.status ?? 1
++  const runOn = engine()
++  const { command, args, env } = depsCommand(runOn, existsSync(`${APP_DIR}/${LOCK_FILES[runOn]}`))
++  const install = spawnSync(command, args, { cwd: APP_DIR, stdio: 'inherit', env: { ...process.env, ...env } })
++  rmSync(DEPS_CACHE, { recursive: true, force: true })
++  if (install.error) console.error(`hivepaas: ${install.error.message}`)
++  return install.status ?? 1
+ }
+ 
+ // Exits at once: an invoke whose handler still runs past its timeout is done.
+diff --git a/runtimes/js/runtime/runtime.mjs b/runtimes/js/runtime/runtime.mjs
+index a4c75d8..2614723 100644
+--- a/runtimes/js/runtime/runtime.mjs
++++ b/runtimes/js/runtime/runtime.mjs
+@@ -1,5 +1,6 @@
+-// The Node.js function runtime: how a handler is loaded and called, and what
+-// its calls answer. See CONTRACT.md at the repository's root.
++// The JavaScript function runtime, on Node.js or on Bun: how a handler is
++// loaded and called, and what its calls answer. See CONTRACT.md at the
++// repository's root.
+ import { randomBytes } from 'node:crypto'
+ import http from 'node:http'
+ import path from 'node:path'
+@@ -18,6 +19,40 @@ const EMPTY = Buffer.alloc(0)
+ const TIMEOUT = Symbol('timeout')
+ const TOO_LARGE = Symbol('too large')
+ 
++// Where deps keeps what it downloads while it installs; removed after.
++export const DEPS_CACHE = '/tmp/hivepaas-deps-cache'
++
++/** engine is what runs the runtime: 'bun' or 'node'. */
++export function engine() {
++  return process.versions.bun ? 'bun' : 'node'
++}
++
++// Each engine's default entrypoint: Bun runs TypeScript whole.
++const DEFAULT_ENTRYPOINT = { node: 'index.js', bun: 'index.ts' }
++
++/** Each engine's lock file of package.json's dependencies. */
++export const LOCK_FILES = { node: 'package-lock.json', bun: 'bun.lock' }
++
++/**
++ * depsCommand installs package.json's dependencies with the engine's own
++ * manager: from its lock file when there is one (locked), which it makes when
++ * there is none. Bun reads an npm lock file to make its own.
++ */
++export function depsCommand(runOn, locked) {
++  if (runOn === 'bun') {
++    return {
++      command: 'bun',
++      args: ['install', '--production', ...(locked ? ['--frozen-lockfile'] : [])],
++      env: { BUN_INSTALL_CACHE_DIR: DEPS_CACHE },
++    }
++  }
++  return {
++    command: 'npm',
++    args: [locked ? 'ci' : 'install', '--omit=dev', '--no-audit', '--no-fund', '--cache', DEPS_CACHE],
++    env: {},
++  }
++}
++
+ /** A configuration the runtime cannot start with. */
+ export class ConfigError extends Error {}
+ 
+@@ -29,8 +64,8 @@ class CallError extends Error {
+   }
+ }
+ 
+-export function loadConfig(env) {
+-  const entrypoint = env.HP_FN_ENTRYPOINT || 'index.js'
++export function loadConfig(env, runOn = engine()) {
++  const entrypoint = env.HP_FN_ENTRYPOINT || DEFAULT_ENTRYPOINT[runOn]
+   if (path.isAbsolute(entrypoint) || !path.resolve(APP_DIR, entrypoint).startsWith(APP_DIR + path.sep)) {
+     throw new ConfigError(`HP_FN_ENTRYPOINT is "${entrypoint}", which is not a file of the function`)
+   }

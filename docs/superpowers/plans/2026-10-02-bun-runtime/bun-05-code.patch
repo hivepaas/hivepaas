@@ -1,0 +1,130 @@
+diff --git a/src/application/modules/projects/module-shared/constants/function-templates.constants.ts b/src/application/modules/projects/module-shared/constants/function-templates.constants.ts
+index 1e54724d..8036ad60 100644
+--- a/src/application/modules/projects/module-shared/constants/function-templates.constants.ts
++++ b/src/application/modules/projects/module-shared/constants/function-templates.constants.ts
+@@ -26,6 +26,52 @@ export default async function (req, ctx) {
+ 
+     return { status: 200, body: { hello: name } };
+ }
++`,
++        },
++    ],
++    [EFunctionRuntime.Bun1]: [
++        {
++            path: "package.json",
++            content: `{
++  "type": "module"
++}
++`,
++        },
++        {
++            path: "index.ts",
++            content: `// A function answers one request: it returns { status, headers, body }.
++// A body that is an object is sent as JSON. Bun runs TypeScript whole; its
++// types are not checked.
++interface Request {
++    method: string;
++    path: string;
++    query: Record<string, string | undefined>;
++    queryAll: Record<string, string[] | undefined>;
++    headers: Record<string, string | undefined>;
++    body: Buffer;
++    text(): string;
++    json(): unknown;
++}
++
++interface Context {
++    requestId: string;
++    deadline: number;
++    signal: AbortSignal;
++    log(...args: unknown[]): void;
++}
++
++interface Response {
++    status?: number;
++    headers?: Record<string, string | string[]>;
++    body?: unknown;
++}
++
++export default async function (req: Request, ctx: Context): Promise<Response> {
++    ctx.log(\`\${req.method} \${req.path}\`);
++    const name = req.query.name ?? "world";
++
++    return { status: 200, body: { hello: name } };
++}
+ `,
+         },
+     ],
+diff --git a/src/application/modules/projects/module-shared/enums/e.function-runtime.ts b/src/application/modules/projects/module-shared/enums/e.function-runtime.ts
+index b54a8d8a..eaffbea0 100644
+--- a/src/application/modules/projects/module-shared/enums/e.function-runtime.ts
++++ b/src/application/modules/projects/module-shared/enums/e.function-runtime.ts
+@@ -3,6 +3,7 @@
+  */
+ export const EFunctionRuntime = {
+     Node24: "node24",
++    Bun1: "bun1",
+     Python313: "python313",
+     Go127: "go127",
+ } as const;
+@@ -11,6 +12,7 @@ export type EFunctionRuntime = (typeof EFunctionRuntime)[keyof typeof EFunctionR
+ 
+ export const ALL_FUNCTION_RUNTIMES: EFunctionRuntime[] = [
+     EFunctionRuntime.Node24,
++    EFunctionRuntime.Bun1,
+     EFunctionRuntime.Python313,
+     EFunctionRuntime.Go127,
+ ];
+@@ -31,6 +33,11 @@ export const FUNCTION_LANGUAGE_LABELS: Record<EFunctionLanguage, string> = {
+     [EFunctionLanguage.TypeScript]: "TypeScript",
+ };
+ 
++/**
++ * The runtimes that run JavaScript: code moves between them as it is.
++ */
++export const FUNCTION_JAVASCRIPT_RUNTIMES: EFunctionRuntime[] = [EFunctionRuntime.Node24, EFunctionRuntime.Bun1];
++
+ /**
+  * The runtimes whose functions may be written in either language.
+  */
+@@ -38,6 +45,7 @@ export const FUNCTION_RUNTIMES_WITH_LANGUAGES: EFunctionRuntime[] = [EFunctionRu
+ 
+ export const FUNCTION_RUNTIME_LABELS: Record<EFunctionRuntime, string> = {
+     [EFunctionRuntime.Node24]: "Node.js 24",
++    [EFunctionRuntime.Bun1]: "Bun 1",
+     [EFunctionRuntime.Python313]: "Python 3.13",
+     [EFunctionRuntime.Go127]: "Go 1.27",
+ };
+@@ -48,6 +56,7 @@ export const FUNCTION_RUNTIME_LABELS: Record<EFunctionRuntime, string> = {
+  */
+ export const FUNCTION_RUNTIME_DEFAULT_ENTRYPOINT: Record<EFunctionRuntime, { file: string; handler: string }> = {
+     [EFunctionRuntime.Node24]: { file: "index.js", handler: "default" },
++    [EFunctionRuntime.Bun1]: { file: "index.ts", handler: "default" },
+     [EFunctionRuntime.Python313]: { file: "main.py", handler: "handler" },
+     [EFunctionRuntime.Go127]: { file: ".", handler: "Handle" },
+ };
+diff --git a/src/application/modules/projects/routes/single-project/single-app/configuration/function-settings/form/function-settings.form.com.tsx b/src/application/modules/projects/routes/single-project/single-app/configuration/function-settings/form/function-settings.form.com.tsx
+index 44d10189..d76a2081 100644
+--- a/src/application/modules/projects/routes/single-project/single-app/configuration/function-settings/form/function-settings.form.com.tsx
++++ b/src/application/modules/projects/routes/single-project/single-app/configuration/function-settings/form/function-settings.form.com.tsx
+@@ -18,6 +18,7 @@ import { PROJECT_FORM_CONTROL_MAX_WIDTH_CLASS } from "~/projects/module-shared/c
+ import {
+     ALL_FUNCTION_RUNTIMES,
+     EFunctionRuntime,
++    FUNCTION_JAVASCRIPT_RUNTIMES,
+     functionRuntimeDefaultEntrypoint,
+     functionRuntimeLabel,
+     isKnownFunctionRuntime,
+@@ -182,6 +183,12 @@ export function FunctionSettingsForm({ ref, projectId, env, source, onSubmit, re
+                                         </Select>
+                                         <FieldError errors={[errors.runtime]} />
+                                         {runtime !== source.runtime &&
++                                            !(
++                                                FUNCTION_JAVASCRIPT_RUNTIMES.includes(runtime as EFunctionRuntime) &&
++                                                FUNCTION_JAVASCRIPT_RUNTIMES.includes(
++                                                    source.runtime as EFunctionRuntime,
++                                                )
++                                            ) &&
+                                             codeLocation === EFunctionCodeLocation.Inline && (
+                                                 <p className="text-xs text-muted-foreground">
+                                                     The code stays as it is: rewrite it for the new runtime in the Code

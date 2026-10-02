@@ -1,0 +1,105 @@
+diff --git a/docs/openapi/swagger.json b/docs/openapi/swagger.json
+index 1344ebd6..419e10e6 100644
+--- a/docs/openapi/swagger.json
++++ b/docs/openapi/swagger.json
+@@ -47778,7 +47778,7 @@
+             "type" : "string"
+           },
+           "runtime" : {
+-            "description" : "Runtime is the language and its line: node24, python313, go127.",
++            "description" : "Runtime is the language and its line: node24, bun1, python313, go127.",
+             "type" : "string"
+           },
+           "systemPackages" : {
+diff --git a/hivepaas_app/base/function.go b/hivepaas_app/base/function.go
+index 0557c222..88ce3905 100644
+--- a/hivepaas_app/base/function.go
++++ b/hivepaas_app/base/function.go
+@@ -16,12 +16,14 @@ type FunctionRuntime string
+ 
+ const (
+ 	FunctionRuntimeNode24    FunctionRuntime = "node24"
++	FunctionRuntimeBun1      FunctionRuntime = "bun1"
+ 	FunctionRuntimePython313 FunctionRuntime = "python313"
+ 	FunctionRuntimeGo127     FunctionRuntime = "go127"
+ )
+ 
+ var (
+-	AllFunctionRuntimes = []FunctionRuntime{FunctionRuntimeNode24, FunctionRuntimePython313, FunctionRuntimeGo127}
++	AllFunctionRuntimes = []FunctionRuntime{FunctionRuntimeNode24, FunctionRuntimeBun1, FunctionRuntimePython313,
++		FunctionRuntimeGo127}
+ )
+ 
+ // Compiled says whether the runtime's functions are compiled, in a build image
+@@ -30,7 +32,7 @@ func (r FunctionRuntime) Compiled() bool {
+ 	switch r {
+ 	case FunctionRuntimeGo127:
+ 		return true
+-	case FunctionRuntimeNode24, FunctionRuntimePython313:
++	case FunctionRuntimeNode24, FunctionRuntimeBun1, FunctionRuntimePython313:
+ 		return false
+ 	}
+ 	return false
+@@ -48,6 +50,8 @@ func (r FunctionRuntime) DefaultEntrypoint() (file, handler string) {
+ 	switch r {
+ 	case FunctionRuntimeNode24:
+ 		return "index.js", "default"
++	case FunctionRuntimeBun1:
++		return "index.ts", "default"
+ 	case FunctionRuntimePython313:
+ 		return "main.py", "handler"
+ 	case FunctionRuntimeGo127:
+@@ -99,9 +103,15 @@ var (
+ 	// Dockerfile or a shell would read as more than a name.
+ 	functionPathPattern = regexp.MustCompile(`^[A-Za-z0-9._/-]+$`)
+ 
++	// javaScriptHandler and javaScriptFiles are the JavaScript runtimes': Bun
++	// runs the code Node.js does.
++	javaScriptHandler = regexp.MustCompile(`^[A-Za-z_$][A-Za-z0-9_$]*$`)
++	javaScriptFiles   = []string{".js", ".mjs", ".cjs", ".ts", ".mts", ".cts"}
++
+ 	// FunctionHandlerPatterns are the names each runtime can call.
+ 	FunctionHandlerPatterns = map[FunctionRuntime]*regexp.Regexp{
+-		FunctionRuntimeNode24:    regexp.MustCompile(`^[A-Za-z_$][A-Za-z0-9_$]*$`),
++		FunctionRuntimeNode24:    javaScriptHandler,
++		FunctionRuntimeBun1:      javaScriptHandler,
+ 		FunctionRuntimePython313: regexp.MustCompile(`^[A-Za-z_][A-Za-z0-9_]*$`),
+ 		FunctionRuntimeGo127:     regexp.MustCompile(`^[A-Z][A-Za-z0-9_]*$`),
+ 	}
+@@ -109,7 +119,8 @@ var (
+ 	// runtimes whose entrypoint is a file. Node.js runs TypeScript by removing
+ 	// its types as it loads a file.
+ 	FunctionEntrypointExts = map[FunctionRuntime][]string{
+-		FunctionRuntimeNode24:    {".js", ".mjs", ".cjs", ".ts", ".mts", ".cts"},
++		FunctionRuntimeNode24:    javaScriptFiles,
++		FunctionRuntimeBun1:      javaScriptFiles,
+ 		FunctionRuntimePython313: {".py"},
+ 	}
+ )
+diff --git a/hivepaas_app/entity/app_deployment_function.go b/hivepaas_app/entity/app_deployment_function.go
+index 62a4a1b7..baeb9fda 100644
+--- a/hivepaas_app/entity/app_deployment_function.go
++++ b/hivepaas_app/entity/app_deployment_function.go
+@@ -10,7 +10,7 @@ import (
+ // runtime that runs it, and the limits of one call. HivePaaS writes the
+ // function's Dockerfile from it.
+ type DeploymentFunctionSource struct {
+-	// Runtime is the language and its line: node24, python313, go127.
++	// Runtime is the language and its line: node24, bun1, python313, go127.
+ 	Runtime base.FunctionRuntime `json:"runtime"`
+ 	// Contract is the version of the handler contract: v1.
+ 	Contract base.FunctionContract `json:"contract"`
+diff --git a/hivepaas_app/service/functionservice/functionbuild/functionbuild.go b/hivepaas_app/service/functionservice/functionbuild/functionbuild.go
+index 498a68a1..f0301d15 100644
+--- a/hivepaas_app/service/functionservice/functionbuild/functionbuild.go
++++ b/hivepaas_app/service/functionservice/functionbuild/functionbuild.go
+@@ -69,6 +69,9 @@ var manifests = map[base.FunctionRuntime]manifest{
+ 	base.FunctionRuntimeNode24: {
+ 		file: "package.json", lock: "package-lock.json", settings: []string{".npmrc"}, localDeps: npmLocalDeps,
+ 	},
++	base.FunctionRuntimeBun1: {
++		file: "package.json", lock: "bun.lock", settings: []string{".npmrc", "bunfig.toml"}, localDeps: npmLocalDeps,
++	},
+ 	base.FunctionRuntimePython313: {
+ 		file: "requirements.txt", lock: "requirements.lock", settings: []string{"uv.toml"}, localDeps: pipLocalDeps,
+ 	},

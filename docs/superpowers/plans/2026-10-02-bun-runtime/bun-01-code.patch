@@ -1,0 +1,151 @@
+diff --git a/.github/workflows/test.yml b/.github/workflows/test.yml
+index 65c4ee7..062c838 100644
+--- a/.github/workflows/test.yml
++++ b/.github/workflows/test.yml
+@@ -42,7 +42,7 @@ jobs:
+           persist-credentials: false
+ 
+       - name: Test
+-        run: docker run --rm -v "$PWD:/src:ro" -w /src node:24-trixie-slim node --test 'runtimes/node24/test/*.test.mjs'
++        run: docker run --rm -v "$PWD:/src:ro" -w /src node:24-trixie-slim node --test 'runtimes/js/test/*.test.mjs'
+ 
+   python:
+     name: Python runtime
+diff --git a/README.md b/README.md
+index 4c178c1..f18649c 100644
+--- a/README.md
++++ b/README.md
+@@ -16,9 +16,11 @@ What a handler can count on, and what the images promise, is the contract:
+ 
+ - `hivepaas/`: the Go package a Go handler is written against, and
+   `hivepaas/serve`, the Go runtime itself.
+-- `runtimes/<runtime>/`: each runtime's Dockerfile and code.
++- `runtimes/<runtime>/`: each runtime's Dockerfile and code; `runtimes/js/`,
++  the code the JavaScript runtimes share.
+ - `conformance/`: the suite every image passes, in `serve` and in `invoke`, with
+-  a fixture function per runtime in `conformance/fixtures/<runtime>/`.
++  a fixture function per runtime in `conformance/fixtures/<runtime>/`, the
++  JavaScript runtimes' in `conformance/fixtures/js/`.
+ 
+ ## Trying a runtime
+ 
+@@ -43,7 +45,7 @@ The Node.js and Python runtimes have unit tests of their own, run in their base
+ images:
+ 
+ ```bash
+-docker run --rm -v "$PWD:/src:ro" -w /src node:24-trixie-slim node --test 'runtimes/node24/test/*.test.mjs'
++docker run --rm -v "$PWD:/src:ro" -w /src node:24-trixie-slim node --test 'runtimes/js/test/*.test.mjs'
+ docker run --rm -v "$PWD:/src:ro" -w /src -e PYTHONPATH=/src/runtimes/python313/runtime \
+   python:3.13-slim-trixie python -m unittest discover -s runtimes/python313/tests
+ ```
+diff --git a/conformance/conformance_test.go b/conformance/conformance_test.go
+index 2d66137..8b2c7f1 100644
+--- a/conformance/conformance_test.go
++++ b/conformance/conformance_test.go
+@@ -2,7 +2,7 @@
+ 
+ // Package conformance checks every runtime image against CONTRACT.md. For each
+ // runtime it builds the runtime's image and the fixture function on it
+-// (fixtures/<runtime>), then calls the fixture through serve and invoke.
++// (fixtures/<runtime>, or the one its language shares), then calls the fixture through serve and invoke.
+ //
+ // It needs Docker, and Docker Hub for the base images:
+ //
+@@ -30,11 +30,22 @@ type runtimeDef struct {
+ 	// processes: the runtime serves with several processes, as many as
+ 	// WEB_CONCURRENCY says; serve's checks run with several and with one.
+ 	processes bool
++	// fixture is the directory of fixtures/ the runtime's fixture is built
++	// from, when it is not the runtime's name: runtimes of one language share
++	// it.
++	fixture string
++}
++
++func (rt runtimeDef) fixtureName() string {
++	if rt.fixture != "" {
++		return rt.fixture
++	}
++	return rt.name
+ }
+ 
+ var runtimes = []runtimeDef{
+ 	{name: "go127", compiled: true},
+-	{name: "node24", typeScript: typesRemoved},
++	{name: "node24", typeScript: typesRemoved, fixture: "js"},
+ 	{name: "python313", processes: true},
+ }
+ 
+diff --git a/conformance/docker_test.go b/conformance/docker_test.go
+index 8f88d1d..b09c343 100644
+--- a/conformance/docker_test.go
++++ b/conformance/docker_test.go
+@@ -44,7 +44,7 @@ func buildImages(t *testing.T, rt runtimeDef) images {
+ 		t.Fatal(err)
+ 	}
+ 	dockerfile := filepath.Join(root, "runtimes", rt.name, "Dockerfile")
+-	fixtureDir := filepath.Join(root, "conformance", "fixtures", rt.name)
++	fixtureDir := filepath.Join(root, "conformance", "fixtures", rt.fixtureName())
+ 	fixtureDockerfile := filepath.Join(fixtureDir, "Dockerfile")
+ 	imgs := images{
+ 		runtime: "hp-conformance/runtime-" + rt.name,
+diff --git a/conformance/fixtures/node24/Dockerfile b/conformance/fixtures/js/Dockerfile
+similarity index 100%
+rename from conformance/fixtures/node24/Dockerfile
+rename to conformance/fixtures/js/Dockerfile
+diff --git a/conformance/fixtures/node24/enum.ts b/conformance/fixtures/js/enum.ts
+similarity index 100%
+rename from conformance/fixtures/node24/enum.ts
+rename to conformance/fixtures/js/enum.ts
+diff --git a/conformance/fixtures/node24/fixture-lib/index.js b/conformance/fixtures/js/fixture-lib/index.js
+similarity index 100%
+rename from conformance/fixtures/node24/fixture-lib/index.js
+rename to conformance/fixtures/js/fixture-lib/index.js
+diff --git a/conformance/fixtures/node24/fixture-lib/package.json b/conformance/fixtures/js/fixture-lib/package.json
+similarity index 100%
+rename from conformance/fixtures/node24/fixture-lib/package.json
+rename to conformance/fixtures/js/fixture-lib/package.json
+diff --git a/conformance/fixtures/node24/index.js b/conformance/fixtures/js/index.js
+similarity index 100%
+rename from conformance/fixtures/node24/index.js
+rename to conformance/fixtures/js/index.js
+diff --git a/conformance/fixtures/node24/package.json b/conformance/fixtures/js/package.json
+similarity index 100%
+rename from conformance/fixtures/node24/package.json
+rename to conformance/fixtures/js/package.json
+diff --git a/conformance/fixtures/node24/typed-lib/greet.ts b/conformance/fixtures/js/typed-lib/greet.ts
+similarity index 100%
+rename from conformance/fixtures/node24/typed-lib/greet.ts
+rename to conformance/fixtures/js/typed-lib/greet.ts
+diff --git a/conformance/fixtures/node24/typed-lib/types.ts b/conformance/fixtures/js/typed-lib/types.ts
+similarity index 100%
+rename from conformance/fixtures/node24/typed-lib/types.ts
+rename to conformance/fixtures/js/typed-lib/types.ts
+diff --git a/conformance/fixtures/node24/typed.ts b/conformance/fixtures/js/typed.ts
+similarity index 100%
+rename from conformance/fixtures/node24/typed.ts
+rename to conformance/fixtures/js/typed.ts
+diff --git a/runtimes/node24/runtime/main.mjs b/runtimes/js/runtime/main.mjs
+similarity index 100%
+rename from runtimes/node24/runtime/main.mjs
+rename to runtimes/js/runtime/main.mjs
+diff --git a/runtimes/node24/runtime/runtime.mjs b/runtimes/js/runtime/runtime.mjs
+similarity index 100%
+rename from runtimes/node24/runtime/runtime.mjs
+rename to runtimes/js/runtime/runtime.mjs
+diff --git a/runtimes/node24/test/runtime.test.mjs b/runtimes/js/test/runtime.test.mjs
+similarity index 100%
+rename from runtimes/node24/test/runtime.test.mjs
+rename to runtimes/js/test/runtime.test.mjs
+diff --git a/runtimes/node24/Dockerfile b/runtimes/node24/Dockerfile
+index 65a9b9d..0576327 100644
+--- a/runtimes/node24/Dockerfile
++++ b/runtimes/node24/Dockerfile
+@@ -8,7 +8,7 @@ RUN groupadd --gid 10001 hivepaas \
+     && useradd --uid 10001 --gid 10001 --create-home --shell /usr/sbin/nologin hivepaas \
+     && mkdir /app \
+     && chown hivepaas:hivepaas /app
+-COPY runtimes/node24/runtime/ /hivepaas/runtime/
++COPY runtimes/js/runtime/ /hivepaas/runtime/
+ RUN chmod 755 /hivepaas/runtime/main.mjs \
+     && ln -s /hivepaas/runtime/main.mjs /usr/local/bin/hivepaas-runtime
+ ENV NODE_ENV=production

@@ -61,7 +61,19 @@ func (s *service) cleanupTempContainers(ctx context.Context, data *clusterCleanu
 	return nil
 }
 
+// cleanupTempServices removes the temporary services left behind. Services are
+// the swarm's, not a node's, and only a manager may list them: on a worker - the
+// cleanup the agents run on the other nodes - it does nothing, and the manager's
+// own pass covers them.
 func (s *service) cleanupTempServices(ctx context.Context, data *clusterCleanupData) error {
+	info, err := s.dockerManager.SystemInfo(ctx)
+	if err != nil {
+		return hperrors.Wrap(err)
+	}
+	if !info.Info.Swarm.ControlAvailable {
+		return nil
+	}
+
 	opts := client.ServiceListOptions{}
 	docker.FilterAdd(&opts.Filters, "label", docker.LabelTempResource+"="+docker.LabelTempResourceVal)
 

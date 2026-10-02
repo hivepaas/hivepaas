@@ -3,7 +3,6 @@ import React, { useEffect, useMemo, useRef } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { FileCode, GitBranch, Globe } from "lucide-react";
 import { useController, useForm } from "react-hook-form";
-import { ProjectDomainSettingsQueries } from "~/projects/data/queries";
 import { type ProjectEnvEntity } from "~/projects/domain";
 import {
     GitCredentialCombobox,
@@ -31,7 +30,6 @@ import {
     EFunctionCodeSource,
     createCreateFunctionFormSchema,
     functionDomainLabel,
-    suggestFunctionDomain,
 } from "../schemas";
 
 const CODE_SOURCE_OPTIONS: OptionCard<EFunctionCodeSource>[] = [
@@ -119,10 +117,6 @@ export function CreateFunctionForm({
     const { field: expose } = useController({ name: "expose", control });
     const { field: domain } = useController({ name: "domain", control });
 
-    // The project's root domain, under which a function is offered a domain.
-    const { data: domainSettings } = ProjectDomainSettingsQueries.useFindOne({ projectID: projectId });
-    const rootDomain = domainSettings?.data.rootDomain ?? "";
-
     const domainInputRef = useRef<HTMLInputElement | null>(null);
 
     // As a template's domain is suggested: the function's name, beside the
@@ -154,8 +148,9 @@ export function CreateFunctionForm({
 
     function changeExpose(checked: boolean) {
         expose.onChange(checked);
+        // A first tick offers the same domain the button suggests.
         if (checked && domain.value === "") {
-            setValue("domain", suggestFunctionDomain(watch("name"), rootDomain));
+            suggestDomain();
         }
     }
 

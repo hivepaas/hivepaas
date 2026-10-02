@@ -37,18 +37,6 @@ export function functionDomainLabel(name: string): string {
         .replace(/-+$/, "");
 }
 
-/**
- * The domain a function is offered at: its name as a DNS label, under the
- * project's root domain; empty when there is no root domain.
- */
-export function suggestFunctionDomain(name: string, rootDomain: string): string {
-    const label = functionDomainLabel(name);
-    if (!rootDomain || !label) {
-        return "";
-    }
-    return `${label}.${rootDomain}`;
-}
-
 const CreateFunctionFormSchemaBase = z.object({
     name: z
         .string({

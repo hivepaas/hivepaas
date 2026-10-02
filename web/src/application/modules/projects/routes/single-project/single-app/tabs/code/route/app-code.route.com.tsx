@@ -1,3 +1,5 @@
+import { useState } from "react";
+
 import { listBox } from "@lib/styles";
 import { cn } from "@lib/utils";
 import { useParams } from "react-router";
@@ -23,6 +25,8 @@ export function AppCodeRoute() {
     invariant(appId, "appId must be defined");
 
     const { canWrite } = useConditionalModule({ id: MODULE_IDS.Project });
+    // Kept here: a save remounts the workspace, and the file being edited stays open.
+    const [selectedPath, setSelectedPath] = useState("");
     const { data, isLoading } = AppDeploymentSettingsQueries.useFindOne(
         { projectID: projectId, env, appID: appId },
         APP_CONFIGURATION_QUERY_OPTIONS,
@@ -74,6 +78,8 @@ export function AppCodeRoute() {
                 appId={appId}
                 settings={settings}
                 readOnly={!canWrite}
+                selectedPath={selectedPath}
+                onSelectPath={setSelectedPath}
             >
                 {(files, setFiles) => (
                     <FunctionTestPanel

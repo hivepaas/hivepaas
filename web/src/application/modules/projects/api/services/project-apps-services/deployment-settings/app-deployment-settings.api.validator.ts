@@ -1,12 +1,6 @@
 import { type AxiosResponse } from "axios";
 import { z } from "zod";
-import {
-    EAppDeploymentMethod,
-    EBuildTool,
-    EDockerfileSource,
-    EFunctionRuntime,
-    ERepoType,
-} from "~/projects/module-shared/enums";
+import { EAppDeploymentMethod, EBuildTool, EDockerfileSource, ERepoType } from "~/projects/module-shared/enums";
 import { SettingsBaseEntitySchema } from "~/settings/module-shared/schemas";
 
 import { BaseMetaApiSchema, parseApiResponse } from "@infrastructure/api";
@@ -127,7 +121,8 @@ const ImageMethodSchema = BaseDeploymentSettingsSchema.extend({
 const FunctionFileSchema = z.object({ path: z.string(), content: OptionalStringSchema });
 
 export const FunctionSourceSchema = z.object({
-    runtime: z.nativeEnum(EFunctionRuntime),
+    // A runtime a newer HivePaaS added is still a function's runtime.
+    runtime: z.string(),
     contract: OptionalStringSchema,
     entrypoint: z
         .object({ file: OptionalStringSchema, handler: OptionalStringSchema })

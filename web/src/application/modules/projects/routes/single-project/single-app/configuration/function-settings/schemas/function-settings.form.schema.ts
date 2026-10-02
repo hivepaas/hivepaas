@@ -2,7 +2,7 @@ import { z } from "zod";
 import { type FunctionSourcePayload } from "~/projects/api/services";
 import { type FunctionSource } from "~/projects/domain";
 import { FUNCTION_TEMPLATES } from "~/projects/module-shared/constants";
-import { ALL_FUNCTION_RUNTIMES, type EFunctionRuntime, ERepoType } from "~/projects/module-shared/enums";
+import { ERepoType, isKnownFunctionRuntime } from "~/projects/module-shared/enums";
 import { functionFilePathProblem, functionSourceToPayload } from "~/projects/module-shared/utils";
 
 /**
@@ -29,7 +29,7 @@ const DEBIAN_PACKAGE_PATTERN = /^[a-z0-9][a-z0-9+.-]+(=[A-Za-z0-9.+~:-]+)?$/;
 
 export const FunctionSettingsFormSchema = z
     .object({
-        runtime: z.enum(ALL_FUNCTION_RUNTIMES as [string, ...string[]]),
+        runtime: z.string().min(1, "Runtime is required"),
         entrypointFile: z.string().trim(),
         entrypointHandler: z.string().trim(),
         timeout: z.string().trim().min(1, "Timeout is required"),
@@ -112,9 +112,10 @@ export function functionSettingsToSource(
     values: FunctionSettingsFormOutput,
     source: FunctionSource,
 ): FunctionSourcePayload {
-    const runtime = values.runtime as EFunctionRuntime;
+    const { runtime } = values;
     const fromRepository = values.codeLocation === EFunctionCodeLocation.Repository;
-    const files = source.code.inline?.files.length ? source.code.inline.files : FUNCTION_TEMPLATES[runtime];
+    const template = isKnownFunctionRuntime(runtime) ? FUNCTION_TEMPLATES[runtime] : [];
+    const files = source.code.inline?.files.length ? source.code.inline.files : template;
     const base = functionSourceToPayload(source, fromRepository ? undefined : files);
 
     return {

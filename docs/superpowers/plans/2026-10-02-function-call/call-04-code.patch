@@ -1,0 +1,160 @@
+diff --git a/hivepaas_app/service/functionservice/functioninvoke/functioninvoke.go b/hivepaas_app/service/functionservice/functioninvoke/functioninvoke.go
+index 97b9c35f..6614764e 100644
+--- a/hivepaas_app/service/functionservice/functioninvoke/functioninvoke.go
++++ b/hivepaas_app/service/functionservice/functioninvoke/functioninvoke.go
+@@ -28,6 +28,11 @@ const (
+ // Command is the runtime's invoke, on the PATH of every runtime image.
+ var Command = []string{"hivepaas-runtime", "invoke"}
+ 
++// CallCommand is the runtime's call, which hands the request invoke reads to the
++// function's serve and writes its answer as invoke's result. Runtimes before
++// 1.2.0 have none: it exits 2 with their usage.
++var CallCommand = []string{"hivepaas-runtime", "call"}
++
+ // Request is a request as invoke reads it. Every field may be left out: the
+ // method is then GET, the path /, the body empty.
+ type Request struct {
+diff --git a/hivepaas_app/tasks/taskschedjobexec/function_invoke.go b/hivepaas_app/tasks/taskschedjobexec/function_invoke.go
+index e7410bc0..08793e1c 100644
+--- a/hivepaas_app/tasks/taskschedjobexec/function_invoke.go
++++ b/hivepaas_app/tasks/taskschedjobexec/function_invoke.go
+@@ -26,17 +26,21 @@ const (
+ 	invokeStepBodyMax = 16 * 1024
+ 	// invokeStatusFailed is the first status that fails a run.
+ 	invokeStatusFailed = 400
+-	// invokeExitBadRequest and invokeExitNotLoaded are invoke's exits without a
+-	// result.
++	// invokeExitBadRequest and invokeExitNotLoaded are call's and invoke's exits
++	// without a result: 2, a request that cannot be read - or, from a runtime
++	// before 1.2.0, no call; 3, a handler that cannot be loaded (invoke) or a
++	// serve that does not answer (call).
+ 	invokeExitBadRequest = 2
+ 	invokeExitNotLoaded  = 3
+ )
+ 
+-// invokeFunction calls the job's function once: the runtime's invoke, in a
+-// running task of the function, reads the job's request on its stdin. The
+-// call's log goes to the run's, the response to the task's output, or, as a
+-// step of a sequence, to the steps after it. A status of 400 or more fails the
+-// run, as an outcome other than ok does.
++// invokeFunction calls the job's function once: the runtime's call, in a
++// running task of the function, reads the job's request on its stdin and hands
++// it to the function's serve, whose log - the app's - has the call's lines; on
++// a runtime without call, invoke runs the handler itself, its log the run's.
++// The response goes to the task's output, or, as a step of a sequence, to the
++// steps after it. A status of 400 or more fails the run, as an outcome other
++// than ok does.
+ func (e *Executor) invokeFunction(
+ 	ctx context.Context,
+ 	db database.Tx,
+@@ -51,27 +55,22 @@ func (e *Executor) invokeFunction(
+ 		return nil, hperrors.Wrap(err)
+ 	}
+ 	logStore := run.execData.LogStore
+-	output := functioninvoke.NewOutputWriter(func(line []byte) {
+-		_ = logStore.Add(ctx, tasklog.NewOutFrame(string(line), tasklog.TsNow))
+-	})
+-
++	// The call goes to the function's serve; a runtime without call - before
++	// 1.2.0 - exits 2, as for a request it cannot read, and the request goes to
++	// invoke, which refuses that request too.
++	output, resp, err := e.execInRuntime(ctx, db, run, job, functioninvoke.CallCommand, request)
++	throughServe := true
++	if err != nil && exitCodeOf(resp) == invokeExitBadRequest {
++		output, resp, err = e.execInRuntime(ctx, db, run, job, functioninvoke.Command, request)
++		throughServe = false
++	}
+ 	result := &jobResult{}
+-	resp, err := e.schedJobExecService.SchedJobExec(ctx, db, &schedjobexecservice.SchedJobExecReq{
+-		TaskExecData:    run.execData,
+-		SchedJobSetting: run.jobSetting,
+-		DestApp:         run.refObjects.RefApps[job.App.ID],
+-		Sequence:        run.sequence,
+-		Command:         &entity.CommandTemplate{Command: strings.Join(functioninvoke.Command, " ")},
+-		Stdin:           bytes.NewReader(request),
+-		StdoutWriter:    output,
+-	})
+-	output.Flush()
+ 	if resp != nil {
+ 		result.skipNotification = resp.SkipResultNotification
+ 		result.exitCode = resp.ExitCode
+ 	}
+ 	if err != nil {
+-		if hint := invokeExitHint(resp); hint != "" {
++		if hint := invokeExitHint(resp, throughServe); hint != "" {
+ 			_ = logStore.Add(ctx, tasklog.NewErrFrame(hint, tasklog.TsNow))
+ 		}
+ 		return result, hperrors.Wrap(err)
+@@ -83,6 +82,10 @@ func (e *Executor) invokeFunction(
+ 		return result, hperrors.Wrap(err)
+ 	}
+ 	_ = logStore.Add(ctx, tasklog.NewOutFrame(describeInvokeResult(invoked), tasklog.TsNow))
++	if throughServe {
++		_ = logStore.Add(ctx, tasklog.NewOutFrame("The call's log is in the app's logs, request "+invoked.RequestID,
++			tasklog.TsNow))
++	}
+ 	if run.sequence == nil {
+ 		run.execData.Task.MustSetOutput(invoked)
+ 	}
+@@ -97,6 +100,41 @@ func (e *Executor) invokeFunction(
+ 	return result, nil
+ }
+ 
++// execInRuntime runs the runtime's command in a running task of the job's
++// function, request on its stdin; what it writes is in output, its log lines
++// already in the run's log.
++func (e *Executor) execInRuntime(
++	ctx context.Context,
++	db database.Tx,
++	run *jobRun,
++	job *entity.SchedJob,
++	command []string,
++	request []byte,
++) (*functioninvoke.OutputWriter, *schedjobexecservice.SchedJobExecResp, error) {
++	logStore := run.execData.LogStore
++	output := functioninvoke.NewOutputWriter(func(line []byte) {
++		_ = logStore.Add(ctx, tasklog.NewOutFrame(string(line), tasklog.TsNow))
++	})
++	resp, err := e.schedJobExecService.SchedJobExec(ctx, db, &schedjobexecservice.SchedJobExecReq{
++		TaskExecData:    run.execData,
++		SchedJobSetting: run.jobSetting,
++		DestApp:         run.refObjects.RefApps[job.App.ID],
++		Sequence:        run.sequence,
++		Command:         &entity.CommandTemplate{Command: strings.Join(command, " ")},
++		Stdin:           bytes.NewReader(request),
++		StdoutWriter:    output,
++	})
++	output.Flush()
++	return output, resp, hperrors.Wrap(err)
++}
++
++func exitCodeOf(resp *schedjobexecservice.SchedJobExecResp) int {
++	if resp == nil || resp.ExitCode == nil {
++		return -1
++	}
++	return *resp.ExitCode
++}
++
+ // invokeOutcomeOK is the runtime's outcome of a handler that returned.
+ const invokeOutcomeOK = "ok"
+ 
+@@ -162,14 +200,14 @@ func invokeOutputs(result *entity.SchedJobFunctionInvokeResult) map[string]strin
+ 
+ // invokeExitHint says what an exit of invoke without a result means, beside
+ // the runtime's own message in the log.
+-func invokeExitHint(resp *schedjobexecservice.SchedJobExecResp) string {
+-	if resp == nil || resp.ExitCode == nil {
+-		return ""
+-	}
+-	switch *resp.ExitCode {
++func invokeExitHint(resp *schedjobexecservice.SchedJobExecResp, throughServe bool) string {
++	switch exitCodeOf(resp) {
+ 	case invokeExitBadRequest:
+ 		return "The runtime could not read the job's request"
+ 	case invokeExitNotLoaded:
++		if throughServe {
++			return "The function's server does not answer on its instance"
++		}
+ 		return "The function's handler could not be loaded: its error is above"
+ 	}
+ 	return ""

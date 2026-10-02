@@ -1,0 +1,180 @@
+diff --git a/hivepaas/serve/call_test.go b/hivepaas/serve/call_test.go
+new file mode 100644
+index 0000000..a28af35
+--- /dev/null
++++ b/hivepaas/serve/call_test.go
+@@ -0,0 +1,174 @@
++package serve
++
++import (
++	"bytes"
++	"context"
++	"encoding/base64"
++	"encoding/json"
++	"io"
++	"net"
++	"net/http"
++	"net/http/httptest"
++	"strconv"
++	"strings"
++	"sync"
++	"testing"
++	"time"
++
++	"github.com/hivepaas/function-runtimes/hivepaas"
++)
++
++// cannedAnswer is what a test's serve answers: a status, headers and a body.
++type cannedAnswer struct {
++	status  int
++	headers http.Header
++	body    string
++}
++
++type seenRequest struct {
++	method, target, body string
++	headers              http.Header
++}
++
++// answering is a serve that answers each request with the next of answers,
++// and keeps what it was sent.
++func answering(t *testing.T, answers ...cannedAnswer) (Config, func() []seenRequest) {
++	t.Helper()
++	var mu sync.Mutex
++	var seen []seenRequest
++	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
++		body, _ := io.ReadAll(r.Body)
++		mu.Lock()
++		seen = append(seen, seenRequest{r.Method, r.URL.RequestURI(), string(body), r.Header.Clone()})
++		a := answers[min(len(seen), len(answers))-1]
++		mu.Unlock()
++		for name, values := range a.headers {
++			w.Header()[name] = values
++		}
++		w.WriteHeader(a.status)
++		_, _ = io.WriteString(w, a.body)
++	}))
++	t.Cleanup(server.Close)
++	_, port, _ := net.SplitHostPort(server.Listener.Addr().String())
++	cfg := testConfig
++	cfg.Port, _ = strconv.Atoi(port)
++	return cfg, func() []seenRequest {
++		mu.Lock()
++		defer mu.Unlock()
++		return append([]seenRequest(nil), seen...)
++	}
++}
++
++func runCall(cfg Config, input string) (code int, stdout, stderr string) {
++	var out, errOut bytes.Buffer
++	code = Call(cfg, strings.NewReader(input), &out, &errOut)
++	return code, out.String(), errOut.String()
++}
++
++func TestCallSendsTheRequestToServeAndWritesItsAnswerAsAResult(t *testing.T) {
++	cfg, seen := answering(t, cannedAnswer{201, http.Header{
++		"Content-Type": {"application/json"}, "X-Request-Id": {"r-1"}, "Set-Cookie": {"a=1", "b=2"},
++		"X-Hivepaas-Outcome": {"ok"}, "X-Hivepaas-Duration-Ms": {"2.5"},
++	}, `{"ok":true}`})
++	body := base64.StdEncoding.EncodeToString([]byte("payload"))
++
++	code, stdout, _ := runCall(cfg, `{"method":"post","path":"/echo","query":{"a":["1","2"]},`+
++		`"headers":{"X-Custom":["v"]},"body":"`+body+`"}`)
++
++	if code != exitOK || strings.Count(stdout, "\n") != 1 || !strings.HasPrefix(stdout, resultMarker) {
++		t.Fatalf("exit %d, output %q", code, stdout)
++	}
++	var got map[string]any
++	_ = json.Unmarshal([]byte(strings.TrimPrefix(strings.TrimSpace(stdout), resultMarker)), &got)
++	want := map[string]any{
++		"status": 201.0,
++		"headers": map[string]any{
++			"content-type": []any{"application/json"}, "x-request-id": []any{"r-1"}, "set-cookie": []any{"a=1", "b=2"},
++		},
++		"body":      base64.StdEncoding.EncodeToString([]byte(`{"ok":true}`)),
++		"requestId": "r-1", "durationMs": 2.5, "outcome": "ok",
++	}
++	if g, w := mustJSON(got), mustJSON(want); g != w {
++		t.Errorf("result\n%s\nwant\n%s", g, w)
++	}
++	sent := seen()[0]
++	if sent.method != "POST" || sent.target != "/echo?a=1&a=2" || sent.body != "payload" ||
++		sent.headers.Get("X-Hivepaas-Call") != "1" || sent.headers.Get("X-Custom") != "v" {
++		t.Errorf("sent %+v", sent)
++	}
++}
++
++func TestACallTurnedAwayIsSentAgainWhileItsTimeoutAllows(t *testing.T) {
++	busy := cannedAnswer{429, http.Header{"Retry-After": {"0"}, "X-Hivepaas-Outcome": {"throttled"}}, ""}
++	cfg, seen := answering(t, busy, busy, cannedAnswer{200, http.Header{"X-Hivepaas-Outcome": {"ok"}}, "done"})
++
++	code, stdout, _ := runCall(cfg, `{}`)
++
++	if code != exitOK || len(seen()) != 3 || !strings.Contains(stdout, `"status":200`) {
++		t.Errorf("exit %d after %d requests: %s", code, len(seen()), stdout)
++	}
++}
++
++func TestACallStillTurnedAwayAtItsTimeoutIsAThrottledResult(t *testing.T) {
++	busy := cannedAnswer{429, http.Header{"Retry-After": {"1"}, "X-Hivepaas-Outcome": {"throttled"}}, ""}
++	cfg, seen := answering(t, busy)
++	cfg.Timeout = 200 * time.Millisecond
++
++	code, stdout, _ := runCall(cfg, `{}`)
++
++	if code != exitOK || len(seen()) != 1 || !strings.Contains(stdout, `"status":429`) ||
++		!strings.Contains(stdout, `"outcome":"throttled"`) {
++		t.Errorf("exit %d after %d requests: %s", code, len(seen()), stdout)
++	}
++}
++
++func TestCallExits2ForARequestItCannotReadAnd3WithoutAServer(t *testing.T) {
++	if code, stdout, _ := runCall(testConfig, "not json"); code != exitUsage || stdout != "" {
++		t.Errorf("not JSON: exit %d, %q", code, stdout)
++	}
++	listener, _ := net.Listen("tcp", "127.0.0.1:0")
++	_, port, _ := net.SplitHostPort(listener.Addr().String())
++	_ = listener.Close()
++	cfg := testConfig
++	cfg.Port, _ = strconv.Atoi(port)
++	code, stdout, stderr := runCall(cfg, `{}`)
++	if code != exitUnavailable || stdout != "" || !strings.Contains(stderr, "serve does not answer") {
++		t.Errorf("no server: exit %d, %q, %q", code, stdout, stderr)
++	}
++}
++
++func TestServeTellsACallItsOutcomeAndKeepsTheHeaderFromTheHandler(t *testing.T) {
++	var seenHeader string
++	rt, _, _ := newTestRuntime(func(_ context.Context, req *hivepaas.Request) (*hivepaas.Response, error) {
++		seenHeader = req.Headers.Get("X-Hivepaas-Call")
++		return hivepaas.Text(200, "hi"), nil
++	}, testConfig)
++
++	rec := call(rt, http.MethodGet, "/x", "", map[string]string{"X-Hivepaas-Call": "1"})
++
++	if rec.Header().Get("X-Hivepaas-Outcome") != "ok" || seenHeader != "" {
++		t.Errorf("outcome %q, the handler saw %q", rec.Header().Get("X-Hivepaas-Outcome"), seenHeader)
++	}
++	if _, err := strconv.ParseFloat(rec.Header().Get("X-Hivepaas-Duration-Ms"), 64); err != nil {
++		t.Errorf("duration %q", rec.Header().Get("X-Hivepaas-Duration-Ms"))
++	}
++	if plain := call(rt, http.MethodGet, "/x", "", nil); plain.Header().Get("X-Hivepaas-Outcome") != "" {
++		t.Error("a request that is no call was told its outcome")
++	}
++}
++
++func mustJSON(v any) string {
++	b, _ := json.Marshal(v)
++	return string(b)
++}
++
++func TestARequestThatCannotGoOnAnHTTPRequestLineOrHeaderExits2(t *testing.T) {
++	for _, input := range []string{
++		`{"path":"no-slash"}`, `{"path":"/a b"}`, `{"method":"G ET"}`,
++		`{"headers":{"x-a":["v\r\nx-b: w"]}}`, `{"headers":{"bad name":["v"]}}`,
++	} {
++		if code, stdout, _ := runCall(testConfig, input); code != exitUsage || stdout != "" {
++			t.Errorf("%s: exit %d, %q", input, code, stdout)
++		}
++	}
++}

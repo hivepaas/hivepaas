@@ -1,0 +1,333 @@
+diff --git a/hivepaas/serve/call.go b/hivepaas/serve/call.go
+new file mode 100644
+index 0000000..97c36f0
+--- /dev/null
++++ b/hivepaas/serve/call.go
+@@ -0,0 +1,174 @@
++package serve
++
++import (
++	"bytes"
++	"encoding/base64"
++	"encoding/json"
++	"errors"
++	"fmt"
++	"io"
++	"net/http"
++	"net/url"
++	"slices"
++	"strconv"
++	"strings"
++	"time"
++)
++
++// callHeader marks a request as call's: serve's answer to it says the call's
++// outcome and duration, and the handler does not see it.
++const callHeader = "X-Hivepaas-Call"
++
++// callWaitMargin is how much longer than a call's timeout call waits for serve,
++// which answers at it.
++const callWaitMargin = 10 * time.Second
++
++// notTheCalls are the headers of serve's answer that are the connection's or
++// the runtime's.
++var notTheCalls = map[string]bool{
++	"content-length": true, "transfer-encoding": true, "connection": true, "keep-alive": true, "date": true,
++	"x-hivepaas-outcome": true, "x-hivepaas-duration-ms": true,
++}
++
++// Call hands the request read from in - invoke's - to the serve running on this
++// container, and writes its answer as Invoke writes a result. A call turned
++// away (429) is sent again after Retry-After while the timeout allows. It
++// returns the exit code: 0 with a result, 2 when the request cannot be read,
++// 3 when serve does not answer.
++func Call(cfg Config, in io.Reader, out, errOut io.Writer) int {
++	ir, body, err := readInvokeRequest(in)
++	if err != nil {
++		_, _ = fmt.Fprintf(errOut, "hivepaas: %v\n", err)
++		return exitUsage
++	}
++	method := strings.ToUpper(ir.Method)
++	if method == "" {
++		method = http.MethodGet
++	}
++	target := ir.Path
++	if target == "" {
++		target = "/"
++	}
++	if query := url.Values(ir.Query).Encode(); query != "" {
++		target += "?" + query
++	}
++	if err := checkSendable(method, target, ir.Headers); err != nil {
++		_, _ = fmt.Fprintf(errOut, "hivepaas: %v\n", err)
++		return exitUsage
++	}
++	client := &http.Client{Timeout: cfg.Timeout + callWaitMargin}
++	deadline := time.Now().Add(cfg.Timeout)
++	for {
++		a, err := sendToServe(client, cfg.Port, method, target, ir.Headers, body)
++		if err != nil {
++			_, _ = fmt.Fprintf(errOut, "hivepaas: serve does not answer: %v\n", err)
++			return exitUnavailable
++		}
++		wait := retryAfter(a.header.Get("Retry-After"))
++		if a.status == http.StatusTooManyRequests && time.Now().Add(wait).Before(deadline) {
++			time.Sleep(wait)
++			continue
++		}
++		line, _ := json.Marshal(callResult(a)) // strings, numbers and a map of strings always encode
++		_, _ = fmt.Fprintln(out, resultMarker+string(line))
++		return exitOK
++	}
++}
++
++// served is serve's answer, read whole.
++type served struct {
++	status int
++	header http.Header
++	body   []byte
++}
++
++func sendToServe(client *http.Client, port int, method, target string, headers map[string][]string,
++	body []byte,
++) (served, error) {
++	req, err := http.NewRequest(method, fmt.Sprintf("http://127.0.0.1:%d%s", port, target), bytes.NewReader(body))
++	if err != nil {
++		return served{}, fmt.Errorf("the request: %w", err)
++	}
++	for name, values := range headers {
++		if !strings.EqualFold(name, callHeader) {
++			req.Header[http.CanonicalHeaderKey(name)] = values
++		}
++	}
++	if host := req.Header.Get("Host"); host != "" {
++		req.Host = host
++	}
++	req.Header.Set(callHeader, "1")
++	resp, err := client.Do(req)
++	if err != nil {
++		return served{}, fmt.Errorf("sending: %w", err)
++	}
++	defer resp.Body.Close()
++	answered, err := io.ReadAll(resp.Body)
++	if err != nil {
++		return served{}, fmt.Errorf("reading the answer: %w", err)
++	}
++	return served{resp.StatusCode, resp.Header, answered}, nil
++}
++
++func retryAfter(value string) time.Duration {
++	seconds, err := strconv.ParseFloat(value, 64)
++	if err != nil || seconds < 0 {
++		return time.Second
++	}
++	return time.Duration(seconds * float64(time.Second))
++}
++
++// callResult is serve's answer as invoke's result line says one.
++func callResult(a served) any {
++	headers := map[string][]string{}
++	for name, values := range a.header {
++		if lower := strings.ToLower(name); !notTheCalls[lower] {
++			headers[lower] = values
++		}
++	}
++	duration, _ := strconv.ParseFloat(a.header.Get("X-Hivepaas-Duration-Ms"), 64)
++	outcome := a.header.Get("X-Hivepaas-Outcome")
++	if outcome == "" {
++		outcome = outcomeOK
++	}
++	requestID := ""
++	if ids := headers["x-request-id"]; len(ids) > 0 {
++		requestID = ids[0]
++	}
++	return struct {
++		Status     int                 `json:"status"`
++		Headers    map[string][]string `json:"headers"`
++		Body       string              `json:"body"`
++		RequestID  string              `json:"requestId"`
++		DurationMs float64             `json:"durationMs"`
++		Outcome    string              `json:"outcome"`
++	}{a.status, headers, base64.StdEncoding.EncodeToString(a.body), requestID, duration, outcome}
++}
++
++// errUnsendable is a part of a request that cannot go on an HTTP/1.1 request
++// line or header.
++var errUnsendable = errors.New("cannot be sent")
++
++// checkSendable refuses what cannot go on an HTTP/1.1 request line or header.
++func checkSendable(method, target string, headers map[string][]string) error {
++	if !isToken(method) {
++		return fmt.Errorf("the request's method %q %w", method, errUnsendable)
++	}
++	if !strings.HasPrefix(target, "/") || strings.ContainsFunc(target, func(r rune) bool {
++		return r <= ' ' || r == 0x7f
++	}) {
++		return fmt.Errorf("the request's path %q %w", target, errUnsendable)
++	}
++	for name, values := range headers {
++		if !isToken(name) || slices.ContainsFunc(values, func(v string) bool { return strings.ContainsAny(v, "\r\n\x00") }) {
++			return fmt.Errorf("the request's header %q %w", name, errUnsendable)
++		}
++	}
++	return nil
++}
++
++func isToken(s string) bool {
++	return s != "" && !strings.ContainsFunc(s, func(r rune) bool {
++		return r > 0x7e || r <= ' ' || strings.ContainsRune(`"(),/:;<=>?@[\]{}`, r)
++	})
++}
+diff --git a/hivepaas/serve/invoke.go b/hivepaas/serve/invoke.go
+index 1a248c0..3706eb1 100644
+--- a/hivepaas/serve/invoke.go
++++ b/hivepaas/serve/invoke.go
+@@ -28,19 +28,9 @@ type invokeRequest struct {
+ // result as the last line of the output. It returns the process's exit code:
+ // 0 with a result, 2 when the request could not be read.
+ func (rt *Runtime) Invoke(in io.Reader) int {
+-	input, err := io.ReadAll(in)
+-	if err != nil {
+-		rt.errOut.write(fmt.Sprintf("hivepaas: reading the request: %v", err))
+-		return exitUsage
+-	}
+-	var ir invokeRequest
+-	if err := json.Unmarshal(input, &ir); err != nil {
+-		rt.errOut.write(fmt.Sprintf("hivepaas: the request is not JSON: %v", err))
+-		return exitUsage
+-	}
+-	body, err := base64.StdEncoding.DecodeString(ir.Body)
++	ir, body, err := readInvokeRequest(in)
+ 	if err != nil {
+-		rt.errOut.write(fmt.Sprintf("hivepaas: the request's body is not base64: %v", err))
++		rt.errOut.write("hivepaas: " + err.Error())
+ 		return exitUsage
+ 	}
+ 	req := &hivepaas.Request{
+@@ -76,6 +66,23 @@ func (rt *Runtime) Invoke(in io.Reader) int {
+ 	return exitOK
+ }
+ 
++// readInvokeRequest reads invoke's request, and its body out of base64.
++func readInvokeRequest(in io.Reader) (*invokeRequest, []byte, error) {
++	input, err := io.ReadAll(in)
++	if err != nil {
++		return nil, nil, fmt.Errorf("reading the request: %w", err)
++	}
++	var ir invokeRequest
++	if err := json.Unmarshal(input, &ir); err != nil {
++		return nil, nil, fmt.Errorf("the request is not JSON: %w", err)
++	}
++	body, err := base64.StdEncoding.DecodeString(ir.Body)
++	if err != nil {
++		return nil, nil, fmt.Errorf("the request's body is not base64: %w", err)
++	}
++	return &ir, body, nil
++}
++
+ func (rt *Runtime) writeResult(id string, a answer) {
+ 	headers := map[string][]string{}
+ 	for name, values := range a.headers {
+diff --git a/hivepaas/serve/main.go b/hivepaas/serve/main.go
+index 04f5165..9f804ba 100644
+--- a/hivepaas/serve/main.go
++++ b/hivepaas/serve/main.go
+@@ -15,13 +15,15 @@ import (
+ 	"github.com/hivepaas/function-runtimes/hivepaas"
+ )
+ 
+-const usage = "usage: hivepaas-runtime serve|invoke|health"
++const usage = "usage: hivepaas-runtime serve|invoke|call|health"
+ 
+ // Exit codes: a result, a failure, a command or input that cannot be used.
+ const (
+ 	exitOK     = 0
+ 	exitFailed = 1
+ 	exitUsage  = 2
++	// exitUnavailable: call found no serve answering.
++	exitUnavailable = 3
+ )
+ 
+ const healthTimeout = 3 * time.Second
+@@ -38,7 +40,7 @@ func run(h hivepaas.HandlerFunc, args []string, getenv func(string) string,
+ 	if len(args) > 0 {
+ 		command = args[0]
+ 	}
+-	if command != "serve" && command != "invoke" && command != "health" {
++	if command != "serve" && command != "invoke" && command != "call" && command != "health" {
+ 		_, _ = fmt.Fprintln(stderr, usage)
+ 		return exitUsage
+ 	}
+@@ -50,6 +52,8 @@ func run(h hivepaas.HandlerFunc, args []string, getenv func(string) string,
+ 	switch command {
+ 	case "invoke":
+ 		return New(h, cfg, stdout, stderr).Invoke(stdin)
++	case "call": // the handler runs in serve, not here
++		return Call(cfg, stdin, stdout, stderr)
+ 	case "health":
+ 		return Health(cfg, stderr)
+ 	}
+diff --git a/hivepaas/serve/serve.go b/hivepaas/serve/serve.go
+index f4217f3..15a7413 100644
+--- a/hivepaas/serve/serve.go
++++ b/hivepaas/serve/serve.go
+@@ -138,6 +138,7 @@ func (f *freshConns) closeAll() {
+ // ServeHTTP answers one request.
+ func (rt *Runtime) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+ 	id := requestID(r.Header.Get("X-Request-Id"))
++	isCall := r.Header.Get(callHeader) == "1"
+ 	path := r.URL.EscapedPath()
+ 	if strings.HasPrefix(path, "/_hivepaas/") {
+ 		rt.serveOwnPath(w, path, id)
+@@ -146,6 +147,10 @@ func (rt *Runtime) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+ 	method := strings.ToUpper(r.Method)
+ 	logged := func(a answer) {
+ 		rt.logInvocation(id, method, path, a)
++		if isCall {
++			w.Header().Set("X-Hivepaas-Outcome", a.outcome)
++			w.Header().Set("X-Hivepaas-Duration-Ms", strconv.FormatFloat(milliseconds(a.duration), 'f', -1, 64))
++		}
+ 		writeAnswer(w, id, a)
+ 	}
+ 
+@@ -172,6 +177,7 @@ func (rt *Runtime) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+ 		return
+ 	}
+ 	headers := r.Header.Clone()
++	headers.Del(callHeader)
+ 	headers.Set("Host", r.Host) // net/http takes it out of the headers
+ 	req := &hivepaas.Request{Method: method, Path: path, Query: r.URL.Query(), Headers: headers, Body: body}
+ 	// A call outlives its client: only its timeout ends it.
+diff --git a/runtimes/go127/hivepaas-runtime b/runtimes/go127/hivepaas-runtime
+index 8b468bc..a94d1bf 100755
+--- a/runtimes/go127/hivepaas-runtime
++++ b/runtimes/go127/hivepaas-runtime
+@@ -1,7 +1,7 @@
+ #!/bin/sh
+ # hivepaas-runtime for Go. deps and build turn the function's module in /app
+-# into /app/.hivepaas/function, in the build image; serve, invoke and health run
+-# that binary, which holds the runtime. See CONTRACT.md.
++# into /app/.hivepaas/function, in the build image; serve, invoke, call and
++# health run that binary, which holds the runtime. See CONTRACT.md.
+ set -eu
+ 
+ app=/app
+@@ -100,15 +100,15 @@ command=${1:-serve}
+ case "$command" in
+ deps) deps ;;
+ build) build ;;
+-serve | invoke | health)
++serve | invoke | call | health)
+ 	if [ ! -x "$binary" ]; then
+-		[ "$command" != health ] || fail "the function is not built"
++		[ "$command" != health ] && [ "$command" != call ] || fail "the function is not built"
+ 		build >&2
+ 	fi
+ 	exec "$binary" "$@"
+ 	;;
+ *)
+-	echo "usage: hivepaas-runtime serve|invoke|health|deps|build" >&2
++	echo "usage: hivepaas-runtime serve|invoke|call|health|deps|build" >&2
+ 	exit 2
+ 	;;
+ esac

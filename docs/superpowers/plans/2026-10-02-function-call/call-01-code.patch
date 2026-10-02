@@ -1,0 +1,515 @@
+diff --git a/CONTRACT.md b/CONTRACT.md
+index 3a1d9fe..229937b 100644
+--- a/CONTRACT.md
++++ b/CONTRACT.md
+@@ -31,6 +31,7 @@ every `1.x.y` image keeps v1. A later contract is a new major, beside this one.
+ |---|---|
+ | `serve` | Answers HTTP until stopped. On `SIGTERM` it takes no new connection, waits for the running calls, at most one timeout, and exits. |
+ | `invoke` | Calls the handler once, with a request read on standard input, and exits. |
++| `call` | Hands one request, read on standard input as `invoke` reads it, to `serve` on this container, writes its answer as `invoke` writes a result, and exits. |
+ | `health` | Exits 0 when the server on this container answers its health check. |
+ | `deps` | Installs the function's libraries from its manifest in `/app`. Node.js: `package.json`, with `npm ci`, or `npm install` that makes `package-lock.json` when there is none. Bun: `package.json`, with `bun install --frozen-lockfile`, or `bun install` that makes `bun.lock` when there is none - from `package-lock.json` when there is one. Python: `requirements.txt`, resolved into `requirements.lock` when there is none, then installed into `/app/.venv` with `uv`. Go, in the build image: the modules `go.mod` requires. Without a manifest it does nothing. |
+ | `build` | Go only, in the build image: compiles the function in `/app` with the runtime into `/app/.hivepaas/function`. It first tidies `go.mod` and `go.sum`: what the code imports is added, at the versions it resolves, and the runtime module is required at the image's version. In the build image, `serve` and `invoke` build first when the function is not built. |
+@@ -255,3 +256,29 @@ after the result, even by a handler still running past its timeout.
+ It exits 0 when it wrote a result, whatever the status; 2 when the request on
+ its input could not be read; 3 when the handler could not be loaded, or, in Go's
+ build image, the function could not be built. Exits 2 and 3 write no result.
++
++### Call
++
++`hivepaas-runtime call` reads on standard input the request `invoke` reads, and
++sends it to `serve` on this container, at `127.0.0.1` and `HP_FN_PORT`, with the
++header `X-Hivepaas-Call: 1`. It writes the answer as `invoke` writes its result -
++the last line of standard output, after the marker - and nothing else: the
++call's log lines are `serve`'s, in the container's log, with its request id.
++The result's `headers` leave out what is the connection's (`content-length`,
++`connection`, `date`) and the runtime's `x-hivepaas-*`; its `requestId` is the
++answer's `x-request-id`; its `durationMs` and `outcome` are what `serve` says of
++the call.
++
++An answer 429 is waited for - `Retry-After` - and the request sent again, for as
++long as `HP_FN_TIMEOUT_MS` from the start allows; then the 429 is the result,
++outcome `throttled`. `call` waits for an answer at most `HP_FN_TIMEOUT_MS` and ten
++seconds. A path under `/_hivepaas/` is answered by the runtime, as `serve`
++answers it.
++
++It exits 0 when it wrote a result, whatever the status; 2 when the request on
++its input could not be read; 3 when `serve` does not answer. Exits 2 and 3 write
++no result.
++
++`serve` answers a request with `X-Hivepaas-Call: 1` as any other, adding
++`X-Hivepaas-Outcome` - the `outcome` of its invocation line - and
++`X-Hivepaas-Duration-Ms`; the handler does not see the header.
+diff --git a/runtimes/js/runtime/call.mjs b/runtimes/js/runtime/call.mjs
+new file mode 100644
+index 0000000..b266cf5
+--- /dev/null
++++ b/runtimes/js/runtime/call.mjs
+@@ -0,0 +1,114 @@
++// call: a request handed to the serve running on this container, its answer
++// written as invoke writes a result. It loads nothing of the runtime.
++import http from 'node:http'
++
++import { invokeRequest, RESULT_MARKER } from './wire.mjs'
++
++// A request with this header is call's: serve's answer to it says the call's
++// outcome and duration, and the handler does not see it.
++export const CALL_HEADER = 'x-hivepaas-call'
++// How much longer than a call's timeout call waits for serve, which answers at it.
++const CALL_WAIT_MARGIN_MS = 10 * 1000
++// The headers of serve's answer that are the connection's or the runtime's.
++const NOT_THE_CALLS = new Set(['content-length', 'transfer-encoding', 'connection', 'keep-alive', 'date',
++  'x-hivepaas-outcome', 'x-hivepaas-duration-ms'])
++
++/**
++ * callServe hands the request in input - invoke's - to the serve running on
++ * this container, and writes its answer as invoke writes a result. A call turned
++ * away (429) is sent again after Retry-After while the timeout allows. It
++ * returns the exit code: 0 with a result, 2 when the request cannot be read,
++ * 3 when serve does not answer.
++ */
++export async function callServe(input, cfg, io = {}) {
++  const out = io.out ?? ((line) => process.stdout.write(`${line}\n`))
++  const err = io.err ?? ((text) => process.stderr.write(`${text}\n`))
++  let request
++  try {
++    request = invokeRequest(input)
++    checkSendable(request)
++  } catch (e) {
++    err(`hivepaas: ${e.message}`)
++    return 2
++  }
++  const deadline = Date.now() + cfg.timeoutMs
++  for (;;) {
++    let answer
++    try {
++      answer = await sendToServe(cfg.port, request, cfg.timeoutMs + CALL_WAIT_MARGIN_MS)
++    } catch (e) {
++      err(`hivepaas: serve does not answer: ${e.message}`)
++      return 3
++    }
++    const wait = Number(answer.headers['retry-after']?.[0] ?? 1) * 1000
++    if (answer.status === 429 && Date.now() + wait < deadline) {
++      await new Promise((resolve) => setTimeout(resolve, wait))
++      continue
++    }
++    out(RESULT_MARKER + JSON.stringify(callResult(answer)))
++    return 0
++  }
++}
++
++function sendToServe(port, request, timeoutMs) {
++  return new Promise((resolve, reject) => {
++    const headers = { [CALL_HEADER]: '1' }
++    for (let i = 0; i + 1 < request.rawHeaders.length; i += 2) {
++      const name = request.rawHeaders[i].toLowerCase()
++      if (name !== CALL_HEADER) headers[name] = [...(headers[name] ?? []), request.rawHeaders[i + 1]]
++    }
++    const req = http.request({
++      host: '127.0.0.1', port, method: request.method.toUpperCase(), path: request.url, headers, agent: false,
++    }, (res) => {
++      const chunks = []
++      res.on('data', (chunk) => chunks.push(chunk))
++      res.on('end', () => resolve({ status: res.statusCode, headers: rawHeadersByName(res.rawHeaders), body: Buffer.concat(chunks) }))
++      res.on('error', reject)
++    })
++    req.setTimeout(timeoutMs, () => req.destroy(new Error('no answer within the timeout')))
++    req.on('error', reject)
++    req.end(request.body)
++  })
++}
++
++function rawHeadersByName(rawHeaders) {
++  const headers = {}
++  for (let i = 0; i + 1 < rawHeaders.length; i += 2) {
++    const name = rawHeaders[i].toLowerCase()
++    headers[name] = [...(headers[name] ?? []), rawHeaders[i + 1]]
++  }
++  return headers
++}
++
++/** callResult is serve's answer as invoke's result line says one. */
++function callResult(answer) {
++  const headers = {}
++  for (const [name, values] of Object.entries(answer.headers)) {
++    if (!NOT_THE_CALLS.has(name)) headers[name] = values
++  }
++  return {
++    status: answer.status,
++    headers,
++    body: answer.body.toString('base64'),
++    requestId: headers['x-request-id']?.[0] ?? '',
++    durationMs: Number(answer.headers['x-hivepaas-duration-ms']?.[0] ?? 0),
++    outcome: answer.headers['x-hivepaas-outcome']?.[0] ?? 'ok',
++  }
++}
++
++const TOKEN = /^[!#$%&'*+\-.^_`|~0-9A-Za-z]+$/
++// eslint-disable-next-line no-control-regex
++const PATH = /^\/[^\s\x00-\x1f\x7f]*$/
++// eslint-disable-next-line no-control-regex
++const BAD_VALUE = /[\r\n\x00]/
++
++/** checkSendable refuses what cannot go on an HTTP/1.1 request line or header. */
++function checkSendable(request) {
++  if (!TOKEN.test(request.method)) throw new Error(`the request's method "${request.method}" cannot be sent`)
++  if (!PATH.test(request.url)) throw new Error(`the request's path "${request.url}" cannot be sent`)
++  for (let i = 0; i + 1 < request.rawHeaders.length; i += 2) {
++    if (!TOKEN.test(request.rawHeaders[i]) || BAD_VALUE.test(request.rawHeaders[i + 1])) {
++      throw new Error(`the request's header "${request.rawHeaders[i]}" cannot be sent`)
++    }
++  }
++}
+diff --git a/runtimes/js/runtime/main.mjs b/runtimes/js/runtime/main.mjs
+index 56ea977..9a40f88 100644
+--- a/runtimes/js/runtime/main.mjs
++++ b/runtimes/js/runtime/main.mjs
+@@ -1,14 +1,16 @@
+ #!/usr/bin/env node
+-// hivepaas-runtime for Node.js and Bun: serve, invoke, health and deps, as
++// hivepaas-runtime for Node.js and Bun: serve, invoke, call, health and deps, as
+ // CONTRACT.md at the repository's root says.
+ import { spawnSync } from 'node:child_process'
+ import { existsSync, rmSync } from 'node:fs'
+ import http from 'node:http'
+ import { text } from 'node:stream/consumers'
+ 
+-import { APP_DIR, ConfigError, DEPS_CACHE, depsCommand, engine, LOCK_FILES, loadConfig, Runtime } from './runtime.mjs'
++// The runtime is loaded only by the commands that run the handler: call hands
++// its request to serve, and starts as fast as a process can.
++import { APP_DIR, ConfigError, DEPS_CACHE, depsCommand, engine, LOCK_FILES, loadConfig } from './wire.mjs'
+ 
+-const USAGE = 'usage: hivepaas-runtime serve|invoke|health|deps'
++const USAGE = 'usage: hivepaas-runtime serve|invoke|call|health|deps'
+ // Longer than a proxy in front keeps an idle connection (Traefik: 90s).
+ const IDLE_TIMEOUT_MS = 5 * 60 * 1000
+ const HEADERS_TIMEOUT_MS = 10 * 1000
+@@ -16,7 +18,7 @@ const HEALTH_TIMEOUT_MS = 3 * 1000
+ 
+ async function main(command = 'serve') {
+   if (command === 'deps') return deps()
+-  if (!['serve', 'invoke', 'health'].includes(command)) {
++  if (!['serve', 'invoke', 'call', 'health'].includes(command)) {
+     console.error(USAGE)
+     return 2
+   }
+@@ -29,6 +31,12 @@ async function main(command = 'serve') {
+     return 2
+   }
+   if (command === 'health') return health(cfg)
++  // call hands its request to serve: the handler is not loaded here.
++  if (command === 'call') {
++    const { callServe } = await import('./call.mjs')
++    return callServe(await text(process.stdin), cfg)
++  }
++  const { Runtime } = await import('./runtime.mjs')
+   const runtime = await Runtime.load(cfg)
+   if (command === 'invoke') return runtime.invoke(await text(process.stdin))
+   return serve(runtime, cfg)
+diff --git a/runtimes/js/runtime/runtime.mjs b/runtimes/js/runtime/runtime.mjs
+index 2614723..4ac2864 100644
+--- a/runtimes/js/runtime/runtime.mjs
++++ b/runtimes/js/runtime/runtime.mjs
+@@ -7,55 +7,21 @@ import path from 'node:path'
+ import { pathToFileURL } from 'node:url'
+ import { format } from 'node:util'
+ 
+-export const APP_DIR = '/app'
+-export const RESULT_MARKER = '#hivepaas-result '
++import { CALL_HEADER } from './call.mjs'
++import { APP_DIR, invokeRequest, RESULT_MARKER } from './wire.mjs'
++
++export { CALL_HEADER, callServe } from './call.mjs'
++export {
++  APP_DIR, ConfigError, DEPS_CACHE, depsCommand, engine, LOCK_FILES, loadConfig, RESULT_MARKER,
++} from './wire.mjs'
++
+ 
+ const REQUEST_ID = /^[A-Za-z0-9._-]{1,128}$/
+-const WHOLE_NUMBER = /^\+?[0-9]+$/
+-const BASE64 = /^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$/
+-const MAX_LIMIT = 2147483647
+ const BODYLESS = new Set([204, 304])
+ const EMPTY = Buffer.alloc(0)
+ const TIMEOUT = Symbol('timeout')
+ const TOO_LARGE = Symbol('too large')
+ 
+-// Where deps keeps what it downloads while it installs; removed after.
+-export const DEPS_CACHE = '/tmp/hivepaas-deps-cache'
+-
+-/** engine is what runs the runtime: 'bun' or 'node'. */
+-export function engine() {
+-  return process.versions.bun ? 'bun' : 'node'
+-}
+-
+-// Each engine's default entrypoint: Bun runs TypeScript whole.
+-const DEFAULT_ENTRYPOINT = { node: 'index.js', bun: 'index.ts' }
+-
+-/** Each engine's lock file of package.json's dependencies. */
+-export const LOCK_FILES = { node: 'package-lock.json', bun: 'bun.lock' }
+-
+-/**
+- * depsCommand installs package.json's dependencies with the engine's own
+- * manager: from its lock file when there is one (locked), which it makes when
+- * there is none. Bun reads an npm lock file to make its own.
+- */
+-export function depsCommand(runOn, locked) {
+-  if (runOn === 'bun') {
+-    return {
+-      command: 'bun',
+-      args: ['install', '--production', ...(locked ? ['--frozen-lockfile'] : [])],
+-      env: { BUN_INSTALL_CACHE_DIR: DEPS_CACHE },
+-    }
+-  }
+-  return {
+-    command: 'npm',
+-    args: [locked ? 'ci' : 'install', '--omit=dev', '--no-audit', '--no-fund', '--cache', DEPS_CACHE],
+-    env: {},
+-  }
+-}
+-
+-/** A configuration the runtime cannot start with. */
+-export class ConfigError extends Error {}
+-
+ /** A call that failed; outcome says how. */
+ class CallError extends Error {
+   constructor(message, outcome = 'error') {
+@@ -64,31 +30,6 @@ class CallError extends Error {
+   }
+ }
+ 
+-export function loadConfig(env, runOn = engine()) {
+-  const entrypoint = env.HP_FN_ENTRYPOINT || DEFAULT_ENTRYPOINT[runOn]
+-  if (path.isAbsolute(entrypoint) || !path.resolve(APP_DIR, entrypoint).startsWith(APP_DIR + path.sep)) {
+-    throw new ConfigError(`HP_FN_ENTRYPOINT is "${entrypoint}", which is not a file of the function`)
+-  }
+-  return {
+-    entrypoint,
+-    handler: env.HP_FN_HANDLER || 'default',
+-    port: positive(env, 'HP_FN_PORT', 8080),
+-    timeoutMs: positive(env, 'HP_FN_TIMEOUT_MS', 30000),
+-    maxConcurrency: positive(env, 'HP_FN_MAX_CONCURRENCY', 16),
+-    maxBodySize: positive(env, 'HP_FN_MAX_BODY_SIZE', 6291456),
+-  }
+-}
+-
+-function positive(env, name, fallback) {
+-  const value = env[name]
+-  if (value === undefined || value === '') return fallback
+-  const n = Number(value)
+-  if (!WHOLE_NUMBER.test(value) || n <= 0 || n > MAX_LIMIT) {
+-    throw new ConfigError(`${name} is "${value}", which is not a positive whole number`)
+-  }
+-  return n
+-}
+-
+ /** The handler: the module's export cfg.handler names, ES module or CommonJS. */
+ export async function loadHandler(appDir, cfg) {
+   const ns = await import(pathToFileURL(path.resolve(appDir, cfg.entrypoint)).href)
+@@ -199,6 +140,14 @@ function requestId(sent) {
+   return REQUEST_ID.test(sent ?? '') ? sent : randomBytes(16).toString('hex')
+ }
+ 
++function withoutHeader(rawHeaders, name) {
++  const kept = []
++  for (let i = 0; i + 1 < rawHeaders.length; i += 2) {
++    if (rawHeaders[i].toLowerCase() !== name) kept.push(rawHeaders[i], rawHeaders[i + 1])
++  }
++  return kept
++}
++
+ function firstHeader(rawHeaders, name) {
+   for (let i = 0; i + 1 < rawHeaders.length; i += 2) {
+     if (rawHeaders[i].toLowerCase() === name) return rawHeaders[i + 1]
+@@ -292,16 +241,17 @@ export class Runtime {
+ 
+   async serve(req, res) {
+     const id = requestId(firstHeader(req.rawHeaders, 'x-request-id'))
++    const isCall = firstHeader(req.rawHeaders, CALL_HEADER) === '1'
+     const q = req.url.indexOf('?')
+     const urlPath = q === -1 ? req.url : req.url.slice(0, q)
+     if (urlPath.startsWith('/_hivepaas/')) {
+-      this.send(res, id, this.ownPath(urlPath))
++      this.send(res, id, this.ownPath(urlPath), isCall)
+       return
+     }
+     const method = req.method.toUpperCase()
+     const answer = (a) => {
+       this.logInvocation(id, method, urlPath, a)
+-      this.send(res, id, a)
++      this.send(res, id, a, isCall)
+     }
+ 
+     // A body refused unread closes the connection: what is left of it is not read.
+@@ -335,7 +285,7 @@ export class Runtime {
+       answer(throttled)
+       return
+     }
+-    answer(await this.call(requestOf(req.method, req.url, req.rawHeaders, body), id))
++    answer(await this.call(requestOf(req.method, req.url, withoutHeader(req.rawHeaders, CALL_HEADER), body), id))
+   }
+ 
+   ownPath(urlPath) {
+@@ -345,13 +295,18 @@ export class Runtime {
+     return own(404, { error: 'not found' })
+   }
+ 
+-  send(res, id, answer) {
++  /** send writes answer; to a call, what the runtime made of it too. */
++  send(res, id, answer, isCall = false) {
+     for (const [name, value] of Object.entries(answer.headers)) res.setHeader(name, value)
+     res.removeHeader('transfer-encoding')
+     res.setHeader('x-request-id', id)
+     if (BODYLESS.has(answer.status)) res.removeHeader('content-length')
+     else res.setHeader('content-length', answer.body.length)
+     if (this.stopping) res.setHeader('connection', 'close')
++    if (isCall && answer.outcome !== undefined) {
++      res.setHeader('x-hivepaas-outcome', answer.outcome)
++      res.setHeader('x-hivepaas-duration-ms', String(answer.durationMs ?? 0))
++    }
+     res.writeHead(answer.status)
+     res.end(answer.body)
+   }
+@@ -412,33 +367,3 @@ function readBody(req, cfg) {
+     })
+   })
+ }
+-
+-/** invokeRequest reads invoke's input: JSON, every field optional. */
+-function invokeRequest(input) {
+-  let given
+-  try {
+-    given = JSON.parse(input)
+-  } catch (e) {
+-    throw new Error(`the request is not JSON: ${e.message}`)
+-  }
+-  if (given === null || typeof given !== 'object' || Array.isArray(given)) {
+-    throw new Error('the request is not a JSON object')
+-  }
+-  const encoded = given.body ?? ''
+-  if (typeof encoded !== 'string' || !BASE64.test(encoded)) throw new Error("the request's body is not base64")
+-  const urlPath = given.path || '/'
+-  const query = new URLSearchParams(pairs(given.query, 'query')).toString()
+-  return {
+-    method: given.method || 'GET',
+-    path: urlPath,
+-    url: query === '' ? urlPath : `${urlPath}?${query}`,
+-    rawHeaders: pairs(given.headers, 'headers').flat(),
+-    body: Buffer.from(encoded, 'base64'),
+-  }
+-}
+-
+-function pairs(given, what) {
+-  if (given === undefined || given === null) return []
+-  if (typeof given !== 'object' || Array.isArray(given)) throw new Error(`the request's ${what} is not an object`)
+-  return Object.entries(given).flatMap(([name, values]) => [values].flat().map((value) => [name, String(value)]))
+-}
+diff --git a/runtimes/js/runtime/wire.mjs b/runtimes/js/runtime/wire.mjs
+new file mode 100644
+index 0000000..932fbaf
+--- /dev/null
++++ b/runtimes/js/runtime/wire.mjs
+@@ -0,0 +1,103 @@
++// What crosses the JavaScript runtime's edges, and nothing heavier: its
++// configuration from the environment, invoke's request and result marker, and
++// what deps runs. call reads it without loading the runtime.
++import path from 'node:path'
++
++export const APP_DIR = '/app'
++export const RESULT_MARKER = '#hivepaas-result '
++
++const WHOLE_NUMBER = /^\+?[0-9]+$/
++const BASE64 = /^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$/
++const MAX_LIMIT = 2147483647
++
++// Where deps keeps what it downloads while it installs; removed after.
++export const DEPS_CACHE = '/tmp/hivepaas-deps-cache'
++
++/** engine is what runs the runtime: 'bun' or 'node'. */
++export function engine() {
++  return process.versions.bun ? 'bun' : 'node'
++}
++
++// Each engine's default entrypoint: Bun runs TypeScript whole.
++const DEFAULT_ENTRYPOINT = { node: 'index.js', bun: 'index.ts' }
++
++/** Each engine's lock file of package.json's dependencies. */
++export const LOCK_FILES = { node: 'package-lock.json', bun: 'bun.lock' }
++
++/**
++ * depsCommand installs package.json's dependencies with the engine's own
++ * manager: from its lock file when there is one (locked), which it makes when
++ * there is none. Bun reads an npm lock file to make its own.
++ */
++export function depsCommand(runOn, locked) {
++  if (runOn === 'bun') {
++    return {
++      command: 'bun',
++      args: ['install', '--production', ...(locked ? ['--frozen-lockfile'] : [])],
++      env: { BUN_INSTALL_CACHE_DIR: DEPS_CACHE },
++    }
++  }
++  return {
++    command: 'npm',
++    args: [locked ? 'ci' : 'install', '--omit=dev', '--no-audit', '--no-fund', '--cache', DEPS_CACHE],
++    env: {},
++  }
++}
++
++/** A configuration the runtime cannot start with. */
++export class ConfigError extends Error {}
++
++export function loadConfig(env, runOn = engine()) {
++  const entrypoint = env.HP_FN_ENTRYPOINT || DEFAULT_ENTRYPOINT[runOn]
++  if (path.isAbsolute(entrypoint) || !path.resolve(APP_DIR, entrypoint).startsWith(APP_DIR + path.sep)) {
++    throw new ConfigError(`HP_FN_ENTRYPOINT is "${entrypoint}", which is not a file of the function`)
++  }
++  return {
++    entrypoint,
++    handler: env.HP_FN_HANDLER || 'default',
++    port: positive(env, 'HP_FN_PORT', 8080),
++    timeoutMs: positive(env, 'HP_FN_TIMEOUT_MS', 30000),
++    maxConcurrency: positive(env, 'HP_FN_MAX_CONCURRENCY', 16),
++    maxBodySize: positive(env, 'HP_FN_MAX_BODY_SIZE', 6291456),
++  }
++}
++
++function positive(env, name, fallback) {
++  const value = env[name]
++  if (value === undefined || value === '') return fallback
++  const n = Number(value)
++  if (!WHOLE_NUMBER.test(value) || n <= 0 || n > MAX_LIMIT) {
++    throw new ConfigError(`${name} is "${value}", which is not a positive whole number`)
++  }
++  return n
++}
++
++/** invokeRequest reads invoke's input: JSON, every field optional. */
++export function invokeRequest(input) {
++  let given
++  try {
++    given = JSON.parse(input)
++  } catch (e) {
++    throw new Error(`the request is not JSON: ${e.message}`)
++  }
++  if (given === null || typeof given !== 'object' || Array.isArray(given)) {
++    throw new Error('the request is not a JSON object')
++  }
++  const encoded = given.body ?? ''
++  if (typeof encoded !== 'string' || !BASE64.test(encoded)) throw new Error("the request's body is not base64")
++  const urlPath = given.path || '/'
++  const query = new URLSearchParams(pairs(given.query, 'query')).toString()
++  return {
++    method: given.method || 'GET',
++    path: urlPath,
++    url: query === '' ? urlPath : `${urlPath}?${query}`,
++    rawHeaders: pairs(given.headers, 'headers').flat(),
++    body: Buffer.from(encoded, 'base64'),
++  }
++}
++
++function pairs(given, what) {
++  if (given === undefined || given === null) return []
++  if (typeof given !== 'object' || Array.isArray(given)) throw new Error(`the request's ${what} is not an object`)
++  return Object.entries(given).flatMap(([name, values]) => [values].flat().map((value) => [name, String(value)]))
++}

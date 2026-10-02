@@ -1,0 +1,142 @@
+diff --git a/src/application/modules/operations/routes/tasks/building-blocks/task-summary-card/function-invoke-response.com.tsx b/src/application/modules/operations/routes/tasks/building-blocks/task-summary-card/function-invoke-response.com.tsx
+index f6764d10..e4f7a4fc 100644
+--- a/src/application/modules/operations/routes/tasks/building-blocks/task-summary-card/function-invoke-response.com.tsx
++++ b/src/application/modules/operations/routes/tasks/building-blocks/task-summary-card/function-invoke-response.com.tsx
+@@ -1,6 +1,8 @@
+ import { Badge } from "@components/ui/badge";
+ import type { SystemTaskFunctionInvoke } from "~/operations/domain";
+ 
++import { AppLink } from "@application/shared/components";
++
+ /** A response's body as text, or how many bytes of something else. */
+ function bodyText(body: Uint8Array): string {
+     try {
+@@ -10,8 +12,11 @@ function bodyText(body: Uint8Array): string {
+     }
+ }
+ 
+-/** The status and duration of a function's call, beside the run's other details. */
+-export function FunctionInvokeSummary({ response }: Props) {
++/**
++ * The status and duration of a function's call, beside the run's other details,
++ * and its request id: the call's log lines carry it, in the app's logs.
++ */
++export function FunctionInvokeSummary({ response, logsHref }: Props & { logsHref?: string }) {
+     const failed = response.outcome !== "ok" || response.status >= 400;
+ 
+     return (
+@@ -27,6 +32,23 @@ export function FunctionInvokeSummary({ response }: Props) {
+                 in {response.durationMs.toFixed(1)} ms
+                 {response.outcome !== "ok" ? ` (${response.outcome})` : ""}
+             </span>
++            {response.requestId && (
++                <>
++                    {" "}
++                    <span className="text-muted-foreground">request</span>{" "}
++                    {logsHref ? (
++                        <AppLink.Modules
++                            to={logsHref}
++                            className="font-mono text-link hover:underline"
++                            title="The call's log, in the app's logs"
++                        >
++                            {response.requestId}
++                        </AppLink.Modules>
++                    ) : (
++                        <span className="font-mono">{response.requestId}</span>
++                    )}
++                </>
++            )}
+         </div>
+     );
+ }
+diff --git a/src/application/modules/operations/routes/tasks/building-blocks/task-summary-card/system-task-summary-card.com.tsx b/src/application/modules/operations/routes/tasks/building-blocks/task-summary-card/system-task-summary-card.com.tsx
+index 3dcbbb6d..c1a10a8e 100644
+--- a/src/application/modules/operations/routes/tasks/building-blocks/task-summary-card/system-task-summary-card.com.tsx
++++ b/src/application/modules/operations/routes/tasks/building-blocks/task-summary-card/system-task-summary-card.com.tsx
+@@ -668,7 +668,20 @@ export function SystemTaskSummaryCard({
+                                     </div>
+                                 )}
+ 
+-                                {task.functionInvoke && <FunctionInvokeSummary response={task.functionInvoke} />}
++                                {task.functionInvoke && (
++                                    <FunctionInvokeSummary
++                                        response={task.functionInvoke}
++                                        logsHref={
++                                            task.scopeProject && task.scopeApp?.env && task.functionInvoke.requestId
++                                                ? `${ROUTE.projects.single.apps.single.logs.$route(
++                                                      task.scopeProject.id,
++                                                      task.scopeApp.env,
++                                                      task.scopeApp.id,
++                                                  )}?search=${encodeURIComponent(task.functionInvoke.requestId)}`
++                                                : undefined
++                                        }
++                                    />
++                                )}
+                             </div>
+ 
+                             {task.functionInvoke && <FunctionInvokeBody response={task.functionInvoke} />}
+diff --git a/src/application/modules/projects/routes/single-project/single-app/tabs/logs/building-blocks/app-logs-history/app-logs-history.com.tsx b/src/application/modules/projects/routes/single-project/single-app/tabs/logs/building-blocks/app-logs-history/app-logs-history.com.tsx
+index de3f63fb..75445e4e 100644
+--- a/src/application/modules/projects/routes/single-project/single-app/tabs/logs/building-blocks/app-logs-history/app-logs-history.com.tsx
++++ b/src/application/modules/projects/routes/single-project/single-app/tabs/logs/building-blocks/app-logs-history/app-logs-history.com.tsx
+@@ -52,6 +52,7 @@ export function AppLogsHistory({
+     projectID,
+     env,
+     appID,
++    initialSearch = "",
+     history,
+     lines,
+     since,
+@@ -66,8 +67,8 @@ export function AppLogsHistory({
+     onSinceChange,
+     onDurationChange,
+ }: AppLogsHistoryProps) {
+-    const [searchDraft, setSearchDraft] = useState("");
+-    const [search, setSearch] = useState("");
++    const [searchDraft, setSearchDraft] = useState(initialSearch);
++    const [search, setSearch] = useState(initialSearch);
+     const [searchMode, setSearchMode] = useState<SearchMode>(DEFAULT_SEARCH_MODE);
+     // A pattern that is not a regular expression yet would come back from the
+     // server as an invalid query. Catching it here keeps the round trip, and
+@@ -278,6 +279,8 @@ interface AppLogsHistoryProps {
+     projectID: string;
+     env: string;
+     appID: string;
++    /** What the history is searched for as it opens. */
++    initialSearch?: string;
+     history: AppLogHistoryInfo | undefined;
+     lines: number | undefined;
+     since: Date | undefined;
+diff --git a/src/application/modules/projects/routes/single-project/single-app/tabs/logs/route/app-logs.route.com.tsx b/src/application/modules/projects/routes/single-project/single-app/tabs/logs/route/app-logs.route.com.tsx
+index 472c7577..bdca1711 100644
+--- a/src/application/modules/projects/routes/single-project/single-app/tabs/logs/route/app-logs.route.com.tsx
++++ b/src/application/modules/projects/routes/single-project/single-app/tabs/logs/route/app-logs.route.com.tsx
+@@ -3,7 +3,7 @@ import { type SetStateAction, useCallback, useEffect, useMemo, useState } from "
+ import { cn } from "@/lib/utils";
+ import type { WebSocketReadyState } from "@infrastructure/websocket";
+ import { listBox } from "@lib/styles";
+-import { useParams } from "react-router";
++import { useParams, useSearchParams } from "react-router";
+ import invariant from "tiny-invariant";
+ import { AppLogsQueries } from "~/projects/data";
+ 
+@@ -26,7 +26,10 @@ const DEFAULT_LOG_LINES = 100;
+ 
+ export function AppLogsRoute() {
+     const { id: projectID, env, appId: appID } = useParams<{ id: string; env: string; appId: string }>();
+-    const [activeTab, setActiveTab] = useState(AGGREGATION_TAB_ID);
++    // ?search=<text> opens the history, searched for text: a call's request id, say.
++    const [searchParams] = useSearchParams();
++    const initialSearch = searchParams.get("search") ?? "";
++    const [activeTab, setActiveTab] = useState(initialSearch ? HISTORY_TAB_ID : AGGREGATION_TAB_ID);
+     const {
+         isFullscreen,
+         toggleFullscreen,
+@@ -239,6 +242,7 @@ export function AppLogsRoute() {
+                                         projectID={projectID}
+                                         env={env}
+                                         appID={appID}
++                                        initialSearch={initialSearch}
+                                         history={infoResponse?.data.history}
+                                         lines={tabState.lines}
+                                         since={tabState.since}

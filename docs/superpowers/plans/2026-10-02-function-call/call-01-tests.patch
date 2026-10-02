@@ -1,0 +1,317 @@
+diff --git a/conformance/call_test.go b/conformance/call_test.go
+new file mode 100644
+index 0000000..c86b087
+--- /dev/null
++++ b/conformance/call_test.go
+@@ -0,0 +1,125 @@
++//go:build conformance
++
++package conformance
++
++import (
++	"encoding/base64"
++	"encoding/json"
++	"net/http"
++	"slices"
++	"strconv"
++	"strings"
++	"testing"
++	"time"
++)
++
++// runCall runs hivepaas-runtime call in the serving container c, with input.
++func (c *container) runCall(t *testing.T, input string) result {
++	t.Helper()
++	return dockerRun(t, input, "exec", "-i", c.id, "hivepaas-runtime", "call")
++}
++
++// checkCall checks call: a request handed to the serve running in the
++// container, answered as invoke answers it.
++func checkCall(t *testing.T, imgs images) {
++	c := imgs.serve(t, "HP_FN_TIMEOUT_MS=1000")
++
++	t.Run("a request is answered as invoke answers it", func(t *testing.T) {
++		body := base64.StdEncoding.EncodeToString([]byte("payload"))
++		r := c.runCall(t, `{"method":"POST","path":"/echo","query":{"a":["1","2"]},`+
++			`"headers":{"x-custom":["v"],"x-request-id":["conf-call"]},"body":"`+body+`"}`)
++
++		res := parseResult(t, r)
++		want := map[string]any{"method": "POST", "path": "/echo", "query": "1", "queryAll": []any{"1", "2"},
++			"header": "v", "body": "payload", "requestId": "conf-call"}
++		var got map[string]any
++		if err := json.Unmarshal(res.body(t), &got); err != nil || !jsonEqual(got, want) {
++			t.Errorf("body %s, want %v", res.body(t), want)
++		}
++		if res.Status != 200 || res.RequestID != "conf-call" || res.Outcome != "ok" || res.DurationMs == nil {
++			t.Errorf("result %+v", res)
++		}
++		if res.Headers["content-type"] == nil || !slices.Equal(res.Headers["x-request-id"], []string{"conf-call"}) {
++			t.Errorf("headers %v", res.Headers)
++		}
++		for name := range res.Headers {
++			if name == "content-length" || name == "date" || name == "connection" || strings.HasPrefix(name, "x-hivepaas-") {
++				t.Errorf("the result has the header %s", name)
++			}
++		}
++		if lines := strings.Split(strings.TrimSpace(r.stdout), "\n"); len(lines) != 1 {
++			t.Errorf("call wrote more than its result:\n%s", r.stdout)
++		}
++		if line := c.jsonLine(t, "invocation", "conf-call"); line["path"] != "/echo" || line["outcome"] != "ok" {
++			t.Errorf("serve's invocation line %v", line)
++		}
++	})
++
++	t.Run("a failed call and a call past its timeout are results", func(t *testing.T) {
++		for input, want := range map[string]struct {
++			status  int
++			outcome string
++		}{
++			`{"path":"/error"}`:                        {500, "error"},
++			`{"path":"/slow","query":{"ms":["3000"]}}`: {504, "timeout"},
++		} {
++			if res := parseResult(t, c.runCall(t, input)); res.Status != want.status || res.Outcome != want.outcome {
++				t.Errorf("%s: result %+v", input, res)
++			}
++		}
++	})
++
++	t.Run("a request that cannot be read, and no server", func(t *testing.T) {
++		if r := c.runCall(t, "not json"); r.code != 2 || strings.Contains(r.stdout, resultMarker) {
++			t.Errorf("not JSON: exit %d\n%s", r.code, r.stdout)
++		}
++		r := dockerRun(t, `{}`, "run", "--rm", "-i", "--network", "none", imgs.fixture, "hivepaas-runtime", "call")
++		if r.code != 3 || strings.Contains(r.stdout, resultMarker) {
++			t.Errorf("no server: exit %d\n%s\n%s", r.code, r.stdout, lastLines(r.stderr))
++		}
++	})
++
++	t.Run("a call over the concurrency waits for a place", func(t *testing.T) {
++		one := imgs.serve(t, "HP_FN_MAX_CONCURRENCY=1", "HP_FN_TIMEOUT_MS=5000")
++		slow := one.background("/slow?ms=1500")
++		time.Sleep(300 * time.Millisecond)
++
++		start := time.Now()
++		res := parseResult(t, one.runCall(t, `{"path":"/text"}`))
++
++		if res.Status != 200 || string(res.body(t)) != "hello" {
++			t.Errorf("result %+v", res)
++		}
++		if took := time.Since(start); took < 700*time.Millisecond {
++			t.Errorf("answered after %v, while the slow call ran", took)
++		}
++		if r := <-slow; r.err != nil || r.status != 200 {
++			t.Errorf("the running call: %d %v", r.status, r.err)
++		}
++	})
++
++	t.Run("serve says the outcome to a call, and keeps the header from the handler", func(t *testing.T) {
++		r := c.call(t, http.MethodGet, "/headers", nil, map[string]string{"X-Hivepaas-Call": "1", "X-Custom": "v"})
++
++		if r.header.Get("X-Hivepaas-Outcome") != "ok" {
++			t.Errorf("X-Hivepaas-Outcome %q", r.header.Get("X-Hivepaas-Outcome"))
++		}
++		if _, err := strconv.ParseFloat(r.header.Get("X-Hivepaas-Duration-Ms"), 64); err != nil {
++			t.Errorf("X-Hivepaas-Duration-Ms %q", r.header.Get("X-Hivepaas-Duration-Ms"))
++		}
++		names, _ := r.json(t)["names"].([]any)
++		if !slices.Contains(names, any("x-custom")) || slices.Contains(names, any("x-hivepaas-call")) {
++			t.Errorf("the handler saw %v", names)
++		}
++		if plain := c.get(t, "/text"); plain.header.Get("X-Hivepaas-Outcome") != "" {
++			t.Errorf("a request that is no call got X-Hivepaas-Outcome")
++		}
++	})
++}
++
++// jsonEqual compares two decoded JSON values.
++func jsonEqual(a, b any) bool {
++	x, _ := json.Marshal(a)
++	y, _ := json.Marshal(b)
++	return string(x) == string(y)
++}
+diff --git a/conformance/conformance_test.go b/conformance/conformance_test.go
+index 29a557e..6d43702 100644
+--- a/conformance/conformance_test.go
++++ b/conformance/conformance_test.go
+@@ -67,6 +67,7 @@ func TestConformance(t *testing.T) {
+ 				t.Run("processes", func(t *testing.T) { checkProcesses(t, imgs) })
+ 			}
+ 			t.Run("invoke", func(t *testing.T) { checkInvoke(t, rt, imgs) })
++			t.Run("call", func(t *testing.T) { checkCall(t, imgs) })
+ 			if rt.typeScript != noTypeScript {
+ 				t.Run("typescript", func(t *testing.T) { checkTypeScript(t, rt, imgs) })
+ 			}
+diff --git a/conformance/fixtures/go127/fixture.go b/conformance/fixtures/go127/fixture.go
+index 7447c86..a4cce6a 100644
+--- a/conformance/fixtures/go127/fixture.go
++++ b/conformance/fixtures/go127/fixture.go
+@@ -6,6 +6,7 @@ import (
+ 	"context"
+ 	"errors"
+ 	"os"
++	"slices"
+ 	"strconv"
+ 	"strings"
+ 	"time"
+@@ -58,6 +59,13 @@ func Handle(ctx context.Context, req *hivepaas.Request) (*hivepaas.Response, err
+ 	case "/log":
+ 		hivepaas.Log(ctx, "fixture log line")
+ 		return hivepaas.Text(200, "logged"), nil
++	case "/headers":
++		names := make([]string, 0, len(req.Headers))
++		for name := range req.Headers {
++			names = append(names, strings.ToLower(name))
++		}
++		slices.Sort(names)
++		return hivepaas.JSON(200, map[string][]string{"names": names})
+ 	case "/whoami":
+ 		return hivepaas.JSON(200, map[string]int{"uid": os.Getuid(), "gid": os.Getgid()})
+ 	case "/lib":
+diff --git a/conformance/fixtures/js/index.js b/conformance/fixtures/js/index.js
+index a517cfa..fdb2400 100644
+--- a/conformance/fixtures/js/index.js
++++ b/conformance/fixtures/js/index.js
+@@ -44,6 +44,8 @@ export default async function (req, ctx) {
+     case '/log':
+       ctx.log('fixture log line')
+       return { body: 'logged' }
++    case '/headers':
++      return { body: { names: Object.keys(req.headers).sort() } }
+     case '/whoami':
+       return { body: { uid: process.getuid(), gid: process.getgid() } }
+     case '/lib':
+diff --git a/conformance/fixtures/python313/main.py b/conformance/fixtures/python313/main.py
+index 896c08f..cbc7d65 100644
+--- a/conformance/fixtures/python313/main.py
++++ b/conformance/fixtures/python313/main.py
+@@ -50,6 +50,8 @@ def handler(req, ctx):
+             return {"body": "logged"}
+         case "/pid":
+             return {"body": {"pid": os.getpid()}}
++        case "/headers":
++            return {"body": {"names": sorted(req.headers)}}
+         case "/whoami":
+             return {"body": {"uid": os.getuid(), "gid": os.getgid()}}
+         case "/lib":
+diff --git a/runtimes/js/test/call.test.mjs b/runtimes/js/test/call.test.mjs
+new file mode 100644
+index 0000000..0ac4af4
+--- /dev/null
++++ b/runtimes/js/test/call.test.mjs
+@@ -0,0 +1,116 @@
++// call: a request handed to the serve running beside it, its answer written as
++// invoke writes a result.
++import assert from 'node:assert/strict'
++import http from 'node:http'
++import { test } from 'node:test'
++
++import { callServe } from '../runtime/call.mjs'
++import { loadConfig, RESULT_MARKER } from '../runtime/wire.mjs'
++
++/** A server answering each request with the next of answers; it keeps what it was sent. */
++async function server(answers) {
++  const seen = []
++  const s = http.createServer((req, res) => {
++    const chunks = []
++    req.on('data', (c) => chunks.push(c))
++    req.on('end', () => {
++      seen.push({ method: req.method, url: req.url, headers: req.headers, body: Buffer.concat(chunks).toString() })
++      const a = answers[Math.min(seen.length, answers.length) - 1]
++      res.writeHead(a.status, a.headers)
++      res.end(a.body ?? '')
++    })
++  })
++  await new Promise((resolve) => s.listen(0, '127.0.0.1', resolve))
++  return { port: s.address().port, seen, close: () => s.close() }
++}
++
++async function call(port, input, env = {}) {
++  const out = []
++  const err = []
++  const code = await callServe(input, loadConfig({ HP_FN_PORT: String(port), ...env }),
++    { out: (line) => out.push(line), err: (line) => err.push(line) })
++  return { code, out, err }
++}
++
++test('a request is sent to serve, and its answer written as a result', async (t) => {
++  const s = await server([{
++    status: 201,
++    headers: {
++      'content-type': 'application/json', 'x-request-id': 'r-1', 'set-cookie': ['a=1', 'b=2'],
++      'x-hivepaas-outcome': 'ok', 'x-hivepaas-duration-ms': '2.5',
++    },
++    body: '{"ok":true}',
++  }])
++  t.after(s.close)
++  const body = Buffer.from('payload').toString('base64')
++
++  const { code, out } = await call(s.port, JSON.stringify({
++    method: 'post', path: '/echo', query: { a: ['1', '2'] }, headers: { 'X-Custom': ['v'] }, body,
++  }))
++
++  assert.equal(code, 0)
++  assert.equal(out.length, 1)
++  assert.ok(out[0].startsWith(RESULT_MARKER))
++  const result = JSON.parse(out[0].slice(RESULT_MARKER.length))
++  assert.deepEqual(result, {
++    status: 201,
++    headers: { 'content-type': ['application/json'], 'x-request-id': ['r-1'], 'set-cookie': ['a=1', 'b=2'] },
++    body: Buffer.from('{"ok":true}').toString('base64'),
++    requestId: 'r-1', durationMs: 2.5, outcome: 'ok',
++  })
++  const sent = s.seen[0]
++  assert.equal(sent.method, 'POST')
++  assert.equal(sent.url, '/echo?a=1&a=2')
++  assert.equal(sent.headers['x-hivepaas-call'], '1')
++  assert.equal(sent.headers['x-custom'], 'v')
++  assert.equal(sent.body, 'payload')
++})
++
++test('a call turned away is sent again while its timeout allows', async (t) => {
++  const busy = { status: 429, headers: { 'retry-after': '0', 'x-hivepaas-outcome': 'throttled' } }
++  const s = await server([busy, busy, { status: 200, headers: { 'x-hivepaas-outcome': 'ok' }, body: 'done' }])
++  t.after(s.close)
++
++  const { code, out } = await call(s.port, '{}')
++
++  assert.equal(code, 0)
++  assert.equal(s.seen.length, 3)
++  assert.equal(JSON.parse(out[0].slice(RESULT_MARKER.length)).status, 200)
++})
++
++test('a call still turned away at its timeout is a throttled result', async (t) => {
++  const s = await server([{ status: 429, headers: { 'retry-after': '1', 'x-hivepaas-outcome': 'throttled' } }])
++  t.after(s.close)
++
++  const { code, out } = await call(s.port, '{}', { HP_FN_TIMEOUT_MS: '200' })
++
++  assert.equal(code, 0)
++  const result = JSON.parse(out[0].slice(RESULT_MARKER.length))
++  assert.deepEqual([result.status, result.outcome], [429, 'throttled'])
++  assert.equal(s.seen.length, 1, 'no time was left to wait for a place')
++})
++
++test('a request that cannot be read exits 2; no server exits 3', async () => {
++  const unreadable = await call(1, 'not json')
++  assert.equal(unreadable.code, 2)
++  assert.deepEqual(unreadable.out, [])
++
++  const s = await server([])
++  const { port } = s
++  s.close()
++  const nobody = await call(port, '{}')
++  assert.equal(nobody.code, 3)
++  assert.deepEqual(nobody.out, [])
++  assert.match(nobody.err.join('\n'), /serve does not answer/)
++})
++
++test('a request that cannot go on an HTTP request line or header exits 2', async () => {
++  for (const request of [
++    { path: 'no-slash' }, { path: '/a b' }, { method: 'G ET' }, { headers: { 'x-a': ['v\r\nx-b: w'] } },
++    { headers: { 'bad name': ['v'] } },
++  ]) {
++    const { code, out } = await call(1, JSON.stringify(request))
++    assert.equal(code, 2, JSON.stringify(request))
++    assert.deepEqual(out, [])
++  }
++})

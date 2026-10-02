@@ -125,3 +125,27 @@ A function moves to `call` at its next build.
 - Calling the server from the agent over the project's network, without `exec`.
 - The call's log lines copied into the run's log, by request id, from the logs
   backend.
+
+## Changes after the plan
+
+Writing and measuring the plan's code
+(`docs/superpowers/plans/2026-10-02-function-call.md`) settled what follows:
+
+- **`call` loads nothing of the runtime.** As first written, Python's `call`
+  took 220 ms against `invoke`'s 214: the interpreter imported the runtime
+  package - asyncio, the server - and `http.client`, which alone brings the
+  `email` package, some 60 ms. What `call` reads now lives apart, in `wire.py`
+  and `wire.mjs` - the configuration from the environment, `invoke`'s request
+  and result marker - and Python's `call` speaks HTTP/1.1 on a socket.
+- **What it does, measured** on warm instances, 20 calls each, `docker exec`
+  alone 29 ms: Python `invoke` 181 ms, `call` 73 ms; Node.js 58 and 61 ms; Bun
+  48 and 48 ms. On Node.js and Bun the process starting is all there is to a
+  trivial handler; what `call` saves there is a handler's own loading - its
+  libraries, its connections - which the measure's handler does not have.
+- **A request `call` cannot send** - a method that is no token, a path that does
+  not start with `/` or holds a space or a control character, a header that is
+  no token or whose value holds CR, LF or NUL - is one it cannot read: exit 2,
+  and the run sends it to `invoke`, which reads it as before.
+- **HivePaaS's part needs no release**: on a runtime without `call` the job runs
+  `invoke`, so the backend's change is merged before `1.2.0`; only the pins wait
+  for it.

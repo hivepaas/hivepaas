@@ -3,6 +3,7 @@ import { useAppLogsApi } from "~/projects/api";
 import type {
     AppLogs_GetFunctionMetrics_Req,
     AppLogs_GetHistory_Req,
+    AppLogs_GetHttpMetrics_Req,
     AppLogs_GetInfo_Req,
     AppLogs_GetInfo_Res,
     AppLogs_GetLogs_Req,
@@ -58,12 +59,23 @@ function useGetHistory(request: GetHistoryReq, options: { enabled?: boolean } = 
 }
 
 /** A function's calls over a range ending now, counted from its logs. */
-function useGetFunctionMetrics(request: AppLogs_GetFunctionMetrics_Req["data"]) {
+function useGetFunctionMetrics(request: AppLogs_GetFunctionMetrics_Req["data"], options: { enabled?: boolean } = {}) {
     const { queries } = useAppLogsApi();
 
     return useQuery({
         queryKey: [QK["projects.apps.function-metrics.$.get"], request],
         queryFn: ({ signal }) => queries.getFunctionMetrics(request, signal),
+        ...options,
+    });
+}
+
+function useGetHttpMetrics(request: AppLogs_GetHttpMetrics_Req["data"], options: { enabled?: boolean } = {}) {
+    const { queries } = useAppLogsApi();
+
+    return useQuery({
+        queryKey: [QK["projects.apps.http-metrics.$.get"], request],
+        queryFn: ({ signal }) => queries.getHttpMetrics(request, signal),
+        ...options,
     });
 }
 
@@ -72,4 +84,5 @@ export const AppLogsQueries = Object.freeze({
     useGetLogs,
     useGetHistory,
     useGetFunctionMetrics,
+    useGetHttpMetrics,
 });

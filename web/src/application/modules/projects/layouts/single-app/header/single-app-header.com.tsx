@@ -131,12 +131,13 @@ function View({ projectId, env, appId }: Props) {
                       route: ROUTE.projects.single.apps.single.code.$route(projectId, env, appId),
                       label: "Code",
                   },
-                  {
-                      route: ROUTE.projects.single.apps.single.metrics.$route(projectId, env, appId),
-                      label: "Metrics",
-                  },
               ]
             : []),
+        // Every app's: its HTTP requests, and a function's calls.
+        {
+            route: ROUTE.projects.single.apps.single.metrics.$route(projectId, env, appId),
+            label: "Metrics",
+        },
         {
             route: ROUTE.projects.single.apps.single.configuration.general.$route(projectId, env, appId),
             label: "Settings",

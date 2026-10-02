@@ -3,6 +3,7 @@ import { z } from "zod";
 import type {
     AppLogs_GetFunctionMetrics_Res,
     AppLogs_GetHistory_Res,
+    AppLogs_GetHttpMetrics_Res,
     AppLogs_GetInfo_Res,
     AppLogs_GetLogs_Res,
 } from "~/projects/api/services";
@@ -133,6 +134,71 @@ const GetFunctionMetricsSchema = z.object({
     meta: BaseMetaApiSchema.nullable(),
 });
 
+const HttpMetricsCountsSchema = z.object({
+    requests: z.number().catch(0),
+    errors4xx: z.number().catch(0),
+    errors5xx: z.number().catch(0),
+    unreachable: z.number().catch(0),
+    p50: z
+        .number()
+        .nullish()
+        .transform(value => value ?? null),
+    p95: z
+        .number()
+        .nullish()
+        .transform(value => value ?? null),
+    p99: z
+        .number()
+        .nullish()
+        .transform(value => value ?? null),
+});
+
+const GetHttpMetricsSchema = z.object({
+    data: z.object({
+        available: z.boolean().catch(false),
+        reason: z
+            .enum([
+                "disabled",
+                "apps-not-collected",
+                "no-query-endpoint",
+                "driver-unreadable",
+                "identity-missing",
+                "not-exposed",
+                "access-log-off",
+                "access-log-not-json",
+                "access-log-unlabelled",
+            ])
+            .nullish()
+            .catch(null)
+            .transform(value => value ?? null),
+        range: z.enum(["1h", "6h", "24h", "7d"]).catch("24h"),
+        start: z
+            .string()
+            .nullish()
+            .transform(value => value ?? null),
+        end: z
+            .string()
+            .nullish()
+            .transform(value => value ?? null),
+        stepSeconds: z.number().catch(0),
+        clamped: z.boolean().catch(false),
+        totals: HttpMetricsCountsSchema.nullish().transform(value => value ?? null),
+        series: z
+            .array(HttpMetricsCountsSchema.extend({ time: z.string() }))
+            .nullish()
+            .transform(value => value ?? []),
+        byPath: z
+            .array(HttpMetricsCountsSchema.extend({ method: z.string().catch(""), path: z.string().catch("") }))
+            .nullish()
+            .transform(value => value ?? []),
+        byReplica: z
+            .array(HttpMetricsCountsSchema.extend({ address: z.string().catch("") }))
+            .nullish()
+            .transform(value => value ?? []),
+    }),
+    meta: BaseMetaApiSchema.nullable(),
+});
+
 export class AppLogsApiValidator {
     getInfo = (response: AxiosResponse): AppLogs_GetInfo_Res => {
         return parseApiResponse({
@@ -157,6 +223,13 @@ export class AppLogsApiValidator {
         return parseApiResponse({
             response,
             schema: GetHistorySchema,
+        });
+    };
+
+    getHttpMetrics = (response: AxiosResponse): AppLogs_GetHttpMetrics_Res => {
+        return parseApiResponse({
+            response,
+            schema: GetHttpMetricsSchema,
         });
     };
 

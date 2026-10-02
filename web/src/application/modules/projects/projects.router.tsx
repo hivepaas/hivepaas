@@ -1693,7 +1693,7 @@ export const projectsRouter: RouteObject = {
                     },
                 },
                 /**
-                 * Single App – Metrics (a function's)
+                 * Single App – Metrics (its HTTP requests; a function's calls)
                  */
                 {
                     path: ROUTE.projects.single.apps.single.metrics.$pattern,

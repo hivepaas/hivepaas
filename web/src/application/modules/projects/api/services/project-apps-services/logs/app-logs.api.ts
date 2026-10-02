@@ -6,6 +6,8 @@ import type {
     AppLogs_GetFunctionMetrics_Res,
     AppLogs_GetHistory_Req,
     AppLogs_GetHistory_Res,
+    AppLogs_GetHttpMetrics_Req,
+    AppLogs_GetHttpMetrics_Res,
     AppLogs_GetInfo_Req,
     AppLogs_GetInfo_Res,
     AppLogs_GetLogs_Req,
@@ -88,6 +90,26 @@ export class AppLogsApi extends BaseApi {
                 }),
             ).pipe(
                 map(this.validator.getHistory),
+                map(res => Ok(res)),
+                catchError(error => of(Err(parseApiError(error)))),
+            ),
+        );
+    }
+
+    async getHttpMetrics(
+        request: AppLogs_GetHttpMetrics_Req,
+        signal?: AbortSignal,
+    ): Promise<Result<AppLogs_GetHttpMetrics_Res, Error>> {
+        const { projectID, env, appID, range } = request.data;
+
+        return lastValueFrom(
+            from(
+                this.client.v1.get(`/projects/${projectID}/${env}/apps/${appID}/http-metrics`, {
+                    params: { range },
+                    signal,
+                }),
+            ).pipe(
+                map(this.validator.getHttpMetrics),
                 map(res => Ok(res)),
                 catchError(error => of(Err(parseApiError(error)))),
             ),

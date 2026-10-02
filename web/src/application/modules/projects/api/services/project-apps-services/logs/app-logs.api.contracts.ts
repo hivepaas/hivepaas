@@ -131,3 +131,57 @@ export type AppLogs_GetFunctionMetrics_Res = ApiResponseBase<{
     /** The most called methods and paths, the most called first. */
     byPath: FunctionMetricsPath[];
 }>;
+
+/** Why an app's HTTP numbers cannot be counted: its logs' reasons, and the proxy's. */
+export type AppHttpMetricsReason =
+    | AppLogHistoryReason
+    | "not-exposed"
+    | "access-log-off"
+    | "access-log-not-json"
+    | "access-log-unlabelled";
+
+export type AppLogs_GetHttpMetrics_Req = AppLogs_GetFunctionMetrics_Req;
+
+/** A set of requests: how many, how many the client got a 4xx and a 5xx for, how many
+ *  the proxy could not get to the app at all, and how long they took end to end, in
+ *  milliseconds - null without a request. */
+export interface HttpMetricsCounts {
+    requests: number;
+    errors4xx: number;
+    errors5xx: number;
+    unreachable: number;
+    p50: number | null;
+    p95: number | null;
+    p99: number | null;
+}
+
+export interface HttpMetricsPoint extends HttpMetricsCounts {
+    time: string;
+}
+
+/** The requests of one method and path, its numbers and ids as :n and :id. */
+export interface HttpMetricsPath extends HttpMetricsCounts {
+    method: string;
+    path: string;
+}
+
+/** The requests one replica answered; an empty address is those none answered. */
+export interface HttpMetricsReplica extends HttpMetricsCounts {
+    address: string;
+}
+
+export type AppLogs_GetHttpMetrics_Res = ApiResponseBase<{
+    /** False when they cannot be counted; reason says why. */
+    available: boolean;
+    reason: AppHttpMetricsReason | null;
+    range: FunctionMetricsRange;
+    start: string | null;
+    end: string | null;
+    stepSeconds: number;
+    clamped: boolean;
+    totals: HttpMetricsCounts | null;
+    /** One point per step, oldest first. */
+    series: HttpMetricsPoint[];
+    byPath: HttpMetricsPath[];
+    byReplica: HttpMetricsReplica[];
+}>;

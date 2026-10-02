@@ -77,8 +77,8 @@ export function CallsChart({ series, range }: Props) {
     );
 }
 
-/** p50, p95 and p99 of the handler's duration; a step without a call is a gap. */
-export function DurationChart({ series, range }: Props) {
+/** p50, p95 and p99 of a duration; a step without a call or a request is a gap. */
+export function DurationChart({ series, range }: DurationProps) {
     const data = series.map(point => ({
         time: formatMetricsTime(point.time, range),
         p50: point.p50,
@@ -129,5 +129,18 @@ export function DurationChart({ series, range }: Props) {
 
 interface Props {
     series: FunctionMetricsPoint[];
+    range: FunctionMetricsRange;
+}
+
+/** A point with durations: a function's calls, or an app's requests. */
+interface DurationPoint {
+    time: string;
+    p50: number | null;
+    p95: number | null;
+    p99: number | null;
+}
+
+interface DurationProps {
+    series: DurationPoint[];
     range: FunctionMetricsRange;
 }

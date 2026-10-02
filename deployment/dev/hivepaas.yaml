@@ -2,7 +2,10 @@ services:
   traefik:
     image: traefik:v3.7
     command:
-      - "--api.insecure=true"
+      # The dashboard only through the router in the labels below, behind the
+      # dev password: api.insecure would serve it, and the API with every
+      # router's configuration, unauthenticated on :8080 to every container on
+      # the network.
       - "--api.dashboard=true"
       - "--providers.swarm=true"
       - "--providers.swarm.watch=true"
@@ -85,10 +88,6 @@ services:
         published: 443 # Host port
         protocol: tcp
         mode: host
-      - target: 8080 # Traefik dashboard
-        published: 38081 # Exposed dashboard
-        protocol: tcp
-        mode: host
     volumes:
       - ./hivepaas/traefik/etc:/etc/traefik
       - ./hivepaas/traefik/var/log:/var/log/traefik
@@ -97,6 +96,25 @@ services:
     deploy:
       labels:
         - "hivepaas.app.info={\"name\":\"traefik\",\"key\":\"traefik\"}"
+        # The dashboard at traefik.dev.hivepaas.com, behind the dev server's one
+        # password (user "dev"), as adminer is; see install.sh.
+        - "traefik.enable=true"
+        - "traefik.http.routers.traefik-dashboard.rule=Host(`traefik.dev.hivepaas.com`)"
+        - "traefik.http.routers.traefik-dashboard.entrypoints=websecure"
+        - "traefik.http.routers.traefik-dashboard.tls=true"
+        - "traefik.http.routers.traefik-dashboard.service=api@internal"
+        - "traefik.http.routers.traefik-dashboard.middlewares=traefik-dashboard-auth"
+        - "traefik.http.middlewares.traefik-dashboard-auth.basicauth.users=${HP_DEV_BASIC_AUTH}"
+        - "traefik.http.middlewares.traefik-dashboard-auth.basicauth.realm=traefik"
+        - "traefik.http.routers.traefik-dashboard-http.rule=Host(`traefik.dev.hivepaas.com`)"
+        - "traefik.http.routers.traefik-dashboard-http.entrypoints=web"
+        - "traefik.http.routers.traefik-dashboard-http.middlewares=traefik-dashboard-https"
+        - "traefik.http.middlewares.traefik-dashboard-https.redirectscheme.scheme=https"
+        - "traefik.http.middlewares.traefik-dashboard-https.redirectscheme.permanent=true"
+        # The swarm provider wants a port for every service it is given; the
+        # router above goes to api@internal, so this one is never used.
+        - "traefik.http.services.traefik-dashboard-noop.loadbalancer.server.port=9999"
+        - "traefik.swarm.network=hivepaas_net"
       mode: replicated
       replicas: 1
       placement:

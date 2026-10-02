@@ -4,7 +4,6 @@ import { ERegistryAuthKind } from "~/settings/domain";
 /** An Amazon ECR registry's address, as the API reads its account and region from it. */
 export const ECR_ADDRESS_REGEX =
     /^([0-9]{12})\.dkr\.ecr(?:-fips)?\.([a-z]{2}(?:-[a-z]+)+-[0-9])\.amazonaws\.com(?:\.cn)?$/;
-const AWS_KEY_ID_REGEX = /^[A-Z0-9]{16,128}$/;
 const AWS_ROLE_ARN_REGEX = /^arn:aws(-cn|-us-gov)?:iam::[0-9]{12}:role\/[\w+=,.@/-]+$/;
 
 /** The region of an Amazon ECR registry's address, or "" for any other address. */
@@ -20,8 +19,7 @@ export const CreateOrEditRegistryAuthFormSchema = z
         username: z.string().trim(),
         // 8 KB, the API's: a Google Artifact Registry JSON key in base64 is some 3 KB.
         password: z.string().max(8 * 1024, "At most 8 KB"),
-        ecrAccessKeyId: z.string().trim(),
-        ecrSecretAccessKey: z.string().trim(),
+        ecrKeyAuth: z.object({ id: z.string(), name: z.string() }).nullable(),
         ecrRoleArn: z.string().trim(),
         readonly: z.boolean(),
         inheritable: z.boolean(),
@@ -36,19 +34,8 @@ export const CreateOrEditRegistryAuthFormSchema = z
                     message: "An Amazon ECR registry: <account>.dkr.ecr.<region>.amazonaws.com",
                 });
             }
-            if (!AWS_KEY_ID_REGEX.test(values.ecrAccessKeyId)) {
-                ctx.addIssue({
-                    code: "custom",
-                    path: ["ecrAccessKeyId"],
-                    message: values.ecrAccessKeyId ? "Not an AWS access key ID" : "Access key ID is required",
-                });
-            }
-            if (!values.ecrSecretAccessKey) {
-                ctx.addIssue({
-                    code: "custom",
-                    path: ["ecrSecretAccessKey"],
-                    message: "Secret access key is required",
-                });
+            if (!values.ecrKeyAuth?.id) {
+                ctx.addIssue({ code: "custom", path: ["ecrKeyAuth"], message: "Key auth is required" });
             }
             if (values.ecrRoleArn && !AWS_ROLE_ARN_REGEX.test(values.ecrRoleArn)) {
                 ctx.addIssue({

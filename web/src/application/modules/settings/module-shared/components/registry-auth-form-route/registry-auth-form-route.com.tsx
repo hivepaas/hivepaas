@@ -198,8 +198,7 @@ export function RegistryAuthFormRoute({ mode, scope, registryAuthId }: Props) {
               address: activeRegistryAuth.address,
               username: activeRegistryAuth.username,
               password: activeRegistryAuth.password,
-              ecrAccessKeyId: activeRegistryAuth.ecr?.accessKeyId ?? "",
-              ecrSecretAccessKey: activeRegistryAuth.ecr?.secretAccessKey ?? "",
+              ecrKeyAuth: activeRegistryAuth.ecr?.keyAuth ?? null,
               ecrRoleArn: activeRegistryAuth.ecr?.roleArn ?? "",
               readonly: activeRegistryAuth.readonly,
               inheritable: Boolean(activeRegistryAuth.inheritable),
@@ -253,6 +252,7 @@ export function RegistryAuthFormRoute({ mode, scope, registryAuthId }: Props) {
                         ecrTokenExpiresAt={activeRegistryAuth?.ecr ? activeRegistryAuth.ecr.tokenExpiresAt : undefined}
                         showAvailableInProjects
                         isProjectScope={scope.type === "project"}
+                        scope={scope}
                         readOnlyInherited={readOnlyInherited}
                         readOnly={!canWrite}
                         onClose={handleClose}
@@ -265,7 +265,8 @@ export function RegistryAuthFormRoute({ mode, scope, registryAuthId }: Props) {
 
 /**
  * How the credential signs in: a username and a password, or, for Amazon ECR,
- * AWS keys - its username is AWS and its password a token HivePaaS gets.
+ * the AWS keys of a key auth - its username is AWS and its password a token
+ * HivePaaS gets.
  */
 function signInPayload(values: CreateOrEditRegistryAuthFormOutput) {
     if (values.kind === ERegistryAuthKind.AwsEcr) {
@@ -275,8 +276,7 @@ function signInPayload(values: CreateOrEditRegistryAuthFormOutput) {
             username: "",
             password: "",
             ecr: {
-                accessKeyId: values.ecrAccessKeyId,
-                secretAccessKey: values.ecrSecretAccessKey,
+                keyAuth: { id: values.ecrKeyAuth?.id ?? "" },
                 roleArn: values.ecrRoleArn,
             },
         };

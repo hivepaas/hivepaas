@@ -21,8 +21,7 @@ export const RegistryAuthSettingEntitySchema = SettingsBaseEntitySchema.omit({ d
     ecr: z
         .object({
             region: z.string().nullish(),
-            accessKeyId: z.string().nullish(),
-            secretAccessKey: z.string().nullish(),
+            keyAuth: z.object({ id: z.string(), name: z.string().nullish() }).nullish(),
             roleArn: z.string().nullish(),
             tokenExpiresAt: z.coerce.date().nullish(),
         })
@@ -31,8 +30,7 @@ export const RegistryAuthSettingEntitySchema = SettingsBaseEntitySchema.omit({ d
             value
                 ? {
                       region: value.region ?? "",
-                      accessKeyId: value.accessKeyId ?? "",
-                      secretAccessKey: value.secretAccessKey ?? "",
+                      keyAuth: value.keyAuth ? { id: value.keyAuth.id, name: value.keyAuth.name ?? "" } : null,
                       roleArn: value.roleArn ?? "",
                       tokenExpiresAt: value.tokenExpiresAt ?? null,
                   }

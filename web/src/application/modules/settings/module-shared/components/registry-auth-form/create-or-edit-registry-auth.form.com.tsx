@@ -1,18 +1,29 @@
-import { useEffect } from "react";
+import { useEffect, useMemo } from "react";
 
 import { PasswordInput } from "@components/ui/input-password";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { format } from "date-fns";
 import { type FieldErrors, useController, useForm } from "react-hook-form";
+import { ProjectKeyAuthQueries } from "~/projects/data/queries";
+import { KeyAuthQueries } from "~/settings/data/queries";
 import { ERegistryAuthKind } from "~/settings/domain";
 import { SETTINGS_FORM_FIELD_CONTROL_MAX_WIDTH_CLASS } from "~/settings/module-shared/constants/settings-form-layout.constants";
 
-import { AvailableInAppsWarning, FormActionBar, InfoBlock, LabelWithInfo } from "@application/shared/components";
+import {
+    AppLink,
+    AvailableInAppsWarning,
+    Combobox,
+    FormActionBar,
+    InfoBlock,
+    LabelWithInfo,
+} from "@application/shared/components";
+import { ROUTE } from "@application/shared/constants";
 
 import { Button, Checkbox, Field, FieldError, FieldGroup, Input, Tabs, TabsList, TabsTrigger } from "@/components/ui";
 
 import { InheritedSettingReadonlyNotice } from "../inherited-setting-readonly-notice.com";
 import { PermissionReadonlyNotice } from "../permission-readonly-notice.com";
+import type { RegistryAuthTableScope } from "../registry-auth-table/registry-auth-table.types";
 import { SettingsFormCancelAction } from "../settings-form-cancel-action";
 
 import type {
@@ -20,6 +31,14 @@ import type {
     CreateOrEditRegistryAuthFormOutput,
 } from "./create-or-edit-registry-auth.form.schema";
 import { CreateOrEditRegistryAuthFormSchema, ecrRegionOf } from "./create-or-edit-registry-auth.form.schema";
+
+/** Every key auth the scope can see: a picker offers the list whole. */
+const KEY_AUTHS_ALL = { page: 1, size: 1000 };
+
+type KeyAuthOption = {
+    id: string;
+    name: string;
+};
 
 export function CreateOrEditRegistryAuthForm({
     isPending,
@@ -33,6 +52,7 @@ export function CreateOrEditRegistryAuthForm({
     ecrTokenExpiresAt,
     showAvailableInProjects = true,
     isProjectScope = false,
+    scope = { type: "settings" },
     readOnlyInherited = false,
     readOnly = false,
     onClose,
@@ -54,8 +74,7 @@ export function CreateOrEditRegistryAuthForm({
             address: initialValues?.address ?? "",
             username: initialValues?.username ?? "",
             password: initialValues?.password ?? "",
-            ecrAccessKeyId: initialValues?.ecrAccessKeyId ?? "",
-            ecrSecretAccessKey: initialValues?.ecrSecretAccessKey ?? "",
+            ecrKeyAuth: initialValues?.ecrKeyAuth ?? null,
             ecrRoleArn: initialValues?.ecrRoleArn ?? "",
             readonly: initialValues?.readonly ?? false,
             inheritable: initialValues?.inheritable ?? (isProjectScope ? true : false),
@@ -95,14 +114,7 @@ export function CreateOrEditRegistryAuthForm({
         fieldState: { invalid: isPasswordInvalid },
     } = useController({ name: "password", control });
     const { field: kind } = useController({ name: "kind", control });
-    const {
-        field: ecrAccessKeyId,
-        fieldState: { invalid: isEcrAccessKeyIdInvalid },
-    } = useController({ name: "ecrAccessKeyId", control });
-    const {
-        field: ecrSecretAccessKey,
-        fieldState: { invalid: isEcrSecretAccessKeyInvalid },
-    } = useController({ name: "ecrSecretAccessKey", control });
+    const { field: ecrKeyAuth } = useController({ name: "ecrKeyAuth", control });
     const {
         field: ecrRoleArn,
         fieldState: { invalid: isEcrRoleArnInvalid },
@@ -111,6 +123,32 @@ export function CreateOrEditRegistryAuthForm({
 
     const isEcr = kind.value === ERegistryAuthKind.AwsEcr;
     const ecrRegion = isEcr ? ecrRegionOf(address.value) : "";
+
+    const globalKeyAuthQuery = KeyAuthQueries.useFindManyPaginated(
+        { pagination: KEY_AUTHS_ALL },
+        { enabled: isEcr && scope.type === "settings" },
+    );
+    const projectKeyAuthQuery = ProjectKeyAuthQueries.useFindManyPaginated(
+        {
+            projectID: scope.type === "project" ? scope.projectId : "",
+            env: scope.type === "project" ? scope.env : undefined,
+            pagination: KEY_AUTHS_ALL,
+        },
+        { enabled: isEcr && scope.type === "project" },
+    );
+    const keyAuthQuery = scope.type === "project" ? projectKeyAuthQuery : globalKeyAuthQuery;
+    const keyAuthOptions = useMemo(
+        () =>
+            (keyAuthQuery.data?.data ?? []).map(item => ({
+                value: { id: item.id, name: item.name } satisfies KeyAuthOption,
+                label: item.name,
+            })),
+        [keyAuthQuery.data?.data],
+    );
+    const keyAuthManageRoute =
+        scope.type === "project"
+            ? ROUTE.projects.single.providerConfiguration.keyAuth.$route(scope.projectId)
+            : ROUTE.settings.keyAuth.$route;
     const { field: inheritable } = useController({ name: "inheritable", control });
     const { field: defaultField } = useController({ name: "default", control });
 
@@ -213,41 +251,40 @@ export function CreateOrEditRegistryAuthForm({
                                 titleWidth={220}
                                 title={
                                     <LabelWithInfo
-                                        label="Access Key ID"
+                                        label="Key Auth"
                                         isRequired
-                                        content="An IAM user's access key. It needs ecr:GetAuthorizationToken, and the permissions to pull from the repositories - and to push, for built images."
+                                        content="The access key ID and secret access key of an IAM user, kept as a Key Auth setting of its own. It needs ecr:GetAuthorizationToken, and the permissions to pull from the repositories - and to push, for built images."
                                     />
                                 }
                             >
                                 <FieldGroup>
                                     <Field>
-                                        <Input
-                                            {...ecrAccessKeyId}
-                                            autoComplete="off"
-                                            aria-invalid={isEcrAccessKeyIdInvalid}
+                                        <Combobox<KeyAuthOption>
+                                            options={keyAuthOptions}
+                                            value={ecrKeyAuth.value?.id ?? null}
+                                            onChange={(_, option) => {
+                                                ecrKeyAuth.onChange(option ?? null);
+                                            }}
+                                            placeholder="select key auth"
+                                            searchable
+                                            closeOnSelect
+                                            emptyText="No key auths available"
+                                            valueKey="id"
+                                            loading={keyAuthQuery.isFetching}
+                                            onRefresh={() => void keyAuthQuery.refetch()}
+                                            isRefreshing={keyAuthQuery.isRefetching}
+                                            disabled={isReadOnly}
                                         />
-                                        <FieldError errors={[errors.ecrAccessKeyId]} />
-                                    </Field>
-                                </FieldGroup>
-                            </InfoBlock>
-
-                            <InfoBlock
-                                titleWidth={220}
-                                title={
-                                    <LabelWithInfo
-                                        label="Secret Access Key"
-                                        isRequired
-                                    />
-                                }
-                            >
-                                <FieldGroup>
-                                    <Field>
-                                        <PasswordInput
-                                            value={ecrSecretAccessKey.value}
-                                            onChange={ecrSecretAccessKey.onChange}
-                                            aria-invalid={isEcrSecretAccessKeyInvalid}
-                                        />
-                                        <FieldError errors={[errors.ecrSecretAccessKey]} />
+                                        <AppLink.Modules
+                                            to={keyAuthManageRoute}
+                                            className="text-xs text-link"
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            ignorePrevPath
+                                        >
+                                            Configure Key Auths
+                                        </AppLink.Modules>
+                                        <FieldError errors={[errors.ecrKeyAuth]} />
                                     </Field>
                                 </FieldGroup>
                             </InfoBlock>
@@ -441,6 +478,8 @@ interface Props {
     ecrTokenExpiresAt?: Date | null;
     showAvailableInProjects?: boolean;
     isProjectScope?: boolean;
+    /** Where the credential is: the key auths offered are those it can see. */
+    scope?: RegistryAuthTableScope;
     readOnlyInherited?: boolean;
     readOnly?: boolean;
     onClose?: () => void;

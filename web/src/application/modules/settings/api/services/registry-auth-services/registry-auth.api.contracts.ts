@@ -19,10 +19,9 @@ export type RegistryAuth_FindOneById_Req = ApiRequestBase<{
 
 export type RegistryAuth_FindOneById_Res = ApiResponseBase<SettingRegistryAuth>;
 
-/** An Amazon ECR credential's AWS keys; the region is read from the address. */
+/** An Amazon ECR credential's AWS side: the key auth holding its keys; the region is read from the address. */
 export type RegistryAuth_Ecr_Payload = {
-    accessKeyId: string;
-    secretAccessKey: string;
+    keyAuth: { id: string };
     roleArn: string;
 };
 

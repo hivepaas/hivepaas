@@ -10,11 +10,11 @@ export const ERegistryAuthKind = {
 
 export type ERegistryAuthKind = (typeof ERegistryAuthKind)[keyof typeof ERegistryAuthKind];
 
-/** An Amazon ECR credential's AWS side. The secret access key comes masked. */
+/** An Amazon ECR credential's AWS side: its keys are those of a key auth. */
 export interface SettingRegistryAuthEcr {
     region: string;
-    accessKeyId: string;
-    secretAccessKey: string;
+    /** The key auth holding the AWS keys; its name is empty when it no longer exists. */
+    keyAuth: { id: string; name: string } | null;
     roleArn: string;
     /** When the token kept for the credential expires; null before one is got. */
     tokenExpiresAt: Date | null;

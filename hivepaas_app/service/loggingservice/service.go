@@ -47,4 +47,10 @@ type Service interface {
 	// identity and the app's services are put into the query here.
 	HTTPMetrics(ctx context.Context, db database.IDB, app *entity.App,
 		q *FunctionMetricsQuery) (*logging.HTTPStatsResp, error)
+
+	// ResourceMetrics reads an app's containers' usage from the rows the agent
+	// writes: one point per step, a step without a row one with none. The
+	// agent's identity and the app's id are put into the query here.
+	ResourceMetrics(ctx context.Context, db database.IDB, app *entity.App,
+		q *FunctionMetricsQuery) (*logging.ResourceStatsResp, error)
 }

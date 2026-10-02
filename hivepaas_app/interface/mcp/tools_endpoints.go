@@ -16,6 +16,11 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/taskuc/taskdto"
 )
 
+// metricsRangeParams are the parameters every metrics tool takes: its range.
+func metricsRangeParams() map[string]string {
+	return map[string]string{"range": "1h, 6h, 24h or 7d; 24h when not given"}
+}
+
 // The read tools that are one GET endpoint each. What each answers is the
 // endpoint's own response - {meta, data} - and what each takes is the
 // endpoint's own query parameters, with names for what its path needs ids for.
@@ -187,7 +192,7 @@ func getEndpoints() []getEndpoint { //nolint:funlen // a table
 				"app's logging feature off, or the logging stack not running. Only a function has them.",
 			paths:  map[under]string{underApp: "/function-metrics"},
 			query:  &appdto.GetFunctionMetricsReq{},
-			params: map[string]string{"range": "1h, 6h, 24h or 7d; 24h when not given"},
+			params: metricsRangeParams(),
 			answer: func() any { return &appdto.GetFunctionMetricsResp{} },
 		},
 		{
@@ -203,8 +208,23 @@ func getEndpoints() []getEndpoint { //nolint:funlen // a table
 				"logging stack is not running.",
 			paths:  map[under]string{underApp: "/http-metrics"},
 			query:  &appdto.GetAppHTTPMetricsReq{},
-			params: map[string]string{"range": "1h, 6h, 24h or 7d; 24h when not given"},
+			params: metricsRangeParams(),
 			answer: func() any { return &appdto.GetAppHTTPMetricsResp{} },
+		},
+		{
+			name: "get_app_resource_metrics", title: "Get an app's CPU and memory",
+			description: "GET /projects/{project}/{env}/apps/{app}/resource-metrics. An app's containers' CPU " +
+				"and memory over a range ending now, read from the rows the agent on each node writes every 15 " +
+				"seconds: CPU in cores and memory in bytes (the working set, as docker stats counts it), each " +
+				"with its limit (0 for none), OOM kills, network and disk in bytes a second - as series, a " +
+				"point per step, oldest first, the containers summed; totals; and the containers, the last " +
+				"seen first. available is false, with a reason, when they cannot be read: the agent does not " +
+				"mark its lines yet (agent-unlabelled, until its next update), or the logging stack is not " +
+				"running.",
+			paths:  map[under]string{underApp: "/resource-metrics"},
+			query:  &appdto.GetAppResourceMetricsReq{},
+			params: metricsRangeParams(),
+			answer: func() any { return &appdto.GetAppResourceMetricsResp{} },
 		},
 		{
 			name: "list_attention", title: "What needs attention",

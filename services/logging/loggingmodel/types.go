@@ -322,3 +322,60 @@ type HTTPStatsResp struct {
 	ByPath    []*HTTPPath
 	ByReplica []*HTTPReplica
 }
+
+// ResourceStatsReq reads the rows the agent writes of an app's containers'
+// usage: the lines in Match - the agent's, by the identity the daemon wrote -
+// whose app is AppID.
+type ResourceStatsReq struct {
+	Match []FieldMatch
+	AppID string
+	Start time.Time
+	End   time.Time
+	// Step is the buckets' width, in whole seconds.
+	Step time.Duration
+	// TopContainers is how many of the app's containers are listed apart, the
+	// last seen first.
+	TopContainers int
+}
+
+// ResourceUsage is what an app's containers used, summed over them: CPU in
+// cores and memory in bytes, each with its limit (0 for none), OOM kills, and
+// network and disk in bytes a second. CPU and Memory are nil for a step without
+// a row.
+type ResourceUsage struct {
+	CPU         *float64
+	CPULimit    float64
+	Memory      *float64
+	MemoryLimit float64
+	OOMKills    int64
+	NetRx       float64
+	NetTx       float64
+	IORead      float64
+	IOWrite     float64
+}
+
+// ResourceBucket is one step's usage, Time its start: each container's
+// average over the step, its memory's peak, summed over the containers.
+type ResourceBucket struct {
+	Time time.Time
+	ResourceUsage
+}
+
+// ResourceContainer is one container over the range: its CPU's average and
+// peak, its memory's peak, its OOM kills, and when it was last seen.
+type ResourceContainer struct {
+	Container   string
+	CPU         float64
+	CPUPeak     float64
+	Memory      float64
+	MemoryLimit float64
+	OOMKills    int64
+	LastSeen    time.Time
+}
+
+// ResourceStatsResp is a range's usage: by step, oldest first, a step without
+// a row left out; and by container.
+type ResourceStatsResp struct {
+	Buckets    []*ResourceBucket
+	Containers []*ResourceContainer
+}

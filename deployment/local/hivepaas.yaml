@@ -494,6 +494,11 @@ services:
       - /:/host
     networks:
       - local_net
+    # The agent's identity in its own log lines, copied into each by json-file's
+    # `labels` option below: the app containers' CPU and memory are counted from
+    # the rows it writes, and only from lines the daemon marked as the agent's.
+    labels:
+      - "hivepaas.component=agent"
     deploy:
       labels:
         - "hivepaas.app.info={\"name\":\"agent\",\"key\":\"agent\"}"
@@ -507,6 +512,7 @@ services:
     logging:
       driver: json-file
       options:
+        labels: hivepaas.component
         max-size: 20m
         max-file: "5"
         compress: "true"

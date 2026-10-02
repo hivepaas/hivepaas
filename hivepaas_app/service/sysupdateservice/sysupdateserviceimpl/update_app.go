@@ -9,6 +9,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
+	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/logidentity"
 )
 
 func (s *service) scaleMainAppService(
@@ -81,6 +82,12 @@ func (s *service) updateAgentService(
 		Component:   base.HivepaasAgentKey,
 		TargetImage: args.TargetVersion.AgentImage,
 		Fetch:       s.getAgentSwarmService,
+		// The image change restarts the agent anyway: its lines get its
+		// identity on the way, for the rows of the app containers' usage it
+		// writes to be counted.
+		Mutate: func(spec *swarm.ServiceSpec) {
+			logidentity.WithComponent(spec, base.LogComponentAgent)
+		},
 	})
 	return hperrors.Wrap(err)
 }

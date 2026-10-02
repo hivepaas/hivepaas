@@ -12,6 +12,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/containerexecservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/domainservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/functionservice"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/hpappservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/loggingservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/schedjobtriggerservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/settingservice"
@@ -42,6 +43,7 @@ type UC struct {
 	settingService         settingservice.Service
 	loggingService         loggingservice.Service
 	traefikService         traefikservice.Service
+	hpAppService           hpappservice.Service
 }
 
 func New(
@@ -66,6 +68,7 @@ func New(
 	settingService settingservice.Service,
 	loggingService loggingservice.Service,
 	traefikService traefikservice.Service,
+	hpAppService hpappservice.Service,
 ) *UC {
 	return &UC{
 		db:            db,
@@ -89,5 +92,6 @@ func New(
 		settingService:         settingService,
 		loggingService:         loggingService,
 		traefikService:         traefikService,
+		hpAppService:           hpAppService,
 	}
 }

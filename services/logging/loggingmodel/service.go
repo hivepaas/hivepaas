@@ -10,6 +10,8 @@ type Backend interface {
 	InvocationStats(ctx context.Context, req *InvocationStatsReq) (*InvocationStatsResp, error)
 	// HTTPStats counts an app's requests in the proxy's access log.
 	HTTPStats(ctx context.Context, req *HTTPStatsReq) (*HTTPStatsResp, error)
+	// ResourceStats reads an app's containers' usage from the agent's rows.
+	ResourceStats(ctx context.Context, req *ResourceStatsReq) (*ResourceStatsResp, error)
 	Ping(ctx context.Context) error
 }
 

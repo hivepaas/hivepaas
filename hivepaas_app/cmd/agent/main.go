@@ -52,6 +52,7 @@ func main() {
 		fx.Invoke(sweepTempDirs),
 		fx.Invoke(internal.InitGrpcServer),
 		fx.Invoke(internal.InitDockerAPIHost),
+		fx.Invoke(internal.ResourceSamplerOnAgent),
 	)
 
 	app.Run()

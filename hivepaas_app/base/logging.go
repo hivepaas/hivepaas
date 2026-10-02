@@ -32,3 +32,7 @@ const LabelLogComponent = "hivepaas.component"
 // LogComponentTraefik is the proxy's LabelLogComponent: its access log is
 // where an app's HTTP numbers are counted from.
 const LogComponentTraefik = "traefik"
+
+// LogComponentAgent is the agent's LabelLogComponent: the containers' CPU and
+// memory are counted from the rows it writes.
+const LogComponentAgent = "agent"

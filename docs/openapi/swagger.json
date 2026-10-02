@@ -20834,6 +20834,78 @@
         "x-codegen-request-body-name" : "body"
       }
     },
+    "/projects/{projectID}/{projectEnv}/apps/{appID}/resource-metrics" : {
+      "get" : {
+        "description" : "Reads an app's containers' CPU and memory over a range ending now, from the rows the agent on\neach node writes every 15 seconds: CPU in cores and memory in bytes - the working set, as\n`docker stats` counts it - each with its limit (0 for none), OOM kills, and network and disk in\nbytes a second. One point per step, oldest first, the containers summed; totals over the\nrange; and the containers, the last seen first. `available` is false, with a `reason`, when\nthey cannot be read: the agent does not mark its lines yet (agent-unlabelled, until its next\nupdate), or the logs cannot be read.",
+        "operationId" : "getAppResourceMetrics",
+        "parameters" : [ {
+          "description" : "project ID",
+          "in" : "path",
+          "name" : "projectID",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "project env",
+          "in" : "path",
+          "name" : "projectEnv",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "app ID",
+          "in" : "path",
+          "name" : "appID",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "1h, 6h, 24h or 7d; default 24h",
+          "in" : "query",
+          "name" : "range",
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/appdto.GetAppResourceMetricsResp"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "400" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Bad Request"
+          },
+          "500" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Internal Server Error"
+          }
+        },
+        "summary" : "Gets an app's resource metrics",
+        "tags" : [ "Apps" ]
+      }
+    },
     "/projects/{projectID}/{projectEnv}/apps/{appID}/resource-settings" : {
       "get" : {
         "description" : "Gets app resource settings",
@@ -53883,6 +53955,141 @@
         "required" : [ "enabled", "history", "tasks" ],
         "type" : "object"
       },
+      "appdto.AppResourceContainerResp" : {
+        "properties" : {
+          "container" : {
+            "type" : "string"
+          },
+          "cpu" : {
+            "type" : "number"
+          },
+          "cpuPeak" : {
+            "type" : "number"
+          },
+          "lastSeen" : {
+            "type" : "string"
+          },
+          "memory" : {
+            "type" : "number"
+          },
+          "memoryLimit" : {
+            "type" : "number"
+          },
+          "oomKills" : {
+            "type" : "integer"
+          }
+        },
+        "required" : [ "container", "cpu", "cpuPeak", "lastSeen", "memory", "memoryLimit", "oomKills" ],
+        "type" : "object"
+      },
+      "appdto.AppResourceMetricsDataResp" : {
+        "properties" : {
+          "available" : {
+            "type" : "boolean"
+          },
+          "clamped" : {
+            "type" : "boolean"
+          },
+          "containers" : {
+            "description" : "Containers are the app's containers over the range, the last seen first.",
+            "items" : {
+              "$ref" : "#/components/schemas/appdto.AppResourceContainerResp"
+            },
+            "type" : "array"
+          },
+          "end" : {
+            "type" : "string"
+          },
+          "range" : {
+            "type" : "string"
+          },
+          "reason" : {
+            "type" : "string"
+          },
+          "series" : {
+            "description" : "Series has one point per step, oldest first: the containers summed.",
+            "items" : {
+              "$ref" : "#/components/schemas/appdto.AppResourcePointResp"
+            },
+            "type" : "array"
+          },
+          "start" : {
+            "type" : "string"
+          },
+          "stepSeconds" : {
+            "type" : "integer"
+          },
+          "totals" : {
+            "allOf" : [ {
+              "$ref" : "#/components/schemas/appdto.AppResourceTotalsResp"
+            } ],
+            "description" : "Totals are over the range: CPU's average and peak, memory's peak, the\nlimits last seen, the OOM kills.",
+            "type" : "object"
+          }
+        },
+        "required" : [ "available", "clamped", "containers", "end", "range", "reason", "series", "start", "stepSeconds", "totals" ],
+        "type" : "object"
+      },
+      "appdto.AppResourcePointResp" : {
+        "properties" : {
+          "cpu" : {
+            "type" : "number"
+          },
+          "cpuLimit" : {
+            "type" : "number"
+          },
+          "ioRead" : {
+            "type" : "number"
+          },
+          "ioWrite" : {
+            "type" : "number"
+          },
+          "memory" : {
+            "type" : "number"
+          },
+          "memoryLimit" : {
+            "type" : "number"
+          },
+          "netRx" : {
+            "type" : "number"
+          },
+          "netTx" : {
+            "type" : "number"
+          },
+          "oomKills" : {
+            "type" : "integer"
+          },
+          "time" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "cpu", "cpuLimit", "ioRead", "ioWrite", "memory", "memoryLimit", "netRx", "netTx", "oomKills", "time" ],
+        "type" : "object"
+      },
+      "appdto.AppResourceTotalsResp" : {
+        "properties" : {
+          "cpu" : {
+            "type" : "number"
+          },
+          "cpuLimit" : {
+            "type" : "number"
+          },
+          "cpuPeak" : {
+            "type" : "number"
+          },
+          "memoryLimit" : {
+            "type" : "number"
+          },
+          "memoryPeak" : {
+            "type" : "number"
+          },
+          "oomKills" : {
+            "type" : "integer"
+          }
+        },
+        "required" : [ "cpu", "cpuLimit", "cpuPeak", "memoryLimit", "memoryPeak", "oomKills" ],
+        "type" : "object"
+      },
       "appdto.AppResp" : {
         "properties" : {
           "accessLinks" : {
@@ -54295,6 +54502,18 @@
         "properties" : {
           "data" : {
             "$ref" : "#/components/schemas/appdto.AppLogsDataResp"
+          },
+          "meta" : {
+            "$ref" : "#/components/schemas/basedto.Meta"
+          }
+        },
+        "required" : [ "data", "meta" ],
+        "type" : "object"
+      },
+      "appdto.GetAppResourceMetricsResp" : {
+        "properties" : {
+          "data" : {
+            "$ref" : "#/components/schemas/appdto.AppResourceMetricsDataResp"
           },
           "meta" : {
             "$ref" : "#/components/schemas/basedto.Meta"

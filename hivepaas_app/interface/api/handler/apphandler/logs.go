@@ -196,6 +196,50 @@ func (h *Handler) GetAppHTTPMetrics(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, resp)
 }
 
+// GetAppResourceMetrics Gets an app's resource metrics
+// @Summary Gets an app's resource metrics
+// @Description Reads an app's containers' CPU and memory over a range ending now, from the rows the agent on
+// @Description each node writes every 15 seconds: CPU in cores and memory in bytes - the working set, as
+// @Description `docker stats` counts it - each with its limit (0 for none), OOM kills, and network and disk in
+// @Description bytes a second. One point per step, oldest first, the containers summed; totals over the
+// @Description range; and the containers, the last seen first. `available` is false, with a `reason`, when
+// @Description they cannot be read: the agent does not mark its lines yet (agent-unlabelled, until its next
+// @Description update), or the logs cannot be read.
+// @Tags    Apps
+// @Produce json
+// @Id      getAppResourceMetrics
+// @Param   projectID path string true "project ID"
+// @Param   projectEnv path string true "project env"
+// @Param   appID path string true "app ID"
+// @Param   range query string false "1h, 6h, 24h or 7d; default 24h"
+// @Success 200 {object} appdto.GetAppResourceMetricsResp
+// @Failure 400 {object} hperrors.ErrorInfo
+// @Failure 500 {object} hperrors.ErrorInfo
+// @Router  /projects/{projectID}/{projectEnv}/apps/{appID}/resource-metrics [get]
+func (h *Handler) GetAppResourceMetrics(ctx *gin.Context) {
+	auth, projectID, projectEnvID, appID, err := h.GetAuth(ctx, base.ActionTypeRead)
+	if err != nil {
+		h.RenderError(ctx, err)
+		return
+	}
+
+	req := appdto.NewGetAppResourceMetricsReq()
+	req.ProjectID = projectID
+	req.ProjectEnvID = projectEnvID
+	req.AppID = appID
+	if err := h.ParseAndValidateRequest(ctx, req, nil); err != nil {
+		h.RenderError(ctx, err)
+		return
+	}
+
+	resp, err := h.appUC.GetAppResourceMetrics(h.RequestCtx(ctx), auth, req)
+	if err != nil {
+		h.RenderError(ctx, err)
+		return
+	}
+	ctx.JSON(http.StatusOK, resp)
+}
+
 // GetFunctionMetrics Gets a function's metrics
 // @Summary Gets a function's metrics
 // @Description Counts a function's calls over a range ending now, from the invocation line its runtime writes

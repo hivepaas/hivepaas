@@ -77,6 +77,62 @@ func (s *service) HTTPMetrics(
 	return resp, nil
 }
 
+// resourceMetricsTopContainers is how many of an app's containers are listed:
+// its replicas, and those replaced within the range.
+const resourceMetricsTopContainers = 50
+
+// ResourceMetrics implements loggingservice.Service. The rows are the agent's
+// by the identity the daemon wrote into them, never by what they say; the
+// app's by the id the agent wrote, from the container's own label.
+func (s *service) ResourceMetrics(
+	ctx context.Context,
+	db database.IDB,
+	app *entity.App,
+	q *loggingservice.FunctionMetricsQuery,
+) (*logging.ResourceStatsResp, error) {
+	if app == nil || app.ID == "" {
+		return nil, hperrors.Wrap(logging.ErrQueryScopeRequired)
+	}
+	backend, err := s.queryBackend(ctx, db)
+	if err != nil {
+		return nil, hperrors.Wrap(err)
+	}
+	resp, err := backend.ResourceStats(ctx, &logging.ResourceStatsReq{
+		Match: []logging.FieldMatch{{
+			Field: vlagent.AttrField(base.LabelLogComponent), Value: base.LogComponentAgent,
+		}},
+		AppID:         app.ID,
+		Start:         q.Start,
+		End:           q.End,
+		Step:          q.Step,
+		TopContainers: resourceMetricsTopContainers,
+	})
+	if err != nil {
+		return nil, hperrors.Wrap(err)
+	}
+	resp.Buckets = everyResourceStep(resp.Buckets, q.Start, q.End, q.Step)
+	return resp, nil
+}
+
+// everyResourceStep is everyStep for usage.
+func everyResourceStep(
+	buckets []*logging.ResourceBucket, start, end time.Time, step time.Duration,
+) []*logging.ResourceBucket {
+	byTime := make(map[int64]*logging.ResourceBucket, len(buckets))
+	for _, b := range buckets {
+		byTime[b.Time.Unix()] = b
+	}
+	out := make([]*logging.ResourceBucket, 0, int(end.Sub(start)/step))
+	for at := start; at.Before(end); at = at.Add(step) {
+		if b, ok := byTime[at.Unix()]; ok {
+			out = append(out, b)
+			continue
+		}
+		out = append(out, &logging.ResourceBucket{Time: at})
+	}
+	return out
+}
+
 // everyHTTPStep is everyStep for requests.
 func everyHTTPStep(buckets []*logging.HTTPBucket, start, end time.Time, step time.Duration) []*logging.HTTPBucket {
 	byTime := make(map[int64]*logging.HTTPBucket, len(buckets))

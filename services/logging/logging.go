@@ -72,6 +72,12 @@ type (
 	HTTPBucket    = loggingmodel.HTTPBucket
 	HTTPPath      = loggingmodel.HTTPPath
 	HTTPReplica   = loggingmodel.HTTPReplica
+
+	ResourceStatsReq  = loggingmodel.ResourceStatsReq
+	ResourceStatsResp = loggingmodel.ResourceStatsResp
+	ResourceUsage     = loggingmodel.ResourceUsage
+	ResourceBucket    = loggingmodel.ResourceBucket
+	ResourceContainer = loggingmodel.ResourceContainer
 )
 
 // MaxQueryLimit caps how many lines one query returns.

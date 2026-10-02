@@ -62,6 +62,57 @@ calling Postgres, labelled `hivepaas.app.id` as HivePaaS labels its containers.
   arrived; at 64 (several hundred a second) about 30% did not. Counting
   requests from spans is therefore wrong.
 
+## Revised (2026-10-03): HTTP numbers from Traefik's access log
+
+Every request that reaches an app by its domain goes through Traefik, which
+already writes an access log (`--accesslog=true`, CLF), and vlagent already
+collects every container's stdout into VictoriaLogs. The HTTP numbers come from
+there first; OBI becomes an opt-in for what Traefik cannot see.
+
+**Checked on the local stack (Traefik v3.7):**
+
+- The access log lines of real requests are in VictoriaLogs, as `_msg` text,
+  in a stream named only by the Traefik container's log file (its id).
+- LogsQL computes the numbers from them at query time, as the functions'
+  metrics already do from their invocation lines: `extract` on the CLF line,
+  then `stats by (router, status) count(), quantile(0.5|0.95, dur)` gave
+  `router-a1-0@swarm 200: 18 hits, p50 3 ms, p95 40 ms`.
+- An app's routers are `router-<appKey>-<n>@swarm` and its services
+  `svc-<appKey>-<n>`: a line maps back to its app. `ServiceURL` names the
+  replica that answered.
+- `--accesslog.format=json` with `--accesslog.fields.queryparameters.defaultmode=drop`
+  is accepted by v3.7 and strips the query: `/login/cb?token=...&email=...` is
+  logged as `/login/cb`. JSON adds `OriginStatus` (what the app answered; 0
+  when the request never reached it), `DownstreamStatus` (what the client got,
+  after middlewares), `OriginDuration` and `Duration` (nanoseconds),
+  `ServiceName`, `RouterName`, `RetryAttempts`.
+
+**Decided:**
+
+- **Traefik's access log becomes JSON**, the query string dropped, headers
+  dropped (Traefik's default), **the client's IP kept** (to trace an abuser in
+  the logs). HivePaaS sets these arguments on its Traefik service; an operator
+  who turns the access log off in Config Options gets a Performance tab that
+  says why it is empty.
+- **Traefik's log lines are labelled** so that a query matches them exactly,
+  not by content and not by a container id that changes at each restart: the
+  Traefik service's log options carry a HivePaaS identity, as an app's
+  `LabelLogAppID` does.
+- **Numbers per app**: requests, errors (`OriginStatus >= 500`, and 502/504
+  from Traefik when the app is down), requests blocked before the app
+  (`OriginStatus` 0 with a 4xx), p50/p95/p99 of `Duration` and of
+  `OriginDuration`, per replica by `ServiceURL`; per path for the top paths, as
+  the functions' metrics count their top 20.
+- **Paths are not templated** by Traefik: `/users/1` and `/users/2` are two
+  paths. The query reduces numbers and ids to `*` (`replace_regexp`) and keeps
+  the top paths; route templates stay OBI's.
+- **What Traefik cannot see** - calls between apps inside a project, calls to
+  databases and outside hosts, the time inside the app - stays OBI's, opt-in
+  per node, until its memory comes down.
+- **Cost**: a line per request, as today with CLF - JSON is somewhat longer.
+  The figure at 100 requests/s is to measure (planning: hundreds of MB a day
+  before retention); there is no sampling in Traefik.
+
 ## Design
 
 ### Shape
@@ -120,9 +171,11 @@ UI:    the app's Performance tab
   span.
 - **Container resources** from cgroup v2 every 15 s: CPU usage and throttling,
   memory and its limit, OOM kills, network bytes; one row per container.
-- **Writes** batches to VictoriaLogs `/insert/jsonline`, with `app_id` and
-  `kind` (metric, span, resource) as stream fields, retrying with a bounded
-  buffer and dropping the oldest when the backend is away.
+- **Writes** batches to **the node's vlagent** (`/insert/jsonline`, port 9429),
+  with `app_id` and `kind` (metric, span, resource) as stream fields: vlagent
+  already buffers on disk and retries when VictoriaLogs is away, so the agent
+  keeps no buffer of its own. The agent reaches the vlagent of its own node
+  (attached to its network, or a port bound to localhost).
 
 ### Storage
 
@@ -189,8 +242,11 @@ The dashboard has no chart library yet; a small one (uPlot) is added.
 
 ## Phases
 
-1. **Container resources** - the agent's cgroup rows, the API, the tab with
-   CPU and memory. No eBPF; every node.
-2. **Requests and calls** - OBI run by the agent, metrics into rows, the
-   routes and calls views.
-3. **Traces** - sampling, the trace list and waterfall, the link to logs.
+1. **Container resources** - the agent's cgroup rows through vlagent, the API,
+   the tab with CPU and memory. No eBPF; every node.
+2. **HTTP numbers from Traefik** - the access log as JSON (query dropped, IP
+   kept), its lines labelled, the API's queries per app, path and replica, the
+   tab's requests, errors and latency. No eBPF; every node.
+3. **Calls and inside the app** - OBI run by the agent, opt-in per node:
+   calls between apps, to databases and outside hosts, route templates.
+4. **Traces** - sampling, the trace list and waterfall, the link to logs.

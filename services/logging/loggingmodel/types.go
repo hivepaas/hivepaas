@@ -212,3 +212,40 @@ type QueryResp struct {
 	// Truncated says the limit was reached: older matching lines exist.
 	Truncated bool
 }
+
+// InvocationStatsReq counts a function's invocation lines - the line its
+// runtime writes for every call - over [Start, End), by Step. Match scopes it,
+// as it does a QueryReq: there is no query text here either.
+type InvocationStatsReq struct {
+	Match []FieldMatch
+	Start time.Time
+	End   time.Time
+	// Step is the buckets' width, in whole seconds.
+	Step time.Duration
+}
+
+// InvocationCounts are a set of calls: how many, how many failed - an outcome
+// other than ok - and how many the handler answered 5xx, and how long the
+// handler ran, in milliseconds. The durations are nil without a call.
+type InvocationCounts struct {
+	Calls     int64
+	Failed    int64
+	Errors5xx int64
+	P50       *float64
+	P95       *float64
+	P99       *float64
+}
+
+// InvocationBucket is the calls of one step, Time its start.
+type InvocationBucket struct {
+	Time time.Time
+	InvocationCounts
+}
+
+// InvocationStatsResp is a range's calls: by step, oldest first, a step
+// without a call left out; in all; and by outcome.
+type InvocationStatsResp struct {
+	Buckets   []*InvocationBucket
+	Totals    InvocationCounts
+	ByOutcome map[string]int64
+}

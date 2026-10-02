@@ -59,6 +59,11 @@ type (
 	QueryResp     = loggingmodel.QueryResp
 	LogEntry      = loggingmodel.LogEntry
 	FieldMatch    = loggingmodel.FieldMatch
+
+	InvocationStatsReq  = loggingmodel.InvocationStatsReq
+	InvocationStatsResp = loggingmodel.InvocationStatsResp
+	InvocationCounts    = loggingmodel.InvocationCounts
+	InvocationBucket    = loggingmodel.InvocationBucket
 )
 
 // MaxQueryLimit caps how many lines one query returns.

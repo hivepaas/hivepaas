@@ -6,6 +6,8 @@ import "context"
 // reading is the one thing HivePaaS always does itself.
 type Backend interface {
 	Query(ctx context.Context, req *QueryReq) (*QueryResp, error)
+	// InvocationStats counts a function's invocation lines.
+	InvocationStats(ctx context.Context, req *InvocationStatsReq) (*InvocationStatsResp, error)
 	Ping(ctx context.Context) error
 }
 

@@ -64,16 +64,31 @@ func (c *Client) Query(ctx context.Context, req *loggingmodel.QueryReq) (*loggin
 	if err != nil {
 		return nil, hperrors.Wrap(err)
 	}
+	resp, err := c.post(ctx, q, req.Start, req.End)
+	if err != nil {
+		return nil, hperrors.Wrap(err)
+	}
+	defer func() { _ = resp.Body.Close() }()
+
+	entries, err := readEntries(resp.Body)
+	if err != nil {
+		return nil, hperrors.Wrap(err)
+	}
+	return &loggingmodel.QueryResp{Entries: entries, Truncated: len(entries) == req.Limit}, nil
+}
+
+// post runs one LogsQL query over [start, end), each left open when zero, and
+// returns the backend's answer when it is 200.
+func (c *Client) post(ctx context.Context, q string, start, end time.Time) (*http.Response, error) {
 	if c.cfg.Endpoint.URL == "" {
 		return nil, hperrors.Wrap(loggingmodel.ErrBackendUnreachable).WithExtraDetail("no query endpoint")
 	}
-
 	form := url.Values{"query": {q}}
-	if !req.Start.IsZero() {
-		form.Set("start", req.Start.UTC().Format(time.RFC3339Nano))
+	if !start.IsZero() {
+		form.Set("start", start.UTC().Format(time.RFC3339Nano))
 	}
-	if !req.End.IsZero() {
-		form.Set("end", req.End.UTC().Format(time.RFC3339Nano))
+	if !end.IsZero() {
+		form.Set("end", end.UTC().Format(time.RFC3339Nano))
 	}
 
 	httpReq, err := http.NewRequestWithContext(ctx, http.MethodPost,
@@ -88,9 +103,8 @@ func (c *Client) Query(ctx context.Context, req *loggingmodel.QueryReq) (*loggin
 	if err != nil {
 		return nil, hperrors.Wrap(loggingmodel.ErrBackendUnreachable).WithExtraDetail("%s", err.Error())
 	}
-	defer func() { _ = resp.Body.Close() }()
-
 	if resp.StatusCode != http.StatusOK {
+		defer func() { _ = resp.Body.Close() }()
 		body, _ := io.ReadAll(io.LimitReader(resp.Body, errorBodyBytes))
 		base := loggingmodel.ErrBackendUnreachable
 		if resp.StatusCode == http.StatusBadRequest {
@@ -98,12 +112,7 @@ func (c *Client) Query(ctx context.Context, req *loggingmodel.QueryReq) (*loggin
 		}
 		return nil, hperrors.Wrap(base).WithExtraDetail("%d: %s", resp.StatusCode, string(body))
 	}
-
-	entries, err := readEntries(resp.Body)
-	if err != nil {
-		return nil, hperrors.Wrap(err)
-	}
-	return &loggingmodel.QueryResp{Entries: entries, Truncated: len(entries) == req.Limit}, nil
+	return resp, nil
 }
 
 // readEntries parses one JSON object per line, newest first as the query sorts

@@ -106,6 +106,7 @@ import {
     ProjectsApi,
     ProjectsApiValidator,
 } from "~/projects/api/services";
+import { AppAutoscaleApi, AppAutoscaleApiValidator } from "~/projects/api/services/project-apps-services/autoscale";
 import {
     AppDockerApiSettingsApi,
     AppDockerApiSettingsApiValidator,
@@ -174,6 +175,7 @@ function createApi() {
     const appNetworkSettingsApiValidator = new AppNetworkSettingsApiValidator();
     const appResourceSettingsApiValidator = new AppResourceSettingsApiValidator();
     const appDockerApiSettingsApiValidator = new AppDockerApiSettingsApiValidator();
+    const appAutoscaleApiValidator = new AppAutoscaleApiValidator();
     const appStorageSettingsApiValidator = new AppStorageSettingsApiValidator();
     const appRoutingSettingsApiValidator = new AppRoutingSettingsApiValidator();
     const appKindSettingsApiValidator = new AppKindSettingsApiValidator();
@@ -274,6 +276,9 @@ function createApi() {
                 },
                 dockerApiSettings: {
                     $: new AppDockerApiSettingsApi(appDockerApiSettingsApiValidator),
+                },
+                autoscale: {
+                    $: new AppAutoscaleApi(appAutoscaleApiValidator),
                 },
                 storageSettings: {
                     $: new AppStorageSettingsApi(appStorageSettingsApiValidator),

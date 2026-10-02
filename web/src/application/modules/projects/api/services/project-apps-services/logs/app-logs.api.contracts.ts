@@ -106,6 +106,8 @@ export interface FunctionMetricsCounts {
 
 export interface FunctionMetricsPoint extends FunctionMetricsCounts {
     time: string;
+    /** The replicas the function ran at the step's end, for one that autoscales; null otherwise. */
+    replicas: number | null;
 }
 
 /** The calls of one method and path. */

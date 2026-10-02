@@ -41,13 +41,15 @@ const MODE_OPTIONS: OptionCard<EServiceMode>[] = [
     },
 ];
 
-export function ServiceModeFields({ savedMode, isAppStopped = false }: Props) {
+export function ServiceModeFields({ savedMode, isAppStopped = false, autoscaled = false }: Props) {
     const { control } = useFormContext<AppConfigAvailabilitySchemaInput, unknown, AppConfigAvailabilitySchemaOutput>();
 
     const mode = useWatch({ control, name: "mode" });
 
     // Swarm cannot change the mode of an existing service, so HivePaaS deletes and recreates it.
     const isChangingMode = Boolean(savedMode) && mode !== savedMode;
+    // Autoscale sets the replicas of a replicated service; one becoming replicated starts at the count given.
+    const replicasByAutoscale = autoscaled && savedMode === EServiceMode.Replicated;
 
     const { field: modeField } = useController({ control, name: "mode" });
     const {
@@ -126,7 +128,13 @@ export function ServiceModeFields({ savedMode, isAppStopped = false }: Props) {
                         }}
                         className="max-w-[100px]"
                         min={0}
+                        disabled={replicasByAutoscale}
                     />
+                    {replicasByAutoscale && (
+                        <p className="mt-1 text-xs text-muted-foreground">
+                            Autoscale sets it, between its Min and Max Replicas.
+                        </p>
+                    )}
                     <FieldError errors={[serviceReplicasError]} />
                 </InfoBlock>
             )}
@@ -183,4 +191,6 @@ interface Props {
     savedMode?: EServiceMode;
     /** A stopped app cannot switch mode: the backend rejects it. */
     isAppStopped?: boolean;
+    /** Autoscale sets the replicas: the backend keeps them as they are when the service is saved. */
+    autoscaled?: boolean;
 }

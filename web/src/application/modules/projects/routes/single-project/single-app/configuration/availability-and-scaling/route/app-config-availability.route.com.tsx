@@ -5,9 +5,15 @@ import { cn } from "@lib/utils";
 import { useParams } from "react-router";
 import { toast } from "sonner";
 import invariant from "tiny-invariant";
-import { AppServiceSettingsCommands, AppServiceSettingsQueries } from "~/projects/data";
+import {
+    AppAutoscaleQueries,
+    AppServiceSettingsCommands,
+    AppServiceSettingsQueries,
+    ProjectAppsQueries,
+} from "~/projects/data";
 import { APP_CONFIGURATION_QUERY_OPTIONS } from "~/projects/data/constants";
 import { ProjectPermissionSubmitButton } from "~/projects/module-shared/components";
+import { isFunctionApp } from "~/projects/module-shared/utils";
 
 import { AppLink, AppLoader, FormActionBar } from "@application/shared/components";
 import { MODULE_IDS, ROUTE } from "@application/shared/constants";
@@ -19,6 +25,7 @@ import { isValidationException } from "@infrastructure/api";
 
 import { ValidationException } from "@infrastructure/exceptions/validation";
 
+import { AutoscaleSection } from "../building-blocks";
 import { AppConfigAvailabilityForm } from "../form";
 import { type AppConfigAvailabilitySchemaOutput } from "../schemas";
 import { type AppConfigAvailabilityFormRef } from "../types";
@@ -39,6 +46,19 @@ export function AppConfigAvailabilityRoute() {
             appID: appId,
         },
         APP_CONFIGURATION_QUERY_OPTIONS,
+    );
+
+    // The header's query: the app is already loaded. Only a function autoscales.
+    const { data: app } = ProjectAppsQueries.useFindOneById({
+        projectID: projectId,
+        env,
+        appID: appId,
+        getStats: true,
+    });
+    const isFunction = app ? isFunctionApp(app.data) : false;
+    const { data: autoscale, isLoading: isAutoscaleLoading } = AppAutoscaleQueries.useFindOne(
+        { projectID: projectId, env, appID: appId },
+        { ...APP_CONFIGURATION_QUERY_OPTIONS, enabled: isFunction },
     );
 
     const { mutate: update, isPending } = AppServiceSettingsCommands.useUpdateOne({
@@ -85,7 +105,7 @@ export function AppConfigAvailabilityRoute() {
         });
     }
 
-    if (isLoading) {
+    if (isLoading || isAutoscaleLoading) {
         return <AppLoader />;
     }
 
@@ -103,11 +123,25 @@ export function AppConfigAvailabilityRoute() {
                 .
             </div>
 
+            {isFunction && autoscale && (
+                <>
+                    <AutoscaleSection
+                        projectId={projectId}
+                        env={env}
+                        appId={appId}
+                        autoscale={autoscale.data}
+                        readOnly={!canWrite}
+                    />
+                    <div className="h-px bg-muted" />
+                </>
+            )}
+
             <AppConfigAvailabilityForm
                 ref={formRef}
                 defaultValues={data?.data}
                 onSubmit={handleSubmit}
                 readOnly={!canWrite}
+                autoscaled={isFunction && Boolean(autoscale?.data.enabled)}
             >
                 <FormActionBar>
                     <ProjectPermissionSubmitButton isPending={isPending} />

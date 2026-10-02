@@ -124,7 +124,15 @@ const GetFunctionMetricsSchema = z.object({
             .nullish()
             .transform(value => value ?? {}),
         series: z
-            .array(FunctionMetricsCountsSchema.extend({ time: z.string() }))
+            .array(
+                FunctionMetricsCountsSchema.extend({
+                    time: z.string(),
+                    replicas: z
+                        .number()
+                        .nullish()
+                        .transform(value => value ?? null),
+                }),
+            )
             .nullish()
             .transform(value => value ?? []),
         byPath: z

@@ -20,7 +20,14 @@ import { type AppConfigAvailabilityFormRef } from "../types";
 type SchemaInput = AppConfigAvailabilitySchemaInput;
 type SchemaOutput = AppConfigAvailabilitySchemaOutput;
 
-export function AppConfigAvailabilityForm({ ref, defaultValues, onSubmit, readOnly = false, children }: Props) {
+export function AppConfigAvailabilityForm({
+    ref,
+    defaultValues,
+    onSubmit,
+    readOnly = false,
+    autoscaled = false,
+    children,
+}: Props) {
     // A stopped app is a replicated service scaled to 0. The backend refuses to switch mode in that
     // state, so the UI must not offer it either.
     const isAppStopped =
@@ -117,6 +124,7 @@ export function AppConfigAvailabilityForm({ ref, defaultValues, onSubmit, readOn
                         <ServiceModeFields
                             savedMode={defaultValues?.modeSpec.mode}
                             isAppStopped={isAppStopped}
+                            autoscaled={autoscaled}
                         />
                         <div className="h-px bg-muted" />
                         <PlacementConstraintsFields />
@@ -135,4 +143,6 @@ type Props = PropsWithChildren<{
     defaultValues?: AppServiceSettings;
     onSubmit: (values: SchemaOutput) => void;
     readOnly?: boolean;
+    /** A function whose replicas autoscale sets. */
+    autoscaled?: boolean;
 }>;

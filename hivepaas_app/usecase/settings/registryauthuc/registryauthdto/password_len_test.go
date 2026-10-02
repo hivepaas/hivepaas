@@ -13,7 +13,7 @@ func passwordErrors(password string) []string {
 	req := &RegistryAuthBaseReq{Name: "gar", Address: "asia-southeast1-docker.pkg.dev",
 		Username: "_json_key_base64", Password: password}
 	var out []string
-	for _, err := range vld.Validate(req.validate("")...) {
+	for _, err := range vld.Validate(req.validate("auth")...) {
 		if f := err.Field(); f != nil {
 			out = append(out, f.PathString(true, "."))
 		}
@@ -29,5 +29,5 @@ func TestARegistryPasswordTakesAJSONKey(t *testing.T) {
 	assert.Greater(t, len(encoded), 2000)
 	assert.Empty(t, passwordErrors(encoded))
 
-	assert.Contains(t, passwordErrors(strings.Repeat("x", 8*1024+1)), "password", "past 8 KB")
+	assert.Contains(t, passwordErrors(strings.Repeat("x", 8*1024+1)), "auth.password", "past 8 KB")
 }

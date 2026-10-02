@@ -14,6 +14,7 @@ export const QK = {
     "projects.apps.logs.$.get-info": "projects.apps.logs.$.get-info",
     "projects.apps.logs.$.get-logs": "projects.apps.logs.$.get-logs",
     "projects.apps.logs.$.get-history": "projects.apps.logs.$.get-history",
+    "projects.apps.function-metrics.$.get": "projects.apps.function-metrics.$.get",
     "projects.apps.terminal.$.get-info": "projects.apps.terminal.$.get-info",
     "projects.apps.deployments.$.find-many-paginated": "projects.apps.deployments.$.find-many-paginated",
     "projects.apps.deployments.$.find-one-by-id": "projects.apps.deployments.$.find-one-by-id",

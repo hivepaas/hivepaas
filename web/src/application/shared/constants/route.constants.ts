@@ -908,6 +908,12 @@ export const ROUTE = {
                             `/projects/${id}/${env}/apps/${appId}/code/`,
                     },
 
+                    metrics: {
+                        $pattern: "projects/:id/:env/apps/:appId/metrics",
+                        $route: (id: string, env: string, appId: string) =>
+                            `/projects/${id}/${env}/apps/${appId}/metrics/`,
+                    },
+
                     logs: {
                         $pattern: "projects/:id/:env/apps/:appId/logs",
                         $route: (id: string, env: string, appId: string) =>

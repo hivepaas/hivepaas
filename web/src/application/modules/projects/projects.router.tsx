@@ -1693,6 +1693,19 @@ export const projectsRouter: RouteObject = {
                     },
                 },
                 /**
+                 * Single App – Metrics (a function's)
+                 */
+                {
+                    path: ROUTE.projects.single.apps.single.metrics.$pattern,
+                    lazy: async () => {
+                        const { AppMetricsRoute } = await getLazyComponents();
+
+                        return {
+                            Component: AppMetricsRoute,
+                        };
+                    },
+                },
+                /**
                  * Single App – Logs
                  */
                 {

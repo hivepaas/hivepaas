@@ -2,6 +2,8 @@ import { Err, Ok, type Result } from "oxide.ts";
 import { catchError, from, lastValueFrom, map, of } from "rxjs";
 import type {
     AppLogsApiValidator,
+    AppLogs_GetFunctionMetrics_Req,
+    AppLogs_GetFunctionMetrics_Res,
     AppLogs_GetHistory_Req,
     AppLogs_GetHistory_Res,
     AppLogs_GetInfo_Req,
@@ -86,6 +88,26 @@ export class AppLogsApi extends BaseApi {
                 }),
             ).pipe(
                 map(this.validator.getHistory),
+                map(res => Ok(res)),
+                catchError(error => of(Err(parseApiError(error)))),
+            ),
+        );
+    }
+
+    async getFunctionMetrics(
+        request: AppLogs_GetFunctionMetrics_Req,
+        signal?: AbortSignal,
+    ): Promise<Result<AppLogs_GetFunctionMetrics_Res, Error>> {
+        const { projectID, env, appID, range } = request.data;
+
+        return lastValueFrom(
+            from(
+                this.client.v1.get(`/projects/${projectID}/${env}/apps/${appID}/function-metrics`, {
+                    params: { range },
+                    signal,
+                }),
+            ).pipe(
+                map(this.validator.getFunctionMetrics),
                 map(res => Ok(res)),
                 catchError(error => of(Err(parseApiError(error)))),
             ),

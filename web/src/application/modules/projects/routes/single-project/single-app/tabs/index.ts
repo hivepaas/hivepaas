@@ -5,3 +5,4 @@ export * from "./terminal";
 export * from "./preview-deployments";
 export * from "./tasks";
 export * from "./code";
+export * from "./metrics";

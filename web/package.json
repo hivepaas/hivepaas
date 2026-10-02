@@ -96,6 +96,7 @@
     "react-time-ago": "^7.4.4",
     "react-use": "^17.6.0",
     "react-verification-input": "^4.2.2",
+    "recharts": "3.10.1",
     "remark-gfm": "^4.0.1",
     "rxjs": "^7.8.2",
     "sass-embedded": "^1.93.3",

@@ -1,7 +1,7 @@
 import { type SetStateAction, useCallback, useMemo, useState } from "react";
 
 import { cn } from "@/lib/utils";
-import type { AppLogHistoryInfo, AppLogHistoryReason } from "~/projects/api/services";
+import type { AppLogHistoryInfo } from "~/projects/api/services";
 import { AppLogsQueries } from "~/projects/data";
 
 import {
@@ -18,6 +18,7 @@ import { Button, Select, SelectContent, SelectItem, SelectTrigger, SelectValue }
 import { AppLogsToolbarFilters } from "../app-logs-toolbar";
 import { HISTORY_DURATION_OPTIONS } from "../duration-picker";
 import { LOG_FILTER_FIELD_WIDTH } from "../log-filters.constants";
+import { LOG_HISTORY_UNAVAILABLE_TEXT } from "../log-history-unavailable.constants";
 
 import {
     type LogHistoryWindow,
@@ -37,15 +38,6 @@ const LEVEL_FILTERS = {
 type LevelFilter = keyof typeof LEVEL_FILTERS;
 
 type StreamFilter = "all" | "stdout" | "stderr";
-
-const UNAVAILABLE_TEXT: Record<AppLogHistoryReason, string> = {
-    "disabled": "Stored logs are off. An administrator can turn them on in System → Logging.",
-    "apps-not-collected": "App logs are not collected. An administrator can turn them on in System → Logging.",
-    "no-query-endpoint": "Logs go to an external backend HivePaaS has no query endpoint for.",
-    "driver-unreadable": "This app's log driver cannot be collected. Switch it to json-file in container settings.",
-    "identity-missing":
-        "This app was created before logging existed. Save its container settings once so its logs can be identified.",
-};
 
 export function AppLogsHistory({
     tabID,
@@ -113,7 +105,7 @@ export function AppLogsHistory({
     );
 
     if (!isAvailable) {
-        return <p className="text-base">{UNAVAILABLE_TEXT[history?.reason ?? "disabled"]}</p>;
+        return <p className="text-base">{LOG_HISTORY_UNAVAILABLE_TEXT[history?.reason ?? "disabled"]}</p>;
     }
 
     return (

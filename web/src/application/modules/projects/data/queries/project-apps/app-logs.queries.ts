@@ -1,6 +1,7 @@
 import { type UseQueryOptions, useInfiniteQuery, useQuery } from "@tanstack/react-query";
 import { useAppLogsApi } from "~/projects/api";
 import type {
+    AppLogs_GetFunctionMetrics_Req,
     AppLogs_GetHistory_Req,
     AppLogs_GetInfo_Req,
     AppLogs_GetInfo_Res,
@@ -56,8 +57,19 @@ function useGetHistory(request: GetHistoryReq, options: { enabled?: boolean } = 
     });
 }
 
+/** A function's calls over a range ending now, counted from its logs. */
+function useGetFunctionMetrics(request: AppLogs_GetFunctionMetrics_Req["data"]) {
+    const { queries } = useAppLogsApi();
+
+    return useQuery({
+        queryKey: [QK["projects.apps.function-metrics.$.get"], request],
+        queryFn: ({ signal }) => queries.getFunctionMetrics(request, signal),
+    });
+}
+
 export const AppLogsQueries = Object.freeze({
     useGetInfo,
     useGetLogs,
     useGetHistory,
+    useGetFunctionMetrics,
 });

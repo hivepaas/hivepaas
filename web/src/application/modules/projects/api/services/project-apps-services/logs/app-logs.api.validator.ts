@@ -1,6 +1,11 @@
 import type { AxiosResponse } from "axios";
 import { z } from "zod";
-import type { AppLogs_GetHistory_Res, AppLogs_GetInfo_Res, AppLogs_GetLogs_Res } from "~/projects/api/services";
+import type {
+    AppLogs_GetFunctionMetrics_Res,
+    AppLogs_GetHistory_Res,
+    AppLogs_GetInfo_Res,
+    AppLogs_GetLogs_Res,
+} from "~/projects/api/services";
 
 import { BaseMetaApiSchema, parseApiResponse } from "@infrastructure/api";
 
@@ -73,6 +78,56 @@ const GetHistorySchema = z.object({
     meta: BaseMetaApiSchema.nullable(),
 });
 
+const FunctionMetricsCountsSchema = z.object({
+    calls: z.number().catch(0),
+    failed: z.number().catch(0),
+    errors5xx: z.number().catch(0),
+    p50: z
+        .number()
+        .nullish()
+        .transform(value => value ?? null),
+    p95: z
+        .number()
+        .nullish()
+        .transform(value => value ?? null),
+    p99: z
+        .number()
+        .nullish()
+        .transform(value => value ?? null),
+});
+
+const GetFunctionMetricsSchema = z.object({
+    data: z.object({
+        available: z.boolean().catch(false),
+        reason: z
+            .enum(["disabled", "apps-not-collected", "no-query-endpoint", "driver-unreadable", "identity-missing"])
+            .nullish()
+            .catch(null)
+            .transform(value => value ?? null),
+        range: z.enum(["1h", "6h", "24h", "7d"]).catch("24h"),
+        start: z
+            .string()
+            .nullish()
+            .transform(value => value ?? null),
+        end: z
+            .string()
+            .nullish()
+            .transform(value => value ?? null),
+        stepSeconds: z.number().catch(0),
+        clamped: z.boolean().catch(false),
+        totals: FunctionMetricsCountsSchema.nullish().transform(value => value ?? null),
+        byOutcome: z
+            .record(z.number())
+            .nullish()
+            .transform(value => value ?? {}),
+        series: z
+            .array(FunctionMetricsCountsSchema.extend({ time: z.string() }))
+            .nullish()
+            .transform(value => value ?? []),
+    }),
+    meta: BaseMetaApiSchema.nullable(),
+});
+
 export class AppLogsApiValidator {
     getInfo = (response: AxiosResponse): AppLogs_GetInfo_Res => {
         return parseApiResponse({
@@ -97,6 +152,13 @@ export class AppLogsApiValidator {
         return parseApiResponse({
             response,
             schema: GetHistorySchema,
+        });
+    };
+
+    getFunctionMetrics = (response: AxiosResponse): AppLogs_GetFunctionMetrics_Res => {
+        return parseApiResponse({
+            response,
+            schema: GetFunctionMetricsSchema,
         });
     };
 }

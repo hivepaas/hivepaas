@@ -81,3 +81,44 @@ export type AppLogs_GetHistory_Res = ApiResponseBase<{
     /** What to pass as `end` for the page before this one; null on the last page. */
     nextEnd: string | null;
 }>;
+
+/** The ranges a function's metrics are asked for. */
+export type FunctionMetricsRange = "1h" | "6h" | "24h" | "7d";
+
+export type AppLogs_GetFunctionMetrics_Req = ApiRequestBase<{
+    projectID: string;
+    env: string;
+    appID: string;
+    range: FunctionMetricsRange;
+}>;
+
+/** A set of calls: how many, how many failed, how many answered 5xx, and the
+ *  handler's duration in milliseconds - null without a call. */
+export interface FunctionMetricsCounts {
+    calls: number;
+    failed: number;
+    errors5xx: number;
+    p50: number | null;
+    p95: number | null;
+    p99: number | null;
+}
+
+export interface FunctionMetricsPoint extends FunctionMetricsCounts {
+    time: string;
+}
+
+export type AppLogs_GetFunctionMetrics_Res = ApiResponseBase<{
+    /** False when the logs cannot be read; reason says why. */
+    available: boolean;
+    reason: AppLogHistoryReason | null;
+    range: FunctionMetricsRange;
+    start: string | null;
+    end: string | null;
+    stepSeconds: number;
+    /** The logs are kept for less than the range: it starts where they do. */
+    clamped: boolean;
+    totals: FunctionMetricsCounts | null;
+    byOutcome: Record<string, number>;
+    /** One point per step, oldest first. */
+    series: FunctionMetricsPoint[];
+}>;

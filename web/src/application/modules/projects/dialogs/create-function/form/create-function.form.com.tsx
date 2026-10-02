@@ -1,7 +1,7 @@
-import React, { useEffect, useMemo } from "react";
+import React, { useEffect, useMemo, useRef } from "react";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { FileCode, GitBranch } from "lucide-react";
+import { FileCode, GitBranch, Globe } from "lucide-react";
 import { useController, useForm } from "react-hook-form";
 import { ProjectDomainSettingsQueries } from "~/projects/data/queries";
 import { type ProjectEnvEntity } from "~/projects/domain";
@@ -16,6 +16,7 @@ import { FUNCTION_TEMPLATES } from "~/projects/module-shared/constants";
 import { ALL_FUNCTION_RUNTIMES, EFunctionRuntime, FUNCTION_RUNTIME_LABELS } from "~/projects/module-shared/enums";
 
 import { InfoBlock, LabelWithInfo } from "@application/shared/components";
+import { getDefaultDomain } from "@application/shared/utils/domain";
 
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -29,6 +30,7 @@ import {
     type CreateFunctionFormOutput,
     EFunctionCodeSource,
     createCreateFunctionFormSchema,
+    functionDomainLabel,
     suggestFunctionDomain,
 } from "../schemas";
 
@@ -120,6 +122,35 @@ export function CreateFunctionForm({
     // The project's root domain, under which a function is offered a domain.
     const { data: domainSettings } = ProjectDomainSettingsQueries.useFindOne({ projectID: projectId });
     const rootDomain = domainSettings?.data.rootDomain ?? "";
+
+    const domainInputRef = useRef<HTMLInputElement | null>(null);
+
+    // As a template's domain is suggested: the function's name, beside the
+    // domain the dashboard is served at; its name is then selected to edit.
+    function suggestDomain() {
+        const suggested = getDefaultDomain(functionDomainLabel(watch("name")));
+        if (!suggested) {
+            return;
+        }
+        setValue("domain", suggested, { shouldValidate: true, shouldDirty: true });
+        const selectFirstSegment = () => {
+            const input = domainInputRef.current;
+            if (!input) {
+                return;
+            }
+            input.focus();
+            const dotIndex = suggested.indexOf(".");
+            if (dotIndex > 0) {
+                input.setSelectionRange(0, dotIndex);
+            } else {
+                input.select();
+            }
+        };
+        // Again after React has written the value into the input.
+        selectFirstSegment();
+        requestAnimationFrame(selectFirstSegment);
+        setTimeout(selectFirstSegment, 0);
+    }
 
     function changeExpose(checked: boolean) {
         expose.onChange(checked);
@@ -397,11 +428,30 @@ export function CreateFunctionForm({
                                 </div>
                                 {expose.value && (
                                     <>
-                                        <Input
-                                            {...domain}
-                                            placeholder="hello.example.com"
-                                            aria-invalid={Boolean(errors.domain)}
-                                        />
+                                        <div className="flex w-full items-center gap-2">
+                                            <Input
+                                                {...domain}
+                                                ref={element => {
+                                                    domain.ref(element);
+                                                    domainInputRef.current = element;
+                                                }}
+                                                placeholder="hello.example.com"
+                                                aria-invalid={Boolean(errors.domain)}
+                                                className="min-w-0 flex-1"
+                                            />
+                                            <Button
+                                                type="button"
+                                                variant="outline"
+                                                size="sm"
+                                                title="Suggest a domain from the function's name and the current hostname"
+                                                disabled={readOnly}
+                                                onClick={suggestDomain}
+                                                className="h-9 shrink-0 border-border/80 px-3 text-xs font-medium text-muted-foreground hover:bg-muted/80 hover:text-foreground"
+                                            >
+                                                <Globe className="mr-1 size-3.5 text-emerald-500" />
+                                                Suggest Domain
+                                            </Button>
+                                        </div>
                                         <FieldError errors={[errors.domain]} />
                                         <p className="text-xs text-muted-foreground">
                                             Routed over HTTPS, forced; turn it off in the routing settings. A

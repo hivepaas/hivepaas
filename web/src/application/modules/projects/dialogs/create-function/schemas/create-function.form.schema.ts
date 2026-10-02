@@ -27,17 +27,22 @@ const CredentialsRefSchema = z
 /** A domain name without a wildcard: labels of letters, digits and '-', at least two. */
 const DOMAIN_PATTERN = /^(?=.{1,253}$)([a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?$/i;
 
-/**
- * The domain a function is offered at: its name as a DNS label, under the
- * project's root domain; empty when there is no root domain.
- */
-export function suggestFunctionDomain(name: string, rootDomain: string): string {
-    const label = name
+/** A function's name as a DNS label: lower case, '-' for anything else, at most 63. */
+export function functionDomainLabel(name: string): string {
+    return name
         .toLowerCase()
         .replace(/[^a-z0-9-]+/g, "-")
         .replace(/^-+/, "")
         .slice(0, 63)
         .replace(/-+$/, "");
+}
+
+/**
+ * The domain a function is offered at: its name as a DNS label, under the
+ * project's root domain; empty when there is no root domain.
+ */
+export function suggestFunctionDomain(name: string, rootDomain: string): string {
+    const label = functionDomainLabel(name);
     if (!rootDomain || !label) {
         return "";
     }

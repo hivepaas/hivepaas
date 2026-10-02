@@ -82,7 +82,7 @@ export function CreateFunctionDialog() {
             open={open}
             onOpenChange={handleClose}
         >
-            <DialogFixedContent className="sm:max-w-[650px]">
+            <DialogFixedContent className="sm:max-w-[700px]">
                 <DialogHeader>
                     <DialogTitle>Create Function</DialogTitle>
                 </DialogHeader>

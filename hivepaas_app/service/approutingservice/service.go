@@ -26,4 +26,10 @@ type Service interface {
 	// trial rather than afterwards.
 	ReapplyClientIPStrategy(ctx context.Context, db database.Tx, req *ReapplyClientIPStrategyReq) (
 		*ReapplyClientIPStrategyResp, error)
+
+	// ReapplyRouteNames applies again the routing of every app whose service
+	// still names its Traefik routers, services and middlewares by its key
+	// rather than its id (see traefikservice.AppRouteName). Labels only: no
+	// task restarts.
+	ReapplyRouteNames(ctx context.Context, db database.IDB) (*ReapplyRouteNamesResp, error)
 }

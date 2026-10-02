@@ -167,7 +167,7 @@ func (s *service) collectDomainConfig(
 		return nil
 	}
 
-	appKey := sanitizeRouterNameReplacer.Replace(data.App.Key)
+	appKey := traefikservice.AppRouteName(data.App.ID)
 	domainKey := sanitizeRouterNameReplacer.Replace(domain.Domain)
 	if domainKey == "" {
 		return nil

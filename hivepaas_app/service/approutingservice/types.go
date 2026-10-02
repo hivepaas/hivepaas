@@ -93,3 +93,11 @@ type ReapplyClientIPStrategyResp struct {
 	// from getting the depth they need.
 	Failed map[string]string
 }
+
+type ReapplyRouteNamesResp struct {
+	// Applied counts the apps renamed.
+	Applied int
+	// Failed names the apps that could not be, with the reason; they keep the
+	// names they had, and the next start tries them again.
+	Failed map[string]string
+}

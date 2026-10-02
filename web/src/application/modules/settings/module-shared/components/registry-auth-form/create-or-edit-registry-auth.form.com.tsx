@@ -183,6 +183,7 @@ export function CreateOrEditRegistryAuthForm({
                             <LabelWithInfo
                                 label="Password"
                                 isRequired
+                                content="For Google Artifact Registry: username _json_key_base64, and the service account's JSON key, in base64, as the password."
                             />
                         }
                     >

@@ -234,7 +234,12 @@ username and a password as today's are.
    client shortens a Docker Hub image to its familiar name
    (`docker.io/library/busybox` is stored as `busybox`); an ECR image keeps its
    host, which is what the image check reads.
-4. **API, dashboard, export, MCP, docs.**
+4. **API, dashboard, export, MCP, docs** (done): the credential's form takes a
+   Type, and for Amazon ECR its keys and role, and shows when its token
+   expires; Settings → Registry Auth Renewal, beside SSL Renewal, with an
+   interval chosen from 1 to 10 hours (dashboard 6368feea); MCP
+   `list_registry_auths` (eeca01d9); the docs' Amazon ECR section and IAM
+   policy (website 8af9047). Left: a check with a real AWS account.
 5. Later, the same `Kind` for Google Artifact Registry and Azure ACR when they
    are used with short-lived tokens.
 

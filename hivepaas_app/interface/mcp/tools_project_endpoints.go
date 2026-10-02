@@ -82,8 +82,12 @@ func projectEndpoints() []getEndpoint { //nolint:funlen // a table
 		{
 			name: "list_registry_auths", title: "List registry credentials",
 			description: "GET /projects/{project}[/{env}]/registry-auth. The credentials apps pull private " +
-				"images with, each with its registry and user, its password masked: the id to give an " +
-				"app's deployment settings as imageSource.registryAuth. " + descProjectOrEnv,
+				"images with, each with its registry, its kind - empty for a username and a password, " +
+				"aws-ecr for Amazon ECR - and its user, its password masked. An Amazon ECR credential's " +
+				"ecr has its region, its AWS access key id, its secret key masked, and tokenExpiresAt, when " +
+				"the token HivePaaS got from the keys stops working, if one was got; the token itself is " +
+				"never answered. Its id is what an app's deployment settings take as " +
+				"imageSource.registryAuth. " + descProjectOrEnv,
 			paths:  atProjectOrEnv("/registry-auth"),
 			query:  &registryauthdto.ListRegistryAuthReq{},
 			omit:   []string{argKind},

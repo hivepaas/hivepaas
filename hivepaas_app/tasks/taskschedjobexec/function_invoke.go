@@ -43,6 +43,9 @@ func (e *Executor) invokeFunction(
 	run *jobRun,
 	job *entity.SchedJob,
 ) (*jobResult, error) {
+	if job.FunctionInvoke == nil {
+		return &jobResult{}, invokeFailed("the job holds no request to send")
+	}
 	request, err := json.Marshal(functioninvoke.RequestOf(job.FunctionInvoke))
 	if err != nil {
 		return nil, hperrors.Wrap(err)

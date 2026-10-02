@@ -160,3 +160,17 @@ func TestAFunctionCallsLargeBodyIsCut(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, map[string]string{"STATUS": "200"}, result.outputs)
 }
+
+// A job stored without its request - nothing saves one, but a row can be
+// written by hand - fails its run without calling the function.
+func TestAFunctionCallWithoutItsRequestFails(t *testing.T) {
+	exec := &fakeInvoke{output: resultLine(200, "ok", "done")}
+	run, _ := invokeRun(nil)
+	run.jobSetting.MustSetData(&entity.SchedJob{JobType: base.SchedJobTypeFunctionInvoke,
+		App: entity.ObjectID{ID: "fn"}})
+
+	_, err := (&Executor{schedJobExecService: exec}).runJob(context.Background(), database.Tx{}, run)
+
+	assert.True(t, errors.Is(err, hperrors.ErrInfraActionFailed), "got %v", err)
+	assert.Nil(t, exec.req, "the function is not called")
+}

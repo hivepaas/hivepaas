@@ -3,6 +3,7 @@
  */
 export const EFunctionRuntime = {
     Node24: "node24",
+    Bun1: "bun1",
     Python313: "python313",
     Go127: "go127",
 } as const;
@@ -11,6 +12,7 @@ export type EFunctionRuntime = (typeof EFunctionRuntime)[keyof typeof EFunctionR
 
 export const ALL_FUNCTION_RUNTIMES: EFunctionRuntime[] = [
     EFunctionRuntime.Node24,
+    EFunctionRuntime.Bun1,
     EFunctionRuntime.Python313,
     EFunctionRuntime.Go127,
 ];
@@ -32,12 +34,18 @@ export const FUNCTION_LANGUAGE_LABELS: Record<EFunctionLanguage, string> = {
 };
 
 /**
+ * The runtimes that run JavaScript: code moves between them as it is.
+ */
+export const FUNCTION_JAVASCRIPT_RUNTIMES: EFunctionRuntime[] = [EFunctionRuntime.Node24, EFunctionRuntime.Bun1];
+
+/**
  * The runtimes whose functions may be written in either language.
  */
 export const FUNCTION_RUNTIMES_WITH_LANGUAGES: EFunctionRuntime[] = [EFunctionRuntime.Node24];
 
 export const FUNCTION_RUNTIME_LABELS: Record<EFunctionRuntime, string> = {
     [EFunctionRuntime.Node24]: "Node.js 24",
+    [EFunctionRuntime.Bun1]: "Bun 1",
     [EFunctionRuntime.Python313]: "Python 3.13",
     [EFunctionRuntime.Go127]: "Go 1.27",
 };
@@ -48,6 +56,7 @@ export const FUNCTION_RUNTIME_LABELS: Record<EFunctionRuntime, string> = {
  */
 export const FUNCTION_RUNTIME_DEFAULT_ENTRYPOINT: Record<EFunctionRuntime, { file: string; handler: string }> = {
     [EFunctionRuntime.Node24]: { file: "index.js", handler: "default" },
+    [EFunctionRuntime.Bun1]: { file: "index.ts", handler: "default" },
     [EFunctionRuntime.Python313]: { file: "main.py", handler: "handler" },
     [EFunctionRuntime.Go127]: { file: ".", handler: "Handle" },
 };

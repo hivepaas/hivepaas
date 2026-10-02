@@ -18,6 +18,7 @@ import { PROJECT_FORM_CONTROL_MAX_WIDTH_CLASS } from "~/projects/module-shared/c
 import {
     ALL_FUNCTION_RUNTIMES,
     EFunctionRuntime,
+    FUNCTION_JAVASCRIPT_RUNTIMES,
     functionRuntimeDefaultEntrypoint,
     functionRuntimeLabel,
     isKnownFunctionRuntime,
@@ -182,6 +183,12 @@ export function FunctionSettingsForm({ ref, projectId, env, source, onSubmit, re
                                         </Select>
                                         <FieldError errors={[errors.runtime]} />
                                         {runtime !== source.runtime &&
+                                            !(
+                                                FUNCTION_JAVASCRIPT_RUNTIMES.includes(runtime as EFunctionRuntime) &&
+                                                FUNCTION_JAVASCRIPT_RUNTIMES.includes(
+                                                    source.runtime as EFunctionRuntime,
+                                                )
+                                            ) &&
                                             codeLocation === EFunctionCodeLocation.Inline && (
                                                 <p className="text-xs text-muted-foreground">
                                                     The code stays as it is: rewrite it for the new runtime in the Code

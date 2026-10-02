@@ -17,6 +17,7 @@ import {
 import { PROJECT_FORM_CONTROL_MAX_WIDTH_CLASS } from "~/projects/module-shared/constants";
 import {
     ALL_FUNCTION_RUNTIMES,
+    EFunctionRuntime,
     functionRuntimeDefaultEntrypoint,
     functionRuntimeLabel,
     isKnownFunctionRuntime,
@@ -302,7 +303,7 @@ export function FunctionSettingsForm({ ref, projectId, env, source, onSubmit, re
                                     <LabelWithInfo
                                         label="Concurrency"
                                         isRequired
-                                        content="How many calls one instance answers at once; the others wait."
+                                        content="How many calls one instance runs at once; a call over it is answered 429."
                                     />
                                 }
                             >
@@ -321,6 +322,13 @@ export function FunctionSettingsForm({ ref, projectId, env, source, onSubmit, re
                                             aria-invalid={Boolean(errors.maxConcurrency)}
                                         />
                                         <FieldError errors={[errors.maxConcurrency]} />
+                                        {runtime === EFunctionRuntime.Python313 && (
+                                            <p className="text-xs text-muted-foreground">
+                                                Python serves with a process per CPU, at most this many and one per 128
+                                                MiB of a memory limit. Set WEB_CONCURRENCY in the function&apos;s
+                                                environment to choose.
+                                            </p>
+                                        )}
                                     </Field>
                                 </FieldGroup>
                             </InfoBlock>

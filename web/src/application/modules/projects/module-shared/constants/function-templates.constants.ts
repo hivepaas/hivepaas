@@ -33,7 +33,8 @@ export default async function (req, ctx) {
         {
             path: "main.py",
             content: `# A function answers one request: it returns a dict of status, headers, body.
-# A body that is a dict is sent as JSON.
+# A body that is a dict is sent as JSON. An async def handler is the fastest,
+# but must not block: blocking code (time.sleep, requests) belongs in a def.
 def handler(req, ctx):
     ctx.log(f"{req.method} {req.path}")
     name = req.query.get("name", "world")

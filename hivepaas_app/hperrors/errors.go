@@ -2,7 +2,10 @@ package hperrors
 
 import (
 	"errors"
+	"fmt"
 	"net/http"
+	"runtime"
+	"strings"
 
 	goerrors "github.com/go-errors/errors"
 	"google.golang.org/grpc/codes"
@@ -83,9 +86,30 @@ func GetErrorDetail(err error, lang translation.Lang) string {
 
 func GetErrorStackTrace(err error) string {
 	if errWithStack, ok := errors.AsType[*goerrors.Error](err); ok {
-		return errWithStack.ErrorStack()
+		return errWithStack.TypeName() + " " + errWithStack.Error() + "\n" + stackOf(errWithStack.Callers())
 	}
 	return ""
+}
+
+// stackOf writes the frames of a stack, one per function, inlined ones too.
+//
+// go-errors' own ErrorStack names a frame by runtime.FuncForPC of the return
+// address while reading its line one byte before it. For a call inlined into
+// its caller the return address can lie past the inlined code, and on amd64 it
+// does: the frame gets the inlined function's line under its caller's name.
+// runtime.CallersFrames is the way the runtime documents to read such a stack.
+func stackOf(pcs []uintptr) string {
+	var b strings.Builder
+	frames := runtime.CallersFrames(pcs)
+	for {
+		frame, more := frames.Next()
+		if frame.Function != "" {
+			fmt.Fprintf(&b, "%s:%d\n\t%s\n", frame.File, frame.Line, frame.Function)
+		}
+		if !more {
+			return b.String()
+		}
+	}
 }
 
 // NewInternal return HPError for error Internal

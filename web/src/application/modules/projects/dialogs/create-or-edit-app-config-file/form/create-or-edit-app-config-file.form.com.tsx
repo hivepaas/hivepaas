@@ -1,7 +1,7 @@
 import React, { useEffect, useRef } from "react";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { UploadIcon } from "lucide-react";
+import { DownloadIcon, UploadIcon } from "lucide-react";
 import { type FieldErrors, useController, useForm, useWatch } from "react-hook-form";
 import { PROJECT_FORM_CONTROL_MAX_WIDTH_CLASS } from "~/projects/module-shared/constants";
 
@@ -24,6 +24,7 @@ export function CreateOrEditAppConfigFileForm({
     onClose,
     inheritableLabel = "Available in Previews",
     inheritableWarning = "Warning: Preview apps will not be able to access this configuration.",
+    currentBinaryContent,
 }: Props) {
     const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -210,6 +211,23 @@ export function CreateOrEditAppConfigFileForm({
                                             <UploadIcon className="size-4" />
                                             Choose File
                                         </Button>
+                                        {keepsBinary && currentBinaryContent && (
+                                            // A link, not a button: a read-only form's disabled
+                                            // fieldset disables its buttons, and the file is still
+                                            // worth saving there.
+                                            <Button
+                                                asChild
+                                                variant="outline"
+                                            >
+                                                <a
+                                                    href={`data:application/octet-stream;base64,${currentBinaryContent}`}
+                                                    download={name.value}
+                                                >
+                                                    <DownloadIcon className="size-4" />
+                                                    Download Current File
+                                                </a>
+                                            </Button>
+                                        )}
                                         <span className="truncate text-sm text-muted-foreground">
                                             {selectedFile?.name ??
                                                 (keepsBinary ? "Leave empty to keep current content" : "")}
@@ -295,4 +313,6 @@ interface Props {
     /** An app's config file is available to its previews; a project's or env's to its apps. */
     inheritableLabel?: string;
     inheritableWarning?: string;
+    /** A binary config file's content in base64, offered for download while editing it. */
+    currentBinaryContent?: string;
 }

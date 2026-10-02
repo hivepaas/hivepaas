@@ -106,9 +106,10 @@ var (
 		FunctionRuntimeGo127:     regexp.MustCompile(`^[A-Z][A-Za-z0-9_]*$`),
 	}
 	// FunctionEntrypointExts are the extensions of a handler's file, for the
-	// runtimes whose entrypoint is a file.
+	// runtimes whose entrypoint is a file. Node.js runs TypeScript by removing
+	// its types as it loads a file.
 	FunctionEntrypointExts = map[FunctionRuntime][]string{
-		FunctionRuntimeNode24:    {".js", ".mjs", ".cjs"},
+		FunctionRuntimeNode24:    {".js", ".mjs", ".cjs", ".ts", ".mts", ".cts"},
 		FunctionRuntimePython313: {".py"},
 	}
 )

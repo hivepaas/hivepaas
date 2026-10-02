@@ -53,8 +53,12 @@ func functionSourceCases() map[string]*entity.DeploymentFunctionSource {
 		"valid repository": repoSource("https://github.com/acme/fns.git"),
 		"unknown runtime":  with(func(s *entity.DeploymentFunctionSource) { s.Runtime = "cobol" }),
 		"wrong extension":  with(func(s *entity.DeploymentFunctionSource) { s.Entrypoint.File = "main.py" }),
-		"handler":          with(func(s *entity.DeploymentFunctionSource) { s.Entrypoint.Handler = "1x" }),
-		"no code":          with(func(s *entity.DeploymentFunctionSource) { s.Code.Inline = nil }),
+		"typescript":       with(func(s *entity.DeploymentFunctionSource) { s.Entrypoint.File = "src/index.ts" }),
+		"typescript in python": with(func(s *entity.DeploymentFunctionSource) {
+			s.Runtime, s.Entrypoint.File = base.FunctionRuntimePython313, "index.ts"
+		}),
+		"handler": with(func(s *entity.DeploymentFunctionSource) { s.Entrypoint.Handler = "1x" }),
+		"no code": with(func(s *entity.DeploymentFunctionSource) { s.Code.Inline = nil }),
 		"both codes": with(func(s *entity.DeploymentFunctionSource) {
 			s.Code.Repo = repoSource("https://github.com/acme/fns.git").Code.Repo
 		}),
@@ -93,4 +97,14 @@ func TestAnImportedFunctionSourceIsCheckedAsTheAPIChecksIt(t *testing.T) {
 
 		assert.Equal(t, apiRefuses, len(problems) > 0, "%s: problems %v", name, problems)
 	}
+}
+
+// A Node.js function written in TypeScript is imported as the API takes it.
+func TestAnImportedTypeScriptFunctionIsValid(t *testing.T) {
+	source := inlineSource(&entity.FunctionFile{Path: "index.ts", Content: "export default () => ({})"})
+	source.Entrypoint.File = "index.ts"
+
+	normalizeFunctionSource(source)
+
+	assert.Empty(t, functionSourceProblems(source))
 }

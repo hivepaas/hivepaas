@@ -96,6 +96,20 @@ func TestAFunctionSourceOfEachRuntimeIsValid(t *testing.T) {
 	}
 }
 
+// Node.js 24 runs TypeScript by removing its types: a handler's file may be
+// TypeScript there, and nowhere else.
+func TestANodeJSHandlerMayBeTypeScript(t *testing.T) {
+	for _, entrypoint := range []string{"index.ts", "src/handler.mts", "main.cts"} {
+		req := inlineSource(base.FunctionRuntimeNode24, file(entrypoint, "export default () => ({})"))
+		req.Entrypoint.File = entrypoint
+		assert.Empty(t, errorsOf(req), entrypoint)
+	}
+
+	req := inlineSource(base.FunctionRuntimePython313, file("index.ts", ""))
+	req.Entrypoint.File = "index.ts"
+	assert.Equal(t, []string{"functionSource.entrypoint.file: ERR_VLD_FUNCTION_ENTRYPOINT_INVALID"}, errorsOf(req))
+}
+
 func TestAFunctionSourceThatCannotBeRunIsRefused(t *testing.T) {
 	big := strings.Repeat("x", int(unit.MB)/2+1)
 	manyFiles := make([]*FunctionFileReq, 0, 101)

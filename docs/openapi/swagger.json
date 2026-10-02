@@ -47894,6 +47894,10 @@
       },
       "entity.DeploymentRepoSource" : {
         "properties" : {
+          "autoDeploy" : {
+            "description" : "AutoDeploy is whether a push to RepoRef, received by a repo webhook,\ndeploys the app.",
+            "type" : "boolean"
+          },
           "commitHash" : {
             "type" : "string"
           },
@@ -47927,7 +47931,7 @@
             "type" : "string"
           }
         },
-        "required" : [ "commitHash", "credentials", "dockerfile", "pushToRegistry", "repoId", "repoOptions", "repoRef", "repoType", "repoURL" ],
+        "required" : [ "autoDeploy", "commitHash", "credentials", "dockerfile", "pushToRegistry", "repoId", "repoOptions", "repoRef", "repoType", "repoURL" ],
         "type" : "object"
       },
       "entity.EmailHTTPFieldMapping" : {
@@ -48013,6 +48017,10 @@
       },
       "entity.FunctionRepoCode" : {
         "properties" : {
+          "autoDeploy" : {
+            "description" : "AutoDeploy is whether a push to RepoRef, received by a repo webhook,\ndeploys the function.",
+            "type" : "boolean"
+          },
           "commitHash" : {
             "type" : "string"
           },
@@ -48036,7 +48044,7 @@
             "type" : "string"
           }
         },
-        "required" : [ "commitHash", "credentials", "repoId", "repoOptions", "repoRef", "repoType", "repoURL" ],
+        "required" : [ "autoDeploy", "commitHash", "credentials", "repoId", "repoOptions", "repoRef", "repoType", "repoURL" ],
         "type" : "object"
       },
       "entity.RepoCredentials" : {
@@ -49760,6 +49768,10 @@
       },
       "appsettingsdto.DeploymentRepoSourceReq" : {
         "properties" : {
+          "autoDeploy" : {
+            "description" : "AutoDeploy is whether a push to RepoRef deploys the app; on when left out.",
+            "type" : "boolean"
+          },
           "commitHash" : {
             "type" : "string"
           },
@@ -49789,11 +49801,14 @@
             "type" : "string"
           }
         },
-        "required" : [ "commitHash", "credentials", "dockerfile", "enabled", "pushToRegistry", "repoOptions", "repoRef", "repoType", "repoURL" ],
+        "required" : [ "autoDeploy", "commitHash", "credentials", "dockerfile", "enabled", "pushToRegistry", "repoOptions", "repoRef", "repoType", "repoURL" ],
         "type" : "object"
       },
       "appsettingsdto.DeploymentRepoSourceResp" : {
         "properties" : {
+          "autoDeploy" : {
+            "type" : "boolean"
+          },
           "commitHash" : {
             "type" : "string"
           },
@@ -49823,7 +49838,7 @@
             "type" : "string"
           }
         },
-        "required" : [ "commitHash", "credentials", "dockerfile", "pushToRegistry", "repoId", "repoOptions", "repoRef", "repoType", "repoURL" ],
+        "required" : [ "autoDeploy", "commitHash", "credentials", "dockerfile", "pushToRegistry", "repoId", "repoOptions", "repoRef", "repoType", "repoURL" ],
         "type" : "object"
       },
       "appsettingsdto.DeploymentSettingsResp" : {
@@ -50332,6 +50347,10 @@
       },
       "appsettingsdto.FunctionRepoCodeReq" : {
         "properties" : {
+          "autoDeploy" : {
+            "description" : "AutoDeploy is whether a push to RepoRef deploys the function; on when left\nout.",
+            "type" : "boolean"
+          },
           "commitHash" : {
             "type" : "string"
           },
@@ -50351,11 +50370,14 @@
             "type" : "string"
           }
         },
-        "required" : [ "commitHash", "credentials", "repoOptions", "repoRef", "repoType", "repoURL" ],
+        "required" : [ "autoDeploy", "commitHash", "credentials", "repoOptions", "repoRef", "repoType", "repoURL" ],
         "type" : "object"
       },
       "appsettingsdto.FunctionRepoCodeResp" : {
         "properties" : {
+          "autoDeploy" : {
+            "type" : "boolean"
+          },
           "commitHash" : {
             "type" : "string"
           },
@@ -50378,7 +50400,7 @@
             "type" : "string"
           }
         },
-        "required" : [ "commitHash", "credentials", "repoId", "repoOptions", "repoRef", "repoType", "repoURL" ],
+        "required" : [ "autoDeploy", "commitHash", "credentials", "repoId", "repoOptions", "repoRef", "repoType", "repoURL" ],
         "type" : "object"
       },
       "appsettingsdto.GenericResource" : {

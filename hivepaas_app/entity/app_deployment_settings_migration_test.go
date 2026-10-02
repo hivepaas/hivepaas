@@ -41,3 +41,31 @@ func TestDeploymentSettingsMigrationDropsNamingFields(t *testing.T) {
 	assert.NotContains(t, stored.Data, "noCache")
 	assert.Contains(t, stored.Data, "repoRef")
 }
+
+// An app built from a repository deployed on every push before it could be told
+// not to: the migration keeps it doing so. A function did not, and still does
+// not until it is told to.
+func TestDeploymentSettingsMigrationKeepsAppsDeployingOnPush(t *testing.T) {
+	app := &entity.Setting{
+		ID: "s1", Type: base.SettingTypeAppDeployment, Version: 2,
+		Data: `{"activeMethod": "repo", "repoSource": {"repoType": "git", "repoRef": "main"}}`,
+	}
+	data, err := app.AsAppDeploymentSettings()
+	assert.NoError(t, err)
+
+	changed, err := data.Migrate(app)
+	assert.NoError(t, err)
+	assert.True(t, changed)
+	assert.True(t, app.MustAsAppDeploymentSettings().RepoSource.AutoDeploy)
+
+	function := &entity.Setting{
+		ID: "s2", Type: base.SettingTypeAppDeployment, Version: 2,
+		Data: `{"activeMethod": "function", "functionSource": {"code": {"repo": {"repoRef": "main"}}}}`,
+	}
+	data, err = function.AsAppDeploymentSettings()
+	assert.NoError(t, err)
+
+	_, err = data.Migrate(function)
+	assert.NoError(t, err)
+	assert.False(t, function.MustAsAppDeploymentSettings().FunctionSource.Code.Repo.AutoDeploy)
+}

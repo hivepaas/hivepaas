@@ -8,7 +8,7 @@ import (
 )
 
 const (
-	CurrentAppDeploymentSettingsVersion = 2
+	CurrentAppDeploymentSettingsVersion = 3
 )
 
 var _ = registerSettingParser(base.SettingTypeAppDeployment, &appDeploymentSettingsParser{})
@@ -49,6 +49,9 @@ type DeploymentRepoSource struct {
 	Credentials    RepoCredentials       `json:"credentials,omitzero"` // id of github app/git token/ssh key setting
 	Dockerfile     DeploymentDockerfile  `json:"dockerfile"`
 	PushToRegistry ObjectID              `json:"pushToRegistry,omitzero"`
+	// AutoDeploy is whether a push to RepoRef, received by a repo webhook,
+	// deploys the app.
+	AutoDeploy bool `json:"autoDeploy"`
 }
 
 type DeploymentRepoOptions struct {
@@ -111,19 +114,66 @@ func (s *AppDeploymentSettings) GetResourceLinks(setting *Setting) []*ResLink {
 	resLinks := s.GetRefObjectIDs().GetResourceLinks(base.ResourceTypeSetting, setting.ID)
 
 	// Links repo ID (URL) to the current deployment
-	if s.ActiveMethod == base.DeploymentMethodRepo && s.RepoSource != nil && setting.ObjectID != "" {
+	if repoID, _, _ := s.sourceRepo(); repoID != "" && setting.ObjectID != "" {
 		timeNow := timeutil.NowUTC()
 		resLinks = append(resLinks, &ResLink{
 			SrcType:   base.ResourceTypeSetting,
 			SrcID:     setting.ID,
 			DstType:   base.ResourceTypeRepo,
-			DstID:     s.RepoSource.RepoID,
+			DstID:     repoID,
 			CreatedAt: timeNow,
 			UpdatedAt: timeNow,
 		})
 	}
 
 	return resLinks
+}
+
+// sourceRepo is the repository the app is built from, by the active method: its
+// repo source, or its function's code in a repository.
+func (s *AppDeploymentSettings) sourceRepo() (repoID, repoRef string, autoDeploy bool) {
+	switch s.ActiveMethod {
+	case base.DeploymentMethodRepo:
+		if s.RepoSource != nil {
+			return s.RepoSource.RepoID, s.RepoSource.RepoRef, s.RepoSource.AutoDeploy
+		}
+	case base.DeploymentMethodFunction:
+		if s.FunctionSource != nil && s.FunctionSource.Code.Repo != nil {
+			repo := s.FunctionSource.Code.Repo
+			return repo.RepoID, repo.RepoRef, repo.AutoDeploy
+		}
+	case base.DeploymentMethodImage:
+	}
+	return "", "", false
+}
+
+// DeploysOnPush is whether a push to the repository and ref deploys the app: it
+// is built from them, and set to deploy on push.
+func (s *AppDeploymentSettings) DeploysOnPush(repoID, repoRef string) bool {
+	sourceRepoID, sourceRepoRef, autoDeploy := s.sourceRepo()
+	return autoDeploy && sourceRepoID != "" && sourceRepoID == repoID && sourceRepoRef == repoRef
+}
+
+// SetRepoCommitHash sets the commit the app's repository is built at, on the
+// source of the active method. It tells whether that changed anything.
+func (s *AppDeploymentSettings) SetRepoCommitHash(hash string) bool {
+	var current *string
+	switch s.ActiveMethod {
+	case base.DeploymentMethodRepo:
+		if s.RepoSource != nil {
+			current = &s.RepoSource.CommitHash
+		}
+	case base.DeploymentMethodFunction:
+		if s.FunctionSource != nil && s.FunctionSource.Code.Repo != nil {
+			current = &s.FunctionSource.Code.Repo.CommitHash
+		}
+	case base.DeploymentMethodImage:
+	}
+	if current == nil || *current == hash {
+		return false
+	}
+	*current = hash
+	return true
 }
 
 func (s *Setting) AsAppDeploymentSettings() (*AppDeploymentSettings, error) {

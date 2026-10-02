@@ -29,7 +29,7 @@ func (uc *UC) processWebhookEventPush(
 		return hperrors.Wrap(err)
 	}
 
-	apps, err := uc.appService.FindAppsMatchingRepository(ctx, db, parsedURL.ID, pushEvent.RepoRef,
+	apps, err := uc.appService.FindAppsDeployingOnPush(ctx, db, parsedURL.ID, pushEvent.RepoRef,
 		bunex.SelectExcludeColumns(entity.AppDefaultExcludeColumns...),
 	)
 	if err != nil {

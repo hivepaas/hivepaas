@@ -69,6 +69,9 @@ type FunctionRepoCode struct {
 	CommitHash  string                `json:"commitHash,omitempty"`
 	RepoOptions DeploymentRepoOptions `json:"repoOptions"`
 	Credentials RepoCredentials       `json:"credentials,omitzero"`
+	// AutoDeploy is whether a push to RepoRef, received by a repo webhook,
+	// deploys the function.
+	AutoDeploy bool `json:"autoDeploy"`
 }
 
 // RepoSource is the repository as a checkout takes it.

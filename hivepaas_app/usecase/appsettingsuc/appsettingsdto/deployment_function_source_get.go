@@ -51,6 +51,7 @@ type FunctionRepoCodeResp struct {
 	CommitHash  string                     `json:"commitHash"`
 	RepoOptions *DeploymentRepoOptionsResp `json:"repoOptions"`
 	Credentials *settings.BaseSettingResp  `json:"credentials"`
+	AutoDeploy  bool                       `json:"autoDeploy"`
 }
 
 // transformFunctionSource shows the settings a function's source refers to as

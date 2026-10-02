@@ -36,6 +36,10 @@ type Service interface {
 
 	FindAppsMatchingRepository(ctx context.Context, db database.IDB, repoID, repoRef string,
 		extraAppOpts ...bunex.SelectQueryOption) ([]*entity.App, error)
+	// FindAppsDeployingOnPush finds the apps, and the functions, a push to the
+	// repository and ref deploys: built from them, and set to deploy on push.
+	FindAppsDeployingOnPush(ctx context.Context, db database.IDB, repoID, repoRef string,
+		extraAppOpts ...bunex.SelectQueryOption) ([]*entity.App, error)
 
 	PersistAppData(ctx context.Context, db database.IDB, data *PersistingAppData) error
 	// DeleteApp removes an app, its service and everything recorded about it.

@@ -16,22 +16,61 @@ func (s *service) FindAppsMatchingRepository(
 	repoID, repoRef string,
 	extraAppOpts ...bunex.SelectQueryOption,
 ) ([]*entity.App, error) {
+	settingOpts := []bunex.SelectQueryOption{
+		bunex.SelectWhere("setting.data->>'activeMethod' = ?", base.DeploymentMethodRepo),
+	}
+	if repoRef != "" {
+		settingOpts = append(settingOpts,
+			bunex.SelectWhere("setting.data->'repoSource'->>'repoRef' = ?", repoRef),
+		)
+	}
+	matches := func(settings *entity.AppDeploymentSettings) bool {
+		return settings.ActiveMethod == base.DeploymentMethodRepo &&
+			settings.RepoSource != nil &&
+			settings.RepoSource.RepoID == repoID &&
+			(repoRef == "" || settings.RepoSource.RepoRef == repoRef)
+	}
+	return s.findAppsLinkedToRepo(ctx, db, repoID, settingOpts, matches, extraAppOpts...)
+}
+
+func (s *service) FindAppsDeployingOnPush(
+	ctx context.Context,
+	db database.IDB,
+	repoID, repoRef string,
+	extraAppOpts ...bunex.SelectQueryOption,
+) ([]*entity.App, error) {
+	settingOpts := []bunex.SelectQueryOption{
+		bunex.SelectWhereIn("setting.data->>'activeMethod' IN (?)",
+			base.DeploymentMethodRepo, base.DeploymentMethodFunction),
+	}
+	matches := func(settings *entity.AppDeploymentSettings) bool {
+		return settings.DeploysOnPush(repoID, repoRef)
+	}
+	return s.findAppsLinkedToRepo(ctx, db, repoID, settingOpts, matches, extraAppOpts...)
+}
+
+// findAppsLinkedToRepo finds the active apps whose active deployment settings
+// are linked to the repository, narrowed by settingOpts, and keeps those whose
+// settings match.
+func (s *service) findAppsLinkedToRepo(
+	ctx context.Context,
+	db database.IDB,
+	repoID string,
+	settingOpts []bunex.SelectQueryOption,
+	matches func(*entity.AppDeploymentSettings) bool,
+	extraAppOpts ...bunex.SelectQueryOption,
+) ([]*entity.App, error) {
 	// Finds all deployment settings which are linked to the repo ID (URL)
 	settingListOpts := []bunex.SelectQueryOption{
 		bunex.SelectColumns("id", "type", "scope", "object_id"),
 		bunex.SelectWhere("setting.type = ?", base.SettingTypeAppDeployment),
 		bunex.SelectWhere("setting.status = ?", base.SettingStatusActive),
-		bunex.SelectWhere("setting.data->>'activeMethod' = ?", base.DeploymentMethodRepo),
 		bunex.SelectJoin("JOIN res_links ON res_links.src_id = setting.id"),
 		bunex.SelectWhere("res_links.deleted_at IS NULL"),
 		bunex.SelectWhere("res_links.dst_type = ?", base.ResourceTypeRepo),
 		bunex.SelectWhere("res_links.dst_id = ?", repoID),
 	}
-	if repoRef != "" {
-		settingListOpts = append(settingListOpts,
-			bunex.SelectWhere("setting.data->'repoSource'->>'repoRef' = ?", repoRef),
-		)
-	}
+	settingListOpts = append(settingListOpts, settingOpts...)
 
 	settings, _, err := s.settingRepo.List(ctx, db, nil, nil, settingListOpts...)
 	if err != nil {
@@ -83,11 +122,7 @@ func (s *service) FindAppsMatchingRepository(
 		if deploymentSetting == nil {
 			continue
 		}
-		deploymentSettings := deploymentSetting.MustAsAppDeploymentSettings()
-		if deploymentSettings.ActiveMethod != base.DeploymentMethodRepo ||
-			deploymentSettings.RepoSource == nil ||
-			deploymentSettings.RepoSource.RepoID != repoID ||
-			(repoRef != "" && deploymentSettings.RepoSource.RepoRef != repoRef) {
+		if !matches(deploymentSetting.MustAsAppDeploymentSettings()) {
 			continue
 		}
 		matchingApps = append(matchingApps, app)

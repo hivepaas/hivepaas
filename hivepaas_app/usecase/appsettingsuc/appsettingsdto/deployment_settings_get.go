@@ -79,6 +79,7 @@ type DeploymentRepoSourceResp struct {
 	Credentials    *settings.BaseSettingResp  `json:"credentials"`
 	Dockerfile     *DeploymentDockerfileResp  `json:"dockerfile"`
 	PushToRegistry *settings.BaseSettingResp  `json:"pushToRegistry"`
+	AutoDeploy     bool                       `json:"autoDeploy"`
 }
 
 type DeploymentRepoOptionsResp struct {

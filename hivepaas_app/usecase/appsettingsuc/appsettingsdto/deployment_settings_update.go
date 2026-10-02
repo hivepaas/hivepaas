@@ -108,6 +108,8 @@ type DeploymentRepoSourceReq struct {
 	Credentials    basedto.ObjectIDReq      `json:"credentials"`
 	Dockerfile     DeploymentDockerfileReq  `json:"dockerfile"`
 	PushToRegistry basedto.ObjectIDReq      `json:"pushToRegistry"`
+	// AutoDeploy is whether a push to RepoRef deploys the app; on when left out.
+	AutoDeploy *bool `json:"autoDeploy"`
 }
 
 func (req *DeploymentRepoSourceReq) ToEntity() (*entity.DeploymentRepoSource, error) {
@@ -135,7 +137,14 @@ func (req *DeploymentRepoSourceReq) ToEntity() (*entity.DeploymentRepoSource, er
 		Credentials:    entity.RepoCredentials{ID: req.Credentials.ID},
 		Dockerfile:     req.Dockerfile.ToEntity(),
 		PushToRegistry: entity.ObjectID{ID: req.PushToRegistry.ID},
+		AutoDeploy:     autoDeployOf(req.AutoDeploy),
 	}, nil
+}
+
+// autoDeployOf is whether a repository deploys on push, as a request sets it: on
+// unless it says otherwise.
+func autoDeployOf(autoDeploy *bool) bool {
+	return autoDeploy == nil || *autoDeploy
 }
 
 func (req *DeploymentRepoSourceReq) validate(field string) (res []vld.Validator) {

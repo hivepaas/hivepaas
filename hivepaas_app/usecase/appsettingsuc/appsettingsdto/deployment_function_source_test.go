@@ -241,7 +241,7 @@ func TestAFunctionSourceBecomesItsEntity(t *testing.T) {
 		Code: entity.FunctionCode{Dir: "fns/hello", Repo: &entity.FunctionRepoCode{
 			RepoType: base.RepoTypeGit, RepoID: "github.com/acme/fns", RepoURL: "https://github.com/acme/fns.git",
 			RepoRef: "refs/heads/main", RepoOptions: entity.DeploymentRepoOptions{GitLFSEnabled: true},
-			Credentials: entity.RepoCredentials{ID: "cred-1"},
+			Credentials: entity.RepoCredentials{ID: "cred-1"}, AutoDeploy: true,
 		}},
 		SystemPackages: []string{"ffmpeg"},
 		Timeout:        timeutil.Duration(30 * time.Second),

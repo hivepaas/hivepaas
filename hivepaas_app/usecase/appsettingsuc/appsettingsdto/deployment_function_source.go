@@ -60,6 +60,9 @@ type FunctionRepoCodeReq struct {
 	CommitHash  string                   `json:"commitHash"`
 	RepoOptions DeploymentRepoOptionsReq `json:"repoOptions"`
 	Credentials basedto.ObjectIDReq      `json:"credentials"`
+	// AutoDeploy is whether a push to RepoRef deploys the function; on when left
+	// out.
+	AutoDeploy *bool `json:"autoDeploy"`
 }
 
 // Normalize folds the source into one spelling, and fills in what it leaves
@@ -317,5 +320,6 @@ func (req *FunctionRepoCodeReq) toEntity() (*entity.FunctionRepoCode, error) {
 		CommitHash:  req.CommitHash,
 		RepoOptions: req.RepoOptions.ToEntity(),
 		Credentials: entity.RepoCredentials{ID: req.Credentials.ID},
+		AutoDeploy:  autoDeployOf(req.AutoDeploy),
 	}, nil
 }

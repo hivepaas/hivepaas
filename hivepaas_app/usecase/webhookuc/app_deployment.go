@@ -67,8 +67,8 @@ func (uc *UC) createAppDeploymentByChangeID(
 	if err != nil {
 		return hperrors.Wrap(err)
 	}
-	if deploymentSettings.RepoSource != nil && deploymentSettings.RepoSource.CommitHash != "" {
-		deploymentSettings.RepoSource.CommitHash = ""
+	// The app follows its ref from now on: a commit it was pinned at goes.
+	if deploymentSettings.SetRepoCommitHash("") {
 		deploymentSetting.MustSetData(deploymentSettings)
 		deploymentSetting.UpdateVer++
 		deploymentSetting.UpdatedAt = timeutil.NowUTC()
@@ -81,7 +81,7 @@ func (uc *UC) createAppDeploymentByChangeID(
 		return hperrors.Wrap(err)
 	}
 	// Override target commit hash
-	deployment.Settings.RepoSource.CommitHash = changeID
+	deployment.Settings.SetRepoCommitHash(changeID)
 	// Set trigger for the deployment
 	deployment.Trigger = &entity.AppDeploymentTrigger{
 		Source:   base.DeploymentTriggerSourceRepoWebhook,

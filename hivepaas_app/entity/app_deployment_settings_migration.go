@@ -18,6 +18,13 @@ func (s *AppDeploymentSettings) Migrate(setting *Setting) (hasChange bool, err e
 	// All three are gone from the struct, so parsing has already dropped them -
 	// writing the data back is what takes them out of the row.
 
+	// Version 3 added repoSource.autoDeploy. An app built from a repository
+	// deployed on every push its webhook received, and keeps doing so. A
+	// function's repository did not, and its flag stays off.
+	if setting.Version < 3 && s.RepoSource != nil { //nolint:mnd
+		s.RepoSource.AutoDeploy = true
+	}
+
 	setting.Version = CurrentAppDeploymentSettingsVersion
 	setting.UpdateVer++
 	setting.MustSetData(s)

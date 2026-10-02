@@ -10,15 +10,25 @@ import { functionSettingsToPayload, functionSourceToPayload } from "~/projects/m
 import { Button } from "@/components/ui";
 
 import { FunctionFiles } from "./function-files.com";
+import { UnsavedCodeGuard } from "./unsaved-code-guard.com";
 
 /**
  * A function's inline code: its files, one in the editor, saved and deployed
- * together. A save sends the function's settings back with these files.
+ * together. A save sends the function's settings back with these files. The
+ * file in the editor is the route's, so that it stays there across a save.
  */
-export function FunctionCodeWorkspace({ projectId, env, appId, settings, readOnly, children }: Props) {
+export function FunctionCodeWorkspace({
+    projectId,
+    env,
+    appId,
+    settings,
+    readOnly,
+    selectedPath,
+    onSelectPath,
+    children,
+}: Props) {
     const savedFiles = settings.functionSource.code.inline?.files ?? [];
     const [files, setFiles] = useState<FunctionFile[]>(savedFiles);
-    const [selectedPath, setSelectedPath] = useState(savedFiles[0]?.path ?? "");
     const selected = files.find(file => file.path === selectedPath) ?? files[0];
     const isDirty = JSON.stringify(files) !== JSON.stringify(savedFiles);
 
@@ -47,6 +57,7 @@ export function FunctionCodeWorkspace({ projectId, env, appId, settings, readOnl
 
     return (
         <div className="flex flex-col gap-4">
+            <UnsavedCodeGuard when={isDirty && !readOnly} />
             <div className="flex flex-wrap items-center justify-between gap-2">
                 <span className="text-sm text-muted-foreground">{isDirty ? "Changes not saved" : "No changes"}</span>
                 {!readOnly ? (
@@ -78,10 +89,10 @@ export function FunctionCodeWorkspace({ projectId, env, appId, settings, readOnl
                         files={files}
                         selectedPath={selected?.path ?? ""}
                         readOnly={readOnly}
-                        onSelect={setSelectedPath}
+                        onSelect={onSelectPath}
                         onAdd={path => {
                             setFiles(current => [...current, { path, content: "" }]);
-                            setSelectedPath(path);
+                            onSelectPath(path);
                         }}
                         onRemove={path => {
                             setFiles(current => current.filter(file => file.path !== path));
@@ -108,6 +119,9 @@ interface Props {
     appId: string;
     settings: FunctionMethod;
     readOnly: boolean;
+    /** The file in the editor; the first file when it is none of the code's. */
+    selectedPath: string;
+    onSelectPath: (path: string) => void;
     /** What sits beside the editor - the test panel - given the files as edited. */
     children?: (files: FunctionFile[], setFiles: (files: FunctionFile[]) => void) => React.ReactNode;
 }

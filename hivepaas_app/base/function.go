@@ -1,7 +1,9 @@
 package base
 
 import (
+	"path"
 	"regexp"
+	"strings"
 	"time"
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/unit"
@@ -87,6 +89,52 @@ const (
 // FunctionReservedDir is the directory of a function's source that is
 // HivePaaS's own: the Dockerfile it writes for the function goes there.
 const FunctionReservedDir = ".hivepaas"
+
+// FunctionPathMaxLen is the longest path of a file or a directory of a
+// function's code.
+const FunctionPathMaxLen = 255
+
+var (
+	// functionPathPattern is a path spelled plainly: no space, no quote, nothing a
+	// Dockerfile or a shell would read as more than a name.
+	functionPathPattern = regexp.MustCompile(`^[A-Za-z0-9._/-]+$`)
+
+	// FunctionHandlerPatterns are the names each runtime can call.
+	FunctionHandlerPatterns = map[FunctionRuntime]*regexp.Regexp{
+		FunctionRuntimeNode24:    regexp.MustCompile(`^[A-Za-z_$][A-Za-z0-9_$]*$`),
+		FunctionRuntimePython313: regexp.MustCompile(`^[A-Za-z_][A-Za-z0-9_]*$`),
+		FunctionRuntimeGo127:     regexp.MustCompile(`^[A-Z][A-Za-z0-9_]*$`),
+	}
+	// FunctionEntrypointExts are the extensions of a handler's file, for the
+	// runtimes whose entrypoint is a file.
+	FunctionEntrypointExts = map[FunctionRuntime][]string{
+		FunctionRuntimeNode24:    {".js", ".mjs", ".cjs"},
+		FunctionRuntimePython313: {".py"},
+	}
+)
+
+// FunctionPathOK says whether p names a place inside a function: relative,
+// within it, and spelled plainly. "." - the function's root - is a place for a
+// directory only.
+func FunctionPathOK(p string, dir bool) bool {
+	if p == "" || len(p) > FunctionPathMaxLen || path.IsAbs(p) || !functionPathPattern.MatchString(p) {
+		return false
+	}
+	if p == "." {
+		return dir
+	}
+	for part := range strings.SplitSeq(p, "/") {
+		if part == "" || part == "." || part == ".." {
+			return false
+		}
+	}
+	return true
+}
+
+// FunctionPathReserved says whether p is in the directory that is HivePaaS's.
+func FunctionPathReserved(p string) bool {
+	return p == FunctionReservedDir || strings.HasPrefix(p, FunctionReservedDir+"/")
+}
 
 // FunctionSystemPackagePattern is a Debian package name, with an optional
 // =version: lowercase letters, digits, '+', '-' and '.', starting with a letter

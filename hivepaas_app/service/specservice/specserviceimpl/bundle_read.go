@@ -173,6 +173,9 @@ func parseBundleFiles(files map[string][]byte) (*specmodel.ImportBundle, error) 
 			bundle.Envs[parts[1]][strings.TrimSuffix(parts[3], ".yaml")] = doc
 		}
 	}
+	if err := readFunctionCode(bundle, files); err != nil {
+		return nil, err
+	}
 	return bundle, nil
 }
 

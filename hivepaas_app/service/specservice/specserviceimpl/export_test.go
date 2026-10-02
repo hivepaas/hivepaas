@@ -419,6 +419,7 @@ func exportFixture(t *testing.T) specservice.Service {
 		FunctionSource: &entity.DeploymentFunctionSource{Runtime: base.FunctionRuntimeNode24,
 			Code: entity.FunctionCode{Inline: &entity.FunctionInlineCode{Files: []*entity.FunctionFile{
 				{Path: "index.js", Content: "export default () => ({})"},
+				{Path: "lib/util.js", Content: "export const two = 2;\n"},
 			}}}},
 	}))
 
@@ -628,23 +629,29 @@ func TestExportSkipsApiKeysAndPreviewApps(t *testing.T) {
 	assert.Positive(t, codes[specmodel.CodePreviewAppSkipped], "so is the preview app")
 }
 
-// A function is not part of a spec yet: it is left out, and the report says
-// so, where an operator looking for it finds why.
-func TestExportSkipsAFunction(t *testing.T) {
+// A function travels as any app, its inline code as files of the bundle under
+// its own directory, which its source names instead of listing the files.
+func TestExportWritesAFunctionWithItsCodeAsFiles(t *testing.T) {
 	path, report := runExport(t, specmodel.SecretsModeOmit, "")
 
 	env := readFromArchive(t, path, "projects/project_a/envs/dev.yaml")
-	assert.NotContains(t, env, "hello")
-	assert.NotContains(t, env, "export default")
+	assert.Contains(t, env, "hello:")
+	assert.Contains(t, env, "activeMethod: function")
+	assert.Contains(t, env, "filesFrom: projects/project_a/envs/dev/functions/hello")
+	assert.NotContains(t, env, "export default", "the code is not in the env document")
 
-	var skipped []string
+	code := readFromArchive(t, path, "projects/project_a/envs/dev/functions/hello/index.js")
+	assert.Equal(t, "export default () => ({})", code)
+	listing, err := exec.Command("tar", "-tzf", path).Output()
+	assert.NoError(t, err)
+	assert.Contains(t, string(listing), "projects/project_a/envs/dev/functions/hello/lib/util.js")
+	manifest := readFromArchive(t, path, "spec.yaml")
+	assert.Contains(t, manifest, "projects/project_a/envs/dev/functions/hello/index.js",
+		"the manifest lists the code's files as it lists every payload file")
+
 	for _, issue := range report.Issues {
-		if issue.Code == specmodel.CodeFunctionSkipped {
-			assert.Equal(t, specmodel.SeveritySkipped, issue.Severity)
-			skipped = append(skipped, issue.Path)
-		}
+		assert.NotEqual(t, "FUNCTION_SKIPPED", issue.Code)
 	}
-	assert.Equal(t, []string{"projects/project_a/envs/dev/apps/hello"}, skipped)
 }
 
 // An app with no service is normal, not an error: two of five user apps in a

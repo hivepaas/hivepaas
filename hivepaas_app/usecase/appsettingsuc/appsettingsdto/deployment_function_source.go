@@ -3,7 +3,6 @@ package appsettingsdto
 import (
 	"fmt"
 	"path"
-	"regexp"
 	"slices"
 	"strings"
 
@@ -18,28 +17,6 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/timeutil"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/unit"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/vcsurl"
-)
-
-const (
-	functionPathMaxLen = 255
-)
-
-var (
-	// functionPathRegex is a path spelled plainly: no space, no quote, nothing a
-	// Dockerfile or a shell would read as more than a name.
-	functionPathRegex = regexp.MustCompile(`^[A-Za-z0-9._/-]+$`)
-	// functionHandlerRegexes are the names each runtime can call.
-	functionHandlerRegexes = map[base.FunctionRuntime]*regexp.Regexp{
-		base.FunctionRuntimeNode24:    regexp.MustCompile(`^[A-Za-z_$][A-Za-z0-9_$]*$`),
-		base.FunctionRuntimePython313: regexp.MustCompile(`^[A-Za-z_][A-Za-z0-9_]*$`),
-		base.FunctionRuntimeGo127:     regexp.MustCompile(`^[A-Z][A-Za-z0-9_]*$`),
-	}
-	// functionEntrypointExts are the extensions of a handler's file, for the
-	// runtimes whose entrypoint is a file.
-	functionEntrypointExts = map[base.FunctionRuntime][]string{
-		base.FunctionRuntimeNode24:    {".js", ".mjs", ".cjs"},
-		base.FunctionRuntimePython313: {".py"},
-	}
 )
 
 // DeploymentFunctionSourceReq is what a function is deployed from. Normalize it,
@@ -145,28 +122,6 @@ func cleanFunctionPath(p string) string {
 	return path.Clean(p)
 }
 
-// functionPathOK says whether p names a place inside a function: relative,
-// within it, and spelled plainly. "." - the function's root - is a place for a
-// directory only.
-func functionPathOK(p string, dir bool) bool {
-	if p == "" || len(p) > functionPathMaxLen || path.IsAbs(p) || !functionPathRegex.MatchString(p) {
-		return false
-	}
-	if p == "." {
-		return dir
-	}
-	for part := range strings.SplitSeq(p, "/") {
-		if part == "" || part == "." || part == ".." {
-			return false
-		}
-	}
-	return true
-}
-
-func functionPathReserved(p string) bool {
-	return p == base.FunctionReservedDir || strings.HasPrefix(p, base.FunctionReservedDir+"/")
-}
-
 // Validate checks the source, once normalized. field is where it is in the
 // request.
 func (req *DeploymentFunctionSourceReq) Validate(field string) (res []vld.Validator) {
@@ -202,15 +157,15 @@ func (req *DeploymentFunctionSourceReq) Validate(field string) (res []vld.Valida
 
 func (req *DeploymentFunctionSourceReq) validateEntrypoint(field string) (res []vld.Validator) {
 	file, handler := req.Entrypoint.File, req.Entrypoint.Handler
-	fileOK := functionPathOK(file, true)
-	if exts, ok := functionEntrypointExts[req.Runtime]; ok {
-		fileOK = functionPathOK(file, false) && slices.Contains(exts, path.Ext(file))
+	fileOK := base.FunctionPathOK(file, true)
+	if exts, ok := base.FunctionEntrypointExts[req.Runtime]; ok {
+		fileOK = base.FunctionPathOK(file, false) && slices.Contains(exts, path.Ext(file))
 	}
 	res = append(res, vld.Must(fileOK).OnError(
 		vld.SetField(field+"file", nil),
 		vld.SetCustomKey("ERR_VLD_FUNCTION_ENTRYPOINT_INVALID"),
 	))
-	if handlerRegex, ok := functionHandlerRegexes[req.Runtime]; ok {
+	if handlerRegex, ok := base.FunctionHandlerPatterns[req.Runtime]; ok {
 		res = append(res, vld.Must(handlerRegex.MatchString(handler)).OnError(
 			vld.SetField(field+"handler", nil),
 			vld.SetCustomKey("ERR_VLD_FUNCTION_HANDLER_INVALID"),
@@ -235,7 +190,7 @@ func (req *FunctionCodeReq) validate(field string) (res []vld.Validator) {
 	if req.Repo != nil {
 		res = append(res, req.Repo.validate(field+".repo.")...)
 		if req.Dir != "" {
-			res = append(res, vld.Must(functionPathOK(req.Dir, false)).OnError(
+			res = append(res, vld.Must(base.FunctionPathOK(req.Dir, false)).OnError(
 				vld.SetField(field+".dir", nil),
 				vld.SetCustomKey("ERR_VLD_FUNCTION_FILE_PATH_INVALID"),
 			))
@@ -280,14 +235,14 @@ func (req *FunctionInlineCodeReq) validate(field string) (res []vld.Validator) {
 	for i, f := range files {
 		size += unit.DataSize(len(f.Content))
 		pathField := fmt.Sprintf("%s.files[%d].path", field, i)
-		if !functionPathOK(f.Path, false) {
+		if !base.FunctionPathOK(f.Path, false) {
 			res = append(res, vld.Must(false).OnError(
 				vld.SetField(pathField, nil),
 				vld.SetCustomKey("ERR_VLD_FUNCTION_FILE_PATH_INVALID"),
 			))
 			continue
 		}
-		res = append(res, vld.Must(!functionPathReserved(f.Path)).OnError(
+		res = append(res, vld.Must(!base.FunctionPathReserved(f.Path)).OnError(
 			vld.SetField(pathField, nil),
 			vld.SetCustomKey("ERR_VLD_VALUE_RESERVED"),
 			vld.SetParam("Value", base.FunctionReservedDir),

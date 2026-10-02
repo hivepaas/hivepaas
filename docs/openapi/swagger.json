@@ -49378,10 +49378,44 @@
         "required" : [ "mode" ],
         "type" : "object"
       },
+      "appsettingsdto.AppAutoscaleEventResp" : {
+        "properties" : {
+          "calls" : {
+            "type" : "integer"
+          },
+          "from" : {
+            "type" : "integer"
+          },
+          "inFlight" : {
+            "type" : "number"
+          },
+          "reason" : {
+            "type" : "string"
+          },
+          "throttled" : {
+            "type" : "integer"
+          },
+          "time" : {
+            "type" : "string"
+          },
+          "to" : {
+            "type" : "integer"
+          }
+        },
+        "required" : [ "calls", "from", "inFlight", "reason", "throttled", "time", "to" ],
+        "type" : "object"
+      },
       "appsettingsdto.AppAutoscaleResp" : {
         "properties" : {
           "enabled" : {
             "type" : "boolean"
+          },
+          "events" : {
+            "description" : "Events are the latest scalings, the latest first.",
+            "items" : {
+              "$ref" : "#/components/schemas/appsettingsdto.AppAutoscaleEventResp"
+            },
+            "type" : "array"
           },
           "maxReplicas" : {
             "type" : "integer"
@@ -49390,7 +49424,7 @@
             "type" : "integer"
           },
           "paused" : {
-            "description" : "Paused is why autoscale cannot act: its calls cannot be read (a reason\nof the logs' history, such as disabled).",
+            "description" : "Paused is why autoscale cannot act: its calls cannot be read (a reason\nof the logs' history, such as disabled), or the function does not run a\nset number of instances (not-replicated).",
             "type" : "string"
           },
           "replicas" : {
@@ -49407,7 +49441,7 @@
             "type" : "integer"
           }
         },
-        "required" : [ "enabled", "maxReplicas", "minReplicas", "paused", "replicas", "scaleInDelay", "target", "updateVer" ],
+        "required" : [ "enabled", "events", "maxReplicas", "minReplicas", "paused", "replicas", "scaleInDelay", "target", "updateVer" ],
         "type" : "object"
       },
       "appsettingsdto.AppCloneRoutingDomainSettingsReq" : {
@@ -54672,11 +54706,14 @@
           "p99" : {
             "type" : "number"
           },
+          "replicas" : {
+            "type" : "integer"
+          },
           "time" : {
             "type" : "string"
           }
         },
-        "required" : [ "calls", "errors4xx", "errors5xx", "failed", "p50", "p95", "p99", "time" ],
+        "required" : [ "calls", "errors4xx", "errors5xx", "failed", "p50", "p95", "p99", "replicas", "time" ],
         "type" : "object"
       },
       "appdto.GetAppHTTPMetricsResp" : {

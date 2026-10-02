@@ -2,6 +2,7 @@ package appsettingsuc
 
 import (
 	"context"
+	"time"
 
 	"github.com/moby/moby/api/types/swarm"
 	"github.com/tiendc/gofn"
@@ -19,8 +20,19 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/appsettingsuc/appsettingsdto"
 )
 
+const (
+	// autoscaleEventsSince and autoscaleEventsLimit bound the scalings the
+	// settings show: the latest of the last week.
+	autoscaleEventsSince = 7 * 24 * time.Hour
+	autoscaleEventsLimit = 20
+
+	// autoscalePausedNotReplicated: the function does not run a set number of
+	// instances - a global or a job mode - so there is none to scale.
+	autoscalePausedNotReplicated = "not-replicated"
+)
+
 // GetAppAutoscale answers a function's autoscale: its settings, its replicas
-// now, and why it is paused when it cannot act.
+// now, why it is paused when it cannot act, and its latest scalings.
 func (uc *UC) GetAppAutoscale(
 	ctx context.Context,
 	_ *basedto.Auth,
@@ -35,14 +47,23 @@ func (uc *UC) GetAppAutoscale(
 		return nil, err
 	}
 	replicas := 0
-	if service, err := uc.clusterService.ServiceInspect(ctx, app.ServiceID, false); err == nil && service != nil {
+	service, err := uc.clusterService.ServiceInspect(ctx, app.ServiceID, false)
+	if err == nil && service != nil {
 		replicas = replicasOf(service)
 	}
 	paused, err := uc.autoscalePaused(ctx, app)
 	if err != nil {
 		return nil, err
 	}
-	resp, err := appsettingsdto.TransformAppAutoscale(setting, replicas, paused)
+	if paused == "" && service != nil && service.Spec.Mode.Replicated == nil {
+		paused = autoscalePausedNotReplicated
+	}
+	events, err := uc.functionAutoscale.Events(ctx, uc.db, app.ID, timeutil.NowUTC().Add(-autoscaleEventsSince),
+		autoscaleEventsLimit)
+	if err != nil {
+		return nil, hperrors.Wrap(err)
+	}
+	resp, err := appsettingsdto.TransformAppAutoscale(setting, replicas, paused, events)
 	if err != nil {
 		return nil, hperrors.Wrap(err)
 	}

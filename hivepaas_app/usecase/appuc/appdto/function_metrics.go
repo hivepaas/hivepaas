@@ -76,10 +76,13 @@ type FunctionMetricsCountsResp struct {
 	P99       *float64 `json:"p99"`
 }
 
-// FunctionMetricsPointResp is the calls of one step, Time its start.
+// FunctionMetricsPointResp is the calls of one step, Time its start, and -
+// for a function with autoscale, or one scaled within the range - its
+// replicas at the step's end.
 type FunctionMetricsPointResp struct {
 	Time time.Time `json:"time"`
 	FunctionMetricsCountsResp
+	Replicas *int `json:"replicas,omitempty"`
 }
 
 // FunctionMetricsPathResp is the calls of one method and path.

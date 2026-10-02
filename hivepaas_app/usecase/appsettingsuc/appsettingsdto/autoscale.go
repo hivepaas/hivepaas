@@ -1,12 +1,15 @@
 package appsettingsdto
 
 import (
+	"time"
+
 	vld "github.com/tiendc/go-validator"
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/timeutil"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/functionautoscaleservice"
 )
 
 type GetAppAutoscaleReq struct {
@@ -43,9 +46,25 @@ type AppAutoscaleResp struct {
 	// Replicas is the function's now; 0 when it is stopped.
 	Replicas int `json:"replicas"`
 	// Paused is why autoscale cannot act: its calls cannot be read (a reason
-	// of the logs' history, such as disabled).
-	Paused    string `json:"paused,omitempty"`
-	UpdateVer int    `json:"updateVer"`
+	// of the logs' history, such as disabled), or the function does not run a
+	// set number of instances (not-replicated).
+	Paused string `json:"paused,omitempty"`
+	// Events are the latest scalings, the latest first.
+	Events    []*AppAutoscaleEventResp `json:"events"`
+	UpdateVer int                      `json:"updateVer"`
+}
+
+// AppAutoscaleEventResp is one scaling: when, from and to how many replicas,
+// and what it was decided from - the calls in flight over the minute before,
+// the calls, those turned away.
+type AppAutoscaleEventResp struct {
+	Time      time.Time `json:"time"`
+	From      int       `json:"from"`
+	To        int       `json:"to"`
+	InFlight  float64   `json:"inFlight"`
+	Calls     int64     `json:"calls"`
+	Throttled int64     `json:"throttled"`
+	Reason    string    `json:"reason"`
 }
 
 type UpdateAppAutoscaleReq struct {
@@ -95,9 +114,16 @@ type UpdateAppAutoscaleResp struct {
 }
 
 // TransformAppAutoscale answers the settings, the defaults when there are none.
-func TransformAppAutoscale(setting *entity.Setting, replicas int, paused string) (*AppAutoscaleResp, error) {
+func TransformAppAutoscale(
+	setting *entity.Setting, replicas int, paused string, events []*functionautoscaleservice.Event,
+) (*AppAutoscaleResp, error) {
 	autoscale := entity.NewAppAutoscale()
-	resp := &AppAutoscaleResp{Replicas: replicas, Paused: paused}
+	resp := &AppAutoscaleResp{Replicas: replicas, Paused: paused,
+		Events: make([]*AppAutoscaleEventResp, 0, len(events))}
+	for _, e := range events {
+		resp.Events = append(resp.Events, &AppAutoscaleEventResp{Time: e.Time, From: e.From, To: e.To,
+			InFlight: e.InFlight, Calls: e.Calls, Throttled: e.Throttled, Reason: e.Reason})
+	}
 	if setting != nil {
 		var err error
 		if autoscale, err = setting.AsAppAutoscale(); err != nil {

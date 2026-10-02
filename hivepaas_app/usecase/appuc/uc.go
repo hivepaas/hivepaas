@@ -11,6 +11,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/clusterservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/containerexecservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/domainservice"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/functionautoscaleservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/functionservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/hpappservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/loggingservice"
@@ -44,6 +45,7 @@ type UC struct {
 	loggingService         loggingservice.Service
 	traefikService         traefikservice.Service
 	hpAppService           hpappservice.Service
+	functionAutoscale      functionautoscaleservice.Service
 }
 
 func New(
@@ -69,6 +71,7 @@ func New(
 	loggingService loggingservice.Service,
 	traefikService traefikservice.Service,
 	hpAppService hpappservice.Service,
+	functionAutoscale functionautoscaleservice.Service,
 ) *UC {
 	return &UC{
 		db:            db,
@@ -93,5 +96,6 @@ func New(
 		loggingService:         loggingService,
 		traefikService:         traefikService,
 		hpAppService:           hpAppService,
+		functionAutoscale:      functionAutoscale,
 	}
 }

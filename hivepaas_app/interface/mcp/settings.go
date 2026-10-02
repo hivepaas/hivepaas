@@ -62,6 +62,9 @@ var appSettingsKinds = []settingsKind{
 	{"docker-api", "/docker-api-settings",
 		func() any { return &appsettingsdto.AppDockerAPISettingsResp{} },
 		func() any { return &appsettingsdto.UpdateAppDockerAPISettingsReq{} }},
+	{"autoscale", "/autoscale",
+		func() any { return &appsettingsdto.AppAutoscaleResp{} },
+		func() any { return &appsettingsdto.UpdateAppAutoscaleReq{} }},
 }
 
 func settingsKindNames() string {
@@ -117,7 +120,10 @@ func getAppSettingsTool() Tool {
 			"or cache from outside, each with its certificate, TLS passthrough and extraAlpnProtocols), "+
 			"service (replicas), network (published ports), resource (CPU and memory), container, storage "+
 			"(mounts), feature, kind (the database or cache it is: engine, version, credentials, sslMode - "+
-			"not its domains, which are routing's) or docker-api. Secrets are masked. Only the kind asked for "+
+			"not its domains, which are routing's), docker-api, or autoscale (a function's: on or off, "+
+			"minReplicas and maxReplicas, target - the share of an instance's Concurrency it keeps busy, in "+
+			"percent - scaleInDelay, its replicas now, why it is paused, its latest scalings; while it is on, "+
+			"service's replicas are the autoscale's). Secrets are masked. Only the kind asked for "+
 			"is read. To connect an app to a database, get_env_link_suggestions answers the env vars; for an "+
 			"engine's image to set itself up, get_env_self_suggestions.",
 		func(ctx context.Context, call *Call, in settingsInput) (settingsAnswer, error) {

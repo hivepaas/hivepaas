@@ -60,6 +60,7 @@ type service struct {
 	dockerManager  docker.Manager
 	appRepo        repository.AppRepo
 	settingRepo    repository.SettingRepo
+	taskRepo       repository.TaskRepo
 	loggingService loggingservice.Service
 	systemEventBus systemeventbusservice.Service
 	logger         logging.Logger
@@ -72,12 +73,13 @@ func New(
 	dockerManager docker.Manager,
 	appRepo repository.AppRepo,
 	settingRepo repository.SettingRepo,
+	taskRepo repository.TaskRepo,
 	loggingService loggingservice.Service,
 	systemEventBus systemeventbusservice.Service,
 	logger logging.Logger,
 ) functionautoscaleservice.Service {
 	return &service{db: db, states: redisStates{client: redisClient}, dockerManager: dockerManager, appRepo: appRepo,
-		settingRepo: settingRepo, loggingService: loggingService, systemEventBus: systemEventBus,
+		settingRepo: settingRepo, taskRepo: taskRepo, loggingService: loggingService, systemEventBus: systemEventBus,
 		logger: logger, now: timeutil.NowUTC}
 }
 
@@ -109,14 +111,9 @@ func (s *service) EnsureJob(ctx context.Context, db database.IDB) error {
 	}
 	status := gofn.If(len(autoscales) > 0, base.SettingStatusActive, base.SettingStatusDisabled)
 
-	jobs, _, err := s.settingRepo.List(ctx, db, nil, nil,
-		bunex.SelectWhere("setting.type = ?", base.SettingTypePeriodicJob),
-		bunex.SelectWhere("setting.kind = ?", base.PeriodicKindFunctionAutoscale),
-		bunex.SelectWhere("setting.scope = ?", base.ObjectScopeGlobal),
-		bunex.SelectLimit(1),
-	)
+	jobs, err := s.jobSettings(ctx, db)
 	if err != nil {
-		return hperrors.Wrap(err)
+		return err
 	}
 	now := s.now()
 	switch {
@@ -153,6 +150,63 @@ func (s *service) EnsureJob(ctx context.Context, db database.IDB) error {
 	// The workers keep the periodic jobs in a cache: tell them it moved.
 	_ = s.systemEventBus.Publish(ctx, base.SystemEventPeriodicSettingsReload)
 	return nil
+}
+
+// jobSettings is the job's setting, made once, whatever its status: none
+// before a function first had autoscale on.
+func (s *service) jobSettings(ctx context.Context, db database.IDB) ([]*entity.Setting, error) {
+	jobs, _, err := s.settingRepo.List(ctx, db, nil, nil,
+		bunex.SelectWhere("setting.type = ?", base.SettingTypePeriodicJob),
+		bunex.SelectWhere("setting.kind = ?", base.PeriodicKindFunctionAutoscale),
+		bunex.SelectWhere("setting.scope = ?", base.ObjectScopeGlobal),
+		bunex.SelectLimit(1),
+	)
+	return jobs, hperrors.Wrap(err)
+}
+
+func (s *service) Events(
+	ctx context.Context, db database.IDB, appID string, since time.Time, limit int,
+) ([]*functionautoscaleservice.Event, error) {
+	jobs, err := s.jobSettings(ctx, db)
+	if err != nil || len(jobs) == 0 {
+		return nil, err
+	}
+	// The job's tasks are a run each, listing the functions it scaled: the
+	// function's are those whose output names it. The pattern holds the app
+	// alone - the output's other fields are not to be matched.
+	match, err := json.Marshal(map[string]any{"scaled": []map[string]string{{"app": appID}}})
+	if err != nil {
+		return nil, hperrors.Wrap(err)
+	}
+	opts := []bunex.SelectQueryOption{
+		bunex.SelectWhere("task.run_at >= ?", since),
+		bunex.SelectWhere("task.output::jsonb @> ?::jsonb", string(match)),
+		bunex.SelectOrder("task.run_at DESC"),
+	}
+	if limit > 0 {
+		opts = append(opts, bunex.SelectLimit(limit))
+	}
+	tasks, _, err := s.taskRepo.ListByTarget(ctx, db, jobs[0].ID, nil, opts...)
+	if err != nil {
+		return nil, hperrors.Wrap(err)
+	}
+	events := make([]*functionautoscaleservice.Event, 0, len(tasks))
+	for _, task := range tasks {
+		out := &entity.TaskFunctionAutoscaleOutput{}
+		if err := json.Unmarshal([]byte(task.Output), out); err != nil {
+			continue
+		}
+		for _, change := range out.Scaled {
+			if change.App != appID {
+				continue
+			}
+			events = append(events, &functionautoscaleservice.Event{
+				Time: task.RunAt, From: change.From, To: change.To, InFlight: change.InFlight,
+				Calls: change.Calls, Throttled: change.Throttled, Reason: change.Reason,
+			})
+		}
+	}
+	return events, nil
 }
 
 func (s *service) Run(ctx context.Context, data *queue.PeriodicExecData) error {

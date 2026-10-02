@@ -60,6 +60,10 @@ type updateAppServiceSettingsData struct {
 	// recreated, which gives it a new ID that must be persisted outside the rolled back
 	// transaction.
 	RestoredServiceID string
+
+	// Autoscaled is a function whose autoscale is on: its replicas are the
+	// autoscale's, and a save of these settings keeps them as they are.
+	Autoscaled bool
 }
 
 func (uc *UC) loadAppServiceSettingsForUpdate(
@@ -91,6 +95,17 @@ func (uc *UC) loadAppServiceSettingsForUpdate(
 		return hperrors.Wrap(hperrors.ErrUpdateVerMismatched)
 	}
 
+	autoscale, err := uc.appAutoscaleSetting(ctx, db, app.ID)
+	if err != nil {
+		return err
+	}
+	if autoscale != nil && autoscale.Status == base.SettingStatusActive {
+		parsed, err := autoscale.AsAppAutoscale()
+		if err != nil {
+			return hperrors.Wrap(err)
+		}
+		data.Autoscaled = parsed.Enabled
+	}
 	return nil
 }
 
@@ -123,7 +138,11 @@ func (uc *UC) prepareUpdatingAppServiceMode(
 		if item == nil {
 			item = &swarm.ReplicatedService{}
 		}
-		item.Replicas = req.ModeSpec.ServiceReplicas
+		// An autoscaled function's replicas are the autoscale's: a save made
+		// from a page loaded a while ago would set them back.
+		if !data.Autoscaled || item.Replicas == nil {
+			item.Replicas = req.ModeSpec.ServiceReplicas
+		}
 		spec.Mode.Replicated = item
 	case docker.ServiceModeReplicatedJob:
 		item := currMode.ReplicatedJob

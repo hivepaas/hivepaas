@@ -2,6 +2,7 @@ package appuc
 
 import (
 	"context"
+	"slices"
 	"time"
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
@@ -10,6 +11,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/timeutil"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/functionautoscaleservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/loggingservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/appuc/appdto"
 	"github.com/hivepaas/hivepaas/services/logging"
@@ -69,7 +71,81 @@ func (uc *UC) GetFunctionMetrics(
 	if err != nil {
 		return nil, hperrors.Wrap(err)
 	}
-	return &appdto.GetFunctionMetricsResp{Data: toFunctionMetricsData(req.Range, window, stats)}, nil
+	data := toFunctionMetricsData(req.Range, window, stats)
+	if err = uc.addReplicas(ctx, app, window, data); err != nil {
+		return nil, hperrors.Wrap(err)
+	}
+	return &appdto.GetFunctionMetricsResp{Data: data}, nil
+}
+
+// addReplicas puts the function's replicas on its points, when it has
+// autoscale on or was scaled within the range: from its scalings, and its
+// count now for the time after the last.
+func (uc *UC) addReplicas(ctx context.Context, app *entity.App, w window, data *appdto.FunctionMetricsDataResp) error {
+	events, err := uc.functionAutoscale.Events(ctx, uc.db, app.ID, w.start, 0)
+	if err != nil {
+		return hperrors.Wrap(err)
+	}
+	enabled, err := uc.autoscaleEnabled(ctx, app.ID)
+	if err != nil {
+		return err
+	}
+	if !enabled && len(events) == 0 {
+		return nil
+	}
+	inspect, err := uc.dockerManager.ServiceInspect(ctx, app.ServiceID)
+	if err != nil {
+		return nil //nolint:nilerr // no service, no count now: the calls are answered without it
+	}
+	current := 0
+	if mode := inspect.Service.Spec.Mode.Replicated; mode != nil && mode.Replicas != nil {
+		current = int(*mode.Replicas) //nolint:gosec // a service's replicas
+	}
+	// The latest first, as Events answers them: oldest first for the walk.
+	slices.Reverse(events)
+	for i, point := range data.Series {
+		replicas := replicasAt(point.Time.Add(w.step), events, current, i == len(data.Series)-1)
+		data.Series[i].Replicas = &replicas
+	}
+	return nil
+}
+
+// replicasAt is the replicas at a step's end, from the scalings oldest first:
+// after the last before it, or before the first after it; now's count for the
+// last step past the last scaling, and with no scaling at all.
+func replicasAt(at time.Time, events []*functionautoscaleservice.Event, current int, last bool) int {
+	var before *functionautoscaleservice.Event
+	for _, e := range events {
+		if e.Time.After(at) {
+			if before == nil {
+				return e.From
+			}
+			break
+		}
+		before = e
+	}
+	if before == nil || (last && before == events[len(events)-1]) {
+		return current
+	}
+	return before.To
+}
+
+// autoscaleEnabled is whether the app has autoscale on.
+func (uc *UC) autoscaleEnabled(ctx context.Context, appID string) (bool, error) {
+	settings, _, err := uc.settingRepo.List(ctx, uc.db, nil, nil,
+		bunex.SelectWhere("setting.type = ?", base.SettingTypeAppAutoscale),
+		bunex.SelectWhere("setting.object_id = ?", appID),
+		bunex.SelectWhere("setting.status = ?", base.SettingStatusActive),
+		bunex.SelectLimit(1),
+	)
+	if err != nil || len(settings) == 0 {
+		return false, hperrors.Wrap(err)
+	}
+	autoscale, err := settings[0].AsAppAutoscale()
+	if err != nil {
+		return false, hperrors.Wrap(err)
+	}
+	return autoscale.Enabled, nil
 }
 
 // window is the range of a metrics request: whole steps, ending with the step

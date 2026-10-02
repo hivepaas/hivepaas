@@ -1,0 +1,384 @@
+diff --git a/hivepaas_app/base/function.go b/hivepaas_app/base/function.go
+index 33930b86..2d123c0f 100644
+--- a/hivepaas_app/base/function.go
++++ b/hivepaas_app/base/function.go
+@@ -1,7 +1,9 @@
+ package base
+ 
+ import (
++	"path"
+ 	"regexp"
++	"strings"
+ 	"time"
+ 
+ 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/unit"
+@@ -88,6 +90,52 @@ const (
+ // HivePaaS's own: the Dockerfile it writes for the function goes there.
+ const FunctionReservedDir = ".hivepaas"
+ 
++// FunctionPathMaxLen is the longest path of a file or a directory of a
++// function's code.
++const FunctionPathMaxLen = 255
++
++var (
++	// functionPathPattern is a path spelled plainly: no space, no quote, nothing a
++	// Dockerfile or a shell would read as more than a name.
++	functionPathPattern = regexp.MustCompile(`^[A-Za-z0-9._/-]+$`)
++
++	// FunctionHandlerPatterns are the names each runtime can call.
++	FunctionHandlerPatterns = map[FunctionRuntime]*regexp.Regexp{
++		FunctionRuntimeNode24:    regexp.MustCompile(`^[A-Za-z_$][A-Za-z0-9_$]*$`),
++		FunctionRuntimePython313: regexp.MustCompile(`^[A-Za-z_][A-Za-z0-9_]*$`),
++		FunctionRuntimeGo127:     regexp.MustCompile(`^[A-Z][A-Za-z0-9_]*$`),
++	}
++	// FunctionEntrypointExts are the extensions of a handler's file, for the
++	// runtimes whose entrypoint is a file.
++	FunctionEntrypointExts = map[FunctionRuntime][]string{
++		FunctionRuntimeNode24:    {".js", ".mjs", ".cjs"},
++		FunctionRuntimePython313: {".py"},
++	}
++)
++
++// FunctionPathOK says whether p names a place inside a function: relative,
++// within it, and spelled plainly. "." - the function's root - is a place for a
++// directory only.
++func FunctionPathOK(p string, dir bool) bool {
++	if p == "" || len(p) > FunctionPathMaxLen || path.IsAbs(p) || !functionPathPattern.MatchString(p) {
++		return false
++	}
++	if p == "." {
++		return dir
++	}
++	for part := range strings.SplitSeq(p, "/") {
++		if part == "" || part == "." || part == ".." {
++			return false
++		}
++	}
++	return true
++}
++
++// FunctionPathReserved says whether p is in the directory that is HivePaaS's.
++func FunctionPathReserved(p string) bool {
++	return p == FunctionReservedDir || strings.HasPrefix(p, FunctionReservedDir+"/")
++}
++
+ // FunctionSystemPackagePattern is a Debian package name, with an optional
+ // =version: lowercase letters, digits, '+', '-' and '.', starting with a letter
+ // or a digit. A package reaches a RUN line of the function's Dockerfile, so
+diff --git a/hivepaas_app/service/specservice/specmodel/issue.go b/hivepaas_app/service/specservice/specmodel/issue.go
+index 429f80c5..4b49f538 100644
+--- a/hivepaas_app/service/specservice/specmodel/issue.go
++++ b/hivepaas_app/service/specservice/specmodel/issue.go
+@@ -17,13 +17,12 @@ const (
+ 	SeverityWarning Severity = "warning"
+ )
+ 
+-// Issue codes. Export emits the first five; the rest belong to the import
++// Issue codes. Export emits the first four; the rest belong to the import
+ // contract, and are declared here so both halves name the same things.
+ const (
+ 	CodeTypeUnclassified   = "TYPE_UNCLASSIFIED"
+ 	CodeTypeSkipped        = "TYPE_SKIPPED"
+ 	CodePreviewAppSkipped  = "PREVIEW_APP_SKIPPED"
+-	CodeFunctionSkipped    = "FUNCTION_SKIPPED"
+ 	CodeServiceUnavailable = "SERVICE_UNAVAILABLE"
+ 	CodeRefNotFound        = "REF_NOT_FOUND"
+ 	CodeRefNotSelected     = "REF_NOT_SELECTED"
+diff --git a/hivepaas_app/service/specservice/specserviceimpl/bundle_read.go b/hivepaas_app/service/specservice/specserviceimpl/bundle_read.go
+index 3c90e037..8298e624 100644
+--- a/hivepaas_app/service/specservice/specserviceimpl/bundle_read.go
++++ b/hivepaas_app/service/specservice/specserviceimpl/bundle_read.go
+@@ -173,6 +173,9 @@ func parseBundleFiles(files map[string][]byte) (*specmodel.ImportBundle, error)
+ 			bundle.Envs[parts[1]][strings.TrimSuffix(parts[3], ".yaml")] = doc
+ 		}
+ 	}
++	if err := readFunctionCode(bundle, files); err != nil {
++		return nil, err
++	}
+ 	return bundle, nil
+ }
+ 
+diff --git a/hivepaas_app/service/specservice/specserviceimpl/function_code.go b/hivepaas_app/service/specservice/specserviceimpl/function_code.go
+new file mode 100644
+index 00000000..2a3dfd0f
+--- /dev/null
++++ b/hivepaas_app/service/specservice/specserviceimpl/function_code.go
+@@ -0,0 +1,121 @@
++package specserviceimpl
++
++import (
++	"maps"
++	"slices"
++	"strings"
++	"unicode/utf8"
++
++	"github.com/hivepaas/hivepaas/hivepaas_app/base"
++	"github.com/hivepaas/hivepaas/hivepaas_app/service/specservice/specmodel"
++)
++
++const (
++	// functionsSegment follows an env's path in the path of its functions' code.
++	functionsSegment = "functions"
++	// filesFromKey names, in a function's inline code, the bundle directory its
++	// files are in, in place of the files.
++	filesFromKey = "filesFrom"
++)
++
++// functionDir is where the code of the function keyed appKey, in the env at
++// envPath, is in a bundle: projects/<project>/envs/<env>/functions/<app>.
++func functionDir(envPath, appKey string) string {
++	return envPath + "/" + functionsSegment + "/" + appKey
++}
++
++// inlineCodeOf is the inline code of an app's function source, as the
++// document holds it; nil for an app that is no function, or whose code is in a
++// repository.
++func inlineCodeOf(doc *specmodel.AppDoc) map[string]any {
++	if doc == nil || doc.Deployment == nil {
++		return nil
++	}
++	source, _ := doc.Deployment.Source["functionSource"].(map[string]any)
++	code, _ := source["code"].(map[string]any)
++	inline, _ := code["inline"].(map[string]any)
++	return inline
++}
++
++// writeFunctionCode takes the inline code of each function of an env out of
++// its document: each file becomes a file of the bundle under the function's
++// directory, which its source names instead. Everything before it - the
++// report, the references, an import's comparison - saw the code inline.
++func writeFunctionCode(bundle *specmodel.Bundle, envPath string, apps map[string]*specmodel.AppDoc) {
++	for _, key := range slices.Sorted(maps.Keys(apps)) {
++		inline := inlineCodeOf(apps[key])
++		if inline == nil {
++			continue
++		}
++		dir := functionDir(envPath, key)
++		files, _ := inline["files"].([]any)
++		for _, file := range files {
++			entry, _ := file.(map[string]any)
++			path, _ := entry["path"].(string)
++			content, _ := entry["content"].(string)
++			bundle.Files[dir+"/"+path] = []byte(content)
++		}
++		delete(inline, "files")
++		inline[filesFromKey] = dir
++	}
++}
++
++// readFunctionCode gives each function of a bundle the files its source names
++// back, inline, so that what reads the bundle next sees the code as export
++// built it. A source naming anything but its own directory, a directory with
++// no file, a file no function may have and a file that is not text make the
++// bundle unreadable. A file under functions/ that no source names is left
++// alone, as any file the reader does not know.
++func readFunctionCode(bundle *specmodel.ImportBundle, files map[string][]byte) error {
++	for _, project := range slices.Sorted(maps.Keys(bundle.Envs)) {
++		envs := bundle.Envs[project]
++		for _, env := range slices.Sorted(maps.Keys(envs)) {
++			envPath := projectsSegment + "/" + project + "/" + envsSegment + "/" + env
++			for _, key := range slices.Sorted(maps.Keys(envs[env].Apps)) {
++				if err := readOneFunctionCode(envPath, key, envs[env].Apps[key], files); err != nil {
++					return err
++				}
++			}
++		}
++	}
++	return nil
++}
++
++func readOneFunctionCode(envPath, key string, doc *specmodel.AppDoc, files map[string][]byte) error {
++	inline := inlineCodeOf(doc)
++	from, named := inline[filesFromKey]
++	if !named {
++		return nil
++	}
++	dir := functionDir(envPath, key)
++	if from != dir {
++		return invalidBundle("%s/apps/%s: its code is read from %v, which is not its own directory %s",
++			envPath, key, from, dir)
++	}
++	if _, listed := inline["files"]; listed {
++		return invalidBundle("%s/apps/%s: its code is both listed and read from %s", envPath, key, dir)
++	}
++
++	prefix := dir + "/"
++	var codeFiles []any
++	for _, name := range slices.Sorted(maps.Keys(files)) {
++		path, inDir := strings.CutPrefix(name, prefix)
++		if !inDir {
++			continue
++		}
++		if !base.FunctionPathOK(path, false) || base.FunctionPathReserved(path) {
++			return invalidBundle("%s: no function may have a file at %q", dir, path)
++		}
++		content := files[name]
++		if !utf8.Valid(content) {
++			return invalidBundle("%s: %s is not UTF-8 text", dir, path)
++		}
++		codeFiles = append(codeFiles, map[string]any{"path": path, "content": string(content)})
++	}
++	if len(codeFiles) == 0 {
++		return invalidBundle("%s: the function's code holds no file", dir)
++	}
++	delete(inline, filesFromKey)
++	inline["files"] = codeFiles
++	return nil
++}
+diff --git a/hivepaas_app/service/specservice/specserviceimpl/walk.go b/hivepaas_app/service/specservice/specserviceimpl/walk.go
+index bc673eba..e27098ae 100644
+--- a/hivepaas_app/service/specservice/specserviceimpl/walk.go
++++ b/hivepaas_app/service/specservice/specserviceimpl/walk.go
+@@ -2,7 +2,6 @@ package specserviceimpl
+ 
+ import (
+ 	"context"
+-	"slices"
+ 	"sort"
+ 
+ 	"github.com/moby/moby/api/types/swarm"
+@@ -225,19 +224,6 @@ func (s *service) gatherEnv(
+ 		if err != nil {
+ 			return nil, hperrors.Wrap(err)
+ 		}
+-		// A function is not part of a spec yet: its code is in its deployment
+-		// settings, which an import would write without the checks creating a
+-		// function makes. It is reported, like a preview app, so that an
+-		// operator looking for it finds out why it is not in the bundle.
+-		if slices.ContainsFunc(appSettings, entity.IsFunctionKind) {
+-			report.Add(specmodel.Issue{
+-				Severity: specmodel.SeveritySkipped,
+-				Code:     specmodel.CodeFunctionSkipped,
+-				Path:     appPath,
+-				Action:   "not exported; functions are not part of a spec yet",
+-			})
+-			continue
+-		}
+ 		out.apps = append(out.apps, &appUnit{
+ 			app: app,
+ 			unit: add(&scopeUnit{
+@@ -338,6 +324,8 @@ func (s *service) writeEnvDoc(
+ 		Apps:      appDocs,
+ 		Settings:  assembled,
+ 	}
++	// Taken out last, so that the document is complete until it is written.
++	writeFunctionCode(bundle, env.unit.path, appDocs)
+ 	return addFile(bundle, env.unit.path+".yaml", doc)
+ }
+ 
+diff --git a/hivepaas_app/usecase/appsettingsuc/appsettingsdto/deployment_function_source.go b/hivepaas_app/usecase/appsettingsuc/appsettingsdto/deployment_function_source.go
+index 8bf8d2dd..0d0647eb 100644
+--- a/hivepaas_app/usecase/appsettingsuc/appsettingsdto/deployment_function_source.go
++++ b/hivepaas_app/usecase/appsettingsuc/appsettingsdto/deployment_function_source.go
+@@ -3,7 +3,6 @@ package appsettingsdto
+ import (
+ 	"fmt"
+ 	"path"
+-	"regexp"
+ 	"slices"
+ 	"strings"
+ 
+@@ -20,28 +19,6 @@ import (
+ 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/vcsurl"
+ )
+ 
+-const (
+-	functionPathMaxLen = 255
+-)
+-
+-var (
+-	// functionPathRegex is a path spelled plainly: no space, no quote, nothing a
+-	// Dockerfile or a shell would read as more than a name.
+-	functionPathRegex = regexp.MustCompile(`^[A-Za-z0-9._/-]+$`)
+-	// functionHandlerRegexes are the names each runtime can call.
+-	functionHandlerRegexes = map[base.FunctionRuntime]*regexp.Regexp{
+-		base.FunctionRuntimeNode24:    regexp.MustCompile(`^[A-Za-z_$][A-Za-z0-9_$]*$`),
+-		base.FunctionRuntimePython313: regexp.MustCompile(`^[A-Za-z_][A-Za-z0-9_]*$`),
+-		base.FunctionRuntimeGo127:     regexp.MustCompile(`^[A-Z][A-Za-z0-9_]*$`),
+-	}
+-	// functionEntrypointExts are the extensions of a handler's file, for the
+-	// runtimes whose entrypoint is a file.
+-	functionEntrypointExts = map[base.FunctionRuntime][]string{
+-		base.FunctionRuntimeNode24:    {".js", ".mjs", ".cjs"},
+-		base.FunctionRuntimePython313: {".py"},
+-	}
+-)
+-
+ // DeploymentFunctionSourceReq is what a function is deployed from. Normalize it,
+ // then Validate it, then turn it into its entity.
+ type DeploymentFunctionSourceReq struct {
+@@ -145,28 +122,6 @@ func cleanFunctionPath(p string) string {
+ 	return path.Clean(p)
+ }
+ 
+-// functionPathOK says whether p names a place inside a function: relative,
+-// within it, and spelled plainly. "." - the function's root - is a place for a
+-// directory only.
+-func functionPathOK(p string, dir bool) bool {
+-	if p == "" || len(p) > functionPathMaxLen || path.IsAbs(p) || !functionPathRegex.MatchString(p) {
+-		return false
+-	}
+-	if p == "." {
+-		return dir
+-	}
+-	for part := range strings.SplitSeq(p, "/") {
+-		if part == "" || part == "." || part == ".." {
+-			return false
+-		}
+-	}
+-	return true
+-}
+-
+-func functionPathReserved(p string) bool {
+-	return p == base.FunctionReservedDir || strings.HasPrefix(p, base.FunctionReservedDir+"/")
+-}
+-
+ // Validate checks the source, once normalized. field is where it is in the
+ // request.
+ func (req *DeploymentFunctionSourceReq) Validate(field string) (res []vld.Validator) {
+@@ -202,15 +157,15 @@ func (req *DeploymentFunctionSourceReq) Validate(field string) (res []vld.Valida
+ 
+ func (req *DeploymentFunctionSourceReq) validateEntrypoint(field string) (res []vld.Validator) {
+ 	file, handler := req.Entrypoint.File, req.Entrypoint.Handler
+-	fileOK := functionPathOK(file, true)
+-	if exts, ok := functionEntrypointExts[req.Runtime]; ok {
+-		fileOK = functionPathOK(file, false) && slices.Contains(exts, path.Ext(file))
++	fileOK := base.FunctionPathOK(file, true)
++	if exts, ok := base.FunctionEntrypointExts[req.Runtime]; ok {
++		fileOK = base.FunctionPathOK(file, false) && slices.Contains(exts, path.Ext(file))
+ 	}
+ 	res = append(res, vld.Must(fileOK).OnError(
+ 		vld.SetField(field+"file", nil),
+ 		vld.SetCustomKey("ERR_VLD_FUNCTION_ENTRYPOINT_INVALID"),
+ 	))
+-	if handlerRegex, ok := functionHandlerRegexes[req.Runtime]; ok {
++	if handlerRegex, ok := base.FunctionHandlerPatterns[req.Runtime]; ok {
+ 		res = append(res, vld.Must(handlerRegex.MatchString(handler)).OnError(
+ 			vld.SetField(field+"handler", nil),
+ 			vld.SetCustomKey("ERR_VLD_FUNCTION_HANDLER_INVALID"),
+@@ -235,7 +190,7 @@ func (req *FunctionCodeReq) validate(field string) (res []vld.Validator) {
+ 	if req.Repo != nil {
+ 		res = append(res, req.Repo.validate(field+".repo.")...)
+ 		if req.Dir != "" {
+-			res = append(res, vld.Must(functionPathOK(req.Dir, false)).OnError(
++			res = append(res, vld.Must(base.FunctionPathOK(req.Dir, false)).OnError(
+ 				vld.SetField(field+".dir", nil),
+ 				vld.SetCustomKey("ERR_VLD_FUNCTION_FILE_PATH_INVALID"),
+ 			))
+@@ -280,14 +235,14 @@ func (req *FunctionInlineCodeReq) validate(field string) (res []vld.Validator) {
+ 	for i, f := range files {
+ 		size += unit.DataSize(len(f.Content))
+ 		pathField := fmt.Sprintf("%s.files[%d].path", field, i)
+-		if !functionPathOK(f.Path, false) {
++		if !base.FunctionPathOK(f.Path, false) {
+ 			res = append(res, vld.Must(false).OnError(
+ 				vld.SetField(pathField, nil),
+ 				vld.SetCustomKey("ERR_VLD_FUNCTION_FILE_PATH_INVALID"),
+ 			))
+ 			continue
+ 		}
+-		res = append(res, vld.Must(!functionPathReserved(f.Path)).OnError(
++		res = append(res, vld.Must(!base.FunctionPathReserved(f.Path)).OnError(
+ 			vld.SetField(pathField, nil),
+ 			vld.SetCustomKey("ERR_VLD_VALUE_RESERVED"),
+ 			vld.SetParam("Value", base.FunctionReservedDir),

@@ -1,0 +1,341 @@
+diff --git a/hivepaas_app/service/specservice/specserviceimpl/export_test.go b/hivepaas_app/service/specservice/specserviceimpl/export_test.go
+index 74568d53..d3534a67 100644
+--- a/hivepaas_app/service/specservice/specserviceimpl/export_test.go
++++ b/hivepaas_app/service/specservice/specserviceimpl/export_test.go
+@@ -173,7 +173,9 @@ func (f *fakeAppRepo) GetByID(
+ 
+ type fakeClusterService struct {
+ 	clusterservice.Service
+-	services map[string]*swarm.Service
++	// multiNode is whether the cluster has several nodes.
++	multiNode bool
++	services  map[string]*swarm.Service
+ 	// ports are the published ports other services hold, by service id.
+ 	ports map[clusterservice.PortRef]string
+ 	// updated are the specs each service was updated to; failUpdate makes one
+@@ -182,6 +184,10 @@ type fakeClusterService struct {
+ 	failUpdate map[string]error
+ }
+ 
++func (f *fakeClusterService) IsMultiNode(context.Context) (bool, error) {
++	return f.multiNode, nil
++}
++
+ func (f *fakeClusterService) VerifyPortsAvailable(
+ 	_ context.Context, ports []clusterservice.PortRef, ignoreServiceIDs []string,
+ ) error {
+@@ -423,8 +429,18 @@ func exportFixture(t *testing.T) specservice.Service {
+ 			}}}},
+ 	}))
+ 
++	functionCall := &entity.Setting{
++		ID: "job_4", Type: base.SettingTypeSchedJob, Scope: base.ObjectScopeApp, ObjectID: "app_4",
++		Name: "nightly", Kind: string(base.SchedJobTypeFunctionInvoke), Status: base.SettingStatusActive,
++		Version: entity.CurrentSchedJobVersion,
++	}
++	assert.NoError(t, functionCall.SetData(&entity.SchedJob{
++		JobType: base.SchedJobTypeFunctionInvoke, App: entity.ObjectID{ID: "app_4"},
++		FunctionInvoke: &entity.SchedJobFunctionInvoke{Method: "POST", Path: "/report?day=today"},
++	}))
++
+ 	all := []*entity.Setting{cert, apiKey, routing, secret, mountEntry, kind, projectVolume, sharedVolume,
+-		projectConfig, envConfig, appJob, envSeq, functionKind, functionSource}
++		projectConfig, envConfig, appJob, envSeq, functionKind, functionSource, functionCall}
+ 
+ 	svc := New(
+ 		&fakeAppRepo{apps: []*entity.App{deployed, undeployed, preview, function}},
+@@ -638,6 +654,8 @@ func TestExportWritesAFunctionWithItsCodeAsFiles(t *testing.T) {
+ 	assert.Contains(t, env, "hello:")
+ 	assert.Contains(t, env, "activeMethod: function")
+ 	assert.Contains(t, env, "filesFrom: projects/project_a/envs/dev/functions/hello")
++	assert.Contains(t, env, "jobType: function-invoke", "a function's calls travel with it")
++	assert.Contains(t, env, "path: /report?day=today")
+ 	assert.NotContains(t, env, "export default", "the code is not in the env document")
+ 
+ 	code := readFromArchive(t, path, "projects/project_a/envs/dev/functions/hello/index.js")
+diff --git a/hivepaas_app/service/specservice/specserviceimpl/function_source_test.go b/hivepaas_app/service/specservice/specserviceimpl/function_source_test.go
+new file mode 100644
+index 00000000..4701da7d
+--- /dev/null
++++ b/hivepaas_app/service/specservice/specserviceimpl/function_source_test.go
+@@ -0,0 +1,96 @@
++package specserviceimpl
++
++import (
++	"encoding/json"
++	"fmt"
++	"strings"
++	"testing"
++	"time"
++
++	"github.com/stretchr/testify/assert"
++	vld "github.com/tiendc/go-validator"
++
++	"github.com/hivepaas/hivepaas/hivepaas_app/base"
++	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
++	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/timeutil"
++	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/unit"
++	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/appsettingsuc/appsettingsdto"
++)
++
++func inlineSource(files ...*entity.FunctionFile) *entity.DeploymentFunctionSource {
++	if len(files) == 0 {
++		files = []*entity.FunctionFile{{Path: "index.js", Content: "export default () => ({})"}}
++	}
++	return &entity.DeploymentFunctionSource{
++		Runtime: base.FunctionRuntimeNode24,
++		Code:    entity.FunctionCode{Inline: &entity.FunctionInlineCode{Files: files}},
++	}
++}
++
++func repoSource(url string) *entity.DeploymentFunctionSource {
++	return &entity.DeploymentFunctionSource{
++		Runtime: base.FunctionRuntimeGo127,
++		Code: entity.FunctionCode{Repo: &entity.FunctionRepoCode{
++			RepoType: base.RepoTypeGit, RepoURL: url, RepoRef: "main",
++		}},
++	}
++}
++
++// functionSourceCases are sources the API takes and sources it refuses, by
++// what each changes of a valid one.
++func functionSourceCases() map[string]*entity.DeploymentFunctionSource {
++	many := make([]*entity.FunctionFile, 0, base.FunctionInlineCodeMaxFiles+1)
++	for i := range base.FunctionInlineCodeMaxFiles + 1 {
++		many = append(many, &entity.FunctionFile{Path: fmt.Sprintf("f%d.js", i), Content: "x"})
++	}
++	with := func(change func(*entity.DeploymentFunctionSource)) *entity.DeploymentFunctionSource {
++		source := inlineSource()
++		change(source)
++		return source
++	}
++	return map[string]*entity.DeploymentFunctionSource{
++		"valid inline":     inlineSource(),
++		"valid repository": repoSource("https://github.com/acme/fns.git"),
++		"unknown runtime":  with(func(s *entity.DeploymentFunctionSource) { s.Runtime = "cobol" }),
++		"wrong extension":  with(func(s *entity.DeploymentFunctionSource) { s.Entrypoint.File = "main.py" }),
++		"handler":          with(func(s *entity.DeploymentFunctionSource) { s.Entrypoint.Handler = "1x" }),
++		"no code":          with(func(s *entity.DeploymentFunctionSource) { s.Code.Inline = nil }),
++		"both codes": with(func(s *entity.DeploymentFunctionSource) {
++			s.Code.Repo = repoSource("https://github.com/acme/fns.git").Code.Repo
++		}),
++		"too many files": inlineSource(many...),
++		"reserved file":  inlineSource(&entity.FunctionFile{Path: ".hivepaas/Dockerfile", Content: "x"}),
++		"file path":      inlineSource(&entity.FunctionFile{Path: "a b.js", Content: "x"}),
++		"same file twice": inlineSource(&entity.FunctionFile{Path: "index.js", Content: "x"},
++			&entity.FunctionFile{Path: "index.js", Content: "y"}),
++		"code too large": inlineSource(&entity.FunctionFile{Path: "index.js",
++			Content: strings.Repeat("x", int(base.FunctionInlineCodeMaxSize)+1)}),
++		"inline in a directory": with(func(s *entity.DeploymentFunctionSource) { s.Code.Dir = "fns" }),
++		"package":               with(func(s *entity.DeploymentFunctionSource) { s.SystemPackages = []string{"Bad Pkg"} }),
++		"timeout": with(func(s *entity.DeploymentFunctionSource) {
++			s.Timeout = timeutil.Duration(20 * time.Minute)
++		}),
++		"concurrency":    with(func(s *entity.DeploymentFunctionSource) { s.MaxConcurrency = 2000 }),
++		"body size":      with(func(s *entity.DeploymentFunctionSource) { s.MaxBodySize = 200 * unit.MB }),
++		"repository URL": repoSource("not a url"),
++	}
++}
++
++// What an import accepts of a function's source is what the API accepts: the
++// two are written apart - a service does not import a DTO - and held together
++// here.
++func TestAnImportedFunctionSourceIsCheckedAsTheAPIChecksIt(t *testing.T) {
++	for name, source := range functionSourceCases() {
++		raw, err := json.Marshal(source)
++		assert.NoError(t, err)
++		req := &appsettingsdto.DeploymentFunctionSourceReq{}
++		assert.NoError(t, json.Unmarshal(raw, req), name)
++		req.Normalize()
++		apiRefuses := len(vld.Validate(req.Validate("functionSource")...)) > 0
++
++		normalizeFunctionSource(source)
++		problems := functionSourceProblems(source)
++
++		assert.Equal(t, apiRefuses, len(problems) > 0, "%s: problems %v", name, problems)
++	}
++}
+diff --git a/hivepaas_app/service/specservice/specserviceimpl/import_functions_test.go b/hivepaas_app/service/specservice/specserviceimpl/import_functions_test.go
+new file mode 100644
+index 00000000..da015e5f
+--- /dev/null
++++ b/hivepaas_app/service/specservice/specserviceimpl/import_functions_test.go
+@@ -0,0 +1,178 @@
++package specserviceimpl
++
++import (
++	"context"
++	"strings"
++	"testing"
++
++	"github.com/stretchr/testify/assert"
++
++	"github.com/hivepaas/hivepaas/hivepaas_app/base"
++	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
++	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
++	"github.com/hivepaas/hivepaas/hivepaas_app/service/specservice/specmodel"
++)
++
++const reportPath = "projects/project_a/envs/dev/apps/report"
++
++// functionSourceBody is a function's deployment source as a bundle holds it,
++// its code inline; what it leaves out is the runtime's default.
++func functionSourceBody(runtime string) map[string]any {
++	return map[string]any{"activeMethod": "function", "functionSource": map[string]any{
++		"runtime":    runtime,
++		"entrypoint": map[string]any{"file": "", "handler": ""},
++		"code": map[string]any{"inline": map[string]any{"files": []any{
++			map[string]any{"path": "index.js", "content": "export default () => ({})"},
++		}}},
++	}}
++}
++
++func kindBody(category string) map[string]any {
++	return map[string]any{"category": category}
++}
++
++// addReport gives the bundle an app the target does not have, report, in the
++// fixture's env.
++func addReport(bundle *specmodel.ImportBundle, kind, source map[string]any, settings map[string]any) {
++	const key = "report"
++	if settings == nil {
++		settings = map[string]any{}
++	}
++	if kind != nil {
++		settings["kind"] = kind
++	}
++	doc := &specmodel.AppDoc{App: key, Name: key, Settings: settings}
++	if source != nil {
++		doc.Deployment = &specmodel.Deployment{Source: source}
++	}
++	bundle.Envs["project_a"]["dev"].Apps[key] = doc
++}
++
++func blockedCodes(node *specmodel.PlanNode) []string {
++	var codes []string
++	for _, issue := range node.Issues {
++		if issue.Severity == specmodel.SeverityBlocked {
++			codes = append(codes, issue.Code)
++		}
++	}
++	return codes
++}
++
++// A function in a bundle is created as a function: its source normalized as
++// creating one does it, its routing at its runtime's port, its first
++// deployment when the options ask.
++func TestImportCreatesAFunctionAsCreatingOneDoes(t *testing.T) {
++	svc, bundle := planFixture(t)
++	addReport(bundle, kindBody("function"), functionSourceBody("node24"), routingAt("report.example.com"))
++
++	resp := apply(t, svc, bundle, applyReqWith(t, svc, bundle, specmodel.ImportOptions{DeployCreated: true}))
++
++	provision := svc.appProvisionService.(*fakeProvisionService)
++	var req = provision.reqs
++	if !assert.Len(t, req, 1) {
++		return
++	}
++	byType := map[base.SettingType]*entity.Setting{}
++	for _, setting := range provision.settings[req[0].AppID] {
++		byType[setting.Type] = setting
++	}
++	assert.True(t, entity.IsFunctionKind(byType[base.SettingTypeAppKind]))
++	source := byType[base.SettingTypeAppDeployment].MustAsAppDeploymentSettings().FunctionSource
++	if assert.NotNil(t, source) {
++		assert.Equal(t, base.FunctionContractV1, source.Contract)
++		assert.Equal(t, entity.FunctionEntrypoint{File: "index.js", Handler: "default"}, source.Entrypoint)
++		assert.Equal(t, base.FunctionMaxConcurrencyDefault, source.MaxConcurrency)
++		assert.Equal(t, base.FunctionMaxBodySizeDefault, source.MaxBodySize)
++		assert.EqualValues(t, base.FunctionTimeoutDefault, source.Timeout)
++	}
++	routing := byType[base.SettingTypeAppRouting].MustAsAppRoutingSettings()
++	assert.Equal(t, base.FunctionPort, routing.Port, "a function answers at its runtime's port")
++	if assert.Len(t, routing.Domains, 1) {
++		assert.Equal(t, base.FunctionPort, routing.Domains[0].ContainerPort)
++	}
++	assert.Len(t, resp.Deployments, 1, "deployed as the options ask")
++}
++
++func TestImportBlocksAFunctionWhoseSourceIsNotValid(t *testing.T) {
++	svc, bundle := planFixture(t)
++	addReport(bundle, kindBody("function"), functionSourceBody("cobol"), nil)
++
++	out := plan(t, svc, bundle, specmodel.ImportOptions{})
++
++	report := node(t, out, reportPath)
++	assert.Equal(t, []string{specmodel.CodeFunctionSourceInvalid}, blockedCodes(report))
++	problems, _ := report.Issues[len(report.Issues)-1].Detail["problems"].([]string)
++	assert.True(t, len(problems) > 0 && strings.Contains(strings.Join(problems, " "), "runtime"),
++		"the problems name what is wrong: %v", problems)
++}
++
++// A kind and a source that disagree make neither an app nor a function.
++func TestImportBlocksAKindThatDisagreesWithItsSource(t *testing.T) {
++	cases := map[string][2]map[string]any{
++		"a function kind with an image": {kindBody("function"), imageSource("nginx:1.27")},
++		"a function source on a webapp": {kindBody("webapp"), functionSourceBody("node24")},
++		"a function source and no kind": {nil, functionSourceBody("node24")},
++	}
++	for name, kindAndSource := range cases {
++		svc, bundle := planFixture(t)
++		addReport(bundle, kindAndSource[0], kindAndSource[1], nil)
++
++		out := plan(t, svc, bundle, specmodel.ImportOptions{})
++
++		assert.Equal(t, []string{specmodel.CodeFunctionKindMismatch}, blockedCodes(node(t, out, reportPath)), name)
++	}
++}
++
++// An app does not change its kind: a function stays one, and an app does not
++// become one.
++func TestImportBlocksAnAppChangingKind(t *testing.T) {
++	svc, bundle := planFixture(t)
++	hello := bundle.Envs["project_a"]["dev"].Apps["hello"]
++	hello.Settings["kind"] = kindBody("webapp")
++	hello.Deployment.Source = imageSource("nginx:1.27")
++
++	out := plan(t, svc, bundle, specmodel.ImportOptions{})
++
++	assert.Equal(t, []string{specmodel.CodeAppKindChanged},
++		blockedCodes(node(t, out, "projects/project_a/envs/dev/apps/hello")))
++
++	svc, bundle = planFixture(t)
++	frontend := bundle.Envs["project_a"]["dev"].Apps["frontend"]
++	if frontend.Settings == nil {
++		frontend.Settings = map[string]any{}
++	}
++	frontend.Settings["kind"] = kindBody("function")
++	frontend.Deployment = &specmodel.Deployment{Source: functionSourceBody("node24")}
++
++	out = plan(t, svc, bundle, specmodel.ImportOptions{})
++
++	assert.Equal(t, []string{specmodel.CodeAppKindChanged},
++		blockedCodes(node(t, out, "projects/project_a/envs/dev/apps/frontend")))
++}
++
++// A cluster of several nodes pulls a function's image from a registry, as it
++// does a repository app's: a function created without one is blocked there.
++func TestImportBlocksAFunctionWithoutARegistryOnSeveralNodes(t *testing.T) {
++	svc, bundle := planFixture(t)
++	svc.clusterService.(*fakeClusterService).multiNode = true
++	addReport(bundle, kindBody("function"), functionSourceBody("node24"), nil)
++
++	out := plan(t, svc, bundle, specmodel.ImportOptions{})
++
++	assert.Equal(t, []string{specmodel.CodeFunctionBuildSource}, blockedCodes(node(t, out, reportPath)))
++	assert.Empty(t, blockedCodes(node(t, out, "projects/project_a/envs/dev/apps/hello")),
++		"a function whose source does not change is not asked again")
++}
++
++// What a plan blocks is not written, whichever path writes settings: a bundle
++// written by hand cannot make a function past the checks.
++func TestApplyRefusesAFunctionTheChecksBlock(t *testing.T) {
++	svc, bundle := planFixture(t)
++	addReport(bundle, nil, functionSourceBody("node24"), nil)
++	req := applyReq(t, svc, bundle)
++
++	_, err := svc.applyBundle(context.Background(), nil, req, bundle)
++
++	assert.ErrorIs(t, err, hperrors.ErrSpecImportBlocked)
++	assert.Empty(t, svc.appProvisionService.(*fakeProvisionService).reqs)
++}

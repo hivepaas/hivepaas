@@ -1,0 +1,450 @@
+diff --git a/hivepaas_app/entity/app_routing_settings.go b/hivepaas_app/entity/app_routing_settings.go
+index 91c679c6..b334b72d 100644
+--- a/hivepaas_app/entity/app_routing_settings.go
++++ b/hivepaas_app/entity/app_routing_settings.go
+@@ -325,3 +325,15 @@ func (s *Setting) AsAppRoutingSettings() (*AppRoutingSettings, error) {
+ func (s *Setting) MustAsAppRoutingSettings() *AppRoutingSettings {
+ 	return gofn.Must(s.AsAppRoutingSettings())
+ }
++
++// PinToFunctionPort points a function's routing at the port its runtime
++// listens on: the app's port, and every domain's. A function answers nowhere
++// else, whatever the settings said.
++func (s *AppRoutingSettings) PinToFunctionPort() {
++	s.Port = base.FunctionPort
++	for _, domain := range s.Domains {
++		if domain != nil {
++			domain.ContainerPort = base.FunctionPort
++		}
++	}
++}
+diff --git a/hivepaas_app/service/specservice/specmodel/importplan.go b/hivepaas_app/service/specservice/specmodel/importplan.go
+index 215e688e..2d48d0f3 100644
+--- a/hivepaas_app/service/specservice/specmodel/importplan.go
++++ b/hivepaas_app/service/specservice/specmodel/importplan.go
+@@ -27,6 +27,12 @@ const (
+ 	CodeNetworkNotAvailable      = "NETWORK_NOT_AVAILABLE"
+ 	CodeSecretOmitted            = "SECRET_OMITTED"
+ 	CodeOwnerNotPermitted        = "OWNER_NOT_PERMITTED"
++
++	// A function is created and changed through what creating one checks.
++	CodeFunctionSourceInvalid = "FUNCTION_SOURCE_INVALID"
++	CodeFunctionKindMismatch  = "FUNCTION_KIND_MISMATCH"
++	CodeAppKindChanged        = "APP_KIND_CHANGED"
++	CodeFunctionBuildSource   = "FUNCTION_BUILD_SOURCE"
+ )
+ 
+ // Note codes. A note says what import does, and needs no acceptance.
+diff --git a/hivepaas_app/service/specservice/specserviceimpl/function_source.go b/hivepaas_app/service/specservice/specserviceimpl/function_source.go
+new file mode 100644
+index 00000000..51c791d3
+--- /dev/null
++++ b/hivepaas_app/service/specservice/specserviceimpl/function_source.go
+@@ -0,0 +1,194 @@
++package specserviceimpl
++
++import (
++	"fmt"
++	"path"
++	"slices"
++	"strings"
++	"time"
++
++	"github.com/hivepaas/hivepaas/hivepaas_app/base"
++	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
++	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/githelper"
++	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/timeutil"
++	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/unit"
++	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/vcsurl"
++)
++
++// normalizeFunctionSource spells an imported function's source the way
++// creating a function does (appsettingsdto.DeploymentFunctionSourceReq's
++// Normalize), and fills what it leaves out with its runtime's defaults. A
++// service does not import a DTO, so the two are held together by a test.
++func normalizeFunctionSource(src *entity.DeploymentFunctionSource) {
++	if src == nil {
++		return
++	}
++	src.Runtime = base.FunctionRuntime(strings.ToLower(strings.TrimSpace(string(src.Runtime))))
++	src.Contract = base.FunctionContract(strings.TrimSpace(string(src.Contract)))
++	if src.Contract == "" {
++		src.Contract = base.FunctionContractV1
++	}
++
++	defaultFile, defaultHandler := src.Runtime.DefaultEntrypoint()
++	src.Entrypoint.File = cleanFunctionPath(src.Entrypoint.File)
++	if src.Entrypoint.File == "" {
++		src.Entrypoint.File = defaultFile
++	}
++	src.Entrypoint.Handler = strings.TrimSpace(src.Entrypoint.Handler)
++	if src.Entrypoint.Handler == "" {
++		src.Entrypoint.Handler = defaultHandler
++	}
++
++	src.Code.Dir = cleanFunctionPath(src.Code.Dir)
++	if src.Code.Dir == "." {
++		src.Code.Dir = ""
++	}
++	if inline := src.Code.Inline; inline != nil {
++		inline.Files = slices.DeleteFunc(inline.Files, func(f *entity.FunctionFile) bool { return f == nil })
++		for _, f := range inline.Files {
++			f.Path = cleanFunctionPath(f.Path)
++		}
++	}
++	if repo := src.Code.Repo; repo != nil {
++		repo.RepoURL = strings.TrimSpace(repo.RepoURL)
++		repo.RepoRef = strings.TrimSpace(repo.RepoRef)
++		if repo.RepoType == base.RepoTypeGit {
++			repo.RepoRef = string(githelper.NormalizeRepoRef(repo.RepoRef))
++		}
++		if parsed, err := vcsurl.Parse(repo.RepoURL); err == nil {
++			repo.RepoID = parsed.ID
++		}
++	}
++
++	packages := make([]string, 0, len(src.SystemPackages))
++	for _, pkg := range src.SystemPackages {
++		if pkg = strings.TrimSpace(pkg); pkg != "" && !slices.Contains(packages, pkg) {
++			packages = append(packages, pkg)
++		}
++	}
++	src.SystemPackages = packages
++	if len(src.SystemPackages) == 0 {
++		src.SystemPackages = nil
++	}
++
++	if src.Timeout == 0 {
++		src.Timeout = timeutil.Duration(base.FunctionTimeoutDefault)
++	}
++	if src.MaxConcurrency == 0 {
++		src.MaxConcurrency = base.FunctionMaxConcurrencyDefault
++	}
++	if src.MaxBodySize == 0 {
++		src.MaxBodySize = base.FunctionMaxBodySizeDefault
++	}
++}
++
++// cleanFunctionPath trims a path and cleans it: "./src//index.js" is
++// "src/index.js". A path that leaves the function stays one, for the check.
++func cleanFunctionPath(p string) string {
++	if p = strings.TrimSpace(p); p == "" {
++		return ""
++	}
++	return path.Clean(p)
++}
++
++// functionSourceProblems says what is wrong with a normalized function source,
++// field by field, as creating a function refuses it; nothing for a valid one.
++func functionSourceProblems(src *entity.DeploymentFunctionSource) []string {
++	var problems []string
++	add := func(field, format string, args ...any) {
++		problems = append(problems, field+": "+fmt.Sprintf(format, args...))
++	}
++	if !slices.Contains(base.AllFunctionRuntimes, src.Runtime) {
++		add("runtime", "%q is not one of %v", src.Runtime, base.AllFunctionRuntimes)
++	}
++	if !slices.Contains(base.AllFunctionContracts, src.Contract) {
++		add("contract", "%q is not one of %v", src.Contract, base.AllFunctionContracts)
++	}
++	problems = append(problems, entrypointProblems(src)...)
++	problems = append(problems, codeProblems(&src.Code)...)
++
++	if len(src.SystemPackages) > base.FunctionSystemPackagesMax {
++		add("systemPackages", "at most %d", base.FunctionSystemPackagesMax)
++	}
++	for _, pkg := range src.SystemPackages {
++		if !base.FunctionSystemPackagePattern.MatchString(pkg) {
++			add("systemPackages", "%q is not a Debian package", pkg)
++		}
++	}
++	timeout := time.Duration(src.Timeout)
++	if timeout < base.FunctionTimeoutMin || timeout > base.FunctionTimeoutMax {
++		add("timeout", "%s is not between %s and %s", timeout, base.FunctionTimeoutMin, base.FunctionTimeoutMax)
++	}
++	if src.MaxConcurrency < 1 || src.MaxConcurrency > base.FunctionMaxConcurrencyMax {
++		add("maxConcurrency", "%d is not between 1 and %d", src.MaxConcurrency, base.FunctionMaxConcurrencyMax)
++	}
++	if src.MaxBodySize < base.FunctionMaxBodySizeMin || src.MaxBodySize > base.FunctionMaxBodySizeMax {
++		add("maxBodySize", "%s is not between %s and %s", src.MaxBodySize.HR(),
++			base.FunctionMaxBodySizeMin.HR(), base.FunctionMaxBodySizeMax.HR())
++	}
++	return problems
++}
++
++func entrypointProblems(src *entity.DeploymentFunctionSource) []string {
++	var problems []string
++	file := src.Entrypoint.File
++	fileOK := base.FunctionPathOK(file, true)
++	if exts, ok := base.FunctionEntrypointExts[src.Runtime]; ok {
++		fileOK = base.FunctionPathOK(file, false) && slices.Contains(exts, path.Ext(file))
++	}
++	if !fileOK {
++		problems = append(problems, fmt.Sprintf("entrypoint.file: %q is not a handler's file for %s", file, src.Runtime))
++	}
++	if pattern, ok := base.FunctionHandlerPatterns[src.Runtime]; ok && !pattern.MatchString(src.Entrypoint.Handler) {
++		problems = append(problems, fmt.Sprintf("entrypoint.handler: %q is not a name %s calls",
++			src.Entrypoint.Handler, src.Runtime))
++	}
++	return problems
++}
++
++func codeProblems(code *entity.FunctionCode) []string {
++	if (code.Inline != nil) == (code.Repo != nil) {
++		return []string{"code: inline code or a repository, one of them"}
++	}
++	var problems []string
++	if repo := code.Repo; repo != nil {
++		if !slices.Contains(base.AllRepoTypes, repo.RepoType) {
++			problems = append(problems, fmt.Sprintf("code.repo.repoType: %q is not one of %v",
++				repo.RepoType, base.AllRepoTypes))
++		}
++		if _, err := vcsurl.Parse(repo.RepoURL); err != nil || repo.RepoURL == "" {
++			problems = append(problems, fmt.Sprintf("code.repo.repoURL: %q is not a repository's URL", repo.RepoURL))
++		}
++		if code.Dir != "" && !base.FunctionPathOK(code.Dir, false) {
++			problems = append(problems, fmt.Sprintf("code.dir: %q is not a directory of the repository", code.Dir))
++		}
++		return problems
++	}
++
++	files := code.Inline.Files
++	if code.Dir != "" {
++		problems = append(problems, "code.dir: inline code is in no directory")
++	}
++	if len(files) == 0 || len(files) > base.FunctionInlineCodeMaxFiles {
++		problems = append(problems, fmt.Sprintf("code.inline.files: from 1 to %d files, not %d",
++			base.FunctionInlineCodeMaxFiles, len(files)))
++	}
++	seen := map[string]bool{}
++	size := unit.DataSize(0)
++	for i, f := range files {
++		size += unit.DataSize(len(f.Content))
++		switch {
++		case !base.FunctionPathOK(f.Path, false) || base.FunctionPathReserved(f.Path):
++			problems = append(problems, fmt.Sprintf("code.inline.files[%d].path: no function may have a file at %q",
++				i, f.Path))
++		case seen[f.Path]:
++			problems = append(problems, fmt.Sprintf("code.inline.files[%d].path: %q is there twice", i, f.Path))
++		}
++		seen[f.Path] = true
++	}
++	if size > base.FunctionInlineCodeMaxSize {
++		problems = append(problems, fmt.Sprintf("code.inline: %s of code, more than %s", size.HR(),
++			base.FunctionInlineCodeMaxSize.HR()))
++	}
++	return problems
++}
+diff --git a/hivepaas_app/service/specservice/specserviceimpl/import_functions.go b/hivepaas_app/service/specservice/specserviceimpl/import_functions.go
+new file mode 100644
+index 00000000..9b968ff8
+--- /dev/null
++++ b/hivepaas_app/service/specservice/specserviceimpl/import_functions.go
+@@ -0,0 +1,148 @@
++package specserviceimpl
++
++import (
++	"context"
++	"errors"
++
++	"github.com/hivepaas/hivepaas/hivepaas_app/base"
++	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
++	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
++	"github.com/hivepaas/hivepaas/hivepaas_app/service/specservice/specmodel"
++)
++
++// appNature is what an app is once imported: its kind's category, and its
++// deployment source - what the bundle writes of them, else what the app has.
++type appNature struct {
++	category base.AppCategory
++	source   *entity.AppDeploymentSettings
++}
++
++func (n appNature) isFunction() bool {
++	return n.category == base.AppCategoryFunction
++}
++
++// checkFunctions holds a function to what creating one checks, whichever way
++// the import writes it: its kind and its source agree, an app keeps its kind,
++// its source is valid, and a cluster of several nodes has a registry to push
++// its image to. What fails is blocked: nothing of the import is written. The
++// functions found are remembered, for the writer to pin their routing to their
++// runtime's port.
++func (p *planner) checkFunctions(ctx context.Context) error {
++	p.functionApps = map[string]bool{}
++	var multiNode *bool
++	for _, node := range p.writingApps() {
++		if err := p.checkFunction(ctx, node, &multiNode); err != nil {
++			return err
++		}
++	}
++	return nil
++}
++
++// checkFunction checks one app the import writes; multiNode is asked of the
++// cluster once, for the first function whose source is written.
++func (p *planner) checkFunction(ctx context.Context, node *specmodel.PlanNode, multiNode **bool) error {
++	writesKind := writesBlock(node, string(specmodel.BlockSettingsKind))
++	writesSource := writesBlock(node, string(specmodel.BlockDeploymentSource))
++
++	current, err := natureOf(p.currentApp(node))
++	if err != nil {
++		return err
++	}
++	bundled, err := natureOf(p.apps[node.Path].doc)
++	if err != nil {
++		return err
++	}
++	after := current
++	if writesKind {
++		after.category = bundled.category
++	}
++	if writesSource {
++		after.source = bundled.source
++	}
++	p.functionApps[node.Path] = after.isFunction()
++	if !writesKind && !writesSource {
++		return nil
++	}
++
++	if node.Action == specmodel.ActionUpdate && writesKind && current.isFunction() != after.isFunction() {
++		p.block(node, specmodel.CodeAppKindChanged, nil,
++			"nothing can be imported: an app does not change its kind - a function stays one, and an app "+
++				"does not become one")
++		return nil
++	}
++	methodIsFunction := after.source != nil && after.source.ActiveMethod == base.DeploymentMethodFunction
++	hasFunctionSource := after.source != nil && after.source.FunctionSource != nil
++	if after.isFunction() != methodIsFunction || methodIsFunction != hasFunctionSource {
++		p.block(node, specmodel.CodeFunctionKindMismatch, nil,
++			"nothing can be imported: a function is an app of kind function deployed from a function's source, "+
++				"and no other app has either")
++		return nil
++	}
++	if !writesSource || !hasFunctionSource {
++		return nil
++	}
++
++	source := after.source.FunctionSource
++	normalizeFunctionSource(source)
++	if problems := functionSourceProblems(source); len(problems) > 0 {
++		p.block(node, specmodel.CodeFunctionSourceInvalid, map[string]any{"problems": problems},
++			"nothing can be imported: the function's source is not valid")
++		return nil
++	}
++	if *multiNode == nil {
++		multi, err := p.s.clusterService.IsMultiNode(ctx)
++		if err != nil {
++			return hperrors.Wrap(err)
++		}
++		*multiNode = &multi
++	}
++	if **multiNode && source.PushToRegistry.ID == "" {
++		p.block(node, specmodel.CodeFunctionBuildSource, nil,
++			"nothing can be imported: a cluster of several nodes pulls the function's image from a registry, "+
++				"and the function names none to push it to")
++	}
++	return nil
++}
++
++func (p *planner) block(node *specmodel.PlanNode, code string, detail map[string]any, action string) {
++	node.Issues = append(node.Issues, specmodel.Issue{
++		Severity: specmodel.SeverityBlocked, Code: code, Path: node.Path, Detail: detail, Action: action,
++	})
++}
++
++// natureOf reads an app document's kind and deployment source; nothing for no
++// document, or a block a newer HivePaaS wrote, which SETTING_VERSION_NEWER
++// blocks already.
++func natureOf(doc *specmodel.AppDoc) (appNature, error) {
++	var nature appNature
++	if doc == nil {
++		return nature, nil
++	}
++	if body, found := doc.Settings[specmodel.SingletonBlockName(base.SettingTypeAppKind)]; found {
++		data, err := decodeNatureBlock(specmodel.BlockSettingsKind, base.SettingTypeAppKind, body)
++		if err != nil {
++			return nature, err
++		}
++		if kind, ok := data.(*entity.AppKindSettings); ok {
++			nature.category = kind.Category
++		}
++	}
++	if doc.Deployment != nil && doc.Deployment.Source != nil {
++		data, err := decodeNatureBlock(specmodel.BlockDeploymentSource, base.SettingTypeAppDeployment,
++			doc.Deployment.Source)
++		if err != nil {
++			return nature, err
++		}
++		nature.source, _ = data.(*entity.AppDeploymentSettings)
++	}
++	return nature, nil
++}
++
++func decodeNatureBlock(block specmodel.Block, typ base.SettingType, body any) (entity.SettingData, error) {
++	var externals []*specmodel.ExternalRef
++	_, data, err := decodeImportedSetting(block, typ, "", withExternalPlaceholders(body, &externals))
++	if errors.Is(err, hperrors.ErrDataVerNewerThanSystemVer) {
++		return nil, nil
++	}
++	return data, err
++}
+diff --git a/hivepaas_app/service/specservice/specserviceimpl/import_plan.go b/hivepaas_app/service/specservice/specserviceimpl/import_plan.go
+index 5f8521c1..9bd98503 100644
+--- a/hivepaas_app/service/specservice/specserviceimpl/import_plan.go
++++ b/hivepaas_app/service/specservice/specserviceimpl/import_plan.go
+@@ -249,6 +249,9 @@ type planner struct {
+ 	// refused names, by node path, the settings this caller may not write. The
+ 	// rest of the node's settings are imported as they are.
+ 	refused map[string][]string
++	// functionApps are the app nodes whose app is a function once imported:
++	// their routing is pinned to the runtime's port when written.
++	functionApps map[string]bool
+ }
+ 
+ // appPlace is where an app's document sits in the bundle.
+@@ -301,6 +304,9 @@ func (p *planner) plan(ctx context.Context) error {
+ 	if err := p.checkAvailability(ctx); err != nil {
+ 		return err
+ 	}
++	if err := p.checkFunctions(ctx); err != nil {
++		return err
++	}
+ 	if err := p.checkSecrets(); err != nil {
+ 		return err
+ 	}
+diff --git a/hivepaas_app/service/specservice/specserviceimpl/import_write.go b/hivepaas_app/service/specservice/specserviceimpl/import_write.go
+index 486a2f07..215ecba6 100644
+--- a/hivepaas_app/service/specservice/specserviceimpl/import_write.go
++++ b/hivepaas_app/service/specservice/specserviceimpl/import_write.go
+@@ -457,6 +457,16 @@ func (w *writer) buildSetting(
+ 	if err = w.keepAndGenerate(node, data, row); err != nil {
+ 		return nil, err
+ 	}
++	// A function is written as creating one writes it; what the plan checked of
++	// its source is the normalized source.
++	switch typed := data.(type) {
++	case *entity.AppDeploymentSettings:
++		normalizeFunctionSource(typed.FunctionSource)
++	case *entity.AppRoutingSettings:
++		if w.p.functionApps[node.Path] {
++			typed.PinToFunctionPort()
++		}
++	}
+ 	holder := w.holderOf(node, name)
+ 	for _, issue := range node.Issues {
+ 		switch {
+diff --git a/hivepaas_app/usecase/appsettingsuc/function_rules.go b/hivepaas_app/usecase/appsettingsuc/function_rules.go
+index d94bf16f..8ddd4e6b 100644
+--- a/hivepaas_app/usecase/appsettingsuc/function_rules.go
++++ b/hivepaas_app/usecase/appsettingsuc/function_rules.go
+@@ -37,8 +37,5 @@ func checkKindCategoryChange(current *entity.AppKindSettings, next base.AppCateg
+ // fixFunctionRouting points a function's routing at the port its runtime
+ // listens on: the app's port, and every domain's.
+ func fixFunctionRouting(routing *entity.AppRoutingSettings) {
+-	routing.Port = base.FunctionPort
+-	for _, domain := range routing.Domains {
+-		domain.ContainerPort = base.FunctionPort
+-	}
++	routing.PinToFunctionPort()
+ }

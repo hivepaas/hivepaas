@@ -176,3 +176,17 @@ is refused, as when it is saved, where its app is not a function.
 ## Later
 
 - An app template holding a function.
+
+## Changes after the plan
+
+Writing the plan (`docs/superpowers/plans/2026-10-02-functions-in-spec.md`)
+settled what follows:
+
+- the repository of an imported function is not reached at import: the
+  credentials it needs may be created by the same import, so at plan time there
+  is nothing to reach it with; as for a repository app imported today, its first
+  build says when it cannot be. `FUNCTION_BUILD_SOURCE` is the registry a
+  cluster of several nodes needs;
+- the source's checks are written for the entity in the spec service and held to
+  the API's by a test, since a service does not import a DTO; the path, handler
+  and entrypoint rules they share are in `base`.

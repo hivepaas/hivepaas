@@ -17,9 +17,9 @@ import {
 import { PROJECT_FORM_CONTROL_MAX_WIDTH_CLASS } from "~/projects/module-shared/constants";
 import {
     ALL_FUNCTION_RUNTIMES,
-    type EFunctionRuntime,
-    FUNCTION_RUNTIME_DEFAULT_ENTRYPOINT,
-    FUNCTION_RUNTIME_LABELS,
+    functionRuntimeDefaultEntrypoint,
+    functionRuntimeLabel,
+    isKnownFunctionRuntime,
 } from "~/projects/module-shared/enums";
 
 import { ContentBlock, InfoBlock, LabelWithInfo } from "@application/shared/components";
@@ -90,7 +90,7 @@ export function FunctionSettingsForm({ ref, projectId, env, source, onSubmit, re
         [setError],
     );
 
-    const runtime = watch("runtime") as EFunctionRuntime;
+    const runtime = watch("runtime");
     const codeLocation = watch("codeLocation");
 
     const { field: runtimeField } = useController({ control, name: "runtime" });
@@ -109,12 +109,12 @@ export function FunctionSettingsForm({ ref, projectId, env, source, onSubmit, re
 
     // An entrypoint left at its runtime's default follows the runtime.
     function changeRuntime(next: string) {
-        const previous = FUNCTION_RUNTIME_DEFAULT_ENTRYPOINT[getValues("runtime") as EFunctionRuntime];
-        const nextDefault = FUNCTION_RUNTIME_DEFAULT_ENTRYPOINT[next as EFunctionRuntime];
-        if (getValues("entrypointFile") === previous.file) {
+        const previous = functionRuntimeDefaultEntrypoint(getValues("runtime"));
+        const nextDefault = functionRuntimeDefaultEntrypoint(next);
+        if (nextDefault && getValues("entrypointFile") === previous?.file) {
             setValue("entrypointFile", nextDefault.file, { shouldDirty: true });
         }
-        if (getValues("entrypointHandler") === previous.handler) {
+        if (nextDefault && getValues("entrypointHandler") === previous?.handler) {
             setValue("entrypointHandler", nextDefault.handler, { shouldDirty: true });
         }
         runtimeField.onChange(next);
@@ -128,7 +128,11 @@ export function FunctionSettingsForm({ ref, projectId, env, source, onSubmit, re
         onSubmit(values);
     }
 
-    const defaultEntrypoint = FUNCTION_RUNTIME_DEFAULT_ENTRYPOINT[runtime];
+    const defaultEntrypoint = functionRuntimeDefaultEntrypoint(runtime);
+    // A runtime the dashboard does not know stays offered, so the select shows it.
+    const runtimes: string[] = isKnownFunctionRuntime(source.runtime)
+        ? ALL_FUNCTION_RUNTIMES
+        : [...ALL_FUNCTION_RUNTIMES, source.runtime];
 
     return (
         <div className="pt-2">
@@ -165,12 +169,12 @@ export function FunctionSettingsForm({ ref, projectId, env, source, onSubmit, re
                                                 <SelectValue />
                                             </SelectTrigger>
                                             <SelectContent>
-                                                {ALL_FUNCTION_RUNTIMES.map(item => (
+                                                {runtimes.map(item => (
                                                     <SelectItem
                                                         key={item}
                                                         value={item}
                                                     >
-                                                        {FUNCTION_RUNTIME_LABELS[item]}
+                                                        {functionRuntimeLabel(item)}
                                                     </SelectItem>
                                                 ))}
                                             </SelectContent>
@@ -200,7 +204,7 @@ export function FunctionSettingsForm({ ref, projectId, env, source, onSubmit, re
                                     <Field>
                                         <Input
                                             {...entrypointFile}
-                                            placeholder={defaultEntrypoint.file}
+                                            placeholder={defaultEntrypoint?.file}
                                             className={PROJECT_FORM_CONTROL_MAX_WIDTH_CLASS}
                                             aria-invalid={Boolean(errors.entrypointFile)}
                                         />
@@ -222,7 +226,7 @@ export function FunctionSettingsForm({ ref, projectId, env, source, onSubmit, re
                                     <Field>
                                         <Input
                                             {...entrypointHandler}
-                                            placeholder={defaultEntrypoint.handler}
+                                            placeholder={defaultEntrypoint?.handler}
                                             className={PROJECT_FORM_CONTROL_MAX_WIDTH_CLASS}
                                             aria-invalid={Boolean(errors.entrypointHandler)}
                                         />

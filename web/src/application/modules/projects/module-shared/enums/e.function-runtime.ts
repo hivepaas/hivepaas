@@ -30,3 +30,25 @@ export const FUNCTION_RUNTIME_DEFAULT_ENTRYPOINT: Record<EFunctionRuntime, { fil
     [EFunctionRuntime.Python313]: { file: "main.py", handler: "handler" },
     [EFunctionRuntime.Go127]: { file: ".", handler: "Handle" },
 };
+
+/**
+ * Whether the dashboard knows a runtime. A function keeps the id of a runtime a
+ * newer HivePaaS added; the dashboard shows it, and leaves it as it is.
+ */
+export function isKnownFunctionRuntime(runtime: string): runtime is EFunctionRuntime {
+    return (ALL_FUNCTION_RUNTIMES as string[]).includes(runtime);
+}
+
+/**
+ * A runtime's name; a runtime the dashboard does not know goes by its id.
+ */
+export function functionRuntimeLabel(runtime: string): string {
+    return isKnownFunctionRuntime(runtime) ? FUNCTION_RUNTIME_LABELS[runtime] : runtime;
+}
+
+/**
+ * A runtime's default entrypoint; none for a runtime the dashboard does not know.
+ */
+export function functionRuntimeDefaultEntrypoint(runtime: string): { file: string; handler: string } | null {
+    return isKnownFunctionRuntime(runtime) ? FUNCTION_RUNTIME_DEFAULT_ENTRYPOINT[runtime] : null;
+}

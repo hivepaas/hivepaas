@@ -1,4 +1,3 @@
-import type { EFunctionRuntime } from "~/projects/module-shared/enums";
 import type { SettingsBaseEntity } from "~/settings/domain";
 
 /**
@@ -24,7 +23,8 @@ export type FunctionRepoCode = {
  * runtime that runs it, and the limits of one call.
  */
 export type FunctionSource = {
-    runtime: EFunctionRuntime;
+    /** A runtime's id; one the dashboard does not know is kept as it is. */
+    runtime: string;
     contract: string;
     entrypoint: { file: string; handler: string };
     code: {

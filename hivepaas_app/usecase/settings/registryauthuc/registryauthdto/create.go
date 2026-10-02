@@ -15,7 +15,9 @@ import (
 const (
 	addressMaxLen  = 200
 	usernameMaxLen = 100
-	passwordMaxLen = 100
+	// passwordMaxLen fits a Google Artifact Registry service account's JSON
+	// key, user _json_key_base64: about 3 KB in base64.
+	passwordMaxLen = 8 * 1024
 )
 
 type CreateRegistryAuthReq struct {

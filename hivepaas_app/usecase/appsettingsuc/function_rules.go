@@ -37,8 +37,5 @@ func checkKindCategoryChange(current *entity.AppKindSettings, next base.AppCateg
 // fixFunctionRouting points a function's routing at the port its runtime
 // listens on: the app's port, and every domain's.
 func fixFunctionRouting(routing *entity.AppRoutingSettings) {
-	routing.Port = base.FunctionPort
-	for _, domain := range routing.Domains {
-		domain.ContainerPort = base.FunctionPort
-	}
+	routing.PinToFunctionPort()
 }

@@ -249,6 +249,9 @@ type planner struct {
 	// refused names, by node path, the settings this caller may not write. The
 	// rest of the node's settings are imported as they are.
 	refused map[string][]string
+	// functionApps are the app nodes whose app is a function once imported:
+	// their routing is pinned to the runtime's port when written.
+	functionApps map[string]bool
 }
 
 // appPlace is where an app's document sits in the bundle.
@@ -299,6 +302,9 @@ func (p *planner) plan(ctx context.Context) error {
 		return err
 	}
 	if err := p.checkAvailability(ctx); err != nil {
+		return err
+	}
+	if err := p.checkFunctions(ctx); err != nil {
 		return err
 	}
 	if err := p.checkSecrets(); err != nil {

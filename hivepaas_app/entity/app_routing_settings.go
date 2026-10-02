@@ -325,3 +325,15 @@ func (s *Setting) AsAppRoutingSettings() (*AppRoutingSettings, error) {
 func (s *Setting) MustAsAppRoutingSettings() *AppRoutingSettings {
 	return gofn.Must(s.AsAppRoutingSettings())
 }
+
+// PinToFunctionPort points a function's routing at the port its runtime
+// listens on: the app's port, and every domain's. A function answers nowhere
+// else, whatever the settings said.
+func (s *AppRoutingSettings) PinToFunctionPort() {
+	s.Port = base.FunctionPort
+	for _, domain := range s.Domains {
+		if domain != nil {
+			domain.ContainerPort = base.FunctionPort
+		}
+	}
+}

@@ -457,6 +457,16 @@ func (w *writer) buildSetting(
 	if err = w.keepAndGenerate(node, data, row); err != nil {
 		return nil, err
 	}
+	// A function is written as creating one writes it; what the plan checked of
+	// its source is the normalized source.
+	switch typed := data.(type) {
+	case *entity.AppDeploymentSettings:
+		normalizeFunctionSource(typed.FunctionSource)
+	case *entity.AppRoutingSettings:
+		if w.p.functionApps[node.Path] {
+			typed.PinToFunctionPort()
+		}
+	}
 	holder := w.holderOf(node, name)
 	for _, issue := range node.Issues {
 		switch {

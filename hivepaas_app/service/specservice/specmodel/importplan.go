@@ -27,6 +27,12 @@ const (
 	CodeNetworkNotAvailable      = "NETWORK_NOT_AVAILABLE"
 	CodeSecretOmitted            = "SECRET_OMITTED"
 	CodeOwnerNotPermitted        = "OWNER_NOT_PERMITTED"
+
+	// A function is created and changed through what creating one checks.
+	CodeFunctionSourceInvalid = "FUNCTION_SOURCE_INVALID"
+	CodeFunctionKindMismatch  = "FUNCTION_KIND_MISMATCH"
+	CodeAppKindChanged        = "APP_KIND_CHANGED"
+	CodeFunctionBuildSource   = "FUNCTION_BUILD_SOURCE"
 )
 
 // Note codes. A note says what import does, and needs no acceptance.

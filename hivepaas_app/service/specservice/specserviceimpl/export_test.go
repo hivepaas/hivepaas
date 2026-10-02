@@ -173,13 +173,19 @@ func (f *fakeAppRepo) GetByID(
 
 type fakeClusterService struct {
 	clusterservice.Service
-	services map[string]*swarm.Service
+	// multiNode is whether the cluster has several nodes.
+	multiNode bool
+	services  map[string]*swarm.Service
 	// ports are the published ports other services hold, by service id.
 	ports map[clusterservice.PortRef]string
 	// updated are the specs each service was updated to; failUpdate makes one
 	// service's update fail.
 	updated    map[string][]*swarm.ServiceSpec
 	failUpdate map[string]error
+}
+
+func (f *fakeClusterService) IsMultiNode(context.Context) (bool, error) {
+	return f.multiNode, nil
 }
 
 func (f *fakeClusterService) VerifyPortsAvailable(
@@ -423,8 +429,18 @@ func exportFixture(t *testing.T) specservice.Service {
 			}}}},
 	}))
 
+	functionCall := &entity.Setting{
+		ID: "job_4", Type: base.SettingTypeSchedJob, Scope: base.ObjectScopeApp, ObjectID: "app_4",
+		Name: "nightly", Kind: string(base.SchedJobTypeFunctionInvoke), Status: base.SettingStatusActive,
+		Version: entity.CurrentSchedJobVersion,
+	}
+	assert.NoError(t, functionCall.SetData(&entity.SchedJob{
+		JobType: base.SchedJobTypeFunctionInvoke, App: entity.ObjectID{ID: "app_4"},
+		FunctionInvoke: &entity.SchedJobFunctionInvoke{Method: "POST", Path: "/report?day=today"},
+	}))
+
 	all := []*entity.Setting{cert, apiKey, routing, secret, mountEntry, kind, projectVolume, sharedVolume,
-		projectConfig, envConfig, appJob, envSeq, functionKind, functionSource}
+		projectConfig, envConfig, appJob, envSeq, functionKind, functionSource, functionCall}
 
 	svc := New(
 		&fakeAppRepo{apps: []*entity.App{deployed, undeployed, preview, function}},
@@ -638,6 +654,8 @@ func TestExportWritesAFunctionWithItsCodeAsFiles(t *testing.T) {
 	assert.Contains(t, env, "hello:")
 	assert.Contains(t, env, "activeMethod: function")
 	assert.Contains(t, env, "filesFrom: projects/project_a/envs/dev/functions/hello")
+	assert.Contains(t, env, "jobType: function-invoke", "a function's calls travel with it")
+	assert.Contains(t, env, "path: /report?day=today")
 	assert.NotContains(t, env, "export default", "the code is not in the env document")
 
 	code := readFromArchive(t, path, "projects/project_a/envs/dev/functions/hello/index.js")

@@ -11,6 +11,8 @@ import {
     type OptionCard,
     OptionCardGroup,
     ProjectEnvBadge,
+    PushToRegistryCombobox,
+    RegistryCredentialsLink,
 } from "~/projects/module-shared/components";
 import { functionTemplateOf } from "~/projects/module-shared/constants";
 import {
@@ -92,6 +94,7 @@ export function CreateFunctionForm({
             dir: "",
             credentials: null,
             autoDeploy: true,
+            pushToRegistry: null,
             expose: false,
             domain: "",
         },
@@ -128,6 +131,7 @@ export function CreateFunctionForm({
     const { field: dir } = useController({ name: "dir", control });
     const { field: credentials } = useController({ name: "credentials", control });
     const { field: autoDeploy } = useController({ name: "autoDeploy", control });
+    const { field: pushToRegistry } = useController({ name: "pushToRegistry", control });
     const { field: expose } = useController({ name: "expose", control });
     const { field: domain } = useController({ name: "domain", control });
 
@@ -226,8 +230,9 @@ export function CreateFunctionForm({
                                     value={env.value}
                                     onValueChange={value => {
                                         env.onChange(value);
-                                        // Credentials are an env's: another env lists its own.
+                                        // Credentials and registries are an env's: another env lists its own.
                                         setValue("credentials", null);
+                                        setValue("pushToRegistry", null);
                                     }}
                                     disabled={readOnly || envs.length === 0}
                                 >
@@ -482,6 +487,31 @@ export function CreateFunctionForm({
                             </InfoBlock>
                         </>
                     )}
+
+                    <InfoBlock
+                        titleWidth={150}
+                        title={
+                            <LabelWithInfo
+                                label="Push Image To"
+                                content="The registry the function's image is pushed to after its build. A cluster of several nodes needs one: its other nodes pull the image from it."
+                            />
+                        }
+                    >
+                        <FieldGroup>
+                            <Field>
+                                <PushToRegistryCombobox
+                                    projectId={projectId}
+                                    env={selectedEnvName}
+                                    value={pushToRegistry.value}
+                                    onChange={value => {
+                                        pushToRegistry.onChange(value ?? null);
+                                    }}
+                                    readOnly={readOnly}
+                                />
+                                <RegistryCredentialsLink projectId={projectId} />
+                            </Field>
+                        </FieldGroup>
+                    </InfoBlock>
 
                     <InfoBlock
                         titleWidth={150}

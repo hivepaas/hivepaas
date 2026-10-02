@@ -1,0 +1,194 @@
+diff --git a/hivepaas_app/service/loggingservice/loggingserviceimpl/metrics_test.go b/hivepaas_app/service/loggingservice/loggingserviceimpl/metrics_test.go
+new file mode 100644
+index 00000000..b6ecad05
+--- /dev/null
++++ b/hivepaas_app/service/loggingservice/loggingserviceimpl/metrics_test.go
+@@ -0,0 +1,81 @@
++package loggingserviceimpl
++
++import (
++	"context"
++	"testing"
++	"time"
++
++	"github.com/stretchr/testify/assert"
++
++	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
++	"github.com/hivepaas/hivepaas/hivepaas_app/service/appservice"
++	"github.com/hivepaas/hivepaas/hivepaas_app/service/loggingservice"
++	"github.com/hivepaas/hivepaas/services/logging"
++)
++
++// statsBackend answers InvocationStats with resp, and keeps the request.
++type statsBackend struct {
++	logging.Backend
++	got  *logging.InvocationStatsReq
++	resp *logging.InvocationStatsResp
++}
++
++func (b *statsBackend) InvocationStats(
++	_ context.Context, req *logging.InvocationStatsReq,
++) (*logging.InvocationStatsResp, error) {
++	b.got = req
++	return b.resp, nil
++}
++
++func withStatsBackend(s *service, resp *logging.InvocationStatsResp) *statsBackend {
++	b := &statsBackend{resp: resp}
++	s.newBackend = func(logging.BackendType, *logging.BackendConfig) (logging.Backend, error) { return b, nil }
++	return b
++}
++
++// A function's metrics are scoped to it, and every step of the range is a
++// point: one without a call is one with no calls.
++func TestFunctionMetricsAreTheFunctionsAndEveryStepIsAPoint(t *testing.T) {
++	s := newTestService(&fakeDocker{}, storedSetting(t, enabledConfig()))
++	at := func(m int) time.Time { return time.Date(2026, 10, 2, 10, m, 0, 0, time.UTC) }
++	p := func(v float64) *float64 { return &v }
++	b := withStatsBackend(s, &logging.InvocationStatsResp{
++		Buckets: []*logging.InvocationBucket{
++			{Time: at(1), InvocationCounts: logging.InvocationCounts{Calls: 2, P95: p(12)}},
++			{Time: at(3), InvocationCounts: logging.InvocationCounts{Calls: 1, Failed: 1, P95: p(40)}},
++		},
++		Totals:    logging.InvocationCounts{Calls: 3, Failed: 1, P95: p(40)},
++		ByOutcome: map[string]int64{"ok": 2, "error": 1},
++	})
++
++	got, err := s.FunctionMetrics(context.Background(), nil, &entity.App{ID: "FN1"},
++		&loggingservice.FunctionMetricsQuery{Start: at(0), End: at(5), Step: time.Minute})
++
++	assert.NoError(t, err)
++	if assert.NotNil(t, b.got) {
++		assert.Equal(t, []logging.FieldMatch{{Field: "attrs." + appservice.LabelLogAppID, Value: "FN1"}}, b.got.Match)
++		assert.Equal(t, time.Minute, b.got.Step)
++	}
++	if assert.Len(t, got.Buckets, 5) {
++		for i, bucket := range got.Buckets {
++			assert.Equal(t, at(i), bucket.Time)
++		}
++		assert.Equal(t, int64(0), got.Buckets[0].Calls)
++		assert.Nil(t, got.Buckets[0].P95)
++		assert.Equal(t, int64(2), got.Buckets[1].Calls)
++		assert.Equal(t, int64(1), got.Buckets[3].Failed)
++	}
++	assert.Equal(t, int64(3), got.Totals.Calls)
++	assert.Equal(t, map[string]int64{"ok": 2, "error": 1}, got.ByOutcome)
++}
++
++func TestFunctionMetricsRefuseAnAppWithoutAnID(t *testing.T) {
++	s := newTestService(&fakeDocker{}, storedSetting(t, enabledConfig()))
++	b := withStatsBackend(s, &logging.InvocationStatsResp{})
++
++	_, err := s.FunctionMetrics(context.Background(), nil, &entity.App{},
++		&loggingservice.FunctionMetricsQuery{Start: time.Now().Add(-time.Hour), End: time.Now(), Step: time.Minute})
++
++	assert.Error(t, err)
++	assert.Nil(t, b.got, "an empty id would count every line with no app at all")
++}
+diff --git a/hivepaas_app/usecase/appuc/appdto/function_metrics_test.go b/hivepaas_app/usecase/appuc/appdto/function_metrics_test.go
+new file mode 100644
+index 00000000..d1fde336
+--- /dev/null
++++ b/hivepaas_app/usecase/appuc/appdto/function_metrics_test.go
+@@ -0,0 +1,22 @@
++package appdto
++
++import (
++	"testing"
++
++	"github.com/stretchr/testify/assert"
++)
++
++func TestAMetricsRangeIsOneOfFour(t *testing.T) {
++	for _, r := range []string{"1h", "6h", "24h", "7d"} {
++		req := &GetFunctionMetricsReq{ProjectID: "01JAB9XED0GTXBSQDFVYAJ8WB1", ProjectEnvID: "dev",
++			AppID: "01JAB9XED0GTXBSQDFVYAJ8WD1", Range: r}
++		assert.Empty(t, req.Validate(), r)
++	}
++	req := &GetFunctionMetricsReq{ProjectID: "01JAB9XED0GTXBSQDFVYAJ8WB1", ProjectEnvID: "dev",
++		AppID: "01JAB9XED0GTXBSQDFVYAJ8WD1", Range: "2h"}
++	assert.NotEmpty(t, req.Validate())
++
++	req = NewGetFunctionMetricsReq()
++	assert.Equal(t, DefaultFunctionMetricsRange, req.Range, "a day, when the range is not given")
++	assert.Equal(t, "24h", DefaultFunctionMetricsRange)
++}
+diff --git a/hivepaas_app/usecase/appuc/function_metrics_test.go b/hivepaas_app/usecase/appuc/function_metrics_test.go
+new file mode 100644
+index 00000000..edb06d16
+--- /dev/null
++++ b/hivepaas_app/usecase/appuc/function_metrics_test.go
+@@ -0,0 +1,73 @@
++package appuc
++
++import (
++	"testing"
++	"time"
++
++	"github.com/stretchr/testify/assert"
++
++	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/timeutil"
++	"github.com/hivepaas/hivepaas/services/logging"
++)
++
++func TestAMetricsWindowEndsWithTheStepNowIsIn(t *testing.T) {
++	now := time.Date(2026, 10, 2, 10, 7, 30, 0, time.UTC)
++	at := func(month time.Month, day, hour, minute int) time.Time {
++		return time.Date(2026, month, day, hour, minute, 0, 0, time.UTC)
++	}
++	for name, want := range map[string]struct {
++		step  time.Duration
++		start time.Time
++		end   time.Time
++	}{
++		"1h":  {time.Minute, at(10, 2, 9, 8), at(10, 2, 10, 8)},
++		"6h":  {5 * time.Minute, at(10, 2, 4, 10), at(10, 2, 10, 10)},
++		"24h": {15 * time.Minute, at(10, 1, 10, 15), at(10, 2, 10, 15)},
++		"7d":  {time.Hour, at(9, 25, 11, 0), at(10, 2, 11, 0)},
++	} {
++		w := metricsWindow(name, now, 0)
++		assert.Equal(t, want.step, w.step, name)
++		assert.Equal(t, want.start, w.start, name)
++		assert.Equal(t, want.end, w.end, name)
++		assert.False(t, w.clamped, name)
++	}
++}
++
++// Logs kept for less than the range answer for what is kept, and say so.
++func TestAMetricsWindowStopsWhereTheLogsDo(t *testing.T) {
++	now := time.Date(2026, 10, 2, 10, 7, 30, 0, time.UTC)
++
++	w := metricsWindow("7d", now, timeutil.Duration(72*time.Hour))
++
++	assert.Equal(t, time.Date(2026, 9, 29, 11, 0, 0, 0, time.UTC), w.start)
++	assert.True(t, w.clamped)
++	assert.False(t, metricsWindow("24h", now, timeutil.Duration(72*time.Hour)).clamped)
++}
++
++func TestMetricsDataAreTheCountsAsTheAPIWritesThem(t *testing.T) {
++	at := time.Date(2026, 10, 2, 10, 0, 0, 0, time.UTC)
++	p := func(v float64) *float64 { return &v }
++	w := metricsWindow("1h", at, 0)
++
++	data := toFunctionMetricsData("1h", w, &logging.InvocationStatsResp{
++		Buckets: []*logging.InvocationBucket{
++			{Time: at, InvocationCounts: logging.InvocationCounts{Calls: 3, Failed: 1, Errors5xx: 1,
++				P50: p(10), P95: p(20), P99: p(30)}},
++			{Time: at.Add(time.Minute)},
++		},
++		Totals:    logging.InvocationCounts{Calls: 3, Failed: 1, Errors5xx: 1, P50: p(10), P95: p(20), P99: p(30)},
++		ByOutcome: map[string]int64{"ok": 2, "error": 1},
++	})
++
++	assert.True(t, data.Available)
++	assert.Equal(t, "1h", data.Range)
++	assert.Equal(t, 60, data.StepSeconds)
++	assert.Equal(t, int64(3), data.Totals.Calls)
++	assert.Equal(t, map[string]int64{"ok": 2, "error": 1}, data.ByOutcome)
++	if assert.Len(t, data.Series, 2) {
++		assert.Equal(t, at, data.Series[0].Time)
++		assert.Equal(t, 20.0, *data.Series[0].P95)
++		assert.Equal(t, int64(0), data.Series[1].Calls)
++		assert.Nil(t, data.Series[1].P95, "no call, no duration")
++	}
++}

@@ -1,0 +1,630 @@
+diff --git a/docs/openapi/swagger.json b/docs/openapi/swagger.json
+index 419e10e6..63921123 100644
+--- a/docs/openapi/swagger.json
++++ b/docs/openapi/swagger.json
+@@ -19151,6 +19151,78 @@
+         "x-codegen-request-body-name" : "body"
+       }
+     },
++    "/projects/{projectID}/{projectEnv}/apps/{appID}/function-metrics" : {
++      "get" : {
++        "description" : "Counts a function's calls over a range ending now, from the invocation line its runtime writes\nfor every call into its logs: how many, how many failed - an outcome other than ok - how many\nthe handler answered 5xx, and the handler's duration's p50, p95 and p99, in milliseconds, which\nare close rather than exact. One point per step, oldest first: 1 min for 1h, 5 min for 6h,\n15 min for 24h, 1 h for 7d. When the logs cannot be read, `available` is false and `reason`\nsays why, as for the logs' history.",
++        "operationId" : "getFunctionMetrics",
++        "parameters" : [ {
++          "description" : "project ID",
++          "in" : "path",
++          "name" : "projectID",
++          "required" : true,
++          "schema" : {
++            "type" : "string"
++          }
++        }, {
++          "description" : "project env",
++          "in" : "path",
++          "name" : "projectEnv",
++          "required" : true,
++          "schema" : {
++            "type" : "string"
++          }
++        }, {
++          "description" : "app ID",
++          "in" : "path",
++          "name" : "appID",
++          "required" : true,
++          "schema" : {
++            "type" : "string"
++          }
++        }, {
++          "description" : "1h, 6h, 24h or 7d; default 24h",
++          "in" : "query",
++          "name" : "range",
++          "schema" : {
++            "type" : "string"
++          }
++        } ],
++        "responses" : {
++          "200" : {
++            "content" : {
++              "application/json" : {
++                "schema" : {
++                  "$ref" : "#/components/schemas/appdto.GetFunctionMetricsResp"
++                }
++              }
++            },
++            "description" : "OK"
++          },
++          "400" : {
++            "content" : {
++              "application/json" : {
++                "schema" : {
++                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
++                }
++              }
++            },
++            "description" : "Bad Request"
++          },
++          "500" : {
++            "content" : {
++              "application/json" : {
++                "schema" : {
++                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
++                }
++              }
++            },
++            "description" : "Internal Server Error"
++          }
++        },
++        "summary" : "Gets a function's metrics",
++        "tags" : [ "Apps" ]
++      }
++    },
+     "/projects/{projectID}/{projectEnv}/apps/{appID}/function/test-run" : {
+       "post" : {
+         "description" : "Calls the function once with the code sent, not yet saved, and a request, in a throwaway\ncontainer on a build node, with the function's variables and secrets.",
+@@ -53634,6 +53706,102 @@
+         "required" : [ "data", "meta" ],
+         "type" : "object"
+       },
++      "appdto.FunctionMetricsCountsResp" : {
++        "properties" : {
++          "calls" : {
++            "type" : "integer"
++          },
++          "errors5xx" : {
++            "type" : "integer"
++          },
++          "failed" : {
++            "type" : "integer"
++          },
++          "p50" : {
++            "type" : "number"
++          },
++          "p95" : {
++            "type" : "number"
++          },
++          "p99" : {
++            "type" : "number"
++          }
++        },
++        "required" : [ "calls", "errors5xx", "failed", "p50", "p95", "p99" ],
++        "type" : "object"
++      },
++      "appdto.FunctionMetricsDataResp" : {
++        "properties" : {
++          "available" : {
++            "type" : "boolean"
++          },
++          "byOutcome" : {
++            "additionalProperties" : {
++              "type" : "integer"
++            },
++            "type" : "object"
++          },
++          "clamped" : {
++            "description" : "Clamped says the range reaches past what the logs keep: it starts where\nthey do.",
++            "type" : "boolean"
++          },
++          "end" : {
++            "type" : "string"
++          },
++          "range" : {
++            "type" : "string"
++          },
++          "reason" : {
++            "type" : "string"
++          },
++          "series" : {
++            "description" : "Series has one point per step, oldest first.",
++            "items" : {
++              "$ref" : "#/components/schemas/appdto.FunctionMetricsPointResp"
++            },
++            "type" : "array"
++          },
++          "start" : {
++            "description" : "Start and End bound the range: whole steps, End past now.",
++            "type" : "string"
++          },
++          "stepSeconds" : {
++            "type" : "integer"
++          },
++          "totals" : {
++            "$ref" : "#/components/schemas/appdto.FunctionMetricsCountsResp"
++          }
++        },
++        "required" : [ "available", "byOutcome", "clamped", "end", "range", "reason", "series", "start", "stepSeconds", "totals" ],
++        "type" : "object"
++      },
++      "appdto.FunctionMetricsPointResp" : {
++        "properties" : {
++          "calls" : {
++            "type" : "integer"
++          },
++          "errors5xx" : {
++            "type" : "integer"
++          },
++          "failed" : {
++            "type" : "integer"
++          },
++          "p50" : {
++            "type" : "number"
++          },
++          "p95" : {
++            "type" : "number"
++          },
++          "p99" : {
++            "type" : "number"
++          },
++          "time" : {
++            "type" : "string"
++          }
++        },
++        "required" : [ "calls", "errors5xx", "failed", "p50", "p95", "p99", "time" ],
++        "type" : "object"
++      },
+       "appdto.GetAppLogHistoryResp" : {
+         "properties" : {
+           "data" : {
+@@ -53682,6 +53850,18 @@
+         "required" : [ "data", "meta" ],
+         "type" : "object"
+       },
++      "appdto.GetFunctionMetricsResp" : {
++        "properties" : {
++          "data" : {
++            "$ref" : "#/components/schemas/appdto.FunctionMetricsDataResp"
++          },
++          "meta" : {
++            "$ref" : "#/components/schemas/basedto.Meta"
++          }
++        },
++        "required" : [ "data", "meta" ],
++        "type" : "object"
++      },
+       "appdto.GetTerminalInfoResp" : {
+         "properties" : {
+           "data" : {
+diff --git a/hivepaas_app/interface/api/handler/apphandler/logs.go b/hivepaas_app/interface/api/handler/apphandler/logs.go
+index 02c20c55..0d5c0559 100644
+--- a/hivepaas_app/interface/api/handler/apphandler/logs.go
++++ b/hivepaas_app/interface/api/handler/apphandler/logs.go
+@@ -150,3 +150,46 @@ func (h *Handler) GetAppLogHistory(ctx *gin.Context) {
+ 	}
+ 	ctx.JSON(http.StatusOK, resp)
+ }
++
++// GetFunctionMetrics Gets a function's metrics
++// @Summary Gets a function's metrics
++// @Description Counts a function's calls over a range ending now, from the invocation line its runtime writes
++// @Description for every call into its logs: how many, how many failed - an outcome other than ok - how many
++// @Description the handler answered 5xx, and the handler's duration's p50, p95 and p99, in milliseconds, which
++// @Description are close rather than exact. One point per step, oldest first: 1 min for 1h, 5 min for 6h,
++// @Description 15 min for 24h, 1 h for 7d. When the logs cannot be read, `available` is false and `reason`
++// @Description says why, as for the logs' history.
++// @Tags    Apps
++// @Produce json
++// @Id      getFunctionMetrics
++// @Param   projectID path string true "project ID"
++// @Param   projectEnv path string true "project env"
++// @Param   appID path string true "app ID"
++// @Param   range query string false "1h, 6h, 24h or 7d; default 24h"
++// @Success 200 {object} appdto.GetFunctionMetricsResp
++// @Failure 400 {object} hperrors.ErrorInfo
++// @Failure 500 {object} hperrors.ErrorInfo
++// @Router  /projects/{projectID}/{projectEnv}/apps/{appID}/function-metrics [get]
++func (h *Handler) GetFunctionMetrics(ctx *gin.Context) {
++	auth, projectID, projectEnvID, appID, err := h.GetAuth(ctx, base.ActionTypeRead)
++	if err != nil {
++		h.RenderError(ctx, err)
++		return
++	}
++
++	req := appdto.NewGetFunctionMetricsReq()
++	req.ProjectID = projectID
++	req.ProjectEnvID = projectEnvID
++	req.AppID = appID
++	if err := h.ParseAndValidateRequest(ctx, req, nil); err != nil {
++		h.RenderError(ctx, err)
++		return
++	}
++
++	resp, err := h.appUC.GetFunctionMetrics(h.RequestCtx(ctx), auth, req)
++	if err != nil {
++		h.RenderError(ctx, err)
++		return
++	}
++	ctx.JSON(http.StatusOK, resp)
++}
+diff --git a/hivepaas_app/interface/api/server/router_apps.go b/hivepaas_app/interface/api/server/router_apps.go
+index aa2540da..b22d3bf9 100644
+--- a/hivepaas_app/interface/api/server/router_apps.go
++++ b/hivepaas_app/interface/api/server/router_apps.go
+@@ -197,6 +197,7 @@ func (s *HTTPServer) registerAppRoutes(projectGroup, projectEnvGroup *gin.Router
+ 		appGroup.GET("/:appID/logs/info", appHandler.GetAppLogsInfo)
+ 		appGroup.GET("/:appID/logs", appHandler.GetAppLogs)
+ 		appGroup.GET("/:appID/logs/history", appHandler.GetAppLogHistory)
++		appGroup.GET("/:appID/function-metrics", appHandler.GetFunctionMetrics)
+ 	}
+ 
+ 	{ // Terminal
+diff --git a/hivepaas_app/service/loggingservice/loggingserviceimpl/metrics.go b/hivepaas_app/service/loggingservice/loggingserviceimpl/metrics.go
+new file mode 100644
+index 00000000..3d4d3249
+--- /dev/null
++++ b/hivepaas_app/service/loggingservice/loggingserviceimpl/metrics.go
+@@ -0,0 +1,66 @@
++package loggingserviceimpl
++
++import (
++	"context"
++	"time"
++
++	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
++	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
++	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
++	"github.com/hivepaas/hivepaas/hivepaas_app/service/appservice"
++	"github.com/hivepaas/hivepaas/hivepaas_app/service/loggingservice"
++	"github.com/hivepaas/hivepaas/services/logging"
++	"github.com/hivepaas/hivepaas/services/logging/vlagent"
++)
++
++// FunctionMetrics counts a function's calls in its stored logs.
++//
++// The scope is app's, as for QueryAppLogs. The backend leaves out the steps
++// without a call; they are put back here, so that every step of the range is a
++// point.
++func (s *service) FunctionMetrics(
++	ctx context.Context,
++	db database.IDB,
++	app *entity.App,
++	q *loggingservice.FunctionMetricsQuery,
++) (*logging.InvocationStatsResp, error) {
++	if app == nil || app.ID == "" {
++		// An empty value would count every line that carries no app at all.
++		return nil, hperrors.Wrap(logging.ErrQueryScopeRequired)
++	}
++	backend, err := s.queryBackend(ctx, db)
++	if err != nil {
++		return nil, hperrors.Wrap(err)
++	}
++	resp, err := backend.InvocationStats(ctx, &logging.InvocationStatsReq{
++		Match: []logging.FieldMatch{{Field: vlagent.AttrField(appservice.LabelLogAppID), Value: app.ID}},
++		Start: q.Start,
++		End:   q.End,
++		Step:  q.Step,
++	})
++	if err != nil {
++		return nil, hperrors.Wrap(err)
++	}
++	resp.Buckets = everyStep(resp.Buckets, q.Start, q.End, q.Step)
++	return resp, nil
++}
++
++// everyStep is one bucket per step of [start, end), the backend's where it has
++// one, an empty one where it has none.
++func everyStep(
++	buckets []*logging.InvocationBucket, start, end time.Time, step time.Duration,
++) []*logging.InvocationBucket {
++	byTime := make(map[int64]*logging.InvocationBucket, len(buckets))
++	for _, b := range buckets {
++		byTime[b.Time.Unix()] = b
++	}
++	out := make([]*logging.InvocationBucket, 0, int(end.Sub(start)/step))
++	for at := start; at.Before(end); at = at.Add(step) {
++		if b, ok := byTime[at.Unix()]; ok {
++			out = append(out, b)
++			continue
++		}
++		out = append(out, &logging.InvocationBucket{Time: at})
++	}
++	return out
++}
+diff --git a/hivepaas_app/service/loggingservice/loggingserviceimpl/query.go b/hivepaas_app/service/loggingservice/loggingserviceimpl/query.go
+index 18af9d28..f075b2af 100644
+--- a/hivepaas_app/service/loggingservice/loggingserviceimpl/query.go
++++ b/hivepaas_app/service/loggingservice/loggingserviceimpl/query.go
+@@ -29,18 +29,7 @@ func (s *service) QueryAppLogs(
+ 		// An empty value would match every line that carries no app at all.
+ 		return nil, hperrors.Wrap(logging.ErrQueryScopeRequired)
+ 	}
+-	cfg, err := s.loadEnabledSettings(ctx, db)
+-	if err != nil {
+-		return nil, hperrors.Wrap(err)
+-	}
+-
+-	ep, err := queryEndpoint(cfg)
+-	if err != nil {
+-		return nil, hperrors.Wrap(err)
+-	}
+-
+-	backend, err := s.newBackend(logging.BackendType(cfg.Backend.Type),
+-		&logging.BackendConfig{VictoriaLogs: &victorialogs.Config{Endpoint: *ep}})
++	backend, err := s.queryBackend(ctx, db)
+ 	if err != nil {
+ 		return nil, hperrors.Wrap(err)
+ 	}
+@@ -57,6 +46,21 @@ func (s *service) QueryAppLogs(
+ 	return resp, hperrors.Wrap(err)
+ }
+ 
++// queryBackend is the client of the backend the stored logs are read from.
++func (s *service) queryBackend(ctx context.Context, db database.IDB) (logging.Backend, error) {
++	cfg, err := s.loadEnabledSettings(ctx, db)
++	if err != nil {
++		return nil, hperrors.Wrap(err)
++	}
++	ep, err := queryEndpoint(cfg)
++	if err != nil {
++		return nil, hperrors.Wrap(err)
++	}
++	backend, err := s.newBackend(logging.BackendType(cfg.Backend.Type),
++		&logging.BackendConfig{VictoriaLogs: &victorialogs.Config{Endpoint: *ep}})
++	return backend, hperrors.Wrap(err)
++}
++
+ // AppHistory says whether stored logs can be shown for the app.
+ //
+ // A service that no longer exists is not a reason: its past output is what
+diff --git a/hivepaas_app/service/loggingservice/service.go b/hivepaas_app/service/loggingservice/service.go
+index e60db8eb..c02f8570 100644
+--- a/hivepaas_app/service/loggingservice/service.go
++++ b/hivepaas_app/service/loggingservice/service.go
+@@ -30,4 +30,10 @@ type Service interface {
+ 	// AppHistory says whether stored logs can be shown for the app, and if not,
+ 	// why - so the dashboard can say so instead of showing an empty list.
+ 	AppHistory(ctx context.Context, db database.IDB, app *entity.App) (*AppHistory, error)
++
++	// FunctionMetrics counts a function's calls in its stored logs: one point
++	// per step of the range, a step without a call one with no calls. The app's
++	// identity is put into the query here, as for QueryAppLogs.
++	FunctionMetrics(ctx context.Context, db database.IDB, app *entity.App,
++		q *FunctionMetricsQuery) (*logging.InvocationStatsResp, error)
+ }
+diff --git a/hivepaas_app/service/loggingservice/types.go b/hivepaas_app/service/loggingservice/types.go
+index cef2256c..1ac9ec3c 100644
+--- a/hivepaas_app/service/loggingservice/types.go
++++ b/hivepaas_app/service/loggingservice/types.go
+@@ -121,3 +121,11 @@ type AppHistory struct {
+ 	// backend is not one HivePaaS keeps: see retentionOf.
+ 	Retention timeutil.Duration
+ }
++
++// FunctionMetricsQuery is a function's calls over [Start, End), by Step. Start
++// and End are whole steps.
++type FunctionMetricsQuery struct {
++	Start time.Time
++	End   time.Time
++	Step  time.Duration
++}
+diff --git a/hivepaas_app/usecase/appuc/appdto/function_metrics.go b/hivepaas_app/usecase/appuc/appdto/function_metrics.go
+new file mode 100644
+index 00000000..992d670d
+--- /dev/null
++++ b/hivepaas_app/usecase/appuc/appdto/function_metrics.go
+@@ -0,0 +1,80 @@
++package appdto
++
++import (
++	"time"
++
++	vld "github.com/tiendc/go-validator"
++
++	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
++	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
++)
++
++// DefaultFunctionMetricsRange is a day: enough to see a function's rhythm - its
++// busy hours, its scheduled calls - and what failed overnight.
++const DefaultFunctionMetricsRange = "24h"
++
++// FunctionMetricsRanges are the ranges metrics are asked for.
++var FunctionMetricsRanges = []string{"1h", "6h", "24h", "7d"}
++
++// GetFunctionMetricsReq asks for a function's calls over a range ending now.
++type GetFunctionMetricsReq struct {
++	ProjectID    string `json:"-"`
++	ProjectEnvID string `json:"-"`
++	AppID        string `json:"-"`
++	Range        string `json:"-" mapstructure:"range"`
++}
++
++func NewGetFunctionMetricsReq() *GetFunctionMetricsReq {
++	return &GetFunctionMetricsReq{Range: DefaultFunctionMetricsRange}
++}
++
++func (req *GetFunctionMetricsReq) Validate() hperrors.ValidationErrors {
++	validators := make([]vld.Validator, 0, 5) //nolint:mnd
++	validators = append(validators, basedto.ValidateID(&req.ProjectID, true, "projectId")...)
++	validators = append(validators, basedto.ValidateID(&req.ProjectEnvID, true, "projectEnv")...)
++	validators = append(validators, basedto.ValidateID(&req.AppID, true, "appId")...)
++	validators = append(validators, basedto.ValidateStrIn(&req.Range, true, FunctionMetricsRanges, "range")...)
++	return hperrors.NewValidationErrors(vld.Validate(validators...))
++}
++
++type GetFunctionMetricsResp struct {
++	Meta *basedto.Meta            `json:"meta"`
++	Data *FunctionMetricsDataResp `json:"data"`
++}
++
++// FunctionMetricsDataResp is a function's calls over a range. When Available
++// is false, Reason says why and nothing else is set.
++type FunctionMetricsDataResp struct {
++	Available bool   `json:"available"`
++	Reason    string `json:"reason,omitempty"`
++	Range     string `json:"range"`
++	// Start and End bound the range: whole steps, End past now.
++	Start       time.Time `json:"start"`
++	End         time.Time `json:"end"`
++	StepSeconds int       `json:"stepSeconds"`
++	// Clamped says the range reaches past what the logs keep: it starts where
++	// they do.
++	Clamped   bool                       `json:"clamped"`
++	Totals    *FunctionMetricsCountsResp `json:"totals,omitempty"`
++	ByOutcome map[string]int64           `json:"byOutcome,omitempty"`
++	// Series has one point per step, oldest first.
++	Series []*FunctionMetricsPointResp `json:"series,omitempty"`
++}
++
++// FunctionMetricsCountsResp are a set of calls: how many, how many failed - an
++// outcome other than ok - how many the handler answered 5xx, and how long the
++// handler ran, in milliseconds, none without a call.
++type FunctionMetricsCountsResp struct {
++	Calls     int64    `json:"calls"`
++	Failed    int64    `json:"failed"`
++	Errors5xx int64    `json:"errors5xx"`
++	P50       *float64 `json:"p50"`
++	P95       *float64 `json:"p95"`
++	P99       *float64 `json:"p99"`
++}
++
++// FunctionMetricsPointResp is the calls of one step, Time its start.
++type FunctionMetricsPointResp struct {
++	Time time.Time `json:"time"`
++	FunctionMetricsCountsResp
++}
+diff --git a/hivepaas_app/usecase/appuc/function_metrics.go b/hivepaas_app/usecase/appuc/function_metrics.go
+new file mode 100644
+index 00000000..36bd9d43
+--- /dev/null
++++ b/hivepaas_app/usecase/appuc/function_metrics.go
+@@ -0,0 +1,121 @@
++package appuc
++
++import (
++	"context"
++	"time"
++
++	"github.com/hivepaas/hivepaas/hivepaas_app/base"
++	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
++	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
++	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
++	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
++	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/timeutil"
++	"github.com/hivepaas/hivepaas/hivepaas_app/service/loggingservice"
++	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/appuc/appdto"
++	"github.com/hivepaas/hivepaas/services/logging"
++)
++
++// metricsRanges are the ranges metrics are given for, each with its step.
++var metricsRanges = map[string]struct{ length, step time.Duration }{
++	"1h":  {time.Hour, time.Minute},
++	"6h":  {6 * time.Hour, 5 * time.Minute},
++	"24h": {24 * time.Hour, 15 * time.Minute},
++	"7d":  {7 * 24 * time.Hour, time.Hour},
++}
++
++// GetFunctionMetrics counts a function's calls over a range ending now, from
++// the invocation lines its runtime writes into its logs.
++//
++// The app is loaded by project and id from the path, which the handler has
++// already authorized, as for the logs it reads.
++func (uc *UC) GetFunctionMetrics(
++	ctx context.Context,
++	_ *basedto.Auth,
++	req *appdto.GetFunctionMetricsReq,
++) (*appdto.GetFunctionMetricsResp, error) {
++	app, featureSettings, err := uc.appService.LoadAppWithFeatureSettings(ctx, uc.db, req.ProjectID, req.AppID,
++		true, true,
++		bunex.SelectExcludeColumns(entity.AppDefaultExcludeColumns...),
++		bunex.SelectRelation("Project",
++			bunex.SelectExcludeColumns(entity.ProjectDefaultExcludeColumns...),
++		),
++		bunex.SelectRelation("ProjectEnv"),
++		bunex.SelectRelation("Settings", bunex.SelectWhere("setting.type = ?", base.SettingTypeAppKind)),
++	)
++	if err != nil {
++		return nil, hperrors.Wrap(err)
++	}
++	if !entity.IsFunctionKind(app.GetSettingByType(base.SettingTypeAppKind)) {
++		return nil, hperrors.Wrap(hperrors.ErrAppNotFunction).WithParam("Name", app.Name)
++	}
++	if featureSettings.LoggingSettings != nil && !featureSettings.LoggingSettings.Enabled {
++		return nil, hperrors.NewUnavailable("App logs")
++	}
++
++	history, err := uc.loggingService.AppHistory(ctx, uc.db, app)
++	if err != nil {
++		return nil, hperrors.Wrap(err)
++	}
++	if !history.Available {
++		return &appdto.GetFunctionMetricsResp{Data: &appdto.FunctionMetricsDataResp{
++			Range: req.Range, Reason: string(history.Reason),
++		}}, nil
++	}
++
++	window := metricsWindow(req.Range, timeutil.NowUTC(), history.Retention)
++	stats, err := uc.loggingService.FunctionMetrics(ctx, uc.db, app, &loggingservice.FunctionMetricsQuery{
++		Start: window.start, End: window.end, Step: window.step,
++	})
++	if err != nil {
++		return nil, hperrors.Wrap(err)
++	}
++	return &appdto.GetFunctionMetricsResp{Data: toFunctionMetricsData(req.Range, window, stats)}, nil
++}
++
++// window is the range of a metrics request: whole steps, ending with the step
++// now is in.
++type window struct {
++	start, end time.Time
++	step       time.Duration
++	// clamped: the logs are kept for less than the range, which starts where
++	// they do.
++	clamped bool
++}
++
++func metricsWindow(rangeName string, now time.Time, retention timeutil.Duration) window {
++	r := metricsRanges[rangeName]
++	w := window{end: now.Truncate(r.step).Add(r.step), step: r.step}
++	w.start = w.end.Add(-r.length)
++	if kept := time.Duration(retention); kept > 0 && kept < r.length {
++		w.start = now.Add(-kept).Truncate(r.step).Add(r.step)
++		w.clamped = true
++	}
++	return w
++}
++
++func toFunctionMetricsData(rangeName string, w window, stats *logging.InvocationStatsResp,
++) *appdto.FunctionMetricsDataResp {
++	data := &appdto.FunctionMetricsDataResp{
++		Available:   true,
++		Range:       rangeName,
++		Start:       w.start,
++		End:         w.end,
++		StepSeconds: int(w.step / time.Second),
++		Clamped:     w.clamped,
++		Totals:      countsResp(stats.Totals),
++		ByOutcome:   stats.ByOutcome,
++		Series:      make([]*appdto.FunctionMetricsPointResp, 0, len(stats.Buckets)),
++	}
++	for _, b := range stats.Buckets {
++		data.Series = append(data.Series, &appdto.FunctionMetricsPointResp{
++			Time: b.Time, FunctionMetricsCountsResp: *countsResp(b.InvocationCounts),
++		})
++	}
++	return data
++}
++
++func countsResp(c logging.InvocationCounts) *appdto.FunctionMetricsCountsResp {
++	return &appdto.FunctionMetricsCountsResp{
++		Calls: c.Calls, Failed: c.Failed, Errors5xx: c.Errors5xx, P50: c.P50, P95: c.P95, P99: c.P99,
++	}
++}

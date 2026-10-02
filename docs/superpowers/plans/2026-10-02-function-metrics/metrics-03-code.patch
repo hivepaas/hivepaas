@@ -1,0 +1,1141 @@
+diff --git a/package.json b/package.json
+index 5c3248e7..4e2a4fcf 100644
+--- a/package.json
++++ b/package.json
+@@ -96,6 +96,7 @@
+     "react-time-ago": "^7.4.4",
+     "react-use": "^17.6.0",
+     "react-verification-input": "^4.2.2",
++    "recharts": "3.10.1",
+     "remark-gfm": "^4.0.1",
+     "rxjs": "^7.8.2",
+     "sass-embedded": "^1.93.3",
+diff --git a/src/application/modules/projects/api/hooks/project-apps/use-app-logs.api.ts b/src/application/modules/projects/api/hooks/project-apps/use-app-logs.api.ts
+index ac686d93..991851eb 100644
+--- a/src/application/modules/projects/api/hooks/project-apps/use-app-logs.api.ts
++++ b/src/application/modules/projects/api/hooks/project-apps/use-app-logs.api.ts
+@@ -2,7 +2,12 @@ import { use, useMemo } from "react";
+ 
+ import { match } from "oxide.ts";
+ import { ProjectsApiContext } from "~/projects/api/api-context";
+-import type { AppLogs_GetHistory_Req, AppLogs_GetInfo_Req, AppLogs_GetLogs_Req } from "~/projects/api/services";
++import type {
++    AppLogs_GetFunctionMetrics_Req,
++    AppLogs_GetHistory_Req,
++    AppLogs_GetInfo_Req,
++    AppLogs_GetLogs_Req,
++} from "~/projects/api/services";
+ 
+ import { useApiErrorNotifications } from "@infrastructure/api";
+ 
+@@ -43,6 +48,21 @@ function createHook() {
+                         },
+                     });
+                 },
++                getFunctionMetrics: async (data: AppLogs_GetFunctionMetrics_Req["data"], signal?: AbortSignal) => {
++                    const result = await api.projects.apps.logs.$.getFunctionMetrics({ data }, signal);
++
++                    return match(result, {
++                        Ok: _ => _,
++                        Err: error => {
++                            notifyError({
++                                message: "Failed to get the function's metrics",
++                                error,
++                            });
++
++                            throw error;
++                        },
++                    });
++                },
+                 getHistory: async (data: AppLogs_GetHistory_Req["data"], signal?: AbortSignal) => {
+                     const result = await api.projects.apps.logs.$.getHistory({ data }, signal);
+ 
+diff --git a/src/application/modules/projects/api/services/project-apps-services/logs/app-logs.api.contracts.ts b/src/application/modules/projects/api/services/project-apps-services/logs/app-logs.api.contracts.ts
+index 472455b0..16f8bea5 100644
+--- a/src/application/modules/projects/api/services/project-apps-services/logs/app-logs.api.contracts.ts
++++ b/src/application/modules/projects/api/services/project-apps-services/logs/app-logs.api.contracts.ts
+@@ -81,3 +81,44 @@ export type AppLogs_GetHistory_Res = ApiResponseBase<{
+     /** What to pass as `end` for the page before this one; null on the last page. */
+     nextEnd: string | null;
+ }>;
++
++/** The ranges a function's metrics are asked for. */
++export type FunctionMetricsRange = "1h" | "6h" | "24h" | "7d";
++
++export type AppLogs_GetFunctionMetrics_Req = ApiRequestBase<{
++    projectID: string;
++    env: string;
++    appID: string;
++    range: FunctionMetricsRange;
++}>;
++
++/** A set of calls: how many, how many failed, how many answered 5xx, and the
++ *  handler's duration in milliseconds - null without a call. */
++export interface FunctionMetricsCounts {
++    calls: number;
++    failed: number;
++    errors5xx: number;
++    p50: number | null;
++    p95: number | null;
++    p99: number | null;
++}
++
++export interface FunctionMetricsPoint extends FunctionMetricsCounts {
++    time: string;
++}
++
++export type AppLogs_GetFunctionMetrics_Res = ApiResponseBase<{
++    /** False when the logs cannot be read; reason says why. */
++    available: boolean;
++    reason: AppLogHistoryReason | null;
++    range: FunctionMetricsRange;
++    start: string | null;
++    end: string | null;
++    stepSeconds: number;
++    /** The logs are kept for less than the range: it starts where they do. */
++    clamped: boolean;
++    totals: FunctionMetricsCounts | null;
++    byOutcome: Record<string, number>;
++    /** One point per step, oldest first. */
++    series: FunctionMetricsPoint[];
++}>;
+diff --git a/src/application/modules/projects/api/services/project-apps-services/logs/app-logs.api.ts b/src/application/modules/projects/api/services/project-apps-services/logs/app-logs.api.ts
+index c455cbe3..fffcecdb 100644
+--- a/src/application/modules/projects/api/services/project-apps-services/logs/app-logs.api.ts
++++ b/src/application/modules/projects/api/services/project-apps-services/logs/app-logs.api.ts
+@@ -2,6 +2,8 @@ import { Err, Ok, type Result } from "oxide.ts";
+ import { catchError, from, lastValueFrom, map, of } from "rxjs";
+ import type {
+     AppLogsApiValidator,
++    AppLogs_GetFunctionMetrics_Req,
++    AppLogs_GetFunctionMetrics_Res,
+     AppLogs_GetHistory_Req,
+     AppLogs_GetHistory_Res,
+     AppLogs_GetInfo_Req,
+@@ -91,4 +93,24 @@ export class AppLogsApi extends BaseApi {
+             ),
+         );
+     }
++
++    async getFunctionMetrics(
++        request: AppLogs_GetFunctionMetrics_Req,
++        signal?: AbortSignal,
++    ): Promise<Result<AppLogs_GetFunctionMetrics_Res, Error>> {
++        const { projectID, env, appID, range } = request.data;
++
++        return lastValueFrom(
++            from(
++                this.client.v1.get(`/projects/${projectID}/${env}/apps/${appID}/function-metrics`, {
++                    params: { range },
++                    signal,
++                }),
++            ).pipe(
++                map(this.validator.getFunctionMetrics),
++                map(res => Ok(res)),
++                catchError(error => of(Err(parseApiError(error)))),
++            ),
++        );
++    }
+ }
+diff --git a/src/application/modules/projects/api/services/project-apps-services/logs/app-logs.api.validator.ts b/src/application/modules/projects/api/services/project-apps-services/logs/app-logs.api.validator.ts
+index 23675f8c..2c06e0ee 100644
+--- a/src/application/modules/projects/api/services/project-apps-services/logs/app-logs.api.validator.ts
++++ b/src/application/modules/projects/api/services/project-apps-services/logs/app-logs.api.validator.ts
+@@ -1,6 +1,11 @@
+ import type { AxiosResponse } from "axios";
+ import { z } from "zod";
+-import type { AppLogs_GetHistory_Res, AppLogs_GetInfo_Res, AppLogs_GetLogs_Res } from "~/projects/api/services";
++import type {
++    AppLogs_GetFunctionMetrics_Res,
++    AppLogs_GetHistory_Res,
++    AppLogs_GetInfo_Res,
++    AppLogs_GetLogs_Res,
++} from "~/projects/api/services";
+ 
+ import { BaseMetaApiSchema, parseApiResponse } from "@infrastructure/api";
+ 
+@@ -73,6 +78,56 @@ const GetHistorySchema = z.object({
+     meta: BaseMetaApiSchema.nullable(),
+ });
+ 
++const FunctionMetricsCountsSchema = z.object({
++    calls: z.number().catch(0),
++    failed: z.number().catch(0),
++    errors5xx: z.number().catch(0),
++    p50: z
++        .number()
++        .nullish()
++        .transform(value => value ?? null),
++    p95: z
++        .number()
++        .nullish()
++        .transform(value => value ?? null),
++    p99: z
++        .number()
++        .nullish()
++        .transform(value => value ?? null),
++});
++
++const GetFunctionMetricsSchema = z.object({
++    data: z.object({
++        available: z.boolean().catch(false),
++        reason: z
++            .enum(["disabled", "apps-not-collected", "no-query-endpoint", "driver-unreadable", "identity-missing"])
++            .nullish()
++            .catch(null)
++            .transform(value => value ?? null),
++        range: z.enum(["1h", "6h", "24h", "7d"]).catch("24h"),
++        start: z
++            .string()
++            .nullish()
++            .transform(value => value ?? null),
++        end: z
++            .string()
++            .nullish()
++            .transform(value => value ?? null),
++        stepSeconds: z.number().catch(0),
++        clamped: z.boolean().catch(false),
++        totals: FunctionMetricsCountsSchema.nullish().transform(value => value ?? null),
++        byOutcome: z
++            .record(z.number())
++            .nullish()
++            .transform(value => value ?? {}),
++        series: z
++            .array(FunctionMetricsCountsSchema.extend({ time: z.string() }))
++            .nullish()
++            .transform(value => value ?? []),
++    }),
++    meta: BaseMetaApiSchema.nullable(),
++});
++
+ export class AppLogsApiValidator {
+     getInfo = (response: AxiosResponse): AppLogs_GetInfo_Res => {
+         return parseApiResponse({
+@@ -99,4 +154,11 @@ export class AppLogsApiValidator {
+             schema: GetHistorySchema,
+         });
+     };
++
++    getFunctionMetrics = (response: AxiosResponse): AppLogs_GetFunctionMetrics_Res => {
++        return parseApiResponse({
++            response,
++            schema: GetFunctionMetricsSchema,
++        });
++    };
+ }
+diff --git a/src/application/modules/projects/data/constants/projects.query-keys.ts b/src/application/modules/projects/data/constants/projects.query-keys.ts
+index f59ea4a6..a01f2289 100644
+--- a/src/application/modules/projects/data/constants/projects.query-keys.ts
++++ b/src/application/modules/projects/data/constants/projects.query-keys.ts
+@@ -14,6 +14,7 @@ export const QK = {
+     "projects.apps.logs.$.get-info": "projects.apps.logs.$.get-info",
+     "projects.apps.logs.$.get-logs": "projects.apps.logs.$.get-logs",
+     "projects.apps.logs.$.get-history": "projects.apps.logs.$.get-history",
++    "projects.apps.function-metrics.$.get": "projects.apps.function-metrics.$.get",
+     "projects.apps.terminal.$.get-info": "projects.apps.terminal.$.get-info",
+     "projects.apps.deployments.$.find-many-paginated": "projects.apps.deployments.$.find-many-paginated",
+     "projects.apps.deployments.$.find-one-by-id": "projects.apps.deployments.$.find-one-by-id",
+diff --git a/src/application/modules/projects/data/queries/project-apps/app-logs.queries.ts b/src/application/modules/projects/data/queries/project-apps/app-logs.queries.ts
+index 3c93d3fd..205a1f85 100644
+--- a/src/application/modules/projects/data/queries/project-apps/app-logs.queries.ts
++++ b/src/application/modules/projects/data/queries/project-apps/app-logs.queries.ts
+@@ -1,6 +1,7 @@
+ import { type UseQueryOptions, useInfiniteQuery, useQuery } from "@tanstack/react-query";
+ import { useAppLogsApi } from "~/projects/api";
+ import type {
++    AppLogs_GetFunctionMetrics_Req,
+     AppLogs_GetHistory_Req,
+     AppLogs_GetInfo_Req,
+     AppLogs_GetInfo_Res,
+@@ -56,8 +57,19 @@ function useGetHistory(request: GetHistoryReq, options: { enabled?: boolean } =
+     });
+ }
+ 
++/** A function's calls over a range ending now, counted from its logs. */
++function useGetFunctionMetrics(request: AppLogs_GetFunctionMetrics_Req["data"]) {
++    const { queries } = useAppLogsApi();
++
++    return useQuery({
++        queryKey: [QK["projects.apps.function-metrics.$.get"], request],
++        queryFn: ({ signal }) => queries.getFunctionMetrics(request, signal),
++    });
++}
++
+ export const AppLogsQueries = Object.freeze({
+     useGetInfo,
+     useGetLogs,
+     useGetHistory,
++    useGetFunctionMetrics,
+ });
+diff --git a/src/application/modules/projects/layouts/single-app/header/single-app-header.com.tsx b/src/application/modules/projects/layouts/single-app/header/single-app-header.com.tsx
+index aca15c5b..cbad1f65 100644
+--- a/src/application/modules/projects/layouts/single-app/header/single-app-header.com.tsx
++++ b/src/application/modules/projects/layouts/single-app/header/single-app-header.com.tsx
+@@ -131,6 +131,10 @@ function View({ projectId, env, appId }: Props) {
+                       route: ROUTE.projects.single.apps.single.code.$route(projectId, env, appId),
+                       label: "Code",
+                   },
++                  {
++                      route: ROUTE.projects.single.apps.single.metrics.$route(projectId, env, appId),
++                      label: "Metrics",
++                  },
+               ]
+             : []),
+         {
+diff --git a/src/application/modules/projects/projects.module.ts b/src/application/modules/projects/projects.module.ts
+index 5408e9dc..e9f74c79 100644
+--- a/src/application/modules/projects/projects.module.ts
++++ b/src/application/modules/projects/projects.module.ts
+@@ -87,6 +87,7 @@ export {
+     AppDeploymentsRoute,
+     AppInstancesRoute,
+     AppCodeRoute,
++    AppMetricsRoute,
+     AppLogsRoute,
+     AppTerminalRoute,
+     AppPreviewDeploymentCreateRoute,
+diff --git a/src/application/modules/projects/projects.router.tsx b/src/application/modules/projects/projects.router.tsx
+index eccf6d50..3d1ff705 100644
+--- a/src/application/modules/projects/projects.router.tsx
++++ b/src/application/modules/projects/projects.router.tsx
+@@ -1692,6 +1692,19 @@ export const projectsRouter: RouteObject = {
+                         };
+                     },
+                 },
++                /**
++                 * Single App – Metrics (a function's)
++                 */
++                {
++                    path: ROUTE.projects.single.apps.single.metrics.$pattern,
++                    lazy: async () => {
++                        const { AppMetricsRoute } = await getLazyComponents();
++
++                        return {
++                            Component: AppMetricsRoute,
++                        };
++                    },
++                },
+                 /**
+                  * Single App – Logs
+                  */
+diff --git a/src/application/modules/projects/routes/index.ts b/src/application/modules/projects/routes/index.ts
+index 277961ed..8ca9ddf3 100644
+--- a/src/application/modules/projects/routes/index.ts
++++ b/src/application/modules/projects/routes/index.ts
+@@ -84,6 +84,7 @@ export {
+     AppDeploymentsRoute,
+     AppInstancesRoute,
+     AppCodeRoute,
++    AppMetricsRoute,
+     AppLogsRoute,
+     AppTerminalRoute,
+     AppPreviewDeploymentCreateRoute,
+diff --git a/src/application/modules/projects/routes/single-project/single-app/tabs/index.ts b/src/application/modules/projects/routes/single-project/single-app/tabs/index.ts
+index 6268d588..ac4a7ee1 100644
+--- a/src/application/modules/projects/routes/single-project/single-app/tabs/index.ts
++++ b/src/application/modules/projects/routes/single-project/single-app/tabs/index.ts
+@@ -5,3 +5,4 @@ export * from "./terminal";
+ export * from "./preview-deployments";
+ export * from "./tasks";
+ export * from "./code";
++export * from "./metrics";
+diff --git a/src/application/modules/projects/routes/single-project/single-app/tabs/logs/building-blocks/app-logs-history/app-logs-history.com.tsx b/src/application/modules/projects/routes/single-project/single-app/tabs/logs/building-blocks/app-logs-history/app-logs-history.com.tsx
+index 75445e4e..5c8512bb 100644
+--- a/src/application/modules/projects/routes/single-project/single-app/tabs/logs/building-blocks/app-logs-history/app-logs-history.com.tsx
++++ b/src/application/modules/projects/routes/single-project/single-app/tabs/logs/building-blocks/app-logs-history/app-logs-history.com.tsx
+@@ -1,7 +1,7 @@
+ import { type SetStateAction, useCallback, useMemo, useState } from "react";
+ 
+ import { cn } from "@/lib/utils";
+-import type { AppLogHistoryInfo, AppLogHistoryReason } from "~/projects/api/services";
++import type { AppLogHistoryInfo } from "~/projects/api/services";
+ import { AppLogsQueries } from "~/projects/data";
+ 
+ import {
+@@ -18,6 +18,7 @@ import { Button, Select, SelectContent, SelectItem, SelectTrigger, SelectValue }
+ import { AppLogsToolbarFilters } from "../app-logs-toolbar";
+ import { HISTORY_DURATION_OPTIONS } from "../duration-picker";
+ import { LOG_FILTER_FIELD_WIDTH } from "../log-filters.constants";
++import { LOG_HISTORY_UNAVAILABLE_TEXT } from "../log-history-unavailable.constants";
+ 
+ import {
+     type LogHistoryWindow,
+@@ -38,15 +39,6 @@ type LevelFilter = keyof typeof LEVEL_FILTERS;
+ 
+ type StreamFilter = "all" | "stdout" | "stderr";
+ 
+-const UNAVAILABLE_TEXT: Record<AppLogHistoryReason, string> = {
+-    "disabled": "Stored logs are off. An administrator can turn them on in System → Logging.",
+-    "apps-not-collected": "App logs are not collected. An administrator can turn them on in System → Logging.",
+-    "no-query-endpoint": "Logs go to an external backend HivePaaS has no query endpoint for.",
+-    "driver-unreadable": "This app's log driver cannot be collected. Switch it to json-file in container settings.",
+-    "identity-missing":
+-        "This app was created before logging existed. Save its container settings once so its logs can be identified.",
+-};
+-
+ export function AppLogsHistory({
+     tabID,
+     projectID,
+@@ -113,7 +105,7 @@ export function AppLogsHistory({
+     );
+ 
+     if (!isAvailable) {
+-        return <p className="text-base">{UNAVAILABLE_TEXT[history?.reason ?? "disabled"]}</p>;
++        return <p className="text-base">{LOG_HISTORY_UNAVAILABLE_TEXT[history?.reason ?? "disabled"]}</p>;
+     }
+ 
+     return (
+diff --git a/src/application/modules/projects/routes/single-project/single-app/tabs/logs/building-blocks/index.ts b/src/application/modules/projects/routes/single-project/single-app/tabs/logs/building-blocks/index.ts
+index 9575f6ab..72b8dff5 100644
+--- a/src/application/modules/projects/routes/single-project/single-app/tabs/logs/building-blocks/index.ts
++++ b/src/application/modules/projects/routes/single-project/single-app/tabs/logs/building-blocks/index.ts
+@@ -3,3 +3,4 @@ export * from "./app-logs-toolbar";
+ export * from "./app-logs-history";
+ export * from "./duration-picker";
+ export * from "./log-filters.constants";
++export * from "./log-history-unavailable.constants";
+diff --git a/src/application/modules/projects/routes/single-project/single-app/tabs/logs/building-blocks/log-history-unavailable.constants.ts b/src/application/modules/projects/routes/single-project/single-app/tabs/logs/building-blocks/log-history-unavailable.constants.ts
+new file mode 100644
+index 00000000..8f207445
+--- /dev/null
++++ b/src/application/modules/projects/routes/single-project/single-app/tabs/logs/building-blocks/log-history-unavailable.constants.ts
+@@ -0,0 +1,11 @@
++import type { AppLogHistoryReason } from "~/projects/api/services";
++
++/** Why an app's stored logs cannot be read, as a person reads it. */
++export const LOG_HISTORY_UNAVAILABLE_TEXT: Record<AppLogHistoryReason, string> = {
++    "disabled": "Stored logs are off. An administrator can turn them on in System → Logging.",
++    "apps-not-collected": "App logs are not collected. An administrator can turn them on in System → Logging.",
++    "no-query-endpoint": "Logs go to an external backend HivePaaS has no query endpoint for.",
++    "driver-unreadable": "This app's log driver cannot be collected. Switch it to json-file in container settings.",
++    "identity-missing":
++        "This app was created before logging existed. Save its container settings once so its logs can be identified.",
++};
+diff --git a/src/application/modules/projects/routes/single-project/single-app/tabs/metrics/building-blocks/index.ts b/src/application/modules/projects/routes/single-project/single-app/tabs/metrics/building-blocks/index.ts
+new file mode 100644
+index 00000000..d2843252
+--- /dev/null
++++ b/src/application/modules/projects/routes/single-project/single-app/tabs/metrics/building-blocks/index.ts
+@@ -0,0 +1,2 @@
++export * from "./metrics-charts.com";
++export * from "./metrics-range";
+diff --git a/src/application/modules/projects/routes/single-project/single-app/tabs/metrics/building-blocks/metrics-charts.com.tsx b/src/application/modules/projects/routes/single-project/single-app/tabs/metrics/building-blocks/metrics-charts.com.tsx
+new file mode 100644
+index 00000000..59177ebe
+--- /dev/null
++++ b/src/application/modules/projects/routes/single-project/single-app/tabs/metrics/building-blocks/metrics-charts.com.tsx
+@@ -0,0 +1,133 @@
++import {
++    Bar,
++    BarChart,
++    CartesianGrid,
++    Legend,
++    Line,
++    LineChart,
++    ResponsiveContainer,
++    Tooltip,
++    XAxis,
++    YAxis,
++} from "recharts";
++import type { FunctionMetricsPoint, FunctionMetricsRange } from "~/projects/api/services";
++
++import { formatMetricsTime } from "./metrics-range";
++
++const AXIS = { fontSize: 11, fill: "var(--muted-foreground)" };
++const TOOLTIP = {
++    contentStyle: {
++        background: "var(--popover)",
++        border: "1px solid var(--border)",
++        borderRadius: 6,
++        fontSize: 12,
++        color: "var(--popover-foreground)",
++    },
++    labelStyle: { color: "var(--muted-foreground)" },
++};
++const CHART_HEIGHT = 220;
++
++/** Calls and failed calls, one bar per step. */
++export function CallsChart({ series, range }: Props) {
++    const data = series.map(point => ({
++        time: formatMetricsTime(point.time, range),
++        ok: point.calls - point.failed,
++        failed: point.failed,
++    }));
++
++    return (
++        <ResponsiveContainer
++            width="100%"
++            height={CHART_HEIGHT}
++        >
++            <BarChart data={data}>
++                <CartesianGrid
++                    stroke="var(--border)"
++                    vertical={false}
++                />
++                <XAxis
++                    dataKey="time"
++                    tick={AXIS}
++                    minTickGap={24}
++                />
++                <YAxis
++                    tick={AXIS}
++                    allowDecimals={false}
++                    width={40}
++                />
++                <Tooltip
++                    {...TOOLTIP}
++                    cursor={{ fill: "var(--muted)" }}
++                />
++                <Legend wrapperStyle={{ fontSize: 12 }} />
++                <Bar
++                    dataKey="ok"
++                    name="Succeeded"
++                    stackId="calls"
++                    fill="var(--chart-2)"
++                />
++                <Bar
++                    dataKey="failed"
++                    name="Failed"
++                    stackId="calls"
++                    fill="var(--destructive)"
++                />
++            </BarChart>
++        </ResponsiveContainer>
++    );
++}
++
++/** p50, p95 and p99 of the handler's duration; a step without a call is a gap. */
++export function DurationChart({ series, range }: Props) {
++    const data = series.map(point => ({
++        time: formatMetricsTime(point.time, range),
++        p50: point.p50,
++        p95: point.p95,
++        p99: point.p99,
++    }));
++
++    return (
++        <ResponsiveContainer
++            width="100%"
++            height={CHART_HEIGHT}
++        >
++            <LineChart data={data}>
++                <CartesianGrid
++                    stroke="var(--border)"
++                    vertical={false}
++                />
++                <XAxis
++                    dataKey="time"
++                    tick={AXIS}
++                    minTickGap={24}
++                />
++                <YAxis
++                    tick={AXIS}
++                    width={48}
++                    unit=" ms"
++                />
++                <Tooltip
++                    {...TOOLTIP}
++                    formatter={value => (typeof value === "number" ? `${value.toFixed(1)} ms` : value)}
++                />
++                <Legend wrapperStyle={{ fontSize: 12 }} />
++                {(["p50", "p95", "p99"] as const).map((key, index) => (
++                    <Line
++                        key={key}
++                        dataKey={key}
++                        name={key}
++                        stroke={`var(--chart-${index + 3})`}
++                        dot={false}
++                        strokeWidth={2}
++                        isAnimationActive={false}
++                    />
++                ))}
++            </LineChart>
++        </ResponsiveContainer>
++    );
++}
++
++interface Props {
++    series: FunctionMetricsPoint[];
++    range: FunctionMetricsRange;
++}
+diff --git a/src/application/modules/projects/routes/single-project/single-app/tabs/metrics/building-blocks/metrics-range.ts b/src/application/modules/projects/routes/single-project/single-app/tabs/metrics/building-blocks/metrics-range.ts
+new file mode 100644
+index 00000000..57241e56
+--- /dev/null
++++ b/src/application/modules/projects/routes/single-project/single-app/tabs/metrics/building-blocks/metrics-range.ts
+@@ -0,0 +1,38 @@
++import type { FunctionMetricsRange } from "~/projects/api/services";
++
++export const METRICS_RANGES: { value: FunctionMetricsRange; label: string }[] = [
++    { value: "1h", label: "1 hour" },
++    { value: "6h", label: "6 hours" },
++    { value: "24h", label: "24 hours" },
++    { value: "7d", label: "7 days" },
++];
++
++/** A day: a function's busy hours, its scheduled calls, what failed overnight. */
++export const DEFAULT_METRICS_RANGE: FunctionMetricsRange = "24h";
++
++const STORAGE_KEY = "hivepaas.function-metrics.range";
++
++/** The range last chosen in this browser; the default when there is none, or no storage. */
++export function storedMetricsRange(): FunctionMetricsRange {
++    try {
++        const stored = window.localStorage.getItem(STORAGE_KEY);
++        return METRICS_RANGES.find(range => range.value === stored)?.value ?? DEFAULT_METRICS_RANGE;
++    } catch {
++        return DEFAULT_METRICS_RANGE;
++    }
++}
++
++export function storeMetricsRange(range: FunctionMetricsRange): void {
++    try {
++        window.localStorage.setItem(STORAGE_KEY, range);
++    } catch {
++        // A browser without storage starts at the default next time.
++    }
++}
++
++/** A point's time on the axis: hours and minutes, with the day for a week. */
++export function formatMetricsTime(time: string, range: FunctionMetricsRange): string {
++    const at = new Date(time);
++    const hm = at.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
++    return range === "7d" ? `${at.toLocaleDateString([], { month: "short", day: "numeric" })} ${hm}` : hm;
++}
+diff --git a/src/application/modules/projects/routes/single-project/single-app/tabs/metrics/index.ts b/src/application/modules/projects/routes/single-project/single-app/tabs/metrics/index.ts
+new file mode 100644
+index 00000000..e37ac0d8
+--- /dev/null
++++ b/src/application/modules/projects/routes/single-project/single-app/tabs/metrics/index.ts
+@@ -0,0 +1 @@
++export * from "./route";
+diff --git a/src/application/modules/projects/routes/single-project/single-app/tabs/metrics/route/app-metrics.route.com.tsx b/src/application/modules/projects/routes/single-project/single-app/tabs/metrics/route/app-metrics.route.com.tsx
+new file mode 100644
+index 00000000..43aae4ee
+--- /dev/null
++++ b/src/application/modules/projects/routes/single-project/single-app/tabs/metrics/route/app-metrics.route.com.tsx
+@@ -0,0 +1,159 @@
++import { useState } from "react";
++
++import { listBox } from "@lib/styles";
++import { cn } from "@lib/utils";
++import { RefreshCw } from "lucide-react";
++import { useParams } from "react-router";
++import invariant from "tiny-invariant";
++import type { FunctionMetricsCounts, FunctionMetricsRange } from "~/projects/api/services";
++import { AppLogsQueries } from "~/projects/data";
++
++import { AppLink, AppLoader } from "@application/shared/components";
++import { ROUTE } from "@application/shared/constants";
++
++import { Badge } from "@/components/ui/badge";
++import { Button } from "@/components/ui/button";
++
++import { LOG_HISTORY_UNAVAILABLE_TEXT } from "../../logs/building-blocks";
++import { CallsChart, DurationChart, METRICS_RANGES, storeMetricsRange, storedMetricsRange } from "../building-blocks";
++
++/**
++ * A function's calls over a range ending now - how many, how many failed, how
++ * long the handler ran - counted from the invocation line its runtime writes
++ * for every call into its logs.
++ */
++export function AppMetricsRoute() {
++    const { id: projectID, env, appId: appID } = useParams<{ id: string; env: string; appId: string }>();
++    invariant(projectID, "projectID must be defined");
++    invariant(env, "env must be defined");
++    invariant(appID, "appID must be defined");
++
++    const [range, setRange] = useState<FunctionMetricsRange>(storedMetricsRange);
++    const query = AppLogsQueries.useGetFunctionMetrics({ projectID, env, appID, range });
++    const metrics = query.data?.data;
++
++    function chooseRange(next: FunctionMetricsRange) {
++        setRange(next);
++        storeMetricsRange(next);
++    }
++
++    return (
++        <div className={cn(listBox, "flex flex-col gap-4")}>
++            <div className="flex flex-wrap items-center justify-between gap-2">
++                <div className="flex gap-1">
++                    {METRICS_RANGES.map(item => (
++                        <Button
++                            key={item.value}
++                            type="button"
++                            size="sm"
++                            variant={item.value === range ? "default" : "outline"}
++                            onClick={() => {
++                                chooseRange(item.value);
++                            }}
++                        >
++                            {item.label}
++                        </Button>
++                    ))}
++                </div>
++                <Button
++                    type="button"
++                    size="sm"
++                    variant="outline"
++                    isLoading={query.isFetching}
++                    onClick={() => {
++                        void query.refetch();
++                    }}
++                >
++                    <RefreshCw /> Refresh
++                </Button>
++            </div>
++
++            {query.isLoading || !metrics ? (
++                <AppLoader />
++            ) : !metrics.available ? (
++                <div className="flex flex-col gap-1 text-sm text-muted-foreground">
++                    <span>
++                        {metrics.reason
++                            ? LOG_HISTORY_UNAVAILABLE_TEXT[metrics.reason]
++                            : "The function's logs cannot be read."}
++                    </span>
++                    {(metrics.reason === "disabled" || metrics.reason === "apps-not-collected") && (
++                        <AppLink.Modules
++                            to={ROUTE.systemSettings.logging.configuration.$route}
++                            className="text-link"
++                        >
++                            Logging settings
++                        </AppLink.Modules>
++                    )}
++                </div>
++            ) : (
++                <>
++                    {metrics.clamped && (
++                        <p className="text-xs text-muted-foreground">
++                            The logs are kept for less than this range: the charts start where they do.
++                        </p>
++                    )}
++                    {metrics.totals && <MetricsTotals totals={metrics.totals} />}
++                    <section className="flex flex-col gap-1">
++                        <h3 className="text-sm font-medium">Calls</h3>
++                        <CallsChart
++                            series={metrics.series}
++                            range={range}
++                        />
++                    </section>
++                    <section className="flex flex-col gap-1">
++                        <h3 className="text-sm font-medium">Duration</h3>
++                        <DurationChart
++                            series={metrics.series}
++                            range={range}
++                        />
++                    </section>
++                    {Object.keys(metrics.byOutcome).length > 0 && (
++                        <section className="flex flex-wrap items-center gap-2 text-sm">
++                            <span className="text-muted-foreground">By outcome:</span>
++                            {Object.entries(metrics.byOutcome)
++                                .sort(([, a], [, b]) => b - a)
++                                .map(([outcome, calls]) => (
++                                    <Badge
++                                        key={outcome}
++                                        tone={outcome === "ok" ? "green" : "red"}
++                                        className="font-mono"
++                                    >
++                                        {outcome} {calls}
++                                    </Badge>
++                                ))}
++                        </section>
++                    )}
++                    <p className="text-xs text-muted-foreground">
++                        Counted from the line the runtime writes for every call: HTTP requests and scheduled calls
++                        through the function&apos;s server. Durations are the handler&apos;s, close rather than exact.
++                    </p>
++                </>
++            )}
++        </div>
++    );
++}
++
++function MetricsTotals({ totals }: { totals: FunctionMetricsCounts }) {
++    const failureRate = totals.calls > 0 ? (totals.failed / totals.calls) * 100 : 0;
++    const items = [
++        { label: "Calls", value: totals.calls.toLocaleString() },
++        { label: "Failed", value: `${failureRate.toFixed(failureRate < 10 ? 2 : 1)}%` },
++        { label: "p95", value: totals.p95 === null ? "-" : `${totals.p95.toFixed(1)} ms` },
++        { label: "5xx", value: totals.errors5xx.toLocaleString() },
++    ];
++
++    return (
++        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
++            {items.map(item => (
++                <div
++                    key={item.label}
++                    className="flex flex-col gap-0.5 rounded-md border px-3 py-2"
++                >
++                    <span className="text-xs text-muted-foreground">{item.label}</span>
++                    <span className="text-lg font-semibold tabular-nums">{item.value}</span>
++                </div>
++            ))}
++        </div>
++    );
++}
+diff --git a/src/application/modules/projects/routes/single-project/single-app/tabs/metrics/route/index.ts b/src/application/modules/projects/routes/single-project/single-app/tabs/metrics/route/index.ts
+new file mode 100644
+index 00000000..f6e61046
+--- /dev/null
++++ b/src/application/modules/projects/routes/single-project/single-app/tabs/metrics/route/index.ts
+@@ -0,0 +1 @@
++export * from "./app-metrics.route.com";
+diff --git a/src/application/shared/constants/route.constants.ts b/src/application/shared/constants/route.constants.ts
+index 92f1593b..6d8652ba 100644
+--- a/src/application/shared/constants/route.constants.ts
++++ b/src/application/shared/constants/route.constants.ts
+@@ -908,6 +908,12 @@ export const ROUTE = {
+                             `/projects/${id}/${env}/apps/${appId}/code/`,
+                     },
+ 
++                    metrics: {
++                        $pattern: "projects/:id/:env/apps/:appId/metrics",
++                        $route: (id: string, env: string, appId: string) =>
++                            `/projects/${id}/${env}/apps/${appId}/metrics/`,
++                    },
++
+                     logs: {
+                         $pattern: "projects/:id/:env/apps/:appId/logs",
+                         $route: (id: string, env: string, appId: string) =>
+diff --git a/yarn.lock b/yarn.lock
+index e67d10ec..89ebb9a4 100644
+--- a/yarn.lock
++++ b/yarn.lock
+@@ -2355,6 +2355,18 @@
+     "@react-types/overlays" "^3.9.4"
+     "@react-types/shared" "^3.33.1"
+ 
++"@reduxjs/toolkit@^1.9.0 || 2.x.x":
++  version "2.13.0"
++  resolved "https://registry.yarnpkg.com/@reduxjs/toolkit/-/toolkit-2.13.0.tgz#9603bebd496c1872deed336b2fabab891de7ac1f"
++  integrity sha512-f6jwVRfwW30+tnllz4YcsHHpPYYOE7abcHkyUCovD+P7DyhdAI5prz2Fh/8TLhakjpN+7aIEion1s5L/tvlYlA==
++  dependencies:
++    "@standard-schema/spec" "^1.0.0"
++    "@standard-schema/utils" "^0.3.0"
++    immer "^11.0.0"
++    redux "^5.0.1"
++    redux-thunk "^3.1.0"
++    reselect "^5.1.0"
++
+ "@rolldown/pluginutils@1.0.0-beta.43":
+   version "1.0.0-beta.43"
+   resolved "https://registry.npmjs.org/@rolldown/pluginutils/-/pluginutils-1.0.0-beta.43.tgz"
+@@ -2504,6 +2516,16 @@
+   resolved "https://registry.npmjs.org/@rtsao/scc/-/scc-1.1.0.tgz"
+   integrity sha512-zt6OdqaDoOnJ1ZYsCYGt9YmWzDXl4vQdKTyJev62gFhRGKdx7mcT54V9KIjg+d2wi9EXsPvAPKe7i7WjfVWB8g==
+ 
++"@standard-schema/spec@^1.0.0":
++  version "1.1.0"
++  resolved "https://registry.yarnpkg.com/@standard-schema/spec/-/spec-1.1.0.tgz#a79b55dbaf8604812f52d140b2c9ab41bc150bb8"
++  integrity sha512-l2aFy5jALhniG5HgqrD6jXLi/rUWrKvqN/qJx6yoJsgKhblVd+iqqU4RCXavm/jPityDo5TCvKMnpjKnOriy0w==
++
++"@standard-schema/utils@^0.3.0":
++  version "0.3.0"
++  resolved "https://registry.yarnpkg.com/@standard-schema/utils/-/utils-0.3.0.tgz#3d5e608f16c2390c10528e98e59aef6bf73cae7b"
++  integrity sha512-e7Mew686owMaPJVNNLs55PUvgz371nKgwsc4vxE49zsODpJEnxgxRo2y/OKrqueavXgZNMDVj3DdHFlaSAeU8g==
++
+ "@stylistic/eslint-plugin@^5.5.0":
+   version "5.5.0"
+   resolved "https://registry.npmjs.org/@stylistic/eslint-plugin/-/eslint-plugin-5.5.0.tgz"
+@@ -2877,6 +2899,57 @@
+   dependencies:
+     "@babel/types" "^7.28.2"
+ 
++"@types/d3-array@^3.0.3":
++  version "3.2.2"
++  resolved "https://registry.yarnpkg.com/@types/d3-array/-/d3-array-3.2.2.tgz#e02151464d02d4a1b44646d0fcdb93faf88fde8c"
++  integrity sha512-hOLWVbm7uRza0BYXpIIW5pxfrKe0W+D5lrFiAEYR+pb6w3N2SwSMaJbXdUfSEv+dT4MfHBLtn5js0LAWaO6otw==
++
++"@types/d3-color@*":
++  version "3.1.3"
++  resolved "https://registry.yarnpkg.com/@types/d3-color/-/d3-color-3.1.3.tgz#368c961a18de721da8200e80bf3943fb53136af2"
++  integrity sha512-iO90scth9WAbmgv7ogoq57O9YpKmFBbmoEoCHDB2xMBY0+/KVrqAaCDyCE16dUspeOvIxFFRI+0sEtqDqy2b4A==
++
++"@types/d3-ease@^3.0.0":
++  version "3.0.2"
++  resolved "https://registry.yarnpkg.com/@types/d3-ease/-/d3-ease-3.0.2.tgz#e28db1bfbfa617076f7770dd1d9a48eaa3b6c51b"
++  integrity sha512-NcV1JjO5oDzoK26oMzbILE6HW7uVXOHLQvHshBUW4UMdZGfiY6v5BeQwh9a9tCzv+CeefZQHJt5SRgK154RtiA==
++
++"@types/d3-interpolate@^3.0.1":
++  version "3.0.4"
++  resolved "https://registry.yarnpkg.com/@types/d3-interpolate/-/d3-interpolate-3.0.4.tgz#412b90e84870285f2ff8a846c6eb60344f12a41c"
++  integrity sha512-mgLPETlrpVV1YRJIglr4Ez47g7Yxjl1lj7YKsiMCb27VJH9W8NVM6Bb9d8kkpG/uAQS5AmbA48q2IAolKKo1MA==
++  dependencies:
++    "@types/d3-color" "*"
++
++"@types/d3-path@*":
++  version "3.1.1"
++  resolved "https://registry.yarnpkg.com/@types/d3-path/-/d3-path-3.1.1.tgz#f632b380c3aca1dba8e34aa049bcd6a4af23df8a"
++  integrity sha512-VMZBYyQvbGmWyWVea0EHs/BwLgxc+MKi1zLDCONksozI4YJMcTt8ZEuIR4Sb1MMTE8MMW49v0IwI5+b7RmfWlg==
++
++"@types/d3-scale@^4.0.2":
++  version "4.0.9"
++  resolved "https://registry.yarnpkg.com/@types/d3-scale/-/d3-scale-4.0.9.tgz#57a2f707242e6fe1de81ad7bfcccaaf606179afb"
++  integrity sha512-dLmtwB8zkAeO/juAMfnV+sItKjlsw2lKdZVVy6LRr0cBmegxSABiLEpGVmSJJ8O08i4+sGR6qQtb6WtuwJdvVw==
++  dependencies:
++    "@types/d3-time" "*"
++
++"@types/d3-shape@^3.1.0":
++  version "3.2.0"
++  resolved "https://registry.yarnpkg.com/@types/d3-shape/-/d3-shape-3.2.0.tgz#66ff342011dc243c6c20e6b899523d148aca412d"
++  integrity sha512-kVd74ta9eof3eJOvbNd1vGKS/XERRyQbT26Og63hIsvDO84cjD5gEOhsXf26w3FSoNlPVz84DOFcKv/oou+fMw==
++  dependencies:
++    "@types/d3-path" "*"
++
++"@types/d3-time@*", "@types/d3-time@^3.0.0":
++  version "3.0.4"
++  resolved "https://registry.yarnpkg.com/@types/d3-time/-/d3-time-3.0.4.tgz#8472feecd639691450dd8000eb33edd444e1323f"
++  integrity sha512-yuzZug1nkAAaBlBBikKZTgzCeA+k1uy4ZFwWANOfKw5z5LRhV0gNA7gNkKm7HoK+HRN0wX3EkxGk0fpbWhmB7g==
++
++"@types/d3-timer@^3.0.0":
++  version "3.0.2"
++  resolved "https://registry.yarnpkg.com/@types/d3-timer/-/d3-timer-3.0.2.tgz#70bbda77dc23aa727413e22e214afa3f0e852f70"
++  integrity sha512-Ps3T8E8dZDam6fUyNiMkekK3XUsaUEik+idO9/YjPtfj2qruF8tFBXS7XhtE4iIXBLxhmLjP3SXpLhVf21I9Lw==
++
+ "@types/debug@^4.0.0":
+   version "4.1.13"
+   resolved "https://registry.yarnpkg.com/@types/debug/-/debug-4.1.13.tgz#22d1cc9d542d3593caea764f974306ab36286ee7"
+@@ -2969,6 +3042,11 @@
+   resolved "https://registry.yarnpkg.com/@types/unist/-/unist-2.0.11.tgz#11af57b127e32487774841f7a4e54eab166d03c4"
+   integrity sha512-CmBKiL6NNo/OqgmMn95Fk9Whlp2mtvIv+KNpQKN2F4SjvrEesubTRWGYSg+BnWZOnlCaSTU1sMpsBOzgbYhnsA==
+ 
++"@types/use-sync-external-store@^0.0.6":
++  version "0.0.6"
++  resolved "https://registry.yarnpkg.com/@types/use-sync-external-store/-/use-sync-external-store-0.0.6.tgz#60be8d21baab8c305132eb9cb912ed497852aadc"
++  integrity sha512-zFDAD+tlpf2r4asuHEj0XH6pY6i0g5NeAHPn+15wk3BV6JA69eERFXC1gyGThDkVa1zCyKr5jox1+2LbV/AMLg==
++
+ "@typescript-eslint/eslint-plugin@8.47.0":
+   version "8.47.0"
+   resolved "https://registry.npmjs.org/@typescript-eslint/eslint-plugin/-/eslint-plugin-8.47.0.tgz"
+@@ -3645,6 +3723,77 @@ csstype@^3.0.2, csstype@^3.1.2:
+   resolved "https://registry.npmjs.org/csstype/-/csstype-3.1.3.tgz"
+   integrity sha512-M1uQkMl8rQK/szD0LNhtqxIPLpimGm8sOBwU7lLnCpSbTyY3yeU1Vc7l4KT5zT4s/yOxHH5O7tIuuLOCnLADRw==
+ 
++"d3-array@2 - 3", "d3-array@2.10.0 - 3", d3-array@^3.1.6:
++  version "3.2.4"
++  resolved "https://registry.yarnpkg.com/d3-array/-/d3-array-3.2.4.tgz#15fec33b237f97ac5d7c986dc77da273a8ed0bb5"
++  integrity sha512-tdQAmyA18i4J7wprpYq8ClcxZy3SC31QMeByyCFyRt7BVHdREQZ5lpzoe5mFEYZUWe+oq8HBvk9JjpibyEV4Jg==
++  dependencies:
++    internmap "1 - 2"
++
++"d3-color@1 - 3":
++  version "3.1.0"
++  resolved "https://registry.yarnpkg.com/d3-color/-/d3-color-3.1.0.tgz#395b2833dfac71507f12ac2f7af23bf819de24e2"
++  integrity sha512-zg/chbXyeBtMQ1LbD/WSoW2DpC3I0mpmPdW+ynRTj/x2DAWYrIY7qeZIHidozwV24m4iavr15lNwIwLxRmOxhA==
++
++d3-ease@^3.0.1:
++  version "3.0.1"
++  resolved "https://registry.yarnpkg.com/d3-ease/-/d3-ease-3.0.1.tgz#9658ac38a2140d59d346160f1f6c30fda0bd12f4"
++  integrity sha512-wR/XK3D3XcLIZwpbvQwQ5fK+8Ykds1ip7A2Txe0yxncXSdq1L9skcG7blcedkOX+ZcgxGAmLX1FrRGbADwzi0w==
++
++"d3-format@1 - 3":
++  version "3.1.2"
++  resolved "https://registry.yarnpkg.com/d3-format/-/d3-format-3.1.2.tgz#01fdb46b58beb1f55b10b42ad70b6e344d5eb2ae"
++  integrity sha512-AJDdYOdnyRDV5b6ArilzCPPwc1ejkHcoyFarqlPqT7zRYjhavcT3uSrqcMvsgh2CgoPbK3RCwyHaVyxYcP2Arg==
++
++"d3-interpolate@1.2.0 - 3", d3-interpolate@^3.0.1:
++  version "3.0.1"
++  resolved "https://registry.yarnpkg.com/d3-interpolate/-/d3-interpolate-3.0.1.tgz#3c47aa5b32c5b3dfb56ef3fd4342078a632b400d"
++  integrity sha512-3bYs1rOD33uo8aqJfKP3JWPAibgw8Zm2+L9vBKEHJ2Rg+viTR7o5Mmv5mZcieN+FRYaAOWX5SJATX6k1PWz72g==
++  dependencies:
++    d3-color "1 - 3"
++
++d3-path@^3.1.0:
++  version "3.1.0"
++  resolved "https://registry.yarnpkg.com/d3-path/-/d3-path-3.1.0.tgz#22df939032fb5a71ae8b1800d61ddb7851c42526"
++  integrity sha512-p3KP5HCf/bvjBSSKuXid6Zqijx7wIfNW+J/maPs+iwR35at5JCbLUT0LzF1cnjbCHWhqzQTIN2Jpe8pRebIEFQ==
++
++d3-scale@^4.0.2:
++  version "4.0.2"
++  resolved "https://registry.yarnpkg.com/d3-scale/-/d3-scale-4.0.2.tgz#82b38e8e8ff7080764f8dcec77bd4be393689396"
++  integrity sha512-GZW464g1SH7ag3Y7hXjf8RoUuAFIqklOAq3MRl4OaWabTFJY9PN/E1YklhXLh+OQ3fM9yS2nOkCoS+WLZ6kvxQ==
++  dependencies:
++    d3-array "2.10.0 - 3"
++    d3-format "1 - 3"
++    d3-interpolate "1.2.0 - 3"
++    d3-time "2.1.1 - 3"
++    d3-time-format "2 - 4"
++
++d3-shape@^3.1.0:
++  version "3.2.0"
++  resolved "https://registry.yarnpkg.com/d3-shape/-/d3-shape-3.2.0.tgz#a1a839cbd9ba45f28674c69d7f855bcf91dfc6a5"
++  integrity sha512-SaLBuwGm3MOViRq2ABk3eLoxwZELpH6zhl3FbAoJ7Vm1gofKx6El1Ib5z23NUEhF9AsGl7y+dzLe5Cw2AArGTA==
++  dependencies:
++    d3-path "^3.1.0"
++
++"d3-time-format@2 - 4":
++  version "4.1.0"
++  resolved "https://registry.yarnpkg.com/d3-time-format/-/d3-time-format-4.1.0.tgz#7ab5257a5041d11ecb4fe70a5c7d16a195bb408a"
++  integrity sha512-dJxPBlzC7NugB2PDLwo9Q8JiTR3M3e4/XANkreKSUxF8vvXKqm1Yfq4Q5dl8budlunRVlUUaDUgFt7eA8D6NLg==
++  dependencies:
++    d3-time "1 - 3"
++
++"d3-time@1 - 3", "d3-time@2.1.1 - 3", d3-time@^3.0.0:
++  version "3.1.0"
++  resolved "https://registry.yarnpkg.com/d3-time/-/d3-time-3.1.0.tgz#9310db56e992e3c0175e1ef385e545e48a9bb5c7"
++  integrity sha512-VqKjzBLejbSMT4IgbmVgDjpkYrNWUYJnbCGo874u7MMKIWsILRX+OpX/gTk8MqjpT1A/c6HY2dCA77ZN0lkQ2Q==
++  dependencies:
++    d3-array "2 - 3"
++
++d3-timer@^3.0.1:
++  version "3.0.1"
++  resolved "https://registry.yarnpkg.com/d3-timer/-/d3-timer-3.0.1.tgz#6284d2a2708285b1abb7e201eda4380af35e63b0"
++  integrity sha512-ndfJ/JxxMd3nw31uyKoY2naivF+r29V+Lc0svZxe1JvvIRmi8hUsrMvdOwgS1o6uBHmiz91geQ0ylPP0aj1VUA==
++
+ damerau-levenshtein@^1.0.8:
+   version "1.0.8"
+   resolved "https://registry.npmjs.org/damerau-levenshtein/-/damerau-levenshtein-1.0.8.tgz"
+@@ -3701,6 +3850,11 @@ debug@^4.0.0, debug@^4.1.0, debug@^4.1.1, debug@^4.3.1, debug@^4.3.2, debug@^4.3
+   dependencies:
+     ms "^2.1.3"
+ 
++decimal.js-light@^2.5.1:
++  version "2.5.1"
++  resolved "https://registry.yarnpkg.com/decimal.js-light/-/decimal.js-light-2.5.1.tgz#134fd32508f19e208f4fb2f8dac0d2626a867934"
++  integrity sha512-qIMFpTMZmny+MMIitAB6D7iVPEorVw6YQRWkvarTkT4tBeSLLiHzcwj6q0MmYSFCiVpiqPJTJEYIrpcPzVEIvg==
++
+ decimal.js@^10.4.3:
+   version "10.6.0"
+   resolved "https://registry.npmjs.org/decimal.js/-/decimal.js-10.6.0.tgz"
+@@ -3964,6 +4118,11 @@ es-to-primitive@^1.3.0:
+     is-date-object "^1.0.5"
+     is-symbol "^1.0.4"
+ 
++es-toolkit@^1.39.3:
++  version "1.52.0"
++  resolved "https://registry.yarnpkg.com/es-toolkit/-/es-toolkit-1.52.0.tgz#71eaf1a8b18834ef77637eccbb885ba4c03cd6dd"
++  integrity sha512-XTNEJQh1tY1ZJVcf6ayP/2n4ZPyaHlW2FWs7xvw5ddPuhUVjLD3olQVQS7kf58JbAB48iL0uL/jerTrjtV3lDA==
++
+ "esbuild@^0.27.0 || ^0.28.0":
+   version "0.28.2"
+   resolved "https://registry.npmjs.org/esbuild/-/esbuild-0.28.2.tgz"
+@@ -4614,6 +4773,11 @@ immer@^10.1.3:
+   resolved "https://registry.npmjs.org/immer/-/immer-10.2.0.tgz"
+   integrity sha512-d/+XTN3zfODyjr89gM3mPq1WNX2B8pYsu7eORitdwyA2sBubnTl3laYlBk4sXY5FUa5qTZGBDPJICVbvqzjlbw==
+ 
++immer@^11.0.0, immer@^11.1.8:
++  version "11.1.18"
++  resolved "https://registry.yarnpkg.com/immer/-/immer-11.1.18.tgz#87d9bced1e25157dc23bced66811de89460ec8f3"
++  integrity sha512-EQyQtLiYW029lyoczMl/Hh4Xu7cDecSc58JRYpHyL4tIAu3eqd1yJzQX04d2BZHDkzFFvm6qJEJWOtfDSWAXbQ==
++
+ immutable@^5.0.2:
+   version "5.1.9"
+   resolved "https://registry.npmjs.org/immutable/-/immutable-5.1.9.tgz"
+@@ -4665,6 +4829,11 @@ internal-slot@^1.1.0:
+     hasown "^2.0.2"
+     side-channel "^1.1.0"
+ 
++"internmap@1 - 2":
++  version "2.0.3"
++  resolved "https://registry.yarnpkg.com/internmap/-/internmap-2.0.3.tgz#6685f23755e43c524e251d29cbc97248e3061009"
++  integrity sha512-5Hh7Y1wQbvY5ooGgPbDaL5iYLAPzMTUrjMulskHLH6wnv/A+1q5rgEaiuqEjB+oxGXIVZs1FF+R/KPN3ZSQYYg==
++
+ intl-messageformat@^10.1.0:
+   version "10.7.18"
+   resolved "https://registry.npmjs.org/intl-messageformat/-/intl-messageformat-10.7.18.tgz"
+@@ -6214,6 +6383,14 @@ react-phone-number-input@^3.4.12:
+     libphonenumber-js "^1.12.24"
+     prop-types "^15.8.1"
+ 
++"react-redux@8.x.x || 9.x.x":
++  version "9.3.0"
++  resolved "https://registry.yarnpkg.com/react-redux/-/react-redux-9.3.0.tgz#a30113bb6d95c0a715d54dda4308d450fca6ce09"
++  integrity sha512-KQopgqFo/p/fgmAs5qz6p5RWaNAzq40WAu7fJIXnQpYxFPbJYtsJPWvGeF2rOBaY/kEuV77AVsX8TsQzKm+A/g==
++  dependencies:
++    "@types/use-sync-external-store" "^0.0.6"
++    use-sync-external-store "^1.4.0"
++
+ react-refresh@^0.18.0:
+   version "0.18.0"
+   resolved "https://registry.npmjs.org/react-refresh/-/react-refresh-0.18.0.tgz"
+@@ -6347,6 +6524,33 @@ readdirp@^4.0.1:
+   resolved "https://registry.npmjs.org/readdirp/-/readdirp-4.1.2.tgz"
+   integrity sha512-GDhwkLfywWL2s6vEjyhri+eXmfH6j1L7JE27WhqLeYzoh/A3DBaYGEj2H/HFZCn/kMfim73FXxEJTw06WtxQwg==
+ 
++recharts@3.10.1:
++  version "3.10.1"
++  resolved "https://registry.yarnpkg.com/recharts/-/recharts-3.10.1.tgz#e6f52c2604a38f728b6d47f95881595fa6604c6c"
++  integrity sha512-QXFrvt6IVcw7eeZCoyXTwkIJAX3Dv1nyVhMicXJ47GsGDDpcN8z6o644DibE9XjpBTThtsomLKnTV6lc+cVFUA==
++  dependencies:
++    "@reduxjs/toolkit" "^1.9.0 || 2.x.x"
++    clsx "^2.1.1"
++    decimal.js-light "^2.5.1"
++    es-toolkit "^1.39.3"
++    eventemitter3 "^5.0.1"
++    immer "^11.1.8"
++    react-redux "8.x.x || 9.x.x"
++    reselect "5.2.0"
++    tiny-invariant "^1.3.3"
++    use-sync-external-store "^1.2.2"
++    victory-vendor "^37.0.2"
++
++redux-thunk@^3.1.0:
++  version "3.1.0"
++  resolved "https://registry.yarnpkg.com/redux-thunk/-/redux-thunk-3.1.0.tgz#94aa6e04977c30e14e892eae84978c1af6058ff3"
++  integrity sha512-NW2r5T6ksUKXCabzhL9z+h206HQw/NJkcLm1GPImRQ8IzfXwRGqjVhKJGauHirT0DAuyy6hjdnMZaRoAcy0Klw==
++
++redux@^5.0.1:
++  version "5.0.1"
++  resolved "https://registry.yarnpkg.com/redux/-/redux-5.0.1.tgz#97fa26881ce5746500125585d5642c77b6e9447b"
++  integrity sha512-M9/ELqF6fy8FwmkpnF0S3YKOqMyoWJ4+CS5Efg2ct3oY9daQvd/Pc71FpGZsVsbl3Cpb+IIcjBDUnnyBdQbq4w==
++
+ reflect.getprototypeof@^1.0.6, reflect.getprototypeof@^1.0.9:
+   version "1.0.10"
+   resolved "https://registry.npmjs.org/reflect.getprototypeof/-/reflect.getprototypeof-1.0.10.tgz"
+@@ -6420,6 +6624,16 @@ remark-stringify@^11.0.0:
+     mdast-util-to-markdown "^2.0.0"
+     unified "^11.0.0"
+ 
++reselect@5.2.0:
++  version "5.2.0"
++  resolved "https://registry.yarnpkg.com/reselect/-/reselect-5.2.0.tgz#f380ef7664332d26ea06c1cba04bdbbdcaa955f1"
++  integrity sha512-AgZ3UOZm3YndfrJ4OYjgrT7bmCm/1iqkjvEfH/oYjzh6PD2qw4QuT3jjnXIrpdt4MTpMXclMT3lXbmRY+XRakw==
++
++reselect@^5.1.0:
++  version "5.3.0"
++  resolved "https://registry.yarnpkg.com/reselect/-/reselect-5.3.0.tgz#0a3e3ed4436bdf2ab7c5e0f392dab2c062595d61"
++  integrity sha512-XGoLeRAVzUTcJ1qkxPQhDJyIZ5d6zzZD9nT7AEZOaaU9UbWclhycElmhO+VD5bFeLuzhPBaOV2oXC8uG35ZSpg==
++
+ resize-observer-polyfill@^1.5.1:
+   version "1.5.1"
+   resolved "https://registry.npmjs.org/resize-observer-polyfill/-/resize-observer-polyfill-1.5.1.tgz"
+@@ -7403,6 +7617,11 @@ use-sidecar@^1.1.3:
+     detect-node-es "^1.1.0"
+     tslib "^2.0.0"
+ 
++use-sync-external-store@^1.2.2, use-sync-external-store@^1.4.0:
++  version "1.7.0"
++  resolved "https://registry.yarnpkg.com/use-sync-external-store/-/use-sync-external-store-1.7.0.tgz#6dcb66ef569e02f186af6b3d575f414ce746e18f"
++  integrity sha512-6L+EeigHMQhdaIPNIFUKwfWJSwWFQ8gJbJ2DLOs5sDIegTwR9fRxvnM3uciHKjIZhFz+KAv2emhWMRvDmMcY8A==
++
+ use-sync-external-store@^1.5.0, use-sync-external-store@^1.6.0:
+   version "1.6.0"
+   resolved "https://registry.npmjs.org/use-sync-external-store/-/use-sync-external-store-1.6.0.tgz"
+@@ -7429,6 +7648,26 @@ vfile@^6.0.0:
+     "@types/unist" "^3.0.0"
+     vfile-message "^4.0.0"
+ 
++victory-vendor@^37.0.2:
++  version "37.3.6"
++  resolved "https://registry.yarnpkg.com/victory-vendor/-/victory-vendor-37.3.6.tgz#401ac4b029a0b3d33e0cba8e8a1d765c487254da"
++  integrity sha512-SbPDPdDBYp+5MJHhBCAyI7wKM3d5ivekigc2Dk2s7pgbZ9wIgIBYGVw4zGHBml/qTFbexrofXW6Gu4noGxrOwQ==
++  dependencies:
++    "@types/d3-array" "^3.0.3"
++    "@types/d3-ease" "^3.0.0"
++    "@types/d3-interpolate" "^3.0.1"
++    "@types/d3-scale" "^4.0.2"
++    "@types/d3-shape" "^3.1.0"
++    "@types/d3-time" "^3.0.0"
++    "@types/d3-timer" "^3.0.0"
++    d3-array "^3.1.6"
++    d3-ease "^3.0.1"
++    d3-interpolate "^3.0.1"
++    d3-scale "^4.0.2"
++    d3-shape "^3.1.0"
++    d3-time "^3.0.0"
++    d3-timer "^3.0.1"
++
+ vite-plugin-checker@^0.11.0:
+   version "0.11.0"
+   resolved "https://registry.npmjs.org/vite-plugin-checker/-/vite-plugin-checker-0.11.0.tgz"

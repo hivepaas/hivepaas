@@ -124,3 +124,23 @@ chart, and a new dependency.
 - Metrics by path.
 - Alerts on failure rate or p95.
 - A metrics store, when autoscaling needs numbers every few seconds.
+
+## Changes after the plan
+
+Writing the plan (`docs/superpowers/plans/2026-10-02-function-metrics.md`)
+settled what follows:
+
+- **The charts use `recharts` directly**, in a component of the tab's own, its
+  colors the theme's (`--chart-*`, `--destructive`, `--border`), rather than
+  shadcn/ui's `chart` wrapper, which the dashboard does not have and would come
+  through the shadcn CLI.
+- **`recharts` 3.10.1 is added with yarn**: `yarn.lock` is the dashboard's lock
+  file - it changes with `package.json` - and `package-lock.json` is behind it
+  (it lacks `@fontsource-variable/geist`), so `npm` would rewrite both.
+- **The reasons' texts** - why the logs cannot be read - move to a file of their
+  own, shared by the History tab and the Metrics tab.
+- **A range longer than the logs' retention** starts at the first whole step the
+  logs still hold.
+- **The live test** (`stats_live_test.go`) ran against VictoriaLogs v1.52.0: an
+  app's handler lines that mention an invocation, and another app's line naming
+  this one, are not counted.

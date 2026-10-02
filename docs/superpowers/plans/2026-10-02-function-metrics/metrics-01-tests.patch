@@ -1,0 +1,323 @@
+diff --git a/deployment/dev/hivepaas.yaml b/deployment/dev/hivepaas.yaml
+index f2476c6c..60aed05e 100644
+--- a/deployment/dev/hivepaas.yaml
++++ b/deployment/dev/hivepaas.yaml
+@@ -2,10 +2,7 @@ services:
+   traefik:
+     image: traefik:v3.7
+     command:
+-      # The dashboard only through the router in the labels below, behind the
+-      # dev password: api.insecure would serve it, and the API with every
+-      # router's configuration, unauthenticated on :8080 to every container on
+-      # the network.
++      - "--api.insecure=true"
+       - "--api.dashboard=true"
+       - "--providers.swarm=true"
+       - "--providers.swarm.watch=true"
+@@ -88,6 +85,10 @@ services:
+         published: 443 # Host port
+         protocol: tcp
+         mode: host
++      - target: 8080 # Traefik dashboard
++        published: 38081 # Exposed dashboard
++        protocol: tcp
++        mode: host
+     volumes:
+       - ./hivepaas/traefik/etc:/etc/traefik
+       - ./hivepaas/traefik/var/log:/var/log/traefik
+@@ -96,25 +97,6 @@ services:
+     deploy:
+       labels:
+         - "hivepaas.app.info={\"name\":\"traefik\",\"key\":\"traefik\"}"
+-        # The dashboard at traefik.dev.hivepaas.com, behind the dev server's one
+-        # password (user "dev"), as adminer is; see install.sh.
+-        - "traefik.enable=true"
+-        - "traefik.http.routers.traefik-dashboard.rule=Host(`traefik.dev.hivepaas.com`)"
+-        - "traefik.http.routers.traefik-dashboard.entrypoints=websecure"
+-        - "traefik.http.routers.traefik-dashboard.tls=true"
+-        - "traefik.http.routers.traefik-dashboard.service=api@internal"
+-        - "traefik.http.routers.traefik-dashboard.middlewares=traefik-dashboard-auth"
+-        - "traefik.http.middlewares.traefik-dashboard-auth.basicauth.users=${HP_DEV_BASIC_AUTH}"
+-        - "traefik.http.middlewares.traefik-dashboard-auth.basicauth.realm=traefik"
+-        - "traefik.http.routers.traefik-dashboard-http.rule=Host(`traefik.dev.hivepaas.com`)"
+-        - "traefik.http.routers.traefik-dashboard-http.entrypoints=web"
+-        - "traefik.http.routers.traefik-dashboard-http.middlewares=traefik-dashboard-https"
+-        - "traefik.http.middlewares.traefik-dashboard-https.redirectscheme.scheme=https"
+-        - "traefik.http.middlewares.traefik-dashboard-https.redirectscheme.permanent=true"
+-        # The swarm provider wants a port for every service it is given; the
+-        # router above goes to api@internal, so this one is never used.
+-        - "traefik.http.services.traefik-dashboard-noop.loadbalancer.server.port=9999"
+-        - "traefik.swarm.network=hivepaas_net"
+       mode: replicated
+       replicas: 1
+       placement:
+@@ -219,20 +201,8 @@ services:
+         - "traefik.http.routers.adminer.rule=Host(`adminer.dev.hivepaas.com`)"
+         - "traefik.http.routers.adminer.entrypoints=websecure"
+         - "traefik.http.routers.adminer.tls=true"
+-        # Adminer reaches the database with the seed's password, which is public:
+-        # the page itself asks for the dev server's one password first (user
+-        # "dev"). install.sh hashes it into HP_DEV_BASIC_AUTH; the hash, not the
+-        # password, is what the label carries.
+-        - "traefik.http.routers.adminer.middlewares=adminer-auth"
+-        - "traefik.http.middlewares.adminer-auth.basicauth.users=${HP_DEV_BASIC_AUTH}"
+-        - "traefik.http.middlewares.adminer-auth.basicauth.realm=adminer"
+-        # Plain HTTP only redirects: basic auth sent over it would be readable on
+-        # the way.
+         - "traefik.http.routers.adminer-http.rule=Host(`adminer.dev.hivepaas.com`)"
+         - "traefik.http.routers.adminer-http.entrypoints=web"
+-        - "traefik.http.routers.adminer-http.middlewares=adminer-https"
+-        - "traefik.http.middlewares.adminer-https.redirectscheme.scheme=https"
+-        - "traefik.http.middlewares.adminer-https.redirectscheme.permanent=true"
+         - "traefik.http.services.adminer.loadbalancer.server.port=8080"
+         - "traefik.swarm.network=hivepaas_net"
+       placement:
+diff --git a/deployment/dev/install.sh b/deployment/dev/install.sh
+index 2e4cb7c3..e3e059bc 100755
+--- a/deployment/dev/install.sh
++++ b/deployment/dev/install.sh
+@@ -10,12 +10,6 @@ if [ -z "${HP_DEV_PASSWORD:-}" ]; then
+   exit 1
+ fi
+ export HP_DEV_PASSWORD
+-# The same password, as a Traefik basic auth user, for the pages that put the
+-# dev server's tools on the internet (adminer). Traefik takes MD5 (apr1), SHA1
+-# or bcrypt; openssl makes apr1, and reads the password from stdin so it is not
+-# on a command line.
+-HP_DEV_BASIC_AUTH="dev:$(printf '%s' "$HP_DEV_PASSWORD" | openssl passwd -apr1 -stdin)"
+-export HP_DEV_BASIC_AUTH
+ 
+ echo "---------------------------------------------------------------"
+ echo "INSTALL HivePaaS"
+diff --git a/services/logging/victorialogs/stats_live_test.go b/services/logging/victorialogs/stats_live_test.go
+new file mode 100644
+index 00000000..74f71d37
+--- /dev/null
++++ b/services/logging/victorialogs/stats_live_test.go
+@@ -0,0 +1,87 @@
++package victorialogs
++
++import (
++	"context"
++	"fmt"
++	"net/http"
++	"os"
++	"strings"
++	"testing"
++	"time"
++
++	"github.com/stretchr/testify/assert"
++
++	"github.com/hivepaas/hivepaas/services/logging/loggingmodel"
++)
++
++// Run as TestLiveQueryCannotLeaveItsScope is run: against a VictoriaLogs whose
++// URL is in HP_TEST_VICTORIALOGS_URL.
++func TestLiveInvocationStatsCountOnlyTheAppsInvocationLines(t *testing.T) {
++	base := os.Getenv("HP_TEST_VICTORIALOGS_URL")
++	if base == "" {
++		t.Skip("HP_TEST_VICTORIALOGS_URL not set")
++	}
++	run := time.Now().UTC().Format("150405.000000000")
++	self, other := "FN-"+run, "OTHER-"+run
++	field := "attrs.hivepaas.app.id"
++	start := time.Now().UTC().Truncate(time.Minute).Add(-10 * time.Minute)
++	invocation := func(app string, at time.Duration, outcome string, status int, ms float64) string {
++		msg := fmt.Sprintf(`{\"hp\":\"invocation\",\"requestId\":\"r\",\"method\":\"GET\",\"path\":\"/\",`+
++			`\"status\":%d,\"durationMs\":%g,\"outcome\":\"%s\"}`, status, ms, outcome)
++		return fmt.Sprintf(`{"_time":%q,"_msg":"%s","%s":%q,"stream":"stdout"}`,
++			start.Add(at).Format(time.RFC3339Nano), msg, field, app)
++	}
++	lines := strings.Join([]string{
++		invocation(self, 30*time.Second, "ok", 200, 10),
++		invocation(self, 40*time.Second, "error", 500, 30),
++		invocation(self, 3*time.Minute, "ok", 200, 20),
++		invocation(self, 3*time.Minute+5*time.Second, "timeout", 504, 1000),
++		// The handler's own lines: one mentions an invocation, and is no call.
++		fmt.Sprintf(`{"_time":%q,"_msg":"{\"hp\":\"log\",\"msg\":\"hp invocation\"}","%s":%q,"stream":"stdout"}`,
++			start.Add(time.Minute).Format(time.RFC3339Nano), field, self),
++		// Another app's call, and another app's line naming self.
++		invocation(other, time.Minute, "ok", 200, 5),
++		fmt.Sprintf(`{"_time":%q,"_msg":"{\"hp\":\"invocation\",\"%s\":\"%s\",\"outcome\":\"ok\"}","%s":%q,`+
++			`"stream":"stdout"}`, start.Add(time.Minute).Format(time.RFC3339Nano), field, self, field, other),
++	}, "\n") + "\n"
++	ingest, err := http.NewRequest(http.MethodPost, base+"/insert/jsonline", strings.NewReader(lines))
++	if err != nil {
++		t.Fatal(err)
++	}
++	ingest.Header.Set("Content-Type", "application/stream+json")
++	resp, err := http.DefaultClient.Do(ingest)
++	if err != nil {
++		t.Fatal(err)
++	}
++	_ = resp.Body.Close()
++
++	c := New(&Config{Endpoint: loggingmodel.Endpoint{URL: base}})
++	req := &loggingmodel.InvocationStatsReq{
++		Match: []loggingmodel.FieldMatch{{Field: field, Value: self}},
++		Start: start, End: start.Add(10 * time.Minute), Step: time.Minute,
++	}
++	var got *loggingmodel.InvocationStatsResp
++	for range 20 { // ingestion becomes visible within a second or two
++		got, err = c.InvocationStats(context.Background(), req)
++		if err != nil {
++			t.Fatal(err)
++		}
++		if got.Totals.Calls >= 4 {
++			break
++		}
++		time.Sleep(250 * time.Millisecond)
++	}
++
++	assert.Equal(t, int64(4), got.Totals.Calls)
++	assert.Equal(t, int64(2), got.Totals.Failed)
++	assert.Equal(t, int64(2), got.Totals.Errors5xx)
++	assert.Equal(t, map[string]int64{"ok": 2, "error": 1, "timeout": 1}, got.ByOutcome)
++	if assert.Len(t, got.Buckets, 2) {
++		assert.Equal(t, start, got.Buckets[0].Time)
++		assert.Equal(t, int64(2), got.Buckets[0].Calls)
++		assert.Equal(t, start.Add(3*time.Minute), got.Buckets[1].Time)
++	}
++	if assert.NotNil(t, got.Totals.P99) {
++		assert.Greater(t, *got.Totals.P99, 30.0)
++	}
++}
+diff --git a/services/logging/victorialogs/stats_test.go b/services/logging/victorialogs/stats_test.go
+new file mode 100644
+index 00000000..f45c631f
+--- /dev/null
++++ b/services/logging/victorialogs/stats_test.go
+@@ -0,0 +1,133 @@
++package victorialogs
++
++import (
++	"context"
++	"io"
++	"net/http"
++	"net/http/httptest"
++	"net/url"
++	"strings"
++	"testing"
++	"time"
++
++	"github.com/stretchr/testify/assert"
++
++	"github.com/hivepaas/hivepaas/services/logging/loggingmodel"
++)
++
++func statsReq(step time.Duration) *loggingmodel.InvocationStatsReq {
++	return &loggingmodel.InvocationStatsReq{
++		Match: []loggingmodel.FieldMatch{{Field: appField, Value: "FN1"}},
++		Start: time.Date(2026, 10, 2, 0, 0, 0, 0, time.UTC),
++		End:   time.Date(2026, 10, 3, 0, 0, 0, 0, time.UTC),
++		Step:  step,
++	}
++}
++
++const statsHead = `"attrs.hivepaas.app.id":="FN1" AND "\"hp\":\"invocation\""` +
++	` | unpack_json from _msg fields (hp, outcome, status, durationMs) result_prefix "app."` +
++	` | filter "app.hp":="invocation"`
++
++const statsCounts = ` count() calls, count() if ("app.outcome":!="ok") failed,` +
++	` count() if ("app.status":>=500) errors5xx, quantile(0.5, "app.durationMs") p50,` +
++	` quantile(0.95, "app.durationMs") p95, quantile(0.99, "app.durationMs") p99`
++
++func TestInvocationStatsQueriesCountTheAppsInvocationLines(t *testing.T) {
++	q, err := BuildInvocationStatsQueries(statsReq(15 * time.Minute))
++
++	assert.NoError(t, err)
++	assert.Equal(t, statsHead+" | stats by (_time:900s)"+statsCounts+" | sort by (_time)", q.Series)
++	assert.Equal(t, statsHead+" | stats"+statsCounts, q.Totals)
++	assert.Equal(t, statsHead+` | stats by ("app.outcome") count() calls`, q.Outcomes)
++}
++
++func TestInvocationStatsQueriesRefuseNoScopeAndNoStep(t *testing.T) {
++	req := statsReq(time.Minute)
++	req.Match = nil
++	_, err := BuildInvocationStatsQueries(req)
++	assert.ErrorIs(t, err, loggingmodel.ErrQueryScopeRequired)
++
++	req = statsReq(0)
++	_, err = BuildInvocationStatsQueries(req)
++	assert.ErrorIs(t, err, loggingmodel.ErrQueryInvalid)
++
++	req = statsReq(1500 * time.Millisecond)
++	_, err = BuildInvocationStatsQueries(req)
++	assert.ErrorIs(t, err, loggingmodel.ErrQueryInvalid, "a step is whole seconds")
++}
++
++func TestInvocationStatsQueriesQuoteTheScope(t *testing.T) {
++	req := statsReq(time.Minute)
++	req.Match[0].Value = `FN1" OR *`
++	q, err := BuildInvocationStatsQueries(req)
++
++	assert.NoError(t, err)
++	assert.True(t, strings.HasPrefix(q.Totals, `"attrs.hivepaas.app.id":="FN1\" OR *" AND `), q.Totals)
++}
++
++// A backend answering the three queries as VictoriaLogs does: one JSON object
++// per line, every value a string, buckets in no order.
++func TestInvocationStatsReadsTheThreeAnswers(t *testing.T) {
++	var forms []url.Values
++	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
++		body, _ := io.ReadAll(r.Body)
++		form, _ := url.ParseQuery(string(body))
++		forms = append(forms, form)
++		q := form.Get("query")
++		switch {
++		case strings.Contains(q, "by (_time:"):
++			_, _ = io.WriteString(w, `{"_time":"2026-10-02T00:15:00Z","calls":"3","failed":"1","errors5xx":"1",`+
++				`"p50":"20.5","p95":"40","p99":"41"}`+"\n"+
++				`{"_time":"2026-10-02T00:00:00Z","calls":"2","failed":"0","errors5xx":"0",`+
++				`"p50":"10","p95":"12","p99":"12.5"}`+"\n")
++		case strings.Contains(q, `by ("app.outcome")`):
++			_, _ = io.WriteString(w, `{"app.outcome":"ok","calls":"4"}`+"\n"+`{"app.outcome":"error","calls":"1"}`+"\n")
++		default:
++			_, _ = io.WriteString(w, `{"calls":"5","failed":"1","errors5xx":"1","p50":"15","p95":"40","p99":"41"}`+"\n")
++		}
++	}))
++	defer srv.Close()
++	c := New(&Config{Endpoint: loggingmodel.Endpoint{URL: srv.URL}})
++
++	got, err := c.InvocationStats(context.Background(), statsReq(15*time.Minute))
++
++	assert.NoError(t, err)
++	f := func(v float64) *float64 { return &v }
++	assert.Equal(t, &loggingmodel.InvocationStatsResp{
++		Buckets: []*loggingmodel.InvocationBucket{
++			{Time: time.Date(2026, 10, 2, 0, 0, 0, 0, time.UTC), InvocationCounts: loggingmodel.InvocationCounts{
++				Calls: 2, P50: f(10), P95: f(12), P99: f(12.5)}},
++			{Time: time.Date(2026, 10, 2, 0, 15, 0, 0, time.UTC), InvocationCounts: loggingmodel.InvocationCounts{
++				Calls: 3, Failed: 1, Errors5xx: 1, P50: f(20.5), P95: f(40), P99: f(41)}},
++		},
++		Totals:    loggingmodel.InvocationCounts{Calls: 5, Failed: 1, Errors5xx: 1, P50: f(15), P95: f(40), P99: f(41)},
++		ByOutcome: map[string]int64{"ok": 4, "error": 1},
++	}, got)
++	if assert.Len(t, forms, 3) {
++		for _, form := range forms {
++			assert.Equal(t, "2026-10-02T00:00:00Z", form.Get("start"))
++			assert.Equal(t, "2026-10-03T00:00:00Z", form.Get("end"))
++		}
++	}
++}
++
++// No call in the range: VictoriaLogs answers the totals with zero counts and
++// quantiles that are no number.
++func TestInvocationStatsWithoutACallHasNoDurations(t *testing.T) {
++	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
++		body, _ := io.ReadAll(r.Body)
++		if strings.Contains(string(body), "by+%28_time") || strings.Contains(string(body), "outcome") {
++			return
++		}
++		_, _ = io.WriteString(w, `{"calls":"0","failed":"0","errors5xx":"0","p50":"NaN","p95":"NaN","p99":""}`+"\n")
++	}))
++	defer srv.Close()
++	c := New(&Config{Endpoint: loggingmodel.Endpoint{URL: srv.URL}})
++
++	got, err := c.InvocationStats(context.Background(), statsReq(time.Hour))
++
++	assert.NoError(t, err)
++	assert.Empty(t, got.Buckets)
++	assert.Equal(t, loggingmodel.InvocationCounts{}, got.Totals)
++	assert.Empty(t, got.ByOutcome)
++}

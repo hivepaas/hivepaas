@@ -43,6 +43,17 @@ func New(
 }
 
 func (h *Handler) GetCurrentUser(ctx *gin.Context) (*basedto.User, error) {
+	user, err := h.currentUser(ctx)
+	if err != nil {
+		return nil, hperrors.Wrap(err)
+	}
+	if err = refuseDemo(ctx, user); err != nil {
+		return nil, err
+	}
+	return user, nil
+}
+
+func (h *Handler) currentUser(ctx *gin.Context) (*basedto.User, error) {
 	if auth := dispatchedAuth(ctx.Request.Context()); auth != nil {
 		return auth.User, nil
 	}
@@ -97,7 +108,20 @@ func (h *Handler) GetCurrentAuth(ctx *gin.Context, accessCheck permission.Access
 	return auth, nil
 }
 
+// getCurrentAuth is the caller's auth. A request the demo user may not make is
+// refused with no auth: nothing is left for a handler to fall back on.
 func (h *Handler) getCurrentAuth(ctx *gin.Context) (*basedto.Auth, error) {
+	auth, err := h.resolveAuth(ctx)
+	if err != nil {
+		return auth, err
+	}
+	if err = refuseDemo(ctx, auth.User); err != nil {
+		return nil, err
+	}
+	return auth, nil
+}
+
+func (h *Handler) resolveAuth(ctx *gin.Context) (*basedto.Auth, error) {
 	if auth := dispatchedAuth(ctx.Request.Context()); auth != nil {
 		return auth, nil
 	}

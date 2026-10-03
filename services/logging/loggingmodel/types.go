@@ -115,7 +115,7 @@ const (
 	// DefaultBackendMemoryLimit is what the backend gets when its own setting
 	// is left empty. VictoriaLogs sizes its caches from its limit, so this is
 	// also what it sizes itself against.
-	DefaultBackendMemoryLimit = 1 * unit.GB
+	DefaultBackendMemoryLimit = 2 * unit.GB
 )
 
 // RuntimeSpec describes a container to run, in terms no orchestrator owns.

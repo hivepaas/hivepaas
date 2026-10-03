@@ -6,6 +6,7 @@ package obi
 import (
 	"crypto/sha256"
 	"encoding/hex"
+	"encoding/json"
 	"path"
 	"sort"
 	"strconv"
@@ -39,10 +40,11 @@ const (
 	// with: one made with another is replaced.
 	LabelConfig = "hivepaas.obi.config"
 
-	// memoryLimit bounds OBI's container, its maps included: nearly twice
-	// what it was measured at with its largest maps, and a node's other
-	// containers safe from it.
-	memoryLimit = 384 << 20
+	// memoryLimit bounds OBI's container, its maps included: well over twice
+	// what it was measured at with its largest maps, about 215 MiB, for the
+	// node's busiest hours; and a node's other containers safe from it. A
+	// bound, not a reservation: OBI takes what its capacity needs.
+	memoryLimit = 512 << 20
 )
 
 // capabilities are what OBI needs to watch processes and attach its probes,
@@ -83,10 +85,19 @@ func Config(patterns []string, capacity Capacity) []byte {
 	return []byte(b.String())
 }
 
-// ConfigHash names a configuration, for a container to say which it runs.
+// ConfigHash names what an OBI container is made with: its image and its
+// options - its memory, its capabilities, its mounts - and its configuration.
+// One made otherwise, by an agent from before or for other apps, is replaced.
 func ConfigHash(config []byte) string {
-	sum := sha256.Sum256(append([]byte(Image+"\n"), config...))
-	return hex.EncodeToString(sum[:8])
+	return hashOf(ContainerOptions("", ""), config)
+}
+
+func hashOf(opts client.ContainerCreateOptions, config []byte) string {
+	h := sha256.New()
+	// Plain values: encoding them does not fail.
+	_ = json.NewEncoder(h).Encode([]any{opts.Config, opts.HostConfig})
+	h.Write(config)
+	return hex.EncodeToString(h.Sum(nil)[:8])
 }
 
 // ContainerOptions is OBI's container on a node:

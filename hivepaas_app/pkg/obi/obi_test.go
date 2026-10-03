@@ -76,7 +76,15 @@ func TestContainerOptions(t *testing.T) {
 	assert.ElementsMatch(t, []string{"CAP_BPF", "CAP_PERFMON", "CAP_SYS_PTRACE", "CAP_NET_RAW",
 		"CAP_DAC_READ_SEARCH", "CAP_CHECKPOINT_RESTORE"}, host.CapAdd)
 	assert.Contains(t, host.Binds, "/var/run/docker.sock:/var/run/docker.sock:ro")
-	assert.Positive(t, host.Memory)
+	assert.Equal(t, int64(512<<20), host.Memory)
+
+	// A container made with other options - another limit, by an agent from
+	// before - is another OBI, and is replaced.
+	config := Config([]string{"p1_dev_a1.*"}, CapacitySmall)
+	other := ContainerOptions("", "")
+	other.HostConfig.Memory = 384 << 20
+	assert.NotEqual(t, ConfigHash(config), hashOf(other, config))
+	assert.Equal(t, ConfigHash(config), hashOf(ContainerOptions("", ""), config))
 	assert.Equal(t, base.LogComponentOBI, opts.Config.Labels[base.LabelLogComponent])
 	assert.Equal(t, "abc", opts.Config.Labels[LabelConfig])
 	assert.Contains(t, opts.Config.Env, "OTEL_EBPF_CONFIG_PATH=/hivepaas-obi.yaml")

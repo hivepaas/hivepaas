@@ -27,16 +27,28 @@ func loadMatch(match []loggingmodel.FieldMatch, phrase string) (string, error) {
 	return strings.Join(filters, " AND "), nil
 }
 
-// httpApp is the app id cut out of a service's name.
-var httpApp = strconv.Quote(HTTPUnpackPrefix + "app")
+var (
+	// httpApp is the app id cut out of a service's name.
+	httpApp = strconv.Quote(HTTPUnpackPrefix + "app")
+	// httpCapped is a request's duration, the range's at most.
+	httpCapped = strconv.Quote(HTTPUnpackPrefix + "capped")
+)
 
 // BuildRequestLoadQuery turns a request into LogsQL by the rules BuildQuery
 // keeps: every value from the request in a Go-quoted literal, the structure
 // fixed here. One query for every app asked about, by the app id its services'
 // names hold: its cost does not grow with them.
+//
+// A request counts for the range at most: a WebSocket or a long poll, logged
+// when it ends with its whole duration, would otherwise read as many requests
+// at once - and is not counted at all while it is open.
 func BuildRequestLoadQuery(req *loggingmodel.RequestLoadReq) (string, error) {
 	if len(req.AppIDs) == 0 {
 		return "", hperrors.Wrap(loggingmodel.ErrQueryScopeRequired)
+	}
+	span, err := loadSpan(req.Start, req.End)
+	if err != nil {
+		return "", err
 	}
 	ids := make([]string, 0, len(req.AppIDs))
 	for _, id := range req.AppIDs {
@@ -57,8 +69,11 @@ func BuildRequestLoadQuery(req *loggingmodel.RequestLoadReq) (string, error) {
 		` | filter ` + httpService + `:~` + strconv.Quote(services) +
 		` | copy ` + httpService + ` as ` + httpApp +
 		` | replace_regexp ("^svc-(.+)-[0-9]+@swarm$", "$1") at ` + httpApp +
-		` | stats by (` + httpApp + `) sum(` + httpDuration + `) if (` + httpOrigin + `:>0) busyNs,` +
-		` count() requests`, nil
+		` | math min(` + httpDuration + `, ` + strconv.FormatInt(span.Nanoseconds(), 10) + `) as ` + httpCapped +
+		// min() of a duration that is not a number is the range: only numbers
+		// are summed.
+		` | stats by (` + httpApp + `) sum(` + httpCapped + `) if (` + httpOrigin + `:>0 AND ` + httpDuration +
+		`:>=0) busyNs, count() requests`, nil
 }
 
 // RequestLoad says how busy apps were over the request's range, by the ids

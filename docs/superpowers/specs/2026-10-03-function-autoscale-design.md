@@ -40,6 +40,10 @@ desired  = ceil(inFlight / (Concurrency * target))      target: 0.7 by default
   many (`current * (1 + throttled / calls)`, capped at doubling).
 - A line is written when a call ends: a call in progress is counted once it
   is done. With the default 30 s timeout, the window (60 s) holds most of them.
+  A call counts for the window at most (`math min(durationMs, window)`): a
+  10-minute call ending in the minute is in flight for the minute, not ten. The
+  window ends 10 s before now, for the lines of the last seconds to arrive
+  (as built with app autoscale).
 
 One LogsQL query a run, for **every** function with autoscale on, grouped by
 app: `"hp":"invocation"` lines of the last 60 s, `sum(durationMs)`, `count()`,

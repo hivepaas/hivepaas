@@ -119,20 +119,32 @@ type loads struct {
 	requests map[string]*logs.RequestLoad
 	cpu      map[string][]*logs.ContainerCPU
 	appsErr  error
+	// ranges are the ranges read, by what was read.
+	ranges map[string][2]time.Time
 }
 
-func (f *loads) FunctionLoad(_ context.Context, _ database.IDB, _ []string, _, _ time.Time) (
+func (f *loads) read(what string, start, end time.Time) {
+	if f.ranges == nil {
+		f.ranges = map[string][2]time.Time{}
+	}
+	f.ranges[what] = [2]time.Time{start, end}
+}
+
+func (f *loads) FunctionLoad(_ context.Context, _ database.IDB, _ []string, start, end time.Time) (
 	map[string]*logs.InvocationLoad, error) {
+	f.read("calls", start, end)
 	return f.byApp, f.err
 }
 
-func (f *loads) RequestLoad(_ context.Context, _ database.IDB, _ []string, _, _ time.Time) (
+func (f *loads) RequestLoad(_ context.Context, _ database.IDB, _ []string, start, end time.Time) (
 	map[string]*logs.RequestLoad, error) {
+	f.read("requests", start, end)
 	return f.requests, f.appsErr
 }
 
-func (f *loads) CPULoad(_ context.Context, _ database.IDB, _ []string, _, _ time.Time) (
+func (f *loads) CPULoad(_ context.Context, _ database.IDB, _ []string, start, end time.Time) (
 	map[string][]*logs.ContainerCPU, error) {
+	f.read("cpu", start, end)
 	return f.cpu, f.appsErr
 }
 
@@ -502,4 +514,19 @@ func TestEnsureJobRenamesTheFunctionsJob(t *testing.T) {
 		assert.Equal(t, jobName, w.settings.updated[0].Name)
 	}
 	assert.Equal(t, 1, w.events.published)
+}
+
+// Every signal is read over the same minute, ending 10 s before now: the
+// lines of the last seconds may not have arrived from every node.
+func TestRunReadsAMinuteEndingBeforeNow(t *testing.T) {
+	want := [2]time.Time{t0.Add(-70 * time.Second), t0.Add(-10 * time.Second)}
+
+	w := newWorld()
+	run(t, w)
+	assert.Equal(t, want, w.loads.ranges["calls"])
+
+	w = appWorld(&entity.AppAutoscale{RequestsTarget: 10, CPUTarget: 70})
+	runAt(t, w, t0)
+	assert.Equal(t, want, w.loads.ranges["requests"])
+	assert.Equal(t, want, w.loads.ranges["cpu"])
 }

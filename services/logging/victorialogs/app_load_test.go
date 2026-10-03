@@ -21,19 +21,23 @@ var (
 
 func TestRequestLoadQueryIsOneForAllTheApps(t *testing.T) {
 	q, err := BuildRequestLoadQuery(&loggingmodel.RequestLoadReq{
-		Match: traefikMatch, AppIDs: []string{"APP1", `x.y") | delete | ("`},
+		Match: traefikMatch, AppIDs: []string{"APP1", `x.y") | delete | ("`}, Start: loadStart, End: loadEnd,
 	})
 	assert.NoError(t, err)
 	assert.True(t, strings.HasPrefix(q, `"`+traefikField+`":="traefik" AND "ServiceName"`), q)
 	// Ids lower-cased, as the services are named, and their regexp's
 	// metacharacters escaped; the pattern a quoted literal.
 	assert.Contains(t, q, `:~"^svc-(app1|x\\.y\"\\) \\| delete \\| \\(\")-[0-9]+@swarm$"`)
-	assert.Contains(t, q, `sum("http.Duration") if ("http.OriginStatus":>0) busyNs, count() requests`)
+	// A request counts for the range at most.
+	assert.Contains(t, q, `| math min("http.Duration", 60000000000) as "http.capped"`)
+	assert.Contains(t, q, `sum("http.capped") if ("http.OriginStatus":>0 AND "http.Duration":>=0) busyNs,`)
 
 	_, err = BuildRequestLoadQuery(&loggingmodel.RequestLoadReq{Match: traefikMatch})
 	assert.ErrorIs(t, err, loggingmodel.ErrQueryScopeRequired)
-	_, err = BuildRequestLoadQuery(&loggingmodel.RequestLoadReq{AppIDs: []string{"A"}})
+	_, err = BuildRequestLoadQuery(&loggingmodel.RequestLoadReq{AppIDs: []string{"A"}, Start: loadStart, End: loadEnd})
 	assert.ErrorIs(t, err, loggingmodel.ErrQueryScopeRequired)
+	_, err = BuildRequestLoadQuery(&loggingmodel.RequestLoadReq{Match: traefikMatch, AppIDs: []string{"A"}})
+	assert.ErrorIs(t, err, loggingmodel.ErrQueryInvalid, "no range")
 }
 
 func TestCPULoadQueryIsOneForAllTheApps(t *testing.T) {
@@ -84,6 +88,12 @@ func TestLiveRequestLoadSumsEachAppsRequests(t *testing.T) {
 		line("traefik", svc(busy, 1), 20*time.Second, 500, 600),
 		// No replica answered: counted, no time of the app's.
 		line("traefik", svc(busy, 0), 30*time.Second, 0, 3000),
+		// A WebSocket open for an hour, closed in the minute: in flight for
+		// the minute, not an hour.
+		line("traefik", svc(busy, 1), 40*time.Second, 101, 3_600_000),
+		// A line whose duration is not a number: counted, none of its time.
+		fmt.Sprintf(`{"_time":%q,"_msg":"{\"ServiceName\":\"%s\",\"OriginStatus\":200,\"Duration\":\"x\"}",`+
+			`"%s":"traefik"}`, start.Add(45*time.Second).Format(time.RFC3339Nano), svc(busy, 0), traefikField),
 		// Another app whose id starts the same, one not asked about, a line an
 		// app printed.
 		line("traefik", svc(busy+"X", 0), 10*time.Second, 200, 99999),
@@ -105,7 +115,7 @@ func TestLiveRequestLoadSumsEachAppsRequests(t *testing.T) {
 		}
 		time.Sleep(250 * time.Millisecond)
 	}
-	assert.Equal(t, map[string]*loggingmodel.RequestLoad{busy: {BusyMs: 1000, Requests: 3}}, got.ByApp)
+	assert.Equal(t, map[string]*loggingmodel.RequestLoad{busy: {BusyMs: 61_000, Requests: 5}}, got.ByApp)
 }
 
 // Run against a VictoriaLogs whose URL is in HP_TEST_VICTORIALOGS_URL.

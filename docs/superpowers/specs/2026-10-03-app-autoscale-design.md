@@ -32,7 +32,7 @@ Kubernetes' HPA does.
 **Requests in flight per instance**, by Little's law, as for functions:
 
 ```text
-inFlight = sum(Duration of the requests that ended in the window) / window
+inFlight = sum(min(Duration, window) of the requests that ended in the window) / window
 desired  = ceil(inFlight / requestsTarget)      requestsTarget: requests per instance
 ```
 
@@ -43,6 +43,16 @@ desired  = ceil(inFlight / requestsTarget)      requestsTarget: requests per ins
   id cut out of it with `replace_regexp`, `sum(Duration)` and `count()` by it.
 - Lines whose `OriginStatus` is 0 (no replica answered) take no time in the app:
   counted, but they do not raise `inFlight`.
+- **A request counts for the window at most** (`math min(Duration, window)`):
+  a WebSocket, a stream of events or a long poll is logged when it ends, with
+  its whole duration - an hour's, ending in the minute, would read as 60
+  requests at once. While it is open it is not seen at all: an app serving
+  mostly those scales on CPU. A duration that is not a number is not summed -
+  `min()` of one is the window.
+- **The window ends 10 s before now**, for every signal: the lines of the last
+  seconds may not have arrived, later from a node further away. With several
+  Traefik replicas each request is still logged once, by the one that served
+  it, and the agent on every node ships its lines: the sum is the app's.
 
 **CPU per instance**, the HPA formula:
 

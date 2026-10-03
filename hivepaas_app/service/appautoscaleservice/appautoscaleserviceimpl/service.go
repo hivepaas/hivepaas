@@ -46,6 +46,12 @@ const (
 	// agent's rows.
 	window = time.Minute
 
+	// logLag is how far behind now the window ends: the lines of the last
+	// seconds may not have reached VictoriaLogs yet - later from a node further
+	// away, a Traefik replica's or a function's - and missing, they would read
+	// as less load.
+	logLag = 10 * time.Second
+
 	// stateTTL keeps an app's state between runs, and lets it go once the job
 	// has stopped running for it. The key says function: it was made for them.
 	stateTTL      = time.Hour
@@ -256,7 +262,9 @@ func (s *service) Run(ctx context.Context, data *queue.PeriodicExecData) error {
 	}
 
 	now := s.now()
-	r := &runData{now: now, autoscales: autoscales, concurrency: concurrency, services: services}
+	r := &runData{now: now, autoscales: autoscales, concurrency: concurrency, services: services,
+		end: now.Add(-logLag)}
+	r.start = r.end.Add(-window)
 	var errs []error
 	// No data is not no load: what cannot be read moves nothing.
 	if err = s.readFunctions(ctx, r, apps); err != nil {
@@ -286,9 +294,10 @@ func (s *service) Run(ctx context.Context, data *queue.PeriodicExecData) error {
 	return hperrors.Wrap(errors.Join(errs...))
 }
 
-// runData is what one run reads, for every app at once.
+// runData is what one run reads, for every app at once, over [start, end).
 type runData struct {
 	now         time.Time
+	start, end  time.Time
 	autoscales  map[string]*entity.AppAutoscale
 	concurrency map[string]int
 	services    map[string]*swarm.Service
@@ -342,7 +351,7 @@ func (s *service) readFunctions(ctx context.Context, r *runData, apps []*entity.
 	if len(ids) == 0 {
 		return nil
 	}
-	loads, err := s.loggingService.FunctionLoad(ctx, s.db, ids, r.now.Add(-window), r.now)
+	loads, err := s.loggingService.FunctionLoad(ctx, s.db, ids, r.start, r.end)
 	if err != nil {
 		return hperrors.Wrap(err)
 	}
@@ -388,7 +397,7 @@ func (s *service) readRequests(ctx context.Context, r *runData, ids []string) er
 	if err != nil {
 		return err
 	}
-	loads, err := s.loggingService.RequestLoad(ctx, s.db, ids, r.now.Add(-window), r.now)
+	loads, err := s.loggingService.RequestLoad(ctx, s.db, ids, r.start, r.end)
 	if err != nil {
 		return hperrors.Wrap(err)
 	}
@@ -400,7 +409,7 @@ func (s *service) readCPU(ctx context.Context, r *runData, ids []string) error {
 	if reason, err := s.agentReadiness(ctx); err != nil || reason != "" {
 		return err
 	}
-	loads, err := s.loggingService.CPULoad(ctx, s.db, ids, r.now.Add(-window), r.now)
+	loads, err := s.loggingService.CPULoad(ctx, s.db, ids, r.start, r.end)
 	if err != nil {
 		return hperrors.Wrap(err)
 	}

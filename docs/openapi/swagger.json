@@ -49383,6 +49383,9 @@
           "calls" : {
             "type" : "integer"
           },
+          "cpu" : {
+            "type" : "number"
+          },
           "from" : {
             "type" : "integer"
           },
@@ -49391,6 +49394,9 @@
           },
           "reason" : {
             "type" : "string"
+          },
+          "requests" : {
+            "type" : "integer"
           },
           "throttled" : {
             "type" : "integer"
@@ -49402,11 +49408,17 @@
             "type" : "integer"
           }
         },
-        "required" : [ "calls", "from", "inFlight", "reason", "throttled", "time", "to" ],
+        "required" : [ "calls", "cpu", "from", "inFlight", "reason", "requests", "throttled", "time", "to" ],
         "type" : "object"
       },
       "appsettingsdto.AppAutoscaleResp" : {
         "properties" : {
+          "cpuTarget" : {
+            "type" : "integer"
+          },
+          "cpuUnavailable" : {
+            "type" : "string"
+          },
           "enabled" : {
             "type" : "boolean"
           },
@@ -49417,6 +49429,9 @@
             },
             "type" : "array"
           },
+          "isFunction" : {
+            "type" : "boolean"
+          },
           "maxReplicas" : {
             "type" : "integer"
           },
@@ -49424,12 +49439,23 @@
             "type" : "integer"
           },
           "paused" : {
-            "description" : "Paused is why autoscale cannot act: its calls cannot be read (a reason\nof the logs' history, such as disabled), or the function does not run a\nset number of instances (not-replicated).",
+            "description" : "Paused is why autoscale cannot act, on or off: a function's calls, or\nall the signals an app scales on, cannot be read (a reason of the logs'\nhistory, such as disabled, or of the signal); the app does not run a set\nnumber of instances (not-replicated), or publishes a port on its node\n(host-ports).",
             "type" : "string"
           },
-          "replicas" : {
-            "description" : "Replicas is the function's now; 0 when it is stopped.",
+          "pending" : {
+            "description" : "Pending is how many of its tasks are wanted and not running: the\ncluster may have no room for them, and autoscale holds its scale-outs.",
             "type" : "integer"
+          },
+          "replicas" : {
+            "description" : "Replicas is the app's now; 0 when it is stopped.",
+            "type" : "integer"
+          },
+          "requestsTarget" : {
+            "type" : "integer"
+          },
+          "requestsUnavailable" : {
+            "description" : "RequestsUnavailable and CPUUnavailable are why an app's signal cannot\nbe read now, whether it scales on it or not: not-exposed, an access\nlog's reason, agent-unlabelled, identity-missing, no-cpu-limit, or a\nreason of the logs' history. Empty when it can, and for a function.",
+            "type" : "string"
           },
           "scaleInDelay" : {
             "type" : "string"
@@ -49439,9 +49465,13 @@
           },
           "updateVer" : {
             "type" : "integer"
+          },
+          "writableMounts" : {
+            "description" : "WritableMounts is whether its replicas would share, or each have their\nown, a volume or a bind mount it writes to.",
+            "type" : "boolean"
           }
         },
-        "required" : [ "enabled", "events", "maxReplicas", "minReplicas", "paused", "replicas", "scaleInDelay", "target", "updateVer" ],
+        "required" : [ "cpuTarget", "cpuUnavailable", "enabled", "events", "isFunction", "maxReplicas", "minReplicas", "paused", "pending", "replicas", "requestsTarget", "requestsUnavailable", "scaleInDelay", "target", "updateVer", "writableMounts" ],
         "type" : "object"
       },
       "appsettingsdto.AppCloneRoutingDomainSettingsReq" : {
@@ -52265,6 +52295,9 @@
       },
       "appsettingsdto.UpdateAppAutoscaleReq" : {
         "properties" : {
+          "cpuTarget" : {
+            "type" : "integer"
+          },
           "enabled" : {
             "type" : "boolean"
           },
@@ -52272,6 +52305,9 @@
             "type" : "integer"
           },
           "minReplicas" : {
+            "type" : "integer"
+          },
+          "requestsTarget" : {
             "type" : "integer"
           },
           "scaleInDelay" : {
@@ -52284,7 +52320,7 @@
             "type" : "integer"
           }
         },
-        "required" : [ "enabled", "maxReplicas", "minReplicas", "scaleInDelay", "target", "updateVer" ],
+        "required" : [ "cpuTarget", "enabled", "maxReplicas", "minReplicas", "requestsTarget", "scaleInDelay", "target", "updateVer" ],
         "type" : "object"
       },
       "appsettingsdto.UpdateAppAutoscaleResp" : {

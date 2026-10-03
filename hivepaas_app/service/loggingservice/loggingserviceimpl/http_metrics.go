@@ -139,6 +139,60 @@ func (s *service) FunctionLoad(
 	return resp.ByApp, nil
 }
 
+// RequestLoad implements loggingservice.Service. The lines are the proxy's by
+// the identity the daemon wrote into them; each app's by its services' names.
+func (s *service) RequestLoad(
+	ctx context.Context,
+	db database.IDB,
+	appIDs []string,
+	start, end time.Time,
+) (map[string]*logging.RequestLoad, error) {
+	if len(appIDs) == 0 {
+		return map[string]*logging.RequestLoad{}, nil
+	}
+	backend, err := s.queryBackend(ctx, db)
+	if err != nil {
+		return nil, hperrors.Wrap(err)
+	}
+	resp, err := backend.RequestLoad(ctx, &logging.RequestLoadReq{
+		Match: []logging.FieldMatch{{
+			Field: vlagent.AttrField(base.LabelLogComponent), Value: base.LogComponentTraefik,
+		}},
+		AppIDs: appIDs, Start: start, End: end,
+	})
+	if err != nil {
+		return nil, hperrors.Wrap(err)
+	}
+	return resp.ByApp, nil
+}
+
+// CPULoad implements loggingservice.Service. The rows are the agent's by the
+// identity the daemon wrote into them; each app's by the id the agent wrote.
+func (s *service) CPULoad(
+	ctx context.Context,
+	db database.IDB,
+	appIDs []string,
+	start, end time.Time,
+) (map[string][]*logging.ContainerCPU, error) {
+	if len(appIDs) == 0 {
+		return map[string][]*logging.ContainerCPU{}, nil
+	}
+	backend, err := s.queryBackend(ctx, db)
+	if err != nil {
+		return nil, hperrors.Wrap(err)
+	}
+	resp, err := backend.CPULoad(ctx, &logging.CPULoadReq{
+		Match: []logging.FieldMatch{{
+			Field: vlagent.AttrField(base.LabelLogComponent), Value: base.LogComponentAgent,
+		}},
+		AppIDs: appIDs, Start: start, End: end,
+	})
+	if err != nil {
+		return nil, hperrors.Wrap(err)
+	}
+	return resp.ByApp, nil
+}
+
 // everyResourceStep is everyStep for usage.
 func everyResourceStep(
 	buckets []*logging.ResourceBucket, start, end time.Time, step time.Duration,

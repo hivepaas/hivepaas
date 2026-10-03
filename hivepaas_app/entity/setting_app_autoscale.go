@@ -13,8 +13,9 @@ import (
 const (
 	CurrentAppAutoscaleVersion = 1
 
-	// The bounds and defaults of a function's autoscale: see the spec,
-	// docs/superpowers/specs/2026-10-03-function-autoscale-design.md.
+	// The bounds and defaults of an app's autoscale: see the specs,
+	// docs/superpowers/specs/2026-10-03-function-autoscale-design.md and
+	// 2026-10-03-app-autoscale-design.md.
 	AppAutoscaleMinReplicasDefault  = 1
 	AppAutoscaleMaxReplicasDefault  = 5
 	AppAutoscaleMaxReplicasLimit    = 50
@@ -24,6 +25,9 @@ const (
 	AppAutoscaleScaleInDelayDefault = 5 * time.Minute
 	AppAutoscaleScaleInDelayMin     = time.Minute
 	AppAutoscaleScaleInDelayMax     = time.Hour
+	AppAutoscaleRequestsTargetMin   = 1
+	AppAutoscaleRequestsTargetMax   = 1000
+	AppAutoscaleCPUTargetDefault    = 70
 )
 
 var _ = registerSettingParser(base.SettingTypeAppAutoscale, &appAutoscaleParser{})
@@ -34,15 +38,22 @@ func (s *appAutoscaleParser) New() SettingData {
 	return &AppAutoscale{}
 }
 
-// AppAutoscale is how an app's replicas follow its load, between Min and Max.
-// Target is the share of an instance's Concurrency it is scaled to keep busy,
-// in percent; ScaleInDelay how long the load stays low before it scales in.
+// AppAutoscale is how an app's replicas follow its load, between Min and Max;
+// ScaleInDelay is how long the load stays low before it scales in.
+//
+// A function scales on its calls: Target is the share of an instance's
+// Concurrency it is kept at, in percent. Any other app scales on its requests,
+// its CPU or both: RequestsTarget is the requests in flight an instance takes,
+// CPUTarget the share of an instance's CPU limit - or reservation - kept busy,
+// in percent; 0 for a signal it does not scale on.
 type AppAutoscale struct {
-	Enabled      bool              `json:"enabled"`
-	MinReplicas  int               `json:"minReplicas"`
-	MaxReplicas  int               `json:"maxReplicas"`
-	Target       int               `json:"target"`
-	ScaleInDelay timeutil.Duration `json:"scaleInDelay"`
+	Enabled        bool              `json:"enabled"`
+	MinReplicas    int               `json:"minReplicas"`
+	MaxReplicas    int               `json:"maxReplicas"`
+	Target         int               `json:"target"`
+	RequestsTarget int               `json:"requestsTarget,omitempty"`
+	CPUTarget      int               `json:"cpuTarget,omitempty"`
+	ScaleInDelay   timeutil.Duration `json:"scaleInDelay"`
 }
 
 // NewAppAutoscale is the settings as they start, off.
@@ -51,6 +62,7 @@ func NewAppAutoscale() *AppAutoscale {
 		MinReplicas:  AppAutoscaleMinReplicasDefault,
 		MaxReplicas:  AppAutoscaleMaxReplicasDefault,
 		Target:       AppAutoscaleTargetDefault,
+		CPUTarget:    AppAutoscaleCPUTargetDefault,
 		ScaleInDelay: timeutil.Duration(AppAutoscaleScaleInDelayDefault),
 	}
 }

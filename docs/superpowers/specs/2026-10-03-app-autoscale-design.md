@@ -150,7 +150,14 @@ same `app-autoscale` setting, with its fields for apps:
 1. The backend: the setting's fields, the service renamed and generalized,
    the two queries, the decision split, the refusals and the full-cluster
    hold, the API for every app; tests against a fake swarm and a live
-   VictoriaLogs with seeded Traefik and agent rows.
+   VictoriaLogs with seeded Traefik and agent rows. **Done**. As built: a run
+   lists the apps' services once (`ServiceList`, status on) rather than
+   inspecting each; a signal whose query fails, or whose source is not
+   marked, holds only the apps that scale on it alone; CPU with no row for a
+   running app holds it (the agent not reporting is not an idle app);
+   `paused` is answered whether autoscale is on or off, so the section can
+   say it cannot be turned on; the replicas on the Requests and CPU charts
+   move to phase 2, with the dashboard.
 2. The dashboard's section for apps, the replicas on the Requests and CPU
    charts, MCP, docs.
 3. Later: memory, queue length and custom metrics, Min by schedule, scaling to

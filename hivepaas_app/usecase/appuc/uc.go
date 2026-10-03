@@ -3,6 +3,7 @@ package appuc
 import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/repository"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/appautoscaleservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/appcloneservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/appdeploymentservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/appprovisionservice"
@@ -11,7 +12,6 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/clusterservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/containerexecservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/domainservice"
-	"github.com/hivepaas/hivepaas/hivepaas_app/service/functionautoscaleservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/functionservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/hpappservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/loggingservice"
@@ -45,7 +45,7 @@ type UC struct {
 	loggingService         loggingservice.Service
 	traefikService         traefikservice.Service
 	hpAppService           hpappservice.Service
-	functionAutoscale      functionautoscaleservice.Service
+	appAutoscale           appautoscaleservice.Service
 }
 
 func New(
@@ -71,7 +71,7 @@ func New(
 	loggingService loggingservice.Service,
 	traefikService traefikservice.Service,
 	hpAppService hpappservice.Service,
-	functionAutoscale functionautoscaleservice.Service,
+	appAutoscale appautoscaleservice.Service,
 ) *UC {
 	return &UC{
 		db:            db,
@@ -96,6 +96,6 @@ func New(
 		loggingService:         loggingService,
 		traefikService:         traefikService,
 		hpAppService:           hpAppService,
-		functionAutoscale:      functionAutoscale,
+		appAutoscale:           appAutoscale,
 	}
 }

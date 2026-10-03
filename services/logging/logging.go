@@ -82,6 +82,13 @@ type (
 	InvocationLoadReq  = loggingmodel.InvocationLoadReq
 	InvocationLoad     = loggingmodel.InvocationLoad
 	InvocationLoadResp = loggingmodel.InvocationLoadResp
+
+	RequestLoadReq  = loggingmodel.RequestLoadReq
+	RequestLoad     = loggingmodel.RequestLoad
+	RequestLoadResp = loggingmodel.RequestLoadResp
+	CPULoadReq      = loggingmodel.CPULoadReq
+	ContainerCPU    = loggingmodel.ContainerCPU
+	CPULoadResp     = loggingmodel.CPULoadResp
 )
 
 // MaxQueryLimit caps how many lines one query returns.

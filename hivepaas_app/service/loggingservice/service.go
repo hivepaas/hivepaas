@@ -60,4 +60,15 @@ type Service interface {
 	// nothing, when the logs cannot be read: no data is not no load.
 	FunctionLoad(ctx context.Context, db database.IDB, appIDs []string,
 		start, end time.Time) (map[string]*logging.InvocationLoad, error)
+
+	// RequestLoad says how busy apps were over [start, end) by the proxy's
+	// access log, by app id, in one query. It fails when the logs cannot be
+	// read, as FunctionLoad does.
+	RequestLoad(ctx context.Context, db database.IDB, appIDs []string,
+		start, end time.Time) (map[string]*logging.RequestLoad, error)
+
+	// CPULoad reads apps' containers' CPU over [start, end) from the agent's
+	// rows, by app id, in one query. It fails when the logs cannot be read.
+	CPULoad(ctx context.Context, db database.IDB, appIDs []string,
+		start, end time.Time) (map[string][]*logging.ContainerCPU, error)
 }

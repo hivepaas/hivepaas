@@ -404,3 +404,51 @@ type InvocationLoad struct {
 type InvocationLoadResp struct {
 	ByApp map[string]*InvocationLoad
 }
+
+// RequestLoadReq asks how busy apps were by the proxy's access log over
+// [Start, End): the proxy's lines by the identity in Match the daemon wrote
+// into them, each app's by its Traefik services, svc-<lower-cased id>-<n>@swarm.
+type RequestLoadReq struct {
+	Match  []FieldMatch
+	AppIDs []string
+	Start  time.Time
+	End    time.Time
+}
+
+// RequestLoad is one app's requests that ended in the range: the time the app
+// took to answer them, summed, in milliseconds - divided by the range, the
+// requests it had in flight on average - and how many. A request no replica
+// answered took none of its time.
+type RequestLoad struct {
+	BusyMs   float64
+	Requests int64
+}
+
+// RequestLoadResp is each app's load, by app id as asked; one with no request
+// in the range is not in it.
+type RequestLoadResp struct {
+	ByApp map[string]*RequestLoad
+}
+
+// CPULoadReq asks how busy apps' containers were over [Start, End): the
+// agent's rows, by the identity in Match the daemon wrote into them.
+type CPULoadReq struct {
+	Match  []FieldMatch
+	AppIDs []string
+	Start  time.Time
+	End    time.Time
+}
+
+// ContainerCPU is one container's CPU over the range, its average, in cores,
+// and its limit, 0 for none.
+type ContainerCPU struct {
+	Container string
+	CPU       float64
+	Limit     float64
+}
+
+// CPULoadResp is each app's containers that wrote a row in the range, by app
+// id; an app with none is not in it.
+type CPULoadResp struct {
+	ByApp map[string][]*ContainerCPU
+}

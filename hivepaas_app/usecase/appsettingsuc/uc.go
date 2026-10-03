@@ -4,6 +4,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/permission"
 	"github.com/hivepaas/hivepaas/hivepaas_app/repository"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/appautoscaleservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/appcloneservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/appdeploymentservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/approutingservice"
@@ -14,7 +15,6 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/dockerapiservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/domainservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/envvarservice"
-	"github.com/hivepaas/hivepaas/hivepaas_app/service/functionautoscaleservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/hpappservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/loggingservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/networkservice"
@@ -44,7 +44,7 @@ type UC struct {
 	dockerAPIService     dockerapiservice.Service
 	domainService        domainservice.Service
 	envVarService        envvarservice.Service
-	functionAutoscale    functionautoscaleservice.Service
+	appAutoscale         appautoscaleservice.Service
 	hpAppService         hpappservice.Service
 	loggingService       loggingservice.Service
 	networkService       networkservice.Service
@@ -75,7 +75,7 @@ func New(
 	dockerAPIService dockerapiservice.Service,
 	domainService domainservice.Service,
 	envVarService envvarservice.Service,
-	functionAutoscale functionautoscaleservice.Service,
+	appAutoscale appautoscaleservice.Service,
 	hpAppService hpappservice.Service,
 	loggingService loggingservice.Service,
 	networkService networkservice.Service,
@@ -105,7 +105,7 @@ func New(
 		dockerAPIService:     dockerAPIService,
 		domainService:        domainService,
 		envVarService:        envVarService,
-		functionAutoscale:    functionAutoscale,
+		appAutoscale:         appAutoscale,
 		hpAppService:         hpAppService,
 		loggingService:       loggingService,
 		networkService:       networkService,

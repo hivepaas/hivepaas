@@ -17,6 +17,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/timeutil"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/transaction"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/ulid"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/appautoscaleservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/appsettingsuc/appsettingsdto"
 )
 
@@ -25,20 +26,16 @@ const (
 	// settings show: the latest of the last week.
 	autoscaleEventsSince = 7 * 24 * time.Hour
 	autoscaleEventsLimit = 20
-
-	// autoscalePausedNotReplicated: the function does not run a set number of
-	// instances - a global or a job mode - so there is none to scale.
-	autoscalePausedNotReplicated = "not-replicated"
 )
 
-// GetAppAutoscale answers a function's autoscale: its settings, its replicas
-// now, why it is paused when it cannot act, and its latest scalings.
+// GetAppAutoscale answers an app's autoscale: its settings, its replicas now,
+// why it cannot act, what it can scale on, and its latest scalings.
 func (uc *UC) GetAppAutoscale(
 	ctx context.Context,
 	_ *basedto.Auth,
 	req *appsettingsdto.GetAppAutoscaleReq,
 ) (*appsettingsdto.GetAppAutoscaleResp, error) {
-	app, err := uc.loadFunction(ctx, uc.db, req.ProjectID, req.AppID, false)
+	app, isFunction, err := uc.loadAutoscaledApp(ctx, uc.db, req.ProjectID, req.AppID, false)
 	if err != nil {
 		return nil, err
 	}
@@ -46,32 +43,37 @@ func (uc *UC) GetAppAutoscale(
 	if err != nil {
 		return nil, err
 	}
-	replicas := 0
-	service, err := uc.clusterService.ServiceInspect(ctx, app.ServiceID, false)
-	if err == nil && service != nil {
-		replicas = replicasOf(service)
+	autoscale := entity.NewAppAutoscale()
+	if setting != nil {
+		if autoscale, err = setting.AsAppAutoscale(); err != nil {
+			return nil, hperrors.Wrap(err)
+		}
 	}
-	paused, err := uc.autoscalePaused(ctx, app)
+	service, err := uc.clusterService.ServiceInspect(ctx, app.ServiceID, false)
 	if err != nil {
+		service = nil
+	}
+	st := &appsettingsdto.AppAutoscaleState{IsFunction: isFunction}
+	if service != nil {
+		st.Replicas = replicasOf(service)
+	}
+	if st.Paused, st.Check, err = uc.autoscaleBlocker(ctx, uc.db, app, isFunction, autoscale, service); err != nil {
 		return nil, err
 	}
-	if paused == "" && service != nil && service.Spec.Mode.Replicated == nil {
-		paused = autoscalePausedNotReplicated
-	}
-	events, err := uc.functionAutoscale.Events(ctx, uc.db, app.ID, timeutil.NowUTC().Add(-autoscaleEventsSince),
+	st.Events, err = uc.appAutoscale.Events(ctx, uc.db, app.ID, timeutil.NowUTC().Add(-autoscaleEventsSince),
 		autoscaleEventsLimit)
 	if err != nil {
 		return nil, hperrors.Wrap(err)
 	}
-	resp, err := appsettingsdto.TransformAppAutoscale(setting, replicas, paused, events)
+	resp, err := appsettingsdto.TransformAppAutoscale(setting, st)
 	if err != nil {
 		return nil, hperrors.Wrap(err)
 	}
 	return &appsettingsdto.GetAppAutoscaleResp{Data: resp}, nil
 }
 
-// UpdateAppAutoscale saves a function's autoscale, turns the job that scales
-// functions on or off with it, and brings the function within its bounds.
+// UpdateAppAutoscale saves an app's autoscale, turns the job that scales apps
+// on or off with it, and brings the app within its bounds.
 func (uc *UC) UpdateAppAutoscale(
 	ctx context.Context,
 	auth *basedto.Auth,
@@ -81,7 +83,8 @@ func (uc *UC) UpdateAppAutoscale(
 	var app *entity.App
 	err := transaction.Execute(ctx, uc.db, func(db database.Tx) error {
 		var err error
-		if app, err = uc.loadFunction(ctx, db, req.ProjectID, req.AppID, true); err != nil {
+		var isFunction bool
+		if app, isFunction, err = uc.loadAutoscaledApp(ctx, db, req.ProjectID, req.AppID, true); err != nil {
 			return err
 		}
 		row, err := uc.appAutoscaleSetting(ctx, db, app.ID)
@@ -92,14 +95,8 @@ func (uc *UC) UpdateAppAutoscale(
 			return hperrors.Wrap(hperrors.ErrUpdateVerMismatched)
 		}
 		if next.Enabled {
-			paused, err := uc.autoscalePaused(ctx, app)
-			if err != nil {
+			if err := uc.checkAutoscaleCanTurnOn(ctx, db, app, isFunction, next); err != nil {
 				return err
-			}
-			if paused != "" {
-				return hperrors.Wrap(hperrors.ErrValueInvalid).WithExtraDetail(
-					"Autoscale reads the function's calls from its stored logs, which cannot be read (%s): "+
-						"turn stored logs on in System → Logging.", paused)
 			}
 		}
 
@@ -122,7 +119,7 @@ func (uc *UC) UpdateAppAutoscale(
 		if err = uc.persistData(ctx, db, persisting); err != nil {
 			return hperrors.Wrap(err)
 		}
-		if err = uc.functionAutoscale.EnsureJob(ctx, db); err != nil {
+		if err = uc.appAutoscale.EnsureJob(ctx, db); err != nil {
 			return hperrors.Wrap(err)
 		}
 		return uc.recordAppUpdate(ctx, db, auth, app, base.AuditLogSourceAPIUpdate, "autoscale",
@@ -143,28 +140,117 @@ func (uc *UC) UpdateAppAutoscale(
 	return resp, nil
 }
 
-// loadFunction is the app, which must be a function: autoscale reads the
-// line its runtime writes for every call.
-func (uc *UC) loadFunction(
+// loadAutoscaledApp is the app, with its kind and routing settings, and
+// whether it is a function: a function scales on its calls, any other app on
+// its requests and its CPU.
+func (uc *UC) loadAutoscaledApp(
 	ctx context.Context, db database.IDB, projectID, appID string, forUpdate bool,
-) (*entity.App, error) {
+) (*entity.App, bool, error) {
 	opts := []bunex.SelectQueryOption{
 		bunex.SelectExcludeColumns(entity.AppDefaultExcludeColumns...),
 		bunex.SelectRelation("Project", bunex.SelectExcludeColumns(entity.ProjectDefaultExcludeColumns...)),
 		bunex.SelectRelation("ProjectEnv"),
-		bunex.SelectRelation("Settings", bunex.SelectWhere("setting.type = ?", base.SettingTypeAppKind)),
+		bunex.SelectRelation("Settings", bunex.SelectWhereIn("setting.type IN (?)",
+			base.SettingTypeAppKind, base.SettingTypeAppRouting)),
 	}
 	if forUpdate {
 		opts = append(opts, bunex.SelectFor("UPDATE OF app"))
 	}
 	app, err := uc.appService.LoadApp(ctx, db, projectID, appID, forUpdate, forUpdate, opts...)
 	if err != nil {
-		return nil, hperrors.Wrap(err)
+		return nil, false, hperrors.Wrap(err)
 	}
-	if !entity.IsFunctionKind(app.GetSettingByType(base.SettingTypeAppKind)) {
-		return nil, hperrors.Wrap(hperrors.ErrAppNotFunction).WithParam("Name", app.Name)
+	return app, entity.IsFunctionKind(app.GetSettingByType(base.SettingTypeAppKind)), nil
+}
+
+// autoscaleBlocker is why an app's autoscale cannot act now, "" when it can,
+// and, for an app other than a function, what it can scale on.
+func (uc *UC) autoscaleBlocker(
+	ctx context.Context, db database.IDB, app *entity.App, isFunction bool, autoscale *entity.AppAutoscale,
+	service *swarm.Service,
+) (string, *appautoscaleservice.Check, error) {
+	if isFunction {
+		paused, err := uc.autoscalePaused(ctx, app)
+		if err != nil {
+			return "", nil, err
+		}
+		if paused == "" && service != nil && service.Spec.Mode.Replicated == nil {
+			paused = appautoscaleservice.RefusedNotReplicated
+		}
+		return paused, nil, nil
 	}
-	return app, nil
+	check, err := uc.appAutoscale.Check(ctx, db, app, service)
+	if err != nil {
+		return "", nil, hperrors.Wrap(err)
+	}
+	if check.Refused != "" {
+		return check.Refused, check, nil
+	}
+	return unreadableSignals(autoscale, check), check, nil
+}
+
+// unreadableSignals is why none of the signals an app scales on can be read,
+// the first of their reasons; "" when one can, or it scales on none.
+func unreadableSignals(autoscale *entity.AppAutoscale, check *appautoscaleservice.Check) string {
+	var reasons []string
+	if autoscale.RequestsTarget > 0 {
+		if check.Requests == "" {
+			return ""
+		}
+		reasons = append(reasons, check.Requests)
+	}
+	if autoscale.CPUTarget > 0 {
+		if check.CPU == "" {
+			return ""
+		}
+		reasons = append(reasons, check.CPU)
+	}
+	if len(reasons) == 0 {
+		return ""
+	}
+	return reasons[0]
+}
+
+// checkAutoscaleCanTurnOn refuses to turn autoscale on when it could not act:
+// a function's calls, or every signal an app scales on, unreadable; an app
+// scaling on nothing, or publishing a port on its node.
+func (uc *UC) checkAutoscaleCanTurnOn(
+	ctx context.Context, db database.IDB, app *entity.App, isFunction bool, next *entity.AppAutoscale,
+) error {
+	if isFunction {
+		paused, err := uc.autoscalePaused(ctx, app)
+		if err != nil {
+			return err
+		}
+		if paused != "" {
+			return hperrors.Wrap(hperrors.ErrValueInvalid).WithExtraDetail(
+				"Autoscale reads the function's calls from its stored logs, which cannot be read (%s): "+
+					"turn stored logs on in System → Logging.", paused)
+		}
+		return nil
+	}
+	if next.RequestsTarget == 0 && next.CPUTarget == 0 {
+		return hperrors.Wrap(hperrors.ErrValueInvalid).WithExtraDetail(
+			"Autoscale scales an app on its requests, its CPU or both: set Requests Per Instance or CPU Target.")
+	}
+	service, err := uc.clusterService.ServiceInspect(ctx, app.ServiceID, false)
+	if err != nil {
+		service = nil
+	}
+	check, err := uc.appAutoscale.Check(ctx, db, app, service)
+	if err != nil {
+		return hperrors.Wrap(err)
+	}
+	if check.Refused == appautoscaleservice.RefusedHostPorts {
+		return hperrors.Wrap(hperrors.ErrValueInvalid).WithExtraDetail(
+			"The app publishes a port in host mode, which one replica a node can take: publish it through " +
+				"the routing mesh to autoscale it.")
+	}
+	if reason := unreadableSignals(next, check); reason != "" {
+		return hperrors.Wrap(hperrors.ErrValueInvalid).WithExtraDetail(
+			"Autoscale cannot read what the app scales on (%s): see Availability & Scaling.", reason)
+	}
+	return nil
 }
 
 // appAutoscaleSetting is an app's autoscale setting, nil when it has none.

@@ -11,7 +11,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/timeutil"
-	"github.com/hivepaas/hivepaas/hivepaas_app/service/functionautoscaleservice"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/appautoscaleservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/loggingservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/appuc/appdto"
 	"github.com/hivepaas/hivepaas/services/logging"
@@ -82,7 +82,7 @@ func (uc *UC) GetFunctionMetrics(
 // autoscale on or was scaled within the range: from its scalings, and its
 // count now for the time after the last.
 func (uc *UC) addReplicas(ctx context.Context, app *entity.App, w window, data *appdto.FunctionMetricsDataResp) error {
-	events, err := uc.functionAutoscale.Events(ctx, uc.db, app.ID, w.start, 0)
+	events, err := uc.appAutoscale.Events(ctx, uc.db, app.ID, w.start, 0)
 	if err != nil {
 		return hperrors.Wrap(err)
 	}
@@ -113,8 +113,8 @@ func (uc *UC) addReplicas(ctx context.Context, app *entity.App, w window, data *
 // replicasAt is the replicas at a step's end, from the scalings oldest first:
 // after the last before it, or before the first after it; now's count for the
 // last step past the last scaling, and with no scaling at all.
-func replicasAt(at time.Time, events []*functionautoscaleservice.Event, current int, last bool) int {
-	var before *functionautoscaleservice.Event
+func replicasAt(at time.Time, events []*appautoscaleservice.Event, current int, last bool) int {
+	var before *appautoscaleservice.Event
 	for _, e := range events {
 		if e.Time.After(at) {
 			if before == nil {

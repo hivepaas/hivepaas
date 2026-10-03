@@ -14,6 +14,12 @@ type Backend interface {
 	ResourceStats(ctx context.Context, req *ResourceStatsReq) (*ResourceStatsResp, error)
 	// InvocationLoad says how busy functions were, all in one query.
 	InvocationLoad(ctx context.Context, req *InvocationLoadReq) (*InvocationLoadResp, error)
+	// RequestLoad says how busy apps were by the proxy's access log, all in one
+	// query.
+	RequestLoad(ctx context.Context, req *RequestLoadReq) (*RequestLoadResp, error)
+	// CPULoad reads apps' containers' CPU from the agent's rows, all in one
+	// query.
+	CPULoad(ctx context.Context, req *CPULoadReq) (*CPULoadResp, error)
 	Ping(ctx context.Context) error
 }
 

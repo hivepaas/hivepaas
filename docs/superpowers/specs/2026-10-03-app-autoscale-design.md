@@ -159,6 +159,12 @@ same `app-autoscale` setting, with its fields for apps:
    say it cannot be turned on; the replicas on the Requests and CPU charts
    move to phase 2, with the dashboard.
 2. The dashboard's section for apps, the replicas on the Requests and CPU
-   charts, MCP, docs.
+   charts, MCP, docs. **Done**. As built: the section is
+   the same for every app, its fields by whether it is a function; each
+   signal has its own switch and target, and says under it why it cannot be
+   read; an app's unreadable signals do not stop it being turned on in the
+   form - the API refuses, with why - but a port in host mode does; the
+   texts of the access log's and the agent's reasons are shared with the
+   Metrics tab.
 3. Later: memory, queue length and custom metrics, Min by schedule, scaling to
    zero.

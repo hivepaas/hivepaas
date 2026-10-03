@@ -68,10 +68,12 @@ function ConditionalDomainDetailSections({
             </div>
 
             <div className="flex flex-col gap-6 px-2">
-                <div className={cn(dashedBorderBox, "text-sm")}>
-                    <span className="font-semibold text-orange-500">Note:</span> To use a global SSL certificate here,
-                    make sure it has <span className="font-medium">Available in Projects</span> turned on.
-                </div>
+                <NoteBox>
+                    <div>
+                        <span className="font-semibold text-orange-500">Note:</span> To use a global SSL certificate
+                        here, make sure it has <span className="font-medium">Available in Projects</span> turned on.
+                    </div>
+                </NoteBox>
                 <SslCert
                     domainIndex={activeDomainIndex}
                     readOnly={readOnly}

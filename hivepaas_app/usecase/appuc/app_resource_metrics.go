@@ -3,6 +3,7 @@ package appuc
 import (
 	"context"
 	"errors"
+	"time"
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
@@ -69,7 +70,14 @@ func (uc *UC) GetAppResourceMetrics(
 	if err != nil {
 		return nil, hperrors.Wrap(err)
 	}
-	return &appdto.GetAppResourceMetricsResp{Data: toAppResourceMetricsData(req.Range, window, stats)}, nil
+	data := toAppResourceMetricsData(req.Range, window, stats)
+	err = addReplicas(ctx, uc, app, window, data.Series,
+		func(p *appdto.AppResourcePointResp) time.Time { return p.Time },
+		func(p *appdto.AppResourcePointResp, n *int) { p.Replicas = n })
+	if err != nil {
+		return nil, hperrors.Wrap(err)
+	}
+	return &appdto.GetAppResourceMetricsResp{Data: data}, nil
 }
 
 func toAppResourceMetricsData(

@@ -69,10 +69,12 @@ type AppHTTPCountsResp struct {
 	P99         *float64 `json:"p99"`
 }
 
-// AppHTTPPointResp is the requests of one step, Time its start.
+// AppHTTPPointResp is the requests of one step, Time its start, and the
+// replicas at its end for an app that autoscales.
 type AppHTTPPointResp struct {
 	Time time.Time `json:"time"`
 	AppHTTPCountsResp
+	Replicas *int `json:"replicas,omitempty"`
 }
 
 // AppHTTPPathResp is the requests of one method and path, its numbers and ids

@@ -54129,6 +54129,9 @@
           "p99" : {
             "type" : "number"
           },
+          "replicas" : {
+            "type" : "integer"
+          },
           "requests" : {
             "type" : "integer"
           },
@@ -54139,7 +54142,7 @@
             "type" : "integer"
           }
         },
-        "required" : [ "errors4xx", "errors5xx", "p50", "p95", "p99", "requests", "time", "unreachable" ],
+        "required" : [ "errors4xx", "errors5xx", "p50", "p95", "p99", "replicas", "requests", "time", "unreachable" ],
         "type" : "object"
       },
       "appdto.AppHTTPReplicaResp" : {
@@ -54346,11 +54349,14 @@
           "oomKills" : {
             "type" : "integer"
           },
+          "replicas" : {
+            "type" : "integer"
+          },
           "time" : {
             "type" : "string"
           }
         },
-        "required" : [ "cpu", "cpuLimit", "ioRead", "ioWrite", "memory", "memoryLimit", "netRx", "netTx", "oomKills", "time" ],
+        "required" : [ "cpu", "cpuLimit", "ioRead", "ioWrite", "memory", "memoryLimit", "netRx", "netTx", "oomKills", "replicas", "time" ],
         "type" : "object"
       },
       "appdto.AppResourceTotalsResp" : {

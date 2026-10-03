@@ -72,16 +72,22 @@ func (uc *UC) GetFunctionMetrics(
 		return nil, hperrors.Wrap(err)
 	}
 	data := toFunctionMetricsData(req.Range, window, stats)
-	if err = uc.addReplicas(ctx, app, window, data); err != nil {
+	err = addReplicas(ctx, uc, app, window, data.Series,
+		func(p *appdto.FunctionMetricsPointResp) time.Time { return p.Time },
+		func(p *appdto.FunctionMetricsPointResp, n *int) { p.Replicas = n })
+	if err != nil {
 		return nil, hperrors.Wrap(err)
 	}
 	return &appdto.GetFunctionMetricsResp{Data: data}, nil
 }
 
-// addReplicas puts the function's replicas on its points, when it has
-// autoscale on or was scaled within the range: from its scalings, and its
-// count now for the time after the last.
-func (uc *UC) addReplicas(ctx context.Context, app *entity.App, w window, data *appdto.FunctionMetricsDataResp) error {
+// addReplicas puts an app's replicas at the end of each step on the points of
+// a series, when it has autoscale on or was scaled within the range: from its
+// scalings, and its count now for the time after the last.
+func addReplicas[P any](
+	ctx context.Context, uc *UC, app *entity.App, w window, series []P,
+	timeOf func(P) time.Time, set func(P, *int),
+) error {
 	events, err := uc.appAutoscale.Events(ctx, uc.db, app.ID, w.start, 0)
 	if err != nil {
 		return hperrors.Wrap(err)
@@ -95,7 +101,7 @@ func (uc *UC) addReplicas(ctx context.Context, app *entity.App, w window, data *
 	}
 	inspect, err := uc.dockerManager.ServiceInspect(ctx, app.ServiceID)
 	if err != nil {
-		return nil //nolint:nilerr // no service, no count now: the calls are answered without it
+		return nil //nolint:nilerr // no service, no count now: the numbers are answered without it
 	}
 	current := 0
 	if mode := inspect.Service.Spec.Mode.Replicated; mode != nil && mode.Replicas != nil {
@@ -103,9 +109,9 @@ func (uc *UC) addReplicas(ctx context.Context, app *entity.App, w window, data *
 	}
 	// The latest first, as Events answers them: oldest first for the walk.
 	slices.Reverse(events)
-	for i, point := range data.Series {
-		replicas := replicasAt(point.Time.Add(w.step), events, current, i == len(data.Series)-1)
-		data.Series[i].Replicas = &replicas
+	for i, point := range series {
+		replicas := replicasAt(timeOf(point).Add(w.step), events, current, i == len(series)-1)
+		set(point, &replicas)
 	}
 	return nil
 }

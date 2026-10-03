@@ -2,6 +2,7 @@ package appuc
 
 import (
 	"context"
+	"time"
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
@@ -70,7 +71,14 @@ func (uc *UC) GetAppHTTPMetrics(
 	if err != nil {
 		return nil, hperrors.Wrap(err)
 	}
-	return &appdto.GetAppHTTPMetricsResp{Data: toAppHTTPMetricsData(req.Range, window, stats)}, nil
+	data := toAppHTTPMetricsData(req.Range, window, stats)
+	err = addReplicas(ctx, uc, app, window, data.Series,
+		func(p *appdto.AppHTTPPointResp) time.Time { return p.Time },
+		func(p *appdto.AppHTTPPointResp, n *int) { p.Replicas = n })
+	if err != nil {
+		return nil, hperrors.Wrap(err)
+	}
+	return &appdto.GetAppHTTPMetricsResp{Data: data}, nil
 }
 
 // isExposed is whether the app is reached by a domain through the proxy.

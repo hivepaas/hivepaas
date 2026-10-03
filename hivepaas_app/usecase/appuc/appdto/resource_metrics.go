@@ -68,7 +68,8 @@ type AppResourceTotalsResp struct {
 }
 
 // AppResourcePointResp is one step's usage, Time its start: CPU in cores and
-// memory in bytes, nil without a row; network and disk in bytes a second.
+// memory in bytes, nil without a row; network and disk in bytes a second; the
+// replicas at its end for an app that autoscales.
 type AppResourcePointResp struct {
 	Time        time.Time `json:"time"`
 	CPU         *float64  `json:"cpu"`
@@ -80,6 +81,7 @@ type AppResourcePointResp struct {
 	NetTx       float64   `json:"netTx"`
 	IORead      float64   `json:"ioRead"`
 	IOWrite     float64   `json:"ioWrite"`
+	Replicas    *int      `json:"replicas,omitempty"`
 }
 
 // AppResourceContainerResp is one container over the range, by its short id.

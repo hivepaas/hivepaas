@@ -20,6 +20,9 @@ type AppFeatureSettingsBaseReq struct {
 	SchedJobSettings *AppFeatureSchedJobSettingsReq `json:"schedJobSettings"`
 	TerminalSettings *AppFeatureTerminalSettingsReq `json:"terminalSettings"`
 	PreviewSettings  *AppFeaturePreviewSettingsReq  `json:"previewSettings"`
+	// PerformanceSettings is kept as it is when left out: a client that does
+	// not know of it does not turn it off.
+	PerformanceSettings *AppFeaturePerformanceSettingsReq `json:"performanceSettings"`
 }
 
 func (req *AppFeatureSettingsBaseReq) ToEntity() *entity.AppFeatureSettings {
@@ -27,10 +30,11 @@ func (req *AppFeatureSettingsBaseReq) ToEntity() *entity.AppFeatureSettings {
 		return nil
 	}
 	return &entity.AppFeatureSettings{
-		LoggingSettings:  req.LoggingSettings.ToEntity(),
-		SchedJobSettings: req.SchedJobSettings.ToEntity(),
-		TerminalSettings: req.TerminalSettings.ToEntity(),
-		PreviewSettings:  req.PreviewSettings.ToEntity(),
+		LoggingSettings:     req.LoggingSettings.ToEntity(),
+		SchedJobSettings:    req.SchedJobSettings.ToEntity(),
+		TerminalSettings:    req.TerminalSettings.ToEntity(),
+		PreviewSettings:     req.PreviewSettings.ToEntity(),
+		PerformanceSettings: req.PerformanceSettings.ToEntity(),
 	}
 }
 
@@ -46,6 +50,17 @@ func (req *AppFeatureSettingsBaseReq) validate(field string) (res []vld.Validato
 	res = append(res, req.SchedJobSettings.validate(field+"schedJobSettings")...)
 	res = append(res, req.PreviewSettings.validate(field+"previewSettings")...)
 	return res
+}
+
+type AppFeaturePerformanceSettingsReq struct {
+	Enabled bool `json:"enabled"`
+}
+
+func (req *AppFeaturePerformanceSettingsReq) ToEntity() *entity.AppFeaturePerformanceSettings {
+	if req == nil {
+		return nil
+	}
+	return &entity.AppFeaturePerformanceSettings{Enabled: req.Enabled}
 }
 
 type AppFeatureTerminalSettingsReq struct {

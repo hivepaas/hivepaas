@@ -240,6 +240,96 @@ func (h *Handler) GetAppResourceMetrics(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, resp)
 }
 
+// GetAppRouteMetrics Gets an app's routes
+// @Summary Gets an app's routes
+// @Description Reads what an app served over a range ending now, from the rows the agent on each node writes
+// @Description from OBI (eBPF): every request its containers answered, from the proxy or from inside the
+// @Description project, by kind (http or rpc), method and route - a template such as /users/{id} when the
+// @Description app's framework names one. How many, how many failed (a 5xx, or an error), and p50, p95 and p99
+// @Description in milliseconds, close rather than exact: in totals, by route, and as series, one point per
+// @Description step, oldest first. `nodes` and `nodesCovered` count the nodes the app runs on now and those
+// @Description that run OBI. `available` is false, with a `reason`, when they cannot be read: the collection
+// @Description is off (performance-disabled) or off for the app (app-disabled), no node the app runs on runs
+// @Description OBI (node-disabled) or can (node-unsupported, with `preflightReasons`), the agent does not mark
+// @Description its lines yet (agent-unlabelled), or the logs cannot be read.
+// @Tags    Apps
+// @Produce json
+// @Id      getAppRouteMetrics
+// @Param   projectID path string true "project ID"
+// @Param   projectEnv path string true "project env"
+// @Param   appID path string true "app ID"
+// @Param   range query string false "1h, 6h, 24h or 7d; default 24h"
+// @Success 200 {object} appdto.GetAppRouteMetricsResp
+// @Failure 400 {object} hperrors.ErrorInfo
+// @Failure 500 {object} hperrors.ErrorInfo
+// @Router  /projects/{projectID}/{projectEnv}/apps/{appID}/route-metrics [get]
+func (h *Handler) GetAppRouteMetrics(ctx *gin.Context) {
+	auth, projectID, projectEnvID, appID, err := h.GetAuth(ctx, base.ActionTypeRead)
+	if err != nil {
+		h.RenderError(ctx, err)
+		return
+	}
+
+	req := appdto.NewGetAppPerformanceMetricsReq()
+	req.ProjectID = projectID
+	req.ProjectEnvID = projectEnvID
+	req.AppID = appID
+	if err := h.ParseAndValidateRequest(ctx, req, nil); err != nil {
+		h.RenderError(ctx, err)
+		return
+	}
+
+	resp, err := h.appUC.GetAppRouteMetrics(h.RequestCtx(ctx), auth, req)
+	if err != nil {
+		h.RenderError(ctx, err)
+		return
+	}
+	ctx.JSON(http.StatusOK, resp)
+}
+
+// GetAppDependencyMetrics Gets what an app calls
+// @Summary Gets what an app calls
+// @Description Reads what an app called over a range ending now, from the rows the agent on each node writes
+// @Description from OBI (eBPF): by kind (http, db or rpc), with series, one point per step, oldest first; and
+// @Description by peer - a host and port as the app named it, or for a database its system and database, as
+// @Description postgresql/shop - with the env's app behind it when one is known, and its methods or
+// @Description operations. How many, how many failed, and p50, p95 and p99 in milliseconds, close rather than
+// @Description exact. `available` is false, with a `reason`, as for the app's routes.
+// @Tags    Apps
+// @Produce json
+// @Id      getAppDependencyMetrics
+// @Param   projectID path string true "project ID"
+// @Param   projectEnv path string true "project env"
+// @Param   appID path string true "app ID"
+// @Param   range query string false "1h, 6h, 24h or 7d; default 24h"
+// @Success 200 {object} appdto.GetAppDependencyMetricsResp
+// @Failure 400 {object} hperrors.ErrorInfo
+// @Failure 500 {object} hperrors.ErrorInfo
+// @Router  /projects/{projectID}/{projectEnv}/apps/{appID}/dependency-metrics [get]
+func (h *Handler) GetAppDependencyMetrics(ctx *gin.Context) {
+	auth, projectID, projectEnvID, appID, err := h.GetAuth(ctx, base.ActionTypeRead)
+	if err != nil {
+		h.RenderError(ctx, err)
+		return
+	}
+
+	req := appdto.NewGetAppPerformanceMetricsReq()
+	req.ProjectID = projectID
+	req.ProjectEnvID = projectEnvID
+	req.AppID = appID
+	if err := h.ParseAndValidateRequest(ctx, req, nil); err != nil {
+		h.RenderError(ctx, err)
+		return
+	}
+
+	resp, err := h.appUC.GetAppDependencyMetrics(h.RequestCtx(ctx), auth, req)
+	if err != nil {
+		h.RenderError(ctx, err)
+		return
+	}
+	ctx.JSON(http.StatusOK, resp)
+}
+
 // GetFunctionMetrics Gets a function's metrics
 // @Summary Gets a function's metrics
 // @Description Counts a function's calls over a range ending now, from the invocation line its runtime writes

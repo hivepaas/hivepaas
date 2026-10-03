@@ -13,4 +13,7 @@ var (
 	// down without saying so: switching logging off, or handing the backend or
 	// the collector to a system HivePaaS does not run.
 	ErrLoggingAppStillRunning = NewErr(ErrPreconditionFailed, "ERR_LOGGING_APP_STILL_RUNNING")
+	// ErrLoggingPerformanceNodeUnknown is a node to run OBI on that is no node
+	// of the swarm: one removed since the page was loaded.
+	ErrLoggingPerformanceNodeUnknown = NewErr(ErrValueInvalid, "ERR_LOGGING_PERFORMANCE_NODE_UNKNOWN")
 )

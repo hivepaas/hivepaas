@@ -96,6 +96,8 @@ func (s *HTTPServer) registerSystemRoutes(apiGroup *gin.RouterGroup) {
 		loggingGroup := systemSettingGroup.Group("/logging")
 		loggingGroup.GET("", systemSettingsHandler.GetLoggingSettings)
 		loggingGroup.PUT("", systemSettingsHandler.UpdateLoggingSettings)
+		loggingGroup.GET("/performance", systemSettingsHandler.GetLoggingPerformance)
+		loggingGroup.PUT("/performance", systemSettingsHandler.UpdateLoggingPerformance)
 	}
 
 	// Registry settings

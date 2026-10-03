@@ -227,6 +227,38 @@ func getEndpoints() []getEndpoint { //nolint:funlen // a table
 			answer: func() any { return &appdto.GetAppResourceMetricsResp{} },
 		},
 		{
+			name: "get_app_route_metrics", title: "Get an app's routes",
+			description: "GET /projects/{project}/{env}/apps/{app}/route-metrics. What an app served over a " +
+				"range ending now, read from the rows the agent on each node writes from OBI (eBPF): every " +
+				"request its containers answered, from the proxy or from inside the project, by kind (http, " +
+				"rpc), method and route (a template such as /users/{id} when the app's framework names one) - " +
+				"how many, how many failed, p50, p95 and p99 in milliseconds, close, not exact - in totals, by " +
+				"route, and as series, a point per step, oldest first. nodes and nodesCovered count the nodes " +
+				"the app runs on now and those running OBI. available is false, with a reason, when they cannot " +
+				"be read: the collection off (performance-disabled: an admin turns it on in System > Logging), " +
+				"off for the app (app-disabled: its Feature Settings), no node of the app's running OBI " +
+				"(node-disabled) or able to (node-unsupported, with preflightReasons), the agent not marking " +
+				"its lines yet (agent-unlabelled), or the logging stack not running.",
+			paths:  map[under]string{underApp: "/route-metrics"},
+			query:  &appdto.GetAppPerformanceMetricsReq{},
+			params: metricsRangeParams(),
+			answer: func() any { return &appdto.GetAppRouteMetricsResp{} },
+		},
+		{
+			name: "get_app_dependency_metrics", title: "Get what an app calls",
+			description: "GET /projects/{project}/{env}/apps/{app}/dependency-metrics. What an app called over a " +
+				"range ending now, read from the rows the agent on each node writes from OBI (eBPF): by kind " +
+				"(http, db, rpc) with series, a point per step, oldest first; and by peer - a host and port as " +
+				"the app named it, or for a database its system and database, as postgresql/shop - with the " +
+				"env's app behind it when one is known, and its methods or operations: how many, how many " +
+				"failed, p50, p95 and p99 in milliseconds, close, not exact. Start here to see which database " +
+				"or app slows an app down. available is false, with a reason, as for get_app_route_metrics.",
+			paths:  map[under]string{underApp: "/dependency-metrics"},
+			query:  &appdto.GetAppPerformanceMetricsReq{},
+			params: metricsRangeParams(),
+			answer: func() any { return &appdto.GetAppDependencyMetricsResp{} },
+		},
+		{
 			name: "list_attention", title: "What needs attention",
 			description: "GET /home/attention. What the dashboard's Home page says needs attention and the API " +
 				"key's user may see: apps whose containers do not all run or keep restarting, nodes that are " +

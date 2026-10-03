@@ -29,6 +29,12 @@ func (uc *UC) UpdateAppFeatureSettings(
 			pData *settings.PersistingSettingData,
 		) error {
 			featureSettings := req.ToEntity()
+			if featureSettings != nil && featureSettings.PerformanceSettings == nil && pData.Setting != nil {
+				// Left out: kept as it is.
+				if current, err := pData.Setting.AsAppFeatureSettings(); err == nil && current != nil {
+					featureSettings.PerformanceSettings = current.PerformanceSettings
+				}
+			}
 			if err := uc.validateAppsToClone(ctx, db, req.Scope, featureSettings); err != nil {
 				return hperrors.Wrap(err)
 			}

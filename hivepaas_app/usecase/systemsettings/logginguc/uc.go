@@ -6,12 +6,14 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/settingservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/tasks/queue"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings"
+	"github.com/hivepaas/hivepaas/services/docker"
 )
 
 type UC struct {
 	*settings.BaseUC
 
-	settingRepo repository.SettingRepo
+	settingRepo   repository.SettingRepo
+	dockerManager docker.Manager
 
 	loggingService loggingservice.Service
 	settingService settingservice.Service
@@ -22,6 +24,7 @@ func New(
 	baseUC *settings.BaseUC,
 
 	settingRepo repository.SettingRepo,
+	dockerManager docker.Manager,
 
 	loggingService loggingservice.Service,
 	settingService settingservice.Service,
@@ -30,7 +33,8 @@ func New(
 	return &UC{
 		BaseUC: baseUC,
 
-		settingRepo: settingRepo,
+		settingRepo:   settingRepo,
+		dockerManager: dockerManager,
 
 		loggingService: loggingService,
 		settingService: settingService,

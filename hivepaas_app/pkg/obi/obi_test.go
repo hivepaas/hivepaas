@@ -6,6 +6,7 @@ import (
 	"math"
 	"os"
 	"path/filepath"
+	"slices"
 	"strconv"
 	"strings"
 	"testing"
@@ -238,7 +239,14 @@ func TestDeltas(t *testing.T) {
 		assert.Equal(t, int64(40), server.Count, "30 fast, 10 slow")
 		assert.Zero(t, server.Errors)
 		assert.InDelta(t, 30*1+10*7, server.SumMs, 1e-6)
-		assert.Equal(t, map[float64]int64{5: 30, 10: 40, math.Inf(1): 40}, server.Buckets)
+		// OBI's 5 ms and 10 ms buckets, onto HivePaaS's bounds: every bound
+		// from 10 ms on holds all 40.
+		want := map[float64]int64{math.Inf(1): 40}
+		for _, b := range Bounds {
+			want[b] = 40
+		}
+		want[5] = 30
+		assert.Equal(t, want, server.Buckets)
 	}
 	client := byPeer["calls/a2:18555"]
 	if assert.NotNil(t, client) {
@@ -291,4 +299,45 @@ func TestRowJSON(t *testing.T) {
 		"route": "/u/*", "status": "2xx", "count": 3.0, "errors": 0.0, "sumMs": 7.123, "le5": 1.0, "le7.5": 2.0,
 		"leInf": 3.0}, got)
 	assert.True(t, strings.HasSuffix(buf.String(), "}\n"))
+}
+
+// OBI's buckets map onto HivePaaS's bounds: at each, the count at the largest
+// of OBI's bounds not above it - none below the first, every one at +Inf.
+func TestNormalizedBuckets(t *testing.T) {
+	got := normalized(map[string]float64{"0.002": 1, "0.007": 4, "0.3": 9, "+Inf": 10}, 10)
+	assert.Equal(t, int64(1), got[5], "2 ms is under 5")
+	assert.Equal(t, int64(4), got[10], "7 ms is under 10")
+	assert.Equal(t, int64(4), got[250])
+	assert.Equal(t, int64(9), got[500], "300 ms is under 500")
+	assert.Equal(t, int64(9), got[10000])
+	assert.Equal(t, int64(10), got[math.Inf(1)])
+	assert.Len(t, got, len(Bounds)+1)
+}
+
+// Quantiles come from the summed buckets: within the one each falls in,
+// linearly; past the last bound, that bound.
+func TestQuantile(t *testing.T) {
+	buckets := func(at map[float64]int64) map[string]int64 {
+		out := map[string]int64{}
+		var n int64
+		for _, b := range append(slices.Clone(Bounds), math.Inf(1)) {
+			n = max(n, at[b])
+			out[BucketField(b)] = n
+		}
+		return out
+	}
+	b := buckets(map[float64]int64{10: 50, 25: 90, 50: 100})
+	assert.InDelta(t, 10, *Quantile(b, 0.5), 1e-9)
+	assert.InDelta(t, 37.5, *Quantile(b, 0.95), 1e-9)
+	assert.InDelta(t, 47.5, *Quantile(b, 0.99), 1e-9)
+	assert.InDelta(t, 2.5, *Quantile(buckets(map[float64]int64{5: 10}), 0.5), 1e-9)
+	assert.InDelta(t, 10000, *Quantile(map[string]int64{"leInf": 10}, 0.5), 1e-9, "past the last bound")
+	assert.Nil(t, Quantile(map[string]int64{}, 0.5))
+	assert.Nil(t, Quantile(b, 1.5))
+
+	assert.Equal(t, []string{"le5", "le10", "le25", "le50", "le100", "le250", "le500", "le1000", "le2500", "le5000",
+		"le10000", "leInf"}, BucketFields())
+	sum := map[string]int64{"le5": 1}
+	AddBuckets(sum, map[string]int64{"le5": 2, "leInf": 3})
+	assert.Equal(t, map[string]int64{"le5": 3, "leInf": 3}, sum)
 }

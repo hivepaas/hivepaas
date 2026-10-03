@@ -71,4 +71,21 @@ type Service interface {
 	// rows, by app id, in one query. It fails when the logs cannot be read.
 	CPULoad(ctx context.Context, db database.IDB, appIDs []string,
 		start, end time.Time) (map[string][]*logging.ContainerCPU, error)
+
+	// RouteMetrics sums an app's routes from the rows the agent writes from
+	// OBI on each node: by step, a step without a row left out; and by kind,
+	// method and route, the busiest first. The agent's identity and the app's
+	// id are put into the query here.
+	RouteMetrics(ctx context.Context, db database.IDB, app *entity.App,
+		q *FunctionMetricsQuery) (*logging.OBIStatsResp, error)
+
+	// DependencyMetrics sums an app's calls as RouteMetrics its routes: each
+	// step split by the calls' kind; and by kind, peer, method and operation.
+	DependencyMetrics(ctx context.Context, db database.IDB, app *entity.App,
+		q *FunctionMetricsQuery) (*logging.OBIStatsResp, error)
+
+	// PerformanceStatus reads each node's latest status about OBI, by node id,
+	// from the rows its agent writes every minute while the logs are stored: a
+	// node with none in the last few minutes has no agent writing them.
+	PerformanceStatus(ctx context.Context, db database.IDB) (map[string]*PerformanceNodeStatus, error)
 }

@@ -17847,6 +17847,78 @@
         "tags" : [ "App settings" ]
       }
     },
+    "/projects/{projectID}/{projectEnv}/apps/{appID}/dependency-metrics" : {
+      "get" : {
+        "description" : "Reads what an app called over a range ending now, from the rows the agent on each node writes\nfrom OBI (eBPF): by kind (http, db or rpc), with series, one point per step, oldest first; and\nby peer - a host and port as the app named it, or for a database its system and database, as\npostgresql/shop - with the env's app behind it when one is known, and its methods or\noperations. How many, how many failed, and p50, p95 and p99 in milliseconds, close rather than\nexact. `available` is false, with a `reason`, as for the app's routes.",
+        "operationId" : "getAppDependencyMetrics",
+        "parameters" : [ {
+          "description" : "project ID",
+          "in" : "path",
+          "name" : "projectID",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "project env",
+          "in" : "path",
+          "name" : "projectEnv",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "app ID",
+          "in" : "path",
+          "name" : "appID",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "1h, 6h, 24h or 7d; default 24h",
+          "in" : "query",
+          "name" : "range",
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/appdto.GetAppDependencyMetricsResp"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "400" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Bad Request"
+          },
+          "500" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Internal Server Error"
+          }
+        },
+        "summary" : "Gets what an app calls",
+        "tags" : [ "Apps" ]
+      }
+    },
     "/projects/{projectID}/{projectEnv}/apps/{appID}/deploy" : {
       "post" : {
         "description" : "Deploys an app",
@@ -21261,6 +21333,78 @@
         "summary" : "Restarts an app",
         "tags" : [ "App actions" ],
         "x-codegen-request-body-name" : "body"
+      }
+    },
+    "/projects/{projectID}/{projectEnv}/apps/{appID}/route-metrics" : {
+      "get" : {
+        "description" : "Reads what an app served over a range ending now, from the rows the agent on each node writes\nfrom OBI (eBPF): every request its containers answered, from the proxy or from inside the\nproject, by kind (http or rpc), method and route - a template such as /users/{id} when the\napp's framework names one. How many, how many failed (a 5xx, or an error), and p50, p95 and p99\nin milliseconds, close rather than exact: in totals, by route, and as series, one point per\nstep, oldest first. `nodes` and `nodesCovered` count the nodes the app runs on now and those\nthat run OBI. `available` is false, with a `reason`, when they cannot be read: the collection\nis off (performance-disabled) or off for the app (app-disabled), no node the app runs on runs\nOBI (node-disabled) or can (node-unsupported, with `preflightReasons`), the agent does not mark\nits lines yet (agent-unlabelled), or the logs cannot be read.",
+        "operationId" : "getAppRouteMetrics",
+        "parameters" : [ {
+          "description" : "project ID",
+          "in" : "path",
+          "name" : "projectID",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "project env",
+          "in" : "path",
+          "name" : "projectEnv",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "app ID",
+          "in" : "path",
+          "name" : "appID",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "1h, 6h, 24h or 7d; default 24h",
+          "in" : "query",
+          "name" : "range",
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/appdto.GetAppRouteMetricsResp"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "400" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Bad Request"
+          },
+          "500" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Internal Server Error"
+          }
+        },
+        "summary" : "Gets an app's routes",
+        "tags" : [ "Apps" ]
       }
     },
     "/projects/{projectID}/{projectEnv}/apps/{appID}/routing-settings" : {
@@ -45274,6 +45418,96 @@
         "x-codegen-request-body-name" : "body"
       }
     },
+    "/system/settings/logging/performance" : {
+      "get" : {
+        "description" : "Lists the swarm's nodes for the collection of apps' routes and calls by OBI (eBPF): whether\neach runs it, at which capacity - how many requests and connections OBI tracks at once, and so\nits memory: small, medium or large, auto for the one HivePaaS recommends for the node's memory\n- and what its agent last said of it: whether OBI runs, for how many apps, and whether the node\ncan run it, with why not. `statusReason` says why the statuses were not read.",
+        "operationId" : "getSystemLoggingPerformance",
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/systemsettings_loggingdto.GetLoggingPerformanceResp"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "400" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Bad Request"
+          },
+          "500" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Internal Server Error"
+          }
+        },
+        "summary" : "Gets which nodes collect apps' routes and calls",
+        "tags" : [ "System settings" ]
+      },
+      "put" : {
+        "description" : "Saves whether apps' routes and calls are collected by OBI (eBPF), and on which nodes, each with\nits capacity. It is saved with the logging settings, whose `updateVer` it takes and changes,\nand applies nothing: each node's agent reads it within 30 seconds. An app's routes and calls\nare collected while both it and its node are on.",
+        "operationId" : "updateSystemLoggingPerformance",
+        "requestBody" : {
+          "content" : {
+            "*/*" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/systemsettings_loggingdto.UpdateLoggingPerformanceReq"
+              }
+            }
+          },
+          "description" : "request data",
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/systemsettings_loggingdto.UpdateLoggingPerformanceResp"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "400" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Bad Request"
+          },
+          "500" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Internal Server Error"
+          }
+        },
+        "summary" : "Updates which nodes collect apps' routes and calls",
+        "tags" : [ "System settings" ],
+        "x-codegen-request-body-name" : "body"
+      }
+    },
     "/system/settings/mcp" : {
       "get" : {
         "description" : "Gets whether HivePaaS serves the Model Context Protocol at `<API base path>/mcp`.",
@@ -54001,6 +54235,165 @@
         "required" : [ "env", "id", "key", "name", "photo", "status" ],
         "type" : "object"
       },
+      "appdto.AppDependencyAppResp" : {
+        "properties" : {
+          "id" : {
+            "type" : "string"
+          },
+          "key" : {
+            "type" : "string"
+          },
+          "name" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "id", "key", "name" ],
+        "type" : "object"
+      },
+      "appdto.AppDependencyKindResp" : {
+        "properties" : {
+          "kind" : {
+            "type" : "string"
+          },
+          "series" : {
+            "items" : {
+              "$ref" : "#/components/schemas/appdto.AppPerformancePointResp"
+            },
+            "type" : "array"
+          },
+          "totals" : {
+            "$ref" : "#/components/schemas/appdto.AppPerformanceCountsResp"
+          }
+        },
+        "required" : [ "kind", "series", "totals" ],
+        "type" : "object"
+      },
+      "appdto.AppDependencyMetricsDataResp" : {
+        "properties" : {
+          "available" : {
+            "type" : "boolean"
+          },
+          "clamped" : {
+            "description" : "Clamped says the range reaches past what the logs keep: it starts where\nthey do.",
+            "type" : "boolean"
+          },
+          "end" : {
+            "type" : "string"
+          },
+          "kinds" : {
+            "description" : "Kinds are the calls by kind - http, db or rpc - the busiest first.",
+            "items" : {
+              "$ref" : "#/components/schemas/appdto.AppDependencyKindResp"
+            },
+            "type" : "array"
+          },
+          "nodes" : {
+            "description" : "Nodes are the nodes the app runs on now, NodesCovered those of them\nthat run OBI: what is served or called on the others is not counted.",
+            "type" : "integer"
+          },
+          "nodesCovered" : {
+            "type" : "integer"
+          },
+          "peers" : {
+            "description" : "Peers are the busiest first.",
+            "items" : {
+              "$ref" : "#/components/schemas/appdto.AppDependencyPeerResp"
+            },
+            "type" : "array"
+          },
+          "preflightReasons" : {
+            "description" : "PreflightReasons say why the nodes the app runs on cannot run OBI, when\nthat is the reason: kernel-too-old, no-btf, container-virt, no-tracefs,\nlockdown, low-memory.",
+            "items" : {
+              "type" : "string"
+            },
+            "type" : "array"
+          },
+          "range" : {
+            "type" : "string"
+          },
+          "reason" : {
+            "type" : "string"
+          },
+          "start" : {
+            "description" : "Start and End bound the range: whole steps, End past now.",
+            "type" : "string"
+          },
+          "stepSeconds" : {
+            "type" : "integer"
+          }
+        },
+        "required" : [ "available", "clamped", "end", "kinds", "nodes", "nodesCovered", "peers", "preflightReasons", "range", "reason", "start", "stepSeconds" ],
+        "type" : "object"
+      },
+      "appdto.AppDependencyOperationResp" : {
+        "properties" : {
+          "errors" : {
+            "type" : "integer"
+          },
+          "method" : {
+            "type" : "string"
+          },
+          "operation" : {
+            "type" : "string"
+          },
+          "p50" : {
+            "type" : "number"
+          },
+          "p95" : {
+            "type" : "number"
+          },
+          "p99" : {
+            "type" : "number"
+          },
+          "requests" : {
+            "type" : "integer"
+          }
+        },
+        "required" : [ "errors", "method", "operation", "p50", "p95", "p99", "requests" ],
+        "type" : "object"
+      },
+      "appdto.AppDependencyPeerResp" : {
+        "properties" : {
+          "app" : {
+            "allOf" : [ {
+              "$ref" : "#/components/schemas/appdto.AppDependencyAppResp"
+            } ],
+            "description" : "App is the env's app behind the peer, when one is: by the name the app\ncalled, or a task's or service's address today; for a database, the\nonly one of its engine and database.",
+            "type" : "object"
+          },
+          "errors" : {
+            "type" : "integer"
+          },
+          "kind" : {
+            "type" : "string"
+          },
+          "operations" : {
+            "description" : "Operations are the calls by method - for HTTP and RPC - or operation -\nfor a database, as SELECT - the busiest first.",
+            "items" : {
+              "$ref" : "#/components/schemas/appdto.AppDependencyOperationResp"
+            },
+            "type" : "array"
+          },
+          "p50" : {
+            "type" : "number"
+          },
+          "p95" : {
+            "type" : "number"
+          },
+          "p99" : {
+            "type" : "number"
+          },
+          "peer" : {
+            "description" : "Peer is what the app called: a host and port for HTTP and RPC, as the\napp named it; for a database, its system and database, as\npostgresql/shop.",
+            "type" : "string"
+          },
+          "requests" : {
+            "type" : "integer"
+          }
+        },
+        "required" : [ "app", "errors", "kind", "operations", "p50", "p95", "p99", "peer", "requests" ],
+        "type" : "object"
+      },
       "appdto.AppHTTPCountsResp" : {
         "properties" : {
           "errors4xx" : {
@@ -54245,6 +54638,54 @@
         "required" : [ "enabled", "history", "tasks" ],
         "type" : "object"
       },
+      "appdto.AppPerformanceCountsResp" : {
+        "properties" : {
+          "errors" : {
+            "type" : "integer"
+          },
+          "p50" : {
+            "type" : "number"
+          },
+          "p95" : {
+            "type" : "number"
+          },
+          "p99" : {
+            "type" : "number"
+          },
+          "requests" : {
+            "type" : "integer"
+          }
+        },
+        "required" : [ "errors", "p50", "p95", "p99", "requests" ],
+        "type" : "object"
+      },
+      "appdto.AppPerformancePointResp" : {
+        "properties" : {
+          "errors" : {
+            "type" : "integer"
+          },
+          "p50" : {
+            "type" : "number"
+          },
+          "p95" : {
+            "type" : "number"
+          },
+          "p99" : {
+            "type" : "number"
+          },
+          "replicas" : {
+            "type" : "integer"
+          },
+          "requests" : {
+            "type" : "integer"
+          },
+          "time" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "errors", "p50", "p95", "p99", "replicas", "requests", "time" ],
+        "type" : "object"
+      },
       "appdto.AppResourceContainerResp" : {
         "properties" : {
           "container" : {
@@ -54468,6 +54909,96 @@
           }
         },
         "required" : [ "accessLinks", "category", "childApps", "createdAt", "engine", "env", "id", "key", "logicalChildApps", "name", "note", "parentApp", "photo", "project", "stats", "status", "tags", "updateVer", "updatedAt" ],
+        "type" : "object"
+      },
+      "appdto.AppRouteMetricsDataResp" : {
+        "properties" : {
+          "available" : {
+            "type" : "boolean"
+          },
+          "clamped" : {
+            "description" : "Clamped says the range reaches past what the logs keep: it starts where\nthey do.",
+            "type" : "boolean"
+          },
+          "end" : {
+            "type" : "string"
+          },
+          "nodes" : {
+            "description" : "Nodes are the nodes the app runs on now, NodesCovered those of them\nthat run OBI: what is served or called on the others is not counted.",
+            "type" : "integer"
+          },
+          "nodesCovered" : {
+            "type" : "integer"
+          },
+          "preflightReasons" : {
+            "description" : "PreflightReasons say why the nodes the app runs on cannot run OBI, when\nthat is the reason: kernel-too-old, no-btf, container-virt, no-tracefs,\nlockdown, low-memory.",
+            "items" : {
+              "type" : "string"
+            },
+            "type" : "array"
+          },
+          "range" : {
+            "type" : "string"
+          },
+          "reason" : {
+            "type" : "string"
+          },
+          "routes" : {
+            "description" : "Routes are the busiest first.",
+            "items" : {
+              "$ref" : "#/components/schemas/appdto.AppRouteResp"
+            },
+            "type" : "array"
+          },
+          "series" : {
+            "description" : "Series has one point per step, oldest first.",
+            "items" : {
+              "$ref" : "#/components/schemas/appdto.AppPerformancePointResp"
+            },
+            "type" : "array"
+          },
+          "start" : {
+            "description" : "Start and End bound the range: whole steps, End past now.",
+            "type" : "string"
+          },
+          "stepSeconds" : {
+            "type" : "integer"
+          },
+          "totals" : {
+            "$ref" : "#/components/schemas/appdto.AppPerformanceCountsResp"
+          }
+        },
+        "required" : [ "available", "clamped", "end", "nodes", "nodesCovered", "preflightReasons", "range", "reason", "routes", "series", "start", "stepSeconds", "totals" ],
+        "type" : "object"
+      },
+      "appdto.AppRouteResp" : {
+        "properties" : {
+          "errors" : {
+            "type" : "integer"
+          },
+          "kind" : {
+            "type" : "string"
+          },
+          "method" : {
+            "type" : "string"
+          },
+          "p50" : {
+            "type" : "number"
+          },
+          "p95" : {
+            "type" : "number"
+          },
+          "p99" : {
+            "type" : "number"
+          },
+          "requests" : {
+            "type" : "integer"
+          },
+          "route" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "errors", "kind", "method", "p50", "p95", "p99", "requests", "route" ],
         "type" : "object"
       },
       "appdto.AppStatsResp" : {
@@ -54758,6 +55289,18 @@
         "required" : [ "calls", "errors4xx", "errors5xx", "failed", "p50", "p95", "p99", "replicas", "time" ],
         "type" : "object"
       },
+      "appdto.GetAppDependencyMetricsResp" : {
+        "properties" : {
+          "data" : {
+            "$ref" : "#/components/schemas/appdto.AppDependencyMetricsDataResp"
+          },
+          "meta" : {
+            "$ref" : "#/components/schemas/basedto.Meta"
+          }
+        },
+        "required" : [ "data", "meta" ],
+        "type" : "object"
+      },
       "appdto.GetAppHTTPMetricsResp" : {
         "properties" : {
           "data" : {
@@ -54822,6 +55365,18 @@
         "properties" : {
           "data" : {
             "$ref" : "#/components/schemas/appdto.AppResp"
+          },
+          "meta" : {
+            "$ref" : "#/components/schemas/basedto.Meta"
+          }
+        },
+        "required" : [ "data", "meta" ],
+        "type" : "object"
+      },
+      "appdto.GetAppRouteMetricsResp" : {
+        "properties" : {
+          "data" : {
+            "$ref" : "#/components/schemas/appdto.AppRouteMetricsDataResp"
           },
           "meta" : {
             "$ref" : "#/components/schemas/basedto.Meta"
@@ -58561,6 +59116,24 @@
         "required" : [ "enabled" ],
         "type" : "object"
       },
+      "settings_appfeaturesettingsdto.AppFeaturePerformanceSettingsReq" : {
+        "properties" : {
+          "enabled" : {
+            "type" : "boolean"
+          }
+        },
+        "required" : [ "enabled" ],
+        "type" : "object"
+      },
+      "settings_appfeaturesettingsdto.AppFeaturePerformanceSettingsResp" : {
+        "properties" : {
+          "enabled" : {
+            "type" : "boolean"
+          }
+        },
+        "required" : [ "enabled" ],
+        "type" : "object"
+      },
       "settings_appfeaturesettingsdto.AppFeaturePreviewSettingsReq" : {
         "properties" : {
           "allowPRComments" : {
@@ -58670,6 +59243,13 @@
           "name" : {
             "type" : "string"
           },
+          "performanceSettings" : {
+            "allOf" : [ {
+              "$ref" : "#/components/schemas/settings_appfeaturesettingsdto.AppFeaturePerformanceSettingsResp"
+            } ],
+            "description" : "PerformanceSettings asks for the app's routes and calls, measured by OBI\non the nodes that run it.",
+            "type" : "object"
+          },
           "previewSettings" : {
             "$ref" : "#/components/schemas/settings_appfeaturesettingsdto.AppFeaturePreviewSettingsResp"
           },
@@ -58695,7 +59275,7 @@
             "type" : "string"
           }
         },
-        "required" : [ "createdAt", "default", "expireAt", "id", "inheritable", "inherited", "kind", "loggingSettings", "name", "previewSettings", "schedJobSettings", "size", "status", "terminalSettings", "type", "updateVer", "updatedAt" ],
+        "required" : [ "createdAt", "default", "expireAt", "id", "inheritable", "inherited", "kind", "loggingSettings", "name", "performanceSettings", "previewSettings", "schedJobSettings", "size", "status", "terminalSettings", "type", "updateVer", "updatedAt" ],
         "type" : "object"
       },
       "settings_appfeaturesettingsdto.AppFeatureTerminalSettingsReq" : {
@@ -58739,6 +59319,13 @@
           "loggingSettings" : {
             "$ref" : "#/components/schemas/settings_appfeaturesettingsdto.AppFeatureLoggingSettingsReq"
           },
+          "performanceSettings" : {
+            "allOf" : [ {
+              "$ref" : "#/components/schemas/settings_appfeaturesettingsdto.AppFeaturePerformanceSettingsReq"
+            } ],
+            "description" : "PerformanceSettings is kept as it is when left out: a client that does\nnot know of it does not turn it off.",
+            "type" : "object"
+          },
           "previewSettings" : {
             "$ref" : "#/components/schemas/settings_appfeaturesettingsdto.AppFeaturePreviewSettingsReq"
           },
@@ -58752,7 +59339,7 @@
             "type" : "integer"
           }
         },
-        "required" : [ "default", "inheritable", "loggingSettings", "previewSettings", "schedJobSettings", "terminalSettings", "updateVer" ],
+        "required" : [ "default", "inheritable", "loggingSettings", "performanceSettings", "previewSettings", "schedJobSettings", "terminalSettings", "updateVer" ],
         "type" : "object"
       },
       "settings_appfeaturesettingsdto.UpdateAppFeatureSettingsResp" : {
@@ -68690,6 +69277,18 @@
         "required" : [ "endpoint", "format", "name" ],
         "type" : "object"
       },
+      "systemsettings_loggingdto.GetLoggingPerformanceResp" : {
+        "properties" : {
+          "data" : {
+            "$ref" : "#/components/schemas/systemsettings_loggingdto.LoggingPerformanceResp"
+          },
+          "meta" : {
+            "$ref" : "#/components/schemas/basedto.Meta"
+          }
+        },
+        "required" : [ "data", "meta" ],
+        "type" : "object"
+      },
       "systemsettings_loggingdto.GetLoggingSettingsResp" : {
         "properties" : {
           "data" : {
@@ -68722,6 +69321,43 @@
           }
         },
         "required" : [ "appId", "desiredTasks", "projectEnv", "projectId", "runningTasks" ],
+        "type" : "object"
+      },
+      "systemsettings_loggingdto.LoggingPerformanceResp" : {
+        "properties" : {
+          "capacities" : {
+            "items" : {
+              "$ref" : "#/components/schemas/systemsettings_loggingdto.PerformanceCapacityResp"
+            },
+            "type" : "array"
+          },
+          "configured" : {
+            "description" : "Configured says the logging settings were saved: these are saved with\nthem, and cannot be before.",
+            "type" : "boolean"
+          },
+          "enabled" : {
+            "type" : "boolean"
+          },
+          "logsStored" : {
+            "description" : "LogsStored says the logs are stored: OBI runs only while they are, its\nnumbers being rows in them.",
+            "type" : "boolean"
+          },
+          "nodes" : {
+            "items" : {
+              "$ref" : "#/components/schemas/systemsettings_loggingdto.PerformanceNodeResp"
+            },
+            "type" : "array"
+          },
+          "statusReason" : {
+            "description" : "StatusReason says why the nodes' statuses were not read:\nlogs-not-stored or unreadable. Empty when they were.",
+            "type" : "string"
+          },
+          "updateVer" : {
+            "description" : "UpdateVer is the logging settings' version, which an update sends back:\nsaving these changes it, as saving the logging settings does.",
+            "type" : "integer"
+          }
+        },
+        "required" : [ "capacities", "configured", "enabled", "logsStored", "nodes", "statusReason", "updateVer" ],
         "type" : "object"
       },
       "systemsettings_loggingdto.LoggingSettingsResp" : {
@@ -68816,6 +69452,116 @@
         "required" : [ "backend", "backendReady", "collector", "collectorReady" ],
         "type" : "object"
       },
+      "systemsettings_loggingdto.PerformanceCapacityResp" : {
+        "properties" : {
+          "capacity" : {
+            "type" : "string"
+          },
+          "memoryMiB" : {
+            "type" : "integer"
+          },
+          "tracked" : {
+            "type" : "integer"
+          }
+        },
+        "required" : [ "capacity", "memoryMiB", "tracked" ],
+        "type" : "object"
+      },
+      "systemsettings_loggingdto.PerformanceNodeReq" : {
+        "properties" : {
+          "capacity" : {
+            "type" : "string"
+          },
+          "id" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "capacity", "id" ],
+        "type" : "object"
+      },
+      "systemsettings_loggingdto.PerformanceNodeResp" : {
+        "properties" : {
+          "availability" : {
+            "type" : "string"
+          },
+          "capacity" : {
+            "description" : "Capacity is the one chosen for the node: auto for the recommended one.",
+            "type" : "string"
+          },
+          "enabled" : {
+            "type" : "boolean"
+          },
+          "hostname" : {
+            "type" : "string"
+          },
+          "id" : {
+            "type" : "string"
+          },
+          "memoryBytes" : {
+            "type" : "integer"
+          },
+          "recommended" : {
+            "description" : "Recommended is the capacity HivePaaS recommends for the node's memory.",
+            "type" : "string"
+          },
+          "role" : {
+            "type" : "string"
+          },
+          "state" : {
+            "type" : "string"
+          },
+          "status" : {
+            "allOf" : [ {
+              "$ref" : "#/components/schemas/systemsettings_loggingdto.PerformanceNodeStatusResp"
+            } ],
+            "description" : "Status is what the node's agent last said, in the last few minutes; nil\nwhen it said nothing: the logs not stored, or an agent from before.",
+            "type" : "object"
+          }
+        },
+        "required" : [ "availability", "capacity", "enabled", "hostname", "id", "memoryBytes", "recommended", "role", "state", "status" ],
+        "type" : "object"
+      },
+      "systemsettings_loggingdto.PerformanceNodeStatusResp" : {
+        "properties" : {
+          "apps" : {
+            "type" : "integer"
+          },
+          "capacity" : {
+            "description" : "Capacity is the one OBI runs, or would run, with there: the one chosen,\nor the one recommended for the memory the node reads.",
+            "type" : "string"
+          },
+          "kernel" : {
+            "type" : "string"
+          },
+          "memAvailableMb" : {
+            "type" : "integer"
+          },
+          "memTotalMb" : {
+            "type" : "integer"
+          },
+          "ok" : {
+            "description" : "OK says the node can run OBI; Reasons why not: kernel-too-old, no-btf,\ncontainer-virt, no-tracefs, lockdown, low-memory.",
+            "type" : "boolean"
+          },
+          "reasons" : {
+            "items" : {
+              "type" : "string"
+            },
+            "type" : "array"
+          },
+          "running" : {
+            "type" : "boolean"
+          },
+          "time" : {
+            "type" : "string"
+          },
+          "wanted" : {
+            "type" : "boolean"
+          }
+        },
+        "required" : [ "apps", "capacity", "kernel", "memAvailableMb", "memTotalMb", "ok", "reasons", "running", "time", "wanted" ],
+        "type" : "object"
+      },
       "systemsettings_loggingdto.SourcesReq" : {
         "properties" : {
           "apps" : {
@@ -68850,6 +69596,39 @@
           }
         },
         "required" : [ "apps", "hivepaas", "nodes", "traefikAccess" ],
+        "type" : "object"
+      },
+      "systemsettings_loggingdto.UpdateLoggingPerformanceReq" : {
+        "properties" : {
+          "default" : {
+            "type" : "boolean"
+          },
+          "enabled" : {
+            "type" : "boolean"
+          },
+          "inheritable" : {
+            "type" : "boolean"
+          },
+          "nodes" : {
+            "items" : {
+              "$ref" : "#/components/schemas/systemsettings_loggingdto.PerformanceNodeReq"
+            },
+            "type" : "array"
+          },
+          "updateVer" : {
+            "type" : "integer"
+          }
+        },
+        "required" : [ "default", "enabled", "inheritable", "nodes", "updateVer" ],
+        "type" : "object"
+      },
+      "systemsettings_loggingdto.UpdateLoggingPerformanceResp" : {
+        "properties" : {
+          "meta" : {
+            "$ref" : "#/components/schemas/basedto.Meta"
+          }
+        },
+        "required" : [ "meta" ],
         "type" : "object"
       },
       "systemsettings_loggingdto.UpdateLoggingSettingsReq" : {

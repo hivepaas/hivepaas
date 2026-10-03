@@ -202,6 +202,8 @@ func (s *HTTPServer) registerAppRoutes(projectGroup, projectEnvGroup *gin.Router
 		appGroup.GET("/:appID/function-metrics", appHandler.GetFunctionMetrics)
 		appGroup.GET("/:appID/http-metrics", appHandler.GetAppHTTPMetrics)
 		appGroup.GET("/:appID/resource-metrics", appHandler.GetAppResourceMetrics)
+		appGroup.GET("/:appID/route-metrics", appHandler.GetAppRouteMetrics)
+		appGroup.GET("/:appID/dependency-metrics", appHandler.GetAppDependencyMetrics)
 	}
 
 	{ // Terminal

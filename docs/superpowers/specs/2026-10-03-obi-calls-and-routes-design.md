@@ -286,7 +286,35 @@ with today's names.
      Node.js app's requests by its swarm-named container. A busybox `httpd`,
      which forks a process per request, was not counted.
 3. **The backend**: the two settings, `SyncPerformance`, the queries and the
-   APIs, MCP.
+   APIs, MCP. **Done**. As built:
+   - **The nodes' settings** are their own endpoints,
+     `GET/PUT /system/settings/logging/performance`, saved with the logging
+     settings - their `updateVer` - and applying nothing: the agents read them
+     within 30 s. A save of the logging settings keeps them. They cannot be
+     saved before the logging settings are. The GET lists the swarm's nodes:
+     hostname, role, memory, the recommended and the chosen capacity, and the
+     latest status its agent wrote in the last 3 minutes; and the capacities,
+     with their memory and how many they track.
+   - **The app's switch** is `performanceSettings` in its Feature Settings,
+     kept as it is by an update that leaves it out.
+   - **The queries** sum the rows in VictoriaLogs - the agent's, by its
+     daemon-written identity, and the app's id - by step and by group. Rows
+     carry their buckets on fixed bounds (5 ms to 10 s, and +Inf), so the
+     quantiles are read in Go from the summed buckets, interpolated within
+     one; past 10 s a quantile reads 10000.
+   - **The reasons**, in order: agent-unlabelled; the logs' (disabled,
+     apps-not-collected, no-query-endpoint); performance-disabled;
+     app-disabled; node-disabled (no node running the app's tasks is on);
+     node-unsupported (none of those can, with the preflight's reasons). An
+     app running nowhere has its past shown. `nodes` and `nodesCovered` say
+     how much of the app is counted.
+   - **Peers**: by the name called - the app's key (its alias in the env's
+     network), its service's name, `tasks.<service>` - or an address of a
+     task or a service today. A database by the engines its system is spoken
+     by (postgresql: postgres; mysql: mysql, mariadb; redis: redis, valkey,
+     dragonfly, keydb) and its database, when exactly one app matches; a
+     cache, which names no database, by its engine when it is the only one.
+   - **MCP**: `get_app_route_metrics`, `get_app_dependency_metrics`.
 4. **The dashboard and docs**: the settings, the Routes table, the
    Dependencies view, a docs page.
 5. Later: traces (the observability spec's phase 4); the Requests autoscale

@@ -89,6 +89,14 @@ type (
 	CPULoadReq      = loggingmodel.CPULoadReq
 	ContainerCPU    = loggingmodel.ContainerCPU
 	CPULoadResp     = loggingmodel.CPULoadResp
+
+	OBIStatsReq  = loggingmodel.OBIStatsReq
+	OBIHistogram = loggingmodel.OBIHistogram
+	OBIBucket    = loggingmodel.OBIBucket
+	OBIGroup     = loggingmodel.OBIGroup
+	OBIStatsResp = loggingmodel.OBIStatsResp
+	OBIStatusReq = loggingmodel.OBIStatusReq
+	OBIStatusRow = loggingmodel.OBIStatusRow
 )
 
 // MaxQueryLimit caps how many lines one query returns.

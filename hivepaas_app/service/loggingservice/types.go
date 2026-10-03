@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
+	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/obi"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/timeutil"
 	"github.com/hivepaas/hivepaas/services/logging"
 )
@@ -128,4 +129,11 @@ type FunctionMetricsQuery struct {
 	Start time.Time
 	End   time.Time
 	Step  time.Duration
+}
+
+// PerformanceNodeStatus is a node's latest status row about OBI - what it can
+// run and runs - and when its agent wrote it.
+type PerformanceNodeStatus struct {
+	Time time.Time
+	obi.Status
 }

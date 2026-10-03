@@ -132,3 +132,18 @@ func readTrimmed(path string) string {
 	}
 	return strings.TrimSpace(string(b))
 }
+
+// RowStatus is the "hp" of a node's status row.
+const RowStatus = "obi"
+
+// Status is what a node can run and runs, as the agent's status row says it
+// every minute while the logs are stored: the settings show each node's
+// latest.
+type Status struct {
+	HP        string    `json:"hp"`
+	Node      string    `json:"node"`
+	Wanted    bool      `json:"wanted"`
+	Running   bool      `json:"running"`
+	Apps      int       `json:"apps"`
+	Preflight Preflight `json:"preflight"`
+}

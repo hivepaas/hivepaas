@@ -17,12 +17,28 @@ const (
 	RowCalls = "calls"
 )
 
+// The fields of a row the API sums by, as MarshalJSON writes them.
+const (
+	FieldKind      = "kind"
+	FieldMethod    = "method"
+	FieldRoute     = "route"
+	FieldPeer      = "peer"
+	FieldOperation = "operation"
+)
+
 // The kinds of call a row is of.
 const (
 	KindHTTP = "http"
 	KindDB   = "db"
 	KindRPC  = "rpc"
 )
+
+// Bounds are the bucket bounds rows are written with, in milliseconds: the
+// API sums each across rows and reads quantiles from them. OBI's own bounds
+// are mapped to them - a row says, at each, how many took at most that long,
+// by the largest of OBI's bounds not above it - so the API does not depend on
+// how OBI's histograms are configured. The last bucket, leInf, is every one.
+var Bounds = []float64{5, 10, 25, 50, 100, 250, 500, 1000, 2500, 5000, 10000} //nolint:mnd // ms
 
 // family is a histogram OBI exports, and the row it becomes.
 type family struct {
@@ -97,8 +113,8 @@ type Row struct {
 	Count     int64
 	Errors    int64
 	SumMs     float64
-	// Buckets are the requests at or under each bound, in milliseconds, as a
-	// Prometheus histogram's are: cumulative over the bounds.
+	// Buckets are the requests at or under each of Bounds, in milliseconds, and
+	// at +Inf, as a Prometheus histogram's are: cumulative over the bounds.
 	Buckets map[float64]int64
 }
 
@@ -200,14 +216,7 @@ func rowOf(s *series, app string) *Row {
 	f := families[s.family]
 	l := s.labels
 	r := &Row{HP: f.row, App: app, Container: l["container_name"], Kind: f.kind, Count: int64(math.Round(s.count)),
-		SumMs: s.sum * 1000, Buckets: make(map[float64]int64, len(s.buckets))} //nolint:mnd // s to ms
-	for le, v := range s.buckets {
-		bound, err := parseValue(le)
-		if err != nil {
-			continue
-		}
-		r.Buckets[bound*1000] = int64(math.Round(v)) //nolint:mnd // s to ms
-	}
+		SumMs: s.sum * 1000, Buckets: normalized(s.buckets, s.count)} //nolint:mnd // s to ms
 	failed := l["error_type"] != ""
 	switch f.kind {
 	case KindHTTP:
@@ -236,6 +245,34 @@ func rowOf(s *series, app string) *Row {
 	return r
 }
 
+// normalized maps OBI's cumulative buckets, by their le in seconds, onto
+// Bounds: at each, the count at the largest of OBI's bounds not above it.
+func normalized(buckets map[string]float64, count float64) map[float64]int64 {
+	type bucket struct{ boundMs, count float64 }
+	obiBuckets := make([]bucket, 0, len(buckets))
+	for le, v := range buckets {
+		bound, err := parseValue(le)
+		if err != nil || math.IsInf(bound, 1) {
+			continue
+		}
+		obiBuckets = append(obiBuckets, bucket{boundMs: bound * 1000, count: v}) //nolint:mnd // s to ms
+	}
+	sort.Slice(obiBuckets, func(i, j int) bool { return obiBuckets[i].boundMs < obiBuckets[j].boundMs })
+	out := make(map[float64]int64, len(Bounds)+1)
+	for _, b := range Bounds {
+		var at float64
+		for _, ob := range obiBuckets {
+			if ob.boundMs > b+1e-9 { //nolint:mnd // a bound read from text
+				break
+			}
+			at = ob.count
+		}
+		out[b] = int64(math.Round(at))
+	}
+	out[math.Inf(1)] = int64(math.Round(count))
+	return out
+}
+
 func statusClass(code string) string {
 	if len(code) != 3 || code[0] < '1' || code[0] > '5' { //nolint:mnd // an HTTP status
 		return ""
@@ -261,10 +298,10 @@ func (r *Row) key() string {
 // MarshalJSON writes a row as the agent's other rows are written: flat, its
 // buckets as le<bound in ms> fields, "leInf" for the last.
 func (r *Row) MarshalJSON() ([]byte, error) {
-	m := map[string]any{"hp": r.HP, "app": r.App, "container": r.Container, "kind": r.Kind,
+	m := map[string]any{"hp": r.HP, "app": r.App, "container": r.Container, FieldKind: r.Kind,
 		"count": r.Count, "errors": r.Errors, "sumMs": math.Round(r.SumMs*1000) / 1000} //nolint:mnd // µs
-	for name, v := range map[string]string{"method": r.Method, "route": r.Route, "peer": r.Peer,
-		"operation": r.Operation, "status": r.Status} {
+	for name, v := range map[string]string{FieldMethod: r.Method, FieldRoute: r.Route, FieldPeer: r.Peer,
+		FieldOperation: r.Operation, "status": r.Status} {
 		if v != "" {
 			m[name] = v
 		}

@@ -20,6 +20,10 @@ type Backend interface {
 	// CPULoad reads apps' containers' CPU from the agent's rows, all in one
 	// query.
 	CPULoad(ctx context.Context, req *CPULoadReq) (*CPULoadResp, error)
+	// OBIStats sums an app's rows the agent wrote from OBI's metrics.
+	OBIStats(ctx context.Context, req *OBIStatsReq) (*OBIStatsResp, error)
+	// OBIStatus reads the nodes' status rows about OBI.
+	OBIStatus(ctx context.Context, req *OBIStatusReq) ([]*OBIStatusRow, error)
 	Ping(ctx context.Context) error
 }
 

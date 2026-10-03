@@ -47,8 +47,6 @@ const (
 	scrapeTimeout     = 5 * time.Second
 	// configFileMode is OBI's configuration's: readable by its user.
 	configFileMode = 0o644
-	// RowStatus is the "hp" of the node's status row.
-	RowStatus = "obi"
 )
 
 // errScrapeStatus is OBI answering its metrics with an error.
@@ -394,22 +392,12 @@ func appOf(appIDs map[string]string, container string) (string, bool) {
 	return id, ok
 }
 
-// Status is what a node can run and runs, as its status row says it.
-type Status struct {
-	HP        string        `json:"hp"`
-	Node      string        `json:"node"`
-	Wanted    bool          `json:"wanted"`
-	Running   bool          `json:"running"`
-	Apps      int           `json:"apps"`
-	Preflight obi.Preflight `json:"preflight"`
-}
-
 // Status says what this node can run and runs.
-func (uc *UC) Status() Status {
+func (uc *UC) Status() obi.Status {
 	uc.mu.Lock()
 	defer uc.mu.Unlock()
-	return Status{HP: RowStatus, Node: uc.nodeID, Wanted: uc.wanted, Running: uc.running, Apps: len(uc.appIDs),
-		Preflight: uc.preflight}
+	return obi.Status{HP: obi.RowStatus, Node: uc.nodeID, Wanted: uc.wanted, Running: uc.running,
+		Apps: len(uc.appIDs), Preflight: uc.preflight}
 }
 
 // writeStatus writes the node's status row while the logs are stored: the

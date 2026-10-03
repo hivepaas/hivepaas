@@ -141,6 +141,9 @@ func (uc *UC) loadSettingData(
 	// left them out would otherwise drop the links to the apps.
 	data.NewSettings.BackendAppID = currSettings.BackendAppID
 	data.NewSettings.CollectorAppID = currSettings.CollectorAppID
+	// The nodes that run OBI are saved apart, by their own endpoint, and
+	// without applying the stack again: this save keeps them as they are.
+	data.NewSettings.Performance = currSettings.Performance
 
 	if err := validateSettings(data.NewSettings); err != nil {
 		return hperrors.Wrap(err)

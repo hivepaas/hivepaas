@@ -21,3 +21,4 @@ ERR_LOGGING_QUERY_ENDPOINT_MISSING = "The logging backend has no query endpoint 
 ERR_LOGGING_SETTINGS_INVALID = "The logging settings are not valid"
 ERR_LOGGING_VOLUME_IMMUTABLE = "The logging backend's volume cannot be changed"
 ERR_LOGGING_APP_STILL_RUNNING = "The logging stack is still running. Confirm that its apps should be removed before saving."
+ERR_LOGGING_PERFORMANCE_NODE_UNKNOWN = "Node '{{.Name}}' is not a node of the cluster: reload the page to see its nodes"

@@ -452,3 +452,73 @@ type ContainerCPU struct {
 type CPULoadResp struct {
 	ByApp map[string][]*ContainerCPU
 }
+
+// OBIStatsReq asks for an app's rows of one kind that the agent wrote from
+// OBI's metrics, routes or calls, by the identity in Match the daemon wrote
+// into the agent's lines: summed by step, and by group.
+type OBIStatsReq struct {
+	Match []FieldMatch
+	AppID string
+	// Row is the rows' "hp": routes or calls.
+	Row string
+	// GroupBy are the fields the groups are by: method and route, or kind and
+	// peer.
+	GroupBy []string
+	// SeriesBy are the fields each step is split by besides its time: none, or
+	// the calls' kind.
+	SeriesBy []string
+	// BucketFields are the rows' cumulative buckets, summed: le5 ... leInf.
+	BucketFields []string
+	Start        time.Time
+	End          time.Time
+	// Step is the buckets' width, in whole seconds.
+	Step time.Duration
+	// TopGroups is how many groups are listed, the busiest first.
+	TopGroups int
+}
+
+// OBIHistogram is rows summed: requests, those that failed, their time, and
+// how many took at most each bucket's bound, by bucket field.
+type OBIHistogram struct {
+	Count   int64
+	Errors  int64
+	SumMs   float64
+	Buckets map[string]int64
+}
+
+// OBIBucket is one step's rows summed, Time its start; Keys its SeriesBy
+// fields' values.
+type OBIBucket struct {
+	Time time.Time
+	Keys map[string]string
+	OBIHistogram
+}
+
+// OBIGroup is one group's rows summed: Keys are its GroupBy fields' values.
+type OBIGroup struct {
+	Keys map[string]string
+	OBIHistogram
+}
+
+// OBIStatsResp is an app's rows over a range: by step, oldest first, a step
+// without a row left out, a step's splits in no order; and by group, the
+// busiest first.
+type OBIStatsResp struct {
+	Buckets []*OBIBucket
+	Groups  []*OBIGroup
+}
+
+// OBIStatusReq asks for the nodes' status rows over [Start, End), the latest
+// first, at most Limit.
+type OBIStatusReq struct {
+	Match []FieldMatch
+	Start time.Time
+	End   time.Time
+	Limit int
+}
+
+// OBIStatusRow is a node's status row as the agent wrote it.
+type OBIStatusRow struct {
+	Time time.Time
+	Msg  string
+}

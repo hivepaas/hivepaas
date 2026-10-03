@@ -38,6 +38,13 @@ type AppFeatureSettingsResp struct {
 	LoggingSettings  *AppFeatureLoggingSettingsResp  `json:"loggingSettings"`
 	SchedJobSettings *AppFeatureSchedJobSettingsResp `json:"schedJobSettings"`
 	PreviewSettings  *AppFeaturePreviewSettingsResp  `json:"previewSettings"`
+	// PerformanceSettings asks for the app's routes and calls, measured by OBI
+	// on the nodes that run it.
+	PerformanceSettings *AppFeaturePerformanceSettingsResp `json:"performanceSettings"`
+}
+
+type AppFeaturePerformanceSettingsResp struct {
+	Enabled bool `json:"enabled"`
 }
 
 type AppFeatureTerminalSettingsResp struct {

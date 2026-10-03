@@ -337,9 +337,9 @@ func TestStatusRow(t *testing.T) {
 
 	assert.NoError(t, w.uc.Reconcile(context.Background()))
 	w.uc.writeStatus()
-	var st Status
+	var st obi.Status
 	assert.NoError(t, json.Unmarshal(w.out.Bytes(), &st))
-	assert.Equal(t, Status{HP: "obi", Node: "node-1", Wanted: true, Running: true, Apps: 1,
+	assert.Equal(t, obi.Status{HP: "obi", Node: "node-1", Wanted: true, Running: true, Apps: 1,
 		Preflight: obi.Preflight{OK: true, Kernel: "6.8.0-124-generic", MemAvailableMB: 456,
 			Recommended: obi.CapacitySmall, Capacity: obi.CapacitySmall}}, st)
 

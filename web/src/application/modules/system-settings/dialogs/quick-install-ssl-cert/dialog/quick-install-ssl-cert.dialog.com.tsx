@@ -139,7 +139,7 @@ export function QuickInstallSslCertDialog() {
             open={open}
             onOpenChange={handleClose}
         >
-            <DialogFixedContent className="sm:max-w-[800px]">
+            <DialogFixedContent className="sm:max-w-[700px]">
                 <DialogHeader>
                     <DialogTitle>Quick install an SSL certificate</DialogTitle>
                 </DialogHeader>

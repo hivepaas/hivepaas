@@ -25,10 +25,13 @@ func TestPatternsAndConfig(t *testing.T) {
     - container_name: "p1_dev_a1.*"
     - container_name: "p1_dev_a2.*"
 ebpf:
+  wakeup_len: 64
   maps_config:
     global_scale_factor: -2
 `, string(Config(patterns, CapacitySmall)))
+	assert.Contains(t, string(Config(patterns, CapacityMedium)), "wakeup_len: 128\n")
 	assert.Contains(t, string(Config(patterns, CapacityMedium)), "global_scale_factor: -1\n")
+	assert.Contains(t, string(Config(patterns, CapacityLarge)), "wakeup_len: 256\n")
 	assert.Contains(t, string(Config(patterns, CapacityLarge)), "global_scale_factor: 0\n")
 
 	small := ConfigHash(Config(patterns, CapacitySmall))

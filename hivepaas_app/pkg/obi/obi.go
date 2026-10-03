@@ -73,15 +73,16 @@ func Patterns(services []string) []string {
 }
 
 // Config is OBI's configuration: the containers it watches, its maps sized
-// for a capacity. Patterns are quoted as JSON strings, which YAML reads as
-// they are.
+// for a capacity, and how often it reads what they hold. Patterns are quoted
+// as JSON strings, which YAML reads as they are.
 func Config(patterns []string, capacity Capacity) []byte {
 	var b strings.Builder
 	b.WriteString("discovery:\n  instrument:\n")
 	for _, p := range patterns {
 		b.WriteString("    - container_name: " + strconv.Quote(p) + "\n")
 	}
-	b.WriteString("ebpf:\n  maps_config:\n    global_scale_factor: " + strconv.Itoa(capacity.ScaleFactor()) + "\n")
+	b.WriteString("ebpf:\n  wakeup_len: " + strconv.Itoa(capacity.WakeupLen()) + "\n")
+	b.WriteString("  maps_config:\n    global_scale_factor: " + strconv.Itoa(capacity.ScaleFactor()) + "\n")
 	return []byte(b.String())
 }
 

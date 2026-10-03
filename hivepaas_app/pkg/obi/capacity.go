@@ -21,16 +21,25 @@ const (
 // level is a capacity's maps, and what it was measured at (step 0, OBI
 // v0.14.0, a 1-vCPU node): its memory, and the in-flight entries of each of
 // its maps. A smaller one (-3) lost a third of the requests.
+//
+// wakeupLen is how many events OBI's ring buffer gathers before OBI is woken
+// to read them. OBI's default, 500, is too many for the smaller maps: at -2 it
+// counted 42% of 500 requests a second, 12% of 2,000 and under 1% of 40,000,
+// dropping the rest without a word; at 64 it counted all of 40,000 a second
+// (Docker Desktop, a Node.js app on one CPU, 2026-10-03). Medium and Large
+// counted all with 500, their buffers larger; they are woken at 128 and 256,
+// in proportion, for the same margin.
 type level struct {
 	scaleFactor int
 	memoryMiB   int
 	tracked     int
+	wakeupLen   int
 }
 
 var levels = map[Capacity]level{
-	CapacitySmall:  {scaleFactor: -2, memoryMiB: 100, tracked: 7500},  //nolint:mnd // measured
-	CapacityMedium: {scaleFactor: -1, memoryMiB: 140, tracked: 15000}, //nolint:mnd // measured
-	CapacityLarge:  {scaleFactor: 0, memoryMiB: 215, tracked: 30000},  //nolint:mnd // measured
+	CapacitySmall:  {scaleFactor: -2, memoryMiB: 100, tracked: 7500, wakeupLen: 64},   //nolint:mnd // measured
+	CapacityMedium: {scaleFactor: -1, memoryMiB: 140, tracked: 15000, wakeupLen: 128}, //nolint:mnd // measured
+	CapacityLarge:  {scaleFactor: 0, memoryMiB: 215, tracked: 30000, wakeupLen: 256},  //nolint:mnd // measured
 }
 
 // Capacities are the ones a node can be given, smallest first.
@@ -89,3 +98,6 @@ func (c Capacity) MemoryMiB() int { return levels[c.Effective(0)].memoryMiB }
 // Tracked is about how many requests and connections OBI tracks at once at a
 // capacity: the entries of each of its in-flight maps.
 func (c Capacity) Tracked() int { return levels[c.Effective(0)].tracked }
+
+// WakeupLen is OBI's ebpf.wakeup_len for a capacity: see level.
+func (c Capacity) WakeupLen() int { return levels[c.Effective(0)].wakeupLen }

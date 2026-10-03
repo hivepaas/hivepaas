@@ -5,15 +5,9 @@ import { cn } from "@lib/utils";
 import { useParams } from "react-router";
 import { toast } from "sonner";
 import invariant from "tiny-invariant";
-import {
-    AppAutoscaleQueries,
-    AppServiceSettingsCommands,
-    AppServiceSettingsQueries,
-    ProjectAppsQueries,
-} from "~/projects/data";
+import { AppAutoscaleQueries, AppServiceSettingsCommands, AppServiceSettingsQueries } from "~/projects/data";
 import { APP_CONFIGURATION_QUERY_OPTIONS } from "~/projects/data/constants";
 import { ProjectPermissionSubmitButton } from "~/projects/module-shared/components";
-import { isFunctionApp } from "~/projects/module-shared/utils";
 
 import { AppLink, AppLoader, FormActionBar } from "@application/shared/components";
 import { MODULE_IDS, ROUTE } from "@application/shared/constants";
@@ -48,17 +42,10 @@ export function AppConfigAvailabilityRoute() {
         APP_CONFIGURATION_QUERY_OPTIONS,
     );
 
-    // The header's query: the app is already loaded. Only a function autoscales.
-    const { data: app } = ProjectAppsQueries.useFindOneById({
-        projectID: projectId,
-        env,
-        appID: appId,
-        getStats: true,
-    });
-    const isFunction = app ? isFunctionApp(app.data) : false;
+    // Any app autoscales: a function on its calls, any other on its requests and CPU.
     const { data: autoscale, isLoading: isAutoscaleLoading } = AppAutoscaleQueries.useFindOne(
         { projectID: projectId, env, appID: appId },
-        { ...APP_CONFIGURATION_QUERY_OPTIONS, enabled: isFunction },
+        APP_CONFIGURATION_QUERY_OPTIONS,
     );
 
     const { mutate: update, isPending } = AppServiceSettingsCommands.useUpdateOne({
@@ -123,7 +110,7 @@ export function AppConfigAvailabilityRoute() {
                 .
             </div>
 
-            {isFunction && autoscale && (
+            {autoscale && (
                 <>
                     <AutoscaleSection
                         projectId={projectId}
@@ -141,7 +128,7 @@ export function AppConfigAvailabilityRoute() {
                 defaultValues={data?.data}
                 onSubmit={handleSubmit}
                 readOnly={!canWrite}
-                autoscaled={isFunction && Boolean(autoscale?.data.enabled)}
+                autoscaled={Boolean(autoscale?.data.enabled)}
             >
                 <FormActionBar>
                     <ProjectPermissionSubmitButton isPending={isPending} />

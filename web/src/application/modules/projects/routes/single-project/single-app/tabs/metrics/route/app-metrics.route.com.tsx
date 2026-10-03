@@ -27,9 +27,11 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 import { LOG_HISTORY_UNAVAILABLE_TEXT } from "../../logs/building-blocks";
 import {
+    AGENT_UNLABELLED_TEXT,
     CallsChart,
     CpuChart,
     DurationChart,
+    HTTP_UNAVAILABLE_TEXT,
     HttpPaths,
     HttpReplicas,
     METRICS_RANGES,
@@ -152,17 +154,6 @@ export function AppMetricsRoute() {
     );
 }
 
-const HTTP_UNAVAILABLE_TEXT: Record<Exclude<AppHttpMetricsReason, AppLogHistoryReason>, string> = {
-    "not-exposed":
-        "The app has no domain. Its requests are counted where they enter, at Traefik, and none of its go through it.",
-    "access-log-off":
-        "Traefik's access log is off. An administrator turns it on in System → Traefik → Config Options, with Access Log; Traefik restarts briefly.",
-    "access-log-not-json":
-        "Traefik's access log is written in an older form. An administrator saves System → Traefik → Config Options once, with Access Log on; Traefik restarts briefly.",
-    "access-log-unlabelled":
-        "Traefik's log lines do not carry its identity yet. An administrator saves System → Traefik → Config Options once, with Access Log on; Traefik restarts briefly.",
-};
-
 function httpUnavailableText(reason: AppHttpMetricsReason | null): string {
     if (!reason) {
         return "The app's requests cannot be counted.";
@@ -273,7 +264,7 @@ function ResourcesView({ metrics, isLoading, range }: ResourcesViewProps) {
             <div className="flex flex-col gap-1 text-sm text-muted-foreground">
                 <span>
                     {reason === "agent-unlabelled"
-                        ? "The HivePaaS agent does not mark its lines yet. It does from its next update, when HivePaaS is updated."
+                        ? AGENT_UNLABELLED_TEXT
                         : reason
                           ? LOG_HISTORY_UNAVAILABLE_TEXT[reason]
                           : "The app's CPU and memory cannot be read."}

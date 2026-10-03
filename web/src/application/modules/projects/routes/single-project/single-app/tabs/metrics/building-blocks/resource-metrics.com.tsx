@@ -18,7 +18,7 @@ const TOOLTIP = {
     labelStyle: { color: "var(--muted-foreground)" },
 };
 const CHART_HEIGHT = 220;
-function ResourceLineChart({ data, lines, format, width }: ChartProps) {
+function ResourceLineChart({ data, lines, format, width, replicas = false }: ChartProps) {
     return (
         <ResponsiveContainer
             width="100%"
@@ -35,18 +35,32 @@ function ResourceLineChart({ data, lines, format, width }: ChartProps) {
                     minTickGap={24}
                 />
                 <YAxis
+                    yAxisId="value"
                     tick={AXIS}
                     width={width}
                     tickFormatter={value => format(Number(value))}
                 />
+                {replicas && (
+                    <YAxis
+                        yAxisId="replicas"
+                        orientation="right"
+                        tick={AXIS}
+                        allowDecimals={false}
+                        domain={[0, "dataMax + 1"]}
+                        width={32}
+                    />
+                )}
                 <Tooltip
                     {...TOOLTIP}
-                    formatter={value => (typeof value === "number" ? format(value) : value)}
+                    formatter={(value, _name, item) =>
+                        typeof value === "number" && item.dataKey !== "replicas" ? format(value) : value
+                    }
                 />
                 <Legend wrapperStyle={{ fontSize: 12 }} />
                 {lines.map(line => (
                     <Line
                         key={line.key}
+                        yAxisId="value"
                         dataKey={line.key}
                         name={line.name}
                         stroke={line.color}
@@ -56,24 +70,42 @@ function ResourceLineChart({ data, lines, format, width }: ChartProps) {
                         isAnimationActive={false}
                     />
                 ))}
+                {replicas && (
+                    <Line
+                        yAxisId="replicas"
+                        type="stepAfter"
+                        dataKey="replicas"
+                        name="Replicas"
+                        stroke="var(--foreground)"
+                        dot={false}
+                        strokeWidth={1.5}
+                        isAnimationActive={false}
+                    />
+                )}
             </LineChart>
         </ResponsiveContainer>
     );
 }
 
-/** CPU in cores, the containers summed, and their limit when they have one. */
+/**
+ * CPU in cores, the containers summed, and their limit when they have one; an autoscaled app's replicas, a line on
+ * its own axis.
+ */
 export function CpuChart({ series, range }: SeriesProps) {
     const hasLimit = series.some(point => point.cpuLimit > 0);
+    const hasReplicas = series.some(point => point.replicas !== null);
     const data = series.map(point => ({
         time: formatMetricsTime(point.time, range),
         cpu: point.cpu,
         limit: point.cpu === null || point.cpuLimit === 0 ? null : point.cpuLimit,
+        replicas: point.replicas,
     }));
 
     return (
         <ResourceLineChart
             data={data}
             width={56}
+            replicas={hasReplicas}
             format={value => value.toFixed(value < 1 ? 2 : 1)}
             lines={[
                 { key: "cpu", name: "Used", color: "var(--chart-3)" },
@@ -175,4 +207,6 @@ interface ChartProps {
     lines: { key: string; name: string; color: string; dashed?: boolean }[];
     format: (value: number) => string;
     width: number;
+    /** Draws the data's replicas, on an axis of their own. */
+    replicas?: boolean;
 }

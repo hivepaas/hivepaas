@@ -159,6 +159,8 @@ export interface HttpMetricsCounts {
 
 export interface HttpMetricsPoint extends HttpMetricsCounts {
     time: string;
+    /** The replicas the app ran at the step's end, for one that autoscales; null otherwise. */
+    replicas: number | null;
 }
 
 /** The requests of one method and path, its numbers and ids as :n and :id. */
@@ -206,6 +208,8 @@ export interface ResourceMetricsPoint {
     netTx: number;
     ioRead: number;
     ioWrite: number;
+    /** The replicas the app ran at the step's end, for one that autoscales; null otherwise. */
+    replicas: number | null;
 }
 
 export interface ResourceMetricsTotals {

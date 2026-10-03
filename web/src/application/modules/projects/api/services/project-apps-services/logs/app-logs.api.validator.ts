@@ -80,6 +80,12 @@ const GetHistorySchema = z.object({
     meta: BaseMetaApiSchema.nullable(),
 });
 
+/** A number the API may leave out, null when it does. */
+const nullableNumber = z
+    .number()
+    .nullish()
+    .transform(value => value ?? null);
+
 const FunctionMetricsCountsSchema = z.object({
     calls: z.number().catch(0),
     failed: z.number().catch(0),
@@ -193,7 +199,7 @@ const GetHttpMetricsSchema = z.object({
         clamped: z.boolean().catch(false),
         totals: HttpMetricsCountsSchema.nullish().transform(value => value ?? null),
         series: z
-            .array(HttpMetricsCountsSchema.extend({ time: z.string() }))
+            .array(HttpMetricsCountsSchema.extend({ time: z.string(), replicas: nullableNumber }))
             .nullish()
             .transform(value => value ?? []),
         byPath: z
@@ -207,11 +213,6 @@ const GetHttpMetricsSchema = z.object({
     }),
     meta: BaseMetaApiSchema.nullable(),
 });
-
-const nullableNumber = z
-    .number()
-    .nullish()
-    .transform(value => value ?? null);
 
 const GetResourceMetricsSchema = z.object({
     data: z.object({
@@ -263,6 +264,7 @@ const GetResourceMetricsSchema = z.object({
                     netTx: z.number().catch(0),
                     ioRead: z.number().catch(0),
                     ioWrite: z.number().catch(0),
+                    replicas: nullableNumber,
                 }),
             )
             .nullish()

@@ -1,3 +1,5 @@
+import type { PropsWithChildren } from "react";
+
 import { FieldError } from "@components/ui";
 import { InputNumber } from "@components/ui/input-number";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -8,7 +10,7 @@ import { useController, useForm } from "react-hook-form";
 import { useUpdateEffect } from "react-use";
 import { toast } from "sonner";
 import { z } from "zod";
-import type { AppAutoscale, AppAutoscalePausedReason } from "~/projects/api/services";
+import type { AppAutoscale } from "~/projects/api/services";
 import { AppAutoscaleCommands } from "~/projects/data";
 import { ProjectPermissionSubmitButton } from "~/projects/module-shared/components";
 
@@ -16,69 +18,72 @@ import { AppLink, InfoBlock, LabelWithInfo } from "@application/shared/component
 import { ROUTE } from "@application/shared/constants";
 
 import { Checkbox, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 
-import { LOG_HISTORY_UNAVAILABLE_TEXT } from "../../../tabs/logs/building-blocks/log-history-unavailable.constants";
+import { AutoscaleEvents } from "./autoscale-events.com";
+import { LOGGING_REASONS, SCALE_IN_DELAYS, pausedText, replicasText, signalText } from "./autoscale-texts";
 
 const MAX_REPLICAS_LIMIT = 50;
-
-/** The scale-in delays offered: 1 minute to 1 hour, as the API takes them. */
-const SCALE_IN_DELAYS = [
-    { value: "1m", label: "1 minute" },
-    { value: "2m", label: "2 minutes" },
-    { value: "5m", label: "5 minutes" },
-    { value: "10m", label: "10 minutes" },
-    { value: "15m", label: "15 minutes" },
-    { value: "30m", label: "30 minutes" },
-    { value: "1h", label: "1 hour" },
-];
+/** What Requests Per Instance starts at when it is turned on. */
+const REQUESTS_TARGET_DEFAULT = 10;
+const CPU_TARGET_DEFAULT = 70;
 
 const AutoscaleSchema = z
     .object({
+        isFunction: z.boolean(),
         enabled: z.boolean(),
         minReplicas: z.number({ message: "Required" }).int().min(1, "At least 1").max(MAX_REPLICAS_LIMIT),
         maxReplicas: z.number({ message: "Required" }).int().min(1, "At least 1").max(MAX_REPLICAS_LIMIT),
-        target: z.number({ message: "Required" }).int().min(10, "From 10 %").max(100, "Up to 100 %"),
+        target: z.number({ message: "Required" }).int(),
+        requestsOn: z.boolean(),
+        requestsTarget: z.number({ message: "Required" }).int(),
+        cpuOn: z.boolean(),
+        cpuTarget: z.number({ message: "Required" }).int(),
         scaleInDelay: z.string(),
     })
-    .refine(values => values.maxReplicas >= values.minReplicas, {
-        path: ["maxReplicas"],
-        message: "At least Min Replicas",
+    .superRefine((values, ctx) => {
+        const outside = (value: number, min: number, max: number) => value < min || value > max;
+        if (values.maxReplicas < values.minReplicas) {
+            ctx.addIssue({ code: "custom", path: ["maxReplicas"], message: "At least Min Replicas" });
+        }
+        if (values.isFunction) {
+            if (outside(values.target, 10, 100)) {
+                ctx.addIssue({ code: "custom", path: ["target"], message: "From 10 to 100 %" });
+            }
+            return;
+        }
+        if (values.enabled && !values.requestsOn && !values.cpuOn) {
+            ctx.addIssue({ code: "custom", path: ["requestsOn"], message: "Scale on requests, CPU or both" });
+        }
+        if (values.requestsOn && outside(values.requestsTarget, 1, 1000)) {
+            ctx.addIssue({ code: "custom", path: ["requestsTarget"], message: "From 1 to 1000" });
+        }
+        if (values.cpuOn && outside(values.cpuTarget, 10, 100)) {
+            ctx.addIssue({ code: "custom", path: ["cpuTarget"], message: "From 10 to 100 %" });
+        }
     });
 
 type AutoscaleValues = z.infer<typeof AutoscaleSchema>;
 
 function valuesOf(autoscale?: AppAutoscale): AutoscaleValues {
+    const requestsTarget = autoscale?.requestsTarget ?? 0;
+    const cpuTarget = autoscale?.cpuTarget ?? CPU_TARGET_DEFAULT;
     return {
+        isFunction: autoscale?.isFunction ?? false,
         enabled: autoscale?.enabled ?? false,
         minReplicas: autoscale?.minReplicas ?? 1,
         maxReplicas: autoscale?.maxReplicas ?? 5,
         target: autoscale?.target ?? 70,
+        requestsOn: requestsTarget > 0,
+        requestsTarget: requestsTarget > 0 ? requestsTarget : REQUESTS_TARGET_DEFAULT,
+        cpuOn: cpuTarget > 0,
+        cpuTarget: cpuTarget > 0 ? cpuTarget : CPU_TARGET_DEFAULT,
         scaleInDelay: autoscale?.scaleInDelay ?? "5m",
     };
 }
 
-/** The reasons an administrator answers in System → Logging. */
-const LOGGING_REASONS: AppAutoscalePausedReason[] = ["disabled", "apps-not-collected"];
-
-function pausedText(reason: AppAutoscalePausedReason): string {
-    if (reason === "not-replicated") {
-        return "Autoscale scales a function that runs a set number of instances: set its Service Mode to Replicated.";
-    }
-    return `Autoscale reads the function's calls from its stored logs, which cannot be read. ${LOG_HISTORY_UNAVAILABLE_TEXT[reason]}`;
-}
-
-/** The replicas the function runs now. A stopped one has none, and autoscale does not start it. */
-function replicasText(replicas: number): string {
-    if (replicas === 0) {
-        return "Stopped: autoscale does not start it";
-    }
-    return replicas === 1 ? "1 replica now" : `${replicas} replicas now`;
-}
-
 /**
- * A function's autoscale: its replicas follow its calls, between Min and Max. Saved on its own, apart from
- * the service's settings below.
+ * An app's autoscale: its replicas follow its load, between Min and Max - a function's its calls, any other app's
+ * its requests, its CPU or both. Saved on its own, apart from the service's settings below.
  */
 export function AutoscaleSection({ projectId, env, appId, autoscale, readOnly = false }: Props) {
     const { control, handleSubmit, reset, watch } = useForm<AutoscaleValues>({
@@ -104,13 +109,29 @@ export function AutoscaleSection({ projectId, env, appId, autoscale, readOnly = 
         field: target,
         fieldState: { error: targetError },
     } = useController({ control, name: "target" });
+    const {
+        field: requestsOn,
+        fieldState: { error: requestsOnError },
+    } = useController({ control, name: "requestsOn" });
+    const {
+        field: requestsTarget,
+        fieldState: { error: requestsTargetError },
+    } = useController({ control, name: "requestsTarget" });
+    const { field: cpuOn } = useController({ control, name: "cpuOn" });
+    const {
+        field: cpuTarget,
+        fieldState: { error: cpuTargetError },
+    } = useController({ control, name: "cpuTarget" });
     const { field: scaleInDelay } = useController({ control, name: "scaleInDelay" });
     const isEnabled = watch("enabled");
 
+    const isFunction = autoscale?.isFunction ?? false;
     const savedOn = autoscale?.enabled ?? false;
     const paused = autoscale?.paused ?? null;
-    // While its calls cannot be read, autoscale cannot be turned on; one already on says it is paused.
-    const cannotTurnOn = Boolean(paused && paused !== "not-replicated" && !savedOn);
+    // A function whose calls cannot be read, or an app publishing a port on its node, cannot have it turned on. An
+    // app's unreadable signals are said by each, as which it scales on is being chosen.
+    const cannotTurnOn =
+        !savedOn && paused !== null && (isFunction ? paused !== "not-replicated" : paused === "host-ports");
 
     const { mutate: update, isPending } = AppAutoscaleCommands.useUpdateOne({
         onSuccess: response => {
@@ -133,7 +154,16 @@ export function AutoscaleSection({ projectId, env, appId, autoscale, readOnly = 
             projectID: projectId,
             env,
             appID: appId,
-            payload: { ...values, updateVer: autoscale?.updateVer ?? 0 },
+            payload: {
+                enabled: values.enabled,
+                minReplicas: values.minReplicas,
+                maxReplicas: values.maxReplicas,
+                target: values.target,
+                requestsTarget: !values.isFunction && values.requestsOn ? values.requestsTarget : 0,
+                cpuTarget: !values.isFunction && values.cpuOn ? values.cpuTarget : 0,
+                scaleInDelay: values.scaleInDelay,
+                updateVer: autoscale?.updateVer ?? 0,
+            },
         });
     }
 
@@ -150,23 +180,12 @@ export function AutoscaleSection({ projectId, env, appId, autoscale, readOnly = 
                 className="contents"
             >
                 {paused && (savedOn || cannotTurnOn) && (
-                    <div className={cn(dashedBorderBox, "flex items-start gap-2")}>
-                        <AlertTriangle className="mt-0.5 size-4 shrink-0 text-amber-600 dark:text-amber-500" />
-                        <span>
-                            <span className="font-semibold">
-                                {cannotTurnOn ? "Autoscale cannot be turned on." : "Autoscale is paused."}
-                            </span>{" "}
-                            {pausedText(paused)}{" "}
-                            {LOGGING_REASONS.includes(paused) && (
-                                <AppLink.Modules
-                                    to={ROUTE.systemSettings.logging.configuration.$route}
-                                    className="text-link"
-                                >
-                                    Logging settings
-                                </AppLink.Modules>
-                            )}
-                        </span>
-                    </div>
+                    <Warning>
+                        <span className="font-semibold">
+                            {cannotTurnOn ? "Autoscale cannot be turned on." : "Autoscale is paused."}
+                        </span>{" "}
+                        {pausedText(paused, isFunction)} {LOGGING_REASONS.includes(paused) && <LoggingLink />}
+                    </Warning>
                 )}
 
                 <InfoBlock
@@ -174,7 +193,11 @@ export function AutoscaleSection({ projectId, env, appId, autoscale, readOnly = 
                     title={
                         <LabelWithInfo
                             label="Autoscale"
-                            content="Scales the function's replicas with its calls, read from its stored logs every 15 seconds: up at once when calls are turned away for Concurrency, down slowly once they have been low for the scale-in delay."
+                            content={
+                                isFunction
+                                    ? "Scales the function's replicas with its calls, read from its stored logs every 15 seconds: up at once when calls are turned away for Concurrency, down slowly once they have been low for the scale-in delay."
+                                    : "Scales the app's replicas with its requests, its CPU or both, read every 15 seconds: up once they have needed more for 30 seconds, down slowly once they have been low for the scale-in delay."
+                            }
                         />
                     }
                 >
@@ -236,36 +259,94 @@ export function AutoscaleSection({ projectId, env, appId, autoscale, readOnly = 
                             <FieldError errors={[maxReplicasError]} />
                         </InfoBlock>
 
-                        <InfoBlock
-                            titleWidth={220}
-                            title={
-                                <LabelWithInfo
-                                    label="Target"
-                                    content="The share of an instance's Concurrency kept busy. At 70 % and a Concurrency of 16, one instance for every 11 calls in flight."
-                                />
-                            }
-                        >
-                            <div className="flex items-center gap-2">
-                                <InputNumber
-                                    value={target.value}
-                                    onValueChange={value => {
-                                        target.onChange(value);
-                                    }}
-                                    className="max-w-[100px]"
-                                    min={10}
-                                    max={100}
-                                />
-                                <span className="text-sm text-muted-foreground">%</span>
-                            </div>
-                            <FieldError errors={[targetError]} />
-                        </InfoBlock>
+                        {isFunction ? (
+                            <InfoBlock
+                                titleWidth={220}
+                                title={
+                                    <LabelWithInfo
+                                        label="Target"
+                                        content="The share of an instance's Concurrency kept busy. At 70 % and a Concurrency of 16, one instance for every 11 calls in flight."
+                                    />
+                                }
+                            >
+                                <div className="flex items-center gap-2">
+                                    <InputNumber
+                                        value={target.value}
+                                        onValueChange={value => {
+                                            target.onChange(value);
+                                        }}
+                                        className="max-w-[100px]"
+                                        min={10}
+                                        max={100}
+                                    />
+                                    <span className="text-sm text-muted-foreground">%</span>
+                                </div>
+                                <FieldError errors={[targetError]} />
+                            </InfoBlock>
+                        ) : (
+                            <InfoBlock
+                                titleWidth={220}
+                                title={
+                                    <LabelWithInfo
+                                        label="Scale On"
+                                        content="What its replicas follow: its requests, its CPU or both. With both, the one asking for more instances wins."
+                                    />
+                                }
+                            >
+                                <div className="flex flex-col gap-4">
+                                    <Signal
+                                        label="Requests"
+                                        checked={requestsOn.value}
+                                        onCheckedChange={requestsOn.onChange}
+                                        unavailable={autoscale?.requestsUnavailable ?? null}
+                                    >
+                                        <InputNumber
+                                            value={requestsTarget.value}
+                                            onValueChange={value => {
+                                                requestsTarget.onChange(value);
+                                            }}
+                                            className="max-w-[100px]"
+                                            min={1}
+                                            max={1000}
+                                            disabled={!requestsOn.value}
+                                        />
+                                        <span className="text-sm text-muted-foreground">
+                                            in flight per instance, through its domains
+                                        </span>
+                                    </Signal>
+                                    <FieldError errors={[requestsTargetError]} />
+
+                                    <Signal
+                                        label="CPU"
+                                        checked={cpuOn.value}
+                                        onCheckedChange={cpuOn.onChange}
+                                        unavailable={autoscale?.cpuUnavailable ?? null}
+                                    >
+                                        <InputNumber
+                                            value={cpuTarget.value}
+                                            onValueChange={value => {
+                                                cpuTarget.onChange(value);
+                                            }}
+                                            className="max-w-[100px]"
+                                            min={10}
+                                            max={100}
+                                            disabled={!cpuOn.value}
+                                        />
+                                        <span className="text-sm text-muted-foreground">
+                                            % of an instance&rsquo;s CPU limit, or its reservation
+                                        </span>
+                                    </Signal>
+                                    <FieldError errors={[cpuTargetError, requestsOnError]} />
+                                </div>
+                            </InfoBlock>
+                        )}
 
                         <InfoBlock
                             titleWidth={220}
                             title={
                                 <LabelWithInfo
                                     label="Scale-in Delay"
-                                    content="How long its calls stay low before it scales in, by half the way to what they need at a time."
+                                    content="How long its load stays low before it scales in, by half the way to what it needs at a time."
                                 />
                             }
                         >
@@ -288,7 +369,29 @@ export function AutoscaleSection({ projectId, env, appId, autoscale, readOnly = 
                                 </SelectContent>
                             </Select>
                         </InfoBlock>
+
+                        {!isFunction && autoscale?.writableMounts && (
+                            <Warning>
+                                The app writes to a volume or a bind mount. Its replicas on one node share it, and those
+                                on another node each have their own: an app that keeps its data there, such as a
+                                database, must not autoscale.
+                            </Warning>
+                        )}
                     </>
+                )}
+
+                {savedOn && autoscale && autoscale.pending > 0 && (
+                    <Warning>
+                        {autoscale.pending === 1 ? "A replica" : `${autoscale.pending} replicas`} cannot start: the
+                        cluster may have no room for them. Autoscale scales it no further out until they run; see its{" "}
+                        <AppLink.Basic
+                            to={ROUTE.projects.single.apps.single.instances.$route(projectId, env, appId)}
+                            className="text-link"
+                        >
+                            Instances
+                        </AppLink.Basic>
+                        .
+                    </Warning>
                 )}
 
                 {!readOnly && (
@@ -308,44 +411,66 @@ export function AutoscaleSection({ projectId, env, appId, autoscale, readOnly = 
                     titleWidth={220}
                     title={<LabelWithInfo label="Latest Scalings" />}
                 >
-                    <AutoscaleEvents events={autoscale.events} />
+                    <AutoscaleEvents
+                        events={autoscale.events}
+                        isFunction={isFunction}
+                    />
                 </InfoBlock>
             )}
         </form>
     );
 }
 
-function AutoscaleEvents({ events }: { events: AppAutoscale["events"] }) {
+/** One signal an app can scale on: whether it does, its target, and why it cannot be read now. */
+function Signal({ label, checked, onCheckedChange, unavailable, children }: PropsWithChildren<SignalProps>) {
     return (
-        <div className="max-w-[800px] overflow-x-auto rounded-md border">
-            <Table>
-                <TableHeader>
-                    <TableRow>
-                        <TableHead>Time</TableHead>
-                        <TableHead className="text-right">Replicas</TableHead>
-                        <TableHead className="text-right">In flight</TableHead>
-                        <TableHead className="text-right">Turned away</TableHead>
-                        <TableHead>Why</TableHead>
-                    </TableRow>
-                </TableHeader>
-                <TableBody>
-                    {events.map(event => (
-                        <TableRow key={`${event.time}-${event.from}-${event.to}`}>
-                            <TableCell className="text-xs text-muted-foreground">
-                                {new Date(event.time).toLocaleString()}
-                            </TableCell>
-                            <TableCell className="text-right tabular-nums">
-                                {event.from} → {event.to}
-                            </TableCell>
-                            <TableCell className="text-right tabular-nums">{event.inFlight.toFixed(1)}</TableCell>
-                            <TableCell className="text-right tabular-nums">{event.throttled}</TableCell>
-                            <TableCell className="text-xs">{event.reason}</TableCell>
-                        </TableRow>
-                    ))}
-                </TableBody>
-            </Table>
+        <div className="flex flex-col gap-1">
+            <div className="flex flex-wrap items-center gap-2">
+                <Checkbox
+                    checked={checked}
+                    onCheckedChange={value => {
+                        onCheckedChange(Boolean(value));
+                    }}
+                />
+                <span className="w-[72px] text-sm font-medium">{label}</span>
+                {children}
+            </div>
+            {unavailable && (
+                <p className="text-xs text-muted-foreground">
+                    <AlertTriangle className="mr-1 inline size-3 text-amber-600 dark:text-amber-500" />
+                    {signalText(unavailable)} {LOGGING_REASONS.includes(unavailable) && <LoggingLink />}
+                </p>
+            )}
         </div>
     );
+}
+
+function Warning({ children }: PropsWithChildren) {
+    return (
+        <div className={cn(dashedBorderBox, "flex items-start gap-2")}>
+            <AlertTriangle className="mt-0.5 size-4 shrink-0 text-amber-600 dark:text-amber-500" />
+            <span>{children}</span>
+        </div>
+    );
+}
+
+function LoggingLink() {
+    return (
+        <AppLink.Modules
+            to={ROUTE.systemSettings.logging.configuration.$route}
+            className="text-link"
+        >
+            Logging settings
+        </AppLink.Modules>
+    );
+}
+
+interface SignalProps {
+    label: string;
+    checked: boolean;
+    onCheckedChange: (checked: boolean) => void;
+    /** Why it cannot be read now; null when it can. */
+    unavailable: string | null;
 }
 
 interface Props {

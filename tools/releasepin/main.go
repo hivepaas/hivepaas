@@ -8,6 +8,7 @@
 //
 //	go run ./tools/releasepin              # pin release.json in place
 //	go run ./tools/releasepin -check       # only report what is not pinned to the current digest
+//	go run ./tools/releasepin -check -deps # the same, leaving out the app and the agent
 //
 // The app's and the agent's images are built after the release commit, from the
 // tag on it: until then their tags are not in the registry, and they are left
@@ -63,7 +64,14 @@ type report struct {
 // pin pins every image of release to its tag's current digest, keeping every
 // other byte of the file as it is.
 func pin(release []byte, resolve func(ref string) (string, error)) ([]byte, report, error) {
-	p := &pinner{resolve: resolve}
+	return pinWith(release, resolve, false)
+}
+
+// pinWith is pin, leaving the app's and the agent's images as they are when
+// depsOnly: before a release is built they are not its to pin - the run that
+// builds them makes their digests, a rebuild under the same tag new ones.
+func pinWith(release []byte, resolve func(ref string) (string, error), depsOnly bool) ([]byte, report, error) {
+	p := &pinner{resolve: resolve, depsOnly: depsOnly}
 	out := p.pinMatches(release, imageField)
 	out = functionRuntimes.ReplaceAllFunc(out, func(block []byte) []byte {
 		parts := functionRuntimes.FindSubmatch(block)
@@ -78,9 +86,10 @@ func pin(release []byte, resolve func(ref string) (string, error)) ([]byte, repo
 // pinner pins references, and remembers what it changed and the first
 // reference it could not resolve.
 type pinner struct {
-	resolve func(ref string) (string, error)
-	report  report
-	failed  error
+	resolve  func(ref string) (string, error)
+	depsOnly bool
+	report   report
+	failed   error
 }
 
 // pinMatches pins the reference of every match of field in text: the match's
@@ -91,6 +100,9 @@ func (p *pinner) pinMatches(text []byte, field *regexp.Regexp) []byte {
 			return match
 		}
 		parts := field.FindSubmatch(match)
+		if p.depsOnly && builtWithTheRelease.Match(parts[1]) {
+			return match
+		}
 		current := string(parts[2])
 		name, _, _ := strings.Cut(current, "@")
 
@@ -148,6 +160,7 @@ func resolveWithDocker(ref string) (string, error) {
 func main() {
 	file := flag.String("file", "release.json", "the release file to pin")
 	check := flag.Bool("check", false, "report what is not pinned to the current digest, and change nothing")
+	deps := flag.Bool("deps", false, "leave out the app's and the agent's images, which the release builds")
 	flag.Parse()
 
 	release, err := os.ReadFile(*file)
@@ -155,7 +168,7 @@ func main() {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
 	}
-	out, rep, err := pin(release, resolveWithDocker)
+	out, rep, err := pinWith(release, resolveWithDocker, *deps)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, "not pinned:", err)
 		os.Exit(1)

@@ -137,3 +137,32 @@ func TestTheAppAndAgentNotBuiltYetAreLeftForLater(t *testing.T) {
 	assert.Equal(t, []string{"ghcr.io/hivepaas/hivepaas:1.0.0-beta2", "ghcr.io/hivepaas/hivepaas-agent:1.0.0-beta2"},
 		report.NotBuilt)
 }
+
+// Before a release is built - the Release workflow's check - only the images it
+// runs from elsewhere are its to pin: the app and the agent it builds itself
+// are not, even when a rebuild under the same tag finds an older build there.
+func TestDepsOnlyLeavesTheAppAndAgentAlone(t *testing.T) {
+	const rebuilt = `{
+  "beta": {
+    "appImage": "ghcr.io/hivepaas/hivepaas:1.0.0-beta1@sha256:old",
+    "agentImage": "ghcr.io/hivepaas/hivepaas-agent:1.0.0-beta1@sha256:old",
+    "redisImage": "redis:8.6.2-alpine@sha256:new"
+  }
+}
+`
+	registry := digests{
+		"ghcr.io/hivepaas/hivepaas:1.0.0-beta1":       "sha256:rebuilt",
+		"ghcr.io/hivepaas/hivepaas-agent:1.0.0-beta1": "sha256:rebuilt",
+		"redis:8.6.2-alpine":                          "sha256:new",
+	}
+
+	out, report, err := pinWith([]byte(rebuilt), registry.resolve, true)
+
+	assert.NoError(t, err)
+	assert.Equal(t, rebuilt, string(out))
+	assert.Empty(t, report.Changed)
+
+	_, report, err = pinWith([]byte(rebuilt), registry.resolve, false)
+	assert.NoError(t, err)
+	assert.Len(t, report.Changed, 2, "after the build, the app and the agent are pinned too")
+}

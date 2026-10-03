@@ -117,3 +117,23 @@ func TestFunctionRuntimesArePinnedToo(t *testing.T) {
 	assert.Len(t, report.Changed, 2)
 	assert.Empty(t, report.Floating)
 }
+
+// The app and the agent of a release are built after its release commit: before
+// that their tags are not in the registry, and they are left to be pinned once
+// they are, while every other image is pinned now.
+func TestTheAppAndAgentNotBuiltYetAreLeftForLater(t *testing.T) {
+	const unbuilt = `{
+  "beta": {
+    "appImage": "ghcr.io/hivepaas/hivepaas:1.0.0-beta2",
+    "agentImage": "ghcr.io/hivepaas/hivepaas-agent:1.0.0-beta2",
+    "redisImage": "redis:8.6.2-alpine"
+  }
+}
+`
+	out, report, err := pin([]byte(unbuilt), digests{"redis:8.6.2-alpine": "sha256:new"}.resolve)
+
+	assert.NoError(t, err)
+	assert.Equal(t, strings.Replace(unbuilt, `"redis:8.6.2-alpine"`, `"redis:8.6.2-alpine@sha256:new"`, 1), string(out))
+	assert.Equal(t, []string{"ghcr.io/hivepaas/hivepaas:1.0.0-beta2", "ghcr.io/hivepaas/hivepaas-agent:1.0.0-beta2"},
+		report.NotBuilt)
+}

@@ -73,21 +73,34 @@ installation run them.
 
 ## Every release
 
-The example is `v1.0.0-beta1`; for a stable release read `StableVersion` for
-`BetaVersion` and `stable` for `beta`.
+The example is `v1.0.0-beta1`; for a stable release read `stable` for `beta`.
 
 1. **Main is green.** The `Go Source Check` workflow passes on the commit you
    release, in both repositories where it applies.
 
-2. **The release commit (backend).** In
-   [base/version.go](../hivepaas_app/base/version.go), `BetaVersion`:
-   - `AppVersion: "v1.0.0-beta1"`, exactly the tag;
-   - `ReleaseDate`: the day you publish;
-   - `AppImage: "ghcr.io/hivepaas/hivepaas:1.0.0-beta1"` and
-     `AgentImage: "ghcr.io/hivepaas/hivepaas-agent:1.0.0-beta1"` (the tags; the digests
-     do not exist yet), and the other images this release runs.
+2. **The release commit (backend).** [release.json](../release.json) is the one
+   place a release is declared: the binary is built with it
+   ([base/version.go](../hivepaas_app/base/version.go) reads it, embedded), and
+   installations fetch it, signed. In its `beta` entry:
+   - `appVersion: "v1.0.0-beta1"`, exactly the tag;
+   - `releaseDate`: the day you publish;
+   - `appImage: "ghcr.io/hivepaas/hivepaas:1.0.0-beta1"` and
+     `agentImage: "ghcr.io/hivepaas/hivepaas-agent:1.0.0-beta1"`, the tags (the
+     digests do not exist yet; the binary names these two by its version anyway);
+   - the other images this release runs, and `templates` if the app templates
+     moved. Keep what the entry of the other channel says.
 
-   Merge it to `main`. The workflow refuses a tag that is not this `AppVersion`.
+   Then pin every image but the app's and the agent's:
+   ```bash
+   make release-pin        # writes tag@sha256:…; make release-pin-check only reports
+   ```
+   Name each image by a tag that says its version (`traefik:v3.7.13`, not
+   `traefik:v3.7`): the digest fixes the image, the tag is what people read, and
+   the updater decides "newer" from the tag. To ship a rebuild under the same tag,
+   the new digest is enough: an installation pinned to the old one updates.
+
+   Merge it to `main`. The workflow refuses a tag that is not this `appVersion`,
+   and an image other than the app's and the agent's that is not pinned.
 
 3. **Tag the dashboard**, on the commit to release:
    ```bash
@@ -106,18 +119,10 @@ The example is `v1.0.0-beta1`; for a stable release read `StableVersion` for
    - *Draft*: a draft GitHub Release (pre-release for a beta) with `install.sh`
      already reading this tag, `install.env`, `digests.txt` and `SHA256SUMS`.
 
-5. **release.json.** Update the `beta` entry: `appVersion`, `releaseDate`,
-   `appImage` and `agentImage` as `digests.txt` gives them
-   (`ghcr.io/hivepaas/hivepaas:1.0.0-beta1@sha256:…`), the other images, and
-   `templates` if the app templates moved. Keep what the entry of the other
-   channel says. Then pin every image to its digest:
-   ```bash
-   make release-pin        # writes tag@sha256:… for each image; make release-pin-check only reports
-   ```
-   Name each image by a tag that says its version (`traefik:v3.7.2`, not
-   `traefik:v3.7`): the digest fixes the image, the tag is what people read, and
-   the updater decides "newer" from the tag. To ship a rebuild under the same tag,
-   the new digest is enough: an installation pinned to the old one updates.
+5. **Pin the app and the agent.** Now that they are built, `make release-pin`
+   pins `appImage` and `agentImage` to the digests `digests.txt` gives, and
+   changes nothing else: the binary does not read those two digests, so the
+   release commit stays the one that was built.
 
 6. **Sign, on the offline machine**, with the reviewed tool pinned in the
    Makefile:
@@ -220,5 +225,5 @@ a pull request, and release as usual.
 - **`agentImage` must be in every release from now on.** An update moves the
   agent to it before the app; a release that names none leaves the agent where
   it is, and the new app then runs against the old agent.
-- **Images other than app and agent** are pinned by tag in the compiled
-  `version.go`; `release.json` pins them by digest (`make release-pin`).
+- **Images other than app and agent** are compiled in as release.json pins
+  them, by digest; the app's and the agent's by their version's tag.

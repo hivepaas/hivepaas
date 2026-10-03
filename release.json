@@ -9,7 +9,7 @@
     "traefikImage": "traefik:v3.7.13@sha256:24841fe2de7304c149343d877d2923b4c8800a38ba015dea9174c23b20e344a0",
     "victoriaLogsImage": "victoriametrics/victoria-logs:v1.53.0@sha256:251121fa882af99b95ba0c230a4a2f412ea602d2698c64a96c58dc9842bb755d",
     "vlagentImage": "victoriametrics/vlagent:v1.53.0@sha256:a82f93ffecc153fb068606903e512368b070272739d823abe99fad0eff6e1849",
-    "placeholderImage": "ghcr.io/hivepaas/placeholder:1.0.0",
+    "placeholderImage": "ghcr.io/hivepaas/placeholder:1.0.0@sha256:8f1ef9d5e54dc58554818fa3dfdaba4e7aeab0aaf9eefb313de6251173f709e2",
     "registryImage": "ghcr.io/project-zot/zot:v2.1.21@sha256:6b69512c00dceaad05b1144e6079aac6aa7309d7fd200f9947ecb1de09cf48c8",
     "functionRuntimes": {
       "node24": "ghcr.io/hivepaas/function-runtime-node24:1.2.0@sha256:dd905254ef4cd7b88bb73d37f75fcaa9b700c3ed521bcb8e3eac424e2229d779",

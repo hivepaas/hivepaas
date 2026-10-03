@@ -20,6 +20,7 @@ import { ROUTE } from "@application/shared/constants";
 import { Checkbox, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui";
 
 import { AutoscaleEvents } from "./autoscale-events.com";
+import { AutoscaleTestGuide } from "./autoscale-test-guide.com";
 import { LOGGING_REASONS, SCALE_IN_DELAYS, pausedText, replicasText, signalText } from "./autoscale-texts";
 
 const MAX_REPLICAS_LIMIT = 50;
@@ -124,6 +125,11 @@ export function AutoscaleSection({ projectId, env, appId, autoscale, readOnly = 
     } = useController({ control, name: "cpuTarget" });
     const { field: scaleInDelay } = useController({ control, name: "scaleInDelay" });
     const isEnabled = watch("enabled");
+    const [watchedRequestsOn, watchedRequestsTarget, watchedMaxReplicas] = watch([
+        "requestsOn",
+        "requestsTarget",
+        "maxReplicas",
+    ]);
 
     const isFunction = autoscale?.isFunction ?? false;
     const savedOn = autoscale?.enabled ?? false;
@@ -379,6 +385,25 @@ export function AutoscaleSection({ projectId, env, appId, autoscale, readOnly = 
                                     ))}
                                 </SelectContent>
                             </Select>
+                        </InfoBlock>
+
+                        <InfoBlock
+                            titleWidth={220}
+                            title={
+                                <LabelWithInfo
+                                    label="Test It"
+                                    content="Load it, and watch it scale: the steps, and a command to load it with."
+                                />
+                            }
+                        >
+                            <AutoscaleTestGuide
+                                projectId={projectId}
+                                env={env}
+                                appId={appId}
+                                isFunction={isFunction}
+                                requestsTarget={watchedRequestsOn ? watchedRequestsTarget : REQUESTS_TARGET_DEFAULT}
+                                maxReplicas={watchedMaxReplicas}
+                            />
                         </InfoBlock>
 
                         {!isFunction && autoscale?.writableMounts && (

@@ -206,6 +206,8 @@ export function QuickInstallSslCertForm({
     const expireAt = expireAtField.value;
     const notifyFrom = notifyFromField.value;
     const effectiveDomain = wildcardDomain.value ? toWildcardDomain(domain) : domain;
+    // Only a wildcard is proven through DNS: a plain domain needs no DNS provider.
+    const isWildcard = wildcardDomain.value || effectiveDomain.includes("*");
 
     const isCustom = certType === ESslCertType.Custom;
     const isAcme = !isCustom && certType !== ESslCertType.SelfSigned;
@@ -221,7 +223,7 @@ export function QuickInstallSslCertForm({
     );
     const acmeProviderQuery = AcmeDnsProviderQueries.useFindManyPaginated(
         { pagination: LIST_ALL_PAGE },
-        { enabled: isAcme },
+        { enabled: isAcme && isWildcard },
     );
 
     const providerOptions = useMemo(
@@ -352,6 +354,10 @@ export function QuickInstallSslCertForm({
                                     }
 
                                     wildcardDomain.onChange(value === true);
+                                    // The DNS provider goes with the wildcard: hidden, it is not sent.
+                                    if (value !== true) {
+                                        acmeProvider.onChange(undefined);
+                                    }
                                 }}
                                 disabled={readOnly}
                             />
@@ -438,45 +444,47 @@ export function QuickInstallSslCertForm({
                                     </Field>
                                 </InfoBlock>
 
-                                <InfoBlock
-                                    title={
-                                        <LabelWithInfo
-                                            label="ACME DNS Provider"
-                                            isRequired={wildcardDomain.value || effectiveDomain.includes("*")}
-                                        />
-                                    }
-                                    titleWidth={150}
-                                >
-                                    <Field>
-                                        <Combobox<ProviderOption>
-                                            options={acmeProviderComboboxOptions}
-                                            value={acmeProvider.value?.id ?? null}
-                                            onChange={(_, option) => {
-                                                acmeProvider.onChange(option ?? undefined);
-                                            }}
-                                            placeholder="select ACME DNS provider"
-                                            searchable
-                                            closeOnSelect
-                                            emptyText="No ACME DNS providers available"
-                                            valueKey="id"
-                                            aria-invalid={isAcmeProviderInvalid}
-                                            loading={acmeProviderQuery.isFetching}
-                                            onRefresh={() => void acmeProviderQuery.refetch()}
-                                            isRefreshing={acmeProviderQuery.isRefetching}
-                                            disabled={readOnly}
-                                        />
-                                        <FieldError errors={[errors.acmeProvider]} />
-                                        <AppLink.Modules
-                                            to={acmeDnsProvidersRoute}
-                                            className="text-xs text-link"
-                                            target="_blank"
-                                            rel="noopener noreferrer"
-                                            ignorePrevPath
-                                        >
-                                            Configure ACME DNS Providers
-                                        </AppLink.Modules>
-                                    </Field>
-                                </InfoBlock>
+                                {isWildcard && (
+                                    <InfoBlock
+                                        title={
+                                            <LabelWithInfo
+                                                label="ACME DNS Provider"
+                                                isRequired
+                                            />
+                                        }
+                                        titleWidth={150}
+                                    >
+                                        <Field>
+                                            <Combobox<ProviderOption>
+                                                options={acmeProviderComboboxOptions}
+                                                value={acmeProvider.value?.id ?? null}
+                                                onChange={(_, option) => {
+                                                    acmeProvider.onChange(option ?? undefined);
+                                                }}
+                                                placeholder="select ACME DNS provider"
+                                                searchable
+                                                closeOnSelect
+                                                emptyText="No ACME DNS providers available"
+                                                valueKey="id"
+                                                aria-invalid={isAcmeProviderInvalid}
+                                                loading={acmeProviderQuery.isFetching}
+                                                onRefresh={() => void acmeProviderQuery.refetch()}
+                                                isRefreshing={acmeProviderQuery.isRefetching}
+                                                disabled={readOnly}
+                                            />
+                                            <FieldError errors={[errors.acmeProvider]} />
+                                            <AppLink.Modules
+                                                to={acmeDnsProvidersRoute}
+                                                className="text-xs text-link"
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                ignorePrevPath
+                                            >
+                                                Configure ACME DNS Providers
+                                            </AppLink.Modules>
+                                        </Field>
+                                    </InfoBlock>
+                                )}
                             </>
                         )}
 

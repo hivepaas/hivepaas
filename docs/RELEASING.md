@@ -39,9 +39,10 @@ installation run them.
    - required reviewers, the maintainers who may release. Every job that pushes
      an image waits for one;
    - **Deployment branches and tags › Selected branches and tags**: the tag
-     rules `v*` and `verify-v*`, and no branch. Only a release tag or a verifier
-     tag can push an image; a run from a branch is refused ("not allowed to
-     deploy to release due to environment protection rules").
+     rules `v*`, `verify-v*` and `placeholder-v*`, and no branch. Only a release,
+     verifier or placeholder tag can push an image; a run from a branch is
+     refused ("not allowed to deploy to release due to environment protection
+     rules").
 
    No secret is needed: the workflows push to GHCR with their own `GITHUB_TOKEN`.
 2. **The release verifier** (see [below](#the-release-verifier)): tag `main`
@@ -49,8 +50,8 @@ installation run them.
    workflow; pin what its summary prints in `deployment/release/install.sh`. The Release workflow refuses a tag
    while `VERIFY_IMAGE` is empty.
 3. **Rulesets** (Settings › Rules), in both `hivepaas` and `hivepaas-dashboard`:
-   - tags `v*` (and `verify-v*` in `hivepaas`): only maintainers create them; no
-     update, no deletion;
+   - tags `v*` (and `verify-v*`, `placeholder-v*` in `hivepaas`): only
+     maintainers create them; no update, no deletion;
    - branch `release` (backend): no force push, no deletion, changes through a
      pull request.
 4. **The `release` branch.** Installations and the installer read
@@ -219,6 +220,23 @@ verifier* workflow, through a tag `verify-v<N>` with the next `N`: the
 
 Then put the two lines the workflow's summary prints into `install.sh`, through
 a pull request, and release as usual.
+
+## The placeholder
+
+A new app is created before anything is deployed to it, and runs
+`ghcr.io/hivepaas/placeholder` until then: `tools/placeholder`, one static
+binary that waits and stops on SIGTERM, built from
+`deployment/release/Dockerfile.placeholder`. It needs no command, so the image
+an app is given later runs its own. `release.json` pins it as
+`placeholderImage`.
+
+It is built once and reused by every release. Build a new one (the
+*Placeholder* workflow, through a tag `placeholder-vX.Y.Z`; the `release`
+environment must allow the tag rule `placeholder-v*`) when `tools/placeholder`
+changes or Go fixes a vulnerability it is built with. The first push creates
+the package private: make it public, as the others (see GHCR packages). Then
+put the line the workflow's summary prints into `release.json`, or the tag and
+`make release-pin`, and release as usual.
 
 ## Known gaps before 1.0.0
 

@@ -28,6 +28,8 @@ func TestTheCompiledBetaIsReleaseJSONs(t *testing.T) {
 	assert.Equal(t, want.VictoriaLogsImage, BetaVersion.VictoriaLogsImage)
 	assert.Equal(t, want.VlagentImage, BetaVersion.VlagentImage)
 	assert.Equal(t, want.RegistryImage, BetaVersion.RegistryImage)
+	assert.Equal(t, want.PlaceholderImage, BetaVersion.PlaceholderImage)
+	assert.NotEmpty(t, BetaVersion.PlaceholderImage, "a new app starts on it")
 	assert.Equal(t, want.FunctionRuntimes, BetaVersion.FunctionRuntimes)
 	assert.Equal(t, want.BlockMajorUpgrade, BetaVersion.BlockMajorUpgrade)
 	assert.Nil(t, BetaVersion.Templates, "templates are only read from the release info fetched")

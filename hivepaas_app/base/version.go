@@ -101,6 +101,10 @@ type ReleaseInfo struct {
 	// The configuration HivePaaS writes for it is the configuration this version
 	// of zot accepts, so a bump is the trigger to re-check that.
 	RegistryImage string `json:"registryImage"`
+	// PlaceholderImage is what a new app runs until its first deployment: an
+	// image whose own command waits and stops on a signal, so the app is given
+	// none, and the image set later runs its own.
+	PlaceholderImage string `json:"placeholderImage"`
 	// FunctionRuntimes are the images functions are built on, by runtime
 	// (node24, go127; go127-build for the image Go functions compile in). A
 	// function built under a release uses the image this release names, and

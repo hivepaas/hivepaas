@@ -10,6 +10,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/githelper"
+	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/logging"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/safego"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/vcsurl"
 )
@@ -18,6 +19,9 @@ type repoPRSynchronizedEventData struct {
 	RepoURL  string
 	PRNumber int64
 	ChangeID string
+	// Author is who opened the pull request: its previews follow its new
+	// commits only when they may write to the repository.
+	Author prAuthor
 }
 
 // processWebhookEventPRSynchronized handles pull request synchronization/update events
@@ -45,6 +49,20 @@ func (uc *UC) processWebhookEventPRSynchronized(
 	)
 	if err != nil {
 		return hperrors.Wrap(err)
+	}
+
+	if len(apps) == 0 {
+		return nil
+	}
+
+	// A preview runs the pull request's code with the app's env vars: a
+	// stranger's new commits wait for someone who may write to deploy them.
+	if !uc.prAuthorAllowed(ctx, db, event.RepoURL, &event.Author, data, apps) {
+		logging.Warnf("webhook: %s may not write to %s: the new commits of pull request %d are not deployed",
+			event.Author.Login, event.RepoURL, event.PRNumber)
+		_ = uc.sendPRComment(ctx, db, &repoPRCommentEventData{RepoURL: event.RepoURL, PRNumber: event.PRNumber},
+			data, apps[0], buildPushNotDeployedComment(event.ChangeID))
+		return nil
 	}
 
 	var wg sync.WaitGroup

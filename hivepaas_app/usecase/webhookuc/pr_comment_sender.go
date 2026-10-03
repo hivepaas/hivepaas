@@ -116,6 +116,19 @@ func buildAuthorNotAllowedComment() string {
 		"by the repository's owners, members and collaborators only."
 }
 
+// buildPushNotDeployedComment says a stranger's new commits were not deployed
+// to the pull request's preview, and how someone who may write deploys them.
+func buildPushNotDeployedComment(changeID string) string {
+	commit := "New commits were"
+	if changeID != "" {
+		commit = fmt.Sprintf("New commits, up to `%.12s`, were", changeID)
+	}
+	return "⚠️ **" + commit + " pushed, but the preview was not deployed again.**\n\n" +
+		"The pull request's author cannot write to this repository, and a preview runs its code with the " +
+		"application's environment variables. Someone who can should read the changes, then comment " +
+		"`/hivepaas deploy` to deploy them."
+}
+
 func buildNoActivePreviewComment() string {
 	return "ℹ️ **No active preview deployment found for this pull request.**"
 }

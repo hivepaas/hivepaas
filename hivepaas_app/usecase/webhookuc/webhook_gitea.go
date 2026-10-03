@@ -47,11 +47,14 @@ func (uc *UC) parseGiteaWebhook(
 		}
 	case gitea.PullRequestPayload:
 		switch p.Action {
-		case actionSynchronize:
+		// Gitea says synchronized; synchronize is kept for any that say it as
+		// GitHub does.
+		case actionSynchronize, giteaActionSynchronized:
 			data.PRSynchronized = &repoPRSynchronizedEventData{
 				RepoURL:  p.Repository.HTMLURL,
 				PRNumber: p.Index,
 				ChangeID: p.PullRequest.Head.Sha,
+				Author:   giteaAuthor(p.PullRequest.Poster, p.Repository),
 			}
 		case actionClosed:
 			data.PRClosed = &repoPRClosedEventData{
@@ -63,18 +66,32 @@ func (uc *UC) parseGiteaWebhook(
 	return nil
 }
 
+// giteaActionSynchronized is the action of Gitea's pull request event when
+// commits are pushed to it.
+const giteaActionSynchronized = "synchronized"
+
 // giteaCommentAuthor is who wrote a comment, as Gitea's webhook says. Whether
 // they may write is asked of Gitea: its webhook says only who owns the
 // repository.
-func giteaCommentAuthor(p *gitea.IssueCommentPayload) prCommentAuthor {
-	var author prCommentAuthor
-	if p.Comment != nil && p.Comment.Poster != nil {
-		author.Login = p.Comment.Poster.UserName
+func giteaCommentAuthor(p *gitea.IssueCommentPayload) prAuthor {
+	var poster *gitea.User
+	if p.Comment != nil {
+		poster = p.Comment.Poster
 	}
-	if p.Repository != nil {
-		author.RepoPrivate = p.Repository.Private
-		author.IsRepoOwner = author.Login != "" && p.Repository.Owner != nil &&
-			strings.EqualFold(author.Login, p.Repository.Owner.UserName)
+	return giteaAuthor(poster, p.Repository)
+}
+
+// giteaAuthor is a user of a repository - a comment's or a pull request's
+// author - as Gitea's webhook says.
+func giteaAuthor(user *gitea.User, repo *gitea.Repository) prAuthor {
+	var author prAuthor
+	if user != nil {
+		author.Login = user.UserName
+	}
+	if repo != nil {
+		author.RepoPrivate = repo.Private
+		author.IsRepoOwner = author.Login != "" && repo.Owner != nil &&
+			strings.EqualFold(author.Login, repo.Owner.UserName)
 	}
 	return author
 }

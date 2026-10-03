@@ -38,7 +38,7 @@ type repoPRCommentEventData struct {
 	Branch      string
 	// Author is who wrote the comment: only someone who may write to the
 	// repository runs commands.
-	Author prCommentAuthor
+	Author prAuthor
 
 	// Parsed command data
 	previewCmd             string
@@ -93,7 +93,7 @@ func (uc *UC) processWebhookEventPRComment(
 
 	// 0. Only someone who may write to the repository runs commands: a preview
 	// runs the pull request's code with the app's env vars.
-	if !uc.prCommentAuthorAllowed(ctx, db, prCommentEvent, data, apps) {
+	if !uc.prAuthorAllowed(ctx, db, prCommentEvent.RepoURL, &prCommentEvent.Author, data, apps) {
 		logging.Warnf("webhook: %s may not write to %s: its command on pull request %d is refused",
 			prCommentEvent.Author.Login, prCommentEvent.RepoURL, prCommentEvent.PRNumber)
 		_ = uc.sendPRComment(ctx, db, prCommentEvent, data, firstApp, buildAuthorNotAllowedComment())

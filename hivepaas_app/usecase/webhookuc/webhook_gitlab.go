@@ -47,7 +47,7 @@ func (uc *UC) parseGitlabWebhook(
 				CommentBody: p.ObjectAttributes.Note,
 				// Whether the author may write is asked of GitLab: its
 				// webhook does not say.
-				Author: prCommentAuthor{Login: p.User.UserName, ID: p.User.ID},
+				Author: prAuthor{Login: p.User.UserName, ID: p.User.ID},
 			}
 		}
 	case gitlab.MergeRequestEventPayload:
@@ -56,6 +56,8 @@ func (uc *UC) parseGitlabWebhook(
 				RepoURL:  p.Repository.GitHTTPURL,
 				PRNumber: p.ObjectAttributes.IID,
 				ChangeID: p.ObjectAttributes.SHA,
+				// Whether the author may write is asked of GitLab.
+				Author: gitlabMRAuthor(&p),
 			}
 		} else if p.ObjectAttributes.State == actionClosed || p.ObjectAttributes.State == actionMerged {
 			data.PRClosed = &repoPRClosedEventData{
@@ -65,4 +67,14 @@ func (uc *UC) parseGitlabWebhook(
 		}
 	}
 	return nil
+}
+
+// gitlabMRAuthor is who opened a merge request: its id, and its name when the
+// event is theirs.
+func gitlabMRAuthor(p *gitlab.MergeRequestEventPayload) prAuthor {
+	author := prAuthor{ID: p.ObjectAttributes.AuthorID}
+	if p.User.ID == author.ID {
+		author.Login = p.User.UserName
+	}
+	return author
 }

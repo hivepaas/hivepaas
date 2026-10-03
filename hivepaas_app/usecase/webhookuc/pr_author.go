@@ -18,9 +18,9 @@ import (
 // collaborators. Anyone else - a first-time contributor, a stranger - is not.
 var githubWriterAssociations = []string{"OWNER", "MEMBER", "COLLABORATOR"}
 
-// prCommentAuthor is who wrote a pull request's comment, and what the
+// prAuthor is who wrote a pull request, or a comment on one, and what the
 // provider's webhook says of them.
-type prCommentAuthor struct {
+type prAuthor struct {
 	// Login names the author; ID is GitLab's id of them.
 	Login string
 	ID    int64
@@ -34,38 +34,40 @@ type prCommentAuthor struct {
 	RepoPrivate bool
 }
 
-// prCommentAuthorAllowed decides whether a comment's author may run commands:
+// prAuthorAllowed decides whether an author - of a comment's command, or of a
+// pull request whose preview new commits would deploy - may have a preview run:
 // someone who may write to the repository. A preview runs the pull request's
-// code with the app's env vars, so a stranger commenting on a public
-// repository must not start one.
-func (uc *UC) prCommentAuthorAllowed(
+// code with the app's env vars, so a stranger on a public repository must not
+// start one.
+func (uc *UC) prAuthorAllowed(
 	ctx context.Context,
 	db database.IDB,
-	event *repoPRCommentEventData,
+	repoURL string,
+	author *prAuthor,
 	data *handleRepoWebhookData,
 	apps []*entity.App,
 ) bool {
 	var canWrite *bool
-	if prCommentAuthorNeedsAsking(&event.Author, data.WebhookSetting.MustAsRepoWebhook().Kind) {
-		canWrite = uc.askCanWriteRepo(ctx, db, event, data, apps)
+	if prAuthorNeedsAsking(author, data.WebhookSetting.MustAsRepoWebhook().Kind) {
+		canWrite = uc.askCanWriteRepo(ctx, db, repoURL, author, data, apps)
 	}
-	return prCommentAuthorVerdict(&event.Author, canWrite)
+	return prAuthorVerdict(author, canWrite)
 }
 
-// prCommentAuthorNeedsAsking is true when the provider's API must say whether
+// prAuthorNeedsAsking is true when the provider's API must say whether
 // the author may write: Gitea and GitLab do not say it in their webhooks.
-func prCommentAuthorNeedsAsking(author *prCommentAuthor, kind base.WebhookKind) bool {
+func prAuthorNeedsAsking(author *prAuthor, kind base.WebhookKind) bool {
 	if author.Association != "" || author.IsRepoOwner {
 		return false
 	}
 	return kind == base.WebhookKindGitea || kind == base.WebhookKindGitlab
 }
 
-// prCommentAuthorVerdict is whether the author may run commands, from the
+// prAuthorVerdict is whether the author may run commands, from the
 // webhook and, when asked, the provider's answer - canWrite, nil when it was
 // not asked or did not answer. With neither, only a private repository's
 // commenters may, as only those given access to it can comment.
-func prCommentAuthorVerdict(author *prCommentAuthor, canWrite *bool) bool {
+func prAuthorVerdict(author *prAuthor, canWrite *bool) bool {
 	switch {
 	case author.Association != "":
 		return slices.Contains(githubWriterAssociations, author.Association)
@@ -83,15 +85,16 @@ func prCommentAuthorVerdict(author *prCommentAuthor, canWrite *bool) bool {
 func (uc *UC) askCanWriteRepo(
 	ctx context.Context,
 	db database.IDB,
-	event *repoPRCommentEventData,
+	repoURL string,
+	author *prAuthor,
 	data *handleRepoWebhookData,
 	apps []*entity.App,
 ) *bool {
-	parsedURL, err := vcsurl.Parse(event.RepoURL)
+	parsedURL, err := vcsurl.Parse(repoURL)
 	if err != nil {
 		return nil
 	}
-	user := gitapi.RepoUser{Login: event.Author.Login, ID: event.Author.ID}
+	user := gitapi.RepoUser{Login: author.Login, ID: author.ID}
 	for _, app := range apps {
 		setting, err := uc.gitAPISetting(ctx, db, data, app)
 		if err != nil || setting == nil {
@@ -99,7 +102,7 @@ func (uc *UC) askCanWriteRepo(
 		}
 		canWrite, err := gitapi.CanWriteRepo(ctx, setting, parsedURL.Username, parsedURL.Name, user)
 		if err != nil {
-			logging.Warnf("webhook: asking whether %s may write to %s: %v", user.Login, event.RepoURL, err)
+			logging.Warnf("webhook: asking whether %s may write to %s: %v", user.Login, repoURL, err)
 			continue
 		}
 		return &canWrite

@@ -60,8 +60,8 @@ func (uc *UC) parseGogsWebhook(
 // gogsCommentAuthor is who wrote a comment, as Gogs' webhook says: HivePaaS
 // cannot ask Gogs whether they may write, so only the repository's owner, or
 // anyone on a private repository, may run commands.
-func gogsCommentAuthor(p *client.IssueCommentPayload) prCommentAuthor {
-	var author prCommentAuthor
+func gogsCommentAuthor(p *client.IssueCommentPayload) prAuthor {
+	var author prAuthor
 	if p.Sender != nil {
 		author.Login = gofn.Coalesce(p.Sender.UserName, p.Sender.Login)
 	}

@@ -280,6 +280,8 @@ func TestRunScalesWhatItMustAndSavesWhy(t *testing.T) {
 
 	assert.Equal(t, map[string]uint64{"s1": 2}, w.swarm.scaled)
 	assert.True(t, data.SaveTask)
+	assert.Equal(t, base.TaskStatusDone, data.Task.Status, "saved as the run ended, not as it was queued")
+	assert.False(t, data.Task.EndedAt.IsZero())
 	out := &entity.TaskAppAutoscaleOutput{}
 	assert.NoError(t, json.Unmarshal([]byte(data.Task.Output), out))
 	if assert.Len(t, out.Scaled, 1) {

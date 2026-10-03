@@ -32,7 +32,7 @@ Kubernetes' HPA does.
 **Requests in flight per instance**, by Little's law, as for functions:
 
 ```text
-inFlight = sum(min(Duration, window) of the requests that ended in the window) / window
+inFlight = sum(min(OriginDuration, window) of the requests that ended in the window) / window
 desired  = ceil(inFlight / requestsTarget)      requestsTarget: requests per instance
 ```
 
@@ -41,8 +41,12 @@ desired  = ceil(inFlight / requestsTarget)      requestsTarget: requests per ins
 - One LogsQL query a run for every app on it: the access log lines of the last
   60 s whose `ServiceName` matches `^svc-(<id>|<id>...)-[0-9]+@swarm$`, the app
   id cut out of it with `replace_regexp`, `sum(Duration)` and `count()` by it.
-- Lines whose `OriginStatus` is 0 (no replica answered) take no time in the app:
-  counted, but they do not raise `inFlight`.
+- A request's time is its `OriginDuration`, how long Traefik waited on the
+  app: 0 for one no replica answered, which is counted but does not raise
+  `inFlight`. Not `Duration`, which adds Traefik's time and a slow client's;
+  and not filtered by `OriginStatus`, which Traefik 3.7 writes 0 for nearly
+  every request the app answered (22 of 61,460 carried one, on a local
+  install) - a filter on it read a loaded app as idle.
 - **A request counts for the window at most** (`math min(Duration, window)`):
   a WebSocket, a stream of events or a long poll is logged when it ends, with
   its whole duration - an hour's, ending in the minute, would read as 60

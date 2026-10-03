@@ -285,13 +285,20 @@ func (s *service) Run(ctx context.Context, data *queue.PeriodicExecData) error {
 			output.Scaled = append(output.Scaled, scaled)
 		}
 	}
+	err = errors.Join(errs...)
 	if len(output.Scaled) > 0 {
 		// A run that changed nothing leaves no task: one every 15 s would
-		// bury the ones that did.
+		// bury the ones that did. The queue saves it as it is: its status and
+		// end are the run's to set.
 		data.Task.MustSetOutput(output)
+		data.Task.Status = gofn.If(err == nil, base.TaskStatusDone, base.TaskStatusFailed)
+		if data.Task.StartedAt.IsZero() {
+			data.Task.StartedAt = now
+		}
+		data.Task.EndedAt = s.now()
 		data.SaveTask = true
 	}
-	return hperrors.Wrap(errors.Join(errs...))
+	return hperrors.Wrap(err)
 }
 
 // runData is what one run reads, for every app at once, over [start, end).

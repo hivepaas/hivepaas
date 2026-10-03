@@ -30,7 +30,10 @@ func loadMatch(match []loggingmodel.FieldMatch, phrase string) (string, error) {
 var (
 	// httpApp is the app id cut out of a service's name.
 	httpApp = strconv.Quote(HTTPUnpackPrefix + "app")
-	// httpCapped is a request's duration, the range's at most.
+	// httpOriginDuration is how long the proxy waited on the app for a
+	// request, in ns: 0 for one it found no replica for.
+	httpOriginDuration = strconv.Quote(HTTPUnpackPrefix + "OriginDuration")
+	// httpCapped is that time, the range's at most.
 	httpCapped = strconv.Quote(HTTPUnpackPrefix + "capped")
 )
 
@@ -38,6 +41,13 @@ var (
 // keeps: every value from the request in a Go-quoted literal, the structure
 // fixed here. One query for every app asked about, by the app id its services'
 // names hold: its cost does not grow with them.
+//
+// A request's time is OriginDuration, how long the proxy waited on the app.
+// Not filtered by OriginStatus: Traefik 3.7 writes it 0 for nearly every
+// request the app answered - 22 of 61,460 carried one, on a local install -
+// so a filter on it counted next to nothing. And not Duration, which adds the
+// proxy's own time and a slow client's. A request no replica answered took
+// none of the app's time.
 //
 // A request counts for the range at most: a WebSocket or a long poll, logged
 // when it ends with its whole duration, would otherwise read as many requests
@@ -64,16 +74,17 @@ func BuildRequestLoadQuery(req *loggingmodel.RequestLoadReq) (string, error) {
 	// Anchored, so that an app's id never matches as the start of another's.
 	services := "^svc-(" + strings.Join(ids, "|") + ")-[0-9]+@swarm$"
 	return head +
-		` | unpack_json from _msg fields (ServiceName, OriginStatus, Duration) result_prefix ` +
+		` | unpack_json from _msg fields (ServiceName, OriginDuration) result_prefix ` +
 		strconv.Quote(HTTPUnpackPrefix) +
 		` | filter ` + httpService + `:~` + strconv.Quote(services) +
 		` | copy ` + httpService + ` as ` + httpApp +
 		` | replace_regexp ("^svc-(.+)-[0-9]+@swarm$", "$1") at ` + httpApp +
-		` | math min(` + httpDuration + `, ` + strconv.FormatInt(span.Nanoseconds(), 10) + `) as ` + httpCapped +
+		` | math min(` + httpOriginDuration + `, ` + strconv.FormatInt(span.Nanoseconds(), 10) + `) as ` +
+		httpCapped +
 		// min() of a duration that is not a number is the range: only numbers
 		// are summed.
-		` | stats by (` + httpApp + `) sum(` + httpCapped + `) if (` + httpOrigin + `:>0 AND ` + httpDuration +
-		`:>=0) busyNs, count() requests`, nil
+		` | stats by (` + httpApp + `) sum(` + httpCapped + `) if (` + httpOriginDuration + `:>=0) busyNs,` +
+		` count() requests`, nil
 }
 
 // RequestLoad says how busy apps were over the request's range, by the ids
@@ -144,9 +155,15 @@ func (c *Client) CPULoad(ctx context.Context, req *loggingmodel.CPULoadReq) (*lo
 	}
 	out := &loggingmodel.CPULoadResp{ByApp: make(map[string][]*loggingmodel.ContainerCPU, len(req.AppIDs))}
 	for _, row := range rows {
+		// A container with no measure in the range - its first row has none -
+		// is left out, not read as idle.
+		cpu := number(row["cpu"])
+		if cpu == nil {
+			continue
+		}
 		app := row[ResourceUnpackPrefix+"app"]
 		out.ByApp[app] = append(out.ByApp[app], &loggingmodel.ContainerCPU{
-			Container: row[ResourceUnpackPrefix+"container"], CPU: value(row["cpu"]), Limit: value(row["cpuLimit"]),
+			Container: row[ResourceUnpackPrefix+"container"], CPU: *cpu, Limit: value(row["cpuLimit"]),
 		})
 	}
 	return out, nil

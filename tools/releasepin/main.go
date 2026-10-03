@@ -9,6 +9,11 @@
 //	go run ./tools/releasepin              # pin release.json in place
 //	go run ./tools/releasepin -check       # only report what is not pinned to the current digest
 //
+// The app's and the agent's images are built after the release commit, from the
+// tag on it: until then their tags are not in the registry, and they are left
+// as they are, to be pinned by a run after the build. Every other image is
+// pinned before the commit - the binary is built with release.json as it is.
+//
 // It needs docker with buildx, and asks the registries; run it before
 // `make release-sign`, never after.
 package main
@@ -29,6 +34,9 @@ import (
 // imageField is a `"somethingImage": "reference"` line of release.json.
 var imageField = regexp.MustCompile(`("[A-Za-z]+Image"\s*:\s*")([^"]+)(")`)
 
+// builtWithTheRelease are the fields naming the images a release builds itself.
+var builtWithTheRelease = regexp.MustCompile(`^"(appImage|agentImage)"`)
+
 // functionRuntimes is the `"functionRuntimes": {…}` map of a release, and
 // runtimeField one `"runtime": "reference"` line of it.
 var (
@@ -47,6 +55,9 @@ type report struct {
 	Changed []string
 	// Floating are the tags that name less than a patch.
 	Floating []string
+	// NotBuilt are the app's and the agent's images whose tags the registry
+	// does not have yet: the release is not built.
+	NotBuilt []string
 }
 
 // pin pins every image of release to its tag's current digest, keeping every
@@ -84,6 +95,10 @@ func (p *pinner) pinMatches(text []byte, field *regexp.Regexp) []byte {
 		name, _, _ := strings.Cut(current, "@")
 
 		digest, err := p.resolve(name)
+		if err != nil && builtWithTheRelease.Match(parts[1]) {
+			p.report.NotBuilt = append(p.report.NotBuilt, name)
+			return match
+		}
 		if err != nil {
 			p.failed = fmt.Errorf("%s: %w", name, err)
 			return match
@@ -150,6 +165,9 @@ func main() {
 	}
 	for _, ref := range rep.Floating {
 		fmt.Printf("note: %s may name a line rather than one release; the digest pins it, the name does not say which\n", ref)
+	}
+	for _, ref := range rep.NotBuilt {
+		fmt.Printf("note: %s is not built yet; pin it again once the release is\n", ref)
 	}
 	switch {
 	case *check && len(rep.Changed) > 0:

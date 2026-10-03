@@ -202,12 +202,20 @@ type world struct {
 	out      *bytes.Buffer
 }
 
+func nodesOf(ids ...string) []*entity.LoggingPerformanceNode {
+	out := make([]*entity.LoggingPerformanceNode, 0, len(ids))
+	for _, id := range ids {
+		out = append(out, &entity.LoggingPerformanceNode{ID: id})
+	}
+	return out
+}
+
 func newWorld(t *testing.T, nodes ...string) *world {
 	t.Helper()
 	w := &world{
 		settings: &settings{
 			logging: &entity.LoggingSettings{Enabled: true, Sources: entity.LoggingSources{Apps: true},
-				Performance: &entity.LoggingPerformance{Enabled: true, Nodes: nodes}},
+				Performance: &entity.LoggingPerformance{Enabled: true, Nodes: nodesOf(nodes...)}},
 			features: []*entity.Setting{featuresOf("A2")},
 		},
 		docker: &fakeDocker{},
@@ -231,6 +239,7 @@ func TestReconcileRunsOBIOnAListedNode(t *testing.T) {
 	assert.Equal(t, []string{obi.Image}, w.docker.pulled)
 	assert.Contains(t, w.docker.config, "//hivepaas-obi.yaml:")
 	assert.Contains(t, w.docker.config, `container_name: "p1_dev_a2.*"`)
+	assert.Contains(t, w.docker.config, "global_scale_factor: -2", "the recommended capacity: small, on 456 MB")
 	assert.NotContains(t, w.docker.config, "p1_dev_a1", "not opted in")
 	assert.Equal(t, "container:agent-container", string(w.docker.obi.HostConfig.NetworkMode))
 
@@ -251,7 +260,7 @@ func TestReconcileRunsOBIOnAListedNode(t *testing.T) {
 // are not stored, no app asks, or the node cannot run it.
 func TestReconcileRemovesOBI(t *testing.T) {
 	cases := map[string]func(w *world){
-		"node not listed": func(w *world) { w.settings.logging.Performance.Nodes = []string{"node-2"} },
+		"node not listed": func(w *world) { w.settings.logging.Performance.Nodes = nodesOf("node-2") },
 		"feature off":     func(w *world) { w.settings.logging.Performance.Enabled = false },
 		"logs not stored": func(w *world) { w.settings.logging.Enabled = false },
 		"no app asks":     func(w *world) { w.settings.features = nil },
@@ -331,7 +340,8 @@ func TestStatusRow(t *testing.T) {
 	var st Status
 	assert.NoError(t, json.Unmarshal(w.out.Bytes(), &st))
 	assert.Equal(t, Status{HP: "obi", Node: "node-1", Wanted: true, Running: true, Apps: 1,
-		Preflight: obi.Preflight{OK: true, Kernel: "6.8.0-124-generic", MemAvailableMB: 456}}, st)
+		Preflight: obi.Preflight{OK: true, Kernel: "6.8.0-124-generic", MemAvailableMB: 456,
+			Recommended: obi.CapacitySmall, Capacity: obi.CapacitySmall}}, st)
 
 	w.out.Reset()
 	w.settings.logging.Enabled = false
@@ -352,3 +362,18 @@ func TestAppOf(t *testing.T) {
 }
 
 func itoa(n int) string { return strconv.Itoa(n) }
+
+// A capacity chosen for the node sizes OBI's maps; changing it replaces OBI.
+func TestReconcileSizesOBIByTheNodesCapacity(t *testing.T) {
+	w := newWorld(t, "node-1")
+	w.settings.logging.Performance.Nodes[0].Capacity = "medium"
+	assert.NoError(t, w.uc.Reconcile(context.Background()))
+	assert.Contains(t, w.docker.config, "global_scale_factor: -1")
+	assert.Equal(t, obi.CapacityMedium, w.uc.Status().Preflight.Capacity)
+	assert.Equal(t, obi.CapacitySmall, w.uc.Status().Preflight.Recommended)
+
+	w.settings.logging.Performance.Nodes[0].Capacity = "auto"
+	assert.NoError(t, w.uc.Reconcile(context.Background()))
+	assert.Equal(t, 2, w.docker.created, "replaced")
+	assert.Contains(t, w.docker.config, "global_scale_factor: -2")
+}

@@ -65,7 +65,7 @@ func TestLiveEnsureRunsOBIThatCountsTheApp(t *testing.T) {
 
 	uc := New(quiet{}, nil, nil, nil, dm, "")
 	uc.agentID = agentID
-	assert.NoError(t, uc.ensure(ctx, obi.Config(obi.Patterns([]string{"hp_obi_live"}))))
+	assert.NoError(t, uc.ensure(ctx, obi.Config(obi.Patterns([]string{"hp_obi_live"}), obi.CapacitySmall)))
 	assert.True(t, uc.running)
 
 	exec := func(cmd string) string {

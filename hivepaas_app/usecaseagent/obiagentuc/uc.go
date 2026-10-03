@@ -78,6 +78,9 @@ type UC struct {
 	running     bool
 	preflight   obi.Preflight
 	preflightAt time.Time
+	// capacity is the node's capacity as the settings choose it, auto for the
+	// recommended one: the preflight is checked again when it changes.
+	capacity obi.Capacity
 	// appIDs are the opted-in apps, by their swarm service's name: what a
 	// container's name starts with.
 	appIDs map[string]string
@@ -143,7 +146,14 @@ func (uc *UC) Reconcile(ctx context.Context) error {
 		}
 	}
 	logsOn := cfg.Enabled && (cfg.Sources.Apps || cfg.Sources.HivePaaS)
-	wanted := logsOn && cfg.Performance.RunsOn(uc.nodeID)
+	node := cfg.Performance.Node(uc.nodeID)
+	wanted := logsOn && node != nil
+	capacity := obi.CapacityAuto
+	if node != nil {
+		if c, ok := obi.ParseCapacity(node.Capacity); ok {
+			capacity = c
+		}
+	}
 	appIDs := map[string]string{}
 	if wanted {
 		if appIDs, err = uc.optedInApps(ctx); err != nil {
@@ -159,8 +169,8 @@ func (uc *UC) Reconcile(ctx context.Context) error {
 		// free memory, which preflight must not count against it.
 		uc.running = uc.containerRunning(ctx)
 	}
-	if uc.preflightAt.IsZero() || uc.now().Sub(uc.preflightAt) >= preflightInterval {
-		uc.preflight, uc.preflightAt = obi.Check(uc.root, uc.running), uc.now()
+	if uc.preflightAt.IsZero() || uc.now().Sub(uc.preflightAt) >= preflightInterval || capacity != uc.capacity {
+		uc.preflight, uc.preflightAt, uc.capacity = obi.Check(uc.root, uc.running, capacity), uc.now(), capacity
 	}
 	if !wanted || !uc.preflight.OK || len(appIDs) == 0 {
 		return uc.remove(ctx)
@@ -169,7 +179,7 @@ func (uc *UC) Reconcile(ctx context.Context) error {
 	for service := range appIDs {
 		services = append(services, service)
 	}
-	return uc.ensure(ctx, obi.Config(obi.Patterns(services)))
+	return uc.ensure(ctx, obi.Config(obi.Patterns(services), uc.preflight.Capacity))
 }
 
 // loggingSettings are the logging settings, the defaults when there are none.

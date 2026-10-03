@@ -27,25 +27,25 @@ const (
 	ReasonLowMemory = "low-memory"
 )
 
-const (
-	minKernelMajor, minKernelMinor = 5, 8
-	// minMemAvailableMB is the free memory a node needs to start OBI: what it
-	// was measured at, twice.
-	minMemAvailableMB = 200
-)
+const minKernelMajor, minKernelMinor = 5, 8
 
-// Preflight is whether a node can run OBI, and why not.
+// Preflight is whether a node can run OBI, and why not; and the capacity it
+// runs with, beside the one HivePaaS recommends for its memory.
 type Preflight struct {
 	OK             bool     `json:"ok"`
 	Reasons        []string `json:"reasons,omitempty"`
 	Kernel         string   `json:"kernel,omitempty"`
+	MemTotalMB     int      `json:"memTotalMb,omitempty"`
 	MemAvailableMB int      `json:"memAvailableMb,omitempty"`
+	Recommended    Capacity `json:"recommended"`
+	Capacity       Capacity `json:"capacity"`
 }
 
 // Check reads a node's filesystem, mounted at root - the agent's /host - for
-// what OBI needs. Free memory is checked only when OBI is not running yet: once
-// it runs, its own use is in it.
-func Check(root string, running bool) Preflight {
+// what OBI needs at a capacity, auto for the recommended one. Free memory is
+// checked only when OBI is not running yet - once it runs, its own use is in
+// it - and against twice what the capacity takes.
+func Check(root string, running bool, capacity Capacity) Preflight {
 	p := Preflight{Kernel: readTrimmed(filepath.Join(root, "proc/sys/kernel/osrelease"))}
 	if !kernelAtLeast(p.Kernel, minKernelMajor, minKernelMinor) {
 		p.Reasons = append(p.Reasons, ReasonKernelTooOld)
@@ -63,8 +63,11 @@ func Check(root string, running bool) Preflight {
 	if strings.Contains(readTrimmed(filepath.Join(root, "sys/kernel/security/lockdown")), "[confidentiality]") {
 		p.Reasons = append(p.Reasons, ReasonLockdown)
 	}
-	p.MemAvailableMB = memAvailableMB(filepath.Join(root, "proc/meminfo"))
-	if !running && p.MemAvailableMB > 0 && p.MemAvailableMB < minMemAvailableMB {
+	meminfo := filepath.Join(root, "proc/meminfo")
+	p.MemTotalMB, p.MemAvailableMB = memInfoMB(meminfo, "MemTotal:"), memInfoMB(meminfo, "MemAvailable:")
+	p.Recommended = Recommended(p.MemTotalMB)
+	p.Capacity = capacity.Effective(p.MemTotalMB)
+	if !running && p.MemAvailableMB > 0 && p.MemAvailableMB < 2*p.Capacity.MemoryMiB() {
 		p.Reasons = append(p.Reasons, ReasonLowMemory)
 	}
 	p.OK = len(p.Reasons) == 0
@@ -96,7 +99,8 @@ func containerVirt(root string) bool {
 	return err == nil && bytes.Contains(environ, []byte("container=lxc"))
 }
 
-func memAvailableMB(path string) int {
+// memInfoMB is a /proc/meminfo field, in MB; 0 when it cannot be read.
+func memInfoMB(path, field string) int {
 	f, err := os.Open(path)
 	if err != nil {
 		return 0
@@ -105,7 +109,7 @@ func memAvailableMB(path string) int {
 	scanner := bufio.NewScanner(f)
 	for scanner.Scan() {
 		fields := strings.Fields(scanner.Text())
-		if len(fields) >= 2 && fields[0] == "MemAvailable:" {
+		if len(fields) >= 2 && fields[0] == field {
 			kb, err := strconv.Atoi(fields[1])
 			if err != nil {
 				return 0

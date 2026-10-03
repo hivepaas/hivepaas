@@ -60,24 +60,33 @@ type LoggingSettings struct {
 }
 
 // LoggingPerformance says which nodes run OBI for the apps that ask for it:
-// none unless on, and then those listed by swarm node id - it costs memory on
-// each. See docs/superpowers/specs/2026-10-03-obi-calls-and-routes-design.md.
+// none unless on, and then those listed - it costs memory on each. See
+// docs/superpowers/specs/2026-10-03-obi-calls-and-routes-design.md.
 type LoggingPerformance struct {
-	Enabled bool     `json:"enabled,omitempty"`
-	Nodes   []string `json:"nodes,omitempty"`
+	Enabled bool                      `json:"enabled,omitempty"`
+	Nodes   []*LoggingPerformanceNode `json:"nodes,omitempty"`
 }
 
-// RunsOn is whether a node runs OBI.
-func (p *LoggingPerformance) RunsOn(nodeID string) bool {
+// LoggingPerformanceNode is a node that runs OBI, and how many requests and
+// connections OBI tracks on it at once - its eBPF maps' size, and so its
+// memory: "small", "medium" or "large"; "" or "auto" for the one HivePaaS
+// recommends for the node's memory.
+type LoggingPerformanceNode struct {
+	ID       string `json:"id"`
+	Capacity string `json:"capacity,omitempty"`
+}
+
+// Node is a node's entry when it runs OBI, nil when it does not.
+func (p *LoggingPerformance) Node(nodeID string) *LoggingPerformanceNode {
 	if p == nil || !p.Enabled || nodeID == "" {
-		return false
+		return nil
 	}
-	for _, id := range p.Nodes {
-		if id == nodeID {
-			return true
+	for _, node := range p.Nodes {
+		if node != nil && node.ID == nodeID {
+			return node
 		}
 	}
-	return false
+	return nil
 }
 
 type LoggingSources struct {

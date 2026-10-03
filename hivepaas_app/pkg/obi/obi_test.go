@@ -26,10 +26,38 @@ func TestPatternsAndConfig(t *testing.T) {
 ebpf:
   maps_config:
     global_scale_factor: -2
-`, string(Config(patterns)))
+`, string(Config(patterns, CapacitySmall)))
+	assert.Contains(t, string(Config(patterns, CapacityMedium)), "global_scale_factor: -1\n")
+	assert.Contains(t, string(Config(patterns, CapacityLarge)), "global_scale_factor: 0\n")
 
-	assert.NotEqual(t, ConfigHash(Config(patterns)), ConfigHash(Config(patterns[:1])))
-	assert.Equal(t, ConfigHash(Config(patterns)), ConfigHash(Config(patterns)))
+	small := ConfigHash(Config(patterns, CapacitySmall))
+	assert.NotEqual(t, small, ConfigHash(Config(patterns[:1], CapacitySmall)))
+	assert.NotEqual(t, small, ConfigHash(Config(patterns, CapacityMedium)), "another capacity: another OBI")
+	assert.Equal(t, small, ConfigHash(Config(patterns, CapacitySmall)))
+}
+
+// HivePaaS recommends more capacity to a node with more memory; a capacity
+// chosen is kept, auto follows the recommendation.
+func TestCapacity(t *testing.T) {
+	for memMB, want := range map[int]Capacity{0: CapacitySmall, 961: CapacitySmall, 4096: CapacitySmall,
+		8192: CapacityMedium, 16384: CapacityMedium, 32768: CapacityLarge, 131072: CapacityLarge} {
+		assert.Equal(t, want, Recommended(memMB), memMB)
+	}
+	assert.Equal(t, CapacityMedium, CapacityAuto.Effective(16384))
+	assert.Equal(t, CapacityLarge, CapacityLarge.Effective(961), "chosen, whatever the memory")
+
+	for in, want := range map[string]Capacity{"": CapacityAuto, "auto": CapacityAuto, "small": CapacitySmall,
+		"medium": CapacityMedium, "large": CapacityLarge} {
+		got, ok := ParseCapacity(in)
+		assert.True(t, ok, in)
+		assert.Equal(t, want, got, in)
+	}
+	_, ok := ParseCapacity("huge")
+	assert.False(t, ok)
+
+	assert.Equal(t, -2, CapacitySmall.ScaleFactor())
+	assert.Equal(t, 215, CapacityLarge.MemoryMiB())
+	assert.Equal(t, 15000, CapacityMedium.Tracked())
 }
 
 // OBI is not privileged: the host's PID namespace, the agent's network one,
@@ -77,10 +105,21 @@ func node(t *testing.T, kernel string, files map[string]string) string {
 }
 
 func TestPreflight(t *testing.T) {
-	good := Check(node(t, "6.8.0-124-generic", nil), false)
+	good := Check(node(t, "6.8.0-124-generic", nil), false, CapacityAuto)
 	assert.True(t, good.OK, good.Reasons)
 	assert.Equal(t, "6.8.0-124-generic", good.Kernel)
+	assert.Equal(t, 976, good.MemTotalMB)
 	assert.Equal(t, 456, good.MemAvailableMB)
+	assert.Equal(t, CapacitySmall, good.Recommended)
+	assert.Equal(t, CapacitySmall, good.Capacity, "auto: the recommended one")
+
+	// 400 MB free: enough for small, not for large - twice its 215 MiB.
+	tight := map[string]string{"proc/meminfo": "MemTotal: 1000000 kB\nMemAvailable: 409600 kB\n"}
+	assert.True(t, Check(node(t, "6.8.0", tight), false, CapacitySmall).OK)
+	large := Check(node(t, "6.8.0", tight), false, CapacityLarge)
+	assert.Equal(t, CapacityLarge, large.Capacity, "chosen")
+	assert.Equal(t, CapacitySmall, large.Recommended)
+	assert.Contains(t, large.Reasons, ReasonLowMemory)
 
 	cases := map[string]struct {
 		kernel string
@@ -99,17 +138,18 @@ func TestPreflight(t *testing.T) {
 	}
 	for name, c := range cases {
 		t.Run(name, func(t *testing.T) {
-			p := Check(node(t, c.kernel, c.files), false)
+			p := Check(node(t, c.kernel, c.files), false, CapacityAuto)
 			assert.False(t, p.OK)
 			assert.Contains(t, p.Reasons, c.want)
 		})
 	}
 
 	// An OpenVZ host has /proc/bc too: it is no container.
-	host := Check(node(t, "5.10.0", map[string]string{"proc/vz/veinfo": "", "proc/bc/0": ""}), false)
+	host := Check(node(t, "5.10.0", map[string]string{"proc/vz/veinfo": "", "proc/bc/0": ""}), false, CapacityAuto)
 	assert.True(t, host.OK, host.Reasons)
 	// Once OBI runs, its own memory is in the free memory: not a reason.
-	running := Check(node(t, "6.8.0", map[string]string{"proc/meminfo": "MemAvailable: 102400 kB\n"}), true)
+	running := Check(node(t, "6.8.0", map[string]string{"proc/meminfo": "MemAvailable: 102400 kB\n"}), true,
+		CapacityAuto)
 	assert.True(t, running.OK, running.Reasons)
 }
 

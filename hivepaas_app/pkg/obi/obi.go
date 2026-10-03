@@ -39,12 +39,9 @@ const (
 	// with: one made with another is replaced.
 	LabelConfig = "hivepaas.obi.config"
 
-	// mapsScaleFactor shrinks OBI's eBPF maps to a quarter: about 100 MiB on a
-	// node instead of 215, every request still counted. -3 lost a third.
-	mapsScaleFactor = -2
-
-	// memoryLimit bounds OBI's container, its maps included: four times what
-	// it was measured at, and a node's other containers safe from it.
+	// memoryLimit bounds OBI's container, its maps included: nearly twice
+	// what it was measured at with its largest maps, and a node's other
+	// containers safe from it.
 	memoryLimit = 384 << 20
 )
 
@@ -73,15 +70,16 @@ func Patterns(services []string) []string {
 	return out
 }
 
-// Config is OBI's configuration: the containers it watches, its maps shrunk.
-// Patterns are quoted as JSON strings, which YAML reads as they are.
-func Config(patterns []string) []byte {
+// Config is OBI's configuration: the containers it watches, its maps sized
+// for a capacity. Patterns are quoted as JSON strings, which YAML reads as
+// they are.
+func Config(patterns []string, capacity Capacity) []byte {
 	var b strings.Builder
 	b.WriteString("discovery:\n  instrument:\n")
 	for _, p := range patterns {
 		b.WriteString("    - container_name: " + strconv.Quote(p) + "\n")
 	}
-	b.WriteString("ebpf:\n  maps_config:\n    global_scale_factor: " + strconv.Itoa(mapsScaleFactor) + "\n")
+	b.WriteString("ebpf:\n  maps_config:\n    global_scale_factor: " + strconv.Itoa(capacity.ScaleFactor()) + "\n")
 	return []byte(b.String())
 }
 

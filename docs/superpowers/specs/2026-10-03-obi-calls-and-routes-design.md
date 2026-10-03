@@ -105,8 +105,9 @@ images, files.
 
 ```text
 node:  OBI - a plain container the agent starts: host PID namespace, the
-       least capabilities, the Docker socket read-only, maps at -2, in the
-       agent's network namespace; its Prometheus endpoint on localhost
+       least capabilities, the Docker socket read-only, maps sized by the
+       node's capacity, in the agent's network namespace; its Prometheus
+       endpoint on localhost
 agent: scrapes it every 15 s; container_name -> the container's labels
        (hivepaas.app.id); drops what is no opted-in app's
        cumulative -> one row per series per 15 s: "hp":"routes", "hp":"calls"
@@ -134,9 +135,24 @@ UI:    the Metrics tab: routes in the HTTP view, a Dependencies view
   Never a port, never all containers. Tasks that start, stop or restart are
   picked up as they come (step 0). OBI is restarted, debounced, only when the
   set of apps changes.
-- **Its config**: maps at `global_scale_factor` -2; metrics feature
+- **Its config**: maps sized by the node's capacity (below); metrics feature
   `application`; the Prometheus endpoint on localhost; traces off until
   phase 4.
+- **Capacity, per node, chosen with a recommendation.** OBI allocates its eBPF
+  maps whole when it starts. Their size is how many requests and connections
+  it tracks at once, and its memory, idle or not. Too small loses what does
+  not fit, silently: -3 lost a third. An administrator chooses per node; the
+  default is HivePaaS's recommendation, by the node's memory:
+
+  | Capacity | `global_scale_factor` | Memory | Tracked at once | Recommended for |
+  |---|---|---|---|---|
+  | Small | -2 | about 100 MiB | about 7,500 | nodes under 8 GB |
+  | Medium | -1 | about 140 MiB | about 15,000 | 8 to 32 GB |
+  | Large | 0 | about 215 MiB | about 30,000 | 32 GB and more |
+
+  The agent reports, in its status row, the node's memory, the recommended
+  capacity and the one it runs with. Preflight asks for twice the chosen
+  capacity's memory free.
 - **Preflight**, run by the agent and reported to the settings page:
   - kernel 5.8 or later, with BTF (`/sys/kernel/btf/vmlinux`);
   - not a container-based VPS (OpenVZ, LXC);
@@ -150,8 +166,10 @@ UI:    the Metrics tab: routes in the HTTP view, a Dependencies view
 ### Turning it on, and telling the agents
 
 - **System → Logging**: "Routes and calls (eBPF)" - off by default. Its nodes
-  are listed with their preflight and a per-node switch, and the cost is shown:
-  "about 100 MB of memory on each node it runs on".
+  are listed with their preflight, a per-node switch, and a capacity. The
+  capacity is "Recommended (Small)" by default - the level shown for the
+  node's memory - or Small, Medium or Large, each with its memory and how many
+  it tracks at once.
 - **App → Feature Settings**: on or off per app, off by default. An app's
   numbers are collected only while both it and its node are on.
 - **The agents are told** as the Docker API feature tells them: a sync RPC,

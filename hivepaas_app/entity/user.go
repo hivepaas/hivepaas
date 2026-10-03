@@ -62,6 +62,9 @@ func (u *User) GetObjectScope() *ObjectScope {
 	}
 }
 
+// IsDemoUser says whether u is the public demo account, which only reads.
+// Nobody is when no configuration is loaded or no demo user is configured.
 func (u *User) IsDemoUser() bool {
-	return u.ID == config.Current().Users.Demo.UserID
+	cfg := config.Current()
+	return cfg != nil && cfg.Users.Demo.UserID != "" && u.ID == cfg.Users.Demo.UserID
 }

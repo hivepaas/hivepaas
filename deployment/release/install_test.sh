@@ -951,6 +951,13 @@ test_help() {
   check "--help exits 0" 0 "$?"
   check_contains "usage" "$out" "Usage: install.sh"
   check_contains "the settings file to fill in" "$out" "deployment/release/install.env"
+  # The settings file of the release the installer came with: the repository's
+  # copy reads main, a release's installer its own tag.
+  check_contains "the settings file of main, unbaked" "$out" "/hivepaas/main/deployment/release/install.env"
+  out=$(HIVEPAAS_INSTALL_REF=v9.9.9 bash "$HERE/install.sh" --help)
+  check_contains "the settings file of the installer's release" "$out" \
+    "/hivepaas/v9.9.9/deployment/release/install.env"
+  out=$(bash "$HERE/install.sh" --help)
   check_contains "the choice over an earlier database" "$out" "HIVEPAAS_EXISTING_DB"
   for key in ADMIN_EMAIL ADMIN_PASSWORD APP_DOMAIN ROOT_DOMAIN APP_SECRET DATA_DIR PROJECT_DATA_DIR CHANNEL \
     SWAP SWAP_SIZE_MB EARLYOOM UPGRADE_DOCKER AGENT_IMAGE RELEASE_BRANCH INSTALL_REF CERT_WAIT_SECONDS; do

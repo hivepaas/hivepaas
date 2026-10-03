@@ -160,6 +160,10 @@ The example is `v1.0.0-beta1`; for a stable release read `stable` for `beta`.
      - a stable release: `https://github.com/hivepaas/hivepaas/releases/latest/download/install.sh`,
        set once.
    - The landing page and the docs give `curl -fsSL https://get.hivepaas.com | sudo bash`.
+   - The docs' silent install (`hivepaas-website`,
+     `docs/docs/installation/silent-install.md`) downloads `install.env` from
+     this release's assets: point it at the new tag. `releases/latest` skips a
+     beta, so the link names its release.
 
 ## Test the update, not only the install
 

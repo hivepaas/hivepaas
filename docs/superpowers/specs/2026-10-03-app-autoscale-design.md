@@ -175,6 +175,9 @@ same `app-autoscale` setting, with its fields for apps:
    read; an app's unreadable signals do not stop it being turned on in the
    form - the API refuses, with why - but a port in host mode does; the
    texts of the access log's and the agent's reasons are shared with the
-   Metrics tab.
+   Metrics tab. Later: only turning autoscale on is refused while what it
+   reads cannot be read - one already on is saved, and says it is paused -
+   with errors of their own (`ERR_AUTOSCALE_*`) that say why in words; the
+   form refuses it first.
 3. Later: memory, queue length and custom metrics, Min by schedule, scaling to
    zero.

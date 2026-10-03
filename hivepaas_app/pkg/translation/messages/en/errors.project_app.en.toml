@@ -40,3 +40,8 @@ ERR_DEPLOYMENT_METHOD_FUNCTION_REQUIRED = "A function is deployed from its code:
 ERR_DEPLOYMENT_METHOD_FUNCTION_UNALLOWED = "Only an app created as a function is deployed from a function's code"
 ERR_APP_KIND_FUNCTION_UNCHANGEABLE = "A function stays a function, and an app becomes one only when it is created as one"
 ERR_APP_NOT_FUNCTION = "App '{{.Name}}' is not a function"
+
+# Autoscale errors
+ERR_AUTOSCALE_UNREADABLE = "Autoscale cannot be turned on for '{{.Name}}': {{.Reason}}"
+ERR_AUTOSCALE_NO_SIGNAL = "Autoscale scales '{{.Name}}' on its requests, its CPU or both: set Requests Per Instance or CPU Target"
+ERR_AUTOSCALE_HOST_PORTS = "'{{.Name}}' publishes a port in host mode, so it runs one replica a node at most: publish it through the routing mesh to autoscale it"

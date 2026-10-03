@@ -2,6 +2,7 @@ package appsettingsuc
 
 import (
 	"context"
+	"strings"
 	"time"
 
 	"github.com/moby/moby/api/types/swarm"
@@ -94,10 +95,8 @@ func (uc *UC) UpdateAppAutoscale(
 		if row != nil && row.UpdateVer != req.UpdateVer {
 			return hperrors.Wrap(hperrors.ErrUpdateVerMismatched)
 		}
-		if next.Enabled {
-			if err := uc.checkAutoscaleCanTurnOn(ctx, db, app, isFunction, next); err != nil {
-				return err
-			}
+		if err = uc.checkAutoscaleUpdate(ctx, db, app, isFunction, row, next); err != nil {
+			return err
 		}
 
 		now := timeutil.NowUTC()
@@ -186,52 +185,91 @@ func (uc *UC) autoscaleBlocker(
 	if check.Refused != "" {
 		return check.Refused, check, nil
 	}
-	return unreadableSignals(autoscale, check), check, nil
+	if unreadable := unreadableSignals(autoscale, check); len(unreadable) > 0 {
+		return unreadable[0].Reason, check, nil
+	}
+	return "", check, nil
 }
 
-// unreadableSignals is why none of the signals an app scales on can be read,
-// the first of their reasons; "" when one can, or it scales on none.
-func unreadableSignals(autoscale *entity.AppAutoscale, check *appautoscaleservice.Check) string {
-	var reasons []string
+// signalReason is a signal an app scales on, and why it cannot be read.
+type signalReason struct {
+	Signal string
+	Reason string
+}
+
+// unreadableSignals is the signals an app scales on when none of them can be
+// read, each with why; nil when one can, or it scales on none.
+func unreadableSignals(autoscale *entity.AppAutoscale, check *appautoscaleservice.Check) []signalReason {
+	var out []signalReason
 	if autoscale.RequestsTarget > 0 {
 		if check.Requests == "" {
-			return ""
+			return nil
 		}
-		reasons = append(reasons, check.Requests)
+		out = append(out, signalReason{Signal: "requests", Reason: check.Requests})
 	}
 	if autoscale.CPUTarget > 0 {
 		if check.CPU == "" {
-			return ""
+			return nil
 		}
-		reasons = append(reasons, check.CPU)
+		out = append(out, signalReason{Signal: "CPU", Reason: check.CPU})
 	}
-	if len(reasons) == 0 {
-		return ""
-	}
-	return reasons[0]
+	return out
 }
 
-// checkAutoscaleCanTurnOn refuses to turn autoscale on when it could not act:
-// a function's calls, or every signal an app scales on, unreadable; an app
-// scaling on nothing, or publishing a port on its node.
-func (uc *UC) checkAutoscaleCanTurnOn(
+// unreadableText says why each signal an app scales on cannot be read.
+func unreadableText(unreadable []signalReason) string {
+	parts := make([]string, 0, len(unreadable))
+	for _, u := range unreadable {
+		parts = append(parts, "its "+u.Signal+" cannot be read, as "+appautoscaleservice.ReasonText(u.Reason))
+	}
+	return strings.Join(parts, "; and ")
+}
+
+// checkAutoscaleUpdate refuses an update that leaves autoscale on and unable
+// to act, as checkAutoscale says; turned off, anything goes.
+func (uc *UC) checkAutoscaleUpdate(
+	ctx context.Context, db database.IDB, app *entity.App, isFunction bool, row *entity.Setting,
+	next *entity.AppAutoscale,
+) error {
+	if !next.Enabled {
+		return nil
+	}
+	wasOn := false
+	if row != nil {
+		current, err := row.AsAppAutoscale()
+		if err != nil {
+			return hperrors.Wrap(err)
+		}
+		wasOn = current.Enabled
+	}
+	return uc.checkAutoscale(ctx, db, app, isFunction, next, !wasOn)
+}
+
+// checkAutoscale refuses an autoscale that is on and could never act: an app
+// scaling on nothing, or publishing a port on its node. Being turned on, it
+// refuses one that cannot act now - a function's calls, or every signal an
+// app scales on, unreadable; one already on is left to say it is paused, its
+// settings still changed.
+func (uc *UC) checkAutoscale(
 	ctx context.Context, db database.IDB, app *entity.App, isFunction bool, next *entity.AppAutoscale,
+	turningOn bool,
 ) error {
 	if isFunction {
+		if !turningOn {
+			return nil
+		}
 		paused, err := uc.autoscalePaused(ctx, app)
 		if err != nil {
 			return err
 		}
 		if paused != "" {
-			return hperrors.Wrap(hperrors.ErrValueInvalid).WithExtraDetail(
-				"Autoscale reads the function's calls from its stored logs, which cannot be read (%s): "+
-					"turn stored logs on in System → Logging.", paused)
+			return hperrors.Wrap(hperrors.ErrAutoscaleUnreadable).WithParam("Name", app.Name).WithParam("Reason",
+				"its calls are read from its stored logs, and "+appautoscaleservice.ReasonText(paused))
 		}
 		return nil
 	}
 	if next.RequestsTarget == 0 && next.CPUTarget == 0 {
-		return hperrors.Wrap(hperrors.ErrValueInvalid).WithExtraDetail(
-			"Autoscale scales an app on its requests, its CPU or both: set Requests Per Instance or CPU Target.")
+		return hperrors.Wrap(hperrors.ErrAutoscaleNoSignal).WithParam("Name", app.Name)
 	}
 	service, err := uc.clusterService.ServiceInspect(ctx, app.ServiceID, false)
 	if err != nil {
@@ -242,13 +280,11 @@ func (uc *UC) checkAutoscaleCanTurnOn(
 		return hperrors.Wrap(err)
 	}
 	if check.Refused == appautoscaleservice.RefusedHostPorts {
-		return hperrors.Wrap(hperrors.ErrValueInvalid).WithExtraDetail(
-			"The app publishes a port in host mode, which one replica a node can take: publish it through " +
-				"the routing mesh to autoscale it.")
+		return hperrors.Wrap(hperrors.ErrAutoscaleHostPorts).WithParam("Name", app.Name)
 	}
-	if reason := unreadableSignals(next, check); reason != "" {
-		return hperrors.Wrap(hperrors.ErrValueInvalid).WithExtraDetail(
-			"Autoscale cannot read what the app scales on (%s): see Availability & Scaling.", reason)
+	if unreadable := unreadableSignals(next, check); turningOn && len(unreadable) > 0 {
+		return hperrors.Wrap(hperrors.ErrAutoscaleUnreadable).WithParam("Name", app.Name).
+			WithParam("Reason", unreadableText(unreadable))
 	}
 	return nil
 }

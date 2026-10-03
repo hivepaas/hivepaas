@@ -37,6 +37,16 @@ var (
 	ErrAppNotFunction = NewErr(ErrPreconditionFailed, "ERR_APP_NOT_FUNCTION")
 )
 
+// Errors for autoscale
+var (
+	// What the app scales on cannot be read now: it is not turned on.
+	ErrAutoscaleUnreadable = NewErr(ErrPreconditionFailed, "ERR_AUTOSCALE_UNREADABLE")
+	// An app other than a function scales on its requests, its CPU or both.
+	ErrAutoscaleNoSignal = NewErr(ErrPreconditionFailed, "ERR_AUTOSCALE_NO_SIGNAL")
+	// An app publishing a port in host mode runs one replica a node at most.
+	ErrAutoscaleHostPorts = NewErr(ErrPreconditionFailed, "ERR_AUTOSCALE_HOST_PORTS")
+)
+
 // Errors for sources
 var (
 	ErrRepoNotFound             = NewErr(ErrNotFound, "ERR_REPO_NOT_FOUND")

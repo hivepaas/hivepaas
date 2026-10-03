@@ -1,0 +1,157 @@
+# Apps that scale themselves
+
+## Why
+
+Functions scale themselves (spec `2026-10-03-function-autoscale-design.md`):
+their replicas follow the calls their runtime logs. Every other app still has
+its **Replicas** set by hand, in Availability & Scaling: kept for the peak all
+day, or short of it.
+
+HivePaaS now stores two numbers that say how busy any app is, with no new
+component:
+
+- **Requests**, from Traefik's JSON access log: every request reaching the app
+  by its domains, with its duration (`Duration`, ns), its service
+  `svc-<lowercased app id>-<n>@swarm`.
+- **CPU**, from the agent's `"hp":"resources"` rows: every container's cores,
+  and its limit (`cpuLimit`, from `cpu.max`), every 15 s.
+
+This spec scales an app's replicas from them, with the function autoscale's job,
+setting, decision and history.
+
+**In scope:** Replicated apps; between Min and Max, from 1 up; requests and CPU.
+**Not in scope:** memory (it does not fall when replicas are added: scaling on
+it only grows); queue length and custom metrics; scaling to zero; schedules
+(Min by time of day); vertical scaling. All are follow-ups.
+
+## The signals
+
+An app scales on one or both, its choice; with both, the larger answer wins, as
+Kubernetes' HPA does.
+
+**Requests in flight per instance**, by Little's law, as for functions:
+
+```text
+inFlight = sum(Duration of the requests that ended in the window) / window
+desired  = ceil(inFlight / requestsTarget)      requestsTarget: requests per instance
+```
+
+- From Traefik's access log, so only requests through the app's domains: a
+  worker, or an app called inside its project, has none - it scales on CPU.
+- One LogsQL query a run for every app on it: the access log lines of the last
+  60 s whose `ServiceName` matches `^svc-(<id>|<id>...)-[0-9]+@swarm$`, the app
+  id cut out of it with `replace_regexp`, `sum(Duration)` and `count()` by it.
+- Lines whose `OriginStatus` is 0 (no replica answered) take no time in the app:
+  counted, but they do not raise `inFlight`.
+
+**CPU per instance**, the HPA formula:
+
+```text
+utilization = sum(cpu) / sum(cpuLimit)   over the app's containers, the last 60 s
+desired     = ceil(current * utilization / cpuTarget)      cpuTarget: 70 % by default
+```
+
+- One query a run for every app on it: the agent's rows of the last 60 s, each
+  container's average, summed by app.
+- **The limit**: `cpuLimit` from the container's cgroup. An app without a CPU
+  limit falls back to its CPU **reservation**, from its service spec; with
+  neither, CPU cannot be used for it, and the section says so.
+- **Tolerance**: within 10 % of the target, no change - CPU moves a little
+  every run, and a replica each way every minute is noise.
+
+## The decision
+
+The function autoscale's, its hysteresis shared, the signal apart:
+
+1. **Skip** an app that is stopped, being deployed, or not Replicated.
+2. **Hold** when a signal it uses cannot be read: logging off, the query
+   failed, the access log not ready (`AccessLogReadiness`), the agent not
+   labelled. No data is never read as no load. With two signals, one that can
+   be read is enough.
+3. `desired` from the signals, clamped to `[min, max]`.
+4. **Up**: after 2 runs in a row above (30 s). No fast path as functions have:
+   an app does not say it turned a request away. After a scale-out, a
+   **cooldown** of 1 min before the next one from CPU: a starting container
+   burns CPU, and would ask for more.
+5. **Down**: once below for the scale-in delay, half the gap a run - as
+   functions.
+6. **The cluster is full**: a scale-out Swarm cannot place - tasks pending for
+   want of CPU or memory reservations, or of a node the constraints allow -
+   is not followed by another. When the service's running tasks
+   (`ServiceStatus`, one `ServiceList` a run) stay below its desired for 2 min,
+   the app holds its count, and its section says why, until they run.
+
+## What it refuses, what it warns of
+
+- **Not Replicated**: paused, as a function is.
+- **A port published in host mode**: one replica a node at most - refused,
+  with why.
+- **A writable volume or bind mount**: allowed, with a warning in the section -
+  the replicas share the volume on one node, and each has its own on another.
+  A database must not autoscale.
+- **Sessions in memory**: a warning in the docs, as for any app with more than
+  one replica.
+
+## Settings
+
+The same **Autoscale** section, in Availability & Scaling, for every app; the
+same `app-autoscale` setting, with its fields for apps:
+
+| Field | Default | |
+|---|---|---|
+| **Autoscale** | off | |
+| **Min Replicas**, **Max Replicas** | 1, 5 | as for functions |
+| **Requests Per Instance** | off | requests in flight one instance takes: 1 to 1000 |
+| **CPU Target** | 70 % | of the limit, or reservation, per instance: 10 to 100 |
+| **Scale-in Delay** | 5 min | as for functions |
+
+- At least one of Requests and CPU.
+- A function keeps its **Target** (of its Concurrency) and does not show these.
+- Each signal says whether it can be used now, and why not: no domain, the
+  access log not ready, no CPU limit nor reservation, the agent not labelled.
+
+## The job, the service
+
+- **One job for every app**: `function-autoscale` becomes `app-autoscale`, and
+  the job's setting is renamed by `EnsureJob`, which finds it by either kind -
+  no migration.
+- `functionautoscaleservice` becomes `appautoscaleservice`: one run reads the
+  invocation lines for the functions, the access log and the agent's rows for
+  the other apps - three queries at most, whatever the number of apps.
+- `decide` splits into the signal - a function's, an app's - and the shared
+  hysteresis, `settle`.
+- The saved task's output stays as it is: an app's scaling lists its in-flight
+  requests, its CPU, the signal that decided.
+
+## API, dashboard, MCP
+
+- `GET/PUT .../apps/{app}/autoscale` take any app; the answer adds each
+  signal's readiness, and the warnings.
+- The **Metrics** tab draws the replicas on the **Requests** and **CPU** charts,
+  as on a function's **Calls**.
+- MCP: the same `autoscale` kind of the app settings tools.
+- Docs: Resources and placement, a section on autoscale.
+
+## Risks
+
+- **Reaction time, 45 s to 2 min**: a request is logged when it ends, the
+  agent's rows come every 15 s, 2 runs above. Min is the answer for a known
+  peak.
+- **A slow start**: an app that takes a minute to answer is scaled before it
+  helps, and more if CPU climbs meanwhile - the cooldown bounds it; a health
+  check keeps Traefik from sending it requests before it answers.
+- **Scale-in drops requests**: Swarm stops a task with SIGTERM while Traefik may
+  still route to it for a moment - an app should finish its requests on
+  SIGTERM, with a stop grace period; the docs say so.
+- **Internal traffic** is not seen by the Requests signal: CPU covers it.
+
+## Phases
+
+1. The backend: the setting's fields, the service renamed and generalized,
+   the two queries, the decision split, the refusals and the full-cluster
+   hold, the API for every app; tests against a fake swarm and a live
+   VictoriaLogs with seeded Traefik and agent rows.
+2. The dashboard's section for apps, the replicas on the Requests and CPU
+   charts, MCP, docs.
+3. Later: memory, queue length and custom metrics, Min by schedule, scaling to
+   zero.

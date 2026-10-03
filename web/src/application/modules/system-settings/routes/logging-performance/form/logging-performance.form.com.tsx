@@ -210,7 +210,9 @@ export function LoggingPerformanceForm({ settings, readOnly, onSubmit, children 
                                         A node&apos;s capacity is how many requests and connections OBI tracks there at
                                         once. More takes more memory, idle or not; too little loses what does not fit,
                                         silently. The recommendation follows the node&apos;s memory: Small under 8 GB,
-                                        Medium under 32 GB, Large from 32 GB.
+                                        Medium under 32 GB, Large from 32 GB. The memory shown is a one-core
+                                        node&apos;s: a node with more cores, or a busy one, takes up to about twice as
+                                        much. Each request OBI measures also costs about 14 µs of CPU.
                                     </p>
                                     {settings.statusReason === "unreadable" && (
                                         <p className="text-sm text-muted-foreground">

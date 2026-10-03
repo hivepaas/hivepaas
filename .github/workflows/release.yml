@@ -66,9 +66,10 @@ jobs:
             { echo "::error::install.sh pins no release verifier (VERIFY_IMAGE): run the Release verifier workflow and pin its digest"; exit 1; }
 
       # The binary is built with release.json as it is: every image it names,
-      # but the app's and the agent's (built by this run), is pinned now.
+      # but the app's and the agent's, is pinned now. Those two are this run's
+      # to build, and a rebuild under the same tag finds an older build there.
       - name: The release's images are pinned
-        run: go run ./tools/releasepin -check
+        run: go run ./tools/releasepin -check -deps
 
       - name: Test
         run: go test -count=1 ./...

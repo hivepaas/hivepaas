@@ -101,7 +101,8 @@ The example is `v1.0.0-beta1`; for a stable release read `stable` for `beta`.
    the new digest is enough: an installation pinned to the old one updates.
 
    Merge it to `main`. The workflow refuses a tag that is not this `appVersion`,
-   and an image other than the app's and the agent's that is not pinned.
+   and an image other than the app's and the agent's that is not pinned
+   (`releasepin -check -deps`).
 
 3. **Tag the dashboard**, on the commit to release:
    ```bash

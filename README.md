@@ -47,7 +47,7 @@ An open-source, resource-efficient alternative to Heroku, Render, and Coolify fo
 ## 🌐 Website & Demo
 
 * **Official Website:** [https://hivepaas.com](https://hivepaas.com)
-* **Demo Server:** *Coming soon*
+* **Demo Servers:** the addresses and the sign-in of the public demo servers are on the [website](https://hivepaas.com/#demo).
 
 ---
 

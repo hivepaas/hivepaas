@@ -866,7 +866,10 @@ test_write_self_signed_cert() {
   write_self_signed_cert "$TMP/certs" mydomain.com hivepaas.dev.mydomain.com
   check "written" 0 "$?"
   text=$(openssl x509 -in "$TMP/certs/self-signed.crt" -noout -text)
-  check_contains "common name" "$text" "CN=mydomain.com"
+  # The subject in one spelling: -text writes "CN = x" on OpenSSL 3.0 and
+  # "CN=x" on later ones and LibreSSL.
+  check_contains "common name" \
+    "$(openssl x509 -in "$TMP/certs/self-signed.crt" -noout -subject -nameopt RFC2253)" "CN=mydomain.com"
   check_contains "names" "$text" "DNS:mydomain.com, DNS:*.mydomain.com, DNS:hivepaas.dev.mydomain.com"
   check_contains "an EC P-256 key" "$text" "prime256v1"
   check "the key is root's alone" 600 "$(stat -c %a "$TMP/certs/self-signed.key" 2>/dev/null ||

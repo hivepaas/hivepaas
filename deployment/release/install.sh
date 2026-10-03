@@ -2074,9 +2074,11 @@ For trying a release before it is published; an install never needs them:
   HIVEPAAS_AGENT_IMAGE         the agent's image (default: from the release)
 
 Silent install - a settings file to fill in, with every setting explained:
-  curl -fsSLO https://raw.githubusercontent.com/hivepaas/hivepaas/main/deployment/release/install.env
-  sudo bash install.sh --config install.env --yes
 USAGE
+  # The settings file of the release this installer came with, as silent_hint
+  # gives it: the repository's copy reads main.
+  printf '  curl -fsSLO %s/%s/deployment/release/install.env\n' "$REPO_RAW" "$(install_ref)"
+  printf '  sudo bash install.sh --config install.env --yes\n'
 }
 
 parse_args() {

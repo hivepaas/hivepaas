@@ -84,7 +84,9 @@ images, files.
 
   OBI is not restarted when tasks change.
 - **Metrics under bursts are whole**: 2,000 of 2,000 at 64 at once, where
-  spans lost 30% in the spike. Counts can come from OBI.
+  spans lost 30% in the spike. Counts can come from OBI - but see the load
+  test below: under sustained load, -2 dropped most of them until
+  `wakeup_len` was lowered.
 - **Attributes**: every series carries `container_name`, and needs no pid or
   cgroup lookup:
   - servers: route templated (`/u/*`), method, status;
@@ -97,7 +99,54 @@ images, files.
   `http_client_request_duration_seconds`,
   `db_client_operation_duration_seconds`). The service graph is not, and is not
   needed.
-- **Not measured**: OBI's CPU on a loaded 1-vCPU node.
+- **Not measured**: OBI's CPU on a loaded 1-vCPU node. Measured since, on
+  Docker Desktop: below.
+
+## Load test (2026-10-03, Docker Desktop)
+
+A Node.js app pinned to one CPU, as on a 1-vCPU node, and OBI on the same
+CPU: `/` answers `ok`; `/chain` calls another app first. `oha` sent the load
+from other CPUs, at fixed rates and as fast as it could. The VM: 10 CPUs,
+7.6 GiB, kernel 7.0 (LinuxKit). Each run was made without OBI, with it, and
+without it again; the numbers without are the two runs' range.
+
+**Counted.** OBI reads its ring buffer once `ebpf.wakeup_len` events have
+gathered, 500 by default. At -2 that is more than the buffer holds in time:
+OBI dropped the rest, logging nothing.
+
+| Capacity, `wakeup_len` | 500 req/s | 2,000 req/s | as fast as possible |
+|---|---|---|---|
+| Small (-2), 500 | 42% | 12% | under 1% (of ~44,000/s) |
+| Small (-2), 500, `high_request_volume` | 42% | 12% | under 1% |
+| Small (-2), 64 | 100% | 100% | 100% (of ~42,000/s) |
+| Medium (-1), 500 | 100% | 100% | 100% |
+| Large (0), 500 | 100% | 100% | 100% |
+
+The agent now sets `wakeup_len` 64, 128 and 256 for Small, Medium and Large.
+With 64, OBI on the app's CPU counted 1,404,887 of 1,405,000 requests and
+378,831 of 379,036 calls over the four runs. At low rates the last few events
+wait for the next wake-up: a scrape later, not lost.
+
+**Cost**, Small, `wakeup_len` 64, OBI on the app's CPU:
+
+| Run | Without OBI | With OBI |
+|---|---|---|
+| `/` at 2,000 req/s: app's CPU | 0.19-0.21 cores | 0.21, OBI 0.05 |
+| `/chain` at 1,000 req/s: app's CPU | 0.26-0.28 cores | 0.26, OBI 0.05 |
+| `/` as fast as possible | 54,000-56,000 req/s | 31,000 (app 0.77, OBI 0.23) |
+| `/chain` as fast as possible | 17,000 req/s | 11,100 (app 0.83, OBI 0.17) |
+
+- **Latency** at the fixed rates moved within the runs' noise: p99 3.3-7.2 ms
+  without, 2.9-3.3 ms with.
+- **CPU per request**: about 14 µs - 6.6 µs in the app's own probes, 7.4 µs in
+  OBI. A trivial handler's throughput fell by 35-44% with its CPU full; one
+  using a millisecond of CPU a request would lose about 1.4%, by the same
+  14 µs. Below saturation the app's CPU did not move, and OBI took about
+  25 µs an event.
+- **Memory** grows with a node's CPUs and with load: Small took 144-229 MiB,
+  Medium 199, Large 284 on these 10 CPUs, against 73-98 MiB at -2 on 1 vCPU.
+  The capacities' figures are a 1-vCPU node's. The container's limit is
+  512 MiB.
 
 ## Design
 

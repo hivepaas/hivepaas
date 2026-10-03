@@ -86,7 +86,7 @@ function valuesOf(autoscale?: AppAutoscale): AutoscaleValues {
  * its requests, its CPU or both. Saved on its own, apart from the service's settings below.
  */
 export function AutoscaleSection({ projectId, env, appId, autoscale, readOnly = false }: Props) {
-    const { control, handleSubmit, reset, watch } = useForm<AutoscaleValues>({
+    const { control, handleSubmit, reset, watch, setError } = useForm<AutoscaleValues>({
         defaultValues: valuesOf(autoscale),
         resolver: zodResolver(AutoscaleSchema),
         mode: "onSubmit",
@@ -148,6 +148,17 @@ export function AutoscaleSection({ projectId, env, appId, autoscale, readOnly = 
 
     function onSubmit(values: AutoscaleValues) {
         if (readOnly) {
+            return;
+        }
+        // Turned on, an app must read one of what it scales on: the API refuses it otherwise. One already on is
+        // saved, and says it is paused.
+        const readsOne =
+            (values.requestsOn && !autoscale?.requestsUnavailable) || (values.cpuOn && !autoscale?.cpuUnavailable);
+        if (!values.isFunction && values.enabled && !savedOn && !readsOne) {
+            setError("requestsOn", {
+                type: "manual",
+                message: "What it scales on cannot be read now, as said above: autoscale can be turned on once it can.",
+            });
             return;
         }
         update({

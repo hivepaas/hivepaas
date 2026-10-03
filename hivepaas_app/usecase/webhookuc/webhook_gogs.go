@@ -3,9 +3,11 @@ package webhookuc
 import (
 	"errors"
 	"net/http"
+	"strings"
 
 	"github.com/go-playground/webhooks/v6/gogs"
 	client "github.com/gogits/go-gogs-client"
+	"github.com/tiendc/gofn"
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 )
@@ -41,6 +43,7 @@ func (uc *UC) parseGogsWebhook(
 				RepoURL:     p.Repository.HTMLURL,
 				PRNumber:    p.Issue.Index,
 				CommentBody: p.Comment.Body,
+				Author:      gogsCommentAuthor(&p),
 			}
 		}
 	case client.PullRequestPayload:
@@ -52,4 +55,22 @@ func (uc *UC) parseGogsWebhook(
 		}
 	}
 	return nil
+}
+
+// gogsCommentAuthor is who wrote a comment, as Gogs' webhook says: HivePaaS
+// cannot ask Gogs whether they may write, so only the repository's owner, or
+// anyone on a private repository, may run commands.
+func gogsCommentAuthor(p *client.IssueCommentPayload) prCommentAuthor {
+	var author prCommentAuthor
+	if p.Sender != nil {
+		author.Login = gofn.Coalesce(p.Sender.UserName, p.Sender.Login)
+	}
+	if p.Repository != nil {
+		author.RepoPrivate = p.Repository.Private
+		if owner := p.Repository.Owner; owner != nil {
+			author.IsRepoOwner = author.Login != "" &&
+				strings.EqualFold(author.Login, gofn.Coalesce(owner.UserName, owner.Login))
+		}
+	}
+	return author
 }

@@ -45,6 +45,9 @@ func (uc *UC) parseGitlabWebhook(
 				RepoURL:     p.Repository.GitHTTPURL,
 				PRNumber:    p.MergeRequest.IID,
 				CommentBody: p.ObjectAttributes.Note,
+				// Whether the author may write is asked of GitLab: its
+				// webhook does not say.
+				Author: prCommentAuthor{Login: p.User.UserName, ID: p.User.ID},
 			}
 		}
 	case gitlab.MergeRequestEventPayload:

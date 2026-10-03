@@ -46,6 +46,10 @@ func (uc *UC) parseGithubWebhook(
 				RepoURL:     p.Repository.HTMLURL,
 				PRNumber:    p.Issue.Number,
 				CommentBody: p.Comment.Body,
+				Author: prCommentAuthor{
+					Login:       p.Comment.User.Login,
+					Association: p.Comment.AuthorAssociation,
+				},
 			}
 		}
 	case github.PullRequestPayload:

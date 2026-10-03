@@ -3,6 +3,7 @@ package webhookuc
 import (
 	"errors"
 	"net/http"
+	"strings"
 
 	"github.com/go-playground/webhooks/v6/gitea"
 
@@ -41,6 +42,7 @@ func (uc *UC) parseGiteaWebhook(
 				RepoURL:     p.Repository.HTMLURL,
 				PRNumber:    p.Issue.Index,
 				CommentBody: p.Comment.Body,
+				Author:      giteaCommentAuthor(&p),
 			}
 		}
 	case gitea.PullRequestPayload:
@@ -59,4 +61,20 @@ func (uc *UC) parseGiteaWebhook(
 		}
 	}
 	return nil
+}
+
+// giteaCommentAuthor is who wrote a comment, as Gitea's webhook says. Whether
+// they may write is asked of Gitea: its webhook says only who owns the
+// repository.
+func giteaCommentAuthor(p *gitea.IssueCommentPayload) prCommentAuthor {
+	var author prCommentAuthor
+	if p.Comment != nil && p.Comment.Poster != nil {
+		author.Login = p.Comment.Poster.UserName
+	}
+	if p.Repository != nil {
+		author.RepoPrivate = p.Repository.Private
+		author.IsRepoOwner = author.Login != "" && p.Repository.Owner != nil &&
+			strings.EqualFold(author.Login, p.Repository.Owner.UserName)
+	}
+	return author
 }

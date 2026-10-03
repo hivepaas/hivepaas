@@ -43,6 +43,11 @@ func (uc *UC) parseBitbucketWebhook(
 			PRNumber:    p.PullRequest.ID,
 			CommentBody: p.Comment.Content.Raw,
 			Branch:      "heads/" + p.PullRequest.Source.Branch.Name,
+			Author: prCommentAuthor{
+				Login:       p.Actor.NickName,
+				IsRepoOwner: p.Actor.UUID != "" && p.Actor.UUID == p.Repository.Owner.UUID,
+				RepoPrivate: p.Repository.IsPrivate,
+			},
 		}
 	case bitbucket.PullRequestMergedPayload:
 		data.PRClosed = &repoPRClosedEventData{

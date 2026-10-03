@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
@@ -109,6 +108,14 @@ func buildPRCommentsDisabledComment(appName, settingsURL string) string {
 		"in the application's %s on the HivePaaS Dashboard.", appName, where)
 }
 
+// buildAuthorNotAllowedComment refuses a command from someone who may not write
+// to the repository.
+func buildAuthorNotAllowedComment() string {
+	return "⚠️ **Only people who can write to this repository can run HivePaaS commands.**\n\n" +
+		"A preview runs the pull request's code with the application's environment variables, so it is started " +
+		"by the repository's owners, members and collaborators only."
+}
+
 func buildNoActivePreviewComment() string {
 	return "ℹ️ **No active preview deployment found for this pull request.**"
 }
@@ -143,38 +150,13 @@ func (uc *UC) sendPRComment(
 	repo := parsedURL.Name
 	prNumber := int(prCommentEvent.PRNumber)
 
-	// Case 1: Webhook setting is directly a Github App
-	if data.WebhookSetting != nil && data.WebhookSetting.Type == base.SettingTypeGithubApp {
-		err = gitapi.CreatePullRequestCommentWithRetry(ctx, data.WebhookSetting, owner, repo, prNumber, message)
-		return hperrors.Wrap(err)
-	}
-
-	// Case 2: Resolve credentials from the app's deployment settings
-	if app == nil {
-		return nil
-	}
-
-	deploymentSetting := app.GetSettingByType(base.SettingTypeAppDeployment)
-	if deploymentSetting == nil {
-		return nil
-	}
-
-	deploymentSettings, err := deploymentSetting.AsAppDeploymentSettings()
+	setting, err := uc.gitAPISetting(ctx, db, data, app)
 	if err != nil {
 		return hperrors.Wrap(err)
 	}
-	if deploymentSettings.RepoSource == nil || deploymentSettings.RepoSource.Credentials.ID == "" {
+	if setting == nil {
 		return nil
 	}
-
-	credSetting, err := uc.settingRepo.GetByID(ctx, db, app.GetObjectScope(), "",
-		deploymentSettings.RepoSource.Credentials.ID, true)
-	if err != nil {
-		return hperrors.Wrap(err)
-	}
-	if credSetting == nil {
-		return nil
-	}
-	err = gitapi.CreatePullRequestCommentWithRetry(ctx, credSetting, owner, repo, prNumber, message)
+	err = gitapi.CreatePullRequestCommentWithRetry(ctx, setting, owner, repo, prNumber, message)
 	return hperrors.Wrap(err)
 }

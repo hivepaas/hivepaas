@@ -40,8 +40,10 @@ ebpf:
 // HivePaaS recommends more capacity to a node with more memory; a capacity
 // chosen is kept, auto follows the recommendation.
 func TestCapacity(t *testing.T) {
-	for memMB, want := range map[int]Capacity{0: CapacitySmall, 961: CapacitySmall, 4096: CapacitySmall,
-		8192: CapacityMedium, 16384: CapacityMedium, 32768: CapacityLarge, 131072: CapacityLarge} {
+	// What nodes sold with 1, 4, 8, 16, 32 and 128 GB read.
+	for memMB, want := range map[int]Capacity{0: CapacitySmall, 961: CapacitySmall, 3912: CapacitySmall,
+		7679: CapacitySmall, 7820: CapacityMedium, 15990: CapacityMedium, 30719: CapacityMedium,
+		32090: CapacityLarge, 128700: CapacityLarge} {
 		assert.Equal(t, want, Recommended(memMB), memMB)
 	}
 	assert.Equal(t, CapacityMedium, CapacityAuto.Effective(16384))

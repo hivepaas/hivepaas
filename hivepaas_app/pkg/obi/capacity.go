@@ -39,9 +39,10 @@ var Capacities = []Capacity{CapacitySmall, CapacityMedium, CapacityLarge}
 const (
 	// mediumFromMB and largeFromMB are the node memory from which a bigger
 	// capacity is recommended: a node with more memory spares it more easily,
-	// and tends to serve more at once.
-	mediumFromMB = 8 << 10
-	largeFromMB  = 32 << 10
+	// and tends to serve more at once. They sit under 8 and 32 GB: a node
+	// sold with 8 GB reads 7.6 to 7.8 GB, the kernel's share kept out.
+	mediumFromMB = 7680  // 7.5 GB
+	largeFromMB  = 30720 // 30 GB
 )
 
 // ParseCapacity reads a node's setting: "" and "auto" are CapacityAuto. false
@@ -57,8 +58,9 @@ func ParseCapacity(s string) (Capacity, bool) {
 }
 
 // Recommended is the capacity HivePaaS recommends for a node of memTotalMB:
-// small under 8 GB, medium under 32 GB, large from 32 GB. Small when the
-// memory is unknown.
+// small for a node of less than 8 GB, medium for one of 8 GB to less than
+// 32, large for 32 GB and more - by what the nodes read, a little under. Small
+// when the memory is unknown.
 func Recommended(memTotalMB int) Capacity {
 	switch {
 	case memTotalMB >= largeFromMB:

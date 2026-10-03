@@ -150,6 +150,9 @@ UI:    the Metrics tab: routes in the HTTP view, a Dependencies view
   | Medium | -1 | about 140 MiB | about 15,000 | 8 to 32 GB |
   | Large | 0 | about 215 MiB | about 30,000 | 32 GB and more |
 
+  By what a node reads, which is a little under what it was sold with: from
+  7.5 GB medium, from 30 GB large.
+
   The agent reports, in its status row, the node's memory, the recommended
   capacity and the one it runs with. Preflight asks for twice the chosen
   capacity's memory free.

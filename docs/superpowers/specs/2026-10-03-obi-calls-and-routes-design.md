@@ -319,6 +319,15 @@ with today's names.
      cache, which names no database, by its engine when it is the only one.
    - **MCP**: `get_app_route_metrics`, `get_app_dependency_metrics`.
 4. **The dashboard and docs**: the settings, the Routes table, the
-   Dependencies view, a docs page.
+   Dependencies view, a docs page. **Done**. As built:
+   - **Routes is a view of its own** beside HTTP and Dependencies, not a
+     table under the HTTP paths: an app without a domain has no HTTP
+     numbers, and its routes - the requests from inside its project - are
+     what it has. The HTTP view's note points to it. Both views say why when
+     they cannot be shown, with a link to where it is turned on, and how many
+     of the app's nodes measure it.
+   - **System → Logging → Routes and Calls** is a page of its own, saved
+     apart; after a save of either page both refetch, their version shared.
+   - **Docs**: the app's Metrics page and System settings' Logging section.
 5. Later: traces (the observability spec's phase 4); the Requests autoscale
    signal from OBI's server metrics, for internal traffic.

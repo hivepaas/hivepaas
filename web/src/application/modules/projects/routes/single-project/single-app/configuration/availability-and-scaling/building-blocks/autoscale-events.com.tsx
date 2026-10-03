@@ -5,7 +5,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 /** The latest scalings: a function's from its calls, any other app's from its requests and CPU. */
 export function AutoscaleEvents({ events, isFunction }: Props) {
     return (
-        <div className="max-w-[800px] overflow-x-auto rounded-md border">
+        <div className="w-full overflow-x-auto rounded-md border">
             <Table>
                 <TableHeader>
                     <TableRow>

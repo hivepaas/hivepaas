@@ -12,6 +12,7 @@ export const QK = {
     "system-settings.hivepaas.http-settings.find-one": "system-settings.hivepaas.routing-settings.find-one",
     "system-settings.hivepaas.security-settings.find-one": "system-settings.hivepaas.security-settings.find-one",
     "system-settings.hivepaas.logging.find-one": "system-settings.hivepaas.logging.find-one",
+    "system-settings.hivepaas.logging-performance.find-one": "system-settings.hivepaas.logging-performance.find-one",
     "system-settings.hivepaas.registry.find-one": "system-settings.hivepaas.registry.find-one",
     "system-settings.mcp.find-one": "system-settings.mcp.find-one",
 

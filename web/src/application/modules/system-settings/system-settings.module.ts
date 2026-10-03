@@ -6,6 +6,7 @@ export {
     SystemSettingsHivePaaSRoutingSettingsRoute,
     SystemSettingsHivePaaSSecurityRoute,
     SystemSettingsLoggingRoute,
+    SystemSettingsLoggingPerformanceRoute,
     SystemSettingsAiMcpRoute,
     SystemSettingsRegistryRoute,
     SystemSettingsHivePaaSActionsRoute,

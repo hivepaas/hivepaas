@@ -13,6 +13,14 @@ const FeatureToggleSettingsSchema = z
     .nullish()
     .transform(value => ({ enabled: value?.enabled ?? true }));
 
+/** A feature that is off unless the app asks for it. */
+const FeatureOptInSettingsSchema = z
+    .object({
+        enabled: z.boolean().optional().default(false),
+    })
+    .nullish()
+    .transform(value => ({ enabled: value?.enabled ?? false }));
+
 const AppFeaturePreviewAppRefSchema = z.object({
     id: z.string(),
     name: z.string().optional().default(""),
@@ -52,6 +60,7 @@ const AppFeatureSettingsSchema = SettingsBaseEntitySchema.extend({
     schedJobSettings: FeatureToggleSettingsSchema,
     terminalSettings: FeatureToggleSettingsSchema,
     previewSettings: AppFeaturePreviewSettingsSchema,
+    performanceSettings: FeatureOptInSettingsSchema,
 });
 
 const FindOneSchema = z.object({

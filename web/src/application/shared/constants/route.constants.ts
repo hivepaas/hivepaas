@@ -565,6 +565,11 @@ export const ROUTE = {
                 $pattern: "system/logging/configuration",
                 $route: "/system/logging/configuration/",
             },
+
+            performance: {
+                $pattern: "system/logging/routes-and-calls",
+                $route: "/system/logging/routes-and-calls/",
+            },
         },
 
         ai: {

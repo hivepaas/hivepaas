@@ -21,6 +21,7 @@ import { isFunctionApp } from "~/projects/module-shared/utils";
 import { AppLink, AppLoader } from "@application/shared/components";
 import { ROUTE } from "@application/shared/constants";
 
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -30,6 +31,7 @@ import {
     AGENT_UNLABELLED_TEXT,
     CallsChart,
     CpuChart,
+    DependenciesView,
     DurationChart,
     HTTP_UNAVAILABLE_TEXT,
     HttpPaths,
@@ -40,19 +42,30 @@ import {
     NetworkChart,
     RequestsChart,
     ResourceContainers,
+    RoutesView,
+    TotalsGrid,
     formatBytes,
     formatCores,
     storeMetricsRange,
     storedMetricsRange,
 } from "../building-blocks";
 
-type MetricsView = "calls" | "http" | "resources";
+type MetricsView = "calls" | "http" | "routes" | "dependencies" | "resources";
+
+const VIEW_LABEL: Record<MetricsView, string> = {
+    calls: "Calls",
+    http: "HTTP",
+    routes: "Routes",
+    dependencies: "Dependencies",
+    resources: "Resources",
+};
 
 /**
  * An app's numbers over a range ending now: its HTTP requests, counted from
- * Traefik's access log, for every app reached by a domain; its containers' CPU
- * and memory, from the rows the agent writes; and a function's calls, counted
- * from the invocation line its runtime writes for every call.
+ * Traefik's access log, for every app reached by a domain; its routes and what
+ * it calls, measured inside its containers by OBI where it is on; its
+ * containers' CPU and memory, from the rows the agent writes; and a function's
+ * calls, counted from the invocation line its runtime writes for every call.
  */
 export function AppMetricsRoute() {
     const { id: projectID, env, appId: appID } = useParams<{ id: string; env: string; appId: string }>();
@@ -74,10 +87,25 @@ export function AppMetricsRoute() {
         enabled: Boolean(app) && isFunction && activeView === "calls",
     });
     const httpQuery = AppLogsQueries.useGetHttpMetrics(request, { enabled: Boolean(app) && activeView === "http" });
+    const routesQuery = AppLogsQueries.useGetRouteMetrics(request, {
+        enabled: Boolean(app) && activeView === "routes",
+    });
+    const dependenciesQuery = AppLogsQueries.useGetDependencyMetrics(request, {
+        enabled: Boolean(app) && activeView === "dependencies",
+    });
     const resourcesQuery = AppLogsQueries.useGetResourceMetrics(request, {
         enabled: Boolean(app) && activeView === "resources",
     });
-    const activeQuery = { calls: callsQuery, http: httpQuery, resources: resourcesQuery }[activeView];
+    const activeQuery = {
+        calls: callsQuery,
+        http: httpQuery,
+        routes: routesQuery,
+        dependencies: dependenciesQuery,
+        resources: resourcesQuery,
+    }[activeView];
+    const views: MetricsView[] = isFunction
+        ? ["calls", "http", "routes", "dependencies", "resources"]
+        : ["http", "routes", "dependencies", "resources"];
 
     function chooseRange(next: FunctionMetricsRange) {
         setRange(next);
@@ -85,19 +113,50 @@ export function AppMetricsRoute() {
     }
 
     return (
-        <div className={cn(listBox, "flex flex-col gap-4")}>
+        <div className={cn(listBox, "@container flex flex-col gap-4")}>
             <div className="flex flex-wrap items-center justify-between gap-2">
                 <div className="flex flex-wrap items-center gap-3">
+                    {/* The views fit in a row of tabs only when the box is wide: below
+                        that, a container query makes them a dropdown. Both show the
+                        same choice. */}
+                    <Select
+                        value={activeView}
+                        onValueChange={value => {
+                            setView(value as MetricsView);
+                        }}
+                    >
+                        <SelectTrigger
+                            className="w-[180px] @xl:hidden"
+                            aria-label="Metrics"
+                        >
+                            <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                            {views.map(item => (
+                                <SelectItem
+                                    key={item}
+                                    value={item}
+                                >
+                                    {VIEW_LABEL[item]}
+                                </SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
                     <Tabs
                         value={activeView}
                         onValueChange={value => {
                             setView(value as MetricsView);
                         }}
                     >
-                        <TabsList>
-                            {isFunction && <TabsTrigger value="calls">Calls</TabsTrigger>}
-                            <TabsTrigger value="http">HTTP</TabsTrigger>
-                            <TabsTrigger value="resources">Resources</TabsTrigger>
+                        <TabsList className="hidden @xl:inline-flex">
+                            {views.map(item => (
+                                <TabsTrigger
+                                    key={item}
+                                    value={item}
+                                >
+                                    {VIEW_LABEL[item]}
+                                </TabsTrigger>
+                            ))}
                         </TabsList>
                     </Tabs>
                     <div className="flex gap-1">
@@ -142,6 +201,24 @@ export function AppMetricsRoute() {
                     metrics={resourcesQuery.data?.data}
                     isLoading={resourcesQuery.isLoading}
                     range={range}
+                />
+            ) : activeView === "routes" ? (
+                <RoutesView
+                    metrics={routesQuery.data?.data}
+                    isLoading={routesQuery.isLoading}
+                    range={range}
+                    projectID={projectID}
+                    env={env}
+                    appID={appID}
+                />
+            ) : activeView === "dependencies" ? (
+                <DependenciesView
+                    metrics={dependenciesQuery.data?.data}
+                    isLoading={dependenciesQuery.isLoading}
+                    range={range}
+                    projectID={projectID}
+                    env={env}
+                    appID={appID}
                 />
             ) : (
                 <HttpRequestsView
@@ -234,7 +311,8 @@ function HttpRequestsView({ metrics, isLoading, range }: HttpViewProps) {
             )}
             <p className="text-xs text-muted-foreground">
                 Counted from Traefik&apos;s access log: the requests that reach the app by its domains, from the client
-                to its answer. Durations are close rather than exact.
+                to its answer. Durations are close rather than exact. Every request, from inside the project too, by the
+                app&apos;s own routes: see Routes.
             </p>
         </>
     );
@@ -433,22 +511,6 @@ function FunctionTotals({ totals }: { totals: FunctionMetricsCounts }) {
     ];
 
     return <TotalsGrid items={items} />;
-}
-
-function TotalsGrid({ items }: { items: { label: string; value: string }[] }) {
-    return (
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-5">
-            {items.map(item => (
-                <div
-                    key={item.label}
-                    className="flex flex-col gap-0.5 rounded-md border px-3 py-2"
-                >
-                    <span className="text-xs text-muted-foreground">{item.label}</span>
-                    <span className="text-lg font-semibold tabular-nums">{item.value}</span>
-                </div>
-            ))}
-        </div>
-    );
 }
 
 interface HttpViewProps {

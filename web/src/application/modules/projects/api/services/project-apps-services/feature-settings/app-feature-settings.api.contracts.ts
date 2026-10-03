@@ -22,6 +22,7 @@ export type AppFeatureSettings_UpdatePayload = {
     schedJobSettings: AppFeatureToggleSettings;
     terminalSettings: AppFeatureToggleSettings;
     previewSettings: AppFeaturePreviewSettingsUpdatePayload;
+    performanceSettings: AppFeatureToggleSettings;
 };
 
 export type AppFeatureSettings_UpdateOne_Req = ApiRequestBase<{

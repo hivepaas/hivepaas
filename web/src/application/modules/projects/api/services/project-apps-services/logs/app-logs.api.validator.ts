@@ -1,12 +1,14 @@
 import type { AxiosResponse } from "axios";
 import { z } from "zod";
 import type {
+    AppLogs_GetDependencyMetrics_Res,
     AppLogs_GetFunctionMetrics_Res,
     AppLogs_GetHistory_Res,
     AppLogs_GetHttpMetrics_Res,
     AppLogs_GetInfo_Res,
     AppLogs_GetLogs_Res,
     AppLogs_GetResourceMetrics_Res,
+    AppLogs_GetRouteMetrics_Res,
 } from "~/projects/api/services";
 
 import { BaseMetaApiSchema, parseApiResponse } from "@infrastructure/api";
@@ -287,7 +289,130 @@ const GetResourceMetricsSchema = z.object({
     meta: BaseMetaApiSchema.nullable(),
 });
 
+const PerformanceCountsSchema = z.object({
+    requests: z.number().catch(0),
+    errors: z.number().catch(0),
+    p50: nullableNumber,
+    p95: nullableNumber,
+    p99: nullableNumber,
+});
+
+const PerformancePointSchema = PerformanceCountsSchema.extend({ time: z.string(), replicas: nullableNumber });
+
+const PerformanceHeadSchema = z.object({
+    available: z.boolean().catch(false),
+    reason: z
+        .enum([
+            "disabled",
+            "apps-not-collected",
+            "no-query-endpoint",
+            "driver-unreadable",
+            "identity-missing",
+            "agent-unlabelled",
+            "performance-disabled",
+            "app-disabled",
+            "node-disabled",
+            "node-unsupported",
+        ])
+        .nullish()
+        .catch(null)
+        .transform(value => value ?? null),
+    preflightReasons: z
+        .array(z.string())
+        .nullish()
+        .transform(value => value ?? []),
+    range: z.enum(["1h", "6h", "24h", "7d"]).catch("24h"),
+    start: z
+        .string()
+        .nullish()
+        .transform(value => value ?? null),
+    end: z
+        .string()
+        .nullish()
+        .transform(value => value ?? null),
+    stepSeconds: z.number().catch(0),
+    clamped: z.boolean().catch(false),
+    nodes: z.number().catch(0),
+    nodesCovered: z.number().catch(0),
+});
+
+const GetRouteMetricsSchema = z.object({
+    data: PerformanceHeadSchema.extend({
+        totals: PerformanceCountsSchema.nullish().transform(value => value ?? null),
+        series: z
+            .array(PerformancePointSchema)
+            .nullish()
+            .transform(value => value ?? []),
+        routes: z
+            .array(
+                PerformanceCountsSchema.extend({
+                    kind: z.string().catch(""),
+                    method: z.string().catch(""),
+                    route: z.string().catch(""),
+                }),
+            )
+            .nullish()
+            .transform(value => value ?? []),
+    }),
+    meta: BaseMetaApiSchema.nullable(),
+});
+
+const GetDependencyMetricsSchema = z.object({
+    data: PerformanceHeadSchema.extend({
+        kinds: z
+            .array(
+                z.object({
+                    kind: z.string().catch(""),
+                    totals: PerformanceCountsSchema,
+                    series: z
+                        .array(PerformancePointSchema)
+                        .nullish()
+                        .transform(value => value ?? []),
+                }),
+            )
+            .nullish()
+            .transform(value => value ?? []),
+        peers: z
+            .array(
+                PerformanceCountsSchema.extend({
+                    kind: z.string().catch(""),
+                    peer: z.string().catch(""),
+                    app: z
+                        .object({ id: z.string(), key: z.string().catch(""), name: z.string().catch("") })
+                        .nullish()
+                        .transform(value => value ?? null),
+                    operations: z
+                        .array(
+                            PerformanceCountsSchema.extend({
+                                method: z.string().catch(""),
+                                operation: z.string().catch(""),
+                            }),
+                        )
+                        .nullish()
+                        .transform(value => value ?? []),
+                }),
+            )
+            .nullish()
+            .transform(value => value ?? []),
+    }),
+    meta: BaseMetaApiSchema.nullable(),
+});
+
 export class AppLogsApiValidator {
+    getRouteMetrics = (response: AxiosResponse): AppLogs_GetRouteMetrics_Res => {
+        return parseApiResponse({
+            response,
+            schema: GetRouteMetricsSchema,
+        });
+    };
+
+    getDependencyMetrics = (response: AxiosResponse): AppLogs_GetDependencyMetrics_Res => {
+        return parseApiResponse({
+            response,
+            schema: GetDependencyMetricsSchema,
+        });
+    };
+
     getInfo = (response: AxiosResponse): AppLogs_GetInfo_Res => {
         return parseApiResponse({
             response,

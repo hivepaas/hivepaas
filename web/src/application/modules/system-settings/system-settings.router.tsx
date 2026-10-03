@@ -202,6 +202,14 @@ export const systemSettingsRouter: RouteObject = {
                         return { Component: SystemSettingsLoggingRoute };
                     },
                 },
+                {
+                    path: "routes-and-calls",
+                    lazy: async () => {
+                        const { SystemSettingsLoggingPerformanceRoute } = await getLazyComponents();
+
+                        return { Component: SystemSettingsLoggingPerformanceRoute };
+                    },
+                },
             ],
         },
         {

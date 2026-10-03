@@ -36,6 +36,7 @@ function mapFormValuesToPayload(
         loggingSettings: values.loggingSettings,
         schedJobSettings: values.schedJobSettings,
         terminalSettings: values.terminalSettings,
+        performanceSettings: values.performanceSettings,
         previewSettings: {
             enabled: values.previewSettings.enabled,
             creationDelay,

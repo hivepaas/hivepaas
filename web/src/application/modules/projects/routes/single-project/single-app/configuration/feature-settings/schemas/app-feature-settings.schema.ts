@@ -21,6 +21,9 @@ export const AppFeatureSettingsFormSchema = z.object({
     terminalSettings: z.object({
         enabled: z.boolean(),
     }),
+    performanceSettings: z.object({
+        enabled: z.boolean(),
+    }),
     previewSettings: z.object({
         enabled: z.boolean(),
         creationDelay: z.string().trim(),
@@ -46,6 +49,9 @@ export const emptyAppFeatureSettingsFormDefaults: AppFeatureSettingsFormSchemaIn
     },
     terminalSettings: {
         enabled: true,
+    },
+    performanceSettings: {
+        enabled: false,
     },
     previewSettings: {
         enabled: true,

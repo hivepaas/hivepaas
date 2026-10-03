@@ -6,3 +6,8 @@ export * from "./http-metrics-tables.com";
 export * from "./resource-metrics.com";
 export * from "./resource-format";
 export * from "./metrics-unavailable.constants";
+export * from "./totals-grid.com";
+export * from "./performance-format";
+export * from "./performance-charts.com";
+export * from "./performance-tables.com";
+export * from "./performance-views.com";

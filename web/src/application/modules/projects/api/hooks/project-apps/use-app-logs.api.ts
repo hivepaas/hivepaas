@@ -3,12 +3,14 @@ import { use, useMemo } from "react";
 import { match } from "oxide.ts";
 import { ProjectsApiContext } from "~/projects/api/api-context";
 import type {
+    AppLogs_GetDependencyMetrics_Req,
     AppLogs_GetFunctionMetrics_Req,
     AppLogs_GetHistory_Req,
     AppLogs_GetHttpMetrics_Req,
     AppLogs_GetInfo_Req,
     AppLogs_GetLogs_Req,
     AppLogs_GetResourceMetrics_Req,
+    AppLogs_GetRouteMetrics_Req,
 } from "~/projects/api/services";
 
 import { useApiErrorNotifications } from "@infrastructure/api";
@@ -73,6 +75,36 @@ function createHook() {
                         Err: error => {
                             notifyError({
                                 message: "Failed to get the app's HTTP metrics",
+                                error,
+                            });
+
+                            throw error;
+                        },
+                    });
+                },
+                getRouteMetrics: async (data: AppLogs_GetRouteMetrics_Req["data"], signal?: AbortSignal) => {
+                    const result = await api.projects.apps.logs.$.getRouteMetrics({ data }, signal);
+
+                    return match(result, {
+                        Ok: _ => _,
+                        Err: error => {
+                            notifyError({
+                                message: "Failed to get the app's routes",
+                                error,
+                            });
+
+                            throw error;
+                        },
+                    });
+                },
+                getDependencyMetrics: async (data: AppLogs_GetDependencyMetrics_Req["data"], signal?: AbortSignal) => {
+                    const result = await api.projects.apps.logs.$.getDependencyMetrics({ data }, signal);
+
+                    return match(result, {
+                        Ok: _ => _,
+                        Err: error => {
+                            notifyError({
+                                message: "Failed to get what the app calls",
                                 error,
                             });
 

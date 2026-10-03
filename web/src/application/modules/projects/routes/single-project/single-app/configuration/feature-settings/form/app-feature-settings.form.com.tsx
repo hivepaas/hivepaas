@@ -8,7 +8,8 @@ import { type FieldPath, FormProvider, useController, useForm, useFormContext, u
 import { useUpdateEffect } from "react-use";
 import type { AppFeatureSettings } from "~/projects/domain";
 
-import { ContentBlock, InfoBlock, LabelWithInfo } from "@application/shared/components";
+import { AppLink, ContentBlock, InfoBlock, LabelWithInfo } from "@application/shared/components";
+import { ROUTE } from "@application/shared/constants";
 
 import type { ValidationException } from "@infrastructure/exceptions/validation";
 
@@ -27,7 +28,11 @@ type SchemaInput = AppFeatureSettingsFormSchemaInput;
 type SchemaOutput = AppFeatureSettingsFormSchemaOutput;
 type FeatureToggleFieldPath = Extract<
     FieldPath<SchemaInput>,
-    "loggingSettings.enabled" | "schedJobSettings.enabled" | "terminalSettings.enabled" | "previewSettings.enabled"
+    | "loggingSettings.enabled"
+    | "schedJobSettings.enabled"
+    | "terminalSettings.enabled"
+    | "previewSettings.enabled"
+    | "performanceSettings.enabled"
 >;
 
 function mapFeatureSettingsToFormInput(data: AppFeatureSettings): SchemaInput {
@@ -40,6 +45,9 @@ function mapFeatureSettingsToFormInput(data: AppFeatureSettings): SchemaInput {
         },
         terminalSettings: {
             enabled: data.terminalSettings.enabled,
+        },
+        performanceSettings: {
+            enabled: data.performanceSettings.enabled,
         },
         previewSettings: {
             enabled: data.previewSettings.enabled,
@@ -264,6 +272,24 @@ export function AppFeatureSettingsForm({
 
                         <ContentBlock label="Terminal">
                             <FeatureToggleField name="terminalSettings.enabled" />
+                        </ContentBlock>
+
+                        <ContentBlock label="Routes and Calls">
+                            <div className="flex flex-col gap-3">
+                                <FeatureToggleField name="performanceSettings.enabled" />
+                                <p className="text-sm text-muted-foreground">
+                                    Measures every request the app answers, by route, and every call it makes to a
+                                    database, another app or an outside host - from inside its containers, by OBI
+                                    (eBPF), on the nodes an administrator turns on in{" "}
+                                    <AppLink.Modules
+                                        to={ROUTE.systemSettings.logging.performance.$route}
+                                        className="text-link"
+                                    >
+                                        System → Logging → Routes and Calls
+                                    </AppLink.Modules>
+                                    . They show in the app&apos;s Metrics, under Routes and Dependencies.
+                                </p>
+                            </div>
                         </ContentBlock>
 
                         {!hidePreviewSettings && (

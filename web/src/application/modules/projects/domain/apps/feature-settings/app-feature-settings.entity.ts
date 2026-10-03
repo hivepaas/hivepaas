@@ -34,4 +34,6 @@ export interface AppFeatureSettings extends SettingsBaseEntity {
     schedJobSettings: AppFeatureToggleSettings;
     terminalSettings: AppFeatureToggleSettings;
     previewSettings: AppFeaturePreviewSettings;
+    /** The app's routes and calls, measured by OBI on the nodes that run it. Off by default. */
+    performanceSettings: AppFeatureToggleSettings;
 }

@@ -244,3 +244,96 @@ export type AppLogs_GetResourceMetrics_Res = ApiResponseBase<{
     series: ResourceMetricsPoint[];
     containers: ResourceMetricsContainer[];
 }>;
+
+/** Why an app's routes and calls cannot be shown: its logs' reasons, the agent's, and OBI's. */
+export type AppPerformanceMetricsReason =
+    | AppLogHistoryReason
+    | "agent-unlabelled"
+    | "performance-disabled"
+    | "app-disabled"
+    | "node-disabled"
+    | "node-unsupported";
+
+export type AppLogs_GetRouteMetrics_Req = AppLogs_GetFunctionMetrics_Req;
+export type AppLogs_GetDependencyMetrics_Req = AppLogs_GetFunctionMetrics_Req;
+
+/** Requests, or calls, as OBI saw them in the app's containers: how many, how many failed, and how long they
+ *  took in milliseconds - read from buckets summed across replicas, null without one. */
+export interface PerformanceCounts {
+    requests: number;
+    errors: number;
+    p50: number | null;
+    p95: number | null;
+    p99: number | null;
+}
+
+export interface PerformancePoint extends PerformanceCounts {
+    time: string;
+    /** The replicas the app ran at the step's end, for one that autoscales; null otherwise. */
+    replicas: number | null;
+}
+
+/** What an app's routes and its calls both say first. */
+export interface AppPerformanceMetricsHead {
+    /** False when they cannot be shown; reason says why. */
+    available: boolean;
+    reason: AppPerformanceMetricsReason | null;
+    /** Why the nodes the app runs on cannot run OBI, for node-unsupported. */
+    preflightReasons: string[];
+    range: FunctionMetricsRange;
+    start: string | null;
+    end: string | null;
+    stepSeconds: number;
+    clamped: boolean;
+    /** The nodes the app runs on now, and those of them that run OBI: the others' requests are not counted. */
+    nodes: number;
+    nodesCovered: number;
+}
+
+/** The requests to one route: http or rpc, its method, and its route as the app's framework names it. */
+export interface AppRouteMetricsRoute extends PerformanceCounts {
+    kind: string;
+    method: string;
+    route: string;
+}
+
+export type AppLogs_GetRouteMetrics_Res = ApiResponseBase<
+    AppPerformanceMetricsHead & {
+        totals: PerformanceCounts | null;
+        /** One point per step, oldest first. */
+        series: PerformancePoint[];
+        /** The busiest first. */
+        routes: AppRouteMetricsRoute[];
+    }
+>;
+
+/** The calls of one kind - http, db or rpc: totals and one point per step. */
+export interface AppDependencyKind {
+    kind: string;
+    totals: PerformanceCounts;
+    series: PerformancePoint[];
+}
+
+/** The calls to a peer of one method, for HTTP and RPC, or operation, for a database. */
+export interface AppDependencyOperation extends PerformanceCounts {
+    method: string;
+    operation: string;
+}
+
+/** The calls to one peer: a host and port as the app named it, or a database as system/database. */
+export interface AppDependencyPeer extends PerformanceCounts {
+    kind: string;
+    peer: string;
+    /** The env's app behind the peer, when one is known. */
+    app: { id: string; key: string; name: string } | null;
+    operations: AppDependencyOperation[];
+}
+
+export type AppLogs_GetDependencyMetrics_Res = ApiResponseBase<
+    AppPerformanceMetricsHead & {
+        /** The busiest first. */
+        kinds: AppDependencyKind[];
+        /** The busiest first. */
+        peers: AppDependencyPeer[];
+    }
+>;

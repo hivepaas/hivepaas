@@ -13,6 +13,7 @@ export * from "./traefik-service-settings-services";
 export * from "./traefik-config-options-services";
 export * from "./traefik-restart-services";
 export * from "./hivepaas-logging-settings-services";
+export * from "./hivepaas-logging-performance-services";
 export * from "./hivepaas-registry-settings-services";
 export * from "./hivepaas-updates-services";
 export * from "./mcp-settings-services";

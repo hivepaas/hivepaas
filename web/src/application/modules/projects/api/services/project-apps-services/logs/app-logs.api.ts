@@ -2,6 +2,8 @@ import { Err, Ok, type Result } from "oxide.ts";
 import { catchError, from, lastValueFrom, map, of } from "rxjs";
 import type {
     AppLogsApiValidator,
+    AppLogs_GetDependencyMetrics_Req,
+    AppLogs_GetDependencyMetrics_Res,
     AppLogs_GetFunctionMetrics_Req,
     AppLogs_GetFunctionMetrics_Res,
     AppLogs_GetHistory_Req,
@@ -14,6 +16,8 @@ import type {
     AppLogs_GetLogs_Res,
     AppLogs_GetResourceMetrics_Req,
     AppLogs_GetResourceMetrics_Res,
+    AppLogs_GetRouteMetrics_Req,
+    AppLogs_GetRouteMetrics_Res,
 } from "~/projects/api/services";
 
 import { BaseApi, parseApiError } from "@infrastructure/api";
@@ -132,6 +136,46 @@ export class AppLogsApi extends BaseApi {
                 }),
             ).pipe(
                 map(this.validator.getHttpMetrics),
+                map(res => Ok(res)),
+                catchError(error => of(Err(parseApiError(error)))),
+            ),
+        );
+    }
+
+    async getRouteMetrics(
+        request: AppLogs_GetRouteMetrics_Req,
+        signal?: AbortSignal,
+    ): Promise<Result<AppLogs_GetRouteMetrics_Res, Error>> {
+        const { projectID, env, appID, range } = request.data;
+
+        return lastValueFrom(
+            from(
+                this.client.v1.get(`/projects/${projectID}/${env}/apps/${appID}/route-metrics`, {
+                    params: { range },
+                    signal,
+                }),
+            ).pipe(
+                map(this.validator.getRouteMetrics),
+                map(res => Ok(res)),
+                catchError(error => of(Err(parseApiError(error)))),
+            ),
+        );
+    }
+
+    async getDependencyMetrics(
+        request: AppLogs_GetDependencyMetrics_Req,
+        signal?: AbortSignal,
+    ): Promise<Result<AppLogs_GetDependencyMetrics_Res, Error>> {
+        const { projectID, env, appID, range } = request.data;
+
+        return lastValueFrom(
+            from(
+                this.client.v1.get(`/projects/${projectID}/${env}/apps/${appID}/dependency-metrics`, {
+                    params: { range },
+                    signal,
+                }),
+            ).pipe(
+                map(this.validator.getDependencyMetrics),
                 map(res => Ok(res)),
                 catchError(error => of(Err(parseApiError(error)))),
             ),

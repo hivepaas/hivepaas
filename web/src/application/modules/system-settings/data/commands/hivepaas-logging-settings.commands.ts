@@ -18,6 +18,11 @@ function useUpdateOne({ onSuccess, ...options }: UpdateOneOptions = {}) {
         mutationFn: mutations.updateOne,
         onSuccess: (response, ...rest) => {
             void queryClient.invalidateQueries({ queryKey: [QK["system-settings.hivepaas.logging.find-one"]] });
+            // The routes and calls settings are saved with these, by their version, and read whether the logs
+            // are stored.
+            void queryClient.invalidateQueries({
+                queryKey: [QK["system-settings.hivepaas.logging-performance.find-one"]],
+            });
             onSuccess?.(response, ...rest);
         },
         ...options,

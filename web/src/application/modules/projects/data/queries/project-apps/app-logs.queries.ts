@@ -1,6 +1,7 @@
 import { type UseQueryOptions, useInfiniteQuery, useQuery } from "@tanstack/react-query";
 import { useAppLogsApi } from "~/projects/api";
 import type {
+    AppLogs_GetDependencyMetrics_Req,
     AppLogs_GetFunctionMetrics_Req,
     AppLogs_GetHistory_Req,
     AppLogs_GetHttpMetrics_Req,
@@ -9,6 +10,7 @@ import type {
     AppLogs_GetLogs_Req,
     AppLogs_GetLogs_Res,
     AppLogs_GetResourceMetrics_Req,
+    AppLogs_GetRouteMetrics_Req,
 } from "~/projects/api/services";
 import { QK } from "~/projects/data/constants";
 
@@ -90,6 +92,31 @@ function useGetResourceMetrics(request: AppLogs_GetResourceMetrics_Req["data"], 
     });
 }
 
+/** What an app served over a range ending now, by route, as OBI saw it in its containers. */
+function useGetRouteMetrics(request: AppLogs_GetRouteMetrics_Req["data"], options: { enabled?: boolean } = {}) {
+    const { queries } = useAppLogsApi();
+
+    return useQuery({
+        queryKey: [QK["projects.apps.route-metrics.$.get"], request],
+        queryFn: ({ signal }) => queries.getRouteMetrics(request, signal),
+        ...options,
+    });
+}
+
+/** What an app called over a range ending now - other apps, databases, outside hosts - as OBI saw it. */
+function useGetDependencyMetrics(
+    request: AppLogs_GetDependencyMetrics_Req["data"],
+    options: { enabled?: boolean } = {},
+) {
+    const { queries } = useAppLogsApi();
+
+    return useQuery({
+        queryKey: [QK["projects.apps.dependency-metrics.$.get"], request],
+        queryFn: ({ signal }) => queries.getDependencyMetrics(request, signal),
+        ...options,
+    });
+}
+
 export const AppLogsQueries = Object.freeze({
     useGetInfo,
     useGetLogs,
@@ -97,4 +124,6 @@ export const AppLogsQueries = Object.freeze({
     useGetFunctionMetrics,
     useGetHttpMetrics,
     useGetResourceMetrics,
+    useGetRouteMetrics,
+    useGetDependencyMetrics,
 });

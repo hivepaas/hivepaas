@@ -3,6 +3,8 @@ import { createContext } from "react";
 import {
     HivePaaSAppSecretApi,
     HivePaaSAppSecretApiValidator,
+    HivePaaSLoggingPerformanceApi,
+    HivePaaSLoggingPerformanceApiValidator,
     HivePaaSLoggingSettingsApi,
     HivePaaSLoggingSettingsApiValidator,
     HivePaaSRegistrySettingsApi,
@@ -65,6 +67,7 @@ function createApi() {
             hivepaasSecuritySettings: new HivePaaSSecuritySettingsApi(hivePaaSSecuritySettingsValidator),
             hivepaasAppSecret: new HivePaaSAppSecretApi(hivePaaSAppSecretValidator),
             hivepaasLoggingSettings: new HivePaaSLoggingSettingsApi(hivePaaSLoggingSettingsValidator),
+            hivepaasLoggingPerformance: new HivePaaSLoggingPerformanceApi(new HivePaaSLoggingPerformanceApiValidator()),
             hivepaasRegistrySettings: new HivePaaSRegistrySettingsApi(hivePaaSRegistrySettingsValidator),
             hivepaasRestart: new HivePaaSRestartApi(hivePaaSRestartValidator),
             hivepaasUpdates: new HivePaaSUpdatesApi(new HivePaaSUpdatesApiValidator()),

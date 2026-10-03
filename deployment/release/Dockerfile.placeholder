@@ -14,7 +14,7 @@ RUN CGO_ENABLED=0 GOOS=$TARGETOS GOARCH=$TARGETARCH \
 FROM scratch
 ARG REVISION
 LABEL org.opencontainers.image.title="HivePaaS placeholder" \
-      org.opencontainers.image.description="What a new HivePaaS app runs until its first deployment" \
+      org.opencontainers.image.description="What a new HivePaaS app runs until its first deployment: a page saying so" \
       org.opencontainers.image.source="https://github.com/hivepaas/hivepaas" \
       org.opencontainers.image.licenses="Apache-2.0" \
       org.opencontainers.image.revision="${REVISION}"

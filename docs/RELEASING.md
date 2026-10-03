@@ -225,10 +225,11 @@ a pull request, and release as usual.
 
 A new app is created before anything is deployed to it, and runs
 `ghcr.io/hivepaas/placeholder` until then: `tools/placeholder`, one static
-binary that waits and stops on SIGTERM, built from
-`deployment/release/Dockerfile.placeholder`. It needs no command, so the image
-an app is given later runs its own. `release.json` pins it as
-`placeholderImage`.
+binary built from `deployment/release/Dockerfile.placeholder`. It answers a page
+saying the app is not deployed yet on ports 80, 3000, 8000 and 8080 - a new app
+has no port yet, so these are the ones apps listen on most often - and stops on
+SIGTERM. It needs no command, so the image an app is given later runs its own.
+`release.json` pins it as `placeholderImage`.
 
 It is built once and reused by every release. Build a new one (the
 *Placeholder* workflow, through a tag `placeholder-vX.Y.Z`; the `release`

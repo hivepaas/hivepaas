@@ -289,7 +289,7 @@ export function AutoscaleSection({ projectId, env, appId, autoscale, readOnly = 
                                 title={
                                     <LabelWithInfo
                                         label="Scale On"
-                                        content="What its replicas follow: its requests, its CPU or both. With both, the one asking for more instances wins."
+                                        content="What its replicas follow: its requests, its CPU or both. With both, the one asking for more instances wins. A request counts when it ends, for a minute at most: an app serving mostly WebSockets, server-sent events or long polls scales better on CPU."
                                     />
                                 }
                             >

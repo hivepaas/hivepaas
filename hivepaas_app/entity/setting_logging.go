@@ -53,6 +53,31 @@ type LoggingSettings struct {
 	// dashboard and sending a copy to a company's own system is not an
 	// either/or, so this is a list beside Backend rather than a variant of it.
 	Forwards []LoggingForward `json:"forwards,omitempty"`
+
+	// Performance is the collection of apps' routes and calls by OBI, eBPF,
+	// on the nodes it lists: their agents run it while the logs are stored.
+	Performance *LoggingPerformance `json:"performance,omitempty"`
+}
+
+// LoggingPerformance says which nodes run OBI for the apps that ask for it:
+// none unless on, and then those listed by swarm node id - it costs memory on
+// each. See docs/superpowers/specs/2026-10-03-obi-calls-and-routes-design.md.
+type LoggingPerformance struct {
+	Enabled bool     `json:"enabled,omitempty"`
+	Nodes   []string `json:"nodes,omitempty"`
+}
+
+// RunsOn is whether a node runs OBI.
+func (p *LoggingPerformance) RunsOn(nodeID string) bool {
+	if p == nil || !p.Enabled || nodeID == "" {
+		return false
+	}
+	for _, id := range p.Nodes {
+		if id == nodeID {
+			return true
+		}
+	}
+	return false
 }
 
 type LoggingSources struct {

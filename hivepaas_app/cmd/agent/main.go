@@ -53,6 +53,7 @@ func main() {
 		fx.Invoke(internal.InitGrpcServer),
 		fx.Invoke(internal.InitDockerAPIHost),
 		fx.Invoke(internal.ResourceSamplerOnAgent),
+		fx.Invoke(internal.OBIOnAgent),
 	)
 
 	app.Run()

@@ -35,6 +35,7 @@ func TestAgentFxGraphResolves(t *testing.T) {
 		fx.Invoke(InitGrpcServer),
 		fx.Invoke(InitDockerAPIHost),
 		fx.Invoke(ResourceSamplerOnAgent),
+		fx.Invoke(OBIOnAgent),
 	)
 	if err != nil {
 		t.Fatalf("the agent's fx graph does not resolve: %v", err)

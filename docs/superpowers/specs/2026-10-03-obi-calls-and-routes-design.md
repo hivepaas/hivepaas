@@ -251,7 +251,22 @@ with today's names.
    above, and the design takes them.
 2. **The agent**: preflight, OBI's lifecycle, the scraper, attribution,
    per-interval rows. Tests against recorded scrapes and a fake Docker; a run
-   on the local stack.
+   on the local stack. **Done**. As built:
+   - **No `SyncPerformance` RPC**: there is no protoc on the build machine to
+     generate it, and the agent already reads the database. It reads the
+     settings every 30 s, as it reads the Docker API's. A switch turned takes
+     30 s at most.
+   - **The node's status** - preflight, wanted, running, apps - is a row the
+     agent writes every minute while the logs are stored, `"hp":"obi"`. The
+     settings show each node's latest, as the other rows are read.
+   - **The settings**: `LoggingSettings.Performance` {enabled, nodes by swarm
+     node id}, and `AppFeatureSettings.PerformanceSettings` {enabled}.
+   - **OBI's configuration** is copied to its image's root,
+     `/hivepaas-obi.yaml`: the image has no shell and no `/etc/obi`.
+   - **A live test** (`HP_TEST_OBI_DOCKER=1`) runs the agent's own start on
+     Docker Desktop, in a stand-in agent's network namespace. It counts a
+     Node.js app's requests by its swarm-named container. A busybox `httpd`,
+     which forks a process per request, was not counted.
 3. **The backend**: the two settings, `SyncPerformance`, the queries and the
    APIs, MCP.
 4. **The dashboard and docs**: the settings, the Routes table, the

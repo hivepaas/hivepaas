@@ -36,3 +36,7 @@ const LogComponentTraefik = "traefik"
 // LogComponentAgent is the agent's LabelLogComponent: the containers' CPU and
 // memory are counted from the rows it writes.
 const LogComponentAgent = "agent"
+
+// LogComponentOBI is the LabelLogComponent of OBI, which the agent runs on a
+// node to see apps' routes and calls: its own log lines are told apart by it.
+const LogComponentOBI = "obi"

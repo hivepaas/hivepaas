@@ -25,6 +25,13 @@ type AppFeatureSettings struct {
 	LoggingSettings  *AppFeatureLoggingSettings  `json:"loggingSettings"`
 	SchedJobSettings *AppFeatureSchedJobSettings `json:"schedJobSettings"`
 	PreviewSettings  *AppFeaturePreviewSettings  `json:"previewSettings"`
+	// PerformanceSettings asks for the app's routes and calls, by OBI on the
+	// nodes that run it.
+	PerformanceSettings *AppFeaturePerformanceSettings `json:"performanceSettings,omitempty"`
+}
+
+type AppFeaturePerformanceSettings struct {
+	Enabled bool `json:"enabled,omitempty"`
 }
 
 type AppFeatureTerminalSettings struct {

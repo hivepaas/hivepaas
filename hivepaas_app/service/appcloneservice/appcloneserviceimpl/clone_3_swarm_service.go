@@ -15,6 +15,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/apphelper"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/copier"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/appservice"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/systemappservice"
 )
 
 //nolint:gocognit,funlen
@@ -170,9 +171,9 @@ func (s *service) onCloneServiceDefault(
 	containerSpec := destSvcSpec.TaskTemplate.ContainerSpec
 	isDevEnv := config.Current().IsDevEnv()
 	if !settings.CloneDeploymentSettings {
-		containerSpec.Image = gofn.If(isDevEnv, dockerImageInitDev, dockerImageInit)
+		containerSpec.Image = gofn.If(isDevEnv, dockerImageInitDev, systemappservice.CurrentRelease().PlaceholderImage)
 		containerSpec.Command = nil
-		containerSpec.Args = gofn.If(isDevEnv, nil, []string{"sleep", "infinity"})
+		containerSpec.Args = nil
 		containerSpec.Dir = ""
 	}
 
@@ -190,9 +191,9 @@ func (s *service) createSwarmService(
 	}
 	// Need to clone ContainerSpec before assigning temp values
 	createSpec.TaskTemplate.ContainerSpec = new(*createSpec.TaskTemplate.ContainerSpec)
-	createSpec.TaskTemplate.ContainerSpec.Image = "busybox:latest"
+	createSpec.TaskTemplate.ContainerSpec.Image = systemappservice.CurrentRelease().PlaceholderImage
 	createSpec.TaskTemplate.ContainerSpec.Command = nil
-	createSpec.TaskTemplate.ContainerSpec.Args = []string{"sleep", "infinity"}
+	createSpec.TaskTemplate.ContainerSpec.Args = nil
 	createSpec.TaskTemplate.ContainerSpec.Dir = ""
 	createSpec.TaskTemplate.ContainerSpec.StopGracePeriod = new(time.Duration(0))
 

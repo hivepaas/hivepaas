@@ -12,12 +12,12 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/settingmountservice"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/systemappservice"
 )
 
-const (
-	dockerImageInit    = "busybox:latest"
-	dockerImageInitDev = "crccheck/hello-world:latest"
-)
+// dockerImageInitDev is a new app's image on a dev server: a page to look at.
+// Elsewhere it is the release's placeholder.
+const dockerImageInitDev = "crccheck/hello-world:latest"
 
 func (s *service) cloneAppSettings(
 	ctx context.Context,
@@ -151,10 +151,11 @@ func (s *service) onCloneDeploymentSettingDefault(
 	if !settings.CloneDeploymentSettings {
 		isDevEnv := config.Current().IsDevEnv()
 		deploymentSettings.ActiveMethod = base.DeploymentMethodImage
+		// As a new app starts: on the placeholder, which runs its own command.
 		deploymentSettings.ImageSource = &entity.DeploymentImageSource{
-			Image: gofn.If(isDevEnv, dockerImageInitDev, dockerImageInit),
+			Image: gofn.If(isDevEnv, dockerImageInitDev, systemappservice.CurrentRelease().PlaceholderImage),
 		}
-		deploymentSettings.Command = gofn.If(isDevEnv, "sleep infinity", "")
+		deploymentSettings.Command = ""
 		deploymentSettings.WorkingDir = ""
 		deploymentSettings.PreDeploymentCommand = ""
 		deploymentSettings.PostDeploymentCommand = ""

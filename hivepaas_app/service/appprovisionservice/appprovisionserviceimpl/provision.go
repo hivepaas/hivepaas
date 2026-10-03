@@ -24,12 +24,12 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/appservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/clusterservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/placementservice"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/systemappservice"
 )
 
-const (
-	dockerImageInit    = "busybox:latest"
-	dockerImageInitDev = "crccheck/hello-world:latest"
-)
+// dockerImageInitDev is a new app's image on a dev server: a page to look at.
+// Elsewhere it is the release's placeholder.
+const dockerImageInitDev = "crccheck/hello-world:latest"
 
 func (s *service) ProvisionApp(
 	ctx context.Context,
@@ -266,8 +266,9 @@ func initialService(app *entity.App, networkName string) *swarm.Service {
 			},
 			TaskTemplate: swarm.TaskSpec{
 				ContainerSpec: &swarm.ContainerSpec{
-					Image:    gofn.If(isDevEnv, dockerImageInitDev, dockerImageInit),
-					Command:  gofn.If(isDevEnv, nil, []string{"sleep", "infinity"}),
+					// No command: the image's own runs, the placeholder's and then
+					// whatever image the app is given.
+					Image:    gofn.If(isDevEnv, dockerImageInitDev, systemappservice.CurrentRelease().PlaceholderImage),
 					Hostname: app.Key,
 					// Init is left undecided on purpose: whether a container needs
 					// docker's init depends on whether its image starts with one of

@@ -29,6 +29,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/networkservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/placementservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/settingmountservice"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/systemappservice"
 	"github.com/hivepaas/hivepaas/services/docker"
 )
 
@@ -301,7 +302,12 @@ func TestProvisionAppCreatesAnEmptyApp(t *testing.T) {
 	assert.Equal(t, []base.SettingType{base.SettingTypeAppRouting, base.SettingTypeAppFeatures},
 		settingTypes(app.Settings))
 
-	assert.Equal(t, dockerImageInit, fakes.docker.created.TaskTemplate.ContainerSpec.Image)
+	// A new app waits on the release's placeholder, which runs without a command:
+	// an image set later runs its own, with nothing left behind to override it.
+	container := fakes.docker.created.TaskTemplate.ContainerSpec
+	assert.Equal(t, systemappservice.CurrentRelease().PlaceholderImage, container.Image)
+	assert.Empty(t, container.Command)
+	assert.Empty(t, container.Args)
 	assert.Equal(t, app.GlobalKey, fakes.docker.created.Name)
 	assert.Equal(t, "net-prod", fakes.docker.created.TaskTemplate.Networks[0].Target)
 

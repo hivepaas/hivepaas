@@ -1,0 +1,23 @@
+# The image a new app runs until its first deployment (tools/placeholder): one
+# static binary and nothing else. release.json pins it by digest
+# (placeholderImage). Cross-compiled, so a multi-arch build needs no emulation.
+
+FROM --platform=$BUILDPLATFORM golang:1.27-alpine AS builder
+ARG TARGETOS
+ARG TARGETARCH
+
+WORKDIR /build
+COPY . .
+RUN CGO_ENABLED=0 GOOS=$TARGETOS GOARCH=$TARGETARCH \
+    go build -trimpath -ldflags="-s -w" -o /placeholder ./tools/placeholder
+
+FROM scratch
+ARG REVISION
+LABEL org.opencontainers.image.title="HivePaaS placeholder" \
+      org.opencontainers.image.description="What a new HivePaaS app runs until its first deployment" \
+      org.opencontainers.image.source="https://github.com/hivepaas/hivepaas" \
+      org.opencontainers.image.licenses="Apache-2.0" \
+      org.opencontainers.image.revision="${REVISION}"
+COPY --from=builder /placeholder /placeholder
+USER 65534:65534
+ENTRYPOINT ["/placeholder"]

@@ -17,6 +17,7 @@ import (
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
+	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/fileutil"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/safego"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/containerfileservice"
 )
@@ -269,8 +270,14 @@ func sanitizeTarPath(path string) string {
 
 // convertZipToTarStream unpacks a zip archive and converts it to a clean TAR stream on the fly.
 func convertZipToTarStream(content io.ReadCloser, size int64) (io.ReadCloser, error) {
-	// Create a temp file to store zip content since zip.Reader requires io.ReaderAt
-	tempFile, err := os.CreateTemp("", "hivepaas-upload-zip-*")
+	// Create a temp file to store zip content since zip.Reader requires io.ReaderAt.
+	// It is removed once converted; should the process die first, it is in a
+	// day's directory the system cleanup removes.
+	dir, err := fileutil.CreateTempDirInAppPath("", "", 0)
+	if err != nil {
+		return nil, hperrors.Wrap(err)
+	}
+	tempFile, err := os.CreateTemp(dir, "upload-zip-*")
 	if err != nil {
 		return nil, hperrors.Wrap(err)
 	}
@@ -295,8 +302,11 @@ func convertZipToTarStream(content io.ReadCloser, size int64) (io.ReadCloser, er
 	}
 
 	pr, pw := io.Pipe()
+	stream := &zipTarStream{PipeReader: pr, done: make(chan struct{})}
 
 	go func() {
+		// Last: the copy of the archive is gone by then.
+		defer close(stream.done)
 		// The zip file comes straight from a user upload: a malformed archive
 		// must not be able to take the process down.
 		defer safego.RecoverPipe("containerfile.zipToTarStream", pw)
@@ -352,5 +362,22 @@ func convertZipToTarStream(content io.ReadCloser, size int64) (io.ReadCloser, er
 		_ = pw.Close()
 	}()
 
-	return pr, nil
+	return stream, nil
+}
+
+// zipTarStream is the TAR stream of an uploaded zip archive.
+type zipTarStream struct {
+	*io.PipeReader
+	// done is closed once the conversion has ended and removed its copy of the
+	// archive.
+	done chan struct{}
+}
+
+// Close stops the conversion, and returns once its copy of the archive is
+// removed: whoever closes the stream leaves no file behind. A write to the
+// closed pipe fails at once, so the conversion ends promptly.
+func (s *zipTarStream) Close() error {
+	err := s.PipeReader.Close()
+	<-s.done
+	return hperrors.Wrap(err)
 }

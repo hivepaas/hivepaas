@@ -7,9 +7,12 @@ import (
 	"compress/gzip"
 	"context"
 	"io"
+	"io/fs"
+	"path/filepath"
 	"testing"
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
+	"github.com/hivepaas/hivepaas/hivepaas_app/config"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/containerfileservice"
 )
 
@@ -193,4 +196,53 @@ func TestPrepareUploadTarStream_ExtractZip(t *testing.T) {
 		t.Errorf("expected 'body { color: red; }', got '%s'", buf.String())
 	}
 	_ = resp.TarStream.Close()
+}
+
+// The copy of a zip archive the stream is read from is in a day's directory of
+// the app's data directory, and gone once the stream is closed - however
+// little of it was read.
+func TestPrepareUploadTarStream_ExtractZipLeavesNoCopy(t *testing.T) {
+	prev := config.Current()
+	t.Cleanup(func() { config.SetCurrent(prev) })
+	appPath := t.TempDir()
+	config.SetCurrent(&config.Config{AppPath: appPath})
+
+	var zipBuf bytes.Buffer
+	zipWriter := zip.NewWriter(&zipBuf)
+	f, err := zipWriter.Create("big.bin")
+	if err != nil {
+		t.Fatalf("zip create error: %v", err)
+	}
+	if _, err = f.Write(bytes.Repeat([]byte("x"), 1<<20)); err != nil {
+		t.Fatalf("zip write error: %v", err)
+	}
+	_ = zipWriter.Close()
+
+	resp, err := (&service{}).PrepareUploadTarStream(context.Background(),
+		&containerfileservice.PrepareUploadTarStreamReq{
+			Path: "/data", FileName: "a.zip", FileSize: int64(zipBuf.Len()), Extract: true,
+			Content: io.NopCloser(&zipBuf),
+		})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	copies := 0
+	_ = filepath.WalkDir(filepath.Join(appPath, "tmp"), func(_ string, d fs.DirEntry, _ error) error {
+		if d != nil && !d.IsDir() {
+			copies++
+		}
+		return nil
+	})
+	if copies != 1 {
+		t.Fatalf("expected the archive's copy in the data directory, found %d file(s)", copies)
+	}
+
+	_ = resp.TarStream.Close()
+
+	_ = filepath.WalkDir(filepath.Join(appPath, "tmp"), func(path string, d fs.DirEntry, _ error) error {
+		if d != nil && !d.IsDir() {
+			t.Errorf("left behind: %s", path)
+		}
+		return nil
+	})
 }

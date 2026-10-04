@@ -33,11 +33,17 @@ func CreateTempDir(baseDir, pattern string, perm os.FileMode) (dir string, err e
 	return dir, nil
 }
 
+// CreateTempDirInAppPath creates a temp dir under the day's directory of
+// AppTempDir. It is where the app and the worker keep what they write for a
+// while: their data directory outlives their container - one whose process
+// died is replaced, and what its /tmp held stays with the old one, out of
+// reach - and the system cleanup removes its days after TempDirRetentionDays.
+// Should use "*" for `pattern` value. If empty, only the day's dir is created.
 func CreateTempDirInAppPath(baseDir, pattern string, perm os.FileMode) (dir string, err error) {
 	if perm == 0 {
 		perm = defaultDirMode
 	}
-	dir = filepath.Join(config.Current().AppPath, "tmp", timeutil.NowUTC().Format(time.DateOnly), baseDir)
+	dir = filepath.Join(AppTempDir(), timeutil.NowUTC().Format(time.DateOnly), baseDir)
 
 	err = os.MkdirAll(dir, perm)
 	if err != nil {
@@ -52,6 +58,15 @@ func CreateTempDirInAppPath(baseDir, pattern string, perm os.FileMode) (dir stri
 	}
 
 	return dir, nil
+}
+
+// AppTempDir is tmp in the app's data directory; with none configured, as in
+// a test, HivePaaS's directory under the OS's temporary one.
+func AppTempDir() string {
+	if cfg := config.Current(); cfg != nil && cfg.AppPath != "" {
+		return filepath.Join(cfg.AppPath, "tmp")
+	}
+	return filepath.Join(os.TempDir(), "hivepaas")
 }
 
 // TempDirRetentionDays is how long a day's temporary directories are kept by the

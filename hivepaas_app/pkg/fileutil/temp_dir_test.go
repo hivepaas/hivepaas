@@ -7,6 +7,9 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/assert"
+
+	"github.com/hivepaas/hivepaas/hivepaas_app/config"
+	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/timeutil"
 )
 
 func mustMkdir(t *testing.T, path string) {
@@ -43,4 +46,24 @@ func TestRemoveDatedTempDirsOfAMissingBaseIsNothing(t *testing.T) {
 
 	assert.NoError(t, err)
 	assert.Zero(t, removed)
+}
+
+// The app's temporary directories are made by day in its data directory, which
+// the system cleanup sweeps; with none configured, under the OS's.
+func TestCreateTempDirInAppPathIsOfTheDayInTheDataDirectory(t *testing.T) {
+	prev := config.Current()
+	t.Cleanup(func() { config.SetCurrent(prev) })
+	appPath := t.TempDir()
+	config.SetCurrent(&config.Config{AppPath: appPath})
+
+	dir, err := CreateTempDirInAppPath("", "x-*", 0)
+
+	assert.NoError(t, err)
+	assert.Equal(t, filepath.Join(appPath, "tmp", timeutil.NowUTC().Format(time.DateOnly)), filepath.Dir(dir))
+	assert.DirExists(t, dir)
+
+	config.SetCurrent(&config.Config{})
+	assert.Equal(t, filepath.Join(os.TempDir(), "hivepaas"), AppTempDir())
+	config.SetCurrent(nil)
+	assert.Equal(t, filepath.Join(os.TempDir(), "hivepaas"), AppTempDir())
 }

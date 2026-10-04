@@ -10,6 +10,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/permission"
+	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/fileutil"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/specservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/specservice/specmodel"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings"
@@ -18,7 +19,7 @@ import (
 
 const (
 	bundleContentType = "application/gzip"
-	workDirPattern    = "hivepaas-spec-*"
+	workDirPattern    = "spec-export-*"
 )
 
 // ExportSpec builds a configuration bundle for a scope.
@@ -59,7 +60,10 @@ func (uc *UC) ExportSpec(
 		}
 	}
 
-	workDir, err := os.MkdirTemp("", workDirPattern)
+	// The staged bundle holds the secrets a secret-bearing mode exported. It is
+	// removed once sent; should the process die first, it is in a day's
+	// directory the system cleanup removes.
+	workDir, err := fileutil.CreateTempDirInAppPath("", workDirPattern, 0)
 	if err != nil {
 		return nil, hperrors.Wrap(err)
 	}

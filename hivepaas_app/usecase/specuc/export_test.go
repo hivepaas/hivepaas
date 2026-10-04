@@ -224,8 +224,14 @@ func TestExportSpecPassesTheScopeThroughToTheExporter(t *testing.T) {
 }
 
 // The exporter stages a directory and archives it, so closing the body is the
-// only moment the response is known to be finished with it.
+// only moment the response is known to be finished with it. Until then it is
+// in a day's directory of the app's data directory, which the system cleanup
+// sweeps should the process die first.
 func TestExportSpecRemovesTheWorkDirOnClose(t *testing.T) {
+	prev := config.Current()
+	t.Cleanup(func() { config.SetCurrent(prev) })
+	appPath := t.TempDir()
+	config.SetCurrent(&config.Config{AppPath: appPath})
 	uc, _, svc := newTestUC(t)
 
 	resp, err := uc.ExportSpec(context.Background(), plainAuth(), exportReq(specmodel.SecretsModeOmit))
@@ -233,6 +239,8 @@ func TestExportSpecRemovesTheWorkDirOnClose(t *testing.T) {
 
 	workDir := svc.lastReq.WorkDir
 	assert.DirExists(t, workDir)
+	day, _ := filepath.Split(workDir)
+	assert.Equal(t, filepath.Join(appPath, "tmp"), filepath.Dir(filepath.Clean(day)), workDir)
 
 	assert.NoError(t, resp.Data.Content.Close())
 	assert.NoDirExists(t, workDir, "the staging directory must not outlive the download")

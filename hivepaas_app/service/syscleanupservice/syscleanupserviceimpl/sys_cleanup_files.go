@@ -3,11 +3,9 @@ package syscleanupserviceimpl
 import (
 	"context"
 	"errors"
-	"path/filepath"
 	"time"
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
-	"github.com/hivepaas/hivepaas/hivepaas_app/config"
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/fileutil"
 )
@@ -41,7 +39,7 @@ func (s *service) sysCleanupTempFiles(
 		return nil
 	}
 
-	baseDirs := []string{base.BaseTempDirDefault, filepath.Join(config.Current().AppPath, "tmp")}
+	baseDirs := []string{base.BaseTempDirDefault, fileutil.AppTempDir()}
 	threshold := time.Now().AddDate(0, 0, -fileutil.TempDirRetentionDays)
 	if data.CleanupFilesTemp == base.CleanupFlagForce {
 		threshold = time.Now()

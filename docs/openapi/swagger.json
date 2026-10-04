@@ -59130,6 +59130,10 @@
             "description" : "Build says the file builds the service's image.",
             "type" : "boolean"
           },
+          "dockerSocket" : {
+            "description" : "DockerSocket is where the service mounts the Docker socket, which it is\nnot given: the app's Docker API settings give it, once it is created.",
+            "type" : "string"
+          },
           "dropped" : {
             "description" : "Dropped are the compose fields not carried to the app.",
             "items" : {
@@ -59184,7 +59188,7 @@
             "type" : "array"
           }
         },
-        "required" : [ "aliases", "app", "build", "dropped", "existing", "image", "mode", "name", "ports", "reason", "replicas", "secrets", "skipped", "useExisting", "volumes" ],
+        "required" : [ "aliases", "app", "build", "dockerSocket", "dropped", "existing", "image", "mode", "name", "ports", "reason", "replicas", "secrets", "skipped", "useExisting", "volumes" ],
         "type" : "object"
       },
       "composeservice.VariableView" : {
@@ -69333,6 +69337,13 @@
       },
       "specdto.ApplyComposeData" : {
         "properties" : {
+          "apps" : {
+            "description" : "Apps are the apps the services became, as written.",
+            "items" : {
+              "$ref" : "#/components/schemas/specdto.ComposeAppResp"
+            },
+            "type" : "array"
+          },
           "deployments" : {
             "description" : "Deployments are the deployments queued.",
             "items" : {
@@ -69355,7 +69366,7 @@
             "type" : "object"
           }
         },
-        "required" : [ "deployments", "plan", "project" ],
+        "required" : [ "apps", "deployments", "plan", "project" ],
         "type" : "object"
       },
       "specdto.ApplyComposeReq" : {
@@ -69502,6 +69513,22 @@
           }
         },
         "required" : [ "data", "meta" ],
+        "type" : "object"
+      },
+      "specdto.ComposeAppResp" : {
+        "properties" : {
+          "app" : {
+            "description" : "App is the app's key, ID its id.",
+            "type" : "string"
+          },
+          "id" : {
+            "type" : "string"
+          },
+          "service" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "app", "id", "service" ],
         "type" : "object"
       },
       "specdto.ComposePortReq" : {

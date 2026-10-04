@@ -150,6 +150,9 @@ type ServiceView struct {
 	Dropped []string `json:"dropped"`
 	// Secrets are its variables kept as secrets of the app.
 	Secrets []string `json:"secrets"`
+	// DockerSocket is where the service mounts the Docker socket, which it is
+	// not given: the app's Docker API settings give it, once it is created.
+	DockerSocket string `json:"dockerSocket"`
 	// Existing is the app of the existing env its name or key is; empty for
 	// none. UseExisting says that app is used rather than one created.
 	Existing    string `json:"existing"`

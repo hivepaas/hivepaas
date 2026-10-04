@@ -214,8 +214,18 @@ type ApplyComposeResp struct {
 type ApplyComposeData struct {
 	// Project is the project created, or the one the services went into.
 	Project *basedto.ObjectIDResp `json:"project"`
+	// Apps are the apps the services became, as written.
+	Apps []*ComposeAppResp `json:"apps"`
 	// Plan is the plan applied, each selected node with its outcome.
 	Plan *specmodel.ImportPlan `json:"plan"`
 	// Deployments are the deployments queued.
 	Deployments []*specservice.ImportDeployment `json:"deployments"`
+}
+
+// ComposeAppResp is a service as the app it became.
+type ComposeAppResp struct {
+	Service string `json:"service"`
+	// App is the app's key, ID its id.
+	App string `json:"app"`
+	ID  string `json:"id"`
 }

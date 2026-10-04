@@ -17,6 +17,7 @@ const (
 	// it.
 	CodeFileMissing       = "COMPOSE_FILE_MISSING"
 	CodeMountDropped      = "COMPOSE_MOUNT_DROPPED"
+	CodeDockerSocket      = "COMPOSE_DOCKER_SOCKET"
 	CodeCapabilityDropped = "COMPOSE_CAPABILITY_DROPPED"
 	CodeDomainMissing     = "COMPOSE_DOMAIN_MISSING"
 	CodeValueDropped      = "COMPOSE_VALUE_DROPPED"

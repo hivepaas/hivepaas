@@ -15,6 +15,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/fileutil"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/unit"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/composeservice"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/dockerapiservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/settingmountservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/specservice/specmodel"
 )
@@ -343,9 +344,19 @@ func (c *converter) hostMount(
 ) {
 	switch {
 	case containsString(dockerSockets, v.Source):
-		c.add(appPath, specmodel.SeverityFixable, composeservice.CodeMountDropped,
-			map[string]any{detailTarget: v.Target, detailSource: v.Source},
-			"not mounted: give the app Docker API access in its settings instead")
+		// Never given from a compose file, as from no template: the node's
+		// socket is root on the node, and the proxy is not the socket the file
+		// means. The operator chooses, once the app is made.
+		view.DockerSocket = v.Target
+		action := "not mounted: once the app is created, give it the Docker API in its Docker API settings - " +
+			"through the proxy, as configured there, or the node's own socket, which takes an administrator " +
+			"and privileged apps. The proxy's socket is at $DOCKER_HOST, the node's at " +
+			dockerapiservice.HostSocketPath
+		if v.Target != dockerapiservice.HostSocketPath {
+			action += ", and neither at " + v.Target + ", where the file mounts it"
+		}
+		c.add(appPath, specmodel.SeverityFixable, composeservice.CodeDockerSocket,
+			map[string]any{detailTarget: v.Target, detailSource: v.Source}, action)
 	case !c.req.MayBindHost:
 		c.add(appPath, specmodel.SeverityFixable, composeservice.CodeMountDropped,
 			map[string]any{detailTarget: v.Target, detailSource: v.Source},

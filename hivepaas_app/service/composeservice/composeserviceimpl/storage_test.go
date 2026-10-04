@@ -3,6 +3,7 @@ package composeserviceimpl
 import (
 	"context"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/compose-spec/compose-go/v2/consts"
@@ -402,4 +403,40 @@ services:
 	assert.Contains(t, codes(resp.Issues[envPath+"/apps/app"]), composeservice.CodeDirectoryApart)
 	mounts, _ := appOf(t, resp, "app").Settings["settingMounts"].(map[string]any)
 	assert.Len(t, mounts, 1, "the file under both, once")
+}
+
+// The Docker socket is never mounted: the review says the app's Docker API
+// settings give it once the app is created - and where, when the file mounts
+// it elsewhere than either socket is.
+func TestConvertLeavesTheDockerSocketToTheDockerAPISettings(t *testing.T) {
+	req := convertReq(`
+services:
+  portainer:
+    image: portainer/portainer-ce:2
+    volumes: ["/var/run/docker.sock:/var/run/docker.sock"]
+  watch:
+    image: containrrr/watchtower:1
+    volumes: ["/var/run/docker.sock:/tmp/docker.sock"]
+`)
+	req.MayBindHost = true
+	resp := convert(t, req)
+
+	for _, view := range resp.Services {
+		want := map[string]string{"portainer": "/var/run/docker.sock", "watch": "/tmp/docker.sock"}[view.Name]
+		assert.Equal(t, want, view.DockerSocket, view.Name)
+	}
+	assert.Nil(t, appOf(t, resp, "portainer").Deployment.Storage, "not mounted, even for one who may bind the host")
+	for name, elsewhere := range map[string]bool{"portainer": false, "watch": true} {
+		var found bool
+		for _, issue := range resp.Issues[envPath+"/apps/"+name] {
+			if issue.Code != composeservice.CodeDockerSocket {
+				continue
+			}
+			found = true
+			assert.Equal(t, specmodel.SeverityFixable, issue.Severity)
+			assert.Contains(t, issue.Action, "Docker API settings")
+			assert.Equal(t, elsewhere, strings.Contains(issue.Action, "/tmp/docker.sock"), name)
+		}
+		assert.True(t, found, name)
+	}
 }

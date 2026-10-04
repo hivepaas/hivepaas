@@ -91,7 +91,7 @@ func (uc *UC) ApplyCompose(
 
 	after := uc.afterImport(ctx, uc.db, applied)
 	resp := &specdto.ApplyComposeResp{Meta: after.Meta, Data: &specdto.ApplyComposeData{
-		Plan: after.Data.Plan, Deployments: after.Data.Deployments,
+		Plan: after.Data.Plan, Deployments: after.Data.Deployments, Apps: read.apps(applied.AppIDs),
 	}}
 	if read.project.ID != "" {
 		resp.Data.Project = &basedto.ObjectIDResp{ID: read.project.ID}
@@ -133,6 +133,18 @@ type composeRead struct {
 	project   *specdto.ComposeProjectResp
 	converted *composeservice.ConvertResp
 	plan      *specservice.PlanBundleReq
+}
+
+// apps are the apps the services became, as the import wrote them.
+func (r *composeRead) apps(ids map[string]string) []*specdto.ComposeAppResp {
+	var out []*specdto.ComposeAppResp
+	for _, svc := range r.converted.Services {
+		path := "projects/" + r.project.Key + "/envs/" + r.project.EnvKey + "/apps/" + svc.App
+		if id := ids[path]; id != "" {
+			out = append(out, &specdto.ComposeAppResp{Service: svc.Name, App: svc.App, ID: id})
+		}
+	}
+	return out
 }
 
 func (r *composeRead) data() *specdto.ValidateComposeData {

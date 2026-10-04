@@ -115,6 +115,9 @@ type ApplyImportReq struct {
 type ApplyImportResp struct {
 	// Plan is the plan applied, with each selected node's outcome.
 	Plan *specmodel.ImportPlan
+	// AppIDs are what each app node written is here, by its path: the app
+	// created, or the one updated.
+	AppIDs map[string]string
 	// Cleanup removes from docker what provisioning the new apps created. It is
 	// the caller's to run when its transaction did not commit: the records are
 	// gone, and the services, secrets and configs are not. Its context should be

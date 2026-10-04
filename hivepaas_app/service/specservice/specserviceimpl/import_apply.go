@@ -62,7 +62,7 @@ func (s *service) applyBundleWith(
 	if err = w.write(ctx); err != nil {
 		return resp, err
 	}
-	resp.Tasks, resp.Deployments = w.tasks, w.deployments
+	resp.Tasks, resp.Deployments, resp.AppIDs = w.tasks, w.deployments, w.appIDs
 	return resp, nil
 }
 

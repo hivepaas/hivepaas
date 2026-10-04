@@ -274,3 +274,20 @@ func TestApplyComposeIntoAProjectIsRecordedOnIt(t *testing.T) {
 		assert.Contains(t, entries[0].Detail, `"newEnv":true`)
 	}
 }
+
+// Applied, the apps the services became come back with their ids - for the
+// page to link to, as the Docker API settings of one that asked for the socket.
+func TestApplyComposeAnswersTheAppsWritten(t *testing.T) {
+	read := &composeRead{
+		project: &specdto.ComposeProjectResp{Key: "shop", EnvKey: "prod"},
+		converted: &composeservice.ConvertResp{Services: []*composeservice.ServiceView{
+			{Name: "web", App: "web"}, {Name: "my_db", App: "my-db"}, {Name: "skipped", App: "skipped"},
+		}},
+	}
+	apps := read.apps(map[string]string{
+		"projects/shop/envs/prod/apps/web": "app_1", "projects/shop/envs/prod/apps/my-db": "app_2",
+	})
+	assert.Equal(t, []*specdto.ComposeAppResp{
+		{Service: "web", App: "web", ID: "app_1"}, {Service: "my_db", App: "my-db", ID: "app_2"},
+	}, apps)
+}

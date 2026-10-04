@@ -44,6 +44,7 @@ const ServiceSchema = z.object({
     ports: list(PortSchema),
     volumes: list(VolumeSchema),
     aliases: list(z.string()),
+    secrets: list(z.string()),
     dropped: list(z.string()),
 });
 

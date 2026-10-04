@@ -158,6 +158,11 @@ function ServiceCard({ service, image, onImageChange, onPortChange }: CardProps)
                     Reached as {service.aliases.map(alias => `"${alias}"`).join(", ")} too.
                 </p>
             )}
+            {service.secrets.length > 0 && (
+                <p className="text-xs text-muted-foreground">
+                    Kept as secrets of the app: {service.secrets.join(", ")}.
+                </p>
+            )}
             {service.dropped.length > 0 && (
                 <p className="text-xs text-amber-700 dark:text-amber-400">Left out: {service.dropped.join(", ")}.</p>
             )}

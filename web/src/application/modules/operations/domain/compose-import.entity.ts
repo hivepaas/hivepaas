@@ -47,6 +47,8 @@ export interface ComposeServiceView {
     volumes: ComposeVolumeView[];
     /** The names it is reached by beside its key. */
     aliases: string[];
+    /** Its variables written out in the file whose values are kept as its secrets. */
+    secrets: string[];
     /** The fields of the file not carried to the app. */
     dropped: string[];
 }

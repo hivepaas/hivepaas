@@ -484,6 +484,17 @@ everything for compose, review later".
   unless the review says otherwise, the others domains too. A published port
   of the same container port is then none by default. Path matchers are not
   kept; only a host a domain can be is taken.
+- **Read-only volumes holding a file.** Found by the same check, and older: a
+  file bind inside a volume mounted `:ro` - `site:/html:ro` with
+  `./index.html:/html/index.html` - would not start either. Such a volume is
+  mounted writable, with a warning (`COMPOSE_MOUNT_WRITABLE`).
+- **Nested directories stay apart.** A directory under another mounted one
+  is its own on the volume, as before, now with a warning
+  (`COMPOSE_DIRECTORY_APART`). Making it the other's subdirectory was built
+  and dropped: `volumeservice.MakeDirWritableCmd` opens up only the leaf it
+  makes, and only while empty, so preparing the inner one first would leave
+  the outer one root's, unwritable for a service not running as root, with
+  deployments in no set order.
 - **Not done, on purpose.** `docker.sock` stays dropped with its note: host
   mode is root on the node, which HivePaaS never grants from a template
   (`HostModeFromTemplate`), and the proxy is not the socket a compose file

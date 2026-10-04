@@ -33,18 +33,51 @@ func BuildInvocationLoadQuery(req *loggingmodel.InvocationLoadReq) (string, erro
 	if err != nil {
 		return "", err
 	}
+	short, err := shortPart(req.Start, req.ShortStart, req.End)
+	if err != nil {
+		return "", err
+	}
 	field := strconv.Quote(req.Field)
+	duration := strconv.Quote(UnpackPrefix + "durationMs")
 	capped := strconv.Quote(UnpackPrefix + "cappedMs")
-	return field + `:in(` + strings.Join(ids, ",") + `) AND ` + strconv.Quote(invocationPhrase) +
+	q := field + `:in(` + strings.Join(ids, ",") + `) AND ` + strconv.Quote(invocationPhrase) +
 		` | unpack_json from _msg fields (hp, outcome, durationMs) result_prefix ` + strconv.Quote(UnpackPrefix) +
 		` | filter ` + strconv.Quote(UnpackPrefix+"hp") + `:="invocation"` +
-		` | math min(` + strconv.Quote(UnpackPrefix+"durationMs") + `, ` + strconv.FormatInt(span.Milliseconds(), 10) +
-		`) as ` + capped +
-		// min() of a duration that is not a number is the range: only numbers
-		// are summed.
-		` | stats by (` + field + `) sum(` + capped + `) if (` + strconv.Quote(UnpackPrefix+"durationMs") +
-		`:>=0) busyMs, count() calls,` +
-		` count() if (` + strconv.Quote(UnpackPrefix+"outcome") + `:="throttled") throttled`, nil
+		` | math min(` + duration + `, ` + strconv.FormatInt(span.Milliseconds(), 10) + `) as ` + capped
+	if short != nil {
+		q += ` | math min(` + duration + `, ` + strconv.FormatInt(short.span.Milliseconds(), 10) + `) as ` +
+			strconv.Quote(UnpackPrefix+"cappedShortMs")
+	}
+	// min() of a duration that is not a number is the range: only numbers
+	// are summed.
+	q += ` | stats by (` + field + `) sum(` + capped + `) if (` + duration + `:>=0) busyMs, count() calls,` +
+		` count() if (` + strconv.Quote(UnpackPrefix+"outcome") + `:="throttled") throttled`
+	if short != nil {
+		q += `, sum(` + strconv.Quote(UnpackPrefix+"cappedShortMs") + `) if (` + short.filter + ` ` + duration +
+			`:>=0) shortBusyMs, count() if (` + short.filter + `) shortCalls`
+	}
+	return q, nil
+}
+
+// shortRange is a load query's last part: its span, and the filter on a
+// line's time that keeps it.
+type shortRange struct {
+	span   time.Duration
+	filter string
+}
+
+// shortPart is the range's last part from shortStart, nil when there is none:
+// it must lie inside the range. The time is written as LogsQL reads one, not
+// quoted: it is no text of anyone's.
+func shortPart(start, shortStart, end time.Time) (*shortRange, error) {
+	if shortStart.IsZero() {
+		return nil, nil //nolint:nilnil // no part asked for
+	}
+	if !shortStart.After(start) || !shortStart.Before(end) {
+		return nil, hperrors.Wrap(loggingmodel.ErrQueryInvalid).WithExtraDetail("the range's last part must lie in it")
+	}
+	return &shortRange{span: end.Sub(shortStart),
+		filter: `_time:>=` + shortStart.UTC().Format(time.RFC3339Nano)}, nil
 }
 
 // InvocationLoad says how busy functions were over the request's range.
@@ -63,6 +96,7 @@ func (c *Client) InvocationLoad(
 	for _, row := range rows {
 		out.ByApp[row[req.Field]] = &loggingmodel.InvocationLoad{
 			BusyMs: value(row["busyMs"]), Calls: whole(row["calls"]), Throttled: whole(row["throttled"]),
+			ShortBusyMs: value(row["shortBusyMs"]), ShortCalls: whole(row["shortCalls"]),
 		}
 	}
 	return out, nil

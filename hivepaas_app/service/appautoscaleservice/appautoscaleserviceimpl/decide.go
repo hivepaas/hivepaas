@@ -10,12 +10,29 @@ import (
 )
 
 // aboveRunsToScaleOut is how many runs in a row the load must ask for more
-// before it is given: a burst within one run is not a trend. Throttled calls
-// do not wait.
+// before it is given: a minute's average a little above for one run is not a
+// trend. Throttled calls and a burst do not wait; once given, a load still
+// rising is given more every run.
 const aboveRunsToScaleOut = 2
 
 // maxGrowth bounds a run's scale-out for throttled calls: doubling at most.
 const maxGrowth = 2
+
+// panicThreshold is how many times the replicas the window's last part must
+// ask for to be given them at once: a burst the minute's average takes most of
+// a minute to see. Knative's panic mode, at its default. Requests and calls
+// only: CPU stops at its limit, and a starting container's CPU would read as a
+// burst.
+const panicThreshold = 2
+
+// growthFactor and growthStep bound any run's scale-out: to twice the
+// replicas, or 4 more, the larger - the Kubernetes HPA's default. A burst read
+// over 15 seconds, or a minute that kept asking, is not let to overshoot in
+// one run.
+const (
+	growthFactor = 2
+	growthStep   = 4
+)
 
 // cpuTolerance is how far from its target an app's CPU may be and change
 // nothing: CPU moves a little every run, and a replica each way every minute
@@ -39,7 +56,7 @@ type bounds struct {
 type ask struct {
 	// Want is the replicas the load needs, before Min and Max.
 	Want int
-	// Urgent scales out at once: calls are being turned away.
+	// Urgent scales out at once: calls are being turned away, or a burst.
 	Urgent bool
 	// Up says why it scales out; Low what the load is, when it scales in.
 	Up, Low string
@@ -67,11 +84,14 @@ type decision struct {
 
 // input is what one function's decision is made from.
 type input struct {
-	Current      int
-	Min, Max     int
-	Concurrency  int
-	Target       int // percent of Concurrency an instance is kept at
-	Window       time.Duration
+	Current     int
+	Min, Max    int
+	Concurrency int
+	Target      int // percent of Concurrency an instance is kept at
+	Window      time.Duration
+	// ShortWindow is the window's last part, read apart for a burst; 0 for
+	// none.
+	ShortWindow  time.Duration
 	ScaleInDelay time.Duration
 	Now          time.Time
 	// Load is nil when the function had no call in the window: no load, the
@@ -110,7 +130,30 @@ func askFunction(in *input) (ask, float64) {
 		a.Urgent = true
 		a.Up = fmt.Sprintf("%d of %d calls turned away", throttled, calls)
 	}
+	if in.Load != nil {
+		a = withBurst(a, in.Current, in.Load.ShortBusyMs, in.ShortWindow, perInstance, "calls")
+	}
 	return a, inFlight
+}
+
+// withBurst is an ask with the window's last part read in: when what was in
+// flight over it needs panicThreshold times the replicas or more, a burst -
+// Urgent, and the larger of the two asks, as Knative's panic mode takes.
+func withBurst(a ask, current int, busyMs float64, span time.Duration, perInstance float64, what string) ask {
+	if current < 1 || span <= 0 || perInstance <= 0 {
+		return a
+	}
+	inFlight := busyMs / float64(span.Milliseconds())
+	need := inFlight / perInstance
+	if need < float64(panicThreshold*current) {
+		return a
+	}
+	a.Urgent = true
+	if want := int(math.Ceil(need)); want > a.Want {
+		a.Want = want
+		a.Up = fmt.Sprintf("%.1f %s in flight over the last %s, %g an instance", inFlight, what, span, perInstance)
+	}
+	return a
 }
 
 // appInput is what an app's decision is made from: the signals it scales on,
@@ -118,6 +161,9 @@ func askFunction(in *input) (ask, float64) {
 type appInput struct {
 	Current int
 	Window  time.Duration
+	// ShortWindow is the window's last part, read apart for a burst; 0 for
+	// none.
+	ShortWindow time.Duration
 
 	// RequestsTarget is the requests in flight an instance takes; 0 when the
 	// app does not scale on them. Requests is nil when none ended in the
@@ -135,8 +181,9 @@ type appInput struct {
 	Reservation float64
 }
 
-// askApp is what an app's signals ask; the larger wins. false when none of
-// those it scales on could be read: it holds.
+// askApp is what an app's signals ask: an urgent one first - a burst is acted
+// on at once, and the others are given on the runs after - then the larger.
+// false when none of those it scales on could be read: it holds.
 func askApp(in *appInput) (ask, float64, bool) {
 	var asks []ask
 	var inFlight float64
@@ -157,8 +204,8 @@ func askApp(in *appInput) (ask, float64, bool) {
 	lows := []string{asks[0].Low}
 	for _, a := range asks[1:] {
 		lows = append(lows, a.Low)
-		if a.Want > out.Want {
-			out.Want, out.Up, out.Cooldown = a.Want, a.Up, a.Cooldown
+		if (a.Urgent && !out.Urgent) || (a.Urgent == out.Urgent && a.Want > out.Want) {
+			out = a
 		}
 	}
 	out.Low = strings.Join(lows, ", ")
@@ -172,11 +219,15 @@ func askRequests(in *appInput) (ask, float64) {
 	if in.Requests != nil && in.Window > 0 {
 		inFlight = in.Requests.BusyMs / float64(in.Window.Milliseconds())
 	}
-	return ask{
+	a := ask{
 		Want: int(math.Ceil(inFlight / float64(in.RequestsTarget))),
 		Up:   fmt.Sprintf("%.1f requests in flight, %d an instance", inFlight, in.RequestsTarget),
 		Low:  fmt.Sprintf("%.1f requests in flight", inFlight),
-	}, inFlight
+	}
+	if in.Requests != nil {
+		a = withBurst(a, in.Current, in.Requests.ShortBusyMs, in.ShortWindow, float64(in.RequestsTarget), "requests")
+	}
+	return a, inFlight
 }
 
 // askCPU: the HPA's formula, the replicas times how far CPU is from its
@@ -223,8 +274,10 @@ func cpuUtilization(containers []*logging.ContainerCPU, reservation float64) (fl
 }
 
 // settle is the replicas a run's ask comes to: within the bounds; up fast -
-// at once when urgent, else after aboveRunsToScaleOut runs and the cooldown;
-// down slow - once below for the scale-in delay, by half the gap a run.
+// at once when urgent, else after aboveRunsToScaleOut runs and the cooldown,
+// then every run that still asks for more, growing at most growthFactor times
+// or growthStep a run; down slow - once below for the scale-in delay, by half
+// the gap a run.
 func settle(b bounds, a ask, st state) (decision, state) {
 	d := decision{Desired: b.Current}
 	want := min(max(a.Want, b.Min), b.Max)
@@ -235,19 +288,23 @@ func settle(b bounds, a ask, st state) (decision, state) {
 		d.Desired, d.Reason = min(max(b.Current, b.Min), b.Max), "outside its bounds"
 		return d, state{LastUpAt: st.LastUpAt, ShortSince: st.ShortSince}
 	case want > b.Current && a.Urgent:
-		d.Desired, d.Reason = want, a.Up
-		return d, state{LastUpAt: now, ShortSince: st.ShortSince}
+		d.Desired, d.Reason = grow(b.Current, want, a.Up)
+		// A burst is a trend already: the next run that asks for more is
+		// given it.
+		return d, state{AboveRuns: aboveRunsToScaleOut, LastUpAt: now, ShortSince: st.ShortSince}
 	case want > b.Current:
 		st.BelowSince = 0
-		st.AboveRuns++
+		st.AboveRuns = min(st.AboveRuns+1, aboveRunsToScaleOut)
 		if st.AboveRuns < aboveRunsToScaleOut {
 			return d, st
 		}
 		if a.Cooldown > 0 && st.LastUpAt > 0 && b.Now.Sub(time.Unix(st.LastUpAt, 0)) < a.Cooldown {
 			return d, st
 		}
-		d.Desired, d.Reason = want, a.Up
-		return d, state{LastUpAt: now, ShortSince: st.ShortSince}
+		d.Desired, d.Reason = grow(b.Current, want, a.Up)
+		// Still rising, the next run that asks for more is given it at once:
+		// the count is kept, not started again.
+		return d, state{AboveRuns: st.AboveRuns, LastUpAt: now, ShortSince: st.ShortSince}
 	case want < b.Current:
 		st.AboveRuns = 0
 		if st.BelowSince == 0 {
@@ -264,4 +321,14 @@ func settle(b bounds, a ask, st state) (decision, state) {
 		return d, st
 	}
 	return d, state{LastUpAt: st.LastUpAt, ShortSince: st.ShortSince}
+}
+
+// grow is a scale-out from current toward want, bounded by growthFactor and
+// growthStep, and why.
+func grow(current, want int, why string) (int, string) {
+	limit := max(current*growthFactor, current+growthStep)
+	if want <= limit {
+		return want, why
+	}
+	return limit, fmt.Sprintf("%s; %d at most this run", why, limit)
 }

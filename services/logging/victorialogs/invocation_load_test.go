@@ -39,6 +39,25 @@ func TestInvocationLoadQueryIsOneForAllTheFunctions(t *testing.T) {
 	assert.ErrorIs(t, err, loggingmodel.ErrQueryScopeRequired)
 	_, err = BuildInvocationLoadQuery(&loggingmodel.InvocationLoadReq{Field: appField, AppIDs: []string{"FN1"}})
 	assert.ErrorIs(t, err, loggingmodel.ErrQueryInvalid, "no range")
+	assert.NotContains(t, q, "short", "no last part asked for")
+}
+
+// The range's last part is summed apart in the same query, each call counted
+// for that part at most.
+func TestInvocationLoadQuerySumsTheLastPartApart(t *testing.T) {
+	req := &loggingmodel.InvocationLoadReq{Field: appField, AppIDs: []string{"FN1"}, Start: loadStart,
+		End: loadEnd, ShortStart: loadEnd.Add(-15 * time.Second)}
+	q, err := BuildInvocationLoadQuery(req)
+	assert.NoError(t, err)
+	assert.Contains(t, q, `| math min("app.durationMs", 15000) as "app.cappedShortMs"`)
+	assert.True(t, strings.HasSuffix(q, `, sum("app.cappedShortMs") if (_time:>=2026-10-03T10:00:45Z `+
+		`"app.durationMs":>=0) shortBusyMs, count() if (_time:>=2026-10-03T10:00:45Z) shortCalls`), q)
+
+	for _, at := range []time.Time{loadStart, loadEnd, loadStart.Add(-time.Second)} {
+		req.ShortStart = at
+		_, err = BuildInvocationLoadQuery(req)
+		assert.ErrorIs(t, err, loggingmodel.ErrQueryInvalid, at)
+	}
 }
 
 // Run against a VictoriaLogs whose URL is in HP_TEST_VICTORIALOGS_URL.
@@ -48,7 +67,7 @@ func TestLiveInvocationLoadSumsEachFunctionsCalls(t *testing.T) {
 		t.Skip("HP_TEST_VICTORIALOGS_URL not set")
 	}
 	run := time.Now().UTC().Format("150405.000000000")
-	busy, throttled, other, long := "BUSY-"+run, "THR-"+run, "OTHER-"+run, "LONG-"+run
+	busy, throttled, other, long, late := "BUSY-"+run, "THR-"+run, "OTHER-"+run, "LONG-"+run, "LATE-"+run
 	start := time.Now().UTC().Truncate(time.Minute).Add(-2 * time.Minute)
 	call := func(app string, at time.Duration, ms float64, outcome string) string {
 		msg := fmt.Sprintf(`{\"hp\":\"invocation\",\"durationMs\":%g,\"outcome\":\"%s\"}`, ms, outcome)
@@ -64,6 +83,9 @@ func TestLiveInvocationLoadSumsEachFunctionsCalls(t *testing.T) {
 		// A call whose duration is not a number: counted, none of its time.
 		fmt.Sprintf(`{"_time":%q,"_msg":"{\"hp\":\"invocation\",\"durationMs\":\"x\",\"outcome\":\"ok\"}",`+
 			`"%s":%q}`, start.Add(45*time.Second).Format(time.RFC3339Nano), appField, long),
+		// One call in the range's last part, long: counted for that part at
+		// most there; and one before it.
+		call(late, 15*time.Second, 1000, "ok"), call(late, 50*time.Second, 30_000, "ok"),
 		// The function's own line mentioning an invocation is no call.
 		fmt.Sprintf(`{"_time":%q,"_msg":"{\"hp\":\"log\",\"msg\":\"hp invocation\"}","%s":%q}`,
 			start.Add(time.Second).Format(time.RFC3339Nano), appField, busy),
@@ -80,15 +102,17 @@ func TestLiveInvocationLoadSumsEachFunctionsCalls(t *testing.T) {
 	_ = resp.Body.Close()
 
 	c := New(&Config{Endpoint: loggingmodel.Endpoint{URL: base}})
-	req := &loggingmodel.InvocationLoadReq{Field: appField, AppIDs: []string{busy, throttled, long},
-		Start: start, End: start.Add(time.Minute)}
+	// The last part starts between two seconds: its time is written to the
+	// nanosecond.
+	req := &loggingmodel.InvocationLoadReq{Field: appField, AppIDs: []string{busy, throttled, long, late},
+		Start: start, End: start.Add(time.Minute), ShortStart: start.Add(44*time.Second + 500*time.Millisecond)}
 	var got *loggingmodel.InvocationLoadResp
 	for range 20 { // ingestion becomes visible within a second or two
 		got, err = c.InvocationLoad(context.Background(), req)
 		if err != nil {
 			t.Fatal(err)
 		}
-		if len(got.ByApp) >= 3 {
+		if len(got.ByApp) >= 4 {
 			break
 		}
 		time.Sleep(250 * time.Millisecond)
@@ -97,6 +121,9 @@ func TestLiveInvocationLoadSumsEachFunctionsCalls(t *testing.T) {
 		assert.Equal(t, &loggingmodel.InvocationLoad{BusyMs: 1000, Calls: 2}, got.ByApp[busy])
 		assert.Equal(t, &loggingmodel.InvocationLoad{BusyMs: 50, Calls: 2, Throttled: 1}, got.ByApp[throttled])
 	}
-	assert.Equal(t, &loggingmodel.InvocationLoad{BusyMs: 60_000, Calls: 2}, got.ByApp[long])
+	assert.Equal(t, &loggingmodel.InvocationLoad{BusyMs: 60_000, Calls: 2, ShortCalls: 1}, got.ByApp[long],
+		"the call at 45 s, its time not a number, is in the last part; the one at 40 s is not")
+	assert.Equal(t, &loggingmodel.InvocationLoad{BusyMs: 31_000, Calls: 2, ShortBusyMs: 15_500, ShortCalls: 1},
+		got.ByApp[late])
 	assert.NotContains(t, got.ByApp, other)
 }

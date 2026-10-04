@@ -5,6 +5,7 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/services/logging/loggingmodel"
@@ -33,8 +34,10 @@ var (
 	// httpOriginDuration is how long the proxy waited on the app for a
 	// request, in ns: 0 for one it found no replica for.
 	httpOriginDuration = strconv.Quote(HTTPUnpackPrefix + "OriginDuration")
-	// httpCapped is that time, the range's at most.
-	httpCapped = strconv.Quote(HTTPUnpackPrefix + "capped")
+	// httpCapped is that time, the range's at most; httpCappedShort the range's
+	// last part's at most.
+	httpCapped      = strconv.Quote(HTTPUnpackPrefix + "capped")
+	httpCappedShort = strconv.Quote(HTTPUnpackPrefix + "cappedShort")
 )
 
 // BuildRequestLoadQuery turns a request into LogsQL by the rules BuildQuery
@@ -67,24 +70,37 @@ func BuildRequestLoadQuery(req *loggingmodel.RequestLoadReq) (string, error) {
 		}
 		ids = append(ids, regexp.QuoteMeta(strings.ToLower(id)))
 	}
+	short, err := shortPart(req.Start, req.ShortStart, req.End)
+	if err != nil {
+		return "", err
+	}
 	head, err := loadMatch(req.Match, accessLogPhrase)
 	if err != nil {
 		return "", err
 	}
 	// Anchored, so that an app's id never matches as the start of another's.
 	services := "^svc-(" + strings.Join(ids, "|") + ")-[0-9]+@swarm$"
-	return head +
+	q := head +
 		` | unpack_json from _msg fields (ServiceName, OriginDuration) result_prefix ` +
 		strconv.Quote(HTTPUnpackPrefix) +
 		` | filter ` + httpService + `:~` + strconv.Quote(services) +
 		` | copy ` + httpService + ` as ` + httpApp +
 		` | replace_regexp ("^svc-(.+)-[0-9]+@swarm$", "$1") at ` + httpApp +
 		` | math min(` + httpOriginDuration + `, ` + strconv.FormatInt(span.Nanoseconds(), 10) + `) as ` +
-		httpCapped +
-		// min() of a duration that is not a number is the range: only numbers
-		// are summed.
-		` | stats by (` + httpApp + `) sum(` + httpCapped + `) if (` + httpOriginDuration + `:>=0) busyNs,` +
-		` count() requests`, nil
+		httpCapped
+	if short != nil {
+		q += ` | math min(` + httpOriginDuration + `, ` + strconv.FormatInt(short.span.Nanoseconds(), 10) +
+			`) as ` + httpCappedShort
+	}
+	// min() of a duration that is not a number is the range: only numbers
+	// are summed.
+	q += ` | stats by (` + httpApp + `) sum(` + httpCapped + `) if (` + httpOriginDuration + `:>=0) busyNs,` +
+		` count() requests`
+	if short != nil {
+		q += `, sum(` + httpCappedShort + `) if (` + short.filter + ` ` + httpOriginDuration +
+			`:>=0) shortBusyNs, count() if (` + short.filter + `) shortRequests`
+	}
+	return q, nil
 }
 
 // RequestLoad says how busy apps were over the request's range, by the ids
@@ -105,6 +121,8 @@ func (c *Client) RequestLoad(
 	for _, id := range req.AppIDs {
 		byLower[strings.ToLower(id)] = id
 	}
+	// The access log's durations are in ns.
+	ms := float64(time.Millisecond)
 	out := &loggingmodel.RequestLoadResp{ByApp: make(map[string]*loggingmodel.RequestLoad, len(rows))}
 	for _, row := range rows {
 		id, ok := byLower[row[HTTPUnpackPrefix+"app"]]
@@ -112,7 +130,8 @@ func (c *Client) RequestLoad(
 			continue
 		}
 		out.ByApp[id] = &loggingmodel.RequestLoad{
-			BusyMs: value(row["busyNs"]) / 1e6, Requests: whole(row["requests"]), //nolint:mnd // ns to ms
+			BusyMs: value(row["busyNs"]) / ms, Requests: whole(row["requests"]),
+			ShortBusyMs: value(row["shortBusyNs"]) / ms, ShortRequests: whole(row["shortRequests"]),
 		}
 	}
 	return out, nil

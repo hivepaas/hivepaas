@@ -121,7 +121,7 @@ func (s *service) FunctionLoad(
 	ctx context.Context,
 	db database.IDB,
 	appIDs []string,
-	start, end time.Time,
+	start, end, shortStart time.Time,
 ) (map[string]*logging.InvocationLoad, error) {
 	if len(appIDs) == 0 {
 		return map[string]*logging.InvocationLoad{}, nil
@@ -132,6 +132,7 @@ func (s *service) FunctionLoad(
 	}
 	resp, err := backend.InvocationLoad(ctx, &logging.InvocationLoadReq{
 		Field: vlagent.AttrField(appservice.LabelLogAppID), AppIDs: appIDs, Start: start, End: end,
+		ShortStart: shortStart,
 	})
 	if err != nil {
 		return nil, hperrors.Wrap(err)
@@ -145,7 +146,7 @@ func (s *service) RequestLoad(
 	ctx context.Context,
 	db database.IDB,
 	appIDs []string,
-	start, end time.Time,
+	start, end, shortStart time.Time,
 ) (map[string]*logging.RequestLoad, error) {
 	if len(appIDs) == 0 {
 		return map[string]*logging.RequestLoad{}, nil
@@ -158,7 +159,7 @@ func (s *service) RequestLoad(
 		Match: []logging.FieldMatch{{
 			Field: vlagent.AttrField(base.LabelLogComponent), Value: base.LogComponentTraefik,
 		}},
-		AppIDs: appIDs, Start: start, End: end,
+		AppIDs: appIDs, Start: start, End: end, ShortStart: shortStart,
 	})
 	if err != nil {
 		return nil, hperrors.Wrap(err)

@@ -52,6 +52,11 @@ const (
 	// as less load.
 	logLag = 10 * time.Second
 
+	// shortWindow is the window's last part, whose requests and calls are read
+	// apart in the same query: a burst the minute's average takes most of a
+	// minute to see is acted on in one run.
+	shortWindow = 15 * time.Second
+
 	// stateTTL keeps an app's state between runs, and lets it go once the job
 	// has stopped running for it. The key says function: it was made for them.
 	stateTTL      = time.Hour
@@ -264,7 +269,7 @@ func (s *service) Run(ctx context.Context, data *queue.PeriodicExecData) error {
 	now := s.now()
 	r := &runData{now: now, autoscales: autoscales, concurrency: concurrency, services: services,
 		end: now.Add(-logLag)}
-	r.start = r.end.Add(-window)
+	r.start, r.shortStart = r.end.Add(-window), r.end.Add(-shortWindow)
 	var errs []error
 	// No data is not no load: what cannot be read moves nothing.
 	if err = s.readFunctions(ctx, r, apps); err != nil {
@@ -301,13 +306,14 @@ func (s *service) Run(ctx context.Context, data *queue.PeriodicExecData) error {
 	return hperrors.Wrap(err)
 }
 
-// runData is what one run reads, for every app at once, over [start, end).
+// runData is what one run reads, for every app at once, over [start, end) -
+// and its last part, from shortStart, apart.
 type runData struct {
-	now         time.Time
-	start, end  time.Time
-	autoscales  map[string]*entity.AppAutoscale
-	concurrency map[string]int
-	services    map[string]*swarm.Service
+	now                    time.Time
+	start, end, shortStart time.Time
+	autoscales             map[string]*entity.AppAutoscale
+	concurrency            map[string]int
+	services               map[string]*swarm.Service
 
 	functionsRead bool
 	functionLoads map[string]*logs.InvocationLoad
@@ -358,7 +364,7 @@ func (s *service) readFunctions(ctx context.Context, r *runData, apps []*entity.
 	if len(ids) == 0 {
 		return nil
 	}
-	loads, err := s.loggingService.FunctionLoad(ctx, s.db, ids, r.start, r.end)
+	loads, err := s.loggingService.FunctionLoad(ctx, s.db, ids, r.start, r.end, r.shortStart)
 	if err != nil {
 		return hperrors.Wrap(err)
 	}
@@ -404,7 +410,7 @@ func (s *service) readRequests(ctx context.Context, r *runData, ids []string) er
 	if err != nil {
 		return err
 	}
-	loads, err := s.loggingService.RequestLoad(ctx, s.db, ids, r.start, r.end)
+	loads, err := s.loggingService.RequestLoad(ctx, s.db, ids, r.start, r.end, r.shortStart)
 	if err != nil {
 		return hperrors.Wrap(err)
 	}
@@ -489,7 +495,7 @@ func (s *service) runApp(ctx context.Context, r *runData, app *entity.App) (*ent
 		}
 		load := r.functionLoads[app.ID]
 		in := &input{Current: current, Concurrency: concurrency, Target: autoscale.Target, Window: window,
-			Load: load}
+			ShortWindow: shortWindow, Load: load}
 		a, change.InFlight = askFunction(in)
 		change.Calls, change.Throttled = callsOf(load), throttledOf(load)
 		change.Concurrency, change.Target = concurrency, autoscale.Target
@@ -543,8 +549,9 @@ func (s *service) runApp(ctx context.Context, r *runData, app *entity.App) (*ent
 func (s *service) appInputOf(
 	r *runData, app *entity.App, autoscale *entity.AppAutoscale, svc *swarm.Service, current int,
 ) *appInput {
-	in := &appInput{Current: current, Window: window, RequestsTarget: autoscale.RequestsTarget,
-		CPUTarget: autoscale.CPUTarget, Reservation: cpuReservation(&svc.Spec)}
+	in := &appInput{Current: current, Window: window, ShortWindow: shortWindow,
+		RequestsTarget: autoscale.RequestsTarget, CPUTarget: autoscale.CPUTarget,
+		Reservation: cpuReservation(&svc.Spec)}
 	if r.requestsRead && r.exposed[app.ID] {
 		in.RequestsRead, in.Requests = true, r.requests[app.ID]
 	}

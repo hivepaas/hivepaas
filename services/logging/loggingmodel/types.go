@@ -387,16 +387,23 @@ type InvocationLoadReq struct {
 	AppIDs []string
 	Start  time.Time
 	End    time.Time
+	// ShortStart starts the range's last part, [ShortStart, End), whose calls
+	// are also summed apart: a burst the whole range's average hides. Zero for
+	// none.
+	ShortStart time.Time
 }
 
 // InvocationLoad is one function's calls that ended in the range: the time
 // they took, summed, in milliseconds - divided by the range, the calls it had
 // in flight on average - how many, and how many it turned away for having
-// Concurrency calls already ("throttled").
+// Concurrency calls already ("throttled"). ShortBusyMs and ShortCalls are the
+// same of the range's last part, each call counted for that part at most.
 type InvocationLoad struct {
-	BusyMs    float64
-	Calls     int64
-	Throttled int64
+	BusyMs      float64
+	Calls       int64
+	Throttled   int64
+	ShortBusyMs float64
+	ShortCalls  int64
 }
 
 // InvocationLoadResp is each function's load, by app id; one with no call in
@@ -413,15 +420,20 @@ type RequestLoadReq struct {
 	AppIDs []string
 	Start  time.Time
 	End    time.Time
+	// ShortStart starts the range's last part, as InvocationLoadReq's.
+	ShortStart time.Time
 }
 
 // RequestLoad is one app's requests that ended in the range: the time the app
 // took to answer them, summed, in milliseconds - divided by the range, the
 // requests it had in flight on average - and how many. A request no replica
-// answered took none of its time.
+// answered took none of its time. ShortBusyMs and ShortRequests are the same
+// of the range's last part, each request counted for that part at most.
 type RequestLoad struct {
-	BusyMs   float64
-	Requests int64
+	BusyMs        float64
+	Requests      int64
+	ShortBusyMs   float64
+	ShortRequests int64
 }
 
 // RequestLoadResp is each app's load, by app id as asked; one with no request

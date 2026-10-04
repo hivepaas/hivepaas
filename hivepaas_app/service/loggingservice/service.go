@@ -56,16 +56,18 @@ type Service interface {
 		q *FunctionMetricsQuery) (*logging.ResourceStatsResp, error)
 
 	// FunctionLoad says how busy functions were over [start, end), by app id,
-	// in one query: what autoscale decides from. It fails, rather than answer
-	// nothing, when the logs cannot be read: no data is not no load.
+	// in one query: what autoscale decides from; and over its last part from
+	// shortStart, apart - zero for none. It fails, rather than answer nothing,
+	// when the logs cannot be read: no data is not no load.
 	FunctionLoad(ctx context.Context, db database.IDB, appIDs []string,
-		start, end time.Time) (map[string]*logging.InvocationLoad, error)
+		start, end, shortStart time.Time) (map[string]*logging.InvocationLoad, error)
 
 	// RequestLoad says how busy apps were over [start, end) by the proxy's
-	// access log, by app id, in one query. It fails when the logs cannot be
-	// read, as FunctionLoad does.
+	// access log, by app id, in one query; and over its last part from
+	// shortStart, apart. It fails when the logs cannot be read, as
+	// FunctionLoad does.
 	RequestLoad(ctx context.Context, db database.IDB, appIDs []string,
-		start, end time.Time) (map[string]*logging.RequestLoad, error)
+		start, end, shortStart time.Time) (map[string]*logging.RequestLoad, error)
 
 	// CPULoad reads apps' containers' CPU over [start, end) from the agent's
 	// rows, by app id, in one query. It fails when the logs cannot be read.

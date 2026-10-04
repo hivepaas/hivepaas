@@ -39,6 +39,17 @@ func TestRequestLoadQueryIsOneForAllTheApps(t *testing.T) {
 	assert.ErrorIs(t, err, loggingmodel.ErrQueryScopeRequired)
 	_, err = BuildRequestLoadQuery(&loggingmodel.RequestLoadReq{Match: traefikMatch, AppIDs: []string{"A"}})
 	assert.ErrorIs(t, err, loggingmodel.ErrQueryInvalid, "no range")
+
+	// The range's last part, summed apart in the same query.
+	q, err = BuildRequestLoadQuery(&loggingmodel.RequestLoadReq{Match: traefikMatch, AppIDs: []string{"A"},
+		Start: loadStart, End: loadEnd, ShortStart: loadEnd.Add(-15 * time.Second)})
+	assert.NoError(t, err)
+	assert.Contains(t, q, `| math min("http.OriginDuration", 15000000000) as "http.cappedShort"`)
+	assert.True(t, strings.HasSuffix(q, `, sum("http.cappedShort") if (_time:>=2026-10-03T10:00:45Z `+
+		`"http.OriginDuration":>=0) shortBusyNs, count() if (_time:>=2026-10-03T10:00:45Z) shortRequests`), q)
+	_, err = BuildRequestLoadQuery(&loggingmodel.RequestLoadReq{Match: traefikMatch, AppIDs: []string{"A"},
+		Start: loadStart, End: loadEnd, ShortStart: loadEnd})
+	assert.ErrorIs(t, err, loggingmodel.ErrQueryInvalid)
 }
 
 func TestCPULoadQueryIsOneForAllTheApps(t *testing.T) {
@@ -75,7 +86,7 @@ func TestLiveRequestLoadSumsEachAppsRequests(t *testing.T) {
 		t.Skip("HP_TEST_VICTORIALOGS_URL not set")
 	}
 	run := time.Now().UTC().Format("150405000000000")
-	busy, other := "BUSY"+run, "OTHER"+run
+	busy, other, late := "BUSY"+run, "OTHER"+run, "LATE"+run
 	start := time.Now().UTC().Truncate(time.Minute).Add(-2 * time.Minute)
 	// Traefik 3 writes OriginStatus 0 for what the app answered: the app's
 	// time is OriginDuration; Duration adds the proxy's.
@@ -102,23 +113,31 @@ func TestLiveRequestLoadSumsEachAppsRequests(t *testing.T) {
 		line("traefik", svc(busy+"X", 0), 10*time.Second, 99999),
 		line("traefik", svc(other, 0), 10*time.Second, 99999),
 		line("app", svc(busy, 0), 10*time.Second, 99999),
+		// One request in the range's last part, long - counted for that part at
+		// most there - and one before it.
+		line("traefik", svc(late, 0), 15*time.Second, 1000),
+		line("traefik", svc(late, 1), 50*time.Second, 20_000),
 	})
 
 	c := New(&Config{Endpoint: loggingmodel.Endpoint{URL: base}})
-	req := &loggingmodel.RequestLoadReq{Match: traefikMatch, AppIDs: []string{busy}, Start: start,
-		End: start.Add(time.Minute)}
+	req := &loggingmodel.RequestLoadReq{Match: traefikMatch, AppIDs: []string{busy, late}, Start: start,
+		End: start.Add(time.Minute), ShortStart: start.Add(44*time.Second + 500*time.Millisecond)}
 	var got *loggingmodel.RequestLoadResp
 	for range 20 { // ingestion becomes visible within a second or two
 		var err error
 		if got, err = c.RequestLoad(context.Background(), req); err != nil {
 			t.Fatal(err)
 		}
-		if len(got.ByApp) > 0 {
+		if len(got.ByApp) > 1 {
 			break
 		}
 		time.Sleep(250 * time.Millisecond)
 	}
-	assert.Equal(t, map[string]*loggingmodel.RequestLoad{busy: {BusyMs: 61_000, Requests: 5}}, got.ByApp)
+	assert.Equal(t, map[string]*loggingmodel.RequestLoad{
+		// The line at 45 s, its time not a number, is in the last part.
+		busy: {BusyMs: 61_000, Requests: 5, ShortRequests: 1},
+		late: {BusyMs: 21_000, Requests: 2, ShortBusyMs: 15_500, ShortRequests: 1},
+	}, got.ByApp)
 }
 
 // Run against a VictoriaLogs whose URL is in HP_TEST_VICTORIALOGS_URL.

@@ -38,6 +38,9 @@ desired  = ceil(inFlight / (Concurrency * target))      target: 0.7 by default
   instances now, whatever the average says. They take no time, so they do not
   raise `inFlight`; they raise `desired` to at least `current + 1`, more for
   many (`current * (1 + throttled / calls)`, capped at doubling).
+- **A burst**: the calls of the window's last 15 s, summed apart, needing
+  twice the replicas or more scale out at once, as throttled calls do - see
+  the app autoscale design.
 - A line is written when a call ends: a call in progress is counted once it
   is done. With the default 30 s timeout, the window (60 s) holds most of them.
   A call counts for the window at most (`math min(durationMs, window)`): a
@@ -47,8 +50,8 @@ desired  = ceil(inFlight / (Concurrency * target))      target: 0.7 by default
 
 One LogsQL query a run, for **every** function with autoscale on, grouped by
 app: `"hp":"invocation"` lines of the last 60 s, `sum(durationMs)`, `count()`,
-`count() if (outcome = "throttled")`. Its cost does not grow with the number of
-functions.
+`count() if (outcome = "throttled")`, and the first two again over its last
+15 s. Its cost does not grow with the number of functions.
 
 ## The decision
 
@@ -60,8 +63,9 @@ Every run, for each function:
    failed, the logging stack is off or not answering. No data is never read as
    no load.
 3. `desired` from the signal, clamped to `[min, max]`.
-4. **Up fast**: above the current replicas, scale at once (throttled calls), or
-   after 2 runs in a row above (the average).
+4. **Up fast**: above the current replicas, scale at once (throttled calls, a
+   burst), or after 2 runs in a row above (the average), then every run that
+   still asks for more; to twice over or by 4, the larger, at most a run.
 5. **Down slow**: below the current replicas, only once it has been below for
    the **scale-in delay** (5 min by default), and by at most half the gap a
    run, so a quiet minute does not undo a busy hour.
@@ -154,4 +158,7 @@ The function's **Settings → Availability & Scaling**, an **Autoscale** section
    the last 20 of a week; the Metrics tab's replicas over the range are rebuilt
    from those scalings and the count now; MCP reads and updates it as the
    `autoscale` kind of the app settings tools.
-3. Later: other apps, from Traefik's requests and the agent's CPU rows.
+3. Later: other apps, from Traefik's requests and the agent's CPU rows. Done,
+   in the app autoscale design.
+4. A burst and a rising load, with apps' (2026-10-04): see the app autoscale
+   design, phase 3. **Done**.

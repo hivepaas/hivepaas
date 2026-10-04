@@ -40,7 +40,9 @@ desired  = ceil(inFlight / requestsTarget)      requestsTarget: requests per ins
   worker, or an app called inside its project, has none - it scales on CPU.
 - One LogsQL query a run for every app on it: the access log lines of the last
   60 s whose `ServiceName` matches `^svc-(<id>|<id>...)-[0-9]+@swarm$`, the app
-  id cut out of it with `replace_regexp`, `sum(Duration)` and `count()` by it.
+  id cut out of it with `replace_regexp`, `sum(Duration)` and `count()` by it;
+  and both again over the window's last 15 s, `if (_time:>=...)`, for a
+  burst.
 - A request's time is its `OriginDuration`, how long Traefik waited on the
   app: 0 for one no replica answered, which is counted but does not raise
   `inFlight`. Not `Duration`, which adds Traefik's time and a slow client's;
@@ -83,10 +85,16 @@ The function autoscale's, its hysteresis shared, the signal apart:
    labelled. No data is never read as no load. With two signals, one that can
    be read is enough.
 3. `desired` from the signals, clamped to `[min, max]`.
-4. **Up**: after 2 runs in a row above (30 s). No fast path as functions have:
-   an app does not say it turned a request away. After a scale-out, a
-   **cooldown** of 1 min before the next one from CPU: a starting container
-   burns CPU, and would ask for more.
+4. **Up**: after 2 runs in a row above (30 s), then every run that still asks
+   for more: the count is kept after a scale-out, and a run not above starts
+   it again. **At once for a burst**: the requests of the window's last 15 s
+   needing twice the replicas running or more - Knative's panic mode, at its
+   default - the larger of the two asks taken; an app does not say it turned
+   a request away, but a burst is how that starts. CPU has no burst: it stops
+   at its limit, and a starting container's would read as one. After a
+   scale-out, a **cooldown** of 1 min before the next one from CPU: a starting
+   container burns CPU, and would ask for more. A run grows the replicas to
+   twice over or by 4, the larger, at most - the HPA's default.
 5. **Down**: once below for the scale-in delay, half the gap a run - as
    functions.
 6. **The cluster is full**: a scale-out Swarm cannot place - tasks pending for
@@ -148,9 +156,9 @@ same `app-autoscale` setting, with its fields for apps:
 
 ## Risks
 
-- **Reaction time, 45 s to 2 min**: a request is logged when it ends, the
-  agent's rows come every 15 s, 2 runs above. Min is the answer for a known
-  peak.
+- **Reaction time, 15 to 45 s for a burst of requests, 45 s to 2 min
+  otherwise**: a request is logged when it ends, the agent's rows come every
+  15 s, 2 runs above. Min is the answer for a known peak.
 - **A slow start**: an app that takes a minute to answer is scaled before it
   helps, and more if CPU climbs meanwhile - the cooldown bounds it; a health
   check keeps Traefik from sending it requests before it answers.
@@ -183,5 +191,12 @@ same `app-autoscale` setting, with its fields for apps:
    reads cannot be read - one already on is saved, and says it is paused -
    with errors of their own (`ERR_AUTOSCALE_*`) that say why in words; the
    form refuses it first.
-3. Later: memory, queue length and custom metrics, Min by schedule, scaling to
+3. A burst and a rising load, for apps and functions alike (2026-10-04).
+   **Done**. The requests' and the calls' queries sum the window's last 15 s
+   apart in the same query - 4 to 10 ms more a run, measured on 120,000
+   access log lines a minute; a burst there scales out at once; the count of
+   runs above is kept after a scale-out, so a load still rising is given more
+   every run, not every other; and every scale-out is bounded, to twice over
+   or by 4 a run.
+4. Later: memory, queue length and custom metrics, Min by schedule, scaling to
    zero.

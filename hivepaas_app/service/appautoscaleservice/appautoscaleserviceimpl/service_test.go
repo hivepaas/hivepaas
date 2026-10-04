@@ -119,32 +119,36 @@ type loads struct {
 	requests map[string]*logs.RequestLoad
 	cpu      map[string][]*logs.ContainerCPU
 	appsErr  error
-	// ranges are the ranges read, by what was read.
-	ranges map[string][2]time.Time
+	// ranges are the ranges read, by what was read; shortStarts where their
+	// last parts read apart start.
+	ranges      map[string][2]time.Time
+	shortStarts map[string]time.Time
 }
 
-func (f *loads) read(what string, start, end time.Time) {
+func (f *loads) read(what string, start, end, shortStart time.Time) {
 	if f.ranges == nil {
 		f.ranges = map[string][2]time.Time{}
+		f.shortStarts = map[string]time.Time{}
 	}
 	f.ranges[what] = [2]time.Time{start, end}
+	f.shortStarts[what] = shortStart
 }
 
-func (f *loads) FunctionLoad(_ context.Context, _ database.IDB, _ []string, start, end time.Time) (
+func (f *loads) FunctionLoad(_ context.Context, _ database.IDB, _ []string, start, end, shortStart time.Time) (
 	map[string]*logs.InvocationLoad, error) {
-	f.read("calls", start, end)
+	f.read("calls", start, end, shortStart)
 	return f.byApp, f.err
 }
 
-func (f *loads) RequestLoad(_ context.Context, _ database.IDB, _ []string, start, end time.Time) (
+func (f *loads) RequestLoad(_ context.Context, _ database.IDB, _ []string, start, end, shortStart time.Time) (
 	map[string]*logs.RequestLoad, error) {
-	f.read("requests", start, end)
+	f.read("requests", start, end, shortStart)
 	return f.requests, f.appsErr
 }
 
 func (f *loads) CPULoad(_ context.Context, _ database.IDB, _ []string, start, end time.Time) (
 	map[string][]*logs.ContainerCPU, error) {
-	f.read("cpu", start, end)
+	f.read("cpu", start, end, time.Time{})
 	return f.cpu, f.appsErr
 }
 
@@ -464,9 +468,9 @@ func TestRunHoldsAnAppWhoseSignalsCannotBeRead(t *testing.T) {
 				_ = w.svc.Run(context.Background(), data)
 			}
 			if name == "no agent row" {
-				// Requests still read: 99 in flight - but CPU, which
-				// cannot be read, does not stop them.
-				assert.Equal(t, map[string]uint64{"s1": 10}, w.swarm.scaled)
+				// Requests still read: 99 in flight, 2 grown to 6 a run -
+				// but CPU, which cannot be read, does not stop them.
+				assert.Equal(t, map[string]uint64{"s1": 6}, w.swarm.scaled)
 				return
 			}
 			assert.Empty(t, w.swarm.scaled)
@@ -519,16 +523,21 @@ func TestEnsureJobRenamesTheFunctionsJob(t *testing.T) {
 }
 
 // Every signal is read over the same minute, ending 10 s before now: the
-// lines of the last seconds may not have arrived from every node.
+// lines of the last seconds may not have arrived from every node. Requests and
+// calls are read over its last 15 s apart too, for a burst; CPU is not.
 func TestRunReadsAMinuteEndingBeforeNow(t *testing.T) {
 	want := [2]time.Time{t0.Add(-70 * time.Second), t0.Add(-10 * time.Second)}
+	short := t0.Add(-25 * time.Second)
 
 	w := newWorld()
 	run(t, w)
 	assert.Equal(t, want, w.loads.ranges["calls"])
+	assert.Equal(t, short, w.loads.shortStarts["calls"])
 
 	w = appWorld(&entity.AppAutoscale{RequestsTarget: 10, CPUTarget: 70})
 	runAt(t, w, t0)
 	assert.Equal(t, want, w.loads.ranges["requests"])
+	assert.Equal(t, short, w.loads.shortStarts["requests"])
 	assert.Equal(t, want, w.loads.ranges["cpu"])
+	assert.True(t, w.loads.shortStarts["cpu"].IsZero())
 }

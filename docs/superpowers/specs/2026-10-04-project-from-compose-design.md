@@ -495,10 +495,17 @@ everything for compose, review later".
   makes, and only while empty, so preparing the inner one first would leave
   the outer one root's, unwritable for a service not running as root, with
   deployments in no set order.
-- **Not done, on purpose.** `docker.sock` stays dropped with its note: host
-  mode is root on the node, which HivePaaS never grants from a template
-  (`HostModeFromTemplate`), and the proxy is not the socket a compose file
-  expects. Database images as the database kind wait for a design: the kind
+- **The Docker socket** - agreed with the user on 2026-10-05: it stays
+  dropped, as host mode is root on the node, which HivePaaS never grants from a
+  template (`HostModeFromTemplate`), and the proxy is not the socket a compose
+  file expects. The operator gives it afterwards in the app's Docker API
+  settings, choosing the proxy, configured, or the node's socket. The review
+  says so on the service (`dockerSocket`) and in the plan
+  (`COMPOSE_DOCKER_SOCKET`, fixable), with where each socket is and that
+  neither is where the file mounts it when it mounts it elsewhere; apply
+  answers the apps written with their ids, and the result links each such app
+  to its Docker API settings.
+- **Not done, on purpose.** Database images as the database kind wait for a design: the kind
   publishes credentials other apps link to, beside its own self env vars.
 - **Setting mount keys.** Found on the way: the converter keyed setting mount
   entries after the mount (`secret-api_key`, `file-etc-nginx-nginx.conf`), and

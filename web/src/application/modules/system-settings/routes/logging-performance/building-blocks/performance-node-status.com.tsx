@@ -25,7 +25,7 @@ export function PerformanceNodeStatus({
         return (
             <span
                 className="text-muted-foreground"
-                title="Its agent said nothing in the last 3 minutes: one from before this version of HivePaaS, or one starting."
+                title="Its agent said nothing lately: one from before this version of HivePaaS, or one starting."
             >
                 No status yet
             </span>

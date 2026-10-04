@@ -1,5 +1,11 @@
 blank_issues_enabled: true
 contact_links:
   - name: "HivePaaS Documentation"
-    url: "https://github.com/hivepaas/hivepaas"
-    about: "Read our official documentation and guides"
+    url: "https://docs.hivepaas.com"
+    about: "Installation, guides and the API reference"
+  - name: "Ask on Discord"
+    url: "https://discord.com/invite/2TgD3zDb2e"
+    about: "Questions, and help from the team and the community"
+  - name: "Report a security vulnerability"
+    url: "https://github.com/hivepaas/hivepaas/security/advisories/new"
+    about: "Privately - never in a public issue. See SECURITY.md"

@@ -176,6 +176,35 @@ To work on HivePaaS itself, see [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md).
 
 ---
 
+## 🗺️ Roadmap
+
+Planned, in no particular order and without dates:
+
+* **CLI** - deploy, follow logs and run jobs from your terminal and your CI.
+* **Functions** - API keys to protect a function's endpoint, and bring-your-own runtime images.
+* **Backups** - network volumes, such as NFS, as backup repositories.
+* **Registry** - read-only accounts, and retention rules per repository.
+
+Ideas and requests are welcome in [GitHub Issues](https://github.com/hivepaas/hivepaas/issues).
+
+---
+
+## 🔒 Security
+
+Please report vulnerabilities **privately**, through
+[GitHub's vulnerability reporting](https://github.com/hivepaas/hivepaas/security/advisories/new) -
+never in a public issue. See [SECURITY.md](SECURITY.md) for what to include and what happens next.
+
+---
+
+## 💬 Community & Support
+
+* **[Discord](https://discord.com/invite/2TgD3zDb2e)** - questions, and help from the team and the community.
+* **[GitHub Issues](https://github.com/hivepaas/hivepaas/issues)** - bugs and feature requests.
+* **[Getting help](https://docs.hivepaas.com/docs/troubleshooting/getting-help)** - what to include so a question gets an answer sooner.
+
+---
+
 ## 🤝 Contributing
 
 Contributions, issues, and feature requests are welcome!

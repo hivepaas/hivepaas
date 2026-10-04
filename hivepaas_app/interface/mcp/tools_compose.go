@@ -74,7 +74,10 @@ func planCreateProjectFromComposeTool() Tool {
 			"each service as the app it becomes (its image, what each published port becomes, its volumes, "+
 			"what is left out), the variables (a required one with no value stops everything until it has "+
 			"one), the files the compose file reads that were not given, and the import's plan with its "+
-			"issues. Give a file's text in files, a variable's value in variables, a port's choice in ports. "+
+			"issues. Give a file's text in files - a compose file an include reads, which stops everything "+
+			"until given, or a file under a directory a service mounts, then mounted in it read only - a "+
+			"variable's value in variables, a port's choice in ports; a service's Traefik labels give a port "+
+			"of source labels. "+
 			"A plan with a blocked issue cannot be applied. Applied, the project is created and its apps' "+
 			"first deployments queued. Nothing is created until apply_plan.",
 		NeedWrite, &applier{follow: "list_projects finds the new project; get_app_deployment with each " +
@@ -95,8 +98,8 @@ func planCreateProjectFromComposeTool() Tool {
 			out := composePlan{Review: resp.Data}
 			plan := resp.Data.Plan
 			if plan == nil {
-				out.Next = "Give the required variables a value (review.variables, given false) and the files " +
-					"review.needs lacks (given false), and plan again."
+				out.Next = "Give the required variables a value (review.variables, given false) and the compose " +
+					"and env files review.needs lacks (as compose or env_file, given false), and plan again."
 				return out, nil, nil
 			}
 			if plan.Summary[string(specmodel.SeverityBlocked)] > 0 {

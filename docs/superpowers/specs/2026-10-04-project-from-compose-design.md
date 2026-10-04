@@ -414,8 +414,15 @@ splits it back.
      only blocks it builds; compose-go refuses a dependency cycle itself, as an
      error; and `depends_on` does not order creation - the import creates a
      volume's owner first, and the rest by key.
-2. The dashboard's page.
-3. Docs and the MCP tool.
+2. The dashboard's page. **Done** (2026-10-04). As built: New Project is a
+   menu - an empty project, or From Docker Compose, the page
+   `/projects/new/compose`. Its API sits beside spec import's, in the
+   operations module, and shares the plan's schema and its tree. The file is
+   read again 500 ms after a change; a service the file gains is checked in the
+   plan, one unchecked stays so.
+3. Docs and the MCP tool. **Done** (2026-10-04): Deploying apps, "From a Docker
+   Compose file", the quick start pointing at it; MCP's
+   `plan_create_project_from_compose`, applied by `apply_plan`.
 4. Later:
    - a directory archive instead of single files;
    - `build:` from the Git repository holding the compose file - it needs a

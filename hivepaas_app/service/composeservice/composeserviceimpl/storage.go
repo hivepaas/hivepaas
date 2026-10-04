@@ -1,8 +1,10 @@
 package composeserviceimpl
 
 import (
+	"maps"
 	"path"
 	"regexp"
+	"slices"
 	"strings"
 	"unicode/utf8"
 
@@ -66,10 +68,13 @@ func (c *converter) volumeKey(v types.ServiceVolumeConfig) (string, bool) {
 
 // isFile says whether a path of the compose file's is a file rather than a
 // directory: the request carries it, or its name has an extension - but not
-// `.d`, a directory of files.
+// `.d`, a directory of files - and the request carries no file under it.
 func (c *converter) isFile(rel string) bool {
 	if _, given := c.r.files[rel]; given {
 		return true
+	}
+	if len(c.filesUnder(rel)) > 0 {
+		return false
 	}
 	ext := path.Ext(strings.TrimPrefix(path.Base(rel), "."))
 	return ext != "" && ext != ".d"
@@ -211,14 +216,44 @@ func (c *converter) bindMount(
 				map[string]any{detailPath: rel, detailTarget: v.Target}, "mounted empty until it is filled")
 		}
 		addMount(mounts, path.Base(v.Target), c.envConfigPath(configName),
-			map[string]any{"part": "content", detailPath: v.Target})
+			map[string]any{filePart: partContent, detailPath: v.Target})
 		c.viewVolume(view, v, v.Source, composeservice.VolumeKindFile, "")
 		return
 	}
 	c.managedMount(name, "bind:"+rel, v, subpathOf(rel), false, st, view, v.Source)
-	c.add(appPath, specmodel.SeverityWarning, composeservice.CodeDirectoryEmpty,
-		map[string]any{detailSource: v.Source, detailTarget: v.Target},
-		"a directory of its own, which starts empty: the files of the compose file's are not copied")
+	files := c.filesUnder(rel)
+	c.need(rel, composeservice.NeedDirectory, name, len(files) > 0)
+	if len(files) == 0 {
+		c.add(appPath, specmodel.SeverityWarning, composeservice.CodeDirectoryEmpty,
+			map[string]any{detailSource: v.Source, detailTarget: v.Target},
+			"a directory of its own, which starts empty: give its files - open the compose file's folder - to have "+
+				"them in it")
+		return
+	}
+	// The directory is the app's, as an empty one is - what the app writes in
+	// it is kept - and each file given is mounted at its place in it.
+	for _, file := range files {
+		target := path.Join(v.Target, strings.TrimPrefix(file, rel+"/"))
+		addMount(mounts, path.Base(file), c.envConfigPath(c.configFile(file)),
+			map[string]any{filePart: partContent, detailPath: target})
+	}
+	view.Volumes[len(view.Volumes)-1].Files = len(files)
+	c.add(appPath, "", composeservice.CodeDirectoryFiles,
+		map[string]any{detailSource: v.Source, detailTarget: v.Target, "files": len(files)},
+		"a directory of its own, with the files given mounted in it, read only: what the app writes beside them "+
+			"is kept")
+}
+
+// filesUnder are the request's files under a directory of the compose
+// file's, in order.
+func (c *converter) filesUnder(rel string) []string {
+	var out []string
+	for _, name := range slices.Sorted(maps.Keys(c.r.files)) {
+		if strings.HasPrefix(name, rel+"/") {
+			out = append(out, name)
+		}
+	}
+	return out
 }
 
 // hostMount is a bind of a host's path: the Docker socket is not one HivePaaS
@@ -255,18 +290,25 @@ func tmpfsMount(t *types.ServiceVolumeTmpfs) specmodel.Mount {
 	return m
 }
 
-// configFileOf is the env config file holding a file of the compose file's,
-// named after it: made once, however many services mount it.
+// configFileOf is the env config file holding a file of the compose file's
+// a service mounts, named after it: made once, however many services mount it.
 func (c *converter) configFileOf(rel, service string) string {
-	content, given := c.r.files[rel]
+	_, given := c.r.files[rel]
 	c.need(rel, composeservice.NeedBind, service, given)
+	return c.configFile(rel)
+}
+
+// configFile is the env config file holding a file of the compose file's:
+// made once.
+func (c *converter) configFile(rel string) string {
+	content, given := c.r.files[rel]
 	for name, body := range c.envConfigs {
 		if fields, _ := body.(map[string]any); fields[fileSourceKey] == rel {
 			return name
 		}
 	}
 	name := c.uniqueSettingName(blockConfigFiles, c.envConfigs, path.Base(rel))
-	c.envConfigs[name] = c.fileSetting(name, "content", content, given, rel)
+	c.envConfigs[name] = c.fileSetting(name, partContent, content, given, rel)
 	return name
 }
 
@@ -283,7 +325,7 @@ func (c *converter) fileSetting(name, field string, content []byte, given bool, 
 		setting["status"] = string(base.SettingStatusPending)
 	}
 	body := map[string]any{specmodel.SettingMetaKey: setting}
-	if field == "content" {
+	if field == partContent {
 		body[detailName] = name
 	} else {
 		body["key"] = name

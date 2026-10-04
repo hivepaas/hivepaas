@@ -31,6 +31,13 @@ const (
 	detailName     = "name"
 )
 
+// The parts of a mounted setting, and an entry file's key for its part.
+const (
+	partContent = "content"
+	partValue   = "value"
+	filePart    = "part"
+)
+
 type service struct{}
 
 func New() composeservice.Service {

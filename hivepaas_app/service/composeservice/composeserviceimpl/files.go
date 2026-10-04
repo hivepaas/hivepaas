@@ -40,14 +40,14 @@ func (c *converter) fileObjects() {
 		content, given := c.fileObject(composeservice.NeedSecret, object, secrets[name])
 		setting := c.uniqueSettingName(blockSecrets, c.envSecrets, name)
 		c.secretNames[name] = setting
-		c.envSecrets[setting] = c.fileSetting(setting, "value", content, given, "")
+		c.envSecrets[setting] = c.fileSetting(setting, partValue, content, given, "")
 	}
 	for _, name := range slices.Sorted(maps.Keys(configs)) {
 		object := types.FileObjectConfig(c.r.project.Configs[name])
 		content, given := c.fileObject(composeservice.NeedConfig, object, configs[name])
 		setting := c.uniqueSettingName(blockConfigFiles, c.envConfigs, name)
 		c.configNames[name] = setting
-		c.envConfigs[setting] = c.fileSetting(setting, "content", content, given, "")
+		c.envConfigs[setting] = c.fileSetting(setting, partContent, content, given, "")
 	}
 }
 
@@ -116,7 +116,7 @@ func (c *converter) fileMounts(svc types.ServiceConfig, mounts map[string]any) {
 			target = path.Join(secretsDir, target)
 		}
 		addMount(mounts, "secret-"+ref.Source, c.envSecretPath(c.secretNames[ref.Source]),
-			mountFile("value", target, types.FileReferenceConfig(ref)))
+			mountFile(partValue, target, types.FileReferenceConfig(ref)))
 	}
 	for _, ref := range svc.Configs {
 		target := ref.Target
@@ -124,12 +124,12 @@ func (c *converter) fileMounts(svc types.ServiceConfig, mounts map[string]any) {
 			target = "/" + ref.Source
 		}
 		addMount(mounts, "config-"+ref.Source, c.envConfigPath(c.configNames[ref.Source]),
-			mountFile("content", target, types.FileReferenceConfig(ref)))
+			mountFile(partContent, target, types.FileReferenceConfig(ref)))
 	}
 }
 
 func mountFile(part, target string, ref types.FileReferenceConfig) map[string]any {
-	file := map[string]any{"part": part, detailPath: target}
+	file := map[string]any{filePart: part, detailPath: target}
 	if ref.UID != "" {
 		file["uid"] = ref.UID
 	}

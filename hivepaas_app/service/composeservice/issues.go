@@ -39,6 +39,7 @@ const (
 	CodeSecretEnv      = "COMPOSE_SECRET_ENV"     //nolint:gosec // an issue code, not a credential
 	CodeAliasAdded     = "COMPOSE_ALIAS_ADDED"
 	CodeAppUsed        = "COMPOSE_APP_USED"
+	CodeDirectoryFiles = "COMPOSE_DIRECTORY_FILES"
 	CodeSettingRenamed = "COMPOSE_SETTING_RENAMED"
 	CodeStartOrder     = "COMPOSE_START_ORDER"
 	CodeLabelsDropped  = "COMPOSE_LABELS_DROPPED"

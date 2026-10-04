@@ -139,7 +139,7 @@ func isVariableSecret(body any, variable string) bool {
 func (c *converter) secretVariableSettings() {
 	for _, variable := range slices.Sorted(maps.Keys(c.secretVariables)) {
 		name := c.secretOfVariable(variable)
-		body := c.fileSetting(name, "value", []byte(c.r.values[variable]), true, "")
+		body := c.fileSetting(name, partValue, []byte(c.r.values[variable]), true, "")
 		body[variableKey] = variable
 		c.envSecrets[name] = body
 		detail := map[string]any{"variable": variable, "secret": name}

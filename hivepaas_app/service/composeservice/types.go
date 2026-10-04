@@ -185,6 +185,9 @@ type VolumeView struct {
 	ReadOnly bool       `json:"readOnly"`
 	// Owner is the app whose directory a shared volume is.
 	Owner string `json:"owner"`
+	// Files are how many files given under a directory of the compose file's
+	// are mounted in it, read only.
+	Files int `json:"files"`
 }
 
 // VariableView is one variable the file uses.
@@ -205,6 +208,9 @@ const (
 	NeedSecret  = "secret"
 	// NeedBind is a file a service mounts.
 	NeedBind = "bind"
+	// NeedDirectory is a directory a service mounts: the files given under it
+	// are mounted in it, read only.
+	NeedDirectory = "directory"
 	// NeedCompose is a compose file an include or extends reads: nothing more
 	// is read until it is given.
 	NeedCompose = "compose"
@@ -213,10 +219,10 @@ const (
 // FileNeed is a file the compose file reads.
 type FileNeed struct {
 	Path string `json:"path"`
-	// As is what reads it: env_file, config, secret, bind, compose.
+	// As is what reads it: env_file, config, secret, bind, directory, compose.
 	As string `json:"as"`
 	// By are the services that read it.
 	By []string `json:"by"`
-	// Given says the request carries it.
+	// Given says the request carries it - for a directory, a file under it.
 	Given bool `json:"given"`
 }

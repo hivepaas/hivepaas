@@ -59040,7 +59040,7 @@
       "composeservice.FileNeed" : {
         "properties" : {
           "as" : {
-            "description" : "As is what reads it: env_file, config, secret, bind, compose.",
+            "description" : "As is what reads it: env_file, config, secret, bind, directory, compose.",
             "type" : "string"
           },
           "by" : {
@@ -59051,7 +59051,7 @@
             "type" : "array"
           },
           "given" : {
-            "description" : "Given says the request carries it.",
+            "description" : "Given says the request carries it - for a directory, a file under it.",
             "type" : "boolean"
           },
           "path" : {
@@ -59197,6 +59197,10 @@
       },
       "composeservice.VolumeView" : {
         "properties" : {
+          "files" : {
+            "description" : "Files are how many files given under a directory of the compose file's\nare mounted in it, read only.",
+            "type" : "integer"
+          },
           "kind" : {
             "$ref" : "#/components/schemas/composeservice.VolumeKind"
           },
@@ -59215,7 +59219,7 @@
             "type" : "string"
           }
         },
-        "required" : [ "kind", "owner", "readOnly", "source", "target" ],
+        "required" : [ "files", "kind", "owner", "readOnly", "source", "target" ],
         "type" : "object"
       },
       "configfiledto.ConfigFileResp" : {
@@ -62344,9 +62348,9 @@
         "type" : "object"
       },
       "hperrors.DisplayLevel" : {
-        "enum" : [ "high", "medium", "low", "medium" ],
+        "enum" : [ "medium", "high", "medium", "low" ],
         "type" : "string",
-        "x-enum-varnames" : [ "DisplayLevelHigh", "DisplayLevelMedium", "DisplayLevelLow", "errVldDisplayLevel" ]
+        "x-enum-varnames" : [ "errVldDisplayLevel", "DisplayLevelHigh", "DisplayLevelMedium", "DisplayLevelLow" ]
       },
       "hperrors.ErrorInfo" : {
         "properties" : {

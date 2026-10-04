@@ -268,3 +268,49 @@ func TestEntryKeysAreValidAndUnique(t *testing.T) {
 	assert.ElementsMatch(t, []string{"nginx-conf", "nginx-conf-2", "secret-db-password", "file",
 		"a-very-long-name-of"}, keys)
 }
+
+// A directory the compose file mounts is the app's own on the project's
+// volume, as ever; the files given under it are mounted in it, read only, and
+// what the app writes beside them is kept.
+func TestConvertMountsTheFilesGivenUnderADirectory(t *testing.T) {
+	req := convertReq(`
+services:
+  web:
+    image: nginx:1.27
+    volumes: ["./nginx/conf.d:/etc/nginx/conf.d", "./data:/data"]
+`)
+	req.Files = map[string][]byte{
+		"nginx/conf.d/default.conf": []byte("server {}"), "nginx/conf.d/sub/x.conf": []byte("x"),
+	}
+	resp := convert(t, req)
+
+	web := appOf(t, resp, "web")
+	if assert.Contains(t, web.Deployment.Storage.Mounts, "/etc/nginx/conf.d") {
+		assert.Equal(t, "nginx-conf.d", web.Deployment.Storage.Mounts["/etc/nginx/conf.d"].VolumeOptions.Subpath)
+	}
+	mounts, _ := web.Settings["settingMounts"].(map[string]any)
+	var paths []any
+	for key, body := range mounts {
+		assert.True(t, settingmountservice.ValidEntryKey(key), key)
+		files, _ := body.(map[string]any)["files"].([]any)
+		for _, file := range files {
+			paths = append(paths, file.(map[string]any)["path"])
+		}
+	}
+	assert.ElementsMatch(t, []any{"/etc/nginx/conf.d/default.conf", "/etc/nginx/conf.d/sub/x.conf"}, paths)
+	configs, _ := resp.Bundle.Envs["blog"]["prod"].Settings["configFiles"].(map[string]any)
+	assert.Contains(t, configs, "default.conf")
+
+	assert.ElementsMatch(t, []*composeservice.FileNeed{
+		{Path: "nginx/conf.d", As: composeservice.NeedDirectory, By: []string{"web"}, Given: true},
+		{Path: "data", As: composeservice.NeedDirectory, By: []string{"web"}},
+	}, resp.Needs)
+	issues := codes(resp.Issues[envPath+"/apps/web"])
+	assert.Contains(t, issues, composeservice.CodeDirectoryFiles)
+	assert.Contains(t, issues, composeservice.CodeDirectoryEmpty, "the one with no file given")
+	for _, volume := range resp.Services[0].Volumes {
+		if volume.Target == "/etc/nginx/conf.d" {
+			assert.Equal(t, 2, volume.Files)
+		}
+	}
+}

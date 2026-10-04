@@ -88,8 +88,11 @@ func wordpressReq(t *testing.T) *composeservice.ConvertReq {
 // variables refer to, each volume a directory of the project's, the database's
 // port kept in and the site's on a domain.
 func TestConvertAWordPressAndItsDatabase(t *testing.T) {
-	resp := convert(t, wordpressReq(t))
+	req := wordpressReq(t)
+	req.OwnerID = "u1"
+	resp := convert(t, req)
 	assert.Equal(t, "blog", resp.FileName)
+	assert.Equal(t, &specmodel.ProjectOwner{ID: "u1"}, resp.Bundle.Projects["blog"].Owner, "the caller owns it")
 
 	db := appOf(t, resp, "db")
 	assert.Equal(t, "${secrets.DB_PASSWORD}", envVar(db, "MYSQL_PASSWORD")["v"])

@@ -137,6 +137,9 @@ func (c *converter) assemble() error {
 	c.env.DocHeader = header
 	project := &specmodel.ProjectDoc{DocHeader: header, Project: c.req.ProjectKey, Name: c.req.ProjectName,
 		Envs: []string{c.req.EnvKey}}
+	if c.req.OwnerID != "" {
+		project.Owner = &specmodel.ProjectOwner{ID: c.req.OwnerID}
+	}
 	data, err := json.Marshal([]any{project, c.env})
 	if err != nil {
 		return hperrors.Wrap(err)

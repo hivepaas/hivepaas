@@ -132,6 +132,7 @@ func TestConvertMountsFilesFromEnvSettings(t *testing.T) {
 
 	webIssues := codes(resp.Issues[envPath+"/apps/web"])
 	assert.Contains(t, webIssues, composeservice.CodeMountDropped)
+	assert.Contains(t, webIssues, composeservice.CodeFileMissing, "certs/site.pem, mounted empty")
 	if assert.Len(t, resp.Needs, 3) {
 		assert.Equal(t, "certs/site.pem", resp.Needs[0].Path)
 		assert.False(t, resp.Needs[0].Given)

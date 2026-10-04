@@ -171,8 +171,9 @@ func (uc *UC) readCompose(
 		return nil, hperrors.Wrap(err)
 	}
 
-	converted, err := uc.composeService.Convert(ctx, uc.convertReq(req, project, mayWriteCluster,
-		gates.AllowPrivilegedApps && gates.Admin))
+	convertReq := uc.convertReq(req, project, mayWriteCluster, gates.AllowPrivilegedApps && gates.Admin)
+	convertReq.OwnerID = auth.User.ID
+	converted, err := uc.composeService.Convert(ctx, convertReq)
 	if err != nil {
 		return nil, hperrors.Wrap(err)
 	}

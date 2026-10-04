@@ -40,8 +40,9 @@ type ConvertReq struct {
 	// Variables are what was typed in the review, by name: over the .env's.
 	Variables map[string]*VariableReq
 	// The project and its env, checked by the caller; NetworkName the env's
-	// network, which every app joins.
+	// network, which every app joins; OwnerID the project's owner, the caller.
 	ProjectKey, ProjectName string
+	OwnerID                 string
 	EnvKey, EnvName         string
 	NetworkName             string
 	// Profiles are the profiles whose services are created, beside those with

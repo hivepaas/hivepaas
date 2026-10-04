@@ -205,6 +205,10 @@ func (c *converter) bindMount(
 	}
 	if c.isFile(rel) {
 		configName := c.configFileOf(rel, name)
+		if _, given := c.r.files[rel]; !given {
+			c.add(appPath, specmodel.SeverityFixable, composeservice.CodeFileMissing,
+				map[string]any{detailPath: rel, detailTarget: v.Target}, "mounted empty until it is filled")
+		}
 		entry := mountEntry(mounts, "file"+strings.ReplaceAll(v.Target, "/", "-"), c.envConfigPath(configName))
 		addMountFile(entry, map[string]any{"part": "content", detailPath: v.Target})
 		c.viewVolume(view, v, v.Source, composeservice.VolumeKindFile, "")

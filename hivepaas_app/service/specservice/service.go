@@ -41,4 +41,8 @@ type Service interface {
 	// ApplyBundle applies what PlanBundle planned, as ApplyImport applies what
 	// ValidateImport did.
 	ApplyBundle(ctx context.Context, db database.IDB, req *ApplyBundleReq) (*ApplyImportResp, error)
+
+	// CurrentEnv is an env as export sees it, its secrets omitted: what a bundle
+	// built for it is planned against.
+	CurrentEnv(ctx context.Context, db database.IDB, projectID, envKey string) (*specmodel.EnvDoc, error)
 }

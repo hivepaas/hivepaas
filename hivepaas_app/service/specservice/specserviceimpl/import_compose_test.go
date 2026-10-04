@@ -115,3 +115,60 @@ func TestAComposeFilesBundlePlansAndApplies(t *testing.T) {
 	}
 	assert.Equal(t, 2, secrets, "the variable's and the file's")
 }
+
+const composeIntoDev = `
+services:
+  backend:
+    image: ghcr.io/me/backend:2
+  worker:
+    image: ghcr.io/me/worker:2
+    depends_on: [backend]
+`
+
+// Into an env that has an app the file names: blocked until the review
+// chooses, then the app there is kept as it is and the rest created.
+func TestAComposeFileIntoAnExistingEnvKeepsWhatItHas(t *testing.T) {
+	svc, _ := planFixture(t)
+	current, err := svc.CurrentEnv(context.Background(), nil, "p1", "dev")
+	if !assert.NoError(t, err) {
+		return
+	}
+	assert.Contains(t, current.Apps, "backend")
+
+	planWith := func(services map[string]*composeservice.ServiceReq) *specmodel.ImportPlan {
+		t.Helper()
+		converted, convertErr := composeserviceimpl.New().Convert(context.Background(), &composeservice.ConvertReq{
+			Compose: composeIntoDev, ProjectKey: "project_a", ProjectName: "Project A", EnvKey: "dev",
+			EnvName: "dev", NetworkName: "project_a_dev_net", Existing: current, Services: services,
+		})
+		if !assert.NoError(t, convertErr) {
+			t.FailNow()
+		}
+		plan, planErr := svc.PlanBundle(context.Background(), nil, &specservice.PlanBundleReq{
+			ValidateImportReq: specservice.ValidateImportReq{Scope: entity.NewObjectScopeProjectEnv("p1", "dev"),
+				Options: specmodel.ImportOptions{Existing: specmodel.ExistingKeep}},
+			Doc: converted.Bundle, Issues: converted.Issues,
+		})
+		if !assert.NoError(t, planErr) {
+			t.FailNow()
+		}
+		return plan
+	}
+
+	plan := planWith(nil)
+	assert.Positive(t, plan.Summary[string(specmodel.SeverityBlocked)])
+	backend := node(t, plan, "projects/project_a/envs/dev/apps/backend")
+	if assert.NotEmpty(t, backend.Issues) {
+		assert.Equal(t, composeservice.CodeAppExists, backend.Issues[0].Code)
+	}
+
+	plan = planWith(map[string]*composeservice.ServiceReq{"backend": {UseExisting: true}})
+	assert.Zero(t, plan.Summary[string(specmodel.SeverityBlocked)])
+	assert.Equal(t, specmodel.ActionKeep, node(t, plan, "projects/project_a/envs/dev/apps/backend").Action)
+	assert.Equal(t, specmodel.ActionCreate, node(t, plan, "projects/project_a/envs/dev/apps/worker").Action)
+	for _, n := range plan.Nodes {
+		if n.Action == specmodel.ActionUpdate {
+			t.Errorf("%s is changed: %v", n.Path, n.Changes)
+		}
+	}
+}

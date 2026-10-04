@@ -34,6 +34,9 @@ func (s *HTTPServer) registerProjectRoutes(apiGroup *gin.RouterGroup) {
 		specGroup.POST("/import/validate", specHandler.ValidateProjectImport)
 		specGroup.POST("/import/apply", specHandler.ApplyProjectImport)
 	}
+	// A compose file's services added to a project's env.
+	projectGroup.POST("/:projectID/from-compose/validate", specHandler.ValidateProjectCompose)
+	projectGroup.POST("/:projectID/from-compose/apply", specHandler.ApplyProjectCompose)
 
 	{ // Tags
 		tagGroup := projectGroup.Group("/:projectID/tags")

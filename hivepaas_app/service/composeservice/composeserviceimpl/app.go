@@ -25,7 +25,12 @@ func (c *converter) app(name string, svc types.ServiceConfig) (*specmodel.AppDoc
 	path, key := c.appPath(name), c.keys[name]
 	doc := &specmodel.AppDoc{App: key, Name: name, Status: string(base.AppStatusActive)}
 	view := &composeservice.ServiceView{Name: name, App: key, Build: svc.Build != nil, Aliases: c.aliases[name],
-		Dropped: c.r.unsupported[name]}
+		Dropped: c.r.unsupported[name], Existing: c.existing[name], UseExisting: c.used[name] != ""}
+	if existing := c.existingApp(name); existing != nil {
+		c.add(path, "", composeservice.CodeAppUsed, map[string]any{detailApp: key},
+			"the env's app is used, as it is: the others reach it by its name")
+		return existing, view
+	}
 
 	image := c.plain(path, "image", svc.Image)
 	if choice := c.req.Services[name]; image == "" && choice != nil {
@@ -63,7 +68,7 @@ func (c *converter) app(name string, svc types.ServiceConfig) (*specmodel.AppDoc
 		settings["envVars"] = envVars
 	}
 	if len(secrets) > 0 {
-		settings["secrets"] = secrets
+		settings[blockSecrets] = secrets
 	}
 	view.Secrets = kept
 	c.fileMounts(svc, mounts)

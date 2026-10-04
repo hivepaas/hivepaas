@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"net/url"
 	"strings"
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/composeservice"
@@ -21,9 +22,17 @@ type composeInput struct {
 
 	Variables map[string]composeVariableInput `json:"variables,omitempty" jsonschema:"variables, over the .env"`
 
-	Project string `json:"project,omitempty" jsonschema:"the project's name; empty takes the file's"`
+	Project string `json:"project,omitempty" jsonschema:"a new project's name; empty takes the file's"`
 
-	Env string `json:"env,omitempty" jsonschema:"the env the apps are in; production when empty"`
+	ProjectID string `json:"projectId,omitempty" jsonschema:"an existing project to add the services to"`
+
+	Env string `json:"env,omitempty" jsonschema:"the env the apps are in, by name; production when empty"`
+
+	NewEnv bool `json:"newEnv,omitempty" jsonschema:"with projectId: create env in the project"`
+
+	Apps map[string]string `json:"apps,omitempty" jsonschema:"app keys chosen, by service"`
+
+	UseExisting []string `json:"useExisting,omitempty" jsonschema:"services the env's app of their name is used for"`
 
 	Profiles []string `json:"profiles,omitempty" jsonschema:"profiles whose services are created"`
 
@@ -57,7 +66,10 @@ type composePlan struct {
 func planCreateProjectFromComposeTool() Tool {
 	return planTool("plan_create_project_from_compose", "Plan a project from a compose file",
 		"Plans POST /projects/from-compose/apply: a new project from a docker-compose.yml, one env, an app per "+
-			"service reached by the same name. The plan is what POST /projects/from-compose/validate answers: "+
+			"service reached by the same name - or, with projectId, the services added to an env of that "+
+			"project, one it has or, with newEnv, a new one; nothing the project has is changed, and a "+
+			"service named as an app there is blocked until useExisting or apps chooses. "+
+			"The plan is what validate answers: "+
 			"each service as the app it becomes (its image, what each published port becomes, its volumes, "+
 			"what is left out), the variables (a required one with no value stops everything until it has "+
 			"one), the files the compose file reads that were not given, and the import's plan with its "+
@@ -72,7 +84,11 @@ func planCreateProjectFromComposeTool() Tool {
 			}
 			req := in.request()
 			var resp specdto.ValidateComposeResp
-			if err := call.Post(ctx, "/projects/from-compose/validate", &req.ValidateComposeReq, &resp); err != nil {
+			base := "/projects"
+			if id := strings.TrimSpace(in.ProjectID); id != "" {
+				base += "/" + url.PathEscape(id)
+			}
+			if err := call.Post(ctx, base+"/from-compose/validate", &req.ValidateComposeReq, &resp); err != nil {
 				return composePlan{}, nil, err
 			}
 			out := composePlan{Review: resp.Data}
@@ -97,9 +113,14 @@ func planCreateProjectFromComposeTool() Tool {
 			if req.AcceptIssues {
 				out.Next = "Applying it accepts the plan's issues: tell the person each, as review.plan says."
 			}
-			return out, &storedPlan{Method: http.MethodPost, Path: "/projects/from-compose/apply", Body: raw,
-				Summary: fmt.Sprintf("create the project %s from a compose file, %d service(s)",
-					resp.Data.Project.Name, len(resp.Data.Services))}, nil
+			summary := fmt.Sprintf("create the project %s from a compose file, %d service(s)",
+				resp.Data.Project.Name, len(resp.Data.Services))
+			if resp.Data.Project.ID != "" {
+				summary = fmt.Sprintf("add a compose file's %d service(s) to %s, env %s",
+					len(resp.Data.Services), resp.Data.Project.Name, resp.Data.Project.Env)
+			}
+			return out, &storedPlan{Method: http.MethodPost, Path: base + "/from-compose/apply", Body: raw,
+				Summary: summary}, nil
 		})
 }
 
@@ -108,7 +129,8 @@ func planCreateProjectFromComposeTool() Tool {
 func (in composeInput) request() *specdto.ApplyComposeReq {
 	req := specdto.NewApplyComposeReq()
 	req.Compose, req.DotEnv, req.Profiles = in.Compose, in.DotEnv, in.Profiles
-	req.Project = specdto.ComposeProjectReq{Name: strings.TrimSpace(in.Project), Env: strings.TrimSpace(in.Env)}
+	req.Project = specdto.ComposeProjectReq{Name: strings.TrimSpace(in.Project), Env: strings.TrimSpace(in.Env),
+		NewEnv: in.NewEnv}
 	req.Deploy = in.Deploy == nil || *in.Deploy
 	req.Files = map[string][]byte{}
 	for path, text := range in.Files {
@@ -127,6 +149,12 @@ func (in composeInput) request() *specdto.ApplyComposeReq {
 	}
 	for name, image := range in.Images {
 		service(name).Image = strings.TrimSpace(image)
+	}
+	for name, app := range in.Apps {
+		service(name).App = strings.TrimSpace(app)
+	}
+	for _, name := range in.UseExisting {
+		service(name).UseExisting = true
 	}
 	for name, ports := range in.Ports {
 		for _, port := range ports {

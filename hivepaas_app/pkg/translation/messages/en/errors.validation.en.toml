@@ -57,6 +57,7 @@ ERR_VLD_USER_SECURITY_OPTION_INVALID = "User security option must be one of {{.T
 ERR_VLD_ACCESS_EXPIRATION_INVALID = "Access expiration date is invalid"
 
 # PROJECTS
+ERR_VLD_PROJECT_ENV_NAME_TAKEN = "The project has an env named '{{.Value}}' already"
 ERR_VLD_PROJECT_ENV_NAME_INVALID = "Project env must contain only lowercase letters (a-z), numbers (0-9), hyphens (-), and underscores (_)"
 ERR_VLD_PROJECT_ENV_ID_INVALID = "Project environment id is invalid"
 ERR_VLD_PROJECT_ENV_ID_MISMATCHED = "Project environment does not belong to this project"

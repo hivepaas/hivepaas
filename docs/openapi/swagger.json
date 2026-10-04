@@ -8262,6 +8262,84 @@
         "x-codegen-request-body-name" : "body"
       }
     },
+    "/projects/{projectID}/from-compose/apply" : {
+      "post" : {
+        "parameters" : [ {
+          "description" : "Project ID",
+          "in" : "path",
+          "name" : "projectID",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/specdto.ApplyComposeReq"
+              }
+            }
+          },
+          "description" : "validate's body, planHash, acceptIssues",
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/specdto.ApplyComposeResp"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "summary" : "Add a Docker Compose file's services to a project's env",
+        "tags" : [ "Configuration specs" ],
+        "x-codegen-request-body-name" : "body"
+      }
+    },
+    "/projects/{projectID}/from-compose/validate" : {
+      "post" : {
+        "parameters" : [ {
+          "description" : "Project ID",
+          "in" : "path",
+          "name" : "projectID",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/specdto.ValidateComposeReq"
+              }
+            }
+          },
+          "description" : "the compose file, its .env and files, the choices",
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/specdto.ValidateComposeResp"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "summary" : "Plan adding a Docker Compose file's services to a project's env",
+        "tags" : [ "Configuration specs" ],
+        "x-codegen-request-body-name" : "body"
+      }
+    },
     "/projects/{projectID}/git-credentials" : {
       "get" : {
         "description" : "Lists git credentials settings",
@@ -59040,6 +59118,10 @@
             },
             "type" : "array"
           },
+          "existing" : {
+            "description" : "Existing is the app of the existing env its name or key is; empty for\nnone. UseExisting says that app is used rather than one created.",
+            "type" : "string"
+          },
           "image" : {
             "type" : "string"
           },
@@ -59073,6 +59155,9 @@
             "description" : "Skipped says the service is not created, and Reason why.",
             "type" : "boolean"
           },
+          "useExisting" : {
+            "type" : "boolean"
+          },
           "volumes" : {
             "items" : {
               "$ref" : "#/components/schemas/composeservice.VolumeView"
@@ -59080,7 +59165,7 @@
             "type" : "array"
           }
         },
-        "required" : [ "aliases", "app", "build", "dropped", "image", "mode", "name", "ports", "reason", "replicas", "secrets", "skipped", "volumes" ],
+        "required" : [ "aliases", "app", "build", "dropped", "existing", "image", "mode", "name", "ports", "reason", "replicas", "secrets", "skipped", "useExisting", "volumes" ],
         "type" : "object"
       },
       "composeservice.VariableView" : {
@@ -69243,7 +69328,7 @@
             "allOf" : [ {
               "$ref" : "#/components/schemas/basedto.ObjectIDResp"
             } ],
-            "description" : "Project is the project created.",
+            "description" : "Project is the project created, or the one the services went into.",
             "type" : "object"
           }
         },
@@ -69420,15 +69505,22 @@
       "specdto.ComposeProjectReq" : {
         "properties" : {
           "env" : {
-            "description" : "Env is the env the services are created in.",
+            "description" : "Env is the env the services are created in, by its name.",
+            "type" : "string"
+          },
+          "envColor" : {
             "type" : "string"
           },
           "name" : {
-            "description" : "Name is the project's; empty takes the file's own, `name:`.",
+            "description" : "Name is the project's; empty takes the file's own, `name:`. Not read\nfor an existing project.",
             "type" : "string"
+          },
+          "newEnv" : {
+            "description" : "NewEnv creates Env in an existing project, with EnvColor; otherwise the\nproject has it. A new project's env is always new.",
+            "type" : "boolean"
           }
         },
-        "required" : [ "env", "name" ],
+        "required" : [ "env", "envColor", "name", "newEnv" ],
         "type" : "object"
       },
       "specdto.ComposeProjectResp" : {
@@ -69444,18 +69536,30 @@
             "description" : "FileName is the project's name in the file; empty for none.",
             "type" : "string"
           },
+          "id" : {
+            "description" : "ID is an existing project's; empty for one created.",
+            "type" : "string"
+          },
           "key" : {
             "type" : "string"
           },
           "name" : {
             "type" : "string"
+          },
+          "newEnv" : {
+            "description" : "NewEnv says the env is created.",
+            "type" : "boolean"
           }
         },
-        "required" : [ "env", "envKey", "fileName", "key", "name" ],
+        "required" : [ "env", "envKey", "fileName", "id", "key", "name", "newEnv" ],
         "type" : "object"
       },
       "specdto.ComposeServiceReq" : {
         "properties" : {
+          "app" : {
+            "description" : "App is the app key chosen for the service; empty for its name's.",
+            "type" : "string"
+          },
           "image" : {
             "description" : "Image is the image of a service the file only builds.",
             "type" : "string"
@@ -69465,9 +69569,13 @@
               "$ref" : "#/components/schemas/specdto.ComposePortReq"
             },
             "type" : "array"
+          },
+          "useExisting" : {
+            "description" : "UseExisting uses the existing env's app the service's name or key is,\nrather than creating one.",
+            "type" : "boolean"
           }
         },
-        "required" : [ "image", "ports" ],
+        "required" : [ "app", "image", "ports", "useExisting" ],
         "type" : "object"
       },
       "specdto.ComposeVariableReq" : {

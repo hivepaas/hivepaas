@@ -387,6 +387,51 @@ splits it back.
   deployed, reached by its domain, the app reaching the database by its compose
   name - then removed.
 
+## Into an existing project
+
+Agreed with the user on 2026-10-04: a compose file goes into a project that
+exists, into one of its envs or a new one.
+
+- **Entry.** The project's apps list: "New From ▾" holds Template and Docker
+  Compose. The page is the same as a new project's, at
+  `projects/:id/apps/from-compose`; the target replaces Project Name and
+  Environment: the project shown, and either an existing env - the header's,
+  when one is chosen - or a new one, named and coloured. A project with ten
+  envs takes no new one.
+- **API.** `POST /projects/{projectID}/from-compose/{validate,apply}`, with
+  `POST /projects/{projectID}/spec/import`'s gate: Write on the project. The
+  body is the new project's, with `project.env` the env's name, and
+  `project.newEnv` saying it is to be created - refused when the name or its key
+  is taken, and an existing env not found is refused too. `project.name` is not
+  read.
+- **Only created.** The import runs with `existing: keep`: nothing the project
+  has is changed. The env's settings it lacks are created; those it has are
+  kept.
+- **What the env has.** The converter is given the env as export sees it,
+  secrets omitted:
+  - a service whose key, or name, is an app's key or alias here is blocked,
+    `COMPOSE_APP_EXISTS`, until the review chooses: use the app there - the
+    service is not created, and the others reach that app by the name - or
+    another key. A key chosen is checked as a service's own;
+  - an alias the env already answers to is not added, a warning,
+    `COMPOSE_ALIAS_TAKEN`: the name reaches the app there;
+  - a secret variable's env secret that exists is used as it is, a warning,
+    `COMPOSE_SECRET_EXISTS`: the value given is not written. Overwriting it
+    is the env's Secrets screen's;
+  - a file's secret or config file whose name is taken is named
+    `<name>-2`: a mount never reads a setting the request did not carry, so
+    no reveal gate is needed.
+- **Volumes** need nothing: an app's directory on the project's volume is
+  `<env key>/<app key>/<subpath>`, so the same file in two envs, or beside
+  other apps, shares no data.
+- **Audit**: `compose-import`, at the project's scope, with the env and whether
+  it was created.
+- **As built** (2026-10-04): `specservice.CurrentEnv` is the env export sees,
+  secrets omitted; the converter takes it as `ConvertReq.Existing`, and a
+  service's `app` and `useExisting` as the review's choices. A service used as
+  the app there is that app's own document, which `keep` leaves alone. MCP's
+  tool takes `projectId`, `newEnv`, `apps` and `useExisting`.
+
 ## Phases
 
 0. Entrypoint for apps.
@@ -433,7 +478,7 @@ splits it back.
    - a directory archive instead of single files;
    - `build:` from the Git repository holding the compose file - it needs a
      build context directory for apps, which functions already have;
-   - into an existing project or env, keys that exist refused or renamed;
+   - into an existing project or env: see "Into an existing project";
    - updating a project from a changed compose file: the import's diff, never
      deleting, the file kept with the project to compare with;
    - Traefik labels read as domains; `x-hivepaas` (domains, volume, autoscale,

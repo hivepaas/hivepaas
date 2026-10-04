@@ -57,7 +57,7 @@ func (c *converter) envVars(
 			// A variable the review says is not secret fills it.
 		case value != "" && secretByName(key) && secretNamePattern.MatchString(key):
 			secrets[key] = map[string]any{"key": key, "value": value,
-				specmodel.SettingMetaKey: map[string]any{"name": key}}
+				specmodel.SettingMetaKey: map[string]any{detailName: key}}
 			entry["v"] = "${secrets." + key + "}"
 			kept = append(kept, key)
 		}
@@ -142,7 +142,13 @@ func (c *converter) secretVariableSettings() {
 		body := c.fileSetting(name, "value", []byte(c.r.values[variable]), true, "")
 		body[variableKey] = variable
 		c.envSecrets[name] = body
-		c.add(c.envPath(), "", composeservice.CodeSecretVariable, map[string]any{"variable": variable, "secret": name},
+		detail := map[string]any{"variable": variable, "secret": name}
+		if c.existingSetting(blockSecrets, name) {
+			c.add(c.envPath(), specmodel.SeverityWarning, composeservice.CodeSecretExists, detail,
+				"the env's secret is used as it is: the value given here is not written")
+			continue
+		}
+		c.add(c.envPath(), "", composeservice.CodeSecretVariable, detail,
 			"kept as an env secret, which the apps' variables refer to")
 	}
 }

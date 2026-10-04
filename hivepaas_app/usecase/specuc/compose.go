@@ -16,6 +16,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/auditdetail"
+	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/projecthelper"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/transaction"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/auditservice"
@@ -92,7 +93,9 @@ func (uc *UC) ApplyCompose(
 	resp := &specdto.ApplyComposeResp{Meta: after.Meta, Data: &specdto.ApplyComposeData{
 		Plan: after.Data.Plan, Deployments: after.Data.Deployments,
 	}}
-	if project, findErr := uc.projectRepo.GetByKey(ctx, uc.db, read.project.Key); findErr == nil {
+	if read.project.ID != "" {
+		resp.Data.Project = &basedto.ObjectIDResp{ID: read.project.ID}
+	} else if project, findErr := uc.projectRepo.GetByKey(ctx, uc.db, read.project.Key); findErr == nil {
 		resp.Data.Project = &basedto.ObjectIDResp{ID: project.ID}
 	}
 	return resp, nil
@@ -139,9 +142,25 @@ func (r *composeRead) data() *specdto.ValidateComposeData {
 	}
 }
 
-// readCompose names the project as creating one does, converts the file, and
-// makes the plan request with the caller's gates. The values of the file are
-// the request's own, so mounting them reveals nothing stored: no reveal gate.
+// composeTarget is where a compose file's services go: a project and its env,
+// the scope the import is planned at, and what the converter is told of them.
+type composeTarget struct {
+	project *specdto.ComposeProjectResp
+	scope   *entity.ObjectScope
+	// existing is the import's choice for what the target has: an existing
+	// project's is never changed.
+	existing specmodel.Existing
+	convert  composeservice.ConvertReq
+}
+
+// composeMaxEnvs is how many envs a project may have, as creating it allows.
+const composeMaxEnvs = 10
+
+// readCompose finds the target - a new project named as creating one does, or
+// an env of the route's project - converts the file, and makes the plan
+// request with the caller's gates. The values of the file are the request's
+// own, and a setting the env has is never what it mounts, so mounting them
+// reveals nothing stored: no reveal gate.
 func (uc *UC) readCompose(
 	ctx context.Context,
 	db database.IDB,
@@ -149,6 +168,47 @@ func (uc *UC) readCompose(
 	req *specdto.ValidateComposeReq,
 	record bool,
 ) (*composeRead, error) {
+	newTarget := uc.newProjectTarget
+	if req.ProjectID != "" {
+		newTarget = uc.existingProjectTarget
+	}
+	target, err := newTarget(ctx, db, auth, req)
+	if err != nil {
+		return nil, err
+	}
+	project := target.project
+
+	gates := uc.importReq(auth, &specdto.ValidateImportReq{
+		Scope: target.scope, Selection: req.Selection,
+		Options: specmodel.ImportOptions{Existing: target.existing, DeployCreated: req.Deploy},
+	}, record)
+	gates.MayMountSecrets, gates.AuthorizeSecrets = nil, nil
+	mayWriteCluster, err := gates.MayWriteCluster(ctx)
+	if err != nil {
+		return nil, hperrors.Wrap(err)
+	}
+
+	convertReq := uc.convertReq(req, project, mayWriteCluster, gates.AllowPrivilegedApps && gates.Admin)
+	convertReq.OwnerID, convertReq.Existing = target.convert.OwnerID, target.convert.Existing
+	convertReq.EnvColor, convertReq.EnvIndex = target.convert.EnvColor, target.convert.EnvIndex
+	converted, err := uc.composeService.Convert(ctx, convertReq)
+	if err != nil {
+		return nil, hperrors.Wrap(err)
+	}
+	project.FileName = converted.FileName
+	return &composeRead{project: project, converted: converted, plan: &specservice.PlanBundleReq{
+		ValidateImportReq: *gates, Doc: converted.Bundle, Issues: converted.Issues,
+	}}, nil
+}
+
+// newProjectTarget is a project created for the file, named after it unless
+// the request names it, with one env; the caller owns it.
+func (uc *UC) newProjectTarget(
+	ctx context.Context,
+	db database.IDB,
+	auth *basedto.Auth,
+	req *specdto.ValidateComposeReq,
+) (*composeTarget, error) {
 	name := gofn.Coalesce(req.Project.Name, composeFileName(req.Compose))
 	if name == "" {
 		return nil, hperrors.NewValidationErrors(vld.Validate(vld.Must(false).OnError(
@@ -158,29 +218,68 @@ func (uc *UC) readCompose(
 	if err != nil {
 		return nil, hperrors.Wrap(err)
 	}
-	project := &specdto.ComposeProjectResp{Name: name, Key: key, Env: req.Project.Env,
-		EnvKey: projecthelper.CalcProjectEnvKey(req.Project.Env)}
+	return &composeTarget{
+		project: &specdto.ComposeProjectResp{Name: name, Key: key, Env: req.Project.Env,
+			EnvKey: projecthelper.CalcProjectEnvKey(req.Project.Env), NewEnv: true},
+		scope:    entity.NewObjectScopeGlobal(),
+		existing: specmodel.ExistingUpdate,
+		convert:  composeservice.ConvertReq{OwnerID: auth.User.ID, EnvColor: req.Project.EnvColor},
+	}, nil
+}
 
-	gates := uc.importReq(auth, &specdto.ValidateImportReq{
-		Scope: entity.NewObjectScopeGlobal(), Selection: req.Selection,
-		Options: specmodel.ImportOptions{Existing: specmodel.ExistingUpdate, DeployCreated: req.Deploy},
-	}, record)
-	gates.MayMountSecrets, gates.AuthorizeSecrets = nil, nil
-	mayWriteCluster, err := gates.MayWriteCluster(ctx)
+// existingProjectTarget is an env of the route's project: one it has, given
+// to the converter as export sees it, or one created after its others. The
+// import keeps what the project has.
+func (uc *UC) existingProjectTarget(
+	ctx context.Context,
+	db database.IDB,
+	_ *basedto.Auth,
+	req *specdto.ValidateComposeReq,
+) (*composeTarget, error) {
+	p, err := uc.projectRepo.GetByID(ctx, db, req.ProjectID, bunex.SelectRelation("ProjectEnvs"))
 	if err != nil {
 		return nil, hperrors.Wrap(err)
 	}
-
-	convertReq := uc.convertReq(req, project, mayWriteCluster, gates.AllowPrivilegedApps && gates.Admin)
-	convertReq.OwnerID = auth.User.ID
-	converted, err := uc.composeService.Convert(ctx, convertReq)
-	if err != nil {
-		return nil, hperrors.Wrap(err)
+	if p.Status != base.ProjectStatusActive {
+		return nil, hperrors.Wrap(hperrors.ErrProjectInactive).WithParam("Name", p.Name)
 	}
-	project.FileName = converted.FileName
-	return &composeRead{project: project, converted: converted, plan: &specservice.PlanBundleReq{
-		ValidateImportReq: *gates, Doc: converted.Bundle, Issues: converted.Issues,
-	}}, nil
+	envKey := projecthelper.CalcProjectEnvKey(req.Project.Env)
+	var env *entity.ProjectEnv
+	index := 0
+	for _, e := range p.ProjectEnvs {
+		if e.Name == req.Project.Env || e.Key == envKey {
+			env = e
+		}
+		index = max(index, e.Index+1)
+	}
+	target := &composeTarget{
+		project:  &specdto.ComposeProjectResp{ID: p.ID, Name: p.Name, Key: p.Key},
+		existing: specmodel.ExistingKeep,
+	}
+	switch {
+	case req.Project.NewEnv && env != nil:
+		return nil, hperrors.NewValidationErrors(vld.Validate(vld.Must(false).OnError(
+			vld.SetField("project.env", nil), vld.SetCustomKey("ERR_VLD_PROJECT_ENV_NAME_TAKEN"),
+			vld.SetParam("Value", req.Project.Env))))
+	case req.Project.NewEnv && len(p.ProjectEnvs) >= composeMaxEnvs:
+		return nil, hperrors.NewValidationErrors(vld.Validate(vld.Must(false).OnError(
+			vld.SetField("project.env", nil), vld.SetCustomKey("ERR_VLD_VALUE_TOO_MANY"),
+			vld.SetParam("Max", composeMaxEnvs), vld.SetParam("Actual", len(p.ProjectEnvs)+1))))
+	case req.Project.NewEnv:
+		target.project.Env, target.project.EnvKey, target.project.NewEnv = req.Project.Env, envKey, true
+		target.scope = entity.NewObjectScopeProject(p.ID)
+		target.convert.EnvColor, target.convert.EnvIndex = req.Project.EnvColor, index
+	case env == nil:
+		return nil, hperrors.Wrap(hperrors.ErrProjectEnvNotFound).WithParam("Name", req.Project.Env)
+	default:
+		target.project.Env, target.project.EnvKey = env.Name, env.Key
+		target.scope = entity.NewObjectScopeProjectEnv(p.ID, env.Key)
+		target.convert.EnvColor, target.convert.EnvIndex = env.Color, env.Index
+		if target.convert.Existing, err = uc.specService.CurrentEnv(ctx, db, p.ID, env.Key); err != nil {
+			return nil, hperrors.Wrap(err)
+		}
+	}
+	return target, nil
 }
 
 func (uc *UC) convertReq(
@@ -211,7 +310,7 @@ func (uc *UC) convertReq(
 		if svc == nil {
 			continue
 		}
-		choice := &composeservice.ServiceReq{Image: svc.Image}
+		choice := &composeservice.ServiceReq{Image: svc.Image, App: svc.App, UseExisting: svc.UseExisting}
 		for _, port := range svc.Ports {
 			if port != nil {
 				choice.Ports = append(choice.Ports, &composeservice.PortReq{Published: port.Published,
@@ -235,8 +334,9 @@ func composeFileName(compose string) string {
 	return strings.TrimSpace(top.Name)
 }
 
-// recordComposeImport records a project created from a compose file in its
-// transaction: what was read into it, where, and what the import did, counted.
+// recordComposeImport records a project created from a compose file, or the
+// services added to one's env, in its transaction: what was read into it,
+// where, and what the import did, counted.
 func (uc *UC) recordComposeImport(
 	ctx context.Context,
 	db database.IDB,
@@ -248,18 +348,25 @@ func (uc *UC) recordComposeImport(
 	detail := auditdetail.New().
 		Set("project", read.project.Name).
 		Set("env", read.project.Env).
+		Set("newEnv", read.project.NewEnv).
 		Set("digest", plan.Bundle.Digest).
 		Set("deployCreated", read.plan.Options.DeployCreated).
 		Set("exclude", read.plan.Selection.Exclude).
 		Set("summary", plan.Summary)
+	scope, scopeID := base.ObjectScopeGlobal, ""
+	if read.project.ID != "" {
+		scope, scopeID = base.ObjectScopeProject, read.project.ID
+	}
 	err := auditservice.RecordAllowed(ctx, uc.auditService, db, &auditservice.Entry{
-		Type:    base.AuditLogTypeComposeImport,
-		Scope:   base.ObjectScopeGlobal,
-		Source:  base.AuditLogSourceAPIAction,
-		Auth:    auth,
-		ResType: base.ResourceTypeProject,
-		ResName: read.project.Name,
-		Detail:  detail.String(),
+		Type:     base.AuditLogTypeComposeImport,
+		Scope:    scope,
+		ObjectID: scopeID,
+		Source:   base.AuditLogSourceAPIAction,
+		Auth:     auth,
+		ResType:  base.ResourceTypeProject,
+		ResID:    read.project.ID,
+		ResName:  read.project.Name,
+		Detail:   detail.String(),
 	})
 	return hperrors.Wrap(err)
 }

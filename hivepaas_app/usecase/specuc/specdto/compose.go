@@ -18,6 +18,8 @@ const (
 	composeNameMaxLen   = 100
 	composeEnvMaxLen    = 50
 	composeDomainMaxLen = 253
+	composeAppMaxLen    = 50
+	composeColorMaxLen  = 20
 	// composeDefaultEnv is the env a compose file's project is created with,
 	// unless the request names another.
 	composeDefaultEnv = "production"
@@ -27,9 +29,14 @@ const (
 var reComposeEnv = regexp.MustCompile(`^[a-z][a-z0-9_-]*$`)
 
 // ValidateComposeReq asks what creating a project from a compose file would
-// do. Everything travels with each call, as an import's bundle does: nothing is
-// kept on the server between validate and apply.
+// do, or adding its services to a project's env. Everything travels with each
+// call, as an import's bundle does: nothing is kept on the server between
+// validate and apply.
 type ValidateComposeReq struct {
+	// ProjectID is the project the services go into, from the route; empty
+	// creates one.
+	ProjectID string `json:"-"`
+
 	Compose string `json:"compose"`
 	// DotEnv is the .env beside the compose file.
 	DotEnv string `json:"dotEnv"`
@@ -61,16 +68,26 @@ type ComposeVariableReq struct {
 }
 
 type ComposeProjectReq struct {
-	// Name is the project's; empty takes the file's own, `name:`.
+	// Name is the project's; empty takes the file's own, `name:`. Not read
+	// for an existing project.
 	Name string `json:"name"`
-	// Env is the env the services are created in.
+	// Env is the env the services are created in, by its name.
 	Env string `json:"env"`
+	// NewEnv creates Env in an existing project, with EnvColor; otherwise the
+	// project has it. A new project's env is always new.
+	NewEnv   bool   `json:"newEnv"`
+	EnvColor string `json:"envColor"`
 }
 
 type ComposeServiceReq struct {
 	// Image is the image of a service the file only builds.
-	Image string            `json:"image"`
-	Ports []*ComposePortReq `json:"ports"`
+	Image string `json:"image"`
+	// App is the app key chosen for the service; empty for its name's.
+	App string `json:"app"`
+	// UseExisting uses the existing env's app the service's name or key is,
+	// rather than creating one.
+	UseExisting bool              `json:"useExisting"`
+	Ports       []*ComposePortReq `json:"ports"`
 }
 
 // ComposePortReq is the review's choice for a published port, found by
@@ -110,11 +127,15 @@ func (req *ValidateComposeReq) Validate() hperrors.ValidationErrors {
 		vld.SetField("project.env", nil),
 		vld.SetCustomKey("ERR_VLD_PROJECT_ENV_NAME_INVALID"),
 	))
+	validators = append(validators, basedto.ValidateStr(&req.Project.EnvColor, false, 1, composeColorMaxLen,
+		"project.envColor")...)
 	validators = append(validators, basedto.ValidateObjectIDReq(&req.Volume, false, "volume")...)
 	for name, svc := range req.Services {
 		if svc == nil {
 			continue
 		}
+		validators = append(validators, basedto.ValidateStr(&svc.App, false, 1, composeAppMaxLen,
+			"services."+name+".app")...)
 		for _, port := range svc.Ports {
 			if port == nil {
 				continue
@@ -166,11 +187,15 @@ type ValidateComposeData struct {
 }
 
 type ComposeProjectResp struct {
+	// ID is an existing project's; empty for one created.
+	ID   string `json:"id"`
 	Name string `json:"name"`
 	Key  string `json:"key"`
 	Env  string `json:"env"`
 	// EnvKey is the env's key, as its paths in the plan name it.
 	EnvKey string `json:"envKey"`
+	// NewEnv says the env is created.
+	NewEnv bool `json:"newEnv"`
 	// FileName is the project's name in the file; empty for none.
 	FileName string `json:"fileName"`
 }
@@ -181,7 +206,7 @@ type ApplyComposeResp struct {
 }
 
 type ApplyComposeData struct {
-	// Project is the project created.
+	// Project is the project created, or the one the services went into.
 	Project *basedto.ObjectIDResp `json:"project"`
 	// Plan is the plan applied, each selected node with its outcome.
 	Plan *specmodel.ImportPlan `json:"plan"`

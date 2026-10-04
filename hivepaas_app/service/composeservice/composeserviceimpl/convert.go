@@ -10,6 +10,7 @@ import (
 	"slices"
 
 	"github.com/compose-spec/compose-go/v2/types"
+	"github.com/tiendc/gofn"
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
@@ -26,6 +27,8 @@ const (
 	detailSource   = "source"
 	detailServices = "services"
 	detailImage    = "image"
+	detailApp      = "app"
+	detailName     = "name"
 )
 
 type service struct{}
@@ -72,6 +75,13 @@ type converter struct {
 
 	// keys are the app key of each service, by its name.
 	keys map[string]string
+	// taken are the names the existing env's apps answer to, each with its
+	// app's key; existing the app a service's name or key is, by service; used
+	// the existing app a service is used as.
+	taken, existing, used map[string]string
+	// secretNames and configNames are the env setting each of the file's
+	// secrets and configs is, by its name in the file.
+	secretNames, configNames map[string]string
 	// names are the services, in depends_on order.
 	names []string
 	// aliases are the names each service is reached by beside its key.
@@ -90,7 +100,7 @@ type converter struct {
 
 func (c *converter) convert() {
 	c.env = &specmodel.EnvDoc{Project: c.req.ProjectKey, Env: c.req.EnvKey, Name: c.req.EnvName,
-		Apps: map[string]*specmodel.AppDoc{}}
+		Color: c.req.EnvColor, Index: c.req.EnvIndex, Apps: map[string]*specmodel.AppDoc{}}
 	c.envSecrets, c.envConfigs = map[string]any{}, map[string]any{}
 	c.secretVariables, c.needs = map[string]bool{}, map[string]*composeservice.FileNeed{}
 
@@ -117,10 +127,10 @@ func (c *converter) convert() {
 
 	settings := map[string]any{}
 	if len(c.envSecrets) > 0 {
-		settings["secrets"] = c.envSecrets
+		settings[blockSecrets] = c.envSecrets
 	}
 	if len(c.envConfigs) > 0 {
-		settings["configFiles"] = c.envConfigs
+		settings[blockConfigFiles] = c.envConfigs
 	}
 	if len(settings) > 0 {
 		c.env.Settings = settings
@@ -171,20 +181,45 @@ func (c *converter) add(path string, severity specmodel.Severity, code string, d
 	})
 }
 
-// nameApps gives each service the app key its name makes. Two services whose
-// names make one key cannot both be created: the file has to rename one.
+// nameApps gives each service the app key its name makes, or the one the
+// review chose. Two services whose names make one key cannot both be created:
+// the file has to rename one. In an existing env, a service whose name or key
+// an app there answers to waits for the review: that app used, or another key.
 func (c *converter) nameApps() {
-	c.keys = map[string]string{}
+	c.keys, c.existing, c.used = map[string]string{}, map[string]string{}, map[string]string{}
+	c.taken = existingNames(c.req.Existing)
 	byKey := map[string]string{}
+	var conflicts []string
 	for _, name := range slices.Sorted(maps.Keys(c.r.project.Services)) {
-		key := projecthelper.CalcAppKey(name)
+		choice := c.req.Services[name]
+		key, existing := projecthelper.CalcAppKey(name), ""
+		if choice != nil && choice.App != "" {
+			key = projecthelper.CalcAppKey(choice.App)
+			existing = c.taken[key]
+		} else {
+			existing = gofn.Coalesce(c.taken[key], c.taken[name])
+		}
+		if existing != "" && choice != nil && choice.UseExisting {
+			key, c.used[name] = existing, existing
+		}
 		if other, taken := byKey[key]; taken {
 			c.add(c.envPath(), specmodel.SeverityBlocked, composeservice.CodeKeyConflict,
-				map[string]any{detailServices: []string{other, name}, "app": key},
+				map[string]any{detailServices: []string{other, name}, detailApp: key},
 				"two services would be one app: rename one in the file")
 			continue
 		}
 		byKey[key], c.keys[name] = name, key
+		if existing != "" {
+			c.existing[name] = existing
+			if c.used[name] == "" {
+				conflicts = append(conflicts, name)
+			}
+		}
+	}
+	for _, name := range conflicts {
+		c.add(c.appPath(name), specmodel.SeverityBlocked, composeservice.CodeAppExists,
+			map[string]any{"service": name, detailApp: c.existing[name]},
+			"the env has an app by this name: use it, or give the service another key")
 	}
 }
 
@@ -268,9 +303,16 @@ var aliasPattern = regexp.MustCompile(`^[A-Za-z0-9][A-Za-z0-9_.-]{0,62}$`)
 // networks call it, and what another's links call it.
 func (c *converter) findAliases() {
 	c.aliases = map[string][]string{}
+	taken := map[string][]string{}
 	add := func(name, alias string) {
-		if _, ok := c.keys[name]; !ok || alias == c.keys[name] || !aliasPattern.MatchString(alias) ||
-			slices.Contains(c.aliases[name], alias) {
+		if _, ok := c.keys[name]; !ok || c.used[name] != "" || alias == c.keys[name] ||
+			!aliasPattern.MatchString(alias) || slices.Contains(c.aliases[name], alias) {
+			return
+		}
+		if c.taken[alias] != "" {
+			if !slices.Contains(taken[name], alias) {
+				taken[name] = append(taken[name], alias)
+			}
 			return
 		}
 		c.aliases[name] = append(c.aliases[name], alias)
@@ -292,6 +334,10 @@ func (c *converter) findAliases() {
 				add(target, alias)
 			}
 		}
+	}
+	for _, name := range slices.Sorted(maps.Keys(taken)) {
+		c.add(c.appPath(name), specmodel.SeverityWarning, composeservice.CodeAliasTaken,
+			map[string]any{"aliases": taken[name]}, "not added: the env's apps answer to these names already")
 	}
 }
 

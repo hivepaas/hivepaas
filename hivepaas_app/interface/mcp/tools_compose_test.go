@@ -29,3 +29,17 @@ func TestComposeInputIsTheEndpointsBody(t *testing.T) {
 
 	assert.False(t, composeInput{Deploy: &no}.request().Deploy)
 }
+
+// Into a project's env, the review's choices of a service named as an app
+// there travel with the body.
+func TestComposeInputChoosesForAServiceNamedAsAnApp(t *testing.T) {
+	req := composeInput{
+		Compose: "services: {}", ProjectID: "prj_1", Env: "staging", NewEnv: true,
+		Apps: map[string]string{"db": " db2 "}, UseExisting: []string{"cache"},
+	}.request()
+
+	assert.True(t, req.Project.NewEnv)
+	assert.Equal(t, "staging", req.Project.Env)
+	assert.Equal(t, "db2", req.Services["db"].App)
+	assert.True(t, req.Services["cache"].UseExisting)
+}

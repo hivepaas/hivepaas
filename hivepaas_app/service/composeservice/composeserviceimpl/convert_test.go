@@ -221,3 +221,80 @@ services:
 	assert.Equal(t, []string{"POSTGRES_PASSWORD"}, resp.Services[0].Secrets)
 	assert.Contains(t, codes(resp.Issues[dbPath]), composeservice.CodeSecretEnv)
 }
+
+// existingEnv is an env with WordPress's database already in it, reached as
+// mysql too, and a secret and a config file of its own.
+func existingEnv() *specmodel.EnvDoc {
+	return &specmodel.EnvDoc{Project: "blog", Env: "prod", Name: "production",
+		Apps: map[string]*specmodel.AppDoc{"db": {App: "db", Deployment: &specmodel.Deployment{
+			Networks: &specmodel.Networks{Attachments: []*specmodel.NetworkAttachment{
+				{Name: "blog_prod_net", Aliases: []string{"db", "mysql"}},
+			}},
+		}}},
+		Settings: map[string]any{
+			"secrets":     map[string]any{"DB_PASSWORD": map[string]any{"key": "DB_PASSWORD"}},
+			"configFiles": map[string]any{"nginx.conf": map[string]any{"name": "nginx.conf"}},
+		},
+	}
+}
+
+// Into an existing env, a service named as an app there waits for the review;
+// its secret variable's env secret, which the env has, is used as it is.
+func TestConvertIntoAnExistingEnvWaitsForAServiceNamedAsAnApp(t *testing.T) {
+	req := wordpressReq(t)
+	req.Existing = existingEnv()
+	resp := convert(t, req)
+
+	assert.Contains(t, codes(resp.Issues[dbPath]), composeservice.CodeAppExists)
+	assert.Contains(t, codes(resp.Issues[envPath]), composeservice.CodeSecretExists)
+	for _, view := range resp.Services {
+		if view.Name == "db" {
+			assert.Equal(t, "db", view.Existing)
+			assert.False(t, view.UseExisting)
+		}
+	}
+
+	req.Services = map[string]*composeservice.ServiceReq{"db": {UseExisting: true}}
+	resp = convert(t, req)
+	assert.NotContains(t, codes(resp.Issues[dbPath]), composeservice.CodeAppExists)
+	assert.Contains(t, codes(resp.Issues[dbPath]), composeservice.CodeAppUsed)
+	assert.Same(t, req.Existing.Apps["db"], appOf(t, resp, "db"), "the app there, unchanged")
+
+	req.Services = map[string]*composeservice.ServiceReq{"db": {App: "db2"}}
+	resp = convert(t, req)
+	assert.Empty(t, resp.Issues[dbPath])
+	db2 := appOf(t, resp, "db2")
+	assert.Equal(t, []string{"db2"}, db2.Deployment.Networks.Attachments[0].Aliases,
+		"db is the app there's: not added")
+	assert.Contains(t, codes(resp.Issues[envPath+"/apps/db2"]), composeservice.CodeAliasTaken)
+}
+
+// A file's secret or config whose name the existing env has is created under
+// another: what is mounted is what the request carries.
+func TestConvertIntoAnExistingEnvNamesASettingItHasOtherwise(t *testing.T) {
+	req := convertReq(`
+services:
+  web:
+    image: nginx:1.27
+    volumes: ["./nginx.conf:/etc/nginx/nginx.conf:ro"]
+    secrets: [DB_PASSWORD]
+secrets:
+  DB_PASSWORD: {file: ./pw.txt}
+`)
+	req.Files = map[string][]byte{"nginx.conf": []byte("events {}"), "pw.txt": []byte("pw")}
+	req.Existing = existingEnv()
+	resp := convert(t, req)
+
+	settings := resp.Bundle.Envs["blog"]["prod"].Settings
+	assert.Contains(t, settings["secrets"], "DB_PASSWORD-2")
+	assert.NotContains(t, settings["secrets"], "DB_PASSWORD")
+	assert.Contains(t, settings["configFiles"], "nginx.conf-2")
+	mounts, _ := appOf(t, resp, "web").Settings["settingMounts"].(map[string]any)
+	sources := []any{}
+	for _, entry := range mounts {
+		source, _ := entry.(map[string]any)["source"].(map[string]any)
+		sources = append(sources, source["id"])
+	}
+	assert.ElementsMatch(t, []any{envPath + "/secrets/DB_PASSWORD-2", envPath + "/configFiles/nginx.conf-2"}, sources)
+	assert.Contains(t, codes(resp.Issues[envPath]), composeservice.CodeSettingRenamed)
+}

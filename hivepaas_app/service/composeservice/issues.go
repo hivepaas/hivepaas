@@ -8,6 +8,7 @@ const (
 	CodeVariableRequired = "COMPOSE_VARIABLE_REQUIRED"
 	CodeKeyConflict      = "COMPOSE_KEY_CONFLICT"
 	CodeDependsCycle     = "COMPOSE_DEPENDS_CYCLE"
+	CodeAppExists        = "COMPOSE_APP_EXISTS"
 
 	// Skipped: the service is not created.
 	CodeNoImage = "COMPOSE_NO_IMAGE"
@@ -29,12 +30,16 @@ const (
 	CodeNetwork        = "COMPOSE_NETWORK"
 	CodePlacement      = "COMPOSE_PLACEMENT"
 	CodeVariableEmpty  = "COMPOSE_VARIABLE_EMPTY"
+	CodeAliasTaken     = "COMPOSE_ALIAS_TAKEN"
+	CodeSecretExists   = "COMPOSE_SECRET_EXISTS" //nolint:gosec // an issue code, not a credential
 
 	// Notes: what the import does, needing no acceptance.
 	CodeSecretVariable = "COMPOSE_SECRET_VARIABLE"
 	CodeSecretWritten  = "COMPOSE_SECRET_WRITTEN" //nolint:gosec // an issue code, not a credential
 	CodeSecretEnv      = "COMPOSE_SECRET_ENV"     //nolint:gosec // an issue code, not a credential
 	CodeAliasAdded     = "COMPOSE_ALIAS_ADDED"
+	CodeAppUsed        = "COMPOSE_APP_USED"
+	CodeSettingRenamed = "COMPOSE_SETTING_RENAMED"
 	CodeStartOrder     = "COMPOSE_START_ORDER"
 	CodeLabelsDropped  = "COMPOSE_LABELS_DROPPED"
 	CodeImageUnpinned  = "COMPOSE_IMAGE_UNPINNED"

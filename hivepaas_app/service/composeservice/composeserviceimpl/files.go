@@ -34,14 +34,39 @@ func (c *converter) fileObjects() {
 			configs[ref.Source] = append(configs[ref.Source], name)
 		}
 	}
+	c.secretNames, c.configNames = map[string]string{}, map[string]string{}
 	for _, name := range slices.Sorted(maps.Keys(secrets)) {
 		content, given := c.fileObject("secret", types.FileObjectConfig(c.r.project.Secrets[name]), secrets[name])
-		c.envSecrets[name] = c.fileSetting(name, "value", content, given, "")
+		setting := c.uniqueSettingName(blockSecrets, c.envSecrets, name)
+		c.secretNames[name] = setting
+		c.envSecrets[setting] = c.fileSetting(setting, "value", content, given, "")
 	}
 	for _, name := range slices.Sorted(maps.Keys(configs)) {
 		content, given := c.fileObject("config", types.FileObjectConfig(c.r.project.Configs[name]), configs[name])
-		c.envConfigs[name] = c.fileSetting(name, "content", content, given, "")
+		setting := c.uniqueSettingName(blockConfigFiles, c.envConfigs, name)
+		c.configNames[name] = setting
+		c.envConfigs[setting] = c.fileSetting(setting, "content", content, given, "")
 	}
+}
+
+// uniqueSettingName is a name for a new env setting of a block: base, or
+// base-2 and on when the env being made or the existing one has it. A setting
+// the existing env has is never what a file mounts: what is mounted is what
+// the request carries.
+func (c *converter) uniqueSettingName(block string, made map[string]any, base string) string {
+	name := base
+	for i := 2; ; i++ {
+		if _, taken := made[name]; !taken && !c.existingSetting(block, name) {
+			break
+		}
+		name = base + "-" + itoa(i)
+	}
+	if name != base && c.existingSetting(block, base) {
+		c.add(c.envPath(), "", composeservice.CodeSettingRenamed,
+			map[string]any{"block": block, detailName: base, "as": name},
+			"named otherwise: the env has a setting by this name, which is left as it is")
+	}
+	return name
 }
 
 // fileObject is a secret's or a config's content: its file, its inline
@@ -88,7 +113,7 @@ func (c *converter) fileMounts(svc types.ServiceConfig, mounts map[string]any) {
 		case !path.IsAbs(target):
 			target = path.Join(secretsDir, target)
 		}
-		entry := mountEntry(mounts, "secret-"+ref.Source, c.envSecretPath(ref.Source))
+		entry := mountEntry(mounts, "secret-"+ref.Source, c.envSecretPath(c.secretNames[ref.Source]))
 		addMountFile(entry, mountFile("value", target, types.FileReferenceConfig(ref)))
 	}
 	for _, ref := range svc.Configs {
@@ -96,7 +121,7 @@ func (c *converter) fileMounts(svc types.ServiceConfig, mounts map[string]any) {
 		if target == "" {
 			target = "/" + ref.Source
 		}
-		entry := mountEntry(mounts, "config-"+ref.Source, c.envConfigPath(ref.Source))
+		entry := mountEntry(mounts, "config-"+ref.Source, c.envConfigPath(c.configNames[ref.Source]))
 		addMountFile(entry, mountFile("content", target, types.FileReferenceConfig(ref)))
 	}
 }

@@ -264,7 +264,7 @@ func (c *converter) configFileOf(rel, service string) string {
 			return name
 		}
 	}
-	name := c.uniqueConfigName(path.Base(rel))
+	name := c.uniqueSettingName(blockConfigFiles, c.envConfigs, path.Base(rel))
 	c.envConfigs[name] = c.fileSetting(name, "content", content, given, rel)
 	return name
 }
@@ -273,27 +273,17 @@ func (c *converter) configFileOf(rel, service string) string {
 // the bundle is made; it is removed before it is written.
 const fileSourceKey = "source"
 
-func (c *converter) uniqueConfigName(base string) string {
-	name := base
-	for i := 2; ; i++ {
-		if _, taken := c.envConfigs[name]; !taken {
-			return name
-		}
-		name = base + "-" + itoa(i)
-	}
-}
-
 // fileSetting is an env secret's or config file's body: its content - in
 // base64 when it is not text - inheritable by the env's apps, and pending
 // while the file is missing.
 func (c *converter) fileSetting(name, field string, content []byte, given bool, source string) map[string]any {
-	setting := map[string]any{"name": name, "inheritable": true}
+	setting := map[string]any{detailName: name, "inheritable": true}
 	if !given {
 		setting["status"] = string(base.SettingStatusPending)
 	}
 	body := map[string]any{specmodel.SettingMetaKey: setting}
 	if field == "content" {
-		body["name"] = name
+		body[detailName] = name
 	} else {
 		body["key"] = name
 	}

@@ -45,6 +45,13 @@ type ConvertReq struct {
 	OwnerID                 string
 	EnvKey, EnvName         string
 	NetworkName             string
+	// EnvColor and EnvIndex are a new env's, beside a project's others.
+	EnvColor string
+	EnvIndex int
+	// Existing is the env the services go into, as export sees it with its
+	// secrets omitted; nil for a new env. What it has is never changed: a
+	// service named as one of its apps waits for the review's choice.
+	Existing *specmodel.EnvDoc
 	// Profiles are the profiles whose services are created, beside those with
 	// none.
 	Profiles []string
@@ -74,6 +81,11 @@ type VariableReq struct {
 type ServiceReq struct {
 	// Image is the image of a service with only a build.
 	Image string
+	// App is the app key chosen for it; empty for its name's.
+	App string
+	// UseExisting uses the app of the existing env its name or key is, rather
+	// than creating one.
+	UseExisting bool
 	// Ports are the choices for its published ports; one not listed takes its
 	// default.
 	Ports []*PortReq
@@ -128,6 +140,10 @@ type ServiceView struct {
 	Dropped []string `json:"dropped"`
 	// Secrets are its variables kept as secrets of the app.
 	Secrets []string `json:"secrets"`
+	// Existing is the app of the existing env its name or key is; empty for
+	// none. UseExisting says that app is used rather than one created.
+	Existing    string `json:"existing"`
+	UseExisting bool   `json:"useExisting"`
 }
 
 // PortView is one published port, and what it becomes.

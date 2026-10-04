@@ -276,6 +276,9 @@ function describeVolume(volume: ComposeVolumeView): string {
     if (volume.owner) {
         parts.push(`(${volume.owner}'s)`);
     }
+    if (volume.files > 0) {
+        parts.push(`with ${volume.files} ${volume.files === 1 ? "file" : "files"} given, read only,`);
+    }
     if (volume.readOnly) {
         parts.push("read only");
     }

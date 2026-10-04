@@ -2,7 +2,7 @@ import { type ReactNode, useRef } from "react";
 
 import { Button, Checkbox, FieldError, Input, Label } from "@components/ui";
 import { Textarea } from "@components/ui/textarea";
-import { FileUpIcon } from "lucide-react";
+import { FileUpIcon, FolderOpenIcon, XIcon } from "lucide-react";
 import { PROJECT_FORM_CONTROL_MAX_WIDTH_CLASS } from "~/projects/module-shared/constants";
 
 import { InfoBlock, LabelWithInfo } from "@application/shared/components";
@@ -34,9 +34,14 @@ export function ComposeSource({
     nameError,
     envError,
     target,
+    folder,
+    onOpenFolder,
+    onCloseFolder,
+    onUseEnvExample,
     isReading,
 }: Props) {
     const fileInputRef = useRef<HTMLInputElement>(null);
+    const folderInputRef = useRef<HTMLInputElement>(null);
 
     return (
         <div className="flex w-full flex-col gap-6">
@@ -45,7 +50,7 @@ export function ComposeSource({
                 title={
                     <LabelWithInfo
                         label="Compose File"
-                        content="A docker-compose.yml: paste it, or open the file. It is read on the server without touching anything there - no file of the server's, nor its environment."
+                        content="A docker-compose.yml: paste it, open the file, or open its folder - the files it reads are then taken from there, as the review asks for them. It is read on the server without touching anything there - no file of the server's, nor its environment."
                     />
                 }
             >
@@ -86,8 +91,57 @@ export function ComposeSource({
                                 }
                             }}
                         />
+                        <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            onClick={() => folderInputRef.current?.click()}
+                        >
+                            <FolderOpenIcon className="size-4" />
+                            Open folder
+                        </Button>
+                        <input
+                            ref={element => {
+                                folderInputRef.current = element;
+                                // Not in React's attributes: the browser's own, for picking a directory.
+                                element?.setAttribute("webkitdirectory", "");
+                            }}
+                            type="file"
+                            multiple
+                            className="hidden"
+                            onChange={event => {
+                                const files = event.target.files ? Array.from(event.target.files) : [];
+                                if (folderInputRef.current) {
+                                    folderInputRef.current.value = "";
+                                }
+                                if (files.length > 0) {
+                                    onOpenFolder(files);
+                                }
+                            }}
+                        />
                         {isReading && <span className="text-xs text-muted-foreground">Reading…</span>}
                     </div>
+                    {folder && (
+                        <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+                            <FolderOpenIcon className="size-4" />
+                            <span>
+                                <code className="font-mono text-foreground">
+                                    {[folder.name, folder.base, folder.composeName].filter(Boolean).join("/")}
+                                </code>{" "}
+                                and the {folder.fileCount} {folder.fileCount === 1 ? "file" : "files"} beside it: those
+                                the file reads are given from the folder.
+                            </span>
+                            <Button
+                                type="button"
+                                variant="ghost"
+                                size="sm"
+                                onClick={onCloseFolder}
+                            >
+                                <XIcon className="size-4" />
+                                Close folder
+                            </Button>
+                        </div>
+                    )}
                     {error && <p className="max-w-[720px] text-xs text-destructive">{error}</p>}
                 </div>
             </InfoBlock>
@@ -101,17 +155,33 @@ export function ComposeSource({
                     />
                 }
             >
-                <Textarea
-                    value={dotEnv}
-                    onChange={event => {
-                        onDotEnvChange(event.target.value);
-                    }}
-                    placeholder="DB_PASSWORD=..."
-                    minRows={3}
-                    maxRows={12}
-                    spellCheck={false}
-                    className="max-w-[900px] font-mono text-xs"
-                />
+                <div className="flex w-full max-w-[900px] flex-col gap-2">
+                    <Textarea
+                        value={dotEnv}
+                        onChange={event => {
+                            onDotEnvChange(event.target.value);
+                        }}
+                        placeholder="DB_PASSWORD=..."
+                        minRows={3}
+                        maxRows={12}
+                        spellCheck={false}
+                        className="font-mono text-xs"
+                    />
+                    {folder?.envExampleName && dotEnv.trim() === "" && (
+                        <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+                            The folder has no .env, but has {folder.envExampleName}.
+                            <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                onClick={onUseEnvExample}
+                            >
+                                Use {folder.envExampleName}
+                            </Button>
+                            <span>Change the passwords it gives: they are the example&apos;s, known to anybody.</span>
+                        </div>
+                    )}
+                </div>
             </InfoBlock>
 
             {target ?? (
@@ -223,5 +293,21 @@ interface Props {
     envError?: string;
     /** Where the services go in an existing project, instead of a new project's name and env. */
     target?: ReactNode;
+    /** The folder opened, if one is. */
+    folder?: ComposeFolderSummary;
+    onOpenFolder: (files: File[]) => void;
+    onCloseFolder: () => void;
+    onUseEnvExample: () => void;
     isReading: boolean;
+}
+
+/** What the page shows of a folder opened. */
+export interface ComposeFolderSummary {
+    name: string;
+    /** The compose file's directory in the folder; empty for the folder itself. */
+    base: string;
+    composeName: string;
+    fileCount: number;
+    /** The example .env beside the compose file, if any. */
+    envExampleName?: string;
 }

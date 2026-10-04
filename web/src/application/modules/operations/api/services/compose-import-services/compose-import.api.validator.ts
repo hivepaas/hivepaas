@@ -30,6 +30,10 @@ const VolumeSchema = z.object({
     kind: z.string().transform(value => value as ComposeVolumeKind),
     readOnly: z.boolean(),
     owner: z.string(),
+    files: z
+        .number()
+        .nullish()
+        .transform(value => value ?? 0),
 });
 
 const ServiceSchema = z.object({

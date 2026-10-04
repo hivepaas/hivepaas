@@ -30,6 +30,8 @@ export interface ComposeVolumeView {
     readOnly: boolean;
     /** The app whose directory a shared volume is. */
     owner: string;
+    /** How many files given under a directory of the compose file's are mounted in it, read only. */
+    files: number;
 }
 
 export interface ComposeServiceView {
@@ -67,7 +69,7 @@ export interface ComposeVariableView {
 
 export interface ComposeFileNeed {
     path: string;
-    /** What reads it: env_file, config, secret, bind. */
+    /** What reads it: env_file, config, secret, bind, directory, compose. */
     as: string;
     by: string[];
     given: boolean;

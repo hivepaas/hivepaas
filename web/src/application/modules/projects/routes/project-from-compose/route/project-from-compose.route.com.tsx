@@ -30,13 +30,19 @@ import { ValidationProblemApiResponse } from "@infrastructure/api";
 import { HttpException } from "@infrastructure/exceptions/http";
 
 import {
+    type ComposeDirectoryState,
     ComposeFiles,
+    type ComposeFolder,
     ComposeResult,
     ComposeServices,
     ComposeSource,
     ComposeTarget,
     type ComposeTargetValue,
     ComposeVariables,
+    folderDirectoryFiles,
+    folderFilesFor,
+    folderFilesUnder,
+    readComposeFolder,
 } from "../building-blocks";
 
 /** How long the review waits for typing to stop before the file is read again. */
@@ -159,6 +165,12 @@ function ComposeImportPage({ projectId }: { projectId?: string }) {
     const [planChanged, setPlanChanged] = useState(false);
     const [result, setResult] = useState<ComposeImportResult | undefined>();
     const [revision, setRevision] = useState(0);
+    const [folder, setFolder] = useState<ComposeFolder | undefined>();
+    const [folderError, setFolderError] = useState<string | undefined>();
+    // The paths the folder gave: once each, so that one removed by hand stays so.
+    const fromFolder = useRef(new Set<string>());
+    // The directories whose files the folder does not give, as chosen.
+    const [directoriesOff, setDirectoriesOff] = useState<ReadonlySet<string>>(new Set());
 
     const plan = review?.plan;
     const roots = useMemo(() => (plan ? buildImportTree(plan.nodes) : []), [plan]);
@@ -289,6 +301,104 @@ function ComposeImportPage({ projectId }: { projectId?: string }) {
         setValidateError(undefined);
         setPlanChanged(false);
         setResult(undefined);
+        setFolder(undefined);
+        setFolderError(undefined);
+        fromFolder.current = new Set();
+        setDirectoriesOff(new Set());
+    };
+
+    // A folder opened is read as its compose file, and its .env: what was
+    // given for another file is not this one's.
+    const openFolder = (list: File[]) => {
+        const opened = readComposeFolder(list);
+        if (!opened) {
+            setFolderError(
+                "The folder has no compose file: compose.yaml, compose.yml, docker-compose.yaml or docker-compose.yml.",
+            );
+
+            return;
+        }
+        setFolderError(undefined);
+        fromFolder.current = new Set();
+        setDirectoriesOff(new Set());
+        latest.current++;
+        setFolder(opened);
+        setFiles({});
+        setVariables({});
+        setServices({});
+        setProfiles([]);
+        setChecked(undefined);
+        seenLeaves.current = new Set();
+        setReview(undefined);
+        setReviewKey(undefined);
+        setValidateError(undefined);
+        void opened.compose.text().then(setCompose);
+        void (opened.dotEnv ? opened.dotEnv.text() : Promise.resolve("")).then(setDotEnv);
+    };
+
+    // The files the review asks for that the folder has are given from it, and
+    // the files under each directory it mounts - all or none of a directory's.
+    useEffect(() => {
+        if (!folder || !review) {
+            return;
+        }
+        const paths = review.needs.filter(need => need.as !== "directory" && !need.given).map(need => need.path);
+        const additions: Record<string, File> = folderFilesFor(folder, paths, files, fromFolder.current);
+        for (const need of review.needs) {
+            if (need.as !== "directory" || directoriesOff.has(need.path)) {
+                continue;
+            }
+            const under = folderDirectoryFiles(folder, need.path, { ...files, ...additions }).files;
+            for (const [path, file] of Object.entries(under)) {
+                if (!fromFolder.current.has(path)) {
+                    additions[path] = file;
+                }
+            }
+        }
+        const added = Object.keys(additions);
+        if (added.length === 0) {
+            return;
+        }
+        added.forEach(path => fromFolder.current.add(path));
+        setFiles(previous => ({ ...previous, ...additions }));
+    }, [folder, review, files, directoriesOff]);
+
+    const directories = useMemo(() => {
+        const out: Record<string, ComposeDirectoryState> = {};
+        for (const need of review?.needs ?? []) {
+            if (need.as !== "directory") {
+                continue;
+            }
+            const given = Object.keys(files).filter(path => path.startsWith(`${need.path}/`)).length;
+            out[need.path] = {
+                available: folder ? folderFilesUnder(folder, need.path).length : 0,
+                given,
+                on: !directoriesOff.has(need.path),
+                fits: !folder || given > 0 || folderDirectoryFiles(folder, need.path, files).fits,
+            };
+        }
+
+        return out;
+    }, [review, folder, files, directoriesOff]);
+
+    // A directory's files are given from the folder, or taken back.
+    const toggleDirectory = (dir: string, on: boolean) => {
+        const prefix = `${dir}/`;
+        const next = new Set(directoriesOff);
+        if (on) {
+            next.delete(dir);
+            fromFolder.current.forEach(path => {
+                if (path.startsWith(prefix)) {
+                    fromFolder.current.delete(path);
+                }
+            });
+        } else {
+            next.add(dir);
+            setFiles(previous =>
+                Object.fromEntries(Object.entries(previous).filter(([path]) => !path.startsWith(prefix))),
+            );
+        }
+        setDirectoriesOff(next);
     };
 
     const readErrors = readErrorsOf(validateError);
@@ -296,6 +406,8 @@ function ComposeImportPage({ projectId }: { projectId?: string }) {
     const blocked = summary["blocked"] ?? 0;
     const accepted = (summary["skipped"] ?? 0) + (summary["fixable"] ?? 0) + (summary["warning"] ?? 0);
     const isCurrent = reviewKey === requestKey && !isValidating;
+    const missingFiles =
+        review?.needs.filter(need => need.as === "compose" && !need.given && files[need.path] === undefined) ?? [];
     const missingVariables = review?.variables.filter(
         variable => variable.required && !variable.given && !variables[variable.name]?.value,
     );
@@ -343,7 +455,7 @@ function ComposeImportPage({ projectId }: { projectId?: string }) {
                         profiles={review?.profiles ?? []}
                         selectedProfiles={profiles}
                         onProfilesChange={setProfiles}
-                        error={readErrors.file}
+                        error={folderError ?? readErrors.file}
                         nameError={readErrors.name}
                         envError={readErrors.env}
                         target={
@@ -357,6 +469,22 @@ function ComposeImportPage({ projectId }: { projectId?: string }) {
                                 />
                             ) : undefined
                         }
+                        folder={
+                            folder && {
+                                name: folder.name,
+                                base: folder.base,
+                                composeName: folder.compose.name,
+                                fileCount: folder.files.size,
+                                envExampleName: folder.envExample?.name,
+                            }
+                        }
+                        onOpenFolder={openFolder}
+                        onCloseFolder={() => {
+                            setFolder(undefined);
+                        }}
+                        onUseEnvExample={() => {
+                            void folder?.envExample?.text().then(setDotEnv);
+                        }}
                         isReading={isValidating}
                     />
 
@@ -371,6 +499,9 @@ function ComposeImportPage({ projectId }: { projectId?: string }) {
                                 needs={review.needs}
                                 files={files}
                                 onChange={setFiles}
+                                directories={directories}
+                                onToggleDirectory={toggleDirectory}
+                                hasFolder={folder !== undefined}
                             />
                             <ComposeServices
                                 services={review.services}
@@ -383,6 +514,12 @@ function ComposeImportPage({ projectId }: { projectId?: string }) {
                     {review && !plan && missingVariables && missingVariables.length > 0 && (
                         <p className="text-sm text-muted-foreground">
                             Give {missingVariables.map(variable => variable.name).join(", ")} a value to see the plan.
+                        </p>
+                    )}
+                    {review && !plan && missingFiles.length > 0 && (
+                        <p className="text-sm text-muted-foreground">
+                            Add {missingFiles.map(need => need.path).join(", ")} under Files to see the plan: the
+                            compose file reads {missingFiles.length === 1 ? "it" : "them"} before anything else.
                         </p>
                     )}
 

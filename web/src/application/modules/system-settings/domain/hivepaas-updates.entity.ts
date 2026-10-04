@@ -28,7 +28,10 @@ export interface HivePaaSReleaseInfo {
 export type UpdateChange = "none" | "update" | "major" | "blocked" | "not-deployed";
 
 export interface UpdateComponent {
-    /** db, redis, traefik, victoria-logs, vlagent, registry, agent, app or worker. */
+    /**
+     * db, redis, traefik, victoria-logs, vlagent, registry, agent, obi, app or worker. obi is no service: each node's
+     * agent runs it, and it moves with the agent.
+     */
     key: string;
     currentImage: string;
     targetImage: string;

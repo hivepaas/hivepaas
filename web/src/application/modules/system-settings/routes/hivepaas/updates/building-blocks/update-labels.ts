@@ -9,6 +9,7 @@ const COMPONENT_NAMES: Record<string, string> = {
     "vlagent": "vlagent (log collector)",
     "registry": "Registry (zot)",
     "agent": "HivePaaS agent",
+    "obi": "OBI (routes and calls, with the agent)",
     "app": "HivePaaS",
     "worker": "HivePaaS workers",
 };

@@ -3,6 +3,7 @@ import { NodesQueries } from "~/cluster/data";
 import { ENodeState } from "~/cluster/module-shared/enums";
 
 import { DEFAULT_PAGINATED_DATA, ROUTE } from "@application/shared/constants";
+import { getFriendlyDataSize } from "@application/shared/utils/data-size";
 
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -64,7 +65,12 @@ export function NodesCard() {
                                         </Badge>
                                         {node.resources && (
                                             <span className="text-muted-foreground">
-                                                {node.resources.cpus} CPU · {node.resources.memory}
+                                                {[
+                                                    `${node.resources.cpus} CPU`,
+                                                    getFriendlyDataSize(node.resources.memoryBytes),
+                                                ]
+                                                    .filter(Boolean)
+                                                    .join(" · ")}
                                             </span>
                                         )}
                                         <span

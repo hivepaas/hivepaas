@@ -45,6 +45,10 @@ export function ComposeServices({ services, inputs, onChange }: Props) {
         const current = inputs[name] ?? { ports: [] };
         onChange({ ...inputs, [name]: { ...current, image: image === "" ? undefined : image } });
     };
+    const setChoice = (name: string, choice: Pick<ComposeServiceInput, "app" | "useExisting">) => {
+        const current = inputs[name] ?? { ports: [] };
+        onChange({ ...inputs, [name]: { ...current, app: choice.app, useExisting: choice.useExisting } });
+    };
     const setPort = (name: string, port: ComposePortView, patch: Partial<ComposePortInput>) => {
         const current = inputs[name] ?? { ports: [] };
         const existing = current.ports.find(input => samePort(input, port)) ?? {
@@ -74,8 +78,12 @@ export function ComposeServices({ services, inputs, onChange }: Props) {
                         key={service.name}
                         service={service}
                         image={inputs[service.name]?.image}
+                        input={inputs[service.name]}
                         onImageChange={image => {
                             setImage(service.name, image);
+                        }}
+                        onChoice={choice => {
+                            setChoice(service.name, choice);
                         }}
                         onPortChange={(port, patch) => {
                             setPort(service.name, port, patch);
@@ -87,7 +95,23 @@ export function ComposeServices({ services, inputs, onChange }: Props) {
     );
 }
 
-function ServiceCard({ service, image, onImageChange, onPortChange }: CardProps) {
+function ServiceCard({ service, image, input, onImageChange, onChoice, onPortChange }: CardProps) {
+    if (service.useExisting) {
+        return (
+            <div className="flex flex-col gap-3 rounded-md border px-3 py-3">
+                <div className="flex flex-wrap items-center gap-2">
+                    <span className="text-sm font-medium text-foreground">{service.name}</span>
+                    <Badge variant="outline">the env&apos;s app</Badge>
+                </div>
+                <ExistingChoice
+                    service={service}
+                    input={input}
+                    onChoice={onChoice}
+                />
+            </div>
+        );
+    }
+
     return (
         <div className="flex flex-col gap-3 rounded-md border px-3 py-3">
             <div className="flex flex-wrap items-center gap-2">
@@ -110,6 +134,14 @@ function ServiceCard({ service, image, onImageChange, onPortChange }: CardProps)
                     </Badge>
                 )}
             </div>
+
+            {(service.existing !== "" || input?.app !== undefined) && (
+                <ExistingChoice
+                    service={service}
+                    input={input}
+                    onChoice={onChoice}
+                />
+            )}
 
             {service.skipped || image !== undefined ? (
                 <Input
@@ -165,6 +197,75 @@ function ServiceCard({ service, image, onImageChange, onPortChange }: CardProps)
             )}
             {service.dropped.length > 0 && (
                 <p className="text-xs text-amber-700 dark:text-amber-400">Left out: {service.dropped.join(", ")}.</p>
+            )}
+        </div>
+    );
+}
+
+type ExistingAction = "use" | "rename";
+
+/**
+ * What to do with a service whose name or key an app of the env answers to:
+ * use that app, or create the service under another key. Until one is chosen,
+ * nothing is created.
+ */
+function ExistingChoice({ service, input, onChoice }: ExistingProps) {
+    const action: ExistingAction | undefined = input?.useExisting
+        ? "use"
+        : input?.app !== undefined
+          ? "rename"
+          : undefined;
+
+    return (
+        <div className="flex flex-col gap-2 rounded-md border border-amber-500/40 bg-amber-500/5 px-3 py-2">
+            <p className="text-xs text-amber-700 dark:text-amber-400">
+                {service.existing ? (
+                    <>
+                        The env has an app, <code className="font-mono">{service.existing}</code>, reached by this
+                        service&apos;s name.
+                    </>
+                ) : (
+                    <>The env has an app reached by this service&apos;s name.</>
+                )}
+            </p>
+            <Select
+                value={action ?? ""}
+                onValueChange={value => {
+                    onChoice(
+                        value === "use"
+                            ? { useExisting: true }
+                            : { app: input?.app ?? `${service.app || service.name}-2` },
+                    );
+                }}
+            >
+                <SelectTrigger className="w-[320px]">
+                    <SelectValue placeholder="Choose what to do with it" />
+                </SelectTrigger>
+                <SelectContent>
+                    <SelectItem value="use">Use the env&apos;s app, as it is</SelectItem>
+                    <SelectItem value="rename">Create it under another key</SelectItem>
+                </SelectContent>
+            </Select>
+            {action === "use" && (
+                <p className="text-xs text-muted-foreground">
+                    Not created: the other services reach the env&apos;s app by this name.
+                </p>
+            )}
+            {action === "rename" && (
+                <>
+                    <Input
+                        value={input?.app ?? ""}
+                        onChange={event => {
+                            onChoice({ app: event.target.value.trim().toLowerCase() });
+                        }}
+                        placeholder="app key"
+                        className="w-[320px] font-mono text-xs"
+                    />
+                    <p className="text-xs text-muted-foreground">
+                        The other services still reach the env&apos;s app by this name: change the file where they refer
+                        to it.
+                    </p>
+                </>
             )}
         </div>
     );
@@ -236,8 +337,16 @@ interface Props {
 interface CardProps {
     service: ComposeServiceView;
     image: string | undefined;
+    input: ComposeServiceInput | undefined;
     onImageChange: (image: string) => void;
+    onChoice: (choice: Pick<ComposeServiceInput, "app" | "useExisting">) => void;
     onPortChange: (port: ComposePortView, patch: Partial<ComposePortInput>) => void;
+}
+
+interface ExistingProps {
+    service: ComposeServiceView;
+    input: ComposeServiceInput | undefined;
+    onChoice: (choice: Pick<ComposeServiceInput, "app" | "useExisting">) => void;
 }
 
 interface PortProps {

@@ -46,14 +46,30 @@ const ServiceSchema = z.object({
     aliases: list(z.string()),
     secrets: list(z.string()),
     dropped: list(z.string()),
+    existing: z
+        .string()
+        .nullish()
+        .transform(value => value ?? ""),
+    useExisting: z
+        .boolean()
+        .nullish()
+        .transform(value => value ?? false),
 });
 
 const ReviewSchema = z.object({
     project: z.object({
+        id: z
+            .string()
+            .nullish()
+            .transform(value => value ?? ""),
         name: z.string(),
         key: z.string(),
         env: z.string(),
         envKey: z.string(),
+        newEnv: z
+            .boolean()
+            .nullish()
+            .transform(value => value ?? false),
         fileName: z.string(),
     }),
     services: list(ServiceSchema),

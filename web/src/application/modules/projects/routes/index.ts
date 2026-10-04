@@ -1,5 +1,5 @@
 export { ProjectsRoute } from "./projects";
-export { ProjectFromComposeRoute } from "./project-from-compose";
+export { ProjectFromComposeRoute, ProjectAppsFromComposeRoute } from "./project-from-compose";
 export {
     ProjectGeneralRoute,
     ProjectImageBuildSettingsRoute,

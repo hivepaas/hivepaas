@@ -51,6 +51,10 @@ export interface ComposeServiceView {
     secrets: string[];
     /** The fields of the file not carried to the app. */
     dropped: string[];
+    /** The existing env's app its name or key is; empty for none. */
+    existing: string;
+    /** That app is used rather than one created. */
+    useExisting: boolean;
 }
 
 export interface ComposeVariableView {
@@ -70,10 +74,14 @@ export interface ComposeFileNeed {
 }
 
 export interface ComposeProject {
+    /** An existing project's; empty for one created. */
+    id: string;
     name: string;
     key: string;
     env: string;
     envKey: string;
+    /** The env is created. */
+    newEnv: boolean;
     /** The project's name in the file; empty for none. */
     fileName: string;
 }
@@ -89,7 +97,7 @@ export interface ComposeImportReview {
 }
 
 export interface ComposeImportResult extends SpecImportResult {
-    /** The project created. */
+    /** The project created, or the one the services went into. */
     projectId?: string;
 }
 
@@ -110,18 +118,35 @@ export interface ComposePortInput {
 
 export interface ComposeServiceInput {
     image?: string;
+    /** The app key chosen for it; absent for its name's. */
+    app?: string;
+    /** Uses the existing env's app its name or key is. */
+    useExisting?: boolean;
     ports: ComposePortInput[];
 }
 
 /** A file the compose file reads: pasted text, or a file picked. */
 export type ComposeFileInput = string | File;
 
+/** Where the services go: a new project, or an env of an existing one. */
+export interface ComposeImportProject {
+    /** A new project's name; empty takes the file's. Not read for an existing project. */
+    name: string;
+    /** The env, by its name. */
+    env: string;
+    /** Creates env in the existing project. */
+    newEnv?: boolean;
+    envColor?: string;
+}
+
 export interface ComposeImportBody {
+    /** The existing project the services go into; absent creates one. */
+    projectId?: string;
     compose: string;
     dotEnv: string;
     files: Record<string, ComposeFileInput>;
     variables: Record<string, ComposeVariableInput>;
-    project: { name: string; env: string };
+    project: ComposeImportProject;
     profiles: string[];
     services: Record<string, ComposeServiceInput>;
     /** A cluster volume for the services' data; none for the project's own. */

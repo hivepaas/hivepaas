@@ -1,4 +1,4 @@
-import { useRef } from "react";
+import { type ReactNode, useRef } from "react";
 
 import { Button, Checkbox, FieldError, Input, Label } from "@components/ui";
 import { Textarea } from "@components/ui/textarea";
@@ -14,7 +14,8 @@ const COMPOSE_PLACEHOLDER = `services:
 
 /**
  * The compose file and what it is read with: its .env, the project's name and
- * env, the profiles whose services are created.
+ * env - or, for an existing project, the target given - the profiles whose
+ * services are created.
  */
 export function ComposeSource({
     compose,
@@ -32,6 +33,7 @@ export function ComposeSource({
     error,
     nameError,
     envError,
+    target,
     isReading,
 }: Props) {
     const fileInputRef = useRef<HTMLInputElement>(null);
@@ -112,47 +114,51 @@ export function ComposeSource({
                 />
             </InfoBlock>
 
-            <InfoBlock
-                titleWidth={220}
-                title={
-                    <LabelWithInfo
-                        label="Project Name"
-                        content="Empty takes the file's own name, `name:`."
-                    />
-                }
-            >
-                <Input
-                    value={projectName}
-                    onChange={event => {
-                        onProjectNameChange(event.target.value);
-                    }}
-                    placeholder={fileName || "my-project"}
-                    aria-invalid={nameError !== undefined}
-                    className={PROJECT_FORM_CONTROL_MAX_WIDTH_CLASS}
-                />
-                <FieldError errors={[nameError === undefined ? undefined : { message: nameError }]} />
-            </InfoBlock>
+            {target ?? (
+                <>
+                    <InfoBlock
+                        titleWidth={220}
+                        title={
+                            <LabelWithInfo
+                                label="Project Name"
+                                content="Empty takes the file's own name, `name:`."
+                            />
+                        }
+                    >
+                        <Input
+                            value={projectName}
+                            onChange={event => {
+                                onProjectNameChange(event.target.value);
+                            }}
+                            placeholder={fileName || "my-project"}
+                            aria-invalid={nameError !== undefined}
+                            className={PROJECT_FORM_CONTROL_MAX_WIDTH_CLASS}
+                        />
+                        <FieldError errors={[nameError === undefined ? undefined : { message: nameError }]} />
+                    </InfoBlock>
 
-            <InfoBlock
-                titleWidth={220}
-                title={
-                    <LabelWithInfo
-                        label="Environment"
-                        content="The project's one env, where every service becomes an app."
-                    />
-                }
-            >
-                <Input
-                    value={envName}
-                    onChange={event => {
-                        onEnvNameChange(event.target.value);
-                    }}
-                    placeholder="production"
-                    aria-invalid={envError !== undefined}
-                    className={PROJECT_FORM_CONTROL_MAX_WIDTH_CLASS}
-                />
-                <FieldError errors={[envError === undefined ? undefined : { message: envError }]} />
-            </InfoBlock>
+                    <InfoBlock
+                        titleWidth={220}
+                        title={
+                            <LabelWithInfo
+                                label="Environment"
+                                content="The project's one env, where every service becomes an app."
+                            />
+                        }
+                    >
+                        <Input
+                            value={envName}
+                            onChange={event => {
+                                onEnvNameChange(event.target.value);
+                            }}
+                            placeholder="production"
+                            aria-invalid={envError !== undefined}
+                            className={PROJECT_FORM_CONTROL_MAX_WIDTH_CLASS}
+                        />
+                        <FieldError errors={[envError === undefined ? undefined : { message: envError }]} />
+                    </InfoBlock>
+                </>
+            )}
 
             {profiles.length > 0 && (
                 <InfoBlock
@@ -215,5 +221,7 @@ interface Props {
     /** What the project's name and env were refused for, shown under each. */
     nameError?: string;
     envError?: string;
+    /** Where the services go in an existing project, instead of a new project's name and env. */
+    target?: ReactNode;
     isReading: boolean;
 }

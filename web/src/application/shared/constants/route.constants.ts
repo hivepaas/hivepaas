@@ -665,6 +665,11 @@ export const ROUTE = {
                 $pattern: "projects/:id/apps",
                 $route: (id: string) => `/projects/${id}/apps/`,
 
+                fromCompose: {
+                    $pattern: "projects/:id/apps/from-compose",
+                    $route: (id: string) => `/projects/${id}/apps/from-compose/`,
+                },
+
                 single: {
                     $pattern: "projects/:id/:env/apps/:appId",
 

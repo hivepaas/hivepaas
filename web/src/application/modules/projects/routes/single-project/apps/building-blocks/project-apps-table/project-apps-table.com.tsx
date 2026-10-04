@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 
-import { CircleHelp, Plus } from "lucide-react";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@components/ui/dropdown-menu";
+import { ChevronDown, CircleHelp, FileCode2, LayoutTemplate, Plus } from "lucide-react";
 import { useNavigate } from "react-router";
 import { ProjectAppsQueries, ProjectsQueries } from "~/projects/data/queries";
 import { useCreateFunctionDialog } from "~/projects/dialogs/create-function";
@@ -125,16 +126,37 @@ export function ProjectAppsTable({ projectId }: Props) {
     const isProjectActive = project?.status === EProjectStatus.Active;
     const isAddButtonDisabled = !isProjectActive || !canWrite;
 
-    const newFromTemplateButton = (
-        <Button
-            type="button"
-            variant="outline"
-            onClick={() => {
-                void navigate(ROUTE.projects.single.appTemplates.$route(projectId));
-            }}
-        >
-            <Plus /> New From Template
-        </Button>
+    const newFromButton = (
+        <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+                <Button
+                    type="button"
+                    variant="outline"
+                >
+                    <Plus /> New From <ChevronDown className="size-4" />
+                </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent
+                align="end"
+                className="min-w-[220px]"
+            >
+                <DropdownMenuItem
+                    onSelect={() => {
+                        void navigate(ROUTE.projects.single.appTemplates.$route(projectId));
+                    }}
+                >
+                    <LayoutTemplate className="size-4" /> Template
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                    disabled={isAddButtonDisabled}
+                    onSelect={() => {
+                        void navigate(ROUTE.projects.single.apps.fromCompose.$route(projectId));
+                    }}
+                >
+                    <FileCode2 className="size-4" /> Docker Compose
+                </DropdownMenuItem>
+            </DropdownMenuContent>
+        </DropdownMenu>
     );
 
     const addNewAppButton = (
@@ -191,7 +213,7 @@ export function ProjectAppsTable({ projectId }: Props) {
 
     const renderActions = (
         <>
-            {newFromTemplateButton}
+            {newFromButton}
             {renderAddButton(addNewFunctionButton)}
             {renderAddButton(addNewAppButton)}
         </>

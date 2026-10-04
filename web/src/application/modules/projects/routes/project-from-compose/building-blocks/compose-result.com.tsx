@@ -9,10 +9,11 @@ import { SpecImportPlanTree, buildImportTree, leafPaths } from "~/operations/rou
 import { ROUTE } from "@application/shared/constants";
 
 /**
- * What creating the project did: the project, its apps, the deployments queued
- * and what failed after it was saved.
+ * What creating the project, or adding the apps to one, did: the project, its
+ * apps, the deployments queued and what failed after it was saved.
  */
-export function ComposeResult({ result, onStartOver }: Props) {
+export function ComposeResult({ result, intoProject = false, onStartOver }: Props) {
+    const done = intoProject ? "The apps are added" : "The project is created";
     const roots = useMemo(() => buildImportTree(result.plan.nodes), [result]);
     const checked = useMemo(() => {
         const selected = new Set(result.plan.nodes.filter(node => node.selected).map(node => node.path));
@@ -33,8 +34,8 @@ export function ComposeResult({ result, onStartOver }: Props) {
                     <div>
                         <p className="text-sm font-medium text-foreground">
                             {failed > 0
-                                ? `The project is created, but ${failed} ${failed === 1 ? "app was" : "apps were"} not brought up`
-                                : "The project is created"}
+                                ? `${done}, but ${failed} ${failed === 1 ? "app was" : "apps were"} not brought up`
+                                : done}
                         </p>
                         <p className="text-xs text-muted-foreground">
                             {result.deployments.length > 0
@@ -61,7 +62,9 @@ export function ComposeResult({ result, onStartOver }: Props) {
                 <div className="flex gap-2">
                     {result.projectId && (
                         <Button asChild>
-                            <Link to={ROUTE.projects.single.apps.$route(result.projectId)}>Open the project</Link>
+                            <Link to={ROUTE.projects.single.apps.$route(result.projectId)}>
+                                {intoProject ? "Open the apps" : "Open the project"}
+                            </Link>
                         </Button>
                     )}
                     <Button
@@ -69,7 +72,7 @@ export function ComposeResult({ result, onStartOver }: Props) {
                         variant="ghost"
                         onClick={onStartOver}
                     >
-                        Create another
+                        {intoProject ? "Add more" : "Create another"}
                     </Button>
                 </div>
             </div>
@@ -79,5 +82,7 @@ export function ComposeResult({ result, onStartOver }: Props) {
 
 interface Props {
     result: ComposeImportResult;
+    /** The apps were added to an existing project. */
+    intoProject?: boolean;
     onStartOver: () => void;
 }

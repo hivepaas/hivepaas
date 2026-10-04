@@ -4,6 +4,8 @@ import { Button, Checkbox, Label } from "@components/ui";
 import { listBox } from "@lib/styles";
 import { cn } from "@lib/utils";
 import { OctagonXIcon } from "lucide-react";
+import { useNavigate, useParams } from "react-router";
+import invariant from "tiny-invariant";
 import { specImportErrorCode } from "~/operations/api/hooks";
 import { ComposeImportCommands } from "~/operations/data";
 import type {
@@ -16,20 +18,45 @@ import type {
     SpecImportSelection,
 } from "~/operations/domain";
 import { SpecImportPlanTree, buildImportTree, leafPaths, selectionOf } from "~/operations/routes/export";
+import { ProjectsQueries } from "~/projects/data/queries";
+import { type ProjectEnvEntity } from "~/projects/domain";
+import { useProjectEnvFilter } from "~/projects/module-shared/hooks";
 
-import { MODULE_IDS } from "@application/shared/constants";
+import { MODULE_IDS, ROUTE } from "@application/shared/constants";
 import { PermissionTooltipAction } from "@application/shared/permissions";
 
 import { ValidationProblemApiResponse } from "@infrastructure/api";
 
 import { HttpException } from "@infrastructure/exceptions/http";
 
-import { ComposeFiles, ComposeResult, ComposeServices, ComposeSource, ComposeVariables } from "../building-blocks";
+import {
+    ComposeFiles,
+    ComposeResult,
+    ComposeServices,
+    ComposeSource,
+    ComposeTarget,
+    type ComposeTargetValue,
+    ComposeVariables,
+} from "../building-blocks";
 
 /** How long the review waits for typing to stop before the file is read again. */
 const REVALIDATE_DELAY_MS = 500;
 
 const EVERYTHING: SpecImportSelection = { include: [], exclude: [] };
+
+const EMPTY_ENVS: ProjectEnvEntity[] = [];
+
+/** A new env's color until another is picked. */
+const DEFAULT_ENV_COLOR = "#64748b";
+
+/** The env offered at first: the header's, when one is chosen there, else the project's first. */
+function defaultTarget(envs: ProjectEnvEntity[], headerEnv: string): ComposeTargetValue {
+    const env = envs.find(item => item.name === headerEnv) ?? envs[0];
+
+    return env
+        ? { env: env.name, newEnv: false, color: DEFAULT_ENV_COLOR }
+        : { env: "", newEnv: true, color: DEFAULT_ENV_COLOR };
+}
 
 /** What a refusal of validate says, by where it belongs on the page. */
 interface ReadErrors {
@@ -80,12 +107,42 @@ function keyOf(body: ComposeImportBody): string {
     return JSON.stringify({ ...body, files });
 }
 
-/**
- * A project from a Docker Compose file: paste the file, see what each service
- * becomes and what the file needs, and create the project - one env, an app per
- * service - once the plan is what was meant. Nothing is written before.
- */
+/** A new project from a Docker Compose file. */
 export function ProjectFromComposeRoute() {
+    return <ComposeImportPage />;
+}
+
+/** A Docker Compose file's services added to an env of the route's project. */
+export function ProjectAppsFromComposeRoute() {
+    const { id: projectId } = useParams<{ id: string }>();
+    invariant(projectId, "projectId must be defined");
+
+    return (
+        <ComposeImportPage
+            key={projectId}
+            projectId={projectId}
+        />
+    );
+}
+
+/**
+ * Paste a compose file, see what each service becomes and what the file needs,
+ * and create the apps - in a new project's one env, or in an env of the project
+ * given - once the plan is what was meant. Nothing is written before.
+ */
+function ComposeImportPage({ projectId }: { projectId?: string }) {
+    const intoProject = projectId !== undefined;
+    const navigate = useNavigate();
+    const { data: projectData } = ProjectsQueries.useFindOneById(
+        { projectID: projectId ?? "" },
+        { enabled: intoProject },
+    );
+    const project = intoProject ? projectData?.data : undefined;
+    const projectEnvs = project?.envs ?? EMPTY_ENVS;
+    const { selectedEnv: headerEnv, setSelectedEnv } = useProjectEnvFilter(projectId ?? "");
+    const [targetInput, setTarget] = useState<ComposeTargetValue | undefined>();
+    const target = targetInput ?? defaultTarget(projectEnvs, headerEnv);
+
     const [compose, setCompose] = useState("");
     const [dotEnv, setDotEnv] = useState("");
     const [projectName, setProjectName] = useState("");
@@ -109,23 +166,53 @@ export function ProjectFromComposeRoute() {
 
     const body = useMemo<ComposeImportBody>(
         () => ({
+            projectId,
             compose,
             dotEnv,
             files,
             variables,
-            project: { name: projectName.trim(), env: envName.trim() },
+            project: intoProject
+                ? {
+                      name: "",
+                      env: target.env.trim(),
+                      newEnv: target.newEnv,
+                      envColor: target.newEnv ? target.color : undefined,
+                  }
+                : { name: projectName.trim(), env: envName.trim() },
             profiles,
             services,
             selection: selection ?? EVERYTHING,
             deploy,
         }),
-        [compose, dotEnv, files, variables, projectName, envName, profiles, services, selection, deploy],
+        [
+            projectId,
+            intoProject,
+            target,
+            compose,
+            dotEnv,
+            files,
+            variables,
+            projectName,
+            envName,
+            profiles,
+            services,
+            selection,
+            deploy,
+        ],
     );
     const requestKey = useMemo(() => keyOf(body), [body]);
 
     const { mutateAsync: validate, isPending: isValidating } = ComposeImportCommands.useValidateCompose();
     const { mutate: apply, isPending: isApplying } = ComposeImportCommands.useApplyCompose({
         onSuccess: response => {
+            const failed = response.data.plan.nodes.some(node => node.outcome === "failed");
+            if (projectId && !failed && !response.data.warning) {
+                // Added cleanly: the apps, in the env they went into.
+                setSelectedEnv(target.env.trim());
+                void navigate(ROUTE.projects.single.apps.$route(projectId));
+
+                return;
+            }
             setResult(response.data);
         },
         onError: error => {
@@ -144,7 +231,7 @@ export function ProjectFromComposeRoute() {
     // file - is checked, as everything is at first; one unchecked stays so.
     const seenLeaves = useRef(new Set<string>());
     useEffect(() => {
-        if (compose.trim() === "" || result) {
+        if (compose.trim() === "" || result || (intoProject && body.project.env === "")) {
             return;
         }
         const requestID = ++latest.current;
@@ -190,6 +277,7 @@ export function ProjectFromComposeRoute() {
         setCompose("");
         setDotEnv("");
         setProjectName("");
+        setTarget(undefined);
         setProfiles([]);
         setVariables({});
         setFiles({});
@@ -218,6 +306,7 @@ export function ProjectFromComposeRoute() {
             <div className={cn(listBox, "flex flex-col gap-6")}>
                 <ComposeResult
                     result={result}
+                    intoProject={intoProject}
                     onStartOver={startOver}
                 />
             </div>
@@ -229,11 +318,15 @@ export function ProjectFromComposeRoute() {
             <div className="rounded-lg border bg-background p-4">
                 <div className="flex flex-col items-start gap-6">
                     <div>
-                        <p className="text-base font-medium text-foreground">New project from Docker Compose</p>
+                        <p className="text-base font-medium text-foreground">
+                            {intoProject ? "New apps from Docker Compose" : "New project from Docker Compose"}
+                        </p>
                         <p className="mt-1 max-w-[900px] text-sm text-muted-foreground">
-                            Paste a compose file. Each service becomes an app of the project&apos;s one env, reached by
-                            the same name. Nothing is created until you confirm: first you see what each service
-                            becomes, what the file needs, and what HivePaaS cannot carry over.
+                            {intoProject
+                                ? "Paste a compose file. Each service becomes an app of the env you choose, reached by the same name; nothing the project has is changed."
+                                : "Paste a compose file. Each service becomes an app of the project's one env, reached by the same name."}{" "}
+                            Nothing is created until you confirm: first you see what each service becomes, what the file
+                            needs, and what HivePaaS cannot carry over.
                         </p>
                     </div>
 
@@ -253,6 +346,17 @@ export function ProjectFromComposeRoute() {
                         error={readErrors.file}
                         nameError={readErrors.name}
                         envError={readErrors.env}
+                        target={
+                            intoProject ? (
+                                <ComposeTarget
+                                    projectName={project?.name ?? ""}
+                                    envs={projectEnvs}
+                                    value={target}
+                                    onChange={setTarget}
+                                    envError={readErrors.env}
+                                />
+                            ) : undefined
+                        }
                         isReading={isValidating}
                     />
 
@@ -288,6 +392,7 @@ export function ProjectFromComposeRoute() {
                                 <p className="text-sm font-medium text-foreground">
                                     Project <code className="font-mono">{review.project.name}</code>, env{" "}
                                     <code className="font-mono">{review.project.env}</code>
+                                    {intoProject && review.project.newEnv ? " (new)" : ""}
                                 </p>
                                 <p className="text-xs text-muted-foreground">{isValidating ? "Checking…" : ""}</p>
                             </div>
@@ -326,13 +431,14 @@ export function ProjectFromComposeRoute() {
                             {planChanged && (
                                 <p className="w-full rounded-md border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-sm text-amber-700 dark:text-amber-400">
                                     Something changed on this installation since the plan was made, and so did the plan.
-                                    Review it, and create the project again.
+                                    Review it, and confirm again.
                                 </p>
                             )}
                             {blocked > 0 && (
                                 <p className="flex items-center gap-2 text-sm text-destructive">
                                     <OctagonXIcon className="size-4" />
-                                    {blocked} {blocked === 1 ? "issue blocks" : "issues block"} creating the project.
+                                    {blocked} {blocked === 1 ? "issue blocks" : "issues block"}{" "}
+                                    {intoProject ? "adding the apps" : "creating the project"}.
                                 </p>
                             )}
                             {blocked === 0 && accepted > 0 && (
@@ -362,8 +468,10 @@ export function ProjectFromComposeRoute() {
                                         }}
                                     >
                                         {accepted > 0 && blocked === 0
-                                            ? `Create and accept ${accepted} ${accepted === 1 ? "issue" : "issues"}`
-                                            : "Create project"}
+                                            ? `${intoProject ? "Add" : "Create"} and accept ${accepted} ${accepted === 1 ? "issue" : "issues"}`
+                                            : intoProject
+                                              ? "Add apps"
+                                              : "Create project"}
                                     </Button>
                                 )}
                             </PermissionTooltipAction>

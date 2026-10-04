@@ -4,6 +4,7 @@
 export {
     ProjectsRoute,
     ProjectFromComposeRoute,
+    ProjectAppsFromComposeRoute,
     ProjectGeneralRoute,
     ProjectImageBuildSettingsRoute,
     ProjectDomainSettingsRoute,

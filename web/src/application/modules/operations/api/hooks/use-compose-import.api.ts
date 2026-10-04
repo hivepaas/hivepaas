@@ -35,7 +35,12 @@ function createHook() {
                         Ok: _ => _,
                         Err: error => {
                             if (!isSpecImportErrorHandledByCaller(error)) {
-                                notifyError({ message: "Failed to create the project", error });
+                                notifyError({
+                                    message: data.projectId
+                                        ? "Failed to add the services to the project"
+                                        : "Failed to create the project",
+                                    error,
+                                });
                             }
                             throw error;
                         },

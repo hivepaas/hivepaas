@@ -1563,6 +1563,16 @@ export const projectsRouter: RouteObject = {
                     },
                 },
                 {
+                    path: ROUTE.projects.single.apps.fromCompose.$pattern,
+                    lazy: async () => {
+                        const { ProjectAppsFromComposeRoute } = await getLazyComponents();
+
+                        return {
+                            Component: ProjectAppsFromComposeRoute,
+                        };
+                    },
+                },
+                {
                     path: ROUTE.projects.single.appTemplates.$pattern,
                     lazy: async () => {
                         const { AppTemplatesView } = await import("~/app-templates");

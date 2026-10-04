@@ -82,3 +82,12 @@ func TestConvertRoutesByTraefikLabels(t *testing.T) {
 	assert.Equal(t, map[string]any{"web.mine.net": 3000, "www.example.org": 3000}, domainsOf(t, convert(t, req), "web"),
 		"the review's domain, and the labels' other hosts")
 }
+
+// Only a host a domain can be is one: not a port's, an empty one, a variable
+// left unread.
+func TestRuleHostsAreDomains(t *testing.T) {
+	assert.Equal(t, []string{"a.example.org", "b.example.org"},
+		ruleHosts("Host(`A.example.org`, `b.example.org`) || Host(`a.example.org`)"))
+	assert.Empty(t, ruleHosts("Host(`localhost`) || Host(`a.org:8080`) || Host(``) || HostRegexp(`{x:.+}.org`)"))
+	assert.Empty(t, ruleHosts("Host(`${DOMAIN}`)"))
+}

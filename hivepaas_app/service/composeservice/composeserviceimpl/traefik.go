@@ -32,6 +32,8 @@ var (
 	hostArg = regexp.MustCompile("[`\"']([^`\"']+)[`\"']")
 	// pathMatcher is a rule's matcher of a path, which a domain does not keep.
 	pathMatcher = regexp.MustCompile(`\bPath(Prefix|Regexp)?\(`)
+	// hostName is a host a domain can be: DNS labels, dotted.
+	hostName = regexp.MustCompile(`^([a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?$`)
 )
 
 // traefikRoute is what a service's Traefik labels route to one of its
@@ -130,13 +132,14 @@ func (c *converter) routerPort(svc types.ServiceConfig, servicePorts map[string]
 	return 0
 }
 
-// ruleHosts are the hosts of a rule's Host matchers, lowercased, each once.
+// ruleHosts are the hosts of a rule's Host matchers that a domain can be -
+// lowercased, each once.
 func ruleHosts(rule string) []string {
 	var hosts []string
 	for _, matcher := range hostMatcher.FindAllStringSubmatch(rule, -1) {
 		for _, arg := range hostArg.FindAllStringSubmatch(matcher[1], -1) {
 			host := strings.ToLower(strings.TrimSpace(arg[1]))
-			if host != "" && !strings.Contains(host, "$") && !slices.Contains(hosts, host) {
+			if hostName.MatchString(host) && !slices.Contains(hosts, host) {
 				hosts = append(hosts, host)
 			}
 		}

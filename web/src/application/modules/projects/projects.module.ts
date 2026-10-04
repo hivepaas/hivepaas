@@ -3,6 +3,7 @@
  */
 export {
     ProjectsRoute,
+    ProjectFromComposeRoute,
     ProjectGeneralRoute,
     ProjectImageBuildSettingsRoute,
     ProjectDomainSettingsRoute,

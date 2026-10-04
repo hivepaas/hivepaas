@@ -652,6 +652,12 @@ export const ROUTE = {
             $route: "/projects/",
         },
 
+        /** A project created from a Docker Compose file. */
+        newFromCompose: {
+            $pattern: "projects/new/compose",
+            $route: "/projects/new/compose/",
+        },
+
         single: {
             $pattern: "projects/:id",
 

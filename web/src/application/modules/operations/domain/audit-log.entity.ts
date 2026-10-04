@@ -34,6 +34,8 @@ export const AuditLogType = {
     HivePaaSAction: "hivepaas-action",
     SpecExport: "spec-export",
     SpecImport: "spec-import",
+    /** A project created from a Docker Compose file. */
+    ComposeImport: "compose-import",
     McpToolCall: "mcp-tool-call",
     /** A file taken out of a backup snapshot. */
     BackupDownload: "backup-download",

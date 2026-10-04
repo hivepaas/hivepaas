@@ -4,3 +4,4 @@ export * from "./use-audit-logs.api";
 export * from "./use-spec-export.api";
 export * from "./use-spec-import.api";
 export * from "./spec-import.errors";
+export * from "./use-compose-import.api";

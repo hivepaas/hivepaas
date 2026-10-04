@@ -1,0 +1,329 @@
+import { useEffect, useMemo, useRef, useState } from "react";
+
+import { Button, Checkbox, Label } from "@components/ui";
+import { listBox } from "@lib/styles";
+import { cn } from "@lib/utils";
+import { OctagonXIcon } from "lucide-react";
+import { specImportErrorCode } from "~/operations/api/hooks";
+import { ComposeImportCommands } from "~/operations/data";
+import type {
+    ComposeFileInput,
+    ComposeImportBody,
+    ComposeImportResult,
+    ComposeImportReview,
+    ComposeServiceInput,
+    ComposeVariableInput,
+    SpecImportSelection,
+} from "~/operations/domain";
+import { SpecImportPlanTree, buildImportTree, leafPaths, selectionOf } from "~/operations/routes/export";
+
+import { MODULE_IDS } from "@application/shared/constants";
+import { PermissionTooltipAction } from "@application/shared/permissions";
+
+import { ComposeFiles, ComposeResult, ComposeServices, ComposeSource, ComposeVariables } from "../building-blocks";
+
+/** How long the review waits for typing to stop before the file is read again. */
+const REVALIDATE_DELAY_MS = 500;
+
+const EVERYTHING: SpecImportSelection = { include: [], exclude: [] };
+
+/** A key of what a body asks, File objects named by what tells them apart. */
+function keyOf(body: ComposeImportBody): string {
+    const files = Object.entries(body.files).map(([path, file]) =>
+        typeof file === "string" ? [path, file] : [path, file.name, file.size, file.lastModified],
+    );
+
+    return JSON.stringify({ ...body, files });
+}
+
+/**
+ * A project from a Docker Compose file: paste the file, see what each service
+ * becomes and what the file needs, and create the project - one env, an app per
+ * service - once the plan is what was meant. Nothing is written before.
+ */
+export function ProjectFromComposeRoute() {
+    const [compose, setCompose] = useState("");
+    const [dotEnv, setDotEnv] = useState("");
+    const [projectName, setProjectName] = useState("");
+    const [envName, setEnvName] = useState("production");
+    const [profiles, setProfiles] = useState<string[]>([]);
+    const [variables, setVariables] = useState<Record<string, ComposeVariableInput>>({});
+    const [files, setFiles] = useState<Record<string, ComposeFileInput>>({});
+    const [services, setServices] = useState<Record<string, ComposeServiceInput>>({});
+    const [deploy, setDeploy] = useState(true);
+    const [checked, setChecked] = useState<Set<string> | undefined>();
+    const [review, setReview] = useState<ComposeImportReview | undefined>();
+    const [reviewKey, setReviewKey] = useState<string | undefined>();
+    const [validateError, setValidateError] = useState<Error | undefined>();
+    const [planChanged, setPlanChanged] = useState(false);
+    const [result, setResult] = useState<ComposeImportResult | undefined>();
+    const [revision, setRevision] = useState(0);
+
+    const plan = review?.plan;
+    const roots = useMemo(() => (plan ? buildImportTree(plan.nodes) : []), [plan]);
+    const selection = useMemo(() => (checked ? selectionOf(roots, checked) : EVERYTHING), [roots, checked]);
+
+    const body = useMemo<ComposeImportBody>(
+        () => ({
+            compose,
+            dotEnv,
+            files,
+            variables,
+            project: { name: projectName.trim(), env: envName.trim() },
+            profiles,
+            services,
+            selection: selection ?? EVERYTHING,
+            deploy,
+        }),
+        [compose, dotEnv, files, variables, projectName, envName, profiles, services, selection, deploy],
+    );
+    const requestKey = useMemo(() => keyOf(body), [body]);
+
+    const { mutateAsync: validate, isPending: isValidating } = ComposeImportCommands.useValidateCompose();
+    const { mutate: apply, isPending: isApplying } = ComposeImportCommands.useApplyCompose({
+        onSuccess: response => {
+            setResult(response.data);
+        },
+        onError: error => {
+            if (specImportErrorCode(error) === "ERR_SPEC_IMPORT_PLAN_CHANGED") {
+                setPlanChanged(true);
+                setReviewKey(undefined);
+                setRevision(value => value + 1);
+            }
+        },
+    });
+
+    // The file is read again whenever what it is read with changes, once the
+    // typing stops. Only the latest answer is kept.
+    const latest = useRef(0);
+    // The plan's leaves seen so far: one that appears - a service added to the
+    // file - is checked, as everything is at first; one unchecked stays so.
+    const seenLeaves = useRef(new Set<string>());
+    useEffect(() => {
+        if (compose.trim() === "" || result) {
+            return;
+        }
+        const requestID = ++latest.current;
+        const key = requestKey;
+        const timer = window.setTimeout(() => {
+            validate(body)
+                .then(response => {
+                    if (requestID !== latest.current) {
+                        return;
+                    }
+                    setReview(response.data);
+                    setReviewKey(key);
+                    setValidateError(undefined);
+                    const nodes = response.data.plan?.nodes;
+                    if (nodes) {
+                        const leaves = leafPaths(buildImportTree(nodes));
+                        const seen = seenLeaves.current;
+                        seenLeaves.current = new Set(leaves);
+                        setChecked(previous => {
+                            const kept = leaves.filter(path => !seen.has(path) || previous?.has(path));
+
+                            return new Set(kept);
+                        });
+                    }
+                })
+                .catch((error: unknown) => {
+                    if (requestID !== latest.current) {
+                        return;
+                    }
+                    setValidateError(error instanceof Error ? error : new Error(String(error)));
+                });
+        }, REVALIDATE_DELAY_MS);
+
+        return () => {
+            window.clearTimeout(timer);
+        };
+        // body is what requestKey names; asking again on each of its renders is not wanted.
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [requestKey, revision, result, validate]);
+
+    const startOver = () => {
+        latest.current++;
+        setCompose("");
+        setDotEnv("");
+        setProjectName("");
+        setProfiles([]);
+        setVariables({});
+        setFiles({});
+        setServices({});
+        setChecked(undefined);
+        seenLeaves.current = new Set();
+        setReview(undefined);
+        setReviewKey(undefined);
+        setValidateError(undefined);
+        setPlanChanged(false);
+        setResult(undefined);
+    };
+
+    const summary = plan?.summary ?? {};
+    const blocked = summary["blocked"] ?? 0;
+    const accepted = (summary["skipped"] ?? 0) + (summary["fixable"] ?? 0) + (summary["warning"] ?? 0);
+    const isCurrent = reviewKey === requestKey && !isValidating;
+    const missingVariables = review?.variables.filter(
+        variable => variable.required && !variable.given && !variables[variable.name]?.value,
+    );
+    const canCreate = plan !== undefined && isCurrent && blocked === 0 && selection !== undefined && !isApplying;
+
+    if (result) {
+        return (
+            <div className={cn(listBox, "flex flex-col gap-6")}>
+                <ComposeResult
+                    result={result}
+                    onStartOver={startOver}
+                />
+            </div>
+        );
+    }
+
+    return (
+        <div className={cn(listBox, "flex flex-col gap-6")}>
+            <div className="rounded-lg border bg-background p-4">
+                <div className="flex flex-col items-start gap-6">
+                    <div>
+                        <p className="text-base font-medium text-foreground">New project from Docker Compose</p>
+                        <p className="mt-1 max-w-[900px] text-sm text-muted-foreground">
+                            Paste a compose file. Each service becomes an app of the project&apos;s one env, reached by
+                            the same name. Nothing is created until you confirm: first you see what each service
+                            becomes, what the file needs, and what HivePaaS cannot carry over.
+                        </p>
+                    </div>
+
+                    <ComposeSource
+                        compose={compose}
+                        onComposeChange={setCompose}
+                        dotEnv={dotEnv}
+                        onDotEnvChange={setDotEnv}
+                        projectName={projectName}
+                        onProjectNameChange={setProjectName}
+                        fileName={review?.project.fileName ?? ""}
+                        envName={envName}
+                        onEnvNameChange={setEnvName}
+                        profiles={review?.profiles ?? []}
+                        selectedProfiles={profiles}
+                        onProfilesChange={setProfiles}
+                        error={validateError}
+                        isReading={isValidating}
+                    />
+
+                    {review && (
+                        <>
+                            <ComposeVariables
+                                variables={review.variables}
+                                inputs={variables}
+                                onChange={setVariables}
+                            />
+                            <ComposeFiles
+                                needs={review.needs}
+                                files={files}
+                                onChange={setFiles}
+                            />
+                            <ComposeServices
+                                services={review.services}
+                                inputs={services}
+                                onChange={setServices}
+                            />
+                        </>
+                    )}
+
+                    {review && !plan && missingVariables && missingVariables.length > 0 && (
+                        <p className="text-sm text-muted-foreground">
+                            Give {missingVariables.map(variable => variable.name).join(", ")} a value to see the plan.
+                        </p>
+                    )}
+
+                    {review && plan && checked && (
+                        <div className="flex w-full flex-col gap-2">
+                            <div className="flex flex-wrap items-baseline justify-between gap-2">
+                                <p className="text-sm font-medium text-foreground">
+                                    Project <code className="font-mono">{review.project.name}</code>, env{" "}
+                                    <code className="font-mono">{review.project.env}</code>
+                                </p>
+                                <p className="text-xs text-muted-foreground">{isValidating ? "Checking…" : ""}</p>
+                            </div>
+                            <SpecImportPlanTree
+                                roots={roots}
+                                checked={checked}
+                                onChange={setChecked}
+                            />
+                        </div>
+                    )}
+
+                    {plan && (
+                        <div className="flex w-full flex-col items-start gap-3">
+                            <div className="flex items-start gap-2">
+                                <Checkbox
+                                    id="compose-deploy"
+                                    className="mt-0.5"
+                                    checked={deploy}
+                                    onCheckedChange={value => {
+                                        setDeploy(value === true);
+                                    }}
+                                />
+                                <div className="flex flex-col">
+                                    <Label
+                                        htmlFor="compose-deploy"
+                                        className="text-sm font-normal"
+                                    >
+                                        Deploy the apps once they are created
+                                    </Label>
+                                    <p className="text-xs text-muted-foreground">
+                                        Otherwise they start on a placeholder image, as an app created by hand does.
+                                    </p>
+                                </div>
+                            </div>
+
+                            {planChanged && (
+                                <p className="w-full rounded-md border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-sm text-amber-700 dark:text-amber-400">
+                                    Something changed on this installation since the plan was made, and so did the plan.
+                                    Review it, and create the project again.
+                                </p>
+                            )}
+                            {blocked > 0 && (
+                                <p className="flex items-center gap-2 text-sm text-destructive">
+                                    <OctagonXIcon className="size-4" />
+                                    {blocked} {blocked === 1 ? "issue blocks" : "issues block"} creating the project.
+                                </p>
+                            )}
+                            {blocked === 0 && accepted > 0 && (
+                                <p className="max-w-[720px] text-sm text-muted-foreground">
+                                    Creating it accepts {accepted} {accepted === 1 ? "issue" : "issues"}: what is left
+                                    out is not created, what is cleared is created without it, and a warning changes
+                                    nothing but may not be what the file meant.
+                                </p>
+                            )}
+
+                            <PermissionTooltipAction
+                                id={MODULE_IDS.Project}
+                                action="write"
+                            >
+                                {({ isDenied }) => (
+                                    <Button
+                                        type="button"
+                                        className="min-w-[120px]"
+                                        disabled={!canCreate || isDenied}
+                                        isLoading={isApplying}
+                                        onClick={() => {
+                                            if (isDenied) {
+                                                return;
+                                            }
+                                            setPlanChanged(false);
+                                            apply({ ...body, planHash: plan.planHash, acceptIssues: accepted > 0 });
+                                        }}
+                                    >
+                                        {accepted > 0 && blocked === 0
+                                            ? `Create and accept ${accepted} ${accepted === 1 ? "issue" : "issues"}`
+                                            : "Create project"}
+                                    </Button>
+                                )}
+                            </PermissionTooltipAction>
+                        </div>
+                    )}
+                </div>
+            </div>
+        </div>
+    );
+}

@@ -3,6 +3,9 @@ import { createContext } from "react";
 import {
     AuditLogsApi,
     AuditLogsApiValidator,
+    ComposeImportApi,
+    ComposeImportApiMapper,
+    ComposeImportApiValidator,
     SpecExportApi,
     SpecImportApi,
     SpecImportApiMapper,
@@ -26,6 +29,7 @@ function createApi() {
         auditLogs: new AuditLogsApi(auditLogsValidator),
         specExport: new SpecExportApi(),
         specImport: new SpecImportApi(specImportValidator, specImportMapper),
+        composeImport: new ComposeImportApi(new ComposeImportApiValidator(), new ComposeImportApiMapper()),
     };
 
     return {

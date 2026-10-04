@@ -63,7 +63,8 @@ const NodeSchema = z.object({
     error: z.string().optional(),
 });
 
-const PlanSchema = z.object({
+/** A plan as the API answers one: spec import's, and what a compose file is read into. */
+export const SpecImportPlanSchema = z.object({
     bundle: z.object({
         apiVersion: z.string(),
         scope: z.string(),
@@ -84,13 +85,13 @@ const PlanSchema = z.object({
 });
 
 const ValidateSchema = z.object({
-    data: PlanSchema,
+    data: SpecImportPlanSchema,
     meta: BaseMetaApiSchema.nullish(),
 });
 
 const ApplySchema = z.object({
     data: z.object({
-        plan: PlanSchema,
+        plan: SpecImportPlanSchema,
         deployments: z
             .array(z.object({ appId: z.string(), deploymentId: z.string() }))
             .nullish()

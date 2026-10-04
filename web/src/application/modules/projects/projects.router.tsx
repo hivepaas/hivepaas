@@ -376,6 +376,16 @@ export const projectsRouter: RouteObject = {
                         };
                     },
                 },
+                {
+                    path: ROUTE.projects.newFromCompose.$pattern,
+                    lazy: async () => {
+                        const { ProjectFromComposeRoute } = await getLazyComponents();
+
+                        return {
+                            Component: ProjectFromComposeRoute,
+                        };
+                    },
+                },
             ],
         },
         {

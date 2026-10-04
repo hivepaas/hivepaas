@@ -52,6 +52,7 @@ type composePortInput struct {
 	Published uint32 `json:"published" jsonschema:"the port compose publishes on the host"`
 	Target    uint32 `json:"target" jsonschema:"the container's port"`
 	Protocol  string `json:"protocol,omitempty" jsonschema:"tcp or udp; tcp when empty"`
+	Source    string `json:"source,omitempty" jsonschema:"labels for the port Traefik labels route to"`
 	As        string `json:"as" jsonschema:"domain, node or none"`
 	Domain    string `json:"domain,omitempty" jsonschema:"the domain, for as domain"`
 }
@@ -165,7 +166,7 @@ func (in composeInput) request() *specdto.ApplyComposeReq {
 			}
 			service(name).Ports = append(service(name).Ports, &specdto.ComposePortReq{
 				Published: port.Published, Target: port.Target, Protocol: protocol,
-				As: composeservice.PortAs(port.As), Domain: port.Domain,
+				Source: composeservice.PortSource(port.Source), As: composeservice.PortAs(port.As), Domain: port.Domain,
 			})
 		}
 	}

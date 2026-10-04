@@ -1,6 +1,7 @@
 package composeserviceimpl
 
 import (
+	"maps"
 	"slices"
 	"strconv"
 	"strings"
@@ -25,16 +26,36 @@ var privatePorts = []uint32{5432, 3306, 1433, 27017, 6379, 11211, 9200, 5672, 90
 // domainLabelMax is the longest a label of a domain name may be.
 const domainLabelMax = 63
 
-// ports are a service's published ports as the review chose them - a domain,
-// a port on the nodes, or none - into its routing and its endpoint.
+// ports are a service's published ports, and the ports its Traefik labels
+// route to, as the review chose them - a domain, a port on the nodes, or none
+// - into its routing and its endpoint.
 func (c *converter) ports(
 	appPath, name string, svc types.ServiceConfig, view *composeservice.ServiceView,
 	networks *specmodel.Networks, settings map[string]any,
 ) {
+	routes := c.traefikRoutes(appPath, svc)
+	views := make([]*composeservice.PortView, 0, len(svc.Ports)+len(routes))
+	modes := make([]string, 0, cap(views))
+	for _, p := range svc.Ports {
+		_, routed := routes[p.Target]
+		views = append(views, c.portView(name, p, routed))
+		modes = append(modes, p.Mode)
+	}
+	for _, target := range slices.Sorted(maps.Keys(routes)) {
+		route := routes[target]
+		views = append(views, c.labelsPortView(name, target, route))
+		modes = append(modes, "")
+		action := "routed by the app's domains, from its Traefik labels"
+		if route.paths {
+			action += ": the whole host - a path a rule matches is not kept"
+		}
+		c.add(appPath, "", composeservice.CodeTraefikRoute,
+			map[string]any{detailTarget: target, "hosts": route.hosts, "paths": route.paths}, action)
+	}
+
 	var domains []any
 	routingPort := 0
-	for _, p := range svc.Ports {
-		pv := c.portView(name, p)
+	for i, pv := range views {
 		switch pv.As {
 		case composeservice.PortAsDomain:
 			if pv.Domain == "" || pv.Protocol != string(network.TCP) {
@@ -43,8 +64,13 @@ func (c *converter) ports(
 				pv.As = composeservice.PortAsNone
 				break
 			}
-			domains = append(domains, map[string]any{"enabled": true, "domain": pv.Domain,
-				"protocol": string(base.NetworkProtocolHTTP), "containerPort": int(pv.Target)})
+			hosts := []string{pv.Domain}
+			if pv.Source == composeservice.PortSourceLabels {
+				hosts = append(hosts, pv.Also...)
+			}
+			for _, host := range hosts {
+				domains = appendDomain(domains, host, pv.Target)
+			}
 			if routingPort == 0 {
 				routingPort = int(pv.Target)
 			}
@@ -57,7 +83,7 @@ func (c *converter) ports(
 				networks.EndpointSpec = &specmodel.EndpointSpec{}
 			}
 			mode := swarm.PortConfigPublishModeIngress
-			if p.Mode == string(swarm.PortConfigPublishModeHost) {
+			if modes[i] == string(swarm.PortConfigPublishModeHost) {
 				mode = swarm.PortConfigPublishModeHost
 			}
 			networks.EndpointSpec.Ports = append(networks.EndpointSpec.Ports, &specmodel.PortConfig{
@@ -72,8 +98,38 @@ func (c *converter) ports(
 	}
 }
 
-// portView is a published port, its default, and the review's choice.
-func (c *converter) portView(name string, p types.ServicePortConfig) *composeservice.PortView {
+// appendDomain adds a domain of the app's on a port of its container, once.
+func appendDomain(domains []any, host string, target uint32) []any {
+	for _, existing := range domains {
+		if fields, _ := existing.(map[string]any); fields["domain"] == host {
+			return domains
+		}
+	}
+	return append(domains, map[string]any{"enabled": true, "domain": host,
+		"protocol": string(base.NetworkProtocolHTTP), "containerPort": int(target)})
+}
+
+// labelsPortView is the container port a service's Traefik labels route to:
+// a domain on their first host, and the others too while it is one, unless
+// the review says otherwise. It is not published: there is nothing to put on
+// the nodes.
+func (c *converter) labelsPortView(name string, target uint32, route *traefikRoute) *composeservice.PortView {
+	pv := &composeservice.PortView{Target: target, Protocol: string(network.TCP),
+		Source: composeservice.PortSourceLabels, Default: composeservice.PortAsDomain,
+		Suggested: route.hosts[0], Also: route.hosts[1:]}
+	pv.As, pv.Domain = pv.Default, pv.Suggested
+	if choice := c.portChoice(name, pv); choice != nil && slices.Contains(composeservice.AllPortAs, choice.As) {
+		pv.As, pv.Domain = choice.As, strings.ToLower(strings.TrimSpace(choice.Domain))
+	}
+	if pv.As == composeservice.PortAsDomain && pv.Domain == "" {
+		pv.Domain = pv.Suggested
+	}
+	return pv
+}
+
+// portView is a published port, its default, and the review's choice. One
+// the Traefik labels route to as well is not a domain by default: theirs is.
+func (c *converter) portView(name string, p types.ServicePortConfig, routed bool) *composeservice.PortView {
 	published, _ := strconv.ParseUint(p.Published, 10, 16)
 	pv := &composeservice.PortView{Published: uint32(published), Target: p.Target,
 		Protocol: strings.ToLower(p.Protocol)}
@@ -84,6 +140,9 @@ func (c *converter) portView(name string, p types.ServicePortConfig) *composeser
 		pv.Suggested = c.suggestedDomain(name)
 	}
 	pv.Default = c.defaultPortAs(pv, p.HostIP)
+	if routed && pv.Default == composeservice.PortAsDomain {
+		pv.Default = composeservice.PortAsNone
+	}
 	pv.As = pv.Default
 	if choice := c.portChoice(name, pv); choice != nil && slices.Contains(composeservice.AllPortAs, choice.As) {
 		pv.As, pv.Domain = choice.As, strings.ToLower(strings.TrimSpace(choice.Domain))
@@ -116,7 +175,7 @@ func (c *converter) portChoice(name string, pv *composeservice.PortView) *compos
 	}
 	for _, choice := range choices.Ports {
 		if choice != nil && choice.Published == pv.Published && choice.Target == pv.Target &&
-			strings.EqualFold(choice.Protocol, pv.Protocol) {
+			strings.EqualFold(choice.Protocol, pv.Protocol) && choice.Source == pv.Source {
 			return choice
 		}
 	}

@@ -90,14 +90,17 @@ type ComposeServiceReq struct {
 	Ports       []*ComposePortReq `json:"ports"`
 }
 
-// ComposePortReq is the review's choice for a published port, found by
-// Published, Target and Protocol.
+// ComposePortReq is the review's choice for a port, found by Published,
+// Target, Protocol and Source.
 type ComposePortReq struct {
-	Published uint32                `json:"published"`
-	Target    uint32                `json:"target"`
-	Protocol  string                `json:"protocol"`
-	As        composeservice.PortAs `json:"as"`
-	Domain    string                `json:"domain"`
+	Published uint32 `json:"published"`
+	Target    uint32 `json:"target"`
+	Protocol  string `json:"protocol"`
+	// Source is empty for a published port, labels for the one the service's
+	// Traefik labels route to.
+	Source composeservice.PortSource `json:"source"`
+	As     composeservice.PortAs     `json:"as"`
+	Domain string                    `json:"domain"`
 }
 
 func NewValidateComposeReq() *ValidateComposeReq {
@@ -143,6 +146,8 @@ func (req *ValidateComposeReq) Validate() hperrors.ValidationErrors {
 			field := "services." + name + ".ports"
 			validators = append(validators, basedto.ValidateStrIn(&port.As, true, composeservice.AllPortAs,
 				field+".as")...)
+			validators = append(validators, basedto.ValidateStrIn(&port.Source, false,
+				[]composeservice.PortSource{composeservice.PortSourceLabels}, field+".source")...)
 			validators = append(validators, basedto.ValidateStr(&port.Domain, false, 1, composeDomainMaxLen,
 				field+".domain")...)
 		}

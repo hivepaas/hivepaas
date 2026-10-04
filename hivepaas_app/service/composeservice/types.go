@@ -97,9 +97,19 @@ type PortReq struct {
 	Published uint32
 	Target    uint32
 	Protocol  string
-	As        PortAs
-	Domain    string
+	// Source is the port's: empty for a published one, PortSourceLabels for
+	// the one Traefik labels route to.
+	Source PortSource
+	As     PortAs
+	Domain string
 }
+
+// PortSource is where a port of the review comes from.
+type PortSource string
+
+// PortSourceLabels is a container port the service's Traefik labels route
+// HTTP to: offered as a domain on their hosts.
+const PortSourceLabels PortSource = "labels"
 
 // ConvertResp is the bundle, the issues of reading it, and what the review
 // shows.
@@ -151,11 +161,17 @@ type PortView struct {
 	Published uint32 `json:"published"`
 	Target    uint32 `json:"target"`
 	Protocol  string `json:"protocol"`
-	As        PortAs `json:"as"`
-	Default   PortAs `json:"default"`
-	Domain    string `json:"domain"`
+	// Source is empty for a published port, labels for the one the service's
+	// Traefik labels route to.
+	Source  PortSource `json:"source"`
+	As      PortAs     `json:"as"`
+	Default PortAs     `json:"default"`
+	Domain  string     `json:"domain"`
 	// Suggested is the domain the review offers.
 	Suggested string `json:"suggested"`
+	// Also are the other hosts the Traefik labels route to the port: domains
+	// of the app too, when it is one.
+	Also []string `json:"also"`
 }
 
 // VolumeKind is what a service's mount becomes.

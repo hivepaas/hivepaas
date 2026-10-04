@@ -40,6 +40,7 @@ const (
 	CodeAliasAdded     = "COMPOSE_ALIAS_ADDED"
 	CodeAppUsed        = "COMPOSE_APP_USED"
 	CodeDirectoryFiles = "COMPOSE_DIRECTORY_FILES"
+	CodeTraefikRoute   = "COMPOSE_TRAEFIK_ROUTE"
 	CodeSettingRenamed = "COMPOSE_SETTING_RENAMED"
 	CodeStartOrder     = "COMPOSE_START_ORDER"
 	CodeLabelsDropped  = "COMPOSE_LABELS_DROPPED"

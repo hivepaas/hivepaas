@@ -314,7 +314,7 @@ func (uc *UC) convertReq(
 		for _, port := range svc.Ports {
 			if port != nil {
 				choice.Ports = append(choice.Ports, &composeservice.PortReq{Published: port.Published,
-					Target: port.Target, Protocol: port.Protocol, As: port.As, Domain: port.Domain})
+					Target: port.Target, Protocol: port.Protocol, Source: port.Source, As: port.As, Domain: port.Domain})
 			}
 		}
 		out.Services[name] = choice

@@ -59066,8 +59066,20 @@
         "type" : "string",
         "x-enum-varnames" : [ "PortAsDomain", "PortAsNode", "PortAsNone" ]
       },
+      "composeservice.PortSource" : {
+        "enum" : [ "labels" ],
+        "type" : "string",
+        "x-enum-varnames" : [ "PortSourceLabels" ]
+      },
       "composeservice.PortView" : {
         "properties" : {
+          "also" : {
+            "description" : "Also are the other hosts the Traefik labels route to the port: domains\nof the app too, when it is one.",
+            "items" : {
+              "type" : "string"
+            },
+            "type" : "array"
+          },
           "as" : {
             "$ref" : "#/components/schemas/composeservice.PortAs"
           },
@@ -59083,6 +59095,13 @@
           "published" : {
             "type" : "integer"
           },
+          "source" : {
+            "allOf" : [ {
+              "$ref" : "#/components/schemas/composeservice.PortSource"
+            } ],
+            "description" : "Source is empty for a published port, labels for the one the service's\nTraefik labels route to.",
+            "type" : "object"
+          },
           "suggested" : {
             "description" : "Suggested is the domain the review offers.",
             "type" : "string"
@@ -59091,7 +59110,7 @@
             "type" : "integer"
           }
         },
-        "required" : [ "as", "default", "domain", "protocol", "published", "suggested", "target" ],
+        "required" : [ "also", "as", "default", "domain", "protocol", "published", "source", "suggested", "target" ],
         "type" : "object"
       },
       "composeservice.ServiceView" : {
@@ -62348,9 +62367,9 @@
         "type" : "object"
       },
       "hperrors.DisplayLevel" : {
-        "enum" : [ "medium", "high", "medium", "low" ],
+        "enum" : [ "high", "medium", "low", "medium" ],
         "type" : "string",
-        "x-enum-varnames" : [ "errVldDisplayLevel", "DisplayLevelHigh", "DisplayLevelMedium", "DisplayLevelLow" ]
+        "x-enum-varnames" : [ "DisplayLevelHigh", "DisplayLevelMedium", "DisplayLevelLow", "errVldDisplayLevel" ]
       },
       "hperrors.ErrorInfo" : {
         "properties" : {
@@ -69499,11 +69518,18 @@
           "published" : {
             "type" : "integer"
           },
+          "source" : {
+            "allOf" : [ {
+              "$ref" : "#/components/schemas/composeservice.PortSource"
+            } ],
+            "description" : "Source is empty for a published port, labels for the one the service's\nTraefik labels route to.",
+            "type" : "object"
+          },
           "target" : {
             "type" : "integer"
           }
         },
-        "required" : [ "as", "domain", "protocol", "published", "target" ],
+        "required" : [ "as", "domain", "protocol", "published", "source", "target" ],
         "type" : "object"
       },
       "specdto.ComposeProjectReq" : {

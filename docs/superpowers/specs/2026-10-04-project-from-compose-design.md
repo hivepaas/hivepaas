@@ -470,6 +470,25 @@ everything for compose, review later".
   mounted at its place in it, read only, from an env config file: Docker mounts
   the config over the volume, nested mounts going deepest last. The dashboard
   gives a directory's files all or none, checked unless unchecked.
+  Checked on Docker 29.8 with plain containers (runc makes a Swarm config's
+  mount as any other): a file mounted in a writable volume's subpath works -
+  the volume's files stay, and the app writes beside it - while one in a
+  read-only volume fails to start ("make mountpoint ...: read-only file
+  system"), Docker having no place to make for it. So a directory mounted
+  read only with files given is those files alone, with no volume; one read
+  from another service that writes it stays that service's, without them.
+- **Traefik labels.** The hosts of a service's routers' `Host` rules - its
+  labels' and its deploy's - are a port of the review's, source `labels`, on
+  the container port they reach (the router's service's load balancer port,
+  the one service's, or the service's one port): the first host the domain
+  unless the review says otherwise, the others domains too. A published port
+  of the same container port is then none by default. Path matchers are not
+  kept; only a host a domain can be is taken.
+- **Not done, on purpose.** `docker.sock` stays dropped with its note: host
+  mode is root on the node, which HivePaaS never grants from a template
+  (`HostModeFromTemplate`), and the proxy is not the socket a compose file
+  expects. Database images as the database kind wait for a design: the kind
+  publishes credentials other apps link to, beside its own self env vars.
 - **Setting mount keys.** Found on the way: the converter keyed setting mount
   entries after the mount (`secret-api_key`, `file-etc-nginx-nginx.conf`), and
   an entry whose key is not an entry key is never mounted. Each mount is now an

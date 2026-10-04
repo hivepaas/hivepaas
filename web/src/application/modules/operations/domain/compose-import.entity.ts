@@ -57,6 +57,8 @@ export interface ComposeServiceView {
     secrets: string[];
     /** The fields of the file not carried to the app. */
     dropped: string[];
+    /** Where the service mounts the Docker socket, which it is not given: empty for nowhere. */
+    dockerSocket: string;
     /** The existing env's app its name or key is; empty for none. */
     existing: string;
     /** That app is used rather than one created. */
@@ -102,9 +104,19 @@ export interface ComposeImportReview {
     plan?: SpecImportPlan;
 }
 
+/** A service as the app it became. */
+export interface ComposeImportApp {
+    service: string;
+    /** The app's key. */
+    app: string;
+    id: string;
+}
+
 export interface ComposeImportResult extends SpecImportResult {
     /** The project created, or the one the services went into. */
     projectId?: string;
+    /** The apps the services became, as written. */
+    apps: ComposeImportApp[];
 }
 
 export interface ComposeVariableInput {

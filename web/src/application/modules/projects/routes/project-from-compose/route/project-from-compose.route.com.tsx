@@ -31,6 +31,7 @@ import { HttpException } from "@infrastructure/exceptions/http";
 
 import {
     type ComposeDirectoryState,
+    type ComposeDockerSocketLink,
     ComposeFiles,
     type ComposeFolder,
     ComposeResult,
@@ -218,7 +219,7 @@ function ComposeImportPage({ projectId }: { projectId?: string }) {
     const { mutate: apply, isPending: isApplying } = ComposeImportCommands.useApplyCompose({
         onSuccess: response => {
             const failed = response.data.plan.nodes.some(node => node.outcome === "failed");
-            if (projectId && !failed && !response.data.warning) {
+            if (projectId && !failed && !response.data.warning && dockerSocketsOf(response.data).length === 0) {
                 // Added cleanly: the apps, in the env they went into.
                 setSelectedEnv(target.env.trim());
                 void navigate(ROUTE.projects.single.apps.$route(projectId));
@@ -401,6 +402,30 @@ function ComposeImportPage({ projectId }: { projectId?: string }) {
         setDirectoriesOff(next);
     };
 
+    // The apps created without the Docker socket their service mounts, linked to
+    // their Docker API settings, where it is given.
+    function dockerSocketsOf(applied: ComposeImportResult): ComposeDockerSocketLink[] {
+        const env = review?.project.env ?? "";
+
+        return (review?.services ?? [])
+            .filter(service => service.dockerSocket !== "" && !service.skipped && !service.useExisting)
+            .map(service => {
+                const app = applied.apps.find(item => item.service === service.name);
+
+                return {
+                    service: service.name,
+                    href:
+                        applied.projectId && app && env
+                            ? ROUTE.projects.single.apps.single.configuration.dockerApi.$route(
+                                  applied.projectId,
+                                  env,
+                                  app.id,
+                              )
+                            : undefined,
+                };
+            });
+    }
+
     const readErrors = readErrorsOf(validateError);
     const summary = plan?.summary ?? {};
     const blocked = summary["blocked"] ?? 0;
@@ -419,6 +444,7 @@ function ComposeImportPage({ projectId }: { projectId?: string }) {
                 <ComposeResult
                     result={result}
                     intoProject={intoProject}
+                    dockerSockets={dockerSocketsOf(result)}
                     onStartOver={startOver}
                 />
             </div>

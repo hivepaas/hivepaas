@@ -12,7 +12,7 @@ import { ROUTE } from "@application/shared/constants";
  * What creating the project, or adding the apps to one, did: the project, its
  * apps, the deployments queued and what failed after it was saved.
  */
-export function ComposeResult({ result, intoProject = false, onStartOver }: Props) {
+export function ComposeResult({ result, intoProject = false, dockerSockets = [], onStartOver }: Props) {
     const done = intoProject ? "The apps are added" : "The project is created";
     const roots = useMemo(() => buildImportTree(result.plan.nodes), [result]);
     const checked = useMemo(() => {
@@ -52,6 +52,32 @@ export function ComposeResult({ result, intoProject = false, onStartOver }: Prop
                     </p>
                 )}
 
+                {dockerSockets.length > 0 && (
+                    <div className="flex flex-col gap-1 rounded-md border border-amber-500/40 bg-amber-500/5 px-3 py-2">
+                        <p className="text-sm text-amber-700 dark:text-amber-400">
+                            {dockerSockets.length === 1 ? "An app was" : "Apps were"} created without the Docker socket
+                            the compose file mounts. Give it in the Docker API settings, through the proxy or the
+                            node&apos;s own socket:
+                        </p>
+                        <ul className="flex flex-col gap-1 text-sm">
+                            {dockerSockets.map(socket => (
+                                <li key={socket.service}>
+                                    {socket.href ? (
+                                        <Link
+                                            to={socket.href}
+                                            className="underline underline-offset-2"
+                                        >
+                                            {socket.service}: Docker API settings
+                                        </Link>
+                                    ) : (
+                                        <span>{socket.service}</span>
+                                    )}
+                                </li>
+                            ))}
+                        </ul>
+                    </div>
+                )}
+
                 <SpecImportPlanTree
                     roots={roots}
                     checked={checked}
@@ -84,5 +110,14 @@ interface Props {
     result: ComposeImportResult;
     /** The apps were added to an existing project. */
     intoProject?: boolean;
+    /** The apps created without the Docker socket their service mounts, with their Docker API settings. */
+    dockerSockets?: ComposeDockerSocketLink[];
     onStartOver: () => void;
+}
+
+/** An app created without the Docker socket its service mounts. */
+export interface ComposeDockerSocketLink {
+    service: string;
+    /** Its Docker API settings; none when the app is not known. */
+    href?: string;
 }

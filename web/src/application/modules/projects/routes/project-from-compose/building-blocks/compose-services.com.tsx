@@ -184,12 +184,24 @@ function ServiceCard({ service, image, input, onImageChange, onChoice, onPortCha
 
             {service.volumes.length > 0 && (
                 <ul className="flex flex-col gap-1 text-xs text-muted-foreground">
-                    {service.volumes.map(volume => (
-                        <li key={volume.target}>
-                            <code className="font-mono text-foreground">{volume.target}</code> {describeVolume(volume)}
-                        </li>
-                    ))}
+                    {service.volumes
+                        .filter(volume => !(service.dockerSocket && volume.target === service.dockerSocket))
+                        .map(volume => (
+                            <li key={volume.target}>
+                                <code className="font-mono text-foreground">{volume.target}</code>{" "}
+                                {describeVolume(volume)}
+                            </li>
+                        ))}
                 </ul>
+            )}
+            {service.dockerSocket && (
+                <p className="text-xs text-amber-700 dark:text-amber-400">
+                    The Docker socket, at <code className="font-mono">{service.dockerSocket}</code>, is not mounted.
+                    Once the app is created, give it the Docker API in its Docker API settings: through the proxy, as
+                    configured there - its socket is at <code className="font-mono">$DOCKER_HOST</code> - or the
+                    node&apos;s own socket, at <code className="font-mono">/var/run/docker.sock</code>, which takes an
+                    administrator and privileged apps.
+                </p>
             )}
 
             {service.aliases.length > 0 && (

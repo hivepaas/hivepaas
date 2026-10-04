@@ -55,6 +55,10 @@ const ServiceSchema = z.object({
     aliases: list(z.string()),
     secrets: list(z.string()),
     dropped: list(z.string()),
+    dockerSocket: z
+        .string()
+        .nullish()
+        .transform(value => value ?? ""),
     existing: z
         .string()
         .nullish()
@@ -104,6 +108,7 @@ const ValidateSchema = z.object({
 const ApplySchema = z.object({
     data: z.object({
         project: z.object({ id: z.string() }).nullish(),
+        apps: list(z.object({ service: z.string(), app: z.string(), id: z.string() })),
         plan: SpecImportPlanSchema,
         deployments: list(z.object({ appId: z.string(), deploymentId: z.string() })),
     }),
@@ -125,6 +130,7 @@ export class ComposeImportApiValidator {
                 plan: data.plan,
                 deployments: data.deployments,
                 projectId: data.project?.id,
+                apps: data.apps,
                 warning: meta?.warning === "" ? undefined : meta?.warning,
             },
             meta,

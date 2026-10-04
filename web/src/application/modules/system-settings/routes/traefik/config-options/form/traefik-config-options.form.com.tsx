@@ -81,10 +81,10 @@ function AccessLogField() {
                     }}
                 />
                 {!field.value && (
-                    <div className={cn(dashedBorderBox)}>
-                        <span className="font-semibold text-orange-500">Warning:</span> HivePaaS counts an app&apos;s
-                        requests from this access log. With it off, Autoscale on requests stops working, and an
-                        app&apos;s Metrics tab shows no HTTP requests.
+                    <div className="rounded-md border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-sm text-amber-700 dark:text-amber-400">
+                        <span className="font-medium">Autoscale may not work with the access log off.</span> HivePaaS
+                        counts an app&apos;s requests from this log: without it, Autoscale on requests stops working,
+                        and an app&apos;s Metrics tab shows no HTTP requests.
                     </div>
                 )}
             </div>

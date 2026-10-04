@@ -30,6 +30,7 @@ const (
 	CodeNetwork        = "COMPOSE_NETWORK"
 	CodePlacement      = "COMPOSE_PLACEMENT"
 	CodeVariableEmpty  = "COMPOSE_VARIABLE_EMPTY"
+	CodeMountWritable  = "COMPOSE_MOUNT_WRITABLE"
 	CodeAliasTaken     = "COMPOSE_ALIAS_TAKEN"
 	CodeSecretExists   = "COMPOSE_SECRET_EXISTS" //nolint:gosec // an issue code, not a credential
 

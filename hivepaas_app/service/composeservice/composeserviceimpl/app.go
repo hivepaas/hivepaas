@@ -72,6 +72,7 @@ func (c *converter) app(name string, svc types.ServiceConfig) (*specmodel.AppDoc
 	}
 	view.Secrets = kept
 	c.fileMounts(svc, mounts)
+	c.writableForFiles(path, deployment.Storage, mounts, view)
 	if len(mounts) > 0 {
 		settings["settingMounts"] = mounts
 	}

@@ -355,3 +355,24 @@ services:
 	certbotMounts, _ := appOf(t, resp, "certbot").Settings["settingMounts"].(map[string]any)
 	assert.Len(t, certbotMounts, 1, "in the writer's own")
 }
+
+// A file mounted in a read-only volume would keep the app from starting -
+// Docker has no place to make for it there - so the volume is writable.
+func TestConvertMakesWritableAReadOnlyVolumeAFileIsMountedIn(t *testing.T) {
+	req := convertReq(`
+services:
+  web:
+    image: nginx:1.27
+    volumes: ["site:/usr/share/nginx/html:ro", "./index.html:/usr/share/nginx/html/index.html", "logs:/logs:ro"]
+volumes:
+  site:
+  logs:
+`)
+	req.Files = map[string][]byte{"index.html": []byte("<h1>hi</h1>")}
+	resp := convert(t, req)
+
+	mounts := appOf(t, resp, "web").Deployment.Storage.Mounts
+	assert.False(t, mounts["/usr/share/nginx/html"].ReadOnly, "a file is mounted in it")
+	assert.True(t, mounts["/logs"].ReadOnly, "none is")
+	assert.Contains(t, codes(resp.Issues[envPath+"/apps/web"]), composeservice.CodeMountWritable)
+}

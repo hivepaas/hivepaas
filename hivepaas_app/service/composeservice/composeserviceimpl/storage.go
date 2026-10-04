@@ -413,3 +413,48 @@ func (c *converter) need(rel, as, service string, given bool) {
 		need.By = append(need.By, service)
 	}
 }
+
+// writableForFiles makes writable a read-only mount a file of the app's is
+// mounted in: Docker has no place to make for the file in a read-only one,
+// and the app would not start.
+func (c *converter) writableForFiles(
+	appPath string, st *specmodel.Storage, mounts map[string]any, view *composeservice.ServiceView,
+) {
+	if st == nil || len(mounts) == 0 {
+		return
+	}
+	var files []string
+	for _, body := range mounts {
+		entry, _ := body.(map[string]any)
+		list, _ := entry["files"].([]any)
+		for _, f := range list {
+			if file, _ := f.(map[string]any); file != nil {
+				if p, ok := file[detailPath].(string); ok {
+					files = append(files, p)
+				}
+			}
+		}
+	}
+	holds := func(target string) bool {
+		prefix := strings.TrimSuffix(target, "/") + "/"
+		return slices.ContainsFunc(files, func(file string) bool { return strings.HasPrefix(file, prefix) })
+	}
+	for _, block := range []map[string]specmodel.Mount{st.Mounts, st.DockerMounts} {
+		for _, target := range slices.Sorted(maps.Keys(block)) {
+			m := block[target]
+			if !m.ReadOnly || !holds(target) {
+				continue
+			}
+			m.ReadOnly = false
+			block[target] = m
+			for _, volume := range view.Volumes {
+				if volume.Target == target {
+					volume.ReadOnly = false
+				}
+			}
+			c.add(appPath, specmodel.SeverityWarning, composeservice.CodeMountWritable,
+				map[string]any{detailTarget: target},
+				"mounted writable: a file is mounted in it, which Docker cannot do in a read-only one")
+		}
+	}
+}

@@ -36,13 +36,15 @@ func (c *converter) fileObjects() {
 	}
 	c.secretNames, c.configNames = map[string]string{}, map[string]string{}
 	for _, name := range slices.Sorted(maps.Keys(secrets)) {
-		content, given := c.fileObject("secret", types.FileObjectConfig(c.r.project.Secrets[name]), secrets[name])
+		object := types.FileObjectConfig(c.r.project.Secrets[name])
+		content, given := c.fileObject(composeservice.NeedSecret, object, secrets[name])
 		setting := c.uniqueSettingName(blockSecrets, c.envSecrets, name)
 		c.secretNames[name] = setting
 		c.envSecrets[setting] = c.fileSetting(setting, "value", content, given, "")
 	}
 	for _, name := range slices.Sorted(maps.Keys(configs)) {
-		content, given := c.fileObject("config", types.FileObjectConfig(c.r.project.Configs[name]), configs[name])
+		object := types.FileObjectConfig(c.r.project.Configs[name])
+		content, given := c.fileObject(composeservice.NeedConfig, object, configs[name])
 		setting := c.uniqueSettingName(blockConfigFiles, c.envConfigs, name)
 		c.configNames[name] = setting
 		c.envConfigs[setting] = c.fileSetting(setting, "content", content, given, "")

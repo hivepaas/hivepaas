@@ -59040,7 +59040,7 @@
       "composeservice.FileNeed" : {
         "properties" : {
           "as" : {
-            "description" : "As is what reads it: env_file, config, secret, bind.",
+            "description" : "As is what reads it: env_file, config, secret, bind, compose.",
             "type" : "string"
           },
           "by" : {

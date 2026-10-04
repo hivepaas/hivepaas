@@ -94,7 +94,8 @@ func planCreateProjectFromComposeTool() Tool {
 			out := composePlan{Review: resp.Data}
 			plan := resp.Data.Plan
 			if plan == nil {
-				out.Next = "Give the required variables a value (review.variables, given false), and plan again."
+				out.Next = "Give the required variables a value (review.variables, given false) and the files " +
+					"review.needs lacks (given false), and plan again."
 				return out, nil, nil
 			}
 			if plan.Summary[string(specmodel.SeverityBlocked)] > 0 {

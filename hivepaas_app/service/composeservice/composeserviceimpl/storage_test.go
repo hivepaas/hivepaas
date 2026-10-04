@@ -2,10 +2,10 @@ package composeserviceimpl
 
 import (
 	"context"
-	"os"
 	"path/filepath"
 	"testing"
 
+	"github.com/compose-spec/compose-go/v2/consts"
 	"github.com/moby/moby/api/types/mount"
 	"github.com/stretchr/testify/assert"
 
@@ -15,27 +15,42 @@ import (
 	"github.com/hivepaas/hivepaas/services/docker"
 )
 
-// The loader serves the scratch directory's files and nothing else.
-func TestSandboxLoaderLoadsOnlyItsDirectorysFiles(t *testing.T) {
+// The loader serves the request's files and nothing else, written to the
+// scratch directory once asked for; a relative path is the naming file's.
+func TestSandboxLoadsOnlyTheRequestsFiles(t *testing.T) {
 	dir := t.TempDir()
-	assert.NoError(t, os.WriteFile(filepath.Join(dir, "base.yaml"), []byte("x"), 0o600))
-	l := sandboxLoader{dir: dir}
+	sb := newSandbox(dir, map[string][]byte{
+		"base.yaml": []byte("x"), "sub/inc.yaml": []byte("y"), "sub/b.yaml": []byte("z"), "sub/.env": []byte("A=1"),
+	})
 
-	got, err := l.Load(context.Background(), "base.yaml")
+	got, err := sb.Load(context.Background(), "base.yaml")
 	assert.NoError(t, err)
 	assert.Equal(t, filepath.Join(dir, "base.yaml"), got)
-	got, err = l.Load(context.Background(), filepath.Join(dir, "base.yaml"))
+	assert.FileExists(t, got, "written once asked for")
+	assert.NoFileExists(t, filepath.Join(dir, "sub", "b.yaml"), "not before")
+	got, err = sb.Load(context.Background(), filepath.Join(dir, "base.yaml"))
 	assert.NoError(t, err, "an absolute path inside it")
 	assert.Equal(t, filepath.Join(dir, "base.yaml"), got)
 
-	for _, p := range []string{"/etc/hostname", "../x", filepath.Join(dir, "..", "x"), "https://example.com/c.yaml"} {
-		_, err = l.Load(context.Background(), p)
-		assert.Error(t, err, p)
-	}
-	_, err = l.Load(context.Background(), "/etc/hostname")
+	inSub := context.WithValue(context.Background(), consts.ComposeFileKey{}, filepath.Join(dir, "sub", "inc.yaml"))
+	got, err = sb.Load(inSub, "b.yaml")
+	assert.NoError(t, err)
+	assert.Equal(t, filepath.Join(dir, "sub", "b.yaml"), got, "beside the file naming it")
+	assert.FileExists(t, filepath.Join(dir, "sub", ".env"), "the .env beside it, which compose-go reads")
+	assert.Equal(t, filepath.Join(dir, "sub"), sb.Dir("b.yaml"), "asked with the path as written")
+	assert.Equal(t, filepath.Join(dir, "sub"), sb.Dir(got))
+	assert.Equal(t, dir, sb.Dir("/etc/hostname"), "never a directory outside")
+	_, err = sb.Load(inSub, "../../x")
 	assert.ErrorIs(t, err, hperrors.ErrComposeFilePath)
-	_, err = l.Load(context.Background(), "other.yaml")
+
+	for _, p := range []string{"/etc/hostname", "../x", filepath.Join(dir, "..", "x"), "https://example.com/c.yaml"} {
+		_, err = sb.Load(context.Background(), p)
+		assert.ErrorIs(t, err, hperrors.ErrComposeFilePath, p)
+	}
+	_, err = sb.Load(context.Background(), "other.yaml")
 	assert.ErrorIs(t, err, hperrors.ErrComposeInvalid, "not among the files given")
+	assert.Equal(t, []string{"other.yaml"}, sb.missingFiles())
+	assert.Equal(t, []string{"base.yaml", "sub/b.yaml"}, sb.loadedFiles())
 }
 
 const sharedCompose = `

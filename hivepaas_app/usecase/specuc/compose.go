@@ -116,7 +116,7 @@ func (uc *UC) applyComposeInTx(
 	}
 	if read.converted.Bundle == nil {
 		return read, nil, hperrors.Wrap(hperrors.ErrSpecImportBlocked).
-			WithExtraDetail("a required variable has no value")
+			WithExtraDetail("a required variable has no value, or a file an include reads is missing")
 	}
 	applied, err := uc.specService.ApplyBundle(ctx, db, &specservice.ApplyBundleReq{
 		PlanBundleReq: *read.plan, OperatorID: auth.User.ID, PlanHash: req.PlanHash, AcceptIssues: req.AcceptIssues,

@@ -36,8 +36,9 @@ func CreateTempDir(baseDir, pattern string, perm os.FileMode) (dir string, err e
 // CreateTempDirInAppPath creates a temp dir under the day's directory of
 // AppTempDir. It is where the app and the worker keep what they write for a
 // while: their data directory outlives their container - one whose process
-// died is replaced, and what its /tmp held stays with the old one, out of
-// reach - and the system cleanup removes its days after TempDirRetentionDays.
+// died is replaced, and what its /tmp held goes only when the stopped
+// container is pruned - and the system cleanup removes its days after
+// TempDirRetentionDays.
 // Should use "*" for `pattern` value. If empty, only the day's dir is created.
 func CreateTempDirInAppPath(baseDir, pattern string, perm os.FileMode) (dir string, err error) {
 	if perm == 0 {

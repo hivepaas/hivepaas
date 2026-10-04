@@ -49,7 +49,8 @@ func (s *service) Convert(
 		Issues: map[string][]specmodel.Issue{}, Profiles: fileProfiles(r.raw),
 	}}
 	c.resp.Variables = c.variableViews()
-	if len(r.missing) > 0 {
+	if len(r.missing) > 0 || len(r.missingFiles) > 0 {
+		c.resp.Needs = r.missingFiles
 		return c.resp, nil
 	}
 	if len(r.project.Services) == 0 {

@@ -203,7 +203,6 @@ func TestConvertReadsNothingOfTheServers(t *testing.T) {
 		"an absolute env_file":            "  - {path: inc.yaml, env_file: " + outside + "}\n",
 		"env_files leaving the directory": "  - {path: inc.yaml, env_file: [../../server.env]}\n",
 		"an env_file of a variable":       "  - {path: inc.yaml, env_file: \"${HOME}/x\"}\n",
-		"an absolute project_directory":   "  - {path: inc.yaml, project_directory: " + filepath.Dir(outside) + "}\n",
 	} {
 		t.Run(name, func(t *testing.T) {
 			req := convertReq("include:\n" + include + "services:\n  a: {image: x}\n")
@@ -212,6 +211,12 @@ func TestConvertReadsNothingOfTheServers(t *testing.T) {
 			assert.ErrorIs(t, includeErr, hperrors.ErrComposeFilePath)
 		})
 	}
+	projectDir := convertReq("include:\n  - {path: inc.yaml, project_directory: " + filepath.Dir(outside) +
+		"}\nservices:\n  a: {image: x}\n")
+	projectDir.Files = included
+	_, err = New().Convert(context.Background(), projectDir)
+	assert.ErrorIs(t, err, hperrors.ErrComposeInvalid, "a project directory of its own is not read")
+
 	nested := convertReq("include: [inc.yaml]\nservices:\n  a: {image: x}\n")
 	nested.Files = map[string][]byte{"inc.yaml": []byte("include:\n  - {path: b.yaml, env_file: " + outside + "}\n"),
 		"b.yaml": included["inc.yaml"]}
@@ -330,4 +335,88 @@ secrets:
 	}
 	assert.ElementsMatch(t, []any{envPath + "/secrets/DB_PASSWORD-2", envPath + "/configFiles/nginx.conf-2"}, sources)
 	assert.Contains(t, codes(resp.Issues[envPath]), composeservice.CodeSettingRenamed)
+}
+
+// A compose file an include or extends reads is read beside the file naming
+// it, and so are its own paths: its includes, its env_file, the files and
+// directories it mounts, and the .env beside it. Its variables are the file's.
+func TestConvertReadsAnIncludedFileBesideItself(t *testing.T) {
+	req := convertReq(`
+include: [sub/inc.yaml]
+services:
+  a:
+    image: x
+    extends: {file: sub/base.yaml, service: base}
+`)
+	req.Files = map[string][]byte{
+		"sub/inc.yaml": []byte(`
+include: [b.yaml]
+services:
+  s:
+    image: x
+    env_file: s.env
+    volumes: ["./data:/data", "./nginx.conf:/etc/nginx/nginx.conf:ro", "../../../x:/x"]
+`),
+		"sub/b.yaml":     []byte("services:\n  b:\n    image: x\n    environment: {TOKEN: \"${API_TOKEN}\"}\n"),
+		"sub/s.env":      []byte("X=from-s-env\n"),
+		"sub/nginx.conf": []byte("events {}\n"),
+		"sub/base.yaml":  []byte("services:\n  base:\n    image: x\n    volumes: [\"./cache:/cache\"]\n"),
+		"sub/.env":       []byte("API_TOKEN=t0k3n\n"),
+	}
+	resp := convert(t, req)
+
+	s := appOf(t, resp, "s")
+	assert.Equal(t, "from-s-env", envVar(s, "X")["v"], "its env_file")
+	mounts := s.Deployment.Storage.Mounts
+	if assert.Contains(t, mounts, "/data") {
+		assert.Equal(t, "sub-data", mounts["/data"].VolumeOptions.Subpath)
+	}
+	assert.NotContains(t, mounts, "/x")
+	assert.Contains(t, codes(resp.Issues[envPath+"/apps/s"]), composeservice.CodeMountDropped, "leaving the directory")
+	configs, _ := resp.Bundle.Envs["blog"]["prod"].Settings["configFiles"].(map[string]any)
+	if assert.Contains(t, configs, "nginx.conf") {
+		assert.Equal(t, "events {}\n", configs["nginx.conf"].(map[string]any)["content"])
+	}
+	for _, view := range resp.Services {
+		for _, volume := range view.Volumes {
+			assert.False(t, filepath.IsAbs(volume.Source) && volume.Source != "/x", "no path of the server's: %s",
+				volume.Source)
+		}
+	}
+
+	a := appOf(t, resp, "a")
+	if assert.Contains(t, a.Deployment.Storage.Mounts, "/cache") {
+		assert.Equal(t, "sub-cache", a.Deployment.Storage.Mounts["/cache"].VolumeOptions.Subpath, "beside the base")
+	}
+
+	assert.Equal(t, "${secrets.API_TOKEN}", envVar(appOf(t, resp, "b"), "TOKEN")["v"],
+		"the included file's variable, given by the .env beside it, kept as a secret")
+	var token *composeservice.VariableView
+	for _, v := range resp.Variables {
+		if v.Name == "API_TOKEN" {
+			token = v
+		}
+	}
+	if assert.NotNil(t, token, "in the review") {
+		assert.True(t, token.Given)
+		assert.True(t, token.Secret)
+	}
+}
+
+// A compose file an include reads that the request lacks, or an env file an
+// include names, is asked for as a required variable is: nothing more is read
+// until it is given.
+func TestConvertAsksForAnIncludedFileItLacks(t *testing.T) {
+	resp := convert(t, convertReq("include: [sub/inc.yaml]\nservices:\n  a: {image: x}\n"))
+	assert.Nil(t, resp.Bundle)
+	assert.Equal(t, []*composeservice.FileNeed{{Path: "sub/inc.yaml", As: composeservice.NeedCompose}}, resp.Needs)
+
+	req := convertReq("include:\n  - {path: inc.yaml, env_file: inc.env}\nservices:\n  a: {image: x}\n")
+	req.Files = map[string][]byte{"inc.yaml": []byte("services:\n  b: {image: x}\n")}
+	resp = convert(t, req)
+	assert.Nil(t, resp.Bundle)
+	assert.Equal(t, []*composeservice.FileNeed{{Path: "inc.env", As: composeservice.NeedEnvFile}}, resp.Needs)
+
+	req.Files["inc.env"] = []byte("")
+	assert.NotNil(t, convert(t, req).Bundle, "given, if empty")
 }

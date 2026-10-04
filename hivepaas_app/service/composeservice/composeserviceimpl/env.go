@@ -85,7 +85,7 @@ func (c *converter) readEnvFile(appPath, name string, file types.EnvFile, values
 		return
 	}
 	content, given := c.r.files[rel]
-	c.need(rel, "env_file", name, given)
+	c.need(rel, composeservice.NeedEnvFile, name, given)
 	if !given {
 		if bool(file.Required) {
 			c.add(appPath, specmodel.SeverityFixable, composeservice.CodeFileMissing,

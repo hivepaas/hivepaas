@@ -1,6 +1,7 @@
 package composeserviceimpl
 
 import (
+	"bytes"
 	"context"
 	"crypto/rand"
 	"encoding/hex"
@@ -63,6 +64,16 @@ type read struct {
 	unsupported map[string][]string
 	// missing are the required variables with no value.
 	missing []string
+	// missingFiles are the compose files and env files the file reads through
+	// an include or extends that the request lacks: nothing more is read until
+	// it has them.
+	missingFiles []*composeservice.FileNeed
+	// includeEnvFiles are the env files includes name, as files of the
+	// request's.
+	includeEnvFiles []string
+	// dir is the scratch directory the project was read in, gone since:
+	// compose-go makes a path of an included or extended file absolute in it.
+	dir string
 }
 
 // readCompose reads a compose file the way `docker compose config` would, and
@@ -91,12 +102,35 @@ func readCompose(ctx context.Context, req *composeservice.ConvertReq) (*read, er
 	if err = r.readVariables(req); err != nil {
 		return nil, err
 	}
-	if len(r.missing) > 0 {
+	if r.missingFiles = r.missingIncludeEnvFiles(); len(r.missingFiles) > 0 {
 		return r, nil
 	}
-	if r.project, err = r.load(ctx, req); err != nil {
-		return nil, err
+	// The files an include or extends reads are known once compose-go has read
+	// them: their variables are the file's too, and with them it reads again.
+	for len(r.missing) == 0 && r.project == nil {
+		project, sb, loadErr := r.load(ctx, req)
+		if sb == nil {
+			return nil, loadErr
+		}
+		if r.loadedVariables(sb) {
+			r.classifyVariables(req)
+			continue
+		}
+		if loadErr != nil {
+			if missing := sb.missingFiles(); len(missing) > 0 {
+				for _, p := range missing {
+					r.missingFiles = append(r.missingFiles, &composeservice.FileNeed{Path: p, As: composeservice.NeedCompose})
+				}
+				return r, nil
+			}
+			return nil, loadErr
+		}
+		r.project, r.dir = project, sb.dir
 	}
+	if r.project == nil {
+		return r, nil
+	}
+	r.localPaths()
 	if len(r.project.Services) > servicesMax {
 		return nil, hperrors.Wrap(hperrors.ErrComposeTooBig).WithExtraDetail("%d services, %d at most",
 			len(r.project.Services), servicesMax)
@@ -130,15 +164,16 @@ func cleanFiles(files map[string][]byte) (map[string][]byte, error) {
 	return out, nil
 }
 
-// checkIncludes refuses an include whose env_file or project_directory is not
-// a path of the scratch directory as written. compose-go reads an include's env
-// files itself, from the disk and not through the loader, and its project
-// directory's .env with them: one outside would be a file of the server's,
-// its values the variables of what is included. Every file compose-go may load
-// is the compose file or one of the request's, so each is checked; a value
-// holding a variable is refused, as it is only a path once interpolated.
+// checkIncludes refuses an include compose-go would read a file of the
+// server's through. compose-go reads an include's env files itself, from the
+// disk and not through the loader: each has to be a file of the request's,
+// relative to the file naming it, as written - a value holding a variable is
+// only a path once interpolated, and is refused. Its project_directory is
+// refused too: the files an included file names are read from its own
+// directory, as the loader reads them. Every file compose-go may load is the
+// compose file or one of the request's, so each is checked.
 func (r *read) checkIncludes() error {
-	if err := checkIncludesOf(composeFileName, r.raw); err != nil {
+	if err := r.checkIncludesOf("", composeFileName, r.raw); err != nil {
 		return err
 	}
 	for _, name := range slices.Sorted(maps.Keys(r.files)) {
@@ -149,39 +184,113 @@ func (r *read) checkIncludes() error {
 		if yaml.Unmarshal(r.files[name], &doc) != nil {
 			continue
 		}
-		if err := checkIncludesOf(name, doc); err != nil {
+		base := path.Dir(name)
+		if base == "." {
+			base = ""
+		}
+		if err := r.checkIncludesOf(base, name, doc); err != nil {
 			return err
 		}
 	}
 	return nil
 }
 
-func checkIncludesOf(file string, doc map[string]any) error {
+// checkIncludesOf checks the includes of one file, whose directory is base,
+// and keeps the env files they name.
+func (r *read) checkIncludesOf(base, file string, doc map[string]any) error {
 	entries, _ := doc["include"].([]any)
 	for _, entry := range entries {
 		fields, _ := entry.(map[string]any)
-		var paths []any
+		if _, found := fields["project_directory"]; found {
+			return hperrors.Wrap(hperrors.ErrComposeInvalid).WithExtraDetail(
+				"%s: include: project_directory is not supported - an included file's directory is its project's", file)
+		}
+		var envFiles []any
 		switch value := fields["env_file"].(type) {
 		case nil:
 		case []any:
-			paths = append(paths, value...)
+			envFiles = value
 		default:
-			paths = append(paths, value)
+			envFiles = []any{value}
 		}
-		if dir, found := fields["project_directory"]; found {
-			paths = append(paths, dir)
-		}
-		for _, p := range paths {
+		for _, p := range envFiles {
 			s, ok := p.(string)
-			if !ok || strings.Contains(s, "$") {
+			if s == "/dev/null" { // compose-go reads nothing for it
+				continue
+			}
+			if !ok || strings.Contains(s, "$") || path.IsAbs(s) || filepath.IsAbs(s) {
 				return hperrors.Wrap(hperrors.ErrComposeFilePath).WithExtraDetail("%s: include: %v", file, p)
 			}
-			if _, inside := cleanPath(s); !inside && s != "." {
+			rel, inside := cleanPath(path.Join(base, filepath.ToSlash(strings.TrimSpace(s))))
+			if !inside {
 				return hperrors.Wrap(hperrors.ErrComposeFilePath).WithExtraDetail("%s: include: %s", file, s)
+			}
+			if !slices.Contains(r.includeEnvFiles, rel) {
+				r.includeEnvFiles = append(r.includeEnvFiles, rel)
 			}
 		}
 	}
 	return nil
+}
+
+// missingIncludeEnvFiles are the env files includes name that the request
+// lacks: compose-go cannot read the file without them.
+func (r *read) missingIncludeEnvFiles() []*composeservice.FileNeed {
+	var out []*composeservice.FileNeed
+	for _, rel := range r.includeEnvFiles {
+		if _, given := r.files[rel]; !given {
+			out = append(out, &composeservice.FileNeed{Path: rel, As: composeservice.NeedEnvFile})
+		}
+	}
+	return out
+}
+
+// localPaths makes the paths compose-go made absolute in the scratch
+// directory - those of included files - relative to the compose file again,
+// as the converter reads every path.
+func (r *read) localPaths() {
+	for name, svc := range r.project.Services {
+		for i := range svc.Volumes {
+			if svc.Volumes[i].Type == types.VolumeTypeBind {
+				svc.Volumes[i].Source = r.local(svc.Volumes[i].Source)
+			}
+		}
+		for i := range svc.EnvFiles {
+			svc.EnvFiles[i].Path = r.local(svc.EnvFiles[i].Path)
+		}
+		r.project.Services[name] = svc
+	}
+	for name, secret := range r.project.Secrets {
+		secret.File = r.local(secret.File)
+		r.project.Secrets[name] = secret
+	}
+	for name, config := range r.project.Configs {
+		config.File = r.local(config.File)
+		r.project.Configs[name] = config
+	}
+}
+
+// local is a path of the compose file's as the converter reads it: relative
+// to the compose file. compose-go makes the relative paths of an included
+// file absolute, in the scratch directory, and one there is relative again.
+// One elsewhere in HivePaaS's own data directory - where a relative path
+// climbing out of the scratch directory lands - is no path a compose file
+// mounts: it reads as one leaving the compose file's directory. Any other is as
+// written.
+func (r *read) local(p string) string {
+	if r.dir == "" || !filepath.IsAbs(p) {
+		return p
+	}
+	if rel, err := filepath.Rel(r.dir, p); err == nil {
+		if cleaned, ok := cleanPath(rel); ok {
+			return cleaned
+		}
+	}
+	data := filepath.Dir(fileutil.AppTempDir())
+	if rel, err := filepath.Rel(data, p); err == nil && rel != ".." && !strings.HasPrefix(rel, "../") {
+		return "../" + filepath.Base(p)
+	}
+	return p
 }
 
 // cleanPath is a path relative to the compose file as one key: `./a/../b` is
@@ -219,8 +328,67 @@ func (r *read) readVariables(req *composeservice.ConvertReq) error {
 		}
 	}
 	r.values = values
+	for _, rel := range r.includeEnvFiles {
+		r.addValues(rel)
+	}
+	r.markers = newSecretMarkers()
+	r.classifyVariables(req)
+	return nil
+}
 
-	r.secret, r.plain = map[string]bool{}, map[string]bool{}
+// addValues adds the values of an env file of the request's an include reads
+// to those of the variables it does not already give - the .env's and the
+// review's come first, as compose's own environment does - and says whether
+// it added any.
+func (r *read) addValues(rel string) bool {
+	content, given := r.files[rel]
+	if !given {
+		return false
+	}
+	values, err := dotenv.ParseWithLookup(bytes.NewReader(content), func(name string) (string, bool) {
+		value, ok := r.values[name]
+		return value, ok
+	})
+	if err != nil {
+		return false
+	}
+	added := false
+	for name, value := range values {
+		if _, known := r.values[name]; !known {
+			r.values[name] = value
+			added = true
+		}
+	}
+	return added
+}
+
+// loadedVariables adds the variables of the compose files compose-go read
+// through an include or extends, and the values of the .env beside each, to
+// the file's; true when it found any, and the file is read again with them.
+func (r *read) loadedVariables(sb *sandbox) bool {
+	found := false
+	for _, rel := range sb.loadedFiles() {
+		var doc map[string]any
+		if yaml.Unmarshal(r.files[rel], &doc) == nil && doc != nil {
+			for name, v := range template.ExtractVariables(doc, template.DefaultPattern) {
+				if _, known := r.variables[name]; !known {
+					r.variables[name] = v
+					found = true
+				}
+			}
+		}
+		if r.addValues(path.Join(path.Dir(rel), ".env")) {
+			found = true
+		}
+	}
+	return found
+}
+
+// classifyVariables says of each variable whether its value is kept as an env
+// secret, and which required ones have none: nothing more is read until they
+// have.
+func (r *read) classifyVariables(req *composeservice.ConvertReq) {
+	r.secret, r.plain, r.missing = map[string]bool{}, map[string]bool{}, nil
 	for _, name := range slices.Sorted(maps.Keys(r.variables)) {
 		if v := req.Variables[name]; v != nil && v.Secret != nil {
 			r.secret[name] = *v.Secret
@@ -228,12 +396,10 @@ func (r *read) readVariables(req *composeservice.ConvertReq) error {
 		} else {
 			r.secret[name] = secretByName(name)
 		}
-		if r.variables[name].Required && values[name] == "" {
+		if r.variables[name].Required && r.values[name] == "" {
 			r.missing = append(r.missing, name)
 		}
 	}
-	r.markers = newSecretMarkers()
-	return nil
 }
 
 // secretWords are the words a variable's name holds to be taken for a secret.
@@ -250,23 +416,20 @@ func secretByName(name string) bool {
 	return false
 }
 
-// load has compose-go read the file in a scratch directory holding only the
-// request's files, removed after. The directory is one of the day's in the
-// app's data directory: should the process die before removing it, the system
-// cleanup removes the day's directory a few days on.
-func (r *read) load(ctx context.Context, req *composeservice.ConvertReq) (*types.Project, error) {
+// load has compose-go read the file in a scratch directory, which holds the
+// request's files it asks for (sandbox), removed after. The directory is one
+// of the day's in the app's data directory: should the process die before
+// removing it, the system cleanup removes the day's directory a few days on.
+func (r *read) load(ctx context.Context, req *composeservice.ConvertReq) (*types.Project, *sandbox, error) {
 	dir, err := fileutil.CreateTempDirInAppPath("", "compose-*", 0)
 	if err != nil {
-		return nil, hperrors.Wrap(err)
+		return nil, nil, hperrors.Wrap(err)
 	}
 	defer func() { _ = os.RemoveAll(dir) }()
-	for name, content := range r.files {
-		target := filepath.Join(dir, filepath.FromSlash(name))
-		if err = os.MkdirAll(filepath.Dir(target), 0o700); err != nil { //nolint:mnd // owner only
-			return nil, hperrors.Wrap(err)
-		}
-		if err = os.WriteFile(target, content, 0o600); err != nil { //nolint:mnd // owner only
-			return nil, hperrors.Wrap(err)
+	sb := newSandbox(dir, r.files)
+	for _, rel := range r.includeEnvFiles {
+		if err = sb.write(rel); err != nil {
+			return nil, sb, err
 		}
 	}
 
@@ -295,44 +458,13 @@ func (r *read) load(ctx context.Context, req *composeservice.ConvertReq) (*types
 		o.SkipResolveLabels = true
 		o.ResolvePaths = false
 		o.Profiles = req.Profiles
-		o.ResourceLoaders = []loader.ResourceLoader{sandboxLoader{dir: dir}}
+		o.ResourceLoaders = []loader.ResourceLoader{sb}
 	}, loader.WithUnsupportedAttributesCheck(unsupportedPatterns(), r.noteUnsupported))
 	if err != nil {
-		return nil, hperrors.Wrap(hperrors.ErrComposeInvalid).WithExtraDetail("%s", strings.ReplaceAll(err.Error(), dir, "."))
+		return nil, sb, hperrors.Wrap(hperrors.ErrComposeInvalid).WithExtraDetail("%s",
+			strings.ReplaceAll(err.Error(), dir, "."))
 	}
-	return project, nil
-}
-
-// sandboxLoader is the only loader compose-go has: it accepts every path, so
-// that neither a remote one nor its own local one is asked, and loads none
-// but a file of the scratch directory.
-type sandboxLoader struct {
-	dir string
-}
-
-func (l sandboxLoader) Accept(string) bool { return true }
-
-func (l sandboxLoader) Load(_ context.Context, p string) (string, error) {
-	rel := p
-	if filepath.IsAbs(p) {
-		var err error
-		if rel, err = filepath.Rel(l.dir, p); err != nil {
-			return "", hperrors.Wrap(hperrors.ErrComposeFilePath).WithExtraDetail("%s", p)
-		}
-	}
-	cleaned, ok := cleanPath(rel)
-	if !ok {
-		return "", hperrors.Wrap(hperrors.ErrComposeFilePath).WithExtraDetail("%s", p)
-	}
-	target := filepath.Join(l.dir, filepath.FromSlash(cleaned))
-	if _, err := os.Stat(target); err != nil {
-		return "", hperrors.Wrap(hperrors.ErrComposeInvalid).WithExtraDetail("%s is not among the files given", cleaned)
-	}
-	return target, nil
-}
-
-func (l sandboxLoader) Dir(p string) string {
-	return filepath.Dir(p)
+	return project, sb, nil
 }
 
 // unsupportedFields are what a service may say that HivePaaS does not carry to

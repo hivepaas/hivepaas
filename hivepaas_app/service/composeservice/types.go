@@ -104,8 +104,8 @@ type PortReq struct {
 // ConvertResp is the bundle, the issues of reading it, and what the review
 // shows.
 type ConvertResp struct {
-	// Bundle is nil while a required variable has no value: nothing can be read
-	// before it has one.
+	// Bundle is nil while a required variable has no value, or the request
+	// lacks a file an include reads: nothing can be read before.
 	Bundle *specmodel.ImportBundle
 	// Issues are the plan's, by node path.
 	Issues map[string][]specmodel.Issue
@@ -197,10 +197,23 @@ type VariableView struct {
 	Secret bool `json:"secret"`
 }
 
+// What reads a file the compose file reads (FileNeed.As).
+const (
+	// NeedEnvFile is a service's env_file, or an include's.
+	NeedEnvFile = "env_file"
+	NeedConfig  = "config"
+	NeedSecret  = "secret"
+	// NeedBind is a file a service mounts.
+	NeedBind = "bind"
+	// NeedCompose is a compose file an include or extends reads: nothing more
+	// is read until it is given.
+	NeedCompose = "compose"
+)
+
 // FileNeed is a file the compose file reads.
 type FileNeed struct {
 	Path string `json:"path"`
-	// As is what reads it: env_file, config, secret, bind.
+	// As is what reads it: env_file, config, secret, bind, compose.
 	As string `json:"as"`
 	// By are the services that read it.
 	By []string `json:"by"`

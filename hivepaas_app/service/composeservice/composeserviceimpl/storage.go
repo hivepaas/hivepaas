@@ -258,7 +258,7 @@ func tmpfsMount(t *types.ServiceVolumeTmpfs) specmodel.Mount {
 // named after it: made once, however many services mount it.
 func (c *converter) configFileOf(rel, service string) string {
 	content, given := c.r.files[rel]
-	c.need(rel, "bind", service, given)
+	c.need(rel, composeservice.NeedBind, service, given)
 	for name, body := range c.envConfigs {
 		if fields, _ := body.(map[string]any); fields[fileSourceKey] == rel {
 			return name

@@ -176,7 +176,8 @@ type ValidateComposeResp struct {
 
 // ValidateComposeData is what the review shows: the project, each service as
 // the app it becomes, the variables and files the file needs, and the import's
-// plan - none while a required variable has no value.
+// plan - none while a required variable has no value, or a file an include
+// reads is missing.
 type ValidateComposeData struct {
 	Project   *ComposeProjectResp            `json:"project"`
 	Services  []*composeservice.ServiceView  `json:"services"`

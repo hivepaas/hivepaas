@@ -73,12 +73,21 @@ function AccessLogField() {
             titleWidth={220}
             title="Access Log"
         >
-            <Checkbox
-                checked={field.value}
-                onCheckedChange={value => {
-                    field.onChange(value === true);
-                }}
-            />
+            <div className="flex flex-col items-start gap-3">
+                <Checkbox
+                    checked={field.value}
+                    onCheckedChange={value => {
+                        field.onChange(value === true);
+                    }}
+                />
+                {!field.value && (
+                    <div className={cn(dashedBorderBox)}>
+                        <span className="font-semibold text-orange-500">Warning:</span> HivePaaS counts an app&apos;s
+                        requests from this access log. With it off, Autoscale on requests stops working, and an
+                        app&apos;s Metrics tab shows no HTTP requests.
+                    </div>
+                )}
+            </div>
         </InfoBlock>
     );
 }

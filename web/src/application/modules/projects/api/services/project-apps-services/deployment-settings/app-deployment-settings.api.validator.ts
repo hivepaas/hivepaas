@@ -22,6 +22,7 @@ const BaseDeploymentSettingsSchema = z.object({
         .object({ repoName: z.string(), tagPrefix: z.string() })
         .nullish()
         .transform(value => value ?? null),
+    entrypoint: OptionalStringSchema.optional(),
     command: OptionalStringSchema.optional(),
     workingDir: OptionalStringSchema.optional(),
     preDeploymentCommand: OptionalStringSchema.optional(),

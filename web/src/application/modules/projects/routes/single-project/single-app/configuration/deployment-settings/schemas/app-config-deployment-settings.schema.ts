@@ -18,6 +18,7 @@ const NotificationSchema = z.object({
 });
 
 const BaseDeploymentSettingsSchema = z.object({
+    entrypoint: z.string().optional(),
     command: z.string().optional(),
     workingDir: z.string().optional(),
     preDeploymentCommand: z.string().optional(),

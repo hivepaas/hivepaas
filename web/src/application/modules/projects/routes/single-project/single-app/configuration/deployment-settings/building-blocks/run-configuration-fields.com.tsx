@@ -2,12 +2,21 @@ import { FieldError, Input } from "@components/ui";
 import { useController, useFormContext } from "react-hook-form";
 import { PROJECT_FORM_CONTROL_MAX_WIDTH_CLASS } from "~/projects/module-shared/constants";
 
-import { InfoBlock } from "@application/shared/components";
+import { InfoBlock, LabelWithInfo } from "@application/shared/components";
 
 import {
     type AppConfigDeploymentSettingsFormSchemaInput,
     type AppConfigDeploymentSettingsFormSchemaOutput,
 } from "../schemas";
+
+const ENTRYPOINT_TOOLTIP =
+    "Runs instead of the image's entrypoint, with the command as its arguments. Leave it empty to keep the image's.";
+const COMMAND_TOOLTIP =
+    "The arguments of the entrypoint - the image's, or the one above. Leave it empty to keep the image's command.";
+
+function TooltipText({ text }: { text: string }) {
+    return <span className="block max-w-[360px] whitespace-normal">{text}</span>;
+}
 
 export function RunConfigurationFields() {
     const { control } = useFormContext<
@@ -15,6 +24,11 @@ export function RunConfigurationFields() {
         unknown,
         AppConfigDeploymentSettingsFormSchemaOutput
     >();
+
+    const {
+        field: entrypoint,
+        fieldState: { error: entrypointError },
+    } = useController({ control, name: "entrypoint" });
 
     const {
         field: command,
@@ -40,7 +54,31 @@ export function RunConfigurationFields() {
         <>
             <InfoBlock
                 titleWidth={220}
-                title="Command"
+                title={
+                    <LabelWithInfo
+                        label="Entrypoint"
+                        content={<TooltipText text={ENTRYPOINT_TOOLTIP} />}
+                    />
+                }
+            >
+                <Input
+                    {...entrypoint}
+                    value={entrypoint.value ?? ""}
+                    onChange={entrypoint.onChange}
+                    placeholder="/docker-entrypoint.sh"
+                    className={PROJECT_FORM_CONTROL_MAX_WIDTH_CLASS}
+                />
+                <FieldError errors={[entrypointError]} />
+            </InfoBlock>
+
+            <InfoBlock
+                titleWidth={220}
+                title={
+                    <LabelWithInfo
+                        label="Command"
+                        content={<TooltipText text={COMMAND_TOOLTIP} />}
+                    />
+                }
             >
                 <Input
                     {...command}

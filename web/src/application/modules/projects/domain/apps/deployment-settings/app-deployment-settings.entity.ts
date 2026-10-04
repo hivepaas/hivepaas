@@ -53,6 +53,7 @@ export type BaseDeploymentSettings = {
      */
     image?: { repoName: string; tagPrefix: string } | null;
 
+    entrypoint?: string;
     command?: string;
     workingDir?: string;
     preDeploymentCommand?: string;

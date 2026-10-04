@@ -60,6 +60,7 @@ const ContainerSpecSchema = z.object({
     serviceLabels: z.record(z.string(), z.string()).nullish(),
     containerLabels: z.record(z.string(), z.string()).nullish(),
     image: z.string(),
+    entrypoint: z.string().optional().default(""),
     command: z.string(),
     workingDir: z.string(),
     hostname: z.string(),

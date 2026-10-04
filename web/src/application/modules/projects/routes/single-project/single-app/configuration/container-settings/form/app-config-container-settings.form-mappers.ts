@@ -22,6 +22,7 @@ export function mapAppContainerSettingsToFormInput(
     return {
         general: {
             image: data.image,
+            entrypoint: data.entrypoint,
             command: data.command,
             workingDir: data.workingDir,
             hostname: data.hostname,

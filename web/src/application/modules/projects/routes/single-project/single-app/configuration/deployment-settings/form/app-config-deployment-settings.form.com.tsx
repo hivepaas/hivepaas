@@ -29,6 +29,7 @@ type SchemaOutput = AppConfigDeploymentSettingsFormSchemaOutput;
 
 function mapDefaultValues(data: RepoMethod | ImageMethod): SchemaInput {
     const base = {
+        entrypoint: data.entrypoint ?? "",
         command: data.command ?? "",
         workingDir: data.workingDir ?? "",
         preDeploymentCommand: data.preDeploymentCommand ?? "",
@@ -100,6 +101,7 @@ export function AppConfigDeploymentSettingsForm({ ref, defaultValues, onSubmit, 
             : {
                   activeMethod: EAppDeploymentMethod.Image,
                   imageSource: { image: "", registryAuth: undefined },
+                  entrypoint: "",
                   command: "",
                   workingDir: "",
                   preDeploymentCommand: "",

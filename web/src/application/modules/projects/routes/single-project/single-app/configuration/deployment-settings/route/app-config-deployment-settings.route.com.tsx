@@ -48,6 +48,7 @@ function buildNotificationPayload(
 
 function mapFormValuesToPayload(values: AppConfigDeploymentSettingsFormSchemaOutput): DeploymentSettingsUpdatePayload {
     const base = {
+        entrypoint: values.entrypoint ?? "",
         command: values.command ?? "",
         workingDir: values.workingDir ?? "",
         preDeploymentCommand: values.preDeploymentCommand ?? "",

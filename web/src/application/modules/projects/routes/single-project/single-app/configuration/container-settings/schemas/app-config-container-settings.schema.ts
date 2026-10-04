@@ -10,6 +10,7 @@ export const ContainerSettingsFormLabelRowSchema = z.object({
 /** General/runtime fields aligned with `ContainerSpec` (groups as one string in the form). */
 export const ContainerSettingsFormGeneralSchema = z.object({
     image: z.string(),
+    entrypoint: z.string(),
     command: z.string(),
     workingDir: z.string(),
     hostname: z.string(),
@@ -97,6 +98,7 @@ export type AppConfigContainerSettingsFormSchemaOutput = z.output<typeof AppConf
 export const emptyAppConfigContainerSettingsFormDefaults: AppConfigContainerSettingsFormSchemaInput = {
     general: {
         image: "",
+        entrypoint: "",
         command: "",
         workingDir: "",
         hostname: "",

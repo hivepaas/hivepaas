@@ -14,6 +14,7 @@ export type AppDeploymentSettings_FindOne_Req = ApiRequestBase<{ projectID: stri
 export type AppDeploymentSettings_FindOne_Res = ApiResponseBase<AppDeploymentSettings>;
 
 type AppDeploymentSettings_UpdateBasePayload = {
+    entrypoint: string;
     command: string;
     workingDir: string;
     preDeploymentCommand: string;

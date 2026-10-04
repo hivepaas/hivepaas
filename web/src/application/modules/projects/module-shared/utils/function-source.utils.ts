@@ -111,6 +111,7 @@ export function functionSettingsToPayload(settings: FunctionMethod, source: Func
 
     return {
         activeMethod: settings.activeMethod,
+        entrypoint: settings.entrypoint ?? "",
         command: settings.command ?? "",
         workingDir: settings.workingDir ?? "",
         preDeploymentCommand: settings.preDeploymentCommand ?? "",

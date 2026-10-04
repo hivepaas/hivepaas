@@ -125,6 +125,7 @@ function mapFormValuesToPayload(
         serviceLabels: buildLabels(values.serviceLabels),
         containerLabels: buildLabels(values.containerLabels),
         image: g.image,
+        entrypoint: g.entrypoint,
         command: g.command,
         workingDir: g.workingDir,
         hostname: g.hostname,

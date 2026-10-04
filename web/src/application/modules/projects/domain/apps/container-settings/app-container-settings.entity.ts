@@ -13,6 +13,7 @@ export type ContainerSpec = {
     serviceLabels: Record<string, string>;
     containerLabels: Record<string, string>;
     image: string;
+    entrypoint: string;
     command: string;
     workingDir: string;
     hostname: string;

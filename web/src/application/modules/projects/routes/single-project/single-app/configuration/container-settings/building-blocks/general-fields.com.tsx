@@ -18,6 +18,9 @@ import {
     type AppConfigContainerSettingsFormSchemaOutput,
 } from "../schemas";
 
+const ENTRYPOINT_TOOLTIP =
+    "What the container runs, with the command as its arguments. Empty runs the image's entrypoint. The next " +
+    "deployment sets it again from the deployment settings.";
 const DOCKER_INIT_TOOLTIP =
     "Runs an init process (Tini) as PID 1 to reap zombie processes and forward signals for a graceful shutdown. " +
     "Automatic leaves it to the image: one that starts with an init of its own keeps it, because two of them in " +
@@ -41,6 +44,13 @@ export function GeneralFields() {
     >();
 
     const { field: image } = useController({ control, name: "general.image" });
+    const {
+        field: entrypoint,
+        fieldState: { error: entrypointError },
+    } = useController({
+        control,
+        name: "general.entrypoint",
+    });
     const {
         field: command,
         fieldState: { error: commandError },
@@ -105,6 +115,25 @@ export function GeneralFields() {
                     readOnly
                     className={`${PROJECT_FORM_CONTROL_MAX_WIDTH_CLASS} bg-muted/50 text-muted-foreground`}
                 />
+            </InfoBlock>
+
+            <InfoBlock
+                titleWidth={220}
+                title={
+                    <LabelWithInfo
+                        label="Entrypoint"
+                        content={<TooltipText text={ENTRYPOINT_TOOLTIP} />}
+                    />
+                }
+            >
+                <Input
+                    {...entrypoint}
+                    value={entrypoint.value}
+                    onChange={entrypoint.onChange}
+                    placeholder="/docker-entrypoint.sh"
+                    className={PROJECT_FORM_CONTROL_MAX_WIDTH_CLASS}
+                />
+                <FieldError errors={[entrypointError]} />
             </InfoBlock>
 
             <InfoBlock

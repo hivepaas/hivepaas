@@ -178,7 +178,13 @@ UI:    the Metrics tab: routes in the HTTP view, a Dependencies view
   namespace, tracefs and debugfs mounted, the Docker socket read-only to name
   containers; not `--privileged`.
 - **Image pinned** in the release, as VictoriaLogs and vlagent are; pulled
-  only on nodes where it is on.
+  only on nodes where it is on. As built: `obiImage` in release.json. An agent
+  runs its own release's OBI - the release it is built with - so an update
+  moves OBI by moving the agent: the new agent pulls the new image while the
+  old OBI still runs, swaps them (its configuration's hash covers the image),
+  and removes the old image. The update's plan lists OBI after the agent,
+  with this release's image as the current one, deployed while the feature
+  is on with a node chosen; the update's log says that the agents move it.
 - **What it watches**: the containers of opted-in apps on the node, by
   `container_name` patterns - a task's container is `<service>.<slot>.<task>`.
   Never a port, never all containers. Tasks that start, stop or restart are

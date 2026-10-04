@@ -10,6 +10,10 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
+	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
+	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
+	"github.com/hivepaas/hivepaas/hivepaas_app/repository"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/sysupdateservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/traefikservice"
 )
 
@@ -95,7 +99,7 @@ func TestPlanListsTheAgent(t *testing.T) {
 		agent: globalServiceOn("hivepaas_agent", "hivepaas/hivepaas-agent:1.0.0-beta1"),
 	}
 	s := &service{dockerManager: &fakeDocker{}, hpAppService: hp, traefikService: fakeTraefik{},
-		systemAppService: &fakeSystemApps{apps: map[string]*entity.App{}}}
+		systemAppService: &fakeSystemApps{apps: map[string]*entity.App{}}, settingRepo: &fakeSettings{}}
 
 	plan, err := s.PlanUpdate(context.Background(), nil, &base.ReleaseInfo{
 		AppImage: "hivepaas/hivepaas:1.0.0-beta2", AgentImage: "hivepaas/hivepaas-agent:1.0.0-beta2",
@@ -103,13 +107,62 @@ func TestPlanListsTheAgent(t *testing.T) {
 
 	assert.NoError(t, err)
 	var agent *struct{ current, target string }
-	for _, c := range plan.Components {
+	at := -1
+	for i, c := range plan.Components {
 		if c.Key == base.HivepaasAgentKey {
 			agent = &struct{ current, target string }{c.CurrentImage, c.TargetImage}
+			at = i
 		}
 	}
 	if assert.NotNil(t, agent, "the agent is in the plan") {
 		assert.Equal(t, "hivepaas/hivepaas-agent:1.0.0-beta1", agent.current)
 		assert.Equal(t, "hivepaas/hivepaas-agent:1.0.0-beta2", agent.target)
+		assert.Equal(t, base.HivepaasOBIKey, plan.Components[at+1].Key, "OBI moves with it")
+	}
+}
+
+// fakeSettings answers the logging settings given; none when nil.
+type fakeSettings struct {
+	repository.SettingRepo
+	logging *entity.LoggingSettings
+}
+
+func (f *fakeSettings) GetSingle(context.Context, database.IDB, *entity.ObjectScope, base.SettingType, bool,
+	...bunex.SelectQueryOption) (*entity.Setting, error) {
+	if f.logging == nil {
+		return nil, hperrors.NewNotFound("Setting")
+	}
+	setting := &entity.Setting{Type: base.SettingTypeLogging}
+	setting.MustSetData(f.logging)
+	return setting, nil
+}
+
+// OBI moves with the agent: from this release's image, where the nodes run it,
+// to the release's.
+func TestOBIMovesWithTheAgent(t *testing.T) {
+	on := &entity.LoggingSettings{Enabled: true, Sources: entity.LoggingSources{Apps: true},
+		Performance: &entity.LoggingPerformance{Enabled: true, Nodes: []*entity.LoggingPerformanceNode{{ID: "n1"}}}}
+	s := &service{settingRepo: &fakeSettings{logging: on}}
+	current := currentOBIImage()
+	assert.Equal(t, base.StableVersion.OBIImage, current, "this release's")
+
+	change, err := s.obiChange(context.Background(), nil, &base.ReleaseInfo{
+		OBIImage: "otel/ebpf-instrument:v0.15.0"})
+	if assert.NoError(t, err) {
+		assert.Equal(t, sysupdateservice.ChangeUpdate, change.Change)
+		assert.Equal(t, current, change.CurrentImage)
+		assert.False(t, change.InterruptsTraffic)
+	}
+
+	change, err = s.obiChange(context.Background(), nil, &base.ReleaseInfo{})
+	if assert.NoError(t, err) {
+		assert.Equal(t, sysupdateservice.ChangeNone, change.Change, "a release naming none")
+	}
+
+	on.Performance.Enabled = false
+	change, err = s.obiChange(context.Background(), nil, &base.ReleaseInfo{
+		OBIImage: "otel/ebpf-instrument:v0.15.0"})
+	if assert.NoError(t, err) {
+		assert.Equal(t, sysupdateservice.ChangeNotDeployed, change.Change, "no node runs it")
 	}
 }

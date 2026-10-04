@@ -213,6 +213,8 @@ func (s *service) updateSystem(
 	if err != nil {
 		return hperrors.Wrap(err)
 	}
+	// OBI moves with the agent: each node's agent runs its own release's.
+	s.noteOBIMove(ctx, db, data, args.TargetVersion)
 
 	// 6. The app and the worker last, and together.
 	//

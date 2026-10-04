@@ -30,6 +30,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/obi"
 	"github.com/hivepaas/hivepaas/hivepaas_app/repository"
 	"github.com/hivepaas/hivepaas/hivepaas_app/repository/cacherepository"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/systemappservice"
 	"github.com/hivepaas/hivepaas/services/docker"
 )
 
@@ -74,7 +75,9 @@ type UC struct {
 	dockerManager docker.Manager
 
 	// root is where the node's filesystem is: /host in the agent's container.
-	root       string
+	root string
+	// image is the OBI this agent runs: its release's.
+	image      string
 	out        io.Writer
 	httpClient *http.Client
 	scrapeURL  string
@@ -117,8 +120,8 @@ func New(
 	root string,
 ) *UC {
 	return &UC{logger: logger, db: db, settingRepo: settingRepo, appRepo: appRepo, cache: cache,
-		dockerManager: dockerManager,
-		root:          root, out: os.Stdout, httpClient: &http.Client{Timeout: scrapeTimeout},
+		dockerManager: dockerManager, image: releaseImage(),
+		root: root, out: os.Stdout, httpClient: &http.Client{Timeout: scrapeTimeout},
 		scrapeURL: fmt.Sprintf("http://127.0.0.1:%d/metrics", obi.MetricsPort), now: time.Now,
 		deltas: obi.NewDeltas(), appIDs: map[string]string{}}
 }
@@ -404,10 +407,23 @@ func (uc *UC) optedInApps(ctx context.Context) (map[string]string, error) {
 	return out, nil
 }
 
+// releaseImage is the OBI this agent runs: its release's, the one it is built
+// with - so that an update moves OBI with the agent - or the default, when the
+// release names none.
+func releaseImage() string {
+	if image := systemappservice.CurrentRelease().OBIImage; image != "" {
+		return image
+	}
+	return obi.DefaultImage
+}
+
 // ensure runs OBI with a configuration: the one running is kept when it was
 // made with it, in this agent's network namespace; otherwise it is replaced.
+// The image is pulled first, while the one running still runs - a new
+// release's OBI stops the numbers only for the swap - and the image a replaced
+// OBI ran is removed once the new one runs, when it is another.
 func (uc *UC) ensure(ctx context.Context, config []byte) error {
-	hash := obi.ConfigHash(config)
+	hash := obi.ConfigHash(uc.image, config)
 	if uc.agentID == "" {
 		id, err := uc.selfContainerID(ctx)
 		if err != nil {
@@ -419,22 +435,27 @@ func (uc *UC) ensure(ctx context.Context, config []byte) error {
 	if err != nil && !errors.Is(err, hperrors.ErrInfraNotFound) {
 		return hperrors.Wrap(err)
 	}
-	if err == nil {
+	replaced := err == nil
+	oldImage := ""
+	if replaced {
 		c := current.Container
 		if c.State != nil && c.State.Running && c.Config != nil && c.Config.Labels[obi.LabelConfig] == hash &&
 			c.HostConfig != nil && string(c.HostConfig.NetworkMode) == "container:"+uc.agentID {
 			uc.running = true
 			return nil
 		}
-		if err = uc.removeContainer(ctx); err != nil {
-			return err
-		}
+		oldImage = c.Image
 	}
 	if err = uc.ensureImage(ctx); err != nil {
 		return err
 	}
+	if replaced {
+		if err = uc.removeContainer(ctx); err != nil {
+			return err
+		}
+	}
 	created, err := uc.dockerManager.ContainerCreate(ctx, func(opts *client.ContainerCreateOptions) {
-		*opts = obi.ContainerOptions(uc.agentID, hash)
+		*opts = obi.ContainerOptions(uc.image, uc.agentID, hash)
 	})
 	if err != nil {
 		return hperrors.Wrap(err)
@@ -454,8 +475,26 @@ func (uc *UC) ensure(ctx context.Context, config []byte) error {
 	// A new OBI counts from zero: its first scrape is a baseline.
 	uc.deltas.Reset()
 	uc.running = true
-	uc.logger.Infof("obi: running for %d apps", len(uc.appIDs))
+	uc.logger.Infof("obi: running %s for %d apps", uc.image, len(uc.appIDs))
+	uc.removeOldImage(ctx, oldImage)
 	return nil
+}
+
+// removeOldImage removes the image a replaced OBI ran, by its id, when it is
+// not the one running now: OBI's images are the agent's own, pulled by
+// digest, and nothing else on the node runs them. A failure leaves it for the
+// node's cleanup.
+func (uc *UC) removeOldImage(ctx context.Context, imageID string) {
+	if imageID == "" {
+		return
+	}
+	running, err := uc.dockerManager.ImageInspect(ctx, uc.image)
+	if err != nil || running.ID == imageID {
+		return
+	}
+	if _, err = uc.dockerManager.ImageRemove(ctx, imageID); err != nil {
+		uc.logger.Warnf("obi: removing the image of the OBI replaced: %v", err)
+	}
 }
 
 // remove takes OBI away: when it runs, or this agent has not looked for one
@@ -483,14 +522,14 @@ func (uc *UC) removeContainer(ctx context.Context) error {
 }
 
 func (uc *UC) ensureImage(ctx context.Context) error {
-	_, err := uc.dockerManager.ImageInspect(ctx, obi.Image)
+	_, err := uc.dockerManager.ImageInspect(ctx, uc.image)
 	if err == nil {
 		return nil
 	}
 	if !errors.Is(err, hperrors.ErrInfraNotFound) {
 		return hperrors.Wrap(err)
 	}
-	pull, err := uc.dockerManager.ImagePull(ctx, obi.Image)
+	pull, err := uc.dockerManager.ImagePull(ctx, uc.image)
 	if err != nil {
 		return hperrors.Wrap(err)
 	}

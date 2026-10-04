@@ -61199,7 +61199,7 @@
             "type" : "boolean"
           },
           "key" : {
-            "description" : "Key is db, redis, traefik, victoria-logs, vlagent, registry, app or worker.",
+            "description" : "Key is db, redis, traefik, victoria-logs, vlagent, registry, agent, obi,\napp or worker. obi is no service: each node's agent runs it, and it moves\nwith the agent.",
             "type" : "string"
           },
           "reason" : {
@@ -61308,6 +61308,10 @@
             "description" : "NotesURL is where the release's notes are read: what changed, and what to\nknow before moving to it. Absent means the release published none.",
             "type" : "string"
           },
+          "obiImage" : {
+            "description" : "OBIImage is OBI's: the eBPF instrumentation each node's agent runs while\napps' routes and calls are on - not a service, a container the agent\nstarts. An agent runs the OBI of the release it is built with, so an\nupdate moves OBI by moving the agent; a release that names none leaves\nit on obi.DefaultImage.",
+            "type" : "string"
+          },
           "placeholderImage" : {
             "description" : "PlaceholderImage is what a new app runs until its first deployment: an\nimage whose own command waits and stops on a signal, so the app is given\nnone, and the image set later runs its own.",
             "type" : "string"
@@ -61342,7 +61346,7 @@
             "type" : "string"
           }
         },
-        "required" : [ "agentImage", "appImage", "appVersion", "blockMajorUpgrade", "canUpdate", "dbImage", "functionRuntimes", "notesUrl", "placeholderImage", "redisImage", "registryImage", "relation", "releaseDate", "templates", "traefikImage", "victoriaLogsImage", "vlagentImage" ],
+        "required" : [ "agentImage", "appImage", "appVersion", "blockMajorUpgrade", "canUpdate", "dbImage", "functionRuntimes", "notesUrl", "obiImage", "placeholderImage", "redisImage", "registryImage", "relation", "releaseDate", "templates", "traefikImage", "victoriaLogsImage", "vlagentImage" ],
         "type" : "object"
       },
       "hpappservice.ReleaseRelation" : {

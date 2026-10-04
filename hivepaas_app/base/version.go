@@ -97,6 +97,12 @@ type ReleaseInfo struct {
 	TraefikImage      string `json:"traefikImage"`
 	VictoriaLogsImage string `json:"victoriaLogsImage"`
 	VlagentImage      string `json:"vlagentImage"`
+	// OBIImage is OBI's: the eBPF instrumentation each node's agent runs while
+	// apps' routes and calls are on - not a service, a container the agent
+	// starts. An agent runs the OBI of the release it is built with, so an
+	// update moves OBI by moving the agent; a release that names none leaves
+	// it on obi.DefaultImage.
+	OBIImage string `json:"obiImage,omitempty"`
 	// RegistryImage is the registry HivePaaS runs for itself, when it runs one.
 	// The configuration HivePaaS writes for it is the configuration this version
 	// of zot accepts, so a bump is the trigger to re-check that.

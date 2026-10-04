@@ -1,6 +1,7 @@
 package sysupdateserviceimpl
 
 import (
+	"github.com/hivepaas/hivepaas/hivepaas_app/repository"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/dbservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/hpappservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/notificationservice"
@@ -17,6 +18,7 @@ type service struct {
 	traefikService      traefikservice.Service
 	systemAppService    systemappservice.Service
 
+	settingRepo   repository.SettingRepo
 	dockerManager docker.Manager
 }
 
@@ -27,6 +29,7 @@ func New(
 	traefikService traefikservice.Service,
 	systemAppService systemappservice.Service,
 
+	settingRepo repository.SettingRepo,
 	dockerManager docker.Manager,
 ) sysupdateservice.Service {
 	return &service{
@@ -36,6 +39,7 @@ func New(
 		traefikService:      traefikService,
 		systemAppService:    systemAppService,
 
+		settingRepo:   settingRepo,
 		dockerManager: dockerManager,
 	}
 }

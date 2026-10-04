@@ -36,6 +36,11 @@ const (
 	// the stack file, so it carries no stack prefix either. Its absence means the
 	// registry was never switched on, not that something is broken.
 	HivepaasRegistryKey = "registry"
+
+	// OBI is no service either: each node's agent runs it as a container of its
+	// own while apps' routes and calls are on, the image of the agent's release.
+	// The update moves it by moving the agent.
+	HivepaasOBIKey = "obi"
 )
 
 const (

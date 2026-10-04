@@ -19,9 +19,10 @@ import (
 )
 
 const (
-	// Image is the OBI release HivePaaS runs, pinned by digest: its metric
-	// names and labels are what the agent reads.
-	Image = "otel/ebpf-instrument:v0.14.0@sha256:0b063b9ec47e10dd4503ce1dc21f273acd3c85ffc9c135f0b753ee64de9c0819"
+	// DefaultImage is the OBI an agent runs when its release names none:
+	// the one this code reads, its metric names and labels, pinned by digest.
+	// A release names its own in release.json, obiImage.
+	DefaultImage = "otel/ebpf-instrument:v0.14.0@sha256:0b063b9ec47e10dd4503ce1dc21f273acd3c85ffc9c135f0b753ee64de9c0819"
 
 	// ContainerName is OBI's container on a node: one a node, the agent's.
 	ContainerName = "hivepaas-obi"
@@ -88,9 +89,10 @@ func Config(patterns []string, capacity Capacity) []byte {
 
 // ConfigHash names what an OBI container is made with: its image and its
 // options - its memory, its capabilities, its mounts - and its configuration.
-// One made otherwise, by an agent from before or for other apps, is replaced.
-func ConfigHash(config []byte) string {
-	return hashOf(ContainerOptions("", ""), config)
+// One made otherwise - another release's OBI, an agent from before, other
+// apps - is replaced.
+func ConfigHash(image string, config []byte) string {
+	return hashOf(ContainerOptions(image, "", ""), config)
 }
 
 func hashOf(opts client.ContainerCreateOptions, config []byte) string {
@@ -109,11 +111,11 @@ func hashOf(opts client.ContainerCreateOptions, config []byte) string {
 //     containers it is told to watch;
 //   - the capabilities above, not privileged;
 //   - its memory bounded, and its own log lines marked as OBI's.
-func ContainerOptions(agentContainerID, configHash string) client.ContainerCreateOptions {
+func ContainerOptions(image, agentContainerID, configHash string) client.ContainerCreateOptions {
 	return client.ContainerCreateOptions{
 		Name: ContainerName,
 		Config: &container.Config{
-			Image: Image,
+			Image: image,
 			Env: []string{
 				"OTEL_EBPF_CONFIG_PATH=" + path.Join(ConfigDir, ConfigFile),
 				"OTEL_EBPF_PROMETHEUS_PORT=" + strconv.Itoa(MetricsPort),

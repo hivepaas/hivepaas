@@ -18,6 +18,7 @@ import (
 	"time"
 
 	"github.com/moby/moby/api/types/container"
+	"github.com/moby/moby/api/types/image"
 	"github.com/moby/moby/api/types/jsonstream"
 	"github.com/moby/moby/client"
 	"github.com/stretchr/testify/assert"
@@ -94,6 +95,10 @@ type fakeDocker struct {
 	created int
 	removed int
 	calls   int
+	// events are what was done, in order: pull, remove, create, start,
+	// remove-image <id>.
+	events        []string
+	removedImages []string
 }
 
 func (f *fakeDocker) NodeCurrentID(context.Context) (string, error) {
@@ -121,17 +126,28 @@ func (f *fakeDocker) ContainerRemove(_ context.Context, _ string, _ ...docker.Co
 	}
 	f.obi = nil
 	f.removed++
+	f.events = append(f.events, "remove")
 	return &client.ContainerRemoveResult{}, nil
 }
 
-func (f *fakeDocker) ImageInspect(_ context.Context, image string, _ ...docker.ImageInspectOption) (
+// imageID is an image's id as the fake names it.
+func imageID(ref string) string { return "id:" + ref }
+
+func (f *fakeDocker) ImageInspect(_ context.Context, ref string, _ ...docker.ImageInspectOption) (
 	*client.ImageInspectResult, error) {
 	for _, p := range f.pulled {
-		if p == image {
-			return &client.ImageInspectResult{}, nil
+		if p == ref {
+			return &client.ImageInspectResult{InspectResponse: image.InspectResponse{ID: imageID(ref)}}, nil
 		}
 	}
 	return nil, hperrors.Wrap(hperrors.ErrInfraNotFound)
+}
+
+func (f *fakeDocker) ImageRemove(_ context.Context, id string, _ ...docker.ImageRemoveOption) (
+	*client.ImageRemoveResult, error) {
+	f.removedImages = append(f.removedImages, id)
+	f.events = append(f.events, "remove-image "+id)
+	return &client.ImageRemoveResult{}, nil
 }
 
 type pullResponse struct{ io.ReadCloser }
@@ -145,6 +161,7 @@ func (pullResponse) JSONMessages(context.Context) iter.Seq2[jsonstream.Message, 
 func (f *fakeDocker) ImagePull(_ context.Context, image string, _ ...docker.ImagePullOption) (
 	client.ImagePullResponse, error) {
 	f.pulled = append(f.pulled, image)
+	f.events = append(f.events, "pull")
 	return pullResponse{ReadCloser: io.NopCloser(&bytes.Buffer{})}, nil
 }
 
@@ -154,9 +171,10 @@ func (f *fakeDocker) ContainerCreate(_ context.Context, options ...docker.Contai
 	for _, o := range options {
 		o(opts)
 	}
-	f.obi = &container.InspectResponse{ID: "obi-1", Config: opts.Config, HostConfig: opts.HostConfig,
-		State: &container.State{}}
+	f.obi = &container.InspectResponse{ID: "obi-1", Image: imageID(opts.Config.Image), Config: opts.Config,
+		HostConfig: opts.HostConfig, State: &container.State{}}
 	f.created++
+	f.events = append(f.events, "create")
 	return &client.ContainerCreateResult{ID: "obi-1"}, nil
 }
 
@@ -175,6 +193,7 @@ func (f *fakeDocker) ContainerCopyTo(_ context.Context, _ string, dst string, co
 func (f *fakeDocker) ContainerStart(_ context.Context, _ string, _ ...docker.ContainerStartOption) (
 	*client.ContainerStartResult, error) {
 	f.obi.State.Running = true
+	f.events = append(f.events, "start")
 	return &client.ContainerStartResult{}, nil
 }
 
@@ -247,7 +266,7 @@ func TestReconcileRunsOBIOnAListedNode(t *testing.T) {
 	w := newWorld(t, "node-1")
 	assert.NoError(t, w.uc.Reconcile(context.Background()))
 	assert.Equal(t, 1, w.docker.created)
-	assert.Equal(t, []string{obi.Image}, w.docker.pulled)
+	assert.Equal(t, []string{w.uc.image}, w.docker.pulled)
 	assert.Contains(t, w.docker.config, "//hivepaas-obi.yaml:")
 	assert.Contains(t, w.docker.config, `container_name: "p1_dev_a2.*"`)
 	assert.Contains(t, w.docker.config, "global_scale_factor: -2", "the recommended capacity: small, on 456 MB")
@@ -559,4 +578,28 @@ func TestSettingsComeFromTheCache(t *testing.T) {
 	assert.NoError(t, err)
 	assert.False(t, s.On())
 	assert.Nil(t, s.Apps)
+}
+
+// The OBI an agent runs is its release's. A new release's - the agent updated
+// - is pulled while the old one still runs, swapped, and the old image
+// removed; a swap for anything else keeps the image.
+func TestANewReleasesOBIIsPulledBeforeTheSwap(t *testing.T) {
+	w := newWorld(t, "node-1")
+	assert.Equal(t, base.BetaVersion.OBIImage, w.uc.image, "the release's, as it was built")
+	w.uc.image = "otel/ebpf-instrument:v0.14.0"
+	assert.NoError(t, w.uc.Reconcile(context.Background()))
+
+	w.docker.events = nil
+	w.uc.image = "otel/ebpf-instrument:v0.15.0"
+	assert.NoError(t, w.uc.Reconcile(context.Background()))
+	assert.Equal(t, []string{"pull", "remove", "create", "start",
+		"remove-image " + imageID("otel/ebpf-instrument:v0.14.0")}, w.docker.events)
+	assert.Equal(t, "otel/ebpf-instrument:v0.15.0", w.docker.obi.Config.Image)
+
+	// Another app asks: the same image, kept.
+	w.docker.events = nil
+	w.settings.features = append(w.settings.features, featuresOf("A1"))
+	assert.NoError(t, w.uc.Reconcile(context.Background()))
+	assert.Equal(t, []string{"remove", "create", "start"}, w.docker.events)
+	assert.Len(t, w.docker.removedImages, 1)
 }

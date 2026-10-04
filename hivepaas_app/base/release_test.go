@@ -27,6 +27,8 @@ func TestTheCompiledBetaIsReleaseJSONs(t *testing.T) {
 	assert.Equal(t, want.TraefikImage, BetaVersion.TraefikImage)
 	assert.Equal(t, want.VictoriaLogsImage, BetaVersion.VictoriaLogsImage)
 	assert.Equal(t, want.VlagentImage, BetaVersion.VlagentImage)
+	assert.Equal(t, want.OBIImage, BetaVersion.OBIImage)
+	assert.NotEmpty(t, BetaVersion.OBIImage, "the agents run it")
 	assert.Equal(t, want.RegistryImage, BetaVersion.RegistryImage)
 	assert.Equal(t, want.PlaceholderImage, BetaVersion.PlaceholderImage)
 	assert.NotEmpty(t, BetaVersion.PlaceholderImage, "a new app starts on it")

@@ -64,6 +64,15 @@ func (s *service) PlanUpdate(
 		plan.Components = append(plan.Components, change)
 		plan.Blocked = plan.Blocked || change.Change == sysupdateservice.ChangeBlocked
 		plan.RequiresBackup = plan.RequiresBackup || change.RequiresBackup
+		if step.key == base.HivepaasAgentKey {
+			// OBI moves with the agent: each node's runs its own release's.
+			obiChange, err := s.obiChange(ctx, db, target)
+			if err != nil {
+				return nil, hperrors.Wrap(err)
+			}
+			plan.Components = append(plan.Components, obiChange)
+			plan.Blocked = plan.Blocked || obiChange.Change == sysupdateservice.ChangeBlocked
+		}
 	}
 	return plan, nil
 }

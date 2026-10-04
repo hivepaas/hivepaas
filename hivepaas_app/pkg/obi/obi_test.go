@@ -34,10 +34,13 @@ ebpf:
 	assert.Contains(t, string(Config(patterns, CapacityLarge)), "wakeup_len: 256\n")
 	assert.Contains(t, string(Config(patterns, CapacityLarge)), "global_scale_factor: 0\n")
 
-	small := ConfigHash(Config(patterns, CapacitySmall))
-	assert.NotEqual(t, small, ConfigHash(Config(patterns[:1], CapacitySmall)))
-	assert.NotEqual(t, small, ConfigHash(Config(patterns, CapacityMedium)), "another capacity: another OBI")
-	assert.Equal(t, small, ConfigHash(Config(patterns, CapacitySmall)))
+	small := ConfigHash(DefaultImage, Config(patterns, CapacitySmall))
+	assert.NotEqual(t, small, ConfigHash(DefaultImage, Config(patterns[:1], CapacitySmall)))
+	assert.NotEqual(t, small, ConfigHash(DefaultImage, Config(patterns, CapacityMedium)),
+		"another capacity: another OBI")
+	assert.NotEqual(t, small, ConfigHash("otel/ebpf-instrument:v0.15.0", Config(patterns, CapacitySmall)),
+		"another release's OBI: another OBI")
+	assert.Equal(t, small, ConfigHash(DefaultImage, Config(patterns, CapacitySmall)))
 }
 
 // HivePaaS recommends more capacity to a node with more memory; a capacity
@@ -69,10 +72,10 @@ func TestCapacity(t *testing.T) {
 // OBI is not privileged: the host's PID namespace, the agent's network one,
 // the measured capabilities, the Docker socket read-only, its memory bounded.
 func TestContainerOptions(t *testing.T) {
-	opts := ContainerOptions("agent123", "abc")
+	opts := ContainerOptions(DefaultImage, "agent123", "abc")
 	host := opts.HostConfig
 	assert.Equal(t, ContainerName, opts.Name)
-	assert.Equal(t, Image, opts.Config.Image)
+	assert.Equal(t, DefaultImage, opts.Config.Image)
 	assert.False(t, host.Privileged)
 	assert.Equal(t, "host", string(host.PidMode))
 	assert.Equal(t, "container:agent123", string(host.NetworkMode))
@@ -84,10 +87,10 @@ func TestContainerOptions(t *testing.T) {
 	// A container made with other options - another limit, by an agent from
 	// before - is another OBI, and is replaced.
 	config := Config([]string{"p1_dev_a1.*"}, CapacitySmall)
-	other := ContainerOptions("", "")
+	other := ContainerOptions(DefaultImage, "", "")
 	other.HostConfig.Memory = 384 << 20
-	assert.NotEqual(t, ConfigHash(config), hashOf(other, config))
-	assert.Equal(t, ConfigHash(config), hashOf(ContainerOptions("", ""), config))
+	assert.NotEqual(t, ConfigHash(DefaultImage, config), hashOf(other, config))
+	assert.Equal(t, ConfigHash(DefaultImage, config), hashOf(ContainerOptions(DefaultImage, "", ""), config))
 	assert.Equal(t, base.LogComponentOBI, opts.Config.Labels[base.LabelLogComponent])
 	assert.Equal(t, "abc", opts.Config.Labels[LabelConfig])
 	assert.Contains(t, opts.Config.Env, "OTEL_EBPF_CONFIG_PATH=/hivepaas-obi.yaml")

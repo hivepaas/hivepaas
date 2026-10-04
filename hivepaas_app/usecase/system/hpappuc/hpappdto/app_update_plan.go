@@ -50,7 +50,9 @@ type UpdateTargetResp struct {
 }
 
 type UpdateComponentResp struct {
-	// Key is db, redis, traefik, victoria-logs, vlagent, registry, app or worker.
+	// Key is db, redis, traefik, victoria-logs, vlagent, registry, agent, obi,
+	// app or worker. obi is no service: each node's agent runs it, and it moves
+	// with the agent.
 	Key          string `json:"key"`
 	CurrentImage string `json:"currentImage"`
 	TargetImage  string `json:"targetImage"`

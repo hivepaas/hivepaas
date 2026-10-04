@@ -66,6 +66,33 @@ func (c *converter) volumeKey(v types.ServiceVolumeConfig) (string, bool) {
 	return "", false
 }
 
+// findBindRoots gives each directory of the compose file's that services
+// mount the outermost one of those it is in - itself, when it is in none.
+func (c *converter) findBindRoots() {
+	var dirs []string
+	for _, name := range c.names {
+		for _, v := range c.r.project.Services[name].Volumes {
+			if v.Type != types.VolumeTypeBind || path.IsAbs(v.Source) {
+				continue
+			}
+			rel, ok := cleanPath(v.Source)
+			if ok && !c.isFile(rel) && !slices.Contains(dirs, rel) {
+				dirs = append(dirs, rel)
+			}
+		}
+	}
+	c.bindRoots = map[string]string{}
+	for _, rel := range dirs {
+		root := rel
+		for _, other := range dirs {
+			if strings.HasPrefix(rel, other+"/") && len(other) < len(root) {
+				root = other
+			}
+		}
+		c.bindRoots[rel] = root
+	}
+}
+
 // isFile says whether a path of the compose file's is a file rather than a
 // directory: the request carries it, or its name has an extension - but not
 // `.d`, a directory of files - and the request carries no file under it.
@@ -222,6 +249,16 @@ func (c *converter) bindMount(
 	}
 	key, files := "bind:"+rel, c.filesUnder(rel)
 	c.need(rel, composeservice.NeedDirectory, name, len(files) > 0)
+	if root := c.bindRoots[rel]; root != "" && root != rel {
+		// Were it that one's subdirectory, preparing it first would make that
+		// one's directory, opened to no user but root: a service not running
+		// as root could not write to it. Each is its own, and the review says
+		// so.
+		c.add(appPath, specmodel.SeverityWarning, composeservice.CodeDirectoryApart,
+			map[string]any{detailSource: v.Source, detailTarget: v.Target, "in": root},
+			"a directory of its own, not a subdirectory of "+root+"'s: a service mounting that one does not see "+
+				"its files")
+	}
 	owner := c.owners[key]
 	if len(files) > 0 && v.ReadOnly && (owner == "" || owner == name) {
 		// Read only, it holds nothing the app writes: the files given are the
@@ -260,12 +297,31 @@ func (c *converter) bindMount(
 }
 
 // mountFiles mounts each file given under a directory of the compose file's at
-// its place under target, read only: an env config file each.
+// its place under target, read only: an env config file each - once, as a
+// directory mounted inside another holds some of the same files.
 func (c *converter) mountFiles(rel, target string, files []string, mounts map[string]any) {
 	for _, file := range files {
+		at := path.Join(target, strings.TrimPrefix(file, rel+"/"))
+		if mountedAt(mounts, at) {
+			continue
+		}
 		addMount(mounts, path.Base(file), c.envConfigPath(c.configFile(file)),
-			map[string]any{filePart: partContent, detailPath: path.Join(target, strings.TrimPrefix(file, rel+"/"))})
+			map[string]any{filePart: partContent, detailPath: at})
 	}
+}
+
+// mountedAt says whether an app's setting mounts already put a file at a path.
+func mountedAt(mounts map[string]any, at string) bool {
+	for _, body := range mounts {
+		entry, _ := body.(map[string]any)
+		list, _ := entry["files"].([]any)
+		for _, f := range list {
+			if file, _ := f.(map[string]any); file != nil && file[detailPath] == at {
+				return true
+			}
+		}
+	}
+	return false
 }
 
 // filesUnder are the request's files under a directory of the compose

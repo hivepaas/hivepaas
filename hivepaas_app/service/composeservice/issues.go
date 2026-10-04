@@ -31,6 +31,7 @@ const (
 	CodePlacement      = "COMPOSE_PLACEMENT"
 	CodeVariableEmpty  = "COMPOSE_VARIABLE_EMPTY"
 	CodeMountWritable  = "COMPOSE_MOUNT_WRITABLE"
+	CodeDirectoryApart = "COMPOSE_DIRECTORY_APART"
 	CodeAliasTaken     = "COMPOSE_ALIAS_TAKEN"
 	CodeSecretExists   = "COMPOSE_SECRET_EXISTS" //nolint:gosec // an issue code, not a credential
 

@@ -376,3 +376,30 @@ volumes:
 	assert.True(t, mounts["/logs"].ReadOnly, "none is")
 	assert.Contains(t, codes(resp.Issues[envPath+"/apps/web"]), composeservice.CodeMountWritable)
 }
+
+// A directory under another the services mount is a directory of its own,
+// as the other is: the review says the services do not see each other's
+// files there. A file under both is mounted once.
+func TestConvertSaysADirectoryUnderAnotherIsApart(t *testing.T) {
+	req := convertReq(`
+services:
+  app:
+    image: me/app:1
+    volumes: ["./data:/data", "./data/logs:/data/logs"]
+  backup:
+    image: me/backup:1
+    depends_on: [app]
+    volumes: ["./data/backups:/backups"]
+`)
+	req.Files = map[string][]byte{"data/logs/keep.txt": []byte("x")}
+	resp := convert(t, req)
+
+	app := appOf(t, resp, "app").Deployment.Storage.Mounts
+	assert.Equal(t, "data", app["/data"].VolumeOptions.Subpath)
+	assert.Equal(t, "data-logs", app["/data/logs"].VolumeOptions.Subpath)
+	assert.Equal(t, "data-backups", appOf(t, resp, "backup").Deployment.Storage.Mounts["/backups"].VolumeOptions.Subpath)
+	assert.Contains(t, codes(resp.Issues[envPath+"/apps/backup"]), composeservice.CodeDirectoryApart)
+	assert.Contains(t, codes(resp.Issues[envPath+"/apps/app"]), composeservice.CodeDirectoryApart)
+	mounts, _ := appOf(t, resp, "app").Settings["settingMounts"].(map[string]any)
+	assert.Len(t, mounts, 1, "the file under both, once")
+}

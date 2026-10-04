@@ -97,6 +97,9 @@ type converter struct {
 	aliases map[string][]string
 	// owners are the service whose directory a shared volume is, by volume.
 	owners map[string]string
+	// bindRoots are the outermost directory of the compose file's that
+	// services mount each one is in, by its path: itself, when it is in none.
+	bindRoots map[string]string
 	// jobs are the services run to completion.
 	jobs map[string]bool
 	// envSecrets and envConfigs are the env's settings.
@@ -117,6 +120,7 @@ func (c *converter) convert() {
 	c.orderServices()
 	c.findJobs()
 	c.findAliases()
+	c.findBindRoots()
 	c.findVolumeOwners()
 	c.fileObjects()
 	for _, name := range c.names {

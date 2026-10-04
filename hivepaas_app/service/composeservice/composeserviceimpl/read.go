@@ -405,15 +405,19 @@ func (r *read) classifyVariables(req *composeservice.ConvertReq) {
 // secretWords are the words a variable's name holds to be taken for a secret.
 var secretWords = []string{"PASSWORD", "PASSWD", "PASS", "SECRET", "TOKEN", "KEY", "PRIVATE", "CREDENTIALS", "SALT"}
 
+// pathWords end a variable's name that holds where a secret is rather than
+// the secret: POSTGRES_PASSWORD_FILE, SSL_KEY_PATH.
+var pathWords = []string{"FILE", "PATH", "DIR"}
+
 // secretByName says whether a variable's name reads as a secret's: one of
-// its words, split at underscores, is one of secretWords.
+// its words, split at underscores, is one of secretWords - and its last is
+// none of pathWords.
 func secretByName(name string) bool {
-	for word := range strings.SplitSeq(strings.ToUpper(name), "_") {
-		if slices.Contains(secretWords, word) {
-			return true
-		}
+	words := strings.Split(strings.ToUpper(name), "_")
+	if slices.Contains(pathWords, words[len(words)-1]) {
+		return false
 	}
-	return false
+	return slices.ContainsFunc(words, func(word string) bool { return slices.Contains(secretWords, word) })
 }
 
 // load has compose-go read the file in a scratch directory, which holds the

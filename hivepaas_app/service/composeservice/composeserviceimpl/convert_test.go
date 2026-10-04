@@ -420,3 +420,13 @@ func TestConvertAsksForAnIncludedFileItLacks(t *testing.T) {
 	req.Files["inc.env"] = []byte("")
 	assert.NotNil(t, convert(t, req).Bundle, "given, if empty")
 }
+
+// A name ending in FILE, PATH or DIR holds where a secret is, not the secret.
+func TestSecretByNameLeavesAPathOut(t *testing.T) {
+	for name, want := range map[string]bool{
+		"POSTGRES_PASSWORD": true, "API_KEY": true, "SECRET_KEY_BASE": true, "db_password": true,
+		"POSTGRES_PASSWORD_FILE": false, "SSL_KEY_PATH": false, "SECRETS_DIR": false, "POSTGRES_USER": false,
+	} {
+		assert.Equal(t, want, secretByName(name), name)
+	}
+}

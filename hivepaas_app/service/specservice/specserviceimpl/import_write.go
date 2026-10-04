@@ -565,13 +565,30 @@ func (w *writer) pathID(ctx context.Context, scope *entity.ObjectScope, path str
 		}
 	}
 	if !inFull {
-		return "", nil
+		return w.createdProjectDefaultID(t), nil
 	}
 	found, err := w.p.s.findRef(ctx, w.p.db, scope, externalOf(t, body))
 	if err != nil || found == nil {
 		return "", hperrors.Wrap(err)
 	}
 	return found.ID, nil
+}
+
+// createdProjectDefaultID is the id of a default a project being created was
+// given (planner.createdProjectDefault), which the bundle names but does not
+// hold: empty for any other path.
+func (w *writer) createdProjectDefaultID(t refTarget) string {
+	projectID := w.projectIDs[t.project]
+	if projectID == "" || !w.p.createdProjectDefault(t) {
+		return ""
+	}
+	for _, setting := range w.data.UpsertingSettings {
+		if setting.Scope == base.ObjectScopeProject && setting.ObjectID == projectID &&
+			setting.Type == t.settingType && setting.Name == t.key {
+			return setting.ID
+		}
+	}
+	return ""
 }
 
 // setOutcomes says what phase 1 did with each selected node. Phase 2 can still

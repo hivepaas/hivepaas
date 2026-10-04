@@ -64,6 +64,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/clusterservice/clusterserviceimpl"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/commandpipeexecservice/commandpipeexecserviceimpl"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/commandservice/commandserviceimpl"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/composeservice/composeserviceimpl"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/containerexecservice/containerexecserviceimpl"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/containerfileservice/containerfileserviceimpl"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/databackupservice/databackupserviceimpl"
@@ -425,6 +426,7 @@ var Provides = []any{
 	settinginitserviceimpl.New,
 	settingmountserviceimpl.New,
 	specserviceimpl.New,
+	composeserviceimpl.New,
 	settingserviceimpl.New,
 	sslrenewalserviceimpl.New,
 	sslserviceimpl.New,

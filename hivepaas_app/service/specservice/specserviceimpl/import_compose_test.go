@@ -1,0 +1,112 @@
+package specserviceimpl
+
+import (
+	"context"
+	"strings"
+	"testing"
+
+	"github.com/stretchr/testify/assert"
+
+	"github.com/hivepaas/hivepaas/hivepaas_app/base"
+	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/composeservice"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/composeservice/composeserviceimpl"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/specservice"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/specservice/specmodel"
+)
+
+const composeStack = `
+services:
+  db:
+    image: postgres:17
+    environment:
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    volumes: [pgdata:/var/lib/postgresql/data]
+  app:
+    image: ghcr.io/me/app:1.2
+    command: ["sh", "-c", "migrate && serve"]
+    depends_on: [db]
+    ports: ["8080:80"]
+    environment:
+      DATABASE_URL: postgres://app:${DB_PASSWORD}@db/app
+    secrets: [api_key]
+    configs: [{source: settings, target: /etc/app/settings.json}]
+    volumes: [pgdata:/backup:ro]
+volumes:
+  pgdata:
+secrets:
+  api_key: {environment: API_KEY}
+configs:
+  settings: {content: '{"a": 1}'}
+`
+
+// What a compose file reads into, the import plans and writes with nothing
+// missing: the project's default volume, the env's secrets and config files
+// the apps mount and refer to, the owner of a shared volume first.
+func TestAComposeFilesBundlePlansAndApplies(t *testing.T) {
+	svc, _ := planFixture(t)
+	svc.appProvisionService.(*fakeProvisionService).repo = svc.appRepo.(*fakeAppRepo)
+	converted, err := composeserviceimpl.New().Convert(context.Background(), &composeservice.ConvertReq{
+		Compose: composeStack, DotEnv: "DB_PASSWORD=pw\nAPI_KEY=k\n",
+		ProjectKey: "blog", ProjectName: "Blog", EnvKey: "prod", EnvName: "production",
+		NetworkName: "blog_prod_net", RootDomain: "example.com",
+	})
+	if !assert.NoError(t, err) {
+		return
+	}
+	req := &specservice.PlanBundleReq{
+		ValidateImportReq: specservice.ValidateImportReq{Scope: entity.NewObjectScopeGlobal(),
+			Options: specmodel.ImportOptions{Existing: specmodel.ExistingUpdate, DeployCreated: true}},
+		Doc: converted.Bundle, Issues: converted.Issues,
+	}
+	plan, err := svc.PlanBundle(context.Background(), nil, req)
+	if !assert.NoError(t, err) {
+		return
+	}
+	for _, n := range plan.Nodes {
+		for _, issue := range n.Issues {
+			assert.True(t, strings.HasPrefix(issue.Code, "COMPOSE_"), "%s: %s %v", n.Path, issue.Code, issue.Detail)
+		}
+	}
+	assert.Equal(t, specmodel.ActionCreate, node(t, plan, "projects/blog/envs/prod/apps/app").Action)
+	assert.True(t, node(t, plan, "projects/blog/envs/prod/apps/app").Deploy)
+
+	resp, err := svc.ApplyBundle(context.Background(), nil, &specservice.ApplyBundleReq{
+		PlanBundleReq: *req, OperatorID: "u_operator", PlanHash: plan.PlanHash, AcceptIssues: true,
+	})
+	if !assert.NoError(t, err) {
+		return
+	}
+	assert.Len(t, resp.Deployments, 2)
+
+	provision := svc.appProvisionService.(*fakeProvisionService)
+	if assert.Len(t, provision.reqs, 2) {
+		assert.Equal(t, "db", provision.reqs[0].Key, "the volume's owner first")
+	}
+	var app string
+	for _, one := range provision.reqs {
+		if one.Key == "app" {
+			app = one.AppID
+		}
+	}
+	types := map[base.SettingType]*entity.Setting{}
+	for _, setting := range provision.settings[app] {
+		types[setting.Type] = setting
+	}
+	for _, typ := range []base.SettingType{base.SettingTypeEnvVar, base.SettingTypeAppRouting,
+		base.SettingTypeAppSettingMount, base.SettingTypeAppDeployment} {
+		assert.Contains(t, types, typ)
+	}
+	assert.Contains(t, types[base.SettingTypeEnvVar].Data, "${secrets.DB_PASSWORD}")
+	assert.Equal(t, "sh -c 'migrate && serve'",
+		types[base.SettingTypeAppDeployment].MustAsAppDeploymentSettings().Command)
+
+	secrets := 0
+	for _, setting := range persisted(svc).UpsertingSettings {
+		if setting.Type == base.SettingTypeSecret && setting.Scope == base.ObjectScopeProjectEnv {
+			secrets++
+			assert.True(t, setting.Inheritable, setting.Name)
+		}
+	}
+	assert.Equal(t, 2, secrets, "the variable's and the file's")
+}

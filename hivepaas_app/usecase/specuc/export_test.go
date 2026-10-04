@@ -6,6 +6,7 @@ import (
 	"os"
 	"path/filepath"
 	"reflect"
+	"slices"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -14,11 +15,15 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/config"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/permission/permissionimpl"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
+	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/projecthelper"
 	"github.com/hivepaas/hivepaas/hivepaas_app/repository"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/auditservice"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/composeservice/composeserviceimpl"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/projectservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/specservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/specservice/specmodel"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/specuc/specdto"
@@ -67,6 +72,20 @@ type fakeSpecService struct {
 	err     error
 }
 
+// fakeProjectService names a new project as the real one does, and refuses
+// the names in taken.
+type fakeProjectService struct {
+	projectservice.Service
+	taken []string
+}
+
+func (f *fakeProjectService) CheckNewProjectName(_ context.Context, _ database.IDB, name string) (string, error) {
+	if slices.Contains(f.taken, name) {
+		return "", hperrors.NewAlreadyExist("Project")
+	}
+	return projecthelper.CalcProjectKey(name), nil
+}
+
 func (f *fakeSpecService) Export(
 	_ context.Context, _ database.IDB, req *specservice.ExportReq,
 ) (*specservice.ExportResp, error) {
@@ -89,7 +108,7 @@ func newTestUC(t *testing.T) (*UC, *fakeAuditService, *fakeSpecService) {
 	audit := &fakeAuditService{}
 	manager := permissionimpl.NewManager(&fakeACLRepo{}, nil, nil, nil, audit)
 	svc := &fakeSpecService{}
-	return New(nil, manager, audit, svc, nil), audit, svc
+	return New(nil, nil, manager, audit, composeserviceimpl.New(), &fakeProjectService{}, svc, nil), audit, svc
 }
 
 // allowSecretReveal sets the operator flag that gates every stored secret.

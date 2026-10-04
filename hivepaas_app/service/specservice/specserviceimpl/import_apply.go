@@ -34,9 +34,21 @@ func (s *service) applyBundle(
 	req *specservice.ApplyImportReq,
 	bundle *specmodel.ImportBundle,
 ) (*specservice.ApplyImportResp, error) {
+	return s.applyBundleWith(ctx, db, req, bundle, nil)
+}
+
+// applyBundleWith applies a bundle with the issues of reading it from another
+// format, which its plan was made with.
+func (s *service) applyBundleWith(
+	ctx context.Context,
+	db database.IDB,
+	req *specservice.ApplyImportReq,
+	bundle *specmodel.ImportBundle,
+	extra map[string][]specmodel.Issue,
+) (*specservice.ApplyImportResp, error) {
 	// Planned again, on the transaction the writes happen in: the plan applied
 	// is the plan of this installation as it is now, not as it was at validate.
-	p, err := s.planBundle(ctx, db, &req.ValidateImportReq, bundle)
+	p, err := s.planBundleWith(ctx, db, &req.ValidateImportReq, bundle, extra)
 	if err != nil {
 		return nil, err
 	}

@@ -61,6 +61,18 @@ func (s *service) planBundle(
 	req *specservice.ValidateImportReq,
 	bundle *specmodel.ImportBundle,
 ) (*planner, error) {
+	return s.planBundleWith(ctx, db, req, bundle, nil)
+}
+
+// planBundleWith plans a bundle with the issues of reading it from another
+// format, by node path (specservice.PlanBundleReq).
+func (s *service) planBundleWith(
+	ctx context.Context,
+	db database.IDB,
+	req *specservice.ValidateImportReq,
+	bundle *specmodel.ImportBundle,
+	extra map[string][]specmodel.Issue,
+) (*planner, error) {
 	// What the route may not write can still be what a reference names, so the
 	// bundle as uploaded is kept beside the part that is planned.
 	full := *bundle
@@ -71,13 +83,17 @@ func (s *service) planBundle(
 	if err != nil {
 		return nil, err
 	}
-	current, err := s.currentState(ctx, db, currentScope, bundle.Manifest.SecretsMode)
-	if err != nil {
-		return nil, err
+	current := &specmodel.ImportBundle{
+		Projects: map[string]*specmodel.ProjectDoc{}, Envs: map[string]map[string]*specmodel.EnvDoc{},
+	}
+	if currentScope != nil {
+		if current, err = s.currentState(ctx, db, currentScope, bundle.Manifest.SecretsMode); err != nil {
+			return nil, err
+		}
 	}
 
 	p := &planner{
-		s: s, db: db, req: req, bundle: bundle, full: &full, current: current,
+		s: s, db: db, req: req, bundle: bundle, full: &full, current: current, extra: extra,
 		envOnly:     req.Scope.ScopeType == base.ObjectScopeProjectEnv,
 		byPath:      map[string]*specmodel.PlanNode{},
 		settingsOf:  map[string]map[string]any{},
@@ -153,7 +169,9 @@ func (s *service) restrictToScope(
 // global setting is a path in a global export and an external reference in any
 // narrower one, and the two must not read as a difference. A global bundle is
 // compared at global scope whatever the route; a narrower one at the route's
-// scope, or at its project's when the route is global.
+// scope, or at its project's when the route is global - and at none when its
+// project is not here: there is nothing to compare it with, and exporting the
+// whole installation to find that out is what a new project's every plan cost.
 func (s *service) currentScopeFor(
 	ctx context.Context,
 	db database.IDB,
@@ -176,7 +194,7 @@ func (s *service) currentScopeFor(
 			return entity.NewObjectScopeProject(project.ID), nil
 		}
 	}
-	return route, nil
+	return nil, nil
 }
 
 // currentState is this installation as export sees it, at the route's scope and
@@ -252,6 +270,9 @@ type planner struct {
 	// functionApps are the app nodes whose app is a function once imported:
 	// their routing is pinned to the runtime's port when written.
 	functionApps map[string]bool
+	// extra are the issues of reading the bundle from another format, by node
+	// path.
+	extra map[string][]specmodel.Issue
 }
 
 // appPlace is where an app's document sits in the bundle.
@@ -292,6 +313,9 @@ func (p *planner) plan(ctx context.Context) error {
 			return err
 		}
 	}
+	if err := p.addExtraIssues(); err != nil {
+		return err
+	}
 	for _, node := range p.nodes {
 		p.applyExisting(node)
 	}
@@ -311,6 +335,32 @@ func (p *planner) plan(ctx context.Context) error {
 		return err
 	}
 	p.selectAncestors()
+	return nil
+}
+
+// addExtraIssues puts the issues of reading the bundle from another format on
+// their nodes, before anything is checked: one that skips its node keeps what
+// the node holds out of the import, as the planner's own do. A note has no
+// severity.
+func (p *planner) addExtraIssues() error {
+	for _, path := range slices.Sorted(maps.Keys(p.extra)) {
+		node := p.byPath[path]
+		if node == nil {
+			return hperrors.Wrap(hperrors.ErrInternal).WithExtraDetail("an issue for %s, which is no node", path)
+		}
+		for _, issue := range p.extra[path] {
+			switch issue.Severity {
+			case "":
+				node.Notes = append(node.Notes, issue)
+			case specmodel.SeveritySkipped:
+				p.skipNode(node, issue)
+			case specmodel.SeverityBlocked, specmodel.SeverityFixable, specmodel.SeverityWarning:
+				node.Issues = append(node.Issues, issue)
+			default:
+				node.Issues = append(node.Issues, issue)
+			}
+		}
+	}
 	return nil
 }
 

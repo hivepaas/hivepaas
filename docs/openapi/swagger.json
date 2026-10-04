@@ -2313,6 +2313,66 @@
         "x-codegen-request-body-name" : "body"
       }
     },
+    "/projects/from-compose/apply" : {
+      "post" : {
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/specdto.ApplyComposeReq"
+              }
+            }
+          },
+          "description" : "validate's body, planHash, acceptIssues",
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/specdto.ApplyComposeResp"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "summary" : "Create a project from a Docker Compose file",
+        "tags" : [ "Configuration specs" ],
+        "x-codegen-request-body-name" : "body"
+      }
+    },
+    "/projects/from-compose/validate" : {
+      "post" : {
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/specdto.ValidateComposeReq"
+              }
+            }
+          },
+          "description" : "the compose file, its .env and files, the choices",
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/specdto.ValidateComposeResp"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "summary" : "Plan creating a project from a Docker Compose file",
+        "tags" : [ "Configuration specs" ],
+        "x-codegen-request-body-name" : "body"
+      }
+    },
     "/projects/{projectID}" : {
       "delete" : {
         "description" : "Deletes a project",
@@ -57222,12 +57282,12 @@
         "x-enum-varnames" : [ "AuditLogSourceAPIGet", "AuditLogSourceAPICreate", "AuditLogSourceCapabilityRevoked", "AuditLogSourceAPIUpdate", "AuditLogSourceAPIDelete", "AuditLogSourceAPIAction", "AuditLogSourceMCP", "AuditLogSourceSystemCleanup" ]
       },
       "base.AuditLogType" : {
-        "enum" : [ "secret-reveal", "api-key-create", "api-key-revoke", "setting-create", "setting-update", "setting-status-update", "setting-delete", "project-update", "app-update", "app-create", "app-delete", "project-create", "project-delete", "project-env-delete", "cluster-update", "task-cancel", "user-create", "user-update", "user-delete", "user-login", "user-logout", "hivepaas-security-settings-update", "hivepaas-settings-update-confirm", "hivepaas-settings-update-revert", "hivepaas-settings-update", "hivepaas-action", "spec-export", "spec-import", "mcp-tool-call", "backup-download" ],
+        "enum" : [ "secret-reveal", "api-key-create", "api-key-revoke", "setting-create", "setting-update", "setting-status-update", "setting-delete", "project-update", "app-update", "app-create", "app-delete", "project-create", "project-delete", "project-env-delete", "cluster-update", "task-cancel", "user-create", "user-update", "user-delete", "user-login", "user-logout", "hivepaas-security-settings-update", "hivepaas-settings-update-confirm", "hivepaas-settings-update-revert", "hivepaas-settings-update", "hivepaas-action", "spec-export", "spec-import", "compose-import", "mcp-tool-call", "backup-download" ],
         "type" : "string",
         "x-enum-comments" : {
           "AuditLogTypeAPIKeyRevoke" : "nolint:gosec // G101: an event name"
         },
-        "x-enum-varnames" : [ "AuditLogTypeSecretReveal", "AuditLogTypeAPIKeyCreate", "AuditLogTypeAPIKeyRevoke", "AuditLogTypeSettingCreate", "AuditLogTypeSettingUpdate", "AuditLogTypeSettingStatusUpdate", "AuditLogTypeSettingDelete", "AuditLogTypeProjectUpdate", "AuditLogTypeAppUpdate", "AuditLogTypeAppCreate", "AuditLogTypeAppDelete", "AuditLogTypeProjectCreate", "AuditLogTypeProjectDelete", "AuditLogTypeProjectEnvDelete", "AuditLogTypeClusterUpdate", "AuditLogTypeTaskCancel", "AuditLogTypeUserCreate", "AuditLogTypeUserUpdate", "AuditLogTypeUserDelete", "AuditLogTypeUserLogin", "AuditLogTypeUserLogout", "AuditLogTypeHivePaaSSecuritySettingsUpdate", "AuditLogTypeHivePaaSSettingsUpdateConfirm", "AuditLogTypeHivePaaSSettingsUpdateRevert", "AuditLogTypeHivePaaSSettingsUpdate", "AuditLogTypeHivePaaSAction", "AuditLogTypeSpecExport", "AuditLogTypeSpecImport", "AuditLogTypeMCPToolCall", "AuditLogTypeBackupDownload" ]
+        "x-enum-varnames" : [ "AuditLogTypeSecretReveal", "AuditLogTypeAPIKeyCreate", "AuditLogTypeAPIKeyRevoke", "AuditLogTypeSettingCreate", "AuditLogTypeSettingUpdate", "AuditLogTypeSettingStatusUpdate", "AuditLogTypeSettingDelete", "AuditLogTypeProjectUpdate", "AuditLogTypeAppUpdate", "AuditLogTypeAppCreate", "AuditLogTypeAppDelete", "AuditLogTypeProjectCreate", "AuditLogTypeProjectDelete", "AuditLogTypeProjectEnvDelete", "AuditLogTypeClusterUpdate", "AuditLogTypeTaskCancel", "AuditLogTypeUserCreate", "AuditLogTypeUserUpdate", "AuditLogTypeUserDelete", "AuditLogTypeUserLogin", "AuditLogTypeUserLogout", "AuditLogTypeHivePaaSSecuritySettingsUpdate", "AuditLogTypeHivePaaSSettingsUpdateConfirm", "AuditLogTypeHivePaaSSettingsUpdateRevert", "AuditLogTypeHivePaaSSettingsUpdate", "AuditLogTypeHivePaaSAction", "AuditLogTypeSpecExport", "AuditLogTypeSpecImport", "AuditLogTypeComposeImport", "AuditLogTypeMCPToolCall", "AuditLogTypeBackupDownload" ]
       },
       "base.BackupRestoreMode" : {
         "enum" : [ "replace", "overwrite" ],
@@ -58897,6 +58957,173 @@
           }
         },
         "required" : [ "meta" ],
+        "type" : "object"
+      },
+      "composeservice.FileNeed" : {
+        "properties" : {
+          "as" : {
+            "description" : "As is what reads it: env_file, config, secret, bind.",
+            "type" : "string"
+          },
+          "by" : {
+            "description" : "By are the services that read it.",
+            "items" : {
+              "type" : "string"
+            },
+            "type" : "array"
+          },
+          "given" : {
+            "description" : "Given says the request carries it.",
+            "type" : "boolean"
+          },
+          "path" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "as", "by", "given", "path" ],
+        "type" : "object"
+      },
+      "composeservice.PortAs" : {
+        "enum" : [ "domain", "node", "none" ],
+        "type" : "string",
+        "x-enum-varnames" : [ "PortAsDomain", "PortAsNode", "PortAsNone" ]
+      },
+      "composeservice.PortView" : {
+        "properties" : {
+          "as" : {
+            "$ref" : "#/components/schemas/composeservice.PortAs"
+          },
+          "default" : {
+            "$ref" : "#/components/schemas/composeservice.PortAs"
+          },
+          "domain" : {
+            "type" : "string"
+          },
+          "protocol" : {
+            "type" : "string"
+          },
+          "published" : {
+            "type" : "integer"
+          },
+          "suggested" : {
+            "description" : "Suggested is the domain the review offers.",
+            "type" : "string"
+          },
+          "target" : {
+            "type" : "integer"
+          }
+        },
+        "required" : [ "as", "default", "domain", "protocol", "published", "suggested", "target" ],
+        "type" : "object"
+      },
+      "composeservice.ServiceView" : {
+        "properties" : {
+          "aliases" : {
+            "description" : "Aliases are the names the service is reached by beside its key.",
+            "items" : {
+              "type" : "string"
+            },
+            "type" : "array"
+          },
+          "app" : {
+            "description" : "App is the key of the app it becomes.",
+            "type" : "string"
+          },
+          "build" : {
+            "description" : "Build says the file builds the service's image.",
+            "type" : "boolean"
+          },
+          "dropped" : {
+            "description" : "Dropped are the compose fields not carried to the app.",
+            "items" : {
+              "type" : "string"
+            },
+            "type" : "array"
+          },
+          "image" : {
+            "type" : "string"
+          },
+          "mode" : {
+            "type" : "string"
+          },
+          "name" : {
+            "type" : "string"
+          },
+          "ports" : {
+            "items" : {
+              "$ref" : "#/components/schemas/composeservice.PortView"
+            },
+            "type" : "array"
+          },
+          "reason" : {
+            "type" : "string"
+          },
+          "replicas" : {
+            "description" : "Replicas of a replicated service.",
+            "type" : "integer"
+          },
+          "skipped" : {
+            "description" : "Skipped says the service is not created, and Reason why.",
+            "type" : "boolean"
+          },
+          "volumes" : {
+            "items" : {
+              "$ref" : "#/components/schemas/composeservice.VolumeView"
+            },
+            "type" : "array"
+          }
+        },
+        "required" : [ "aliases", "app", "build", "dropped", "image", "mode", "name", "ports", "reason", "replicas", "skipped", "volumes" ],
+        "type" : "object"
+      },
+      "composeservice.VariableView" : {
+        "properties" : {
+          "default" : {
+            "type" : "string"
+          },
+          "given" : {
+            "description" : "Given says it has a value, from the .env or the review.",
+            "type" : "boolean"
+          },
+          "name" : {
+            "type" : "string"
+          },
+          "required" : {
+            "type" : "boolean"
+          },
+          "secret" : {
+            "type" : "boolean"
+          }
+        },
+        "required" : [ "default", "given", "name", "required", "secret" ],
+        "type" : "object"
+      },
+      "composeservice.VolumeKind" : {
+        "enum" : [ "volume", "shared", "file", "host", "tmpfs", "dropped" ],
+        "type" : "string",
+        "x-enum-varnames" : [ "VolumeKindVolume", "VolumeKindShared", "VolumeKindFile", "VolumeKindHost", "VolumeKindTmpfs", "VolumeKindDropped" ]
+      },
+      "composeservice.VolumeView" : {
+        "properties" : {
+          "kind" : {
+            "$ref" : "#/components/schemas/composeservice.VolumeKind"
+          },
+          "owner" : {
+            "description" : "Owner is the app whose directory a shared volume is.",
+            "type" : "string"
+          },
+          "readOnly" : {
+            "type" : "boolean"
+          },
+          "source" : {
+            "description" : "Source is what the compose file mounts: a volume's name, a path.",
+            "type" : "string"
+          },
+          "target" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "kind", "owner", "readOnly", "source", "target" ],
         "type" : "object"
       },
       "configfiledto.ConfigFileResp" : {
@@ -68989,6 +69216,117 @@
         "required" : [ "createdAt", "default", "expireAt", "id", "inheritable", "inherited", "kind", "name", "size", "status", "type", "updateVer", "updatedAt" ],
         "type" : "object"
       },
+      "specdto.ApplyComposeData" : {
+        "properties" : {
+          "deployments" : {
+            "description" : "Deployments are the deployments queued.",
+            "items" : {
+              "$ref" : "#/components/schemas/specservice.ImportDeployment"
+            },
+            "type" : "array"
+          },
+          "plan" : {
+            "allOf" : [ {
+              "$ref" : "#/components/schemas/specmodel.ImportPlan"
+            } ],
+            "description" : "Plan is the plan applied, each selected node with its outcome.",
+            "type" : "object"
+          },
+          "project" : {
+            "allOf" : [ {
+              "$ref" : "#/components/schemas/basedto.ObjectIDResp"
+            } ],
+            "description" : "Project is the project created.",
+            "type" : "object"
+          }
+        },
+        "required" : [ "deployments", "plan", "project" ],
+        "type" : "object"
+      },
+      "specdto.ApplyComposeReq" : {
+        "properties" : {
+          "acceptIssues" : {
+            "description" : "AcceptIssues accepts every skipped, fixable and warning issue of the plan.",
+            "type" : "boolean"
+          },
+          "compose" : {
+            "type" : "string"
+          },
+          "deploy" : {
+            "description" : "Deploy deploys the apps once they are created.",
+            "type" : "boolean"
+          },
+          "dotEnv" : {
+            "description" : "DotEnv is the .env beside the compose file.",
+            "type" : "string"
+          },
+          "files" : {
+            "additionalProperties" : {
+              "items" : {
+                "type" : "integer"
+              },
+              "type" : "array"
+            },
+            "description" : "Files are the files the compose file reads, by their path in it. JSON\ncarries each as base64.",
+            "type" : "object"
+          },
+          "planHash" : {
+            "type" : "string"
+          },
+          "profiles" : {
+            "description" : "Profiles are the profiles whose services are created, beside those with\nnone.",
+            "items" : {
+              "type" : "string"
+            },
+            "type" : "array"
+          },
+          "project" : {
+            "$ref" : "#/components/schemas/specdto.ComposeProjectReq"
+          },
+          "selection" : {
+            "allOf" : [ {
+              "$ref" : "#/components/schemas/specmodel.Selection"
+            } ],
+            "description" : "Selection leaves services out, as an import's does: by their apps' paths.",
+            "type" : "object"
+          },
+          "services" : {
+            "additionalProperties" : {
+              "$ref" : "#/components/schemas/specdto.ComposeServiceReq"
+            },
+            "description" : "Services are the review's choices of each service, by its name.",
+            "type" : "object"
+          },
+          "variables" : {
+            "additionalProperties" : {
+              "$ref" : "#/components/schemas/specdto.ComposeVariableReq"
+            },
+            "description" : "Variables are what the review gives of the file's variables, by name.",
+            "type" : "object"
+          },
+          "volume" : {
+            "allOf" : [ {
+              "$ref" : "#/components/schemas/basedto.ObjectIDReq"
+            } ],
+            "description" : "Volume is the cluster volume the services' data goes to; none for the\nproject's own.",
+            "type" : "object"
+          }
+        },
+        "required" : [ "acceptIssues", "compose", "deploy", "dotEnv", "files", "planHash", "profiles", "project", "selection", "services", "variables", "volume" ],
+        "type" : "object"
+      },
+      "specdto.ApplyComposeResp" : {
+        "properties" : {
+          "data" : {
+            "$ref" : "#/components/schemas/specdto.ApplyComposeData"
+          },
+          "meta" : {
+            "$ref" : "#/components/schemas/basedto.Meta"
+          }
+        },
+        "required" : [ "data", "meta" ],
+        "type" : "object"
+      },
       "specdto.ApplyImportData" : {
         "properties" : {
           "deployments" : {
@@ -69051,6 +69389,94 @@
         "required" : [ "data", "meta" ],
         "type" : "object"
       },
+      "specdto.ComposePortReq" : {
+        "properties" : {
+          "as" : {
+            "$ref" : "#/components/schemas/composeservice.PortAs"
+          },
+          "domain" : {
+            "type" : "string"
+          },
+          "protocol" : {
+            "type" : "string"
+          },
+          "published" : {
+            "type" : "integer"
+          },
+          "target" : {
+            "type" : "integer"
+          }
+        },
+        "required" : [ "as", "domain", "protocol", "published", "target" ],
+        "type" : "object"
+      },
+      "specdto.ComposeProjectReq" : {
+        "properties" : {
+          "env" : {
+            "description" : "Env is the env the services are created in.",
+            "type" : "string"
+          },
+          "name" : {
+            "description" : "Name is the project's; empty takes the file's own, `name:`.",
+            "type" : "string"
+          }
+        },
+        "required" : [ "env", "name" ],
+        "type" : "object"
+      },
+      "specdto.ComposeProjectResp" : {
+        "properties" : {
+          "env" : {
+            "type" : "string"
+          },
+          "envKey" : {
+            "description" : "EnvKey is the env's key, as its paths in the plan name it.",
+            "type" : "string"
+          },
+          "fileName" : {
+            "description" : "FileName is the project's name in the file; empty for none.",
+            "type" : "string"
+          },
+          "key" : {
+            "type" : "string"
+          },
+          "name" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "env", "envKey", "fileName", "key", "name" ],
+        "type" : "object"
+      },
+      "specdto.ComposeServiceReq" : {
+        "properties" : {
+          "image" : {
+            "description" : "Image is the image of a service the file only builds.",
+            "type" : "string"
+          },
+          "ports" : {
+            "items" : {
+              "$ref" : "#/components/schemas/specdto.ComposePortReq"
+            },
+            "type" : "array"
+          }
+        },
+        "required" : [ "image", "ports" ],
+        "type" : "object"
+      },
+      "specdto.ComposeVariableReq" : {
+        "properties" : {
+          "secret" : {
+            "description" : "Secret keeps it as an env secret; absent decides by its name.",
+            "type" : "boolean"
+          },
+          "value" : {
+            "description" : "Value is the variable's, over the .env's; absent keeps that one.",
+            "type" : "string"
+          }
+        },
+        "required" : [ "secret", "value" ],
+        "type" : "object"
+      },
       "specdto.ExportSpecReq" : {
         "properties" : {
           "passphrase" : {
@@ -69066,6 +69492,119 @@
           }
         },
         "required" : [ "passphrase", "secretsMode" ],
+        "type" : "object"
+      },
+      "specdto.ValidateComposeData" : {
+        "properties" : {
+          "needs" : {
+            "items" : {
+              "$ref" : "#/components/schemas/composeservice.FileNeed"
+            },
+            "type" : "array"
+          },
+          "plan" : {
+            "$ref" : "#/components/schemas/specmodel.ImportPlan"
+          },
+          "profiles" : {
+            "items" : {
+              "type" : "string"
+            },
+            "type" : "array"
+          },
+          "project" : {
+            "$ref" : "#/components/schemas/specdto.ComposeProjectResp"
+          },
+          "services" : {
+            "items" : {
+              "$ref" : "#/components/schemas/composeservice.ServiceView"
+            },
+            "type" : "array"
+          },
+          "variables" : {
+            "items" : {
+              "$ref" : "#/components/schemas/composeservice.VariableView"
+            },
+            "type" : "array"
+          }
+        },
+        "required" : [ "needs", "plan", "profiles", "project", "services", "variables" ],
+        "type" : "object"
+      },
+      "specdto.ValidateComposeReq" : {
+        "properties" : {
+          "compose" : {
+            "type" : "string"
+          },
+          "deploy" : {
+            "description" : "Deploy deploys the apps once they are created.",
+            "type" : "boolean"
+          },
+          "dotEnv" : {
+            "description" : "DotEnv is the .env beside the compose file.",
+            "type" : "string"
+          },
+          "files" : {
+            "additionalProperties" : {
+              "items" : {
+                "type" : "integer"
+              },
+              "type" : "array"
+            },
+            "description" : "Files are the files the compose file reads, by their path in it. JSON\ncarries each as base64.",
+            "type" : "object"
+          },
+          "profiles" : {
+            "description" : "Profiles are the profiles whose services are created, beside those with\nnone.",
+            "items" : {
+              "type" : "string"
+            },
+            "type" : "array"
+          },
+          "project" : {
+            "$ref" : "#/components/schemas/specdto.ComposeProjectReq"
+          },
+          "selection" : {
+            "allOf" : [ {
+              "$ref" : "#/components/schemas/specmodel.Selection"
+            } ],
+            "description" : "Selection leaves services out, as an import's does: by their apps' paths.",
+            "type" : "object"
+          },
+          "services" : {
+            "additionalProperties" : {
+              "$ref" : "#/components/schemas/specdto.ComposeServiceReq"
+            },
+            "description" : "Services are the review's choices of each service, by its name.",
+            "type" : "object"
+          },
+          "variables" : {
+            "additionalProperties" : {
+              "$ref" : "#/components/schemas/specdto.ComposeVariableReq"
+            },
+            "description" : "Variables are what the review gives of the file's variables, by name.",
+            "type" : "object"
+          },
+          "volume" : {
+            "allOf" : [ {
+              "$ref" : "#/components/schemas/basedto.ObjectIDReq"
+            } ],
+            "description" : "Volume is the cluster volume the services' data goes to; none for the\nproject's own.",
+            "type" : "object"
+          }
+        },
+        "required" : [ "compose", "deploy", "dotEnv", "files", "profiles", "project", "selection", "services", "variables", "volume" ],
+        "type" : "object"
+      },
+      "specdto.ValidateComposeResp" : {
+        "properties" : {
+          "data" : {
+            "$ref" : "#/components/schemas/specdto.ValidateComposeData"
+          },
+          "meta" : {
+            "$ref" : "#/components/schemas/basedto.Meta"
+          }
+        },
+        "required" : [ "data", "meta" ],
         "type" : "object"
       },
       "specdto.ValidateImportReq" : {

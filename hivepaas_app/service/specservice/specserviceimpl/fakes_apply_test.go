@@ -54,6 +54,9 @@ type fakeProvisionService struct {
 	settings  map[string][]*entity.Setting
 	specs     map[string]*swarm.ServiceSpec
 	cleanedUp bool
+	// repo, when set, is given each app as it is provisioned, as the real
+	// service persists one before the next is built.
+	repo *fakeAppRepo
 }
 
 func (f *fakeProvisionService) ProvisionApps(
@@ -77,6 +80,9 @@ func (f *fakeProvisionService) ProvisionApps(
 			return resp, err
 		}
 		f.settings[app.ID], f.specs[app.ID] = settings, spec
+		if f.repo != nil {
+			f.repo.apps = append(f.repo.apps, app)
+		}
 		provisioned := &appprovisionservice.ProvisionAppResp{App: app}
 		if one.Deployment != nil {
 			provisioned.Deployment = &entity.Deployment{ID: "dep_" + app.ID, AppID: app.ID}

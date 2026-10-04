@@ -2,6 +2,7 @@ package projectserviceimpl
 
 import (
 	"context"
+	"errors"
 	"time"
 
 	"github.com/tiendc/gofn"
@@ -9,15 +10,15 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
+	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
+	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
+	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/projecthelper"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/ulid"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/projectservice"
 )
 
 const (
-	projectWebhookName      = "default"
 	projectWebhookSecretLen = 24
-
-	projectNotificationName = "default"
 )
 
 func (s *service) PrepareNewProject(
@@ -51,7 +52,7 @@ func newProjectWebhook(project *entity.Project, now time.Time) *entity.Setting {
 		ObjectID:    project.ID,
 		Type:        base.SettingTypeRepoWebhook,
 		Status:      base.SettingStatusActive,
-		Name:        projectWebhookName,
+		Name:        projectservice.NewProjectDefaults[base.SettingTypeRepoWebhook],
 		Inheritable: true,
 		Default:     true,
 		Version:     entity.CurrentRepoWebhookVersion,
@@ -74,7 +75,7 @@ func newProjectNotificationDefault(project *entity.Project, now time.Time) *enti
 		ObjectID:    project.ID,
 		Type:        base.SettingTypeNotification,
 		Status:      base.SettingStatusActive,
-		Name:        projectNotificationName,
+		Name:        projectservice.NewProjectDefaults[base.SettingTypeNotification],
 		Inheritable: true,
 		Default:     true,
 		Version:     entity.CurrentNotificationVersion,
@@ -83,4 +84,26 @@ func newProjectNotificationDefault(project *entity.Project, now time.Time) *enti
 	}
 	setting.MustSetData(entity.NewNotificationDefaultForScope(entity.NewObjectScopeProject(project.ID)))
 	return setting
+}
+
+func (s *service) CheckNewProjectName(ctx context.Context, db database.IDB, name string) (string, error) {
+	key := projecthelper.CalcProjectKey(name)
+	if gofn.Contain(base.UnallowedProjectKeys, key) {
+		return "", hperrors.Wrap(hperrors.ErrProjectNameNotAllowed).WithParam("Name", name)
+	}
+	conflict, err := s.projectRepo.GetByKey(ctx, db, key, bunex.SelectColumns("id"))
+	if err != nil && !errors.Is(err, hperrors.ErrNotFound) {
+		return "", hperrors.Wrap(err)
+	}
+	if conflict != nil {
+		return "", hperrors.NewAlreadyExist("Project").WithMsgLog("project key '%s' already exists", key)
+	}
+	conflict, err = s.projectRepo.GetByName(ctx, db, name, bunex.SelectColumns("id"))
+	if err != nil && !errors.Is(err, hperrors.ErrNotFound) {
+		return "", hperrors.Wrap(err)
+	}
+	if conflict != nil {
+		return "", hperrors.NewAlreadyExist("Project").WithMsgLog("project name '%s' already exists", name)
+	}
+	return key, nil
 }

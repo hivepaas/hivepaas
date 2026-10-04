@@ -25,6 +25,10 @@ type Service interface {
 	// notification and a volume. Nothing is written, and nothing outside the
 	// database is created.
 	PrepareNewProject(ctx context.Context, req *NewProjectReq, out *PersistingProjectData) error
+	// CheckNewProjectName answers the key a project of this name is created
+	// under: it refuses a key HivePaaS keeps for itself, and a name or a key
+	// another project has.
+	CheckNewProjectName(ctx context.Context, db database.IDB, name string) (string, error)
 	// DeleteProject removes a project with everything in it. removeStorage also
 	// deletes the volumes the project owns and the data its apps kept.
 	DeleteProject(ctx context.Context, db database.IDB, project *entity.Project, removeStorage bool) error

@@ -8,6 +8,18 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/projecthelper"
 )
 
+// NewProjectDefaults are the settings PrepareNewProject gives every project it
+// makes, by type and name - its default volume among them. An import creating
+// a project may name them before they exist.
+var NewProjectDefaults = map[base.SettingType]string{
+	base.SettingTypeRepoWebhook:   defaultSettingName,
+	base.SettingTypeNotification:  defaultSettingName,
+	base.SettingTypeClusterVolume: defaultSettingName,
+}
+
+// defaultSettingName names every setting a project is created with.
+const defaultSettingName = "default"
+
 type PersistingProjectData struct {
 	UpsertingProjects       []*entity.Project
 	UpsertingProjectEnvs    []*entity.ProjectEnv

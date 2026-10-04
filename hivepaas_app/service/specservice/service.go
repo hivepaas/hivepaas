@@ -10,6 +10,7 @@ import (
 	"context"
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/specservice/specmodel"
 )
 
 type Service interface {
@@ -31,4 +32,13 @@ type Service interface {
 	// what the plan says. It refuses a plan other than the one the operator saw,
 	// one with a blocked issue, and one with issues nobody accepted.
 	ApplyImport(ctx context.Context, db database.IDB, req *ApplyImportReq) (*ApplyImportResp, error)
+
+	// PlanBundle plans a bundle built in memory - read from another format, such
+	// as a compose file - as ValidateImport plans an uploaded one. It writes
+	// nothing.
+	PlanBundle(ctx context.Context, db database.IDB, req *PlanBundleReq) (*specmodel.ImportPlan, error)
+
+	// ApplyBundle applies what PlanBundle planned, as ApplyImport applies what
+	// ValidateImport did.
+	ApplyBundle(ctx context.Context, db database.IDB, req *ApplyBundleReq) (*ApplyImportResp, error)
 }

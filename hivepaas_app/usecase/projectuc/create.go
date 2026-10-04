@@ -2,7 +2,6 @@ package projectuc
 
 import (
 	"context"
-	"errors"
 	"time"
 
 	"github.com/tiendc/gofn"
@@ -13,8 +12,6 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/auditdetail"
-	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
-	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/projecthelper"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/timeutil"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/transaction"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/ulid"
@@ -75,30 +72,11 @@ func (uc *UC) loadProjectData(
 	req *projectdto.CreateProjectReq,
 	data *createProjectData,
 ) error {
-	data.ProjectKey = projecthelper.CalcProjectKey(req.Name)
-	if gofn.Contain(base.UnallowedProjectKeys, data.ProjectKey) {
-		return hperrors.Wrap(hperrors.ErrProjectNameNotAllowed).WithParam("Name", req.Name)
-	}
-
-	// Project key must be unique
-	conflictProject, err := uc.projectRepo.GetByKey(ctx, db, data.ProjectKey, bunex.SelectColumns("id"))
-	if err != nil && !errors.Is(err, hperrors.ErrNotFound) {
+	key, err := uc.projectService.CheckNewProjectName(ctx, db, req.Name)
+	if err != nil {
 		return hperrors.Wrap(err)
 	}
-	if conflictProject != nil {
-		return hperrors.NewAlreadyExist("Project").
-			WithMsgLog("project key '%s' already exists", data.ProjectKey)
-	}
-
-	// Project name must be unique
-	conflictProject, err = uc.projectRepo.GetByName(ctx, db, req.Name, bunex.SelectColumns("id"))
-	if err != nil && !errors.Is(err, hperrors.ErrNotFound) {
-		return hperrors.Wrap(err)
-	}
-	if conflictProject != nil {
-		return hperrors.NewAlreadyExist("Project").
-			WithMsgLog("project name '%s' already exists", req.Name)
-	}
+	data.ProjectKey = key
 
 	// Validate project owner
 	if req.Owner.ID != "" {

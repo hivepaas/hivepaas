@@ -15,6 +15,10 @@ func (s *HTTPServer) registerProjectRoutes(apiGroup *gin.RouterGroup) {
 	projectGroup.GET("/:projectID", projectHandler.GetProject)
 	projectGroup.GET("", projectHandler.ListProject)
 	projectGroup.POST("", projectHandler.CreateProject)
+	// A project created from a compose file: a path of its own, before
+	// /:projectID matches anything.
+	projectGroup.POST("/from-compose/validate", specHandler.ValidateCompose)
+	projectGroup.POST("/from-compose/apply", specHandler.ApplyCompose)
 	projectGroup.PUT("/:projectID", projectHandler.UpdateProject)
 	projectGroup.PUT("/:projectID/status", projectHandler.UpdateProjectStatus)
 	projectGroup.DELETE("/:projectID", projectHandler.DeleteProject)

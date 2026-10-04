@@ -260,6 +260,11 @@ const (
 	// arrived together.
 	AuditLogTypeSpecImport AuditLogType = "spec-import"
 
+	// AuditLogTypeComposeImport records a project created from a compose file,
+	// as spec-import records an import: the project, its env, the digest of what
+	// the file was read into, and what the import did, counted.
+	AuditLogTypeComposeImport AuditLogType = "compose-import"
+
 	// AuditLogTypeMCPToolCall records an AI client calling one of the MCP
 	// server's tools: which tool, with what input. A tool reads through the
 	// dashboard's own endpoints, which audit their writes as always; this is the
@@ -302,6 +307,7 @@ var AllAuditLogTypes = []AuditLogType{
 	AuditLogTypeHivePaaSAction,
 	AuditLogTypeSpecExport,
 	AuditLogTypeSpecImport,
+	AuditLogTypeComposeImport,
 	AuditLogTypeMCPToolCall,
 	AuditLogTypeBackupDownload,
 }

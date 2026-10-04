@@ -807,7 +807,14 @@ func (f *fakeProjectService) PrepareNewProject(
 		ObjectID: req.Project.ID, Name: "default", Status: base.SettingStatusActive, Default: true,
 	}
 	webhook.MustSetData(&entity.RepoWebhook{Secret: entity.NewEncryptedField("generated")})
-	out.UpsertingSettings = append(out.UpsertingSettings, webhook)
+	// And the default volume, as the real one has the volume service make it.
+	volume := &entity.Setting{
+		ID: "volume_" + req.Project.ID, Type: base.SettingTypeClusterVolume, Scope: base.ObjectScopeProject,
+		ObjectID: req.Project.ID, Name: projectservice.NewProjectDefaults[base.SettingTypeClusterVolume],
+		Status: base.SettingStatusActive, Default: true, Inheritable: true,
+	}
+	volume.MustSetData(&entity.ClusterVolume{Managed: true, Driver: "local"})
+	out.UpsertingSettings = append(out.UpsertingSettings, webhook, volume)
 	return nil
 }
 

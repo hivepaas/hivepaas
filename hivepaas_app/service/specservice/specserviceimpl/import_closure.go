@@ -15,6 +15,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/projectservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/specservice/specmodel"
 )
 
@@ -228,11 +229,27 @@ func (p *planner) resolvePath(ctx context.Context, node *specmodel.PlanNode, ref
 	if inRoute && holder != nil && t.app == "" && holder.Action != specmodel.ActionSkip && !p.excluded(holder.Path) {
 		return p.pull(holder, t, body)
 	}
+	if !inFull && p.createdProjectDefault(t) {
+		return nil, nil
+	}
 	if !inFull {
 		p.refIssue(node, ref, specmodel.CodeRefNotFound, "")
 		return nil, nil
 	}
 	return nil, p.resolveExternal(ctx, node, ref, externalOf(t, body), t.node)
+}
+
+// createdProjectDefault reports whether a path names a setting a project being
+// created is given anyway (projectservice.NewProjectDefaults) - its default
+// volume, which a bundle read from a compose file mounts before the project
+// exists.
+func (p *planner) createdProjectDefault(t refTarget) bool {
+	if t.project == "" || t.env != "" || !t.isCollectionSetting {
+		return false
+	}
+	node := p.byPath[projectsSegment+"/"+t.project]
+	name, isDefault := projectservice.NewProjectDefaults[t.settingType]
+	return node != nil && node.Action == specmodel.ActionCreate && isDefault && name == t.key
 }
 
 // targetHas reports whether this installation has the setting a path names, at

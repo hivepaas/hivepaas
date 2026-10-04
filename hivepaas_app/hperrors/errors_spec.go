@@ -21,3 +21,11 @@ var (
 	ErrSpecImportBlocked           = NewErr(ErrPreconditionFailed, "ERR_SPEC_IMPORT_BLOCKED")
 	ErrSpecImportIssuesNotAccepted = NewErr(ErrPreconditionRequired, "ERR_SPEC_IMPORT_ISSUES_NOT_ACCEPTED")
 )
+
+// Errors for creating a project from a compose file
+var (
+	ErrComposeInvalid    = NewErr(ErrArgumentInvalid, "ERR_COMPOSE_INVALID")
+	ErrComposeTooBig     = NewErr(ErrArgumentInvalid, "ERR_COMPOSE_TOO_BIG")
+	ErrComposeFilePath   = NewErr(ErrArgumentInvalid, "ERR_COMPOSE_FILE_PATH")
+	ErrComposeNoServices = NewErr(ErrArgumentInvalid, "ERR_COMPOSE_NO_SERVICES")
+)

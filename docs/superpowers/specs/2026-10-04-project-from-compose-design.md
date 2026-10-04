@@ -391,7 +391,29 @@ splits it back.
 
 0. Entrypoint for apps.
 1. The backend: reader, converter, endpoints, the import's changes; the tests
-   and the corpus.
+   and the corpus. **Done** (2026-10-04). As built:
+   - `service/composeservice` converts. compose-go loads the file in a scratch
+     directory through a resource loader of its own, the only one it has, that
+     serves the request's files and nothing else; env files and label files
+     are read by the converter; a variable with neither a value nor a default
+     is given an empty one, so that compose-go logs nothing of it. What a
+     service says that HivePaaS does not carry is found by compose-go's
+     unsupported-attribute check, from a list of patterns.
+   - `POST /projects/from-compose/{validate,apply}` are the spec handler's,
+     with `POST /projects`' gate; the usecase is spec import's neighbour in
+     `specuc`, with its gates but no reveal gate; its audit entry is
+     `compose-import`. The name checks of creating a project moved to
+     `projectservice.CheckNewProjectName`, which both use.
+   - Spec import: `PlanBundle` and `ApplyBundle`; the reader's issues on their
+     nodes, in the hash, a skipped one skipping its node; the defaults a new
+     project is given (`projectservice.NewProjectDefaults`) resolve in the
+     planner and the writer; and a bundle narrower than global whose project
+     is not here is compared with nothing, rather than with an export of the
+     whole installation.
+   - Not as planned: validate does not run the builder - the converter writes
+     only blocks it builds; compose-go refuses a dependency cycle itself, as an
+     error; and `depends_on` does not order creation - the import creates a
+     volume's owner first, and the rest by key.
 2. The dashboard's page.
 3. Docs and the MCP tool.
 4. Later:

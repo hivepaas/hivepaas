@@ -134,6 +134,26 @@ type ApplyImportResp struct {
 	Deployments []*ImportDeployment
 }
 
+// PlanBundleReq plans a bundle built in memory. The upload's fields of the
+// embedded request - Bundle, Passphrase - are not read: Doc is the bundle, its
+// Digest naming what it was built from.
+type PlanBundleReq struct {
+	ValidateImportReq
+	Doc *specmodel.ImportBundle
+	// Issues are those of reading the bundle from its format, by the path of the
+	// node each belongs to. They are the plan's as the planner's own are - in
+	// its hash, and a skipped one skipping its node.
+	Issues map[string][]specmodel.Issue
+}
+
+// ApplyBundleReq applies what a PlanBundleReq planned, as ApplyImportReq does.
+type ApplyBundleReq struct {
+	PlanBundleReq
+	OperatorID   string
+	PlanHash     string
+	AcceptIssues bool
+}
+
 // ImportDeployment is a deployment an import queued.
 type ImportDeployment struct {
 	AppID        string `json:"appId"`

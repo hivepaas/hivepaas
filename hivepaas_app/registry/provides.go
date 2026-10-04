@@ -469,6 +469,7 @@ var Provides = []any{
 	cacherepository.NewLoginAttemptRepo,
 	cacherepository.NewMCPPlanRepo,
 	cacherepository.NewMFAPasscodeRepo,
+	cacherepository.NewOBISettingsRepo,
 	cacherepository.NewPeriodicSettingsRepo,
 	cacherepository.NewTaskControlRepo,
 	cacherepository.NewTaskInfoRepo,

@@ -45420,7 +45420,7 @@
     },
     "/system/settings/logging/performance" : {
       "get" : {
-        "description" : "Lists the swarm's nodes for the collection of apps' routes and calls by OBI (eBPF): whether\neach runs it, at which capacity - how many requests and connections OBI tracks at once, and so\nits memory: small, medium or large, auto for the one HivePaaS recommends for the node's memory\n- and what its agent last said of it: whether OBI runs, for how many apps, and whether the node\ncan run it, with why not. `statusReason` says why the statuses were not read: off (the agents\nsay nothing while the feature is off), logs-not-stored, or unreadable.",
+        "description" : "Lists the swarm's nodes for the collection of apps' routes and calls by OBI (eBPF): whether\neach runs it, at which capacity - how many requests and connections OBI tracks at once, and so\nits memory: small, medium or large, auto for the one HivePaaS recommends for the node's memory\n- and what its agent last said of it: whether OBI runs, for how many apps, and whether the node\ncan run it, with why not - said every minute while the feature is on, every 10 minutes while it\nis off. `statusReason` says why the statuses were not read: logs-not-stored, or unreadable.",
         "operationId" : "getSystemLoggingPerformance",
         "responses" : {
           "200" : {
@@ -62005,9 +62005,9 @@
         "type" : "object"
       },
       "hperrors.DisplayLevel" : {
-        "enum" : [ "medium", "high", "medium", "low" ],
+        "enum" : [ "high", "medium", "low", "medium" ],
         "type" : "string",
-        "x-enum-varnames" : [ "errVldDisplayLevel", "DisplayLevelHigh", "DisplayLevelMedium", "DisplayLevelLow" ]
+        "x-enum-varnames" : [ "DisplayLevelHigh", "DisplayLevelMedium", "DisplayLevelLow", "errVldDisplayLevel" ]
       },
       "hperrors.ErrorInfo" : {
         "properties" : {
@@ -63101,7 +63101,7 @@
             "type" : "array"
           },
           "statusReason" : {
-            "description" : "StatusReason says why the nodes' statuses were not read: off,\nlogs-not-stored or unreadable. Empty when they were.",
+            "description" : "StatusReason says why the nodes' statuses were not read:\nlogs-not-stored or unreadable. Empty when they were.",
             "type" : "string"
           },
           "updateVer" : {
@@ -63266,7 +63266,7 @@
             "allOf" : [ {
               "$ref" : "#/components/schemas/loggingdto.PerformanceNodeStatusResp"
             } ],
-            "description" : "Status is what the node's agent last said, in the last few minutes; nil\nwhen it said nothing: the feature off, the logs not stored, or an agent\nfrom before.",
+            "description" : "Status is what the node's agent last said - every minute while the\nfeature is on, every 10 minutes while it is off; nil when it said nothing:\nthe logs not stored, or an agent from before.",
             "type" : "object"
           }
         },

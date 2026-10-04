@@ -63,7 +63,7 @@ func TestLiveEnsureRunsOBIThatCountsTheApp(t *testing.T) {
 	run(app, liveAppImage, []string{"node", "-e",
 		"require('http').createServer((q,s)=>{s.end('ok')}).listen(8080)"})
 
-	uc := New(quiet{}, nil, nil, nil, dm, "")
+	uc := New(quiet{}, nil, nil, nil, nil, dm, "")
 	uc.agentID = agentID
 	assert.NoError(t, uc.ensure(ctx, obi.Config(obi.Patterns([]string{"hp_obi_live"}), obi.CapacitySmall)))
 	assert.True(t, uc.running)

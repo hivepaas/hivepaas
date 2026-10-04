@@ -29,6 +29,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/logging"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/obi"
 	"github.com/hivepaas/hivepaas/hivepaas_app/repository"
+	"github.com/hivepaas/hivepaas/hivepaas_app/repository/cacherepository"
 	"github.com/hivepaas/hivepaas/services/docker"
 )
 
@@ -39,12 +40,23 @@ const (
 	// scrapeInterval is how often OBI's metrics are read: a row per series
 	// per interval, as the agent's resource rows.
 	scrapeInterval = 15 * time.Second
-	// statusInterval is how often the node says what it can run and runs.
-	statusInterval = time.Minute
+	// statusInterval is how often the node says what it can run and runs,
+	// while the feature is on.
+	statusInterval = obi.StatusEvery
 	// preflightInterval is how often the node is checked again: a kernel
 	// does not change while it runs, its free memory does.
 	preflightInterval = 10 * time.Minute
-	scrapeTimeout     = 5 * time.Second
+	// offInterval is how often, while the feature is off, the node is looked
+	// at as when it is on: an OBI that should not run goes, and the node says
+	// what it can run. In between, the agent reads the settings, nothing else.
+	offInterval = obi.StatusEveryOff
+	// syncInterval is how often the settings are read from the database
+	// rather than the cache: what a missed change can cost at most.
+	syncInterval = 10 * time.Minute
+	// cacheTTL is how long settings read from the database are cached for the
+	// agents.
+	cacheTTL      = time.Hour
+	scrapeTimeout = 5 * time.Second
 	// configFileMode is OBI's configuration's: readable by its user.
 	configFileMode = 0o644
 )
@@ -58,6 +70,7 @@ type UC struct {
 	db            database.IDB
 	settingRepo   repository.SettingRepo
 	appRepo       repository.AppRepo
+	cache         cacherepository.OBISettingsRepo
 	dockerManager docker.Manager
 
 	// root is where the node's filesystem is: /host in the agent's container.
@@ -88,6 +101,10 @@ type UC struct {
 	// appIDs are the opted-in apps, by their swarm service's name: what a
 	// container's name starts with.
 	appIDs map[string]string
+	// syncedAt is when the settings were last read from the database;
+	// offCheckedAt when the node was last looked at while the feature is off.
+	syncedAt     time.Time
+	offCheckedAt time.Time
 }
 
 func New(
@@ -95,11 +112,13 @@ func New(
 	db *database.DB,
 	settingRepo repository.SettingRepo,
 	appRepo repository.AppRepo,
+	cache cacherepository.OBISettingsRepo,
 	dockerManager docker.Manager,
 	root string,
 ) *UC {
-	return &UC{logger: logger, db: db, settingRepo: settingRepo, appRepo: appRepo, dockerManager: dockerManager,
-		root: root, out: os.Stdout, httpClient: &http.Client{Timeout: scrapeTimeout},
+	return &UC{logger: logger, db: db, settingRepo: settingRepo, appRepo: appRepo, cache: cache,
+		dockerManager: dockerManager,
+		root:          root, out: os.Stdout, httpClient: &http.Client{Timeout: scrapeTimeout},
 		scrapeURL: fmt.Sprintf("http://127.0.0.1:%d/metrics", obi.MetricsPort), now: time.Now,
 		deltas: obi.NewDeltas(), appIDs: map[string]string{}}
 }
@@ -167,39 +186,32 @@ func (uc *UC) reconcileAndLog(ctx context.Context) {
 // Reconcile reads the settings and makes OBI match them: running, with the
 // opted-in apps, when this node runs it and can; gone otherwise. When the
 // settings cannot be read, nothing changes. While the feature is off, reading
-// them is all it does.
+// them is all it does, but every offInterval.
 func (uc *UC) Reconcile(ctx context.Context) error {
-	cfg, err := uc.loggingSettings(ctx)
+	s, err := uc.settings(ctx)
 	if err != nil {
 		return err
 	}
-	logsOn := cfg.Enabled && (cfg.Sources.Apps || cfg.Sources.HivePaaS)
-	if !logsOn || cfg.Performance == nil || !cfg.Performance.Enabled {
-		return uc.off(ctx)
+	if !s.On() {
+		return uc.off(ctx, s)
 	}
-	if uc.nodeID == "" {
-		if uc.nodeID, err = uc.dockerManager.NodeCurrentID(ctx); err != nil {
-			return hperrors.Wrap(err)
-		}
+	if err = uc.ensureNodeID(ctx); err != nil {
+		return err
 	}
-	node := cfg.Performance.Node(uc.nodeID)
+	node := s.Performance.Node(uc.nodeID)
 	wanted := node != nil
-	capacity := obi.CapacityAuto
-	if node != nil {
-		if c, ok := obi.ParseCapacity(node.Capacity); ok {
-			capacity = c
-		}
-	}
+	capacity := capacityOf(node)
 	appIDs := map[string]string{}
 	if wanted {
-		if appIDs, err = uc.optedInApps(ctx); err != nil {
-			return err
+		for service, id := range s.Apps {
+			appIDs[service] = id
 		}
 	}
 
 	uc.mu.Lock()
 	defer uc.mu.Unlock()
-	uc.on, uc.wanted, uc.appIDs = true, wanted, appIDs
+	// Turned off again, the node is looked at at once.
+	uc.on, uc.wanted, uc.appIDs, uc.offCheckedAt = true, wanted, appIDs, time.Time{}
 	if !uc.checked {
 		// One a previous agent left running: its memory is in the node's
 		// free memory, which preflight must not count against it.
@@ -220,15 +232,72 @@ func (uc *UC) Reconcile(ctx context.Context) error {
 	return uc.ensure(ctx, obi.Config(obi.Patterns(services), uc.preflight.Capacity))
 }
 
-// off is the feature off, or the logs: OBI goes, once - one a previous agent
-// left, or this one ran - and then nothing is done, no Docker, no files, no
-// rows, until it is on again; the node is checked again then.
-func (uc *UC) off(ctx context.Context) error {
+// off is the feature off, or the logs. The node is looked at as when it is on,
+// at once and then every offInterval, the time kept in offCheckedAt: an OBI
+// that should not run goes - one a previous agent left, this one ran, or one
+// started since - and, while the logs are stored, the node says what it can
+// run. In between nothing is done: no Docker, no files, no rows.
+func (uc *UC) off(ctx context.Context, s *entity.OBIAgentSettings) error {
 	uc.mu.Lock()
 	defer uc.mu.Unlock()
 	uc.on, uc.wanted, uc.appIDs = false, false, map[string]string{}
-	uc.preflight, uc.preflightAt = obi.Preflight{}, time.Time{}
-	return uc.remove(ctx)
+	if !uc.offCheckedAt.IsZero() && uc.now().Sub(uc.offCheckedAt) < offInterval {
+		return nil
+	}
+	uc.checked = false // look again: one may have been started since
+	if err := uc.remove(ctx); err != nil {
+		return err
+	}
+	if !s.LogsOn {
+		// Nobody would read what the node says.
+		uc.preflight, uc.preflightAt, uc.offCheckedAt = obi.Preflight{}, time.Time{}, uc.now()
+		return nil
+	}
+	if err := uc.ensureNodeID(ctx); err != nil {
+		return err
+	}
+	capacity := capacityOf(chosenNode(s.Performance, uc.nodeID))
+	uc.preflight, uc.preflightAt, uc.capacity = obi.Check(uc.root, false, capacity), uc.now(), capacity
+	uc.offCheckedAt = uc.now()
+	uc.writeRow(uc.statusLocked())
+	return nil
+}
+
+// ensureNodeID learns this node's id, once.
+func (uc *UC) ensureNodeID(ctx context.Context) error {
+	if uc.nodeID != "" {
+		return nil
+	}
+	id, err := uc.dockerManager.NodeCurrentID(ctx)
+	if err != nil {
+		return hperrors.Wrap(err)
+	}
+	uc.nodeID = id
+	return nil
+}
+
+// chosenNode is the node's entry in the settings, the feature on or off: nil
+// when it is not listed.
+func chosenNode(perf *entity.LoggingPerformance, nodeID string) *entity.LoggingPerformanceNode {
+	if perf == nil {
+		return nil
+	}
+	for _, node := range perf.Nodes {
+		if node != nil && node.ID == nodeID {
+			return node
+		}
+	}
+	return nil
+}
+
+// capacityOf is a node's capacity as chosen: auto when none is.
+func capacityOf(node *entity.LoggingPerformanceNode) obi.Capacity {
+	if node != nil {
+		if c, ok := obi.ParseCapacity(node.Capacity); ok {
+			return c
+		}
+	}
+	return obi.CapacityAuto
 }
 
 // adoptLeftover looks once for an OBI a previous agent left: a running one is
@@ -252,17 +321,56 @@ func (uc *UC) adoptLeftover(ctx context.Context) error {
 	return nil
 }
 
-// loggingSettings are the logging settings, the defaults when there are none.
-func (uc *UC) loggingSettings(ctx context.Context) (*entity.LoggingSettings, error) {
+// settings are what this agent runs OBI by: from the cache while it holds
+// the current ones; from the database every syncInterval, the time kept in
+// syncedAt, and whenever the cache does not hold them - then cached for every
+// agent, under the generation read before. Without Redis, the database.
+func (uc *UC) settings(ctx context.Context) (*entity.OBIAgentSettings, error) {
+	sync := uc.syncedAt.IsZero() || uc.now().Sub(uc.syncedAt) >= syncInterval
+	var gen int64
+	cacheOK := false
+	if uc.cache != nil {
+		cached, g, err := uc.cache.Get(ctx)
+		if err == nil && cached != nil && !sync {
+			return cached, nil
+		}
+		gen, cacheOK = g, err == nil
+	}
+	s, err := uc.readSettings(ctx)
+	if err != nil {
+		return nil, err
+	}
+	uc.syncedAt = uc.now()
+	if cacheOK {
+		if err = uc.cache.Set(ctx, s, gen, cacheTTL); err != nil {
+			uc.logger.Warnf("obi: caching the settings: %v", err)
+		}
+	}
+	return s, nil
+}
+
+// readSettings reads the settings from the database: the logging settings,
+// and the opted-in apps while the feature is on.
+func (uc *UC) readSettings(ctx context.Context) (*entity.OBIAgentSettings, error) {
 	setting, err := uc.settingRepo.GetSingle(ctx, uc.db, entity.NewObjectScopeGlobal(), base.SettingTypeLogging, true)
 	if errors.Is(err, hperrors.ErrNotFound) || (err == nil && setting == nil) {
-		return &entity.LoggingSettings{}, nil
+		return &entity.OBIAgentSettings{}, nil
 	}
 	if err != nil {
 		return nil, hperrors.Wrap(err)
 	}
 	cfg, err := setting.AsLoggingSettings()
-	return cfg, hperrors.Wrap(err)
+	if err != nil {
+		return nil, hperrors.Wrap(err)
+	}
+	s := &entity.OBIAgentSettings{LogsOn: cfg.Enabled && (cfg.Sources.Apps || cfg.Sources.HivePaaS),
+		Performance: cfg.Performance}
+	if s.On() {
+		if s.Apps, err = uc.optedInApps(ctx); err != nil {
+			return nil, err
+		}
+	}
+	return s, nil
 }
 
 // optedInApps are the apps asking for their routes and calls, by their swarm
@@ -460,21 +568,31 @@ func appOf(appIDs map[string]string, container string) (string, bool) {
 func (uc *UC) Status() obi.Status {
 	uc.mu.Lock()
 	defer uc.mu.Unlock()
+	return uc.statusLocked()
+}
+
+func (uc *UC) statusLocked() obi.Status {
 	return obi.Status{HP: obi.RowStatus, Node: uc.nodeID, Wanted: uc.wanted, Running: uc.running,
 		Apps: len(uc.appIDs), Preflight: uc.preflight}
 }
 
 // writeStatus writes the node's status row while the feature is on, the
 // logs stored: the settings show each node's from the latest. Before a
-// reconcile has checked the node there is nothing to say.
+// reconcile has checked the node there is nothing to say. While the feature
+// is off, off writes it, every offInterval.
 func (uc *UC) writeStatus() {
 	uc.mu.Lock()
-	on, known := uc.on, !uc.preflightAt.IsZero()
+	on, known, status := uc.on, !uc.preflightAt.IsZero(), uc.statusLocked()
 	uc.mu.Unlock()
 	if !on || !known {
 		return
 	}
-	line, err := json.Marshal(uc.Status())
+	uc.writeRow(status)
+}
+
+// writeRow writes a status row to the agent's stdout.
+func (uc *UC) writeRow(status obi.Status) {
+	line, err := json.Marshal(status)
 	if err != nil {
 		return
 	}

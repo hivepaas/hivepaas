@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
+	"time"
 )
 
 // The reasons a node cannot run OBI.
@@ -135,6 +136,14 @@ func readTrimmed(path string) string {
 
 // RowStatus is the "hp" of a node's status row.
 const RowStatus = "obi"
+
+// How often an agent writes its node's status row: every minute while the
+// feature is on, every 10 minutes while it is off - so that the nodes can be
+// chosen knowing which can run OBI. The API reads the rows of a little more.
+const (
+	StatusEvery    = time.Minute
+	StatusEveryOff = 10 * time.Minute
+)
 
 // Status is what a node can run and runs, as the agent's status row says it
 // every minute while the logs are stored: the settings show each node's

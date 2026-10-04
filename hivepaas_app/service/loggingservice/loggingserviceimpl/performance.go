@@ -23,12 +23,8 @@ const (
 	// dependencyMetricsTopCalls is how many of its peers' operations: an app
 	// calls a few peers, each a few ways.
 	dependencyMetricsTopCalls = 200
-	// performanceStatusSince is how far back the nodes' status rows are read:
-	// the agent writes one a minute, so a node without one in three is one
-	// whose agent is not writing them.
-	performanceStatusSince = 3 * time.Minute
-	// performanceStatusRows is at most how many: three a node, for over a
-	// hundred nodes.
+	// performanceStatusRows is at most how many status rows are read: three a
+	// node, for over a hundred nodes.
 	performanceStatusRows = 500
 )
 
@@ -92,6 +88,7 @@ func (s *service) obiStats(
 func (s *service) PerformanceStatus(
 	ctx context.Context,
 	db database.IDB,
+	since time.Duration,
 ) (map[string]*loggingservice.PerformanceNodeStatus, error) {
 	backend, err := s.queryBackend(ctx, db)
 	if err != nil {
@@ -99,7 +96,7 @@ func (s *service) PerformanceStatus(
 	}
 	now := timeutil.NowUTC()
 	rows, err := backend.OBIStatus(ctx, &logging.OBIStatusReq{
-		Match: agentMatch(), Start: now.Add(-performanceStatusSince), End: now.Add(time.Second),
+		Match: agentMatch(), Start: now.Add(-since), End: now.Add(time.Second),
 		Limit: performanceStatusRows,
 	})
 	if err != nil {

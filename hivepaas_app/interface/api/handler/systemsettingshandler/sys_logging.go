@@ -93,8 +93,8 @@ func (h *Handler) UpdateLoggingSettings(ctx *gin.Context) {
 // @Description each runs it, at which capacity - how many requests and connections OBI tracks at once, and so
 // @Description its memory: small, medium or large, auto for the one HivePaaS recommends for the node's memory
 // @Description - and what its agent last said of it: whether OBI runs, for how many apps, and whether the node
-// @Description can run it, with why not. `statusReason` says why the statuses were not read: off (the agents
-// @Description say nothing while the feature is off), logs-not-stored, or unreadable.
+// @Description can run it, with why not - said every minute while the feature is on, every 10 minutes while it
+// @Description is off. `statusReason` says why the statuses were not read: logs-not-stored, or unreadable.
 // @Tags    System settings
 // @Produce json
 // @Id      getSystemLoggingPerformance

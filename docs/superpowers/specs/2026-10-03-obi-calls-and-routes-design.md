@@ -327,15 +327,25 @@ with today's names.
      settings every 30 s, as it reads the Docker API's. A switch turned takes
      30 s at most.
    - **The node's status** - preflight, wanted, running, apps - is a row the
-     agent writes every minute while the feature is on and the logs are
-     stored, `"hp":"obi"`. The settings show each node's latest, as the other
-     rows are read.
+     agent writes while the logs are stored, `"hp":"obi"`: every minute while
+     the feature is on, every 10 minutes while it is off, so that the nodes
+     can be chosen knowing which can run OBI. The settings show each node's
+     latest, read over 3 and 12 minutes.
+   - **The settings come from Redis.** Every agent reads them every 30 s:
+     whether the logs are stored, the feature's switch and nodes, the
+     opted-in apps. They are cached for an hour under a generation; saving the
+     logging settings, the nodes, or an app's feature settings moves the
+     generation and drops the entry once committed, so that an agent that read
+     the database before the change cannot cache it after. An agent reads the
+     database on a miss and every 10 minutes, which bounds what a missed
+     change can cost; without Redis, every time.
    - **While the feature is off** - the default, on every node of every
-     installation - the agent reads the setting every 30 s and does nothing
-     else: one look for an OBI a previous agent left, when it starts, then no
-     Docker call, no preflight, no status row, its scrape and status timers
-     stopped. The API answers an app's routes and calls from the switches
-     alone, and the settings page reads no status.
+     installation - the agent reads the settings every 30 s and does nothing
+     else, but every 10 minutes, the time kept in a variable: then it looks
+     for an OBI that should not run - one a previous agent left, or one
+     started since - removes it, checks the node and says its status. Its
+     scrape and status timers are stopped. The API answers an app's routes
+     and calls from the switches alone.
    - **The settings**: `LoggingSettings.Performance` {enabled, nodes by swarm
      node id}, and `AppFeatureSettings.PerformanceSettings` {enabled}.
    - **OBI's configuration** is copied to its image's root,

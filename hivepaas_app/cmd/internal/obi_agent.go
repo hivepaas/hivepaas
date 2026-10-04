@@ -10,6 +10,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/logging"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/safego"
 	"github.com/hivepaas/hivepaas/hivepaas_app/repository"
+	"github.com/hivepaas/hivepaas/hivepaas_app/repository/cacherepository"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecaseagent/obiagentuc"
 	"github.com/hivepaas/hivepaas/services/docker"
 )
@@ -23,13 +24,14 @@ func OBIOnAgent(
 	db *database.DB,
 	settingRepo repository.SettingRepo,
 	appRepo repository.AppRepo,
+	cache cacherepository.OBISettingsRepo,
 	dockerManager docker.Manager,
 	logger logging.Logger,
 ) {
 	if cfg.RunMode != config.RunModeAgent {
 		return
 	}
-	uc := obiagentuc.New(logger, db, settingRepo, appRepo, dockerManager, hostPrefix())
+	uc := obiagentuc.New(logger, db, settingRepo, appRepo, cache, dockerManager, hostPrefix())
 	ctx, cancel := context.WithCancel(context.Background())
 	lc.Append(fx.Hook{
 		OnStart: func(context.Context) error {

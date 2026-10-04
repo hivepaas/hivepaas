@@ -20,6 +20,7 @@ func (uc *UC) DeleteAppFeatureSettings(
 	if err != nil {
 		return nil, hperrors.Wrap(err)
 	}
+	uc.forgetOBISettings(ctx)
 
 	return &appfeaturesettingsdto.DeleteAppFeatureSettingsResp{}, nil
 }

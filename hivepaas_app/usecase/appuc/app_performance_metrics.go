@@ -237,7 +237,7 @@ func (uc *UC) performanceCoverage(
 		head.Reason = performanceReasonNodeDisabled
 		return nil
 	}
-	statuses, err := uc.loggingService.PerformanceStatus(ctx, uc.db)
+	statuses, err := uc.loggingService.PerformanceStatus(ctx, uc.db, 3*obi.StatusEvery) //nolint:mnd // three rows
 	if err != nil {
 		return hperrors.Wrap(err)
 	}

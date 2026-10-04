@@ -5,6 +5,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"io"
 	"iter"
 	"net/http"
@@ -35,15 +36,18 @@ import (
 	"github.com/hivepaas/hivepaas/services/docker"
 )
 
-// settings answers the logging settings and the app features asked for.
+// settings answers the logging settings and the app features asked for, and
+// counts the reads of the logging settings.
 type settings struct {
 	repository.SettingRepo
 	logging  *entity.LoggingSettings
 	features []*entity.Setting
+	reads    int
 }
 
 func (f *settings) GetSingle(_ context.Context, _ database.IDB, _ *entity.ObjectScope, _ base.SettingType,
 	_ bool, _ ...bunex.SelectQueryOption) (*entity.Setting, error) {
+	f.reads++
 	if f.logging == nil {
 		return nil, hperrors.NewNotFound("Setting")
 	}
@@ -231,7 +235,7 @@ func newWorld(t *testing.T, nodes ...string) *world {
 	w.uc = New(quiet{}, nil, w.settings, &apps{list: []*entity.App{
 		{ID: "A1", GlobalKey: "p1_dev_a1", Status: base.AppStatusActive},
 		{ID: "A2", GlobalKey: "p1_dev_a2", Status: base.AppStatusActive},
-	}}, w.docker, goodNode(t))
+	}}, nil, w.docker, goodNode(t))
 	w.uc.out = w.out
 	w.uc.agentID = "agent-container"
 	return w
@@ -385,24 +389,48 @@ func TestReconcileSizesOBIByTheNodesCapacity(t *testing.T) {
 	assert.Contains(t, w.docker.config, "global_scale_factor: -2")
 }
 
-// While the feature is off, the agent reads the settings and nothing else:
-// one look for an OBI a previous agent left, then no Docker, no node's
-// files, no status rows, no timers.
-func TestReconcileWhileOffDoesNothingElse(t *testing.T) {
+// clock is a time a test moves.
+type clock struct{ at time.Time }
+
+func (c *clock) now() time.Time { return c.at }
+
+// While the feature is off, the agent reads the settings and, every 10
+// minutes, looks at the node as when it is on: a stray OBI goes, the node says
+// what it can run. In between, no Docker, no node's files, no rows, no timers.
+func TestReconcileWhileOffLooksEveryTenMinutes(t *testing.T) {
 	w := newWorld(t, "node-1")
+	c := &clock{at: time.Date(2026, 10, 4, 10, 0, 0, 0, time.UTC)}
+	w.uc.now = c.now
 	w.settings.logging.Performance.Enabled = false
 	assert.NoError(t, w.uc.Reconcile(context.Background()))
-	assert.Equal(t, 1, w.docker.calls, "one look for a leftover")
+	assert.Equal(t, 2, w.docker.calls, "a look for a leftover, the node's id")
+	assert.False(t, w.uc.preflightAt.IsZero(), "the node checked")
+	var st obi.Status
+	assert.NoError(t, json.Unmarshal(w.out.Bytes(), &st), "it says what it can run")
+	assert.True(t, st.Preflight.OK)
+	assert.False(t, st.Wanted)
+
+	w.out.Reset()
 	for range 3 {
+		c.at = c.at.Add(30 * time.Second)
 		assert.NoError(t, w.uc.Reconcile(context.Background()))
 	}
-	assert.Equal(t, 1, w.docker.calls)
-	assert.True(t, w.uc.preflightAt.IsZero(), "the node's files unread")
+	assert.Equal(t, 2, w.docker.calls, "nothing in between")
 	w.uc.writeStatus()
-	assert.Empty(t, w.out.String(), "no status row")
+	assert.Empty(t, w.out.String(), "no row in between")
 	scrape, status := w.uc.activity()
 	assert.False(t, scrape)
 	assert.False(t, status)
+
+	// One started since, by hand or by an agent from before: gone at the next
+	// look, and the node says its status again.
+	w.docker.obi = &container.InspectResponse{ID: "stray", State: &container.State{Running: true},
+		HostConfig: &container.HostConfig{}, Config: &container.Config{}}
+	c.at = c.at.Add(10 * time.Minute)
+	assert.NoError(t, w.uc.Reconcile(context.Background()))
+	assert.Nil(t, w.docker.obi)
+	assert.Equal(t, 3, w.docker.calls)
+	assert.Contains(t, w.out.String(), `"hp":"obi"`)
 
 	// Turned on: the node is checked, OBI made, and the timers needed.
 	w.settings.logging.Performance.Enabled = true
@@ -460,4 +488,75 @@ func TestPace(t *testing.T) {
 	case <-time.After(time.Second):
 		t.Fatal("started again: it ticks")
 	}
+}
+
+// cache answers what it was given, at a generation, and keeps what is set.
+type cache struct {
+	settings *entity.OBIAgentSettings
+	gen      int64
+	err      error
+	set      []int64
+}
+
+func (c *cache) Get(context.Context) (*entity.OBIAgentSettings, int64, error) {
+	return c.settings, c.gen, c.err
+}
+
+func (c *cache) Set(_ context.Context, s *entity.OBIAgentSettings, gen int64, _ time.Duration) error {
+	c.settings, c.set = s, append(c.set, gen)
+	return nil
+}
+
+func (c *cache) Invalidate(context.Context) error { return nil }
+
+// The settings come from the cache while it holds them; from the database on
+// a miss and every 10 minutes - then cached under the generation read before -
+// and when Redis cannot be read.
+func TestSettingsComeFromTheCache(t *testing.T) {
+	w := newWorld(t, "node-1")
+	c := &clock{at: time.Date(2026, 10, 4, 10, 0, 0, 0, time.UTC)}
+	cached := &cache{gen: 7}
+	w.uc.now, w.uc.cache = c.now, cached
+
+	s, err := w.uc.settings(context.Background())
+	assert.NoError(t, err)
+	assert.Equal(t, 1, w.settings.reads, "nothing cached: the database")
+	assert.Equal(t, []int64{7}, cached.set, "cached under the generation read before")
+	assert.Equal(t, map[string]string{"p1_dev_a2": "A2"}, s.Apps, "the opted-in apps with them, the feature on")
+
+	for range 5 {
+		c.at = c.at.Add(30 * time.Second)
+		_, err = w.uc.settings(context.Background())
+		assert.NoError(t, err)
+	}
+	assert.Equal(t, 1, w.settings.reads, "from the cache")
+
+	c.at = c.at.Add(10 * time.Minute)
+	_, err = w.uc.settings(context.Background())
+	assert.NoError(t, err)
+	assert.Equal(t, 2, w.settings.reads, "every 10 minutes, the database")
+
+	// A change: the entry dropped, the next read is the database's.
+	cached.settings, cached.gen = nil, 8
+	_, err = w.uc.settings(context.Background())
+	assert.NoError(t, err)
+	assert.Equal(t, 3, w.settings.reads)
+	assert.Equal(t, int64(8), cached.set[len(cached.set)-1])
+
+	// Redis down: the database, nothing cached.
+	cached.settings, cached.err = nil, errors.New("redis down")
+	sets := len(cached.set)
+	_, err = w.uc.settings(context.Background())
+	assert.NoError(t, err)
+	assert.Equal(t, 4, w.settings.reads)
+	assert.Len(t, cached.set, sets)
+
+	// While the feature is off, no app is read.
+	w.settings.logging.Performance.Enabled = false
+	cached.err = nil
+	c.at = c.at.Add(10 * time.Minute)
+	s, err = w.uc.settings(context.Background())
+	assert.NoError(t, err)
+	assert.False(t, s.On())
+	assert.Nil(t, s.Apps)
 }

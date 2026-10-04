@@ -158,7 +158,7 @@ type coverageLogging struct {
 	statuses map[string]*loggingservice.PerformanceNodeStatus
 }
 
-func (l *coverageLogging) PerformanceStatus(context.Context, database.IDB) (
+func (l *coverageLogging) PerformanceStatus(context.Context, database.IDB, time.Duration) (
 	map[string]*loggingservice.PerformanceNodeStatus, error) {
 	return l.statuses, nil
 }

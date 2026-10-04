@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"sort"
+	"time"
 
 	"github.com/moby/moby/api/types/swarm"
 
@@ -54,17 +55,10 @@ func (uc *UC) GetLoggingPerformance(
 		return nil, hperrors.Wrap(err)
 	}
 	statuses := map[string]*loggingservice.PerformanceNodeStatus{}
-	switch {
-	case !data.Enabled:
-		// The agents write no status while it is off: nothing is asked of the
-		// logs either.
-		data.StatusReason = loggingdto.PerformanceStatusReasonOff
-	case !data.LogsStored:
+	if !data.LogsStored {
 		data.StatusReason = loggingdto.PerformanceStatusReasonLogsNotStored
-	default:
-		statuses, err = uc.loggingService.PerformanceStatus(ctx, uc.DB)
-	}
-	if err != nil {
+	} else if statuses, err = uc.loggingService.PerformanceStatus(ctx, uc.DB,
+		performanceStatusSince(data.Enabled)); err != nil {
 		// The settings are shown without: the nodes can be chosen while the
 		// logs cannot be read.
 		data.StatusReason, statuses = loggingdto.PerformanceStatusReasonUnreadable, nil
@@ -154,6 +148,7 @@ func (uc *UC) UpdateLoggingPerformance(
 	if err != nil {
 		return nil, hperrors.Wrap(err)
 	}
+	uc.forgetOBISettings(ctx)
 	return &loggingdto.UpdateLoggingPerformanceResp{}, nil
 }
 
@@ -176,4 +171,14 @@ func (uc *UC) checkPerformanceNodes(ctx context.Context, perf *entity.LoggingPer
 		}
 	}
 	return nil
+}
+
+// performanceStatusSince is how far back the nodes' statuses are read: over
+// the time their agents write one, and a little more - every minute while the
+// feature is on, every 10 while it is off.
+func performanceStatusSince(on bool) time.Duration {
+	if on {
+		return 3 * obi.StatusEvery //nolint:mnd // three rows
+	}
+	return obi.StatusEveryOff + 2*time.Minute //nolint:mnd // one row, late
 }

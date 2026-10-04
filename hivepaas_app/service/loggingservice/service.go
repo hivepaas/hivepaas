@@ -85,7 +85,9 @@ type Service interface {
 		q *FunctionMetricsQuery) (*logging.OBIStatsResp, error)
 
 	// PerformanceStatus reads each node's latest status about OBI, by node id,
-	// from the rows its agent writes every minute while the logs are stored: a
-	// node with none in the last few minutes has no agent writing them.
-	PerformanceStatus(ctx context.Context, db database.IDB) (map[string]*PerformanceNodeStatus, error)
+	// from the rows its agent writes while the logs are stored - every minute
+	// while the feature is on, every 10 while it is off - over the last since:
+	// a node with none has no agent writing them.
+	PerformanceStatus(ctx context.Context, db database.IDB, since time.Duration) (
+		map[string]*PerformanceNodeStatus, error)
 }

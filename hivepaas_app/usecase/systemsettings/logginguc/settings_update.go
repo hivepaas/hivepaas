@@ -84,6 +84,7 @@ func (uc *UC) UpdateLoggingSettings(
 		}
 		return nil, hperrors.Wrap(err)
 	}
+	uc.forgetOBISettings(ctx)
 
 	// A task can be picked up only once its row exists, which is once the
 	// transaction has committed. The deployments are what replace a new app's

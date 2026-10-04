@@ -47,6 +47,7 @@ func (uc *UC) UpdateAppFeatureSettings(
 	if err != nil {
 		return nil, hperrors.Wrap(err)
 	}
+	uc.forgetOBISettings(ctx)
 
 	return &appfeaturesettingsdto.UpdateAppFeatureSettingsResp{}, nil
 }

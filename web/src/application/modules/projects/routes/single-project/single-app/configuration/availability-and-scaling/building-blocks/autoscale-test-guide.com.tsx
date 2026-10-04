@@ -97,10 +97,10 @@ export function AutoscaleTestGuide({ projectId, env, appId, isFunction, requests
                     </li>
                     <li>
                         {isFunction
-                            ? "Within 20 to 45 seconds it scales out - at once when calls are turned away: "
-                            : "Within 30 to 45 seconds it scales out: "}
-                        see Latest Scalings below, and the replicas on the {isFunction ? "Calls" : "Requests"} chart of
-                        its Metrics tab.
+                            ? "Within 20 to 45 seconds it scales out - at once when calls are turned away or come in a burst - "
+                            : "Within 15 to 30 seconds it scales out - load this sudden is a burst, met at once - "}
+                        and further every 15 seconds while it needs more, up to Max: see Latest Scalings below, and the
+                        replicas on the {isFunction ? "Calls" : "Requests"} chart of its Metrics tab.
                     </li>
                     <li>
                         Stop the load. Once it has been low for the scale-in delay, it scales in, half the way down

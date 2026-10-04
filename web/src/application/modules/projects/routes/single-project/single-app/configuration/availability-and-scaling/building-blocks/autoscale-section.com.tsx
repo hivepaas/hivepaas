@@ -212,8 +212,8 @@ export function AutoscaleSection({ projectId, env, appId, autoscale, readOnly = 
                             label="Autoscale"
                             content={
                                 isFunction
-                                    ? "Scales the function's replicas with its calls, read from its stored logs every 15 seconds: up at once when calls are turned away for Concurrency, down slowly once they have been low for the scale-in delay."
-                                    : "Scales the app's replicas with its requests, its CPU or both, read every 15 seconds: up once they have needed more for 30 seconds, down slowly once they have been low for the scale-in delay."
+                                    ? "Scales the function's replicas with its calls, read from its stored logs every 15 seconds: up at once when calls are turned away for Concurrency or come in a burst, else once they have needed more for 30 seconds; down slowly once they have been low for the scale-in delay."
+                                    : "Scales the app's replicas with its requests, its CPU or both, read every 15 seconds: up at once for a burst of requests, else once they have needed more for 30 seconds; down slowly once they have been low for the scale-in delay."
                             }
                         />
                     }

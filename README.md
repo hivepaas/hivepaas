@@ -176,6 +176,22 @@ To work on HivePaaS itself, see [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md).
 
 ---
 
+## 🔒 Security
+
+Please report vulnerabilities **privately**, through
+[GitHub's vulnerability reporting](https://github.com/hivepaas/hivepaas/security/advisories/new) -
+never in a public issue. See [SECURITY.md](SECURITY.md) for what to include and what happens next.
+
+---
+
+## 💬 Community & Support
+
+* **[Discord](https://discord.com/invite/2TgD3zDb2e)** - questions, and help from the team and the community.
+* **[GitHub Issues](https://github.com/hivepaas/hivepaas/issues)** - bugs and feature requests.
+* **[Getting help](https://docs.hivepaas.com/docs/troubleshooting/getting-help)** - what to include so a question gets an answer sooner.
+
+---
+
 ## 🤝 Contributing
 
 Contributions, issues, and feature requests are welcome!

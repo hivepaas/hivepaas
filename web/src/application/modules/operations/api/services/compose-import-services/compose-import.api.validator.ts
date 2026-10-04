@@ -18,10 +18,15 @@ const PortSchema = z.object({
     published: z.number(),
     target: z.number(),
     protocol: z.string(),
+    source: z
+        .string()
+        .nullish()
+        .transform(value => value ?? ""),
     as: z.string().transform(value => value as ComposePortAs),
     default: z.string().transform(value => value as ComposePortAs),
     domain: z.string(),
     suggested: z.string(),
+    also: list(z.string()),
 });
 
 const VolumeSchema = z.object({

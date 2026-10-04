@@ -12,12 +12,16 @@ export interface ComposePortView {
     published: number;
     target: number;
     protocol: string;
+    /** Empty for a published port; labels for the one the service's Traefik labels route to. */
+    source: string;
     as: ComposePortAs;
     /** What it becomes unless the review says otherwise. */
     default: ComposePortAs;
     domain: string;
-    /** The domain offered under the root domain; empty without one. */
+    /** The domain offered under the root domain - or the Traefik labels' host; empty without one. */
     suggested: string;
+    /** The Traefik labels' other hosts: domains of the app too, while the port is one. */
+    also: string[];
 }
 
 export type ComposeVolumeKind = "volume" | "shared" | "file" | "host" | "tmpfs" | "dropped";
@@ -114,6 +118,7 @@ export interface ComposePortInput {
     published: number;
     target: number;
     protocol: string;
+    source?: string;
     as: ComposePortAs;
     domain: string;
 }

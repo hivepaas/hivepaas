@@ -28,7 +28,12 @@ const VOLUME_KIND_LABELS: Record<ComposeVolumeKind, string> = {
 };
 
 function samePort(input: ComposePortInput, port: ComposePortView): boolean {
-    return input.published === port.published && input.target === port.target && input.protocol === port.protocol;
+    return (
+        input.published === port.published &&
+        input.target === port.target &&
+        input.protocol === port.protocol &&
+        (input.source ?? "") === port.source
+    );
 }
 
 /**
@@ -55,6 +60,7 @@ export function ComposeServices({ services, inputs, onChange }: Props) {
             published: port.published,
             target: port.target,
             protocol: port.protocol,
+            source: port.source || undefined,
             as: port.as,
             domain: port.domain,
         };
@@ -165,7 +171,7 @@ function ServiceCard({ service, image, input, onImageChange, onChoice, onPortCha
                 <div className="flex flex-col gap-2">
                     {service.ports.map(port => (
                         <PortRow
-                            key={`${port.published}-${port.target}-${port.protocol}`}
+                            key={`${port.published}-${port.target}-${port.protocol}-${port.source}`}
                             port={port}
                             onChange={patch => {
                                 onPortChange(port, patch);
@@ -288,6 +294,7 @@ function describeVolume(volume: ComposeVolumeView): string {
 
 function PortRow({ port, onChange }: PortProps) {
     const label = `${port.published ? `${port.published} → ` : ""}${port.target}/${port.protocol}`;
+    const fromLabels = port.source === "labels";
 
     return (
         <div className="flex flex-wrap items-center gap-2">
@@ -326,6 +333,15 @@ function PortRow({ port, onChange }: PortProps) {
                     placeholder={port.suggested || "app.example.com"}
                     className="min-w-[240px] flex-1 font-mono text-xs"
                 />
+            )}
+            {fromLabels && (
+                <p className="w-full text-xs text-muted-foreground">
+                    From the service&apos;s Traefik labels
+                    {port.also.length > 0 && port.as === "domain"
+                        ? `: ${port.also.join(", ")} ${port.also.length === 1 ? "is a domain" : "are domains"} of the app too`
+                        : ""}
+                    .
+                </p>
             )}
         </div>
     );

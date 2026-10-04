@@ -184,6 +184,9 @@ const (
 	VolumeKindShared VolumeKind = "shared"
 	// VolumeKindFile is a file of the env's, mounted from a setting.
 	VolumeKindFile VolumeKind = "file"
+	// VolumeKindFiles is a directory mounted read only: the files given under
+	// it, each a file of the env's.
+	VolumeKindFiles VolumeKind = "files"
 	// VolumeKindHost is a directory of the host's.
 	VolumeKindHost VolumeKind = "host"
 	// VolumeKindTmpfs is memory.

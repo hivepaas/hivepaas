@@ -220,28 +220,52 @@ func (c *converter) bindMount(
 		c.viewVolume(view, v, v.Source, composeservice.VolumeKindFile, "")
 		return
 	}
-	c.managedMount(name, "bind:"+rel, v, subpathOf(rel), false, st, view, v.Source)
-	files := c.filesUnder(rel)
+	key, files := "bind:"+rel, c.filesUnder(rel)
 	c.need(rel, composeservice.NeedDirectory, name, len(files) > 0)
-	if len(files) == 0 {
+	owner := c.owners[key]
+	if len(files) > 0 && v.ReadOnly && (owner == "" || owner == name) {
+		// Read only, it holds nothing the app writes: the files given are the
+		// directory - and none could be mounted in a read-only volume, which
+		// has no place for them.
+		c.mountFiles(rel, v.Target, files, mounts)
+		c.viewVolume(view, v, v.Source, composeservice.VolumeKindFiles, "")
+		view.Volumes[len(view.Volumes)-1].Files = len(files)
+		c.add(appPath, "", composeservice.CodeDirectoryFiles,
+			map[string]any{detailSource: v.Source, detailTarget: v.Target, detailFiles: len(files)},
+			"the files given, mounted read only, as the directory is")
+		return
+	}
+	c.managedMount(name, key, v, subpathOf(rel), false, st, view, v.Source)
+	switch {
+	case len(files) == 0:
 		c.add(appPath, specmodel.SeverityWarning, composeservice.CodeDirectoryEmpty,
 			map[string]any{detailSource: v.Source, detailTarget: v.Target},
 			"a directory of its own, which starts empty: give its files - open the compose file's folder - to have "+
 				"them in it")
-		return
+	case v.ReadOnly:
+		c.add(appPath, specmodel.SeverityWarning, composeservice.CodeDirectoryEmpty,
+			map[string]any{detailSource: v.Source, detailTarget: v.Target, "owner": c.keys[owner]},
+			"the files given are not mounted in it: another app writes this directory, and this one reads it as "+
+				"that one does")
+	default:
+		// The directory is the app's, as an empty one is - what the app writes
+		// in it is kept - and each file given is mounted at its place in it.
+		c.mountFiles(rel, v.Target, files, mounts)
+		view.Volumes[len(view.Volumes)-1].Files = len(files)
+		c.add(appPath, "", composeservice.CodeDirectoryFiles,
+			map[string]any{detailSource: v.Source, detailTarget: v.Target, detailFiles: len(files)},
+			"a directory of its own, with the files given mounted in it, read only: what the app writes beside "+
+				"them is kept")
 	}
-	// The directory is the app's, as an empty one is - what the app writes in
-	// it is kept - and each file given is mounted at its place in it.
+}
+
+// mountFiles mounts each file given under a directory of the compose file's at
+// its place under target, read only: an env config file each.
+func (c *converter) mountFiles(rel, target string, files []string, mounts map[string]any) {
 	for _, file := range files {
-		target := path.Join(v.Target, strings.TrimPrefix(file, rel+"/"))
 		addMount(mounts, path.Base(file), c.envConfigPath(c.configFile(file)),
-			map[string]any{filePart: partContent, detailPath: target})
+			map[string]any{filePart: partContent, detailPath: path.Join(target, strings.TrimPrefix(file, rel+"/"))})
 	}
-	view.Volumes[len(view.Volumes)-1].Files = len(files)
-	c.add(appPath, "", composeservice.CodeDirectoryFiles,
-		map[string]any{detailSource: v.Source, detailTarget: v.Target, "files": len(files)},
-		"a directory of its own, with the files given mounted in it, read only: what the app writes beside them "+
-			"is kept")
 }
 
 // filesUnder are the request's files under a directory of the compose

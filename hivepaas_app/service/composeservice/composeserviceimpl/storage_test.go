@@ -314,3 +314,44 @@ services:
 		}
 	}
 }
+
+// A directory mounted read only holds nothing the app writes: the files given
+// are the directory, with no volume under them - none could be mounted in a
+// read-only one. Read from another app that writes it, it is that app's, and
+// the files are not mounted.
+func TestConvertMountsAReadOnlyDirectoryAsItsFiles(t *testing.T) {
+	req := convertReq(`
+services:
+  web:
+    image: nginx:1.27
+    volumes: ["./conf.d:/etc/nginx/conf.d:ro"]
+  certbot:
+    image: certbot/certbot:v3
+    volumes: ["./certs:/etc/letsencrypt"]
+  proxy:
+    image: nginx:1.27
+    depends_on: [certbot]
+    volumes: ["./certs:/etc/letsencrypt:ro"]
+`)
+	req.Files = map[string][]byte{"conf.d/default.conf": []byte("server {}"), "certs/options.conf": []byte("x")}
+	resp := convert(t, req)
+
+	web := appOf(t, resp, "web")
+	assert.Nil(t, web.Deployment.Storage, "no volume")
+	mounts, _ := web.Settings["settingMounts"].(map[string]any)
+	assert.Len(t, mounts, 1)
+	for _, view := range resp.Services {
+		if view.Name == "web" {
+			assert.Equal(t, composeservice.VolumeKindFiles, view.Volumes[0].Kind)
+			assert.Equal(t, 1, view.Volumes[0].Files)
+		}
+	}
+
+	proxy := appOf(t, resp, "proxy")
+	if assert.NotNil(t, proxy.Deployment.Storage) {
+		assert.NotNil(t, proxy.Deployment.Storage.Mounts["/etc/letsencrypt"].SourceApp, "certbot's directory")
+	}
+	assert.Nil(t, proxy.Settings["settingMounts"], "not in a read-only volume")
+	certbotMounts, _ := appOf(t, resp, "certbot").Settings["settingMounts"].(map[string]any)
+	assert.Len(t, certbotMounts, 1, "in the writer's own")
+}

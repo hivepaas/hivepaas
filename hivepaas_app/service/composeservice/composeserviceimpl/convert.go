@@ -29,6 +29,7 @@ const (
 	detailImage    = "image"
 	detailApp      = "app"
 	detailName     = "name"
+	detailFiles    = "files"
 )
 
 // The parts of a mounted setting, and an entry file's key for its part.

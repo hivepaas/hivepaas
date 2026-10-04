@@ -54,9 +54,17 @@ func (uc *UC) GetLoggingPerformance(
 		return nil, hperrors.Wrap(err)
 	}
 	statuses := map[string]*loggingservice.PerformanceNodeStatus{}
-	if !data.LogsStored {
+	switch {
+	case !data.Enabled:
+		// The agents write no status while it is off: nothing is asked of the
+		// logs either.
+		data.StatusReason = loggingdto.PerformanceStatusReasonOff
+	case !data.LogsStored:
 		data.StatusReason = loggingdto.PerformanceStatusReasonLogsNotStored
-	} else if statuses, err = uc.loggingService.PerformanceStatus(ctx, uc.DB); err != nil {
+	default:
+		statuses, err = uc.loggingService.PerformanceStatus(ctx, uc.DB)
+	}
+	if err != nil {
 		// The settings are shown without: the nodes can be chosen while the
 		// logs cannot be read.
 		data.StatusReason, statuses = loggingdto.PerformanceStatusReasonUnreadable, nil

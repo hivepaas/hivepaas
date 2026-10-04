@@ -121,8 +121,9 @@ func (uc *UC) GetAppDependencyMetrics(
 }
 
 // loadPerformanceView loads the app and says whether its routes and calls can
-// be read, over which range; the reasons are checked in the order they are
-// fixed in: the agent, the logs, the system's switch, the app's, its nodes.
+// be read, over which range. The switches come first - the system's, then the
+// app's - so that while they are off, nothing more is asked of Docker or the
+// logs; then the agent, the logs and the app's nodes.
 func (uc *UC) loadPerformanceView(
 	ctx context.Context,
 	req *appdto.GetAppPerformanceMetricsReq,
@@ -140,6 +141,19 @@ func (uc *UC) loadPerformanceView(
 	}
 	view := &performanceView{app: app, head: appdto.AppPerformanceMetricsHeadResp{Range: req.Range}}
 
+	perf, err := uc.loggingPerformance(ctx)
+	if err != nil {
+		return nil, hperrors.Wrap(err)
+	}
+	switch {
+	case !perf.Enabled:
+		view.head.Reason = performanceReasonDisabled
+		return view, nil
+	case features.PerformanceSettings == nil || !features.PerformanceSettings.Enabled:
+		view.head.Reason = performanceReasonAppDisabled
+		return view, nil
+	}
+
 	agentSvc, err := uc.hpAppService.GetHpAgentSwarmService(ctx)
 	if err != nil && !errors.Is(err, hperrors.ErrNotFound) {
 		return nil, hperrors.Wrap(err)
@@ -156,19 +170,7 @@ func (uc *UC) loadPerformanceView(
 		view.head.Reason = string(history.Reason)
 		return view, nil
 	}
-	perf, err := uc.loggingPerformance(ctx)
-	if err != nil {
-		return nil, hperrors.Wrap(err)
-	}
-	switch {
-	case !perf.Enabled:
-		view.head.Reason = performanceReasonDisabled
-	case features.PerformanceSettings == nil || !features.PerformanceSettings.Enabled:
-		view.head.Reason = performanceReasonAppDisabled
-	default:
-		err = uc.performanceCoverage(ctx, app, perf, &view.head)
-	}
-	if err != nil {
+	if err = uc.performanceCoverage(ctx, app, perf, &view.head); err != nil {
 		return nil, hperrors.Wrap(err)
 	}
 	if view.head.Reason != "" {

@@ -327,8 +327,15 @@ with today's names.
      settings every 30 s, as it reads the Docker API's. A switch turned takes
      30 s at most.
    - **The node's status** - preflight, wanted, running, apps - is a row the
-     agent writes every minute while the logs are stored, `"hp":"obi"`. The
-     settings show each node's latest, as the other rows are read.
+     agent writes every minute while the feature is on and the logs are
+     stored, `"hp":"obi"`. The settings show each node's latest, as the other
+     rows are read.
+   - **While the feature is off** - the default, on every node of every
+     installation - the agent reads the setting every 30 s and does nothing
+     else: one look for an OBI a previous agent left, when it starts, then no
+     Docker call, no preflight, no status row, its scrape and status timers
+     stopped. The API answers an app's routes and calls from the switches
+     alone, and the settings page reads no status.
    - **The settings**: `LoggingSettings.Performance` {enabled, nodes by swarm
      node id}, and `AppFeatureSettings.PerformanceSettings` {enabled}.
    - **OBI's configuration** is copied to its image's root,

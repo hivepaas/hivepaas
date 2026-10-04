@@ -10,9 +10,14 @@ import (
 	"github.com/moby/moby/client"
 	"github.com/stretchr/testify/assert"
 
+	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
+	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/obi"
+	"github.com/hivepaas/hivepaas/hivepaas_app/repository"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/appservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/loggingservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/appuc/appdto"
 	"github.com/hivepaas/hivepaas/services/docker"
@@ -196,4 +201,56 @@ func TestPerformanceCoverage(t *testing.T) {
 
 	head, _ = cover(nil, nil)
 	assert.Equal(t, appdto.AppPerformanceMetricsHeadResp{}, head, "running nowhere: its past is shown")
+}
+
+// perfApps loads one app, with the feature settings given.
+type perfApps struct {
+	appservice.Service
+	features *entity.AppFeatureSettings
+}
+
+func (s *perfApps) LoadAppWithFeatureSettings(context.Context, database.IDB, string, string, bool, bool,
+	...bunex.SelectQueryOption) (*entity.App, *entity.AppFeatureSettings, error) {
+	return &entity.App{ID: "a1"}, s.features, nil
+}
+
+// perfSettings answers the logging settings given; none when nil.
+type perfSettings struct {
+	repository.SettingRepo
+	logging *entity.LoggingSettings
+}
+
+func (s *perfSettings) GetSingle(context.Context, database.IDB, *entity.ObjectScope, base.SettingType, bool,
+	...bunex.SelectQueryOption) (*entity.Setting, error) {
+	if s.logging == nil {
+		return nil, hperrors.NewNotFound("Setting")
+	}
+	setting := &entity.Setting{Type: base.SettingTypeLogging}
+	setting.MustSetData(s.logging)
+	return setting, nil
+}
+
+// While routes and calls are off, for the system or the app, the reason is
+// answered from the settings alone: Docker, the agent and the logs are not
+// asked - they are nil here, and asking them would fail.
+func TestPerformanceViewWhileOffAsksNothingElse(t *testing.T) {
+	appOn := &entity.AppFeatureSettings{PerformanceSettings: &entity.AppFeaturePerformanceSettings{Enabled: true}}
+	systemOn := &entity.LoggingSettings{Enabled: true, Performance: &entity.LoggingPerformance{Enabled: true}}
+	for name, c := range map[string]struct {
+		logging  *entity.LoggingSettings
+		features *entity.AppFeatureSettings
+		reason   string
+	}{
+		"never saved": {nil, appOn, performanceReasonDisabled},
+		"system off":  {&entity.LoggingSettings{Enabled: true}, appOn, performanceReasonDisabled},
+		"app off":     {systemOn, &entity.AppFeatureSettings{}, performanceReasonAppDisabled},
+	} {
+		uc := &UC{appService: &perfApps{features: c.features}, settingRepo: &perfSettings{logging: c.logging}}
+		view, err := uc.loadPerformanceView(context.Background(),
+			&appdto.GetAppPerformanceMetricsReq{ProjectID: "p1", AppID: "a1", Range: "1h"})
+		if assert.NoError(t, err, name) {
+			assert.Equal(t, c.reason, view.head.Reason, name)
+			assert.False(t, view.head.Available, name)
+		}
+	}
 }

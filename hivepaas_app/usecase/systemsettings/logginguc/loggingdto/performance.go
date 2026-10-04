@@ -20,6 +20,9 @@ const performanceNodesMax = 1000
 
 // The reasons the nodes' statuses are not read.
 const (
+	// PerformanceStatusReasonOff: the agents say their nodes' statuses only
+	// while the feature is on, and do nothing else while it is off.
+	PerformanceStatusReasonOff = "off"
 	// PerformanceStatusReasonLogsNotStored: OBI runs, and its agents write
 	// their statuses, only while the logs are stored.
 	PerformanceStatusReasonLogsNotStored = "logs-not-stored"
@@ -55,7 +58,7 @@ type LoggingPerformanceResp struct {
 	// UpdateVer is the logging settings' version, which an update sends back:
 	// saving these changes it, as saving the logging settings does.
 	UpdateVer int `json:"updateVer"`
-	// StatusReason says why the nodes' statuses were not read:
+	// StatusReason says why the nodes' statuses were not read: off,
 	// logs-not-stored or unreadable. Empty when they were.
 	StatusReason string                     `json:"statusReason,omitempty"`
 	Capacities   []*PerformanceCapacityResp `json:"capacities"`
@@ -86,7 +89,8 @@ type PerformanceNodeResp struct {
 	// Capacity is the one chosen for the node: auto for the recommended one.
 	Capacity string `json:"capacity"`
 	// Status is what the node's agent last said, in the last few minutes; nil
-	// when it said nothing: the logs not stored, or an agent from before.
+	// when it said nothing: the feature off, the logs not stored, or an agent
+	// from before.
 	Status *PerformanceNodeStatusResp `json:"status,omitempty"`
 }
 

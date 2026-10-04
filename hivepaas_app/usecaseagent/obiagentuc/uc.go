@@ -67,12 +67,18 @@ type UC struct {
 	scrapeURL  string
 	now        func() time.Time
 
-	mu          sync.Mutex
-	deltas      *obi.Deltas
-	nodeID      string
-	agentID     string
-	logsOn      bool
-	wanted      bool
+	mu      sync.Mutex
+	deltas  *obi.Deltas
+	nodeID  string
+	agentID string
+	// on is the feature on while the logs are stored: until it is, the agent
+	// reads the settings and does nothing else.
+	on     bool
+	wanted bool
+	// checked says this agent has looked for an OBI container since it
+	// started: one a previous agent left. From then on, running is what this
+	// agent made it.
+	checked     bool
 	running     bool
 	preflight   obi.Preflight
 	preflightAt time.Time
@@ -98,8 +104,9 @@ func New(
 		deltas: obi.NewDeltas(), appIDs: map[string]string{}}
 }
 
-// Run reconciles at once and then on a timer, scrapes on a shorter one, and
-// says the node's status on a longer one, until ctx ends.
+// Run reconciles at once and then on a timer until ctx ends. While OBI runs
+// here it scrapes it on a shorter timer, and while the feature is on it says
+// the node's status on a longer one: otherwise those timers are stopped.
 func (uc *UC) Run(ctx context.Context) {
 	reconcile := time.NewTicker(reconcileInterval)
 	defer reconcile.Stop()
@@ -107,13 +114,20 @@ func (uc *UC) Run(ctx context.Context) {
 	defer scrape.Stop()
 	status := time.NewTicker(statusInterval)
 	defer status.Stop()
-	uc.reconcileAndLog(ctx)
+	scraping, saying := true, true
+	reconcileAndPace := func() {
+		uc.reconcileAndLog(ctx)
+		scrapeNow, sayNow := uc.activity()
+		scraping = pace(scrape, scrapeInterval, scraping, scrapeNow)
+		saying = pace(status, statusInterval, saying, sayNow)
+	}
+	reconcileAndPace()
 	for {
 		select {
 		case <-ctx.Done():
 			return
 		case <-reconcile.C:
-			uc.reconcileAndLog(ctx)
+			reconcileAndPace()
 		case <-scrape.C:
 			if err := uc.Scrape(ctx); err != nil {
 				uc.logger.Warnf("obi: scrape: %v", err)
@@ -124,6 +138,26 @@ func (uc *UC) Run(ctx context.Context) {
 	}
 }
 
+// pace starts or stops a ticker as it is now needed, and says whether it
+// runs. A tick already sent before it stops is read once, and does nothing.
+func pace(t *time.Ticker, every time.Duration, running, needed bool) bool {
+	switch {
+	case needed && !running:
+		t.Reset(every)
+	case !needed && running:
+		t.Stop()
+	}
+	return needed
+}
+
+// activity is what the timers are needed for: scraping while OBI runs here,
+// the status while the feature is on.
+func (uc *UC) activity() (scrape, status bool) {
+	uc.mu.Lock()
+	defer uc.mu.Unlock()
+	return uc.running, uc.on
+}
+
 func (uc *UC) reconcileAndLog(ctx context.Context) {
 	if err := uc.Reconcile(ctx); err != nil {
 		uc.logger.Warnf("obi: reconcile: %v", err)
@@ -132,20 +166,24 @@ func (uc *UC) reconcileAndLog(ctx context.Context) {
 
 // Reconcile reads the settings and makes OBI match them: running, with the
 // opted-in apps, when this node runs it and can; gone otherwise. When the
-// settings cannot be read, nothing changes.
+// settings cannot be read, nothing changes. While the feature is off, reading
+// them is all it does.
 func (uc *UC) Reconcile(ctx context.Context) error {
 	cfg, err := uc.loggingSettings(ctx)
 	if err != nil {
 		return err
+	}
+	logsOn := cfg.Enabled && (cfg.Sources.Apps || cfg.Sources.HivePaaS)
+	if !logsOn || cfg.Performance == nil || !cfg.Performance.Enabled {
+		return uc.off(ctx)
 	}
 	if uc.nodeID == "" {
 		if uc.nodeID, err = uc.dockerManager.NodeCurrentID(ctx); err != nil {
 			return hperrors.Wrap(err)
 		}
 	}
-	logsOn := cfg.Enabled && (cfg.Sources.Apps || cfg.Sources.HivePaaS)
 	node := cfg.Performance.Node(uc.nodeID)
-	wanted := logsOn && node != nil
+	wanted := node != nil
 	capacity := obi.CapacityAuto
 	if node != nil {
 		if c, ok := obi.ParseCapacity(node.Capacity); ok {
@@ -161,11 +199,13 @@ func (uc *UC) Reconcile(ctx context.Context) error {
 
 	uc.mu.Lock()
 	defer uc.mu.Unlock()
-	uc.logsOn, uc.wanted, uc.appIDs = logsOn, wanted, appIDs
-	if !uc.running {
+	uc.on, uc.wanted, uc.appIDs = true, wanted, appIDs
+	if !uc.checked {
 		// One a previous agent left running: its memory is in the node's
 		// free memory, which preflight must not count against it.
-		uc.running = uc.containerRunning(ctx)
+		if err = uc.adoptLeftover(ctx); err != nil {
+			return err
+		}
 	}
 	if uc.preflightAt.IsZero() || uc.now().Sub(uc.preflightAt) >= preflightInterval || capacity != uc.capacity {
 		uc.preflight, uc.preflightAt, uc.capacity = obi.Check(uc.root, uc.running, capacity), uc.now(), capacity
@@ -178,6 +218,38 @@ func (uc *UC) Reconcile(ctx context.Context) error {
 		services = append(services, service)
 	}
 	return uc.ensure(ctx, obi.Config(obi.Patterns(services), uc.preflight.Capacity))
+}
+
+// off is the feature off, or the logs: OBI goes, once - one a previous agent
+// left, or this one ran - and then nothing is done, no Docker, no files, no
+// rows, until it is on again; the node is checked again then.
+func (uc *UC) off(ctx context.Context) error {
+	uc.mu.Lock()
+	defer uc.mu.Unlock()
+	uc.on, uc.wanted, uc.appIDs = false, false, map[string]string{}
+	uc.preflight, uc.preflightAt = obi.Preflight{}, time.Time{}
+	return uc.remove(ctx)
+}
+
+// adoptLeftover looks once for an OBI a previous agent left: a running one is
+// kept as running, to be kept or replaced; a stopped one is removed.
+func (uc *UC) adoptLeftover(ctx context.Context) error {
+	current, err := uc.dockerManager.ContainerInspect(ctx, obi.ContainerName)
+	switch {
+	case errors.Is(err, hperrors.ErrInfraNotFound):
+		uc.running = false
+	case err != nil:
+		return hperrors.Wrap(err)
+	case current.Container.State != nil && current.Container.State.Running:
+		uc.running = true
+	default:
+		if err = uc.removeContainer(ctx); err != nil {
+			return err
+		}
+		uc.running = false
+	}
+	uc.checked = true
+	return nil
 }
 
 // loggingSettings are the logging settings, the defaults when there are none.
@@ -278,26 +350,18 @@ func (uc *UC) ensure(ctx context.Context, config []byte) error {
 	return nil
 }
 
-// remove stops OBI when it runs.
+// remove takes OBI away: when it runs, or this agent has not looked for one
+// yet. Once there is none, removing it again asks Docker nothing.
 func (uc *UC) remove(ctx context.Context) error {
-	if !uc.running {
-		_, err := uc.dockerManager.ContainerInspect(ctx, obi.ContainerName)
-		if errors.Is(err, hperrors.ErrInfraNotFound) {
-			return nil
-		}
+	if uc.checked && !uc.running {
+		return nil
 	}
 	if err := uc.removeContainer(ctx); err != nil {
 		return err
 	}
-	uc.running = false
+	uc.checked, uc.running = true, false
 	uc.deltas.Reset()
 	return nil
-}
-
-// containerRunning is whether OBI's container runs, whoever started it.
-func (uc *UC) containerRunning(ctx context.Context) bool {
-	current, err := uc.dockerManager.ContainerInspect(ctx, obi.ContainerName)
-	return err == nil && current.Container.State != nil && current.Container.State.Running
 }
 
 func (uc *UC) removeContainer(ctx context.Context) error {
@@ -400,14 +464,14 @@ func (uc *UC) Status() obi.Status {
 		Apps: len(uc.appIDs), Preflight: uc.preflight}
 }
 
-// writeStatus writes the node's status row while the logs are stored: the
-// settings show each node's from the latest. Before the first reconcile there
-// is nothing to say.
+// writeStatus writes the node's status row while the feature is on, the
+// logs stored: the settings show each node's from the latest. Before a
+// reconcile has checked the node there is nothing to say.
 func (uc *UC) writeStatus() {
 	uc.mu.Lock()
-	logsOn, known := uc.logsOn, !uc.preflightAt.IsZero()
+	on, known := uc.on, !uc.preflightAt.IsZero()
 	uc.mu.Unlock()
-	if !logsOn || !known {
+	if !on || !known {
 		return
 	}
 	line, err := json.Marshal(uc.Status())

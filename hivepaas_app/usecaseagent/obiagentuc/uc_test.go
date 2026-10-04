@@ -80,7 +80,8 @@ func (f *apps) ListByIDs(_ context.Context, _ database.IDB, _ string, ids []stri
 	return out, nil
 }
 
-// fakeDocker keeps one OBI container, and what was done to it.
+// fakeDocker keeps one OBI container, and what was done to it; calls counts
+// every call made to it.
 type fakeDocker struct {
 	docker.Manager
 	obi     *container.InspectResponse
@@ -88,12 +89,17 @@ type fakeDocker struct {
 	pulled  []string
 	created int
 	removed int
+	calls   int
 }
 
-func (f *fakeDocker) NodeCurrentID(context.Context) (string, error) { return "node-1", nil }
+func (f *fakeDocker) NodeCurrentID(context.Context) (string, error) {
+	f.calls++
+	return "node-1", nil
+}
 
 func (f *fakeDocker) ContainerInspect(_ context.Context, id string, _ ...docker.ContainerInspectOption) (
 	*client.ContainerInspectResult, error) {
+	f.calls++
 	if id == obi.ContainerName && f.obi != nil {
 		return &client.ContainerInspectResult{Container: *f.obi}, nil
 	}
@@ -105,6 +111,7 @@ func (f *fakeDocker) ContainerInspect(_ context.Context, id string, _ ...docker.
 
 func (f *fakeDocker) ContainerRemove(_ context.Context, _ string, _ ...docker.ContainerRemoveOption) (
 	*client.ContainerRemoveResult, error) {
+	f.calls++
 	if f.obi == nil {
 		return nil, hperrors.Wrap(hperrors.ErrInfraNotFound)
 	}
@@ -287,7 +294,7 @@ func TestReconcileReplacesOBIOfAnotherAgent(t *testing.T) {
 	w := newWorld(t, "node-1")
 	assert.NoError(t, w.uc.Reconcile(context.Background()))
 	w.docker.obi.HostConfig.NetworkMode = "container:old-agent"
-	w.uc.running = false
+	w.uc.checked, w.uc.running = false, false // a new agent
 	assert.NoError(t, w.uc.Reconcile(context.Background()))
 	assert.Equal(t, 2, w.docker.created)
 	assert.Equal(t, "container:agent-container", string(w.docker.obi.HostConfig.NetworkMode))
@@ -376,4 +383,81 @@ func TestReconcileSizesOBIByTheNodesCapacity(t *testing.T) {
 	assert.NoError(t, w.uc.Reconcile(context.Background()))
 	assert.Equal(t, 2, w.docker.created, "replaced")
 	assert.Contains(t, w.docker.config, "global_scale_factor: -2")
+}
+
+// While the feature is off, the agent reads the settings and nothing else:
+// one look for an OBI a previous agent left, then no Docker, no node's
+// files, no status rows, no timers.
+func TestReconcileWhileOffDoesNothingElse(t *testing.T) {
+	w := newWorld(t, "node-1")
+	w.settings.logging.Performance.Enabled = false
+	assert.NoError(t, w.uc.Reconcile(context.Background()))
+	assert.Equal(t, 1, w.docker.calls, "one look for a leftover")
+	for range 3 {
+		assert.NoError(t, w.uc.Reconcile(context.Background()))
+	}
+	assert.Equal(t, 1, w.docker.calls)
+	assert.True(t, w.uc.preflightAt.IsZero(), "the node's files unread")
+	w.uc.writeStatus()
+	assert.Empty(t, w.out.String(), "no status row")
+	scrape, status := w.uc.activity()
+	assert.False(t, scrape)
+	assert.False(t, status)
+
+	// Turned on: the node is checked, OBI made, and the timers needed.
+	w.settings.logging.Performance.Enabled = true
+	assert.NoError(t, w.uc.Reconcile(context.Background()))
+	assert.Equal(t, 1, w.docker.created)
+	assert.False(t, w.uc.preflightAt.IsZero())
+	scrape, status = w.uc.activity()
+	assert.True(t, scrape)
+	assert.True(t, status)
+
+	// Off again: removed once, then nothing.
+	w.settings.logging.Performance.Enabled = false
+	assert.NoError(t, w.uc.Reconcile(context.Background()))
+	assert.Nil(t, w.docker.obi)
+	calls := w.docker.calls
+	assert.NoError(t, w.uc.Reconcile(context.Background()))
+	assert.Equal(t, calls, w.docker.calls)
+}
+
+// A node the settings do not list, while the feature is on, says its status
+// and asks Docker nothing once it has looked for a leftover.
+func TestReconcileOnAnotherNodeAsksDockerOnce(t *testing.T) {
+	w := newWorld(t, "node-2")
+	assert.NoError(t, w.uc.Reconcile(context.Background()))
+	calls := w.docker.calls
+	assert.NoError(t, w.uc.Reconcile(context.Background()))
+	assert.Equal(t, calls, w.docker.calls)
+	assert.Zero(t, w.docker.created)
+	w.uc.writeStatus()
+	assert.Contains(t, w.out.String(), `"wanted":false`)
+	scrape, status := w.uc.activity()
+	assert.False(t, scrape, "OBI does not run here")
+	assert.True(t, status)
+}
+
+// A stopped OBI a previous agent left is removed, and none is made where it
+// is not wanted.
+func TestReconcileRemovesAStoppedLeftover(t *testing.T) {
+	w := newWorld(t, "node-2")
+	w.docker.obi = &container.InspectResponse{ID: "old", State: &container.State{Running: false},
+		HostConfig: &container.HostConfig{}, Config: &container.Config{}}
+	assert.NoError(t, w.uc.Reconcile(context.Background()))
+	assert.Nil(t, w.docker.obi)
+	assert.Equal(t, 1, w.docker.removed)
+}
+
+// A ticker is stopped when it is not needed and started again when it is.
+func TestPace(t *testing.T) {
+	ticker := time.NewTicker(time.Hour)
+	defer ticker.Stop()
+	assert.False(t, pace(ticker, time.Millisecond, true, false))
+	assert.True(t, pace(ticker, time.Millisecond, false, true))
+	select {
+	case <-ticker.C:
+	case <-time.After(time.Second):
+		t.Fatal("started again: it ticks")
+	}
 }

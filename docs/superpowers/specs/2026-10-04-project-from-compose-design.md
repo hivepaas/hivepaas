@@ -432,6 +432,49 @@ exists, into one of its envs or a new one.
   the app there is that app's own document, which `keep` leaves alone. MCP's
   tool takes `projectId`, `newEnv`, `apps` and `useExisting`.
 
+## Opening a folder, includes, directories
+
+Built on 2026-10-04, while the user was away, from what was agreed: "do
+everything for compose, review later".
+
+- **A folder, read in the browser.** Rather than an archive uploaded and kept
+  on the server under an id - storage, expiry, unpacking with its zip-slip and
+  symlink risks - the dashboard reads the folder itself (`webkitdirectory`):
+  the shallowest compose file by compose's order of names, its `.env` (or it
+  offers a `.env.example`, whose passwords are known to anybody), and from then
+  on gives, from the folder, each file the review lists as needed. Nothing
+  else leaves the browser, the request stays stateless, and its limits - 100
+  files, 5 MB, 500 KB each - hold.
+- **Includes and extends.** The loader resolves a relative path from the file
+  naming it, which compose-go puts in the context (`consts.ComposeFileKey`), and
+  answers `Dir` with the loaded file's directory, absolute and inside the
+  scratch directory. compose-go makes an included file's paths absolute there;
+  the reader makes them relative to the compose file again, and one climbing
+  out into HivePaaS's data directory reads as leaving the directory. An
+  include's `project_directory` is refused - an included file's directory is
+  its project's - and a URL is not fetched. A compose file an include or
+  extends reads that the request lacks, and an include's env file, are needs
+  (`compose`, `env_file`) that stop the read, as a required variable does.
+  The variables of included files are found once compose-go has read them, and
+  the file read again with them; the `.env` beside an included file and an
+  include's env files give values after the request's.
+- **Only what compose-go reads is written.** The scratch directory gets a file
+  of the request's only when compose-go asks for it: an included or extended
+  compose file, the `.env` beside one, an include's env file. The converter
+  reads everything else from the request itself. It is in the data directory's
+  `tmp/<day>` (`fileutil.CreateTempDirInAppPath`), which the system cleanup
+  sweeps.
+- **Directories.** A directory a service mounts is a need (`directory`), given
+  once a file under it is. It stays the app's own directory on the project's
+  volume - what the app writes there is kept - and each file given under it is
+  mounted at its place in it, read only, from an env config file: Docker mounts
+  the config over the volume, nested mounts going deepest last. The dashboard
+  gives a directory's files all or none, checked unless unchecked.
+- **Setting mount keys.** Found on the way: the converter keyed setting mount
+  entries after the mount (`secret-api_key`, `file-etc-nginx-nginx.conf`), and
+  an entry whose key is not an entry key is never mounted. Each mount is now an
+  entry of its own, keyed by `EntryKeyFor`, numbered when two would share one.
+
 ## Phases
 
 0. Entrypoint for apps.
@@ -475,7 +518,8 @@ exists, into one of its envs or a new one.
    Compose file", the quick start pointing at it; MCP's
    `plan_create_project_from_compose`, applied by `apply_plan`.
 4. Later:
-   - a directory archive instead of single files;
+   - a directory archive instead of single files: done as a folder read in
+     the browser, see "Opening a folder, includes, directories";
    - `build:` from the Git repository holding the compose file - it needs a
      build context directory for apps, which functions already have;
    - into an existing project or env: see "Into an existing project";

@@ -22,6 +22,7 @@ const VOLUME_KIND_LABELS: Record<ComposeVolumeKind, string> = {
     volume: "a directory of the project's volume",
     shared: "another app's directory",
     file: "a file of the env's",
+    files: "the files given, read only",
     host: "a directory of the host's",
     tmpfs: "memory",
     dropped: "not mounted",
@@ -282,7 +283,7 @@ function describeVolume(volume: ComposeVolumeView): string {
     if (volume.owner) {
         parts.push(`(${volume.owner}'s)`);
     }
-    if (volume.files > 0) {
+    if (volume.files > 0 && volume.kind !== "files") {
         parts.push(`with ${volume.files} ${volume.files === 1 ? "file" : "files"} given, read only,`);
     }
     if (volume.readOnly) {

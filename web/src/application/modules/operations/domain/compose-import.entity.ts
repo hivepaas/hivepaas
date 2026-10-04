@@ -24,7 +24,7 @@ export interface ComposePortView {
     also: string[];
 }
 
-export type ComposeVolumeKind = "volume" | "shared" | "file" | "host" | "tmpfs" | "dropped";
+export type ComposeVolumeKind = "volume" | "shared" | "file" | "files" | "host" | "tmpfs" | "dropped";
 
 export interface ComposeVolumeView {
     target: string;

@@ -84,6 +84,9 @@ func readCompose(ctx context.Context, req *composeservice.ConvertReq) (*read, er
 	if r.raw == nil {
 		return nil, hperrors.Wrap(hperrors.ErrComposeNoServices)
 	}
+	if err = r.checkIncludes(); err != nil {
+		return nil, err
+	}
 	if err = r.readVariables(req); err != nil {
 		return nil, err
 	}
@@ -124,6 +127,60 @@ func cleanFiles(files map[string][]byte) (map[string][]byte, error) {
 		return nil, hperrors.Wrap(hperrors.ErrComposeTooBig)
 	}
 	return out, nil
+}
+
+// checkIncludes refuses an include whose env_file or project_directory is not
+// a path of the scratch directory as written. compose-go reads an include's env
+// files itself, from the disk and not through the loader, and its project
+// directory's .env with them: one outside would be a file of the server's,
+// its values the variables of what is included. Every file compose-go may load
+// is the compose file or one of the request's, so each is checked; a value
+// holding a variable is refused, as it is only a path once interpolated.
+func (r *read) checkIncludes() error {
+	if err := checkIncludesOf(composeFileName, r.raw); err != nil {
+		return err
+	}
+	for _, name := range slices.Sorted(maps.Keys(r.files)) {
+		if !strings.Contains(string(r.files[name]), "include") {
+			continue
+		}
+		var doc map[string]any
+		if yaml.Unmarshal(r.files[name], &doc) != nil {
+			continue
+		}
+		if err := checkIncludesOf(name, doc); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func checkIncludesOf(file string, doc map[string]any) error {
+	entries, _ := doc["include"].([]any)
+	for _, entry := range entries {
+		fields, _ := entry.(map[string]any)
+		var paths []any
+		switch value := fields["env_file"].(type) {
+		case nil:
+		case []any:
+			paths = append(paths, value...)
+		default:
+			paths = append(paths, value)
+		}
+		if dir, found := fields["project_directory"]; found {
+			paths = append(paths, dir)
+		}
+		for _, p := range paths {
+			s, ok := p.(string)
+			if !ok || strings.Contains(s, "$") {
+				return hperrors.Wrap(hperrors.ErrComposeFilePath).WithExtraDetail("%s: include: %v", file, p)
+			}
+			if _, inside := cleanPath(s); !inside && s != "." {
+				return hperrors.Wrap(hperrors.ErrComposeFilePath).WithExtraDetail("%s: include: %s", file, s)
+			}
+		}
+	}
+	return nil
 }
 
 // cleanPath is a path relative to the compose file as one key: `./a/../b` is

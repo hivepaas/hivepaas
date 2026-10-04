@@ -3,6 +3,7 @@ package composeserviceimpl
 import (
 	"context"
 	"os"
+	"path/filepath"
 	"testing"
 
 	"github.com/moby/moby/api/types/mount"
@@ -188,6 +189,38 @@ func TestConvertReadsNothingOfTheServers(t *testing.T) {
 		Compose: "services:\n  a: {image: x}\n", Files: map[string][]byte{"../x": nil},
 	})
 	assert.ErrorIs(t, err, hperrors.ErrComposeFilePath)
+
+	// compose-go reads an include's env files from the disk itself, and its
+	// project directory's .env: neither may be the server's.
+	outside := filepath.Join(t.TempDir(), "server.env")
+	if !assert.NoError(t, os.WriteFile(outside, []byte("LEAK=from-the-server\n"), 0o600)) {
+		return
+	}
+	included := map[string][]byte{
+		"inc.yaml": []byte("services:\n  inc:\n    image: x\n    environment: {X: \"${LEAK}\"}\n"),
+	}
+	for name, include := range map[string]string{
+		"an absolute env_file":            "  - {path: inc.yaml, env_file: " + outside + "}\n",
+		"env_files leaving the directory": "  - {path: inc.yaml, env_file: [../../server.env]}\n",
+		"an env_file of a variable":       "  - {path: inc.yaml, env_file: \"${HOME}/x\"}\n",
+		"an absolute project_directory":   "  - {path: inc.yaml, project_directory: " + filepath.Dir(outside) + "}\n",
+	} {
+		t.Run(name, func(t *testing.T) {
+			req := convertReq("include:\n" + include + "services:\n  a: {image: x}\n")
+			req.Files = included
+			_, includeErr := New().Convert(context.Background(), req)
+			assert.ErrorIs(t, includeErr, hperrors.ErrComposeFilePath)
+		})
+	}
+	nested := convertReq("include: [inc.yaml]\nservices:\n  a: {image: x}\n")
+	nested.Files = map[string][]byte{"inc.yaml": []byte("include:\n  - {path: b.yaml, env_file: " + outside + "}\n"),
+		"b.yaml": included["inc.yaml"]}
+	_, err = New().Convert(context.Background(), nested)
+	assert.ErrorIs(t, err, hperrors.ErrComposeFilePath, "an included file's own include")
+
+	given := convertReq("include:\n  - {path: inc.yaml, env_file: inc.env}\nservices:\n  a: {image: x}\n")
+	given.Files = map[string][]byte{"inc.yaml": included["inc.yaml"], "inc.env": []byte("LEAK=given\n")}
+	assert.Equal(t, "given", envVar(appOf(t, convert(t, given), "inc"), "X")["v"], "an env file the request gave")
 
 	t.Setenv("HIVEPAAS_TEST_SECRET", "from the server")
 	resp := convert(t, convertReq("services:\n  a:\n    image: x\n    environment: {V: \"${HIVEPAAS_TEST_SECRET}\"}\n"))

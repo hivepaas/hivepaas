@@ -11,6 +11,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/composeservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/composeservice/composeserviceimpl"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/settingmountservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/specservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/specservice/specmodel"
 )
@@ -91,9 +92,16 @@ func TestAComposeFilesBundlePlansAndApplies(t *testing.T) {
 		}
 	}
 	types := map[base.SettingType]*entity.Setting{}
+	mounted := 0
 	for _, setting := range provision.settings[app] {
 		types[setting.Type] = setting
+		if setting.Type == base.SettingTypeAppSettingMount {
+			mounted++
+			assert.True(t, settingmountservice.ValidEntryKey(setting.Name),
+				"an entry called %q is never mounted", setting.Name)
+		}
 	}
+	assert.Equal(t, 2, mounted, "the secret's and the config's")
 	for _, typ := range []base.SettingType{base.SettingTypeEnvVar, base.SettingTypeAppRouting,
 		base.SettingTypeAppSettingMount, base.SettingTypeAppDeployment} {
 		assert.Contains(t, types, typ)

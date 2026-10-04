@@ -13,6 +13,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/fileutil"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/unit"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/composeservice"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/settingmountservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/specservice/specmodel"
 )
 
@@ -209,8 +210,8 @@ func (c *converter) bindMount(
 			c.add(appPath, specmodel.SeverityFixable, composeservice.CodeFileMissing,
 				map[string]any{detailPath: rel, detailTarget: v.Target}, "mounted empty until it is filled")
 		}
-		entry := mountEntry(mounts, "file"+strings.ReplaceAll(v.Target, "/", "-"), c.envConfigPath(configName))
-		addMountFile(entry, map[string]any{"part": "content", detailPath: v.Target})
+		addMount(mounts, path.Base(v.Target), c.envConfigPath(configName),
+			map[string]any{"part": "content", detailPath: v.Target})
 		c.viewVolume(view, v, v.Source, composeservice.VolumeKindFile, "")
 		return
 	}
@@ -306,20 +307,35 @@ func (c *converter) envSecretPath(name string) string {
 	return c.envPath() + "/secrets/" + name
 }
 
-// mountEntry is a setting mount entry of an app's, from one source: made once.
-func mountEntry(mounts map[string]any, key, source string) map[string]any {
-	if entry, ok := mounts[key].(map[string]any); ok {
-		return entry
+// addMount adds a setting mount entry to an app's: one file of one source.
+// Each mount is an entry of its own - an entry gives a part of its source
+// once - keyed after hint as an entry key has to be: the app's entries with a
+// key that is not one are never mounted (settingmountservice.ValidEntryKey).
+func addMount(mounts map[string]any, hint, source string, file map[string]any) {
+	mounts[uniqueEntryKey(mounts, hint)] = map[string]any{
+		detailSource: map[string]any{"id": source}, "files": []any{file},
 	}
-	entry := map[string]any{detailSource: map[string]any{"id": source}, "files": []any{}}
-	mounts[key] = entry
-	return entry
 }
 
-func addMountFile(entry map[string]any, file map[string]any) {
-	files, _ := entry["files"].([]any)
-	entry["files"] = append(files, file)
+// uniqueEntryKey is the entry key hint makes, numbered when the app has one
+// by that key already.
+func uniqueEntryKey(mounts map[string]any, hint string) string {
+	key := settingmountservice.EntryKeyFor(hint)
+	if key == "" {
+		key = "file"
+	}
+	candidate := key
+	for i := 2; ; i++ {
+		if _, taken := mounts[candidate]; !taken {
+			return candidate
+		}
+		suffix := "-" + itoa(i)
+		candidate = strings.TrimRight(key[:min(len(key), entryKeyMaxLen-len(suffix))], "-") + suffix
+	}
 }
+
+// entryKeyMaxLen is how long an entry key may be.
+const entryKeyMaxLen = 20
 
 func (c *converter) need(rel, as, service string, given bool) {
 	need := c.needs[rel]

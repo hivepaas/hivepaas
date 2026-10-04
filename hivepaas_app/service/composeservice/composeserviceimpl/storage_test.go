@@ -11,6 +11,7 @@ import (
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/composeservice"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/settingmountservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/specservice/specmodel"
 	"github.com/hivepaas/hivepaas/services/docker"
 )
@@ -132,12 +133,15 @@ func TestConvertMountsFilesFromEnvSettings(t *testing.T) {
 
 	web := appOf(t, resp, "web")
 	mounts, _ := web.Settings["settingMounts"].(map[string]any)
-	apiKey, _ := mounts["secret-api_key"].(map[string]any)
+	apiKey, _ := mounts["secret-api-key"].(map[string]any)
 	assert.Equal(t, map[string]any{"id": envPath + "/secrets/api_key"}, apiKey["source"])
 	assert.Equal(t, []any{map[string]any{"part": "value", "path": "/run/secrets/api.key", "mode": "0400"}},
 		apiKey["files"])
-	assert.Contains(t, mounts, "file-etc-nginx-nginx.conf")
-	assert.Contains(t, mounts, "config-app_config")
+	assert.Contains(t, mounts, "nginx-conf")
+	assert.Contains(t, mounts, "config-app-config")
+	for key := range mounts {
+		assert.True(t, settingmountservice.ValidEntryKey(key), "an entry with key %q is never mounted", key)
+	}
 
 	storage := web.Deployment.Storage
 	assert.Empty(t, storage.Mounts)
@@ -246,4 +250,21 @@ services:
 
 	req.Profiles = []string{"debug"}
 	assert.Contains(t, convert(t, req).Bundle.Envs["blog"]["prod"].Apps, "debug")
+}
+
+// Each mount is an entry of its own, keyed as an entry key has to be - one
+// that is not is never mounted - and numbered when two would share one.
+func TestEntryKeysAreValidAndUnique(t *testing.T) {
+	mounts := map[string]any{}
+	hints := []string{"nginx.conf", "nginx.conf", "secret-DB_PASSWORD", "___", "a-very-long-name-of-a-config-file.yaml"}
+	for _, hint := range hints {
+		addMount(mounts, hint, "source", map[string]any{})
+	}
+	keys := make([]string, 0, len(mounts))
+	for key := range mounts {
+		keys = append(keys, key)
+		assert.True(t, settingmountservice.ValidEntryKey(key), key)
+	}
+	assert.ElementsMatch(t, []string{"nginx-conf", "nginx-conf-2", "secret-db-password", "file",
+		"a-very-long-name-of"}, keys)
 }

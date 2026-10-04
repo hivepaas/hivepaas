@@ -115,16 +115,16 @@ func (c *converter) fileMounts(svc types.ServiceConfig, mounts map[string]any) {
 		case !path.IsAbs(target):
 			target = path.Join(secretsDir, target)
 		}
-		entry := mountEntry(mounts, "secret-"+ref.Source, c.envSecretPath(c.secretNames[ref.Source]))
-		addMountFile(entry, mountFile("value", target, types.FileReferenceConfig(ref)))
+		addMount(mounts, "secret-"+ref.Source, c.envSecretPath(c.secretNames[ref.Source]),
+			mountFile("value", target, types.FileReferenceConfig(ref)))
 	}
 	for _, ref := range svc.Configs {
 		target := ref.Target
 		if target == "" {
 			target = "/" + ref.Source
 		}
-		entry := mountEntry(mounts, "config-"+ref.Source, c.envConfigPath(c.configNames[ref.Source]))
-		addMountFile(entry, mountFile("content", target, types.FileReferenceConfig(ref)))
+		addMount(mounts, "config-"+ref.Source, c.envConfigPath(c.configNames[ref.Source]),
+			mountFile("content", target, types.FileReferenceConfig(ref)))
 	}
 }
 

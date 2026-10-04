@@ -74,7 +74,12 @@ func (w *writer) applyToServices(ctx context.Context, db database.IDB) {
 		return
 	}
 	for _, envID := range slices.Sorted(maps.Keys(envs)) {
-		data, err := w.p.s.envVarService.BuildEnvVarsForAllAppsInScope(ctx, db, envs[envID], false, nil, true, true)
+		scope, err := w.loadedEnvScope(ctx, db, envs[envID])
+		if err != nil {
+			w.failEnv(envID, byAppID, err)
+			continue
+		}
+		data, err := w.p.s.envVarService.BuildEnvVarsForAllAppsInScope(ctx, db, scope, false, nil, true, true)
 		if err != nil {
 			w.failEnv(envID, byAppID, err)
 			continue
@@ -85,6 +90,22 @@ func (w *writer) applyToServices(ctx context.Context, db database.IDB) {
 			}
 		}
 	}
+}
+
+// loadedEnvScope is an env's scope with what building its apps' environment
+// reads: the env, its project and its apps. A scope of ids alone has none of
+// them, and building on it was a nil dereference.
+func (w *writer) loadedEnvScope(
+	ctx context.Context, db database.IDB, scope *entity.ObjectScope,
+) (*entity.ObjectScope, error) {
+	env, err := w.p.s.projectEnvRepo.GetByID(ctx, db, scope.ProjectID, scope.ProjectEnvID,
+		bunex.SelectRelation("Project", bunex.SelectExcludeColumns(entity.ProjectDefaultExcludeColumns...)),
+		bunex.SelectRelation("Apps", bunex.SelectExcludeColumns(entity.AppDefaultExcludeColumns...)),
+	)
+	if err != nil {
+		return nil, hperrors.Wrap(err)
+	}
+	return env.GetObjectScope(), nil
 }
 
 func failNode(node *specmodel.PlanNode, err error) {

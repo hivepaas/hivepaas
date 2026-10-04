@@ -97,8 +97,8 @@ func (uc *UC) afterImport(
 	applied *specservice.ApplyImportResp,
 ) *specdto.ApplyImportResp {
 	var warnings []string
-	if err := applied.AfterCommit(ctx, db); err != nil {
-		warnings = append(warnings, "writing certificate files: "+err.Error())
+	if err := runAfterCommit(ctx, db, applied); err != nil {
+		warnings = append(warnings, "applying what was saved to the running apps: "+err.Error())
 	}
 	// After phase 2, so that a deployment runs on the service it updated.
 	if err := uc.taskQueue.ScheduleTask(ctx, applied.Tasks...); err != nil {
@@ -108,6 +108,17 @@ func (uc *UC) afterImport(
 		Meta: &basedto.Meta{Warning: strings.Join(warnings, "\n")},
 		Data: &specdto.ApplyImportData{Plan: applied.Plan, Deployments: applied.Deployments},
 	}
+}
+
+// runAfterCommit is phase 2, with a panic in it an error like any other: the
+// import is committed, and its deployments are still to be scheduled.
+func runAfterCommit(ctx context.Context, db database.IDB, applied *specservice.ApplyImportResp) (err error) {
+	defer func() {
+		if rec := recover(); rec != nil {
+			err = hperrors.NewPanic(rec)
+		}
+	}()
+	return hperrors.Wrap(applied.AfterCommit(ctx, db))
 }
 
 // recordSpecImport records an import in its transaction: what was imported

@@ -131,6 +131,19 @@ func (f *fakeProjectEnvRepo) List(
 	return out, nil, nil
 }
 
+func (f *fakeProjectEnvRepo) GetByID(
+	_ context.Context, _ database.IDB, projectID, id string, _ ...bunex.SelectQueryOption,
+) (*entity.ProjectEnv, error) {
+	for _, env := range f.envs {
+		if env.ProjectID == projectID && env.ID == id {
+			loaded := *env
+			loaded.Project = &entity.Project{ID: projectID}
+			return &loaded, nil
+		}
+	}
+	return nil, hperrors.Wrap(hperrors.ErrProjectEnvNotFound)
+}
+
 func (f *fakeProjectEnvRepo) GetByKey(
 	_ context.Context, _ database.IDB, projectID, key string, _ ...bunex.SelectQueryOption,
 ) (*entity.ProjectEnv, error) {

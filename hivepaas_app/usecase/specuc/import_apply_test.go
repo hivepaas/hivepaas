@@ -112,3 +112,22 @@ func TestApplyImportSchedulesAfterPhaseTwo(t *testing.T) {
 	assert.Contains(t, out.Meta.Warning, "disk full")
 	assert.Equal(t, resp.Deployments, out.Data.Deployments)
 }
+
+// A panic after the commit is a warning: the import is saved, and its
+// deployments are scheduled all the same.
+func TestAfterImportSchedulesTheDeploymentsWhenPhaseTwoPanics(t *testing.T) {
+	uc, _, _ := newTestUC(t)
+	q := &fakeQueue{}
+	uc.taskQueue = q
+	applied := applyResp()
+	applied.AfterCommit = func(context.Context, database.IDB) error {
+		var scopes map[string]int
+		scopes["env"]++ // a nil map: a panic
+		return nil
+	}
+
+	resp := uc.afterImport(context.Background(), nil, applied)
+
+	assert.Contains(t, resp.Meta.Warning, "applying what was saved")
+	assert.Len(t, q.scheduled, 1)
+}

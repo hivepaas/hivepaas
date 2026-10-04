@@ -80,6 +80,9 @@ func TestAComposeFilesBundlePlansAndApplies(t *testing.T) {
 		return
 	}
 	assert.Len(t, resp.Deployments, 2)
+	// Phase 2 builds the environment of the env whose secrets were written: it
+	// panicked on a scope of ids alone.
+	assert.NoError(t, resp.AfterCommit(context.Background(), nil))
 
 	provision := svc.appProvisionService.(*fakeProvisionService)
 	if assert.Len(t, provision.reqs, 2) {

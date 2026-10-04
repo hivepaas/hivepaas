@@ -2,6 +2,7 @@ package specserviceimpl
 
 import (
 	"context"
+	"errors"
 
 	"github.com/moby/moby/api/types/mount"
 	"github.com/moby/moby/api/types/swarm"
@@ -135,9 +136,15 @@ type fakeEnvVarService struct {
 	scopes []string
 }
 
+// BuildEnvVarsForAllAppsInScope wants what the real one reads of an env's
+// scope: the env, with its project and its apps - a scope of ids alone made it
+// dereference nil.
 func (f *fakeEnvVarService) BuildEnvVarsForAllAppsInScope(
 	_ context.Context, _ database.IDB, scope *entity.ObjectScope, _ bool, _ []string, _, _ bool,
 ) ([]*envvarservice.AppEnvVarData, error) {
+	if scope.IsProjectEnvScope() && (scope.ProjectEnv == nil || scope.ProjectEnv.Project == nil) {
+		return nil, errors.New("an env's scope without its env and project loaded")
+	}
 	f.scopes = append(f.scopes, scope.ProjectEnvID)
 	return nil, nil
 }

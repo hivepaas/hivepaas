@@ -1,6 +1,6 @@
 import { useRef } from "react";
 
-import { Button, Checkbox, Input, Label } from "@components/ui";
+import { Button, Checkbox, FieldError, Input, Label } from "@components/ui";
 import { Textarea } from "@components/ui/textarea";
 import { FileUpIcon } from "lucide-react";
 import { PROJECT_FORM_CONTROL_MAX_WIDTH_CLASS } from "~/projects/module-shared/constants";
@@ -30,6 +30,8 @@ export function ComposeSource({
     selectedProfiles,
     onProfilesChange,
     error,
+    nameError,
+    envError,
     isReading,
 }: Props) {
     const fileInputRef = useRef<HTMLInputElement>(null);
@@ -84,7 +86,7 @@ export function ComposeSource({
                         />
                         {isReading && <span className="text-xs text-muted-foreground">Reading…</span>}
                     </div>
-                    {error && <p className="max-w-[720px] text-xs text-destructive">{error.message}</p>}
+                    {error && <p className="max-w-[720px] text-xs text-destructive">{error}</p>}
                 </div>
             </InfoBlock>
 
@@ -125,8 +127,10 @@ export function ComposeSource({
                         onProjectNameChange(event.target.value);
                     }}
                     placeholder={fileName || "my-project"}
+                    aria-invalid={nameError !== undefined}
                     className={PROJECT_FORM_CONTROL_MAX_WIDTH_CLASS}
                 />
+                <FieldError errors={[nameError === undefined ? undefined : { message: nameError }]} />
             </InfoBlock>
 
             <InfoBlock
@@ -144,8 +148,10 @@ export function ComposeSource({
                         onEnvNameChange(event.target.value);
                     }}
                     placeholder="production"
+                    aria-invalid={envError !== undefined}
                     className={PROJECT_FORM_CONTROL_MAX_WIDTH_CLASS}
                 />
+                <FieldError errors={[envError === undefined ? undefined : { message: envError }]} />
             </InfoBlock>
 
             {profiles.length > 0 && (
@@ -204,6 +210,10 @@ interface Props {
     profiles: string[];
     selectedProfiles: string[];
     onProfilesChange: (value: string[]) => void;
-    error?: Error;
+    /** What the file itself was refused for. */
+    error?: string;
+    /** What the project's name and env were refused for, shown under each. */
+    nameError?: string;
+    envError?: string;
     isReading: boolean;
 }

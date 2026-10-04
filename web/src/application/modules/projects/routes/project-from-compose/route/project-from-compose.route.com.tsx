@@ -20,12 +20,56 @@ import { SpecImportPlanTree, buildImportTree, leafPaths, selectionOf } from "~/o
 import { MODULE_IDS } from "@application/shared/constants";
 import { PermissionTooltipAction } from "@application/shared/permissions";
 
+import { ValidationProblemApiResponse } from "@infrastructure/api";
+
+import { HttpException } from "@infrastructure/exceptions/http";
+
 import { ComposeFiles, ComposeResult, ComposeServices, ComposeSource, ComposeVariables } from "../building-blocks";
 
 /** How long the review waits for typing to stop before the file is read again. */
 const REVALIDATE_DELAY_MS = 500;
 
 const EVERYTHING: SpecImportSelection = { include: [], exclude: [] };
+
+/** What a refusal of validate says, by where it belongs on the page. */
+interface ReadErrors {
+    name?: string;
+    env?: string;
+    /** About the file itself, or a field shown nowhere else. */
+    file?: string;
+}
+
+/**
+ * Splits a refusal by field: the project's name and env are said under their
+ * inputs, in words of this page; anything else under the file, field by field.
+ */
+function readErrorsOf(error: Error | undefined): ReadErrors {
+    if (!error) {
+        return {};
+    }
+    if (!(error instanceof HttpException) || !(error.problem instanceof ValidationProblemApiResponse)) {
+        return { file: error.message };
+    }
+    const out: ReadErrors = {};
+    const rest: string[] = [];
+    for (const item of error.problem.errors) {
+        if (item.path === "project.name") {
+            out.name =
+                item.code === "ERR_VLD_VALUE_REQUIRED"
+                    ? "Name the project: the compose file has no name of its own (name:)."
+                    : item.message;
+        } else if (item.path === "project.env") {
+            out.env = item.message;
+        } else {
+            rest.push(`${item.path}: ${item.message}`);
+        }
+    }
+    if (rest.length > 0) {
+        out.file = rest.join("; ");
+    }
+
+    return out;
+}
 
 /** A key of what a body asks, File objects named by what tells them apart. */
 function keyOf(body: ComposeImportBody): string {
@@ -159,6 +203,7 @@ export function ProjectFromComposeRoute() {
         setResult(undefined);
     };
 
+    const readErrors = readErrorsOf(validateError);
     const summary = plan?.summary ?? {};
     const blocked = summary["blocked"] ?? 0;
     const accepted = (summary["skipped"] ?? 0) + (summary["fixable"] ?? 0) + (summary["warning"] ?? 0);
@@ -205,7 +250,9 @@ export function ProjectFromComposeRoute() {
                         profiles={review?.profiles ?? []}
                         selectedProfiles={profiles}
                         onProfilesChange={setProfiles}
-                        error={validateError}
+                        error={readErrors.file}
+                        nameError={readErrors.name}
+                        envError={readErrors.env}
                         isReading={isValidating}
                     />
 

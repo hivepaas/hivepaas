@@ -33,6 +33,7 @@ const (
 	// Notes: what the import does, needing no acceptance.
 	CodeSecretVariable = "COMPOSE_SECRET_VARIABLE"
 	CodeSecretWritten  = "COMPOSE_SECRET_WRITTEN" //nolint:gosec // an issue code, not a credential
+	CodeSecretEnv      = "COMPOSE_SECRET_ENV"     //nolint:gosec // an issue code, not a credential
 	CodeAliasAdded     = "COMPOSE_ALIAS_ADDED"
 	CodeStartOrder     = "COMPOSE_START_ORDER"
 	CodeLabelsDropped  = "COMPOSE_LABELS_DROPPED"

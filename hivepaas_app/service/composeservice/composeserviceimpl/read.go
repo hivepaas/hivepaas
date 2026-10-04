@@ -49,6 +49,9 @@ type read struct {
 	variables map[string]template.Variable
 	values    map[string]string
 	secret    map[string]bool
+	// plain are the variables whose names read as a secret's that the review
+	// says are not: a variable they fill is not kept as a secret either.
+	plain map[string]bool
 	// files are the files the request carries, by their cleaned path.
 	files map[string][]byte
 	// markers stands in for a secret variable's value while the file is read
@@ -159,10 +162,11 @@ func (r *read) readVariables(req *composeservice.ConvertReq) error {
 	}
 	r.values = values
 
-	r.secret = map[string]bool{}
+	r.secret, r.plain = map[string]bool{}, map[string]bool{}
 	for _, name := range slices.Sorted(maps.Keys(r.variables)) {
 		if v := req.Variables[name]; v != nil && v.Secret != nil {
 			r.secret[name] = *v.Secret
+			r.plain[name] = !*v.Secret && secretByName(name)
 		} else {
 			r.secret[name] = secretByName(name)
 		}
@@ -209,8 +213,8 @@ func (r *read) load(ctx context.Context, req *composeservice.ConvertReq) (*types
 	environment := types.Mapping{}
 	for name, value := range r.values {
 		environment[name] = value
-		if r.secret[name] && value != "" {
-			environment[name] = r.markers.of(name)
+		if marked, ok := r.marked(name, value); ok {
+			environment[name] = marked
 		}
 	}
 	// One with neither a value nor a default is empty either way; given as
@@ -326,19 +330,53 @@ func newSecretMarkers() *secretMarkers {
 	return &secretMarkers{nonce: hex.EncodeToString(nonce)}
 }
 
+// The kinds of marker: a secret variable's, and a plain one's - one whose name
+// reads as a secret's that the review says is not.
+const (
+	secretKind = ":"
+	plainKind  = "="
+)
+
 func (m *secretMarkers) of(name string) string {
-	return fmt.Sprintf("%s%s:%s%s", markerOpen, m.nonce, name, markerClose)
+	return fmt.Sprintf("%s%s%s%s%s", markerOpen, m.nonce, secretKind, name, markerClose)
 }
 
-// replace writes each marker of s as what with makes of its variable's name;
-// names are the variables it found.
+func (m *secretMarkers) plainOf(name string) string {
+	return fmt.Sprintf("%s%s%s%s%s", markerOpen, m.nonce, plainKind, name, markerClose)
+}
+
+// marked is what a variable is read as: a marker for a secret one or a plain
+// one with a value; false for any other, read as its value.
+func (r *read) marked(name, value string) (string, bool) {
+	switch {
+	case value == "":
+		return "", false
+	case r.secret[name]:
+		return r.markers.of(name), true
+	case r.plain[name]:
+		return r.markers.plainOf(name), true
+	}
+	return "", false
+}
+
+// replace writes each secret marker of s as what with makes of its
+// variable's name; names are the variables it found.
 func (m *secretMarkers) replace(s string, with func(name string) string) (string, []string) {
+	return m.replaceKind(s, secretKind, with)
+}
+
+// replacePlain writes each plain marker of s as its variable's value.
+func (m *secretMarkers) replacePlain(s string, values map[string]string) (string, []string) {
+	return m.replaceKind(s, plainKind, func(name string) string { return values[name] })
+}
+
+func (m *secretMarkers) replaceKind(s, kind string, with func(name string) string) (string, []string) {
 	if !strings.Contains(s, markerOpen) {
 		return s, nil
 	}
 	var b strings.Builder
 	var names []string
-	prefix := markerOpen + m.nonce + ":"
+	prefix := markerOpen + m.nonce + kind
 	for {
 		start := strings.Index(s, prefix)
 		if start < 0 {

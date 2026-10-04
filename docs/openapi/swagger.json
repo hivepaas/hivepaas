@@ -59062,6 +59062,13 @@
             "description" : "Replicas of a replicated service.",
             "type" : "integer"
           },
+          "secrets" : {
+            "description" : "Secrets are its variables kept as secrets of the app.",
+            "items" : {
+              "type" : "string"
+            },
+            "type" : "array"
+          },
           "skipped" : {
             "description" : "Skipped says the service is not created, and Reason why.",
             "type" : "boolean"
@@ -59073,7 +59080,7 @@
             "type" : "array"
           }
         },
-        "required" : [ "aliases", "app", "build", "dropped", "image", "mode", "name", "ports", "reason", "replicas", "skipped", "volumes" ],
+        "required" : [ "aliases", "app", "build", "dropped", "image", "mode", "name", "ports", "reason", "replicas", "secrets", "skipped", "volumes" ],
         "type" : "object"
       },
       "composeservice.VariableView" : {
@@ -62252,9 +62259,9 @@
         "type" : "object"
       },
       "hperrors.DisplayLevel" : {
-        "enum" : [ "medium", "high", "medium", "low" ],
+        "enum" : [ "high", "medium", "low", "medium" ],
         "type" : "string",
-        "x-enum-varnames" : [ "errVldDisplayLevel", "DisplayLevelHigh", "DisplayLevelMedium", "DisplayLevelLow" ]
+        "x-enum-varnames" : [ "DisplayLevelHigh", "DisplayLevelMedium", "DisplayLevelLow", "errVldDisplayLevel" ]
       },
       "hperrors.ErrorInfo" : {
         "properties" : {

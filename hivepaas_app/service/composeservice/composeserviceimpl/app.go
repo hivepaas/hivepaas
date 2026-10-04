@@ -57,9 +57,15 @@ func (c *converter) app(name string, svc types.ServiceConfig) (*specmodel.AppDoc
 	}
 	deployment.Storage = c.storage(path, name, svc, view, mounts)
 	c.ports(path, name, svc, view, deployment.Networks, settings)
-	if envVars := c.envVars(path, name, svc); envVars != nil {
+	secrets := map[string]any{}
+	envVars, kept := c.envVars(path, name, svc, secrets)
+	if envVars != nil {
 		settings["envVars"] = envVars
 	}
+	if len(secrets) > 0 {
+		settings["secrets"] = secrets
+	}
+	view.Secrets = kept
 	c.fileMounts(svc, mounts)
 	if len(mounts) > 0 {
 		settings["settingMounts"] = mounts
@@ -75,7 +81,8 @@ func (c *converter) app(name string, svc types.ServiceConfig) (*specmodel.AppDoc
 // plain is a value of the file other than an environment's: a secret
 // variable in it is written as its value, which a note says.
 func (c *converter) plain(path, field, s string) string {
-	out, names := c.r.markers.replace(s, func(name string) string { return c.r.values[name] })
+	out, _ := c.r.markers.replacePlain(s, c.r.values)
+	out, names := c.r.markers.replace(out, func(name string) string { return c.r.values[name] })
 	for _, name := range names {
 		c.add(path, "", composeservice.CodeSecretWritten, map[string]any{"variable": name, detailField: field},
 			"written as its value: only an environment refers to a secret")

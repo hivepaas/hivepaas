@@ -3,6 +3,7 @@ package composeserviceimpl
 import (
 	"bytes"
 	"maps"
+	"regexp"
 	"slices"
 	"strings"
 
@@ -15,8 +16,13 @@ import (
 
 // envVars are a service's environment as the app's variables: its env_files
 // first and its environment over them, as compose reads them. A secret
-// variable in a value is a reference to the env secret holding it.
-func (c *converter) envVars(appPath, name string, svc types.ServiceConfig) map[string]any {
+// variable in a value is a reference to the env secret holding it; a variable
+// whose own name reads as a secret's and whose value the file writes out is
+// kept as a secret of the app, which the variable refers to - secrets
+// collects them.
+func (c *converter) envVars(
+	appPath, name string, svc types.ServiceConfig, secrets map[string]any,
+) (map[string]any, []string) {
 	values := map[string]string{}
 	for _, file := range svc.EnvFiles {
 		c.readEnvFile(appPath, name, file, values)
@@ -33,24 +39,42 @@ func (c *converter) envVars(appPath, name string, svc types.ServiceConfig) map[s
 	}
 
 	data := make([]any, 0, len(values))
+	var kept []string
 	for _, key := range slices.Sorted(maps.Keys(values)) {
-		value, names := c.r.markers.replace(values[key], func(variable string) string {
+		value, plainNames := c.r.markers.replacePlain(values[key], c.r.values)
+		value, names := c.r.markers.replace(value, func(variable string) string {
 			c.secretVariables[variable] = true
 			return "${secrets." + c.secretOfVariable(variable) + "}"
 		})
 		entry := map[string]any{"k": key, "v": value}
-		// Not a reference of HivePaaS's - written `$${` in compose, or a file's
-		// own: it reaches the container as it is.
-		if len(names) == 0 && strings.Contains(value, "${") {
+		switch {
+		case len(names) > 0:
+		case strings.Contains(value, "${"):
+			// Not a reference of HivePaaS's - written `$${` in compose, or a
+			// file's own: it reaches the container as it is.
 			entry["literal"] = true
+		case len(plainNames) > 0:
+			// A variable the review says is not secret fills it.
+		case value != "" && secretByName(key) && secretNamePattern.MatchString(key):
+			secrets[key] = map[string]any{"key": key, "value": value,
+				specmodel.SettingMetaKey: map[string]any{"name": key}}
+			entry["v"] = "${secrets." + key + "}"
+			kept = append(kept, key)
 		}
 		data = append(data, entry)
 	}
-	if len(data) == 0 {
-		return nil
+	if len(kept) > 0 {
+		c.add(appPath, "", composeservice.CodeSecretEnv, map[string]any{"variables": kept},
+			"kept as secrets of the app, which its variables refer to")
 	}
-	return map[string]any{"data": data}
+	if len(data) == 0 {
+		return nil, kept
+	}
+	return map[string]any{"data": data}, kept
 }
+
+// secretNamePattern is a name a variable can refer to a secret by.
+var secretNamePattern = regexp.MustCompile(`^[a-zA-Z_][a-zA-Z0-9_]*$`)
 
 // readEnvFile reads one env_file into values, from the request's files.
 func (c *converter) readEnvFile(appPath, name string, file types.EnvFile, values map[string]string) {
@@ -82,8 +106,8 @@ func (c *converter) readEnvFile(appPath, name string, file types.EnvFile, values
 // marker.
 func (c *converter) lookup(name string) (string, bool) {
 	value, ok := c.r.values[name]
-	if ok && c.r.secret[name] && value != "" {
-		return c.r.markers.of(name), true
+	if marked, isMarked := c.r.marked(name, value); isMarked {
+		return marked, true
 	}
 	return value, ok
 }

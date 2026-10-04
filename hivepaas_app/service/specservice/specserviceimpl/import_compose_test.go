@@ -29,6 +29,7 @@ services:
     ports: ["8080:80"]
     environment:
       DATABASE_URL: postgres://app:${DB_PASSWORD}@db/app
+      API_TOKEN: t0ken
     secrets: [api_key]
     configs: [{source: settings, target: /etc/app/settings.json}]
     volumes: [pgdata:/backup:ro]
@@ -98,6 +99,10 @@ func TestAComposeFilesBundlePlansAndApplies(t *testing.T) {
 		assert.Contains(t, types, typ)
 	}
 	assert.Contains(t, types[base.SettingTypeEnvVar].Data, "${secrets.DB_PASSWORD}")
+	assert.Contains(t, types[base.SettingTypeEnvVar].Data, "${secrets.API_TOKEN}")
+	if assert.Contains(t, types, base.SettingTypeSecret, "the app's own secret") {
+		assert.Equal(t, "API_TOKEN", types[base.SettingTypeSecret].Name)
+	}
 	assert.Equal(t, "sh -c 'migrate && serve'",
 		types[base.SettingTypeAppDeployment].MustAsAppDeploymentSettings().Command)
 

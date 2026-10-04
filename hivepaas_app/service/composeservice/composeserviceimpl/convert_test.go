@@ -197,3 +197,27 @@ func TestConvertReadsNothingOfTheServers(t *testing.T) {
 	assert.Contains(t, codes(resp.Issues[envPath+"/apps/a"]), composeservice.CodeFileMissing)
 	assert.Nil(t, appOf(t, resp, "a").Settings["envVars"])
 }
+
+// A variable whose name reads as a secret's, written out in the file rather
+// than given by a variable, is kept as a secret of the app.
+func TestConvertKeepsAWrittenOutPasswordAsAnAppSecret(t *testing.T) {
+	resp := convert(t, convertReq(`
+services:
+  db:
+    image: postgres:17
+    environment:
+      POSTGRES_PASSWORD: example
+      POSTGRES_USER: app
+      API_KEY: ""
+`))
+	db := appOf(t, resp, "db")
+	assert.Equal(t, "${secrets.POSTGRES_PASSWORD}", envVar(db, "POSTGRES_PASSWORD")["v"])
+	assert.Equal(t, "app", envVar(db, "POSTGRES_USER")["v"])
+	assert.Equal(t, "", envVar(db, "API_KEY")["v"], "nothing to keep")
+	secrets, _ := db.Settings["secrets"].(map[string]any)
+	if assert.Len(t, secrets, 1) {
+		assert.Equal(t, "example", secrets["POSTGRES_PASSWORD"].(map[string]any)["value"])
+	}
+	assert.Equal(t, []string{"POSTGRES_PASSWORD"}, resp.Services[0].Secrets)
+	assert.Contains(t, codes(resp.Issues[dbPath]), composeservice.CodeSecretEnv)
+}

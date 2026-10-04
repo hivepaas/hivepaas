@@ -414,6 +414,12 @@ splits it back.
      only blocks it builds; compose-go refuses a dependency cycle itself, as an
      error; and `depends_on` does not order creation - the import creates a
      volume's owner first, and the rest by key.
+   - Added after the first try: a variable written out in a service's
+     environment whose name reads as a secret's, with a value, is kept as a
+     secret of the app (`COMPOSE_SECRET_ENV`), its variable `${secrets.NAME}`.
+     A value a `${VARIABLE}` fills follows the variable instead; one the review
+     says is not secret is read through a marker of its own, so that it is
+     written as plain text.
 2. The dashboard's page. **Done** (2026-10-04). As built: New Project is a
    menu - an empty project, or From Docker Compose, the page
    `/projects/new/compose`. Its API sits beside spec import's, in the

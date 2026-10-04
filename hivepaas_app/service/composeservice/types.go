@@ -126,6 +126,8 @@ type ServiceView struct {
 	Aliases []string `json:"aliases"`
 	// Dropped are the compose fields not carried to the app.
 	Dropped []string `json:"dropped"`
+	// Secrets are its variables kept as secrets of the app.
+	Secrets []string `json:"secrets"`
 }
 
 // PortView is one published port, and what it becomes.

@@ -19,7 +19,9 @@ import (
 	"github.com/compose-spec/compose-go/v2/types"
 	"gopkg.in/yaml.v3"
 
+	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
+	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/fileutil"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/composeservice"
 )
 
@@ -250,9 +252,11 @@ func secretByName(name string) bool {
 }
 
 // load has compose-go read the file in a scratch directory holding only the
-// request's files, removed after.
+// request's files, removed after. The directory is one of the day's under
+// HivePaaS's temporary directory: should the process die before removing it,
+// the system cleanup removes the day's directory a few days on.
 func (r *read) load(ctx context.Context, req *composeservice.ConvertReq) (*types.Project, error) {
-	dir, err := os.MkdirTemp("", "hivepaas-compose-*")
+	dir, err := fileutil.CreateTempDir(base.BaseTempDirDefault, "compose-*", 0)
 	if err != nil {
 		return nil, hperrors.Wrap(err)
 	}

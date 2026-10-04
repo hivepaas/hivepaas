@@ -7,13 +7,13 @@ import (
 	"github.com/gin-gonic/gin"
 	mcpsdk "github.com/modelcontextprotocol/go-sdk/mcp"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/interface/api/handler/authhandler"
 	"github.com/hivepaas/hivepaas/hivepaas_app/repository/cacherepository"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/auditservice"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/systemappservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/systemsettings/mcpuc"
 )
 
@@ -104,8 +104,9 @@ func NewEndpoint(services *Services, dispatcher *Dispatcher, tools []Tool) *Endp
 // newServer is the server of one access: the tools it can use, and what it
 // is told of those it cannot.
 func newServer(deps *Deps, tools []Tool, a access) *mcpsdk.Server {
-	server := mcpsdk.NewServer(&mcpsdk.Implementation{Name: "hivepaas", Title: "HivePaaS", Version: base.CurrentVersion},
-		&mcpsdk.ServerOptions{Instructions: a.instructions()})
+	server := mcpsdk.NewServer(&mcpsdk.Implementation{
+		Name: "hivepaas", Title: "HivePaaS", Version: systemappservice.CurrentRelease().AppVersion,
+	}, &mcpsdk.ServerOptions{Instructions: a.instructions()})
 	for _, tool := range tools {
 		if a.serves(tool.needs) {
 			tool.add(server, deps)

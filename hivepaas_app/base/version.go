@@ -12,15 +12,18 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/timeutil"
 )
 
+// Version codes are the version of HivePaaS's data and of what templates and
+// specs may need, apart from the release version (release.json's appVersion).
+// A new code is added, and CurrentVersion moved to it, when a setting's Migrate
+// must run on existing databases - data migration runs only while the stored
+// code is behind - or when templates or specs need what an older HivePaaS does
+// not have. Codes are fixed-width, so they compare as strings.
 const (
 	VersionCodeV1 = "v000001" // Date: 2026-01-01
 )
 
+// CurrentVersion is the version code this binary is.
 const CurrentVersion = VersionCodeV1
-
-const StableVersionCode = VersionCodeV1
-
-const BetaVersionCode = VersionCodeV1
 
 // The repositories the app's and the agent's images are released to.
 const (

@@ -14,6 +14,7 @@ import (
 	mcpsdk "github.com/modelcontextprotocol/go-sdk/mcp"
 	"github.com/stretchr/testify/assert"
 
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/systemappservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/appdeploymentuc/appdeploymentdto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/apptemplateuc/apptemplatedto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings/schedjobuc/schedjobdto"
@@ -617,4 +618,12 @@ func TestOnlyADeploymentThatHasNotEndedIsCanceled(t *testing.T) {
 	assert.False(t, isErr, text)
 	assert.Equal(t, []sentRequest{{"POST", "/projects/p1/prod/apps/a1/deployments/d3/cancel", "{}"}},
 		w.routes.writes())
+}
+
+// The server reports the release it runs, as the dashboard shows it, not the
+// data version code, which means nothing to a client.
+func TestTheServerReportsTheReleaseItRuns(t *testing.T) {
+	w := newWriteWorld(t)
+	info := w.session(t, "reader").InitializeResult().ServerInfo
+	assert.Equal(t, systemappservice.CurrentRelease().AppVersion, info.Version)
 }

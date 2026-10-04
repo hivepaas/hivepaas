@@ -105,6 +105,13 @@ function readErrorsOf(error: Error | undefined): ReadErrors {
     return out;
 }
 
+/** The .env beside a compose file of a subdirectory; none beside the compose file itself, whose .env is its own box. */
+function besideEnv(path: string): string[] {
+    const slash = path.lastIndexOf("/");
+
+    return slash < 0 ? [] : [`${path.slice(0, slash)}/.env`];
+}
+
 /** A key of what a body asks, File objects named by what tells them apart. */
 function keyOf(body: ComposeImportBody): string {
     const files = Object.entries(body.files).map(([path, file]) =>
@@ -343,7 +350,11 @@ function ComposeImportPage({ projectId }: { projectId?: string }) {
         if (!folder || !review) {
             return;
         }
-        const paths = review.needs.filter(need => need.as !== "directory" && !need.given).map(need => need.path);
+        // A compose file an include reads comes with the .env beside it, which
+        // compose reads for it - no need of the review's, as it may be absent.
+        const paths = review.needs
+            .filter(need => need.as !== "directory" && !need.given)
+            .flatMap(need => (need.as === "compose" ? [need.path, ...besideEnv(need.path)] : [need.path]));
         const additions: Record<string, File> = folderFilesFor(folder, paths, files, fromFolder.current);
         for (const need of review.needs) {
             if (need.as !== "directory" || directoriesOff.has(need.path)) {

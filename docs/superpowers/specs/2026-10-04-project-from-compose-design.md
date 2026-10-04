@@ -308,6 +308,34 @@ deployment as `ContainerSpec.Command` when set; its field on the deployment
 settings screen; `source.entrypoint` in the spec and among the templates'
 buildable fields; MCP's app settings; the docs.
 
+Nothing changes for an app without one: empty is the image's entrypoint, as
+now, so no data is migrated, and a deployment writes the service spec it wrote
+before - the upgrade restarts nothing. What must change with it, or an app that
+has one breaks:
+
+- **The container settings screen** shows `Command` and `Args` joined as one
+  command, and a save splits it all into the arguments and clears the command:
+  one save would turn the entrypoint into arguments of the image's own. It
+  shows the entrypoint apart, and keeps it. Its join quotes nothing either -
+  today `sh -c "a && b"` comes back split into words on a save - so both are
+  joined with `shellquote.Join`.
+- **The deployment settings request** replaces the whole setting: a client that
+  does not know the field - a dashboard tab open across the upgrade, a script
+  on the API - would clear it. `entrypoint` is a pointer there: absent keeps
+  it, empty clears it. MCP merges a patch into what it read, so it keeps it.
+- **Docker's init** is decided from the image's entrypoint
+  (`applyContainerInit`); with an entrypoint of the app's own, from that one -
+  else `tini --` as the entrypoint would run under docker's init, two inits,
+  which s6 refuses.
+- **No new setting version**: a version here rewrites old data (2 removed
+  fields, 3 turned `autoDeploy` on for old rows), and there is none to rewrite.
+  A release before this one, importing a bundle that sets an entrypoint,
+  ignores it as it ignores any key it does not know; a template that sets one
+  says so in `requires.versionCode`.
+- Already right: a clone without the deployment settings clears the command,
+  and one with them keeps both; a function passes none; a build deploys through
+  the same apply.
+
 ## Dashboard
 
 - The projects page: **New Project** gets a menu - an empty project, or **From

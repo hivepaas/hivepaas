@@ -128,9 +128,10 @@ func oracleCases() []oracleCase {
 			name:   "container",
 			spec:   specmodel.Container{},
 			update: appsettingsdto.UpdateAppContainerSettingsReq{},
-			// command and workingDir live in Source, which carries the value the
-			// setting and the service agree on rather than duplicating it.
-			omitted: []string{"updateVer", "command", "workingDir"},
+			// entrypoint, command and workingDir live in Source, which carries the
+			// value the setting and the service agree on rather than duplicating
+			// it.
+			omitted: []string{"updateVer", "entrypoint", "command", "workingDir"},
 		},
 	}
 }

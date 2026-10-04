@@ -59,7 +59,10 @@ func (s *service) repoDeployStepServiceApply(
 			contSpec := svc.Spec.TaskTemplate.ContainerSpec
 			contSpec.Image = data.Deployment.Output.ImageTags[0]
 			contSpec.Dir = deployment.Settings.WorkingDir
-			dockerhelper.ContainerCommandApply(contSpec, deployment.Settings.Command)
+			if err := dockerhelper.ContainerCommandApply(contSpec, deployment.Settings.Entrypoint,
+				deployment.Settings.Command); err != nil {
+				return false, hperrors.Wrap(err)
+			}
 			s.applyContainerInit(ctx, data.appDeploymentData, contSpec)
 
 			// The socket and the network follow the app's access on every

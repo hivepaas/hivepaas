@@ -18,7 +18,6 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
-	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/executil"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/unit"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/specservice/specmodel"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/volumeservice"
@@ -47,35 +46,18 @@ func (s *service) buildHealthcheck(_ context.Context, state *buildState) error {
 		state.req.Spec.TaskTemplate.ContainerSpec)
 }
 
-// applyHealthcheck writes a healthcheck in the form docker runs it. CMD is an
-// argv, so its command is split; CMD-SHELL is one string handed to the shell,
-// so its command is not. A mode left empty means CMD-SHELL, which is what a
-// template author writing a shell command expects. NONE turns the image's own
-// healthcheck off, where no healthcheck at all leaves the image's.
-//
-// The container settings screen splits a CMD-SHELL command too, and docker then
-// hands the shell only its first word: `sh -c pg_isready -U app` runs pg_isready
-// with no arguments. That is a bug to fix there, not a behavior to copy here.
+// applyHealthcheck writes a healthcheck in the form docker runs it
+// (dockerhelper.HealthcheckTest): a mode left empty means CMD-SHELL, which is
+// what a template author writing a shell command expects. NONE turns the
+// image's own healthcheck off, where no healthcheck at all leaves the image's.
 func applyHealthcheck(check *specmodel.Healthcheck, containerSpec *swarm.ContainerSpec) error {
 	if check == nil || (!check.Enabled && check.Mode != docker.HealthcheckModeNone) {
 		containerSpec.Healthcheck = nil
 		return nil
 	}
-	var test []string
-	switch check.Mode {
-	case docker.HealthcheckModeCmd:
-		command, err := executil.CmdSplit(check.Command)
-		if err != nil {
-			return invalidBlock(specmodel.BlockContainerHealthcheck, "command: %s", err.Error())
-		}
-		test = append([]string{string(check.Mode)}, command...)
-	case docker.HealthcheckModeInherit, docker.HealthcheckModeCmdShell:
-		test = []string{string(docker.HealthcheckModeCmdShell), check.Command}
-	case docker.HealthcheckModeNone:
-		test = []string{string(docker.HealthcheckModeNone)}
-	default:
-		return invalidBlock(specmodel.BlockContainerHealthcheck, "mode %q is not one of CMD, CMD-SHELL, NONE",
-			check.Mode)
+	test, err := dockerhelper.HealthcheckTest(check.Mode, check.Command)
+	if err != nil {
+		return invalidBlock(specmodel.BlockContainerHealthcheck, "%s", err.Error())
 	}
 	containerSpec.Healthcheck = &container.HealthConfig{
 		Test:          test,

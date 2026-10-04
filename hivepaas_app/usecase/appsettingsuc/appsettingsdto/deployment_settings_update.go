@@ -34,6 +34,7 @@ type DeploymentSettingsReq struct {
 	FunctionSource *DeploymentFunctionSourceReq `json:"functionSource"`
 	ActiveMethod   base.DeploymentMethod        `json:"activeMethod"`
 
+	Entrypoint            string `json:"entrypoint"`
 	Command               string `json:"command"`
 	WorkingDir            string `json:"workingDir"`
 	PreDeploymentCommand  string `json:"preDeploymentCommand"`
@@ -61,6 +62,7 @@ func (req *DeploymentSettingsReq) ToEntity() (*entity.AppDeploymentSettings, err
 		FunctionSource: functionSource,
 		ActiveMethod:   req.ActiveMethod,
 
+		Entrypoint:            req.Entrypoint,
 		Command:               req.Command,
 		WorkingDir:            req.WorkingDir,
 		PreDeploymentCommand:  req.PreDeploymentCommand,
@@ -242,6 +244,8 @@ func (req *UpdateAppDeploymentSettingsReq) Validate() hperrors.ValidationErrors 
 	if req.FunctionSource != nil {
 		validators = append(validators, req.FunctionSource.Validate("functionSource")...)
 	}
+	validators = append(validators, basedto.ValidateCommandLine(&req.Entrypoint, "entrypoint")...)
+	validators = append(validators, basedto.ValidateCommandLine(&req.Command, "command")...)
 	validators = append(validators, req.Notification.Validate("notification")...)
 	// TODO: add validation for deployment settings input
 	return hperrors.NewValidationErrors(vld.Validate(validators...))

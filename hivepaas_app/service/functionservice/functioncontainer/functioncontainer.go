@@ -8,7 +8,6 @@ import (
 	"github.com/moby/moby/api/types/swarm"
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
-	"github.com/hivepaas/hivepaas/services/docker/dockerhelper"
 )
 
 // StopGraceMargin is how much longer than one call's timeout a stopping
@@ -22,7 +21,7 @@ const StopGraceMargin = 10 * time.Second
 // at a stop finish.
 func ApplyFixed(contSpec *swarm.ContainerSpec, source *entity.DeploymentFunctionSource) {
 	contSpec.Dir = ""
-	dockerhelper.ContainerCommandApply(contSpec, "")
+	contSpec.Command, contSpec.Args = nil, nil
 	contSpec.Healthcheck = nil
 	grace := time.Duration(source.Timeout) + StopGraceMargin
 	contSpec.StopGracePeriod = &grace

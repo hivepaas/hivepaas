@@ -4,6 +4,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/moby/moby/api/types/container"
 	"github.com/moby/moby/api/types/mount"
 	"github.com/moby/moby/api/types/network"
 	"github.com/moby/moby/api/types/swarm"
@@ -182,6 +183,27 @@ func TestHealthcheckNoneStaysOff(t *testing.T) {
 	cs := &swarm.ContainerSpec{}
 	assert.NoError(t, applyHealthcheck(&specmodel.Healthcheck{Mode: docker.HealthcheckModeNone}, cs))
 	assert.Equal(t, []string{"NONE"}, cs.Healthcheck.Test)
+}
+
+// The export writes a CMD healthcheck's argv quoted, so that the import splits
+// it back: an argument with a space in it stays one.
+func TestHealthcheckRoundTripKeepsItsWords(t *testing.T) {
+	cs := &swarm.ContainerSpec{}
+	check := &specmodel.Healthcheck{Enabled: true, Mode: docker.HealthcheckModeCmd,
+		Command: `curl -f 'http://localhost/a b'`}
+	assert.NoError(t, applyHealthcheck(check, cs))
+	assert.Equal(t, []string{"CMD", "curl", "-f", "http://localhost/a b"}, cs.Healthcheck.Test)
+	assert.Equal(t, check.Command, mapHealthcheck(cs.Healthcheck).Command)
+}
+
+// An inherited healthcheck - the image's test, with timings of its own - goes
+// through an export and an import as it was: not as an empty shell command.
+func TestHealthcheckInheritRoundTrip(t *testing.T) {
+	cs := &swarm.ContainerSpec{}
+	exported := mapHealthcheck(&container.HealthConfig{Interval: time.Minute})
+	assert.NoError(t, applyHealthcheck(exported, cs))
+	assert.Empty(t, cs.Healthcheck.Test)
+	assert.Equal(t, time.Minute, cs.Healthcheck.Interval)
 }
 
 func TestServiceRoundTrip(t *testing.T) {

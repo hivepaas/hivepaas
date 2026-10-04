@@ -202,7 +202,8 @@ func deployImagePrompt(s *mcpsdk.Server, a access) {
 			"(search_templates), tell me first: it comes set up.\n\n" +
 			"1. plan_create_app. If the image is private, list_registry_auths for the credentials to pull it.\n" +
 			"2. plan_update_app_settings, kind deployment: activeMethod image, imageSource.image the image " +
-			"(and imageSource.registryAuth, if private).\n" +
+			"(and imageSource.registryAuth, if private); entrypoint and command, command lines, only when " +
+			"the image's own are not what it should run.\n" +
 			"3. If it serves HTTP: plan_update_app_settings, kind routing - the port it listens on, ask me " +
 			"if you do not know it, exposePublicly true and " + domain + ".\n" +
 			"4. Its variables: ask me which it needs; for a database of the env, get_env_link_suggestions " +

@@ -109,16 +109,11 @@ func mapHealthcheck(config *container.HealthConfig) *specmodel.Healthcheck {
 	if config == nil {
 		return nil
 	}
-	cmd := config.Test
-	var mode docker.HealthcheckMode
-	if len(cmd) > 0 {
-		mode = docker.HealthcheckMode(cmd[0])
-		cmd = cmd[1:]
-	}
+	mode, command := dockerhelper.HealthcheckCommand(config.Test)
 	return &specmodel.Healthcheck{
-		Enabled:       mode != "NONE",
+		Enabled:       mode != docker.HealthcheckModeNone,
 		Mode:          mode,
-		Command:       strings.Join(cmd, " "),
+		Command:       command,
 		Interval:      timeutil.Duration(config.Interval),
 		Timeout:       timeutil.Duration(config.Timeout),
 		StartPeriod:   timeutil.Duration(config.StartPeriod),

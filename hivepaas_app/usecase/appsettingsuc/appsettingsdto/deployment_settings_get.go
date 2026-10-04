@@ -42,6 +42,7 @@ type DeploymentSettingsResp struct {
 	FunctionSource *DeploymentFunctionSourceResp `json:"functionSource,omitempty"`
 	ActiveMethod   base.DeploymentMethod         `json:"activeMethod"`
 
+	Entrypoint            string `json:"entrypoint,omitempty"`
 	Command               string `json:"command,omitempty"`
 	WorkingDir            string `json:"workingDir,omitempty"`
 	PreDeploymentCommand  string `json:"preDeploymentCommand,omitempty"`
@@ -109,9 +110,10 @@ func TransformDeploymentSettings(
 	refObjects := input.RefObjects
 
 	if input.ServiceSpec != nil && input.ServiceSpec.TaskTemplate.ContainerSpec != nil {
-		resp.WorkingDir = input.ServiceSpec.TaskTemplate.ContainerSpec.Dir
-		resp.Command = dockerhelper.ContainerCommandBuild(input.ServiceSpec.TaskTemplate.ContainerSpec.Command,
-			input.ServiceSpec.TaskTemplate.ContainerSpec.Args)
+		containerSpec := input.ServiceSpec.TaskTemplate.ContainerSpec
+		resp.WorkingDir = containerSpec.Dir
+		resp.Entrypoint = dockerhelper.CommandLine(containerSpec.Command)
+		resp.Command = dockerhelper.CommandLine(containerSpec.Args)
 	}
 
 	var appDeploymentSettings *entity.AppDeploymentSettings

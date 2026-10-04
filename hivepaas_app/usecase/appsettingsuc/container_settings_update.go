@@ -6,7 +6,6 @@ import (
 
 	"github.com/moby/moby/api/types/container"
 	"github.com/moby/moby/api/types/swarm"
-	"github.com/tiendc/gofn"
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
@@ -14,12 +13,12 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
-	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/executil"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/reflectutil"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/transaction"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/appservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/functionservice/functioncontainer"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/appsettingsuc/appsettingsdto"
+	"github.com/hivepaas/hivepaas/services/docker"
 	"github.com/hivepaas/hivepaas/services/docker/dockerhelper"
 )
 
@@ -104,14 +103,16 @@ func (uc *UC) loadAppContainerSettingsForUpdate(
 func (uc *UC) prepareUpdatingAppContainerSettings(
 	req *appsettingsdto.UpdateAppContainerSettingsReq,
 	data *updateAppContainerSettingsData,
-) {
+) error {
 	service := data.Service
 	service.Spec.Labels = dockerhelper.ApplyUserLabels(service.Spec.Labels, req.ServiceLabels)
 
 	containerSpec := service.Spec.TaskTemplate.ContainerSpec
 	containerSpec.Labels = dockerhelper.ApplyUserLabels(containerSpec.Labels, req.ContainerLabels)
 	containerSpec.Image = req.Image
-	dockerhelper.ContainerCommandApply(containerSpec, req.Command)
+	if err := dockerhelper.ContainerCommandApply(containerSpec, req.Entrypoint, req.Command); err != nil {
+		return hperrors.Wrap(err)
+	}
 	containerSpec.Dir = req.WorkingDir
 	containerSpec.Hostname = req.Hostname
 	containerSpec.User = req.User
@@ -125,7 +126,9 @@ func (uc *UC) prepareUpdatingAppContainerSettings(
 		containerSpec.StopGracePeriod = new(time.Duration(*req.StopGracePeriod))
 	}
 
-	uc.prepareUpdatingAppContainerHealthcheck(req, data)
+	if err := uc.prepareUpdatingAppContainerHealthcheck(req, data); err != nil {
+		return err
+	}
 	uc.prepareUpdatingAppContainerPrivileges(req, data)
 	uc.prepareUpdatingAppContainerRestartPolicy(req, data)
 	uc.prepareUpdatingAppContainerLogDriver(req, data)
@@ -133,29 +136,38 @@ func (uc *UC) prepareUpdatingAppContainerSettings(
 	if data.FunctionSource != nil {
 		functioncontainer.ApplyFixed(containerSpec, data.FunctionSource)
 	}
+	return nil
 }
 
+// prepareUpdatingAppContainerHealthcheck writes the healthcheck as the spec
+// import does: CMD's command split, CMD-SHELL's handed to the shell whole, and
+// NONE kept - it turns the image's own off.
 func (uc *UC) prepareUpdatingAppContainerHealthcheck(
 	req *appsettingsdto.UpdateAppContainerSettingsReq,
 	data *updateAppContainerSettingsData,
-) {
+) error {
 	service := data.Service
 	containerSpec := service.Spec.TaskTemplate.ContainerSpec
 
-	if req.Healthcheck == nil || !req.Healthcheck.Enabled {
+	check := req.Healthcheck
+	if check == nil || (!check.Enabled && check.Mode != docker.HealthcheckModeNone) {
 		containerSpec.Healthcheck = nil
-		return
+		return nil
+	}
+	test, err := dockerhelper.HealthcheckTest(check.Mode, check.Command)
+	if err != nil {
+		return hperrors.Wrap(err)
 	}
 	if containerSpec.Healthcheck == nil {
 		containerSpec.Healthcheck = &container.HealthConfig{}
 	}
-	cmd := gofn.Must(executil.CmdSplit(req.Healthcheck.Command))
-	containerSpec.Healthcheck.Test = gofn.Concat([]string{string(req.Healthcheck.Mode)}, cmd)
+	containerSpec.Healthcheck.Test = test
 	containerSpec.Healthcheck.Interval = time.Duration(req.Healthcheck.Interval)
 	containerSpec.Healthcheck.Timeout = time.Duration(req.Healthcheck.Timeout)
 	containerSpec.Healthcheck.StartPeriod = time.Duration(req.Healthcheck.StartPeriod)
 	containerSpec.Healthcheck.StartInterval = time.Duration(req.Healthcheck.StartInterval)
 	containerSpec.Healthcheck.Retries = req.Healthcheck.Retries
+	return nil
 }
 
 func (uc *UC) prepareUpdatingAppContainerPrivileges(
@@ -274,7 +286,9 @@ func (uc *UC) applyAppContainerSettings(
 	err := uc.dockerManager.ServiceUpdateFunc(ctx, data.Service.ID, data.Service,
 		func(_ int, service *swarm.Service) (bool, error) {
 			data.Service = service
-			uc.prepareUpdatingAppContainerSettings(req, data)
+			if err := uc.prepareUpdatingAppContainerSettings(req, data); err != nil {
+				return false, hperrors.Wrap(err)
+			}
 			return true, nil
 		}, defaultServiceRetryMax, 0)
 	if err != nil {

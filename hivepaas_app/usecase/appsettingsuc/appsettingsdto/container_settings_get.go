@@ -1,12 +1,9 @@
 package appsettingsdto
 
 import (
-	"strings"
-
 	"github.com/moby/moby/api/types/container"
 	"github.com/moby/moby/api/types/swarm"
 	vld "github.com/tiendc/go-validator"
-	"github.com/tiendc/gofn"
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
@@ -52,6 +49,7 @@ type BaseContainerSettings struct {
 	ServiceLabels   map[string]string  `json:"serviceLabels"`
 	ContainerLabels map[string]string  `json:"containerLabels"`
 	Image           string             `json:"image"`
+	Entrypoint      string             `json:"entrypoint"`
 	Command         string             `json:"command"`
 	WorkingDir      string             `json:"workingDir"`
 	Hostname        string             `json:"hostname"`
@@ -159,7 +157,8 @@ func TransformContainerSettingsBase(spec *swarm.ServiceSpec) *BaseContainerSetti
 		ServiceLabels:   spec.Labels,
 		ContainerLabels: containerSpec.Labels,
 		Image:           containerSpec.Image,
-		Command:         strings.Join(gofn.Concat(containerSpec.Command, containerSpec.Args), " "),
+		Entrypoint:      dockerhelper.CommandLine(containerSpec.Command),
+		Command:         dockerhelper.CommandLine(containerSpec.Args),
 		WorkingDir:      containerSpec.Dir,
 		Hostname:        containerSpec.Hostname,
 		User:            containerSpec.User,
@@ -214,16 +213,11 @@ func TransformContainerHealthcheck(config *container.HealthConfig) *Healthcheck 
 	if config == nil {
 		return nil
 	}
-	cmd := config.Test
-	var mode docker.HealthcheckMode
-	if len(cmd) > 0 {
-		mode = docker.HealthcheckMode(cmd[0])
-		cmd = cmd[1:]
-	}
+	mode, command := dockerhelper.HealthcheckCommand(config.Test)
 	res := &Healthcheck{
-		Enabled:       mode != "NONE",
+		Enabled:       mode != docker.HealthcheckModeNone,
 		Mode:          mode,
-		Command:       strings.Join(cmd, " "),
+		Command:       command,
 		Interval:      timeutil.Duration(config.Interval),
 		Timeout:       timeutil.Duration(config.Timeout),
 		StartPeriod:   timeutil.Duration(config.StartPeriod),

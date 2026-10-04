@@ -23,6 +23,9 @@ import (
 // written down, so an app keeps the answer it was deployed with until somebody
 // changes it in its container settings - where an empty value asks for this
 // again on the next deployment.
+//
+// An app with an entrypoint of its own is decided by that one: it is what
+// starts, not the image's.
 func (s *service) applyContainerInit(
 	ctx context.Context,
 	data *appDeploymentData,
@@ -33,6 +36,15 @@ func (s *service) applyContainerInit(
 	}
 
 	dockerInit := true
+	if len(contSpec.Command) > 0 {
+		if dockerhelper.ImageProvidesInit(contSpec.Command) {
+			dockerInit = false
+			_ = data.LogStore.Add(ctx, tasklog.NewOutFrame(
+				"The entrypoint starts with an init of its own; leaving it as the container's", tasklog.TsNow))
+		}
+		contSpec.Init = &dockerInit
+		return
+	}
 	inspect, err := s.dockerManager.ImageInspect(ctx, contSpec.Image)
 	switch {
 	case err != nil:

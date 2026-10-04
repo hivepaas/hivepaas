@@ -18,6 +18,7 @@ deployment:
   source:
     activeMethod: image
     imageSource: {image: "postgres:17.6-alpine3.22"}
+    entrypoint: docker-entrypoint.sh
     command: postgres -c max_connections=200
     workingDir: /
   storage:

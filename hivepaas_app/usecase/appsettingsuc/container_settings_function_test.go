@@ -37,7 +37,7 @@ func functionContainerData(source *entity.DeploymentFunctionSource) *updateAppCo
 func TestAFunctionsContainerSettingsKeepWhatIsFixedForIt(t *testing.T) {
 	data := functionContainerData(&entity.DeploymentFunctionSource{Timeout: timeutil.Duration(30 * time.Second)})
 
-	(&UC{}).prepareUpdatingAppContainerSettings(functionContainerReq(), data)
+	assert.NoError(t, (&UC{}).prepareUpdatingAppContainerSettings(functionContainerReq(), data))
 
 	contSpec := data.Service.Spec.TaskTemplate.ContainerSpec
 	assert.Nil(t, contSpec.Command)
@@ -53,7 +53,7 @@ func TestAFunctionsContainerSettingsKeepWhatIsFixedForIt(t *testing.T) {
 func TestAnAppsContainerSettingsAreTheRequests(t *testing.T) {
 	data := functionContainerData(nil)
 
-	(&UC{}).prepareUpdatingAppContainerSettings(functionContainerReq(), data)
+	assert.NoError(t, (&UC{}).prepareUpdatingAppContainerSettings(functionContainerReq(), data))
 
 	contSpec := data.Service.Spec.TaskTemplate.ContainerSpec
 	assert.Equal(t, []string{"node", "server.js"}, append(contSpec.Command, contSpec.Args...))

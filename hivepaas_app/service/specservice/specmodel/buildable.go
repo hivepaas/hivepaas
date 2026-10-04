@@ -279,7 +279,7 @@ func checkSource(source map[string]any) error {
 					return unsupported(path + "." + field)
 				}
 			}
-		case "command", "workingDir":
+		case "entrypoint", "command", "workingDir":
 		default:
 			return unsupported(path)
 		}

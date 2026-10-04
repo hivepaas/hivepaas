@@ -320,9 +320,9 @@ has one breaks:
   today `sh -c "a && b"` comes back split into words on a save - so both are
   joined with `shellquote.Join`.
 - **The deployment settings request** replaces the whole setting: a client that
-  does not know the field - a dashboard tab open across the upgrade, a script
-  on the API - would clear it. `entrypoint` is a pointer there: absent keeps
-  it, empty clears it. MCP merges a patch into what it read, so it keeps it.
+  does not know the field would clear it. No compatibility is kept with such a
+  client - nobody runs HivePaaS yet (2026-10-04) - so it is a plain string, as
+  `command` is. MCP merges a patch into what it read, so it keeps it.
 - **Docker's init** is decided from the image's entrypoint
   (`applyContainerInit`); with an entrypoint of the app's own, from that one -
   else `tini --` as the entrypoint would run under docker's init, two inits,
@@ -335,6 +335,15 @@ has one breaks:
 - Already right: a clone without the deployment settings clears the command,
   and one with them keeps both; a function passes none; a build deploys through
   the same apply.
+
+**As built** (2026-10-04): `dockerhelper.ContainerCommandApply` takes both
+lines and returns an error where it panicked on a quote left open; both
+settings requests refuse such a line; the screens show argv quoted
+(`CommandLine`). The container screen's healthcheck is written as the spec's
+(`HealthcheckTest`, shared): CMD-SHELL whole, not split; NONE kept; and an
+empty mode with no command inherits the image's test - before, it wrote `[""]`,
+which docker does not run at all. The export quotes CMD's argv, so an import
+splits it back.
 
 ## Dashboard
 

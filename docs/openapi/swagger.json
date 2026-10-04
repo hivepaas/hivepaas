@@ -52177,6 +52177,9 @@
             },
             "type" : "object"
           },
+          "entrypoint" : {
+            "type" : "string"
+          },
           "groups" : {
             "items" : {
               "type" : "string"
@@ -52235,7 +52238,7 @@
             "type" : "string"
           }
         },
-        "required" : [ "command", "containerLabels", "groups", "healthcheck", "hostname", "image", "init", "logDriver", "openStdin", "privileges", "readOnly", "restartPolicy", "serviceLabels", "stopGracePeriod", "stopSignal", "tty", "updateVer", "user", "workingDir" ],
+        "required" : [ "command", "containerLabels", "entrypoint", "groups", "healthcheck", "hostname", "image", "init", "logDriver", "openStdin", "privileges", "readOnly", "restartPolicy", "serviceLabels", "stopGracePeriod", "stopSignal", "tty", "updateVer", "user", "workingDir" ],
         "type" : "object"
       },
       "appsettingsdto.ContainerStatus" : {
@@ -52564,6 +52567,9 @@
           "command" : {
             "type" : "string"
           },
+          "entrypoint" : {
+            "type" : "string"
+          },
           "functionSource" : {
             "$ref" : "#/components/schemas/appsettingsdto.DeploymentFunctionSourceResp"
           },
@@ -52596,7 +52602,7 @@
             "type" : "string"
           }
         },
-        "required" : [ "activeMethod", "command", "functionSource", "image", "imageSource", "notification", "postDeploymentCommand", "preDeploymentCommand", "repoSource", "updateVer", "workingDir" ],
+        "required" : [ "activeMethod", "command", "entrypoint", "functionSource", "image", "imageSource", "notification", "postDeploymentCommand", "preDeploymentCommand", "repoSource", "updateVer", "workingDir" ],
         "type" : "object"
       },
       "appsettingsdto.DockerfileTemplateResp" : {
@@ -54623,6 +54629,9 @@
             },
             "type" : "object"
           },
+          "entrypoint" : {
+            "type" : "string"
+          },
           "groups" : {
             "items" : {
               "type" : "string"
@@ -54681,7 +54690,7 @@
             "type" : "string"
           }
         },
-        "required" : [ "command", "containerLabels", "groups", "healthcheck", "hostname", "image", "init", "logDriver", "openStdin", "privileges", "readOnly", "restartPolicy", "serviceLabels", "stopGracePeriod", "stopSignal", "tty", "updateVer", "user", "workingDir" ],
+        "required" : [ "command", "containerLabels", "entrypoint", "groups", "healthcheck", "hostname", "image", "init", "logDriver", "openStdin", "privileges", "readOnly", "restartPolicy", "serviceLabels", "stopGracePeriod", "stopSignal", "tty", "updateVer", "user", "workingDir" ],
         "type" : "object"
       },
       "appsettingsdto.UpdateAppContainerSettingsResp" : {
@@ -54713,6 +54722,9 @@
           "command" : {
             "type" : "string"
           },
+          "entrypoint" : {
+            "type" : "string"
+          },
           "functionSource" : {
             "allOf" : [ {
               "$ref" : "#/components/schemas/appsettingsdto.DeploymentFunctionSourceReq"
@@ -54742,7 +54754,7 @@
             "type" : "string"
           }
         },
-        "required" : [ "activeMethod", "command", "functionSource", "imageSource", "notification", "postDeploymentCommand", "preDeploymentCommand", "repoSource", "updateVer", "workingDir" ],
+        "required" : [ "activeMethod", "command", "entrypoint", "functionSource", "imageSource", "notification", "postDeploymentCommand", "preDeploymentCommand", "repoSource", "updateVer", "workingDir" ],
         "type" : "object"
       },
       "appsettingsdto.UpdateAppDeploymentSettingsResp" : {
@@ -59705,6 +59717,10 @@
           "command" : {
             "type" : "string"
           },
+          "entrypoint" : {
+            "description" : "Entrypoint and Command are command lines, split by shell rules at each\ndeployment into the container's entrypoint and its arguments. Empty\nleaves the image's.",
+            "type" : "string"
+          },
           "functionSource" : {
             "$ref" : "#/components/schemas/entity.DeploymentFunctionSource"
           },
@@ -59727,7 +59743,7 @@
             "type" : "string"
           }
         },
-        "required" : [ "activeMethod", "command", "functionSource", "imageSource", "notification", "postDeploymentCommand", "preDeploymentCommand", "repoSource", "workingDir" ],
+        "required" : [ "activeMethod", "command", "entrypoint", "functionSource", "imageSource", "notification", "postDeploymentCommand", "preDeploymentCommand", "repoSource", "workingDir" ],
         "type" : "object"
       },
       "entity.BaseEventNotification" : {
@@ -62009,9 +62025,9 @@
         "type" : "object"
       },
       "hperrors.DisplayLevel" : {
-        "enum" : [ "high", "medium", "low", "medium" ],
+        "enum" : [ "medium", "high", "medium", "low" ],
         "type" : "string",
-        "x-enum-varnames" : [ "DisplayLevelHigh", "DisplayLevelMedium", "DisplayLevelLow", "errVldDisplayLevel" ]
+        "x-enum-varnames" : [ "errVldDisplayLevel", "DisplayLevelHigh", "DisplayLevelMedium", "DisplayLevelLow" ]
       },
       "hperrors.ErrorInfo" : {
         "properties" : {

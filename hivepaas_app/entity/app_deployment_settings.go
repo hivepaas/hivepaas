@@ -26,6 +26,10 @@ type AppDeploymentSettings struct {
 	FunctionSource *DeploymentFunctionSource `json:"functionSource,omitempty"`
 	ActiveMethod   base.DeploymentMethod     `json:"activeMethod"`
 
+	// Entrypoint and Command are command lines, split by shell rules at each
+	// deployment into the container's entrypoint and its arguments. Empty
+	// leaves the image's.
+	Entrypoint            string `json:"entrypoint,omitempty"`
 	Command               string `json:"command,omitempty"`
 	WorkingDir            string `json:"workingDir,omitempty"`
 	PreDeploymentCommand  string `json:"preDeploymentCommand,omitempty"`

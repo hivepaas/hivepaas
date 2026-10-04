@@ -419,9 +419,10 @@ func releaseImage() string {
 
 // ensure runs OBI with a configuration: the one running is kept when it was
 // made with it, in this agent's network namespace; otherwise it is replaced.
-// The image is pulled first, while the one running still runs - a new
-// release's OBI stops the numbers only for the swap - and the image a replaced
-// OBI ran is removed once the new one runs, when it is another.
+// The image is pulled first, while the one running still runs: a new
+// release's OBI stops the numbers only for the swap. The image the old one ran
+// is left to the system cleanup, which prunes the nodes' unused images daily -
+// or keeps them, when an administrator says so.
 func (uc *UC) ensure(ctx context.Context, config []byte) error {
 	hash := obi.ConfigHash(uc.image, config)
 	if uc.agentID == "" {
@@ -436,7 +437,6 @@ func (uc *UC) ensure(ctx context.Context, config []byte) error {
 		return hperrors.Wrap(err)
 	}
 	replaced := err == nil
-	oldImage := ""
 	if replaced {
 		c := current.Container
 		if c.State != nil && c.State.Running && c.Config != nil && c.Config.Labels[obi.LabelConfig] == hash &&
@@ -444,7 +444,6 @@ func (uc *UC) ensure(ctx context.Context, config []byte) error {
 			uc.running = true
 			return nil
 		}
-		oldImage = c.Image
 	}
 	if err = uc.ensureImage(ctx); err != nil {
 		return err
@@ -476,25 +475,7 @@ func (uc *UC) ensure(ctx context.Context, config []byte) error {
 	uc.deltas.Reset()
 	uc.running = true
 	uc.logger.Infof("obi: running %s for %d apps", uc.image, len(uc.appIDs))
-	uc.removeOldImage(ctx, oldImage)
 	return nil
-}
-
-// removeOldImage removes the image a replaced OBI ran, by its id, when it is
-// not the one running now: OBI's images are the agent's own, pulled by
-// digest, and nothing else on the node runs them. A failure leaves it for the
-// node's cleanup.
-func (uc *UC) removeOldImage(ctx context.Context, imageID string) {
-	if imageID == "" {
-		return
-	}
-	running, err := uc.dockerManager.ImageInspect(ctx, uc.image)
-	if err != nil || running.ID == imageID {
-		return
-	}
-	if _, err = uc.dockerManager.ImageRemove(ctx, imageID); err != nil {
-		uc.logger.Warnf("obi: removing the image of the OBI replaced: %v", err)
-	}
 }
 
 // remove takes OBI away: when it runs, or this agent has not looked for one

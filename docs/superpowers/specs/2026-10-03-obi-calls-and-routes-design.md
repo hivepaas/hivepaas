@@ -181,8 +181,10 @@ UI:    the Metrics tab: routes in the HTTP view, a Dependencies view
   only on nodes where it is on. As built: `obiImage` in release.json. An agent
   runs its own release's OBI - the release it is built with - so an update
   moves OBI by moving the agent: the new agent pulls the new image while the
-  old OBI still runs, swaps them (its configuration's hash covers the image),
-  and removes the old image. The update's plan lists OBI after the agent,
+  old OBI still runs, then swaps them (its configuration's hash covers the
+  image). The old image is left to the system cleanup, which prunes every
+  node's unused images daily unless an administrator turned that off. The
+  update's plan lists OBI after the agent,
   with this release's image as the current one, deployed while the feature
   is on with a node chosen; the update's log says that the agents move it.
 - **What it watches**: the containers of opted-in apps on the node, by

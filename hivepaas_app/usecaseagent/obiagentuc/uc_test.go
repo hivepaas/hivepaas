@@ -95,10 +95,8 @@ type fakeDocker struct {
 	created int
 	removed int
 	calls   int
-	// events are what was done, in order: pull, remove, create, start,
-	// remove-image <id>.
-	events        []string
-	removedImages []string
+	// events are what was done, in order: pull, remove, create, start.
+	events []string
 }
 
 func (f *fakeDocker) NodeCurrentID(context.Context) (string, error) {
@@ -141,13 +139,6 @@ func (f *fakeDocker) ImageInspect(_ context.Context, ref string, _ ...docker.Ima
 		}
 	}
 	return nil, hperrors.Wrap(hperrors.ErrInfraNotFound)
-}
-
-func (f *fakeDocker) ImageRemove(_ context.Context, id string, _ ...docker.ImageRemoveOption) (
-	*client.ImageRemoveResult, error) {
-	f.removedImages = append(f.removedImages, id)
-	f.events = append(f.events, "remove-image "+id)
-	return &client.ImageRemoveResult{}, nil
 }
 
 type pullResponse struct{ io.ReadCloser }
@@ -581,8 +572,8 @@ func TestSettingsComeFromTheCache(t *testing.T) {
 }
 
 // The OBI an agent runs is its release's. A new release's - the agent updated
-// - is pulled while the old one still runs, swapped, and the old image
-// removed; a swap for anything else keeps the image.
+// - is pulled while the old one still runs, then swapped; the old image is
+// left to the system cleanup.
 func TestANewReleasesOBIIsPulledBeforeTheSwap(t *testing.T) {
 	w := newWorld(t, "node-1")
 	assert.Equal(t, base.BetaVersion.OBIImage, w.uc.image, "the release's, as it was built")
@@ -592,14 +583,12 @@ func TestANewReleasesOBIIsPulledBeforeTheSwap(t *testing.T) {
 	w.docker.events = nil
 	w.uc.image = "otel/ebpf-instrument:v0.15.0"
 	assert.NoError(t, w.uc.Reconcile(context.Background()))
-	assert.Equal(t, []string{"pull", "remove", "create", "start",
-		"remove-image " + imageID("otel/ebpf-instrument:v0.14.0")}, w.docker.events)
+	assert.Equal(t, []string{"pull", "remove", "create", "start"}, w.docker.events)
 	assert.Equal(t, "otel/ebpf-instrument:v0.15.0", w.docker.obi.Config.Image)
 
-	// Another app asks: the same image, kept.
+	// Another app asks: the image is there, nothing to pull.
 	w.docker.events = nil
 	w.settings.features = append(w.settings.features, featuresOf("A1"))
 	assert.NoError(t, w.uc.Reconcile(context.Background()))
 	assert.Equal(t, []string{"remove", "create", "start"}, w.docker.events)
-	assert.Len(t, w.docker.removedImages, 1)
 }

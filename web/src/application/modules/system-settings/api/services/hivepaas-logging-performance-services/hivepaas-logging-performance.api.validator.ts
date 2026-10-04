@@ -49,7 +49,7 @@ const FindOneSchema = z.object({
         logsStored: z.boolean().catch(false),
         updateVer: z.number().catch(0),
         statusReason: z
-            .enum(["logs-not-stored", "unreadable"])
+            .enum(["off", "logs-not-stored", "unreadable"])
             .nullish()
             .catch(null)
             .transform(value => value ?? null),

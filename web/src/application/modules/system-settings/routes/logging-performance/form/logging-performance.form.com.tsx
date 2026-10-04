@@ -214,6 +214,12 @@ export function LoggingPerformanceForm({ settings, readOnly, onSubmit, children 
                                         node&apos;s: a node with more cores, or a busy one, takes up to about twice as
                                         much. Each request OBI measures also costs about 14 µs of CPU.
                                     </p>
+                                    {settings.statusReason === "off" && (
+                                        <p className="text-sm text-muted-foreground">
+                                            While this is off, the agents do nothing for it. Once it is saved on, each
+                                            node&apos;s agent says within a minute whether it can run OBI.
+                                        </p>
+                                    )}
                                     {settings.statusReason === "unreadable" && (
                                         <p className="text-sm text-muted-foreground">
                                             The stored logs could not be read: the nodes&apos; statuses are not shown.

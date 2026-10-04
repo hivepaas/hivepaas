@@ -50,8 +50,8 @@ export interface LoggingPerformanceNode {
     status: LoggingPerformanceNodeStatus | null;
 }
 
-/** Why the nodes' statuses were not read. */
-export type LoggingPerformanceStatusReason = "logs-not-stored" | "unreadable";
+/** Why the nodes' statuses were not read: the agents say nothing while the feature is off. */
+export type LoggingPerformanceStatusReason = "off" | "logs-not-stored" | "unreadable";
 
 /** The collection of apps' routes and calls by OBI (eBPF), and the nodes that run it. */
 export interface LoggingPerformance {

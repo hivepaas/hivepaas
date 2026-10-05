@@ -7,6 +7,10 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
+# Dependencies are installed with yarn, from yarn.lock: the lockfile the
+# release image is built and scanned with. npm's would drift from it.
+package-lock.json
+
 node_modules
 dist
 dist-ssr

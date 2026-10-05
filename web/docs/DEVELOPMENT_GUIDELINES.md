@@ -4,6 +4,10 @@
 
 Work from `hivepaas-dashboard/` for frontend tasks.
 
+Install dependencies with `yarn install`: `yarn.lock` is the lockfile the
+release image is built and scanned with, and `npm install` would write a
+`package-lock.json` beside it, which git ignores.
+
 Common scripts:
 
 - `npm run dev`

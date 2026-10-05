@@ -1,0 +1,247 @@
+name: 'Kopia'
+
+# Builds the kopia the app and agent images ship (deployment/kopia/Dockerfile),
+# from source, for amd64 and arm64, on a tag kopia-v<kopia version>-<build> -
+# the release environment accepts no branch. Each is tested with the backup
+# engine's integration tests - a filesystem repository, S3 on a local rustfs,
+# kopia's repository server - and scanned, before anything is pushed to GHCR.
+# The app's and the agent's Dockerfiles pin it by digest (KOPIA_IMAGE; see
+# docs/RELEASING.md).
+#
+# Every week, and by hand, the kopia the release Dockerfile pins is scanned
+# again: a HIGH or CRITICAL flaw found since, with a fix, fails the run - the
+# sign to build a new one.
+
+on:
+  push:
+    tags:
+      - 'kopia-v[0-9]+.[0-9]+.[0-9]+-[0-9]+'
+  schedule:
+    - cron: '0 3 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  IMAGE: ghcr.io/hivepaas/kopia
+  # The S3 server the tests use: the credentials are a throwaway server's.
+  S3_IMAGE: rustfs/rustfs:1.0.0@sha256:8cc9801755448b71a786705ce76692c77e14936cccd87cf2fc31842e58f4d1ff
+  S3_ACCESS_KEY: hptestkey
+  S3_SECRET_KEY: hptestsecret123
+  S3_BUCKET: hivepaas-test
+
+jobs:
+  check:
+    name: Check the tag
+    if: github.event_name == 'push'
+    runs-on: ubuntu-24.04
+    outputs:
+      tag: ${{ steps.meta.outputs.tag }}
+      version: ${{ steps.meta.outputs.version }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: The tag is the kopia the Dockerfile builds
+        id: meta
+        run: |
+          tag=${GITHUB_REF_NAME#kopia-v}
+          version=${tag%-*}
+          grep -qx "ARG KOPIA_VERSION=$version" deployment/kopia/Dockerfile ||
+            { echo "::error::deployment/kopia/Dockerfile builds no kopia $version"; exit 1; }
+          {
+            echo "tag=$tag"
+            echo "version=$version"
+          } >> "$GITHUB_OUTPUT"
+
+  build:
+    name: Build (${{ matrix.arch }})
+    needs: check
+    environment: release
+    permissions:
+      contents: read
+      packages: write
+    strategy:
+      matrix:
+        include:
+          - { arch: amd64, runner: ubuntu-24.04 }
+          - { arch: arm64, runner: ubuntu-24.04-arm }
+    runs-on: ${{ matrix.runner }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Setup Go
+        uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version: '1.27.x'
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
+
+      # Built first into the runner's Docker, to be tested and scanned before
+      # anything is pushed; the push after builds it again from the cache.
+      - name: Build for the tests
+        uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
+        with:
+          context: deployment/kopia
+          platforms: linux/${{ matrix.arch }}
+          load: true
+          build-args: |
+            REVISION=${{ github.sha }}
+          tags: kopia-test:${{ matrix.arch }}
+
+      - name: Take the binary out
+        env:
+          ARCH: ${{ matrix.arch }}
+          VERSION: ${{ needs.check.outputs.version }}
+        run: |
+          mkdir -p "$RUNNER_TEMP/bin"
+          id=$(docker create "kopia-test:$ARCH" /kopia)
+          docker cp "$id:/kopia" "$RUNNER_TEMP/bin/kopia"
+          docker rm "$id"
+          "$RUNNER_TEMP/bin/kopia" --version | tee /dev/stderr | grep -q "^$VERSION " ||
+            { echo "::error::the binary is not kopia $VERSION"; exit 1; }
+          echo "$RUNNER_TEMP/bin" >> "$GITHUB_PATH"
+
+      - name: Start an S3 server
+        run: |
+          docker run -d --name s3 -p 127.0.0.1:9000:9000 \
+            -e RUSTFS_ACCESS_KEY="$S3_ACCESS_KEY" -e RUSTFS_SECRET_KEY="$S3_SECRET_KEY" "$S3_IMAGE"
+          for _ in $(seq 1 30); do
+            if curl -fsS -o /dev/null --aws-sigv4 "aws:amz:us-east-1:s3" --user "$S3_ACCESS_KEY:$S3_SECRET_KEY" \
+              -X PUT "http://127.0.0.1:9000/$S3_BUCKET"; then
+              exit 0
+            fi
+            sleep 1
+          done
+          docker logs s3
+          echo "::error::the S3 server did not start"
+          exit 1
+
+      # The tests skip without kopia, or without S3: here, one skipped fails.
+      - name: Test with the backup engine's integration tests
+        env:
+          HIVEPAAS_TEST_S3_ENDPOINT: http://127.0.0.1:9000
+          HIVEPAAS_TEST_S3_BUCKET: ${{ env.S3_BUCKET }}
+          HIVEPAAS_TEST_S3_ACCESS_KEY: ${{ env.S3_ACCESS_KEY }}
+          HIVEPAAS_TEST_S3_SECRET_KEY: ${{ env.S3_SECRET_KEY }}
+        run: |
+          go test -count=1 -v ./services/backup/kopia/... ./hivepaas_app/usecaseagent/reposerveragentuc/... |
+            tee "$RUNNER_TEMP/test.log"
+          if grep -E '^\s*--- SKIP' "$RUNNER_TEMP/test.log"; then
+            echo "::error::a test was skipped: it did not run against this kopia"
+            exit 1
+          fi
+
+      # A HIGH or CRITICAL flaw with a fix stops it; one reviewed and accepted
+      # goes in .trivyignore.
+      - name: Scan the image
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+        with:
+          version: 'v0.75.0'
+          scan-type: 'image'
+          image-ref: kopia-test:${{ matrix.arch }}
+          scanners: 'vuln'
+          vuln-type: 'os,library'
+          severity: 'CRITICAL,HIGH'
+          ignore-unfixed: true
+          exit-code: '1'
+          format: 'table'
+          trivyignores: '.trivyignore'
+
+      - name: Log in to GHCR
+        uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4.6.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ github.token }}
+
+      - name: Build and push
+        uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
+        with:
+          context: deployment/kopia
+          platforms: linux/${{ matrix.arch }}
+          push: true
+          provenance: mode=max
+          sbom: true
+          build-args: |
+            REVISION=${{ github.sha }}
+          tags: ${{ env.IMAGE }}:${{ needs.check.outputs.tag }}-${{ matrix.arch }}
+
+  manifest:
+    name: Multi-arch image
+    needs: [check, build]
+    environment: release
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - name: Log in to GHCR
+        uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4.6.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ github.token }}
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
+
+      - name: Create the manifest
+        env:
+          TAG: ${{ needs.check.outputs.tag }}
+        run: docker buildx imagetools create -t "$IMAGE:$TAG" "$IMAGE:$TAG-amd64" "$IMAGE:$TAG-arm64"
+
+      - name: What to pin
+        env:
+          TAG: ${{ needs.check.outputs.tag }}
+        run: |
+          digest=$(docker buildx imagetools inspect "$IMAGE:$TAG" --format '{{json .Manifest}}' | jq -r .digest)
+          {
+            echo '### Pin it in the Dockerfiles'
+            echo '```'
+            echo "ARG KOPIA_IMAGE=$IMAGE:$TAG@$digest"
+            echo '```'
+            echo 'In deployment/release/Dockerfile and Dockerfile.agent, and deployment/dev/Dockerfile and'
+            echo 'Dockerfile.agent (docs/RELEASING.md).'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+  scan:
+    name: Scan the pinned kopia
+    if: github.event_name != 'push'
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: The pinned image
+        id: pin
+        run: |
+          image=$(sed -n 's/^ARG KOPIA_IMAGE=//p' deployment/release/Dockerfile)
+          if [ -z "$image" ]; then
+            echo "::notice::deployment/release/Dockerfile pins no kopia image yet: nothing to scan"
+          fi
+          echo "image=$image" >> "$GITHUB_OUTPUT"
+
+      - name: Scan it
+        if: steps.pin.outputs.image != ''
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+        with:
+          version: 'v0.75.0'
+          scan-type: 'image'
+          image-ref: ${{ steps.pin.outputs.image }}
+          scanners: 'vuln'
+          vuln-type: 'os,library'
+          severity: 'CRITICAL,HIGH'
+          ignore-unfixed: true
+          exit-code: '1'
+          format: 'table'
+          trivyignores: '.trivyignore'

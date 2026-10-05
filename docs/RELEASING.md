@@ -39,10 +39,10 @@ installation run them.
    - required reviewers, the maintainers who may release. Every job that pushes
      an image waits for one;
    - **Deployment branches and tags › Selected branches and tags**: the tag
-     rules `v*`, `verify-v*` and `placeholder-v*`, and no branch. Only a release,
-     verifier or placeholder tag can push an image; a run from a branch is
-     refused ("not allowed to deploy to release due to environment protection
-     rules").
+     rules `v*`, `verify-v*`, `placeholder-v*` and `kopia-v*`, and no branch.
+     Only a release, verifier, placeholder or kopia tag can push an image; a run
+     from a branch is refused ("not allowed to deploy to release due to
+     environment protection rules").
 
    No secret is needed: the workflows push to GHCR with their own `GITHUB_TOKEN`.
 2. **The release verifier** (see [below](#the-release-verifier)): tag `main`
@@ -50,8 +50,8 @@ installation run them.
    workflow; pin what its summary prints in `deployment/release/install.sh`. The Release workflow refuses a tag
    while `VERIFY_IMAGE` is empty.
 3. **Rulesets** (Settings › Rules), in both `hivepaas` and `hivepaas-dashboard`:
-   - tags `v*` (and `verify-v*`, `placeholder-v*` in `hivepaas`): only
-     maintainers create them; no update, no deletion;
+   - tags `v*` (and `verify-v*`, `placeholder-v*`, `kopia-v*` in `hivepaas`):
+     only maintainers create them; no update, no deletion;
    - branch `release` (backend): no force push, no deletion, changes through a
      pull request.
 4. **The `release` branch.** Installations and the installer read
@@ -192,9 +192,9 @@ migration and `blockMajorUpgrade` run for the first time there.
 ## GHCR packages
 
 The first push of each image creates its package under the `hivepaas`
-organization, private. Once, for each of `hivepaas`, `hivepaas-agent` and
-`release-verify` (github.com/orgs/hivepaas/packages › the package › Package
-settings):
+organization, private. Once, for each of `hivepaas`, `hivepaas-agent`,
+`release-verify` and `kopia` (github.com/orgs/hivepaas/packages › the package ›
+Package settings):
 - **Change visibility › Public**, or servers cannot pull it. If GitHub refuses,
   allow public packages in Organization settings › Packages.
 - **Manage Actions access**: `hivepaas/hivepaas` with **Write**, if the package
@@ -247,6 +247,33 @@ changes or Go fixes a vulnerability it is built with. The first push creates
 the package private: make it public, as the others (see GHCR packages). Then
 put the line the workflow's summary prints into `release.json`, or the tag and
 `make release-pin`, and release as usual.
+
+## Kopia
+
+The app and the agent ship kopia, the backup engine, built from source by
+`deployment/kopia/Dockerfile` with Go 1.27 and the modules it names raised past
+kopia's release: the release's own binaries keep the Go and the modules of
+their day. The image, `ghcr.io/hivepaas/kopia`, holds the binary and its
+license only; the app's and the agent's Dockerfiles, release and dev, copy the
+binary from it, pinned by digest:
+
+```dockerfile
+ARG KOPIA_IMAGE=ghcr.io/hivepaas/kopia:0.23.1-1@sha256:…
+```
+
+It is built once and reused by every release. Build a new one (the *Kopia*
+workflow, through a tag `kopia-v<kopia version>-<build>`, as `kopia-v0.23.1-2`;
+the `release` environment must allow the tag rule `kopia-v*`) when:
+- the *Kopia* workflow's weekly scan of the pinned image fails: a flaw with a fix
+  was found since. Raise the module in `KOPIA_MODULES`, or Go;
+- kopia releases: set `KOPIA_VERSION`, and drop from `KOPIA_MODULES` what the
+  release has caught up with.
+
+The workflow tests each architecture with the backup engine's integration
+tests - a filesystem repository, S3, kopia's repository server - and scans it
+before pushing. The first push creates the package private: make it public, as
+the others (see GHCR packages). Then put the line its summary prints into the
+four Dockerfiles, through a pull request, and release as usual.
 
 ## Known gaps before 1.0.0
 

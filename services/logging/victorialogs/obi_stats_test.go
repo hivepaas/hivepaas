@@ -95,7 +95,7 @@ func TestLiveOBIStatsSumTheAppsRows(t *testing.T) {
 	if base == "" {
 		t.Skip("HP_TEST_VICTORIALOGS_URL not set")
 	}
-	app := "OBI" + time.Now().UTC().Format("150405000000000")
+	app := "OBI" + liveRun()
 	start := time.Now().UTC().Truncate(time.Minute).Add(-3 * time.Minute)
 	row := func(component, hp, appID, route string, at time.Duration, count, errors int, sumMs float64,
 		buckets ...int) string {
@@ -152,7 +152,7 @@ func TestLiveOBIStatsSplitTheCallsByKind(t *testing.T) {
 	if base == "" {
 		t.Skip("HP_TEST_VICTORIALOGS_URL not set")
 	}
-	app := "OBIC" + time.Now().UTC().Format("150405000000000")
+	app := "OBIC" + liveRun()
 	start := time.Now().UTC().Truncate(time.Minute).Add(-3 * time.Minute)
 	call := func(kind, peer string, at time.Duration, count int) string {
 		msg := fmt.Sprintf(`{\"hp\":\"calls\",\"app\":\"%s\",\"kind\":\"%s\",\"peer\":\"%s\",\"count\":%d,`+
@@ -198,7 +198,7 @@ func TestLiveOBIStatusIsTheAgentsStatusRows(t *testing.T) {
 	if base == "" {
 		t.Skip("HP_TEST_VICTORIALOGS_URL not set")
 	}
-	node := "NODE" + time.Now().UTC().Format("150405000000000")
+	node := "NODE" + liveRun()
 	start := time.Now().UTC().Truncate(time.Minute).Add(-3 * time.Minute)
 	status := func(component string, at time.Duration, running bool) string {
 		return fmt.Sprintf(`{"_time":%q,"_msg":"{\"hp\":\"obi\",\"node\":\"%s\",\"running\":%t}","%s":%q}`,

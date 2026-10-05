@@ -74,7 +74,7 @@ func TestLiveHTTPStatsCountOnlyTheAppsRequests(t *testing.T) {
 	if base == "" {
 		t.Skip("HP_TEST_VICTORIALOGS_URL not set")
 	}
-	run := strings.ToLower(time.Now().UTC().Format("150405000000000"))
+	run := liveRun()
 	self := "svc-" + run + "-0@swarm"
 	start := time.Now().UTC().Truncate(time.Minute).Add(-10 * time.Minute)
 	line := func(component, service, replica, path string, at time.Duration, status, origin int, ms float64) string {
@@ -113,7 +113,9 @@ func TestLiveHTTPStatsCountOnlyTheAppsRequests(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
-		if got.Totals.Requests >= 4 {
+		// The series' rows too, read first: the lines may become visible
+		// between the queries.
+		if len(got.Buckets) >= 2 && got.Totals.Requests >= 4 {
 			break
 		}
 		time.Sleep(250 * time.Millisecond)

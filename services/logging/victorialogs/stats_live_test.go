@@ -70,7 +70,9 @@ func TestLiveInvocationStatsCountOnlyTheAppsInvocationLines(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
-		if got.Totals.Calls >= 5 {
+		// The series' rows too, read first: the lines may become visible
+		// between the queries.
+		if len(got.Buckets) >= 2 && got.Totals.Calls >= 5 {
 			break
 		}
 		time.Sleep(250 * time.Millisecond)

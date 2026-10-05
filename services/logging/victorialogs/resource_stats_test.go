@@ -51,7 +51,7 @@ func TestLiveResourceStatsSumTheAppsContainers(t *testing.T) {
 	if base == "" {
 		t.Skip("HP_TEST_VICTORIALOGS_URL not set")
 	}
-	app := "APP" + time.Now().UTC().Format("150405000000000")
+	app := "APP" + liveRun()
 	start := time.Now().UTC().Truncate(time.Minute).Add(-10 * time.Minute)
 	row := func(component, appID, container string, at time.Duration, cpu float64, memory, oom int) string {
 		msg := fmt.Sprintf(`{\"hp\":\"resources\",\"app\":\"%s\",\"container\":\"%s\",\"cpu\":%g,\"cpuLimit\":1,`+
@@ -89,7 +89,8 @@ func TestLiveResourceStatsSumTheAppsContainers(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
-		if len(got.Containers) >= 2 {
+		// Both queries' rows: the lines may become visible between them.
+		if len(got.Buckets) >= 2 && len(got.Containers) >= 2 {
 			break
 		}
 		time.Sleep(250 * time.Millisecond)

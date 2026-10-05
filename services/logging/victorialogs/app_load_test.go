@@ -9,6 +9,7 @@ import (
 	"net/url"
 	"os"
 	"regexp"
+	"strconv"
 	"strings"
 	"testing"
 	"time"
@@ -124,6 +125,12 @@ func TestLoadsAskAbout200AppsAQuery(t *testing.T) {
 	assert.ErrorIs(t, err, loggingmodel.ErrQueryScopeRequired)
 }
 
+// liveRun is what a live test's ids are made unique by: every run's apart,
+// however close - its lines stay in VictoriaLogs.
+func liveRun() string {
+	return strconv.FormatInt(time.Now().UnixNano(), 10)
+}
+
 // ingestLines posts JSON lines to a live VictoriaLogs.
 func ingestLines(t *testing.T, base string, lines []string) {
 	t.Helper()
@@ -146,7 +153,7 @@ func TestLiveRequestLoadSumsEachAppsRequests(t *testing.T) {
 	if base == "" {
 		t.Skip("HP_TEST_VICTORIALOGS_URL not set")
 	}
-	run := time.Now().UTC().Format("150405000000000")
+	run := liveRun()
 	busy, other, late := "BUSY"+run, "OTHER"+run, "LATE"+run
 	start := time.Now().UTC().Truncate(time.Minute).Add(-2 * time.Minute)
 	// Traefik 3 writes OriginStatus 0 for what the app answered: the app's
@@ -207,7 +214,7 @@ func TestLiveCPULoadAveragesEachContainer(t *testing.T) {
 	if base == "" {
 		t.Skip("HP_TEST_VICTORIALOGS_URL not set")
 	}
-	app := "CPU" + time.Now().UTC().Format("150405000000000")
+	app := "CPU" + liveRun()
 	start := time.Now().UTC().Truncate(time.Minute).Add(-2 * time.Minute)
 	row := func(component, appID, container string, at time.Duration, cpu, limit float64) string {
 		msg := fmt.Sprintf(`{\"hp\":\"resources\",\"app\":\"%s\",\"container\":\"%s\",\"cpu\":%g,\"cpuLimit\":%g}`,

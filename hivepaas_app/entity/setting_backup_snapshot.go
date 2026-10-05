@@ -21,6 +21,10 @@ func (s *backupSnapshotParser) New() SettingData {
 	return &BackupSnapshot{}
 }
 
+// BackupSnapshot is a backup-snapshot setting's data. Its setting's name is
+// the short ID, its size the size, and its created_at the time: when the
+// snapshot was taken, not when HivePaaS recorded it. The list is ordered and
+// filtered by created_at, which idx_settings_backup_snapshot_time serves.
 type BackupSnapshot struct {
 	ID          string    `json:"id"`
 	ShortID     string    `json:"shortId"`

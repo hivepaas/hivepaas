@@ -107,6 +107,12 @@ func NewSnapshotSettings(
 	settings = make([]*entity.Setting, 0, len(snapshots))
 	for _, item := range snapshots {
 		snapshot := item.Snapshot
+		// Created when it was taken, not when it is recorded - for one read
+		// from a repository, long after: the snapshots are listed by it.
+		createdAt := snapshot.Time
+		if createdAt.IsZero() {
+			createdAt = timeNow
+		}
 		setting := &entity.Setting{
 			ID:        gofn.Must(ulid.NewStringULID()),
 			Scope:     repoSetting.Scope,
@@ -118,7 +124,7 @@ func NewSnapshotSettings(
 			Name:      snapshot.ShortID,
 			Size:      snapshot.SizeBytes,
 			Version:   entity.CurrentBackupSnapshotVersion,
-			CreatedAt: timeNow,
+			CreatedAt: createdAt,
 			UpdatedAt: timeNow,
 		}
 		setting.MustSetData(snapshot)

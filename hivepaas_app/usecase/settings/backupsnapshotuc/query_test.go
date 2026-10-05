@@ -35,7 +35,9 @@ func TestSnapshotQueryKeepsTheViewsReach(t *testing.T) {
 	assert.Contains(t, sql, `t.tag IN ('hivepaas.app:web-dev')`)
 	assert.Contains(t, sql, `setting.ref_id IN ('r-p1') AND NOT EXISTS`)
 	assert.Contains(t, sql, `JOIN apps AS a ON t.tag = 'hivepaas.app:' || a.id`)
-	assert.Contains(t, sql, `ORDER BY (setting.data->>'time')::timestamptz DESC`)
+	// The conditions and the order idx_settings_backup_snapshot_time serves.
+	assert.Contains(t, sql, `(setting.type = 'backup-snapshot')`)
+	assert.Contains(t, sql, `"setting"."deleted_at" IS NULL ORDER BY setting.created_at DESC`)
 }
 
 // A view that reaches nothing lists nothing.
@@ -60,7 +62,7 @@ func TestSnapshotQueryFilters(t *testing.T) {
 	assert.NotContains(t, sql, "r-elsewhere")
 	assert.Equal(t, 1, strings.Count(sql, `t.tag = 'env:prod'`))
 	assert.Equal(t, 1, strings.Count(sql, `t.tag = 'db:main'`))
-	assert.Contains(t, sql, `(setting.data->>'time')::timestamptz >= '2026-09-01 00:00:00+00:00'`)
+	assert.Contains(t, sql, `(setting.created_at >= '2026-09-01 00:00:00+00:00')`)
 	assert.Contains(t, sql, `setting.name ILIKE '%nightly%'`)
 
 	outside := renderSnapshotQuery(snapshotQueryOpts(reachP1, &snapshotFilter{RepoIDs: []string{"r-elsewhere"}}))

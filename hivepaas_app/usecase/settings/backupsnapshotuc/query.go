@@ -34,7 +34,10 @@ const (
 	ownedByNoLiveApp = "setting.ref_id IN (?) AND NOT EXISTS (SELECT 1 FROM tags AS t " +
 		"JOIN apps AS a ON t.tag = '" + entity.DataBackupTagApp + ":' || a.id " +
 		"WHERE t.object_id = setting.id AND t.deleted_at IS NULL AND a.deleted_at IS NULL)"
-	snapshotTime = "(setting.data->>'time')::timestamptz"
+	// snapshotTime is when a snapshot was taken: its setting's created_at
+	// (entity.BackupSnapshot), which idx_settings_backup_snapshot_time orders
+	// by repository - the data's time, a text, could not be indexed so.
+	snapshotTime = "setting.created_at"
 	nothing      = "1=0"
 )
 

@@ -123,6 +123,9 @@ type DeleteSnapshotResult struct {
 }
 
 type PruneResult struct {
+	// MaintenanceTakenFrom is the client the repository's maintenance was moved from, to run
+	// it; empty when it was already this one's.
+	MaintenanceTakenFrom string
 }
 
 // RetentionPolicy defines the snapshot retention and pruning rules.
@@ -146,6 +149,18 @@ type Storage struct {
 	// Every repository must use its own file, otherwise operations on different repositories
 	// overwrite each other's connection state as they all share the engine default config file.
 	ConfigFile string `json:"configFile,omitempty"`
+
+	// Identity is who the engine connects to an S3 or local repository as, wherever its
+	// commands run; none is the host's user and hostname, which a container changes with every
+	// deploy. A repository server's client names its own (StorageServer).
+	Identity *ClientIdentity `json:"identity,omitempty"`
+}
+
+// ClientIdentity is a repository client's name: the user and the hostname. The repository
+// keeps its maintenance for one client, by this name.
+type ClientIdentity struct {
+	Username string `json:"username"`
+	Hostname string `json:"hostname"`
 }
 
 type StorageS3 struct {

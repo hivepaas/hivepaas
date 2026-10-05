@@ -78,7 +78,7 @@ func (c *Client) ApplyRepoOptions(
 	if opts.Compression != "" {
 		var errBuf bytes.Buffer
 		_, err := c.execCommand(ctx,
-			[]string{cmdPolicy, "set", cmdFlagGlobal, "--compression=" + opts.Compression},
+			[]string{cmdPolicy, cmdSet, cmdFlagGlobal, "--compression=" + opts.Compression},
 			func(o *execOptions) { o.stderr = &errBuf })
 		if err != nil {
 			return hperrors.Wrap(fmt.Errorf("kopia policy set compression failed: %s (err: %w)",

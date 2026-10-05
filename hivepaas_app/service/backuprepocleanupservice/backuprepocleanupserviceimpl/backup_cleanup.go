@@ -158,6 +158,12 @@ func (s *service) cleanupOneRepo(
 		return hperrors.Wrap(err)
 	}
 
+	if cleanupResp.MaintenanceTakenFrom != "" {
+		_ = data.LogStore.Add(ctx, tasklog.NewOutFrame(fmt.Sprintf(
+			"'%s': took over the repository's maintenance from %s", repoSetting.Name,
+			cleanupResp.MaintenanceTakenFrom), nil))
+	}
+
 	syncResp, err := s.backupRepoService.SyncRepoSnapshots(ctx, db, &backupreposervice.SyncRepoSnapshotsReq{
 		Scope:       scope,
 		RepoSetting: repoSetting,

@@ -19,6 +19,7 @@ const (
 	cmdCreate = "create"
 	cmdList   = "list"
 	cmdPolicy = "policy"
+	cmdSet    = "set"
 
 	cmdFlagJSON   = "--json"
 	cmdFlagGlobal = "--global"
@@ -29,10 +30,10 @@ func (c *Client) buildStorageFlags() ([]string, error) {
 		return nil, hperrors.Wrap(backupmodel.ErrStorageConfigRequired)
 	}
 	if c.storage.StorageS3 != nil {
-		return c.buildS3Flags(c.storage.StorageS3), nil
+		return append(c.buildS3Flags(c.storage.StorageS3), c.buildIdentityFlags()...), nil
 	}
 	if c.storage.StorageLocal != nil {
-		return c.buildLocalFlags(c.storage.StorageLocal), nil
+		return append(c.buildLocalFlags(c.storage.StorageLocal), c.buildIdentityFlags()...), nil
 	}
 	if c.storage.StorageServer != nil {
 		return c.buildServerFlags(c.storage.StorageServer), nil
@@ -84,6 +85,16 @@ func (c *Client) buildServerFlags(cfg *backupmodel.StorageServer) []string {
 		"--override-hostname=" + cfg.Hostname,
 		"--no-persist-credentials",
 	}
+}
+
+// buildIdentityFlags names the client to the repository, as `repository create` and `connect`
+// keep it in the config file: the repository's maintenance owner is a client by this name.
+func (c *Client) buildIdentityFlags() []string {
+	id := c.storage.Identity
+	if id == nil || id.Username == "" || id.Hostname == "" {
+		return nil
+	}
+	return []string{"--override-username=" + id.Username, "--override-hostname=" + id.Hostname}
 }
 
 func (c *Client) buildLocalFlags(cfg *backupmodel.StorageLocal) []string {

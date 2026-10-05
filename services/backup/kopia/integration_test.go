@@ -374,6 +374,30 @@ func TestIntegration_Prune_AppliesRetention(t *testing.T) {
 	assert.Equal(t, before.Items[len(before.Items)-1].ID, after.Items[len(after.Items)-1].ID)
 }
 
+// kopia runs maintenance for the repository's owner only - the client that created it, by its
+// user and hostname. A client by another name - a container deployed again, a repository made on
+// another machine - takes the maintenance over to prune, and says from whom; once.
+func TestIntegration_Prune_TakesTheMaintenanceOver(t *testing.T) {
+	creator, baseDir := newTestRepo(t, "repo")
+	ctx := context.Background()
+	creator.storage.Identity = &backupmodel.ClientIdentity{Username: "tnt", Hostname: "mac-mini"}
+	mustNoError(t, creator.InitRepo(ctx, nil))
+
+	storage := *creator.storage
+	storage.ConfigFile = filepath.Join(baseDir, "other.config")
+	storage.Identity = &backupmodel.ClientIdentity{Username: "hivepaas", Hostname: "repo-01abc"}
+	hivepaas := NewClient(&storage, backupmodel.DefaultCommandExecutor)
+	mustNoError(t, hivepaas.ConnectRepo(ctx))
+
+	res, err := hivepaas.Prune(ctx, &backupmodel.RetentionPolicy{KeepLast: 2})
+	mustNoError(t, err)
+	assert.Equal(t, "tnt@mac-mini", res.MaintenanceTakenFrom)
+
+	res, err = hivepaas.Prune(ctx, &backupmodel.RetentionPolicy{KeepLast: 2})
+	mustNoError(t, err)
+	assert.Empty(t, res.MaintenanceTakenFrom, "its own already")
+}
+
 // KeepHourly buckets by hour rather than by count, so it needs its own proof: with only one hour
 // bucket active (every snapshot taken in this run falls in the current hour), keepHourly=1 must
 // collapse everything down to the single latest snapshot, the same way a bare keep-hourly=1 does

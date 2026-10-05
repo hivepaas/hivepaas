@@ -31,7 +31,8 @@ func (s *service) CleanupRepo(
 		return nil, hperrors.Wrap(err)
 	}
 
-	if _, err = engine.Prune(ctx, toRetentionPolicy(repo.Retention)); err != nil {
+	pruned, err := engine.Prune(ctx, toRetentionPolicy(repo.Retention))
+	if err != nil {
 		return nil, hperrors.Wrap(err)
 	}
 
@@ -42,7 +43,8 @@ func (s *service) CleanupRepo(
 		return nil, hperrors.Wrap(err)
 	}
 
-	return &backupreposervice.CleanupRepoResp{Remaining: remaining}, nil
+	return &backupreposervice.CleanupRepoResp{Remaining: remaining,
+		MaintenanceTakenFrom: pruned.MaintenanceTakenFrom}, nil
 }
 
 func toRetentionPolicy(retention *entity.BackupRetentionPolicy) *backup.RetentionPolicy {

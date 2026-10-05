@@ -168,3 +168,14 @@ func TestVolumeHostDirRefusesASharedVolumeThatIsNotABindDirectory(t *testing.T) 
 
 	assert.ErrorIs(t, err, hperrors.ErrBackupVolumeSharedNotBind)
 }
+
+// HivePaaS connects to a repository by a name of the repository's, not by the host its commands
+// run on: the same from one deploy to the next, and another installation's elsewhere.
+func TestEngineIdentityIsTheRepositorys(t *testing.T) {
+	id := engineIdentity("01JAB9XED0GTXBSQDFVYAJ8WS1")
+	if assert.NotNil(t, id) {
+		assert.Equal(t, "hivepaas", id.Username)
+		assert.Equal(t, "repo-01jab9xed0gtxbsqdfvyaj8ws1", id.Hostname)
+	}
+	assert.Nil(t, engineIdentity(""), "a repository not yet saved has no name to give")
+}

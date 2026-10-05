@@ -40,6 +40,7 @@ type (
 	StorageS3            = backupmodel.StorageS3
 	StorageServer        = backupmodel.StorageServer
 	StorageLocal         = backupmodel.StorageLocal
+	ClientIdentity       = backupmodel.ClientIdentity
 	RestoreOptions       = backupmodel.RestoreOptions
 	SnapshotEntry        = backupmodel.SnapshotEntry
 	CommandExecReq       = backupmodel.CommandExecReq

@@ -135,6 +135,7 @@ func (s *service) buildStorage(
 	storage = &backup.Storage{
 		RepositoryPassword: password,
 		ConfigFile:         engineConfigFilePath(repoID),
+		Identity:           engineIdentity(repoID),
 	}
 
 	if hasCloudStorage {
@@ -205,6 +206,18 @@ func (s *service) buildLocalStorage(
 		NodeLabel: dir.NodeLabel,
 		Shared:    dir.Shared,
 	}, nil
+}
+
+// engineIdentity is who HivePaaS connects to a repository as, wherever the engine's commands run
+// - this container, or the agent of the volume's node - whatever their hostnames: kopia keeps the
+// repository's maintenance for one client, by name, and a container's hostname changes with
+// every deploy. The repository's id makes it this installation's, not another's that shares the
+// storage.
+func engineIdentity(repoID string) *backup.ClientIdentity {
+	if repoID == "" {
+		return nil
+	}
+	return &backup.ClientIdentity{Username: "hivepaas", Hostname: "repo-" + strings.ToLower(repoID)}
 }
 
 // engineConfigFilePath gives each repository its own engine config file.

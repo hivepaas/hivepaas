@@ -16,7 +16,7 @@ func (c *Client) Prune(
 	policy *backupmodel.RetentionPolicy,
 ) (res backupmodel.PruneResult, err error) {
 	if policy != nil {
-		args := []string{cmdPolicy, "set", cmdFlagGlobal}
+		args := []string{cmdPolicy, cmdSet, cmdFlagGlobal}
 		if policy.KeepLast > 0 {
 			args = append(args, "--keep-latest="+strconv.Itoa(policy.KeepLast))
 		}
@@ -49,9 +49,13 @@ func (c *Client) Prune(
 			backupmodel.ErrCommandFailed, strings.TrimSpace(expireErrBuf.String())))
 	}
 
-	// Maintenance reclaims the blobs the expired snapshots were the last reference to.
+	// Maintenance reclaims the blobs the expired snapshots were the last reference to. kopia runs
+	// it for the repository's maintenance owner only: this client becomes it first.
+	if res.MaintenanceTakenFrom, err = c.takeMaintenance(ctx); err != nil {
+		return res, hperrors.Wrap(err)
+	}
 	var errBuf bytes.Buffer
-	_, err = c.execCommand(ctx, []string{"maintenance", "run", "--full"}, func(o *execOptions) {
+	_, err = c.execCommand(ctx, []string{cmdMaintenance, "run", "--full"}, func(o *execOptions) {
 		o.stderr = &errBuf
 	})
 	if err != nil {

@@ -72,6 +72,9 @@ type CleanupRepoResp struct {
 	// reconcile its own records against. Listing the repository beforehand would add nothing: the
 	// stored records already say what the app believed was there.
 	Remaining []*RepoSnapshot
+	// MaintenanceTakenFrom is the client the repository's maintenance was taken over from, to
+	// run it: empty when it was HivePaaS's already.
+	MaintenanceTakenFrom string
 }
 
 // RepoSnapshot pairs a snapshot with its tags. Tags are stored in the tags table rather than
@@ -135,6 +138,9 @@ type SyncRepoSnapshotsReq struct {
 	RepoSetting *entity.Setting
 	// Remaining is what the repository holds now; stored records are reconciled against it.
 	Remaining []*RepoSnapshot
+	// MaintenanceTakenFrom is the client the repository's maintenance was taken over from, to
+	// run it: empty when it was HivePaaS's already.
+	MaintenanceTakenFrom string
 }
 
 type SyncRepoSnapshotsResp struct {

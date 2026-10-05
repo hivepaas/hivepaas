@@ -92,3 +92,30 @@ func TestClient_ConfigFile_IsolatesRepos(t *testing.T) {
 	assert.Equal(t, []string{"kopia", "--config-file=/tmp/hivepaas/backup-repos/repo-1/repository.config",
 		"repository", "validate-provider"}, executedReq.Command)
 }
+
+// A client given an identity creates and connects to a repository by it, S3 or local; one
+// through a repository server names its own, and none leaves kopia to the host's.
+func TestClient_ConnectsByItsIdentity(t *testing.T) {
+	var executed []string
+	executor := func(_ context.Context, req *backupmodel.CommandExecReq) (*backupmodel.CommandExecResp, error) {
+		executed = req.Command
+		return &backupmodel.CommandExecResp{}, nil
+	}
+	identity := &backupmodel.ClientIdentity{Username: "hivepaas", Hostname: "repo-01abc"}
+	flags := []string{"--override-username=hivepaas", "--override-hostname=repo-01abc"}
+
+	local := NewClient(&backupmodel.Storage{StorageLocal: &backupmodel.StorageLocal{Path: "/mnt/backups"},
+		Identity: identity}, executor)
+	assert.NoError(t, local.InitRepo(context.Background(), nil))
+	assert.Subset(t, executed, flags)
+	assert.NoError(t, local.ConnectRepo(context.Background()))
+	assert.Subset(t, executed, flags)
+
+	s3 := NewClient(&backupmodel.Storage{StorageS3: &backupmodel.StorageS3{Bucket: "b"}, Identity: identity}, executor)
+	assert.NoError(t, s3.ConnectRepo(context.Background()))
+	assert.Subset(t, executed, flags)
+
+	none := NewClient(&backupmodel.Storage{StorageLocal: &backupmodel.StorageLocal{Path: "/mnt/backups"}}, executor)
+	assert.NoError(t, none.ConnectRepo(context.Background()))
+	assert.NotContains(t, executed, flags[0])
+}

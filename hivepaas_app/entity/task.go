@@ -1,9 +1,11 @@
 package entity
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"reflect"
+	"strings"
 	"sync"
 	"time"
 
@@ -247,7 +249,7 @@ func (t *Task) parseArgs(structPtr any) error {
 }
 
 func (t *Task) SetArgs(args any) error {
-	b, err := json.Marshal(args)
+	b, clean, err := marshalJSONB(args)
 	if err != nil {
 		return hperrors.Wrap(err)
 	}
@@ -256,7 +258,10 @@ func (t *Task) SetArgs(args any) error {
 	defer t.parseMu.Unlock()
 
 	t.Args = reflectutil.UnsafeBytesToStr(b)
-	t.parsedArgs = args
+	t.parsedArgs = nil
+	if clean {
+		t.parsedArgs = args
+	}
 	return nil
 }
 
@@ -298,7 +303,7 @@ func (t *Task) parseOutput(structPtr any) error {
 }
 
 func (t *Task) SetOutput(output any) error {
-	b, err := json.Marshal(output)
+	b, clean, err := marshalJSONB(output)
 	if err != nil {
 		return hperrors.Wrap(err)
 	}
@@ -307,8 +312,66 @@ func (t *Task) SetOutput(output any) error {
 	defer t.parseMu.Unlock()
 
 	t.Output = reflectutil.UnsafeBytesToStr(b)
-	t.parsedOutput = output
+	t.parsedOutput = nil
+	if clean {
+		t.parsedOutput = output
+	}
 	return nil
+}
+
+// marshalJSONB is v as JSON a JSONB column takes: Postgres refuses a string
+// holding \u0000, which an error a process wrote can. Such characters are
+// dropped, and clean is false: what is stored is no longer v, so v is not to be
+// kept as what it parses to. Numbers stay exact.
+func marshalJSONB(v any) (b []byte, clean bool, err error) {
+	if b, err = json.Marshal(v); err != nil || !bytes.Contains(b, []byte(`\u0000`)) {
+		return b, true, hperrors.Wrap(err)
+	}
+	// The escape is also the text of a string holding a backslash before
+	// "u0000": decoded, the strings say which.
+	dec := json.NewDecoder(bytes.NewReader(b))
+	dec.UseNumber()
+	var decoded any
+	if err = dec.Decode(&decoded); err != nil {
+		return nil, false, hperrors.Wrap(err)
+	}
+	stripped, changed := withoutNUL(decoded)
+	if !changed {
+		return b, true, nil
+	}
+	b, err = json.Marshal(stripped)
+	return b, false, hperrors.Wrap(err)
+}
+
+// withoutNUL is a decoded JSON value with the NUL characters of its strings
+// and keys dropped, and whether there were any.
+func withoutNUL(v any) (any, bool) {
+	switch x := v.(type) {
+	case string:
+		if !strings.Contains(x, "\x00") {
+			return x, false
+		}
+		return strings.ReplaceAll(x, "\x00", ""), true
+	case []any:
+		changed := false
+		for i, e := range x {
+			var c bool
+			x[i], c = withoutNUL(e)
+			changed = changed || c
+		}
+		return x, changed
+	case map[string]any:
+		changed := false
+		out := make(map[string]any, len(x))
+		for k, e := range x {
+			key := strings.ReplaceAll(k, "\x00", "")
+			value, cv := withoutNUL(e)
+			out[key] = value
+			changed = changed || cv || key != k
+		}
+		return out, changed
+	}
+	return v, false
 }
 
 func (t *Task) MustSetOutput(output any) {

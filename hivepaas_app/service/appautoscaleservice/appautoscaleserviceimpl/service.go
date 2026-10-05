@@ -259,9 +259,13 @@ func (s *service) Events(
 	if err != nil {
 		return nil, hperrors.Wrap(err)
 	}
+	// The conditions of idx_tasks_periodic_output (migration tasks_output_jsonb),
+	// which finds them by containment: its type here, its live rows by the
+	// model's soft delete.
 	opts := []bunex.SelectQueryOption{
+		bunex.SelectWhere("task.type = ?", base.TaskTypePeriodicExec),
 		bunex.SelectWhere("task.run_at >= ?", since),
-		bunex.SelectWhere("task.output::jsonb @> ?::jsonb", string(match)),
+		bunex.SelectWhere("task.output @> ?::jsonb", string(match)),
 		bunex.SelectOrder("task.run_at DESC"),
 	}
 	if limit > 0 {

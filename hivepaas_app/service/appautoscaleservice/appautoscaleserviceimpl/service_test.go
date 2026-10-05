@@ -659,3 +659,43 @@ func TestRunScalesAFunctionOnItsRequestsWhenItsCallsCannotBeRead(t *testing.T) {
 
 	assert.Equal(t, map[string]uint64{"s1": 3}, w.swarm.scaled)
 }
+
+// taskList answers ListByTarget with its tasks, and keeps the query it was asked.
+type taskList struct {
+	repository.TaskRepo
+	tasks []*entity.Task
+	sql   string
+}
+
+func (f *taskList) ListByTarget(_ context.Context, _ database.IDB, targetID string, _ *basedto.Paging,
+	opts ...bunex.SelectQueryOption) ([]*entity.Task, *basedto.PagingMeta, error) {
+	var rows []*entity.Task
+	q := bun.NewDB(nil, pgdialect.New()).NewSelect().Model(&rows).Where("task.target_id = ?", targetID)
+	f.sql = bunex.ApplySelect(q, opts...).String()
+	return f.tasks, nil, nil
+}
+
+// An app's events are asked by the conditions of the index that finds them -
+// the periodic tasks' outputs, by containment - and read from what matched.
+func TestEventsAskByTheConditionsOfTheirIndex(t *testing.T) {
+	w := newWorld()
+	w.settings.jobs = []*entity.Setting{{ID: "job", Type: base.SettingTypePeriodicJob,
+		Kind: string(base.PeriodicKindAppAutoscale), Status: base.SettingStatusActive}}
+	run := &entity.Task{ID: "t1", RunAt: t0}
+	run.MustSetOutput(&entity.TaskAppAutoscaleOutput{Scaled: []*entity.AppAutoscaleChange{
+		{App: "F1", From: 1, To: 2, Reason: "turned away"}, {App: "F2", From: 2, To: 1}}})
+	tasks := &taskList{tasks: []*entity.Task{run}}
+	w.svc.taskRepo = tasks
+
+	events, err := w.svc.Events(context.Background(), nil, "F1", t0.Add(-time.Hour), 0)
+
+	assert.NoError(t, err)
+	assert.Contains(t, tasks.sql, `task.type = 'task:periodic-exec'`)
+	assert.Contains(t, tasks.sql, `task.output @> '{"scaled":[{"app":"F1"}]}'::jsonb`)
+	assert.NotContains(t, tasks.sql, "output::jsonb", "the column is JSONB: the index is on it, not on a cast")
+	assert.Contains(t, tasks.sql, `"task"."deleted_at" IS NULL`)
+	if assert.Len(t, events, 1) {
+		assert.Equal(t, 2, events[0].To)
+		assert.Equal(t, "turned away", events[0].Reason)
+	}
+}

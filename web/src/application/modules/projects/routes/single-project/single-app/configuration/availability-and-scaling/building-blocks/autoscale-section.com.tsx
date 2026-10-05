@@ -282,7 +282,7 @@ export function AutoscaleSection({ projectId, env, appId, autoscale, readOnly = 
                                 title={
                                     <LabelWithInfo
                                         label="Target"
-                                        content="The share of an instance's Concurrency kept busy. At 70 % and a Concurrency of 16, one instance for every 11 calls in flight."
+                                        content="The share of an instance's Concurrency kept busy. At 70 % and a Concurrency of 16, one instance for every 11 calls in flight - or, when a domain reaches the function, every 11 requests in flight through the proxy, whichever needs more: the proxy also sees requests waiting in the runtime before the handler starts."
                                     />
                                 }
                             >

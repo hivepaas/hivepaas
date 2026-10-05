@@ -1066,6 +1066,51 @@ test_no_ingress_network_is_nothing_to_wait_for() {
   check_ok "a swarm whose ingress network was removed" ingress_ready 1
 }
 
+# A stand-in for the docker calls local_pool_clash makes: daemon.json's pools in
+# LOCAL_POOLS, and the bridge networks in NETWORKS as id=subnet[,subnet].
+fake_local_networks() {
+  # shellcheck disable=SC2329 # install.sh's local_pool_clash calls it
+  docker() {
+    local net
+    case "$1 $2" in
+      "info --format") printf '%s' "${LOCAL_POOLS:-}" ;;
+      "network ls")
+        for net in ${NETWORKS:-}; do printf '%s\n' "${net%%=*}"; done
+        ;;
+      "network inspect")
+        for net in ${NETWORKS:-}; do
+          if [ "${net%%=*}" = "$3" ]; then printf '%s ' "$(printf '%s' "${net#*=}" | tr ',' ' ')"; fi
+        done
+        ;;
+      *) return 1 ;;
+    esac
+  }
+}
+
+test_local_pools_inside_the_swarms_clash() {
+  fake_local_networks
+  LOCAL_POOLS='10.0.0.0/8 ' NETWORKS='b1=10.0.0.0/24'
+  check "daemon.json's pool in 10.0.0.0/8" 10.0.0.0/8 "$(local_pool_clash 10.0.0.0/8)"
+}
+
+test_a_bridge_inside_the_swarms_pool_clashes() {
+  fake_local_networks
+  NETWORKS='b1=172.17.0.0/16 b2=10.0.5.0/24,fd00::/64'
+  check "a bridge given 10.0.5.0/24" 10.0.5.0/24 "$(local_pool_clash 10.0.0.0/8)"
+}
+
+test_docker_defaults_do_not_clash() {
+  fake_local_networks
+  NETWORKS='b1=172.17.0.0/16 b2=172.18.0.0/16,fd00::/64'
+  check_fails "172.17/16 and 172.18/16 beside 10.0.0.0/8" local_pool_clash 10.0.0.0/8
+}
+
+test_a_swarm_on_another_pool_does_not_clash() {
+  fake_local_networks
+  LOCAL_POOLS='10.0.0.0/8 ' NETWORKS='b1=10.0.0.0/24'
+  check_fails "a swarm on 172.30.0.0/16" local_pool_clash 172.30.0.0/16
+}
+
 # ------------------------------------------------------------------- Runner
 
 for t in $(declare -F | awk '$3 ~ /^test_/ {print $3}'); do

@@ -260,7 +260,8 @@ func newWorld() *world {
 			{ID: "F3", Name: "f3", ServiceID: "s3", Status: base.AppStatusActive},
 		}},
 		loggingService: w.loads, systemEventBus: w.events, logger: quiet{},
-		now: func() time.Time { return t0 }}
+		now:  func() time.Time { return t0 },
+		inTx: func(_ context.Context, exec func(db database.IDB) error) error { return exec(nil) }}
 	return w
 }
 
@@ -540,4 +541,25 @@ func TestRunReadsAMinuteEndingBeforeNow(t *testing.T) {
 	assert.Equal(t, short, w.loads.shortStarts["requests"])
 	assert.Equal(t, want, w.loads.ranges["cpu"])
 	assert.True(t, w.loads.shortStarts["cpu"].IsZero())
+}
+
+// With no app's autoscale on any more - the last one's app deleted, which
+// turns no setting off - a run turns the job off, and tells the workers; one
+// that finds it off already does nothing.
+func TestRunTurnsTheJobOffWhenNoAppHasAutoscale(t *testing.T) {
+	w := newWorld()
+	w.settings.autoscales = nil
+	w.settings.jobs = []*entity.Setting{{ID: "job", Type: base.SettingTypePeriodicJob,
+		Kind: string(base.PeriodicKindAppAutoscale), Status: base.SettingStatusActive}}
+
+	run(t, w)
+
+	if assert.Len(t, w.settings.updated, 1) {
+		assert.Equal(t, base.SettingStatusDisabled, w.settings.updated[0].Status)
+	}
+	assert.Equal(t, 1, w.events.published)
+
+	run(t, w)
+	assert.Len(t, w.settings.updated, 1, "off already")
+	assert.Equal(t, 1, w.events.published)
 }

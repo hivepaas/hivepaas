@@ -21,6 +21,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/logging"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/timeutil"
+	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/transaction"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/ulid"
 	"github.com/hivepaas/hivepaas/hivepaas_app/repository"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/appautoscaleservice"
@@ -91,6 +92,8 @@ type service struct {
 	systemEventBus systemeventbusservice.Service
 	logger         logging.Logger
 	now            func() time.Time
+	// inTx runs in a transaction of the store's.
+	inTx func(ctx context.Context, exec func(db database.IDB) error) error
 }
 
 func New(
@@ -109,7 +112,10 @@ func New(
 	return &service{db: db, states: redisStates{client: redisClient}, dockerManager: dockerManager,
 		traefikService: traefikService, hpAppService: hpAppService, appRepo: appRepo,
 		settingRepo: settingRepo, taskRepo: taskRepo, loggingService: loggingService, systemEventBus: systemEventBus,
-		logger: logger, now: timeutil.NowUTC}
+		logger: logger, now: timeutil.NowUTC,
+		inTx: func(ctx context.Context, exec func(db database.IDB) error) error {
+			return hperrors.Wrap(transaction.Execute(ctx, db, func(tx database.Tx) error { return exec(tx) }))
+		}}
 }
 
 // enabledAutoscales are the autoscale settings that are on, by app id.
@@ -140,7 +146,9 @@ func (s *service) EnsureJob(ctx context.Context, db database.IDB) error {
 	}
 	status := gofn.If(len(autoscales) > 0, base.SettingStatusActive, base.SettingStatusDisabled)
 
-	jobs, err := s.jobSettings(ctx, db)
+	// Locked, as stopIdleJob locks it: one of the two waits for the other,
+	// and reads what it wrote.
+	jobs, err := s.jobSettings(ctx, db, bunex.SelectFor("UPDATE OF setting"))
 	if err != nil {
 		return err
 	}
@@ -190,14 +198,50 @@ func (s *service) EnsureJob(ctx context.Context, db database.IDB) error {
 // jobSettings is the job's setting, made once, whatever its status: none
 // before an app first had autoscale on. Found by its kind before it scaled
 // every app too.
-func (s *service) jobSettings(ctx context.Context, db database.IDB) ([]*entity.Setting, error) {
-	jobs, _, err := s.settingRepo.List(ctx, db, nil, nil,
+func (s *service) jobSettings(
+	ctx context.Context, db database.IDB, opts ...bunex.SelectQueryOption,
+) ([]*entity.Setting, error) {
+	jobs, _, err := s.settingRepo.List(ctx, db, nil, nil, append([]bunex.SelectQueryOption{
 		bunex.SelectWhere("setting.type = ?", base.SettingTypePeriodicJob),
 		bunex.SelectWhereIn("setting.kind IN (?)", string(base.PeriodicKindAppAutoscale), legacyJobKind),
 		bunex.SelectWhere("setting.scope = ?", base.ObjectScopeGlobal),
 		bunex.SelectLimit(1),
-	)
+	}, opts...)...)
 	return jobs, hperrors.Wrap(err)
+}
+
+// stopIdleJob turns the job off when no app has autoscale on any more - the
+// last one's app deleted, or its project, which turns no setting off. The
+// job's row is locked before the apps are looked at, as EnsureJob locks it:
+// an app turning autoscale on meanwhile is seen here, or turns the job on
+// again after.
+func (s *service) stopIdleJob(ctx context.Context) error {
+	stopped := false
+	err := s.inTx(ctx, func(db database.IDB) error {
+		jobs, err := s.jobSettings(ctx, db, bunex.SelectFor("UPDATE OF setting"))
+		if err != nil || len(jobs) == 0 || jobs[0].Status != base.SettingStatusActive {
+			return err
+		}
+		autoscales, err := s.enabledAutoscales(ctx, db)
+		if err != nil || len(autoscales) > 0 {
+			return err
+		}
+		job := jobs[0]
+		job.Status = base.SettingStatusDisabled
+		job.UpdateVer++
+		job.UpdatedAt = s.now()
+		stopped = true
+		return hperrors.Wrap(s.settingRepo.Update(ctx, db, job,
+			bunex.UpdateColumns("status", "update_ver", "updated_at")))
+	})
+	if err != nil {
+		return err
+	}
+	if stopped {
+		// The workers keep the periodic jobs in a cache: tell them it stopped.
+		_ = s.systemEventBus.Publish(ctx, base.SystemEventPeriodicSettingsReload)
+	}
+	return nil
 }
 
 func (s *service) Events(
@@ -248,8 +292,11 @@ func (s *service) Events(
 
 func (s *service) Run(ctx context.Context, data *queue.PeriodicExecData) error {
 	autoscales, err := s.enabledAutoscales(ctx, s.db)
-	if err != nil || len(autoscales) == 0 {
+	if err != nil {
 		return err
+	}
+	if len(autoscales) == 0 {
+		return s.stopIdleJob(ctx)
 	}
 	ids := gofn.MapKeys(autoscales)
 	sort.Strings(ids)

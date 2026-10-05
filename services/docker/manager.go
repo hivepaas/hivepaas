@@ -115,7 +115,7 @@ type Manager interface {
 	// Networks
 	NetworkList(ctx context.Context, options ...NetworkListOption) (
 		*client.NetworkListResult, error)
-	NetworkListByIDs(ctx context.Context, networkIDOrNames []string, options ...NetworkListOption) (
+	NetworkListByIDs(ctx context.Context, networkIDs []string, options ...NetworkListOption) (
 		*client.NetworkListResult, error)
 	NetworkCreate(ctx context.Context, name string, options ...NetworkCreateOption) (
 		*client.NetworkCreateResult, error)
@@ -132,7 +132,7 @@ type Manager interface {
 		*client.NodeListResult, error)
 	NodeManagerList(ctx context.Context, options ...NodeListOption) (
 		*client.NodeListResult, error)
-	NodeListByIDs(ctx context.Context, nodeIDOrNames []string, options ...NodeListOption) (
+	NodeListByIDs(ctx context.Context, nodeIDs []string, options ...NodeListOption) (
 		*client.NodeListResult, error)
 	NodeInspect(ctx context.Context, nodeID string, options ...NodeInspectOption) (
 		*client.NodeInspectResult, error)
@@ -204,7 +204,7 @@ type Manager interface {
 	// Volumes
 	VolumeList(ctx context.Context, options ...VolumeListOption) (
 		*client.VolumeListResult, error)
-	VolumeListByIDs(ctx context.Context, volumeIDOrNames []string, options ...VolumeListOption) (
+	VolumeListByIDs(ctx context.Context, volumeIDs []string, options ...VolumeListOption) (
 		*client.VolumeListResult, error)
 
 	VolumeCreate(ctx context.Context, options ...VolumeCreateOption) (

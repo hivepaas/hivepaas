@@ -131,14 +131,9 @@ func (s *service) ListProjectEnvNetworks(
 		return nil, nil, hperrors.Wrap(err)
 	}
 
-	networks = make(map[string]*network.Summary, len(settings))
-	for _, netID := range netIDs {
-		net, found := gofn.FindPtr(netList.Items, func(net *network.Summary) bool {
-			return net.ID == netID
-		})
-		if found {
-			networks[net.ID] = &net
-		}
+	networks = make(map[string]*network.Summary, len(netList.Items))
+	for i := range netList.Items {
+		networks[netList.Items[i].ID] = &netList.Items[i]
 	}
 
 	return settings, networks, nil

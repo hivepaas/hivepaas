@@ -52,20 +52,13 @@ func (m *manager) ServiceListByStack(
 }
 
 // ServiceListByIDs lists the services of these ids, in one call, and only them:
-// Docker reads an id filter as a prefix, so its answer is narrowed to the ids
-// given. A blank id is dropped - as a prefix it matches every service - and with
-// none left Docker is not asked.
+// see byids.go.
 func (m *manager) ServiceListByIDs(
 	ctx context.Context,
 	serviceIDs []string,
 	options ...ServiceListOption,
 ) (*client.ServiceListResult, error) {
-	wanted := make(map[string]struct{}, len(serviceIDs))
-	for _, id := range serviceIDs {
-		if strings.TrimSpace(id) != "" {
-			wanted[id] = struct{}{}
-		}
-	}
+	wanted := wantedIDs(serviceIDs)
 	if len(wanted) == 0 {
 		return &client.ServiceListResult{Items: []swarm.Service{}}, nil
 	}
@@ -78,13 +71,7 @@ func (m *manager) ServiceListByIDs(
 	if err != nil {
 		return nil, hperrors.Wrap(err)
 	}
-	items := resp.Items[:0]
-	for i := range resp.Items {
-		if _, ok := wanted[resp.Items[i].ID]; ok {
-			items = append(items, resp.Items[i])
-		}
-	}
-	resp.Items = items
+	resp.Items = keepWanted(resp.Items, wanted, func(s *swarm.Service) string { return s.ID })
 	return resp, nil
 }
 

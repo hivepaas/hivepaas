@@ -2,14 +2,12 @@ package dockerhelper
 
 import (
 	"github.com/moby/moby/api/types/volume"
+
+	"github.com/hivepaas/hivepaas/services/docker"
 )
 
+// GetVolumeID is a volume's id: its cluster id for a cluster volume, its name
+// for any other. It is docker.VolumeID, which VolumeListByIDs matches on.
 func GetVolumeID(vol *volume.Volume) string {
-	if vol == nil {
-		return ""
-	}
-	if vol.ClusterVolume == nil {
-		return vol.Name
-	}
-	return vol.ClusterVolume.ID
+	return docker.VolumeID(vol)
 }

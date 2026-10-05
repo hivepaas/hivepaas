@@ -2,12 +2,10 @@ package docker
 
 import (
 	"context"
-	"errors"
 
 	"github.com/moby/moby/api/types/swarm"
 	"github.com/moby/moby/api/types/volume"
 	"github.com/moby/moby/client"
-	"github.com/tiendc/gofn"
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 )
@@ -61,44 +59,36 @@ func (m *manager) VolumeList(
 	return &resp, nil
 }
 
+// VolumeListByIDs lists the volumes of these ids, in one call, and only them,
+// an id being what VolumeID says. Docker has no filter for a cluster volume's
+// id, so every volume is listed and narrowed here; see byids.go.
 func (m *manager) VolumeListByIDs(
 	ctx context.Context,
-	volumeIDOrNames []string,
+	volumeIDs []string,
 	options ...VolumeListOption,
 ) (*client.VolumeListResult, error) {
-	resp := &client.VolumeListResult{}
-	if len(volumeIDOrNames) == 0 {
-		return resp, nil
+	wanted := wantedIDs(volumeIDs)
+	if len(wanted) == 0 {
+		return &client.VolumeListResult{Items: []volume.Volume{}}, nil
 	}
-
-	if len(volumeIDOrNames) == 1 {
-		inspect, err := m.VolumeInspect(ctx, volumeIDOrNames[0])
-		if err != nil && !errors.Is(err, hperrors.ErrNotFound) {
-			return nil, hperrors.Wrap(err)
-		}
-		if inspect != nil {
-			resp.Items = []volume.Volume{inspect.Volume}
-		}
-		return resp, nil
-	}
-
-	listResp, err := m.VolumeList(ctx, options...)
+	resp, err := m.VolumeList(ctx, options...)
 	if err != nil {
 		return nil, hperrors.Wrap(err)
 	}
-	for i := range listResp.Items {
-		vol := &listResp.Items[i]
-		if gofn.Contain(volumeIDOrNames, vol.Name) {
-			resp.Items = append(resp.Items, *vol)
-			continue
-		}
-		if vol.ClusterVolume != nil && gofn.Contain(volumeIDOrNames, vol.ClusterVolume.ID) {
-			resp.Items = append(resp.Items, *vol)
-			continue
-		}
-	}
-
+	resp.Items = keepWanted(resp.Items, wanted, VolumeID)
 	return resp, nil
+}
+
+// VolumeID is a volume's id: its cluster id for a cluster volume, its name for
+// any other.
+func VolumeID(vol *volume.Volume) string {
+	if vol == nil {
+		return ""
+	}
+	if vol.ClusterVolume == nil {
+		return vol.Name
+	}
+	return vol.ClusterVolume.ID
 }
 
 type VolumeCreateOption func(options *client.VolumeCreateOptions)

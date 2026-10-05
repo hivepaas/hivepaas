@@ -2,12 +2,10 @@ package docker
 
 import (
 	"context"
-	"errors"
 	"time"
 
 	"github.com/moby/moby/api/types/network"
 	"github.com/moby/moby/client"
-	"github.com/tiendc/gofn"
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 )
@@ -44,39 +42,27 @@ func (m *manager) NetworkList(
 	return &resp, nil
 }
 
+// NetworkListByIDs lists the networks of these ids, in one call, and only them:
+// see byids.go.
 func (m *manager) NetworkListByIDs(
 	ctx context.Context,
-	networkIDOrNames []string,
+	networkIDs []string,
 	options ...NetworkListOption,
 ) (*client.NetworkListResult, error) {
-	resp := &client.NetworkListResult{}
-	if len(networkIDOrNames) == 0 {
-		return resp, nil
+	wanted := wantedIDs(networkIDs)
+	if len(wanted) == 0 {
+		return &client.NetworkListResult{Items: []network.Summary{}}, nil
 	}
-
-	if len(networkIDOrNames) == 1 {
-		inspect, err := m.NetworkInspect(ctx, networkIDOrNames[0])
-		if err != nil && !errors.Is(err, hperrors.ErrNotFound) {
-			return nil, hperrors.Wrap(err)
+	options = append(options, func(opts *client.NetworkListOptions) {
+		for id := range wanted {
+			FilterAdd(&opts.Filters, "id", id)
 		}
-		if inspect != nil {
-			resp.Items = append(resp.Items, network.Summary{Network: inspect.Network.Network})
-		}
-		return resp, nil
-	}
-
-	listResp, err := m.NetworkList(ctx, options...)
+	})
+	resp, err := m.NetworkList(ctx, options...)
 	if err != nil {
 		return nil, hperrors.Wrap(err)
 	}
-	for i := range listResp.Items {
-		net := &listResp.Items[i]
-		if gofn.Contain(networkIDOrNames, net.Name) || gofn.Contain(networkIDOrNames, net.ID) {
-			resp.Items = append(resp.Items, *net)
-			continue
-		}
-	}
-
+	resp.Items = keepWanted(resp.Items, wanted, func(n *network.Summary) string { return n.ID })
 	return resp, nil
 }
 

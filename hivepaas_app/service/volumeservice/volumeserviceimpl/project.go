@@ -120,14 +120,9 @@ func (s *service) ListProjectVolumes(
 		return nil, nil, hperrors.Wrap(err)
 	}
 
-	volumes = make(map[string]*volume.Volume, len(settings))
-	for _, volID := range volIDs {
-		vol, found := gofn.FindPtr(volList.Items, func(vol *volume.Volume) bool {
-			return dockerhelper.GetVolumeID(vol) == volID
-		})
-		if found {
-			volumes[volID] = &vol
-		}
+	volumes = make(map[string]*volume.Volume, len(volList.Items))
+	for i := range volList.Items {
+		volumes[dockerhelper.GetVolumeID(&volList.Items[i])] = &volList.Items[i]
 	}
 
 	return settings, volumes, nil

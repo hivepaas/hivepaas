@@ -47,7 +47,7 @@ func (uc *UC) GetApp(
 	transformationInput := &appdto.AppTransformationInput{}
 
 	if req.GetStats {
-		serviceMap, err := uc.loadAppSwarmServices(ctx, app.Project.Key, []*entity.App{app})
+		serviceMap, err := uc.loadAppSwarmServices(ctx, []*entity.App{app})
 		if err != nil {
 			return nil, hperrors.Wrap(err)
 		}

@@ -2,11 +2,9 @@ package docker
 
 import (
 	"context"
-	"errors"
 
 	"github.com/moby/moby/api/types/swarm"
 	"github.com/moby/moby/client"
-	"github.com/tiendc/gofn"
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 )
@@ -75,39 +73,27 @@ func (m *manager) NodeManagerList(
 	return m.NodeList(ctx, options...)
 }
 
+// NodeListByIDs lists the nodes of these ids, in one call, and only them: see
+// byids.go. A node's hostname is its name to Docker, and not an id here.
 func (m *manager) NodeListByIDs(
 	ctx context.Context,
-	nodeIDOrNames []string,
+	nodeIDs []string,
 	options ...NodeListOption,
 ) (*client.NodeListResult, error) {
-	resp := &client.NodeListResult{}
-	if len(nodeIDOrNames) == 0 {
-		return resp, nil
+	wanted := wantedIDs(nodeIDs)
+	if len(wanted) == 0 {
+		return &client.NodeListResult{Items: []swarm.Node{}}, nil
 	}
-
-	if len(nodeIDOrNames) == 1 {
-		inspect, err := m.NodeInspect(ctx, nodeIDOrNames[0])
-		if err != nil && !errors.Is(err, hperrors.ErrNotFound) {
-			return nil, hperrors.Wrap(err)
+	options = append(options, func(opts *client.NodeListOptions) {
+		for id := range wanted {
+			FilterAdd(&opts.Filters, "id", id)
 		}
-		if inspect != nil {
-			resp.Items = []swarm.Node{inspect.Node}
-		}
-		return resp, nil
-	}
-
-	listResp, err := m.NodeList(ctx, options...)
+	})
+	resp, err := m.NodeList(ctx, options...)
 	if err != nil {
 		return nil, hperrors.Wrap(err)
 	}
-	for i := range listResp.Items {
-		node := &listResp.Items[i]
-		if gofn.Contain(nodeIDOrNames, node.ID) || gofn.Contain(nodeIDOrNames, node.Spec.Name) {
-			resp.Items = append(resp.Items, *node)
-			continue
-		}
-	}
-
+	resp.Items = keepWanted(resp.Items, wanted, func(n *swarm.Node) string { return n.ID })
 	return resp, nil
 }
 

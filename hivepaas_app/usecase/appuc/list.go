@@ -15,7 +15,6 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/appuc/appdto"
-	"github.com/hivepaas/hivepaas/services/docker"
 )
 
 //nolint:gocognit,funlen
@@ -141,7 +140,7 @@ func (uc *UC) ListApp(
 	transformationInput := &appdto.AppTransformationInput{}
 
 	if req.GetStats && len(apps) > 0 {
-		serviceMap, err := uc.loadAppSwarmServices(ctx, apps[0].Project.Key, apps)
+		serviceMap, err := uc.loadAppSwarmServices(ctx, apps)
 		if err != nil {
 			return nil, hperrors.Wrap(err)
 		}
@@ -178,9 +177,11 @@ func excludeChildApps() []bunex.SelectQueryOption {
 	}
 }
 
+// loadAppSwarmServices is the services of the apps and of their children, by
+// app id, nil for an app never deployed. Only their services are listed, not
+// the whole project's.
 func (uc *UC) loadAppSwarmServices(
 	ctx context.Context,
-	projectKey string,
 	apps []*entity.App,
 ) (map[string]*swarm.Service, error) {
 	allApps := make([]*entity.App, 0, len(apps)*2) //nolint:mnd
@@ -189,12 +190,12 @@ func (uc *UC) loadAppSwarmServices(
 		allApps = append(allApps, app.ChildApps...)
 		allApps = append(allApps, app.LogicalChildApps...)
 	}
-	// Load all services of the project
-	listResp, err := uc.dockerManager.ServiceListByStack(ctx, projectKey, func(opts *client.ServiceListOptions) {
+	serviceIDs := make([]string, 0, len(allApps))
+	for _, app := range allApps {
+		serviceIDs = append(serviceIDs, app.ServiceID)
+	}
+	listResp, err := uc.dockerManager.ServiceListByIDs(ctx, serviceIDs, func(opts *client.ServiceListOptions) {
 		opts.Status = true
-		if len(allApps) == 1 && allApps[0].ServiceID != "" {
-			docker.FilterAdd(&opts.Filters, "id", allApps[0].ServiceID)
-		}
 	})
 	if err != nil {
 		return nil, hperrors.Wrap(err)

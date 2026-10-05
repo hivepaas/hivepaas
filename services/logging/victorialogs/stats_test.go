@@ -12,6 +12,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/services/logging/loggingmodel"
 )
 
@@ -151,4 +152,15 @@ func TestInvocationStatsWithoutACallHasNoDurations(t *testing.T) {
 	assert.Equal(t, loggingmodel.InvocationCounts{}, got.Totals)
 	assert.Empty(t, got.ByOutcome)
 	assert.Empty(t, got.ByPath)
+}
+
+// A query that panics in its goroutine is the call's error, as a failed one is:
+// a panic there would otherwise take the whole process down.
+func TestAQueryThatPanicsIsTheCallsError(t *testing.T) {
+	c := &Client{} // no config: every query panics reading its endpoint
+
+	results, err := c.rowsAtOnce(context.Background(), time.Time{}, time.Time{}, "* | stats count()", "*")
+
+	assert.Nil(t, results)
+	assert.ErrorIs(t, err, hperrors.ErrPanic)
 }

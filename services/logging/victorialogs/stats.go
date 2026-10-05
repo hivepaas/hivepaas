@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
+	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/safego"
 	"github.com/hivepaas/hivepaas/services/logging/loggingmodel"
 )
 
@@ -169,12 +170,18 @@ func (c *Client) rowsAtOnce(
 	)
 	for i, q := range queries {
 		wg.Go(func() {
-			rows, err := c.rows(ctx, q, start, end)
-			if err != nil {
-				once.Do(func() { first = err; cancel() })
-				return
+			// A panic here is this query's error, as a failure is.
+			var err error
+			defer func() {
+				if err != nil {
+					once.Do(func() { first = err; cancel() })
+				}
+			}()
+			defer safego.RecoverTo(&err)
+			var rows []map[string]string
+			if rows, err = c.rows(ctx, q, start, end); err == nil {
+				results[i] = rows
 			}
-			results[i] = rows
 		})
 	}
 	wg.Wait()

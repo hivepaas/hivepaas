@@ -1,4 +1,4 @@
-package appuc
+package appmetricsuc
 
 import (
 	"context"
@@ -13,7 +13,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/timeutil"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/appautoscaleservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/loggingservice"
-	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/appuc/appdto"
+	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/appmetricsuc/appmetricsdto"
 	"github.com/hivepaas/hivepaas/services/logging"
 )
 
@@ -33,8 +33,8 @@ var metricsRanges = map[string]struct{ length, step time.Duration }{
 func (uc *UC) GetFunctionMetrics(
 	ctx context.Context,
 	_ *basedto.Auth,
-	req *appdto.GetFunctionMetricsReq,
-) (*appdto.GetFunctionMetricsResp, error) {
+	req *appmetricsdto.GetFunctionMetricsReq,
+) (*appmetricsdto.GetFunctionMetricsResp, error) {
 	app, featureSettings, err := uc.appService.LoadAppWithFeatureSettings(ctx, uc.db, req.ProjectID, req.AppID,
 		true, true,
 		bunex.SelectExcludeColumns(entity.AppDefaultExcludeColumns...),
@@ -59,7 +59,7 @@ func (uc *UC) GetFunctionMetrics(
 		return nil, hperrors.Wrap(err)
 	}
 	if !history.Available {
-		return &appdto.GetFunctionMetricsResp{Data: &appdto.FunctionMetricsDataResp{
+		return &appmetricsdto.GetFunctionMetricsResp{Data: &appmetricsdto.FunctionMetricsDataResp{
 			Range: req.Range, Reason: string(history.Reason),
 		}}, nil
 	}
@@ -73,12 +73,12 @@ func (uc *UC) GetFunctionMetrics(
 	}
 	data := toFunctionMetricsData(req.Range, window, stats)
 	err = addReplicas(ctx, uc, app, window, data.Series,
-		func(p *appdto.FunctionMetricsPointResp) time.Time { return p.Time },
-		func(p *appdto.FunctionMetricsPointResp, n *int) { p.Replicas = n })
+		func(p *appmetricsdto.FunctionMetricsPointResp) time.Time { return p.Time },
+		func(p *appmetricsdto.FunctionMetricsPointResp, n *int) { p.Replicas = n })
 	if err != nil {
 		return nil, hperrors.Wrap(err)
 	}
-	return &appdto.GetFunctionMetricsResp{Data: data}, nil
+	return &appmetricsdto.GetFunctionMetricsResp{Data: data}, nil
 }
 
 // addReplicas puts an app's replicas at the end of each step on the points of
@@ -88,7 +88,7 @@ func addReplicas[P any](
 	ctx context.Context, uc *UC, app *entity.App, w window, series []P,
 	timeOf func(P) time.Time, set func(P, *int),
 ) error {
-	events, err := uc.appAutoscale.Events(ctx, uc.db, app.ID, w.start, 0)
+	events, err := uc.appAutoscaleService.Events(ctx, uc.db, app.ID, w.start, 0)
 	if err != nil {
 		return hperrors.Wrap(err)
 	}
@@ -176,8 +176,8 @@ func metricsWindow(rangeName string, now time.Time, retention timeutil.Duration)
 }
 
 func toFunctionMetricsData(rangeName string, w window, stats *logging.InvocationStatsResp,
-) *appdto.FunctionMetricsDataResp {
-	data := &appdto.FunctionMetricsDataResp{
+) *appmetricsdto.FunctionMetricsDataResp {
+	data := &appmetricsdto.FunctionMetricsDataResp{
 		Available:   true,
 		Range:       rangeName,
 		Start:       w.start,
@@ -186,24 +186,24 @@ func toFunctionMetricsData(rangeName string, w window, stats *logging.Invocation
 		Clamped:     w.clamped,
 		Totals:      countsResp(stats.Totals),
 		ByOutcome:   stats.ByOutcome,
-		Series:      make([]*appdto.FunctionMetricsPointResp, 0, len(stats.Buckets)),
-		ByPath:      make([]*appdto.FunctionMetricsPathResp, 0, len(stats.ByPath)),
+		Series:      make([]*appmetricsdto.FunctionMetricsPointResp, 0, len(stats.Buckets)),
+		ByPath:      make([]*appmetricsdto.FunctionMetricsPathResp, 0, len(stats.ByPath)),
 	}
 	for _, p := range stats.ByPath {
-		data.ByPath = append(data.ByPath, &appdto.FunctionMetricsPathResp{
+		data.ByPath = append(data.ByPath, &appmetricsdto.FunctionMetricsPathResp{
 			Method: p.Method, Path: p.Path, FunctionMetricsCountsResp: *countsResp(p.InvocationCounts),
 		})
 	}
 	for _, b := range stats.Buckets {
-		data.Series = append(data.Series, &appdto.FunctionMetricsPointResp{
+		data.Series = append(data.Series, &appmetricsdto.FunctionMetricsPointResp{
 			Time: b.Time, FunctionMetricsCountsResp: *countsResp(b.InvocationCounts),
 		})
 	}
 	return data
 }
 
-func countsResp(c logging.InvocationCounts) *appdto.FunctionMetricsCountsResp {
-	return &appdto.FunctionMetricsCountsResp{
+func countsResp(c logging.InvocationCounts) *appmetricsdto.FunctionMetricsCountsResp {
+	return &appmetricsdto.FunctionMetricsCountsResp{
 		Calls: c.Calls, Failed: c.Failed, Errors4xx: c.Errors4xx, Errors5xx: c.Errors5xx,
 		P50: c.P50, P95: c.P95, P99: c.P99,
 	}

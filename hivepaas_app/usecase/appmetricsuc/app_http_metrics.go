@@ -1,4 +1,4 @@
-package appuc
+package appmetricsuc
 
 import (
 	"context"
@@ -12,7 +12,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/timeutil"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/loggingservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/traefikservice"
-	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/appuc/appdto"
+	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/appmetricsuc/appmetricsdto"
 	"github.com/hivepaas/hivepaas/services/logging"
 )
 
@@ -28,8 +28,8 @@ const httpMetricsReasonNotExposed = "not-exposed"
 func (uc *UC) GetAppHTTPMetrics(
 	ctx context.Context,
 	_ *basedto.Auth,
-	req *appdto.GetAppHTTPMetricsReq,
-) (*appdto.GetAppHTTPMetricsResp, error) {
+	req *appmetricsdto.GetAppHTTPMetricsReq,
+) (*appmetricsdto.GetAppHTTPMetricsResp, error) {
 	app, _, err := uc.appService.LoadAppWithFeatureSettings(ctx, uc.db, req.ProjectID, req.AppID,
 		true, true,
 		bunex.SelectExcludeColumns(entity.AppDefaultExcludeColumns...),
@@ -42,8 +42,10 @@ func (uc *UC) GetAppHTTPMetrics(
 	if err != nil {
 		return nil, hperrors.Wrap(err)
 	}
-	unavailable := func(reason string) *appdto.GetAppHTTPMetricsResp {
-		return &appdto.GetAppHTTPMetricsResp{Data: &appdto.AppHTTPMetricsDataResp{Range: req.Range, Reason: reason}}
+	unavailable := func(reason string) *appmetricsdto.GetAppHTTPMetricsResp {
+		return &appmetricsdto.GetAppHTTPMetricsResp{
+			Data: &appmetricsdto.AppHTTPMetricsDataResp{Range: req.Range, Reason: reason},
+		}
 	}
 
 	if !isExposed(app) {
@@ -73,12 +75,12 @@ func (uc *UC) GetAppHTTPMetrics(
 	}
 	data := toAppHTTPMetricsData(req.Range, window, stats)
 	err = addReplicas(ctx, uc, app, window, data.Series,
-		func(p *appdto.AppHTTPPointResp) time.Time { return p.Time },
-		func(p *appdto.AppHTTPPointResp, n *int) { p.Replicas = n })
+		func(p *appmetricsdto.AppHTTPPointResp) time.Time { return p.Time },
+		func(p *appmetricsdto.AppHTTPPointResp, n *int) { p.Replicas = n })
 	if err != nil {
 		return nil, hperrors.Wrap(err)
 	}
-	return &appdto.GetAppHTTPMetricsResp{Data: data}, nil
+	return &appmetricsdto.GetAppHTTPMetricsResp{Data: data}, nil
 }
 
 // isExposed is whether the app is reached by a domain through the proxy.
@@ -99,8 +101,10 @@ func isExposed(app *entity.App) bool {
 	return false
 }
 
-func toAppHTTPMetricsData(rangeName string, w window, stats *logging.HTTPStatsResp) *appdto.AppHTTPMetricsDataResp {
-	data := &appdto.AppHTTPMetricsDataResp{
+func toAppHTTPMetricsData(
+	rangeName string, w window, stats *logging.HTTPStatsResp,
+) *appmetricsdto.AppHTTPMetricsDataResp {
+	data := &appmetricsdto.AppHTTPMetricsDataResp{
 		Available:   true,
 		Range:       rangeName,
 		Start:       w.start,
@@ -108,27 +112,27 @@ func toAppHTTPMetricsData(rangeName string, w window, stats *logging.HTTPStatsRe
 		StepSeconds: int(w.step.Seconds()),
 		Clamped:     w.clamped,
 		Totals:      httpCountsResp(stats.Totals),
-		Series:      make([]*appdto.AppHTTPPointResp, 0, len(stats.Buckets)),
-		ByPath:      make([]*appdto.AppHTTPPathResp, 0, len(stats.ByPath)),
-		ByReplica:   make([]*appdto.AppHTTPReplicaResp, 0, len(stats.ByReplica)),
+		Series:      make([]*appmetricsdto.AppHTTPPointResp, 0, len(stats.Buckets)),
+		ByPath:      make([]*appmetricsdto.AppHTTPPathResp, 0, len(stats.ByPath)),
+		ByReplica:   make([]*appmetricsdto.AppHTTPReplicaResp, 0, len(stats.ByReplica)),
 	}
 	for _, b := range stats.Buckets {
-		data.Series = append(data.Series, &appdto.AppHTTPPointResp{
+		data.Series = append(data.Series, &appmetricsdto.AppHTTPPointResp{
 			Time: b.Time, AppHTTPCountsResp: *httpCountsResp(b.HTTPCounts)})
 	}
 	for _, p := range stats.ByPath {
-		data.ByPath = append(data.ByPath, &appdto.AppHTTPPathResp{
+		data.ByPath = append(data.ByPath, &appmetricsdto.AppHTTPPathResp{
 			Method: p.Method, Path: p.Path, AppHTTPCountsResp: *httpCountsResp(p.HTTPCounts)})
 	}
 	for _, r := range stats.ByReplica {
-		data.ByReplica = append(data.ByReplica, &appdto.AppHTTPReplicaResp{
+		data.ByReplica = append(data.ByReplica, &appmetricsdto.AppHTTPReplicaResp{
 			Address: r.Address, AppHTTPCountsResp: *httpCountsResp(r.HTTPCounts)})
 	}
 	return data
 }
 
-func httpCountsResp(c logging.HTTPCounts) *appdto.AppHTTPCountsResp {
-	return &appdto.AppHTTPCountsResp{
+func httpCountsResp(c logging.HTTPCounts) *appmetricsdto.AppHTTPCountsResp {
+	return &appmetricsdto.AppHTTPCountsResp{
 		Requests: c.Requests, Errors4xx: c.Errors4xx, Errors5xx: c.Errors5xx, Unreachable: c.Unreachable,
 		P50: c.P50, P95: c.P95, P99: c.P99,
 	}

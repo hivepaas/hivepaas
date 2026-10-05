@@ -5,6 +5,7 @@ import (
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/appdeploymentuc/appdeploymentdto"
+	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/appmetricsuc/appmetricsdto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/appsettingsuc/appsettingsdto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/apptemplateuc/apptemplatedto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/appuc/appdto"
@@ -191,9 +192,9 @@ func getEndpoints() []getEndpoint { //nolint:funlen // a table
 				"per step, oldest first. available is false, with a reason, when its logs cannot be read: the " +
 				"app's logging feature off, or the logging stack not running. Only a function has them.",
 			paths:  map[under]string{underApp: "/function-metrics"},
-			query:  &appdto.GetFunctionMetricsReq{},
+			query:  &appmetricsdto.GetFunctionMetricsReq{},
 			params: metricsRangeParams(),
-			answer: func() any { return &appdto.GetFunctionMetricsResp{} },
+			answer: func() any { return &appmetricsdto.GetFunctionMetricsResp{} },
 		},
 		{
 			name: "get_app_http_metrics", title: "Get an app's requests",
@@ -207,9 +208,9 @@ func getEndpoints() []getEndpoint { //nolint:funlen // a table
 				"unlabelled (an admin saves System > Traefik > Config Options with Access Log on), or the " +
 				"logging stack is not running.",
 			paths:  map[under]string{underApp: "/http-metrics"},
-			query:  &appdto.GetAppHTTPMetricsReq{},
+			query:  &appmetricsdto.GetAppHTTPMetricsReq{},
 			params: metricsRangeParams(),
-			answer: func() any { return &appdto.GetAppHTTPMetricsResp{} },
+			answer: func() any { return &appmetricsdto.GetAppHTTPMetricsResp{} },
 		},
 		{
 			name: "get_app_resource_metrics", title: "Get an app's CPU and memory",
@@ -222,9 +223,9 @@ func getEndpoints() []getEndpoint { //nolint:funlen // a table
 				"mark its lines yet (agent-unlabelled, until its next update), or the logging stack is not " +
 				"running.",
 			paths:  map[under]string{underApp: "/resource-metrics"},
-			query:  &appdto.GetAppResourceMetricsReq{},
+			query:  &appmetricsdto.GetAppResourceMetricsReq{},
 			params: metricsRangeParams(),
-			answer: func() any { return &appdto.GetAppResourceMetricsResp{} },
+			answer: func() any { return &appmetricsdto.GetAppResourceMetricsResp{} },
 		},
 		{
 			name: "get_app_route_metrics", title: "Get an app's routes",
@@ -240,9 +241,9 @@ func getEndpoints() []getEndpoint { //nolint:funlen // a table
 				"(node-disabled) or able to (node-unsupported, with preflightReasons), the agent not marking " +
 				"its lines yet (agent-unlabelled), or the logging stack not running.",
 			paths:  map[under]string{underApp: "/route-metrics"},
-			query:  &appdto.GetAppPerformanceMetricsReq{},
+			query:  &appmetricsdto.GetAppPerformanceMetricsReq{},
 			params: metricsRangeParams(),
-			answer: func() any { return &appdto.GetAppRouteMetricsResp{} },
+			answer: func() any { return &appmetricsdto.GetAppRouteMetricsResp{} },
 		},
 		{
 			name: "get_app_dependency_metrics", title: "Get what an app calls",
@@ -254,9 +255,9 @@ func getEndpoints() []getEndpoint { //nolint:funlen // a table
 				"failed, p50, p95 and p99 in milliseconds, close, not exact. Start here to see which database " +
 				"or app slows an app down. available is false, with a reason, as for get_app_route_metrics.",
 			paths:  map[under]string{underApp: "/dependency-metrics"},
-			query:  &appdto.GetAppPerformanceMetricsReq{},
+			query:  &appmetricsdto.GetAppPerformanceMetricsReq{},
 			params: metricsRangeParams(),
-			answer: func() any { return &appdto.GetAppDependencyMetricsResp{} },
+			answer: func() any { return &appmetricsdto.GetAppDependencyMetricsResp{} },
 		},
 		{
 			name: "list_attention", title: "What needs attention",

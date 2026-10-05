@@ -1,4 +1,4 @@
-package appuc
+package appmetricsuc
 
 import (
 	"context"
@@ -19,7 +19,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/repository"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/appservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/loggingservice"
-	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/appuc/appdto"
+	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/appmetricsuc/appmetricsdto"
 	"github.com/hivepaas/hivepaas/services/docker"
 	"github.com/hivepaas/hivepaas/services/logging"
 )
@@ -99,7 +99,7 @@ func TestDependencyPeers(t *testing.T) {
 	}
 	pg := got[0]
 	assert.Equal(t, "postgresql/shop", pg.Peer)
-	assert.Equal(t, &appdto.AppDependencyAppResp{ID: "pg", Key: "pg", Name: "Postgres"}, pg.App)
+	assert.Equal(t, &appmetricsdto.AppDependencyAppResp{ID: "pg", Key: "pg", Name: "Postgres"}, pg.App)
 	assert.Equal(t, int64(10), pg.Requests)
 	assert.Equal(t, int64(1), pg.Errors)
 	assert.InDelta(t, 25.0/6, *pg.P50, 1e-9, "the 5th of 10, 6 of them within 5 ms")
@@ -175,9 +175,9 @@ func TestPerformanceCoverage(t *testing.T) {
 	}
 	perf := &entity.LoggingPerformance{Enabled: true, Nodes: []*entity.LoggingPerformanceNode{{ID: "n1"}, {ID: "n2"}}}
 	cover := func(tasks []swarm.Task, statuses map[string]*loggingservice.PerformanceNodeStatus) (
-		appdto.AppPerformanceMetricsHeadResp, error) {
+		appmetricsdto.AppPerformanceMetricsHeadResp, error) {
 		uc := &UC{dockerManager: &coverageDocker{tasks: tasks}, loggingService: &coverageLogging{statuses: statuses}}
-		var head appdto.AppPerformanceMetricsHeadResp
+		var head appmetricsdto.AppPerformanceMetricsHeadResp
 		err := uc.performanceCoverage(context.Background(), &entity.App{ServiceID: "s"}, perf, &head)
 		return head, err
 	}
@@ -185,7 +185,7 @@ func TestPerformanceCoverage(t *testing.T) {
 	head, err := cover([]swarm.Task{task("n1", swarm.TaskStateRunning), task("n3", swarm.TaskStateRunning),
 		task("n2", swarm.TaskStateShutdown)}, map[string]*loggingservice.PerformanceNodeStatus{"n1": status(true)})
 	assert.NoError(t, err)
-	assert.Equal(t, appdto.AppPerformanceMetricsHeadResp{Nodes: 2, NodesCovered: 1}, head)
+	assert.Equal(t, appmetricsdto.AppPerformanceMetricsHeadResp{Nodes: 2, NodesCovered: 1}, head)
 
 	head, _ = cover([]swarm.Task{task("n3", swarm.TaskStateRunning)}, nil)
 	assert.Equal(t, performanceReasonNodeDisabled, head.Reason)
@@ -200,7 +200,7 @@ func TestPerformanceCoverage(t *testing.T) {
 	assert.Equal(t, 1, head.NodesCovered, "a node whose agent said nothing yet may run it")
 
 	head, _ = cover(nil, nil)
-	assert.Equal(t, appdto.AppPerformanceMetricsHeadResp{}, head, "running nowhere: its past is shown")
+	assert.Equal(t, appmetricsdto.AppPerformanceMetricsHeadResp{}, head, "running nowhere: its past is shown")
 }
 
 // perfApps loads one app, with the feature settings given.
@@ -247,7 +247,7 @@ func TestPerformanceViewWhileOffAsksNothingElse(t *testing.T) {
 	} {
 		uc := &UC{appService: &perfApps{features: c.features}, settingRepo: &perfSettings{logging: c.logging}}
 		view, err := uc.loadPerformanceView(context.Background(),
-			&appdto.GetAppPerformanceMetricsReq{ProjectID: "p1", AppID: "a1", Range: "1h"})
+			&appmetricsdto.GetAppPerformanceMetricsReq{ProjectID: "p1", AppID: "a1", Range: "1h"})
 		if assert.NoError(t, err, name) {
 			assert.Equal(t, c.reason, view.head.Reason, name)
 			assert.False(t, view.head.Available, name)

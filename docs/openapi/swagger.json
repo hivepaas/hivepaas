@@ -18026,7 +18026,7 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/appdto.GetAppDependencyMetricsResp"
+                  "$ref" : "#/components/schemas/appmetricsdto.GetAppDependencyMetricsResp"
                 }
               }
             },
@@ -19542,7 +19542,7 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/appdto.GetFunctionMetricsResp"
+                  "$ref" : "#/components/schemas/appmetricsdto.GetFunctionMetricsResp"
                 }
               }
             },
@@ -19701,7 +19701,7 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/appdto.GetAppHTTPMetricsResp"
+                  "$ref" : "#/components/schemas/appmetricsdto.GetAppHTTPMetricsResp"
                 }
               }
             },
@@ -21225,7 +21225,7 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/appdto.GetAppResourceMetricsResp"
+                  "$ref" : "#/components/schemas/appmetricsdto.GetAppResourceMetricsResp"
                 }
               }
             },
@@ -21514,7 +21514,7 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/appdto.GetAppRouteMetricsResp"
+                  "$ref" : "#/components/schemas/appmetricsdto.GetAppRouteMetricsResp"
                 }
               }
             },
@@ -49764,339 +49764,6 @@
         "required" : [ "env", "id", "key", "name", "photo", "status" ],
         "type" : "object"
       },
-      "appdto.AppDependencyAppResp" : {
-        "properties" : {
-          "id" : {
-            "type" : "string"
-          },
-          "key" : {
-            "type" : "string"
-          },
-          "name" : {
-            "type" : "string"
-          }
-        },
-        "required" : [ "id", "key", "name" ],
-        "type" : "object"
-      },
-      "appdto.AppDependencyKindResp" : {
-        "properties" : {
-          "kind" : {
-            "type" : "string"
-          },
-          "series" : {
-            "items" : {
-              "$ref" : "#/components/schemas/appdto.AppPerformancePointResp"
-            },
-            "type" : "array"
-          },
-          "totals" : {
-            "$ref" : "#/components/schemas/appdto.AppPerformanceCountsResp"
-          }
-        },
-        "required" : [ "kind", "series", "totals" ],
-        "type" : "object"
-      },
-      "appdto.AppDependencyMetricsDataResp" : {
-        "properties" : {
-          "available" : {
-            "type" : "boolean"
-          },
-          "clamped" : {
-            "description" : "Clamped says the range reaches past what the logs keep: it starts where\nthey do.",
-            "type" : "boolean"
-          },
-          "end" : {
-            "type" : "string"
-          },
-          "kinds" : {
-            "description" : "Kinds are the calls by kind - http, db or rpc - the busiest first.",
-            "items" : {
-              "$ref" : "#/components/schemas/appdto.AppDependencyKindResp"
-            },
-            "type" : "array"
-          },
-          "nodes" : {
-            "description" : "Nodes are the nodes the app runs on now, NodesCovered those of them\nthat run OBI: what is served or called on the others is not counted.",
-            "type" : "integer"
-          },
-          "nodesCovered" : {
-            "type" : "integer"
-          },
-          "peers" : {
-            "description" : "Peers are the busiest first.",
-            "items" : {
-              "$ref" : "#/components/schemas/appdto.AppDependencyPeerResp"
-            },
-            "type" : "array"
-          },
-          "preflightReasons" : {
-            "description" : "PreflightReasons say why the nodes the app runs on cannot run OBI, when\nthat is the reason: kernel-too-old, no-btf, container-virt, no-tracefs,\nlockdown, low-memory.",
-            "items" : {
-              "type" : "string"
-            },
-            "type" : "array"
-          },
-          "range" : {
-            "type" : "string"
-          },
-          "reason" : {
-            "type" : "string"
-          },
-          "start" : {
-            "description" : "Start and End bound the range: whole steps, End past now.",
-            "type" : "string"
-          },
-          "stepSeconds" : {
-            "type" : "integer"
-          }
-        },
-        "required" : [ "available", "clamped", "end", "kinds", "nodes", "nodesCovered", "peers", "preflightReasons", "range", "reason", "start", "stepSeconds" ],
-        "type" : "object"
-      },
-      "appdto.AppDependencyOperationResp" : {
-        "properties" : {
-          "errors" : {
-            "type" : "integer"
-          },
-          "method" : {
-            "type" : "string"
-          },
-          "operation" : {
-            "type" : "string"
-          },
-          "p50" : {
-            "type" : "number"
-          },
-          "p95" : {
-            "type" : "number"
-          },
-          "p99" : {
-            "type" : "number"
-          },
-          "requests" : {
-            "type" : "integer"
-          }
-        },
-        "required" : [ "errors", "method", "operation", "p50", "p95", "p99", "requests" ],
-        "type" : "object"
-      },
-      "appdto.AppDependencyPeerResp" : {
-        "properties" : {
-          "app" : {
-            "allOf" : [ {
-              "$ref" : "#/components/schemas/appdto.AppDependencyAppResp"
-            } ],
-            "description" : "App is the env's app behind the peer, when one is: by the name the app\ncalled, or a task's or service's address today; for a database, the\nonly one of its engine and database.",
-            "type" : "object"
-          },
-          "errors" : {
-            "type" : "integer"
-          },
-          "kind" : {
-            "type" : "string"
-          },
-          "operations" : {
-            "description" : "Operations are the calls by method - for HTTP and RPC - or operation -\nfor a database, as SELECT - the busiest first.",
-            "items" : {
-              "$ref" : "#/components/schemas/appdto.AppDependencyOperationResp"
-            },
-            "type" : "array"
-          },
-          "p50" : {
-            "type" : "number"
-          },
-          "p95" : {
-            "type" : "number"
-          },
-          "p99" : {
-            "type" : "number"
-          },
-          "peer" : {
-            "description" : "Peer is what the app called: a host and port for HTTP and RPC, as the\napp named it; for a database, its system and database, as\npostgresql/shop.",
-            "type" : "string"
-          },
-          "requests" : {
-            "type" : "integer"
-          }
-        },
-        "required" : [ "app", "errors", "kind", "operations", "p50", "p95", "p99", "peer", "requests" ],
-        "type" : "object"
-      },
-      "appdto.AppHTTPCountsResp" : {
-        "properties" : {
-          "errors4xx" : {
-            "type" : "integer"
-          },
-          "errors5xx" : {
-            "type" : "integer"
-          },
-          "p50" : {
-            "type" : "number"
-          },
-          "p95" : {
-            "type" : "number"
-          },
-          "p99" : {
-            "type" : "number"
-          },
-          "requests" : {
-            "type" : "integer"
-          },
-          "unreachable" : {
-            "type" : "integer"
-          }
-        },
-        "required" : [ "errors4xx", "errors5xx", "p50", "p95", "p99", "requests", "unreachable" ],
-        "type" : "object"
-      },
-      "appdto.AppHTTPMetricsDataResp" : {
-        "properties" : {
-          "available" : {
-            "type" : "boolean"
-          },
-          "byPath" : {
-            "items" : {
-              "$ref" : "#/components/schemas/appdto.AppHTTPPathResp"
-            },
-            "type" : "array"
-          },
-          "byReplica" : {
-            "items" : {
-              "$ref" : "#/components/schemas/appdto.AppHTTPReplicaResp"
-            },
-            "type" : "array"
-          },
-          "clamped" : {
-            "description" : "Clamped says the range reaches past what the logs keep: it starts where\nthey do.",
-            "type" : "boolean"
-          },
-          "end" : {
-            "type" : "string"
-          },
-          "range" : {
-            "type" : "string"
-          },
-          "reason" : {
-            "type" : "string"
-          },
-          "series" : {
-            "description" : "Series has one point per step, oldest first.",
-            "items" : {
-              "$ref" : "#/components/schemas/appdto.AppHTTPPointResp"
-            },
-            "type" : "array"
-          },
-          "start" : {
-            "description" : "Start and End bound the range: whole steps, End past now.",
-            "type" : "string"
-          },
-          "stepSeconds" : {
-            "type" : "integer"
-          },
-          "totals" : {
-            "$ref" : "#/components/schemas/appdto.AppHTTPCountsResp"
-          }
-        },
-        "required" : [ "available", "byPath", "byReplica", "clamped", "end", "range", "reason", "series", "start", "stepSeconds", "totals" ],
-        "type" : "object"
-      },
-      "appdto.AppHTTPPathResp" : {
-        "properties" : {
-          "errors4xx" : {
-            "type" : "integer"
-          },
-          "errors5xx" : {
-            "type" : "integer"
-          },
-          "method" : {
-            "type" : "string"
-          },
-          "p50" : {
-            "type" : "number"
-          },
-          "p95" : {
-            "type" : "number"
-          },
-          "p99" : {
-            "type" : "number"
-          },
-          "path" : {
-            "type" : "string"
-          },
-          "requests" : {
-            "type" : "integer"
-          },
-          "unreachable" : {
-            "type" : "integer"
-          }
-        },
-        "required" : [ "errors4xx", "errors5xx", "method", "p50", "p95", "p99", "path", "requests", "unreachable" ],
-        "type" : "object"
-      },
-      "appdto.AppHTTPPointResp" : {
-        "properties" : {
-          "errors4xx" : {
-            "type" : "integer"
-          },
-          "errors5xx" : {
-            "type" : "integer"
-          },
-          "p50" : {
-            "type" : "number"
-          },
-          "p95" : {
-            "type" : "number"
-          },
-          "p99" : {
-            "type" : "number"
-          },
-          "replicas" : {
-            "type" : "integer"
-          },
-          "requests" : {
-            "type" : "integer"
-          },
-          "time" : {
-            "type" : "string"
-          },
-          "unreachable" : {
-            "type" : "integer"
-          }
-        },
-        "required" : [ "errors4xx", "errors5xx", "p50", "p95", "p99", "replicas", "requests", "time", "unreachable" ],
-        "type" : "object"
-      },
-      "appdto.AppHTTPReplicaResp" : {
-        "properties" : {
-          "address" : {
-            "type" : "string"
-          },
-          "errors4xx" : {
-            "type" : "integer"
-          },
-          "errors5xx" : {
-            "type" : "integer"
-          },
-          "p50" : {
-            "type" : "number"
-          },
-          "p95" : {
-            "type" : "number"
-          },
-          "p99" : {
-            "type" : "number"
-          },
-          "requests" : {
-            "type" : "integer"
-          },
-          "unreachable" : {
-            "type" : "integer"
-          }
-        },
-        "required" : [ "address", "errors4xx", "errors5xx", "p50", "p95", "p99", "requests", "unreachable" ],
-        "type" : "object"
-      },
       "appdto.AppLogHistoryDataResp" : {
         "properties" : {
           "logs" : {
@@ -50165,192 +49832,6 @@
           }
         },
         "required" : [ "enabled", "history", "tasks" ],
-        "type" : "object"
-      },
-      "appdto.AppPerformanceCountsResp" : {
-        "properties" : {
-          "errors" : {
-            "type" : "integer"
-          },
-          "p50" : {
-            "type" : "number"
-          },
-          "p95" : {
-            "type" : "number"
-          },
-          "p99" : {
-            "type" : "number"
-          },
-          "requests" : {
-            "type" : "integer"
-          }
-        },
-        "required" : [ "errors", "p50", "p95", "p99", "requests" ],
-        "type" : "object"
-      },
-      "appdto.AppPerformancePointResp" : {
-        "properties" : {
-          "errors" : {
-            "type" : "integer"
-          },
-          "p50" : {
-            "type" : "number"
-          },
-          "p95" : {
-            "type" : "number"
-          },
-          "p99" : {
-            "type" : "number"
-          },
-          "replicas" : {
-            "type" : "integer"
-          },
-          "requests" : {
-            "type" : "integer"
-          },
-          "time" : {
-            "type" : "string"
-          }
-        },
-        "required" : [ "errors", "p50", "p95", "p99", "replicas", "requests", "time" ],
-        "type" : "object"
-      },
-      "appdto.AppResourceContainerResp" : {
-        "properties" : {
-          "container" : {
-            "type" : "string"
-          },
-          "cpu" : {
-            "type" : "number"
-          },
-          "cpuPeak" : {
-            "type" : "number"
-          },
-          "lastSeen" : {
-            "type" : "string"
-          },
-          "memory" : {
-            "type" : "number"
-          },
-          "memoryLimit" : {
-            "type" : "number"
-          },
-          "oomKills" : {
-            "type" : "integer"
-          }
-        },
-        "required" : [ "container", "cpu", "cpuPeak", "lastSeen", "memory", "memoryLimit", "oomKills" ],
-        "type" : "object"
-      },
-      "appdto.AppResourceMetricsDataResp" : {
-        "properties" : {
-          "available" : {
-            "type" : "boolean"
-          },
-          "clamped" : {
-            "type" : "boolean"
-          },
-          "containers" : {
-            "description" : "Containers are the app's containers over the range, the last seen first.",
-            "items" : {
-              "$ref" : "#/components/schemas/appdto.AppResourceContainerResp"
-            },
-            "type" : "array"
-          },
-          "end" : {
-            "type" : "string"
-          },
-          "range" : {
-            "type" : "string"
-          },
-          "reason" : {
-            "type" : "string"
-          },
-          "series" : {
-            "description" : "Series has one point per step, oldest first: the containers summed.",
-            "items" : {
-              "$ref" : "#/components/schemas/appdto.AppResourcePointResp"
-            },
-            "type" : "array"
-          },
-          "start" : {
-            "type" : "string"
-          },
-          "stepSeconds" : {
-            "type" : "integer"
-          },
-          "totals" : {
-            "allOf" : [ {
-              "$ref" : "#/components/schemas/appdto.AppResourceTotalsResp"
-            } ],
-            "description" : "Totals are over the range: CPU's average and peak, memory's peak, the\nlimits last seen, the OOM kills.",
-            "type" : "object"
-          }
-        },
-        "required" : [ "available", "clamped", "containers", "end", "range", "reason", "series", "start", "stepSeconds", "totals" ],
-        "type" : "object"
-      },
-      "appdto.AppResourcePointResp" : {
-        "properties" : {
-          "cpu" : {
-            "type" : "number"
-          },
-          "cpuLimit" : {
-            "type" : "number"
-          },
-          "ioRead" : {
-            "type" : "number"
-          },
-          "ioWrite" : {
-            "type" : "number"
-          },
-          "memory" : {
-            "type" : "number"
-          },
-          "memoryLimit" : {
-            "type" : "number"
-          },
-          "netRx" : {
-            "type" : "number"
-          },
-          "netTx" : {
-            "type" : "number"
-          },
-          "oomKills" : {
-            "type" : "integer"
-          },
-          "replicas" : {
-            "type" : "integer"
-          },
-          "time" : {
-            "type" : "string"
-          }
-        },
-        "required" : [ "cpu", "cpuLimit", "ioRead", "ioWrite", "memory", "memoryLimit", "netRx", "netTx", "oomKills", "replicas", "time" ],
-        "type" : "object"
-      },
-      "appdto.AppResourceTotalsResp" : {
-        "properties" : {
-          "cpu" : {
-            "type" : "number"
-          },
-          "cpuLimit" : {
-            "type" : "number"
-          },
-          "cpuPeak" : {
-            "type" : "number"
-          },
-          "memoryLimit" : {
-            "type" : "number"
-          },
-          "memoryPeak" : {
-            "type" : "number"
-          },
-          "oomKills" : {
-            "type" : "integer"
-          }
-        },
-        "required" : [ "cpu", "cpuLimit", "cpuPeak", "memoryLimit", "memoryPeak", "oomKills" ],
         "type" : "object"
       },
       "appdto.AppResp" : {
@@ -50441,96 +49922,6 @@
           }
         },
         "required" : [ "accessLinks", "category", "childApps", "createdAt", "engine", "env", "id", "key", "logicalChildApps", "name", "note", "parentApp", "photo", "project", "stats", "status", "tags", "updateVer", "updatedAt" ],
-        "type" : "object"
-      },
-      "appdto.AppRouteMetricsDataResp" : {
-        "properties" : {
-          "available" : {
-            "type" : "boolean"
-          },
-          "clamped" : {
-            "description" : "Clamped says the range reaches past what the logs keep: it starts where\nthey do.",
-            "type" : "boolean"
-          },
-          "end" : {
-            "type" : "string"
-          },
-          "nodes" : {
-            "description" : "Nodes are the nodes the app runs on now, NodesCovered those of them\nthat run OBI: what is served or called on the others is not counted.",
-            "type" : "integer"
-          },
-          "nodesCovered" : {
-            "type" : "integer"
-          },
-          "preflightReasons" : {
-            "description" : "PreflightReasons say why the nodes the app runs on cannot run OBI, when\nthat is the reason: kernel-too-old, no-btf, container-virt, no-tracefs,\nlockdown, low-memory.",
-            "items" : {
-              "type" : "string"
-            },
-            "type" : "array"
-          },
-          "range" : {
-            "type" : "string"
-          },
-          "reason" : {
-            "type" : "string"
-          },
-          "routes" : {
-            "description" : "Routes are the busiest first.",
-            "items" : {
-              "$ref" : "#/components/schemas/appdto.AppRouteResp"
-            },
-            "type" : "array"
-          },
-          "series" : {
-            "description" : "Series has one point per step, oldest first.",
-            "items" : {
-              "$ref" : "#/components/schemas/appdto.AppPerformancePointResp"
-            },
-            "type" : "array"
-          },
-          "start" : {
-            "description" : "Start and End bound the range: whole steps, End past now.",
-            "type" : "string"
-          },
-          "stepSeconds" : {
-            "type" : "integer"
-          },
-          "totals" : {
-            "$ref" : "#/components/schemas/appdto.AppPerformanceCountsResp"
-          }
-        },
-        "required" : [ "available", "clamped", "end", "nodes", "nodesCovered", "preflightReasons", "range", "reason", "routes", "series", "start", "stepSeconds", "totals" ],
-        "type" : "object"
-      },
-      "appdto.AppRouteResp" : {
-        "properties" : {
-          "errors" : {
-            "type" : "integer"
-          },
-          "kind" : {
-            "type" : "string"
-          },
-          "method" : {
-            "type" : "string"
-          },
-          "p50" : {
-            "type" : "number"
-          },
-          "p95" : {
-            "type" : "number"
-          },
-          "p99" : {
-            "type" : "number"
-          },
-          "requests" : {
-            "type" : "integer"
-          },
-          "route" : {
-            "type" : "string"
-          }
-        },
-        "required" : [ "errors", "kind", "method", "p50", "p95", "p99", "requests", "route" ],
         "type" : "object"
       },
       "appdto.AppStatsResp" : {
@@ -50676,175 +50067,6 @@
         "required" : [ "data", "meta" ],
         "type" : "object"
       },
-      "appdto.FunctionMetricsCountsResp" : {
-        "properties" : {
-          "calls" : {
-            "type" : "integer"
-          },
-          "errors4xx" : {
-            "type" : "integer"
-          },
-          "errors5xx" : {
-            "type" : "integer"
-          },
-          "failed" : {
-            "type" : "integer"
-          },
-          "p50" : {
-            "type" : "number"
-          },
-          "p95" : {
-            "type" : "number"
-          },
-          "p99" : {
-            "type" : "number"
-          }
-        },
-        "required" : [ "calls", "errors4xx", "errors5xx", "failed", "p50", "p95", "p99" ],
-        "type" : "object"
-      },
-      "appdto.FunctionMetricsDataResp" : {
-        "properties" : {
-          "available" : {
-            "type" : "boolean"
-          },
-          "byOutcome" : {
-            "additionalProperties" : {
-              "type" : "integer"
-            },
-            "type" : "object"
-          },
-          "byPath" : {
-            "description" : "ByPath is the most called methods and paths, the most called first.",
-            "items" : {
-              "$ref" : "#/components/schemas/appdto.FunctionMetricsPathResp"
-            },
-            "type" : "array"
-          },
-          "clamped" : {
-            "description" : "Clamped says the range reaches past what the logs keep: it starts where\nthey do.",
-            "type" : "boolean"
-          },
-          "end" : {
-            "type" : "string"
-          },
-          "range" : {
-            "type" : "string"
-          },
-          "reason" : {
-            "type" : "string"
-          },
-          "series" : {
-            "description" : "Series has one point per step, oldest first.",
-            "items" : {
-              "$ref" : "#/components/schemas/appdto.FunctionMetricsPointResp"
-            },
-            "type" : "array"
-          },
-          "start" : {
-            "description" : "Start and End bound the range: whole steps, End past now.",
-            "type" : "string"
-          },
-          "stepSeconds" : {
-            "type" : "integer"
-          },
-          "totals" : {
-            "$ref" : "#/components/schemas/appdto.FunctionMetricsCountsResp"
-          }
-        },
-        "required" : [ "available", "byOutcome", "byPath", "clamped", "end", "range", "reason", "series", "start", "stepSeconds", "totals" ],
-        "type" : "object"
-      },
-      "appdto.FunctionMetricsPathResp" : {
-        "properties" : {
-          "calls" : {
-            "type" : "integer"
-          },
-          "errors4xx" : {
-            "type" : "integer"
-          },
-          "errors5xx" : {
-            "type" : "integer"
-          },
-          "failed" : {
-            "type" : "integer"
-          },
-          "method" : {
-            "type" : "string"
-          },
-          "p50" : {
-            "type" : "number"
-          },
-          "p95" : {
-            "type" : "number"
-          },
-          "p99" : {
-            "type" : "number"
-          },
-          "path" : {
-            "type" : "string"
-          }
-        },
-        "required" : [ "calls", "errors4xx", "errors5xx", "failed", "method", "p50", "p95", "p99", "path" ],
-        "type" : "object"
-      },
-      "appdto.FunctionMetricsPointResp" : {
-        "properties" : {
-          "calls" : {
-            "type" : "integer"
-          },
-          "errors4xx" : {
-            "type" : "integer"
-          },
-          "errors5xx" : {
-            "type" : "integer"
-          },
-          "failed" : {
-            "type" : "integer"
-          },
-          "p50" : {
-            "type" : "number"
-          },
-          "p95" : {
-            "type" : "number"
-          },
-          "p99" : {
-            "type" : "number"
-          },
-          "replicas" : {
-            "type" : "integer"
-          },
-          "time" : {
-            "type" : "string"
-          }
-        },
-        "required" : [ "calls", "errors4xx", "errors5xx", "failed", "p50", "p95", "p99", "replicas", "time" ],
-        "type" : "object"
-      },
-      "appdto.GetAppDependencyMetricsResp" : {
-        "properties" : {
-          "data" : {
-            "$ref" : "#/components/schemas/appdto.AppDependencyMetricsDataResp"
-          },
-          "meta" : {
-            "$ref" : "#/components/schemas/basedto.Meta"
-          }
-        },
-        "required" : [ "data", "meta" ],
-        "type" : "object"
-      },
-      "appdto.GetAppHTTPMetricsResp" : {
-        "properties" : {
-          "data" : {
-            "$ref" : "#/components/schemas/appdto.AppHTTPMetricsDataResp"
-          },
-          "meta" : {
-            "$ref" : "#/components/schemas/basedto.Meta"
-          }
-        },
-        "required" : [ "data", "meta" ],
-        "type" : "object"
-      },
       "appdto.GetAppLogHistoryResp" : {
         "properties" : {
           "data" : {
@@ -50881,46 +50103,10 @@
         "required" : [ "data", "meta" ],
         "type" : "object"
       },
-      "appdto.GetAppResourceMetricsResp" : {
-        "properties" : {
-          "data" : {
-            "$ref" : "#/components/schemas/appdto.AppResourceMetricsDataResp"
-          },
-          "meta" : {
-            "$ref" : "#/components/schemas/basedto.Meta"
-          }
-        },
-        "required" : [ "data", "meta" ],
-        "type" : "object"
-      },
       "appdto.GetAppResp" : {
         "properties" : {
           "data" : {
             "$ref" : "#/components/schemas/appdto.AppResp"
-          },
-          "meta" : {
-            "$ref" : "#/components/schemas/basedto.Meta"
-          }
-        },
-        "required" : [ "data", "meta" ],
-        "type" : "object"
-      },
-      "appdto.GetAppRouteMetricsResp" : {
-        "properties" : {
-          "data" : {
-            "$ref" : "#/components/schemas/appdto.AppRouteMetricsDataResp"
-          },
-          "meta" : {
-            "$ref" : "#/components/schemas/basedto.Meta"
-          }
-        },
-        "required" : [ "data", "meta" ],
-        "type" : "object"
-      },
-      "appdto.GetFunctionMetricsResp" : {
-        "properties" : {
-          "data" : {
-            "$ref" : "#/components/schemas/appdto.FunctionMetricsDataResp"
           },
           "meta" : {
             "$ref" : "#/components/schemas/basedto.Meta"
@@ -51448,6 +50634,820 @@
           }
         },
         "required" : [ "meta" ],
+        "type" : "object"
+      },
+      "appmetricsdto.AppDependencyAppResp" : {
+        "properties" : {
+          "id" : {
+            "type" : "string"
+          },
+          "key" : {
+            "type" : "string"
+          },
+          "name" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "id", "key", "name" ],
+        "type" : "object"
+      },
+      "appmetricsdto.AppDependencyKindResp" : {
+        "properties" : {
+          "kind" : {
+            "type" : "string"
+          },
+          "series" : {
+            "items" : {
+              "$ref" : "#/components/schemas/appmetricsdto.AppPerformancePointResp"
+            },
+            "type" : "array"
+          },
+          "totals" : {
+            "$ref" : "#/components/schemas/appmetricsdto.AppPerformanceCountsResp"
+          }
+        },
+        "required" : [ "kind", "series", "totals" ],
+        "type" : "object"
+      },
+      "appmetricsdto.AppDependencyMetricsDataResp" : {
+        "properties" : {
+          "available" : {
+            "type" : "boolean"
+          },
+          "clamped" : {
+            "description" : "Clamped says the range reaches past what the logs keep: it starts where\nthey do.",
+            "type" : "boolean"
+          },
+          "end" : {
+            "type" : "string"
+          },
+          "kinds" : {
+            "description" : "Kinds are the calls by kind - http, db or rpc - the busiest first.",
+            "items" : {
+              "$ref" : "#/components/schemas/appmetricsdto.AppDependencyKindResp"
+            },
+            "type" : "array"
+          },
+          "nodes" : {
+            "description" : "Nodes are the nodes the app runs on now, NodesCovered those of them\nthat run OBI: what is served or called on the others is not counted.",
+            "type" : "integer"
+          },
+          "nodesCovered" : {
+            "type" : "integer"
+          },
+          "peers" : {
+            "description" : "Peers are the busiest first.",
+            "items" : {
+              "$ref" : "#/components/schemas/appmetricsdto.AppDependencyPeerResp"
+            },
+            "type" : "array"
+          },
+          "preflightReasons" : {
+            "description" : "PreflightReasons say why the nodes the app runs on cannot run OBI, when\nthat is the reason: kernel-too-old, no-btf, container-virt, no-tracefs,\nlockdown, low-memory.",
+            "items" : {
+              "type" : "string"
+            },
+            "type" : "array"
+          },
+          "range" : {
+            "type" : "string"
+          },
+          "reason" : {
+            "type" : "string"
+          },
+          "start" : {
+            "description" : "Start and End bound the range: whole steps, End past now.",
+            "type" : "string"
+          },
+          "stepSeconds" : {
+            "type" : "integer"
+          }
+        },
+        "required" : [ "available", "clamped", "end", "kinds", "nodes", "nodesCovered", "peers", "preflightReasons", "range", "reason", "start", "stepSeconds" ],
+        "type" : "object"
+      },
+      "appmetricsdto.AppDependencyOperationResp" : {
+        "properties" : {
+          "errors" : {
+            "type" : "integer"
+          },
+          "method" : {
+            "type" : "string"
+          },
+          "operation" : {
+            "type" : "string"
+          },
+          "p50" : {
+            "type" : "number"
+          },
+          "p95" : {
+            "type" : "number"
+          },
+          "p99" : {
+            "type" : "number"
+          },
+          "requests" : {
+            "type" : "integer"
+          }
+        },
+        "required" : [ "errors", "method", "operation", "p50", "p95", "p99", "requests" ],
+        "type" : "object"
+      },
+      "appmetricsdto.AppDependencyPeerResp" : {
+        "properties" : {
+          "app" : {
+            "allOf" : [ {
+              "$ref" : "#/components/schemas/appmetricsdto.AppDependencyAppResp"
+            } ],
+            "description" : "App is the env's app behind the peer, when one is: by the name the app\ncalled, or a task's or service's address today; for a database, the\nonly one of its engine and database.",
+            "type" : "object"
+          },
+          "errors" : {
+            "type" : "integer"
+          },
+          "kind" : {
+            "type" : "string"
+          },
+          "operations" : {
+            "description" : "Operations are the calls by method - for HTTP and RPC - or operation -\nfor a database, as SELECT - the busiest first.",
+            "items" : {
+              "$ref" : "#/components/schemas/appmetricsdto.AppDependencyOperationResp"
+            },
+            "type" : "array"
+          },
+          "p50" : {
+            "type" : "number"
+          },
+          "p95" : {
+            "type" : "number"
+          },
+          "p99" : {
+            "type" : "number"
+          },
+          "peer" : {
+            "description" : "Peer is what the app called: a host and port for HTTP and RPC, as the\napp named it; for a database, its system and database, as\npostgresql/shop.",
+            "type" : "string"
+          },
+          "requests" : {
+            "type" : "integer"
+          }
+        },
+        "required" : [ "app", "errors", "kind", "operations", "p50", "p95", "p99", "peer", "requests" ],
+        "type" : "object"
+      },
+      "appmetricsdto.AppHTTPCountsResp" : {
+        "properties" : {
+          "errors4xx" : {
+            "type" : "integer"
+          },
+          "errors5xx" : {
+            "type" : "integer"
+          },
+          "p50" : {
+            "type" : "number"
+          },
+          "p95" : {
+            "type" : "number"
+          },
+          "p99" : {
+            "type" : "number"
+          },
+          "requests" : {
+            "type" : "integer"
+          },
+          "unreachable" : {
+            "type" : "integer"
+          }
+        },
+        "required" : [ "errors4xx", "errors5xx", "p50", "p95", "p99", "requests", "unreachable" ],
+        "type" : "object"
+      },
+      "appmetricsdto.AppHTTPMetricsDataResp" : {
+        "properties" : {
+          "available" : {
+            "type" : "boolean"
+          },
+          "byPath" : {
+            "items" : {
+              "$ref" : "#/components/schemas/appmetricsdto.AppHTTPPathResp"
+            },
+            "type" : "array"
+          },
+          "byReplica" : {
+            "items" : {
+              "$ref" : "#/components/schemas/appmetricsdto.AppHTTPReplicaResp"
+            },
+            "type" : "array"
+          },
+          "clamped" : {
+            "description" : "Clamped says the range reaches past what the logs keep: it starts where\nthey do.",
+            "type" : "boolean"
+          },
+          "end" : {
+            "type" : "string"
+          },
+          "range" : {
+            "type" : "string"
+          },
+          "reason" : {
+            "type" : "string"
+          },
+          "series" : {
+            "description" : "Series has one point per step, oldest first.",
+            "items" : {
+              "$ref" : "#/components/schemas/appmetricsdto.AppHTTPPointResp"
+            },
+            "type" : "array"
+          },
+          "start" : {
+            "description" : "Start and End bound the range: whole steps, End past now.",
+            "type" : "string"
+          },
+          "stepSeconds" : {
+            "type" : "integer"
+          },
+          "totals" : {
+            "$ref" : "#/components/schemas/appmetricsdto.AppHTTPCountsResp"
+          }
+        },
+        "required" : [ "available", "byPath", "byReplica", "clamped", "end", "range", "reason", "series", "start", "stepSeconds", "totals" ],
+        "type" : "object"
+      },
+      "appmetricsdto.AppHTTPPathResp" : {
+        "properties" : {
+          "errors4xx" : {
+            "type" : "integer"
+          },
+          "errors5xx" : {
+            "type" : "integer"
+          },
+          "method" : {
+            "type" : "string"
+          },
+          "p50" : {
+            "type" : "number"
+          },
+          "p95" : {
+            "type" : "number"
+          },
+          "p99" : {
+            "type" : "number"
+          },
+          "path" : {
+            "type" : "string"
+          },
+          "requests" : {
+            "type" : "integer"
+          },
+          "unreachable" : {
+            "type" : "integer"
+          }
+        },
+        "required" : [ "errors4xx", "errors5xx", "method", "p50", "p95", "p99", "path", "requests", "unreachable" ],
+        "type" : "object"
+      },
+      "appmetricsdto.AppHTTPPointResp" : {
+        "properties" : {
+          "errors4xx" : {
+            "type" : "integer"
+          },
+          "errors5xx" : {
+            "type" : "integer"
+          },
+          "p50" : {
+            "type" : "number"
+          },
+          "p95" : {
+            "type" : "number"
+          },
+          "p99" : {
+            "type" : "number"
+          },
+          "replicas" : {
+            "type" : "integer"
+          },
+          "requests" : {
+            "type" : "integer"
+          },
+          "time" : {
+            "type" : "string"
+          },
+          "unreachable" : {
+            "type" : "integer"
+          }
+        },
+        "required" : [ "errors4xx", "errors5xx", "p50", "p95", "p99", "replicas", "requests", "time", "unreachable" ],
+        "type" : "object"
+      },
+      "appmetricsdto.AppHTTPReplicaResp" : {
+        "properties" : {
+          "address" : {
+            "type" : "string"
+          },
+          "errors4xx" : {
+            "type" : "integer"
+          },
+          "errors5xx" : {
+            "type" : "integer"
+          },
+          "p50" : {
+            "type" : "number"
+          },
+          "p95" : {
+            "type" : "number"
+          },
+          "p99" : {
+            "type" : "number"
+          },
+          "requests" : {
+            "type" : "integer"
+          },
+          "unreachable" : {
+            "type" : "integer"
+          }
+        },
+        "required" : [ "address", "errors4xx", "errors5xx", "p50", "p95", "p99", "requests", "unreachable" ],
+        "type" : "object"
+      },
+      "appmetricsdto.AppPerformanceCountsResp" : {
+        "properties" : {
+          "errors" : {
+            "type" : "integer"
+          },
+          "p50" : {
+            "type" : "number"
+          },
+          "p95" : {
+            "type" : "number"
+          },
+          "p99" : {
+            "type" : "number"
+          },
+          "requests" : {
+            "type" : "integer"
+          }
+        },
+        "required" : [ "errors", "p50", "p95", "p99", "requests" ],
+        "type" : "object"
+      },
+      "appmetricsdto.AppPerformancePointResp" : {
+        "properties" : {
+          "errors" : {
+            "type" : "integer"
+          },
+          "p50" : {
+            "type" : "number"
+          },
+          "p95" : {
+            "type" : "number"
+          },
+          "p99" : {
+            "type" : "number"
+          },
+          "replicas" : {
+            "type" : "integer"
+          },
+          "requests" : {
+            "type" : "integer"
+          },
+          "time" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "errors", "p50", "p95", "p99", "replicas", "requests", "time" ],
+        "type" : "object"
+      },
+      "appmetricsdto.AppResourceContainerResp" : {
+        "properties" : {
+          "container" : {
+            "type" : "string"
+          },
+          "cpu" : {
+            "type" : "number"
+          },
+          "cpuPeak" : {
+            "type" : "number"
+          },
+          "lastSeen" : {
+            "type" : "string"
+          },
+          "memory" : {
+            "type" : "number"
+          },
+          "memoryLimit" : {
+            "type" : "number"
+          },
+          "oomKills" : {
+            "type" : "integer"
+          }
+        },
+        "required" : [ "container", "cpu", "cpuPeak", "lastSeen", "memory", "memoryLimit", "oomKills" ],
+        "type" : "object"
+      },
+      "appmetricsdto.AppResourceMetricsDataResp" : {
+        "properties" : {
+          "available" : {
+            "type" : "boolean"
+          },
+          "clamped" : {
+            "type" : "boolean"
+          },
+          "containers" : {
+            "description" : "Containers are the app's containers over the range, the last seen first.",
+            "items" : {
+              "$ref" : "#/components/schemas/appmetricsdto.AppResourceContainerResp"
+            },
+            "type" : "array"
+          },
+          "end" : {
+            "type" : "string"
+          },
+          "range" : {
+            "type" : "string"
+          },
+          "reason" : {
+            "type" : "string"
+          },
+          "series" : {
+            "description" : "Series has one point per step, oldest first: the containers summed.",
+            "items" : {
+              "$ref" : "#/components/schemas/appmetricsdto.AppResourcePointResp"
+            },
+            "type" : "array"
+          },
+          "start" : {
+            "type" : "string"
+          },
+          "stepSeconds" : {
+            "type" : "integer"
+          },
+          "totals" : {
+            "allOf" : [ {
+              "$ref" : "#/components/schemas/appmetricsdto.AppResourceTotalsResp"
+            } ],
+            "description" : "Totals are over the range: CPU's average and peak, memory's peak, the\nlimits last seen, the OOM kills.",
+            "type" : "object"
+          }
+        },
+        "required" : [ "available", "clamped", "containers", "end", "range", "reason", "series", "start", "stepSeconds", "totals" ],
+        "type" : "object"
+      },
+      "appmetricsdto.AppResourcePointResp" : {
+        "properties" : {
+          "cpu" : {
+            "type" : "number"
+          },
+          "cpuLimit" : {
+            "type" : "number"
+          },
+          "ioRead" : {
+            "type" : "number"
+          },
+          "ioWrite" : {
+            "type" : "number"
+          },
+          "memory" : {
+            "type" : "number"
+          },
+          "memoryLimit" : {
+            "type" : "number"
+          },
+          "netRx" : {
+            "type" : "number"
+          },
+          "netTx" : {
+            "type" : "number"
+          },
+          "oomKills" : {
+            "type" : "integer"
+          },
+          "replicas" : {
+            "type" : "integer"
+          },
+          "time" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "cpu", "cpuLimit", "ioRead", "ioWrite", "memory", "memoryLimit", "netRx", "netTx", "oomKills", "replicas", "time" ],
+        "type" : "object"
+      },
+      "appmetricsdto.AppResourceTotalsResp" : {
+        "properties" : {
+          "cpu" : {
+            "type" : "number"
+          },
+          "cpuLimit" : {
+            "type" : "number"
+          },
+          "cpuPeak" : {
+            "type" : "number"
+          },
+          "memoryLimit" : {
+            "type" : "number"
+          },
+          "memoryPeak" : {
+            "type" : "number"
+          },
+          "oomKills" : {
+            "type" : "integer"
+          }
+        },
+        "required" : [ "cpu", "cpuLimit", "cpuPeak", "memoryLimit", "memoryPeak", "oomKills" ],
+        "type" : "object"
+      },
+      "appmetricsdto.AppRouteMetricsDataResp" : {
+        "properties" : {
+          "available" : {
+            "type" : "boolean"
+          },
+          "clamped" : {
+            "description" : "Clamped says the range reaches past what the logs keep: it starts where\nthey do.",
+            "type" : "boolean"
+          },
+          "end" : {
+            "type" : "string"
+          },
+          "nodes" : {
+            "description" : "Nodes are the nodes the app runs on now, NodesCovered those of them\nthat run OBI: what is served or called on the others is not counted.",
+            "type" : "integer"
+          },
+          "nodesCovered" : {
+            "type" : "integer"
+          },
+          "preflightReasons" : {
+            "description" : "PreflightReasons say why the nodes the app runs on cannot run OBI, when\nthat is the reason: kernel-too-old, no-btf, container-virt, no-tracefs,\nlockdown, low-memory.",
+            "items" : {
+              "type" : "string"
+            },
+            "type" : "array"
+          },
+          "range" : {
+            "type" : "string"
+          },
+          "reason" : {
+            "type" : "string"
+          },
+          "routes" : {
+            "description" : "Routes are the busiest first.",
+            "items" : {
+              "$ref" : "#/components/schemas/appmetricsdto.AppRouteResp"
+            },
+            "type" : "array"
+          },
+          "series" : {
+            "description" : "Series has one point per step, oldest first.",
+            "items" : {
+              "$ref" : "#/components/schemas/appmetricsdto.AppPerformancePointResp"
+            },
+            "type" : "array"
+          },
+          "start" : {
+            "description" : "Start and End bound the range: whole steps, End past now.",
+            "type" : "string"
+          },
+          "stepSeconds" : {
+            "type" : "integer"
+          },
+          "totals" : {
+            "$ref" : "#/components/schemas/appmetricsdto.AppPerformanceCountsResp"
+          }
+        },
+        "required" : [ "available", "clamped", "end", "nodes", "nodesCovered", "preflightReasons", "range", "reason", "routes", "series", "start", "stepSeconds", "totals" ],
+        "type" : "object"
+      },
+      "appmetricsdto.AppRouteResp" : {
+        "properties" : {
+          "errors" : {
+            "type" : "integer"
+          },
+          "kind" : {
+            "type" : "string"
+          },
+          "method" : {
+            "type" : "string"
+          },
+          "p50" : {
+            "type" : "number"
+          },
+          "p95" : {
+            "type" : "number"
+          },
+          "p99" : {
+            "type" : "number"
+          },
+          "requests" : {
+            "type" : "integer"
+          },
+          "route" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "errors", "kind", "method", "p50", "p95", "p99", "requests", "route" ],
+        "type" : "object"
+      },
+      "appmetricsdto.FunctionMetricsCountsResp" : {
+        "properties" : {
+          "calls" : {
+            "type" : "integer"
+          },
+          "errors4xx" : {
+            "type" : "integer"
+          },
+          "errors5xx" : {
+            "type" : "integer"
+          },
+          "failed" : {
+            "type" : "integer"
+          },
+          "p50" : {
+            "type" : "number"
+          },
+          "p95" : {
+            "type" : "number"
+          },
+          "p99" : {
+            "type" : "number"
+          }
+        },
+        "required" : [ "calls", "errors4xx", "errors5xx", "failed", "p50", "p95", "p99" ],
+        "type" : "object"
+      },
+      "appmetricsdto.FunctionMetricsDataResp" : {
+        "properties" : {
+          "available" : {
+            "type" : "boolean"
+          },
+          "byOutcome" : {
+            "additionalProperties" : {
+              "type" : "integer"
+            },
+            "type" : "object"
+          },
+          "byPath" : {
+            "description" : "ByPath is the most called methods and paths, the most called first.",
+            "items" : {
+              "$ref" : "#/components/schemas/appmetricsdto.FunctionMetricsPathResp"
+            },
+            "type" : "array"
+          },
+          "clamped" : {
+            "description" : "Clamped says the range reaches past what the logs keep: it starts where\nthey do.",
+            "type" : "boolean"
+          },
+          "end" : {
+            "type" : "string"
+          },
+          "range" : {
+            "type" : "string"
+          },
+          "reason" : {
+            "type" : "string"
+          },
+          "series" : {
+            "description" : "Series has one point per step, oldest first.",
+            "items" : {
+              "$ref" : "#/components/schemas/appmetricsdto.FunctionMetricsPointResp"
+            },
+            "type" : "array"
+          },
+          "start" : {
+            "description" : "Start and End bound the range: whole steps, End past now.",
+            "type" : "string"
+          },
+          "stepSeconds" : {
+            "type" : "integer"
+          },
+          "totals" : {
+            "$ref" : "#/components/schemas/appmetricsdto.FunctionMetricsCountsResp"
+          }
+        },
+        "required" : [ "available", "byOutcome", "byPath", "clamped", "end", "range", "reason", "series", "start", "stepSeconds", "totals" ],
+        "type" : "object"
+      },
+      "appmetricsdto.FunctionMetricsPathResp" : {
+        "properties" : {
+          "calls" : {
+            "type" : "integer"
+          },
+          "errors4xx" : {
+            "type" : "integer"
+          },
+          "errors5xx" : {
+            "type" : "integer"
+          },
+          "failed" : {
+            "type" : "integer"
+          },
+          "method" : {
+            "type" : "string"
+          },
+          "p50" : {
+            "type" : "number"
+          },
+          "p95" : {
+            "type" : "number"
+          },
+          "p99" : {
+            "type" : "number"
+          },
+          "path" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "calls", "errors4xx", "errors5xx", "failed", "method", "p50", "p95", "p99", "path" ],
+        "type" : "object"
+      },
+      "appmetricsdto.FunctionMetricsPointResp" : {
+        "properties" : {
+          "calls" : {
+            "type" : "integer"
+          },
+          "errors4xx" : {
+            "type" : "integer"
+          },
+          "errors5xx" : {
+            "type" : "integer"
+          },
+          "failed" : {
+            "type" : "integer"
+          },
+          "p50" : {
+            "type" : "number"
+          },
+          "p95" : {
+            "type" : "number"
+          },
+          "p99" : {
+            "type" : "number"
+          },
+          "replicas" : {
+            "type" : "integer"
+          },
+          "time" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "calls", "errors4xx", "errors5xx", "failed", "p50", "p95", "p99", "replicas", "time" ],
+        "type" : "object"
+      },
+      "appmetricsdto.GetAppDependencyMetricsResp" : {
+        "properties" : {
+          "data" : {
+            "$ref" : "#/components/schemas/appmetricsdto.AppDependencyMetricsDataResp"
+          },
+          "meta" : {
+            "$ref" : "#/components/schemas/basedto.Meta"
+          }
+        },
+        "required" : [ "data", "meta" ],
+        "type" : "object"
+      },
+      "appmetricsdto.GetAppHTTPMetricsResp" : {
+        "properties" : {
+          "data" : {
+            "$ref" : "#/components/schemas/appmetricsdto.AppHTTPMetricsDataResp"
+          },
+          "meta" : {
+            "$ref" : "#/components/schemas/basedto.Meta"
+          }
+        },
+        "required" : [ "data", "meta" ],
+        "type" : "object"
+      },
+      "appmetricsdto.GetAppResourceMetricsResp" : {
+        "properties" : {
+          "data" : {
+            "$ref" : "#/components/schemas/appmetricsdto.AppResourceMetricsDataResp"
+          },
+          "meta" : {
+            "$ref" : "#/components/schemas/basedto.Meta"
+          }
+        },
+        "required" : [ "data", "meta" ],
+        "type" : "object"
+      },
+      "appmetricsdto.GetAppRouteMetricsResp" : {
+        "properties" : {
+          "data" : {
+            "$ref" : "#/components/schemas/appmetricsdto.AppRouteMetricsDataResp"
+          },
+          "meta" : {
+            "$ref" : "#/components/schemas/basedto.Meta"
+          }
+        },
+        "required" : [ "data", "meta" ],
+        "type" : "object"
+      },
+      "appmetricsdto.GetFunctionMetricsResp" : {
+        "properties" : {
+          "data" : {
+            "$ref" : "#/components/schemas/appmetricsdto.FunctionMetricsDataResp"
+          },
+          "meta" : {
+            "$ref" : "#/components/schemas/basedto.Meta"
+          }
+        },
+        "required" : [ "data", "meta" ],
         "type" : "object"
       },
       "appplacementsettingsdto.AppPlacementSettingsResp" : {

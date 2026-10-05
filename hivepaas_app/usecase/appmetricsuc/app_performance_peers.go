@@ -1,4 +1,4 @@
-package appuc
+package appmetricsuc
 
 import (
 	"context"

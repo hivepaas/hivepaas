@@ -1,4 +1,4 @@
-package appuc
+package appmetricsuc
 
 import (
 	"context"
@@ -18,7 +18,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/obi"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/timeutil"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/loggingservice"
-	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/appuc/appdto"
+	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/appmetricsuc/appmetricsdto"
 	"github.com/hivepaas/hivepaas/services/logging"
 )
 
@@ -41,7 +41,7 @@ const (
 // the range, what of the app they cover - or why they cannot be.
 type performanceView struct {
 	app    *entity.App
-	head   appdto.AppPerformanceMetricsHeadResp
+	head   appmetricsdto.AppPerformanceMetricsHeadResp
 	window window
 }
 
@@ -53,15 +53,15 @@ type performanceView struct {
 func (uc *UC) GetAppRouteMetrics(
 	ctx context.Context,
 	_ *basedto.Auth,
-	req *appdto.GetAppPerformanceMetricsReq,
-) (*appdto.GetAppRouteMetricsResp, error) {
+	req *appmetricsdto.GetAppPerformanceMetricsReq,
+) (*appmetricsdto.GetAppRouteMetricsResp, error) {
 	view, err := uc.loadPerformanceView(ctx, req)
 	if err != nil {
 		return nil, hperrors.Wrap(err)
 	}
-	data := &appdto.AppRouteMetricsDataResp{AppPerformanceMetricsHeadResp: view.head}
+	data := &appmetricsdto.AppRouteMetricsDataResp{AppPerformanceMetricsHeadResp: view.head}
 	if !view.head.Available {
-		return &appdto.GetAppRouteMetricsResp{Data: data}, nil
+		return &appmetricsdto.GetAppRouteMetricsResp{Data: data}, nil
 	}
 	stats, err := uc.loggingService.RouteMetrics(ctx, uc.db, view.app, &loggingservice.FunctionMetricsQuery{
 		Start: view.window.start, End: view.window.end, Step: view.window.step,
@@ -71,19 +71,19 @@ func (uc *UC) GetAppRouteMetrics(
 	}
 	data.Totals = performanceCounts(sumHistograms(stats.Buckets))
 	data.Series = everyPerformanceStep(stats.Buckets, view.window)
-	data.Routes = make([]*appdto.AppRouteResp, 0, len(stats.Groups))
+	data.Routes = make([]*appmetricsdto.AppRouteResp, 0, len(stats.Groups))
 	for _, g := range stats.Groups {
-		data.Routes = append(data.Routes, &appdto.AppRouteResp{Kind: g.Keys[obi.FieldKind],
+		data.Routes = append(data.Routes, &appmetricsdto.AppRouteResp{Kind: g.Keys[obi.FieldKind],
 			Method: g.Keys[obi.FieldMethod], Route: g.Keys[obi.FieldRoute],
 			AppPerformanceCountsResp: *performanceCounts(g.OBIHistogram)})
 	}
 	err = addReplicas(ctx, uc, view.app, view.window, data.Series,
-		func(p *appdto.AppPerformancePointResp) time.Time { return p.Time },
-		func(p *appdto.AppPerformancePointResp, n *int) { p.Replicas = n })
+		func(p *appmetricsdto.AppPerformancePointResp) time.Time { return p.Time },
+		func(p *appmetricsdto.AppPerformancePointResp, n *int) { p.Replicas = n })
 	if err != nil {
 		return nil, hperrors.Wrap(err)
 	}
-	return &appdto.GetAppRouteMetricsResp{Data: data}, nil
+	return &appmetricsdto.GetAppRouteMetricsResp{Data: data}, nil
 }
 
 // GetAppDependencyMetrics reads what an app called over a range ending now -
@@ -95,15 +95,15 @@ func (uc *UC) GetAppRouteMetrics(
 func (uc *UC) GetAppDependencyMetrics(
 	ctx context.Context,
 	_ *basedto.Auth,
-	req *appdto.GetAppPerformanceMetricsReq,
-) (*appdto.GetAppDependencyMetricsResp, error) {
+	req *appmetricsdto.GetAppPerformanceMetricsReq,
+) (*appmetricsdto.GetAppDependencyMetricsResp, error) {
 	view, err := uc.loadPerformanceView(ctx, req)
 	if err != nil {
 		return nil, hperrors.Wrap(err)
 	}
-	data := &appdto.AppDependencyMetricsDataResp{AppPerformanceMetricsHeadResp: view.head}
+	data := &appmetricsdto.AppDependencyMetricsDataResp{AppPerformanceMetricsHeadResp: view.head}
 	if !view.head.Available {
-		return &appdto.GetAppDependencyMetricsResp{Data: data}, nil
+		return &appmetricsdto.GetAppDependencyMetricsResp{Data: data}, nil
 	}
 	stats, err := uc.loggingService.DependencyMetrics(ctx, uc.db, view.app, &loggingservice.FunctionMetricsQuery{
 		Start: view.window.start, End: view.window.end, Step: view.window.step,
@@ -117,7 +117,7 @@ func (uc *UC) GetAppDependencyMetrics(
 	}
 	data.Kinds = dependencyKinds(stats.Buckets, view.window)
 	data.Peers = dependencyPeers(stats.Groups, peers.resolve)
-	return &appdto.GetAppDependencyMetricsResp{Data: data}, nil
+	return &appmetricsdto.GetAppDependencyMetricsResp{Data: data}, nil
 }
 
 // loadPerformanceView loads the app and says whether its routes and calls can
@@ -126,7 +126,7 @@ func (uc *UC) GetAppDependencyMetrics(
 // logs; then the agent, the logs and the app's nodes.
 func (uc *UC) loadPerformanceView(
 	ctx context.Context,
-	req *appdto.GetAppPerformanceMetricsReq,
+	req *appmetricsdto.GetAppPerformanceMetricsReq,
 ) (*performanceView, error) {
 	app, features, err := uc.appService.LoadAppWithFeatureSettings(ctx, uc.db, req.ProjectID, req.AppID,
 		true, true,
@@ -139,7 +139,7 @@ func (uc *UC) loadPerformanceView(
 	if err != nil {
 		return nil, hperrors.Wrap(err)
 	}
-	view := &performanceView{app: app, head: appdto.AppPerformanceMetricsHeadResp{Range: req.Range}}
+	view := &performanceView{app: app, head: appmetricsdto.AppPerformanceMetricsHeadResp{Range: req.Range}}
 
 	perf, err := uc.loggingPerformance(ctx)
 	if err != nil {
@@ -211,7 +211,7 @@ func (uc *UC) performanceCoverage(
 	ctx context.Context,
 	app *entity.App,
 	perf *entity.LoggingPerformance,
-	head *appdto.AppPerformanceMetricsHeadResp,
+	head *appmetricsdto.AppPerformanceMetricsHeadResp,
 ) error {
 	tasks, err := uc.dockerManager.ServiceTaskList(ctx, app.ServiceID, []swarm.TaskState{swarm.TaskStateRunning})
 	if err != nil {
@@ -279,8 +279,8 @@ func addHistogram(to *logging.OBIHistogram, h logging.OBIHistogram) {
 
 // performanceCounts are summed rows as the API answers them: the quantiles
 // read from their buckets.
-func performanceCounts(h logging.OBIHistogram) *appdto.AppPerformanceCountsResp {
-	return &appdto.AppPerformanceCountsResp{Requests: h.Count, Errors: h.Errors,
+func performanceCounts(h logging.OBIHistogram) *appmetricsdto.AppPerformanceCountsResp {
+	return &appmetricsdto.AppPerformanceCountsResp{Requests: h.Count, Errors: h.Errors,
 		P50: obi.Quantile(h.Buckets, 0.5),  //nolint:mnd // the median
 		P95: obi.Quantile(h.Buckets, 0.95), //nolint:mnd // a percentile
 		P99: obi.Quantile(h.Buckets, 0.99), //nolint:mnd // a percentile
@@ -289,14 +289,14 @@ func performanceCounts(h logging.OBIHistogram) *appdto.AppPerformanceCountsResp 
 
 // everyPerformanceStep is a point per step of the window, oldest first, from
 // one series' buckets: a step without one is a point with none.
-func everyPerformanceStep(buckets []*logging.OBIBucket, w window) []*appdto.AppPerformancePointResp {
+func everyPerformanceStep(buckets []*logging.OBIBucket, w window) []*appmetricsdto.AppPerformancePointResp {
 	byTime := make(map[int64]*logging.OBIBucket, len(buckets))
 	for _, b := range buckets {
 		byTime[b.Time.Unix()] = b
 	}
-	out := make([]*appdto.AppPerformancePointResp, 0, int(w.end.Sub(w.start)/w.step))
+	out := make([]*appmetricsdto.AppPerformancePointResp, 0, int(w.end.Sub(w.start)/w.step))
 	for at := w.start; at.Before(w.end); at = at.Add(w.step) {
-		point := &appdto.AppPerformancePointResp{Time: at}
+		point := &appmetricsdto.AppPerformancePointResp{Time: at}
 		if b, ok := byTime[at.Unix()]; ok {
 			point.AppPerformanceCountsResp = *performanceCounts(b.OBIHistogram)
 		}
@@ -307,14 +307,14 @@ func everyPerformanceStep(buckets []*logging.OBIBucket, w window) []*appdto.AppP
 
 // dependencyKinds are the calls by kind, the busiest first: each its totals
 // and a point per step.
-func dependencyKinds(buckets []*logging.OBIBucket, w window) []*appdto.AppDependencyKindResp {
+func dependencyKinds(buckets []*logging.OBIBucket, w window) []*appmetricsdto.AppDependencyKindResp {
 	byKind := map[string][]*logging.OBIBucket{}
 	for _, b := range buckets {
 		byKind[b.Keys[obi.FieldKind]] = append(byKind[b.Keys[obi.FieldKind]], b)
 	}
-	out := make([]*appdto.AppDependencyKindResp, 0, len(byKind))
+	out := make([]*appmetricsdto.AppDependencyKindResp, 0, len(byKind))
 	for kind, of := range byKind {
-		out = append(out, &appdto.AppDependencyKindResp{Kind: kind, Totals: performanceCounts(sumHistograms(of)),
+		out = append(out, &appmetricsdto.AppDependencyKindResp{Kind: kind, Totals: performanceCounts(sumHistograms(of)),
 			Series: everyPerformanceStep(of, w)})
 	}
 	sort.Slice(out, func(i, j int) bool {
@@ -331,24 +331,24 @@ func dependencyKinds(buckets []*logging.OBIBucket, w window) []*appdto.AppDepend
 func dependencyPeers(
 	groups []*logging.OBIGroup,
 	resolve func(kind, peer string) *entity.App,
-) []*appdto.AppDependencyPeerResp {
+) []*appmetricsdto.AppDependencyPeerResp {
 	type peerKey struct{ kind, peer string }
 	sums := map[peerKey]*logging.OBIHistogram{}
-	byKey := map[peerKey]*appdto.AppDependencyPeerResp{}
-	out := make([]*appdto.AppDependencyPeerResp, 0, len(groups))
+	byKey := map[peerKey]*appmetricsdto.AppDependencyPeerResp{}
+	out := make([]*appmetricsdto.AppDependencyPeerResp, 0, len(groups))
 	for _, g := range groups {
 		key := peerKey{kind: g.Keys[obi.FieldKind], peer: g.Keys[obi.FieldPeer]}
 		peer := byKey[key]
 		if peer == nil {
-			peer = &appdto.AppDependencyPeerResp{Kind: key.kind, Peer: key.peer}
+			peer = &appmetricsdto.AppDependencyPeerResp{Kind: key.kind, Peer: key.peer}
 			if app := resolve(key.kind, key.peer); app != nil {
-				peer.App = &appdto.AppDependencyAppResp{ID: app.ID, Key: app.Key, Name: app.Name}
+				peer.App = &appmetricsdto.AppDependencyAppResp{ID: app.ID, Key: app.Key, Name: app.Name}
 			}
 			byKey[key], sums[key] = peer, &logging.OBIHistogram{Buckets: map[string]int64{}}
 			out = append(out, peer)
 		}
 		addHistogram(sums[key], g.OBIHistogram)
-		peer.Operations = append(peer.Operations, &appdto.AppDependencyOperationResp{
+		peer.Operations = append(peer.Operations, &appmetricsdto.AppDependencyOperationResp{
 			Method: g.Keys[obi.FieldMethod], Operation: g.Keys[obi.FieldOperation],
 			AppPerformanceCountsResp: *performanceCounts(g.OBIHistogram)})
 	}

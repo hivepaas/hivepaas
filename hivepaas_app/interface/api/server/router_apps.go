@@ -13,6 +13,7 @@ func (s *HTTPServer) registerAppRoutes(projectGroup, projectEnvGroup *gin.Router
 	appActionHandler := s.handlerRegistry.appActionHandler
 	appPreviewHandler := s.handlerRegistry.appPreviewHandler
 	appContainerHandler := s.handlerRegistry.appContainerHandler
+	appMetricsHandler := s.handlerRegistry.appMetricsHandler
 
 	{ // List apps from `projects/projectID/apps`
 		projectGroup.GET("/apps", appHandler.ListAppInProject)
@@ -199,11 +200,11 @@ func (s *HTTPServer) registerAppRoutes(projectGroup, projectEnvGroup *gin.Router
 		appGroup.GET("/:appID/logs/info", appHandler.GetAppLogsInfo)
 		appGroup.GET("/:appID/logs", appHandler.GetAppLogs)
 		appGroup.GET("/:appID/logs/history", appHandler.GetAppLogHistory)
-		appGroup.GET("/:appID/function-metrics", appHandler.GetFunctionMetrics)
-		appGroup.GET("/:appID/http-metrics", appHandler.GetAppHTTPMetrics)
-		appGroup.GET("/:appID/resource-metrics", appHandler.GetAppResourceMetrics)
-		appGroup.GET("/:appID/route-metrics", appHandler.GetAppRouteMetrics)
-		appGroup.GET("/:appID/dependency-metrics", appHandler.GetAppDependencyMetrics)
+		appGroup.GET("/:appID/function-metrics", appMetricsHandler.GetFunctionMetrics)
+		appGroup.GET("/:appID/http-metrics", appMetricsHandler.GetAppHTTPMetrics)
+		appGroup.GET("/:appID/resource-metrics", appMetricsHandler.GetAppResourceMetrics)
+		appGroup.GET("/:appID/route-metrics", appMetricsHandler.GetAppRouteMetrics)
+		appGroup.GET("/:appID/dependency-metrics", appMetricsHandler.GetAppDependencyMetrics)
 	}
 
 	{ // Terminal

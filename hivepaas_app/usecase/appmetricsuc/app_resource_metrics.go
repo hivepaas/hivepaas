@@ -1,4 +1,4 @@
-package appuc
+package appmetricsuc
 
 import (
 	"context"
@@ -13,7 +13,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/logidentity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/timeutil"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/loggingservice"
-	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/appuc/appdto"
+	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/appmetricsuc/appmetricsdto"
 	"github.com/hivepaas/hivepaas/services/logging"
 )
 
@@ -30,8 +30,8 @@ const resourceMetricsReasonAgentUnlabelled = "agent-unlabelled"
 func (uc *UC) GetAppResourceMetrics(
 	ctx context.Context,
 	_ *basedto.Auth,
-	req *appdto.GetAppResourceMetricsReq,
-) (*appdto.GetAppResourceMetricsResp, error) {
+	req *appmetricsdto.GetAppResourceMetricsReq,
+) (*appmetricsdto.GetAppResourceMetricsResp, error) {
 	app, _, err := uc.appService.LoadAppWithFeatureSettings(ctx, uc.db, req.ProjectID, req.AppID,
 		true, true,
 		bunex.SelectExcludeColumns(entity.AppDefaultExcludeColumns...),
@@ -43,9 +43,9 @@ func (uc *UC) GetAppResourceMetrics(
 	if err != nil {
 		return nil, hperrors.Wrap(err)
 	}
-	unavailable := func(reason string) *appdto.GetAppResourceMetricsResp {
-		return &appdto.GetAppResourceMetricsResp{
-			Data: &appdto.AppResourceMetricsDataResp{Range: req.Range, Reason: reason}}
+	unavailable := func(reason string) *appmetricsdto.GetAppResourceMetricsResp {
+		return &appmetricsdto.GetAppResourceMetricsResp{
+			Data: &appmetricsdto.AppResourceMetricsDataResp{Range: req.Range, Reason: reason}}
 	}
 
 	agentSvc, err := uc.hpAppService.GetHpAgentSwarmService(ctx)
@@ -72,32 +72,32 @@ func (uc *UC) GetAppResourceMetrics(
 	}
 	data := toAppResourceMetricsData(req.Range, window, stats)
 	err = addReplicas(ctx, uc, app, window, data.Series,
-		func(p *appdto.AppResourcePointResp) time.Time { return p.Time },
-		func(p *appdto.AppResourcePointResp, n *int) { p.Replicas = n })
+		func(p *appmetricsdto.AppResourcePointResp) time.Time { return p.Time },
+		func(p *appmetricsdto.AppResourcePointResp, n *int) { p.Replicas = n })
 	if err != nil {
 		return nil, hperrors.Wrap(err)
 	}
-	return &appdto.GetAppResourceMetricsResp{Data: data}, nil
+	return &appmetricsdto.GetAppResourceMetricsResp{Data: data}, nil
 }
 
 func toAppResourceMetricsData(
 	rangeName string, w window, stats *logging.ResourceStatsResp,
-) *appdto.AppResourceMetricsDataResp {
-	data := &appdto.AppResourceMetricsDataResp{
+) *appmetricsdto.AppResourceMetricsDataResp {
+	data := &appmetricsdto.AppResourceMetricsDataResp{
 		Available:   true,
 		Range:       rangeName,
 		Start:       w.start,
 		End:         w.end,
 		StepSeconds: int(w.step.Seconds()),
 		Clamped:     w.clamped,
-		Totals:      &appdto.AppResourceTotalsResp{},
-		Series:      make([]*appdto.AppResourcePointResp, 0, len(stats.Buckets)),
-		Containers:  make([]*appdto.AppResourceContainerResp, 0, len(stats.Containers)),
+		Totals:      &appmetricsdto.AppResourceTotalsResp{},
+		Series:      make([]*appmetricsdto.AppResourcePointResp, 0, len(stats.Buckets)),
+		Containers:  make([]*appmetricsdto.AppResourceContainerResp, 0, len(stats.Containers)),
 	}
 	var cpuSum float64
 	var cpuSteps int
 	for _, b := range stats.Buckets {
-		data.Series = append(data.Series, &appdto.AppResourcePointResp{
+		data.Series = append(data.Series, &appmetricsdto.AppResourcePointResp{
 			Time: b.Time, CPU: b.CPU, CPULimit: b.CPULimit, Memory: b.Memory, MemoryLimit: b.MemoryLimit,
 			OOMKills: b.OOMKills, NetRx: b.NetRx, NetTx: b.NetTx, IORead: b.IORead, IOWrite: b.IOWrite,
 		})
@@ -118,7 +118,7 @@ func toAppResourceMetricsData(
 		data.Totals.CPU = &avg
 	}
 	for _, c := range stats.Containers {
-		data.Containers = append(data.Containers, &appdto.AppResourceContainerResp{
+		data.Containers = append(data.Containers, &appmetricsdto.AppResourceContainerResp{
 			Container: c.Container, CPU: c.CPU, CPUPeak: c.CPUPeak, Memory: c.Memory,
 			MemoryLimit: c.MemoryLimit, OOMKills: c.OOMKills, LastSeen: c.LastSeen,
 		})

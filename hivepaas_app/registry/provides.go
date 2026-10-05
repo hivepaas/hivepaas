@@ -13,6 +13,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/interface/api/handler/appcontainerhandler"
 	"github.com/hivepaas/hivepaas/hivepaas_app/interface/api/handler/appdeploymenthandler"
 	"github.com/hivepaas/hivepaas/hivepaas_app/interface/api/handler/apphandler"
+	"github.com/hivepaas/hivepaas/hivepaas_app/interface/api/handler/appmetricshandler"
 	"github.com/hivepaas/hivepaas/hivepaas_app/interface/api/handler/apppreviewhandler"
 	"github.com/hivepaas/hivepaas/hivepaas_app/interface/api/handler/appsettingshandler"
 	"github.com/hivepaas/hivepaas/hivepaas_app/interface/api/handler/apptemplatehandler"
@@ -132,6 +133,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/appactionuc"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/appcontaineruc"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/appdeploymentuc"
+	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/appmetricsuc"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/apppreviewuc"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/appsettingsuc"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/apptemplateuc"
@@ -265,6 +267,7 @@ var Provides = []any{
 	appcontainerhandler.New,
 	appdeploymenthandler.New,
 	apphandler.New,
+	appmetricshandler.New,
 	apppreviewhandler.New,
 	appsettingshandler.New,
 	apptemplatehandler.New,
@@ -304,6 +307,7 @@ var Provides = []any{
 	appcontaineruc.New,
 	appdeploymentuc.New,
 	appfeaturesettingsuc.New,
+	appmetricsuc.New,
 	appplacementsettingsuc.New,
 	apppreviewuc.New,
 	appsettingsuc.New,

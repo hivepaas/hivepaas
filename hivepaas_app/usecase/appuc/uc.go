@@ -3,7 +3,6 @@ package appuc
 import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/repository"
-	"github.com/hivepaas/hivepaas/hivepaas_app/service/appautoscaleservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/appcloneservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/appdeploymentservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/appprovisionservice"
@@ -13,11 +12,9 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/containerexecservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/domainservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/functionservice"
-	"github.com/hivepaas/hivepaas/hivepaas_app/service/hpappservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/loggingservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/schedjobtriggerservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/settingservice"
-	"github.com/hivepaas/hivepaas/hivepaas_app/service/traefikservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/tasks/queue"
 	"github.com/hivepaas/hivepaas/services/docker"
 )
@@ -43,9 +40,6 @@ type UC struct {
 	functionService        functionservice.Service
 	settingService         settingservice.Service
 	loggingService         loggingservice.Service
-	traefikService         traefikservice.Service
-	hpAppService           hpappservice.Service
-	appAutoscale           appautoscaleservice.Service
 }
 
 func New(
@@ -69,9 +63,6 @@ func New(
 	functionService functionservice.Service,
 	settingService settingservice.Service,
 	loggingService loggingservice.Service,
-	traefikService traefikservice.Service,
-	hpAppService hpappservice.Service,
-	appAutoscale appautoscaleservice.Service,
 ) *UC {
 	return &UC{
 		db:            db,
@@ -94,8 +85,5 @@ func New(
 		functionService:        functionService,
 		settingService:         settingService,
 		loggingService:         loggingService,
-		traefikService:         traefikService,
-		hpAppService:           hpAppService,
-		appAutoscale:           appAutoscale,
 	}
 }

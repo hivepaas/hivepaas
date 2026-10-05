@@ -1,4 +1,4 @@
-package appdto
+package appmetricsdto
 
 import (
 	"testing"

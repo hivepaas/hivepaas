@@ -59,9 +59,9 @@ const (
 	shortWindow = 15 * time.Second
 
 	// stateTTL keeps an app's state between runs, and lets it go once the job
-	// has stopped running for it. The key says function: it was made for them.
+	// has stopped running for it.
 	stateTTL      = time.Hour
-	stateKeyFmt   = "autoscale:function:%s"
+	stateKeyFmt   = "autoscale:app:%s"
 	updateRetries = 2
 
 	// clusterFullAfter is how long a service may run fewer tasks than it

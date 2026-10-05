@@ -264,10 +264,14 @@ type InvocationStatsResp struct {
 
 // HTTPStatsReq counts the requests the proxy's access log records for one
 // app: the lines in Match - the proxy's own, by the identity the daemon wrote -
-// whose service matches ServicePattern, a regular expression.
+// whose service matches ServicePattern, a regular expression. ServicePhrase,
+// when given, is a phrase every one of those lines holds: the lines are
+// narrowed by it before they are unpacked, so what is read grows with the
+// app's requests, not the cluster's.
 type HTTPStatsReq struct {
 	Match          []FieldMatch
 	ServicePattern string
+	ServicePhrase  string
 	Start          time.Time
 	End            time.Time
 	// Step is the buckets' width, in whole seconds.

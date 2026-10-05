@@ -81,6 +81,9 @@ func BuildHTTPStatsQueries(req *loggingmodel.HTTPStatsReq) (*HTTPStatsQueries, e
 		filters = append(filters, strconv.Quote(m.Field)+":="+strconv.Quote(m.Value))
 	}
 	filters = append(filters, strconv.Quote(accessLogPhrase))
+	if req.ServicePhrase != "" {
+		filters = append(filters, strconv.Quote(req.ServicePhrase))
+	}
 	head := strings.Join(filters, " AND ") +
 		` | unpack_json from _msg fields (ServiceName, ServiceURL, RequestMethod, RequestPath,` +
 		` DownstreamStatus, OriginStatus, Duration) result_prefix ` + strconv.Quote(HTTPUnpackPrefix) +
@@ -98,19 +101,22 @@ func BuildHTTPStatsQueries(req *loggingmodel.HTTPStatsReq) (*HTTPStatsQueries, e
 }
 
 // HTTPStats counts an app's access log lines: four queries, built by
-// BuildHTTPStatsQueries, over the request's range.
+// BuildHTTPStatsQueries, over the request's range. They run at once: each
+// reads the range's lines anew, and one after another an app's busy hour took
+// the four's time added up.
 func (c *Client) HTTPStats(ctx context.Context, req *loggingmodel.HTTPStatsReq) (*loggingmodel.HTTPStatsResp, error) {
 	q, err := BuildHTTPStatsQueries(req)
 	if err != nil {
 		return nil, hperrors.Wrap(err)
 	}
-	out := &loggingmodel.HTTPStatsResp{}
-
-	rows, err := c.rows(ctx, q.Series, req.Start, req.End)
+	results, err := c.rowsAtOnce(ctx, req.Start, req.End, q.Series, q.Totals, q.Paths, q.Replicas)
 	if err != nil {
 		return nil, hperrors.Wrap(err)
 	}
-	for _, row := range rows {
+	series, totals, paths, replicas := results[0], results[1], results[2], results[3]
+	out := &loggingmodel.HTTPStatsResp{}
+
+	for _, row := range series {
 		at, err := time.Parse(time.RFC3339Nano, row["_time"])
 		if err != nil {
 			return nil, hperrors.Wrap(loggingmodel.ErrQueryInvalid).WithExtraDetail("a bucket's time: %s", row["_time"])
@@ -119,30 +125,18 @@ func (c *Client) HTTPStats(ctx context.Context, req *loggingmodel.HTTPStatsReq) 
 	}
 	sort.Slice(out.Buckets, func(i, j int) bool { return out.Buckets[i].Time.Before(out.Buckets[j].Time) })
 
-	rows, err = c.rows(ctx, q.Totals, req.Start, req.End)
-	if err != nil {
-		return nil, hperrors.Wrap(err)
-	}
-	if len(rows) > 0 {
-		out.Totals = httpCountsOf(rows[0])
+	if len(totals) > 0 {
+		out.Totals = httpCountsOf(totals[0])
 	}
 
-	rows, err = c.rows(ctx, q.Paths, req.Start, req.End)
-	if err != nil {
-		return nil, hperrors.Wrap(err)
-	}
-	for _, row := range rows {
+	for _, row := range paths {
 		out.ByPath = append(out.ByPath, &loggingmodel.HTTPPath{
 			Method: row[HTTPUnpackPrefix+"RequestMethod"], Path: row[HTTPUnpackPrefix+"RequestPath"],
 			HTTPCounts: httpCountsOf(row),
 		})
 	}
 
-	rows, err = c.rows(ctx, q.Replicas, req.Start, req.End)
-	if err != nil {
-		return nil, hperrors.Wrap(err)
-	}
-	for _, row := range rows {
+	for _, row := range replicas {
 		out.ByReplica = append(out.ByReplica, &loggingmodel.HTTPReplica{
 			Address: row[HTTPUnpackPrefix+"ServiceURL"], HTTPCounts: httpCountsOf(row),
 		})

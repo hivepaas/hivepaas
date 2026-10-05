@@ -28,6 +28,12 @@ func AppHTTPServicePattern(appID string) string {
 	return "^svc-" + regexp.QuoteMeta(AppRouteName(appID)) + "-[0-9]+@swarm$"
 }
 
+// AppHTTPServicePhrase is what every name AppHTTPServicePattern matches holds:
+// a phrase a log store finds by its index, before the pattern is tried.
+func AppHTTPServicePhrase(appID string) string {
+	return "svc-" + AppRouteName(appID) + "-"
+}
+
 // traefikNameLabel is a router, service or middleware label: its kind and its
 // name.
 var traefikNameLabel = regexp.MustCompile(`^traefik\.(?:http|tcp|udp)\.(?:routers|services|middlewares)\.([^.]+)\.`)

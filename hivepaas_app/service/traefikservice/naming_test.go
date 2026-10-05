@@ -2,6 +2,7 @@ package traefikservice
 
 import (
 	"regexp"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -18,6 +19,9 @@ func TestAppHTTPServicePatternIsExact(t *testing.T) {
 		assert.False(t, re.MatchString(other), other)
 	}
 	assert.Equal(t, "svc-01k6a-3", AppHTTPServiceName("01K6A", 3))
+	// Every name the pattern matches holds the phrase.
+	assert.True(t, strings.HasPrefix(AppHTTPServiceName("01K6A", 3), AppHTTPServicePhrase("01K6A")))
+	assert.Equal(t, "svc-01k6a-", AppHTTPServicePhrase("01K6A"))
 }
 
 // Labels written by key are stale; those by id are not; an operator's

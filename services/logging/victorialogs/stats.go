@@ -9,6 +9,7 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
@@ -151,6 +152,36 @@ func (c *Client) rows(ctx context.Context, q string, start, end time.Time) ([]ma
 		out = append(out, row)
 	}
 	return out, hperrors.Wrap(scanner.Err())
+}
+
+// rowsAtOnce runs stats queries over one range at once, their rows in the
+// queries' order. The first to fail stops the others, and is the error.
+func (c *Client) rowsAtOnce(
+	ctx context.Context, start, end time.Time, queries ...string,
+) ([][]map[string]string, error) {
+	ctx, cancel := context.WithCancel(ctx)
+	defer cancel()
+	results := make([][]map[string]string, len(queries))
+	var (
+		wg    sync.WaitGroup
+		once  sync.Once
+		first error
+	)
+	for i, q := range queries {
+		wg.Go(func() {
+			rows, err := c.rows(ctx, q, start, end)
+			if err != nil {
+				once.Do(func() { first = err; cancel() })
+				return
+			}
+			results[i] = rows
+		})
+	}
+	wg.Wait()
+	if first != nil {
+		return nil, hperrors.Wrap(first)
+	}
+	return results, nil
 }
 
 func countsOf(row map[string]string) loggingmodel.InvocationCounts {

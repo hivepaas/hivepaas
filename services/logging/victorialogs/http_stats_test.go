@@ -3,9 +3,12 @@ package victorialogs
 import (
 	"context"
 	"fmt"
+	"io"
 	"net/http"
+	"net/http/httptest"
 	"os"
 	"strings"
+	"sync"
 	"testing"
 	"time"
 
@@ -141,4 +144,69 @@ func TestLiveHTTPStatsCountOnlyTheAppsRequests(t *testing.T) {
 	if assert.NotNil(t, got.Totals.P99) {
 		assert.Greater(t, *got.Totals.P99, 10.0)
 	}
+}
+
+// Given the phrase every one of the app's lines holds, the lines are narrowed
+// by it before they are unpacked; without one, as before.
+func TestHTTPStatsQueriesNarrowByTheServicePhrase(t *testing.T) {
+	req := httpStatsReq("^svc-01k6a-[0-9]+@swarm$")
+	q, err := BuildHTTPStatsQueries(req)
+	assert.NoError(t, err)
+	assert.Contains(t, q.Totals, `AND "ServiceName" | unpack_json`)
+
+	req.ServicePhrase = "svc-01k6a-"
+	q, err = BuildHTTPStatsQueries(req)
+	assert.NoError(t, err)
+	for _, query := range []string{q.Series, q.Totals, q.Paths, q.Replicas} {
+		assert.Contains(t, query, `AND "ServiceName" AND "svc-01k6a-" | unpack_json`)
+	}
+}
+
+// The four queries run at once: each waits here until all four have come.
+// The first to fail is the error, and the others are not waited for.
+func TestHTTPStatsRunsItsQueriesAtOnce(t *testing.T) {
+	var arrived sync.WaitGroup
+	arrived.Add(4)
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		arrived.Done()
+		done := make(chan struct{})
+		go func() { arrived.Wait(); close(done) }()
+		select {
+		case <-done:
+		case <-time.After(2 * time.Second):
+			w.WriteHeader(http.StatusGatewayTimeout)
+			return
+		}
+		_, _ = io.WriteString(w, `{"_time":"2026-10-02T00:00:00Z","requests":"1"}`+"\n")
+	}))
+	defer srv.Close()
+	c := New(&Config{Endpoint: loggingmodel.Endpoint{URL: srv.URL}})
+
+	got, err := c.HTTPStats(context.Background(), httpStatsReq("^svc-01k6a-[0-9]+@swarm$"))
+
+	assert.NoError(t, err)
+	if assert.NotNil(t, got) {
+		assert.Equal(t, int64(1), got.Totals.Requests)
+		assert.Len(t, got.Buckets, 1)
+	}
+
+	failing := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		body, _ := io.ReadAll(r.Body)
+		if strings.Contains(string(body), "limit+10") || strings.Contains(string(body), "limit%2010") {
+			w.WriteHeader(http.StatusBadRequest)
+			return
+		}
+		select {
+		case <-r.Context().Done():
+		case <-time.After(2 * time.Second):
+		}
+	}))
+	defer failing.Close()
+	c = New(&Config{Endpoint: loggingmodel.Endpoint{URL: failing.URL}})
+	started := time.Now()
+
+	_, err = c.HTTPStats(context.Background(), httpStatsReq("^svc-01k6a-[0-9]+@swarm$"))
+
+	assert.ErrorIs(t, err, loggingmodel.ErrQueryInvalid, "the replicas' query's own error")
+	assert.Less(t, time.Since(started), time.Second, "the others were not waited for")
 }

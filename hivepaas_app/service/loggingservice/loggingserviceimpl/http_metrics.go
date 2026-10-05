@@ -65,6 +65,7 @@ func (s *service) HTTPMetrics(
 			Field: vlagent.AttrField(base.LabelLogComponent), Value: base.LogComponentTraefik,
 		}},
 		ServicePattern: traefikservice.AppHTTPServicePattern(app.ID),
+		ServicePhrase:  traefikservice.AppHTTPServicePhrase(app.ID),
 		Start:          q.Start,
 		End:            q.End,
 		Step:           q.Step,

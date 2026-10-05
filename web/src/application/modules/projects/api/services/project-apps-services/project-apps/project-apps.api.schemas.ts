@@ -38,6 +38,10 @@ export const ProjectAppSchema: z.ZodType<ProjectAppDetails, z.ZodTypeDef, unknow
         key: z.string(),
         updateVer: z.number(),
         category: OptionalStringSchema,
+        runtimeOutdated: z
+            .boolean()
+            .nullish()
+            .transform(value => value ?? false),
         stats: ProjectAppStatsSchema.nullable(),
         parentApp: ProjectAppParentSchema,
         childApps: z.array(ProjectAppSchema).optional(),

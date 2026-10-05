@@ -47,10 +47,13 @@ function View({ projectId, env, appId }: Props) {
     );
 
     const [noCache, setNoCache] = useState(false);
+    // The app a re-deploy was started for: its runtime notice goes, the deployment being on its way.
+    const [redeployedAppId, setRedeployedAppId] = useState<string | null>(null);
 
     const { mutate: deploy, isPending: isDeploying } = ProjectAppsCommands.useDeploy({
-        onSuccess: () => {
+        onSuccess: (_, request) => {
             toast.success("Re-deploy started");
+            setRedeployedAppId(request.appID);
         },
     });
     const { mutate: restart, isPending: isRestarting } = ProjectAppsCommands.useRestart({
@@ -341,6 +344,36 @@ function View({ projectId, env, appId }: Props) {
                     )}
                 </div>
             </div>
+
+            {isFunctionApp(appData) && appData.runtimeOutdated && redeployedAppId !== appId ? (
+                <div className="mb-2.5 flex flex-col sm:flex-row sm:items-center justify-between gap-2 rounded-md border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-sm text-amber-700 dark:text-amber-400">
+                    <div>
+                        <span className="font-medium">This function runs on an older runtime.</span> HivePaaS has been
+                        updated since it was deployed: re-deploy it to build it on the current runtime.
+                    </div>
+                    <PopConfirm
+                        title="Re-deploy function"
+                        description="Build this function on the current runtime and deploy it?"
+                        confirmText="Re-deploy"
+                        cancelText="Cancel"
+                        onConfirm={() => {
+                            deploy({ projectID: projectId, env, appID: appId });
+                        }}
+                    >
+                        <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            className="h-7 shrink-0 text-xs"
+                            isLoading={isDeploying}
+                            disabled={isAppDeleting || (isAppActionPending && !isDeploying)}
+                        >
+                            <RefreshCw className="size-3.5 mr-1" />
+                            Re-deploy
+                        </Button>
+                    </PopConfirm>
+                </div>
+            ) : null}
 
             <Separator className="opacity-50" />
 

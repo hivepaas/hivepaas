@@ -5,6 +5,8 @@ export interface ProjectAppDetails extends ProjectAppBase {
     updateVer: number;
     /** What the app is - "function", "database" - empty when it declares no kind. */
     category: string;
+    /** A function whose deployment was built on an older runtime than this HivePaaS version's. */
+    runtimeOutdated: boolean;
     accessLinks: string[];
     parentApp: ProjectAppBaseRef | null;
     stats: {

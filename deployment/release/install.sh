@@ -1390,13 +1390,47 @@ install_ref() {
   printf '%s' "${HIVEPAAS_INSTALL_REF:-$INSTALL_REF_DEFAULT}"
 }
 
+# SWARM_DEFAULT_POOL is where a swarm takes its networks' addresses from when it
+# is not told otherwise, a /24 each.
+SWARM_DEFAULT_POOL=10.0.0.0/8
+POOL_OVERLAPS_DOCS=https://docs.hivepaas.com/docs/troubleshooting/common-issues#pool-overlaps
+
+# swarm_pools: the ranges this node's swarm takes its networks' addresses from.
+swarm_pools() {
+  local pools
+  pools=$(docker info --format '{{range .Swarm.Cluster.DefaultAddrPool}}{{.}} {{end}}' 2>/dev/null)
+  printf '%s' "${pools:-$SWARM_DEFAULT_POOL}"
+}
+
+# local_pool_clash POOL...: the first range Docker gives its own local networks -
+# a pool of default-address-pools in daemon.json, or a bridge network it already
+# made - that overlaps one of the swarm's pools. The two hand out the same
+# subnets in the same order, and a swarm network given one that a local network
+# holds cannot be created on this node: "invalid pool request: Pool overlaps with
+# other one on this address space", the ingress network first.
+local_pool_clash() {
+  local ranges id cidr pool
+  ranges=$(docker info --format '{{range .DefaultAddressPools}}{{.Base}} {{end}}' 2>/dev/null)
+  for id in $(docker network ls --filter driver=bridge --format '{{.ID}}' 2>/dev/null); do
+    ranges="$ranges $(docker network inspect "$id" --format '{{range .IPAM.Config}}{{.Subnet}} {{end}}' 2>/dev/null)"
+  done
+  for cidr in $ranges; do
+    for pool in "$@"; do
+      if cidr_overlaps "$pool" "$cidr"; then
+        printf '%s' "$cidr"
+        return 0
+      fi
+    done
+  done
+  return 1
+}
+
 # ingress_ready [TRIES]: whether this node has set up the swarm's ingress
 # network, which it does within a second or two of joining a swarm, asking once
-# a second. A node that left another swarm without Docker restarting since
-# cannot: Docker still holds that swarm's network addresses, and logs "Failed
-# creating ingress network: invalid pool request: Pool overlaps with other one
-# on this address space" - and so fails every network of the new swarm given one
-# of them. A swarm whose ingress network was removed has nothing to wait for.
+# a second. It cannot when a local network holds the ingress network's addresses
+# (see local_pool_clash): Docker logs "Failed creating ingress network: invalid
+# pool request: Pool overlaps with other one on this address space". A swarm
+# whose ingress network was removed has nothing to wait for.
 ingress_ready() {
   local tries=${1:-20} sandboxes
   while :; do
@@ -1409,17 +1443,30 @@ ingress_ready() {
   done
 }
 
+# die_pool_clash LOCAL POOLS: stop, saying a local network range overlaps the
+# swarm's.
+die_pool_clash() {
+  die "Docker gives this server's own networks addresses from $1, inside the range its swarm takes its" \
+    "networks from ($2): the two would clash, and the swarm's networks fail to start. Give Docker's own" \
+    "networks another range ('default-address-pools' in /etc/docker/daemon.json), as $POOL_OVERLAPS_DOCS" \
+    "shows, then run the installer again."
+}
+
 ensure_swarm() {
-  local state node
+  local state node clash pools
   state=$(docker info --format '{{.Swarm.LocalNodeState}}')
   case "$state" in
     active)
       if [ "$(docker info --format '{{.Swarm.ControlAvailable}}')" != true ]; then
         die "This server is a worker in a swarm, and HivePaaS runs on a manager. Run the installer on a manager."
       fi
+      pools=$(swarm_pools)
+      # shellcheck disable=SC2086 # the pools are one word each
+      if clash=$(local_pool_clash $pools); then die_pool_clash "$clash" "$pools"; fi
       ok "This server is a swarm manager."
       ;;
     inactive)
+      if clash=$(local_pool_clash "$SWARM_DEFAULT_POOL"); then die_pool_clash "$clash" "$SWARM_DEFAULT_POOL"; fi
       # A host with more than one address has swarm init refuse to guess which
       # to advertise; the default route's is the one other nodes would reach.
       if [ -n "$HOST_IP" ]; then
@@ -1435,10 +1482,10 @@ ensure_swarm() {
       ;;
   esac
   if ! ingress_ready; then
-    die "Docker could not set up the swarm's network on this server. This happens when the server left" \
-      "another swarm and Docker has not restarted since: it still holds that swarm's network addresses" \
-      "('Pool overlaps with other one on this address space' in 'journalctl -u docker'). Run" \
-      "'sudo systemctl restart docker', then the installer again."
+    die "Docker could not set up the swarm's network on this server: a network of its own holds the" \
+      "addresses ('Pool overlaps with other one on this address space' in 'journalctl -u docker')." \
+      "$POOL_OVERLAPS_DOCS shows how to give Docker's own networks another range; then run the" \
+      "installer again."
   fi
   node=$(docker info --format '{{.Swarm.NodeID}}')
   docker node update --label-add hivepaas.role=control-plane "$node" >/dev/null

@@ -65,6 +65,18 @@ jobs:
           grep -Eq "^VERIFY_IMAGE='?ghcr\.io/hivepaas/release-verify@sha256:[0-9a-f]{64}'?$" deployment/release/install.sh ||
             { echo "::error::install.sh pins no release verifier (VERIFY_IMAGE): run the Release verifier workflow and pin its digest"; exit 1; }
 
+      - name: Kopia is pinned, the same in every Dockerfile
+        run: |
+          files=(deployment/release/Dockerfile deployment/release/Dockerfile.agent
+            deployment/dev/Dockerfile deployment/dev/Dockerfile.agent)
+          pins=$(grep -h '^ARG KOPIA_IMAGE=' "${files[@]}" | sort -u)
+          if [ "$(grep -l '^ARG KOPIA_IMAGE=' "${files[@]}" | wc -l)" -ne "${#files[@]}" ] ||
+            [ "$(wc -l <<<"$pins")" -ne 1 ] ||
+            ! grep -Eqx 'ARG KOPIA_IMAGE=ghcr\.io/hivepaas/kopia:[0-9]+\.[0-9]+\.[0-9]+-[0-9]+@sha256:[0-9a-f]{64}' <<<"$pins"; then
+            echo "::error::the four Dockerfiles must pin one kopia image by digest (ARG KOPIA_IMAGE; docs/RELEASING.md)"
+            exit 1
+          fi
+
       # The binary is built with release.json as it is: every image it names,
       # but the app's and the agent's, is pinned now. Those two are this run's
       # to build, and a rebuild under the same tag finds an older build there.

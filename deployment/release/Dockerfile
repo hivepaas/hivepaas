@@ -4,11 +4,17 @@
 # It differs from deployment/dev/Dockerfile in what makes a release a release:
 # - the dashboard is its tag, not whatever main held when the image was built;
 # - the binary is a production build (make build-prod);
-# - downloads are pinned: sql-migrate and the x/crypto it is built with by
-#   version, kopia by checksum;
+# - what it ships beside the binary is pinned: sql-migrate and the x/crypto it
+#   is built with by version, kopia's image by digest;
 # - only the configuration files a release runs with are copied: the stack sets
 #   HP_CONFIG_FILE to config/config.<beta|production>.toml, and a developer's
 #   config.local.toml has no place in a published image.
+
+# kopia, the backup engine: built from source into an image of its own
+# (deployment/kopia/Dockerfile) and pinned by digest - the same one in the
+# release's and the dev's Dockerfiles, app and agent (docs/RELEASING.md).
+ARG KOPIA_IMAGE=ghcr.io/hivepaas/kopia:0.23.1-1@sha256:c00e0f5a45e02f131b68b89df7b1aeebafa2621db3a9fd6bb68ab0236d3d7d18
+FROM ${KOPIA_IMAGE} AS kopia
 
 ############################################################
 # Build dashboard
@@ -61,7 +67,6 @@ RUN mkdir /tmp/sql-migrate && cd /tmp/sql-migrate && \
 ############################################################
 # The image
 FROM alpine:3.24
-ARG TARGETARCH
 ARG VERSION
 ARG REVISION
 
@@ -76,23 +81,10 @@ RUN apk update && \
     git lfs install --system && \
     rm -rf /var/cache/apk/*
 
-# kopia, the backup engine. The checksums are those of the release's
-# checksums.txt (https://github.com/kopia/kopia/releases/tag/v0.23.1): change
-# them with the version.
-ARG KOPIA_VERSION=0.23.1
-RUN case "${TARGETARCH}" in \
-        amd64) KOPIA_ARCH="x64";   KOPIA_SHA256="416d0f84a3dbb321a8b2d8f0997b1a0a6e915babe79ee76fa6e4d2bd1e1c5178" ;; \
-        arm64) KOPIA_ARCH="arm64"; KOPIA_SHA256="a4ffbc019e0b0f932e2632054e73ec521dc1e80172a00095369c53ecf4e5a6cb" ;; \
-        *)     echo "unsupported TARGETARCH: ${TARGETARCH}" >&2; exit 1 ;; \
-    esac && \
-    wget -qO /tmp/kopia.tar.gz \
-        "https://github.com/kopia/kopia/releases/download/v${KOPIA_VERSION}/kopia-${KOPIA_VERSION}-linux-${KOPIA_ARCH}.tar.gz" && \
-    echo "${KOPIA_SHA256}  /tmp/kopia.tar.gz" | sha256sum -c - && \
-    tar -xzf /tmp/kopia.tar.gz -C /tmp && \
-    mv "/tmp/kopia-${KOPIA_VERSION}-linux-${KOPIA_ARCH}/kopia" /usr/local/bin/kopia && \
-    chmod +x /usr/local/bin/kopia && \
-    rm -rf /tmp/kopia* && \
-    kopia --version
+# kopia, the backup engine, and its license.
+COPY --from=kopia /kopia /usr/local/bin/kopia
+COPY --from=kopia /LICENSE /usr/share/licenses/kopia/LICENSE
+RUN kopia --version
 
 WORKDIR /hivepaas
 

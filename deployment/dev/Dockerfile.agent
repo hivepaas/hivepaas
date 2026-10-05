@@ -1,3 +1,9 @@
+# kopia, the backup engine: built from source into an image of its own
+# (deployment/kopia/Dockerfile) and pinned by digest - the same one in the
+# release's and the dev's Dockerfiles, app and agent (docs/RELEASING.md).
+ARG KOPIA_IMAGE=ghcr.io/hivepaas/kopia:0.23.1-1@sha256:c00e0f5a45e02f131b68b89df7b1aeebafa2621db3a9fd6bb68ab0236d3d7d18
+FROM ${KOPIA_IMAGE} AS kopia
+
 ############################################################
 # Build backend
 FROM golang:1.27-alpine AS builder
@@ -26,28 +32,16 @@ RUN make build-agent
 FROM alpine:3.24
 WORKDIR /hivepaas
 
-ARG TARGETARCH
 
 RUN apk update && \
     apk add --no-cache ca-certificates make openssl postgresql-client git git-lfs openssh-client rsync zstd lz4 docker-cli docker-cli-buildx && \
     git lfs install --system && \
     rm -rf /var/cache/apk/*
 
-# Install kopia backup engine (statically linked binary from official releases)
-ARG KOPIA_VERSION=0.23.1
-RUN case "${TARGETARCH}" in \
-        amd64) KOPIA_ARCH="x64" ;; \
-        arm64) KOPIA_ARCH="arm64" ;; \
-        arm)   KOPIA_ARCH="arm" ;; \
-        *)     echo "unsupported TARGETARCH: ${TARGETARCH}" >&2; exit 1 ;; \
-    esac && \
-    wget -qO /tmp/kopia.tar.gz \
-        "https://github.com/kopia/kopia/releases/download/v${KOPIA_VERSION}/kopia-${KOPIA_VERSION}-linux-${KOPIA_ARCH}.tar.gz" && \
-    tar -xzf /tmp/kopia.tar.gz -C /tmp && \
-    mv "/tmp/kopia-${KOPIA_VERSION}-linux-${KOPIA_ARCH}/kopia" /usr/local/bin/kopia && \
-    chmod +x /usr/local/bin/kopia && \
-    rm -rf /tmp/kopia* && \
-    kopia --version
+# kopia, the backup engine, and its license.
+COPY --from=kopia /kopia /usr/local/bin/kopia
+COPY --from=kopia /LICENSE /usr/share/licenses/kopia/LICENSE
+RUN kopia --version
 
 # Copy compiled agent binary and base configurations
 COPY --from=builder /build/hivepaas-agent .

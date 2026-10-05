@@ -200,3 +200,16 @@ same `app-autoscale` setting, with its fields for apps:
    or by 4 a run.
 4. Later: memory, queue length and custom metrics, Min by schedule, scaling to
    zero.
+
+## Found on review (2026-10-05)
+
+- The job was turned off only when an app's autoscale setting was saved; the
+  last such app deleted, or its project, left it running on nothing. A run
+  that finds no app with autoscale on turns it off now. The job's row is
+  locked before the apps are read, by the run and by `EnsureJob` alike, so
+  that an app turning autoscale on meanwhile is seen, or turns it on again.
+- A periodic job's timeout was not enforced: a run that hung held up every
+  periodic job of its worker, as a round waits for all it starts. Each run
+  now has its job's timeout - 1 minute for this one - or its type's ceiling as
+  a deadline, and its lock outlives it.
+

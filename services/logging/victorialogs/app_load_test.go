@@ -40,6 +40,8 @@ func TestRequestLoadQueryIsOneForAllTheApps(t *testing.T) {
 	assert.Contains(t, q, `| math min("http.OriginDuration", 60000000000) as "http.capped"`)
 	assert.Contains(t, q, `sum("http.capped") if ("http.OriginDuration":>=0) busyNs, count() requests`)
 	assert.NotContains(t, q, "OriginStatus", "Traefik 3 writes it 0 for what the app answered")
+	// A request the proxy could not get to the app took none of its time.
+	assert.Contains(t, q, `@swarm$" NOT "http.DownstreamStatus":in(502, 503) | copy`)
 
 	_, err = BuildRequestLoadQuery(&loggingmodel.RequestLoadReq{Match: traefikMatch})
 	assert.ErrorIs(t, err, loggingmodel.ErrQueryScopeRequired)

@@ -87,6 +87,11 @@ var (
 // proxy's own time and a slow client's. A request no replica answered took
 // none of the app's time.
 //
+// Nor is a request the proxy could not get to the app counted at all: a 502,
+// the replica not answering - nothing listening on the port - or a 503, none
+// to send it to. More replicas would not answer it either: an app down, sent
+// requests by the thousand, read as busy and scaled out.
+//
 // A request counts for the range at most: a WebSocket or a long poll, logged
 // when it ends with its whole duration, would otherwise read as many requests
 // at once - and is not counted at all while it is open.
@@ -118,9 +123,9 @@ func BuildRequestLoadQuery(req *loggingmodel.RequestLoadReq) (string, error) {
 	// Anchored, so that an app's id never matches as the start of another's.
 	services := "^svc-(" + strings.Join(ids, "|") + ")-[0-9]+@swarm$"
 	q := head + ` AND ` + anyPhrase(names) +
-		` | unpack_json from _msg fields (ServiceName, OriginDuration) result_prefix ` +
+		` | unpack_json from _msg fields (ServiceName, DownstreamStatus, OriginDuration) result_prefix ` +
 		strconv.Quote(HTTPUnpackPrefix) +
-		` | filter ` + httpService + `:~` + strconv.Quote(services) +
+		` | filter ` + httpService + `:~` + strconv.Quote(services) + ` NOT ` + httpStatus + `:in(502, 503)` +
 		` | copy ` + httpService + ` as ` + httpApp +
 		` | replace_regexp ("^svc-(.+)-[0-9]+@swarm$", "$1") at ` + httpApp +
 		` | math min(` + httpOriginDuration + `, ` + strconv.FormatInt(span.Nanoseconds(), 10) + `) as ` +

@@ -86,12 +86,14 @@ type fakeSwarm struct {
 	scaled   map[string]uint64
 }
 
-// ServiceList answers every service, whatever the filters: the run maps them
-// by id.
-func (f *fakeSwarm) ServiceList(_ context.Context, _ ...docker.ServiceListOption) (*client.ServiceListResult, error) {
+// ServiceListByIDs answers the services of these ids, as the manager does.
+func (f *fakeSwarm) ServiceListByIDs(_ context.Context, ids []string, _ ...docker.ServiceListOption) (
+	*client.ServiceListResult, error) {
 	out := &client.ServiceListResult{}
-	for _, svc := range f.services {
-		out.Items = append(out.Items, *svc)
+	for _, id := range ids {
+		if svc, ok := f.services[id]; ok {
+			out.Items = append(out.Items, *svc)
+		}
 	}
 	return out, nil
 }

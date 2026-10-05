@@ -393,11 +393,8 @@ func (s *service) services(ctx context.Context, apps []*entity.App) (map[string]
 	if len(ids) == 0 {
 		return out, nil
 	}
-	list, err := s.dockerManager.ServiceList(ctx, func(opts *client.ServiceListOptions) {
+	list, err := s.dockerManager.ServiceListByIDs(ctx, ids, func(opts *client.ServiceListOptions) {
 		opts.Status = true
-		for _, id := range ids {
-			docker.FilterAdd(&opts.Filters, "id", id)
-		}
 	})
 	if err != nil {
 		return nil, hperrors.Wrap(err)

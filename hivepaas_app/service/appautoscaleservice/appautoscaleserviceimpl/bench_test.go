@@ -79,10 +79,10 @@ type countedSwarm struct {
 	n *calls
 }
 
-func (f countedSwarm) ServiceList(ctx context.Context, opts ...docker.ServiceListOption) (
+func (f countedSwarm) ServiceListByIDs(ctx context.Context, ids []string, opts ...docker.ServiceListOption) (
 	*client.ServiceListResult, error) {
 	f.n.docker++
-	return f.fakeSwarm.ServiceList(ctx, opts...)
+	return f.fakeSwarm.ServiceListByIDs(ctx, ids, opts...)
 }
 
 func (f countedSwarm) ServiceUpdateFunc(ctx context.Context, id string, svc *swarm.Service,

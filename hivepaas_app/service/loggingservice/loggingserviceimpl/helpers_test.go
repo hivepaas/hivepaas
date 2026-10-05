@@ -40,13 +40,15 @@ func (f *fakeDocker) ServiceInspect(
 	return nil, hperrors.Wrap(hperrors.ErrNotFound)
 }
 
-// ServiceList returns every service; the code under test picks its own by id.
-func (f *fakeDocker) ServiceList(
-	_ context.Context, _ ...docker.ServiceListOption,
+// ServiceListByIDs answers the services of these ids, as the manager does.
+func (f *fakeDocker) ServiceListByIDs(
+	_ context.Context, ids []string, _ ...docker.ServiceListOption,
 ) (*client.ServiceListResult, error) {
-	items := make([]swarm.Service, 0, len(f.inspected))
-	for _, svc := range f.inspected {
-		items = append(items, svc)
+	items := make([]swarm.Service, 0, len(ids))
+	for _, id := range ids {
+		if svc, ok := f.inspected[id]; ok {
+			items = append(items, svc)
+		}
 	}
 	return &client.ServiceListResult{Items: items}, nil
 }

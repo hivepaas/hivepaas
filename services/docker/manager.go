@@ -150,6 +150,8 @@ type Manager interface {
 		*client.ServiceListResult, error)
 	ServiceListByStack(ctx context.Context, namespace string, options ...ServiceListOption) (
 		*client.ServiceListResult, error)
+	ServiceListByIDs(ctx context.Context, serviceIDs []string, options ...ServiceListOption) (
+		*client.ServiceListResult, error)
 	ServiceGetByName(ctx context.Context, serviceName string, status bool) (
 		*swarm.Service, error)
 	ServiceInspect(ctx context.Context, serviceID string, options ...ServiceInspectOption) (

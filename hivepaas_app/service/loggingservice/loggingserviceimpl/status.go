@@ -11,7 +11,6 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/loggingservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/systemappservice"
-	"github.com/hivepaas/hivepaas/services/docker"
 )
 
 // Status reports the apps HivePaaS runs for logging and what they are doing.
@@ -71,25 +70,20 @@ func (s *service) appStatus(ctx context.Context, app *entity.App) (*loggingservi
 	if app.ServiceID == "" {
 		return status, nil
 	}
-	listed, err := s.dockerManager.ServiceList(ctx, func(opts *client.ServiceListOptions) {
-		docker.FilterAdd(&opts.Filters, "id", app.ServiceID)
+	listed, err := s.dockerManager.ServiceListByIDs(ctx, []string{app.ServiceID}, func(opts *client.ServiceListOptions) {
 		opts.Status = true
 	})
 	if err != nil {
 		s.logger.Warnf("cannot read the service of logging app %s: %v", app.Key, err)
 		return status, nil
 	}
-	// The id filter matches prefixes.
-	for i := range listed.Items {
-		svc := &listed.Items[i]
-		if svc.ID != app.ServiceID {
-			continue
-		}
-		if svc.ServiceStatus != nil {
-			status.RunningTasks = svc.ServiceStatus.RunningTasks
-			status.DesiredTasks = svc.ServiceStatus.DesiredTasks
-		}
-		return status, svc
+	if len(listed.Items) == 0 {
+		return status, nil
 	}
-	return status, nil
+	svc := &listed.Items[0]
+	if svc.ServiceStatus != nil {
+		status.RunningTasks = svc.ServiceStatus.RunningTasks
+		status.DesiredTasks = svc.ServiceStatus.DesiredTasks
+	}
+	return status, svc
 }

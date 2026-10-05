@@ -16,7 +16,6 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/appautoscaleservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/appservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/traefikservice"
-	"github.com/hivepaas/hivepaas/services/docker"
 )
 
 func (s *service) Check(
@@ -68,16 +67,14 @@ func (s *service) Check(
 
 // pending is how many of a service's tasks are wanted and not running.
 func (s *service) pending(ctx context.Context, serviceID string) (int, error) {
-	list, err := s.dockerManager.ServiceList(ctx, func(opts *client.ServiceListOptions) {
+	list, err := s.dockerManager.ServiceListByIDs(ctx, []string{serviceID}, func(opts *client.ServiceListOptions) {
 		opts.Status = true
-		docker.FilterAdd(&opts.Filters, "id", serviceID)
 	})
 	if err != nil {
 		return 0, hperrors.Wrap(err)
 	}
 	for _, svc := range list.Items {
-		if svc.ID == serviceID && svc.ServiceStatus != nil &&
-			svc.ServiceStatus.DesiredTasks > svc.ServiceStatus.RunningTasks {
+		if svc.ServiceStatus != nil && svc.ServiceStatus.DesiredTasks > svc.ServiceStatus.RunningTasks {
 			return int(svc.ServiceStatus.DesiredTasks - svc.ServiceStatus.RunningTasks), nil //nolint:gosec // tasks
 		}
 	}

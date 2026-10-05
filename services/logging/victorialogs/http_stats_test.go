@@ -2,7 +2,7 @@ package victorialogs
 
 import (
 	"context"
-	"fmt"
+	"encoding/json"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -81,11 +81,10 @@ func TestLiveHTTPStatsCountOnlyTheAppsRequests(t *testing.T) {
 	self := "svc-" + run + "-0@swarm"
 	start := time.Now().UTC().Truncate(time.Minute).Add(-10 * time.Minute)
 	line := func(component, service, replica, path string, at time.Duration, status, origin int, ms float64) string {
-		msg := fmt.Sprintf(`{\"ServiceName\":\"%s\",\"ServiceURL\":\"%s\",\"RequestMethod\":\"GET\",`+
-			`\"RequestPath\":\"%s\",\"DownstreamStatus\":%d,\"OriginStatus\":%d,\"Duration\":%d}`,
-			service, replica, path, status, origin, int64(ms*1e6))
-		return fmt.Sprintf(`{"_time":%q,"_msg":"%s","%s":%q,"stream":"stdout"}`,
-			start.Add(at).Format(time.RFC3339Nano), msg, traefikField, component)
+		return traefikAccessLine(t, component, start.Add(at), map[string]any{
+			"ServiceName": service, "ServiceURL": replica, "RequestMethod": "GET", "RequestPath": path,
+			"DownstreamStatus": status, "OriginStatus": origin, "Duration": int64(ms * 1e6),
+		})
 	}
 	lines := strings.Join([]string{
 		line("traefik", self, "http://10.0.0.5:8080", "/users/12", 30*time.Second, 200, 200, 10),
@@ -152,13 +151,13 @@ func TestHTTPStatsQueriesNarrowByTheServicePhrase(t *testing.T) {
 	req := httpStatsReq("^svc-01k6a-[0-9]+@swarm$")
 	q, err := BuildHTTPStatsQueries(req)
 	assert.NoError(t, err)
-	assert.Contains(t, q.Totals, `AND "ServiceName" | unpack_json`)
+	assert.Contains(t, q.Totals, `AND "ServiceName" | extract`)
 
 	req.ServicePhrase = "svc-01k6a-"
 	q, err = BuildHTTPStatsQueries(req)
 	assert.NoError(t, err)
 	for _, query := range []string{q.Series, q.Totals, q.Paths, q.Replicas} {
-		assert.Contains(t, query, `AND "ServiceName" AND "svc-01k6a-" | unpack_json`)
+		assert.Contains(t, query, `AND "ServiceName" AND "svc-01k6a-" | extract`)
 	}
 }
 
@@ -209,4 +208,79 @@ func TestHTTPStatsRunsItsQueriesAtOnce(t *testing.T) {
 
 	assert.ErrorIs(t, err, loggingmodel.ErrQueryInvalid, "the replicas' query's own error")
 	assert.Less(t, time.Since(started), time.Second, "the others were not waited for")
+}
+
+// An access log line's fields are taken each by the text before its value in
+// Traefik's JSON - its own key, quoted, a colon - up to the comma after it.
+func TestAccessLogFieldsAreExtractedByTheirKeys(t *testing.T) {
+	assert.Equal(t, ` | extract "\"ServiceName\":<http.ServiceName>," from _msg`+
+		` | extract "\"Duration\":<http.Duration>," from _msg`, extractAccessLog("ServiceName", "Duration"))
+
+	q, err := BuildHTTPStatsQueries(httpStatsReq("^svc-01k6a-[0-9]+@swarm$"))
+	assert.NoError(t, err)
+	assert.NotContains(t, q.Totals, "unpack_json")
+	// Each query takes the fields it counts by, and only after the service
+	// filter.
+	assert.Contains(t, q.Totals, `@swarm$" | extract "\"DownstreamStatus\":`)
+	assert.NotContains(t, q.Totals, "RequestPath")
+	assert.Contains(t, q.Paths, `extract "\"RequestPath\":<http.RequestPath>," from _msg | replace_regexp`)
+	assert.Contains(t, q.Replicas, `extract "\"ServiceURL\":<http.ServiceURL>," from _msg | stats by ("http.ServiceURL")`)
+}
+
+// traefikOwnLine is an access log line Traefik 3.7.13 wrote, verbatim but its
+// service, which %s is: the fields are read from the layout it writes, not
+// from one a test made up.
+const traefikOwnLine = `{"ClientAddr":"172.19.0.1:62090","ClientHost":"172.19.0.1","ClientPort":"62090",` +
+	`"ClientUsername":"-","DownstreamContentSize":365,"DownstreamStatus":200,"Duration":2196000,` +
+	`"OriginContentSize":365,"OriginDuration":2079000,"OriginStatus":200,"Overhead":117000,` +
+	`"RequestAddr":"127.0.0.1:18081","RequestContentSize":0,"RequestCount":1,"RequestHost":"127.0.0.1",` +
+	`"RequestMethod":"GET","RequestPath":"/ok/a,b","RequestPort":"18081","RequestProtocol":"HTTP/1.1",` +
+	`"RequestScheme":"http","RetryAttempts":0,"RouterName":"ok@file","ServiceAddr":"hp-tr-who:80",` +
+	`"ServiceName":"%s","ServiceURL":"http://hp-tr-who:80","StartLocal":"2026-10-05T07:33:48.823112007Z",` +
+	`"StartUTC":"2026-10-05T07:33:48.823112007Z","entryPointName":"web","level":"info","msg":"",` +
+	`"time":"2026-10-05T07:33:48Z"}`
+
+// Run against a VictoriaLogs whose URL is in HP_TEST_VICTORIALOGS_URL.
+func TestLiveHTTPStatsReadTraefiksOwnLine(t *testing.T) {
+	base := os.Getenv("HP_TEST_VICTORIALOGS_URL")
+	if base == "" {
+		t.Skip("HP_TEST_VICTORIALOGS_URL not set")
+	}
+	run := liveRun()
+	at := time.Now().UTC().Add(-time.Minute)
+	msg := strings.Replace(traefikOwnLine, "%s", "svc-"+run+"-0@swarm", 1)
+	line, err := json.Marshal(map[string]string{
+		"_time": at.Format(time.RFC3339Nano), "_msg": msg, traefikField: "traefik", "stream": "stdout",
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	ingestLines(t, base, []string{string(line)})
+
+	c := New(&Config{Endpoint: loggingmodel.Endpoint{URL: base}})
+	req := httpStatsReq("^svc-" + run + "-[0-9]+@swarm$")
+	req.Start, req.End, req.Step = at.Add(-time.Minute), at.Add(time.Minute), time.Minute
+	var got *loggingmodel.HTTPStatsResp
+	for range 20 { // ingestion becomes visible within a second or two
+		if got, err = c.HTTPStats(context.Background(), req); err != nil {
+			t.Fatal(err)
+		}
+		if len(got.Buckets) >= 1 && got.Totals.Requests >= 1 && len(got.ByPath) >= 1 && len(got.ByReplica) >= 1 {
+			break
+		}
+		time.Sleep(250 * time.Millisecond)
+	}
+
+	assert.Equal(t, int64(1), got.Totals.Requests)
+	assert.Zero(t, got.Totals.Errors5xx)
+	if assert.NotNil(t, got.Totals.P50) {
+		assert.InDelta(t, 2.196, *got.Totals.P50, 0.01, "Duration, in ms")
+	}
+	if assert.Len(t, got.ByPath, 1) {
+		assert.Equal(t, "GET", got.ByPath[0].Method)
+		assert.Equal(t, "/ok/a,b", got.ByPath[0].Path, "a quoted value with a comma, whole")
+	}
+	if assert.Len(t, got.ByReplica, 1) {
+		assert.Equal(t, "http://hp-tr-who:80", got.ByReplica[0].Address)
+	}
 }

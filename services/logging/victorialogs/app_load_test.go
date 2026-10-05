@@ -2,8 +2,10 @@ package victorialogs
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"io"
+	"maps"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
@@ -32,7 +34,8 @@ func TestRequestLoadQueryIsOneForAllTheApps(t *testing.T) {
 	assert.True(t, strings.HasPrefix(q, `"`+traefikField+`":="traefik" AND "ServiceName"`), q)
 	// The lines narrowed to the apps' by their services' names, quoted, before
 	// they are unpacked.
-	assert.Contains(t, q, `AND "ServiceName" AND ("svc-app1-" OR "svc-x.y\") | delete | (\"-") | unpack_json`)
+	assert.Contains(t, q, `AND "ServiceName" AND ("svc-app1-" OR "svc-x.y\") | delete | (\"-")`+
+		` | extract "\"ServiceName\":<http.ServiceName>," from _msg | filter`)
 	// Ids lower-cased, as the services are named, and their regexp's
 	// metacharacters escaped; the pattern a quoted literal.
 	assert.Contains(t, q, `:~"^svc-(app1|x\\.y\"\\) \\| delete \\| \\(\")-[0-9]+@swarm$"`)
@@ -41,7 +44,10 @@ func TestRequestLoadQueryIsOneForAllTheApps(t *testing.T) {
 	assert.Contains(t, q, `sum("http.capped") if ("http.OriginDuration":>=0) busyNs, count() requests`)
 	assert.NotContains(t, q, "OriginStatus", "Traefik 3 writes it 0 for what the app answered")
 	// A request the proxy could not get to the app took none of its time.
-	assert.Contains(t, q, `@swarm$" NOT "http.DownstreamStatus":in(502, 503) | copy`)
+	assert.Contains(t, q, `| filter NOT "http.DownstreamStatus":in(502, 503) | copy`)
+	// The fields taken from the app's lines only, after the service filter.
+	assert.Contains(t, q, `@swarm$" | extract "\"DownstreamStatus\":<http.DownstreamStatus>," from _msg`+
+		` | extract "\"OriginDuration\":<http.OriginDuration>," from _msg |`)
 
 	_, err = BuildRequestLoadQuery(&loggingmodel.RequestLoadReq{Match: traefikMatch})
 	assert.ErrorIs(t, err, loggingmodel.ErrQueryScopeRequired)
@@ -127,6 +133,27 @@ func TestLoadsAskAbout200AppsAQuery(t *testing.T) {
 	assert.ErrorIs(t, err, loggingmodel.ErrQueryScopeRequired)
 }
 
+// traefikAccessLine is an access log line as the proxy writes it, in a line of
+// component's container log: JSON with its keys sorted - the upper-case ones
+// first, its own entryPointName, level, msg and time last - and <, > and &
+// escaped, as Traefik's encoder does.
+func traefikAccessLine(t *testing.T, component string, at time.Time, fields map[string]any) string {
+	t.Helper()
+	line := map[string]any{"entryPointName": "websecure", "level": "info", "msg": "", "time": at.Format(time.RFC3339)}
+	maps.Copy(line, fields)
+	msg, err := json.Marshal(line)
+	if err != nil {
+		t.Fatal(err)
+	}
+	out, err := json.Marshal(map[string]string{
+		"_time": at.Format(time.RFC3339Nano), "_msg": string(msg), traefikField: component, "stream": "stdout",
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	return string(out)
+}
+
 // liveRun is what a live test's ids are made unique by: every run's apart,
 // however close - its lines stay in VictoriaLogs.
 func liveRun() string {
@@ -161,10 +188,10 @@ func TestLiveRequestLoadSumsEachAppsRequests(t *testing.T) {
 	// Traefik 3 writes OriginStatus 0 for what the app answered: the app's
 	// time is OriginDuration; Duration adds the proxy's.
 	line := func(component, service string, at time.Duration, originMs float64) string {
-		msg := fmt.Sprintf(`{\"ServiceName\":\"%s\",\"DownstreamStatus\":200,\"OriginStatus\":0,`+
-			`\"OriginDuration\":%d,\"Duration\":%d}`, service, int64(originMs*1e6), int64(originMs*1e6)+5_000_000)
-		return fmt.Sprintf(`{"_time":%q,"_msg":"%s","%s":%q,"stream":"stdout"}`,
-			start.Add(at).Format(time.RFC3339Nano), msg, traefikField, component)
+		return traefikAccessLine(t, component, start.Add(at), map[string]any{
+			"ServiceName": service, "DownstreamStatus": 200, "OriginStatus": 0,
+			"OriginDuration": int64(originMs * 1e6), "Duration": int64(originMs*1e6) + 5_000_000,
+		})
 	}
 	svc := func(id string, n int) string { return fmt.Sprintf("svc-%s-%d@swarm", strings.ToLower(id), n) }
 	ingestLines(t, base, []string{
@@ -176,8 +203,16 @@ func TestLiveRequestLoadSumsEachAppsRequests(t *testing.T) {
 		// the minute, not an hour.
 		line("traefik", svc(busy, 1), 40*time.Second, 3_600_000),
 		// A line whose time is not a number: counted, none of its time.
-		fmt.Sprintf(`{"_time":%q,"_msg":"{\"ServiceName\":\"%s\",\"OriginDuration\":\"x\"}",`+
-			`"%s":"traefik"}`, start.Add(45*time.Second).Format(time.RFC3339Nano), svc(busy, 0), traefikField),
+		traefikAccessLine(t, "traefik", start.Add(45*time.Second), map[string]any{
+			"ServiceName": svc(busy, 0), "DownstreamStatus": 200, "OriginDuration": "x",
+		}),
+		// Proxy's own 502 and 503 - not got to the app: none of its time.
+		traefikAccessLine(t, "traefik", start.Add(46*time.Second), map[string]any{
+			"ServiceName": svc(busy, 0), "DownstreamStatus": 502, "OriginStatus": 0, "OriginDuration": 9_000_000_000,
+		}),
+		traefikAccessLine(t, "traefik", start.Add(47*time.Second), map[string]any{
+			"ServiceName": svc(busy, 1), "DownstreamStatus": 503, "OriginStatus": 0, "OriginDuration": 9_000_000_000,
+		}),
 		// Another app whose id starts the same, one not asked about, a line an
 		// app printed.
 		line("traefik", svc(busy+"X", 0), 10*time.Second, 99999),

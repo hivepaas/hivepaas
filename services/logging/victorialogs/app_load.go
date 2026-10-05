@@ -122,10 +122,10 @@ func BuildRequestLoadQuery(req *loggingmodel.RequestLoadReq) (string, error) {
 	}
 	// Anchored, so that an app's id never matches as the start of another's.
 	services := "^svc-(" + strings.Join(ids, "|") + ")-[0-9]+@swarm$"
-	q := head + ` AND ` + anyPhrase(names) +
-		` | unpack_json from _msg fields (ServiceName, DownstreamStatus, OriginDuration) result_prefix ` +
-		strconv.Quote(HTTPUnpackPrefix) +
-		` | filter ` + httpService + `:~` + strconv.Quote(services) + ` NOT ` + httpStatus + `:in(502, 503)` +
+	q := head + ` AND ` + anyPhrase(names) + extractAccessLog("ServiceName") +
+		` | filter ` + httpService + `:~` + strconv.Quote(services) +
+		extractAccessLog("DownstreamStatus", "OriginDuration") +
+		` | filter NOT ` + httpStatus + `:in(502, 503)` +
 		` | copy ` + httpService + ` as ` + httpApp +
 		` | replace_regexp ("^svc-(.+)-[0-9]+@swarm$", "$1") at ` + httpApp +
 		` | math min(` + httpOriginDuration + `, ` + strconv.FormatInt(span.Nanoseconds(), 10) + `) as ` +

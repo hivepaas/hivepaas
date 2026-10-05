@@ -1037,6 +1037,35 @@ test_bake_install_ref() {
     "$HERE/../../scripts/release/bake-install-ref.sh" "$TMP/no-default.sh" "$TMP/y.sh" v1.0.0
 }
 
+# A stand-in for `docker network inspect ingress`: the sandboxes it lists, or no
+# ingress network at all when INGRESS_MISSING is set.
+fake_ingress() {
+  # shellcheck disable=SC2329 # install.sh's ingress_ready calls it
+  docker() {
+    [ "$1 $2 $3" = "network inspect ingress" ] || return 1
+    [ -z "${INGRESS_MISSING:-}" ] || return 1
+    printf '%s' "${INGRESS_CONTAINERS:-}"
+  }
+}
+
+test_ingress_ready_once_the_node_set_it_up() {
+  fake_ingress
+  INGRESS_CONTAINERS='ingress-sbox '
+  check_ok "the node's ingress sandbox is there" ingress_ready 1
+}
+
+test_ingress_not_ready_when_the_node_could_not_set_it_up() {
+  fake_ingress
+  INGRESS_CONTAINERS=''
+  check_fails "no ingress sandbox" ingress_ready 1
+}
+
+test_no_ingress_network_is_nothing_to_wait_for() {
+  fake_ingress
+  INGRESS_MISSING=1
+  check_ok "a swarm whose ingress network was removed" ingress_ready 1
+}
+
 # ------------------------------------------------------------------- Runner
 
 for t in $(declare -F | awk '$3 ~ /^test_/ {print $3}'); do

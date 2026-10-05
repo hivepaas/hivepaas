@@ -1390,6 +1390,25 @@ install_ref() {
   printf '%s' "${HIVEPAAS_INSTALL_REF:-$INSTALL_REF_DEFAULT}"
 }
 
+# ingress_ready [TRIES]: whether this node has set up the swarm's ingress
+# network, which it does within a second or two of joining a swarm, asking once
+# a second. A node that left another swarm without Docker restarting since
+# cannot: Docker still holds that swarm's network addresses, and logs "Failed
+# creating ingress network: invalid pool request: Pool overlaps with other one
+# on this address space" - and so fails every network of the new swarm given one
+# of them. A swarm whose ingress network was removed has nothing to wait for.
+ingress_ready() {
+  local tries=${1:-20} sandboxes
+  while :; do
+    sandboxes=$(docker network inspect ingress --format '{{range $k, $v := .Containers}}{{$k}} {{end}}' \
+      2>/dev/null) || return 0
+    case " $sandboxes " in *" ingress-sbox "*) return 0 ;; esac
+    tries=$((tries - 1))
+    [ "$tries" -gt 0 ] || return 1
+    sleep 1
+  done
+}
+
 ensure_swarm() {
   local state node
   state=$(docker info --format '{{.Swarm.LocalNodeState}}')
@@ -1415,6 +1434,12 @@ ensure_swarm() {
         "locked), then run the installer again."
       ;;
   esac
+  if ! ingress_ready; then
+    die "Docker could not set up the swarm's network on this server. This happens when the server left" \
+      "another swarm and Docker has not restarted since: it still holds that swarm's network addresses" \
+      "('Pool overlaps with other one on this address space' in 'journalctl -u docker'). Run" \
+      "'sudo systemctl restart docker', then the installer again."
+  fi
   node=$(docker info --format '{{.Swarm.NodeID}}')
   docker node update --label-add hivepaas.role=control-plane "$node" >/dev/null
   ok "Node labeled hivepaas.role=control-plane."

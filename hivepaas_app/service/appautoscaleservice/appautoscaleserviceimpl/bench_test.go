@@ -23,8 +23,9 @@ import (
 	logs "github.com/hivepaas/hivepaas/services/logging"
 )
 
-// calls counts what a run asks of the store, Docker, the logs and Redis. A
-// load is a query of VictoriaLogs, and of the logging setting before it.
+// calls counts what a run asks of the store, Docker, the logs and Redis - the
+// round trips. A load is a query of VictoriaLogs, and of the logging setting
+// before it.
 type calls struct {
 	db, docker, loads, redis, scaled int
 }
@@ -135,29 +136,40 @@ func (f countedLoads) CPULoad(ctx context.Context, db database.IDB, ids []string
 	return f.loads.CPULoad(ctx, db, ids, start, end)
 }
 
-// jsonStates keeps the states as Redis does: marshaled, by key.
+// jsonStates keeps the states as Redis does: marshaled, by key. A call is a
+// round trip.
 type jsonStates struct {
 	raw map[string][]byte
 	n   *calls
 }
 
-func (m jsonStates) load(_ context.Context, id string) state {
+func (m jsonStates) load(_ context.Context, ids []string) map[string]state {
 	m.n.redis++
-	var st state
-	if raw, found := m.raw[fmt.Sprintf(stateKeyFmt, id)]; found {
-		_ = json.Unmarshal(raw, &st)
+	out := map[string]state{}
+	for _, id := range ids {
+		if raw, found := m.raw[fmt.Sprintf(stateKeyFmt, id)]; found {
+			var st state
+			if json.Unmarshal(raw, &st) == nil {
+				out[id] = st
+			}
+		}
 	}
-	return st
+	return out
 }
 
-func (m jsonStates) save(_ context.Context, id string, st state) {
-	m.n.redis++
-	key := fmt.Sprintf(stateKeyFmt, id)
-	if st == (state{}) {
-		delete(m.raw, key)
+func (m jsonStates) save(_ context.Context, states map[string]state) {
+	if len(states) == 0 {
 		return
 	}
-	m.raw[key], _ = json.Marshal(st)
+	m.n.redis++
+	for id, st := range states {
+		key := fmt.Sprintf(stateKeyFmt, id)
+		if st == (state{}) {
+			delete(m.raw, key)
+			continue
+		}
+		m.raw[key], _ = json.Marshal(st)
+	}
 }
 
 // benchWorld is n apps with autoscale on - a third functions, a third apps on

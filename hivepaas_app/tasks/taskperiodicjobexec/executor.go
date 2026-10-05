@@ -17,8 +17,8 @@ type Executor struct {
 	logger logging.Logger
 	db     *database.DB
 
-	healthcheckService       healthcheckservice.Service
-	functionAutoscaleService appautoscaleservice.Service
+	healthcheckService  healthcheckservice.Service
+	appAutoscaleService appautoscaleservice.Service
 }
 
 func NewExecutor(
@@ -27,14 +27,14 @@ func NewExecutor(
 	taskQueue queue.TaskQueue,
 
 	healthcheckService healthcheckservice.Service,
-	functionAutoscaleService appautoscaleservice.Service,
+	appAutoscaleService appautoscaleservice.Service,
 ) *Executor {
 	e := &Executor{
 		logger: logger,
 		db:     db,
 
-		healthcheckService:       healthcheckService,
-		functionAutoscaleService: functionAutoscaleService,
+		healthcheckService:  healthcheckService,
+		appAutoscaleService: appAutoscaleService,
 	}
 	taskQueue.RegisterPeriodicExecutor(e.execute)
 	return e
@@ -63,7 +63,7 @@ func (e *Executor) execute(
 			return hperrors.Wrap(err)
 		}
 	case base.PeriodicKindAppAutoscale:
-		if err = e.functionAutoscaleService.Run(ctx, execData); err != nil {
+		if err = e.appAutoscaleService.Run(ctx, execData); err != nil {
 			return hperrors.Wrap(err)
 		}
 	default:

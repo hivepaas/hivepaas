@@ -197,9 +197,24 @@ func (quiet) Warnf(string, ...any) {}
 
 type memStates map[string]state
 
-func (m memStates) load(_ context.Context, id string) state { return m[id] }
-func (m memStates) save(_ context.Context, id string, st state) {
-	m[id] = st
+func (m memStates) load(_ context.Context, ids []string) map[string]state {
+	out := map[string]state{}
+	for _, id := range ids {
+		if st, found := m[id]; found {
+			out[id] = st
+		}
+	}
+	return out
+}
+
+func (m memStates) save(_ context.Context, states map[string]state) {
+	for id, st := range states {
+		if st == (state{}) {
+			delete(m, id)
+			continue
+		}
+		m[id] = st
+	}
 }
 
 func autoscaleOf(appID string, a *entity.AppAutoscale) *entity.Setting {
@@ -562,4 +577,31 @@ func TestRunTurnsTheJobOffWhenNoAppHasAutoscale(t *testing.T) {
 	run(t, w)
 	assert.Len(t, w.settings.updated, 1, "off already")
 	assert.Equal(t, 1, w.events.published)
+}
+
+// A run reads its apps' states at once and writes them at once - a round
+// trip each, however many apps; a stopped app's is not touched.
+func TestRunReadsAndWritesTheStatesAtOnce(t *testing.T) {
+	w := newWorld()
+	counted := &calls{}
+	store := jsonStates{raw: map[string][]byte{}, n: counted}
+	w.svc.states = store
+	w.loads.byApp = map[string]*logs.InvocationLoad{
+		"F1": {BusyMs: 30_000, Calls: 40, Throttled: 4},
+		"F2": {BusyMs: 6 * 60_000, Calls: 100},
+	}
+
+	run(t, w)
+
+	assert.Equal(t, 2, counted.redis)
+	assert.Contains(t, store.raw, "autoscale:app:F1", "scaled out: its cooldown kept")
+	assert.Contains(t, store.raw, "autoscale:app:F2", "low: its clock kept")
+	assert.NotContains(t, store.raw, "autoscale:app:F3")
+
+	// Read back the next run: F2's clock goes on.
+	before := string(store.raw["autoscale:app:F2"])
+	w.svc.now = func() time.Time { return t0.Add(jobInterval) }
+	run(t, w)
+	assert.Equal(t, 4, counted.redis)
+	assert.Equal(t, before, string(store.raw["autoscale:app:F2"]))
 }

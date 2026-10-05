@@ -73,10 +73,11 @@ const (
 	legacyJobKind = "function-autoscale"
 )
 
-// stateStore keeps an app's state between runs.
+// stateStore keeps the apps' states between runs: those of a run's apps read
+// at once, and written at once.
 type stateStore interface {
-	load(ctx context.Context, appID string) state
-	save(ctx context.Context, appID string, st state)
+	load(ctx context.Context, appIDs []string) map[string]state
+	save(ctx context.Context, states map[string]state)
 }
 
 type service struct {
@@ -326,6 +327,8 @@ func (s *service) Run(ctx context.Context, data *queue.PeriodicExecData) error {
 		errs = append(errs, err)
 	}
 
+	r.states = s.states.load(ctx, gofn.MapSlice(apps, func(app *entity.App) string { return app.ID }))
+	r.next = make(map[string]state, len(apps))
 	output := &entity.TaskAppAutoscaleOutput{}
 	for _, app := range apps {
 		scaled, err := s.runApp(ctx, r, app)
@@ -337,6 +340,7 @@ func (s *service) Run(ctx context.Context, data *queue.PeriodicExecData) error {
 			output.Scaled = append(output.Scaled, scaled)
 		}
 	}
+	s.states.save(ctx, r.next)
 	err = errors.Join(errs...)
 	if len(output.Scaled) > 0 {
 		// A run that changed nothing leaves no task: one every 15 s would
@@ -370,6 +374,10 @@ type runData struct {
 	requests     map[string]*logs.RequestLoad
 	cpuRead      bool
 	cpu          map[string][]*logs.ContainerCPU
+
+	// states are the apps' states the last run left; next those this one
+	// leaves, of the apps it decided.
+	states, next map[string]state
 }
 
 // services are the apps' services, with their tasks running and wanted, by
@@ -563,7 +571,7 @@ func (s *service) runApp(ctx context.Context, r *runData, app *entity.App) (*ent
 		}
 	}
 
-	st := s.states.load(ctx, app.ID)
+	st := r.states[app.ID]
 	st.ShortSince = shortSince(svc, st.ShortSince, r.now)
 	if st.ShortSince > 0 && r.now.Sub(time.Unix(st.ShortSince, 0)) >= clusterFullAfter && a.Want > current {
 		// The cluster has no room for what it scaled to: no more until it has.
@@ -571,7 +579,10 @@ func (s *service) runApp(ctx context.Context, r *runData, app *entity.App) (*ent
 	}
 	d, next := settle(bounds{Current: current, Min: autoscale.MinReplicas, Max: autoscale.MaxReplicas,
 		ScaleInDelay: autoscale.ScaleInDelay.ToDuration(), Now: r.now}, a, st)
-	s.states.save(ctx, app.ID, next)
+	// An app at rest that had none leaves none: nothing to write.
+	if _, had := r.states[app.ID]; had || next != (state{}) {
+		r.next[app.ID] = next
+	}
 	if d.Desired == current {
 		return nil, nil
 	}
@@ -646,30 +657,52 @@ func scalable(svc *swarm.Service, appID string, isFunction bool) (int, bool) {
 	return int(*mode.Replicas), true //nolint:gosec // a service's replicas
 }
 
-// redisStates keeps the states in Redis, shared by the workers.
+// redisStates keeps the states in Redis, shared by the workers: a round trip
+// to read a run's, one to write them, however many apps.
 type redisStates struct {
 	client rediscache.Client
 }
 
-func (r redisStates) load(ctx context.Context, appID string) state {
-	var st state
-	raw, err := r.client.Get(ctx, fmt.Sprintf(stateKeyFmt, appID)).Bytes()
-	if err == nil {
-		_ = json.Unmarshal(raw, &st)
+func (r redisStates) load(ctx context.Context, appIDs []string) map[string]state {
+	out := make(map[string]state, len(appIDs))
+	if len(appIDs) == 0 {
+		return out
 	}
-	return st
+	keys := gofn.MapSlice(appIDs, func(id string) string { return fmt.Sprintf(stateKeyFmt, id) })
+	values, err := r.client.MGet(ctx, keys...).Result()
+	if err != nil {
+		return out
+	}
+	for i, value := range values {
+		raw, ok := value.(string)
+		if !ok {
+			continue
+		}
+		var st state
+		if json.Unmarshal([]byte(raw), &st) == nil {
+			out[appIDs[i]] = st
+		}
+	}
+	return out
 }
 
-// save keeps it for the next run; lost, it starts again, which only delays a
-// scale-out by a run or a scale-in by its delay.
-func (r redisStates) save(ctx context.Context, appID string, st state) {
-	key := fmt.Sprintf(stateKeyFmt, appID)
-	if st == (state{}) {
-		_ = r.client.Del(ctx, key).Err()
+// save keeps them for the next run; lost, an app starts again, which only
+// delays a scale-out by a run or a scale-in by its delay.
+func (r redisStates) save(ctx context.Context, states map[string]state) {
+	if len(states) == 0 {
 		return
 	}
-	raw, _ := json.Marshal(st)
-	_ = r.client.Set(ctx, key, raw, stateTTL).Err()
+	pipe := r.client.Pipeline()
+	for appID, st := range states {
+		key := fmt.Sprintf(stateKeyFmt, appID)
+		if st == (state{}) {
+			pipe.Del(ctx, key)
+			continue
+		}
+		raw, _ := json.Marshal(st)
+		pipe.Set(ctx, key, raw, stateTTL)
+	}
+	_, _ = pipe.Exec(ctx)
 }
 
 func callsOf(load *logs.InvocationLoad) int64 {

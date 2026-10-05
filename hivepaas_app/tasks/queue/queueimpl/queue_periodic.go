@@ -19,7 +19,11 @@ import (
 )
 
 const (
-	taskPeriodicLockKey      = "task:periodic:%v:lock"
+	taskPeriodicLockKey = "task:periodic:%v:lock"
+	// periodicLockTTL is the least a periodic job's lock is held for; it is
+	// held periodicLockMargin past a longer run's bound.
+	periodicLockTTL          = time.Minute
+	periodicLockMargin       = 10 * time.Second
 	cachePeriodicSettingsExp = 5 * time.Minute
 	defaultPeriodicBatchSize = 100
 )
@@ -105,8 +109,15 @@ func (q *taskQueue) doPeriodicTask(
 	savingTasks *[]*entity.Task,
 	mu *sync.Mutex,
 ) error {
+	// A run is bounded by its job's timeout, or its type's ceiling: the round
+	// waits for every job it runs, so one that hangs - on a service or a node
+	// that does not answer - would hold up the others, healthchecks among them,
+	// as long as it hangs. The lock outlives that bound, so that no other
+	// worker starts the job while this run may still be going.
+	timeout := resolveTaskTimeout(periodicData.Task)
 	lockKey := fmt.Sprintf(taskPeriodicLockKey, periodicData.PeriodicSetting.ID)
-	success, releaser, err := q.taskService.CreateRedisLock(ctx, lockKey, time.Minute)
+	success, releaser, err := q.taskService.CreateRedisLock(ctx, lockKey,
+		max(periodicLockTTL, timeout+periodicLockMargin))
 	if err != nil {
 		return hperrors.Wrap(err)
 	}
@@ -115,7 +126,9 @@ func (q *taskQueue) doPeriodicTask(
 	}
 	defer releaser()
 
-	err = q.periodicExecutor(ctx, periodicData)
+	runCtx, cancel := context.WithTimeout(ctx, timeout)
+	defer cancel()
+	err = q.periodicExecutor(runCtx, periodicData)
 	if periodicData.SaveTask {
 		mu.Lock()
 		*savingTasks = append(*savingTasks, periodicData.Task)

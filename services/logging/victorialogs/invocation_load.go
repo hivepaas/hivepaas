@@ -12,8 +12,8 @@ import (
 
 // BuildInvocationLoadQuery turns a request into LogsQL by the rules BuildQuery
 // keeps: every value from the request in a Go-quoted literal, the structure
-// fixed here. One query for every function asked about, grouped by app: its
-// cost does not grow with them.
+// fixed here. One query for every function asked about, grouped by app - 200
+// at most, see loadIDsPerQuery.
 //
 // A call counts for the range at most: one that ran longer was in flight for
 // the whole range, not more - its whole duration, ending in it, would read as
@@ -84,20 +84,28 @@ func shortPart(start, shortStart, end time.Time) (*shortRange, error) {
 func (c *Client) InvocationLoad(
 	ctx context.Context, req *loggingmodel.InvocationLoadReq,
 ) (*loggingmodel.InvocationLoadResp, error) {
-	q, err := BuildInvocationLoadQuery(req)
-	if err != nil {
-		return nil, hperrors.Wrap(err)
-	}
-	rows, err := c.rows(ctx, q, req.Start, req.End)
-	if err != nil {
-		return nil, hperrors.Wrap(err)
-	}
-	out := &loggingmodel.InvocationLoadResp{ByApp: make(map[string]*loggingmodel.InvocationLoad, len(rows))}
-	for _, row := range rows {
-		out.ByApp[row[req.Field]] = &loggingmodel.InvocationLoad{
-			BusyMs: value(row["busyMs"]), Calls: whole(row["calls"]), Throttled: whole(row["throttled"]),
-			ShortBusyMs: value(row["shortBusyMs"]), ShortCalls: whole(row["shortCalls"]),
+	out := &loggingmodel.InvocationLoadResp{ByApp: make(map[string]*loggingmodel.InvocationLoad, len(req.AppIDs))}
+	err := inChunks(req.AppIDs, func(ids []string) error {
+		part := *req
+		part.AppIDs = ids
+		q, err := BuildInvocationLoadQuery(&part)
+		if err != nil {
+			return hperrors.Wrap(err)
 		}
+		rows, err := c.rows(ctx, q, req.Start, req.End)
+		if err != nil {
+			return hperrors.Wrap(err)
+		}
+		for _, row := range rows {
+			out.ByApp[row[req.Field]] = &loggingmodel.InvocationLoad{
+				BusyMs: value(row["busyMs"]), Calls: whole(row["calls"]), Throttled: whole(row["throttled"]),
+				ShortBusyMs: value(row["shortBusyMs"]), ShortCalls: whole(row["shortCalls"]),
+			}
+		}
+		return nil
+	})
+	if err != nil {
+		return nil, err
 	}
 	return out, nil
 }

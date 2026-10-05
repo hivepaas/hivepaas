@@ -3,8 +3,12 @@ package victorialogs
 import (
 	"context"
 	"fmt"
+	"io"
 	"net/http"
+	"net/http/httptest"
+	"net/url"
 	"os"
+	"regexp"
 	"strings"
 	"testing"
 	"time"
@@ -25,6 +29,9 @@ func TestRequestLoadQueryIsOneForAllTheApps(t *testing.T) {
 	})
 	assert.NoError(t, err)
 	assert.True(t, strings.HasPrefix(q, `"`+traefikField+`":="traefik" AND "ServiceName"`), q)
+	// The lines narrowed to the apps' by their services' names, quoted, before
+	// they are unpacked.
+	assert.Contains(t, q, `AND "ServiceName" AND ("svc-app1-" OR "svc-x.y\") | delete | (\"-") | unpack_json`)
 	// Ids lower-cased, as the services are named, and their regexp's
 	// metacharacters escaped; the pattern a quoted literal.
 	assert.Contains(t, q, `:~"^svc-(app1|x\\.y\"\\) \\| delete \\| \\(\")-[0-9]+@swarm$"`)
@@ -56,10 +63,64 @@ func TestCPULoadQueryIsOneForAllTheApps(t *testing.T) {
 	q, err := BuildCPULoadQuery(&loggingmodel.CPULoadReq{Match: agentMatch, AppIDs: []string{"A1", `x") | delete`}})
 	assert.NoError(t, err)
 	assert.True(t, strings.HasPrefix(q, `"`+agentField+`":="agent" AND`), q)
+	assert.Contains(t, q, `AND "\"hp\":\"resources\"" AND ("A1" OR "x\") | delete") | unpack_json`)
 	assert.Contains(t, q, `"res.app":in("A1","x\") | delete")`)
 	assert.Contains(t, q, `| stats by ("res.app", "res.container") avg("res.cpu") cpu, max("res.cpuLimit") cpuLimit`)
 
 	_, err = BuildCPULoadQuery(&loggingmodel.CPULoadReq{Match: agentMatch})
+	assert.ErrorIs(t, err, loggingmodel.ErrQueryScopeRequired)
+}
+
+// Apps are asked about 200 a query, every query's rows in the one answer: a
+// query of them all could pass VictoriaLogs' 16 KB limit, which a full one of
+// ULIDs does not.
+func TestLoadsAskAbout200AppsAQuery(t *testing.T) {
+	var queries []string
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		body, _ := io.ReadAll(r.Body)
+		form, _ := url.ParseQuery(string(body))
+		q := form.Get("query")
+		queries = append(queries, q)
+		// A row for the first app each query asks about.
+		first := regexp.MustCompile(`"svc-(app\d+)-"|"(APP\d+)"|:in\("(APP\d+)"`).FindStringSubmatch(q)
+		id := first[1] + first[2] + first[3]
+		_, _ = fmt.Fprintf(w, `{"http.app":%q,"requests":"3","res.app":%q,"res.container":"c","cpu":"0.5",`+
+			`"attrs.hivepaas.app.id":%q,"calls":"2"}`+"\n", id, id, id)
+	}))
+	defer srv.Close()
+	c := New(&Config{Endpoint: loggingmodel.Endpoint{URL: srv.URL}})
+	ids := make([]string, 0, 450)
+	for i := range 450 {
+		ids = append(ids, fmt.Sprintf("APP%023d", i))
+	}
+	ctx := context.Background()
+
+	requests, err := c.RequestLoad(ctx, &loggingmodel.RequestLoadReq{Match: traefikMatch, AppIDs: ids,
+		Start: loadStart, End: loadEnd, ShortStart: loadEnd.Add(-15 * time.Second)})
+	assert.NoError(t, err)
+	cpu, err := c.CPULoad(ctx, &loggingmodel.CPULoadReq{Match: agentMatch, AppIDs: ids, Start: loadStart, End: loadEnd})
+	assert.NoError(t, err)
+	calls, err := c.InvocationLoad(ctx, &loggingmodel.InvocationLoadReq{Field: "attrs.hivepaas.app.id", AppIDs: ids,
+		Start: loadStart, End: loadEnd, ShortStart: loadEnd.Add(-15 * time.Second)})
+	assert.NoError(t, err)
+
+	assert.Len(t, queries, 9, "3 a load")
+	for _, q := range queries {
+		assert.Less(t, len(q), 16384)
+	}
+	for _, id := range []string{ids[0], ids[200], ids[400]} {
+		if assert.Contains(t, requests.ByApp, id) {
+			assert.Equal(t, int64(3), requests.ByApp[id].Requests)
+		}
+		assert.Len(t, cpu.ByApp[id], 1)
+		if assert.Contains(t, calls.ByApp, id) {
+			assert.Equal(t, int64(2), calls.ByApp[id].Calls)
+		}
+	}
+	assert.Len(t, requests.ByApp, 3)
+
+	// None is refused, as ever.
+	_, err = c.RequestLoad(ctx, &loggingmodel.RequestLoadReq{Match: traefikMatch, Start: loadStart, End: loadEnd})
 	assert.ErrorIs(t, err, loggingmodel.ErrQueryScopeRequired)
 }
 

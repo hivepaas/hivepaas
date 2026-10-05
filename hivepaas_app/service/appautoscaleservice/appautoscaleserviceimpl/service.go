@@ -430,7 +430,13 @@ func (s *service) readApps(ctx context.Context, r *runData, apps []*entity.App) 
 	var onRequests, onCPU []string
 	for _, app := range apps {
 		a := r.autoscales[app.ID]
-		if r.concurrency[app.ID] > 0 || a == nil {
+		if a == nil {
+			continue
+		}
+		// A function's requests through the proxy too, when it has a domain:
+		// see askFunctionSignals.
+		if r.concurrency[app.ID] > 0 {
+			onRequests = append(onRequests, app.ID)
 			continue
 		}
 		if a.RequestsTarget > 0 {
@@ -542,15 +548,11 @@ func (s *service) runApp(ctx context.Context, r *runData, app *entity.App) (*ent
 	change := &entity.AppAutoscaleChange{App: app.ID, Name: app.Name, From: current}
 	var a ask
 	if isFunction {
-		if !r.functionsRead {
+		in := s.functionInputOf(r, app, autoscale, current, change)
+		var read bool
+		if a, change.InFlight, read = askFunctionSignals(in); !read {
 			return nil, nil
 		}
-		load := r.functionLoads[app.ID]
-		in := &input{Current: current, Concurrency: concurrency, Target: autoscale.Target, Window: window,
-			ShortWindow: shortWindow, Load: load}
-		a, change.InFlight = askFunction(in)
-		change.Calls, change.Throttled = callsOf(load), throttledOf(load)
-		change.Concurrency, change.Target = concurrency, autoscale.Target
 	} else {
 		in := s.appInputOf(r, app, autoscale, svc, current)
 		var read bool
@@ -600,12 +602,38 @@ func (s *service) runApp(ctx context.Context, r *runData, app *entity.App) (*ent
 	return change, nil
 }
 
+// functionInputOf is what a function is decided from this run: its calls, and
+// its requests through the proxy when a domain reaches it; what was read goes
+// into the change too.
+func (s *service) functionInputOf(
+	r *runData, app *entity.App, autoscale *entity.AppAutoscale, current int, change *entity.AppAutoscaleChange,
+) functionInput {
+	concurrency := r.concurrency[app.ID]
+	change.Concurrency, change.Target = concurrency, autoscale.Target
+	var in functionInput
+	if r.functionsRead {
+		load := r.functionLoads[app.ID]
+		in.Calls = &input{Current: current, Concurrency: concurrency, Target: autoscale.Target, Window: window,
+			ShortWindow: shortWindow, Load: load}
+		change.Calls, change.Throttled = callsOf(load), throttledOf(load)
+	}
+	if r.requestsRead && r.exposed[app.ID] {
+		requests := r.requests[app.ID]
+		in.Requests = &appInput{Current: current, Window: window, ShortWindow: shortWindow,
+			RequestsTarget: perInstanceOf(concurrency, autoscale.Target), RequestsRead: true, Requests: requests}
+		if requests != nil {
+			change.Requests = requests.Requests
+		}
+	}
+	return in
+}
+
 // appInputOf is what an app other than a function is decided from this run.
 func (s *service) appInputOf(
 	r *runData, app *entity.App, autoscale *entity.AppAutoscale, svc *swarm.Service, current int,
 ) *appInput {
 	in := &appInput{Current: current, Window: window, ShortWindow: shortWindow,
-		RequestsTarget: autoscale.RequestsTarget, CPUTarget: autoscale.CPUTarget,
+		RequestsTarget: float64(autoscale.RequestsTarget), CPUTarget: autoscale.CPUTarget,
 		Reservation: cpuReservation(&svc.Spec)}
 	if r.requestsRead && r.exposed[app.ID] {
 		in.RequestsRead, in.Requests = true, r.requests[app.ID]

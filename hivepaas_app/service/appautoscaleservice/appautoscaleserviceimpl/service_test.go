@@ -607,3 +607,55 @@ func TestRunReadsAndWritesTheStatesAtOnce(t *testing.T) {
 	assert.Equal(t, 4, counted.redis)
 	assert.Equal(t, before, string(store.raw["autoscale:app:F2"]))
 }
+
+// A function a domain reaches scales on its requests through the proxy when
+// its handler's time says nothing; one no domain reaches, on its calls only.
+func TestRunScalesAFunctionOnItsRequestsThroughTheProxy(t *testing.T) {
+	w := newWorld()
+	routing := &entity.Setting{ID: "rt-F1", Type: base.SettingTypeAppRouting, ObjectID: "F1"}
+	routing.MustSetData(&entity.AppRoutingSettings{ExposePublicly: true,
+		Domains: []*entity.AppDomain{{Enabled: true, Domain: "f1.example.com"}}})
+	w.settings.routings = []*entity.Setting{routing}
+	w.loads.byApp = map[string]*logs.InvocationLoad{
+		"F1": {BusyMs: 6_000, Calls: 50_000}, // 0.1 in flight in the handler
+		"F2": {BusyMs: 6_000, Calls: 50_000},
+	}
+	// 20 requests in flight at the proxy for each.
+	w.loads.requests = map[string]*logs.RequestLoad{
+		"F1": {BusyMs: 20 * 60_000, Requests: 50_000},
+		"F2": {BusyMs: 20 * 60_000, Requests: 50_000},
+	}
+
+	runAt(t, w, t0)
+	data := runAt(t, w, t0.Add(15*time.Second))
+
+	assert.Equal(t, map[string]uint64{"s1": 3}, w.swarm.scaled, "F1: 20 at 7 an instance; F2 has no domain")
+	out := &entity.TaskAppAutoscaleOutput{}
+	assert.NoError(t, json.Unmarshal([]byte(data.Task.Output), out))
+	if assert.Len(t, out.Scaled, 1) {
+		assert.Equal(t, "F1", out.Scaled[0].App)
+		assert.Equal(t, "20.0 requests in flight, 7 an instance", out.Scaled[0].Reason)
+		assert.Equal(t, int64(50_000), out.Scaled[0].Requests)
+		assert.Equal(t, int64(50_000), out.Scaled[0].Calls)
+		assert.InDelta(t, 20, out.Scaled[0].InFlight, 1e-9)
+	}
+}
+
+// A function whose calls cannot be read scales on its requests, when a domain
+// reaches it, rather than holding.
+func TestRunScalesAFunctionOnItsRequestsWhenItsCallsCannotBeRead(t *testing.T) {
+	w := newWorld()
+	routing := &entity.Setting{ID: "rt-F1", Type: base.SettingTypeAppRouting, ObjectID: "F1"}
+	routing.MustSetData(&entity.AppRoutingSettings{ExposePublicly: true,
+		Domains: []*entity.AppDomain{{Enabled: true, Domain: "f1.example.com"}}})
+	w.settings.routings = []*entity.Setting{routing}
+	w.loads.err = errors.New("calls unreadable")
+	w.loads.requests = map[string]*logs.RequestLoad{"F1": {BusyMs: 20 * 60_000, Requests: 50_000}}
+
+	for i := range 2 {
+		w.svc.now = func() time.Time { return t0.Add(time.Duration(i) * 15 * time.Second) }
+		_ = w.svc.Run(context.Background(), &queue.PeriodicExecData{Task: &entity.Task{ID: "task"}})
+	}
+
+	assert.Equal(t, map[string]uint64{"s1": 3}, w.swarm.scaled)
+}

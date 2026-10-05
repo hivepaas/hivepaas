@@ -118,7 +118,7 @@ func askFunction(in *input) (ask, float64) {
 		inFlight = in.Load.BusyMs / float64(in.Window.Milliseconds())
 		calls, throttled = in.Load.Calls, in.Load.Throttled
 	}
-	perInstance := float64(max(in.Concurrency, 1)) * float64(in.Target) / 100 //nolint:mnd // percent
+	perInstance := perInstanceOf(in.Concurrency, in.Target)
 	a := ask{
 		Want: int(math.Ceil(inFlight / perInstance)),
 		Up:   fmt.Sprintf("%.1f calls in flight, %.1f an instance", inFlight, perInstance),
@@ -134,6 +134,45 @@ func askFunction(in *input) (ask, float64) {
 		a = withBurst(a, in.Current, in.Load.ShortBusyMs, in.ShortWindow, perInstance, "calls")
 	}
 	return a, inFlight
+}
+
+// perInstanceOf is what a function's instance is kept at: Target percent of
+// its Concurrency, calls - or requests through the proxy - in flight.
+func perInstanceOf(concurrency, target int) float64 {
+	return float64(max(concurrency, 1)) * float64(target) / 100 //nolint:mnd // percent
+}
+
+// functionInput is what a function's decision is made from: its calls, nil
+// when they could not be read; and, reached through the proxy by a domain of
+// its own, its requests there, nil when it is not or they could not be read.
+type functionInput struct {
+	Calls    *input
+	Requests *appInput
+}
+
+// askFunctionSignals is what a function's signals ask, as askApp picks: its
+// calls, and its requests through the proxy at the same target an instance.
+// The calls' time is the handler's only: a single-threaded runtime - Node's,
+// Bun's - short of CPU queues the next requests before it sees them, and its
+// handler's time stays what it was. The proxy waits that queue out too. The
+// calls still say what the proxy does not: those from inside the cluster, and
+// those turned away. false when neither could be read: it holds.
+func askFunctionSignals(in functionInput) (ask, float64, bool) {
+	var asks []ask
+	var inFlights []float64
+	if in.Calls != nil {
+		a, inFlight := askFunction(in.Calls)
+		asks, inFlights = append(asks, a), append(inFlights, inFlight)
+	}
+	if in.Requests != nil {
+		a, inFlight := askRequests(in.Requests)
+		asks, inFlights = append(asks, a), append(inFlights, inFlight)
+	}
+	if len(asks) == 0 {
+		return ask{}, 0, false
+	}
+	a, at := pick(asks)
+	return a, inFlights[at], true
 }
 
 // withBurst is an ask with the window's last part read in: when what was in
@@ -168,7 +207,7 @@ type appInput struct {
 	// RequestsTarget is the requests in flight an instance takes; 0 when the
 	// app does not scale on them. Requests is nil when none ended in the
 	// window, the access log having been read.
-	RequestsTarget int
+	RequestsTarget float64
 	RequestsRead   bool
 	Requests       *logging.RequestLoad
 
@@ -200,16 +239,25 @@ func askApp(in *appInput) (ask, float64, bool) {
 	if len(asks) == 0 {
 		return ask{}, 0, false
 	}
-	out := asks[0]
+	out, _ := pick(asks)
+	return out, inFlight, true
+}
+
+// pick is the ask a run acts on of several signals': an urgent one first - a
+// burst is acted on at once, and the others are given on the runs after - then
+// the one wanting more; and its index. Its Low says them all, for the scale-in
+// it may come to.
+func pick(asks []ask) (ask, int) {
+	out, at := asks[0], 0
 	lows := []string{asks[0].Low}
-	for _, a := range asks[1:] {
+	for i, a := range asks[1:] {
 		lows = append(lows, a.Low)
 		if (a.Urgent && !out.Urgent) || (a.Urgent == out.Urgent && a.Want > out.Want) {
-			out = a
+			out, at = a, i+1
 		}
 	}
 	out.Low = strings.Join(lows, ", ")
-	return out, inFlight, true
+	return out, at
 }
 
 // askRequests: as many instances as the requests in flight need, by Little's
@@ -220,12 +268,12 @@ func askRequests(in *appInput) (ask, float64) {
 		inFlight = in.Requests.BusyMs / float64(in.Window.Milliseconds())
 	}
 	a := ask{
-		Want: int(math.Ceil(inFlight / float64(in.RequestsTarget))),
-		Up:   fmt.Sprintf("%.1f requests in flight, %d an instance", inFlight, in.RequestsTarget),
+		Want: int(math.Ceil(inFlight / in.RequestsTarget)),
+		Up:   fmt.Sprintf("%.1f requests in flight, %g an instance", inFlight, in.RequestsTarget),
 		Low:  fmt.Sprintf("%.1f requests in flight", inFlight),
 	}
 	if in.Requests != nil {
-		a = withBurst(a, in.Current, in.Requests.ShortBusyMs, in.ShortWindow, float64(in.RequestsTarget), "requests")
+		a = withBurst(a, in.Current, in.Requests.ShortBusyMs, in.ShortWindow, in.RequestsTarget, "requests")
 	}
 	return a, inFlight
 }

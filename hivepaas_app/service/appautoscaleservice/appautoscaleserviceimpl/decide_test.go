@@ -231,3 +231,37 @@ func TestAskApp(t *testing.T) {
 	_, _, ok = askApp(in)
 	assert.False(t, ok)
 }
+
+// A function reached through the proxy asks of its requests there too, at its
+// calls' target an instance, and the larger is taken: a single-threaded
+// runtime short of CPU queues requests its handler's time does not show.
+func TestAFunctionAsksOfItsRequestsThroughTheProxyToo(t *testing.T) {
+	calls := in(1, busy(0.1), t0) // the handler's time: next to nothing
+	requests := &appInput{Current: 1, Window: time.Minute, RequestsTarget: perInstanceOf(10, 70),
+		RequestsRead: true, Requests: &logging.RequestLoad{BusyMs: 34 * 60_000, Requests: 50_000}}
+
+	a, inFlight, ok := askFunctionSignals(functionInput{Calls: calls, Requests: requests})
+	assert.True(t, ok)
+	assert.Equal(t, 5, a.Want, "34 requests in flight at 7 an instance")
+	assert.Equal(t, "34.0 requests in flight, 7 an instance", a.Up)
+	assert.Equal(t, "0.1 calls in flight, 34.0 requests in flight", a.Low)
+	assert.InDelta(t, 34, inFlight, 1e-9, "the signal taken's")
+
+	// Calls turned away are acted on at once, whatever the requests ask.
+	calls.Load = &logging.InvocationLoad{BusyMs: 60_000, Calls: 100, Throttled: 20}
+	a, inFlight, _ = askFunctionSignals(functionInput{Calls: calls, Requests: requests})
+	assert.True(t, a.Urgent)
+	assert.Equal(t, "20 of 100 calls turned away", a.Up)
+	assert.InDelta(t, 1, inFlight, 1e-9)
+
+	// Not reached through the proxy: its calls only.
+	a, _, ok = askFunctionSignals(functionInput{Calls: in(1, busy(20), t0)})
+	assert.True(t, ok)
+	assert.Equal(t, 3, a.Want)
+	// Its calls unread: its requests only. Neither: it holds.
+	a, _, ok = askFunctionSignals(functionInput{Requests: requests})
+	assert.True(t, ok)
+	assert.Equal(t, 5, a.Want)
+	_, _, ok = askFunctionSignals(functionInput{})
+	assert.False(t, ok)
+}

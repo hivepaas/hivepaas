@@ -213,3 +213,21 @@ same `app-autoscale` setting, with its fields for apps:
   now has its job's timeout - 1 minute for this one - or its type's ceiling as
   a deadline, and its lock outlives it.
 
+
+## Found on test (2026-10-05)
+
+- A request the proxy could not get to the app - a `502`, nothing listening;
+  a `503`, no replica - was read as load: an app down, load-tested, scaled
+  out. Both are left out of the request load.
+- A Node.js or Bun function never scaled under load: the calls' time is the
+  handler's, and a single-threaded runtime short of CPU queues requests in
+  the socket before its loop sees them. Measured on a local stack, the
+  handler at 0.005 ms and the proxy waiting 196 ms; timing from the request's
+  arrival in the runtime reads 0.03 ms too. Go and Python, many calls at once,
+  are preempted inside the timed span and fill their Concurrency, so they
+  scaled. A function a domain reaches now reads its requests at the proxy
+  too, at its calls' target an instance, and takes the larger ask - the same
+  pick as an app's signals. Calls from inside the project still count only
+  as calls; a Node.js function reached there only, short of CPU, still does
+  not scale - an event-loop utilization signal from the runtime would be
+  the fix.

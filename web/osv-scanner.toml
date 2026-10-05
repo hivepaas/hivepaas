@@ -1,0 +1,11 @@
+# Flaws OSV-Scanner reports that were reviewed and accepted. Each says why,
+# and expires, so that it is looked at again.
+
+[[IgnoredVulns]]
+# braces 3.0.3, the latest: a stack overflow on deeply nested patterns. Only
+# the lint tooling has it (eslint-import-resolver-typescript > fast-glob >
+# micromatch), on the repository's own globs; the bundle the browser loads
+# does not.
+id = "GHSA-vfj7-8cjw-p6xm"
+ignoreUntil = 2027-01-05T00:00:00Z
+reason = "lint tooling only, on the repository's own globs; no fixed release yet"

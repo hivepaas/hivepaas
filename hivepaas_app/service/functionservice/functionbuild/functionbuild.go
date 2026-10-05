@@ -48,6 +48,9 @@ type DockerfileReq struct {
 type DockerfileResp struct {
 	Content string
 	Notes   []string
+	// Images are the runtime images the Dockerfile builds on and runs on, by
+	// their key in DockerfileReq.Images.
+	Images map[string]string
 }
 
 // manifest is what a runtime installs a function's libraries from.
@@ -108,7 +111,25 @@ func Dockerfile(req *DockerfileReq) (*DockerfileResp, error) {
 	}
 	writeEnv(w, append(entrypointEnv(src), limitsEnv(src)...))
 
-	return &DockerfileResp{Content: w.String(), Notes: st.notes}, nil
+	images := map[string]string{string(src.Runtime): st.runImage}
+	if src.Runtime.Compiled() {
+		images[base.FunctionBuildImageKey(src.Runtime)] = st.baseImage
+	}
+	return &DockerfileResp{Content: w.String(), Notes: st.notes, Images: images}, nil
+}
+
+// RuntimeOutdated says whether a function built on these runtime images, as its
+// deployment recorded them, would be built on others under this release. A
+// function that recorded none is not outdated, nothing says it is, and neither
+// is one whose runtime the release has no image for: building it again could
+// not move it.
+func RuntimeOutdated(built, release map[string]string) bool {
+	for key, image := range built {
+		if current := release[key]; current != "" && current != image {
+			return true
+		}
+	}
+	return false
 }
 
 // stages is what a function's Dockerfile and its libraries' have in common: the

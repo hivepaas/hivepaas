@@ -57,6 +57,10 @@ type AppResp struct {
 	// Category is what the app is - function, database, webapp - and is empty
 	// for an app that declares no kind.
 	Category base.AppCategory `json:"category,omitempty" copy:"-"` // manual copy, from the kind setting
+	// RuntimeOutdated says, of a function, that the deployment it runs was built
+	// on other runtime images than this HivePaaS version's: deploying it again
+	// moves it to them. Only an app's own get answers it.
+	RuntimeOutdated bool `json:"runtimeOutdated,omitempty" copy:"-"`
 
 	ChildApps        []*AppResp `json:"childApps,omitempty" copy:"-"`
 	LogicalChildApps []*AppResp `json:"logicalChildApps,omitempty" copy:"-"`

@@ -49897,6 +49897,10 @@
             "description" : "manual copy",
             "type" : "object"
           },
+          "runtimeOutdated" : {
+            "description" : "RuntimeOutdated says, of a function, that the deployment it runs was built\non other runtime images than this HivePaaS version's: deploying it again\nmoves it to them. Only an app's own get answers it.",
+            "type" : "boolean"
+          },
           "stats" : {
             "allOf" : [ {
               "$ref" : "#/components/schemas/appdto.AppStatsResp"
@@ -49921,7 +49925,7 @@
             "type" : "string"
           }
         },
-        "required" : [ "accessLinks", "category", "childApps", "createdAt", "engine", "env", "id", "key", "logicalChildApps", "name", "note", "parentApp", "photo", "project", "stats", "status", "tags", "updateVer", "updatedAt" ],
+        "required" : [ "accessLinks", "category", "childApps", "createdAt", "engine", "env", "id", "key", "logicalChildApps", "name", "note", "parentApp", "photo", "project", "runtimeOutdated", "stats", "status", "tags", "updateVer", "updatedAt" ],
         "type" : "object"
       },
       "appdto.AppStatsResp" : {

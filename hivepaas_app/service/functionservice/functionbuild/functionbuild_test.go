@@ -309,3 +309,37 @@ func TestTheSameFunctionHasTheSameContentHash(t *testing.T) {
 		{Path: "a", Content: "bc"},
 	}}, ""))
 }
+
+// A function's Dockerfile says which runtime images it builds on and runs on,
+// by their key in the release: what its deployment records.
+func TestTheDockerfileSaysWhichRuntimeImagesItUses(t *testing.T) {
+	for runtime, want := range map[base.FunctionRuntime]map[string]string{
+		base.FunctionRuntimeNode24: {"node24": images["node24"]},
+		base.FunctionRuntimeGo127:  {"go127": images["go127"], "go127-build": images["go127-build"]},
+	} {
+		resp, err := Dockerfile(&DockerfileReq{Source: source(runtime), Images: images, SourceDir: t.TempDir()})
+		if assert.NoError(t, err, runtime) {
+			assert.Equal(t, want, resp.Images, runtime)
+		}
+	}
+}
+
+// A function is on an older runtime when an image it was built on is no longer
+// the release's. One whose deployment recorded none is not - nothing says so -
+// and neither is one whose runtime the release has no image for, since a new
+// deployment could not move it anywhere.
+func TestARuntimeIsOutdatedOnceTheReleaseMovesOn(t *testing.T) {
+	release := map[string]string{"node24": "node:2", "go127": "go:2", "go127-build": "gobuild:2"}
+	for name, tc := range map[string]struct {
+		built map[string]string
+		want  bool
+	}{
+		"the release's":               {map[string]string{"node24": "node:2"}, false},
+		"an older one":                {map[string]string{"node24": "node:1"}, true},
+		"an older build image":        {map[string]string{"go127": "go:2", "go127-build": "gobuild:1"}, true},
+		"none recorded":               {nil, false},
+		"a runtime the release lacks": {map[string]string{"ruby3": "ruby:1"}, false},
+	} {
+		assert.Equal(t, tc.want, RuntimeOutdated(tc.built, release), name)
+	}
+}

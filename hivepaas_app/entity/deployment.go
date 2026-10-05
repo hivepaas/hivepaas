@@ -98,4 +98,8 @@ type AppDeploymentOutput struct {
 	CommitMessage string   `json:"commitMessage,omitempty"`
 	CommitAuthor  string   `json:"commitAuthor,omitempty"`
 	ImageTags     []string `json:"imageTags,omitempty"`
+	// RuntimeImages are the runtime images a function was built on, by their key
+	// in the release's functionRuntimes: the release it was built under named
+	// them, and a later one may name others.
+	RuntimeImages map[string]string `json:"runtimeImages,omitempty"`
 }

@@ -58,6 +58,12 @@ func (uc *UC) GetApp(
 	if err != nil {
 		return nil, hperrors.Wrap(err)
 	}
+	if resp.Category == base.AppCategoryFunction {
+		resp.RuntimeOutdated, err = uc.functionRuntimeOutdated(ctx, app.ID)
+		if err != nil {
+			return nil, hperrors.Wrap(err)
+		}
+	}
 
 	return &appdto.GetAppResp{
 		Data: resp,

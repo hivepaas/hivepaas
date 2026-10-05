@@ -190,6 +190,7 @@ func (s *service) functionDeployStepImageBuild(
 	for _, note := range dockerfile.Notes {
 		_ = data.LogStore.Add(ctx, tasklog.NewWarnFrame(note, tasklog.TsNow))
 	}
+	data.Deployment.Output.RuntimeImages = dockerfile.Images
 
 	// Inline code has no commit: its image is tagged after its content.
 	commitHash := ""

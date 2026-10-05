@@ -203,4 +203,6 @@ func TestAFunctionIsBuiltFromTheDockerfileWrittenForIt(t *testing.T) {
 	assert.Equal(t, entity.ObjectID{ID: "registry-1"}, built.PushToRegistry)
 	assert.Same(t, builds.inputs, built.Inputs)
 	assert.Equal(t, []string{"fn:dev-1234567"}, data.Deployment.Output.ImageTags)
+	assert.Equal(t, map[string]string{"node24": base.StableVersion.FunctionRuntimes["node24"]},
+		data.Deployment.Output.RuntimeImages)
 }

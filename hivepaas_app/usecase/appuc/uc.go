@@ -24,9 +24,10 @@ type UC struct {
 	dockerManager docker.Manager
 	taskQueue     queue.TaskQueue
 
-	appRepo       repository.AppRepo
-	binObjectRepo repository.BinObjectRepo
-	settingRepo   repository.SettingRepo
+	appRepo        repository.AppRepo
+	binObjectRepo  repository.BinObjectRepo
+	settingRepo    repository.SettingRepo
+	deploymentRepo repository.DeploymentRepo
 
 	auditService           auditservice.Service
 	appCloneService        appcloneservice.Service
@@ -50,6 +51,7 @@ func New(
 	appRepo repository.AppRepo,
 	binObjectRepo repository.BinObjectRepo,
 	settingRepo repository.SettingRepo,
+	deploymentRepo repository.DeploymentRepo,
 
 	auditService auditservice.Service,
 	appCloneService appcloneservice.Service,
@@ -69,9 +71,10 @@ func New(
 		dockerManager: dockerManager,
 		taskQueue:     taskQueue,
 
-		appRepo:       appRepo,
-		binObjectRepo: binObjectRepo,
-		settingRepo:   settingRepo,
+		appRepo:        appRepo,
+		binObjectRepo:  binObjectRepo,
+		settingRepo:    settingRepo,
+		deploymentRepo: deploymentRepo,
 
 		auditService:           auditService,
 		appCloneService:        appCloneService,

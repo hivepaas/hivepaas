@@ -2,8 +2,8 @@
   "beta": {
     "releaseDate": "2026-10-05",
     "appVersion": "v1.0.0-beta2",
-    "appImage": "ghcr.io/hivepaas/hivepaas:1.0.0-beta2@sha256:a20602502ebdd955370596a41c10056133cbc21a649e2efd0a3b64c4e33623fc",
-    "agentImage": "ghcr.io/hivepaas/hivepaas-agent:1.0.0-beta2@sha256:bb79af00a7548154ac60c40ce91167674887e78a4ae5399a142ffded13c3ff3a",
+    "appImage": "ghcr.io/hivepaas/hivepaas:1.0.0-beta2@sha256:0bdc91b94f2acbe09180521bcfdb10f9ec0dcf0e55f00f99793f4faed6187464",
+    "agentImage": "ghcr.io/hivepaas/hivepaas-agent:1.0.0-beta2@sha256:7c891eaf1d43fe58ea86a6621a1a9b22cdf8b73e7012004ddca33203eee82454",
     "redisImage": "redis:8.10.2-alpine@sha256:3811787313eba226a2ef38658c6ccb91cd5e110edc89c37767de373120a0e5a0",
     "dbImage": "postgres:18.6-alpine@sha256:77f585114c32fbca283dc835b0596f4e52b51b4c6662d7810b2f4084f60a1873",
     "traefikImage": "traefik:v3.7.13@sha256:24841fe2de7304c149343d877d2923b4c8800a38ba015dea9174c23b20e344a0",

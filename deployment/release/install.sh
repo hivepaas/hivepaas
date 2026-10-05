@@ -1393,7 +1393,7 @@ install_ref() {
 # SWARM_DEFAULT_POOL is where a swarm takes its networks' addresses from when it
 # is not told otherwise, a /24 each.
 SWARM_DEFAULT_POOL=10.0.0.0/8
-POOL_OVERLAPS_DOCS=https://docs.hivepaas.com/docs/troubleshooting/common-issues#pool-overlaps
+POOL_OVERLAPS_DOCS=https://docs.hivepaas.com/docs/troubleshooting/common-issues#a-network-cannot-start-pool-overlaps
 
 # swarm_pools: the ranges this node's swarm takes its networks' addresses from.
 swarm_pools() {

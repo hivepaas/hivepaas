@@ -4,7 +4,8 @@
 # It differs from deployment/dev/Dockerfile in what makes a release a release:
 # - the dashboard is its tag, not whatever main held when the image was built;
 # - the binary is a production build (make build-prod);
-# - downloads are pinned: sql-migrate by version, kopia by checksum;
+# - downloads are pinned: sql-migrate and the x/crypto it is built with by
+#   version, kopia by checksum;
 # - only the configuration files a release runs with are copied: the stack sets
 #   HP_CONFIG_FILE to config/config.<beta|production>.toml, and a developer's
 #   config.local.toml has no place in a published image.
@@ -45,9 +46,17 @@ RUN make mod
 RUN make build-prod
 
 # The database migration tool the app runs on an update (sysupdateservice).
+# Built in a module of its own that raises golang.org/x/crypto past the one
+# its release requires: the image scan before a release refuses that one,
+# though govulncheck finds none of its flaws called by sql-migrate.
 ARG SQL_MIGRATE_VERSION=v1.8.1
-RUN go install "github.com/rubenv/sql-migrate/sql-migrate@${SQL_MIGRATE_VERSION}" && \
-    find /go/bin/ -name 'sql-migrate' -exec cp "{}" ./sql-migrate \;
+ARG SQL_MIGRATE_CRYPTO_VERSION=v0.57.0
+RUN mkdir /tmp/sql-migrate && cd /tmp/sql-migrate && \
+    go mod init sql-migrate-build && \
+    go get "github.com/rubenv/sql-migrate/sql-migrate@${SQL_MIGRATE_VERSION}" \
+        "golang.org/x/crypto@${SQL_MIGRATE_CRYPTO_VERSION}" && \
+    go build -trimpath -o /build/sql-migrate github.com/rubenv/sql-migrate/sql-migrate && \
+    rm -rf /tmp/sql-migrate
 
 ############################################################
 # The image

@@ -115,7 +115,11 @@ The example is `v1.0.0-beta1`; for a stable release read `stable` for `beta`.
    - *Check the tag*: the tag is the compiled version, the dashboard has the tag,
      `go test ./...`, shellcheck and the installer's tests;
    - *Build* (after a reviewer approves the `release` environment): app and
-     agent, amd64 and arm64, with SBOM and provenance;
+     agent, amd64 and arm64, with SBOM and provenance. Each image is scanned
+     with Trivy before it is pushed: a HIGH or CRITICAL flaw that has a fix -
+     in the Alpine packages, or in a binary's Go or modules, kopia's and
+     sql-migrate's too - stops the release. Update what carries it, or, once
+     reviewed, accept it in `.trivyignore` with why and an expiry date;
    - *Multi-arch images*: `1.0.0-beta1` and `beta`, and the digests in the run's
      summary and in `digests.txt`;
    - *Draft*: a draft GitHub Release (pre-release for a beta) with `install.sh`

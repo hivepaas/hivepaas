@@ -1,0 +1,9 @@
+# Flaws Trivy reports that were reviewed and accepted, one id a line: the
+# repository's scan (.github/workflows/go.yml) and the images' before a release
+# (.github/workflows/release.yml) both read this file.
+#
+# Every entry says above it what it is in, why it is accepted, and who decided;
+# and expires, so that it is looked at again:
+#
+#   # kopia: the SSH storage, which HivePaaS does not use. Upstream has no fix.
+#   CVE-2026-00000 exp:2026-12-31

@@ -112,6 +112,38 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ github.token }}
 
+      # Built first into the runner's Docker, to be scanned before anything is
+      # pushed; the push after builds it again from the builder's cache.
+      - name: Build for the scan
+        uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
+        with:
+          context: .
+          file: ${{ matrix.dockerfile }}
+          platforms: linux/${{ matrix.arch }}
+          load: true
+          build-args: |
+            DASHBOARD_REF=${{ github.ref_name }}
+            VERSION=${{ needs.check.outputs.version }}
+            REVISION=${{ github.sha }}
+          tags: release-scan:${{ matrix.arch }}
+
+      # A HIGH or CRITICAL flaw with a fix - in the Alpine packages, or in the
+      # Go and the modules of a binary the image holds - stops the release.
+      # One reviewed and accepted goes in .trivyignore.
+      - name: Scan the image
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+        with:
+          version: 'v0.75.0'
+          scan-type: 'image'
+          image-ref: release-scan:${{ matrix.arch }}
+          scanners: 'vuln'
+          vuln-type: 'os,library'
+          severity: 'CRITICAL,HIGH'
+          ignore-unfixed: true
+          exit-code: '1'
+          format: 'table'
+          trivyignores: '.trivyignore'
+
       - name: Build and push
         uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
         with:

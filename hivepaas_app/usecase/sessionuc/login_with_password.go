@@ -72,6 +72,15 @@ func (uc *UC) LoginWithPassword(
 		return nil, uc.wrapSensitiveError(err)
 	}
 
+	// The right password opens nothing for an account that may not sign in, and
+	// no second factor is asked of it: refused here, and recorded as refused.
+	if err = signInRefusal(dbUser); err != nil {
+		if e := uc.recordLoginDenied(ctx, dbUser, auditMethodPassword, loginRefusalReason(err)); e != nil {
+			return nil, hperrors.Wrap(e)
+		}
+		return nil, err
+	}
+
 	passcodeRequired := dbUser.TotpSecret != ""
 
 	// When trusted device is sent

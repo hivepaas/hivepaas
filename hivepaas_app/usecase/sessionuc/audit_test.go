@@ -157,6 +157,7 @@ func TestLoginRefusalReason(t *testing.T) {
 		{"wrong password", hperrors.ErrPasswordMismatched, auditReasonWrongPassword},
 		{"locked out", hperrors.ErrTooManyLoginFailures, auditReasonLockedOut},
 		{"sso required", hperrors.ErrSSORequired, auditReasonSSORequired},
+		{"user unavailable", hperrors.ErrUserUnavailable, auditReasonUserUnavailable},
 		// The install failing is not somebody being turned away, and recording it
 		// as one would put bad days in among the attempts.
 		{"redis unreachable", errors.New("redis is unreachable"), ""},

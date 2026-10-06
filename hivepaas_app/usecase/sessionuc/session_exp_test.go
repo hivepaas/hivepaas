@@ -83,7 +83,7 @@ func TestCreateSessionRefusesASessionPastItsDeadline(t *testing.T) {
 	uc, audit := newAuditUCTest()
 
 	_, err := uc.createSession(context.Background(), &sessiondto.BaseCreateSessionReq{
-		User:      &entity.User{ID: "user-1", Role: base.UserRoleMember},
+		User:      &entity.User{ID: "user-1", Role: base.UserRoleMember, Status: base.UserStatusActive},
 		StartedAt: timeutil.NowUTC().Add(-25 * time.Hour),
 		Method:    auditMethodRefresh,
 	})

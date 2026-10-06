@@ -32,22 +32,15 @@ func (uc *UC) GetCurrentAuthByAPIKey(ctx context.Context, keyID, secret string) 
 func (uc *UC) verifyAuth(ctx context.Context, auth *basedto.Auth) error {
 	user := auth.User
 
-	// User must have access permission
-	if user.IsAccessExpired() {
-		return hperrors.Wrap(hperrors.ErrUserUnavailable).
-			WithMsgLog("user access expired at: %v", user.AccessExpireAt)
+	// The account may still sign in: not expired, and active
+	if err := signInRefusal(user.Entity()); err != nil {
+		return err
 	}
 
 	// Use must complete MFA requirement
 	if user.SecurityOption == base.UserSecurityPassword2FA && user.TotpSecret == "" {
 		return hperrors.Wrap(hperrors.ErrUserNotCompleteMFASetup).
 			WithMsgLog("user hasn't completed the MFA setup")
-	}
-
-	// User status is not active
-	if user.Status != base.UserStatusActive {
-		return hperrors.Wrap(hperrors.ErrUserUnavailable).
-			WithMsgLog("user status: %s", user.Status)
 	}
 
 	// Update `last_access` timestamp after each period of few minute.

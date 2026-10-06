@@ -6,6 +6,7 @@ import (
 	"github.com/tiendc/gofn"
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
+	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/jwtsession"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/timeutil"
@@ -25,6 +26,11 @@ func (uc *UC) createSession(
 	// say how it authenticated - and a path that never says goes no further.
 	if req.Method == "" {
 		return nil, hperrors.NewArgumentInvalid("session login method")
+	}
+	// And the one place an account that may not sign in is stopped, whichever
+	// way it came - a refresh included.
+	if err = signInRefusal(req.User); err != nil {
+		return nil, err
 	}
 
 	// If user is demo user, restrict permissions to READ only
@@ -108,4 +114,18 @@ func (uc *UC) createSession(
 // api-key-revoke record next door is about.
 func privilegedSession(req *sessiondto.BaseCreateSessionReq) bool {
 	return !req.IsAPIKey && req.User != nil && req.User.IsAdmin()
+}
+
+// signInRefusal says why an account may not have a session: its access has
+// expired, or it is not active - disabled, or still pending. Nil when it may.
+func signInRefusal(user *entity.User) error {
+	if user.IsAccessExpired() {
+		return hperrors.Wrap(hperrors.ErrUserUnavailable).
+			WithMsgLog("user access expired at: %v", user.AccessExpireAt)
+	}
+	if user.Status != base.UserStatusActive {
+		return hperrors.Wrap(hperrors.ErrUserUnavailable).
+			WithMsgLog("user status: %s", user.Status)
+	}
+	return nil
 }

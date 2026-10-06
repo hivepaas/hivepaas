@@ -45,6 +45,7 @@ const (
 	auditReasonWrongPasscode    = "wrong-passcode"
 	auditReasonTooManyPasscodes = "too-many-passcodes"
 	auditReasonInvalidAPIKey    = "invalid-api-key"
+	auditReasonUserUnavailable  = "user-unavailable"
 )
 
 // recordLogin records a session handed out to somebody who proved who they are.
@@ -167,6 +168,8 @@ func loginRefusalReason(err error) string {
 		return auditReasonLockedOut
 	case errors.Is(err, hperrors.ErrPasswordMismatched):
 		return auditReasonWrongPassword
+	case errors.Is(err, hperrors.ErrUserUnavailable):
+		return auditReasonUserUnavailable
 	}
 	return ""
 }

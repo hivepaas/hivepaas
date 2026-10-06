@@ -93,20 +93,32 @@ func TestLiveEnsureRunsOBIThatCountsTheApp(t *testing.T) {
 		return
 	}
 	time.Sleep(10 * time.Second) // OBI attaches to the app it found
-	exec("for i in $(seq 1 50); do wget -qO- http://" + app + ":8080/x/ >/dev/null; done")
+	load := func(path string, n int) {
+		exec("for i in $(seq 1 " + strconv.Itoa(n) + "); do wget -qO- http://" + app + ":8080" + path +
+			" >/dev/null; done")
+	}
+	// The app's requests, every series of its container summed, once at least
+	// want are counted.
 	count := regexp.MustCompile(`http_server_request_duration_seconds_count\{[^}]*container_name="` +
 		regexp.QuoteMeta(app) + `"[^}]*\} ([0-9]+)`)
-	var got int
-	for range 15 {
-		time.Sleep(2 * time.Second)
-		if m := count.FindStringSubmatch(exec("wget -qO- http://127.0.0.1:" + strconv.Itoa(obi.MetricsPort) +
-			"/metrics")); m != nil {
-			if got, _ = strconv.Atoi(m[1]); got >= 50 {
+	counted := func(want int) int {
+		got := 0
+		for range 15 {
+			time.Sleep(2 * time.Second)
+			got = 0
+			for _, m := range count.FindAllStringSubmatch(exec("wget -qO- http://127.0.0.1:"+
+				strconv.Itoa(obi.MetricsPort)+"/metrics"), -1) {
+				n, _ := strconv.Atoi(m[1])
+				got += n
+			}
+			if got >= want {
 				break
 			}
 		}
+		return got
 	}
-	if !assert.GreaterOrEqual(t, got, 50, "the app's requests, counted by its container's name") {
+	load("/x/", 50)
+	if !assert.Equal(t, 50, counted(50), "the app's requests, counted by its container's name") {
 		logs, _ := dm.ContainerLogs(ctx, obi.ContainerName, func(o *client.ContainerLogsOptions) {
 			o.ShowStdout, o.ShowStderr, o.Tail = true, true, "30"
 		})
@@ -114,7 +126,16 @@ func TestLiveEnsureRunsOBIThatCountsTheApp(t *testing.T) {
 			b, _ := io.ReadAll(logs)
 			t.Logf("OBI's logs:\n%s", b)
 		}
+		return
 	}
+	// A function runtime's own paths - its health check, every 10 seconds -
+	// are not the app's requests: OBI ignores them.
+	load("/_hivepaas/health", 20)
+	load("/_hivepaas/other/path", 5)
+	load("/x/", 10)
+	// Waiting for one more than the app's, to the end: any of the runtime's
+	// counted, however late, shows.
+	assert.Equal(t, 60, counted(61), "the runtime's own paths not counted")
 }
 
 // liveAppImage is the app the live test loads: a Node.js server, as step 0's.

@@ -218,7 +218,10 @@ UI:    the Metrics tab: routes in the HTTP view, a Dependencies view
   set of apps changes.
 - **Its config**: maps sized by the node's capacity (below); metrics feature
   `application`; the Prometheus endpoint on localhost; traces off until
-  phase 4.
+  phase 4. Routes under `/_hivepaas/` are ignored (added 2026-10-06): a
+  function runtime's own, never its handler's - its health check, every
+  10 seconds, made 204 of a function's 231 requests in an hour. An app's own
+  health check is counted: its path is the app's.
 - **Capacity, per node, chosen with a recommendation.** OBI allocates its eBPF
   maps whole when it starts. Their size is how many requests and connections
   it tracks at once, and its memory, idle or not. Too small loses what does

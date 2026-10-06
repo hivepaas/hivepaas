@@ -24,6 +24,10 @@ func TestPatternsAndConfig(t *testing.T) {
   instrument:
     - container_name: "p1_dev_a1.*"
     - container_name: "p1_dev_a2.*"
+routes:
+  unmatched: heuristic
+  ignored_patterns:
+    - "/_hivepaas/*"
 ebpf:
   wakeup_len: 64
   maps_config:

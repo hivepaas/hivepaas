@@ -86,14 +86,24 @@ func Patterns(services []string) []string {
 	return out
 }
 
-// Config is OBI's configuration: the containers it watches, its maps sized
-// for a capacity, and how often it reads what they hold. Patterns are quoted
-// as JSON strings, which YAML reads as they are.
+// ignoredRoutes are paths OBI does not count: a function runtime's own, under
+// /_hivepaas/ - its health check, every 10 seconds - which never reach the
+// function and are not its calls. OBI names the other routes as it does
+// without a list: heuristically.
+var ignoredRoutes = []string{"/_hivepaas/*"}
+
+// Config is OBI's configuration: the containers it watches, the routes it
+// ignores, its maps sized for a capacity, and how often it reads what they
+// hold. Patterns are quoted as JSON strings, which YAML reads as they are.
 func Config(patterns []string, capacity Capacity) []byte {
 	var b strings.Builder
 	b.WriteString("discovery:\n  instrument:\n")
 	for _, p := range patterns {
 		b.WriteString("    - container_name: " + strconv.Quote(p) + "\n")
+	}
+	b.WriteString("routes:\n  unmatched: heuristic\n  ignored_patterns:\n")
+	for _, p := range ignoredRoutes {
+		b.WriteString("    - " + strconv.Quote(p) + "\n")
 	}
 	b.WriteString("ebpf:\n  wakeup_len: " + strconv.Itoa(capacity.WakeupLen()) + "\n")
 	b.WriteString("  maps_config:\n    global_scale_factor: " + strconv.Itoa(capacity.ScaleFactor()) + "\n")

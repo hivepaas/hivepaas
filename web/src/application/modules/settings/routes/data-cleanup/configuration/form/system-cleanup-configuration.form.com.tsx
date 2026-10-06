@@ -8,7 +8,7 @@ import { useNotificationSettingsSources } from "~/settings/module-shared/hooks";
 import type { SystemCleanupSettings } from "~/system-settings/domain";
 import { SectionHeader } from "~/system-settings/module-shared";
 
-import { CronTimezoneNote, InfoBlock, NextRunsField } from "@application/shared/components";
+import { BrowserTimezoneNote, CronTimezoneNote, InfoBlock, NextRunsField } from "@application/shared/components";
 import { ESettingStatus } from "@application/shared/enums";
 import { NotificationSettings } from "@application/shared/form";
 
@@ -152,6 +152,7 @@ function GeneralFields({ nextRuns }: { nextRuns: Date[] }) {
                                 aria-invalid={isScheduleFromInvalid}
                                 containerClassName="max-w-[400px]"
                             />
+                            <BrowserTimezoneNote />
                             <FieldError errors={[scheduleFromError]} />
                         </Field>
                     </FieldGroup>

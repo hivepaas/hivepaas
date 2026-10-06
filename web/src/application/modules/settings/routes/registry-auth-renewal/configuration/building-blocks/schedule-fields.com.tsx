@@ -1,6 +1,6 @@
 import { useController, useFormContext } from "react-hook-form";
 
-import { InfoBlock } from "@application/shared/components";
+import { BrowserTimezoneNote, InfoBlock } from "@application/shared/components";
 
 import {
     Field,
@@ -90,6 +90,7 @@ export function ScheduleFields() {
                             aria-invalid={isScheduleFromInvalid}
                             containerClassName="max-w-[400px]"
                         />
+                        <BrowserTimezoneNote />
                         <FieldError errors={[scheduleFromError]} />
                     </Field>
                 </FieldGroup>

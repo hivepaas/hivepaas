@@ -6,6 +6,13 @@ import { expect, test } from "../../support/fixtures";
 test.describe.configure({ mode: "serial" });
 
 test.describe("Data Cleanup settings", () => {
+    test("each time says the timezone it is in", async ({ page }) => {
+        await page.goto("/settings/data-cleanup/configuration/");
+
+        await expect(page.getByRole("group", { name: "Schedule From" })).toContainText("this browser's timezone");
+        await expect(page.getByRole("group", { name: "Next Runs" })).toContainText(/In \S+/);
+    });
+
     test("what is saved is kept", async ({ page, api, cleanup }) => {
         const saved = await cleanupSettings(api);
         cleanup(() => restoreCleanupSettings(api, saved));

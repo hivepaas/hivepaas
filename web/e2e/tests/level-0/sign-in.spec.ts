@@ -1,13 +1,13 @@
-import { env } from "../support/env";
-import { expect, test } from "../support/fixtures";
-import { signIn } from "../support/sign-in";
+import { env } from "../../support/env";
+import { expect, test } from "../../support/fixtures";
+import { signIn } from "../../support/sign-in";
 
 test.describe("signed out", () => {
     test.use({ storageState: { cookies: [], origins: [] } });
 
     test("a user signs in with a username and password", async ({ page }) => {
         await page.goto("/");
-        await expect(page).toHaveURL(/\/auth\/sign-in\/$/);
+        await expect(page).toHaveURL(/\/auth\/sign-in\/(\?.*)?$/);
 
         await signIn(page, env.username, env.password);
 
@@ -23,7 +23,7 @@ test.describe("signed out", () => {
         await signIn(page, `e2e-nobody-${Date.now()}`, "not-the-password");
 
         await expect(page.getByText("Email or password is incorrect")).toBeVisible();
-        await expect(page).toHaveURL(/\/auth\/sign-in\/$/);
+        await expect(page).toHaveURL(/\/auth\/sign-in\/(\?.*)?$/);
     });
 });
 

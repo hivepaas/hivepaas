@@ -147,9 +147,9 @@ export function RoutesView({ metrics, isLoading, range, projectID, env, appID }:
                 </section>
             )}
             <p className="text-xs text-muted-foreground">
-                Measured inside the app&apos;s containers by OBI (eBPF): every request it answered, from Traefik or from
-                another app of the project. A request fails on a 5xx or an error. Durations are the app&apos;s own,
-                close rather than exact.
+                Measured inside the app&apos;s containers by OBI (eBPF): every request it answered, from Traefik, from
+                another app of the project, or from its own health check - a function&apos;s is left out. A request
+                fails on a 5xx or an error. Durations are the app&apos;s own, close rather than exact.
             </p>
         </>
     );

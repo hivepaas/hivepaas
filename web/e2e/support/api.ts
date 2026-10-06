@@ -46,3 +46,13 @@ export async function deleteProject(api: APIRequestContext, id: string): Promise
     if (res.status() === 404) return;
     await ok(res, `deleting project ${id}`);
 }
+
+// deleteApiKeysNamed removes the current user's API keys of that name.
+export async function deleteApiKeysNamed(api: APIRequestContext, name: string): Promise<void> {
+    const body = (await ok(await api.get("users/current/settings/api-keys"), "listing API keys")) as {
+        data: { id: string; name: string }[];
+    };
+    for (const key of body.data.filter(k => k.name === name)) {
+        await ok(await api.delete(`users/current/settings/api-keys/${key.id}`), `deleting API key ${name}`);
+    }
+}

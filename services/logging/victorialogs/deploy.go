@@ -13,9 +13,10 @@ import (
 const (
 	// DefaultImage is pinned rather than tracking latest: an unannounced storage
 	// format change arriving on a restart is not a surprise worth having. It is
-	// also the version the provenance properties in the spec were measured
-	// against, so a bump is the trigger to re-run them.
-	DefaultImage = "victoriametrics/victoria-logs:v1.52.0"
+	// the release's, and the version the provenance properties in the spec were
+	// last measured against, so a bump is the trigger to re-run them.
+	DefaultImage = "victoriametrics/victoria-logs:v1.53.0" +
+		"@sha256:251121fa882af99b95ba0c230a4a2f412ea602d2698c64a96c58dc9842bb755d"
 
 	// DefaultHTTPPort is where VictoriaLogs serves ingest, query and health.
 	DefaultHTTPPort = 9428

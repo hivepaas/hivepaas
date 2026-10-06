@@ -412,6 +412,9 @@ Repeating the test with the app emitting the exact field name
 `attrs.hivepaas.app.id` changed nothing. Filtering on the stored field returned
 zero matches for the forged value.
 
+Re-run on 2026-10-06 against Docker 29.8.0 and vlagent and VictoriaLogs v1.53.0,
+the release's: the same, and so for a value nested as `{"attrs":{"hivepaas.app.id":...}}`.
+
 ### Query-time unpacking can be spoofed
 
 ```

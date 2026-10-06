@@ -13,11 +13,12 @@ import (
 
 const (
 	// DefaultImage is pinned. vlagent publishes no `latest` tag in any case,
-	// and this is the version the spec's provenance properties were measured
-	// against - that vlagent does not recursively parse a container's own JSON,
-	// so a forged label in an app's stdout cannot displace the daemon's. A bump
-	// is the trigger to re-run that check.
-	DefaultImage = "victoriametrics/vlagent:v1.52.0"
+	// and this is the release's, the version the spec's provenance properties
+	// were last measured against - that vlagent does not recursively parse a
+	// container's own JSON, so a forged label in an app's stdout cannot
+	// displace the daemon's. A bump is the trigger to re-run that check.
+	DefaultImage = "victoriametrics/vlagent:v1.53.0" +
+		"@sha256:a82f93ffecc153fb068606903e512368b070272739d823abe99fad0eff6e1849"
 
 	// ContainersPath is where docker keeps the json-file logs, mounted read-only.
 	ContainersPath = "/var/lib/docker/containers"

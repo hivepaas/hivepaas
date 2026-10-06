@@ -110,3 +110,78 @@ export async function deleteUsersByEmail(api: APIRequestContext, email: string):
         await ok(await api.delete(`users/${user.id}`), `deleting user ${email}`);
     }
 }
+
+export interface App {
+    id: string;
+    name: string;
+    projectId: string;
+    env: string;
+}
+
+/** appPath is an app's path under the API. */
+export function appPath(app: App): string {
+    return `projects/${app.projectId}/${app.env}/apps/${app.id}`;
+}
+
+// createApp makes an app in a project's environment. HivePaaS gives it a
+// service at once, on a placeholder image, until it is deployed.
+export async function createApp(
+    api: APIRequestContext,
+    project: Project,
+    name: string,
+    env = "development",
+): Promise<App> {
+    const body = (await ok(
+        await api.post(`projects/${project.id}/${env}/apps`, {
+            data: { name, env, note: "", tags: [], status: "active" },
+        }),
+        `creating app ${name}`,
+    )) as { data: { id: string } };
+    return { id: body.data.id, name, projectId: project.id, env };
+}
+
+// deployImage sets an app to run an image - with a command, when given - which
+// deploys it; it answers the deployment's id.
+export async function deployImage(api: APIRequestContext, app: App, image: string, command = ""): Promise<string> {
+    const current = (await ok(await api.get(`${appPath(app)}/deployment-settings`), "reading deployment settings")) as {
+        data: { updateVer: number };
+    };
+    const body = (await ok(
+        await api.put(`${appPath(app)}/deployment-settings`, {
+            data: {
+                entrypoint: "",
+                command,
+                workingDir: "",
+                preDeploymentCommand: "",
+                postDeploymentCommand: "",
+                notification: { successUseDefault: true, failureUseDefault: true },
+                activeMethod: "image",
+                imageSource: { image, registryAuth: { id: "" } },
+                updateVer: current.data.updateVer,
+            },
+        }),
+        `deploying ${image} to ${app.name}`,
+    )) as { data: { deploymentId: string } };
+    return body.data.deploymentId;
+}
+
+export interface Deployment {
+    id: string;
+    status: string;
+}
+
+// latestDeployment is an app's newest deployment, if it has one.
+export async function latestDeployment(api: APIRequestContext, app: App): Promise<Deployment | undefined> {
+    const body = (await ok(await api.get(`${appPath(app)}/deployments`), "listing deployments")) as {
+        data: Deployment[];
+    };
+    return body.data[0];
+}
+
+// findApp is the app of that id in its environment, if it is still there.
+export async function findApp(api: APIRequestContext, app: App): Promise<App | undefined> {
+    const body = (await ok(await api.get(`projects/${app.projectId}/${app.env}/apps`), "listing apps")) as {
+        data: { id: string }[];
+    };
+    return body.data.some(a => a.id === app.id) ? app : undefined;
+}

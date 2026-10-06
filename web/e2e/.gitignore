@@ -1,0 +1,6 @@
+# The signed-in session the setup saves: a live token.
+.auth/
+
+test-results/
+playwright-report/
+blob-report/

@@ -15,6 +15,8 @@ Common scripts:
 - `npm run build`
 - `npm run format:src`
 - `npm run agents:check`
+- `npm run e2e` - the end-to-end tests, against a running backend: see
+  `e2e/README.md`
 
 ## Agent Quick Start
 

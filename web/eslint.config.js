@@ -25,6 +25,8 @@ export default tseslint.config(
             "src/infrastructure/api/be-api/**",
             "src/components/ui/**",
             "vite.config.d.ts",
+            // A package of its own, with its own tsconfig: `yarn --cwd e2e typecheck`.
+            "e2e/**",
         ],
     },
     js.configs.recommended,

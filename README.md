@@ -21,58 +21,24 @@ An open-source, resource-efficient alternative to Heroku, Render, and Coolify fo
 
 ## 🌟 Key Features
 
-### 🚀 Deploy anything
-
-* **From a Docker image, or from a Git repository** HivePaaS builds: with your Dockerfile, or one it writes for you (Go, Node.js, Bun, Deno, Python, Ruby, PHP, Java, .NET, Rust, Elixir, Next.js, Nuxt, Astro, static sites and more).
-* **Git providers:** a native **GitHub App**, or access tokens and SSH keys for GitHub, GitLab, Gitea, Bitbucket and Gogs.
-* **Functions:** write a handler, and HivePaaS builds and runs it - no Dockerfile, no server code. **Node.js 24** (JavaScript or TypeScript), **Bun 1**, **Python 3.13** and **Go 1.27**, called over HTTP or on a schedule.
-* **App Store:** 300+ ready-made templates - databases, CMSs, analytics, monitoring, automation and more - deployed in one click.
-* **Deploy on push** through the GitHub App or repository webhooks, and **pull request previews**: an isolated copy of an app for each PR, driven by `/hivepaas` commands in its comments.
-
-### 🌐 Domains, routing & TLS
-
-* **Traefik v3** in front of every app, with changes applied live.
-* **Automatic certificates** from **Let's Encrypt**, **ZeroSSL** or **Google Trust Services**, renewed on their own; HTTP-01, or DNS-01 through a DNS provider for **wildcard** certificates; custom certificates too.
-* **Per app and per domain:** redirects, path rules, force HTTPS, basic auth, allowed IPs, request size and rate limits.
-* **Databases reachable from outside** over TCP, with TLS, when a client needs them.
-
-### ⚙️ Run & scale
-
-* **Health checks, resource limits, replicas** and **placement** on the nodes you choose.
-* **Autoscaling** of apps and functions on their requests and CPU.
-* **Multi-node Docker Swarm clusters:** add worker nodes as you grow; volumes on local disks, NFS or any Docker volume driver; isolated networks per project environment.
-* **Scheduled jobs and workflows:** commands in containers, function calls and backups on a cron schedule, chained into sequences.
-* **Live logs, a terminal into containers**, and searchable **log history**.
-* **Metrics:** CPU and memory of every app; calls, failures and latency of every function; HTTP routes and outgoing calls of apps through **eBPF**, without changing their code.
-
-### 💾 Backups & portability
-
-* **Encrypted, deduplicated backups** (Kopia) of app data and of HivePaaS itself, to S3-compatible storage (AWS S3, Cloudflare R2, Backblaze B2, MinIO...) or a volume - on demand or scheduled, with restores.
-* **Export & import** of projects, apps and settings as a bundle, secrets encrypted with a passphrase.
-* **One-click cloning** of apps across environments and projects.
-
-### 👥 Teams & security
-
-* **Projects and environments** (`development`, `staging`, `production`...), each isolated on its own network.
-* **Role-based access** per project and per module; **API keys**; an **audit log** of every change.
-* **Sign-in** with a password and **two-factor authentication** (TOTP, with brute-force lockout), or **SSO** with GitHub, GitLab, Gitea, Google, Microsoft or any OpenID Connect provider. Passwords hashed with Argon2id.
-* **Notifications** by Email (SMTP), Slack, Discord, Telegram and Lark.
-* **Container registry** of your own (optional), and credentials for any registry, Amazon ECR included.
-* **Filtered Docker API access** for the apps that need the Docker socket, limited to what they call.
-
-### 🔌 Integrations & operations
-
-* **REST API** with OpenAPI docs, and an **MCP server** so AI assistants can read and operate your apps.
-* **Updates from the dashboard**, verified with signed releases (Ed25519 and ML-DSA-65).
-* **Safe changes:** settings that could lock you out of the dashboard are applied on trial and rolled back unless you confirm them.
-* **Lightweight:** written in Go; the control plane - app, agent, database, Redis and Traefik - runs in about 300 MB of memory.
+* **Deploy anything:** from a Docker image or a Git repository - with your Dockerfile, or one written for you for 15+ languages and frameworks - with deploy on push and pull request previews.
+* **Functions:** write a handler in Node.js/TypeScript, Bun, Python or Go; HivePaaS builds and runs it, over HTTP or on a schedule.
+* **App Store:** 300+ one-click templates - databases, CMSs, analytics, monitoring, automation.
+* **Domains & TLS:** Traefik v3 with automatic certificates (Let's Encrypt, ZeroSSL, Google Trust Services; wildcards through DNS), and redirects, basic auth, IP and rate limits per app.
+* **Run & scale:** health checks, resource limits, placement, autoscaling on requests and CPU, scheduled jobs, and multi-node Swarm clusters.
+* **Observe:** live logs and log history, a terminal into containers, CPU and memory metrics, and metrics of HTTP routes and outgoing calls through eBPF - no code changes.
+* **Backups:** encrypted, deduplicated backups (Kopia) to S3-compatible storage or a volume, scheduled, with restores; export, import and cloning of apps.
+* **Teams & security:** projects and environments, role-based access, API keys, an audit log, two-factor authentication, SSO (GitHub, GitLab, Google, Microsoft, OpenID Connect) and notifications.
+* **API & AI:** a REST API with OpenAPI docs, and an MCP server for AI assistants.
+* **Light and safe:** written in Go, a control plane of about 300 MB; signed releases (Ed25519 and ML-DSA-65); settings that could lock you out are applied on trial and rolled back unless you confirm them.
 
 ---
 
 ## 🌐 Website & Demo
 
-* **Official Website:** [https://hivepaas.com](https://hivepaas.com)
-* **Demo Servers:** the addresses and the sign-in of the public demo servers are on the [website](https://hivepaas.com/#demo).
+* **Website:** [hivepaas.com](https://hivepaas.com)
+* **Demo servers:** [Demo1 (EU)](https://demo1.hivepaas.com) · [Demo2 (Asia)](https://demo2.hivepaas.com) · [Demo3 (US)](https://demo3.hivepaas.com)
+* **Sign in with:** username `demo` · password `HivePaaS@2026` (a read-only account)
 
 ---
 

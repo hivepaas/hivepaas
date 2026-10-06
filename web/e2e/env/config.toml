@@ -1,0 +1,79 @@
+# The throwaway HivePaaS's configuration, read inside the dind container: the
+# local development one, with the containers' names on the network up.sh makes
+# for hosts. __PORT__ is replaced by up.sh.
+env = "development"
+platform = "local"
+run_mode = "app+worker"
+root_domain = "localhost"
+app_domain = "localhost"
+secret = "abc123"
+app_path = "/hp/appdata"
+
+[users.admin]
+    username = "admin"
+    email = "admin@e2e.localhost"
+    password = "abc123"
+
+[users.demo]
+    user_id = "01JAB9XED0GTXBSQDFVYAJ8WA9"
+
+[db]
+    host = "hp-e2e-db"
+    port = 5432
+    user = "hivepaas"
+    password = "abc123"
+    db_name = "hivepaas"
+    ssl_mode = "disable"
+
+[cache]
+    url = "redis://default:abc123@hp-e2e-redis:6379/0"
+    use_tls = false
+
+[http_server]
+    port = __PORT__
+    cors_allow_origins = ["*"]
+
+[session]
+    last_access_update_period = "1m"
+    passcode_timeout = "60s"
+    device_trusted_period = "48h" # 2-days
+
+    jwt_secret = "abc123"
+    access_token_exp = "8h"
+    refresh_token_exp = "16h"
+
+    # The deadline a session cannot renew past, measured from the login that
+    # started it. The two lifetimes above are renewable and only decide how long
+    # a session may sit unused - the dashboard renews one whenever a request
+    # finds the access token expired - so this is what ends a session that is
+    # kept alive. "0s" means no deadline.
+    session_max_exp = "24h"
+
+    # The same three for admin sessions, which can change the whole install.
+    # Any of them set to "0s" falls back to the shared value above.
+    admin_access_token_exp = "30m"
+    admin_refresh_token_exp = "1h"
+    admin_session_max_exp = "8h"
+
+    basic_auth_username = "hivepaas"
+    basic_auth_password = "abc123"
+
+[proxy]
+    http_proxy = ""
+    https_proxy = ""
+    no_proxy = ""
+    socks5_proxy = ""
+
+[tasks.queue]
+    concurrency = 10
+    task_check_interval = "10m"
+    task_create_interval = "10m"
+
+[tasks.periodic]
+    base_interval = "2s"
+
+[agent]
+    secret_token = "abc123"
+
+[dev_mode]
+    force_agent_local = false

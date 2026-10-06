@@ -4,3 +4,6 @@
 test-results/
 playwright-report/
 blob-report/
+
+# The throwaway stack's build.
+env/.build/

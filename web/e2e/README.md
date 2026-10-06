@@ -14,6 +14,25 @@ yarn install
 npx playwright install chromium
 ```
 
+### On a throwaway HivePaaS (level 1 and up)
+
+Level 1 makes and removes data; run it on an installation that is there to go:
+
+```bash
+yarn env:up     # builds the dashboard and the backend, then starts them: http://localhost:10100
+HP_E2E_BASE_URL=http://localhost:10100 yarn test
+yarn env:down
+```
+
+`env/up.sh` runs postgres and redis as containers, and the backend with its
+agent inside a dind container that is a swarm of its own - never on this
+machine's swarm, which it checks before it says the stack is up. It needs the
+backend repo beside this one (or `HP_BACKEND_DIR`), Go, and the backend's
+`hivepaas-devtools` image (`make init` there, once). `HP_E2E_PORT` moves it off
+10100; `HP_E2E_SKIP_BUILD=1` reuses the last build.
+
+### On the local backend (level 0)
+
 Against the local backend - see the backend repo's `docs/DEVELOPMENT.md`:
 
 ```bash

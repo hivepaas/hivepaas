@@ -20,6 +20,7 @@ import (
 )
 
 type service struct {
+	deploymentRepo repository.DeploymentRepo
 	projectRepo    repository.ProjectRepo
 	projectEnvRepo repository.ProjectEnvRepo
 	settingRepo    repository.SettingRepo
@@ -39,6 +40,7 @@ type service struct {
 //
 //nolint:ireturn // the constructor of a service returns its interface
 func New(
+	deploymentRepo repository.DeploymentRepo,
 	projectRepo repository.ProjectRepo,
 	projectEnvRepo repository.ProjectEnvRepo,
 	settingRepo repository.SettingRepo,
@@ -53,6 +55,7 @@ func New(
 	dockerManager docker.Manager,
 ) systemappservice.Service {
 	return &service{
+		deploymentRepo:      deploymentRepo,
 		projectRepo:         projectRepo,
 		projectEnvRepo:      projectEnvRepo,
 		settingRepo:         settingRepo,

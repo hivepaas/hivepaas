@@ -76,6 +76,14 @@ type LoggingPerformanceNode struct {
 	Capacity string `json:"capacity,omitempty"`
 }
 
+// OBIOn says the nodes the settings list run OBI, for the apps that ask for
+// it: the logs stored - an app's or HivePaaS's own - the feature on, and a
+// node listed. The agents decide the same way.
+func (s *LoggingSettings) OBIOn() bool {
+	return s != nil && s.Enabled && (s.Sources.Apps || s.Sources.HivePaaS) &&
+		s.Performance != nil && s.Performance.Enabled && len(s.Performance.Nodes) > 0
+}
+
 // Node is a node's entry when it runs OBI, nil when it does not.
 func (p *LoggingPerformance) Node(nodeID string) *LoggingPerformanceNode {
 	if p == nil || !p.Enabled || nodeID == "" {

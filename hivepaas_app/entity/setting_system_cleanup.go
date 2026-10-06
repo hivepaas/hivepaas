@@ -8,7 +8,8 @@ import (
 )
 
 const (
-	CurrentSystemCleanupVersion = 1
+	// CurrentSystemCleanupVersion 2 added SystemAppsSync.
+	CurrentSystemCleanupVersion = 2
 )
 
 var _ = registerSettingParser(base.SettingTypeSystemCleanup, &systemCleanupParser{})
@@ -21,12 +22,30 @@ func (s *systemCleanupParser) New() SettingData {
 }
 
 type SystemCleanup struct {
-	Schedule          SchedJobSchedule       `json:"schedule"`
-	DBObjectRetention DBObjectRetention      `json:"dbObjectRetention"`
-	ClusterCleanup    SystemClusterCleanup   `json:"clusterCleanup"`
-	CacheCleanup      SystemCacheCleanup     `json:"cacheCleanup"`
-	FileCleanup       SystemFileCleanup      `json:"fileCleanup"`
-	Notification      *BaseEventNotification `json:"notification,omitempty"`
+	Schedule          SchedJobSchedule     `json:"schedule"`
+	DBObjectRetention DBObjectRetention    `json:"dbObjectRetention"`
+	ClusterCleanup    SystemClusterCleanup `json:"clusterCleanup"`
+	CacheCleanup      SystemCacheCleanup   `json:"cacheCleanup"`
+	FileCleanup       SystemFileCleanup    `json:"fileCleanup"`
+	// SystemAppsSync is on when absent: a setting saved before it existed
+	// syncs too. See SystemAppsSyncEnabled.
+	SystemAppsSync *SystemAppsSync        `json:"systemAppsSync,omitempty"`
+	Notification   *BaseEventNotification `json:"notification,omitempty"`
+}
+
+// SystemAppsSync brings the apps HivePaaS runs for itself - the registry, the
+// logging stack - to their settings: one switched off is removed, its data
+// kept; one missing is created, or deployed again when its service is gone.
+// What it cannot mend - one scaled to zero, one whose tasks fail - and the
+// nodes running OBI are reported.
+type SystemAppsSync struct {
+	Enabled bool `json:"enabled"`
+}
+
+// SystemAppsSyncEnabled says whether the system apps are synced: unless
+// switched off.
+func (s *SystemCleanup) SystemAppsSyncEnabled() bool {
+	return s.SystemAppsSync == nil || s.SystemAppsSync.Enabled
 }
 
 type DBObjectRetention struct {

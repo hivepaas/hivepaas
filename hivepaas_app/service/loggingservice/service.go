@@ -92,4 +92,12 @@ type Service interface {
 	// a node with none has no agent writing them.
 	PerformanceStatus(ctx context.Context, db database.IDB, since time.Duration) (
 		map[string]*PerformanceNodeStatus, error)
+
+	// Sync brings the logging apps to the stored settings, as a save does, and
+	// further: an app the settings no longer want is removed, its stored logs
+	// kept; one whose service is gone is removed and provisioned again. It then
+	// checks OBI on the nodes, and takes the nodes no longer in the cluster off
+	// the ones that run it. It runs inside the caller's transaction, and locks
+	// the settings as a save does.
+	Sync(ctx context.Context, db database.IDB) (*SyncResp, error)
 }

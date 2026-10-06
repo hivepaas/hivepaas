@@ -112,3 +112,14 @@ type PushCheckResult struct {
 	// wants to know about a proxy.
 	Elapsed time.Duration
 }
+
+// SyncResp is what Sync found and did.
+type SyncResp struct {
+	// App is nil when there was no app and is none.
+	App *entity.SystemAppSyncOutput
+
+	// Tasks and Cleanup are as SettingApplyResp's: for the caller to schedule
+	// once committed, and to run when its transaction does not commit.
+	Tasks   []*entity.Task
+	Cleanup func(ctx context.Context) error
+}

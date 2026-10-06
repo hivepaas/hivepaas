@@ -19,13 +19,15 @@ type UpdateSystemCleanupReq struct {
 }
 
 type SystemCleanupBaseReq struct {
-	Status            base.SettingStatus                `json:"status"`
-	Schedule          ScheduleReq                       `json:"schedule"`
-	DBObjectRetention DBObjectRetentionReq              `json:"dbObjectRetention"`
-	ClusterCleanup    SystemClusterCleanupReq           `json:"clusterCleanup"`
-	CacheCleanup      SystemCacheCleanupReq             `json:"cacheCleanup"`
-	FileCleanup       SystemFileCleanupReq              `json:"fileCleanup"`
-	Notification      *basedto.BaseEventNotificationReq `json:"notification"`
+	Status            base.SettingStatus      `json:"status"`
+	Schedule          ScheduleReq             `json:"schedule"`
+	DBObjectRetention DBObjectRetentionReq    `json:"dbObjectRetention"`
+	ClusterCleanup    SystemClusterCleanupReq `json:"clusterCleanup"`
+	CacheCleanup      SystemCacheCleanupReq   `json:"cacheCleanup"`
+	FileCleanup       SystemFileCleanupReq    `json:"fileCleanup"`
+	// SystemAppsSync left out keeps the system apps synced.
+	SystemAppsSync *SystemAppsSyncReq                `json:"systemAppsSync"`
+	Notification   *basedto.BaseEventNotificationReq `json:"notification"`
 }
 
 func (req *SystemCleanupBaseReq) ToEntity() *entity.SystemCleanup {
@@ -35,6 +37,7 @@ func (req *SystemCleanupBaseReq) ToEntity() *entity.SystemCleanup {
 		ClusterCleanup:    req.ClusterCleanup.ToEntity(),
 		CacheCleanup:      req.CacheCleanup.ToEntity(),
 		FileCleanup:       req.FileCleanup.ToEntity(),
+		SystemAppsSync:    req.SystemAppsSync.ToEntity(),
 		Notification:      req.Notification.ToEntity(),
 	}
 }
@@ -182,6 +185,17 @@ func (req *SystemFileCleanupReq) validate(_ string) []vld.Validator {
 		return nil
 	}
 	return nil
+}
+
+type SystemAppsSyncReq struct {
+	Enabled bool `json:"enabled"`
+}
+
+func (req *SystemAppsSyncReq) ToEntity() *entity.SystemAppsSync {
+	if req == nil {
+		return &entity.SystemAppsSync{Enabled: true}
+	}
+	return &entity.SystemAppsSync{Enabled: req.Enabled}
 }
 
 func NewUpdateSystemCleanupReq() *UpdateSystemCleanupReq {

@@ -16,6 +16,13 @@ type Service interface {
 	// idempotent, so a failed save leaves work the next save retries.
 	Apply(ctx context.Context, db database.IDB, req *SettingApplyReq) (*SettingApplyResp, error)
 
+	// Sync brings the registry's app to the stored settings, as a save does, and
+	// further: an app the settings no longer want is removed, its images kept;
+	// one whose service is gone is removed and provisioned again. The credential
+	// it pushed with is kept, for a later switch-on to take up. It runs inside
+	// the caller's transaction, and locks the settings as a save does.
+	Sync(ctx context.Context, db database.IDB) (*SyncResp, error)
+
 	// Status says what is running and what the registry holds, for the settings
 	// screen. It never fails the screen: a registry that cannot be reached comes
 	// back as a status saying so.

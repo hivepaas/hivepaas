@@ -39,6 +39,7 @@ type SystemCleanupResp struct {
 	ClusterCleanup    *SystemClusterCleanupResp          `json:"clusterCleanup"`
 	CacheCleanup      *SystemCacheCleanupResp            `json:"cacheCleanup"`
 	FileCleanup       *SystemFileCleanupResp             `json:"fileCleanup"`
+	SystemAppsSync    *SystemAppsSyncResp                `json:"systemAppsSync"`
 	Notification      *basedto.BaseEventNotificationResp `json:"notification"`
 
 	// Calculated fields
@@ -80,6 +81,11 @@ type SystemFileCleanupResp struct {
 	Enabled bool `json:"enabled"`
 }
 
+// SystemAppsSyncResp is on for a setting saved before it existed.
+type SystemAppsSyncResp struct {
+	Enabled bool `json:"enabled"`
+}
+
 func TransformSystemCleanup(
 	setting *entity.Setting,
 	refObjects *entity.RefObjects,
@@ -95,6 +101,7 @@ func TransformSystemCleanup(
 	}
 
 	resp.Notification = basedto.TransformBaseEventNotification(config.Notification, refObjects)
+	resp.SystemAppsSync = &SystemAppsSyncResp{Enabled: config.SystemAppsSyncEnabled()}
 
 	// Add next runs
 	resp.NextRuns, _ = config.Schedule.CalcNextRuns(time.Now(), 5) //nolint

@@ -12,7 +12,10 @@ func (s *SystemCleanup) Migrate(setting *Setting) (hasChange bool, err error) {
 		return false, hperrors.Wrap(hperrors.ErrDataVerNewerThanSystemVer)
 	}
 
-	// TODO: add migration if we make any change
+	// Version 2 added SystemAppsSync, on for every installation.
+	if setting.Version < 2 && s.SystemAppsSync == nil { //nolint:mnd
+		s.SystemAppsSync = &SystemAppsSync{Enabled: true}
+	}
 
 	setting.Version = CurrentSystemCleanupVersion
 	setting.UpdateVer++

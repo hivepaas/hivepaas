@@ -137,3 +137,18 @@ type PerformanceNodeStatus struct {
 	Time time.Time
 	obi.Status
 }
+
+// SyncResp is what Sync found and did.
+type SyncResp struct {
+	Apps []*entity.SystemAppSyncOutput
+	// OBI is nil when OBI is off and nothing about it needed doing.
+	OBI *entity.OBISyncOutput
+
+	// Tasks and Cleanup are as SettingApplyResp's: for the caller to schedule
+	// once committed, and to run when its transaction does not commit.
+	Tasks   []*entity.Task
+	Cleanup func(ctx context.Context) error
+	// OBISettingsChanged says the agents are to read the settings again: the
+	// caller drops their cache once committed.
+	OBISettingsChanged bool
+}

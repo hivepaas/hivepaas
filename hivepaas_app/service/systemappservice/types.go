@@ -71,3 +71,13 @@ type SecretFile struct {
 	Path  string
 	Value string
 }
+
+// AppCheck is what Check found of an app's service.
+type AppCheck struct {
+	// Action is none, reported or skipped.
+	Action entity.SystemAppSyncAction
+	// Problem is what was found, for whoever reads the run: empty for none.
+	Problem string
+	// ServiceGone says the app has no service any more.
+	ServiceGone bool
+}

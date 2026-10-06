@@ -2,12 +2,16 @@ package syscleanupserviceimpl
 
 import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/repository"
+	"github.com/hivepaas/hivepaas/hivepaas_app/repository/cacherepository"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/agentservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/appservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/auditservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/clustercleanupservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/fileservice"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/loggingservice"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/registryservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/syscleanupservice"
+	"github.com/hivepaas/hivepaas/hivepaas_app/tasks/queue"
 	"github.com/hivepaas/hivepaas/services/docker"
 )
 
@@ -27,7 +31,11 @@ type service struct {
 	appService            appservice.Service
 	auditService          auditservice.Service
 	fileService           fileservice.Service
+	loggingService        loggingservice.Service
+	registryService       registryservice.Service
 
+	obiSettings   cacherepository.OBISettingsRepo
+	taskQueue     queue.TaskQueue
 	dockerManager docker.Manager
 }
 
@@ -47,7 +55,11 @@ func New(
 	appService appservice.Service,
 	auditService auditservice.Service,
 	fileService fileservice.Service,
+	loggingService loggingservice.Service,
+	registryService registryservice.Service,
 
+	obiSettings cacherepository.OBISettingsRepo,
+	taskQueue queue.TaskQueue,
 	dockerManager docker.Manager,
 ) syscleanupservice.Service {
 	return &service{
@@ -66,7 +78,11 @@ func New(
 		appService:            appService,
 		auditService:          auditService,
 		fileService:           fileService,
+		loggingService:        loggingService,
+		registryService:       registryService,
 
+		obiSettings:   obiSettings,
+		taskQueue:     taskQueue,
 		dockerManager: dockerManager,
 	}
 }

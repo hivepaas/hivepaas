@@ -80,6 +80,9 @@ func (s *service) initDefaultSystemCleanup(
 		FileCleanup: entity.SystemFileCleanup{
 			Enabled: true,
 		},
+		SystemAppsSync: &entity.SystemAppsSync{
+			Enabled: true,
+		},
 		Notification: &entity.BaseEventNotification{
 			SuccessUseDefault: true,
 			FailureUseDefault: true,

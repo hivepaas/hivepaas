@@ -20,6 +20,8 @@ type SysCleanupReq struct {
 	CleanupCacheRepo base.CleanupFlag
 
 	CleanupFilesTemp base.CleanupFlag
+
+	SyncSystemApps base.CleanupFlag
 }
 
 func (req *SysCleanupReq) SetCleanupFlagsDefault() {
@@ -32,6 +34,8 @@ func (req *SysCleanupReq) SetCleanupFlagsDefault() {
 	req.CleanupCacheRepo = base.CleanupFlagTrue
 
 	req.CleanupFilesTemp = base.CleanupFlagTrue
+
+	req.SyncSystemApps = base.CleanupFlagTrue
 }
 
 type SysCleanupResp struct {

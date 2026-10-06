@@ -53,6 +53,14 @@ type Service interface {
 	// update, so the app restarts once when anything changed.
 	SyncSecrets(ctx context.Context, db database.IDB, app *entity.App, files []*SecretFile) error
 
+	// Check reads how the app's service runs. A service that is gone is said to
+	// be: a deployment updates a service, and cannot make one, so the caller
+	// removes the app and provisions it again. What neither would mend - a
+	// service scaled to zero, tasks that fail - is reported for a person to look
+	// into; an app being deployed, or its service updated, is left for the next
+	// look.
+	Check(ctx context.Context, db database.IDB, app *entity.App) (*AppCheck, error)
+
 	// Remove deletes the app and the apps created to serve it. removeStorage also
 	// deletes its directories inside the volumes it mounted.
 	Remove(ctx context.Context, db database.IDB, app *entity.App, removeStorage bool) error

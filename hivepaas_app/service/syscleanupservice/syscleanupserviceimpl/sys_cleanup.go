@@ -48,6 +48,11 @@ func (s *service) Cleanup(
 	// Cleanup DB objects
 	errs = append(errs, s.sysCleanupDB(ctx, db, data))
 
+	// Bring the system apps to their settings, and check OBI on the nodes:
+	// before the cluster's cleanup, which would otherwise prune the image of
+	// one whose service is gone, only for it to be pulled again.
+	errs = append(errs, s.sysSyncSystemApps(ctx, db, data))
+
 	// Cleanup unused cluster data (docker)
 	errs = append(errs, s.sysCleanupCluster(ctx, data))
 

@@ -53,9 +53,7 @@ func (s *service) obiDeployed(ctx context.Context, db database.IDB) (bool, error
 	if err != nil {
 		return false, hperrors.Wrap(err)
 	}
-	perf := cfg.Performance
-	return cfg.Enabled && (cfg.Sources.Apps || cfg.Sources.HivePaaS) && perf != nil && perf.Enabled &&
-		len(perf.Nodes) > 0, nil
+	return cfg.OBIOn(), nil
 }
 
 // noteOBIMove says in the update's log what becomes of OBI, once the agent has

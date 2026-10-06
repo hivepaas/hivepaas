@@ -62375,9 +62375,9 @@
         "type" : "object"
       },
       "hperrors.DisplayLevel" : {
-        "enum" : [ "high", "medium", "low", "medium" ],
+        "enum" : [ "medium", "high", "medium", "low" ],
         "type" : "string",
-        "x-enum-varnames" : [ "DisplayLevelHigh", "DisplayLevelMedium", "DisplayLevelLow", "errVldDisplayLevel" ]
+        "x-enum-varnames" : [ "errVldDisplayLevel", "DisplayLevelHigh", "DisplayLevelMedium", "DisplayLevelLow" ]
       },
       "hperrors.ErrorInfo" : {
         "properties" : {
@@ -71537,6 +71537,24 @@
         "required" : [ "cronExpr", "initialTime", "interval" ],
         "type" : "object"
       },
+      "systemcleanupdto.SystemAppsSyncReq" : {
+        "properties" : {
+          "enabled" : {
+            "type" : "boolean"
+          }
+        },
+        "required" : [ "enabled" ],
+        "type" : "object"
+      },
+      "systemcleanupdto.SystemAppsSyncResp" : {
+        "properties" : {
+          "enabled" : {
+            "type" : "boolean"
+          }
+        },
+        "required" : [ "enabled" ],
+        "type" : "object"
+      },
       "systemcleanupdto.SystemCacheCleanupReq" : {
         "properties" : {
           "enabled" : {
@@ -71618,6 +71636,9 @@
           "status" : {
             "$ref" : "#/components/schemas/base.SettingStatus"
           },
+          "systemAppsSync" : {
+            "$ref" : "#/components/schemas/systemcleanupdto.SystemAppsSyncResp"
+          },
           "type" : {
             "$ref" : "#/components/schemas/base.SettingType"
           },
@@ -71628,7 +71649,7 @@
             "type" : "string"
           }
         },
-        "required" : [ "cacheCleanup", "clusterCleanup", "createdAt", "dbObjectRetention", "default", "expireAt", "fileCleanup", "id", "inheritable", "inherited", "kind", "name", "nextRuns", "notification", "schedule", "size", "status", "type", "updateVer", "updatedAt" ],
+        "required" : [ "cacheCleanup", "clusterCleanup", "createdAt", "dbObjectRetention", "default", "expireAt", "fileCleanup", "id", "inheritable", "inherited", "kind", "name", "nextRuns", "notification", "schedule", "size", "status", "systemAppsSync", "type", "updateVer", "updatedAt" ],
         "type" : "object"
       },
       "systemcleanupdto.SystemClusterCleanupReq" : {
@@ -71738,11 +71759,18 @@
           "status" : {
             "$ref" : "#/components/schemas/base.SettingStatus"
           },
+          "systemAppsSync" : {
+            "allOf" : [ {
+              "$ref" : "#/components/schemas/systemcleanupdto.SystemAppsSyncReq"
+            } ],
+            "description" : "SystemAppsSync left out keeps the system apps synced.",
+            "type" : "object"
+          },
           "updateVer" : {
             "type" : "integer"
           }
         },
-        "required" : [ "cacheCleanup", "clusterCleanup", "dbObjectRetention", "default", "fileCleanup", "inheritable", "notification", "schedule", "status", "updateVer" ],
+        "required" : [ "cacheCleanup", "clusterCleanup", "dbObjectRetention", "default", "fileCleanup", "inheritable", "notification", "schedule", "status", "systemAppsSync", "updateVer" ],
         "type" : "object"
       },
       "systemcleanupdto.UpdateSystemCleanupResp" : {

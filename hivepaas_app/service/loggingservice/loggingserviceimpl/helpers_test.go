@@ -29,6 +29,26 @@ type fakeDocker struct {
 	docker.Manager
 	inspected map[string]swarm.Service
 	networks  []network.Summary
+	// nodes are the cluster's; agentNodes those the agent runs a task on.
+	nodes      []swarm.Node
+	agentNodes []string
+}
+
+func (f *fakeDocker) NodeList(_ context.Context, _ ...docker.NodeListOption) (*client.NodeListResult, error) {
+	return &client.NodeListResult{Items: f.nodes}, nil
+}
+
+func (f *fakeDocker) ServiceGetByName(_ context.Context, name string, _ bool) (*swarm.Service, error) {
+	return &swarm.Service{ID: "svc-" + name}, nil
+}
+
+// TaskList answers the agent's running tasks, one a node.
+func (f *fakeDocker) TaskList(_ context.Context, _ ...docker.TaskListOption) (*client.TaskListResult, error) {
+	items := make([]swarm.Task, 0, len(f.agentNodes))
+	for _, node := range f.agentNodes {
+		items = append(items, swarm.Task{NodeID: node, Status: swarm.TaskStatus{State: swarm.TaskStateRunning}})
+	}
+	return &client.TaskListResult{Items: items}, nil
 }
 
 func (f *fakeDocker) ServiceInspect(
@@ -140,6 +160,20 @@ type fakeSystemApps struct {
 	removed     []string
 	// removedStorage says, by app key, whether its storage went with it.
 	removedStorage map[string]bool
+	// checks are what Check answers, by app key; otherwise an app whose
+	// service is not in docker has none, and the rest are fine.
+	checks map[string]*systemappservice.AppCheck
+}
+
+func (f *fakeSystemApps) Check(_ context.Context, _ database.IDB, app *entity.App) (*systemappservice.AppCheck, error) {
+	if check, ok := f.checks[app.Key]; ok {
+		return check, nil
+	}
+	if _, ok := f.docker.inspected[app.ServiceID]; !ok {
+		return &systemappservice.AppCheck{Action: entity.SystemAppSyncReported, Problem: "its service is gone",
+			ServiceGone: true}, nil
+	}
+	return &systemappservice.AppCheck{Action: entity.SystemAppSyncNone}, nil
 }
 
 func (f *fakeSystemApps) LoadApp(_ context.Context, _ database.IDB, key string) (*entity.App, error) {
@@ -198,7 +232,7 @@ func (f *fakeSystemApps) Redeploy(
 		return nil, err
 	}
 	f.redeployed = append(f.redeployed, req.App.Key)
-	return &entity.Task{ID: "redeploy-" + req.App.Key}, nil
+	return &entity.Task{ID: "redeploy-" + req.App.Key, ObjectID: req.App.ID}, nil
 }
 
 func (f *fakeSystemApps) SetResources(_ context.Context, app *entity.App, res systemappservice.Resources) error {

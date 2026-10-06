@@ -11,7 +11,7 @@ import { useNotificationSettingsSources, useSettingRevealSecrets } from "~/setti
 import { SYSTEM_BACKUP_SPEC_SECRETS, type SystemBackupSettings } from "~/system-settings/domain";
 import { SectionHeader } from "~/system-settings/module-shared";
 
-import { AppLink, Combobox, InfoBlock, NextRunsField } from "@application/shared/components";
+import { AppLink, Combobox, CronTimezoneNote, InfoBlock, NextRunsField } from "@application/shared/components";
 import { DEFAULT_PAGINATED_DATA, ROUTE } from "@application/shared/constants";
 import { ESettingStatus } from "@application/shared/enums";
 import { NotificationSettings } from "@application/shared/form";
@@ -178,6 +178,7 @@ function GeneralFields({ nextRuns }: { nextRuns: Date[] }) {
                                     className="max-w-[400px]"
                                     aria-invalid={isScheduleCronExprInvalid}
                                 />
+                                <CronTimezoneNote />
                                 <FieldError errors={[scheduleCronExprError]} />
                             </Field>
                         </FieldGroup>

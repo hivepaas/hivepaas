@@ -2,7 +2,7 @@ import { useController, useFormContext } from "react-hook-form";
 import { PROJECT_FORM_CONTROL_MAX_WIDTH_CLASS } from "~/projects/module-shared/constants";
 import { EAppScheduledJobScheduleMode } from "~/projects/module-shared/enums";
 
-import { InfoBlock, NextRunsField } from "@application/shared/components";
+import { CronTimezoneNote, InfoBlock, NextRunsField } from "@application/shared/components";
 
 import { Field, FieldError, Input, Tabs, TabsList, TabsTrigger } from "@/components/ui";
 import { DateTimePicker } from "@/components/ui/date-time-picker";
@@ -96,6 +96,7 @@ export function JobScheduleFields({ titleWidth, nextRuns, readOnly = false }: Pr
                             aria-invalid={cronExprState.invalid}
                             disabled={readOnly}
                         />
+                        <CronTimezoneNote />
                         <FieldError errors={[cronExprState.error]} />
                     </Field>
                 </InfoBlock>

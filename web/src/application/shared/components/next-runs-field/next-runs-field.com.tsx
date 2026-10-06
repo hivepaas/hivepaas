@@ -2,8 +2,9 @@ import React, { useState } from "react";
 
 import { dashedBorderBox } from "@lib/styles";
 import { cn } from "@lib/utils";
-import { format } from "date-fns";
 import { ChevronDown } from "lucide-react";
+
+import { formatInTimezone, useInstallationTimezone } from "@application/shared/hooks";
 
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui";
 
@@ -11,6 +12,8 @@ import { InfoBlock } from "../info-block";
 
 function View({ nextRuns, titleWidth }: Props) {
     const [open, setOpen] = useState(false);
+    // On the installation's clocks, the ones a schedule's hours are read on.
+    const timezone = useInstallationTimezone();
 
     if (nextRuns.length === 0) {
         return null;
@@ -37,7 +40,7 @@ function View({ nextRuns, titleWidth }: Props) {
                     )}
                 >
                     <div className="relative flex w-full items-center justify-center">
-                        <span className="text-orange-500">{format(firstRun, "yyyy-MM-dd HH:mm:ss")}</span>
+                        <span className="text-orange-500">{formatInTimezone(firstRun, timezone)}</span>
                         {hasMore && (
                             <CollapsibleTrigger asChild>
                                 <button
@@ -62,12 +65,13 @@ function View({ nextRuns, titleWidth }: Props) {
                                     key={runAt.toISOString()}
                                     className="text-orange-500"
                                 >
-                                    {format(runAt, "yyyy-MM-dd HH:mm:ss")}
+                                    {formatInTimezone(runAt, timezone)}
                                 </span>
                             ))}
                         </CollapsibleContent>
                     )}
                 </div>
+                <p className="mt-1 text-xs text-muted-foreground">In {timezone}</p>
             </Collapsible>
         </InfoBlock>
     );

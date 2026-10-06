@@ -119,6 +119,10 @@ function mapProjectAccessesToProjectPermissions(
 const GetProfileSchema = z.object({
     data: z.object({
         nextStep: z.string().optional(),
+        timezone: z
+            .string()
+            .nullish()
+            .transform(value => value ?? "UTC"),
         user: z.object({
             id: z.string(),
             username: z.string(),
@@ -148,7 +152,7 @@ export class SessionApiValidator {
      */
     getProfile = (response: AxiosResponse): Session_GetProfile_Res => {
         const {
-            data: { user, nextStep },
+            data: { user, nextStep, timezone },
         } = parseApiResponse({
             response,
             schema: GetProfileSchema,
@@ -172,6 +176,7 @@ export class SessionApiValidator {
                 createdAt: user.createdAt,
                 lastAccess: user.lastAccess ?? null,
                 nextStep,
+                timezone,
                 position: user.position ?? "",
                 status: user.status,
                 projectAccesses,

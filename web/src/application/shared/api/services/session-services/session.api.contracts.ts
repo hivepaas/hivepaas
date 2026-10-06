@@ -5,7 +5,8 @@ import { type ApiResponseBase } from "@infrastructure/api";
 /**
  * Get profile
  */
-export type Session_GetProfile_Res = ApiResponseBase<Profile & { nextStep?: string }>;
+/** timezone is the installation's, a zone name such as Asia/Ho_Chi_Minh: what a schedule's hours are read in. */
+export type Session_GetProfile_Res = ApiResponseBase<Profile & { nextStep?: string; timezone: string }>;
 
 /**
  * Logout

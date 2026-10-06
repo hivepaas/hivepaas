@@ -31,7 +31,7 @@ interface Props {
 }
 
 const CHANGE_TAGS: Record<string, { label: string; className: string }> = {
-    settings: { label: "Settings", className: "bg-secondary text-secondary-foreground" },
+    settings: { label: "Settings", className: "bg-violet-100 text-violet-800 dark:bg-violet-950 dark:text-violet-300" },
     update: { label: "Updated", className: "bg-blue-100 text-blue-800 dark:bg-blue-950 dark:text-blue-300" },
     major: { label: "Major", className: "bg-amber-100 text-amber-900 dark:bg-amber-950 dark:text-amber-300" },
     blocked: { label: "Blocked", className: "bg-red-100 text-red-800 dark:bg-red-950 dark:text-red-300" },
@@ -65,9 +65,7 @@ function ComponentRow({ component }: { component: UpdateComponent }) {
             )}
             {blocked && <span className="col-span-full text-xs text-destructive">{component.reason}</span>}
             {component.change === "settings" && (
-                <span className="col-span-full text-xs text-muted-foreground">
-                    Same image, restarted with the settings this release writes.
-                </span>
+                <span className="col-span-full text-xs text-muted-foreground">{component.reason}</span>
             )}
             {component.requiresBackup && (
                 <span className="col-span-full text-xs text-amber-800 dark:text-amber-300">
@@ -113,6 +111,9 @@ export function ReviewUpdateDialog({ open, channel, releaseInfo, onOpenChange, o
 
     const changed = plan?.components.filter(c => c.change !== "none" && c.change !== "not-deployed") ?? [];
     const unchanged = plan?.components.filter(c => c.change === "none").map(componentName) ?? [];
+    // The plan knows only what this version writes: a release that writes Traefik's settings otherwise still
+    // restarts it while the plan says it stays as it is.
+    const proxyMayRestart = plan?.components.some(c => c.key === "traefik" && c.change === "none") === true;
     const mustBackUp = plan?.requiresBackup === true;
     const released = formatReleaseDate(plan?.target.releaseDate ?? null);
 
@@ -247,6 +248,9 @@ export function ReviewUpdateDialog({ open, channel, releaseInfo, onOpenChange, o
                             <span>
                                 The dashboard and the API stop for <b>a few minutes</b> while HivePaaS updates itself.
                                 Your apps keep running.
+                                {proxyMayRestart &&
+                                    " Traefik may restart to take this release's settings, leaving sites served through " +
+                                        "HivePaaS unreachable for a few seconds."}
                             </span>
                         </div>
                     )}

@@ -100,3 +100,13 @@ export async function restoreCleanupSettings(api: APIRequestContext, saved: Sett
         "restoring cleanup settings",
     );
 }
+
+// deleteUsersByEmail removes the users, invited or signed up, with that email.
+export async function deleteUsersByEmail(api: APIRequestContext, email: string): Promise<void> {
+    const body = (await ok(await api.get("users", { params: { search: email } }), `listing users ${email}`)) as {
+        data: { id: string; email: string }[];
+    };
+    for (const user of body.data.filter(u => u.email === email)) {
+        await ok(await api.delete(`users/${user.id}`), `deleting user ${email}`);
+    }
+}

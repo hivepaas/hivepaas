@@ -23,7 +23,7 @@ type GetMeResp struct {
 type GetMeDataResp struct {
 	NextStep string                   `json:"nextStep,omitempty"`
 	User     *userdto.UserDetailsResp `json:"user"`
-	// Timezone is the installation's, a zone name such as Asia/Ho_Chi_Minh:
+	// Timezone is the installation's, a zone name such as America/New_York:
 	// what a schedule's hours are read in.
 	Timezone string `json:"timezone"`
 }

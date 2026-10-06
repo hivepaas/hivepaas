@@ -70,7 +70,7 @@ func TestAProjectEnvVarsChangeSendsThePutsRequest(t *testing.T) {
 	text, isErr := callTool(t, session, "plan_update_project_settings", map[string]any{
 		"project": "shop", "kind": "env-vars", "changes": map[string]any{
 			"runtimeEnvVars": []any{
-				map[string]any{"key": "TZ", "value": "Asia/Ho_Chi_Minh"},
+				map[string]any{"key": "TZ", "value": "America/New_York"},
 			},
 		},
 	})
@@ -92,7 +92,7 @@ func TestAProjectEnvVarsChangeSendsThePutsRequest(t *testing.T) {
 		var body map[string]any
 		assert.NoError(t, json.Unmarshal([]byte(sent[0].Body), &body))
 		assert.EqualValues(t, 4, body["updateVer"])
-		assert.Contains(t, sent[0].Body, "Asia/Ho_Chi_Minh")
+		assert.Contains(t, sent[0].Body, "America/New_York")
 	}
 }
 

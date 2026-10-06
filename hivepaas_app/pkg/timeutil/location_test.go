@@ -12,7 +12,7 @@ func TestLocation(t *testing.T) {
 	t.Cleanup(func() { SetLocation(nil) })
 	assert.Equal(t, time.UTC, Location())
 
-	loc, err := time.LoadLocation("Asia/Ho_Chi_Minh")
+	loc, err := time.LoadLocation("America/New_York")
 	assert.NoError(t, err)
 	SetLocation(loc)
 	assert.Equal(t, loc, Location())

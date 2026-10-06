@@ -74,7 +74,7 @@ func (q *rescheduling) ScheduleTasksForSchedJobs(_ context.Context, _ database.T
 // tasks made again; the status then says the new one, and a start under it
 // moves nothing.
 func TestDailyJobsMoveToTheTimezone(t *testing.T) {
-	vn, err := time.LoadLocation("Asia/Ho_Chi_Minh")
+	newYork, err := time.LoadLocation("America/New_York")
 	assert.NoError(t, err)
 	status := &statusRepo{status: &entity.SystemStatus{ID: "1"}}
 	jobs := &movingJobs{moved: []*entity.Setting{{ID: "cleanup-job"}}}
@@ -83,25 +83,25 @@ func TestDailyJobsMoveToTheTimezone(t *testing.T) {
 		return moveDailyJobsToTimezone(context.Background(), txDB{}, status, jobs, tasks, to, logging.GlobalLogger())
 	}
 
-	assert.NoError(t, run(vn))
+	assert.NoError(t, run(newYork))
 	assert.Equal(t, 1, jobs.calls)
 	assert.Equal(t, "UTC", jobs.from, "given before there was a timezone: in UTC")
-	assert.Equal(t, "Asia/Ho_Chi_Minh", jobs.to)
+	assert.Equal(t, "America/New_York", jobs.to)
 	assert.Equal(t, []*entity.Setting{{ID: "cleanup-job"}}, tasks.jobs)
 	assert.True(t, tasks.unschedule, "the tasks of the old times go")
-	assert.Equal(t, "Asia/Ho_Chi_Minh", status.status.ScheduleTimezone)
+	assert.Equal(t, "America/New_York", status.status.ScheduleTimezone)
 	assert.Equal(t, entity.SystemStatusScheduleTimezoneCols, status.saved)
 
-	assert.NoError(t, run(vn))
+	assert.NoError(t, run(newYork))
 	assert.Equal(t, 1, jobs.calls, "already there")
 
 	assert.NoError(t, run(time.UTC))
 	assert.Equal(t, 2, jobs.calls)
-	assert.Equal(t, "Asia/Ho_Chi_Minh", jobs.from)
+	assert.Equal(t, "America/New_York", jobs.from)
 	assert.Equal(t, "UTC", status.status.ScheduleTimezone)
 
 	status.status.ScheduleTimezone = "Mars/Olympus_Mons"
-	assert.Error(t, run(vn), "a timezone it cannot read is not taken for UTC")
+	assert.Error(t, run(newYork), "a timezone it cannot read is not taken for UTC")
 }
 
 // An installation from before there was a timezone, still in UTC, moves

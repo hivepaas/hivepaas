@@ -36,7 +36,7 @@ ZONEINFO_DIR=$TMP/zoneinfo
 LOCALTIME_LINK=$TMP/localtime
 TIMEZONE_FILE=$TMP/timezone
 zone_file UTC
-zone_file Asia/Ho_Chi_Minh
+zone_file America/New_York
 zone_file Europe/Berlin
 printf '# a table, no zone\n' >"$ZONEINFO_DIR/zone.tab"
 printf '# leap seconds, no zone\n' >"$ZONEINFO_DIR/leapseconds"
@@ -191,10 +191,10 @@ test_valid_app_secret() {
 
 test_valid_timezone() {
   local z
-  for z in UTC Asia/Ho_Chi_Minh Europe/Berlin; do
+  for z in UTC America/New_York Europe/Berlin; do
     check_ok "zone $z" valid_timezone "$z"
   done
-  for z in '' Local localtime posixrules leapseconds zone.tab Mars/Olympus_Mons UTC+7 \
+  for z in '' Local localtime posixrules leapseconds zone.tab Mars/Olympus_Mons UTC-5 \
     '+07:00' '../etc/passwd' 'Asia/Ho Chi Minh' /UTC Asia/; do
     check_fails "zone '$z'" valid_timezone "$z"
   done
@@ -207,12 +207,12 @@ test_host_timezone() {
   check "nothing names one: UTC" UTC "$(host_timezone)"
   printf 'Europe/Berlin\n' >"$TIMEZONE_FILE"
   check "/etc/timezone" Europe/Berlin "$(host_timezone)"
-  ln -s /usr/share/zoneinfo/posix/Asia/Ho_Chi_Minh "$LOCALTIME_LINK"
-  check "the zone /etc/localtime links to, before /etc/timezone" Asia/Ho_Chi_Minh "$(host_timezone)"
+  ln -s /usr/share/zoneinfo/posix/America/New_York "$LOCALTIME_LINK"
+  check "the zone /etc/localtime links to, before /etc/timezone" America/New_York "$(host_timezone)"
   timedatectl_zone() { printf 'UTC'; }
   check "systemd's, before both" UTC "$(host_timezone)"
   timedatectl_zone() { printf 'Mars/Olympus_Mons'; }
-  check "one this server does not know is passed over" Asia/Ho_Chi_Minh "$(host_timezone)"
+  check "one this server does not know is passed over" America/New_York "$(host_timezone)"
 }
 
 test_valid_ipv4() {
@@ -527,7 +527,7 @@ answers() {
 
 test_ask_questions_interactive() {
   answers not-an-email you@example.com short password123 password124 password123 password123 \
-    HivePaaS.Dev.MyDomain.com '' /var/lib/hivepaas/ '' Mars/Olympus_Mons Asia/Ho_Chi_Minh ''
+    HivePaaS.Dev.MyDomain.com '' /var/lib/hivepaas/ '' Mars/Olympus_Mons America/New_York ''
   ask_questions 2>/dev/null
   check "email, asked again" you@example.com "$HIVEPAAS_ADMIN_EMAIL"
   check "password, typed twice alike" password123 "$HIVEPAAS_ADMIN_PASSWORD"
@@ -536,7 +536,7 @@ test_ask_questions_interactive() {
   check_ok "app secret, generated" matches "$HIVEPAAS_APP_SECRET" '^[0-9a-f]{64}$'
   check "data dir, normalized" /var/lib/hivepaas "$HIVEPAAS_DATA_DIR"
   check "project data dir, defaulted" /var/lib/hivepaas/project_data "$HIVEPAAS_PROJECT_DATA_DIR"
-  check "timezone, asked again" Asia/Ho_Chi_Minh "$HIVEPAAS_TIMEZONE"
+  check "timezone, asked again" America/New_York "$HIVEPAAS_TIMEZONE"
 }
 
 test_ask_questions_silent() {
@@ -571,7 +571,7 @@ test_ask_questions_given_invalid() {
   out=$( (ask_questions) 2>&1)
   check "project data on app data stops" 1 "$?"
   check_contains "naming it" "$out" HIVEPAAS_PROJECT_DATA_DIR
-  HIVEPAAS_PROJECT_DATA_DIR=/data/projects HIVEPAAS_TIMEZONE=GMT+7
+  HIVEPAAS_PROJECT_DATA_DIR=/data/projects HIVEPAAS_TIMEZONE=GMT-5
   out=$( (ask_questions) 2>&1)
   check "a timezone that is no zone stops" 1 "$?"
   check_contains "naming it" "$out" HIVEPAAS_TIMEZONE
@@ -620,7 +620,7 @@ test_take_installed_env() {
   take_installed_env 'HP_ENV=beta
 HP_APP_DOMAIN=app.example.com
 HP_ROOT_DOMAIN=example.com
-HP_TIMEZONE=Asia/Ho_Chi_Minh
+HP_TIMEZONE=America/New_York
 HP_STORAGE_HOST_DIR=/srv/hivepaas
 HP_STORAGE_PROJECT_DATA_HOST_DIR=/data/projects
 HP_SESSION_JWT_SECRET=jwt=with=equals
@@ -631,7 +631,7 @@ HP_RUN_MODE=app+worker'
   check "channel" beta "$HIVEPAAS_CHANNEL"
   check "app domain" app.example.com "$HIVEPAAS_APP_DOMAIN"
   check "root domain" example.com "$HIVEPAAS_ROOT_DOMAIN"
-  check "timezone" Asia/Ho_Chi_Minh "$HIVEPAAS_TIMEZONE"
+  check "timezone" America/New_York "$HIVEPAAS_TIMEZONE"
   check "data dir" /srv/hivepaas "$HIVEPAAS_DATA_DIR"
   check "project data dir" /data/projects "$HIVEPAAS_PROJECT_DATA_DIR"
   check "a value with =" jwt=with=equals "$HIVEPAAS_JWT_SECRET"
@@ -682,6 +682,94 @@ test_cert_wait_seconds() {
   check "as set" 5 "$(HIVEPAAS_CERT_WAIT_SECONDS=5 cert_wait_seconds)"
   check "0: not waited for" 0 "$(HIVEPAAS_CERT_WAIT_SECONDS=0 cert_wait_seconds)"
   check "not a number: the default" 20 "$(HIVEPAAS_CERT_WAIT_SECONDS=soon cert_wait_seconds 2>/dev/null)"
+}
+
+# fake_app_tasks BEFORE AFTER: a swarm whose app has the tasks BEFORE at the
+# first look and AFTER at every one after, each an "ID State" line as docker
+# service ps writes it, and whose logs are APP_LOG. The dashboard never
+# answers, and time runs only as the wait sleeps.
+fake_app_tasks() {
+  printf '%s\n' "$1" >"$TMP/tasks-before"
+  printf '%s\n' "$2" >"$TMP/tasks-after"
+  rm -f "$TMP/tasks-seen" "$TMP/logs-args"
+  docker() {
+    case "$1 $2" in
+      'service ps')
+        if [ -e "$TMP/tasks-seen" ]; then cat "$TMP/tasks-after"; else
+          : >"$TMP/tasks-seen"
+          cat "$TMP/tasks-before"
+        fi
+        ;;
+      'service logs')
+        printf '%s\n' "$*" >"$TMP/logs-args"
+        printf '%s\n' "${APP_LOG:-}"
+        ;;
+    esac
+  }
+  dashboard_answers() { return 1; }
+  sleep() { SECONDS=$((SECONDS + 5)); }
+}
+
+# What the app says as it fails to start for a timezone that is no zone.
+TIMEZONE_FAILURE='[Fx] ERROR		Failed to start: could not build arguments for function InitLogger
+failed to build *config.Config:
+received non-nil error from function "github.com/hivepaas/hivepaas/hivepaas_app/config".LoadConfig
+timezone is not a zone name: HP_TIMEZONE "America/NewYork" - a name such as UTC or America/New_York'
+
+test_app_last_words() {
+  fake_app_tasks '' ''
+  APP_LOG=$TIMEZONE_FAILURE
+  check "a failed start: the cause, its last line" \
+    'timezone is not a zone name: HP_TIMEZONE "America/NewYork" - a name such as UTC or America/New_York' \
+    "$(app_last_words t1)"
+  check_contains "of the task asked about, raw" "$(cat "$TMP/logs-args")" "service logs --raw --tail 40 t1"
+  APP_LOG='panic: runtime error: invalid memory address or nil pointer dereference
+
+goroutine 1 [running]:
+main.main()
+	/src/main.go:10 +0x1d'
+  check "a panic: the panic" "panic: runtime error: invalid memory address or nil pointer dereference" \
+    "$(app_last_words t1)"
+  APP_LOG=''
+  check "nothing said" "" "$(app_last_words t1)"
+}
+
+# The app stopping as it starts, again and again, ends the wait at once, with
+# what it said last - not after the wait's five minutes.
+test_wait_stops_when_the_app_keeps_failing() {
+  local out
+  APP_LOG=$TIMEZONE_FAILURE
+  fake_app_tasks 'old Failed 2 hours ago' 't4 Starting 1 second ago
+t3 Failed 4 seconds ago
+t2 Failed 11 seconds ago
+t1 Failed 18 seconds ago
+old Failed 2 hours ago'
+  out=$( (wait_for_dashboard) 2>&1)
+  check "stops" 1 "$?"
+  check_contains "saying how often" "$out" "HivePaaS stopped as it started, 3 times"
+  check_contains "and why" "$out" 'timezone is not a zone name: HP_TIMEZONE "America/NewYork"'
+  check_contains "and what to do" "$out" "run the installer again with --redeploy"
+  check_contains "from the newest failed task" "$(cat "$TMP/logs-args")" "--tail 40 t3"
+  unset -f docker dashboard_answers sleep
+}
+
+# Failures from before the wait, or one or two in it, wait on: the database
+# may not have been answering yet.
+test_wait_waits_on_a_failure_or_two() {
+  local out
+  HIVEPAAS_WAIT_SECONDS=20
+  APP_LOG=$TIMEZONE_FAILURE
+  fake_app_tasks 'o1 Failed 1 hour ago
+o2 Failed 1 hour ago
+o3 Failed 1 hour ago' 'n1 Failed 3 seconds ago
+n2 Failed 10 seconds ago
+o1 Failed 1 hour ago
+o2 Failed 1 hour ago
+o3 Failed 1 hour ago'
+  out=$( (wait_for_dashboard) 2>&1)
+  check "runs out of time" 1 "$?"
+  check_lacks "rather than stopping" "$out" "stopped as it started"
+  unset -f docker dashboard_answers sleep
 }
 
 test_wait_for_trusted_cert() {

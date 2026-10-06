@@ -9,9 +9,11 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/timeutil"
 )
 
-func inZone(t *testing.T, name string) *time.Location {
+// inNewYork makes New York the installation's timezone: UTC-5, and UTC-4 in
+// daylight saving, from March to November.
+func inNewYork(t *testing.T) *time.Location {
 	t.Helper()
-	loc, err := time.LoadLocation(name)
+	loc, err := time.LoadLocation("America/New_York")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -39,14 +41,14 @@ func TestCronRunsAtTheInstallationsHours(t *testing.T) {
 	assert.Equal(t, []time.Time{time.Date(2026, 10, 1, 2, 0, 0, 0, time.UTC),
 		time.Date(2026, 10, 2, 2, 0, 0, 0, time.UTC)}, runs, "UTC until set")
 
-	vn := inZone(t, "Asia/Ho_Chi_Minh")
+	newYork := inNewYork(t)
 	runs, err = s.CalcNextRuns(from, 2)
 	assert.NoError(t, err)
-	// 02:00 at UTC+7: 19:00 UTC the day before. 2 Oct 02:00 there is the first
-	// after 1 Oct 07:00 there, the initial time.
-	assert.Equal(t, []time.Time{time.Date(2026, 10, 1, 19, 0, 0, 0, time.UTC),
-		time.Date(2026, 10, 2, 19, 0, 0, 0, time.UTC)}, inUTC(runs))
-	assert.Equal(t, vn, runs[0].Location(), "in the installation's timezone")
+	// 02:00 at UTC-4, New York's daylight saving: 06:00 UTC. 1 Oct 02:00 there
+	// is the first after 30 Sep 20:00 there, the initial time.
+	assert.Equal(t, []time.Time{time.Date(2026, 10, 1, 6, 0, 0, 0, time.UTC),
+		time.Date(2026, 10, 2, 6, 0, 0, 0, time.UTC)}, inUTC(runs))
+	assert.Equal(t, newYork, runs[0].Location(), "in the installation's timezone")
 
 	inRange, err := s.CalcNextRunsInRange(from, from.Add(48*time.Hour))
 	assert.NoError(t, err)
@@ -57,7 +59,7 @@ func TestCronRunsAtTheInstallationsHours(t *testing.T) {
 // expression read at that offset, whatever the installation's timezone, and
 // the runs come back at it, as before there was one.
 func TestCronKeepsTheOffsetItWasGiven(t *testing.T) {
-	inZone(t, "Asia/Ho_Chi_Minh")
+	inNewYork(t)
 	tokyo := time.FixedZone("", 9*60*60)
 	from := time.Date(2026, 10, 1, 0, 0, 0, 0, tokyo)
 	s := &SchedJobSchedule{CronExpr: "0 2 * * *", InitialTime: from}
@@ -71,7 +73,7 @@ func TestCronKeepsTheOffsetItWasGiven(t *testing.T) {
 
 // Across a change of the clocks, a cron expression keeps its hour there.
 func TestCronKeepsItsHourAcrossDST(t *testing.T) {
-	inZone(t, "America/New_York")
+	inNewYork(t)
 	from := time.Date(2026, 10, 30, 12, 0, 0, 0, time.UTC)
 	s := &SchedJobSchedule{CronExpr: "0 3 * * *", InitialTime: from}
 
@@ -88,10 +90,11 @@ func TestCronKeepsItsHourAcrossDST(t *testing.T) {
 // An interval is from an instant: the timezone does not move it.
 func TestIntervalIsNotMovedByTheTimezone(t *testing.T) {
 	from := time.Date(2026, 10, 1, 0, 0, 0, 0, time.UTC)
-	s := &SchedJobSchedule{Interval: timeutil.Duration(timeutil.Day), InitialTime: from.Add(17 * time.Hour)}
+	// Midnight in New York, at UTC-4.
+	s := &SchedJobSchedule{Interval: timeutil.Duration(timeutil.Day), InitialTime: from.Add(4 * time.Hour)}
 
-	inZone(t, "Asia/Ho_Chi_Minh")
+	inNewYork(t)
 	runs, err := s.CalcNextRuns(from, 2)
 	assert.NoError(t, err)
-	assert.Equal(t, []time.Time{from.Add(17 * time.Hour), from.Add(41 * time.Hour)}, runs)
+	assert.Equal(t, []time.Time{from.Add(4 * time.Hour), from.Add(28 * time.Hour)}, runs)
 }

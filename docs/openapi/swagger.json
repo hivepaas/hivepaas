@@ -62375,9 +62375,9 @@
         "type" : "object"
       },
       "hperrors.DisplayLevel" : {
-        "enum" : [ "medium", "high", "medium", "low" ],
+        "enum" : [ "high", "medium", "low", "medium" ],
         "type" : "string",
-        "x-enum-varnames" : [ "errVldDisplayLevel", "DisplayLevelHigh", "DisplayLevelMedium", "DisplayLevelLow" ]
+        "x-enum-varnames" : [ "DisplayLevelHigh", "DisplayLevelMedium", "DisplayLevelLow", "errVldDisplayLevel" ]
       },
       "hperrors.ErrorInfo" : {
         "properties" : {
@@ -68778,7 +68778,7 @@
             "type" : "string"
           },
           "timezone" : {
-            "description" : "Timezone is the installation's, a zone name such as Asia/Ho_Chi_Minh:\nwhat a schedule's hours are read in.",
+            "description" : "Timezone is the installation's, a zone name such as America/New_York:\nwhat a schedule's hours are read in.",
             "type" : "string"
           },
           "user" : {

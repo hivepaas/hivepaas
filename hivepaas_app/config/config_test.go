@@ -129,10 +129,10 @@ func TestTimezone(t *testing.T) {
 		assert.Equal(t, time.UTC, cfg.Location())
 	}
 
-	cfg, err = load("Asia/Ho_Chi_Minh")
+	cfg, err = load("America/New_York")
 	if assert.NoError(t, err) {
-		assert.Equal(t, "Asia/Ho_Chi_Minh", cfg.Location().String())
-		assert.Equal(t, "Asia/Ho_Chi_Minh", timeutil.Location().String())
+		assert.Equal(t, "America/New_York", cfg.Location().String())
+		assert.Equal(t, "America/New_York", timeutil.Location().String())
 	}
 
 	for _, name := range []string{"Mars/Olympus_Mons", "Local", "+07:00"} {

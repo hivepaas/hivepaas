@@ -104,7 +104,7 @@ type Config struct {
 	// publicly known key. See ensureAppSecret.
 	Secret  string `toml:"secret" env:"HP_APP_SECRET"`
 	AppPath string `toml:"app_path" env:"HP_APP_PATH" default:"/var/lib/hivepaas"`
-	// Timezone is the installation's, a zone name such as Asia/Ho_Chi_Minh:
+	// Timezone is the installation's, a zone name such as America/New_York:
 	// what a schedule's hours are read in - a cron expression's, the time of
 	// day a system job runs at. The installer asks for it. Times are kept in
 	// UTC whatever it is. See Location.
@@ -232,7 +232,7 @@ func loadConfig(configFile string) (*Config, error) {
 	// jobs would run at hours nobody chose.
 	location, err := time.LoadLocation(config.Timezone)
 	if err != nil || config.Timezone == "" || config.Timezone == "Local" {
-		return config, fmt.Errorf("%w: HP_TIMEZONE %q - a name such as UTC or Asia/Ho_Chi_Minh",
+		return config, fmt.Errorf("%w: HP_TIMEZONE %q - a name such as UTC or America/New_York",
 			ErrTimezoneInvalid, config.Timezone)
 	}
 	config.location = location

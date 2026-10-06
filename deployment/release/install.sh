@@ -214,7 +214,7 @@ ZONEINFO_DIR=/usr/share/zoneinfo
 LOCALTIME_LINK=/etc/localtime
 TIMEZONE_FILE=/etc/timezone
 
-# valid_timezone NAME: a zone name such as UTC or Asia/Ho_Chi_Minh. With the
+# valid_timezone NAME: a zone name such as UTC or America/New_York. With the
 # server's zone files there, it is one of them - a file of zone data, not one
 # of the tables beside them; without, a name of the right shape is taken, and
 # the app, which knows every zone, refuses one that is none.
@@ -999,7 +999,7 @@ ask_questions() {
   # Once installed, only a redeploy gives the services a timezone: asked
   # without one, the answer would go nowhere.
   if [ "$INSTALLED" != 1 ] || [ "$REDEPLOY" = 1 ]; then
-    answer HIVEPAAS_TIMEZONE "Timezone, the hours scheduled jobs run at (e.g. Asia/Ho_Chi_Minh)" valid_timezone \
+    answer HIVEPAAS_TIMEZONE "Timezone, the hours scheduled jobs run at (e.g. America/New_York)" valid_timezone \
       "Enter a zone name such as UTC or Europe/Berlin; 'timedatectl list-timezones' lists them." \
       "$(host_timezone)"
   fi
@@ -1929,8 +1929,12 @@ redeploy_stack() {
       *) return 0 ;;
     esac
     if [ "$attempt" = 2 ]; then
-      die "Swarm rolled back the app's update twice. See 'docker service ps ${STACK}_app --no-trunc'" \
-        "and 'docker service logs ${STACK}_app', then run the installer again."
+      local failed words=''
+      failed=$(failed_app_tasks | head -n 1)
+      if [ -n "$failed" ]; then words=$(app_last_words "$failed"); fi
+      die "Swarm rolled back the app's update twice.${words:+ The app said: $words.} See" \
+        "'docker service ps ${STACK}_app --no-trunc' and 'docker service logs ${STACK}_app', then run the" \
+        "installer again."
     fi
     info "The app's update was rolled back while the database restarted; deploying again..."
   done
@@ -1999,10 +2003,52 @@ dashboard_answers() {
     "https://$HIVEPAAS_APP_DOMAIN/api/ping" >/dev/null 2>&1
 }
 
+# APP_START_FAILURES: how often the app may stop as it starts before the wait
+# gives up on it. Once may be the database not answering yet; three times is a
+# setting it refuses, which waiting will not mend.
+APP_START_FAILURES=3
+
+# failed_app_tasks: the app's tasks swarm keeps as failed - stopped with an
+# error, or refused by every node - the newest first.
+failed_app_tasks() {
+  docker service ps "${STACK}_app" --no-trunc --format '{{.ID}} {{.CurrentState}}' 2>/dev/null |
+    awk '$2 == "Failed" || $2 == "Rejected" {print $1}'
+}
+
+# app_last_words TASK: what the app said last before the task stopped: its
+# panic, for one that panicked, or else its log's last line - for a start that
+# failed, the cause.
+app_last_words() {
+  local log
+  log=$(docker service logs --raw --tail 40 "$1" 2>/dev/null) || log=''
+  printf '%s\n' "$log" | grep -m 1 '^panic: ' ||
+    printf '%s\n' "$log" | awk 'NF {last = $0} END {print last}'
+}
+
+# die_app_failing COUNT TASK: the app stops as it starts, and says why - such
+# as a timezone that is no zone.
+die_app_failing() {
+  local words
+  words=$(app_last_words "$2")
+  die "HivePaaS stopped as it started, $1 times: ${words:-its log says nothing}." \
+    "Put right what that names, then run the installer again with --redeploy." \
+    "'docker service logs ${STACK}_app' has its whole log."
+}
+
+# wait_for_dashboard: until the dashboard answers - or the wait's time runs
+# out, or the app has stopped as it started APP_START_FAILURES times since.
 wait_for_dashboard() {
-  local start=$SECONDS limit="${HIVEPAAS_WAIT_SECONDS:-300}" said=0
+  local start=$SECONDS limit="${HIVEPAAS_WAIT_SECONDS:-300}" said=0 known id failed newest
+  known=" $(failed_app_tasks | tr '\n' ' ') "
   until dashboard_answers; do
     if [ $((SECONDS - start)) -ge "$limit" ]; then return 1; fi
+    failed=0 newest=''
+    for id in $(failed_app_tasks); do
+      case "$known" in *" $id "*) continue ;; esac
+      failed=$((failed + 1))
+      newest=${newest:-$id}
+    done
+    if [ "$failed" -ge "$APP_START_FAILURES" ]; then die_app_failing "$failed" "$newest"; fi
     if [ $((SECONDS - start)) -ge $((said + 30)) ]; then
       said=$((SECONDS - start))
       info "Still waiting (${said}s)..."
@@ -2188,7 +2234,7 @@ Settings, from the environment or --config (the environment wins):
   HIVEPAAS_DATA_DIR            HivePaaS's data (default: /var/lib/hivepaas)
   HIVEPAAS_PROJECT_DATA_DIR    projects' data (default: <data dir>/project_data)
   HIVEPAAS_TIMEZONE            the timezone scheduled jobs' hours are read in, a zone name
-                               such as Asia/Ho_Chi_Minh (default: the server's, or UTC)
+                               such as America/New_York (default: the server's, or UTC)
   HIVEPAAS_CHANNEL             beta or stable (default: beta)
   HIVEPAAS_SWAP=false          do not add a swap file
   HIVEPAAS_SWAP_SIZE_MB        the swap file's size (default: 2048)

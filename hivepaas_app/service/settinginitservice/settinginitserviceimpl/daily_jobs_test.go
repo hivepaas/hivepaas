@@ -16,10 +16,11 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/repository"
 )
 
-// vietnam is UTC+7, with no daylight saving.
-func vietnam(t *testing.T) *time.Location {
+// newYork is UTC-5, and UTC-4 in daylight saving, from March to November -
+// through the dates these tests take.
+func newYork(t *testing.T) *time.Location {
 	t.Helper()
-	loc, err := time.LoadLocation("Asia/Ho_Chi_Minh")
+	loc, err := time.LoadLocation("America/New_York")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -32,27 +33,27 @@ var daily = timeutil.Duration(timeutil.Day)
 func TestDailyJobStartsAtItsTimeOfDayInTheTimezone(t *testing.T) {
 	cleanup := dailyJobOf(base.SettingTypeSystemCleanup)
 	backup := dailyJobOf(base.SettingTypeSystemBackup)
-	// 20:00 UTC on 5 October is 03:00 on the 6th at UTC+7.
-	now := time.Date(2026, 10, 5, 20, 0, 0, 0, time.UTC)
+	// 02:00 UTC on 6 October is 22:00 on the 5th in New York.
+	now := time.Date(2026, 10, 6, 2, 0, 0, 0, time.UTC)
 
-	assert.Equal(t, time.Date(2026, 10, 5, 0, 0, 0, 0, time.UTC), cleanup.startIn(now, time.UTC))
-	assert.Equal(t, time.Date(2026, 10, 5, 17, 0, 0, 0, time.UTC),
-		cleanup.startIn(now, vietnam(t)), "midnight of the 6th there")
-	assert.Equal(t, time.Date(2026, 10, 5, 17, 30, 0, 0, time.UTC),
-		backup.startIn(now, vietnam(t)))
+	assert.Equal(t, time.Date(2026, 10, 6, 0, 0, 0, 0, time.UTC), cleanup.startIn(now, time.UTC))
+	assert.Equal(t, time.Date(2026, 10, 5, 4, 0, 0, 0, time.UTC),
+		cleanup.startIn(now, newYork(t)), "midnight of the 5th there")
+	assert.Equal(t, time.Date(2026, 10, 5, 4, 30, 0, 0, time.UTC),
+		backup.startIn(now, newYork(t)))
 	assert.Zero(t, dailyJobOf(base.SettingTypeSchedJob).settingType, "no daily job")
 }
 
 // A schedule is the default only daily, from the job's time of day there.
 func TestDailyJobKnowsItsDefault(t *testing.T) {
 	cleanup := dailyJobOf(base.SettingTypeSystemCleanup)
-	vn := vietnam(t)
+	ny := newYork(t)
 	utcMidnight := time.Date(2026, 9, 30, 0, 0, 0, 0, time.UTC)
 
 	assert.True(t, cleanup.isDefaultIn(&entity.SchedJobSchedule{Interval: daily, InitialTime: utcMidnight}, time.UTC))
-	assert.False(t, cleanup.isDefaultIn(&entity.SchedJobSchedule{Interval: daily, InitialTime: utcMidnight}, vn))
+	assert.False(t, cleanup.isDefaultIn(&entity.SchedJobSchedule{Interval: daily, InitialTime: utcMidnight}, ny))
 	assert.True(t, cleanup.isDefaultIn(&entity.SchedJobSchedule{Interval: daily,
-		InitialTime: time.Date(2026, 9, 29, 17, 0, 0, 0, time.UTC)}, vn))
+		InitialTime: time.Date(2026, 9, 30, 4, 0, 0, 0, time.UTC)}, ny), "midnight there")
 	for name, s := range map[string]*entity.SchedJobSchedule{
 		"another time":     {Interval: daily, InitialTime: utcMidnight.Add(3 * time.Hour)},
 		"another interval": {Interval: timeutil.Duration(12 * time.Hour), InitialTime: utcMidnight},
@@ -138,28 +139,28 @@ func TestMoveDailyJobs(t *testing.T) {
 		},
 	}
 	s := &service{settingRepo: repo}
-	vn := vietnam(t)
+	ny := newYork(t)
 
-	moved, left, err := s.MoveDailyJobs(context.Background(), database.Tx{}, time.UTC, vn)
+	moved, left, err := s.MoveDailyJobs(context.Background(), database.Tx{}, time.UTC, ny)
 
 	assert.NoError(t, err)
 	if assert.Len(t, moved, 1) {
 		assert.Equal(t, "cleanup-job", moved[0].ID)
 		job := moved[0].MustAsSchedJob().Schedule
-		assert.Equal(t, time.Date(2026, 9, 29, 17, 0, 0, 0, time.UTC), job.InitialTime, "midnight there, that day")
+		assert.Equal(t, time.Date(2026, 9, 30, 4, 0, 0, 0, time.UTC), job.InitialTime, "midnight there, that day")
 		assert.Equal(t, daily, job.Interval)
 		assert.True(t, job.LastSchedTime.IsZero(), "the runs made under the old schedule are forgotten")
 		assert.Equal(t, 1, moved[0].UpdateVer)
 	}
 	cleanup := repo.byType[base.SettingTypeSystemCleanup].MustAsSystemCleanup()
-	assert.Equal(t, time.Date(2026, 9, 29, 17, 0, 0, 0, time.UTC), cleanup.Schedule.InitialTime)
+	assert.Equal(t, time.Date(2026, 9, 30, 4, 0, 0, 0, time.UTC), cleanup.Schedule.InitialTime)
 	assert.Equal(t, []string{"System backup", "SSL renewal"}, left)
 	assert.Equal(t, []string{"cleanup", "cleanup-job"}, repo.updated)
 	assert.Equal(t, utcMidnight.Add(3*time.Hour),
 		repo.byType[base.SettingTypeSystemBackup].MustAsSystemBackup().Schedule.InitialTime, "left as it was")
 
 	// Moved again, back: the job is at its default in the timezone it was moved to.
-	moved, _, err = s.MoveDailyJobs(context.Background(), database.Tx{}, vn, time.UTC)
+	moved, _, err = s.MoveDailyJobs(context.Background(), database.Tx{}, ny, time.UTC)
 	assert.NoError(t, err)
 	assert.Len(t, moved, 1)
 	assert.Equal(t, utcMidnight, repo.byType[base.SettingTypeSystemCleanup].MustAsSystemCleanup().Schedule.InitialTime)

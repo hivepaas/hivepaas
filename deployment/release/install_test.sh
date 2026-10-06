@@ -693,6 +693,13 @@ fake_app_tasks() {
   printf '%s\n' "$2" >"$TMP/tasks-after"
   rm -f "$TMP/tasks-seen" "$TMP/logs-args"
   docker() {
+    case "$1 $2 $3" in
+      "service ps ${STACK}_db")
+        # The database, running unless DB_TASKS says otherwise.
+        printf '%s\n' "${DB_TASKS-d1 Running 2 minutes ago}"
+        return 0
+        ;;
+    esac
     case "$1 $2" in
       'service ps')
         if [ -e "$TMP/tasks-seen" ]; then cat "$TMP/tasks-after"; else
@@ -769,6 +776,25 @@ o3 Failed 1 hour ago'
   out=$( (wait_for_dashboard) 2>&1)
   check "runs out of time" 1 "$?"
   check_lacks "rather than stopping" "$out" "stopped as it started"
+  unset -f docker dashboard_answers sleep
+}
+
+# On a first install the app stops as it starts until the database answers -
+# its image still pulling, its files still being made: those stops are the
+# database's, and are not counted however many they are.
+test_wait_does_not_count_stops_before_the_database_runs() {
+  local out
+  HIVEPAAS_WAIT_SECONDS=20
+  APP_LOG='failed to use connection dial tcp 10.0.1.5:5432: connect: connection refused'
+  DB_TASKS='d1 Starting 30 seconds ago'
+  fake_app_tasks '' 't4 Starting 1 second ago
+t3 Failed 6 seconds ago
+t2 Failed 12 seconds ago
+t1 Failed 18 seconds ago'
+  out=$( (wait_for_dashboard) 2>&1)
+  check "runs out of time" 1 "$?"
+  check_lacks "rather than stopping" "$out" "stopped as it started"
+  unset DB_TASKS
   unset -f docker dashboard_answers sleep
 }
 

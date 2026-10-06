@@ -107,7 +107,8 @@ type Config struct {
 	// Timezone is the installation's, a zone name such as America/New_York:
 	// what a schedule's hours are read in - a cron expression's, the time of
 	// day a system job runs at. The installer asks for it. Times are kept in
-	// UTC whatever it is. See Location.
+	// UTC whatever it is. A change takes effect on a start, not on a reload.
+	// See Location.
 	Timezone string `toml:"timezone" env:"HP_TIMEZONE" default:"UTC"`
 	location *time.Location
 
@@ -252,9 +253,19 @@ func ReloadConfig() (*Config, error) {
 
 	// TODO: validate then apply a certain portion of the new config
 
+	keepStartingTimezone(newConfig, current.Load())
 	current.Store(newConfig)
-	timeutil.SetLocation(newConfig.Location())
 	return newConfig, nil
+}
+
+// keepStartingTimezone gives a reloaded config the timezone the process
+// started with: the daily jobs are moved to a new one as HivePaaS starts, so a
+// change takes effect on the next start.
+func keepStartingTimezone(reloaded, started *Config) {
+	if started == nil {
+		return
+	}
+	reloaded.Timezone, reloaded.location = started.Timezone, started.location
 }
 
 // appSecretLen is the length in bytes of a generated app secret, before hex

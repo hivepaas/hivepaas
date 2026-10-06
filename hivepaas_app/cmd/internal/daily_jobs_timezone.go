@@ -72,7 +72,7 @@ func moveDailyJobsToTimezone(
 					sysStatus.ScheduleTimezone, err)
 			}
 		}
-		if from.String() == to.String() {
+		if timeutil.SameZone(from, to) {
 			return nil
 		}
 

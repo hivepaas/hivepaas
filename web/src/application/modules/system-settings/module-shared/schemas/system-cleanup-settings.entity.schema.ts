@@ -30,6 +30,13 @@ const SystemCleanupFileCleanupSchema = z.object({
     enabled: z.boolean(),
 });
 
+const SystemCleanupSystemAppsSyncSchema = z
+    .object({
+        enabled: z.boolean(),
+    })
+    .nullish()
+    .transform(value => value ?? { enabled: true });
+
 const SystemCleanupScheduleSchema = z
     .object({
         cronExpr: z.string().nullish(),
@@ -65,6 +72,7 @@ export const SystemCleanupSettingsEntitySchema = SettingsBaseEntitySchema.omit({
     clusterCleanup: SystemCleanupClusterCleanupSchema,
     cacheCleanup: SystemCleanupCacheCleanupSchema,
     fileCleanup: SystemCleanupFileCleanupSchema,
+    systemAppsSync: SystemCleanupSystemAppsSyncSchema,
     notification: SystemCleanupNotificationSchema,
     nextRuns: z
         .array(z.coerce.date())

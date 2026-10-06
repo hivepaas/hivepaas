@@ -486,6 +486,36 @@ function FileCleanupOptionsFields() {
     );
 }
 
+function SystemAppsSyncFields() {
+    const { control } = useFormContext<SchemaInput, unknown, SchemaOutput>();
+    const { field: enabled } = useController({ control, name: "systemAppsSync.enabled" });
+
+    return (
+        <>
+            <SectionHeader>System Apps</SectionHeader>
+            <div className="flex flex-col gap-6 px-3">
+                <InfoBlock
+                    titleWidth={220}
+                    title="Sync With Settings"
+                >
+                    <div className="flex flex-col items-start gap-2">
+                        <Checkbox
+                            checked={enabled.value}
+                            onCheckedChange={enabled.onChange}
+                        />
+                        <p className="text-sm text-muted-foreground">
+                            Brings the registry and the logging stack to their settings: an app switched off is removed
+                            with its data kept, and one missing, or whose service is gone, is created again. One scaled
+                            to zero or failing, and OBI not running on a node it should, are reported in the run&apos;s
+                            result.
+                        </p>
+                    </div>
+                </InfoBlock>
+            </div>
+        </>
+    );
+}
+
 function NotificationFields({ readOnly = false }: { readOnly?: boolean }) {
     const { sources, manageLink } = useNotificationSettingsSources({ type: "settings" });
 
@@ -525,6 +555,7 @@ function EnabledCleanupConfigurationFields({ nextRuns, readOnly }: { nextRuns: D
             <DockerSwarmCleanupOptionsFields />
             <CacheCleanupOptionsFields />
             <FileCleanupOptionsFields />
+            <SystemAppsSyncFields />
             <NotificationFields readOnly={readOnly} />
         </>
     );

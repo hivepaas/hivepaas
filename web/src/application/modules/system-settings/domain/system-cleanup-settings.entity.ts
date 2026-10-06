@@ -39,6 +39,14 @@ export interface SystemCleanupFileCleanup {
     enabled: boolean;
 }
 
+/**
+ * Brings the apps HivePaaS runs for itself - the registry, the logging stack - to their settings, and checks OBI on the
+ * nodes. On for a setting saved before it existed.
+ */
+export interface SystemCleanupSystemAppsSync {
+    enabled: boolean;
+}
+
 export interface SystemCleanupNotification {
     success?: {
         id: string;
@@ -59,6 +67,7 @@ export interface SystemCleanupSettings extends SettingsBaseEntity {
     clusterCleanup: SystemCleanupClusterCleanup;
     cacheCleanup: SystemCleanupCacheCleanup;
     fileCleanup: SystemCleanupFileCleanup;
+    systemAppsSync: SystemCleanupSystemAppsSync;
     notification?: SystemCleanupNotification | null;
     nextRuns: Date[];
 }

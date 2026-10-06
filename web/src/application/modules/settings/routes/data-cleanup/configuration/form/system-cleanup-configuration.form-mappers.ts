@@ -36,6 +36,9 @@ export const emptySystemCleanupConfigurationFormDefaults: SystemCleanupConfigura
     fileCleanup: {
         enabled: true,
     },
+    systemAppsSync: {
+        enabled: true,
+    },
     notification: {
         successUseDefault: true,
         success: undefined,
@@ -77,6 +80,9 @@ export function mapSystemCleanupSettingsToFormInput(
         },
         fileCleanup: {
             enabled: settings.fileCleanup.enabled,
+        },
+        systemAppsSync: {
+            enabled: settings.systemAppsSync.enabled,
         },
         notification: {
             successUseDefault: settings.notification?.successUseDefault ?? true,

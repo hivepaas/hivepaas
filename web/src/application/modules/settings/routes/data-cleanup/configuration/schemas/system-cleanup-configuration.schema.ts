@@ -52,6 +52,9 @@ export const SystemCleanupConfigurationFormSchema = z.object({
     fileCleanup: z.object({
         enabled: z.boolean(),
     }),
+    systemAppsSync: z.object({
+        enabled: z.boolean(),
+    }),
     notification: NotificationSchema,
 });
 

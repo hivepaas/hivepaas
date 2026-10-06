@@ -49,6 +49,9 @@ function mapFormValuesToPayload(values: SystemCleanupConfigurationFormOutput, up
         fileCleanup: {
             enabled: values.fileCleanup.enabled,
         },
+        systemAppsSync: {
+            enabled: values.systemAppsSync.enabled,
+        },
         notification: {
             successUseDefault: values.notification.successUseDefault,
             success: {

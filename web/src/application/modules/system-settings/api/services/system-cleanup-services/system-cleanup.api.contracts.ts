@@ -46,6 +46,9 @@ export type SystemCleanup_UpdateOne_Payload = {
     fileCleanup: {
         enabled: boolean;
     };
+    systemAppsSync: {
+        enabled: boolean;
+    };
     notification: {
         success: {
             id: string;

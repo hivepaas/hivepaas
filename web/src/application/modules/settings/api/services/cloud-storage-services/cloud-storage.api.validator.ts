@@ -1,8 +1,7 @@
-import { type AxiosResponse } from "axios";
 import { z } from "zod";
 import { CloudStorageSettingEntitySchema } from "~/settings/module-shared/schemas";
 
-import { BaseMetaApiSchema, PagingMetaApiSchema, parseApiResponse } from "@infrastructure/api";
+import { type ApiHttpResponse, BaseMetaApiSchema, PagingMetaApiSchema, parseApiResponse } from "@infrastructure/api";
 
 import type {
     CloudStorage_CreateOne_Res,
@@ -34,37 +33,37 @@ const MetaOnlySchema = z.object({
 });
 
 export class CloudStorageApiValidator {
-    findManyPaginated = (response: AxiosResponse): CloudStorage_FindManyPaginated_Res => {
+    findManyPaginated = (response: ApiHttpResponse): CloudStorage_FindManyPaginated_Res => {
         const { data, meta } = parseApiResponse({ response, schema: FindManyPaginatedSchema });
         return { data, meta };
     };
 
-    findOneById = (response: AxiosResponse): CloudStorage_FindOneById_Res => {
+    findOneById = (response: ApiHttpResponse): CloudStorage_FindOneById_Res => {
         const { data, meta } = parseApiResponse({ response, schema: FindOneByIdSchema });
         return { data, meta };
     };
 
-    createOne = (response: AxiosResponse): CloudStorage_CreateOne_Res => {
+    createOne = (response: ApiHttpResponse): CloudStorage_CreateOne_Res => {
         const { data, meta } = parseApiResponse({ response, schema: CreateOneSchema });
         return { data, meta };
     };
 
-    updateOne = (response: AxiosResponse): CloudStorage_UpdateOne_Res => {
+    updateOne = (response: ApiHttpResponse): CloudStorage_UpdateOne_Res => {
         parseApiResponse({ response, schema: MetaOnlySchema });
         return { data: { type: "success" } };
     };
 
-    updateStatus = (response: AxiosResponse): CloudStorage_UpdateStatus_Res => {
+    updateStatus = (response: ApiHttpResponse): CloudStorage_UpdateStatus_Res => {
         parseApiResponse({ response, schema: MetaOnlySchema });
         return { data: { type: "success" } };
     };
 
-    deleteOne = (response: AxiosResponse): CloudStorage_DeleteOne_Res => {
+    deleteOne = (response: ApiHttpResponse): CloudStorage_DeleteOne_Res => {
         parseApiResponse({ response, schema: MetaOnlySchema });
         return { data: { type: "success" } };
     };
 
-    testConn = (response: AxiosResponse): CloudStorage_TestConn_Res => {
+    testConn = (response: ApiHttpResponse): CloudStorage_TestConn_Res => {
         parseApiResponse({ response, schema: MetaOnlySchema });
         return { data: { type: "success" } };
     };

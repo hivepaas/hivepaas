@@ -1,8 +1,7 @@
-import { type AxiosResponse } from "axios";
 import { z } from "zod";
 import { SystemRegistryAuthRenewalSettingsEntitySchema } from "~/system-settings/module-shared/schemas";
 
-import { BaseMetaApiSchema, parseApiResponse } from "@infrastructure/api";
+import { type ApiHttpResponse, BaseMetaApiSchema, parseApiResponse } from "@infrastructure/api";
 
 import type {
     SystemRegistryAuthRenewal_Execute_Res,
@@ -29,17 +28,17 @@ const ExecuteSchema = z.object({
 });
 
 export class SystemRegistryAuthRenewalApiValidator {
-    findOne = (response: AxiosResponse): SystemRegistryAuthRenewal_FindOne_Res => {
+    findOne = (response: ApiHttpResponse): SystemRegistryAuthRenewal_FindOne_Res => {
         const { data, meta } = parseApiResponse({ response, schema: FindOneSchema });
         return { data, meta };
     };
 
-    updateOne = (response: AxiosResponse): SystemRegistryAuthRenewal_UpdateOne_Res => {
+    updateOne = (response: ApiHttpResponse): SystemRegistryAuthRenewal_UpdateOne_Res => {
         parseApiResponse({ response, schema: MetaOnlySchema });
         return { data: { type: "success" } };
     };
 
-    execute = (response: AxiosResponse): SystemRegistryAuthRenewal_Execute_Res => {
+    execute = (response: ApiHttpResponse): SystemRegistryAuthRenewal_Execute_Res => {
         const { data, meta } = parseApiResponse({ response, schema: ExecuteSchema });
         return { data, meta };
     };

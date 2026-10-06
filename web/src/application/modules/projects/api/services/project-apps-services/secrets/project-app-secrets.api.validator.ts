@@ -1,4 +1,3 @@
-import { type AxiosResponse } from "axios";
 import { z } from "zod";
 import type {
     AppSecrets_CreateOne_Res,
@@ -7,7 +6,7 @@ import type {
     AppSecrets_GetDownloadToken_Res,
 } from "~/projects/api/services/project-apps-services";
 
-import { BaseMetaApiSchema, PagingMetaApiSchema, parseApiResponse } from "@infrastructure/api";
+import { type ApiHttpResponse, BaseMetaApiSchema, PagingMetaApiSchema, parseApiResponse } from "@infrastructure/api";
 
 /**
  * App secret schema
@@ -69,7 +68,7 @@ export class AppSecretsApiValidator {
     /**
      * Validate and transform find many app secrets paginated API response
      */
-    findManyPaginated = (response: AxiosResponse): AppSecrets_FindManyPaginated_Res => {
+    findManyPaginated = (response: ApiHttpResponse): AppSecrets_FindManyPaginated_Res => {
         const { data, meta } = parseApiResponse({
             response,
             schema: FindManyPaginatedSchema,
@@ -84,7 +83,7 @@ export class AppSecretsApiValidator {
     /**
      * Validate and transform create app secret API response
      */
-    createOne = (response: AxiosResponse): AppSecrets_CreateOne_Res => {
+    createOne = (response: ApiHttpResponse): AppSecrets_CreateOne_Res => {
         return parseApiResponse({
             response,
             schema: CreateOneSchema,
@@ -94,7 +93,7 @@ export class AppSecretsApiValidator {
     /**
      * Validate and transform find one app secret by id API response
      */
-    findOneById = (response: AxiosResponse): AppSecrets_FindOneById_Res => {
+    findOneById = (response: ApiHttpResponse): AppSecrets_FindOneById_Res => {
         const { data, meta } = parseApiResponse({
             response,
             schema: FindOneByIdSchema,
@@ -109,7 +108,7 @@ export class AppSecretsApiValidator {
     /**
      * Validate and transform get app secret download token API response
      */
-    getDownloadToken = (response: AxiosResponse): AppSecrets_GetDownloadToken_Res => {
+    getDownloadToken = (response: ApiHttpResponse): AppSecrets_GetDownloadToken_Res => {
         return parseApiResponse({
             response,
             schema: GetDownloadTokenSchema,

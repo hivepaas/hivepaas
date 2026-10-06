@@ -1,8 +1,7 @@
-import { type AxiosResponse } from "axios";
 import { z } from "zod";
 import { BasicAuthSettingEntitySchema } from "~/settings/module-shared/schemas";
 
-import { BaseMetaApiSchema, PagingMetaApiSchema, parseApiResponse } from "@infrastructure/api";
+import { type ApiHttpResponse, BaseMetaApiSchema, PagingMetaApiSchema, parseApiResponse } from "@infrastructure/api";
 
 import type {
     BasicAuth_CreateOne_Res,
@@ -35,7 +34,7 @@ const MetaOnlySchema = z.object({
 });
 
 export class BasicAuthApiValidator {
-    findManyPaginated = (response: AxiosResponse): BasicAuth_FindManyPaginated_Res => {
+    findManyPaginated = (response: ApiHttpResponse): BasicAuth_FindManyPaginated_Res => {
         const { data, meta } = parseApiResponse({
             response,
             schema: FindManyPaginatedSchema,
@@ -44,7 +43,7 @@ export class BasicAuthApiValidator {
         return { data, meta };
     };
 
-    findOneById = (response: AxiosResponse): BasicAuth_FindOneById_Res => {
+    findOneById = (response: ApiHttpResponse): BasicAuth_FindOneById_Res => {
         const { data, meta } = parseApiResponse({
             response,
             schema: FindOneByIdSchema,
@@ -53,7 +52,7 @@ export class BasicAuthApiValidator {
         return { data, meta };
     };
 
-    createOne = (response: AxiosResponse): BasicAuth_CreateOne_Res => {
+    createOne = (response: ApiHttpResponse): BasicAuth_CreateOne_Res => {
         const { data, meta } = parseApiResponse({
             response,
             schema: CreateOneSchema,
@@ -62,7 +61,7 @@ export class BasicAuthApiValidator {
         return { data, meta };
     };
 
-    updateOne = (response: AxiosResponse): BasicAuth_UpdateOne_Res => {
+    updateOne = (response: ApiHttpResponse): BasicAuth_UpdateOne_Res => {
         parseApiResponse({
             response,
             schema: MetaOnlySchema,
@@ -71,7 +70,7 @@ export class BasicAuthApiValidator {
         return { data: { type: "success" } };
     };
 
-    updateStatus = (response: AxiosResponse): BasicAuth_UpdateStatus_Res => {
+    updateStatus = (response: ApiHttpResponse): BasicAuth_UpdateStatus_Res => {
         parseApiResponse({
             response,
             schema: MetaOnlySchema,
@@ -80,7 +79,7 @@ export class BasicAuthApiValidator {
         return { data: { type: "success" } };
     };
 
-    deleteOne = (response: AxiosResponse): BasicAuth_DeleteOne_Res => {
+    deleteOne = (response: ApiHttpResponse): BasicAuth_DeleteOne_Res => {
         parseApiResponse({
             response,
             schema: MetaOnlySchema,

@@ -1,4 +1,3 @@
-import type { AxiosResponse } from "axios";
 import { z } from "zod";
 import type {
     AppLogs_GetDependencyMetrics_Res,
@@ -11,7 +10,7 @@ import type {
     AppLogs_GetRouteMetrics_Res,
 } from "~/projects/api/services";
 
-import { BaseMetaApiSchema, parseApiResponse } from "@infrastructure/api";
+import { type ApiHttpResponse, BaseMetaApiSchema, parseApiResponse } from "@infrastructure/api";
 
 const AppLogFrameSchema = z.object({
     type: z.enum(["in", "out", "err", "warn", "debug"]),
@@ -399,28 +398,28 @@ const GetDependencyMetricsSchema = z.object({
 });
 
 export class AppLogsApiValidator {
-    getRouteMetrics = (response: AxiosResponse): AppLogs_GetRouteMetrics_Res => {
+    getRouteMetrics = (response: ApiHttpResponse): AppLogs_GetRouteMetrics_Res => {
         return parseApiResponse({
             response,
             schema: GetRouteMetricsSchema,
         });
     };
 
-    getDependencyMetrics = (response: AxiosResponse): AppLogs_GetDependencyMetrics_Res => {
+    getDependencyMetrics = (response: ApiHttpResponse): AppLogs_GetDependencyMetrics_Res => {
         return parseApiResponse({
             response,
             schema: GetDependencyMetricsSchema,
         });
     };
 
-    getInfo = (response: AxiosResponse): AppLogs_GetInfo_Res => {
+    getInfo = (response: ApiHttpResponse): AppLogs_GetInfo_Res => {
         return parseApiResponse({
             response,
             schema: GetInfoSchema,
         });
     };
 
-    getLogs = (response: AxiosResponse): AppLogs_GetLogs_Res => {
+    getLogs = (response: ApiHttpResponse): AppLogs_GetLogs_Res => {
         const { data, meta } = parseApiResponse({
             response,
             schema: GetLogsSchema,
@@ -432,28 +431,28 @@ export class AppLogsApiValidator {
         };
     };
 
-    getHistory = (response: AxiosResponse): AppLogs_GetHistory_Res => {
+    getHistory = (response: ApiHttpResponse): AppLogs_GetHistory_Res => {
         return parseApiResponse({
             response,
             schema: GetHistorySchema,
         });
     };
 
-    getResourceMetrics = (response: AxiosResponse): AppLogs_GetResourceMetrics_Res => {
+    getResourceMetrics = (response: ApiHttpResponse): AppLogs_GetResourceMetrics_Res => {
         return parseApiResponse({
             response,
             schema: GetResourceMetricsSchema,
         });
     };
 
-    getHttpMetrics = (response: AxiosResponse): AppLogs_GetHttpMetrics_Res => {
+    getHttpMetrics = (response: ApiHttpResponse): AppLogs_GetHttpMetrics_Res => {
         return parseApiResponse({
             response,
             schema: GetHttpMetricsSchema,
         });
     };
 
-    getFunctionMetrics = (response: AxiosResponse): AppLogs_GetFunctionMetrics_Res => {
+    getFunctionMetrics = (response: ApiHttpResponse): AppLogs_GetFunctionMetrics_Res => {
         return parseApiResponse({
             response,
             schema: GetFunctionMetricsSchema,

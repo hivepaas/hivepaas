@@ -1,4 +1,3 @@
-import type { AxiosResponse } from "axios";
 import { z } from "zod";
 import type {
     AppDataFiles_CreateOne_Res,
@@ -8,7 +7,7 @@ import type {
 } from "~/projects/api/services/project-apps-services/data-files";
 import { AppDataFileStorageType } from "~/projects/domain";
 
-import { BaseMetaApiSchema, PagingMetaApiSchema, parseApiResponse } from "@infrastructure/api";
+import { type ApiHttpResponse, BaseMetaApiSchema, PagingMetaApiSchema, parseApiResponse } from "@infrastructure/api";
 
 const AppDataFileSchema = z.object({
     id: z.string(),
@@ -67,7 +66,7 @@ const CreateOneSchema = z.object({
 });
 
 export class AppDataFilesApiValidator {
-    findManyPaginated = (response: AxiosResponse): AppDataFiles_FindManyPaginated_Res => {
+    findManyPaginated = (response: ApiHttpResponse): AppDataFiles_FindManyPaginated_Res => {
         const { data, meta } = parseApiResponse({
             response,
             schema: FindManyPaginatedSchema,
@@ -76,14 +75,14 @@ export class AppDataFilesApiValidator {
         return { data, meta };
     };
 
-    getDownloadUrl = (response: AxiosResponse): AppDataFiles_GetDownloadUrl_Res => {
+    getDownloadUrl = (response: ApiHttpResponse): AppDataFiles_GetDownloadUrl_Res => {
         return parseApiResponse({
             response,
             schema: GetDownloadUrlSchema,
         });
     };
 
-    uploadLocal = (response: AxiosResponse): AppDataFiles_UploadLocal_Res => {
+    uploadLocal = (response: ApiHttpResponse): AppDataFiles_UploadLocal_Res => {
         const parsed = parseApiResponse({
             response,
             schema: UploadLocalSchema,
@@ -91,7 +90,7 @@ export class AppDataFilesApiValidator {
         return { data: { files: parsed.data }, meta: parsed.meta };
     };
 
-    createOne = (response: AxiosResponse): AppDataFiles_CreateOne_Res => {
+    createOne = (response: ApiHttpResponse): AppDataFiles_CreateOne_Res => {
         return parseApiResponse({
             response,
             schema: CreateOneSchema,

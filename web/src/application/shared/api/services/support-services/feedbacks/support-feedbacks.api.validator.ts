@@ -1,7 +1,6 @@
-import type { AxiosResponse } from "axios";
 import { z } from "zod";
 
-import { parseApiResponse } from "@infrastructure/api";
+import { type ApiHttpResponse, parseApiResponse } from "@infrastructure/api";
 
 import type { SupportFeedbacks_CreateOne_Res } from "./support-feedbacks.api.contracts";
 
@@ -10,7 +9,7 @@ const CreateOneSchema = z.object({
 });
 
 export class SupportFeedbacksApiValidator {
-    createOne = (response: AxiosResponse): SupportFeedbacks_CreateOne_Res => {
+    createOne = (response: ApiHttpResponse): SupportFeedbacks_CreateOne_Res => {
         parseApiResponse({
             response,
             schema: CreateOneSchema,

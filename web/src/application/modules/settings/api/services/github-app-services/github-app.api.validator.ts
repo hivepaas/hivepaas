@@ -1,8 +1,7 @@
-import { type AxiosResponse } from "axios";
 import { z } from "zod";
 import { GithubAppSettingEntitySchema } from "~/settings/module-shared/schemas";
 
-import { BaseMetaApiSchema, PagingMetaApiSchema, parseApiResponse } from "@infrastructure/api";
+import { type ApiHttpResponse, BaseMetaApiSchema, PagingMetaApiSchema, parseApiResponse } from "@infrastructure/api";
 
 import type {
     GithubApp_BeginManifestFlow_Res,
@@ -67,7 +66,7 @@ const ListInstallationsSchema = z.object({
 });
 
 export class GithubAppApiValidator {
-    findManyPaginated = (response: AxiosResponse): GithubApp_FindManyPaginated_Res => {
+    findManyPaginated = (response: ApiHttpResponse): GithubApp_FindManyPaginated_Res => {
         const { data, meta } = parseApiResponse({
             response,
             schema: FindManyPaginatedSchema,
@@ -76,7 +75,7 @@ export class GithubAppApiValidator {
         return { data, meta };
     };
 
-    findOneById = (response: AxiosResponse): GithubApp_FindOneById_Res => {
+    findOneById = (response: ApiHttpResponse): GithubApp_FindOneById_Res => {
         const { data, meta } = parseApiResponse({
             response,
             schema: FindOneByIdSchema,
@@ -85,7 +84,7 @@ export class GithubAppApiValidator {
         return { data, meta };
     };
 
-    createOne = (response: AxiosResponse): GithubApp_CreateOne_Res => {
+    createOne = (response: ApiHttpResponse): GithubApp_CreateOne_Res => {
         const { data, meta } = parseApiResponse({
             response,
             schema: CreateOneSchema,
@@ -94,7 +93,7 @@ export class GithubAppApiValidator {
         return { data, meta };
     };
 
-    updateOne = (response: AxiosResponse): GithubApp_UpdateOne_Res => {
+    updateOne = (response: ApiHttpResponse): GithubApp_UpdateOne_Res => {
         parseApiResponse({
             response,
             schema: MetaOnlySchema,
@@ -103,7 +102,7 @@ export class GithubAppApiValidator {
         return { data: { type: "success" } };
     };
 
-    updateStatus = (response: AxiosResponse): GithubApp_UpdateStatus_Res => {
+    updateStatus = (response: ApiHttpResponse): GithubApp_UpdateStatus_Res => {
         parseApiResponse({
             response,
             schema: MetaOnlySchema,
@@ -112,7 +111,7 @@ export class GithubAppApiValidator {
         return { data: { type: "success" } };
     };
 
-    deleteOne = (response: AxiosResponse): GithubApp_DeleteOne_Res => {
+    deleteOne = (response: ApiHttpResponse): GithubApp_DeleteOne_Res => {
         parseApiResponse({
             response,
             schema: MetaOnlySchema,
@@ -121,7 +120,7 @@ export class GithubAppApiValidator {
         return { data: { type: "success" } };
     };
 
-    testConnection = (response: AxiosResponse): GithubApp_TestConnection_Res => {
+    testConnection = (response: ApiHttpResponse): GithubApp_TestConnection_Res => {
         parseApiResponse({
             response,
             schema: MetaOnlySchema,
@@ -130,7 +129,7 @@ export class GithubAppApiValidator {
         return { data: { type: "success" } };
     };
 
-    beginManifestFlow = (response: AxiosResponse): GithubApp_BeginManifestFlow_Res => {
+    beginManifestFlow = (response: ApiHttpResponse): GithubApp_BeginManifestFlow_Res => {
         const { data, meta } = parseApiResponse({
             response,
             schema: BeginManifestFlowSchema,
@@ -139,7 +138,7 @@ export class GithubAppApiValidator {
         return { data, meta };
     };
 
-    beginReprovision = (response: AxiosResponse): GithubApp_BeginReprovision_Res => {
+    beginReprovision = (response: ApiHttpResponse): GithubApp_BeginReprovision_Res => {
         const { data, meta } = parseApiResponse({
             response,
             schema: BeginReprovisionSchema,
@@ -148,7 +147,7 @@ export class GithubAppApiValidator {
         return { data, meta };
     };
 
-    listInstallations = (response: AxiosResponse): GithubApp_ListInstallations_Res => {
+    listInstallations = (response: ApiHttpResponse): GithubApp_ListInstallations_Res => {
         const { data, meta } = parseApiResponse({
             response,
             schema: ListInstallationsSchema,

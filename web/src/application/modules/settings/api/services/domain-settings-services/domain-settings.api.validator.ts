@@ -1,8 +1,7 @@
-import { type AxiosResponse } from "axios";
 import { z } from "zod";
 import { DomainSettingsEntitySchema } from "~/settings/module-shared/schemas";
 
-import { BaseMetaApiSchema, parseApiResponse } from "@infrastructure/api";
+import { type ApiHttpResponse, BaseMetaApiSchema, parseApiResponse } from "@infrastructure/api";
 
 import type {
     DomainSettings_DeleteOne_Res,
@@ -21,7 +20,7 @@ const MetaOnlySchema = z.object({
 });
 
 export class DomainSettingsApiValidator {
-    findOne = (response: AxiosResponse): DomainSettings_FindOne_Res => {
+    findOne = (response: ApiHttpResponse): DomainSettings_FindOne_Res => {
         const { data, meta } = parseApiResponse({
             response,
             schema: FindOneSchema,
@@ -30,7 +29,7 @@ export class DomainSettingsApiValidator {
         return { data, meta };
     };
 
-    updateOne = (response: AxiosResponse): DomainSettings_UpdateOne_Res => {
+    updateOne = (response: ApiHttpResponse): DomainSettings_UpdateOne_Res => {
         parseApiResponse({
             response,
             schema: MetaOnlySchema,
@@ -39,7 +38,7 @@ export class DomainSettingsApiValidator {
         return { data: { type: "success" } };
     };
 
-    updateStatus = (response: AxiosResponse): DomainSettings_UpdateStatus_Res => {
+    updateStatus = (response: ApiHttpResponse): DomainSettings_UpdateStatus_Res => {
         parseApiResponse({
             response,
             schema: MetaOnlySchema,
@@ -48,7 +47,7 @@ export class DomainSettingsApiValidator {
         return { data: { type: "success" } };
     };
 
-    deleteOne = (response: AxiosResponse): DomainSettings_DeleteOne_Res => {
+    deleteOne = (response: ApiHttpResponse): DomainSettings_DeleteOne_Res => {
         parseApiResponse({
             response,
             schema: MetaOnlySchema,

@@ -1,8 +1,7 @@
-import type { AxiosResponse } from "axios";
 import { z } from "zod";
 import { TraefikServiceSettingsEntitySchema } from "~/system-settings/module-shared/schemas";
 
-import { BaseMetaApiSchema, parseApiResponse } from "@infrastructure/api";
+import { type ApiHttpResponse, BaseMetaApiSchema, parseApiResponse } from "@infrastructure/api";
 
 import type {
     TraefikServiceSettings_FindOne_Res,
@@ -19,12 +18,12 @@ const MetaOnlySchema = z.object({
 });
 
 export class TraefikServiceSettingsApiValidator {
-    findOne = (response: AxiosResponse): TraefikServiceSettings_FindOne_Res => {
+    findOne = (response: ApiHttpResponse): TraefikServiceSettings_FindOne_Res => {
         const { data, meta } = parseApiResponse({ response, schema: FindOneSchema });
         return { data, meta };
     };
 
-    updateOne = (response: AxiosResponse): TraefikServiceSettings_UpdateOne_Res => {
+    updateOne = (response: ApiHttpResponse): TraefikServiceSettings_UpdateOne_Res => {
         parseApiResponse({ response, schema: MetaOnlySchema });
         return { data: { type: "success" } };
     };

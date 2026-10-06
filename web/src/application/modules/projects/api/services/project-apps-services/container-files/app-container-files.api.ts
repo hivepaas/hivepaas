@@ -1,8 +1,7 @@
-import type { AxiosResponse } from "axios";
 import { Err, Ok, type Result } from "oxide.ts";
 import { catchError, from, lastValueFrom, map, of } from "rxjs";
 
-import { BaseApi, parseApiError, parseBlobApiError } from "@infrastructure/api";
+import { type ApiHttpResponse, BaseApi, parseApiError, parseBlobApiError } from "@infrastructure/api";
 
 import type {
     AppContainerFiles_DownloadOne_Req,
@@ -26,7 +25,7 @@ function parseFilenameFromContentDisposition(contentDisposition?: string): strin
     return filename ? decodeURIComponent(filename) : undefined;
 }
 
-function mapDownloadResponse(response: AxiosResponse<Blob>): AppContainerFiles_DownloadOne_Res {
+function mapDownloadResponse(response: ApiHttpResponse<Blob>): AppContainerFiles_DownloadOne_Res {
     const headers = response.headers as Record<string, unknown>;
     const contentDisposition = headers["content-disposition"];
 

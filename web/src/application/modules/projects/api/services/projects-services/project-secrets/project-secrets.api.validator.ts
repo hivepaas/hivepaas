@@ -1,4 +1,3 @@
-import { type AxiosResponse } from "axios";
 import { z } from "zod";
 import type {
     ProjectSecrets_CreateOne_Res,
@@ -6,7 +5,7 @@ import type {
     ProjectSecrets_FindOneById_Res,
 } from "~/projects/api/services/projects-services";
 
-import { BaseMetaApiSchema, PagingMetaApiSchema, parseApiResponse } from "@infrastructure/api";
+import { type ApiHttpResponse, BaseMetaApiSchema, PagingMetaApiSchema, parseApiResponse } from "@infrastructure/api";
 
 /**
  * Project secret schema
@@ -56,7 +55,7 @@ export class ProjectSecretsApiValidator {
     /**
      * Validate and transform find many project secrets paginated API response
      */
-    findManyPaginated = (response: AxiosResponse): ProjectSecrets_FindManyPaginated_Res => {
+    findManyPaginated = (response: ApiHttpResponse): ProjectSecrets_FindManyPaginated_Res => {
         const { data, meta } = parseApiResponse({
             response,
             schema: FindManyPaginatedSchema,
@@ -71,7 +70,7 @@ export class ProjectSecretsApiValidator {
     /**
      * Validate and transform create project secret API response
      */
-    createOne = (response: AxiosResponse): ProjectSecrets_CreateOne_Res => {
+    createOne = (response: ApiHttpResponse): ProjectSecrets_CreateOne_Res => {
         return parseApiResponse({
             response,
             schema: CreateOneSchema,
@@ -81,7 +80,7 @@ export class ProjectSecretsApiValidator {
     /**
      * Validate and transform find one project secret by id API response
      */
-    findOneById = (response: AxiosResponse): ProjectSecrets_FindOneById_Res => {
+    findOneById = (response: ApiHttpResponse): ProjectSecrets_FindOneById_Res => {
         const { data, meta } = parseApiResponse({
             response,
             schema: FindOneByIdSchema,

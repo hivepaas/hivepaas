@@ -1,4 +1,3 @@
-import type { AxiosResponse } from "axios";
 import { z } from "zod";
 import type {
     AppDeployments_Cancel_Res,
@@ -9,7 +8,7 @@ import { EAppDeploymentMethod, EAppDeploymentTriggerSource } from "~/projects/mo
 
 import { EUserRole } from "@application/shared/enums";
 
-import { BaseMetaApiSchema, PagingMetaApiSchema, parseApiResponse } from "@infrastructure/api";
+import { type ApiHttpResponse, BaseMetaApiSchema, PagingMetaApiSchema, parseApiResponse } from "@infrastructure/api";
 
 const SourceUserSchema = z
     .object({
@@ -158,21 +157,21 @@ const CancelSchema = z.object({
 });
 
 export class AppDeploymentsApiValidator {
-    findManyPaginated = (response: AxiosResponse): AppDeployments_FindManyPaginated_Res => {
+    findManyPaginated = (response: ApiHttpResponse): AppDeployments_FindManyPaginated_Res => {
         return parseApiResponse({
             response,
             schema: FindManyPaginatedSchema,
         });
     };
 
-    findOneById = (response: AxiosResponse): AppDeployments_FindOneById_Res => {
+    findOneById = (response: ApiHttpResponse): AppDeployments_FindOneById_Res => {
         return parseApiResponse({
             response,
             schema: FindOneByIdSchema,
         });
     };
 
-    cancel = (response: AxiosResponse): AppDeployments_Cancel_Res => {
+    cancel = (response: ApiHttpResponse): AppDeployments_Cancel_Res => {
         return parseApiResponse({
             response,
             schema: CancelSchema,

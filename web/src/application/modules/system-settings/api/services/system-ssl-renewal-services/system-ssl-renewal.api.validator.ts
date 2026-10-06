@@ -1,8 +1,7 @@
-import { type AxiosResponse } from "axios";
 import { z } from "zod";
 import { SystemSslRenewalSettingsEntitySchema } from "~/system-settings/module-shared/schemas";
 
-import { BaseMetaApiSchema, parseApiResponse } from "@infrastructure/api";
+import { type ApiHttpResponse, BaseMetaApiSchema, parseApiResponse } from "@infrastructure/api";
 
 import type {
     SystemSslRenewal_Execute_Res,
@@ -29,17 +28,17 @@ const ExecuteSchema = z.object({
 });
 
 export class SystemSslRenewalApiValidator {
-    findOne = (response: AxiosResponse): SystemSslRenewal_FindOne_Res => {
+    findOne = (response: ApiHttpResponse): SystemSslRenewal_FindOne_Res => {
         const { data, meta } = parseApiResponse({ response, schema: FindOneSchema });
         return { data, meta };
     };
 
-    updateOne = (response: AxiosResponse): SystemSslRenewal_UpdateOne_Res => {
+    updateOne = (response: ApiHttpResponse): SystemSslRenewal_UpdateOne_Res => {
         parseApiResponse({ response, schema: MetaOnlySchema });
         return { data: { type: "success" } };
     };
 
-    execute = (response: AxiosResponse): SystemSslRenewal_Execute_Res => {
+    execute = (response: ApiHttpResponse): SystemSslRenewal_Execute_Res => {
         const { data, meta } = parseApiResponse({ response, schema: ExecuteSchema });
         return { data, meta };
     };

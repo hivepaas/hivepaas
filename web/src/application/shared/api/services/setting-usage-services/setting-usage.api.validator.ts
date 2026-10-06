@@ -1,9 +1,8 @@
-import type { AxiosResponse } from "axios";
 import { z } from "zod";
 
 import type { SettingUsages_FindMany_Res } from "@application/shared/api/services";
 
-import { BaseMetaApiSchema, parseApiResponse } from "@infrastructure/api";
+import { type ApiHttpResponse, BaseMetaApiSchema, parseApiResponse } from "@infrastructure/api";
 
 /**
  * Everything past type and id is optional on purpose: the server fills in what it
@@ -29,7 +28,7 @@ const FindManySchema = z.object({
 });
 
 export class SettingUsageApiValidator {
-    findMany = (response: AxiosResponse): SettingUsages_FindMany_Res => {
+    findMany = (response: ApiHttpResponse): SettingUsages_FindMany_Res => {
         const { data, meta } = parseApiResponse({ response, schema: FindManySchema });
 
         return {

@@ -1,4 +1,3 @@
-import { type AxiosResponse } from "axios";
 import { z } from "zod";
 import type {
     ProjectConfigFiles_CreateOne_Res,
@@ -6,7 +5,7 @@ import type {
     ProjectConfigFiles_FindOneById_Res,
 } from "~/projects/api/services/projects-services";
 
-import { BaseMetaApiSchema, PagingMetaApiSchema, parseApiResponse } from "@infrastructure/api";
+import { type ApiHttpResponse, BaseMetaApiSchema, PagingMetaApiSchema, parseApiResponse } from "@infrastructure/api";
 
 /**
  * Project config file schema
@@ -42,16 +41,16 @@ const FindOneByIdSchema = z.object({
 });
 
 export class ProjectConfigFilesApiValidator {
-    findManyPaginated = (response: AxiosResponse): ProjectConfigFiles_FindManyPaginated_Res => {
+    findManyPaginated = (response: ApiHttpResponse): ProjectConfigFiles_FindManyPaginated_Res => {
         const { data, meta } = parseApiResponse({ response, schema: FindManyPaginatedSchema });
         return { data, meta };
     };
 
-    createOne = (response: AxiosResponse): ProjectConfigFiles_CreateOne_Res => {
+    createOne = (response: ApiHttpResponse): ProjectConfigFiles_CreateOne_Res => {
         return parseApiResponse({ response, schema: CreateOneSchema });
     };
 
-    findOneById = (response: AxiosResponse): ProjectConfigFiles_FindOneById_Res => {
+    findOneById = (response: ApiHttpResponse): ProjectConfigFiles_FindOneById_Res => {
         const { data, meta } = parseApiResponse({ response, schema: FindOneByIdSchema });
         return { data, meta };
     };

@@ -1,9 +1,8 @@
-import { type AxiosResponse } from "axios";
 import { z } from "zod";
 
 import { type Public_Projects_FindManyPaginated_Res } from "@application/shared/api-public/services";
 
-import { PagingMetaApiSchema, parseApiResponse } from "@infrastructure/api";
+import { type ApiHttpResponse, PagingMetaApiSchema, parseApiResponse } from "@infrastructure/api";
 
 /**
  * The fields a picker needs from GET /projects; the rest of each project is
@@ -32,7 +31,7 @@ export class ProjectsPublicApiValidator {
     /**
      * Validate and transform find many public projects API response.
      */
-    findManyPaginated = (response: AxiosResponse): Public_Projects_FindManyPaginated_Res => {
+    findManyPaginated = (response: ApiHttpResponse): Public_Projects_FindManyPaginated_Res => {
         const { data, meta } = parseApiResponse({
             response,
             schema: FindManyPaginatedSchema,

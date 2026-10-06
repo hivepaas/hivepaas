@@ -1,10 +1,9 @@
-import { type AxiosResponse } from "axios";
 import { z } from "zod";
 import { SSHKeySettingEntitySchema } from "~/settings/module-shared/schemas";
 
 import { ESSHKeyType } from "@application/shared/enums";
 
-import { BaseMetaApiSchema, PagingMetaApiSchema, parseApiResponse } from "@infrastructure/api";
+import { type ApiHttpResponse, BaseMetaApiSchema, PagingMetaApiSchema, parseApiResponse } from "@infrastructure/api";
 
 import type {
     SSHKey_CreateOne_Res,
@@ -45,37 +44,37 @@ const MetaOnlySchema = z.object({
 });
 
 export class SSHKeyApiValidator {
-    findManyPaginated = (response: AxiosResponse): SSHKey_FindManyPaginated_Res => {
+    findManyPaginated = (response: ApiHttpResponse): SSHKey_FindManyPaginated_Res => {
         const { data, meta } = parseApiResponse({ response, schema: FindManyPaginatedSchema });
         return { data, meta };
     };
 
-    findOneById = (response: AxiosResponse): SSHKey_FindOneById_Res => {
+    findOneById = (response: ApiHttpResponse): SSHKey_FindOneById_Res => {
         const { data, meta } = parseApiResponse({ response, schema: FindOneByIdSchema });
         return { data, meta };
     };
 
-    createOne = (response: AxiosResponse): SSHKey_CreateOne_Res => {
+    createOne = (response: ApiHttpResponse): SSHKey_CreateOne_Res => {
         const { data, meta } = parseApiResponse({ response, schema: CreateOneSchema });
         return { data, meta };
     };
 
-    updateOne = (response: AxiosResponse): SSHKey_UpdateOne_Res => {
+    updateOne = (response: ApiHttpResponse): SSHKey_UpdateOne_Res => {
         parseApiResponse({ response, schema: MetaOnlySchema });
         return { data: { type: "success" } };
     };
 
-    updateStatus = (response: AxiosResponse): SSHKey_UpdateStatus_Res => {
+    updateStatus = (response: ApiHttpResponse): SSHKey_UpdateStatus_Res => {
         parseApiResponse({ response, schema: MetaOnlySchema });
         return { data: { type: "success" } };
     };
 
-    deleteOne = (response: AxiosResponse): SSHKey_DeleteOne_Res => {
+    deleteOne = (response: ApiHttpResponse): SSHKey_DeleteOne_Res => {
         parseApiResponse({ response, schema: MetaOnlySchema });
         return { data: { type: "success" } };
     };
 
-    generate = (response: AxiosResponse): SSHKey_Generate_Res => {
+    generate = (response: ApiHttpResponse): SSHKey_Generate_Res => {
         const { data, meta } = parseApiResponse({ response, schema: GenerateSchema });
         return { data, meta };
     };

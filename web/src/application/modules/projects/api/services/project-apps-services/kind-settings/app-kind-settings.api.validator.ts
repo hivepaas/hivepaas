@@ -1,7 +1,6 @@
-import { type AxiosResponse } from "axios";
 import { z } from "zod";
 
-import { BaseMetaApiSchema, parseApiResponse } from "@infrastructure/api";
+import { type ApiHttpResponse, BaseMetaApiSchema, parseApiResponse } from "@infrastructure/api";
 
 import type { AppKindSettings_FindOne_Res } from "./app-kind-settings.api.contracts";
 
@@ -76,7 +75,7 @@ const FindOneSchema = z.object({
 });
 
 export class AppKindSettingsApiValidator {
-    findOne = (response: AxiosResponse): AppKindSettings_FindOne_Res => {
+    findOne = (response: ApiHttpResponse): AppKindSettings_FindOne_Res => {
         return parseApiResponse({ response, schema: FindOneSchema });
     };
 }

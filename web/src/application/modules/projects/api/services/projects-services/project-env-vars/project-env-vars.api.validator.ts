@@ -1,8 +1,7 @@
-import { type AxiosResponse } from "axios";
 import { z } from "zod";
 import type { ProjectEnvVars_Compute_Res, ProjectEnvVars_FindOne_Res } from "~/projects/api/services/projects-services";
 
-import { BaseMetaApiSchema, parseApiResponse } from "@infrastructure/api";
+import { type ApiHttpResponse, BaseMetaApiSchema, parseApiResponse } from "@infrastructure/api";
 
 /**
  * Project buildtime env var schema
@@ -72,7 +71,7 @@ export class ProjectEnvVarsApiValidator {
     /**
      * Validate and transform find one project env vars API response
      */
-    findOne = (response: AxiosResponse): ProjectEnvVars_FindOne_Res => {
+    findOne = (response: ApiHttpResponse): ProjectEnvVars_FindOne_Res => {
         const { data, meta } = parseApiResponse({
             response,
             schema: FindOneSchema,
@@ -97,7 +96,7 @@ export class ProjectEnvVarsApiValidator {
     /**
      * Validate and transform compute project env vars API response
      */
-    compute = (response: AxiosResponse): ProjectEnvVars_Compute_Res => {
+    compute = (response: ApiHttpResponse): ProjectEnvVars_Compute_Res => {
         const { data, meta } = parseApiResponse({
             response,
             schema: ComputeSchema,

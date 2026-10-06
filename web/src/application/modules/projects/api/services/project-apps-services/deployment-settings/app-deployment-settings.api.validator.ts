@@ -1,9 +1,8 @@
-import { type AxiosResponse } from "axios";
 import { z } from "zod";
 import { EAppDeploymentMethod, EBuildTool, EDockerfileSource, ERepoType } from "~/projects/module-shared/enums";
 import { SettingsBaseEntitySchema } from "~/settings/module-shared/schemas";
 
-import { BaseMetaApiSchema, parseApiResponse } from "@infrastructure/api";
+import { type ApiHttpResponse, BaseMetaApiSchema, parseApiResponse } from "@infrastructure/api";
 
 import type {
     AppDeploymentSettings_FindOne_Res,
@@ -226,11 +225,11 @@ const GetDockerfileTemplateSchema = z.object({
 });
 
 export class AppDeploymentSettingsApiValidator {
-    findOne = (response: AxiosResponse): AppDeploymentSettings_FindOne_Res => {
+    findOne = (response: ApiHttpResponse): AppDeploymentSettings_FindOne_Res => {
         return parseApiResponse({ response, schema: FindOneSchema });
     };
 
-    getDockerfileTemplate = (response: AxiosResponse): AppDeploymentSettings_GetDockerfileTemplate_Res => {
+    getDockerfileTemplate = (response: ApiHttpResponse): AppDeploymentSettings_GetDockerfileTemplate_Res => {
         return parseApiResponse({ response, schema: GetDockerfileTemplateSchema });
     };
 }

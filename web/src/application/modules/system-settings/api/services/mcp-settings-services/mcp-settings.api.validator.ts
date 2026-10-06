@@ -1,7 +1,6 @@
-import { type AxiosResponse } from "axios";
 import { z } from "zod";
 
-import { BaseMetaApiSchema, parseApiResponse } from "@infrastructure/api";
+import { type ApiHttpResponse, BaseMetaApiSchema, parseApiResponse } from "@infrastructure/api";
 
 import type { McpSettings_FindOne_Res, McpSettings_UpdateOne_Res } from "./mcp-settings.api.contracts";
 
@@ -19,12 +18,12 @@ const MetaOnlySchema = z.object({
 });
 
 export class McpSettingsApiValidator {
-    findOne = (response: AxiosResponse): McpSettings_FindOne_Res => {
+    findOne = (response: ApiHttpResponse): McpSettings_FindOne_Res => {
         const { data, meta } = parseApiResponse({ response, schema: FindOneSchema });
         return { data, meta };
     };
 
-    updateOne = (response: AxiosResponse): McpSettings_UpdateOne_Res => {
+    updateOne = (response: ApiHttpResponse): McpSettings_UpdateOne_Res => {
         parseApiResponse({ response, schema: MetaOnlySchema });
         return { data: { type: "success" } };
     };

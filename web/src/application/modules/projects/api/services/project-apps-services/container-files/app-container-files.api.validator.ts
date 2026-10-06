@@ -1,7 +1,6 @@
-import type { AxiosResponse } from "axios";
 import { z } from "zod";
 
-import { BaseMetaApiSchema, parseApiResponse } from "@infrastructure/api";
+import { type ApiHttpResponse, BaseMetaApiSchema, parseApiResponse } from "@infrastructure/api";
 
 import type { AppContainerFiles_UploadOne_Res } from "./app-container-files.api.contracts";
 
@@ -14,7 +13,7 @@ const UploadOneSchema = z.object({
 });
 
 export class AppContainerFilesApiValidator {
-    uploadOne = (response: AxiosResponse): AppContainerFiles_UploadOne_Res => {
+    uploadOne = (response: ApiHttpResponse): AppContainerFiles_UploadOne_Res => {
         const { data, meta } = parseApiResponse({
             response,
             schema: UploadOneSchema,

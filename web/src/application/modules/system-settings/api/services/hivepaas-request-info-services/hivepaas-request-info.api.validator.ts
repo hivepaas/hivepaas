@@ -1,7 +1,6 @@
-import type { AxiosResponse } from "axios";
 import { z } from "zod";
 
-import { BaseMetaApiSchema, parseApiResponse } from "@infrastructure/api";
+import { type ApiHttpResponse, BaseMetaApiSchema, parseApiResponse } from "@infrastructure/api";
 
 import type { HivePaaSRequestInfo_FindOne_Res } from "./hivepaas-request-info.api.contracts";
 
@@ -20,7 +19,7 @@ const FindOneSchema = z.object({
 });
 
 export class HivePaaSRequestInfoApiValidator {
-    findOne = (response: AxiosResponse): HivePaaSRequestInfo_FindOne_Res => {
+    findOne = (response: ApiHttpResponse): HivePaaSRequestInfo_FindOne_Res => {
         const { data, meta } = parseApiResponse({ response, schema: FindOneSchema });
         return {
             data: {

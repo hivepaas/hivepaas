@@ -1,4 +1,3 @@
-import { type AxiosResponse } from "axios";
 import { z } from "zod";
 import { AccessSchema } from "~/user-management/module-shared/schemas";
 
@@ -6,7 +5,7 @@ import { type Session_GetProfile_Res, type Session_Logout_Res } from "@applicati
 import { ESecuritySettings, EUserRole } from "@application/shared/enums";
 import type { ModulePermission, ProjectPermission } from "@application/shared/permissions";
 
-import { parseApiResponse } from "@infrastructure/api";
+import { type ApiHttpResponse, parseApiResponse } from "@infrastructure/api";
 
 /**
  * Get account API response schema
@@ -150,7 +149,7 @@ export class SessionApiValidator {
     /**
      * Validate and transform the get account API response
      */
-    getProfile = (response: AxiosResponse): Session_GetProfile_Res => {
+    getProfile = (response: ApiHttpResponse): Session_GetProfile_Res => {
         const {
             data: { user, nextStep, timezone },
         } = parseApiResponse({
@@ -192,7 +191,7 @@ export class SessionApiValidator {
     /**
      * Validate and transform the logout API response
      */
-    logout = (_: AxiosResponse): Session_Logout_Res => {
+    logout = (_: ApiHttpResponse): Session_Logout_Res => {
         return {
             data: {
                 type: "success",

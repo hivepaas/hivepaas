@@ -1,4 +1,3 @@
-import { type AxiosResponse } from "axios";
 import { z } from "zod";
 
 import type {
@@ -7,7 +6,7 @@ import type {
     Profile_GetProfile2FASetup_Res,
 } from "@application/shared/api/services";
 
-import { PagingMetaApiSchema, parseApiResponse } from "@infrastructure/api";
+import { type ApiHttpResponse, PagingMetaApiSchema, parseApiResponse } from "@infrastructure/api";
 
 /**
  * Get profile 2FA setup API response schema
@@ -70,7 +69,7 @@ export class ProfileApiValidator {
     /**
      * Validate and transform get profile 2FA setup API response
      */
-    getProfile2FASetup = (response: AxiosResponse): Profile_GetProfile2FASetup_Res => {
+    getProfile2FASetup = (response: ApiHttpResponse): Profile_GetProfile2FASetup_Res => {
         const { data } = parseApiResponse({
             response,
             schema: GetProfile2FASetupSchema,
@@ -88,7 +87,7 @@ export class ProfileApiValidator {
     /**
      * Validate and transform find many account API keys paginated API response
      */
-    findManyApiKeysPaginated = (response: AxiosResponse): Profile_FindManyApiKeysPaginated_Res => {
+    findManyApiKeysPaginated = (response: ApiHttpResponse): Profile_FindManyApiKeysPaginated_Res => {
         const { data, meta } = parseApiResponse({
             response,
             schema: FindManyApiKeysPaginatedSchema,
@@ -112,7 +111,7 @@ export class ProfileApiValidator {
     /**
      * Validate and transform create one account API key API response
      */
-    createOneApiKey = (response: AxiosResponse): Profile_CreateOneApiKey_Res => {
+    createOneApiKey = (response: ApiHttpResponse): Profile_CreateOneApiKey_Res => {
         const { data } = parseApiResponse({
             response,
             schema: CreateOneApiKeySchema,

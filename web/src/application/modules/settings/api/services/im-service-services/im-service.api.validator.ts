@@ -1,8 +1,7 @@
-import { type AxiosResponse } from "axios";
 import { z } from "zod";
 import { ImServiceSettingEntitySchema } from "~/settings/module-shared/schemas";
 
-import { BaseMetaApiSchema, PagingMetaApiSchema, parseApiResponse } from "@infrastructure/api";
+import { type ApiHttpResponse, BaseMetaApiSchema, PagingMetaApiSchema, parseApiResponse } from "@infrastructure/api";
 
 import type {
     ImService_CreateOne_Res,
@@ -36,7 +35,7 @@ const MetaOnlySchema = z.object({
 });
 
 export class ImServiceApiValidator {
-    findManyPaginated = (response: AxiosResponse): ImService_FindManyPaginated_Res => {
+    findManyPaginated = (response: ApiHttpResponse): ImService_FindManyPaginated_Res => {
         const { data, meta } = parseApiResponse({
             response,
             schema: FindManyPaginatedSchema,
@@ -45,7 +44,7 @@ export class ImServiceApiValidator {
         return { data, meta };
     };
 
-    findOneById = (response: AxiosResponse): ImService_FindOneById_Res => {
+    findOneById = (response: ApiHttpResponse): ImService_FindOneById_Res => {
         const { data, meta } = parseApiResponse({
             response,
             schema: FindOneByIdSchema,
@@ -54,7 +53,7 @@ export class ImServiceApiValidator {
         return { data, meta };
     };
 
-    createOne = (response: AxiosResponse): ImService_CreateOne_Res => {
+    createOne = (response: ApiHttpResponse): ImService_CreateOne_Res => {
         const { data, meta } = parseApiResponse({
             response,
             schema: CreateOneSchema,
@@ -63,7 +62,7 @@ export class ImServiceApiValidator {
         return { data, meta };
     };
 
-    updateOne = (response: AxiosResponse): ImService_UpdateOne_Res => {
+    updateOne = (response: ApiHttpResponse): ImService_UpdateOne_Res => {
         parseApiResponse({
             response,
             schema: MetaOnlySchema,
@@ -72,7 +71,7 @@ export class ImServiceApiValidator {
         return { data: { type: "success" } };
     };
 
-    updateStatus = (response: AxiosResponse): ImService_UpdateStatus_Res => {
+    updateStatus = (response: ApiHttpResponse): ImService_UpdateStatus_Res => {
         parseApiResponse({
             response,
             schema: MetaOnlySchema,
@@ -81,7 +80,7 @@ export class ImServiceApiValidator {
         return { data: { type: "success" } };
     };
 
-    deleteOne = (response: AxiosResponse): ImService_DeleteOne_Res => {
+    deleteOne = (response: ApiHttpResponse): ImService_DeleteOne_Res => {
         parseApiResponse({
             response,
             schema: MetaOnlySchema,
@@ -90,7 +89,7 @@ export class ImServiceApiValidator {
         return { data: { type: "success" } };
     };
 
-    testSendMsg = (response: AxiosResponse): ImService_TestSendMsg_Res => {
+    testSendMsg = (response: ApiHttpResponse): ImService_TestSendMsg_Res => {
         parseApiResponse({
             response,
             schema: MetaOnlySchema,

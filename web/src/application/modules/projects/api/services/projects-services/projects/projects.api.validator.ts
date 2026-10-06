@@ -1,4 +1,3 @@
-import { type AxiosResponse } from "axios";
 import { z } from "zod";
 import {
     type Projects_CreateOne_Res,
@@ -7,7 +6,7 @@ import {
 } from "~/projects/api/services/projects-services";
 import { EProjectEnvStatus } from "~/projects/module-shared/enums";
 
-import { BaseMetaApiSchema, PagingMetaApiSchema, parseApiResponse } from "@infrastructure/api";
+import { type ApiHttpResponse, BaseMetaApiSchema, PagingMetaApiSchema, parseApiResponse } from "@infrastructure/api";
 
 /**
  * Project schema
@@ -93,7 +92,7 @@ export class ProjectsApiValidator {
     /**
      * Validate and transform find many projects paginated API response
      */
-    findManyPaginated = (response: AxiosResponse): Projects_FindManyPaginated_Res => {
+    findManyPaginated = (response: ApiHttpResponse): Projects_FindManyPaginated_Res => {
         const { data, meta } = parseApiResponse({
             response,
             schema: FindManyPaginatedSchema,
@@ -111,7 +110,7 @@ export class ProjectsApiValidator {
     /**
      * Validate and transform create project API response
      */
-    createOne = (response: AxiosResponse): Projects_CreateOne_Res => {
+    createOne = (response: ApiHttpResponse): Projects_CreateOne_Res => {
         return parseApiResponse({
             response,
             schema: CreateOneSchema,
@@ -121,7 +120,7 @@ export class ProjectsApiValidator {
     /**
      * Validate and transform find one project by id API response
      */
-    findOneById = (response: AxiosResponse): Projects_FindOneById_Res => {
+    findOneById = (response: ApiHttpResponse): Projects_FindOneById_Res => {
         const { data, meta } = parseApiResponse({
             response,
             schema: FindOneByIdSchema,

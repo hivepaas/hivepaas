@@ -1,8 +1,7 @@
-import { type AxiosResponse } from "axios";
 import { z } from "zod";
 import type { DashboardCert } from "~/home/domain";
 
-import { BaseMetaApiSchema, parseApiResponse } from "@infrastructure/api";
+import { type ApiHttpResponse, BaseMetaApiSchema, parseApiResponse } from "@infrastructure/api";
 
 import type {
     GetStarted_Dismiss_Res,
@@ -30,17 +29,17 @@ const DashboardCertResponseSchema = z.object({
 });
 
 export class GetStartedApiValidator {
-    getDashboardCert = (response: AxiosResponse): GetStarted_GetDashboardCert_Res => {
+    getDashboardCert = (response: ApiHttpResponse): GetStarted_GetDashboardCert_Res => {
         const { data, meta } = parseApiResponse({ response, schema: DashboardCertResponseSchema });
         return { data, meta };
     };
 
-    requestDashboardCert = (response: AxiosResponse): GetStarted_RequestDashboardCert_Res => {
+    requestDashboardCert = (response: ApiHttpResponse): GetStarted_RequestDashboardCert_Res => {
         const { data, meta } = parseApiResponse({ response, schema: DashboardCertResponseSchema });
         return { data, meta };
     };
 
-    dismiss = (_: AxiosResponse): GetStarted_Dismiss_Res => {
+    dismiss = (_: ApiHttpResponse): GetStarted_Dismiss_Res => {
         return { data: { type: "success" } };
     };
 }

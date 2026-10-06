@@ -1,7 +1,6 @@
-import { type AxiosResponse } from "axios";
 import { z } from "zod";
 
-import { BaseMetaApiSchema, parseApiResponse } from "@infrastructure/api";
+import { type ApiHttpResponse, BaseMetaApiSchema, parseApiResponse } from "@infrastructure/api";
 
 import type { HomeAttention_FindAll_Res } from "./home-attention.api.contracts";
 
@@ -59,7 +58,7 @@ const FindAllSchema = z.object({
 });
 
 export class HomeAttentionApiValidator {
-    findAll = (response: AxiosResponse): HomeAttention_FindAll_Res => {
+    findAll = (response: ApiHttpResponse): HomeAttention_FindAll_Res => {
         const { data, meta } = parseApiResponse({ response, schema: FindAllSchema });
         return { data: data.items ?? [], meta };
     };

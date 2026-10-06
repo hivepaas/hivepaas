@@ -1,8 +1,7 @@
-import { type AxiosResponse } from "axios";
 import { z } from "zod";
 import { KeyAuthSettingEntitySchema } from "~/settings/module-shared/schemas";
 
-import { BaseMetaApiSchema, PagingMetaApiSchema, parseApiResponse } from "@infrastructure/api";
+import { type ApiHttpResponse, BaseMetaApiSchema, PagingMetaApiSchema, parseApiResponse } from "@infrastructure/api";
 
 import type {
     KeyAuth_CreateOne_Res,
@@ -35,7 +34,7 @@ const MetaOnlySchema = z.object({
 });
 
 export class KeyAuthApiValidator {
-    findManyPaginated = (response: AxiosResponse): KeyAuth_FindManyPaginated_Res => {
+    findManyPaginated = (response: ApiHttpResponse): KeyAuth_FindManyPaginated_Res => {
         const { data, meta } = parseApiResponse({
             response,
             schema: FindManyPaginatedSchema,
@@ -44,7 +43,7 @@ export class KeyAuthApiValidator {
         return { data, meta };
     };
 
-    findOneById = (response: AxiosResponse): KeyAuth_FindOneById_Res => {
+    findOneById = (response: ApiHttpResponse): KeyAuth_FindOneById_Res => {
         const { data, meta } = parseApiResponse({
             response,
             schema: FindOneByIdSchema,
@@ -53,7 +52,7 @@ export class KeyAuthApiValidator {
         return { data, meta };
     };
 
-    createOne = (response: AxiosResponse): KeyAuth_CreateOne_Res => {
+    createOne = (response: ApiHttpResponse): KeyAuth_CreateOne_Res => {
         const { data, meta } = parseApiResponse({
             response,
             schema: CreateOneSchema,
@@ -62,7 +61,7 @@ export class KeyAuthApiValidator {
         return { data, meta };
     };
 
-    updateOne = (response: AxiosResponse): KeyAuth_UpdateOne_Res => {
+    updateOne = (response: ApiHttpResponse): KeyAuth_UpdateOne_Res => {
         parseApiResponse({
             response,
             schema: MetaOnlySchema,
@@ -71,7 +70,7 @@ export class KeyAuthApiValidator {
         return { data: { type: "success" } };
     };
 
-    updateStatus = (response: AxiosResponse): KeyAuth_UpdateStatus_Res => {
+    updateStatus = (response: ApiHttpResponse): KeyAuth_UpdateStatus_Res => {
         parseApiResponse({
             response,
             schema: MetaOnlySchema,
@@ -80,7 +79,7 @@ export class KeyAuthApiValidator {
         return { data: { type: "success" } };
     };
 
-    deleteOne = (response: AxiosResponse): KeyAuth_DeleteOne_Res => {
+    deleteOne = (response: ApiHttpResponse): KeyAuth_DeleteOne_Res => {
         parseApiResponse({
             response,
             schema: MetaOnlySchema,

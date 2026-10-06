@@ -1,7 +1,6 @@
-import { type AxiosResponse } from "axios";
 import { z } from "zod";
 
-import { BaseMetaApiSchema, parseApiResponse } from "@infrastructure/api";
+import { type ApiHttpResponse, BaseMetaApiSchema, parseApiResponse } from "@infrastructure/api";
 
 import type {
     HivePaaSLoggingPerformance_FindOne_Res,
@@ -76,11 +75,11 @@ const MetaOnlySchema = z.object({
 });
 
 export class HivePaaSLoggingPerformanceApiValidator {
-    findOne = (response: AxiosResponse): HivePaaSLoggingPerformance_FindOne_Res => {
+    findOne = (response: ApiHttpResponse): HivePaaSLoggingPerformance_FindOne_Res => {
         return parseApiResponse({ response, schema: FindOneSchema });
     };
 
-    updateOne = (response: AxiosResponse): HivePaaSLoggingPerformance_UpdateOne_Res => {
+    updateOne = (response: ApiHttpResponse): HivePaaSLoggingPerformance_UpdateOne_Res => {
         parseApiResponse({ response, schema: MetaOnlySchema });
         return { data: { type: "success" } };
     };

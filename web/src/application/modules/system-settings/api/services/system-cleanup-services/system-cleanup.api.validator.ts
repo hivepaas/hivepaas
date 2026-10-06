@@ -1,8 +1,7 @@
-import { type AxiosResponse } from "axios";
 import { z } from "zod";
 import { SystemCleanupSettingsEntitySchema } from "~/system-settings/module-shared/schemas";
 
-import { BaseMetaApiSchema, parseApiResponse } from "@infrastructure/api";
+import { type ApiHttpResponse, BaseMetaApiSchema, parseApiResponse } from "@infrastructure/api";
 
 import type {
     SystemCleanup_ClearBuildCache_Res,
@@ -62,29 +61,29 @@ const ClearBuildCacheSchema = z.object({
 });
 
 export class SystemCleanupApiValidator {
-    findOne = (response: AxiosResponse): SystemCleanup_FindOne_Res => {
+    findOne = (response: ApiHttpResponse): SystemCleanup_FindOne_Res => {
         const { data, meta } = parseApiResponse({ response, schema: FindOneSchema });
         return { data, meta };
     };
 
-    updateOne = (response: AxiosResponse): SystemCleanup_UpdateOne_Res => {
+    updateOne = (response: ApiHttpResponse): SystemCleanup_UpdateOne_Res => {
         parseApiResponse({ response, schema: MetaOnlySchema });
         return { data: { type: "success" } };
     };
 
-    execute = (response: AxiosResponse): SystemCleanup_Execute_Res => {
+    execute = (response: ApiHttpResponse): SystemCleanup_Execute_Res => {
         return parseApiResponse({ response, schema: ExecuteSchema });
     };
 
-    findRepoCache = (response: AxiosResponse): SystemCleanup_FindRepoCache_Res => {
+    findRepoCache = (response: ApiHttpResponse): SystemCleanup_FindRepoCache_Res => {
         return parseApiResponse({ response, schema: FindRepoCacheSchema });
     };
 
-    clearRepoCache = (response: AxiosResponse): SystemCleanup_ClearRepoCache_Res => {
+    clearRepoCache = (response: ApiHttpResponse): SystemCleanup_ClearRepoCache_Res => {
         return parseApiResponse({ response, schema: ClearRepoCacheSchema });
     };
 
-    clearBuildCache = (response: AxiosResponse): SystemCleanup_ClearBuildCache_Res => {
+    clearBuildCache = (response: ApiHttpResponse): SystemCleanup_ClearBuildCache_Res => {
         const { data, meta } = parseApiResponse({ response, schema: ClearBuildCacheSchema });
 
         return {

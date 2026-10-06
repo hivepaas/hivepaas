@@ -1,7 +1,6 @@
-import { type AxiosResponse } from "axios";
 import { z } from "zod";
 
-import { BaseMetaApiSchema, parseApiResponse } from "@infrastructure/api";
+import { type ApiHttpResponse, BaseMetaApiSchema, parseApiResponse } from "@infrastructure/api";
 
 import type {
     ProjectImageBuildSettings_ClearRepoCache_Res,
@@ -69,7 +68,7 @@ const ClearRepoCacheSchema = z.object({
 });
 
 export class ProjectImageBuildSettingsApiValidator {
-    findOne = (response: AxiosResponse): ProjectImageBuildSettings_FindOne_Res => {
+    findOne = (response: ApiHttpResponse): ProjectImageBuildSettings_FindOne_Res => {
         const { data, meta } = parseApiResponse({ response, schema: FindOneSchema });
 
         return {
@@ -92,11 +91,11 @@ export class ProjectImageBuildSettingsApiValidator {
         };
     };
 
-    findRepoCache = (response: AxiosResponse): ProjectImageBuildSettings_FindRepoCache_Res => {
+    findRepoCache = (response: ApiHttpResponse): ProjectImageBuildSettings_FindRepoCache_Res => {
         return parseApiResponse({ response, schema: FindRepoCacheSchema });
     };
 
-    clearRepoCache = (response: AxiosResponse): ProjectImageBuildSettings_ClearRepoCache_Res => {
+    clearRepoCache = (response: ApiHttpResponse): ProjectImageBuildSettings_ClearRepoCache_Res => {
         return parseApiResponse({ response, schema: ClearRepoCacheSchema });
     };
 }

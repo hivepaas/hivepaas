@@ -1,4 +1,3 @@
-import type { AxiosResponse } from "axios";
 import { z } from "zod";
 import type {
     AppHealthChecks_CreateOne_Res,
@@ -12,7 +11,7 @@ import {
     EAppHealthCheckType,
 } from "~/projects/module-shared/enums";
 
-import { BaseMetaApiSchema, PagingMetaApiSchema, parseApiResponse } from "@infrastructure/api";
+import { type ApiHttpResponse, BaseMetaApiSchema, PagingMetaApiSchema, parseApiResponse } from "@infrastructure/api";
 
 const NamedRefSchema = z
     .object({
@@ -116,21 +115,21 @@ const CreateOneSchema = z.object({
 });
 
 export class AppHealthChecksApiValidator {
-    findManyPaginated = (response: AxiosResponse): AppHealthChecks_FindManyPaginated_Res => {
+    findManyPaginated = (response: ApiHttpResponse): AppHealthChecks_FindManyPaginated_Res => {
         return parseApiResponse({
             response,
             schema: FindManyPaginatedSchema,
         });
     };
 
-    findOneById = (response: AxiosResponse): AppHealthChecks_FindOneById_Res => {
+    findOneById = (response: ApiHttpResponse): AppHealthChecks_FindOneById_Res => {
         return parseApiResponse({
             response,
             schema: FindOneByIdSchema,
         });
     };
 
-    createOne = (response: AxiosResponse): AppHealthChecks_CreateOne_Res => {
+    createOne = (response: ApiHttpResponse): AppHealthChecks_CreateOne_Res => {
         return parseApiResponse({
             response,
             schema: CreateOneSchema,

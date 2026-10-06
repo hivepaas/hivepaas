@@ -1,7 +1,6 @@
-import type { AxiosResponse } from "axios";
 import { z } from "zod";
 
-import { BaseMetaApiSchema, parseApiResponse } from "@infrastructure/api";
+import { type ApiHttpResponse, BaseMetaApiSchema, parseApiResponse } from "@infrastructure/api";
 
 import type { AppDockerApiSettings_FindOne_Res } from "./app-docker-api-settings.api.contracts";
 
@@ -55,7 +54,7 @@ const FindOneSchema = z.object({
 });
 
 export class AppDockerApiSettingsApiValidator {
-    findOne = (response: AxiosResponse): AppDockerApiSettings_FindOne_Res => {
+    findOne = (response: ApiHttpResponse): AppDockerApiSettings_FindOne_Res => {
         return parseApiResponse({ response, schema: FindOneSchema });
     };
 }

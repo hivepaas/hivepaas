@@ -1,8 +1,7 @@
-import { type AxiosResponse } from "axios";
 import { z } from "zod";
 import { SettingsBaseEntitySchema } from "~/settings/module-shared/schemas";
 
-import { BaseMetaApiSchema, PagingMetaApiSchema, parseApiResponse } from "@infrastructure/api";
+import { type ApiHttpResponse, BaseMetaApiSchema, PagingMetaApiSchema, parseApiResponse } from "@infrastructure/api";
 
 import {
     type Notifications_CreateOne_Res,
@@ -109,7 +108,7 @@ export class NotificationsApiValidator {
     /**
      * Validate and transform find many notifications paginated API response
      */
-    findManyPaginated = (response: AxiosResponse): Notifications_FindManyPaginated_Res => {
+    findManyPaginated = (response: ApiHttpResponse): Notifications_FindManyPaginated_Res => {
         const { data, meta } = parseApiResponse({
             response,
             schema: FindManyPaginatedSchema,
@@ -124,7 +123,7 @@ export class NotificationsApiValidator {
     /**
      * Validate and transform find one notification by id API response
      */
-    findOneById = (response: AxiosResponse): Notifications_FindOneById_Res => {
+    findOneById = (response: ApiHttpResponse): Notifications_FindOneById_Res => {
         const { data } = parseApiResponse({
             response,
             schema: FindOneByIdSchema,
@@ -138,7 +137,7 @@ export class NotificationsApiValidator {
     /**
      * Validate and transform create one notification API response
      */
-    createOne = (response: AxiosResponse): Notifications_CreateOne_Res => {
+    createOne = (response: ApiHttpResponse): Notifications_CreateOne_Res => {
         const { data } = parseApiResponse({
             response,
             schema: CreateOneSchema,
@@ -152,7 +151,7 @@ export class NotificationsApiValidator {
     /**
      * Validate and transform update one notification API response
      */
-    updateOne = (response: AxiosResponse): Notifications_UpdateOne_Res => {
+    updateOne = (response: ApiHttpResponse): Notifications_UpdateOne_Res => {
         parseApiResponse({
             response,
             schema: MetaOnlySchema,
@@ -168,7 +167,7 @@ export class NotificationsApiValidator {
     /**
      * Validate and transform update notification status API response
      */
-    updateStatus = (response: AxiosResponse): Notifications_UpdateStatus_Res => {
+    updateStatus = (response: ApiHttpResponse): Notifications_UpdateStatus_Res => {
         parseApiResponse({
             response,
             schema: MetaOnlySchema,
@@ -184,7 +183,7 @@ export class NotificationsApiValidator {
     /**
      * Validate and transform delete one notification API response
      */
-    deleteOne = (response: AxiosResponse): Notifications_DeleteOne_Res => {
+    deleteOne = (response: ApiHttpResponse): Notifications_DeleteOne_Res => {
         parseApiResponse({
             response,
             schema: MetaOnlySchema,

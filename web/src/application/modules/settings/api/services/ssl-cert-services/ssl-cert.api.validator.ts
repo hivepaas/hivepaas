@@ -1,8 +1,7 @@
-import { type AxiosResponse } from "axios";
 import { z } from "zod";
 import { SslCertSettingEntitySchema } from "~/settings/module-shared/schemas";
 
-import { BaseMetaApiSchema, PagingMetaApiSchema, parseApiResponse } from "@infrastructure/api";
+import { type ApiHttpResponse, BaseMetaApiSchema, PagingMetaApiSchema, parseApiResponse } from "@infrastructure/api";
 
 import type {
     SslCert_CreateOne_Res,
@@ -36,7 +35,7 @@ const MetaOnlySchema = z.object({
 });
 
 export class SslCertApiValidator {
-    findManyPaginated = (response: AxiosResponse): SslCert_FindManyPaginated_Res => {
+    findManyPaginated = (response: ApiHttpResponse): SslCert_FindManyPaginated_Res => {
         const { data, meta } = parseApiResponse({
             response,
             schema: FindManyPaginatedSchema,
@@ -45,7 +44,7 @@ export class SslCertApiValidator {
         return { data, meta };
     };
 
-    findOneById = (response: AxiosResponse): SslCert_FindOneById_Res => {
+    findOneById = (response: ApiHttpResponse): SslCert_FindOneById_Res => {
         const { data, meta } = parseApiResponse({
             response,
             schema: FindOneByIdSchema,
@@ -54,7 +53,7 @@ export class SslCertApiValidator {
         return { data, meta };
     };
 
-    createOne = (response: AxiosResponse): SslCert_CreateOne_Res => {
+    createOne = (response: ApiHttpResponse): SslCert_CreateOne_Res => {
         const { data, meta } = parseApiResponse({
             response,
             schema: CreateOneSchema,
@@ -63,7 +62,7 @@ export class SslCertApiValidator {
         return { data, meta };
     };
 
-    updateOne = (response: AxiosResponse): SslCert_UpdateOne_Res => {
+    updateOne = (response: ApiHttpResponse): SslCert_UpdateOne_Res => {
         parseApiResponse({
             response,
             schema: MetaOnlySchema,
@@ -72,7 +71,7 @@ export class SslCertApiValidator {
         return { data: { type: "success" } };
     };
 
-    updateStatus = (response: AxiosResponse): SslCert_UpdateStatus_Res => {
+    updateStatus = (response: ApiHttpResponse): SslCert_UpdateStatus_Res => {
         parseApiResponse({
             response,
             schema: MetaOnlySchema,
@@ -81,7 +80,7 @@ export class SslCertApiValidator {
         return { data: { type: "success" } };
     };
 
-    deleteOne = (response: AxiosResponse): SslCert_DeleteOne_Res => {
+    deleteOne = (response: ApiHttpResponse): SslCert_DeleteOne_Res => {
         parseApiResponse({
             response,
             schema: MetaOnlySchema,
@@ -90,7 +89,7 @@ export class SslCertApiValidator {
         return { data: { type: "success" } };
     };
 
-    renewOne = (response: AxiosResponse): SslCert_RenewOne_Res => {
+    renewOne = (response: ApiHttpResponse): SslCert_RenewOne_Res => {
         parseApiResponse({
             response,
             schema: MetaOnlySchema,

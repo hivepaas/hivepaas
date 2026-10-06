@@ -1,8 +1,7 @@
-import { type AxiosResponse } from "axios";
 import { z } from "zod";
 import { SettingsBaseEntitySchema } from "~/settings/module-shared/schemas";
 
-import { PagingMetaApiSchema, parseApiResponse } from "@infrastructure/api";
+import { type ApiHttpResponse, PagingMetaApiSchema, parseApiResponse } from "@infrastructure/api";
 
 import type {
     ProjectGitCredentials_FindManyBranches_Res,
@@ -67,7 +66,7 @@ const FindManyPullRequestsSchema = z.object({
 });
 
 export class ProjectGitCredentialsApiValidator {
-    findManyPaginated = (response: AxiosResponse): ProjectGitCredentials_FindManyPaginated_Res => {
+    findManyPaginated = (response: ApiHttpResponse): ProjectGitCredentials_FindManyPaginated_Res => {
         const { data, meta } = parseApiResponse({
             response,
             schema: FindManyPaginatedSchema,
@@ -76,7 +75,7 @@ export class ProjectGitCredentialsApiValidator {
         return { data, meta };
     };
 
-    findManyRepos = (response: AxiosResponse): ProjectGitCredentials_FindManyRepos_Res => {
+    findManyRepos = (response: ApiHttpResponse): ProjectGitCredentials_FindManyRepos_Res => {
         const { data, meta } = parseApiResponse({
             response,
             schema: FindManyReposSchema,
@@ -85,7 +84,7 @@ export class ProjectGitCredentialsApiValidator {
         return { data, meta };
     };
 
-    findManyBranches = (response: AxiosResponse): ProjectGitCredentials_FindManyBranches_Res => {
+    findManyBranches = (response: ApiHttpResponse): ProjectGitCredentials_FindManyBranches_Res => {
         const { data, meta } = parseApiResponse({
             response,
             schema: FindManyBranchesSchema,
@@ -94,7 +93,7 @@ export class ProjectGitCredentialsApiValidator {
         return { data, meta };
     };
 
-    findManyPullRequests = (response: AxiosResponse): ProjectGitCredentials_FindManyPullRequests_Res => {
+    findManyPullRequests = (response: ApiHttpResponse): ProjectGitCredentials_FindManyPullRequests_Res => {
         const { data, meta } = parseApiResponse({
             response,
             schema: FindManyPullRequestsSchema,

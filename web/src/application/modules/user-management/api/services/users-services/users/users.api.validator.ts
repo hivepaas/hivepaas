@@ -1,4 +1,3 @@
-import { type AxiosResponse } from "axios";
 import { z } from "zod";
 import {
     type Users_FindManyPaginated_Res,
@@ -10,7 +9,7 @@ import { AccessSchema, ProjectEnvAccessSchema } from "~/user-management/module-s
 
 import { ESecuritySettings, EUserRole } from "@application/shared/enums";
 
-import { PagingMetaApiSchema, parseApiResponse } from "@infrastructure/api";
+import { type ApiHttpResponse, PagingMetaApiSchema, parseApiResponse } from "@infrastructure/api";
 
 /**
  * User schema
@@ -80,7 +79,7 @@ export class UsersApiValidator {
     /**
      * Validate and transform find many users paginated API response
      */
-    findManyPaginated = (response: AxiosResponse): Users_FindManyPaginated_Res => {
+    findManyPaginated = (response: ApiHttpResponse): Users_FindManyPaginated_Res => {
         const { data, meta } = parseApiResponse({
             response,
             schema: FindManyPaginatedSchema,
@@ -112,7 +111,7 @@ export class UsersApiValidator {
     /**
      * Validate and transform find one user by id API response
      */
-    findOneById = (response: AxiosResponse): Users_FindOneById_Res => {
+    findOneById = (response: ApiHttpResponse): Users_FindOneById_Res => {
         const { data } = parseApiResponse({
             response,
             schema: FindOneByIdSchema,
@@ -149,7 +148,7 @@ export class UsersApiValidator {
     /**
      * Validate and transform invite one user API response
      */
-    inviteOne = (response: AxiosResponse): Users_InviteOne_Res => {
+    inviteOne = (response: ApiHttpResponse): Users_InviteOne_Res => {
         const { data } = parseApiResponse({
             response,
             schema: InviteOneSchema,
@@ -165,7 +164,7 @@ export class UsersApiValidator {
     /**
      * Validate and transform reset password API response
      */
-    resetPassword = (response: AxiosResponse): Users_ResetPassword_Res => {
+    resetPassword = (response: ApiHttpResponse): Users_ResetPassword_Res => {
         const { data } = parseApiResponse({
             response,
             schema: ResetPasswordSchema,

@@ -1,8 +1,7 @@
-import { type AxiosResponse } from "axios";
 import { z } from "zod";
 import { OAuthSettingEntitySchema } from "~/settings/module-shared/schemas";
 
-import { BaseMetaApiSchema, PagingMetaApiSchema, parseApiResponse } from "@infrastructure/api";
+import { type ApiHttpResponse, BaseMetaApiSchema, PagingMetaApiSchema, parseApiResponse } from "@infrastructure/api";
 
 import type {
     OAuth_CreateOne_Res,
@@ -36,32 +35,32 @@ const MetaOnlySchema = z.object({
 });
 
 export class OAuthApiValidator {
-    findManyPaginated = (response: AxiosResponse): OAuth_FindManyPaginated_Res => {
+    findManyPaginated = (response: ApiHttpResponse): OAuth_FindManyPaginated_Res => {
         const { data, meta } = parseApiResponse({ response, schema: FindManyPaginatedSchema });
         return { data, meta };
     };
 
-    findOneById = (response: AxiosResponse): OAuth_FindOneById_Res => {
+    findOneById = (response: ApiHttpResponse): OAuth_FindOneById_Res => {
         const { data, meta } = parseApiResponse({ response, schema: FindOneByIdSchema });
         return { data, meta };
     };
 
-    createOne = (response: AxiosResponse): OAuth_CreateOne_Res => {
+    createOne = (response: ApiHttpResponse): OAuth_CreateOne_Res => {
         const { data, meta } = parseApiResponse({ response, schema: CreateOneSchema });
         return { data, meta };
     };
 
-    updateOne = (response: AxiosResponse): OAuth_UpdateOne_Res => {
+    updateOne = (response: ApiHttpResponse): OAuth_UpdateOne_Res => {
         parseApiResponse({ response, schema: MetaOnlySchema });
         return { data: { type: "success" } };
     };
 
-    updateStatus = (response: AxiosResponse): OAuth_UpdateStatus_Res => {
+    updateStatus = (response: ApiHttpResponse): OAuth_UpdateStatus_Res => {
         parseApiResponse({ response, schema: MetaOnlySchema });
         return { data: { type: "success" } };
     };
 
-    deleteOne = (response: AxiosResponse): OAuth_DeleteOne_Res => {
+    deleteOne = (response: ApiHttpResponse): OAuth_DeleteOne_Res => {
         parseApiResponse({ response, schema: MetaOnlySchema });
         return { data: { type: "success" } };
     };

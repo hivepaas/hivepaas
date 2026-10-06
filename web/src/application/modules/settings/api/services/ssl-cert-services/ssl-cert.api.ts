@@ -1,8 +1,7 @@
-import type { AxiosResponse } from "axios";
 import { Err, Ok, type Result } from "oxide.ts";
 import { catchError, from, lastValueFrom, map, of } from "rxjs";
 
-import { BaseApi, parseApiError } from "@infrastructure/api";
+import { type ApiHttpResponse, BaseApi, parseApiError } from "@infrastructure/api";
 
 import type {
     SslCert_CreateOne_Req,
@@ -38,7 +37,7 @@ function parseFilenameFromContentDisposition(contentDisposition?: string): strin
     return filename ? decodeURIComponent(filename) : undefined;
 }
 
-function mapDownloadResponse(response: AxiosResponse<Blob>): SslCert_DownloadBundle_Res {
+function mapDownloadResponse(response: ApiHttpResponse<Blob>): SslCert_DownloadBundle_Res {
     const headers = response.headers as Record<string, unknown>;
     const contentDisposition = headers["content-disposition"];
 

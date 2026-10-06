@@ -1,8 +1,7 @@
-import { type AxiosResponse } from "axios";
 import { z } from "zod";
 import { AccessTokenSettingEntitySchema } from "~/settings/module-shared/schemas";
 
-import { BaseMetaApiSchema, PagingMetaApiSchema, parseApiResponse } from "@infrastructure/api";
+import { type ApiHttpResponse, BaseMetaApiSchema, PagingMetaApiSchema, parseApiResponse } from "@infrastructure/api";
 
 import type {
     AccessToken_CreateOne_Res,
@@ -34,37 +33,37 @@ const MetaOnlySchema = z.object({
 });
 
 export class AccessTokenApiValidator {
-    findManyPaginated = (response: AxiosResponse): AccessToken_FindManyPaginated_Res => {
+    findManyPaginated = (response: ApiHttpResponse): AccessToken_FindManyPaginated_Res => {
         const { data, meta } = parseApiResponse({ response, schema: FindManyPaginatedSchema });
         return { data, meta };
     };
 
-    findOneById = (response: AxiosResponse): AccessToken_FindOneById_Res => {
+    findOneById = (response: ApiHttpResponse): AccessToken_FindOneById_Res => {
         const { data, meta } = parseApiResponse({ response, schema: FindOneByIdSchema });
         return { data, meta };
     };
 
-    createOne = (response: AxiosResponse): AccessToken_CreateOne_Res => {
+    createOne = (response: ApiHttpResponse): AccessToken_CreateOne_Res => {
         const { data, meta } = parseApiResponse({ response, schema: CreateOneSchema });
         return { data, meta };
     };
 
-    updateOne = (response: AxiosResponse): AccessToken_UpdateOne_Res => {
+    updateOne = (response: ApiHttpResponse): AccessToken_UpdateOne_Res => {
         parseApiResponse({ response, schema: MetaOnlySchema });
         return { data: { type: "success" } };
     };
 
-    updateStatus = (response: AxiosResponse): AccessToken_UpdateStatus_Res => {
+    updateStatus = (response: ApiHttpResponse): AccessToken_UpdateStatus_Res => {
         parseApiResponse({ response, schema: MetaOnlySchema });
         return { data: { type: "success" } };
     };
 
-    deleteOne = (response: AxiosResponse): AccessToken_DeleteOne_Res => {
+    deleteOne = (response: ApiHttpResponse): AccessToken_DeleteOne_Res => {
         parseApiResponse({ response, schema: MetaOnlySchema });
         return { data: { type: "success" } };
     };
 
-    testConn = (response: AxiosResponse): AccessToken_TestConn_Res => {
+    testConn = (response: ApiHttpResponse): AccessToken_TestConn_Res => {
         parseApiResponse({ response, schema: MetaOnlySchema });
         return { data: { type: "success" } };
     };

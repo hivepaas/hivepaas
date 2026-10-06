@@ -1,10 +1,9 @@
-import { type AxiosResponse } from "axios";
 import { z } from "zod";
 import type { ProjectUserAccesses_FindOne_Res } from "~/projects/api/services/projects-services";
 
 import { EUserRole } from "@application/shared/enums";
 
-import { BaseMetaApiSchema, parseApiResponse } from "@infrastructure/api";
+import { type ApiHttpResponse, BaseMetaApiSchema, parseApiResponse } from "@infrastructure/api";
 
 const AccessActionsSchema = z.object({
     read: z.boolean(),
@@ -44,7 +43,7 @@ const FindOneSchema = z.object({
 });
 
 export class ProjectUserAccessesApiValidator {
-    findOne = (response: AxiosResponse): ProjectUserAccesses_FindOne_Res => {
+    findOne = (response: ApiHttpResponse): ProjectUserAccesses_FindOne_Res => {
         return parseApiResponse({
             response,
             schema: FindOneSchema,

@@ -1,9 +1,8 @@
-import type { AxiosResponse } from "axios";
 import { Err, Ok, type Result } from "oxide.ts";
 import { catchError, from, lastValueFrom, map } from "rxjs";
 import type { SpecExportScope, SpecExportSummary } from "~/operations/domain";
 
-import { BaseApi, parseBlobApiError } from "@infrastructure/api";
+import { type ApiHttpResponse, BaseApi, parseBlobApiError } from "@infrastructure/api";
 
 import type { SpecExport_Export_Req, SpecExport_Export_Res } from "./spec-export.api.contracts";
 
@@ -50,7 +49,7 @@ function parseSummary(raw: unknown): SpecExportSummary | undefined {
     }
 }
 
-function mapExportResponse(response: AxiosResponse<Blob>): SpecExport_Export_Res {
+function mapExportResponse(response: ApiHttpResponse<Blob>): SpecExport_Export_Res {
     const headers = response.headers as Record<string, unknown>;
     const contentDisposition = headers["content-disposition"];
 

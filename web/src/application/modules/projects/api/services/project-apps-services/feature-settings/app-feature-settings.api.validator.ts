@@ -1,8 +1,7 @@
-import type { AxiosResponse } from "axios";
 import { z } from "zod";
 import { SettingsBaseEntitySchema } from "~/settings/module-shared/schemas";
 
-import { BaseMetaApiSchema, parseApiResponse } from "@infrastructure/api";
+import { type ApiHttpResponse, BaseMetaApiSchema, parseApiResponse } from "@infrastructure/api";
 
 import type { AppFeatureSettings_FindOne_Res } from "./app-feature-settings.api.contracts";
 
@@ -69,7 +68,7 @@ const FindOneSchema = z.object({
 });
 
 export class AppFeatureSettingsApiValidator {
-    findOne = (response: AxiosResponse): AppFeatureSettings_FindOne_Res => {
+    findOne = (response: ApiHttpResponse): AppFeatureSettings_FindOne_Res => {
         return parseApiResponse({ response, schema: FindOneSchema });
     };
 }

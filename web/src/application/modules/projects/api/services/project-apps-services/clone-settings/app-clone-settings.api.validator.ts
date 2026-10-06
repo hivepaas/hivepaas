@@ -1,8 +1,7 @@
-import type { AxiosResponse } from "axios";
 import { z } from "zod";
 import { EProjectAppStatus } from "~/projects/module-shared/enums";
 
-import { BaseMetaApiSchema, parseApiResponse } from "@infrastructure/api";
+import { type ApiHttpResponse, BaseMetaApiSchema, parseApiResponse } from "@infrastructure/api";
 
 import type { AppCloneSettings_Execute_Res, AppCloneSettings_FindOne_Res } from "./app-clone-settings.api.contracts";
 
@@ -90,11 +89,11 @@ const ExecuteSchema = z.object({
 });
 
 export class AppCloneSettingsApiValidator {
-    findOne = (response: AxiosResponse): AppCloneSettings_FindOne_Res => {
+    findOne = (response: ApiHttpResponse): AppCloneSettings_FindOne_Res => {
         return parseApiResponse({ response, schema: FindOneSchema });
     };
 
-    execute = (response: AxiosResponse): AppCloneSettings_Execute_Res => {
+    execute = (response: ApiHttpResponse): AppCloneSettings_Execute_Res => {
         const { meta } = parseApiResponse({ response, schema: ExecuteSchema });
         return { data: { type: "success" }, meta };
     };

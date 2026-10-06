@@ -122,7 +122,9 @@ func TestSystemAppsSyncSchedulesOnceCommitted(t *testing.T) {
 		App: &entity.SystemAppSyncOutput{Key: "registry", Name: "Registry", Action: entity.SystemAppSyncUpdated}}
 	data := syncData(&entity.SystemCleanup{})
 
-	assert.NoError(t, f.svc.sysSyncSystemApps(context.Background(), savepointDB{}, data))
+	err, attention := f.svc.sysSyncSystemApps(context.Background(), savepointDB{}, data)
+	assert.NoError(t, err)
+	assert.NoError(t, attention)
 
 	assert.Len(t, data.TaskOutput.SystemApps.Apps, 4)
 	assert.Empty(t, f.queue.scheduled, "not before the commit")
@@ -150,9 +152,10 @@ func TestSystemAppsSyncRollsBackAFailingFeatureAlone(t *testing.T) {
 		App: &entity.SystemAppSyncOutput{Key: "registry", Name: "Registry", Action: entity.SystemAppSyncNone}}
 	data := syncData(&entity.SystemCleanup{})
 
-	err := f.svc.sysSyncSystemApps(context.Background(), savepointDB{}, data)
+	err, attention := f.svc.sysSyncSystemApps(context.Background(), savepointDB{}, data)
 
 	assert.ErrorContains(t, err, "the backend would not provision")
+	assert.NoError(t, attention)
 	assert.True(t, cleaned)
 	apps := data.TaskOutput.SystemApps.Apps
 	if assert.Len(t, apps, 2) {
@@ -173,11 +176,12 @@ func TestSystemAppsSyncFailsTheRunOverWhatItReports(t *testing.T) {
 	}
 	data := syncData(&entity.SystemCleanup{})
 
-	err := f.svc.sysSyncSystemApps(context.Background(), savepointDB{}, data)
+	err, attention := f.svc.sysSyncSystemApps(context.Background(), savepointDB{}, data)
 
-	assert.ErrorIs(t, err, errSystemAppsNeedAttention)
-	assert.ErrorContains(t, err, "Logging collector: its service is scaled to zero")
-	assert.ErrorContains(t, err, "OBI on node one: its agent is not running")
+	assert.NoError(t, err)
+	assert.ErrorIs(t, attention, errSystemAppsNeedAttention)
+	assert.ErrorContains(t, attention, "Logging collector: its service is scaled to zero")
+	assert.ErrorContains(t, attention, "OBI on node one: its agent is not running")
 }
 
 // Switched off in the settings, or a system update running, nothing syncs.
@@ -185,11 +189,33 @@ func TestSystemAppsSyncSkips(t *testing.T) {
 	f := newSyncFixture()
 	f.logging.err = errors.New("must not be called")
 	off := syncData(&entity.SystemCleanup{SystemAppsSync: &entity.SystemAppsSync{Enabled: false}})
-	assert.NoError(t, f.svc.sysSyncSystemApps(context.Background(), savepointDB{}, off))
+	err, attention := f.svc.sysSyncSystemApps(context.Background(), savepointDB{}, off)
+	assert.NoError(t, errors.Join(err, attention))
 	assert.Nil(t, off.TaskOutput.SystemApps)
 
 	f.tasks.running = true
 	updating := syncData(&entity.SystemCleanup{})
-	assert.NoError(t, f.svc.sysSyncSystemApps(context.Background(), savepointDB{}, updating))
+	err, attention = f.svc.sysSyncSystemApps(context.Background(), savepointDB{}, updating)
+	assert.NoError(t, errors.Join(err, attention))
 	assert.Equal(t, "a system update is running", updating.TaskOutput.SystemApps.Skipped)
+}
+
+// A run that failed only over what it leaves to a person is not run again; one
+// that failed besides is, as before.
+func TestAttentionAloneIsNotRetried(t *testing.T) {
+	attention := errSystemAppsNeedAttention
+
+	alone := syncData(&entity.SystemCleanup{})
+	assert.ErrorIs(t, withAttention(alone, nil, attention), errSystemAppsNeedAttention)
+	assert.True(t, alone.TaskNonRetryable)
+
+	besides := syncData(&entity.SystemCleanup{})
+	err := withAttention(besides, errors.New("pruning the images failed"), attention)
+	assert.ErrorIs(t, err, errSystemAppsNeedAttention)
+	assert.ErrorContains(t, err, "pruning the images failed")
+	assert.False(t, besides.TaskNonRetryable)
+
+	clean := syncData(&entity.SystemCleanup{})
+	assert.NoError(t, withAttention(clean, nil, nil))
+	assert.False(t, clean.TaskNonRetryable)
 }

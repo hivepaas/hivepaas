@@ -51,7 +51,8 @@ func (s *service) Cleanup(
 	// Bring the system apps to their settings, and check OBI on the nodes:
 	// before the cluster's cleanup, which would otherwise prune the image of
 	// one whose service is gone, only for it to be pulled again.
-	errs = append(errs, s.sysSyncSystemApps(ctx, db, data))
+	syncErr, attention := s.sysSyncSystemApps(ctx, db, data)
+	errs = append(errs, syncErr)
 
 	// Cleanup unused cluster data (docker)
 	errs = append(errs, s.sysCleanupCluster(ctx, data))
@@ -65,5 +66,19 @@ func (s *service) Cleanup(
 	// Assign back the result output
 	data.Task.MustSetOutput(data.TaskOutput)
 
-	return resp, errors.Join(errs...)
+	return resp, withAttention(data, errors.Join(errs...), attention)
+}
+
+// withAttention fails the run over what the system apps' sync left to a
+// person, for its notification to say so; but does not have it run again for
+// that - it would mend nothing, and prune twice - unless something else failed
+// too.
+func withAttention(data *sysCleanupData, err, attention error) error {
+	if attention == nil {
+		return err
+	}
+	if err == nil {
+		data.TaskNonRetryable = true
+	}
+	return errors.Join(err, attention)
 }

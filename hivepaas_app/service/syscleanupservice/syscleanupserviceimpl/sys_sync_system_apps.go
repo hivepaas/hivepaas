@@ -41,23 +41,25 @@ type systemAppsSync struct {
 // sysSyncSystemApps brings the apps HivePaaS runs for itself - the registry,
 // the logging stack - to their settings, and checks OBI on the nodes. Each
 // feature syncs in a savepoint of its own, so one that fails is rolled back
-// alone - with what it made in docker - and the other goes on.
-func (s *service) sysSyncSystemApps(ctx context.Context, db database.IDB, data *sysCleanupData) error {
+// alone - with what it made in docker - and the other goes on. What it leaves
+// to a person comes back apart, as attention: running again would not mend it.
+func (s *service) sysSyncSystemApps(ctx context.Context, db database.IDB, data *sysCleanupData) (
+	err, attention error) {
 	if data.SyncSystemApps == base.CleanupFlagFalse || !data.SysCleanupSettings.SystemAppsSyncEnabled() {
-		return nil
+		return nil, nil
 	}
 	out := &entity.SystemAppsSyncOutput{}
 	data.TaskOutput.SystemApps = out
 
 	updating, err := s.systemUpdating(ctx, db)
 	if err != nil {
-		return hperrors.Wrap(err)
+		return hperrors.Wrap(err), nil
 	}
 	if updating {
 		out.Skipped = "a system update is running"
 		_ = data.LogStore.Add(ctx, tasklog.NewOutFrame("System apps not synced: a system update is running",
 			tasklog.TsNow))
-		return nil
+		return nil, nil
 	}
 
 	var errs []error
@@ -83,10 +85,10 @@ func (s *service) sysSyncSystemApps(ctx context.Context, db database.IDB, data *
 		}
 	}
 
-	if attention := needingAttention(out); len(attention) > 0 {
-		errs = append(errs, fmt.Errorf("%w: %s", errSystemAppsNeedAttention, strings.Join(attention, "; ")))
+	if lines := needingAttention(out); len(lines) > 0 {
+		attention = fmt.Errorf("%w: %s", errSystemAppsNeedAttention, strings.Join(lines, "; "))
 	}
-	return errors.Join(errs...)
+	return errors.Join(errs...), attention
 }
 
 // syncInSavepoint runs one feature's sync in a savepoint. Committed, it logs

@@ -56,3 +56,14 @@ export async function deleteApiKeysNamed(api: APIRequestContext, name: string): 
         await ok(await api.delete(`users/current/settings/api-keys/${key.id}`), `deleting API key ${name}`);
     }
 }
+
+// deleteSettingsNamed removes the global settings of a kind - basic-auth,
+// ssh-keys, repo-webhooks... - that carry the name.
+export async function deleteSettingsNamed(api: APIRequestContext, kind: string, name: string): Promise<void> {
+    const body = (await ok(await api.get(`settings/${kind}`), `listing ${kind}`)) as {
+        data: { id: string; name: string }[];
+    };
+    for (const item of body.data.filter(i => i.name === name)) {
+        await ok(await api.delete(`settings/${kind}/${item.id}`), `deleting ${kind} ${name}`);
+    }
+}

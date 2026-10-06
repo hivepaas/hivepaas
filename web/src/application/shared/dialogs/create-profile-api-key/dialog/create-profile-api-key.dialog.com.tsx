@@ -150,6 +150,7 @@ export function CreateProfileApiKeyDialog() {
                                     variant="link"
                                     size="icon"
                                     className="shrink-0"
+                                    aria-label="Copy the key ID"
                                     onClick={handleCopyKeyId}
                                 >
                                     <Copy className="h-4 w-4 text-muted-foreground" />
@@ -176,6 +177,7 @@ export function CreateProfileApiKeyDialog() {
                                             variant="link"
                                             size="icon"
                                             className="shrink-0"
+                                            aria-label="Copy the secret key"
                                             onClick={handleCopySecretKey}
                                         >
                                             <Copy className="h-4 w-4 text-muted-foreground" />

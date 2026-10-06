@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useId, useState } from "react";
 
 import { cn } from "@/lib/utils";
 
@@ -22,6 +22,9 @@ export function PopConfirm({
     className,
 }: Props) {
     const [open, setOpen] = useState(false);
+    // The popover is a dialog: named by its title, described by its text.
+    const titleId = useId();
+    const descriptionId = useId();
 
     const handleOpenChange = (nextOpen: boolean) => {
         setOpen(nextOpen);
@@ -47,12 +50,28 @@ export function PopConfirm({
                 className={cn("w-[350px]", className)}
                 side={side}
                 align={align}
+                aria-labelledby={title ? titleId : undefined}
+                aria-describedby={description ? descriptionId : undefined}
             >
                 <div className="grid gap-4">
                     {(title != null || description != null) && (
                         <div className="space-y-2">
-                            {title && <h4 className="leading-none font-medium">{title}</h4>}
-                            {description && <p className="text-muted-foreground text-sm">{description}</p>}
+                            {title && (
+                                <h4
+                                    id={titleId}
+                                    className="leading-none font-medium"
+                                >
+                                    {title}
+                                </h4>
+                            )}
+                            {description && (
+                                <p
+                                    id={descriptionId}
+                                    className="text-muted-foreground text-sm"
+                                >
+                                    {description}
+                                </p>
+                            )}
                         </div>
                     )}
                     {content}

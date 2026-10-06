@@ -24,6 +24,7 @@ function View({ keyId }: { keyId: string }) {
                 variant="link"
                 size="icon"
                 className="shrink-0"
+                aria-label="Copy the key ID"
                 onClick={handleCopyKeyId}
             >
                 <Copy className="h-4 w-4 text-muted-foreground" />

@@ -147,6 +147,7 @@ export function CreateProjectForm({ isPending, readOnly = false, onSubmit, onHas
                         title={
                             <LabelWithInfo
                                 label="Name"
+                                htmlFor="name"
                                 isRequired
                             />
                         }

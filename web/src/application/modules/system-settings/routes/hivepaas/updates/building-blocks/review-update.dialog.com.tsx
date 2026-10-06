@@ -31,6 +31,7 @@ interface Props {
 }
 
 const CHANGE_TAGS: Record<string, { label: string; className: string }> = {
+    settings: { label: "Settings", className: "bg-secondary text-secondary-foreground" },
     update: { label: "Updated", className: "bg-blue-100 text-blue-800 dark:bg-blue-950 dark:text-blue-300" },
     major: { label: "Major", className: "bg-amber-100 text-amber-900 dark:bg-amber-950 dark:text-amber-300" },
     blocked: { label: "Blocked", className: "bg-red-100 text-red-800 dark:bg-red-950 dark:text-red-300" },
@@ -63,6 +64,11 @@ function ComponentRow({ component }: { component: UpdateComponent }) {
                 </span>
             )}
             {blocked && <span className="col-span-full text-xs text-destructive">{component.reason}</span>}
+            {component.change === "settings" && (
+                <span className="col-span-full text-xs text-muted-foreground">
+                    Same image, restarted with the settings this release writes.
+                </span>
+            )}
             {component.requiresBackup && (
                 <span className="col-span-full text-xs text-amber-800 dark:text-amber-300">
                     The new database is loaded from the backup, so the backup cannot be skipped.

@@ -59,7 +59,7 @@ const PlanSchema = z.object({
                     key: z.string(),
                     currentImage: z.string().catch(""),
                     targetImage: z.string().catch(""),
-                    change: z.enum(["none", "update", "major", "blocked", "not-deployed"]).catch("none"),
+                    change: z.enum(["none", "settings", "update", "major", "blocked", "not-deployed"]).catch("none"),
                     reason: z.string().catch(""),
                     requiresBackup: z.boolean().catch(false),
                     interruptsTraffic: z.boolean().catch(false),

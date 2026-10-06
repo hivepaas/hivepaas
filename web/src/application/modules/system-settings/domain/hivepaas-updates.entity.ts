@@ -24,8 +24,11 @@ export interface HivePaaSReleaseInfo {
     beta: PublishedRelease | null;
 }
 
-/** none, update, major, blocked or not-deployed. */
-export type UpdateChange = "none" | "update" | "major" | "blocked" | "not-deployed";
+/**
+ * none, settings, update, major, blocked or not-deployed. settings keeps the image, and restarts the component for what
+ * the release writes.
+ */
+export type UpdateChange = "none" | "settings" | "update" | "major" | "blocked" | "not-deployed";
 
 export interface UpdateComponent {
     /**

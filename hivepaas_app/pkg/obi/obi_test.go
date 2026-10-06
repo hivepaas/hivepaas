@@ -34,13 +34,13 @@ ebpf:
 	assert.Contains(t, string(Config(patterns, CapacityLarge)), "wakeup_len: 256\n")
 	assert.Contains(t, string(Config(patterns, CapacityLarge)), "global_scale_factor: 0\n")
 
-	small := ConfigHash(DefaultImage, Config(patterns, CapacitySmall))
-	assert.NotEqual(t, small, ConfigHash(DefaultImage, Config(patterns[:1], CapacitySmall)))
-	assert.NotEqual(t, small, ConfigHash(DefaultImage, Config(patterns, CapacityMedium)),
+	small := ConfigHash(DefaultImage, false, Config(patterns, CapacitySmall))
+	assert.NotEqual(t, small, ConfigHash(DefaultImage, false, Config(patterns[:1], CapacitySmall)))
+	assert.NotEqual(t, small, ConfigHash(DefaultImage, false, Config(patterns, CapacityMedium)),
 		"another capacity: another OBI")
-	assert.NotEqual(t, small, ConfigHash("otel/ebpf-instrument:v0.15.0", Config(patterns, CapacitySmall)),
+	assert.NotEqual(t, small, ConfigHash("otel/ebpf-instrument:v0.15.0", false, Config(patterns, CapacitySmall)),
 		"another release's OBI: another OBI")
-	assert.Equal(t, small, ConfigHash(DefaultImage, Config(patterns, CapacitySmall)))
+	assert.Equal(t, small, ConfigHash(DefaultImage, false, Config(patterns, CapacitySmall)))
 }
 
 // HivePaaS recommends more capacity to a node with more memory; a capacity
@@ -72,7 +72,7 @@ func TestCapacity(t *testing.T) {
 // OBI is not privileged: the host's PID namespace, the agent's network one,
 // the measured capabilities, the Docker socket read-only, its memory bounded.
 func TestContainerOptions(t *testing.T) {
-	opts := ContainerOptions(DefaultImage, "agent123", "abc")
+	opts := ContainerOptions(DefaultImage, "agent123", "abc", false)
 	host := opts.HostConfig
 	assert.Equal(t, ContainerName, opts.Name)
 	assert.Equal(t, DefaultImage, opts.Config.Image)
@@ -87,13 +87,26 @@ func TestContainerOptions(t *testing.T) {
 	// A container made with other options - another limit, by an agent from
 	// before - is another OBI, and is replaced.
 	config := Config([]string{"p1_dev_a1.*"}, CapacitySmall)
-	other := ContainerOptions(DefaultImage, "", "")
+	other := ContainerOptions(DefaultImage, "", "", false)
 	other.HostConfig.Memory = 384 << 20
-	assert.NotEqual(t, ConfigHash(DefaultImage, config), hashOf(other, config))
-	assert.Equal(t, ConfigHash(DefaultImage, config), hashOf(ContainerOptions(DefaultImage, "", ""), config))
+	assert.NotEqual(t, ConfigHash(DefaultImage, false, config), hashOf(other, config))
+	assert.Equal(t, ConfigHash(DefaultImage, false, config),
+		hashOf(ContainerOptions(DefaultImage, "", "", false), config))
 	assert.Equal(t, base.LogComponentOBI, opts.Config.Labels[base.LabelLogComponent])
 	assert.Equal(t, "abc", opts.Config.Labels[LabelConfig])
 	assert.Contains(t, opts.Config.Env, "OTEL_EBPF_CONFIG_PATH=/hivepaas-obi.yaml")
+}
+
+// Where the kernel allows perf events to CAP_SYS_ADMIN alone, OBI has it too,
+// and is still not privileged; a node where that changes gets another OBI.
+func TestContainerOptionsWherePerfEventsAreRestricted(t *testing.T) {
+	host := ContainerOptions(DefaultImage, "agent123", "abc", true).HostConfig
+	assert.ElementsMatch(t, []string{"CAP_BPF", "CAP_PERFMON", "CAP_SYS_PTRACE", "CAP_NET_RAW",
+		"CAP_DAC_READ_SEARCH", "CAP_CHECKPOINT_RESTORE", "CAP_SYS_ADMIN"}, host.CapAdd)
+	assert.False(t, host.Privileged)
+
+	config := Config([]string{"p1_dev_a1.*"}, CapacitySmall)
+	assert.NotEqual(t, ConfigHash(DefaultImage, false, config), ConfigHash(DefaultImage, true, config))
 }
 
 // node writes a node's filesystem: a kernel, BTF, tracefs, memory.
@@ -168,6 +181,18 @@ func TestPreflight(t *testing.T) {
 	running := Check(node(t, "6.8.0", map[string]string{"proc/meminfo": "MemAvailable: 102400 kB\n"}), true,
 		CapacityAuto)
 	assert.True(t, running.OK, running.Reasons)
+}
+
+// Above 2, perf_event_paranoid restricts perf events: to CAP_SYS_ADMIN alone on
+// Debian's kernels. Not a reason: OBI is given it.
+func TestPreflightSaysWherePerfEventsAreRestricted(t *testing.T) {
+	for paranoid, want := range map[string]bool{"3\n": true, "4\n": true, "2\n": false, "-1\n": false,
+		"-": false, "junk": false} {
+		p := Check(node(t, "6.12.111+deb13-cloud-amd64",
+			map[string]string{"proc/sys/kernel/perf_event_paranoid": paranoid}), false, CapacityAuto)
+		assert.True(t, p.OK, p.Reasons)
+		assert.Equal(t, want, p.PerfRestricted, paranoid)
+	}
 }
 
 func TestParseText(t *testing.T) {

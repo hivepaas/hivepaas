@@ -240,47 +240,72 @@ const traefikOwnLine = `{"ClientAddr":"172.19.0.1:62090","ClientHost":"172.19.0.
 	`"StartUTC":"2026-10-05T07:33:48.823112007Z","entryPointName":"web","level":"info","msg":"",` +
 	`"time":"2026-10-05T07:33:48Z"}`
 
-// Run against a VictoriaLogs whose URL is in HP_TEST_VICTORIALOGS_URL.
+// traefikKeptLine is one Traefik 3.7.13 wrote with the fields the Access Log
+// option keeps - HivePaaS's base.TraefikAccessLogFields - verbatim but its
+// service.
+const traefikKeptLine = `{"ClientHost":"172.19.0.1","ClientUsername":"-","DownstreamContentSize":153,` +
+	`"DownstreamStatus":404,"Duration":1523917,"OriginDuration":1473542,"OriginStatus":404,` +
+	`"RequestHost":"127.0.0.1","RequestMethod":"GET","RequestPath":"/item/123","RequestProtocol":"HTTP/1.1",` +
+	`"RetryAttempts":0,"RouterName":"a1@file","ServiceName":"%s","ServiceURL":"http://hp-trim-web:80",` +
+	`"entryPointName":"web","level":"info","msg":"","time":"2026-10-06T05:56:35Z"}`
+
+// Run against a VictoriaLogs whose URL is in HP_TEST_VICTORIALOGS_URL. The
+// line with every field - an installation's from before the option kept some -
+// and the one with the kept fields read the same.
 func TestLiveHTTPStatsReadTraefiksOwnLine(t *testing.T) {
 	base := os.Getenv("HP_TEST_VICTORIALOGS_URL")
 	if base == "" {
 		t.Skip("HP_TEST_VICTORIALOGS_URL not set")
 	}
-	run := liveRun()
-	at := time.Now().UTC().Add(-time.Minute)
-	msg := strings.Replace(traefikOwnLine, "%s", "svc-"+run+"-0@swarm", 1)
-	line, err := json.Marshal(map[string]string{
-		"_time": at.Format(time.RFC3339Nano), "_msg": msg, traefikField: "traefik", "stream": "stdout",
-	})
-	if err != nil {
-		t.Fatal(err)
-	}
-	ingestLines(t, base, []string{string(line)})
+	for _, tc := range []struct {
+		name, line, path, replica string
+		errors4xx                 int64
+		ms                        float64
+	}{
+		// A quoted value with a comma, whole.
+		{"every field", traefikOwnLine, "/ok/a,b", "http://hp-tr-who:80", 0, 2.196},
+		{"the kept fields", traefikKeptLine, "/item/:n", "http://hp-trim-web:80", 1, 1.524},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			run := liveRun()
+			at := time.Now().UTC().Add(-time.Minute)
+			msg := strings.Replace(tc.line, "%s", "svc-"+run+"-0@swarm", 1)
+			line, err := json.Marshal(map[string]string{
+				"_time": at.Format(time.RFC3339Nano), "_msg": msg, traefikField: "traefik", "stream": "stdout",
+			})
+			if err != nil {
+				t.Fatal(err)
+			}
+			ingestLines(t, base, []string{string(line)})
 
-	c := New(&Config{Endpoint: loggingmodel.Endpoint{URL: base}})
-	req := httpStatsReq("^svc-" + run + "-[0-9]+@swarm$")
-	req.Start, req.End, req.Step = at.Add(-time.Minute), at.Add(time.Minute), time.Minute
-	var got *loggingmodel.HTTPStatsResp
-	for range 20 { // ingestion becomes visible within a second or two
-		if got, err = c.HTTPStats(context.Background(), req); err != nil {
-			t.Fatal(err)
-		}
-		if len(got.Buckets) >= 1 && got.Totals.Requests >= 1 && len(got.ByPath) >= 1 && len(got.ByReplica) >= 1 {
-			break
-		}
-		time.Sleep(250 * time.Millisecond)
-	}
+			c := New(&Config{Endpoint: loggingmodel.Endpoint{URL: base}})
+			req := httpStatsReq("^svc-" + run + "-[0-9]+@swarm$")
+			req.Start, req.End, req.Step = at.Add(-time.Minute), at.Add(time.Minute), time.Minute
+			var got *loggingmodel.HTTPStatsResp
+			for range 20 { // ingestion becomes visible within a second or two
+				if got, err = c.HTTPStats(context.Background(), req); err != nil {
+					t.Fatal(err)
+				}
+				if len(got.Buckets) >= 1 && got.Totals.Requests >= 1 && len(got.ByPath) >= 1 &&
+					len(got.ByReplica) >= 1 {
+					break
+				}
+				time.Sleep(250 * time.Millisecond)
+			}
 
-	assert.Equal(t, int64(1), got.Totals.Requests)
-	assert.Zero(t, got.Totals.Errors5xx)
-	if assert.NotNil(t, got.Totals.P50) {
-		assert.InDelta(t, 2.196, *got.Totals.P50, 0.01, "Duration, in ms")
-	}
-	if assert.Len(t, got.ByPath, 1) {
-		assert.Equal(t, "GET", got.ByPath[0].Method)
-		assert.Equal(t, "/ok/a,b", got.ByPath[0].Path, "a quoted value with a comma, whole")
-	}
-	if assert.Len(t, got.ByReplica, 1) {
-		assert.Equal(t, "http://hp-tr-who:80", got.ByReplica[0].Address)
+			assert.Equal(t, int64(1), got.Totals.Requests)
+			assert.Equal(t, tc.errors4xx, got.Totals.Errors4xx)
+			assert.Zero(t, got.Totals.Errors5xx)
+			if assert.NotNil(t, got.Totals.P50) {
+				assert.InDelta(t, tc.ms, *got.Totals.P50, 0.01, "Duration, in ms")
+			}
+			if assert.Len(t, got.ByPath, 1) {
+				assert.Equal(t, "GET", got.ByPath[0].Method)
+				assert.Equal(t, tc.path, got.ByPath[0].Path)
+			}
+			if assert.Len(t, got.ByReplica, 1) {
+				assert.Equal(t, tc.replica, got.ByReplica[0].Address)
+			}
+		})
 	}
 }

@@ -80,18 +80,18 @@ func TransformStartupCommand(
 			continue
 		}
 
-		switch key {
-		case "log":
+		switch {
+		case key == "log":
 			log = isBoolTrue(val)
-		case "log.level":
+		case key == "log.level":
 			resp.LogLevel = val
-		case "accesslog":
+		case key == "accesslog":
 			resp.AccessLog = isBoolTrue(val)
-		case "accesslog.format", "accesslog.fields.queryparameters.defaultmode":
+		case base.IsTraefikAccessLogArg(key):
 			// The Access Log option's own, not an argument of the operator's.
-		case "entrypoints.websecure.http3":
+		case key == "entrypoints.websecure.http3":
 			resp.HTTP3 = isBoolTrue(val)
-		case "experimental.fastproxy":
+		case key == "experimental.fastproxy":
 			resp.FastProxy = isBoolTrue(val)
 		default:
 			resp.Args = append(resp.Args, arg)

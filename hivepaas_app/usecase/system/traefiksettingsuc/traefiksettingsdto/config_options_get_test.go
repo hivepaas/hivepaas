@@ -23,6 +23,10 @@ func TestTransformStartupCommand_OpenPorts(t *testing.T) {
 						"--entrypoints.udp-svc-dns.address=:53",
 						"--log.level=INFO",
 						"--accesslog=true",
+						"--accesslog.format=json",
+						"--accesslog.fields.defaultmode=drop",
+						"--accesslog.fields.names.ServiceName=keep",
+						"--accesslog.fields.names.StartUTC=keep",
 						"--entrypoints.websecure.http3=true",
 						"--experimental.fastproxy=true",
 						"--providers.docker=true",
@@ -48,5 +52,7 @@ func TestTransformStartupCommand_OpenPorts(t *testing.T) {
 	}
 	assert.Equal(t, expectedOpenPorts, resp.OpenPorts)
 
-	assert.Equal(t, []string{"--providers.docker=true"}, resp.Args)
+	// The Access Log option's own arguments are not listed as the operator's;
+	// a field the operator keeps besides is.
+	assert.Equal(t, []string{"--accesslog.fields.names.StartUTC=keep", "--providers.docker=true"}, resp.Args)
 }

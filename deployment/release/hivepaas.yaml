@@ -64,6 +64,27 @@ services:
       - "--accesslog=true"
       - "--accesslog.format=json"
       - "--accesslog.fields.queryparameters.defaultmode=drop"
+      # Only the fields base.TraefikAccessLogFields names, as the Access Log
+      # option writes them: the rest are not counted by, and make every line
+      # stored and read back nearly twice as long.
+      - "--accesslog.fields.defaultmode=drop"
+      - "--accesslog.fields.names.ServiceName=keep"
+      - "--accesslog.fields.names.ServiceURL=keep"
+      - "--accesslog.fields.names.RequestMethod=keep"
+      - "--accesslog.fields.names.RequestPath=keep"
+      - "--accesslog.fields.names.DownstreamStatus=keep"
+      - "--accesslog.fields.names.OriginStatus=keep"
+      - "--accesslog.fields.names.Duration=keep"
+      - "--accesslog.fields.names.OriginDuration=keep"
+      - "--accesslog.fields.names.ClientHost=keep"
+      - "--accesslog.fields.names.ClientUsername=keep"
+      - "--accesslog.fields.names.RequestHost=keep"
+      - "--accesslog.fields.names.RouterName=keep"
+      - "--accesslog.fields.names.RequestProtocol=keep"
+      - "--accesslog.fields.names.DownstreamContentSize=keep"
+      - "--accesslog.fields.names.RetryAttempts=keep"
+      - "--accesslog.fields.names.TLSVersion=keep"
+      - "--accesslog.fields.names.entryPointName=keep"
     # The proxy's identity in its own log lines, copied into each by json-file's
     # `labels` option below: an app's HTTP numbers are counted from its access
     # log, and only from lines the daemon marked as the proxy's.

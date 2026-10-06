@@ -94,6 +94,16 @@ there first; OBI becomes an opt-in for what Traefik cannot see.
   the logs). HivePaaS sets these arguments on its Traefik service; an operator
   who turns the access log off in Config Options gets a Performance tab that
   says why it is empty.
+- **Revised (2026-10-06): only some fields are kept**
+  (`--accesslog.fields.defaultmode=drop`, `base.TraefikAccessLogFields`): the
+  eight counted from, and eight more a person reads a line by - client host and
+  user, host, router, protocol, size, retries, TLS version - plus the entry
+  point. A line went from 807 bytes to 474. Measured on Traefik 3.7.13 and
+  VictoriaLogs 1.53.0 (2 CPUs), 750,000 lines, an app at 750 requests a second:
+  its hour of HTTP numbers 3.36 s to 2.75 s, its request load 82 ms to 38 ms,
+  the 51 apps' 95 ms to 56 ms, the stored size 61 MB to 27 MB. A system update
+  that moves Traefik's image brings an install's arguments to these, as a save
+  of Config Options does.
 - **Traefik's log lines are labelled** so that a query matches them exactly,
   not by content and not by a container id that changes at each restart: the
   Traefik service's log options carry a HivePaaS identity, as an app's

@@ -25,9 +25,11 @@ func (s *service) updateTraefikService(
 			return s.traefikService.GetTraefikSwarmService(ctx)
 		},
 		// The image change restarts traefik anyway: its lines get its
-		// identity on the way, for its access log to be counted from.
+		// identity on the way, for its access log to be counted from, and
+		// the access log the release's form.
 		Mutate: func(spec *swarm.ServiceSpec) {
 			traefikservice.WithAccessLogIdentity(spec)
+			traefikservice.WithAccessLogArgs(spec)
 		},
 	})
 	return hperrors.Wrap(err)

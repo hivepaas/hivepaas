@@ -2003,9 +2003,9 @@ dashboard_answers() {
     "https://$HIVEPAAS_APP_DOMAIN/api/ping" >/dev/null 2>&1
 }
 
-# APP_START_FAILURES: how often the app may stop as it starts before the wait
-# gives up on it. Once may be the database not answering yet; three times is a
-# setting it refuses, which waiting will not mend.
+# APP_START_FAILURES: how often the app may stop as it starts, once the
+# database runs, before the wait gives up on it. Once may be the database just
+# come up; three times is a setting it refuses, which waiting will not mend.
 APP_START_FAILURES=3
 
 # failed_app_tasks: the app's tasks swarm keeps as failed - stopped with an
@@ -2036,19 +2036,26 @@ die_app_failing() {
 }
 
 # wait_for_dashboard: until the dashboard answers - or the wait's time runs
-# out, or the app has stopped as it started APP_START_FAILURES times since.
+# out, or the app has stopped as it started APP_START_FAILURES times since the
+# database runs. Before that - on a first install, its image pulling and its
+# files being made - the app stops for want of it, as often as it takes; the
+# database's task runs only once its healthcheck passes.
 wait_for_dashboard() {
   local start=$SECONDS limit="${HIVEPAAS_WAIT_SECONDS:-300}" said=0 known id failed newest
   known=" $(failed_app_tasks | tr '\n' ' ') "
   until dashboard_answers; do
     if [ $((SECONDS - start)) -ge "$limit" ]; then return 1; fi
-    failed=0 newest=''
-    for id in $(failed_app_tasks); do
-      case "$known" in *" $id "*) continue ;; esac
-      failed=$((failed + 1))
-      newest=${newest:-$id}
-    done
-    if [ "$failed" -ge "$APP_START_FAILURES" ]; then die_app_failing "$failed" "$newest"; fi
+    if [ -z "$(running_task db)" ]; then
+      known=" $(failed_app_tasks | tr '\n' ' ') "
+    else
+      failed=0 newest=''
+      for id in $(failed_app_tasks); do
+        case "$known" in *" $id "*) continue ;; esac
+        failed=$((failed + 1))
+        newest=${newest:-$id}
+      done
+      if [ "$failed" -ge "$APP_START_FAILURES" ]; then die_app_failing "$failed" "$newest"; fi
+    fi
     if [ $((SECONDS - start)) -ge $((said + 30)) ]; then
       said=$((SECONDS - start))
       info "Still waiting (${said}s)..."

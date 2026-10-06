@@ -40,9 +40,12 @@ type systemAppsSync struct {
 
 // sysSyncSystemApps brings the apps HivePaaS runs for itself - the registry,
 // the logging stack - to their settings, and checks OBI on the nodes. Each
-// feature syncs in a savepoint of its own, so one that fails is rolled back
-// alone - with what it made in docker - and the other goes on. What it leaves
-// to a person comes back apart, as attention: running again would not mend it.
+// feature syncs in a transaction of its own, apart from the cleanup's: one that
+// fails is rolled back alone - with what it made in docker - and the other goes
+// on; and the settings a feature locks, as a save does, are held for its sync
+// alone, not while the rest of the cleanup prunes the nodes - which can take
+// minutes, a save of them waiting. What it leaves to a person comes back apart,
+// as attention: running again would not mend it.
 func (s *service) sysSyncSystemApps(ctx context.Context, db database.IDB, data *sysCleanupData) (
 	err, attention error) {
 	if data.SyncSystemApps == base.CleanupFlagFalse || !data.SysCleanupSettings.SystemAppsSyncEnabled() {
@@ -70,7 +73,7 @@ func (s *service) sysSyncSystemApps(ctx context.Context, db database.IDB, data *
 		{"logging", s.syncLogging},
 		{"registry", s.syncRegistry},
 	} {
-		synced, err := s.syncInSavepoint(ctx, db, data, feature.sync)
+		synced, err := s.syncInOwnTransaction(ctx, data, feature.sync)
 		if err != nil {
 			errs = append(errs, fmt.Errorf("syncing the %s apps: %w", feature.name, err))
 			_ = data.LogStore.Add(ctx, tasklog.NewErrFrame("Failed to sync the "+feature.name+" apps: "+
@@ -91,18 +94,21 @@ func (s *service) sysSyncSystemApps(ctx context.Context, db database.IDB, data *
 	return errors.Join(errs...), attention
 }
 
-// syncInSavepoint runs one feature's sync in a savepoint. Committed, it logs
-// what it did, records a removal as a person's is, and schedules the
-// deployments - and has the agents read OBI's settings again - once the task's
-// transaction commits; rolled back, it takes down what it made in docker.
-func (s *service) syncInSavepoint(
+// syncInOwnTransaction runs one feature's sync in a transaction of its own,
+// which records a removal as a person's is. Committed, it logs what it did,
+// schedules the deployments and has the agents read OBI's settings again;
+// rolled back, it takes down what it made in docker.
+//
+// The cleanup's transaction is still open, and waits for this one: what the
+// sync touches must not be what the cleanup locked before it - the rows its
+// database cleanup deletes - or each would wait for the other.
+func (s *service) syncInOwnTransaction(
 	ctx context.Context,
-	db database.IDB,
 	data *sysCleanupData,
 	sync func(ctx context.Context, tx database.Tx) (*systemAppsSync, error),
 ) (*systemAppsSync, error) {
 	var synced *systemAppsSync
-	err := transaction.Execute(ctx, db, func(tx database.Tx) error {
+	err := transaction.Execute(ctx, s.db, func(tx database.Tx) error {
 		var e error
 		synced, e = sync(ctx, tx)
 		if e != nil {
@@ -118,20 +124,14 @@ func (s *service) syncInSavepoint(
 	}
 
 	logSynced(ctx, data, synced)
-	if len(synced.tasks) > 0 || synced.obiSettingsChanged {
-		tasks, obiChanged := synced.tasks, synced.obiSettingsChanged
-		data.OnPostTx(func() {
-			ctx := context.WithoutCancel(ctx)
-			if len(tasks) > 0 {
-				if e := s.taskQueue.ScheduleTask(ctx, tasks...); e != nil {
-					_ = data.LogStore.Add(ctx, tasklog.NewErrFrame("Failed to schedule the system apps' "+
-						"deployments: "+e.Error(), tasklog.TsNow))
-				}
-			}
-			if obiChanged {
-				_ = s.obiSettings.Invalidate(ctx)
-			}
-		})
+	if len(synced.tasks) > 0 {
+		if e := s.taskQueue.ScheduleTask(context.WithoutCancel(ctx), synced.tasks...); e != nil {
+			_ = data.LogStore.Add(ctx, tasklog.NewErrFrame("Failed to schedule the system apps' "+
+				"deployments: "+e.Error(), tasklog.TsNow))
+		}
+	}
+	if synced.obiSettingsChanged {
+		_ = s.obiSettings.Invalidate(context.WithoutCancel(ctx))
 	}
 	return synced, nil
 }

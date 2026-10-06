@@ -1,6 +1,7 @@
 package syscleanupserviceimpl
 
 import (
+	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/repository"
 	"github.com/hivepaas/hivepaas/hivepaas_app/repository/cacherepository"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/agentservice"
@@ -16,6 +17,10 @@ import (
 )
 
 type service struct {
+	// db is the database apart from the cleanup's own transaction: the system
+	// apps' sync commits there, feature by feature.
+	db database.IDB
+
 	appRepo        repository.AppRepo
 	auditLogRepo   repository.AuditLogRepo
 	deploymentRepo repository.DeploymentRepo
@@ -40,6 +45,8 @@ type service struct {
 }
 
 func New(
+	db *database.DB,
+
 	appRepo repository.AppRepo,
 	auditLogRepo repository.AuditLogRepo,
 	deploymentRepo repository.DeploymentRepo,
@@ -63,6 +70,8 @@ func New(
 	dockerManager docker.Manager,
 ) syscleanupservice.Service {
 	return &service{
+		db: db,
+
 		appRepo:        appRepo,
 		auditLogRepo:   auditLogRepo,
 		deploymentRepo: deploymentRepo,

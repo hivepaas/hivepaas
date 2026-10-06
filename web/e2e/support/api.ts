@@ -67,3 +67,36 @@ export async function deleteSettingsNamed(api: APIRequestContext, kind: string, 
         await ok(await api.delete(`settings/${kind}/${item.id}`), `deleting ${kind} ${name}`);
     }
 }
+
+const CLEANUP_FIELDS = [
+    "status",
+    "schedule",
+    "dbObjectRetention",
+    "clusterCleanup",
+    "cacheCleanup",
+    "fileCleanup",
+    "systemAppsSync",
+    "notification",
+] as const;
+
+type Settings = Record<string, unknown>;
+
+// cleanupSettings are the system cleanup's settings as a save sends them.
+export async function cleanupSettings(api: APIRequestContext): Promise<Settings> {
+    const body = (await ok(await api.get("system/settings/cleanup"), "reading cleanup settings")) as {
+        data: Settings;
+    };
+    return Object.fromEntries(CLEANUP_FIELDS.map(field => [field, body.data[field]]));
+}
+
+// restoreCleanupSettings saves settings read before, over whatever a test saved
+// since.
+export async function restoreCleanupSettings(api: APIRequestContext, saved: Settings): Promise<void> {
+    const current = (await ok(await api.get("system/settings/cleanup"), "reading cleanup settings")) as {
+        data: { updateVer: number };
+    };
+    await ok(
+        await api.put("system/settings/cleanup", { data: { ...saved, updateVer: current.data.updateVer } }),
+        "restoring cleanup settings",
+    );
+}

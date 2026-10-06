@@ -113,4 +113,12 @@ func TestDailyJobsStayInUTC(t *testing.T) {
 		time.UTC, logging.GlobalLogger()))
 	assert.Zero(t, jobs.calls)
 	assert.Nil(t, status.saved)
+
+	// Etc/UTC, as timedatectl names it on many servers, is UTC: nothing to move.
+	etcUTC, err := time.LoadLocation("Etc/UTC")
+	assert.NoError(t, err)
+	assert.NoError(t, moveDailyJobsToTimezone(context.Background(), txDB{}, status, jobs, &rescheduling{},
+		etcUTC, logging.GlobalLogger()))
+	assert.Zero(t, jobs.calls)
+	assert.Nil(t, status.saved)
 }

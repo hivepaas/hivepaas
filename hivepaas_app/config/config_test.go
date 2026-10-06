@@ -140,3 +140,19 @@ func TestTimezone(t *testing.T) {
 		assert.ErrorIs(t, err, ErrTimezoneInvalid, name)
 	}
 }
+
+// A reload keeps the timezone the process started with: what moves the daily
+// jobs to a new one runs as HivePaaS starts, so a change waits for the next.
+func TestReloadKeepsTheStartingTimezone(t *testing.T) {
+	newYork, err := time.LoadLocation("America/New_York")
+	assert.NoError(t, err)
+	tokyo, err := time.LoadLocation("Asia/Tokyo")
+	assert.NoError(t, err)
+	started := &Config{Timezone: "America/New_York", location: newYork}
+	reloaded := &Config{Timezone: "Asia/Tokyo", location: tokyo}
+
+	keepStartingTimezone(reloaded, started)
+
+	assert.Equal(t, "America/New_York", reloaded.Timezone)
+	assert.Equal(t, newYork, reloaded.Location())
+}

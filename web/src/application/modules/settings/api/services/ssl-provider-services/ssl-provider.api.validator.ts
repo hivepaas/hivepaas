@@ -1,8 +1,7 @@
-import { type AxiosResponse } from "axios";
 import { z } from "zod";
 import { SslProviderSettingEntitySchema } from "~/settings/module-shared/schemas";
 
-import { BaseMetaApiSchema, PagingMetaApiSchema, parseApiResponse } from "@infrastructure/api";
+import { type ApiHttpResponse, BaseMetaApiSchema, PagingMetaApiSchema, parseApiResponse } from "@infrastructure/api";
 
 import type {
     SslProvider_CreateOne_Res,
@@ -35,7 +34,7 @@ const MetaOnlySchema = z.object({
 });
 
 export class SslProviderApiValidator {
-    findManyPaginated = (response: AxiosResponse): SslProvider_FindManyPaginated_Res => {
+    findManyPaginated = (response: ApiHttpResponse): SslProvider_FindManyPaginated_Res => {
         const { data, meta } = parseApiResponse({
             response,
             schema: FindManyPaginatedSchema,
@@ -44,7 +43,7 @@ export class SslProviderApiValidator {
         return { data, meta };
     };
 
-    findOneById = (response: AxiosResponse): SslProvider_FindOneById_Res => {
+    findOneById = (response: ApiHttpResponse): SslProvider_FindOneById_Res => {
         const { data, meta } = parseApiResponse({
             response,
             schema: FindOneByIdSchema,
@@ -53,7 +52,7 @@ export class SslProviderApiValidator {
         return { data, meta };
     };
 
-    createOne = (response: AxiosResponse): SslProvider_CreateOne_Res => {
+    createOne = (response: ApiHttpResponse): SslProvider_CreateOne_Res => {
         const { data, meta } = parseApiResponse({
             response,
             schema: CreateOneSchema,
@@ -62,7 +61,7 @@ export class SslProviderApiValidator {
         return { data, meta };
     };
 
-    updateOne = (response: AxiosResponse): SslProvider_UpdateOne_Res => {
+    updateOne = (response: ApiHttpResponse): SslProvider_UpdateOne_Res => {
         parseApiResponse({
             response,
             schema: MetaOnlySchema,
@@ -71,7 +70,7 @@ export class SslProviderApiValidator {
         return { data: { type: "success" } };
     };
 
-    updateStatus = (response: AxiosResponse): SslProvider_UpdateStatus_Res => {
+    updateStatus = (response: ApiHttpResponse): SslProvider_UpdateStatus_Res => {
         parseApiResponse({
             response,
             schema: MetaOnlySchema,
@@ -80,7 +79,7 @@ export class SslProviderApiValidator {
         return { data: { type: "success" } };
     };
 
-    deleteOne = (response: AxiosResponse): SslProvider_DeleteOne_Res => {
+    deleteOne = (response: ApiHttpResponse): SslProvider_DeleteOne_Res => {
         parseApiResponse({
             response,
             schema: MetaOnlySchema,

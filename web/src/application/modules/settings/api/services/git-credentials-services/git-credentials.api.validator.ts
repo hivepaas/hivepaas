@@ -1,8 +1,7 @@
-import { type AxiosResponse } from "axios";
 import { z } from "zod";
 import { SettingsBaseEntitySchema } from "~/settings/module-shared/schemas";
 
-import { PagingMetaApiSchema, parseApiResponse } from "@infrastructure/api";
+import { type ApiHttpResponse, PagingMetaApiSchema, parseApiResponse } from "@infrastructure/api";
 
 import type { GitCredentials_FindManyPaginated_Res } from "./git-credentials.api.contracts";
 
@@ -18,7 +17,7 @@ const FindManyPaginatedSchema = z.object({
 });
 
 export class GitCredentialsApiValidator {
-    findManyPaginated = (response: AxiosResponse): GitCredentials_FindManyPaginated_Res => {
+    findManyPaginated = (response: ApiHttpResponse): GitCredentials_FindManyPaginated_Res => {
         const { data, meta } = parseApiResponse({
             response,
             schema: FindManyPaginatedSchema,

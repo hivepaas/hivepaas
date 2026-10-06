@@ -1,7 +1,6 @@
-import type { AxiosResponse } from "axios";
 import { z } from "zod";
 
-import { BaseMetaApiSchema, parseApiResponse } from "@infrastructure/api";
+import { type ApiHttpResponse, BaseMetaApiSchema, parseApiResponse } from "@infrastructure/api";
 
 import type { AppAutoscale_FindOne_Res, AppAutoscale_UpdateOne_Res } from "./app-autoscale.api.contracts";
 
@@ -56,11 +55,11 @@ const UpdateOneSchema = z.object({
 });
 
 export class AppAutoscaleApiValidator {
-    findOne = (response: AxiosResponse): AppAutoscale_FindOne_Res => {
+    findOne = (response: ApiHttpResponse): AppAutoscale_FindOne_Res => {
         return parseApiResponse({ response, schema: FindOneSchema });
     };
 
-    updateOne = (response: AxiosResponse): AppAutoscale_UpdateOne_Res => {
+    updateOne = (response: ApiHttpResponse): AppAutoscale_UpdateOne_Res => {
         const { meta } = parseApiResponse({ response, schema: UpdateOneSchema });
         return { data: { type: "success", warning: meta?.warning ?? null } };
     };

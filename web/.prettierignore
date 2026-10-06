@@ -8,3 +8,10 @@ coverage
 src/infrastructure/api/be-api
 
 package-lock.json
+
+# What running the e2e tests leaves: e2e/.gitignore keeps them out of git.
+e2e/.auth
+e2e/playwright-report
+e2e/test-results
+e2e/blob-report
+e2e/env/.build

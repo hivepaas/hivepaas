@@ -1,4 +1,3 @@
-import type { AxiosResponse } from "axios";
 import { z } from "zod";
 import type {
     AppScheduledJobTasks_FindManyPaginated_Res,
@@ -20,7 +19,7 @@ import {
     ESchedJobTriggerEvent,
 } from "~/projects/module-shared/enums";
 
-import { BaseMetaApiSchema, PagingMetaApiSchema, parseApiResponse } from "@infrastructure/api";
+import { type ApiHttpResponse, BaseMetaApiSchema, PagingMetaApiSchema, parseApiResponse } from "@infrastructure/api";
 
 const NamedRefSchema = z
     .object({
@@ -387,49 +386,49 @@ const GetTaskLogsSchema = z.object({
 });
 
 export class AppScheduledJobsApiValidator {
-    findManyPaginated = (response: AxiosResponse): AppScheduledJobs_FindManyPaginated_Res => {
+    findManyPaginated = (response: ApiHttpResponse): AppScheduledJobs_FindManyPaginated_Res => {
         return parseApiResponse({
             response,
             schema: FindManyPaginatedSchema,
         });
     };
 
-    findOneById = (response: AxiosResponse): AppScheduledJobs_FindOneById_Res => {
+    findOneById = (response: ApiHttpResponse): AppScheduledJobs_FindOneById_Res => {
         return parseApiResponse({
             response,
             schema: FindOneByIdSchema,
         });
     };
 
-    findTasksManyPaginated = (response: AxiosResponse): AppScheduledJobTasks_FindManyPaginated_Res => {
+    findTasksManyPaginated = (response: ApiHttpResponse): AppScheduledJobTasks_FindManyPaginated_Res => {
         return parseApiResponse({
             response,
             schema: FindTasksManyPaginatedSchema,
         });
     };
 
-    findTaskById = (response: AxiosResponse): AppScheduledJobTasks_FindOneById_Res => {
+    findTaskById = (response: ApiHttpResponse): AppScheduledJobTasks_FindOneById_Res => {
         return parseApiResponse({
             response,
             schema: FindTaskByIdSchema,
         });
     };
 
-    createOne = (response: AxiosResponse): AppScheduledJobs_CreateOne_Res => {
+    createOne = (response: ApiHttpResponse): AppScheduledJobs_CreateOne_Res => {
         return parseApiResponse({
             response,
             schema: CreateOneSchema,
         });
     };
 
-    runNow = (response: AxiosResponse): AppScheduledJobs_RunNow_Res => {
+    runNow = (response: ApiHttpResponse): AppScheduledJobs_RunNow_Res => {
         return parseApiResponse({
             response,
             schema: RunNowSchema,
         });
     };
 
-    getTaskLogs = (response: AxiosResponse): AppScheduledJobTasks_GetLogs_Res => {
+    getTaskLogs = (response: ApiHttpResponse): AppScheduledJobTasks_GetLogs_Res => {
         const { data, meta } = parseApiResponse({
             response,
             schema: GetTaskLogsSchema,

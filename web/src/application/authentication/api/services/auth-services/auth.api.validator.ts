@@ -1,4 +1,3 @@
-import { type AxiosResponse } from "axios";
 import { z } from "zod";
 
 import { ESecuritySettings, EUserRole } from "@application/shared/enums";
@@ -15,7 +14,7 @@ import {
     type Auth_ValidateResetToken_Res,
 } from "@application/authentication/api/services";
 
-import { BaseMetaApiSchema, parseApiResponse } from "@infrastructure/api";
+import { type ApiHttpResponse, BaseMetaApiSchema, parseApiResponse } from "@infrastructure/api";
 
 /**
  * Sign in API response schema
@@ -111,7 +110,7 @@ export class AuthApiValidator {
     /**
      * Validate and transform the sign-up API response
      */
-    signUp = (_: AxiosResponse): Auth_SignUp_Res => {
+    signUp = (_: ApiHttpResponse): Auth_SignUp_Res => {
         return {
             data: {
                 type: "success",
@@ -122,7 +121,7 @@ export class AuthApiValidator {
     /**
      * Validate and transform the sign in API response
      */
-    signIn = (response: AxiosResponse): Auth_SignIn_Res => {
+    signIn = (response: ApiHttpResponse): Auth_SignIn_Res => {
         const { data } = parseApiResponse({
             response,
             schema: SignInSchema,
@@ -157,7 +156,7 @@ export class AuthApiValidator {
     /**
      * Validate and transform the send 2FA token API response
      */
-    send2FAToken = (response: AxiosResponse): Auth_Send2FAToken_Res => {
+    send2FAToken = (response: ApiHttpResponse): Auth_Send2FAToken_Res => {
         const { data } = parseApiResponse({
             response,
             schema: Send2FATokenSchema,
@@ -171,7 +170,7 @@ export class AuthApiValidator {
     /**
      * Validate and transform the sign in 2FA API response
      */
-    signIn2FA = (response: AxiosResponse): Auth_SignIn2FA_Res => {
+    signIn2FA = (response: ApiHttpResponse): Auth_SignIn2FA_Res => {
         const { data } = parseApiResponse({
             response,
             schema: SignIn2FASchema,
@@ -187,7 +186,7 @@ export class AuthApiValidator {
     /**
      * Validate and transform the forgot password API response
      */
-    forgotPassword = (response: AxiosResponse): Auth_ForgotPassword_Res => {
+    forgotPassword = (response: ApiHttpResponse): Auth_ForgotPassword_Res => {
         const { meta } = parseApiResponse({
             response,
             schema: ForgotPasswordSchema,
@@ -204,7 +203,7 @@ export class AuthApiValidator {
     /**
      * Validate and transform the reset token validation API response
      */
-    validateResetToken = (_: AxiosResponse): Auth_ValidateResetToken_Res => {
+    validateResetToken = (_: ApiHttpResponse): Auth_ValidateResetToken_Res => {
         return {
             data: {
                 type: "success",
@@ -215,7 +214,7 @@ export class AuthApiValidator {
     /**
      * Validate and transform the reset password API response
      */
-    resetPassword = (_: AxiosResponse): Auth_ResetPassword_Res => {
+    resetPassword = (_: ApiHttpResponse): Auth_ResetPassword_Res => {
         return {
             data: {
                 type: "success",
@@ -226,7 +225,7 @@ export class AuthApiValidator {
     /**
      * Validate and transform the get login options API response
      */
-    getLoginOptions = (response: AxiosResponse): Auth_GetLoginOptions_Res => {
+    getLoginOptions = (response: ApiHttpResponse): Auth_GetLoginOptions_Res => {
         const { data } = parseApiResponse({
             response,
             schema: GetLoginOptionsSchema,
@@ -240,7 +239,7 @@ export class AuthApiValidator {
     /**
      * Validate and transform the validate invite token API response
      */
-    validateInviteToken = (response: AxiosResponse): Auth_ValidateInviteToken_Res => {
+    validateInviteToken = (response: ApiHttpResponse): Auth_ValidateInviteToken_Res => {
         const { data } = parseApiResponse({
             response,
             schema: ValidateInviteTokenSchema,

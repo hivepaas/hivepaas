@@ -1,8 +1,7 @@
-import { type AxiosResponse } from "axios";
 import { z } from "zod";
 import { EAppArmorMode, EHealthcheckMode, ERestartPolicyCondition, ESeccompMode } from "~/projects/module-shared/enums";
 
-import { BaseMetaApiSchema, parseApiResponse } from "@infrastructure/api";
+import { type ApiHttpResponse, BaseMetaApiSchema, parseApiResponse } from "@infrastructure/api";
 
 import {
     type AppContainerSettings_CheckPort_Res,
@@ -95,7 +94,7 @@ const CheckPortSchema = z.object({
 });
 
 export class AppContainerSettingsApiValidator {
-    findOne = (response: AxiosResponse): AppContainerSettings_FindOne_Res => {
+    findOne = (response: ApiHttpResponse): AppContainerSettings_FindOne_Res => {
         const data = parseApiResponse({ response, schema: FindOneSchema });
         return {
             data: {
@@ -114,7 +113,7 @@ export class AppContainerSettingsApiValidator {
         };
     };
 
-    checkPort = (response: AxiosResponse): AppContainerSettings_CheckPort_Res => {
+    checkPort = (response: ApiHttpResponse): AppContainerSettings_CheckPort_Res => {
         const { data, meta } = parseApiResponse({
             response,
             schema: CheckPortSchema,

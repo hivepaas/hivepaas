@@ -1,4 +1,3 @@
-import { type AxiosResponse } from "axios";
 import { z } from "zod";
 import type {
     ProjectAppEnvVars_Compute_Res,
@@ -8,7 +7,7 @@ import type {
     ProjectAppEnvVars_FindSelfSuggestions_Res,
 } from "~/projects/api/services";
 
-import { BaseMetaApiSchema, parseApiResponse } from "@infrastructure/api";
+import { type ApiHttpResponse, BaseMetaApiSchema, parseApiResponse } from "@infrastructure/api";
 
 /**
  * Project buildtime env var schema
@@ -163,7 +162,7 @@ export class ProjectAppEnvVarsApiValidator {
     /**
      * Validate and transform find one project app env vars API response
      */
-    findOne = (response: AxiosResponse): ProjectAppEnvVars_FindOne_Res => {
+    findOne = (response: ApiHttpResponse): ProjectAppEnvVars_FindOne_Res => {
         const { data, meta } = parseApiResponse({
             response,
             schema: FindOneSchema,
@@ -189,7 +188,7 @@ export class ProjectAppEnvVarsApiValidator {
     /**
      * Validate and transform compute project app env vars API response
      */
-    compute = (response: AxiosResponse): ProjectAppEnvVars_Compute_Res => {
+    compute = (response: ApiHttpResponse): ProjectAppEnvVars_Compute_Res => {
         const { data, meta } = parseApiResponse({
             response,
             schema: ComputeSchema,
@@ -201,15 +200,15 @@ export class ProjectAppEnvVarsApiValidator {
         };
     };
 
-    findLinkTargets = (response: AxiosResponse): ProjectAppEnvVars_FindLinkTargets_Res => {
+    findLinkTargets = (response: ApiHttpResponse): ProjectAppEnvVars_FindLinkTargets_Res => {
         return parseApiResponse({ response, schema: FindLinkTargetsSchema });
     };
 
-    findLinkSuggestions = (response: AxiosResponse): ProjectAppEnvVars_FindLinkSuggestions_Res => {
+    findLinkSuggestions = (response: ApiHttpResponse): ProjectAppEnvVars_FindLinkSuggestions_Res => {
         return parseApiResponse({ response, schema: FindLinkSuggestionsSchema });
     };
 
-    findSelfSuggestions = (response: AxiosResponse): ProjectAppEnvVars_FindSelfSuggestions_Res => {
+    findSelfSuggestions = (response: ApiHttpResponse): ProjectAppEnvVars_FindSelfSuggestions_Res => {
         return parseApiResponse({ response, schema: FindSelfSuggestionsSchema });
     };
 }

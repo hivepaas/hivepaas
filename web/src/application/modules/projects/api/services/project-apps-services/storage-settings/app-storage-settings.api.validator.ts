@@ -1,8 +1,7 @@
-import { type AxiosResponse } from "axios";
 import { z } from "zod";
 import { EMountConsistency, EMountPropagation, EMountType } from "~/projects/module-shared/enums";
 
-import { BaseMetaApiSchema, parseApiResponse } from "@infrastructure/api";
+import { type ApiHttpResponse, BaseMetaApiSchema, parseApiResponse } from "@infrastructure/api";
 
 import {
     type AppStorageSettings_FindOne_Res,
@@ -113,17 +112,17 @@ const FindOneSchema = z.object({
 });
 
 export class AppStorageSettingsApiValidator {
-    preflight = (response: AxiosResponse): AppStorageSettings_Preflight_Res => {
+    preflight = (response: ApiHttpResponse): AppStorageSettings_Preflight_Res => {
         const { data, meta } = parseApiResponse({ response, schema: PreflightSchema });
         return { data: { storage: data.storage ?? [], unchecked: data.storageUnchecked ?? [] }, meta };
     };
 
-    resetPermissions = (response: AxiosResponse): AppStorageSettings_ResetPermissions_Res => {
+    resetPermissions = (response: ApiHttpResponse): AppStorageSettings_ResetPermissions_Res => {
         const { data, meta } = parseApiResponse({ response, schema: ResetPermissionsSchema });
         return { data, meta };
     };
 
-    findOne = (response: AxiosResponse): AppStorageSettings_FindOne_Res => {
+    findOne = (response: ApiHttpResponse): AppStorageSettings_FindOne_Res => {
         const { data, meta } = parseApiResponse({ response, schema: FindOneSchema });
         return {
             data: {

@@ -1,8 +1,7 @@
-import { type AxiosResponse } from "axios";
 import { z } from "zod";
 import { EEndpointResolutionMode, EPortConfigProtocol, EPortConfigPublishMode } from "~/projects/module-shared/enums";
 
-import { BaseMetaApiSchema, parseApiResponse } from "@infrastructure/api";
+import { type ApiHttpResponse, BaseMetaApiSchema, parseApiResponse } from "@infrastructure/api";
 
 import { type AppNetworkSettings_FindOne_Res } from "./app-network-settings.api.contracts";
 
@@ -49,7 +48,7 @@ const FindOneSchema = z.object({
 });
 
 export class AppNetworkSettingsApiValidator {
-    findOne = (response: AxiosResponse): AppNetworkSettings_FindOne_Res => {
+    findOne = (response: ApiHttpResponse): AppNetworkSettings_FindOne_Res => {
         const { data, meta } = parseApiResponse({ response, schema: FindOneSchema });
         return {
             data: {

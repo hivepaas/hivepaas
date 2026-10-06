@@ -1,8 +1,7 @@
-import { type AxiosResponse } from "axios";
 import { z } from "zod";
 import type { AuditLogResult, AuditLogSource, AuditLogType } from "~/operations/domain";
 
-import { BaseMetaApiSchema, PagingMetaApiSchema, parseApiResponse } from "@infrastructure/api";
+import { type ApiHttpResponse, BaseMetaApiSchema, PagingMetaApiSchema, parseApiResponse } from "@infrastructure/api";
 
 import type {
     AuditLogs_FindManyPaginated_Res,
@@ -146,17 +145,17 @@ const FindTypesSchema = z.object({
 });
 
 export class AuditLogsApiValidator {
-    findManyPaginated = (response: AxiosResponse): AuditLogs_FindManyPaginated_Res => {
+    findManyPaginated = (response: ApiHttpResponse): AuditLogs_FindManyPaginated_Res => {
         const { data, meta } = parseApiResponse({ response, schema: FindManyPaginatedSchema });
         return { data, meta };
     };
 
-    findOneById = (response: AxiosResponse): AuditLogs_FindOneById_Res => {
+    findOneById = (response: ApiHttpResponse): AuditLogs_FindOneById_Res => {
         const { data, meta } = parseApiResponse({ response, schema: FindOneByIdSchema });
         return { data, meta };
     };
 
-    findTypes = (response: AxiosResponse): AuditLogs_FindTypes_Res => {
+    findTypes = (response: ApiHttpResponse): AuditLogs_FindTypes_Res => {
         const { data, meta } = parseApiResponse({ response, schema: FindTypesSchema });
         return { data, meta };
     };

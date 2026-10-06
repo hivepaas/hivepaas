@@ -1,9 +1,8 @@
-import { type AxiosResponse } from "axios";
 import { z } from "zod";
 
 import { type Public_Apps_FindMany_Res } from "@application/shared/api-public/services";
 
-import { PagingMetaApiSchema, parseApiResponse } from "@infrastructure/api";
+import { type ApiHttpResponse, PagingMetaApiSchema, parseApiResponse } from "@infrastructure/api";
 
 /**
  * The fields a picker needs from GET /projects/{projectID}[/{env}]/apps; the rest of
@@ -24,7 +23,7 @@ export class AppsPublicApiValidator {
     /**
      * Validate and transform find many public apps API response.
      */
-    findMany = (response: AxiosResponse): Public_Apps_FindMany_Res => {
+    findMany = (response: ApiHttpResponse): Public_Apps_FindMany_Res => {
         const { data, meta } = parseApiResponse({
             response,
             schema: FindManySchema,

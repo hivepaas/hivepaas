@@ -1,4 +1,3 @@
-import type { AxiosResponse } from "axios";
 import { z } from "zod";
 import type {
     ClusterNetworks_CreateOne_Res,
@@ -9,7 +8,7 @@ import type {
     ClusterNetworks_UpdateStatus_Res,
 } from "~/cluster/api/services/network-services";
 
-import { BaseMetaApiSchema, PagingMetaApiSchema, parseApiResponse } from "@infrastructure/api";
+import { type ApiHttpResponse, BaseMetaApiSchema, PagingMetaApiSchema, parseApiResponse } from "@infrastructure/api";
 
 const mapSchema = z
     .record(z.string())
@@ -77,7 +76,7 @@ const MetaOnlySchema = z.object({
 });
 
 export class ClusterNetworksApiValidator {
-    findManyPaginated = (response: AxiosResponse): ClusterNetworks_FindManyPaginated_Res => {
+    findManyPaginated = (response: ApiHttpResponse): ClusterNetworks_FindManyPaginated_Res => {
         const { data, meta } = parseApiResponse({
             response,
             schema: FindManyPaginatedSchema,
@@ -89,7 +88,7 @@ export class ClusterNetworksApiValidator {
         };
     };
 
-    findOneById = (response: AxiosResponse): ClusterNetworks_FindOneById_Res => {
+    findOneById = (response: ApiHttpResponse): ClusterNetworks_FindOneById_Res => {
         const { data } = parseApiResponse({
             response,
             schema: FindOneByIdSchema,
@@ -100,7 +99,7 @@ export class ClusterNetworksApiValidator {
         };
     };
 
-    createOne = (response: AxiosResponse): ClusterNetworks_CreateOne_Res => {
+    createOne = (response: ApiHttpResponse): ClusterNetworks_CreateOne_Res => {
         const { data } = parseApiResponse({
             response,
             schema: CreateOneSchema,
@@ -111,7 +110,7 @@ export class ClusterNetworksApiValidator {
         };
     };
 
-    updateOne = (response: AxiosResponse): ClusterNetworks_UpdateOne_Res => {
+    updateOne = (response: ApiHttpResponse): ClusterNetworks_UpdateOne_Res => {
         parseApiResponse({
             response,
             schema: MetaOnlySchema,
@@ -124,7 +123,7 @@ export class ClusterNetworksApiValidator {
         };
     };
 
-    updateStatus = (response: AxiosResponse): ClusterNetworks_UpdateStatus_Res => {
+    updateStatus = (response: ApiHttpResponse): ClusterNetworks_UpdateStatus_Res => {
         parseApiResponse({
             response,
             schema: MetaOnlySchema,
@@ -137,7 +136,7 @@ export class ClusterNetworksApiValidator {
         };
     };
 
-    syncFromDocker = (response: AxiosResponse): ClusterNetworks_SyncFromDocker_Res => {
+    syncFromDocker = (response: ApiHttpResponse): ClusterNetworks_SyncFromDocker_Res => {
         parseApiResponse({
             response,
             schema: MetaOnlySchema,

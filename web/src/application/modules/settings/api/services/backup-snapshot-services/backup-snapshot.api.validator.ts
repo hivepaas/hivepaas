@@ -1,9 +1,8 @@
-import { type AxiosResponse } from "axios";
 import { z } from "zod";
 import { APP_SCHEDULED_JOB_DEFAULT_CONSOLE_SIZE } from "~/projects/domain";
 import { EAppScheduledJobArgSeparator } from "~/projects/module-shared/enums";
 
-import { BaseMetaApiSchema, PagingMetaApiSchema, parseApiResponse } from "@infrastructure/api";
+import { type ApiHttpResponse, BaseMetaApiSchema, PagingMetaApiSchema, parseApiResponse } from "@infrastructure/api";
 
 import type {
     BackupSnapshot_DeleteOne_Res,
@@ -138,27 +137,27 @@ const MetaOnlySchema = z.object({
 });
 
 export class BackupSnapshotApiValidator {
-    findManyPaginated = (response: AxiosResponse): BackupSnapshot_FindManyPaginated_Res => {
+    findManyPaginated = (response: ApiHttpResponse): BackupSnapshot_FindManyPaginated_Res => {
         const { data, meta, repos } = parseApiResponse({ response, schema: FindManyPaginatedSchema });
         return { data, meta, repos };
     };
 
-    findOneById = (response: AxiosResponse): BackupSnapshot_FindOneById_Res => {
+    findOneById = (response: ApiHttpResponse): BackupSnapshot_FindOneById_Res => {
         const { data, meta } = parseApiResponse({ response, schema: FindOneByIdSchema });
         return { data, meta };
     };
 
-    findEntries = (response: AxiosResponse): BackupSnapshot_FindEntries_Res => {
+    findEntries = (response: ApiHttpResponse): BackupSnapshot_FindEntries_Res => {
         const { data, meta } = parseApiResponse({ response, schema: FindEntriesSchema });
         return { data, meta };
     };
 
-    restore = (response: AxiosResponse): BackupSnapshot_Restore_Res => {
+    restore = (response: ApiHttpResponse): BackupSnapshot_Restore_Res => {
         const { data, meta } = parseApiResponse({ response, schema: RestoreSchema });
         return { data: { taskId: data.task.id }, meta };
     };
 
-    deleteOne = (response: AxiosResponse): BackupSnapshot_DeleteOne_Res => {
+    deleteOne = (response: ApiHttpResponse): BackupSnapshot_DeleteOne_Res => {
         parseApiResponse({ response, schema: MetaOnlySchema });
         return { data: { type: "success" } };
     };

@@ -1,8 +1,7 @@
-import { type AxiosResponse } from "axios";
 import { z } from "zod";
 import type { ProjectDockerVolumes_List_Res } from "~/projects/api/services/projects-services";
 
-import { PagingMetaApiSchema, parseApiResponse } from "@infrastructure/api";
+import { type ApiHttpResponse, PagingMetaApiSchema, parseApiResponse } from "@infrastructure/api";
 
 const DockerVolumeSchema = z.object({
     id: z.string(),
@@ -39,7 +38,7 @@ const ListSchema = z.object({
 });
 
 export class ProjectDockerVolumesApiValidator {
-    list = (response: AxiosResponse): ProjectDockerVolumes_List_Res => {
+    list = (response: ApiHttpResponse): ProjectDockerVolumes_List_Res => {
         const { data, meta } = parseApiResponse({
             response,
             schema: ListSchema,

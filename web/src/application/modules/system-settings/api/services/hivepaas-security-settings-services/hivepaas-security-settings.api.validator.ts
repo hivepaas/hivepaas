@@ -1,7 +1,6 @@
-import type { AxiosResponse } from "axios";
 import { z } from "zod";
 
-import { BaseMetaApiSchema, parseApiResponse } from "@infrastructure/api";
+import { type ApiHttpResponse, BaseMetaApiSchema, parseApiResponse } from "@infrastructure/api";
 
 import type {
     HivePaaSSecuritySettings_FindOne_Res,
@@ -39,7 +38,7 @@ const MetaOnlySchema = z.object({
 });
 
 export class HivePaaSSecuritySettingsApiValidator {
-    findOne = (response: AxiosResponse): HivePaaSSecuritySettings_FindOne_Res => {
+    findOne = (response: ApiHttpResponse): HivePaaSSecuritySettings_FindOne_Res => {
         const { data, meta } = parseApiResponse({ response, schema: FindOneSchema });
         return {
             data: {
@@ -52,7 +51,7 @@ export class HivePaaSSecuritySettingsApiValidator {
         };
     };
 
-    updateOne = (response: AxiosResponse): HivePaaSSecuritySettings_UpdateOne_Res => {
+    updateOne = (response: ApiHttpResponse): HivePaaSSecuritySettings_UpdateOne_Res => {
         parseApiResponse({ response, schema: MetaOnlySchema });
         return { data: { type: "success" } };
     };

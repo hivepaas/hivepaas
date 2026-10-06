@@ -1,4 +1,3 @@
-import { type AxiosResponse } from "axios";
 import { z } from "zod";
 import type {
     AppSettingMounts_CreateOne_Res,
@@ -7,7 +6,7 @@ import type {
     AppSettingMounts_FindSources_Res,
 } from "~/projects/api/services/project-apps-services";
 
-import { BaseMetaApiSchema, PagingMetaApiSchema, parseApiResponse } from "@infrastructure/api";
+import { type ApiHttpResponse, BaseMetaApiSchema, PagingMetaApiSchema, parseApiResponse } from "@infrastructure/api";
 
 /**
  * App setting mount schema
@@ -91,22 +90,22 @@ const CreateOneSchema = z.object({
 });
 
 export class AppSettingMountsApiValidator {
-    findManyPaginated = (response: AxiosResponse): AppSettingMounts_FindManyPaginated_Res => {
+    findManyPaginated = (response: ApiHttpResponse): AppSettingMounts_FindManyPaginated_Res => {
         const { data, meta } = parseApiResponse({ response, schema: FindManyPaginatedSchema });
         return { data, meta };
     };
 
-    findOneById = (response: AxiosResponse): AppSettingMounts_FindOneById_Res => {
+    findOneById = (response: ApiHttpResponse): AppSettingMounts_FindOneById_Res => {
         const { data, meta } = parseApiResponse({ response, schema: FindOneByIdSchema });
         return { data, meta };
     };
 
-    findSources = (response: AxiosResponse): AppSettingMounts_FindSources_Res => {
+    findSources = (response: ApiHttpResponse): AppSettingMounts_FindSources_Res => {
         const { data, mayMountSensitive, meta } = parseApiResponse({ response, schema: FindSourcesSchema });
         return { data: { sources: data, mayMountSensitive }, meta };
     };
 
-    createOne = (response: AxiosResponse): AppSettingMounts_CreateOne_Res => {
+    createOne = (response: ApiHttpResponse): AppSettingMounts_CreateOne_Res => {
         return parseApiResponse({ response, schema: CreateOneSchema });
     };
 }

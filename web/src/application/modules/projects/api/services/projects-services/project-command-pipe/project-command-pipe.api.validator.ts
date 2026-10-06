@@ -1,7 +1,6 @@
-import type { AxiosResponse } from "axios";
 import { z } from "zod";
 
-import { BaseMetaApiSchema, PagingMetaApiSchema, parseApiResponse } from "@infrastructure/api";
+import { type ApiHttpResponse, BaseMetaApiSchema, PagingMetaApiSchema, parseApiResponse } from "@infrastructure/api";
 
 import type {
     ProjectCommandPipe_CreateFromTemplate_Res,
@@ -94,7 +93,7 @@ const MetaOnlySchema = z.object({
 });
 
 export class ProjectCommandPipeApiValidator {
-    findManyPaginated = (response: AxiosResponse): ProjectCommandPipe_FindManyPaginated_Res => {
+    findManyPaginated = (response: ApiHttpResponse): ProjectCommandPipe_FindManyPaginated_Res => {
         const { data, meta } = parseApiResponse({
             response,
             schema: FindManyPaginatedSchema,
@@ -103,7 +102,7 @@ export class ProjectCommandPipeApiValidator {
         return { data, meta };
     };
 
-    findOneById = (response: AxiosResponse): ProjectCommandPipe_FindOneById_Res => {
+    findOneById = (response: ApiHttpResponse): ProjectCommandPipe_FindOneById_Res => {
         const { data, meta } = parseApiResponse({
             response,
             schema: FindOneByIdSchema,
@@ -112,7 +111,7 @@ export class ProjectCommandPipeApiValidator {
         return { data, meta };
     };
 
-    createOne = (response: AxiosResponse): ProjectCommandPipe_CreateOne_Res => {
+    createOne = (response: ApiHttpResponse): ProjectCommandPipe_CreateOne_Res => {
         const { data, meta } = parseApiResponse({
             response,
             schema: CreateOneSchema,
@@ -121,7 +120,7 @@ export class ProjectCommandPipeApiValidator {
         return { data, meta };
     };
 
-    createFromTemplate = (response: AxiosResponse): ProjectCommandPipe_CreateFromTemplate_Res => {
+    createFromTemplate = (response: ApiHttpResponse): ProjectCommandPipe_CreateFromTemplate_Res => {
         const { data, meta } = parseApiResponse({
             response,
             schema: CreateOneSchema,
@@ -130,7 +129,7 @@ export class ProjectCommandPipeApiValidator {
         return { data, meta };
     };
 
-    updateOne = (response: AxiosResponse): ProjectCommandPipe_UpdateOne_Res => {
+    updateOne = (response: ApiHttpResponse): ProjectCommandPipe_UpdateOne_Res => {
         parseApiResponse({
             response,
             schema: MetaOnlySchema,
@@ -139,7 +138,7 @@ export class ProjectCommandPipeApiValidator {
         return { data: { type: "success" } };
     };
 
-    updateStatus = (response: AxiosResponse): ProjectCommandPipe_UpdateStatus_Res => {
+    updateStatus = (response: ApiHttpResponse): ProjectCommandPipe_UpdateStatus_Res => {
         parseApiResponse({
             response,
             schema: MetaOnlySchema,
@@ -148,7 +147,7 @@ export class ProjectCommandPipeApiValidator {
         return { data: { type: "success" } };
     };
 
-    deleteOne = (response: AxiosResponse): ProjectCommandPipe_DeleteOne_Res => {
+    deleteOne = (response: ApiHttpResponse): ProjectCommandPipe_DeleteOne_Res => {
         parseApiResponse({
             response,
             schema: MetaOnlySchema,

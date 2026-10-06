@@ -1,8 +1,7 @@
-import { type AxiosResponse } from "axios";
 import { z } from "zod";
 import { SystemTaskPriority, SystemTaskSequenceStepStatus, SystemTaskStatus } from "~/operations/domain";
 
-import { BaseMetaApiSchema, PagingMetaApiSchema, parseApiResponse } from "@infrastructure/api";
+import { type ApiHttpResponse, BaseMetaApiSchema, PagingMetaApiSchema, parseApiResponse } from "@infrastructure/api";
 
 import type {
     SystemTasks_Cancel_Res,
@@ -255,27 +254,27 @@ const CancelSchema = z.object({
 });
 
 export class SystemTasksApiValidator {
-    findManyPaginated = (response: AxiosResponse): SystemTasks_FindManyPaginated_Res => {
+    findManyPaginated = (response: ApiHttpResponse): SystemTasks_FindManyPaginated_Res => {
         const { data, meta } = parseApiResponse({ response, schema: FindManyPaginatedSchema });
         return { data, meta };
     };
 
-    findOneById = (response: AxiosResponse): SystemTasks_FindOneById_Res => {
+    findOneById = (response: ApiHttpResponse): SystemTasks_FindOneById_Res => {
         const { data, meta } = parseApiResponse({ response, schema: FindOneByIdSchema });
         return { data, meta };
     };
 
-    findTypes = (response: AxiosResponse): SystemTasks_FindTypes_Res => {
+    findTypes = (response: ApiHttpResponse): SystemTasks_FindTypes_Res => {
         const { data, meta } = parseApiResponse({ response, schema: FindTypesSchema });
         return { data, meta };
     };
 
-    findTargetObjects = (response: AxiosResponse): SystemTasks_FindTargetObjects_Res => {
+    findTargetObjects = (response: ApiHttpResponse): SystemTasks_FindTargetObjects_Res => {
         const { data, meta } = parseApiResponse({ response, schema: FindTargetObjectsSchema });
         return { data, meta };
     };
 
-    cancel = (response: AxiosResponse): SystemTasks_Cancel_Res => {
+    cancel = (response: ApiHttpResponse): SystemTasks_Cancel_Res => {
         const { data, meta } = parseApiResponse({ response, schema: CancelSchema });
         return { data, meta };
     };

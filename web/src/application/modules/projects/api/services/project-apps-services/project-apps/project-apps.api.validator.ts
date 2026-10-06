@@ -1,4 +1,3 @@
-import { type AxiosResponse } from "axios";
 import { z } from "zod";
 import type {
     ProjectApps_CreateFunction_Res,
@@ -9,7 +8,7 @@ import type {
     ProjectApps_FindOneById_Res,
 } from "~/projects/api/services";
 
-import { BaseMetaApiSchema, PagingMetaApiSchema, parseApiResponse } from "@infrastructure/api";
+import { type ApiHttpResponse, BaseMetaApiSchema, PagingMetaApiSchema, parseApiResponse } from "@infrastructure/api";
 
 import { ProjectAppDetailsSchema, ProjectAppSchema } from "./project-apps.api.schemas";
 
@@ -73,7 +72,7 @@ export class ProjectAppsApiValidator {
     /**
      * Validate and transform find many project apps paginated API response
      */
-    findManyPaginated = (response: AxiosResponse): ProjectApps_FindManyPaginated_Res => {
+    findManyPaginated = (response: ApiHttpResponse): ProjectApps_FindManyPaginated_Res => {
         const { data, meta } = parseApiResponse({
             response,
             schema: FindManyPaginatedSchema,
@@ -88,7 +87,7 @@ export class ProjectAppsApiValidator {
     /**
      * Validate and transform create project app API response
      */
-    createOne = (response: AxiosResponse): ProjectApps_CreateOne_Res => {
+    createOne = (response: ApiHttpResponse): ProjectApps_CreateOne_Res => {
         return parseApiResponse({
             response,
             schema: CreateOneSchema,
@@ -98,7 +97,7 @@ export class ProjectAppsApiValidator {
     /**
      * Validate and transform create function API response
      */
-    createFunction = (response: AxiosResponse): ProjectApps_CreateFunction_Res => {
+    createFunction = (response: ApiHttpResponse): ProjectApps_CreateFunction_Res => {
         return parseApiResponse({
             response,
             schema: CreateFunctionSchema,
@@ -108,7 +107,7 @@ export class ProjectAppsApiValidator {
     /**
      * Validate and transform deploy project app API response
      */
-    deploy = (response: AxiosResponse): ProjectApps_Deploy_Res => {
+    deploy = (response: ApiHttpResponse): ProjectApps_Deploy_Res => {
         return parseApiResponse({
             response,
             schema: DeploySchema,
@@ -118,7 +117,7 @@ export class ProjectAppsApiValidator {
     /**
      * Validate and transform find one project app by id API response
      */
-    findOneById = (response: AxiosResponse): ProjectApps_FindOneById_Res => {
+    findOneById = (response: ApiHttpResponse): ProjectApps_FindOneById_Res => {
         const { data, meta } = parseApiResponse({
             response,
             schema: FindOneByIdSchema,
@@ -130,7 +129,7 @@ export class ProjectAppsApiValidator {
         };
     };
 
-    detectPhoto = (response: AxiosResponse): ProjectApps_DetectPhoto_Res => {
+    detectPhoto = (response: ApiHttpResponse): ProjectApps_DetectPhoto_Res => {
         const { data, meta } = parseApiResponse({
             response,
             schema: DetectPhotoSchema,

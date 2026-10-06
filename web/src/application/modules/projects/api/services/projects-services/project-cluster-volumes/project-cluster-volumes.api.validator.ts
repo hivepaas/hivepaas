@@ -1,8 +1,7 @@
-import { type AxiosResponse } from "axios";
 import { z } from "zod";
 import { ClusterVolumeSchema } from "~/cluster/api/services";
 
-import { BaseMetaApiSchema, PagingMetaApiSchema, parseApiResponse } from "@infrastructure/api";
+import { type ApiHttpResponse, BaseMetaApiSchema, PagingMetaApiSchema, parseApiResponse } from "@infrastructure/api";
 
 import type {
     ProjectClusterVolumes_CreateOne_Res,
@@ -35,7 +34,7 @@ const MetaOnlySchema = z.object({
 });
 
 export class ProjectClusterVolumesApiValidator {
-    findManyPaginated = (response: AxiosResponse): ProjectClusterVolumes_FindManyPaginated_Res => {
+    findManyPaginated = (response: ApiHttpResponse): ProjectClusterVolumes_FindManyPaginated_Res => {
         const { data, meta } = parseApiResponse({
             response,
             schema: FindManyPaginatedSchema,
@@ -47,7 +46,7 @@ export class ProjectClusterVolumesApiValidator {
         };
     };
 
-    findOneById = (response: AxiosResponse): ProjectClusterVolumes_FindOneById_Res => {
+    findOneById = (response: ApiHttpResponse): ProjectClusterVolumes_FindOneById_Res => {
         const { data, meta } = parseApiResponse({
             response,
             schema: FindOneByIdSchema,
@@ -59,7 +58,7 @@ export class ProjectClusterVolumesApiValidator {
         };
     };
 
-    createOne = (response: AxiosResponse): ProjectClusterVolumes_CreateOne_Res => {
+    createOne = (response: ApiHttpResponse): ProjectClusterVolumes_CreateOne_Res => {
         const { data, meta } = parseApiResponse({
             response,
             schema: CreateOneSchema,
@@ -71,7 +70,7 @@ export class ProjectClusterVolumesApiValidator {
         };
     };
 
-    updateOne = (response: AxiosResponse): ProjectClusterVolumes_UpdateOne_Res => {
+    updateOne = (response: ApiHttpResponse): ProjectClusterVolumes_UpdateOne_Res => {
         parseApiResponse({
             response,
             schema: MetaOnlySchema,
@@ -84,7 +83,7 @@ export class ProjectClusterVolumesApiValidator {
         };
     };
 
-    updateStatus = (response: AxiosResponse): ProjectClusterVolumes_UpdateStatus_Res => {
+    updateStatus = (response: ApiHttpResponse): ProjectClusterVolumes_UpdateStatus_Res => {
         parseApiResponse({
             response,
             schema: MetaOnlySchema,
@@ -97,7 +96,7 @@ export class ProjectClusterVolumesApiValidator {
         };
     };
 
-    deleteOne = (response: AxiosResponse): ProjectClusterVolumes_DeleteOne_Res => {
+    deleteOne = (response: ApiHttpResponse): ProjectClusterVolumes_DeleteOne_Res => {
         parseApiResponse({
             response,
             schema: MetaOnlySchema,

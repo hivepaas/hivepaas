@@ -1,4 +1,3 @@
-import { type AxiosResponse } from "axios";
 import { z } from "zod";
 import {
     type Nodes_CreateOne_Res,
@@ -8,7 +7,7 @@ import {
 } from "~/cluster/api/services/nodes-services/nodes/nodes.api.contracts";
 import { ENodeAvailability, ENodeRole, ENodeState } from "~/cluster/module-shared/enums";
 
-import { PagingMetaApiSchema, parseApiResponse } from "@infrastructure/api";
+import { type ApiHttpResponse, PagingMetaApiSchema, parseApiResponse } from "@infrastructure/api";
 
 /**
  * Node schema
@@ -84,7 +83,7 @@ export class NodesApiValidator {
     /**
      * Validate and transform find many nodes paginated API response
      */
-    findManyPaginated = (response: AxiosResponse): Nodes_FindManyPaginated_Res => {
+    findManyPaginated = (response: ApiHttpResponse): Nodes_FindManyPaginated_Res => {
         const { data, meta } = parseApiResponse({
             response,
             schema: FindManyPaginatedSchema,
@@ -120,7 +119,7 @@ export class NodesApiValidator {
     /**
      * Validate and transform find one node by id API response
      */
-    findOneById = (response: AxiosResponse): Nodes_FindOneById_Res => {
+    findOneById = (response: ApiHttpResponse): Nodes_FindOneById_Res => {
         const { data } = parseApiResponse({
             response,
             schema: FindOneByIdSchema,
@@ -155,7 +154,7 @@ export class NodesApiValidator {
     /**
      * Validate and transform create one node API response
      */
-    createOne = (response: AxiosResponse): Nodes_CreateOne_Res => {
+    createOne = (response: ApiHttpResponse): Nodes_CreateOne_Res => {
         const { data } = parseApiResponse({
             response,
             schema: CreateOneSchema,
@@ -171,7 +170,7 @@ export class NodesApiValidator {
     /**
      * Validate and transform get join node API response
      */
-    getJoinNode = (response: AxiosResponse): Nodes_GetJoinNode_Res => {
+    getJoinNode = (response: ApiHttpResponse): Nodes_GetJoinNode_Res => {
         const { data } = parseApiResponse({
             response,
             schema: GetJoinNodeSchema,

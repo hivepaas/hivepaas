@@ -1,4 +1,3 @@
-import { type AxiosResponse } from "axios";
 import { z } from "zod";
 import { ClusterNetworkSchema } from "~/cluster/api/services";
 import type {
@@ -10,7 +9,7 @@ import type {
     ProjectNetworks_UpdateStatus_Res,
 } from "~/projects/api/services/projects-services";
 
-import { BaseMetaApiSchema, PagingMetaApiSchema, parseApiResponse } from "@infrastructure/api";
+import { type ApiHttpResponse, BaseMetaApiSchema, PagingMetaApiSchema, parseApiResponse } from "@infrastructure/api";
 
 const FindManyPaginatedSchema = z.object({
     data: z.array(ClusterNetworkSchema),
@@ -34,7 +33,7 @@ const MetaOnlySchema = z.object({
 });
 
 export class ProjectNetworksApiValidator {
-    findManyPaginated = (response: AxiosResponse): ProjectNetworks_FindManyPaginated_Res => {
+    findManyPaginated = (response: ApiHttpResponse): ProjectNetworks_FindManyPaginated_Res => {
         const { data, meta } = parseApiResponse({
             response,
             schema: FindManyPaginatedSchema,
@@ -46,7 +45,7 @@ export class ProjectNetworksApiValidator {
         };
     };
 
-    findOneById = (response: AxiosResponse): ProjectNetworks_FindOneById_Res => {
+    findOneById = (response: ApiHttpResponse): ProjectNetworks_FindOneById_Res => {
         const { data } = parseApiResponse({
             response,
             schema: FindOneByIdSchema,
@@ -57,7 +56,7 @@ export class ProjectNetworksApiValidator {
         };
     };
 
-    createOne = (response: AxiosResponse): ProjectNetworks_CreateOne_Res => {
+    createOne = (response: ApiHttpResponse): ProjectNetworks_CreateOne_Res => {
         const { data } = parseApiResponse({
             response,
             schema: CreateOneSchema,
@@ -68,7 +67,7 @@ export class ProjectNetworksApiValidator {
         };
     };
 
-    updateOne = (response: AxiosResponse): ProjectNetworks_UpdateOne_Res => {
+    updateOne = (response: ApiHttpResponse): ProjectNetworks_UpdateOne_Res => {
         parseApiResponse({
             response,
             schema: MetaOnlySchema,
@@ -81,7 +80,7 @@ export class ProjectNetworksApiValidator {
         };
     };
 
-    updateStatus = (response: AxiosResponse): ProjectNetworks_UpdateStatus_Res => {
+    updateStatus = (response: ApiHttpResponse): ProjectNetworks_UpdateStatus_Res => {
         parseApiResponse({
             response,
             schema: MetaOnlySchema,
@@ -94,7 +93,7 @@ export class ProjectNetworksApiValidator {
         };
     };
 
-    deleteOne = (response: AxiosResponse): ProjectNetworks_DeleteOne_Res => {
+    deleteOne = (response: ApiHttpResponse): ProjectNetworks_DeleteOne_Res => {
         parseApiResponse({
             response,
             schema: MetaOnlySchema,

@@ -1,7 +1,6 @@
-import type { AxiosResponse } from "axios";
 import { z } from "zod";
 
-import { BaseMetaApiSchema, parseApiResponse } from "@infrastructure/api";
+import { type ApiHttpResponse, BaseMetaApiSchema, parseApiResponse } from "@infrastructure/api";
 
 import type { HivePaaSRestart_Execute_Res } from "./hivepaas-restart.api.contracts";
 
@@ -10,7 +9,7 @@ const MetaOnlySchema = z.object({
 });
 
 export class HivePaaSRestartApiValidator {
-    execute = (response: AxiosResponse): HivePaaSRestart_Execute_Res => {
+    execute = (response: ApiHttpResponse): HivePaaSRestart_Execute_Res => {
         parseApiResponse({ response, schema: MetaOnlySchema });
         return { data: { type: "success" } };
     };

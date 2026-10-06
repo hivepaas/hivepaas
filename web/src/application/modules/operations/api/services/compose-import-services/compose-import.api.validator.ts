@@ -1,8 +1,7 @@
-import { type AxiosResponse } from "axios";
 import { z } from "zod";
 import type { ComposePortAs, ComposeVolumeKind } from "~/operations/domain";
 
-import { BaseMetaApiSchema, parseApiResponse } from "@infrastructure/api";
+import { type ApiHttpResponse, BaseMetaApiSchema, parseApiResponse } from "@infrastructure/api";
 
 import { SpecImportPlanSchema } from "../spec-import-services/spec-import.api.validator";
 
@@ -116,13 +115,13 @@ const ApplySchema = z.object({
 });
 
 export class ComposeImportApiValidator {
-    validate = (response: AxiosResponse): ComposeImport_Validate_Res => {
+    validate = (response: ApiHttpResponse): ComposeImport_Validate_Res => {
         const { data, meta } = parseApiResponse({ response, schema: ValidateSchema });
 
         return { data, meta };
     };
 
-    apply = (response: AxiosResponse): ComposeImport_Apply_Res => {
+    apply = (response: ApiHttpResponse): ComposeImport_Apply_Res => {
         const { data, meta } = parseApiResponse({ response, schema: ApplySchema });
 
         return {

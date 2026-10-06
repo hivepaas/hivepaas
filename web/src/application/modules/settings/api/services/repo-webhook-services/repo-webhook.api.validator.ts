@@ -1,8 +1,7 @@
-import { type AxiosResponse } from "axios";
 import { z } from "zod";
 import { RepoWebhookSettingEntitySchema } from "~/settings/module-shared/schemas";
 
-import { BaseMetaApiSchema, PagingMetaApiSchema, parseApiResponse } from "@infrastructure/api";
+import { type ApiHttpResponse, BaseMetaApiSchema, PagingMetaApiSchema, parseApiResponse } from "@infrastructure/api";
 
 import type {
     RepoWebhook_CreateOne_Res,
@@ -37,7 +36,7 @@ const MetaOnlySchema = z.object({
 });
 
 export class RepoWebhookApiValidator {
-    findManyPaginated = (response: AxiosResponse): RepoWebhook_FindManyPaginated_Res => {
+    findManyPaginated = (response: ApiHttpResponse): RepoWebhook_FindManyPaginated_Res => {
         const { data, meta } = parseApiResponse({
             response,
             schema: FindManyPaginatedSchema,
@@ -46,7 +45,7 @@ export class RepoWebhookApiValidator {
         return { data, meta };
     };
 
-    findOneById = (response: AxiosResponse): RepoWebhook_FindOneById_Res => {
+    findOneById = (response: ApiHttpResponse): RepoWebhook_FindOneById_Res => {
         const { data, meta } = parseApiResponse({
             response,
             schema: FindOneByIdSchema,
@@ -55,7 +54,7 @@ export class RepoWebhookApiValidator {
         return { data, meta };
     };
 
-    createOne = (response: AxiosResponse): RepoWebhook_CreateOne_Res => {
+    createOne = (response: ApiHttpResponse): RepoWebhook_CreateOne_Res => {
         const { data, meta } = parseApiResponse({
             response,
             schema: CreateOneSchema,
@@ -64,7 +63,7 @@ export class RepoWebhookApiValidator {
         return { data, meta };
     };
 
-    updateOne = (response: AxiosResponse): RepoWebhook_UpdateOne_Res => {
+    updateOne = (response: ApiHttpResponse): RepoWebhook_UpdateOne_Res => {
         parseApiResponse({
             response,
             schema: MetaOnlySchema,
@@ -73,7 +72,7 @@ export class RepoWebhookApiValidator {
         return { data: { type: "success" } };
     };
 
-    updateStatus = (response: AxiosResponse): RepoWebhook_UpdateStatus_Res => {
+    updateStatus = (response: ApiHttpResponse): RepoWebhook_UpdateStatus_Res => {
         parseApiResponse({
             response,
             schema: MetaOnlySchema,
@@ -82,7 +81,7 @@ export class RepoWebhookApiValidator {
         return { data: { type: "success" } };
     };
 
-    deleteOne = (response: AxiosResponse): RepoWebhook_DeleteOne_Res => {
+    deleteOne = (response: ApiHttpResponse): RepoWebhook_DeleteOne_Res => {
         parseApiResponse({
             response,
             schema: MetaOnlySchema,

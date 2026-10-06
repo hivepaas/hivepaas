@@ -1,7 +1,7 @@
-import { AxiosError, type AxiosResponse, isAxiosError } from "axios";
+import { AxiosError, isAxiosError } from "axios";
 import { type z } from "zod";
 
-import { ProblemApiResponse, ValidationProblemApiResponse } from "@infrastructure/api/types";
+import { type ApiHttpResponse, ProblemApiResponse, ValidationProblemApiResponse } from "@infrastructure/api/types";
 import { ProblemApiResponseSchema, ValidationProblemApiResponseSchema } from "@infrastructure/api/validation";
 
 import { UnexpectedApiErrorException, UnexpectedApiResponseException } from "@infrastructure/exceptions/api";
@@ -22,7 +22,7 @@ import { RouteNotFoundException } from "@infrastructure/exceptions/not-found";
 import { TimeoutException } from "@infrastructure/exceptions/timeout";
 
 interface ParseApiResponseParams<T extends z.SomeZodObject> {
-    response: AxiosResponse;
+    response: ApiHttpResponse;
     schema: T;
 }
 

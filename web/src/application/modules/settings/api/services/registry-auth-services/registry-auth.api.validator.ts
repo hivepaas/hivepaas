@@ -1,8 +1,7 @@
-import { type AxiosResponse } from "axios";
 import { z } from "zod";
 import { RegistryAuthSettingEntitySchema } from "~/settings/module-shared/schemas";
 
-import { BaseMetaApiSchema, PagingMetaApiSchema, parseApiResponse } from "@infrastructure/api";
+import { type ApiHttpResponse, BaseMetaApiSchema, PagingMetaApiSchema, parseApiResponse } from "@infrastructure/api";
 
 import type {
     RegistryAuth_CreateOne_Res,
@@ -36,7 +35,7 @@ const MetaOnlySchema = z.object({
 });
 
 export class RegistryAuthApiValidator {
-    findManyPaginated = (response: AxiosResponse): RegistryAuth_FindManyPaginated_Res => {
+    findManyPaginated = (response: ApiHttpResponse): RegistryAuth_FindManyPaginated_Res => {
         const { data, meta } = parseApiResponse({
             response,
             schema: FindManyPaginatedSchema,
@@ -45,7 +44,7 @@ export class RegistryAuthApiValidator {
         return { data, meta };
     };
 
-    findOneById = (response: AxiosResponse): RegistryAuth_FindOneById_Res => {
+    findOneById = (response: ApiHttpResponse): RegistryAuth_FindOneById_Res => {
         const { data, meta } = parseApiResponse({
             response,
             schema: FindOneByIdSchema,
@@ -54,7 +53,7 @@ export class RegistryAuthApiValidator {
         return { data, meta };
     };
 
-    createOne = (response: AxiosResponse): RegistryAuth_CreateOne_Res => {
+    createOne = (response: ApiHttpResponse): RegistryAuth_CreateOne_Res => {
         const { data, meta } = parseApiResponse({
             response,
             schema: CreateOneSchema,
@@ -63,7 +62,7 @@ export class RegistryAuthApiValidator {
         return { data, meta };
     };
 
-    updateOne = (response: AxiosResponse): RegistryAuth_UpdateOne_Res => {
+    updateOne = (response: ApiHttpResponse): RegistryAuth_UpdateOne_Res => {
         parseApiResponse({
             response,
             schema: MetaOnlySchema,
@@ -72,7 +71,7 @@ export class RegistryAuthApiValidator {
         return { data: { type: "success" } };
     };
 
-    updateStatus = (response: AxiosResponse): RegistryAuth_UpdateStatus_Res => {
+    updateStatus = (response: ApiHttpResponse): RegistryAuth_UpdateStatus_Res => {
         parseApiResponse({
             response,
             schema: MetaOnlySchema,
@@ -81,7 +80,7 @@ export class RegistryAuthApiValidator {
         return { data: { type: "success" } };
     };
 
-    deleteOne = (response: AxiosResponse): RegistryAuth_DeleteOne_Res => {
+    deleteOne = (response: ApiHttpResponse): RegistryAuth_DeleteOne_Res => {
         parseApiResponse({
             response,
             schema: MetaOnlySchema,
@@ -90,7 +89,7 @@ export class RegistryAuthApiValidator {
         return { data: { type: "success" } };
     };
 
-    testConn = (response: AxiosResponse): RegistryAuth_TestConn_Res => {
+    testConn = (response: ApiHttpResponse): RegistryAuth_TestConn_Res => {
         parseApiResponse({
             response,
             schema: MetaOnlySchema,

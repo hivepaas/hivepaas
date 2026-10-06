@@ -1,4 +1,3 @@
-import { type AxiosResponse } from "axios";
 import { z } from "zod";
 import {
     type AppRoutingCircuitBreakerConfig,
@@ -14,7 +13,7 @@ import {
 } from "~/projects/domain";
 import { EHttpPathMode, ELBStrategy, ERoutingProtocol } from "~/projects/module-shared/enums";
 
-import { BaseMetaApiSchema, parseApiResponse } from "@infrastructure/api";
+import { type ApiHttpResponse, BaseMetaApiSchema, parseApiResponse } from "@infrastructure/api";
 
 import { type AppRoutingSettings_FindOne_Res } from "./app-routing-settings.api.contracts";
 
@@ -310,7 +309,7 @@ function mapDomain(raw: z.infer<typeof DomainSchema>): AppRoutingDomain {
 }
 
 export class AppRoutingSettingsApiValidator {
-    findOne = (response: AxiosResponse): AppRoutingSettings_FindOne_Res => {
+    findOne = (response: ApiHttpResponse): AppRoutingSettings_FindOne_Res => {
         const { data, meta } = parseApiResponse({ response, schema: FindOneSchema });
         return {
             data: {

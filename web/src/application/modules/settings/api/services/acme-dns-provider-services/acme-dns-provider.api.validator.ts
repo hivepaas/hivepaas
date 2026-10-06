@@ -1,8 +1,7 @@
-import { type AxiosResponse } from "axios";
 import { z } from "zod";
 import { AcmeDnsProviderSettingEntitySchema } from "~/settings/module-shared/schemas";
 
-import { BaseMetaApiSchema, PagingMetaApiSchema, parseApiResponse } from "@infrastructure/api";
+import { type ApiHttpResponse, BaseMetaApiSchema, PagingMetaApiSchema, parseApiResponse } from "@infrastructure/api";
 
 import type {
     AcmeDnsProvider_CreateOne_Res,
@@ -36,7 +35,7 @@ const MetaOnlySchema = z.object({
 });
 
 export class AcmeDnsProviderApiValidator {
-    findManyPaginated = (response: AxiosResponse): AcmeDnsProvider_FindManyPaginated_Res => {
+    findManyPaginated = (response: ApiHttpResponse): AcmeDnsProvider_FindManyPaginated_Res => {
         const { data, meta } = parseApiResponse({
             response,
             schema: FindManyPaginatedSchema,
@@ -45,7 +44,7 @@ export class AcmeDnsProviderApiValidator {
         return { data, meta };
     };
 
-    findOneById = (response: AxiosResponse): AcmeDnsProvider_FindOneById_Res => {
+    findOneById = (response: ApiHttpResponse): AcmeDnsProvider_FindOneById_Res => {
         const { data, meta } = parseApiResponse({
             response,
             schema: FindOneByIdSchema,
@@ -54,7 +53,7 @@ export class AcmeDnsProviderApiValidator {
         return { data, meta };
     };
 
-    createOne = (response: AxiosResponse): AcmeDnsProvider_CreateOne_Res => {
+    createOne = (response: ApiHttpResponse): AcmeDnsProvider_CreateOne_Res => {
         const { data, meta } = parseApiResponse({
             response,
             schema: CreateOneSchema,
@@ -63,7 +62,7 @@ export class AcmeDnsProviderApiValidator {
         return { data, meta };
     };
 
-    updateOne = (response: AxiosResponse): AcmeDnsProvider_UpdateOne_Res => {
+    updateOne = (response: ApiHttpResponse): AcmeDnsProvider_UpdateOne_Res => {
         parseApiResponse({
             response,
             schema: MetaOnlySchema,
@@ -72,7 +71,7 @@ export class AcmeDnsProviderApiValidator {
         return { data: { type: "success" } };
     };
 
-    updateStatus = (response: AxiosResponse): AcmeDnsProvider_UpdateStatus_Res => {
+    updateStatus = (response: ApiHttpResponse): AcmeDnsProvider_UpdateStatus_Res => {
         parseApiResponse({
             response,
             schema: MetaOnlySchema,
@@ -81,7 +80,7 @@ export class AcmeDnsProviderApiValidator {
         return { data: { type: "success" } };
     };
 
-    deleteOne = (response: AxiosResponse): AcmeDnsProvider_DeleteOne_Res => {
+    deleteOne = (response: ApiHttpResponse): AcmeDnsProvider_DeleteOne_Res => {
         parseApiResponse({
             response,
             schema: MetaOnlySchema,
@@ -90,7 +89,7 @@ export class AcmeDnsProviderApiValidator {
         return { data: { type: "success" } };
     };
 
-    testAccess = (response: AxiosResponse): AcmeDnsProvider_TestAccess_Res => {
+    testAccess = (response: ApiHttpResponse): AcmeDnsProvider_TestAccess_Res => {
         parseApiResponse({
             response,
             schema: MetaOnlySchema,

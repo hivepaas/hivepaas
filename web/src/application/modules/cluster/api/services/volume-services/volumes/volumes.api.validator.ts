@@ -1,9 +1,8 @@
-import type { AxiosResponse } from "axios";
 import { z } from "zod";
 import { EClusterVolumePropagation } from "~/cluster/module-shared/enums";
 import { SettingsBaseEntitySchema } from "~/settings/module-shared/schemas";
 
-import { BaseMetaApiSchema, PagingMetaApiSchema, parseApiResponse } from "@infrastructure/api";
+import { type ApiHttpResponse, BaseMetaApiSchema, PagingMetaApiSchema, parseApiResponse } from "@infrastructure/api";
 
 import type {
     ClusterVolumes_CreateOne_Res,
@@ -142,7 +141,7 @@ const MetaOnlySchema = z.object({
 });
 
 export class ClusterVolumesApiValidator {
-    findManyPaginated = (response: AxiosResponse): ClusterVolumes_FindManyPaginated_Res => {
+    findManyPaginated = (response: ApiHttpResponse): ClusterVolumes_FindManyPaginated_Res => {
         const { data, meta } = parseApiResponse({
             response,
             schema: FindManyPaginatedSchema,
@@ -154,9 +153,9 @@ export class ClusterVolumesApiValidator {
         };
     };
 
-    list = (response: AxiosResponse): ClusterVolumes_List_Res => this.findManyPaginated(response);
+    list = (response: ApiHttpResponse): ClusterVolumes_List_Res => this.findManyPaginated(response);
 
-    findOneById = (response: AxiosResponse): ClusterVolumes_FindOneById_Res => {
+    findOneById = (response: ApiHttpResponse): ClusterVolumes_FindOneById_Res => {
         const { data } = parseApiResponse({
             response,
             schema: FindOneByIdSchema,
@@ -167,7 +166,7 @@ export class ClusterVolumesApiValidator {
         };
     };
 
-    createOne = (response: AxiosResponse): ClusterVolumes_CreateOne_Res => {
+    createOne = (response: ApiHttpResponse): ClusterVolumes_CreateOne_Res => {
         const { data } = parseApiResponse({
             response,
             schema: IdSchema,
@@ -178,7 +177,7 @@ export class ClusterVolumesApiValidator {
         };
     };
 
-    updateOne = (response: AxiosResponse): ClusterVolumes_UpdateOne_Res => {
+    updateOne = (response: ApiHttpResponse): ClusterVolumes_UpdateOne_Res => {
         parseApiResponse({
             response,
             schema: MetaOnlySchema,
@@ -191,7 +190,7 @@ export class ClusterVolumesApiValidator {
         };
     };
 
-    updateStatus = (response: AxiosResponse): ClusterVolumes_UpdateStatus_Res => {
+    updateStatus = (response: ApiHttpResponse): ClusterVolumes_UpdateStatus_Res => {
         parseApiResponse({
             response,
             schema: MetaOnlySchema,
@@ -204,7 +203,7 @@ export class ClusterVolumesApiValidator {
         };
     };
 
-    syncFromDocker = (response: AxiosResponse): ClusterVolumes_SyncFromDocker_Res => {
+    syncFromDocker = (response: ApiHttpResponse): ClusterVolumes_SyncFromDocker_Res => {
         parseApiResponse({
             response,
             schema: MetaOnlySchema,

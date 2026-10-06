@@ -1,4 +1,3 @@
-import { type AxiosResponse } from "axios";
 import { z } from "zod";
 import type {
     SpecImportIssue,
@@ -9,7 +8,7 @@ import type {
     SpecSecretsMode,
 } from "~/operations/domain";
 
-import { BaseMetaApiSchema, parseApiResponse } from "@infrastructure/api";
+import { type ApiHttpResponse, BaseMetaApiSchema, parseApiResponse } from "@infrastructure/api";
 
 import type { SpecImport_Apply_Res, SpecImport_Validate_Res } from "./spec-import.api.contracts";
 
@@ -101,13 +100,13 @@ const ApplySchema = z.object({
 });
 
 export class SpecImportApiValidator {
-    validate = (response: AxiosResponse): SpecImport_Validate_Res => {
+    validate = (response: ApiHttpResponse): SpecImport_Validate_Res => {
         const { data, meta } = parseApiResponse({ response, schema: ValidateSchema });
 
         return { data, meta };
     };
 
-    apply = (response: AxiosResponse): SpecImport_Apply_Res => {
+    apply = (response: ApiHttpResponse): SpecImport_Apply_Res => {
         const { data, meta } = parseApiResponse({ response, schema: ApplySchema });
 
         return {

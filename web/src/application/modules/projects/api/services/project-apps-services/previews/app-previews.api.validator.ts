@@ -1,4 +1,3 @@
-import { type AxiosResponse } from "axios";
 import { z } from "zod";
 import type {
     AppPreviews_CreateOne_Res,
@@ -6,7 +5,7 @@ import type {
     AppPreviews_PrepareCreate_Res,
 } from "~/projects/api/services";
 
-import { BaseMetaApiSchema, PagingMetaApiSchema, parseApiResponse } from "@infrastructure/api";
+import { type ApiHttpResponse, BaseMetaApiSchema, PagingMetaApiSchema, parseApiResponse } from "@infrastructure/api";
 
 import { ProjectAppSchema } from "../project-apps/project-apps.api.schemas";
 
@@ -58,21 +57,21 @@ const CreateOneSchema = z.object({
 });
 
 export class AppPreviewsApiValidator {
-    findManyPaginated = (response: AxiosResponse): AppPreviews_FindManyPaginated_Res => {
+    findManyPaginated = (response: ApiHttpResponse): AppPreviews_FindManyPaginated_Res => {
         return parseApiResponse({
             response,
             schema: FindManyPaginatedSchema,
         });
     };
 
-    prepareCreate = (response: AxiosResponse): AppPreviews_PrepareCreate_Res => {
+    prepareCreate = (response: ApiHttpResponse): AppPreviews_PrepareCreate_Res => {
         return parseApiResponse({
             response,
             schema: PrepareCreateSchema,
         });
     };
 
-    createOne = (response: AxiosResponse): AppPreviews_CreateOne_Res => {
+    createOne = (response: ApiHttpResponse): AppPreviews_CreateOne_Res => {
         return parseApiResponse({
             response,
             schema: CreateOneSchema,

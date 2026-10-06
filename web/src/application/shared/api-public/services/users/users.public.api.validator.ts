@@ -1,10 +1,9 @@
-import { type AxiosResponse } from "axios";
 import { z } from "zod";
 
 import { type Public_Users_FindMany_Res } from "@application/shared/api-public/services";
 import { EUserRole } from "@application/shared/enums";
 
-import { PagingMetaApiSchema, parseApiResponse } from "@infrastructure/api";
+import { type ApiHttpResponse, PagingMetaApiSchema, parseApiResponse } from "@infrastructure/api";
 
 const UserBaseSchema = z.object({
     id: z.string(),
@@ -21,7 +20,7 @@ const FindManySchema = z.object({
 });
 
 export class UsersPublicApiValidator {
-    findMany = (response: AxiosResponse): Public_Users_FindMany_Res => {
+    findMany = (response: ApiHttpResponse): Public_Users_FindMany_Res => {
         const { data, meta } = parseApiResponse({
             response,
             schema: FindManySchema,

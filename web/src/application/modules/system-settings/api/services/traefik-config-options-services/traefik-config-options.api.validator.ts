@@ -1,10 +1,9 @@
-import type { AxiosResponse } from "axios";
 import { z } from "zod";
 import type { SettingsPendingChange } from "~/system-settings/domain";
 import type { SettingsPendingChangeSchema } from "~/system-settings/module-shared/schemas";
 import { SettingsPendingChangeSchema as PendingChangeSchema } from "~/system-settings/module-shared/schemas";
 
-import { BaseMetaApiSchema, parseApiResponse } from "@infrastructure/api";
+import { type ApiHttpResponse, BaseMetaApiSchema, parseApiResponse } from "@infrastructure/api";
 
 import type {
     TraefikConfigOptions_ConfirmChange_Res,
@@ -64,7 +63,7 @@ function mapPendingChange(
 }
 
 export class TraefikConfigOptionsApiValidator {
-    findOne = (response: AxiosResponse): TraefikConfigOptions_FindOne_Res => {
+    findOne = (response: ApiHttpResponse): TraefikConfigOptions_FindOne_Res => {
         const { data, meta } = parseApiResponse({ response, schema: FindOneSchema });
         return {
             data: {
@@ -75,17 +74,17 @@ export class TraefikConfigOptionsApiValidator {
         };
     };
 
-    updateOne = (response: AxiosResponse): TraefikConfigOptions_UpdateOne_Res => {
+    updateOne = (response: ApiHttpResponse): TraefikConfigOptions_UpdateOne_Res => {
         const { data } = parseApiResponse({ response, schema: UpdateOneSchema });
         return { data: { pendingChange: mapPendingChange(data ?? undefined) } };
     };
 
-    confirmChange = (response: AxiosResponse): TraefikConfigOptions_ConfirmChange_Res => {
+    confirmChange = (response: ApiHttpResponse): TraefikConfigOptions_ConfirmChange_Res => {
         parseApiResponse({ response, schema: MetaOnlySchema });
         return { data: { type: "success" } };
     };
 
-    revertChange = (response: AxiosResponse): TraefikConfigOptions_RevertChange_Res => {
+    revertChange = (response: ApiHttpResponse): TraefikConfigOptions_RevertChange_Res => {
         const { data } = parseApiResponse({ response, schema: RevertChangeSchema });
         return { data: { reverted: data?.reverted ?? false, reason: data?.reason ?? null } };
     };

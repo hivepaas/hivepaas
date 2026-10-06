@@ -1,7 +1,6 @@
-import { type AxiosResponse } from "axios";
 import { z } from "zod";
 
-import { BaseMetaApiSchema, parseApiResponse } from "@infrastructure/api";
+import { type ApiHttpResponse, BaseMetaApiSchema, parseApiResponse } from "@infrastructure/api";
 
 import type {
     HivePaaSUpdates_FindPlan_Res,
@@ -74,12 +73,12 @@ const PlanSchema = z.object({
 });
 
 export class HivePaaSUpdatesApiValidator {
-    findReleaseInfo = (response: AxiosResponse): HivePaaSUpdates_FindReleaseInfo_Res => {
+    findReleaseInfo = (response: ApiHttpResponse): HivePaaSUpdates_FindReleaseInfo_Res => {
         const { data, meta } = parseApiResponse({ response, schema: ReleaseInfoSchema });
         return { data, meta };
     };
 
-    findPlan = (response: AxiosResponse): HivePaaSUpdates_FindPlan_Res => {
+    findPlan = (response: ApiHttpResponse): HivePaaSUpdates_FindPlan_Res => {
         const { data, meta } = parseApiResponse({ response, schema: PlanSchema });
         return { data, meta };
     };

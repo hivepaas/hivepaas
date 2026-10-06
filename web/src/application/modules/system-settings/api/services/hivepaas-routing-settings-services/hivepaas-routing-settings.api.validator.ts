@@ -1,4 +1,3 @@
-import type { AxiosResponse } from "axios";
 import { z } from "zod";
 import type {
     HivePaaSRoutingClientConfig,
@@ -15,7 +14,7 @@ import {
     SettingsPendingChangeSchema as PendingChangeSchema,
 } from "~/system-settings/module-shared/schemas";
 
-import { BaseMetaApiSchema, parseApiResponse } from "@infrastructure/api";
+import { type ApiHttpResponse, BaseMetaApiSchema, parseApiResponse } from "@infrastructure/api";
 
 import type {
     HivePaaSRoutingSettings_ConfirmChange_Res,
@@ -91,7 +90,7 @@ function mapDomain(raw: z.infer<typeof HivePaaSRoutingDomainSchema>): HivePaaSRo
 }
 
 export class HivePaaSRoutingSettingsApiValidator {
-    findOne = (response: AxiosResponse): HivePaaSRoutingSettings_FindOne_Res => {
+    findOne = (response: ApiHttpResponse): HivePaaSRoutingSettings_FindOne_Res => {
         const { data, meta } = parseApiResponse({ response, schema: FindOneSchema });
         return {
             data: {
@@ -103,17 +102,17 @@ export class HivePaaSRoutingSettingsApiValidator {
         };
     };
 
-    updateOne = (response: AxiosResponse): HivePaaSRoutingSettings_UpdateOne_Res => {
+    updateOne = (response: ApiHttpResponse): HivePaaSRoutingSettings_UpdateOne_Res => {
         const { data } = parseApiResponse({ response, schema: UpdateOneSchema });
         return { data: { pendingChange: mapPendingChange(data ?? undefined) } };
     };
 
-    confirmChange = (response: AxiosResponse): HivePaaSRoutingSettings_ConfirmChange_Res => {
+    confirmChange = (response: ApiHttpResponse): HivePaaSRoutingSettings_ConfirmChange_Res => {
         parseApiResponse({ response, schema: MetaOnlySchema });
         return { data: { type: "success" } };
     };
 
-    revertChange = (response: AxiosResponse): HivePaaSRoutingSettings_RevertChange_Res => {
+    revertChange = (response: ApiHttpResponse): HivePaaSRoutingSettings_RevertChange_Res => {
         const { data } = parseApiResponse({ response, schema: RevertChangeSchema });
         return { data: { reverted: data?.reverted ?? false, reason: data?.reason ?? null } };
     };

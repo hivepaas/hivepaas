@@ -1,9 +1,8 @@
-import type { AxiosResponse } from "axios";
 import { z } from "zod";
 import { PROJECT_COMMAND_TEMPLATE_DEFAULT_CONSOLE_SIZE } from "~/projects/domain";
 import { EAppScheduledJobArgSeparator } from "~/projects/module-shared/enums";
 
-import { BaseMetaApiSchema, PagingMetaApiSchema, parseApiResponse } from "@infrastructure/api";
+import { type ApiHttpResponse, BaseMetaApiSchema, PagingMetaApiSchema, parseApiResponse } from "@infrastructure/api";
 
 import type {
     ProjectCommandTemplate_BuildForApp_Res,
@@ -142,7 +141,7 @@ const MetaOnlySchema = z.object({
 });
 
 export class ProjectCommandTemplateApiValidator {
-    findManyPaginated = (response: AxiosResponse): ProjectCommandTemplate_FindManyPaginated_Res => {
+    findManyPaginated = (response: ApiHttpResponse): ProjectCommandTemplate_FindManyPaginated_Res => {
         const { data, meta } = parseApiResponse({
             response,
             schema: FindManyPaginatedSchema,
@@ -151,7 +150,7 @@ export class ProjectCommandTemplateApiValidator {
         return { data, meta };
     };
 
-    findManyEnvPaginated = (response: AxiosResponse): ProjectCommandTemplate_FindManyEnvPaginated_Res => {
+    findManyEnvPaginated = (response: ApiHttpResponse): ProjectCommandTemplate_FindManyEnvPaginated_Res => {
         const { data, meta } = parseApiResponse({
             response,
             schema: FindManyPaginatedSchema,
@@ -160,7 +159,7 @@ export class ProjectCommandTemplateApiValidator {
         return { data, meta };
     };
 
-    findOneById = (response: AxiosResponse): ProjectCommandTemplate_FindOneById_Res => {
+    findOneById = (response: ApiHttpResponse): ProjectCommandTemplate_FindOneById_Res => {
         const { data, meta } = parseApiResponse({
             response,
             schema: FindOneByIdSchema,
@@ -169,7 +168,7 @@ export class ProjectCommandTemplateApiValidator {
         return { data, meta };
     };
 
-    createOne = (response: AxiosResponse): ProjectCommandTemplate_CreateOne_Res => {
+    createOne = (response: ApiHttpResponse): ProjectCommandTemplate_CreateOne_Res => {
         const { data, meta } = parseApiResponse({
             response,
             schema: CreateOneSchema,
@@ -178,7 +177,7 @@ export class ProjectCommandTemplateApiValidator {
         return { data, meta };
     };
 
-    createFromTemplate = (response: AxiosResponse): ProjectCommandTemplate_CreateFromTemplate_Res => {
+    createFromTemplate = (response: ApiHttpResponse): ProjectCommandTemplate_CreateFromTemplate_Res => {
         const { data, meta } = parseApiResponse({
             response,
             schema: CreateOneSchema,
@@ -187,7 +186,7 @@ export class ProjectCommandTemplateApiValidator {
         return { data, meta };
     };
 
-    updateOne = (response: AxiosResponse): ProjectCommandTemplate_UpdateOne_Res => {
+    updateOne = (response: ApiHttpResponse): ProjectCommandTemplate_UpdateOne_Res => {
         parseApiResponse({
             response,
             schema: MetaOnlySchema,
@@ -196,7 +195,7 @@ export class ProjectCommandTemplateApiValidator {
         return { data: { type: "success" } };
     };
 
-    updateStatus = (response: AxiosResponse): ProjectCommandTemplate_UpdateStatus_Res => {
+    updateStatus = (response: ApiHttpResponse): ProjectCommandTemplate_UpdateStatus_Res => {
         parseApiResponse({
             response,
             schema: MetaOnlySchema,
@@ -205,7 +204,7 @@ export class ProjectCommandTemplateApiValidator {
         return { data: { type: "success" } };
     };
 
-    deleteOne = (response: AxiosResponse): ProjectCommandTemplate_DeleteOne_Res => {
+    deleteOne = (response: ApiHttpResponse): ProjectCommandTemplate_DeleteOne_Res => {
         parseApiResponse({
             response,
             schema: MetaOnlySchema,
@@ -214,7 +213,7 @@ export class ProjectCommandTemplateApiValidator {
         return { data: { type: "success" } };
     };
 
-    buildForApp = (response: AxiosResponse): ProjectCommandTemplate_BuildForApp_Res => {
+    buildForApp = (response: ApiHttpResponse): ProjectCommandTemplate_BuildForApp_Res => {
         const { data, meta } = parseApiResponse({
             response,
             schema: BuildForAppSchema,

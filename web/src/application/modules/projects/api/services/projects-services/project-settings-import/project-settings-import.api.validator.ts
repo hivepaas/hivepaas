@@ -1,7 +1,6 @@
-import { type AxiosResponse } from "axios";
 import { z } from "zod";
 
-import { BaseMetaApiSchema, parseApiResponse } from "@infrastructure/api";
+import { type ApiHttpResponse, BaseMetaApiSchema, parseApiResponse } from "@infrastructure/api";
 
 import type { ProjectSettingsImport_Import_Res } from "./project-settings-import.api.contracts";
 
@@ -10,7 +9,7 @@ const MetaOnlySchema = z.object({
 });
 
 export class ProjectSettingsImportApiValidator {
-    importSettings = (response: AxiosResponse): ProjectSettingsImport_Import_Res => {
+    importSettings = (response: ApiHttpResponse): ProjectSettingsImport_Import_Res => {
         parseApiResponse({
             response,
             schema: MetaOnlySchema,

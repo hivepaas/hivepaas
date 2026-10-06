@@ -1,8 +1,7 @@
-import type { AxiosResponse } from "axios";
 import { z } from "zod";
 import type { AppServiceTasks_FindMany_Res } from "~/projects/api/services";
 
-import { BaseMetaApiSchema, parseApiResponse } from "@infrastructure/api";
+import { type ApiHttpResponse, BaseMetaApiSchema, parseApiResponse } from "@infrastructure/api";
 
 const NullableDateSchema = z.preprocess(
     value => (value === null || value === undefined || value === "" ? null : value),
@@ -61,7 +60,7 @@ const FindManySchema = z.object({
 });
 
 export class AppServiceTasksApiValidator {
-    findMany = (response: AxiosResponse): AppServiceTasks_FindMany_Res => {
+    findMany = (response: ApiHttpResponse): AppServiceTasks_FindMany_Res => {
         return parseApiResponse({
             response,
             schema: FindManySchema,

@@ -1,4 +1,3 @@
-import { type AxiosResponse } from "axios";
 import { z } from "zod";
 import {
     ImageBuildRepoCacheClearResultSchema,
@@ -6,7 +5,7 @@ import {
     ImageBuildSettingsEntitySchema,
 } from "~/settings/module-shared/schemas";
 
-import { BaseMetaApiSchema, parseApiResponse } from "@infrastructure/api";
+import { type ApiHttpResponse, BaseMetaApiSchema, parseApiResponse } from "@infrastructure/api";
 
 import type {
     ImageBuildSettings_ClearRepoCache_Res,
@@ -41,7 +40,7 @@ function parseWorkerNodeName(id: string, name: string): string {
 }
 
 export class ImageBuildSettingsApiValidator {
-    findOne = (response: AxiosResponse): ImageBuildSettings_FindOne_Res => {
+    findOne = (response: ApiHttpResponse): ImageBuildSettings_FindOne_Res => {
         const { data, meta } = parseApiResponse({ response, schema: FindOneSchema });
 
         return {
@@ -72,11 +71,11 @@ export class ImageBuildSettingsApiValidator {
         };
     };
 
-    findRepoCache = (response: AxiosResponse): ImageBuildSettings_FindRepoCache_Res => {
+    findRepoCache = (response: ApiHttpResponse): ImageBuildSettings_FindRepoCache_Res => {
         return parseApiResponse({ response, schema: FindRepoCacheSchema });
     };
 
-    clearRepoCache = (response: AxiosResponse): ImageBuildSettings_ClearRepoCache_Res => {
+    clearRepoCache = (response: ApiHttpResponse): ImageBuildSettings_ClearRepoCache_Res => {
         return parseApiResponse({ response, schema: ClearRepoCacheSchema });
     };
 }

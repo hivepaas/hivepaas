@@ -1,8 +1,7 @@
-import type { AxiosResponse } from "axios";
 import { z } from "zod";
 import { AppScheduledJobSchema } from "~/projects/api/services/project-apps-services/scheduled-jobs/app-scheduled-jobs.api.validator";
 
-import { BaseMetaApiSchema, PagingMetaApiSchema, parseApiResponse } from "@infrastructure/api";
+import { type ApiHttpResponse, BaseMetaApiSchema, PagingMetaApiSchema, parseApiResponse } from "@infrastructure/api";
 
 import type {
     EnvScheduledJobs_CreateOne_Res,
@@ -40,19 +39,19 @@ const RunNowSchema = z.object({
 });
 
 export class EnvScheduledJobsApiValidator {
-    findManyPaginated = (response: AxiosResponse): EnvScheduledJobs_FindManyPaginated_Res => {
+    findManyPaginated = (response: ApiHttpResponse): EnvScheduledJobs_FindManyPaginated_Res => {
         return parseApiResponse({ response, schema: FindManyPaginatedSchema });
     };
 
-    findOneById = (response: AxiosResponse): EnvScheduledJobs_FindOneById_Res => {
+    findOneById = (response: ApiHttpResponse): EnvScheduledJobs_FindOneById_Res => {
         return parseApiResponse({ response, schema: FindOneByIdSchema });
     };
 
-    createOne = (response: AxiosResponse): EnvScheduledJobs_CreateOne_Res => {
+    createOne = (response: ApiHttpResponse): EnvScheduledJobs_CreateOne_Res => {
         return parseApiResponse({ response, schema: CreateOneSchema });
     };
 
-    runNow = (response: AxiosResponse): EnvScheduledJobs_RunNow_Res => {
+    runNow = (response: ApiHttpResponse): EnvScheduledJobs_RunNow_Res => {
         return parseApiResponse({ response, schema: RunNowSchema });
     };
 }

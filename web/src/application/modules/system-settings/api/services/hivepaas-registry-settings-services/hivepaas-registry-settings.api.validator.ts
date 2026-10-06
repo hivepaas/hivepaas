@@ -1,8 +1,7 @@
-import { type AxiosResponse } from "axios";
 import { z } from "zod";
 import { SettingsBaseEntitySchema } from "~/settings/module-shared/schemas";
 
-import { BaseMetaApiSchema, parseApiResponse } from "@infrastructure/api";
+import { type ApiHttpResponse, BaseMetaApiSchema, parseApiResponse } from "@infrastructure/api";
 
 import type {
     HivePaaSRegistrySettings_CheckPush_Res,
@@ -102,12 +101,12 @@ const RotateSchema = z.object({
 });
 
 export class HivePaaSRegistrySettingsApiValidator {
-    findOne = (response: AxiosResponse): HivePaaSRegistrySettings_FindOne_Res => {
+    findOne = (response: ApiHttpResponse): HivePaaSRegistrySettings_FindOne_Res => {
         const { data, meta } = parseApiResponse({ response, schema: FindOneSchema });
         return { data: { settings: data, registryStatus: data.registryStatus }, meta };
     };
 
-    updateOne = (response: AxiosResponse): HivePaaSRegistrySettings_UpdateOne_Res => {
+    updateOne = (response: ApiHttpResponse): HivePaaSRegistrySettings_UpdateOne_Res => {
         const { data } = parseApiResponse({ response, schema: UpdateSchema });
         return {
             data: {
@@ -117,17 +116,17 @@ export class HivePaaSRegistrySettingsApiValidator {
         };
     };
 
-    probeDomain = (response: AxiosResponse): HivePaaSRegistrySettings_ProbeDomain_Res => {
+    probeDomain = (response: ApiHttpResponse): HivePaaSRegistrySettings_ProbeDomain_Res => {
         const { data, meta } = parseApiResponse({ response, schema: ProbeSchema });
         return { data, meta };
     };
 
-    checkPush = (response: AxiosResponse): HivePaaSRegistrySettings_CheckPush_Res => {
+    checkPush = (response: ApiHttpResponse): HivePaaSRegistrySettings_CheckPush_Res => {
         const { data, meta } = parseApiResponse({ response, schema: PushCheckSchema });
         return { data, meta };
     };
 
-    rotateCredential = (response: AxiosResponse): HivePaaSRegistrySettings_RotateCredential_Res => {
+    rotateCredential = (response: ApiHttpResponse): HivePaaSRegistrySettings_RotateCredential_Res => {
         const { data, meta } = parseApiResponse({ response, schema: RotateSchema });
         return { data, meta };
     };

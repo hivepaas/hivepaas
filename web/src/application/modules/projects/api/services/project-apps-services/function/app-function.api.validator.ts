@@ -1,7 +1,6 @@
-import { type AxiosResponse } from "axios";
 import { z } from "zod";
 
-import { BaseMetaApiSchema, parseApiResponse } from "@infrastructure/api";
+import { type ApiHttpResponse, BaseMetaApiSchema, parseApiResponse } from "@infrastructure/api";
 
 import { type AppFunction_TestRun_Res } from "./app-function.api.contracts";
 
@@ -72,7 +71,7 @@ const TestRunSchema = z.object({
 });
 
 export class AppFunctionApiValidator {
-    testRun = (response: AxiosResponse): AppFunction_TestRun_Res => {
+    testRun = (response: ApiHttpResponse): AppFunction_TestRun_Res => {
         return parseApiResponse({ response, schema: TestRunSchema });
     };
 }

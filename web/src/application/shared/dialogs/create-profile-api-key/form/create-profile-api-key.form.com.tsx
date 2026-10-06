@@ -17,6 +17,7 @@ import {
     CreateProfileApiKeyFormSchema,
     type CreateProfileApiKeyFormSchemaInput,
     type CreateProfileApiKeyFormSchemaOutput,
+    latestExpiration,
 } from "../schemas";
 
 const PROFILE_API_KEY_FORM_CONTROL_MAX_WIDTH_CLASS = "max-w-[600px]";
@@ -244,11 +245,16 @@ export function CreateProfileApiKeyForm({ formId, onSubmit, onHasChanges }: Prop
                     )}
 
                     <InfoBlock
-                        title={<LabelWithInfo label="Access Expiration" />}
+                        title={
+                            <LabelWithInfo
+                                label="Access Expiration"
+                                isRequired
+                            />
+                        }
                         titleWidth={220}
                     >
                         <DateTimePicker
-                            value={expireAt.value ?? undefined}
+                            value={expireAt.value}
                             onChange={date => {
                                 expireAt.onChange(date ?? undefined);
                             }}
@@ -258,6 +264,7 @@ export function CreateProfileApiKeyForm({ formId, onSubmit, onHasChanges }: Prop
                             aria-invalid={isExpireAtInvalid}
                             placeholder="Select expiration date"
                             fromDate={new Date()}
+                            toDate={latestExpiration()}
                             showClearButton
                         />
                         <FieldError errors={[errors.expireAt]} />

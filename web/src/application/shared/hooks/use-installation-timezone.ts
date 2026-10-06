@@ -1,7 +1,7 @@
 import { SessionQueries } from "@application/shared/data/queries";
 
 /**
- * The installation's timezone, a zone name such as Asia/Ho_Chi_Minh: what a schedule's hours are read in - a cron
+ * The installation's timezone, a zone name such as America/New_York: what a schedule's hours are read in - a cron
  * expression's, the time of day a system job runs at. From the profile the dashboard loaded at sign-in; UTC until
  * it is there.
  */

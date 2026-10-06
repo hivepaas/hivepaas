@@ -2,6 +2,7 @@ package sysupdateserviceimpl
 
 import (
 	"context"
+	"strings"
 	"testing"
 
 	"github.com/moby/moby/api/types/swarm"
@@ -114,4 +115,39 @@ func TestPlanSaysTheProxyRestartsForItsSettings(t *testing.T) {
 			assert.Equal(t, before, svc.Spec.TaskTemplate.ContainerSpec.Args, "the plan changes nothing")
 		})
 	}
+}
+
+// logOf is what an update wrote to its task log, a line each.
+func logOf(t *testing.T, data *sysUpdateData) string {
+	t.Helper()
+	frames, err := data.LogStore.GetData(context.Background(), 0)
+	assert.NoError(t, err)
+	lines := make([]string, 0, len(frames))
+	for _, frame := range frames {
+		lines = append(lines, frame.Data)
+	}
+	return strings.Join(lines, "\n")
+}
+
+// The log says what the step does: a proxy restarted for its settings is not
+// said to be skipped, and one left as it is is.
+func TestTraefikUpdateLogSaysWhetherItRestarts(t *testing.T) {
+	s := &service{dockerManager: &fakeDocker{},
+		traefikService: fakeTraefik{svc: traefikOn(releaseTraefik, earlierAccessLog...)}}
+	data := loggingUpdateData(t, &base.ReleaseInfo{TraefikImage: releaseTraefik})
+
+	assert.NoError(t, s.updateTraefikService(context.Background(), data))
+
+	log := logOf(t, data)
+	assert.NotContains(t, log, "Skipping traefik")
+	assert.Contains(t, log, "traefik: already at traefik:v3.7.13; its settings are brought to this release's")
+
+	aligned := traefikOn(releaseTraefik, earlierAccessLog...)
+	alignTraefik(&aligned.Spec)
+	s = &service{dockerManager: &fakeDocker{}, traefikService: fakeTraefik{svc: aligned}}
+	data = loggingUpdateData(t, &base.ReleaseInfo{TraefikImage: releaseTraefik})
+
+	assert.NoError(t, s.updateTraefikService(context.Background(), data))
+
+	assert.Contains(t, logOf(t, data), "Skipping traefik: already at traefik:v3.7.13")
 }

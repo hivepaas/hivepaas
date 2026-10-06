@@ -85,7 +85,8 @@ func (s *service) PlanUpdate(
 }
 
 // wouldAlign reports whether a step's Align would change the service, on a copy
-// of its spec: the plan changes nothing.
+// of its spec: the plan changes nothing. It is this version's Align, not the
+// target's, so it sees only what this version writes; see ChangeSettings.
 func wouldAlign(svc *swarm.Service, align func(spec *swarm.ServiceSpec) bool) (bool, error) {
 	if align == nil {
 		return false, nil

@@ -32,6 +32,12 @@ const (
 	ChangeNone Change = "none"
 	// ChangeSettings leaves the component's image as it is, and brings the rest
 	// of its spec to what the release writes, which restarts it.
+	//
+	// It is judged by the running version, against what the running version
+	// writes, while the update runs on the target's image and writes what the
+	// target does. A target that writes something the running version does not
+	// know of - other access log fields for Traefik - restarts the component with
+	// the plan saying ChangeNone, so the screen says the proxy may still restart.
 	ChangeSettings Change = "settings"
 	// ChangeUpdate moves the component to a newer image of the same major.
 	ChangeUpdate Change = "update"

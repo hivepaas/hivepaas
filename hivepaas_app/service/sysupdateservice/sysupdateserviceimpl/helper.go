@@ -138,7 +138,7 @@ func (s *service) updateServiceImage(
 	err = s.dockerManager.ServiceUpdateFunc(ctx, svc.ID, svc,
 		func(_ int, current *swarm.Service) (bool, error) {
 			currentImage := current.Spec.TaskTemplate.ContainerSpec.Image
-			move := s.shouldUpdateImage(ctx, data, step.What, currentImage, step.TargetImage)
+			move, reason := s.shouldUpdateImage(ctx, data, step.What, currentImage, step.TargetImage)
 			if move {
 				// Checked only once the image has been found worth moving to. An
 				// update that was going to change nothing has no major to cross.
@@ -151,12 +151,15 @@ func (s *service) updateServiceImage(
 				}
 			}
 			aligned := step.Align != nil && step.Align(&current.Spec)
-			if !move && !aligned {
-				return false, nil
-			}
 			if !move {
-				_ = data.LogStore.Add(ctx, tasklog.NewOutFrame(
-					step.What+": its settings are brought to this release's, on the same image", tasklog.TsNow))
+				// Skipped only when nothing moves: a service whose settings move
+				// restarts on the same image, and the log says so instead.
+				if !aligned {
+					_ = data.LogStore.Add(ctx, tasklog.NewOutFrame("Skipping "+step.What+": "+reason, tasklog.TsNow))
+					return false, nil
+				}
+				_ = data.LogStore.Add(ctx, tasklog.NewOutFrame(step.What+": "+reason+
+					"; its settings are brought to this release's, which restarts it", tasklog.TsNow))
 			}
 
 			// Every service the updater touches gets this. Without it swarm
@@ -217,7 +220,8 @@ func (s *service) logStep(ctx context.Context, data *sysUpdateData, what string)
 }
 
 // shouldUpdateImage answers whether a step should move a service to target, and
-// records the reason in the task log either way.
+// why. A go-ahead is recorded in the task log here; a refusal is the caller's to
+// record, because a service whose settings still move is not skipped.
 //
 // Applying an image that is not newer is not free: every swarm service update
 // restarts the task, so re-running an update - after a failure, or because the
@@ -227,6 +231,7 @@ func (s *service) logStep(ctx context.Context, data *sysUpdateData, what string)
 // The reason is logged for a refusal as well as for a go-ahead, because a step
 // that decided to do nothing otherwise reads exactly like a step that was never
 // reached, and the two call for different reactions from whoever is watching.
+// The caller logs a refusal as a skip, or as a restart on the same image.
 //
 // `current` comes from the running service's own spec rather than from the
 // task's CurrentVersion: that field is filled from the constants compiled into
@@ -238,14 +243,13 @@ func (s *service) shouldUpdateImage(
 	what string,
 	current string,
 	target string,
-) bool {
-	apply, reason := imageref.IsUpgrade(current, target)
+) (apply bool, reason string) {
+	apply, reason = imageref.IsUpgrade(current, target)
 	if !apply {
-		_ = data.LogStore.Add(ctx, tasklog.NewOutFrame("Skipping "+what+": "+reason, tasklog.TsNow))
-		return false
+		return false, reason
 	}
 	_ = data.LogStore.Add(ctx, tasklog.NewOutFrame(what+": "+reason, tasklog.TsNow))
-	return true
+	return true, reason
 }
 
 // checkMajorUpgrade refuses a step that would cross a major version the release

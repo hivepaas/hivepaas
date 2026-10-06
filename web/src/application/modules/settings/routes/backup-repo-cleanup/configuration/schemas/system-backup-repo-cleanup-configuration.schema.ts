@@ -1,6 +1,7 @@
 import { z } from "zod";
 
 import { ESettingStatus } from "@application/shared/enums";
+import { DURATION_HINT, isDuration } from "@application/shared/utils";
 
 export const SystemBackupRepoCleanupScheduleMode = {
     Interval: "interval",
@@ -22,14 +23,20 @@ const NotificationSchema = z.object({
     failure: SettingsRefSchema.optional(),
 });
 
-export const SystemBackupRepoCleanupConfigurationFormSchema = z.object({
-    status: z.enum([ESettingStatus.Active, ESettingStatus.Disabled]),
-    scheduleMode: z.enum([SystemBackupRepoCleanupScheduleMode.Interval, SystemBackupRepoCleanupScheduleMode.Cron]),
-    scheduleInterval: z.string(),
-    scheduleCronExpr: z.string(),
-    scheduleFrom: z.date().nullable(),
-    notification: NotificationSchema,
-});
+export const SystemBackupRepoCleanupConfigurationFormSchema = z
+    .object({
+        status: z.enum([ESettingStatus.Active, ESettingStatus.Disabled]),
+        scheduleMode: z.enum([SystemBackupRepoCleanupScheduleMode.Interval, SystemBackupRepoCleanupScheduleMode.Cron]),
+        scheduleInterval: z.string(),
+        scheduleCronExpr: z.string(),
+        scheduleFrom: z.date().nullable(),
+        notification: NotificationSchema,
+    })
+    .superRefine((data, ctx) => {
+        if (data.scheduleMode === SystemBackupRepoCleanupScheduleMode.Interval && !isDuration(data.scheduleInterval)) {
+            ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["scheduleInterval"], message: DURATION_HINT });
+        }
+    });
 
 export type SystemBackupRepoCleanupConfigurationFormInput = z.input<
     typeof SystemBackupRepoCleanupConfigurationFormSchema

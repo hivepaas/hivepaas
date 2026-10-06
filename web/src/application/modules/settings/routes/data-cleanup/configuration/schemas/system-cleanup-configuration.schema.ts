@@ -1,6 +1,7 @@
 import { z } from "zod";
 
 import { ESettingStatus } from "@application/shared/enums";
+import { DURATION_HINT, isDuration } from "@application/shared/utils";
 
 export const SystemCleanupScheduleMode = {
     Interval: "interval",
@@ -21,42 +22,51 @@ const NotificationSchema = z.object({
     failure: SettingsRefSchema.optional(),
 });
 
-export const SystemCleanupConfigurationFormSchema = z.object({
-    status: z.enum([ESettingStatus.Active, ESettingStatus.Disabled]),
-    scheduleMode: z.enum([SystemCleanupScheduleMode.Interval, SystemCleanupScheduleMode.Cron]),
-    scheduleInterval: z.string(),
-    scheduleCronExpr: z.string(),
-    scheduleFrom: z.date().nullable(),
-    dbObjectRetention: z.object({
-        enabled: z.boolean(),
-        tasks: z.string(),
-        deployments: z.string(),
-        sysErrors: z.string(),
-        auditLogs: z.string(),
-        deletedObjects: z.string(),
-    }),
-    clusterCleanup: z.object({
-        enabled: z.boolean(),
-        generalRetention: z.string(),
-        buildCacheRetention: z.string(),
-        pruneImages: z.boolean(),
-        pruneVolumes: z.boolean(),
-        pruneNetworks: z.boolean(),
-        pruneContainers: z.boolean(),
-        pruneBuildCache: z.boolean(),
-    }),
-    cacheCleanup: z.object({
-        enabled: z.boolean(),
-        repoCacheRetention: z.string(),
-    }),
-    fileCleanup: z.object({
-        enabled: z.boolean(),
-    }),
-    systemAppsSync: z.object({
-        enabled: z.boolean(),
-    }),
-    notification: NotificationSchema,
-});
+// A retention left empty is none; one filled in must read as a duration.
+const RetentionSchema = z.string().refine(value => value.trim() === "" || isDuration(value), DURATION_HINT);
+
+export const SystemCleanupConfigurationFormSchema = z
+    .object({
+        status: z.enum([ESettingStatus.Active, ESettingStatus.Disabled]),
+        scheduleMode: z.enum([SystemCleanupScheduleMode.Interval, SystemCleanupScheduleMode.Cron]),
+        scheduleInterval: z.string(),
+        scheduleCronExpr: z.string(),
+        scheduleFrom: z.date().nullable(),
+        dbObjectRetention: z.object({
+            enabled: z.boolean(),
+            tasks: RetentionSchema,
+            deployments: RetentionSchema,
+            sysErrors: RetentionSchema,
+            auditLogs: RetentionSchema,
+            deletedObjects: RetentionSchema,
+        }),
+        clusterCleanup: z.object({
+            enabled: z.boolean(),
+            generalRetention: RetentionSchema,
+            buildCacheRetention: RetentionSchema,
+            pruneImages: z.boolean(),
+            pruneVolumes: z.boolean(),
+            pruneNetworks: z.boolean(),
+            pruneContainers: z.boolean(),
+            pruneBuildCache: z.boolean(),
+        }),
+        cacheCleanup: z.object({
+            enabled: z.boolean(),
+            repoCacheRetention: RetentionSchema,
+        }),
+        fileCleanup: z.object({
+            enabled: z.boolean(),
+        }),
+        systemAppsSync: z.object({
+            enabled: z.boolean(),
+        }),
+        notification: NotificationSchema,
+    })
+    .superRefine((data, ctx) => {
+        if (data.scheduleMode === SystemCleanupScheduleMode.Interval && !isDuration(data.scheduleInterval)) {
+            ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["scheduleInterval"], message: DURATION_HINT });
+        }
+    });
 
 export type SystemCleanupConfigurationFormInput = z.input<typeof SystemCleanupConfigurationFormSchema>;
 export type SystemCleanupConfigurationFormOutput = z.output<typeof SystemCleanupConfigurationFormSchema>;

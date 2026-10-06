@@ -2,6 +2,7 @@ import { z } from "zod";
 import { SYSTEM_BACKUP_SPEC_SECRETS } from "~/system-settings/domain";
 
 import { ESettingStatus } from "@application/shared/enums";
+import { DURATION_HINT, isDuration } from "@application/shared/utils";
 
 export const SystemBackupScheduleMode = {
     Interval: "interval",
@@ -40,6 +41,10 @@ export const SystemBackupConfigurationFormSchema = z
         const issue = (message: string, path: string) => {
             ctx.addIssue({ code: z.ZodIssueCode.custom, path: [path], message });
         };
+        // Read by the server even while disabled.
+        if (data.scheduleMode === SystemBackupScheduleMode.Interval && !isDuration(data.scheduleInterval)) {
+            issue(DURATION_HINT, "scheduleInterval");
+        }
         // A disabled backup is not asked for what it would take.
         if (data.status !== ESettingStatus.Active) {
             return;

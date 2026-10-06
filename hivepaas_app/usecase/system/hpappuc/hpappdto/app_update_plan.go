@@ -56,7 +56,8 @@ type UpdateComponentResp struct {
 	Key          string `json:"key"`
 	CurrentImage string `json:"currentImage"`
 	TargetImage  string `json:"targetImage"`
-	// Change is none, update, major, blocked or not-deployed.
+	// Change is none, settings, update, major, blocked or not-deployed: settings
+	// keeps the image, and restarts the component for what the release writes.
 	Change string `json:"change"`
 	// Reason is the update's own words for what it would do.
 	Reason            string `json:"reason"`

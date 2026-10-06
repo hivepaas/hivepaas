@@ -93,6 +93,13 @@ type serviceImageUpdate struct {
 	// Mutate applies whatever else the service needs, and is called only once the
 	// image has been found worth moving to. The image itself is already set.
 	Mutate func(spec *swarm.ServiceSpec)
+
+	// Align brings the rest of the spec to what this release writes, and reports
+	// whether it changed anything. Unlike Mutate it is applied with the image
+	// staying too - a release can change what it writes without moving the image
+	// - and a service whose image stays is updated, and restarted, only when it
+	// did change something: an update run again restarts nothing.
+	Align func(spec *swarm.ServiceSpec) bool
 }
 
 // updateServiceImage runs one step: announce it, decide whether the image is
@@ -131,18 +138,25 @@ func (s *service) updateServiceImage(
 	err = s.dockerManager.ServiceUpdateFunc(ctx, svc.ID, svc,
 		func(_ int, current *swarm.Service) (bool, error) {
 			currentImage := current.Spec.TaskTemplate.ContainerSpec.Image
-			if !s.shouldUpdateImage(ctx, data, step.What, currentImage, step.TargetImage) {
+			move := s.shouldUpdateImage(ctx, data, step.What, currentImage, step.TargetImage)
+			if move {
+				// Checked only once the image has been found worth moving to. An
+				// update that was going to change nothing has no major to cross.
+				if err := s.checkMajorUpgrade(ctx, data, step, currentImage); err != nil {
+					return false, hperrors.Wrap(err)
+				}
+				current.Spec.TaskTemplate.ContainerSpec.Image = step.TargetImage
+				if step.Mutate != nil {
+					step.Mutate(&current.Spec)
+				}
+			}
+			aligned := step.Align != nil && step.Align(&current.Spec)
+			if !move && !aligned {
 				return false, nil
 			}
-			// Checked only once the image has been found worth moving to. An
-			// update that was going to change nothing has no major to cross.
-			if err := s.checkMajorUpgrade(ctx, data, step, currentImage); err != nil {
-				return false, hperrors.Wrap(err)
-			}
-
-			current.Spec.TaskTemplate.ContainerSpec.Image = step.TargetImage
-			if step.Mutate != nil {
-				step.Mutate(&current.Spec)
+			if !move {
+				_ = data.LogStore.Add(ctx, tasklog.NewOutFrame(
+					step.What+": its settings are brought to this release's, on the same image", tasklog.TsNow))
 			}
 
 			// Every service the updater touches gets this. Without it swarm
@@ -169,8 +183,8 @@ func (s *service) updateServiceImage(
 	if err != nil {
 		return hperrors.Wrap(err)
 	}
-	// Swarm undid it on its own. The service is still up, on the old image, and
-	// the update as a whole has not done what it was asked.
+	// Swarm undid it on its own. The service is still up, as it was, and the
+	// update as a whole has not done what it was asked.
 	if updated.UpdateStatus != nil && updated.UpdateStatus.State == swarm.UpdateStateRollbackCompleted {
 		_ = data.LogStore.Add(ctx,
 			tasklog.NewWarnFrame("service "+step.What+" is rolled back", tasklog.TsNow))

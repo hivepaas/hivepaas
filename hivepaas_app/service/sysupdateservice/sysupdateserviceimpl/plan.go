@@ -2,6 +2,7 @@ package sysupdateserviceimpl
 
 import (
 	"context"
+	"encoding/json"
 	"slices"
 
 	"github.com/moby/moby/api/types/swarm"
@@ -18,6 +19,8 @@ type planStep struct {
 	key   string
 	image string
 	fetch func(ctx context.Context) (*swarm.Service, error)
+	// align is the step's serviceImageUpdate.Align, if it has one.
+	align func(spec *swarm.ServiceSpec) bool
 }
 
 func (s *service) PlanUpdate(
@@ -28,7 +31,8 @@ func (s *service) PlanUpdate(
 	steps := []planStep{
 		{key: base.HivepaasDbKey, image: target.DbImage, fetch: s.hpAppService.GetHpDbSwarmService},
 		{key: base.HivepaasCacheKey, image: target.RedisImage, fetch: s.hpAppService.GetHpCacheSwarmService},
-		{key: base.HivepaasTraefikKey, image: target.TraefikImage, fetch: s.traefikService.GetTraefikSwarmService},
+		{key: base.HivepaasTraefikKey, image: target.TraefikImage, fetch: s.traefikService.GetTraefikSwarmService,
+			align: alignTraefik},
 	}
 	for _, app := range []struct{ key, image string }{
 		{base.HivepaasVictoriaLogsKey, target.VictoriaLogsImage},
@@ -56,11 +60,14 @@ func (s *service) PlanUpdate(
 		if err != nil {
 			return nil, hperrors.Wrap(err)
 		}
-		current, deployed := "", svc != nil
+		current, deployed, aligns := "", svc != nil, false
 		if deployed {
 			current = svc.Spec.TaskTemplate.ContainerSpec.Image
+			if aligns, err = wouldAlign(svc, step.align); err != nil {
+				return nil, hperrors.Wrap(err)
+			}
 		}
-		change := planComponent(step.key, current, deployed, step.image, target.BlockMajorUpgrade)
+		change := planComponent(step.key, current, deployed, step.image, aligns, target.BlockMajorUpgrade)
 		plan.Components = append(plan.Components, change)
 		plan.Blocked = plan.Blocked || change.Change == sysupdateservice.ChangeBlocked
 		plan.RequiresBackup = plan.RequiresBackup || change.RequiresBackup
@@ -77,13 +84,32 @@ func (s *service) PlanUpdate(
 	return plan, nil
 }
 
+// wouldAlign reports whether a step's Align would change the service, on a copy
+// of its spec: the plan changes nothing.
+func wouldAlign(svc *swarm.Service, align func(spec *swarm.ServiceSpec) bool) (bool, error) {
+	if align == nil {
+		return false, nil
+	}
+	b, err := json.Marshal(svc.Spec)
+	if err != nil {
+		return false, hperrors.Wrap(err)
+	}
+	var spec swarm.ServiceSpec
+	if err := json.Unmarshal(b, &spec); err != nil {
+		return false, hperrors.Wrap(err)
+	}
+	return align(&spec), nil
+}
+
 // planComponent decides what an update does to one component, by the rules
 // updateServiceImage applies: imageref.IsUpgrade for whether to move at all,
-// and the release's BlockMajorUpgrade for a move across a major.
+// the release's BlockMajorUpgrade for a move across a major, and whether the
+// step's Align would change the service, aligns, for one whose image stays.
 func planComponent(
 	key, current string,
 	deployed bool,
 	target string,
+	aligns bool,
 	blockMajor []string,
 ) *sysupdateservice.ComponentChange {
 	change := &sysupdateservice.ComponentChange{Key: key, CurrentImage: current, TargetImage: target}
@@ -100,6 +126,11 @@ func planComponent(
 	change.Reason = reason
 	if !apply {
 		change.Change = sysupdateservice.ChangeNone
+		if aligns {
+			change.Change = sysupdateservice.ChangeSettings
+			change.Reason = reason + "; its settings are brought to this release's, which restarts it"
+			change.InterruptsTraffic = key == base.HivepaasTraefikKey
+		}
 		return change
 	}
 

@@ -102,8 +102,9 @@ there first; OBI becomes an opt-in for what Traefik cannot see.
   VictoriaLogs 1.53.0 (2 CPUs), 750,000 lines, an app at 750 requests a second:
   its hour of HTTP numbers 3.36 s to 2.75 s, its request load 82 ms to 38 ms,
   the 51 apps' 95 ms to 56 ms, the stored size 61 MB to 27 MB. A system update
-  that moves Traefik's image brings an install's arguments to these, as a save
-  of Config Options does.
+  brings an install's arguments to these, as a save of Config Options does,
+  Traefik's image moving or not: the plan lists Traefik as restarting for its
+  settings (`ChangeSettings`) when the image stays.
 - **Traefik's log lines are labelled** so that a query matches them exactly,
   not by content and not by a container id that changes at each restart: the
   Traefik service's log options carry a HivePaaS identity, as an app's

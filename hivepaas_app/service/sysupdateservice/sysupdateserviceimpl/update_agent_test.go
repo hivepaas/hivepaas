@@ -84,12 +84,14 @@ func TestAgentUpdateSkipsAnInstallationWithoutOne(t *testing.T) {
 	assert.Empty(t, f.updated)
 }
 
+// fakeTraefik answers with svc; none deployed when nil.
 type fakeTraefik struct {
 	traefikservice.Service
+	svc *swarm.Service
 }
 
-func (fakeTraefik) GetTraefikSwarmService(_ context.Context) (*swarm.Service, error) {
-	return nil, nil
+func (f fakeTraefik) GetTraefikSwarmService(_ context.Context) (*swarm.Service, error) {
+	return f.svc, nil
 }
 
 // The plan the dashboard shows before an update lists the agent with the rest.

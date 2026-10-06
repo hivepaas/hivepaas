@@ -17,6 +17,7 @@ func TestPlanComponent(t *testing.T) {
 		current  string
 		deployed bool
 		target   string
+		aligns   bool
 		block    []string
 		change   sysupdateservice.Change
 		backup   bool
@@ -58,6 +59,16 @@ func TestPlanComponent(t *testing.T) {
 			change: sysupdateservice.ChangeUpdate, traffic: true,
 		},
 		{
+			name: "the proxy whose settings move restarts on the same image", key: base.HivepaasTraefikKey,
+			current: "traefik:v3.7.13", deployed: true, target: "traefik:v3.7.13", aligns: true,
+			change: sysupdateservice.ChangeSettings, traffic: true,
+		},
+		{
+			name: "an image moving takes the settings with it", key: base.HivepaasTraefikKey,
+			current: "traefik:v3.7.13", deployed: true, target: "traefik:v3.7.14", aligns: true,
+			change: sysupdateservice.ChangeUpdate, traffic: true,
+		},
+		{
 			name: "a component not running is not deployed", key: base.HivepaasRegistryKey,
 			target: "ghcr.io/project-zot/zot:v2.1.22",
 			change: sysupdateservice.ChangeNotDeployed,
@@ -70,7 +81,7 @@ func TestPlanComponent(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := planComponent(tt.key, tt.current, tt.deployed, tt.target, tt.block)
+			got := planComponent(tt.key, tt.current, tt.deployed, tt.target, tt.aligns, tt.block)
 
 			assert.Equal(t, tt.change, got.Change)
 			assert.Equal(t, tt.backup, got.RequiresBackup)

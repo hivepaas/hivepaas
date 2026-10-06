@@ -27,7 +27,7 @@ func (s *service) obiChange(
 	if err != nil {
 		return nil, err
 	}
-	return planComponent(base.HivepaasOBIKey, currentOBIImage(), deployed, target.OBIImage,
+	return planComponent(base.HivepaasOBIKey, currentOBIImage(), deployed, target.OBIImage, false,
 		target.BlockMajorUpgrade), nil
 }
 

@@ -30,6 +30,9 @@ const (
 	// ChangeNone leaves the component as it is: already on the image, or the
 	// image is not newer, or the release names none.
 	ChangeNone Change = "none"
+	// ChangeSettings leaves the component's image as it is, and brings the rest
+	// of its spec to what the release writes, which restarts it.
+	ChangeSettings Change = "settings"
 	// ChangeUpdate moves the component to a newer image of the same major.
 	ChangeUpdate Change = "update"
 	// ChangeMajor moves it across a major version.
@@ -52,7 +55,7 @@ type ComponentChange struct {
 	// RequiresBackup is a move made from the database backup: a postgres major
 	// loads the new cluster from it.
 	RequiresBackup bool
-	// InterruptsTraffic is a move that restarts the proxy every app is reached
-	// through, so apps are unreachable for a moment.
+	// InterruptsTraffic is a change that restarts the proxy every app is
+	// reached through, so apps are unreachable for a moment.
 	InterruptsTraffic bool
 }

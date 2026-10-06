@@ -24,13 +24,17 @@ func (s *service) updateTraefikService(
 		Fetch: func(ctx context.Context) (*swarm.Service, error) {
 			return s.traefikService.GetTraefikSwarmService(ctx)
 		},
-		// The image change restarts traefik anyway: its lines get its
-		// identity on the way, for its access log to be counted from, and
-		// the access log the release's form.
-		Mutate: func(spec *swarm.ServiceSpec) {
-			traefikservice.WithAccessLogIdentity(spec)
-			traefikservice.WithAccessLogArgs(spec)
-		},
+		Align: alignTraefik,
 	})
 	return hperrors.Wrap(err)
+}
+
+// alignTraefik brings traefik to what this release writes, its image moving or
+// not: its lines get its identity, for its access log to be counted from, and
+// the access log is written as the release writes it. It reports whether it
+// changed the spec.
+func alignTraefik(spec *swarm.ServiceSpec) bool {
+	marked := traefikservice.WithAccessLogIdentity(spec)
+	written := traefikservice.WithAccessLogArgs(spec)
+	return marked || written
 }

@@ -61555,7 +61555,7 @@
       "hpappdto.UpdateComponentResp" : {
         "properties" : {
           "change" : {
-            "description" : "Change is none, update, major, blocked or not-deployed.",
+            "description" : "Change is none, settings, update, major, blocked or not-deployed: settings\nkeeps the image, and restarts the component for what the release writes.",
             "type" : "string"
           },
           "currentImage" : {
@@ -62375,9 +62375,9 @@
         "type" : "object"
       },
       "hperrors.DisplayLevel" : {
-        "enum" : [ "medium", "high", "medium", "low" ],
+        "enum" : [ "high", "medium", "low", "medium" ],
         "type" : "string",
-        "x-enum-varnames" : [ "errVldDisplayLevel", "DisplayLevelHigh", "DisplayLevelMedium", "DisplayLevelLow" ]
+        "x-enum-varnames" : [ "DisplayLevelHigh", "DisplayLevelMedium", "DisplayLevelLow", "errVldDisplayLevel" ]
       },
       "hperrors.ErrorInfo" : {
         "properties" : {

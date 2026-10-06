@@ -1,6 +1,6 @@
 import { useController, useFormContext } from "react-hook-form";
 
-import { CronTimezoneNote, InfoBlock } from "@application/shared/components";
+import { BrowserTimezoneNote, CronTimezoneNote, InfoBlock } from "@application/shared/components";
 
 import { Field, FieldError, FieldGroup, Input } from "@/components/ui";
 import { DateTimePicker } from "@/components/ui/date-time-picker";
@@ -88,6 +88,7 @@ export function ScheduleFields() {
                             aria-invalid={isScheduleFromInvalid}
                             containerClassName="max-w-[400px]"
                         />
+                        <BrowserTimezoneNote />
                         <FieldError errors={[scheduleFromError]} />
                     </Field>
                 </FieldGroup>

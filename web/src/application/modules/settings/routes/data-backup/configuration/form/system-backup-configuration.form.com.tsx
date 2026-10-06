@@ -11,7 +11,14 @@ import { useNotificationSettingsSources, useSettingRevealSecrets } from "~/setti
 import { SYSTEM_BACKUP_SPEC_SECRETS, type SystemBackupSettings } from "~/system-settings/domain";
 import { SectionHeader } from "~/system-settings/module-shared";
 
-import { AppLink, Combobox, CronTimezoneNote, InfoBlock, NextRunsField } from "@application/shared/components";
+import {
+    AppLink,
+    BrowserTimezoneNote,
+    Combobox,
+    CronTimezoneNote,
+    InfoBlock,
+    NextRunsField,
+} from "@application/shared/components";
 import { DEFAULT_PAGINATED_DATA, ROUTE } from "@application/shared/constants";
 import { ESettingStatus } from "@application/shared/enums";
 import { NotificationSettings } from "@application/shared/form";
@@ -202,6 +209,7 @@ function GeneralFields({ nextRuns }: { nextRuns: Date[] }) {
                                 aria-invalid={isScheduleFromInvalid}
                                 containerClassName="max-w-[400px]"
                             />
+                            <BrowserTimezoneNote />
                             <FieldError errors={[scheduleFromError]} />
                         </Field>
                     </FieldGroup>

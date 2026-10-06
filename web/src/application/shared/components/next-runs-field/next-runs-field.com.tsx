@@ -4,7 +4,7 @@ import { dashedBorderBox } from "@lib/styles";
 import { cn } from "@lib/utils";
 import { ChevronDown } from "lucide-react";
 
-import { formatInTimezone, useInstallationTimezone } from "@application/shared/hooks";
+import { formatInTimezone, shownTimezone, useInstallationTimezone } from "@application/shared/hooks";
 
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui";
 
@@ -12,8 +12,9 @@ import { InfoBlock } from "../info-block";
 
 function View({ nextRuns, titleWidth }: Props) {
     const [open, setOpen] = useState(false);
-    // On the installation's clocks, the ones a schedule's hours are read on.
-    const timezone = useInstallationTimezone();
+    // On the installation's clocks, the ones a schedule's hours are read on -
+    // or UTC's, and said so, where this browser does not know its zone.
+    const timezone = shownTimezone(useInstallationTimezone());
 
     if (nextRuns.length === 0) {
         return null;

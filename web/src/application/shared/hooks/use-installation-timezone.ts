@@ -11,6 +11,18 @@ export function useInstallationTimezone(): string {
 }
 
 /**
+ * The timezone times can be shown in here: the one given, or UTC for a zone this browser does not know.
+ */
+export function shownTimezone(timeZone: string): string {
+    try {
+        new Intl.DateTimeFormat("en-US", { timeZone });
+        return timeZone;
+    } catch {
+        return "UTC";
+    }
+}
+
+/**
  * A time as yyyy-MM-dd HH:mm:ss on the clocks of a timezone; in UTC for a zone this browser does not know.
  */
 export function formatInTimezone(date: Date, timeZone: string): string {

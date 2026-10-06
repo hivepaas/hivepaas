@@ -2,10 +2,12 @@ package syscleanupserviceimpl
 
 import (
 	"context"
+	"database/sql"
 	"errors"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/uptrace/bun"
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
@@ -55,13 +57,45 @@ func (u *updateTasks) ListByTarget(context.Context, database.IDB, string, *based
 	return nil, nil, nil
 }
 
+// ownDB is the service's own database: each transaction's function runs, and
+// one that returns nil commits.
+type ownDB struct {
+	database.IDB
+	committed int
+}
+
+func (d *ownDB) RunInTx(ctx context.Context, _ *sql.TxOptions, fn func(context.Context, bun.Tx) error) error {
+	if err := fn(ctx, bun.Tx{}); err != nil {
+		return err
+	}
+	d.committed++
+	return nil
+}
+
+// taskTx is the cleanup task's transaction, which the sync must not run in: a
+// lock taken there is held until the whole cleanup commits.
+type taskTx struct {
+	database.IDB
+	used int
+}
+
+func (d *taskTx) RunInTx(ctx context.Context, _ *sql.TxOptions, fn func(context.Context, bun.Tx) error) error {
+	d.used++
+	return fn(ctx, bun.Tx{})
+}
+
+// schedulingQueue records the tasks scheduled, and how many of the sync's
+// transactions had committed when each call came.
 type schedulingQueue struct {
 	queue.TaskQueue
-	scheduled []*entity.Task
+	db          *ownDB
+	scheduled   []*entity.Task
+	committedAt []int
 }
 
 func (q *schedulingQueue) ScheduleTask(_ context.Context, tasks ...*entity.Task) error {
 	q.scheduled = append(q.scheduled, tasks...)
+	q.committedAt = append(q.committedAt, q.db.committed)
 	return nil
 }
 
@@ -86,6 +120,7 @@ func syncData(settings *entity.SystemCleanup) *sysCleanupData {
 
 type syncFixture struct {
 	svc      *service
+	db       *ownDB
 	logging  *syncingLogging
 	registry *syncingRegistry
 	queue    *schedulingQueue
@@ -95,20 +130,24 @@ type syncFixture struct {
 }
 
 func newSyncFixture() *syncFixture {
+	db := &ownDB{}
 	f := &syncFixture{
+		db:       db,
 		logging:  &syncingLogging{resp: &loggingservice.SyncResp{}},
 		registry: &syncingRegistry{resp: &registryservice.SyncResp{}},
-		queue:    &schedulingQueue{}, cache: &obiCache{}, audit: &recordingAudit{}, tasks: &updateTasks{},
+		queue:    &schedulingQueue{db: db}, cache: &obiCache{}, audit: &recordingAudit{}, tasks: &updateTasks{},
 	}
-	f.svc = &service{loggingService: f.logging, registryService: f.registry, taskQueue: f.queue,
+	f.svc = &service{db: db, loggingService: f.logging, registryService: f.registry, taskQueue: f.queue,
 		obiSettings: f.cache, auditService: f.audit, taskRepo: f.tasks}
 	return f
 }
 
-// What the features did is recorded and logged; their deployments are
-// scheduled - and the agents told to read OBI's settings again - only once the
-// task's transaction commits; a removal is recorded as a person's is.
-func TestSystemAppsSyncSchedulesOnceCommitted(t *testing.T) {
+// Each feature syncs in a transaction of its own, not the cleanup's: the
+// settings it locks are held for its sync alone, not while the rest of the
+// cleanup prunes the nodes. What the features did is recorded and logged; their
+// deployments are scheduled - and the agents told to read OBI's settings again
+// - once its transaction commits; a removal is recorded as a person's is.
+func TestSystemAppsSyncCommitsEachFeatureApartFromTheCleanup(t *testing.T) {
 	f := newSyncFixture()
 	f.logging.resp = &loggingservice.SyncResp{
 		Apps: []*entity.SystemAppSyncOutput{
@@ -121,17 +160,19 @@ func TestSystemAppsSyncSchedulesOnceCommitted(t *testing.T) {
 	f.registry.resp = &registryservice.SyncResp{Tasks: []*entity.Task{{ID: "deploy-r"}},
 		App: &entity.SystemAppSyncOutput{Key: "registry", Name: "Registry", Action: entity.SystemAppSyncUpdated}}
 	data := syncData(&entity.SystemCleanup{})
+	task := &taskTx{}
 
-	err, attention := f.svc.sysSyncSystemApps(context.Background(), savepointDB{}, data)
+	err, attention := f.svc.sysSyncSystemApps(context.Background(), task, data)
 	assert.NoError(t, err)
 	assert.NoError(t, attention)
 
+	assert.Zero(t, task.used, "nothing in the cleanup's transaction")
+	assert.Equal(t, 2, f.db.committed, "a transaction a feature")
 	assert.Len(t, data.TaskOutput.SystemApps.Apps, 4)
-	assert.Empty(t, f.queue.scheduled, "not before the commit")
-	assert.Zero(t, f.cache.invalidated)
-	data.OnPostTxFunc()
 	assert.Len(t, f.queue.scheduled, 2)
+	assert.Equal(t, []int{1, 2}, f.queue.committedAt, "each feature's, once it committed")
 	assert.Equal(t, 1, f.cache.invalidated)
+	assert.Nil(t, data.OnPostTxFunc, "not left for the cleanup's commit")
 	if assert.Len(t, f.audit.entries, 2) {
 		assert.Equal(t, base.AuditLogTypeAppDelete, f.audit.entries[0].Type)
 		assert.Equal(t, "a2", f.audit.entries[0].ResID)
@@ -162,7 +203,8 @@ func TestSystemAppsSyncRollsBackAFailingFeatureAlone(t *testing.T) {
 		assert.Equal(t, entity.SystemAppSyncFailed, apps[0].Action)
 		assert.Equal(t, "registry", apps[1].Key)
 	}
-	assert.Nil(t, data.OnPostTxFunc, "nothing of the failed feature is scheduled")
+	assert.Equal(t, 1, f.db.committed, "the registry's alone")
+	assert.Empty(t, f.queue.scheduled, "nothing of the failed feature is scheduled")
 }
 
 // What is left to a person fails the run, for its notification to say so.

@@ -73,11 +73,6 @@ test("an invited member signs up, and sees only the project given", async ({ pag
 });
 
 test("a disabled member is turned away at sign-in", async ({ page, api, cleanup, browser }) => {
-    test.fail(
-        true,
-        "Known bug: a disabled user still signs in - login answers 200 with a session, and only the calls " +
-            "after it say 'User is unavailable'. Remove this once sign-in refuses them.",
-    );
     const project = await createProject(api, e2eName("disabled-project"));
     cleanup(() => deleteProject(api, project.id));
     cleanup(() => deleteUsersByEmail(api, `${e2eName("disabled")}@example.com`));

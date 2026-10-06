@@ -17,7 +17,7 @@ test.describe("projects", () => {
         await page.getByRole("button", { name: "New Project", exact: true }).click();
         await page.getByRole("menuitem", { name: "Empty project" }).click();
         const dialog = page.getByRole("dialog", { name: "Create Project" });
-        await dialog.getByPlaceholder("E.g. My Project").fill(name);
+        await dialog.getByRole("textbox", { name: "Name *" }).fill(name);
         await dialog.getByRole("button", { name: "Create Project" }).click();
 
         await expect(page.getByText("Project created successfully")).toBeVisible();
@@ -46,7 +46,7 @@ test.describe("projects", () => {
         await page.getByRole("button", { name: "New Project", exact: true }).click();
         await page.getByRole("menuitem", { name: "Empty project" }).click();
         const dialog = page.getByRole("dialog", { name: "Create Project" });
-        await dialog.getByPlaceholder("E.g. My Project").fill(existing.name);
+        await dialog.getByRole("textbox", { name: "Name *" }).fill(existing.name);
         await dialog.getByRole("button", { name: "Create Project" }).click();
 
         await expect(page.getByText("Project already exists")).toBeVisible();

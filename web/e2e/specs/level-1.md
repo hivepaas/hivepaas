@@ -22,19 +22,16 @@ level 2; Traefik and HivePaaS routing and security (they can restart the proxy)
 
 - level 4.
 
-## Found while writing them (2026-10-06)
+## Found while writing them (2026-10-06), and fixed
 
-- **A disabled user still signs in**: `login-with-password` answers 200 with a
-  session, and only the calls after it say "User is unavailable". The test is
-  marked `test.fail`; remove the mark once sign-in refuses them.
-- **An API key needs an expiration the form does not ask for**: Create Key
-  without a date fails with "Param 'expireAt': Value is required".
-- **An unknown API key answers 412** (`ERR_API_KEY_INVALID`), where no
-  credentials answer 401.
-- **A Data Cleanup interval that is not one** fails with a bare "Bad request",
-  naming no field.
-- **Accessibility**: the delete confirmations have no accessible name (found by
-  their heading); the copy buttons beside an API key's ID and secret have no
-  name; the Create Project dialog's name field is named only by its
-  placeholder. Fields laid out with `InfoBlock` had no name either: fixed with
-  these tests, the block is now a group named by its title.
+- **A disabled user still signed in**: login answered 200 with a session.
+  Sign-in now refuses an account that is not active or has expired, on every
+  way in (backend `createSession`).
+- **An API key needed an expiration the form did not ask for**: the form now
+  requires one, within a year, as the server does.
+- **An unknown API key answered 412**: it answers 401 now, as no credentials do.
+- **An interval or retention that is not a duration** failed with a bare "Bad
+  request": the settings forms now say so at the field.
+- **Accessibility**: confirmations name their dialog by their title; the copy
+  buttons beside an API key's ID and secret are named; Create Project's name
+  field is labelled; fields laid out with `InfoBlock` are named by their title.

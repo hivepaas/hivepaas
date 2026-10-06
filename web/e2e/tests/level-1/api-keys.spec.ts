@@ -32,14 +32,33 @@ test("an API key answers once made, shows its secret once, and stops once delete
         await page.goto("/current-user/api-keys/");
         await page.getByRole("row").filter({ hasText: name }).getByRole("button", { name: "Actions menu" }).click();
         await page.getByRole("menu").getByRole("button", { name: "Delete" }).click();
-        await page.getByRole("dialog").getByRole("button", { name: "Delete" }).click();
+        // The row leaves the table before the server is done: wait for the
+        // server, not the row.
+        const deleted = page.waitForResponse(
+            res => res.request().method() === "DELETE" && res.url().includes("/settings/api-keys/"),
+        );
+        await page.getByRole("dialog", { name: "Delete Item" }).getByRole("button", { name: "Delete" }).click();
+        expect((await deleted).ok()).toBe(true);
 
         await expect(page.getByRole("row").filter({ hasText: name })).toHaveCount(0);
-        // Refused as a key it does not know. (It answers 412, not 401.)
         const refused = await withKey.get("projects");
-        expect(refused.ok()).toBe(false);
+        expect(refused.status()).toBe(401);
         expect(((await refused.json()) as { code: string }).code).toBe("ERR_API_KEY_INVALID");
     } finally {
         await withKey.dispose();
     }
+});
+
+test("a key is asked for when it expires before anything is sent", async ({ page }) => {
+    const sent: string[] = [];
+    page.on("request", req => {
+        if (req.method() === "POST" && req.url().includes("/settings/api-keys")) sent.push(req.url());
+    });
+    await page.goto("/current-user/api-keys/create/");
+
+    await page.getByRole("textbox", { name: "Enter API key name" }).fill(e2eName("api-key-undated"));
+    await page.getByRole("button", { name: "Create Key" }).click();
+
+    await expect(page.getByRole("group", { name: /^Access Expiration/ })).toContainText("Choose when the key expires");
+    expect(sent).toEqual([]);
 });

@@ -23,18 +23,21 @@ test.describe("Data Cleanup settings", () => {
         await expect(syncApps).not.toBeChecked();
     });
 
-    test("an interval that is not one is refused, and not kept", async ({ page, api, cleanup }) => {
-        const saved = await cleanupSettings(api);
-        cleanup(() => restoreCleanupSettings(api, saved));
+    test("an interval or a retention that is not a duration is caught in the form", async ({ page }) => {
+        const sent: string[] = [];
+        page.on("request", req => {
+            if (req.method() === "PUT" && req.url().includes("/system/settings/cleanup")) sent.push(req.url());
+        });
         await page.goto("/settings/data-cleanup/configuration/");
-        const interval = page.getByRole("group", { name: "Scheduling Interval" }).getByRole("textbox");
-        const before = await interval.inputValue();
+        const interval = page.getByRole("group", { name: "Scheduling Interval" });
+        const retention = page.getByRole("group", { name: "Audit Logs Retention" });
 
-        await interval.fill("every day");
+        await interval.getByRole("textbox").fill("every day");
+        await retention.getByRole("textbox").fill("three months");
         await page.getByRole("button", { name: "Save" }).click();
 
-        await expect(page.getByText("Failed to update system cleanup settings")).toBeVisible();
-        await page.reload();
-        await expect(interval).toHaveValue(before);
+        await expect(interval).toContainText("Use a duration such as 1d, 12h or 1h30m");
+        await expect(retention).toContainText("Use a duration such as 1d, 12h or 1h30m");
+        expect(sent).toEqual([]);
     });
 });

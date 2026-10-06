@@ -94,10 +94,7 @@ for (const kind of KINDS) {
 
         await renamedRow.getByRole("button", { name: "Actions menu" }).click();
         await page.getByRole("menu").getByRole("button", { name: "Delete" }).click();
-        // The confirmation has no name of its own: found by its heading.
-        const dialog = page
-            .getByRole("dialog")
-            .filter({ has: page.getByRole("heading", { name: `Delete ${kind.noun}` }) });
+        const dialog = page.getByRole("dialog", { name: `Delete ${kind.noun}` });
         await dialog.getByRole("button", { name: "Delete" }).click();
 
         await expect(page.getByText(`${Noun} deleted successfully`)).toBeVisible();

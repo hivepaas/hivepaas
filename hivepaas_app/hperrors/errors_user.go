@@ -43,5 +43,7 @@ var (
 
 // Errors for api client
 var (
-	ErrAPIKeyInvalid = NewErr(ErrValueInvalid, "ERR_API_KEY_INVALID")
+	// ErrAPIKeyInvalid is a key nobody knows, switched off, or with the wrong
+	// secret: the caller is not authenticated, as with no credentials at all.
+	ErrAPIKeyInvalid = NewErr(ErrUnauthorized, "ERR_API_KEY_INVALID")
 )

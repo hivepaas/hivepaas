@@ -418,13 +418,14 @@ func releaseImage() string {
 }
 
 // ensure runs OBI with a configuration: the one running is kept when it was
-// made with it, in this agent's network namespace; otherwise it is replaced.
+// made with it - and with the capabilities the node's kernel asks for - in
+// this agent's network namespace; otherwise it is replaced.
 // The image is pulled first, while the one running still runs: a new
 // release's OBI stops the numbers only for the swap. The image the old one ran
 // is left to the system cleanup, which prunes the nodes' unused images daily -
 // or keeps them, when an administrator says so.
 func (uc *UC) ensure(ctx context.Context, config []byte) error {
-	hash := obi.ConfigHash(uc.image, config)
+	hash := obi.ConfigHash(uc.image, uc.preflight.PerfRestricted, config)
 	if uc.agentID == "" {
 		id, err := uc.selfContainerID(ctx)
 		if err != nil {
@@ -454,7 +455,7 @@ func (uc *UC) ensure(ctx context.Context, config []byte) error {
 		}
 	}
 	created, err := uc.dockerManager.ContainerCreate(ctx, func(opts *client.ContainerCreateOptions) {
-		*opts = obi.ContainerOptions(uc.image, uc.agentID, hash)
+		*opts = obi.ContainerOptions(uc.image, uc.agentID, hash, uc.preflight.PerfRestricted)
 	})
 	if err != nil {
 		return hperrors.Wrap(err)

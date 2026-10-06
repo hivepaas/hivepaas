@@ -40,6 +40,11 @@ type Preflight struct {
 	MemAvailableMB int      `json:"memAvailableMb,omitempty"`
 	Recommended    Capacity `json:"recommended"`
 	Capacity       Capacity `json:"capacity"`
+	// PerfRestricted is perf_event_paranoid above 2, where Debian's kernels -
+	// and Ubuntu's before December 2025 - allow perf events to CAP_SYS_ADMIN
+	// alone, CAP_PERFMON not enough: OBI is then given CAP_SYS_ADMIN. The
+	// agent's, not the status row's.
+	PerfRestricted bool `json:"-"`
 }
 
 // Check reads a node's filesystem, mounted at root - the agent's /host - for
@@ -64,6 +69,7 @@ func Check(root string, running bool, capacity Capacity) Preflight {
 	if strings.Contains(readTrimmed(filepath.Join(root, "sys/kernel/security/lockdown")), "[confidentiality]") {
 		p.Reasons = append(p.Reasons, ReasonLockdown)
 	}
+	p.PerfRestricted = perfRestricted(readTrimmed(filepath.Join(root, "proc/sys/kernel/perf_event_paranoid")))
 	meminfo := filepath.Join(root, "proc/meminfo")
 	p.MemTotalMB, p.MemAvailableMB = memInfoMB(meminfo, "MemTotal:"), memInfoMB(meminfo, "MemAvailable:")
 	p.Recommended = Recommended(p.MemTotalMB)
@@ -88,6 +94,14 @@ func kernelAtLeast(release string, major, minor int) bool {
 		return true
 	}
 	return ma > major || (ma == major && mi >= minor)
+}
+
+// perfRestricted reads perf_event_paranoid: above 2, perf events are
+// restricted further than upstream's levels go. One unreadable is not: it is
+// OBI's to log, then.
+func perfRestricted(paranoid string) bool {
+	level, err := strconv.Atoi(paranoid)
+	return err == nil && level > 2 //nolint:mnd // upstream's highest level
 }
 
 // containerVirt is whether the node is a container: OpenVZ's /proc/vz without

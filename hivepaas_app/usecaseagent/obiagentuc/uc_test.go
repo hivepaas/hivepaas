@@ -399,6 +399,23 @@ func TestReconcileSizesOBIByTheNodesCapacity(t *testing.T) {
 	assert.Contains(t, w.docker.config, "global_scale_factor: -2")
 }
 
+// On a node whose kernel restricts perf events, OBI is given CAP_SYS_ADMIN, or
+// it attaches no probe; once they are restricted no more, it is replaced
+// without.
+func TestReconcileGivesOBISysAdminWherePerfEventsAreRestricted(t *testing.T) {
+	w := newWorld(t, "node-1")
+	paranoid := filepath.Join(w.uc.root, "proc/sys/kernel/perf_event_paranoid")
+	assert.NoError(t, os.WriteFile(paranoid, []byte("3\n"), 0o600))
+	assert.NoError(t, w.uc.Reconcile(context.Background()))
+	assert.Contains(t, w.docker.obi.HostConfig.CapAdd, "CAP_SYS_ADMIN")
+
+	assert.NoError(t, os.WriteFile(paranoid, []byte("2\n"), 0o600))
+	w.uc.preflightAt = time.Time{}
+	assert.NoError(t, w.uc.Reconcile(context.Background()))
+	assert.Equal(t, 2, w.docker.created, "replaced")
+	assert.NotContains(t, w.docker.obi.HostConfig.CapAdd, "CAP_SYS_ADMIN")
+}
+
 // clock is a time a test moves.
 type clock struct{ at time.Time }
 

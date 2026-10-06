@@ -148,6 +148,30 @@ wait for the next wake-up: a scrape later, not lost.
   The capacities' figures are a 1-vCPU node's. The container's limit is
   512 MiB.
 
+## Found on Debian 13 (2026-10-06)
+
+A node on Debian 13 (kernel 6.12.111+deb13-cloud-amd64) ran OBI, preflight
+said ok, and two opted-in apps got no routes and no calls for a day. OBI's log:
+
+- `creating perf_kprobe PMU ... opening perf event: permission denied`;
+- `creating tracefs kprobe ... open /sys/kernel/tracing/kprobe_events:
+  permission denied`;
+- `Unable to load eBPF watcher for process events`: no process found, nothing
+  instrumented, the container running all the same.
+
+Debian's kernel carries a patch that, with `kernel.perf_event_paranoid` above
+2 (Debian's default is 3), allows `perf_event_open` to `CAP_SYS_ADMIN` alone:
+`CAP_PERFMON` is not enough. Ubuntu carried the same check at its level 4 and
+changed it to `CAP_PERFMON` in December 2025 (Launchpad #2131046; noble from
+6.8.0-91), which is why step 0 did not meet it.
+
+As built: preflight reads `perf_event_paranoid`, and above 2 OBI is given
+`CAP_SYS_ADMIN` too - still not privileged. The configuration's hash covers
+it: a node where the value changes gets another OBI at the next preflight.
+On an Ubuntu kernel that accepts `CAP_PERFMON` this gives more than is
+needed; OBI already holds the Docker socket, which is more. Not yet built:
+saying so when OBI runs but instruments nothing, for another cause.
+
 ## Design
 
 ### Shape
@@ -318,7 +342,8 @@ with today's names.
 - **OBI is beta (0.x)**: the image is pinned, and the agent's mapping is tested
   against recorded scrapes of that version's Prometheus endpoint.
 - **Kernels**: older ones, and container-based VPS, get nothing. Preflight
-  says so.
+  says so. Kernels that restrict perf events further than upstream (Debian,
+  `perf_event_paranoid` 3) need `CAP_SYS_ADMIN`, given there (above).
 - **Restarts** lose a few seconds of numbers. With `container_name` selection
   they happen only when the set of apps changes.
 - **Peers named by today's IPs** (above).

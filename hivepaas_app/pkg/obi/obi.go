@@ -8,6 +8,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"path"
+	"slices"
 	"sort"
 	"strconv"
 	"strings"
@@ -56,6 +57,18 @@ var capabilities = []string{
 	"CAP_BPF", "CAP_PERFMON", "CAP_SYS_PTRACE", "CAP_NET_RAW", "CAP_DAC_READ_SEARCH", "CAP_CHECKPOINT_RESTORE",
 }
 
+// capabilitiesOf are OBI's capabilities on a node: CAP_SYS_ADMIN too where
+// the kernel restricts perf events (Preflight.PerfRestricted). Without it
+// there, OBI attaches no probe - neither through perf events nor through
+// tracefs - and measures nothing, though it runs: measured on Debian 13,
+// kernel 6.12, perf_event_paranoid 3.
+func capabilitiesOf(perfRestricted bool) []string {
+	if !perfRestricted {
+		return slices.Clone(capabilities)
+	}
+	return append(slices.Clone(capabilities), "CAP_SYS_ADMIN")
+}
+
 // Patterns are the container names OBI watches: every task's container of the
 // apps given by their swarm services' names, `<service>.<slot>.<task>`. A
 // service's name holds no dot, so one never matches another's.
@@ -90,9 +103,9 @@ func Config(patterns []string, capacity Capacity) []byte {
 // ConfigHash names what an OBI container is made with: its image and its
 // options - its memory, its capabilities, its mounts - and its configuration.
 // One made otherwise - another release's OBI, an agent from before, other
-// apps - is replaced.
-func ConfigHash(image string, config []byte) string {
-	return hashOf(ContainerOptions(image, "", ""), config)
+// apps, a node whose perf events are restricted no more - is replaced.
+func ConfigHash(image string, perfRestricted bool, config []byte) string {
+	return hashOf(ContainerOptions(image, "", "", perfRestricted), config)
 }
 
 func hashOf(opts client.ContainerCreateOptions, config []byte) string {
@@ -109,9 +122,11 @@ func hashOf(opts client.ContainerCreateOptions, config []byte) string {
 //     on localhost, and to be gone when the agent is;
 //   - tracefs and debugfs, and the Docker socket read-only, to name the
 //     containers it is told to watch;
-//   - the capabilities above, not privileged;
+//   - the capabilities above - CAP_SYS_ADMIN too where the kernel restricts
+//     perf events - not privileged;
 //   - its memory bounded, and its own log lines marked as OBI's.
-func ContainerOptions(image, agentContainerID, configHash string) client.ContainerCreateOptions {
+func ContainerOptions(image, agentContainerID, configHash string, perfRestricted bool,
+) client.ContainerCreateOptions {
 	return client.ContainerCreateOptions{
 		Name: ContainerName,
 		Config: &container.Config{
@@ -129,7 +144,7 @@ func ContainerOptions(image, agentContainerID, configHash string) client.Contain
 		HostConfig: &container.HostConfig{
 			PidMode:     "host",
 			NetworkMode: container.NetworkMode("container:" + agentContainerID),
-			CapAdd:      capabilities,
+			CapAdd:      capabilitiesOf(perfRestricted),
 			Binds: []string{
 				"/sys/kernel/tracing:/sys/kernel/tracing",
 				"/sys/kernel/debug:/sys/kernel/debug",

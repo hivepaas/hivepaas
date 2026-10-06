@@ -19,6 +19,9 @@ x-hivepaas-env: &hivepaas-env
   HP_CONFIG_FILE: config/config.${HIVEPAAS_APP_ENV:?}.toml
   HP_ROOT_DOMAIN: ${HIVEPAAS_ROOT_DOMAIN:?}
   HP_APP_DOMAIN: ${HIVEPAAS_APP_DOMAIN:?}
+  # The installation's timezone, the hours a schedule is read in. UTC for one
+  # installed before the installer asked.
+  HP_TIMEZONE: ${HIVEPAAS_TIMEZONE:-UTC}
   HP_STORAGE_HOST_DIR: ${HIVEPAAS_DATA_DIR:?}
   HP_STORAGE_PROJECT_DATA_HOST_DIR: ${HIVEPAAS_PROJECT_DATA_DIR:?}
   HP_DB_HOST: db

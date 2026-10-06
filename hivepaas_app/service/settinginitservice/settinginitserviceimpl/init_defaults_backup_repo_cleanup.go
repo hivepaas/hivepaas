@@ -42,7 +42,7 @@ func (s *service) initDefaultBackupRepoCleanup(
 	cleanup := &entity.BackupRepoCleanup{
 		Schedule: entity.SchedJobSchedule{
 			Interval:    backupRepoCleanupInterval,
-			InitialTime: time.Date(timeNow.Year(), timeNow.Month(), timeNow.Day(), 1, 30, 0, 0, time.UTC),
+			InitialTime: dailyJobOf(base.SettingTypeBackupRepoCleanup).startIn(timeNow, timeutil.Location()),
 		},
 		Notification: &entity.BaseEventNotification{},
 	}

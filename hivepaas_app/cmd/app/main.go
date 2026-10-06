@@ -36,6 +36,7 @@ func main() {
 		fx.Invoke(internal.DashboardCertOnFirstBoot),
 		// After InitTaskQueue, for the same reason.
 		fx.Invoke(internal.RegistryAuthRenewalOnStart),
+		fx.Invoke(internal.DailyJobsTimezoneOnStart),
 		fx.Invoke(internal.TraefikRouteNamesOnStart),
 		// After InitTaskQueue: the heartbeat must not vouch for a worker whose
 		// queue has not started.

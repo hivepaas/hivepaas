@@ -125,6 +125,17 @@ func (s *SchedJobSchedule) ParseCronExpr() (cron.Schedule, error) {
 	return sched, nil
 }
 
+// cronLocation is where a cron expression's hours are read: in the zone of the
+// initial time when it was given with an offset of its own - an API client's
+// 2026-09-27T00:00:00+07:00 - and otherwise, for one in UTC as the dashboard
+// gives it, in the installation's timezone, daylight saving and all.
+func (s *SchedJobSchedule) cronLocation() *time.Location {
+	if _, offset := s.InitialTime.Zone(); offset != 0 {
+		return s.InitialTime.Location()
+	}
+	return timeutil.Location()
+}
+
 // CalcNextRuns is the next count runs from fromTime. A job without a schedule
 // has none: it runs only by hand or as a step of a job sequence.
 func (s *SchedJobSchedule) CalcNextRuns(fromTime time.Time, count int) (res []time.Time, err error) {
@@ -167,6 +178,9 @@ func (s *SchedJobSchedule) calcNextRuns(fromTime time.Time, count int) (res []ti
 		if err != nil {
 			return nil, hperrors.Wrap(err)
 		}
+		// Next reads the expression's hours in the location of the time it is
+		// given: see cronLocation.
+		nextRunAt = nextRunAt.In(s.cronLocation())
 		for {
 			nextRunAt = cronSched.Next(nextRunAt)
 			if !s.EndTime.IsZero() && nextRunAt.After(s.EndTime) {
@@ -228,6 +242,9 @@ func (s *SchedJobSchedule) calcNextRunsInRange(fromTime, toTime time.Time) (res 
 		if err != nil {
 			return nil, hperrors.Wrap(err)
 		}
+		// Next reads the expression's hours in the location of the time it is
+		// given: see cronLocation.
+		nextRunAt = nextRunAt.In(s.cronLocation())
 		for {
 			nextRunAt = cronSched.Next(nextRunAt)
 			if !s.EndTime.IsZero() && nextRunAt.After(s.EndTime) {

@@ -6,6 +6,8 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/assert"
+
+	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/timeutil"
 )
 
 func Test_LoadConfig(t *testing.T) {
@@ -102,4 +104,39 @@ func TestAgentRepoServerDefaults(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, "256MiB", cfg.Agent.RepoServer.MemLimit)
 	assert.Equal(t, 30*time.Second, cfg.Agent.RepoServer.StartTimeout)
+}
+
+// The timezone is UTC unless given; given, schedules are read in it from then
+// on. A name that is no zone stops the start.
+func TestTimezone(t *testing.T) {
+	t.Cleanup(func() {
+		SetCurrent(nil)
+		timeutil.SetLocation(nil)
+	})
+	// A load takes the HP_ variables out of the process: each is given again.
+	load := func(timezone string) (*Config, error) {
+		t.Setenv("HP_CONFIG_FILE", "testdata/config.myenv.toml")
+		if timezone != "" {
+			t.Setenv("HP_TIMEZONE", timezone)
+		}
+		SetCurrent(nil)
+		return LoadConfig()
+	}
+
+	cfg, err := load("")
+	if assert.NoError(t, err) {
+		assert.Equal(t, "UTC", cfg.Timezone)
+		assert.Equal(t, time.UTC, cfg.Location())
+	}
+
+	cfg, err = load("Asia/Ho_Chi_Minh")
+	if assert.NoError(t, err) {
+		assert.Equal(t, "Asia/Ho_Chi_Minh", cfg.Location().String())
+		assert.Equal(t, "Asia/Ho_Chi_Minh", timeutil.Location().String())
+	}
+
+	for _, name := range []string{"Mars/Olympus_Mons", "Local", "+07:00"} {
+		_, err = load(name)
+		assert.ErrorIs(t, err, ErrTimezoneInvalid, name)
+	}
 }

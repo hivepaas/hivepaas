@@ -154,10 +154,12 @@ func sysInstallationInitData(
 		}
 
 		sysStatus.NextStep = base.InstallationStepGetStarted
+		// The daily jobs were just given their times of day in it.
+		sysStatus.ScheduleTimezone = timeutil.Location().String()
 		sysStatus.UpdateVer++
 		sysStatus.UpdatedAt = timeutil.NowUTC()
-		err = sysStatusRepo.Upsert(ctx, db, sysStatus,
-			entity.SystemStatusUpsertingConflictCols, entity.SystemStatusUpsertingUpdateCols)
+		err = sysStatusRepo.Upsert(ctx, db, sysStatus, entity.SystemStatusUpsertingConflictCols,
+			append([]string{"schedule_timezone"}, entity.SystemStatusUpsertingUpdateCols...))
 		if err != nil {
 			return fmt.Errorf("failed to save system status: %w", err)
 		}

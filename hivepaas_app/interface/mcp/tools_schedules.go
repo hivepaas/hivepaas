@@ -11,13 +11,15 @@ import (
 func scheduleDescs(prefix string) map[string]string {
 	return map[string]string{
 		prefix + "cronExpr": "a cron expression - minute, hour, day of month, month, day of week, such as " +
-			"0 3 * * 1-5 - or a descriptor such as @daily, @hourly or @every 90m; read in the time zone of " +
-			"initialTime. Give it or interval, not both",
+			"0 3 * * 1-5 - or a descriptor such as @daily, @hourly or @every 90m; read at the offset of " +
+			"initialTime, or, for an initialTime in UTC, in the installation's timezone (sessions/me's " +
+			"timezone). Give it or interval, not both",
 		prefix + "interval": "instead of cronExpr: a duration such as 90m, 12h or 1d; the runs are initialTime, " +
 			"then every interval after it",
-		prefix + "initialTime": "when the schedule starts, RFC 3339 - its offset is the zone cronExpr is read " +
-			"in, such as 2026-09-27T00:00:00+07:00; a fixed offset, so no daylight saving. Now, in UTC, " +
-			"when not given; not more than a year ago",
+		prefix + "initialTime": "when the schedule starts, RFC 3339. An offset other than UTC is the zone " +
+			"cronExpr is read in, such as 2026-09-27T00:00:00+07:00 - a fixed offset, so no daylight saving; " +
+			"in UTC, cronExpr is read in the installation's timezone. Now, in UTC, when not given; not more " +
+			"than a year ago",
 	}
 }
 
@@ -28,8 +30,9 @@ func explainScheduleTool() Tool {
 	descs["count"] = "how many runs to answer, 1-10"
 	return readToolWith("explain_schedule", "Explain a schedule",
 		"POST /settings/sched-jobs/calc-next-runs. The next runs of a cron expression or an interval from "+
-			"initialTime, as HivePaaS computes them for a scheduled job: data is their times, in the offset "+
-			"of initialTime. Use it to check a schedule before setting it up.",
+			"initialTime, as HivePaaS computes them for a scheduled job: data is their times, at the offset "+
+			"cronExpr is read at - initialTime's, or the installation's timezone. Use it to check a schedule "+
+			"before setting it up.",
 		bodyInput(underNothing, &schedjobdto.CalcNextRunsReq{}, descs, []string{"count"},
 			"endTime"), // taken, but not applied to the runs answered
 		func(ctx context.Context, call *Call, in map[string]any) (*schedjobdto.CalcNextRunsResp, error) {

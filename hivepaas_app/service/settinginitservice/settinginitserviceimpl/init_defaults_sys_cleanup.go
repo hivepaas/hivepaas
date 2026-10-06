@@ -53,7 +53,7 @@ func (s *service) initDefaultSystemCleanup(
 	cleanup := &entity.SystemCleanup{
 		Schedule: entity.SchedJobSchedule{
 			Interval:    sysCleanupInterval,
-			InitialTime: time.Date(timeNow.Year(), timeNow.Month(), timeNow.Day(), 0, 0, 0, 0, time.UTC),
+			InitialTime: dailyJobOf(base.SettingTypeSystemCleanup).startIn(timeNow, timeutil.Location()),
 		},
 		DBObjectRetention: entity.DBObjectRetention{
 			Enabled:        true,

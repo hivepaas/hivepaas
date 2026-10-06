@@ -42,7 +42,7 @@ func (s *service) initDefaultSSLRenewal(
 	renewal := &entity.SSLRenewal{
 		Schedule: entity.SchedJobSchedule{
 			Interval:    sslRenewalInterval,
-			InitialTime: time.Date(timeNow.Year(), timeNow.Month(), timeNow.Day(), 1, 0, 0, 0, time.UTC),
+			InitialTime: dailyJobOf(base.SettingTypeSSLRenewal).startIn(timeNow, timeutil.Location()),
 		},
 		Notification: &entity.BaseEventNotification{
 			SuccessUseDefault: true,

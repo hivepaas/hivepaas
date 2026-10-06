@@ -208,6 +208,57 @@ valid_app_secret() {
   [ "${#1}" -ge 32 ] && [[ ! $1 =~ [[:space:]\"\'\\] ]]
 }
 
+# Where the timezone is read from and checked against; the tests point them
+# elsewhere.
+ZONEINFO_DIR=/usr/share/zoneinfo
+LOCALTIME_LINK=/etc/localtime
+TIMEZONE_FILE=/etc/timezone
+
+# valid_timezone NAME: a zone name such as UTC or Asia/Ho_Chi_Minh. With the
+# server's zone files there, it is one of them - a file of zone data, not one
+# of the tables beside them; without, a name of the right shape is taken, and
+# the app, which knows every zone, refuses one that is none.
+valid_timezone() {
+  [[ $1 =~ ^[A-Za-z][A-Za-z0-9_+-]*(/[A-Za-z0-9_+-]+)*$ ]] || return 1
+  case "$1" in Local | localtime | posixrules) return 1 ;; esac
+  if [ -d "$ZONEINFO_DIR" ]; then
+    [ "$(head -c 4 "$ZONEINFO_DIR/$1" 2>/dev/null)" = TZif ] || return 1
+  fi
+  return 0
+}
+
+# timedatectl_zone: the timezone systemd says the server is in, if it says.
+timedatectl_zone() {
+  if command -v timedatectl >/dev/null 2>&1; then
+    timedatectl show -p Timezone --value 2>/dev/null
+  fi
+}
+
+# host_timezone: the server's own timezone, the default answer: systemd's, or
+# the zone /etc/localtime links to, or /etc/timezone's. UTC when none names
+# one this server knows.
+host_timezone() {
+  local tz candidates=()
+  tz=$(timedatectl_zone) || tz=''
+  candidates+=("$tz")
+  if [ -L "$LOCALTIME_LINK" ]; then
+    tz=$(readlink "$LOCALTIME_LINK") || tz=''
+    tz=${tz#*zoneinfo/}
+    tz=${tz#posix/}
+    candidates+=("${tz#right/}")
+  fi
+  if [ -r "$TIMEZONE_FILE" ]; then
+    candidates+=("$(head -n 1 "$TIMEZONE_FILE")")
+  fi
+  for tz in "${candidates[@]}"; do
+    if [ -n "$tz" ] && valid_timezone "$tz"; then
+      printf '%s' "$tz"
+      return 0
+    fi
+  done
+  printf 'UTC'
+}
+
 valid_ipv4() {
   local octet='(25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9]?[0-9])'
   [[ $1 =~ ^$octet\.$octet\.$octet\.$octet$ ]]
@@ -688,6 +739,7 @@ take_installed_env() {
       HP_ENV) take_installed HIVEPAAS_CHANNEL "$(channel_of_app_env "$value")" ;;
       HP_APP_DOMAIN) take_installed HIVEPAAS_APP_DOMAIN "$value" ;;
       HP_ROOT_DOMAIN) take_installed HIVEPAAS_ROOT_DOMAIN "$value" ;;
+      HP_TIMEZONE) take_installed HIVEPAAS_TIMEZONE "$value" ;;
       HP_STORAGE_HOST_DIR) take_installed HIVEPAAS_DATA_DIR "$value" ;;
       HP_STORAGE_PROJECT_DATA_HOST_DIR) take_installed HIVEPAAS_PROJECT_DATA_DIR "$value" ;;
       HP_SESSION_JWT_SECRET) take_installed HIVEPAAS_JWT_SECRET "$value" ;;
@@ -944,6 +996,13 @@ ask_questions() {
     "Enter an absolute path outside the system's directories, and not the app data directory or one above it." \
     "$HIVEPAAS_DATA_DIR/project_data"
   normalize_settings
+  # Once installed, only a redeploy gives the services a timezone: asked
+  # without one, the answer would go nowhere.
+  if [ "$INSTALLED" != 1 ] || [ "$REDEPLOY" = 1 ]; then
+    answer HIVEPAAS_TIMEZONE "Timezone, the hours scheduled jobs run at (e.g. Asia/Ho_Chi_Minh)" valid_timezone \
+      "Enter a zone name such as UTC or Europe/Berlin; 'timedatectl list-timezones' lists them." \
+      "$(host_timezone)"
+  fi
   if [ "$EXISTING_DB" = keep ]; then take_kept_credentials; fi
   load_secret_file
   answer HIVEPAAS_APP_SECRET "App secret, which encrypts stored secrets" valid_app_secret \
@@ -985,6 +1044,7 @@ print_summary() {
   info "App secret     $(mask "$HIVEPAAS_APP_SECRET"), kept in $(secret_file)"
   info "App data       $HIVEPAAS_DATA_DIR"
   info "Project data   $HIVEPAAS_PROJECT_DATA_DIR"
+  info "Timezone       ${HIVEPAAS_TIMEZONE:-UTC}"
   info "Addresses      $(addresses_line)"
   printf '\n'
 }
@@ -1782,7 +1842,7 @@ deploy_stack() {
   if [ "$1" = 1 ]; then files+=(-c "$WORK_DIR/hivepaas.first-boot.yaml"); fi
   (
     HIVEPAAS_APP_ENV=$(app_env_of_channel "$HIVEPAAS_CHANNEL")
-    export HIVEPAAS_APP_ENV HIVEPAAS_APP_DOMAIN HIVEPAAS_ROOT_DOMAIN \
+    export HIVEPAAS_APP_ENV HIVEPAAS_APP_DOMAIN HIVEPAAS_ROOT_DOMAIN HIVEPAAS_TIMEZONE \
       HIVEPAAS_JWT_SECRET HIVEPAAS_DATA_DIR HIVEPAAS_PROJECT_DATA_DIR HIVEPAAS_DB_PASSWORD \
       HIVEPAAS_REDIS_PASSWORD HIVEPAAS_AGENT_TOKEN HIVEPAAS_IP_RULE HP_DB_MAJOR HIVEPAAS_IMAGE_APP \
       HIVEPAAS_IMAGE_WORKER HIVEPAAS_IMAGE_UPDATER HIVEPAAS_IMAGE_AGENT HIVEPAAS_IMAGE_DB HIVEPAAS_IMAGE_REDIS \
@@ -2127,6 +2187,8 @@ Settings, from the environment or --config (the environment wins):
                                more, no spaces, quotes or backslashes (default: generated)
   HIVEPAAS_DATA_DIR            HivePaaS's data (default: /var/lib/hivepaas)
   HIVEPAAS_PROJECT_DATA_DIR    projects' data (default: <data dir>/project_data)
+  HIVEPAAS_TIMEZONE            the timezone scheduled jobs' hours are read in, a zone name
+                               such as Asia/Ho_Chi_Minh (default: the server's, or UTC)
   HIVEPAAS_CHANNEL             beta or stable (default: beta)
   HIVEPAAS_SWAP=false          do not add a swap file
   HIVEPAAS_SWAP_SIZE_MB        the swap file's size (default: 2048)

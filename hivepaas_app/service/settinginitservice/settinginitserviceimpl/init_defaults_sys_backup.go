@@ -42,7 +42,7 @@ func (s *service) initDefaultSystemBackup(
 	backup := &entity.SystemBackup{
 		Schedule: entity.SchedJobSchedule{
 			Interval:    sysBackupInterval,
-			InitialTime: time.Date(timeNow.Year(), timeNow.Month(), timeNow.Day(), 0, 30, 0, 0, time.UTC),
+			InitialTime: dailyJobOf(base.SettingTypeSystemBackup).startIn(timeNow, timeutil.Location()),
 		},
 		// The database, into a repository the operator picks before enabling it.
 		IncludeDB:   true,

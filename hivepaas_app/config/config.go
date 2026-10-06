@@ -7,10 +7,15 @@ import (
 	"path/filepath"
 	"sync"
 	"sync/atomic"
+	"time"
+	// The zone names a timezone is given by, built in: an image without a
+	// zoneinfo directory still knows them.
+	_ "time/tzdata"
 
 	"github.com/jinzhu/configor"
 	"github.com/tiendc/gofn"
 
+	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/timeutil"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/tracerr"
 )
 
@@ -42,6 +47,7 @@ var (
 	ErrConfigFileUnset    = errors.New("config file unset")
 	ErrConfigFileNotFound = errors.New("config file not found")
 	ErrAppSecretUnset     = errors.New("app secret is not configured")
+	ErrTimezoneInvalid    = errors.New("timezone is not a zone name")
 )
 
 const (
@@ -98,6 +104,12 @@ type Config struct {
 	// publicly known key. See ensureAppSecret.
 	Secret  string `toml:"secret" env:"HP_APP_SECRET"`
 	AppPath string `toml:"app_path" env:"HP_APP_PATH" default:"/var/lib/hivepaas"`
+	// Timezone is the installation's, a zone name such as Asia/Ho_Chi_Minh:
+	// what a schedule's hours are read in - a cron expression's, the time of
+	// day a system job runs at. The installer asks for it. Times are kept in
+	// UTC whatever it is. See Location.
+	Timezone string `toml:"timezone" env:"HP_TIMEZONE" default:"UTC"`
+	location *time.Location
 
 	Users      Users      `toml:"users"`
 	HTTPServer HTTPServer `toml:"http_server"`
@@ -114,6 +126,14 @@ type Config struct {
 	AppTemplates AppTemplates `toml:"app_templates"`
 
 	DevMode DevMode `toml:"dev_mode"`
+}
+
+// Location is the installation's timezone, as Timezone names it.
+func (cfg *Config) Location() *time.Location {
+	if cfg.location == nil {
+		return time.UTC
+	}
+	return cfg.location
 }
 
 func (cfg *Config) IsDevEnv() bool   { return cfg.Env == EnvDev }
@@ -142,6 +162,7 @@ func LoadConfig() (*Config, error) {
 		return nil, tracerr.Wrap(err)
 	}
 	current.Store(cfg)
+	timeutil.SetLocation(cfg.Location())
 	return cfg, nil
 }
 
@@ -207,6 +228,14 @@ func loadConfig(configFile string) (*Config, error) {
 	if err := config.Storage.Validate(); err != nil {
 		return config, tracerr.Wrap(err)
 	}
+	// A name that is no zone stops the start rather than reading as UTC: the
+	// jobs would run at hours nobody chose.
+	location, err := time.LoadLocation(config.Timezone)
+	if err != nil || config.Timezone == "" || config.Timezone == "Local" {
+		return config, fmt.Errorf("%w: HP_TIMEZONE %q - a name such as UTC or Asia/Ho_Chi_Minh",
+			ErrTimezoneInvalid, config.Timezone)
+	}
+	config.location = location
 
 	lastConfigFile = configFile
 	return config, nil
@@ -224,6 +253,7 @@ func ReloadConfig() (*Config, error) {
 	// TODO: validate then apply a certain portion of the new config
 
 	current.Store(newConfig)
+	timeutil.SetLocation(newConfig.Location())
 	return newConfig, nil
 }
 

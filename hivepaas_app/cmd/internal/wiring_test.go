@@ -37,6 +37,7 @@ func TestFxGraphResolves(t *testing.T) {
 		fx.Invoke(InitTaskQueue),
 		fx.Invoke(DashboardCertOnFirstBoot),
 		fx.Invoke(RegistryAuthRenewalOnStart),
+		fx.Invoke(DailyJobsTimezoneOnStart),
 		fx.Invoke(TraefikRouteNamesOnStart),
 		fx.Invoke(InitWorkerHeartbeat),
 		fx.Invoke(InitJWTSession),

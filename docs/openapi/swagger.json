@@ -68777,11 +68777,15 @@
           "nextStep" : {
             "type" : "string"
           },
+          "timezone" : {
+            "description" : "Timezone is the installation's, a zone name such as Asia/Ho_Chi_Minh:\nwhat a schedule's hours are read in.",
+            "type" : "string"
+          },
           "user" : {
             "$ref" : "#/components/schemas/userdto.UserDetailsResp"
           }
         },
-        "required" : [ "nextStep", "user" ],
+        "required" : [ "nextStep", "timezone", "user" ],
         "type" : "object"
       },
       "sessiondto.GetMeResp" : {

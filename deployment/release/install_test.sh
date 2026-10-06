@@ -26,6 +26,22 @@ HIVEPAAS_INSTALL_LIB=1
   exit 1
 }
 
+# The server's timezone, as every test sees it: zone files of their own, and
+# nothing that names one - so UTC - unless a test says otherwise.
+zone_file() {
+  mkdir -p "$(dirname "$ZONEINFO_DIR/$1")"
+  printf 'TZif2 zone data' >"$ZONEINFO_DIR/$1"
+}
+ZONEINFO_DIR=$TMP/zoneinfo
+LOCALTIME_LINK=$TMP/localtime
+TIMEZONE_FILE=$TMP/timezone
+zone_file UTC
+zone_file Asia/Ho_Chi_Minh
+zone_file Europe/Berlin
+printf '# a table, no zone\n' >"$ZONEINFO_DIR/zone.tab"
+printf '# leap seconds, no zone\n' >"$ZONEINFO_DIR/leapseconds"
+timedatectl_zone() { :; }
+
 record() {
   printf '%s\n' "$1" >>"$RESULTS"
 }
@@ -171,6 +187,32 @@ test_valid_app_secret() {
   check_fails "a double quote" valid_app_secret '0123456789abcdef"0123456789abcdef'
   check_fails "a single quote" valid_app_secret "0123456789abcdef'0123456789abcdef"
   check_fails "a backslash" valid_app_secret '0123456789abcdef\0123456789abcdef'
+}
+
+test_valid_timezone() {
+  local z
+  for z in UTC Asia/Ho_Chi_Minh Europe/Berlin; do
+    check_ok "zone $z" valid_timezone "$z"
+  done
+  for z in '' Local localtime posixrules leapseconds zone.tab Mars/Olympus_Mons UTC+7 \
+    '+07:00' '../etc/passwd' 'Asia/Ho Chi Minh' /UTC Asia/; do
+    check_fails "zone '$z'" valid_timezone "$z"
+  done
+  ZONEINFO_DIR=$TMP/no-zoneinfo
+  check_ok "without zone files, a name of the right shape" valid_timezone America/Argentina/Buenos_Aires
+  check_fails "and not one of the wrong shape" valid_timezone 'Asia/Ho Chi Minh'
+}
+
+test_host_timezone() {
+  check "nothing names one: UTC" UTC "$(host_timezone)"
+  printf 'Europe/Berlin\n' >"$TIMEZONE_FILE"
+  check "/etc/timezone" Europe/Berlin "$(host_timezone)"
+  ln -s /usr/share/zoneinfo/posix/Asia/Ho_Chi_Minh "$LOCALTIME_LINK"
+  check "the zone /etc/localtime links to, before /etc/timezone" Asia/Ho_Chi_Minh "$(host_timezone)"
+  timedatectl_zone() { printf 'UTC'; }
+  check "systemd's, before both" UTC "$(host_timezone)"
+  timedatectl_zone() { printf 'Mars/Olympus_Mons'; }
+  check "one this server does not know is passed over" Asia/Ho_Chi_Minh "$(host_timezone)"
 }
 
 test_valid_ipv4() {
@@ -456,6 +498,8 @@ test_stack_renders() {
     'traefik.http.routers.x-custom-router-ip.rule: Host(`1.2.3.4`) || Host(`10.0.0.5`)'
   check_contains "the Postgres major" "$out" 'PGDATA: /var/lib/postgresql/18/docker'
   check_contains "project data seen from the app" "$out" 'target: /host/data/projects'
+  check "every HivePaaS process is given the timezone, UTC unless set" \
+    "$(printf '%s\n' "$out" | grep -c 'HP_DB_HOST: db')" "$(printf '%s\n' "$out" | grep -c 'HP_TIMEZONE: UTC')"
   check "no service is given the app secret" 0 "$(printf '%s\n' "$out" | grep -c 'HP_APP_SECRET')"
   check "app, worker and updater get the JWT secret, the agent not" 3 \
     "$(printf '%s\n' "$out" | grep -c 'HP_SESSION_JWT_SECRET: jwt')"
@@ -483,7 +527,7 @@ answers() {
 
 test_ask_questions_interactive() {
   answers not-an-email you@example.com short password123 password124 password123 password123 \
-    HivePaaS.Dev.MyDomain.com '' /var/lib/hivepaas/ '' ''
+    HivePaaS.Dev.MyDomain.com '' /var/lib/hivepaas/ '' Mars/Olympus_Mons Asia/Ho_Chi_Minh ''
   ask_questions 2>/dev/null
   check "email, asked again" you@example.com "$HIVEPAAS_ADMIN_EMAIL"
   check "password, typed twice alike" password123 "$HIVEPAAS_ADMIN_PASSWORD"
@@ -492,6 +536,7 @@ test_ask_questions_interactive() {
   check_ok "app secret, generated" matches "$HIVEPAAS_APP_SECRET" '^[0-9a-f]{64}$'
   check "data dir, normalized" /var/lib/hivepaas "$HIVEPAAS_DATA_DIR"
   check "project data dir, defaulted" /var/lib/hivepaas/project_data "$HIVEPAAS_PROJECT_DATA_DIR"
+  check "timezone, asked again" Asia/Ho_Chi_Minh "$HIVEPAAS_TIMEZONE"
 }
 
 test_ask_questions_silent() {
@@ -501,6 +546,7 @@ test_ask_questions_silent() {
   check "data dir" /var/lib/hivepaas "$HIVEPAAS_DATA_DIR"
   check "project data dir" /var/lib/hivepaas/project_data "$HIVEPAAS_PROJECT_DATA_DIR"
   check_ok "app secret" valid_app_secret "$HIVEPAAS_APP_SECRET"
+  check "timezone, the server's" UTC "$HIVEPAAS_TIMEZONE"
 }
 
 test_ask_questions_silent_missing() {
@@ -525,12 +571,20 @@ test_ask_questions_given_invalid() {
   out=$( (ask_questions) 2>&1)
   check "project data on app data stops" 1 "$?"
   check_contains "naming it" "$out" HIVEPAAS_PROJECT_DATA_DIR
+  HIVEPAAS_PROJECT_DATA_DIR=/data/projects HIVEPAAS_TIMEZONE=GMT+7
+  out=$( (ask_questions) 2>&1)
+  check "a timezone that is no zone stops" 1 "$?"
+  check_contains "naming it" "$out" HIVEPAAS_TIMEZONE
 }
 
 test_ask_questions_installed() {
   INSTALLED=1 HIVEPAAS_APP_DOMAIN=app.example.com HIVEPAAS_APP_SECRET=0123456789abcdef0123456789abcdef
   ask_questions
   check "no admin asked for once installed" "" "${HIVEPAAS_ADMIN_PASSWORD:-}"
+  check "nor a timezone, which nothing would deploy" "" "${HIVEPAAS_TIMEZONE:-}"
+  REDEPLOY=1
+  ask_questions
+  check "a redeploy gives one to an installation from before there was one" UTC "$HIVEPAAS_TIMEZONE"
 }
 
 test_load_settings_precedence() {
@@ -566,6 +620,7 @@ test_take_installed_env() {
   take_installed_env 'HP_ENV=beta
 HP_APP_DOMAIN=app.example.com
 HP_ROOT_DOMAIN=example.com
+HP_TIMEZONE=Asia/Ho_Chi_Minh
 HP_STORAGE_HOST_DIR=/srv/hivepaas
 HP_STORAGE_PROJECT_DATA_HOST_DIR=/data/projects
 HP_SESSION_JWT_SECRET=jwt=with=equals
@@ -576,6 +631,7 @@ HP_RUN_MODE=app+worker'
   check "channel" beta "$HIVEPAAS_CHANNEL"
   check "app domain" app.example.com "$HIVEPAAS_APP_DOMAIN"
   check "root domain" example.com "$HIVEPAAS_ROOT_DOMAIN"
+  check "timezone" Asia/Ho_Chi_Minh "$HIVEPAAS_TIMEZONE"
   check "data dir" /srv/hivepaas "$HIVEPAAS_DATA_DIR"
   check "project data dir" /data/projects "$HIVEPAAS_PROJECT_DATA_DIR"
   check "a value with =" jwt=with=equals "$HIVEPAAS_JWT_SECRET"

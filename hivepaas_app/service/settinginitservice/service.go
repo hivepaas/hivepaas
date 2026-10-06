@@ -2,7 +2,9 @@ package settinginitservice
 
 import (
 	"context"
+	"time"
 
+	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 )
 
@@ -17,4 +19,13 @@ type Service interface {
 	// certificate is a thing an operator owns - one they removed on purpose must
 	// stay removed.
 	InitSelfSignedCert(ctx context.Context, db database.Tx) error
+
+	// MoveDailyJobs moves the system jobs that run daily - the cleanup, the
+	// backup, the certificates' renewal, the backup repositories' cleanup - to
+	// their time of day in to, each whose schedule is still the one HivePaaS
+	// gave it in from. One an administrator changed is left as it is. It answers
+	// the jobs moved, for the caller to schedule again, and the names of those
+	// left.
+	MoveDailyJobs(ctx context.Context, db database.Tx, from, to *time.Location) (
+		moved []*entity.Setting, left []string, err error)
 }

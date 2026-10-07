@@ -187,6 +187,9 @@ func TestApplyAppConfig(t *testing.T) {
 		assert.Equal(t, labels[main+".middlewares"], labels[plain+".middlewares"])
 		assert.NotContains(t, labels, plain+".tls")
 		assert.NotContains(t, labels, "traefik.http.routers.router-01k6web-0-forcehttps.rule")
+		// Below the ACME challenge's router on web, whatever the domain's length,
+		// and below its own paths'.
+		assert.Equal(t, "1", labels[plain+".priority"])
 
 		mainPath, plainPath := main+"-path-0", main+"-path-0-http"
 		assert.Equal(t, "web", labels[plainPath+".entrypoints"])
@@ -194,6 +197,7 @@ func TestApplyAppConfig(t *testing.T) {
 		assert.Equal(t, labels[mainPath+".service"], labels[plainPath+".service"])
 		assert.Equal(t, labels[mainPath+".middlewares"], labels[plainPath+".middlewares"])
 		assert.NotContains(t, labels, plainPath+".tls")
+		assert.NotContains(t, labels, plainPath+".priority", "a path's ranks by its rule, above its domain's")
 	})
 
 	t.Run("HTTP domain with Force HTTPS is only sent to HTTPS on HTTP", func(t *testing.T) {
@@ -212,6 +216,8 @@ func TestApplyAppConfig(t *testing.T) {
 		assert.NoError(t, s.collectDomainConfig(domain, 0, labels, &AppTraefikConfig{}, data))
 
 		assert.Equal(t, "web", labels["traefik.http.routers.router-01k6web-0-forcehttps.entrypoints"])
+		assert.Equal(t, "1", labels["traefik.http.routers.router-01k6web-0-forcehttps.priority"],
+			"below the ACME challenge's router: a long domain's Host rule would outrank its PathPrefix")
 		assert.NotContains(t, labels, "traefik.http.routers.router-01k6web-0-http.rule")
 		assert.NotContains(t, labels, "traefik.http.routers.router-01k6web-0-path-0-http.rule")
 	})

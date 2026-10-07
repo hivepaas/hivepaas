@@ -277,8 +277,8 @@ func (s *service) collectDomainConfig(
 		labels[fmt.Sprintf("traefik.http.routers.%s.middlewares", routerName)] =
 			strings.Join(middlewares, ",")
 	}
-	s.createPlainHTTPRouter(domain.ForceHttps, routerName,
-		labels[fmt.Sprintf("traefik.http.routers.%s.rule", routerName)], serviceName, middlewares, labels)
+	s.createPlainHTTPRouter(domain.ForceHttps, routerName, labels[fmt.Sprintf("traefik.http.routers.%s.rule", routerName)],
+		serviceName, middlewares, webRouterPriority, labels)
 
 	// Paths config
 	for pathIdx, pathCfg := range domain.Paths {
@@ -357,19 +357,28 @@ func (s *service) collectPathConfig(
 		labels[fmt.Sprintf("traefik.http.routers.%s.middlewares", pathRouterName)] =
 			strings.Join(pathMiddlewares, ",")
 	}
-	s.createPlainHTTPRouter(domain.ForceHttps, pathRouterName, pathRule, serviceName, pathMiddlewares, labels)
+	s.createPlainHTTPRouter(domain.ForceHttps, pathRouterName, pathRule, serviceName, pathMiddlewares, "", labels)
 
 	return nil
 }
 
+// webRouterPriority ranks a domain's own router on web below every other one
+// that may match its requests there: its paths', and the ACME challenge's
+// (PathPrefix(`/.well-known/acme-challenge/`), on HivePaaS's own service). Traefik
+// ranks routers by the length of their rule, so the Host rule of a domain of 34
+// characters or more would otherwise take the challenge, or tie for it.
+const webRouterPriority = "1"
+
 // createPlainHTTPRouter serves a domain on HTTP as well when HTTPS is not
 // forced: a router of its own on web, with the TLS router's rule, service and
 // middlewares, and no TLS. A router answers either HTTPS or HTTP, never both;
-// without this one HTTP would find no router and answer 404.
+// without this one HTTP would find no router and answer 404. An empty priority
+// leaves the router ranked by its rule.
 func (s *service) createPlainHTTPRouter(
 	forceHttps bool,
 	routerName, rule, serviceName string,
 	middlewares []string,
+	priority string,
 	labels map[string]string,
 ) {
 	if forceHttps {
@@ -379,6 +388,9 @@ func (s *service) createPlainHTTPRouter(
 	labels[fmt.Sprintf("traefik.http.routers.%s.rule", routerName)] = rule
 	labels[fmt.Sprintf("traefik.http.routers.%s.service", routerName)] = serviceName
 	labels[fmt.Sprintf("traefik.http.routers.%s.entrypoints", routerName)] = "web"
+	if priority != "" {
+		labels[fmt.Sprintf("traefik.http.routers.%s.priority", routerName)] = priority
+	}
 	if len(middlewares) > 0 {
 		labels[fmt.Sprintf("traefik.http.routers.%s.middlewares", routerName)] = strings.Join(middlewares, ",")
 	}
@@ -406,6 +418,7 @@ func (s *service) createForceHttpsConfig(
 	}
 	// Listen to HTTP, then redirect to HTTPS
 	labels[fmt.Sprintf("traefik.http.routers.%s.entrypoints", routerName)] = "web"
+	labels[fmt.Sprintf("traefik.http.routers.%s.priority", routerName)] = webRouterPriority
 
 	mwName := routerName
 	labels[fmt.Sprintf("traefik.http.middlewares.%s.redirectscheme.scheme", mwName)] = "https"

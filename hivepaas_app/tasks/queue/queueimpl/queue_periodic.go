@@ -57,33 +57,9 @@ func (q *taskQueue) doPeriodicJob(
 	execFuncs := make([]func(ctx context.Context) error, 0, len(jobSettings))
 
 	for _, jobSetting := range jobSettings {
-		periodicJob := jobSetting.MustAsPeriodicJob()
-		scope, err := baseData.RefObjects.GetObjectScope(jobSetting.Scope, jobSetting.ObjectID, false)
+		periodicData, err := periodicExecDataOf(jobSetting, baseData, timeNow)
 		if err != nil {
 			return hperrors.Wrap(err)
-		}
-		periodicData := &queue.PeriodicExecData{
-			PeriodicSetting: jobSetting,
-			Scope:           scope,
-			Task: &entity.Task{
-				ID:       gofn.Must(ulid.NewStringULID()),
-				Scope:    jobSetting.Scope,
-				ObjectID: jobSetting.ObjectID,
-				TargetID: jobSetting.ID,
-				Type:     base.TaskTypePeriodicExec,
-				Status:   base.TaskStatusNotStarted,
-				Config: entity.TaskConfig{
-					MaxRetry:   periodicJob.MaxRetry,
-					RetryDelay: periodicJob.RetryDelay,
-					Timeout:    periodicJob.Timeout,
-				},
-				Version:   entity.CurrentTaskVersion,
-				RunAt:     timeNow,
-				StartedAt: timeNow,
-				CreatedAt: timeNow,
-				UpdatedAt: timeNow,
-			},
-			RefObjects: baseData.RefObjects,
 		}
 		execFuncs = append(execFuncs, func(ctx context.Context) error {
 			return q.doPeriodicTask(ctx, periodicData, &savingTasks, &mu)
@@ -101,6 +77,47 @@ func (q *taskQueue) doPeriodicJob(
 	}
 
 	return nil
+}
+
+// periodicExecDataOf is what a due job's run is given. Its RefObjects is a copy
+// of the round's: the runs go concurrently, and what they load - a
+// notification's settings, for one - goes into it. Two runs writing into the
+// round's maps at once is a fatal error, not a panic: it ends the process.
+func periodicExecDataOf(
+	jobSetting *entity.Setting,
+	round *queue.PeriodicExecData,
+	timeNow time.Time,
+) (*queue.PeriodicExecData, error) {
+	periodicJob := jobSetting.MustAsPeriodicJob()
+	scope, err := round.RefObjects.GetObjectScope(jobSetting.Scope, jobSetting.ObjectID, false)
+	if err != nil {
+		return nil, hperrors.Wrap(err)
+	}
+	refObjects := entity.NewRefObjects()
+	refObjects.AddRefObjects(round.RefObjects)
+	return &queue.PeriodicExecData{
+		PeriodicSetting: jobSetting,
+		Scope:           scope,
+		Task: &entity.Task{
+			ID:       gofn.Must(ulid.NewStringULID()),
+			Scope:    jobSetting.Scope,
+			ObjectID: jobSetting.ObjectID,
+			TargetID: jobSetting.ID,
+			Type:     base.TaskTypePeriodicExec,
+			Status:   base.TaskStatusNotStarted,
+			Config: entity.TaskConfig{
+				MaxRetry:   periodicJob.MaxRetry,
+				RetryDelay: periodicJob.RetryDelay,
+				Timeout:    periodicJob.Timeout,
+			},
+			Version:   entity.CurrentTaskVersion,
+			RunAt:     timeNow,
+			StartedAt: timeNow,
+			CreatedAt: timeNow,
+			UpdatedAt: timeNow,
+		},
+		RefObjects: refObjects,
+	}, nil
 }
 
 func (q *taskQueue) doPeriodicTask(

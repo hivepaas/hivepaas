@@ -73,3 +73,30 @@ func TestPeriodicRunIsBoundedByItsTimeout(t *testing.T) {
 		t.Fatal("a hanging run was not stopped at its timeout")
 	}
 }
+
+// The runs of a round go concurrently, and what they load - a notification's
+// settings among them - goes into their RefObjects: each has its own, filled
+// from the round's, so that two runs never write into one map. Writing into
+// one map from two goroutines is a fatal error: it took the backend down.
+func TestEachPeriodicRunHasRefObjectsOfItsOwn(t *testing.T) {
+	round := &queue.PeriodicExecData{RefObjects: entity.NewRefObjects()}
+	round.RefObjects.RefApps["app"] = &entity.App{ID: "app", ProjectEnv: &entity.ProjectEnv{},
+		Project: &entity.Project{}}
+	round.RefObjects.RefSettings["shared"] = &entity.Setting{ID: "shared"}
+	job := func(id string) *entity.Setting {
+		setting := &entity.Setting{ID: id, Type: base.SettingTypePeriodicJob, Scope: base.ObjectScopeApp, ObjectID: "app"}
+		assert.NoError(t, setting.SetData(&entity.PeriodicJob{}))
+		return setting
+	}
+
+	one, err := periodicExecDataOf(job("one"), round, time.Now())
+	assert.NoError(t, err)
+	two, err := periodicExecDataOf(job("two"), round, time.Now())
+	assert.NoError(t, err)
+
+	one.RefObjects.RefSettings["loaded"] = &entity.Setting{ID: "loaded"}
+	assert.NotContains(t, two.RefObjects.RefSettings, "loaded")
+	assert.NotContains(t, round.RefObjects.RefSettings, "loaded", "the round's, kept for the next")
+	assert.Contains(t, two.RefObjects.RefSettings, "shared", "what the round loaded, each has")
+	assert.Equal(t, "app", one.Scope.App.ID)
+}

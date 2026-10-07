@@ -29,3 +29,6 @@ func (req *UpdatePasswordReq) Validate() hperrors.ValidationErrors {
 type UpdatePasswordResp struct {
 	Meta *basedto.Meta `json:"meta"`
 }
+
+// NULAllowed implements basedto.NULAllowed: a password is only hashed and compared.
+func (req *UpdatePasswordReq) NULAllowed() {}

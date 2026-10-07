@@ -65,3 +65,7 @@ type CreateSecretResp struct {
 	Meta *basedto.Meta         `json:"meta"`
 	Data *basedto.ObjectIDResp `json:"data"`
 }
+
+// NULAllowed implements basedto.NULAllowed: a secret's value is encrypted before it is
+// stored, and a file mounted from it is written byte for byte.
+func (req *CreateSecretReq) NULAllowed() {}

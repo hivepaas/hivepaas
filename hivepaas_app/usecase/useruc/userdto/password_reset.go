@@ -27,3 +27,6 @@ func (req *ResetPasswordReq) Validate() hperrors.ValidationErrors {
 type ResetPasswordResp struct {
 	Meta *basedto.Meta `json:"meta"`
 }
+
+// NULAllowed implements basedto.NULAllowed: a password is only hashed.
+func (req *ResetPasswordReq) NULAllowed() {}

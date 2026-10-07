@@ -65,15 +65,24 @@ func (repo *tagRepo) UpsertMulti(ctx context.Context, db database.IDB, tags []*e
 	if len(tags) == 0 {
 		return nil
 	}
-	query := db.NewInsert().Model(&tags)
-	query = bunex.ApplyInsert(query, opts...)
-	query = bunex.ApplyUpsert(query, conflictCols, updateCols)
-
-	_, err := query.Exec(ctx)
+	_, err := repo.upsertMultiQuery(db, tags, conflictCols, updateCols, opts...).Exec(ctx)
 	if err != nil {
 		return hperrors.Wrap(err)
 	}
 	return nil
+}
+
+// upsertMultiQuery replaces every NUL byte in the tags before they are written.
+// A tag can come from outside - a kopia snapshot's, written by whatever wrote the
+// snapshot - and is written in the transaction that records what it tags.
+func (repo *tagRepo) upsertMultiQuery(db database.IDB, tags []*entity.Tag,
+	conflictCols, updateCols []string, opts ...bunex.InsertQueryOption) *bun.InsertQuery {
+	for _, tag := range tags {
+		tag.Tag = replaceNUL(tag.Tag)
+	}
+	query := db.NewInsert().Model(&tags)
+	query = bunex.ApplyInsert(query, opts...)
+	return bunex.ApplyUpsert(query, conflictCols, updateCols)
 }
 
 func (repo *tagRepo) DeleteAllByObjects(ctx context.Context, db database.IDB,

@@ -45,9 +45,9 @@ func parseQuery(t *testing.T, query string, req any) error {
 	return err
 }
 
-// A NUL cannot be stored in a text column, and in jsonb it turns into the six
-// characters \u0000: a request holding one is refused, a 400 that says so,
-// rather than failing as it is written or being stored as something else.
+// A NUL cannot be stored in a text column, nor the \u0000 JSON writes for it
+// in JSONB: a request holding one is refused, a 400 that says so, rather than
+// failing as it is written - a 500, and the transaction it is in with it.
 func TestARequestHoldingANULIsRefused(t *testing.T) {
 	err := parseBody(t, `{"updateVer":1,"name":"web","note":"bad\u0000note"}`, appdto.NewUpdateAppReq())
 	assert.ErrorIs(t, err, hperrors.ErrRequestHasNUL)

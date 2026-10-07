@@ -73,6 +73,9 @@ func (s *service) planBundleWith(
 	bundle *specmodel.ImportBundle,
 	extra map[string][]specmodel.Issue,
 ) (*planner, error) {
+	if err := refuseNUL(bundle); err != nil {
+		return nil, err
+	}
 	// What the route may not write can still be what a reference names, so the
 	// bundle as uploaded is kept beside the part that is planned.
 	full := *bundle
@@ -665,4 +668,27 @@ func restarts(changes []string) bool {
 		}
 	}
 	return false
+}
+
+// refuseNUL refuses a bundle that holds a NUL character, saying in which
+// document and where. Nothing holding one can be written, and the import writes
+// as one statement after another in one transaction: it would fail at the first,
+// as a 500. A Compose file is planned as a bundle, and refused the same way.
+func refuseNUL(bundle *specmodel.ImportBundle) error {
+	if at, found := specmodel.FindNUL(bundle.Global); found {
+		return invalidBundle("global: %s holds a NUL character", at)
+	}
+	for _, project := range slices.Sorted(maps.Keys(bundle.Projects)) {
+		if at, found := specmodel.FindNUL(bundle.Projects[project]); found {
+			return invalidBundle("projects/%s: %s holds a NUL character", project, at)
+		}
+	}
+	for _, project := range slices.Sorted(maps.Keys(bundle.Envs)) {
+		for _, env := range slices.Sorted(maps.Keys(bundle.Envs[project])) {
+			if at, found := specmodel.FindNUL(bundle.Envs[project][env]); found {
+				return invalidBundle("projects/%s/envs/%s: %s holds a NUL character", project, env, at)
+			}
+		}
+	}
+	return nil
 }

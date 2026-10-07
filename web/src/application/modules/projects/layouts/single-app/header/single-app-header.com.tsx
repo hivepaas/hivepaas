@@ -116,7 +116,7 @@ function View({ projectId, env, appId }: Props) {
         ROUTE.projects.single.apps.single.configuration.settingMounts.$route(projectId, env, appId),
         ROUTE.projects.single.apps.single.configuration.containerSettings.$route(projectId, env, appId),
         ROUTE.projects.single.apps.single.configuration.availabilityAndScaling.$route(projectId, env, appId),
-        ROUTE.projects.single.apps.single.configuration.presistentStorage.$route(projectId, env, appId),
+        ROUTE.projects.single.apps.single.configuration.persistentStorage.$route(projectId, env, appId),
         ROUTE.projects.single.apps.single.configuration.networks.$route(projectId, env, appId),
         ROUTE.projects.single.apps.single.configuration.resources.$route(projectId, env, appId),
         ROUTE.projects.single.apps.single.configuration.dockerApi.$route(projectId, env, appId),

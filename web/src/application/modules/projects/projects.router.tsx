@@ -2042,7 +2042,7 @@ export const projectsRouter: RouteObject = {
                             },
                         },
                         {
-                            path: ROUTE.projects.single.apps.single.configuration.presistentStorage.$pattern,
+                            path: ROUTE.projects.single.apps.single.configuration.persistentStorage.$pattern,
                             lazy: async () => {
                                 const { AppConfigStorageRoute } = await getLazyComponents();
 
@@ -2050,7 +2050,7 @@ export const projectsRouter: RouteObject = {
                             },
                         },
                         {
-                            path: ROUTE.projects.single.apps.single.configuration.presistentStorage.create.$pattern,
+                            path: ROUTE.projects.single.apps.single.configuration.persistentStorage.create.$pattern,
                             lazy: async () => {
                                 const { StorageMountCreateRoute } = await getLazyComponents();
 
@@ -2058,7 +2058,7 @@ export const projectsRouter: RouteObject = {
                             },
                         },
                         {
-                            path: ROUTE.projects.single.apps.single.configuration.presistentStorage.edit.$pattern,
+                            path: ROUTE.projects.single.apps.single.configuration.persistentStorage.edit.$pattern,
                             lazy: async () => {
                                 const { StorageMountEditRoute } = await getLazyComponents();
 

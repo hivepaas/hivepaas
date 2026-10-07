@@ -52,7 +52,7 @@ export function StorageMountFormRoute({ mode, projectId, env, appId, mountId }: 
 
     function navigateToList() {
         navigate.modules(
-            ROUTE.projects.single.apps.single.configuration.presistentStorage.$route(projectId, env, appId),
+            ROUTE.projects.single.apps.single.configuration.persistentStorage.$route(projectId, env, appId),
             {
                 ignorePrevPath: true,
             },

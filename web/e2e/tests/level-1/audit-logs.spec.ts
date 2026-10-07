@@ -9,7 +9,11 @@ test("making and deleting a project is in the audit log, with who did it", async
 
     await page.getByRole("searchbox", { name: "Search" }).fill(project.name);
 
-    const entries = page.getByRole("button").filter({ hasText: project.name });
+    // The search is applied: what is listed is the project's alone, not the
+    // newest entries of anything, among which the project's may happen to be.
+    const listed = page.getByRole("button").filter({ hasText: /^(Allowed|Denied)/ });
+    await expect(listed.filter({ hasNotText: project.name })).toHaveCount(0);
+    const entries = listed.filter({ hasText: project.name });
     for (const action of ["project-create", "project-delete"]) {
         const entry = entries.filter({ hasText: action });
         await expect(entry).toHaveCount(1);

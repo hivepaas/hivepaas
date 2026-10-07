@@ -200,3 +200,53 @@ export async function runtimeEnvVars(api: APIRequestContext, app: App): Promise<
     };
     return body.data.runtimeEnvVars ?? [];
 }
+
+// createVolume makes a docker volume on the node HivePaaS runs on, for apps to
+// mount - inheritable, or no project sees it; it answers its id.
+export async function createVolume(api: APIRequestContext, name: string): Promise<string> {
+    const body = (await ok(
+        await api.post("cluster/volumes", { data: { name, driver: "local", nodeId: "current", inheritable: true } }),
+        `creating volume ${name}`,
+    )) as { data: { id: string } };
+    return body.data.id;
+}
+
+// deleteVolume removes a volume; one already gone is fine. Docker refuses one
+// still in use: a project's containers go a little after the project does.
+export async function deleteVolume(api: APIRequestContext, id: string): Promise<void> {
+    let res = await api.delete(`cluster/volumes/${id}`);
+    for (let tries = 0; res.status() === 409 && tries < 30; tries++) {
+        await new Promise(resolve => setTimeout(resolve, 2_000));
+        res = await api.delete(`cluster/volumes/${id}`);
+    }
+    if (res.status() === 404) return;
+    await ok(res, `deleting volume ${id}`);
+}
+
+// setRuntimeEnvVars replaces the variables an app sets for itself at run time.
+export async function setRuntimeEnvVars(api: APIRequestContext, app: App, vars: EnvVar[]): Promise<void> {
+    const current = (await ok(await api.get(`${appPath(app)}/env-vars`), "reading env variables")) as {
+        data: { updateVer: number };
+    };
+    await ok(
+        await api.put(`${appPath(app)}/env-vars`, {
+            data: {
+                updateVer: current.data.updateVer,
+                runtimeEnvVars: vars,
+                buildtimeEnvVars: [],
+                sharedEnvVars: [],
+            },
+        }),
+        `setting env variables of ${app.name}`,
+    );
+}
+
+// findAppNamed is the app of that name in an app's environment, if there is
+// one.
+export async function findAppNamed(api: APIRequestContext, near: App, name: string): Promise<App | undefined> {
+    const body = (await ok(await api.get(`projects/${near.projectId}/${near.env}/apps`), "listing apps")) as {
+        data: { id: string; name: string }[];
+    };
+    const found = body.data.find(a => a.name === name);
+    return found ? { id: found.id, name, projectId: near.projectId, env: near.env } : undefined;
+}

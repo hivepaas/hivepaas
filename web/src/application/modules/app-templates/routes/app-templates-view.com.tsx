@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 
 import { ROUTE } from "@/application/shared/constants";
 import { cn } from "@/lib/utils";
@@ -31,14 +31,10 @@ export function AppTemplatesView() {
     // Cached template summary when clicked from card for instant rendering
     const [selectedTemplateSummary, setSelectedTemplateSummary] = useState<AppTemplateSummary | undefined>(undefined);
 
-    const isFirstRender = useRef(true);
-
+    // Its first run is not skipped: what is typed before it would restart its
+    // timer and be skipped with it.
     useDebounce(
         () => {
-            if (isFirstRender.current) {
-                isFirstRender.current = false;
-                return;
-            }
             setDebouncedSearch(searchQuery.trim());
         },
         350,
@@ -61,6 +57,7 @@ export function AppTemplatesView() {
     const {
         data: templatesData,
         isLoading: isTemplatesLoading,
+        error: templatesError,
         isFetchingNextPage,
         hasNextPage,
         fetchNextPage,
@@ -282,6 +279,19 @@ export function AppTemplatesView() {
                                             </div>
                                         </div>
                                     ))}
+                                </div>
+                            ) : templatesError ? (
+                                // The catalog itself could not be had: no filter would bring it.
+                                <div
+                                    role="alert"
+                                    className="flex flex-col items-center justify-center rounded-xl border border-dashed border-border/70 bg-card/50 p-12 text-center min-h-[300px]"
+                                >
+                                    <h3 className="text-base font-semibold text-foreground">
+                                        Templates are not available
+                                    </h3>
+                                    <p className="text-xs text-muted-foreground mt-1 max-w-sm">
+                                        {templatesError.message}
+                                    </p>
                                 </div>
                             ) : templates.length === 0 ? (
                                 <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-border/70 bg-card/50 p-12 text-center min-h-[300px]">

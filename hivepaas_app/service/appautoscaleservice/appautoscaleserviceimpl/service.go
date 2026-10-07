@@ -140,10 +140,10 @@ func (s *service) enabledAutoscales(ctx context.Context, db database.IDB) (map[s
 	return out, nil
 }
 
-func (s *service) EnsureJob(ctx context.Context, db database.IDB) error {
+func (s *service) EnsureJob(ctx context.Context, db database.IDB) (bool, error) {
 	autoscales, err := s.enabledAutoscales(ctx, db)
 	if err != nil {
-		return err
+		return false, err
 	}
 	status := gofn.If(len(autoscales) > 0, base.SettingStatusActive, base.SettingStatusDisabled)
 
@@ -151,12 +151,12 @@ func (s *service) EnsureJob(ctx context.Context, db database.IDB) error {
 	// and reads what it wrote.
 	jobs, err := s.jobSettings(ctx, db, bunex.SelectFor("UPDATE OF setting"))
 	if err != nil {
-		return err
+		return false, err
 	}
 	now := s.now()
 	switch {
 	case len(jobs) == 0 && status == base.SettingStatusDisabled:
-		return nil
+		return false, nil
 	case len(jobs) == 0:
 		job := &entity.Setting{
 			ID:        gofn.Must(ulid.NewStringULID()),
@@ -172,10 +172,10 @@ func (s *service) EnsureJob(ctx context.Context, db database.IDB) error {
 		job.MustSetData(&entity.PeriodicJob{
 			Interval: timeutil.Duration(jobInterval), Timeout: timeutil.Duration(jobTimeout)})
 		if err = s.settingRepo.Insert(ctx, db, job); err != nil {
-			return hperrors.Wrap(err)
+			return false, hperrors.Wrap(err)
 		}
 	case jobs[0].Status == status && jobs[0].Kind == string(base.PeriodicKindAppAutoscale):
-		return nil
+		return false, nil
 	default:
 		// Its status, and its kind and name when made before it scaled every
 		// app: the executor knows it by the kind.
@@ -188,12 +188,16 @@ func (s *service) EnsureJob(ctx context.Context, db database.IDB) error {
 		err = s.settingRepo.Update(ctx, db, job,
 			bunex.UpdateColumns("status", "kind", "name", "update_ver", "updated_at"))
 		if err != nil {
-			return hperrors.Wrap(err)
+			return false, hperrors.Wrap(err)
 		}
 	}
-	// The workers keep the periodic jobs in a cache: tell them it moved.
+	return true, nil
+}
+
+// AnnounceJob tells the workers, which keep the periodic jobs in a cache,
+// that the job moved.
+func (s *service) AnnounceJob(ctx context.Context) {
 	_ = s.systemEventBus.Publish(ctx, base.SystemEventPeriodicSettingsReload)
-	return nil
 }
 
 // jobSettings is the job's setting, made once, whatever its status: none
@@ -239,8 +243,7 @@ func (s *service) stopIdleJob(ctx context.Context) error {
 		return err
 	}
 	if stopped {
-		// The workers keep the periodic jobs in a cache: tell them it stopped.
-		_ = s.systemEventBus.Publish(ctx, base.SystemEventPeriodicSettingsReload)
+		s.AnnounceJob(ctx)
 	}
 	return nil
 }
@@ -316,6 +319,13 @@ func (s *service) Run(ctx context.Context, data *queue.PeriodicExecData) error {
 	services, err := s.services(ctx, apps)
 	if err != nil {
 		return err
+	}
+	// The load is read for the apps this run could scale alone, and with
+	// none, not at all: an app at rest with autoscale on - stopped, disabled,
+	// mid-update - would cost the queries of one running, every run.
+	apps = scalableApps(apps, autoscales, concurrency, services)
+	if len(apps) == 0 {
+		return nil
 	}
 
 	now := s.now()
@@ -529,6 +539,29 @@ func (s *service) exposed(ctx context.Context, ids []string) (map[string]bool, e
 		out[setting.ObjectID] = isExposed(setting)
 	}
 	return out, nil
+}
+
+// scalableApps are the apps a run could scale: with autoscale on, active,
+// with a service that scalable says may be changed.
+func scalableApps(
+	apps []*entity.App, autoscales map[string]*entity.AppAutoscale, concurrency map[string]int,
+	services map[string]*swarm.Service,
+) []*entity.App {
+	out := make([]*entity.App, 0, len(apps))
+	for _, app := range apps {
+		if autoscales[app.ID] == nil || app.ServiceID == "" || app.Status != base.AppStatusActive {
+			continue
+		}
+		svc := services[app.ServiceID]
+		if svc == nil {
+			continue
+		}
+		if _, ok := scalable(svc, app.ID, concurrency[app.ID] > 0); !ok {
+			continue
+		}
+		out = append(out, app)
+	}
+	return out
 }
 
 // runApp decides one app's replicas and applies them; the change, or nil for

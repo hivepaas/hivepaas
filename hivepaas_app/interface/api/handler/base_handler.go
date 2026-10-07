@@ -325,10 +325,17 @@ func (h *BaseHandler) ParseAndValidateRequest(ctx *gin.Context, reqStruct any, p
 	if err != nil {
 		return hperrors.Wrap(err)
 	}
+	return modifyAndValidate(reqStruct)
+}
+
+// modifyAndValidate runs a parsed request's own modifier, then its validator,
+// once the structs it embeds are there - see fillNilEmbedded.
+func modifyAndValidate(reqStruct any) error {
+	fillNilEmbedded(reflect.ValueOf(reqStruct))
 
 	// Execute custom modifier for the request input
 	if modifier, ok := reqStruct.(basedto.ReqModifier); ok {
-		if err = modifier.ModifyRequest(); err != nil {
+		if err := modifier.ModifyRequest(); err != nil {
 			return hperrors.Wrap(err)
 		}
 	}
@@ -399,22 +406,7 @@ func (h *BaseHandler) ParseAndValidateJSONBody(ctx *gin.Context, reqStruct any) 
 	if err != nil {
 		return hperrors.Wrap(err)
 	}
-
-	// Execute custom modifier for the request input
-	if modifier, ok := reqStruct.(basedto.ReqModifier); ok {
-		if err = modifier.ModifyRequest(); err != nil {
-			return hperrors.Wrap(err)
-		}
-	}
-
-	// Execute custom validator for the request input
-	if validator, ok := reqStruct.(basedto.ReqValidator); ok {
-		if vldErrs := validator.Validate(); len(vldErrs) > 0 {
-			return vldErrs
-		}
-	}
-
-	return nil
+	return modifyAndValidate(reqStruct)
 }
 
 // ParseJSONBody parse request body as JSON

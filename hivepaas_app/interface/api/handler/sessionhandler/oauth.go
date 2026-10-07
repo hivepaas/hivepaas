@@ -7,7 +7,7 @@ import (
 	"github.com/markbates/goth/gothic"
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/config"
-	_ "github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/sessionuc/sessiondto"
 )
 
@@ -65,9 +65,11 @@ func (h *Handler) SSOOAuthCallback(ctx *gin.Context) {
 	q.Add("provider", provider)
 	ctx.Request.URL.RawQuery = q.Encode()
 
+	// An unknown provider, a missing or mismatched state, a code the provider
+	// refuses: the sign-in is not completed, whichever it was.
 	oauthUser, err := gothic.CompleteUserAuth(ctx.Writer, ctx.Request)
 	if err != nil {
-		h.RenderError(ctx, err)
+		h.RenderError(ctx, hperrors.Wrap(hperrors.ErrUnauthorized).WithCause(err))
 		return
 	}
 

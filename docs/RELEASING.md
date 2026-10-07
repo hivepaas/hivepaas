@@ -89,12 +89,17 @@ The example is `v1.0.0-beta1`; for a stable release read `stable` for `beta`.
      `agentImage: "ghcr.io/hivepaas/hivepaas-agent:1.0.0-beta1"`, the tags (the
      digests do not exist yet; the binary names these two by its version anyway);
    - the other images this release runs, and `templates` if the app templates
-     moved. Keep what the entry of the other channel says.
+     moved: `go run ./tools/apptemplate pin <app-templates checkout>` prints the
+     pin of its commit. Keep what the entry of the other channel says.
 
    Then pin every image but the app's and the agent's:
    ```bash
    make release-pin        # writes tag@sha256:…; make release-pin-check only reports
    ```
+   It also checks each `templates` pin, and stops on one whose index.json at
+   that commit does not hash to its `indexSha256`: every server that updates
+   would be left without templates.
+
    Name each image by a tag that says its version (`traefik:v3.7.13`, not
    `traefik:v3.7`): the digest fixes the image, the tag is what people read, and
    the updater decides "newer" from the tag. To ship a rebuild under the same tag,

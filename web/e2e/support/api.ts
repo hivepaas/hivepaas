@@ -259,3 +259,40 @@ export async function findAppNamed(api: APIRequestContext, near: App, name: stri
     const found = body.data.find(a => a.name === name);
     return found ? { id: found.id, name, projectId: near.projectId, env: near.env } : undefined;
 }
+
+export interface SystemProject {
+    id: string;
+    updateVer: number;
+    envs: { id: string; name: string; updateVer: number }[];
+}
+
+// systemProject is the project HivePaaS runs in, which the projects list leaves
+// out, with its environments.
+export async function systemProject(api: APIRequestContext): Promise<SystemProject> {
+    const found = (await ok(await api.get("system/hivepaas/project"), "finding the HivePaaS project")) as {
+        data: { id: string };
+    };
+    const body = (await ok(await api.get(`projects/${found.data.id}`), "reading the HivePaaS project")) as {
+        data: SystemProject;
+    };
+    return body.data;
+}
+
+export interface SystemApp extends App {
+    key: string;
+    updateVer: number;
+}
+
+// systemApp is the app of the HivePaaS project with that key, in whichever of
+// its environments it is.
+export async function systemApp(api: APIRequestContext, project: SystemProject, key: string): Promise<SystemApp> {
+    for (const env of project.envs) {
+        const body = (await ok(
+            await api.get(`projects/${project.id}/${env.name}/apps`),
+            `listing the HivePaaS apps of ${env.name}`,
+        )) as { data: { id: string; name: string; key: string; updateVer: number }[] };
+        const app = body.data.find(a => a.key === key);
+        if (app) return { ...app, projectId: project.id, env: env.name };
+    }
+    throw new Error(`the HivePaaS project has no app ${key}`);
+}

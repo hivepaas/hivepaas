@@ -32,7 +32,9 @@ backend repo beside this one (or `HP_BACKEND_DIR`), Go, and the backend's
 10100; `HP_E2E_SKIP_BUILD=1` reuses the last build. The template catalog is the
 app-templates repo beside this one (or `HP_TEMPLATES_SRC`); without it, the
 template test finds none. dind is also given kopia, the backup engine, from
-its pinned image.
+its pinned image. The seed's notification channels - a mail account, a Slack, a
+Discord and a Telegram, real ones - are removed: nothing the tests do is sent
+to anyone.
 
 The stack's proxy is the release's Traefik, inside dind; the apps' domains
 answer on this machine at 10180 (HTTP) and 10443 (HTTPS), moved by

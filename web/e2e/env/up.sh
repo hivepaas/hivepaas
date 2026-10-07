@@ -82,6 +82,12 @@ docker run --rm --network "$NET" -v "$BACKEND_DIR":/app:ro -e HP_DB_HOST="$DB" -
 	-e HP_DB_USER=hivepaas -e HP_DB_PASSWORD=abc123 -e HP_DB_DB_NAME=hivepaas hivepaas-devtools \
 	sql-migrate up -config=hivepaas_app/db/dbconfig.yml -env=main >/dev/null
 docker exec -i "$DB" psql -q -U hivepaas -d hivepaas <"$BACKEND_DIR/hivepaas_app/db/seed/seed.sql" >/dev/null
+# The seed's notification channels are real ones - a mail account, Slack,
+# Discord and Telegram, all defaults - and every deployment, health check and
+# cleanup here would write to them. Gone: a test makes the channels it needs,
+# pointed at an app of its own.
+docker exec "$DB" psql -q -U hivepaas -d hivepaas \
+	-c "DELETE FROM settings WHERE scope = '' AND type IN ('notification', 'im-service', 'email')" >/dev/null
 
 say "Standing in for the stack inside dind"
 # What the installer deploys and the backend looks for: its own services

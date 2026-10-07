@@ -15,7 +15,12 @@
 // as they are, to be pinned by a run after the build. Every other image is
 // pinned before the commit - the binary is built with release.json as it is.
 //
-// It needs docker with buildx, and asks the registries; run it before
+// It also checks each channel's templates pin: the index.json of the pinned
+// commit hashes to its indexSha256, as a server will check it. A pin that does
+// not stops it, -check or not; the pin itself is made with
+// `go run ./tools/apptemplate pin`.
+//
+// It needs docker with buildx, and asks the registries and GitHub; run it before
 // `make release-sign`, never after.
 package main
 
@@ -167,6 +172,14 @@ func main() {
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
+	}
+	checked, err := checkTemplates(release, fetchHTTP)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, "templates pin:", err)
+		os.Exit(1)
+	}
+	for _, pin := range checked {
+		fmt.Println("templates pin matches its index:", pin)
 	}
 	out, rep, err := pinWith(release, resolveWithDocker, *deps)
 	if err != nil {

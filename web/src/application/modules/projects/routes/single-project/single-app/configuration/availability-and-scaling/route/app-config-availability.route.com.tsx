@@ -98,18 +98,6 @@ export function AppConfigAvailabilityRoute() {
 
     return (
         <div className="flex flex-col gap-4">
-            <div className={cn(dashedBorderBox)}>
-                <span className="font-semibold text-orange-500">Note:</span> If you change the configuration here,
-                please check the application&rsquo;s scheduling results in{" "}
-                <AppLink.Basic
-                    to={ROUTE.projects.single.apps.single.instances.$route(projectId, env, appId)}
-                    className="text-link underline-offset-4 hover:underline"
-                >
-                    Instances
-                </AppLink.Basic>
-                .
-            </div>
-
             {autoscale && (
                 <>
                     <AutoscaleSection
@@ -122,6 +110,18 @@ export function AppConfigAvailabilityRoute() {
                     <div className="h-px bg-muted" />
                 </>
             )}
+
+            <div className={cn(dashedBorderBox)}>
+                <span className="font-semibold text-orange-500">Note:</span> If you change the configuration here,
+                please check the application&rsquo;s scheduling results in{" "}
+                <AppLink.Basic
+                    to={ROUTE.projects.single.apps.single.instances.$route(projectId, env, appId)}
+                    className="text-link underline-offset-4 hover:underline"
+                >
+                    Instances
+                </AppLink.Basic>
+                .
+            </div>
 
             <AppConfigAvailabilityForm
                 ref={formRef}

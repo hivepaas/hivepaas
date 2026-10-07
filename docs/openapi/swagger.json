@@ -134,7 +134,7 @@
   "paths" : {
     "/app-templates" : {
       "get" : {
-        "description" : "Lists the templates a project can create apps from, a page at a time, ordered by name.\nThe categories and tags to filter by come from the app template catalog.",
+        "description" : "Lists the templates a project can create apps from, a page at a time, by name\nunless sort says otherwise.\nThe categories and tags to filter by come from the app template catalog.",
         "operationId" : "listAppTemplates",
         "parameters" : [ {
           "description" : "categories, comma separated; a parent matches every child",
@@ -154,6 +154,13 @@
           "description" : "matches name, title, tagline, tags and aliases, ignoring case",
           "in" : "query",
           "name" : "search",
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "name (the default), stars, trending or added; a leading minus reverses it",
+          "in" : "query",
+          "name" : "sort",
           "schema" : {
             "type" : "string"
           }
@@ -55874,6 +55881,10 @@
       },
       "apptemplatedto.AppTemplateSummaryResp" : {
         "properties" : {
+          "added" : {
+            "description" : "Added is the day the template joined the catalog, YYYY-MM-DD, or \"\" when\nthe catalog does not say. The store marks the recent ones as new.",
+            "type" : "string"
+          },
           "aliases" : {
             "items" : {
               "type" : "string"
@@ -55921,6 +55932,13 @@
             "description" : "RequiresDockerAPI says creating this template gives an app the Docker API,\nbehind the same permission. The store marks those too.",
             "type" : "boolean"
           },
+          "stars" : {
+            "description" : "Stars are the GitHub stars of the project the template runs, and\nStarsGained the ones of the last 28 days; 0 for a project not counted.",
+            "type" : "integer"
+          },
+          "starsGained" : {
+            "type" : "integer"
+          },
           "tagline" : {
             "type" : "string"
           },
@@ -55946,7 +55964,7 @@
             "type" : "array"
           }
         },
-        "required" : [ "aliases", "categories", "compatible", "components", "dependencies", "iconUrl", "license", "name", "requiresCapabilities", "requiresDockerApi", "tagline", "tags", "title", "variants", "versions" ],
+        "required" : [ "added", "aliases", "categories", "compatible", "components", "dependencies", "iconUrl", "license", "name", "requiresCapabilities", "requiresDockerApi", "stars", "starsGained", "tagline", "tags", "title", "variants", "versions" ],
         "type" : "object"
       },
       "apptemplatedto.AppTemplateTagResp" : {

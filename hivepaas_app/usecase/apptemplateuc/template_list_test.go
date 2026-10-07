@@ -1,6 +1,7 @@
 package apptemplateuc
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -108,4 +109,55 @@ func TestFilteredTotalIsWhatThePagesCover(t *testing.T) {
 
 	assert.Len(t, page, 1)
 	assert.Equal(t, int64(3), meta.Total, "total counts what matched, not the whole catalog")
+}
+
+func sortTestEntries() []*templatemodel.IndexEntry {
+	return []*templatemodel.IndexEntry{
+		{Name: "redis", Stats: &templatemodel.IndexStats{Added: "2026-09-01", Stars: 70000, StarsGained: 300}},
+		{Name: "gitea", Stats: &templatemodel.IndexStats{Added: "2026-10-01", Stars: 50000, StarsGained: 900}},
+		// Counted nothing: not on GitHub, and from an index that predates dates.
+		{Name: "forgejo"},
+		{Name: "mariadb", Stats: &templatemodel.IndexStats{Added: "2026-09-01", Stars: 7000, StarsGained: 300}},
+		{Name: "valkey", Stats: &templatemodel.IndexStats{Added: "2026-10-01"}},
+	}
+}
+
+func TestSortTemplates(t *testing.T) {
+	for sort, want := range map[string][]string{
+		"":          {"forgejo", "gitea", "mariadb", "redis", "valkey"},
+		"name":      {"forgejo", "gitea", "mariadb", "redis", "valkey"},
+		"-name":     {"valkey", "redis", "mariadb", "gitea", "forgejo"},
+		"-stars":    {"redis", "gitea", "mariadb", "forgejo", "valkey"},
+		"stars":     {"mariadb", "gitea", "redis", "forgejo", "valkey"},
+		"-trending": {"gitea", "mariadb", "redis", "forgejo", "valkey"},
+		"-added":    {"gitea", "valkey", "mariadb", "redis", "forgejo"},
+		"added":     {"mariadb", "redis", "gitea", "valkey", "forgejo"},
+	} {
+		t.Run(sort, func(t *testing.T) {
+			var orders basedto.Orders
+			if sort != "" {
+				direction, column := basedto.DirectionAsc, sort
+				if sort[0] == '-' {
+					direction, column = basedto.DirectionDesc, sort[1:]
+				}
+				orders = basedto.Orders{{Direction: direction, ColumnName: column}}
+			}
+			assert.Equal(t, want, names(sortTemplates(sortTestEntries(), orders)))
+		})
+	}
+}
+
+func TestListAppTemplatesReqTakesOneKnownOrder(t *testing.T) {
+	for sort, valid := range map[string]bool{
+		"": true, "name": true, "stars": true, "trending": true, "added": true,
+		"popularity": false, "stars,name": false,
+	} {
+		req := &apptemplatedto.ListAppTemplatesReq{}
+		for _, column := range strings.Split(sort, ",") {
+			if column != "" {
+				req.Paging.Sort = append(req.Paging.Sort, &basedto.Order{Direction: basedto.DirectionDesc, ColumnName: column})
+			}
+		}
+		assert.Equal(t, valid, req.Validate() == nil, sort)
+	}
 }

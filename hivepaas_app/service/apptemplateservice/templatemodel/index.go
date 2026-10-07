@@ -72,6 +72,8 @@ type IndexEntry struct {
 	// RequiresDockerAPI says the template gives an app the Docker API, which
 	// also takes Write on the Cluster module; in the index for the same reason.
 	RequiresDockerAPI bool `json:"requiresDockerApi,omitempty"`
+	// Stats are what the store orders templates by besides their name.
+	Stats *IndexStats `json:"stats,omitempty"`
 }
 
 type IndexVariant struct {

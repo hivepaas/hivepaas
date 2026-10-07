@@ -12,7 +12,8 @@ import (
 
 // ListAppTemplates Lists app templates
 // @Summary Lists app templates
-// @Description Lists the templates a project can create apps from, a page at a time, ordered by name.
+// @Description Lists the templates a project can create apps from, a page at a time, by name
+// @Description unless sort says otherwise.
 // @Description The categories and tags to filter by come from the app template catalog.
 // @Tags    App templates
 // @Produce json
@@ -20,6 +21,7 @@ import (
 // @Param   category query string false "categories, comma separated; a parent matches every child"
 // @Param   tag query string false "tags, comma separated; a template carrying any of them matches"
 // @Param   search query string false "matches name, title, tagline, tags and aliases, ignoring case"
+// @Param   sort query string false "name (the default), stars, trending or added; a leading minus reverses it"
 // @Param   pageOffset query int false "`pageOffset=offset`"
 // @Param   pageLimit query int false "`pageLimit=limit`"
 // @Success 200 {object} apptemplatedto.ListAppTemplatesResp

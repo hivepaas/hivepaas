@@ -23,7 +23,7 @@ const (
 // vocabularies and its icon, and by rendering every version and variant with
 // default parameters - the same render HivePaaS runs.
 func Lint(repo *Repo) []Problem {
-	problems := lintVocabularies(repo)
+	problems := append(lintVocabularies(repo), lintStats(repo)...)
 	categories := categoryRefs(repo.Categories.Categories)
 	tags := map[string]bool{}
 	for _, tag := range repo.Tags.Tags {

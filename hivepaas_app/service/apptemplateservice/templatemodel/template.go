@@ -23,6 +23,7 @@ const (
 	KindTemplateIndex      = "TemplateIndex"
 	KindTemplateCategories = "TemplateCategories"
 	KindTemplateTags       = "TemplateTags"
+	KindTemplateStats      = "TemplateStats"
 )
 
 // Template is one file under templates/.

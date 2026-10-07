@@ -1,6 +1,7 @@
 package apptemplateuc
 
 import (
+	"cmp"
 	"context"
 	"slices"
 	"strings"
@@ -21,7 +22,8 @@ func (uc *UC) ListAppTemplates(
 	if err != nil {
 		return nil, hperrors.Wrap(err)
 	}
-	page, pagingMeta := pageTemplates(filterTemplates(index.Index.Templates, req), req.Paging)
+	matched := sortTemplates(filterTemplates(index.Index.Templates, req), req.Paging.Sort)
+	page, pagingMeta := pageTemplates(matched, req.Paging)
 	return &apptemplatedto.ListAppTemplatesResp{
 		Meta: &basedto.ListMeta{Page: pagingMeta},
 		Data: apptemplatedto.TransformAppTemplateSummaries(page, base.CurrentVersion),
@@ -98,6 +100,66 @@ func matchesSearch(entry *templatemodel.IndexEntry, search string) bool {
 		}
 	}
 	return false
+}
+
+// sortTemplates puts the templates in the order asked for, by name when none was.
+//
+// Ties go by name, so that a page boundary falls in the same place on every
+// request: templates with the same stars, or none, would otherwise move between
+// pages as they are fetched. And a template the order knows nothing about - no
+// stars counted, no day it joined - comes after the ones it does, whichever way
+// it runs: the store asked for the most starred, or the oldest, not for the ones
+// nobody counted.
+func sortTemplates(entries []*templatemodel.IndexEntry, orders basedto.Orders) []*templatemodel.IndexEntry {
+	column, desc := apptemplatedto.AppTemplateOrderName, false
+	if len(orders) > 0 {
+		column, desc = orders[0].ColumnName, orders[0].Direction == basedto.DirectionDesc
+	}
+	byName := func(a, b *templatemodel.IndexEntry) int { return cmp.Compare(a.Name, b.Name) }
+	var key func(entry *templatemodel.IndexEntry) (string, int)
+	switch column {
+	case apptemplatedto.AppTemplateOrderStars:
+		key = func(entry *templatemodel.IndexEntry) (string, int) { return "", statsOf(entry).Stars }
+	case apptemplatedto.AppTemplateOrderTrending:
+		key = func(entry *templatemodel.IndexEntry) (string, int) { return "", statsOf(entry).StarsGained }
+	case apptemplatedto.AppTemplateOrderAdded:
+		key = func(entry *templatemodel.IndexEntry) (string, int) { return statsOf(entry).Added, 0 }
+	default:
+		slices.SortStableFunc(entries, func(a, b *templatemodel.IndexEntry) int {
+			if desc {
+				return byName(b, a)
+			}
+			return byName(a, b)
+		})
+		return entries
+	}
+
+	slices.SortStableFunc(entries, func(a, b *templatemodel.IndexEntry) int {
+		textA, numA := key(a)
+		textB, numB := key(b)
+		knownA, knownB := textA != "" || numA != 0, textB != "" || numB != 0
+		if knownA != knownB {
+			if knownA {
+				return -1
+			}
+			return 1
+		}
+		order := cmp.Or(cmp.Compare(textA, textB), cmp.Compare(numA, numB))
+		if desc {
+			order = -order
+		}
+		return cmp.Or(order, byName(a, b))
+	})
+	return entries
+}
+
+var noStats = &templatemodel.IndexStats{}
+
+func statsOf(entry *templatemodel.IndexEntry) *templatemodel.IndexStats {
+	if entry.Stats == nil {
+		return noStats
+	}
+	return entry.Stats
 }
 
 // pageTemplates cuts one page out of the filtered templates. Total is what matched,

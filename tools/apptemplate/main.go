@@ -1,6 +1,6 @@
 // Command apptemplate works on a checkout of the app-templates repository: it
-// lints templates, writes index.json, renders a template the way HivePaaS will,
-// and prints the pin release.json carries.
+// lints templates, writes index.json and the stats the store orders by, renders
+// a template the way HivePaaS will, and prints the pin release.json carries.
 //
 // It is built on the packages HivePaaS renders templates with, so a template this
 // tool accepts is one HivePaaS accepts.
@@ -12,6 +12,7 @@
 //	go run ./tools/apptemplate render [-version 18] [-variant alpine] [-param name=value]... <dir> <template>
 //	go run ./tools/apptemplate pin    <dir>
 //	go run ./tools/apptemplate bump   [-dry-run] <dir>
+//	go run ./tools/apptemplate stats  <dir>    (GITHUB_TOKEN in the environment)
 //	go run ./tools/apptemplate subset -version-code v000001 <dir> <out-dir>
 //	go run ./tools/apptemplate version-code
 package main
@@ -32,17 +33,19 @@ import (
 	"slices"
 	"sort"
 	"strings"
+	"time"
 
 	"gopkg.in/yaml.v3"
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/apptemplateservice/templatemodel"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/apptemplateservice/templaterender"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/apptemplateservice/templaterepo"
 )
 
 var (
 	errProblems   = errors.New("the repository has problems")
-	errIndexStale = errors.New("index.json is out of date: run `apptemplate index`")
+	errIndexStale = errors.New("index.json or stats.yaml is out of date: run `apptemplate index`")
 
 	githubRemotePattern = regexp.MustCompile(
 		`^(?:https://github\.com/|git@github\.com:|ssh://git@github\.com/)([A-Za-z0-9][A-Za-z0-9-]*/[A-Za-z0-9._-]+?)(?:\.git)?/?$`)
@@ -65,6 +68,8 @@ func main() {
 		err = runPin(args, os.Stdout)
 	case "bump":
 		err = runBump(args, os.Stdout)
+	case "stats":
+		err = runStats(args, os.Stdout)
 	case "subset":
 		err = runSubset(args, os.Stdout)
 	case "version-code":
@@ -79,7 +84,7 @@ func main() {
 }
 
 func usage() {
-	fmt.Fprintln(os.Stderr, "usage: apptemplate lint|index|render|pin|bump|subset|version-code [flags] <dir> ...")
+	fmt.Fprintln(os.Stderr, "usage: apptemplate lint|index|render|pin|bump|stats|subset|version-code [flags] <dir> ...")
 	os.Exit(2) //nolint:mnd
 }
 
@@ -122,38 +127,56 @@ func runIndex(args []string, out io.Writer) error {
 		return err
 	}
 
-	data, err := buildIndex(dir)
+	repo, data, err := buildIndex(dir)
 	if err != nil {
 		return err
 	}
 	warnIndexSize(out, len(data))
-	path := filepath.Join(dir, templaterepo.IndexFile)
+	files := []struct {
+		path string
+		data []byte
+	}{
+		// stats.yaml first: the index carries what it says.
+		{filepath.Join(dir, templaterepo.StatsFile), templaterepo.MarshalStats(repo.Stats)},
+		{filepath.Join(dir, templaterepo.IndexFile), data},
+	}
 	if *check {
-		current, readErr := os.ReadFile(path)
-		if readErr != nil || !bytes.Equal(current, data) {
-			return errIndexStale
+		for _, file := range files {
+			current, readErr := os.ReadFile(file.path)
+			if readErr != nil || !bytes.Equal(current, file.data) {
+				return errIndexStale
+			}
 		}
 		fmt.Fprintln(out, "index.json is up to date")
 		return nil
 	}
-	if err = os.WriteFile(path, data, 0o644); err != nil { //nolint:gosec
-		return err
+	for _, file := range files {
+		if err = os.WriteFile(file.path, file.data, 0o644); err != nil { //nolint:gosec
+			return err
+		}
+		fmt.Fprintf(out, "written: %s\n", file.path)
 	}
-	fmt.Fprintf(out, "written: %s\n", path)
 	return nil
 }
 
+// today is the day a template joining the repository is dated, in UTC.
+var today = func() string { return time.Now().UTC().Format(templatemodel.DateLayout) }
+
 // buildIndex refuses a repository with problems: an index is published, and an
-// index of broken templates is a store of forms that cannot be submitted.
-func buildIndex(dir string) ([]byte, error) {
+// index of broken templates is a store of forms that cannot be submitted. It
+// dates the templates that joined since stats.yaml was last written, so the
+// repository it returns carries the stats to write beside the index.
+func buildIndex(dir string) (*templaterepo.Repo, []byte, error) {
 	repo, problems, err := templaterepo.Load(os.DirFS(dir))
 	if err != nil {
-		return nil, errors.New(templaterepo.ErrorText(err))
+		return nil, nil, errors.New(templaterepo.ErrorText(err))
 	}
+	templaterepo.SyncStats(repo, today())
 	if problems = append(problems, templaterepo.Lint(repo)...); len(problems) > 0 {
-		return nil, fmt.Errorf("%w: run `apptemplate lint` to see them", errProblems)
+		return nil, nil, fmt.Errorf("%w: run `apptemplate lint` to see them", errProblems)
 	}
-	return indexBytes(repo)
+	data, err := indexBytes(repo)
+	return repo, data, err
 }
 
 func indexBytes(repo *templaterepo.Repo) ([]byte, error) {

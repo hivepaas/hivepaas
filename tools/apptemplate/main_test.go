@@ -61,6 +61,45 @@ func TestLintAndIndex(t *testing.T) {
 	assert.ErrorIs(t, runIndex([]string{"-check", dir}, &out), errIndexStale, "a changed template changes its hash")
 }
 
+// index dates the templates that joined since stats.yaml was written, forgets
+// the ones that left, and puts the stats in the index; -check catches a
+// repository it has not been run on since.
+func TestIndexKeepsStatsInLineWithTheTemplates(t *testing.T) {
+	dir := copyRepo(t)
+	statsPath := filepath.Join(dir, templaterepo.StatsFile)
+	assert.NoError(t, os.WriteFile(statsPath, []byte(`apiVersion: hivepaas.com/v1
+kind: TemplateStats
+counted: "2026-10-05"
+templates:
+  demo: {added: "2026-09-01", stars: 1200, starsGained: 40}
+  gone: {added: "2026-09-02"}
+`), 0o600))
+	defer func(original func() string) { today = original }(today)
+	today = func() string { return "2026-10-07" }
+	var out bytes.Buffer
+
+	assert.ErrorIs(t, runIndex([]string{"-check", dir}, &out), errIndexStale)
+	assert.NoError(t, runIndex([]string{dir}, &out))
+	assert.NoError(t, runIndex([]string{"-check", dir}, &out))
+
+	stats, err := os.ReadFile(statsPath)
+	assert.NoError(t, err)
+	assert.Contains(t, string(stats), `  demo: {added: "2026-09-01", stars: 1200, starsGained: 40}`)
+	assert.Contains(t, string(stats), `  demoweb: {added: "2026-10-07"}`, "a template that joined is dated today")
+	assert.NotContains(t, string(stats), "gone", "a template that left is forgotten")
+
+	data, err := os.ReadFile(filepath.Join(dir, templaterepo.IndexFile))
+	assert.NoError(t, err)
+	assert.Contains(t, string(data), `"stats": {
+        "added": "2026-09-01",
+        "stars": 1200,
+        "starsGained": 40
+      }`)
+
+	assert.NoError(t, os.WriteFile(statsPath, []byte(strings.Replace(string(stats), "1200", "1300", 1)), 0o600))
+	assert.ErrorIs(t, runIndex([]string{"-check", dir}, &out), errIndexStale, "new counts are not in the index yet")
+}
+
 func TestLintReportsProblems(t *testing.T) {
 	dir := copyRepo(t)
 	path := filepath.Join(dir, "templates", "demo.yaml")

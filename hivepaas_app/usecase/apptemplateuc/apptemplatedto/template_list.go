@@ -1,6 +1,7 @@
 package apptemplatedto
 
 import (
+	"slices"
 	"strings"
 
 	vld "github.com/tiendc/go-validator"
@@ -16,12 +17,29 @@ const (
 	searchMaxLen      = 100
 )
 
+// Orders the store lists templates in, as the sort parameter names them. A
+// minus orders the other way: -stars is the most starred first.
+const (
+	// AppTemplateOrderName is the default, A to Z.
+	AppTemplateOrderName = "name"
+	// AppTemplateOrderStars is by the GitHub stars of the project.
+	AppTemplateOrderStars = "stars"
+	// AppTemplateOrderTrending is by the stars it gained lately.
+	AppTemplateOrderTrending = "trending"
+	// AppTemplateOrderAdded is by the day the template joined the catalog.
+	AppTemplateOrderAdded = "added"
+)
+
+var appTemplateOrders = []string{
+	AppTemplateOrderName, AppTemplateOrderStars, AppTemplateOrderTrending, AppTemplateOrderAdded,
+}
+
 // ListAppTemplatesReq lists the templates a project can create apps from, a page
 // at a time. The categories and tags to filter by come from GetAppTemplateCatalog.
 //
-// Ordering is by template name and cannot be changed: the catalog is one verified
-// file read into memory, so there is no database to sort by, and a sort parameter
-// would be accepted and silently ignored.
+// The sort parameter takes one of the AppTemplateOrder names. The catalog is
+// one verified file read into memory, so these are the only orders there are;
+// any other is refused rather than silently ignored.
 type ListAppTemplatesReq struct {
 	// Categories match a template in any of them. A parent such as `databases`
 	// matches every child under it; `databases/sql` matches exactly.
@@ -63,6 +81,8 @@ func (req *ListAppTemplatesReq) Validate() hperrors.ValidationErrors {
 	validators = append(validators, basedto.ValidateStr(&req.Search, false, 1, searchMaxLen, "search")...)
 	validators = append(validators, validateFilterValues(req.Categories, "category")...)
 	validators = append(validators, validateFilterValues(req.Tags, "tag")...)
+	validators = append(validators, basedto.ValidateCond(len(req.Paging.Sort) <= 1 &&
+		(len(req.Paging.Sort) == 0 || slices.Contains(appTemplateOrders, req.Paging.Sort[0].ColumnName)), "sort")...)
 	return hperrors.NewValidationErrors(vld.Validate(validators...))
 }
 
@@ -121,6 +141,13 @@ type AppTemplateSummaryResp struct {
 	// the only thing to do about an incompatible template is update - which is
 	// the same whichever version it asked for.
 	Compatible bool `json:"compatible"`
+	// Added is the day the template joined the catalog, YYYY-MM-DD, or "" when
+	// the catalog does not say. The store marks the recent ones as new.
+	Added string `json:"added"`
+	// Stars are the GitHub stars of the project the template runs, and
+	// StarsGained the ones of the last 28 days; 0 for a project not counted.
+	Stars       int `json:"stars"`
+	StarsGained int `json:"starsGained"`
 }
 
 // AppTemplateComponentSummaryResp is one app of a template that creates several.
@@ -174,6 +201,9 @@ func transformSummary(entry *templatemodel.IndexEntry, currentVersionCode string
 
 		RequiresCapabilities: entry.RequiresCapabilities,
 		RequiresDockerAPI:    entry.RequiresDockerAPI,
+	}
+	if entry.Stats != nil {
+		summary.Added, summary.Stars, summary.StarsGained = entry.Stats.Added, entry.Stats.Stars, entry.Stats.StarsGained
 	}
 	for _, variant := range entry.Variants {
 		summary.Variants = append(summary.Variants,

@@ -46,6 +46,8 @@ type Repo struct {
 	Templates []*TemplateFile
 	// Icons holds the icons templates name, by path.
 	Icons map[string]*File
+	// Stats is stats.yaml, nil for a repository without one.
+	Stats *templatemodel.Stats
 }
 
 // Problem is one thing wrong with a repository, for a person to fix.
@@ -89,7 +91,7 @@ func Load(fsys fs.FS) (*Repo, []Problem, error) {
 	}
 
 	repo := &Repo{Categories: categories, Tags: tags, Icons: map[string]*File{}}
-	var problems []Problem
+	problems := repo.loadStats(fsys)
 
 	paths, err := fs.Glob(fsys, TemplatesDir+"/*.yaml")
 	if err != nil {

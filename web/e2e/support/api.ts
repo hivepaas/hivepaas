@@ -185,3 +185,18 @@ export async function findApp(api: APIRequestContext, app: App): Promise<App | u
     };
     return body.data.some(a => a.id === app.id) ? app : undefined;
 }
+
+export interface EnvVar {
+    key: string;
+    value: string;
+    isLiteral: boolean;
+}
+
+// runtimeEnvVars are the variables an app sets for itself at run time, as
+// saved.
+export async function runtimeEnvVars(api: APIRequestContext, app: App): Promise<EnvVar[]> {
+    const body = (await ok(await api.get(`${appPath(app)}/env-vars`), "reading env variables")) as {
+        data: { runtimeEnvVars: EnvVar[] | null };
+    };
+    return body.data.runtimeEnvVars ?? [];
+}

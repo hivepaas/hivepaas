@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import React, { useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
 
 import { cn } from "@/lib/utils";
 import { Button } from "@components/ui/button";
@@ -24,6 +24,9 @@ ${MULTILINE_ENV_SEPARATOR}
 KEY_2=
 value line
 ${MULTILINE_ENV_SEPARATOR}`;
+
+// What Literal does: shown beside its checkbox, and read with it.
+const LITERAL_HINT = "Used as written: ${...} references in it are not replaced";
 
 function View<T>({
     name,
@@ -52,6 +55,10 @@ function View<T>({
     const fieldValues = useMemo(() => {
         return fieldValuesWatch;
     }, [fieldValuesWatch]);
+
+    const hintId = useId();
+    const literalHintId = `${hintId}-literal`;
+    const mergeHintId = `${hintId}-merge`;
 
     const previousViewModeRef = useRef<"merge" | "individual">(viewMode);
     const readOnlySnapshotRef = useRef(snapshotReadOnlyEnvVars([]));
@@ -217,6 +224,8 @@ function View<T>({
                         return (
                             <div
                                 key={field.id}
+                                role="group"
+                                aria-label={record.key.trim() || "New variable"}
                                 className="flex flex-col sm:flex-row sm:items-start gap-2 sm:gap-3 p-2.5 sm:p-0 rounded-lg sm:rounded-none bg-muted/20 sm:bg-transparent border sm:border-0"
                             >
                                 {/* Key & Value Inputs */}
@@ -228,6 +237,7 @@ function View<T>({
                                                 id={`${name}-${index}-key`}
                                                 {...register(`${name}.${index}.key`)}
                                                 placeholder="Key"
+                                                aria-label="Key"
                                                 aria-invalid={!!get(errors, `${name}.${index}.key`)}
                                                 disabled={rowReadOnly}
                                             />
@@ -242,6 +252,7 @@ function View<T>({
                                                 <Textarea
                                                     id={`${name}-${index}-value`}
                                                     {...register(`${name}.${index}.value`)}
+                                                    aria-label="Value"
                                                     aria-invalid={!!get(errors, `${name}.${index}.value`)}
                                                     disabled={rowReadOnly}
                                                     minRows={4}
@@ -256,6 +267,7 @@ function View<T>({
                                                     id={`${name}-${index}-value`}
                                                     type={isRevealed ? "text" : "password"}
                                                     {...register(`${name}.${index}.value`)}
+                                                    aria-label="Value"
                                                     aria-invalid={!!get(errors, `${name}.${index}.value`)}
                                                     disabled={rowReadOnly}
                                                 />
@@ -285,13 +297,19 @@ function View<T>({
                                                 });
                                             }}
                                             disabled={rowReadOnly}
+                                            aria-describedby={literalHintId}
                                         />
-                                        <label
-                                            htmlFor={`${name}-${index}-literal`}
-                                            className="text-sm cursor-pointer select-none text-muted-foreground sm:text-foreground"
-                                        >
-                                            Literal
-                                        </label>
+                                        <Tooltip>
+                                            <TooltipTrigger asChild>
+                                                <label
+                                                    htmlFor={`${name}-${index}-literal`}
+                                                    className="text-sm cursor-pointer select-none text-muted-foreground sm:text-foreground"
+                                                >
+                                                    Literal
+                                                </label>
+                                            </TooltipTrigger>
+                                            <TooltipContent side="top">{LITERAL_HINT}</TooltipContent>
+                                        </Tooltip>
                                     </div>
 
                                     <div className="flex items-center gap-1">
@@ -306,7 +324,7 @@ function View<T>({
                                                         handleMultilineToggle(field.id, record.value, rowReadOnly);
                                                     }}
                                                     disabled={rowReadOnly}
-                                                    aria-label="Toggle multi-line mode"
+                                                    aria-label="Multi-line value"
                                                     aria-pressed={isMultiline}
                                                     aria-disabled={rowReadOnly || cannotDisableMultiline || undefined}
                                                     className={cn(
@@ -318,35 +336,47 @@ function View<T>({
                                                     <WrapText className="size-4" />
                                                 </Button>
                                             </TooltipTrigger>
-                                            <TooltipContent side="top">Toggle multi-line mode</TooltipContent>
+                                            <TooltipContent side="top">Multi-line value</TooltipContent>
                                         </Tooltip>
 
                                         {/* Delete Button */}
                                         {rowReadOnly && !readOnly ? (
                                             <div className="size-9" />
                                         ) : (
-                                            <Button
-                                                type="button"
-                                                variant="ghost"
-                                                size="icon"
-                                                onClick={() => {
-                                                    if (rowReadOnly) {
-                                                        return;
-                                                    }
+                                            <Tooltip>
+                                                <TooltipTrigger asChild>
+                                                    <Button
+                                                        type="button"
+                                                        variant="ghost"
+                                                        size="icon"
+                                                        onClick={() => {
+                                                            if (rowReadOnly) {
+                                                                return;
+                                                            }
 
-                                                    remove(index);
-                                                }}
-                                                disabled={rowReadOnly}
-                                                className="size-9 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
-                                            >
-                                                <Trash2 className="size-4" />
-                                            </Button>
+                                                            remove(index);
+                                                        }}
+                                                        disabled={rowReadOnly}
+                                                        aria-label="Remove variable"
+                                                        className="size-9 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                                                    >
+                                                        <Trash2 className="size-4" />
+                                                    </Button>
+                                                </TooltipTrigger>
+                                                <TooltipContent side="top">Remove variable</TooltipContent>
+                                            </Tooltip>
                                         )}
                                     </div>
                                 </div>
                             </div>
                         );
                     })}
+                    <p
+                        id={literalHintId}
+                        hidden
+                    >
+                        {LITERAL_HINT}
+                    </p>
                 </div>
             ) : (
                 <div className="text-sm text-muted-foreground py-4 text-center">
@@ -381,11 +411,16 @@ function View<T>({
                     syncMergeTextToFields();
                 }}
                 placeholder={MERGE_VIEW_PLACEHOLDER}
+                aria-label="Env variables"
+                aria-describedby={mergeHintId}
                 rows={10}
                 className="font-mono text-sm min-h-[500px]"
                 disabled={readOnly}
             />
-            <p className="text-xs text-muted-foreground">
+            <p
+                id={mergeHintId}
+                className="text-xs text-muted-foreground"
+            >
                 Enter environment variables in key=value format, one per line
             </p>
             {extraActions ? <div className="flex flex-wrap items-center gap-2">{extraActions}</div> : null}

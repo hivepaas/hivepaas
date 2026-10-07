@@ -51,6 +51,8 @@ function View({ title, items, isRevealed = false, search = "" }: Props) {
                                     return (
                                         <div
                                             key={index}
+                                            role="group"
+                                            aria-label={item.key}
                                             className="flex flex-col sm:flex-row sm:items-start gap-2 sm:gap-3 p-2.5 sm:p-0 rounded-lg sm:rounded-none bg-muted/20 sm:bg-transparent border sm:border-0"
                                         >
                                             {/* Key & Value */}
@@ -62,6 +64,7 @@ function View({ title, items, isRevealed = false, search = "" }: Props) {
                                                         readOnly
                                                         disabled
                                                         placeholder="Key"
+                                                        aria-label="Key"
                                                         className="bg-muted cursor-default"
                                                     />
                                                 </div>
@@ -75,6 +78,7 @@ function View({ title, items, isRevealed = false, search = "" }: Props) {
                                                             disabled
                                                             minRows={4}
                                                             maxRows={0}
+                                                            aria-label="Value"
                                                             className="bg-muted cursor-default resize-y"
                                                         />
                                                     ) : (
@@ -83,6 +87,7 @@ function View({ title, items, isRevealed = false, search = "" }: Props) {
                                                             value={item.value}
                                                             readOnly
                                                             disabled
+                                                            aria-label="Value"
                                                             className="bg-muted cursor-default"
                                                         />
                                                     )}
@@ -96,6 +101,7 @@ function View({ title, items, isRevealed = false, search = "" }: Props) {
                                                     <Checkbox
                                                         checked={item.isLiteral}
                                                         disabled
+                                                        aria-label="Literal"
                                                     />
                                                     <span className="text-sm text-muted-foreground cursor-default select-none">
                                                         Literal

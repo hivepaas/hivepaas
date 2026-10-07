@@ -80,9 +80,14 @@ test("a runtime variable reaches the container once redeployed, as its log shows
     await page.goto(appPage(app, "env-variables"));
     const runtime = page.getByRole("region", { name: "Runtime Env Variables", exact: true });
     await runtime.getByRole("button", { name: "Add" }).click();
-    await runtime.getByRole("textbox", { name: "Key" }).last().fill("E2E_GREETING");
-    // The value's field has no name of its own: the one after the key.
-    await runtime.getByRole("textbox").last().fill(greeting);
+    await runtime
+        .getByRole("group", { name: "New variable" })
+        .getByRole("textbox", { name: "Key" })
+        .fill("E2E_GREETING");
+    await runtime
+        .getByRole("group", { name: "E2E_GREETING", exact: true })
+        .getByRole("textbox", { name: "Value" })
+        .fill(greeting);
     await page.getByRole("button", { name: "Save" }).click();
     await expect(page.getByText("Environment variables updated")).toBeVisible();
 

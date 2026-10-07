@@ -6,13 +6,14 @@ has a project of its own, and deleting it takes the apps and their services.
 
 ## Done
 
-| #   | Scenario                                                                                        | Test                         |
-| --- | ----------------------------------------------------------------------------------------------- | ---------------------------- |
-| 2.1 | An app deployed from an image (Deployment Settings, Deploy) runs 1/1; its deployment is Done    | `tests/level-2/apps.spec.ts` |
-| 2.2 | A runtime variable saved, then the app re-deployed: the container prints it, as Copy logs shows | `tests/level-2/apps.spec.ts` |
-| 2.3 | Replicas set to 2 run 2/2                                                                       | `tests/level-2/apps.spec.ts` |
-| 2.4 | Stopped, an app runs 0/0; started, 1/1 again                                                    | `tests/level-2/apps.spec.ts` |
-| 2.5 | Deleting an app asks for its name, then removes it                                              | `tests/level-2/apps.spec.ts` |
+| #   | Scenario                                                                                        | Test                             |
+| --- | ----------------------------------------------------------------------------------------------- | -------------------------------- |
+| 2.1 | An app deployed from an image (Deployment Settings, Deploy) runs 1/1; its deployment is Done    | `tests/level-2/apps.spec.ts`     |
+| 2.2 | A runtime variable saved, then the app re-deployed: the container prints it, as Copy logs shows | `tests/level-2/apps.spec.ts`     |
+| 2.3 | Replicas set to 2 run 2/2                                                                       | `tests/level-2/apps.spec.ts`     |
+| 2.4 | Stopped, an app runs 0/0; started, 1/1 again                                                    | `tests/level-2/apps.spec.ts`     |
+| 2.5 | Deleting an app asks for its name, then removes it                                              | `tests/level-2/apps.spec.ts`     |
+| 2.6 | A variable added by name, Literal, multi-line: kept after a reload; removed by its button       | `tests/level-2/env-vars.spec.ts` |
 
 The images: `traefik/whoami` for an app that serves, `busybox` for one that
 prints what it was given. The logs are drawn on a canvas, so a test reads them
@@ -38,6 +39,8 @@ the way a person can take them: Copy logs, then the clipboard.
   embeds its fields' struct by pointer (`*AppEnvVarsBaseReq`), left nil when
   the body names none of them, and `ModifyRequest` or `Validate` reads it. The
   recovery middleware answers 500 "Unexpected error" - not a 400 naming the
-  field. Not fixed yet.
-- **Accessibility**: an environment variable's value field has no name, nor
-  the button beside it.
+  field. Fixed: see [level 1](level-1.md), 1.7.
+- **Accessibility**: an environment variable's value field had no name, nor
+  the button beside it. Fixed: each row is a group named by its key, holding
+  Key, Value, Literal (described), Multi-line value and Remove variable; the
+  merge view's text is named Env variables. Inherited rows are named the same.

@@ -2,6 +2,8 @@ package queueimpl
 
 import (
 	"context"
+	"errors"
+	"fmt"
 	"testing"
 	"time"
 
@@ -265,4 +267,40 @@ func TestATickDoesNotWaitForItsRuns(t *testing.T) {
 	q.periodicRuns.Wait()
 
 	assert.Equal(t, due+60, sched.next["slow"], "its next run, an interval after it was due")
+}
+
+// recordingLogger keeps what was logged, with its level.
+type recordingLogger struct {
+	logging.Logger
+	lines []string
+}
+
+func (l *recordingLogger) Errorf(format string, args ...any) {
+	l.lines = append(l.lines, "E "+fmt.Sprintf(format, args...))
+}
+
+func (l *recordingLogger) Infof(format string, args ...any) {
+	l.lines = append(l.lines, "I "+fmt.Sprintf(format, args...))
+}
+
+// How a run went is logged when that changes: once when a job starts failing,
+// with the error, once more when the error is another, and once when it runs
+// again - not a line a run, every 15 seconds, while a server it needs is down.
+func TestARunsFailureIsLoggedWhenItChanges(t *testing.T) {
+	logger := &recordingLogger{}
+	q := &taskQueue{logger: logger}
+	down := errors.New("victoria-logs: connection refused")
+
+	q.notePeriodicResult("job", nil)
+	q.notePeriodicResult("job", down)
+	q.notePeriodicResult("job", down)
+	q.notePeriodicResult("job", errors.New("victoria-logs: timeout"))
+	q.notePeriodicResult("job", nil)
+	q.notePeriodicResult("job", nil)
+
+	assert.Equal(t, []string{
+		"E periodic job job: victoria-logs: connection refused",
+		"E periodic job job: victoria-logs: timeout",
+		"I periodic job job runs again",
+	}, logger.lines)
 }

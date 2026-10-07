@@ -66,6 +66,7 @@ func Lint(repo *Repo) []Problem {
 			continue
 		}
 		problems = append(problems, lintConfigFileSecrets(file)...)
+		problems = append(problems, lintVolumeMounts(file)...)
 		if depProblems := lintDependencies(repo, file); len(depProblems) > 0 {
 			problems = append(problems, depProblems...)
 			continue

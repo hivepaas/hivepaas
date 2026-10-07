@@ -19,6 +19,19 @@ import (
 	"github.com/hivepaas/hivepaas/services/docker"
 )
 
+// labelProjectID names the project an env network was made for. The name alone
+// does not: a project made again under the key of a deleted one has the same.
+const labelProjectID = "hivepaas.project.id"
+
+// A deleted project's env network lingers until the last of its containers has
+// stopped - ten seconds of grace unless an app asks for more - and while it does,
+// a service cannot use it ("network ... not found") nor a network take its name
+// ("already exists"). networkLingerMax bounds the wait for it to go.
+var (
+	networkLingerPoll = 500 * time.Millisecond
+	networkLingerMax  = 30 * time.Second
+)
+
 func (s *service) GetProjectNetworkName(project *entity.Project, env string) string {
 	return networkservice.ProjectNetworkName(project, env)
 }
@@ -30,9 +43,22 @@ func (s *service) GetOrCreateProjectNetwork(
 	env string,
 ) (*entity.Setting, *network.Inspect, error) {
 	netName := s.GetProjectNetworkName(project, env)
+	setting, err := s.settingRepo.GetByName(ctx, db, project.GetObjectScope(),
+		base.SettingTypeClusterNetwork, netName, true,
+	)
+	if err != nil && !errors.Is(err, hperrors.ErrNotFound) {
+		return nil, nil, hperrors.Wrap(err)
+	}
 	inspect, err := s.dockerManager.NetworkInspect(ctx, netName)
 	if err != nil && !errors.Is(err, hperrors.ErrNotFound) {
 		return nil, nil, hperrors.Wrap(err)
+	}
+	// One the project neither records nor labeled is what a deleted project of
+	// the same key left: waited out, then made anew.
+	if inspect != nil && setting == nil && inspect.Network.Labels[labelProjectID] != project.ID {
+		if inspect, err = s.awaitNetworkGone(ctx, netName); err != nil {
+			return nil, nil, hperrors.Wrap(err)
+		}
 	}
 
 	if inspect == nil { // not found, create one
@@ -46,6 +72,7 @@ func (s *service) GetOrCreateProjectNetwork(
 				}
 				opts.Labels = map[string]string{
 					docker.StackLabelNamespace: project.Key,
+					labelProjectID:             project.ID,
 				}
 			})
 		if err != nil {
@@ -58,12 +85,6 @@ func (s *service) GetOrCreateProjectNetwork(
 		}
 	}
 
-	setting, err := s.settingRepo.GetByName(ctx, db, project.GetObjectScope(),
-		base.SettingTypeClusterNetwork, netName, true,
-	)
-	if err != nil && !errors.Is(err, hperrors.ErrNotFound) {
-		return nil, nil, hperrors.Wrap(err)
-	}
 	hasChange := false
 	if setting == nil {
 		hasChange = true
@@ -103,6 +124,32 @@ func (s *service) GetOrCreateProjectNetwork(
 	}
 
 	return setting, &inspect.Network, nil
+}
+
+// awaitNetworkGone waits for a network a deleted project left to go, and
+// answers nil once it has. One still there after networkLingerMax is answered:
+// its removal failed rather than lags, and it can be used.
+func (s *service) awaitNetworkGone(ctx context.Context, name string) (*client.NetworkInspectResult, error) {
+	deadline := time.Now().Add(networkLingerMax)
+	for {
+		timer := time.NewTimer(networkLingerPoll)
+		select {
+		case <-ctx.Done():
+			timer.Stop()
+			return nil, hperrors.Wrap(ctx.Err())
+		case <-timer.C:
+		}
+		inspect, err := s.dockerManager.NetworkInspect(ctx, name)
+		if errors.Is(err, hperrors.ErrNotFound) {
+			return nil, nil
+		}
+		if err != nil {
+			return nil, hperrors.Wrap(err)
+		}
+		if time.Now().After(deadline) {
+			return inspect, nil
+		}
+	}
 }
 
 func (s *service) ListProjectEnvNetworks(

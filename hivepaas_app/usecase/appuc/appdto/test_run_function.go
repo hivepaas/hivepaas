@@ -136,3 +136,6 @@ type TestRunFunctionDataResp struct {
 	LibrariesLog   string                             `json:"librariesLog,omitempty"`
 	LockFiles      []*appsettingsdto.FunctionFileResp `json:"lockFiles,omitempty"`
 }
+
+// NULAllowed implements basedto.NULAllowed: a test run's request is passed to the function as it is.
+func (req *TestRunFunctionReq) NULAllowed() {}

@@ -102,6 +102,14 @@ type ReqParsingErrorHandler interface {
 	HandleParsingError(err error) error
 }
 
+// NULAllowed marks a request that may hold a NUL character. Any other is
+// refused for one: a text column cannot store it, and jsonb stores it as the
+// six characters \u0000. What such a request carries is hashed, encrypted or
+// passed on as it is - a password, a secret's value, a function's test run.
+type NULAllowed interface {
+	NULAllowed()
+}
+
 // Meta metadata of single entity response
 type Meta struct {
 	Code    string `json:"code,omitempty"`

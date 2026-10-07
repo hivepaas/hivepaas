@@ -56,3 +56,6 @@ type LoginWithPasswordDataResp struct {
 	MFAToken string                 `json:"mfaToken,omitempty"`
 	Session  *BaseCreateSessionResp `json:"session,omitempty"`
 }
+
+// NULAllowed implements basedto.NULAllowed: a password is only hashed and compared.
+func (req *LoginWithPasswordReq) NULAllowed() {}

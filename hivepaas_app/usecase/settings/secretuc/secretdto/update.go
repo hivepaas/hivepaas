@@ -28,3 +28,6 @@ func (req *UpdateSecretReq) Validate() hperrors.ValidationErrors {
 type UpdateSecretResp struct {
 	Meta *basedto.Meta `json:"meta"`
 }
+
+// NULAllowed implements basedto.NULAllowed: see CreateSecretReq.
+func (req *UpdateSecretReq) NULAllowed() {}

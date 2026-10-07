@@ -292,6 +292,9 @@ func (h *BaseHandler) parseQuery(ctx *gin.Context, query any) error {
 	if len(mapQuery) == 0 {
 		return nil
 	}
+	if err := refuseNUL(query, queryHasNUL(mapQuery)); err != nil {
+		return err
+	}
 
 	config := &mapstructure.DecoderConfig{
 		Result:           query,
@@ -421,6 +424,9 @@ func (h *BaseHandler) ParseJSONBody(ctx *gin.Context, reqStruct any) error {
 			}
 		}
 		return hperrors.Wrap(hperrors.ErrBadRequest).WithCause(err)
+	}
+	if err := refuseNUL(reqStruct, jsonHasNUL(buf.Bytes())); err != nil {
+		return err
 	}
 
 	ctx.Request.Body = io.NopCloser(&buf)

@@ -105,4 +105,5 @@ var (
 	ErrTokenInvalid             = NewErr(ErrValueInvalid, "ERR_TOKEN_INVALID")
 	ErrMismatch                 = NewErr(ErrPreconditionFailed, "ERR_MISMATCH")
 	ErrValidation               = NewErr(ErrBadRequest, "ERR_VALIDATION")
+	ErrRequestHasNUL            = NewErr(ErrBadRequest, "ERR_REQUEST_HAS_NUL")
 )

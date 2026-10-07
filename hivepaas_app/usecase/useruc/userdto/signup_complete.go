@@ -84,3 +84,6 @@ func (req *CompleteUserSignupReq) Validate() hperrors.ValidationErrors {
 type CompleteUserSignupResp struct {
 	Meta *basedto.Meta `json:"meta"`
 }
+
+// NULAllowed implements basedto.NULAllowed: a password is only hashed.
+func (req *CompleteUserSignupReq) NULAllowed() {}

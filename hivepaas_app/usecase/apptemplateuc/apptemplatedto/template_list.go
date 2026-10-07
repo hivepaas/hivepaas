@@ -162,9 +162,9 @@ func transformSummary(entry *templatemodel.IndexEntry, currentVersionCode string
 		Title:        entry.Title,
 		Tagline:      entry.Tagline,
 		License:      entry.License,
-		Categories:   entry.Categories,
-		Tags:         entry.Tags,
-		Aliases:      entry.Aliases,
+		Categories:   nonNil(entry.Categories),
+		Tags:         nonNil(entry.Tags),
+		Aliases:      nonNil(entry.Aliases),
 		IconURL:      AppTemplateIconURL(entry),
 		Dependencies: make([]*AppTemplateDependencySummaryResp, 0, len(entry.Dependencies)),
 		Components:   make([]*AppTemplateComponentSummaryResp, 0, len(entry.Components)),
@@ -185,7 +185,7 @@ func transformSummary(entry *templatemodel.IndexEntry, currentVersionCode string
 			Release:    version.Release,
 			Default:    version.Default,
 			Deprecated: version.Deprecated,
-			Variants:   version.Variants,
+			Variants:   nonNil(version.Variants),
 		})
 	}
 	for _, dep := range entry.Dependencies {
@@ -197,4 +197,13 @@ func transformSummary(entry *templatemodel.IndexEntry, currentVersionCode string
 			Name: component.Name, Title: component.Title, Primary: component.Primary})
 	}
 	return summary
+}
+
+// nonNil is a list as the dashboard reads it: empty rather than null, which it
+// would have to guard against everywhere it reads a length.
+func nonNil[T any](items []T) []T {
+	if items == nil {
+		return []T{}
+	}
+	return items
 }

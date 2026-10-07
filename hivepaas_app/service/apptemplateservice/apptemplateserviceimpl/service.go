@@ -125,6 +125,13 @@ func (s *service) loadTemplate(
 	if entry == nil {
 		return nil, nil, hperrors.Wrap(hperrors.ErrAppTemplateNotFound).WithParam("Name", name)
 	}
+	// Refused before its file is read. The index says which HivePaaS a template is
+	// written for, and a file written for a newer one may hold what this one cannot
+	// parse: the answer for such a template is that it needs a newer HivePaaS, not
+	// a parse error. The same goes for a dependency, which comes through here too.
+	if !templatemodel.IsCompatible(entry.Requires, base.CurrentVersion) {
+		return nil, nil, hperrors.Wrap(hperrors.ErrAppTemplateIncompatible).WithParam("Name", name)
+	}
 	if tmpl, found := s.templateCache.get(entry.File.SHA256); found {
 		return entry, tmpl, nil
 	}

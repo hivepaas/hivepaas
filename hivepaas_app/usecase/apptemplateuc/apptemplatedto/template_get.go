@@ -197,6 +197,45 @@ type AppTemplateParamOptionResp struct {
 	Title string `json:"title"`
 }
 
+// TransformIncompatibleAppTemplate is a template written for a newer HivePaaS, as
+// the index describes it: this HivePaaS does not read its file, so there is no
+// description and no form, only what the store lists - and compatible is false.
+func TransformIncompatibleAppTemplate(
+	index *apptemplateservice.IndexResp,
+	entry *templatemodel.IndexEntry,
+	currentVersionCode string,
+) *AppTemplateResp {
+	summary := transformSummary(entry, currentVersionCode)
+	resp := &AppTemplateResp{
+		Source:         index.Source,
+		Revision:       index.Revision,
+		Name:           summary.Name,
+		Title:          summary.Title,
+		Tagline:        summary.Tagline,
+		Categories:     summary.Categories,
+		Tags:           summary.Tags,
+		IconURL:        summary.IconURL,
+		License:        summary.License,
+		Compatible:     summary.Compatible,
+		Versions:       summary.Versions,
+		Variants:       make([]*AppTemplateVariantResp, 0, len(summary.Variants)),
+		Parameters:     []*AppTemplateParamResp{},
+		Dependencies:   []*AppTemplateDependencyResp{},
+		PublishedPorts: []*AppTemplatePortResp{},
+		Components:     make([]*AppTemplateComponentResp, 0, len(summary.Components)),
+	}
+	for _, variant := range summary.Variants {
+		resp.Variants = append(resp.Variants, &AppTemplateVariantResp{Name: variant.Name, Default: variant.Default})
+	}
+	for _, component := range summary.Components {
+		resp.Components = append(resp.Components, &AppTemplateComponentResp{
+			Name: component.Name, Title: component.Title, Primary: component.Primary,
+			PublishedPorts: []*AppTemplatePortResp{},
+		})
+	}
+	return resp
+}
+
 func TransformAppTemplate(tmpl *apptemplateservice.TemplateResp, currentVersionCode string) *AppTemplateResp {
 	metadata := tmpl.Template.Metadata
 	summary := transformSummary(tmpl.Entry, currentVersionCode)
@@ -207,8 +246,8 @@ func TransformAppTemplate(tmpl *apptemplateservice.TemplateResp, currentVersionC
 		Title:       metadata.Title,
 		Tagline:     metadata.Tagline,
 		Description: metadata.Description,
-		Categories:  metadata.Categories,
-		Tags:        metadata.Tags,
+		Categories:  nonNil(metadata.Categories),
+		Tags:        nonNil(metadata.Tags),
 		IconURL:     summary.IconURL,
 		License:     metadata.License,
 		Compatible:  summary.Compatible,

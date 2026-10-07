@@ -139,6 +139,12 @@ func (s *officialSource) Index(ctx context.Context) (*templatemodel.Index, error
 	if err != nil {
 		return nil, hperrors.Wrap(err)
 	}
+	// Once per revision, like the pruning below: what this HivePaaS left out of the
+	// store is worth one line each, not one per request.
+	for _, skipped := range index.Skipped {
+		s.logger.Warnf("app templates: %s %q of index %s left out: %s",
+			skipped.List, skipped.Name, pin.IndexSHA256, skipped.Reason)
+	}
 
 	s.mu.Lock()
 	s.indexMemo, s.indexSHA = index, pin.IndexSHA256

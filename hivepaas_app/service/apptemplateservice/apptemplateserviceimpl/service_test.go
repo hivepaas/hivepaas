@@ -217,3 +217,58 @@ func TestServiceRenderRefusesWhatADependencyDoesNotAsk(t *testing.T) {
 		})
 	}
 }
+
+// indexOnlySource serves an index, and a file nothing should read: it records
+// every file asked for.
+type indexOnlySource struct {
+	unavailableSource
+	index *templatemodel.Index
+	asked []string
+}
+
+func (s *indexOnlySource) Revision(context.Context) (string, error) { return "rev", nil }
+func (s *indexOnlySource) Index(context.Context) (*templatemodel.Index, error) {
+	return s.index, nil
+}
+func (s *indexOnlySource) TemplateFile(_ context.Context, entry *templatemodel.IndexEntry) ([]byte, error) {
+	s.asked = append(s.asked, entry.Name)
+	return []byte("written: for a newer HivePaaS"), nil
+}
+
+func newIndexOnlyService(t *testing.T, entries ...*templatemodel.IndexEntry) (*service, *indexOnlySource) {
+	t.Helper()
+	svc, _ := newServiceTest(t, config.EnvProd, "")
+	src := &indexOnlySource{index: &templatemodel.Index{Templates: entries}}
+	svc.official = src
+	return svc, src
+}
+
+func indexEntry(name, versionCode string) *templatemodel.IndexEntry {
+	return &templatemodel.IndexEntry{
+		Name:     name,
+		File:     templatemodel.FileRef{Path: "templates/" + name + ".yaml", SHA256: name + "-sha"},
+		Versions: []*templatemodel.IndexVersion{{Name: "1", Default: true}},
+		Requires: templatemodel.Requires{VersionCode: versionCode},
+	}
+}
+
+// A template written for a newer HivePaaS is refused before its file is read:
+// that file may hold what this HivePaaS cannot parse, and what to say about such
+// a template is that it needs a newer HivePaaS, not that it is broken.
+func TestServiceTemplateRefusesANewerTemplateBeforeReadingIt(t *testing.T) {
+	svc, src := newIndexOnlyService(t, indexEntry("newer", "v999999"))
+
+	_, err := svc.Template(context.Background(), "newer")
+
+	assert.ErrorIs(t, err, hperrors.ErrAppTemplateIncompatible)
+	assert.Empty(t, src.asked, "the file is not fetched")
+}
+
+func TestServiceRenderRefusesANewerTemplateBeforeReadingIt(t *testing.T) {
+	svc, src := newIndexOnlyService(t, indexEntry("newer", "v999999"))
+
+	_, err := svc.Render(context.Background(), &apptemplateservice.RenderReq{Name: "newer"})
+
+	assert.ErrorIs(t, err, hperrors.ErrAppTemplateIncompatible)
+	assert.Empty(t, src.asked)
+}

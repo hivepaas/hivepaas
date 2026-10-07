@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useState } from "react";
 
 import { ROUTE } from "@/application/shared/constants";
 import { cn } from "@/lib/utils";
-import { ArrowDownCircle, Loader2, Search, Tag, X } from "lucide-react";
+import { ArrowDownCircle, ArrowUpDown, Loader2, Search, Tag, X } from "lucide-react";
 import { useNavigate, useParams } from "react-router";
 import { useDebounce } from "react-use";
 
@@ -10,9 +10,10 @@ import { ErrorBoundary } from "@application/shared/components";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 
-import type { AppTemplateSummary } from "../api";
+import type { AppTemplateSort, AppTemplateSummary } from "../api";
 import {
     AppTemplateCard,
     AppTemplatesDetailsView,
@@ -22,6 +23,7 @@ import {
 } from "../components";
 import { useGetAppTemplateCatalog, useListAppTemplatesInfinite } from "../data";
 import { DeployTemplateDialog } from "../dialogs";
+import { TEMPLATE_SORTS } from "../utils";
 
 export function AppTemplatesView() {
     const { id, templateName } = useParams<{ id: string; templateName?: string }>();
@@ -35,6 +37,7 @@ export function AppTemplatesView() {
     const [searchQuery, setSearchQuery] = useState<string>("");
     const [debouncedSearch, setDebouncedSearch] = useState<string>("");
     const [selectedTag, setSelectedTag] = useState<string | undefined>(undefined);
+    const [sort, setSort] = useState<AppTemplateSort>("name");
 
     // Cached template summary when clicked from card for instant rendering
     const [selectedTemplateSummary, setSelectedTemplateSummary] = useState<AppTemplateSummary | undefined>(undefined);
@@ -73,6 +76,7 @@ export function AppTemplatesView() {
         category: selectedCategory,
         search: debouncedSearch,
         tag: selectedTag,
+        sort,
     });
 
     // Flatten all pages into a single template list
@@ -213,7 +217,7 @@ export function AppTemplatesView() {
                     ) : (
                         /* Catalog List View */
                         <div className="flex flex-col gap-4">
-                            {/* Sticky Toolbar: Search input + subcategories (NO Custom Template button, NO Sort By) */}
+                            {/* Sticky Toolbar: Search input, the order, and the active tag */}
                             <div className="sticky top-[95px] md:top-[56px] z-10 bg-canvas/95 backdrop-blur-md py-2 border-b border-border/40 space-y-2">
                                 <div className="flex items-center gap-3">
                                     <div className="relative flex-1">
@@ -241,6 +245,30 @@ export function AppTemplatesView() {
                                             </button>
                                         )}
                                     </div>
+                                    <Select
+                                        value={sort}
+                                        onValueChange={value => {
+                                            setSort(value as AppTemplateSort);
+                                        }}
+                                    >
+                                        <SelectTrigger
+                                            className="h-9 w-[140px] shrink-0 text-sm bg-card border-border/70"
+                                            aria-label="Order templates by"
+                                        >
+                                            <ArrowUpDown className="size-3.5 text-muted-foreground" />
+                                            <SelectValue />
+                                        </SelectTrigger>
+                                        <SelectContent align="end">
+                                            {TEMPLATE_SORTS.map(option => (
+                                                <SelectItem
+                                                    key={option.value}
+                                                    value={option.value}
+                                                >
+                                                    {option.label}
+                                                </SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
                                 </div>
 
                                 {/* Active Tag Filter pill under search input */}

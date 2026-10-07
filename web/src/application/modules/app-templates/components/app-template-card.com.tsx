@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 
 import { cn } from "@/lib/utils";
-import { Boxes, Container, Lock, Rocket, Scale, ShieldAlert } from "lucide-react";
+import { Boxes, Container, Lock, Rocket, Scale, ShieldAlert, Star } from "lucide-react";
 import { useParams } from "react-router";
 
 import { Badge } from "@/components/ui/badge";
@@ -10,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 
 import type { AppTemplateSummary, AppTemplateVersionSummary } from "../api";
 import { useDeployTemplateDialogState } from "../dialogs";
+import { formatStars, isNewTemplate } from "../utils";
 
 interface AppTemplateCardProps {
     template: AppTemplateSummary;
@@ -86,6 +87,16 @@ export function AppTemplateCard({ template, onSelect, onSelectTag, selectedTag, 
                             <h3 className="truncate font-semibold text-base tracking-tight text-foreground group-hover:text-amber-600 dark:group-hover:text-amber-400 transition-colors">
                                 {template.title}
                             </h3>
+                            {isNewTemplate(template) && (
+                                <Badge
+                                    variant="outline"
+                                    className="shrink-0 px-1.5 py-0 text-[11px] font-semibold uppercase tracking-wider bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border border-emerald-500/30"
+                                    title={`Added on ${template.added}`}
+                                >
+                                    New
+                                </Badge>
+                            )}
+                            <span className="flex-1" />
                             {primaryCategory && (
                                 <Badge
                                     variant="outline"
@@ -206,6 +217,21 @@ export function AppTemplateCard({ template, onSelect, onSelectTag, selectedTag, 
                             </Badge>
                         )}
                     </div>
+
+                    {/* The project's GitHub stars: what the Popular order goes by. */}
+                    {(template.stars ?? 0) > 0 && (
+                        <div
+                            className="ml-auto inline-flex items-center gap-1 rounded-md bg-muted/60 px-2 py-0.5 text-[12px] font-medium text-muted-foreground"
+                            title={`${(template.stars ?? 0).toLocaleString("en")} GitHub stars${
+                                template.starsGained
+                                    ? `, ${template.starsGained.toLocaleString("en")} of them in the last 28 days`
+                                    : ""
+                            }`}
+                        >
+                            <Star className="size-3 text-amber-500" />
+                            <span>{formatStars(template.stars ?? 0)}</span>
+                        </div>
+                    )}
 
                     {template.license ? (
                         <div

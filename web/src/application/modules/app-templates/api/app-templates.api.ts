@@ -52,12 +52,24 @@ export interface AppTemplateSummary {
     /** Deploying this lets an app start containers through HivePaaS's Docker API
      *  proxy, which also needs Write on the Cluster module. */
     requiresDockerApi?: boolean;
+    /** The day the template joined the catalog, YYYY-MM-DD; empty when the
+     *  catalog does not say. */
+    added?: string;
+    /** GitHub stars of the project the template runs; 0 when not counted. */
+    stars?: number;
+    /** Stars it gained in the last 28 days. */
+    starsGained?: number;
 }
+
+/** The orders the store lists templates in. A minus is the largest or newest
+ *  first; templates without the figure come last, and ties go by name. */
+export type AppTemplateSort = "name" | "-stars" | "-trending" | "-added";
 
 export interface ListAppTemplatesFilter {
     category?: string;
     tag?: string;
     search?: string;
+    sort?: AppTemplateSort;
     pageOffset?: number;
     pageLimit?: number;
 }
@@ -375,6 +387,8 @@ export class AppTemplatesApi extends BaseApi {
                     category: params.category ?? undefined,
                     tag: params.tag ?? undefined,
                     search: params.search?.trim() ?? undefined,
+                    // By name is the API's own default: no parameter for it.
+                    sort: params.sort === "name" ? undefined : params.sort,
                     pageOffset: params.pageOffset ?? 0,
                     pageLimit: params.pageLimit ?? undefined,
                 },

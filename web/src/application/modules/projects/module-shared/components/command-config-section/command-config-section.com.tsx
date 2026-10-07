@@ -9,13 +9,27 @@ import { PROJECT_FORM_CONTROL_MAX_WIDTH_CLASS } from "~/projects/module-shared/c
 import { AppLink, ContentBlock, InfoBlock, LabelWithInfo } from "@application/shared/components";
 import { KeyValueList } from "@application/shared/form";
 
-import { Button, Checkbox, Field, FieldError, FieldGroup, Input, Tabs, TabsList, TabsTrigger } from "@/components/ui";
+import {
+    Button,
+    Checkbox,
+    Field,
+    FieldDescription,
+    FieldError,
+    FieldGroup,
+    Input,
+    Tabs,
+    TabsList,
+    TabsTrigger,
+} from "@/components/ui";
 import { InputNumber } from "@/components/ui/input-number";
 
 import { CommandArgGroupsSection } from "../command-arg-groups-section";
 import { ScriptEditorField } from "../script-editor-field";
 
 import { CommandTemplatePicker } from "./command-template-picker.com";
+
+// A command runs without a shell: the arg groups' variables reach it through one.
+const COMMAND_PLACEHOLDER = "sh -c 'echo \"$CMD_ARG_GROUP_1\"'";
 
 const COMMAND_MODE = { Command: "command", Script: "script" } as const;
 
@@ -53,6 +67,7 @@ export function CommandConfigSection({
 
     const consoleWidthInputId = useId();
     const consoleHeightInputId = useId();
+    const commandHintId = useId();
 
     const { field: commandMode } = useController({ control, name: `${p}commandMode` as never });
     const {
@@ -179,11 +194,16 @@ export function CommandConfigSection({
                                 <Input
                                     {...command}
                                     value={command.value as string}
-                                    placeholder='echo "$CMD_ARG_GROUP_1"'
+                                    placeholder={COMMAND_PLACEHOLDER}
                                     className={PROJECT_FORM_CONTROL_MAX_WIDTH_CLASS}
                                     aria-invalid={isCommandInvalid}
+                                    aria-describedby={commandHintId}
                                     disabled={readOnly}
                                 />
+                                <FieldDescription id={commandHintId}>
+                                    Run as written, without a shell: for pipes, redirects or $VARIABLES, use sh -c
+                                    &apos;...&apos; or a script.
+                                </FieldDescription>
                                 <FieldError
                                     errors={[commandErrors?.["command"] as ReactHookFormFieldError | undefined]}
                                 />

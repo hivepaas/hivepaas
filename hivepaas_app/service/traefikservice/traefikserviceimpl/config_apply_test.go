@@ -156,6 +156,66 @@ func TestApplyAppConfig(t *testing.T) {
 		assert.Len(t, own, len(tcpTLSALPNProtocols)+1, "the usual ones too, without repeating mqtt")
 	})
 
+	// Without Force HTTPS a domain answers HTTP as well, rather than nothing: a
+	// router of its own on web, with the main router's rule, service and
+	// middlewares and no TLS - and so does each of its paths.
+	t.Run("HTTP domain without Force HTTPS is served on HTTP too", func(t *testing.T) {
+		data := &appConfigData{
+			ApplyAppConfigReq: &traefikservice.ApplyAppConfigReq{
+				App:             &entity.App{ID: "01K6WEB", Key: "my_web"},
+				RoutingSettings: &entity.AppRoutingSettings{Port: 80},
+				RefObjects:      entity.NewRefObjects(),
+			},
+		}
+		domain := &entity.AppDomain{
+			Enabled:  true,
+			Domain:   "web.myapp.com",
+			Protocol: base.NetworkProtocolHTTP,
+			HeaderConfig: &entity.HTTPHeaderConfig{
+				Enabled: true, ToAddToResponses: map[string]string{"X-Served": "yes"},
+			},
+			Paths: []*entity.HTTPPathConfig{{Enabled: true, Path: "/api", Mode: base.HTTPPathModePrefix}},
+		}
+		labels := map[string]string{}
+		assert.NoError(t, s.collectDomainConfig(domain, 0, labels, &AppTraefikConfig{}, data))
+
+		main, plain := "traefik.http.routers.router-01k6web-0", "traefik.http.routers.router-01k6web-0-http"
+		assert.Equal(t, "web", labels[plain+".entrypoints"])
+		assert.Equal(t, labels[main+".rule"], labels[plain+".rule"])
+		assert.Equal(t, labels[main+".service"], labels[plain+".service"])
+		assert.NotEmpty(t, labels[main+".middlewares"])
+		assert.Equal(t, labels[main+".middlewares"], labels[plain+".middlewares"])
+		assert.NotContains(t, labels, plain+".tls")
+		assert.NotContains(t, labels, "traefik.http.routers.router-01k6web-0-forcehttps.rule")
+
+		mainPath, plainPath := main+"-path-0", main+"-path-0-http"
+		assert.Equal(t, "web", labels[plainPath+".entrypoints"])
+		assert.Equal(t, labels[mainPath+".rule"], labels[plainPath+".rule"])
+		assert.Equal(t, labels[mainPath+".service"], labels[plainPath+".service"])
+		assert.Equal(t, labels[mainPath+".middlewares"], labels[plainPath+".middlewares"])
+		assert.NotContains(t, labels, plainPath+".tls")
+	})
+
+	t.Run("HTTP domain with Force HTTPS is only sent to HTTPS on HTTP", func(t *testing.T) {
+		data := &appConfigData{
+			ApplyAppConfigReq: &traefikservice.ApplyAppConfigReq{
+				App:             &entity.App{ID: "01K6WEB", Key: "my_web"},
+				RoutingSettings: &entity.AppRoutingSettings{Port: 80},
+				RefObjects:      entity.NewRefObjects(),
+			},
+		}
+		domain := &entity.AppDomain{
+			Enabled: true, Domain: "web.myapp.com", Protocol: base.NetworkProtocolHTTP, ForceHttps: true,
+			Paths: []*entity.HTTPPathConfig{{Enabled: true, Path: "/api", Mode: base.HTTPPathModePrefix}},
+		}
+		labels := map[string]string{}
+		assert.NoError(t, s.collectDomainConfig(domain, 0, labels, &AppTraefikConfig{}, data))
+
+		assert.Equal(t, "web", labels["traefik.http.routers.router-01k6web-0-forcehttps.entrypoints"])
+		assert.NotContains(t, labels, "traefik.http.routers.router-01k6web-0-http.rule")
+		assert.NotContains(t, labels, "traefik.http.routers.router-01k6web-0-path-0-http.rule")
+	})
+
 	t.Run("ExposePublicly disabled cleans labels", func(t *testing.T) {
 		app := &entity.App{
 			Key: "my_app",

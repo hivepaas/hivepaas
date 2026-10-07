@@ -277,6 +277,8 @@ func (s *service) collectDomainConfig(
 		labels[fmt.Sprintf("traefik.http.routers.%s.middlewares", routerName)] =
 			strings.Join(middlewares, ",")
 	}
+	s.createPlainHTTPRouter(domain.ForceHttps, routerName,
+		labels[fmt.Sprintf("traefik.http.routers.%s.rule", routerName)], serviceName, middlewares, labels)
 
 	// Paths config
 	for pathIdx, pathCfg := range domain.Paths {
@@ -355,8 +357,31 @@ func (s *service) collectPathConfig(
 		labels[fmt.Sprintf("traefik.http.routers.%s.middlewares", pathRouterName)] =
 			strings.Join(pathMiddlewares, ",")
 	}
+	s.createPlainHTTPRouter(domain.ForceHttps, pathRouterName, pathRule, serviceName, pathMiddlewares, labels)
 
 	return nil
+}
+
+// createPlainHTTPRouter serves a domain on HTTP as well when HTTPS is not
+// forced: a router of its own on web, with the TLS router's rule, service and
+// middlewares, and no TLS. A router answers either HTTPS or HTTP, never both;
+// without this one HTTP would find no router and answer 404.
+func (s *service) createPlainHTTPRouter(
+	forceHttps bool,
+	routerName, rule, serviceName string,
+	middlewares []string,
+	labels map[string]string,
+) {
+	if forceHttps {
+		return
+	}
+	routerName += "-http"
+	labels[fmt.Sprintf("traefik.http.routers.%s.rule", routerName)] = rule
+	labels[fmt.Sprintf("traefik.http.routers.%s.service", routerName)] = serviceName
+	labels[fmt.Sprintf("traefik.http.routers.%s.entrypoints", routerName)] = "web"
+	if len(middlewares) > 0 {
+		labels[fmt.Sprintf("traefik.http.routers.%s.middlewares", routerName)] = strings.Join(middlewares, ",")
+	}
 }
 
 func (s *service) createForceHttpsConfig(

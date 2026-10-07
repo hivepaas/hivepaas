@@ -16,6 +16,15 @@ export const env = {
     ingressHTTPS: process.env["HP_E2E_INGRESS_HTTPS"] ?? "127.0.0.1:10443",
 };
 
+// isLocalBackend is whether the address is the local backend's - `make
+// local-app-run`, the default above: a developer's own data, on their own
+// swarm. Levels 1 and 2, which make, deploy and remove things, are left out
+// there (playwright.config.ts).
+export function isLocalBackend(url: string): boolean {
+    const { hostname, port } = new URL(url);
+    return ["localhost", "127.0.0.1", "[::1]"].includes(hostname) && port === "10000";
+}
+
 // runId is one for the whole run: the config sets it before the workers start,
 // and they inherit it. What the tests make is named with it.
 process.env["HP_E2E_RUN_ID"] ??= Date.now().toString(36);

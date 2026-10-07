@@ -24,6 +24,10 @@ HP_E2E_BASE_URL=http://localhost:10100 yarn test
 yarn env:down
 ```
 
+Without `HP_E2E_BASE_URL` the tests go to the local backend, and there levels 1
+and 2 are left out - the run says so: they never make, deploy or remove
+anything on a developer's own installation.
+
 `env/up.sh` runs postgres and redis as containers, and the backend with its
 agent inside a dind container that is a swarm of its own - never on this
 machine's swarm, which it checks before it says the stack is up. It needs the
@@ -56,9 +60,9 @@ make local-build-dashboard  # the dashboard the backend serves
 make local-app-run          # http://localhost:10000
 ```
 
-Then `yarn test` here, or `npm run e2e` from the dashboard's root. `yarn test:ui`
-opens Playwright's UI mode; `yarn report` shows the last run, with a trace of
-each test that failed.
+Then `yarn test` here, or `npm run e2e` from the dashboard's root: level 0
+alone runs there. `yarn test:ui` opens Playwright's UI mode; `yarn report` shows
+the last run, with a trace of each test that failed.
 
 To run against another installation:
 

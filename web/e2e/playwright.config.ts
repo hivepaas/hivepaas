@@ -1,6 +1,17 @@
 import { defineConfig, devices } from "@playwright/test";
 
-import { authFile, env } from "./support/env";
+import { authFile, env, isLocalBackend } from "./support/env";
+
+// Levels 1 and 2 make, deploy and remove things: they run on a throwaway
+// installation, never on the local backend, where only level 0 does. Said
+// once, by the runner - its workers read this file too.
+const levelZeroOnly = isLocalBackend(env.baseURL);
+if (levelZeroOnly && process.env["TEST_WORKER_INDEX"] === undefined) {
+    console.warn(
+        `${env.baseURL} is the local backend: levels 1 and 2 are left out. They run on the throwaway ` +
+            "installation - yarn env:up, then HP_E2E_BASE_URL=http://localhost:10100 (see the README).",
+    );
+}
 
 export default defineConfig({
     testDir: "tests",
@@ -19,6 +30,7 @@ export default defineConfig({
         { name: "setup", testMatch: /.*\.setup\.ts/ },
         {
             name: "chromium",
+            testIgnore: levelZeroOnly ? /[\\/]level-[12][\\/]/ : undefined,
             use: {
                 ...devices["Desktop Chrome"],
                 storageState: authFile,

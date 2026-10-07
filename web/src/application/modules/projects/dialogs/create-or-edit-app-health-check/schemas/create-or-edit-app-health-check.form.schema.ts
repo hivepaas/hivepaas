@@ -62,6 +62,15 @@ export const CreateOrEditAppHealthCheckFormSchema = z
                 });
             }
 
+            // Without either, any answer would pass, a 500 too: the server refuses it.
+            if (!value.rest.returnCode && value.rest.returnBodyMode === EAppHealthCheckReturnBodyMode.Skipped) {
+                ctx.addIssue({
+                    code: z.ZodIssueCode.custom,
+                    message: "Give the codes a healthy answer has, or what its body must be",
+                    path: ["rest", "returnCode"],
+                });
+            }
+
             if (!VisibleRestMethodSchema.safeParse(value.rest.method).success) {
                 return;
             }

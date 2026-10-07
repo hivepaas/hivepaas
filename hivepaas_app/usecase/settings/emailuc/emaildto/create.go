@@ -151,6 +151,8 @@ func (req *EmailBaseReq) validate(field string) (res []vld.Validator) {
 	if field != "" {
 		field += "."
 	}
+	res = append(res, basedto.ValidateStr(&req.Name, true, 1, base.SettingNameMaxLen, field+"name")...)
+	res = append(res, basedto.ValidateStrIn(&req.Kind, true, base.AllEmailKinds, field+"kind")...)
 	switch req.Kind {
 	case base.EmailKindSMTP:
 		res = append(res, basedto.ValidateCond(req.SMTP != nil, field+"smtp")...)

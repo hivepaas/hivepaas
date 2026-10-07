@@ -206,6 +206,8 @@ func (req *IMServiceBaseReq) validate(field string) (res []vld.Validator) {
 	if field != "" {
 		field += "."
 	}
+	res = append(res, basedto.ValidateStr(&req.Name, true, 1, base.SettingNameMaxLen, field+"name")...)
+	res = append(res, basedto.ValidateStrIn(&req.Kind, true, base.AllIMServiceKinds, field+"kind")...)
 	switch req.Kind {
 	case base.IMServiceKindSlack:
 		res = append(res, basedto.ValidateCond(req.Slack != nil, field+"slack")...)

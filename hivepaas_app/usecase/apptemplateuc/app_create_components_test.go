@@ -66,9 +66,9 @@ func TestPlanAppsRecordsWhichComponentEachAppIs(t *testing.T) {
 	assert.Empty(t, auth.links.components, "only the primary lists the others")
 }
 
-// The secondary components are created before the primary, and the dependencies
-// before all of them.
-func TestProvisionAllCreatesComponentsBeforeTheAppTheyServe(t *testing.T) {
+// The components are created in the order their needs rendered them in, the
+// primary among them, and the dependencies before all of them.
+func TestProvisionAllCreatesComponentsInTheOrderTheyRendered(t *testing.T) {
 	uc, fakes := newCreateTest(t)
 	req := testCreateReq()
 	req.Name = "shop"
@@ -78,6 +78,25 @@ func TestProvisionAllCreatesComponentsBeforeTheAppTheyServe(t *testing.T) {
 
 	assert.NoError(t, err)
 	assert.Equal(t, []string{"shop-db", "shop-auth", "shop"}, fakes.provision.names)
+}
+
+// A primary the others need is created before them: a component reading its
+// address, ${shop.HIVEPAAS_APP_URL}, reads an app that has to exist by then.
+func TestProvisionAllCreatesAPrimaryTheOthersNeedFirst(t *testing.T) {
+	uc, fakes := newCreateTest(t)
+	req := testCreateReq()
+	req.Name = "shop"
+	rendered := renderedWithComponents(t, fakes)
+	rendered.Components[0], rendered.Components[1] = rendered.Components[1], rendered.Components[0]
+
+	apps := planApps(req, rendered)
+	_, err := uc.provisionAll(context.Background(), nil, testAuth(), req, apps)
+
+	assert.NoError(t, err)
+	assert.Equal(t, []string{"shop-db", "shop", "shop-auth"}, fakes.provision.names)
+	assert.Equal(t, []entity.AppTemplateComponent{{Name: "auth", AppID: apps[2].id}}, apps[1].links.components,
+		"the primary lists the components created after it")
+	assert.Equal(t, apps[1].id, apps[2].logicalParentID)
 }
 
 // What is recorded on each app is what phase 2 will merge against, so every

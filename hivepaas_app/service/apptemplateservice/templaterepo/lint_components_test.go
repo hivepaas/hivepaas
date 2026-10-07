@@ -150,3 +150,21 @@ func TestLintCatchesAComponentReadingOneRenderedLater(t *testing.T) {
 func TestLintAcceptsComponentKeysThatStayDistinct(t *testing.T) {
 	assert.Empty(t, lintStack(t, stackTemplateYAML))
 }
+
+// ${<key>.VAR} is resolved as the app is created, so the app it reads has to be
+// created first. Auth reading the gateway's address while the gateway needs auth
+// is what made Headscale fail to create at all.
+func TestLintCatchesAComponentReadingAnAppCreatedAfterIt(t *testing.T) {
+	readsGateway := `- {k: DB_HOST, v: "${{ deps.db.ref.HIVEPAAS_HOST }}"}
+            - {k: PUBLIC_URL, v: "${${{ comp.gw.key }}.HIVEPAAS_APP_URL}"}`
+	stack := strings.Replace(stackTemplateYAML, `- {k: DB_HOST, v: "${{ deps.db.ref.HIVEPAAS_HOST }}"}`,
+		readsGateway, 1)
+
+	assert.Contains(t, strings.Join(lintStack(t, stack), "; "),
+		"component auth reads the app of component gw, which is created after it")
+
+	// Created the other way round, it reads an app that is there.
+	reversed := strings.Replace(stack, "    needs: [auth]\n", "", 1)
+	reversed = strings.Replace(reversed, "    title: Auth\n", "    title: Auth\n    needs: [gw]\n", 1)
+	assert.Empty(t, lintStack(t, reversed))
+}

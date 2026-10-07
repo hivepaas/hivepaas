@@ -344,12 +344,17 @@ func planApps(
 }
 
 // planComponents lists the component apps of a template that creates several,
-// in the order its needs put them, with the primary one last.
+// in the order its needs put them - the order they were rendered in.
 //
 // The primary app is the one the person named, so it is main itself: the same
-// id, the same name, and the render of the primary component. The rest are
-// created before it and carry its id as their logical parent, which is what
-// makes them nest under it everywhere apps are listed.
+// id, the same name, and the render of the primary component. The rest carry its
+// id as their logical parent, which is what makes them nest under it everywhere
+// apps are listed.
+//
+// The primary takes its place in that order rather than coming last: it owns the
+// domain, and a component reading its address, ${<primary>.HIVEPAAS_APP_URL},
+// reads an app that has to exist by then. The linter checks the references
+// against this order.
 func planComponents(rendered *apptemplateservice.RenderResp, main *appToProvision) []*appToProvision {
 	if len(rendered.Components) == 0 {
 		return []*appToProvision{main}
@@ -359,6 +364,7 @@ func planComponents(rendered *apptemplateservice.RenderResp, main *appToProvisio
 		if component.Primary {
 			main.links.component = component.Name
 			main.result = component.Result
+			apps = append(apps, main)
 			continue
 		}
 		componentApp := &appToProvision{
@@ -378,7 +384,7 @@ func planComponents(rendered *apptemplateservice.RenderResp, main *appToProvisio
 		})
 		apps = append(apps, componentApp)
 	}
-	return append(apps, main)
+	return apps
 }
 
 // newAppTemplateSetting records the template an app was provisioned from. Secret

@@ -4,7 +4,9 @@
 # touching nothing else on it:
 #   - postgres and redis as plain containers on a network of their own;
 #   - docker itself in a dind container, made a swarm;
-#   - the backend and its agent built from the backend repo and run INSIDE dind.
+#   - the backend and its agent built from the backend repo and run INSIDE dind;
+#   - Traefik, the release's, as the stack's proxy inside dind: the apps'
+#     domains answer on this machine at 10180 (HTTP) and 10443 (HTTPS).
 #
 # The last point is the one that matters. The backend's docker client takes the
 # default socket and ignores DOCKER_HOST: run anywhere else, it would work on
@@ -17,6 +19,8 @@
 #   HP_TEMPLATES_SRC the app-templates repo the catalog is read from, default
 #                    ../../app-templates beside the dashboard; none if missing
 #   HP_E2E_PORT      where the dashboard answers, default 10100
+#   HP_E2E_HTTP_PORT, HP_E2E_HTTPS_PORT
+#                    where the apps' domains answer, default 10180 and 10443
 #   HP_E2E_SKIP_BUILD=1  reuse the last build of the dashboard and the binaries
 
 set -euo pipefail
@@ -26,6 +30,8 @@ DASHBOARD_DIR="$(cd "$ENV_DIR/../.." && pwd)"
 BACKEND_DIR="$(cd "${HP_BACKEND_DIR:-$DASHBOARD_DIR/../hivepaas}" && pwd)"
 TEMPLATES_SRC="${HP_TEMPLATES_SRC:-$DASHBOARD_DIR/../app-templates}"
 PORT="${HP_E2E_PORT:-10100}"
+HTTP_PORT="${HP_E2E_HTTP_PORT:-10180}"
+HTTPS_PORT="${HP_E2E_HTTPS_PORT:-10443}"
 BUILD="$ENV_DIR/.build"
 NET=hp-e2e-net
 DB=hp-e2e-db
@@ -65,6 +71,7 @@ docker run -d --name "$DB" --network "$NET" -e POSTGRES_USER=hivepaas -e POSTGRE
 	-e POSTGRES_DB=hivepaas postgres:18.6-alpine >/dev/null
 docker run -d --name "$REDIS" --network "$NET" redis:8-alpine redis-server --requirepass abc123 >/dev/null
 docker run -d --privileged --name "$DIND" --network "$NET" -e DOCKER_TLS_CERTDIR= -p "$PORT:$PORT" \
+	-p "$HTTP_PORT:80" -p "$HTTPS_PORT:443" \
 	docker:dind >/dev/null
 for _ in $(seq 1 60); do docker exec "$DB" pg_isready -U hivepaas >/dev/null 2>&1 && break; sleep 1; done
 for _ in $(seq 1 60); do in_dind docker info >/dev/null 2>&1 && break; sleep 1; done
@@ -82,11 +89,33 @@ say "Standing in for the stack inside dind"
 # the backend runs its helper containers on, so it is pulled - into dind.
 in_dind docker network create -d overlay --attachable hivepaas_net >/dev/null
 in_dind docker pull -q alpine:3 >/dev/null
-for app in app worker updater traefik agent; do
+for app in app worker updater agent; do
 	in_dind docker service create -d --no-resolve-image --name "hivepaas_$app" --replicas 0 \
 		--network hivepaas_net --label com.docker.stack.namespace=hivepaas \
 		--label "hivepaas.app.info={\"name\":\"$app\",\"key\":\"$app\"}" alpine:3 true >/dev/null
 done
+
+say "Starting Traefik inside dind"
+# The proxy the release deploys, routing what the apps' service labels and the
+# files HivePaaS writes ask for. It binds 80 and 443 on dind's own network, which
+# up.sh publishes here; this machine's 80 and 443 are left alone.
+traefik_image="$(sed -n 's/.*"traefikImage": *"\([^"]*\)".*/\1/p' "$BACKEND_DIR/release.json" | head -n 1)"
+[ -n "$traefik_image" ] || fail "No traefikImage in $BACKEND_DIR/release.json."
+in_dind docker pull -q "$traefik_image" >/dev/null
+in_dind mkdir -p /hp/appdata/traefik/etc/dynamic /hp/appdata/ssl/certs
+in_dind docker service create -d --no-resolve-image --name hivepaas_traefik \
+	--network name=hivepaas_net,alias=hivepaas_traefik --label com.docker.stack.namespace=hivepaas \
+	--label 'hivepaas.app.info={"name":"traefik","key":"traefik"}' --container-label hivepaas.component=traefik \
+	--publish mode=host,target=80,published=80 --publish mode=host,target=443,published=443 \
+	--mount type=bind,src=/hp/appdata/traefik/etc/dynamic,dst=/etc/traefik/dynamic \
+	--mount type=bind,src=/hp/appdata/ssl/certs,dst=/etc/traefik/ssl/certs \
+	--mount type=bind,src=/var/run/docker.sock,dst=/var/run/docker.sock,readonly \
+	"$traefik_image" \
+	--providers.swarm=true --providers.swarm.watch=true --providers.swarm.network=hivepaas_net \
+	--providers.swarm.exposedbydefault=false --providers.file.directory=/etc/traefik/dynamic \
+	--providers.file.watch=true --entrypoints.web.address=:80 --entrypoints.websecure.address=:443 \
+	--entrypoints.websecure.http.tls=true --entrypoints.ping.address=127.0.0.1:8082 --ping=true \
+	--ping.entrypoint=ping --log.level=INFO --accesslog=true --accesslog.format=json >/dev/null
 
 say "Giving dind what the agent's image carries"
 # kopia, the backup engine, from the image the release copies it from; and the
@@ -129,4 +158,4 @@ seen="$(curl -s -H "Authorization: Bearer $token" "$base/api/cluster/nodes" |
 	grep -o '"id":"[a-z0-9]\{25\}"' | sed 's/"id":"\(.*\)"/\1/' | sort -u | tr '\n' ' ' || true)"
 [ "$seen" = "$want " ] || fail "The backend sees nodes '$seen', not dind's '$want': stopped."
 
-say "Up: $base - admin / abc123. Stop it with env/down.sh."
+say "Up: $base - admin / abc123; the apps' domains at :$HTTP_PORT and :$HTTPS_PORT. Stop it with env/down.sh."

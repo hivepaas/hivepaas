@@ -23,20 +23,37 @@ has a project of its own, and deleting it takes the apps and their services.
 | 2.13 | A data backup of an app's volume into a repository on a volume is a snapshot; restored (Replace), the app finds its data as backed up | `tests/level-2/backups.spec.ts`       |
 | 2.14 | A function made from the runtime's template builds, and a Run answers 200 with what it was asked                                      | `tests/level-2/functions.spec.ts`     |
 | 2.15 | A health check runs on its interval: Done when answered as asked, Failed when not                                                     | `tests/level-2/health-checks.spec.ts` |
+| 2.16 | An app exposed at a domain from Routing Settings answers there over HTTPS; a new domain forces HTTPS, and HTTP is sent there          | `tests/level-2/routing.spec.ts`       |
+| 2.17 | Without Force HTTPS, the app answers plain HTTP as well                                                                               | `tests/level-2/routing.spec.ts`       |
+| 2.18 | Basic auth on a domain: 401 without the credentials, 200 with them                                                                    | `tests/level-2/routing.spec.ts`       |
+| 2.19 | A domain set to Redirect To sends its visitors to the main one, path and query kept                                                   | `tests/level-2/routing.spec.ts`       |
+| 2.20 | Headers added on the way in and on the way out; a path prefix stripped                                                                | `tests/level-2/routing.spec.ts`       |
+| 2.21 | A client outside the Allowed IPs gets 403; a request over the rate limit gets 429                                                     | `tests/level-2/routing.spec.ts`       |
+| 2.22 | A function created at a domain answers there, sent to HTTPS                                                                           | `tests/level-2/functions.spec.ts`     |
+| 2.23 | A health check of an app at its own domain passes                                                                                     | `tests/level-2/health-checks.spec.ts` |
 
-The images: `traefik/whoami` for an app that serves, `busybox` for one that
-prints what it was given. The logs are drawn on a canvas, so a test reads them
+The images: `traefik/whoami` for an app that serves - it answers with the
+request it got, as the proxy passed it on - and `busybox` for one that prints
+what it was given. The logs are drawn on a canvas, so a test reads them
 the way a person can take them: Copy logs, then the clipboard. What a test
 waits for is in the log, not in a deployment's status: a deployment is done
 once swarm has the new spec, before the container it starts is running.
 
+An app's domain is `<e2e name>.localhost`, reached the way a person reaches a
+domain: the browser keeps the address and connects where the env's proxy
+answers (see the README). Chrome's own upgrade of `http://` to HTTPS is off, so
+what a test sees of plain HTTP is the proxy's answer.
+
 ## Next
 
-- **Domains and routing**: an app reached through Traefik by its domain, with
-  basic auth and a redirect; a function called at its domain. Needs a real
-  Traefik inside dind, its ports published, and a way to reach it from the
-  tests. Health checks of an app's own URL wait for it: the backend that runs
-  them is on no app network in dind.
+- **Routing, the rest**: a TCP domain (a database through the proxy, by SNI),
+  settings of one path, compression, websockets, a certificate of one's own.
+- **A project's spec exported and imported** into another, its apps running;
+  a project made from a Compose file.
+- **Notifications**: a health check failing, then healthy again, told to an IM
+  platform's webhook - an app of the env's; Repeat while failing.
+- **Deployments that fail**: an image that does not exist, a container that
+  keeps exiting.
 
 ## Found while writing them (2026-10-07)
 
@@ -120,3 +137,22 @@ Seen, and left as they are:
 - A template's card is a button with buttons in it (Details, Deploy, the
   version picker), which screen readers flatten.
 - Every container of an app has the app's key as its hostname.
+
+## Found with the proxy (2026-10-07), and fixed
+
+- **Without Force HTTPS, HTTP answered 404**: a domain had a router on HTTPS
+  alone, and one on HTTP only to send it to HTTPS - so turning Force HTTPS off
+  left HTTP with no router at all, while the function dialog said to turn it
+  off for plain HTTP. A domain not forced to HTTPS now has a router of its own
+  on HTTP, with the same rule, service and middlewares; so has each of its
+  paths.
+- **The function dialog's domain field had no name** but its placeholder: it
+  is named Domain.
+
+Seen, and left as they are:
+
+- A health check trusts only certificates someone signed: an app on a domain
+  with no certificate - a `.localhost` one, a local one - is checked over HTTP.
+- In Routing Settings, every number field is named "Number input", other
+  fields only by their placeholder ("192.168.1.0/24", "/foo", "1s"), and each
+  section's "Enabled" and "Remove section" carry no section's name.

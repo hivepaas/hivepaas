@@ -4,7 +4,6 @@ import (
 	"context"
 	"database/sql"
 	"errors"
-	"strings"
 
 	"github.com/uptrace/bun"
 
@@ -113,7 +112,7 @@ func (repo *taskLogRepo) InsertMulti(ctx context.Context, db database.IDB, logs 
 func (repo *taskLogRepo) insertMultiQuery(db database.IDB, logs []*entity.TaskLog,
 	opts ...bunex.InsertQueryOption) *bun.InsertQuery {
 	for _, log := range logs {
-		log.Data = strings.ReplaceAll(log.Data, "\x00", "\uFFFD")
+		log.Data = replaceNUL(log.Data)
 	}
 	query := db.NewInsert().Model(&logs)
 	return bunex.ApplyInsert(query, opts...)

@@ -545,6 +545,7 @@ export function CreateFunctionForm({
                                                     domainInputRef.current = element;
                                                 }}
                                                 placeholder="hello.example.com"
+                                                aria-label="Domain"
                                                 aria-invalid={Boolean(errors.domain)}
                                                 className="min-w-0 flex-1"
                                             />

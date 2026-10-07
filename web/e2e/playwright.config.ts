@@ -19,7 +19,21 @@ export default defineConfig({
         { name: "setup", testMatch: /.*\.setup\.ts/ },
         {
             name: "chromium",
-            use: { ...devices["Desktop Chrome"], storageState: authFile },
+            use: {
+                ...devices["Desktop Chrome"],
+                storageState: authFile,
+                launchOptions: {
+                    args: [
+                        // An app's domain, <name>.localhost, keeps its address - port
+                        // and all, as a redirect writes it - and is reached where the
+                        // proxy is.
+                        `--host-resolver-rules=MAP *.localhost:80 ${env.ingressHTTP}, MAP *.localhost:443 ${env.ingressHTTPS}`,
+                        // Chrome tries HTTPS first for an http:// address, which would
+                        // hide what the proxy does with plain HTTP.
+                        "--disable-features=HttpsUpgrades",
+                    ],
+                },
+            },
             dependencies: ["setup"],
         },
     ],

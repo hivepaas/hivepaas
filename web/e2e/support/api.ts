@@ -296,3 +296,17 @@ export async function systemApp(api: APIRequestContext, project: SystemProject, 
     }
     throw new Error(`the HivePaaS project has no app ${key}`);
 }
+
+// createBasicAuth makes credentials of the installation's, open to every
+// project, for a domain to ask its visitors for.
+export async function createBasicAuth(
+    api: APIRequestContext,
+    name: string,
+    username: string,
+    password: string,
+): Promise<void> {
+    await ok(
+        await api.post("settings/basic-auth", { data: { name, username, password, inheritable: true } }),
+        `creating basic auth ${name}`,
+    );
+}

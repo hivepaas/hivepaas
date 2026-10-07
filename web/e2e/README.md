@@ -34,6 +34,16 @@ app-templates repo beside this one (or `HP_TEMPLATES_SRC`); without it, the
 template test finds none. dind is also given kopia, the backup engine, from
 its pinned image.
 
+The stack's proxy is the release's Traefik, inside dind; the apps' domains
+answer on this machine at 10180 (HTTP) and 10443 (HTTPS), moved by
+`HP_E2E_HTTP_PORT` and `HP_E2E_HTTPS_PORT`. A test reaches an app at
+`https://<name>.localhost/`, the address a person would use: the browser is told
+to connect for `*.localhost` where the proxy answers (`HP_E2E_INGRESS_HTTP` and
+`HP_E2E_INGRESS_HTTPS` below), and the address stays as it is - a redirect
+writes it whole. The backend in dind reaches the same names through Docker
+Desktop's DNS, which answers `*.localhost` with loopback; a host whose DNS does
+not fails the health check of an app's domain.
+
 ### On the local backend (level 0)
 
 Against the local backend - see the backend repo's `docs/DEVELOPMENT.md`:
@@ -50,12 +60,14 @@ each test that failed.
 
 To run against another installation:
 
-| Variable          | Default                          |
-| ----------------- | -------------------------------- |
-| `HP_E2E_BASE_URL` | `http://localhost:10000`         |
-| `HP_E2E_USERNAME` | `admin`                          |
-| `HP_E2E_PASSWORD` | `abc123`                         |
-| `HP_E2E_RUN_ID`   | when the run started, in base 36 |
+| Variable               | Default                          |
+| ---------------------- | -------------------------------- |
+| `HP_E2E_BASE_URL`      | `http://localhost:10000`         |
+| `HP_E2E_USERNAME`      | `admin`                          |
+| `HP_E2E_PASSWORD`      | `abc123`                         |
+| `HP_E2E_RUN_ID`        | when the run started, in base 36 |
+| `HP_E2E_INGRESS_HTTP`  | `127.0.0.1:10180`                |
+| `HP_E2E_INGRESS_HTTPS` | `127.0.0.1:10443`                |
 
 Point them only at an installation whose data does not matter: the tests make
 what they need there, and remove it. A read-only account, as on the demo

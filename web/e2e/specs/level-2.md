@@ -203,15 +203,24 @@ Seen, and left as they are:
   deployment and each daily cleanup in the env sent mail and messages through
   them. `env/up.sh` removes the seed's channels and targets; a test makes its
   own, pointed at an app of the env.
+- **A failed deployment said why in codes**: its reason, its log and the
+  comment on a preview's pull request were the error's chain of codes - and
+  for an error of HivePaaS's own, that was all of it: "ERR_PRECONDITION_FAILED
+  ERR_MISSING" where "Registry auth to pull image is missing" was meant. They
+  are the error's code and what it means now, as a task's output is. An error
+  no code names - a task's too - is its message alone, no longer under an
+  empty line.
+- **Home named an app's env by its key**: "project / dev", and linked the
+  app's screens at `/dev/`, where they are `/development/` - the server took
+  both, one screen at two addresses. It is the env's name now.
 
 Seen, and left as they are:
 
-- A failed deployment's reason starts with two internal codes, a line each,
-  before docker's own message: `ERR_NOT_FOUND`, `ERR_INFRA_NOT_FOUND`, then
-  "Error response from daemon: failed to resolve reference ...: not found".
-- Home's Needs attention links an app's screens with its env's key - `/dev/` -
-  where the app's own links use its name - `/development/`. The server takes
-  both: one screen, two addresses.
+- In a full run, an app made after other projects were deleted had its first
+  tasks fail before the container ran: "invalid pool request: Pool overlaps
+  with other one on this address space" - the env's new network was given a
+  subnet the node had not let go of yet. Docker's own; Home told it as the
+  app's latest failure, which is what it was.
 - An app's placeholder container starts twice when the app is made: the
   service is created, then the env's variables are applied by an update, which
   replaces its task.

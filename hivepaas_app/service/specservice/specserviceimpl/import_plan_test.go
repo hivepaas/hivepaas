@@ -9,6 +9,7 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/specservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/specservice/specmodel"
 )
@@ -230,4 +231,22 @@ func TestPlanMatchesARenamedSettingByID(t *testing.T) {
 	assert.Equal(t, specmodel.ActionUpdate, updated.Action)
 	assert.Equal(t, []string{"sslCerts/renamed"}, updated.Changes)
 	assert.Equal(t, specmodel.ActionKeep, kept.Action)
+}
+
+// A NUL - a YAML "\0" - in what a bundle writes fails the import's write, one
+// statement for the whole of it. The bundle is refused when it is read, saying
+// where; a Compose file goes through here too.
+func TestPlanRefusesABundleHoldingANUL(t *testing.T) {
+	svc, bundle := planFixture(t)
+	bundle.Envs["project_a"]["dev"].Apps["backend"].Note = "a\x00b"
+
+	_, err := svc.planImport(context.Background(), nil, &specservice.ValidateImportReq{
+		Scope: entity.NewObjectScopeGlobal(), Options: specmodel.ImportOptions{Existing: specmodel.ExistingUpdate},
+	}, bundle)
+
+	assert.ErrorIs(t, err, hperrors.ErrSpecBundleInvalid)
+	var hpErr hperrors.HPError
+	if assert.ErrorAs(t, err, &hpErr) {
+		assert.Contains(t, hpErr.Build("en").Detail, "projects/project_a/envs/dev: apps.backend.note")
+	}
 }

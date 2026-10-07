@@ -9,6 +9,7 @@ import (
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/composeservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/composeservice/composeserviceimpl"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/settingmountservice"
@@ -182,4 +183,26 @@ func TestAComposeFileIntoAnExistingEnvKeepsWhatItHas(t *testing.T) {
 			t.Errorf("%s is changed: %v", n.Path, n.Changes)
 		}
 	}
+}
+
+// A YAML "\0" is a NUL once read: a Compose file holding one is refused as a
+// bundle would be, saying where, rather than failing as it is written.
+func TestAComposeFileHoldingANULIsRefused(t *testing.T) {
+	svc, _ := planFixture(t)
+	converted, err := composeserviceimpl.New().Convert(context.Background(), &composeservice.ConvertReq{
+		Compose:    "services:\n  app:\n    image: nginx\n    environment:\n      GREETING: \"hi\\0there\"\n",
+		ProjectKey: "blog", ProjectName: "Blog", EnvKey: "prod", EnvName: "production",
+		NetworkName: "blog_prod_net", RootDomain: "example.com",
+	})
+	if !assert.NoError(t, err) {
+		return
+	}
+
+	_, err = svc.PlanBundle(context.Background(), nil, &specservice.PlanBundleReq{
+		ValidateImportReq: specservice.ValidateImportReq{Scope: entity.NewObjectScopeGlobal(),
+			Options: specmodel.ImportOptions{Existing: specmodel.ExistingUpdate}},
+		Doc: converted.Bundle, Issues: converted.Issues,
+	})
+
+	assert.ErrorIs(t, err, hperrors.ErrSpecBundleInvalid)
 }

@@ -15,6 +15,9 @@ func (s *HTTPServer) registerHivePaaSRoutes(systemGroup *gin.RouterGroup) *gin.R
 	// How a request reaches this install - used to work out the proxy settings
 	hivepaasGroup.GET("/request-info", hivepaasHandler.GetRequestInfo)
 
+	// The project HivePaaS runs in, which the projects list leaves out
+	hivepaasGroup.GET("/project", hivepaasHandler.GetProject)
+
 	// Release info
 	hivepaasGroup.GET("/release-info", hivepaasHandler.GetAppReleaseInfo)
 	// Update app version

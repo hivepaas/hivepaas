@@ -1,6 +1,6 @@
 import React, { useEffect } from "react";
 
-import { Field, FieldError } from "@components/ui";
+import { Field, FieldDescription, FieldError } from "@components/ui";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { dashedBorderBox } from "@lib/styles";
 import { cn } from "@lib/utils";
@@ -291,8 +291,12 @@ export function CreateOrEditAppHealthCheckForm({
                                             {...timeout}
                                             placeholder="15s"
                                             aria-invalid={isTimeoutInvalid}
+                                            aria-describedby="app-health-check-timeout-hint"
                                             className="max-w-[260px]"
                                         />
+                                        <FieldDescription id="app-health-check-timeout-hint">
+                                            One attempt. Left empty: 30s, or the interval when that is shorter.
+                                        </FieldDescription>
                                         <FieldError errors={[errors.timeout]} />
                                     </Field>
                                 </InfoBlock>
@@ -640,17 +644,16 @@ export function CreateOrEditAppHealthCheckForm({
                                 titleWidth={220}
                             >
                                 <div className={cn(dashedBorderBox)}>
-                                    <span className="font-semibold text-orange-500">Note:</span> If you don&apos;t want
-                                    to receive continuous notifications for identical results, use this configuration.
-                                    For example, if you set{" "}
-                                    <span className="text-orange-500"> Min Send Interval = 10m</span>, and the health
-                                    check result remains success or failure within 10 minutes, you will only receive one
-                                    notification.
+                                    <span className="font-semibold text-orange-500">Note:</span> A notification is sent
+                                    when the result changes: when the check fails, and when it passes again after
+                                    failing. A check that stays healthy sends nothing. While it stays failing, it is
+                                    sent again every <span className="text-orange-500">Repeat while failing</span>, when
+                                    one is set.
                                 </div>
 
                                 <InfoBlock
                                     titleWidth={220}
-                                    title={<LabelWithInfo label="Min Send Interval" />}
+                                    title={<LabelWithInfo label="Repeat while failing" />}
                                 >
                                     <Field>
                                         <Input
@@ -658,8 +661,12 @@ export function CreateOrEditAppHealthCheckForm({
                                             {...minSendInterval}
                                             placeholder="10m"
                                             aria-invalid={isMinSendIntervalInvalid}
+                                            aria-describedby="app-health-check-min-send-interval-hint"
                                             className="max-w-[260px]"
                                         />
+                                        <FieldDescription id="app-health-check-min-send-interval-hint">
+                                            Left empty: only when the result changes.
+                                        </FieldDescription>
                                         <FieldError errors={[errors.notification?.minSendInterval]} />
                                     </Field>
                                 </InfoBlock>

@@ -90,6 +90,31 @@ Seen, and left as they are:
 - **Templates the server could not give showed as "No templates found... clear
   filters"**: the page now says they are not available, and why.
 
+## Found reviewing the periodic jobs (2026-10-07), and fixed
+
+- **A periodic job on an interval longer than five minutes never ran, or ran
+  every five minutes**: every reload of the workers' cache - one every five
+  minutes, one for every setting that changes - gave every job a new slot in
+  the schedule, as if new; a job due later than the next reload was pushed on
+  before it was ever due. The schedule is kept across reloads now; a job is
+  slotted when it is new, and again when its interval changes.
+- **A health check that never got an answer held every other periodic job**:
+  a tick waited for all its runs, and a check with no timeout - the HTTP
+  client has none - waited for the run's ceiling of fifteen minutes. The runs
+  go in the background now, and a check with no timeout gives an attempt 30
+  seconds, or its interval when that is shorter.
+- **A health check notified on every run** - every 10 to 30 seconds for a
+  healthy app, when a default notification was configured - and the state it
+  kept was its first result ever, so every run after the first change read
+  as a change. It notifies when the result changes now: failing, and healthy
+  again after failing; a check healthy from its first run says nothing. "Min
+  Send Interval" is "Repeat while failing": set, a check still failing is
+  told again that often.
+- Smaller: reload events queued while a tick was busy were one reload each;
+  a job's next run was counted from when it was seen, a tick late each time;
+  the sources a notification would be sent through were loaded before it was
+  known whether it would be.
+
 Seen, and left as they are:
 
 - A template's card is a button with buttons in it (Details, Deploy, the

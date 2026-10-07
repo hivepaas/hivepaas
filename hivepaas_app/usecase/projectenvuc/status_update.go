@@ -23,6 +23,7 @@ func (uc *UC) UpdateProjectEnvStatus(
 	err := transaction.Execute(ctx, uc.db, func(db database.Tx) error {
 		projectEnv, err := uc.projectEnvRepo.GetByID(ctx, db, req.ProjectID, req.ProjectEnvID,
 			bunex.SelectFor("UPDATE OF project_env"),
+			bunex.SelectRelation("Project", bunex.SelectExcludeColumns(entity.ProjectDefaultExcludeColumns...)),
 			bunex.SelectRelation("Apps",
 				bunex.SelectExcludeColumns(entity.AppDefaultExcludeColumns...),
 			),
@@ -32,6 +33,11 @@ func (uc *UC) UpdateProjectEnvStatus(
 		}
 		if projectEnv.UpdateVer != req.UpdateVer {
 			return hperrors.Wrap(hperrors.ErrUpdateVerMismatched)
+		}
+		if req.Status != base.ProjectStatusActive {
+			if err = entity.CheckProjectEnvChange(projectEnv.Project, projectEnv, "disabled"); err != nil {
+				return hperrors.Wrap(err)
+			}
 		}
 		// No change
 		if projectEnv.Status == req.Status {

@@ -5,6 +5,7 @@ import (
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
+	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/auditdetail"
@@ -21,8 +22,12 @@ func (uc *UC) DeleteApp(
 	err := transaction.Execute(ctx, uc.db, func(db database.Tx) error {
 		app, err := uc.appService.LoadApp(ctx, db, req.ProjectID, req.AppID, false, false,
 			bunex.SelectFor("UPDATE OF app"),
+			bunex.SelectRelation("Project", bunex.SelectExcludeColumns(entity.ProjectDefaultExcludeColumns...)),
 		)
 		if err != nil {
+			return hperrors.Wrap(err)
+		}
+		if err = entity.CheckAppDeletion(app.Project, app); err != nil {
 			return hperrors.Wrap(err)
 		}
 

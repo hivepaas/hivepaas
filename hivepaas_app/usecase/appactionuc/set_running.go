@@ -26,6 +26,11 @@ func (uc *UC) SetAppRunning(
 	if err != nil {
 		return nil, hperrors.Wrap(err)
 	}
+	if !req.Running {
+		if err = entity.CheckAppStop(app.Project, app, "stopped"); err != nil {
+			return nil, hperrors.Wrap(err)
+		}
+	}
 
 	err = uc.recordAppAction(ctx, uc.db, auth, app, base.AuditLogSourceAPIAction, "set-running",
 		auditdetail.New().Set("running", req.Running))

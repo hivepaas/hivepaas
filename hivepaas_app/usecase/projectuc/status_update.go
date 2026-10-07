@@ -86,6 +86,11 @@ func (uc *UC) loadProjectDataForUpdateStatus(
 	if project.UpdateVer != req.UpdateVer {
 		return hperrors.Wrap(hperrors.ErrUpdateVerMismatched)
 	}
+	if req.Status != base.ProjectStatusActive {
+		if err = entity.CheckProjectChange(project, "disabled"); err != nil {
+			return hperrors.Wrap(err)
+		}
+	}
 	data.Project = project
 	data.HasChanges = project.Status != req.Status
 

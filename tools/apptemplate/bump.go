@@ -71,20 +71,37 @@ func runBump(args []string, out io.Writer) error {
 	lister := newTagLister()
 	tagsByRepo := map[string][]string{}
 	changed := 0
+	// One template that cannot be bumped - a registry refusing for the hour, a
+	// file the tool cannot rewrite safely - is left as it is, said out loud, and
+	// does not hold back the rest: the job runs weekly, and the next run tries
+	// it again.
+	var skipped []string
+	skip := func(file *templaterepo.TemplateFile, err error) {
+		fmt.Fprintf(out, "::warning::%s: not bumped: %v\n", file.Path, err)
+		skipped = append(skipped, file.Template.Metadata.Name)
+	}
 	for _, file := range repo.Templates {
 		plans, planErr := planTemplateBumps(context.Background(), lister, file, tagsByRepo)
 		if planErr != nil {
-			return planErr
+			skip(file, planErr)
+			continue
 		}
 		if len(plans) == 0 {
 			continue
 		}
 		content := file.Content
+		var applyErr error
+		for _, plan := range plans {
+			if content, applyErr = applyBump(content, plan); applyErr != nil {
+				break
+			}
+		}
+		if applyErr != nil {
+			skip(file, applyErr)
+			continue
+		}
 		for _, plan := range plans {
 			fmt.Fprintln(out, plan)
-			if content, err = applyBump(content, plan); err != nil {
-				return fmt.Errorf("%s: %w", file.Path, err)
-			}
 		}
 		changed++
 		if *dryRun {
@@ -95,6 +112,9 @@ func runBump(args []string, out io.Writer) error {
 		}
 	}
 
+	if len(skipped) > 0 {
+		fmt.Fprintf(out, "%d template(s) not bumped: %s\n", len(skipped), strings.Join(skipped, ", "))
+	}
 	if changed == 0 {
 		fmt.Fprintln(out, "every template is current")
 		return nil
@@ -151,6 +171,7 @@ func planTemplateBumps(
 			continue
 		}
 		plan.Template, plan.Version, plan.CurrentRelease = tmpl.Metadata.Name, version.Name, version.Release
+		plan.Release = releaseInStyleOf(version.Release, plan.Release)
 		plans = append(plans, plan)
 	}
 	return plans, nil
@@ -220,10 +241,11 @@ func planVersionBump(line string, current map[string]string, tagsByRepo map[stri
 // the tool would be guessing which occurrence belongs to this version line.
 func applyBump(content []byte, plan *bumpPlan) ([]byte, error) {
 	for variant, image := range plan.CurrentImages {
-		if bytes.Count(content, []byte(image)) != 1 {
+		at := imageOccurrences(content, image)
+		if len(at) != 1 {
 			return nil, fmt.Errorf("%w: %s", errAmbiguousBump, image)
 		}
-		content = bytes.Replace(content, []byte(image), []byte(plan.Images[variant]), 1)
+		content = slices.Concat(content[:at[0]], []byte(plan.Images[variant]), content[at[0]+len(image):])
 	}
 
 	currentRelease := []byte(fmt.Sprintf("release: %q", plan.CurrentRelease))
@@ -239,6 +261,17 @@ func applyBump(content []byte, plan *bumpPlan) ([]byte, error) {
 // A template whose release omits a level the tag carries - release 2.1 for tag
 // 2.1.0 - is rewritten to the tag's own version, because release is documented as
 // the exact version shown to users and the tag is where that version comes from.
+// releaseInStyleOf writes release the way the template writes current: with a
+// leading v or without. Tags and templates disagree - onetimesecret tags
+// v0.26.12 and the template says 0.26.12 - and a bump keeps the template's way.
+func releaseInStyleOf(current, release string) string {
+	bare := strings.TrimPrefix(release, "v")
+	if strings.HasPrefix(current, "v") {
+		return "v" + bare
+	}
+	return bare
+}
+
 func releaseOfTag(tag string) string {
 	if i := strings.IndexAny(tag, "-_+"); i >= 0 {
 		return tag[:i]
@@ -249,4 +282,27 @@ func releaseOfTag(tag string) string {
 func isNewerTag(current, candidate string) bool {
 	order, ok := imageref.CompareTags(current, candidate)
 	return ok && order < 0
+}
+
+// imageOccurrences finds where image stands whole in content. One image is
+// often the start of another - openclaw:2026.9.5 of openclaw:2026.9.5-browser,
+// a variant's tag - and that longer one is a different image.
+func imageOccurrences(content []byte, image string) []int {
+	var at []int
+	for offset := 0; ; {
+		i := bytes.Index(content[offset:], []byte(image))
+		if i < 0 {
+			return at
+		}
+		start, end := offset+i, offset+i+len(image)
+		if (start == 0 || !isImageRefByte(content[start-1])) && (end == len(content) || !isImageRefByte(content[end])) {
+			at = append(at, start)
+		}
+		offset = start + 1
+	}
+}
+
+func isImageRefByte(b byte) bool {
+	return b >= 'a' && b <= 'z' || b >= 'A' && b <= 'Z' || b >= '0' && b <= '9' ||
+		strings.IndexByte("._-:/@", b) >= 0
 }

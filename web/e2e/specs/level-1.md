@@ -16,6 +16,7 @@ back what they found.
 | 1.4 | Basic auth, key auth, SSH key, webhook: made, listed, secret masked, renamed, deleted          | `tests/level-1/integrations.spec.ts` |
 | 1.5 | Data Cleanup settings kept after a reload; an interval that is not one refused and not kept    | `tests/level-1/settings.spec.ts`     |
 | 1.6 | A project made and deleted is in the audit log, with who did it                                | `tests/level-1/audit-logs.spec.ts`   |
+| 1.7 | An empty body on every PUT and POST is refused or harmless: never a 5xx, nothing made          | `tests/level-1/api-bodies.spec.ts`   |
 
 Left for later levels: Logging and Registry settings (saving them deploys) -
 level 2; Traefik and HivePaaS routing and security (they can restart the proxy)
@@ -35,3 +36,15 @@ level 2; Traefik and HivePaaS routing and security (they can restart the proxy)
 - **Accessibility**: confirmations name their dialog by their title; the copy
   buttons beside an API key's ID and secret are named; Create Project's name
   field is labelled; fields laid out with `InfoBlock` are named by their title.
+
+## Found by the empty-body sweep (2026-10-07), and fixed
+
+- **130 of 193 PUT and POST endpoints panicked on `{}`** (a 500): their request
+  types embed their fields' struct by pointer, which JSON left nil. The backend
+  fills those before validating, so such a body is now a 400.
+- **Email accounts, IM services and SSL providers were made from `{}`**,
+  nameless and of no kind: they now require a name and a kind.
+- **Computing a project environment's variables always panicked**: the project
+  they inherit from was not loaded.
+- **An SSO callback that could not complete** - an unknown provider, a missing
+  state - answered 500; it answers 401.

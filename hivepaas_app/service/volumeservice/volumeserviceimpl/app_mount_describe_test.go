@@ -115,3 +115,53 @@ func TestDescribeAppMountNamesNoAppOutsideItsEnvironment(t *testing.T) {
 		})
 	}
 }
+
+// Docker knows a volume HivePaaS made by its id, which is all a mount carries:
+// the screen names it by the name it was given, whole or a directory of it.
+func TestDescribeAppMountNamesTheVolume(t *testing.T) {
+	app := mountTestApp()
+	uploads := scopedVolume(t, "vol-1", "hp-vol-1", base.ObjectScopeProject, &entity.ClusterVolume{Managed: true})
+	uploads.Name = "uploads"
+	volumes := []*entity.Setting{uploads, clusterVolumeSetting(t, "files", "/srv/data")}
+
+	whole := mount.Mount{Type: mount.TypeVolume, Source: "hp-vol-1", Target: "/data"}
+	inside := whole
+	inside.VolumeOptions = &mount.VolumeOptions{Subpath: "prod/web"}
+	bind := func(source string) mount.Mount {
+		return mount.Mount{Type: mount.TypeBind, Source: source, Target: "/data"}
+	}
+
+	cases := map[string]struct {
+		mnt  mount.Mount
+		want string
+	}{
+		"a volume mounted whole":         {whole, "uploads"},
+		"a directory of a volume":        {inside, "uploads"},
+		"a bind of a volume's directory": {bind("/srv/data"), "files"},
+		"a bind below it":                {bind("/srv/data/prod/web"), "files"},
+		"a volume HivePaaS did not make": {mount.Mount{Type: mount.TypeVolume, Source: "theirs", Target: "/data"}, ""},
+		"a bind nothing accounts for":    {bind("/mnt/elsewhere"), ""},
+	}
+	for name, tc := range cases {
+		t.Run(name, func(t *testing.T) {
+			assert.Equal(t, tc.want, describeAppMount(app, &tc.mnt, volumes).VolumeName)
+		})
+	}
+}
+
+// A volume whose directory lies inside another's, bound whole, is that volume:
+// not a directory of the outer one an app could own, and delete.
+func TestDescribeAppMountTakesANestedVolumeWhole(t *testing.T) {
+	app := mountTestApp()
+	volumes := []*entity.Setting{
+		clusterVolumeSetting(t, "data", "/srv/data"),
+		clusterVolumeSetting(t, "pg", "/srv/data/pg"),
+	}
+
+	desc := describeAppMount(app, &mount.Mount{Type: mount.TypeBind, Source: "/srv/data/pg", Target: "/data"}, volumes)
+
+	assert.Equal(t, "pg", desc.VolumeName)
+	assert.Empty(t, desc.AppKey)
+	_, ok := appStorageTarget(&mount.Mount{Type: mount.TypeBind, Source: "/srv/data/pg"}, volumes)
+	assert.False(t, ok, "nothing of it is an app's to delete")
+}

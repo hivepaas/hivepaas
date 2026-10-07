@@ -49,7 +49,7 @@ func describeAppMount(
 	mnt *mount.Mount,
 	volumes []*entity.Setting,
 ) *volumeservice.AppMountDesc {
-	desc := &volumeservice.AppMountDesc{}
+	desc := &volumeservice.AppMountDesc{VolumeName: mountVolumeName(mnt, volumes)}
 
 	target, ok := appStorageTarget(mnt, volumes)
 	if !ok || target.volume == nil {
@@ -116,4 +116,22 @@ func inAppsEnvironment(app *entity.App, scope base.ObjectScopeType, subpath stri
 
 func trimDirPrefix(path, prefix string) string {
 	return strings.TrimPrefix(strings.TrimPrefix(path, prefix), "/")
+}
+
+// mountVolumeName is the name of the volume a mount is, or is a directory of:
+// a volume mount names it by its RefID, a bind by the volume's directory.
+func mountVolumeName(mnt *mount.Mount, volumes []*entity.Setting) string {
+	switch mnt.Type { //nolint:exhaustive
+	case mount.TypeVolume, mount.TypeCluster:
+		if vol := volumeByRefID(volumes, mnt.Source); vol != nil {
+			return vol.Name
+		}
+	case mount.TypeBind:
+		for _, source := range bindSourceCandidates(mnt.Source) {
+			if _, vol := bindVolumeOf(source, volumes); vol != nil {
+				return vol.Name
+			}
+		}
+	}
+	return ""
 }

@@ -60,14 +60,20 @@ func (s *service) Items(ctx context.Context, db database.IDB) ([]*attentionservi
 	return items, nil
 }
 
-func (s *service) readCluster(ctx context.Context, db database.IDB, now time.Time) (*clusterState, error) {
-	apps, _, err := s.appRepo.List(ctx, db, "", nil,
+// appsRead is what is read of the apps that have a service: enough to find
+// it, and to name the app, its project and its env as their screens do.
+func appsRead() []bunex.SelectQueryOption {
+	return []bunex.SelectQueryOption{
 		bunex.SelectColumns("id", "key", "name", "project_id", "project_env_id", "service_id", "status"),
 		bunex.SelectWhere("app.service_id IS NOT NULL"),
 		bunex.SelectWhere("app.status = ?", base.AppStatusActive),
 		bunex.SelectRelation("Project", bunex.SelectColumns("id", "key", "name")),
-		bunex.SelectRelation("ProjectEnv", bunex.SelectColumns("id", "key")),
-	)
+		bunex.SelectRelation("ProjectEnv", bunex.SelectColumns("id", "key", "name")),
+	}
+}
+
+func (s *service) readCluster(ctx context.Context, db database.IDB, now time.Time) (*clusterState, error) {
+	apps, _, err := s.appRepo.List(ctx, db, "", nil, appsRead()...)
 	if err != nil {
 		return nil, hperrors.Wrap(err)
 	}

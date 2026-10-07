@@ -19,7 +19,7 @@ func app(id, serviceID, projectKey string) *entity.App {
 	return &entity.App{
 		ID: id, Name: id, ServiceID: serviceID, ProjectID: "prj_" + projectKey, Status: base.AppStatusActive,
 		Project:    &entity.Project{ID: "prj_" + projectKey, Key: projectKey, Name: projectKey},
-		ProjectEnv: &entity.ProjectEnv{Key: "dev"},
+		ProjectEnv: &entity.ProjectEnv{Key: "dev", Name: "development"},
 	}
 }
 
@@ -63,6 +63,8 @@ func TestAnAppWithMissingTasksIsNotRunning(t *testing.T) {
 	assert.Equal(t, uint64(1), item.Desired)
 	assert.Equal(t, "exit code 1", item.LastError)
 	assert.Equal(t, "p2", item.ProjectName)
+	// The env as the app's screens name it, beside the key its scope is checked by.
+	assert.Equal(t, "development", item.EnvName)
 }
 
 // Some replicas running is still fewer than asked for, and another service's

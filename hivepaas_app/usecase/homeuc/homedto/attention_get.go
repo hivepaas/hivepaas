@@ -27,8 +27,10 @@ type AttentionItemResp struct {
 	// Scope is where it is fixed: app (the app's screens), system or cluster.
 	Scope   string                   `json:"scope"`
 	Project *basedto.NamedObjectResp `json:"project,omitempty"`
-	Env     string                   `json:"env,omitempty"`
-	App     *basedto.NamedObjectResp `json:"app,omitempty"`
+	// Env is the app's env by its name, as the app's screens and their
+	// addresses name it.
+	Env string                   `json:"env,omitempty"`
+	App *basedto.NamedObjectResp `json:"app,omitempty"`
 	// Subject names what it is about: an app, a system service, a node.
 	Subject string `json:"subject"`
 
@@ -64,7 +66,7 @@ func TransformAttentionItem(item *attentionservice.Item, canAct bool) *Attention
 	}
 	if item.Scope.Type == attentionservice.ScopeApp {
 		resp.Project = &basedto.NamedObjectResp{ID: item.Scope.ProjectID, Name: item.ProjectName}
-		resp.Env = item.Scope.ProjectEnv
+		resp.Env = item.EnvName
 		resp.App = &basedto.NamedObjectResp{ID: item.Scope.AppID, Name: item.Subject}
 	}
 	if !item.Since.IsZero() {

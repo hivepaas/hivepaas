@@ -92,6 +92,26 @@ func TestHomeAttentionShowsEachUserTheirPart(t *testing.T) {
 	assert.Equal(t, map[string]bool{"a1": true, "a3": false, "appstack-1": false}, shown)
 }
 
+// An app's item names its env as the app's screens do - by its name, which
+// their addresses carry - not by the key its scope is checked with.
+func TestHomeAttentionNamesAnAppsEnvByItsName(t *testing.T) {
+	item := appItem("prj_1", "dev", "a1")
+	item.EnvName = "development"
+	uc := &UC{
+		attentionService: &fakeAttention{items: []*attentionservice.Item{item}},
+		permissionManager: &fakeManager{visibility: &fakeVisibility{grants: map[string]bool{
+			"prj_1/dev/read": true,
+		}}},
+	}
+
+	resp, err := uc.GetHomeAttention(context.Background(), &basedto.Auth{})
+
+	assert.NoError(t, err)
+	if assert.Len(t, resp.Data.Items, 1) {
+		assert.Equal(t, "development", resp.Data.Items[0].Env)
+	}
+}
+
 // Nothing to show is an empty list, not a missing one.
 func TestHomeAttentionIsAnEmptyListWhenAllIsWell(t *testing.T) {
 	uc := &UC{

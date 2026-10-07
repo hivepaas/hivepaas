@@ -61431,6 +61431,7 @@
             "type" : "integer"
           },
           "env" : {
+            "description" : "Env is the app's env by its name, as the app's screens and their\naddresses name it.",
             "type" : "string"
           },
           "kind" : {

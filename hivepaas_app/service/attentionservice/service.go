@@ -67,6 +67,9 @@ type Item struct {
 	// app's name, a system service's, a node's hostname.
 	Subject     string
 	ProjectName string
+	// EnvName is an app's env as its screens name it, and their addresses: by
+	// its name, where the scope has its key.
+	EnvName string
 
 	// What the item is about, for the screen to word. Each kind fills its own.
 	Running      uint64 // tasks running, of an app not running

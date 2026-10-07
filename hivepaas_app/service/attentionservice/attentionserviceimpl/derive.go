@@ -53,7 +53,8 @@ func deriveItems(state *clusterState) []*attentionservice.Item {
 	var items []*attentionservice.Item
 	for i := range state.services {
 		svc := &state.services[i]
-		scope, subject, projectName, ok := serviceScope(svc, appsByService[svc.ID])
+		app := appsByService[svc.ID]
+		scope, subject, projectName, ok := serviceScope(svc, app)
 		if !ok {
 			continue
 		}
@@ -62,6 +63,9 @@ func deriveItems(state *clusterState) []*attentionservice.Item {
 			continue
 		}
 		item.Scope, item.Subject, item.ProjectName = scope, subject, projectName
+		if scope.Type == attentionservice.ScopeApp {
+			item.EnvName = app.ProjectEnv.Name
+		}
 		items = append(items, item)
 	}
 	items = append(items, nodeItems(state)...)

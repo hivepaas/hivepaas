@@ -5,6 +5,7 @@ import (
 
 	"github.com/moby/moby/api/types/swarm"
 
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/tasklog"
 	"github.com/hivepaas/hivepaas/services/docker/dockerhelper"
 )
@@ -52,7 +53,8 @@ func (s *service) applyContainerInit(
 		// going wrong, and the app still has to deploy. Docker's init is what
 		// every app had before there was a choice.
 		_ = data.LogStore.Add(ctx, tasklog.NewDebugFrame(
-			"Could not read the image's entry point, keeping the init process: "+err.Error(), tasklog.TsNow))
+			"Could not read the image's entry point, keeping the init process: "+hperrors.GetErrorDetail(err, ""),
+			tasklog.TsNow))
 	case inspect.Config != nil && dockerhelper.ImageProvidesInit(inspect.Config.Entrypoint):
 		dockerInit = false
 		_ = data.LogStore.Add(ctx, tasklog.NewOutFrame(

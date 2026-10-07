@@ -20,7 +20,7 @@ func (s *service) prepareDockerAPI(ctx context.Context, db database.IDB, data *a
 	}
 	if err = s.dockerAPIService.SyncAgents(ctx); err != nil {
 		_ = data.LogStore.Add(ctx, tasklog.NewOutFrame(
-			"Not every node serves the app's Docker API yet: "+err.Error(), tasklog.TsNow))
+			"Not every node serves the app's Docker API yet: "+hperrors.GetErrorDetail(err, ""), tasklog.TsNow))
 	}
 	return nil
 }

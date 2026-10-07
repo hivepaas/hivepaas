@@ -60,17 +60,7 @@ func (s *service) Deploy(
 		if r := recover(); r != nil {
 			err = errors.Join(err, hperrors.NewPanic(r))
 		}
-		data.Deployment.UpdatedAt = timeutil.NowUTC()
-		data.Deployment.EndedAt = data.Deployment.UpdatedAt
-		switch {
-		case data.TaskCanceled, data.DeploymentCanceled:
-			data.Deployment.Status = base.DeploymentStatusCanceled
-		default:
-			data.Deployment.Status = gofn.If(err != nil, base.DeploymentStatusFailed, base.DeploymentStatusDone)
-			if err != nil {
-				data.Deployment.Output.Errors = append(data.Deployment.Output.Errors, err.Error())
-			}
-		}
+		settleDeployment(data.Deployment, data.TaskCanceled || data.DeploymentCanceled, err)
 		err = s.deploymentRepo.Update(ctx, db, data.Deployment)
 		// Make cleanup with ignoring errors
 		_ = s.deploymentInfoRepo.Del(ctx, data.Deployment.ID)
@@ -87,6 +77,22 @@ func (s *service) Deploy(
 	}
 
 	return resp, err
+}
+
+// settleDeployment writes how a deployment ended: canceled, failed - and why -
+// or done.
+func settleDeployment(deployment *entity.Deployment, canceled bool, err error) {
+	deployment.UpdatedAt = timeutil.NowUTC()
+	deployment.EndedAt = deployment.UpdatedAt
+	switch {
+	case canceled:
+		deployment.Status = base.DeploymentStatusCanceled
+	default:
+		deployment.Status = gofn.If(err != nil, base.DeploymentStatusFailed, base.DeploymentStatusDone)
+		if err != nil {
+			deployment.Output.Errors = append(deployment.Output.Errors, hperrors.GetErrorDetail(err, ""))
+		}
+	}
 }
 
 func (s *service) loadDeploymentData(
@@ -239,7 +245,7 @@ func (s *service) addStepEndLog(
 	duration := timeutil.NowUTC().Sub(start).Truncate(time.Millisecond)
 	if err != nil {
 		_ = data.LogStore.Add(ctx, tasklog.NewOutFrame("Task finished in "+duration.String()+
-			" with error: "+err.Error(), tasklog.TsNow))
+			" with error: "+hperrors.GetErrorDetail(err, ""), tasklog.TsNow))
 	} else {
 		_ = data.LogStore.Add(ctx, tasklog.NewOutFrame("Task finished in "+duration.String(),
 			tasklog.TsNow))
@@ -262,13 +268,14 @@ func (s *service) onPostTx(
 		if err := s.notifyForDeployment(ctx, db, data); err != nil {
 			_ = data.LogStore.Add(ctx,
 				tasklog.NewOutFrame("---------------------------------", tasklog.TsNow),
-				tasklog.NewOutFrame("Failed to send deployment notification with error: "+err.Error(),
+				tasklog.NewOutFrame("Failed to send deployment notification with error: "+hperrors.GetErrorDetail(err, ""),
 					tasklog.TsNow))
 		}
 		if prErr := s.notifyPRForDeploymentResult(ctx, db, data); prErr != nil {
 			_ = data.LogStore.Add(ctx,
 				tasklog.NewOutFrame("---------------------------------", tasklog.TsNow),
-				tasklog.NewOutFrame("Failed to send PR deployment notification with error: "+prErr.Error(),
+				tasklog.NewOutFrame("Failed to send PR deployment notification with error: "+
+					hperrors.GetErrorDetail(prErr, ""),
 					tasklog.TsNow))
 		}
 	}

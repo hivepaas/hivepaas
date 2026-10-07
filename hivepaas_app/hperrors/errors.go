@@ -66,7 +66,8 @@ func isWarnLevelError(err error) bool {
 	return false
 }
 
-// GetErrorDetail parses to get detail from the given error
+// GetErrorDetail is what a person is told of an error: its code, then what the
+// code means. An error no code names is its message alone.
 func GetErrorDetail(err error, lang translation.Lang) string {
 	if err == nil {
 		return ""
@@ -77,6 +78,9 @@ func GetErrorDetail(err error, lang translation.Lang) string {
 	errInfo, _ := ParseError(err, lang)
 	if errInfo == nil {
 		return err.Error()
+	}
+	if errInfo.Code == "" {
+		return errInfo.Detail
 	}
 	return errInfo.Code + "\n" + errInfo.Detail
 }

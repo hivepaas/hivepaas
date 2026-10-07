@@ -1,5 +1,3 @@
-import { dashedBorderBox } from "@lib/styles";
-import { cn } from "@lib/utils";
 import { Link } from "react-router";
 import { HivePaaSProjectQueries } from "~/system-settings/data";
 
@@ -22,10 +20,10 @@ export function SystemAppsSection() {
                     The apps HivePaaS runs itself: its backend, worker, proxy, agent and the system apps it provisions.
                     Open them to read their logs, metrics and instances.
                 </p>
-                <div className={cn(dashedBorderBox)}>
-                    <span className="font-semibold text-orange-500">Warning:</span> Changing their settings directly can
-                    break HivePaaS. Change them only if you know what the change does; their own pages under System are
-                    the safe way to configure them.
+                <div className="rounded-md border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-sm text-amber-700 dark:text-amber-400">
+                    <span className="font-medium">Changing their settings directly can break HivePaaS.</span> Change
+                    them only if you know what the change does; their own pages under System are the safe way to
+                    configure them.
                 </div>
                 {project ? (
                     <Button

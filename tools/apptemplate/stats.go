@@ -2,7 +2,6 @@ package main
 
 import (
 	"bytes"
-	"cmp"
 	"context"
 	"encoding/json"
 	"errors"
@@ -33,7 +32,7 @@ const (
 )
 
 var (
-	errNoGitHubToken   = errors.New("stats needs a GitHub token in GITHUB_TOKEN (or GH_TOKEN)")
+	errNoGitHubToken   = errors.New("stats needs a GitHub token in STATS_GITHUB_TOKEN, GITHUB_TOKEN or GH_TOKEN")
 	errGitHubForbidden = errors.New("GitHub refused this token")
 )
 
@@ -51,10 +50,20 @@ func runStats(args []string, out io.Writer) error {
 	if err != nil {
 		return err
 	}
-	token := strings.TrimSpace(cmp.Or(os.Getenv("GITHUB_TOKEN"), os.Getenv("GH_TOKEN")))
+	// The first of these that is set, named in the output - never its value - so
+	// that a run says which token GitHub refused: a secret that did not reach the
+	// job leaves the job's own token, and nothing else would tell.
+	var token, tokenVar string
+	for _, name := range []string{"STATS_GITHUB_TOKEN", "GITHUB_TOKEN", "GH_TOKEN"} {
+		if token = strings.TrimSpace(os.Getenv(name)); token != "" {
+			tokenVar = name
+			break
+		}
+	}
 	if token == "" {
 		return errNoGitHubToken
 	}
+	fmt.Fprintf(out, "counting with the token in %s\n", tokenVar)
 
 	repo, _, err := templaterepo.Load(os.DirFS(dir))
 	if err != nil {

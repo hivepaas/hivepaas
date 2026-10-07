@@ -131,6 +131,7 @@ func TestStatsCountsStarsAndWhatTheyGained(t *testing.T) {
 	}}
 	server := httptest.NewServer(github)
 	defer server.Close()
+	t.Setenv("STATS_GITHUB_TOKEN", "")
 	t.Setenv("GITHUB_TOKEN", "test-token")
 	var out bytes.Buffer
 
@@ -142,6 +143,7 @@ func TestStatsCountsStarsAndWhatTheyGained(t *testing.T) {
 	assert.Contains(t, out.String(), "demoweb: acme/gone is not on GitHub any more")
 	assert.Regexp(t, `  demoweb: \{added: "[0-9-]+"\}`, string(stats))
 	assert.Equal(t, 4, github.queries, "the batch's stars, its stargazers, then two more pages of acme/demo")
+	assert.Contains(t, out.String(), "counting with the token in GITHUB_TOKEN")
 	assert.NoError(t, runIndex([]string{"-check", dir}, &out), "stats writes the index")
 }
 
@@ -156,7 +158,7 @@ func TestStatsCountsStarsWhenTheStargazersAreRefused(t *testing.T) {
 				"acme/demo": starTimes(250, 30),
 			}})
 			defer server.Close()
-			t.Setenv("GITHUB_TOKEN", "test-token")
+			t.Setenv("STATS_GITHUB_TOKEN", "test-token")
 			var out bytes.Buffer
 
 			assert.NoError(t, runStats([]string{"-endpoint", server.URL, dir}, &out))
@@ -174,6 +176,7 @@ func TestStatsFailsWithoutCountingAnything(t *testing.T) {
 	dir := copyRepo(t)
 	setSource(t, dir, "demo", "https://github.com/acme/demo")
 
+	t.Setenv("STATS_GITHUB_TOKEN", "")
 	t.Setenv("GITHUB_TOKEN", "")
 	t.Setenv("GH_TOKEN", "")
 	assert.ErrorIs(t, runStats([]string{dir}, &bytes.Buffer{}), errNoGitHubToken)

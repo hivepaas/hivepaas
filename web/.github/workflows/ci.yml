@@ -1,0 +1,46 @@
+name: CI
+
+# What a pull request must keep working: the dashboard type-checks, lints and
+# builds - with the lockfile as it is and the release image's Node - and the
+# end-to-end tests' package type-checks. A dependency update that breaks either
+# fails here, not after it is merged. The end-to-end tests themselves need a
+# HivePaaS to run against, and do not run here.
+
+on:
+    push:
+        branches: [main]
+    pull_request:
+        branches: [main]
+
+permissions:
+    contents: read
+
+jobs:
+    dashboard:
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+            - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+              with:
+                  # The release image builds the dashboard on node:26
+                  # (deployment/release/Dockerfile in the backend).
+                  node-version: "26"
+                  cache: yarn
+            - run: yarn install --frozen-lockfile
+            - run: yarn lint:ci
+            - run: yarn build
+
+    e2e:
+        runs-on: ubuntu-latest
+        defaults:
+            run:
+                working-directory: e2e
+        steps:
+            - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+            - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+              with:
+                  node-version: "26"
+                  cache: yarn
+                  cache-dependency-path: e2e/yarn.lock
+            - run: yarn install --frozen-lockfile
+            - run: yarn typecheck

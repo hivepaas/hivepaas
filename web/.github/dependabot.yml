@@ -1,0 +1,49 @@
+# Weekly pull requests for the dependencies, on the backend's schedule. Minor
+# and patch updates come together, one pull request a week for each package;
+# a major update has one of its own. CI (workflows/ci.yml) checks each.
+
+version: 2
+updates:
+    # The dashboard (yarn.lock)
+    - package-ecosystem: "npm"
+      directory: "/"
+      schedule:
+          interval: "weekly"
+          day: "monday"
+          time: "03:00"
+          timezone: "Asia/Ho_Chi_Minh"
+      open-pull-requests-limit: 5
+      groups:
+          npm-minor-patch:
+              patterns:
+                  - "*"
+              update-types:
+                  - "minor"
+                  - "patch"
+
+    # The end-to-end tests (e2e/yarn.lock)
+    - package-ecosystem: "npm"
+      directory: "/e2e"
+      schedule:
+          interval: "weekly"
+          day: "monday"
+          time: "03:00"
+          timezone: "Asia/Ho_Chi_Minh"
+      open-pull-requests-limit: 3
+      groups:
+          e2e-minor-patch:
+              patterns:
+                  - "*"
+              update-types:
+                  - "minor"
+                  - "patch"
+
+    # The actions the workflows use, pinned by commit
+    - package-ecosystem: "github-actions"
+      directory: "/"
+      schedule:
+          interval: "weekly"
+          day: "monday"
+          time: "03:00"
+          timezone: "Asia/Ho_Chi_Minh"
+      open-pull-requests-limit: 3

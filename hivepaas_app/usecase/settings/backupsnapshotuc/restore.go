@@ -171,7 +171,12 @@ func (uc *UC) restoreTargetApp(
 	auth *basedto.Auth,
 	req *backupsnapshotdto.RestoreBackupSnapshotReq,
 ) (*entity.App, error) {
-	app, err := uc.appRepo.GetByID(ctx, db, "", req.TargetApp.ID)
+	// With its project and environment: they name the app's own directory in a
+	// volume, which the check below looks for.
+	app, err := uc.appRepo.GetByID(ctx, db, "", req.TargetApp.ID,
+		bunex.SelectRelation("Project", bunex.SelectExcludeColumns(entity.ProjectDefaultExcludeColumns...)),
+		bunex.SelectRelation("ProjectEnv"),
+	)
 	if err != nil {
 		return nil, hperrors.Wrap(err)
 	}

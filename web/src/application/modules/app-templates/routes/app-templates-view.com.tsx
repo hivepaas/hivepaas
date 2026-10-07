@@ -6,12 +6,20 @@ import { ArrowDownCircle, Loader2, Search, Tag, X } from "lucide-react";
 import { useNavigate, useParams } from "react-router";
 import { useDebounce } from "react-use";
 
+import { ErrorBoundary } from "@application/shared/components";
+
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 
 import type { AppTemplateSummary } from "../api";
-import { AppTemplateCard, AppTemplatesDetailsView, AppTemplatesSidebar } from "../components";
+import {
+    AppTemplateCard,
+    AppTemplatesDetailsView,
+    AppTemplatesSidebar,
+    TemplateRenderError,
+    UnrenderableTemplateCard,
+} from "../components";
 import { useGetAppTemplateCatalog, useListAppTemplatesInfinite } from "../data";
 import { DeployTemplateDialog } from "../dialogs";
 
@@ -182,12 +190,26 @@ export function AppTemplatesView() {
                 <div className="flex-1 min-w-0 w-full">
                     {templateName ? (
                         /* Details View: Takes over the right content area, left side menu preserved */
-                        <AppTemplatesDetailsView
-                            templateName={templateName}
-                            templateSummary={currentTemplateSummary}
-                            onBack={handleBackToCatalog}
-                            onSelectTag={handleSelectTagFromDetails}
-                        />
+                        // A template this dashboard cannot show stays inside this pane: the
+                        // catalog and the menu around it keep working.
+                        <ErrorBoundary
+                            resetKeys={[templateName]}
+                            fallback={({ error, reset }) => (
+                                <TemplateRenderError
+                                    title="This template cannot be shown"
+                                    message={error.message}
+                                    onRetry={reset}
+                                    onBack={handleBackToCatalog}
+                                />
+                            )}
+                        >
+                            <AppTemplatesDetailsView
+                                templateName={templateName}
+                                templateSummary={currentTemplateSummary}
+                                onBack={handleBackToCatalog}
+                                onSelectTag={handleSelectTagFromDetails}
+                            />
+                        </ErrorBoundary>
                     ) : (
                         /* Catalog List View */
                         <div className="flex flex-col gap-4">
@@ -325,13 +347,18 @@ export function AppTemplatesView() {
                                     {/* Template Cards Grid */}
                                     <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
                                         {templates.map(template => (
-                                            <AppTemplateCard
+                                            // One card that cannot be drawn costs that card, not the grid.
+                                            <ErrorBoundary
                                                 key={template.name}
-                                                template={template}
-                                                onSelect={handleSelectTemplate}
-                                                onSelectTag={handleTagSelect}
-                                                selectedTag={selectedTag}
-                                            />
+                                                fallback={() => <UnrenderableTemplateCard name={template.name} />}
+                                            >
+                                                <AppTemplateCard
+                                                    template={template}
+                                                    onSelect={handleSelectTemplate}
+                                                    onSelectTag={handleTagSelect}
+                                                    selectedTag={selectedTag}
+                                                />
+                                            </ErrorBoundary>
                                         ))}
 
                                         {/* Load More Card (Identical grid card dimensions and rhythm) */}

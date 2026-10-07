@@ -53,6 +53,8 @@ import {
     grantedDockerApiByTemplate,
 } from "../utils";
 
+import { TemplateRenderError } from "./template-render-error.com";
+
 interface AppTemplatesDetailsViewProps {
     templateName: string;
     templateSummary?: AppTemplateSummary;
@@ -267,7 +269,7 @@ export function AppTemplatesDetailsView({
     const [imageError, setImageError] = useState(false);
 
     // Fetch full template detail
-    const { data: templateDetail, isLoading } = useGetAppTemplate(templateName);
+    const { data: templateDetail, isLoading, error: detailError, refetch } = useGetAppTemplate(templateName);
 
     // Current data: use detailed response when available, fallback to summary
     const template: AppTemplateDetail | AppTemplateSummary | undefined = templateDetail ?? templateSummary;
@@ -323,6 +325,24 @@ export function AppTemplatesDetailsView({
                     </div>
                     <Skeleton className="h-32 w-full" />
                 </div>
+            </div>
+        );
+    }
+
+    // The template itself could not be had - a file this HivePaaS cannot read, a
+    // registry that did not answer. The summary from the list is not shown in its
+    // place: its Deploy would open a form that cannot load either.
+    if (detailError && !templateDetail) {
+        return (
+            <div className={cn("flex flex-col gap-4 w-full", className)}>
+                <TemplateRenderError
+                    title="This template could not be loaded"
+                    message={detailError.message}
+                    onRetry={() => {
+                        void refetch();
+                    }}
+                    onBack={onBack}
+                />
             </div>
         );
     }

@@ -7,6 +7,8 @@ import { useNavigate } from "react-router";
 import { toast } from "sonner";
 import { ProjectClusterVolumesQueries, ProjectsQueries } from "~/projects/data/queries";
 
+import { ErrorBoundary } from "@application/shared/components";
+
 import { Dialog, DialogFixedContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Skeleton } from "@/components/ui/skeleton";
 
@@ -17,6 +19,7 @@ import {
     type PreflightResult,
     type PreflightStorageFinding,
 } from "../../../api";
+import { TemplateRenderError } from "../../../components/template-render-error.com";
 import { useCreateAppFromTemplate, useGetAppTemplate, usePreflightAppFromTemplate } from "../../../data";
 import { DeployTemplateForm } from "../form";
 import { useDeployTemplateDialogState } from "../hooks";
@@ -37,7 +40,12 @@ export function DeployTemplateDialog() {
     const { projectId, templateName } = state;
 
     // 1. Fetch template detail
-    const { data: template, isLoading: isTemplateLoading } = useGetAppTemplate(templateName ?? undefined);
+    const {
+        data: template,
+        isLoading: isTemplateLoading,
+        error: templateError,
+        refetch: refetchTemplate,
+    } = useGetAppTemplate(templateName ?? undefined);
 
     // 2. Fetch project environments
     const { data: projectData } = ProjectsQueries.useFindOneById(
@@ -178,7 +186,19 @@ export function DeployTemplateDialog() {
                     </div>
                 </DialogHeader>
 
-                {isTemplateLoading || !template ? (
+                {templateError && !template ? (
+                    // Without the template there is no form to show: say why, rather
+                    // than load forever.
+                    <div className="px-3.5 py-6">
+                        <TemplateRenderError
+                            title="This template could not be loaded"
+                            message={templateError.message}
+                            onRetry={() => {
+                                void refetchTemplate();
+                            }}
+                        />
+                    </div>
+                ) : isTemplateLoading || !template ? (
                     <div className="px-3.5 py-6 space-y-4">
                         <div className="flex items-center justify-center py-8 gap-3 text-sm text-muted-foreground">
                             <Loader2 className="size-5 animate-spin text-amber-500" />
@@ -188,20 +208,35 @@ export function DeployTemplateDialog() {
                         <Skeleton className="h-40 w-full rounded-xl" />
                     </div>
                 ) : (
-                    <DeployTemplateForm
-                        template={template}
-                        projectId={projectId}
-                        envs={envs}
-                        clusterVolumes={clusterVolumes}
-                        initialEnv={dialogOptions.initialEnv}
-                        initialVersion={dialogOptions.initialVersion}
-                        initialVariant={dialogOptions.initialVariant}
-                        isPending={isPending || isChecking}
-                        readOnly={!canWrite}
-                        onSubmit={handleSubmit}
-                        onCancel={handleClose}
-                        onHasChanges={setHasChanges}
-                    />
+                    // A form this dashboard cannot draw for a template costs the form,
+                    // not the page the dialog was opened from.
+                    <ErrorBoundary
+                        resetKeys={[templateName]}
+                        fallback={({ error, reset }) => (
+                            <div className="px-3.5 py-6">
+                                <TemplateRenderError
+                                    title="This template's form cannot be shown"
+                                    message={error.message}
+                                    onRetry={reset}
+                                />
+                            </div>
+                        )}
+                    >
+                        <DeployTemplateForm
+                            template={template}
+                            projectId={projectId}
+                            envs={envs}
+                            clusterVolumes={clusterVolumes}
+                            initialEnv={dialogOptions.initialEnv}
+                            initialVersion={dialogOptions.initialVersion}
+                            initialVariant={dialogOptions.initialVariant}
+                            isPending={isPending || isChecking}
+                            readOnly={!canWrite}
+                            onSubmit={handleSubmit}
+                            onCancel={handleClose}
+                            onHasChanges={setHasChanges}
+                        />
+                    </ErrorBoundary>
                 )}
             </DialogFixedContent>
 

@@ -46,6 +46,17 @@ export async function redeploy(page: Page, api: APIRequestContext, app: App): Pr
     await deployed(api, app);
 }
 
+// mountVolume mounts a volume in the app from Persistent Storage.
+export async function mountVolume(page: Page, app: App, volume: string, target: string): Promise<void> {
+    await page.goto(appPage(app, "persistent-storage"));
+    await page.getByRole("button", { name: "New Storage Mount" }).click();
+    await page.getByRole("group", { name: "Volume *" }).getByRole("combobox").click();
+    await page.getByRole("option", { name: volume }).click();
+    await page.getByRole("group", { name: "Target *" }).getByRole("textbox").fill(target);
+    await page.getByRole("button", { name: "Save" }).click();
+    await expect(page.getByRole("row", { name: new RegExp(`${volume}.*${target}`) })).toBeVisible();
+}
+
 // restart restarts the app from its header: its containers are made anew, on
 // the same spec. A re-deploy of an unchanged app changes nothing for swarm to
 // act on.
@@ -64,20 +75,32 @@ export async function expectInstances(page: Page, app: App, value: string): Prom
     }).toPass({ timeout: 120_000, intervals: [3_000] });
 }
 
-// expectLogs waits for the app's log to hold the text.
-export async function expectLogs(page: Page, app: App, text: string): Promise<void> {
+// expectLogs waits for the app's log to hold the text, or a match of the
+// pattern, and answers what it found. The log is the app's current
+// container's: one replaced takes its log with it.
+export async function expectLogs(page: Page, app: App, text: string | RegExp): Promise<string> {
     await page.goto(appPage(app, "logs"));
-    await expectShownLogs(page, text);
+    return expectShownLogs(page, text);
 }
 
 // expectShownLogs waits for the log on the page - an app's, a task's - to hold
-// the text. A log is drawn on a canvas: it is read the way a person can take
-// it, Copy logs and the clipboard.
-export async function expectShownLogs(page: Page, text: string): Promise<void> {
-    await page.context().grantPermissions(["clipboard-read", "clipboard-write"]);
+// the text, or a match of the pattern, and answers what it found. A log is
+// drawn on a canvas: it is read the way a person can take it, Copy logs and
+// the clipboard.
+export async function expectShownLogs(page: Page, text: string | RegExp): Promise<string> {
+    let found = "";
     await expect(async () => {
-        await page.getByRole("button", { name: "Copy logs" }).locator("visible=true").first().click();
-        const copied = await page.evaluate(() => navigator.clipboard.readText());
-        expect(copied).toContain(text);
+        const copied = await copyShownLogs(page);
+        const match = typeof text === "string" ? (copied.includes(text) ? text : null) : copied.match(text)?.[0];
+        expect(match, `${String(text)} in the log`).toBeTruthy();
+        found = match ?? "";
     }).toPass({ timeout: 60_000, intervals: [2_000] });
+    return found;
+}
+
+// copyShownLogs is the log on the page, as Copy logs puts it on the clipboard.
+async function copyShownLogs(page: Page): Promise<string> {
+    await page.context().grantPermissions(["clipboard-read", "clipboard-write"]);
+    await page.getByRole("button", { name: "Copy logs" }).locator("visible=true").first().click();
+    return page.evaluate(() => navigator.clipboard.readText());
 }

@@ -202,10 +202,19 @@ export async function runtimeEnvVars(api: APIRequestContext, app: App): Promise<
 }
 
 // createVolume makes a docker volume on the node HivePaaS runs on, for apps to
-// mount - inheritable, or no project sees it; it answers its id.
-export async function createVolume(api: APIRequestContext, name: string): Promise<string> {
+// mount - inheritable, or no project sees it; it answers its id. Given a
+// directory, the volume is that directory of the node, bound.
+export async function createVolume(api: APIRequestContext, name: string, directory?: string): Promise<string> {
     const body = (await ok(
-        await api.post("cluster/volumes", { data: { name, driver: "local", nodeId: "current", inheritable: true } }),
+        await api.post("cluster/volumes", {
+            data: {
+                name,
+                driver: "local",
+                nodeId: "current",
+                inheritable: true,
+                ...(directory ? { bindOptions: { directory } } : {}),
+            },
+        }),
         `creating volume ${name}`,
     )) as { data: { id: string } };
     return body.data.id;

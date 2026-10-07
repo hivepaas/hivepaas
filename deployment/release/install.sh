@@ -1541,7 +1541,7 @@ ensure_swarm() {
         "locked), then run the installer again."
       ;;
   esac
-  if ! ingress_ready; then
+  if ! ingress_ready 20; then
     die "Docker could not set up the swarm's network on this server: a network of its own holds the" \
       "addresses ('Pool overlaps with other one on this address space' in 'journalctl -u docker')." \
       "$POOL_OVERLAPS_DOCS shows how to give Docker's own networks another range; then run the" \

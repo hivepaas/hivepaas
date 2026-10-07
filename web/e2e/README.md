@@ -29,7 +29,10 @@ agent inside a dind container that is a swarm of its own - never on this
 machine's swarm, which it checks before it says the stack is up. It needs the
 backend repo beside this one (or `HP_BACKEND_DIR`), Go, and the backend's
 `hivepaas-devtools` image (`make init` there, once). `HP_E2E_PORT` moves it off
-10100; `HP_E2E_SKIP_BUILD=1` reuses the last build.
+10100; `HP_E2E_SKIP_BUILD=1` reuses the last build. The template catalog is the
+app-templates repo beside this one (or `HP_TEMPLATES_SRC`); without it, the
+template test finds none. dind is also given kopia, the backup engine, from
+its pinned image.
 
 ### On the local backend (level 0)
 

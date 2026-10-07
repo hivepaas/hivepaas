@@ -14,6 +14,8 @@
 #
 # Usage: env/up.sh            (from e2e/; yarn env:up)
 #   HP_BACKEND_DIR   the backend repo, default ../../hivepaas beside the dashboard
+#   HP_TEMPLATES_SRC the app-templates repo the catalog is read from, default
+#                    ../../app-templates beside the dashboard; none if missing
 #   HP_E2E_PORT      where the dashboard answers, default 10100
 #   HP_E2E_SKIP_BUILD=1  reuse the last build of the dashboard and the binaries
 
@@ -22,6 +24,7 @@ set -euo pipefail
 ENV_DIR="$(cd "$(dirname "$0")" && pwd)"
 DASHBOARD_DIR="$(cd "$ENV_DIR/../.." && pwd)"
 BACKEND_DIR="$(cd "${HP_BACKEND_DIR:-$DASHBOARD_DIR/../hivepaas}" && pwd)"
+TEMPLATES_SRC="${HP_TEMPLATES_SRC:-$DASHBOARD_DIR/../app-templates}"
 PORT="${HP_E2E_PORT:-10100}"
 BUILD="$ENV_DIR/.build"
 NET=hp-e2e-net
@@ -85,6 +88,16 @@ for app in app worker updater traefik agent; do
 		--label "hivepaas.app.info={\"name\":\"$app\",\"key\":\"$app\"}" alpine:3 true >/dev/null
 done
 
+say "Giving dind what the agent's image carries"
+# kopia, the backup engine, from the image the release copies it from; and the
+# node's root at /host, where the agent's container sees it and where a backup
+# repository on a volume is looked for.
+kopia_image="$(sed -n 's/^ARG KOPIA_IMAGE=//p' "$BACKEND_DIR/deployment/release/Dockerfile")"
+in_dind docker pull -q "$kopia_image" >/dev/null
+in_dind sh -c "c=\$(docker create '$kopia_image' /kopia) && docker cp \$c:/kopia /usr/local/bin/kopia && docker rm \$c" \
+	>/dev/null
+in_dind ln -s / /host
+
 say "Starting the agent and the backend inside dind"
 sed "s/__PORT__/$PORT/" "$ENV_DIR/config.toml" >"$BUILD/config.toml"
 in_dind mkdir -p /hp/appdata
@@ -92,9 +105,17 @@ docker cp "$BUILD/hivepaas-app" "$DIND:/hp/hivepaas-app" >/dev/null
 docker cp "$BUILD/hivepaas-agent" "$DIND:/hp/hivepaas-agent" >/dev/null
 docker cp "$BUILD/config.toml" "$DIND:/hp/config.toml" >/dev/null
 docker cp "$BUILD/dist-dashboard" "$DIND:/hp/dist-dashboard" >/dev/null
+# The catalog, read from a checkout - which only the development environment
+# honours - rather than from the signed release this build is not one of.
+templates_env=""
+if [ -d "$TEMPLATES_SRC/templates" ]; then
+	in_dind mkdir -p /hp/app-templates
+	tar -C "$TEMPLATES_SRC" --exclude=.git -cf - . | docker exec -i "$DIND" tar -C /hp/app-templates -xf -
+	templates_env="HP_TEMPLATES_DIR=/hp/app-templates"
+fi
 docker exec -d -w /hp "$DIND" sh -c 'HP_CONFIG_FILE=config.toml ./hivepaas-agent >agent.log 2>&1'
-docker exec -d -w /hp "$DIND" sh -c 'HP_CONFIG_FILE=config.toml HP_APP_PATH=/hp/appdata \
-	HP_STORAGE_HOST_DIR=/hp/appdata HP_DEV_MODE_FORCE_AGENT_LOCAL=true ./hivepaas-app >app.log 2>&1'
+docker exec -d -w /hp "$DIND" sh -c "HP_CONFIG_FILE=config.toml HP_APP_PATH=/hp/appdata $templates_env \
+	HP_STORAGE_HOST_DIR=/hp/appdata HP_DEV_MODE_FORCE_AGENT_LOCAL=true ./hivepaas-app >app.log 2>&1"
 
 base="http://localhost:$PORT"
 for _ in $(seq 1 90); do curl -s -o /dev/null -m 2 "$base/api/auth/login-options" && break; sleep 1; done

@@ -255,7 +255,7 @@ func (repo *settingRepo) List(ctx context.Context, db database.IDB, scope *entit
 		if err != nil {
 			return nil, nil, hperrors.Wrap(err)
 		}
-		pagingMeta.Total = int(total)
+		pagingMeta.Total = total
 
 		// Applies pagination
 		query = bunex.ApplyPagination(query, paging)

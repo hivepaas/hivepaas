@@ -1210,7 +1210,7 @@ test_bake_install_ref() {
 # A stand-in for `docker network inspect ingress`: the sandboxes it lists, or no
 # ingress network at all when INGRESS_MISSING is set.
 fake_ingress() {
-  # shellcheck disable=SC2329 # install.sh's ingress_ready calls it
+  # shellcheck disable=SC2317,SC2329 # install.sh's ingress_ready calls it
   docker() {
     [ "$1 $2 $3" = "network inspect ingress" ] || return 1
     [ -z "${INGRESS_MISSING:-}" ] || return 1

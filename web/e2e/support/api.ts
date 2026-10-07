@@ -310,3 +310,22 @@ export async function createBasicAuth(
         `creating basic auth ${name}`,
     );
 }
+
+// exposeApp opens an app to the internet at a domain, on its container's port
+// 80, HTTPS forced - what Routing Settings saves for a new domain.
+export async function exposeApp(api: APIRequestContext, app: App, domain: string): Promise<void> {
+    const current = (await ok(await api.get(`${appPath(app)}/routing-settings`), "reading routing settings")) as {
+        data: { updateVer: number };
+    };
+    await ok(
+        await api.put(`${appPath(app)}/routing-settings`, {
+            data: {
+                port: 80,
+                exposePublicly: true,
+                domains: [{ enabled: true, domain, protocol: "http", forceHttps: true }],
+                updateVer: current.data.updateVer,
+            },
+        }),
+        `exposing ${app.name} at ${domain}`,
+    );
+}

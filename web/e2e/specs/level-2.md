@@ -6,31 +6,34 @@ has a project of its own, and deleting it takes the apps and their services.
 
 ## Done
 
-| #    | Scenario                                                                                                                              | Test                                  |
-| ---- | ------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------- |
-| 2.1  | An app deployed from an image (Deployment Settings, Deploy) runs 1/1; its deployment is Done                                          | `tests/level-2/apps.spec.ts`          |
-| 2.2  | A runtime variable saved, then the app re-deployed: the container prints it, as Copy logs shows                                       | `tests/level-2/apps.spec.ts`          |
-| 2.3  | Replicas set to 2 run 2/2                                                                                                             | `tests/level-2/apps.spec.ts`          |
-| 2.4  | Stopped, an app runs 0/0; started, 1/1 again                                                                                          | `tests/level-2/apps.spec.ts`          |
-| 2.5  | Deleting an app asks for its name, then removes it                                                                                    | `tests/level-2/apps.spec.ts`          |
-| 2.6  | A variable added by name, Literal, multi-line: kept after a reload; removed by its button                                             | `tests/level-2/env-vars.spec.ts`      |
-| 2.7  | A volume mounted (Persistent Storage, listed by its name): what one container wrote, the next reads                                   | `tests/level-2/storage.spec.ts`       |
-| 2.8  | A config file mounted by a setting mount is read by the container                                                                     | `tests/level-2/app-settings.spec.ts`  |
-| 2.9  | A secret referenced from a variable as `${secrets.NAME}` reaches the container                                                        | `tests/level-2/app-settings.spec.ts`  |
-| 2.10 | A scheduled job run by hand (Run Now, View Run) runs its command in the container; Done                                               | `tests/level-2/jobs.spec.ts`          |
-| 2.11 | An app cloned in its environment runs with its image and variables, and deploys on its own                                            | `tests/level-2/clone.spec.ts`         |
-| 2.12 | An app made from a template (IT Tools, found by searching the catalog) is deployed; its health check passes                           | `tests/level-2/templates.spec.ts`     |
-| 2.13 | A data backup of an app's volume into a repository on a volume is a snapshot; restored (Replace), the app finds its data as backed up | `tests/level-2/backups.spec.ts`       |
-| 2.14 | A function made from the runtime's template builds, and a Run answers 200 with what it was asked                                      | `tests/level-2/functions.spec.ts`     |
-| 2.15 | A health check runs on its interval: Done when answered as asked, Failed when not                                                     | `tests/level-2/health-checks.spec.ts` |
-| 2.16 | An app exposed at a domain from Routing Settings answers there over HTTPS; a new domain forces HTTPS, and HTTP is sent there          | `tests/level-2/routing.spec.ts`       |
-| 2.17 | Without Force HTTPS, the app answers plain HTTP as well                                                                               | `tests/level-2/routing.spec.ts`       |
-| 2.18 | Basic auth on a domain: 401 without the credentials, 200 with them                                                                    | `tests/level-2/routing.spec.ts`       |
-| 2.19 | A domain set to Redirect To sends its visitors to the main one, path and query kept                                                   | `tests/level-2/routing.spec.ts`       |
-| 2.20 | Headers added on the way in and on the way out; a path prefix stripped                                                                | `tests/level-2/routing.spec.ts`       |
-| 2.21 | A client outside the Allowed IPs gets 403; a request over the rate limit gets 429                                                     | `tests/level-2/routing.spec.ts`       |
-| 2.22 | A function created at a domain answers there, sent to HTTPS                                                                           | `tests/level-2/functions.spec.ts`     |
-| 2.23 | A health check of an app at its own domain passes                                                                                     | `tests/level-2/health-checks.spec.ts` |
+| #    | Scenario                                                                                                                                                        | Test                                  |
+| ---- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------- |
+| 2.1  | An app deployed from an image (Deployment Settings, Deploy) runs 1/1; its deployment is Done                                                                    | `tests/level-2/apps.spec.ts`          |
+| 2.2  | A runtime variable saved, then the app re-deployed: the container prints it, as Copy logs shows                                                                 | `tests/level-2/apps.spec.ts`          |
+| 2.3  | Replicas set to 2 run 2/2                                                                                                                                       | `tests/level-2/apps.spec.ts`          |
+| 2.4  | Stopped, an app runs 0/0; started, 1/1 again                                                                                                                    | `tests/level-2/apps.spec.ts`          |
+| 2.5  | Deleting an app asks for its name, then removes it                                                                                                              | `tests/level-2/apps.spec.ts`          |
+| 2.6  | A variable added by name, Literal, multi-line: kept after a reload; removed by its button                                                                       | `tests/level-2/env-vars.spec.ts`      |
+| 2.7  | A volume mounted (Persistent Storage, listed by its name): what one container wrote, the next reads                                                             | `tests/level-2/storage.spec.ts`       |
+| 2.8  | A config file mounted by a setting mount is read by the container                                                                                               | `tests/level-2/app-settings.spec.ts`  |
+| 2.9  | A secret referenced from a variable as `${secrets.NAME}` reaches the container                                                                                  | `tests/level-2/app-settings.spec.ts`  |
+| 2.10 | A scheduled job run by hand (Run Now, View Run) runs its command in the container; Done                                                                         | `tests/level-2/jobs.spec.ts`          |
+| 2.11 | An app cloned in its environment runs with its image and variables, and deploys on its own                                                                      | `tests/level-2/clone.spec.ts`         |
+| 2.12 | An app made from a template (IT Tools, found by searching the catalog) is deployed; its health check passes                                                     | `tests/level-2/templates.spec.ts`     |
+| 2.13 | A data backup of an app's volume into a repository on a volume is a snapshot; restored (Replace), the app finds its data as backed up                           | `tests/level-2/backups.spec.ts`       |
+| 2.14 | A function made from the runtime's template builds, and a Run answers 200 with what it was asked                                                                | `tests/level-2/functions.spec.ts`     |
+| 2.15 | A health check runs on its interval: Done when answered as asked, Failed when not                                                                               | `tests/level-2/health-checks.spec.ts` |
+| 2.16 | An app exposed at a domain from Routing Settings answers there over HTTPS; a new domain forces HTTPS, and HTTP is sent there                                    | `tests/level-2/routing.spec.ts`       |
+| 2.17 | Without Force HTTPS, the app answers plain HTTP as well                                                                                                         | `tests/level-2/routing.spec.ts`       |
+| 2.18 | Basic auth on a domain: 401 without the credentials, 200 with them                                                                                              | `tests/level-2/routing.spec.ts`       |
+| 2.19 | A domain set to Redirect To sends its visitors to the main one, path and query kept                                                                             | `tests/level-2/routing.spec.ts`       |
+| 2.20 | Headers added on the way in and on the way out; a path prefix stripped                                                                                          | `tests/level-2/routing.spec.ts`       |
+| 2.21 | A client outside the Allowed IPs gets 403; a request over the rate limit gets 429                                                                               | `tests/level-2/routing.spec.ts`       |
+| 2.22 | A function created at a domain answers there, sent to HTTPS                                                                                                     | `tests/level-2/functions.spec.ts`     |
+| 2.23 | A health check of an app at its own domain passes                                                                                                               | `tests/level-2/health-checks.spec.ts` |
+| 2.24 | A project made from a Compose file: its services run as apps, a variable its .env gives reaches the container, a published port answers at the domain suggested | `tests/level-2/compose.spec.ts`       |
+| 2.25 | A project exported from its Operations page, deleted, and imported on the installation's runs as it was: its app, its variable, its domain                      | `tests/level-2/spec.spec.ts`          |
+| 2.26 | Exporting secrets is refused while the server does not return them, and the page says why                                                                       | `tests/level-2/spec.spec.ts`          |
 
 The images: `traefik/whoami` for an app that serves - it answers with the
 request it got, as the proxy passed it on - and `busybox` for one that prints
@@ -48,8 +51,10 @@ what a test sees of plain HTTP is the proxy's answer.
 
 - **Routing, the rest**: a TCP domain (a database through the proxy, by SNI),
   settings of one path, compression, websockets, a certificate of one's own.
-- **A project's spec exported and imported** into another, its apps running;
-  a project made from a Compose file.
+- **Secrets in a spec**: exported encrypted and imported with the passphrase.
+  The server refuses to return secrets unless its Security settings allow it,
+  and turning that on for one test would unmask them for the tests running
+  beside it.
 - **Notifications**: a health check failing, then healthy again, told to an IM
   platform's webhook - an app of the env's; Repeat while failing.
 - **Deployments that fail**: an image that does not exist, a container that
@@ -156,3 +161,23 @@ Seen, and left as they are:
 - In Routing Settings, every number field is named "Number input", other
   fields only by their placeholder ("192.168.1.0/24", "/foo", "1s"), and each
   section's "Enabled" and "Remove section" carry no section's name.
+
+## Found with specs and Compose (2026-10-07), and fixed
+
+- **A project deleted and made again at once could not create its first app**:
+  "network ... not found", a 500 - restored from its spec, a Compose file
+  applied again. Its env's network lingers until the old project's containers
+  have stopped - seconds, or the grace an app asks for - and while it does, it
+  can neither be used nor made again under its name; HivePaaS found it by name
+  and took it as the new project's. A network the project neither records nor
+  labeled is now waited out (30 seconds at most) and made anew, labeled with
+  the project's id.
+
+Seen, and left as they are:
+
+- Every app exposed at a domain is attached to the proxy's network, and the
+  import flags that attachment as one its project cannot use - fixable,
+  dropped - though routing attaches it again: noise in each plan.
+- On the Compose page a published port's domain field is named by the domain
+  it suggests, and the project's and the env's "Own settings" checkboxes share
+  their name.

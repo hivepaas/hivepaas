@@ -5,6 +5,8 @@ import { WHOAMI, appIn, deployed } from "../../support/apps";
 import { e2eName, expect, test } from "../../support/fixtures";
 import { addDomain, addSection, domainFor, exposeAt, visit } from "../../support/routing";
 
+// Each test deploys, then waits for the proxy to route what it set: room for it.
+test.describe.configure({ timeout: 180_000 });
 // The proxy's certificate for a .localhost name is its own, signed by no one.
 test.use({ ignoreHTTPSErrors: true });
 

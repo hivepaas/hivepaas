@@ -6,19 +6,23 @@ has a project of its own, and deleting it takes the apps and their services.
 
 ## Done
 
-| #    | Scenario                                                                                            | Test                                 |
-| ---- | --------------------------------------------------------------------------------------------------- | ------------------------------------ |
-| 2.1  | An app deployed from an image (Deployment Settings, Deploy) runs 1/1; its deployment is Done        | `tests/level-2/apps.spec.ts`         |
-| 2.2  | A runtime variable saved, then the app re-deployed: the container prints it, as Copy logs shows     | `tests/level-2/apps.spec.ts`         |
-| 2.3  | Replicas set to 2 run 2/2                                                                           | `tests/level-2/apps.spec.ts`         |
-| 2.4  | Stopped, an app runs 0/0; started, 1/1 again                                                        | `tests/level-2/apps.spec.ts`         |
-| 2.5  | Deleting an app asks for its name, then removes it                                                  | `tests/level-2/apps.spec.ts`         |
-| 2.6  | A variable added by name, Literal, multi-line: kept after a reload; removed by its button           | `tests/level-2/env-vars.spec.ts`     |
-| 2.7  | A volume mounted (Persistent Storage, listed by its name): what one container wrote, the next reads | `tests/level-2/storage.spec.ts`      |
-| 2.8  | A config file mounted by a setting mount is read by the container                                   | `tests/level-2/app-settings.spec.ts` |
-| 2.9  | A secret referenced from a variable as `${secrets.NAME}` reaches the container                      | `tests/level-2/app-settings.spec.ts` |
-| 2.10 | A scheduled job run by hand (Run Now, View Run) runs its command in the container; Done             | `tests/level-2/jobs.spec.ts`         |
-| 2.11 | An app cloned in its environment runs with its image and variables, and deploys on its own          | `tests/level-2/clone.spec.ts`        |
+| #    | Scenario                                                                                                                              | Test                                  |
+| ---- | ------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------- |
+| 2.1  | An app deployed from an image (Deployment Settings, Deploy) runs 1/1; its deployment is Done                                          | `tests/level-2/apps.spec.ts`          |
+| 2.2  | A runtime variable saved, then the app re-deployed: the container prints it, as Copy logs shows                                       | `tests/level-2/apps.spec.ts`          |
+| 2.3  | Replicas set to 2 run 2/2                                                                                                             | `tests/level-2/apps.spec.ts`          |
+| 2.4  | Stopped, an app runs 0/0; started, 1/1 again                                                                                          | `tests/level-2/apps.spec.ts`          |
+| 2.5  | Deleting an app asks for its name, then removes it                                                                                    | `tests/level-2/apps.spec.ts`          |
+| 2.6  | A variable added by name, Literal, multi-line: kept after a reload; removed by its button                                             | `tests/level-2/env-vars.spec.ts`      |
+| 2.7  | A volume mounted (Persistent Storage, listed by its name): what one container wrote, the next reads                                   | `tests/level-2/storage.spec.ts`       |
+| 2.8  | A config file mounted by a setting mount is read by the container                                                                     | `tests/level-2/app-settings.spec.ts`  |
+| 2.9  | A secret referenced from a variable as `${secrets.NAME}` reaches the container                                                        | `tests/level-2/app-settings.spec.ts`  |
+| 2.10 | A scheduled job run by hand (Run Now, View Run) runs its command in the container; Done                                               | `tests/level-2/jobs.spec.ts`          |
+| 2.11 | An app cloned in its environment runs with its image and variables, and deploys on its own                                            | `tests/level-2/clone.spec.ts`         |
+| 2.12 | An app made from a template (IT Tools, found by searching the catalog) is deployed; its health check passes                           | `tests/level-2/templates.spec.ts`     |
+| 2.13 | A data backup of an app's volume into a repository on a volume is a snapshot; restored (Replace), the app finds its data as backed up | `tests/level-2/backups.spec.ts`       |
+| 2.14 | A function made from the runtime's template builds, and a Run answers 200 with what it was asked                                      | `tests/level-2/functions.spec.ts`     |
+| 2.15 | A health check runs on its interval: Done when answered as asked, Failed when not                                                     | `tests/level-2/health-checks.spec.ts` |
 
 The images: `traefik/whoami` for an app that serves, `busybox` for one that
 prints what it was given. The logs are drawn on a canvas, so a test reads them
@@ -29,14 +33,10 @@ once swarm has the new spec, before the container it starts is running.
 ## Next
 
 - **Domains and routing**: an app reached through Traefik by its domain, with
-  basic auth and a redirect. Needs a real Traefik inside dind, and a way to
-  reach it from the tests.
-- **Functions**: one made, built on its runtime, called. The runtime images
-  are large: pulled once into dind.
-- **App templates**: a small one installed and running.
-- **Backups**: a backup repository on a volume, a backup run, a snapshot listed.
-- **Health checks** (Periodic Jobs): they run from the backend, which in dind
-  is not on the apps' network - a URL it can reach is needed.
+  basic auth and a redirect; a function called at its domain. Needs a real
+  Traefik inside dind, its ports published, and a way to reach it from the
+  tests. Health checks of an app's own URL wait for it: the backend that runs
+  them is on no app network in dind.
 
 ## Found while writing them (2026-10-07)
 
@@ -69,3 +69,29 @@ Seen, and left as they are:
   running task found".
 - Deleting a volume right after the project that used it answers 409 "volume
   is in use" with docker's message, until the project's containers are gone.
+
+## Found in the second round (2026-10-07), and fixed
+
+- **The backend died when two periodic jobs notified in the same round**:
+  "fatal error: concurrent map read and map write" - not a panic, the process
+  ends. The round's jobs run concurrently and shared one RefObjects, the
+  queue's cache, which a notification writes the settings it loads into. Two
+  health checks with the default notification were enough. Each run now has
+  a copy of its own.
+- **Restoring a volume's snapshot was always refused** (400 "dataBackup.
+  sourceVolume is invalid"): the app was read without its project and
+  environment, which name its directory in a volume, so it seemed not to
+  mount the volume it does.
+- **A health check could not be saved as the form left it**: no return code
+  and no body check, which the server refuses - any answer would pass, a 500
+  too. A new check starts with 200, and the form says what is missing.
+- **The template catalog's search dropped what was typed as it appeared**,
+  as the tables' did.
+- **Templates the server could not give showed as "No templates found... clear
+  filters"**: the page now says they are not available, and why.
+
+Seen, and left as they are:
+
+- A template's card is a button with buttons in it (Details, Deploy, the
+  version picker), which screen readers flatten.
+- Every container of an app has the app's key as its hostname.

@@ -55,7 +55,9 @@ function mapInitialValues(healthCheck?: AppHealthCheck): CreateOrEditAppHealthCh
             method: healthCheck?.rest?.method ?? EAppHealthCheckRestMethod.GET,
             contentType: healthCheck?.rest?.contentType ?? "application/json",
             body: healthCheck?.rest?.body ?? "",
-            returnCode: healthCheck?.rest?.returnCode ?? "",
+            // A new check passes on a 200 unless told otherwise; one being edited
+            // keeps what it had, codes or none.
+            returnCode: healthCheck ? (healthCheck.rest?.returnCode ?? "") : "200",
             returnBodyMode: getReturnBodyMode(healthCheck?.rest ?? null),
             textExact: healthCheck?.rest?.returnText?.exact ?? "",
             textRegex: healthCheck?.rest?.returnText?.regex ?? "",

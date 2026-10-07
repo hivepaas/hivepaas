@@ -21,6 +21,8 @@ test.describe("projects", () => {
         await dialog.getByRole("button", { name: "Create Project" }).click();
 
         await expect(page.getByText("Project created successfully")).toBeVisible();
+        // Searched for: the other tests' projects can push it off the first page.
+        await page.getByRole("searchbox", { name: "Search" }).fill(name);
         await expect(page.getByRole("row").filter({ hasText: name })).toBeVisible();
         const made = await findProject(api, name);
         expect(made?.envs?.map(env => env.name)).toEqual(["development", "production"]);

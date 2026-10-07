@@ -32,7 +32,10 @@ const (
 	statsTimeout      = 30 * time.Second
 )
 
-var errNoGitHubToken = errors.New("stats needs a GitHub token in GITHUB_TOKEN (or GH_TOKEN)")
+var (
+	errNoGitHubToken   = errors.New("stats needs a GitHub token in GITHUB_TOKEN (or GH_TOKEN)")
+	errGitHubForbidden = errors.New("GitHub refused this token")
+)
 
 // runStats counts the GitHub stars of every template's project into stats.yaml,
 // and how many came in the last templatemodel.TrendingWindowDays days, then
@@ -66,7 +69,7 @@ func runStats(args []string, out io.Writer) error {
 		}
 	}
 	since := time.Now().UTC().AddDate(0, 0, -templatemodel.TrendingWindowDays)
-	counter := &starCounter{client: &http.Client{Timeout: statsTimeout}, endpoint: *endpoint, token: token}
+	counter := &starCounter{client: &http.Client{Timeout: statsTimeout}, endpoint: *endpoint, token: token, out: out}
 	counts, err := counter.count(context.Background(), slices.Sorted(maps.Values(byTemplate)), since)
 	if err != nil {
 		return err
@@ -98,23 +101,32 @@ type starCounter struct {
 	client   *http.Client
 	endpoint string
 	token    string
+	// out is where what could not be counted is said; the count goes on.
+	out io.Writer
+	// noGained is set once the stargazers cannot be read with this token - the
+	// job's own token may read a repository's star count and not who starred it
+	// when - so that it is said once, and Trending is left empty.
+	noGained bool
 }
 
-// stargazersFragment reads a repository's stars and a page of its newest
-// stargazers, the most GitHub returns at once.
-const stargazersFragment = `fragment stars on Repository {
-  nameWithOwner
-  stargazerCount
+// The stars, and a page of the newest stargazers, the most GitHub returns at
+// once, are asked for apart: a token may read the one and not the other.
+const (
+	starCountFragment  = `fragment count on Repository { stargazerCount }`
+	stargazersFragment = `fragment recent on Repository {
   stargazers(first: 100, after: $after, orderBy: {field: STARRED_AT, direction: DESC}) {
     pageInfo { hasNextPage endCursor }
     edges { starredAt }
   }
 }`
+)
 
-type repoStars struct {
-	NameWithOwner  string `json:"nameWithOwner"`
-	StargazerCount int    `json:"stargazerCount"`
-	Stargazers     struct {
+type repoCount struct {
+	StargazerCount int `json:"stargazerCount"`
+}
+
+type repoRecent struct {
+	Stargazers struct {
 		PageInfo struct {
 			HasNextPage bool   `json:"hasNextPage"`
 			EndCursor   string `json:"endCursor"`
@@ -125,52 +137,93 @@ type repoStars struct {
 	} `json:"stargazers"`
 }
 
+// graphQLError is one error GitHub answers with. One with a path is about a
+// field of the answer - a repository it did not find, a field this token may
+// not read - and the rest of the answer stands.
+type graphQLError struct {
+	Type    string `json:"type"`
+	Message string `json:"message"`
+	Path    []any  `json:"path"`
+}
+
+func (e graphQLError) forbidden() bool {
+	return e.Type == "FORBIDDEN" || strings.Contains(e.Message, "not accessible by integration")
+}
+
 // count reads each repository's stars, keyed by its lowercased owner/name as
 // asked: GitHub matches names ignoring case. A repository it does not find has
-// no key.
+// no key; one whose stargazers it may not read has its stars and no gain.
 func (c *starCounter) count(ctx context.Context, repos []string, since time.Time) (map[string]starCount, error) {
 	repos = slices.Compact(repos)
 	counts := map[string]starCount{}
 	for batch := range slices.Chunk(repos, statsBatchSize) {
-		found, err := c.firstPages(ctx, batch)
+		query, err := batchQuery(batch, "count", starCountFragment, false)
 		if err != nil {
 			return nil, err
 		}
+		found := map[string]*repoCount{}
+		fieldErrs, err := c.query(ctx, query, nil, &found)
+		if err != nil {
+			return nil, err
+		}
+		c.report(batch, fieldErrs, "NOT_FOUND")
 		for i, source := range batch {
-			stars := found[fmt.Sprintf("r%d", i)]
-			if stars == nil {
-				continue
+			if stars := found[alias(i)]; stars != nil {
+				counts[strings.ToLower(source)] = starCount{stars: stars.StargazerCount}
 			}
-			gained, err := c.gained(ctx, source, stars, since)
-			if err != nil {
-				return nil, err
-			}
-			counts[strings.ToLower(source)] = starCount{stars: stars.StargazerCount, gained: gained}
+		}
+		if err = c.countGained(ctx, batch, since, counts); err != nil {
+			return nil, err
 		}
 	}
 	return counts, nil
 }
 
-// firstPages asks about a batch of repositories in one query, each under an
-// alias of its position.
-func (c *starCounter) firstPages(ctx context.Context, batch []string) (map[string]*repoStars, error) {
-	var query strings.Builder
-	query.WriteString("query($after: String) {\n")
-	for i, source := range batch {
-		if !templaterepo.GitHubRepoPattern.MatchString(source) {
-			return nil, fmt.Errorf("%q is not a GitHub repository written as owner/name", source)
-		}
-		owner, name, _ := strings.Cut(source, "/")
-		fmt.Fprintf(&query, "  r%d: repository(owner: %q, name: %q) { ...stars }\n", i, owner, name)
+// countGained adds to counts the stars each repository of a batch gained since.
+func (c *starCounter) countGained(ctx context.Context, batch []string, since time.Time,
+	counts map[string]starCount,
+) error {
+	if c.noGained {
+		return nil
 	}
-	query.WriteString("}\n" + stargazersFragment)
-	found := map[string]*repoStars{}
-	return found, c.query(ctx, query.String(), map[string]any{"after": nil}, &found)
+	query, err := batchQuery(batch, "recent", stargazersFragment, true)
+	if err != nil {
+		return err
+	}
+	recent := map[string]*repoRecent{}
+	fieldErrs, err := c.query(ctx, query, map[string]any{"after": nil}, &recent)
+	if errors.Is(err, errGitHubForbidden) || slices.ContainsFunc(fieldErrs, graphQLError.forbidden) {
+		c.noGained = true
+		why := firstMessage(fieldErrs)
+		if err != nil {
+			why = err.Error()
+		}
+		fmt.Fprintf(c.out, "::warning::the stargazers cannot be read with this token, so Trending stays empty: "+
+			"give the job a token that can, as STATS_GITHUB_TOKEN (%s)\n", why)
+		return nil
+	}
+	if err != nil {
+		return err
+	}
+	c.report(batch, fieldErrs, "NOT_FOUND")
+	for i, source := range batch {
+		key := strings.ToLower(source)
+		got, counted := counts[key]
+		page := recent[alias(i)]
+		if !counted || page == nil {
+			continue
+		}
+		if got.gained, err = c.gained(ctx, source, page, since); err != nil {
+			return err
+		}
+		counts[key] = got
+	}
+	return nil
 }
 
 // gained counts the stars that came since, reading further pages of stargazers
 // while every one on the last page came since and there are more.
-func (c *starCounter) gained(ctx context.Context, source string, stars *repoStars, since time.Time) (int, error) {
+func (c *starCounter) gained(ctx context.Context, source string, stars *repoRecent, since time.Time) (int, error) {
 	gained := 0
 	for page := 1; ; page++ {
 		for _, edge := range stars.Stargazers.Edges {
@@ -184,61 +237,120 @@ func (c *starCounter) gained(ctx context.Context, source string, stars *repoStar
 		}
 		owner, name, _ := strings.Cut(source, "/")
 		var next struct {
-			Repository *repoStars `json:"repository"`
+			Repository *repoRecent `json:"repository"`
 		}
-		err := c.query(ctx, "query($owner: String!, $name: String!, $after: String) {\n"+
-			"  repository(owner: $owner, name: $name) { ...stars }\n}\n"+stargazersFragment,
+		_, err := c.query(ctx, "query($owner: String!, $name: String!, $after: String) {\n"+
+			"  repository(owner: $owner, name: $name) { ...recent }\n}\n"+stargazersFragment,
 			map[string]any{"owner": owner, "name": name, "after": stars.Stargazers.PageInfo.EndCursor}, &next)
 		if err != nil {
 			return 0, err
 		}
 		if next.Repository == nil {
+			// The page could not be read: what was counted so far is a floor.
 			return gained, nil
 		}
 		stars = next.Repository
 	}
 }
 
-// query runs one GraphQL query into data. Errors GitHub returns beside data are
-// the repositories it did not find, which data leaves null; errors without any
-// data fail the run.
-func (c *starCounter) query(ctx context.Context, query string, variables map[string]any, data any) error {
+// batchQuery asks about a batch of repositories in one query, each under the
+// alias of its position.
+func batchQuery(batch []string, fragmentName, fragment string, paged bool) (string, error) {
+	var query strings.Builder
+	if paged {
+		query.WriteString("query($after: String) {\n")
+	} else {
+		query.WriteString("query {\n")
+	}
+	for i, source := range batch {
+		if !templaterepo.GitHubRepoPattern.MatchString(source) {
+			return "", fmt.Errorf("%q is not a GitHub repository written as owner/name", source)
+		}
+		owner, name, _ := strings.Cut(source, "/")
+		fmt.Fprintf(&query, "  %s: repository(owner: %q, name: %q) { ...%s }\n", alias(i), owner, name, fragmentName)
+	}
+	query.WriteString("}\n" + fragment)
+	return query.String(), nil
+}
+
+func alias(i int) string { return fmt.Sprintf("r%d", i) }
+
+// report says what GitHub could not answer about a batch's repositories, but
+// for errors of the type expected - a repository that is not there, which the
+// caller says itself.
+func (c *starCounter) report(batch []string, fieldErrs []graphQLError, expected string) {
+	for _, problem := range fieldErrs {
+		if problem.Type == expected {
+			continue
+		}
+		where := "GitHub"
+		if len(problem.Path) > 0 {
+			if name, ok := problem.Path[0].(string); ok {
+				var i int
+				if _, err := fmt.Sscanf(name, "r%d", &i); err == nil && i < len(batch) {
+					where = batch[i]
+				}
+			}
+		}
+		fmt.Fprintf(c.out, "::warning::%s: %s\n", where, problem.Message)
+	}
+}
+
+func firstMessage(fieldErrs []graphQLError) string {
+	if len(fieldErrs) == 0 {
+		return ""
+	}
+	return fieldErrs[0].Message
+}
+
+// query runs one GraphQL query into data, and returns the errors about fields
+// of the answer, whose rest stands. An error about the query as a whole - a
+// limit, a token - fails it.
+func (c *starCounter) query(ctx context.Context, query string, variables map[string]any, data any) (
+	[]graphQLError, error,
+) {
 	body, err := json.Marshal(map[string]any{"query": query, "variables": variables})
 	if err != nil {
-		return err
+		return nil, err
 	}
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost, c.endpoint, bytes.NewReader(body))
 	if err != nil {
-		return err
+		return nil, err
 	}
 	req.Header.Set("Authorization", "bearer "+c.token)
 	req.Header.Set("Content-Type", "application/json")
 	resp, err := c.client.Do(req)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	defer resp.Body.Close()
 	if resp.StatusCode != http.StatusOK {
 		snippet, _ := io.ReadAll(io.LimitReader(resp.Body, 300)) //nolint:mnd
-		return fmt.Errorf("GitHub answered %s: %s", resp.Status, strings.TrimSpace(string(snippet)))
+		return nil, fmt.Errorf("GitHub answered %s: %s", resp.Status, strings.TrimSpace(string(snippet)))
 	}
 	var answer struct {
 		Data   json.RawMessage `json:"data"`
-		Errors []struct {
-			Type    string `json:"type"`
-			Message string `json:"message"`
-		} `json:"errors"`
+		Errors []graphQLError  `json:"errors"`
 	}
 	if err = json.NewDecoder(resp.Body).Decode(&answer); err != nil {
-		return fmt.Errorf("reading GitHub's answer: %w", err)
+		return nil, fmt.Errorf("reading GitHub's answer: %w", err)
 	}
+	var fieldErrs []graphQLError
 	for _, problem := range answer.Errors {
-		if problem.Type != "NOT_FOUND" {
-			return fmt.Errorf("GitHub: %s", problem.Message)
+		switch {
+		case len(problem.Path) > 0:
+			fieldErrs = append(fieldErrs, problem)
+		case problem.forbidden():
+			return nil, fmt.Errorf("%w: %s", errGitHubForbidden, problem.Message)
+		default:
+			return nil, fmt.Errorf("GitHub: %s", problem.Message)
 		}
 	}
 	if len(answer.Data) == 0 || string(answer.Data) == "null" {
-		return errors.New("GitHub answered without data")
+		if len(fieldErrs) > 0 {
+			return fieldErrs, nil
+		}
+		return nil, errors.New("GitHub answered without data")
 	}
-	return json.Unmarshal(answer.Data, data)
+	return fieldErrs, json.Unmarshal(answer.Data, data)
 }

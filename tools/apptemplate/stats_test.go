@@ -24,6 +24,9 @@ type fakeGitHub struct {
 	repos   map[string][]time.Time
 	queries int
 	fail    string
+	// forbid refuses the stargazers as GitHub refuses an integration's token:
+	// "field" with an error per repository, "query" with one for the query.
+	forbid string
 }
 
 var aliasPattern = regexp.MustCompile(`(r\d+): repository\(owner: "([^"]+)", name: "([^"]+)"\)`)
@@ -46,15 +49,26 @@ func (f *fakeGitHub) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	after, _ := req.Variables["after"].(string)
 	data := map[string]any{}
 	var errs []any
+	refused := map[string]any{"type": "FORBIDDEN", "message": "Resource not accessible by integration"}
+	if f.forbid == "query" && strings.Contains(req.Query, "stargazers(") {
+		_ = json.NewEncoder(w).Encode(map[string]any{"errors": []any{refused}})
+		return
+	}
 	if owner, ok := req.Variables["owner"].(string); ok {
 		data["repository"] = f.page(owner+"/"+req.Variables["name"].(string), after)
 	} else {
 		for _, match := range aliasPattern.FindAllStringSubmatch(req.Query, -1) {
 			page := f.page(match[2]+"/"+match[3], after)
-			data[match[1]] = page
-			if page == nil {
-				errs = append(errs, map[string]any{"type": "NOT_FOUND", "message": "not found"})
+			switch {
+			case page == nil:
+				errs = append(errs, map[string]any{"type": "NOT_FOUND", "message": "not found", "path": []any{match[1]}})
+			case f.forbid == "field" && strings.Contains(req.Query, "stargazers("):
+				// The connection is not nullable: its error nulls the repository.
+				errs = append(errs, map[string]any{"type": refused["type"], "message": refused["message"],
+					"path": []any{match[1], "stargazers"}})
+				page = nil
 			}
+			data[match[1]] = page
 		}
 	}
 	_ = json.NewEncoder(w).Encode(map[string]any{"data": data, "errors": errs})
@@ -127,8 +141,33 @@ func TestStatsCountsStarsAndWhatTheyGained(t *testing.T) {
 	assert.Regexp(t, `  demo: \{added: "[0-9-]+", stars: 5280, starsGained: 250\}`, string(stats))
 	assert.Contains(t, out.String(), "demoweb: acme/gone is not on GitHub any more")
 	assert.Regexp(t, `  demoweb: \{added: "[0-9-]+"\}`, string(stats))
-	assert.Equal(t, 3, github.queries, "one batch, then two more pages of acme/demo")
+	assert.Equal(t, 4, github.queries, "the batch's stars, its stargazers, then two more pages of acme/demo")
 	assert.NoError(t, runIndex([]string{"-check", dir}, &out), "stats writes the index")
+}
+
+// The job's own token may read a repository's stars and not its stargazers:
+// the stars are counted, Trending is left empty, and the run says why.
+func TestStatsCountsStarsWhenTheStargazersAreRefused(t *testing.T) {
+	for _, forbid := range []string{"field", "query"} {
+		t.Run(forbid, func(t *testing.T) {
+			dir := copyRepo(t)
+			setSource(t, dir, "demo", "https://github.com/acme/demo")
+			server := httptest.NewServer(&fakeGitHub{forbid: forbid, repos: map[string][]time.Time{
+				"acme/demo": starTimes(250, 30),
+			}})
+			defer server.Close()
+			t.Setenv("GITHUB_TOKEN", "test-token")
+			var out bytes.Buffer
+
+			assert.NoError(t, runStats([]string{"-endpoint", server.URL, dir}, &out))
+
+			stats, err := os.ReadFile(filepath.Join(dir, templaterepo.StatsFile))
+			assert.NoError(t, err)
+			assert.Regexp(t, `  demo: \{added: "[0-9-]+", stars: 5280\}`, string(stats))
+			assert.Contains(t, out.String(), "::warning::the stargazers cannot be read with this token")
+			assert.Contains(t, out.String(), "Resource not accessible by integration")
+		})
+	}
 }
 
 func TestStatsFailsWithoutCountingAnything(t *testing.T) {

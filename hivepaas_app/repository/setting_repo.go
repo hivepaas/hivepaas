@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"errors"
 	"strings"
+	"time"
 
 	"github.com/tiendc/gofn"
 	"github.com/uptrace/bun"
@@ -685,32 +686,7 @@ func (repo *settingRepo) updateSettingResLinks(ctx context.Context, db database.
 		return hperrors.Wrap(err)
 	}
 
-	mapCurrLinks := make(map[string]*entity.ResLink, len(currLinks))
-	for _, link := range currLinks {
-		mapCurrLinks[link.GetKey()] = link
-	}
-
-	upsertingLinks := make([]*entity.ResLink, 0, len(newLinks))
-	timeNow := timeutil.NowUTC()
-
-	for _, newLink := range newLinks {
-		key := newLink.GetKey()
-		if currLink, ok := mapCurrLinks[key]; ok {
-			delete(mapCurrLinks, key)
-			if currLink.Index != newLink.Index || currLink.Data != newLink.Data {
-				upsertingLinks = append(upsertingLinks, newLink)
-			}
-		} else { // No existing link in the current map, need to add
-			upsertingLinks = append(upsertingLinks, newLink)
-		}
-	}
-
-	// Remaining links in the map need to delete
-	for _, link := range mapCurrLinks {
-		link.DeletedAt = timeNow
-		upsertingLinks = append(upsertingLinks, link)
-	}
-
+	upsertingLinks := resLinksToUpsert(newLinks, currLinks, timeutil.NowUTC())
 	if len(upsertingLinks) > 0 {
 		upsertQuery := db.NewInsert().Model(&upsertingLinks)
 		upsertQuery = bunex.ApplyUpsert(upsertQuery, entity.ResLinkUpsertingConflictCols,
@@ -723,6 +699,42 @@ func (repo *settingRepo) updateSettingResLinks(ctx context.Context, db database.
 	}
 
 	return nil
+}
+
+// resLinksToUpsert is what brings the settings' links from what they are to
+// what they should be: each wanted link that is new or changed, and each
+// current one no longer wanted, deleted. A link wanted twice - one target told
+// of success and of failure - is written once: one statement may not upsert a
+// row twice.
+func resLinksToUpsert(wanted, current []*entity.ResLink, now time.Time) []*entity.ResLink {
+	currentByKey := make(map[string]*entity.ResLink, len(current))
+	for _, link := range current {
+		currentByKey[link.GetKey()] = link
+	}
+
+	upserting := make([]*entity.ResLink, 0, len(wanted))
+	seen := make(map[string]struct{}, len(wanted))
+	for _, link := range wanted {
+		key := link.GetKey()
+		if _, dup := seen[key]; dup {
+			continue
+		}
+		seen[key] = struct{}{}
+		if curr, ok := currentByKey[key]; ok {
+			delete(currentByKey, key)
+			if curr.Index != link.Index || curr.Data != link.Data {
+				upserting = append(upserting, link)
+			}
+		} else {
+			upserting = append(upserting, link)
+		}
+	}
+
+	for _, link := range currentByKey {
+		link.DeletedAt = now
+		upserting = append(upserting, link)
+	}
+	return upserting
 }
 
 func (repo *settingRepo) DeleteAllByObjects(ctx context.Context, db database.IDB,

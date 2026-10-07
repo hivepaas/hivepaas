@@ -17,3 +17,4 @@ export * from "./hivepaas-logging-performance-services";
 export * from "./hivepaas-registry-settings-services";
 export * from "./hivepaas-updates-services";
 export * from "./mcp-settings-services";
+export * from "./hivepaas-project-services";

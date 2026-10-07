@@ -17,3 +17,4 @@ export * from "./use-hivepaas-logging-performance.api";
 export * from "./use-hivepaas-registry-settings.api";
 export * from "./use-hivepaas-updates.api";
 export * from "./use-mcp-settings.api";
+export * from "./use-hivepaas-project.api";

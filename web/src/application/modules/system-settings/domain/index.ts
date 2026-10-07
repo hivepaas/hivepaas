@@ -14,3 +14,4 @@ export * from "./hivepaas-logging-performance.entity";
 export * from "./hivepaas-registry-settings.entity";
 export * from "./hivepaas-updates.entity";
 export * from "./mcp-settings.entity";
+export * from "./hivepaas-project.entity";

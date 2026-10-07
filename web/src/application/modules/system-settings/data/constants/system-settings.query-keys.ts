@@ -14,6 +14,7 @@ export const QK = {
     "system-settings.hivepaas.logging.find-one": "system-settings.hivepaas.logging.find-one",
     "system-settings.hivepaas.logging-performance.find-one": "system-settings.hivepaas.logging-performance.find-one",
     "system-settings.hivepaas.registry.find-one": "system-settings.hivepaas.registry.find-one",
+    "system-settings.hivepaas.project.find-one": "system-settings.hivepaas.project.find-one",
     "system-settings.mcp.find-one": "system-settings.mcp.find-one",
 
     "system-settings.traefik.service-settings.find-one": "system-settings.traefik.service-settings.find-one",

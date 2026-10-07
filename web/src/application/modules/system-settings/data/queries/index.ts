@@ -15,3 +15,4 @@ export * from "./hivepaas-logging-performance.queries";
 export * from "./hivepaas-registry-settings.queries";
 export * from "./hivepaas-updates.queries";
 export * from "./mcp-settings.queries";
+export * from "./hivepaas-project.queries";

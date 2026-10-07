@@ -14,6 +14,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/reflectutil"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/strutil"
+	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/timeutil"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/notificationservice"
 )
 
@@ -27,6 +28,14 @@ func (s *service) sendNotification(
 	if notifConfig == nil {
 		return nil
 	}
+	// A change of state is told, and a failure that goes on is told again
+	// every MinSendInterval of the check. Decided here, from the state kept
+	// for the check: the throttle NotifyForTaskResult keeps for results told
+	// one by one is not given what it would need to apply.
+	if !shouldNotify(!data.Task.IsDone(), data.LastHealthcheckState,
+		notifConfig.MinSendInterval.ToDuration(), timeutil.NowUTC()) {
+		return nil
+	}
 
 	notification, err := s.notificationService.GetNotificationForEvent(ctx, db,
 		data.Scope, notifConfig.BaseEventNotification, data.Task.IsDone(), data.RefObjects)
@@ -35,9 +44,6 @@ func (s *service) sendNotification(
 	}
 	if notification == nil {
 		return nil
-	}
-	if notifConfig.MinSendInterval > 0 {
-		notification.MinSendInterval = notifConfig.MinSendInterval
 	}
 
 	s.buildNotificationMsgData(data)
@@ -49,10 +55,6 @@ func (s *service) sendNotification(
 		Notification: notification,
 		TemplateName: notificationservice.TemplateHealthcheckNotification,
 		TemplateData: data.NotifMsgData,
-	}
-	if data.LastHealthcheckState != nil {
-		req.LastEvent = string(data.LastHealthcheckState.State)
-		req.LastSendTs = data.LastHealthcheckState.LastNotifTs
 	}
 
 	resp, err := s.notificationService.NotifyForTaskResult(ctx, db, req)

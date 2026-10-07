@@ -120,11 +120,11 @@ func (s *service) saveStateInCache(
 ) (err error) {
 	state := data.LastHealthcheckState
 	if state == nil {
-		state = &cacheentity.HealthcheckState{
-			State: gofn.If(data.Task.Status == base.TaskStatusDone,
-				base.HealthcheckStateSuccess, base.HealthcheckStateFailure),
-		}
+		state = &cacheentity.HealthcheckState{}
 	}
+	// The latest result: what the next run tells a change by.
+	state.State = gofn.If(data.Task.Status == base.TaskStatusDone,
+		base.HealthcheckStateSuccess, base.HealthcheckStateFailure)
 	if !data.LastNotifSendTs.IsZero() {
 		state.LastNotifTs = data.LastNotifSendTs
 	}
@@ -140,4 +140,38 @@ func (s *service) saveStateInCache(
 	}
 
 	return nil
+}
+
+// defaultAttemptTimeout bounds one attempt of a check that sets no timeout.
+// The client has none of its own, and a server that never answers would
+// otherwise hold the run - and its slot among the runs - for the run's whole
+// ceiling.
+const defaultAttemptTimeout = 30 * time.Second
+
+// attemptTimeout is how long one attempt of the check may take: its timeout,
+// or the default, within the check's interval.
+func attemptTimeout(job *entity.PeriodicJob) time.Duration {
+	if timeout := job.Timeout.ToDuration(); timeout > 0 {
+		return timeout
+	}
+	timeout := defaultAttemptTimeout
+	if interval := job.Interval.ToDuration(); interval > 0 && interval < timeout {
+		timeout = interval
+	}
+	return timeout
+}
+
+// shouldNotify says whether a result is told. A change of state is: failing,
+// and healthy again after failing - the first result counts as a change only
+// when it is a failure, a check healthy from its first run has nothing to
+// say. Failing on, the check is told again every repeat, when one is set;
+// healthy on, never.
+func shouldNotify(failing bool, last *cacheentity.HealthcheckState, repeat time.Duration, now time.Time) bool {
+	if last == nil {
+		return failing
+	}
+	if (last.State == base.HealthcheckStateSuccess) == failing {
+		return true
+	}
+	return failing && repeat > 0 && (last.LastNotifTs.IsZero() || now.Sub(last.LastNotifTs) >= repeat)
 }

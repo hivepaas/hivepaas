@@ -1,9 +1,9 @@
 {
   "beta": {
-    "releaseDate": "2026-10-05",
-    "appVersion": "v1.0.0-beta2",
-    "appImage": "ghcr.io/hivepaas/hivepaas:1.0.0-beta2@sha256:0bdc91b94f2acbe09180521bcfdb10f9ec0dcf0e55f00f99793f4faed6187464",
-    "agentImage": "ghcr.io/hivepaas/hivepaas-agent:1.0.0-beta2@sha256:7c891eaf1d43fe58ea86a6621a1a9b22cdf8b73e7012004ddca33203eee82454",
+    "releaseDate": "2026-10-08",
+    "appVersion": "v1.0.0-beta3",
+    "appImage": "ghcr.io/hivepaas/hivepaas:1.0.0-beta3@sha256:0bdc91b94f2acbe09180521bcfdb10f9ec0dcf0e55f00f99793f4faed6187464",
+    "agentImage": "ghcr.io/hivepaas/hivepaas-agent:1.0.0-beta3@sha256:7c891eaf1d43fe58ea86a6621a1a9b22cdf8b73e7012004ddca33203eee82454",
     "redisImage": "redis:8.10.2-alpine@sha256:3811787313eba226a2ef38658c6ccb91cd5e110edc89c37767de373120a0e5a0",
     "dbImage": "postgres:18.6-alpine@sha256:77f585114c32fbca283dc835b0596f4e52b51b4c6662d7810b2f4084f60a1873",
     "traefikImage": "traefik:v3.7.13@sha256:24841fe2de7304c149343d877d2923b4c8800a38ba015dea9174c23b20e344a0",
@@ -24,8 +24,8 @@
     ],
     "templates": {
       "repo": "hivepaas/app-templates",
-      "commit": "022b868e8ee2dbcba8d1050807baaf4f8e05785c",
-      "indexSha256": "0e93fc772c9fc1bb687eb319662ea796cca50632c4f83b476be7806b9dc992e5"
+      "commit": "32c7af0821c421760f70ec33ce5b943841254d20",
+      "indexSha256": "937224158365ba8688e75608467d1fa6d9c7ed7203ab9da8f3bd56274ad0f36c"
     }
   }
 }

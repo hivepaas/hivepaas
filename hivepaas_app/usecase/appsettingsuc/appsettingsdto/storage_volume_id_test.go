@@ -41,3 +41,28 @@ func TestAStorageMountNamesTheVolumeOfTheAppsOwnDirectory(t *testing.T) {
 		assert.Empty(t, resp[2].VolumeID)
 	}
 }
+
+// A mount in a volume HivePaaS made is shown by the volume's name, whoever's
+// directory it is: its source is the id docker knows it by.
+func TestAStorageMountCarriesItsVolumesName(t *testing.T) {
+	mounts := []mount.Mount{
+		{Type: mount.TypeVolume, Source: "01M4AB3ZQGPW5T21RVB5JVFG6M", Target: "/data"},
+		{Type: mount.TypeBind, Source: "/srv/x", Target: "/x"},
+	}
+	resp, err := TransformStorageMounts(&StorageSettingsTransformInput{
+		App: &entity.App{Key: "web", Project: &entity.Project{Key: "shop"},
+			ProjectEnv: &entity.ProjectEnv{Key: "prod"}},
+		Service: &swarm.Service{Spec: swarm.ServiceSpec{TaskTemplate: swarm.TaskSpec{
+			ContainerSpec: &swarm.ContainerSpec{Mounts: mounts},
+		}}},
+		MountKeyCalculator: func(m *mount.Mount) string { return m.Target },
+		MountDescs:         []*volumeservice.AppMountDesc{{VolumeName: "uploads"}, {}},
+	})
+
+	assert.NoError(t, err)
+	if assert.Len(t, resp, 2) {
+		assert.Equal(t, "uploads", resp[0].SourceName)
+		assert.Equal(t, "01M4AB3ZQGPW5T21RVB5JVFG6M", resp[0].Source, "the source stays what it is")
+		assert.Empty(t, resp[1].SourceName)
+	}
+}

@@ -76,6 +76,10 @@ type Mount struct {
 	// VolumeID is the volume setting a mount of the app's own directory is in:
 	// what a data backup of a volume picks. An answer, ignored when written.
 	VolumeID string `json:"volumeId,omitempty" copy:"-"`
+	// SourceName is the name of the volume the source is, or is a directory of:
+	// docker knows a volume HivePaaS made by its id, which is all Source says.
+	// An answer, ignored when written.
+	SourceName string `json:"sourceName,omitempty" copy:"-"`
 }
 
 // MountSourceApp says the directory this mount reaches belongs to another app -
@@ -213,8 +217,11 @@ func TransformStorageMount(
 		// Do nothing
 	}
 
-	if desc != nil && desc.Own {
-		resp.VolumeID = desc.VolumeID
+	if desc != nil {
+		resp.SourceName = desc.VolumeName
+		if desc.Own {
+			resp.VolumeID = desc.VolumeID
+		}
 	}
 	applyMountSourceApp(resp, desc, input)
 	return resp, nil

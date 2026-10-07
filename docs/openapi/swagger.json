@@ -54072,6 +54072,10 @@
           "sourceApp" : {
             "$ref" : "#/components/schemas/appsettingsdto.MountSourceApp"
           },
+          "sourceName" : {
+            "description" : "SourceName is the name of the volume the source is, or is a directory of:\ndocker knows a volume HivePaaS made by its id, which is all Source says.\nAn answer, ignored when written.",
+            "type" : "string"
+          },
           "target" : {
             "type" : "string"
           },
@@ -54089,7 +54093,7 @@
             "$ref" : "#/components/schemas/appsettingsdto.VolumeOptions"
           }
         },
-        "required" : [ "bindOptions", "clusterOptions", "consistency", "key", "readOnly", "source", "sourceApp", "target", "tmpfsOptions", "type", "volumeId", "volumeOptions" ],
+        "required" : [ "bindOptions", "clusterOptions", "consistency", "key", "readOnly", "source", "sourceApp", "sourceName", "target", "tmpfsOptions", "type", "volumeId", "volumeOptions" ],
         "type" : "object"
       },
       "appsettingsdto.MountBorrower" : {

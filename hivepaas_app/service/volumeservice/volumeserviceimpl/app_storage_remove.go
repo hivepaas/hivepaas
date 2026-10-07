@@ -257,8 +257,21 @@ func bindSourceCandidates(source string) []string {
 var bindSourcePrefixes = []string{"/host_mnt", "/host-mnt"}
 
 func bindStorageTargetOf(source string, volumes []*entity.Setting) (storageTarget, bool) {
-	device := ""
-	var setting *entity.Setting
+	device, setting := bindVolumeOf(source, volumes)
+	if setting == nil || source == device {
+		return storageTarget{}, false
+	}
+
+	subpath := safeSubpath(strings.TrimPrefix(source, device+"/"))
+	if subpath == "" {
+		return storageTarget{}, false
+	}
+	return storageTarget{mount: bindMountWhole(device), subpath: subpath, volume: setting}, true
+}
+
+// bindVolumeOf is the volume whose directory a bind source is, or is below,
+// with that directory.
+func bindVolumeOf(source string, volumes []*entity.Setting) (device string, setting *entity.Setting) {
 	for _, vol := range volumes {
 		clusterVol, err := vol.AsClusterVolume()
 		if err != nil || clusterVol == nil {
@@ -273,19 +286,12 @@ func bindStorageTargetOf(source string, volumes []*entity.Setting) (storageTarge
 		// A volume at /srv/data/pg is a more specific answer than one at
 		// /srv/data for a source below both, and the specific one is the volume
 		// the mount was actually built from.
-		if dir = filepath.Clean(dir); strings.HasPrefix(source, dir+"/") && len(dir) > len(device) {
+		dir = filepath.Clean(dir)
+		if (source == dir || strings.HasPrefix(source, dir+"/")) && len(dir) > len(device) {
 			device, setting = dir, vol
 		}
 	}
-	if device == "" {
-		return storageTarget{}, false
-	}
-
-	subpath := safeSubpath(strings.TrimPrefix(source, device+"/"))
-	if subpath == "" {
-		return storageTarget{}, false
-	}
-	return storageTarget{mount: bindMountWhole(device), subpath: subpath, volume: setting}, true
+	return device, setting
 }
 
 // volumeByRefID finds the volume setting a mount names. A volume mount carries

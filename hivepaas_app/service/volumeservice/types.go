@@ -136,6 +136,10 @@ type AppMountDesc struct {
 	// It is set whenever AppKey is: a mount that is no app's directory names no
 	// volume here either.
 	VolumeID string
+	// VolumeName is the name of the volume the mount is, or is a directory of,
+	// whoever's directory that is. Docker knows a volume HivePaaS made by its id,
+	// and a mount carries nothing else to show.
+	VolumeName string
 }
 
 // InspectAppStorageReq asks about the directories a set of apps would be given.

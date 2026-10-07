@@ -30,28 +30,7 @@ func (uc *UC) ListDeployment(
 		}
 	}
 
-	var listOpts []bunex.SelectQueryOption
-	if len(req.Status) > 0 {
-		statuses := req.Status
-		if gofn.Contain(statuses, base.DeploymentStatusInProgress) {
-			cond := bunex.SelectWhereIn("deployment.id IN (?)", inprogressDeploymentIDs...)
-			statuses = gofn.Drop(statuses, base.DeploymentStatusInProgress)
-			if len(statuses) == 0 {
-				listOpts = append(listOpts, cond)
-			} else {
-				listOpts = append(listOpts, cond,
-					bunex.SelectWhereOrGroup(
-						bunex.SelectWhereNotIn("deployment.id NOT IN (?)", inprogressDeploymentIDs...),
-						bunex.SelectWhereIn("deployment.status IN (?)", statuses),
-					),
-				)
-			}
-		} else {
-			listOpts = append(listOpts,
-				bunex.SelectWhereNotIn("deployment.id NOT IN (?)", inprogressDeploymentIDs...),
-				bunex.SelectWhereIn("deployment.status IN (?)", statuses...))
-		}
-	}
+	listOpts := statusFilter(req.Status, inprogressDeploymentIDs)
 	if req.Search != "" { //nolint
 		// TODO: add implementation
 	}
@@ -111,4 +90,29 @@ func (uc *UC) loadDeploymentTriggerUsers(
 		return nil, hperrors.Wrap(err)
 	}
 	return userMap, nil
+}
+
+// statusFilter is what the statuses asked for match. A deployment in progress is
+// known by the deployments' cache, not by its row - in_progress is the cached
+// ones - and any other status is the row's, of one not in progress. It is one
+// condition: what it ORs stays clear of the app's and access filters around it.
+func statusFilter(statuses []base.DeploymentStatus, inprogressDeploymentIDs []string) []bunex.SelectQueryOption {
+	if len(statuses) == 0 {
+		return nil
+	}
+	others := gofn.Drop(statuses, base.DeploymentStatusInProgress)
+	inProgress := bunex.SelectWhereIn("deployment.id IN (?)", inprogressDeploymentIDs...)
+	if len(others) == 0 {
+		return []bunex.SelectQueryOption{inProgress}
+	}
+	ended := []bunex.SelectQueryOption{
+		bunex.SelectWhereNotIn("deployment.id NOT IN (?)", inprogressDeploymentIDs...),
+		bunex.SelectWhereIn("deployment.status IN (?)", others...),
+	}
+	if len(others) == len(statuses) {
+		return []bunex.SelectQueryOption{bunex.SelectWhereGroup(ended...)}
+	}
+	return []bunex.SelectQueryOption{
+		bunex.SelectWhereGroup(inProgress, bunex.SelectWhereOrGroup(ended...)),
+	}
 }

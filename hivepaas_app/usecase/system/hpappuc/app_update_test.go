@@ -73,7 +73,7 @@ func TestUpdateHpApp_RefusesTargetNotNewer(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			svc := &fakeHpAppService{info: tc.info}
 			// No db: a refusal has to happen before the transaction is opened.
-			uc := New(nil, nil, nil, svc, nil)
+			uc := New(nil, nil, nil, nil, svc, nil)
 
 			resp, err := uc.UpdateHpApp(context.Background(), &basedto.Auth{},
 				&hpappdto.UpdateHpAppReq{TargetVersion: tc.target})
@@ -125,7 +125,7 @@ func TestUpdateHpApp_RefusesWhatTheUpdaterWouldRefuse(t *testing.T) {
 			svc := &fakeHpAppService{info: info}
 			plan := &sysupdateservice.UpdatePlan{Components: []*sysupdateservice.ComponentChange{tc.component}}
 			// No db: the refusal has to come before the transaction is opened.
-			uc := New(nil, nil, nil, svc, &fakeSysUpdate{plan: plan})
+			uc := New(nil, nil, nil, nil, svc, &fakeSysUpdate{plan: plan})
 
 			resp, err := uc.UpdateHpApp(context.Background(), &basedto.Auth{},
 				&hpappdto.UpdateHpAppReq{TargetVersion: "v0.2.0", SkipBackup: tc.skipBackup})
@@ -148,7 +148,7 @@ func TestGetHpAppUpdatePlan(t *testing.T) {
 	plan := &sysupdateservice.UpdatePlan{RequiresBackup: true, Components: []*sysupdateservice.ComponentChange{
 		{Key: "db", Change: sysupdateservice.ChangeMajor, RequiresBackup: true},
 	}}
-	uc := New(nil, nil, nil, &fakeHpAppService{info: info}, &fakeSysUpdate{plan: plan})
+	uc := New(nil, nil, nil, nil, &fakeHpAppService{info: info}, &fakeSysUpdate{plan: plan})
 
 	resp, err := uc.GetHpAppUpdatePlan(context.Background(), &basedto.Auth{},
 		&hpappdto.GetHpAppUpdatePlanReq{TargetVersion: "v0.3.0-beta1"})

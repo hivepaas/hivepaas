@@ -68,6 +68,11 @@ func (uc *UC) loadAppDataForUpdateStatus(
 	if app.UpdateVer != req.UpdateVer {
 		return hperrors.Wrap(hperrors.ErrUpdateVerMismatched)
 	}
+	if req.Status != base.AppStatusActive {
+		if err = entity.CheckAppStop(app.Project, app, "disabled"); err != nil {
+			return hperrors.Wrap(err)
+		}
+	}
 	data.App = app
 	data.HasChanges = app.Status != req.Status
 

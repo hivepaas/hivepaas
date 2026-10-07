@@ -5,6 +5,7 @@ import (
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
+	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/auditdetail"
@@ -21,11 +22,15 @@ func (uc *UC) DeleteProjectEnv(
 	err := transaction.Execute(ctx, uc.db, func(db database.Tx) error {
 		projectEnv, err := uc.projectEnvRepo.GetByID(ctx, db, req.ProjectID, req.ProjectEnvID,
 			bunex.SelectFor("UPDATE OF project_env"),
+			bunex.SelectRelation("Project", bunex.SelectExcludeColumns(entity.ProjectDefaultExcludeColumns...)),
 			bunex.SelectRelation("Apps",
 				bunex.SelectWhere("app.deleted_at IS NULL"),
 			),
 		)
 		if err != nil {
+			return hperrors.Wrap(err)
+		}
+		if err = entity.CheckProjectEnvChange(projectEnv.Project, projectEnv, "deleted"); err != nil {
 			return hperrors.Wrap(err)
 		}
 

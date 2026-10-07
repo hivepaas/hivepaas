@@ -44329,6 +44329,46 @@
         "x-codegen-request-body-name" : "body"
       }
     },
+    "/system/hivepaas/project" : {
+      "get" : {
+        "description" : "The project of HivePaaS's own apps and those it provisions, which the projects list leaves out.\nAdmin only.",
+        "operationId" : "getHivePaaSProject",
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hpappdto.GetHpProjectResp"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "403" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Forbidden"
+          },
+          "500" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Internal Server Error"
+          }
+        },
+        "summary" : "Gets the project HivePaaS runs in",
+        "tags" : [ "HivePaaS" ]
+      }
+    },
     "/system/hivepaas/release-info" : {
       "get" : {
         "description" : "Gets release info of the app",
@@ -61468,6 +61508,18 @@
         "required" : [ "data", "meta" ],
         "type" : "object"
       },
+      "hpappdto.GetHpProjectResp" : {
+        "properties" : {
+          "data" : {
+            "$ref" : "#/components/schemas/hpappdto.HpProjectResp"
+          },
+          "meta" : {
+            "$ref" : "#/components/schemas/basedto.Meta"
+          }
+        },
+        "required" : [ "data", "meta" ],
+        "type" : "object"
+      },
       "hpappdto.HpAppReleaseInfoResp" : {
         "properties" : {
           "beta" : {
@@ -61512,6 +61564,21 @@
           }
         },
         "required" : [ "blocked", "components", "current", "requiresBackup", "target" ],
+        "type" : "object"
+      },
+      "hpappdto.HpProjectResp" : {
+        "properties" : {
+          "id" : {
+            "type" : "string"
+          },
+          "key" : {
+            "type" : "string"
+          },
+          "name" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "id", "key", "name" ],
         "type" : "object"
       },
       "hpappdto.ReloadHpAppConfigReq" : {

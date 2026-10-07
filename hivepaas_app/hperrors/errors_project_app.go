@@ -9,6 +9,11 @@ var (
 	ErrProjectNameNotAllowed      = NewErr(ErrNotAllowed, "ERR_PROJECT_NAME_NOT_ALLOWED")
 	ErrProjectNetworkUnavailable  = NewErr(ErrUnavailable, "ERR_PROJECT_NETWORK_UNAVAILABLE")
 	ErrProjectEnvRemovalUnallowed = NewErr(ErrNotAllowed, "ERR_PROJECT_ENV_REMOVAL_UNALLOWED")
+	// The project HivePaaS runs in, and what in it runs this installation: not
+	// to be deleted, disabled or stopped by hand.
+	ErrSystemProjectProtected    = NewErr(ErrNotAllowed, "ERR_SYSTEM_PROJECT_PROTECTED")
+	ErrSystemProjectEnvProtected = NewErr(ErrNotAllowed, "ERR_SYSTEM_PROJECT_ENV_PROTECTED")
+	ErrSystemAppProtected        = NewErr(ErrNotAllowed, "ERR_SYSTEM_APP_PROTECTED")
 )
 
 // Errors for apps

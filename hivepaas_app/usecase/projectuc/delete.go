@@ -5,6 +5,7 @@ import (
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
+	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/auditdetail"
@@ -24,6 +25,9 @@ func (uc *UC) DeleteProject(
 			bunex.SelectRelation("ProjectEnvs.Apps"),
 		)
 		if err != nil {
+			return hperrors.Wrap(err)
+		}
+		if err = entity.CheckProjectChange(project, "deleted"); err != nil {
 			return hperrors.Wrap(err)
 		}
 

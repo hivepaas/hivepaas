@@ -99,7 +99,7 @@ export async function expectShownLogs(page: Page, text: string | RegExp): Promis
 }
 
 // copyShownLogs is the log on the page, as Copy logs puts it on the clipboard.
-async function copyShownLogs(page: Page): Promise<string> {
+export async function copyShownLogs(page: Page): Promise<string> {
     await page.context().grantPermissions(["clipboard-read", "clipboard-write"]);
     await page.getByRole("button", { name: "Copy logs" }).locator("visible=true").first().click();
     return page.evaluate(() => navigator.clipboard.readText());

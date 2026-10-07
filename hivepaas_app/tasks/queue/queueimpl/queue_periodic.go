@@ -77,10 +77,28 @@ func (q *taskQueue) startPeriodicRun(ctx context.Context, periodicData *queue.Pe
 			return
 		}
 		defer func() { <-q.periodicSlots }()
-		if err := q.doPeriodicTask(ctx, periodicData); err != nil {
-			q.logger.Errorf("periodic job %s: %v", periodicData.PeriodicSetting.ID, err)
-		}
+		q.notePeriodicResult(periodicData.PeriodicSetting.ID, q.doPeriodicTask(ctx, periodicData))
 	})
+}
+
+// notePeriodicResult logs how a run went when that changed: once when a job
+// starts failing, with the error, and once when it runs again - not a line a
+// run, every 15 seconds, while a server it needs is down.
+func (q *taskQueue) notePeriodicResult(jobID string, err error) {
+	q.periodicErrMu.Lock()
+	defer q.periodicErrMu.Unlock()
+	if q.periodicErrs == nil {
+		q.periodicErrs = map[string]string{}
+	}
+	last := q.periodicErrs[jobID]
+	switch {
+	case err == nil && last != "":
+		delete(q.periodicErrs, jobID)
+		q.logger.Infof("periodic job %s runs again", jobID)
+	case err != nil && err.Error() != last:
+		q.periodicErrs[jobID] = err.Error()
+		q.logger.Errorf("periodic job %s: %v", jobID, err)
+	}
 }
 
 // periodicExecDataOf is what a due job's run is given. Its RefObjects is a copy

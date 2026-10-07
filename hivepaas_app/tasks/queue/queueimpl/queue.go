@@ -54,6 +54,9 @@ type taskQueue struct {
 	// shutdown; periodicSlots is how many of them go at once.
 	periodicRuns  sync.WaitGroup
 	periodicSlots chan struct{}
+	// periodicErrs is each failing job's last error, for notePeriodicResult.
+	periodicErrMu sync.Mutex
+	periodicErrs  map[string]string
 }
 
 func New(

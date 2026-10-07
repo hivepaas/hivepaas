@@ -123,13 +123,17 @@ func (s *Setting) SetData(data SettingData) error {
 	if data.GetType() != s.Type {
 		return hperrors.NewMismatch("Setting type", s.Type)
 	}
-	b, err := json.Marshal(data)
+	// settings.data is JSONB: see marshalJSONB.
+	b, clean, err := marshalJSONB(data)
 	if err != nil {
 		return hperrors.Wrap(err)
 	}
 	s.Data = reflectutil.UnsafeBytesToStr(b)
 	s.Size = int64(len(s.Data))
-	s.parsedData = data
+	s.parsedData = nil
+	if clean {
+		s.parsedData = data
+	}
 	return nil
 }
 

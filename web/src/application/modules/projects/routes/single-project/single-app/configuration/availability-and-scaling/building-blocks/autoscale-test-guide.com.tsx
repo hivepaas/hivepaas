@@ -13,6 +13,9 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 /** Load runs for this long: long enough to scale out, and to see it hold. */
 const LOAD_DURATION = "3m";
 
+/** The fewest connections the command loads with. */
+const MIN_CONNECTIONS = 100;
+
 /**
  * How to see autoscale act: load the app through its domain, with more connections than its instances take, watch
  * it scale out, then stop and watch it scale in.
@@ -31,8 +34,11 @@ export function AutoscaleTestGuide({ projectId, env, appId, isFunction, requests
           )?.domain
         : undefined;
     // A function turns calls away past its Concurrency, 16 by default; any other app is loaded past what its
-    // instances take, up to Max.
-    const connections = isFunction ? 50 : Math.min(1000, Math.max(50, requestsTarget * maxReplicas * 2));
+    // instances take, up to Max. 100 at least: a request is in flight at the server only for the part of its round
+    // trip spent there, and with 50 a quick app tested from far away often held too few at once to scale.
+    const connections = isFunction
+        ? MIN_CONNECTIONS
+        : Math.min(1000, Math.max(MIN_CONNECTIONS, requestsTarget * maxReplicas * 2));
     // A local domain has no certificate a client trusts.
     const insecure = domain?.endsWith(".localhost") ? " --insecure" : "";
     const command = `oha -c ${connections} -z ${LOAD_DURATION}${insecure} https://${domain ?? "<its-domain>"}/`;

@@ -30,17 +30,19 @@ func (s *service) NotifyForTaskResult(
 		return resp, nil
 	}
 
-	err = s.loadDefaultNotificationSourceSettings(ctx, db, data)
-	if err != nil {
-		return nil, hperrors.Wrap(err)
-	}
-
+	// The same result as the last, told within the minimum interval, is not
+	// told again: decided before the sources are loaded, which is a query.
 	currEvent := gofn.If(data.ActionSucceeded, "success", "failure")
 	minSendingInterval := notification.MinSendInterval.ToDuration()
 	shouldSkipNotif := minSendingInterval > 0 && data.LastEvent == currEvent &&
 		!data.LastSendTs.IsZero() && time.Since(data.LastSendTs) < minSendingInterval
 	if shouldSkipNotif {
 		return resp, nil
+	}
+
+	err = s.loadDefaultNotificationSourceSettings(ctx, db, data)
+	if err != nil {
+		return nil, hperrors.Wrap(err)
 	}
 
 	var (

@@ -50,6 +50,10 @@ type taskQueue struct {
 	periodicCache      *periodicCache
 	periodicReloadChan <-chan *entity.SystemEvent
 	periodicBatchSize  int
+	// periodicRuns is the runs started in the background, waited for at
+	// shutdown; periodicSlots is how many of them go at once.
+	periodicRuns  sync.WaitGroup
+	periodicSlots chan struct{}
 }
 
 func New(
@@ -79,6 +83,7 @@ func New(
 		taskRepo:             taskRepo,
 		taskInfoRepo:         cacheTaskInfoRepo,
 		periodicSettingsRepo: periodicSettingsRepo,
+		periodicSlots:        make(chan struct{}, periodicRunSlots),
 
 		schedJobService: schedJobService,
 		settingService:  settingService,
@@ -151,9 +156,12 @@ func (q *taskQueue) Shutdown() error {
 	q.logger.Info("stopping task queue ...")
 	if q.server != nil {
 		if err := q.server.Shutdown(); err != nil {
-			q.logger.Errorf("failed to start task queue server: %v", err)
+			q.logger.Errorf("failed to stop task queue server: %v", err)
 			return hperrors.Wrap(err)
 		}
+		// The ticks are stopped and their context ended: the runs still going
+		// end with it.
+		q.periodicRuns.Wait()
 	}
 	if q.client != nil {
 		if err := q.client.Close(); err != nil {

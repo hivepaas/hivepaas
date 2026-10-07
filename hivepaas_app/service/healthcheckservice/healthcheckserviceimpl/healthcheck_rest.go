@@ -35,12 +35,8 @@ func (s *service) doHealthcheckREST(
 		data.Output.REST = &entity.TaskPeriodicHealthcheckOutputREST{}
 	}
 
-	reqCtx := ctx
-	if periodicJob.Timeout > 0 {
-		ctx, cancel := context.WithTimeout(ctx, periodicJob.Timeout.ToDuration())
-		defer cancel()
-		reqCtx = ctx
-	}
+	reqCtx, cancel := context.WithTimeout(ctx, attemptTimeout(periodicJob))
+	defer cancel()
 
 	method := gofn.Coalesce(healthchk.Method, "GET")
 	var input io.Reader

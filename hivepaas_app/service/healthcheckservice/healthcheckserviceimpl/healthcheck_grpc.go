@@ -23,12 +23,8 @@ func (s *service) doHealthcheckGRPC(
 		data.Output.GRPC = &entity.TaskPeriodicHealthcheckOutputGRPC{}
 	}
 
-	reqCtx := ctx
-	if periodicJob.Timeout > 0 {
-		ctx, cancel := context.WithTimeout(ctx, periodicJob.Timeout.ToDuration())
-		defer cancel()
-		reqCtx = ctx
-	}
+	reqCtx, cancel := context.WithTimeout(ctx, attemptTimeout(periodicJob))
+	defer cancel()
 
 	switch healthchk.Version {
 	case base.HealthcheckGRPCV1:

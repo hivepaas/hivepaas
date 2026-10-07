@@ -15,9 +15,19 @@ const (
 	periodicScheduleKey = "queue:periodic:schedule"
 )
 
+// DueJob is a job whose next run has come, and when it was due.
+type DueJob struct {
+	ID      string
+	DueSecs int64
+}
+
 type PeriodicSettingsRepo interface {
-	GetDueJobIDs(ctx context.Context, nowSecs int64, limit int64) ([]string, error)
-	ScheduleJob(ctx context.Context, jobID string, nextRunSecs int64) error
+	// GetDueJobs is the jobs due by nowSecs, the earliest first, limit at most.
+	GetDueJobs(ctx context.Context, nowSecs int64, limit int64) ([]DueJob, error)
+	// ScheduleJobs sets when each job next runs, all in one call. With
+	// keepExisting, a job already scheduled keeps its time: only one not in the
+	// schedule is added.
+	ScheduleJobs(ctx context.Context, nextRunSecs map[string]int64, keepExisting bool) error
 	RemoveJob(ctx context.Context, jobID string) error
 	ResetSchedule(ctx context.Context) error
 }
@@ -34,12 +44,12 @@ func NewPeriodicSettingsRepo(
 	}
 }
 
-func (repo *periodicSettingsRepo) GetDueJobIDs(
+func (repo *periodicSettingsRepo) GetDueJobs(
 	ctx context.Context,
 	nowSecs int64,
 	limit int64,
-) ([]string, error) {
-	members, err := redishelper.ZRangeByScore(ctx, repo.client, periodicScheduleKey, &redis.ZRangeBy{
+) ([]DueJob, error) {
+	members, err := redishelper.ZRangeByScoreWithScores(ctx, repo.client, periodicScheduleKey, &redis.ZRangeBy{
 		Min:    "-inf",
 		Max:    strconv.FormatInt(nowSecs, 10),
 		Offset: 0,
@@ -48,19 +58,28 @@ func (repo *periodicSettingsRepo) GetDueJobIDs(
 	if err != nil {
 		return nil, hperrors.Wrap(err)
 	}
-	return members, nil
+	due := make([]DueJob, 0, len(members))
+	for _, member := range members {
+		id, _ := member.Member.(string)
+		due = append(due, DueJob{ID: id, DueSecs: int64(member.Score)})
+	}
+	return due, nil
 }
 
-func (repo *periodicSettingsRepo) ScheduleJob(
+func (repo *periodicSettingsRepo) ScheduleJobs(
 	ctx context.Context,
-	jobID string,
-	nextRunSecs int64,
+	nextRunSecs map[string]int64,
+	keepExisting bool,
 ) error {
-	err := redishelper.ZAdd(ctx, repo.client, periodicScheduleKey, redis.Z{
-		Score:  float64(nextRunSecs),
-		Member: jobID,
-	})
-	if err != nil {
+	members := make([]redis.Z, 0, len(nextRunSecs))
+	for id, at := range nextRunSecs {
+		members = append(members, redis.Z{Score: float64(at), Member: id})
+	}
+	add := redishelper.ZAdd
+	if keepExisting {
+		add = redishelper.ZAddNX
+	}
+	if err := add(ctx, repo.client, periodicScheduleKey, members...); err != nil {
 		return hperrors.Wrap(err)
 	}
 	return nil

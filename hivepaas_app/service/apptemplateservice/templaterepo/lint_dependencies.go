@@ -28,6 +28,13 @@ func lintDependencies(repo *Repo, file *TemplateFile) []Problem {
 			continue
 		}
 		depTmpl := target.Template
+		// Created with it, so needed with it: a HivePaaS this template says it runs
+		// on, but its dependency does not, would show it and then refuse it.
+		if depRequires := depTmpl.Metadata.Requires; !templatemodel.IsCompatible(depRequires,
+			file.Template.Metadata.Requires.VersionCode) {
+			report("%s: template %q needs HivePaaS %s, newer than the %s this template declares in requires.versionCode",
+				prefix, dep.Template, depRequires.VersionCode, file.Template.Metadata.Requires.VersionCode)
+		}
 		if len(depTmpl.Dependencies) > 0 {
 			report("%s: template %q has dependencies of its own, and dependencies go one level deep",
 				prefix, dep.Template)

@@ -108,3 +108,28 @@ func TestBuildIndexListsDependencies(t *testing.T) {
 	assert.Equal(t, []*templatemodel.IndexDependency{{Name: "db", Title: "Database", Template: "demo"}},
 		index.FindTemplate("web").Dependencies)
 }
+
+// A template needs every HivePaaS its dependencies need: the store shows it
+// wherever its own requires.versionCode allows, and creating it creates them.
+func TestLintRefusesADependencyNeedingANewerHivePaaS(t *testing.T) {
+	newerDemo := strings.Replace(demoTemplateYAML, "versionCode: v000001", "versionCode: v000002", 1)
+	fsys := withFile(withFile(validRepoFS(), "templates/web.yaml", webTemplateYAML), "templates/demo.yaml", newerDemo)
+
+	_, problems := loadAndLint(t, fsys)
+
+	all := make([]string, 0, len(problems))
+	for _, problem := range problems {
+		all = append(all, problem.String())
+	}
+	assert.Contains(t, strings.Join(all, "\n"),
+		`template "demo" needs HivePaaS v000002, newer than the v000001 this template declares`)
+}
+
+// A code beyond the HivePaaS the tool is built from is one nothing can provision
+// yet - a typo, or a code base/version.go has not been given.
+func TestLintRefusesAVersionCodeNewerThanThisHivePaaS(t *testing.T) {
+	newer := strings.Replace(webTemplateYAML, "versionCode: v000001", "versionCode: v000009", 1)
+
+	assert.Contains(t, strings.Join(lintWeb(t, newer), "\n"),
+		"requires.versionCode v000009 is newer than this HivePaaS (v000001)")
+}

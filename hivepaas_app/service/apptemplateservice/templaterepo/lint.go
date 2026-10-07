@@ -5,6 +5,7 @@ import (
 	"path"
 	"strings"
 
+	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/apptemplateservice/templatemodel"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/apptemplateservice/templaterender"
 )
@@ -52,6 +53,13 @@ func Lint(repo *Repo) []Problem {
 		}
 		if repo.Icons[tmpl.Metadata.Icon] == nil {
 			report("icon %q is missing", tmpl.Metadata.Icon)
+		}
+		// A code beyond this HivePaaS is one no release can provision yet. A template
+		// using what this HivePaaS adds needs a new code, and adding one is what
+		// moves CurrentVersion - so it is that move, not the template, that is missing.
+		if !templatemodel.IsCompatible(tmpl.Metadata.Requires, base.CurrentVersion) {
+			report("requires.versionCode %s is newer than this HivePaaS (%s): add the code to base/version.go first",
+				tmpl.Metadata.Requires.VersionCode, base.CurrentVersion)
 		}
 		if err := templaterender.ValidateDefaults(tmpl.Parameters); err != nil {
 			report("%s", ErrorText(err))

@@ -12,6 +12,8 @@
 //	go run ./tools/apptemplate render [-version 18] [-variant alpine] [-param name=value]... <dir> <template>
 //	go run ./tools/apptemplate pin    <dir>
 //	go run ./tools/apptemplate bump   [-dry-run] <dir>
+//	go run ./tools/apptemplate subset -version-code v000001 <dir> <out-dir>
+//	go run ./tools/apptemplate version-code
 package main
 
 import (
@@ -63,6 +65,10 @@ func main() {
 		err = runPin(args, os.Stdout)
 	case "bump":
 		err = runBump(args, os.Stdout)
+	case "subset":
+		err = runSubset(args, os.Stdout)
+	case "version-code":
+		err = runVersionCode(args, os.Stdout)
 	default:
 		usage()
 	}
@@ -73,7 +79,7 @@ func main() {
 }
 
 func usage() {
-	fmt.Fprintln(os.Stderr, "usage: apptemplate lint|index|render|pin|bump [flags] <dir> ...")
+	fmt.Fprintln(os.Stderr, "usage: apptemplate lint|index|render|pin|bump|subset|version-code [flags] <dir> ...")
 	os.Exit(2) //nolint:mnd
 }
 

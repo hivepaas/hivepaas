@@ -48,3 +48,11 @@ level 2; Traefik and HivePaaS routing and security (they can restart the proxy)
   they inherit from was not loaded.
 - **An SSO callback that could not complete** - an unknown provider, a missing
   state - answered 500; it answers 401.
+
+## Found later (2026-10-07), and fixed
+
+- **A search typed as a table appeared was dropped**: the search box's first
+  debounced run was skipped, and what was typed before it restarted that run.
+  The audit log listed its newest entries whatever the box said - its test
+  passed only while the project's were among them. Every table's search box
+  is the same component.

@@ -7,7 +7,6 @@ import { useDebounce } from "react-use";
 export function TableActions({ children, search, renderActions = null, renderAfterSearch = null }: Props) {
     const [internalSearch, setInternalSearch] = useState(search?.value ?? "");
     const inputRef = useRef<HTMLInputElement>(null);
-    const isFirstRender = useRef(true);
     const searchOnChangeRef = useRef(search?.onChange);
     searchOnChangeRef.current = search?.onChange;
 
@@ -21,12 +20,10 @@ export function TableActions({ children, search, renderActions = null, renderAft
         setInternalSearch(search?.value ?? "");
     }, [search?.value]);
 
+    // Its first run is not skipped: what is typed before it would restart its
+    // timer and be skipped with it. A search left as it is changes nothing.
     useDebounce(
         () => {
-            if (isFirstRender.current) {
-                isFirstRender.current = false;
-                return;
-            }
             const trimmed = internalSearch.trim();
             if (trimmed !== (search?.value ?? "")) {
                 searchOnChangeRef.current?.(trimmed);

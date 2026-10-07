@@ -122,35 +122,40 @@ type loads struct {
 	cpu      map[string][]*logs.ContainerCPU
 	appsErr  error
 	// ranges are the ranges read, by what was read; shortStarts where their
-	// last parts read apart start.
+	// last parts read apart start; ids the apps each was read for.
 	ranges      map[string][2]time.Time
 	shortStarts map[string]time.Time
+	ids         map[string][]string
 }
 
-func (f *loads) read(what string, start, end, shortStart time.Time) {
+func (f *loads) read(what string, ids []string, start, end, shortStart time.Time) {
 	if f.ranges == nil {
 		f.ranges = map[string][2]time.Time{}
 		f.shortStarts = map[string]time.Time{}
 	}
+	if f.ids == nil {
+		f.ids = map[string][]string{}
+	}
 	f.ranges[what] = [2]time.Time{start, end}
 	f.shortStarts[what] = shortStart
+	f.ids[what] = ids
 }
 
-func (f *loads) FunctionLoad(_ context.Context, _ database.IDB, _ []string, start, end, shortStart time.Time) (
+func (f *loads) FunctionLoad(_ context.Context, _ database.IDB, ids []string, start, end, shortStart time.Time) (
 	map[string]*logs.InvocationLoad, error) {
-	f.read("calls", start, end, shortStart)
+	f.read("calls", ids, start, end, shortStart)
 	return f.byApp, f.err
 }
 
-func (f *loads) RequestLoad(_ context.Context, _ database.IDB, _ []string, start, end, shortStart time.Time) (
+func (f *loads) RequestLoad(_ context.Context, _ database.IDB, ids []string, start, end, shortStart time.Time) (
 	map[string]*logs.RequestLoad, error) {
-	f.read("requests", start, end, shortStart)
+	f.read("requests", ids, start, end, shortStart)
 	return f.requests, f.appsErr
 }
 
-func (f *loads) CPULoad(_ context.Context, _ database.IDB, _ []string, start, end time.Time) (
+func (f *loads) CPULoad(_ context.Context, _ database.IDB, ids []string, start, end time.Time) (
 	map[string][]*logs.ContainerCPU, error) {
-	f.read("cpu", start, end, time.Time{})
+	f.read("cpu", ids, start, end, time.Time{})
 	return f.cpu, f.appsErr
 }
 
@@ -343,9 +348,15 @@ func TestRunPassesOverAFunctionWithoutItsLogIdentity(t *testing.T) {
 
 // The job is on while a function has autoscale on, off when none has; made
 // the first time, and the workers told each time it moves.
+// The job is made, on, when an app first has autoscale on, and turned off
+// when none has. The workers are told apart, by AnnounceJob, once the change
+// is committed: told within the transaction, a worker could read the job as
+// it was, and again only when its cache expires.
 func TestEnsureJob(t *testing.T) {
 	w := newWorld()
-	assert.NoError(t, w.svc.EnsureJob(context.Background(), nil))
+	changed, err := w.svc.EnsureJob(context.Background(), nil)
+	assert.NoError(t, err)
+	assert.True(t, changed)
 	if assert.Len(t, w.settings.inserted, 1) {
 		job := w.settings.inserted[0]
 		assert.Equal(t, base.SettingTypePeriodicJob, job.Type)
@@ -353,18 +364,22 @@ func TestEnsureJob(t *testing.T) {
 		assert.Equal(t, base.SettingStatusActive, job.Status)
 		assert.Equal(t, timeutil.Duration(15*time.Second), job.MustAsPeriodicJob().Interval)
 	}
+	assert.Equal(t, 0, w.events.published, "not before the commit")
+	w.svc.AnnounceJob(context.Background())
 	assert.Equal(t, 1, w.events.published)
 
 	w.settings.jobs = w.settings.inserted
-	assert.NoError(t, w.svc.EnsureJob(context.Background(), nil))
-	assert.Equal(t, 1, w.events.published, "already on: nothing to tell")
+	changed, err = w.svc.EnsureJob(context.Background(), nil)
+	assert.NoError(t, err)
+	assert.False(t, changed, "already on: nothing to tell")
 
 	w.settings.autoscales = nil
-	assert.NoError(t, w.svc.EnsureJob(context.Background(), nil))
+	changed, err = w.svc.EnsureJob(context.Background(), nil)
+	assert.NoError(t, err)
+	assert.True(t, changed)
 	if assert.Len(t, w.settings.updated, 1) {
 		assert.Equal(t, base.SettingStatusDisabled, w.settings.updated[0].Status)
 	}
-	assert.Equal(t, 2, w.events.published)
 }
 
 // appWorld is a world with one app that is not a function: A1, exposed, its
@@ -531,13 +546,34 @@ func TestEnsureJobRenamesTheFunctionsJob(t *testing.T) {
 	old := &entity.Setting{ID: "job", Type: base.SettingTypePeriodicJob, Kind: legacyJobKind,
 		Name: "Function autoscale", Status: base.SettingStatusActive}
 	w.settings.jobs = []*entity.Setting{old}
-	assert.NoError(t, w.svc.EnsureJob(context.Background(), nil))
+	changed, err := w.svc.EnsureJob(context.Background(), nil)
+	assert.NoError(t, err)
+	assert.True(t, changed)
 	assert.Empty(t, w.settings.inserted)
 	if assert.Len(t, w.settings.updated, 1) {
 		assert.Equal(t, string(base.PeriodicKindAppAutoscale), w.settings.updated[0].Kind)
 		assert.Equal(t, jobName, w.settings.updated[0].Name)
 	}
-	assert.Equal(t, 1, w.events.published)
+}
+
+// A run reads load for the apps it could scale alone - not the disabled, the
+// stopped, those mid-update - and with none it could, reads none: an app at
+// rest with autoscale on used to cost the queries of one running, every run.
+func TestRunReadsLoadForTheAppsItCouldScaleAlone(t *testing.T) {
+	w := newWorld()
+	w.svc.appRepo = &apps{list: []*entity.App{
+		{ID: "F1", Name: "f1", ServiceID: "s1", Status: base.AppStatusDisabled},
+		{ID: "F2", Name: "f2", ServiceID: "s2", Status: base.AppStatusActive},
+		{ID: "F3", Name: "f3", ServiceID: "s3", Status: base.AppStatusActive}, // stopped
+	}}
+
+	run(t, w)
+	assert.Equal(t, []string{"F2"}, w.loads.ids["calls"])
+
+	w.swarm.services["s2"] = serviceOf("s2", "F2", 0)
+	w.loads.ids = nil
+	run(t, w)
+	assert.Empty(t, w.loads.ids, "none it could scale: nothing read")
 }
 
 // Every signal is read over the same minute, ending 10 s before now: the

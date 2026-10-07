@@ -19,8 +19,14 @@ import (
 type Service interface {
 	// EnsureJob turns the periodic job that scales apps on while an app has
 	// autoscale on, and off when none has: no app with autoscale, no runs at
-	// all.
-	EnsureJob(ctx context.Context, db database.IDB) error
+	// all. It says whether the job changed; the workers are told of that by
+	// AnnounceJob, once the change is committed.
+	EnsureJob(ctx context.Context, db database.IDB) (changed bool, err error)
+
+	// AnnounceJob tells the workers the job changed, to read it again. Called
+	// once the transaction EnsureJob ran in has committed: told before, a
+	// worker reads the job as it was, and again only when its cache expires.
+	AnnounceJob(ctx context.Context)
 
 	// Run is one run of that job: every app with autoscale on, three queries
 	// at most, a decision each. A run that scales one asks for its task to be

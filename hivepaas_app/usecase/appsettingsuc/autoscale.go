@@ -82,6 +82,7 @@ func (uc *UC) UpdateAppAutoscale(
 ) (*appsettingsdto.UpdateAppAutoscaleResp, error) {
 	next := req.ToEntity()
 	var app *entity.App
+	var jobChanged bool
 	err := transaction.Execute(ctx, uc.db, func(db database.Tx) error {
 		var err error
 		var isFunction bool
@@ -118,7 +119,7 @@ func (uc *UC) UpdateAppAutoscale(
 		if err = uc.persistData(ctx, db, persisting); err != nil {
 			return hperrors.Wrap(err)
 		}
-		if err = uc.appAutoscale.EnsureJob(ctx, db); err != nil {
+		if jobChanged, err = uc.appAutoscale.EnsureJob(ctx, db); err != nil {
 			return hperrors.Wrap(err)
 		}
 		return uc.recordAppUpdate(ctx, db, auth, app, base.AuditLogSourceAPIUpdate, "autoscale",
@@ -127,6 +128,11 @@ func (uc *UC) UpdateAppAutoscale(
 	})
 	if err != nil {
 		return nil, hperrors.Wrap(err)
+	}
+	if jobChanged {
+		// Once the job's row is committed: a worker told within the
+		// transaction could read it as it was.
+		uc.appAutoscale.AnnounceJob(ctx)
 	}
 
 	resp := &appsettingsdto.UpdateAppAutoscaleResp{Meta: &basedto.Meta{}}

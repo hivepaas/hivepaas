@@ -164,13 +164,13 @@ func SelectOrder(orderBy ...string) SelectQueryOption {
 
 func SelectLimit(limit int) SelectQueryOption {
 	return func(query *bun.SelectQuery) *bun.SelectQuery {
-		return query.Limit(limit)
+		return query.Limit(int64(limit))
 	}
 }
 
 func SelectOffset(offset int) SelectQueryOption {
 	return func(query *bun.SelectQuery) *bun.SelectQuery {
-		return query.Offset(offset)
+		return query.Offset(int64(offset))
 	}
 }
 

@@ -4,6 +4,9 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"strings"
+
+	"github.com/uptrace/bun"
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
@@ -70,7 +73,7 @@ func (repo *taskLogRepo) List(ctx context.Context, db database.IDB, taskID, targ
 		if err != nil {
 			return nil, nil, hperrors.Wrap(err)
 		}
-		pagingMeta.Total = total
+		pagingMeta.Total = int(total)
 
 		// Applies pagination
 		query = bunex.ApplyPagination(query, paging)
@@ -93,14 +96,27 @@ func (repo *taskLogRepo) InsertMulti(ctx context.Context, db database.IDB, logs 
 	if len(logs) == 0 {
 		return nil
 	}
-	query := db.NewInsert().Model(&logs)
-	query = bunex.ApplyInsert(query, opts...)
-
-	_, err := query.Exec(ctx)
+	_, err := repo.insertMultiQuery(db, logs, opts...).Exec(ctx)
 	if err != nil {
 		return hperrors.Wrap(err)
 	}
 	return nil
+}
+
+// insertMultiQuery replaces every NUL byte in the logs' data before they are written.
+//
+// The data is a process's output, and nothing stops a process from printing one: a
+// binary file, /proc/<pid>/cmdline, find -print0. A Postgres text column cannot hold
+// a NUL, and bun refuses to send one rather than drop it, which fails the whole batch
+// and the transaction it runs in - for a deployment, the one that records how the
+// deployment ended.
+func (repo *taskLogRepo) insertMultiQuery(db database.IDB, logs []*entity.TaskLog,
+	opts ...bunex.InsertQueryOption) *bun.InsertQuery {
+	for _, log := range logs {
+		log.Data = strings.ReplaceAll(log.Data, "\x00", "\uFFFD")
+	}
+	query := db.NewInsert().Model(&logs)
+	return bunex.ApplyInsert(query, opts...)
 }
 
 func (repo *taskLogRepo) DeleteHard(ctx context.Context, db database.IDB,

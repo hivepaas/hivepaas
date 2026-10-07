@@ -68,7 +68,7 @@ func (repo *sysErrorRepo) List(ctx context.Context, db database.IDB, paging *bas
 		if err != nil {
 			return nil, nil, hperrors.Wrap(err)
 		}
-		pagingMeta.Total = total
+		pagingMeta.Total = int(total)
 
 		// Applies pagination
 		query = bunex.ApplyPagination(query, paging)

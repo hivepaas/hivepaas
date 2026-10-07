@@ -68,7 +68,7 @@ func (repo *sharedSettingRepo) List(ctx context.Context, db database.IDB, paging
 		if err != nil {
 			return nil, nil, hperrors.Wrap(err)
 		}
-		pagingMeta.Total = total
+		pagingMeta.Total = int(total)
 
 		// Applies pagination
 		query = bunex.ApplyPagination(query, paging)

@@ -102,7 +102,7 @@ func (repo *taskRepo) ListByTarget(ctx context.Context, db database.IDB, targetI
 		if err != nil {
 			return nil, nil, hperrors.Wrap(err)
 		}
-		pagingMeta.Total = total
+		pagingMeta.Total = int(total)
 
 		// Applies pagination
 		query = bunex.ApplyPagination(query, paging)
@@ -151,7 +151,7 @@ func (repo *taskRepo) List(ctx context.Context, db database.IDB, scope *entity.O
 		if err != nil {
 			return nil, nil, hperrors.Wrap(err)
 		}
-		pagingMeta.Total = total
+		pagingMeta.Total = int(total)
 
 		// Applies pagination
 		query = bunex.ApplyPagination(query, paging)

@@ -12,10 +12,10 @@ func ApplyPagination(qry *bun.SelectQuery, paging *basedto.Paging) *bun.SelectQu
 	}
 
 	if paging.Offset > 0 {
-		qry = qry.Offset(paging.Offset)
+		qry = qry.Offset(int64(paging.Offset))
 	}
 	if paging.Limit > 0 {
-		qry = qry.Limit(paging.Limit)
+		qry = qry.Limit(int64(paging.Limit))
 	}
 	for _, order := range paging.Orders() {
 		qry = qry.Order(order.ColumnName + " " + string(order.Direction))

@@ -103,9 +103,9 @@ type ReqParsingErrorHandler interface {
 }
 
 // NULAllowed marks a request that may hold a NUL character. Any other is
-// refused for one: a text column cannot store it, and jsonb stores it as the
-// six characters \u0000. What such a request carries is hashed, encrypted or
-// passed on as it is - a password, a secret's value, a function's test run.
+// refused for one: a text column cannot store it, nor JSONB the \u0000 JSON
+// writes for it. What such a request carries is hashed, encrypted or passed on
+// as it is - a password, a secret's value, a function's test run.
 type NULAllowed interface {
 	NULAllowed()
 }

@@ -43,9 +43,9 @@ func queryHasNUL(query map[string]string) bool {
 }
 
 // refuseNUL refuses a request that holds a NUL. A text column cannot store
-// one - bun fails the statement - and in jsonb it turns into the six characters
-// \u0000: a 400 that says so, rather than a 500 or a value stored as another.
-// A request that is basedto.NULAllowed goes on.
+// one, nor JSONB the \u0000 JSON writes for it: the statement fails, and the
+// transaction it is in - a 500. A 400 that says so instead. A request that is
+// basedto.NULAllowed goes on.
 func refuseNUL(reqStruct any, hasNUL bool) error {
 	if !hasNUL {
 		return nil

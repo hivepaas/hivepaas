@@ -5,6 +5,8 @@ import (
 	"database/sql"
 	"errors"
 
+	"github.com/uptrace/bun"
+
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
@@ -91,14 +93,25 @@ func (repo *sysErrorRepo) InsertMulti(ctx context.Context, db database.IDB, sysE
 	if len(sysErrors) == 0 {
 		return nil
 	}
-	query := db.NewInsert().Model(&sysErrors)
-	query = bunex.ApplyInsert(query, opts...)
-
-	_, err := query.Exec(ctx)
+	_, err := repo.insertMultiQuery(db, sysErrors, opts...).Exec(ctx)
 	if err != nil {
 		return hperrors.Wrap(err)
 	}
 	return nil
+}
+
+// insertMultiQuery replaces every NUL byte in the errors' text before they are
+// written. An error can carry what a process printed; with a NUL in it, the error
+// would go unrecorded - and a failed recording is ignored.
+func (repo *sysErrorRepo) insertMultiQuery(db database.IDB, sysErrors []*entity.SysError,
+	opts ...bunex.InsertQueryOption) *bun.InsertQuery {
+	for _, e := range sysErrors {
+		e.RequestID, e.Code = replaceNUL(e.RequestID), replaceNUL(e.Code)
+		e.Detail, e.Cause = replaceNUL(e.Detail), replaceNUL(e.Cause)
+		e.DebugLog, e.StackTrace = replaceNUL(e.DebugLog), replaceNUL(e.StackTrace)
+	}
+	query := db.NewInsert().Model(&sysErrors)
+	return bunex.ApplyInsert(query, opts...)
 }
 
 func (repo *sysErrorRepo) Delete(ctx context.Context, db database.IDB, sysError *entity.SysError,

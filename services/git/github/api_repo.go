@@ -60,7 +60,7 @@ func (c *Client) ListAllAppRepos(
 	}
 
 	pagingMeta := &basedto.PagingMeta{
-		Total: len(output),
+		Total: int64(len(output)),
 	}
 	if paging != nil {
 		pagingMeta.Offset = paging.Offset
@@ -138,7 +138,7 @@ func (c *Client) ListAllUserRepos(
 	}
 
 	pagingMeta := &basedto.PagingMeta{
-		Total: len(output),
+		Total: int64(len(output)),
 	}
 	if paging != nil {
 		pagingMeta.Offset = paging.Offset

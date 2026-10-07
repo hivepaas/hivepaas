@@ -75,7 +75,7 @@ func (c *Client) ListAllPullRequests(
 	}
 
 	pagingMeta := &basedto.PagingMeta{
-		Total: len(output),
+		Total: int64(len(output)),
 	}
 	if paging != nil {
 		pagingMeta.Offset = paging.Offset

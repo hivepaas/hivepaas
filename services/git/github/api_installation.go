@@ -71,7 +71,7 @@ func (c *Client) ListAllInstallations(
 	}
 
 	pagingMeta := &basedto.PagingMeta{
-		Total: len(output),
+		Total: int64(len(output)),
 	}
 	if paging != nil {
 		pagingMeta.Offset = paging.Offset

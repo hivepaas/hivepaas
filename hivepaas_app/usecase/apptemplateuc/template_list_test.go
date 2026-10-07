@@ -93,11 +93,11 @@ func TestPageTemplates(t *testing.T) {
 
 	page, meta = pageTemplates(entries, basedto.Paging{Offset: 3, Limit: 2})
 	assert.Equal(t, []string{"gitea"}, names(page), "the last page may be short")
-	assert.Equal(t, 4, meta.Total)
+	assert.Equal(t, int64(4), meta.Total)
 
 	page, meta = pageTemplates(entries, basedto.Paging{Offset: 10, Limit: 2})
 	assert.Empty(t, page, "an offset past the end is an empty page, not an error")
-	assert.Equal(t, 4, meta.Total)
+	assert.Equal(t, int64(4), meta.Total)
 }
 
 func TestFilteredTotalIsWhatThePagesCover(t *testing.T) {
@@ -107,5 +107,5 @@ func TestFilteredTotalIsWhatThePagesCover(t *testing.T) {
 	page, meta := pageTemplates(filtered, basedto.Paging{Limit: 1})
 
 	assert.Len(t, page, 1)
-	assert.Equal(t, 3, meta.Total, "total counts what matched, not the whole catalog")
+	assert.Equal(t, int64(3), meta.Total, "total counts what matched, not the whole catalog")
 }

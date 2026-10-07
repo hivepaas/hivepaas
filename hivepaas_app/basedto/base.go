@@ -118,9 +118,9 @@ type ListMeta struct {
 
 // PagingMeta metadata of pagination
 type PagingMeta struct {
-	Offset int `json:"offset"`
-	Limit  int `json:"limit"`
-	Total  int `json:"total"`
+	Offset int   `json:"offset"`
+	Limit  int   `json:"limit"`
+	Total  int64 `json:"total"`
 }
 
 func NewEmptyListMeta() *ListMeta {

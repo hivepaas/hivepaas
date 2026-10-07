@@ -36,7 +36,7 @@ func (c *Client) ListBranch(
 	return output, &basedto.PagingMeta{
 		Offset: int(opts.Page * opts.PerPage),
 		Limit:  int(opts.PerPage),
-		Total:  int(resp.TotalItems),
+		Total:  resp.TotalItems,
 	}, nil
 }
 
@@ -72,7 +72,7 @@ func (c *Client) ListAllBranches(
 	}
 
 	pagingMeta := &basedto.PagingMeta{
-		Total: len(output),
+		Total: int64(len(output)),
 	}
 	if paging != nil {
 		pagingMeta.Offset = paging.Offset

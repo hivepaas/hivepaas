@@ -112,5 +112,5 @@ func pageTemplates(
 	if paging.Limit > 0 {
 		end = min(start+paging.Limit, total)
 	}
-	return entries[start:end], &basedto.PagingMeta{Offset: paging.Offset, Limit: paging.Limit, Total: total}
+	return entries[start:end], &basedto.PagingMeta{Offset: paging.Offset, Limit: paging.Limit, Total: int64(total)}
 }

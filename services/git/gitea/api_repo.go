@@ -35,7 +35,7 @@ func (c *Client) ListRepos(
 	return output, &basedto.PagingMeta{
 		Offset: opts.Page * opts.PageSize,
 		Limit:  opts.PageSize,
-		Total:  resp.LastPage * opts.PageSize,
+		Total:  int64(resp.LastPage * opts.PageSize),
 	}, nil
 }
 
@@ -70,7 +70,7 @@ func (c *Client) ListAllRepos(
 	}
 
 	pagingMeta := &basedto.PagingMeta{
-		Total: len(output),
+		Total: int64(len(output)),
 	}
 	if paging != nil {
 		pagingMeta.Offset = paging.Offset

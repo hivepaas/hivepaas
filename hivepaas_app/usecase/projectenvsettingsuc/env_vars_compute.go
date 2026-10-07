@@ -5,7 +5,9 @@ import (
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
+	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
+	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/envvarservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/projectenvsettingsuc/projectenvsettingsdto"
 )
@@ -15,7 +17,12 @@ func (uc *UC) ComputeProjectEnvEnvVars(
 	auth *basedto.Auth,
 	req *projectenvsettingsdto.ComputeProjectEnvEnvVarsReq,
 ) (*projectenvsettingsdto.ComputeProjectEnvEnvVarsResp, error) {
-	projectEnv, err := uc.projectEnvRepo.GetByID(ctx, uc.db, req.ProjectID, req.ProjectEnvID)
+	// The project's variables are inherited from, so it is loaded with the env.
+	projectEnv, err := uc.projectEnvRepo.GetByID(ctx, uc.db, req.ProjectID, req.ProjectEnvID,
+		bunex.SelectRelation("Project",
+			bunex.SelectExcludeColumns(entity.ProjectDefaultExcludeColumns...),
+		),
+	)
 	if err != nil {
 		return nil, hperrors.Wrap(err)
 	}

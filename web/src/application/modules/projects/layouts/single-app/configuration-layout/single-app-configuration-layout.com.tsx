@@ -211,7 +211,7 @@ function View({ children }: PropsWithChildren) {
                     {
                         label: "Persistent Storage",
                         icon: HardDrive,
-                        route: ROUTE.projects.single.apps.single.configuration.presistentStorage.$route(
+                        route: ROUTE.projects.single.apps.single.configuration.persistentStorage.$route(
                             projectId,
                             env,
                             appId,

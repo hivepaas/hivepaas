@@ -16,7 +16,7 @@ export * from "./config-files";
 export * from "./setting-mounts";
 export * from "./data-files";
 export * from "./availability-and-scaling";
-export * from "./presistent-storage";
+export * from "./persistent-storage";
 export * from "./networks";
 export * from "./resources";
 export * from "./docker-api";

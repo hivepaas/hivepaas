@@ -850,21 +850,21 @@ export const ROUTE = {
                                 `/projects/${id}/${env}/apps/${appId}/availability-and-scaling/`,
                         },
 
-                        presistentStorage: {
-                            $pattern: "projects/:id/:env/apps/:appId/presistent-storage",
+                        persistentStorage: {
+                            $pattern: "projects/:id/:env/apps/:appId/persistent-storage",
                             $route: (id: string, env: string, appId: string) =>
-                                `/projects/${id}/${env}/apps/${appId}/presistent-storage/`,
+                                `/projects/${id}/${env}/apps/${appId}/persistent-storage/`,
 
                             create: {
-                                $pattern: "projects/:id/:env/apps/:appId/presistent-storage/create",
+                                $pattern: "projects/:id/:env/apps/:appId/persistent-storage/create",
                                 $route: (id: string, env: string, appId: string) =>
-                                    `/projects/${id}/${env}/apps/${appId}/presistent-storage/create/`,
+                                    `/projects/${id}/${env}/apps/${appId}/persistent-storage/create/`,
                             },
 
                             edit: {
-                                $pattern: "projects/:id/:env/apps/:appId/presistent-storage/:mountId/edit",
+                                $pattern: "projects/:id/:env/apps/:appId/persistent-storage/:mountId/edit",
                                 $route: (id: string, env: string, appId: string, mountId: string) =>
-                                    `/projects/${id}/${env}/apps/${appId}/presistent-storage/${mountId}/edit/`,
+                                    `/projects/${id}/${env}/apps/${appId}/persistent-storage/${mountId}/edit/`,
                             },
                         },
 

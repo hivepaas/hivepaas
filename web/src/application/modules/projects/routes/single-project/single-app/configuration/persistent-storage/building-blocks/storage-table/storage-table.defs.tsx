@@ -16,8 +16,9 @@ type StorageMountWithId = AppStorageMount & { _id: string };
 
 const MOUNT_TYPE_BADGE_TONE: BadgeTone = "cyan";
 
+// A volume HivePaaS made is its id to docker: it is shown by its name.
 function getSourceDisplay(mount: AppStorageMount): ReactNode {
-    return mount.source ?? "-";
+    return mount.sourceName ?? mount.source ?? "-";
 }
 
 function getOptionsDisplay(mount: AppStorageMount): string {

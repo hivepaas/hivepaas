@@ -32,6 +32,8 @@ export type AppStorageMount = {
     sourceApp?: MountSourceApp;
     /** The volume setting a mount of the app's own directory is in; comes back from the API and is not sent. */
     volumeId?: string;
+    /** The name of the volume the source is, or is a directory of: the source is its id. */
+    sourceName?: string;
 };
 
 /**

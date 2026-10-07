@@ -72,7 +72,7 @@ function AppConfigStorageContent() {
         }
 
         navigate.modules(
-            ROUTE.projects.single.apps.single.configuration.presistentStorage.create.$route(
+            ROUTE.projects.single.apps.single.configuration.persistentStorage.create.$route(
                 resolvedProjectId,
                 resolvedEnv,
                 resolvedAppId,
@@ -82,7 +82,7 @@ function AppConfigStorageContent() {
 
     const handleEditMount = (mount: StorageMountWithId) => {
         navigate.modules(
-            ROUTE.projects.single.apps.single.configuration.presistentStorage.edit.$route(
+            ROUTE.projects.single.apps.single.configuration.persistentStorage.edit.$route(
                 resolvedProjectId,
                 resolvedEnv,
                 resolvedAppId,

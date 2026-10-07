@@ -158,7 +158,7 @@ func (s *service) appsPullingWith(
 	}
 	deployments, _, err := s.settingRepo.List(ctx, db, nil, nil,
 		bunex.SelectWhere("setting.type = ?", base.SettingTypeAppDeployment),
-		bunex.SelectWhereOrGroup(
+		bunex.SelectWhereGroup(
 			bunex.SelectWhereIn("setting.data->'imageSource'->'registryAuth'->>'id' IN (?)", authIDs...),
 			bunex.SelectWhereOr("setting.data->'repoSource'->'pushToRegistry'->>'id' IN (?)",
 				bunex.List(authIDs)),

@@ -37,6 +37,8 @@ type settingStore struct {
 	auths       []*entity.Setting
 	deployments []*entity.Setting
 	keys        map[string]*entity.Setting
+
+	deploymentsQuery string
 }
 
 func (f *settingStore) List(_ context.Context, _ database.IDB, _ *entity.ObjectScope, _ *basedto.Paging,
@@ -44,6 +46,7 @@ func (f *settingStore) List(_ context.Context, _ database.IDB, _ *entity.ObjectS
 	var rows []*entity.Setting
 	sql := bunex.ApplySelect(bun.NewDB(nil, pgdialect.New()).NewSelect().Model(&rows), opts...).String()
 	if strings.Contains(sql, "'app-deployment'") {
+		f.deploymentsQuery = sql
 		return f.deployments, nil, nil
 	}
 	for _, setting := range f.auths {
@@ -352,4 +355,15 @@ func TestRenewForTargetsOnly(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, 1, ecr.calls)
 	assert.Equal(t, []string{"ra2"}, resp.Output.Auths.ToIDStringSlice())
+}
+
+// The deployments read are the ones using a credential being renewed. The type
+// and the credentials are both conditions of the query: joined by OR, they read
+// every app's deployment settings on every run.
+func TestRenewReadsOnlyTheDeploymentsUsingTheCredentials(t *testing.T) {
+	store := &settingStore{auths: []*entity.Setting{ecrAuth(t, "ra1", ecrHost, "", time.Time{})}}
+	_, err := renew(newRenewService(store, &appStore{}, &fakeSwarm{}, &fakeECR{}), 6*time.Hour)
+	assert.NoError(t, err)
+	assert.Contains(t, store.deploymentsQuery, "WHERE (setting.type = 'app-deployment') AND ((")
+	assert.NotContains(t, store.deploymentsQuery, "'app-deployment') OR")
 }

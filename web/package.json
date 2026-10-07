@@ -75,7 +75,7 @@
     "eslint-plugin-prettier": "^5.5.4",
     "eslint-plugin-react": "^7.37.5",
     "i18next": "^23.16.8",
-    "immer": "^10.1.3",
+    "immer": "^11.1.21",
     "input-otp": "^1.4.2",
     "javascript-time-ago": "^2.6.4",
     "jwt-decode": "^4.0.0",

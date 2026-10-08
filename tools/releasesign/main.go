@@ -22,10 +22,13 @@
 // is the obvious place to plant something that sends them elsewhere; keeping it
 // to one short, stdlib-only file keeps such a change visible in review.
 //
-// Both algorithms sign with the context "hivepaas-release-v1" (Ed25519ctx, and
-// the ML-DSA context string). The context ties a signature to this purpose: a key
-// that also signed something else could not have that passed off as a
-// release.json signature. The verifier in the app must use the same context.
+// Both algorithms sign with a context (Ed25519ctx, and the ML-DSA context
+// string), which ties a signature to one purpose: "hivepaas-release-v1" for
+// release.json, the default, and "hivepaas-cli-release-v1" (-context cli) for the
+// list of the HivePaaS CLI's releases, which the CLI updates itself from. A
+// signature under one does not verify under the other, so the same keys sign
+// both, and neither can be passed off as the other. The app's verifier uses the
+// first, the CLI's the second; nothing else is accepted.
 //
 // A key's id is its file name: <dir>/<key-id>.key and <dir>/<key-id>.pub.pem.
 // Keys are PKCS#8 / PKIX PEM, so openssl (3.5 or later, for ML-DSA) reads them as
@@ -36,9 +39,9 @@
 //	releasesign keygen -alg ed25519   -key-id 2026-ed -dir /offline
 //	releasesign keygen -alg ml-dsa-65 -key-id 2026-ml -dir /offline
 //	releasesign sign   -key /offline/2026-ed.key -key /offline/2026-ml.key \
-//	                   [-in release.json] [-out release.signed.json]
+//	                   [-in release.json] [-out release.signed.json] [-context release|cli]
 //	releasesign verify -pub 2026-ed.pub.pem -pub 2026-ml.pub.pem \
-//	                   [-in release.signed.json] [-expect release.json]
+//	                   [-in release.signed.json] [-expect release.json] [-context release|cli]
 package main
 
 import (
@@ -64,11 +67,28 @@ import (
 )
 
 const (
-	signContext = "hivepaas-release-v1"
+	// releaseContext signs release.json; the app verifies under it.
+	releaseContext = "hivepaas-release-v1"
+	// cliContext signs the HivePaaS CLI's list of its releases; the CLI
+	// verifies under it.
+	cliContext = "hivepaas-cli-release-v1"
 
 	algEd25519 = "ed25519"
 	algMLDSA65 = "ml-dsa-65"
 )
+
+// contexts are the contexts a signature may be made under, by the name -context
+// takes. There is no other: a context is a purpose a verifier was built for.
+var contexts = map[string]string{"release": releaseContext, "cli": cliContext}
+
+// contextOf is the context -context names.
+func contextOf(name string) (string, error) {
+	context, found := contexts[name]
+	if !found {
+		return "", fmt.Errorf("-context must be release or cli, not %q", name)
+	}
+	return context, nil
+}
 
 // requiredAlgorithms must match releasesig.RequiredAlgorithms.
 var requiredAlgorithms = []string{algEd25519, algMLDSA65}
@@ -196,8 +216,13 @@ func runSign(args []string) error {
 	fs.Var(&keyFiles, "key", "private key file <key-id>.key (repeat: one per algorithm)")
 	in := fs.String("in", "release.json", "file to sign")
 	out := fs.String("out", "", "envelope to write (default <in without .json>.signed.json)")
+	contextName := fs.String("context", "release", "what the file is: release (release.json) or cli (the CLI's releases)")
 	_ = fs.Parse(args)
 
+	context, err := contextOf(*contextName)
+	if err != nil {
+		return err
+	}
 	if *out == "" {
 		*out = strings.TrimSuffix(*in, ".json") + ".signed.json"
 	}
@@ -218,7 +243,7 @@ func runSign(args []string) error {
 		return fmt.Errorf("%s is not valid JSON; refusing to sign it", *in)
 	}
 
-	env, err := Sign(keys, data)
+	env, err := Sign(keys, data, context)
 	if err != nil {
 		return err
 	}
@@ -230,7 +255,7 @@ func runSign(args []string) error {
 	for _, key := range keys {
 		pubs = append(pubs, &publicKey{id: key.id, alg: key.alg, key: key.key.Public()})
 	}
-	opened, err := Open(pubs, content)
+	opened, err := Open(pubs, content, context)
 	if err != nil {
 		return fmt.Errorf("self-check failed: %w", err)
 	}
@@ -243,6 +268,7 @@ func runSign(args []string) error {
 	}
 
 	fmt.Printf("signed:  %s\n", *in)
+	fmt.Printf("context: %s\n", context)
 	fmt.Printf("sha256:  %s  <- compare with `git show <release-ref>:%s | shasum -a 256`\n", env.SHA256, *in)
 	for _, entry := range env.Signatures {
 		fmt.Printf("key:     %s (%s)\n", entry.KeyID, entry.Algorithm)
@@ -257,7 +283,13 @@ func runVerify(args []string) error {
 	fs.Var(&pubFiles, "pub", "public key file <key-id>.pub.pem (repeat)")
 	in := fs.String("in", "release.signed.json", "envelope to verify")
 	expect := fs.String("expect", "", "file the envelope must carry, byte for byte (e.g. release.json)")
+	contextName := fs.String("context", "release", "what the file is: release (release.json) or cli (the CLI's releases)")
 	_ = fs.Parse(args)
+
+	context, err := contextOf(*contextName)
+	if err != nil {
+		return err
+	}
 
 	pubs := make([]*publicKey, 0, len(pubFiles))
 	for _, path := range pubFiles {
@@ -271,7 +303,7 @@ func runVerify(args []string) error {
 	if err != nil {
 		return err
 	}
-	opened, err := Open(pubs, content)
+	opened, err := Open(pubs, content, context)
 	if err != nil {
 		return err
 	}
@@ -284,13 +316,14 @@ func runVerify(args []string) error {
 			return fmt.Errorf("%s is validly signed but does not carry %s as it is now", *in, *expect)
 		}
 	}
-	fmt.Printf("OK: %s carries valid %s signatures\n", *in, strings.Join(requiredAlgorithms, " and "))
+	fmt.Printf("OK: %s carries valid %s signatures, context %s\n", *in, strings.Join(requiredAlgorithms, " and "),
+		context)
 	return nil
 }
 
-// Sign signs data with every key, and refuses unless the keys cover every
-// required algorithm exactly once.
-func Sign(keys []*privateKey, data []byte) (*Envelope, error) {
+// Sign signs data under context with every key, and refuses unless the keys
+// cover every required algorithm exactly once.
+func Sign(keys []*privateKey, data []byte, context string) (*Envelope, error) {
 	seen := map[string]string{}
 	for _, key := range keys {
 		if other, dup := seen[key.alg]; dup {
@@ -315,10 +348,10 @@ func Sign(keys []*privateKey, data []byte) (*Envelope, error) {
 		var err error
 		switch k := key.key.(type) {
 		case ed25519.PrivateKey:
-			sig, err = k.Sign(nil, data, &ed25519.Options{Context: signContext})
+			sig, err = k.Sign(nil, data, &ed25519.Options{Context: context})
 		case *mldsa.PrivateKey:
 			// Deterministic, so signing the same file again gives the same bytes.
-			sig, err = k.SignDeterministic(data, &mldsa.Options{Context: signContext})
+			sig, err = k.SignDeterministic(data, &mldsa.Options{Context: context})
 		default:
 			err = fmt.Errorf("key %q: unsupported key type %T", key.id, key.key)
 		}
@@ -338,10 +371,10 @@ func Sign(keys []*privateKey, data []byte) (*Envelope, error) {
 }
 
 // Open applies the app's rule and returns the payload: for every required
-// algorithm, a valid signature by one of pubs. A signature by a key not in pubs
-// is passed over; one by a key in pubs that does not verify, or names the wrong
-// algorithm, fails the envelope.
-func Open(pubs []*publicKey, content []byte) ([]byte, error) {
+// algorithm, a valid signature under context by one of pubs. A signature by a
+// key not in pubs is passed over; one by a key in pubs that does not verify, or
+// names the wrong algorithm, fails the envelope.
+func Open(pubs []*publicKey, content []byte, context string) ([]byte, error) {
 	var env Envelope
 	if err := json.Unmarshal(content, &env); err != nil {
 		return nil, fmt.Errorf("malformed envelope: %w", err)
@@ -374,9 +407,9 @@ func Open(pubs []*publicKey, content []byte) ([]byte, error) {
 		}
 		switch k := pub.key.(type) {
 		case ed25519.PublicKey:
-			err = ed25519.VerifyWithOptions(k, data, sig, &ed25519.Options{Context: signContext})
+			err = ed25519.VerifyWithOptions(k, data, sig, &ed25519.Options{Context: context})
 		case *mldsa.PublicKey:
-			err = mldsa.Verify(k, data, sig, &mldsa.Options{Context: signContext})
+			err = mldsa.Verify(k, data, sig, &mldsa.Options{Context: context})
 		default:
 			err = fmt.Errorf("unsupported key type %T", pub.key)
 		}

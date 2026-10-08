@@ -12,6 +12,7 @@ of every release, a beta (`v1.0.0-beta1`) or a stable one (`v1.0.0`).
 | `install.sh` | the GitHub Release of the tag | the Release workflow | the tag, protected |
 | The release verifier image | GHCR `ghcr.io/hivepaas/release-verify` | the Release verifier workflow, rarely | `install.sh` pins it by digest |
 | `get.hivepaas.com` | a redirect to that `install.sh` | you | the domain's own protection |
+| The CLI's `release.json` / `release.signed.json` | the `release` branch of `hivepaas-cli` | you, signed offline with `make release-sign CONTEXT=cli` | the CLI updates itself only to an archive whose SHA-256 that list carries, signed by both keys ([The CLI](#the-cli)) |
 
 The workflow never signs and never publishes: the signing keys stay on the
 offline machine, so a compromised CI can build images but cannot make an
@@ -209,6 +210,29 @@ Public packages cost nothing in storage or transfer. A public package version
 cannot be deleted once the package has more than 5,000 downloads, and a
 version's per-architecture tags (`1.0.0-beta1-amd64`, `-arm64`) are what its
 multi-arch tag points to: delete neither.
+
+## The CLI
+
+The HivePaaS CLI (`hivepaas-cli`) is released on its own, from its own tags; its
+`docs/RELEASING.md` has the steps. One of them is here: `hivepaas update` installs
+only what a list of the CLI's releases names, with each archive's SHA-256, and
+that list is signed with these same offline keys, under a context of its own
+(`hivepaas-cli-release-v1`), so that a signature on the list is no signature on a
+`release.json`, nor the reverse:
+
+```bash
+make release-sign KEYS="/offline/2026_ed.key /offline/2026_ml.key" CONTEXT=cli \
+  IN=../hivepaas-cli/release.json OUT=../hivepaas-cli/release.signed.json
+```
+
+`RELEASESIGN_SHA` must be a commit whose tool takes `-context`; an older one
+refuses the flag.
+
+The CLI carries a copy of the public keys of
+[releasekeys](../hivepaas_app/pkg/releasesig/releasekeys/), and its CI compares the
+two every week. A key rotation adds the new key to the CLI too, and keeps signing
+the CLI's list with the old key for longer than `release.json`: a CLI updates
+only when its user asks, so old ones stay around.
 
 ## The release verifier
 

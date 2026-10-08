@@ -43,12 +43,12 @@ func TestSignOpen(t *testing.T) {
 	keys := newKeys(t, "2026")
 	data := []byte(`{"stable":{"appVersion":"v0.1.1"}}`)
 
-	env, err := Sign(keys, data)
+	env, err := Sign(keys, data, releaseContext)
 	if err != nil {
 		t.Fatal(err)
 	}
 	content := FormatEnvelope(env)
-	opened, err := Open(publicOf(keys), content)
+	opened, err := Open(publicOf(keys), content, releaseContext)
 	if err != nil {
 		t.Fatalf("a fresh envelope must open: %v", err)
 	}
@@ -58,20 +58,20 @@ func TestSignOpen(t *testing.T) {
 
 	changed := *env
 	changed.Payload = base64.StdEncoding.EncodeToString([]byte(`{"stable":{"appVersion":"v0.1.0"}}`))
-	if _, err = Open(publicOf(keys), FormatEnvelope(&changed)); err == nil {
+	if _, err = Open(publicOf(keys), FormatEnvelope(&changed), releaseContext); err == nil {
 		t.Fatal("a changed payload must not open")
 	}
-	if _, err = Open(publicOf(newKeys(t, "2026")), content); err == nil {
+	if _, err = Open(publicOf(newKeys(t, "2026")), content, releaseContext); err == nil {
 		t.Fatal("other keys under the same ids must not open it")
 	}
-	if _, err = Open(publicOf(keys[:1]), content); err == nil {
+	if _, err = Open(publicOf(keys[:1]), content, releaseContext); err == nil {
 		t.Fatal("trusting only one algorithm's key must not satisfy both")
 	}
 
-	if _, err = Sign(keys[:1], data); err == nil {
+	if _, err = Sign(keys[:1], data, releaseContext); err == nil {
 		t.Fatal("signing with one algorithm only must be refused")
 	}
-	if _, err = Sign(append(keys, newKeys(t, "x")[0]), data); err == nil {
+	if _, err = Sign(append(keys, newKeys(t, "x")[0]), data, releaseContext); err == nil {
 		t.Fatal("two keys of one algorithm must be refused")
 	}
 }
@@ -80,8 +80,8 @@ func TestSignOpen(t *testing.T) {
 // copies of the format are held together here: what the tool signs, the app
 // accepts, through the PEM files a real release would use.
 func TestSignatureAcceptedByApp(t *testing.T) {
-	if signContext != releasesig.Context {
-		t.Fatalf("signContext %q differs from releasesig.Context %q", signContext, releasesig.Context)
+	if releaseContext != releasesig.Context {
+		t.Fatalf("releaseContext %q differs from releasesig.Context %q", releaseContext, releasesig.Context)
 	}
 	if algEd25519 != releasesig.AlgEd25519 || algMLDSA65 != releasesig.AlgMLDSA65 {
 		t.Fatal("algorithm names differ from releasesig")
@@ -92,7 +92,7 @@ func TestSignatureAcceptedByApp(t *testing.T) {
 
 	keys := newKeys(t, "2026")
 	data := []byte(`{"stable":{"appVersion":"v0.1.1"}}`)
-	env, err := Sign(keys, data)
+	env, err := Sign(keys, data, releaseContext)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -114,8 +114,56 @@ func TestSignatureAcceptedByApp(t *testing.T) {
 	}
 }
 
+// A signature is good for the context it was made under, and no other: the
+// CLI's list of releases, signed with the release keys, is not a release.json
+// the app would take, nor the reverse.
+func TestContextsAreApart(t *testing.T) {
+	keys := newKeys(t, "2026")
+	data := []byte(`{"channels":{"stable":"v0.2.0"}}`)
+	env, err := Sign(keys, data, cliContext)
+	if err != nil {
+		t.Fatal(err)
+	}
+	content := FormatEnvelope(env)
+
+	if _, err = Open(publicOf(keys), content, cliContext); err != nil {
+		t.Fatalf("a CLI list must open under the CLI's context: %v", err)
+	}
+	if _, err = Open(publicOf(keys), content, releaseContext); err == nil {
+		t.Fatal("a CLI list must not open as release.json")
+	}
+	pems := map[string][]byte{}
+	for _, key := range keys {
+		pems[key.id] = pemPublicKey(t, key.key.Public())
+	}
+	trusted, err := releasesig.ParsePublicKeys(pems)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err = releasesig.Open(trusted, content); err == nil {
+		t.Fatal("the app must refuse a CLI list signed with its own keys")
+	}
+}
+
+func TestContextOf(t *testing.T) {
+	for name, want := range map[string]string{
+		"release": "hivepaas-release-v1",
+		"cli":     "hivepaas-cli-release-v1",
+	} {
+		got, err := contextOf(name)
+		if err != nil || got != want {
+			t.Fatalf("contextOf(%q) = %q, %v; want %q", name, got, err, want)
+		}
+	}
+	for _, name := range []string{"", "hivepaas-release-v1", "CLI", "server"} {
+		if _, err := contextOf(name); err == nil {
+			t.Fatalf("contextOf(%q) must be refused", name)
+		}
+	}
+}
+
 func TestFormatEnvelope_OneFieldPerLine(t *testing.T) {
-	env, err := Sign(newKeys(t, "2026"), []byte(`{}`))
+	env, err := Sign(newKeys(t, "2026"), []byte(`{}`), releaseContext)
 	if err != nil {
 		t.Fatal(err)
 	}

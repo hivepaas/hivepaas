@@ -26,13 +26,15 @@
 #                    algorithm (required)
 #   IN               file to sign (default: release.json)
 #   OUT              envelope to write (default: release.signed.json)
+#   CONTEXT          what IN is: release (default), or cli for the HivePaaS CLI's
+#                    list of its releases (hivepaas-cli/release.json), which the
+#                    same keys sign under a context of its own
 
 set -euo pipefail
 
 IN="${IN:-release.json}"
 OUT="${OUT:-${IN%.json}.signed.json}"
-# Must match signContext in tools/releasesign/main.go.
-SIGN_CONTEXT="hivepaas-release-v1"
+CONTEXT="${CONTEXT:-release}"
 
 fail() {
   echo "release-sign: $*" >&2
@@ -49,6 +51,13 @@ for key in "${KEY_FILES[@]}"; do
   [[ "$(basename "$key")" == *.key ]] || fail "$key: key files are named <key-id>.key"
 done
 [[ -f "$IN" ]] || fail "$IN not found"
+
+# Must match contexts in tools/releasesign/main.go.
+case "$CONTEXT" in
+release) SIGN_CONTEXT="hivepaas-release-v1" ;;
+cli) SIGN_CONTEXT="hivepaas-cli-release-v1" ;;
+*) fail "CONTEXT must be release or cli (got '$CONTEXT')" ;;
+esac
 
 git cat-file -e "${RELEASESIGN_SHA}^{commit}" 2>/dev/null ||
   fail "commit $RELEASESIGN_SHA is not in this clone (git fetch first)"
@@ -90,10 +99,20 @@ SIGN_ARGS=()
 for key in "${KEY_FILES[@]}"; do
   SIGN_ARGS+=(-key "$key")
 done
-"$TMP/releasesign" sign "${SIGN_ARGS[@]}" -in "$IN" -out "$OUT"
+# release.json is signed as the tool always did, so a pin from before -context
+# still signs it; a CLI list needs a tool that knows its context, and an older
+# one refuses the flag rather than signing under the wrong context.
+if [[ "$CONTEXT" != release ]]; then
+  SIGN_ARGS+=(-context "$CONTEXT")
+fi
+if ! "$TMP/releasesign" sign "${SIGN_ARGS[@]}" -in "$IN" -out "$OUT"; then
+  [[ "$CONTEXT" == release ]] ||
+    fail "signing failed; the tool at RELEASESIGN_SHA may predate -context: move the pin to a commit that has it"
+  fail "signing failed"
+fi
 
 echo "---------------------------------------------------------------"
-echo "Independent check with $("$OPENSSL" version | cut -d' ' -f1-2):"
+echo "Independent check with $("$OPENSSL" version | cut -d' ' -f1-2), context $SIGN_CONTEXT:"
 echo "---------------------------------------------------------------"
 
 # releasesign writes the payload and each signature on a line of its own:

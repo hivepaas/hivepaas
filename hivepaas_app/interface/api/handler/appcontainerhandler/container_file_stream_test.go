@@ -15,7 +15,6 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/appcontaineruc/appcontainerdto"
@@ -60,11 +59,11 @@ func TestADownloadOutlastsTheWriteTimeout(t *testing.T) {
 	srv := serveDownload(t, 150*time.Millisecond, &slowReader{chunks: 8, every: 50 * time.Millisecond})
 
 	resp, err := http.Get(srv.URL) //nolint:noctx // a test's
-	require.NoError(t, err)
+	mustNot(t, err)
 	defer resp.Body.Close()
 	body, err := io.ReadAll(resp.Body)
 
-	require.NoError(t, err)
+	mustNot(t, err)
 	assert.Len(t, body, 8*1024, "the whole copy, though it took 400 ms of a 150 ms timeout")
 }
 
@@ -73,7 +72,7 @@ func TestADownloadCutIsNotAnEnd(t *testing.T) {
 	srv := serveDownload(t, time.Minute, &slowReader{chunks: 8, failAfter: 2})
 
 	resp, err := http.Get(srv.URL) //nolint:noctx // a test's
-	require.NoError(t, err)
+	mustNot(t, err)
 	defer resp.Body.Close()
 	_, err = io.ReadAll(resp.Body)
 
@@ -117,7 +116,7 @@ func newStreamServer(t *testing.T, idle time.Duration, readErr error) *streamSer
 func (s *streamServer) dial(t *testing.T) *websocket.Conn {
 	t.Helper()
 	conn, resp, err := websocket.DefaultDialer.Dial("ws"+strings.TrimPrefix(s.srv.URL, "http"), nil)
-	require.NoError(t, err)
+	mustNot(t, err)
 	_ = resp.Body.Close()
 	t.Cleanup(func() { _ = conn.Close() })
 	return conn
@@ -128,9 +127,9 @@ func TestAStreamEndsWithItsEndMessage(t *testing.T) {
 	conn := s.dial(t)
 
 	for _, part := range []string{"FROM ", "scratch", "\n"} {
-		require.NoError(t, conn.WriteMessage(websocket.BinaryMessage, []byte(part)))
+		mustNot(t, conn.WriteMessage(websocket.BinaryMessage, []byte(part)))
 	}
-	require.NoError(t, conn.WriteMessage(websocket.TextMessage, []byte(`{"type":"end"}`)))
+	mustNot(t, conn.WriteMessage(websocket.TextMessage, []byte(`{"type":"end"}`)))
 
 	assert.NoError(t, <-s.pumped)
 	assert.Equal(t, "FROM scratch\n", string(<-s.got), "whole, in order")
@@ -141,7 +140,7 @@ func TestAStreamEndsWithItsEndMessage(t *testing.T) {
 func TestASilentStreamIsCut(t *testing.T) {
 	s := newStreamServer(t, 100*time.Millisecond, nil)
 	conn := s.dial(t)
-	require.NoError(t, conn.WriteMessage(websocket.BinaryMessage, []byte("part")))
+	mustNot(t, conn.WriteMessage(websocket.BinaryMessage, []byte("part")))
 
 	select {
 	case err := <-s.pumped:
@@ -180,7 +179,7 @@ func TestADownloadCutThroughGinIsNotAnEnd(t *testing.T) {
 	t.Cleanup(srv.Close)
 
 	resp, err := http.Get(srv.URL + "/x") //nolint:noctx // a test's
-	require.NoError(t, err)
+	mustNot(t, err)
 	defer resp.Body.Close()
 	_, err = io.ReadAll(resp.Body)
 
@@ -201,7 +200,7 @@ func TestADownloadThatFailsAtOnceIsAnswered(t *testing.T) {
 	t.Cleanup(srv.Close)
 
 	resp, err := http.Get(srv.URL + "/x") //nolint:noctx // a test's
-	require.NoError(t, err)
+	mustNot(t, err)
 	defer resp.Body.Close()
 
 	assert.Equal(t, http.StatusInternalServerError, resp.StatusCode)
@@ -229,7 +228,7 @@ func stream(t *testing.T, req *appcontainerdto.UploadFileToContainerReq,
 	}))
 	t.Cleanup(srv.Close)
 	conn, resp, err := websocket.DefaultDialer.Dial("ws"+strings.TrimPrefix(srv.URL, "http"), nil)
-	require.NoError(t, err)
+	mustNot(t, err)
 	_ = resp.Body.Close()
 	t.Cleanup(func() { _ = conn.Close() })
 	return conn, answered
@@ -241,10 +240,10 @@ func answerOf(t *testing.T, conn *websocket.Conn) streamControl {
 	_ = conn.SetReadDeadline(time.Now().Add(5 * time.Second))
 	for {
 		kind, message, err := conn.ReadMessage()
-		require.NoError(t, err, "the server answered nothing")
+		mustNot(t, err, "the server answered nothing")
 		if kind == websocket.TextMessage {
 			var answer streamControl
-			require.NoError(t, json.Unmarshal(message, &answer))
+			mustNot(t, json.Unmarshal(message, &answer))
 			return answer
 		}
 	}
@@ -263,9 +262,9 @@ func readAll(_ context.Context, req *appcontainerdto.UploadFileToContainerReq) (
 func send(t *testing.T, conn *websocket.Conn, parts ...string) {
 	t.Helper()
 	for _, part := range parts {
-		require.NoError(t, conn.WriteMessage(websocket.BinaryMessage, []byte(part)))
+		mustNot(t, conn.WriteMessage(websocket.BinaryMessage, []byte(part)))
 	}
-	require.NoError(t, conn.WriteMessage(websocket.TextMessage, []byte(`{"type":"end"}`)))
+	mustNot(t, conn.WriteMessage(websocket.TextMessage, []byte(`{"type":"end"}`)))
 }
 
 // A single file is held to the size it declared, and a client that says one
@@ -320,7 +319,7 @@ func TestAStreamWhoseCopyPanicsIsAnswered(t *testing.T) {
 // keep, not a 500 of the server's.
 func TestAStreamTheClientLeftIsItsError(t *testing.T) {
 	conn, answered := stream(t, &appcontainerdto.UploadFileToContainerReq{Extract: true}, readAll)
-	require.NoError(t, conn.WriteMessage(websocket.BinaryMessage, []byte("part")))
+	mustNot(t, conn.WriteMessage(websocket.BinaryMessage, []byte("part")))
 	_ = conn.WriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.CloseNormalClosure, ""))
 
 	select {
@@ -328,5 +327,13 @@ func TestAStreamTheClientLeftIsItsError(t *testing.T) {
 		assert.Equal(t, http.StatusBadRequest, info.Status)
 	case <-time.After(5 * time.Second):
 		t.Fatal("no answer")
+	}
+}
+
+// mustNot stops the test on err: testify's require is not vendored here.
+func mustNot(t *testing.T, err error, msgAndArgs ...any) {
+	t.Helper()
+	if err != nil {
+		t.Fatal(append([]any{err}, msgAndArgs...)...)
 	}
 }

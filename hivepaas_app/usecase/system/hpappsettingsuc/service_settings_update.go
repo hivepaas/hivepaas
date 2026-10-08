@@ -275,14 +275,37 @@ func (uc *UC) loadServiceSettingsForUpdate(
 		if err != nil {
 			return hperrors.Wrap(err)
 		}
-		// Stop all workers from taking new jobs
-		err = uc.taskQueue.StopAllSchedulers()
+		err = uc.pauseTaskQueues(data)
 		if err != nil {
 			return hperrors.Wrap(err)
 		}
-		data.taskQueueStopped = true
 	}
 
+	return nil
+}
+
+// pauseTaskQueues pauses the task queues of the processes the change is about to
+// replace, so that none starts a task the restart would cut short - and only
+// those: a process that stays would hold its tasks for nothing.
+func (uc *UC) pauseTaskQueues(data *updateServiceSettingsData) error {
+	var err error
+	switch {
+	case data.mainSvcChanges && data.workerSvcChanges:
+		// None stays.
+		err = uc.taskQueue.StopAllSchedulers()
+	case data.mainSvcChanges:
+		// The app goes, and this process with it; the worker stays.
+		err = uc.taskQueue.StopScheduler()
+	default:
+		// The worker goes, and the app - this process - stays. The worker cannot
+		// be told on its own: a control message goes to whichever process reads
+		// it first, the app as likely as the worker.
+		return nil
+	}
+	if err != nil {
+		return hperrors.Wrap(err)
+	}
+	data.taskQueueStopped = true
 	return nil
 }
 

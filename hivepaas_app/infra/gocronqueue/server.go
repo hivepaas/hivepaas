@@ -25,6 +25,15 @@ const (
 	defaultPeriodicInterval   = 1 * time.Second
 	taskHighPriorityLookAhead = 1 * time.Second
 	taskLowPriorityDelay      = 500 * time.Millisecond
+
+	// defaultPauseLimit is the longest a stop holds the scheduler. A stop comes
+	// before a restart that replaces the process within minutes; one still here
+	// after this was not replaced - the stop reached a process the restart left
+	// alone, or the restart failed - and the pause ends on its own.
+	defaultPauseLimit = 10 * time.Minute
+	// defaultPauseRecheck is how often a task held by a pause looks again, and so
+	// how late it runs once a start ends the pause.
+	defaultPauseRecheck = 5 * time.Second
 )
 
 var (
@@ -43,6 +52,16 @@ type Server struct {
 	// startedAt is when this process started its scheduler: a stop sent
 	// before then was meant for another.
 	startedAt time.Time
+
+	// A stop pauses the scheduler rather than stopping gocron. Stopped, gocron
+	// held every task for good when the restart the stop was for never came,
+	// and dropped the one-time jobs whose time passed meanwhile once started
+	// again. A task due while paused is held, looking again every
+	// pauseRecheckEvery, until a start ends the pause or pauseLimit runs out.
+	pauseLimit        time.Duration
+	pauseRecheckEvery time.Duration
+	pauseMu           sync.Mutex
+	pausedUntil       time.Time
 }
 
 type Config struct {
@@ -79,9 +98,11 @@ func NewServer(config *Config) (*Server, error) {
 		return nil, hperrors.Wrap(err)
 	}
 	return &Server{
-		scheduler: scheduler,
-		config:    config,
-		jobMap:    make(map[string]*jobData, 20), //nolint:mnd
+		scheduler:         scheduler,
+		config:            config,
+		jobMap:            make(map[string]*jobData, 20), //nolint:mnd
+		pauseLimit:        defaultPauseLimit,
+		pauseRecheckEvery: defaultPauseRecheck,
 	}, nil
 }
 
@@ -224,26 +245,20 @@ func (s *Server) handleCtrlMessage(ctx context.Context, ctrlMsg *Message) {
 		return
 	}
 	if ctrlMsg.StartScheduler {
-		s.scheduler.Start()
-		s.config.Logger.Infof("task queue scheduler started, as a control message sent at %v asked",
-			ctrlMsg.SentAt)
+		s.resume(fmt.Sprintf("a control message sent at %v", ctrlMsg.SentAt))
 		return
 	}
 	if ctrlMsg.StopScheduler {
 		// A stop is for the processes running when it was sent - an update's,
 		// for those it is about to replace. One that reaches a process started
-		// since would stop it for good: nothing sends a start after an update.
+		// since is left from a restart already done, and would hold its tasks
+		// for nothing: nothing sends a start after an update.
 		if ctrlMsg.SentAt.Before(s.startedAt) {
 			s.config.Logger.Warnf("task queue scheduler: ignored a stop sent at %v, before this process "+
 				"started at %v", ctrlMsg.SentAt, s.startedAt)
 			return
 		}
-		if err := s.scheduler.StopJobs(); err != nil {
-			s.config.Logger.Errorf("failed to stop scheduler: %v", err)
-			return
-		}
-		s.config.Logger.Infof("task queue scheduler stopped, as a control message sent at %v asked",
-			ctrlMsg.SentAt)
+		s.pause(fmt.Sprintf("a control message sent at %v", ctrlMsg.SentAt))
 		return
 	}
 
@@ -357,9 +372,19 @@ func (s *Server) shouldSchedule(task *entity.Task, runAt time.Time) bool {
 }
 
 func (s *Server) executeTask(task *entity.Task, priorityCheck bool) error {
+	// Held while paused: it looks again shortly.
+	now := timeutil.NowUTC()
+	if s.paused(now) {
+		err := s.scheduleTask(task, now.Add(s.pauseRecheckEvery))
+		if err != nil {
+			return hperrors.Wrap(err)
+		}
+		return nil
+	}
+
 	// Skip this task and queue it for running later if there is higher priority task
 	if priorityCheck && task.Config.Priority != base.TaskPriorityCritical {
-		priorityJob := s.findPriorityJob(task, timeutil.NowUTC())
+		priorityJob := s.findPriorityJob(task, now)
 		if priorityJob != nil {
 			err := s.scheduleTask(task, priorityJob.RunAt.Add(taskLowPriorityDelay))
 			if err != nil {
@@ -458,18 +483,48 @@ func (s *Server) Shutdown() error {
 	return nil
 }
 
+// StartScheduler ends a pause: the tasks it held run within pauseRecheckEvery.
 func (s *Server) StartScheduler() error {
-	if s.scheduler != nil {
-		s.scheduler.Start()
-	}
+	s.resume("this process")
 	return nil
 }
 
+// StopScheduler pauses the scheduler, for a restart about to replace this process.
 func (s *Server) StopScheduler() error {
-	if s.scheduler != nil {
-		if err := s.scheduler.StopJobs(); err != nil {
-			return hperrors.Wrap(err)
-		}
-	}
+	s.pause("this process")
 	return nil
+}
+
+func (s *Server) pause(asker string) {
+	s.pauseMu.Lock()
+	s.pausedUntil = timeutil.NowUTC().Add(s.pauseLimit)
+	s.pauseMu.Unlock()
+	s.config.Logger.Infof("task queue scheduler paused for at most %v, as %s asked", s.pauseLimit, asker)
+}
+
+func (s *Server) resume(asker string) {
+	s.pauseMu.Lock()
+	wasPaused := !s.pausedUntil.IsZero()
+	s.pausedUntil = time.Time{}
+	s.pauseMu.Unlock()
+	if wasPaused {
+		s.config.Logger.Infof("task queue scheduler resumed, as %s asked", asker)
+	}
+}
+
+// paused says whether the scheduler is paused at now. A pause that has run out
+// ends here, and says so: the restart it was for did not replace this process.
+func (s *Server) paused(now time.Time) bool {
+	s.pauseMu.Lock()
+	until := s.pausedUntil
+	ranOut := !until.IsZero() && !now.Before(until)
+	if ranOut {
+		s.pausedUntil = time.Time{}
+	}
+	s.pauseMu.Unlock()
+	if ranOut {
+		s.config.Logger.Warnf("task queue scheduler resumed on its own: its pause ran out at %v, "+
+			"and no restart had replaced this process", until)
+	}
+	return !until.IsZero() && !ranOut
 }

@@ -12,6 +12,8 @@ type TaskQueue interface {
 	Start() error
 	Shutdown() error
 
+	// The All variants also send to the other processes, but what is sent is
+	// read by one process only: whichever gets to it first.
 	StartScheduler() error     // resume from pause
 	StartAllSchedulers() error // resume from pause
 	StopScheduler() error      // pause the scheduler

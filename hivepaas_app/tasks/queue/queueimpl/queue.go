@@ -200,10 +200,11 @@ func (q *taskQueue) StartAllSchedulers() error {
 	return nil
 }
 
+// StopScheduler pauses this process's scheduler, if it runs one: the app does
+// not when its tasks run in the worker.
 func (q *taskQueue) StopScheduler() error {
 	if q.server == nil {
-		q.logger.Error("task queue server is not running")
-		return hperrors.Wrap(hperrors.ErrUnavailable).WithParam("Name", "Task queue server")
+		return nil
 	}
 	if err := q.server.StopScheduler(); err != nil {
 		q.logger.Errorf("failed to stop scheduler in task queue server: %v", err)

@@ -1,24 +1,46 @@
+import { Err, Ok, type Result } from "oxide.ts";
 import { z } from "zod";
 
-import { type ApiHttpResponse, BaseMetaApiSchema, parseApiResponse } from "@infrastructure/api";
+import { parseApiProblem } from "@infrastructure/api";
+
+import { UnexpectedApiErrorException, UnexpectedApiResponseException } from "@infrastructure/exceptions/api";
 
 import type { AppContainerFiles_UploadOne_Res } from "./app-container-files.api.contracts";
 
-const UploadOneSchema = z.object({
-    data: z.object({
-        path: z.string(),
-        message: z.string(),
+// What an upload's stream ends with: done, with what the file became, or the
+// error the server would have answered a request with.
+const UploadAnswerSchema = z.discriminatedUnion("type", [
+    z.object({
+        type: z.literal("done"),
+        data: z.object({
+            path: z.string(),
+            message: z.string(),
+        }),
     }),
-    meta: BaseMetaApiSchema.nullish(),
-});
+    z.object({
+        type: z.literal("error"),
+        error: z.unknown(),
+    }),
+]);
 
 export class AppContainerFilesApiValidator {
-    uploadOne = (response: ApiHttpResponse): AppContainerFiles_UploadOne_Res => {
-        const { data, meta } = parseApiResponse({
-            response,
-            schema: UploadOneSchema,
-        });
+    uploadAnswer = (message: string): Result<AppContainerFiles_UploadOne_Res, Error> => {
+        let json: unknown;
+        try {
+            json = JSON.parse(message);
+        } catch {
+            return Err(new UnexpectedApiResponseException());
+        }
 
-        return { data, meta };
+        const parsed = UploadAnswerSchema.safeParse(json);
+        if (!parsed.success) {
+            return Err(new UnexpectedApiResponseException());
+        }
+
+        if (parsed.data.type === "error") {
+            return Err(parseApiProblem(parsed.data.error) ?? new UnexpectedApiErrorException());
+        }
+
+        return Ok({ data: parsed.data.data });
     };
 }

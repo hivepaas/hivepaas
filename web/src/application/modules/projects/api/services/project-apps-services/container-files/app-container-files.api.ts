@@ -1,15 +1,12 @@
 import { Err, Ok, type Result } from "oxide.ts";
-import { catchError, from, lastValueFrom, map, of } from "rxjs";
+import { catchError, from, lastValueFrom, map } from "rxjs";
 
-import { type ApiHttpResponse, BaseApi, parseApiError, parseBlobApiError } from "@infrastructure/api";
+import { type ApiHttpResponse, BaseApi, parseBlobApiError } from "@infrastructure/api";
 
 import type {
     AppContainerFiles_DownloadOne_Req,
     AppContainerFiles_DownloadOne_Res,
-    AppContainerFiles_UploadOne_Req,
-    AppContainerFiles_UploadOne_Res,
 } from "./app-container-files.api.contracts";
-import type { AppContainerFilesApiValidator } from "./app-container-files.api.validator";
 
 function parseFilenameFromContentDisposition(contentDisposition?: string): string | undefined {
     if (!contentDisposition) {
@@ -40,7 +37,7 @@ function mapDownloadResponse(response: ApiHttpResponse<Blob>): AppContainerFiles
 }
 
 export class AppContainerFilesApi extends BaseApi {
-    constructor(private readonly validator: AppContainerFilesApiValidator) {
+    public constructor() {
         super();
     }
 
@@ -67,36 +64,6 @@ export class AppContainerFilesApi extends BaseApi {
                 map(mapDownloadResponse),
                 map(res => Ok(res)),
                 catchError(error => from(parseBlobApiError(error)).pipe(map(parsed => Err(parsed)))),
-            ),
-        );
-    }
-
-    async uploadOne(
-        req: AppContainerFiles_UploadOne_Req,
-        signal?: AbortSignal,
-    ): Promise<Result<AppContainerFiles_UploadOne_Res, Error>> {
-        const { projectID, env, appID, nodeId, containerId, path, file, extract, compressionFormat, overwrite } =
-            req.data;
-
-        const formData = new FormData();
-        formData.append("nodeId", nodeId);
-        formData.append("containerId", containerId);
-        formData.append("path", path);
-        formData.append("extract", String(extract));
-        formData.append("compressionFormat", compressionFormat);
-        formData.append("overwrite", String(overwrite));
-        formData.append("file", file);
-
-        return lastValueFrom(
-            from(
-                this.client.v1.post(`/projects/${projectID}/${env}/apps/${appID}/container/file-upload`, formData, {
-                    signal,
-                    headers: { "Content-Type": undefined },
-                }),
-            ).pipe(
-                map(this.validator.uploadOne),
-                map(res => Ok(res)),
-                catchError(error => of(Err(parseApiError(error)))),
             ),
         );
     }

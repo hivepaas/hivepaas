@@ -7,6 +7,7 @@ import {
     AppConfigFilesApiValidator,
     AppContainerFilesApi,
     AppContainerFilesApiValidator,
+    AppContainerFilesUploadWsApi,
     AppContainerSettingsApi,
     AppContainerSettingsApiValidator,
     AppDataFilesApi,
@@ -245,7 +246,10 @@ function createApi() {
                     $: new AppContainerSettingsApi(appContainerSettingsApiValidator),
                 },
                 containerFiles: {
-                    $: new AppContainerFilesApi(appContainerFilesApiValidator),
+                    $: new AppContainerFilesApi(),
+                    stream: {
+                        $: new AppContainerFilesUploadWsApi(appContainerFilesApiValidator),
+                    },
                 },
                 deploymentSettings: {
                     $: new AppDeploymentSettingsApi(appDeploymentSettingsApiValidator),

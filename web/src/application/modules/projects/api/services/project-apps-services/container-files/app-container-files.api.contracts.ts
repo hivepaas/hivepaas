@@ -29,6 +29,8 @@ export type AppContainerFiles_UploadOne_Req = ApiRequestBase<{
     extract: boolean;
     compressionFormat: AppContainerFileCompressionFormat;
     overwrite: boolean;
+    /** Told how much of the file has left the browser, as it goes. */
+    onProgress?: (sent: number, total: number) => void;
 }>;
 
 export type AppContainerFiles_UploadOne_Res = ApiResponseBase<{

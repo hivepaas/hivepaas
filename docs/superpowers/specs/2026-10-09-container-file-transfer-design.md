@@ -36,8 +36,10 @@ Two faults of the same handler go with it:
 
 - **A cut is told from an end.** The copy's error was dropped, and a directory -
   a tar, of no announced length - cut short read as a whole one. On an error
-  after the headers, the handler now closes the connection (it hijacks it), so
-  the client reads an unexpected EOF rather than a clean end.
+  after the first bytes, the handler now closes the connection, so the client
+  reads an unexpected EOF rather than a clean end. It takes the connection from
+  the server's own writer: gin refuses to hand it over once it has written. An
+  error before the first byte is answered as an error still.
 - **The file's name** in `Content-Disposition`'s `filename*` was escaped with
   `url.QueryEscape`, which writes a space as `+`; RFC 5987 wants `%20`:
   `url.PathEscape`.
@@ -62,22 +64,36 @@ Then:
 3. It answers one text message, `{"type":"done","data":{"path","message"}}` or
    `{"type":"error","error":<hperrors.ErrorInfo>}`, and closes.
 
-A client that sends nothing for 60 seconds ends the transfer, as an error: the
-pipe is closed with it, and the copy into the container fails rather than
-waiting. A use case that fails while the client still sends - no running
+- **A single file is the size it said.** Its content is read through a reader
+  held to `fileSize`: a byte more, or fewer, is a 400 naming `fileSize`. Without
+  it, `fileSize=0` would have the server buffer whatever came, in memory.
+- **A copy that went well is done.** An archive's copy ends at the archive's end
+  marker; what the client sends after it - the padding `tar` writes - finds the
+  pipe closed, and is no failure.
+- **A use case that panics is answered**, as an error, and the stream closed: the
+  handler does not wait on it for good.
+- **What the client caused is the client's.** A client that leaves before its end
+  message, or goes silent, is answered - and kept - as a 400, not a 500.
+
+A client that sends no message for 60 seconds ends the transfer, as an error:
+the pipe is closed with it, and the copy into the container fails rather than
+waiting. The limit is per message, not per byte: a client sends small ones -
+the CLI 256 KiB - so that a slow link still sends one a minute. A use case that fails while the client still sends - no running
 container, a refusal from Docker - closes the pipe, and its error is the
 answer. The pipe gives the transfer the container's pace: the server reads the
 next message only when the last one has been written into the copy.
 
 Upload and stream keep their permissions: `write` for an upload, as the form's.
+The demo user, refused every write, is refused this GET too, as `/terminal` is.
 
 ## The CLI
 
 `cp` sends its upload over the websocket, and a directory compressed
-(`compressionFormat=gzip`, a `.tar.gz` the server extracts); it asks for a
-directory gzipped too. A server without the stream endpoint (404) gets the form,
-as now, with the CLI saying that an upload longer than 60 seconds will be cut.
-Progress - bytes and rate - goes to stderr at a terminal.
+(`compressionFormat=gzip`, a `.tar.gz` the server extracts). A download stays
+uncompressed: a gzipped answer no longer says whether it is a directory's tar or
+a file. A server without the stream endpoint (404) gets the form, as now, with
+the CLI saying that an upload longer than 60 seconds will be cut. Progress -
+bytes and rate - goes to stderr at a terminal.
 
 ## Testing
 

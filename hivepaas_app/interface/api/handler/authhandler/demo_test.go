@@ -81,6 +81,7 @@ func TestTheDemoUserCannotReadWhatActsOrExposes(t *testing.T) {
 	for _, route := range []string{
 		"/api/projects/:projectID/:projectEnv/apps/:appID/terminal",
 		"/api/projects/:projectID/:projectEnv/apps/:appID/container/file-download",
+		"/api/projects/:projectID/:projectEnv/apps/:appID/container/file-upload/stream",
 		"/api/projects/:projectID/:projectEnv/apps/:appID/secrets/:itemID/download",
 		"/api/projects/:projectID/secrets/:itemID/download-token",
 		"/api/settings/ssl-certs/:itemID/download",

@@ -1,6 +1,7 @@
 package appcontainerhandler
 
 import (
+	"errors"
 	"fmt"
 	"net/http"
 	"net/url"
@@ -67,10 +68,11 @@ func (h *Handler) DownloadFileFromContainer(ctx *gin.Context) {
 
 	// A copy that goes on is not cut by the server's write timeout; one that
 	// fails reaches the client as a cut, not as the end of the file.
-	if err = copyDownload(ctx.Writer, resp.Reader, transferIdle); err != nil {
-		// Logged and kept as any failure is; the client has its cut already.
-		_ = h.ErrorInfoOf(ctx, err)
+	err = copyDownload(ctx.Writer, resp.Reader, transferIdle)
+	if _, nothingSent := errors.AsType[*nothingCopiedError](err); nothingSent {
+		h.RenderError(ctx, err)
 	}
+	// Otherwise the client has its cut: a client that went is no server error.
 }
 
 // UploadFileToContainer Uploads a file or archive into container

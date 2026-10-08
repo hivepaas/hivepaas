@@ -33,6 +33,7 @@ var demoWrites = []string{
 var demoRefusedReads = []string{
 	"/apps/:appID/terminal",
 	"/apps/:appID/container/file-download",
+	"/apps/:appID/container/file-upload/stream",
 	"/secrets/:itemID/download",
 	"/secrets/:itemID/download-token",
 	"/ssl-certs/:itemID/download",

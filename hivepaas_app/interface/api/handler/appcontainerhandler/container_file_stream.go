@@ -5,7 +5,9 @@ import (
 	"encoding/json"
 	"errors"
 	"io"
+	"net"
 	"net/http"
+	"runtime/debug"
 	"strconv"
 	"time"
 
@@ -20,7 +22,8 @@ import (
 
 const (
 	// transferIdle is how long a copy into or out of a container may go without
-	// a byte before it ends: one that goes on, however slowly, is not cut.
+	// a byte - out - or a message - in - before it ends: one that goes on,
+	// however slowly, is not cut.
 	transferIdle = 60 * time.Second
 	// streamMessageMax is the largest message a client may send in a stream.
 	streamMessageMax = 4 << 20
@@ -29,23 +32,47 @@ const (
 // errStreamEnded is the pipe's end when the client went before its end message.
 var errStreamEnded = errors.New("the client ended the stream before its end message")
 
+// nothingCopiedError is copyDownload's failure before a byte was sent: the
+// response is still the handler's to write.
+type nothingCopiedError struct{ err error }
+
+func (e *nothingCopiedError) Error() string { return e.err.Error() }
+func (e *nothingCopiedError) Unwrap() error { return e.err }
+
 // copyDownload copies r to the response, pushing the connection's write
 // deadline idle past each write: the server's write timeout would cut a long
-// copy however well it went. On an error, with the headers sent, it closes the
-// connection, so that the client reads a cut and not an end.
+// copy however well it went. A copy that fails once bytes are sent closes the
+// connection, so that the client reads a cut and not an end; one that fails
+// before is an nothingCopiedError, the response left to the caller.
 func copyDownload(w http.ResponseWriter, r io.Reader, idle time.Duration) error {
-	rc := http.NewResponseController(w)
-	_, err := io.Copy(writerFunc(func(p []byte) (int, error) {
-		_ = rc.SetWriteDeadline(time.Now().Add(idle))
+	conn := http.NewResponseController(underlying(w))
+	written, err := io.Copy(writerFunc(func(p []byte) (int, error) {
+		_ = conn.SetWriteDeadline(time.Now().Add(idle))
 		return w.Write(p) //nolint:wrapcheck // the copy's error
 	}), r)
-	if err != nil {
-		if conn, _, hijackErr := rc.Hijack(); hijackErr == nil {
-			_ = conn.Close()
-		}
-		return hperrors.Wrap(err)
+	if err == nil {
+		return nil
 	}
-	return nil
+	if written == 0 {
+		return &nothingCopiedError{err: hperrors.Wrap(err)}
+	}
+	// gin will not hand over a connection it has written to: the server's will.
+	if raw, _, hijackErr := conn.Hijack(); hijackErr == nil {
+		_ = raw.Close()
+	}
+	return hperrors.Wrap(err)
+}
+
+// underlying is the server's own writer under the wrappers - gin's - that keep
+// from it what this needs: its connection, after a write.
+func underlying(w http.ResponseWriter) http.ResponseWriter {
+	for {
+		inner, ok := w.(interface{ Unwrap() http.ResponseWriter })
+		if !ok {
+			return w
+		}
+		w = inner.Unwrap()
+	}
 }
 
 type writerFunc func([]byte) (int, error)
@@ -97,11 +124,111 @@ func pumpUpload(conn *websocket.Conn, w *io.PipeWriter, idle time.Duration) (err
 	}
 }
 
+// clientError is a stream's end the client caused - it left, it went silent -
+// as the 400 it is, not a 500 of the server's; nil for any other.
+func clientError(err error) error {
+	var netErr net.Error
+	if errors.Is(err, errStreamEnded) || (errors.As(err, &netErr) && netErr.Timeout()) ||
+		websocket.IsUnexpectedCloseError(err) {
+		return hperrors.Wrap(hperrors.ErrBadRequest).WithCause(err).
+			WithMsgLog("the client ended the upload: %v", err)
+	}
+	return nil
+}
+
+// exactReader is a single file's content, held to the size the client said: the
+// tar it goes in starts with that size, and a size of 0 must not let a client
+// fill the server's memory with what it sends after.
+type exactReader struct {
+	r    io.Reader
+	left int64
+}
+
+func (e *exactReader) Read(p []byte) (int, error) {
+	if e.left == 0 {
+		// One byte more than said is an error, not an end.
+		var extra [1]byte
+		if n, _ := io.ReadFull(e.r, extra[:]); n > 0 {
+			return 0, hperrors.NewArgumentInvalid("fileSize").
+				WithMsgLog("the client sent more than the fileSize it gave")
+		}
+		return 0, io.EOF
+	}
+	if int64(len(p)) > e.left {
+		p = p[:e.left]
+	}
+	n, err := e.r.Read(p)
+	e.left -= int64(n)
+	if errors.Is(err, io.EOF) && e.left > 0 {
+		return n, hperrors.NewArgumentInvalid("fileSize").
+			WithMsgLog("the client sent %d bytes fewer than the fileSize it gave", e.left)
+	}
+	return n, err //nolint:wrapcheck // the pipe's own
+}
+
+// uploadFunc copies an upload into the container: the use case, but for tests.
+type uploadFunc func(context.Context, *appcontainerdto.UploadFileToContainerReq) (
+	*appcontainerdto.UploadFileToContainerResp, error)
+
+// serveUploadStream feeds what the client sends over conn to upload, through a
+// pipe, and answers one message: done, or the error. A copy that went well is
+// done, whatever the client sent after its end - a tar's padding.
+func serveUploadStream(ctx context.Context, conn *websocket.Conn, req *appcontainerdto.UploadFileToContainerReq,
+	upload uploadFunc, errInfo func(error) *hperrors.ErrorInfo,
+) {
+	pr, pw := io.Pipe()
+	req.FileContent = pr
+	if !req.Extract {
+		req.FileContent = struct {
+			io.Reader
+			io.Closer
+		}{&exactReader{r: pr, left: req.FileSize}, pr}
+	}
+	type outcome struct {
+		resp *appcontainerdto.UploadFileToContainerResp
+		err  error
+	}
+	copied := make(chan outcome, 1)
+	safego.Go("appcontainer.uploadStream", func() {
+		var out outcome
+		defer func() {
+			if r := recover(); r != nil {
+				out.err = hperrors.Wrap(hperrors.ErrInternal).
+					WithMsgLog("panic in the upload's copy: %v\n%s", r, debug.Stack())
+			}
+			// What the copy did not read stops the pump.
+			_ = pr.CloseWithError(errors.Join(out.err, io.ErrClosedPipe))
+			copied <- out
+		}()
+		out.resp, out.err = upload(ctx, req)
+	})
+
+	pumpErr := pumpUpload(conn, pw, transferIdle)
+	result := <-copied
+	answer := streamControl{Type: streamDone}
+	if result.resp != nil {
+		answer.Data = result.resp.Data
+	}
+	if result.err != nil {
+		err := result.err
+		if byClient := clientError(pumpErr); byClient != nil {
+			err = byClient
+		}
+		answer = streamControl{Type: streamError, Error: errInfo(err)}
+	}
+	if message, err := json.Marshal(answer); err == nil {
+		_ = conn.WriteMessage(websocket.TextMessage, message)
+	}
+	_ = conn.WriteControl(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.CloseNormalClosure, ""),
+		time.Now().Add(time.Second))
+}
+
 // StreamFileToContainer Uploads a file or archive into container over a websocket
 // @Summary Uploads a file or archive into container over a websocket
 // @Description Takes what file-upload takes, as query parameters, then the content as binary messages
 // @Description and {"type":"end"} as a text message; answers {"type":"done","data":{...}} or
-// @Description {"type":"error","error":{...}}. Neither the server's nor Traefik's timeouts cut it.
+// @Description {"type":"error","error":{...}}. Neither the server's nor Traefik's timeouts cut it; a
+// @Description client sends a message at least every 60 seconds.
 // @Tags    Apps
 // @Produce json
 // @Id      streamFileToAppContainer
@@ -153,36 +280,13 @@ func (h *Handler) StreamFileToContainer(ctx *gin.Context) {
 	}
 	defer conn.Close()
 
-	pr, pw := io.Pipe()
-	req.FileContent = pr
-	copyCtx, cancel := context.WithCancel(h.RequestCtx(ctx))
-	defer cancel()
-	type outcome struct {
-		resp *appcontainerdto.UploadFileToContainerResp
-		err  error
-	}
-	copied := make(chan outcome, 1)
-	safego.Go("appcontainer.streamFileToContainer", func() {
-		resp, err := h.appContainerUC.UploadFileToContainer(copyCtx, auth, req)
-		// What the copy did not read stops the pump.
-		_ = pr.CloseWithError(errors.Join(err, io.ErrClosedPipe))
-		copied <- outcome{resp, err}
-	})
-
-	pumpErr := pumpUpload(conn, pw, transferIdle)
-	result := <-copied
-	answer := streamControl{Type: streamDone}
-	switch {
-	case result.err != nil:
-		answer = streamControl{Type: streamError, Error: h.ErrorInfoOf(ctx, result.err)}
-	case pumpErr != nil:
-		answer = streamControl{Type: streamError, Error: h.ErrorInfoOf(ctx, pumpErr)}
-	case result.resp != nil:
-		answer.Data = result.resp.Data
-	}
-	if message, err := json.Marshal(answer); err == nil {
-		_ = conn.WriteMessage(websocket.TextMessage, message)
-	}
-	_ = conn.WriteControl(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.CloseNormalClosure, ""),
-		time.Now().Add(time.Second))
+	// A client that leaves reaches the copy through the pipe, closed with the
+	// pump's error: a hijacked connection does not end the request's context.
+	serveUploadStream(h.RequestCtx(ctx), conn, req,
+		func(ctx context.Context, req *appcontainerdto.UploadFileToContainerReq) (
+			*appcontainerdto.UploadFileToContainerResp, error,
+		) {
+			return h.appContainerUC.UploadFileToContainer(ctx, auth, req)
+		},
+		func(err error) *hperrors.ErrorInfo { return h.ErrorInfoOf(ctx, err) })
 }

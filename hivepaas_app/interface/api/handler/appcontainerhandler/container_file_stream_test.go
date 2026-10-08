@@ -2,6 +2,8 @@ package appcontainerhandler
 
 import (
 	"bytes"
+	"context"
+	"encoding/json"
 	"errors"
 	"io"
 	"net/http"
@@ -10,9 +12,13 @@ import (
 	"testing"
 	"time"
 
+	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
+	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/appcontaineruc/appcontainerdto"
 )
 
 // slowReader gives chunks of a byte each, every so often, then ends - or fails,
@@ -25,7 +31,7 @@ type slowReader struct {
 var errReadFailed = errors.New("the container's copy failed")
 
 func (r *slowReader) Read(p []byte) (int, error) {
-	if r.failAfter > 0 && r.given == r.failAfter {
+	if r.failAfter < 0 || (r.failAfter > 0 && r.given == r.failAfter) {
 		return 0, errReadFailed
 	}
 	if r.given == r.chunks {
@@ -158,5 +164,169 @@ func TestAFailedCopyStopsTheStream(t *testing.T) {
 		assert.ErrorIs(t, err, errReadFailed)
 	case <-time.After(5 * time.Second):
 		t.Fatal("the pump went on after the copy failed")
+	}
+}
+
+// Through gin, as the server serves it: gin refuses to hand over a connection
+// it has written to, and the cut has to reach the client anyway.
+func TestADownloadCutThroughGinIsNotAnEnd(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+	engine := gin.New()
+	engine.GET("/x", func(ctx *gin.Context) {
+		ctx.Header("Content-Type", "application/x-tar")
+		_ = copyDownload(ctx.Writer, &slowReader{chunks: 8, failAfter: 2}, time.Second)
+	})
+	srv := httptest.NewServer(engine)
+	t.Cleanup(srv.Close)
+
+	resp, err := http.Get(srv.URL + "/x") //nolint:noctx // a test's
+	require.NoError(t, err)
+	defer resp.Body.Close()
+	_, err = io.ReadAll(resp.Body)
+
+	assert.ErrorIs(t, err, io.ErrUnexpectedEOF)
+}
+
+// A copy that fails before its first byte has sent nothing: its error can still
+// be answered as one.
+func TestADownloadThatFailsAtOnceIsAnswered(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+	engine := gin.New()
+	engine.GET("/x", func(ctx *gin.Context) {
+		if err := copyDownload(ctx.Writer, &slowReader{chunks: 8, failAfter: -1}, time.Second); err != nil {
+			ctx.JSON(http.StatusInternalServerError, gin.H{"detail": err.Error()})
+		}
+	})
+	srv := httptest.NewServer(engine)
+	t.Cleanup(srv.Close)
+
+	resp, err := http.Get(srv.URL + "/x") //nolint:noctx // a test's
+	require.NoError(t, err)
+	defer resp.Body.Close()
+
+	assert.Equal(t, http.StatusInternalServerError, resp.StatusCode)
+}
+
+// stream serves an upload stream with upload as the use case, and gives the
+// client's connection and the errors the server answered.
+func stream(t *testing.T, req *appcontainerdto.UploadFileToContainerReq,
+	upload func(context.Context, *appcontainerdto.UploadFileToContainerReq) (
+		*appcontainerdto.UploadFileToContainerResp, error),
+) (*websocket.Conn, chan *hperrors.ErrorInfo) {
+	t.Helper()
+	answered := make(chan *hperrors.ErrorInfo, 1)
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		conn, err := (&websocket.Upgrader{}).Upgrade(w, r, nil)
+		if err != nil {
+			return
+		}
+		defer conn.Close()
+		serveUploadStream(r.Context(), conn, req, upload, func(err error) *hperrors.ErrorInfo {
+			info, _ := hperrors.ParseError(err, "")
+			answered <- info
+			return info
+		})
+	}))
+	t.Cleanup(srv.Close)
+	conn, resp, err := websocket.DefaultDialer.Dial("ws"+strings.TrimPrefix(srv.URL, "http"), nil)
+	require.NoError(t, err)
+	_ = resp.Body.Close()
+	t.Cleanup(func() { _ = conn.Close() })
+	return conn, answered
+}
+
+// answerOf reads the server's last message.
+func answerOf(t *testing.T, conn *websocket.Conn) streamControl {
+	t.Helper()
+	_ = conn.SetReadDeadline(time.Now().Add(5 * time.Second))
+	for {
+		kind, message, err := conn.ReadMessage()
+		require.NoError(t, err, "the server answered nothing")
+		if kind == websocket.TextMessage {
+			var answer streamControl
+			require.NoError(t, json.Unmarshal(message, &answer))
+			return answer
+		}
+	}
+}
+
+func readAll(_ context.Context, req *appcontainerdto.UploadFileToContainerReq) (
+	*appcontainerdto.UploadFileToContainerResp, error,
+) {
+	if _, err := io.ReadAll(req.FileContent); err != nil {
+		return nil, err
+	}
+	return &appcontainerdto.UploadFileToContainerResp{Data: &appcontainerdto.UploadFileToContainerDataResp{
+		Path: "/app/x", Message: "ok"}}, nil
+}
+
+func send(t *testing.T, conn *websocket.Conn, parts ...string) {
+	t.Helper()
+	for _, part := range parts {
+		require.NoError(t, conn.WriteMessage(websocket.BinaryMessage, []byte(part)))
+	}
+	require.NoError(t, conn.WriteMessage(websocket.TextMessage, []byte(`{"type":"end"}`)))
+}
+
+// A single file is held to the size it declared, and a client that says one
+// and sends another is told so - not left to a buffer of all it sends.
+func TestAStreamedFileIsTheSizeItSaid(t *testing.T) {
+	for name, parts := range map[string][]string{"more": {"12345", "678"}, "fewer": {"123"}} {
+		conn, _ := stream(t, &appcontainerdto.UploadFileToContainerReq{FileSize: 5}, readAll)
+		send(t, conn, parts...)
+
+		answer := answerOf(t, conn)
+
+		assert.Equal(t, streamError, answer.Type, name)
+		if assert.NotNil(t, answer.Error, name) {
+			assert.Equal(t, http.StatusBadRequest, answer.Error.Status, name)
+		}
+	}
+	conn, _ := stream(t, &appcontainerdto.UploadFileToContainerReq{FileSize: 5}, readAll)
+	send(t, conn, "12", "345")
+	assert.Equal(t, streamDone, answerOf(t, conn).Type)
+}
+
+// An archive's copy ends at the archive's end: what the client sends after it -
+// a tar's padding - is no failure of a copy that went well.
+func TestAStreamAfterTheCopyEndedIsDone(t *testing.T) {
+	conn, _ := stream(t, &appcontainerdto.UploadFileToContainerReq{Extract: true},
+		func(_ context.Context, req *appcontainerdto.UploadFileToContainerReq) (
+			*appcontainerdto.UploadFileToContainerResp, error,
+		) {
+			_, err := io.ReadFull(req.FileContent, make([]byte, 4))
+			return &appcontainerdto.UploadFileToContainerResp{}, err
+		})
+	send(t, conn, "data", strings.Repeat("\x00", 1024))
+
+	assert.Equal(t, streamDone, answerOf(t, conn).Type)
+}
+
+// A use case that panics is answered, not waited on for good.
+func TestAStreamWhoseCopyPanicsIsAnswered(t *testing.T) {
+	conn, _ := stream(t, &appcontainerdto.UploadFileToContainerReq{Extract: true},
+		func(context.Context, *appcontainerdto.UploadFileToContainerReq) (
+			*appcontainerdto.UploadFileToContainerResp, error,
+		) {
+			panic("a bug")
+		})
+	send(t, conn, "data")
+
+	answer := answerOf(t, conn)
+	assert.Equal(t, streamError, answer.Type)
+}
+
+// A client that goes before its end message is the client's doing: a 400 to
+// keep, not a 500 of the server's.
+func TestAStreamTheClientLeftIsItsError(t *testing.T) {
+	conn, answered := stream(t, &appcontainerdto.UploadFileToContainerReq{Extract: true}, readAll)
+	require.NoError(t, conn.WriteMessage(websocket.BinaryMessage, []byte("part")))
+	_ = conn.WriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.CloseNormalClosure, ""))
+
+	select {
+	case info := <-answered:
+		assert.Equal(t, http.StatusBadRequest, info.Status)
+	case <-time.After(5 * time.Second):
+		t.Fatal("no answer")
 	}
 }

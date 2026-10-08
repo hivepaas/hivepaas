@@ -157,6 +157,14 @@ func (h *BaseHandler) RenderResponse(ctx *gin.Context, status int, body any) {
 
 // RenderError renders errors to client as JSON
 func (h *BaseHandler) RenderError(ctx *gin.Context, err error) {
+	errInfo := h.ErrorInfoOf(ctx, err)
+	ctx.JSON(errInfo.Status, errInfo)
+}
+
+// ErrorInfoOf is the answer an error makes, as RenderError writes it: kept as
+// SaveError keeps it, without what only a dev environment shows. A handler that
+// answers over a websocket sends it in a message.
+func (h *BaseHandler) ErrorInfoOf(ctx *gin.Context, err error) *hperrors.ErrorInfo {
 	// Parse the error
 	errInfo, errLevel := hperrors.ParseError(err, h.ParseRequestLang(ctx))
 	h.SaveError(ctx, errInfo, errLevel)
@@ -173,8 +181,7 @@ func (h *BaseHandler) RenderError(ctx *gin.Context, err error) {
 			errInfo.InnerErrors[i].Cause = ""
 		}
 	}
-
-	ctx.JSON(errInfo.Status, errInfo)
+	return errInfo
 }
 
 // SaveError logs an error and saves it into the DB, if it is one worth keeping.

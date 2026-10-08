@@ -17940,6 +17940,122 @@
         "tags" : [ "Apps" ]
       }
     },
+    "/projects/{projectID}/{projectEnv}/apps/{appID}/container/file-upload/stream" : {
+      "get" : {
+        "description" : "Takes what file-upload takes, as query parameters, then the content as binary messages\nand {\"type\":\"end\"} as a text message; answers {\"type\":\"done\",\"data\":{...}} or\n{\"type\":\"error\",\"error\":{...}}. Neither the server's nor Traefik's timeouts cut it.",
+        "operationId" : "streamFileToAppContainer",
+        "parameters" : [ {
+          "description" : "project ID",
+          "in" : "path",
+          "name" : "projectID",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "project env",
+          "in" : "path",
+          "name" : "projectEnv",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "app ID",
+          "in" : "path",
+          "name" : "appID",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "node ID",
+          "in" : "query",
+          "name" : "nodeId",
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "container ID (optional, auto-picks active container if empty)",
+          "in" : "query",
+          "name" : "containerId",
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "file/dir path in container",
+          "in" : "query",
+          "name" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "extract archive into path",
+          "in" : "query",
+          "name" : "extract",
+          "schema" : {
+            "type" : "boolean"
+          }
+        }, {
+          "description" : "compression format (gzip, zstd, zip, tar)",
+          "in" : "query",
+          "name" : "compressionFormat",
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "allow overwrite (default: true)",
+          "in" : "query",
+          "name" : "overwrite",
+          "schema" : {
+            "type" : "boolean"
+          }
+        }, {
+          "description" : "the file's name",
+          "in" : "query",
+          "name" : "fileName",
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "the file's size in bytes: required unless extract",
+          "in" : "query",
+          "name" : "fileSize",
+          "schema" : {
+            "type" : "integer"
+          }
+        } ],
+        "responses" : {
+          "101" : {
+            "content" : { },
+            "description" : "Switching Protocols"
+          },
+          "400" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Bad Request"
+          },
+          "500" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Internal Server Error"
+          }
+        },
+        "summary" : "Uploads a file or archive into container over a websocket",
+        "tags" : [ "Apps" ]
+      }
+    },
     "/projects/{projectID}/{projectEnv}/apps/{appID}/data-files" : {
       "get" : {
         "description" : "Lists data files of an app",

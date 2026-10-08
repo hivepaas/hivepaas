@@ -2,7 +2,6 @@ package appcontainerhandler
 
 import (
 	"fmt"
-	"io"
 	"net/http"
 	"net/url"
 	"strconv"
@@ -55,17 +54,23 @@ func (h *Handler) DownloadFileFromContainer(ctx *gin.Context) {
 	}
 	defer resp.Reader.Close()
 
+	// RFC 5987 escapes a space as %20: QueryEscape's + is read as a +.
 	ctx.Header("Content-Disposition", fmt.Sprintf(
 		`attachment; filename="%s"; filename*=UTF-8''%s`,
 		resp.FileName,
-		url.QueryEscape(resp.FileName),
+		url.PathEscape(resp.FileName),
 	))
 	ctx.Header("Content-Type", resp.ContentType)
 	if resp.FileSize > 0 {
 		ctx.Header("Content-Length", strconv.FormatInt(resp.FileSize, 10))
 	}
 
-	_, _ = io.Copy(ctx.Writer, resp.Reader)
+	// A copy that goes on is not cut by the server's write timeout; one that
+	// fails reaches the client as a cut, not as the end of the file.
+	if err = copyDownload(ctx.Writer, resp.Reader, transferIdle); err != nil {
+		// Logged and kept as any failure is; the client has its cut already.
+		_ = h.ErrorInfoOf(ctx, err)
+	}
 }
 
 // UploadFileToContainer Uploads a file or archive into container

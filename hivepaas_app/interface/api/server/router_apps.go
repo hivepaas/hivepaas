@@ -182,6 +182,8 @@ func (s *HTTPServer) registerAppRoutes(projectGroup, projectEnvGroup *gin.Router
 		containerGroup.GET("/file-download", appContainerHandler.DownloadFileFromContainer)
 		// Upload file
 		containerGroup.POST("/file-upload", appContainerHandler.UploadFileToContainer)
+		// Upload a file over a websocket: no timeout cuts it
+		containerGroup.GET("/file-upload/stream", appContainerHandler.StreamFileToContainer)
 	}
 
 	{ // Deployments

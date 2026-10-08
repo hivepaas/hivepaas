@@ -9,6 +9,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/logging"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/redishelper"
+	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/timeutil"
 )
 
 type Client struct {
@@ -32,7 +33,7 @@ func (c *Client) Close() error {
 }
 
 func (c *Client) StartScheduler(ctx context.Context) error {
-	err := redishelper.RPush(ctx, c.redisClient, taskQueueCtrlKey, &Message{
+	err := c.send(ctx, &Message{
 		StartScheduler: true,
 	})
 	if err != nil {
@@ -42,7 +43,7 @@ func (c *Client) StartScheduler(ctx context.Context) error {
 }
 
 func (c *Client) StopScheduler(ctx context.Context) error {
-	err := redishelper.RPush(ctx, c.redisClient, taskQueueCtrlKey, &Message{
+	err := c.send(ctx, &Message{
 		StopScheduler: true,
 	})
 	if err != nil {
@@ -55,7 +56,7 @@ func (c *Client) ScheduleTask(ctx context.Context, tasks ...*entity.Task) error 
 	if len(tasks) == 0 {
 		return nil
 	}
-	err := redishelper.RPush(ctx, c.redisClient, taskQueueCtrlKey, &Message{
+	err := c.send(ctx, &Message{
 		SchedTasks: tasks,
 	})
 	if err != nil {
@@ -68,11 +69,17 @@ func (c *Client) UnscheduleTask(ctx context.Context, taskIDs ...string) error {
 	if len(taskIDs) == 0 {
 		return nil
 	}
-	err := redishelper.RPush(ctx, c.redisClient, taskQueueCtrlKey, &Message{
+	err := c.send(ctx, &Message{
 		UnschedTaskIDs: taskIDs,
 	})
 	if err != nil {
 		return hperrors.Wrap(err)
 	}
 	return nil
+}
+
+// send puts a message on the list every server reads, saying when it was sent.
+func (c *Client) send(ctx context.Context, msg *Message) error {
+	msg.SentAt = timeutil.NowUTC()
+	return redishelper.RPush(ctx, c.redisClient, taskQueueCtrlKey, msg) //nolint:wrapcheck // its callers wrap
 }

@@ -41,17 +41,20 @@ func serverRunning(t *testing.T) (*Server, <-chan string) {
 	return server, ran
 }
 
-func dueTask(id string) *entity.Task {
-	return &entity.Task{ID: id, Type: testTaskType, RunAt: time.Now()}
+// testTaskID is the task the tests below schedule.
+const testTaskID = "t1"
+
+func dueTask() *entity.Task {
+	return &entity.Task{ID: testTaskID, Type: testTaskType, RunAt: time.Now()}
 }
 
-func expectRun(t *testing.T, ran <-chan string, id string, within time.Duration) {
+func expectRun(t *testing.T, ran <-chan string, within time.Duration) {
 	t.Helper()
 	select {
 	case got := <-ran:
-		assert.Equal(t, id, got)
+		assert.Equal(t, testTaskID, got)
 	case <-time.After(within):
-		t.Fatalf("%s did not run within %v", id, within)
+		t.Fatalf("the task did not run within %v", within)
 	}
 }
 
@@ -68,9 +71,9 @@ func expectNoRun(t *testing.T, ran <-chan string, during time.Duration) {
 func TestATaskGivenToARunningSchedulerRuns(t *testing.T) {
 	server, ran := serverRunning(t)
 
-	assert.NoError(t, server.ScheduleTask(context.Background(), dueTask("t1")))
+	assert.NoError(t, server.ScheduleTask(context.Background(), dueTask()))
 
-	expectRun(t, ran, "t1", time.Second)
+	expectRun(t, ran, time.Second)
 }
 
 // A stop is a pause for a restart: a task due meanwhile waits. One that reaches a
@@ -82,10 +85,10 @@ func TestAPauseHoldsTasksUntilItEndsOnItsOwn(t *testing.T) {
 	server, ran := serverRunning(t)
 
 	assert.NoError(t, server.StopScheduler())
-	assert.NoError(t, server.ScheduleTask(context.Background(), dueTask("t1")))
+	assert.NoError(t, server.ScheduleTask(context.Background(), dueTask()))
 
 	expectNoRun(t, ran, 150*time.Millisecond)
-	expectRun(t, ran, "t1", 2*time.Second)
+	expectRun(t, ran, 2*time.Second)
 	logs := server.config.Logger.(*lines)
 	assert.True(t, logs.has("resumed on its own"), logs.logs)
 }
@@ -96,11 +99,11 @@ func TestAStartRunsTheTasksAPauseHeld(t *testing.T) {
 	server.pauseLimit = time.Hour
 
 	assert.NoError(t, server.StopScheduler())
-	assert.NoError(t, server.ScheduleTask(context.Background(), dueTask("t1")))
+	assert.NoError(t, server.ScheduleTask(context.Background(), dueTask()))
 	expectNoRun(t, ran, 100*time.Millisecond)
 	assert.NoError(t, server.StartScheduler())
 
-	expectRun(t, ran, "t1", time.Second)
+	expectRun(t, ran, time.Second)
 }
 
 // slowScheduler hands back the first job it makes only once that job has had
@@ -110,7 +113,9 @@ type slowScheduler struct {
 	made atomic.Int32
 }
 
-func (s *slowScheduler) NewJob(def gocron.JobDefinition, task gocron.Task, opts ...gocron.JobOption) (gocron.Job, error) {
+func (s *slowScheduler) NewJob(
+	def gocron.JobDefinition, task gocron.Task, opts ...gocron.JobOption,
+) (gocron.Job, error) {
 	job, err := s.Scheduler.NewJob(def, task, opts...)
 	if s.made.Add(1) == 1 {
 		time.Sleep(100 * time.Millisecond)
@@ -126,12 +131,12 @@ func TestATaskHeldBeforeItsSchedulingEndsIsNotLost(t *testing.T) {
 	server, ran := serverRunning(t)
 	server.scheduler = &slowScheduler{Scheduler: server.scheduler}
 	server.pauseLimit = time.Hour
-	task := dueTask("t1")
+	task := dueTask()
 
 	assert.NoError(t, server.StopScheduler())
 	assert.NoError(t, server.ScheduleTask(context.Background(), task))
 	assert.NoError(t, server.StartScheduler())
 	assert.NoError(t, server.ScheduleTask(context.Background(), task)) // a scan finding it again
 
-	expectRun(t, ran, "t1", time.Second)
+	expectRun(t, ran, time.Second)
 }

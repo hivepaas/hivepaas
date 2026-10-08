@@ -17942,7 +17942,7 @@
     },
     "/projects/{projectID}/{projectEnv}/apps/{appID}/container/file-upload/stream" : {
       "get" : {
-        "description" : "Takes what file-upload takes, as query parameters, then the content as binary messages\nand {\"type\":\"end\"} as a text message; answers {\"type\":\"done\",\"data\":{...}} or\n{\"type\":\"error\",\"error\":{...}}. Neither the server's nor Traefik's timeouts cut it; a\nclient sends a message at least every 60 seconds.",
+        "description" : "Takes what file-upload takes, as query parameters, then the content as binary messages\nand {\"type\":\"end\"} as a text message; answers {\"type\":\"done\",\"data\":{...}} or\n{\"type\":\"error\",\"error\":{...}}. Neither the server's nor Traefik's timeouts cut it; a\nclient sends a message at least every 60 seconds. With progress=true, each binary\nmessage is followed by {\"type\":\"progress\",\"received\":<bytes the copy has taken>}.\nWithout the websocket upgrade, the request is only checked: 204 when the stream would\nbe taken, else the error it would get - which a browser cannot read from a refused upgrade.",
         "operationId" : "streamFileToAppContainer",
         "parameters" : [ {
           "description" : "project ID",
@@ -18025,11 +18025,22 @@
           "schema" : {
             "type" : "integer"
           }
+        }, {
+          "description" : "be told after each message how much the copy has taken",
+          "in" : "query",
+          "name" : "progress",
+          "schema" : {
+            "type" : "boolean"
+          }
         } ],
         "responses" : {
           "101" : {
             "content" : { },
             "description" : "Switching Protocols"
+          },
+          "204" : {
+            "content" : { },
+            "description" : "No Content"
           },
           "400" : {
             "content" : {

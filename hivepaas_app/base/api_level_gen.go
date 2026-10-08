@@ -6,4 +6,4 @@ package base
 // the request of a write operation that already existed changes, and a HivePaaS
 // CLI built for a lower level may not write: it would send back objects without
 // the fields it does not know. See tools/openapi/level.go.
-const APILevel = 1
+const APILevel = 2

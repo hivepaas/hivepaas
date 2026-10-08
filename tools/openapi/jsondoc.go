@@ -21,12 +21,17 @@ func newObject() *object {
 	return &object{values: map[string]any{}}
 }
 
+// get is a key's value, or nil - on a nil object too, so that a path through
+// keys a document may not have reads as one expression.
 func (o *object) get(key string) any {
+	if o == nil {
+		return nil
+	}
 	return o.values[key]
 }
 
 func (o *object) getObject(key string) *object {
-	child, _ := o.values[key].(*object)
+	child, _ := o.get(key).(*object)
 	return child
 }
 

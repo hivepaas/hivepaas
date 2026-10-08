@@ -12,7 +12,7 @@
     },
     "title" : "HivePaaS API",
     "version" : "0.1",
-    "x-api-level" : 1
+    "x-api-level" : 2
   },
   "servers" : [ {
     "url" : "/api"
@@ -489,7 +489,7 @@
         "operationId" : "loginPasswordForgot",
         "requestBody" : {
           "content" : {
-            "*/*" : {
+            "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/sessiondto.LoginPasswordForgotReq"
               }
@@ -542,7 +542,7 @@
         "operationId" : "loginWithAPIKey",
         "requestBody" : {
           "content" : {
-            "*/*" : {
+            "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/sessiondto.LoginWithAPIKeyReq"
               }
@@ -595,7 +595,7 @@
         "operationId" : "loginWithPasscode",
         "requestBody" : {
           "content" : {
-            "*/*" : {
+            "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/sessiondto.LoginWithPasscodeReq"
               }
@@ -648,7 +648,7 @@
         "operationId" : "loginWithPassword",
         "requestBody" : {
           "content" : {
-            "*/*" : {
+            "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/sessiondto.LoginWithPasswordReq"
               }
@@ -831,7 +831,7 @@
         "operationId" : "clearClusterBuildCache",
         "requestBody" : {
           "content" : {
-            "*/*" : {
+            "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/builddto.ClearBuildCacheReq"
               }
@@ -950,7 +950,7 @@
         "operationId" : "createClusterNetwork",
         "requestBody" : {
           "content" : {
-            "*/*" : {
+            "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/networkdto.CreateNetworkReq"
               }
@@ -1002,7 +1002,7 @@
         "operationId" : "syncClusterNetwork",
         "requestBody" : {
           "content" : {
-            "*/*" : {
+            "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/networkdto.SyncNetworkReq"
               }
@@ -1157,7 +1157,7 @@
         } ],
         "requestBody" : {
           "content" : {
-            "*/*" : {
+            "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/networkdto.UpdateNetworkReq"
               }
@@ -1218,7 +1218,7 @@
         } ],
         "requestBody" : {
           "content" : {
-            "*/*" : {
+            "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/networkdto.UpdateNetworkStatusReq"
               }
@@ -1339,7 +1339,7 @@
         "operationId" : "joinClusterNode",
         "requestBody" : {
           "content" : {
-            "*/*" : {
+            "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/nodedto.JoinNodeReq"
               }
@@ -1439,7 +1439,7 @@
         "operationId" : "setClusterManagerNodes",
         "requestBody" : {
           "content" : {
-            "*/*" : {
+            "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/nodedto.SetManagerNodesReq"
               }
@@ -1594,7 +1594,7 @@
         } ],
         "requestBody" : {
           "content" : {
-            "*/*" : {
+            "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/nodedto.UpdateNodeReq"
               }
@@ -1713,7 +1713,7 @@
         "operationId" : "createClusterVolume",
         "requestBody" : {
           "content" : {
-            "*/*" : {
+            "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/volumedto.CreateVolumeReq"
               }
@@ -1765,7 +1765,7 @@
         "operationId" : "syncClusterVolume",
         "requestBody" : {
           "content" : {
-            "*/*" : {
+            "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/volumedto.SyncVolumeReq"
               }
@@ -1920,7 +1920,7 @@
         } ],
         "requestBody" : {
           "content" : {
-            "*/*" : {
+            "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/volumedto.UpdateVolumeReq"
               }
@@ -1981,7 +1981,7 @@
         } ],
         "requestBody" : {
           "content" : {
-            "*/*" : {
+            "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/volumedto.UpdateVolumeStatusReq"
               }
@@ -2298,7 +2298,7 @@
         "operationId" : "createProject",
         "requestBody" : {
           "content" : {
-            "*/*" : {
+            "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/projectdto.CreateProjectReq"
               }
@@ -2529,7 +2529,7 @@
         } ],
         "requestBody" : {
           "content" : {
-            "*/*" : {
+            "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/projectdto.UpdateProjectReq"
               }
@@ -2665,7 +2665,7 @@
         } ],
         "requestBody" : {
           "content" : {
-            "*/*" : {
+            "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/accesstokendto.CreateAccessTokenReq"
               }
@@ -2844,7 +2844,7 @@
         } ],
         "requestBody" : {
           "content" : {
-            "*/*" : {
+            "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/accesstokendto.UpdateAccessTokenReq"
               }
@@ -2913,7 +2913,7 @@
         } ],
         "requestBody" : {
           "content" : {
-            "*/*" : {
+            "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/accesstokendto.UpdateAccessTokenStatusReq"
               }
@@ -3049,7 +3049,7 @@
         } ],
         "requestBody" : {
           "content" : {
-            "*/*" : {
+            "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/acmednsproviderdto.CreateAcmeDnsProviderReq"
               }
@@ -3228,7 +3228,7 @@
         } ],
         "requestBody" : {
           "content" : {
-            "*/*" : {
+            "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/acmednsproviderdto.UpdateAcmeDnsProviderReq"
               }
@@ -3297,7 +3297,7 @@
         } ],
         "requestBody" : {
           "content" : {
-            "*/*" : {
+            "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/acmednsproviderdto.UpdateAcmeDnsProviderStatusReq"
               }
@@ -3812,7 +3812,7 @@
         } ],
         "requestBody" : {
           "content" : {
-            "*/*" : {
+            "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/backuprepodto.CreateBackupRepoReq"
               }
@@ -3991,7 +3991,7 @@
         } ],
         "requestBody" : {
           "content" : {
-            "*/*" : {
+            "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/backuprepodto.UpdateBackupRepoReq"
               }
@@ -4117,7 +4117,7 @@
         } ],
         "requestBody" : {
           "content" : {
-            "*/*" : {
+            "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/backuprepodto.ChangeRepoPasswordReq"
               }
@@ -4186,7 +4186,7 @@
         } ],
         "requestBody" : {
           "content" : {
-            "*/*" : {
+            "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/backuprepodto.UpdateBackupRepoStatusReq"
               }
@@ -4880,7 +4880,7 @@
         } ],
         "requestBody" : {
           "content" : {
-            "*/*" : {
+            "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/basicauthdto.CreateBasicAuthReq"
               }
@@ -5059,7 +5059,7 @@
         } ],
         "requestBody" : {
           "content" : {
-            "*/*" : {
+            "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/basicauthdto.UpdateBasicAuthReq"
               }
@@ -5128,7 +5128,7 @@
         } ],
         "requestBody" : {
           "content" : {
-            "*/*" : {
+            "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/basicauthdto.UpdateBasicAuthStatusReq"
               }
@@ -5264,7 +5264,7 @@
         } ],
         "requestBody" : {
           "content" : {
-            "*/*" : {
+            "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/cloudstoragedto.CreateCloudStorageReq"
               }
@@ -5443,7 +5443,7 @@
         } ],
         "requestBody" : {
           "content" : {
-            "*/*" : {
+            "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/cloudstoragedto.UpdateCloudStorageReq"
               }
@@ -5512,7 +5512,7 @@
         } ],
         "requestBody" : {
           "content" : {
-            "*/*" : {
+            "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/cloudstoragedto.UpdateCloudStorageStatusReq"
               }
@@ -5648,7 +5648,7 @@
         } ],
         "requestBody" : {
           "content" : {
-            "*/*" : {
+            "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/networkdto.CreateNetworkReq"
               }
@@ -5827,7 +5827,7 @@
         } ],
         "requestBody" : {
           "content" : {
-            "*/*" : {
+            "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/networkdto.UpdateNetworkReq"
               }
@@ -5896,7 +5896,7 @@
         } ],
         "requestBody" : {
           "content" : {
-            "*/*" : {
+            "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/networkdto.UpdateNetworkStatusReq"
               }
@@ -6032,7 +6032,7 @@
         } ],
         "requestBody" : {
           "content" : {
-            "*/*" : {
+            "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/volumedto.CreateVolumeReq"
               }
@@ -6211,7 +6211,7 @@
         } ],
         "requestBody" : {
           "content" : {
-            "*/*" : {
+            "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/volumedto.UpdateVolumeReq"
               }
@@ -6280,7 +6280,7 @@
         } ],
         "requestBody" : {
           "content" : {
-            "*/*" : {
+            "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/volumedto.UpdateVolumeStatusReq"
               }
@@ -6416,7 +6416,7 @@
         } ],
         "requestBody" : {
           "content" : {
-            "*/*" : {
+            "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/commandpipedto.CreateCommandPipeReq"
               }
@@ -6477,7 +6477,7 @@
         } ],
         "requestBody" : {
           "content" : {
-            "*/*" : {
+            "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/commandpipedto.CreateCommandPipeFromTemplateReq"
               }
@@ -6656,7 +6656,7 @@
         } ],
         "requestBody" : {
           "content" : {
-            "*/*" : {
+            "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/commandpipedto.UpdateCommandPipeReq"
               }
@@ -6725,7 +6725,7 @@
         } ],
         "requestBody" : {
           "content" : {
-            "*/*" : {
+            "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/commandpipedto.UpdateCommandPipeStatusReq"
               }
@@ -6861,7 +6861,7 @@
         } ],
         "requestBody" : {
           "content" : {
-            "*/*" : {
+            "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/commandtemplatedto.CreateCommandTemplateReq"
               }
@@ -6922,7 +6922,7 @@
         } ],
         "requestBody" : {
           "content" : {
-            "*/*" : {
+            "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/commandtemplatedto.CreateCommandTemplateFromTemplateReq"
               }
@@ -7101,7 +7101,7 @@
         } ],
         "requestBody" : {
           "content" : {
-            "*/*" : {
+            "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/commandtemplatedto.UpdateCommandTemplateReq"
               }
@@ -7170,7 +7170,7 @@
         } ],
         "requestBody" : {
           "content" : {
-            "*/*" : {
+            "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/commandtemplatedto.UpdateCommandTemplateStatusReq"
               }
@@ -7285,7 +7285,7 @@
         } ],
         "requestBody" : {
           "content" : {
-            "*/*" : {
+            "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/configfiledto.CreateConfigFileReq"
               }
@@ -7464,7 +7464,7 @@
         } ],
         "requestBody" : {
           "content" : {
-            "*/*" : {
+            "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/configfiledto.UpdateConfigFileReq"
               }
@@ -7533,7 +7533,7 @@
         } ],
         "requestBody" : {
           "content" : {
-            "*/*" : {
+            "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/configfiledto.UpdateConfigFileStatusReq"
               }
@@ -7688,7 +7688,7 @@
         } ],
         "requestBody" : {
           "content" : {
-            "*/*" : {
+            "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/domainsettingsdto.UpdateDomainSettingsReq"
               }
@@ -7749,7 +7749,7 @@
         } ],
         "requestBody" : {
           "content" : {
-            "*/*" : {
+            "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/domainsettingsdto.UpdateDomainSettingsStatusReq"
               }
@@ -7885,7 +7885,7 @@
         } ],
         "requestBody" : {
           "content" : {
-            "*/*" : {
+            "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/emaildto.CreateEmailReq"
               }
@@ -8064,7 +8064,7 @@
         } ],
         "requestBody" : {
           "content" : {
-            "*/*" : {
+            "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/emaildto.UpdateEmailReq"
               }
@@ -8133,7 +8133,7 @@
         } ],
         "requestBody" : {
           "content" : {
-            "*/*" : {
+            "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/emaildto.UpdateEmailStatusReq"
               }
@@ -8241,7 +8241,7 @@
         } ],
         "requestBody" : {
           "content" : {
-            "*/*" : {
+            "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/projectsettingsdto.UpdateProjectEnvVarsReq"
               }
@@ -8302,7 +8302,7 @@
         } ],
         "requestBody" : {
           "content" : {
-            "*/*" : {
+            "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/projectsettingsdto.ComputeProjectEnvVarsReq"
               }
@@ -8875,7 +8875,7 @@
         } ],
         "requestBody" : {
           "content" : {
-            "*/*" : {
+            "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/githubappdto.CreateGithubAppReq"
               }
@@ -8936,7 +8936,7 @@
         } ],
         "requestBody" : {
           "content" : {
-            "*/*" : {
+            "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/githubappdto.BeginGithubAppManifestFlowReq"
               }
@@ -9115,7 +9115,7 @@
         } ],
         "requestBody" : {
           "content" : {
-            "*/*" : {
+            "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/githubappdto.UpdateGithubAppReq"
               }
@@ -9184,7 +9184,7 @@
         } ],
         "requestBody" : {
           "content" : {
-            "*/*" : {
+            "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/githubappdto.BeginReprovisionGithubAppReq"
               }
@@ -9390,7 +9390,7 @@
         } ],
         "requestBody" : {
           "content" : {
-            "*/*" : {
+            "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/githubappdto.UpdateGithubAppStatusReq"
               }
@@ -9526,7 +9526,7 @@
         } ],
         "requestBody" : {
           "content" : {
-            "*/*" : {
+            "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/imservicedto.CreateIMServiceReq"
               }
@@ -9705,7 +9705,7 @@
         } ],
         "requestBody" : {
           "content" : {
-            "*/*" : {
+            "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/imservicedto.UpdateIMServiceReq"
               }
@@ -9774,7 +9774,7 @@
         } ],
         "requestBody" : {
           "content" : {
-            "*/*" : {
+            "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/imservicedto.UpdateIMServiceStatusReq"
               }
@@ -9929,7 +9929,7 @@
         } ],
         "requestBody" : {
           "content" : {
-            "*/*" : {
+            "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/imagebuildsettingsdto.UpdateImageBuildSettingsReq"
               }
@@ -10039,7 +10039,7 @@
         } ],
         "requestBody" : {
           "content" : {
-            "*/*" : {
+            "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/imagebuildsettingsdto.ClearRepoCacheReq"
               }
@@ -10100,7 +10100,7 @@
         } ],
         "requestBody" : {
           "content" : {
-            "*/*" : {
+            "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/imagebuildsettingsdto.UpdateImageBuildSettingsStatusReq"
               }
@@ -10236,7 +10236,7 @@
         } ],
         "requestBody" : {
           "content" : {
-            "*/*" : {
+            "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/keyauthdto.CreateKeyAuthReq"
               }
@@ -10415,7 +10415,7 @@
         } ],
         "requestBody" : {
           "content" : {
-            "*/*" : {
+            "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/keyauthdto.UpdateKeyAuthReq"
               }
@@ -10484,7 +10484,7 @@
         } ],
         "requestBody" : {
           "content" : {
-            "*/*" : {
+            "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/keyauthdto.UpdateKeyAuthStatusReq"
               }
@@ -10620,7 +10620,7 @@
         } ],
         "requestBody" : {
           "content" : {
-            "*/*" : {
+            "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/notificationdto.CreateNotificationReq"
               }
@@ -10799,7 +10799,7 @@
         } ],
         "requestBody" : {
           "content" : {
-            "*/*" : {
+            "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/notificationdto.UpdateNotificationReq"
               }
@@ -10868,7 +10868,7 @@
         } ],
         "requestBody" : {
           "content" : {
-            "*/*" : {
+            "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/notificationdto.UpdateNotificationStatusReq"
               }
@@ -10929,7 +10929,7 @@
         } ],
         "requestBody" : {
           "content" : {
-            "*/*" : {
+            "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/projectdto.UpdateProjectPhotoReq"
               }
@@ -11065,7 +11065,7 @@
         } ],
         "requestBody" : {
           "content" : {
-            "*/*" : {
+            "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/registryauthdto.CreateRegistryAuthReq"
               }
@@ -11244,7 +11244,7 @@
         } ],
         "requestBody" : {
           "content" : {
-            "*/*" : {
+            "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/registryauthdto.UpdateRegistryAuthReq"
               }
@@ -11313,7 +11313,7 @@
         } ],
         "requestBody" : {
           "content" : {
-            "*/*" : {
+            "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/registryauthdto.UpdateRegistryAuthStatusReq"
               }
@@ -11449,7 +11449,7 @@
         } ],
         "requestBody" : {
           "content" : {
-            "*/*" : {
+            "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/repowebhookdto.CreateRepoWebhookReq"
               }
@@ -11628,7 +11628,7 @@
         } ],
         "requestBody" : {
           "content" : {
-            "*/*" : {
+            "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/repowebhookdto.UpdateRepoWebhookReq"
               }
@@ -11697,7 +11697,7 @@
         } ],
         "requestBody" : {
           "content" : {
-            "*/*" : {
+            "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/repowebhookdto.UpdateRepoWebhookStatusReq"
               }
@@ -11812,7 +11812,7 @@
         } ],
         "requestBody" : {
           "content" : {
-            "*/*" : {
+            "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/secretdto.CreateSecretReq"
               }
@@ -11991,7 +11991,7 @@
         } ],
         "requestBody" : {
           "content" : {
-            "*/*" : {
+            "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/secretdto.UpdateSecretReq"
               }
@@ -12060,7 +12060,7 @@
         } ],
         "requestBody" : {
           "content" : {
-            "*/*" : {
+            "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/secretdto.UpdateSecretStatusReq"
               }
@@ -12121,7 +12121,7 @@
         } ],
         "requestBody" : {
           "content" : {
-            "*/*" : {
+            "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/projectsettingsdto.ImportSettingsToProjectReq"
               }
@@ -12359,7 +12359,7 @@
         } ],
         "requestBody" : {
           "content" : {
-            "*/*" : {
+            "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/sshkeydto.CreateSSHKeyReq"
               }
@@ -12538,7 +12538,7 @@
         } ],
         "requestBody" : {
           "content" : {
-            "*/*" : {
+            "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/sshkeydto.UpdateSSHKeyReq"
               }
@@ -12607,7 +12607,7 @@
         } ],
         "requestBody" : {
           "content" : {
-            "*/*" : {
+            "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/sshkeydto.UpdateSSHKeyStatusReq"
               }
@@ -12743,7 +12743,7 @@
         } ],
         "requestBody" : {
           "content" : {
-            "*/*" : {
+            "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/sslcertdto.CreateSSLCertReq"
               }
@@ -12922,7 +12922,7 @@
         } ],
         "requestBody" : {
           "content" : {
-            "*/*" : {
+            "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/sslcertdto.UpdateSSLCertReq"
               }
@@ -13049,7 +13049,7 @@
         } ],
         "requestBody" : {
           "content" : {
-            "*/*" : {
+            "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/sslcertdto.RenewSSLCertReq"
               }
@@ -13118,7 +13118,7 @@
         } ],
         "requestBody" : {
           "content" : {
-            "*/*" : {
+            "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/sslcertdto.UpdateSSLCertStatusReq"
               }
@@ -13254,7 +13254,7 @@
         } ],
         "requestBody" : {
           "content" : {
-            "*/*" : {
+            "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/sslproviderdto.CreateSSLProviderReq"
               }
@@ -13433,7 +13433,7 @@
         } ],
         "requestBody" : {
           "content" : {
-            "*/*" : {
+            "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/sslproviderdto.UpdateSSLProviderReq"
               }
@@ -13502,7 +13502,7 @@
         } ],
         "requestBody" : {
           "content" : {
-            "*/*" : {
+            "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/sslproviderdto.UpdateSSLProviderStatusReq"
               }
@@ -13563,7 +13563,7 @@
         } ],
         "requestBody" : {
           "content" : {
-            "*/*" : {
+            "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/projectdto.UpdateProjectStatusReq"
               }
@@ -13624,7 +13624,7 @@
         } ],
         "requestBody" : {
           "content" : {
-            "*/*" : {
+            "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/projectsettingsdto.CreateProjectTagReq"
               }
@@ -13685,7 +13685,7 @@
         } ],
         "requestBody" : {
           "content" : {
-            "*/*" : {
+            "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/projectsettingsdto.DeleteProjectTagsReq"
               }
@@ -14287,7 +14287,7 @@
         } ],
         "requestBody" : {
           "content" : {
-            "*/*" : {
+            "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/projectsettingsdto.UpdateUserAccessesReq"
               }
@@ -14503,7 +14503,7 @@
         } ],
         "requestBody" : {
           "content" : {
-            "*/*" : {
+            "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/accesstokendto.CreateAccessTokenReq"
               }
@@ -14706,7 +14706,7 @@
         } ],
         "requestBody" : {
           "content" : {
-            "*/*" : {
+            "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/accesstokendto.UpdateAccessTokenReq"
               }
@@ -14783,7 +14783,7 @@
         } ],
         "requestBody" : {
           "content" : {
-            "*/*" : {
+            "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/accesstokendto.UpdateAccessTokenStatusReq"
               }
@@ -14935,7 +14935,7 @@
         } ],
         "requestBody" : {
           "content" : {
-            "*/*" : {
+            "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/acmednsproviderdto.CreateAcmeDnsProviderReq"
               }
@@ -15138,7 +15138,7 @@
         } ],
         "requestBody" : {
           "content" : {
-            "*/*" : {
+            "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/acmednsproviderdto.UpdateAcmeDnsProviderReq"
               }
@@ -15215,7 +15215,7 @@
         } ],
         "requestBody" : {
           "content" : {
-            "*/*" : {
+            "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/acmednsproviderdto.UpdateAcmeDnsProviderStatusReq"
               }
@@ -15402,7 +15402,7 @@
         } ],
         "requestBody" : {
           "content" : {
-            "*/*" : {
+            "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/appdto.CreateAppReq"
               }
@@ -15471,7 +15471,7 @@
         } ],
         "requestBody" : {
           "content" : {
-            "*/*" : {
+            "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/apptemplatedto.CreateAppFromTemplateReq"
               }
@@ -15550,7 +15550,7 @@
         } ],
         "requestBody" : {
           "content" : {
-            "*/*" : {
+            "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/apptemplatedto.PreflightAppFromTemplateReq"
               }
@@ -15629,7 +15629,7 @@
         } ],
         "requestBody" : {
           "content" : {
-            "*/*" : {
+            "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/appdto.CreateFunctionReq"
               }
@@ -15723,7 +15723,7 @@
         } ],
         "requestBody" : {
           "content" : {
-            "*/*" : {
+            "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/appdto.DeleteAppReq"
               }
@@ -15868,7 +15868,7 @@
         } ],
         "requestBody" : {
           "content" : {
-            "*/*" : {
+            "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/appdto.UpdateAppReq"
               }
@@ -16008,7 +16008,7 @@
         } ],
         "requestBody" : {
           "content" : {
-            "*/*" : {
+            "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/appsettingsdto.UpdateAppAutoscaleReq"
               }
@@ -16682,7 +16682,7 @@
         } ],
         "requestBody" : {
           "content" : {
-            "*/*" : {
+            "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/appsettingsdto.ExecuteAppCloneReq"
               }
@@ -16822,7 +16822,7 @@
         } ],
         "requestBody" : {
           "content" : {
-            "*/*" : {
+            "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/appsettingsdto.UpdateAppCloneSettingsReq"
               }
@@ -17035,7 +17035,7 @@
         } ],
         "requestBody" : {
           "content" : {
-            "*/*" : {
+            "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/configfiledto.CreateConfigFileReq"
               }
@@ -17262,7 +17262,7 @@
         } ],
         "requestBody" : {
           "content" : {
-            "*/*" : {
+            "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/configfiledto.UpdateConfigFileReq"
               }
@@ -17493,7 +17493,7 @@
         } ],
         "requestBody" : {
           "content" : {
-            "*/*" : {
+            "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/configfiledto.UpdateConfigFileStatusReq"
               }
@@ -17640,7 +17640,7 @@
         } ],
         "requestBody" : {
           "content" : {
-            "*/*" : {
+            "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/appsettingsdto.UpdateAppContainerSettingsReq"
               }
@@ -17717,7 +17717,7 @@
         } ],
         "requestBody" : {
           "content" : {
-            "*/*" : {
+            "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/appcontainerdto.CheckAppContainerPortReq"
               }
@@ -18090,7 +18090,7 @@
         } ],
         "requestBody" : {
           "content" : {
-            "*/*" : {
+            "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/filedto.CreateFileReq"
               }
@@ -18491,7 +18491,7 @@
         } ],
         "requestBody" : {
           "content" : {
-            "*/*" : {
+            "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/appactiondto.DeployAppReq"
               }
@@ -18631,7 +18631,7 @@
         } ],
         "requestBody" : {
           "content" : {
-            "*/*" : {
+            "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/appsettingsdto.UpdateAppDeploymentSettingsReq"
               }
@@ -18962,7 +18962,7 @@
         } ],
         "requestBody" : {
           "content" : {
-            "*/*" : {
+            "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/appdeploymentdto.CancelDeploymentReq"
               }
@@ -19291,7 +19291,7 @@
         } ],
         "requestBody" : {
           "content" : {
-            "*/*" : {
+            "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/appsettingsdto.UpdateAppDockerAPISettingsReq"
               }
@@ -19431,7 +19431,7 @@
         } ],
         "requestBody" : {
           "content" : {
-            "*/*" : {
+            "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/appsettingsdto.UpdateAppEnvVarsReq"
               }
@@ -19508,7 +19508,7 @@
         } ],
         "requestBody" : {
           "content" : {
-            "*/*" : {
+            "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/appsettingsdto.ComputeAppEnvVarsReq"
               }
@@ -19858,7 +19858,7 @@
         } ],
         "requestBody" : {
           "content" : {
-            "*/*" : {
+            "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/appfeaturesettingsdto.UpdateAppFeatureSettingsReq"
               }
@@ -20007,7 +20007,7 @@
         } ],
         "requestBody" : {
           "content" : {
-            "*/*" : {
+            "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/appdto.TestRunFunctionReq"
               }
@@ -20236,7 +20236,7 @@
         } ],
         "requestBody" : {
           "content" : {
-            "*/*" : {
+            "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/appsettingsdto.UpdateAppKindSettingsReq"
               }
@@ -20669,7 +20669,7 @@
         } ],
         "requestBody" : {
           "content" : {
-            "*/*" : {
+            "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/appsettingsdto.UpdateAppNetworkSettingsReq"
               }
@@ -20837,7 +20837,7 @@
         } ],
         "requestBody" : {
           "content" : {
-            "*/*" : {
+            "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/periodicjobdto.CreatePeriodicJobReq"
               }
@@ -21064,7 +21064,7 @@
         } ],
         "requestBody" : {
           "content" : {
-            "*/*" : {
+            "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/periodicjobdto.UpdatePeriodicJobReq"
               }
@@ -21149,7 +21149,7 @@
         } ],
         "requestBody" : {
           "content" : {
-            "*/*" : {
+            "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/periodicjobdto.UpdatePeriodicJobStatusReq"
               }
@@ -21226,7 +21226,7 @@
         } ],
         "requestBody" : {
           "content" : {
-            "*/*" : {
+            "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/appdto.UpdateAppPhotoReq"
               }
@@ -21303,7 +21303,7 @@
         } ],
         "requestBody" : {
           "content" : {
-            "*/*" : {
+            "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/appdto.DetectAppPhotoReq"
               }
@@ -21506,7 +21506,7 @@
         } ],
         "requestBody" : {
           "content" : {
-            "*/*" : {
+            "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/apppreviewdto.CreatePreviewReq"
               }
@@ -21583,7 +21583,7 @@
         } ],
         "requestBody" : {
           "content" : {
-            "*/*" : {
+            "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/apppreviewdto.PrepareCreatePreviewReq"
               }
@@ -21795,7 +21795,7 @@
         } ],
         "requestBody" : {
           "content" : {
-            "*/*" : {
+            "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/appsettingsdto.UpdateAppResourceSettingsReq"
               }
@@ -21872,7 +21872,7 @@
         } ],
         "requestBody" : {
           "content" : {
-            "*/*" : {
+            "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/appactiondto.RestartAppReq"
               }
@@ -22084,7 +22084,7 @@
         } ],
         "requestBody" : {
           "content" : {
-            "*/*" : {
+            "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/appsettingsdto.UpdateAppRoutingSettingsReq"
               }
@@ -22161,7 +22161,7 @@
         } ],
         "requestBody" : {
           "content" : {
-            "*/*" : {
+            "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/appactiondto.SetAppRunningReq"
               }
@@ -22329,7 +22329,7 @@
         } ],
         "requestBody" : {
           "content" : {
-            "*/*" : {
+            "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/schedjobdto.CreateSchedJobReq"
               }
@@ -22556,7 +22556,7 @@
         } ],
         "requestBody" : {
           "content" : {
-            "*/*" : {
+            "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/schedjobdto.UpdateSchedJobReq"
               }
@@ -22641,7 +22641,7 @@
         } ],
         "requestBody" : {
           "content" : {
-            "*/*" : {
+            "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/schedjobdto.ExecuteSchedJobReq"
               }
@@ -22726,7 +22726,7 @@
         } ],
         "requestBody" : {
           "content" : {
-            "*/*" : {
+            "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/schedjobdto.UpdateSchedJobStatusReq"
               }
@@ -22866,7 +22866,7 @@
         } ],
         "requestBody" : {
           "content" : {
-            "*/*" : {
+            "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/secretdto.CreateSecretReq"
               }
@@ -23093,7 +23093,7 @@
         } ],
         "requestBody" : {
           "content" : {
-            "*/*" : {
+            "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/secretdto.UpdateSecretReq"
               }
@@ -23324,7 +23324,7 @@
         } ],
         "requestBody" : {
           "content" : {
-            "*/*" : {
+            "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/secretdto.UpdateSecretStatusReq"
               }
@@ -23464,7 +23464,7 @@
         } ],
         "requestBody" : {
           "content" : {
-            "*/*" : {
+            "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/appsettingsdto.UpdateAppServiceSettingsReq"
               }
@@ -23676,7 +23676,7 @@
         } ],
         "requestBody" : {
           "content" : {
-            "*/*" : {
+            "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/settingmountdto.CreateSettingMountReq"
               }
@@ -23968,7 +23968,7 @@
         } ],
         "requestBody" : {
           "content" : {
-            "*/*" : {
+            "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/settingmountdto.UpdateSettingMountReq"
               }
@@ -24053,7 +24053,7 @@
         } ],
         "requestBody" : {
           "content" : {
-            "*/*" : {
+            "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/settingmountdto.UpdateSettingMountStatusReq"
               }
@@ -24168,7 +24168,7 @@
         } ],
         "requestBody" : {
           "content" : {
-            "*/*" : {
+            "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/appdto.UpdateAppStatusReq"
               }
@@ -24308,7 +24308,7 @@
         } ],
         "requestBody" : {
           "content" : {
-            "*/*" : {
+            "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/appsettingsdto.UpdateAppStorageSettingsReq"
               }
@@ -24385,7 +24385,7 @@
         } ],
         "requestBody" : {
           "content" : {
-            "*/*" : {
+            "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/appsettingsdto.PreflightAppStorageSettingsReq"
               }
@@ -24462,7 +24462,7 @@
         } ],
         "requestBody" : {
           "content" : {
-            "*/*" : {
+            "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/appsettingsdto.ResetAppStoragePermissionsReq"
               }
@@ -24539,7 +24539,7 @@
         } ],
         "requestBody" : {
           "content" : {
-            "*/*" : {
+            "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/appsettingsdto.CreateAppTagReq"
               }
@@ -24616,7 +24616,7 @@
         } ],
         "requestBody" : {
           "content" : {
-            "*/*" : {
+            "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/appsettingsdto.DeleteAppTagsReq"
               }
@@ -25891,7 +25891,7 @@
         } ],
         "requestBody" : {
           "content" : {
-            "*/*" : {
+            "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/backuprepodto.CreateBackupRepoReq"
               }
@@ -26094,7 +26094,7 @@
         } ],
         "requestBody" : {
           "content" : {
-            "*/*" : {
+            "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/backuprepodto.UpdateBackupRepoReq"
               }
@@ -26236,7 +26236,7 @@
         } ],
         "requestBody" : {
           "content" : {
-            "*/*" : {
+            "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/backuprepodto.ChangeRepoPasswordReq"
               }
@@ -26313,7 +26313,7 @@
         } ],
         "requestBody" : {
           "content" : {
-            "*/*" : {
+            "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/backuprepodto.UpdateBackupRepoStatusReq"
               }
@@ -27079,7 +27079,7 @@
         } ],
         "requestBody" : {
           "content" : {
-            "*/*" : {
+            "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/basicauthdto.CreateBasicAuthReq"
               }
@@ -27282,7 +27282,7 @@
         } ],
         "requestBody" : {
           "content" : {
-            "*/*" : {
+            "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/basicauthdto.UpdateBasicAuthReq"
               }
@@ -27359,7 +27359,7 @@
         } ],
         "requestBody" : {
           "content" : {
-            "*/*" : {
+            "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/basicauthdto.UpdateBasicAuthStatusReq"
               }
@@ -27511,7 +27511,7 @@
         } ],
         "requestBody" : {
           "content" : {
-            "*/*" : {
+            "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/cloudstoragedto.CreateCloudStorageReq"
               }
@@ -27714,7 +27714,7 @@
         } ],
         "requestBody" : {
           "content" : {
-            "*/*" : {
+            "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/cloudstoragedto.UpdateCloudStorageReq"
               }
@@ -27791,7 +27791,7 @@
         } ],
         "requestBody" : {
           "content" : {
-            "*/*" : {
+            "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/cloudstoragedto.UpdateCloudStorageStatusReq"
               }
@@ -27943,7 +27943,7 @@
         } ],
         "requestBody" : {
           "content" : {
-            "*/*" : {
+            "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/networkdto.CreateNetworkReq"
               }
@@ -28146,7 +28146,7 @@
         } ],
         "requestBody" : {
           "content" : {
-            "*/*" : {
+            "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/networkdto.UpdateNetworkReq"
               }
@@ -28223,7 +28223,7 @@
         } ],
         "requestBody" : {
           "content" : {
-            "*/*" : {
+            "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/networkdto.UpdateNetworkStatusReq"
               }
@@ -28375,7 +28375,7 @@
         } ],
         "requestBody" : {
           "content" : {
-            "*/*" : {
+            "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/volumedto.CreateVolumeReq"
               }
@@ -28578,7 +28578,7 @@
         } ],
         "requestBody" : {
           "content" : {
-            "*/*" : {
+            "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/volumedto.UpdateVolumeReq"
               }
@@ -28655,7 +28655,7 @@
         } ],
         "requestBody" : {
           "content" : {
-            "*/*" : {
+            "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/volumedto.UpdateVolumeStatusReq"
               }
@@ -28807,7 +28807,7 @@
         } ],
         "requestBody" : {
           "content" : {
-            "*/*" : {
+            "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/commandpipedto.CreateCommandPipeReq"
               }
@@ -28876,7 +28876,7 @@
         } ],
         "requestBody" : {
           "content" : {
-            "*/*" : {
+            "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/commandpipedto.CreateCommandPipeFromTemplateReq"
               }
@@ -29079,7 +29079,7 @@
         } ],
         "requestBody" : {
           "content" : {
-            "*/*" : {
+            "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/commandpipedto.UpdateCommandPipeReq"
               }
@@ -29156,7 +29156,7 @@
         } ],
         "requestBody" : {
           "content" : {
-            "*/*" : {
+            "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/commandpipedto.UpdateCommandPipeStatusReq"
               }
@@ -29308,7 +29308,7 @@
         } ],
         "requestBody" : {
           "content" : {
-            "*/*" : {
+            "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/commandtemplatedto.CreateCommandTemplateReq"
               }
@@ -29377,7 +29377,7 @@
         } ],
         "requestBody" : {
           "content" : {
-            "*/*" : {
+            "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/commandtemplatedto.CreateCommandTemplateFromTemplateReq"
               }
@@ -29580,7 +29580,7 @@
         } ],
         "requestBody" : {
           "content" : {
-            "*/*" : {
+            "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/commandtemplatedto.UpdateCommandTemplateReq"
               }
@@ -29657,7 +29657,7 @@
         } ],
         "requestBody" : {
           "content" : {
-            "*/*" : {
+            "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/commandtemplatedto.UpdateCommandTemplateStatusReq"
               }
@@ -29788,7 +29788,7 @@
         } ],
         "requestBody" : {
           "content" : {
-            "*/*" : {
+            "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/configfiledto.CreateConfigFileReq"
               }
@@ -29991,7 +29991,7 @@
         } ],
         "requestBody" : {
           "content" : {
-            "*/*" : {
+            "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/configfiledto.UpdateConfigFileReq"
               }
@@ -30068,7 +30068,7 @@
         } ],
         "requestBody" : {
           "content" : {
-            "*/*" : {
+            "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/configfiledto.UpdateConfigFileStatusReq"
               }
@@ -30220,7 +30220,7 @@
         } ],
         "requestBody" : {
           "content" : {
-            "*/*" : {
+            "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/emaildto.CreateEmailReq"
               }
@@ -30423,7 +30423,7 @@
         } ],
         "requestBody" : {
           "content" : {
-            "*/*" : {
+            "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/emaildto.UpdateEmailReq"
               }
@@ -30500,7 +30500,7 @@
         } ],
         "requestBody" : {
           "content" : {
-            "*/*" : {
+            "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/emaildto.UpdateEmailStatusReq"
               }
@@ -30624,7 +30624,7 @@
         } ],
         "requestBody" : {
           "content" : {
-            "*/*" : {
+            "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/projectenvsettingsdto.UpdateProjectEnvEnvVarsReq"
               }
@@ -30693,7 +30693,7 @@
         } ],
         "requestBody" : {
           "content" : {
-            "*/*" : {
+            "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/projectenvsettingsdto.ComputeProjectEnvEnvVarsReq"
               }
@@ -31384,7 +31384,7 @@
         } ],
         "requestBody" : {
           "content" : {
-            "*/*" : {
+            "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/imservicedto.CreateIMServiceReq"
               }
@@ -31587,7 +31587,7 @@
         } ],
         "requestBody" : {
           "content" : {
-            "*/*" : {
+            "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/imservicedto.UpdateIMServiceReq"
               }
@@ -31664,7 +31664,7 @@
         } ],
         "requestBody" : {
           "content" : {
-            "*/*" : {
+            "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/imservicedto.UpdateIMServiceStatusReq"
               }
@@ -31816,7 +31816,7 @@
         } ],
         "requestBody" : {
           "content" : {
-            "*/*" : {
+            "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/keyauthdto.CreateKeyAuthReq"
               }
@@ -32019,7 +32019,7 @@
         } ],
         "requestBody" : {
           "content" : {
-            "*/*" : {
+            "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/keyauthdto.UpdateKeyAuthReq"
               }
@@ -32096,7 +32096,7 @@
         } ],
         "requestBody" : {
           "content" : {
-            "*/*" : {
+            "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/keyauthdto.UpdateKeyAuthStatusReq"
               }
@@ -32248,7 +32248,7 @@
         } ],
         "requestBody" : {
           "content" : {
-            "*/*" : {
+            "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/notificationdto.CreateNotificationReq"
               }
@@ -32451,7 +32451,7 @@
         } ],
         "requestBody" : {
           "content" : {
-            "*/*" : {
+            "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/notificationdto.UpdateNotificationReq"
               }
@@ -32528,7 +32528,7 @@
         } ],
         "requestBody" : {
           "content" : {
-            "*/*" : {
+            "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/notificationdto.UpdateNotificationStatusReq"
               }
@@ -32680,7 +32680,7 @@
         } ],
         "requestBody" : {
           "content" : {
-            "*/*" : {
+            "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/registryauthdto.CreateRegistryAuthReq"
               }
@@ -32883,7 +32883,7 @@
         } ],
         "requestBody" : {
           "content" : {
-            "*/*" : {
+            "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/registryauthdto.UpdateRegistryAuthReq"
               }
@@ -32960,7 +32960,7 @@
         } ],
         "requestBody" : {
           "content" : {
-            "*/*" : {
+            "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/registryauthdto.UpdateRegistryAuthStatusReq"
               }
@@ -33290,7 +33290,7 @@
         } ],
         "requestBody" : {
           "content" : {
-            "*/*" : {
+            "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/schedjobdto.CreateSchedJobReq"
               }
@@ -33493,7 +33493,7 @@
         } ],
         "requestBody" : {
           "content" : {
-            "*/*" : {
+            "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/schedjobdto.UpdateSchedJobReq"
               }
@@ -33570,7 +33570,7 @@
         } ],
         "requestBody" : {
           "content" : {
-            "*/*" : {
+            "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/schedjobdto.ExecuteSchedJobReq"
               }
@@ -33647,7 +33647,7 @@
         } ],
         "requestBody" : {
           "content" : {
-            "*/*" : {
+            "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/schedjobdto.UpdateSchedJobStatusReq"
               }
@@ -33778,7 +33778,7 @@
         } ],
         "requestBody" : {
           "content" : {
-            "*/*" : {
+            "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/secretdto.CreateSecretReq"
               }
@@ -33981,7 +33981,7 @@
         } ],
         "requestBody" : {
           "content" : {
-            "*/*" : {
+            "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/secretdto.UpdateSecretReq"
               }
@@ -34058,7 +34058,7 @@
         } ],
         "requestBody" : {
           "content" : {
-            "*/*" : {
+            "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/secretdto.UpdateSecretStatusReq"
               }
@@ -34127,7 +34127,7 @@
         } ],
         "requestBody" : {
           "content" : {
-            "*/*" : {
+            "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/projectenvsettingsdto.ImportSettingsToProjectEnvReq"
               }
@@ -34405,7 +34405,7 @@
         } ],
         "requestBody" : {
           "content" : {
-            "*/*" : {
+            "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/sshkeydto.CreateSSHKeyReq"
               }
@@ -34608,7 +34608,7 @@
         } ],
         "requestBody" : {
           "content" : {
-            "*/*" : {
+            "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/sshkeydto.UpdateSSHKeyReq"
               }
@@ -34685,7 +34685,7 @@
         } ],
         "requestBody" : {
           "content" : {
-            "*/*" : {
+            "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/sshkeydto.UpdateSSHKeyStatusReq"
               }
@@ -34837,7 +34837,7 @@
         } ],
         "requestBody" : {
           "content" : {
-            "*/*" : {
+            "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/sslcertdto.CreateSSLCertReq"
               }
@@ -35040,7 +35040,7 @@
         } ],
         "requestBody" : {
           "content" : {
-            "*/*" : {
+            "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/sslcertdto.UpdateSSLCertReq"
               }
@@ -35183,7 +35183,7 @@
         } ],
         "requestBody" : {
           "content" : {
-            "*/*" : {
+            "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/sslcertdto.RenewSSLCertReq"
               }
@@ -35260,7 +35260,7 @@
         } ],
         "requestBody" : {
           "content" : {
-            "*/*" : {
+            "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/sslcertdto.UpdateSSLCertStatusReq"
               }
@@ -35412,7 +35412,7 @@
         } ],
         "requestBody" : {
           "content" : {
-            "*/*" : {
+            "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/sslproviderdto.CreateSSLProviderReq"
               }
@@ -35615,7 +35615,7 @@
         } ],
         "requestBody" : {
           "content" : {
-            "*/*" : {
+            "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/sslproviderdto.UpdateSSLProviderReq"
               }
@@ -35692,7 +35692,7 @@
         } ],
         "requestBody" : {
           "content" : {
-            "*/*" : {
+            "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/sslproviderdto.UpdateSSLProviderStatusReq"
               }
@@ -35761,7 +35761,7 @@
         } ],
         "requestBody" : {
           "content" : {
-            "*/*" : {
+            "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/projectenvdto.UpdateProjectEnvStatusReq"
               }
@@ -36598,7 +36598,7 @@
         "operationId" : "createSettingAccessToken",
         "requestBody" : {
           "content" : {
-            "*/*" : {
+            "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/accesstokendto.CreateAccessTokenReq"
               }
@@ -36650,7 +36650,7 @@
         "operationId" : "testAccessTokenConn",
         "requestBody" : {
           "content" : {
-            "*/*" : {
+            "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/accesstokendto.TestAccessTokenConnReq"
               }
@@ -36805,7 +36805,7 @@
         } ],
         "requestBody" : {
           "content" : {
-            "*/*" : {
+            "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/accesstokendto.UpdateAccessTokenReq"
               }
@@ -36866,7 +36866,7 @@
         } ],
         "requestBody" : {
           "content" : {
-            "*/*" : {
+            "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/accesstokendto.UpdateAccessTokenStatusReq"
               }
@@ -36985,7 +36985,7 @@
         "operationId" : "createSettingAcmeDnsProvider",
         "requestBody" : {
           "content" : {
-            "*/*" : {
+            "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/acmednsproviderdto.CreateAcmeDnsProviderReq"
               }
@@ -37037,7 +37037,7 @@
         "operationId" : "testAcmeDnsProviderAccess",
         "requestBody" : {
           "content" : {
-            "*/*" : {
+            "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/acmednsproviderdto.TestProviderAccessReq"
               }
@@ -37192,7 +37192,7 @@
         } ],
         "requestBody" : {
           "content" : {
-            "*/*" : {
+            "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/acmednsproviderdto.UpdateAcmeDnsProviderReq"
               }
@@ -37253,7 +37253,7 @@
         } ],
         "requestBody" : {
           "content" : {
-            "*/*" : {
+            "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/acmednsproviderdto.UpdateAcmeDnsProviderStatusReq"
               }
@@ -37381,7 +37381,7 @@
         "operationId" : "updateSettingAppPlacementSettings",
         "requestBody" : {
           "content" : {
-            "*/*" : {
+            "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/appplacementsettingsdto.UpdateAppPlacementSettingsReq"
               }
@@ -37433,7 +37433,7 @@
         "operationId" : "updateSettingAppPlacementSettingsStatus",
         "requestBody" : {
           "content" : {
-            "*/*" : {
+            "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/appplacementsettingsdto.UpdateAppPlacementSettingsStatusReq"
               }
@@ -37552,7 +37552,7 @@
         "operationId" : "createSettingBackupRepo",
         "requestBody" : {
           "content" : {
-            "*/*" : {
+            "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/backuprepodto.CreateBackupRepoReq"
               }
@@ -37707,7 +37707,7 @@
         } ],
         "requestBody" : {
           "content" : {
-            "*/*" : {
+            "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/backuprepodto.UpdateBackupRepoReq"
               }
@@ -37817,7 +37817,7 @@
         } ],
         "requestBody" : {
           "content" : {
-            "*/*" : {
+            "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/backuprepodto.ChangeRepoPasswordReq"
               }
@@ -37878,7 +37878,7 @@
         } ],
         "requestBody" : {
           "content" : {
-            "*/*" : {
+            "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/backuprepodto.UpdateBackupRepoStatusReq"
               }
@@ -38499,7 +38499,7 @@
         "operationId" : "createSettingBasicAuth",
         "requestBody" : {
           "content" : {
-            "*/*" : {
+            "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/basicauthdto.CreateBasicAuthReq"
               }
@@ -38654,7 +38654,7 @@
         } ],
         "requestBody" : {
           "content" : {
-            "*/*" : {
+            "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/basicauthdto.UpdateBasicAuthReq"
               }
@@ -38715,7 +38715,7 @@
         } ],
         "requestBody" : {
           "content" : {
-            "*/*" : {
+            "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/basicauthdto.UpdateBasicAuthStatusReq"
               }
@@ -38834,7 +38834,7 @@
         "operationId" : "createSettingCloudStorage",
         "requestBody" : {
           "content" : {
-            "*/*" : {
+            "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/cloudstoragedto.CreateCloudStorageReq"
               }
@@ -38886,7 +38886,7 @@
         "operationId" : "testCloudStorageConn",
         "requestBody" : {
           "content" : {
-            "*/*" : {
+            "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/cloudstoragedto.TestCloudStorageConnReq"
               }
@@ -39041,7 +39041,7 @@
         } ],
         "requestBody" : {
           "content" : {
-            "*/*" : {
+            "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/cloudstoragedto.UpdateCloudStorageReq"
               }
@@ -39102,7 +39102,7 @@
         } ],
         "requestBody" : {
           "content" : {
-            "*/*" : {
+            "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/cloudstoragedto.UpdateCloudStorageStatusReq"
               }
@@ -39230,7 +39230,7 @@
         "operationId" : "updateSettingDomainSettings",
         "requestBody" : {
           "content" : {
-            "*/*" : {
+            "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/domainsettingsdto.UpdateDomainSettingsReq"
               }
@@ -39282,7 +39282,7 @@
         "operationId" : "updateSettingDomainSettingsStatus",
         "requestBody" : {
           "content" : {
-            "*/*" : {
+            "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/domainsettingsdto.UpdateDomainSettingsStatusReq"
               }
@@ -39401,7 +39401,7 @@
         "operationId" : "createSettingEmail",
         "requestBody" : {
           "content" : {
-            "*/*" : {
+            "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/emaildto.CreateEmailReq"
               }
@@ -39453,7 +39453,7 @@
         "operationId" : "testSendMail",
         "requestBody" : {
           "content" : {
-            "*/*" : {
+            "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/emaildto.TestSendMailReq"
               }
@@ -39608,7 +39608,7 @@
         } ],
         "requestBody" : {
           "content" : {
-            "*/*" : {
+            "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/emaildto.UpdateEmailReq"
               }
@@ -39669,7 +39669,7 @@
         } ],
         "requestBody" : {
           "content" : {
-            "*/*" : {
+            "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/emaildto.UpdateEmailStatusReq"
               }
@@ -39871,7 +39871,7 @@
         "operationId" : "createSettingGithubApp",
         "requestBody" : {
           "content" : {
-            "*/*" : {
+            "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/githubappdto.CreateGithubAppReq"
               }
@@ -39938,7 +39938,7 @@
         } ],
         "requestBody" : {
           "content" : {
-            "*/*" : {
+            "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/githubappdto.ListAppInstallationReq"
               }
@@ -39990,7 +39990,7 @@
         "operationId" : "beginGithubAppManifestFlow",
         "requestBody" : {
           "content" : {
-            "*/*" : {
+            "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/githubappdto.BeginGithubAppManifestFlowReq"
               }
@@ -40042,7 +40042,7 @@
         "operationId" : "testGithubAppConn",
         "requestBody" : {
           "content" : {
-            "*/*" : {
+            "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/githubappdto.TestGithubAppConnReq"
               }
@@ -40197,7 +40197,7 @@
         } ],
         "requestBody" : {
           "content" : {
-            "*/*" : {
+            "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/githubappdto.UpdateGithubAppReq"
               }
@@ -40258,7 +40258,7 @@
         } ],
         "requestBody" : {
           "content" : {
-            "*/*" : {
+            "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/githubappdto.BeginReprovisionGithubAppReq"
               }
@@ -40440,7 +40440,7 @@
         } ],
         "requestBody" : {
           "content" : {
-            "*/*" : {
+            "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/githubappdto.UpdateGithubAppStatusReq"
               }
@@ -40559,7 +40559,7 @@
         "operationId" : "createSettingIMService",
         "requestBody" : {
           "content" : {
-            "*/*" : {
+            "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/imservicedto.CreateIMServiceReq"
               }
@@ -40611,7 +40611,7 @@
         "operationId" : "testSendIMServiceMsg",
         "requestBody" : {
           "content" : {
-            "*/*" : {
+            "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/imservicedto.TestSendInstantMsgReq"
               }
@@ -40766,7 +40766,7 @@
         } ],
         "requestBody" : {
           "content" : {
-            "*/*" : {
+            "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/imservicedto.UpdateIMServiceReq"
               }
@@ -40827,7 +40827,7 @@
         } ],
         "requestBody" : {
           "content" : {
-            "*/*" : {
+            "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/imservicedto.UpdateIMServiceStatusReq"
               }
@@ -40955,7 +40955,7 @@
         "operationId" : "updateSettingImageBuildSettings",
         "requestBody" : {
           "content" : {
-            "*/*" : {
+            "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/imagebuildsettingsdto.UpdateImageBuildSettingsReq"
               }
@@ -41047,7 +41047,7 @@
         "operationId" : "clearSettingRepoCache",
         "requestBody" : {
           "content" : {
-            "*/*" : {
+            "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/imagebuildsettingsdto.ClearRepoCacheReq"
               }
@@ -41099,7 +41099,7 @@
         "operationId" : "updateSettingImageBuildSettingsStatus",
         "requestBody" : {
           "content" : {
-            "*/*" : {
+            "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/imagebuildsettingsdto.UpdateImageBuildSettingsStatusReq"
               }
@@ -41218,7 +41218,7 @@
         "operationId" : "createSettingKeyAuth",
         "requestBody" : {
           "content" : {
-            "*/*" : {
+            "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/keyauthdto.CreateKeyAuthReq"
               }
@@ -41373,7 +41373,7 @@
         } ],
         "requestBody" : {
           "content" : {
-            "*/*" : {
+            "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/keyauthdto.UpdateKeyAuthReq"
               }
@@ -41434,7 +41434,7 @@
         } ],
         "requestBody" : {
           "content" : {
-            "*/*" : {
+            "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/keyauthdto.UpdateKeyAuthStatusReq"
               }
@@ -41553,7 +41553,7 @@
         "operationId" : "createSettingNotification",
         "requestBody" : {
           "content" : {
-            "*/*" : {
+            "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/notificationdto.CreateNotificationReq"
               }
@@ -41708,7 +41708,7 @@
         } ],
         "requestBody" : {
           "content" : {
-            "*/*" : {
+            "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/notificationdto.UpdateNotificationReq"
               }
@@ -41769,7 +41769,7 @@
         } ],
         "requestBody" : {
           "content" : {
-            "*/*" : {
+            "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/notificationdto.UpdateNotificationStatusReq"
               }
@@ -41888,7 +41888,7 @@
         "operationId" : "createSettingOAuth",
         "requestBody" : {
           "content" : {
-            "*/*" : {
+            "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/oauthdto.CreateOAuthReq"
               }
@@ -42043,7 +42043,7 @@
         } ],
         "requestBody" : {
           "content" : {
-            "*/*" : {
+            "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/oauthdto.UpdateOAuthReq"
               }
@@ -42104,7 +42104,7 @@
         } ],
         "requestBody" : {
           "content" : {
-            "*/*" : {
+            "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/oauthdto.UpdateOAuthStatusReq"
               }
@@ -42223,7 +42223,7 @@
         "operationId" : "createSettingRegistryAuth",
         "requestBody" : {
           "content" : {
-            "*/*" : {
+            "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/registryauthdto.CreateRegistryAuthReq"
               }
@@ -42275,7 +42275,7 @@
         "operationId" : "testRegistryAuthConn",
         "requestBody" : {
           "content" : {
-            "*/*" : {
+            "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/registryauthdto.TestRegistryAuthConnReq"
               }
@@ -42430,7 +42430,7 @@
         } ],
         "requestBody" : {
           "content" : {
-            "*/*" : {
+            "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/registryauthdto.UpdateRegistryAuthReq"
               }
@@ -42491,7 +42491,7 @@
         } ],
         "requestBody" : {
           "content" : {
-            "*/*" : {
+            "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/registryauthdto.UpdateRegistryAuthStatusReq"
               }
@@ -42610,7 +42610,7 @@
         "operationId" : "createSettingRepoWebhook",
         "requestBody" : {
           "content" : {
-            "*/*" : {
+            "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/repowebhookdto.CreateRepoWebhookReq"
               }
@@ -42765,7 +42765,7 @@
         } ],
         "requestBody" : {
           "content" : {
-            "*/*" : {
+            "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/repowebhookdto.UpdateRepoWebhookReq"
               }
@@ -42826,7 +42826,7 @@
         } ],
         "requestBody" : {
           "content" : {
-            "*/*" : {
+            "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/repowebhookdto.UpdateRepoWebhookStatusReq"
               }
@@ -42945,7 +42945,7 @@
         "operationId" : "createSettingSchedJob",
         "requestBody" : {
           "content" : {
-            "*/*" : {
+            "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/schedjobdto.CreateSchedJobReq"
               }
@@ -42997,7 +42997,7 @@
         "operationId" : "schedJobCalcNextRuns",
         "requestBody" : {
           "content" : {
-            "*/*" : {
+            "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/schedjobdto.CalcNextRunsReq"
               }
@@ -43152,7 +43152,7 @@
         } ],
         "requestBody" : {
           "content" : {
-            "*/*" : {
+            "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/schedjobdto.UpdateSchedJobReq"
               }
@@ -43213,7 +43213,7 @@
         } ],
         "requestBody" : {
           "content" : {
-            "*/*" : {
+            "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/schedjobdto.UpdateSchedJobStatusReq"
               }
@@ -43332,7 +43332,7 @@
         "operationId" : "createSettingSSHKey",
         "requestBody" : {
           "content" : {
-            "*/*" : {
+            "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/sshkeydto.CreateSSHKeyReq"
               }
@@ -43384,7 +43384,7 @@
         "operationId" : "generateSSHKey",
         "requestBody" : {
           "content" : {
-            "*/*" : {
+            "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/sshkeydto.GenerateSSHKeyReq"
               }
@@ -43539,7 +43539,7 @@
         } ],
         "requestBody" : {
           "content" : {
-            "*/*" : {
+            "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/sshkeydto.UpdateSSHKeyReq"
               }
@@ -43600,7 +43600,7 @@
         } ],
         "requestBody" : {
           "content" : {
-            "*/*" : {
+            "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/sshkeydto.UpdateSSHKeyStatusReq"
               }
@@ -43719,7 +43719,7 @@
         "operationId" : "createSettingSSLCert",
         "requestBody" : {
           "content" : {
-            "*/*" : {
+            "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/sslcertdto.CreateSSLCertReq"
               }
@@ -43874,7 +43874,7 @@
         } ],
         "requestBody" : {
           "content" : {
-            "*/*" : {
+            "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/sslcertdto.UpdateSSLCertReq"
               }
@@ -43985,7 +43985,7 @@
         } ],
         "requestBody" : {
           "content" : {
-            "*/*" : {
+            "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/sslcertdto.RenewSSLCertReq"
               }
@@ -44046,7 +44046,7 @@
         } ],
         "requestBody" : {
           "content" : {
-            "*/*" : {
+            "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/sslcertdto.UpdateSSLCertStatusReq"
               }
@@ -44165,7 +44165,7 @@
         "operationId" : "createSettingSSLProvider",
         "requestBody" : {
           "content" : {
-            "*/*" : {
+            "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/sslproviderdto.CreateSSLProviderReq"
               }
@@ -44320,7 +44320,7 @@
         } ],
         "requestBody" : {
           "content" : {
-            "*/*" : {
+            "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/sslproviderdto.UpdateSSLProviderReq"
               }
@@ -44381,7 +44381,7 @@
         } ],
         "requestBody" : {
           "content" : {
-            "*/*" : {
+            "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/sslproviderdto.UpdateSSLProviderStatusReq"
               }
@@ -44499,7 +44499,7 @@
         "operationId" : "exportGlobalSpec",
         "requestBody" : {
           "content" : {
-            "*/*" : {
+            "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/specdto.ExportSpecReq"
               }
@@ -44587,7 +44587,7 @@
         "operationId" : "createFeedback",
         "requestBody" : {
           "content" : {
-            "*/*" : {
+            "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/supportdto.CreateFeedbackReq"
               }
@@ -45188,7 +45188,7 @@
         "operationId" : "updateHivePaaSAppSecret",
         "requestBody" : {
           "content" : {
-            "*/*" : {
+            "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/hpappsettingsdto.UpdateAppSecretReq"
               }
@@ -45260,7 +45260,7 @@
         "operationId" : "reloadHivePaaSAppConfig",
         "requestBody" : {
           "content" : {
-            "*/*" : {
+            "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/hpappdto.ReloadHpAppConfigReq"
               }
@@ -45432,7 +45432,7 @@
         "operationId" : "restartHivePaaSApp",
         "requestBody" : {
           "content" : {
-            "*/*" : {
+            "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/hpappdto.RestartHpAppReq"
               }
@@ -45522,7 +45522,7 @@
         "operationId" : "updateHivePaaSRoutingSettings",
         "requestBody" : {
           "content" : {
-            "*/*" : {
+            "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/hpappsettingsdto.UpdateRoutingSettingsReq"
               }
@@ -45574,7 +45574,7 @@
         "operationId" : "confirmHivePaaSRoutingSettings",
         "requestBody" : {
           "content" : {
-            "*/*" : {
+            "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/hpappsettingsdto.ConfirmRoutingSettingsReq"
               }
@@ -45626,7 +45626,7 @@
         "operationId" : "revertHivePaaSRoutingSettings",
         "requestBody" : {
           "content" : {
-            "*/*" : {
+            "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/hpappsettingsdto.RevertRoutingSettingsReq"
               }
@@ -45716,7 +45716,7 @@
         "operationId" : "updateHivePaaSSecuritySettings",
         "requestBody" : {
           "content" : {
-            "*/*" : {
+            "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/hpappsettingsdto.UpdateSecuritySettingsReq"
               }
@@ -45806,7 +45806,7 @@
         "operationId" : "updateHivePaaSServiceSettings",
         "requestBody" : {
           "content" : {
-            "*/*" : {
+            "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/hpappsettingsdto.UpdateServiceSettingsReq"
               }
@@ -45858,7 +45858,7 @@
         "operationId" : "confirmHivePaaSServiceSettings",
         "requestBody" : {
           "content" : {
-            "*/*" : {
+            "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/hpappsettingsdto.ConfirmServiceSettingsReq"
               }
@@ -45910,7 +45910,7 @@
         "operationId" : "revertHivePaaSServiceSettings",
         "requestBody" : {
           "content" : {
-            "*/*" : {
+            "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/hpappsettingsdto.RevertServiceSettingsReq"
               }
@@ -46011,7 +46011,7 @@
         "operationId" : "updateHivePaaSAppVersion",
         "requestBody" : {
           "content" : {
-            "*/*" : {
+            "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/hpappdto.UpdateHpAppReq"
               }
@@ -46109,7 +46109,7 @@
         "operationId" : "updateSystemBackupSettings",
         "requestBody" : {
           "content" : {
-            "*/*" : {
+            "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/systembackupdto.UpdateSystemBackupReq"
               }
@@ -46207,7 +46207,7 @@
         "operationId" : "updateBackupRepoCleanupSettings",
         "requestBody" : {
           "content" : {
-            "*/*" : {
+            "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/backuprepocleanupdto.UpdateBackupRepoCleanupReq"
               }
@@ -46259,7 +46259,7 @@
         "operationId" : "executeBackupRepoCleanup",
         "requestBody" : {
           "content" : {
-            "*/*" : {
+            "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/backuprepocleanupdto.ExecuteBackupRepoCleanupReq"
               }
@@ -46311,7 +46311,7 @@
         "operationId" : "executeSystemBackup",
         "requestBody" : {
           "content" : {
-            "*/*" : {
+            "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/systembackupdto.ExecuteSystemBackupReq"
               }
@@ -46409,7 +46409,7 @@
         "operationId" : "updateSystemCleanupSettings",
         "requestBody" : {
           "content" : {
-            "*/*" : {
+            "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/systemcleanupdto.UpdateSystemCleanupReq"
               }
@@ -46461,7 +46461,7 @@
         "operationId" : "executeSystemCleanup",
         "requestBody" : {
           "content" : {
-            "*/*" : {
+            "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/systemcleanupdto.ExecuteSystemCleanupReq"
               }
@@ -46559,7 +46559,7 @@
         "operationId" : "updateSystemLoggingSettings",
         "requestBody" : {
           "content" : {
-            "*/*" : {
+            "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/loggingdto.UpdateLoggingSettingsReq"
               }
@@ -46649,7 +46649,7 @@
         "operationId" : "updateSystemLoggingPerformance",
         "requestBody" : {
           "content" : {
-            "*/*" : {
+            "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/loggingdto.UpdateLoggingPerformanceReq"
               }
@@ -46747,7 +46747,7 @@
         "operationId" : "updateMCPSettings",
         "requestBody" : {
           "content" : {
-            "*/*" : {
+            "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/mcpdto.UpdateMCPSettingsReq"
               }
@@ -46845,7 +46845,7 @@
         "operationId" : "updateSystemRegistrySettings",
         "requestBody" : {
           "content" : {
-            "*/*" : {
+            "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/registrydto.UpdateRegistrySettingsReq"
               }
@@ -46943,7 +46943,7 @@
         "operationId" : "updateRegistryAuthRenewalSettings",
         "requestBody" : {
           "content" : {
-            "*/*" : {
+            "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/registryauthrenewaldto.UpdateRegistryAuthRenewalReq"
               }
@@ -46995,7 +46995,7 @@
         "operationId" : "executeRegistryAuthRenewal",
         "requestBody" : {
           "content" : {
-            "*/*" : {
+            "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/registryauthrenewaldto.ExecuteRegistryAuthRenewalReq"
               }
@@ -47047,7 +47047,7 @@
         "operationId" : "probeSystemRegistryDomain",
         "requestBody" : {
           "content" : {
-            "*/*" : {
+            "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/registrydto.ProbeDomainReq"
               }
@@ -47099,7 +47099,7 @@
         "operationId" : "checkSystemRegistryPush",
         "requestBody" : {
           "content" : {
-            "*/*" : {
+            "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/registrydto.PushCheckReq"
               }
@@ -47237,7 +47237,7 @@
         "operationId" : "updateSSLRenewalSettings",
         "requestBody" : {
           "content" : {
-            "*/*" : {
+            "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/sslrenewaldto.UpdateSSLRenewalReq"
               }
@@ -47289,7 +47289,7 @@
         "operationId" : "executeSSLRenewal",
         "requestBody" : {
           "content" : {
-            "*/*" : {
+            "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/sslrenewaldto.ExecuteSSLRenewalReq"
               }
@@ -47855,7 +47855,7 @@
         "operationId" : "updateTraefikConfigOptions",
         "requestBody" : {
           "content" : {
-            "*/*" : {
+            "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/traefiksettingsdto.UpdateConfigOptionsReq"
               }
@@ -47907,7 +47907,7 @@
         "operationId" : "confirmTraefikConfigOptions",
         "requestBody" : {
           "content" : {
-            "*/*" : {
+            "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/traefiksettingsdto.ConfirmConfigOptionsReq"
               }
@@ -47959,7 +47959,7 @@
         "operationId" : "revertTraefikConfigOptions",
         "requestBody" : {
           "content" : {
-            "*/*" : {
+            "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/traefiksettingsdto.RevertConfigOptionsReq"
               }
@@ -48011,7 +48011,7 @@
         "operationId" : "reloadTraefikConfig",
         "requestBody" : {
           "content" : {
-            "*/*" : {
+            "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/traefikdto.ReloadTraefikConfigReq"
               }
@@ -48063,7 +48063,7 @@
         "operationId" : "resetTraefikConfig",
         "requestBody" : {
           "content" : {
-            "*/*" : {
+            "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/traefikdto.ResetTraefikConfigReq"
               }
@@ -48115,7 +48115,7 @@
         "operationId" : "restartTraefik",
         "requestBody" : {
           "content" : {
-            "*/*" : {
+            "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/traefikdto.RestartTraefikReq"
               }
@@ -48205,7 +48205,7 @@
         "operationId" : "updateTraefikServiceSettings",
         "requestBody" : {
           "content" : {
-            "*/*" : {
+            "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/traefiksettingsdto.UpdateServiceSettingsReq"
               }
@@ -48340,7 +48340,7 @@
         "operationId" : "beginMFATotpSetup",
         "requestBody" : {
           "content" : {
-            "*/*" : {
+            "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/userdto.BeginMFATotpSetupReq"
               }
@@ -48392,7 +48392,7 @@
         "operationId" : "completeMFATotpSetup",
         "requestBody" : {
           "content" : {
-            "*/*" : {
+            "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/userdto.CompleteMFATotpSetupReq"
               }
@@ -48444,7 +48444,7 @@
         "operationId" : "removeMFATotp",
         "requestBody" : {
           "content" : {
-            "*/*" : {
+            "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/userdto.RemoveMFATotpReq"
               }
@@ -48496,7 +48496,7 @@
         "operationId" : "updateUserPassword",
         "requestBody" : {
           "content" : {
-            "*/*" : {
+            "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/userdto.UpdatePasswordReq"
               }
@@ -48548,7 +48548,7 @@
         "operationId" : "userForgotPassword",
         "requestBody" : {
           "content" : {
-            "*/*" : {
+            "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/userdto.PasswordForgotReq"
               }
@@ -48601,7 +48601,7 @@
         "operationId" : "updateUserProfile",
         "requestBody" : {
           "content" : {
-            "*/*" : {
+            "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/userdto.UpdateProfileReq"
               }
@@ -48720,7 +48720,7 @@
         "operationId" : "createUserAPIKey",
         "requestBody" : {
           "content" : {
-            "*/*" : {
+            "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/apikeydto.CreateAPIKeyReq"
               }
@@ -48877,7 +48877,7 @@
         } ],
         "requestBody" : {
           "content" : {
-            "*/*" : {
+            "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/apikeydto.UpdateAPIKeyStatusReq"
               }
@@ -48929,7 +48929,7 @@
         "operationId" : "inviteUser",
         "requestBody" : {
           "content" : {
-            "*/*" : {
+            "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/userdto.InviteUserReq"
               }
@@ -49021,7 +49021,7 @@
         "operationId" : "beginUserSignup",
         "requestBody" : {
           "content" : {
-            "*/*" : {
+            "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/userdto.BeginUserSignupReq"
               }
@@ -49074,7 +49074,7 @@
         "operationId" : "completeUserSignup",
         "requestBody" : {
           "content" : {
-            "*/*" : {
+            "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/userdto.CompleteUserSignupReq"
               }
@@ -49237,7 +49237,7 @@
         } ],
         "requestBody" : {
           "content" : {
-            "*/*" : {
+            "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/userdto.UpdateUserReq"
               }
@@ -49298,7 +49298,7 @@
         } ],
         "requestBody" : {
           "content" : {
-            "*/*" : {
+            "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/userdto.RequestResetPasswordReq"
               }
@@ -49359,7 +49359,7 @@
         } ],
         "requestBody" : {
           "content" : {
-            "*/*" : {
+            "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/userdto.ResetPasswordReq"
               }
@@ -49421,7 +49421,7 @@
         } ],
         "requestBody" : {
           "content" : {
-            "*/*" : {
+            "application/json" : {
               "schema" : {
                 "$ref" : "#/components/schemas/webhookdto.HandleRepoWebhookReq"
               }

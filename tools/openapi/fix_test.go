@@ -137,3 +137,25 @@ func TestFixSpecListsAnEnumsValuesOnce(t *testing.T) {
   "x-enum-varnames" : [ "ModeA" ]
 }`, string(encodeDocument(schemas.getObject("base.Mode"))), "names that never lined up are left as they are")
 }
+
+// A body swag gave no media type is the JSON the handlers read; a form, a body
+// without a schema of the API's own, and an operation without a body stay.
+func TestFixSpecMakesRequestBodiesJSON(t *testing.T) {
+	value, err := decodeDocument([]byte(`{"paths": {"/items": {
+		"post": {"requestBody": {"content": {"*/*": {"schema": {"$ref": "#/components/schemas/demo.Item"}}}}},
+		"put": {"requestBody": {"content": {"multipart/form-data": {"schema": {"type": "object"}}}}},
+		"patch": {"requestBody": {"content": {"*/*": {"schema": {"type": "string"}}}}},
+		"delete": {}
+	}}, "components": {"schemas": {}}}`))
+	assert.NoError(t, err)
+	doc := value.(*object)
+
+	stats, err := fixSpec(doc, loadTestSource(t))
+
+	assert.NoError(t, err)
+	assert.Equal(t, 1, stats.jsonBodies)
+	item := doc.getObject("paths").getObject("/items")
+	assert.Equal(t, []string{"application/json"}, item.getObject("post").getObject("requestBody").getObject("content").keys)
+	assert.Equal(t, []string{"multipart/form-data"}, item.getObject("put").getObject("requestBody").getObject("content").keys)
+	assert.Equal(t, []string{"*/*"}, item.getObject("patch").getObject("requestBody").getObject("content").keys)
+}

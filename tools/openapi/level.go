@@ -19,6 +19,8 @@ const (
 	apiLevelFile   = "docs/openapi/api-level.json"
 	apiLevelGoFile = "hivepaas_app/base/api_level_gen.go"
 	apiLevelKey    = "x-api-level"
+	// maxNamedOperations is how many changed operations a run names.
+	maxNamedOperations = 5
 )
 
 // writeMethods are the operations whose requests the API level follows: a client
@@ -105,8 +107,13 @@ func runLevel(args []string, out io.Writer) error {
 	}
 
 	if len(changed) > 0 {
+		named := changed
+		if len(named) > maxNamedOperations {
+			named = append(slices.Clone(named[:maxNamedOperations]),
+				fmt.Sprintf("%d more", len(changed)-maxNamedOperations))
+		}
 		fmt.Fprintf(out, "API level %d, raised from %d: the request of %s changed\n",
-			next.Level, prev.Level, strings.Join(changed, ", "))
+			next.Level, prev.Level, strings.Join(named, ", "))
 		return nil
 	}
 	fmt.Fprintf(out, "API level %d\n", next.Level)

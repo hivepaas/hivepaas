@@ -14,13 +14,14 @@ type fixStats struct {
 	nullable   int
 	anyValue   int
 	enums      int
+	jsonBodies int
 	unresolved []string
 }
 
 func (s fixStats) String() string {
 	return fmt.Sprintf("%d schemas from Go types: %d fields optional, %d nullable, %d any value; "+
-		"%d enums with a value listed twice; %d schemas with no Go type found",
-		s.schemas, s.optional, s.nullable, s.anyValue, s.enums, len(s.unresolved))
+		"%d enums with a value listed twice; %d request bodies made JSON; %d schemas with no Go type found",
+		s.schemas, s.optional, s.nullable, s.anyValue, s.enums, s.jsonBodies, len(s.unresolved))
 }
 
 // fixSpec corrects what swag cannot say about the API's types, from the Go
@@ -32,6 +33,9 @@ func (s fixStats) String() string {
 //     which encoding/json writes as null when nil - is nullable.
 //   - a field of type any, or json.RawMessage, is any JSON value. Swag writes
 //     an object, and the converter adds the type to an empty schema.
+//   - a request body of a DTO is JSON. Swag writes */* for a handler without
+//     @Accept, and a client generator then offers only a raw body: the handlers
+//     read it with ParseJSONBody, as JSON.
 //   - an enum lists each value once. Swag lists every constant of the type, and
 //     one that aliases another - SSLKeyTypeDefault = SSLKeyTypeECP256 - repeats
 //     its value: a client generated from the spec does not compile.
@@ -61,6 +65,7 @@ func fixSpec(doc *object, src *goSource) (fixStats, error) {
 		fixObjectSchema(schema, src.jsonFields(decl), src, &stats)
 	}
 	stats.enums = dedupeEnums(doc)
+	stats.jsonBodies = jsonRequestBodies(doc)
 	sort.Strings(stats.unresolved)
 	return stats, nil
 }
@@ -232,4 +237,39 @@ func makeNullable(schema *object) (*object, bool) {
 	}
 	schema.set("nullable", true)
 	return schema, true
+}
+
+// jsonRequestBodies makes a request body swag gave no media type - */*, with a
+// schema of the API's own - JSON, and answers how many it made.
+func jsonRequestBodies(doc *object) int {
+	changed := 0
+	paths := doc.getObject("paths")
+	if paths == nil {
+		return 0
+	}
+	for _, path := range paths.keys {
+		item := paths.getObject(path)
+		if item == nil {
+			continue
+		}
+		for _, method := range item.keys {
+			op := item.getObject(method)
+			if op == nil {
+				continue
+			}
+			content := op.getObject("requestBody").getObject("content")
+			if content == nil || len(content.keys) != 1 || content.keys[0] != "*/*" {
+				continue
+			}
+			media := content.getObject("*/*")
+			if media == nil || media.getObject("schema") == nil || media.getObject("schema").get("$ref") == nil {
+				continue
+			}
+			content.keys[0] = "application/json"
+			content.values["application/json"] = media
+			delete(content.values, "*/*")
+			changed++
+		}
+	}
+	return changed
 }

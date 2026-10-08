@@ -15,8 +15,11 @@ func (uc *UC) GetTask(
 	auth *basedto.Auth,
 	req *taskdto.GetTaskReq,
 ) (*taskdto.GetTaskResp, error) {
+	// Within the scope the task was reached through, as its status, logs and
+	// cancel are: through one app's path, another app's task is not found.
 	getResp, err := uc.taskService.GetTask(ctx, uc.db, &taskservice.GetTaskReq{
-		ID: req.ID,
+		Scope: req.Scope,
+		ID:    req.ID,
 	})
 	if err != nil {
 		return nil, hperrors.Wrap(err)

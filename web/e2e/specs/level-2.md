@@ -39,7 +39,7 @@ has a project of its own, and deleting it takes the apps and their services.
 | 2.29 | A project's Slack platform tried with Test Send Msg, then saved, and a notification target through it                                                           | `tests/level-2/notifications.spec.ts`   |
 | 2.30 | A health check telling a target: nothing while it is healthy, once when it fails, once when it passes again                                                     | `tests/level-2/notifications.spec.ts`   |
 | 2.31 | Repeat while failing tells a check that still fails again                                                                                                       | `tests/level-2/notifications.spec.ts`   |
-| 2.32 | A file uploaded from the terminal goes over a websocket, in pieces, and lands whole; to a directory not there, it is refused, and the dialog says so            | `tests/level-2/container-files.spec.ts` |
+| 2.32 | An upload from the terminal goes over a websocket and lands whole; a refusal says what the server said; an expired session is refreshed first                   | `tests/level-2/container-files.spec.ts` |
 
 The images: `traefik/whoami` for an app that serves - it answers with the
 request it got, as the proxy passed it on - and `busybox` for one that prints

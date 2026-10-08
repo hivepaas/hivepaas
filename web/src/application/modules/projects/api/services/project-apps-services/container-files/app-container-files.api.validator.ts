@@ -7,9 +7,14 @@ import { UnexpectedApiErrorException, UnexpectedApiResponseException } from "@in
 
 import type { AppContainerFiles_UploadOne_Res } from "./app-container-files.api.contracts";
 
-// What an upload's stream ends with: done, with what the file became, or the
-// error the server would have answered a request with.
-const UploadAnswerSchema = z.discriminatedUnion("type", [
+// What the server sends over an upload's stream: how much the copy has taken,
+// then done, with what the file became, or the error the server would have
+// answered a request with.
+const UploadMessageSchema = z.discriminatedUnion("type", [
+    z.object({
+        type: z.literal("progress"),
+        received: z.number(),
+    }),
     z.object({
         type: z.literal("done"),
         data: z.object({
@@ -23,24 +28,38 @@ const UploadAnswerSchema = z.discriminatedUnion("type", [
     }),
 ]);
 
+export type AppContainerFiles_UploadMessage =
+    | { type: "progress"; received: number }
+    | { type: "answer"; result: Result<AppContainerFiles_UploadOne_Res, Error> };
+
 export class AppContainerFilesApiValidator {
-    uploadAnswer = (message: string): Result<AppContainerFiles_UploadOne_Res, Error> => {
+    uploadMessage = (message: string): AppContainerFiles_UploadMessage => {
         let json: unknown;
         try {
             json = JSON.parse(message);
         } catch {
-            return Err(new UnexpectedApiResponseException());
+            return { type: "answer", result: Err(new UnexpectedApiResponseException()) };
         }
 
-        const parsed = UploadAnswerSchema.safeParse(json);
+        const parsed = UploadMessageSchema.safeParse(json);
         if (!parsed.success) {
-            return Err(new UnexpectedApiResponseException());
+            if (import.meta.env["NODE_ENV"] !== "production") {
+                console.warn(json, parsed.error.format());
+            }
+
+            return { type: "answer", result: Err(new UnexpectedApiResponseException()) };
         }
 
-        if (parsed.data.type === "error") {
-            return Err(parseApiProblem(parsed.data.error) ?? new UnexpectedApiErrorException());
+        switch (parsed.data.type) {
+            case "progress":
+                return { type: "progress", received: parsed.data.received };
+            case "error":
+                return {
+                    type: "answer",
+                    result: Err(parseApiProblem(parsed.data.error) ?? new UnexpectedApiErrorException()),
+                };
+            case "done":
+                return { type: "answer", result: Ok({ data: parsed.data.data }) };
         }
-
-        return Ok({ data: parsed.data.data });
     };
 }

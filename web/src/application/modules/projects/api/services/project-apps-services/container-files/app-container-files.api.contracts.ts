@@ -37,3 +37,25 @@ export type AppContainerFiles_UploadOne_Res = ApiResponseBase<{
     path: string;
     message: string;
 }>;
+
+/**
+ * The query of an upload's stream - which a request without the websocket
+ * upgrade only checks - as the server takes it.
+ */
+export function appContainerFilesUploadQuery(
+    data: AppContainerFiles_UploadOne_Req["data"],
+): Record<string, string | number | boolean> {
+    const { nodeId, containerId, path, file, extract, compressionFormat, overwrite } = data;
+
+    return {
+        nodeId,
+        containerId,
+        path,
+        extract,
+        compressionFormat,
+        overwrite,
+        fileName: file.name,
+        fileSize: file.size,
+        progress: true,
+    };
+}

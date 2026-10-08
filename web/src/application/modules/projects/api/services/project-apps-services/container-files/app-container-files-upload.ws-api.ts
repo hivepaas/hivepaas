@@ -6,24 +6,25 @@ import { session } from "@infrastructure/api";
 import { CancelException } from "@infrastructure/exceptions/cancel";
 import { NetworkException } from "@infrastructure/exceptions/network";
 
-import type {
-    AppContainerFiles_UploadOne_Req,
-    AppContainerFiles_UploadOne_Res,
+import type { AppContainerFilesApi } from "./app-container-files.api";
+import {
+    type AppContainerFiles_UploadOne_Req,
+    type AppContainerFiles_UploadOne_Res,
+    appContainerFilesUploadQuery,
 } from "./app-container-files.api.contracts";
 import type { AppContainerFilesApiValidator } from "./app-container-files.api.validator";
 
 // A piece of the file a message carries; the server takes up to 4 MiB.
 const PIECE_SIZE = 256 * 1024;
-// How much may wait in the socket's buffer before the next piece is read: a
-// browser's websocket buffers all it is given, the whole file if let.
-const BUFFERED_MAX = 4 * PIECE_SIZE;
-const BUFFER_POLL_MS = 50;
+// How much may be on its way - sent, and not yet taken by the copy into the
+// container. The server says what it has taken after each piece: the sender
+// waits on that, not on a timer, which a tab in the background runs once a
+// second, or once a minute.
+const IN_FLIGHT_MAX = 8 * 1024 * 1024;
+// How often the progress is told at most, for a dialog to draw.
+const PROGRESS_EVERY_MS = 100;
 
 const END_MESSAGE = JSON.stringify({ type: "end" });
-
-function wait(ms: number): Promise<void> {
-    return new Promise(resolve => setTimeout(resolve, ms));
-}
 
 /**
  * Uploads a file into an app's container over a websocket: the file in pieces,
@@ -31,27 +32,52 @@ function wait(ms: number): Promise<void> {
  * request's body cuts it, as one that takes minutes would be.
  */
 export class AppContainerFilesUploadWsApi extends BaseWebSocketApi {
-    constructor(private readonly validator: AppContainerFilesApiValidator) {
+    constructor(
+        private readonly validator: AppContainerFilesApiValidator,
+        private readonly filesApi: AppContainerFilesApi,
+    ) {
         super();
     }
 
-    uploadOne(
+    async uploadOne(
         req: AppContainerFiles_UploadOne_Req,
         signal?: AbortSignal,
     ): Promise<Result<AppContainerFiles_UploadOne_Res, Error>> {
+        const checked = await this.filesApi.checkUpload(req, signal);
+
+        if (checked.isErr()) {
+            return Err(checked.unwrapErr());
+        }
+
+        return this.stream(req, signal);
+    }
+
+    private stream(
+        req: AppContainerFiles_UploadOne_Req,
+        signal?: AbortSignal,
+    ): Promise<Result<AppContainerFiles_UploadOne_Res, Error>> {
+        // Read after the check, which refreshed it if it had expired.
         const accessToken = session.getToken();
 
         if (!accessToken) {
             return Promise.resolve(Err(new Error("Access token not found.")));
         }
 
-        const { projectID, env, appID, nodeId, containerId, path, file, extract, compressionFormat, overwrite } =
-            req.data;
-        const { onProgress } = req.data;
+        const { projectID, env, appID, file, onProgress } = req.data;
 
         return new Promise(resolve => {
             let settled = false;
             let subscription: WebSocketSubscription | undefined;
+            // What the copy has taken, as the server last said.
+            let received = 0;
+            let toldAt = 0;
+            let wakeSender: (() => void) | undefined;
+
+            const wake = () => {
+                const resume = wakeSender;
+                wakeSender = undefined;
+                resume?.();
+            };
 
             const settle = (result: Result<AppContainerFiles_UploadOne_Res, Error>) => {
                 if (settled) {
@@ -60,24 +86,32 @@ export class AppContainerFilesUploadWsApi extends BaseWebSocketApi {
 
                 settled = true;
                 resolve(result);
+                wake();
                 subscription?.close();
             };
 
-            const isSending = (socket: WebSocket) => !settled && socket.readyState === WebSocket.OPEN;
+            const tell = (force = false) => {
+                const now = performance.now();
 
-            // What has left the browser: given to the socket, and no longer in its buffer.
-            const report = (socket: WebSocket, given: number) => {
-                onProgress?.(Math.max(0, Math.min(file.size, given - socket.bufferedAmount)), file.size);
+                if (settled || (!force && now - toldAt < PROGRESS_EVERY_MS)) {
+                    return;
+                }
+
+                toldAt = now;
+                onProgress?.(Math.min(received, file.size), file.size);
             };
+
+            const isSending = (socket: WebSocket) => !settled && socket.readyState === WebSocket.OPEN;
 
             const send = async (socket: WebSocket) => {
                 let given = 0;
 
                 try {
                     while (given < file.size) {
-                        while (isSending(socket) && socket.bufferedAmount > BUFFERED_MAX) {
-                            report(socket, given);
-                            await wait(BUFFER_POLL_MS);
+                        while (isSending(socket) && given - received >= IN_FLIGHT_MAX) {
+                            await new Promise<void>(resume => {
+                                wakeSender = resume;
+                            });
                         }
 
                         const piece = await file.slice(given, given + PIECE_SIZE).arrayBuffer();
@@ -89,22 +123,11 @@ export class AppContainerFilesUploadWsApi extends BaseWebSocketApi {
 
                         socket.send(piece);
                         given += piece.byteLength;
-                        report(socket, given);
                     }
 
-                    if (!isSending(socket)) {
-                        return;
+                    if (isSending(socket)) {
+                        socket.send(END_MESSAGE);
                     }
-
-                    socket.send(END_MESSAGE);
-                    given += END_MESSAGE.length;
-
-                    while (isSending(socket) && socket.bufferedAmount > 0) {
-                        report(socket, given);
-                        await wait(BUFFER_POLL_MS);
-                    }
-
-                    report(socket, given);
                 } catch (error) {
                     // The file could not be read: changed, or gone, since it was picked.
                     settle(Err(error instanceof Error ? error : new Error("Failed to read the file.")));
@@ -114,30 +137,29 @@ export class AppContainerFilesUploadWsApi extends BaseWebSocketApi {
             try {
                 const url = this.client.buildUrl(
                     `projects/${encodeURIComponent(projectID)}/${encodeURIComponent(env)}/apps/${encodeURIComponent(appID)}/container/file-upload/stream`,
-                    {
-                        nodeId,
-                        containerId,
-                        path,
-                        extract,
-                        compressionFormat,
-                        overwrite,
-                        fileName: file.name,
-                        fileSize: file.size,
-                    },
+                    appContainerFilesUploadQuery(req.data),
                 );
 
                 subscription = this.client.connect(
                     url,
                     {
                         onOpen: (_event, socket) => {
+                            tell(true);
                             void send(socket);
                         },
                         onMessage: message => {
-                            settle(this.validator.uploadAnswer(message));
+                            const parsed = this.validator.uploadMessage(message);
+
+                            if (parsed.type === "progress") {
+                                ({ received } = parsed);
+                                tell(received >= file.size);
+                                wake();
+                                return;
+                            }
+
+                            settle(parsed.result);
                         },
                         onClose: () => {
-                            // A refusal before the stream opened - the session, a permission -
-                            // comes as a close the browser does not explain.
                             settle(
                                 Err(
                                     signal?.aborted

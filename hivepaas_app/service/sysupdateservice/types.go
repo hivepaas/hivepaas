@@ -6,6 +6,10 @@ import (
 
 type SysUpdateReq struct {
 	*queue.TaskExecData
+
+	// PauseTaskQueues, when set, is called once the images are pulled, right
+	// before the app and the worker are scaled down.
+	PauseTaskQueues func() error
 }
 
 type SysUpdateResp struct {

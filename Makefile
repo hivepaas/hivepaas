@@ -84,7 +84,7 @@ release-pin:
 release-pin-check:
 	@go run ./tools/releasepin -check
 
-RELEASESIGN_SHA := 921f4a7263a6819aed7e8d8f69fcc1259af46255
+RELEASESIGN_SHA := 140394df6a530db61aa4d6ac4058add4db969709
 release-sign:
 	@RELEASESIGN_SHA="$(RELEASESIGN_SHA)" KEYS="$(KEYS)" IN="$(IN)" OUT="$(OUT)" CONTEXT="$(CONTEXT)" ./scripts/release-sign.sh
 

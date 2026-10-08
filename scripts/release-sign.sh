@@ -74,7 +74,8 @@ for candidate in openssl /opt/homebrew/opt/openssl@3/bin/openssl /usr/local/opt/
 done
 [[ -n "$OPENSSL" ]] || fail "OpenSSL 3.5+ not found (brew install openssl@3); it is required for the independent check"
 
-if ! git diff --quiet HEAD -- "$IN" 2>/dev/null; then
+# In the repository IN is in: the CLI's list is in hivepaas-cli.
+if ! git -C "$(dirname "$IN")" diff --quiet HEAD -- "$(basename "$IN")" 2>/dev/null; then
   echo "WARNING: $IN has uncommitted changes. What gets signed is the file on disk, not the commit." >&2
 fi
 

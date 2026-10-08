@@ -109,6 +109,15 @@ func (s *service) stopServices(
 	ctx context.Context,
 	data *sysUpdateData,
 ) (err error) {
+	// Here, not before the pull: a pull on a slow link takes minutes, and the
+	// pause could run out before the scale-down it is for.
+	if data.PauseTaskQueues != nil {
+		err = data.PauseTaskQueues()
+		if err != nil {
+			return hperrors.Wrap(err)
+		}
+	}
+
 	// 1. Scale down the main app to zero instance
 	err = s.scaleMainAppService(ctx, 0, data)
 	if err != nil {

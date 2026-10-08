@@ -5,25 +5,16 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"strings"
 	"sync"
 	"testing"
 	"time"
 
-	"github.com/go-co-op/gocron/v2"
 	"github.com/stretchr/testify/assert"
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/logging/mocks"
 )
-
-// fakeScheduler counts what the server asks of gocron.
-type fakeScheduler struct {
-	gocron.Scheduler
-	starts, stops int
-}
-
-func (f *fakeScheduler) Start()          { f.starts++ }
-func (f *fakeScheduler) StopJobs() error { f.stops++; return nil }
 
 // lines is a logger that keeps what it is told.
 type lines struct {
@@ -36,6 +27,19 @@ func (l *lines) add(level, template string, args ...any) {
 	defer l.mu.Unlock()
 	l.logs = append(l.logs, level+" "+fmt.Sprintf(template, args...))
 }
+
+// has says whether a line holds the text.
+func (l *lines) has(text string) bool {
+	l.mu.Lock()
+	defer l.mu.Unlock()
+	for _, line := range l.logs {
+		if strings.Contains(line, text) {
+			return true
+		}
+	}
+	return false
+}
+
 func (l *lines) Info(msg string, _ ...any)           { l.add("info", "%s", msg) }
 func (l *lines) Error(msg string, _ ...any)          { l.add("error", "%s", msg) }
 func (l *lines) Debug(msg string, _ ...any)          { l.add("debug", "%s", msg) }
@@ -49,60 +53,55 @@ func (l *lines) Panic(_ ...any)                      {}
 func (l *lines) Fatalf(string, ...any)               {}
 func (l *lines) Panicf(string, ...any)               {}
 
-func serverStartedAt(startedAt time.Time) (*Server, *fakeScheduler, *lines) {
-	sched := &fakeScheduler{}
+func serverStartedAt(startedAt time.Time) (*Server, *lines) {
 	logs := &lines{}
 	return &Server{
-		config:    &Config{Logger: logs},
-		scheduler: sched,
-		jobMap:    make(map[string]*jobData),
-		startedAt: startedAt,
-	}, sched, logs
+		config:            &Config{Logger: logs},
+		jobMap:            make(map[string]*jobData),
+		startedAt:         startedAt,
+		pauseLimit:        defaultPauseLimit,
+		pauseRecheckEvery: defaultPauseRecheck,
+	}, logs
 }
 
-// An update stops the schedulers of the processes it is about to replace. A
+// An update pauses the schedulers of the processes it is about to replace. A
 // process started after the stop was sent is not one of them: the message, left
 // in the list by a process that went before reading it, stopped beta3's app for
 // good the moment it started.
 func TestAStopSentBeforeTheServerStartedIsIgnored(t *testing.T) {
 	started := time.Now()
-	server, sched, logs := serverStartedAt(started)
+	server, logs := serverStartedAt(started)
 
 	server.handleCtrlMessage(context.Background(), &Message{StopScheduler: true, SentAt: started.Add(-5 * time.Second)})
 	// One from a release that did not say when it sent it is as old.
 	server.handleCtrlMessage(context.Background(), &Message{StopScheduler: true})
 
-	assert.Equal(t, 0, sched.stops)
-	if assert.Len(t, logs.logs, 2) {
-		assert.Contains(t, logs.logs[0], "ignored a stop")
-	}
+	assert.False(t, server.paused(time.Now()))
+	assert.True(t, logs.has("ignored a stop"), logs.logs)
 }
 
-// A stop sent while the process runs is meant for it: the scheduler stops, and
-// says so.
-func TestAStopSentAfterTheServerStartedStopsIt(t *testing.T) {
+// A stop sent while the process runs is meant for it: the scheduler is paused,
+// for pauseLimit at most, and says so.
+func TestAStopSentAfterTheServerStartedPausesIt(t *testing.T) {
 	started := time.Now()
-	server, sched, logs := serverStartedAt(started)
+	server, logs := serverStartedAt(started)
 
 	server.handleCtrlMessage(context.Background(), &Message{StopScheduler: true, SentAt: started.Add(time.Second)})
 
-	assert.Equal(t, 1, sched.stops)
-	if assert.Len(t, logs.logs, 1) {
-		assert.Contains(t, logs.logs[0], "stopped")
-	}
+	assert.True(t, server.paused(time.Now()))
+	assert.WithinDuration(t, time.Now().Add(defaultPauseLimit), server.pausedUntil, time.Second)
+	assert.True(t, logs.has("paused for at most"), logs.logs)
 }
 
-// A start is followed whenever it was sent: starting a running scheduler does
-// nothing. It is logged too.
-func TestAStartStartsTheSchedulerAndSaysSo(t *testing.T) {
-	server, sched, logs := serverStartedAt(time.Now())
+// A start ends the pause at once, and says so.
+func TestAStartEndsThePause(t *testing.T) {
+	server, logs := serverStartedAt(time.Now())
+	assert.NoError(t, server.StopScheduler())
 
 	server.handleCtrlMessage(context.Background(), &Message{StartScheduler: true})
 
-	assert.Equal(t, 1, sched.starts)
-	if assert.Len(t, logs.logs, 1) {
-		assert.Contains(t, logs.logs[0], "started")
-	}
+	assert.False(t, server.paused(time.Now()))
+	assert.True(t, logs.has("resumed"), logs.logs)
 }
 
 // BLPOP coming back empty is the listener's every five seconds, not a failure:

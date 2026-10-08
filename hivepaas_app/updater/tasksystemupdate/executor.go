@@ -121,16 +121,6 @@ func (e *Executor) Execute(
 			return hperrors.Wrap(err)
 		}
 		data.Task = latestTask
-		if latestTask == nil {
-			return nil
-		}
-
-		// Stop only services which need to be stopped (main app and workers)
-		err = e.taskQueue.StopAllSchedulers()
-		if err != nil {
-			return hperrors.Wrap(err)
-		}
-
 		return nil
 	})
 	if err != nil {
@@ -144,7 +134,8 @@ func (e *Executor) Execute(
 	// will restart the DB service, hence we can't keep it.
 
 	_, err = e.sysUpdateService.SysUpdate(ctx, db, &sysupdateservice.SysUpdateReq{
-		TaskExecData: data.TaskExecData,
+		TaskExecData:    data.TaskExecData,
+		PauseTaskQueues: e.taskQueue.StopAllSchedulers,
 	})
 	if err != nil {
 		return hperrors.Wrap(err)

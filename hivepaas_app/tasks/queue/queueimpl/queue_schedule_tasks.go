@@ -12,19 +12,25 @@ import (
 )
 
 const (
-	missedTaskPeriodMax = 1 * time.Hour
+	// missedTaskPeriod is how far back a scan looks for tasks that should have
+	// run and did not: those created while no scheduler ran them - stopped, or
+	// restarting - are run once one does.
+	missedTaskPeriod = 1 * time.Hour
 )
+
+// scanWindow is the times a scan looks between: ahead to the next scan, and
+// back missedTaskPeriod, or to the last scan when that was longer ago. Looking
+// back only to the last scan left a task that missed its run - three
+// deployments, while an update's stop held the scheduler - never run at all.
+func scanWindow(now time.Time, checkInterval time.Duration) (from, to time.Time) {
+	return now.Add(-max(checkInterval, missedTaskPeriod)), now.Add(checkInterval)
+}
 
 func (q *taskQueue) findSchedulingTasks(
 	ctx context.Context,
 ) ([]*entity.Task, error) {
 	timeNow := timeutil.NowUTC()
-	missedTaskPeriod := q.config.Tasks.Queue.TaskCheckInterval
-	if missedTaskPeriod > missedTaskPeriodMax {
-		missedTaskPeriod = missedTaskPeriodMax
-	}
-	scanFrom := timeNow.Add(-missedTaskPeriod)
-	scanTo := timeNow.Add(q.config.Tasks.Queue.TaskCheckInterval)
+	scanFrom, scanTo := scanWindow(timeNow, q.config.Tasks.Queue.TaskCheckInterval)
 	tasks, _, err := q.taskRepo.ListByTarget(ctx, q.db, "", nil,
 		bunex.SelectWhere("task.type != ?", base.TaskTypePeriodicExec), // special tasks no need scheduling
 		bunex.SelectWhere("task.type != ?", base.TaskTypeSystemUpdate), // special tasks

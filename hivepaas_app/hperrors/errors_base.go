@@ -27,6 +27,7 @@ var (
 	ErrPreconditionRequired = errors.New("ERR_PRECONDITION_REQUIRED")
 	ErrServiceUnavailable   = errors.New("ERR_SERVICE_UNAVAILABLE")
 	ErrNotImplemented       = errors.New("ERR_NOT_IMPLEMENTED")
+	ErrUpgradeRequired      = errors.New("ERR_UPGRADE_REQUIRED")
 )
 
 // errorStatusMap - mapping from base error to http status code
@@ -42,6 +43,7 @@ var errorStatusMap = map[error]int{
 	ErrPreconditionRequired: http.StatusPreconditionRequired,
 	ErrServiceUnavailable:   http.StatusServiceUnavailable,
 	ErrNotImplemented:       http.StatusNotImplemented,
+	ErrUpgradeRequired:      http.StatusUpgradeRequired,
 }
 
 // warnLevelErrors are errors that are handled but unexpected to happen: they answer

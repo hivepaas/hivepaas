@@ -12,6 +12,7 @@ ERR_PRECONDITION_FAILED = "Precondition failed"
 ERR_PRECONDITION_REQUIRED = "Precondition required"
 ERR_SERVICE_UNAVAILABLE = "{{.Name}} is unavailable"
 ERR_NOT_IMPLEMENTED = "Not implemented"
+ERR_UPGRADE_REQUIRED = "A newer client is required"
 
 ERR_PANIC = "Panic: {{.Error}}"
 ERR_ALREADY_EXIST = "{{.Name}} already exists"

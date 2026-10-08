@@ -437,7 +437,10 @@ remembered to run it. Both apply the formatters configured in `.golangci.yaml`,
 so they cannot disagree about what formatted means.
 
 `docs/openapi/swagger.json` is generated and committed, so a DTO change that skips
-`make gen-swag` leaves the committed contract wrong. CI regenerates it and fails
+`make gen-swag` leaves the committed contract wrong. It writes the API level beside
+it (`docs/openapi/api-level.json`, `base/api_level_gen.go`); when it says the level
+was raised, the HivePaaS CLI needs a release that knows the change before the
+server ships it. CI regenerates it and fails
 when the result differs from the committed file; the generation is
 deterministic, so a difference is always a change somebody did not regenerate.
 

@@ -70,8 +70,10 @@ jobs:
         run: SWAG_BIN="$(go env GOPATH)/bin/swag" ./tools/swag/swag.sh
 
       - name: Compare with the committed spec
+        # The spec, the API level beside it and base.APILevel, which `make gen-swag`
+        # writes together.
         run: |
-          if ! git diff --exit-code --stat docs/openapi/swagger.json; then
+          if ! git diff --exit-code --stat docs/openapi hivepaas_app/base/api_level_gen.go; then
             echo "::error file=docs/openapi/swagger.json::not current: run make gen-swag and commit the result"
             exit 1
           fi

@@ -86,3 +86,8 @@ apply_replacements "docs/openapi/swagger.json"
 # What swag cannot say about the types - optional, nullable, any value - from
 # the Go types themselves. See tools/openapi.
 go run ./tools/openapi fix docs/openapi/swagger.json
+
+# The API level a CLI must be built for to write, raised when the request of an
+# existing write operation changed: docs/openapi/api-level.json, the spec's
+# x-api-level and base.APILevel.
+go run ./tools/openapi level docs/openapi/swagger.json

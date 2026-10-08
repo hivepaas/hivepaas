@@ -10,6 +10,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/timeutil"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/systemappservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/sessionuc/sessiondto"
 )
 
@@ -40,7 +41,15 @@ func (uc *UC) GetMe(
 		return nil, hperrors.Wrap(err)
 	}
 
-	respData := &sessiondto.GetMeDataResp{User: userResp, Timezone: timeutil.Location().String()}
+	respData := &sessiondto.GetMeDataResp{
+		User:     userResp,
+		Timezone: timeutil.Location().String(),
+		Server: &sessiondto.ServerInfoResp{
+			Version:        systemappservice.CurrentRelease().AppVersion,
+			APILevel:       base.APILevel,
+			MinCLIAPILevel: base.APILevel,
+		},
+	}
 
 	if config.CurrentSystemInfo().NextStep != "" && user.IsAdmin() {
 		sysStatus, err := uc.systemStatusRepo.Get(ctx, uc.db)

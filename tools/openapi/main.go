@@ -8,6 +8,9 @@
 //	fix   corrects the generated spec from the Go types: a field with omitempty
 //	      is optional, one that can be null is nullable, one of type any takes
 //	      any value. tools/swag/swag.sh runs it after the conversion to OpenAPI 3.
+//	level keeps the API level a HivePaaS CLI must be built for to write, raised
+//	      when the request of an existing write operation changes. swag.sh runs
+//	      it after fix.
 //	lint  checks every handler's comment against what the handler reads: each
 //	      query parameter its request type decodes is documented, each one
 //	      documented is read, and the path parameters match the route.
@@ -17,7 +20,8 @@
 //
 // Usage:
 //
-//	go run ./tools/openapi fix  [file]   (default docs/openapi/swagger.json)
+//	go run ./tools/openapi fix   [file]   (default docs/openapi/swagger.json)
+//	go run ./tools/openapi level [file]
 //	go run ./tools/openapi lint
 package main
 
@@ -41,6 +45,8 @@ func main() {
 	switch os.Args[1] {
 	case "fix":
 		err = runFix(os.Args[2:], os.Stdout)
+	case "level":
+		err = runLevel(os.Args[2:], os.Stdout)
 	case "lint":
 		err = runLint(os.Args[2:], os.Stdout)
 	default:
@@ -53,7 +59,7 @@ func main() {
 }
 
 func usage() {
-	fmt.Fprintln(os.Stderr, "usage: openapi fix [file] | openapi lint")
+	fmt.Fprintln(os.Stderr, "usage: openapi fix [file] | openapi level [file] | openapi lint")
 	os.Exit(2) //nolint:mnd
 }
 

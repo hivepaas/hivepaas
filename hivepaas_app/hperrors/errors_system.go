@@ -11,4 +11,6 @@ var (
 	ErrSystemUpdateBlocked = NewErr(ErrPreconditionFailed, "ERR_SYSTEM_UPDATE_BLOCKED")
 	// The update moves a component from the database backup, and was asked to skip it.
 	ErrSystemUpdateNeedsBackup = NewErr(ErrPreconditionFailed, "ERR_SYSTEM_UPDATE_NEEDS_BACKUP")
+	// A write from a HivePaaS CLI built for an older API than this server's.
+	ErrCLIOutdated = NewErr(ErrUpgradeRequired, "ERR_CLI_OUTDATED")
 )

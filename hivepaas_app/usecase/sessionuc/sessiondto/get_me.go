@@ -26,6 +26,22 @@ type GetMeDataResp struct {
 	// Timezone is the installation's, a zone name such as America/New_York:
 	// what a schedule's hours are read in.
 	Timezone string `json:"timezone"`
+	// Server is what the installation runs, for a client to know what it may
+	// ask of it - the CLI reads it on login.
+	Server *ServerInfoResp `json:"server"`
+}
+
+// ServerInfoResp is the release an installation runs and the API it answers.
+type ServerInfoResp struct {
+	// Version is the release, such as v1.0.0-beta4.
+	Version string `json:"version"`
+	// APILevel is the level of the API: raised whenever the request of a write
+	// operation that already existed changes.
+	APILevel int `json:"apiLevel"`
+	// MinCLIAPILevel is the lowest API level a HivePaaS CLI may be built for to
+	// write: one below it is answered 426, as it would write objects back
+	// without the fields it does not know. It may read.
+	MinCLIAPILevel int `json:"minCliApiLevel"`
 }
 
 func TransformUserDetails(user *entity.User) (resp *userdto.UserDetailsResp, err error) {

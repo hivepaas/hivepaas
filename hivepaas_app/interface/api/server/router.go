@@ -8,6 +8,7 @@ import (
 	swaggoGin "github.com/swaggo/gin-swagger"
 
 	"github.com/hivepaas/hivepaas/assets"
+	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/interface/api/handler"
 	"github.com/hivepaas/hivepaas/hivepaas_app/interface/api/handler/appactionhandler"
 	"github.com/hivepaas/hivepaas/hivepaas_app/interface/api/handler/appcontainerhandler"
@@ -39,6 +40,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/interface/api/handler/userhandler"
 	"github.com/hivepaas/hivepaas/hivepaas_app/interface/api/handler/usersettingshandler"
 	"github.com/hivepaas/hivepaas/hivepaas_app/interface/api/handler/webhookhandler"
+	"github.com/hivepaas/hivepaas/hivepaas_app/interface/api/middleware/clilevel"
 )
 
 type HandlerRegistry struct {
@@ -177,6 +179,9 @@ func (s *HTTPServer) registerRoutes() {
 
 	// PUBLIC ROUTES
 	apiGroup := s.engine.Group(s.config.HTTPServer.BasePath)
+	// Before any route: a write from a HivePaaS CLI built for an older API is
+	// refused, wherever it is sent.
+	apiGroup.Use(clilevel.Check(base.APILevel, s.handlerRegistry.baseHandler.RenderError))
 
 	s.registerSessionRoutes(apiGroup)
 	s.registerUserRoutes(apiGroup)

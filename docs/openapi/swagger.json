@@ -11,7 +11,8 @@
       "url" : "https://github.com/hivepaas/hivepaas/blob/main/LICENSE"
     },
     "title" : "HivePaaS API",
-    "version" : "0.1"
+    "version" : "0.1",
+    "x-api-level" : 1
   },
   "servers" : [ {
     "url" : "/api"
@@ -72696,6 +72697,14 @@
           "nextStep" : {
             "type" : "string"
           },
+          "server" : {
+            "allOf" : [ {
+              "$ref" : "#/components/schemas/sessiondto.ServerInfoResp"
+            } ],
+            "description" : "Server is what the installation runs, for a client to know what it may\nask of it - the CLI reads it on login.",
+            "nullable" : true,
+            "type" : "object"
+          },
           "timezone" : {
             "description" : "Timezone is the installation's, a zone name such as America/New_York:\nwhat a schedule's hours are read in.",
             "type" : "string"
@@ -72707,7 +72716,7 @@
             "nullable" : true
           }
         },
-        "required" : [ "timezone", "user" ],
+        "required" : [ "server", "timezone", "user" ],
         "type" : "object"
       },
       "sessiondto.GetMeResp" : {
@@ -72931,6 +72940,24 @@
           }
         },
         "required" : [ "data", "meta" ],
+        "type" : "object"
+      },
+      "sessiondto.ServerInfoResp" : {
+        "properties" : {
+          "apiLevel" : {
+            "description" : "APILevel is the level of the API: raised whenever the request of a write\noperation that already existed changes.",
+            "type" : "integer"
+          },
+          "minCliApiLevel" : {
+            "description" : "MinCLIAPILevel is the lowest API level a HivePaaS CLI may be built for to\nwrite: one below it is answered 426, as it would write objects back\nwithout the fields it does not know. It may read.",
+            "type" : "integer"
+          },
+          "version" : {
+            "description" : "Version is the release, such as v1.0.0-beta4.",
+            "type" : "string"
+          }
+        },
+        "required" : [ "apiLevel", "minCliApiLevel", "version" ],
         "type" : "object"
       },
       "settingmountdto.CreateSettingMountReq" : {

@@ -5,8 +5,6 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/assert"
-
-	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 )
 
 func TestNewServer(t *testing.T) {
@@ -28,23 +26,23 @@ func TestNewServer_DefaultConcurrency(t *testing.T) {
 	assert.Equal(t, defaultConcurrency, server.config.Concurrency)
 }
 
-func TestServer_shouldSchedule(t *testing.T) {
+func TestServer_reserveJob(t *testing.T) {
 	server := &Server{
 		config: &Config{},
 		jobMap: make(map[string]*jobData),
 	}
 
-	task := &entity.Task{ID: "task-1"}
+	taskID := "task-1"
 	runAt := time.Now()
 
 	// Case 1: Job doesn't exist
-	assert.True(t, server.shouldSchedule(task, runAt))
+	assert.True(t, server.reserveJob(taskID, &jobData{RunAt: runAt}))
 
 	// Case 2: Job exists but with different time
-	server.jobMap[task.ID] = &jobData{RunAt: runAt.Add(time.Hour)}
-	assert.True(t, server.shouldSchedule(task, runAt))
+	server.jobMap[taskID] = &jobData{RunAt: runAt.Add(time.Hour)}
+	assert.True(t, server.reserveJob(taskID, &jobData{RunAt: runAt}))
 
 	// Case 3: Job exists with same time
-	server.jobMap[task.ID] = &jobData{RunAt: runAt}
-	assert.False(t, server.shouldSchedule(task, runAt))
+	server.jobMap[taskID] = &jobData{RunAt: runAt}
+	assert.False(t, server.reserveJob(taskID, &jobData{RunAt: runAt}))
 }

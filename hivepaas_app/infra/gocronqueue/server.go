@@ -82,7 +82,7 @@ type Config struct {
 }
 
 type jobData struct {
-	Job      gocron.Job
+	Job      gocron.Job // nil until the scheduler has made it
 	RunAt    time.Time
 	Priority base.TaskPriority
 }
@@ -325,7 +325,11 @@ func (s *Server) scheduleTask(task *entity.Task, runAt time.Time) error {
 	if runAt.IsZero() {
 		return nil
 	}
-	if !s.shouldSchedule(task, runAt) {
+	if s.config.TaskCanScheduleFunc != nil && !s.config.TaskCanScheduleFunc(task) {
+		return nil
+	}
+	data := &jobData{RunAt: runAt, Priority: task.Config.Priority}
+	if !s.reserveJob(task.ID, data) {
 		return nil
 	}
 	var startAt gocron.OneTimeJobStartAtOption
@@ -337,41 +341,74 @@ func (s *Server) scheduleTask(task *entity.Task, runAt time.Time) error {
 	job, err := s.scheduler.NewJob(
 		gocron.OneTimeJob(startAt),
 		gocron.NewTask(func() {
-			err := s.executeTask(task, true)
+			err := s.executeTask(task, data, true)
 			if err != nil {
 				s.config.Logger.Errorf("failed to execute task '%v', id %s: %v", task.Type, task.ID, err)
 			}
 		}),
 	)
 	if err != nil {
+		s.releaseJob(task.ID, data)
 		s.config.Logger.Errorf("failed to schedule task %s: %v", task.ID, err)
 		return hperrors.Wrap(err)
 	}
-	s.addJob(task, job, runAt)
+	s.setJob(task.ID, data, job)
 	return nil
 }
 
 func (s *Server) UnscheduleTask(ctx context.Context, taskIDs ...string) error {
 	for _, taskID := range taskIDs {
-		s.removeJob(taskID, true)
+		s.removeJob(taskID)
 	}
 	return nil
 }
 
-func (s *Server) shouldSchedule(task *entity.Task, runAt time.Time) bool {
-	if s.config.TaskCanScheduleFunc != nil && !s.config.TaskCanScheduleFunc(task) {
+// reserveJob makes data the task's entry, unless the task is scheduled for that
+// time already, before data has a job: one due at once can run before the
+// scheduler hands it back, and what its run puts in the map - a hold, a
+// reschedule - is newer than data.
+func (s *Server) reserveJob(taskID string, data *jobData) bool {
+	s.mu.Lock()
+	currJob := s.jobMap[taskID]
+	if currJob != nil && currJob.RunAt.Equal(data.RunAt) {
+		s.mu.Unlock()
 		return false
 	}
-	s.mu.RLock()
-	defer s.mu.RUnlock()
-	existingJob := s.jobMap[task.ID]
-	if existingJob != nil && existingJob.RunAt.Equal(runAt) { // NOTE: zero time values equal
-		return false
+	s.jobMap[taskID] = data
+	var replaced gocron.Job
+	if currJob != nil {
+		replaced = currJob.Job
+	}
+	s.mu.Unlock()
+	if replaced != nil {
+		_ = s.scheduler.RemoveJob(replaced.ID())
 	}
 	return true
 }
 
-func (s *Server) executeTask(task *entity.Task, priorityCheck bool) error {
+// setJob gives data its job. A job whose entry was replaced meanwhile is removed
+// from the scheduler: it has run already, or a newer one stands for the task.
+func (s *Server) setJob(taskID string, data *jobData, job gocron.Job) {
+	s.mu.Lock()
+	data.Job = job
+	replaced := s.jobMap[taskID] != data
+	s.mu.Unlock()
+	if replaced {
+		_ = s.scheduler.RemoveJob(job.ID())
+	}
+}
+
+// releaseJob removes data from the map, if it is still the task's entry.
+func (s *Server) releaseJob(taskID string, data *jobData) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	if s.jobMap[taskID] == data {
+		delete(s.jobMap, taskID)
+	}
+}
+
+// executeTask runs the task of the entry own; own is nil when no job runs it.
+func (s *Server) executeTask(task *entity.Task, own *jobData, priorityCheck bool) error {
 	// Held while paused: it looks again shortly.
 	now := timeutil.NowUTC()
 	if s.paused(now) {
@@ -396,8 +433,8 @@ func (s *Server) executeTask(task *entity.Task, priorityCheck bool) error {
 
 	var rescheduled bool
 	defer func() {
-		if !rescheduled {
-			s.removeJob(task.ID, false)
+		if !rescheduled && own != nil {
+			s.releaseJob(task.ID, own)
 		}
 	}()
 
@@ -419,30 +456,17 @@ func (s *Server) executeTask(task *entity.Task, priorityCheck bool) error {
 	return nil
 }
 
-func (s *Server) addJob(task *entity.Task, job gocron.Job, runAt time.Time) {
+// removeJob unschedules the task. A job still being made is removed by setJob.
+func (s *Server) removeJob(taskID string) {
 	s.mu.Lock()
-	defer s.mu.Unlock()
-	if currJob := s.jobMap[task.ID]; currJob != nil {
-		if currJob.Job == job {
-			return
-		}
-		_ = s.scheduler.RemoveJob(currJob.Job.ID())
-	}
-	s.jobMap[task.ID] = &jobData{
-		Job:      job,
-		RunAt:    runAt,
-		Priority: task.Config.Priority,
-	}
-}
-
-func (s *Server) removeJob(taskID string, unschedule bool) {
-	s.mu.Lock()
-	defer s.mu.Unlock()
+	var job gocron.Job
 	if currJob := s.jobMap[taskID]; currJob != nil {
-		if unschedule {
-			_ = s.scheduler.RemoveJob(currJob.Job.ID())
-		}
+		job = currJob.Job
 		delete(s.jobMap, taskID)
+	}
+	s.mu.Unlock()
+	if job != nil {
+		_ = s.scheduler.RemoveJob(job.ID())
 	}
 }
 
@@ -465,7 +489,7 @@ func (s *Server) findPriorityJob(currentTask *entity.Task, runAt time.Time) *job
 }
 
 func (s *Server) ScheduleNextTask(task *entity.Task, _ time.Time) error {
-	return s.executeTask(task, false)
+	return s.executeTask(task, nil, false)
 }
 
 func (s *Server) Shutdown() error {

@@ -2,6 +2,7 @@ package gocronqueue
 
 import (
 	"context"
+	"sync/atomic"
 	"testing"
 	"time"
 
@@ -98,6 +99,39 @@ func TestAStartRunsTheTasksAPauseHeld(t *testing.T) {
 	assert.NoError(t, server.ScheduleTask(context.Background(), dueTask("t1")))
 	expectNoRun(t, ran, 100*time.Millisecond)
 	assert.NoError(t, server.StartScheduler())
+
+	expectRun(t, ran, "t1", time.Second)
+}
+
+// slowScheduler hands back the first job it makes only once that job has had
+// time to run: a job due at once can run before NewJob returns.
+type slowScheduler struct {
+	gocron.Scheduler
+	made atomic.Int32
+}
+
+func (s *slowScheduler) NewJob(def gocron.JobDefinition, task gocron.Task, opts ...gocron.JobOption) (gocron.Job, error) {
+	job, err := s.Scheduler.NewJob(def, task, opts...)
+	if s.made.Add(1) == 1 {
+		time.Sleep(100 * time.Millisecond)
+	}
+	return job, err
+}
+
+// A task scheduled while paused can be held - by its own job, rescheduling it -
+// before the scheduling of it is done. That job was then put back as the task's,
+// in place of the one holding it, and the task was lost: its job had run, and a
+// scan finding the task again took it for scheduled.
+func TestATaskHeldBeforeItsSchedulingEndsIsNotLost(t *testing.T) {
+	server, ran := serverRunning(t)
+	server.scheduler = &slowScheduler{Scheduler: server.scheduler}
+	server.pauseLimit = time.Hour
+	task := dueTask("t1")
+
+	assert.NoError(t, server.StopScheduler())
+	assert.NoError(t, server.ScheduleTask(context.Background(), task))
+	assert.NoError(t, server.StartScheduler())
+	assert.NoError(t, server.ScheduleTask(context.Background(), task)) // a scan finding it again
 
 	expectRun(t, ran, "t1", time.Second)
 }

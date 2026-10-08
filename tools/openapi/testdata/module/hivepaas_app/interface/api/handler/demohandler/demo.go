@@ -10,6 +10,7 @@ type Handler struct {
 }
 
 // ListItems documents search and its paging, and reads status too.
+// @Id      listItems
 // @Param   search query string false "`search=<text>`"
 // @Param   pageOffset query int false "`pageOffset=offset`"
 // @Param   pageLimit query int false "`pageLimit=limit`"
@@ -23,18 +24,21 @@ func (h *Handler) ListItems(ctx *gin.Context) {
 }
 
 // GetItem has a path parameter it does not document, and one it documents that
-// the path does not have.
+// the path does not have; and the id of another handler.
+// @Id      listItems
 // @Param   other path string true "not in the path"
 // @Router  /items/{itemID} [get]
 func (h *Handler) GetItem(ctx *gin.Context) {
 	h.Get(ctx, basehandler.KindItem)
 }
 
-// DownloadItem reads one parameter by name, and ignores one it decodes.
+// DownloadItem reads one parameter by name, and ignores one it decodes. It has
+// no @Id, and two routes.
 // @Param   itemID path string true "item ID"
 // @Param   inline query bool false "`inline=true`"
 // openapi:ignore-param reveal - nothing here is secret
 // @Router  /items/{itemID}/download [get]
+// @Router  /items/{itemID}/download [post]
 func (h *Handler) DownloadItem(ctx *gin.Context) {
 	_ = ctx.Query("inline")
 	h.Get(ctx, basehandler.KindItem)

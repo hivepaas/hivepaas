@@ -17,6 +17,7 @@ const handlerDir = "/hivepaas_app/interface/api/handler"
 
 var (
 	routerPattern    = regexp.MustCompile(`@Router\s+(\S+)\s+\[(\w+)\]`)
+	idPattern        = regexp.MustCompile(`@Id\s+(\S+)`)
 	paramPattern     = regexp.MustCompile(`@Param\s+(\S+)\s+(\w+)\s`)
 	pathParamPattern = regexp.MustCompile(`\{([^}]+)\}`)
 	// ignorePattern marks a parameter a handler decodes and deliberately
@@ -83,6 +84,7 @@ func runLint(_ []string, out io.Writer) error {
 func lintHandlers(src *goSource) ([]lintProblem, int) {
 	var problems []lintProblem
 	checked := 0
+	ids := map[string]string{} // operation id -> the handler that has it
 	for _, pkgPath := range slices.Sorted(maps.Keys(src.byPath)) {
 		if !strings.HasPrefix(pkgPath, src.module+handlerDir) {
 			continue
@@ -95,6 +97,13 @@ func lintHandlers(src *goSource) ([]lintProblem, int) {
 				}
 				checked++
 				problems = append(problems, lintHandler(src, file, fn)...)
+				if id := idPattern.FindStringSubmatch(fn.Doc.Text()); id != nil {
+					if other, taken := ids[id[1]]; taken {
+						problems = append(problems, lintProblem{pos: src.fset.Position(fn.Pos()), handler: fn.Name.Name,
+							message: fmt.Sprintf("@Id %s is %s's too: an operation id names one operation", id[1], other)})
+					}
+					ids[id[1]] = fn.Name.Name
+				}
 			}
 		}
 	}
@@ -123,8 +132,18 @@ func lintHandler(src *goSource, file *goFile, fn *ast.FuncDecl) []lintProblem {
 		documented[m[2]][m[1]] = true
 	}
 
+	// A client generated from the spec names a method after each operation's
+	// id: every operation has one, and one only.
+	routes := routerPattern.FindAllStringSubmatch(doc, -1)
+	switch {
+	case !idPattern.MatchString(doc):
+		report("has no @Id: a client generated from the spec names its method after it")
+	case len(routes) > 1:
+		report("documents %d routes under one @Id, which names one operation: give each route a handler", len(routes))
+	}
+
 	// The path's parameters and the documented ones are the same.
-	for _, route := range routerPattern.FindAllStringSubmatch(doc, -1) {
+	for _, route := range routes {
 		inPath := map[string]bool{}
 		for _, m := range pathParamPattern.FindAllStringSubmatch(route[1], -1) {
 			inPath[m[1]] = true

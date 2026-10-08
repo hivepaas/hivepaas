@@ -696,7 +696,7 @@
     },
     "/auth/sso/callback/{provider}" : {
       "get" : {
-        "description" : "Begins SSO flow",
+        "description" : "The provider sends the browser back here once the person has signed in.",
         "operationId" : "ssoOAuthCallback",
         "parameters" : [ {
           "description" : "provider name",
@@ -734,12 +734,12 @@
           }
         },
         "security" : [ ],
-        "summary" : "Begins SSO flow",
+        "summary" : "Completes the SSO flow",
         "tags" : [ "Sessions" ]
       },
       "post" : {
-        "description" : "Begins SSO flow",
-        "operationId" : "ssoOAuthCallback",
+        "description" : "The same as the GET, for a provider that returns with a form post (response_mode=form_post).",
+        "operationId" : "ssoOAuthCallbackPost",
         "parameters" : [ {
           "description" : "provider name",
           "in" : "path",
@@ -776,7 +776,7 @@
           }
         },
         "security" : [ ],
-        "summary" : "Begins SSO flow",
+        "summary" : "Completes the SSO flow, for a provider that posts its answer",
         "tags" : [ "Sessions" ]
       }
     },
@@ -2345,6 +2345,7 @@
     },
     "/projects/from-compose/apply" : {
       "post" : {
+        "operationId" : "applyCompose",
         "requestBody" : {
           "content" : {
             "application/json" : {
@@ -2375,6 +2376,7 @@
     },
     "/projects/from-compose/validate" : {
       "post" : {
+        "operationId" : "validateCompose",
         "requestBody" : {
           "content" : {
             "application/json" : {
@@ -8347,6 +8349,7 @@
     },
     "/projects/{projectID}/from-compose/apply" : {
       "post" : {
+        "operationId" : "applyProjectCompose",
         "parameters" : [ {
           "description" : "Project ID",
           "in" : "path",
@@ -8386,6 +8389,7 @@
     },
     "/projects/{projectID}/from-compose/validate" : {
       "post" : {
+        "operationId" : "validateProjectCompose",
         "parameters" : [ {
           "description" : "Project ID",
           "in" : "path",
@@ -12164,6 +12168,7 @@
     },
     "/projects/{projectID}/spec/export" : {
       "post" : {
+        "operationId" : "exportProjectSpec",
         "parameters" : [ {
           "description" : "Project ID",
           "in" : "path",
@@ -12185,6 +12190,7 @@
     },
     "/projects/{projectID}/spec/import/apply" : {
       "post" : {
+        "operationId" : "applyProjectImport",
         "parameters" : [ {
           "description" : "Project ID",
           "in" : "path",
@@ -12224,6 +12230,7 @@
     },
     "/projects/{projectID}/spec/import/validate" : {
       "post" : {
+        "operationId" : "validateProjectImport",
         "parameters" : [ {
           "description" : "Project ID",
           "in" : "path",
@@ -24093,6 +24100,7 @@
     },
     "/projects/{projectID}/{projectEnv}/apps/{appID}/spec/export" : {
       "post" : {
+        "operationId" : "exportAppSpec",
         "parameters" : [ {
           "description" : "Project ID",
           "in" : "path",
@@ -34166,6 +34174,7 @@
     },
     "/projects/{projectID}/{projectEnv}/spec/export" : {
       "post" : {
+        "operationId" : "exportProjectEnvSpec",
         "parameters" : [ {
           "description" : "Project ID",
           "in" : "path",
@@ -34195,6 +34204,7 @@
     },
     "/projects/{projectID}/{projectEnv}/spec/import/apply" : {
       "post" : {
+        "operationId" : "applyProjectEnvImport",
         "parameters" : [ {
           "description" : "Project ID",
           "in" : "path",
@@ -34242,6 +34252,7 @@
     },
     "/projects/{projectID}/{projectEnv}/spec/import/validate" : {
       "post" : {
+        "operationId" : "validateProjectEnvImport",
         "parameters" : [ {
           "description" : "Project ID",
           "in" : "path",
@@ -44484,6 +44495,7 @@
     },
     "/spec/export" : {
       "post" : {
+        "operationId" : "exportGlobalSpec",
         "requestBody" : {
           "content" : {
             "*/*" : {
@@ -44508,6 +44520,7 @@
     },
     "/spec/import/apply" : {
       "post" : {
+        "operationId" : "applyGlobalImport",
         "requestBody" : {
           "content" : {
             "application/json" : {
@@ -44538,6 +44551,7 @@
     },
     "/spec/import/validate" : {
       "post" : {
+        "operationId" : "validateGlobalImport",
         "requestBody" : {
           "content" : {
             "application/json" : {
@@ -58738,7 +58752,7 @@
         "type" : "object"
       },
       "backup.EngineType" : {
-        "enum" : [ "kopia", "kopia" ],
+        "enum" : [ "kopia" ],
         "type" : "string",
         "x-enum-varnames" : [ "EngineTypeKopia" ]
       },
@@ -59962,9 +59976,9 @@
         "x-enum-varnames" : [ "SSLCertTypeGoogleTrust", "SSLCertTypeLetsEncrypt", "SSLCertTypeZeroSSL", "SSLCertTypeCustom", "SSLCertTypeSelfSigned" ]
       },
       "base.SSLKeyType" : {
-        "enum" : [ "ec-p256", "ec-p384", "ec-p521", "rsa-2048", "rsa-3072", "rsa-4096", "rsa-8192", "ec-p256" ],
+        "enum" : [ "ec-p256", "ec-p384", "ec-p521", "rsa-2048", "rsa-3072", "rsa-4096", "rsa-8192" ],
         "type" : "string",
-        "x-enum-varnames" : [ "SSLKeyTypeECP256", "SSLKeyTypeECP384", "SSLKeyTypeECP521", "SSLKeyTypeRSA2048", "SSLKeyTypeRSA3072", "SSLKeyTypeRSA4096", "SSLKeyTypeRSA8192", "SSLKeyTypeDefault" ]
+        "x-enum-varnames" : [ "SSLKeyTypeECP256", "SSLKeyTypeECP384", "SSLKeyTypeECP521", "SSLKeyTypeRSA2048", "SSLKeyTypeRSA3072", "SSLKeyTypeRSA4096", "SSLKeyTypeRSA8192" ]
       },
       "base.SSLProvider" : {
         "enum" : [ "googletrust", "letsencrypt", "zerossl" ],

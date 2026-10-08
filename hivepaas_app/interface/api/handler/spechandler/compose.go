@@ -19,6 +19,7 @@ import (
 //	@Tags		Configuration specs
 //	@Accept		json
 //	@Produce	json
+//	@Id			validateCompose
 //	@Param		body	body		specdto.ValidateComposeReq	true	"the compose file, its .env and files, the choices"
 //	@Success	200		{object}	specdto.ValidateComposeResp
 //	@Router		/projects/from-compose/validate [post]
@@ -32,6 +33,7 @@ func (h *Handler) ValidateCompose(ctx *gin.Context) {
 //	@Tags		Configuration specs
 //	@Accept		json
 //	@Produce	json
+//	@Id			validateProjectCompose
 //	@Param		projectID	path		string						true	"Project ID"
 //	@Param		body		body		specdto.ValidateComposeReq	true	"the compose file, its .env and files, the choices"
 //	@Success	200			{object}	specdto.ValidateComposeResp
@@ -66,6 +68,7 @@ func (h *Handler) validateCompose(ctx *gin.Context, projectID string) {
 //	@Tags		Configuration specs
 //	@Accept		json
 //	@Produce	json
+//	@Id			applyCompose
 //	@Param		body	body		specdto.ApplyComposeReq	true	"validate's body, planHash, acceptIssues"
 //	@Success	200		{object}	specdto.ApplyComposeResp
 //	@Router		/projects/from-compose/apply [post]
@@ -79,6 +82,7 @@ func (h *Handler) ApplyCompose(ctx *gin.Context) {
 //	@Tags		Configuration specs
 //	@Accept		json
 //	@Produce	json
+//	@Id			applyProjectCompose
 //	@Param		projectID	path		string					true	"Project ID"
 //	@Param		body		body		specdto.ApplyComposeReq	true	"validate's body, planHash, acceptIssues"
 //	@Success	200			{object}	specdto.ApplyComposeResp

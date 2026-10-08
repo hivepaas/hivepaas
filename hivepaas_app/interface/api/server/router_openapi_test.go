@@ -113,3 +113,43 @@ func TestTheOpenAPISpecHasEveryRouteAndNothingElse(t *testing.T) {
 	assert.Empty(t, extra, "operations no route serves: their @Router does not match the route")
 	assert.NotEmpty(t, slices.Collect(maps.Keys(routes)))
 }
+
+// Every operation has an id, and no two the same: a client generated from the
+// spec names each method after it, and a repeated id is a method declared
+// twice, which does not compile.
+func TestTheOpenAPISpecNamesEveryOperationOnce(t *testing.T) {
+	data, err := os.ReadFile("../../../../docs/openapi/swagger.json")
+	if err != nil {
+		t.Fatal(err)
+	}
+	var doc struct {
+		Paths map[string]map[string]struct {
+			OperationID string `json:"operationId"`
+		} `json:"paths"`
+	}
+	if err = json.Unmarshal(data, &doc); err != nil {
+		t.Fatal(err)
+	}
+	byID := map[string][]string{}
+	var unnamed []string
+	for path, methods := range doc.Paths {
+		for method, op := range methods {
+			if op.OperationID == "" {
+				unnamed = append(unnamed, strings.ToUpper(method)+" "+path)
+				continue
+			}
+			byID[op.OperationID] = append(byID[op.OperationID], strings.ToUpper(method)+" "+path)
+		}
+	}
+	var repeated []string
+	for id, ops := range byID {
+		if len(ops) > 1 {
+			slices.Sort(ops)
+			repeated = append(repeated, id+": "+strings.Join(ops, ", "))
+		}
+	}
+	slices.Sort(unnamed)
+	slices.Sort(repeated)
+	assert.Empty(t, unnamed, "operations without an @Id")
+	assert.Empty(t, repeated, "@Ids naming more than one operation")
+}

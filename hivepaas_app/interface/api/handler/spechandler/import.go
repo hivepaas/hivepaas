@@ -25,6 +25,7 @@ const importMaxBodySize = 25 * 1024 * 1024
 //	@Tags		Configuration specs
 //	@Accept		json
 //	@Produce	json
+//	@Id			validateGlobalImport
 //	@Param		body	body		specdto.ValidateImportReq	true	"bundle, passphrase, selection, options"
 //	@Success	200		{object}	specdto.ValidateImportResp
 //	@Router		/spec/import/validate [post]
@@ -38,6 +39,7 @@ func (h *Handler) ValidateGlobalImport(ctx *gin.Context) {
 //	@Tags		Configuration specs
 //	@Accept		json
 //	@Produce	json
+//	@Id			validateProjectImport
 //	@Param		projectID	path		string						true	"Project ID"
 //	@Param		body		body		specdto.ValidateImportReq	true	"bundle, passphrase, selection, options"
 //	@Success	200			{object}	specdto.ValidateImportResp
@@ -57,6 +59,7 @@ func (h *Handler) ValidateProjectImport(ctx *gin.Context) {
 //	@Tags		Configuration specs
 //	@Accept		json
 //	@Produce	json
+//	@Id			validateProjectEnvImport
 //	@Param		projectID	path		string						true	"Project ID"
 //	@Param		projectEnv	path		string						true	"Project env"
 //	@Param		body		body		specdto.ValidateImportReq	true	"bundle, passphrase, selection, options"
@@ -98,6 +101,7 @@ func (h *Handler) validateImport(ctx *gin.Context, scope *entity.ObjectScope) {
 //	@Tags		Configuration specs
 //	@Accept		json
 //	@Produce	json
+//	@Id			applyGlobalImport
 //	@Param		body	body		specdto.ApplyImportReq	true	"validate's body, planHash, acceptIssues"
 //	@Success	200		{object}	specdto.ApplyImportResp
 //	@Router		/spec/import/apply [post]
@@ -111,6 +115,7 @@ func (h *Handler) ApplyGlobalImport(ctx *gin.Context) {
 //	@Tags		Configuration specs
 //	@Accept		json
 //	@Produce	json
+//	@Id			applyProjectImport
 //	@Param		projectID	path		string					true	"Project ID"
 //	@Param		body		body		specdto.ApplyImportReq	true	"validate's body, planHash, acceptIssues"
 //	@Success	200			{object}	specdto.ApplyImportResp
@@ -130,6 +135,7 @@ func (h *Handler) ApplyProjectImport(ctx *gin.Context) {
 //	@Tags		Configuration specs
 //	@Accept		json
 //	@Produce	json
+//	@Id			applyProjectEnvImport
 //	@Param		projectID	path		string					true	"Project ID"
 //	@Param		projectEnv	path		string					true	"Project env"
 //	@Param		body		body		specdto.ApplyImportReq	true	"validate's body, planHash, acceptIssues"

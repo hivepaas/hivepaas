@@ -31,6 +31,7 @@ const reportHeader = "X-HivePaaS-Spec-Report"
 //	@Summary	Export the whole installation as a configuration spec
 //	@Tags		Configuration specs
 //	@Produce	application/gzip
+//	@Id			exportGlobalSpec
 //	@Param		body	body	specdto.ExportSpecReq	false	"secretsMode and passphrase"
 //	@Success	200
 //	@Router		/spec/export [post]
@@ -45,6 +46,7 @@ func (h *Handler) ExportGlobalSpec(ctx *gin.Context) {
 //	@Summary	Export one project as a configuration spec
 //	@Tags		Configuration specs
 //	@Produce	application/gzip
+//	@Id			exportProjectSpec
 //	@Param		projectID	path	string	true	"Project ID"
 //	@Success	200
 //	@Router		/projects/{projectID}/spec/export [post]
@@ -64,6 +66,7 @@ func (h *Handler) ExportProjectSpec(ctx *gin.Context) {
 //	@Summary	Export one project env as a configuration spec
 //	@Tags		Configuration specs
 //	@Produce	application/gzip
+//	@Id			exportProjectEnvSpec
 //	@Param		projectID	path	string	true	"Project ID"
 //	@Param		projectEnv	path	string	true	"Project env"
 //	@Success	200
@@ -89,6 +92,7 @@ func (h *Handler) ExportProjectEnvSpec(ctx *gin.Context) {
 //	@Summary	Export one app as a configuration spec
 //	@Tags		Configuration specs
 //	@Produce	application/gzip
+//	@Id			exportAppSpec
 //	@Param		projectID	path	string	true	"Project ID"
 //	@Param		projectEnv	path	string	true	"Project env"
 //	@Param		appID		path	string	true	"App ID"

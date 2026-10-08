@@ -13,12 +13,14 @@ type fixStats struct {
 	optional   int
 	nullable   int
 	anyValue   int
+	enums      int
 	unresolved []string
 }
 
 func (s fixStats) String() string {
 	return fmt.Sprintf("%d schemas from Go types: %d fields optional, %d nullable, %d any value; "+
-		"%d schemas with no Go type found", s.schemas, s.optional, s.nullable, s.anyValue, len(s.unresolved))
+		"%d enums with a value listed twice; %d schemas with no Go type found",
+		s.schemas, s.optional, s.nullable, s.anyValue, s.enums, len(s.unresolved))
 }
 
 // fixSpec corrects what swag cannot say about the API's types, from the Go
@@ -30,6 +32,9 @@ func (s fixStats) String() string {
 //     which encoding/json writes as null when nil - is nullable.
 //   - a field of type any, or json.RawMessage, is any JSON value. Swag writes
 //     an object, and the converter adds the type to an empty schema.
+//   - an enum lists each value once. Swag lists every constant of the type, and
+//     one that aliases another - SSLKeyTypeDefault = SSLKeyTypeECP256 - repeats
+//     its value: a client generated from the spec does not compile.
 //
 // A field given its schema by hand, with a swaggertype tag, is only made
 // optional.
@@ -55,8 +60,55 @@ func fixSpec(doc *object, src *goSource) (fixStats, error) {
 		stats.schemas++
 		fixObjectSchema(schema, src.jsonFields(decl), src, &stats)
 	}
+	stats.enums = dedupeEnums(doc)
 	sort.Strings(stats.unresolved)
 	return stats, nil
+}
+
+// dedupeEnums keeps the first of each value of every enum in the document, and
+// the names and descriptions beside them that line up with the values. It
+// answers how many enums it changed.
+func dedupeEnums(node any) int {
+	changed := 0
+	switch n := node.(type) {
+	case *object:
+		if values, ok := n.get("enum").([]any); ok {
+			keep := make([]bool, len(values))
+			seen := map[string]bool{}
+			for i, value := range values {
+				key := fmt.Sprintf("%T:%v", value, value)
+				keep[i] = !seen[key]
+				seen[key] = true
+			}
+			if slices.Contains(keep, false) {
+				changed++
+				for _, key := range []string{"x-enum-varnames", "x-enum-descriptions"} {
+					if aligned, isList := n.get(key).([]any); isList && len(aligned) == len(values) {
+						n.set(key, keepOnly(aligned, keep))
+					}
+				}
+				n.set("enum", keepOnly(values, keep))
+			}
+		}
+		for _, key := range n.keys {
+			changed += dedupeEnums(n.values[key])
+		}
+	case []any:
+		for _, item := range n {
+			changed += dedupeEnums(item)
+		}
+	}
+	return changed
+}
+
+func keepOnly(values []any, keep []bool) []any {
+	out := make([]any, 0, len(values))
+	for i, value := range values {
+		if keep[i] {
+			out = append(out, value)
+		}
+	}
+	return out
 }
 
 // schemaType is the Go struct a schema is named after: package.Type, which is

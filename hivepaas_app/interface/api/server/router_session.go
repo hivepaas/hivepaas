@@ -27,7 +27,7 @@ func (s *HTTPServer) registerSessionRoutes(apiGroup *gin.RouterGroup) {
 		// Login via SSO
 		authGroup.GET("/sso/:provider", sessionHandler.SSOOAuthBegin)
 		authGroup.GET("/sso/callback/:provider", sessionHandler.SSOOAuthCallback)
-		authGroup.POST("/sso/callback/:provider", sessionHandler.SSOOAuthCallback)
+		authGroup.POST("/sso/callback/:provider", sessionHandler.SSOOAuthCallbackPost)
 		// Password forgot
 		authGroup.POST("/login-password-forgot", sessionHandler.LoginPasswordForgot)
 	}

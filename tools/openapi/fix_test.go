@@ -108,3 +108,32 @@ func TestFixSpecSaysWhatTheGoTypesMean(t *testing.T) {
 }`, got, "omitempty is optional, a pointer, map or slice nullable, any any value; a type that writes "+
 		"itself and one given its schema by hand are left alone")
 }
+
+// A Go constant that aliases another is not a value of its own: the enum lists
+// each value once, and its names stay lined up with the values.
+func TestFixSpecListsAnEnumsValuesOnce(t *testing.T) {
+	value, err := decodeDocument([]byte(`{"components": {"schemas": {
+		"base.KeyType": {"enum": ["ec", "rsa", "ec"], "type": "string",
+			"x-enum-varnames": ["KeyTypeEC", "KeyTypeRSA", "KeyTypeDefault"]},
+		"base.Mode": {"enum": ["a", "a"], "type": "string", "x-enum-varnames": ["ModeA"]},
+		"base.Fine": {"enum": [1, 2], "type": "integer"}
+	}}}`))
+	assert.NoError(t, err)
+	doc := value.(*object)
+
+	stats, err := fixSpec(doc, loadTestSource(t))
+
+	assert.NoError(t, err)
+	assert.Equal(t, 2, stats.enums)
+	schemas := doc.getObject("components").getObject("schemas")
+	assert.Equal(t, `{
+  "enum" : [ "ec", "rsa" ],
+  "type" : "string",
+  "x-enum-varnames" : [ "KeyTypeEC", "KeyTypeRSA" ]
+}`, string(encodeDocument(schemas.getObject("base.KeyType"))))
+	assert.Equal(t, `{
+  "enum" : [ "a" ],
+  "type" : "string",
+  "x-enum-varnames" : [ "ModeA" ]
+}`, string(encodeDocument(schemas.getObject("base.Mode"))), "names that never lined up are left as they are")
+}

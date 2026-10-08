@@ -21,5 +21,7 @@ func TestLintHandlersComparesCommentsWithWhatHandlersRead(t *testing.T) {
 		`GetItem: the route /items/{itemID} has {itemID}, which no @Param ... path documents`,
 		`GetItem: @Param other path is not in the route /items/{itemID}`,
 		`GetItem: reads "reveal" from the query or the form, and no @Param ... query (or formData) documents it`,
+		`GetItem: @Id listItems is ListItems's too: an operation id names one operation`,
+		`DownloadItem: has no @Id: a client generated from the spec names its method after it`,
 	}, got, strings.Join(got, "\n"))
 }

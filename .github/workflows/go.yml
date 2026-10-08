@@ -76,6 +76,11 @@ jobs:
             exit 1
           fi
 
+      # What the CLI does with the spec: an id or an enum value given twice is a
+      # client that does not compile, which nothing else here would notice.
+      - name: Generate a Go client from the spec and build it
+        run: ./tools/swag/check-client.sh
+
   # The CLI is a client generated from this spec, in its own repository. Its
   # `make spec-check SPEC=<file>` regenerates the client from the spec given and
   # builds and tests it: a change here that breaks the CLI fails here, in the

@@ -42,9 +42,28 @@ func (h *Handler) SSOOAuthBegin(ctx *gin.Context) {
 	gothic.BeginAuthHandler(ctx.Writer, ctx.Request)
 }
 
-// SSOOAuthCallback Begins SSO flow
-// @Summary Begins SSO flow
-// @Description Begins SSO flow
+// SSOOAuthCallbackPost Completes the SSO flow, for a provider that posts its answer
+// @Summary Completes the SSO flow, for a provider that posts its answer
+// @Description The same as the GET, for a provider that returns with a form post (response_mode=form_post).
+// @Tags    Sessions
+// @Produce json
+// @Id      ssoOAuthCallbackPost
+// @Param   provider path string true "provider name"
+// @Success 302 "on success redirect to the dashboard page"
+// @Failure 400 {object} hperrors.ErrorInfo
+// @Failure 500 {object} hperrors.ErrorInfo
+// @Security
+// @Router  /auth/sso/callback/{provider} [post]
+//
+// A handler of its own, not a second @Router on SSOOAuthCallback: an operation
+// id names one operation, and a client generated from the spec needs one each.
+func (h *Handler) SSOOAuthCallbackPost(ctx *gin.Context) {
+	h.SSOOAuthCallback(ctx)
+}
+
+// SSOOAuthCallback Completes the SSO flow
+// @Summary Completes the SSO flow
+// @Description The provider sends the browser back here once the person has signed in.
 // @Tags    Sessions
 // @Produce json
 // @Id      ssoOAuthCallback
@@ -54,7 +73,6 @@ func (h *Handler) SSOOAuthBegin(ctx *gin.Context) {
 // @Failure 500 {object} hperrors.ErrorInfo
 // @Security
 // @Router  /auth/sso/callback/{provider} [get]
-// @Router  /auth/sso/callback/{provider} [post]
 func (h *Handler) SSOOAuthCallback(ctx *gin.Context) {
 	provider, err := h.ParseStringParam(ctx, "provider")
 	if err != nil {

@@ -40,6 +40,9 @@ type Server struct {
 	mu         sync.RWMutex
 	cancelFunc context.CancelFunc
 	wg         sync.WaitGroup
+	// startedAt is when this process started its scheduler: a stop sent
+	// before then was meant for another.
+	startedAt time.Time
 }
 
 type Config struct {
@@ -83,6 +86,7 @@ func NewServer(config *Config) (*Server, error) {
 }
 
 func (s *Server) Start() error {
+	s.startedAt = timeutil.NowUTC()
 	s.scheduler.Start()
 
 	ctx, cancel := context.WithCancel(context.Background())
@@ -194,22 +198,52 @@ func (s *Server) listenToCtrlMessages(ctx context.Context) {
 		if errors.Is(err, context.Canceled) {
 			return
 		}
-		select {
-		case <-ctx.Done():
-		case <-time.After(10 * time.Second): //nolint:mnd
+		if wait := ctrlReadBackoff(err); wait > 0 {
+			select {
+			case <-ctx.Done():
+			case <-time.After(wait):
+			}
 		}
 		return
 	}
+	s.handleCtrlMessage(ctx, ctrlMsg)
+}
 
+// ctrlReadBackoff is how long to wait before reading the list again: not at all
+// when it was only empty for the read's timeout, which is every few seconds.
+func ctrlReadBackoff(err error) time.Duration {
+	if errors.Is(err, hperrors.ErrNotFound) {
+		return 0
+	}
+	return ctrlReadErrorBackoff
+}
+
+// handleCtrlMessage does what a message asks of this process.
+func (s *Server) handleCtrlMessage(ctx context.Context, ctrlMsg *Message) {
+	if ctrlMsg == nil {
+		return
+	}
 	if ctrlMsg.StartScheduler {
 		s.scheduler.Start()
+		s.config.Logger.Infof("task queue scheduler started, as a control message sent at %v asked",
+			ctrlMsg.SentAt)
 		return
 	}
 	if ctrlMsg.StopScheduler {
-		err := s.scheduler.StopJobs()
-		if err != nil {
-			s.config.Logger.Errorf("failed to stop scheduler: %v", err)
+		// A stop is for the processes running when it was sent - an update's,
+		// for those it is about to replace. One that reaches a process started
+		// since would stop it for good: nothing sends a start after an update.
+		if ctrlMsg.SentAt.Before(s.startedAt) {
+			s.config.Logger.Warnf("task queue scheduler: ignored a stop sent at %v, before this process "+
+				"started at %v", ctrlMsg.SentAt, s.startedAt)
+			return
 		}
+		if err := s.scheduler.StopJobs(); err != nil {
+			s.config.Logger.Errorf("failed to stop scheduler: %v", err)
+			return
+		}
+		s.config.Logger.Infof("task queue scheduler stopped, as a control message sent at %v asked",
+			ctrlMsg.SentAt)
 		return
 	}
 

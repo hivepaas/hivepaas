@@ -126,6 +126,7 @@ func (h *Handler) RenewSSLCert(ctx *gin.Context) {
 // @Produce application/zip
 // @Id      downloadSettingSSLCert
 // @Param   itemID path string true "setting ID"
+// openapi:ignore-param revealSecrets - the bundle holds the private key whatever it says
 // @Success 200 {file} binary
 // @Failure 400 {object} hperrors.ErrorInfo
 // @Failure 500 {object} hperrors.ErrorInfo

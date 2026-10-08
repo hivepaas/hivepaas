@@ -17,6 +17,7 @@ import (
 // @Produce json
 // @Id      deleteProject
 // @Param   projectID path string true "project ID"
+// @Param   removeStorage query bool false "`removeStorage=true` also deletes the data its apps keep on volumes"
 // @Success 200 {object} projectdto.DeleteProjectResp
 // @Failure 400 {object} hperrors.ErrorInfo
 // @Failure 500 {object} hperrors.ErrorInfo

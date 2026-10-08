@@ -59,6 +59,14 @@ func (h *Handler) CreateDataFile(ctx *gin.Context) {
 // @Param   projectID path string true "project ID"
 // @Param   projectEnv path string true "project env"
 // @Param   appID path string true "app ID"
+// @Param   pageOffset query int false "`pageOffset=offset`"
+// @Param   pageLimit query int false "`pageLimit=limit`"
+// @Param   key query string false "`key=<key>`, comma separated"
+// @Param   kind query string false "`kind=<file kind>`, comma separated"
+// @Param   search query string false "`search=<text>`"
+// @Param   status query string false "`status=<status>`, comma separated"
+// @Param   storageType query string false "`storageType=volume` or `cloud`, comma separated"
+// @Param   type query string false "`type=<file type>`, comma separated"
 // @Success 200 {object} filedto.ListFileResp
 // @Failure 400 {object} hperrors.ErrorInfo
 // @Failure 500 {object} hperrors.ErrorInfo
@@ -96,6 +104,8 @@ func (h *Handler) ListDataFile(ctx *gin.Context) {
 // @Param   projectEnv path string true "project env"
 // @Param   appID path string true "app ID"
 // @Param   itemID path string true "file ID"
+// @Param   kind query string false "`kind=<file kind>`, comma separated: the file is one of them"
+// @Param   type query string false "`type=<file type>`, comma separated: the file is one of them"
 // @Success 200 {object} filedto.GetFileResp
 // @Failure 400 {object} hperrors.ErrorInfo
 // @Failure 500 {object} hperrors.ErrorInfo
@@ -134,6 +144,7 @@ func (h *Handler) GetDataFile(ctx *gin.Context) {
 // @Param   projectEnv path string true "project env"
 // @Param   appID path string true "app ID"
 // @Param   itemID path string true "file ID"
+// @Param   viewInline query bool false "`viewInline=true` for a URL the browser shows rather than saves"
 // @Success 200 {object} filedto.GetFileDownloadURLResp
 // @Failure 400 {object} hperrors.ErrorInfo
 // @Failure 500 {object} hperrors.ErrorInfo
@@ -174,6 +185,8 @@ func (h *Handler) GetDataFileDownloadURL(ctx *gin.Context) {
 // @Param   projectEnv path string true "project env"
 // @Param   appID path string true "app ID"
 // @Param   itemID path string true "file ID"
+// @Param   deletePermanently query bool false "`deletePermanently=true` also deletes the file's data, wherever it is"
+// @Param   deletePermanentlyIfOnVolume query bool false "`=true` deletes the data too if it is on a volume"
 // @Success 200 {object} filedto.DeleteFileResp
 // @Failure 400 {object} hperrors.ErrorInfo
 // @Failure 500 {object} hperrors.ErrorInfo

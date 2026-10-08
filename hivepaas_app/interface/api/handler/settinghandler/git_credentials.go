@@ -21,6 +21,8 @@ import (
 // @Param   pageOffset query int false "`pageOffset=offset`"
 // @Param   pageLimit query int false "`pageLimit=limit`"
 // @Param   sort query string false "`sort=[-]field1|field2...`"
+// @Param   kind query string false "`kind=<kind>`, comma separated"
+// @Param   status query string false "`status=<status>`, comma separated"
 // @Success 200 {object} gitcredentialdto.ListGitCredentialResp
 // @Failure 400 {object} hperrors.ErrorInfo
 // @Failure 500 {object} hperrors.ErrorInfo

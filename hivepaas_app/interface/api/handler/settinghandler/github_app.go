@@ -146,6 +146,8 @@ func (h *Handler) TestGithubAppConn(ctx *gin.Context) {
 // @Produce json
 // @Id      listAppInstallation
 // @Param   body body githubappdto.ListAppInstallationReq true "request data"
+// @Param   pageOffset query int false "`pageOffset=offset`"
+// @Param   pageLimit query int false "`pageLimit=limit`"
 // @Success 200 {object} githubappdto.ListAppInstallationResp
 // @Failure 400 {object} hperrors.ErrorInfo
 // @Failure 500 {object} hperrors.ErrorInfo
@@ -198,6 +200,7 @@ func (h *Handler) BeginGithubAppManifestFlow(ctx *gin.Context) {
 // @Produce json
 // @Id      beginGithubAppManifestFlowCreation
 // @Param   itemID path string true "setting ID"
+// @Param   state query string false "the flow's state, handed on to GitHub and back"
 // @Success 200 "html page to redirect to github app creation page"
 // @Failure 400 {object} hperrors.ErrorInfo
 // @Failure 500 {object} hperrors.ErrorInfo
@@ -213,6 +216,10 @@ func (h *Handler) BeginGithubAppManifestFlowCreation(ctx *gin.Context) {
 // @Produce json
 // @Id      handleGithubAppManifestFlowProgress
 // @Param   itemID path string true "setting ID"
+// @Param   code query string false "the code GitHub hands back, exchanged for the app"
+// @Param   installation_id query int false "the installation GitHub hands back, after installing the app"
+// @Param   setup_action query string false "what GitHub did: `install` or `update`"
+// @Param   state query string false "the flow's state, which GitHub hands back"
 // @Success 200 "html page to redirect to github app creation page"
 // @Failure 400 {object} hperrors.ErrorInfo
 // @Failure 500 {object} hperrors.ErrorInfo

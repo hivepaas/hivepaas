@@ -45,6 +45,70 @@ jobs:
       - name: Test
         run: make test-cover
 
+  # docs/openapi/swagger.json is the API's contract - the CLI is generated from it
+  # - and its generation is deterministic: regenerating it changes nothing unless
+  # a change was committed without `make gen-swag`.
+  openapi:
+    name: OpenAPI spec is current
+    runs-on: ubuntu-latest
+    steps:
+      - name: Setup Go
+        uses: actions/setup-go@v7
+        with:
+          go-version: 1.27.x
+
+      - name: Checkout code
+        uses: actions/checkout@v7
+
+      - name: Install swag
+        # The version the devtools image runs, so that CI and `make gen-swag` agree.
+        run: |
+          version=$(grep -o 'swag/v2/cmd/swag@[^ ]*' tools/docker/Dockerfile | cut -d@ -f2)
+          go install "github.com/swaggo/swag/v2/cmd/swag@${version}"
+
+      - name: Regenerate the spec
+        run: SWAG_BIN="$(go env GOPATH)/bin/swag" ./tools/swag/swag.sh
+
+      - name: Compare with the committed spec
+        run: |
+          if ! git diff --exit-code --stat docs/openapi/swagger.json; then
+            echo "::error file=docs/openapi/swagger.json::not current: run make gen-swag and commit the result"
+            exit 1
+          fi
+
+  # The CLI is a client generated from this spec, in its own repository. Its
+  # `make spec-check SPEC=<file>` regenerates the client from the spec given and
+  # builds and tests it: a change here that breaks the CLI fails here, in the
+  # pull request that makes it. Until the CLI has the target, there is nothing
+  # to check.
+  cli-compat:
+    name: The CLI builds against this API
+    runs-on: ubuntu-latest
+    steps:
+      - name: Setup Go
+        uses: actions/setup-go@v7
+        with:
+          go-version: 1.27.x
+
+      - name: Checkout code
+        uses: actions/checkout@v7
+        with:
+          path: hivepaas
+
+      - name: Checkout the CLI
+        uses: actions/checkout@v7
+        with:
+          repository: hivepaas/hivepaas-cli
+          path: hivepaas-cli
+
+      - name: Check the CLI against this spec
+        run: |
+          if ! make -C hivepaas-cli -n spec-check SPEC=x >/dev/null 2>&1; then
+            echo "::notice::hivepaas-cli has no spec-check target yet: nothing to check"
+            exit 0
+          fi
+          make -C hivepaas-cli spec-check SPEC="${GITHUB_WORKSPACE}/hivepaas/docs/openapi/swagger.json"
+
   govulncheck:
     name: Govulncheck
     runs-on: ubuntu-latest

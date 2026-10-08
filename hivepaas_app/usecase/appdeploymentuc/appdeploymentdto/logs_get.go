@@ -13,7 +13,6 @@ import (
 )
 
 type GetDeploymentLogsReq struct {
-	Token        string            `json:"-" mapstructure:"token"`
 	ProjectID    string            `json:"-"`
 	ProjectEnvID string            `json:"-"`
 	AppID        string            `json:"-"`
@@ -22,7 +21,6 @@ type GetDeploymentLogsReq struct {
 	Since        time.Time         `json:"-" mapstructure:"since"`
 	Duration     timeutil.Duration `json:"-" mapstructure:"duration"`
 	Tail         int               `json:"-" mapstructure:"tail"`
-	Timestamps   bool              `json:"-" mapstructure:"timestamps"`
 }
 
 func NewGetDeploymentLogsReq() *GetDeploymentLogsReq {

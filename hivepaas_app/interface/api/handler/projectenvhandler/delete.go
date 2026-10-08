@@ -18,6 +18,7 @@ import (
 // @Id      deleteProjectEnv
 // @Param   projectID path string true "project ID"
 // @Param   projectEnv path string true "project Env"
+// @Param   removeStorage query bool false "`removeStorage=true` also deletes the data its apps keep on volumes"
 // @Success 200 {object} projectenvdto.DeleteProjectEnvResp
 // @Failure 400 {object} hperrors.ErrorInfo
 // @Failure 500 {object} hperrors.ErrorInfo

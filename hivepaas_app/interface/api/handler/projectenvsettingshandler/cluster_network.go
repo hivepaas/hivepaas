@@ -52,6 +52,7 @@ func (h *Handler) GetClusterNetwork(ctx *gin.Context) {
 // @Produce json
 // @Id      createProjectEnvClusterNetwork
 // @Param   projectID path string true "project ID"
+// @Param   projectEnv path string true "project env"
 // @Param   body body networkdto.CreateNetworkReq true "request data"
 // @Success 201 {object} networkdto.CreateNetworkResp
 // @Failure 400 {object} hperrors.ErrorInfo

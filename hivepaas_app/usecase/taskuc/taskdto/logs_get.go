@@ -16,11 +16,10 @@ type GetTaskLogsReq struct {
 	Scope *entity.ObjectScope `json:"-" mapstructure:"-"`
 	ID    string              `json:"-"`
 
-	Follow     bool              `json:"-" mapstructure:"follow"`
-	Since      time.Time         `json:"-" mapstructure:"since"`
-	Duration   timeutil.Duration `json:"-" mapstructure:"duration"`
-	Tail       int               `json:"-" mapstructure:"tail"`
-	Timestamps bool              `json:"-" mapstructure:"timestamps"`
+	Follow   bool              `json:"-" mapstructure:"follow"`
+	Since    time.Time         `json:"-" mapstructure:"since"`
+	Duration timeutil.Duration `json:"-" mapstructure:"duration"`
+	Tail     int               `json:"-" mapstructure:"tail"`
 }
 
 func NewGetTaskLogsReq() *GetTaskLogsReq {

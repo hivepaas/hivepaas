@@ -54,6 +54,7 @@ func (h *Handler) ListProject(ctx *gin.Context) {
 // @Produce json
 // @Id      getProject
 // @Param   projectID path string true "project ID"
+// @Param   getUserAccesses query bool false "`getUserAccesses=true` to include who can access the project"
 // @Success 200 {object} projectdto.GetProjectResp
 // @Failure 400 {object} hperrors.ErrorInfo
 // @Failure 500 {object} hperrors.ErrorInfo

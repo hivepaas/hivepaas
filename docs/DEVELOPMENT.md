@@ -405,7 +405,7 @@ the offline signature: a template decides which images run.
 make fmt                  # gofmt + import grouping, in place
 golangci-lint run ./...   # or `make lint` to run it in the devtools image
 make test                 # and `make test-race` if you touched anything concurrent
-make gen-swag             # only if a DTO changed
+make gen-swag             # if a DTO or a handler's swag comment changed
 ```
 
 There are three test targets. All three cache, so the second column is what you
@@ -437,7 +437,9 @@ remembered to run it. Both apply the formatters configured in `.golangci.yaml`,
 so they cannot disagree about what formatted means.
 
 `docs/openapi/swagger.json` is generated and committed, so a DTO change that skips
-`make gen-swag` leaves the committed contract wrong.
+`make gen-swag` leaves the committed contract wrong. CI regenerates it and fails
+when the result differs from the committed file; the generation is
+deterministic, so a difference is always a change somebody did not regenerate.
 
 If the wire format changed, the matching dashboard change belongs in the same
 piece of work.

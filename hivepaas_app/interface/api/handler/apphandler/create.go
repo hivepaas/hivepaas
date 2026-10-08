@@ -17,11 +17,12 @@ import (
 // @Produce json
 // @Id      createApp
 // @Param   projectID path string true "project ID"
+// @Param   projectEnv path string true "project env"
 // @Param   body body appdto.CreateAppReq true "request data"
 // @Success 201 {object} appdto.CreateAppResp
 // @Failure 400 {object} hperrors.ErrorInfo
 // @Failure 500 {object} hperrors.ErrorInfo
-// @Router  /projects/{projectID}/apps [post]
+// @Router  /projects/{projectID}/{projectEnv}/apps [post]
 func (h *Handler) CreateApp(ctx *gin.Context) {
 	auth, projectID, projectEnvID, _, err := h.GetAuthInEnv(ctx, base.ActionTypeWrite, false)
 	if err != nil {

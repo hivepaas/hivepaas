@@ -20,11 +20,15 @@ import (
 // @Produce json
 // @Id      uploadFiles
 // @Param   file formData file true "one or multiple files to upload"
-// @Param   type formData string true "file type: `build-source,...`"
-// @Param   scope formData string true "object target scope: project/app/user/global"
+// @Param   scope formData string true "object target scope: project, project-env, app, user or global"
 // @Param   projectId formData string false "target project id if scope=project or app"
 // @Param   appId formData string false "target app id if scope=app"
 // @Param   userId formData string false "target app id if scope=user"
+// @Param   fileKind formData string false "with fileType `tmp`: `source-code`"
+// @Param   fileType formData string true "`data-file`, or `tmp` with fileKind `source-code`"
+// @Param   projectEnv formData string false "target environment if scope=project-env"
+// @Param   storageId formData string false "the cloud storage's ID, with storageType `cloud`"
+// @Param   storageType formData string true "`volume` or `cloud`"
 // @Success 200 {object} filedto.UploadResp
 // @Failure 400 {object} hperrors.ErrorInfo
 // @Failure 500 {object} hperrors.ErrorInfo

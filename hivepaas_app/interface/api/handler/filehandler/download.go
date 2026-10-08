@@ -17,6 +17,8 @@ import (
 // @Produce application/octet-stream
 // @Id      downloadFile
 // @Param   fileID path string true "file ID"
+// @Param   token query string false "`token=<download token>`, from a download URL, in place of a session"
+// @Param   viewInline query bool false "`viewInline=true` to show the file in the browser rather than save it"
 // @Success 200
 // @Failure 400 {object} hperrors.ErrorInfo
 // @Failure 500 {object} hperrors.ErrorInfo

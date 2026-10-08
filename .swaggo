@@ -9,3 +9,7 @@
 // a duration such as "1h30m".
 replace github.com/hivepaas/hivepaas/hivepaas_app/pkg/fileutil.FileMode string
 replace github.com/hivepaas/hivepaas/hivepaas_app/pkg/timeutil.Duration string
+
+// A size is an int64 of bytes, and its constants - B, KB, MB... - made swag read
+// it as an integer enum. MarshalJSON writes a string such as "512MB" or "1GB".
+replace github.com/hivepaas/hivepaas/hivepaas_app/pkg/unit.DataSize string

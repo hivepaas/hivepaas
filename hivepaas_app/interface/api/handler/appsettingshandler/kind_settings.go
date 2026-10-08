@@ -19,6 +19,7 @@ import (
 // @Param   projectID path string true "project ID"
 // @Param   projectEnv path string true "project env"
 // @Param   appID path string true "app ID"
+// @Param   revealSecrets query bool false "`revealSecrets=true` to include the secrets' values"
 // @Success 200 {object} appsettingsdto.GetAppKindSettingsResp
 // @Failure 400 {object} hperrors.ErrorInfo
 // @Failure 500 {object} hperrors.ErrorInfo

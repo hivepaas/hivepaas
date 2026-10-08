@@ -46,6 +46,27 @@ type GetSettingUsagesResp struct {
 // makes it inherit exactly the authorization the group's other routes have,
 // instead of deriving the scope from the setting row and inventing a second
 // permission path to get wrong.
+//
+// Its routes are one per group, and the comment below documents them as one
+// path with the group as a parameter: a handler made per group has no comment of
+// its own for swag to read.
+//
+// @Summary Lists what references a setting
+// @Description Lists what still references a setting: the apps, projects and settings that use it. Deleting
+// @Description a setting they use fails with ERR_SETTING_IN_USE. kind is the settings group, as in its other
+// @Description routes: access-tokens, acme-dns-providers, backup-repos, basic-auth, cloud-storages, emails,
+// @Description github-apps, im-services, key-auth, notifications, oauth, registry-auth, repo-webhooks,
+// @Description sched-jobs, ssh-keys, ssl-certs or ssl-providers.
+// @Tags    Global settings
+// @Produce json
+// @Id      getSettingUsages
+// @Param   kind path string true "the settings group, such as ssh-keys"
+// @Param   itemID path string true "setting ID"
+// @Success 200 {object} basesettinghandler.GetSettingUsagesResp
+// @Failure 400 {object} hperrors.ErrorInfo
+// @Failure 404 {object} hperrors.ErrorInfo
+// @Failure 500 {object} hperrors.ErrorInfo
+// @Router  /settings/{kind}/{itemID}/usages [get]
 func (h *Handler) SettingUsages(resType base.ResourceType, scopeType base.ObjectScopeType) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		itemID, err := h.authorizeSettingUsages(ctx, resType, scopeType)

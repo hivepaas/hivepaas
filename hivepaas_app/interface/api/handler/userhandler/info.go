@@ -56,6 +56,7 @@ func (h *Handler) GetUser(ctx *gin.Context) {
 // @Param   pageOffset query int false "`pageOffset=offset`"
 // @Param   pageLimit query int false "`pageLimit=limit`"
 // @Param   sort query string false "`sort=[-]field1|field2...`"
+// @Param   role query string false "`role=<role>`, comma separated"
 // @Success 200 {object} userdto.ListUserResp
 // @Failure 400 {object} hperrors.ErrorInfo
 // @Failure 500 {object} hperrors.ErrorInfo

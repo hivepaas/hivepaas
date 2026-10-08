@@ -133,6 +133,7 @@ func (h *Handler) BeginProjectGithubAppManifestFlow(ctx *gin.Context) {
 // @Id      beginProjectGithubAppManifestFlowCreation
 // @Param   projectID path string true "project ID"
 // @Param   itemID path string true "setting ID"
+// @Param   state query string false "the flow's state, handed on to GitHub and back"
 // @Success 200 "html page to redirect to github app creation page"
 // @Failure 400 {object} hperrors.ErrorInfo
 // @Failure 500 {object} hperrors.ErrorInfo
@@ -149,10 +150,14 @@ func (h *Handler) BeginProjectGithubAppManifestFlowCreation(ctx *gin.Context) {
 // @Id      handleProjectGithubAppManifestFlowProgress
 // @Param   projectID path string true "project ID"
 // @Param   itemID path string true "setting ID"
+// @Param   code query string false "the code GitHub hands back, exchanged for the app"
+// @Param   installation_id query int false "the installation GitHub hands back, after installing the app"
+// @Param   setup_action query string false "what GitHub did: `install` or `update`"
+// @Param   state query string false "the flow's state, which GitHub hands back"
 // @Success 200 "html page to redirect to github app creation page"
 // @Failure 400 {object} hperrors.ErrorInfo
 // @Failure 500 {object} hperrors.ErrorInfo
-// @Router  /projects/{projectID}/github-apps/itemID}/manifest-flow/progress [get]
+// @Router  /projects/{projectID}/github-apps/{itemID}/manifest-flow/progress [get]
 func (h *Handler) HandleProjectGithubAppManifestFlowProgress(ctx *gin.Context) {
 	h.GithubAppManifestFlowProgress(ctx, base.ObjectScopeProject)
 }

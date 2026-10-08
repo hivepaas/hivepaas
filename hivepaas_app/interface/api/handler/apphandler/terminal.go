@@ -59,6 +59,9 @@ func (h *Handler) GetAppTerminalInfo(ctx *gin.Context) {
 // @Param   projectID path string true "project ID"
 // @Param   projectEnv path string true "project env"
 // @Param   appID path string true "app ID"
+// @Param   h query int false "`h=<rows>`: the terminal's height"
+// @Param   shell query string false "`shell=sh`, `bash`, `zsh` or `fish`"
+// @Param   w query int false "`w=<columns>`: the terminal's width"
 // @Success 200 {object} appdto.OpenTerminalResp
 // @Failure 400 {object} hperrors.ErrorInfo
 // @Failure 500 {object} hperrors.ErrorInfo

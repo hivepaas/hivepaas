@@ -23,6 +23,8 @@ import (
 // @Param   pageOffset query int false "`pageOffset=offset`"
 // @Param   pageLimit query int false "`pageLimit=limit`"
 // @Param   sort query string false "`sort=[-]field1|field2...`"
+// @Param   kind query string false "`kind=<kind>`, comma separated"
+// @Param   status query string false "`status=<status>`, comma separated"
 // @Success 200 {object} gitcredentialdto.ListGitCredentialResp
 // @Failure 400 {object} hperrors.ErrorInfo
 // @Failure 500 {object} hperrors.ErrorInfo
@@ -58,10 +60,10 @@ func (h *Handler) ListGitCredentials(ctx *gin.Context) {
 // @Id      listProjectGitRepository
 // @Param   projectID path string true "project ID"
 // @Param   itemID path string true "credential ID"
-// @Param   search query string false "`search=<target> (support *)`"
 // @Param   pageOffset query int false "`pageOffset=offset`"
 // @Param   pageLimit query int false "`pageLimit=limit`"
 // @Param   sort query string false "`sort=[-]field1|field2...`"
+// openapi:ignore-param revealSecrets - a listing from the provider has no secret to reveal
 // @Success 200 {object} gitcredentialdto.ListRepoResp
 // @Failure 400 {object} hperrors.ErrorInfo
 // @Failure 500 {object} hperrors.ErrorInfo
@@ -100,10 +102,10 @@ func (h *Handler) ListGitRepository(ctx *gin.Context) {
 // @Param   itemID path string true "credential ID"
 // @Param   owner query string true "repo owner (org, user)"
 // @Param   repo query string true "repo name"
-// @Param   search query string false "`search=<target> (support *)`"
 // @Param   pageOffset query int false "`pageOffset=offset`"
 // @Param   pageLimit query int false "`pageLimit=limit`"
 // @Param   sort query string false "`sort=[-]field1|field2...`"
+// openapi:ignore-param revealSecrets - a listing from the provider has no secret to reveal
 // @Success 200 {object} gitcredentialdto.ListBranchResp
 // @Failure 400 {object} hperrors.ErrorInfo
 // @Failure 500 {object} hperrors.ErrorInfo
@@ -142,10 +144,10 @@ func (h *Handler) ListGitBranch(ctx *gin.Context) {
 // @Param   itemID path string true "credential ID"
 // @Param   owner query string true "repo owner (org, user)"
 // @Param   repo query string true "repo name"
-// @Param   search query string false "`search=<target> (support *)`"
 // @Param   pageOffset query int false "`pageOffset=offset`"
 // @Param   pageLimit query int false "`pageLimit=limit`"
 // @Param   sort query string false "`sort=[-]field1|field2...`"
+// openapi:ignore-param revealSecrets - a listing from the provider has no secret to reveal
 // @Success 200 {object} gitcredentialdto.ListPullRequestResp
 // @Failure 400 {object} hperrors.ErrorInfo
 // @Failure 500 {object} hperrors.ErrorInfo

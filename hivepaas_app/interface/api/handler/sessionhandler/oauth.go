@@ -17,6 +17,7 @@ import (
 // @Tags    Sessions
 // @Produce json
 // @Id      ssoOAuthBegin
+// @Param   provider path string true "provider name"
 // @Success 302 "on success redirect to provider OAuth URL"
 // @Failure 400 {object} hperrors.ErrorInfo
 // @Failure 500 {object} hperrors.ErrorInfo

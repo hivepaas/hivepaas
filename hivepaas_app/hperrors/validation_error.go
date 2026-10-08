@@ -10,9 +10,12 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/translation"
 )
 
+// A validation error shows at DisplayLevelMedium. There is no constant for it:
+// swag reads every constant of type DisplayLevel as one of its enum values,
+// collected from both files in an order that changed between runs, which made
+// `make gen-swag` rewrite swagger.json every time.
 const (
-	errVldStatusCode   = http.StatusBadRequest
-	errVldDisplayLevel = DisplayLevelMedium
+	errVldStatusCode = http.StatusBadRequest
 
 	errKeyVldCommonDetail = "ERR_VLD_COMMON_DETAIL"
 )
@@ -51,7 +54,7 @@ func (e ValidationErrors) Build(lang translation.Lang) *ErrorInfo {
 		Status:       errVldStatusCode,
 		Code:         getErrorCode(ErrValidation),
 		Detail:       detail,
-		DisplayLevel: errVldDisplayLevel,
+		DisplayLevel: DisplayLevelMedium,
 		InnerErrors:  vldErrs,
 	}
 }

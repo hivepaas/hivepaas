@@ -18,6 +18,7 @@ import (
 // @Tags    System settings
 // @Produce json
 // @Id      getBackupRepoCleanupSettings
+// @Param   revealSecrets query bool false "`revealSecrets=true` to include the secrets' values"
 // @Success 200 {object} backuprepocleanupdto.GetBackupRepoCleanupResp
 // @Failure 400 {object} hperrors.ErrorInfo
 // @Failure 500 {object} hperrors.ErrorInfo

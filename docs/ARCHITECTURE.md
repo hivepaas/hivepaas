@@ -99,7 +99,11 @@ Decryption belongs in the usecase, not the DTO. `usecase/settings` already imple
 
 **swag annotations are one line each.** `@Param` stops at the newline, so it cannot wrap — but the 120-character limit still applies to it. Long prose goes in repeated `@Description` lines instead, each short enough to pass.
 
-**Types that marshal as strings need to say so.** `timeutil.Duration` and `unit.DataSize` write `"30d"` and `"1gb"`, but swag sees the integer underneath. Tag them `swaggertype:"string"` or the generated API contract is wrong.
+**Types that marshal as strings need to say so.** `timeutil.Duration` and `unit.DataSize` write `"30d"` and `"1gb"`, but swag sees the integer underneath. A type used across the API is declared once in `.swaggo`, as those two are; a single field takes `swaggertype:"string"`. Otherwise the generated API contract is wrong.
+
+**The comment documents what the handler reads, and CI checks it.** `go run ./tools/openapi lint` (part of `make lint`) compares each handler's `@Param`s with what it decodes: every `mapstructure` field of its request type is a documented query (or form) parameter, every documented one is read, and the path parameters match `@Router`. A field a shared request type decodes that means nothing on one endpoint is left out with a line swag ignores: `// openapi:ignore-param revealSecrets - why`. A test in `interface/api/server` checks that every route is an operation of the spec and every operation a route.
+
+**What swag cannot say, the generator adds from the Go types.** After swag, `tools/openapi fix` makes a field with `omitempty` optional, one that can be null - a pointer, slice or map without `omitempty` - nullable, and an `any` or `json.RawMessage` any value. A client generated from the spec, such as the CLI, decodes what the server sends only if those are right.
 
 ## 3. Entity
 

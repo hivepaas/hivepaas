@@ -20,6 +20,18 @@ import (
 // @Param   pageOffset query int false "`pageOffset=offset`"
 // @Param   pageLimit query int false "`pageLimit=limit`"
 // @Param   sort query string false "`sort=[-]field1|field2...`"
+// @Param   actorId query string false "`actorId=<user ID>`, comma separated: who acted"
+// @Param   appId query string false "`appId=<app ID>` narrows to one app's entries"
+// @Param   fromDate query string false "`fromDate=YYYY-MM-DD`"
+// @Param   projectEnvId query string false "`projectEnvId=<project ID>:<env>` narrows to one environment's entries"
+// @Param   projectId query string false "`projectId=<project ID>` narrows to one project's entries"
+// @Param   resourceId query string false "`resourceId=<ID>`, comma separated: what was acted on"
+// @Param   result query string false "`result=<result>`, comma separated"
+// @Param   scopeOnly query bool false "`scopeOnly=true` leaves out the entries of what the scope holds"
+// @Param   section query string false "`section=<section>`, comma separated"
+// @Param   source query string false "`source=<source>`, comma separated"
+// @Param   toDate query string false "`toDate=YYYY-MM-DD`"
+// @Param   type query string false "`type=<audit log type>`, comma separated"
 // @Success 200 {object} auditlogdto.ListAuditLogResp
 // @Failure 400 {object} hperrors.ErrorInfo
 // @Failure 500 {object} hperrors.ErrorInfo
@@ -52,6 +64,7 @@ func (h *Handler) GetAuditLog(ctx *gin.Context) {
 // @Produce json
 // @Id      listProjectEnvAuditLogType
 // @Param   projectID path string true "project ID"
+// @Param   projectEnv path string true "project env"
 // @Success 200 {object} auditlogdto.ListAuditLogTypeResp
 // @Failure 400 {object} hperrors.ErrorInfo
 // @Failure 500 {object} hperrors.ErrorInfo

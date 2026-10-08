@@ -24,6 +24,10 @@ import (
 // @Param   pageOffset query int false "`pageOffset=offset`"
 // @Param   pageLimit query int false "`pageLimit=limit`"
 // @Param   sort query string false "`sort=[-]field1|field2...`"
+// @Param   category query string false "`category=function`, or `category=webapp,database`; no kind is webapp"
+// @Param   getChildApps query bool false "`getChildApps=true` to include apps that belong to another"
+// @Param   getStats query bool false "`getStats=true` to include each app's stats"
+// @Param   parentId query string false "`parentId=<app ID>` lists the preview apps of that app"
 // @Success 200 {object} appdto.ListAppResp
 // @Failure 400 {object} hperrors.ErrorInfo
 // @Failure 500 {object} hperrors.ErrorInfo

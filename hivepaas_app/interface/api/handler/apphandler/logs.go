@@ -61,8 +61,9 @@ func (h *Handler) GetAppLogsInfo(ctx *gin.Context) {
 // @Param   taskId query string false "`taskId=<task-id>`"
 // @Param   follow query string false "`follow=true/false`"
 // @Param   since query string false "`since=YYYY-MM-DDTHH:mm:SSZ`"
-// @Param   duration query int false "`duration=` logs within the period"
+// @Param   duration query string false "`duration=1h` for the logs within that period"
 // @Param   tail query int false "`tail=1000` for the last 1000 lines, 1-5000, default 1000"
+// @Param   timestamps query bool false "`timestamps=false` leaves out each line's time, on by default"
 // @Success 200 {object} appdto.GetAppLogsResp
 // @Failure 400 {object} hperrors.ErrorInfo
 // @Failure 500 {object} hperrors.ErrorInfo

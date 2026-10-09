@@ -2,6 +2,8 @@ package server
 
 import (
 	"github.com/gin-gonic/gin"
+
+	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 )
 
 //nolint:funlen
@@ -109,6 +111,8 @@ func (s *HTTPServer) registerAppRoutes(projectGroup, projectEnvGroup *gin.Router
 		secretGroup.PUT("/:itemID", appSettingsHandler.UpdateSecret)
 		secretGroup.PUT("/:itemID/status", appSettingsHandler.UpdateSecretStatus)
 		secretGroup.DELETE("/:itemID", appSettingsHandler.DeleteSecret)
+		secretGroup.GET("/:itemID/usages",
+			appSettingsHandler.AppSettingUsages(base.ResourceTypeSecret))
 		// Download as file
 		secretGroup.GET("/:itemID/download-token", appSettingsHandler.GetSecretDownloadToken)
 		secretGroup.GET("/:itemID/download", appSettingsHandler.DownloadSecret)
@@ -122,6 +126,8 @@ func (s *HTTPServer) registerAppRoutes(projectGroup, projectEnvGroup *gin.Router
 		configFileGroup.PUT("/:itemID", appSettingsHandler.UpdateConfigFile)
 		configFileGroup.PUT("/:itemID/status", appSettingsHandler.UpdateConfigFileStatus)
 		configFileGroup.DELETE("/:itemID", appSettingsHandler.DeleteConfigFile)
+		configFileGroup.GET("/:itemID/usages",
+			appSettingsHandler.AppSettingUsages(base.ResourceTypeConfigFile))
 		// Download as file
 		configFileGroup.GET("/:itemID/download-token", appSettingsHandler.GetConfigFileDownloadToken)
 		configFileGroup.GET("/:itemID/download", appSettingsHandler.DownloadConfigFile)
@@ -136,6 +142,8 @@ func (s *HTTPServer) registerAppRoutes(projectGroup, projectEnvGroup *gin.Router
 		settingMountGroup.PUT("/:itemID", appSettingsHandler.UpdateSettingMount)
 		settingMountGroup.PUT("/:itemID/status", appSettingsHandler.UpdateSettingMountStatus)
 		settingMountGroup.DELETE("/:itemID", appSettingsHandler.DeleteSettingMount)
+		settingMountGroup.GET("/:itemID/usages",
+			appSettingsHandler.AppSettingUsages(base.ResourceTypeSettingMount))
 	}
 
 	{ // Data files
@@ -155,6 +163,8 @@ func (s *HTTPServer) registerAppRoutes(projectGroup, projectEnvGroup *gin.Router
 		schedJobGroup.PUT("/:itemID", appSettingsHandler.UpdateAppSchedJob)
 		schedJobGroup.PUT("/:itemID/status", appSettingsHandler.UpdateAppSchedJobStatus)
 		schedJobGroup.DELETE("/:itemID", appSettingsHandler.DeleteAppSchedJob)
+		schedJobGroup.GET("/:itemID/usages",
+			appSettingsHandler.AppSettingUsages(base.ResourceTypeSchedJob))
 		// Execute
 		schedJobGroup.POST("/:itemID/exec", appSettingsHandler.ExecuteAppSchedJob)
 	}
@@ -167,6 +177,8 @@ func (s *HTTPServer) registerAppRoutes(projectGroup, projectEnvGroup *gin.Router
 		periodicJobGroup.PUT("/:itemID", appSettingsHandler.UpdateAppPeriodicJob)
 		periodicJobGroup.PUT("/:itemID/status", appSettingsHandler.UpdateAppPeriodicJobStatus)
 		periodicJobGroup.DELETE("/:itemID", appSettingsHandler.DeleteAppPeriodicJob)
+		periodicJobGroup.GET("/:itemID/usages",
+			appSettingsHandler.AppSettingUsages(base.ResourceTypePeriodicJob))
 	}
 
 	{ // Command templates

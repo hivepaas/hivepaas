@@ -69,13 +69,13 @@ type GetSettingUsagesResp struct {
 // @Router  /settings/{kind}/{itemID}/usages [get]
 func (h *Handler) SettingUsages(resType base.ResourceType, scopeType base.ObjectScopeType) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		itemID, err := h.authorizeSettingUsages(ctx, resType, scopeType)
+		scope, itemID, err := h.authorizeSettingUsages(ctx, resType, scopeType)
 		if err != nil {
 			h.RenderError(ctx, err)
 			return
 		}
 
-		usages, err := h.BaseSettingUC.GetSettingUsages(h.RequestCtx(ctx), itemID)
+		usages, err := h.BaseSettingUC.GetSettingUsages(h.RequestCtx(ctx), scope, itemID)
 		if err != nil {
 			h.RenderError(ctx, err)
 			return
@@ -107,9 +107,9 @@ func (h *Handler) authorizeSettingUsages(
 	ctx *gin.Context,
 	resType base.ResourceType,
 	scopeType base.ObjectScopeType,
-) (itemID string, err error) {
+) (scope *entity.ObjectScope, itemID string, err error) {
 	var auth *basedto.Auth
-	scope := &entity.ObjectScope{ScopeType: scopeType}
+	scope = &entity.ObjectScope{ScopeType: scopeType}
 
 	switch scopeType {
 	case base.ObjectScopeProject:
@@ -128,13 +128,11 @@ func (h *Handler) authorizeSettingUsages(
 		err = hperrors.NewUnsupported("Setting scope 'none'")
 	}
 	if err != nil {
-		return "", hperrors.Wrap(err)
+		return nil, "", hperrors.Wrap(err)
 	}
-	// The scope is resolved for its permission checks, not for the query: a
-	// setting id is unique on its own, and the checks above are what decide
-	// whether this caller may look at it.
+	// The checks above are of the project, env or app in the path: the use case
+	// finds the setting there, or not at all.
 	_ = auth
-	_ = scope
 
-	return itemID, nil
+	return scope, itemID, nil
 }

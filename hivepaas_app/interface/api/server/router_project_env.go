@@ -2,6 +2,8 @@ package server
 
 import (
 	"github.com/gin-gonic/gin"
+
+	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 )
 
 //nolint:funlen
@@ -30,6 +32,8 @@ func (s *HTTPServer) registerProjectEnvRoutes(projectGroup *gin.RouterGroup) {
 		accessTokenGroup.PUT("/:itemID", projectEnvSettingsHandler.UpdateAccessToken)
 		accessTokenGroup.PUT("/:itemID/status", projectEnvSettingsHandler.UpdateAccessTokenStatus)
 		accessTokenGroup.DELETE("/:itemID", projectEnvSettingsHandler.DeleteAccessToken)
+		accessTokenGroup.GET("/:itemID/usages",
+			projectEnvSettingsHandler.ProjectEnvSettingUsages(base.ResourceTypeAccessToken))
 	}
 
 	{ // ACME DNS Provider group
@@ -40,6 +44,8 @@ func (s *HTTPServer) registerProjectEnvRoutes(projectGroup *gin.RouterGroup) {
 		acmeDnsProviderGroup.PUT("/:itemID", projectEnvSettingsHandler.UpdateAcmeDnsProvider)
 		acmeDnsProviderGroup.PUT("/:itemID/status", projectEnvSettingsHandler.UpdateAcmeDnsProviderStatus)
 		acmeDnsProviderGroup.DELETE("/:itemID", projectEnvSettingsHandler.DeleteAcmeDnsProvider)
+		acmeDnsProviderGroup.GET("/:itemID/usages",
+			projectEnvSettingsHandler.ProjectEnvSettingUsages(base.ResourceTypeAcmeDnsProvider))
 	}
 
 	{ // Audit log group
@@ -65,6 +71,8 @@ func (s *HTTPServer) registerProjectEnvRoutes(projectGroup *gin.RouterGroup) {
 		backupRepoGroup.PUT("/:itemID", projectEnvSettingsHandler.UpdateBackupRepo)
 		backupRepoGroup.PUT("/:itemID/status", projectEnvSettingsHandler.UpdateBackupRepoStatus)
 		backupRepoGroup.DELETE("/:itemID", projectEnvSettingsHandler.DeleteBackupRepo)
+		backupRepoGroup.GET("/:itemID/usages",
+			projectEnvSettingsHandler.ProjectEnvSettingUsages(base.ResourceTypeBackupRepo))
 		// Change repository password
 		backupRepoGroup.PUT("/:itemID/password", projectEnvSettingsHandler.ChangeBackupRepoPassword)
 		// Apply retention and reconcile stored snapshots
@@ -81,6 +89,8 @@ func (s *HTTPServer) registerProjectEnvRoutes(projectGroup *gin.RouterGroup) {
 		basicAuthGroup.PUT("/:itemID", projectEnvSettingsHandler.UpdateBasicAuth)
 		basicAuthGroup.PUT("/:itemID/status", projectEnvSettingsHandler.UpdateBasicAuthStatus)
 		basicAuthGroup.DELETE("/:itemID", projectEnvSettingsHandler.DeleteBasicAuth)
+		basicAuthGroup.GET("/:itemID/usages",
+			projectEnvSettingsHandler.ProjectEnvSettingUsages(base.ResourceTypeBasicAuth))
 	}
 
 	{ // Key auth group
@@ -91,6 +101,8 @@ func (s *HTTPServer) registerProjectEnvRoutes(projectGroup *gin.RouterGroup) {
 		keyAuthGroup.PUT("/:itemID", projectEnvSettingsHandler.UpdateKeyAuth)
 		keyAuthGroup.PUT("/:itemID/status", projectEnvSettingsHandler.UpdateKeyAuthStatus)
 		keyAuthGroup.DELETE("/:itemID", projectEnvSettingsHandler.DeleteKeyAuth)
+		keyAuthGroup.GET("/:itemID/usages",
+			projectEnvSettingsHandler.ProjectEnvSettingUsages(base.ResourceTypeKeyAuth))
 	}
 
 	{ // Cloud storage group
@@ -101,6 +113,8 @@ func (s *HTTPServer) registerProjectEnvRoutes(projectGroup *gin.RouterGroup) {
 		cloudStorageGroup.PUT("/:itemID", projectEnvSettingsHandler.UpdateCloudStorage)
 		cloudStorageGroup.PUT("/:itemID/status", projectEnvSettingsHandler.UpdateCloudStorageStatus)
 		cloudStorageGroup.DELETE("/:itemID", projectEnvSettingsHandler.DeleteCloudStorage)
+		cloudStorageGroup.GET("/:itemID/usages",
+			projectEnvSettingsHandler.ProjectEnvSettingUsages(base.ResourceTypeCloudStorage))
 	}
 
 	{ // Cluster network group
@@ -111,6 +125,8 @@ func (s *HTTPServer) registerProjectEnvRoutes(projectGroup *gin.RouterGroup) {
 		networkGroup.PUT("/:itemID", projectEnvSettingsHandler.UpdateClusterNetwork)
 		networkGroup.PUT("/:itemID/status", projectEnvSettingsHandler.UpdateClusterNetworkStatus)
 		networkGroup.DELETE("/:itemID", projectEnvSettingsHandler.DeleteClusterNetwork)
+		networkGroup.GET("/:itemID/usages",
+			projectEnvSettingsHandler.ProjectEnvSettingUsages(base.ResourceTypeClusterNetwork))
 	}
 
 	{ // Cluster volume group
@@ -121,6 +137,8 @@ func (s *HTTPServer) registerProjectEnvRoutes(projectGroup *gin.RouterGroup) {
 		volumeGroup.PUT("/:itemID", projectEnvSettingsHandler.UpdateClusterVolume)
 		volumeGroup.PUT("/:itemID/status", projectEnvSettingsHandler.UpdateClusterVolumeStatus)
 		volumeGroup.DELETE("/:itemID", projectEnvSettingsHandler.DeleteClusterVolume)
+		volumeGroup.GET("/:itemID/usages",
+			projectEnvSettingsHandler.ProjectEnvSettingUsages(base.ResourceTypeClusterVolume))
 	}
 
 	{ // Command pipes group
@@ -132,6 +150,8 @@ func (s *HTTPServer) registerProjectEnvRoutes(projectGroup *gin.RouterGroup) {
 		commandPipeGroup.PUT("/:itemID", projectEnvSettingsHandler.UpdateCommandPipe)
 		commandPipeGroup.PUT("/:itemID/status", projectEnvSettingsHandler.UpdateCommandPipeStatus)
 		commandPipeGroup.DELETE("/:itemID", projectEnvSettingsHandler.DeleteCommandPipe)
+		commandPipeGroup.GET("/:itemID/usages",
+			projectEnvSettingsHandler.ProjectEnvSettingUsages(base.ResourceTypeCommandPipe))
 	}
 
 	{ // Scheduled jobs group: the env's own (job sequences) and, listed, its apps'
@@ -142,6 +162,8 @@ func (s *HTTPServer) registerProjectEnvRoutes(projectGroup *gin.RouterGroup) {
 		schedJobGroup.PUT("/:itemID", projectEnvSettingsHandler.UpdateSchedJob)
 		schedJobGroup.PUT("/:itemID/status", projectEnvSettingsHandler.UpdateSchedJobStatus)
 		schedJobGroup.DELETE("/:itemID", projectEnvSettingsHandler.DeleteSchedJob)
+		schedJobGroup.GET("/:itemID/usages",
+			projectEnvSettingsHandler.ProjectEnvSettingUsages(base.ResourceTypeSchedJob))
 		schedJobGroup.POST("/:itemID/exec", projectEnvSettingsHandler.ExecuteSchedJob)
 	}
 
@@ -154,6 +176,8 @@ func (s *HTTPServer) registerProjectEnvRoutes(projectGroup *gin.RouterGroup) {
 		commandTemplateGroup.PUT("/:itemID", projectEnvSettingsHandler.UpdateCommandTemplate)
 		commandTemplateGroup.PUT("/:itemID/status", projectEnvSettingsHandler.UpdateCommandTemplateStatus)
 		commandTemplateGroup.DELETE("/:itemID", projectEnvSettingsHandler.DeleteCommandTemplate)
+		commandTemplateGroup.GET("/:itemID/usages",
+			projectEnvSettingsHandler.ProjectEnvSettingUsages(base.ResourceTypeCommandTemplate))
 	}
 
 	{ // Email group
@@ -164,6 +188,8 @@ func (s *HTTPServer) registerProjectEnvRoutes(projectGroup *gin.RouterGroup) {
 		emailGroup.PUT("/:itemID", projectEnvSettingsHandler.UpdateEmail)
 		emailGroup.PUT("/:itemID/status", projectEnvSettingsHandler.UpdateEmailStatus)
 		emailGroup.DELETE("/:itemID", projectEnvSettingsHandler.DeleteEmail)
+		emailGroup.GET("/:itemID/usages",
+			projectEnvSettingsHandler.ProjectEnvSettingUsages(base.ResourceTypeEmail))
 	}
 
 	{ // Env vars
@@ -199,6 +225,8 @@ func (s *HTTPServer) registerProjectEnvRoutes(projectGroup *gin.RouterGroup) {
 		imServiceGroup.PUT("/:itemID", projectEnvSettingsHandler.UpdateIMService)
 		imServiceGroup.PUT("/:itemID/status", projectEnvSettingsHandler.UpdateIMServiceStatus)
 		imServiceGroup.DELETE("/:itemID", projectEnvSettingsHandler.DeleteIMService)
+		imServiceGroup.GET("/:itemID/usages",
+			projectEnvSettingsHandler.ProjectEnvSettingUsages(base.ResourceTypeIMService))
 	}
 
 	{ // Notification group
@@ -209,6 +237,8 @@ func (s *HTTPServer) registerProjectEnvRoutes(projectGroup *gin.RouterGroup) {
 		notificationGroup.PUT("/:itemID", projectEnvSettingsHandler.UpdateNotification)
 		notificationGroup.PUT("/:itemID/status", projectEnvSettingsHandler.UpdateNotificationStatus)
 		notificationGroup.DELETE("/:itemID", projectEnvSettingsHandler.DeleteNotification)
+		notificationGroup.GET("/:itemID/usages",
+			projectEnvSettingsHandler.ProjectEnvSettingUsages(base.ResourceTypeNotification))
 	}
 
 	{ // Registry auth group
@@ -219,6 +249,8 @@ func (s *HTTPServer) registerProjectEnvRoutes(projectGroup *gin.RouterGroup) {
 		registryAuthGroup.PUT("/:itemID", projectEnvSettingsHandler.UpdateRegistryAuth)
 		registryAuthGroup.PUT("/:itemID/status", projectEnvSettingsHandler.UpdateRegistryAuthStatus)
 		registryAuthGroup.DELETE("/:itemID", projectEnvSettingsHandler.DeleteRegistryAuth)
+		registryAuthGroup.GET("/:itemID/usages",
+			projectEnvSettingsHandler.ProjectEnvSettingUsages(base.ResourceTypeRegistryAuth))
 	}
 
 	{ // Repo webhook group
@@ -235,6 +267,8 @@ func (s *HTTPServer) registerProjectEnvRoutes(projectGroup *gin.RouterGroup) {
 		secretGroup.PUT("/:itemID", projectEnvSettingsHandler.UpdateSecret)
 		secretGroup.PUT("/:itemID/status", projectEnvSettingsHandler.UpdateSecretStatus)
 		secretGroup.DELETE("/:itemID", projectEnvSettingsHandler.DeleteSecret)
+		secretGroup.GET("/:itemID/usages",
+			projectEnvSettingsHandler.ProjectEnvSettingUsages(base.ResourceTypeSecret))
 	}
 
 	{ // Config files
@@ -245,6 +279,8 @@ func (s *HTTPServer) registerProjectEnvRoutes(projectGroup *gin.RouterGroup) {
 		configFileGroup.PUT("/:itemID", projectEnvSettingsHandler.UpdateConfigFile)
 		configFileGroup.PUT("/:itemID/status", projectEnvSettingsHandler.UpdateConfigFileStatus)
 		configFileGroup.DELETE("/:itemID", projectEnvSettingsHandler.DeleteConfigFile)
+		configFileGroup.GET("/:itemID/usages",
+			projectEnvSettingsHandler.ProjectEnvSettingUsages(base.ResourceTypeConfigFile))
 	}
 
 	{ // SSH key group
@@ -255,6 +291,8 @@ func (s *HTTPServer) registerProjectEnvRoutes(projectGroup *gin.RouterGroup) {
 		sshKeyGroup.PUT("/:itemID", projectEnvSettingsHandler.UpdateSSHKey)
 		sshKeyGroup.PUT("/:itemID/status", projectEnvSettingsHandler.UpdateSSHKeyStatus)
 		sshKeyGroup.DELETE("/:itemID", projectEnvSettingsHandler.DeleteSSHKey)
+		sshKeyGroup.GET("/:itemID/usages",
+			projectEnvSettingsHandler.ProjectEnvSettingUsages(base.ResourceTypeSSHKey))
 	}
 
 	{ // SSL Cert group
@@ -265,6 +303,8 @@ func (s *HTTPServer) registerProjectEnvRoutes(projectGroup *gin.RouterGroup) {
 		sslCertGroup.PUT("/:itemID", projectEnvSettingsHandler.UpdateSSLCert)
 		sslCertGroup.PUT("/:itemID/status", projectEnvSettingsHandler.UpdateSSLCertStatus)
 		sslCertGroup.DELETE("/:itemID", projectEnvSettingsHandler.DeleteSSLCert)
+		sslCertGroup.GET("/:itemID/usages",
+			projectEnvSettingsHandler.ProjectEnvSettingUsages(base.ResourceTypeSSLCert))
 		sslCertGroup.POST("/:itemID/renew", projectEnvSettingsHandler.RenewSSLCert)
 		sslCertGroup.GET("/:itemID/download", projectEnvSettingsHandler.DownloadSSLCertBundle)
 	}
@@ -277,6 +317,8 @@ func (s *HTTPServer) registerProjectEnvRoutes(projectGroup *gin.RouterGroup) {
 		sslProviderGroup.PUT("/:itemID", projectEnvSettingsHandler.UpdateSSLProvider)
 		sslProviderGroup.PUT("/:itemID/status", projectEnvSettingsHandler.UpdateSSLProviderStatus)
 		sslProviderGroup.DELETE("/:itemID", projectEnvSettingsHandler.DeleteSSLProvider)
+		sslProviderGroup.GET("/:itemID/usages",
+			projectEnvSettingsHandler.ProjectEnvSettingUsages(base.ResourceTypeSSLProvider))
 	}
 
 	{ // Task group

@@ -45,7 +45,25 @@ type SettingUsage struct {
 
 // GetSettingUsages is LoadSettingUsages for a caller with no transaction of its
 // own - the read-only endpoint behind the dashboard's "what uses this" modal.
-func (uc *BaseUC) GetSettingUsages(ctx context.Context, settingID string) ([]*SettingUsage, error) {
+//
+// Through a project's, an env's or an app's path, the setting is one of that
+// object's: the path's permission checks are of the object in it, and a setting
+// of another one is not found there.
+func (uc *BaseUC) GetSettingUsages(
+	ctx context.Context,
+	scope *entity.ObjectScope,
+	settingID string,
+) ([]*SettingUsage, error) {
+	if objectID := scope.ScopeObjectID(); objectID != "" {
+		setting, err := uc.SettingRepo.GetByID(ctx, uc.DB, nil, "", settingID, false)
+		if err != nil {
+			return nil, hperrors.Wrap(err)
+		}
+		if setting.ObjectID != objectID {
+			return nil, hperrors.Wrap(hperrors.ErrSettingNotFound).WithParam("Name", settingID)
+		}
+	}
+
 	usages, err := uc.LoadSettingUsages(ctx, uc.DB, settingID)
 	if err != nil {
 		return nil, hperrors.Wrap(err)

@@ -16,7 +16,10 @@ import (
 // the routes a handler factory registers once per group, which have no comment
 // of their own. The parameter in braces is what differs between them.
 var templatedOperations = map[string]string{
-	"GET /api/settings/{kind}/{itemID}/usages": "kind",
+	"GET /api/settings/{kind}/{itemID}/usages":                                       "kind",
+	"GET /api/projects/{projectID}/{kind}/{itemID}/usages":                           "kind",
+	"GET /api/projects/{projectID}/{projectEnv}/{kind}/{itemID}/usages":              "kind",
+	"GET /api/projects/{projectID}/{projectEnv}/apps/{appID}/{kind}/{itemID}/usages": "kind",
 }
 
 var specParam = regexp.MustCompile(`\{([^}]+)\}`)

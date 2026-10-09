@@ -164,8 +164,10 @@ func (s *service) EnsureAppActive(
 	checkUpdateVer bool,
 	lockApp bool,
 ) error {
+	// What LoadApp checks the app by, and names it with: with "id" alone, every
+	// app read as inactive.
 	_, err := s.LoadApp(ctx, db, app.ProjectID, app.ID, true, true,
-		bunex.SelectColumns("id"),
+		bunex.SelectColumns("id", "name", "status"),
 		bunex.SelectRelation("Project",
 			bunex.SelectExcludeColumns(entity.ProjectDefaultExcludeColumns...),
 		),

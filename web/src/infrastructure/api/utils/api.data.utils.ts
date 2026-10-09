@@ -95,6 +95,14 @@ export function parseApiError(error: unknown): Error {
         return new RouteNotFoundException(error.config?.url ?? "");
     }
 
+    return parseApiProblem(data, error.config?.url) ?? new UnexpectedApiErrorException();
+}
+
+/**
+ * The exception a problem the server answered stands for: the body of a failed
+ * request, or the error a stream ends with. Undefined when data is no problem.
+ */
+export function parseApiProblem(data: unknown, requestUrl?: string): Error | undefined {
     /**
      * Validation problem
      */
@@ -153,14 +161,11 @@ export function parseApiError(error: unknown): Error {
         return new HttpException({
             status: problem.status,
             problem,
-            requestUrl: error.config?.url,
+            requestUrl,
         });
     }
 
-    /**
-     * Unexpected API error response
-     */
-    return new UnexpectedApiErrorException();
+    return undefined;
 }
 
 /**

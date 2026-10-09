@@ -26,7 +26,7 @@ function createHook() {
                     });
                 },
                 uploadOne: async (request: AppContainerFiles_UploadOne_Req["data"], signal?: AbortSignal) => {
-                    const result = await api.projects.apps.containerFiles.$.uploadOne({ data: request }, signal);
+                    const result = await api.projects.apps.containerFiles.stream.$.uploadOne({ data: request }, signal);
                     return match(result, {
                         Ok: _ => _,
                         Err: error => {

@@ -1,8 +1,10 @@
+import { useState } from "react";
+
 import { Dialog, DialogDescription, DialogFixedContent, DialogHeader, DialogTitle } from "@components/ui/dialog";
 import { toast } from "sonner";
 import { AppContainerFilesCommands } from "~/projects/data";
 
-import { ImportFilesToContainerForm } from "../form";
+import { ImportFilesToContainerForm, type UploadProgressValue } from "../form";
 import { useImportFilesToContainerDialogState } from "../hooks";
 import type { ImportFilesToContainerFormOutput } from "../schemas";
 import { mapImportCompressionToWire } from "../schemas";
@@ -12,6 +14,7 @@ export function ImportFilesToContainerDialog() {
     const open = state.mode === "open";
 
     const { mutateAsync: uploadOne, isPending } = AppContainerFilesCommands.useUploadOne();
+    const [progress, setProgress] = useState<UploadProgressValue | null>(null);
 
     function handleClose() {
         if (isPending) {
@@ -27,6 +30,7 @@ export function ImportFilesToContainerDialog() {
             return;
         }
 
+        setProgress(null);
         try {
             const response = await uploadOne({
                 projectID: state.projectId,
@@ -39,6 +43,9 @@ export function ImportFilesToContainerDialog() {
                 extract: values.extract,
                 compressionFormat: mapImportCompressionToWire(values.compression),
                 overwrite: values.overwrite,
+                onProgress: (sent, total) => {
+                    setProgress({ sent, total });
+                },
             });
 
             toast.success(response.data.message || "File uploaded successfully");
@@ -47,6 +54,8 @@ export function ImportFilesToContainerDialog() {
         } catch (error) {
             const nextError = error instanceof Error ? error : new Error("Failed to upload container file");
             dialogOptions?.onError?.(nextError);
+        } finally {
+            setProgress(null);
         }
     }
 
@@ -69,6 +78,7 @@ export function ImportFilesToContainerDialog() {
 
                 <ImportFilesToContainerForm
                     isPending={isPending}
+                    progress={progress}
                     onSubmit={onSubmit}
                 />
             </DialogFixedContent>

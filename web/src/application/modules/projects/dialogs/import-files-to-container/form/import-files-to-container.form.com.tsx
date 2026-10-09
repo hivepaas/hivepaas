@@ -5,11 +5,12 @@ import { UploadIcon } from "lucide-react";
 import { type FieldErrors, useController, useForm } from "react-hook-form";
 
 import { InfoBlock } from "@application/shared/components";
+import { formatDataSizeCompact } from "@application/shared/utils/data-size";
 
 import { Button, Tabs, TabsList, TabsTrigger } from "@/components/ui";
 import { Checkbox } from "@/components/ui/checkbox";
 import { DialogActionFooter, DialogBody } from "@/components/ui/dialog";
-import { Field, FieldError, FieldGroup } from "@/components/ui/field";
+import { Field, FieldDescription, FieldError, FieldGroup } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 
 import type { ImportFilesToContainerFormInput, ImportFilesToContainerFormOutput } from "../schemas";
@@ -23,7 +24,7 @@ const compressionOptions = [
     { value: "zstd", label: "Zstd" },
 ] as const;
 
-export function ImportFilesToContainerForm({ isPending, onSubmit }: Props) {
+export function ImportFilesToContainerForm({ isPending, progress, onSubmit }: Props) {
     const fileInputRef = useRef<HTMLInputElement>(null);
 
     const {
@@ -124,7 +125,13 @@ export function ImportFilesToContainerForm({ isPending, onSubmit }: Props) {
                                 {...path}
                                 placeholder="/path/in/container"
                                 disabled={isPending}
+                                aria-describedby="import-container-path-hint"
                             />
+                            <FieldDescription id="import-container-path-hint">
+                                {extract.value
+                                    ? "The directory the archive is unpacked into."
+                                    : "Ending in /, the directory the file goes into, under its own name; otherwise, the file's own path. A directory is never replaced by the file."}
+                            </FieldDescription>
                             <FieldError errors={[errors.path]} />
                         </InfoBlock>
                     </Field>
@@ -177,30 +184,45 @@ export function ImportFilesToContainerForm({ isPending, onSubmit }: Props) {
                         </Field>
                     )}
 
-                    <Field>
-                        <InfoBlock
-                            title="Overwrite"
-                            titleWidth={130}
-                        >
-                            <label
-                                htmlFor="import-container-overwrite"
-                                className="flex items-center gap-3 text-sm font-medium"
+                    {/* A single file never replaces a directory, and files are overwritten
+                        either way: Overwrite is the archive's entries' only. */}
+                    {extract.value && (
+                        <Field>
+                            <InfoBlock
+                                title="Overwrite"
+                                titleWidth={130}
                             >
-                                <Checkbox
-                                    id="import-container-overwrite"
-                                    checked={overwrite.value}
-                                    disabled={isPending}
-                                    onCheckedChange={checked => {
-                                        overwrite.onChange(checked === true);
-                                    }}
-                                />
-                            </label>
-                        </InfoBlock>
-                    </Field>
+                                <label
+                                    htmlFor="import-container-overwrite"
+                                    className="flex items-center gap-3 text-sm font-medium"
+                                >
+                                    <Checkbox
+                                        id="import-container-overwrite"
+                                        checked={overwrite.value}
+                                        disabled={isPending}
+                                        aria-describedby="import-container-overwrite-hint"
+                                        onCheckedChange={checked => {
+                                            overwrite.onChange(checked === true);
+                                        }}
+                                    />
+                                </label>
+                                <FieldDescription id="import-container-overwrite-hint">
+                                    Let an entry replace a directory with a file, or a file with a directory. Files are
+                                    overwritten either way.
+                                </FieldDescription>
+                            </InfoBlock>
+                        </Field>
+                    )}
                 </FieldGroup>
             </DialogBody>
 
-            <DialogActionFooter className="flex justify-end gap-4">
+            <DialogActionFooter className="flex items-center justify-end gap-4">
+                {isPending && progress && (
+                    <UploadProgress
+                        sent={progress.sent}
+                        total={progress.total}
+                    />
+                )}
                 <Button
                     type="submit"
                     disabled={isPending}
@@ -212,7 +234,42 @@ export function ImportFilesToContainerForm({ isPending, onSubmit }: Props) {
     );
 }
 
+// How much of the file has left the browser. Once it all has, the server still
+// writes it into the container before it answers.
+function UploadProgress({ sent, total }: UploadProgressValue) {
+    const percent = total > 0 ? Math.floor((sent / total) * 100) : 100;
+
+    return (
+        <div className="flex min-w-0 flex-1 flex-col gap-1.5">
+            <div
+                role="progressbar"
+                aria-label="Upload progress"
+                aria-valuemin={0}
+                aria-valuemax={100}
+                aria-valuenow={percent}
+                className="h-1.5 w-full overflow-hidden rounded-full bg-muted"
+            >
+                <div
+                    className="h-full bg-primary transition-[width]"
+                    style={{ width: `${percent}%` }}
+                />
+            </div>
+            <span className="text-xs text-muted-foreground tabular-nums">
+                {sent >= total
+                    ? "Writing into the container..."
+                    : `${formatDataSizeCompact(sent) || "0B"} of ${formatDataSizeCompact(total)}`}
+            </span>
+        </div>
+    );
+}
+
+export interface UploadProgressValue {
+    sent: number;
+    total: number;
+}
+
 interface Props {
     isPending: boolean;
+    progress: UploadProgressValue | null;
     onSubmit: (values: ImportFilesToContainerFormOutput) => void | Promise<void>;
 }

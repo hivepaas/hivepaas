@@ -6,20 +6,23 @@ makes a container, but it writes: run it on an installation that is there to go.
 Settings are the installation's own - those tests run one at a time and put
 back what they found.
 
-| #    | Scenario                                                                                          | Test                                   |
-| ---- | ------------------------------------------------------------------------------------------------- | -------------------------------------- |
-| 1.1  | A project made from the dialog, with its two environments; a name required; a name taken          | `tests/level-1/projects.spec.ts`       |
-| 1.1  | A project renamed and given an environment, kept after a reload; deleted after typing its name    | `tests/level-1/projects.spec.ts`       |
-| 1.2  | A member invited by link to one project signs up, signs in, and sees that project alone           | `tests/level-1/users.spec.ts`          |
-| 1.2  | A member disabled is turned away at sign-in                                                       | `tests/level-1/users.spec.ts`          |
-| 1.3  | An API key shows its secret once, answers the API, and is refused once deleted                    | `tests/level-1/api-keys.spec.ts`       |
-| 1.4  | Basic auth, key auth, SSH key, webhook: made, listed, secret masked, renamed, deleted             | `tests/level-1/integrations.spec.ts`   |
-| 1.5  | Data Cleanup settings kept after a reload; an interval that is not one refused and not kept       | `tests/level-1/settings.spec.ts`       |
-| 1.6  | A project made and deleted is in the audit log, with who did it                                   | `tests/level-1/audit-logs.spec.ts`     |
-| 1.7  | An empty body on every PUT and POST is refused or harmless: never a 5xx, nothing made             | `tests/level-1/api-bodies.spec.ts`     |
-| 1.8  | The HivePaaS project, its environments and its own apps: deleting, disabling and stopping refused | `tests/level-1/system-project.spec.ts` |
-| 1.9  | A read-only API key reads and is refused a write; a key without delete, a deletion                | `tests/level-1/api-keys.spec.ts`       |
-| 1.10 | A CLI built for an older API level reads, told the server's, and is refused its writes (426)      | `tests/level-1/cli-level.spec.ts`      |
+| #    | Scenario                                                                                                                           | Test                                   |
+| ---- | ---------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------- |
+| 1.1  | A project made from the dialog, with its two environments; a name required; a name taken                                           | `tests/level-1/projects.spec.ts`       |
+| 1.1  | A project renamed and given an environment, kept after a reload; deleted after typing its name                                     | `tests/level-1/projects.spec.ts`       |
+| 1.2  | A member invited by link to one project signs up, signs in, and sees that project alone                                            | `tests/level-1/users.spec.ts`          |
+| 1.2  | A member disabled is turned away at sign-in                                                                                        | `tests/level-1/users.spec.ts`          |
+| 1.3  | An API key shows its secret once, answers the API, and is refused once deleted                                                     | `tests/level-1/api-keys.spec.ts`       |
+| 1.4  | Basic auth, key auth, SSH key, webhook: made, listed, secret masked, renamed, deleted                                              | `tests/level-1/integrations.spec.ts`   |
+| 1.5  | Data Cleanup settings kept after a reload; an interval that is not one refused and not kept                                        | `tests/level-1/settings.spec.ts`       |
+| 1.6  | A project made and deleted is in the audit log, with who did it                                                                    | `tests/level-1/audit-logs.spec.ts`     |
+| 1.7  | An empty body on every PUT and POST is refused or harmless: never a 5xx, nothing made                                              | `tests/level-1/api-bodies.spec.ts`     |
+| 1.8  | The HivePaaS project, its environments and its own apps: deleting, disabling and stopping refused                                  | `tests/level-1/system-project.spec.ts` |
+| 1.9  | A read-only API key reads and is refused a write; a key without delete, a deletion                                                 | `tests/level-1/api-keys.spec.ts`       |
+| 1.10 | A CLI built for an older API level reads, told the server's, and is refused its writes (426)                                       | `tests/level-1/cli-level.spec.ts`      |
+| 1.11 | A member given a project to read sees its apps' settings; Save is out of reach, and the API refuses saving, deleting, making (401) | `tests/level-1/users.spec.ts`          |
+| 1.12 | An API key is good until it expires, and refused from then on                                                                      | `tests/level-1/api-keys.spec.ts`       |
+| 1.13 | A member turns two-factor sign-in on from the profile; then a code is asked for, a wrong one refused, the right one lets them in   | `tests/level-1/users.spec.ts`          |
 
 Left for later levels: Logging and Registry settings (saving them deploys) -
 level 2; Traefik and HivePaaS routing and security (they can restart the proxy)

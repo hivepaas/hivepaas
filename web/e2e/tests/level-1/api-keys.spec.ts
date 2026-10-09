@@ -70,10 +70,18 @@ interface Actions {
     delete: boolean;
 }
 
+const DAY = 24 * 60 * 60 * 1000;
+
 // keyWith makes an API key of the tests' user allowed only the actions given,
-// and answers a client that calls the API with it.
-async function keyWith(api: APIRequestContext, name: string, accessAction: Actions): Promise<APIRequestContext> {
-    const expireAt = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
+// expiring in a day or as given, and answers a client that calls the API with
+// it.
+async function keyWith(
+    api: APIRequestContext,
+    name: string,
+    accessAction: Actions,
+    expiresIn = DAY,
+): Promise<APIRequestContext> {
+    const expireAt = new Date(Date.now() + expiresIn).toISOString();
     const res = await api.post("users/current/settings/api-keys", {
         data: { name, accessAction, capabilities: [], default: false, inheritable: false, expireAt },
     });
@@ -90,8 +98,8 @@ async function keyWith(api: APIRequestContext, name: string, accessAction: Actio
 // refused a deletion - each refused as the API refuses an action not allowed,
 // with nothing made or removed.
 test("an API key is refused what its actions do not allow", async ({ api, cleanup }) => {
-    const readOnly = e2eName("api-key-read");
-    const noDelete = e2eName("api-key-no-delete");
+    const readOnly = e2eName("read-key");
+    const noDelete = e2eName("no-delete-key");
     cleanup(() => deleteApiKeysNamed(api, readOnly));
     cleanup(() => deleteApiKeysNamed(api, noDelete));
     const project = await createProject(api, e2eName("key-actions"));
@@ -121,5 +129,23 @@ test("an API key is refused what its actions do not allow", async ({ api, cleanu
     } finally {
         await reader.dispose();
         await writer.dispose();
+    }
+});
+
+// A key is good until it expires, and refused from then on, as a deleted one is.
+test("an API key is refused once it expires", async ({ api, cleanup }) => {
+    const name = e2eName("expiring-key");
+    cleanup(() => deleteApiKeysNamed(api, name));
+    const all = { read: true, write: true, execute: true, delete: true };
+    const key = await keyWith(api, name, all, 5_000);
+    try {
+        expect((await key.get("projects")).status(), "good before it expires").toBe(200);
+        await expect
+            .poll(async () => (await key.get("projects")).status(), { timeout: 20_000, intervals: [1_000] })
+            .toBe(401);
+        const refused = await key.get("projects");
+        expect(((await refused.json()) as { code: string }).code).toMatch(/^ERR_API_KEY_/);
+    } finally {
+        await key.dispose();
     }
 });

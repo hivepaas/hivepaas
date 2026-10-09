@@ -85,6 +85,14 @@ Point them only at an installation whose data does not matter: the tests make
 what they need there, and remove it. A read-only account, as on the demo
 servers, is enough for the sign-in tests alone.
 
+### In CI
+
+`.github/workflows/e2e.yml` checks the backend and app-templates out beside the
+dashboard, makes the throwaway HivePaaS with `env/up.sh` on the runner, and runs
+levels 0 and 1 on every push and pull request, every level every night and by
+hand (Run workflow). A failed run keeps its report, traces and videos as the
+`playwright-report` artifact, and shows the end of the backend's log.
+
 ## Writing tests
 
 - **Tests start signed in**, with the session `tests/auth.setup.ts` saved. One

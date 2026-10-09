@@ -4,7 +4,7 @@ name: CI
 # builds - with the lockfile as it is and the release image's Node - and the
 # end-to-end tests' package type-checks. A dependency update that breaks either
 # fails here, not after it is merged. The end-to-end tests themselves need a
-# HivePaaS to run against, and do not run here.
+# HivePaaS to run against: e2e.yml makes one, and runs them.
 
 on:
     push:

@@ -83,6 +83,10 @@ has a project of its own, and deleting it takes the apps and their services.
 | 2.73 | A mount moved to another target keeps its data; removed, the container has none; mounted again, "This storage already has data" keeps it (Save anyway) or deletes it                                                                          | `tests/level-2/storage.spec.ts`             |
 | 2.74 | Reset permissions: given to a user (1000:1000) the files are that user's, modes kept; opened to every user, 666                                                                                                                               | `tests/level-2/storage.spec.ts`             |
 | 2.75 | A volume bound to a directory of the node is mounted as a bind, and keeps what the app wrote for the next container                                                                                                                           | `tests/level-2/storage.spec.ts`             |
+| 2.76 | A file mounted from a config file follows it: changed, the container reads the new content without a deploy; the mount turned off, the file is gone; on again, it is back                                                                     | `tests/level-2/setting-mounts.spec.ts`      |
+| 2.77 | A certificate and its key mounted from an SSL certificate, the key 0400; renewed with Renew Now, the container has the new pair without a deploy                                                                                              | `tests/level-2/setting-mounts.spec.ts`      |
+| 2.78 | A basic auth's htpasswd mounted: Apache's htpasswd accepts its password, and no other                                                                                                                                                         | `tests/level-2/setting-mounts.spec.ts`      |
+| 2.79 | A path one setting mount has is refused to another; a config file a mount reads is not deleted                                                                                                                                                | `tests/level-2/setting-mounts.spec.ts`      |
 
 The images: `traefik/whoami` for an app that serves - it answers with the
 request it got, as the proxy passed it on - and `busybox` for one that prints
@@ -125,6 +129,27 @@ README): their commits are made at fixed dates, so their hashes are fixed too.
 A test plays GitHub's webhook - a push of a commit, a comment on pull request
 7 - signing it with the webhook's secret as GitHub does. GitHub itself is not
 called: what HivePaaS posts back on a pull request fails, and is let go.
+
+## Found with setting mounts (2026-10-10), and fixed
+
+- **A certificate renewed by hand was not saved**: Renew Now obtained a new
+  one and wrote Traefik's files from it, but the setting kept the old one. An
+  app mounting the certificate kept the old pair, a restart that rewrote the
+  files went back to it, and the renewal job saw it still about to expire. It
+  is saved now as an update is, and the apps that mount it follow it.
+
+Seen, and left as they are:
+
+- A setting a mount reads is not deleted, but the dialog that says so cannot
+  say what reads it: "The list of what uses it could not be loaded". The
+  usages route is under `/settings` only, for the installation's settings; a
+  project's, an environment's or an app's setting has none.
+- A mount's setting picker lists the environment's certificates, SSH keys and
+  basic auths, those not inheritable too. The app cannot use those: saving one
+  answers "Setting '...' is not found". Routing's basic auth picker lists them
+  the same way. The tests make theirs inheritable.
+- A certificate is named by its domain: a name given when it is made is not
+  kept.
 
 ## Found with Persistent Storage (2026-10-10), and fixed
 

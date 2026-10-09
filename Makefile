@@ -23,7 +23,7 @@ lint-local:
 	@go run ./tools/errcodelint
 	@go run ./tools/openapi lint
 	# Run this cmd locally once to install golangci-lint binary
-	# curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/HEAD/install.sh | sh -s -- -b $(go env GOPATH)/bin v2.13.0
+	# curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/HEAD/install.sh | sh -s -- -b $(go env GOPATH)/bin v2.14.0
 	# FASTER golangci-lint --timeout=5m run -v --new-from-rev=HEAD~1
 	golangci-lint --timeout=5m run -v ./...
 

@@ -40,6 +40,7 @@ has a project of its own, and deleting it takes the apps and their services.
 | 2.30 | A health check telling a target: nothing while it is healthy, once when it fails, once when it passes again                                                     | `tests/level-2/notifications.spec.ts`   |
 | 2.31 | Repeat while failing tells a check that still fails again                                                                                                       | `tests/level-2/notifications.spec.ts`   |
 | 2.32 | An upload from the terminal goes over a websocket and lands whole; a file never replaces a directory; refusals say why; an expired session is refreshed         | `tests/level-2/container-files.spec.ts` |
+| 2.33 | Autoscale is not turned on while neither of what it scales on can be read: the page says why, sends nothing, and the API refuses it                             | `tests/level-2/autoscale.spec.ts`       |
 
 The images: `traefik/whoami` for an app that serves - it answers with the
 request it got, as the proxy passed it on - and `busybox` for one that prints
@@ -61,6 +62,10 @@ the code last POSTed to it: it fails, and passes again, with no restart.
 
 ## Next
 
+- **Metrics and autoscale on load**: the HTTP and CPU charts, and an app and a
+  function scaling out under load and back in. They read the stored logs, which
+  the env does not run yet: `env/up.sh` is to set up Logging (VictoriaLogs and
+  its agent) first. Until then autoscale can be checked only refusing (2.33).
 - **Routing, the rest**: a TCP domain (a database through the proxy, by SNI),
   settings of one path, compression, websockets, a certificate of one's own.
 - **Secrets in a spec**: exported encrypted and imported with the passphrase.

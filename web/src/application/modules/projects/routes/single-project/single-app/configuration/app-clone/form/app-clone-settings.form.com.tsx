@@ -760,16 +760,15 @@ export function AppCloneSettingsForm({
                             <div className="flex flex-col gap-6">
                                 <SectionEnabledField name="cloneVolumes" />
                                 <ConditionalSection enabled={cloneVolumes}>
-                                    <div className={cn(dashedBorderBox)}>
+                                    <div className="flex flex-col gap-2 rounded-md border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-sm text-amber-700 dark:text-amber-400">
                                         <p>
-                                            <span className="font-semibold text-orange-500">Warning:</span>{" "}
-                                            <span className="font-semibold">Raw volume cloning</span> is not recommended
+                                            <span className="font-medium">Raw volume cloning is not recommended</span>{" "}
                                             for database-type applications (e.g., PostgreSQL, MySQL, Redis, MongoDB)
                                             while actively running with continuous read/write operations and active
                                             memory buffering. Direct file-level copying during active I/O can easily
                                             result in database corruption or inconsistent data states.
                                         </p>
-                                        <p className="mt-2 italic">
+                                        <p className="italic">
                                             💡 Recommendation: Use dedicated database dump/restore utilities (e.g.,
                                             pg_dump, mysqldump) via Post-Clone Commands, or stop the source application
                                             before cloning volumes.

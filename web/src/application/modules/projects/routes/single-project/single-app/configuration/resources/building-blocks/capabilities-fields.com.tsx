@@ -1,8 +1,6 @@
 import { Input } from "@components/ui";
 import { Checkbox } from "@components/ui/checkbox";
 import { InputNumber } from "@components/ui/input-number";
-import { dashedBorderBox } from "@lib/styles";
-import { cn } from "@lib/utils";
 import { useController, useFormContext } from "react-hook-form";
 
 import { InfoBlock, LabelWithInfo } from "@application/shared/components";
@@ -26,15 +24,16 @@ export function CapabilitiesFields() {
 
     return (
         <div className="flex flex-col gap-6">
-            <div className={cn(dashedBorderBox)}>
+            <div className="flex flex-col gap-2 rounded-md border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-sm text-amber-700 dark:text-amber-400">
                 <p>
-                    <span className="font-semibold text-orange-500">Warning:</span> Modifying container capabilities can
-                    introduce severe security risks; please ensure you understand the implications before proceeding.
+                    <span className="font-medium">
+                        Modifying container capabilities can introduce severe security risks.
+                    </span>{" "}
+                    Please make sure you understand the implications before proceeding.
                 </p>
-
                 <p>
-                    Additionally, you must have <span className="font-medium text-orange-500">Write</span> permission on
-                    the <span className="font-medium text-orange-500">Cluster</span> module to apply these changes.
+                    Additionally, you must have <span className="font-medium">Write</span> permission on the{" "}
+                    <span className="font-medium">Cluster</span> module to apply these changes.
                 </p>
             </div>
 

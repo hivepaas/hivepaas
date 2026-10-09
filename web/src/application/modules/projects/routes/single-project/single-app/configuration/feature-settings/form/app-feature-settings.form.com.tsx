@@ -154,10 +154,11 @@ function AllowPRCommentsField() {
                     }}
                 />
                 {field.value && (
-                    <p className={cn(dashedBorderBox, "text-sm")}>
-                        <span className="font-semibold text-orange-500">Warning:</span> A comment deploys the pull
-                        request&apos;s code with this app&apos;s variables and secrets. On a public repository, anyone
-                        who can comment can do it.
+                    <p className="rounded-md border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-sm text-amber-700 dark:text-amber-400">
+                        <span className="font-medium">
+                            A comment deploys the pull request&apos;s code with this app&apos;s variables and secrets.
+                        </span>{" "}
+                        On a public repository, anyone who can comment can do it.
                     </p>
                 )}
             </div>
@@ -167,18 +168,18 @@ function AllowPRCommentsField() {
 
 function AppPreviewWarningBox() {
     return (
-        <div className={cn(dashedBorderBox, "space-y-2")}>
-            <p>
-                <span className="font-semibold text-orange-500">Warning:</span> Deploying a Preview App that executes
-                database schema migrations against a shared database may break or crash the Main App.
+        <div className="flex flex-col gap-2 rounded-md border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-sm text-amber-700 dark:text-amber-400">
+            <p className="font-medium">
+                Deploying a Preview App that executes database schema migrations against a shared database may break or
+                crash the Main App.
             </p>
             <p>
-                <span className="font-semibold">Solution:</span> Add the Database Apps you want to clone here so the
+                <span className="font-medium">Solution:</span> Add the Database Apps you want to clone here so the
                 Preview App operates on an isolated database instance.
             </p>
             <p>
-                <span className="font-semibold text-orange-500">Note:</span> Selected Database Apps must have their
-                Clone Settings pre-configured.
+                <span className="font-medium">Note:</span> Selected Database Apps must have their Clone Settings
+                pre-configured.
             </p>
         </div>
     );

@@ -78,6 +78,11 @@ has a project of its own, and deleting it takes the apps and their services.
 | 2.68 | An app cloned with its volumes' data, the source stopped for it: the clone runs on a copy - the source's files and its own - and the source, started again, on its own data                                                                   | `tests/level-2/clone.spec.ts`               |
 | 2.69 | An app cloned with its volumes but not their data starts on empty directories of its own; the source's data stays its own                                                                                                                     | `tests/level-2/clone.spec.ts`               |
 | 2.70 | An app cloned without its volumes has none - Persistent Storage lists nothing - and the source reads nothing of the clone's                                                                                                                   | `tests/level-2/clone.spec.ts`               |
+| 2.71 | Subpaths of a volume: two are directories of their own, one mounted twice is the same directory; read only, it refuses writes                                                                                                                 | `tests/level-2/storage.spec.ts`             |
+| 2.72 | Data of another app: it reads that app's files and cannot write them; Allow writing, it can; the owner's Persistent Storage names it, reading or changing                                                                                     | `tests/level-2/storage.spec.ts`             |
+| 2.73 | A mount moved to another target keeps its data; removed, the container has none; mounted again, "This storage already has data" keeps it (Save anyway) or deletes it                                                                          | `tests/level-2/storage.spec.ts`             |
+| 2.74 | Reset permissions: given to a user (1000:1000) the files are that user's, modes kept; opened to every user, 666                                                                                                                               | `tests/level-2/storage.spec.ts`             |
+| 2.75 | A volume bound to a directory of the node is mounted as a bind, and keeps what the app wrote for the next container                                                                                                                           | `tests/level-2/storage.spec.ts`             |
 
 The images: `traefik/whoami` for an app that serves - it answers with the
 request it got, as the proxy passed it on - and `busybox` for one that prints
@@ -120,6 +125,17 @@ README): their commits are made at fixed dates, so their hashes are fixed too.
 A test plays GitHub's webhook - a push of a commit, a comment on pull request
 7 - signing it with the webhook's secret as GitHub does. GitHub itself is not
 called: what HivePaaS posts back on a pull request fails, and is let go.
+
+## Found with Persistent Storage (2026-10-10), and fixed
+
+- **Reset permissions took a second click**: its user and group ids were
+  number fields, which take their number only once left; the button, disabled
+  until both were there, was still disabled when the second was typed, and
+  the click that left the field did nothing. The dialog follows what is typed
+  now.
+- **A number field was "Number input" to a screen reader** whatever its label
+  said: the label's `for` named an id the field never had, and its fallback
+  name won anyway. A field given an id now has it, and its label names it.
 
 ## Found cloning apps with volumes (2026-10-10), and fixed
 

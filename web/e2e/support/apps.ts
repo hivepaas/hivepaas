@@ -46,16 +46,60 @@ export async function redeploy(page: Page, api: APIRequestContext, app: App): Pr
     await deployed(api, app);
 }
 
-// mountVolume mounts a volume in the app from Persistent Storage.
-export async function mountVolume(page: Page, app: App, volume: string, target: string): Promise<void> {
-    await page.goto(appPage(app, "persistent-storage"));
-    await page.getByRole("button", { name: "New Storage Mount" }).click();
+export interface MountOptions {
+    // A directory below the app's own on the volume.
+    subpath?: string;
+    readOnly?: boolean;
+    // Another app of the environment, by its name, whose directory the mount
+    // reaches instead of the app's own; read only, unless allowWriting.
+    dataOf?: string;
+    allowWriting?: boolean;
+}
+
+// fillMount fills Persistent Storage's form: the volume, mounted at the target,
+// as the options say.
+export async function fillMount(page: Page, volume: string, target: string, options: MountOptions = {}): Promise<void> {
     await page.getByRole("group", { name: "Volume *" }).getByRole("combobox").click();
     await page.getByRole("option", { name: volume }).click();
+    if (options.subpath) {
+        await page.getByRole("group", { name: "Subpath", exact: true }).getByRole("textbox").fill(options.subpath);
+    }
+    if (options.dataOf) {
+        await page
+            .getByRole("group", { name: /^Data of/ })
+            .getByRole("combobox")
+            .click();
+        await page.getByRole("option", { name: options.dataOf, exact: true }).click();
+    }
+    if (options.allowWriting) {
+        await page.getByRole("group", { name: "Allow writing", exact: true }).getByRole("checkbox").check();
+    }
+    if (options.readOnly) {
+        await page.getByRole("group", { name: "Read-only", exact: true }).getByRole("checkbox").check();
+    }
     await page.getByRole("group", { name: "Target *" }).getByRole("textbox").fill(target);
-    await page.getByRole("button", { name: "Save" }).click();
-    await expect(page.getByRole("row", { name: new RegExp(`${volume}.*${target}`) })).toBeVisible();
 }
+
+// mountVolume mounts a volume in the app from Persistent Storage.
+export async function mountVolume(
+    page: Page,
+    app: App,
+    volume: string,
+    target: string,
+    options: MountOptions = {},
+): Promise<void> {
+    await page.goto(appPage(app, "persistent-storage"));
+    await page.getByRole("button", { name: "New Storage Mount" }).click();
+    await fillMount(page, volume, target, options);
+    await page.getByRole("button", { name: "Save" }).click();
+    // Saved, the list shows it: a busy node takes a while to check the storage
+    // and update the service.
+    await expect(mountRow(page, target)).toBeVisible({ timeout: 30_000 });
+}
+
+// mountRow is Persistent Storage's row of the mount at the target.
+export const mountRow = (page: Page, target: string) =>
+    page.getByRole("row").filter({ has: page.getByRole("cell", { name: target, exact: true }) });
 
 // restart restarts the app from its header: its containers are made anew, on
 // the same spec. A re-deploy of an unchanged app changes nothing for swarm to

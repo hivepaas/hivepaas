@@ -6,6 +6,7 @@ ERR_NODE_WITH_LABEL_NOT_AVAILABLE = "Node with label '{{.Label}}' is not found o
 ERR_SERVICE_NOT_RUNNING = "Service '{{.Name}}' is not running"
 ERR_SERVICE_MODE_REPLICATED_REQUIRED = "Service is required to be in 'replicated' mode"
 ERR_ACTIVE_CONTAINER_NOT_FOUND = "No active container found for app '{{.App}}'"
+ERR_CONTAINER_PATH_IS_DIR = "'{{.Path}}' is a directory in the container: end the path with / to upload into it"
 ERR_SERVICE_MODE_CHANGE_REQUIRES_RUNNING_APP = "Changing the service mode recreates the service, which requires the app to be running"
 
 # File errors

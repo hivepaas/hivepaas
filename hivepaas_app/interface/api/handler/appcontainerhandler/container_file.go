@@ -90,10 +90,11 @@ func (h *Handler) DownloadFileFromContainer(ctx *gin.Context) {
 // @Param   path formData string true "file/dir path in container"
 // @Param   extract formData boolean false "extract archive into path"
 // @Param   compressionFormat formData string false "compression format (gzip, zstd, zip, tar)"
-// @Param   overwrite formData boolean false "allow overwrite (default: true)"
+// @Param   overwrite formData boolean false "extract only: an entry may replace a directory, or a file (default: true)"
 // @Param   file formData file true "file to upload"
 // @Success 200 {object} appcontainerdto.UploadFileToContainerResp
 // @Failure 400 {object} hperrors.ErrorInfo
+// @Failure 409 {object} hperrors.ErrorInfo
 // @Failure 500 {object} hperrors.ErrorInfo
 // @Router  /projects/{projectID}/{projectEnv}/apps/{appID}/container/file-upload [post]
 func (h *Handler) UploadFileToContainer(ctx *gin.Context) {

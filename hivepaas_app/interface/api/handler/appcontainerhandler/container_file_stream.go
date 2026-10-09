@@ -280,7 +280,7 @@ func drainUntilClosed(conn *websocket.Conn, wait time.Duration) {
 // @Param   path query string true "file/dir path in container"
 // @Param   extract query boolean false "extract archive into path"
 // @Param   compressionFormat query string false "compression format (gzip, zstd, zip, tar)"
-// @Param   overwrite query boolean false "allow overwrite (default: true)"
+// @Param   overwrite query boolean false "extract only: an entry may replace a directory, or a file (default: true)"
 // @Param   fileName query string false "the file's name"
 // @Param   fileSize query integer false "the file's size in bytes: required unless extract"
 // @Param   progress query boolean false "be told after each message how much the copy has taken"

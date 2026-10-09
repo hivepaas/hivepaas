@@ -21,7 +21,7 @@ ENV CGO_ENABLED=0
 
 # One layer per tool: changing a version rebuilds that one instead of all five.
 RUN wget -O- -nv https://raw.githubusercontent.com/golangci/golangci-lint/HEAD/install.sh \
-    | sh -s -- -b /go/bin v2.13.0
+    | sh -s -- -b /go/bin v2.14.0
 RUN go install github.com/rubenv/sql-migrate/...@latest
 RUN go install github.com/swaggo/swag/v2/cmd/swag@v2.0.0-rc5
 RUN go install google.golang.org/protobuf/cmd/protoc-gen-go@latest

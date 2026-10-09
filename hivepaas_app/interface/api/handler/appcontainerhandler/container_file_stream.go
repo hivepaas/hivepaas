@@ -284,6 +284,7 @@ func drainUntilClosed(conn *websocket.Conn, wait time.Duration) {
 // @Param   fileName query string false "the file's name"
 // @Param   fileSize query integer false "the file's size in bytes: required unless extract"
 // @Param   progress query boolean false "be told after each message how much the copy has taken"
+// openapi:ignore-param file - the content comes over the websocket, not as a form's file
 // @Success 101
 // @Success 204
 // @Failure 400 {object} hperrors.ErrorInfo

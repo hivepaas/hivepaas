@@ -49588,6 +49588,16 @@
             },
             "description" : "Bad Request"
           },
+          "401" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Unauthorized"
+          },
           "500" : {
             "content" : {
               "application/json" : {

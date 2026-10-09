@@ -23,6 +23,7 @@ const webhookMaxBodySize = 25 * 1024 * 1024
 // @Param   body body webhookdto.HandleRepoWebhookReq true "request data"
 // @Success 200 {object} webhookdto.HandleRepoWebhookResp
 // @Failure 400 {object} hperrors.ErrorInfo
+// @Failure 401 {object} hperrors.ErrorInfo
 // @Failure 500 {object} hperrors.ErrorInfo
 // @Security
 // @Router  /webhooks/{webhookID} [post]

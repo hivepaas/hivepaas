@@ -5,6 +5,7 @@ import { UploadIcon } from "lucide-react";
 import { type FieldErrors, useController, useForm } from "react-hook-form";
 
 import { InfoBlock } from "@application/shared/components";
+import { formatDataSizeCompact } from "@application/shared/utils/data-size";
 
 import { Button, Tabs, TabsList, TabsTrigger } from "@/components/ui";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -23,7 +24,7 @@ const compressionOptions = [
     { value: "zstd", label: "Zstd" },
 ] as const;
 
-export function ImportFilesToContainerForm({ isPending, onSubmit }: Props) {
+export function ImportFilesToContainerForm({ isPending, progress, onSubmit }: Props) {
     const fileInputRef = useRef<HTMLInputElement>(null);
 
     const {
@@ -200,7 +201,13 @@ export function ImportFilesToContainerForm({ isPending, onSubmit }: Props) {
                 </FieldGroup>
             </DialogBody>
 
-            <DialogActionFooter className="flex justify-end gap-4">
+            <DialogActionFooter className="flex items-center justify-end gap-4">
+                {isPending && progress && (
+                    <UploadProgress
+                        sent={progress.sent}
+                        total={progress.total}
+                    />
+                )}
                 <Button
                     type="submit"
                     disabled={isPending}
@@ -212,7 +219,42 @@ export function ImportFilesToContainerForm({ isPending, onSubmit }: Props) {
     );
 }
 
+// How much of the file has left the browser. Once it all has, the server still
+// writes it into the container before it answers.
+function UploadProgress({ sent, total }: UploadProgressValue) {
+    const percent = total > 0 ? Math.floor((sent / total) * 100) : 100;
+
+    return (
+        <div className="flex min-w-0 flex-1 flex-col gap-1.5">
+            <div
+                role="progressbar"
+                aria-label="Upload progress"
+                aria-valuemin={0}
+                aria-valuemax={100}
+                aria-valuenow={percent}
+                className="h-1.5 w-full overflow-hidden rounded-full bg-muted"
+            >
+                <div
+                    className="h-full bg-primary transition-[width]"
+                    style={{ width: `${percent}%` }}
+                />
+            </div>
+            <span className="text-xs text-muted-foreground tabular-nums">
+                {sent >= total
+                    ? "Writing into the container..."
+                    : `${formatDataSizeCompact(sent) || "0B"} of ${formatDataSizeCompact(total)}`}
+            </span>
+        </div>
+    );
+}
+
+export interface UploadProgressValue {
+    sent: number;
+    total: number;
+}
+
 interface Props {
     isPending: boolean;
+    progress: UploadProgressValue | null;
     onSubmit: (values: ImportFilesToContainerFormOutput) => void | Promise<void>;
 }

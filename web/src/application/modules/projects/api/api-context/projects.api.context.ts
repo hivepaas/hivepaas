@@ -7,6 +7,7 @@ import {
     AppConfigFilesApiValidator,
     AppContainerFilesApi,
     AppContainerFilesApiValidator,
+    AppContainerFilesUploadWsApi,
     AppContainerSettingsApi,
     AppContainerSettingsApiValidator,
     AppDataFilesApi,
@@ -158,6 +159,7 @@ function createApi() {
     const projectDockerVolumesApiValidator = new ProjectDockerVolumesApiValidator();
     const projectNotificationApiValidator = new ProjectNotificationApiValidator();
     const appContainerFilesApiValidator = new AppContainerFilesApiValidator();
+    const appContainerFilesApi = new AppContainerFilesApi();
     const appContainerSettingsApiValidator = new AppContainerSettingsApiValidator();
     const appConfigFilesApiValidator = new AppConfigFilesApiValidator();
     const appSettingMountsApiValidator = new AppSettingMountsApiValidator();
@@ -245,7 +247,10 @@ function createApi() {
                     $: new AppContainerSettingsApi(appContainerSettingsApiValidator),
                 },
                 containerFiles: {
-                    $: new AppContainerFilesApi(appContainerFilesApiValidator),
+                    $: appContainerFilesApi,
+                    stream: {
+                        $: new AppContainerFilesUploadWsApi(appContainerFilesApiValidator, appContainerFilesApi),
+                    },
                 },
                 deploymentSettings: {
                     $: new AppDeploymentSettingsApi(appDeploymentSettingsApiValidator),

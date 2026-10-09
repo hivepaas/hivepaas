@@ -24,7 +24,7 @@ export function MemoryFields() {
                 title={
                     <LabelWithInfo
                         label="Swap Memory"
-                        content="Total memory plus swap available to the service. Use DataSize values like 10gb."
+                        content="Swap the service may use beyond its memory limit, which it needs set: 0 for none. Unset, it is as much as the memory limit. Use DataSize values like 1gb."
                     />
                 }
             >

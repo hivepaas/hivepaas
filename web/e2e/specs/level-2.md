@@ -51,7 +51,7 @@ has a project of its own, and deleting it takes the apps and their services.
 | 2.41 | Variables of the project, the environment and another app (shared), and HivePaaS's own, reach the container, the nearest winning; the page lists the inherited                                                     | `tests/level-2/env-vars.spec.ts`        |
 | 2.42 | An app built from a repository (main, at a commit); a push of the next commit through the webhook builds and deploys it, marked Webhook; another branch, a bad signature (401) and the push delivered again do not | `tests/level-2/webhooks.spec.ts`        |
 | 2.43 | A scheduled job on a cron runs on it, minute after minute                                                                                                                                                          | `tests/level-2/jobs.spec.ts`            |
-| 2.44 | A deployment tells its notification target that it failed, and that it succeeded: the app, the image, a link to the deployment                                                                                     | `tests/level-2/notifications.spec.ts`   |
+| 2.44 | A deployment tells its notification target that it failed, and why, and that it succeeded: the app, the image, a link to the deployment                                                                            | `tests/level-2/notifications.spec.ts`   |
 | 2.45 | An upload cancelled from its dialog stops at once, says what may be left partly written, and the dialog takes another                                                                                              | `tests/level-2/container-files.spec.ts` |
 
 The images: `traefik/whoami` for an app that serves - it answers with the
@@ -107,6 +107,25 @@ signing the push with the webhook's secret as GitHub does.
 - **A push not signed with the webhook's secret answered 500**, logged as the
   server's own failure: it answers 401, `ERR_WEBHOOK_UNVERIFIED`, "The
   delivery is not signed with the webhook's secret".
+- **A pre-deployment command right after a deployment failed** "Running task
+  of service not found": it runs in a container that has run 15 seconds, and
+  the deployment looked three times, five seconds apart, for one - the last
+  wait never followed by a look. A container running, not that long yet, is
+  waited for now until it has, 15 seconds more at most; with none running the
+  looks are as many as before, the last one after the last wait; a cancel
+  ends the wait. With none found, the deployment says so: "No active container
+  found for app 'web'". The same holds for a scheduled job, a command pipe and
+  a preview's commands.
+- **A failed deployment's notification did not say why**: it has a Reason on
+  every channel now, as the deployment's details say it, cut to 1000
+  characters.
+- **A notification in JSON - Slack, Discord, Lark - was not sent when a name had
+  a quote in it**: a project's or an app's name, a commit message, a health
+  check's answer was written into the body as it was, and quotes, new lines or
+  control characters broke it. Every value goes through `json` now; a test
+  renders each of the 18 templates with such text.
+- **Swappiness set without swap read back as unset**: the settings page took it
+  only when swap was set too.
 - **Accessibility**: the Compose page's choice for a service an app of the env
   is named ("What to do with web") and so is its key's field; a template's
   parameters are groups named by their titles.
@@ -120,12 +139,6 @@ Found, and left for review:
 
 Seen, and left as they are:
 
-- A pre-deployment command runs in a container that has run 15 seconds, and a
-  deployment looks for one about as long - the last of its waits is never
-  checked: deployed again right after a deployment, it fails "Running task of
-  service not found".
-- A failed deployment's notification says that it failed, the image and when,
-  not why: the reason is a click away.
 - A checkout that fails says "exit status 128"; git's words are in the log.
 - A notification target's own platform is looked up as the app sees it: a
   target the project's apps may use, sending through a platform only the

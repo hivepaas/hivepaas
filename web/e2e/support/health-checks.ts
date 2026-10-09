@@ -3,6 +3,7 @@ import type { APIRequestContext, Page } from "@playwright/test";
 import { type App, appPath } from "./api";
 import { appPage } from "./apps";
 import { expect } from "./fixtures";
+import { visit } from "./routing";
 
 // newHealthCheck makes a health check of the app from its Periodic Jobs: the
 // URL called every 10 seconds, passing on a 200 as the form has it. `configure`
@@ -47,4 +48,28 @@ export async function expectRuns(
         ).toBeVisible({ timeout: 3_000 });
     }).toPass({ timeout: 60_000, intervals: [3_000] });
     await expect(page.getByRole("button", { name: new RegExp(`^${never} task:periodic-exec`) })).toHaveCount(0);
+}
+
+// checkRuns are how a check's runs ended, the newest first.
+export async function checkRuns(api: APIRequestContext, app: App, name: string): Promise<string[]> {
+    const jobs = (await (
+        await api.get(`${appPath(app)}/periodic-jobs`, { params: { kind: "healthcheck" } })
+    ).json()) as {
+        data: { id: string; name: string }[];
+    };
+    const id = jobs.data.find(job => job.name === name)?.id ?? "";
+    const tasks = (await (await api.get(`${appPath(app)}/tasks`, { params: { targetId: id } })).json()) as {
+        data: { status: string }[];
+    };
+    return tasks.data.map(task => task.status);
+}
+
+// setHealth has whoami answer its /health with the code from now on: it takes
+// the code POSTed there.
+export async function setHealth(page: Page, domain: string, code: number): Promise<void> {
+    await page.goto(`http://${domain}/`);
+    await page.evaluate(async body => {
+        await fetch("/health", { method: "POST", body });
+    }, String(code));
+    await visit(page, `http://${domain}/health`, code);
 }

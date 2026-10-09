@@ -342,3 +342,48 @@ export async function exposeApp(
         `exposing ${app.name} at ${domain}`,
     );
 }
+
+// createJob makes a scheduled job of the app's running the command in its
+// container, with no schedule - run by hand, or as a step of a sequence - and
+// answers its id. `more` sets more of the job: a timeout, retries.
+export async function createJob(
+    api: APIRequestContext,
+    app: App,
+    name: string,
+    command: string,
+    more: Record<string, unknown> = {},
+): Promise<string> {
+    const body = (await ok(
+        await api.post(`${appPath(app)}/sched-jobs`, {
+            data: { name, jobType: "container-command", app: { id: app.id }, command: { command }, ...more },
+        }),
+        `creating job ${name}`,
+    )) as { data: { id: string } };
+    return body.data.id;
+}
+
+// runJob runs a job of the app now, waits for the run to end, and answers how
+// it ended and what it logged.
+export async function runJob(
+    api: APIRequestContext,
+    app: App,
+    jobId: string,
+): Promise<{ status: string; log: string }> {
+    const body = (await ok(
+        await api.post(`${appPath(app)}/sched-jobs/${jobId}/exec`, { data: {} }),
+        `running job ${jobId}`,
+    )) as { data: { task: { id: string } } };
+    const task = `${appPath(app)}/tasks/${body.data.task.id}`;
+    let status = "";
+    await expect
+        .poll(
+            async () => {
+                status = ((await (await api.get(task)).json()) as { data: { status: string } }).data.status;
+                return ["done", "failed", "canceled"].includes(status);
+            },
+            { timeout: 120_000, intervals: [2_000] },
+        )
+        .toBe(true);
+    const logs = (await (await api.get(`${task}/logs`)).json()) as { data: { logs: { data: string }[] } };
+    return { status, log: logs.data.logs.map(l => l.data).join("") };
+}

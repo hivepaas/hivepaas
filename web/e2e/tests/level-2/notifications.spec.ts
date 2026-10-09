@@ -11,9 +11,9 @@ import {
     latestDeployment,
     setRuntimeEnvVars,
 } from "../../support/api";
-import { DEPLOYED, WHOAMI, copyShownLogs, deployed, expectLogs } from "../../support/apps";
+import { BUSYBOX, DEPLOYED, WHOAMI, appPage, copyShownLogs, deployed, expectLogs } from "../../support/apps";
 import { e2eName, expect, test } from "../../support/fixtures";
-import { expectRuns, newHealthCheck } from "../../support/health-checks";
+import { expectRuns, newHealthCheck, setHealth } from "../../support/health-checks";
 import { domainFor, visit } from "../../support/routing";
 
 test.describe.configure({ timeout: 360_000 });
@@ -31,16 +31,6 @@ async function told(page: Page, hook: App, check: string): Promise<string[]> {
         .split("\n")
         .filter(line => line.includes(`"value":"${check}"`))
         .map(line => /Healthcheck (failed|succeeded)/.exec(line)?.[1] ?? line);
-}
-
-// setHealth has whoami answer its /health with the code from now on: it takes
-// the code POSTed there.
-async function setHealth(page: Page, domain: string, code: number): Promise<void> {
-    await page.goto(`http://${domain}/`);
-    await page.evaluate(async body => {
-        await fetch("/health", { method: "POST", body });
-    }, String(code));
-    await visit(page, `http://${domain}/health`, code);
 }
 
 test("a failing health check is told to Slack once, and again when it passes; Repeat while failing tells it again", async ({
@@ -256,4 +246,52 @@ test("a deployment tells its notification target that it failed, and why, and th
     expect(done?.title).toBe(`[${project.name}][web] Deployment succeeded`);
     expect(field(done, "Image")).toBe(WHOAMI);
     expect(field(done, "Reason"), "nothing failed").toBeUndefined();
+});
+
+// A scheduled job tells the target its form names when a run fails: the job,
+// what it failed with.
+test("a scheduled job that fails tells its notification target", async ({ page, api, cleanup }) => {
+    const project = await createProject(api, e2eName("job-told"));
+    cleanup(() => deleteProject(api, project.id));
+    const hook = await createApp(api, project, "hook");
+    await setRuntimeEnvVars(api, hook, [{ key: "LOG_WITHOUT_NEWLINE", value: "true", isLiteral: true }]);
+    await deployImage(api, hook, ECHO);
+    await deployed(api, hook);
+    const hookDomain = domainFor("job-told-hook");
+    await exposeApp(api, hook, hookDomain, { port: 8080, forceHttps: false });
+    await visit(page, `http://${hookDomain}/`);
+    const platform = await created(api, `projects/${project.id}/im-services`, {
+        name: e2eName("slack"),
+        inheritable: true,
+        kind: "slack",
+        slack: { webhook: `http://${hookDomain}/slack` },
+    });
+    const target = e2eName("to-slack");
+    await created(api, `projects/${project.id}/notifications`, {
+        name: target,
+        inheritable: true,
+        viaSlack: { enabled: true, useDefault: false, webhook: { id: platform } },
+    });
+
+    const web = await createApp(api, project, "web");
+    await deployImage(api, web, BUSYBOX, "sh -c 'echo ready; exec sleep 3600'");
+    await deployed(api, web);
+    await expectLogs(page, web, "ready");
+    await page.goto(appPage(web, "sched-jobs"));
+    await page.getByRole("button", { name: "New Scheduled Job" }).click();
+    await page.getByRole("group", { name: "Name *" }).getByRole("textbox").fill("e2e-breaks");
+    await page.getByRole("group", { name: "Scheduling Mode" }).getByRole("tab", { name: "No schedule" }).click();
+    await page.getByRole("group", { name: "Command *" }).getByRole("textbox").fill("sh -c 'echo broken; exit 3'");
+    await page.getByRole("checkbox", { name: "On Failure Use Default" }).uncheck();
+    await page.getByRole("group", { name: "On Failure", exact: true }).getByRole("combobox").click();
+    await page.getByRole("option", { name: target }).click();
+    await page.getByRole("button", { name: "Save" }).click();
+    const row = page.getByRole("row", { name: /e2e-breaks/ });
+    await row.getByRole("button", { name: "Actions menu" }).click();
+    await page.getByRole("button", { name: "Run Now" }).click();
+
+    const ofJob = async () => (await slackMessages(page, hook)).filter(m => field(m, "Scheduled Job") === "e2e-breaks");
+    await expect
+        .poll(async () => (await ofJob()).map(m => m.title), { timeout: 90_000, intervals: [5_000] })
+        .toEqual([`[${project.name}][web] Scheduled task failed`]);
 });

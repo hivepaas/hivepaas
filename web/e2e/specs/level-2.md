@@ -59,6 +59,14 @@ has a project of its own, and deleting it takes the apps and their services.
 | 2.49 | A private repository over HTTPS: refused without credentials (ERR_REPO_NOT_FOUND); built with an access token picked in Git Credentials                                                                            | `tests/level-2/git.spec.ts`             |
 | 2.50 | The same repository over SSH, built with a key                                                                                                                                                                     | `tests/level-2/git.spec.ts`             |
 | 2.51 | Previews and PR comments on in Feature Settings: a stranger's "/hivepaas deploy" on a pull request makes nothing; the owner's makes pr-7, built from the pull request's head; "/hivepaas cancel" removes it        | `tests/level-2/webhooks.spec.ts`        |
+| 2.52 | A job sequence, watched as it runs: a step hands its output to the next; a step that fails stops it, the rest skipped                                                                                              | `tests/level-2/jobs.spec.ts`            |
+| 2.53 | A job triggered after a deploy runs once the deploy is done, told the event and the deployment                                                                                                                     | `tests/level-2/jobs.spec.ts`            |
+| 2.54 | A failing job is retried as many times as asked (Retries: 2), then failed; a slow one stops at its timeout                                                                                                         | `tests/level-2/jobs.spec.ts`            |
+| 2.55 | A job turned off does not run on its cron; turned on again, it runs at the next minute                                                                                                                             | `tests/level-2/jobs.spec.ts`            |
+| 2.56 | A database dumped by a data backup job's command is a snapshot; restored, the restore command loads it back                                                                                                        | `tests/level-2/backups.spec.ts`         |
+| 2.57 | A scheduled job that fails tells the target its form names: Scheduled task failed                                                                                                                                  | `tests/level-2/notifications.spec.ts`   |
+| 2.58 | A health check reads the answer's body: a text by its pattern, a JSON by what it contains; others fail                                                                                                             | `tests/level-2/health-checks.spec.ts`   |
+| 2.59 | A check left waiting fails at its timeout and holds no other; a check turned off sees no change                                                                                                                    | `tests/level-2/health-checks.spec.ts`   |
 
 The images: `traefik/whoami` for an app that serves - it answers with the
 request it got, as the proxy passed it on - and `busybox` for one that prints
@@ -111,6 +119,32 @@ called: what HivePaaS posts back on a pull request fails, and is let go.
   statically - plain HTML, an Astro or a Nuxt site built to files - failed to
   build. The packages are installed as root now, and the server runs as the
   image's user again (dockerfile-generator).
+
+## Found with the jobs and the health checks (2026-10-09), and fixed
+
+- **A job sequence's log stopped after its first step** for anyone following
+  it - the run's page, `hivepaas logs -f` - though the sequence went on. Each
+  step runs as one more run of its task, and every run ended the log: it wrote
+  "Job execution finished" and told those following that the log was closed.
+  A run that goes on now hands its lines on and starts the log's list again,
+  telling those following to read the new one from its start; the last run
+  ends the log. A log grown past its size limit starts its list again the same
+  way: those following it lost what came after.
+- **A job turned on again stayed silent for up to ten minutes**: it was
+  scheduled as it was before the change - off - so its runs were made only at
+  the next scan; and its coming runs, canceled when it was turned off, stood
+  in the way of the same runs made anew. A status change schedules the job as
+  it is now, and a coming run that never started is removed.
+
+Seen, and left as they are:
+
+- A health check's run is kept when its result changes, not every run: a
+  check that stays healthy shows one run. A test that a check goes on running
+  makes its result change.
+- A run's page asks for the run's status every 5 seconds once its log has
+  ended: "Done" can come that late.
+- A run that failed and waits for its retry reads Failed on its page, which
+  then asks no more: the retries show once the page is opened again.
 
 ## Found in the third round (2026-10-09), and fixed
 

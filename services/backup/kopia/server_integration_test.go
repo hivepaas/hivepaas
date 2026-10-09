@@ -2,6 +2,7 @@ package kopia
 
 import (
 	"bufio"
+	"bytes"
 	"context"
 	"os"
 	"os/exec"
@@ -28,10 +29,19 @@ func startTestServer(t *testing.T) *backupmodel.Storage {
 	t.Helper()
 	owner, baseDir := newTestRepo(t, "repo")
 	mustNoError(t, owner.InitRepo(context.Background(), &backupmodel.InitRepoOptions{}))
+	return serveTestRepo(t, baseDir, "hivepaas@data-backup")
+}
+
+// serveTestRepo runs a kopia repository server on the test repository under
+// baseDir, with the user user@host, and gives the storage a client reaches it
+// with. The server stops with the test.
+func serveTestRepo(t *testing.T, baseDir, user string) *backupmodel.Storage {
+	t.Helper()
 	ownerConfig := filepath.Join(baseDir, "repo.config")
+	username, hostname, _ := strings.Cut(user, "@")
 
 	userAdd := exec.Command("kopia", "--config-file="+ownerConfig, "server", "user", "add",
-		"hivepaas@data-backup", "--user-password=user-password")
+		user, "--user-password=user-password")
 	userAdd.Env = append(os.Environ(), "KOPIA_PASSWORD=integration-test-password")
 	mustNoError(t, userAdd.Run())
 
@@ -74,7 +84,7 @@ func startTestServer(t *testing.T) *backupmodel.Storage {
 		RepositoryPassword: "user-password",
 		StorageServer: &backupmodel.StorageServer{
 			URL: "https://127.0.0.1:" + port, Fingerprint: fingerprint,
-			Username: "hivepaas", Hostname: "data-backup",
+			Username: username, Hostname: hostname,
 		},
 		ConfigFile: filepath.Join(t.TempDir(), "client.config"),
 	}
@@ -111,4 +121,45 @@ func TestIntegration_Server_BackupsUnderTheUsersIdentity(t *testing.T) {
 	mustNoError(t, client.DisconnectRepo(ctx))
 	_, err = os.Stat(storage.ConfigFile)
 	assert.True(t, os.IsNotExist(err), "the client's config file is removed")
+}
+
+// A snapshot another user took is read through a server, as the restore user,
+// by its root object: kopia shows a user the manifests of its own snapshots
+// only, but what any snapshot holds.
+func TestIntegration_Server_RestoresAnotherUsersSnapshotByItsRoot(t *testing.T) {
+	owner, baseDir := newTestRepo(t, "repo")
+	ctx := context.Background()
+	mustNoError(t, owner.InitRepo(ctx, &backupmodel.InitRepoOptions{}))
+	dump := "CREATE TABLE t();\n"
+	stream, err := owner.BackupStream(ctx, strings.NewReader(dump), "db.sql",
+		&backupmodel.BackupOptions{Source: "hivepaas@data-backup:/j1"})
+	mustNoError(t, err)
+	dataDir := t.TempDir()
+	mustNoError(t, os.MkdirAll(filepath.Join(dataDir, "uploads"), 0o755))
+	mustNoError(t, os.WriteFile(filepath.Join(dataDir, "uploads", "a.txt"), []byte("a"), 0o600))
+	dir, err := owner.BackupDirectory(ctx, dataDir, &backupmodel.BackupOptions{Source: "hivepaas@data-backup:/j2"})
+	mustNoError(t, err)
+	streamSnapshot, err := owner.GetSnapshot(ctx, stream.Item.ID)
+	mustNoError(t, err)
+	dirSnapshot, err := owner.GetSnapshot(ctx, dir.Item.ID)
+	mustNoError(t, err)
+
+	client := NewClient(serveTestRepo(t, baseDir, "hivepaas@restore"), backupmodel.DefaultCommandExecutor)
+	mustNoError(t, client.ConnectRepo(ctx))
+	defer func() { _ = client.DisconnectRepo(ctx) }()
+
+	_, err = client.RestoreStream(ctx, stream.Item.ID, "db.sql", &bytes.Buffer{}, nil)
+	assert.Error(t, err, "by its ID: the manifest is not the restore user's to read")
+	var out bytes.Buffer
+	_, err = client.RestoreStream(ctx, streamSnapshot.Item.RootObjectID, "db.sql", &out, nil)
+	mustNoError(t, err)
+	assert.Equal(t, dump, out.String())
+
+	target := filepath.Join(t.TempDir(), "uploads")
+	_, err = client.RestoreDirectory(ctx, dirSnapshot.Item.RootObjectID, target,
+		&backupmodel.RestoreOptions{Path: "uploads"})
+	mustNoError(t, err)
+	got, err := os.ReadFile(filepath.Join(target, "a.txt"))
+	mustNoError(t, err)
+	assert.Equal(t, "a", string(got))
 }

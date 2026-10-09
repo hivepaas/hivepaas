@@ -39,11 +39,15 @@ func (refsLoaded) LoadRefObjectsByIDs(context.Context, database.IDB, **entity.Re
 	return nil
 }
 
-// agentCommands records the commands run through agents, and where.
+// agentCommands records the commands run through agents, and where; a
+// manifest asked for is answered as kopia answers it, its root kroot1.
 type agentCommands struct {
 	mu   sync.Mutex
 	runs []nodeexecservice.CommandExecReq
 }
+
+const snapshotManifest = "// id: k1\n// label type:snapshot\n" +
+	`{"id":"","source":{"host":"data-backup","userName":"hivepaas","path":"/j1"},"rootEntry":{"obj":"kroot1"}}` + "\n"
 
 func (a *agentCommands) ExecCommand(
 	_ context.Context,
@@ -52,6 +56,9 @@ func (a *agentCommands) ExecCommand(
 	a.mu.Lock()
 	defer a.mu.Unlock()
 	a.runs = append(a.runs, *req)
+	if strings.Contains(strings.Join(req.Command, " "), " manifest show ") && req.Stdout != nil {
+		_, _ = req.Stdout.Write([]byte(snapshotManifest))
+	}
 	return &nodeexecservice.CommandExecResp{}, nil
 }
 
@@ -117,7 +124,9 @@ func TestRestoreDirectoryOnTheRepositorysNode(t *testing.T) {
 }
 
 // On another node than the repository's, kopia reaches it through a server run
-// on the repository's node, as the restore's own user.
+// on the repository's node, as the restore's own user - who may read what a
+// snapshot holds, not its manifest: the snapshot's root is read first, on the
+// repository's node, and restored by.
 func TestRestoreDirectoryOnAnotherNodeGoesThroughAServer(t *testing.T) {
 	agent := &fakeAgent{addr: "10.0.1.5:10001"}
 	commands := &agentCommands{}
@@ -135,16 +144,19 @@ func TestRestoreDirectoryOnAnotherNodeGoesThroughAServer(t *testing.T) {
 	}
 	assert.True(t, agent.closed)
 	lines := commands.kopiaArgs()
-	if assert.Len(t, lines, 3) {
-		assert.True(t, strings.HasPrefix(lines[0], "node-3: repository connect server --url=https://10.0.1.5:40123"),
-			lines[0])
-		assert.Equal(t, "node-3: snapshot restore k1 /host/srv/data/app1", lines[1])
-		assert.True(t, strings.HasPrefix(lines[2], "node-3: repository disconnect"), lines[2])
+	if assert.Len(t, lines, 5) {
+		assert.True(t, strings.HasPrefix(lines[0], "node-2: repository connect filesystem"), lines[0])
+		assert.Equal(t, "node-2: manifest show k1", lines[1])
+		assert.True(t, strings.HasPrefix(lines[2], "node-3: repository connect server --url=https://10.0.1.5:40123"),
+			lines[2])
+		assert.Equal(t, "node-3: snapshot restore kroot1 /host/srv/data/app1", lines[3])
+		assert.True(t, strings.HasPrefix(lines[4], "node-3: repository disconnect"), lines[4])
 	}
 }
 
 // A stream out of a repository on a volume is read here, through a server on
-// the repository's node: an agent's commands bring back no stream.
+// the repository's node: an agent's commands bring back no stream. The
+// snapshot's root is read first, on the repository's node.
 func TestRestoreStreamOutOfAVolumeRepositoryGoesThroughAServer(t *testing.T) {
 	// Nothing listens there: the server is a fake, and kopia is refused at once.
 	agent := &fakeAgent{addr: "127.0.0.1:10001"}
@@ -164,7 +176,10 @@ func TestRestoreStreamOutOfAVolumeRepositoryGoesThroughAServer(t *testing.T) {
 	}
 	assert.True(t, agent.closed)
 	assert.False(t, connected, "the engine never connected")
-	assert.Empty(t, commands.runs, "nothing ran through an agent")
+	lines := commands.kopiaArgs()
+	if assert.Len(t, lines, 2) {
+		assert.Equal(t, "node-2: manifest show k1", lines[1])
+	}
 }
 
 // A directory of this process goes into a repository on a volume through a

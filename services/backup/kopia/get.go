@@ -68,12 +68,15 @@ func (c *Client) ListSnapshots(
 	return res, nil
 }
 
+// GetSnapshot reads a snapshot's manifest: `snapshot list` takes a source, and
+// finds no snapshot by its ID. `manifest show` prints the manifest's labels as
+// comments, then the manifest.
 func (c *Client) GetSnapshot(
 	ctx context.Context,
 	snapshotID string,
 ) (res backupmodel.GetSnapshotResult, err error) {
 	var outBuf, errBuf bytes.Buffer
-	_, err = c.execCommand(ctx, []string{cmdSnapshot, cmdList, snapshotID, cmdFlagJSON}, func(o *execOptions) {
+	_, err = c.execCommand(ctx, []string{"manifest", "show", snapshotID}, func(o *execOptions) {
 		o.stdout = &outBuf
 		o.stderr = &errBuf
 	})
@@ -85,12 +88,19 @@ func (c *Client) GetSnapshot(
 		return res, hperrors.Wrap(fmt.Errorf("kopia get snapshot failed: %w", err))
 	}
 
-	var rawManifests []kopiaSnapshotManifest
-	if err := json.Unmarshal(outBuf.Bytes(), &rawManifests); err != nil || len(rawManifests) == 0 {
-		return res, hperrors.Wrap(backupmodel.ErrSnapshotNotFound).WithParam("Name", snapshotID)
+	notFound := hperrors.Wrap(backupmodel.ErrSnapshotNotFound).WithParam("Name", snapshotID)
+	out := outBuf.String()
+	if !strings.Contains(out, "// label type:snapshot\n") {
+		return res, notFound
 	}
-
-	res.Item = toStandardSnapshot(&rawManifests[0])
+	var manifest kopiaSnapshotManifest
+	start := strings.Index(out, "{")
+	if start < 0 || json.Unmarshal([]byte(out[start:]), &manifest) != nil {
+		return res, notFound
+	}
+	// The manifest's own ID is the entry's, which it does not hold.
+	manifest.ID = snapshotID
+	res.Item = toStandardSnapshot(&manifest)
 	return res, nil
 }
 
@@ -122,14 +132,15 @@ func toStandardSnapshot(m *kopiaSnapshotManifest) *backupmodel.Snapshot {
 	}
 
 	return &backupmodel.Snapshot{
-		ID:          m.ID,
-		ShortID:     shortID,
-		Time:        m.StartTime,
-		Tags:        tags,
-		Paths:       []string{m.Source.Path},
-		Hostname:    m.Source.Host,
-		SizeBytes:   size,
-		Description: m.Description,
+		ID:           m.ID,
+		ShortID:      shortID,
+		Time:         m.StartTime,
+		Tags:         tags,
+		Paths:        []string{m.Source.Path},
+		Hostname:     m.Source.Host,
+		SizeBytes:    size,
+		Description:  m.Description,
+		RootObjectID: m.RootEntry.ObjectID,
 	}
 }
 

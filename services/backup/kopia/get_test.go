@@ -2,6 +2,7 @@ package kopia
 
 import (
 	"context"
+	"strings"
 	"testing"
 	"time"
 
@@ -144,4 +145,43 @@ func TestToStandardSnapshot_SizeFromTheRootEntry(t *testing.T) {
 	snap := toStandardSnapshot(manifest)
 	assert.Equal(t, int64(42), snap.SizeBytes)
 	assert.Equal(t, "nightly (run t1)", snap.Description)
+}
+
+// A snapshot is read by its manifest - `snapshot list` finds none by its ID -
+// and its root object comes with it.
+func TestClient_GetSnapshot_ReadsTheManifest(t *testing.T) {
+	var args []string
+	answer := "// id: 7ef3a908\n// length: 732\n// label type:snapshot\n// label username:hivepaas\n" +
+		`{"id":"","source":{"host":"data-backup","userName":"hivepaas","path":"/j2"},` +
+		`"startTime":"2026-10-09T10:00:00Z","rootEntry":{"obj":"kroot1","summ":{"size":42}}}` + "\n"
+	c := NewClient(&backupmodel.Storage{StorageLocal: &backupmodel.StorageLocal{Path: "/mnt/backups"}},
+		func(_ context.Context, req *backupmodel.CommandExecReq) (*backupmodel.CommandExecResp, error) {
+			args = req.Command
+			_, _ = req.Stdout.Write([]byte(answer))
+			return &backupmodel.CommandExecResp{}, nil
+		})
+
+	got, err := c.GetSnapshot(context.Background(), "7ef3a908")
+
+	assert.NoError(t, err)
+	if assert.NotNil(t, got.Item) {
+		assert.Equal(t, "7ef3a908", got.Item.ID)
+		assert.Equal(t, "kroot1", got.Item.RootObjectID)
+		assert.Equal(t, int64(42), got.Item.SizeBytes)
+		assert.Equal(t, []string{"/j2"}, got.Item.Paths)
+	}
+	assert.Contains(t, strings.Join(args, " "), "manifest show 7ef3a908")
+}
+
+// A manifest that is not a snapshot's is no snapshot.
+func TestClient_GetSnapshot_OfAnotherManifest(t *testing.T) {
+	c := NewClient(&backupmodel.Storage{StorageLocal: &backupmodel.StorageLocal{Path: "/mnt/backups"}},
+		func(_ context.Context, req *backupmodel.CommandExecReq) (*backupmodel.CommandExecResp, error) {
+			_, _ = req.Stdout.Write([]byte("// id: p1\n// label type:policy\n{\"actions\":{}}\n"))
+			return &backupmodel.CommandExecResp{}, nil
+		})
+
+	_, err := c.GetSnapshot(context.Background(), "p1")
+
+	assert.ErrorIs(t, err, backupmodel.ErrSnapshotNotFound)
 }

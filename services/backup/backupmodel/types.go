@@ -25,6 +25,10 @@ type Snapshot struct {
 	SizeBytes int64     `json:"sizeBytes,omitempty"`
 	// Description is what the snapshot was taken with, such as the job and run.
 	Description string `json:"description,omitempty"`
+	// RootObjectID is the snapshot's root directory as an object: what a client
+	// that may not read the snapshot's manifest - a repository server's restore
+	// user - lists and restores it by.
+	RootObjectID string `json:"rootObjectId,omitempty"`
 }
 
 // RepoOptions are the repository settings that can still be changed once the repository exists.

@@ -27,7 +27,10 @@ type kopiaSnapshotManifest struct {
 }
 
 type kopiaRootEntry struct {
-	Summary struct {
+	// ObjectID is the root directory as an object: what lists and restores the
+	// snapshot without its manifest.
+	ObjectID string `json:"obj"`
+	Summary  struct {
 		Size int64 `json:"size"`
 	} `json:"summ"`
 }

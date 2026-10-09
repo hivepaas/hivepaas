@@ -6,6 +6,7 @@ import { ChevronDown, ChevronRight, X } from "lucide-react";
 import { useController, useFormContext, useWatch } from "react-hook-form";
 import { useParams } from "react-router";
 import invariant from "tiny-invariant";
+import { appUsableSettings } from "~/projects/module-shared/utils";
 
 import { AppLink, Combobox, InfoBlock } from "@application/shared/components";
 import { DEFAULT_PAGINATED_DATA, ROUTE } from "@application/shared/constants";
@@ -68,7 +69,7 @@ export function BasicAuthSection({ prefix, readOnly = false, onRemove }: BasicAu
     });
 
     const comboboxOptions = useMemo(() => {
-        return basicAuths.map(item => ({
+        return appUsableSettings(basicAuths).map(item => ({
             value: {
                 id: item.id,
                 name: item.name,

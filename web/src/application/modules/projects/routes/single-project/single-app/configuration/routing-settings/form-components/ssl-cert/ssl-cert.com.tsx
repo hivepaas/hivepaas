@@ -5,6 +5,7 @@ import { useController, useFormContext, useWatch } from "react-hook-form";
 import { useParams } from "react-router";
 import invariant from "tiny-invariant";
 import { useQuickInstallSslCertDialog } from "~/projects/dialogs/quick-install-ssl-cert";
+import { appUsableSettings } from "~/projects/module-shared/utils";
 
 import { AppLink, Combobox, InfoBlock, LabelWithInfo } from "@application/shared/components";
 import { DEFAULT_PAGINATED_DATA, MODULE_IDS, ROUTE } from "@application/shared/constants";
@@ -68,7 +69,7 @@ function View({ domainIndex, readOnly = false }: SslCertProps) {
     );
 
     const comboboxOptions = useMemo(() => {
-        const list = sslCerts.map(cert => ({
+        const list = appUsableSettings(sslCerts).map(cert => ({
             value: { id: cert.id, name: cert.name },
             label: cert.name,
         }));

@@ -10,6 +10,7 @@ import {
     ProjectSslCertQueries,
 } from "~/projects/data/queries";
 import { PROJECT_FORM_CONTROL_MAX_WIDTH_CLASS } from "~/projects/module-shared/constants";
+import { appUsableSettings } from "~/projects/module-shared/utils";
 
 import { Combobox } from "@application/shared/components";
 import { DEFAULT_PAGINATED_DATA } from "@application/shared/constants";
@@ -17,7 +18,8 @@ import { DEFAULT_PAGINATED_DATA } from "@application/shared/constants";
 /**
  * The settings of one type an entry may mount from. A secret or config file is
  * listed through the app, which shows the project's inheritable ones too; the
- * other types through the environment.
+ * other types through the environment, of which the app can use only those
+ * inheritable.
  */
 function View({ sourceType, value, onChange, invalid, disabled }: Props) {
     const { id: projectId, env, appId } = useParams<{ id: string; env: string; appId: string }>();
@@ -42,7 +44,12 @@ function View({ sourceType, value, onChange, invalid, disabled }: Props) {
         "ssh-key": keys,
         "basic-auth": auths,
     }[sourceType];
-    const settings: { id: string; name: string }[] = active?.data?.data ?? DEFAULT_PAGINATED_DATA.data;
+    const listed: { id: string; name: string; inheritable?: boolean }[] =
+        active?.data?.data ?? DEFAULT_PAGINATED_DATA.data;
+    const settings = useMemo(
+        () => (sourceType === "secret" || sourceType === "config-file" ? listed : appUsableSettings(listed)),
+        [sourceType, listed],
+    );
 
     const options = useMemo(() => {
         const list = settings.map(setting => ({

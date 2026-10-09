@@ -99,6 +99,7 @@ const APP_HREF: Record<string, AppHref> = {
     "app-features": A.featureSettings.$route,
     "app-placement": A.availabilityAndScaling.$route,
     "app-routing": A.routingSettings.$route,
+    "app-setting-mount": A.settingMounts.$route,
     "config-file": A.configFiles.$route,
     "env-var": A.envVariables.$route,
     "periodic-job": A.periodicJobs.$route,

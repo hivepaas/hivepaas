@@ -85,8 +85,8 @@ has a project of its own, and deleting it takes the apps and their services.
 | 2.75 | A volume bound to a directory of the node is mounted as a bind, and keeps what the app wrote for the next container                                                                                                                           | `tests/level-2/storage.spec.ts`             |
 | 2.76 | A file mounted from a config file follows it: changed, the container reads the new content without a deploy; the mount turned off, the file is gone; on again, it is back                                                                     | `tests/level-2/setting-mounts.spec.ts`      |
 | 2.77 | A certificate and its key mounted from an SSL certificate, the key 0400; renewed with Renew Now, the container has the new pair without a deploy                                                                                              | `tests/level-2/setting-mounts.spec.ts`      |
-| 2.78 | A basic auth's htpasswd mounted: Apache's htpasswd accepts its password, and no other                                                                                                                                                         | `tests/level-2/setting-mounts.spec.ts`      |
-| 2.79 | A path one setting mount has is refused to another; a config file a mount reads is not deleted                                                                                                                                                | `tests/level-2/setting-mounts.spec.ts`      |
+| 2.78 | A basic auth's htpasswd mounted: Apache's htpasswd accepts its password, and no other; the env's own basic auth not inheritable, which the app cannot use, is not offered                                                                     | `tests/level-2/setting-mounts.spec.ts`      |
+| 2.79 | A path one setting mount has is refused to another; a config file a mount reads is not deleted, and the dialog lists the mount, a link to it                                                                                                  | `tests/level-2/setting-mounts.spec.ts`      |
 
 The images: `traefik/whoami` for an app that serves - it answers with the
 request it got, as the proxy passed it on - and `busybox` for one that prints
@@ -137,17 +137,19 @@ called: what HivePaaS posts back on a pull request fails, and is let go.
   app mounting the certificate kept the old pair, a restart that rewrote the
   files went back to it, and the renewal job saw it still about to expire. It
   is saved now as an update is, and the apps that mount it follow it.
+- **What reads a setting could not be listed** below the installation: a
+  config file a mount reads was not deleted, but the dialog said "The list of
+  what uses it could not be loaded". The usages route was under `/settings`
+  only. Every settings group of a project, an environment and an app has it
+  now, a setting of another one not found through it; and a mount using a
+  setting is a link to the app's Setting Mounts.
+- **A picker offered settings the app could not use**: a mount's source, and
+  Routing's basic auth and certificate, listed the environment's own ones not
+  inheritable too, and saving one answered "Setting '...' is not found". They
+  list those the app can use.
 
 Seen, and left as they are:
 
-- A setting a mount reads is not deleted, but the dialog that says so cannot
-  say what reads it: "The list of what uses it could not be loaded". The
-  usages route is under `/settings` only, for the installation's settings; a
-  project's, an environment's or an app's setting has none.
-- A mount's setting picker lists the environment's certificates, SSH keys and
-  basic auths, those not inheritable too. The app cannot use those: saving one
-  answers "Setting '...' is not found". Routing's basic auth picker lists them
-  the same way. The tests make theirs inheritable.
 - A certificate is named by its domain: a name given when it is made is not
   kept.
 

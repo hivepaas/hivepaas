@@ -198,7 +198,7 @@ test("a certificate and its key mounted from an SSL certificate, the key 0400; r
     expect((await latestDeployment(api, app))?.id, "no deployment was made").toBe(deployment?.id);
 });
 
-test("a basic auth's htpasswd mounted is one Apache's htpasswd accepts the password by, and no other", async ({
+test("a basic auth's htpasswd mounted is one Apache's htpasswd accepts the password by, and no other; one the app cannot use is not offered", async ({
     page,
     api,
     cleanup,
@@ -212,6 +212,21 @@ test("a basic auth's htpasswd mounted is one Apache's htpasswd accepts the passw
         password,
         inheritable: true,
     });
+    // The env's own, not inheritable: its apps cannot use it.
+    const envOnly = e2eName("env-only");
+    await created(api, `projects/${app.projectId}/${app.env}/basic-auth`, {
+        name: envOnly,
+        username: "e2e-user",
+        password,
+    });
+
+    await page.goto(appPage(app, "setting-mounts"));
+    await page.getByRole("button", { name: "New Setting Mount" }).click();
+    await page.getByRole("combobox", { name: "Mount From" }).click();
+    await page.getByRole("option", { name: "Basic auth", exact: true }).click();
+    await page.getByRole("group", { name: "Setting *" }).getByRole("combobox").click();
+    await expect(page.getByRole("option", { name: authName, exact: true })).toBeVisible();
+    await expect(page.getByRole("option", { name: envOnly, exact: true })).toHaveCount(0);
 
     await newSettingMount(page, app, {
         name: "auth",
@@ -257,6 +272,15 @@ test("a path one setting mount has is refused to another, and a config file a mo
     await page.getByRole("dialog", { name: "Delete Item" }).getByRole("button", { name: "Delete" }).click();
     const inUse = page.getByRole("dialog", { name: "This setting is still in use" });
     await expect(inUse).toContainText("It cannot be deleted while anything still points at it.");
+    // What reads it is listed, a link to the page it is changed on, which opens
+    // in a tab of its own.
+    const [mounts] = await Promise.all([
+        page.context().waitForEvent("page"),
+        inUse.getByRole("link", { name: /e2e-first/ }).click(),
+    ]);
+    await expect(mounts).toHaveURL(new RegExp(`/projects/${app.projectId}/[^/]+/apps/${app.id}/setting-mounts/$`));
+    await expect(mounts.getByRole("row", { name: /e2e-first/ })).toBeVisible();
+    await mounts.close();
     // Its footer's Close, or the corner's: either closes it.
     await inUse.getByRole("button", { name: "Close" }).first().click();
 

@@ -173,9 +173,8 @@ func TransformMemory(taskSpec *swarm.TaskSpec) *Memory {
 	resp := &Memory{}
 	// Resource requirements
 	if taskSpec.Resources != nil {
-		if taskSpec.Resources.SwapBytes != nil {
-			resp.Swappiness = taskSpec.Resources.MemorySwappiness
-		}
+		// Each on its own: swappiness set with no swap given is still set.
+		resp.Swappiness = taskSpec.Resources.MemorySwappiness
 		if taskSpec.Resources.SwapBytes != nil {
 			resp.Swap = new(unit.DataSize(*taskSpec.Resources.SwapBytes))
 		}

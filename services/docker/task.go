@@ -91,6 +91,23 @@ func (m *manager) TaskLogs(
 	return resp, nil
 }
 
+func earliest(a, b time.Time) time.Time {
+	if a.Before(b) {
+		return a
+	}
+	return b
+}
+
+// minTaskLookInterval keeps the looks for a running task apart however short
+// the wait asked for.
+const minTaskLookInterval = 10 * time.Millisecond
+
+// ServiceTaskGetRunning is a running task of the service that has run longer
+// than minRunningDuration: one that has not may still fail to start. It looks
+// maxRetry more times, retryDelay apart, for one; and a task that runs, not that
+// long yet, is waited for until it has - minRunningDuration more at most - a
+// container started as the caller came being what it is there for. It answers
+// nil when there is none by then.
 func (m *manager) ServiceTaskGetRunning(
 	ctx context.Context,
 	serviceID string,
@@ -99,42 +116,45 @@ func (m *manager) ServiceTaskGetRunning(
 	retryDelay time.Duration,
 	ignoreNodeIDs []string,
 ) (running *swarm.Task, all *client.TaskListResult, err error) {
-	return m.serviceTaskGetRunning(ctx, serviceID, minRunningDuration, -1,
-		maxRetry, retryDelay, ignoreNodeIDs)
-}
-
-func (m *manager) serviceTaskGetRunning(
-	ctx context.Context,
-	serviceID string,
-	minRunningDuration time.Duration,
-	retry int,
-	maxRetry int,
-	retryDelay time.Duration,
-	ignoreNodeIDs []string,
-) (running *swarm.Task, all *client.TaskListResult, err error) {
-	if retry >= maxRetry {
-		return nil, nil, nil
-	}
-	listResp, err := m.ServiceTaskList(ctx, serviceID, []swarm.TaskState{swarm.TaskStateRunning})
-	if err != nil {
-		return nil, nil, hperrors.Wrap(err)
-	}
-
-	timeNow := time.Now()
-	waitDuration := retryDelay
-	for i := range listResp.Items {
-		t := &listResp.Items[i]
-		if t.Status.State != swarm.TaskStateRunning || gofn.Contain(ignoreNodeIDs, t.NodeID) {
-			continue
+	start := time.Now()
+	deadline := start.Add(time.Duration(max(maxRetry, 0)) * retryDelay)
+	limit := deadline.Add(minRunningDuration)
+	for {
+		listResp, err := m.ServiceTaskList(ctx, serviceID, []swarm.TaskState{swarm.TaskStateRunning})
+		if err != nil {
+			return nil, nil, hperrors.Wrap(err)
 		}
-		duration := timeNow.Sub(t.Status.Timestamp)
-		if duration > minRunningDuration {
-			return t, listResp, nil
-		}
-		waitDuration = min(waitDuration, minRunningDuration-duration)
-	}
 
-	time.Sleep(max(waitDuration, time.Second))
-	return m.serviceTaskGetRunning(ctx, serviceID, minRunningDuration, retry+1,
-		maxRetry, retryDelay, ignoreNodeIDs)
+		now := time.Now()
+		next := now.Add(retryDelay)
+		for i := range listResp.Items {
+			t := &listResp.Items[i]
+			if t.Status.State != swarm.TaskStateRunning || gofn.Contain(ignoreNodeIDs, t.NodeID) {
+				continue
+			}
+			grown := t.Status.Timestamp.Add(minRunningDuration)
+			if now.After(grown) {
+				return t, listResp, nil
+			}
+			// Running, not long enough yet: looked at again once it has.
+			if grown.After(deadline) {
+				deadline = earliest(grown, limit)
+			}
+			if grown.Before(next) {
+				next = grown
+			}
+		}
+
+		if !now.Before(deadline) {
+			return nil, nil, nil
+		}
+		wait := max(earliest(next, deadline).Sub(now), minTaskLookInterval)
+		timer := time.NewTimer(wait)
+		select {
+		case <-ctx.Done():
+			timer.Stop()
+			return nil, nil, hperrors.Wrap(ctx.Err())
+		case <-timer.C:
+		}
+	}
 }

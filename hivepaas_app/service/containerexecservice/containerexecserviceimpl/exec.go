@@ -341,8 +341,8 @@ func (s *service) pickContainer(
 		return "", "", false, false, nil
 	}
 
-	task, _, err := s.dockerManager.ServiceTaskGetRunning(ctx, serviceID,
-		gofn.Coalesce(req.TaskMinRunningDuration, taskFindMinRunningDuration),
+	minRunning := gofn.Coalesce(req.TaskMinRunningDuration, taskFindMinRunningDuration)
+	task, _, err := s.dockerManager.ServiceTaskGetRunning(ctx, serviceID, minRunning,
 		gofn.Coalesce(req.TaskFindRetryMax, taskFindRetryMax),
 		gofn.Coalesce(req.TaskFindRetryDelay, taskFindRetryDelay),
 		nil)
@@ -350,9 +350,13 @@ func (s *service) pickContainer(
 		return "", "", true, false, hperrors.Wrap(err)
 	}
 	if task == nil {
-		_ = logStore.Add(ctx, tasklog.NewWarnFrame("No running task found for service: "+serviceID,
+		// A container that has not run that long may still fail to start: it is
+		// not the one to run in.
+		_ = logStore.Add(ctx, tasklog.NewWarnFrame(fmt.Sprintf(
+			"No container of the app has been running for %s, which the command needs", minRunning),
 			tasklog.TsNow))
-		return "", "", true, false, hperrors.NewNotFound("Running task of service")
+		return "", "", true, false, hperrors.Wrap(hperrors.ErrActiveContainerNotFound).
+			WithParam("App", req.App.Name)
 	}
 	return task.Status.ContainerStatus.ContainerID, task.NodeID, true, false, nil
 }

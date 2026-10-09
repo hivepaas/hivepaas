@@ -2,7 +2,7 @@ import { type APIRequestContext, test as base, expect, request } from "@playwrig
 
 import { env, runId } from "./env";
 
-type Cleanup = (step: () => Promise<unknown>) => void;
+export type Cleanup = (step: () => Promise<unknown>) => void;
 
 interface LoginResp {
     data?: { session?: { accessToken?: string } };

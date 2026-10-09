@@ -38,9 +38,13 @@ backend repo beside this one (or `HP_BACKEND_DIR`), Go, and the backend's
 10100; `HP_E2E_SKIP_BUILD=1` reuses the last build. The template catalog is the
 app-templates repo beside this one (or `HP_TEMPLATES_SRC`); without it, the
 template test finds none. dind is also given kopia, the backup engine, from
-its pinned image, and a Git repository to build apps from, served by git's own
-daemon on dind's loopback - `git://127.0.0.1/e2e/shop.git`, two commits made at
-fixed dates, so of fixed hashes. The seed's notification channels - a mail account, a Slack, a
+its pinned image, and Git repositories to build apps from, on dind's loopback,
+made at fixed dates, so of fixed hashes: `git://127.0.0.1/e2e/shop.git` (two
+commits on main, a branch, a pull request's head), `site.git` (a page of HTML)
+and `args.git` (a Dockerfile of build arguments), by git's own daemon; and a
+private one, over HTTPS with a token (`https://127.0.0.1:8443/cgi-bin/git/e2e/private.git`)
+and over SSH with a key (`git@127.0.0.1:e2e/private.git`, the key left in
+`env/.build/git-ssh-key`). The seed's notification channels - a mail account, a Slack, a
 Discord and a Telegram, real ones - are removed: nothing the tests do is sent
 to anyone.
 

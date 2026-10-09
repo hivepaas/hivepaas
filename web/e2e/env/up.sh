@@ -133,25 +133,85 @@ in_dind sh -c "c=\$(docker create '$kopia_image' /kopia) && docker cp \$c:/kopia
 	>/dev/null
 in_dind ln -s / /host
 
-say "Serving a Git repository inside dind"
-# An app built from a repository needs one HivePaaS can reach: git's own daemon,
-# on dind's loopback, where the backend runs - git://127.0.0.1/e2e/shop.git. Its
-# main has two commits, each a Dockerfile printing which it is; develop is at
-# the first. Nothing is pushed to it: a test plays the Git host's webhook, about
-# the second. Their dates are fixed, and so are their hashes, on every env.
+say "Serving Git repositories inside dind"
+# Apps are built from repositories HivePaaS reaches inside dind, where it runs,
+# all made with fixed dates - so of fixed hashes, on every env:
+#   git://127.0.0.1/e2e/shop.git  main: two commits, each a Dockerfile printing
+#       which it is; develop at the first; refs/pull/7/head a third, as GitHub
+#       keeps a pull request's head. A test plays the Git host's webhook.
+#   git://127.0.0.1/e2e/site.git  an index.html and nothing else: HivePaaS
+#       writes the Dockerfile.
+#   git://127.0.0.1/e2e/args.git  a Dockerfile that prints the build argument
+#       GREETING, and the hash of the build secret BUILD_TOKEN.
+#   https://127.0.0.1:8443/cgi-bin/git/e2e/private.git, with the token
+#       e2e-git-token - HivePaaS asks as user "default" - and
+#   git@127.0.0.1:e2e/private.git, with the key env/.build/git-ssh-key:
+#       one private repository, its Dockerfile printing built-from-private.
+# The HTTPS server is busybox's, running git-http-backend, behind socat for TLS
+# with a certificate dind trusts; SSH is sshd's, the git user's shell git-shell.
 # lz4 too, which the release's image has: the backend packs a checkout with it.
-in_dind apk add --no-cache -q git-daemon lz4 >/dev/null
-in_dind sh -c 'set -e; rm -rf /tmp/shop /hp/git/e2e; mkdir -p /tmp/shop /hp/git/e2e; cd /tmp/shop
-	export GIT_AUTHOR_NAME=e2e GIT_AUTHOR_EMAIL=e2e@e2e.localhost GIT_COMMITTER_NAME=e2e
-	export GIT_COMMITTER_EMAIL=e2e@e2e.localhost GIT_AUTHOR_DATE=2026-01-01T00:00:00Z
-	export GIT_COMMITTER_DATE=2026-01-01T00:00:00Z
-	git init -q -b main
-	for n in 1 2; do
-		printf "FROM busybox:1.37\nCMD [\"sh\", \"-c\", \"echo built-from-commit-$n; exec sleep 3600\"]\n" >Dockerfile
-		git add Dockerfile; git commit -q -m "Print commit $n"
-		[ "$n" = 1 ] && git branch develop
-	done
-	git clone -q --bare . /hp/git/e2e/shop.git; rm -rf /tmp/shop'
+in_dind apk add --no-cache -q git-daemon lz4 busybox-extras socat openssh-server >/dev/null
+docker exec -i "$DIND" sh -s <<'REPOS'
+set -e
+export GIT_AUTHOR_NAME=e2e GIT_AUTHOR_EMAIL=e2e@e2e.localhost GIT_COMMITTER_NAME=e2e
+export GIT_COMMITTER_EMAIL=e2e@e2e.localhost GIT_AUTHOR_DATE=2026-01-01T00:00:00Z
+export GIT_COMMITTER_DATE=2026-01-01T00:00:00Z
+rm -rf /tmp/repos /hp/git /hp/git-private && mkdir -p /tmp/repos /hp/git/e2e /hp/git-private/e2e
+dockerfile() { printf 'FROM busybox:1.37\nCMD ["sh", "-c", "echo %s; exec sleep 3600"]\n' "$1" >Dockerfile; }
+publish() { git clone -q --mirror . "$1"; }
+
+mkdir /tmp/repos/shop && cd /tmp/repos/shop && git init -q -b main
+dockerfile built-from-commit-1 && git add Dockerfile && git commit -q -m "Print commit 1" && git branch develop
+dockerfile built-from-commit-2 && git add Dockerfile && git commit -q -m "Print commit 2"
+git checkout -q -b pull-7
+dockerfile built-from-pull-request && git add Dockerfile && git commit -q -m "Print the pull request"
+git update-ref refs/pull/7/head HEAD && git checkout -q main && git branch -q -D pull-7
+publish /hp/git/e2e/shop.git
+
+mkdir /tmp/repos/site && cd /tmp/repos/site && git init -q -b main
+printf '<!doctype html>\n<title>site</title>\n<h1>site-from-git</h1>\n' >index.html
+git add index.html && git commit -q -m "A page" && publish /hp/git/e2e/site.git
+
+mkdir /tmp/repos/args && cd /tmp/repos/args && git init -q -b main
+cat >Dockerfile <<'DOCKERFILE'
+FROM busybox:1.37
+ARG GREETING
+RUN --mount=type=secret,id=BUILD_TOKEN echo "greeting=$GREETING" >/built.txt && \
+    echo "token=$(sha256sum /run/secrets/BUILD_TOKEN | cut -c1-12)" >>/built.txt
+CMD ["sh", "-c", "cat /built.txt; exec sleep 3600"]
+DOCKERFILE
+git add Dockerfile && git commit -q -m "Print what the build was given" && publish /hp/git/e2e/args.git
+
+mkdir /tmp/repos/private && cd /tmp/repos/private && git init -q -b main
+dockerfile built-from-private && git add Dockerfile && git commit -q -m "A private Dockerfile"
+publish /hp/git-private/e2e/private.git
+rm -rf /tmp/repos
+
+# HTTPS, with a token.
+rm -rf /hp/git-https && mkdir -p /hp/git-https/cgi-bin && cd /hp/git-https
+printf '#!/bin/sh\nexport GIT_PROJECT_ROOT=/hp/git-private GIT_HTTP_EXPORT_ALL=1\nexec /usr/libexec/git-core/git-http-backend\n' >cgi-bin/git
+chmod +x cgi-bin/git
+echo "/cgi-bin:default:e2e-git-token" >httpd.conf
+openssl req -x509 -newkey rsa:2048 -nodes -days 3650 -subj "/CN=127.0.0.1" \
+    -addext "subjectAltName=IP:127.0.0.1" -keyout key.pem -out cert.pem 2>/dev/null
+cat cert.pem key.pem >server.pem
+cp cert.pem /usr/local/share/ca-certificates/hp-e2e-git.crt && update-ca-certificates 2>/dev/null
+httpd -p 127.0.0.1:8081 -h /hp/git-https -c /hp/git-https/httpd.conf
+
+# SSH, with a key.
+grep -q /usr/bin/git-shell /etc/shells || echo /usr/bin/git-shell >>/etc/shells
+id git >/dev/null 2>&1 || adduser -D -s /usr/bin/git-shell git
+sed -i 's/^git:!/git:*/' /etc/shadow
+rm -rf /home/git/.ssh /home/git/e2e /hp/git-ssh-key /hp/git-ssh-key.pub && mkdir -p /home/git/.ssh
+ssh-keygen -q -t ed25519 -N "" -C e2e -f /hp/git-ssh-key
+cp /hp/git-ssh-key.pub /home/git/.ssh/authorized_keys && cp -R /hp/git-private/e2e /home/git/e2e
+chown -R git:git /home/git && chmod 700 /home/git/.ssh && chmod 600 /home/git/.ssh/authorized_keys
+ssh-keygen -A >/dev/null
+/usr/sbin/sshd -o ListenAddress=127.0.0.1 -o PasswordAuthentication=no
+REPOS
+docker exec -d "$DIND" socat OPENSSL-LISTEN:8443,bind=127.0.0.1,reuseaddr,fork,cert=/hp/git-https/server.pem,verify=0 \
+	TCP:127.0.0.1:8081
+docker cp "$DIND:/hp/git-ssh-key" "$BUILD/git-ssh-key" >/dev/null
 in_dind git daemon --base-path=/hp/git --export-all --reuseaddr --listen=127.0.0.1 --detach
 
 say "Starting the agent and the backend inside dind"

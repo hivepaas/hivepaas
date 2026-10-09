@@ -53,6 +53,12 @@ has a project of its own, and deleting it takes the apps and their services.
 | 2.43 | A scheduled job on a cron runs on it, minute after minute                                                                                                                                                          | `tests/level-2/jobs.spec.ts`            |
 | 2.44 | A deployment tells its notification target that it failed, and why, and that it succeeded: the app, the image, a link to the deployment                                                                            | `tests/level-2/notifications.spec.ts`   |
 | 2.45 | An upload cancelled from its dialog stops at once, says what may be left partly written, and the dialog takes another                                                                                              | `tests/level-2/container-files.spec.ts` |
+| 2.46 | An app set to Git Source in Deployment Settings - a repository, branch develop, Deploy on Push off - builds the branch's commit and runs it; Deploy on Push is saved off                                           | `tests/level-2/git.spec.ts`             |
+| 2.47 | A repository with no Dockerfile, Auto-Generate picked: built with the Dockerfile HivePaaS writes, a static web server, it serves the page at its domain                                                            | `tests/level-2/git.spec.ts`             |
+| 2.48 | Build-time variables: the build's step shows the argument, the container prints it; one that uses an app secret is a BuildKit secret, read from a file, in no log                                                  | `tests/level-2/git.spec.ts`             |
+| 2.49 | A private repository over HTTPS: refused without credentials (ERR_REPO_NOT_FOUND); built with an access token picked in Git Credentials                                                                            | `tests/level-2/git.spec.ts`             |
+| 2.50 | The same repository over SSH, built with a key                                                                                                                                                                     | `tests/level-2/git.spec.ts`             |
+| 2.51 | Previews and PR comments on in Feature Settings: a stranger's "/hivepaas deploy" on a pull request makes nothing; the owner's makes pr-7, built from the pull request's head; "/hivepaas cancel" removes it        | `tests/level-2/webhooks.spec.ts`        |
 
 The images: `traefik/whoami` for an app that serves - it answers with the
 request it got, as the proxy passed it on - and `busybox` for one that prints
@@ -74,6 +80,11 @@ the code last POSTed to it: it fails, and passes again, with no restart.
 
 ## Next
 
+- **Git, for real**: a repository on GitHub, a GitHub App, a webhook GitHub
+  calls itself, the comments HivePaaS posts on a pull request. The env is
+  offline: these need GitHub, and an account of the tests' own there.
+- **A build pushed to a registry**: waits for a registry in the env.
+
 - **Metrics and autoscale on load**: the HTTP and CPU charts, and an app and a
   function scaling out under load and back in. They read the stored logs, which
   the env does not run yet: `env/up.sh` is to set up Logging (VictoriaLogs and
@@ -85,10 +96,21 @@ the code last POSTed to it: it fails, and passes again, with no restart.
   and turning that on for one test would unmask them for the tests running
   beside it.
 
-The Git repository an app is built from is served inside dind, by git's own
-daemon (see the README): its two commits on main are made at fixed dates, so
-their hashes are fixed too, and a test plays GitHub's webhook about the second,
-signing the push with the webhook's secret as GitHub does.
+The Git repositories apps are built from are served inside dind (see the
+README): their commits are made at fixed dates, so their hashes are fixed too.
+A test plays GitHub's webhook - a push of a commit, a comment on pull request
+7 - signing it with the webhook's secret as GitHub does. GitHub itself is not
+called: what HivePaaS posts back on a pull request fails, and is let go.
+
+## Found with Git sources (2026-10-09), and fixed
+
+- **A Dockerfile generated for a static site never built**: its image,
+  `joseluisq/static-web-server:2-debian`, runs as a user of its own (`sws`)
+  since 2.44, and the Dockerfile's `apt-get` failed as that user ("Permission
+  denied"). Every repository with no Dockerfile of its own that is served
+  statically - plain HTML, an Astro or a Nuxt site built to files - failed to
+  build. The packages are installed as root now, and the server runs as the
+  image's user again (dockerfile-generator).
 
 ## Found in the third round (2026-10-09), and fixed
 

@@ -1,3 +1,7 @@
+// The assertions type the form calls by the form's own values: without them
+// TypeScript infers from the generic Path<T>, and the calls do not type-check -
+// whatever typescript-eslint says of the receiver.
+/* eslint-disable @typescript-eslint/no-unnecessary-type-assertion */
 import React, { useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
 
 import { cn } from "@/lib/utils";

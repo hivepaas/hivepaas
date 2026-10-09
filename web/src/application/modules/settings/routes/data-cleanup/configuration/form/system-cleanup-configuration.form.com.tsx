@@ -583,7 +583,7 @@ export function SystemCleanupConfigurationForm({ ref, defaultValues, onSubmit, r
                 methods.reset({
                     ...methods.getValues(),
                     ...values,
-                } as SchemaInput);
+                });
             },
             onError(error: ValidationException) {
                 if (error.errors.length === 0) {

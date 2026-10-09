@@ -44,7 +44,7 @@ function ordered(sources: AppSettingMountSource[] | undefined): AppSettingMountS
 
 /** What the entry hands out as loaded: nothing when it is disabled. */
 function grantsOfEntry(entry: AppSettingMount | undefined): Grant[] {
-    if (!entry || entry.status !== EProjectSecretStatus.Active) {
+    if (entry?.status !== EProjectSecretStatus.Active) {
         return [];
     }
     return entry.files.filter(file => file.gated).map(file => ({ source: entry.source.id, part: file.part }));

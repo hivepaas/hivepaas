@@ -59,14 +59,7 @@ export type FunctionTestRequest = {
  * HivePaaS saw it.
  */
 export type FunctionTestOutcome =
-    | "ok"
-    | "error"
-    | "timeout"
-    | "libraries-failed"
-    | "not-loaded"
-    | "bad-request"
-    | "killed"
-    | "no-result";
+    "ok" | "error" | "timeout" | "libraries-failed" | "not-loaded" | "bad-request" | "killed" | "no-result";
 
 export type FunctionTestRunResult = {
     /** A FunctionTestOutcome, or an outcome a later backend adds. */

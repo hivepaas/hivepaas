@@ -60,7 +60,7 @@ export function AppConfigDockerApiForm({
                 methods.reset({
                     ...methods.getValues(),
                     ...values,
-                } as SchemaInput);
+                });
             },
             onError(error: ValidationException) {
                 error.errors.forEach(({ path, message }, index) => {

@@ -267,7 +267,7 @@ function RestoreForm({ scope, snapshot }: { scope: BackupSnapshotScope; snapshot
                                 onChange={next => {
                                     setTarget(next);
                                     setTyped("");
-                                    const own = Boolean(next && snapshot.app && next.id === snapshot.app.id);
+                                    const own = Boolean(next && next.id === snapshot.app?.id);
                                     setVolumeId(own ? (job?.sourceVolumeId ?? "") : "");
                                     setSubpath(own ? (job?.sourceVolumeSubpath ?? "") : "");
                                 }}

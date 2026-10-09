@@ -117,7 +117,7 @@ export function UploadAppDataFileForm({ isPending, onSubmit, projectId, env, onC
     const fileLabel =
         Array.isArray(selectedFiles) && selectedFiles.length > 0
             ? selectedFiles.length === 1
-                ? ((selectedFiles[0] as File | undefined)?.name ?? "")
+                ? (selectedFiles[0]?.name ?? "")
                 : `${selectedFiles.length} files selected`
             : "";
 
@@ -211,7 +211,7 @@ export function UploadAppDataFileForm({ isPending, onSubmit, projectId, env, onC
                                 <Field>
                                     <EditableCombobox
                                         options={APP_DATA_FILE_KIND_OPTIONS}
-                                        value={fileKindLocalField.value as string}
+                                        value={fileKindLocalField.value}
                                         onChange={fileKindLocalField.onChange}
                                         placeholder="select or type file kind"
                                         aria-invalid={isFileKindLocalInvalid}
@@ -307,7 +307,7 @@ export function UploadAppDataFileForm({ isPending, onSubmit, projectId, env, onC
                                 <Field>
                                     <EditableCombobox
                                         options={APP_DATA_FILE_KIND_OPTIONS}
-                                        value={fileKindCloudField.value as string}
+                                        value={fileKindCloudField.value}
                                         onChange={fileKindCloudField.onChange}
                                         placeholder="select or type file kind"
                                         aria-invalid={isFileKindCloudInvalid}

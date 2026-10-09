@@ -31,7 +31,7 @@ function View() {
             onCancel = fnPlaceholder,
             showFooter = true,
             type = "default",
-        } = {},
+        },
         close,
     } = useGlobalAlertDialogState();
 

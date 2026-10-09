@@ -45,7 +45,7 @@ export function AppConfigNetworksForm({ ref, defaultValues, onSubmit, readOnly =
                 methods.reset({
                     ...methods.getValues(),
                     ...values,
-                } as SchemaInput);
+                });
             },
             onError(error: ValidationException) {
                 if (error.errors.length === 0) {

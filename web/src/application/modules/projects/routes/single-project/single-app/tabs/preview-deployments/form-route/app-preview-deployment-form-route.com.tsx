@@ -67,8 +67,8 @@ export function AppPreviewDeploymentFormRoute({ projectId, appId, env, initialPr
     const isGitCredentialTypeResolved = !preparedCredentialId || deploymentGitCredential?.id === preparedCredentialId;
     const isGithubAppCredential = Boolean(
         preparedCredentialId &&
-            deploymentGitCredential?.id === preparedCredentialId &&
-            deploymentGitCredential.type === ESettingType.GithubApp,
+        deploymentGitCredential?.id === preparedCredentialId &&
+        deploymentGitCredential.type === ESettingType.GithubApp,
     );
 
     useEffect(() => {

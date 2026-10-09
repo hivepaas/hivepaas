@@ -384,7 +384,7 @@ export function HivePaaSGeneralForm({ ref, defaultValues, onSubmit, readOnly = f
                 methods.reset({
                     ...methods.getValues(),
                     ...values,
-                } as SchemaInput);
+                });
             },
             onError(error: ValidationException) {
                 if (error.errors.length === 0) {

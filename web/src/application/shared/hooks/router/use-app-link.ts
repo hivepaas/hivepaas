@@ -17,7 +17,7 @@ function createHook() {
          */
         const modules = useCallback(<T extends To>(to: T): T => {
             if (isString(to)) {
-                return to as T;
+                return to;
             }
 
             if (isPath(to)) {

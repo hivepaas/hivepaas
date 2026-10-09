@@ -110,7 +110,7 @@ export function UpdateApiKeyStatusForm({ isPending, onSubmit, initialValues, onH
                             <Tabs
                                 value={status.value}
                                 onValueChange={value => {
-                                    status.onChange(value as EProfileApiKeyStatus);
+                                    status.onChange(value);
                                 }}
                             >
                                 <TabsList>

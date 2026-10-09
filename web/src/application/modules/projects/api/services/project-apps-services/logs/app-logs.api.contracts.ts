@@ -40,11 +40,7 @@ export type AppLogs_GetLogs_Req = ApiRequestBase<{
 export type AppLogs_GetLogs_Res = ApiResponseBase<AppLogFrame[]>;
 
 export type AppLogHistoryReason =
-    | "disabled"
-    | "apps-not-collected"
-    | "no-query-endpoint"
-    | "driver-unreadable"
-    | "identity-missing";
+    "disabled" | "apps-not-collected" | "no-query-endpoint" | "driver-unreadable" | "identity-missing";
 
 export interface AppLogHistoryInfo {
     available: boolean;
@@ -136,11 +132,7 @@ export type AppLogs_GetFunctionMetrics_Res = ApiResponseBase<{
 
 /** Why an app's HTTP numbers cannot be counted: its logs' reasons, and the proxy's. */
 export type AppHttpMetricsReason =
-    | AppLogHistoryReason
-    | "not-exposed"
-    | "access-log-off"
-    | "access-log-not-json"
-    | "access-log-unlabelled";
+    AppLogHistoryReason | "not-exposed" | "access-log-off" | "access-log-not-json" | "access-log-unlabelled";
 
 export type AppLogs_GetHttpMetrics_Req = AppLogs_GetFunctionMetrics_Req;
 

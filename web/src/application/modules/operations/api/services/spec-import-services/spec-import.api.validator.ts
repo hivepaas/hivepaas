@@ -25,12 +25,10 @@ const IssueSchema = z
         action: z.string().optional(),
         hint: z.string().optional(),
     })
-    .transform(
-        (issue): SpecImportIssue => ({
-            ...issue,
-            detail: issue.detail ?? undefined,
-        }),
-    );
+    .transform((issue): SpecImportIssue => ({
+        ...issue,
+        detail: issue.detail ?? undefined,
+    }));
 
 const NodeSchema = z.object({
     path: z.string(),

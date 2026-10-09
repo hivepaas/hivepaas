@@ -1,3 +1,7 @@
+// The assertions type the form calls by the form's own values: without them
+// TypeScript infers from the generic Path<T>, and the calls do not type-check -
+// whatever typescript-eslint says of the receiver.
+/* eslint-disable @typescript-eslint/no-unnecessary-type-assertion */
 import React, { useMemo, useState } from "react";
 
 import { Button, Checkbox } from "@components/ui";

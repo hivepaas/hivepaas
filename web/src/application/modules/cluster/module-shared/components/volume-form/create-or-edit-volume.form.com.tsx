@@ -207,7 +207,7 @@ export function CreateOrEditVolumeForm({
                             <Tabs
                                 value={driverMode.value}
                                 onValueChange={value => {
-                                    driverMode.onChange(value as EClusterVolumeDriverMode);
+                                    driverMode.onChange(value);
                                 }}
                             >
                                 <TabsList>
@@ -242,7 +242,7 @@ export function CreateOrEditVolumeForm({
                                     <Tabs
                                         value={localType.value}
                                         onValueChange={value => {
-                                            localType.onChange(value as EClusterVolumeLocalType);
+                                            localType.onChange(value);
                                         }}
                                     >
                                         <TabsList>

@@ -75,7 +75,7 @@ export function F2aSetupDialog() {
         if (state.mode === "deactivate") {
             removeMfaTotp(
                 {
-                    passcode: (values as { currentPasscode: string }).currentPasscode,
+                    passcode: values.currentPasscode,
                 },
                 {
                     onSuccess: () => {
@@ -91,7 +91,7 @@ export function F2aSetupDialog() {
 
         getProfile2FASetup(
             {
-                passcode: (values as { currentPasscode: string }).currentPasscode,
+                passcode: values.currentPasscode,
             },
             {
                 onSuccess: data => {
@@ -185,7 +185,6 @@ export function F2aSetupDialog() {
                         onSubmit={onSubmit}
                         qrCode={stateData.qrCode}
                         secretKey={stateData.secretKey}
-                        totpToken={stateData.totpToken}
                     />
                 )}
             </DialogFixedContent>

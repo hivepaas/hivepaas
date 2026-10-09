@@ -109,7 +109,7 @@ export function BuildConfigurationFields({ readOnly = false, image }: Props) {
         setIsLoadingTemplate(true);
 
         try {
-            const response = await queryClient.fetchQuery({
+            const response = await queryClient.query({
                 queryKey: [
                     QK["projects.apps.deployment-settings.$.dockerfile-template"],
                     { projectID: projectId, env, appID: appId, type },

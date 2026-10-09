@@ -437,7 +437,7 @@ export function SystemBackupConfigurationForm({ ref, defaultValues, onSubmit, re
                 methods.reset({
                     ...methods.getValues(),
                     ...values,
-                } as SchemaInput);
+                });
             },
             onError(error: ValidationException) {
                 if (error.errors.length === 0) {

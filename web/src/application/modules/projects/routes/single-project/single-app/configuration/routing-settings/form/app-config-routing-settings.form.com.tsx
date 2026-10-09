@@ -175,7 +175,7 @@ export function AppConfigRoutingSettingsForm({ ref, defaultValues, onSubmit, rea
                 methods.reset({
                     ...methods.getValues(),
                     ...values,
-                } as SchemaInput);
+                });
             },
             onError(error: ValidationException) {
                 if (error.errors.length === 0) {

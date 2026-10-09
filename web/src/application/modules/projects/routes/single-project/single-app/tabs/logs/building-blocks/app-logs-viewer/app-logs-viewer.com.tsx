@@ -256,7 +256,7 @@ export function AppLogsViewer({
 
 function toLogsViewerFrames(frames: AppLogFrame[]): LogsViewerFrame[] {
     return frames.map(frame => ({
-        type: frame.type as LogsViewerFrame["type"],
+        type: frame.type,
         data: frame.data,
         ts: frame.ts,
     }));

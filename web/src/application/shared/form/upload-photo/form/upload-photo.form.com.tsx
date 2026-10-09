@@ -66,7 +66,7 @@ export function UploadPhotoForm({
         });
     }
 
-    async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
+    async function handleSubmit(event: React.SubmitEvent<HTMLFormElement>) {
         const result = await getImageFile();
         match(result, {
             Ok: ({ file }) => {

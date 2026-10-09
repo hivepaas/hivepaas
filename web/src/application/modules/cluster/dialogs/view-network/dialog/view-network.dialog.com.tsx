@@ -50,7 +50,7 @@ export function ViewNetworkDialog() {
     }
 
     function handleReadonlySubmit(_values: ViewNetworkFormOutput) {
-        void _values;
+        // Read-only: there is nothing to submit.
     }
 
     return (

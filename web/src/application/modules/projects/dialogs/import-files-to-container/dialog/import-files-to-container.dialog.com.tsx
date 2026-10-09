@@ -39,6 +39,9 @@ export function ImportFilesToContainerDialog() {
         setProgress(null);
         const controller = new AbortController();
         uploading.current = controller;
+        // Whether the server has taken any of it: from then on, it is in the
+        // container as far as it came.
+        const upload = { received: false };
         try {
             const response = await uploadOne({
                 projectID: state.projectId,
@@ -52,6 +55,7 @@ export function ImportFilesToContainerDialog() {
                 compressionFormat: mapImportCompressionToWire(values.compression),
                 overwrite: values.overwrite,
                 onProgress: (sent, total) => {
+                    upload.received ||= sent > 0;
                     setProgress({ sent, total });
                 },
                 signal: controller.signal,
@@ -63,10 +67,13 @@ export function ImportFilesToContainerDialog() {
         } catch (error) {
             const nextError = error instanceof Error ? error : new Error("Failed to upload container file");
             if (isCancelException(nextError)) {
-                toast.info("Upload cancelled");
+                toast.warning("Upload cancelled", { description: partlyUploaded(values) });
                 return;
             }
             dialogOptions?.onError?.(nextError);
+            if (upload.received) {
+                toast.warning("The upload stopped part way", { description: partlyUploaded(values) });
+            }
         } finally {
             uploading.current = null;
             setProgress(null);
@@ -99,4 +106,15 @@ export function ImportFilesToContainerDialog() {
             </DialogFixedContent>
         </Dialog>
     );
+}
+
+// partlyUploaded says what an upload stopped part way may have left in the
+// container: the server writes into it as the upload comes, and what reached it
+// stays there.
+function partlyUploaded(values: ImportFilesToContainerFormOutput): string {
+    if (values.extract) {
+        return `Some of the archive's files may already be in ${values.path}.`;
+    }
+    const target = values.path.endsWith("/") ? `${values.path}${values.file.name}` : values.path;
+    return `${target} may be partly written in the container.`;
 }

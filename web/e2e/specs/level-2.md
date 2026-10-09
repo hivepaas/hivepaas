@@ -52,7 +52,7 @@ has a project of its own, and deleting it takes the apps and their services.
 | 2.42 | An app built from a repository (main, at a commit); a push of the next commit through the webhook builds and deploys it, marked Webhook; another branch, a bad signature (401) and the push delivered again do not | `tests/level-2/webhooks.spec.ts`        |
 | 2.43 | A scheduled job on a cron runs on it, minute after minute                                                                                                                                                          | `tests/level-2/jobs.spec.ts`            |
 | 2.44 | A deployment tells its notification target that it failed, and that it succeeded: the app, the image, a link to the deployment                                                                                     | `tests/level-2/notifications.spec.ts`   |
-| 2.45 | An upload cancelled from its dialog stops at once, and the dialog takes another                                                                                                                                    | `tests/level-2/container-files.spec.ts` |
+| 2.45 | An upload cancelled from its dialog stops at once, says what may be left partly written, and the dialog takes another                                                                                              | `tests/level-2/container-files.spec.ts` |
 
 The images: `traefik/whoami` for an app that serves - it answers with the
 request it got, as the proxy passed it on - and `busybox` for one that prints

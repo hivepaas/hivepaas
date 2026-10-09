@@ -147,5 +147,7 @@ test("an upload is cancelled from its dialog", async ({ page, api, cleanup }) =>
     await dialog.getByRole("button", { name: "Cancel upload" }).click();
 
     await expect(page.getByText("Upload cancelled")).toBeVisible();
+    // What reached the container stays there: it is said, by name.
+    await expect(page.getByText(`/tmp/${name} may be partly written in the container.`)).toBeVisible();
     await expect(dialog.getByRole("button", { name: "Upload", exact: true })).toBeEnabled();
 });

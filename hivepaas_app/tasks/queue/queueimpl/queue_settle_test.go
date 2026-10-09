@@ -77,3 +77,16 @@ func TestSettleTaskGivesUpOnANonRetryableFailure(t *testing.T) {
 	assert.True(t, rescheduleAt.IsZero())
 	assert.False(t, task.CanRetry())
 }
+
+// A task canceled while it runs is canceled, whatever error its work returned
+// for being cut - a stream closed, a context done - and it is not retried.
+func TestSettleTaskLetsACancelWinOverTheErrorItCaused(t *testing.T) {
+	task := runningTask()
+	data := &queue.TaskExecData{Task: task, TaskCanceled: true}
+
+	rescheduleAt := settleTask(task, data, errors.New("stream closed without exit code"), settleNow)
+
+	assert.Equal(t, base.TaskStatusCanceled, task.Status)
+	assert.True(t, rescheduleAt.IsZero())
+	assert.True(t, task.RetryAt.IsZero())
+}

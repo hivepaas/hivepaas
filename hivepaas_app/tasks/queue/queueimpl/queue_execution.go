@@ -141,9 +141,10 @@ func (q *taskQueue) executeTask(
 	return rescheduleAt
 }
 
-// settleTask is where an execution leaves its task: failed, to be retried or
-// not; run again at once, when it asked to Continue; canceled; or done. It
-// returns when the task is to run next, zero for not at all.
+// settleTask is where an execution leaves its task: canceled, whatever error
+// its work returned for being cut; failed, to be retried or not; run again at
+// once, when it asked to Continue; or done. It returns when the task is to run
+// next, zero for not at all.
 func settleTask(
 	task *entity.Task,
 	taskData *queue.TaskExecData,
@@ -152,6 +153,9 @@ func settleTask(
 ) (rescheduleAt time.Time) {
 	task.EndedAt = timeNow
 	switch {
+	case taskData.TaskCanceled:
+		task.Status = base.TaskStatusCanceled
+		task.RetryAt = time.Time{}
 	case execErr != nil:
 		task.Status = base.TaskStatusFailed
 		if taskData.TaskNonRetryable {
@@ -169,8 +173,6 @@ func settleTask(
 			Error:      hperrors.GetErrorDetail(execErr, ""),
 			StackTrace: hperrors.GetErrorStackTrace(execErr),
 		})
-	case taskData.TaskCanceled:
-		task.Status = base.TaskStatusCanceled
 	case taskData.Continued():
 		task.Status = base.TaskStatusNotStarted
 		task.RunAt = timeNow
@@ -244,8 +246,10 @@ func (q *taskQueue) taskControlCheck(
 			taskData.OnCommandFunc(cmd)
 		}
 		if !taskData.TaskNonCancelable && cmd == base.TaskCommandCancel {
-			taskData.CancelFunc()
+			// Marked before the work is cut: what it returns for being cut
+			// settles a canceled task, not a failed one.
 			taskData.TaskCanceled = true
+			taskData.CancelFunc()
 			return
 		}
 	}

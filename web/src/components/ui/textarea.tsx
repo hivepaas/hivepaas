@@ -2,6 +2,8 @@ import * as React from "react";
 
 import { cn } from "@/lib/utils";
 
+import { useGroupLabelledBy } from "./group-label";
+
 type TextareaProps = React.ComponentPropsWithoutRef<"textarea"> & {
     minRows?: number;
     maxRows?: number;
@@ -23,6 +25,7 @@ function getLineHeight(element: HTMLTextAreaElement) {
 const Textarea = React.forwardRef<HTMLTextAreaElement, TextareaProps>(
     ({ className, rows, minRows = rows ?? 6, maxRows = 10, onPointerDown, style, ...props }, ref) => {
         const textareaRef = React.useRef<HTMLTextAreaElement | null>(null);
+        const labelledBy = useGroupLabelledBy(props);
         const [minRowsHeight, setMinRowsHeight] = React.useState<number>();
         const [maxRowsHeight, setMaxRowsHeight] = React.useState<number>();
         const [hasManualResize, setHasManualResize] = React.useState(false);
@@ -108,6 +111,7 @@ const Textarea = React.forwardRef<HTMLTextAreaElement, TextareaProps>(
                 }}
                 onPointerDown={handlePointerDown}
                 {...props}
+                aria-labelledby={labelledBy}
             />
         );
     },

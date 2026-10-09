@@ -44,17 +44,16 @@ export function AppTemplateCard({ template, onSelect, onSelectTag, selectedTag, 
     };
 
     return (
+        // A group named by the template, not a button: it holds buttons of its
+        // own - Details, Deploy, the version - and a button may not. A click on
+        // the card opens the details, a mouse's shortcut to the Details button,
+        // which the keyboard reaches.
+        // eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions
         <div
-            role="button"
-            tabIndex={0}
+            role="group"
+            aria-label={template.title}
             onClick={() => {
                 onSelect(template);
-            }}
-            onKeyDown={e => {
-                if (e.key === "Enter" || e.key === " ") {
-                    e.preventDefault();
-                    onSelect(template);
-                }
             }}
             className={cn(
                 "group relative flex flex-col justify-between rounded-xl border border-border/70 bg-card p-4 text-card-foreground shadow-xs transition-all duration-200",
@@ -188,6 +187,7 @@ export function AppTemplateCard({ template, onSelect, onSelectTag, selectedTag, 
                                 }}
                             >
                                 <SelectTrigger
+                                    aria-label={`${template.title} version`}
                                     className="h-6.5 w-auto min-w-[70px] px-2 py-0 text-[12px] bg-muted/50 border-border/60 hover:bg-muted font-medium"
                                     onClick={e => {
                                         e.stopPropagation();

@@ -3,6 +3,7 @@
 import * as React from "react";
 
 import { cn } from "@/lib/utils";
+import { useGroupLabelledBy } from "@components/ui/group-label";
 import { Check, ChevronsUpDown, Loader2, RefreshCw, X } from "lucide-react";
 
 import { useDebouncedSearch } from "@application/shared/hooks";
@@ -113,6 +114,8 @@ export function Combobox<T extends Record<string, unknown> = Record<string, unkn
     renderOption,
 }: ComboboxProps<T>) {
     const [open, setOpen] = React.useState(false);
+    const triggerId = React.useId();
+    const labelledBy = useGroupLabelledBy({}, triggerId);
     const [debouncedSearch, setSearch, searchValue] = useDebouncedSearch(debounceMs, "");
     const onSearchRef = React.useRef(onSearch);
     onSearchRef.current = onSearch;
@@ -209,9 +212,11 @@ export function Combobox<T extends Record<string, unknown> = Record<string, unkn
                 >
                     <PopoverTrigger asChild>
                         <Button
+                            id={triggerId}
                             type="button"
                             variant="outline"
                             role="combobox"
+                            aria-labelledby={labelledBy}
                             aria-expanded={open}
                             aria-invalid={ariaInvalid}
                             disabled={disabled || loading}

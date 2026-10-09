@@ -103,6 +103,7 @@ function TablePagination({
                         >
                             <SelectTrigger
                                 size="sm"
+                                aria-label="Rows per page"
                                 className="h-8 w-[70px] shrink-0"
                             >
                                 <SelectValue />

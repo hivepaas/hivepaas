@@ -4,6 +4,8 @@ import * as SelectPrimitive from "@radix-ui/react-select";
 import { cn } from "@/lib/utils";
 import { CheckIcon, ChevronDownIcon, ChevronUpIcon } from "lucide-react";
 
+import { useGroupLabelledBy } from "./group-label";
+
 function Select({ ...props }: React.ComponentProps<typeof SelectPrimitive.Root>) {
     return (
         <SelectPrimitive.Root
@@ -39,6 +41,9 @@ function SelectTrigger({
 }: React.ComponentProps<typeof SelectPrimitive.Trigger> & {
     size?: "sm" | "default";
 }) {
+    const selfId = React.useId();
+    const labelledBy = useGroupLabelledBy(props, selfId);
+
     return (
         <SelectPrimitive.Trigger
             data-slot="select-trigger"
@@ -47,7 +52,9 @@ function SelectTrigger({
                 "border-input data-[placeholder]:text-muted-foreground [&_svg:not([class*='text-'])]:text-muted-foreground focus-visible:border-ring focus-visible:ring-ring/50 aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive dark:bg-input/15 dark:hover:bg-input/25 flex w-full max-w-full min-w-0 items-center justify-between gap-2 rounded-md border bg-transparent px-3 py-2 text-sm whitespace-nowrap overflow-hidden shadow-xs transition-[color,box-shadow] outline-none focus-visible:ring-[3px] disabled:cursor-not-allowed disabled:opacity-50 data-[size=default]:h-9 data-[size=sm]:h-8 *:data-[slot=select-value]:min-w-0 *:data-[slot=select-value]:flex-1 *:data-[slot=select-value]:truncate *:data-[slot=select-value]:text-left *:data-[slot=select-value]:flex *:data-[slot=select-value]:items-center *:data-[slot=select-value]:gap-2 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
                 className,
             )}
+            id={props.id ?? selfId}
             {...props}
+            aria-labelledby={labelledBy}
         >
             {children}
             <SelectPrimitive.Icon asChild>

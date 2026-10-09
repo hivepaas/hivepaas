@@ -3,13 +3,43 @@ import * as React from "react";
 import * as TabsPrimitive from "@radix-ui/react-tabs";
 import { cn } from "@/lib/utils";
 
+interface TabPanels {
+    /** The values a TabsContent is there for. */
+    values: ReadonlySet<string>;
+    register: (value: string) => () => void;
+}
+
+/**
+ * The panels of the tabs. Tabs often have none: they switch what a form shows,
+ * or are a page's sections, each a route of its own. A trigger with no panel
+ * has no aria-controls - it would name an element that is not there.
+ */
+const TabPanelsContext = React.createContext<TabPanels | null>(null);
+
 function Tabs({ className, ...props }: React.ComponentProps<typeof TabsPrimitive.Root>) {
+    const [values, setValues] = React.useState<ReadonlySet<string>>(new Set());
+    const register = React.useCallback((value: string) => {
+        setValues(previous => new Set(previous).add(value));
+
+        return () => {
+            setValues(previous => {
+                const next = new Set(previous);
+                next.delete(value);
+
+                return next;
+            });
+        };
+    }, []);
+    const panels = React.useMemo(() => ({ values, register }), [values, register]);
+
     return (
-        <TabsPrimitive.Root
-            data-slot="tabs"
-            className={cn("flex flex-col gap-2", className)}
-            {...props}
-        />
+        <TabPanelsContext.Provider value={panels}>
+            <TabsPrimitive.Root
+                data-slot="tabs"
+                className={cn("flex flex-col gap-2", className)}
+                {...props}
+            />
+        </TabPanelsContext.Provider>
     );
 }
 
@@ -27,6 +57,9 @@ function TabsList({ className, ...props }: React.ComponentProps<typeof TabsPrimi
 }
 
 function TabsTrigger({ className, ...props }: React.ComponentProps<typeof TabsPrimitive.Trigger>) {
+    const panels = React.useContext(TabPanelsContext);
+    const hasPanel = panels === null || panels.values.has(props.value);
+
     return (
         <TabsPrimitive.Trigger
             data-slot="tabs-trigger"
@@ -35,11 +68,15 @@ function TabsTrigger({ className, ...props }: React.ComponentProps<typeof TabsPr
                 className,
             )}
             {...props}
+            {...(hasPanel ? {} : { "aria-controls": undefined })}
         />
     );
 }
 
 function TabsContent({ className, ...props }: React.ComponentProps<typeof TabsPrimitive.Content>) {
+    const register = React.useContext(TabPanelsContext)?.register;
+    React.useLayoutEffect(() => register?.(props.value), [register, props.value]);
+
     return (
         <TabsPrimitive.Content
             data-slot="tabs-content"

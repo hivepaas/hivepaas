@@ -13,6 +13,7 @@ function View({ projectId, env, appId }: Props) {
                 to={ROUTE.projects.single.apps.single.configuration.general.$route(projectId, env, appId)}
             >
                 <EyeIcon className="size-5" />
+                <span className="sr-only">View app</span>
             </AppLink.Modules>
         </div>
     );

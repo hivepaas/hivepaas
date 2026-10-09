@@ -4,7 +4,11 @@ import * as CheckboxPrimitive from "@radix-ui/react-checkbox";
 import { cn } from "@/lib/utils";
 import { CheckIcon } from "lucide-react";
 
+import { useGroupLabelledBy } from "./group-label";
+
 function Checkbox({ className, ...props }: React.ComponentProps<typeof CheckboxPrimitive.Root>) {
+    const labelledBy = useGroupLabelledBy(props);
+
     return (
         <CheckboxPrimitive.Root
             data-slot="checkbox"
@@ -13,6 +17,7 @@ function Checkbox({ className, ...props }: React.ComponentProps<typeof CheckboxP
                 className,
             )}
             {...props}
+            aria-labelledby={labelledBy}
         >
             <CheckboxPrimitive.Indicator
                 data-slot="checkbox-indicator"

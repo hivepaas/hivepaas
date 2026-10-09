@@ -2,7 +2,11 @@ import * as React from "react";
 
 import { cn } from "@/lib/utils";
 
+import { useGroupLabelledBy } from "./group-label";
+
 function Input({ className, type, ...props }: React.ComponentProps<"input">) {
+    const labelledBy = useGroupLabelledBy(props);
+
     return (
         <input
             type={type}
@@ -14,6 +18,7 @@ function Input({ className, type, ...props }: React.ComponentProps<"input">) {
                 className,
             )}
             {...props}
+            aria-labelledby={labelledBy}
         />
     );
 }

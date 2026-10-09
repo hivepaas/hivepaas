@@ -13,6 +13,7 @@ function View({ id }: Props) {
                 to={ROUTE.cluster.nodes.single.$route(id)}
             >
                 <EyeIcon className="size-5" />
+                <span className="sr-only">View node</span>
             </AppLink.Modules>
         </div>
     );

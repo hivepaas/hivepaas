@@ -28,7 +28,7 @@ test("an app made from a template is deployed, and runs", async ({ page, api, cl
     await page.goto(`/projects/${project.id}/app-templates/`);
     await page.getByRole("textbox", { name: /^Search templates/ }).fill("IT Tools");
     await page
-        .getByRole("button", { name: /^IT Tools/ })
+        .getByRole("group", { name: "IT Tools", exact: true })
         .getByRole("button", { name: "Deploy", exact: true })
         .click();
     const dialog = page.getByRole("dialog", { name: "Deploy Template: IT Tools" });
@@ -64,7 +64,7 @@ test("a template that depends on a database deploys both, the app connected to i
     await page.goto(`/projects/${project.id}/app-templates/`);
     await page.getByRole("textbox", { name: /^Search templates/ }).fill("Atuin");
     await page
-        .getByRole("button", { name: /^Atuin/ })
+        .getByRole("group", { name: "Atuin", exact: true })
         .getByRole("button", { name: "Deploy", exact: true })
         .click();
     const dialog = page.getByRole("dialog", { name: "Deploy Template: Atuin" });
@@ -106,7 +106,7 @@ async function openDeploy(page: Page, project: Project, title: string) {
     await page.goto(`/projects/${project.id}/app-templates/`);
     await page.getByRole("textbox", { name: /^Search templates/ }).fill(title);
     await page
-        .getByRole("button", { name: new RegExp(`^${title}`) })
+        .getByRole("group", { name: title, exact: true })
         .getByRole("button", { name: "Deploy", exact: true })
         .click();
     return page.getByRole("dialog", { name: `Deploy Template: ${title}` });

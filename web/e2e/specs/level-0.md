@@ -21,18 +21,31 @@ An app's or a project's page added to the dashboard is added to the lists in
 
 ## Accessibility not passed yet (2026-10-09)
 
-axe finds these on the pages 0.8 checks; the test leaves them out until they
-are fixed, and any other rule broken fails it. Each comes from shared
-components, so one fix clears many pages.
+axe finds these on the pages 0.8 checks; the test leaves them out, and any
+other rule broken fails it.
 
-| Rule                    | Where                                                                       | Found on (21 pages) |
-| ----------------------- | --------------------------------------------------------------------------- | ------------------- |
-| `color-contrast`        | muted text (`text-muted-foreground`) on its background, below 4.5:1         | 290 elements, all   |
-| `button-name`           | selects with no name: a table's page size, a form's options                 | 45, 15 pages        |
-| `aria-valid-attr-value` | tabs that switch a form's fields, with no panel for `aria-controls` to name | 24, 12 pages        |
-| `nested-interactive`    | a template's card - a button with buttons in it; a popover in a field       | 51, 2 pages         |
-| `link-name`             | a table row's icon links                                                    | 20, 4 pages         |
-| `label`                 | inputs named by nothing: a create form's name, the profile's username       | 7, 4 pages          |
-| `svg-img-alt`           | a template's icon                                                           | 1                   |
+- `color-contrast`: muted text (`text-muted-foreground`) on its background,
+  below 4.5:1 - 290 elements, on every page. The palette's: changing it
+  changes how every page looks.
+- `nested-interactive`: a date picker's Clear date is a control inside the
+  button that opens the calendar. Moved out beside it, waiting for review: it
+  is where the eye sees it.
 
-`color-contrast` is the palette's: changing it changes how every page looks.
+## Found with axe (2026-10-09), and fixed
+
+- **Controls named by nothing** (`button-name`, `label`): a checkbox, a select
+  or an input alone in a block titled "Enabled", "Default", "Name" had no
+  name. A block's title now names what it holds that nothing else names - a
+  select by its title and its value, "Environment development" - and a
+  table's page size is "Rows per page".
+- **Tabs with no panel** (`aria-valid-attr-value`): tabs that switch a form's
+  fields, or a page's sections by their routes, said they controlled panels
+  that were not there. Such a tab names none now.
+- **A table row's view link** (`link-name`) was an eye alone: "View app",
+  "View project", "View node", "View user".
+- **A template's card was a button with buttons in it** (`nested-interactive`):
+  it is a group named by the template; a click on it still opens the
+  details, and the keyboard has the Details button - Enter on Deploy opened
+  the details before, the card taking the key.
+- **The template's GitHub icon** (`svg-img-alt`) is hidden from screen readers,
+  beside the link's text.

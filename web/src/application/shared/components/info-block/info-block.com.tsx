@@ -2,6 +2,8 @@ import React, { type PropsWithChildren, useId } from "react";
 
 import classnames from "classnames/bind";
 
+import { GroupLabelContext } from "@components/ui/group-label";
+
 import styles from "./info-block.module.scss";
 
 const cx = classnames.bind(styles);
@@ -31,7 +33,10 @@ function View({ title, description, children, titleWidth = 270 }: Props) {
                 {description && <div className={cx("description")}>{description}</div>}
             </div>
 
-            <div className={cx("children")}>{children}</div>
+            <div className={cx("children")}>
+                {/* A control in it with no name of its own is named by the title. */}
+                <GroupLabelContext.Provider value={titleId}>{children}</GroupLabelContext.Provider>
+            </div>
         </div>
     );
 }

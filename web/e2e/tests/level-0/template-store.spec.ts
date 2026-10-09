@@ -28,9 +28,9 @@ async function apiOrder(api: APIRequestContext, sort: string, search = ""): Prom
 }
 
 // shownOrder is the titles of the first cards the store shows. A card is a
-// button headed by its template's title.
+// group named and headed by its template's title.
 async function shownOrder(page: Page, count: number): Promise<string[]> {
-    return (await page.getByRole("button").getByRole("heading", { level: 3 }).allInnerTexts())
+    return (await page.getByRole("group").getByRole("heading", { level: 3 }).allInnerTexts())
         .slice(0, count)
         .map(t => t.trim());
 }

@@ -13,6 +13,7 @@ function View({ id }: Props) {
                 to={ROUTE.userManagement.users.single.$route(id)}
             >
                 <EyeIcon className="size-5" />
+                <span className="sr-only">View user</span>
             </AppLink.Modules>
         </div>
     );

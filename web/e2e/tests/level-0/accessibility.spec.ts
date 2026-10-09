@@ -6,18 +6,10 @@ import { expect, test } from "../../support/fixtures";
 // The rules of WCAG 2.1, A and AA, that axe checks on a page.
 const WCAG = ["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"];
 
-// Rules the dashboard does not pass yet, each on many pages, through shared
-// components (specs/level-0.md lists them). They are left out until fixed; any
-// other rule a page breaks fails it - a new kind of problem is caught.
-const NOT_YET = [
-    "color-contrast", // muted text on its background, below 4.5:1 - a design choice
-    "button-name", // selects with no name: a table's page size, a form's options
-    "aria-valid-attr-value", // tabs that switch a form's fields, with no panel to control
-    "link-name", // a table row's icon links
-    "label", // a few inputs named by nothing
-    "nested-interactive", // a template's card, a button with buttons in it
-    "svg-img-alt", // a template's icon
-];
+// The rules the dashboard does not pass yet (specs/level-0.md): muted text on
+// its background, below 4.5:1 - the palette's, a design choice; a date picker's
+// Clear date inside the button that opens it. Any other rule broken fails.
+const NOT_YET = ["color-contrast", "nested-interactive"];
 
 // Pages of every kind: lists, forms, settings, an app's tabs - the app being the
 // HivePaaS project's Traefik, which every installation has. Nothing is written.

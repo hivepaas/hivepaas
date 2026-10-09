@@ -387,3 +387,18 @@ export async function runJob(
     const logs = (await (await api.get(`${task}/logs`)).json()) as { data: { logs: { data: string }[] } };
     return { status, log: logs.data.logs.map(l => l.data).join("") };
 }
+
+export interface StorageMount {
+    target: string;
+    // The app whose directory the mount reaches, when it is not the app's own.
+    sourceApp?: { appId: string };
+}
+
+// storageMounts are the mounts an app's Persistent Storage lists.
+export async function storageMounts(api: APIRequestContext, app: App): Promise<StorageMount[]> {
+    const body = (await ok(
+        await api.get(`${appPath(app)}/storage-settings`, { params: { getMounts: true } }),
+        `reading the storage of ${app.name}`,
+    )) as { data: { mounts?: StorageMount[] } };
+    return body.data.mounts ?? [];
+}

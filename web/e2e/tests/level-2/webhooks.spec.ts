@@ -1,8 +1,8 @@
 import type { APIRequestContext } from "@playwright/test";
 import { createHmac, randomBytes } from "node:crypto";
 
-import { type App, appPath, deleteSettingsNamed } from "../../support/api";
-import { DEPLOYED, appIn, appPage, deployed, expectLogs } from "../../support/apps";
+import { type App, appPath, createVolume, deleteSettingsNamed, deleteVolume, storageMounts } from "../../support/api";
+import { DEPLOYED, appIn, appPage, deployed, expectLogs, mountVolume } from "../../support/apps";
 import { type Cleanup, e2eName, expect, test } from "../../support/fixtures";
 import { REPOS, SHOP_COMMITS, SHOP_PAGE, buildFromRepo } from "../../support/git";
 
@@ -142,8 +142,14 @@ test("a pull request's comment deploys a preview of the app, and another cancels
 }) => {
     const secret = randomBytes(16).toString("hex");
     const webhook = await createWebhook(api, cleanup, "webhook-pr", secret);
+    // The app has a volume: a preview is to have its own directory on it, not the
+    // app's. Made before the project, to be removed after it.
+    const volume = e2eName("preview-vol");
+    const volumeId = await createVolume(api, volume);
+    cleanup(() => deleteVolume(api, volumeId));
     // Not deployed on push: a push to main, in the test above, is not this one's.
     const app = await appIn(api, cleanup, "preview");
+    await mountVolume(page, app, volume, "/data");
     await buildFromRepo(api, app, {
         repoURL: REPOS.shop,
         branch: "main",
@@ -177,6 +183,11 @@ test("a pull request's comment deploys a preview of the app, and another cancels
     const preview = { ...app, id: made!.id, name: made!.name };
     await deployed(api, preview);
     await expectLogs(page, preview, "built-from-pull-request");
+    // Its /data is a directory of its own: not the app's, which the preview's
+    // code would otherwise read and write.
+    const mounts = await storageMounts(api, preview);
+    expect(mounts.map(m => m.target)).toEqual(["/data"]);
+    expect(mounts[0]?.sourceApp, "the preview does not reach the app's data").toBeUndefined();
     await page.goto(appPage(app, "preview-deployments"));
     await expect(page.getByRole("row", { name: /pr-7/ })).toBeVisible();
 

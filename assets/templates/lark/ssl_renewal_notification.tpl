@@ -8,7 +8,7 @@
       "template": "{{if .Succeeded}}green{{else}}red{{end}}",
       "title": {
         "tag": "plain_text",
-        "content": "{{if .ProjectName | ne ""}}[{{.ProjectName}}]{{if .AppName | ne ""}}[{{.AppName}}]{{end}}{{else}}[System]{{end}} SSL renewal {{if .Succeeded}}succeeded{{else}}failed{{end}}"
+        "content": {{json (scope .ProjectName .AppName) " SSL renewal " (outcome .Succeeded)}}
       }
     },
     "elements": [
@@ -19,56 +19,56 @@
             "is_short": true,
             "text": {
               "tag": "lark_md",
-              "content": "**Project:**\n{{.ProjectName}}"
+              "content": {{json "**Project:**\n" .ProjectName}}
             }
           },{{end}}
           {{if .AppName | ne ""}}{
             "is_short": true,
             "text": {
               "tag": "lark_md",
-              "content": "**App:**\n{{.AppName}}"
+              "content": {{json "**App:**\n" .AppName}}
             }
           },{{end}}
           {
             "is_short": true,
             "text": {
               "tag": "lark_md",
-              "content": "**Name:**\n{{.SSLName}}"
+              "content": {{json "**Name:**\n" .SSLName}}
             }
           },
           {
             "is_short": true,
             "text": {
               "tag": "lark_md",
-              "content": "**Type:**\n{{.SSLType}}"
+              "content": {{json "**Type:**\n" .SSLType}}
             }
           },
           {
             "is_short": true,
             "text": {
               "tag": "lark_md",
-              "content": "**Domain:**\n{{.Domain}}"
+              "content": {{json "**Domain:**\n" .Domain}}
             }
           },
           {
             "is_short": true,
             "text": {
               "tag": "lark_md",
-              "content": "**Created At:**\n{{.CreatedAt}}"
+              "content": {{json "**Created At:**\n" .CreatedAt}}
             }
           },
           {
             "is_short": true,
             "text": {
               "tag": "lark_md",
-              "content": "**Expire At:**\n{{.ExpireAt}}"
+              "content": {{json "**Expire At:**\n" .ExpireAt}}
             }
           }{{if .NextRenewalIn | gt 0}},
           {
             "is_short": true,
             "text": {
               "tag": "lark_md",
-              "content": "**Next Renewal In:**\n{{.NextRenewalIn}}"
+              "content": {{json "**Next Renewal In:**\n" .NextRenewalIn}}
             }
           }{{end}}
         ]
@@ -83,7 +83,7 @@
               "content": "Go to Dashboard"
             },
             "type": "primary",
-            "url": "{{.DashboardLink}}"
+            "url": {{json .DashboardLink}}
           }
         ]
       }

@@ -8,7 +8,7 @@
       "template": "{{if .Succeeded}}green{{else}}red{{end}}",
       "title": {
         "tag": "plain_text",
-        "content": "{{if .ProjectName | ne ""}}[{{.ProjectName}}]{{if .AppName | ne ""}}[{{.AppName}}]{{end}}{{else}}[System]{{end}} Scheduled task {{if .Succeeded}}succeeded{{else}}failed{{end}}"
+        "content": {{json (scope .ProjectName .AppName) " Scheduled task " (outcome .Succeeded)}}
       }
     },
     "elements": [
@@ -19,49 +19,49 @@
             "is_short": true,
             "text": {
               "tag": "lark_md",
-              "content": "**Project:**\n{{.ProjectName}}"
+              "content": {{json "**Project:**\n" .ProjectName}}
             }
           },{{end}}
           {{if .AppName | ne ""}}{
             "is_short": true,
             "text": {
               "tag": "lark_md",
-              "content": "**App:**\n{{.AppName}}"
+              "content": {{json "**App:**\n" .AppName}}
             }
           },{{end}}
           {
             "is_short": true,
             "text": {
               "tag": "lark_md",
-              "content": "**Scheduled Job:**\n{{.SchedJobName}}"
+              "content": {{json "**Scheduled Job:**\n" .SchedJobName}}
             }
           },
           {
             "is_short": true,
             "text": {
               "tag": "lark_md",
-              "content": "**Schedule:**\n{{.Schedule}}"
+              "content": {{json "**Schedule:**\n" .Schedule}}
             }
           },
           {
             "is_short": true,
             "text": {
               "tag": "lark_md",
-              "content": "**Started At:**\n{{.StartedAt}}"
+              "content": {{json "**Started At:**\n" .StartedAt}}
             }
           },
           {
             "is_short": true,
             "text": {
               "tag": "lark_md",
-              "content": "**Duration:**\n{{.Duration}}"
+              "content": {{json "**Duration:**\n" .Duration}}
             }
           },
           {
             "is_short": true,
             "text": {
               "tag": "lark_md",
-              "content": "**Retries:**\n{{.Retries}}"
+              "content": {{json "**Retries:**\n" .Retries}}
             }
           }
         ]
@@ -76,7 +76,7 @@
               "content": "Go to Dashboard"
             },
             "type": "primary",
-            "url": "{{.DashboardLink}}"
+            "url": {{json .DashboardLink}}
           }
         ]
       }

@@ -2,46 +2,46 @@
   "attachments": [
     {
       "color": "{{if .Succeeded}}#2eb886{{else}}#a30200{{end}}",
-      "title": "{{if .ProjectName | ne ""}}[{{.ProjectName}}]{{if .AppName | ne ""}}[{{.AppName}}]{{end}}{{else}}[System]{{end}} Scheduled task {{if .Succeeded}}succeeded{{else}}failed{{end}}",
+      "title": {{json (scope .ProjectName .AppName) " Scheduled task " (outcome .Succeeded)}},
       "fields": [
         {{if .ProjectName | ne ""}}{
           "title": "Project",
-          "value": {{printf "%q" .ProjectName}},
+          "value": {{json .ProjectName}},
           "short": true
         },{{end}}
         {{if .AppName | ne ""}}{
           "title": "App",
-          "value": {{printf "%q" .AppName}},
+          "value": {{json .AppName}},
           "short": true
         },{{end}}
         {
           "title": "Scheduled Job",
-          "value": {{printf "%q" .SchedJobName}},
+          "value": {{json .SchedJobName}},
           "short": true
         },
         {
           "title": "Schedule",
-          "value": {{printf "%q" .Schedule}},
+          "value": {{json .Schedule}},
           "short": true
         },
         {
           "title": "Started At",
-          "value": {{printf "%q" .StartedAt}},
+          "value": {{json .StartedAt}},
           "short": true
         },
         {
           "title": "Duration",
-          "value": {{printf "%q" .Duration}},
+          "value": {{json .Duration}},
           "short": true
         },
         {
           "title": "Retries",
-          "value": "{{.Retries}}",
+          "value": {{json .Retries}},
           "short": true
         },
         {
           "title": "See task details",
-          "value": "<{{.DashboardLink}}|Go to Dashboard>",
+          "value": {{json "<" .DashboardLink "|Go to Dashboard>"}},
           "short": false
         }
       ],

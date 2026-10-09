@@ -1,58 +1,58 @@
 {
   "embeds": [
     {
-      "title": "{{if .ProjectName | ne ""}}[{{.ProjectName}}]{{if .AppName | ne ""}}[{{.AppName}}]{{end}}{{else}}[System]{{end}} Healthcheck {{if .Succeeded}}succeeded{{else}}failed{{end}}",
+      "title": {{json (scope .ProjectName .AppName) " Healthcheck " (outcome .Succeeded)}},
       "color": {{if .Succeeded}}3066993{{else}}15153724{{end}},
       "fields": [
         {{if .ProjectName | ne ""}}{
           "name": "Project",
-          "value": {{printf "%q" .ProjectName}},
+          "value": {{json .ProjectName}},
           "inline": true
         },{{end}}
         {{if .AppName | ne ""}}{
           "name": "App",
-          "value": {{printf "%q" .AppName}},
+          "value": {{json .AppName}},
           "inline": true
         },{{end}}
         {"name": "\u200b", "value": "\u200b", "inline": true},
         {
           "name": "Name",
-          "value": {{printf "%q" .HealthcheckName}},
+          "value": {{json .HealthcheckName}},
           "inline": true
         },
         {
           "name": "Type",
-          "value": {{printf "%q" .HealthcheckType}},
+          "value": {{json .HealthcheckType}},
           "inline": true
         },
         {
           "name": "Retries",
-          "value": "{{.Retries}}",
+          "value": {{json .Retries}},
           "inline": true
         },
         {{if not .Succeeded}}{
           "name": "Expect",
-          "value": {{printf "%q" .Expect}},
+          "value": {{json .Expect}},
           "inline": false
         },
         {
           "name": "Actual",
-          "value": {{printf "%q" .Actual}},
+          "value": {{json .Actual}},
           "inline": false
         },{{end}}{
           "name": "Started At",
-          "value": {{printf "%q" .StartedAt}},
+          "value": {{json .StartedAt}},
           "inline": true
         },
         {
           "name": "Duration",
-          "value": {{printf "%q" .Duration}},
+          "value": {{json .Duration}},
           "inline": true
         },
         {"name": "\u200b", "value": "\u200b", "inline": true},
         {
           "name": "See task details",
-          "value": "[Go to Dashboard]({{.DashboardLink}})",
+          "value": {{json "[Go to Dashboard](" .DashboardLink ")"}},
           "inline": false
         }
       ]

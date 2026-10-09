@@ -2,31 +2,31 @@
   "attachments": [
     {
       "color": "{{if .Succeeded}}#2eb886{{else}}#a30200{{end}}",
-      "title": "System update {{if .Succeeded}}succeeded{{else}}failed{{end}}",
+      "title": {{json "System update " (outcome .Succeeded)}},
       "fields": [
         {
           "title": "Current Version",
-          "value": {{printf "%q" .CurrentVersion}},
+          "value": {{json .CurrentVersion}},
           "short": true
         },
         {
           "title": "Target Version",
-          "value": {{printf "%q" .TargetVersion}},
+          "value": {{json .TargetVersion}},
           "short": true
         },
         {
           "title": "Started At",
-          "value": {{printf "%q" .StartedAt}},
+          "value": {{json .StartedAt}},
           "short": true
         },
         {
           "title": "Duration",
-          "value": {{printf "%q" .Duration}},
+          "value": {{json .Duration}},
           "short": true
         },
         {
           "title": "See task details",
-          "value": "<{{.DashboardLink}}|Go to Dashboard>",
+          "value": {{json "<" .DashboardLink "|Go to Dashboard>"}},
           "short": false
         }
       ],

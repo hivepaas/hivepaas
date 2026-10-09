@@ -1,54 +1,54 @@
 {
   "embeds": [
     {
-      "title": "{{if .ProjectName | ne ""}}[{{.ProjectName}}]{{if .AppName | ne ""}}[{{.AppName}}]{{end}}{{else}}[System]{{end}} SSL expiring in {{.ExpireIn}}",
+      "title": {{json (scope .ProjectName .AppName) " SSL expiring in " .ExpireIn}},
       "color": 15844367,
       "fields": [
         {{if .ProjectName | ne ""}}{
           "name": "Project",
-          "value": {{printf "%q" .ProjectName}},
+          "value": {{json .ProjectName}},
           "inline": true
         },{{end}}
         {{if .AppName | ne ""}}{
           "name": "App",
-          "value": {{printf "%q" .AppName}},
+          "value": {{json .AppName}},
           "inline": true
         },{{end}}
         {"name": "\u200b", "value": "\u200b", "inline": true},
         {
           "name": "Name",
-          "value": {{printf "%q" .SSLName}},
+          "value": {{json .SSLName}},
           "inline": true
         },
         {
           "name": "Type",
-          "value": {{printf "%q" .SSLType}},
+          "value": {{json .SSLType}},
           "inline": true
         },
         {
           "name": "Domain",
-          "value": {{printf "%q" .Domain}},
+          "value": {{json .Domain}},
           "inline": true
         },
         {
           "name": "Created At",
-          "value": {{printf "%q" .CreatedAt}},
+          "value": {{json .CreatedAt}},
           "inline": true
         },
         {
           "name": "Expire At",
-          "value": {{printf "%q" .ExpireAt}},
+          "value": {{json .ExpireAt}},
           "inline": true
         },
         {
           "name": "Expire In",
-          "value": {{printf "%q" .ExpireIn}},
+          "value": {{json .ExpireIn}},
           "inline": true
         },
         {"name": "\u200b", "value": "\u200b", "inline": true},
         {
           "name": "See object details",
-          "value": "[Go to Dashboard]({{.DashboardLink}})",
+          "value": {{json "[Go to Dashboard](" .DashboardLink ")"}},
           "inline": false
         }
       ]

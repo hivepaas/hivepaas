@@ -2,61 +2,61 @@
   "attachments": [
     {
       "color": "{{if .Succeeded}}#2eb886{{else}}#a30200{{end}}",
-      "title": {{printf "%q" (print "[" .ProjectName "][" .AppName "] Deployment " (or (and .Succeeded "succeeded") "failed"))}},
+      "title": {{json "[" .ProjectName "][" .AppName "] Deployment " (outcome .Succeeded)}},
       "fields": [
         {
           "title": "Project",
-          "value": {{printf "%q" .ProjectName}},
+          "value": {{json .ProjectName}},
           "short": true
         },
         {
           "title": "App",
-          "value": {{printf "%q" .AppName}},
+          "value": {{json .AppName}},
           "short": true
         },
         {{if .Method | eq "repo"}}{
           "title": "Repository",
-          "value": {{printf "%q" .RepoURL}},
+          "value": {{json .RepoURL}},
           "short": true
         },
         {
           "title": "Branch/Ref",
-          "value": {{printf "%q" .RepoRef}},
+          "value": {{json .RepoRef}},
           "short": true
         },
         {
           "title": "Commit Message",
-          "value": {{printf "%q" .CommitMsg}},
+          "value": {{json .CommitMsg}},
           "short": false
         },
         {
           "title": "Commit Author",
-          "value": {{printf "%q" .CommitAuthor}},
+          "value": {{json .CommitAuthor}},
           "short": false
         },
         {{else if .Method | eq "image"}}{
           "title": "Image",
-          "value": {{printf "%q" .Image}},
+          "value": {{json .Image}},
           "short": false
         },
         {{end}}{{if .Reason}}{
           "title": "Reason",
-          "value": {{printf "%q" .Reason}},
+          "value": {{json .Reason}},
           "short": false
         },
         {{end}}{
           "title": "Started At",
-          "value": {{printf "%q" .StartedAt}},
+          "value": {{json .StartedAt}},
           "short": true
         },
         {
           "title": "Duration",
-          "value": {{printf "%q" .Duration}},
+          "value": {{json .Duration}},
           "short": true
         },
         {
           "title": "See deployment details",
-          "value": "<{{.DashboardLink}}|Go to Dashboard>",
+          "value": {{json "<" .DashboardLink "|Go to Dashboard>"}},
           "short": false
         }
       ],

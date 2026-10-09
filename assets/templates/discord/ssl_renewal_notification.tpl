@@ -1,54 +1,54 @@
 {
   "embeds": [
     {
-      "title": "{{if .ProjectName | ne ""}}[{{.ProjectName}}]{{if .AppName | ne ""}}[{{.AppName}}]{{end}}{{else}}[System]{{end}} SSL renewal {{if .Succeeded}}succeeded{{else}}failed{{end}}",
+      "title": {{json (scope .ProjectName .AppName) " SSL renewal " (outcome .Succeeded)}},
       "color": {{if .Succeeded}}3066993{{else}}15153724{{end}},
       "fields": [
         {{if .ProjectName | ne ""}}{
           "name": "Project",
-          "value": {{printf "%q" .ProjectName}},
+          "value": {{json .ProjectName}},
           "inline": true
         },{{end}}
         {{if .AppName | ne ""}}{
           "name": "App",
-          "value": {{printf "%q" .AppName}},
+          "value": {{json .AppName}},
           "inline": true
         },{{end}}
         {"name": "\u200b", "value": "\u200b", "inline": true},
         {
           "name": "Name",
-          "value": {{printf "%q" .SSLName}},
+          "value": {{json .SSLName}},
           "inline": true
         },
         {
           "name": "Type",
-          "value": {{printf "%q" .SSLType}},
+          "value": {{json .SSLType}},
           "inline": true
         },
         {
           "name": "Domain",
-          "value": {{printf "%q" .Domain}},
+          "value": {{json .Domain}},
           "inline": true
         },
         {
           "name": "Created At",
-          "value": {{printf "%q" .CreatedAt}},
+          "value": {{json .CreatedAt}},
           "inline": true
         },
         {
           "name": "Expire At",
-          "value": {{printf "%q" .ExpireAt}},
+          "value": {{json .ExpireAt}},
           "inline": true
         },
         {{if .NextRenewalIn | gt 0}}{
           "name": "Next Renewal In",
-          "value": {{printf "%q" .NextRenewalIn}},
+          "value": {{json .NextRenewalIn}},
           "inline": true
         },{{end}}
         {"name": "\u200b", "value": "\u200b", "inline": true},
         {
           "name": "See task details",
-          "value": "[Go to Dashboard]({{.DashboardLink}})",
+          "value": {{json "[Go to Dashboard](" .DashboardLink ")"}},
           "inline": false
         }
       ]

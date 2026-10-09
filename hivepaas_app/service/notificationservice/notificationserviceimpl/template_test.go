@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	htmltemplate "html/template"
 	"testing"
-	texttemplate "text/template"
 	"time"
 
 	"github.com/stretchr/testify/assert"
@@ -16,7 +15,7 @@ import (
 )
 
 func TestDiscordAppDeploymentTemplate(t *testing.T) {
-	tpl, err := texttemplate.ParseFS(assets.GetTemplatesFS(), "discord/app_deployment_notification.tpl")
+	tpl, err := parseJSONTemplate("discord/app_deployment_notification.tpl")
 	if err != nil {
 		t.Fatalf("failed to parse template: %v", err)
 	}
@@ -89,7 +88,7 @@ func TestDiscordAppDeploymentTemplate(t *testing.T) {
 }
 
 func TestDiscordHealthcheckTemplate(t *testing.T) {
-	tpl, err := texttemplate.ParseFS(assets.GetTemplatesFS(), "discord/healthcheck_notification.tpl")
+	tpl, err := parseJSONTemplate("discord/healthcheck_notification.tpl")
 	if err != nil {
 		t.Fatalf("failed to parse template: %v", err)
 	}
@@ -118,7 +117,7 @@ func TestDiscordHealthcheckTemplate(t *testing.T) {
 }
 
 func TestDiscordSchedTaskTemplate(t *testing.T) {
-	tpl, err := texttemplate.ParseFS(assets.GetTemplatesFS(), "discord/sched_task_notification.tpl")
+	tpl, err := parseJSONTemplate("discord/sched_task_notification.tpl")
 	if err != nil {
 		t.Fatalf("failed to parse template: %v", err)
 	}
@@ -145,7 +144,7 @@ func TestDiscordSchedTaskTemplate(t *testing.T) {
 }
 
 func TestDiscordSSLExpiringTemplate(t *testing.T) {
-	tpl, err := texttemplate.ParseFS(assets.GetTemplatesFS(), "discord/ssl_expiring_notification.tpl")
+	tpl, err := parseJSONTemplate("discord/ssl_expiring_notification.tpl")
 	if err != nil {
 		t.Fatalf("failed to parse template: %v", err)
 	}
@@ -172,7 +171,7 @@ func TestDiscordSSLExpiringTemplate(t *testing.T) {
 }
 
 func TestDiscordSSLRenewalTemplate(t *testing.T) {
-	tpl, err := texttemplate.ParseFS(assets.GetTemplatesFS(), "discord/ssl_renewal_notification.tpl")
+	tpl, err := parseJSONTemplate("discord/ssl_renewal_notification.tpl")
 	if err != nil {
 		t.Fatalf("failed to parse template: %v", err)
 	}
@@ -199,7 +198,7 @@ func TestDiscordSSLRenewalTemplate(t *testing.T) {
 }
 
 func TestDiscordSystemUpdateTemplate(t *testing.T) {
-	tpl, err := texttemplate.ParseFS(assets.GetTemplatesFS(), "discord/system_update_notification.tpl")
+	tpl, err := parseJSONTemplate("discord/system_update_notification.tpl")
 	if err != nil {
 		t.Fatalf("failed to parse template: %v", err)
 	}
@@ -223,7 +222,7 @@ func TestDiscordSystemUpdateTemplate(t *testing.T) {
 }
 
 func TestSlackAppDeploymentTemplate(t *testing.T) {
-	tpl, err := texttemplate.ParseFS(assets.GetTemplatesFS(), "slack/app_deployment_notification.tpl")
+	tpl, err := parseJSONTemplate("slack/app_deployment_notification.tpl")
 	if err != nil {
 		t.Fatalf("failed to parse template: %v", err)
 	}
@@ -293,7 +292,7 @@ func TestSlackAppDeploymentTemplate(t *testing.T) {
 }
 
 func TestSlackHealthcheckTemplate(t *testing.T) {
-	tpl, err := texttemplate.ParseFS(assets.GetTemplatesFS(), "slack/healthcheck_notification.tpl")
+	tpl, err := parseJSONTemplate("slack/healthcheck_notification.tpl")
 	if err != nil {
 		t.Fatalf("failed to parse template: %v", err)
 	}
@@ -322,7 +321,7 @@ func TestSlackHealthcheckTemplate(t *testing.T) {
 }
 
 func TestSlackSchedTaskTemplate(t *testing.T) {
-	tpl, err := texttemplate.ParseFS(assets.GetTemplatesFS(), "slack/sched_task_notification.tpl")
+	tpl, err := parseJSONTemplate("slack/sched_task_notification.tpl")
 	if err != nil {
 		t.Fatalf("failed to parse template: %v", err)
 	}
@@ -349,7 +348,7 @@ func TestSlackSchedTaskTemplate(t *testing.T) {
 }
 
 func TestSlackSSLExpiringTemplate(t *testing.T) {
-	tpl, err := texttemplate.ParseFS(assets.GetTemplatesFS(), "slack/ssl_expiring_notification.tpl")
+	tpl, err := parseJSONTemplate("slack/ssl_expiring_notification.tpl")
 	if err != nil {
 		t.Fatalf("failed to parse template: %v", err)
 	}
@@ -376,7 +375,7 @@ func TestSlackSSLExpiringTemplate(t *testing.T) {
 }
 
 func TestSlackSSLRenewalTemplate(t *testing.T) {
-	tpl, err := texttemplate.ParseFS(assets.GetTemplatesFS(), "slack/ssl_renewal_notification.tpl")
+	tpl, err := parseJSONTemplate("slack/ssl_renewal_notification.tpl")
 	if err != nil {
 		t.Fatalf("failed to parse template: %v", err)
 	}
@@ -403,7 +402,7 @@ func TestSlackSSLRenewalTemplate(t *testing.T) {
 }
 
 func TestSlackSystemUpdateTemplate(t *testing.T) {
-	tpl, err := texttemplate.ParseFS(assets.GetTemplatesFS(), "slack/system_update_notification.tpl")
+	tpl, err := parseJSONTemplate("slack/system_update_notification.tpl")
 	if err != nil {
 		t.Fatalf("failed to parse template: %v", err)
 	}
@@ -603,7 +602,7 @@ func TestTelegramSystemUpdateTemplate(t *testing.T) {
 }
 
 func TestLarkAppDeploymentTemplate(t *testing.T) {
-	tpl, err := texttemplate.ParseFS(assets.GetTemplatesFS(), "lark/app_deployment_notification.tpl")
+	tpl, err := parseJSONTemplate("lark/app_deployment_notification.tpl")
 	if err != nil {
 		t.Fatalf("failed to parse template: %v", err)
 	}
@@ -660,7 +659,7 @@ func TestLarkAppDeploymentTemplate(t *testing.T) {
 }
 
 func TestLarkHealthcheckTemplate(t *testing.T) {
-	tpl, err := texttemplate.ParseFS(assets.GetTemplatesFS(), "lark/healthcheck_notification.tpl")
+	tpl, err := parseJSONTemplate("lark/healthcheck_notification.tpl")
 	if err != nil {
 		t.Fatalf("failed to parse template: %v", err)
 	}
@@ -690,7 +689,7 @@ func TestLarkHealthcheckTemplate(t *testing.T) {
 }
 
 func TestLarkSchedTaskTemplate(t *testing.T) {
-	tpl, err := texttemplate.ParseFS(assets.GetTemplatesFS(), "lark/sched_task_notification.tpl")
+	tpl, err := parseJSONTemplate("lark/sched_task_notification.tpl")
 	if err != nil {
 		t.Fatalf("failed to parse template: %v", err)
 	}
@@ -718,7 +717,7 @@ func TestLarkSchedTaskTemplate(t *testing.T) {
 }
 
 func TestLarkSSLExpiringTemplate(t *testing.T) {
-	tpl, err := texttemplate.ParseFS(assets.GetTemplatesFS(), "lark/ssl_expiring_notification.tpl")
+	tpl, err := parseJSONTemplate("lark/ssl_expiring_notification.tpl")
 	if err != nil {
 		t.Fatalf("failed to parse template: %v", err)
 	}
@@ -746,7 +745,7 @@ func TestLarkSSLExpiringTemplate(t *testing.T) {
 }
 
 func TestLarkSSLRenewalTemplate(t *testing.T) {
-	tpl, err := texttemplate.ParseFS(assets.GetTemplatesFS(), "lark/ssl_renewal_notification.tpl")
+	tpl, err := parseJSONTemplate("lark/ssl_renewal_notification.tpl")
 	if err != nil {
 		t.Fatalf("failed to parse template: %v", err)
 	}
@@ -774,7 +773,7 @@ func TestLarkSSLRenewalTemplate(t *testing.T) {
 }
 
 func TestLarkSystemUpdateTemplate(t *testing.T) {
-	tpl, err := texttemplate.ParseFS(assets.GetTemplatesFS(), "lark/system_update_notification.tpl")
+	tpl, err := parseJSONTemplate("lark/system_update_notification.tpl")
 	if err != nil {
 		t.Fatalf("failed to parse template: %v", err)
 	}

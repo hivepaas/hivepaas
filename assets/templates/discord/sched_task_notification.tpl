@@ -1,49 +1,49 @@
 {
   "embeds": [
     {
-      "title": "{{if .ProjectName | ne ""}}[{{.ProjectName}}]{{if .AppName | ne ""}}[{{.AppName}}]{{end}}{{else}}[System]{{end}} Scheduled task {{if .Succeeded}}succeeded{{else}}failed{{end}}",
+      "title": {{json (scope .ProjectName .AppName) " Scheduled task " (outcome .Succeeded)}},
       "color": {{if .Succeeded}}3066993{{else}}15153724{{end}},
       "fields": [
         {{if .ProjectName | ne ""}}{
           "name": "Project",
-          "value": {{printf "%q" .ProjectName}},
+          "value": {{json .ProjectName}},
           "inline": false
         },{{end}}
         {{if .AppName | ne ""}}{
           "name": "App",
-          "value": {{printf "%q" .AppName}},
+          "value": {{json .AppName}},
           "inline": false
         },{{end}}
         {"name": "\u200b", "value": "\u200b", "inline": true},
         {
           "name": "Scheduled Job",
-          "value": {{printf "%q" .SchedJobName}},
+          "value": {{json .SchedJobName}},
           "inline": false
         },
         {
           "name": "Schedule",
-          "value": {{printf "%q" .Schedule}},
+          "value": {{json .Schedule}},
           "inline": false
         },
         {
           "name": "Started At",
-          "value": {{printf "%q" .StartedAt}},
+          "value": {{json .StartedAt}},
           "inline": false
         },
         {
           "name": "Duration",
-          "value": {{printf "%q" .Duration}},
+          "value": {{json .Duration}},
           "inline": false
         },
         {
           "name": "Retries",
-          "value": "{{.Retries}}",
+          "value": {{json .Retries}},
           "inline": false
         },
         {"name": "\u200b", "value": "\u200b", "inline": true},
         {
           "name": "See task details",
-          "value": "[Go to Dashboard]({{.DashboardLink}})",
+          "value": {{json "[Go to Dashboard](" .DashboardLink ")"}},
           "inline": false
         }
       ]

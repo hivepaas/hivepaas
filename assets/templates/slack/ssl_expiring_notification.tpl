@@ -2,51 +2,51 @@
   "attachments": [
     {
       "color": "#f1c40f",
-      "title": "{{if .ProjectName | ne ""}}[{{.ProjectName}}]{{if .AppName | ne ""}}[{{.AppName}}]{{end}}{{else}}[System]{{end}} SSL expiring in {{.ExpireIn}}",
+      "title": {{json (scope .ProjectName .AppName) " SSL expiring in " .ExpireIn}},
       "fields": [
         {{if .ProjectName | ne ""}}{
           "title": "Project",
-          "value": {{printf "%q" .ProjectName}},
+          "value": {{json .ProjectName}},
           "short": true
         },{{end}}
         {{if .AppName | ne ""}}{
           "title": "App",
-          "value": {{printf "%q" .AppName}},
+          "value": {{json .AppName}},
           "short": true
         },{{end}}
         {
           "title": "Name",
-          "value": {{printf "%q" .SSLName}},
+          "value": {{json .SSLName}},
           "short": true
         },
         {
           "title": "Type",
-          "value": {{printf "%q" .SSLType}},
+          "value": {{json .SSLType}},
           "short": true
         },
         {
           "title": "Domain",
-          "value": {{printf "%q" .Domain}},
+          "value": {{json .Domain}},
           "short": true
         },
         {
           "title": "Created At",
-          "value": {{printf "%q" .CreatedAt}},
+          "value": {{json .CreatedAt}},
           "short": true
         },
         {
           "title": "Expire At",
-          "value": {{printf "%q" .ExpireAt}},
+          "value": {{json .ExpireAt}},
           "short": true
         },
         {
           "title": "Expire In",
-          "value": {{printf "%q" .ExpireIn}},
+          "value": {{json .ExpireIn}},
           "short": true
         },
         {
           "title": "See object details",
-          "value": "<{{.DashboardLink}}|Go to Dashboard>",
+          "value": {{json "<" .DashboardLink "|Go to Dashboard>"}},
           "short": false
         }
       ],

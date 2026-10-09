@@ -5,7 +5,6 @@ import (
 	htmltemplate "html/template"
 	"io"
 	"sync"
-	texttemplate "text/template"
 
 	"github.com/hivepaas/hivepaas/assets"
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
@@ -103,17 +102,17 @@ func (s *service) loadSlackTemplate(
 ) (tpl Template, err error) {
 	switch name {
 	case notificationservice.TemplateAppDeploymentNotification:
-		tpl, err = texttemplate.ParseFS(assets.GetTemplatesFS(), slackTemplateDir+"app_deployment_notification.tpl")
+		tpl, err = parseJSONTemplate(slackTemplateDir + "app_deployment_notification.tpl")
 	case notificationservice.TemplateSchedTaskNotification:
-		tpl, err = texttemplate.ParseFS(assets.GetTemplatesFS(), slackTemplateDir+"sched_task_notification.tpl")
+		tpl, err = parseJSONTemplate(slackTemplateDir + "sched_task_notification.tpl")
 	case notificationservice.TemplateHealthcheckNotification:
-		tpl, err = texttemplate.ParseFS(assets.GetTemplatesFS(), slackTemplateDir+"healthcheck_notification.tpl")
+		tpl, err = parseJSONTemplate(slackTemplateDir + "healthcheck_notification.tpl")
 	case notificationservice.TemplateSSLExpiringNotification:
-		tpl, err = texttemplate.ParseFS(assets.GetTemplatesFS(), slackTemplateDir+"ssl_expiring_notification.tpl")
+		tpl, err = parseJSONTemplate(slackTemplateDir + "ssl_expiring_notification.tpl")
 	case notificationservice.TemplateSSLRenewalNotification:
-		tpl, err = texttemplate.ParseFS(assets.GetTemplatesFS(), slackTemplateDir+"ssl_renewal_notification.tpl")
+		tpl, err = parseJSONTemplate(slackTemplateDir + "ssl_renewal_notification.tpl")
 	case notificationservice.TemplateSystemUpdateNotification:
-		tpl, err = texttemplate.ParseFS(assets.GetTemplatesFS(), slackTemplateDir+"system_update_notification.tpl")
+		tpl, err = parseJSONTemplate(slackTemplateDir + "system_update_notification.tpl")
 	}
 	if err != nil {
 		return nil, hperrors.Wrap(err)
@@ -129,17 +128,17 @@ func (s *service) loadDiscordTemplate(
 ) (tpl Template, err error) {
 	switch name {
 	case notificationservice.TemplateAppDeploymentNotification:
-		tpl, err = texttemplate.ParseFS(assets.GetTemplatesFS(), discordTemplateDir+"app_deployment_notification.tpl")
+		tpl, err = parseJSONTemplate(discordTemplateDir + "app_deployment_notification.tpl")
 	case notificationservice.TemplateSchedTaskNotification:
-		tpl, err = texttemplate.ParseFS(assets.GetTemplatesFS(), discordTemplateDir+"sched_task_notification.tpl")
+		tpl, err = parseJSONTemplate(discordTemplateDir + "sched_task_notification.tpl")
 	case notificationservice.TemplateHealthcheckNotification:
-		tpl, err = texttemplate.ParseFS(assets.GetTemplatesFS(), discordTemplateDir+"healthcheck_notification.tpl")
+		tpl, err = parseJSONTemplate(discordTemplateDir + "healthcheck_notification.tpl")
 	case notificationservice.TemplateSSLExpiringNotification:
-		tpl, err = texttemplate.ParseFS(assets.GetTemplatesFS(), discordTemplateDir+"ssl_expiring_notification.tpl")
+		tpl, err = parseJSONTemplate(discordTemplateDir + "ssl_expiring_notification.tpl")
 	case notificationservice.TemplateSSLRenewalNotification:
-		tpl, err = texttemplate.ParseFS(assets.GetTemplatesFS(), discordTemplateDir+"ssl_renewal_notification.tpl")
+		tpl, err = parseJSONTemplate(discordTemplateDir + "ssl_renewal_notification.tpl")
 	case notificationservice.TemplateSystemUpdateNotification:
-		tpl, err = texttemplate.ParseFS(assets.GetTemplatesFS(), discordTemplateDir+"system_update_notification.tpl")
+		tpl, err = parseJSONTemplate(discordTemplateDir + "system_update_notification.tpl")
 	}
 	if err != nil {
 		return nil, hperrors.Wrap(err)
@@ -181,17 +180,17 @@ func (s *service) loadLarkTemplate(
 ) (tpl Template, err error) {
 	switch name {
 	case notificationservice.TemplateAppDeploymentNotification:
-		tpl, err = texttemplate.ParseFS(assets.GetTemplatesFS(), larkTemplateDir+"app_deployment_notification.tpl")
+		tpl, err = parseJSONTemplate(larkTemplateDir + "app_deployment_notification.tpl")
 	case notificationservice.TemplateSchedTaskNotification:
-		tpl, err = texttemplate.ParseFS(assets.GetTemplatesFS(), larkTemplateDir+"sched_task_notification.tpl")
+		tpl, err = parseJSONTemplate(larkTemplateDir + "sched_task_notification.tpl")
 	case notificationservice.TemplateHealthcheckNotification:
-		tpl, err = texttemplate.ParseFS(assets.GetTemplatesFS(), larkTemplateDir+"healthcheck_notification.tpl")
+		tpl, err = parseJSONTemplate(larkTemplateDir + "healthcheck_notification.tpl")
 	case notificationservice.TemplateSSLExpiringNotification:
-		tpl, err = texttemplate.ParseFS(assets.GetTemplatesFS(), larkTemplateDir+"ssl_expiring_notification.tpl")
+		tpl, err = parseJSONTemplate(larkTemplateDir + "ssl_expiring_notification.tpl")
 	case notificationservice.TemplateSSLRenewalNotification:
-		tpl, err = texttemplate.ParseFS(assets.GetTemplatesFS(), larkTemplateDir+"ssl_renewal_notification.tpl")
+		tpl, err = parseJSONTemplate(larkTemplateDir + "ssl_renewal_notification.tpl")
 	case notificationservice.TemplateSystemUpdateNotification:
-		tpl, err = texttemplate.ParseFS(assets.GetTemplatesFS(), larkTemplateDir+"system_update_notification.tpl")
+		tpl, err = parseJSONTemplate(larkTemplateDir + "system_update_notification.tpl")
 	}
 	if err != nil {
 		return nil, hperrors.Wrap(err)

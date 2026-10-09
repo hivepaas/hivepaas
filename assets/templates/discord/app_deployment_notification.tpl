@@ -1,65 +1,65 @@
 {
   "embeds": [
     {
-      "title": {{printf "%q" (print "[" .ProjectName "][" .AppName "] Deployment " (or (and .Succeeded "succeeded") "failed"))}},
+      "title": {{json "[" .ProjectName "][" .AppName "] Deployment " (outcome .Succeeded)}},
       "color": {{if .Succeeded}}3066993{{else}}15153724{{end}},
       "fields": [
         {
           "name": "Project",
-          "value": {{printf "%q" .ProjectName}},
+          "value": {{json .ProjectName}},
           "inline": true
         },
         {
           "name": "App",
-          "value": {{printf "%q" .AppName}},
+          "value": {{json .AppName}},
           "inline": true
         },
         {"name": "\u200b", "value": "\u200b", "inline": true},
         {{if .Method | eq "repo"}}{
           "name": "Repository",
-          "value": {{printf "%q" .RepoURL}},
+          "value": {{json .RepoURL}},
           "inline": true
         },
         {
           "name": "Branch/Ref",
-          "value": {{printf "%q" .RepoRef}},
+          "value": {{json .RepoRef}},
           "inline": true
         },
         {"name": "\u200b", "value": "\u200b", "inline": true},
         {
           "name": "Commit Message",
-          "value": {{printf "%q" .CommitMsg}},
+          "value": {{json .CommitMsg}},
           "inline": false
         },
         {
           "name": "Commit Author",
-          "value": {{printf "%q" .CommitAuthor}},
+          "value": {{json .CommitAuthor}},
           "inline": false
         },
         {{else if .Method | eq "image"}}{
           "name": "Image",
-          "value": {{printf "%q" .Image}},
+          "value": {{json .Image}},
           "inline": false
         },
         {{end}}{{if .Reason}}{
           "name": "Reason",
-          "value": {{printf "%q" .Reason}},
+          "value": {{json .Reason}},
           "inline": false
         },
         {{end}}{
           "name": "Started At",
-          "value": {{printf "%q" .StartedAt}},
+          "value": {{json .StartedAt}},
           "inline": true
         },
         {
           "name": "Duration",
-          "value": {{printf "%q" .Duration}},
+          "value": {{json .Duration}},
           "inline": true
         },
         {"name": "\u200b", "value": "\u200b", "inline": true},
         {
           "name": "See deployment details",
-          "value": "[Go to Dashboard]({{.DashboardLink}})",
+          "value": {{json "[Go to Dashboard](" .DashboardLink ")"}},
           "inline": false
         }
       ]

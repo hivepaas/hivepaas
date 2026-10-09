@@ -7,7 +7,6 @@ import (
 	"io"
 	"strings"
 	"testing"
-	texttemplate "text/template"
 	"time"
 
 	"github.com/stretchr/testify/assert"
@@ -47,7 +46,7 @@ func TestAppDeploymentTemplatesTellTheReason(t *testing.T) {
 		if strings.HasSuffix(name, ".html") || strings.HasPrefix(name, "telegram/") {
 			tpl, err = htmltemplate.ParseFS(assets.GetTemplatesFS(), name)
 		} else {
-			tpl, err = texttemplate.ParseFS(assets.GetTemplatesFS(), name)
+			tpl, err = parseJSONTemplate(name)
 		}
 		if err != nil {
 			t.Fatalf("parsing %s: %v", name, err)

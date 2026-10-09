@@ -8,7 +8,7 @@
       "template": "{{if .Succeeded}}green{{else}}red{{end}}",
       "title": {
         "tag": "plain_text",
-        "content": "{{if .ProjectName | ne ""}}[{{.ProjectName}}]{{if .AppName | ne ""}}[{{.AppName}}]{{end}}{{else}}[System]{{end}} Healthcheck {{if .Succeeded}}succeeded{{else}}failed{{end}}"
+        "content": {{json (scope .ProjectName .AppName) " Healthcheck " (outcome .Succeeded)}}
       }
     },
     "elements": [
@@ -19,63 +19,63 @@
             "is_short": true,
             "text": {
               "tag": "lark_md",
-              "content": "**Project:**\n{{.ProjectName}}"
+              "content": {{json "**Project:**\n" .ProjectName}}
             }
           },{{end}}
           {{if .AppName | ne ""}}{
             "is_short": true,
             "text": {
               "tag": "lark_md",
-              "content": "**App:**\n{{.AppName}}"
+              "content": {{json "**App:**\n" .AppName}}
             }
           },{{end}}
           {
             "is_short": true,
             "text": {
               "tag": "lark_md",
-              "content": "**Name:**\n{{.HealthcheckName}}"
+              "content": {{json "**Name:**\n" .HealthcheckName}}
             }
           },
           {
             "is_short": true,
             "text": {
               "tag": "lark_md",
-              "content": "**Type:**\n{{.HealthcheckType}}"
+              "content": {{json "**Type:**\n" .HealthcheckType}}
             }
           },
           {
             "is_short": true,
             "text": {
               "tag": "lark_md",
-              "content": "**Retries:**\n{{.Retries}}"
+              "content": {{json "**Retries:**\n" .Retries}}
             }
           }{{if not .Succeeded}},
           {
             "is_short": false,
             "text": {
               "tag": "lark_md",
-              "content": "**Expect:**\n{{.Expect}}"
+              "content": {{json "**Expect:**\n" .Expect}}
             }
           },
           {
             "is_short": false,
             "text": {
               "tag": "lark_md",
-              "content": "**Actual:**\n{{.Actual}}"
+              "content": {{json "**Actual:**\n" .Actual}}
             }
           }{{end}},
           {
             "is_short": true,
             "text": {
               "tag": "lark_md",
-              "content": "**Started At:**\n{{.StartedAt}}"
+              "content": {{json "**Started At:**\n" .StartedAt}}
             }
           },
           {
             "is_short": true,
             "text": {
               "tag": "lark_md",
-              "content": "**Duration:**\n{{.Duration}}"
+              "content": {{json "**Duration:**\n" .Duration}}
             }
           }
         ]
@@ -90,7 +90,7 @@
               "content": "Go to Dashboard"
             },
             "type": "primary",
-            "url": "{{.DashboardLink}}"
+            "url": {{json .DashboardLink}}
           }
         ]
       }

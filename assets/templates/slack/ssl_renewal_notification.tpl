@@ -2,50 +2,50 @@
   "attachments": [
     {
       "color": "{{if .Succeeded}}#2eb886{{else}}#a30200{{end}}",
-      "title": "{{if .ProjectName | ne ""}}[{{.ProjectName}}]{{if .AppName | ne ""}}[{{.AppName}}]{{end}}{{else}}[System]{{end}} SSL renewal {{if .Succeeded}}succeeded{{else}}failed{{end}}",
+      "title": {{json (scope .ProjectName .AppName) " SSL renewal " (outcome .Succeeded)}},
       "fields": [
         {{if .ProjectName | ne ""}}{
           "title": "Project",
-          "value": {{printf "%q" .ProjectName}},
+          "value": {{json .ProjectName}},
           "short": true
         },{{end}}
         {{if .AppName | ne ""}}{
           "title": "App",
-          "value": {{printf "%q" .AppName}},
+          "value": {{json .AppName}},
           "short": true
         },{{end}}
         {
           "title": "Name",
-          "value": {{printf "%q" .SSLName}},
+          "value": {{json .SSLName}},
           "short": true
         },
         {
           "title": "Type",
-          "value": {{printf "%q" .SSLType}},
+          "value": {{json .SSLType}},
           "short": true
         },
         {
           "title": "Domain",
-          "value": {{printf "%q" .Domain}},
+          "value": {{json .Domain}},
           "short": true
         },
         {
           "title": "Created At",
-          "value": {{printf "%q" .CreatedAt}},
+          "value": {{json .CreatedAt}},
           "short": true
         },
         {
           "title": "Expire At",
-          "value": {{printf "%q" .ExpireAt}},
+          "value": {{json .ExpireAt}},
           "short": true
         },
         {{if .NextRenewalIn | gt 0}}{
           "title": "Next Renewal In",
-          "value": {{printf "%q" .NextRenewalIn}},
+          "value": {{json .NextRenewalIn}},
           "short": true
         },{{end}}{
           "title": "See task details",
-          "value": "<{{.DashboardLink}}|Go to Dashboard>",
+          "value": {{json "<" .DashboardLink "|Go to Dashboard>"}},
           "short": false
         }
       ],

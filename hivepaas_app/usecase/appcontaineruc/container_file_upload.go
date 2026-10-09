@@ -2,6 +2,7 @@ package appcontaineruc
 
 import (
 	"context"
+	"strings"
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
@@ -77,10 +78,7 @@ func (uc *UC) UploadFileToContainer(
 	}
 	defer prepResp.TarStream.Close()
 
-	overwrite := true
-	if req.Overwrite != nil {
-		overwrite = *req.Overwrite
-	}
+	overwrite := allowDirReplaced(req)
 
 	currNodeID, err := uc.dockerManager.NodeCurrentID(ctx)
 	if err != nil {
@@ -107,7 +105,7 @@ func (uc *UC) UploadFileToContainer(
 			Overwrite:   overwrite,
 		})
 		if err != nil {
-			return nil, hperrors.Wrap(err)
+			return nil, copyToError(err, req)
 		}
 	} else {
 		opts := make([]docker.ContainerCopyToOption, 0, 1)
@@ -117,7 +115,7 @@ func (uc *UC) UploadFileToContainer(
 
 		_, err = uc.dockerManager.ContainerCopyTo(ctx, req.ContainerID, prepResp.DestPath, prepResp.TarStream, opts...)
 		if err != nil {
-			return nil, hperrors.Wrap(err)
+			return nil, copyToError(err, req)
 		}
 	}
 
@@ -127,4 +125,25 @@ func (uc *UC) UploadFileToContainer(
 			Message: "File uploaded successfully",
 		},
 	}, nil
+}
+
+// allowDirReplaced is whether the copy may put a file where a directory is, or
+// a directory where a file is: what overwrite asks for an archive's entries. A
+// single file never may: a path without its slash names the file, and /app
+// given for the directory would put the file where the app's code was.
+func allowDirReplaced(req *appcontainerdto.UploadFileToContainerReq) bool {
+	if !req.Extract {
+		return false
+	}
+	return req.Overwrite == nil || *req.Overwrite
+}
+
+// copyToError is the copy's failure as the client is told it: a single file
+// docker would not put where a directory is says what to do instead. Docker
+// says it in words only, the same through an agent.
+func copyToError(err error, req *appcontainerdto.UploadFileToContainerReq) error {
+	if !req.Extract && strings.Contains(err.Error(), "cannot overwrite directory") {
+		return hperrors.Wrap(hperrors.ErrContainerPathIsDir).WithParam("Path", req.Path).WithCause(err)
+	}
+	return hperrors.Wrap(err)
 }

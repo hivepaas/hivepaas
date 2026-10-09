@@ -17925,6 +17925,16 @@
             },
             "description" : "Bad Request"
           },
+          "409" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Conflict"
+          },
           "500" : {
             "content" : {
               "application/json" : {
@@ -18005,7 +18015,7 @@
             "type" : "string"
           }
         }, {
-          "description" : "allow overwrite (default: true)",
+          "description" : "extract only: an entry may replace a directory, or a file (default: true)",
           "in" : "query",
           "name" : "overwrite",
           "schema" : {
@@ -78224,7 +78234,7 @@
             "type" : "string"
           },
           "overwrite" : {
-            "description" : "allow overwrite (default: true)",
+            "description" : "extract only: an entry may replace a directory, or a file (default: true)",
             "type" : "boolean"
           },
           "file" : {

@@ -1,6 +1,6 @@
 import * as React from "react";
 
-import { LogoIcon } from "@/assets/icons";
+import { GithubIcon, LogoIcon } from "@/assets/icons";
 import {
     Archive,
     ArchiveX,
@@ -12,7 +12,6 @@ import {
     FileBadge,
     FileDown,
     Fingerprint,
-    Github,
     Globe,
     Hammer,
     HardDrive,
@@ -120,8 +119,7 @@ const navMain: SidebarItem[] = [
                 items: [
                     {
                         title: "Github Apps",
-                        // eslint-disable-next-line @typescript-eslint/no-deprecated -- lucide's Github brand icon is deprecated, kept intentionally here.
-                        icon: Github,
+                        icon: GithubIcon,
                         route: ROUTE.settings.githubApps.$route,
                         pattern: ROUTE.settings.githubApps.$pattern,
                     },

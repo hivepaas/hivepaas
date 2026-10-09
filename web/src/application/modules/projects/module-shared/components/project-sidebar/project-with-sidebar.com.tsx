@@ -1,5 +1,6 @@
 import { type PropsWithChildren, memo, useMemo } from "react";
 
+import { GithubIcon } from "@/assets/icons";
 import { listBox } from "@lib/styles";
 import { cn } from "@lib/utils";
 import {
@@ -12,7 +13,6 @@ import {
     FileCode2,
     FileDown,
     Fingerprint,
-    Github,
     Globe,
     Hammer,
     HardDrive,
@@ -119,8 +119,7 @@ function createProviderConfigurationSections(projectId: string): ProviderTabSect
             items: [
                 {
                     label: "Github Apps",
-                    // eslint-disable-next-line @typescript-eslint/no-deprecated -- lucide's Github brand icon is deprecated, kept intentionally here.
-                    icon: Github,
+                    icon: GithubIcon,
                     route: ROUTE.projects.single.providerConfiguration.githubApps.$route(projectId),
                 },
                 {

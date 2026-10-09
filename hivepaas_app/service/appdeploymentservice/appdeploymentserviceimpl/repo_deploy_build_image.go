@@ -161,8 +161,7 @@ func (s *service) deployStepImageBuild(
 			return hperrors.Wrap(err)
 		}
 
-		data.Deployment.Output.ImageTags = buildResp.ImageTags
-		return nil //nolint:staticcheck
+		return setBuiltImage(data, buildResp.ImageTags) //nolint:staticcheck
 	}
 
 	buildResp, err := s.imageBuildService.ImageBuild(ctx, db, buildReq)
@@ -170,8 +169,16 @@ func (s *service) deployStepImageBuild(
 		return hperrors.Wrap(err)
 	}
 
-	data.Deployment.Output.ImageTags = buildResp.ImageTags
+	return setBuiltImage(data, buildResp.ImageTags)
+}
 
+// setBuiltImage keeps the image a build tagged, which the service is updated
+// to. A build that answers none did not build one, whatever else it said.
+func setBuiltImage(data *repoDeploymentData, imageTags []string) error {
+	if len(imageTags) == 0 {
+		return hperrors.NewMissing("Image of the build")
+	}
+	data.Deployment.Output.ImageTags = imageTags
 	return nil
 }
 

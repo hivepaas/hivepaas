@@ -181,7 +181,13 @@ func ToGRPCError(err error) error {
 	}
 
 	if appErr, ok := errors.AsType[HPError](err); ok {
-		grpcCode := grpcErrorStatusMap[getBaseError(appErr)]
+		grpcCode, known := grpcErrorStatusMap[getBaseError(appErr)]
+		if !known {
+			// An error of no base the map knows - one wrapped from outside - is
+			// still an error: code 0 is OK, and status.Error(OK) is no error at
+			// all, which would end the call as if it had succeeded.
+			grpcCode = codes.Unknown
+		}
 
 		// Translate the error message using Default English Language
 		detail, _ := appErr.Message(translation.LangEn)

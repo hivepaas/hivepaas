@@ -50,6 +50,14 @@ test("a file uploaded from the terminal reaches the container whole, over a stre
     await dialog
         .locator('input[type="file"]')
         .setInputFiles({ name, mimeType: "application/octet-stream", buffer: content });
+
+    // Without its slash, a path names the file: one that is a directory is not
+    // replaced by it, and the dialog says what to do instead.
+    await dialog.getByRole("group", { name: "Destination Path" }).getByRole("textbox").fill("/tmp");
+    await dialog.getByRole("button", { name: "Upload", exact: true }).click();
+    await expect(uploadFailure(page)).toContainText("end the path with /", { timeout: 60_000 });
+    await expect(page.locator("[data-sonner-toast]")).toHaveCount(0, { timeout: 30_000 });
+
     // A path that ends in a slash is a directory, the file keeping its name in it.
     await dialog.getByRole("group", { name: "Destination Path" }).getByRole("textbox").fill("/tmp/");
     const stream = page.waitForEvent("websocket", {

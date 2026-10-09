@@ -100,6 +100,10 @@ func (s *service) CreatePreview(
 		// transaction, and its end, stay the preview's.
 		TaskExecData: data.SubTask(cloneTask),
 		SrcApp:       data.App,
+		// A preview's storage is its own, empty: directories named after it, on
+		// the app's volumes. It never reads or writes the app's data, and what it
+		// wrote goes with it.
+		CloneSettings: &entity.AppCloneSettings{CloneVolumes: true},
 		OnCloneApp: func(targetApp, srcApp *entity.App) error {
 			data.PreviewApp = targetApp
 			return s.onCloneApp(targetApp, srcApp, data)

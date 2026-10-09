@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/moby/moby/api/types/mount"
+	"github.com/moby/moby/api/types/swarm"
 	"github.com/stretchr/testify/assert"
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
@@ -81,4 +82,25 @@ func TestCalcVolumeMountSubpathSkipsAnotherAppsDirectory(t *testing.T) {
 
 	assert.False(t, svc.calcVolumeMountSubpath(&destMount, &srcMount, volumeCloneData()))
 	assert.Equal(t, "postgres/pgdata", srcMount.VolumeOptions.Subpath, "the source mount is untouched")
+}
+
+// Volumes not cloned, the copy has none: the service it was copied from mounts
+// the source app's own directories, which the copy would otherwise have read and
+// written as its own. A tmpfs holds none of the source's data, and stays.
+func TestVolumesNotClonedLeaveTheCopyNone(t *testing.T) {
+	data := volumeCloneData()
+	data.CloneSettings = &entity.AppCloneSettings{CloneVolumes: false}
+	data.DestService = &swarm.Service{Spec: swarm.ServiceSpec{TaskTemplate: swarm.TaskSpec{
+		ContainerSpec: &swarm.ContainerSpec{Mounts: []mount.Mount{
+			{Type: mount.TypeVolume, Source: "vol-1", Target: "/data",
+				VolumeOptions: &mount.VolumeOptions{Subpath: "blog"}},
+			{Type: mount.TypeBind, Source: "/srv/blog", Target: "/srv"},
+			{Type: mount.TypeTmpfs, Target: "/tmp/cache"},
+		}},
+	}}}
+
+	assert.NoError(t, (&service{}).cloneVolumes(t.Context(), data))
+
+	assert.Equal(t, []mount.Mount{{Type: mount.TypeTmpfs, Target: "/tmp/cache"}},
+		data.DestService.Spec.TaskTemplate.ContainerSpec.Mounts)
 }

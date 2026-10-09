@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"path/filepath"
+	"slices"
 	"strings"
 	"time"
 
@@ -23,6 +24,12 @@ func (s *service) cloneVolumes(
 ) (err error) {
 	settings := data.CloneSettings
 	if !settings.CloneVolumes {
+		// The copy's service started as the source's, mounts and all: kept, they
+		// are the source app's own directories, which the copy would read and
+		// write as its own. Not cloning the volumes leaves the copy none.
+		if spec := data.DestService.Spec.TaskTemplate.ContainerSpec; spec != nil {
+			spec.Mounts = withoutDataMounts(spec.Mounts)
+		}
 		return nil
 	}
 
@@ -48,6 +55,18 @@ func (s *service) cloneVolumes(
 	return nil
 }
 
+// withoutDataMounts is the mounts a copy keeps when the volumes are not cloned:
+// those that hold no data of the source's - a tmpfs, an image, a named pipe.
+func withoutDataMounts(mounts []mount.Mount) []mount.Mount {
+	return slices.DeleteFunc(slices.Clone(mounts), func(m mount.Mount) bool {
+		switch m.Type { //nolint:exhaustive // the others hold no data
+		case mount.TypeVolume, mount.TypeCluster, mount.TypeBind:
+			return true
+		}
+		return false
+	})
+}
+
 //nolint:gocognit
 func (s *service) onCloneVolumesDefault(
 	ctx context.Context,
@@ -70,6 +89,15 @@ func (s *service) onCloneVolumesDefault(
 			destMount := srcMount
 			if !s.calcVolumeMountSubpath(&destMount, &srcMount, data) {
 				continue
+			}
+			// The copy's directory, named after it, is not there yet - and a
+			// volume's subpath that is not there is not mounted: the copy's
+			// container would not start. Copying the data makes it too.
+			if !settings.CloneVolumeData {
+				err = s.volumeService.EnsureVolumePermissions(ctx, &destMount, destMount.VolumeOptions.Subpath)
+				if err != nil {
+					return nil, hperrors.Wrap(err)
+				}
 			}
 			destMounts = append(destMounts, destMount)
 			if settings.CloneVolumeData {

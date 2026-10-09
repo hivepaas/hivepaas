@@ -1,6 +1,4 @@
-import type { APIRequestContext } from "@playwright/test";
-
-import { type App, appPath, deployImage, latestDeployment } from "../../support/api";
+import { deployImage, latestDeployment } from "../../support/api";
 import {
     BUSYBOX,
     DEPLOYED,
@@ -10,36 +8,11 @@ import {
     deployed,
     expectInstances,
     expectShownLogs,
+    runningTask,
 } from "../../support/apps";
 import { e2eName, expect, test } from "../../support/fixtures";
 
 test.describe.configure({ timeout: 300_000 });
-
-interface ServiceTask {
-    id: string;
-    desiredState: string;
-    status: { state: string };
-}
-
-// runningTask is the app's container once swarm has settled on it: the only
-// one meant to run, and running.
-async function runningTask(api: APIRequestContext, app: App): Promise<string> {
-    let id = "";
-    await expect
-        .poll(
-            async () => {
-                const body = (await (await api.get(`${appPath(app)}/service-tasks`)).json()) as {
-                    data: ServiceTask[];
-                };
-                const meant = body.data.filter(task => task.desiredState === "running");
-                id = meant.length === 1 && meant[0]?.status.state === "running" ? meant[0].id : "";
-                return id;
-            },
-            { timeout: 60_000 },
-        )
-        .not.toBe("");
-    return id;
-}
 
 test("a deployment of an image that does not exist fails, says why, and leaves the app running", async ({
     page,

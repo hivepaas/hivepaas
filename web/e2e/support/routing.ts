@@ -38,13 +38,15 @@ export async function addSection(page: Page, name: string): Promise<void> {
     await page.getByRole("menuitem", { name }).click();
 }
 
-// visit opens the address until the proxy answers it as asked - the proxy
-// reads the apps' labels every few seconds - and answers that response.
+// visit opens the address until the proxy answers it as asked, and answers
+// that response. A domain just set takes a while: the proxy reads the apps'
+// labels every 15 seconds, and the app's container is made anew to join the
+// proxy's network - on a busy node, a minute or more.
 export async function visit(page: Page, url: string, status = 200): Promise<Response> {
     let res: Response | null = null;
     await expect(async () => {
         res = await page.goto(url);
         expect(res?.status(), `${url} answers ${status}`).toBe(status);
-    }).toPass({ timeout: 60_000, intervals: [2_000] });
+    }).toPass({ timeout: 120_000, intervals: [2_000] });
     return res as unknown as Response;
 }

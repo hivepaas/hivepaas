@@ -1,6 +1,6 @@
 import { defineConfig, devices } from "@playwright/test";
 
-import { authFile, env, isLocalBackend } from "./support/env";
+import { authFile, env, isDevServer, isLocalBackend } from "./support/env";
 
 // Levels 1 and 2 make, deploy and remove things: they run on a throwaway
 // installation, never on the local backend, where only level 0 does. Said
@@ -16,6 +16,9 @@ if (levelZeroOnly && process.env["TEST_WORKER_INDEX"] === undefined) {
 export default defineConfig({
     testDir: "tests",
     fullyParallel: true,
+    // The dev server builds the pages as they are opened: more at once than two,
+    // and a page outwaits the assertion that it loaded.
+    workers: isDevServer(env.baseURL) ? 2 : undefined,
     forbidOnly: !!process.env["CI"],
     retries: process.env["CI"] ? 1 : 0,
     reporter: [["list"], ["html", { open: "never" }]],

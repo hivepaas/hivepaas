@@ -1,6 +1,6 @@
 import type { APIRequestContext, Page } from "@playwright/test";
 
-import { type App, createApp, createProject, deleteProject, latestDeployment } from "./api";
+import { type App, appPath, createApp, createProject, deleteProject, latestDeployment } from "./api";
 import { e2eName, expect } from "./fixtures";
 
 // What level 2 deploys: `whoami` for an app that serves, `busybox` for one that
@@ -103,4 +103,30 @@ export async function copyShownLogs(page: Page): Promise<string> {
     await page.context().grantPermissions(["clipboard-read", "clipboard-write"]);
     await page.getByRole("button", { name: "Copy logs" }).locator("visible=true").first().click();
     return page.evaluate(() => navigator.clipboard.readText());
+}
+
+interface ServiceTask {
+    id: string;
+    desiredState: string;
+    status: { state: string };
+}
+
+// runningTask is the app's container once swarm has settled on it: the only
+// one meant to run, and running.
+export async function runningTask(api: APIRequestContext, app: App): Promise<string> {
+    let id = "";
+    await expect
+        .poll(
+            async () => {
+                const body = (await (await api.get(`${appPath(app)}/service-tasks`)).json()) as {
+                    data: ServiceTask[];
+                };
+                const meant = body.data.filter(task => task.desiredState === "running");
+                id = meant.length === 1 && meant[0]?.status.state === "running" ? meant[0].id : "";
+                return id;
+            },
+            { timeout: 60_000 },
+        )
+        .not.toBe("");
+    return id;
 }

@@ -16,13 +16,31 @@ export const env = {
     ingressHTTPS: process.env["HP_E2E_INGRESS_HTTPS"] ?? "127.0.0.1:10443",
 };
 
-// isLocalBackend is whether the address is the local backend's - `make
-// local-app-run`, the default above: a developer's own data, on their own
-// swarm. Levels 1 and 2, which make, deploy and remove things, are left out
-// there (playwright.config.ts).
+// The dashboard's dev server, `yarn dev`, which hands its API calls to the local
+// backend.
+const DEV_SERVER_PORT = "4000";
+
+// The local ports of a developer's own installation: the backend's - `make
+// local-app-run`, the default above - and the dev server's.
+const LOCAL_PORTS = ["10000", DEV_SERVER_PORT];
+
+const LOOPBACK = ["localhost", "127.0.0.1", "[::1]"];
+
+// isLocalBackend is whether the address is a developer's own installation, by
+// the backend or through the dev server: their own data, on their own swarm.
+// Levels 1 and 2, which make, deploy and remove things, are left out there
+// (playwright.config.ts).
 export function isLocalBackend(url: string): boolean {
     const { hostname, port } = new URL(url);
-    return ["localhost", "127.0.0.1", "[::1]"].includes(hostname) && port === "10000";
+    return LOOPBACK.includes(hostname) && LOCAL_PORTS.includes(port);
+}
+
+// isDevServer is whether the address is the dashboard's dev server, which builds
+// each module the first time a page asks for it: many pages opened at once wait
+// on it longer than an assertion waits.
+export function isDevServer(url: string): boolean {
+    const { hostname, port } = new URL(url);
+    return LOOPBACK.includes(hostname) && port === DEV_SERVER_PORT;
 }
 
 // runId is one for the whole run: the config sets it before the workers start,

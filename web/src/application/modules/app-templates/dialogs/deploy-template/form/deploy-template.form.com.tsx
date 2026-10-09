@@ -744,7 +744,10 @@ export function DeployTemplateForm({
                                             name={`dependencyParams.${dep.name}.${p.name}`}
                                             control={control}
                                             render={({ field }) => (
-                                                <Field className="space-y-1">
+                                                <Field
+                                                    aria-label={p.title ? p.title : p.name}
+                                                    className="space-y-1"
+                                                >
                                                     <div className="space-y-0.5">
                                                         <FieldLabel className="text-xs font-medium text-foreground">
                                                             {p.title ? p.title : p.name}{" "}
@@ -1104,6 +1107,7 @@ function ParameterRow({
                 return (
                     <Field
                         data-invalid={fieldState.invalid}
+                        aria-label={param.title ? param.title : param.name}
                         className="space-y-1.5 py-1 border-b border-border/30 last:border-0 pb-3"
                     >
                         {/* Title, optional badge, and description */}

@@ -1,15 +1,17 @@
-import type { Page } from "@playwright/test";
+import type { APIRequestContext, Page } from "@playwright/test";
 
 import {
     type App,
+    appPath,
     createApp,
     createProject,
     deleteProject,
     deployImage,
     exposeApp,
+    latestDeployment,
     setRuntimeEnvVars,
 } from "../../support/api";
-import { WHOAMI, copyShownLogs, deployed, expectLogs } from "../../support/apps";
+import { DEPLOYED, WHOAMI, copyShownLogs, deployed, expectLogs } from "../../support/apps";
 import { e2eName, expect, test } from "../../support/fixtures";
 import { expectRuns, newHealthCheck } from "../../support/health-checks";
 import { domainFor, visit } from "../../support/routing";
@@ -145,4 +147,110 @@ test("a failing health check is told to Slack once, and again when it passes; Re
     await page.waitForTimeout(25_000);
     expect(await told(page, hook, "check-once")).toEqual(["failed", "succeeded"]);
     expect(await told(page, hook, "check-again")).toEqual(again);
+});
+
+// created is the id of what a POST made.
+async function created(api: APIRequestContext, path: string, data: unknown): Promise<string> {
+    const res = await api.post(path, { data });
+    expect(res.ok(), `POST ${path}: ${res.status()} ${await res.text()}`).toBe(true);
+    return ((await res.json()) as { data: { id: string } }).data.id;
+}
+
+// deployTelling deploys an image to the app, telling the target how its
+// deployment ends - done or failed - and nobody else.
+async function deployTelling(api: APIRequestContext, app: App, image: string, target: string): Promise<string> {
+    const current = await api.get(`${appPath(app)}/deployment-settings`);
+    const { updateVer } = ((await current.json()) as { data: { updateVer: number } }).data;
+    const res = await api.put(`${appPath(app)}/deployment-settings`, {
+        data: {
+            entrypoint: "",
+            command: "",
+            workingDir: "",
+            preDeploymentCommand: "",
+            postDeploymentCommand: "",
+            notification: {
+                success: { id: target },
+                successUseDefault: false,
+                failure: { id: target },
+                failureUseDefault: false,
+            },
+            activeMethod: "image",
+            imageSource: { image, registryAuth: { id: "" } },
+            updateVer,
+        },
+    });
+    expect(res.ok(), `deploying ${image}: ${res.status()} ${await res.text()}`).toBe(true);
+    return ((await res.json()) as { data: { deploymentId: string } }).data.deploymentId;
+}
+
+interface SlackAttachment {
+    title: string;
+    fields: { title: string; value: string }[];
+}
+
+// slackMessages are what the hook was sent at /slack, in the order it came.
+async function slackMessages(page: Page, hook: App): Promise<SlackAttachment[]> {
+    await expectLogs(page, hook, "Listening on ports");
+    return (await copyShownLogs(page)).split("\n").flatMap(line => {
+        try {
+            const req = JSON.parse(line) as { path?: string; json?: { attachments?: SlackAttachment[] } };
+            return req.path === "/slack" ? (req.json?.attachments ?? []) : [];
+        } catch {
+            return [];
+        }
+    });
+}
+
+const field = (message: SlackAttachment | undefined, title: string) =>
+    message?.fields.find(f => f.title === title)?.value;
+
+// A deployment tells the app's target how it ended: failed, or done - the
+// image, and where its details are.
+test("a deployment tells its notification target that it failed, and that it is done", async ({
+    page,
+    api,
+    cleanup,
+}) => {
+    const project = await createProject(api, e2eName("deploy-told"));
+    cleanup(() => deleteProject(api, project.id));
+    const hook = await createApp(api, project, "hook");
+    await setRuntimeEnvVars(api, hook, [{ key: "LOG_WITHOUT_NEWLINE", value: "true", isLiteral: true }]);
+    await deployImage(api, hook, ECHO);
+    await deployed(api, hook);
+    const hookDomain = domainFor("deploy-told-hook");
+    await exposeApp(api, hook, hookDomain, { port: 8080, forceHttps: false });
+    await visit(page, `http://${hookDomain}/`);
+
+    const platform = await created(api, `projects/${project.id}/im-services`, {
+        name: e2eName("slack"),
+        // The app's deployment reaches it through the target: for the project's
+        // apps too, as the form makes it.
+        inheritable: true,
+        kind: "slack",
+        slack: { webhook: `http://${hookDomain}/slack` },
+    });
+    const target = await created(api, `projects/${project.id}/notifications`, {
+        name: e2eName("to-slack"),
+        // For the project's apps to use, as the form makes it.
+        inheritable: true,
+        viaSlack: { enabled: true, useDefault: false, webhook: { id: platform } },
+    });
+    const ofWeb = async () => (await slackMessages(page, hook)).filter(m => m.title.includes("[web]"));
+
+    const web = await createApp(api, project, "web");
+    const failedId = await deployTelling(api, web, "traefik/whoami:e2e-no-such-tag", target);
+    await expect.poll(async () => (await latestDeployment(api, web))?.status, DEPLOYED).toBe("failed");
+    await expect
+        .poll(async () => (await ofWeb()).map(m => m.title), { timeout: 60_000, intervals: [5_000] })
+        .toEqual([`[${project.name}][web] Deployment failed`]);
+    const [failed] = await ofWeb();
+    expect(field(failed, "Image")).toBe("traefik/whoami:e2e-no-such-tag");
+    expect(field(failed, "See deployment details")).toContain(`/deployments/${failedId}|`);
+
+    await deployTelling(api, web, WHOAMI, target);
+    await deployed(api, web);
+    await expect.poll(async () => (await ofWeb()).length, { timeout: 60_000, intervals: [5_000] }).toBe(2);
+    const done = (await ofWeb())[1];
+    expect(done?.title).toBe(`[${project.name}][web] Deployment succeeded`);
+    expect(field(done, "Image")).toBe(WHOAMI);
 });

@@ -257,7 +257,10 @@ function ExistingChoice({ service, input, onChoice }: ExistingProps) {
                     );
                 }}
             >
-                <SelectTrigger className="w-[320px]">
+                <SelectTrigger
+                    aria-label={`What to do with ${service.name}`}
+                    className="w-[320px]"
+                >
                     <SelectValue placeholder="Choose what to do with it" />
                 </SelectTrigger>
                 <SelectContent>
@@ -278,6 +281,7 @@ function ExistingChoice({ service, input, onChoice }: ExistingProps) {
                             onChoice({ app: event.target.value.trim().toLowerCase() });
                         }}
                         placeholder="app key"
+                        aria-label={`The key ${service.name} is created under`}
                         className="w-[320px] font-mono text-xs"
                     />
                     <p className="text-xs text-muted-foreground">

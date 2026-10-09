@@ -26,7 +26,9 @@ yarn env:down
 
 Without `HP_E2E_BASE_URL` the tests go to the local backend, and there levels 1
 and 2 are left out - the run says so: they never make, deploy or remove
-anything on a developer's own installation.
+anything on a developer's own installation. The dashboard's dev server,
+`http://localhost:4000`, counts as that installation too: it hands the API
+calls to the local backend.
 
 `env/up.sh` runs postgres and redis as containers, and the backend with its
 agent inside a dind container that is a swarm of its own - never on this
@@ -36,7 +38,9 @@ backend repo beside this one (or `HP_BACKEND_DIR`), Go, and the backend's
 10100; `HP_E2E_SKIP_BUILD=1` reuses the last build. The template catalog is the
 app-templates repo beside this one (or `HP_TEMPLATES_SRC`); without it, the
 template test finds none. dind is also given kopia, the backup engine, from
-its pinned image. The seed's notification channels - a mail account, a Slack, a
+its pinned image, and a Git repository to build apps from, served by git's own
+daemon on dind's loopback - `git://127.0.0.1/e2e/shop.git`, two commits made at
+fixed dates, so of fixed hashes. The seed's notification channels - a mail account, a Slack, a
 Discord and a Telegram, real ones - are removed: nothing the tests do is sent
 to anyone.
 
@@ -61,7 +65,9 @@ make local-app-run          # http://localhost:10000
 ```
 
 Then `yarn test` here, or `npm run e2e` from the dashboard's root: level 0
-alone runs there. `yarn test:ui` opens Playwright's UI mode; `yarn report` shows
+alone runs there. With the dashboard's dev server running (`yarn dev`),
+`HP_E2E_BASE_URL=http://localhost:4000 yarn test` tests the code as it is now,
+without building it into the backend first; two tests run at a time there. `yarn test:ui` opens Playwright's UI mode; `yarn report` shows
 the last run, with a trace of each test that failed.
 
 To run against another installation:

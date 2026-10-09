@@ -140,9 +140,16 @@ export async function createApp(
     return { id: body.data.id, name, projectId: project.id, env };
 }
 
-// deployImage sets an app to run an image - with a command, when given - which
-// deploys it; it answers the deployment's id.
-export async function deployImage(api: APIRequestContext, app: App, image: string, command = ""): Promise<string> {
+// deployImage sets an app to run an image - with a command, when given, and a
+// command run in its running container before - which deploys it; it answers
+// the deployment's id.
+export async function deployImage(
+    api: APIRequestContext,
+    app: App,
+    image: string,
+    command = "",
+    preDeploymentCommand = "",
+): Promise<string> {
     const current = (await ok(await api.get(`${appPath(app)}/deployment-settings`), "reading deployment settings")) as {
         data: { updateVer: number };
     };
@@ -152,7 +159,7 @@ export async function deployImage(api: APIRequestContext, app: App, image: strin
                 entrypoint: "",
                 command,
                 workingDir: "",
-                preDeploymentCommand: "",
+                preDeploymentCommand,
                 postDeploymentCommand: "",
                 notification: { successUseDefault: true, failureUseDefault: true },
                 activeMethod: "image",

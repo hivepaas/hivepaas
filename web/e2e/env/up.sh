@@ -133,6 +133,27 @@ in_dind sh -c "c=\$(docker create '$kopia_image' /kopia) && docker cp \$c:/kopia
 	>/dev/null
 in_dind ln -s / /host
 
+say "Serving a Git repository inside dind"
+# An app built from a repository needs one HivePaaS can reach: git's own daemon,
+# on dind's loopback, where the backend runs - git://127.0.0.1/e2e/shop.git. Its
+# main has two commits, each a Dockerfile printing which it is; develop is at
+# the first. Nothing is pushed to it: a test plays the Git host's webhook, about
+# the second. Their dates are fixed, and so are their hashes, on every env.
+# lz4 too, which the release's image has: the backend packs a checkout with it.
+in_dind apk add --no-cache -q git-daemon lz4 >/dev/null
+in_dind sh -c 'set -e; rm -rf /tmp/shop /hp/git/e2e; mkdir -p /tmp/shop /hp/git/e2e; cd /tmp/shop
+	export GIT_AUTHOR_NAME=e2e GIT_AUTHOR_EMAIL=e2e@e2e.localhost GIT_COMMITTER_NAME=e2e
+	export GIT_COMMITTER_EMAIL=e2e@e2e.localhost GIT_AUTHOR_DATE=2026-01-01T00:00:00Z
+	export GIT_COMMITTER_DATE=2026-01-01T00:00:00Z
+	git init -q -b main
+	for n in 1 2; do
+		printf "FROM busybox:1.37\nCMD [\"sh\", \"-c\", \"echo built-from-commit-$n; exec sleep 3600\"]\n" >Dockerfile
+		git add Dockerfile; git commit -q -m "Print commit $n"
+		[ "$n" = 1 ] && git branch develop
+	done
+	git clone -q --bare . /hp/git/e2e/shop.git; rm -rf /tmp/shop'
+in_dind git daemon --base-path=/hp/git --export-all --reuseaddr --listen=127.0.0.1 --detach
+
 say "Starting the agent and the backend inside dind"
 sed "s/__PORT__/$PORT/" "$ENV_DIR/config.toml" >"$BUILD/config.toml"
 in_dind mkdir -p /hp/appdata

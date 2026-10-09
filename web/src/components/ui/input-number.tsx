@@ -65,6 +65,7 @@ export const InputNumber = forwardRef<HTMLInputElement, NumberInputProps>(
             classNameInner,
             "aria-label": ariaLabel,
             "aria-labelledby": ariaLabelledBy,
+            id,
             disabled,
             readOnly,
             ...props
@@ -110,7 +111,10 @@ export const InputNumber = forwardRef<HTMLInputElement, NumberInputProps>(
                 step={stepper}
                 formatOptions={formatOptions}
                 className={className}
-                aria-label={ariaLabel ?? (!ariaLabelledBy ? "Number input" : undefined)}
+                // An id is the input's, for a <label htmlFor> to name it; with
+                // neither that nor a label of its own, it is "Number input".
+                id={id}
+                aria-label={ariaLabel ?? (!ariaLabelledBy && !id ? "Number input" : undefined)}
                 aria-labelledby={ariaLabelledBy}
             >
                 <Group

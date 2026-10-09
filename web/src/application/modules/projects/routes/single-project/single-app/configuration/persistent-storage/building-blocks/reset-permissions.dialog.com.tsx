@@ -42,6 +42,12 @@ interface Props {
     onConfirm: (owner: AppStorageOwner | undefined) => void;
 }
 
+// parseId is the user or group id typed, or null while it is not one.
+function parseId(text: string): number | null {
+    const trimmed = text.trim();
+    return /^\d+$/.test(trimmed) ? Number(trimmed) : null;
+}
+
 /**
  * Resets what one mount holds, for an app that has to be given data another user
  * wrote - a different image on the same volume, or files copied in by hand.
@@ -51,17 +57,22 @@ interface Props {
  */
 export function ResetPermissionsDialog({ open, target, isPending, onOpenChange, onConfirm }: Props) {
     const [method, setMethod] = useState<ResetMethod>("owner");
-    const [uid, setUid] = useState<number | null>(null);
-    const [gid, setGid] = useState<number | null>(null);
+    // What is typed, as it is typed. A number field takes its number only once
+    // it is left, and the button - still disabled when the second number is
+    // typed - would take the click that leaves it, and do nothing.
+    const [uidText, setUidText] = useState("");
+    const [gidText, setGidText] = useState("");
 
     useEffect(() => {
         if (open) {
             setMethod("owner");
-            setUid(null);
-            setGid(null);
+            setUidText("");
+            setGidText("");
         }
     }, [open]);
 
+    const uid = parseId(uidText);
+    const gid = parseId(gidText);
     const ownerComplete = uid !== null && gid !== null;
     const canConfirm = method === "everyone" || ownerComplete;
 
@@ -104,7 +115,6 @@ export function ResetPermissionsDialog({ open, target, isPending, onOpenChange, 
                                     <Label htmlFor="reset-permissions-uid">User ID</Label>
                                     <InputNumber
                                         id="reset-permissions-uid"
-                                        value={uid ?? undefined}
                                         placeholder="1000"
                                         min={0}
                                         step={1}
@@ -112,8 +122,11 @@ export function ResetPermissionsDialog({ open, target, isPending, onOpenChange, 
                                         useGrouping={false}
                                         disabled={isPending}
                                         className="w-[140px]"
+                                        onInput={event => {
+                                            setUidText(event.currentTarget.value);
+                                        }}
                                         onValueChange={value => {
-                                            setUid(typeof value === "number" ? value : null);
+                                            setUidText(value === undefined ? "" : String(value));
                                         }}
                                     />
                                 </div>
@@ -121,7 +134,6 @@ export function ResetPermissionsDialog({ open, target, isPending, onOpenChange, 
                                     <Label htmlFor="reset-permissions-gid">Group ID</Label>
                                     <InputNumber
                                         id="reset-permissions-gid"
-                                        value={gid ?? undefined}
                                         placeholder="1000"
                                         min={0}
                                         step={1}
@@ -129,8 +141,11 @@ export function ResetPermissionsDialog({ open, target, isPending, onOpenChange, 
                                         useGrouping={false}
                                         disabled={isPending}
                                         className="w-[140px]"
+                                        onInput={event => {
+                                            setGidText(event.currentTarget.value);
+                                        }}
                                         onValueChange={value => {
-                                            setGid(typeof value === "number" ? value : null);
+                                            setGidText(value === undefined ? "" : String(value));
                                         }}
                                     />
                                 </div>

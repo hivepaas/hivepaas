@@ -27,9 +27,6 @@ other rule broken fails it.
 - `color-contrast`: muted text (`text-muted-foreground`) on its background,
   below 4.5:1 - 290 elements, on every page. The palette's: changing it
   changes how every page looks.
-- `nested-interactive`: a date picker's Clear date is a control inside the
-  button that opens the calendar. Moved out beside it, waiting for review: it
-  is where the eye sees it.
 
 ## Found with axe (2026-10-09), and fixed
 
@@ -49,3 +46,6 @@ other rule broken fails it.
   the details before, the card taking the key.
 - **The template's GitHub icon** (`svg-img-alt`) is hidden from screen readers,
   beside the link's text.
+- **A date picker's Clear date was a control inside the button that opens the
+  calendar** (`nested-interactive`), and the keyboard could not reach it. It
+  is a button of its own beside it now, where it was seen.

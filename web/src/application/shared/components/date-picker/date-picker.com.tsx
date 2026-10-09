@@ -31,7 +31,7 @@ export function DatePicker({
 
     return (
         <Popover>
-            <div className="group/clear">
+            <div className="group/clear relative">
                 <PopoverTrigger asChild>
                     <Button
                         variant="outline"
@@ -44,32 +44,28 @@ export function DatePicker({
                         )}
                     >
                         {value ? format(value, "yyyy-MM-dd") : <span>{placeholder}</span>}
-                        {showClear ? (
-                            <>
-                                <CalendarIcon className="size-4 group-hover/clear:hidden" />
-                                <span
-                                    role="button"
-                                    tabIndex={-1}
-                                    aria-label="Clear date"
-                                    className="hidden rounded-sm p-0.5 text-muted-foreground hover:text-foreground group-hover/clear:inline-flex"
-                                    onPointerDown={e => {
-                                        e.preventDefault();
-                                        e.stopPropagation();
-                                    }}
-                                    onClick={e => {
-                                        e.preventDefault();
-                                        e.stopPropagation();
-                                        onChange?.(undefined);
-                                    }}
-                                >
-                                    <X className="size-3.5" />
-                                </span>
-                            </>
-                        ) : (
-                            <CalendarIcon className="size-4" />
-                        )}
+                        <CalendarIcon
+                            className={cn(
+                                "size-4",
+                                showClear && "group-hover/clear:invisible group-focus-within/clear:invisible",
+                            )}
+                        />
                     </Button>
                 </PopoverTrigger>
+                {/* Over the calendar's icon, while the field is pointed at or in focus: a
+                    button of its own, beside the one that opens the calendar. */}
+                {showClear && (
+                    <button
+                        type="button"
+                        aria-label="Clear date"
+                        className="absolute right-3 top-1/2 hidden -translate-y-1/2 rounded-sm p-0.5 text-muted-foreground hover:text-foreground group-focus-within/clear:inline-flex group-hover/clear:inline-flex focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                        onClick={() => {
+                            onChange?.(undefined);
+                        }}
+                    >
+                        <X className="size-3.5" />
+                    </button>
+                )}
             </div>
             <PopoverContent
                 className="w-auto p-0"

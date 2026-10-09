@@ -804,6 +804,8 @@ const DateTimePicker = React.forwardRef<Partial<DateTimePickerRef>, DateTimePick
             setDisplayDate(undefined);
         };
 
+        const showClear = showClearButton && displayDate && !disabled;
+
         const widthClasses = React.useMemo(() => {
             if (!className) return "";
             return className
@@ -872,31 +874,26 @@ const DateTimePicker = React.forwardRef<Partial<DateTimePickerRef>, DateTimePick
                             </span>
                             <div className="flex items-center gap-1.5 ml-2 shrink-0">
                                 <CalendarIcon className="h-4 w-4 shrink-0 text-muted-foreground" />
-                                {showClearButton && displayDate && !disabled && (
+                                {/* Room for Clear date, which is a button of its own beside this one. */}
+                                {showClear && (
                                     <span
-                                        role="button"
-                                        tabIndex={-1}
-                                        aria-label="Clear date"
-                                        className="flex size-4.5 items-center justify-center rounded-xs text-muted-foreground hover:text-foreground opacity-60 hover:opacity-100 transition-opacity cursor-pointer"
-                                        onPointerDown={e => {
-                                            e.preventDefault();
-                                            e.stopPropagation();
-                                        }}
-                                        onClick={handleClear}
-                                        onKeyDown={e => {
-                                            if (e.key === "Enter" || e.key === " ") {
-                                                e.preventDefault();
-                                                e.stopPropagation();
-                                                handleClear(e as any);
-                                            }
-                                        }}
-                                    >
-                                        <X className="size-3.5" />
-                                    </span>
+                                        aria-hidden="true"
+                                        className="size-4.5"
+                                    />
                                 )}
                             </div>
                         </Button>
                     </PopoverTrigger>
+                    {showClear && (
+                        <button
+                            type="button"
+                            aria-label="Clear date"
+                            className="absolute right-4 top-1/2 flex size-4.5 -translate-y-1/2 items-center justify-center rounded-xs text-muted-foreground hover:text-foreground opacity-60 hover:opacity-100 transition-opacity cursor-pointer focus-visible:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                            onClick={handleClear}
+                        >
+                            <X className="size-3.5" />
+                        </button>
+                    )}
                     <PopoverContent className="w-auto p-0">
                         <Calendar
                             mode="single"

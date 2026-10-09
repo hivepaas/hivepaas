@@ -6,10 +6,10 @@ import { expect, test } from "../../support/fixtures";
 // The rules of WCAG 2.1, A and AA, that axe checks on a page.
 const WCAG = ["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"];
 
-// The rules the dashboard does not pass yet (specs/level-0.md): muted text on
-// its background, below 4.5:1 - the palette's, a design choice; a date picker's
-// Clear date inside the button that opens it. Any other rule broken fails.
-const NOT_YET = ["color-contrast", "nested-interactive"];
+// The rule the dashboard does not pass yet (specs/level-0.md): muted text on
+// its background, below 4.5:1 - the palette's, a design choice. Any other rule
+// a page breaks fails it.
+const NOT_YET = ["color-contrast"];
 
 // Pages of every kind: lists, forms, settings, an app's tabs - the app being the
 // HivePaaS project's Traefik, which every installation has. Nothing is written.
@@ -38,7 +38,7 @@ const PAGES = [
 ];
 
 for (const path of PAGES) {
-    test(`${path} breaks no accessibility rule but those known`, async ({ page, api }) => {
+    test(`${path} breaks no accessibility rule but the one known`, async ({ page, api }) => {
         const project = await systemProject(api);
         const app = await systemApp(api, project, "traefik");
         await page.goto(

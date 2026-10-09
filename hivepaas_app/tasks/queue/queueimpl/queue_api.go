@@ -137,14 +137,24 @@ func (q *taskQueue) loadCurrentTasksForUnscheduling(
 		return nil, hperrors.Wrap(err)
 	}
 
+	return unscheduleTasks(tasks, timeNow), nil
+}
+
+// unscheduleTasks cancels a job's runs still to come or under way. A run that
+// never started is removed too: the job, turned on again or given its schedule
+// back, makes it anew - same job, same time - which a canceled one, still
+// there, would stop.
+func unscheduleTasks(tasks []*entity.Task, timeNow time.Time) []*entity.Task {
 	unschedulingTasks := make([]*entity.Task, 0, len(tasks))
 	for _, task := range tasks {
-		if task.CanCancel() {
-			task.Status = base.TaskStatusCanceled
-			unschedulingTasks = append(unschedulingTasks, task)
+		if !task.CanCancel() {
 			continue
 		}
+		if task.IsNotStarted() && task.StartedAt.IsZero() {
+			task.DeletedAt = timeNow
+		}
+		task.Status = base.TaskStatusCanceled
+		unschedulingTasks = append(unschedulingTasks, task)
 	}
-
-	return unschedulingTasks, nil
+	return unschedulingTasks
 }

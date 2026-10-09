@@ -92,16 +92,23 @@ func (s *SchedJobSchedule) IsValid() error {
 	return hperrors.NewArgumentInvalid("Schedule")
 }
 
-func (s *SchedJobSchedule) GetLastSchedTime() time.Time {
-	if !s.LastSchedTime.IsZero() && s.LastCronExpr == s.CronExpr && s.LastInterval == s.Interval &&
-		s.LastInitialTime.Equal(s.LastSchedTime) {
+// countingFrom is the time the runs from fromTime are counted from: the last
+// run a task was made for, when it was made by this schedule and is before
+// fromTime, and the initial time otherwise. One still to come is counted again:
+// the job's page lists it, and a job turned off and on again remakes its task.
+func (s *SchedJobSchedule) countingFrom(fromTime time.Time) time.Time {
+	if !s.LastSchedTime.IsZero() && s.LastSchedTime.Before(fromTime) &&
+		s.LastCronExpr == s.CronExpr && s.LastInterval == s.Interval &&
+		s.LastInitialTime.Equal(s.InitialTime) {
 		return s.LastSchedTime
 	}
 	return s.InitialTime
 }
 
+// SetLastSchedTime keeps the last run a task was made for; a scan that made
+// none keeps the one before.
 func (s *SchedJobSchedule) SetLastSchedTime(lastSchedTime time.Time) bool {
-	if s == nil {
+	if s == nil || lastSchedTime.IsZero() {
 		return false
 	}
 	if s.LastSchedTime.Equal(lastSchedTime) {
@@ -150,7 +157,7 @@ func (s *SchedJobSchedule) calcNextRuns(fromTime time.Time, count int) (res []ti
 		return nil, hperrors.NewArgumentInvalid("count")
 	}
 
-	nextRunAt := s.GetLastSchedTime()
+	nextRunAt := s.countingFrom(fromTime)
 	if s.Interval > 0 {
 		interval := s.Interval.ToDuration()
 		if interval < 0 {
@@ -213,7 +220,7 @@ func (s *SchedJobSchedule) calcNextRunsInRange(fromTime, toTime time.Time) (res 
 	if toTime.IsZero() {
 		return nil, hperrors.NewArgumentInvalid("toTime")
 	}
-	nextRunAt := s.GetLastSchedTime()
+	nextRunAt := s.countingFrom(fromTime)
 
 	if s.Interval > 0 {
 		interval := s.Interval.ToDuration()

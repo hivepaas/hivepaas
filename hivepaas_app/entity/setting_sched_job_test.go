@@ -98,3 +98,86 @@ func TestIntervalIsNotMovedByTheTimezone(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, []time.Time{from.Add(4 * time.Hour), from.Add(28 * time.Hour)}, runs)
 }
+
+// scheduled is a schedule that made its tasks up to lastRun, as the scan does.
+func scheduled(s SchedJobSchedule, lastRun time.Time) *SchedJobSchedule {
+	s.SetLastSchedTime(lastRun)
+	return &s
+}
+
+// The runs are counted from the last one a task was made for, not from the
+// initial time: a job made a year ago to run each minute would otherwise walk
+// the whole year again on each scan, and on each look at its page.
+func TestRunsAreCountedFromTheLastOneScheduled(t *testing.T) {
+	now := time.Date(2026, 10, 10, 12, 0, 30, 0, time.UTC)
+	lastRun := time.Date(2026, 10, 10, 12, 0, 0, 0, time.UTC)
+	s := scheduled(SchedJobSchedule{CronExpr: "* * * * *", InitialTime: now.AddDate(-1, 0, 0)}, lastRun)
+
+	assert.Equal(t, lastRun, s.countingFrom(now))
+}
+
+// A schedule changed since its last run was scheduled counts from its initial
+// time again.
+func TestAChangedScheduleCountsFromItsInitialTime(t *testing.T) {
+	now := time.Date(2026, 10, 10, 12, 0, 30, 0, time.UTC)
+	initial := now.AddDate(0, -1, 0)
+	for name, change := range map[string]func(s *SchedJobSchedule){
+		"cron":         func(s *SchedJobSchedule) { s.CronExpr = "*/5 * * * *" },
+		"interval":     func(s *SchedJobSchedule) { s.CronExpr, s.Interval = "", timeutil.Duration(time.Hour) },
+		"initial time": func(s *SchedJobSchedule) { s.InitialTime = initial.Add(time.Hour) },
+	} {
+		s := scheduled(SchedJobSchedule{CronExpr: "* * * * *", InitialTime: initial}, now.Add(-30*time.Second))
+		change(s)
+		assert.Equal(t, s.InitialTime, s.countingFrom(now), name)
+	}
+}
+
+// A run whose task is made, still to come, is one of the next runs: the job's
+// page lists it, and a job turned off and on again makes it again.
+func TestARunScheduledButToComeIsStillNext(t *testing.T) {
+	now := time.Date(2026, 10, 10, 1, 55, 0, 0, time.UTC)
+	nextRun := time.Date(2026, 10, 10, 2, 0, 0, 0, time.UTC)
+	cron := scheduled(SchedJobSchedule{CronExpr: "0 2 * * *", InitialTime: now.AddDate(0, -1, 0)}, nextRun)
+	every := scheduled(SchedJobSchedule{Interval: timeutil.Duration(timeutil.Day),
+		InitialTime: nextRun.AddDate(0, -1, 0)}, nextRun)
+
+	for name, s := range map[string]*SchedJobSchedule{"cron": cron, "interval": every} {
+		runs, err := s.CalcNextRuns(now, 1)
+		assert.NoError(t, err)
+		assert.Equal(t, []time.Time{nextRun}, inUTC(runs), name)
+
+		runs, err = s.CalcNextRunsInRange(now, now.Add(10*time.Minute))
+		assert.NoError(t, err)
+		assert.Equal(t, []time.Time{nextRun}, inUTC(runs), name)
+	}
+}
+
+// Counted from the last run scheduled or from the initial time, the runs are
+// the same.
+func TestRunsAfterTheLastOneScheduledAreTheSchedulesRuns(t *testing.T) {
+	inNewYork(t)
+	now := time.Date(2026, 10, 31, 23, 58, 0, 0, time.UTC)
+	for _, s := range []SchedJobSchedule{
+		{CronExpr: "*/7 2-3 * * *", InitialTime: time.Date(2026, 9, 1, 0, 0, 0, 0, time.UTC)},
+		{Interval: timeutil.Duration(7 * time.Hour), InitialTime: time.Date(2026, 9, 1, 0, 3, 0, 0, time.UTC)},
+	} {
+		want, err := s.CalcNextRunsInRange(now, now.Add(72*time.Hour))
+		assert.NoError(t, err)
+		lastRun, err := s.CalcNextRuns(now.Add(-36*time.Hour), 1)
+		assert.NoError(t, err)
+
+		got, err := scheduled(s, lastRun[0]).CalcNextRunsInRange(now, now.Add(72*time.Hour))
+		assert.NoError(t, err)
+		assert.NotEmpty(t, want)
+		assert.Equal(t, want, got)
+	}
+}
+
+// A scan that makes no task keeps the last run it knows of.
+func TestAScanWithoutRunsKeepsTheLastOne(t *testing.T) {
+	lastRun := time.Date(2026, 10, 10, 2, 0, 0, 0, time.UTC)
+	s := scheduled(SchedJobSchedule{CronExpr: "0 2 * * *", InitialTime: lastRun.AddDate(0, -1, 0)}, lastRun)
+
+	assert.False(t, s.SetLastSchedTime(time.Time{}))
+	assert.Equal(t, lastRun, s.LastSchedTime)
+}

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"regexp"
 	"strconv"
 	"strings"
 	"unicode"
@@ -665,22 +666,30 @@ func (s *service) createPathRewriteConfig(
 		}
 	}
 
-	if rewriteCfg.PathReplace != "" {
-		if rewriteCfg.PathReplaceIsRegex {
-			if rewriteCfg.PathReplaceWith != "" {
-				mwName := fmt.Sprintf("%s-replacepathregex", routerName)
-				labels[fmt.Sprintf("traefik.http.middlewares.%s.replacepathregex.regex", mwName)] =
-					rewriteCfg.PathReplace
-				labels[fmt.Sprintf("traefik.http.middlewares.%s.replacepathregex.replacement", mwName)] =
-					rewriteCfg.PathReplaceWith
-				*middlewares = append(*middlewares, mwName+middlewareProvider)
-			}
-		} else {
-			mwName := fmt.Sprintf("%s-replacepath", routerName)
-			labels[fmt.Sprintf("traefik.http.middlewares.%s.replacepath.path", mwName)] = rewriteCfg.PathReplace
-			*middlewares = append(*middlewares, mwName+middlewareProvider)
+	if rewriteCfg.PathReplace != "" && rewriteCfg.PathReplaceWith != "" {
+		regex, replacement := rewriteCfg.PathReplace, rewriteCfg.PathReplaceWith
+		if !rewriteCfg.PathReplaceIsRegex {
+			regex, replacement = plainPathReplace(regex, replacement)
 		}
+		mwName := fmt.Sprintf("%s-replacepathregex", routerName)
+		labels[fmt.Sprintf("traefik.http.middlewares.%s.replacepathregex.regex", mwName)] = regex
+		labels[fmt.Sprintf("traefik.http.middlewares.%s.replacepathregex.replacement", mwName)] = replacement
+		*middlewares = append(*middlewares, mwName+middlewareProvider)
 	}
+}
+
+// plainPathReplace is the pattern and the replacement that replace a path
+// written out, not a pattern, and what is under it: /old with /new turns /old
+// into /new and /old/page into /new/page, and leaves /older and the other paths
+// alone. The path is taken as written, its dots and question marks too.
+//
+// Traefik's own ReplacePath is not it: it replaces every path the router takes
+// with one, and the path to replace would go unread. It used to: /old with /new
+// sent every request to /old.
+func plainPathReplace(path, with string) (regex, replacement string) {
+	path = strings.TrimSuffix(path, "/")
+	with = strings.ReplaceAll(strings.TrimSuffix(with, "/"), "$", "$$")
+	return "^" + regexp.QuoteMeta(path) + "(/.*)?$", with + "${1}"
 }
 
 // createRateLimitConfig builds the rate limit and in-flight middlewares.

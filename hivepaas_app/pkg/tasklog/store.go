@@ -128,7 +128,7 @@ func (s *Store) Add(ctx context.Context, frames ...*LogFrame) error {
 
 	if shouldFlush && len(framesToFlush) > 0 && onFlush != nil {
 		if s.storeRemote {
-			_ = redishelper.Del(ctx, s.redisClient, s.Key)
+			_ = s.startOver(ctx)
 		}
 		if err := onFlush(ctx, framesToFlush); err != nil {
 			return err
@@ -207,6 +207,34 @@ func (s *Store) Reset() (err error) {
 		s.mu.Unlock()
 	}
 	return err
+}
+
+// Rotate starts the log's list again, once what it holds has been handed on:
+// those following are told to read the new list from its start, not that the
+// log has ended - a task that runs again, a sequence's next step, logs on.
+func (s *Store) Rotate() (err error) {
+	if s.storeRemote {
+		err = s.startOver(context.Background())
+	}
+	if s.storeLocal {
+		s.mu.Lock()
+		s.frames = make([]*LogFrame, 0, 100) //nolint:mnd
+		s.totalSize = 0
+		s.mu.Unlock()
+	}
+	return err
+}
+
+// startOver deletes the list in redis, then tells those following to read the
+// new one from its start: deleted first, or they would read the old one again.
+func (s *Store) startOver(ctx context.Context) error {
+	if err := redishelper.Del(ctx, s.redisClient, s.Key); err != nil {
+		return hperrors.Wrap(err).WithMsgLog("failed to remove data from redis")
+	}
+	if _, err := s.redisClient.Publish(ctx, s.Key, buildMessage(CommandReset)).Result(); err != nil {
+		return hperrors.Wrap(err).WithMsgLog("failed to notify consumers")
+	}
+	return nil
 }
 
 func (s *Store) Close() (err error) {

@@ -175,6 +175,15 @@ func (e *Executor) initLogStore(data *taskData) {
 	})
 }
 
+// keepsLogOpen is whether the task runs again at once - a sequence's next step
+// - and its log goes on: those following it read on, rather than being told
+// it has ended.
+func keepsLogOpen(data *taskData) bool {
+	return data.Continued() && !data.TaskCanceled
+}
+
+// saveLogs saves what the run logged. The run's end, and how long it took, is
+// written by the last run of the task; one that goes on keeps the log open.
 func (e *Executor) saveLogs(
 	ctx context.Context,
 	db database.IDB,
@@ -185,8 +194,9 @@ func (e *Executor) saveLogs(
 	if logStore == nil {
 		return nil
 	}
+	goesOn := keepsLogOpen(data)
 
-	if addDurationInfo {
+	if addDurationInfo && !goesOn {
 		duration := timeutil.NowUTC().Sub(data.Task.StartedAt)
 		_ = logStore.Add(ctx,
 			tasklog.NewOutFrame("\n---------------------------------\n", tasklog.TsNow),
@@ -198,7 +208,11 @@ func (e *Executor) saveLogs(
 	if err != nil {
 		return hperrors.Wrap(err)
 	}
-	_ = logStore.Reset() //nolint
+	if goesOn {
+		_ = logStore.Rotate() //nolint
+	} else {
+		_ = logStore.Reset() //nolint
+	}
 
 	return e.saveLogFramesToDB(ctx, db, data.Task.ID, data.SchedJob.ID, logFrames)
 }

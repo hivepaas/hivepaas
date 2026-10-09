@@ -64,21 +64,22 @@ func (c *Consumer) StartConsuming(
 
 		for msg := range pubSub.Channel() {
 			cmd, _ := parseMessage(msg.Payload)
-			switch cmd {
-			case CommandNewData:
-				frames, err := c.getData(ctx, &frameIndex)
-				if err != nil {
-					batchChan.Send(&LogFrame{
-						Type: LogTypeErr,
-						Data: "failed to get log data: " + err.Error(),
-					})
-					continue
-				}
-				batchChan.Send(frames...)
-
-			case CommandClosed:
+			fetch, stop := follow(cmd, &frameIndex)
+			if stop {
 				return
 			}
+			if !fetch {
+				continue
+			}
+			frames, err := c.getData(ctx, &frameIndex)
+			if err != nil {
+				batchChan.Send(&LogFrame{
+					Type: LogTypeErr,
+					Data: "failed to get log data: " + err.Error(),
+				})
+				continue
+			}
+			batchChan.Send(frames...)
 		}
 	}()
 
@@ -106,4 +107,19 @@ func (c *Consumer) GetAllData(
 		return nil, hperrors.Wrap(err)
 	}
 	return frames, nil
+}
+
+// follow is what a follower does on a command: read on from frameIndex, read
+// the new list from its start, or stop.
+func follow(cmd Command, frameIndex *int64) (fetch, stop bool) {
+	switch cmd {
+	case CommandNewData:
+		return true, false
+	case CommandReset:
+		*frameIndex = 0
+		return true, false
+	case CommandClosed:
+		return false, true
+	}
+	return false, false
 }

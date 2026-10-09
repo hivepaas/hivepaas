@@ -10,7 +10,7 @@ import { formatDataSizeCompact } from "@application/shared/utils/data-size";
 import { Button, Tabs, TabsList, TabsTrigger } from "@/components/ui";
 import { Checkbox } from "@/components/ui/checkbox";
 import { DialogActionFooter, DialogBody } from "@/components/ui/dialog";
-import { Field, FieldError, FieldGroup } from "@/components/ui/field";
+import { Field, FieldDescription, FieldError, FieldGroup } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 
 import type { ImportFilesToContainerFormInput, ImportFilesToContainerFormOutput } from "../schemas";
@@ -125,7 +125,13 @@ export function ImportFilesToContainerForm({ isPending, progress, onSubmit }: Pr
                                 {...path}
                                 placeholder="/path/in/container"
                                 disabled={isPending}
+                                aria-describedby="import-container-path-hint"
                             />
+                            <FieldDescription id="import-container-path-hint">
+                                {extract.value
+                                    ? "The directory the archive is unpacked into."
+                                    : "Ending in /, the directory the file goes into, under its own name; otherwise, the file's own path. A directory is never replaced by the file."}
+                            </FieldDescription>
                             <FieldError errors={[errors.path]} />
                         </InfoBlock>
                     </Field>
@@ -178,26 +184,35 @@ export function ImportFilesToContainerForm({ isPending, progress, onSubmit }: Pr
                         </Field>
                     )}
 
-                    <Field>
-                        <InfoBlock
-                            title="Overwrite"
-                            titleWidth={130}
-                        >
-                            <label
-                                htmlFor="import-container-overwrite"
-                                className="flex items-center gap-3 text-sm font-medium"
+                    {/* A single file never replaces a directory, and files are overwritten
+                        either way: Overwrite is the archive's entries' only. */}
+                    {extract.value && (
+                        <Field>
+                            <InfoBlock
+                                title="Overwrite"
+                                titleWidth={130}
                             >
-                                <Checkbox
-                                    id="import-container-overwrite"
-                                    checked={overwrite.value}
-                                    disabled={isPending}
-                                    onCheckedChange={checked => {
-                                        overwrite.onChange(checked === true);
-                                    }}
-                                />
-                            </label>
-                        </InfoBlock>
-                    </Field>
+                                <label
+                                    htmlFor="import-container-overwrite"
+                                    className="flex items-center gap-3 text-sm font-medium"
+                                >
+                                    <Checkbox
+                                        id="import-container-overwrite"
+                                        checked={overwrite.value}
+                                        disabled={isPending}
+                                        aria-describedby="import-container-overwrite-hint"
+                                        onCheckedChange={checked => {
+                                            overwrite.onChange(checked === true);
+                                        }}
+                                    />
+                                </label>
+                                <FieldDescription id="import-container-overwrite-hint">
+                                    Let an entry replace a directory with a file, or a file with a directory. Files are
+                                    overwritten either way.
+                                </FieldDescription>
+                            </InfoBlock>
+                        </Field>
+                    )}
                 </FieldGroup>
             </DialogBody>
 

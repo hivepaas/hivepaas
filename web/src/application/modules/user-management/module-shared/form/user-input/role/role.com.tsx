@@ -18,7 +18,7 @@ function View<T>({ name, disabled = false }: Props<T>) {
         fieldState: { invalid },
     } = useController({
         control,
-        name: name as string,
+        name,
     });
 
     return (
@@ -29,7 +29,7 @@ function View<T>({ name, disabled = false }: Props<T>) {
                     return;
                 }
 
-                role.onChange(value as EUserRole);
+                role.onChange(value);
             }}
         >
             <TabsList>

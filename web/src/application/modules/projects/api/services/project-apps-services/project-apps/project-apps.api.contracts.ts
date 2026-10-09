@@ -179,9 +179,7 @@ export type ProjectApps_SetRunning_Res = ApiResponseBase<{
  * Update project app photo
  */
 export type ProjectAppPhotoPayload =
-    | { fileName: string; dataBase64: string }
-    | { fileName: string; isPresetIcon: true }
-    | { delete: true };
+    { fileName: string; dataBase64: string } | { fileName: string; isPresetIcon: true } | { delete: true };
 
 export type ProjectApps_UpdatePhoto_Req = ApiRequestBase<{
     projectID: string;

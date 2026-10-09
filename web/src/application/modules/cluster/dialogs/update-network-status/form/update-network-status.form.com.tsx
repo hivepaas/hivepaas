@@ -111,7 +111,7 @@ export function UpdateNetworkStatusForm({
                                 <Tabs
                                     value={status.value}
                                     onValueChange={value => {
-                                        status.onChange(value as ESettingStatus);
+                                        status.onChange(value);
                                     }}
                                 >
                                     <TabsList>

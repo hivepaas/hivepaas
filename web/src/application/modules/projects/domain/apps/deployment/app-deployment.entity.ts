@@ -56,9 +56,7 @@ type AppDeploymentFunctionSettingsSnapshot = {
 };
 
 export type AppDeploymentSettingsSnapshot =
-    | AppDeploymentRepoSettingsSnapshot
-    | AppDeploymentImageSettingsSnapshot
-    | AppDeploymentFunctionSettingsSnapshot;
+    AppDeploymentRepoSettingsSnapshot | AppDeploymentImageSettingsSnapshot | AppDeploymentFunctionSettingsSnapshot;
 
 export interface AppDeployment {
     id: string;

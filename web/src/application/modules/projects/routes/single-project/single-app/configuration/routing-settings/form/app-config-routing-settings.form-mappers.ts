@@ -3,7 +3,7 @@ import {
     type AppRoutingSettings,
     type AppRoutingSettingsUpdatePayload,
 } from "~/projects/domain";
-import { type EHttpPathMode, ELBStrategy, ERoutingProtocol } from "~/projects/module-shared/enums";
+import { ELBStrategy, ERoutingProtocol } from "~/projects/module-shared/enums";
 
 import {
     type AppConfigRoutingSettingsFormSchemaInput,
@@ -306,7 +306,7 @@ export function mapFormValuesToPayload(
             paths: domain.paths.map(path => ({
                 enabled: path.enabled,
                 path: path.path,
-                mode: path.mode as EHttpPathMode,
+                mode: path.mode,
                 basicAuth: { id: path.basicAuth?.id ?? "", enabled: path.basicAuth?.enabled ?? false },
                 clientConfig: path.clientConfig
                     ? {

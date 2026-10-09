@@ -93,8 +93,7 @@ export function CommandConfigSection({
     } = useController({ control, name: `${p}consoleSize.height` as never });
 
     const commandErrors = (fieldPrefix ? (errors as Record<string, unknown>)[fieldPrefix] : errors) as
-        | Record<string, unknown>
-        | undefined;
+        Record<string, unknown> | undefined;
 
     function applyTemplate(template: ProjectCommandTemplate) {
         const isScript = template.script.trim().length > 0;
@@ -150,7 +149,7 @@ export function CommandConfigSection({
                         titleWidth={220}
                     >
                         <Tabs
-                            value={commandMode.value as string}
+                            value={commandMode.value}
                             onValueChange={commandMode.onChange}
                         >
                             <TabsList>
@@ -182,7 +181,7 @@ export function CommandConfigSection({
                         {commandMode.value === COMMAND_MODE.Script ? (
                             <Field>
                                 <ScriptEditorField
-                                    value={script.value as string}
+                                    value={script.value}
                                     onChange={script.onChange}
                                     invalid={isScriptInvalid}
                                     error={commandErrors?.["script"] as ReactHookFormFieldError | undefined}
@@ -193,7 +192,7 @@ export function CommandConfigSection({
                             <Field>
                                 <Input
                                     {...command}
-                                    value={command.value as string}
+                                    value={command.value}
                                     placeholder={COMMAND_PLACEHOLDER}
                                     className={PROJECT_FORM_CONTROL_MAX_WIDTH_CLASS}
                                     aria-invalid={isCommandInvalid}
@@ -218,7 +217,7 @@ export function CommandConfigSection({
                         <Field>
                             <Input
                                 {...workingDir}
-                                value={workingDir.value as string}
+                                value={workingDir.value}
                                 placeholder="/path/to/working/dir"
                                 className={PROJECT_FORM_CONTROL_MAX_WIDTH_CLASS}
                                 aria-invalid={isWorkingDirInvalid}
@@ -238,7 +237,7 @@ export function CommandConfigSection({
                             <div className="flex h-9 items-center gap-3 text-sm font-medium">
                                 <span>TTY</span>
                                 <Checkbox
-                                    checked={tty.value as boolean}
+                                    checked={tty.value}
                                     onCheckedChange={checked => {
                                         tty.onChange(checked === true);
                                     }}
@@ -261,7 +260,7 @@ export function CommandConfigSection({
                                                 id={consoleWidthInputId}
                                                 ref={consoleWidth.ref}
                                                 name={consoleWidth.name}
-                                                value={consoleWidth.value as number | undefined}
+                                                value={consoleWidth.value}
                                                 onBlur={consoleWidth.onBlur}
                                                 onValueChange={value => {
                                                     consoleWidth.onChange(
@@ -282,8 +281,7 @@ export function CommandConfigSection({
                                             errors={[
                                                 (
                                                     commandErrors?.["consoleSize"] as
-                                                        | Record<string, unknown>
-                                                        | undefined
+                                                        Record<string, unknown> | undefined
                                                 )?.["width"] as ReactHookFormFieldError | undefined,
                                             ]}
                                         />
@@ -301,7 +299,7 @@ export function CommandConfigSection({
                                                 id={consoleHeightInputId}
                                                 ref={consoleHeight.ref}
                                                 name={consoleHeight.name}
-                                                value={consoleHeight.value as number | undefined}
+                                                value={consoleHeight.value}
                                                 onBlur={consoleHeight.onBlur}
                                                 onValueChange={value => {
                                                     consoleHeight.onChange(
@@ -322,8 +320,7 @@ export function CommandConfigSection({
                                             errors={[
                                                 (
                                                     commandErrors?.["consoleSize"] as
-                                                        | Record<string, unknown>
-                                                        | undefined
+                                                        Record<string, unknown> | undefined
                                                 )?.["height"] as ReactHookFormFieldError | undefined,
                                             ]}
                                         />

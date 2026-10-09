@@ -52,7 +52,7 @@ export function RestartPolicyFields() {
                 <Tabs
                     value={condition.value}
                     onValueChange={v => {
-                        condition.onChange(v as ERestartPolicyCondition);
+                        condition.onChange(v);
                     }}
                     className="w-fit"
                 >

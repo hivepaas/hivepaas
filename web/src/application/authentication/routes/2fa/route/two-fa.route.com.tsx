@@ -29,10 +29,7 @@ type State =
           type: "error";
       };
 
-function View({ email, mfaToken }: ViewProps) {
-    void email;
-    void mfaToken;
-
+function View({ mfaToken }: ViewProps) {
     const [state, setState] = useState<State>({
         type: "initial",
     });
@@ -103,7 +100,6 @@ function View({ email, mfaToken }: ViewProps) {
 }
 
 interface ViewProps {
-    email: string;
     mfaToken: string;
 }
 
@@ -124,10 +120,5 @@ export function TwoFaRoute() {
         );
     }
 
-    return (
-        <View
-            email={data.email}
-            mfaToken={data.mfaToken}
-        />
-    );
+    return <View mfaToken={data.mfaToken} />;
 }

@@ -142,7 +142,7 @@ export function ProvisionGithubAppForm({
                                 <Tabs
                                     value={ownerType.value}
                                     onValueChange={value => {
-                                        ownerType.onChange(value as EGithubAppOwnerType);
+                                        ownerType.onChange(value);
                                     }}
                                 >
                                     <TabsList>

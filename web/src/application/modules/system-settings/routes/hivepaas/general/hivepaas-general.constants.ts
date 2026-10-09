@@ -1,11 +1,7 @@
 export const PROXY_PROVIDER_UNSPECIFIED = "unspecified" as const;
 
 export type HivePaaSKnownProxyProvider =
-    | "cloudflare"
-    | "fastly"
-    | "aws-cloudfront"
-    | "imperva"
-    | typeof PROXY_PROVIDER_UNSPECIFIED;
+    "cloudflare" | "fastly" | "aws-cloudfront" | "imperva" | typeof PROXY_PROVIDER_UNSPECIFIED;
 
 export const PROXY_PROVIDER_OPTIONS: string[] = [
     "cloudflare",

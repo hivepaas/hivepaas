@@ -1,7 +1,6 @@
 import { InputOTP, InputOTPGroup, InputOTPSlot } from "@components/ui/input-otp";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { type FieldErrors, useController, useForm } from "react-hook-form";
-import z from "zod";
 
 import { MfaQrCode } from "@application/shared/components";
 
@@ -9,17 +8,11 @@ import { Button } from "@/components/ui/button";
 import { DialogActionFooter, DialogBody } from "@/components/ui/dialog";
 import { Field, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field";
 
+import { F2aSetupSchema, type F2aSetupSchemaInput, type F2aSetupSchemaOutput } from "./f2a-setup.form.schema";
+
 const CODE_LENGTH = 6;
 
-export const F2aSetupSchema = z.object({
-    passcode: z.string().trim().min(1, "Passcode is required"),
-});
-
-export type F2aSetupSchemaInput = z.input<typeof F2aSetupSchema>;
-export type F2aSetupSchemaOutput = z.output<typeof F2aSetupSchema>;
-
-export function F2aSetupForm({ isPending, onSubmit, qrCode, totpToken, secretKey }: Props) {
-    void totpToken;
+export function F2aSetupForm({ isPending, onSubmit, qrCode, secretKey }: Props) {
     const {
         handleSubmit,
         control,
@@ -126,6 +119,5 @@ interface Props {
     isPending: boolean;
     onSubmit: (values: F2aSetupSchemaOutput) => Promise<void> | void;
     qrCode: string;
-    totpToken: string;
     secretKey: string;
 }

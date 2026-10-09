@@ -200,7 +200,7 @@ export function CreateOrEditSSHKeyForm({
                                     <Select
                                         value={kind.value}
                                         onValueChange={value => {
-                                            kind.onChange(value as ESSHKeyKind);
+                                            kind.onChange(value);
                                         }}
                                     >
                                         <SelectTrigger aria-invalid={isKindInvalid}>

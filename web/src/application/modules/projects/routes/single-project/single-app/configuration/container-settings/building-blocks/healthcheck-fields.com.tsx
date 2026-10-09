@@ -76,7 +76,7 @@ export function HealthcheckFields() {
                         <Tabs
                             value={mode.value}
                             onValueChange={v => {
-                                mode.onChange(v as EHealthcheckMode);
+                                mode.onChange(v);
                             }}
                             className="w-fit"
                         >

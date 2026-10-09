@@ -315,7 +315,7 @@ function ArgGroupRow({ groupIndex, onRemove, readOnly = false, fieldName = "argG
                                         className="w-fit"
                                         disabled={readOnly}
                                         onClick={() => {
-                                            append(createDefaultCommandArg() as never);
+                                            append(createDefaultCommandArg());
                                         }}
                                     >
                                         <Plus className="size-4" />

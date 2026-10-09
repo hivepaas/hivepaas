@@ -96,7 +96,7 @@ export function AppLogsHistory({
         () =>
             [...(query.data?.pages ?? [])].reverse().flatMap(page =>
                 page.data.logs.map(frame => ({
-                    type: frame.type as LogsViewerFrame["type"],
+                    type: frame.type,
                     data: frame.data,
                     ts: frame.ts,
                 })),

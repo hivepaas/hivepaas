@@ -31,7 +31,11 @@ import { useSettingInUseDialogState } from "../hooks";
  * of a setting hang off the same path the delete was sent to.
  */
 export function SettingInUseDialog() {
-    const { mode, props: { settingName = "", requestUrl = "" } = {}, close } = useSettingInUseDialogState();
+    const {
+        mode,
+        props: { settingName = "", requestUrl = "" },
+        close,
+    } = useSettingInUseDialogState();
     const { queries } = useSettingUsageApi();
 
     const open = mode === "open";

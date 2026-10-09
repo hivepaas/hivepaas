@@ -129,7 +129,7 @@ export function AppTerminalPanel({
     }
 
     const sendResizeToSocket = useCallback((socket: WebSocket | undefined, width: number, height: number) => {
-        if (!socket || socket.readyState !== WebSocket.OPEN || width <= 0 || height <= 0) {
+        if (socket?.readyState !== WebSocket.OPEN || width <= 0 || height <= 0) {
             return;
         }
 
@@ -145,7 +145,7 @@ export function AppTerminalPanel({
         const targetSocket = socket ?? subscriptionRef.current?.socket;
         const terminal = terminalRef.current;
 
-        if (!targetSocket || targetSocket.readyState !== WebSocket.OPEN || !terminal) {
+        if (targetSocket?.readyState !== WebSocket.OPEN || !terminal) {
             return;
         }
 

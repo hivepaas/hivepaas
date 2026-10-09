@@ -108,7 +108,7 @@ export function CertificateConfigurationFields({ readOnly = false }: Props) {
                     <Select
                         value={certType.value}
                         onValueChange={value => {
-                            certType.onChange(value as ESslCertType);
+                            certType.onChange(value);
                         }}
                         disabled={readOnly}
                     >

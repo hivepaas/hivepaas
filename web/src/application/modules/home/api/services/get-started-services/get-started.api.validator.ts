@@ -15,13 +15,11 @@ const DashboardCertSchema = z
         domain: z.string().nullish(),
         error: z.string().nullish(),
     })
-    .transform(
-        (cert): DashboardCert => ({
-            status: cert.status,
-            domain: cert.domain ?? "",
-            error: cert.error ?? "",
-        }),
-    );
+    .transform((cert): DashboardCert => ({
+        status: cert.status,
+        domain: cert.domain ?? "",
+        error: cert.error ?? "",
+    }));
 
 const DashboardCertResponseSchema = z.object({
     data: DashboardCertSchema,

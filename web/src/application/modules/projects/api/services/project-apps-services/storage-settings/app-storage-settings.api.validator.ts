@@ -14,7 +14,7 @@ const VolumeDriverSchema = z.object({
     options: z
         .record(z.string())
         .nullish()
-        .transform(rec => rec ?? ({} as Record<string, string>)),
+        .transform(rec => rec ?? {}),
 });
 
 const BindOptionsSchema = z.object({
@@ -31,7 +31,7 @@ const VolumeOptionsSchema = z.object({
     labels: z
         .record(z.string())
         .nullish()
-        .transform(rec => rec ?? ({} as Record<string, string>)),
+        .transform(rec => rec ?? {}),
     driverConfig: VolumeDriverSchema.nullish(),
 });
 
@@ -47,7 +47,7 @@ const ClusterOptionsSchema = z.object({
     labels: z
         .record(z.string())
         .nullish()
-        .transform(rec => rec ?? ({} as Record<string, string>)),
+        .transform(rec => rec ?? {}),
     driverConfig: VolumeDriverSchema.nullish(),
 });
 

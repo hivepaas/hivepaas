@@ -53,7 +53,7 @@ export function SecuritySwitchSection({ field, title, action, description }: Sec
         setAppSecret("");
     }
 
-    function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
+    function handleSubmit(event: React.SubmitEvent<HTMLFormElement>) {
         event.preventDefault();
         if (!appSecret.trim() || isUpdating || !settings) return;
 

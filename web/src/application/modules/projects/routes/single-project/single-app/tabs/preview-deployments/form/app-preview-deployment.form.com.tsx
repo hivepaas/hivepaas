@@ -21,7 +21,6 @@ import {
     AppPreviewDeploymentFormSchema,
     DEFAULT_APP_PREVIEW_DEPLOYMENT_FORM_VALUES,
     PREVIEW_DEPLOYMENT_TRIGGER,
-    type PreviewDeploymentTrigger,
 } from "../schemas";
 
 import { PreviewWithheldSecretsWarning } from "./preview-withheld-secrets-warning.com";
@@ -118,7 +117,7 @@ export function AppPreviewDeploymentForm({
                         <Tabs
                             value={trigger.value}
                             onValueChange={value => {
-                                trigger.onChange(value as PreviewDeploymentTrigger);
+                                trigger.onChange(value);
                             }}
                         >
                             <TabsList>

@@ -12,7 +12,7 @@ function View<T>({ name, isAdmin = false, disabled = false }: Props<T>) {
 
     const { field } = useController({
         control,
-        name: name as string,
+        name,
     });
 
     const isFieldDisabled = disabled || !currentUserIsAdmin;

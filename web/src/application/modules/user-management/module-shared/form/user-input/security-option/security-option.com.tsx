@@ -37,7 +37,7 @@ function View<T>({ name, role, disabled = false }: Props<T>) {
         fieldState: { invalid },
     } = useController({
         control,
-        name: name as string,
+        name,
     });
 
     const { onChange } = securityOption;
@@ -76,7 +76,7 @@ function View<T>({ name, role, disabled = false }: Props<T>) {
                         return;
                     }
 
-                    onChange(value as ESecuritySettings);
+                    onChange(value);
                 }}
             >
                 <TabsList>

@@ -29,7 +29,7 @@ export interface EditableComboboxProps {
 }
 
 export function EditableCombobox({
-    options = [],
+    options,
     value,
     onChange,
     onInputChange,

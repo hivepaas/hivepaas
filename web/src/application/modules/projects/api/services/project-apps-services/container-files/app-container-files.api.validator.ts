@@ -29,8 +29,7 @@ const UploadMessageSchema = z.discriminatedUnion("type", [
 ]);
 
 export type AppContainerFiles_UploadMessage =
-    | { type: "progress"; received: number }
-    | { type: "answer"; result: Result<AppContainerFiles_UploadOne_Res, Error> };
+    { type: "progress"; received: number } | { type: "answer"; result: Result<AppContainerFiles_UploadOne_Res, Error> };
 
 export class AppContainerFilesApiValidator {
     uploadMessage = (message: string): AppContainerFiles_UploadMessage => {

@@ -162,7 +162,7 @@ export function SecurityFields() {
                 <Tabs
                     value={seccompMode.value}
                     onValueChange={v => {
-                        seccompMode.onChange(v as ESeccompMode);
+                        seccompMode.onChange(v);
                     }}
                     className="w-fit"
                 >
@@ -207,7 +207,7 @@ export function SecurityFields() {
                 <Tabs
                     value={appArmorMode.value}
                     onValueChange={v => {
-                        appArmorMode.onChange(v as EAppArmorMode);
+                        appArmorMode.onChange(v);
                     }}
                     className="w-fit"
                 >

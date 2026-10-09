@@ -169,7 +169,7 @@ export function SingleNodeForm({ ref, defaultValues, onSubmit, readOnly = false,
                             <Tabs
                                 value={availability.value}
                                 onValueChange={v => {
-                                    availability.onChange(v as ENodeAvailability);
+                                    availability.onChange(v);
                                 }}
                                 className="w-fit"
                             >

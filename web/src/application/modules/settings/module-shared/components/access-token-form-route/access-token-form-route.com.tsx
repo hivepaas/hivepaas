@@ -193,7 +193,7 @@ export function AccessTokenFormRoute({ mode, scope, accessTokenId }: Props) {
     const initialValues: Partial<CreateOrEditAccessTokenFormInput> | undefined = activeAccessToken
         ? {
               name: activeAccessToken.name,
-              kind: (activeAccessToken.kind ?? EAccessTokenKind.Github) as EAccessTokenKind,
+              kind: activeAccessToken.kind ?? EAccessTokenKind.Github,
               user: activeAccessToken.user,
               token: activeAccessToken.token,
               baseURL: activeAccessToken.baseURL,

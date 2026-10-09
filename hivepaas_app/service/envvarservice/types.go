@@ -106,9 +106,15 @@ type AppEnvVarData struct {
 	Secrets []*entity.Setting
 }
 
+// Errors are what stops the app's variables from being applied. A preview goes
+// without the secrets its app keeps from previews: a variable built from one is
+// empty there - the pull request's comment says which - and is not one of them.
 func (e *AppEnvVarData) Errors() (res []string) {
 	for _, env := range e.EnvVars {
 		for _, err := range env.Errors {
+			if err.Type == ParseErrorVarUsesWithheldSecret && e.App.IsPreviewApp() {
+				continue
+			}
 			res = append(res, err.ErrorWithApp(e.App.Name))
 		}
 	}

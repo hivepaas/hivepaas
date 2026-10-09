@@ -87,18 +87,34 @@ type streamControl struct {
 }
 
 const (
-	streamEnd   = "end"
-	streamDone  = "done"
-	streamError = "error"
+	streamEnd      = "end"
+	streamDone     = "done"
+	streamError    = "error"
+	streamProgress = "progress"
 )
+
+// streamProgressMessage tells a client that asked how much of its upload the
+// copy has taken.
+type streamProgressMessage struct {
+	Type     string `json:"type"`
+	Received int64  `json:"received"`
+}
+
+// answerDrain is how long the server reads what a client still sends after the
+// answer, for the client's close: a connection closed with bytes unread is
+// reset, and a reset can cost the client the answer before it.
+const answerDrain = 2 * time.Second
 
 // pumpUpload writes what a client sends over conn into w until its end message:
 // binary messages are the content, {"type":"end"} its end. A client silent for
 // idle ends the copy, with an error; so does a reader that stopped. It closes w
-// either way, with the error when there is one.
-func pumpUpload(conn *websocket.Conn, w *io.PipeWriter, idle time.Duration) (err error) {
+// either way, with the error when there is one. With progress, the client is
+// told after each message how much the reader has taken: a write to the pipe
+// returns once it has.
+func pumpUpload(conn *websocket.Conn, w *io.PipeWriter, idle time.Duration, progress bool) (err error) {
 	defer func() { _ = w.CloseWithError(err) }()
 	conn.SetReadLimit(streamMessageMax)
+	var received int64
 	for {
 		if err = conn.SetReadDeadline(time.Now().Add(idle)); err != nil {
 			return hperrors.Wrap(err)
@@ -114,6 +130,15 @@ func pumpUpload(conn *websocket.Conn, w *io.PipeWriter, idle time.Duration) (err
 		case websocket.BinaryMessage:
 			if _, err = w.Write(message); err != nil {
 				return err //nolint:wrapcheck // the reader's own error, as it stopped
+			}
+			received += int64(len(message))
+			if progress {
+				if err = conn.SetWriteDeadline(time.Now().Add(idle)); err != nil {
+					return hperrors.Wrap(err)
+				}
+				if err = conn.WriteJSON(streamProgressMessage{Type: streamProgress, Received: received}); err != nil {
+					return hperrors.Wrap(err)
+				}
 			}
 		case websocket.TextMessage:
 			var control streamControl
@@ -174,7 +199,7 @@ type uploadFunc func(context.Context, *appcontainerdto.UploadFileToContainerReq)
 // pipe, and answers one message: done, or the error. A copy that went well is
 // done, whatever the client sent after its end - a tar's padding.
 func serveUploadStream(ctx context.Context, conn *websocket.Conn, req *appcontainerdto.UploadFileToContainerReq,
-	upload uploadFunc, errInfo func(error) *hperrors.ErrorInfo,
+	upload uploadFunc, progress bool, errInfo func(error) *hperrors.ErrorInfo,
 ) {
 	pr, pw := io.Pipe()
 	req.FileContent = pr
@@ -203,7 +228,7 @@ func serveUploadStream(ctx context.Context, conn *websocket.Conn, req *appcontai
 		out.resp, out.err = upload(ctx, req)
 	})
 
-	pumpErr := pumpUpload(conn, pw, transferIdle)
+	pumpErr := pumpUpload(conn, pw, transferIdle, progress)
 	result := <-copied
 	answer := streamControl{Type: streamDone}
 	if result.resp != nil {
@@ -221,6 +246,18 @@ func serveUploadStream(ctx context.Context, conn *websocket.Conn, req *appcontai
 	}
 	_ = conn.WriteControl(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.CloseNormalClosure, ""),
 		time.Now().Add(time.Second))
+	drainUntilClosed(conn, answerDrain)
+}
+
+// drainUntilClosed reads, and drops, what the client sends until its close -
+// for wait at most. One that left already ends it at once.
+func drainUntilClosed(conn *websocket.Conn, wait time.Duration) {
+	_ = conn.SetReadDeadline(time.Now().Add(wait))
+	for {
+		if _, _, err := conn.NextReader(); err != nil {
+			return
+		}
+	}
 }
 
 // StreamFileToContainer Uploads a file or archive into container over a websocket
@@ -228,7 +265,10 @@ func serveUploadStream(ctx context.Context, conn *websocket.Conn, req *appcontai
 // @Description Takes what file-upload takes, as query parameters, then the content as binary messages
 // @Description and {"type":"end"} as a text message; answers {"type":"done","data":{...}} or
 // @Description {"type":"error","error":{...}}. Neither the server's nor Traefik's timeouts cut it; a
-// @Description client sends a message at least every 60 seconds.
+// @Description client sends a message at least every 60 seconds. With progress=true, each binary
+// @Description message is followed by {"type":"progress","received":<bytes the copy has taken>}.
+// @Description Without the websocket upgrade, the request is only checked: 204 when the stream would
+// @Description be taken, else the error it would get - which a browser cannot read from a refused upgrade.
 // @Tags    Apps
 // @Produce json
 // @Id      streamFileToAppContainer
@@ -243,7 +283,9 @@ func serveUploadStream(ctx context.Context, conn *websocket.Conn, req *appcontai
 // @Param   overwrite query boolean false "allow overwrite (default: true)"
 // @Param   fileName query string false "the file's name"
 // @Param   fileSize query integer false "the file's size in bytes: required unless extract"
+// @Param   progress query boolean false "be told after each message how much the copy has taken"
 // @Success 101
+// @Success 204
 // @Failure 400 {object} hperrors.ErrorInfo
 // @Failure 500 {object} hperrors.ErrorInfo
 // @Router  /projects/{projectID}/{projectEnv}/apps/{appID}/container/file-upload/stream [get]
@@ -260,6 +302,7 @@ func (h *Handler) StreamFileToContainer(ctx *gin.Context) {
 		return
 	}
 	req.FileName = ctx.Query("fileName")
+	progress, _ := strconv.ParseBool(ctx.Query("progress"))
 	if !req.Extract {
 		// The tar a single file goes in starts with its size.
 		if req.FileSize, err = strconv.ParseInt(ctx.Query("fileSize"), 10, 64); err != nil || req.FileSize < 0 {
@@ -269,7 +312,7 @@ func (h *Handler) StreamFileToContainer(ctx *gin.Context) {
 		}
 	}
 	if !h.IsWebsocketRequest(ctx) {
-		h.RenderError(ctx, hperrors.Wrap(hperrors.ErrBadRequest).WithMsgLog("the stream is a websocket"))
+		ctx.Status(http.StatusNoContent)
 		return
 	}
 
@@ -287,6 +330,6 @@ func (h *Handler) StreamFileToContainer(ctx *gin.Context) {
 			*appcontainerdto.UploadFileToContainerResp, error,
 		) {
 			return h.appContainerUC.UploadFileToContainer(ctx, auth, req)
-		},
+		}, progress,
 		func(err error) *hperrors.ErrorInfo { return h.ErrorInfoOf(ctx, err) })
 }

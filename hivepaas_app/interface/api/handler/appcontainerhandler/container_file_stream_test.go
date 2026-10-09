@@ -107,7 +107,7 @@ func newStreamServer(t *testing.T, idle time.Duration, readErr error) *streamSer
 			data, _ := io.ReadAll(pr)
 			s.got <- data
 		}()
-		s.pumped <- pumpUpload(conn, pw, idle)
+		s.pumped <- pumpUpload(conn, pw, idle, false)
 	}))
 	t.Cleanup(s.srv.Close)
 	return s
@@ -208,19 +208,28 @@ func TestADownloadThatFailsAtOnceIsAnswered(t *testing.T) {
 
 // stream serves an upload stream with upload as the use case, and gives the
 // client's connection and the errors the server answered.
-func stream(t *testing.T, req *appcontainerdto.UploadFileToContainerReq,
-	upload func(context.Context, *appcontainerdto.UploadFileToContainerReq) (
-		*appcontainerdto.UploadFileToContainerResp, error),
+func stream(t *testing.T, req *appcontainerdto.UploadFileToContainerReq, upload uploadFunc,
 ) (*websocket.Conn, chan *hperrors.ErrorInfo) {
 	t.Helper()
-	answered := make(chan *hperrors.ErrorInfo, 1)
+	conn, answered, _ := streamWith(t, req, upload, false)
+	return conn, answered
+}
+
+// streamWith is stream, the client asking for progress or not; served is
+// closed once the server is done with the connection.
+func streamWith(t *testing.T, req *appcontainerdto.UploadFileToContainerReq, upload uploadFunc, progress bool,
+) (conn *websocket.Conn, answered chan *hperrors.ErrorInfo, served chan struct{}) {
+	t.Helper()
+	answered = make(chan *hperrors.ErrorInfo, 1)
+	served = make(chan struct{})
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		conn, err := (&websocket.Upgrader{}).Upgrade(w, r, nil)
 		if err != nil {
 			return
 		}
+		defer close(served)
 		defer conn.Close()
-		serveUploadStream(r.Context(), conn, req, upload, func(err error) *hperrors.ErrorInfo {
+		serveUploadStream(r.Context(), conn, req, upload, progress, func(err error) *hperrors.ErrorInfo {
 			info, _ := hperrors.ParseError(err, "")
 			answered <- info
 			return info
@@ -231,7 +240,7 @@ func stream(t *testing.T, req *appcontainerdto.UploadFileToContainerReq,
 	mustNot(t, err)
 	_ = resp.Body.Close()
 	t.Cleanup(func() { _ = conn.Close() })
-	return conn, answered
+	return conn, answered, served
 }
 
 // answerOf reads the server's last message.
@@ -327,6 +336,68 @@ func TestAStreamTheClientLeftIsItsError(t *testing.T) {
 		assert.Equal(t, http.StatusBadRequest, info.Status)
 	case <-time.After(5 * time.Second):
 		t.Fatal("no answer")
+	}
+}
+
+// A client that asks for progress is told, after each message, how much of the
+// upload the copy has taken: what it may send next is bounded by that, with no
+// timer of its own - a browser's, in a tab in the background, wakes once a
+// minute.
+func TestAStreamAskedForProgressTellsWhatTheCopyTook(t *testing.T) {
+	conn, _, _ := streamWith(t, &appcontainerdto.UploadFileToContainerReq{FileSize: 5}, readAll, true)
+
+	var told []string
+	for _, part := range []string{"12", "345"} {
+		mustNot(t, conn.WriteMessage(websocket.BinaryMessage, []byte(part)))
+		_ = conn.SetReadDeadline(time.Now().Add(5 * time.Second))
+		_, message, err := conn.ReadMessage()
+		mustNot(t, err, "no progress after a message")
+		told = append(told, strings.TrimSpace(string(message)))
+	}
+	mustNot(t, conn.WriteMessage(websocket.TextMessage, []byte(`{"type":"end"}`)))
+
+	assert.Equal(t, []string{`{"type":"progress","received":2}`, `{"type":"progress","received":5}`}, told)
+	assert.Equal(t, streamDone, answerOf(t, conn).Type)
+}
+
+// A client not asking for progress is told nothing until the answer: one that
+// reads only then would fill its buffer with what it does not read.
+func TestAStreamNotAskedForProgressTellsOnlyTheAnswer(t *testing.T) {
+	conn, _ := stream(t, &appcontainerdto.UploadFileToContainerReq{FileSize: 5}, readAll)
+	send(t, conn, "12", "345")
+
+	_ = conn.SetReadDeadline(time.Now().Add(5 * time.Second))
+	_, message, err := conn.ReadMessage()
+	mustNot(t, err)
+	assert.Contains(t, string(message), `"type":"done"`)
+}
+
+// After its answer the server waits for the client's close, reading what the
+// client still sends: a connection closed with bytes unread is reset, and a
+// reset can cost the client the answer that came before it.
+func TestAStreamAnsweredWaitsForTheClientsClose(t *testing.T) {
+	conn, _, served := streamWith(t, &appcontainerdto.UploadFileToContainerReq{Extract: true},
+		func(context.Context, *appcontainerdto.UploadFileToContainerReq) (
+			*appcontainerdto.UploadFileToContainerResp, error,
+		) {
+			return nil, hperrors.NewArgumentInvalid("path")
+		}, false)
+	mustNot(t, conn.WriteMessage(websocket.BinaryMessage, []byte("part")))
+	assert.Equal(t, streamError, answerOf(t, conn).Type)
+
+	// The client was still sending.
+	_ = conn.WriteMessage(websocket.BinaryMessage, []byte("more"))
+	select {
+	case <-served:
+		t.Fatal("the server closed the connection before the client did")
+	case <-time.After(300 * time.Millisecond):
+	}
+
+	_ = conn.WriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.CloseNormalClosure, ""))
+	select {
+	case <-served:
+	case <-time.After(5 * time.Second):
+		t.Fatal("the server waited on after the client closed")
 	}
 }
 

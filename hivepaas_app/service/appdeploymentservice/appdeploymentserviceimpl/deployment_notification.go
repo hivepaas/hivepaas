@@ -2,12 +2,14 @@ package appdeploymentserviceimpl
 
 import (
 	"context"
+	"strings"
 	"time"
 
 	"github.com/tiendc/gofn"
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/config"
+	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/notificationservice"
@@ -79,6 +81,9 @@ func (s *service) buildDeploymentNotifMsgData(
 		Duration:      deployment.GetDuration().Truncate(time.Millisecond),
 		DashboardLink: config.Current().DashboardAppDeploymentDetailsURL(scope.GetBaseURLPath(), deployment.ID),
 	}
+	if !isSucceeded {
+		msgData.Reason = failureReason(deployment)
+	}
 	data.NotifMsgData = msgData
 
 	switch deployment.Settings.ActiveMethod {
@@ -101,4 +106,22 @@ func (s *service) buildDeploymentNotifMsgData(
 			}
 		}
 	}
+}
+
+// notifReasonMaxLen is how much of a failure's reason a notification carries:
+// within what each channel takes in one field - Discord's 1024 characters the
+// least. The rest is a click away, in the deployment's details.
+const notifReasonMaxLen = 1000
+
+// failureReason is why a deployment failed, as its details say it, cut to what
+// a notification carries.
+func failureReason(deployment *entity.Deployment) string {
+	if deployment.Output == nil {
+		return ""
+	}
+	reason := []rune(strings.Join(deployment.Output.Errors, "\n"))
+	if len(reason) > notifReasonMaxLen {
+		return string(reason[:notifReasonMaxLen-1]) + "…"
+	}
+	return string(reason)
 }

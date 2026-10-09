@@ -1,7 +1,7 @@
 {
   "embeds": [
     {
-      "title": "[{{.ProjectName}}][{{.AppName}}] Deployment {{if .Succeeded}}succeeded{{else}}failed{{end}}",
+      "title": {{printf "%q" (print "[" .ProjectName "][" .AppName "] Deployment " (or (and .Succeeded "succeeded") "failed"))}},
       "color": {{if .Succeeded}}3066993{{else}}15153724{{end}},
       "fields": [
         {
@@ -39,6 +39,11 @@
         {{else if .Method | eq "image"}}{
           "name": "Image",
           "value": {{printf "%q" .Image}},
+          "inline": false
+        },
+        {{end}}{{if .Reason}}{
+          "name": "Reason",
+          "value": {{printf "%q" .Reason}},
           "inline": false
         },
         {{end}}{

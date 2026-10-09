@@ -9,6 +9,7 @@
 <b>• Commit Author:</b> {{.CommitAuthor}}
 {{else if .Method | eq "image"}}
 <b>• Image:</b> <code>{{.Image}}</code>
+{{end}}{{if .Reason}}<b>• Reason:</b> <code>{{.Reason}}</code>
 {{end}}
 <b>• Started At:</b> <code>{{.StartedAt}}</code>
 <b>• Duration:</b> <code>{{.Duration}}</code>

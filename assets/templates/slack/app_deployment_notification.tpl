@@ -2,7 +2,7 @@
   "attachments": [
     {
       "color": "{{if .Succeeded}}#2eb886{{else}}#a30200{{end}}",
-      "title": "[{{.ProjectName}}][{{.AppName}}] Deployment {{if .Succeeded}}succeeded{{else}}failed{{end}}",
+      "title": {{printf "%q" (print "[" .ProjectName "][" .AppName "] Deployment " (or (and .Succeeded "succeeded") "failed"))}},
       "fields": [
         {
           "title": "Project",
@@ -37,6 +37,11 @@
         {{else if .Method | eq "image"}}{
           "title": "Image",
           "value": {{printf "%q" .Image}},
+          "short": false
+        },
+        {{end}}{{if .Reason}}{
+          "title": "Reason",
+          "value": {{printf "%q" .Reason}},
           "short": false
         },
         {{end}}{

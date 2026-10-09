@@ -86,6 +86,9 @@ type TemplateDataAppDeployment struct {
 	StartedAt     time.Time
 	Duration      time.Duration
 	DashboardLink string
+	// Reason is why a failed deployment failed, as its details say it; empty
+	// for one that succeeded.
+	Reason string
 }
 
 func (d TemplateDataAppDeployment) StartedAtFormatted() string {

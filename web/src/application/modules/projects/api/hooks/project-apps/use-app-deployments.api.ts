@@ -4,6 +4,7 @@ import { match } from "oxide.ts";
 import { ProjectsApiContext } from "~/projects/api/api-context";
 import type {
     AppDeployments_Cancel_Req,
+    AppDeployments_FindActive_Req,
     AppDeployments_FindManyPaginated_Req,
     AppDeployments_FindOneById_Req,
 } from "~/projects/api/services";
@@ -19,6 +20,16 @@ function createHook() {
             () => ({
                 findManyPaginated: async (data: AppDeployments_FindManyPaginated_Req["data"], signal?: AbortSignal) => {
                     const result = await api.projects.apps.deployments.$.findManyPaginated({ data }, signal);
+
+                    return match(result, {
+                        Ok: _ => _,
+                        Err: error => {
+                            throw error;
+                        },
+                    });
+                },
+                findActive: async (data: AppDeployments_FindActive_Req["data"], signal?: AbortSignal) => {
+                    const result = await api.projects.apps.deployments.$.findActive({ data }, signal);
 
                     return match(result, {
                         Ok: _ => _,

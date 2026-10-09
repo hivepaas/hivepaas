@@ -1,10 +1,15 @@
 import { z } from "zod";
 import type {
     AppDeployments_Cancel_Res,
+    AppDeployments_FindActive_Res,
     AppDeployments_FindManyPaginated_Res,
     AppDeployments_FindOneById_Res,
 } from "~/projects/api/services/project-apps-services";
-import { EAppDeploymentMethod, EAppDeploymentTriggerSource } from "~/projects/module-shared/enums";
+import {
+    EAppDeploymentMethod,
+    EAppDeploymentStatus,
+    EAppDeploymentTriggerSource,
+} from "~/projects/module-shared/enums";
 
 import { EUserRole } from "@application/shared/enums";
 
@@ -149,6 +154,16 @@ const FindOneByIdSchema = z.object({
     meta: BaseMetaApiSchema.nullable(),
 });
 
+const FindActiveSchema = z.object({
+    data: z
+        .object({
+            id: z.string(),
+            status: z.enum([EAppDeploymentStatus.InProgress, EAppDeploymentStatus.NotStarted]),
+        })
+        .nullable(),
+    meta: BaseMetaApiSchema.nullable(),
+});
+
 const CancelSchema = z.object({
     data: z.object({
         canceled: z.boolean(),
@@ -168,6 +183,13 @@ export class AppDeploymentsApiValidator {
         return parseApiResponse({
             response,
             schema: FindOneByIdSchema,
+        });
+    };
+
+    findActive = (response: ApiHttpResponse): AppDeployments_FindActive_Res => {
+        return parseApiResponse({
+            response,
+            schema: FindActiveSchema,
         });
     };
 

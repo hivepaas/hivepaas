@@ -1,5 +1,5 @@
 import type { PaginationState, SortingState } from "@infrastructure/data";
-import type { AppDeployment } from "~/projects/domain";
+import type { AppActiveDeployment, AppDeployment } from "~/projects/domain";
 
 import type { ApiRequestBase, ApiResponseBase, ApiResponsePaginated } from "@infrastructure/api";
 
@@ -33,3 +33,12 @@ export type AppDeployments_Cancel_Req = ApiRequestBase<{
 export type AppDeployments_Cancel_Res = ApiResponseBase<{
     canceled: boolean;
 }>;
+
+export type AppDeployments_FindActive_Req = ApiRequestBase<{
+    projectID: string;
+    env: string;
+    appID: string;
+}>;
+
+/** Null when no deployment of the app is queued or running. */
+export type AppDeployments_FindActive_Res = ApiResponseBase<AppActiveDeployment | null>;

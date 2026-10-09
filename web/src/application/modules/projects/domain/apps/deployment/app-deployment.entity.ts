@@ -70,3 +70,9 @@ export interface AppDeployment {
     createdAt: Date;
     updatedAt: Date | null;
 }
+
+/** The app's deployment that has not ended: the one running, or else the next to run. */
+export interface AppActiveDeployment {
+    id: string;
+    status: typeof EAppDeploymentStatus.InProgress | typeof EAppDeploymentStatus.NotStarted;
+}

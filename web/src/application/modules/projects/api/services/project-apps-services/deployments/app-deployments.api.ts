@@ -4,6 +4,8 @@ import type {
     AppDeploymentsApiValidator,
     AppDeployments_Cancel_Req,
     AppDeployments_Cancel_Res,
+    AppDeployments_FindActive_Req,
+    AppDeployments_FindActive_Res,
     AppDeployments_FindManyPaginated_Req,
     AppDeployments_FindManyPaginated_Res,
     AppDeployments_FindOneById_Req,
@@ -52,6 +54,25 @@ export class AppDeploymentsApi extends BaseApi {
                 }),
             ).pipe(
                 map(this.validator.findOneById),
+                map(res => Ok(res)),
+                catchError(error => of(Err(parseApiError(error)))),
+            ),
+        );
+    }
+
+    async findActive(
+        request: AppDeployments_FindActive_Req,
+        signal?: AbortSignal,
+    ): Promise<Result<AppDeployments_FindActive_Res, Error>> {
+        const { projectID, env, appID } = request.data;
+
+        return lastValueFrom(
+            from(
+                this.client.v1.get(`/projects/${projectID}/${env}/apps/${appID}/deployments/active`, {
+                    signal,
+                }),
+            ).pipe(
+                map(this.validator.findActive),
                 map(res => Ok(res)),
                 catchError(error => of(Err(parseApiError(error)))),
             ),

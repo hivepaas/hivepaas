@@ -11,6 +11,11 @@ export function invalidateSingleAppSummaryQueries(queryClient: QueryClient, scop
     void queryClient.invalidateQueries({
         queryKey: [QK["projects.apps.$.find-many-paginated"]],
     });
+    // A deployment started, or canceled: the header says so at once, not at its
+    // next poll.
+    void queryClient.invalidateQueries({
+        queryKey: [QK["projects.apps.deployments.$.find-active"]],
+    });
     void queryClient.invalidateQueries({
         queryKey: [QK["projects.apps.$.find-one-by-id"], scope],
     });

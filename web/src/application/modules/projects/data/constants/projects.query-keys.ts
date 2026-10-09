@@ -22,6 +22,7 @@ export const QK = {
     "projects.apps.terminal.$.get-info": "projects.apps.terminal.$.get-info",
     "projects.apps.deployments.$.find-many-paginated": "projects.apps.deployments.$.find-many-paginated",
     "projects.apps.deployments.$.find-one-by-id": "projects.apps.deployments.$.find-one-by-id",
+    "projects.apps.deployments.$.find-active": "projects.apps.deployments.$.find-active",
     "projects.apps.previews.$.find-many-paginated": "projects.apps.previews.$.find-many-paginated",
     /*
      * Project Secrets

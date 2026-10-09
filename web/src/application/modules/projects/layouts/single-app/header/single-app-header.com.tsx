@@ -1,13 +1,27 @@
-import { memo, useMemo, useState } from "react";
+import { memo, useEffect, useMemo, useRef, useState } from "react";
 
 import { Button, Checkbox } from "@components/ui";
 import { Avatar } from "@components/ui/avatar";
+import { useQueryClient } from "@tanstack/react-query";
 import { Power, RefreshCw } from "lucide-react";
 import { useParams } from "react-router";
 import { toast } from "sonner";
 import invariant from "tiny-invariant";
-import { AppServiceTasksQueries, ProjectAppsCommands, ProjectAppsQueries, ProjectsQueries } from "~/projects/data";
-import { AppInstancesCountBadge, ProjectAppStatusBadge, ProjectEnvFilter } from "~/projects/module-shared/components";
+import {
+    AppDeploymentsQueries,
+    AppServiceTasksQueries,
+    ProjectAppsCommands,
+    ProjectAppsQueries,
+    ProjectsQueries,
+} from "~/projects/data";
+import { QK } from "~/projects/data/constants";
+import {
+    AppActiveDeploymentBadge,
+    AppActiveDeploymentDot,
+    AppInstancesCountBadge,
+    ProjectAppStatusBadge,
+    ProjectEnvFilter,
+} from "~/projects/module-shared/components";
 import { EProjectAppStatus } from "~/projects/module-shared/enums";
 import {
     APP_SERVICE_TASKS_REFETCH_INTERVAL_MS,
@@ -25,6 +39,27 @@ import { SingleAppBreadcrumbs } from "../buidling-blocks";
 import { AppAccessLinksDropdown } from "./building-blocks";
 import { SingleAppHeaderSkeleton } from "./single-app-header.skeleton.com";
 
+// How often the header asks whether a deployment of the app is queued or running.
+const APP_ACTIVE_DEPLOYMENT_REFETCH_INTERVAL_MS = 5_000;
+
+// useReadAgainWhenDeploymentEnds reads again what a deployment changes - the
+// deployments, the app - once the one the header showed is no longer queued or
+// running: it ended, or the next took its place.
+function useReadAgainWhenDeploymentEnds(projectID: string, activeDeploymentId: string | null) {
+    const queryClient = useQueryClient();
+    const shown = useRef<string | null>(null);
+
+    useEffect(() => {
+        if (shown.current && shown.current !== activeDeploymentId) {
+            void queryClient.invalidateQueries({ queryKey: [QK["projects.apps.deployments.$.find-many-paginated"]] });
+            void queryClient.invalidateQueries({ queryKey: [QK["projects.apps.deployments.$.find-one-by-id"]] });
+            void queryClient.invalidateQueries({ queryKey: [QK["projects.apps.$.find-one-by-id"]] });
+            void queryClient.invalidateQueries({ queryKey: [QK["projects.$.find-one-by-id"], { projectID }] });
+        }
+        shown.current = activeDeploymentId;
+    }, [queryClient, projectID, activeDeploymentId]);
+}
+
 function View({ projectId, env, appId }: Props) {
     const { taskId } = useParams<{
         taskId?: string;
@@ -41,6 +76,14 @@ function View({ projectId, env, appId }: Props) {
         { refetchInterval: APP_SERVICE_TASKS_REFETCH_INTERVAL_MS },
     );
     const serviceTasks = serviceTasksResponse?.data;
+    // A deployment queued or running, asked as often as the instances: the
+    // header and the Deployments tab say so.
+    const { data: activeDeploymentResponse } = AppDeploymentsQueries.useFindActive(
+        { projectID: projectId, env, appID: appId },
+        { refetchInterval: APP_ACTIVE_DEPLOYMENT_REFETCH_INTERVAL_MS },
+    );
+    const activeDeployment = activeDeploymentResponse?.data ?? null;
+    useReadAgainWhenDeploymentEnds(projectId, activeDeployment?.id ?? null);
     const instancesHealth = useMemo(
         () => (serviceTasks ? computeAppInstancesHealth(serviceTasks) : null),
         [serviceTasks],
@@ -158,7 +201,12 @@ function View({ projectId, env, appId }: Props) {
         },
         {
             route: ROUTE.projects.single.apps.single.deployments.$route(projectId, env, appId),
-            label: "Deployments",
+            label: (
+                <span className="inline-flex items-center gap-1.5">
+                    Deployments
+                    {activeDeployment && <AppActiveDeploymentDot deployment={activeDeployment} />}
+                </span>
+            ),
             activePathPrefixes: [ROUTE.projects.single.apps.single.deployments.$route(projectId, env, appId)],
         },
         {
@@ -226,6 +274,14 @@ function View({ projectId, env, appId }: Props) {
                                 {appData.name}
                             </h2>
                             <ProjectAppStatusBadge status={appData.status} />
+                            {activeDeployment && (
+                                <AppActiveDeploymentBadge
+                                    projectId={projectId}
+                                    env={env}
+                                    appId={appId}
+                                    deployment={activeDeployment}
+                                />
+                            )}
                         </div>
                     </div>
                 </div>

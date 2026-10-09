@@ -1,6 +1,8 @@
 import { type UseQueryOptions, keepPreviousData, useQuery } from "@tanstack/react-query";
 import { useAppDeploymentsApi } from "~/projects/api";
 import type {
+    AppDeployments_FindActive_Req,
+    AppDeployments_FindActive_Res,
     AppDeployments_FindManyPaginated_Req,
     AppDeployments_FindManyPaginated_Res,
     AppDeployments_FindOneById_Req,
@@ -38,7 +40,24 @@ function useFindOneById(request: FindOneByIdReq, options: FindOneByIdOptions = {
     });
 }
 
+type FindActiveReq = AppDeployments_FindActive_Req["data"];
+type FindActiveRes = AppDeployments_FindActive_Res;
+type FindActiveOptions = Omit<UseQueryOptions<FindActiveRes>, "queryKey" | "queryFn">;
+
+// The app's deployment that has not ended, if any: what its header says, asked
+// every few seconds.
+function useFindActive(request: FindActiveReq, options: FindActiveOptions = {}) {
+    const { queries } = useAppDeploymentsApi();
+
+    return useQuery({
+        queryKey: [QK["projects.apps.deployments.$.find-active"], request],
+        queryFn: ({ signal }) => queries.findActive(request, signal),
+        ...options,
+    });
+}
+
 export const AppDeploymentsQueries = Object.freeze({
     useFindManyPaginated,
     useFindOneById,
+    useFindActive,
 });

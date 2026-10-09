@@ -85,9 +85,17 @@ fi
 # directory when that shell is sitting in $HIVEPAAS_ROOT. Deploy from the repo
 # root instead and docker accepts it without a word, having bound the app to an
 # empty <repo>/hivepaas while traefik reads the config written above.
+#
+# On macOS, hivepaas.darwin.yaml gives the agent the VM's /host_mnt/Users: it says
+# why.
 echo "Deploy hivepaas stack..."
 cp deployment/local/hivepaas.yaml $HIVEPAAS_ROOT/hivepaas.yaml
-(cd $HIVEPAAS_ROOT && docker stack deploy -c hivepaas.yaml hivepaas)
+STACK_FILES=(-c hivepaas.yaml)
+if [ "$(uname -s)" = Darwin ]; then
+  cp deployment/local/hivepaas.darwin.yaml $HIVEPAAS_ROOT/hivepaas.darwin.yaml
+  STACK_FILES+=(-c hivepaas.darwin.yaml)
+fi
+(cd $HIVEPAAS_ROOT && docker stack deploy "${STACK_FILES[@]}" hivepaas)
 
 # Kernel OOM priority for the system services, so a user app is the one killed
 # when memory runs out. Not in the stack file: `docker stack deploy` drops

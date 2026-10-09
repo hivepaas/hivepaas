@@ -1,0 +1,11 @@
+# Deployed with hivepaas.yaml on macOS only (install.sh). In Docker Desktop's VM,
+# /Users is a symbolic link to /host_mnt/Users. The agent sees the VM's / at /host
+# and follows that link into its own filesystem, where /host_mnt does not exist:
+# every file it reads or writes in a volume bound under /Users - a data file
+# uploaded to an app, a backup - is "not found". The shared /Users is mounted
+# where the link leads. Not in hivepaas.yaml: swarm refuses a bind whose source
+# is missing, and a Linux machine has no /Users.
+services:
+  agent:
+    volumes:
+      - /Users:/host_mnt/Users

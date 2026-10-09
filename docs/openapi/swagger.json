@@ -18987,6 +18987,71 @@
         "tags" : [ "App deployments" ]
       }
     },
+    "/projects/{projectID}/{projectEnv}/apps/{appID}/deployments/active" : {
+      "get" : {
+        "description" : "The deployment running - in-progress - or else the next to run, not-started; data is null when none\nis queued or running. Light enough to be asked every few seconds.",
+        "operationId" : "getActiveAppDeployment",
+        "parameters" : [ {
+          "description" : "project ID",
+          "in" : "path",
+          "name" : "projectID",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "project env",
+          "in" : "path",
+          "name" : "projectEnv",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "app ID",
+          "in" : "path",
+          "name" : "appID",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/appdeploymentdto.GetActiveDeploymentResp"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "400" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Bad Request"
+          },
+          "500" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Internal Server Error"
+          }
+        },
+        "summary" : "Gets the app's deployment that has not ended",
+        "tags" : [ "App deployments" ]
+      }
+    },
     "/projects/{projectID}/{projectEnv}/apps/{appID}/deployments/{deploymentID}" : {
       "get" : {
         "description" : "Gets app deployment",
@@ -51125,6 +51190,18 @@
         "required" : [ "data" ],
         "type" : "object"
       },
+      "appdeploymentdto.ActiveDeploymentResp" : {
+        "properties" : {
+          "id" : {
+            "type" : "string"
+          },
+          "status" : {
+            "$ref" : "#/components/schemas/base.DeploymentStatus"
+          }
+        },
+        "required" : [ "id", "status" ],
+        "type" : "object"
+      },
       "appdeploymentdto.CancelDeploymentDataResp" : {
         "properties" : {
           "canceled" : {
@@ -51270,6 +51347,26 @@
           }
         },
         "required" : [ "source" ],
+        "type" : "object"
+      },
+      "appdeploymentdto.GetActiveDeploymentResp" : {
+        "properties" : {
+          "data" : {
+            "allOf" : [ {
+              "$ref" : "#/components/schemas/appdeploymentdto.ActiveDeploymentResp"
+            } ],
+            "description" : "Data is null when no deployment of the app is queued or running.",
+            "nullable" : true,
+            "type" : "object"
+          },
+          "meta" : {
+            "allOf" : [ {
+              "$ref" : "#/components/schemas/basedto.Meta"
+            } ],
+            "nullable" : true
+          }
+        },
+        "required" : [ "data", "meta" ],
         "type" : "object"
       },
       "appdeploymentdto.GetDeploymentLogsResp" : {

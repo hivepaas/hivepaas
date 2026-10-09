@@ -189,6 +189,7 @@ func (s *HTTPServer) registerAppRoutes(projectGroup, projectEnvGroup *gin.Router
 	{ // Deployments
 		deploymentGroup := appGroup.Group("/:appID/deployments")
 		// Info
+		deploymentGroup.GET("/active", appDeploymentHandler.GetActiveAppDeployment)
 		deploymentGroup.GET("/:deploymentID", appDeploymentHandler.GetAppDeployment)
 		deploymentGroup.GET("", appDeploymentHandler.ListAppDeployment)
 		deploymentGroup.GET("/:deploymentID/status", appDeploymentHandler.GetAppDeploymentStatus)

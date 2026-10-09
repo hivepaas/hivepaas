@@ -95,3 +95,42 @@ func (h *Handler) GetAppDeploymentStatus(ctx *gin.Context) {
 
 	ctx.JSON(http.StatusOK, resp)
 }
+
+// GetActiveAppDeployment Gets the app's deployment that has not ended
+// @Summary Gets the app's deployment that has not ended
+// @Description The deployment running - in-progress - or else the next to run, not-started; data is null when none
+// @Description is queued or running. Light enough to be asked every few seconds.
+// @Tags    App deployments
+// @Produce json
+// @Id      getActiveAppDeployment
+// @Param   projectID path string true "project ID"
+// @Param   projectEnv path string true "project env"
+// @Param   appID path string true "app ID"
+// @Success 200 {object} appdeploymentdto.GetActiveDeploymentResp
+// @Failure 400 {object} hperrors.ErrorInfo
+// @Failure 500 {object} hperrors.ErrorInfo
+// @Router  /projects/{projectID}/{projectEnv}/apps/{appID}/deployments/active [get]
+func (h *Handler) GetActiveAppDeployment(ctx *gin.Context) {
+	auth, projectID, projectEnvID, appID, err := h.GetAuth(ctx, base.ActionTypeRead)
+	if err != nil {
+		h.RenderError(ctx, err)
+		return
+	}
+
+	req := appdeploymentdto.NewGetActiveDeploymentReq()
+	req.ProjectID = projectID
+	req.ProjectEnvID = projectEnvID
+	req.AppID = appID
+	if err := h.ParseAndValidateRequest(ctx, req, nil); err != nil {
+		h.RenderError(ctx, err)
+		return
+	}
+
+	resp, err := h.appDeploymentUC.GetActiveDeployment(h.RequestCtx(ctx), auth, req)
+	if err != nil {
+		h.RenderError(ctx, err)
+		return
+	}
+
+	ctx.JSON(http.StatusOK, resp)
+}

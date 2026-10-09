@@ -109,7 +109,7 @@
     "vite-plugin-checker": "^0.14.5",
     "vite-plugin-svgr": "^4.5.0",
     "vite-tsconfig-paths": "^5.1.4",
-    "znv": "^0.5.0",
+    "znv": "^0.4.0",
     "zod": "^3.25.76",
     "zustand": "^5.0.15"
   },

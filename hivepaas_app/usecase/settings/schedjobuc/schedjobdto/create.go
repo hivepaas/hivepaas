@@ -138,10 +138,12 @@ func (req *SchedJobBaseReq) validate(field string) (res []vld.Validator) {
 	res = append(res, basedto.ValidateNumber(&req.MaxRetry, false, 1, maxRetryCount, field+"maxRetry")...)
 	res = append(res, basedto.ValidateDuration(&req.RetryDelay, false, 1, maxRetryDelay, field+"retryDelay")...)
 	res = append(res, basedto.ValidateDuration(&req.Timeout, false, 1, maxTimeout, field+"timeout")...)
-	// A container command needs its command; no other job type has one, and a
-	// nil one is not validated (Validate dereferences it).
+	// A container command needs its command - no other job type has one, and a
+	// nil one is not validated (Validate dereferences it) - and the app whose
+	// running container it runs in.
 	if req.JobType == base.SchedJobTypeContainerCommand {
 		res = append(res, basedto.ValidateCond(req.Command != nil, field+"command")...)
+		res = append(res, basedto.ValidateObjectIDReq(&req.App, true, field+"app")...)
 	}
 	if req.Command != nil {
 		res = append(res, req.Command.Validate(field+"command")...)

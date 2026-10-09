@@ -40,6 +40,10 @@ func (s *service) SchedJobExec(
 ) (_ *schedjobexecservice.SchedJobExecResp, err error) {
 	defer safego.RecoverTo(&err)
 
+	// The app the command runs in: none was named, or it was deleted since.
+	if req.DestApp == nil {
+		return nil, hperrors.NewNotFound("App")
+	}
 	schedJob := req.SchedJobSetting.MustAsSchedJob()
 	command := schedJob.Command
 	if req.Command != nil {

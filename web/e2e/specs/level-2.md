@@ -87,6 +87,7 @@ has a project of its own, and deleting it takes the apps and their services.
 | 2.77 | A certificate and its key mounted from an SSL certificate, the key 0400; renewed with Renew Now, the container has the new pair without a deploy                                                                                              | `tests/level-2/setting-mounts.spec.ts`      |
 | 2.78 | A basic auth's htpasswd mounted: Apache's htpasswd accepts its password, and no other; the env's own basic auth not inheritable, which the app cannot use, is not offered                                                                     | `tests/level-2/setting-mounts.spec.ts`      |
 | 2.79 | A path one setting mount has is refused to another; a config file a mount reads is not deleted, and the dialog lists the mount, a link to it                                                                                                  | `tests/level-2/setting-mounts.spec.ts`      |
+| 2.80 | A deployment running is in the app's header - Deploying, which opens it - and marked on its Deployments tab; once it ends, neither                                                                                                            | `tests/level-2/deployments.spec.ts`         |
 
 The images: `traefik/whoami` for an app that serves - it answers with the
 request it got, as the proxy passed it on - and `busybox` for one that prints

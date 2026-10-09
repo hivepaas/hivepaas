@@ -62,3 +62,33 @@ test("each deployment is listed, the newest first, and its log is its own", asyn
     await page.goto(appPage(app, `deployments/${second}`));
     await expectShownLogs(page, "ran-before-second");
 });
+
+// A deployment running is in the app's header - Deploying, beside its status,
+// which opens that deployment - and marked on its Deployments tab; once it
+// ends, neither is. The pre-deployment command holds it in progress.
+test("the header says a deployment is running, opens it, and stops saying so once it ends", async ({
+    page,
+    api,
+    cleanup,
+}) => {
+    const app = await appIn(api, cleanup, "deploying");
+    await deployImage(api, app, BUSYBOX, "sh -c 'echo first; exec sleep 3600'");
+    await deployed(api, app);
+    await page.goto(appPage(app, "general"));
+    const badge = page.getByRole("link", { name: "Deploying", exact: true });
+    const tabMark = page.getByRole("link", { name: /^Deployments/ }).getByRole("img", { name: "Deploying" });
+    await expect(page.getByRole("heading", { name: app.name })).toBeVisible();
+    await expect(badge).toHaveCount(0);
+
+    const id = await deployImage(api, app, BUSYBOX, "sh -c 'echo second; exec sleep 3600'", "sleep 20");
+    // Asked every five seconds: it shows within a few.
+    await expect(badge).toBeVisible({ timeout: 30_000 });
+    await expect(tabMark).toBeVisible();
+
+    await badge.click();
+    await expect(page).toHaveURL(new RegExp(`/deployments/${id}/$`));
+
+    await deployed(api, app, id);
+    await expect(badge).toHaveCount(0, { timeout: 30_000 });
+    await expect(tabMark).toHaveCount(0);
+});

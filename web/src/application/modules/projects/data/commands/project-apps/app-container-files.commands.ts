@@ -23,7 +23,8 @@ function useDownloadOne(options: DownloadOneOptions = {}) {
     });
 }
 
-type UploadOneReq = AppContainerFiles_UploadOne_Req["data"];
+// An upload's request, and the signal that cancels it.
+type UploadOneReq = AppContainerFiles_UploadOne_Req["data"] & { signal?: AbortSignal };
 type UploadOneRes = AppContainerFiles_UploadOne_Res;
 type UploadOneOptions = Omit<UseMutationOptions<UploadOneRes, Error, UploadOneReq>, "mutationFn">;
 
@@ -31,7 +32,7 @@ function useUploadOne(options: UploadOneOptions = {}) {
     const { mutations } = useAppContainerFilesApi();
 
     return useMutation({
-        mutationFn: (request: UploadOneReq) => mutations.uploadOne(request),
+        mutationFn: ({ signal, ...request }: UploadOneReq) => mutations.uploadOne(request, signal),
         ...options,
     });
 }

@@ -85,10 +85,18 @@ export class AppContainerFilesUploadWsApi extends BaseWebSocketApi {
                 }
 
                 settled = true;
+                signal?.removeEventListener("abort", cancelled);
                 resolve(result);
                 wake();
                 subscription?.close();
             };
+
+            // Cancelled is done with at once: the socket closes after what it
+            // buffered is sent, which on a slow link takes seconds.
+            const cancelled = () => {
+                settle(Err(new CancelException("The upload was cancelled.")));
+            };
+            signal?.addEventListener("abort", cancelled, { once: true });
 
             const tell = (force = false) => {
                 const now = performance.now();

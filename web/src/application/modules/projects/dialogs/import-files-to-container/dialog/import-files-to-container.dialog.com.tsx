@@ -1,8 +1,10 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 
 import { Dialog, DialogDescription, DialogFixedContent, DialogHeader, DialogTitle } from "@components/ui/dialog";
 import { toast } from "sonner";
 import { AppContainerFilesCommands } from "~/projects/data";
+
+import { isCancelException } from "@infrastructure/api";
 
 import { ImportFilesToContainerForm, type UploadProgressValue } from "../form";
 import { useImportFilesToContainerDialogState } from "../hooks";
@@ -15,12 +17,16 @@ export function ImportFilesToContainerDialog() {
 
     const { mutateAsync: uploadOne, isPending } = AppContainerFilesCommands.useUploadOne();
     const [progress, setProgress] = useState<UploadProgressValue | null>(null);
+    // What cancels the upload going on, if one is.
+    const uploading = useRef<AbortController | null>(null);
 
+    function cancelUpload() {
+        uploading.current?.abort();
+    }
+
+    // Closed while uploading, the dialog cancels the upload.
     function handleClose() {
-        if (isPending) {
-            return;
-        }
-
+        cancelUpload();
         actions.close();
         dialogOptions?.onClose?.();
     }
@@ -31,6 +37,8 @@ export function ImportFilesToContainerDialog() {
         }
 
         setProgress(null);
+        const controller = new AbortController();
+        uploading.current = controller;
         try {
             const response = await uploadOne({
                 projectID: state.projectId,
@@ -46,6 +54,7 @@ export function ImportFilesToContainerDialog() {
                 onProgress: (sent, total) => {
                     setProgress({ sent, total });
                 },
+                signal: controller.signal,
             });
 
             toast.success(response.data.message || "File uploaded successfully");
@@ -53,8 +62,13 @@ export function ImportFilesToContainerDialog() {
             dialogOptions?.onSuccess?.();
         } catch (error) {
             const nextError = error instanceof Error ? error : new Error("Failed to upload container file");
+            if (isCancelException(nextError)) {
+                toast.info("Upload cancelled");
+                return;
+            }
             dialogOptions?.onError?.(nextError);
         } finally {
+            uploading.current = null;
             setProgress(null);
         }
     }
@@ -80,6 +94,7 @@ export function ImportFilesToContainerDialog() {
                     isPending={isPending}
                     progress={progress}
                     onSubmit={onSubmit}
+                    onCancel={cancelUpload}
                 />
             </DialogFixedContent>
         </Dialog>

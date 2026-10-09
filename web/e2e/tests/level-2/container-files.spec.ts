@@ -113,3 +113,39 @@ function uploadFailure(page: Page) {
         .filter({ hasText: "Failed to upload container file" })
         .first();
 }
+
+test("an upload is cancelled from its dialog", async ({ page, api, cleanup }) => {
+    await page.goto("/");
+    await signIn(page, env.username, env.password);
+    await expect(page.getByRole("heading", { name: "Welcome back" })).toBeVisible();
+    const app = await appIn(api, cleanup, "upload-cancel");
+    await deployImage(api, app, BUSYBOX, "sh -c 'echo ready; exec sleep 3600'");
+    await deployed(api, app);
+    await expectLogs(page, app, "ready");
+    await page.goto(appPage(app, "terminal"));
+    await page.getByRole("button", { name: "Connect" }).click();
+    await expect(page.getByText("connected", { exact: true })).toBeVisible({ timeout: 30_000 });
+
+    // Slow enough to be cancelled on its way.
+    const cdp = await page.context().newCDPSession(page);
+    await cdp.send("Network.enable");
+    await cdp.send("Network.emulateNetworkConditions", {
+        offline: false,
+        latency: 0,
+        downloadThroughput: -1,
+        uploadThroughput: 512 * 1024,
+    });
+    const name = `${e2eName("cancelled")}.bin`;
+    const dialog = await openUpload(page);
+    await dialog
+        .locator('input[type="file"]')
+        .setInputFiles({ name, mimeType: "application/octet-stream", buffer: randomBytes(16 * 1024 * 1024) });
+    await dialog.getByRole("group", { name: "Destination Path" }).getByRole("textbox").fill("/tmp/");
+    await dialog.getByRole("button", { name: "Upload", exact: true }).click();
+    await expect(dialog.getByRole("progressbar", { name: "Upload progress" })).toBeVisible({ timeout: 30_000 });
+
+    await dialog.getByRole("button", { name: "Cancel upload" }).click();
+
+    await expect(page.getByText("Upload cancelled")).toBeVisible();
+    await expect(dialog.getByRole("button", { name: "Upload", exact: true })).toBeEnabled();
+});

@@ -24,7 +24,7 @@ const compressionOptions = [
     { value: "zstd", label: "Zstd" },
 ] as const;
 
-export function ImportFilesToContainerForm({ isPending, progress, onSubmit }: Props) {
+export function ImportFilesToContainerForm({ isPending, progress, onSubmit, onCancel }: Props) {
     const fileInputRef = useRef<HTMLInputElement>(null);
 
     const {
@@ -223,6 +223,16 @@ export function ImportFilesToContainerForm({ isPending, progress, onSubmit }: Pr
                         total={progress.total}
                     />
                 )}
+                {isPending && (
+                    <Button
+                        type="button"
+                        variant="outline"
+                        aria-label="Cancel upload"
+                        onClick={onCancel}
+                    >
+                        Cancel
+                    </Button>
+                )}
                 <Button
                     type="submit"
                     disabled={isPending}
@@ -271,5 +281,6 @@ export interface UploadProgressValue {
 interface Props {
     isPending: boolean;
     progress: UploadProgressValue | null;
+    onCancel: () => void;
     onSubmit: (values: ImportFilesToContainerFormOutput) => void | Promise<void>;
 }

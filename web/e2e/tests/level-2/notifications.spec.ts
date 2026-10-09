@@ -204,9 +204,9 @@ async function slackMessages(page: Page, hook: App): Promise<SlackAttachment[]> 
 const field = (message: SlackAttachment | undefined, title: string) =>
     message?.fields.find(f => f.title === title)?.value;
 
-// A deployment tells the app's target how it ended: failed, or done - the
-// image, and where its details are.
-test("a deployment tells its notification target that it failed, and that it is done", async ({
+// A deployment tells the app's target how it ended: failed, and why, or done -
+// the image, and where its details are.
+test("a deployment tells its notification target that it failed, and why, and that it is done", async ({
     page,
     api,
     cleanup,
@@ -245,6 +245,8 @@ test("a deployment tells its notification target that it failed, and that it is 
         .toEqual([`[${project.name}][web] Deployment failed`]);
     const [failed] = await ofWeb();
     expect(field(failed, "Image")).toBe("traefik/whoami:e2e-no-such-tag");
+    // Why, as the deployment's details say it.
+    expect(field(failed, "Reason")).toContain("whoami:e2e-no-such-tag: not found");
     expect(field(failed, "See deployment details")).toContain(`/deployments/${failedId}|`);
 
     await deployTelling(api, web, WHOAMI, target);
@@ -253,4 +255,5 @@ test("a deployment tells its notification target that it failed, and that it is 
     const done = (await ofWeb())[1];
     expect(done?.title).toBe(`[${project.name}][web] Deployment succeeded`);
     expect(field(done, "Image")).toBe(WHOAMI);
+    expect(field(done, "Reason"), "nothing failed").toBeUndefined();
 });

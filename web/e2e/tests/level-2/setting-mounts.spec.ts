@@ -1,7 +1,7 @@
 import type { APIRequestContext, Page } from "@playwright/test";
 
-import { type App, appPath, deployImage, latestDeployment } from "../../support/api";
-import { BUSYBOX, appIn, appPage, copyShownLogs, deployed, expectLogs } from "../../support/apps";
+import { type App, appPath, createSettingAt, deployImage, latestDeployment } from "../../support/api";
+import { BUSYBOX, appIn, appPage, deployed, expectLogs, expectPrinted } from "../../support/apps";
 import { e2eName, expect, test } from "../../support/fixtures";
 
 test.describe.configure({ timeout: 300_000 });
@@ -9,10 +9,6 @@ test.describe.configure({ timeout: 300_000 });
 // The image a basic auth's htpasswd is checked with: Apache's own htpasswd
 // reads the file.
 const HTTPD = "httpd:2.4-alpine";
-
-// A file follows its setting once the app's service is updated: swarm starts a
-// new container, on an image it has.
-const FOLLOWED = { timeout: 120_000, intervals: [2_000] };
 
 interface FileMount {
     part: string;
@@ -58,39 +54,6 @@ async function switchMount(page: Page, app: App, name: string, action: "Disable"
     await expect(page.getByText(`Setting mount ${action.toLowerCase()}d`)).toBeVisible();
 }
 
-async function created(api: APIRequestContext, path: string, data: object): Promise<string> {
-    const res = await api.post(path, { data });
-    expect(res.ok(), `creating ${path}: ${res.status()} ${await res.text()}`).toBe(true);
-    return ((await res.json()) as { data: { id: string } }).data.id;
-}
-
-// lastPrinted is the value the app's container printed last for the key, as
-// key=value: the value of the newest container, once the one before is gone.
-async function lastPrinted(page: Page, key: string): Promise<string> {
-    const values = [...(await copyShownLogs(page)).matchAll(new RegExp(`\\b${key}=(\\S*)`, "g"))];
-    return values.at(-1)?.[1] ?? "";
-}
-
-// expectPrinted waits for the last value the app printed for the key to be
-// value, or to pass the check, and answers it.
-async function expectPrinted(
-    page: Page,
-    app: App,
-    key: string,
-    value: string | ((printed: string) => boolean),
-): Promise<string> {
-    await page.goto(appPage(app, "logs"));
-    const check = typeof value === "string" ? (printed: string) => printed === value : value;
-    let printed = "";
-    await expect
-        .poll(async () => {
-            printed = await lastPrinted(page, key);
-            return check(printed) ? "yes" : printed;
-        }, FOLLOWED)
-        .toBe("yes");
-    return printed;
-}
-
 test("a file mounted from a config file follows it without a deploy; turned off it is gone, on again it is back", async ({
     page,
     api,
@@ -99,7 +62,7 @@ test("a file mounted from a config file follows it without a deploy; turned off 
     const app = await appIn(api, cleanup, "mount-follow");
     const before = e2eName("before");
     const after = e2eName("after");
-    await created(api, `${appPath(app)}/config-files`, { name: "E2E_CONF", content: before });
+    await createSettingAt(api, `${appPath(app)}/config-files`, { name: "E2E_CONF", content: before });
 
     await newSettingMount(page, app, {
         name: "e2e-conf",
@@ -148,7 +111,7 @@ test("a certificate and its key mounted from an SSL certificate, the key 0400; r
     const app = await appIn(api, cleanup, "mount-tls");
     // A certificate is named by its domain.
     const domain = `${e2eName("tls")}.localhost`;
-    await created(api, `projects/${app.projectId}/ssl-certs`, {
+    await createSettingAt(api, `projects/${app.projectId}/ssl-certs`, {
         certType: "self-signed",
         domain,
         inheritable: true,
@@ -206,7 +169,7 @@ test("a basic auth's htpasswd mounted is one Apache's htpasswd accepts the passw
     const app = await appIn(api, cleanup, "mount-htpasswd");
     const authName = e2eName("auth");
     const password = e2eName("password");
-    await created(api, `projects/${app.projectId}/${app.env}/basic-auth`, {
+    await createSettingAt(api, `projects/${app.projectId}/${app.env}/basic-auth`, {
         name: authName,
         username: "e2e-user",
         password,
@@ -214,7 +177,7 @@ test("a basic auth's htpasswd mounted is one Apache's htpasswd accepts the passw
     });
     // The env's own, not inheritable: its apps cannot use it.
     const envOnly = e2eName("env-only");
-    await created(api, `projects/${app.projectId}/${app.env}/basic-auth`, {
+    await createSettingAt(api, `projects/${app.projectId}/${app.env}/basic-auth`, {
         name: envOnly,
         username: "e2e-user",
         password,
@@ -254,7 +217,7 @@ test("a path one setting mount has is refused to another, and a config file a mo
     cleanup,
 }) => {
     const app = await appIn(api, cleanup, "mount-refused");
-    await created(api, `${appPath(app)}/config-files`, { name: "E2E_CONF", content: e2eName("conf") });
+    await createSettingAt(api, `${appPath(app)}/config-files`, { name: "E2E_CONF", content: e2eName("conf") });
     const file = { part: "content", path: "/etc/e2e.conf" };
 
     await newSettingMount(page, app, { name: "e2e-first", from: "Config file", setting: "E2E_CONF", files: [file] });

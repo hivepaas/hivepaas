@@ -88,6 +88,11 @@ has a project of its own, and deleting it takes the apps and their services.
 | 2.78 | A basic auth's htpasswd mounted: Apache's htpasswd accepts its password, and no other; the env's own basic auth not inheritable, which the app cannot use, is not offered                                                                     | `tests/level-2/setting-mounts.spec.ts`      |
 | 2.79 | A path one setting mount has is refused to another; a config file a mount reads is not deleted, and the dialog lists the mount, a link to it                                                                                                  | `tests/level-2/setting-mounts.spec.ts`      |
 | 2.80 | A deployment running is in the app's header - Deploying, which opens it - and marked on its Deployments tab; once it ends, neither                                                                                                            | `tests/level-2/deployments.spec.ts`         |
+| 2.81 | A variable saved and a secret changed reach the running container without a deploy                                                                                                                                                            | `tests/level-2/variables-secrets.spec.ts`   |
+| 2.82 | A preview takes its app's variables as they change; a secret kept from previews is empty there, and the preview is made                                                                                                                       | `tests/level-2/variables-secrets.spec.ts`   |
+| 2.83 | Variables refused: a reference to a secret that does not exist, a circular one; a secret a variable uses is not deleted                                                                                                                       | `tests/level-2/variables-secrets.spec.ts`   |
+| 2.84 | A project's secret and an env's config file made for its apps reach them; an env's secret not made for them is refused, not available here                                                                                                    | `tests/level-2/variables-secrets.spec.ts`   |
+| 2.85 | A secret's value is never shown; Reveal Secret and Download File are refused while the server returns no secrets                                                                                                                              | `tests/level-2/variables-secrets.spec.ts`   |
 
 The images: `traefik/whoami` for an app that serves - it answers with the
 request it got, as the proxy passed it on - and `busybox` for one that prints
@@ -130,6 +135,38 @@ README): their commits are made at fixed dates, so their hashes are fixed too.
 A test plays GitHub's webhook - a push of a commit, a comment on pull request
 7 - signing it with the webhook's secret as GitHub does. GitHub itself is not
 called: what HivePaaS posts back on a pull request fails, and is let go.
+
+## Found with variables and secrets (2026-10-10), and fixed
+
+- **Download File handed an app's secret to anyone who could read the app**:
+  it took neither the operator's switch nor the Can Reveal Secrets
+  capability, and left no record, though Reveal Secret takes both and records
+  every attempt. It goes through the same gate now; an inherited secret is not
+  downloaded from below.
+- **A preview of an app with a variable was not made**: the task panicked,
+  "invalid memory address or nil pointer dereference". Its variables were
+  rewritten for the databases cloned with it, with a replacer that exists only
+  when there are some.
+- **A preview kept the variables it was made with**: saving the app's, or a
+  secret they use, applied the app's and none of its previews'. The check
+  before the previews was the wrong way round.
+- **A preview of an app with a secret kept from previews was not made**: the
+  variable built from it, empty in the preview as the pull request's comment
+  says, failed the preview's task instead. It is empty now, and no error.
+
+Seen, and left as they are:
+
+- A runtime variable named like HivePaaS's own - `HIVEPAAS_HOST` - is dropped
+  without a word: the save says it is updated. The request is cleaned of such
+  names before it is checked, so the check that refuses them never sees one.
+- A reference to a project's secret not made for its apps says the secret is
+  missing, not that it is "not available here": the names held back are those
+  of the scope just above.
+- Making a preview answers the id of the task that makes it, not the
+  preview's: a test finds the preview in the list.
+- A secret made through the API is not for the scopes below unless it says
+  so; the dashboard's form ticks it, and the CLI's `secret set` gives it to
+  previews unless told `--no-previews`.
 
 ## Found with setting mounts (2026-10-10), and fixed
 

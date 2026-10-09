@@ -22,6 +22,10 @@ var (
 	ErrWebhookTypeUnsupported               = NewErr(ErrUnsupported, "ERR_WEBHOOK_TYPE_UNSUPPORTED")
 	ErrIMServiceUnsupported                 = NewErr(ErrUnsupported, "ERR_IM_SERVICE_UNSUPPORTED")
 	ErrPasswordCurrentMismatched            = NewErr(ErrBadRequest, "ERR_PASSWORD_CURRENT_MISMATCHED")
+	// ErrWebhookUnverified is a delivery the webhook's secret does not sign, or
+	// one not signed at all: a wrong secret on the Git host's side, or a sender
+	// that is not the Git host.
+	ErrWebhookUnverified = NewErr(ErrUnauthorized, "ERR_WEBHOOK_UNVERIFIED")
 	// ErrCloudStorageConnFailed is a bucket a connection test could not reach:
 	// the endpoint, the key or the bucket, as Reason says.
 	ErrCloudStorageConnFailed = NewErr(ErrPreconditionFailed, "ERR_CLOUD_STORAGE_CONN_FAILED")

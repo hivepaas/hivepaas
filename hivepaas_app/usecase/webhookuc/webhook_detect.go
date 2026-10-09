@@ -2,8 +2,16 @@ package webhookuc
 
 import (
 	"bytes"
+	"errors"
 	"io"
 	"net/http"
+	"slices"
+
+	"github.com/go-playground/webhooks/v6/bitbucket"
+	"github.com/go-playground/webhooks/v6/gitea"
+	"github.com/go-playground/webhooks/v6/github"
+	"github.com/go-playground/webhooks/v6/gitlab"
+	"github.com/go-playground/webhooks/v6/gogs"
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
@@ -155,7 +163,26 @@ func (uc *UC) parseRepoWebhook(
 		logging.Warnf("webhook: the %s parser rejected the delivery, trying the next provider: %v",
 			candidate, err)
 	}
+	if isUnverified(lastErr) {
+		return nil, hperrors.Wrap(hperrors.ErrWebhookUnverified).WithCause(lastErr)
+	}
 	return nil, hperrors.Wrap(lastErr)
+}
+
+// unverifiedErrors are what the providers' parsers answer a delivery the
+// webhook's secret does not sign, or one that comes unsigned.
+var unverifiedErrors = []error{
+	github.ErrHMACVerificationFailed, github.ErrMissingHubSignatureHeader,
+	gitea.ErrHMACVerificationFailed, gitea.ErrMissingGiteaSignatureHeader,
+	gogs.ErrHMACVerificationFailed, gogs.ErrMissingGogsSignatureHeader,
+	gitlab.ErrGitLabTokenVerificationFailed,
+	bitbucket.ErrUUIDVerificationFailed, bitbucket.ErrMissingHookUUIDHeader,
+}
+
+// isUnverified is whether a parser refused the delivery for its signature: the
+// sender's fault, not the server's.
+func isUnverified(err error) bool {
+	return slices.ContainsFunc(unverifiedErrors, func(target error) bool { return errors.Is(err, target) })
 }
 
 func (uc *UC) parseRepoWebhookAs(

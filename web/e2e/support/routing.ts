@@ -1,8 +1,8 @@
-import type { Page, Response } from "@playwright/test";
+import type { APIRequestContext, Page, Response } from "@playwright/test";
 
-import type { App } from "./api";
-import { appPage } from "./apps";
-import { e2eName, expect } from "./fixtures";
+import { type App, deployImage } from "./api";
+import { WHOAMI, appIn, appPage, deployed } from "./apps";
+import { type Cleanup, e2eName, expect } from "./fixtures";
 
 // domainFor names a domain for what a test exposes: <its e2e name>.localhost,
 // which the browser reaches at the installation's proxy (playwright.config.ts).
@@ -49,4 +49,37 @@ export async function visit(page: Page, url: string, status = 200): Promise<Resp
         expect(res?.status(), `${url} answers ${status}`).toBe(status);
     }).toPass({ timeout: 120_000, intervals: [2_000] });
     return res as unknown as Response;
+}
+
+// whoamiIn is an app that answers each request with what reached it: the
+// request line, the Host, the headers - what the proxy made of the request.
+// It answers /data?size=N with N bytes of text, /?wait=2s two seconds late,
+// and /health with the code last POSTed to it.
+export async function whoamiIn(api: APIRequestContext, cleanup: Cleanup, label: string): Promise<App> {
+    const app = await appIn(api, cleanup, label);
+    await deployImage(api, app, WHOAMI);
+    await deployed(api, app);
+    return app;
+}
+
+export interface Fetched {
+    status: number;
+    headers: Record<string, string>;
+    body: string;
+}
+
+// fetchFrom asks the page's own site for a path, from the page, as a script of
+// it would: the browser reaches the domain only where the proxy answers.
+export async function fetchFrom(
+    page: Page,
+    path: string,
+    init: { method?: string; body?: string } = {},
+): Promise<Fetched> {
+    return page.evaluate(
+        async ({ path, init }) => {
+            const res = await fetch(path, { ...init, cache: "no-store" });
+            return { status: res.status, headers: Object.fromEntries(res.headers.entries()), body: await res.text() };
+        },
+        { path, init },
+    );
 }

@@ -1,25 +1,11 @@
-import type { APIRequestContext } from "@playwright/test";
-
-import { type App, createBasicAuth, deleteSettingsNamed, deployImage } from "../../support/api";
-import { WHOAMI, appIn, deployed } from "../../support/apps";
+import { createBasicAuth, deleteSettingsNamed } from "../../support/api";
 import { e2eName, expect, test } from "../../support/fixtures";
-import { addDomain, addSection, domainFor, exposeAt, visit } from "../../support/routing";
+import { addDomain, addSection, domainFor, exposeAt, visit, whoamiIn } from "../../support/routing";
 
 // Each test deploys, then waits for the proxy to route what it set: room for it.
 test.describe.configure({ timeout: 180_000 });
 // The proxy's certificate for a .localhost name is its own, signed by no one.
 test.use({ ignoreHTTPSErrors: true });
-
-type Cleanup = (step: () => Promise<unknown>) => void;
-
-// whoamiIn is an app that answers each request with what reached it: the
-// request line, the Host, the headers - what the proxy made of the request.
-async function whoamiIn(api: APIRequestContext, cleanup: Cleanup, label: string): Promise<App> {
-    const app = await appIn(api, cleanup, label);
-    await deployImage(api, app, WHOAMI);
-    await deployed(api, app);
-    return app;
-}
 
 test("an app exposed at a domain answers there over HTTPS, and Force HTTPS sends HTTP there", async ({
     page,
@@ -56,7 +42,7 @@ test("without Force HTTPS, the app answers HTTP as well", async ({ page, api, cl
     await expect(page.locator("body")).toContainText("GET /plain HTTP/1.1");
 });
 
-test("basic auth on a domain turns away a visitor without the credentials, and lets one with them in", async ({
+test("basic auth on a domain turns away a visitor without the credentials or with a wrong password, and lets one with them in", async ({
     page,
     browser,
     api,
@@ -76,15 +62,20 @@ test("basic auth on a domain turns away a visitor without the credentials, and l
     });
 
     await visit(page, `https://${domain}/`, 401);
-    const visitor = await browser.newContext({
-        ignoreHTTPSErrors: true,
-        httpCredentials: { username: "visitor", password: "e2e-route-secret" },
-    });
-    try {
-        const res = await (await visitor.newPage()).goto(`https://${domain}/`);
-        expect(res?.status()).toBe(200);
-    } finally {
-        await visitor.close();
+    for (const [password, status] of [
+        ["not-the-secret", 401],
+        ["e2e-route-secret", 200],
+    ] as const) {
+        const visitor = await browser.newContext({
+            ignoreHTTPSErrors: true,
+            httpCredentials: { username: "visitor", password },
+        });
+        try {
+            const res = await (await visitor.newPage()).goto(`https://${domain}/`);
+            expect(res?.status(), `with the password ${password}`).toBe(status);
+        } finally {
+            await visitor.close();
+        }
     }
 });
 

@@ -70,6 +70,8 @@ type RepoConfig struct {
 type InitRepoOptions struct {
 	Description string `json:"description,omitempty"`
 	RepoOptions
+	// Retention is what the repository keeps; none leaves the engine's defaults.
+	Retention *RetentionPolicy `json:"retention,omitempty"`
 }
 
 // BackupOptions contains parameters for running a backup operation.

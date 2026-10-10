@@ -13,7 +13,7 @@ func (s *service) ApplyRepoOptions(
 	db database.IDB,
 	req *backupreposervice.ApplyRepoOptionsReq,
 ) error {
-	if !req.Options.HasData() {
+	if !req.Options.HasData() && req.Retention == nil {
 		return nil
 	}
 
@@ -29,6 +29,9 @@ func (s *service) ApplyRepoOptions(
 	}
 
 	if err := engine.ApplyRepoOptions(ctx, req.Options); err != nil {
+		return hperrors.Wrap(err)
+	}
+	if err := engine.SetRetention(ctx, toRetentionPolicy(req.Retention)); err != nil {
 		return hperrors.Wrap(err)
 	}
 	return nil

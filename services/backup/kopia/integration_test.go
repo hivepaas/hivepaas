@@ -374,6 +374,56 @@ func TestIntegration_Prune_AppliesRetention(t *testing.T) {
 	assert.Equal(t, before.Items[len(before.Items)-1].ID, after.Items[len(after.Items)-1].ID)
 }
 
+// A repository is created with the retention asked for, every rule of it: the setting says what
+// the repository keeps from the start, not kopia's defaults.
+func TestIntegration_InitRepo_SetsRetention(t *testing.T) {
+	client, _ := newTestRepo(t, "repo")
+	ctx := context.Background()
+	want := backupmodel.RetentionPolicy{KeepLast: 2, KeepWeekly: 3}
+	mustNoError(t, client.InitRepo(ctx, &backupmodel.InitRepoOptions{Retention: &want}))
+
+	config, err := client.ReadRepoConfig(ctx)
+	mustNoError(t, err)
+	mustNotNil(t, config.Retention)
+	assert.Equal(t, want, *config.Retention)
+}
+
+// SetRetention replaces the retention of a repository that has one, a rule lowered to zero
+// included.
+func TestIntegration_SetRetention_ReplacesEveryRule(t *testing.T) {
+	client, _ := newTestRepo(t, "repo")
+	ctx := context.Background()
+	mustNoError(t, client.InitRepo(ctx, &backupmodel.InitRepoOptions{
+		Retention: &backupmodel.RetentionPolicy{KeepLast: 5, KeepHourly: 6, KeepDaily: 7},
+	}))
+
+	want := backupmodel.RetentionPolicy{KeepLast: 1, KeepMonthly: 2}
+	mustNoError(t, client.SetRetention(ctx, &want))
+
+	config, err := client.ReadRepoConfig(ctx)
+	mustNoError(t, err)
+	mustNotNil(t, config.Retention)
+	assert.Equal(t, want, *config.Retention)
+}
+
+// Prune applies the retention it is given as it is, every rule of it: a rule at zero keeps nothing
+// on its own, where left out it would go on keeping what kopia's default, or an earlier policy,
+// said to keep.
+func TestIntegration_Prune_SetsEveryRule(t *testing.T) {
+	client, _ := newTestRepo(t, "repo")
+	ctx := context.Background()
+	mustNoError(t, client.InitRepo(ctx, nil))
+
+	want := backupmodel.RetentionPolicy{KeepLast: 2}
+	_, err := client.Prune(ctx, &want)
+	mustNoError(t, err)
+
+	config, err := client.ReadRepoConfig(ctx)
+	mustNoError(t, err)
+	mustNotNil(t, config.Retention)
+	assert.Equal(t, want, *config.Retention)
+}
+
 // kopia runs maintenance for the repository's owner only - the client that created it, by its
 // user and hostname. A client by another name - a container deployed again, a repository made on
 // another machine - takes the maintenance over to prune, and says from whom; once.
@@ -422,18 +472,8 @@ func TestIntegration_Prune_AppliesHourlyRetention(t *testing.T) {
 	mustNoError(t, err)
 	mustLen(t, before.Items, 3)
 
-	// Prune only ever sends the rules a caller sets (see Prune: each --keep-* flag is conditional
-	// on being positive), so an unset rule keeps whatever the repository already has - here,
-	// kopia's defaults, every one of them comfortably above 3 and each enough on its own to retain
-	// every snapshot in this test. A zero rule means "no limit" to kopia, not "expire everything":
-	// verified directly against the CLI, an all-zero policy keeps every snapshot. So clearing every
-	// rule to zero first, keepHourly included, is what makes what happens next attributable to the
-	// value Prune actually sends rather than to whatever the repository already had.
-	_, err = client.execCommand(ctx, []string{cmdPolicy, "set", cmdFlagGlobal,
-		"--keep-latest=0", "--keep-hourly=0", "--keep-daily=0", "--keep-weekly=0",
-		"--keep-monthly=0", "--keep-annual=0"})
-	mustNoError(t, err)
-
+	// The repository starts with kopia's defaults, each enough on its own to keep every snapshot
+	// here: Prune sets the other rules to zero, so keepHourly=1 is all that keeps anything.
 	_, err = client.Prune(ctx, &backupmodel.RetentionPolicy{KeepHourly: 1})
 	mustNoError(t, err)
 

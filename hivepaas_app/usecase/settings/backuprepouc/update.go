@@ -17,8 +17,9 @@ import (
 type updateBackupRepoData struct {
 	Repo      *entity.BackupRepo
 	SettingID string
-	// Options is set only when the repository itself has to be told about the change.
-	Options *backup.RepoOptions
+	// Options and Retention are set only when the repository itself has to be told about the change.
+	Options   *backup.RepoOptions
+	Retention *entity.BackupRetentionPolicy
 }
 
 func (uc *UC) UpdateBackupRepo(
@@ -47,6 +48,7 @@ func (uc *UC) UpdateBackupRepo(
 			currentOptions := backup.NewRepoOptions(
 				int(backupRepo.PackSize.MBytes()), backupRepo.Compression)
 			newOptions := req.RepoOptions(backupRepo)
+			currentRetention := backupRepo.Retention
 
 			req.Apply(backupRepo)
 			if err := pData.Setting.SetData(backupRepo); err != nil {
@@ -54,9 +56,12 @@ func (uc *UC) UpdateBackupRepo(
 			}
 
 			if newOptions != currentOptions {
+				data.Options = &newOptions
+			}
+			data.Retention = retentionToApply(currentRetention, backupRepo.Retention)
+			if data.Options != nil || data.Retention != nil {
 				data.Repo = backupRepo
 				data.SettingID = pData.Setting.ID
-				data.Options = &newOptions
 			}
 			return nil
 		},
@@ -72,8 +77,18 @@ func (uc *UC) UpdateBackupRepo(
 	return &backuprepodto.UpdateBackupRepoResp{}, nil
 }
 
-// applyRepoOptions pushes compression and pack size to the repository, which is where the engine
-// reads them from: stored in the DB alone they would have no effect on any later backup.
+// retentionToApply is the retention the repository has to be told about: the new one when it
+// differs from what the repository keeps by now. An update without one leaves the repository's.
+func retentionToApply(current, updated *entity.BackupRetentionPolicy) *entity.BackupRetentionPolicy {
+	if updated == nil || (current != nil && *current == *updated) {
+		return nil
+	}
+	return updated
+}
+
+// applyRepoOptions pushes compression, pack size and retention to the repository, which is where
+// the engine reads them from: stored in the DB alone they would have no effect on any later backup,
+// and a sync would read the repository's back over them.
 //
 // This runs after the commit on purpose. Failing inside the transaction would throw away the rest
 // of the update - a rename included - over a setting that the next successful update pushes again.
@@ -82,15 +97,16 @@ func (uc *UC) applyRepoOptions(
 	req *backuprepodto.UpdateBackupRepoReq,
 	data *updateBackupRepoData,
 ) error {
-	if data.Options == nil {
+	if data.Options == nil && data.Retention == nil {
 		return nil
 	}
 
 	err := uc.backupRepoService.ApplyRepoOptions(ctx, uc.DB, &backupreposervice.ApplyRepoOptionsReq{
-		Scope:   req.Scope,
-		Repo:    data.Repo,
-		RepoID:  data.SettingID,
-		Options: data.Options,
+		Scope:     req.Scope,
+		Repo:      data.Repo,
+		RepoID:    data.SettingID,
+		Options:   data.Options,
+		Retention: data.Retention,
 	})
 	if err != nil {
 		// The settings are already saved, so reporting a plain failure would suggest nothing

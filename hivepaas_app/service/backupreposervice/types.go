@@ -114,6 +114,8 @@ type ApplyRepoOptionsReq struct {
 	RepoID     string
 	RefObjects *entity.RefObjects
 	Options    *backup.RepoOptions
+	// Retention, when set, replaces the retention the repository keeps by.
+	Retention *entity.BackupRetentionPolicy
 }
 
 type SyncRepoReq struct {

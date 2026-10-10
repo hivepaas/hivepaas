@@ -11,29 +11,36 @@ import (
 	"github.com/hivepaas/hivepaas/services/backup/backupmodel"
 )
 
+// SetRetention sets the global retention policy, every rule of it. A rule at zero keeps nothing on
+// its own - and with every rule at zero kopia keeps every snapshot - while one left out would go on
+// keeping what kopia's default, or the policy set before, said to keep.
+func (c *Client) SetRetention(ctx context.Context, policy *backupmodel.RetentionPolicy) error {
+	if policy == nil {
+		return nil
+	}
+	var errBuf bytes.Buffer
+	_, err := c.execCommand(ctx, []string{cmdPolicy, cmdSet, cmdFlagGlobal,
+		"--keep-latest=" + strconv.Itoa(policy.KeepLast),
+		"--keep-hourly=" + strconv.Itoa(policy.KeepHourly),
+		"--keep-daily=" + strconv.Itoa(policy.KeepDaily),
+		"--keep-weekly=" + strconv.Itoa(policy.KeepWeekly),
+		"--keep-monthly=" + strconv.Itoa(policy.KeepMonthly),
+	}, func(o *execOptions) {
+		o.stderr = &errBuf
+	})
+	if err != nil {
+		return hperrors.Wrap(fmt.Errorf("kopia policy set retention failed: %s (err: %w)",
+			strings.TrimSpace(errBuf.String()), err))
+	}
+	return nil
+}
+
 func (c *Client) Prune(
 	ctx context.Context,
 	policy *backupmodel.RetentionPolicy,
 ) (res backupmodel.PruneResult, err error) {
-	if policy != nil {
-		args := []string{cmdPolicy, cmdSet, cmdFlagGlobal}
-		if policy.KeepLast > 0 {
-			args = append(args, "--keep-latest="+strconv.Itoa(policy.KeepLast))
-		}
-		if policy.KeepHourly > 0 {
-			args = append(args, "--keep-hourly="+strconv.Itoa(policy.KeepHourly))
-		}
-		if policy.KeepDaily > 0 {
-			args = append(args, "--keep-daily="+strconv.Itoa(policy.KeepDaily))
-		}
-		if policy.KeepWeekly > 0 {
-			args = append(args, "--keep-weekly="+strconv.Itoa(policy.KeepWeekly))
-		}
-		if policy.KeepMonthly > 0 {
-			args = append(args, "--keep-monthly="+strconv.Itoa(policy.KeepMonthly))
-		}
-
-		_, _ = c.execCommand(ctx, args)
+	if err = c.SetRetention(ctx, policy); err != nil {
+		return res, hperrors.Wrap(err)
 	}
 
 	// Setting the policy does not remove anything on its own, and neither does maintenance:

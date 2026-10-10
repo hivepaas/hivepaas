@@ -8,6 +8,7 @@ import (
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/config"
+	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings/secretuc/secretdto"
@@ -28,6 +29,9 @@ func (uc *UC) GetDownloadToken(
 	if err != nil {
 		return nil, hperrors.Wrap(err)
 	}
+	if err = uc.authorizeDownload(ctx, auth, req.Scope, resp.Data); err != nil {
+		return nil, hperrors.Wrap(err)
+	}
 
 	expiration := req.Expiration.ToDuration()
 	if expiration <= 0 {
@@ -43,4 +47,22 @@ func (uc *UC) GetDownloadToken(
 			Token: token,
 		},
 	}, nil
+}
+
+// authorizeDownload lets a secret be downloaded only by whoever may reveal it: a
+// download hands the value over in the clear, as a reveal does, so it takes the
+// same gate - the operator's switch, the capability - and leaves the same
+// record. An inherited secret belongs to the scope that made it, and is not
+// revealed from below.
+func (uc *UC) authorizeDownload(
+	ctx context.Context,
+	auth *basedto.Auth,
+	scope *entity.ObjectScope,
+	setting *entity.Setting,
+) error {
+	if setting.ObjectID != setting.CurrentObjectID {
+		return hperrors.Wrap(hperrors.ErrUserNotHavePermissionOnRevealSecrets).
+			WithMsgLog("an inherited secret is not downloaded from below")
+	}
+	return hperrors.Wrap(uc.AuthorizeReveal(ctx, uc.DB, auth, scope, setting))
 }

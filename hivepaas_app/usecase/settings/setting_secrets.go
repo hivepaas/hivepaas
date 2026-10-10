@@ -53,7 +53,7 @@ func (uc *BaseUC) revealSecrets(
 		return false, nil // the type holds no secrets, so there is nothing to reveal
 	}
 
-	if err = uc.authorizeReveal(ctx, db, auth, scope, setting); err != nil {
+	if err = uc.AuthorizeReveal(ctx, db, auth, scope, setting); err != nil {
 		return false, hperrors.Wrap(err)
 	}
 	if err = decrypter.Decrypt(); err != nil {
@@ -62,8 +62,8 @@ func (uc *BaseUC) revealSecrets(
 	return true, nil
 }
 
-// authorizeReveal is AuthorizeSecretReveal for a stored setting.
-func (uc *BaseUC) authorizeReveal(
+// AuthorizeReveal is AuthorizeSecretReveal for a stored setting.
+func (uc *BaseUC) AuthorizeReveal(
 	ctx context.Context,
 	db database.IDB,
 	auth *basedto.Auth,

@@ -16,12 +16,16 @@ var (
 	ErrPortInUse                            = NewErr(ErrInUse, "ERR_PORT_IN_USE")
 	ErrDomainUnallowed                      = NewErr(ErrSettingViolation, "ERR_DOMAIN_UNALLOWED")
 	ErrSSLTypeUnsupported                   = NewErr(ErrUnsupported, "ERR_SSL_TYPE_UNSUPPORTED")
-	ErrPrivateKeyTypeUnsupported            = NewErr(ErrUnsupported, "ERR_PRIVATE_KEY_TYPE_UNSUPPORTED")
-	ErrAddressInvalid                       = NewErr(ErrValueInvalid, "ERR_ADDRESS_INVALID")
-	ErrTokenTypeUnsupported                 = NewErr(ErrUnsupported, "ERR_TOKEN_TYPE_UNSUPPORTED")
-	ErrWebhookTypeUnsupported               = NewErr(ErrUnsupported, "ERR_WEBHOOK_TYPE_UNSUPPORTED")
-	ErrIMServiceUnsupported                 = NewErr(ErrUnsupported, "ERR_IM_SERVICE_UNSUPPORTED")
-	ErrPasswordCurrentMismatched            = NewErr(ErrBadRequest, "ERR_PASSWORD_CURRENT_MISMATCHED")
+	// ErrSSLCertUnusable is a certificate brought by its owner that cannot serve
+	// its domain - not a certificate, a private key of another, another domain -
+	// as Reason says.
+	ErrSSLCertUnusable           = NewErr(ErrValueInvalid, "ERR_SSL_CERT_UNUSABLE")
+	ErrPrivateKeyTypeUnsupported = NewErr(ErrUnsupported, "ERR_PRIVATE_KEY_TYPE_UNSUPPORTED")
+	ErrAddressInvalid            = NewErr(ErrValueInvalid, "ERR_ADDRESS_INVALID")
+	ErrTokenTypeUnsupported      = NewErr(ErrUnsupported, "ERR_TOKEN_TYPE_UNSUPPORTED")
+	ErrWebhookTypeUnsupported    = NewErr(ErrUnsupported, "ERR_WEBHOOK_TYPE_UNSUPPORTED")
+	ErrIMServiceUnsupported      = NewErr(ErrUnsupported, "ERR_IM_SERVICE_UNSUPPORTED")
+	ErrPasswordCurrentMismatched = NewErr(ErrBadRequest, "ERR_PASSWORD_CURRENT_MISMATCHED")
 	// ErrWebhookUnverified is a delivery the webhook's secret does not sign, or
 	// one not signed at all: a wrong secret on the Git host's side, or a sender
 	// that is not the Git host.

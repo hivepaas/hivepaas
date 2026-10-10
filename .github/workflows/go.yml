@@ -66,6 +66,11 @@ jobs:
           version=$(grep -o 'swag/v2/cmd/swag@[^ ]*' tools/docker/Dockerfile | cut -d@ -f2)
           go install "github.com/swaggo/swag/v2/cmd/swag@${version}"
 
+      # swag lists the packages with `go list` and takes anything it writes to
+      # stderr for a failure: on a cold module cache, its "go: downloading".
+      - name: Download the modules
+        run: go mod download
+
       - name: Regenerate the spec
         run: SWAG_BIN="$(go env GOPATH)/bin/swag" ./tools/swag/swag.sh
 

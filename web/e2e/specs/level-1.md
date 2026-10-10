@@ -27,6 +27,7 @@ back what they found.
 | 1.15 | A member changes nothing an admin decides of them - role, grants, expiry - and does not delete their own account                   | `tests/level-1/permissions.spec.ts`    |
 | 1.16 | A member's audit log of the project shows no other project's entries, nor another env's, whatever its filters say                  | `tests/level-1/permissions.spec.ts`    |
 | 1.17 | A member's API key reaches what the member does as they are: moved, it follows; disabled, refused; no capability they lack         | `tests/level-1/permissions.spec.ts`    |
+| 1.18 | A member whose access expires is refused at the next request, though signed in, and cannot sign in again                           | `tests/level-1/permissions.spec.ts`    |
 
 Left for later levels: Logging and Registry settings (saving them deploys) -
 level 2; Traefik and HivePaaS routing and security (they can restart the proxy)

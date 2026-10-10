@@ -122,3 +122,20 @@ for (const tab of PROJECT_PAGES) {
         await opensCleanly(page, `/projects/${project.id}/${tab}/`, "HivePaaS");
     });
 }
+
+// The snapshots of an app, and of a project, are in the project's backup
+// repositories: their page links to where those are kept.
+test("an app's and a project's Backup Snapshots link to the project's Backup Repos", async ({ page, api }) => {
+    const project = await systemProject(api);
+    const app = await systemApp(api, project, "traefik");
+    const repos = `/projects/${project.id}/integrations/backup-repos/`;
+
+    for (const snapshots of [
+        `/projects/${app.projectId}/${app.env}/apps/${app.id}/backup-snapshots/`,
+        `/projects/${project.id}/integrations/backup-snapshots/`,
+    ]) {
+        await page.goto(snapshots);
+        await page.getByRole("link", { name: "Go to Backup Repos" }).click();
+        await expect(page).toHaveURL(new RegExp(`${repos}$`));
+    }
+});

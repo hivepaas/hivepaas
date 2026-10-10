@@ -1,8 +1,8 @@
 import { type APIRequestContext, type Browser, type Page, request } from "@playwright/test";
 
-import type { Project } from "./api";
+import { type App, type Project, createApp, createProject, deleteProject, deleteUsersByEmail } from "./api";
 import { env } from "./env";
-import { e2eName, expect, test } from "./fixtures";
+import { type Cleanup, e2eName, expect, test } from "./fixtures";
 
 // Members: invited by an admin, signed up from the link, signed in - on a page
 // of their own, or to the API.
@@ -110,4 +110,34 @@ export async function grantMember(
         },
     });
     expect(res.ok(), `granting ${email}: ${res.status()} ${await res.text()}`).toBe(true);
+}
+
+// What the member is refused answers 401, or 404 for what it may not know is
+// there: anything else is the member reaching it.
+export const REFUSED = [401, 403, 404];
+
+export interface DevOnly {
+    project: Project;
+    dev: App;
+    prod: App;
+    member: Member;
+}
+
+// devOnly is a project with an app in development and one in production, and
+// a member given development alone: to read, run and change, not to delete.
+export async function devOnly(
+    page: Page,
+    browser: Browser,
+    api: APIRequestContext,
+    cleanup: Cleanup,
+    label: string,
+): Promise<DevOnly> {
+    const project = await createProject(api, e2eName(label));
+    cleanup(() => deleteProject(api, project.id));
+    const dev = await createApp(api, project, "web");
+    const prod = await createApp(api, project, "api", "production");
+    cleanup(() => deleteUsersByEmail(api, `${e2eName(label)}@example.com`));
+    const member = await inviteAndSignUp(page, browser, label, project);
+    await grantMember(api, member.email, project.id, `${project.id}:dev`, []);
+    return { project, dev, prod, member };
 }

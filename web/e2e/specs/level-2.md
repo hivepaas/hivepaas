@@ -113,6 +113,7 @@ has a project of its own, and deleting it takes the apps and their services.
 | 2.103 | A snapshot's file downloaded from its details is the file backed up; the snapshot deleted is gone, and a sync of the repository does not bring it back                                                                                        | `tests/level-2/backups.spec.ts`             |
 | 2.104 | A repository keeps by the retention it is made with - Keep Last 2, the other rules 0 - and by what it is changed to: a sync reads it back unchanged, a backup keeps that many                                                                 | `tests/level-2/backups.spec.ts`             |
 | 2.105 | A command backup whose command fails is a failed run, and leaves no snapshot                                                                                                                                                                  | `tests/level-2/backups.spec.ts`             |
+| 2.106 | A member's tasks of the project show no other project's, nor another env's, whatever the filters; another env's task, and its log, are refused                                                                                                | `tests/level-2/permissions.spec.ts`         |
 
 The images: `traefik/whoami` for an app that serves - it answers with the
 request it got, as the proxy passed it on - and `busybox` for one that prints
@@ -155,6 +156,14 @@ README): their commits are made at fixed dates, so their hashes are fixed too.
 A test plays GitHub's webhook - a push of a commit, a comment on pull request
 7 - signing it with the webhook's secret as GitHub does. GitHub itself is not
 called: what HivePaaS posts back on a pull request fails, and is let go.
+
+## Found with members' tasks (2026-10-10), and fixed
+
+- **A project's tasks, filtered, were any project's**: as with its audit log
+  (1.16), the filters named the scope listed. A member of one project listed
+  another's tasks by naming it, and a member given development listed
+  production's, and read one with its log. The filters narrow what is reached
+  now; a project read through some of its envs shows those alone.
 
 ## Found with backups (2026-10-10), and fixed
 

@@ -1,49 +1,16 @@
-import type { APIRequestContext, Browser, Page } from "@playwright/test";
+import type { APIRequestContext } from "@playwright/test";
 
 import {
-    type App,
-    type Project,
     appPath,
     createApp,
     createProject,
     createSettingAt,
     deleteProject,
-    deleteUsersByEmail,
     runtimeEnvVars,
     setRuntimeEnvVars,
 } from "../../support/api";
-import { type Cleanup, e2eName, expect, test } from "../../support/fixtures";
-import { type Member, PASSWORD, grantMember, inviteAndSignUp, signedInAs } from "../../support/users";
-
-// What the member is refused answers 401, or 404 for what it may not know is
-// there: anything else is the member reaching it.
-const REFUSED = [401, 403, 404];
-
-interface DevOnly {
-    project: Project;
-    dev: App;
-    prod: App;
-    member: Member;
-}
-
-// devOnly is a project with an app in development and one in production, and
-// a member given development alone: to read, run and change, not to delete.
-async function devOnly(
-    page: Page,
-    browser: Browser,
-    api: APIRequestContext,
-    cleanup: Cleanup,
-    label: string,
-): Promise<DevOnly> {
-    const project = await createProject(api, e2eName(label));
-    cleanup(() => deleteProject(api, project.id));
-    const dev = await createApp(api, project, "web");
-    const prod = await createApp(api, project, "api", "production");
-    cleanup(() => deleteUsersByEmail(api, `${e2eName(label)}@example.com`));
-    const member = await inviteAndSignUp(page, browser, label, project);
-    await grantMember(api, member.email, project.id, `${project.id}:dev`, []);
-    return { project, dev, prod, member };
-}
+import { e2eName, expect, test } from "../../support/fixtures";
+import { PASSWORD, REFUSED, devOnly, signedInAs } from "../../support/users";
 
 // A member given one environment of a project reaches its apps, and none of
 // the other's: not at their own address, not listed with the project's, and
@@ -206,4 +173,57 @@ test("a member gives themselves nothing an admin has not", async ({ page, api, c
         await memberApi.dispose();
     }
     expect((await api.get(`users/${id}`)).status(), "the member's account is still there").toBe(200);
+});
+
+interface Entry {
+    type: string;
+    scopeProject?: { id: string };
+    scopeApp?: { id: string };
+}
+
+// A member reads the audit log of the project given, and no other's: its
+// filters - by project, env, app - keep to the project, and to the envs given.
+test("a member's audit log of the project shows no other project's entries, nor another env's", async ({
+    page,
+    api,
+    cleanup,
+    browser,
+}) => {
+    const { project, dev, prod, member } = await devOnly(page, browser, api, cleanup, "log-reader");
+    const other = await createProject(api, e2eName("log-other"));
+    cleanup(() => deleteProject(api, other.id));
+    const otherApp = await createApp(api, other, "web");
+    const greeting = [{ key: "GREETING", value: "hello", isLiteral: true }];
+    for (const app of [dev, prod, otherApp]) {
+        await setRuntimeEnvVars(api, app, greeting);
+    }
+
+    const memberApi = await signedInAs(member.username, PASSWORD);
+    try {
+        const own = `projects/${project.id}/audit-logs`;
+        const read = async (params: Record<string, string> = {}): Promise<Entry[]> => {
+            const res = await memberApi.get(own, { params: { pageLimit: 200, ...params } });
+            if (REFUSED.includes(res.status())) return [];
+            expect(res.ok(), `${own} ${JSON.stringify(params)}: ${res.status()}`).toBe(true);
+            return ((await res.json()) as { data: Entry[] | null }).data ?? [];
+        };
+        const views = {
+            "the project's": await read(),
+            "filtered to another project": await read({ projectId: other.id }),
+            "filtered to another project's env": await read({ projectEnvId: `${other.id}:dev` }),
+            "filtered to another project's app": await read({ appId: otherApp.id }),
+            "filtered to production": await read({ projectEnvId: `${project.id}:prod` }),
+            "filtered to the production app": await read({ appId: prod.id }),
+        };
+        for (const [what, entries] of Object.entries(views)) {
+            const others = entries.filter(e => e.scopeProject && e.scopeProject.id !== project.id);
+            expect.soft(others, `${what}: another project's entries`).toEqual([]);
+            const production = entries.filter(e => e.scopeApp?.id === prod.id);
+            expect.soft(production, `${what}: the production app's entries`).toEqual([]);
+        }
+        const developed = views["the project's"].filter(e => e.scopeApp?.id === dev.id);
+        expect(developed.length, "the development app's entries are there").toBeGreaterThan(0);
+    } finally {
+        await memberApi.dispose();
+    }
 });

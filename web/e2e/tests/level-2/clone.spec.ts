@@ -471,6 +471,10 @@ test("a command pipe run after the clone carries what the app has into the clone
     const clone = await cloneAs(page, api, app, "web-copy", { volumes: true, volumeData: false, commandPipe: pipe });
 
     await expectLogs(page, clone, `piped=${note}`);
+    // Saved with the clone, the pipe is listed once - and so saved once again.
+    const saved = await api.get(`${appPath(app)}/clone-settings`);
+    const { commandPipes } = ((await saved.json()) as { data: { commandPipes: { name: string }[] } }).data;
+    expect(commandPipes.map(p => p.name)).toEqual([pipe]);
 });
 
 // A clone tells the target its settings name how it ended: failed, and why - a
@@ -516,4 +520,19 @@ test("a clone tells its notification target that it failed, and why, or that it 
     expect(field(done, "Clone")).toBe("web-copy in development");
     expect(field(done, "Reason"), "nothing failed").toBeUndefined();
     await expectLogs(page, clone, "ready");
+
+    // The target the page was loaded with, picked again, is unpicked: the field
+    // says so, and the settings save without it.
+    await page.goto(appPage(app, "app-clone"));
+    const onSuccess = page.getByRole("group", { name: "On Success", exact: true }).getByRole("combobox");
+    const onFailure = page.getByRole("group", { name: "On Failure", exact: true }).getByRole("combobox");
+    await expect(onSuccess).toHaveText(target.name);
+    await onSuccess.click();
+    await page.getByRole("option", { name: target.name }).click();
+    await expect(onSuccess).toHaveText("None");
+    await page.getByRole("button", { name: "Save", exact: true }).click();
+    await expect(page.getByText("App clone settings saved")).toBeVisible();
+    await page.reload();
+    await expect(onFailure).toHaveText(target.name);
+    await expect(onSuccess).toHaveText("None");
 });

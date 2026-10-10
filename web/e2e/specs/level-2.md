@@ -104,8 +104,8 @@ has a project of its own, and deleting it takes the apps and their services.
 | 2.94 | An app cloned without its routing, variables, secrets and config files: the clone has no domain, and its container none of them                                                                                                               | `tests/level-2/clone.spec.ts`               |
 | 2.95 | An app cloned disabled is made, and runs no instance                                                                                                                                                                                          | `tests/level-2/clone.spec.ts`               |
 | 2.96 | An app's health check and scheduled job come with its clone, the job running in the clone's container; turned off, neither does                                                                                                               | `tests/level-2/clone.spec.ts`               |
-| 2.97 | A command pipe run after the clone carries what the app has into the clone: the source's command in the app, the target's in the clone                                                                                                        | `tests/level-2/clone.spec.ts`               |
-| 2.98 | A clone tells its notification target that it failed, and why, leaving no app; or that it succeeded. Its settings tell nobody by default                                                                                                      | `tests/level-2/clone.spec.ts`               |
+| 2.97 | A command pipe run after the clone carries what the app has into the clone: the source's command in the app, the target's in the clone; saved, it is listed once                                                                              | `tests/level-2/clone.spec.ts`               |
+| 2.98 | A clone tells its target that it failed, and why, leaving no app; or that it succeeded. Nobody by default; a target unpicked says None, and saves                                                                                             | `tests/level-2/clone.spec.ts`               |
 
 The images: `traefik/whoami` for an app that serves - it answers with the
 request it got, as the proxy passed it on - and `busybox` for one that prints
@@ -220,16 +220,15 @@ Seen, and left as they are:
   reason, when it failed - and its settings tell nobody until a target is
   chosen; the form said the defaults, which would have told every clone to
   the project's default target.
-
-Found, and not fixed yet:
-
-- **A clone's command pipes come back twice**: App Clone's settings list each
-  saved pipe once with its name and once without, and saving the form again
-  saves both - each a run of the pipe after the clone.
-- **A notification target picked again shows as picked, and the form will not
-  save**: choosing the target a field already has unpicks it, as a picker
-  does; but a field that had it when the page was loaded keeps showing it,
-  and saving says "Required".
+- **A clone's command pipes came back twice**: App Clone's settings listed
+  each saved pipe once with its name and once without, and saving the form
+  again saved both - each a run of the pipe after the clone. Each is listed,
+  saved and run once now, a pipe saved twice before too.
+- **A notification target unpicked still showed, and the form would not
+  save**: choosing the target a field had, or clearing it, left nothing in
+  the field - but one the page was loaded with kept showing, and App Clone's
+  form said "Required". Every form choosing notification targets had it. A
+  field unpicked says None now, and saves so.
 
 Seen, and left as they are:
 

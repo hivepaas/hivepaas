@@ -57,7 +57,7 @@ func (s *service) repoDeployStepServiceApply(
 				queryRegistry = true
 			}
 			contSpec := svc.Spec.TaskTemplate.ContainerSpec
-			contSpec.Image = data.Deployment.Output.ImageTags[0]
+			applyBuiltImage(&svc.Spec, data.Deployment.Output.ImageTags[0])
 			contSpec.Dir = deployment.Settings.WorkingDir
 			if err := dockerhelper.ContainerCommandApply(contSpec, deployment.Settings.Entrypoint,
 				deployment.Settings.Command); err != nil {
@@ -94,4 +94,16 @@ func (s *service) repoDeployStepServiceApply(
 	_ = s.settingMountService.Sweep(ctx, data.App)
 
 	return nil
+}
+
+// applyBuiltImage points the service at the image a build tagged. A tag the
+// service runs already was built again under the same name - the same commit,
+// with other build settings - and swarm, finding the spec unchanged, would keep
+// the containers of the old image: the update is forced.
+func applyBuiltImage(spec *swarm.ServiceSpec, image string) {
+	contSpec := spec.TaskTemplate.ContainerSpec
+	if contSpec.Image == image {
+		spec.TaskTemplate.ForceUpdate++
+	}
+	contSpec.Image = image
 }

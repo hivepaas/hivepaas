@@ -8,7 +8,6 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/reflectutil"
 )
 
-//nolint:unused
 func (cli *checkoutCli) gitCliPullLfs(
 	ctx context.Context,
 ) (err error) {

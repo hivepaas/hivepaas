@@ -125,6 +125,7 @@ has a project of its own, and deleting it takes the apps and their services.
 | 2.115 | A private GitHub repository is not found without credentials; with the GitHub App's, or an access token's, it is built                                                                                                                        | `tests/level-2/github.spec.ts`              |
 | 2.116 | A GitHub repository's pull requests are listed through the GitHub App, each with its branch                                                                                                                                                   | `tests/level-2/github.spec.ts`              |
 | 2.117 | A repository's submodules and LFS files come with its build when asked: off, an empty directory and a pointer; on, the same commit built again, both there                                                                                    | `tests/level-2/github.spec.ts`              |
+| 2.118 | A page loaded before a deployment's rolling update was marked complete saves; one whose settings changed meanwhile is refused                                                                                                                 | `tests/level-2/resources.spec.ts`           |
 
 The images: `traefik/whoami` for an app that serves - it answers with the
 request it got, as the proxy passed it on - and `busybox` for one that prints
@@ -211,6 +212,14 @@ called: what HivePaaS posts back on a pull request fails, and is let go.
   emptied field was NaN, which the form refused without a message - CPUs,
   Pids, Swappiness, the out-of-memory score. It is no number now, and saves
   so.
+- **A save made a few seconds after a deployment, or another save, was
+  refused**, "Mismatching update version. Please reload the page.": a page
+  saved against the service's version, which swarm moves whenever it writes
+  the service - a rolling update marked complete, the autoscaler's replicas,
+  another page's save. Resources, Container Settings, Availability,
+  Persistent Storage and Networks save against what each shows of the
+  service now; a change to that, made while the page was open, is refused
+  still.
 
 Found, and not fixed yet:
 
@@ -218,11 +227,6 @@ Found, and not fixed yet:
   container's capabilities, and docker refuses the container, "unknown
   capability: CAP_[GPU]". `[gpu]` is a device request's capability in
   Compose, not a Linux one, and swarm takes no device requests.
-- **A save made a few seconds after a deployment, or another save, is
-  refused**, "Mismatching update version. Please reload the page.": the
-  version a page saves against is the service's, which swarm moves again
-  when it marks the rolling update complete. The tests wait for it before
-  opening the page.
 
 Seen, and left as they are:
 

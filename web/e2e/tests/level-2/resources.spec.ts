@@ -27,7 +27,7 @@ test("resource limits saved apply to the container: CPU, memory, swap, processes
     await expectLogs(page, app, "memory.max=max");
     await expectLogs(page, app, "dd=0");
 
-    await openResources(page, api, app);
+    await page.goto(appPage(app, "resources"));
     const limits = page.getByText("Resource Limit", { exact: true }).locator("xpath=..");
     await limits.getByRole("group", { name: "CPUs" }).getByRole("textbox").fill("0.5");
     await limits.getByRole("group", { name: "Memory" }).getByRole("textbox").fill("64mb");
@@ -68,27 +68,6 @@ async function appSaying(
     return app;
 }
 
-// openResources opens the app's Resources page once its service is still: swarm
-// marks a rolling update complete a few seconds after its container runs, and
-// that moves the version a save is checked against - a page loaded before it
-// is refused, "Mismatching update version" (see the spec's Found).
-async function openResources(page: Page, api: APIRequestContext, app: App): Promise<void> {
-    let last = -1;
-    await expect
-        .poll(
-            async () => {
-                const res = await api.get(`${appPath(app)}/resource-settings`);
-                const { updateVer } = ((await res.json()) as { data: { updateVer: number } }).data;
-                const still = updateVer === last;
-                last = updateVer;
-                return still;
-            },
-            { timeout: 60_000, intervals: [6_000] },
-        )
-        .toBe(true);
-    await page.goto(appPage(app, "resources"));
-}
-
 // saveResources saves the app's Resources page as it is filled.
 async function saveResources(page: Page): Promise<void> {
     await page.getByRole("button", { name: "Save" }).click();
@@ -107,13 +86,13 @@ test("a reservation no node can meet runs nothing, and lowered, the app runs aga
     await expectPrinted(page, app, "running", "yes");
 
     // More CPUs than the node has, and memory it has.
-    await openResources(page, api, app);
+    await page.goto(appPage(app, "resources"));
     const reservation = section(page, "Resource Reservation");
     await reservation.getByRole("group", { name: "CPUs" }).getByRole("textbox").fill("64");
     await reservation.getByRole("group", { name: "Memory" }).getByRole("textbox").fill("32mb");
     await saveResources(page);
     await expectInstances(page, app, "0/1");
-    await openResources(page, api, app);
+    await page.goto(appPage(app, "resources"));
     await expect(reservation.getByRole("group", { name: "CPUs" }).getByRole("textbox")).toHaveValue("64");
     await expect(reservation.getByRole("group", { name: "Memory" }).getByRole("textbox")).toHaveValue("32mb");
 
@@ -143,12 +122,12 @@ test("shared memory and swap apply as saved, and cleared, are as before; swappin
     await expectPrinted(page, app, "shm", "64");
 
     // A memory limit, and the swap it has without one said.
-    await openResources(page, api, app);
+    await page.goto(appPage(app, "resources"));
     await section(page, "Resource Limit").getByRole("group", { name: "Memory" }).getByRole("textbox").fill("64mb");
     await saveResources(page);
     const defaultSwap = await expectPrinted(page, app, "swap", printed => printed !== "" && printed !== "max");
 
-    await openResources(page, api, app);
+    await page.goto(appPage(app, "resources"));
     await field(page, "Swap Memory").getByRole("textbox").fill("32mb");
     await field(page, "Shm Size").getByRole("textbox").fill("128mb");
     await field(page, "Swappiness").getByRole("textbox").fill("10");
@@ -156,7 +135,7 @@ test("shared memory and swap apply as saved, and cleared, are as before; swappin
     await saveResources(page);
     await expectPrinted(page, app, "shm", "128");
     await expectPrinted(page, app, "swap", String(32 * 1024 * 1024));
-    await openResources(page, api, app);
+    await page.goto(appPage(app, "resources"));
     await expect(field(page, "Swappiness").getByRole("textbox")).toHaveValue("10");
 
     await field(page, "Swap Memory").getByRole("textbox").fill("");
@@ -179,7 +158,7 @@ test("ulimits apply to the container, soft and hard, and one removed is as befor
     const nofile = await expectPrinted(page, app, "nofile", printed => printed.includes("/"));
     await expectPrinted(page, app, "nproc", "unlimited/unlimited");
 
-    await openResources(page, api, app);
+    await page.goto(appPage(app, "resources"));
     const ulimits = field(page, "Ulimits");
     for (const [name, soft, hard] of [
         ["nofile", "1000", "2000"],
@@ -196,7 +175,7 @@ test("ulimits apply to the container, soft and hard, and one removed is as befor
     await expectPrinted(page, app, "nofile", "1000/2000");
     await expectPrinted(page, app, "nproc", "300/400");
 
-    await openResources(page, api, app);
+    await page.goto(appPage(app, "resources"));
     await ulimits
         .getByText("nproc", { exact: true })
         .locator("xpath=../..")
@@ -235,7 +214,7 @@ test("capabilities added and dropped, the out-of-memory score and a sysctl apply
         await expectPrinted(page, app, key, value);
     }
 
-    await openResources(page, api, app);
+    await page.goto(appPage(app, "resources"));
     await field(page, "Capabilities Add").getByRole("textbox").fill("NET_ADMIN");
     await field(page, "Capabilities Drop").getByRole("textbox").fill("CHOWN");
     await field(page, "Out-of-Mem Score Adjustment").getByRole("textbox").fill("500");
@@ -249,7 +228,7 @@ test("capabilities added and dropped, the out-of-memory score and a sysctl apply
         await expectPrinted(page, app, key, value);
     }
 
-    await openResources(page, api, app);
+    await page.goto(appPage(app, "resources"));
     await field(page, "Capabilities Add").getByRole("textbox").fill("");
     await field(page, "Capabilities Drop").getByRole("textbox").fill("");
     await field(page, "Out-of-Mem Score Adjustment").getByRole("textbox").fill("");
@@ -260,4 +239,45 @@ test("capabilities added and dropped, the out-of-memory score and a sysctl apply
     for (const [key, value] of Object.entries(before)) {
         await expectPrinted(page, app, key, value);
     }
+});
+
+// The page is saved against what it shows of the service, not against the
+// service's own version: loaded before swarm marked the deployment's rolling
+// update complete - which writes the service again - it saves; another change
+// to what it shows, made while it was open, is refused.
+test("a page loaded before a deployment settled saves; one whose settings changed meanwhile is refused", async ({
+    page,
+    api,
+    cleanup,
+}) => {
+    const app = await appIn(api, cleanup, "settled");
+    await deployImage(api, app, BUSYBOX, "sh -c 'exec sleep 3600'");
+    await deployed(api, app);
+    const versionNow = async () => {
+        const res = await api.get(`${appPath(app)}/resource-settings`);
+        return ((await res.json()) as { data: { updateVer: number; limits: unknown } }).data;
+    };
+
+    // Loaded at once, and saved once swarm has written the service again.
+    await page.goto(appPage(app, "resources"));
+    const loaded = (await versionNow()).updateVer;
+    await page.waitForTimeout(12_000);
+    expect((await versionNow()).updateVer, "the page's version stays").toBe(loaded);
+    await section(page, "Resource Limit").getByRole("group", { name: "Pids" }).getByRole("textbox").fill("64");
+    await saveResources(page);
+
+    // Open again, and the limits changed by someone else meanwhile.
+    await page.goto(appPage(app, "resources"));
+    await expect(section(page, "Resource Limit").getByRole("group", { name: "Pids" }).getByRole("textbox")).toHaveValue(
+        "64",
+    );
+    const current = await versionNow();
+    const res = await api.put(`${appPath(app)}/resource-settings`, {
+        data: { ...current, limits: { pids: 32 } },
+    });
+    expect(res.ok(), `changing the limits: ${res.status()} ${await res.text()}`).toBe(true);
+    await section(page, "Resource Limit").getByRole("group", { name: "Pids" }).getByRole("textbox").fill("128");
+    await page.getByRole("button", { name: "Save" }).click();
+    await expect(page.getByText("Mismatching update version").first()).toBeVisible();
+    expect(((await versionNow()).limits as { pids?: number }).pids, "the other change stands").toBe(32);
 });

@@ -40,6 +40,13 @@ function runRoute(scope: BackupSnapshotScope, snapshot: BackupSnapshot): string 
     );
 }
 
+/** The page of the repositories an app's or a project's snapshots are in: the project's. */
+function reposRoute(scope: BackupSnapshotScope): string | undefined {
+    return scope.type === "settings"
+        ? undefined
+        : ROUTE.projects.single.providerConfiguration.backupRepos.$route(scope.projectId);
+}
+
 /**
  * The snapshots a scope sees, with their filters. A link in may set the filters
  * through the URL: `repo`, `app` and `tag` (several). `fixedTags` narrow the list
@@ -95,6 +102,7 @@ export function BackupSnapshotTable({ scope, fixedTags = [] }: Props) {
     );
 
     const detailsRunRoute = details ? runRoute(scope, details) : undefined;
+    const reposPage = reposRoute(scope);
 
     return (
         <div className="flex flex-col gap-4">
@@ -105,6 +113,16 @@ export function BackupSnapshotTable({ scope, fixedTags = [] }: Props) {
 
             <TableActions
                 search={{ value: search, onChange: setSearch }}
+                renderActions={
+                    reposPage && (
+                        <AppLink.Basic
+                            to={reposPage}
+                            className="text-sm font-medium text-link underline-offset-4 hover:underline"
+                        >
+                            Go to Backup Repos
+                        </AppLink.Basic>
+                    )
+                }
                 renderAfterSearch={
                     <div className="flex items-center gap-2">
                         <Button

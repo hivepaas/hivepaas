@@ -289,3 +289,39 @@ test("a member's API key reaches what the member does, and no more", async ({ pa
         await key.dispose();
     }
 });
+
+// A member whose access expires is turned away at the next request, though
+// signed in before: a session lasts hours, the access no longer than it says.
+test("a member whose access expires is refused at once, though signed in", async ({ page, api, cleanup, browser }) => {
+    test.setTimeout(180_000);
+    const { dev, member } = await devOnly(page, browser, api, cleanup, "expiring");
+    const found = (await (await api.get("users", { params: { search: member.email } })).json()) as {
+        data: { id: string; email: string }[];
+    };
+    const id = found.data.find(user => user.email === member.email)?.id ?? "";
+    const expiry = new Date(Date.now() + 60_000);
+    const set = await api.put(`users/${id}`, {
+        data: { username: member.username, email: member.email, accessExpireAt: expiry.toISOString() },
+    });
+    expect(set.ok(), `an admin sets the member's expiry: ${await set.text()}`).toBe(true);
+
+    const memberApi = await signedInAs(member.username, PASSWORD);
+    try {
+        expect((await memberApi.get(appPath(dev))).status(), "before the expiry").toBe(200);
+        await expect
+            .poll(async () => (await memberApi.get(appPath(dev))).status(), { timeout: 120_000, intervals: [5_000] })
+            .toBe(401);
+        expect(Date.now(), "refused once expired, not before").toBeGreaterThanOrEqual(expiry.getTime());
+    } finally {
+        await memberApi.dispose();
+    }
+    const again = await request.newContext({ baseURL: `${env.baseURL}/api/` });
+    try {
+        const res = await again.post("auth/login-with-password", {
+            data: { username: member.username, password: PASSWORD },
+        });
+        expect(REFUSED, `signing in again: ${res.status()}`).toContain(res.status());
+    } finally {
+        await again.dispose();
+    }
+});

@@ -118,6 +118,9 @@ has a project of its own, and deleting it takes the apps and their services.
 | 2.108 | Shared memory and swap apply as saved, and cleared, are as before; swappiness is kept as saved                                                                                                                                                | `tests/level-2/resources.spec.ts`           |
 | 2.109 | Ulimits - nofile, nproc - apply to the container, soft and hard; one removed is as before                                                                                                                                                     | `tests/level-2/resources.spec.ts`           |
 | 2.110 | Capabilities added and dropped, the out-of-memory score and a sysctl apply to the container; cleared, it is as before                                                                                                                         | `tests/level-2/resources.spec.ts`           |
+| 2.111 | A domain's paths have settings of their own: basic auth on a prefix, a header on an exact path and on a pattern's; a path turned off changes nothing                                                                                          | `tests/level-2/routing-paths.spec.ts`       |
+| 2.112 | The load balancer's strategy decides which of two replicas answer: round robin each in turn, highest random weight the one a client is hashed to                                                                                              | `tests/level-2/routing-paths.spec.ts`       |
+| 2.113 | A websocket opened at an app's domain reaches the app, and is answered through the proxy                                                                                                                                                      | `tests/level-2/routing-paths.spec.ts`       |
 
 The images: `traefik/whoami` for an app that serves - it answers with the
 request it got, as the proxy passed it on - and `busybox` for one that prints
@@ -147,19 +150,22 @@ the code last POSTed to it: it fails, and passes again, with no restart.
   function scaling out under load and back in. They read the stored logs, which
   the env does not run yet: `env/up.sh` is to set up Logging (VictoriaLogs and
   its agent) first. Until then autoscale can be checked only refusing (2.33).
-- **Routing, the rest**: a TCP domain (a database through the proxy, by SNI),
-  settings of one path (Paths), load balancing, websockets, a certificate of
-  one's own; Mem Request Body Size, which nothing outside the proxy sees.
-- **Secrets in a spec**: exported encrypted and imported with the passphrase.
-  The server refuses to return secrets unless its Security settings allow it,
-  and turning that on for one test would unmask them for the tests running
-  beside it.
+- **Routing, the rest**: a TCP domain (a database through the proxy, by SNI).
+  The proxy answers it on a port of its own, opened inside dind, which the
+  machine running the tests does not reach; Mem Request Body Size, which
+  nothing outside the proxy sees.
 
 The Git repositories apps are built from are served inside dind (see the
 README): their commits are made at fixed dates, so their hashes are fixed too.
 A test plays GitHub's webhook - a push of a commit, a comment on pull request
 7 - signing it with the webhook's secret as GitHub does. GitHub itself is not
 called: what HivePaaS posts back on a pull request fails, and is let go.
+
+## Seen with routing (2026-10-10), and left as it is
+
+- A domain's Websocket Configuration does nothing: it is saved, and the proxy
+  is told nothing of it. A websocket passes through the proxy without it
+  (2.113), and turned off it is not refused.
 
 ## Found with members' tasks (2026-10-10), and fixed
 

@@ -723,29 +723,27 @@ export function CreateOrEditSslCertForm({
 
                             {!isAcme && (
                                 <>
-                                    <InfoBlock
-                                        titleWidth={220}
-                                        title={
-                                            <LabelWithInfo
-                                                label="Expire At"
-                                                isRequired={isCustom}
-                                            />
-                                        }
-                                    >
-                                        <Field className={SETTINGS_FORM_CONTROL_MAX_WIDTH_CLASS}>
-                                            <DateTimePicker
-                                                value={expireAtField.value ?? undefined}
-                                                onChange={date => {
-                                                    expireAtField.onChange(date ?? null);
-                                                }}
-                                                displayFormat={{ hour24: "yyyy-MM-dd HH:mm:ss" }}
-                                                granularity="second"
-                                                showClearButton
-                                                aria-invalid={isExpireAtInvalid}
-                                            />
-                                            <FieldError errors={[errors.expireAt]} />
-                                        </Field>
-                                    </InfoBlock>
+                                    {/* A custom certificate's expiry is read from it, by the server. */}
+                                    {!isCustom && (
+                                        <InfoBlock
+                                            titleWidth={220}
+                                            title={<LabelWithInfo label="Expire At" />}
+                                        >
+                                            <Field className={SETTINGS_FORM_CONTROL_MAX_WIDTH_CLASS}>
+                                                <DateTimePicker
+                                                    value={expireAtField.value ?? undefined}
+                                                    onChange={date => {
+                                                        expireAtField.onChange(date ?? null);
+                                                    }}
+                                                    displayFormat={{ hour24: "yyyy-MM-dd HH:mm:ss" }}
+                                                    granularity="second"
+                                                    showClearButton
+                                                    aria-invalid={isExpireAtInvalid}
+                                                />
+                                                <FieldError errors={[errors.expireAt]} />
+                                            </Field>
+                                        </InfoBlock>
+                                    )}
 
                                     <InfoBlock
                                         titleWidth={220}

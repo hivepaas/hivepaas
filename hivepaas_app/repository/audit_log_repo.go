@@ -213,11 +213,13 @@ func (repo *auditLogRepo) applyProjectFilter(opts []bunex.SelectQueryOption,
 			bunex.SelectWhereOrGroup(
 				bunex.SelectJoin("LEFT JOIN project_envs AS env ON env.id = audit_log.object_id"),
 				bunex.SelectWhere("env.project_id = ?", projectID),
+				inProjectEnvs("env.id", scope.ProjectEnvIDs),
 			),
 			// Logs from containing apps
 			bunex.SelectWhereOrGroup(
 				bunex.SelectJoin("LEFT JOIN apps AS app ON app.id = audit_log.object_id"),
 				bunex.SelectWhere("app.project_id = ?", projectID),
+				inProjectEnvs("app.project_env_id", scope.ProjectEnvIDs),
 			),
 		),
 	)

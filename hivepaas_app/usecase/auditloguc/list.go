@@ -8,7 +8,6 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
-	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/projecthelper"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/auditloguc/auditlogdto"
 )
 
@@ -20,17 +19,15 @@ func (uc *UC) ListAuditLog(
 	if req.Scope == nil {
 		req.Scope = entity.NewObjectScopeGlobal()
 	}
-	targetScope := req.Scope
-	switch {
-	case req.ProjectID != "":
-		targetScope = entity.NewObjectScopeProject(req.ProjectID)
-	case req.ProjectEnvID != "":
-		projectID, env := projecthelper.ParseProjectEnvID(req.ProjectEnvID)
-		if projectID != "" && env != "" {
-			targetScope = entity.NewObjectScopeProjectEnv(projectID, env)
-		}
-	case req.AppID != "":
-		targetScope = entity.NewObjectScopeApp(req.AppID, "", "", "")
+	// The filters narrow what the scope reached shows, never widen it: a project
+	// or an app outside it lists nothing.
+	targetScope, err := uc.scopeService.FilterScope(ctx, uc.db, req.Scope, req.ProjectID, req.ProjectEnvID,
+		req.AppID)
+	if err != nil {
+		return nil, hperrors.Wrap(err)
+	}
+	if targetScope == nil {
+		return &auditlogdto.ListAuditLogResp{Meta: basedto.NewEmptyListMeta()}, nil
 	}
 	targetScope.NoInherited = req.Scope.NoInherited
 	if req.ScopeOnly {

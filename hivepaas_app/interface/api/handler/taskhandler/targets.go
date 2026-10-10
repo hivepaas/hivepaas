@@ -23,6 +23,8 @@ func (h *Handler) ListTargetObject(
 	switch scopeType {
 	case base.ObjectScopeProject:
 		auth, scope.ProjectID, _, err = h.GetAuthProjectTasks(ctx, base.ActionTypeRead, "")
+		// Read through some of its envs, the project shows those alone.
+		scope.ProjectEnvIDs = auth.ProjectEnvRestriction()
 	case base.ObjectScopeProjectEnv:
 		auth, scope.ProjectID, scope.ProjectEnvID, _, err = h.GetAuthProjectEnvTasks(ctx, base.ActionTypeRead, "")
 	case base.ObjectScopeApp:

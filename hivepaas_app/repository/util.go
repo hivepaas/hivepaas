@@ -32,3 +32,9 @@ func wrapPaginationError(err error, paging *basedto.Paging) error {
 func replaceNUL(s string) string {
 	return strings.ReplaceAll(s, "\x00", "\uFFFD")
 }
+
+// inProjectEnvs keeps a project's query to the envs given, by the column that
+// holds an env's ID; with none given, to all of them.
+func inProjectEnvs(column string, envIDs []string) bunex.SelectQueryOption {
+	return bunex.SelectWhereInIf(len(envIDs) > 0, column+" IN (?)", envIDs...)
+}

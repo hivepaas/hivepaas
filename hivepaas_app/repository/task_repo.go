@@ -278,12 +278,14 @@ func (repo *taskRepo) applyProjectFilter(opts []bunex.SelectQueryOption,
 				bunex.SelectJoin("LEFT JOIN project_envs AS env ON env.id = task.object_id AND "+
 					"env.deleted_at IS NULL"),
 				bunex.SelectWhere("env.project_id = ?", projectID),
+				inProjectEnvs("env.id", scope.ProjectEnvIDs),
 			),
 			// Tasks from containing apps
 			bunex.SelectWhereOrGroup(
 				bunex.SelectJoin("LEFT JOIN apps AS app ON app.id = task.object_id AND "+
 					"app.deleted_at IS NULL"),
 				bunex.SelectWhere("app.project_id = ?", projectID),
+				inProjectEnvs("app.project_env_id", scope.ProjectEnvIDs),
 			),
 		),
 	)

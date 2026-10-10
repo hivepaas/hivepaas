@@ -2,6 +2,7 @@ package entity
 
 import (
 	"fmt"
+	"slices"
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/projecthelper"
@@ -28,6 +29,53 @@ type ObjectScope struct {
 	// in the env, next to the env's own, and nothing inherited or shared: the
 	// env's scheduled jobs are listed with its apps'.
 	IncludeEnvApps bool
+	// ProjectEnvIDs, set on a project's scope, keeps it to these of its envs: a
+	// project read through a grant on some of its envs shows those alone.
+	ProjectEnvIDs []string
+}
+
+// FilteredBy is the scope a list reached through s shows once filtered to a
+// project, an env or an app: the filter's when s holds it, s itself when the
+// filter holds s, and nil when the two do not meet. A filter narrows what s
+// shows and never widens it; a project kept to some of its envs holds those
+// alone.
+func (s *ObjectScope) FilteredBy(filter *ObjectScope) *ObjectScope {
+	if filter == nil {
+		return s
+	}
+	switch s.ScopeType {
+	case base.ObjectScopeGlobal, base.ObjectScopeHivepaas:
+		return filter
+	case base.ObjectScopeProject:
+		switch {
+		case filter.ProjectID != s.ProjectID:
+			return nil
+		case filter.ScopeType == base.ObjectScopeProject:
+			return s
+		case len(s.ProjectEnvIDs) > 0 && !slices.Contains(s.ProjectEnvIDs, filter.ProjectEnvID):
+			return nil
+		}
+		return filter
+	case base.ObjectScopeProjectEnv:
+		switch {
+		case filter.ScopeType == base.ObjectScopeProject && filter.ProjectID == s.ProjectID:
+			return s
+		case filter.ProjectEnvID != s.ProjectEnvID:
+			return nil
+		case filter.ScopeType == base.ObjectScopeApp:
+			return filter
+		}
+		return s
+	case base.ObjectScopeApp:
+		switch {
+		case filter.ScopeType == base.ObjectScopeApp && filter.AppID == s.AppID,
+			filter.ScopeType == base.ObjectScopeProjectEnv && filter.ProjectEnvID == s.ProjectEnvID,
+			filter.ScopeType == base.ObjectScopeProject && filter.ProjectID == s.ProjectID:
+			return s
+		}
+	case base.ObjectScopeUser:
+	}
+	return nil
 }
 
 func (s *ObjectScope) IsGlobalScope() bool {

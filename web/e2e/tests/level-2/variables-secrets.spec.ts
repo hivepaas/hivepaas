@@ -1,15 +1,19 @@
 import type { APIRequestContext, Page } from "@playwright/test";
+import crypto from "node:crypto";
+import fs from "node:fs";
 
 import {
     type App,
     type EnvVar,
     appPath,
+    createApp,
     createSettingAt,
     deployImage,
+    exposeApp,
     latestDeployment,
     setRuntimeEnvVars,
 } from "../../support/api";
-import { BUSYBOX, DEPLOYED, appIn, appPage, deployed, expectPrinted } from "../../support/apps";
+import { BUSYBOX, DEPLOYED, WHOAMI, appIn, appPage, deployed, expectPrinted } from "../../support/apps";
 import { e2eName, expect, test } from "../../support/fixtures";
 import { REPOS, buildFromRepo } from "../../support/git";
 
@@ -21,6 +25,19 @@ const plain = (key: string, value: string): EnvVar => ({ key, value, isLiteral: 
 // container was given is read in its log.
 const printing = (...keys: string[]) =>
     `sh -c 'while :; do ${keys.map(key => `echo "${key.toLowerCase()}=$${key}"`).join("; ")}; sleep 2; done'`;
+
+// putSharedEnvVars replaces the variables an app shares with the apps of its
+// env, its runtime ones left as they are.
+async function putSharedEnvVars(api: APIRequestContext, app: App, vars: EnvVar[]): Promise<void> {
+    const current = await api.get(`${appPath(app)}/env-vars`);
+    const { updateVer, runtimeEnvVars } = (
+        (await current.json()) as { data: { updateVer: number; runtimeEnvVars?: EnvVar[] | null } }
+    ).data;
+    const res = await api.put(`${appPath(app)}/env-vars`, {
+        data: { updateVer, runtimeEnvVars: runtimeEnvVars ?? [], buildtimeEnvVars: [], sharedEnvVars: vars },
+    });
+    expect(res.ok(), `sharing ${app.name}'s variables: ${res.status()} ${await res.text()}`).toBe(true);
+}
 
 // variablesForm is the app's Runtime Env Variables, opened.
 async function variablesForm(page: Page, app: App) {
@@ -242,4 +259,162 @@ test("a secret's value is not shown, and neither revealed nor downloaded while t
     await page.getByRole("button", { name: "Download File" }).click();
     await expect(page.getByText("Returning secrets via the API is disabled on this server.")).toBeVisible();
     expect(opened, "no tab opened with the secret").toBe(false);
+});
+
+// finalValues are the keys and values of the Final Env Values dialog.
+async function finalValues(page: Page): Promise<Record<string, string>> {
+    const dialog = page.getByRole("dialog", { name: "Final Env Values" });
+    await expect(dialog.locator("textarea").first()).toBeVisible();
+    return dialog.evaluate(element => {
+        const values: Record<string, string> = {};
+        for (const textarea of element.querySelectorAll("textarea")) {
+            const key = textarea.parentElement?.querySelector("input");
+            if (key) values[key.value] = textarea.value;
+        }
+        return values;
+    });
+}
+
+// settingIdNamed is the id of the setting of that name listed at a path.
+async function settingIdNamed(api: APIRequestContext, path: string, name: string): Promise<string> {
+    const res = await api.get(path);
+    expect(res.ok(), `listing ${path}: ${res.status()}`).toBe(true);
+    const found = ((await res.json()) as { data: { id: string; name: string }[] }).data.find(s => s.name === name);
+    expect(found, `${name} at ${path}`).toBeDefined();
+    return found?.id ?? "";
+}
+
+test("a literal variable reaches the container as written and a reference worked out; the final values show both, a secret masked", async ({
+    page,
+    api,
+    cleanup,
+}) => {
+    const app = await appIn(api, cleanup, "literal");
+    await createSettingAt(api, `${appPath(app)}/secrets`, { key: "E2E_TOKEN", value: "kept-secret" });
+    await setRuntimeEnvVars(api, app, [
+        plain("GREETING", "hello"),
+        plain("REF", "${GREETING}"),
+        { key: "LIT", value: "${GREETING}", isLiteral: true },
+        plain("TOKEN", "${secrets.E2E_TOKEN}"),
+    ]);
+    await deployImage(api, app, BUSYBOX, printing("REF", "LIT"));
+    await deployed(api, app);
+    await expectPrinted(page, app, "ref", "hello");
+    await expectPrinted(page, app, "lit", "${GREETING}");
+
+    const runtime = await variablesForm(page, app);
+    await runtime.getByRole("button", { name: "Show Final Values" }).click();
+    expect(await finalValues(page)).toEqual(
+        expect.objectContaining({ REF: "hello", LIT: "${GREETING}", TOKEN: "********" }),
+    );
+});
+
+test("Link App: an app reaches another at the address it adds; a shared variable changed reaches it without a deploy", async ({
+    page,
+    api,
+    cleanup,
+}) => {
+    const client = await appIn(api, cleanup, "linked");
+    const target = await createApp(api, { id: client.projectId, name: "", key: "" }, "api");
+    await exposeApp(api, target, `${e2eName("api")}.localhost`);
+    await putSharedEnvVars(api, target, [plain("API_TOKEN", "first")]);
+    await deployImage(api, target, WHOAMI);
+    await deployed(api, target);
+
+    const runtime = await variablesForm(page, client);
+    await runtime.getByRole("button", { name: "Link App" }).click();
+    const dialog = page.getByRole("dialog", { name: "Link to another app" });
+    await dialog.getByRole("combobox").first().click();
+    await page.getByRole("option", { name: /^api/ }).click();
+    // Its addresses are picked, as recommended; its shared variables too.
+    await dialog
+        .locator("div.rounded-md", { has: page.getByText("Shared variables of api", { exact: true }) })
+        .getByRole("checkbox")
+        .first()
+        .check();
+    await dialog.getByRole("button", { name: /^Add \d+ variables$/ }).click();
+    await page.getByRole("button", { name: "Save" }).click();
+    await expect(page.getByText("Environment variables updated")).toBeVisible();
+
+    await deployImage(
+        api,
+        client,
+        BUSYBOX,
+        `sh -c 'while :; do echo "reached=$(wget -qO- -T 2 "$API_URL" 2>/dev/null | grep -c Hostname)"; ` +
+            `echo "token=$API_TOKEN"; sleep 2; done'`,
+    );
+    await deployed(api, client);
+    const deployment = await latestDeployment(api, client);
+    await expectPrinted(page, client, "reached", "1");
+    await expectPrinted(page, client, "token", "first");
+
+    await putSharedEnvVars(api, target, [plain("API_TOKEN", "second")]);
+    await expectPrinted(page, client, "token", "second");
+    expect((await latestDeployment(api, client))?.id, "no deployment was made").toBe(deployment?.id);
+});
+
+test("a binary secret and a binary config file, uploaded, are mounted as they were; a config file downloads as it was", async ({
+    page,
+    api,
+    cleanup,
+}, testInfo) => {
+    const app = await appIn(api, cleanup, "binary");
+    const blob = Buffer.from(Array.from({ length: 1024 }, (_, i) => (i * 7) % 256));
+    const file = testInfo.outputPath("blob.bin");
+    fs.writeFileSync(file, blob);
+    const sha = crypto.createHash("sha256").update(blob).digest("hex").slice(0, 16);
+
+    for (const { tab, newButton, input, name } of [
+        { tab: "secrets", newButton: "New Secret", input: "#app-secret-binary-value", name: "E2E_BLOB" },
+        {
+            tab: "config-files",
+            newButton: "New Config File",
+            input: "#app-config-file-binary-value",
+            name: "E2E_BLOB_CONF",
+        },
+    ]) {
+        await page.goto(appPage(app, tab));
+        await page.getByRole("button", { name: newButton }).click();
+        await page.getByRole("group", { name: "Name *" }).getByRole("textbox").fill(name);
+        await page.getByRole("tab", { name: "Binary" }).click();
+        await page.locator(input).setInputFiles(file);
+        await page.getByRole("button", { name: "Save" }).click();
+        await expect(page.getByRole("row", { name: new RegExp(name) })).toBeVisible();
+    }
+    const secret = await settingIdNamed(api, `${appPath(app)}/secrets`, "E2E_BLOB");
+    const conf = await settingIdNamed(api, `${appPath(app)}/config-files`, "E2E_BLOB_CONF");
+    await createSettingAt(api, `${appPath(app)}/setting-mounts`, {
+        name: "blob-secret",
+        source: { id: secret },
+        files: [{ part: "value", path: "/etc/blob.secret" }],
+    });
+    await createSettingAt(api, `${appPath(app)}/setting-mounts`, {
+        name: "blob-conf",
+        source: { id: conf },
+        files: [{ part: "content", path: "/etc/blob.conf" }],
+    });
+    await deployImage(
+        api,
+        app,
+        BUSYBOX,
+        `sh -c 'while :; do echo "secret=$(sha256sum < /etc/blob.secret | cut -c1-16)"; ` +
+            `echo "conf=$(sha256sum < /etc/blob.conf | cut -c1-16)"; sleep 2; done'`,
+    );
+    await deployed(api, app);
+    await expectPrinted(page, app, "secret", sha);
+    await expectPrinted(page, app, "conf", sha);
+
+    const text = e2eName("as-it-was");
+    await createSettingAt(api, `${appPath(app)}/config-files`, { name: "E2E_TEXT", content: text });
+    await page.goto(appPage(app, "config-files"));
+    await page
+        .getByRole("row", { name: /E2E_TEXT/ })
+        .getByRole("button", { name: "Actions menu" })
+        .click();
+    const [download] = await Promise.all([
+        page.context().waitForEvent("page"),
+        page.getByRole("button", { name: "Download File" }).click(),
+    ]);
+    await expect(download.locator("body")).toHaveText(text);
+    await download.close();
 });

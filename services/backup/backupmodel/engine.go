@@ -16,6 +16,9 @@ type Engine interface {
 	// ApplyRepoOptions applies the changeable settings to an existing repository.
 	ApplyRepoOptions(ctx context.Context, opts *RepoOptions) error
 
+	// SetRetention sets the retention policy the repository keeps snapshots by, every rule of it.
+	SetRetention(ctx context.Context, policy *RetentionPolicy) error
+
 	// ReadRepoConfig reads back the settings the repository is actually running with.
 	ReadRepoConfig(ctx context.Context) (RepoConfig, error)
 

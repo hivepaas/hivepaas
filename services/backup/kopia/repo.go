@@ -46,6 +46,9 @@ func (c *Client) InitRepo(
 		if err := c.ApplyRepoOptions(ctx, &opts.RepoOptions); err != nil {
 			return hperrors.Wrap(err)
 		}
+		if err := c.SetRetention(ctx, opts.Retention); err != nil {
+			return hperrors.Wrap(err)
+		}
 	}
 	return nil
 }

@@ -28,6 +28,7 @@ func (s *service) InitRepo(
 				PackSizeMB:  int(req.Repo.PackSize.MBytes()),
 				Compression: req.Repo.Compression,
 			},
+			Retention: toRetentionPolicy(req.Repo.Retention),
 		})
 		if err != nil {
 			return nil, hperrors.Wrap(err)

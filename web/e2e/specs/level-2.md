@@ -106,6 +106,7 @@ has a project of its own, and deleting it takes the apps and their services.
 | 2.96 | An app's health check and scheduled job come with its clone, the job running in the clone's container; turned off, neither does                                                                                                               | `tests/level-2/clone.spec.ts`               |
 | 2.97 | A command pipe run after the clone carries what the app has into the clone: the source's command in the app, the target's in the clone; saved, it is listed once                                                                              | `tests/level-2/clone.spec.ts`               |
 | 2.98 | A clone tells its target that it failed, and why, leaving no app; or that it succeeded. Nobody by default; a target unpicked says None, and saves                                                                                             | `tests/level-2/clone.spec.ts`               |
+| 2.99 | A project exported with its secrets encrypted comes back with them: a wrong passphrase refused, the right one opens it, the app runs with its secret                                                                                          | `tests/level-2/secrets-on/spec.spec.ts`     |
 
 The images: `traefik/whoami` for an app that serves - it answers with the
 request it got, as the proxy passed it on - and `busybox` for one that prints

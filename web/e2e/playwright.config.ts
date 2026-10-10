@@ -13,6 +13,26 @@ if (levelZeroOnly && process.env["TEST_WORKER_INDEX"] === undefined) {
     );
 }
 
+// The tests that switch the server's return of secrets on: tests/**/secrets-on/.
+const SECRETS_ON = /[\\/]secrets-on[\\/]/;
+
+// The browser every test runs in.
+const CHROME = {
+    ...devices["Desktop Chrome"],
+    storageState: authFile,
+    launchOptions: {
+        args: [
+            // An app's domain, <name>.localhost, keeps its address - port
+            // and all, as a redirect writes it - and is reached where the
+            // proxy is.
+            `--host-resolver-rules=MAP *.localhost:80 ${env.ingressHTTP}, MAP *.localhost:443 ${env.ingressHTTPS}`,
+            // Chrome tries HTTPS first for an http:// address, which would
+            // hide what the proxy does with plain HTTP.
+            "--disable-features=HttpsUpgrades",
+        ],
+    },
+};
+
 export default defineConfig({
     testDir: "tests",
     fullyParallel: true,
@@ -33,23 +53,23 @@ export default defineConfig({
         { name: "setup", testMatch: /.*\.setup\.ts/ },
         {
             name: "chromium",
-            testIgnore: levelZeroOnly ? /[\\/]level-[12][\\/]/ : undefined,
-            use: {
-                ...devices["Desktop Chrome"],
-                storageState: authFile,
-                launchOptions: {
-                    args: [
-                        // An app's domain, <name>.localhost, keeps its address - port
-                        // and all, as a redirect writes it - and is reached where the
-                        // proxy is.
-                        `--host-resolver-rules=MAP *.localhost:80 ${env.ingressHTTP}, MAP *.localhost:443 ${env.ingressHTTPS}`,
-                        // Chrome tries HTTPS first for an http:// address, which would
-                        // hide what the proxy does with plain HTTP.
-                        "--disable-features=HttpsUpgrades",
-                    ],
-                },
-            },
+            testIgnore: levelZeroOnly ? /[\\/]level-[12][\\/]/ : SECRETS_ON,
+            use: CHROME,
             dependencies: ["setup"],
+        },
+        // The tests that need the server to return secrets through its API -
+        // an export with them, for one - turn that on, and off again when they
+        // end. Others count on it being off (2.26, 2.85), so these run alone,
+        // once every other test is done - and a run of only them runs every
+        // other test first. On their own, with what they depend on left out,
+        // signed in by a run before on the same installation (--project=setup):
+        // --project=secrets-on --no-deps.
+        {
+            name: "secrets-on",
+            testMatch: SECRETS_ON,
+            testIgnore: levelZeroOnly ? /.*/ : undefined,
+            use: CHROME,
+            dependencies: ["chromium"],
         },
     ],
 });

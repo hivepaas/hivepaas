@@ -164,8 +164,9 @@ func applyMemory(m *specmodel.Memory, task *swarm.TaskSpec) {
 // document carrying capabilities is provisioned only by someone who may change
 // them - so there is nothing left to refuse here.
 //
-// The GPU is a reservation, not a capability: one GPU, which swarm finds on a
-// node that has it free - see dockerhelper.SetOneGPU.
+// A GPU is a reservation among the generic resources, not a capability:
+// enableGPU - and "[gpu]", which it wrote before, in a document exported then -
+// reserve one NVIDIA GPU, which swarm finds on a node that has it free.
 func buildCapabilities(capabilities *specmodel.Capabilities, task *swarm.TaskSpec) {
 	if capabilities == nil {
 		capabilities = &specmodel.Capabilities{}
@@ -178,7 +179,10 @@ func buildCapabilities(capabilities *specmodel.Capabilities, task *swarm.TaskSpe
 	}
 	contSpec.CapabilityAdd = slices.Clone(capabilities.CapabilityAdd)
 	contSpec.CapabilityDrop = slices.Clone(capabilities.CapabilityDrop)
-	dockerhelper.SetOneGPU(task, capabilities.EnableGPU)
+	if capabilities.EnableGPU || dockerhelper.HasLegacyGPU(task) {
+		dockerhelper.ReserveOneGPU(task)
+	}
+	dockerhelper.DropLegacyGPU(task)
 	contSpec.OomScoreAdj = capabilities.OomScoreAdj
 	contSpec.Sysctls = maps.Clone(capabilities.Sysctls)
 }

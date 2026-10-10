@@ -121,7 +121,7 @@ func TransformResourceSettings(
 		UpdateVer: ResourceSettingsVersion(service),
 	}
 
-	resp.Reservations = TransformResourceReservations(spec.TaskTemplate.Resources)
+	resp.Reservations = TransformResourceReservations(&spec.TaskTemplate)
 	resp.Limits = TransformResourceLimits(spec.TaskTemplate.Resources)
 	resp.Memory = TransformMemory(&spec.TaskTemplate)
 	resp.Capabilities = TransformCapabilities(&spec.TaskTemplate)
@@ -129,17 +129,21 @@ func TransformResourceSettings(
 	return resp, nil
 }
 
-func TransformResourceReservations(res *swarm.ResourceRequirements) *ResourceReservations {
-	if res == nil || res.Reservations == nil {
+// TransformResourceReservations are what the task reserves. A GPU is one of
+// its generic resources; the capability Enable GPU used to write is shown as
+// the one NVIDIA GPU it asked for, which saving reserves.
+func TransformResourceReservations(task *swarm.TaskSpec) *ResourceReservations {
+	generic := dockerhelper.ShownGenericResources(task)
+	res := task.Resources
+	if (res == nil || res.Reservations == nil) && len(generic) == 0 {
 		return nil
 	}
-	resp := &ResourceReservations{
-		CPUs:             float64(res.Reservations.NanoCPUs) / docker.UnitCPUNano,
-		Memory:           unit.DataSize(res.Reservations.MemoryBytes),
-		GenericResources: make([]*GenericResource, 0, len(res.Reservations.GenericResources)),
+	resp := &ResourceReservations{GenericResources: make([]*GenericResource, 0, len(generic))}
+	if res != nil && res.Reservations != nil {
+		resp.CPUs = float64(res.Reservations.NanoCPUs) / docker.UnitCPUNano
+		resp.Memory = unit.DataSize(res.Reservations.MemoryBytes)
 	}
-	// Enable GPU's one GPU is shown as Enable GPU.
-	for _, r := range dockerhelper.WithoutOneGPU(res.Reservations.GenericResources) {
+	for _, r := range generic {
 		if r.NamedResourceSpec != nil {
 			resp.GenericResources = append(resp.GenericResources, &GenericResource{
 				Kind:  r.NamedResourceSpec.Kind,
@@ -198,10 +202,10 @@ func TransformCapabilities(task *swarm.TaskSpec) *Capabilities {
 				Soft: ulimit.Soft,
 			}
 		}),
-		// The capability Enable GPU wrote before is shown as Enable GPU.
+		// The capability Enable GPU used to write is shown as the GPU it asked
+		// for, among the generic resources reserved.
 		CapabilityAdd:  gofn.Drop(containerSpec.CapabilityAdd, docker.CapabilityGPU),
 		CapabilityDrop: containerSpec.CapabilityDrop,
-		EnableGPU:      dockerhelper.ReservesOneGPU(task),
 		OomScoreAdj:    containerSpec.OomScoreAdj,
 		Sysctls:        containerSpec.Sysctls,
 	}

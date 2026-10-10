@@ -441,9 +441,9 @@ services:
 	}
 }
 
-// GPUs asked for are reserved: one is enableGPU, more a count of them, and
-// all a node has is one, said so. Generic resources are kept, a GPU among them
-// granted as one asked for by `gpus`.
+// GPUs asked for are reserved as NVIDIA GPUs among the generic resources, by
+// count - all a node has as one, said so. Generic resources are kept, a GPU
+// among them, of any maker, granted as one asked for by `gpus`.
 func TestConvertReservesTheGPUsAServiceAsksFor(t *testing.T) {
 	reserved := func(compose string) (*specmodel.Resources, []string) {
 		req := convertReq(compose)
@@ -451,29 +451,31 @@ func TestConvertReservesTheGPUsAServiceAsksFor(t *testing.T) {
 		resp := convert(t, req)
 		return appOf(t, resp, "a").Deployment.Resources, codes(resp.Issues[envPath+"/apps/a"])
 	}
+	gpus := func(kind, count string) []*specmodel.GenericResource {
+		return []*specmodel.GenericResource{{Kind: kind, Value: count}}
+	}
 
 	resources, _ := reserved("services:\n  a:\n    image: x:1\n    gpus: [{count: 1}]\n")
-	assert.True(t, resources.Capabilities.EnableGPU)
+	assert.Nil(t, resources.Capabilities)
+	assert.Equal(t, gpus(docker.GenericResourceGPU, "1"), resources.Reservations.GenericResources)
 
 	resources, _ = reserved("services:\n  a:\n    image: x:1\n    deploy:\n      resources:\n        reservations:\n" +
 		"          devices: [{capabilities: [gpu], count: 2}]\n")
-	assert.Nil(t, resources.Capabilities)
-	assert.Equal(t, []*specmodel.GenericResource{{Kind: docker.GenericResourceGPU, Value: "2"}},
-		resources.Reservations.GenericResources)
+	assert.Equal(t, gpus(docker.GenericResourceGPU, "2"), resources.Reservations.GenericResources)
 
 	resources, issues := reserved("services:\n  a:\n    image: x:1\n    gpus: all\n")
-	assert.True(t, resources.Capabilities.EnableGPU)
+	assert.Equal(t, gpus(docker.GenericResourceGPU, "1"), resources.Reservations.GenericResources)
 	assert.Contains(t, issues, composeservice.CodeValueDropped)
 
 	compose := "services:\n  a:\n    image: x:1\n    deploy:\n      resources:\n        reservations:\n" +
 		"          generic_resources:\n            - discrete_resource_spec: {kind: SSD, value: 1}\n" +
-		"            - discrete_resource_spec: {kind: NVIDIA-GPU, value: 2}\n"
+		"            - discrete_resource_spec: {kind: AMD_GPU, value: 2}\n"
 	resources, _ = reserved(compose)
-	assert.Equal(t, []*specmodel.GenericResource{{Kind: "SSD", Value: "1"}, {Kind: docker.GenericResourceGPU, Value: "2"}},
+	assert.Equal(t, []*specmodel.GenericResource{{Kind: "SSD", Value: "1"}, {Kind: "AMD_GPU", Value: "2"}},
 		resources.Reservations.GenericResources)
 
 	resp := convert(t, convertReq(compose))
-	assert.Equal(t, []*specmodel.GenericResource{{Kind: "SSD", Value: "1"}},
-		appOf(t, resp, "a").Deployment.Resources.Reservations.GenericResources, "the GPU takes Write on the Cluster module")
+	assert.Equal(t, gpus("SSD", "1"), appOf(t, resp, "a").Deployment.Resources.Reservations.GenericResources,
+		"the GPU takes Write on the Cluster module")
 	assert.Equal(t, []string{composeservice.CodeCapabilityDropped}, codes(resp.Issues[envPath+"/apps/a"]))
 }

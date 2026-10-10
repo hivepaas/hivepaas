@@ -84,9 +84,10 @@ func (uc *UC) loadAppResourceSettingsForUpdate(
 	}
 
 	// Modifying capabilities requires Write on Cluster module, as does giving
-	// the app a GPU or taking it away - by Enable GPU or by a reservation.
+	// the app a GPU - of any maker, among its generic resources - or taking it
+	// away.
 	currCaps := appsettingsdto.TransformCapabilities(&service.Spec.TaskTemplate)
-	if !req.Capabilities.Equal(currCaps) || reservesGPU(req, &service.Spec.TaskTemplate) !=
+	if !req.Capabilities.Equal(currCaps) || reservesGPU(req) !=
 		dockerhelper.ReservesGPU(&service.Spec.TaskTemplate) {
 		hasPerm, err := uc.permissionManager.CheckAccess(ctx, db, auth, &permission.ModuleAccessCheck{
 			BaseAccessCheck: permission.BaseAccessCheck{Action: base.ActionTypeWrite},
@@ -108,30 +109,29 @@ func (uc *UC) prepareUpdatingAppResourceSettings(
 	req *appsettingsdto.UpdateAppResourceSettingsReq,
 	data *updateAppResourceSettingsData,
 ) {
-	// Enable GPU is a reservation the screen shows apart from the others: a
-	// request saying nothing of the capabilities keeps it.
-	enableGPU := dockerhelper.ReservesOneGPU(&data.Service.Spec.TaskTemplate)
-	if req.Capabilities != nil {
-		enableGPU = req.Capabilities.EnableGPU
-	}
 	uc.prepareUpdatingAppResourceReservations(req, data)
 	uc.prepareUpdatingAppResourceLimits(req, data)
 	uc.prepareUpdatingAppMemory(req, data)
 	uc.prepareUpdatingAppCapabilities(req, data)
-	dockerhelper.SetOneGPU(&data.Service.Spec.TaskTemplate, enableGPU)
+
+	// A GPU is one of the generic resources reserved. The capability Enable
+	// GPU used to write, shown as one of them, goes; enableGPU, which a client
+	// may still send, is one NVIDIA GPU.
+	task := &data.Service.Spec.TaskTemplate
+	dockerhelper.DropLegacyGPU(task)
+	if req.Capabilities != nil && req.Capabilities.EnableGPU {
+		dockerhelper.ReserveOneGPU(task)
+	}
 }
 
-// reservesGPU says whether the request leaves the app a GPU: by Enable GPU, by
-// a reservation, or - saying nothing of either - as it has now.
-func reservesGPU(req *appsettingsdto.UpdateAppResourceSettingsReq, task *swarm.TaskSpec) bool {
+// reservesGPU says whether the request leaves the app a GPU: one of any maker
+// among its generic resources, or enableGPU's.
+func reservesGPU(req *appsettingsdto.UpdateAppResourceSettingsReq) bool {
 	if req.Capabilities != nil && req.Capabilities.EnableGPU {
 		return true
 	}
-	if req.Reservations != nil && slices.ContainsFunc(req.Reservations.GenericResources,
-		func(r *appsettingsdto.GenericResource) bool { return r != nil && r.Kind == docker.GenericResourceGPU }) {
-		return true
-	}
-	return req.Capabilities == nil && dockerhelper.ReservesOneGPU(task)
+	return req.Reservations != nil && slices.ContainsFunc(req.Reservations.GenericResources,
+		func(r *appsettingsdto.GenericResource) bool { return r != nil && docker.IsGPUKind(r.Kind) })
 }
 
 func (uc *UC) prepareUpdatingAppResourceReservations(

@@ -80,15 +80,15 @@ func withoutExternalRefs(node any) any {
 	return node
 }
 
-// ReservesGPU says whether a document reserves GPUs among its generic
-// resources, by hand rather than by enableGPU.
+// ReservesGPU says whether a document reserves GPUs, of any maker, among its
+// generic resources, rather than by enableGPU.
 func ReservesGPU(doc *AppDoc) bool {
 	if doc == nil || doc.Deployment == nil || doc.Deployment.Resources == nil ||
 		doc.Deployment.Resources.Reservations == nil {
 		return false
 	}
 	return slices.ContainsFunc(doc.Deployment.Resources.Reservations.GenericResources, func(r *GenericResource) bool {
-		return r != nil && r.Kind == docker.GenericResourceGPU
+		return r != nil && docker.IsGPUKind(r.Kind)
 	})
 }
 

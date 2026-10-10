@@ -28,7 +28,7 @@ func settingsVersion(parts ...any) int {
 // ResourceSettingsVersion is the version of the app's Resources screen.
 func ResourceSettingsVersion(service *swarm.Service) int {
 	task := &service.Spec.TaskTemplate
-	return settingsVersion(TransformResourceReservations(task.Resources), TransformResourceLimits(task.Resources),
+	return settingsVersion(TransformResourceReservations(task), TransformResourceLimits(task.Resources),
 		TransformMemory(task), TransformCapabilities(task))
 }
 

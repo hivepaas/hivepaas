@@ -335,15 +335,11 @@ func (c *converter) resources(path string, svc types.ServiceConfig) *specmodel.R
 	if svc.Deploy != nil {
 		limits, reservations = svc.Deploy.Resources.Limits, svc.Deploy.Resources.Reservations
 	}
-	gpus, allGPUs := gpusWanted(svc, reservations)
 	out := &specmodel.Resources{
 		Limits:       resourceLimits(limits, svc),
 		Reservations: c.resourceReservations(path, reservations, svc),
 		Memory:       memory(svc),
-		Capabilities: c.capabilities(path, svc, gpus > 0),
-	}
-	if out.Capabilities != nil && out.Capabilities.EnableGPU {
-		c.reserveGPUs(path, out, gpus, allGPUs)
+		Capabilities: c.capabilities(path, svc),
 	}
 	if out.Limits == nil && out.Reservations == nil && out.Memory == nil && out.Capabilities == nil {
 		return nil
@@ -384,8 +380,8 @@ func (c *converter) resourceReservations(
 			if spec == nil {
 				continue
 			}
-			// GPUs reserved by hand are granted as much as `gpus`.
-			if spec.Kind == docker.GenericResourceGPU && !c.req.MayWriteCluster {
+			// A GPU, of any maker, is granted only as a capability is.
+			if docker.IsGPUKind(spec.Kind) && !c.req.MayWriteCluster {
 				c.capabilitiesDropped(path)
 				continue
 			}
@@ -394,6 +390,7 @@ func (c *converter) resourceReservations(
 			})
 		}
 	}
+	c.reserveGPUs(path, out, svc, r)
 	if out.CPUs <= 0 && out.Memory <= 0 && len(out.GenericResources) == 0 {
 		return nil
 	}
@@ -420,10 +417,10 @@ func memory(svc types.ServiceConfig) *specmodel.Memory {
 // capabilities are what a container is granted beyond an ordinary one. They
 // take Write on the Cluster module: without it, the app is created without
 // them.
-func (c *converter) capabilities(path string, svc types.ServiceConfig, wantsGPU bool) *specmodel.Capabilities {
+func (c *converter) capabilities(path string, svc types.ServiceConfig) *specmodel.Capabilities {
 	out := &specmodel.Capabilities{
 		CapabilityAdd: svc.CapAdd, CapabilityDrop: svc.CapDrop, OomScoreAdj: svc.OomScoreAdj,
-		Sysctls: map[string]string(svc.Sysctls), EnableGPU: wantsGPU,
+		Sysctls: map[string]string(svc.Sysctls),
 	}
 	for _, name := range slices.Sorted(maps.Keys(svc.Ulimits)) {
 		limit := svc.Ulimits[name]
@@ -437,7 +434,7 @@ func (c *converter) capabilities(path string, svc types.ServiceConfig, wantsGPU 
 		out.Ulimits = append(out.Ulimits, &specmodel.Ulimit{Name: name, Soft: soft, Hard: hard})
 	}
 	if len(out.CapabilityAdd) == 0 && len(out.CapabilityDrop) == 0 && out.OomScoreAdj == 0 &&
-		len(out.Sysctls) == 0 && !out.EnableGPU && len(out.Ulimits) == 0 {
+		len(out.Sysctls) == 0 && len(out.Ulimits) == 0 {
 		return nil
 	}
 	if !c.req.MayWriteCluster {
@@ -459,29 +456,30 @@ func (c *converter) capabilitiesDropped(path string) {
 		"left out: granting capabilities, ulimits, sysctls or GPUs takes Write on the Cluster module")
 }
 
-// reserveGPUs reserves what the service asks of GPUs: one is enableGPU, more
-// a count of them among the generic resources. Swarm reserves GPUs by count:
-// every one a node has is reserved as one.
-func (c *converter) reserveGPUs(path string, out *specmodel.Resources, gpus int, allGPUs bool) {
-	if allGPUs {
+// reserveGPUs reserves the NVIDIA GPUs the service asks for by `gpus`, or by a
+// device reservation for them, as a count of them among its generic
+// resources - unless it reserves GPUs there already. Swarm reserves GPUs by
+// count: every one a node has is reserved as one.
+func (c *converter) reserveGPUs(
+	path string, out *specmodel.ResourceReservations, svc types.ServiceConfig, reservations *types.Resource,
+) {
+	gpus, all := gpusWanted(svc, reservations)
+	if gpus == 0 || slices.ContainsFunc(out.GenericResources, func(r *specmodel.GenericResource) bool {
+		return docker.IsGPUKind(r.Kind)
+	}) {
+		return
+	}
+	if !c.req.MayWriteCluster {
+		c.capabilitiesDropped(path)
+		return
+	}
+	if all {
 		c.add(path, specmodel.SeverityFixable, composeservice.CodeValueDropped, map[string]any{detailField: "gpus"},
 			"one GPU is reserved for `all`: swarm reserves GPUs by count")
 	}
-	if gpus <= 1 {
-		return
-	}
-	out.Capabilities.EnableGPU = false
-	if out.Reservations == nil {
-		out.Reservations = &specmodel.ResourceReservations{}
-	}
-	out.Reservations.GenericResources = append(out.Reservations.GenericResources, &specmodel.GenericResource{
+	out.GenericResources = append(out.GenericResources, &specmodel.GenericResource{
 		Kind: docker.GenericResourceGPU, Value: strconv.Itoa(gpus),
 	})
-	capabilities := out.Capabilities
-	if len(capabilities.CapabilityAdd) == 0 && len(capabilities.CapabilityDrop) == 0 && capabilities.OomScoreAdj == 0 &&
-		len(capabilities.Sysctls) == 0 && len(capabilities.Ulimits) == 0 {
-		out.Capabilities = nil
-	}
 }
 
 // gpusWanted is how many GPUs the service asks for - by `gpus`, or by a

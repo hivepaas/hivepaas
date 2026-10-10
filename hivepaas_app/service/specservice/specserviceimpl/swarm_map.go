@@ -148,7 +148,7 @@ func mapLogDriver(logDriver *swarm.Driver) *specmodel.LogDriver {
 
 func mapResources(task *swarm.TaskSpec) *specmodel.Resources {
 	out := &specmodel.Resources{
-		Reservations: mapReservations(task.Resources),
+		Reservations: mapReservations(task),
 		Limits:       mapLimits(task.Resources),
 		Memory:       mapMemory(task),
 	}
@@ -161,16 +161,20 @@ func mapResources(task *swarm.TaskSpec) *specmodel.Resources {
 	return out
 }
 
-func mapReservations(res *swarm.ResourceRequirements) *specmodel.ResourceReservations {
-	if res == nil || res.Reservations == nil {
+// mapReservations are what the task reserves; a GPU among them, and the
+// capability Enable GPU used to write as the one NVIDIA GPU it asked for.
+func mapReservations(task *swarm.TaskSpec) *specmodel.ResourceReservations {
+	generic := dockerhelper.ShownGenericResources(task)
+	res := task.Resources
+	if (res == nil || res.Reservations == nil) && len(generic) == 0 {
 		return nil
 	}
-	out := &specmodel.ResourceReservations{
-		CPUs:   float64(res.Reservations.NanoCPUs) / docker.UnitCPUNano,
-		Memory: unit.DataSize(res.Reservations.MemoryBytes),
+	out := &specmodel.ResourceReservations{}
+	if res != nil && res.Reservations != nil {
+		out.CPUs = float64(res.Reservations.NanoCPUs) / docker.UnitCPUNano
+		out.Memory = unit.DataSize(res.Reservations.MemoryBytes)
 	}
-	// Enable GPU's one GPU is written as enableGPU.
-	for _, r := range dockerhelper.WithoutOneGPU(res.Reservations.GenericResources) {
+	for _, r := range generic {
 		switch {
 		case r.NamedResourceSpec != nil:
 			out.GenericResources = append(out.GenericResources, &specmodel.GenericResource{
@@ -220,7 +224,6 @@ func mapCapabilities(task *swarm.TaskSpec) *specmodel.Capabilities {
 		}),
 		CapabilityAdd:  gofn.Drop(cs.CapabilityAdd, docker.CapabilityGPU),
 		CapabilityDrop: cs.CapabilityDrop,
-		EnableGPU:      dockerhelper.ReservesOneGPU(task),
 		OomScoreAdj:    cs.OomScoreAdj,
 		Sysctls:        cs.Sysctls,
 	}

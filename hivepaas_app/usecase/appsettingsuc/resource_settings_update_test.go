@@ -10,7 +10,6 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/unit"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/appsettingsuc/appsettingsdto"
 	"github.com/hivepaas/hivepaas/services/docker"
-	"github.com/hivepaas/hivepaas/services/docker/dockerhelper"
 )
 
 func memoryOf(swap, shm unit.DataSize, swappiness int64) *appsettingsdto.Memory {
@@ -56,16 +55,18 @@ func TestTheMemorySettingsAreWhatTheySayAndEmptiedAreGone(t *testing.T) {
 	assert.Equal(t, int64(0), *task.Resources.SwapBytes)
 }
 
-// Enable GPU is shown from the GPU reserved, and saved as one: an app saved
-// the old way - the capability docker refuses - is given the reservation in
-// its place. A request saying nothing of the capabilities keeps it.
-func TestEnableGPUIsAReservationOfOneGPU(t *testing.T) {
+// A GPU is one of the generic resources the page shows and saves. An app
+// saved with the capability Enable GPU used to write is shown the NVIDIA GPU
+// it asked for, and saving it reserves that in the capability's place.
+// enableGPU, which a client may still send, reserves one.
+func TestAGPUIsAGenericResourceOfThePage(t *testing.T) {
 	legacy := &swarm.Service{Spec: swarm.ServiceSpec{TaskTemplate: swarm.TaskSpec{
 		ContainerSpec: &swarm.ContainerSpec{CapabilityAdd: []string{"SYS_PTRACE", docker.CapabilityGPU}},
 	}}}
 	shown, err := appsettingsdto.TransformResourceSettings(legacy)
 	assert.NoError(t, err)
-	assert.True(t, shown.Capabilities.EnableGPU)
+	assert.Equal(t, []*appsettingsdto.GenericResource{{Kind: docker.GenericResourceGPU, Value: "1"}},
+		shown.Reservations.GenericResources)
 	assert.Equal(t, []string{"SYS_PTRACE"}, shown.Capabilities.CapabilityAdd)
 
 	data := &updateAppResourceSettingsData{Service: legacy}
@@ -78,15 +79,21 @@ func TestEnableGPUIsAReservationOfOneGPU(t *testing.T) {
 		Kind: docker.GenericResourceGPU, Value: 1,
 	}}}, task.Resources.Reservations.GenericResources)
 
+	amd := &appsettingsdto.UpdateAppResourceSettingsReq{
+		Reservations: &appsettingsdto.ResourceReservations{
+			GenericResources: []*appsettingsdto.GenericResource{{Kind: "AMD_GPU", Value: "1"}},
+		},
+		Capabilities: &appsettingsdto.Capabilities{},
+	}
+	assert.True(t, reservesGPU(amd), "a GPU of any maker")
+	(&UC{}).prepareUpdatingAppResourceSettings(amd, data)
 	shown, _ = appsettingsdto.TransformResourceSettings(data.Service)
-	assert.True(t, shown.Capabilities.EnableGPU)
-	assert.Empty(t, shown.Reservations.GenericResources, "the GPU is shown as Enable GPU")
-
-	(&UC{}).prepareUpdatingAppResourceSettings(&appsettingsdto.UpdateAppResourceSettingsReq{}, data)
-	assert.True(t, dockerhelper.ReservesOneGPU(task), "kept by a request saying nothing of it")
+	assert.Equal(t, []*appsettingsdto.GenericResource{{Kind: "AMD_GPU", Value: "1"}}, shown.Reservations.GenericResources)
 
 	(&UC{}).prepareUpdatingAppResourceSettings(&appsettingsdto.UpdateAppResourceSettingsReq{
-		Capabilities: &appsettingsdto.Capabilities{},
+		Capabilities: &appsettingsdto.Capabilities{EnableGPU: true},
 	}, data)
-	assert.False(t, dockerhelper.ReservesGPU(task), "turned off")
+	shown, _ = appsettingsdto.TransformResourceSettings(data.Service)
+	assert.Equal(t, []*appsettingsdto.GenericResource{{Kind: docker.GenericResourceGPU, Value: "1"}},
+		shown.Reservations.GenericResources)
 }

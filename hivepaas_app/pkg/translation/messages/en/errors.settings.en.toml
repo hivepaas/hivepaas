@@ -15,6 +15,7 @@ ERR_ENV_VAR_EXTERNAL_REFERENCE_IS_NOT_ALLOWED = "Env variable {{.Name}} contains
 ERR_DOMAIN_IN_USE = "Domain '{{.Domain}}' is in use"
 ERR_DOMAIN_UNALLOWED = "Setting violation: Domain {{.Domain}} is not allowed"
 ERR_SSL_TYPE_UNSUPPORTED = "SLL certificate type '{{.Type}}' is not supported"
+ERR_SSL_CERT_UNUSABLE = "The certificate cannot be used: {{.Reason}}"
 ERR_PRIVATE_KEY_TYPE_UNSUPPORTED = "Private key type '{{.Type}}' is not supported"
 ERR_ADDRESS_INVALID = "Address '{{.Address}}' is invalid"
 ERR_TOKEN_TYPE_UNSUPPORTED = "Token type '{{.Type}}' is not supported"

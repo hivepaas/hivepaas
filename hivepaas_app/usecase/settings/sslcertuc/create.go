@@ -19,6 +19,9 @@ func (uc *UC) CreateSSLCert(
 	req.Type = currentSettingType
 	req.Auth = auth
 	sslCert := req.ToEntity()
+	if err := checkCustomCert(sslCert); err != nil {
+		return nil, hperrors.Wrap(err)
+	}
 	resp, err := uc.CreateSetting(ctx, &req.CreateSettingReq, &settings.CreateSettingData{
 		VerifyingName:   req.Domain,
 		VerifyingRefIDs: sslCert.GetRefObjectIDs(),

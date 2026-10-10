@@ -47,3 +47,19 @@ func TestAPreviewsDomainsHaveNoCertificateOfTheApps(t *testing.T) {
 	}
 	assert.Equal(t, []string{"pr-42-shop.example.com"}, domains.asked)
 }
+
+// A preview made with no database cloned keeps its app's variables as they
+// are: there is no app's name in them to change.
+func TestAPreviewWithNoDatabaseClonedKeepsItsVariables(t *testing.T) {
+	s := &service{}
+	setting := &entity.Setting{Type: base.SettingTypeEnvVar}
+	assert.NoError(t, setting.SetData(&entity.EnvVars{Data: []*entity.EnvVar{
+		{Key: "GREETING", Value: "hello"},
+		{Key: "DB_URL", Value: "${db.HIVEPAAS_URL}"},
+	}}))
+
+	out, err := s.onCloneEnvVars(setting, &createPreviewData{})
+
+	assert.NoError(t, err)
+	assert.Nil(t, out, "nothing to change")
+}

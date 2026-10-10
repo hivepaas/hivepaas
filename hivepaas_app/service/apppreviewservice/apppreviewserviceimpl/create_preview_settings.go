@@ -115,6 +115,11 @@ func (s *service) onCloneEnvVars(
 	setting *entity.Setting,
 	data *createPreviewData,
 ) (*entity.Setting, error) {
+	// No database is cloned for the preview: its variables name the apps they
+	// named, and are left as they are.
+	if data.CloneDBAppsEnvRefReplacer == nil {
+		return nil, nil
+	}
 	envVars := setting.MustAsEnvVars()
 	changedEnvVars := make([]*entity.EnvVar, 0)
 	for _, env := range envVars.Data {

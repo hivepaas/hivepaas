@@ -195,7 +195,9 @@ func (s *service) BuildEnvVarsForAllAppsInApp(
 		Secrets: appData.Secrets,
 	})
 
-	if !app.IsPreviewApp() {
+	// A preview has no previews of its own; an app's are built after it, from
+	// what it gives them.
+	if app.IsPreviewApp() {
 		return result, nil
 	}
 

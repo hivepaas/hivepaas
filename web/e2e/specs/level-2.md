@@ -126,6 +126,7 @@ has a project of its own, and deleting it takes the apps and their services.
 | 2.116 | A GitHub repository's pull requests are listed through the GitHub App, each with its branch                                                                                                                                                   | `tests/level-2/github.spec.ts`              |
 | 2.117 | A repository's submodules and LFS files come with its build when asked: off, an empty directory and a pointer; on, the same commit built again, both there                                                                                    | `tests/level-2/github.spec.ts`              |
 | 2.118 | A page loaded before a deployment's rolling update was marked complete saves; one whose settings changed meanwhile is refused                                                                                                                 | `tests/level-2/resources.spec.ts`           |
+| 2.119 | Enable GPU reserves the node's one GPU: the app is placed and told which; a second app waits, saying why, until it is given back                                                                                                              | `tests/level-2/resources.spec.ts`           |
 
 The images: `traefik/whoami` for an app that serves - it answers with the
 request it got, as the proxy passed it on - and `busybox` for one that prints
@@ -220,13 +221,13 @@ called: what HivePaaS posts back on a pull request fails, and is let go.
   Persistent Storage and Networks save against what each shows of the
   service now; a change to that, made while the page was open, is refused
   still.
-
-Found, and not fixed yet:
-
-- **Enable GPU stops the app on any node**: it adds `[gpu]` to the
-  container's capabilities, and docker refuses the container, "unknown
-  capability: CAP_[GPU]". `[gpu]` is a device request's capability in
-  Compose, not a Linux one, and swarm takes no device requests.
+- **Enable GPU stopped the app on any node**: it added `[gpu]` to the
+  container's capabilities, and docker refused the container, "unknown
+  capability: CAP_[GPU]" - `[gpu]` is a device request's in Compose, not a
+  Linux capability, and swarm takes no device requests. It reserves one GPU
+  now, `NVIDIA-GPU`, which swarm finds on a node that lists it; an app saved
+  the old way is shown so, and saved as the reservation. A Compose file's
+  GPUs are reserved by count, and its generic resources kept.
 
 Seen, and left as they are:
 

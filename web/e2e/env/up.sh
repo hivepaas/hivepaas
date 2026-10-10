@@ -70,9 +70,11 @@ docker network create "$NET" >/dev/null
 docker run -d --name "$DB" --network "$NET" -e POSTGRES_USER=hivepaas -e POSTGRES_PASSWORD=abc123 \
 	-e POSTGRES_DB=hivepaas postgres:18.6-alpine >/dev/null
 docker run -d --name "$REDIS" --network "$NET" redis:8-alpine redis-server --requirepass abc123 >/dev/null
+# dind lists one GPU, by name and of no hardware: an app that reserves one is
+# placed, and told which, as on a node with NVIDIA's runtime; a second waits.
 docker run -d --privileged --name "$DIND" --network "$NET" -e DOCKER_TLS_CERTDIR= -p "$PORT:$PORT" \
 	-p "$HTTP_PORT:80" -p "$HTTPS_PORT:443" \
-	docker:dind >/dev/null
+	docker:dind --node-generic-resource NVIDIA-GPU=GPU-e2e0 >/dev/null
 for _ in $(seq 1 60); do docker exec "$DB" pg_isready -U hivepaas >/dev/null 2>&1 && break; sleep 1; done
 for _ in $(seq 1 60); do in_dind docker info >/dev/null 2>&1 && break; sleep 1; done
 in_dind docker swarm init >/dev/null

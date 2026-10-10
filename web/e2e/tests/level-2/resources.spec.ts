@@ -281,3 +281,41 @@ test("a page loaded before a deployment settled saves; one whose settings change
     await expect(page.getByText("Mismatching update version").first()).toBeVisible();
     expect(((await versionNow()).limits as { pids?: number }).pids, "the other change stands").toBe(32);
 });
+
+// enableGPU turns the app's Enable GPU on or off, and saves.
+async function enableGPU(page: Page, app: App, on: boolean): Promise<void> {
+    await page.goto(appPage(app, "resources"));
+    await field(page, "Enable GPU").getByRole("checkbox").setChecked(on);
+    await saveResources(page);
+}
+
+// Enable GPU reserves one GPU: the env's node lists one, of no hardware. The
+// app is placed, and told which GPU is its - as NVIDIA's runtime is - and the
+// page shows it as Enable GPU, not among the generic resources. A second app
+// asking for one waits, its instance saying why, until the first gives it
+// back.
+test("Enable GPU reserves the node's GPU for the app; a second app waits for it", async ({ page, api, cleanup }) => {
+    const sayingItsGPU = saying({
+        gpu: "$(env | grep ^DOCKER_RESOURCE_NVIDIA-GPU= | cut -d= -f2 | grep . || echo none)",
+    });
+    const first = await appSaying(page, api, cleanup, "gpu-first", sayingItsGPU);
+    const second = await appSaying(page, api, cleanup, "gpu-second", sayingItsGPU);
+    await expectPrinted(page, first, "gpu", "none");
+
+    await enableGPU(page, first, true);
+    await expectPrinted(page, first, "gpu", "GPU-e2e0");
+    await page.goto(appPage(first, "resources"));
+    await expect(field(page, "Enable GPU").getByRole("checkbox")).toBeChecked();
+    await expect(field(page, "Generic Resources")).not.toContainText("NVIDIA-GPU");
+
+    await enableGPU(page, second, true);
+    await expectInstances(page, second, "0/1");
+    await page.goto(appPage(second, "instances"));
+    // The instance waiting, newest, says why.
+    await page.getByRole("button", { name: "Show" }).first().click();
+    await expect(page.getByText(/insufficient resources/)).toBeVisible();
+
+    await enableGPU(page, first, false);
+    await expectPrinted(page, second, "gpu", "GPU-e2e0");
+    await expectPrinted(page, first, "gpu", "none");
+});

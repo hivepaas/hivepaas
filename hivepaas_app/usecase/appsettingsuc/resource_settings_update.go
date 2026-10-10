@@ -186,16 +186,24 @@ func (uc *UC) prepareUpdatingAppMemory(
 		taskSpec.Resources = &swarm.ResourceRequirements{}
 	}
 
-	if req.Memory != nil {
-		if req.Memory.Swap != nil {
-			taskSpec.Resources.SwapBytes = new(req.Memory.Swap.Truncate(unit.MB).Bytes())
-		}
+	// What the settings leave out the app does not have, as with its limits: a
+	// field emptied is docker's default again, not the last value it had.
+	memory := req.Memory
+	if memory == nil {
+		memory = &appsettingsdto.Memory{}
+	}
 
-		taskSpec.Resources.MemorySwappiness = req.Memory.Swappiness
+	taskSpec.Resources.SwapBytes = nil
+	if memory.Swap != nil {
+		taskSpec.Resources.SwapBytes = new(memory.Swap.Truncate(unit.MB).Bytes())
+	}
 
-		if req.Memory.ShmSize != nil && *req.Memory.ShmSize > unit.MB {
-			dockerhelper.SetShmSize(taskSpec, req.Memory.ShmSize.Truncate(unit.MB).Bytes())
-		}
+	taskSpec.Resources.MemorySwappiness = memory.Swappiness
+
+	if memory.ShmSize != nil && *memory.ShmSize > unit.MB {
+		dockerhelper.SetShmSize(taskSpec, memory.ShmSize.Truncate(unit.MB).Bytes())
+	} else {
+		dockerhelper.RemoveShmMount(taskSpec)
 	}
 }
 

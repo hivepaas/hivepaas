@@ -101,8 +101,12 @@ func (cli *checkoutCli) checkout(
 		return nil, hperrors.Wrap(err)
 	}
 
-	// 5. Pull LFS files if configured
-	// This is done automatically within git clone/pull/fetch commands if GIT_LFS_SKIP_SMUDGE is not set
+	// 5. Pull LFS files if configured. A fresh clone fetches them as it checks
+	// out, but a cached repository keeps the pointers a checkout without LFS
+	// left, and checking out the same commit again does not replace them.
+	if err = cli.gitCliPullLfs(ctx); err != nil {
+		return nil, hperrors.Wrap(err)
+	}
 
 	// 6. Cleanup orphaned data
 	if cli.needCleanup {

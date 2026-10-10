@@ -174,3 +174,37 @@ export async function runningTask(api: APIRequestContext, app: App): Promise<str
         .not.toBe("");
     return id;
 }
+
+// FOLLOWED is how long a running app takes to follow a change it is not
+// deployed for - a variable, a secret, a mounted file: its service is updated,
+// and swarm starts a new container, on an image it has.
+export const FOLLOWED = { timeout: 120_000, intervals: [2_000] };
+
+// lastPrinted is the value the app's container printed last for the key, as
+// key=value, in the log on the page: the value of the newest container, once
+// the one before is gone.
+export async function lastPrinted(page: Page, key: string): Promise<string> {
+    const values = [...(await copyShownLogs(page)).matchAll(new RegExp(`\\b${key}=(\\S*)`, "g"))];
+    return values.at(-1)?.[1] ?? "";
+}
+
+// expectPrinted waits for the last value the app printed for the key to be
+// value, or to pass the check, and answers it. The app prints it over and over:
+// what a change it follows does is read in the newest container's log.
+export async function expectPrinted(
+    page: Page,
+    app: App,
+    key: string,
+    value: string | ((printed: string) => boolean),
+): Promise<string> {
+    await page.goto(appPage(app, "logs"));
+    const check = typeof value === "string" ? (printed: string) => printed === value : value;
+    let printed = "";
+    await expect
+        .poll(async () => {
+            printed = await lastPrinted(page, key);
+            return check(printed) ? "yes" : printed;
+        }, FOLLOWED)
+        .toBe("yes");
+    return printed;
+}

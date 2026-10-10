@@ -39,6 +39,13 @@ export async function createProject(api: APIRequestContext, name: string): Promi
     return project as Project;
 }
 
+// createSettingAt makes a setting at a path - an app's secrets, an
+// environment's config files - and answers its id.
+export async function createSettingAt(api: APIRequestContext, path: string, data: object): Promise<string> {
+    const body = (await ok(await api.post(path, { data }), `creating ${path}`)) as { data: { id: string } };
+    return body.data.id;
+}
+
 // deleteProject removes a project and its stored data; one already gone is
 // fine.
 export async function deleteProject(api: APIRequestContext, id: string): Promise<void> {

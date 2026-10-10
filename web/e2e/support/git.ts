@@ -48,6 +48,8 @@ export interface RepoSource {
     // Whether a push to the branch deploys the app: on when left out, as the
     // API has it.
     autoDeploy?: boolean;
+    // The container's command, instead of the image's.
+    command?: string;
 }
 
 // saveRepoSource saves the app as built from a repository's branch - at a
@@ -59,7 +61,7 @@ export async function saveRepoSource(api: APIRequestContext, app: App, source: R
     return api.put(`${appPath(app)}/deployment-settings`, {
         data: {
             entrypoint: "",
-            command: "",
+            command: source.command ?? "",
             workingDir: "",
             preDeploymentCommand: "",
             postDeploymentCommand: "",

@@ -95,9 +95,9 @@ export const CreateOrEditAppScheduledJobFormSchema = z
         triggers: JobTriggersFormSchema,
         notification: z.object({
             successUseDefault: z.boolean(),
-            success: NotificationRefSchema.optional(),
+            success: NotificationRefSchema.nullish(),
             failureUseDefault: z.boolean(),
-            failure: NotificationRefSchema.optional(),
+            failure: NotificationRefSchema.nullish(),
         }),
     })
     .superRefine((value, ctx) => {

@@ -28,9 +28,9 @@ export const CreateOrEditSslCertFormSchema = z
         default: z.boolean(),
         notification: z.object({
             successUseDefault: z.boolean(),
-            success: NamedObjectSchema,
+            success: NamedObjectSchema.nullable(),
             failureUseDefault: z.boolean(),
-            failure: NamedObjectSchema,
+            failure: NamedObjectSchema.nullable(),
         }),
     })
     .superRefine((value, ctx) => {

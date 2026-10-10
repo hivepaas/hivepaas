@@ -26,7 +26,7 @@ function NotificationSelect<TFieldValues extends FieldValues>({
         fieldState: { error, invalid },
     } = useController({ control, name });
 
-    const selectedValue = field.value as NotificationSettingsRef | undefined;
+    const selectedValue = field.value as NotificationSettingsRef | null | undefined;
 
     return (
         <InfoBlock
@@ -42,7 +42,9 @@ function NotificationSelect<TFieldValues extends FieldValues>({
                             return;
                         }
 
-                        field.onChange(option ?? undefined);
+                        // Nothing picked is null: a form keeps it, where it shows the
+                        // value it was loaded with in place of undefined.
+                        field.onChange(option ?? null);
                     }}
                     onSearch={source.onSearch}
                     placeholder="None"
@@ -90,18 +92,18 @@ export function NotificationSettings<TFieldValues extends FieldValues>({
 
     const isSuccessUseDefault = successUseDefault.value === true;
     const isFailureUseDefault = failureUseDefault.value === true;
-    const successValue = success.value as NotificationSettingsRef | undefined;
-    const failureValue = failure.value as NotificationSettingsRef | undefined;
+    const successValue = success.value as NotificationSettingsRef | null | undefined;
+    const failureValue = failure.value as NotificationSettingsRef | null | undefined;
 
     useEffect(() => {
         if (!readOnly && isSuccessUseDefault && successValue) {
-            success.onChange(undefined);
+            success.onChange(null);
         }
     }, [isSuccessUseDefault, readOnly, success, successValue]);
 
     useEffect(() => {
         if (!readOnly && isFailureUseDefault && failureValue) {
-            failure.onChange(undefined);
+            failure.onChange(null);
         }
     }, [failure, failureValue, isFailureUseDefault, readOnly]);
 

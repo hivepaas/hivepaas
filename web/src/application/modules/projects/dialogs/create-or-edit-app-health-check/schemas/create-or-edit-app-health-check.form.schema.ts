@@ -46,9 +46,9 @@ export const CreateOrEditAppHealthCheckFormSchema = z
         }),
         notification: z.object({
             successUseDefault: z.boolean(),
-            success: NotificationRefSchema.optional(),
+            success: NotificationRefSchema.nullish(),
             failureUseDefault: z.boolean(),
-            failure: NotificationRefSchema.optional(),
+            failure: NotificationRefSchema.nullish(),
             minSendInterval: z.string().trim(),
         }),
     })

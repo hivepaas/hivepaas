@@ -17,9 +17,9 @@ const SettingsRefSchema = z.object({
 
 const NotificationSchema = z.object({
     successUseDefault: z.boolean(),
-    success: SettingsRefSchema.optional(),
+    success: SettingsRefSchema.nullish(),
     failureUseDefault: z.boolean(),
-    failure: SettingsRefSchema.optional(),
+    failure: SettingsRefSchema.nullish(),
 });
 
 // A retention left empty is none; one filled in must read as a duration.

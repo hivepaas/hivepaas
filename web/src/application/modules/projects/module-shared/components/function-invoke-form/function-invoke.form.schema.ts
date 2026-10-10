@@ -73,9 +73,9 @@ export const FunctionInvokeFormSchema = z
         controlEnabled: z.boolean(),
         notification: z.object({
             successUseDefault: z.boolean(),
-            success: NamedRefSchema.optional(),
+            success: NamedRefSchema.nullish(),
             failureUseDefault: z.boolean(),
-            failure: NamedRefSchema.optional(),
+            failure: NamedRefSchema.nullish(),
         }),
     })
     .superRefine((value, ctx) => {

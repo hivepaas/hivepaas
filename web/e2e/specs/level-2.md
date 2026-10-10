@@ -108,6 +108,11 @@ has a project of its own, and deleting it takes the apps and their services.
 | 2.98  | A clone tells its target that it failed, and why, leaving no app; or that it succeeded. Nobody by default; a target unpicked says None, and saves                                                                                             | `tests/level-2/clone.spec.ts`               |
 | 2.99  | A project exported with its secrets encrypted comes back with them: a wrong passphrase refused, the right one opens it, the app runs with its secret                                                                                          | `tests/level-2/secrets-on/spec.spec.ts`     |
 | 2.100 | A certificate from Let's Encrypt is not saved without the email it registers with; one of one's own asks for none                                                                                                                             | `tests/level-2/certificates.spec.ts`        |
+| 2.101 | A snapshot restored into another app of the project with Overwrite: that app's files of the same names are the snapshot's, its other files stay, and it runs on meanwhile                                                                     | `tests/level-2/backups.spec.ts`             |
+| 2.102 | One directory of a snapshot restored with Replace is as it was backed up, its later files moved aside beside it; the snapshot's other directories are untouched                                                                               | `tests/level-2/backups.spec.ts`             |
+| 2.103 | A snapshot's file downloaded from its details is the file backed up; the snapshot deleted is gone, and a sync of the repository does not bring it back                                                                                        | `tests/level-2/backups.spec.ts`             |
+| 2.104 | A repository keeps by the retention it is made with - Keep Last 2, the other rules 0 - and by what it is changed to: a sync reads it back unchanged, a backup keeps that many                                                                 | `tests/level-2/backups.spec.ts`             |
+| 2.105 | A command backup whose command fails is a failed run, and leaves no snapshot                                                                                                                                                                  | `tests/level-2/backups.spec.ts`             |
 
 The images: `traefik/whoami` for an app that serves - it answers with the
 request it got, as the proxy passed it on - and `busybox` for one that prints
@@ -150,6 +155,21 @@ README): their commits are made at fixed dates, so their hashes are fixed too.
 A test plays GitHub's webhook - a push of a commit, a comment on pull request
 7 - signing it with the webhook's secret as GitHub does. GitHub itself is not
 called: what HivePaaS posts back on a pull request fails, and is let go.
+
+## Found with backups (2026-10-10), and fixed
+
+- **A repository's retention was not what it said**: made with Keep Last 2
+  and every other rule 0, it was saved with kopia's defaults instead - 10
+  last, 48 hourly, 7 daily, 4 weekly, 24 monthly - and its form showed those.
+  A change to it was saved but not given to the repository, so a sync read
+  the old one back over it; and a cleanup gave the repository only the rules
+  above 0, a rule lowered to 0 keeping what it kept before. The repository is
+  given all of it now, when it is made and when it is changed.
+
+Seen, and left as it is:
+
+- kopia has a rule HivePaaS does not show: the last snapshot of each year, 3
+  years of them, kept whatever the other rules say.
 
 ## Found with certificates of one's own (2026-10-10), and fixed
 

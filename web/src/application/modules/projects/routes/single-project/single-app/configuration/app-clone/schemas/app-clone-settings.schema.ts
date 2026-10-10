@@ -89,10 +89,11 @@ export const emptyAppCloneSettingsFormDefaults: AppCloneSettingsFormSchemaInput 
     commandPipes: [],
     includedVolumes: [],
     excludedVolumes: [],
+    // Nobody is told of a clone unless its settings name a target.
     notification: {
-        successUseDefault: true,
+        successUseDefault: false,
         success: null,
-        failureUseDefault: true,
+        failureUseDefault: false,
         failure: null,
     },
     updateVer: 0,

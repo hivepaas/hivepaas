@@ -25,9 +25,9 @@ const RoutingDomainSchema = z.object({
 
 const NotificationSchema = z
     .object({
-        successUseDefault: z.boolean().optional().default(true),
+        successUseDefault: z.boolean().optional().default(false),
         success: SettingRefSchema,
-        failureUseDefault: z.boolean().optional().default(true),
+        failureUseDefault: z.boolean().optional().default(false),
         failure: SettingRefSchema,
     })
     .nullish()

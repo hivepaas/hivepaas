@@ -57,9 +57,9 @@ export function mapAppCloneSettingsToFormInput(data: AppCloneSettings): AppClone
         includedVolumes: data.includedVolumes,
         excludedVolumes: data.excludedVolumes,
         notification: {
-            successUseDefault: data.notification?.successUseDefault ?? true,
+            successUseDefault: data.notification?.successUseDefault ?? false,
             success: data.notification?.success ?? null,
-            failureUseDefault: data.notification?.failureUseDefault ?? true,
+            failureUseDefault: data.notification?.failureUseDefault ?? false,
             failure: data.notification?.failure ?? null,
         },
         updateVer: data.updateVer,

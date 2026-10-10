@@ -121,6 +121,10 @@ has a project of its own, and deleting it takes the apps and their services.
 | 2.111 | A domain's paths have settings of their own: basic auth on a prefix, a header on an exact path and on a pattern's; a path turned off changes nothing                                                                                          | `tests/level-2/routing-paths.spec.ts`       |
 | 2.112 | The load balancer's strategy decides which of two replicas answer: round robin each in turn, highest random weight the one a client is hashed to                                                                                              | `tests/level-2/routing-paths.spec.ts`       |
 | 2.113 | A websocket opened at an app's domain reaches the app, and is answered through the proxy                                                                                                                                                      | `tests/level-2/routing-paths.spec.ts`       |
+| 2.114 | An app built from a GitHub repository, picked with its branch from what the GitHub App lists, serves at its domain                                                                                                                            | `tests/level-2/github.spec.ts`              |
+| 2.115 | A private GitHub repository is not found without credentials; with the GitHub App's, or an access token's, it is built                                                                                                                        | `tests/level-2/github.spec.ts`              |
+| 2.116 | A GitHub repository's pull requests are listed through the GitHub App, each with its branch                                                                                                                                                   | `tests/level-2/github.spec.ts`              |
+| 2.117 | A repository's submodules and LFS files come with its build when asked: off, an empty directory and a pointer; on, the same commit built again, both there                                                                                    | `tests/level-2/github.spec.ts`              |
 
 The images: `traefik/whoami` for an app that serves - it answers with the
 request it got, as the proxy passed it on - and `busybox` for one that prints
@@ -142,9 +146,10 @@ the code last POSTed to it: it fails, and passes again, with no restart.
 
 ## Next
 
-- **Git, for real**: a repository on GitHub, a GitHub App, a webhook GitHub
-  calls itself, the comments HivePaaS posts on a pull request. The env is
-  offline: these need GitHub, and an account of the tests' own there.
+- **Git, the rest of GitHub**: a webhook GitHub calls itself, which the env
+  is not reachable for; the comments HivePaaS posts on a pull request, and a
+  preview made from one - they write to the organization's pull requests, and
+  the tests write nothing to GitHub yet.
 - **A build pushed to a registry**: waits for a registry in the env.
 - **Metrics and autoscale on load**: the HTTP and CPU charts, and an app and a
   function scaling out under load and back in. They read the stored logs, which
@@ -155,11 +160,29 @@ the code last POSTed to it: it fails, and passes again, with no restart.
   machine running the tests does not reach; Mem Request Body Size, which
   nothing outside the proxy sees.
 
+GitHub itself is the organization hivepaas-test, which the seed reaches with
+a GitHub App and an access token (2.114-2.117): its go-app is public,
+go-app-private private. The tests list and clone; they write nothing there.
+
 The Git repositories apps are built from are served inside dind (see the
 README): their commits are made at fixed dates, so their hashes are fixed too.
 A test plays GitHub's webhook - a push of a commit, a comment on pull request
 7 - signing it with the webhook's secret as GitHub does. GitHub itself is not
 called: what HivePaaS posts back on a pull request fails, and is let go.
+
+## Found with GitHub (2026-10-10), and fixed
+
+- **A commit built again was not deployed**: a build's image is tagged after
+  its commit, so the same commit built again - its Dockerfile, build
+  arguments or repository options changed - gave the tag the service ran
+  already. Swarm found nothing changed and kept the old containers, and the
+  deployment said done. The update is forced now when the tag is the same.
+- **LFS files stayed pointers with a cached repository**: a build asked for
+  LFS files fetched them in a fresh clone only. The repository a project keeps
+  from an earlier build has the pointers a build without LFS left, and
+  checking out the same commit did not replace them. They are pulled after
+  each checkout that asks for them.
+- The env had no git-lfs, which the release image has: it has now.
 
 ## Seen with routing (2026-10-10), and left as it is
 

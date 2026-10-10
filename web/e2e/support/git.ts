@@ -44,7 +44,12 @@ export interface RepoSource {
     branch: string;
     commitHash?: string;
     credentials?: string;
-    dockerfile?: { source: "manual"; path: string } | { source: "auto" };
+    // A Dockerfile of the repository's, or one written out (content) in its
+    // place.
+    dockerfile?: { source: "manual"; path: string; content?: string } | { source: "auto" };
+    // Whether the build takes the repository's submodules, and its Git LFS
+    // files; neither when left out.
+    repoOptions?: { gitSubmodulesEnabled: boolean; gitLfsEnabled: boolean };
     // Whether a push to the branch deploys the app: on when left out, as the
     // API has it.
     autoDeploy?: boolean;
@@ -76,6 +81,7 @@ export async function saveRepoSource(api: APIRequestContext, app: App, source: R
                 dockerfile: source.dockerfile ?? { source: "manual", path: "Dockerfile" },
                 pushToRegistry: { id: "" },
                 autoDeploy: source.autoDeploy ?? true,
+                ...(source.repoOptions ? { repoOptions: source.repoOptions } : {}),
             },
             updateVer,
         },

@@ -74,6 +74,7 @@ test("a dump a job saved as a data file is loaded back into the database through
             { timeout: 60_000 },
         )
         .toBe("failed");
+    expect(await ran(api, app, "e2e-gone", psql("SELECT to_regclass('public.notes') IS NULL"))).toMatch(/^t$/m);
 
     await page.goto(appPage(app, "data-files"));
     await page

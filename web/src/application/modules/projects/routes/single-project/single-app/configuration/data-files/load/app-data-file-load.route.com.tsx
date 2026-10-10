@@ -82,6 +82,9 @@ export function AppDataFileLoadRoute() {
                     <AppLoader />
                 </div>
             )}
+            {!isLoadingFile && !isLoadingApp && (!file || !appName) && (
+                <p className="px-4 text-sm text-muted-foreground">The data file, or its app, is not found.</p>
+            )}
             {file && appName && (
                 <LoadForm
                     key={file.id}

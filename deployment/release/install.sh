@@ -1213,7 +1213,7 @@ install_tools() {
 }
 
 # check_resources: the server against what HivePaaS recommends - 4 CPUs, 8 GB
-# of memory, a 40 GB disk. Less only warns: HivePaaS runs on less, with less
+# of memory, a 100 GB disk. Less only warns: HivePaaS runs on less, with less
 # room for apps. The sizes a server reports are a little under the ones it is
 # sold with - the kernel keeps some memory, the filesystem some disk - so the
 # thresholds sit a little under too.
@@ -1228,8 +1228,8 @@ check_resources() {
     warn "This server has $((mem_mb / 1024)).$(((mem_mb % 1024) * 10 / 1024)) GB of memory; 8 GB or more is recommended."
   fi
   disk_mb=$(df -Pm /var/lib 2>/dev/null | awk 'NR == 2 {print $2}') || disk_mb=
-  if [ -n "$disk_mb" ] && [ "$disk_mb" -lt 35840 ]; then
-    warn "The disk of /var/lib holds $((disk_mb / 1024)) GB; 40 GB or more is recommended."
+  if [ -n "$disk_mb" ] && [ "$disk_mb" -lt 89600 ]; then
+    warn "The disk of /var/lib holds $((disk_mb / 1024)) GB; 100 GB or more is recommended."
   fi
 }
 

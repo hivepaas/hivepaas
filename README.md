@@ -84,7 +84,7 @@ HivePaaS uses a clean two-tier network and node topology for maximum security an
 ### Prerequisites
 
 * A Linux server with root access: Debian, Ubuntu, Fedora, RHEL, Rocky, AlmaLinux, Amazon Linux, SLES, openSUSE, Arch or Alpine.
-* 4 CPUs, 8 GB of memory and 40 GB of disk recommended; HivePaaS runs on less.
+* 4 CPUs, 8 GB of memory and 100 GB of disk recommended; HivePaaS runs on less.
 * Ports `80` and `443` free and open to the internet.
 * Docker 29.5 or newer - the installer installs or upgrades it if needed.
 

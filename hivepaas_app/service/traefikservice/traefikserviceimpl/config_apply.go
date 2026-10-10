@@ -108,6 +108,7 @@ func (s *service) ApplyAppConfig(
 	} else if data.App != nil && config.Current() != nil {
 		// Ensure file does not exist if no certs are needed
 		_ = os.Remove(data.App.TraefikConfigPath())
+		_ = os.Remove(data.App.LegacyTraefikConfigPath())
 	}
 
 	// 4. Open required TCP ports in traefik
@@ -884,6 +885,10 @@ func (s *service) writeAppConfigFile(
 	if err != nil {
 		return hperrors.Wrap(err)
 	}
+	// The file named after the app's key, from before, would define the same TLS
+	// options again: it goes, whichever app of that key wrote it last - that one
+	// writes its own the next time it is applied.
+	_ = os.Remove(data.App.LegacyTraefikConfigPath())
 
 	return nil
 }

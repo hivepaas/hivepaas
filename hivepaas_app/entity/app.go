@@ -2,6 +2,7 @@ package entity
 
 import (
 	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
@@ -106,6 +107,17 @@ func (app *App) GetSettingByType(typ base.SettingType) *Setting {
 	return nil
 }
 
+// TraefikConfigPath is the app's file of Traefik's dynamic configuration -
+// its certificates, its TCP domains' TLS options - named after its ID: apps of
+// one key, web in a project's development and in its production, each have
+// their own.
 func (app *App) TraefikConfigPath() string {
+	return filepath.Join(config.Current().DataPathTraefikEtcDynamic().AbsPath(), strings.ToLower(app.ID)+".yml")
+}
+
+// LegacyTraefikConfigPath is where the app's file was before, named after its
+// key, and shared with every app of that key. It goes whenever the app's own is
+// written or removed.
+func (app *App) LegacyTraefikConfigPath() string {
 	return filepath.Join(config.Current().DataPathTraefikEtcDynamic().AbsPath(), app.Key+".yml")
 }

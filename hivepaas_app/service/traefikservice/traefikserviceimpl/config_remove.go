@@ -24,10 +24,11 @@ func (s *service) RemoveAppConfig(
 		}
 	}
 
-	// Clean file
-	err := os.Remove(req.App.TraefikConfigPath())
-	if err != nil && !os.IsNotExist(err) {
-		return nil, hperrors.Wrap(err)
+	// Clean file, and the one named after the app's key, from before
+	for _, path := range []string{req.App.TraefikConfigPath(), req.App.LegacyTraefikConfigPath()} {
+		if err := os.Remove(path); err != nil && !os.IsNotExist(err) {
+			return nil, hperrors.Wrap(err)
+		}
 	}
 
 	return &traefikservice.RemoveAppConfigResp{}, nil

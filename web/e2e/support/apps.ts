@@ -182,10 +182,19 @@ export const FOLLOWED = { timeout: 120_000, intervals: [2_000] };
 
 // lastPrinted is the value the app's container printed last for the key, as
 // key=value, in the log on the page: the value of the newest container, once
-// the one before is gone.
+// the one before is gone. One printed key=value@<seconds since the epoch> is
+// taken by that time instead: the log may show a container that is gone after
+// the one that replaced it.
 export async function lastPrinted(page: Page, key: string): Promise<string> {
-    const values = [...(await copyShownLogs(page)).matchAll(new RegExp(`\\b${key}=(\\S*)`, "g"))];
-    return values.at(-1)?.[1] ?? "";
+    const values = [...(await copyShownLogs(page)).matchAll(new RegExp(`\\b${key}=(\\S*)`, "g"))].map(m => m[1] ?? "");
+    const timed = values.flatMap(value => {
+        const stamped = /^(.*)@(\d+)$/.exec(value);
+        return stamped ? [{ value: stamped[1] ?? "", at: Number(stamped[2]) }] : [];
+    });
+    if (timed.length > 0) {
+        return timed.reduce((newest, printed) => (printed.at >= newest.at ? printed : newest)).value;
+    }
+    return values.at(-1) ?? "";
 }
 
 // expectPrinted waits for the last value the app printed for the key to be

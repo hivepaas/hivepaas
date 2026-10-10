@@ -114,6 +114,10 @@ has a project of its own, and deleting it takes the apps and their services.
 | 2.104 | A repository keeps by the retention it is made with - Keep Last 2, the other rules 0 - and by what it is changed to: a sync reads it back unchanged, a backup keeps that many                                                                 | `tests/level-2/backups.spec.ts`             |
 | 2.105 | A command backup whose command fails is a failed run, and leaves no snapshot                                                                                                                                                                  | `tests/level-2/backups.spec.ts`             |
 | 2.106 | A member's tasks of the project show no other project's, nor another env's, whatever the filters; another env's task, and its log, are refused                                                                                                | `tests/level-2/permissions.spec.ts`         |
+| 2.107 | A reservation no node can meet - more CPUs than it has - runs nothing; it reads back as saved, and lowered, the app runs again                                                                                                                | `tests/level-2/resources.spec.ts`           |
+| 2.108 | Shared memory and swap apply as saved, and cleared, are as before; swappiness is kept as saved                                                                                                                                                | `tests/level-2/resources.spec.ts`           |
+| 2.109 | Ulimits - nofile, nproc - apply to the container, soft and hard; one removed is as before                                                                                                                                                     | `tests/level-2/resources.spec.ts`           |
+| 2.110 | Capabilities added and dropped, the out-of-memory score and a sysctl apply to the container; cleared, it is as before                                                                                                                         | `tests/level-2/resources.spec.ts`           |
 
 The images: `traefik/whoami` for an app that serves - it answers with the
 request it got, as the proxy passed it on - and `busybox` for one that prints
@@ -164,6 +168,39 @@ called: what HivePaaS posts back on a pull request fails, and is let go.
   another's tasks by naming it, and a member given development listed
   production's, and read one with its log. The filters narrow what is reached
   now; a project read through some of its envs shows those alone.
+
+## Found with Resources and Capabilities (2026-10-10), and fixed
+
+- **Ulimits never applied, and the next save dropped them**: the page sent
+  them, and read them, beside the capabilities, where the server keeps them
+  among the capabilities. They are sent and read there now.
+- **Swap, swappiness and shared memory cleared stayed**: the server wrote them
+  only when given, and never took one away - the container kept 128 MB of
+  /dev/shm after Shm Size was emptied. What the settings leave out is
+  docker's default again.
+- **A number field emptied kept its form from saving, and said nothing**: an
+  emptied field was NaN, which the form refused without a message - CPUs,
+  Pids, Swappiness, the out-of-memory score. It is no number now, and saves
+  so.
+
+Found, and not fixed yet:
+
+- **Enable GPU stops the app on any node**: it adds `[gpu]` to the
+  container's capabilities, and docker refuses the container, "unknown
+  capability: CAP_[GPU]". `[gpu]` is a device request's capability in
+  Compose, not a Linux one, and swarm takes no device requests.
+- **A save made a few seconds after a deployment, or another save, is
+  refused**, "Mismatching update version. Please reload the page.": the
+  version a page saves against is the service's, which swarm moves again
+  when it marks the rolling update complete. The tests wait for it before
+  opening the page.
+
+Seen, and left as they are:
+
+- A reservation is the scheduler's: swarm does not give it to the container,
+  whose cgroup has no `memory.low` of it.
+- The app log may show a container gone after the one that replaced it: a
+  test that reads what the newest printed has it print the time too.
 
 ## Found with backups (2026-10-10), and fixed
 

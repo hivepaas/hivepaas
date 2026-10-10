@@ -48,6 +48,8 @@ func (req *LoadDataFileReq) Validate() hperrors.ValidationErrors {
 	}
 	validators = append(validators, basedto.ValidateStr(&req.Passphrase, false, 1, maxPassphraseLen,
 		"passphrase")...)
+	validators = append(validators, basedto.ValidatePlainSecret(&req.Passphrase, "passphrase")...)
+	validators = append(validators, basedto.ValidateNotMaskedSecret(&req.Passphrase, "passphrase")...)
 	return hperrors.NewValidationErrors(vld.Validate(validators...))
 }
 

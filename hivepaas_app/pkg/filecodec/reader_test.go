@@ -92,3 +92,20 @@ func TestLayers(t *testing.T) {
 	assert.Equal(t, FileLayers{Encrypted: true}, Layers("dump.age"))
 	assert.Equal(t, FileLayers{}, Layers("dump.gz.sql"), "a suffix not last is the name's")
 }
+
+// A file asking more work of the passphrase than a job's ever does is refused
+// before the work is done: an uploaded file is anyone's, and the scrypt work
+// it names is memory the server spends.
+func TestNewReaderRefusesAnExpensivePassphraseWork(t *testing.T) {
+	recipient, err := age.NewScryptRecipient(passphrase)
+	assert.NoError(t, err)
+	recipient.SetWorkFactor(maxScryptWorkFactor + 1)
+	var out bytes.Buffer
+	enc, err := age.Encrypt(&out, recipient)
+	assert.NoError(t, err)
+	_, _ = enc.Write([]byte("rows"))
+	assert.NoError(t, enc.Close())
+
+	_, err = NewReader(bytes.NewReader(out.Bytes()), "dump.sql.age", passphrase)
+	assert.Error(t, err)
+}

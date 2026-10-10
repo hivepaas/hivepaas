@@ -3,6 +3,7 @@ package containerexecserviceimpl
 import (
 	"context"
 	"errors"
+	"strings"
 	"testing"
 
 	"github.com/moby/moby/client"
@@ -47,4 +48,17 @@ func TestContainerExecReportsTheFailureItself(t *testing.T) {
 
 	assert.ErrorIs(t, err, execErr)
 	assert.NotErrorIs(t, err, hperrors.ErrPanic)
+}
+
+// A stdin read from is not read again from its start: the guard says so once
+// a byte of it is gone, which keeps a failed exec from being retried with what
+// is left of it.
+func TestStdinGuardTellsAReadStdin(t *testing.T) {
+	guard := &stdinGuard{r: strings.NewReader("rows")}
+	assert.False(t, guard.read())
+	buf := make([]byte, 2)
+	n, err := guard.Read(buf)
+	assert.NoError(t, err)
+	assert.Equal(t, 2, n)
+	assert.True(t, guard.read())
 }

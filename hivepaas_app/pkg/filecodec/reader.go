@@ -18,6 +18,14 @@ const (
 	suffixAge  = ".age"
 	suffixGzip = ".gz"
 	suffixZstd = ".zst"
+
+	// maxScryptWorkFactor is the scrypt work a passphrase is read with at most:
+	// age's own, which a job's encryption uses. A file is anyone's to upload, and
+	// the work its header names is memory and time the server spends.
+	maxScryptWorkFactor = 18
+	// maxZstdWindow is the window a zstd file is read with at most: what zstd
+	// uses with --long, well above its levels' own.
+	maxZstdWindow = 128 << 20
 )
 
 // FileLayers are what a file was wrapped in when it was saved.
@@ -55,6 +63,7 @@ func NewReader(r io.Reader, name, passphrase string) (io.Reader, error) {
 		if err != nil {
 			return nil, hperrors.Wrap(err)
 		}
+		identity.SetMaxWorkFactor(maxScryptWorkFactor)
 		if r, err = age.Decrypt(r, identity); err != nil {
 			return nil, hperrors.Wrap(err)
 		}
@@ -67,7 +76,9 @@ func NewReader(r io.Reader, name, passphrase string) (io.Reader, error) {
 		}
 		return gz, nil
 	case base.FileCompressionFormatZstd:
-		zr, err := zstd.NewReader(r)
+		// Decoded on the reader's goroutine: one of its own would wait on a reader
+		// left unread, and nothing closes it.
+		zr, err := zstd.NewReader(r, zstd.WithDecoderConcurrency(1), zstd.WithDecoderMaxWindow(maxZstdWindow))
 		if err != nil {
 			return nil, hperrors.Wrap(err)
 		}

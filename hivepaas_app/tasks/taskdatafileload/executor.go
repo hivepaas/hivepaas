@@ -105,6 +105,8 @@ func (e *Executor) execute(
 
 	// The file may have been deleted since the load was asked for.
 	file, err := e.fileRepo.GetByID(ctx, db, task.Task.TargetID,
+		// The cloud storage a file is on is how it is read.
+		bunex.SelectRelation("Storage"),
 		bunex.SelectWhere("file.status = ?", base.FileStatusActive),
 		bunex.SelectWhere("file.object_id = ?", args.AppID),
 	)
@@ -148,49 +150,76 @@ func (e *Executor) execute(
 	_ = task.LogStore.Add(ctx, tasklog.NewOutFrame(fmt.Sprintf("Loading %s (%s) into %s\n",
 		file.Name, unit.DataSize(file.Size).HR(), app.Name), tasklog.TsNow))
 	stdin := &readingReader{r: decoded}
-	_, err = e.schedJobExecService.RunCommand(ctx, db, &schedjobexecservice.RunCommandReq{
+	resp, err := e.schedJobExecService.RunCommand(ctx, db, &schedjobexecservice.RunCommandReq{
 		TaskExecData: task, App: app, Command: args.Command, Stdin: stdin,
 	})
-	// The command read a part of the file only: whatever it says, the load failed.
-	read, readErr := stdin.read()
-	if readErr != nil {
-		err = errors.Join(err, hperrors.Wrap(readErr).WithExtraDetail("the file could not be read whole"))
-	}
-	if err != nil {
+	read := stdin.read()
+	if err = loadOutcome(resp, err, read); err != nil {
 		return hperrors.Wrap(err)
 	}
 	_ = task.LogStore.Add(ctx, tasklog.NewOutFrame(fmt.Sprintf("Loaded %s into the command\n",
-		unit.DataSize(read).HR()), tasklog.TsNow))
+		unit.DataSize(read.n).HR()), tasklog.TsNow))
 	return nil
 }
 
-// readingReader counts what is read of the file, and keeps the error that
-// ended the reading before its end. The command's stdin is copied from it on
-// a goroutine of its own, which may outlast the command.
-type readingReader struct {
-	r io.Reader
+// loadOutcome is how a load ended: done when a command ran, ended well, and
+// read the whole file. A command that read a part of it - ended early, or fed
+// a file that could not be read whole - leaves the app with that part, and
+// whatever it says, the load failed.
+func loadOutcome(resp *schedjobexecservice.RunCommandResp, runErr error, read readResult) error {
+	if read.err != nil {
+		runErr = errors.Join(runErr, hperrors.Wrap(read.err).WithExtraDetail("the file could not be read whole"))
+	}
+	switch {
+	case runErr != nil:
+		return hperrors.Wrap(runErr)
+	case resp == nil || resp.ExitCode == nil:
+		return hperrors.Wrap(hperrors.ErrInfraActionFailed).
+			WithParam("Error", "no container of the app ran the command: is the app running?")
+	case !read.eof:
+		return hperrors.Wrap(hperrors.ErrInfraActionFailed).
+			WithParam("Error", "the command ended before it read the whole file")
+	}
+	return nil
+}
 
-	mu  sync.Mutex
+// readResult is what a load read of its file: how much, whether to its end,
+// and the error that ended it before, if one did.
+type readResult struct {
 	n   int64
+	eof bool
 	err error
 }
 
+// readingReader counts what is read of the file, and keeps how its reading
+// ended. The command's stdin is copied from it on a goroutine of its own, which
+// may outlast the command; reads are one at a time, as a decompressor's must be.
+type readingReader struct {
+	r io.Reader
+
+	mu     sync.Mutex
+	result readResult
+}
+
 func (r *readingReader) Read(p []byte) (int, error) {
-	n, err := r.r.Read(p)
 	r.mu.Lock()
 	defer r.mu.Unlock()
-	r.n += int64(n)
-	if err != nil && !errors.Is(err, io.EOF) && r.err == nil {
-		r.err = err
+	n, err := r.r.Read(p)
+	r.result.n += int64(n)
+	switch {
+	case errors.Is(err, io.EOF):
+		r.result.eof = true
+	case err != nil && r.result.err == nil:
+		r.result.err = err
 	}
 	return n, err //nolint:wrapcheck // a reader's errors pass through as they are
 }
 
-// read is how much was read, and the error that ended it early, if one did.
-func (r *readingReader) read() (int64, error) {
+// read is what was read, so far.
+func (r *readingReader) read() readResult {
 	r.mu.Lock()
 	defer r.mu.Unlock()
-	return r.n, r.err
+	return r.result
 }
 
 func (e *Executor) saveLogs(ctx context.Context, db database.IDB, task *queue.TaskExecData) error {

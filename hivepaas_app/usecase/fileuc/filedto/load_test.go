@@ -22,3 +22,16 @@ func TestLoadDataFileReq(t *testing.T) {
 	assert.Empty(t, req.Validate())
 	assert.False(t, req.Command.TTY)
 }
+
+// A passphrase is the user's own: not one stored encrypted, nor the mask a
+// stored one is shown as.
+func TestLoadDataFileReqRefusesAPassphraseThatIsNotOne(t *testing.T) {
+	for _, passphrase := range []string{"hpenc:abc", "********"} {
+		req := NewLoadDataFileReq()
+		req.ID = "01JAB9XED0GTXBSQDFVYAJ8WJ1"
+		req.Command = &commandtemplatedto.CommandTemplateBaseReq{Command: "psql"}
+		req.Passphrase = passphrase
+		assert.NoError(t, req.ModifyRequest())
+		assert.NotEmpty(t, req.Validate(), passphrase)
+	}
+}

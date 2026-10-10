@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/moby/moby/client"
@@ -34,13 +35,22 @@ func (s *service) ContainerExec(
 	ctx context.Context,
 	req *containerexecservice.ContainerExecReq,
 ) (resp *containerexecservice.ContainerExecResp, lastErr error) {
+	// A stdin an attempt read from is gone in part: another attempt would be fed
+	// what is left of it, a load cut short that may well end well.
+	var stdin *stdinGuard
+	if req.StdinReader != nil {
+		stdin = &stdinGuard{r: req.StdinReader}
+		guarded := *req
+		guarded.StdinReader = stdin
+		req = &guarded
+	}
 	for i := range containerExecRetryMax + 1 {
 		var retryable bool
 		resp, retryable, lastErr = s.containerExec(ctx, req)
 		if lastErr == nil {
 			return resp, nil
 		}
-		if i >= containerExecRetryMax || !retryable {
+		if i >= containerExecRetryMax || !retryable || (stdin != nil && stdin.read()) {
 			break
 		}
 		if req.LogStore != nil {
@@ -363,4 +373,23 @@ func (s *service) pickContainer(
 			WithParam("App", req.App.Name)
 	}
 	return task.Status.ContainerStatus.ContainerID, task.NodeID, true, false, nil
+}
+
+// stdinGuard tells whether a byte of an exec's stdin was read. It is read on
+// an attempt's own goroutine, and asked about on the one that retries.
+type stdinGuard struct {
+	r       io.Reader
+	started atomic.Bool
+}
+
+func (g *stdinGuard) Read(p []byte) (int, error) {
+	n, err := g.r.Read(p)
+	if n > 0 {
+		g.started.Store(true)
+	}
+	return n, err //nolint:wrapcheck // a reader's errors pass through as they are
+}
+
+func (g *stdinGuard) read() bool {
+	return g.started.Load()
 }

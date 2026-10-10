@@ -128,6 +128,7 @@ export {
     AppSettingMountEditRoute,
     AppDataFilesRoute,
     AppDataFileCreateRoute,
+    AppDataFileLoadRoute,
     AppConfigAvailabilityRoute,
     AppConfigStorageRoute,
     StorageMountCreateRoute,

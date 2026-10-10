@@ -127,6 +127,7 @@ has a project of its own, and deleting it takes the apps and their services.
 | 2.117 | A repository's submodules and LFS files come with its build when asked: off, an empty directory and a pointer; on, the same commit built again, both there                                                                                    | `tests/level-2/github.spec.ts`              |
 | 2.118 | A page loaded before a deployment's rolling update was marked complete saves; one whose settings changed meanwhile is refused                                                                                                                 | `tests/level-2/resources.spec.ts`           |
 | 2.119 | A GPU reserved among the generic resources, NVIDIA's or AMD's, is the app's, told which; a second app asking for the same waits, saying why                                                                                                   | `tests/level-2/resources.spec.ts`           |
+| 2.120 | A dump a job saved as a data file, compressed and encrypted, is loaded back into the database from Data Files, through a command; no passphrase is refused, another fails                                                                     | `tests/level-2/data-files.spec.ts`          |
 
 The images: `traefik/whoami` for an app that serves - it answers with the
 request it got, as the proxy passed it on - and `busybox` for one that prints

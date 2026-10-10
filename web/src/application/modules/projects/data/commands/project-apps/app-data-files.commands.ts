@@ -5,6 +5,8 @@ import type {
     AppDataFiles_CreateOne_Res,
     AppDataFiles_DeleteOne_Req,
     AppDataFiles_DeleteOne_Res,
+    AppDataFiles_Load_Req,
+    AppDataFiles_Load_Res,
     AppDataFiles_UploadLocal_Req,
     AppDataFiles_UploadLocal_Res,
 } from "~/projects/api/services";
@@ -73,8 +75,22 @@ function useCreateOne({ onSuccess, ...options }: CreateOneOptions = {}) {
     });
 }
 
+type LoadReq = AppDataFiles_Load_Req["data"];
+type LoadOptions = Omit<UseMutationOptions<AppDataFiles_Load_Res, Error, LoadReq>, "mutationFn">;
+
+/** Loads a data file into a command run in the app: a task, whose ID is answered. */
+function useLoad(options: LoadOptions = {}) {
+    const { mutations } = useAppDataFilesApi();
+
+    return useMutation({
+        mutationFn: (data: LoadReq) => mutations.load(data),
+        ...options,
+    });
+}
+
 export const AppDataFilesCommands = Object.freeze({
     useDeleteOne,
+    useLoad,
     useUploadLocal,
     useCreateOne,
 });

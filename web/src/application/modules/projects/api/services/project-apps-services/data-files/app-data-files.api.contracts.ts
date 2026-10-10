@@ -1,4 +1,5 @@
 import type { PaginationState, SortingState } from "@infrastructure/data";
+import type { AppScheduledJobs_Command_Payload } from "~/projects/api/services/project-apps-services/scheduled-jobs";
 import type { AppDataFile } from "~/projects/domain";
 
 import type { ApiRequestBase, ApiResponseBase, ApiResponsePaginated } from "@infrastructure/api";
@@ -62,3 +63,28 @@ export type AppDataFiles_DeleteOne_Res = ApiResponseBase<{
 export type AppDataFiles_CreateOne_Res = ApiResponseBase<{
     id: string;
 }>;
+
+export type AppDataFiles_FindOneById_Req = ApiRequestBase<{
+    projectID: string;
+    env: string;
+    appID: string;
+    dataFileID: string;
+}>;
+
+export type AppDataFiles_FindOneById_Res = ApiResponseBase<AppDataFile>;
+
+/** What a data file is loaded into: a command reading it on its stdin, and the passphrase of one saved encrypted. */
+export type AppDataFiles_Load_Payload = {
+    command: AppScheduledJobs_Command_Payload;
+    passphrase?: string;
+};
+
+export type AppDataFiles_Load_Req = ApiRequestBase<{
+    projectID: string;
+    env: string;
+    appID: string;
+    dataFileID: string;
+    payload: AppDataFiles_Load_Payload;
+}>;
+
+export type AppDataFiles_Load_Res = ApiResponseBase<{ taskId: string }>;

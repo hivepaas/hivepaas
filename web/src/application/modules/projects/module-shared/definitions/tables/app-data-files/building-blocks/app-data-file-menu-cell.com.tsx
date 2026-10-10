@@ -13,14 +13,15 @@ import {
 import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger } from "@components/ui/dropdown-menu";
 import { dashedBorderBox } from "@lib/styles";
 import { cn } from "@lib/utils";
-import { DownloadIcon, MoreVertical, Trash2Icon } from "lucide-react";
+import { DownloadIcon, MoreVertical, TerminalSquareIcon, Trash2Icon } from "lucide-react";
 import { toast } from "sonner";
 import { useAppDataFilesApi } from "~/projects/api/hooks/project-apps";
 import { AppDataFilesCommands } from "~/projects/data/commands";
 import { type AppDataFile, AppDataFileStorageType } from "~/projects/domain";
 
 import { CopyIdMenuButton } from "@application/shared/components";
-import { MODULE_IDS } from "@application/shared/constants";
+import { MODULE_IDS, ROUTE } from "@application/shared/constants";
+import { useAppNavigate } from "@application/shared/hooks/router";
 import { PermissionTooltipAction } from "@application/shared/permissions";
 
 function View({ projectId, env, appId, dataFile }: Props) {
@@ -29,6 +30,7 @@ function View({ projectId, env, appId, dataFile }: Props) {
     const [deletePermanently, setDeletePermanently] = useState(false);
     const [isDownloading, setIsDownloading] = useState(false);
     const { queries } = useAppDataFilesApi();
+    const { navigate } = useAppNavigate();
     const { mutate: deleteOne, isPending: isDeleting } = AppDataFilesCommands.useDeleteOne({
         onSuccess: () => {
             toast.success("App data file deleted successfully");
@@ -114,6 +116,33 @@ function View({ projectId, env, appId, dataFile }: Props) {
                             <DownloadIcon className="mr-2 size-4" />
                             Download
                         </Button>
+                        <PermissionTooltipAction
+                            id={MODULE_IDS.Project}
+                            action="write"
+                            triggerClassName="w-full"
+                        >
+                            {({ isDenied }) => (
+                                <Button
+                                    className="w-full justify-start py-1.5"
+                                    variant="ghost"
+                                    disabled={isDenied}
+                                    onClick={() => {
+                                        setMenuOpen(false);
+                                        navigate.modules(
+                                            ROUTE.projects.single.apps.single.configuration.dataFiles.load.$route(
+                                                projectId,
+                                                env,
+                                                appId,
+                                                dataFile.id,
+                                            ),
+                                        );
+                                    }}
+                                >
+                                    <TerminalSquareIcon className="mr-2 size-4" />
+                                    Load into Command
+                                </Button>
+                            )}
+                        </PermissionTooltipAction>
                         <PermissionTooltipAction
                             id={MODULE_IDS.Project}
                             action="write"

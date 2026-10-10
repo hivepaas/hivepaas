@@ -73,6 +73,7 @@ export const QK = {
      * Project App Data Files
      */
     "projects.apps.data-files.$.find-many-paginated": "projects.apps.data-files.$.find-many-paginated",
+    "projects.apps.data-files.$.find-one-by-id": "projects.apps.data-files.$.find-one-by-id",
     /*
      * Project App Container Settings
      */

@@ -25,6 +25,7 @@ back what they found.
 | 1.13 | A member turns two-factor sign-in on from the profile; then a code is asked for, a wrong one refused, the right one lets them in   | `tests/level-1/users.spec.ts`          |
 | 1.14 | A member given development is refused production's apps: their address, the project's list, an address of development              | `tests/level-1/permissions.spec.ts`    |
 | 1.15 | A member changes nothing an admin decides of them - role, grants, expiry - and does not delete their own account                   | `tests/level-1/permissions.spec.ts`    |
+| 1.16 | A member's audit log of the project shows no other project's entries, nor another env's, whatever its filters say                  | `tests/level-1/permissions.spec.ts`    |
 
 Left for later levels: Logging and Registry settings (saving them deploys) -
 level 2; Traefik and HivePaaS routing and security (they can restart the proxy)
@@ -45,6 +46,12 @@ level 2; Traefik and HivePaaS routing and security (they can restart the proxy)
   role and the grants have checks of their own; the expiry had none, and a
   member set theirs ten years out. Changing or deleting one's own account takes
   the Users module now; the profile and the password have routes of their own.
+- **A project's audit log, filtered, was any project's**: its filters - by
+  project, env, app - named the scope listed, whatever scope the log was
+  reached through. A member of one project read another's by naming it, and a
+  member given development read production's. The filters narrow what is
+  reached now, never widen it; and a project read through some of its envs
+  shows those alone. Its tasks were the same (2.106).
 
 ## Found while writing them (2026-10-06), and fixed
 

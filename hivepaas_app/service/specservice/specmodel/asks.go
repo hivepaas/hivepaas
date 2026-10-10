@@ -2,6 +2,7 @@ package specmodel
 
 import (
 	"encoding/json"
+	"slices"
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
@@ -79,6 +80,18 @@ func withoutExternalRefs(node any) any {
 	return node
 }
 
+// ReservesGPU says whether a document reserves GPUs among its generic
+// resources, by hand rather than by enableGPU.
+func ReservesGPU(doc *AppDoc) bool {
+	if doc == nil || doc.Deployment == nil || doc.Deployment.Resources == nil ||
+		doc.Deployment.Resources.Reservations == nil {
+		return false
+	}
+	return slices.ContainsFunc(doc.Deployment.Resources.Reservations.GenericResources, func(r *GenericResource) bool {
+		return r != nil && r.Kind == docker.GenericResourceGPU
+	})
+}
+
 // GrantedCapabilities names, for a person to read, what a document asks the
 // host for beyond what a container ordinarily gets. It is empty for a document
 // that carries no capabilities.
@@ -87,13 +100,19 @@ func GrantedCapabilities(doc *AppDoc) []string {
 		return nil
 	}
 	capabilities := doc.Deployment.Resources.Capabilities
+	// A GPU reserved among the generic resources is granted as much as one
+	// asked for by enableGPU.
+	gpuReserved := ReservesGPU(doc)
 	if capabilities == nil {
+		if gpuReserved {
+			return []string{"GPU"}
+		}
 		return nil
 	}
 	granted := make([]string, 0, len(capabilities.CapabilityAdd))
 	granted = append(granted, capabilities.CapabilityAdd...)
-	if capabilities.EnableGPU {
-		granted = append(granted, docker.CapabilityGPU)
+	if capabilities.EnableGPU || gpuReserved {
+		granted = append(granted, "GPU")
 	}
 	for _, described := range []struct {
 		what  string

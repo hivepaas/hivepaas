@@ -201,8 +201,9 @@ func (p *planner) checkCapabilities(ctx context.Context, node *specmodel.PlanNod
 	if len(granted) == 0 || !writesBlock(node, "deployment.resources") {
 		return nil
 	}
-	if node.Action == specmodel.ActionUpdate &&
-		sameYAML(doc.Deployment.Resources.Capabilities, currentCapabilities(p.currentApp(node))) {
+	current := p.currentApp(node)
+	if node.Action == specmodel.ActionUpdate && sameYAML(doc.Deployment.Resources.Capabilities,
+		currentCapabilities(current)) && specmodel.ReservesGPU(doc) == specmodel.ReservesGPU(current) {
 		return nil
 	}
 	allowed, err := p.mayWriteCluster(ctx)

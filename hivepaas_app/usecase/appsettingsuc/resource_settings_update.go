@@ -2,11 +2,11 @@ package appsettingsuc
 
 import (
 	"context"
+	"slices"
 	"strconv"
 
 	"github.com/moby/moby/api/types/container"
 	"github.com/moby/moby/api/types/swarm"
-	"github.com/tiendc/gofn"
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
@@ -83,8 +83,11 @@ func (uc *UC) loadAppResourceSettingsForUpdate(
 		return hperrors.Wrap(hperrors.ErrUpdateVerMismatched)
 	}
 
-	currCaps := appsettingsdto.TransformCapabilities(service.Spec.TaskTemplate.ContainerSpec)
-	if !req.Capabilities.Equal(currCaps) { // Modifying capabilities requires Write on Cluster module
+	// Modifying capabilities requires Write on Cluster module, as does giving
+	// the app a GPU or taking it away - by Enable GPU or by a reservation.
+	currCaps := appsettingsdto.TransformCapabilities(&service.Spec.TaskTemplate)
+	if !req.Capabilities.Equal(currCaps) || reservesGPU(req, &service.Spec.TaskTemplate) !=
+		dockerhelper.ReservesGPU(&service.Spec.TaskTemplate) {
 		hasPerm, err := uc.permissionManager.CheckAccess(ctx, db, auth, &permission.ModuleAccessCheck{
 			BaseAccessCheck: permission.BaseAccessCheck{Action: base.ActionTypeWrite},
 			Module:          base.ResourceModuleCluster,
@@ -105,10 +108,30 @@ func (uc *UC) prepareUpdatingAppResourceSettings(
 	req *appsettingsdto.UpdateAppResourceSettingsReq,
 	data *updateAppResourceSettingsData,
 ) {
+	// Enable GPU is a reservation the screen shows apart from the others: a
+	// request saying nothing of the capabilities keeps it.
+	enableGPU := dockerhelper.ReservesOneGPU(&data.Service.Spec.TaskTemplate)
+	if req.Capabilities != nil {
+		enableGPU = req.Capabilities.EnableGPU
+	}
 	uc.prepareUpdatingAppResourceReservations(req, data)
 	uc.prepareUpdatingAppResourceLimits(req, data)
 	uc.prepareUpdatingAppMemory(req, data)
 	uc.prepareUpdatingAppCapabilities(req, data)
+	dockerhelper.SetOneGPU(&data.Service.Spec.TaskTemplate, enableGPU)
+}
+
+// reservesGPU says whether the request leaves the app a GPU: by Enable GPU, by
+// a reservation, or - saying nothing of either - as it has now.
+func reservesGPU(req *appsettingsdto.UpdateAppResourceSettingsReq, task *swarm.TaskSpec) bool {
+	if req.Capabilities != nil && req.Capabilities.EnableGPU {
+		return true
+	}
+	if req.Reservations != nil && slices.ContainsFunc(req.Reservations.GenericResources,
+		func(r *appsettingsdto.GenericResource) bool { return r != nil && r.Kind == docker.GenericResourceGPU }) {
+		return true
+	}
+	return req.Capabilities == nil && dockerhelper.ReservesOneGPU(task)
 }
 
 func (uc *UC) prepareUpdatingAppResourceReservations(
@@ -231,11 +254,6 @@ func (uc *UC) prepareUpdatingAppCapabilities(
 
 	containerSpec.CapabilityAdd = req.Capabilities.CapabilityAdd
 	containerSpec.CapabilityDrop = req.Capabilities.CapabilityDrop
-	if req.Capabilities.EnableGPU && !gofn.Contain(containerSpec.CapabilityAdd, docker.CapabilityGPU) {
-		containerSpec.CapabilityAdd = append(containerSpec.CapabilityAdd, docker.CapabilityGPU)
-	} else if !req.Capabilities.EnableGPU {
-		containerSpec.CapabilityAdd = gofn.Drop(containerSpec.CapabilityAdd, docker.CapabilityGPU)
-	}
 
 	containerSpec.OomScoreAdj = req.Capabilities.OomScoreAdj
 	containerSpec.Sysctls = req.Capabilities.Sysctls

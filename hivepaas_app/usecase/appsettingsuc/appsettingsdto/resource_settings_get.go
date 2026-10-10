@@ -124,7 +124,7 @@ func TransformResourceSettings(
 	resp.Reservations = TransformResourceReservations(spec.TaskTemplate.Resources)
 	resp.Limits = TransformResourceLimits(spec.TaskTemplate.Resources)
 	resp.Memory = TransformMemory(&spec.TaskTemplate)
-	resp.Capabilities = TransformCapabilities(spec.TaskTemplate.ContainerSpec)
+	resp.Capabilities = TransformCapabilities(&spec.TaskTemplate)
 
 	return resp, nil
 }
@@ -138,7 +138,8 @@ func TransformResourceReservations(res *swarm.ResourceRequirements) *ResourceRes
 		Memory:           unit.DataSize(res.Reservations.MemoryBytes),
 		GenericResources: make([]*GenericResource, 0, len(res.Reservations.GenericResources)),
 	}
-	for _, r := range res.Reservations.GenericResources {
+	// Enable GPU's one GPU is shown as Enable GPU.
+	for _, r := range dockerhelper.WithoutOneGPU(res.Reservations.GenericResources) {
 		if r.NamedResourceSpec != nil {
 			resp.GenericResources = append(resp.GenericResources, &GenericResource{
 				Kind:  r.NamedResourceSpec.Kind,
@@ -187,7 +188,8 @@ func TransformMemory(taskSpec *swarm.TaskSpec) *Memory {
 	return resp
 }
 
-func TransformCapabilities(containerSpec *swarm.ContainerSpec) *Capabilities {
+func TransformCapabilities(task *swarm.TaskSpec) *Capabilities {
+	containerSpec := task.ContainerSpec
 	return &Capabilities{
 		Ulimits: gofn.MapSlice(containerSpec.Ulimits, func(ulimit *container.Ulimit) *Ulimit {
 			return &Ulimit{
@@ -196,9 +198,10 @@ func TransformCapabilities(containerSpec *swarm.ContainerSpec) *Capabilities {
 				Soft: ulimit.Soft,
 			}
 		}),
-		CapabilityAdd:  containerSpec.CapabilityAdd,
+		// The capability Enable GPU wrote before is shown as Enable GPU.
+		CapabilityAdd:  gofn.Drop(containerSpec.CapabilityAdd, docker.CapabilityGPU),
 		CapabilityDrop: containerSpec.CapabilityDrop,
-		EnableGPU:      gofn.Contain(containerSpec.CapabilityAdd, docker.CapabilityGPU),
+		EnableGPU:      dockerhelper.ReservesOneGPU(task),
 		OomScoreAdj:    containerSpec.OomScoreAdj,
 		Sysctls:        containerSpec.Sysctls,
 	}

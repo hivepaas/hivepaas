@@ -474,7 +474,11 @@ deployment:
 
 	assert.NoError(t, err)
 	containerSpec := req.Spec.TaskTemplate.ContainerSpec
-	assert.Equal(t, []string{"NET_ADMIN", docker.CapabilityGPU}, containerSpec.CapabilityAdd)
+	assert.Equal(t, []string{"NET_ADMIN"}, containerSpec.CapabilityAdd)
+	// The GPU is one reserved, which swarm finds on a node that has it free.
+	assert.Equal(t, []swarm.GenericResource{{DiscreteResourceSpec: &swarm.DiscreteGenericResource{
+		Kind: docker.GenericResourceGPU, Value: 1,
+	}}}, req.Spec.TaskTemplate.Resources.Reservations.GenericResources)
 	assert.Equal(t, []string{"MKNOD"}, containerSpec.CapabilityDrop)
 	assert.Equal(t, map[string]string{"vm.max_map_count": "262144"}, containerSpec.Sysctls)
 	assert.Equal(t, []*container.Ulimit{{Name: "memlock", Soft: -1, Hard: -1}}, containerSpec.Ulimits)

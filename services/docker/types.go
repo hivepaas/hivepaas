@@ -3,8 +3,14 @@ package docker
 const (
 	UnitCPUNano    = 1000 * 1000 * 1000
 	MinCPUFraction = 0.25
-	// CapabilityGPU is how a service spec asks for the GPU: docker carries the
-	// request in the capability list, under a name no real capability has.
+	// GenericResourceGPU is the kind of generic resource a node advertises its
+	// GPUs as, and an app reserves one by: swarm places the app on a node with
+	// one free and names it to the container in DOCKER_RESOURCE_NVIDIA-GPU,
+	// which NVIDIA's container runtime reads to hand the container that GPU.
+	GenericResourceGPU = "NVIDIA-GPU"
+	// CapabilityGPU is how Enable GPU used to ask for the GPU: in the
+	// capability list, where docker refuses it ("unknown capability"). It is
+	// read to know such an app, and taken away when the app is saved.
 	CapabilityGPU = "[gpu]"
 )
 

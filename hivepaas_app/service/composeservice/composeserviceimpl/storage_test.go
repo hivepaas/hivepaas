@@ -440,3 +440,40 @@ services:
 		assert.True(t, found, name)
 	}
 }
+
+// GPUs asked for are reserved: one is enableGPU, more a count of them, and
+// all a node has is one, said so. Generic resources are kept, a GPU among them
+// granted as one asked for by `gpus`.
+func TestConvertReservesTheGPUsAServiceAsksFor(t *testing.T) {
+	reserved := func(compose string) (*specmodel.Resources, []string) {
+		req := convertReq(compose)
+		req.MayWriteCluster = true
+		resp := convert(t, req)
+		return appOf(t, resp, "a").Deployment.Resources, codes(resp.Issues[envPath+"/apps/a"])
+	}
+
+	resources, _ := reserved("services:\n  a:\n    image: x:1\n    gpus: [{count: 1}]\n")
+	assert.True(t, resources.Capabilities.EnableGPU)
+
+	resources, _ = reserved("services:\n  a:\n    image: x:1\n    deploy:\n      resources:\n        reservations:\n" +
+		"          devices: [{capabilities: [gpu], count: 2}]\n")
+	assert.Nil(t, resources.Capabilities)
+	assert.Equal(t, []*specmodel.GenericResource{{Kind: docker.GenericResourceGPU, Value: "2"}},
+		resources.Reservations.GenericResources)
+
+	resources, issues := reserved("services:\n  a:\n    image: x:1\n    gpus: all\n")
+	assert.True(t, resources.Capabilities.EnableGPU)
+	assert.Contains(t, issues, composeservice.CodeValueDropped)
+
+	compose := "services:\n  a:\n    image: x:1\n    deploy:\n      resources:\n        reservations:\n" +
+		"          generic_resources:\n            - discrete_resource_spec: {kind: SSD, value: 1}\n" +
+		"            - discrete_resource_spec: {kind: NVIDIA-GPU, value: 2}\n"
+	resources, _ = reserved(compose)
+	assert.Equal(t, []*specmodel.GenericResource{{Kind: "SSD", Value: "1"}, {Kind: docker.GenericResourceGPU, Value: "2"}},
+		resources.Reservations.GenericResources)
+
+	resp := convert(t, convertReq(compose))
+	assert.Equal(t, []*specmodel.GenericResource{{Kind: "SSD", Value: "1"}},
+		appOf(t, resp, "a").Deployment.Resources.Reservations.GenericResources, "the GPU takes Write on the Cluster module")
+	assert.Equal(t, []string{composeservice.CodeCapabilityDropped}, codes(resp.Issues[envPath+"/apps/a"]))
+}

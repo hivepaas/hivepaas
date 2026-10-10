@@ -153,7 +153,7 @@ func mapResources(task *swarm.TaskSpec) *specmodel.Resources {
 		Memory:       mapMemory(task),
 	}
 	if task.ContainerSpec != nil {
-		out.Capabilities = mapCapabilities(task.ContainerSpec)
+		out.Capabilities = mapCapabilities(task)
 	}
 	if out.Reservations == nil && out.Limits == nil && out.Memory == nil && out.Capabilities == nil {
 		return nil
@@ -169,7 +169,8 @@ func mapReservations(res *swarm.ResourceRequirements) *specmodel.ResourceReserva
 		CPUs:   float64(res.Reservations.NanoCPUs) / docker.UnitCPUNano,
 		Memory: unit.DataSize(res.Reservations.MemoryBytes),
 	}
-	for _, r := range res.Reservations.GenericResources {
+	// Enable GPU's one GPU is written as enableGPU.
+	for _, r := range dockerhelper.WithoutOneGPU(res.Reservations.GenericResources) {
 		switch {
 		case r.NamedResourceSpec != nil:
 			out.GenericResources = append(out.GenericResources, &specmodel.GenericResource{
@@ -211,14 +212,15 @@ func mapMemory(task *swarm.TaskSpec) *specmodel.Memory {
 	return out
 }
 
-func mapCapabilities(cs *swarm.ContainerSpec) *specmodel.Capabilities {
+func mapCapabilities(task *swarm.TaskSpec) *specmodel.Capabilities {
+	cs := task.ContainerSpec
 	out := &specmodel.Capabilities{
 		Ulimits: gofn.MapSlice(cs.Ulimits, func(u *container.Ulimit) *specmodel.Ulimit {
 			return &specmodel.Ulimit{Name: u.Name, Hard: u.Hard, Soft: u.Soft}
 		}),
-		CapabilityAdd:  cs.CapabilityAdd,
+		CapabilityAdd:  gofn.Drop(cs.CapabilityAdd, docker.CapabilityGPU),
 		CapabilityDrop: cs.CapabilityDrop,
-		EnableGPU:      gofn.Contain(cs.CapabilityAdd, docker.CapabilityGPU),
+		EnableGPU:      dockerhelper.ReservesOneGPU(task),
 		OomScoreAdj:    cs.OomScoreAdj,
 		Sysctls:        cs.Sysctls,
 	}

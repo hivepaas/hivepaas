@@ -29,7 +29,7 @@ func settingsVersion(parts ...any) int {
 func ResourceSettingsVersion(service *swarm.Service) int {
 	task := &service.Spec.TaskTemplate
 	return settingsVersion(TransformResourceReservations(task.Resources), TransformResourceLimits(task.Resources),
-		TransformMemory(task), TransformCapabilities(task.ContainerSpec))
+		TransformMemory(task), TransformCapabilities(task))
 }
 
 // ContainerSettingsVersion is the version of the app's Container Settings

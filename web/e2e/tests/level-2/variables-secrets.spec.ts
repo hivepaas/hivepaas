@@ -307,7 +307,7 @@ test("Link App: an app reaches another at the address it adds; a shared variable
     cleanup,
 }) => {
     const client = await appIn(api, cleanup, "linked");
-    const target = await createApp(api, { id: client.projectId, name: "", key: "" }, "api");
+    const target = await createApp(api, { id: client.projectId }, "api");
     await exposeApp(api, target, `${e2eName("api")}.localhost`);
     await putSharedEnvVars(api, target, [plain("API_TOKEN", "first")]);
     await deployImage(api, target, WHOAMI);

@@ -100,6 +100,12 @@ has a project of its own, and deleting it takes the apps and their services.
 | 2.90 | A certificate of one's own pasted in as Custom - its expiry read from it - is the one its domain is served with                                                                                                                               | `tests/level-2/certificates.spec.ts`        |
 | 2.91 | A certificate pasted with the private key of another is refused, and says why                                                                                                                                                                 | `tests/level-2/certificates.spec.ts`        |
 | 2.92 | Apps of one name - web in development and in production - are each served at their domain with their own certificate                                                                                                                          | `tests/level-2/certificates.spec.ts`        |
+| 2.93 | An app cloned to another environment runs there, as many times as asked, at a domain of its own, with the app's secret and config file                                                                                                        | `tests/level-2/clone.spec.ts`               |
+| 2.94 | An app cloned without its routing, variables, secrets and config files: the clone has no domain, and its container none of them                                                                                                               | `tests/level-2/clone.spec.ts`               |
+| 2.95 | An app cloned disabled is made, and runs no instance                                                                                                                                                                                          | `tests/level-2/clone.spec.ts`               |
+| 2.96 | An app's health check and scheduled job come with its clone, the job running in the clone's container; turned off, neither does                                                                                                               | `tests/level-2/clone.spec.ts`               |
+| 2.97 | A command pipe run after the clone carries what the app has into the clone: the source's command in the app, the target's in the clone                                                                                                        | `tests/level-2/clone.spec.ts`               |
+| 2.98 | A clone tells its notification target that it failed, and why, leaving no app; or that it succeeded. Its settings tell nobody by default                                                                                                      | `tests/level-2/clone.spec.ts`               |
 
 The images: `traefik/whoami` for an app that serves - it answers with the
 request it got, as the proxy passed it on - and `busybox` for one that prints
@@ -188,6 +194,47 @@ Seen, and left as they are:
 - A secret made through the API is not for the scopes below unless it says
   so; the dashboard's form ticks it, and the CLI's `secret set` gives it to
   previews unless told `--no-previews`.
+
+## Found cloning apps (2026-10-10), and fixed
+
+- **Clone Routing Configuration turned off was not read**: the copy had the
+  app's routing all the same, domains included. Off, it has no domain now.
+- **The domain a copy was given by default was no host name**:
+  `clone_shop.example.com` - an underscore is no host name's. It is
+  `clone-shop.example.com` now.
+- **A config file came with the copy without its mount**: the setting mounts
+  of the app's own config files were copied only when marked Inheritable, so
+  the copy had the file and nothing that read it. A mount of the app's own
+  setting comes with that setting now.
+- **Post-Clone Commands ran in the wrong container**: a copy is made on a
+  placeholder image, then given the app's; the command was run in the first
+  running container found, the placeholder's - empty, with no shell - and the
+  clone failed. It runs in a container of the copy's current spec.
+- **A command that failed said `<no value>`**: the error a command's exit
+  gave had no text. It says the code it exited with.
+- **A failed clone left an app behind**: the task's transaction is saved
+  whether it fails or not, and the copy's rows with it - an app listed as
+  active, with no service. They are removed with what else the clone made.
+- **Notification Configuration told nobody**: a clone's settings named
+  targets, and nothing sent to them. A clone tells them how it ended - the
+  reason, when it failed - and its settings tell nobody until a target is
+  chosen; the form said the defaults, which would have told every clone to
+  the project's default target.
+
+Found, and not fixed yet:
+
+- **A clone's command pipes come back twice**: App Clone's settings list each
+  saved pipe once with its name and once without, and saving the form again
+  saves both - each a run of the pipe after the clone.
+- **A notification target picked again shows as picked, and the form will not
+  save**: choosing the target a field already has unpicks it, as a picker
+  does; but a field that had it when the page was loaded keeps showing it,
+  and saving says "Required".
+
+Seen, and left as they are:
+
+- A command template's command is run as it is, not by a shell: a redirect is
+  written `sh -c '...'`, or as a script.
 
 ## Found with setting mounts (2026-10-10), and fixed
 

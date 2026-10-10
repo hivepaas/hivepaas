@@ -84,7 +84,7 @@ test("an app given another's data reads it, writes only when allowed, and the ow
     await deployed(api, owner);
     await expectLogs(page, owner, "owner-ready");
 
-    const reader = await createApp(api, { id: owner.projectId, name: "", key: "" }, "reader");
+    const reader = await createApp(api, { id: owner.projectId }, "reader");
     await mountVolume(page, reader, volume, "/shared", { dataOf: owner.name });
     await deployImage(
         api,

@@ -9,18 +9,14 @@ import {
     deployImage,
     exposeApp,
     latestDeployment,
-    setRuntimeEnvVars,
 } from "../../support/api";
 import { BUSYBOX, DEPLOYED, WHOAMI, appPage, copyShownLogs, deployed, expectLogs } from "../../support/apps";
 import { e2eName, expect, test } from "../../support/fixtures";
 import { expectRuns, newHealthCheck, setHealth } from "../../support/health-checks";
+import { echoHook, slackField as field, slackMessages, slackTarget } from "../../support/notifications";
 import { domainFor, visit } from "../../support/routing";
 
 test.describe.configure({ timeout: 360_000 });
-
-// What stands in for Slack: an echo server, which logs each request it gets -
-// body and all, on a line of its own with LOG_WITHOUT_NEWLINE.
-const ECHO = "mendhak/http-https-echo:42";
 
 // told is what the hook was sent about a health check, in the order it came:
 // "failed" or "succeeded" for each message naming the check.
@@ -40,21 +36,13 @@ test("a failing health check is told to Slack once, and again when it passes; Re
 }) => {
     const project = await createProject(api, e2eName("notifications"));
     cleanup(() => deleteProject(api, project.id));
+    const { hook, domain: hookDomain } = await echoHook(page, api, project, "notifications-hook");
     const web = await createApp(api, project, "web");
-    const hook = await createApp(api, project, "hook");
-
-    await setRuntimeEnvVars(api, hook, [{ key: "LOG_WITHOUT_NEWLINE", value: "true", isLiteral: true }]);
-    await deployImage(api, hook, ECHO);
     await deployImage(api, web, WHOAMI);
-    await deployed(api, hook);
     await deployed(api, web);
-    // Over plain HTTP: what calls them - the backend - trusts only certificates
-    // someone signed, and a .localhost one is signed by no one.
-    const hookDomain = domainFor("notifications-hook");
+    // Over plain HTTP, as the hook: the backend calls it.
     const webDomain = domainFor("notifications-web");
-    await exposeApp(api, hook, hookDomain, { port: 8080, forceHttps: false });
     await exposeApp(api, web, webDomain, { forceHttps: false });
-    await visit(page, `http://${hookDomain}/`);
     await visit(page, `http://${webDomain}/health`);
 
     const field = (name: string) => page.getByRole("group", { name, exact: true });
@@ -139,13 +127,6 @@ test("a failing health check is told to Slack once, and again when it passes; Re
     expect(await told(page, hook, "check-again")).toEqual(again);
 });
 
-// created is the id of what a POST made.
-async function created(api: APIRequestContext, path: string, data: unknown): Promise<string> {
-    const res = await api.post(path, { data });
-    expect(res.ok(), `POST ${path}: ${res.status()} ${await res.text()}`).toBe(true);
-    return ((await res.json()) as { data: { id: string } }).data.id;
-}
-
 // deployTelling deploys an image to the app, telling the target how its
 // deployment ends - done or failed - and nobody else.
 async function deployTelling(api: APIRequestContext, app: App, image: string, target: string): Promise<string> {
@@ -173,27 +154,6 @@ async function deployTelling(api: APIRequestContext, app: App, image: string, ta
     return ((await res.json()) as { data: { deploymentId: string } }).data.deploymentId;
 }
 
-interface SlackAttachment {
-    title: string;
-    fields: { title: string; value: string }[];
-}
-
-// slackMessages are what the hook was sent at /slack, in the order it came.
-async function slackMessages(page: Page, hook: App): Promise<SlackAttachment[]> {
-    await expectLogs(page, hook, "Listening on ports");
-    return (await copyShownLogs(page)).split("\n").flatMap(line => {
-        try {
-            const req = JSON.parse(line) as { path?: string; json?: { attachments?: SlackAttachment[] } };
-            return req.path === "/slack" ? (req.json?.attachments ?? []) : [];
-        } catch {
-            return [];
-        }
-    });
-}
-
-const field = (message: SlackAttachment | undefined, title: string) =>
-    message?.fields.find(f => f.title === title)?.value;
-
 // A deployment tells the app's target how it ended: failed, and why, or done -
 // the image, and where its details are.
 test("a deployment tells its notification target that it failed, and why, and that it is done", async ({
@@ -203,28 +163,7 @@ test("a deployment tells its notification target that it failed, and why, and th
 }) => {
     const project = await createProject(api, e2eName("deploy-told"));
     cleanup(() => deleteProject(api, project.id));
-    const hook = await createApp(api, project, "hook");
-    await setRuntimeEnvVars(api, hook, [{ key: "LOG_WITHOUT_NEWLINE", value: "true", isLiteral: true }]);
-    await deployImage(api, hook, ECHO);
-    await deployed(api, hook);
-    const hookDomain = domainFor("deploy-told-hook");
-    await exposeApp(api, hook, hookDomain, { port: 8080, forceHttps: false });
-    await visit(page, `http://${hookDomain}/`);
-
-    const platform = await created(api, `projects/${project.id}/im-services`, {
-        name: e2eName("slack"),
-        // The app's deployment reaches it through the target: for the project's
-        // apps too, as the form makes it.
-        inheritable: true,
-        kind: "slack",
-        slack: { webhook: `http://${hookDomain}/slack` },
-    });
-    const target = await created(api, `projects/${project.id}/notifications`, {
-        name: e2eName("to-slack"),
-        // For the project's apps to use, as the form makes it.
-        inheritable: true,
-        viaSlack: { enabled: true, useDefault: false, webhook: { id: platform } },
-    });
+    const { hook, id: target } = await slackTarget(page, api, project, "deploy-told-hook");
     const ofWeb = async () => (await slackMessages(page, hook)).filter(m => m.title.includes("[web]"));
 
     const web = await createApp(api, project, "web");
@@ -253,25 +192,7 @@ test("a deployment tells its notification target that it failed, and why, and th
 test("a scheduled job that fails tells its notification target", async ({ page, api, cleanup }) => {
     const project = await createProject(api, e2eName("job-told"));
     cleanup(() => deleteProject(api, project.id));
-    const hook = await createApp(api, project, "hook");
-    await setRuntimeEnvVars(api, hook, [{ key: "LOG_WITHOUT_NEWLINE", value: "true", isLiteral: true }]);
-    await deployImage(api, hook, ECHO);
-    await deployed(api, hook);
-    const hookDomain = domainFor("job-told-hook");
-    await exposeApp(api, hook, hookDomain, { port: 8080, forceHttps: false });
-    await visit(page, `http://${hookDomain}/`);
-    const platform = await created(api, `projects/${project.id}/im-services`, {
-        name: e2eName("slack"),
-        inheritable: true,
-        kind: "slack",
-        slack: { webhook: `http://${hookDomain}/slack` },
-    });
-    const target = e2eName("to-slack");
-    await created(api, `projects/${project.id}/notifications`, {
-        name: target,
-        inheritable: true,
-        viaSlack: { enabled: true, useDefault: false, webhook: { id: platform } },
-    });
+    const { hook, name: target } = await slackTarget(page, api, project, "job-told-hook");
 
     const web = await createApp(api, project, "web");
     await deployImage(api, web, BUSYBOX, "sh -c 'echo ready; exec sleep 3600'");

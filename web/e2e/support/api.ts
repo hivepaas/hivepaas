@@ -127,6 +127,12 @@ export async function deleteUsersByEmail(api: APIRequestContext, email: string):
     }
 }
 
+// created is the id of what a POST made.
+export async function created(api: APIRequestContext, path: string, data: unknown): Promise<string> {
+    const body = (await ok(await api.post(path, { data }), `POST ${path}`)) as { data: { id: string } };
+    return body.data.id;
+}
+
 export interface App {
     id: string;
     name: string;
@@ -143,7 +149,7 @@ export function appPath(app: App): string {
 // service at once, on a placeholder image, until it is deployed.
 export async function createApp(
     api: APIRequestContext,
-    project: Project,
+    project: Pick<Project, "id">,
     name: string,
     env = "development",
 ): Promise<App> {

@@ -66,16 +66,24 @@ func (p *manager) checkProjectAccess(
 	// env of the project is a way into the project, or a user given a single env
 	// could never open the project it is in. Only reading: changing or deleting
 	// the project reaches every env, and a grant on one says nothing of the rest.
+	//
+	// What is read of the project then is of those envs alone: the envs are
+	// named, for a list of the project's apps, or anything else of its envs, to
+	// be narrowed to them.
 	envIDs, err := p.grantedEnvs(ctx, db, &check.BaseAccessCheck)
 	if err != nil {
 		return false, nil, err
 	}
+	var projectEnvIDs []string
 	for _, envID := range envIDs {
 		if projectID, _ := projecthelper.ParseProjectEnvID(envID); projectID == check.ProjectID {
-			return true, nil, nil
+			projectEnvIDs = append(projectEnvIDs, envID)
 		}
 	}
-	return false, nil, nil
+	if len(projectEnvIDs) == 0 {
+		return false, nil, nil
+	}
+	return true, map[base.ResourceType][]string{base.ResourceTypeProjectEnv: projectEnvIDs}, nil
 }
 
 // checkProjectsAccess answers a question about projects in general: which ones

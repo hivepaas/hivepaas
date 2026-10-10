@@ -104,6 +104,12 @@ func (uc *UC) ListApp(
 			bunex.SelectJoin("JOIN project_envs ON project_envs.id = app.project_env_id"),
 			bunex.SelectWhere("project_envs.id = ?", req.ProjectEnvID),
 		)
+	} else if allowedAllEnvs, envIDs := auth.AllowedProjectEnvIDs(); !allowedAllEnvs {
+		// A project read through a grant on some of its envs lists their apps alone.
+		if len(envIDs) == 0 {
+			return &appdto.ListAppResp{Meta: basedto.NewEmptyListMeta()}, nil
+		}
+		listOpts = append(listOpts, bunex.SelectWhereIn("app.project_env_id IN (?)", envIDs...))
 	}
 
 	allowedAllIDs, allowedIDs := auth.AllowedApps(nil)

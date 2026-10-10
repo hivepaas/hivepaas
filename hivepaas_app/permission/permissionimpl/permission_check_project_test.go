@@ -152,3 +152,34 @@ func TestAllowedIDsAreEachListedOnce(t *testing.T) {
 	assert.False(t, all)
 	assert.ElementsMatch(t, []string{"prj_1", "prj_2"}, ids)
 }
+
+// Reading a project by a grant on some of its envs, the user is told which: a
+// list of the project's apps, or anything else of its envs, shows those alone.
+func TestProjectReadByAnEnvGrantNamesTheEnvs(t *testing.T) {
+	p := newProjectManager([]*entity.ACLPermission{
+		grant(base.ResourceTypeProjectEnv, "prj_1:dev", readOnly),
+		grant(base.ResourceTypeProjectEnv, "prj_2:prod", readOnly),
+	}, nil)
+	auth := plainAuth()
+	allowed, err := p.CheckAccess(context.Background(), nil, auth, &permission.ProjectAccessCheck{
+		BaseAccessCheck: permission.BaseAccessCheck{Action: base.ActionTypeRead},
+		ProjectID:       "prj_1",
+	})
+	assert.NoError(t, err)
+	assert.True(t, allowed)
+	all, envIDs := auth.AllowedProjectEnvIDs()
+	assert.False(t, all)
+	assert.Equal(t, []string{"prj_1:dev"}, envIDs)
+
+	// Given the project itself, every env of it.
+	p = newProjectManager([]*entity.ACLPermission{grant(base.ResourceTypeProject, "prj_1", readOnly)}, nil)
+	auth = plainAuth()
+	allowed, err = p.CheckAccess(context.Background(), nil, auth, &permission.ProjectAccessCheck{
+		BaseAccessCheck: permission.BaseAccessCheck{Action: base.ActionTypeRead},
+		ProjectID:       "prj_1",
+	})
+	assert.NoError(t, err)
+	assert.True(t, allowed)
+	all, _ = auth.AllowedProjectEnvIDs()
+	assert.True(t, all)
+}

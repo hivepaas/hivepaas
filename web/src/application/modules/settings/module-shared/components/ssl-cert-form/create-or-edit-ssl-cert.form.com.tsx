@@ -547,8 +547,8 @@ export function CreateOrEditSslCertForm({
                                 titleWidth={220}
                                 title={
                                     <LabelWithInfo
-                                        label={isCustom ? "E-mail" : "Registration E-mail"}
-                                        isRequired
+                                        label={isAcme ? "Registration E-mail" : "E-mail"}
+                                        isRequired={isAcme}
                                     />
                                 }
                             >

@@ -15,7 +15,7 @@ export const CreateOrEditSslCertFormSchema = z
         certType: z.nativeEnum(ESslCertType),
         provider: NamedObjectSchema.nullish(),
         acmeProvider: NamedObjectSchema.nullish(),
-        email: z.string().trim().email("Invalid email"),
+        email: z.string().trim(),
         keyType: z.nativeEnum(ESslKeyType),
         autoRenew: z.boolean(),
         certificate: z.string().trim(),
@@ -34,6 +34,20 @@ export const CreateOrEditSslCertFormSchema = z
         }),
     })
     .superRefine((value, ctx) => {
+        // An email registers an ACME account; a certificate of one's own or one
+        // signed here has none to register.
+        const requiresEmail =
+            value.certType === ESslCertType.LetsEncrypt ||
+            value.certType === ESslCertType.ZeroSSL ||
+            value.certType === ESslCertType.GoogleTrust;
+        if ((requiresEmail || value.email) && !z.string().email().safeParse(value.email).success) {
+            ctx.addIssue({
+                code: z.ZodIssueCode.custom,
+                path: ["email"],
+                message: "Invalid email",
+            });
+        }
+
         const requiresProvider = value.certType === ESslCertType.ZeroSSL || value.certType === ESslCertType.GoogleTrust;
         const requiresAcmeProvider =
             value.domain.includes("*") &&

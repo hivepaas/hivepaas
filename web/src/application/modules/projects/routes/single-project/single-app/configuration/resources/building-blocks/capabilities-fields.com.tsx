@@ -1,10 +1,8 @@
 import { Input } from "@components/ui";
-import { Checkbox } from "@components/ui/checkbox";
 import { InputNumber } from "@components/ui/input-number";
 import { useController, useFormContext } from "react-hook-form";
 
 import { InfoBlock, LabelWithInfo } from "@application/shared/components";
-import { DOCS_URL } from "@application/shared/constants";
 import { KeyValueList } from "@application/shared/form";
 
 import { type AppConfigResourcesFormSchemaInput, type AppConfigResourcesFormSchemaOutput } from "../schemas";
@@ -20,7 +18,6 @@ export function CapabilitiesFields() {
 
     const { field: capabilityAddField } = useController({ control, name: "capabilities.capabilityAdd" });
     const { field: capabilityDropField } = useController({ control, name: "capabilities.capabilityDrop" });
-    const { field: enableGPUField } = useController({ control, name: "capabilities.enableGPU" });
     const { field: oomScoreAdjField } = useController({ control, name: "capabilities.oomScoreAdj" });
 
     return (
@@ -76,32 +73,6 @@ export function CapabilitiesFields() {
                     placeholder="AUDIT_WRITE ANOTHER"
                     className="max-w-[500px]"
                 />
-            </InfoBlock>
-
-            <InfoBlock
-                titleWidth={220}
-                title="Enable GPU"
-            >
-                <div className="flex items-center gap-2">
-                    <Checkbox
-                        checked={enableGPUField.value}
-                        onCheckedChange={val => {
-                            enableGPUField.onChange(val);
-                        }}
-                    />
-                    <span className="text-sm text-muted-foreground">
-                        Reserves one GPU, <code className="text-orange-500">NVIDIA-GPU</code>: the app runs on a node
-                        with one free. See{" "}
-                        <a
-                            href={`${DOCS_URL}/configuring-apps/resources-and-placement#gpus`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-blue-500 underline underline-offset-2"
-                        >
-                            how to prepare a node
-                        </a>
-                    </span>
-                </div>
             </InfoBlock>
 
             <InfoBlock

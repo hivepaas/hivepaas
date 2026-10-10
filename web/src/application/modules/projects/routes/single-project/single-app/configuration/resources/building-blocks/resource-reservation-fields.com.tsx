@@ -3,6 +3,7 @@ import { InputNumber } from "@components/ui/input-number";
 import { useController, useFormContext } from "react-hook-form";
 
 import { InfoBlock, LabelWithInfo } from "@application/shared/components";
+import { DOCS_URL } from "@application/shared/constants";
 import { KeyValueList } from "@application/shared/form";
 
 import { type AppConfigResourcesFormSchemaInput, type AppConfigResourcesFormSchemaOutput } from "../schemas";
@@ -76,6 +77,28 @@ export function ResourceReservationFields() {
                     enableValueEditing
                     className="max-w-[800px]"
                 />
+                <div className="mt-3 flex max-w-[800px] flex-col gap-1 rounded-md border border-sky-500/30 bg-sky-500/10 px-3 py-2 text-sm text-sky-700 dark:text-sky-400">
+                    <p>
+                        <span className="font-medium">To give the app a GPU</span>, add the name its node lists its GPUs
+                        as, with how many: <code>NVIDIA-GPU</code> or <code>AMD_GPU</code>, and <code>1</code>. The app
+                        then runs only on a node with that many free.
+                    </p>
+                    <p>
+                        Each such node needs its GPU maker&apos;s container runtime:{" "}
+                        <a
+                            href={`${DOCS_URL}/configuring-apps/resources-and-placement#gpus`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="underline underline-offset-2"
+                        >
+                            how to prepare a node
+                        </a>
+                    </p>
+                    <p>
+                        Reserving a GPU needs <span className="font-medium">Write</span> permission on the{" "}
+                        <span className="font-medium">Cluster</span> module.
+                    </p>
+                </div>
             </InfoBlock>
         </div>
     );

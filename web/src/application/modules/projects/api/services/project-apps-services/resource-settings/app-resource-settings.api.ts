@@ -42,10 +42,13 @@ export class AppResourceSettingsApi extends BaseApi {
         signal?: AbortSignal,
     ): Promise<Result<AppResourceSettings_UpdateOne_Res, Error>> {
         const { projectID, env, appID, payload } = req.data;
+        // The server keeps an app's ulimits with its capabilities.
+        const { ulimits, ...settings } = payload;
+        const body = { ...settings, capabilities: { ...settings.capabilities, ulimits } };
 
         return lastValueFrom(
             from(
-                this.client.v1.put(`/projects/${projectID}/${env}/apps/${appID}/resource-settings`, payload, {
+                this.client.v1.put(`/projects/${projectID}/${env}/apps/${appID}/resource-settings`, body, {
                     signal,
                 }),
             ).pipe(

@@ -45,13 +45,13 @@ const CapabilitiesSchema = z.object({
     enableGPU: z.boolean().optional(),
     oomScoreAdj: z.number().optional(),
     sysctls: z.record(z.string(), z.string()).nullish(),
+    ulimits: z.array(UlimitSchema).nullish(),
 });
 
 const AppResourceSettingsSchema = z.object({
     reservations: ResourceReservationsSchema.nullish(),
     limits: ResourceLimitsSchema.nullish(),
     memory: ResourceMemorySchema.nullish(),
-    ulimits: z.array(UlimitSchema).nullish(),
     capabilities: CapabilitiesSchema.nullish(),
     updateVer: z.number(),
 });
@@ -92,7 +92,7 @@ export class AppResourceSettingsApiValidator {
                       }
                     : null,
                 ulimits:
-                    data.ulimits?.map(item => ({
+                    data.capabilities?.ulimits?.map(item => ({
                         name: item.Name,
                         hard: item.Hard,
                         soft: item.Soft,

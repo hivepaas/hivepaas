@@ -102,7 +102,8 @@ export const InputNumber = forwardRef<HTMLInputElement, NumberInputProps>(
                 isReadOnly={readOnly}
                 onChange={nextValue => {
                     if (disabled || readOnly) return;
-                    const normalizedValue = clampValue(nextValue, min, max);
+                    // An emptied field is NaN to react-aria: no number, for whoever reads it.
+                    const normalizedValue = Number.isNaN(nextValue) ? undefined : clampValue(nextValue, min, max);
                     setValue(normalizedValue);
                     onValueChange?.(normalizedValue);
                 }}

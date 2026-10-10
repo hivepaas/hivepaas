@@ -2,12 +2,14 @@ package scopeserviceimpl
 
 import (
 	"context"
+	"errors"
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
+	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/projecthelper"
 )
 
 func (s *service) LoadObjectScopeData(
@@ -110,4 +112,34 @@ func (s *service) LoadObjectScope(
 	}
 
 	return scope, nil
+}
+
+func (s *service) FilterScope(
+	ctx context.Context,
+	db database.IDB,
+	scope *entity.ObjectScope,
+	projectID, projectEnvID, appID string,
+) (*entity.ObjectScope, error) {
+	var filter *entity.ObjectScope
+	switch {
+	case projectID != "":
+		filter = entity.NewObjectScopeProject(projectID)
+	case projectEnvID != "":
+		envProjectID, env := projecthelper.ParseProjectEnvID(projectEnvID)
+		if envProjectID == "" || env == "" {
+			return scope, nil
+		}
+		filter = entity.NewObjectScopeProjectEnv(envProjectID, env)
+	case appID != "":
+		app, err := s.appService.LoadApp(ctx, db, "", appID, false, false,
+			bunex.SelectColumns("id", "project_id", "project_env_id", "parent_id"))
+		if errors.Is(err, hperrors.ErrNotFound) {
+			return nil, nil
+		}
+		if err != nil {
+			return nil, hperrors.Wrap(err)
+		}
+		filter = entity.NewObjectScopeApp(app.ID, app.ParentID, app.ProjectID, app.ProjectEnvID)
+	}
+	return scope.FilteredBy(filter), nil
 }

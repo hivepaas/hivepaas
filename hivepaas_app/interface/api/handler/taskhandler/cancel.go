@@ -42,6 +42,8 @@ func (h *Handler) CancelTask(
 	switch scopeType {
 	case base.ObjectScopeProject:
 		auth, scope.ProjectID, itemID, err = h.GetAuthProjectTasks(ctx, base.ActionTypeWrite, "itemID")
+		// Read through some of its envs, the project shows those alone.
+		scope.ProjectEnvIDs = auth.ProjectEnvRestriction()
 	case base.ObjectScopeProjectEnv:
 		auth, scope.ProjectID, scope.ProjectEnvID, itemID, err = h.GetAuthProjectEnvTasks(ctx,
 			base.ActionTypeWrite, "itemID")

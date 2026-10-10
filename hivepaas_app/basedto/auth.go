@@ -66,6 +66,18 @@ func (auth *Auth) AllowedProjectEnvIDs() (allowAll bool, allowed []string) {
 	return auth.calcResIntersection(auth.AllowedResources[base.ResourceTypeProjectEnv], nil)
 }
 
+// ProjectEnvRestriction is the envs a project read through a grant on some of
+// them is kept to, or nil when it was reached as a whole.
+func (auth *Auth) ProjectEnvRestriction() []string {
+	if auth == nil {
+		return nil
+	}
+	if allowAll, envIDs := auth.AllowedProjectEnvIDs(); !allowAll {
+		return envIDs
+	}
+	return nil
+}
+
 func (auth *Auth) AllowedApps(inIDs []string) (allowAll bool, allowed []string) {
 	return auth.calcResIntersection(auth.AllowedResources[base.ResourceTypeApp], inIDs)
 }

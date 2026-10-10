@@ -4,6 +4,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/repository"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/auditservice"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/scopeservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/settingservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/taskservice"
 )
@@ -14,6 +15,7 @@ type UC struct {
 	settingRepo repository.SettingRepo
 
 	auditService   auditservice.Service
+	scopeService   scopeservice.Service
 	settingService settingservice.Service
 	taskService    taskservice.Service
 }
@@ -24,6 +26,7 @@ func New(
 	settingRepo repository.SettingRepo,
 
 	auditService auditservice.Service,
+	scopeService scopeservice.Service,
 	settingService settingservice.Service,
 	taskService taskservice.Service,
 ) *UC {
@@ -33,6 +36,7 @@ func New(
 		settingRepo: settingRepo,
 
 		auditService:   auditService,
+		scopeService:   scopeService,
 		settingService: settingService,
 		taskService:    taskService,
 	}

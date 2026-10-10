@@ -23,11 +23,28 @@ back what they found.
 | 1.11 | A member given a project to read sees its apps' settings; Save is out of reach, and the API refuses saving, deleting, making (401) | `tests/level-1/users.spec.ts`          |
 | 1.12 | An API key is good until it expires, and refused from then on                                                                      | `tests/level-1/api-keys.spec.ts`       |
 | 1.13 | A member turns two-factor sign-in on from the profile; then a code is asked for, a wrong one refused, the right one lets them in   | `tests/level-1/users.spec.ts`          |
+| 1.14 | A member given development is refused production's apps: their address, the project's list, an address of development              | `tests/level-1/permissions.spec.ts`    |
+| 1.15 | A member changes nothing an admin decides of them - role, grants, expiry - and does not delete their own account                   | `tests/level-1/permissions.spec.ts`    |
 
 Left for later levels: Logging and Registry settings (saving them deploys) -
 level 2; Traefik and HivePaaS routing and security (they can restart the proxy)
 
 - level 4.
+
+## Found with members and environments (2026-10-10), and fixed
+
+- **An app was reached by the grant of the env its address named**: it was
+  looked up by its project and ID alone, so a member given development read a
+  production app at an address of development, saved its variables, and set
+  how it clones. An app is checked by its own env now.
+- **A project's list of apps had every env's**: a member given development was
+  listed production's apps too. A project read through a grant on some of its
+  envs lists their apps alone.
+- **A member changed what an admin decides of them**: their own account's
+  address - by its ID or as `current` - saved it without the Users module. The
+  role and the grants have checks of their own; the expiry had none, and a
+  member set theirs ten years out. Changing or deleting one's own account takes
+  the Users module now; the profile and the password have routes of their own.
 
 ## Found while writing them (2026-10-06), and fixed
 

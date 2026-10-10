@@ -12,6 +12,7 @@ import {
     exposeApp,
     latestDeployment,
     setRuntimeEnvVars,
+    settingIdNamed,
 } from "../../support/api";
 import { BUSYBOX, DEPLOYED, WHOAMI, appIn, appPage, deployed, expectPrinted } from "../../support/apps";
 import { e2eName, expect, test } from "../../support/fixtures";
@@ -273,15 +274,6 @@ async function finalValues(page: Page): Promise<Record<string, string>> {
         }
         return values;
     });
-}
-
-// settingIdNamed is the id of the setting of that name listed at a path.
-async function settingIdNamed(api: APIRequestContext, path: string, name: string): Promise<string> {
-    const res = await api.get(path);
-    expect(res.ok(), `listing ${path}: ${res.status()}`).toBe(true);
-    const found = ((await res.json()) as { data: { id: string; name: string }[] }).data.find(s => s.name === name);
-    expect(found, `${name} at ${path}`).toBeDefined();
-    return found?.id ?? "";
 }
 
 test("a literal variable reaches the container as written and a reference worked out; the final values show both, a secret masked", async ({

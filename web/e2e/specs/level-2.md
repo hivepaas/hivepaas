@@ -96,6 +96,7 @@ has a project of its own, and deleting it takes the apps and their services.
 | 2.86 | A literal variable reaches the container as written, a reference worked out; Show Final Values shows both, a secret masked                                                                                                                    | `tests/level-2/variables-secrets.spec.ts`   |
 | 2.87 | Link App: an app reaches another at the address it adds; a shared variable changed reaches the app that uses it without a deploy                                                                                                              | `tests/level-2/variables-secrets.spec.ts`   |
 | 2.88 | A binary secret and a binary config file, uploaded, are mounted byte for byte; a config file downloads as it was                                                                                                                              | `tests/level-2/variables-secrets.spec.ts`   |
+| 2.89 | A member without Can Reveal Secrets finds a basic auth's password and htpasswd locked, the API refusing them, and mounts its username; given it, signed in again, the htpasswd                                                                | `tests/level-2/setting-mounts.spec.ts`      |
 
 The images: `traefik/whoami` for an app that serves - it answers with the
 request it got, as the proxy passed it on - and `busybox` for one that prints

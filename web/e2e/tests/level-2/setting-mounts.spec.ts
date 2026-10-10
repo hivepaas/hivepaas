@@ -1,8 +1,18 @@
 import type { APIRequestContext, Page } from "@playwright/test";
 
-import { type App, appPath, createSettingAt, deployImage, latestDeployment } from "../../support/api";
+import {
+    type App,
+    appPath,
+    createSettingAt,
+    deleteUsersByEmail,
+    deployImage,
+    latestDeployment,
+    settingIdNamed,
+} from "../../support/api";
 import { BUSYBOX, appIn, appPage, deployed, expectLogs, expectPrinted } from "../../support/apps";
 import { e2eName, expect, test } from "../../support/fixtures";
+import { signIn } from "../../support/sign-in";
+import { PASSWORD, SIGNED_OUT, grantMember, inviteAndSignUp, signedInAs } from "../../support/users";
 
 test.describe.configure({ timeout: 300_000 });
 
@@ -249,4 +259,82 @@ test("a path one setting mount has is refused to another, and a config file a mo
 
     await page.goto(appPage(app, "config-files"));
     await expect(page.getByRole("row", { name: /E2E_CONF/ })).toBeVisible();
+});
+
+// Mounting a password, a private key, a basic auth's htpasswd hands it to
+// whoever runs the app: it takes the Can Reveal Secrets capability. A member
+// who may change the app but not reveal finds the part locked, and the API
+// refuses what the page would send; given the capability, they mount it.
+test("a member mounts a basic auth's htpasswd only once given Can Reveal Secrets; its username they mount before", async ({
+    page,
+    api,
+    cleanup,
+    browser,
+}) => {
+    const app = await appIn(api, cleanup, "mount-gate");
+    const authName = e2eName("gate-auth");
+    await createSettingAt(api, `projects/${app.projectId}/${app.env}/basic-auth`, {
+        name: authName,
+        username: "e2e-user",
+        password: e2eName("password"),
+        inheritable: true,
+    });
+    cleanup(() => deleteUsersByEmail(api, `${e2eName("mounter")}@example.com`));
+    const member = await inviteAndSignUp(page, browser, "mounter", {
+        id: app.projectId,
+        name: e2eName("mount-gate"),
+        key: "",
+    });
+    const envId = `${app.projectId}:dev`;
+    await grantMember(api, member.email, app.projectId, envId, []);
+
+    const asMember = await browser.newPage(SIGNED_OUT);
+    const memberApi = await signedInAs(member.username, PASSWORD);
+    try {
+        await asMember.goto("/");
+        await signIn(asMember, member.username, PASSWORD);
+        await expect(asMember).toHaveURL(/\/home\/$/);
+        const openForm = async () => {
+            await asMember.goto(appPage(app, "setting-mounts"));
+            await asMember.getByRole("button", { name: "New Setting Mount" }).click();
+            await asMember.getByRole("combobox", { name: "Mount From" }).click();
+            await asMember.getByRole("option", { name: "Basic auth", exact: true }).click();
+            await asMember.getByRole("group", { name: "Setting *" }).getByRole("combobox").click();
+            await asMember.getByRole("option", { name: authName, exact: true }).click();
+        };
+
+        await openForm();
+        await expect(asMember.getByRole("checkbox", { name: "htpasswd", exact: true })).toBeDisabled();
+        // Its password and its htpasswd, each locked, each saying why.
+        await expect(asMember.getByText(/it takes the Can Reveal Secrets permission/)).toHaveCount(2);
+        await expect(asMember.getByRole("checkbox", { name: "password", exact: true })).toBeDisabled();
+        await expect(asMember.getByRole("checkbox", { name: "username", exact: true })).toBeEnabled();
+
+        const source = await settingIdNamed(api, `projects/${app.projectId}/${app.env}/basic-auth`, authName);
+        const mount = (name: string, part: string) =>
+            memberApi.post(`${appPath(app)}/setting-mounts`, {
+                data: { name, source: { id: source }, files: [{ part, path: `/etc/app/${part}` }] },
+            });
+        const refused = await mount("e2e-htpasswd", "htpasswd");
+        expect(refused.ok(), "the API refuses the member the htpasswd").toBe(false);
+        expect(((await refused.json()) as { code: string }).code).toBe(
+            "ERR_USER_NOT_HAVE_PERMISSION_ON_REVEAL_SECRETS",
+        );
+        expect((await mount("e2e-username", "username")).ok(), "the username is no secret").toBe(true);
+
+        // A member whose grants change is signed out, and signs in again.
+        await grantMember(api, member.email, app.projectId, envId, ["cap::secret::reveal"]);
+        await asMember.goto("/");
+        await signIn(asMember, member.username, PASSWORD);
+        await expect(asMember).toHaveURL(/\/home\/$/);
+        await openForm();
+        await asMember.getByRole("group", { name: "Name *" }).getByRole("textbox").fill("e2e-htpasswd");
+        await asMember.getByRole("checkbox", { name: "htpasswd", exact: true }).check();
+        await asMember.getByRole("textbox", { name: "htpasswd path", exact: true }).fill("/etc/app/htpasswd");
+        await asMember.getByRole("button", { name: "Save" }).click();
+        await expect(asMember.getByRole("row", { name: /e2e-htpasswd/ })).toBeVisible();
+    } finally {
+        await asMember.close();
+        await memberApi.dispose();
+    }
 });

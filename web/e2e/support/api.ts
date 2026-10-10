@@ -46,6 +46,15 @@ export async function createSettingAt(api: APIRequestContext, path: string, data
     return body.data.id;
 }
 
+// settingIdNamed is the id of the setting of that name listed at a path.
+export async function settingIdNamed(api: APIRequestContext, path: string, name: string): Promise<string> {
+    const res = await api.get(path);
+    expect(res.ok(), `listing ${path}: ${res.status()}`).toBe(true);
+    const found = ((await res.json()) as { data: { id: string; name: string }[] }).data.find(s => s.name === name);
+    expect(found, `${name} at ${path}`).toBeDefined();
+    return found?.id ?? "";
+}
+
 // deleteProject removes a project and its stored data; one already gone is
 // fine.
 export async function deleteProject(api: APIRequestContext, id: string): Promise<void> {

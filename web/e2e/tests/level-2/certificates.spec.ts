@@ -170,6 +170,26 @@ test("a certificate pasted with the private key of another is refused", async ({
     await page.goto(`/projects/${app.projectId}/integrations/ssl-certificates/`);
     await expect(page.getByRole("row", { name: new RegExp(domain) })).toHaveCount(0);
 });
+
+// A certificate from Let's Encrypt registers an account with an email: it is
+// not saved without one. One of one's own asks for none - the tests above give
+// none.
+test("a certificate from Let's Encrypt asks for the email it registers with", async ({ page, api, cleanup }) => {
+    const project = await createProject(api, e2eName("acme-email"));
+    cleanup(() => deleteProject(api, project.id));
+    const domain = domainFor("acme-email");
+
+    await page.goto(`/projects/${project.id}/integrations/ssl-certificates/create/`);
+    await page.getByRole("group", { name: "Domain *" }).getByRole("textbox").fill(domain);
+    await page.getByRole("group", { name: "Certificate Type *" }).getByRole("combobox").click();
+    await page.getByRole("option", { name: /^Let.s Encrypt$/ }).click();
+    await page.getByRole("group", { name: "Registration E-mail *" }).getByRole("textbox").fill("");
+    await page.getByRole("button", { name: "Save" }).click();
+    await expect(page.getByText("Invalid email")).toBeVisible();
+    await page.goto(`/projects/${project.id}/integrations/ssl-certificates/`);
+    await expect(page.getByRole("row", { name: new RegExp(domain) })).toHaveCount(0);
+});
+
 // Two apps of one name - web in development and in production, as a project
 // has them - are each served at their domain with their own certificate.
 test("apps of one name in two environments are each served with their own certificate", async ({

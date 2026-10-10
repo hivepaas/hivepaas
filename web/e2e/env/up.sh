@@ -150,8 +150,10 @@ say "Serving Git repositories inside dind"
 # The HTTPS server is busybox's, running git-http-backend, behind socat for TLS
 # with a certificate dind trusts; SSH is sshd's, the git user's shell git-shell.
 # lz4 and rsync too, which the release's agent image has: the backend packs a
-# checkout with lz4, and a clone copies an app's volumes with rsync.
-in_dind apk add --no-cache -q git-daemon lz4 rsync busybox-extras socat openssh-server >/dev/null
+# checkout with lz4, and a clone copies an app's volumes with rsync; and
+# git-lfs, which a build asked for LFS files fetches them with.
+in_dind apk add --no-cache -q git-daemon git-lfs lz4 rsync busybox-extras socat openssh-server >/dev/null
+in_dind git lfs install --system >/dev/null
 docker exec -i "$DIND" sh -s <<'REPOS'
 set -e
 export GIT_AUTHOR_NAME=e2e GIT_AUTHOR_EMAIL=e2e@e2e.localhost GIT_COMMITTER_NAME=e2e

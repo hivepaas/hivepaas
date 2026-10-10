@@ -282,40 +282,64 @@ test("a page loaded before a deployment settled saves; one whose settings change
     expect(((await versionNow()).limits as { pids?: number }).pids, "the other change stands").toBe(32);
 });
 
-// enableGPU turns the app's Enable GPU on or off, and saves.
-async function enableGPU(page: Page, app: App, on: boolean): Promise<void> {
+// reservedKind is the row of a kind among the app's generic resources - not
+// the note beside them, which names the kinds too.
+const reservedKind = (page: Page, kind: string) =>
+    field(page, "Generic Resources").getByText(kind, { exact: true }).and(page.locator("div"));
+
+// reserveGPU reserves one GPU of the kind for the app, among its generic
+// resources, in place of the one it had; none, without a kind. It saves.
+async function reserveGPU(page: Page, app: App, kind?: string): Promise<void> {
     await page.goto(appPage(app, "resources"));
-    await field(page, "Enable GPU").getByRole("checkbox").setChecked(on);
+    const generic = field(page, "Generic Resources");
+    await expect(generic.getByPlaceholder("NVIDIA-GPU")).toBeVisible();
+    for (const had of ["NVIDIA-GPU", "AMD_GPU"]) {
+        const row = reservedKind(page, had);
+        if ((await row.count()) > 0) {
+            await row.locator("xpath=../..").getByRole("button", { name: "Remove item" }).click();
+            await page.getByRole("dialog").getByRole("button", { name: "Remove" }).click();
+        }
+    }
+    if (kind) {
+        await generic.getByPlaceholder("NVIDIA-GPU").fill(kind);
+        await generic.getByPlaceholder("2 (a count, or a name)").fill("1");
+        await generic.getByRole("button", { name: "Add" }).click();
+    }
     await saveResources(page);
 }
 
-// Enable GPU reserves one GPU: the env's node lists one, of no hardware. The
-// app is placed, and told which GPU is its - as NVIDIA's runtime is - and the
-// page shows it as Enable GPU, not among the generic resources. A second app
-// asking for one waits, its instance saying why, until the first gives it
-// back.
-test("Enable GPU reserves the node's GPU for the app; a second app waits for it", async ({ page, api, cleanup }) => {
-    const sayingItsGPU = saying({
-        gpu: "$(env | grep ^DOCKER_RESOURCE_NVIDIA-GPU= | cut -d= -f2 | grep . || echo none)",
-    });
-    const first = await appSaying(page, api, cleanup, "gpu-first", sayingItsGPU);
-    const second = await appSaying(page, api, cleanup, "gpu-second", sayingItsGPU);
-    await expectPrinted(page, first, "gpu", "none");
+// A GPU is reserved among the generic resources, by the name the node lists
+// it as - the env's lists one NVIDIA GPU and one AMD GPU, of no hardware. The
+// app is placed, and told which GPU is its, as the maker's runtime is. A
+// second app asking for the same waits, its instance saying why; given the
+// other maker's, it runs. One taken away is the app's no more.
+test("a GPU reserved among the generic resources is the app's; a second app waits for it, or takes another maker's", async ({
+    page,
+    api,
+    cleanup,
+}) => {
+    const itsGPU = (kind: string) => `$(env | grep ^DOCKER_RESOURCE_${kind}= | cut -d= -f2 | grep . || echo none)`;
+    const sayingItsGPUs = saying({ nvidia: itsGPU("NVIDIA-GPU"), amd: itsGPU("AMD_GPU") });
+    const first = await appSaying(page, api, cleanup, "gpu-first", sayingItsGPUs);
+    const second = await appSaying(page, api, cleanup, "gpu-second", sayingItsGPUs);
+    await expectPrinted(page, first, "nvidia", "none");
 
-    await enableGPU(page, first, true);
-    await expectPrinted(page, first, "gpu", "GPU-e2e0");
+    await reserveGPU(page, first, "NVIDIA-GPU");
+    await expectPrinted(page, first, "nvidia", "GPU-e2e0");
     await page.goto(appPage(first, "resources"));
-    await expect(field(page, "Enable GPU").getByRole("checkbox")).toBeChecked();
-    await expect(field(page, "Generic Resources")).not.toContainText("NVIDIA-GPU");
+    await expect(reservedKind(page, "NVIDIA-GPU")).toBeVisible();
 
-    await enableGPU(page, second, true);
+    await reserveGPU(page, second, "NVIDIA-GPU");
     await expectInstances(page, second, "0/1");
     await page.goto(appPage(second, "instances"));
     // The instance waiting, newest, says why.
     await page.getByRole("button", { name: "Show" }).first().click();
     await expect(page.getByText(/insufficient resources/)).toBeVisible();
 
-    await enableGPU(page, first, false);
-    await expectPrinted(page, second, "gpu", "GPU-e2e0");
-    await expectPrinted(page, first, "gpu", "none");
+    await reserveGPU(page, second, "AMD_GPU");
+    await expectPrinted(page, second, "amd", "0xe2e1");
+    await expectPrinted(page, second, "nvidia", "none");
+
+    await reserveGPU(page, first);
+    await expectPrinted(page, first, "nvidia", "none");
 });

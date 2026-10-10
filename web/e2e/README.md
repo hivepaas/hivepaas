@@ -37,8 +37,8 @@ backend repo beside this one (or `HP_BACKEND_DIR`), Go, and the backend's
 `hivepaas-devtools` image (`make init` there, once). `HP_E2E_PORT` moves it off
 10100; `HP_E2E_SKIP_BUILD=1` reuses the last build. The template catalog is the
 app-templates repo beside this one (or `HP_TEMPLATES_SRC`); without it, the
-template test finds none. dind lists one GPU of no hardware, `NVIDIA-GPU=GPU-e2e0`,
-for the apps that reserve one. dind is also given kopia, the backup engine, from
+template test finds none. dind lists two GPUs of no hardware, `NVIDIA-GPU=GPU-e2e0` and
+`AMD_GPU=0xe2e1`, for the apps that reserve one. dind is also given kopia, the backup engine, from
 its pinned image, and Git repositories to build apps from, on dind's loopback,
 made at fixed dates, so of fixed hashes: `git://127.0.0.1/e2e/shop.git` (two
 commits on main, a branch, a pull request's head), `site.git` (a page of HTML)

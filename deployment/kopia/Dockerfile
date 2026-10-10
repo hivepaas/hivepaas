@@ -18,10 +18,10 @@ ARG KOPIA_VERSION=0.23.1
 # to its latest; grpc and compress, which kopia's server and its compression
 # run on, to the first release with the fix only.
 ARG KOPIA_MODULES="\
-golang.org/x/crypto@v0.57.0 \
-golang.org/x/mod@v0.41.0 \
-golang.org/x/net@v0.59.0 \
-golang.org/x/text@v0.42.0 \
+golang.org/x/crypto@v0.58.0 \
+golang.org/x/mod@v0.42.0 \
+golang.org/x/net@v0.61.0 \
+golang.org/x/text@v0.43.0 \
 google.golang.org/grpc@v1.83.2 \
 github.com/klauspost/compress@v1.18.7"
 

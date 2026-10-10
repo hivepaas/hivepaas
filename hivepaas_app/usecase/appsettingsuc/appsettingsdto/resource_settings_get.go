@@ -118,7 +118,7 @@ func TransformResourceSettings(
 ) (resp *ResourceSettingsResp, err error) {
 	spec := &service.Spec
 	resp = &ResourceSettingsResp{
-		UpdateVer: int(service.Version.Index), //nolint:gosec
+		UpdateVer: ResourceSettingsVersion(service),
 	}
 
 	resp.Reservations = TransformResourceReservations(spec.TaskTemplate.Resources)

@@ -136,7 +136,7 @@ func TransformContainerSettings(
 ) (resp *ContainerSettingsResp, err error) {
 	spec := &service.Spec
 	resp = &ContainerSettingsResp{
-		UpdateVer: int(service.Version.Index), //nolint:gosec
+		UpdateVer: ContainerSettingsVersion(service),
 	}
 
 	resp.BaseContainerSettings = TransformContainerSettingsBase(spec)

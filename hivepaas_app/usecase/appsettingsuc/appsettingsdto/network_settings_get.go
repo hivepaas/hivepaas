@@ -85,7 +85,7 @@ func TransformNetworkSettings(
 ) (resp *NetworkSettingsResp, err error) {
 	spec := &input.Service.Spec
 	resp = &NetworkSettingsResp{
-		UpdateVer: int(input.Service.Version.Index), //nolint:gosec
+		UpdateVer: NetworkSettingsVersion(input.Service),
 	}
 
 	resp.NetworkAttachments, err = TransformNetworkAttachments(spec.TaskTemplate.Networks, input)

@@ -88,7 +88,7 @@ func (uc *UC) loadAppNetworkSettingsForUpdate(
 	}
 	data.Service = service
 
-	if data.Service == nil || data.Service.Version.Index != uint64(req.UpdateVer) { //nolint:gosec
+	if data.Service == nil || appsettingsdto.NetworkSettingsVersion(data.Service) != req.UpdateVer {
 		return hperrors.Wrap(hperrors.ErrUpdateVerMismatched)
 	}
 
@@ -268,8 +268,14 @@ func (uc *UC) applyAppNetworkSettings(
 	req *appsettingsdto.UpdateAppNetworkSettingsReq,
 	data *updateAppNetworkSettingsData,
 ) error {
+	// What the screen showed, checked again on a retry: swarm refuses an update
+	// of a service it wrote meanwhile, and the retry reads the service again.
+	shown := appsettingsdto.NetworkSettingsVersion(data.Service)
 	err := uc.dockerManager.ServiceUpdateFunc(ctx, data.Service.ID, data.Service,
-		func(_ int, service *swarm.Service) (bool, error) {
+		func(attempt int, service *swarm.Service) (bool, error) {
+			if attempt > 0 && appsettingsdto.NetworkSettingsVersion(service) != shown {
+				return false, hperrors.Wrap(hperrors.ErrUpdateVerMismatched)
+			}
 			data.Service = service
 			return true, uc.prepareUpdatingAppNetworkSettings(req, data)
 		}, defaultServiceRetryMax, 0)

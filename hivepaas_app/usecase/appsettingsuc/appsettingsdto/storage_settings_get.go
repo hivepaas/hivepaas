@@ -148,7 +148,7 @@ func TransformStorageSettings(
 	input *StorageSettingsTransformInput,
 ) (resp *StorageSettingsResp, err error) {
 	resp = &StorageSettingsResp{
-		UpdateVer: int(input.Service.Version.Index), //nolint:gosec
+		UpdateVer: StorageSettingsVersion(input.Service),
 	}
 
 	resp.Mounts, err = TransformStorageMounts(input)

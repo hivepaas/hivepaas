@@ -68,7 +68,7 @@ func TransformServiceSettings(
 ) (resp *ServiceSettingsResp, err error) {
 	spec := &service.Spec
 	resp = &ServiceSettingsResp{
-		UpdateVer: int(service.Version.Index), //nolint:gosec
+		UpdateVer: ServiceSettingsVersion(service),
 	}
 
 	resp.ModeSpec = TransformServiceMode(spec)

@@ -5,7 +5,7 @@ import fs from "node:fs";
 import https from "node:https";
 import tls from "node:tls";
 
-import { type App, createApp, createProject, deleteProject, deployImage } from "../../support/api";
+import { type App, createApp, createProject, createSettingAt, deleteProject, deployImage } from "../../support/api";
 import { WHOAMI, deployed } from "../../support/apps";
 import { env } from "../../support/env";
 import { type Cleanup, e2eName, expect, test } from "../../support/fixtures";
@@ -83,9 +83,7 @@ async function getTrusting(domain: string, certificate: string): Promise<{ statu
     });
 }
 
-// whoamiNamed is a project of its own with a whoami app named after the test:
-// two apps of one name, in any two projects, would share the proxy's file of
-// the app's configuration (see the spec's findings).
+// whoamiNamed is a project of its own with a whoami app named after the test.
 async function whoamiNamed(api: APIRequestContext, cleanup: Cleanup, label: string): Promise<App> {
     const project = await createProject(api, e2eName(label));
     cleanup(() => deleteProject(api, project.id));
@@ -171,4 +169,43 @@ test("a certificate pasted with the private key of another is refused", async ({
     ).toBeVisible();
     await page.goto(`/projects/${app.projectId}/integrations/ssl-certificates/`);
     await expect(page.getByRole("row", { name: new RegExp(domain) })).toHaveCount(0);
+});
+// Two apps of one name - web in development and in production, as a project
+// has them - are each served at their domain with their own certificate.
+test("apps of one name in two environments are each served with their own certificate", async ({
+    page,
+    api,
+    cleanup,
+}, testInfo) => {
+    const project = await createProject(api, e2eName("same-name"));
+    cleanup(() => deleteProject(api, project.id));
+    fs.mkdirSync(testInfo.outputDir, { recursive: true });
+    const apps: { app: App; domain: string; pair: KeyPair }[] = [];
+    for (const env of ["development", "production"]) {
+        const app = await createApp(api, project, "web", env);
+        await deployImage(api, app, WHOAMI);
+        await deployed(api, app);
+        const domain = domainFor(`same-name-${env}`);
+        const pair = selfSigned(testInfo.outputDir, domain);
+        await createSettingAt(api, `projects/${project.id}/ssl-certs`, {
+            certType: "custom",
+            domain,
+            certificate: pair.certificate,
+            privateKey: pair.privateKey,
+            inheritable: true,
+        });
+        apps.push({ app, domain, pair });
+    }
+
+    for (const { app, domain } of apps) {
+        await exposeAt(page, app, domain, async () => {
+            await page.getByRole("group", { name: "SSL Certificate" }).getByRole("combobox").click();
+            await page.getByRole("option", { name: domain, exact: true }).click();
+        });
+    }
+    for (const { domain, pair } of apps) {
+        await expect
+            .poll(() => servedBy(domain, pair.certificate), { timeout: 120_000, intervals: [2_000] })
+            .toBe(new crypto.X509Certificate(pair.certificate).fingerprint256);
+    }
 });

@@ -99,6 +99,7 @@ has a project of its own, and deleting it takes the apps and their services.
 | 2.89 | A member without Can Reveal Secrets finds a basic auth's password and htpasswd locked, the API refusing them, and mounts its username; given it, signed in again, the htpasswd                                                                | `tests/level-2/setting-mounts.spec.ts`      |
 | 2.90 | A certificate of one's own pasted in as Custom - its expiry read from it - is the one its domain is served with                                                                                                                               | `tests/level-2/certificates.spec.ts`        |
 | 2.91 | A certificate pasted with the private key of another is refused, and says why                                                                                                                                                                 | `tests/level-2/certificates.spec.ts`        |
+| 2.92 | Apps of one name - web in development and in production - are each served at their domain with their own certificate                                                                                                                          | `tests/level-2/certificates.spec.ts`        |
 
 The images: `traefik/whoami` for an app that serves - it answers with the
 request it got, as the proxy passed it on - and `busybox` for one that prints
@@ -149,14 +150,12 @@ called: what HivePaaS posts back on a pull request fails, and is let go.
   not load it and served the domain with its default certificate, and nothing
   said why. It is read now: refused with the reason, and its expiry - typed in
   beside it before - is its own.
-
-Seen, and not fixed yet:
-
-- **Two apps of one name share the proxy's file of their configuration**: it
-  is named after the app's key, `web.yml`, which a project's development and
+- **Two apps of one name shared the proxy's file of their configuration**: it
+  was named after the app's key, `web.yml`, which a project's development and
   production apps both have, and apps of other projects too. The app applied
-  last wins: the other loses its certificate, and what else the file holds.
-  The tests here give their apps names of their own.
+  last won: the other lost its certificate, and its TCP domains' TLS options.
+  It is named after the app's ID now; the file named after the key goes when
+  an app of that key writes or removes its own.
 
 ## Found with variables and secrets (2026-10-10), and fixed
 

@@ -214,3 +214,46 @@ func (h *Handler) DeleteDataFile(ctx *gin.Context) {
 
 	ctx.JSON(http.StatusOK, resp)
 }
+
+// LoadDataFile Loads a data file into a command
+// @Summary Loads a data file into a command
+// @Description Feeds an app's data file to a command run in the app, on its stdin - a dump a job
+// @Description saved, loaded back into the app's database. A file saved encrypted takes its passphrase.
+// @Description The load runs as a task, whose ID is answered.
+// @Tags    App settings
+// @Produce json
+// @Id      loadAppDataFile
+// @Param   projectID path string true "project ID"
+// @Param   projectEnv path string true "project env"
+// @Param   appID path string true "app ID"
+// @Param   itemID path string true "file ID"
+// @Param   body body filedto.LoadDataFileReq true "request data"
+// @Success 200 {object} filedto.LoadDataFileResp
+// @Failure 400 {object} hperrors.ErrorInfo
+// @Failure 500 {object} hperrors.ErrorInfo
+// @Router  /projects/{projectID}/{projectEnv}/apps/{appID}/data-files/{itemID}/load [post]
+func (h *Handler) LoadDataFile(ctx *gin.Context) {
+	// What it loads changes the app's data, as a restore does.
+	auth, projectID, _, appID, itemID, err := h.GetAuthForItem(ctx, base.ActionTypeWrite, "itemID")
+	if err != nil {
+		h.RenderError(ctx, err)
+		return
+	}
+
+	req := filedto.NewLoadDataFileReq()
+	req.ID = itemID
+	req.ProjectID = projectID
+	req.AppID = appID
+	if err := h.ParseAndValidateJSONBody(ctx, req); err != nil {
+		h.RenderError(ctx, err)
+		return
+	}
+
+	resp, err := h.fileUC.LoadDataFile(h.RequestCtx(ctx), auth, req)
+	if err != nil {
+		h.RenderError(ctx, err)
+		return
+	}
+
+	ctx.JSON(http.StatusOK, resp)
+}

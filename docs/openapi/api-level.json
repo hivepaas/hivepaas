@@ -153,6 +153,7 @@
     "POST /projects/{projectID}/{projectEnv}/apps/{appID}/container/check-port": "a9d731bcda5f5fbb3487bbc5e58885c400bd5f89fbf7bca55e586072fe42e410",
     "POST /projects/{projectID}/{projectEnv}/apps/{appID}/container/file-upload": "fd6fae6da0297422d6aa904950b6272c199df2910680c3d9175b4e57d7061194",
     "POST /projects/{projectID}/{projectEnv}/apps/{appID}/data-files": "4c8b6a0a1441cde195d783a55b4f62ff06cad9c0dce02116210f9cbe2414d7dc",
+    "POST /projects/{projectID}/{projectEnv}/apps/{appID}/data-files/{itemID}/load": "f3f96004395b97b7f14b1cf3bbf6baabf72ac72ddcebdbf879d1e736d199a7fb",
     "POST /projects/{projectID}/{projectEnv}/apps/{appID}/deploy": "b06f116f8f0376ddd21c4fd1b7da20a1d2ec10391fa140d0a06bf080403f79c3",
     "POST /projects/{projectID}/{projectEnv}/apps/{appID}/deployments/{deploymentID}/cancel": "f7bbe97aeec9f341fba3e87357e8ed4a6dd402e80c754bacf2adc74bc27ed14a",
     "POST /projects/{projectID}/{projectEnv}/apps/{appID}/env-vars/compute": "6b8cbb19bbfecac553368b168183a7b788574c837ad1834d5f6868d1cd5c021a",

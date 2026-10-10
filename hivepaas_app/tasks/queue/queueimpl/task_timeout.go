@@ -69,6 +69,8 @@ var taskTypeTimeouts = map[base.TaskType]time.Duration{
 	base.TaskTypeWorkflow:     taskDefaultTimeout,
 	// A restore is bounded by the snapshot's size.
 	base.TaskTypeBackupRestore: taskDefaultTimeout,
+	// As long as a restore: the file is as large as the dump it is.
+	base.TaskTypeDataFileLoad: taskDefaultTimeout,
 }
 
 // resolveTaskTimeout picks the timeout for a task: what the task asks for, else the ceiling for

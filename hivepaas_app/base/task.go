@@ -38,19 +38,24 @@ const (
 	// TaskTypeBackupRestore puts a backup snapshot back into an app. See
 	// service/databackupservice.
 	TaskTypeBackupRestore TaskType = "task:backup-restore"
+
+	// TaskTypeDataFileLoad feeds an app's data file to a command run in the app,
+	// on its stdin. See tasks/taskdatafileload.
+	TaskTypeDataFileLoad TaskType = "task:data-file-load"
 )
 
 var (
 	AllTaskTypes = []TaskType{TaskTypeDummy, TaskTypeAppDeploy, TaskTypeAppClone,
 		TaskTypeAppPreview, TaskTypeSchedJobExec, TaskTypePeriodicExec,
 		TaskTypeSystemUpdate, TaskTypeWorkflow, TaskTypeSettingsRevert, TaskTypeAppLabelsSweep,
-		TaskTypeSSLObtain, TaskTypeSettingMountRefresh, TaskTypeBackupRestore}
+		TaskTypeSSLObtain, TaskTypeSettingMountRefresh, TaskTypeBackupRestore, TaskTypeDataFileLoad}
 
 	// These are listing types for front-end to show
 	AllGlobalTaskTypes   = gofn.Drop(AllTaskTypes, TaskTypeDummy)
 	AllHivepaasTaskTypes = []TaskType{}
 	AllProjectTaskTypes  = []TaskType{TaskTypeAppDeploy, TaskTypeAppClone,
-		TaskTypeAppPreview, TaskTypeSchedJobExec, TaskTypePeriodicExec, TaskTypeBackupRestore}
+		TaskTypeAppPreview, TaskTypeSchedJobExec, TaskTypePeriodicExec, TaskTypeBackupRestore,
+		TaskTypeDataFileLoad}
 	AllAppTaskTypes  = AllProjectTaskTypes
 	AllUserTaskTypes = []TaskType{}
 )

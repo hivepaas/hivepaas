@@ -121,6 +121,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/tasks/taskapplabelssweep"
 	"github.com/hivepaas/hivepaas/hivepaas_app/tasks/taskapppreview"
 	"github.com/hivepaas/hivepaas/hivepaas_app/tasks/taskbackuprestore"
+	"github.com/hivepaas/hivepaas/hivepaas_app/tasks/taskdatafileload"
 	"github.com/hivepaas/hivepaas/hivepaas_app/tasks/taskdummy"
 	"github.com/hivepaas/hivepaas/hivepaas_app/tasks/taskperiodicjobexec"
 	"github.com/hivepaas/hivepaas/hivepaas_app/tasks/taskschedjobexec"
@@ -254,6 +255,7 @@ var Provides = []any{
 	tasksettingsrevert.NewExecutor,
 	tasksslobtain.NewExecutor,
 	taskbackuprestore.NewExecutor,
+	taskdatafileload.NewExecutor,
 	tasksettingmountrefresh.NewExecutor,
 	taskworkflow.NewExecutor,
 

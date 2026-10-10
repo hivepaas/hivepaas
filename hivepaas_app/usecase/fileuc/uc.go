@@ -4,9 +4,11 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/repository"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/appservice"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/auditservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/fileservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/projectservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/userservice"
+	"github.com/hivepaas/hivepaas/hivepaas_app/tasks/queue"
 )
 
 type UC struct {
@@ -14,8 +16,11 @@ type UC struct {
 
 	fileRepo    repository.FileRepo
 	settingRepo repository.SettingRepo
+	taskRepo    repository.TaskRepo
+	taskQueue   queue.TaskQueue
 
 	appService     appservice.Service
+	auditService   auditservice.Service
 	fileService    fileservice.Service
 	projectService projectservice.Service
 	userService    userservice.Service
@@ -26,8 +31,11 @@ func New(
 
 	fileRepo repository.FileRepo,
 	settingRepo repository.SettingRepo,
+	taskRepo repository.TaskRepo,
+	taskQueue queue.TaskQueue,
 
 	appService appservice.Service,
+	auditService auditservice.Service,
 	fileService fileservice.Service,
 	projectService projectservice.Service,
 	userService userservice.Service,
@@ -37,8 +45,11 @@ func New(
 
 		fileRepo:    fileRepo,
 		settingRepo: settingRepo,
+		taskRepo:    taskRepo,
+		taskQueue:   taskQueue,
 
 		appService:     appService,
+		auditService:   auditService,
 		fileService:    fileService,
 		projectService: projectService,
 		userService:    userService,

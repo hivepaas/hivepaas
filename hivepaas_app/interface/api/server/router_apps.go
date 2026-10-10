@@ -153,6 +153,7 @@ func (s *HTTPServer) registerAppRoutes(projectGroup, projectEnvGroup *gin.Router
 		dataFileGroup.GET("/:itemID/download-url", appSettingsHandler.GetDataFileDownloadURL)
 		dataFileGroup.POST("", appSettingsHandler.CreateDataFile)
 		dataFileGroup.DELETE("/:itemID", appSettingsHandler.DeleteDataFile)
+		dataFileGroup.POST("/:itemID/load", appSettingsHandler.LoadDataFile)
 	}
 
 	{ // Scheduled jobs

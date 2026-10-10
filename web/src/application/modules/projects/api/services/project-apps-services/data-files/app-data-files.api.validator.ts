@@ -2,7 +2,9 @@ import { z } from "zod";
 import type {
     AppDataFiles_CreateOne_Res,
     AppDataFiles_FindManyPaginated_Res,
+    AppDataFiles_FindOneById_Res,
     AppDataFiles_GetDownloadUrl_Res,
+    AppDataFiles_Load_Res,
     AppDataFiles_UploadLocal_Res,
 } from "~/projects/api/services/project-apps-services/data-files";
 import { AppDataFileStorageType } from "~/projects/domain";
@@ -46,6 +48,18 @@ const FindManyPaginatedSchema = z.object({
     meta: PagingMetaApiSchema,
 });
 
+const FindOneByIdSchema = z.object({
+    data: AppDataFileSchema,
+    meta: BaseMetaApiSchema.nullish(),
+});
+
+const LoadSchema = z.object({
+    data: z.object({
+        task: z.object({ id: z.string() }),
+    }),
+    meta: BaseMetaApiSchema.nullish(),
+});
+
 const GetDownloadUrlSchema = z.object({
     data: z.object({
         url: z.string(),
@@ -73,6 +87,18 @@ export class AppDataFilesApiValidator {
         });
 
         return { data, meta };
+    };
+
+    findOneById = (response: ApiHttpResponse): AppDataFiles_FindOneById_Res => {
+        return parseApiResponse({
+            response,
+            schema: FindOneByIdSchema,
+        });
+    };
+
+    load = (response: ApiHttpResponse): AppDataFiles_Load_Res => {
+        const { data, meta } = parseApiResponse({ response, schema: LoadSchema });
+        return { data: { taskId: data.task.id }, meta };
     };
 
     getDownloadUrl = (response: ApiHttpResponse): AppDataFiles_GetDownloadUrl_Res => {

@@ -842,6 +842,12 @@ export const ROUTE = {
                                 $route: (id: string, env: string, appId: string) =>
                                     `/projects/${id}/${env}/apps/${appId}/data-files/create/`,
                             },
+
+                            load: {
+                                $pattern: "projects/:id/:env/apps/:appId/data-files/:dataFileId/load",
+                                $route: (id: string, env: string, appId: string, dataFileId: string) =>
+                                    `/projects/${id}/${env}/apps/${appId}/data-files/${dataFileId}/load/`,
+                            },
                         },
 
                         availabilityAndScaling: {

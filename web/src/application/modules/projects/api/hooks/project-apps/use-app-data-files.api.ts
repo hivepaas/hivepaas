@@ -6,7 +6,9 @@ import type {
     AppDataFiles_CreateOne_Req,
     AppDataFiles_DeleteOne_Req,
     AppDataFiles_FindManyPaginated_Req,
+    AppDataFiles_FindOneById_Req,
     AppDataFiles_GetDownloadUrl_Req,
+    AppDataFiles_Load_Req,
     AppDataFiles_UploadLocal_Req,
 } from "~/projects/api/services";
 
@@ -21,6 +23,16 @@ function createHook() {
             () => ({
                 findManyPaginated: async (data: AppDataFiles_FindManyPaginated_Req["data"], signal?: AbortSignal) => {
                     const result = await api.projects.apps.dataFiles.$.findManyPaginated({ data }, signal);
+
+                    return match(result, {
+                        Ok: response => response,
+                        Err: error => {
+                            throw error;
+                        },
+                    });
+                },
+                findOneById: async (data: AppDataFiles_FindOneById_Req["data"], signal?: AbortSignal) => {
+                    const result = await api.projects.apps.dataFiles.$.findOneById({ data }, signal);
 
                     return match(result, {
                         Ok: response => response,
@@ -53,6 +65,22 @@ function createHook() {
                         Err: error => {
                             notifyError({
                                 message: "Failed to delete app data file",
+                                error,
+                            });
+
+                            throw error;
+                        },
+                    });
+                },
+
+                load: async (data: AppDataFiles_Load_Req["data"]) => {
+                    const result = await api.projects.apps.dataFiles.$.load({ data });
+
+                    return match(result, {
+                        Ok: response => response,
+                        Err: error => {
+                            notifyError({
+                                message: "Failed to load the data file",
                                 error,
                             });
 

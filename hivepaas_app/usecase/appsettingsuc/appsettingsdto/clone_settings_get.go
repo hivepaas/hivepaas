@@ -56,7 +56,7 @@ type AppCloneSettingsResp struct {
 	ClonePeriodicJobs bool `json:"clonePeriodicJobs"`
 	CloneSchedJobs    bool `json:"cloneSchedJobs"`
 
-	CommandPipes []*settings.BaseSettingResp        `json:"commandPipes,omitempty"`
+	CommandPipes []*settings.BaseSettingResp        `json:"commandPipes,omitempty" copy:"-"`
 	Notification *basedto.BaseEventNotificationResp `json:"notification,omitempty"`
 
 	UpdateVer int `json:"updateVer"`
@@ -115,7 +115,9 @@ func TransformAppCloneSettings(input *AppCloneSettingsTransformInput) (*AppClone
 			resp.CloneRoutingDomains = append(resp.CloneRoutingDomains, domainResp)
 		}
 
-		for _, pipe := range appCloneSettings.CommandPipes {
+		// Each once: a pipe saved twice - which the form did, given each twice -
+		// runs once.
+		for _, pipe := range appCloneSettings.CommandPipes.Unique() {
 			pipeResp, _ := settings.TransformSettingBase(refObjects.RefSettings[pipe.ID])
 			if pipeResp == nil {
 				pipeResp = settings.NewMissingSetting(pipe.ID, base.SettingTypeCommandPipe)

@@ -26,10 +26,8 @@ func (s *service) runCommands(
 	}
 
 	commandPipeSettings := make([]*entity.Setting, 0, len(data.CloneSettings.CommandPipes))
-	for _, pipeObj := range data.CloneSettings.CommandPipes {
-		if pipeObj == nil || pipeObj.ID == "" {
-			continue
-		}
+	// Each once, whatever the settings saved: a pipe is not run twice.
+	for _, pipeObj := range data.CloneSettings.CommandPipes.Unique() {
 		pipeSetting := data.RefObjects.RefSettings[pipeObj.ID]
 		if pipeSetting != nil {
 			commandPipeSettings = append(commandPipeSettings, pipeSetting)

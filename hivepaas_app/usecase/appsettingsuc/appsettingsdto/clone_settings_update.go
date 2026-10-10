@@ -103,7 +103,7 @@ func (req *UpdateAppCloneSettingsReq) ToEntity() *entity.AppCloneSettings {
 		ClonePeriodicJobs: req.ClonePeriodicJobs,
 		CloneSchedJobs:    req.CloneSchedJobs,
 
-		CommandPipes: req.CommandPipes.ToEntity(),
+		CommandPipes: req.CommandPipes.ToEntity().Unique(),
 		Notification: req.Notification.ToEntity(),
 	}
 }

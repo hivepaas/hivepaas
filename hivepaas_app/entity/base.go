@@ -16,6 +16,24 @@ type ObjectID struct {
 
 type ObjectIDSlice []*ObjectID
 
+// Unique is the slice without its empty ids and with each id once, where it
+// first is.
+func (o ObjectIDSlice) Unique() ObjectIDSlice {
+	res := make(ObjectIDSlice, 0, len(o))
+	seen := make(map[string]struct{}, len(o))
+	for _, obj := range o {
+		if obj == nil || obj.ID == "" {
+			continue
+		}
+		if _, ok := seen[obj.ID]; ok {
+			continue
+		}
+		seen[obj.ID] = struct{}{}
+		res = append(res, obj)
+	}
+	return res
+}
+
 func (o ObjectIDSlice) ToIDStringSlice() []string {
 	res := make([]string, 0, len(o))
 	for _, obj := range o {

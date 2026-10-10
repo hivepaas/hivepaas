@@ -1,4 +1,4 @@
-import type { APIRequestContext } from "@playwright/test";
+import { type APIRequestContext, request } from "@playwright/test";
 
 import {
     appPath,
@@ -9,8 +9,9 @@ import {
     runtimeEnvVars,
     setRuntimeEnvVars,
 } from "../../support/api";
+import { env } from "../../support/env";
 import { e2eName, expect, test } from "../../support/fixtures";
-import { PASSWORD, REFUSED, devOnly, signedInAs } from "../../support/users";
+import { PASSWORD, REFUSED, devOnly, grantMember, signedInAs } from "../../support/users";
 
 // A member given one environment of a project reaches its apps, and none of
 // the other's: not at their own address, not listed with the project's, and
@@ -225,5 +226,66 @@ test("a member's audit log of the project shows no other project's entries, nor 
         expect(developed.length, "the development app's entries are there").toBeGreaterThan(0);
     } finally {
         await memberApi.dispose();
+    }
+});
+
+const DAY = 24 * 3_600_000;
+
+// keyBody is what the profile's form sends for a key with every action.
+const keyBody = (name: string, capabilities: string[] = []) => ({
+    name,
+    accessAction: { read: true, write: true, execute: true, delete: true },
+    capabilities,
+    default: false,
+    inheritable: false,
+    expireAt: new Date(Date.now() + DAY).toISOString(),
+});
+
+// A member's API key reaches what the member does, as the member is when it is
+// used: moved to another env, the key follows; disabled, the key is refused.
+// It carries no capability the member lacks, and makes no key of its own.
+test("a member's API key reaches what the member does, and no more", async ({ page, api, cleanup, browser }) => {
+    const { project, dev, prod, member } = await devOnly(page, browser, api, cleanup, "key-holder");
+    const canMakeKeys = ["cap::api-key::create"];
+    await grantMember(api, member.email, project.id, `${project.id}:dev`, canMakeKeys);
+
+    const memberApi = await signedInAs(member.username, PASSWORD);
+    let made: { keyId: string; secretKey: string };
+    try {
+        const revealing = await memberApi.post("users/current/settings/api-keys", {
+            data: keyBody(e2eName("revealing-key"), ["cap::secret::reveal"]),
+        });
+        expect(REFUSED, `a key that reveals secrets: ${revealing.status()}`).toContain(revealing.status());
+        const res = await memberApi.post("users/current/settings/api-keys", { data: keyBody(e2eName("member-key")) });
+        expect(res.ok(), `the member makes a key: ${res.status()} ${await res.text()}`).toBe(true);
+        made = ((await res.json()) as { data: { keyId: string; secretKey: string } }).data;
+    } finally {
+        await memberApi.dispose();
+    }
+    const key = await request.newContext({
+        baseURL: `${env.baseURL}/api/`,
+        extraHTTPHeaders: { "HIVEPAAS-API-KEY-ID": made.keyId, "HIVEPAAS-API-SECRET-KEY": made.secretKey },
+    });
+    try {
+        const minted = await key.post("users/current/settings/api-keys", { data: keyBody(e2eName("minted-key")) });
+        expect(REFUSED, `a key making a key: ${minted.status()}`).toContain(minted.status());
+        expect((await key.get(appPath(dev))).status(), "development, through the key").toBe(200);
+        expect(REFUSED).toContain((await key.get(appPath(prod))).status());
+
+        await grantMember(api, member.email, project.id, `${project.id}:prod`, canMakeKeys);
+        expect(REFUSED, "development, once taken away").toContain((await key.get(appPath(dev))).status());
+        expect((await key.get(appPath(prod))).status(), "production, once given").toBe(200);
+
+        const found = (await (await api.get("users", { params: { search: member.email } })).json()) as {
+            data: { id: string; email: string }[];
+        };
+        const id = found.data.find(user => user.email === member.email)?.id ?? "";
+        const disable = await api.put(`users/${id}`, {
+            data: { username: member.username, email: member.email, status: "disabled" },
+        });
+        expect(disable.ok(), `disabling the member: ${await disable.text()}`).toBe(true);
+        expect(REFUSED, "production, the member disabled").toContain((await key.get(appPath(prod))).status());
+    } finally {
+        await key.dispose();
     }
 });

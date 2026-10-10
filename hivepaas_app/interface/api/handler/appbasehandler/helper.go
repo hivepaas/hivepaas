@@ -75,16 +75,24 @@ func (h *Handler) GetAuthInEnv(
 		return
 	}
 	projectEnvID = projecthelper.CalcProjectEnvID(projectID, projectEnv)
+	var accessCheck permission.AccessCheck = &permission.ProjectAccessCheck{
+		BaseAccessCheck: permission.BaseAccessCheck{Action: action},
+		ProjectID:       projectID,
+		ProjectEnv:      &projectEnvID,
+	}
 	if getAppID {
 		appID, err = h.ParseStringParam(ctx, "appID")
 		if err != nil {
 			return
 		}
-	}
-	accessCheck := &permission.ProjectAccessCheck{
-		BaseAccessCheck: permission.BaseAccessCheck{Action: action},
-		ProjectID:       projectID,
-		ProjectEnv:      &projectEnvID,
+		// What is done in the env is done with the app: its own env is the one
+		// checked, which is the one in the address unless the app is elsewhere.
+		accessCheck = &permission.AppAccessCheck{
+			BaseAccessCheck: permission.BaseAccessCheck{Action: action},
+			ProjectID:       projectID,
+			AppID:           appID,
+			ProjectEnv:      projectEnvID,
+		}
 	}
 	auth, err = h.AuthHandler.GetCurrentAuth(ctx, accessCheck)
 	if err != nil {

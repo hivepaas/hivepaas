@@ -60,6 +60,12 @@ func (auth *Auth) AllowedProjectEnvs(inEnvs []string) (allowAll bool, allowed []
 	return auth.calcResIntersection(allowedIDs, inEnvs)
 }
 
+// AllowedProjectEnvIDs is which envs of a project may be seen, by their IDs: all
+// of them, or those a grant names when the project was reached through them.
+func (auth *Auth) AllowedProjectEnvIDs() (allowAll bool, allowed []string) {
+	return auth.calcResIntersection(auth.AllowedResources[base.ResourceTypeProjectEnv], nil)
+}
+
 func (auth *Auth) AllowedApps(inIDs []string) (allowAll bool, allowed []string) {
 	return auth.calcResIntersection(auth.AllowedResources[base.ResourceTypeApp], inIDs)
 }

@@ -106,13 +106,26 @@ func (f *fakeOwnerlessProjectRepo) GetByIDAndOwner(
 	return nil, hperrors.Wrap(hperrors.ErrProjectNotFound)
 }
 
+// fakeNoAppRepo has no app made yet: the apps an import asks about are those it
+// is to make.
+type fakeNoAppRepo struct {
+	repository.AppRepo
+}
+
+func (f *fakeNoAppRepo) GetByID(
+	_ context.Context, _ database.IDB, _, id string, _ ...bunex.SelectQueryOption,
+) (*entity.App, error) {
+	return nil, hperrors.Wrap(hperrors.ErrAppNotFound).WithParam("Name", id)
+}
+
 // Granting capabilities and reaching another app's storage take what they take
 // when a template asks for them.
 func TestValidateImportAsksThePermissionManagerForWhatAnImportGrants(t *testing.T) {
 	app := &entity.App{ID: "app_1", ProjectID: "p1", ProjectEnvID: "p1:dev"}
 	for auth, want := range map[*basedto.Auth]bool{adminAuth(): true, plainAuth(): false} {
 		uc, audit, _ := newTestUC(t)
-		uc.permissionManager = permissionimpl.NewManager(&fakeACLRepo{}, nil, nil, &fakeOwnerlessProjectRepo{}, audit)
+		uc.permissionManager = permissionimpl.NewManager(&fakeACLRepo{}, &fakeNoAppRepo{}, nil,
+			&fakeOwnerlessProjectRepo{}, audit)
 		svc := &fakeImportService{mode: specmodel.SecretsModeOmit}
 		uc.specService = svc
 

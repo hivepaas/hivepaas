@@ -29,13 +29,20 @@ func (h *Handler) getAuth(
 		ResourceType:    resType,
 		ResourceID:      userID,
 	}
-	if userID == "current" {
+	// Users read their own account. Changing or deleting it takes the Users
+	// module, as anyone else's does: its role, its grants, its expiry are what an
+	// admin decides about them, and their own profile and password have routes of
+	// their own.
+	ownRead := action == base.ActionTypeRead
+	if userID == "current" && ownRead {
 		accessCheck = authhandler.NoAccessCheck
 	}
 	auth, err = h.authHandler.GetCurrentAuth(ctx, accessCheck)
 	if auth != nil && (userID == "current" || userID == auth.User.ID) {
-		err = nil
 		userID = auth.User.ID
+		if ownRead {
+			err = nil
+		}
 	}
 	if err != nil {
 		return

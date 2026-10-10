@@ -353,6 +353,7 @@ function RestoreForm({ scope, snapshot }: { scope: BackupSnapshotScope; snapshot
                         templateEnv={target?.env}
                         readOnly={isPending}
                         showArgGroups
+                        hideTerminal
                     />
                 </FormProvider>
             )}

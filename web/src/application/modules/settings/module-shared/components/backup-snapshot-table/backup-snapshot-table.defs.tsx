@@ -1,109 +1,17 @@
 import { Badge } from "@components/ui/badge";
-import { Button } from "@components/ui/button";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@components/ui/dropdown-menu";
 import type { ColumnDef } from "@tanstack/react-table";
 import { format } from "date-fns";
-import { ArchiveRestore, Copy, Info, MoreVertical, Trash2Icon } from "lucide-react";
-import { toast } from "sonner";
 import type { BackupSnapshot, BackupSnapshotScope } from "~/settings/domain";
 
-import { MODULE_IDS } from "@application/shared/constants";
-import { PermissionTooltipAction } from "@application/shared/permissions";
 import { formatDataSizeCompact } from "@application/shared/utils/data-size";
 
-import {
-    canRestoreSnapshot,
-    isRepoActive,
-    snapshotScopeModuleId,
-    sourceLabel,
-    tagTone,
-    userTags,
-} from "./backup-snapshot-table.helpers";
+import { BackupSnapshotMenuCell } from "./backup-snapshot-menu-cell.com";
+import { sourceLabel, tagTone, userTags } from "./backup-snapshot-table.helpers";
 
 export interface BackupSnapshotRowActions {
     onViewDetails: (snapshot: BackupSnapshot) => void;
     onRestore: (snapshot: BackupSnapshot) => void;
     onDelete: (snapshot: BackupSnapshot) => void;
-}
-
-function MenuCell({ scope, snapshot, actions }: { scope: BackupSnapshotScope } & MenuProps) {
-    return (
-        <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-                <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-8 w-8"
-                >
-                    <MoreVertical className="size-4" />
-                    <span className="sr-only">Actions menu</span>
-                </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-                <DropdownMenuItem
-                    onClick={() => {
-                        actions.onViewDetails(snapshot);
-                    }}
-                >
-                    <Info className="mr-2 size-4" />
-                    View details
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                    onClick={() => {
-                        void navigator.clipboard.writeText(snapshot.snapshotId).then(() => {
-                            toast.success("Snapshot ID copied");
-                        });
-                    }}
-                >
-                    <Copy className="mr-2 size-4" />
-                    Copy ID
-                </DropdownMenuItem>
-                {canRestoreSnapshot(snapshot) && (
-                    <PermissionTooltipAction
-                        id={MODULE_IDS.Project}
-                        action="write"
-                        triggerClassName="w-full"
-                    >
-                        {({ isDenied }) => (
-                            <DropdownMenuItem
-                                disabled={isDenied || !isRepoActive(snapshot)}
-                                title={isRepoActive(snapshot) ? undefined : "The snapshot's repository is not active"}
-                                onClick={() => {
-                                    actions.onRestore(snapshot);
-                                }}
-                            >
-                                <ArchiveRestore className="mr-2 size-4" />
-                                Restore
-                            </DropdownMenuItem>
-                        )}
-                    </PermissionTooltipAction>
-                )}
-                <PermissionTooltipAction
-                    id={snapshotScopeModuleId(scope)}
-                    action="delete"
-                    triggerClassName="w-full"
-                >
-                    {({ isDenied }) => (
-                        <DropdownMenuItem
-                            disabled={isDenied}
-                            className="text-destructive"
-                            onClick={() => {
-                                actions.onDelete(snapshot);
-                            }}
-                        >
-                            <Trash2Icon className="mr-2 size-4" />
-                            Delete
-                        </DropdownMenuItem>
-                    )}
-                </PermissionTooltipAction>
-            </DropdownMenuContent>
-        </DropdownMenu>
-    );
-}
-
-interface MenuProps {
-    snapshot: BackupSnapshot;
-    actions: BackupSnapshotRowActions;
 }
 
 function createColumns(scope: BackupSnapshotScope, actions: BackupSnapshotRowActions): ColumnDef<BackupSnapshot>[] {
@@ -196,7 +104,7 @@ function createColumns(scope: BackupSnapshotScope, actions: BackupSnapshotRowAct
             size: 56,
             meta: { align: "center", titleAlign: "center" },
             cell: ({ row: { original } }) => (
-                <MenuCell
+                <BackupSnapshotMenuCell
                     scope={scope}
                     snapshot={original}
                     actions={actions}

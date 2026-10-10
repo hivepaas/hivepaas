@@ -308,6 +308,7 @@ export function DataBackupForm({
                                 configureTemplatesLink={configureTemplatesLink}
                                 readOnly={readOnly}
                                 showArgGroups
+                                hideTerminal
                             />
                         )}
 
@@ -325,6 +326,7 @@ export function DataBackupForm({
                                 templateEnv={env}
                                 readOnly={readOnly}
                                 showArgGroups
+                                hideTerminal
                             />
                         )}
 

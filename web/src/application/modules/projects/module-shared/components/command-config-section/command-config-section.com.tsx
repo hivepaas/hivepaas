@@ -43,6 +43,8 @@ interface Props {
     readOnly?: boolean;
     showArgGroups?: boolean;
     envLabel?: string;
+    /** For a command whose input or output is data: it runs without a TTY, whatever the template says. */
+    hideTerminal?: boolean;
 }
 
 export function CommandConfigSection({
@@ -55,6 +57,7 @@ export function CommandConfigSection({
     readOnly = false,
     showArgGroups = false,
     envLabel = "Env",
+    hideTerminal = false,
 }: Props) {
     const p = fieldPrefix ? `${fieldPrefix}.` : "";
     const [pickerOpen, setPickerOpen] = useState(false);
@@ -229,106 +232,108 @@ export function CommandConfigSection({
                         </Field>
                     </InfoBlock>
 
-                    <InfoBlock
-                        title="Terminal"
-                        titleWidth={220}
-                    >
-                        <div className="flex w-full max-w-[430px] flex-wrap items-start gap-x-4 gap-y-3">
-                            <div className="flex h-9 items-center gap-3 text-sm font-medium">
-                                <span>TTY</span>
-                                <Checkbox
-                                    checked={tty.value}
-                                    onCheckedChange={checked => {
-                                        tty.onChange(checked === true);
-                                    }}
-                                    aria-label="TTY"
-                                    disabled={readOnly}
-                                />
+                    {!hideTerminal && (
+                        <InfoBlock
+                            title="Terminal"
+                            titleWidth={220}
+                        >
+                            <div className="flex w-full max-w-[430px] flex-wrap items-start gap-x-4 gap-y-3">
+                                <div className="flex h-9 items-center gap-3 text-sm font-medium">
+                                    <span>TTY</span>
+                                    <Checkbox
+                                        checked={tty.value}
+                                        onCheckedChange={checked => {
+                                            tty.onChange(checked === true);
+                                        }}
+                                        aria-label="TTY"
+                                        disabled={readOnly}
+                                    />
+                                </div>
+
+                                {tty.value === true && (
+                                    <>
+                                        <div className="flex min-w-[140px] flex-1 flex-col gap-1.5">
+                                            <div className="flex min-w-0 items-center gap-2">
+                                                <label
+                                                    htmlFor={consoleWidthInputId}
+                                                    className="shrink-0 text-sm font-medium"
+                                                >
+                                                    Width
+                                                </label>
+                                                <InputNumber
+                                                    id={consoleWidthInputId}
+                                                    ref={consoleWidth.ref}
+                                                    name={consoleWidth.name}
+                                                    value={consoleWidth.value}
+                                                    onBlur={consoleWidth.onBlur}
+                                                    onValueChange={value => {
+                                                        consoleWidth.onChange(
+                                                            value !== undefined && Number.isFinite(value)
+                                                                ? value
+                                                                : undefined,
+                                                        );
+                                                    }}
+                                                    useGrouping={false}
+                                                    showControls={false}
+                                                    placeholder="120"
+                                                    aria-invalid={isConsoleWidthInvalid}
+                                                    className="min-w-0 flex-1"
+                                                    disabled={readOnly}
+                                                />
+                                            </div>
+                                            <FieldError
+                                                errors={[
+                                                    (
+                                                        commandErrors?.["consoleSize"] as
+                                                            Record<string, unknown> | undefined
+                                                    )?.["width"] as ReactHookFormFieldError | undefined,
+                                                ]}
+                                            />
+                                        </div>
+
+                                        <div className="flex min-w-[140px] flex-1 flex-col gap-1.5">
+                                            <div className="flex min-w-0 items-center gap-2">
+                                                <label
+                                                    htmlFor={consoleHeightInputId}
+                                                    className="shrink-0 text-sm font-medium"
+                                                >
+                                                    Height
+                                                </label>
+                                                <InputNumber
+                                                    id={consoleHeightInputId}
+                                                    ref={consoleHeight.ref}
+                                                    name={consoleHeight.name}
+                                                    value={consoleHeight.value}
+                                                    onBlur={consoleHeight.onBlur}
+                                                    onValueChange={value => {
+                                                        consoleHeight.onChange(
+                                                            value !== undefined && Number.isFinite(value)
+                                                                ? value
+                                                                : undefined,
+                                                        );
+                                                    }}
+                                                    useGrouping={false}
+                                                    showControls={false}
+                                                    placeholder="40"
+                                                    aria-invalid={isConsoleHeightInvalid}
+                                                    className="min-w-0 flex-1"
+                                                    disabled={readOnly}
+                                                />
+                                            </div>
+                                            <FieldError
+                                                errors={[
+                                                    (
+                                                        commandErrors?.["consoleSize"] as
+                                                            Record<string, unknown> | undefined
+                                                    )?.["height"] as ReactHookFormFieldError | undefined,
+                                                ]}
+                                            />
+                                        </div>
+                                    </>
+                                )}
                             </div>
-
-                            {tty.value === true && (
-                                <>
-                                    <div className="flex min-w-[140px] flex-1 flex-col gap-1.5">
-                                        <div className="flex min-w-0 items-center gap-2">
-                                            <label
-                                                htmlFor={consoleWidthInputId}
-                                                className="shrink-0 text-sm font-medium"
-                                            >
-                                                Width
-                                            </label>
-                                            <InputNumber
-                                                id={consoleWidthInputId}
-                                                ref={consoleWidth.ref}
-                                                name={consoleWidth.name}
-                                                value={consoleWidth.value}
-                                                onBlur={consoleWidth.onBlur}
-                                                onValueChange={value => {
-                                                    consoleWidth.onChange(
-                                                        value !== undefined && Number.isFinite(value)
-                                                            ? value
-                                                            : undefined,
-                                                    );
-                                                }}
-                                                useGrouping={false}
-                                                showControls={false}
-                                                placeholder="120"
-                                                aria-invalid={isConsoleWidthInvalid}
-                                                className="min-w-0 flex-1"
-                                                disabled={readOnly}
-                                            />
-                                        </div>
-                                        <FieldError
-                                            errors={[
-                                                (
-                                                    commandErrors?.["consoleSize"] as
-                                                        Record<string, unknown> | undefined
-                                                )?.["width"] as ReactHookFormFieldError | undefined,
-                                            ]}
-                                        />
-                                    </div>
-
-                                    <div className="flex min-w-[140px] flex-1 flex-col gap-1.5">
-                                        <div className="flex min-w-0 items-center gap-2">
-                                            <label
-                                                htmlFor={consoleHeightInputId}
-                                                className="shrink-0 text-sm font-medium"
-                                            >
-                                                Height
-                                            </label>
-                                            <InputNumber
-                                                id={consoleHeightInputId}
-                                                ref={consoleHeight.ref}
-                                                name={consoleHeight.name}
-                                                value={consoleHeight.value}
-                                                onBlur={consoleHeight.onBlur}
-                                                onValueChange={value => {
-                                                    consoleHeight.onChange(
-                                                        value !== undefined && Number.isFinite(value)
-                                                            ? value
-                                                            : undefined,
-                                                    );
-                                                }}
-                                                useGrouping={false}
-                                                showControls={false}
-                                                placeholder="40"
-                                                aria-invalid={isConsoleHeightInvalid}
-                                                className="min-w-0 flex-1"
-                                                disabled={readOnly}
-                                            />
-                                        </div>
-                                        <FieldError
-                                            errors={[
-                                                (
-                                                    commandErrors?.["consoleSize"] as
-                                                        Record<string, unknown> | undefined
-                                                )?.["height"] as ReactHookFormFieldError | undefined,
-                                            ]}
-                                        />
-                                    </div>
-                                </>
-                            )}
-                        </div>
-                    </InfoBlock>
+                        </InfoBlock>
+                    )}
 
                     <InfoBlock
                         title={envLabel}

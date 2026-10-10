@@ -97,6 +97,9 @@ has a project of its own, and deleting it takes the apps and their services.
 | 2.87 | Link App: an app reaches another at the address it adds; a shared variable changed reaches the app that uses it without a deploy                                                                                                              | `tests/level-2/variables-secrets.spec.ts`   |
 | 2.88 | A binary secret and a binary config file, uploaded, are mounted byte for byte; a config file downloads as it was                                                                                                                              | `tests/level-2/variables-secrets.spec.ts`   |
 | 2.89 | A member without Can Reveal Secrets finds a basic auth's password and htpasswd locked, the API refusing them, and mounts its username; given it, signed in again, the htpasswd                                                                | `tests/level-2/setting-mounts.spec.ts`      |
+| 2.90 | A certificate of one's own pasted in as Custom - its expiry read from it - is the one its domain is served with                                                                                                                               | `tests/level-2/certificates.spec.ts`        |
+| 2.91 | A certificate pasted with the private key of another is refused, and says why                                                                                                                                                                 | `tests/level-2/certificates.spec.ts`        |
+| 2.92 | Apps of one name - web in development and in production - are each served at their domain with their own certificate                                                                                                                          | `tests/level-2/certificates.spec.ts`        |
 
 The images: `traefik/whoami` for an app that serves - it answers with the
 request it got, as the proxy passed it on - and `busybox` for one that prints
@@ -139,6 +142,20 @@ README): their commits are made at fixed dates, so their hashes are fixed too.
 A test plays GitHub's webhook - a push of a commit, a comment on pull request
 7 - signing it with the webhook's secret as GitHub does. GitHub itself is not
 called: what HivePaaS posts back on a pull request fails, and is let go.
+
+## Found with certificates of one's own (2026-10-10), and fixed
+
+- **A custom certificate was saved whatever it was**: not a certificate, a
+  private key of another, a certificate for another domain. The proxy could
+  not load it and served the domain with its default certificate, and nothing
+  said why. It is read now: refused with the reason, and its expiry - typed in
+  beside it before - is its own.
+- **Two apps of one name shared the proxy's file of their configuration**: it
+  was named after the app's key, `web.yml`, which a project's development and
+  production apps both have, and apps of other projects too. The app applied
+  last won: the other lost its certificate, and its TCP domains' TLS options.
+  It is named after the app's ID now; the file named after the key goes when
+  an app of that key writes or removes its own.
 
 ## Found with variables and secrets (2026-10-10), and fixed
 

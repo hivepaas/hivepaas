@@ -74,13 +74,6 @@ export const CreateOrEditSslCertFormSchema = z
                 message: "Private key is required",
             });
         }
-        if (!value.expireAt) {
-            ctx.addIssue({
-                code: z.ZodIssueCode.custom,
-                path: ["expireAt"],
-                message: "Expire At is required",
-            });
-        }
     });
 
 export type CreateOrEditSslCertFormInput = z.input<typeof CreateOrEditSslCertFormSchema>;

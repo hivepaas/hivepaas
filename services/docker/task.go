@@ -102,12 +102,44 @@ func earliest(a, b time.Time) time.Time {
 // the wait asked for.
 const minTaskLookInterval = 10 * time.Millisecond
 
+// TaskFilter says whether a running task is one the caller may have.
+type TaskFilter func(task *swarm.Task) bool
+
+// OfCurrentSpec takes only the tasks of the service's current spec: those swarm
+// keeps running, of the image the spec names. A task an update is replacing -
+// the placeholder a new service is made on, a container of the spec before - may
+// still run, and long enough to be picked, but a command run in it runs in what
+// is going away, or in what has no shell at all.
+func OfCurrentSpec(service *swarm.Service) TaskFilter {
+	image := ""
+	if service != nil && service.Spec.TaskTemplate.ContainerSpec != nil {
+		image = imageWithoutDigest(service.Spec.TaskTemplate.ContainerSpec.Image)
+	}
+	return func(task *swarm.Task) bool {
+		if task.DesiredState != "" && task.DesiredState != swarm.TaskStateRunning {
+			return false
+		}
+		if image == "" || task.Spec.ContainerSpec == nil {
+			return true
+		}
+		return imageWithoutDigest(task.Spec.ContainerSpec.Image) == image
+	}
+}
+
+// imageWithoutDigest is an image reference without the digest swarm may pin it
+// to: the service's and its tasks' are compared by what was asked for.
+func imageWithoutDigest(image string) string {
+	ref, _, _ := strings.Cut(image, "@")
+	return ref
+}
+
 // ServiceTaskGetRunning is a running task of the service that has run longer
 // than minRunningDuration: one that has not may still fail to start. It looks
 // maxRetry more times, retryDelay apart, for one; and a task that runs, not that
 // long yet, is waited for until it has - minRunningDuration more at most - a
 // container started as the caller came being what it is there for. It answers
-// nil when there is none by then.
+// nil when there is none by then. A task the filters do not take is not looked
+// at.
 func (m *manager) ServiceTaskGetRunning(
 	ctx context.Context,
 	serviceID string,
@@ -115,6 +147,7 @@ func (m *manager) ServiceTaskGetRunning(
 	maxRetry int,
 	retryDelay time.Duration,
 	ignoreNodeIDs []string,
+	filters ...TaskFilter,
 ) (running *swarm.Task, all *client.TaskListResult, err error) {
 	start := time.Now()
 	deadline := start.Add(time.Duration(max(maxRetry, 0)) * retryDelay)
@@ -129,7 +162,8 @@ func (m *manager) ServiceTaskGetRunning(
 		next := now.Add(retryDelay)
 		for i := range listResp.Items {
 			t := &listResp.Items[i]
-			if t.Status.State != swarm.TaskStateRunning || gofn.Contain(ignoreNodeIDs, t.NodeID) {
+			if t.Status.State != swarm.TaskStateRunning || gofn.Contain(ignoreNodeIDs, t.NodeID) ||
+				!takenByAll(t, filters) {
 				continue
 			}
 			grown := t.Status.Timestamp.Add(minRunningDuration)
@@ -157,4 +191,14 @@ func (m *manager) ServiceTaskGetRunning(
 		case <-timer.C:
 		}
 	}
+}
+
+// takenByAll is whether every filter takes the task.
+func takenByAll(task *swarm.Task, filters []TaskFilter) bool {
+	for _, filter := range filters {
+		if !filter(task) {
+			return false
+		}
+	}
+	return true
 }

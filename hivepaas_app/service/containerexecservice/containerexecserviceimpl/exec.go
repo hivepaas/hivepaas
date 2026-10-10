@@ -149,7 +149,9 @@ func (s *service) containerExec(
 	if exitCode != 0 {
 		_ = logStore.AddRedacted(ctx, tasklog.NewErrFrame(fmt.Sprintf(
 			"Command execution failed with exit code: %v", exitCode), tasklog.TsNow))
-		return resp, false, hperrors.Wrap(hperrors.ErrInfraActionFailed)
+		// The message is its Error: without one, it read "<no value>".
+		return resp, false, hperrors.Wrap(hperrors.ErrInfraActionFailed).
+			WithParam("Error", fmt.Sprintf("The command exited with code %d", exitCode))
 	}
 
 	return resp, false, nil
@@ -342,10 +344,12 @@ func (s *service) pickContainer(
 	}
 
 	minRunning := gofn.Coalesce(req.TaskMinRunningDuration, taskFindMinRunningDuration)
+	// A container of the spec the service has now: one being replaced is not
+	// the app as it is - a clone's placeholder, which has no shell, least of all.
 	task, _, err := s.dockerManager.ServiceTaskGetRunning(ctx, serviceID, minRunning,
 		gofn.Coalesce(req.TaskFindRetryMax, taskFindRetryMax),
 		gofn.Coalesce(req.TaskFindRetryDelay, taskFindRetryDelay),
-		nil)
+		nil, docker.OfCurrentSpec(&inspectResp.Service))
 	if err != nil {
 		return "", "", true, false, hperrors.Wrap(err)
 	}

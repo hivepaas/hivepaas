@@ -77,6 +77,8 @@ func (s *service) loadEmailTemplate(
 	switch name {
 	case notificationservice.TemplateAppDeploymentNotification:
 		tpl, err = htmltemplate.ParseFS(assets.GetTemplatesFS(), emailTemplateDir+"app_deployment_notification.html")
+	case notificationservice.TemplateAppCloneNotification:
+		tpl, err = htmltemplate.ParseFS(assets.GetTemplatesFS(), emailTemplateDir+"app_clone_notification.html")
 	case notificationservice.TemplateSchedTaskNotification:
 		tpl, err = htmltemplate.ParseFS(assets.GetTemplatesFS(), emailTemplateDir+"sched_task_notification.html")
 	case notificationservice.TemplateHealthcheckNotification:
@@ -103,6 +105,8 @@ func (s *service) loadSlackTemplate(
 	switch name {
 	case notificationservice.TemplateAppDeploymentNotification:
 		tpl, err = parseJSONTemplate(slackTemplateDir + "app_deployment_notification.tpl")
+	case notificationservice.TemplateAppCloneNotification:
+		tpl, err = parseJSONTemplate(slackTemplateDir + "app_clone_notification.tpl")
 	case notificationservice.TemplateSchedTaskNotification:
 		tpl, err = parseJSONTemplate(slackTemplateDir + "sched_task_notification.tpl")
 	case notificationservice.TemplateHealthcheckNotification:
@@ -129,6 +133,8 @@ func (s *service) loadDiscordTemplate(
 	switch name {
 	case notificationservice.TemplateAppDeploymentNotification:
 		tpl, err = parseJSONTemplate(discordTemplateDir + "app_deployment_notification.tpl")
+	case notificationservice.TemplateAppCloneNotification:
+		tpl, err = parseJSONTemplate(discordTemplateDir + "app_clone_notification.tpl")
 	case notificationservice.TemplateSchedTaskNotification:
 		tpl, err = parseJSONTemplate(discordTemplateDir + "sched_task_notification.tpl")
 	case notificationservice.TemplateHealthcheckNotification:
@@ -155,6 +161,8 @@ func (s *service) loadTelegramTemplate(
 	switch name {
 	case notificationservice.TemplateAppDeploymentNotification:
 		tpl, err = htmltemplate.ParseFS(assets.GetTemplatesFS(), telegramTemplateDir+"app_deployment_notification.tpl")
+	case notificationservice.TemplateAppCloneNotification:
+		tpl, err = htmltemplate.ParseFS(assets.GetTemplatesFS(), telegramTemplateDir+"app_clone_notification.tpl")
 	case notificationservice.TemplateSchedTaskNotification:
 		tpl, err = htmltemplate.ParseFS(assets.GetTemplatesFS(), telegramTemplateDir+"sched_task_notification.tpl")
 	case notificationservice.TemplateHealthcheckNotification:
@@ -181,6 +189,8 @@ func (s *service) loadLarkTemplate(
 	switch name {
 	case notificationservice.TemplateAppDeploymentNotification:
 		tpl, err = parseJSONTemplate(larkTemplateDir + "app_deployment_notification.tpl")
+	case notificationservice.TemplateAppCloneNotification:
+		tpl, err = parseJSONTemplate(larkTemplateDir + "app_clone_notification.tpl")
 	case notificationservice.TemplateSchedTaskNotification:
 		tpl, err = parseJSONTemplate(larkTemplateDir + "sched_task_notification.tpl")
 	case notificationservice.TemplateHealthcheckNotification:

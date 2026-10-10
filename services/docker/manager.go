@@ -198,7 +198,7 @@ type Manager interface {
 	TaskLogs(ctx context.Context, taskID string, options ...TaskLogsOption) (
 		client.TaskLogsResult, error)
 	ServiceTaskGetRunning(ctx context.Context, serviceID string, minRunningDuration time.Duration,
-		maxRetry int, retryDelay time.Duration, ignoreNodeIDs []string) (
+		maxRetry int, retryDelay time.Duration, ignoreNodeIDs []string, filters ...TaskFilter) (
 		running *swarm.Task, all *client.TaskListResult, err error)
 
 	// Volumes

@@ -22,17 +22,57 @@ func mountEntry(t *testing.T, name, source string, inheritable bool, parts ...st
 	return setting
 }
 
-// A clone copies what its settings ask for, and an app's inheritable setting
-// mounts: whoever made them said a copy may have them.
-func TestTheDefaultCloneKeepsOnlyInheritableEntries(t *testing.T) {
-	data := &appCloneData{AppCloneReq: &appcloneservice.AppCloneReq{CloneSettings: &entity.AppCloneSettings{}}}
+// A clone copies a mount of the app's own setting, inheritable or not: it
+// follows its setting. One of a setting from outside the app is copied when
+// inheritable: whoever made it said a copy may have it.
+func TestTheDefaultCloneKeepsOwnMountsAndInheritableOthers(t *testing.T) {
+	data := &appCloneData{
+		AppCloneReq:    &appcloneservice.AppCloneReq{CloneSettings: &entity.AppCloneSettings{}},
+		srcOwnSettings: map[string]bool{"cfg_1": true},
+	}
 
-	kept, err := (&service{}).onCloneSettingDefault(mountEntry(t, "conf", "cfg_1", true, "content"), data)
+	own, err := (&service{}).onCloneSettingDefault(mountEntry(t, "conf", "cfg_1", false, "content"), data)
 	assert.NoError(t, err)
-	assert.NotNil(t, kept)
+	assert.NotNil(t, own, "the app's own config file's mount follows it")
+	inheritable, err := (&service{}).onCloneSettingDefault(mountEntry(t, "shared", "project_cfg", true, "content"), data)
+	assert.NoError(t, err)
+	assert.NotNil(t, inheritable)
 	dropped, err := (&service{}).onCloneSettingDefault(mountEntry(t, "key", "cert_1", false, "privateKey"), data)
 	assert.NoError(t, err)
-	assert.Nil(t, dropped)
+	assert.Nil(t, dropped, "an outside setting's mount, not inheritable")
+}
+
+func routingSetting(t *testing.T, domains ...string) *entity.Setting {
+	t.Helper()
+	routing := &entity.AppRoutingSettings{}
+	for _, domain := range domains {
+		routing.Domains = append(routing.Domains, &entity.AppDomain{Domain: domain, Enabled: true})
+	}
+	setting := &entity.Setting{ID: "routing-1", Type: base.SettingTypeAppRouting, Status: base.SettingStatusActive}
+	assert.NoError(t, setting.SetData(routing))
+	return setting
+}
+
+// Routing not cloned, the clone has its routing setting, without a domain:
+// applying it takes away the proxy's labels its service was copied with.
+// Cloned, it has the domains asked for in place of the app's.
+func TestACloneHasTheDomainsAskedForOrNone(t *testing.T) {
+	asked := []*entity.AppCloneRoutingDomainSettings{{SourceDomain: "app.example.com", TargetDomain: "copy.example.com"}}
+	off := &appCloneData{AppCloneReq: &appcloneservice.AppCloneReq{CloneSettings: &entity.AppCloneSettings{
+		CloneRoutingSettings: false, CloneRoutingDomains: asked}}}
+	on := &appCloneData{AppCloneReq: &appcloneservice.AppCloneReq{CloneSettings: &entity.AppCloneSettings{
+		CloneRoutingSettings: true, CloneRoutingDomains: asked}}}
+
+	none, err := (&service{}).onCloneSettingDefault(routingSetting(t, "app.example.com"), off)
+	assert.NoError(t, err)
+	if assert.NotNil(t, none) {
+		assert.Empty(t, none.MustAsAppRoutingSettings().Domains)
+	}
+	copied, err := (&service{}).onCloneSettingDefault(routingSetting(t, "app.example.com"), on)
+	assert.NoError(t, err)
+	if assert.NotNil(t, copied) && assert.Len(t, copied.MustAsAppRoutingSettings().Domains, 1) {
+		assert.Equal(t, "copy.example.com", copied.MustAsAppRoutingSettings().Domains[0].Domain)
+	}
 }
 
 // Each copied entry names the copy's setting where the source was the app's own

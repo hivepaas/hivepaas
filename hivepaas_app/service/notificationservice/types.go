@@ -22,6 +22,7 @@ type TemplateName string
 
 const (
 	TemplateAppDeploymentNotification TemplateName = "app-deployment-notification"
+	TemplateAppCloneNotification      TemplateName = "app-clone-notification"
 	TemplateSchedTaskNotification     TemplateName = "sched-job-notification"
 	TemplateHealthcheckNotification   TemplateName = "healthcheck-notification"
 	TemplateSSLExpiringNotification   TemplateName = "ssl-expiring-notification"
@@ -92,6 +93,29 @@ type TemplateDataAppDeployment struct {
 }
 
 func (d TemplateDataAppDeployment) StartedAtFormatted() string {
+	return formatDateTime(d.StartedAt)
+}
+
+//
+// APP CLONE
+//
+
+type TemplateDataAppClone struct {
+	BaseTemplateData
+	ProjectName string
+	// AppName is the app cloned; CloneName and CloneEnv, its copy's.
+	AppName       string
+	CloneName     string
+	CloneEnv      string
+	Succeeded     bool
+	StartedAt     time.Time
+	Duration      time.Duration
+	DashboardLink string
+	// Reason is why a clone failed; empty for one that succeeded.
+	Reason string
+}
+
+func (d TemplateDataAppClone) StartedAtFormatted() string {
 	return formatDateTime(d.StartedAt)
 }
 

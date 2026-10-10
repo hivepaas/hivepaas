@@ -1,6 +1,7 @@
 package appcloneserviceimpl
 
 import (
+	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/repository"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/appcloneservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/appprovisionservice"
@@ -12,6 +13,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/domainservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/envvarservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/networkservice"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/notificationservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/settingmountservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/settingservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/sslservice"
@@ -22,6 +24,8 @@ import (
 )
 
 type service struct {
+	// db is for after the clone's transaction: telling of how it ended.
+	db            *database.DB
 	taskQueue     queue.TaskQueue
 	dockerManager docker.Manager
 
@@ -38,6 +42,7 @@ type service struct {
 	dockerAPIService       dockerapiservice.Service
 	envVarService          envvarservice.Service
 	networkService         networkservice.Service
+	notificationService    notificationservice.Service
 	settingService         settingservice.Service
 	sslService             sslservice.Service
 	traefikService         traefikservice.Service
@@ -45,6 +50,7 @@ type service struct {
 }
 
 func New(
+	db *database.DB,
 	taskQueue queue.TaskQueue,
 	dockerManager docker.Manager,
 
@@ -61,12 +67,14 @@ func New(
 	dockerAPIService dockerapiservice.Service,
 	envVarService envvarservice.Service,
 	networkService networkservice.Service,
+	notificationService notificationservice.Service,
 	settingService settingservice.Service,
 	sslService sslservice.Service,
 	traefikService traefikservice.Service,
 	volumeService volumeservice.Service,
 ) appcloneservice.Service {
 	return &service{
+		db:            db,
 		taskQueue:     taskQueue,
 		dockerManager: dockerManager,
 
@@ -83,6 +91,7 @@ func New(
 		dockerAPIService:       dockerAPIService,
 		envVarService:          envVarService,
 		networkService:         networkService,
+		notificationService:    notificationService,
 		settingService:         settingService,
 		sslService:             sslService,
 		traefikService:         traefikService,

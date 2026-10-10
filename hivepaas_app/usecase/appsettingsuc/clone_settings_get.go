@@ -97,10 +97,8 @@ func (uc *UC) initDefaultAppCloneSettings(
 			ClonePeriodicJobs: true,
 			CloneSchedJobs:    true,
 
-			Notification: &entity.BaseEventNotification{
-				SuccessUseDefault: true,
-				FailureUseDefault: true,
-			},
+			// Nobody is told of a clone unless its settings name a target.
+			Notification: &entity.BaseEventNotification{},
 		}
 	}
 
@@ -127,7 +125,9 @@ func (uc *UC) initDefaultAppCloneSettings(
 		if domainSettings == nil {
 			domainSettings = &entity.AppCloneRoutingDomainSettings{
 				SourceDomain: domain.Domain,
-				TargetDomain: "clone_" + domain.Domain,
+				// A label of its own: an underscore is no host name's, and a
+				// wildcard certificate of the app's domain still covers it.
+				TargetDomain: "clone-" + domain.Domain,
 			}
 		} else {
 			domainSettings.TargetSSLCert.ID = ""

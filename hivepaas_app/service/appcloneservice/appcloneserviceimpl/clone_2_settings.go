@@ -44,9 +44,12 @@ func (s *service) cloneAppSettings(
 	// new ones, so the entries are remapped once every setting is copied.
 	idMap := make(map[string]string, len(appSettings))
 	srcOwn := make(map[string]bool, len(appSettings))
-	var mounts []*entity.Setting
 	for _, setting := range appSettings {
 		srcOwn[setting.ID] = true
+	}
+	data.srcOwnSettings = srcOwn
+	var mounts []*entity.Setting
+	for _, setting := range appSettings {
 		cpSetting, err := setting.Clone(true)
 		if err != nil {
 			return hperrors.Wrap(err)
@@ -133,8 +136,14 @@ func (s *service) onCloneSettingDefault(
 	case base.SettingTypeSchedJob:
 		return gofn.If(settings.CloneSchedJobs, setting, nil), nil
 	case base.SettingTypeAppSettingMount:
-		// Copied when inheritable: whoever made it said a copy may have it.
-		// Its source is remapped once every setting is copied.
+		// A mount of one of the app's own settings follows it: kept when its
+		// setting is copied, and pointed at the copy, which remapClonedMounts
+		// settles - a config file cloned is in the clone's container as it is in
+		// the app's. A mount of a setting from outside the app is copied when
+		// inheritable: whoever made it said a copy may have it.
+		if mount, err := setting.AsAppSettingMount(); err == nil && data.srcOwnSettings[mount.Source.ID] {
+			return setting, nil
+		}
 		return gofn.If(setting.Inheritable, setting, nil), nil
 	default:
 		return nil, nil
@@ -174,6 +183,13 @@ func (s *service) onCloneRoutingSettingDefault(
 
 	currDomains := routingSettings.Domains
 	routingSettings.Domains = nil
+	// Routing not cloned, the clone has no domain. Its setting is kept, empty:
+	// applying it takes away the proxy's labels the clone's service was copied
+	// with, which would have it answer at the app's domains too.
+	if !settings.CloneRoutingSettings {
+		setting.MustSetData(routingSettings)
+		return setting, nil
+	}
 	for _, copySettings := range settings.CloneRoutingDomains {
 		appDomain, _ := gofn.Find(currDomains, func(item *entity.AppDomain) bool {
 			return item.Domain == copySettings.SourceDomain

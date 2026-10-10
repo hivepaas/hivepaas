@@ -89,3 +89,46 @@ func TestRunningTaskWaitEndsWhenCanceled(t *testing.T) {
 	assert.ErrorIs(t, err, context.DeadlineExceeded)
 	assert.Less(t, time.Since(start), time.Second)
 }
+
+func taskOf(id, image string, desired swarm.TaskState, started time.Time) swarm.Task {
+	return swarm.Task{
+		ID:           id,
+		NodeID:       "node1",
+		Spec:         swarm.TaskSpec{ContainerSpec: &swarm.ContainerSpec{Image: image}},
+		DesiredState: desired,
+		Status:       swarm.TaskStatus{State: swarm.TaskStateRunning, Timestamp: started},
+	}
+}
+
+func serviceOf(image string) *swarm.Service {
+	return &swarm.Service{Spec: swarm.ServiceSpec{TaskTemplate: swarm.TaskSpec{
+		ContainerSpec: &swarm.ContainerSpec{Image: image},
+	}}}
+}
+
+// Of the service's current spec, the container a clone's placeholder ran in is
+// not taken, though it has run longer: the clone's own is, once it has run long
+// enough. The digest swarm pins an image to changes nothing.
+func TestRunningTaskOfTheCurrentSpecOnly(t *testing.T) {
+	m, _ := newDaemon(t, "/tasks", []swarm.Task{
+		taskOf("placeholder", "hivepaas/placeholder:1", swarm.TaskStateRunning, time.Now().Add(-time.Hour)),
+		taskOf("own", "busybox:1.37@sha256:abc", swarm.TaskStateRunning, time.Now().Add(-time.Minute)),
+	})
+	task, _, err := m.ServiceTaskGetRunning(context.Background(), "svc", 15*time.Second, 0, 0, nil,
+		OfCurrentSpec(serviceOf("busybox:1.37")))
+	assert.NoError(t, err)
+	if assert.NotNil(t, task) {
+		assert.Equal(t, "own", task.ID)
+	}
+}
+
+// A container swarm is shutting down is not taken, of whatever spec.
+func TestRunningTaskBeingShutDownIsNotTaken(t *testing.T) {
+	m, _ := newDaemon(t, "/tasks", []swarm.Task{
+		taskOf("going", "busybox:1.37", swarm.TaskStateShutdown, time.Now().Add(-time.Hour)),
+	})
+	task, _, err := m.ServiceTaskGetRunning(context.Background(), "svc", 15*time.Second, 0, 0, nil,
+		OfCurrentSpec(serviceOf("busybox:1.37")))
+	assert.NoError(t, err)
+	assert.Nil(t, task)
+}

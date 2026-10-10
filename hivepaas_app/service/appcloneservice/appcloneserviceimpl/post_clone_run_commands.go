@@ -9,6 +9,10 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/commandpipeexecservice"
 )
 
+// cloneCommandTaskFindRetryMax is how many times, two seconds apart, the
+// commands run after a clone look for the clone's container of its own spec.
+const cloneCommandTaskFindRetryMax = 30
+
 func (s *service) runCommands(
 	ctx context.Context,
 	db database.IDB,
@@ -40,6 +44,9 @@ func (s *service) runCommands(
 		CommandPipes: commandPipeSettings,
 		SrcApp:       data.SrcApp,
 		DestApp:      data.DestApp,
+		// The clone's container was replaced a moment ago - its placeholder by
+		// its own - and is waited for longer than a running app's.
+		TaskFindRetryMax: cloneCommandTaskFindRetryMax,
 	})
 	if err != nil {
 		return hperrors.Wrap(err)

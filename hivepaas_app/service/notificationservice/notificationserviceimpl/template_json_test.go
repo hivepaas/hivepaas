@@ -45,6 +45,10 @@ func TestJSONTemplatesWriteJSONWhateverTheText(t *testing.T) {
 			notificationservice.TemplateDataAppDeployment{Method: "repo", StartedAt: started},
 			notificationservice.TemplateDataAppDeployment{Method: "image", Succeeded: true, StartedAt: started},
 		},
+		"app_clone_notification": {
+			notificationservice.TemplateDataAppClone{StartedAt: started},
+			notificationservice.TemplateDataAppClone{Succeeded: true, StartedAt: started},
+		},
 		"sched_task_notification":    {notificationservice.TemplateDataSchedTask{StartedAt: started, Retries: 2}},
 		"healthcheck_notification":   {notificationservice.TemplateDataHealthcheck{StartedAt: started}},
 		"ssl_expiring_notification":  {notificationservice.TemplateDataSSLExpiring{}},

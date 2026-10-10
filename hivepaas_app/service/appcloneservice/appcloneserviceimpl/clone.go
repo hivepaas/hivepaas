@@ -24,6 +24,10 @@ type appCloneData struct {
 	SrcService     *swarm.Service
 	DestService    *swarm.Service
 	ClonedSettings []*entity.Setting
+	// srcOwnSettings are the ids of the source app's own settings.
+	srcOwnSettings map[string]bool
+	// destAppPersisted is whether the clone's rows were written.
+	destAppPersisted bool
 
 	TimeNow time.Time
 }
@@ -47,8 +51,9 @@ func (s *service) CloneApp(
 		if r := recover(); r != nil {
 			err = errors.Join(err, hperrors.NewPanic(r))
 		}
-		_ = s.cleanupOnFail(ctx, data, err)
+		_ = s.cleanupOnFail(ctx, db, data, err)
 	}()
+	s.notifyOnCloneEnd(ctx, data)
 
 	// Cloning steps
 
@@ -108,7 +113,7 @@ func (s *service) CloneApp(
 	resp.TargetApp = data.DestApp
 	resp.TargetService = data.DestService
 	resp.OnCleanup = func(e error) error {
-		return s.cleanupOnFail(ctx, data, e)
+		return s.cleanupOnFail(ctx, db, data, e)
 	}
 	return resp, nil
 }
@@ -189,6 +194,7 @@ func (s *service) persistAppData(
 	if err != nil {
 		return hperrors.Wrap(err)
 	}
+	data.destAppPersisted = true
 
 	err = s.settingRepo.UpsertMulti(ctx, db, data.ClonedSettings,
 		entity.SettingUpsertingConflictCols, entity.SettingUpsertingUpdateCols)
@@ -208,6 +214,7 @@ func (s *service) persistAppData(
 
 func (s *service) cleanupOnFail(
 	ctx context.Context,
+	db database.IDB,
 	data *appCloneData,
 	err error,
 ) error {
@@ -222,6 +229,16 @@ func (s *service) cleanupOnFail(
 	// And its setting mounts' objects, which were made with the service.
 	if data.DestApp != nil && data.DestApp.ID != "" {
 		_ = s.settingMountService.RemoveApp(ctx, data.DestApp.ID)
+	}
+
+	// And its rows. A clone runs in the transaction its task's state is saved in,
+	// which commits whether the clone failed or not: left there, they were an app
+	// listed as active with no service behind it.
+	if data.destAppPersisted {
+		_ = s.settingRepo.DeleteHard(ctx, db,
+			bunex.DeleteWhere("setting.scope = ?", base.ObjectScopeApp),
+			bunex.DeleteWhere("setting.object_id = ?", data.DestApp.ID))
+		_ = s.appRepo.DeleteHard(ctx, db, bunex.DeleteWhere("app.id = ?", data.DestApp.ID))
 	}
 	return nil
 }

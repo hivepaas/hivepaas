@@ -63,7 +63,7 @@ export function ResourceReservationFields() {
                 title={
                     <LabelWithInfo
                         label="Generic Resources"
-                        content="User-defined resources such as GPUs or other accelerators."
+                        content="Resources a node advertises, by name and count - such as NVIDIA-GPU, 2 for two GPUs - or one by its name."
                     />
                 }
             >
@@ -71,8 +71,8 @@ export function ResourceReservationFields() {
                     name="reservations.genericResources"
                     keyField="kind"
                     keyLabel="Name"
-                    keyPlaceholder="SSD"
-                    valuePlaceholder="sda1 (string or integer)"
+                    keyPlaceholder="NVIDIA-GPU"
+                    valuePlaceholder="2 (a count, or a name)"
                     enableValueEditing
                     className="max-w-[800px]"
                 />

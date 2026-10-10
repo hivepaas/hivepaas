@@ -20,6 +20,7 @@ import {
     REPO_PASSWORD,
     confirmRestore,
     repoAction,
+    setRepoStatus,
     snapshotsIn,
     startRestore,
     storeVolume,
@@ -58,7 +59,8 @@ test("a data backup of an app's volume is a snapshot, restored", async ({ page, 
     await page.getByRole("group", { name: "Password *" }).getByRole("textbox").fill("E2e-backup-Pass1");
     await page.getByRole("group", { name: "Available in Projects" }).getByRole("checkbox").check();
     await page.getByRole("button", { name: "Save" }).click();
-    await expect(page.getByRole("row", { name: new RegExp(store) })).toBeVisible();
+    // Made, the repository is listed: kopia makes it first, slower on a busy node.
+    await expect(page.getByRole("row", { name: new RegExp(store) })).toBeVisible({ timeout: 30_000 });
 
     await page.goto(appPage(app, "sched-jobs"));
     await page.getByRole("button", { name: "New Data Backup" }).click();
@@ -147,6 +149,8 @@ test("a database dumped by a command is a snapshot, restored through the restore
     await page.getByRole("button", { name: "New Data Backup" }).click();
     await page.getByRole("group", { name: "Name *", exact: true }).getByRole("textbox").fill("e2e-dump");
     await page.getByRole("group", { name: "Back Up" }).getByRole("tab", { name: "Command" }).click();
+    // The commands run without a TTY, whatever is ticked: there is none to tick.
+    await expect(page.getByRole("checkbox", { name: "TTY" })).toHaveCount(0);
     await page.getByRole("group", { name: "File Name *" }).getByRole("textbox").fill("db.sql");
     const commands = page.getByRole("group", { name: "Command *" });
     await commands.nth(0).getByRole("textbox").fill("pg_dump -U postgres --clean --if-exists postgres");
@@ -323,6 +327,15 @@ test("a snapshot's file is downloaded, and the snapshot deleted stays so after a
     expect((await readFile(file, "utf8")).trim()).toBe(mark);
     await page.keyboard.press("Escape");
 
+    // An inactive repository keeps its snapshots: Delete waits, as Restore does.
+    await setRepoStatus(api, repo, "disabled");
+    await page.reload();
+    await row.getByRole("button", { name: "Actions menu" }).click();
+    await expect(page.getByRole("menuitem", { name: "Delete" })).toBeDisabled();
+    await page.keyboard.press("Escape");
+    await setRepoStatus(api, repo, "active");
+    await page.reload();
+
     const [snapshot] = await snapshotsIn(api, repo);
     await row.getByRole("button", { name: "Actions menu" }).click();
     await page.getByRole("menuitem", { name: "Delete" }).click();
@@ -373,7 +386,7 @@ test("a repository keeps the snapshots its retention says, as created and as cha
         await keep(rule).fill("0");
     }
     await page.getByRole("button", { name: "Save" }).click();
-    await expect(page.getByRole("row", { name: new RegExp(store.name) })).toBeVisible();
+    await expect(page.getByRole("row", { name: new RegExp(store.name) })).toBeVisible({ timeout: 30_000 });
     const repo = { id: await settingIdNamed(api, "settings/backup-repos", store.name), name: store.name };
     expect(await retentionShown(page, repo.name)).toEqual(["2", "0", "0", "0", "0"]);
 

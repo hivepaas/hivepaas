@@ -68,6 +68,15 @@ export async function snapshotsIn(api: APIRequestContext, repo: Repo): Promise<S
     return ((await res.json()) as { data: Snapshot[] }).data;
 }
 
+// setRepoStatus makes the repository active, or not.
+export async function setRepoStatus(api: APIRequestContext, repo: Repo, status: "active" | "disabled"): Promise<void> {
+    const current = await api.get(`settings/backup-repos/${repo.id}`);
+    expect(current.ok(), `reading ${repo.name}: ${current.status()}`).toBe(true);
+    const { updateVer } = ((await current.json()) as { data: { updateVer: number } }).data;
+    const res = await api.put(`settings/backup-repos/${repo.id}/status`, { data: { status, updateVer } });
+    expect(res.ok(), `making ${repo.name} ${status}: ${res.status()} ${await res.text()}`).toBe(true);
+}
+
 // repoAction runs one of the repository's actions from its row of Backup
 // Repos, and waits for it to say it is done.
 export async function repoAction(page: Page, repo: Repo, action: "Repo Cleanup" | "Repo Sync"): Promise<void> {

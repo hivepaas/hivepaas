@@ -174,6 +174,12 @@ called: what HivePaaS posts back on a pull request fails, and is let go.
   the old one back over it; and a cleanup gave the repository only the rules
   above 0, a rule lowered to 0 keeping what it kept before. The repository is
   given all of it now, when it is made and when it is changed.
+- **A backup's commands offered a TTY**: ticked, it was dropped on save - the
+  commands read or print the backup, which a TTY would not pass through as is
+    - and the restore page offered it too. It is not offered now.
+- **Delete was offered for an inactive repository's snapshot**: the server
+  refuses it, as the menu already said of Restore. Delete waits as Restore
+  does now.
 
 Seen, and left as it is:
 

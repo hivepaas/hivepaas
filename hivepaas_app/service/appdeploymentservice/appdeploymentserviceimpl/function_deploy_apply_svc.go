@@ -52,7 +52,7 @@ func (s *service) functionDeployStepServiceApply(
 				queryRegistry = true
 			}
 			contSpec := svc.Spec.TaskTemplate.ContainerSpec
-			contSpec.Image = data.Deployment.Output.ImageTags[0]
+			applyBuiltImage(&svc.Spec, data.Deployment.Output.ImageTags[0])
 			functioncontainer.ApplyFixed(contSpec, source)
 			s.applyContainerInit(ctx, data.appDeploymentData, contSpec)
 

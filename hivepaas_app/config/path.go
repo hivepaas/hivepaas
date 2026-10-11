@@ -56,7 +56,7 @@ func (cfg *Config) DashboardAppSecurityURL(basePath string) string {
 
 // DashboardImageScanImagesURL lists every app's images and what they carry.
 func (cfg *Config) DashboardImageScanImagesURL() string {
-	return gofn.Must(url.JoinPath(cfg.BaseDashboardURL(), "settings/image-scanning/images"))
+	return gofn.Must(url.JoinPath(cfg.BaseDashboardURL(), "system/image-scanning/apps"))
 }
 
 // Github Apps

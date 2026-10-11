@@ -20,8 +20,8 @@ const (
 	reasonMaxLen  = 1000
 
 	// maxExpireIn is how far away an ignore may expire: a year, so each is
-	// looked at again.
-	maxExpireIn = timeutil.Dur365Days
+	// looked at again - and a day, for the clock of the browser that asked.
+	maxExpireIn = timeutil.Dur365Days + timeutil.Day
 )
 
 // vulnIDPattern is a vulnerability's ID as Trivy reports it: CVE-2025-1234,
